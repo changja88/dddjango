@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "계층 분리 없음(domain/application/infra 혼재)을 지적하고, domain_layer/application_layer/infra_layer/presentation_layer 4계층 분리를 권장한다",
+      "passed": true,
+      "evidence": "CRITICAL-2에서 '계층 분리 없음 -- domain/application/infra 혼재'를 지적하고, 권장 구조로 domain_layer/, application_layer/, infra_layer/, presentation_layer/ 4계층을 명시적으로 제시함"
+    },
+    {
+      "text": "Django 앱을 infra_layer/django_<domain>/에 배치하도록 권장한다 (django_ 접두사 포함)",
+      "passed": true,
+      "evidence": "CRITICAL-2 및 권장 개선 구조에서 'infra_layer/django_<domain>/'을 명시. 구체적으로 infra_layer/django_inventory/, infra_layer/django_order/ 예시를 포함"
+    },
+    {
+      "text": "도메인 모델이 Django ORM에 의존하는 것을 지적하고, 순수 도메인 모델(@dataclass)을 domain_layer에, ORM 모델을 infra_layer에 분리하도록 권장한다",
+      "passed": true,
+      "evidence": "CRITICAL-3에서 '도메인 모델이 models.Model을 상속하여 프레임워크와 결합'을 지적하고, 'domain_layer/<aggregate>/<root>.py -- 순수 Python @dataclass 도메인 엔티티', 'infra_layer/django_<domain>/models/<name>_model.py -- ORM 모델' 분리를 권장"
+    },
+    {
+      "text": "order에서 inventory.models를 직접 import하는 것을 지적하고, 타 도메인의 application_layer 서비스만 import 허용하거나 도메인 이벤트로 전환하도록 권장한다",
+      "passed": true,
+      "evidence": "CRITICAL-1에서 'order/services.py에서 inventory.models.Stock을 직접 import'를 지적하고, '타 도메인의 application_layer 서비스만 직접 import 허용' 규칙 및 'OrderPlacedEvent 도메인 이벤트를 발행' 전환을 권장"
+    },
+    {
+      "text": "모델 파일명 <name>_model.py, 클래스명 <Name>Model 네이밍 규칙을 제시하거나, 리포지토리 인터페이스를 domain_layer에 두도록 권장한다",
+      "passed": true,
+      "evidence": "권장 구조에서 파일명 product_model.py/stock_model.py/order_model.py, 클래스명 ProductModel/StockModel/OrderModel을 명시. 또한 리포지토리 인터페이스를 domain_layer/repository/에 배치(product_repo.py, stock_repo.py, order_repo.py)"
+    }
+  ]
+}

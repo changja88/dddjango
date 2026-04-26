@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "User post_save 시그널(create_profile)은 유지한다 -- 서드파티 모델(auth.User) 연동이므로 시그널이 적절",
+      "passed": true,
+      "evidence": "Change 1에서 User post_save 시그널을 명시적으로 유지. Reason: 'django.contrib.auth.User는 서드파티(Django 내장) 모델이므로 save()를 오버라이드할 수 없다. 시그널 사용이 적절한 케이스다.'"
+    },
+    {
+      "text": "같은 앱 내 시그널(update_order_total, send_order_notification, update_product_stock)을 서비스 함수나 save() 오버라이드로 변환한다",
+      "passed": true,
+      "evidence": "Change 3: update_order_total -> Order.recalculate_total() 모델 메서드. Change 4: send_order_notification -> order_create 서비스 함수. Change 5: update_product_stock -> _deduct_stock 서비스 함수. orders/signals.py와 products/signals.py 삭제."
+    },
+    {
+      "text": "update_product_stock에서 bare save()를 save(update_fields=['stock'])로 변경한다",
+      "passed": true,
+      "evidence": "Change 5에서 Product.objects.bulk_update(products_to_update, fields=['stock'])로 변경. Reason에서 'save() 시 update_fields 없이 전체 필드를 덮어쓰는 문제도 해결된다'고 명시."
+    },
+    {
+      "text": "update_order_total의 무한 루프 위험(save 시그널이 다시 save를 호출)을 지적한다",
+      "passed": true,
+      "evidence": "Change 3 Reason: 'post_save 시그널이 재귀적으로 트리거될 위험이 있다. save(update_fields=[\"total_amount\"])로 변경 필드만 업데이트하고 재귀를 방지한다.'"
+    },
+    {
+      "text": "product_count를 annotate(Count)나 GeneratedField로 대체하도록 제안한다",
+      "passed": true,
+      "evidence": "Change 6에서 annotate(Count('product'))를 사용하는 category_list_with_counts 셀렉터 함수로 대체. '성능 병목이 되는 경우에만 GeneratedField나 캐싱을 고려한다'고 언급."
+    }
+  ]
+}

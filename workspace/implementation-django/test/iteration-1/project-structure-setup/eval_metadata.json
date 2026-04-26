@@ -1,0 +1,14 @@
+{
+  "eval_id": 3,
+  "eval_name": "project-structure-setup",
+  "prompt": "새로운 Django 프로젝트를 시작하려고 해. 온라인 서점인데 사용자(User), 도서(Book), 주문(Order), 리뷰(Review) 기능이 필요해. 프로젝트 구조를 잡고, 도서 모델과 리뷰 모델을 만들어줘. 도서에는 제목, 저자, 가격, ISBN, 출판일, 카테고리가 있고, 리뷰에는 별점(1-5), 내용, 작성자가 있어.",
+  "assertions": [
+    "Two Scoops 레이아웃을 따른다 (config/ + apps/)",
+    "settings가 base/local/production으로 분리되어 있다",
+    "앱이 도메인별로 분리되어 있다",
+    "공통 필드를 위한 추상 베이스 클래스를 사용한다",
+    "Book 모델에서 가격에 DecimalField를 사용한다",
+    "Review rating에 범위 제약(1-5)이 있다",
+    "환경 변수로 시크릿을 관리한다"
+  ]
+}

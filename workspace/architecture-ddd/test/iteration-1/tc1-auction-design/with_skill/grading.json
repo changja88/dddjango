@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "바운디드 컨텍스트를 최소 3개 이상 식별하고 각 컨텍스트의 유비쿼터스 언어를 정의한다",
+      "passed": true,
+      "evidence": "5개 바운디드 컨텍스트 식별(경매, 결제, 배송, 평가, 회원). 섹션 1.2에서 각 컨텍스트별 핵심 용어를 테이블로 정의하고, 섹션 2에서 경매 컨텍스트의 유비쿼터스 언어 사전을 별도 제공. 또한 '용어 분리 예시'로 '사용자'가 컨텍스트마다 다른 의미(판매자/입찰자, 지불자/수취인, 발송인/수령인 등)를 갖는다는 점까지 명시함."
+    },
+    {
+      "text": "전략 설계(바운디드 컨텍스트, 컨텍스트 맵)를 전술 패턴(애그리거트, 엔티티)보다 먼저 제시한다",
+      "passed": true,
+      "evidence": "문서 구조가 '1. 전략 설계'(하위 도메인 분류, 바운디드 컨텍스트 정의, 컨텍스트 맵) -> '2. 유비쿼터스 언어 사전' -> '3. 전술 설계 -- 애그리거트, 엔티티, 값 객체, 도메인 이벤트' 순서. 섹션 8 설계 결정 근거에서도 '전략 설계 우선 원칙 (Vernon): 잘못된 경계에서 좋은 전술 패턴을 적용해도 복잡성이 해결되지 않는다'를 명시적으로 언급함."
+    },
+    {
+      "text": "경매 애그리거트가 입찰 불변식을 자체적으로 보호하며 비즈니스 의도를 드러내는 메서드명(place_bid, close 등)을 사용한다",
+      "passed": true,
+      "evidence": "Auction 애그리거트 루트가 open(), place_bid(), close(), confirm_transaction() 메서드를 가지며, place_bid() 내부에서 OPEN 상태 확인, 종료 시간 확인, 판매자 자가입찰 차단, 최고 입찰가 비교를 직접 수행. 불변식이 클래스 docstring에 명시되어 있고, Vernon 규칙 1 적용 주석으로 Bid를 Auction 내부 값 객체로 배치한 이유를 설명함."
+    },
+    {
+      "text": "낙찰 후 결제 생성 등 교차 컨텍스트 통신에 도메인 이벤트를 사용하고 결과적 일관성을 명시한다",
+      "passed": true,
+      "evidence": "AuctionClosed 이벤트 -> AuctionClosedHandler가 Payment 생성, PaymentCompleted -> PaymentCompletedHandler가 Shipment 생성, ReceiptConfirmed -> ReceiptConfirmedHandler가 거래 확정, TransactionConfirmed -> TransactionConfirmedHandler가 Settlement+Review 생성. 섹션 7 제목이 '이벤트 핸들러 -- 결과적 일관성 구현'이며, '각 이벤트 핸들러는 별도 트랜잭션에서 실행되며, 컨텍스트 간 결과적 일관성을 구현한다'고 명시. Vernon 규칙 4를 반복 인용."
+    },
+    {
+      "text": "하위 도메인을 핵심/지원/일반으로 분류한다",
+      "passed": true,
+      "evidence": "섹션 1.1 '하위 도메인 분류' 테이블에서 경매=핵심(Core), 결제=일반(Generic), 배송=지원(Supporting), 평가=지원(Supporting), 회원=일반(Generic)으로 분류. 각 유형에 대한 솔루션 전략(사내 구현/외부 PG 연동/단순 CRUD 등)까지 제시하고, '핵심 도메인은 경매다'라는 선언과 투자 집중 근거를 명시함."
+    }
+  ]
+}

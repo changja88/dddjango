@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "서비스 함수(order_create)를 추출하여 두 뷰에서 중복 로직을 제거한다",
+      "passed": true,
+      "evidence": "services.py에 order_create 함수를 추출하고, views.py의 OrderCreateView와 OrderAPIView 모두 order_create(user=request.user, items=data['items'], payment_method=data['payment_method'])로 호출하여 중복을 제거했다."
+    },
+    {
+      "text": "서비스 함수가 <entity>_<action> 네이밍을 따른다",
+      "passed": true,
+      "evidence": "서비스 함수명이 order_create로, <entity>_<action> 패턴(order + create)을 정확히 따른다."
+    },
+    {
+      "text": "재고 차감에 F('stock') - quantity를 사용한다",
+      "passed": true,
+      "evidence": "services.py에서 Product.objects.filter(pk=item['product_id']).update(stock=F('stock') - item['quantity'])로 F() 표현식을 사용한 원자적 재고 차감을 구현했다."
+    },
+    {
+      "text": "Product.objects.get() 루프 내 반복 호출을 최적화한다",
+      "passed": true,
+      "evidence": "루프 내 반복 get() 호출을 Product.objects.filter(pk__in=product_ids).select_for_update()로 단일 쿼리 조회 후 딕셔너리 룩업으로 최적화했다."
+    },
+    {
+      "text": "이메일 발송에 transaction.on_commit을 사용한다",
+      "passed": true,
+      "evidence": "services.py에서 transaction.on_commit(lambda: _send_order_confirmation_email(order=order, user=user))로 트랜잭션 커밋 후에만 이메일을 발송하도록 구현했다."
+    }
+  ]
+}

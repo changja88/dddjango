@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "Two Scoops 레이아웃(config/ + apps/)을 사용한다",
+      "passed": true,
+      "evidence": "config/ 디렉토리에 settings, urls, wsgi, asgi 배치. 모든 앱이 apps/ 하위에 위치. Two Scoops 레이아웃 완벽 준수."
+    },
+    {
+      "text": "settings가 base/local/production/test로 분리되고, django-environ으로 시크릿을 관리한다",
+      "passed": true,
+      "evidence": "config/settings/ 하위에 base.py, local.py, production.py, test.py 4개 파일 존재. django-environ 사용."
+    },
+    {
+      "text": "멤버 역할과 태스크 상태/우선순위를 모두 TextChoices 또는 IntegerChoices로 정의한다",
+      "passed": true,
+      "evidence": "Membership.Role은 TextChoices, Task.Status는 TextChoices, Task.Priority는 IntegerChoices. 우선순위에 IntegerChoices는 합리적 선택 (1-4 정수 값)."
+    },
+    {
+      "text": "공통 timestamp 필드를 위한 TimeStampedModel 추상 베이스 클래스를 사용한다",
+      "passed": true,
+      "evidence": "TimeStampedModel(models.Model) with abstract=True. 모든 모델이 상속."
+    },
+    {
+      "text": "팀 멤버십을 중간 모델(TeamMembership)로 구현하고, 역할 필드를 중간 모델에 둔다",
+      "passed": true,
+      "evidence": "Membership 클래스가 중간 모델로 구현, role 필드가 중간 모델에 위치."
+    }
+  ]
+}

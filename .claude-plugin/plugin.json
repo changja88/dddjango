@@ -1,0 +1,17 @@
+{
+  "name": "dddjango",
+  "description": "Python/Django development standards — DDD, Architecture Patterns, DB Design, API Design",
+  "version": "0.1.0",
+  "author": {
+    "name": "Hyun",
+    "url": "https://github.com/changja88"
+  },
+  "repository": "https://github.com/changja88/dddjango",
+  "license": "MIT",
+  "keywords": [
+    "ddd",
+    "architecture-patterns",
+    "db-design",
+    "api-design"
+  ]
+}

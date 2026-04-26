@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "4계층 분리(domain_layer, application_layer, infra_layer, presentation_layer)를 사용한다",
+      "passed": true,
+      "evidence": "폴더 트리에서 inventory/domain_layer/, inventory/application_layer/, inventory/infra_layer/, inventory/presentation_layer/ 및 ordering/domain_layer/, ordering/application_layer/, ordering/infra_layer/, ordering/presentation_layer/를 정확히 사용한다."
+    },
+    {
+      "text": "도메인 객체를 애그리거트 단위 폴더로 묶는다 (타입별 entity/value_object 분리가 아닌 aggregate 단위)",
+      "passed": true,
+      "evidence": "domain_layer/ 하위에 stock/ (stock.py + quantity.py), product/ (product.py), warehouse/ (warehouse.py), order/ (order.py + order_item.py + order_status.py) 등 애그리거트 단위 폴더를 사용한다. entities.py/value_objects.py 같은 타입별 파일이 아니다."
+    },
+    {
+      "text": "Django 앱을 infra_layer/django_<domain>/ 위치에 django_ 접두사로 배치한다",
+      "passed": true,
+      "evidence": "infra_layer/django_inventory/ (apps.py, admin.py, models/) 및 infra_layer/django_ordering/ (apps.py, admin.py, models/)로 django_ 접두사 앱을 배치한다."
+    },
+    {
+      "text": "리포지토리 인터페이스(ABC)를 domain_layer/repository/에, 구현체를 infra_layer/repository/에 분리한다",
+      "passed": true,
+      "evidence": "domain_layer/repository/stock_repo.py에 StockRepository(ABC), infra_layer/repository/stock_repo.py에 DjangoStockRepository 구현체. product_repo.py, warehouse_repo.py, order_repo.py도 동일 패턴으로 분리되어 있다."
+    },
+    {
+      "text": "도메인 이벤트 클래스를 domain_layer/event/에 정의하고, Django signals 변환은 infra_layer/event_bus/에 둔다",
+      "passed": true,
+      "evidence": "domain_layer/event/stock_events.py에 StockReceivedEvent, StockReleasedEvent, StockDepletedEvent 정의. domain_layer/event/order_events.py에 OrderPlacedEvent, OrderCancelledEvent 정의. infra_layer/event_bus/signal_event_bus.py에 Django signals 기반 이벤트 버스 배치."
+    }
+  ]
+}

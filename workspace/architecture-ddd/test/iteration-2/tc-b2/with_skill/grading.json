@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "Hotel 애그리거트가 rooms, reservations, reviews를 모두 포함하고 있어 너무 크다고 지적한다 (Vernon 규칙 2)",
+      "passed": true,
+      "evidence": "섹션 '1. 거대 애그리거트 -- Vernon 규칙 2 위반'에서 '[Vernon 규칙 2: 작은 애그리거트를 설계하라] -- Hotel이 rooms(수백 개), reservations(수천 건), reviews(수천 건), amenities를 모두 포함하는 거대 애그리거트다. 이는 Vernon이 명시적으로 경고하는 안티패턴이다.'라고 명시적으로 지적함"
+    },
+    {
+      "text": "Reservation을 별도 애그리거트로 분리하고 hotel_id, room_id로 참조하도록 권장한다",
+      "passed": true,
+      "evidence": "권장 애그리거트 분리안에서 'Reservation 애그리거트 -- hotel_id, room_id로 ID 참조, 예약 생명주기 관리'로 명시. 본문에서도 'Hotel, Reservation, Review는 각각 별도의 애그리거트여야 한다'라고 권장함"
+    },
+    {
+      "text": "Review를 별도 애그리거트로 분리하고 hotel_id로 참조하도록 권장한다",
+      "passed": true,
+      "evidence": "권장 애그리거트 분리안에서 'Review 애그리거트 -- hotel_id, guest_id로 ID 참조, 리뷰 독립 관리'로 명시. '리뷰는 호텔 정보와 아무런 불변식을 공유하지 않는다'라고 분리 근거도 제시함"
+    },
+    {
+      "text": "객실 가용성 확인 불변식이 어떤 애그리거트에서 보호되어야 하는지 설계 대안을 제시한다",
+      "passed": true,
+      "evidence": "분리 기준 섹션에서 '같은 객실이 같은 기간에 중복 예약되면 안 된다는 Room 수준의 불변식이지, Hotel 전체의 불변식이 아니다'라고 분석하고, DateRange 값 객체로 기간 겹침 검증 로직을 캡슐화하는 대안을 제시함"
+    },
+    {
+      "text": "reservation.status = 'cancelled' 직접 변경 대신 cancel() 메서드로 비즈니스 의도를 드러내도록 권장한다",
+      "passed": true,
+      "evidence": "잘 된 부분에서 'cancel_reservation()처럼 유비쿼터스 언어를 반영한다'고 긍정 평가. 또한 'status = \"cancelled\" --> 문자열 대신 ReservationStatus Enum을 사용해야 오타와 잘못된 상태 전이를 방지한다'라고 직접 변경 방식의 문제를 지적함"
+    }
+  ]
+}

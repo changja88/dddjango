@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "계층 분리 없음(domain/application/infra 혼재)을 지적하고, domain_layer/application_layer/infra_layer/presentation_layer 4계층 분리를 권장한다",
+      "passed": true,
+      "evidence": "문제 3에서 'domain/application/infrastructure 혼재'를 지적하고, domain/application/infra/presentation 4계층 분리를 권장. _layer 접미사는 없지만 동일한 4계층 분리 원칙과 의존성 규칙을 제시함"
+    },
+    {
+      "text": "Django 앱을 infra_layer/django_<domain>/에 배치하도록 권장한다 (django_ 접두사 포함)",
+      "passed": false,
+      "evidence": "권장 구조에서 Django ORM 모델을 infra/orm_models.py에 배치. django_ 접두사가 붙은 하위 폴더(django_inventory/, django_order/)를 제시하지 않음"
+    },
+    {
+      "text": "도메인 모델이 Django ORM에 의존하는 것을 지적하고, 순수 도메인 모델(@dataclass)을 domain_layer에, ORM 모델을 infra_layer에 분리하도록 권장한다",
+      "passed": true,
+      "evidence": "문제 2에서 '도메인 모델이 Django ORM에 직접 의존'을 지적하고, domain/models.py에 @dataclass 순수 도메인 모델, infra/orm_models.py에 ORM 모델(StockORM)을 분리하는 코드 예시를 제시"
+    },
+    {
+      "text": "order에서 inventory.models를 직접 import하는 것을 지적하고, 타 도메인의 application_layer 서비스만 import 허용하거나 도메인 이벤트로 전환하도록 권장한다",
+      "passed": true,
+      "evidence": "문제 1에서 'order/services.py에서 inventory.models.Stock을 직접 import'를 지적. ACL+Domain Event 패턴과 'inventory.services import InventoryService(서비스 계층만 참조)' 두 가지 개선안을 제시"
+    },
+    {
+      "text": "모델 파일명 <name>_model.py, 클래스명 <Name>Model 네이밍 규칙을 제시하거나, 리포지토리 인터페이스를 domain_layer에 두도록 권장한다",
+      "passed": true,
+      "evidence": "리포지토리 인터페이스를 domain/repositories.py에 ABC로 배치하도록 권장 (class StockRepository(ABC)). 단, 모델 파일명/클래스명은 orm_models.py/StockORM으로 <name>_model.py/<Name>Model 규칙과는 다름"
+    }
+  ]
+}

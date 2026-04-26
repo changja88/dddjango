@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "Auction 애그리거트가 Bid/Payment/Shipping/Review를 모두 포함하여 너무 크다고 지적한다 (Vernon 규칙 2)",
+      "passed": true,
+      "evidence": "섹션 1.1 'God Aggregate'에서 Auction이 payment, shipping, reviews, bids를 모두 직접 참조하여 너무 크다고 지적한다. Vernon 규칙 2를 명시적으로 인용하지는 않지만, 동시성 충돌 증가와 변경 이유 과다를 근거로 동일한 문제를 정확히 식별한다."
+    },
+    {
+      "text": "seller/item/payment/shipping이 객체 직접 참조이므로 ID 참조로 변경해야 한다고 지적한다 (Vernon 규칙 3)",
+      "passed": true,
+      "evidence": "개선 방향 테이블에서 Payment/Shipping/Review에 'auction_id (참조만)'을 표기하여 ID 참조 전환을 실질적으로 제안한다. Vernon 규칙 3을 명시적으로 인용하지는 않지만, 분리된 애그리거트가 ID로만 참조하는 구조를 보여주고 있다."
+    },
+    {
+      "text": "빈혈 도메인 모델 안티패턴을 지적한다 -- place_bid/close_auction 로직이 AuctionService에 있고 Auction에는 행동이 없다",
+      "passed": true,
+      "evidence": "섹션 2.1에서 'Anemic Domain Model'을 명시적으로 지적하며, place_bid의 입찰 유효성 검증과 close_auction의 낙찰자 결정 로직이 모두 AuctionService에 있고 Auction 엔티티는 데이터만 보유한다고 설명한다."
+    },
+    {
+      "text": "close_auction에서 Payment.create/Shipping.create 직접 호출이 도메인 이벤트로 대체되어야 한다고 지적한다 (Vernon 규칙 4)",
+      "passed": true,
+      "evidence": "섹션 5에서 close_auction의 결제/배송 생성이 동기적 절차적 코드임을 지적하고, AuctionClosed 도메인 이벤트를 발행하여 Payment/Fulfillment Context가 구독하는 방식으로 대체해야 한다고 권고한다. Vernon 규칙 4 명칭은 사용하지 않지만 동일한 문제와 해결책을 정확히 제시한다."
+    },
+    {
+      "text": "start_price가 int 원시 타입이므로 Money 값 객체로 추출하거나, update_status가 유비쿼터스 언어를 위반한다고 지적한다",
+      "passed": true,
+      "evidence": "섹션 3.1에서 start_price가 단순 숫자(Primitive Obsession)이므로 Money 값 객체로 모델링해야 한다고 지적하고, 섹션 2.2에서 update_status가 캡슐화를 파괴하며 의미 있는 도메인 행위(open, close, cancel)로 표현해야 한다고 지적한다."
+    }
+  ]
+}

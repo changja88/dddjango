@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "is_internal/is_surgeon/is_pediatric/is_orthopedic BooleanField 4개가 상호 배타적 진료과이므로 TextChoices로 통합해야 한다고 지적한다",
+      "passed": true,
+      "evidence": "Finding 1에서 'is_internal, is_surgeon, is_pediatric, is_orthopedic 필드는 BooleanField 남발에 해당한다... TextChoices로 단일 필드에 표현해야 한다'고 명시적으로 지적하며, TextChoices 코드 예시까지 제공."
+    },
+    {
+      "text": "루프 내 apt.patient.name/apt.doctor.name 접근이 N+1 문제이므로 select_related를 권장한다",
+      "passed": true,
+      "evidence": "Finding 4에서 'for 루프 내에서 apt.patient.name과 apt.doctor.name에 접근하므로, 예약 N건에 대해 2N번의 추가 쿼리가 발생한다. select_related(\"patient\", \"doctor\")를 사용하여 단일 JOIN 쿼리로 해결해야 한다'고 정확히 지적."
+    },
+    {
+      "text": "같은 앱 내 Appointment post_save 시그널이 안티패턴이므로 save() 오버라이드나 서비스 함수로 대체를 권장한다",
+      "passed": true,
+      "evidence": "Finding 7에서 '시그널은 서드파티 모델 후크 또는 순환 의존 방지 용도에만 사용해야 한다. 같은 앱 내 로직은 save() 오버라이드 또는 서비스 함수에서 직접 호출하는 것이 명시적이고 디버깅이 쉽다'고 명시적으로 권장."
+    },
+    {
+      "text": "create 직후 status 변경 save()에서 update_fields 누락을 지적한다",
+      "passed": true,
+      "evidence": "Finding 5에서 'apt.status = \"confirmed\" 후 apt.save()를 호출하면 모든 필드가 UPDATE SET 절에 포함된다. 변경된 status 필드만 지정해야 한다'고 지적하며 apt.save(update_fields=[\"status\"]) 코드 예시 제공."
+    },
+    {
+      "text": "3개 모델의 created_at/updated_at 중복을 TimeStampedModel 추상 베이스 클래스로 추출하도록 권장한다",
+      "passed": true,
+      "evidence": "Finding 2에서 'Doctor, Patient, Appointment 세 모델 모두 created_at, updated_at 필드를 동일하게 정의하고 있다. DRY 원칙 위반이며, TimeStampedModel 추상 베이스 클래스로 추출해야 한다'고 정확히 권장하며 abstract = True 코드 예시 제공."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: taskflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      SECRET_KEY: local-dev-secret-key-change-in-production
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      DATABASE_URL: postgres://postgres:postgres@db:5432/taskflow
+
+volumes:
+  postgres_data:

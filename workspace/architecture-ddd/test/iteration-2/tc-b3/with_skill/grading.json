@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "출금 계좌와 입금 계좌를 별도 애그리거트로 설계한다",
+      "passed": true,
+      "evidence": "섹션 2.1에서 Vernon 규칙 1,2,4를 근거로 '출금 계좌의 불변식과 입금 계좌의 불변식은 서로 독립적이다'라고 분석. 2.2 애그리거트 식별에서 Account를 단일 애그리거트로 설계하고, 각 계좌 인스턴스가 독립적 일관성 경계를 가지도록 설계함. Transfer도 별도 애그리거트로 분리."
+    },
+    {
+      "text": "Money와 TransferLimit 등을 값 객체로 설계한다",
+      "passed": true,
+      "evidence": "섹션 3에서 Money(@dataclass(frozen=True), 금액 검증 및 연산 포함), AccountType(Enum, daily_transfer_limit 속성으로 한도 반환), BankCode, TransactionEntry, TransferStatus 등을 값 객체로 설계. Money는 currency와 amount를 포함하고 add/subtract 메서드를 제공함"
+    },
+    {
+      "text": "도메인 이벤트를 사용하거나, 같은 트랜잭션 허용의 실무적 판단을 Vernon 규칙 4의 예외로 명시적으로 설명한다",
+      "passed": true,
+      "evidence": "Vernon 규칙 4를 명시 인용하며 결과적 일관성을 원칙으로 채택. MoneyWithdrawn, MoneyDeposited, TransferRequested, TransferCompleted, TransferFailed 등 도메인 이벤트를 설계. 동시에 '실무적으로 동일 데이터베이스 내 당행 이체의 경우, 같은 트랜잭션에서 두 계좌를 수정하는 것도 용인할 수 있다'라고 Vernon 규칙 4의 예외를 명시적으로 설명함"
+    },
+    {
+      "text": "이체 프로세스를 도메인 서비스 또는 Saga 패턴으로 모델링한다",
+      "passed": true,
+      "evidence": "섹션 6에서 TransferApplicationService(응용 서비스)가 이체 흐름을 조율하고, MoneyWithdrawnHandler가 결과적 일관성으로 입금을 처리하는 Saga 패턴을 구현. 보상 트랜잭션(_compensate_withdrawal)도 포함. 섹션 5에서 TransferFeeCalculationService를 도메인 서비스로 분리함"
+    }
+  ]
+}

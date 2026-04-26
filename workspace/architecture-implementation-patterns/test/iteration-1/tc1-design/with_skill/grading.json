@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "ecommerce-architecture-design",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "Hexagonal/Ports & Adapters 구조를 제안하고, Driving Port와 Driven Port를 구분한다",
+      "passed": true,
+      "evidence": "명시적으로 Hexagonal Architecture 채택. ports/driving/(order_commands, order_queries)과 ports/driven/(payment_gateway, shipping_notifier, order_repository) 구분"
+    },
+    {
+      "text": "외부 PG사에 대해 Port를 도메인에 정의하고 Adapter를 인프라에 구현하는 DIP/Ownership Inversion 적용",
+      "passed": true,
+      "evidence": "PaymentGateway ABC를 ports/driven/에 정의(도메인 소유), TossPaymentGateway를 adapters/driven/에 구현. '인터페이스(포트)는 도메인 계층이 정의하고 소유' 명시"
+    },
+    {
+      "text": "Domain Event와 구분되는 Integration Event 개념을 사용하거나 외부 발행용 이벤트를 내부와 분리",
+      "passed": true,
+      "evidence": "application/event_handlers.py에서 '도메인 이벤트 → Integration Event 변환' 역할 명시. 도메인 이벤트(OrderConfirmed)와 외부 발행을 분리"
+    },
+    {
+      "text": "Outbox 패턴을 언급하거나 DB 트랜잭션과 메시지 발행의 원자성 문제를 다룬다",
+      "passed": true,
+      "evidence": "Outbox Pattern 섹션에서 Dual Write Problem을 정의하고, Polling Publisher 방식 제안. adapters/driven/outbox.py 포함"
+    },
+    {
+      "text": "CQRS를 시스템 전체가 아닌 선택적으로 제안한다",
+      "passed": true,
+      "evidence": "'CQRS 수준 1 (동일 DB, 분리된 모델)' 제안. '현재 Django 모놀리스이므로 별도 DB까지 가지 않고' 판단. Event Sourcing/CQRS 수준2,3은 미적용 사유 명시"
+    }
+  ]
+}

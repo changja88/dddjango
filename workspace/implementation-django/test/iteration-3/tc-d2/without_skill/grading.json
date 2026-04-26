@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "User post_save 시그널(create_profile)은 유지한다 -- 서드파티 모델(auth.User) 연동이므로 시그널이 적절",
+      "passed": false,
+      "evidence": "create_profile 시그널을 제거하고 UserService.create_user()로 이동. 요약표에서 '유저 생성은 우리 코드가 직접 제어하므로 명시적 호출이 적합'이라 판단. signals.py를 완전히 비움. 서드파티 모델(auth.User)에 대한 시그널 유지 필요성을 인식하지 못함."
+    },
+    {
+      "text": "같은 앱 내 시그널(update_order_total, send_order_notification, update_product_stock)을 서비스 함수나 save() 오버라이드로 변환한다",
+      "passed": true,
+      "evidence": "update_order_total -> Order.calculate_total() + OrderService. send_order_notification -> OrderService.create_order(). update_product_stock -> OrderService.create_order() 내 F-expression 처리. 세 시그널 모두 서비스 레이어로 이동."
+    },
+    {
+      "text": "update_product_stock에서 bare save()를 save(update_fields=['stock'])로 변경한다",
+      "passed": true,
+      "evidence": "OrderService.create_order()에서 item_data['product'].save(update_fields=['stock'])로 명시적 변경."
+    },
+    {
+      "text": "update_order_total의 무한 루프 위험(save 시그널이 다시 save를 호출)을 지적한다",
+      "passed": true,
+      "evidence": "문제 진단 섹션에서 '무한 루프 위험 -- update_order_total에서 instance.save()를 다시 호출하므로 시그널이 재귀적으로 트리거된다'고 명시. 변경 요약표에서도 '무한 루프 위험 제거'로 기록."
+    },
+    {
+      "text": "product_count를 annotate(Count)나 GeneratedField로 대체하도록 제안한다",
+      "passed": false,
+      "evidence": "Category에 @property로 product_count를 구현: 'return self.product_set.count()'. 이는 annotate(Count)가 아닌 Python 프로퍼티로, 카테고리 목록 조회 시 N+1 쿼리 문제를 유발한다. annotate(Count)나 GeneratedField는 언급되지 않음."
+    }
+  ]
+}

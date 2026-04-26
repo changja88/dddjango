@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "BooleanField 남발 문제를 지적하고 TextChoices 대안을 제시한다",
+      "passed": false,
+      "evidence": "BooleanField 난립 문제는 지적했으나(섹션 1-2), 대안으로 '별도 관계 모델이나 태그 시스템'을 제시했을 뿐 TextChoices는 언급하지 않음"
+    },
+    {
+      "text": "FloatField 대신 DecimalField 사용을 권장한다",
+      "passed": true,
+      "evidence": "섹션 1-1에서 FloatField의 부동소수점 정밀도 문제를 지적하고 DecimalField(max_digits=10, decimal_places=2)를 명시적으로 권장"
+    },
+    {
+      "text": "N+1 문제를 지적하고 select_related를 권장한다",
+      "passed": true,
+      "evidence": "섹션 2-1에서 p.category.name 접근 시 매 반복 DB 쿼리 발생하는 N+1 문제를 설명하고 select_related('category') 사용을 권장"
+    },
+    {
+      "text": "같은 앱 내 시그널 사용 안티패턴을 지적한다",
+      "passed": false,
+      "evidence": "시그널의 동기 실행 문제와 created 플래그 미활용만 지적했을 뿐, 같은 앱 내에서 시그널을 사용하는 것 자체가 안티패턴이라는 점은 언급하지 않음"
+    },
+    {
+      "text": "뷰에 직접 딕셔너리 변환 대신 Serializer 또는 values() 사용을 권장한다",
+      "passed": true,
+      "evidence": "섹션 2-3에서 수동 딕셔너리 구성 대신 ModelSerializer 또는 model_to_dict 사용을 권장 (Serializer 대안 제시 충족)"
+    }
+  ]
+}

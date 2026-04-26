@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "최소 4개 이상의 바운디드 컨텍스트를 식별한다",
+      "passed": true,
+      "evidence": "8개의 바운디드 컨텍스트를 식별: Tenant Management, Identity & Access, Recruitment, Employee Management, Attendance, Leave, Payroll, Performance."
+    },
+    {
+      "text": "컨텍스트 간 관계를 컨텍스트 맵 패턴(파트너십, 고객-공급자, ACL, OHS 등 최소 2가지)으로 정의한다",
+      "passed": true,
+      "evidence": "OHS/PL, Customer-Supplier, Partnership, ACL 4가지 패턴을 사용. 11개 관계를 상세 정의하고 요약 테이블도 제공. Leave-Attendance간 Partnership 양방향 관계도 포함."
+    },
+    {
+      "text": "같은 용어가 컨텍스트마다 다른 의미를 가짐을 설명한다",
+      "passed": true,
+      "evidence": "각 관계 상세에서 ACL 변환을 통해 동일 개념이 다르게 표현됨을 설명: Applicant->Employee(3.3), Employee->WorkerProfile(3.4), Employee->LeaveEligibility(3.5), Employee->PayrollProfile(3.6), Employee->Reviewee/Reviewer(3.7), TimeSheet->WorkedHoursSummary(3.8), LeaveRecord->PaidAbsence/UnpaidAbsence(3.9), PerformanceRating->IncentiveGrade(3.11)."
+    },
+    {
+      "text": "급여/세금을 일반(Generic) 하위 도메인으로, 성과평가/채용를 핵심(Core) 하위 도메인으로 분류한다",
+      "passed": false,
+      "evidence": "채용(Recruitment)과 성과평가(Performance)는 Core Domain으로 올바르게 분류. 그러나 급여(Payroll)도 Core Domain으로 분류했으며 일반(Generic)으로 분류하지 않았다. 세금은 별도 하위 도메인으로 식별되지 않았다."
+    },
+    {
+      "text": "급여 시스템이나 외부 세금 시스템과의 연동에 ACL을 적용한다",
+      "passed": false,
+      "evidence": "Payroll을 향한 다수의 ACL이 존재하나(Employee->PayrollProfile, TimeSheet->WorkedHoursSummary, LeaveRecord->PaidAbsence 등) 이는 내부 컨텍스트 간의 모델 변환이다. 외부 세금 시스템과의 연동에 ACL을 적용하는 내용은 없다. 세금(Tax)은 Payroll 내부 개념(TaxCalculation)으로만 언급."
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "items의 dict 구조를 OrderLineItem 값 객체로, price를 Money 값 객체로 추출한다",
+      "passed": true,
+      "evidence": "OrderItem(@dataclass(frozen=True))이 name, price(int), qty를 캡슐화하고 line_total 프로퍼티를 제공한다. Money(@dataclass(frozen=True))가 subtract/add/apply_rate 연산을 제공한다. 다만 OrderItem.price가 Money가 아닌 원시 int로 남아 있어, price를 Money 값 객체로 '추출'했다고 보기 어렵다. Money와 OrderItem이 별개로 존재하며 OrderItem 내부에서 Money를 사용하지 않는다."
+    },
+    {
+      "text": "confirm_order, cancel_order의 상태 전이 로직을 Order 엔티티의 메서드로 이동시킨다",
+      "passed": true,
+      "evidence": "Order.confirm() 메서드가 _ensure_status()로 PENDING 상태를 검증한 뒤 CONFIRMED로 전이한다. Order.cancel() 메서드가 SHIPPED/CANCELLED 상태를 거부한 뒤 CANCELLED로 전이한다. Before의 OrderService.confirm_order/cancel_order 로직이 Order 엔티티 메서드로 완전히 이동했다."
+    },
+    {
+      "text": "apply_discount의 할인 계산 로직을 도메인 서비스로 분리하되, 할인 적용 자체는 Order의 메서드로 둔다",
+      "passed": false,
+      "evidence": "DiscountPolicy.calculate() 정적 메서드가 할인 계산을 담당하지만, Order.apply_discount()가 직접 DiscountPolicy.calculate()를 호출하여 할인을 계산하고 적용한다. 할인 계산과 적용이 분리되지 않고 Order 내부에서 DiscountPolicy를 직접 호출하는 구조다. 도메인 서비스를 분리했다고 보기보다 Order가 정책 객체에 의존하는 형태이며, 응용 서비스에서 계산 결과를 Order에 전달하는 구조가 아니다."
+    },
+    {
+      "text": "status 문자열을 OrderStatus Enum 또는 값 객체로 변경한다",
+      "passed": true,
+      "evidence": "OrderStatus(Enum)으로 PENDING/CONFIRMED/SHIPPED/CANCELLED를 정의했다. Before의 'pending'/'confirmed' 등 문자열이 Enum으로 변경되었다."
+    },
+    {
+      "text": "각 변경에 대해 Before/After 형식과 함께 DDD 원칙을 근거로 설명한다",
+      "passed": false,
+      "evidence": "문서가 Before/After 형식을 사용하지 않는다. 섹션 1(문제 진단)에서 기존 문제점을 서술하고, 섹션 2에서 리팩토링된 전체 코드를 제시하며, 섹션 3(변경 요약)에서 Before/After 비교 테이블을 제공한다. 그러나 '각 변경에 대해' Before/After를 나란히 보여주는 형식이 아니라, 전체 코드를 한꺼번에 제시한 후 요약 테이블로 정리하는 형식이다. 개별 변경 단위의 Before/After 대비가 없고, DDD 원칙 근거가 섹션 4(핵심 설계 판단)에서 간략히 언급될 뿐 각 변경에 대한 체계적 설명이 부족하다."
+    }
+  ]
+}

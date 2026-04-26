@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "최소 4개 이상의 바운디드 컨텍스트를 식별한다",
+      "passed": true,
+      "evidence": "8개의 바운디드 컨텍스트를 식별: Recruitment, Personnel, Attendance, Payroll, Performance, Tenant, Identity & Access, Notification."
+    },
+    {
+      "text": "컨텍스트 간 관계를 컨텍스트 맵 패턴(파트너십, 고객-공급자, ACL, OHS 등 최소 2가지)으로 정의한다",
+      "passed": true,
+      "evidence": "Customer-Supplier, ACL, OHS/PL, Conformist 4가지 패턴을 사용. 9개 관계를 상세 테이블로 정의하고 관계 요약 매트릭스도 제공."
+    },
+    {
+      "text": "같은 용어가 컨텍스트마다 다른 의미를 가짐을 설명한다",
+      "passed": true,
+      "evidence": "섹션 5.3에서 '직원'이 Personnel에서는 Employee(전체 인사 정보), Attendance에서는 AttendanceWorker, Payroll에서는 Payee, Performance에서는 ReviewSubject, Recruitment에서는 Applicant, Identity & Access에서는 User로 다르게 표현됨을 테이블로 명시. 섹션 3.2, 3.4에서도 각 컨텍스트별 용어 차이를 명시적으로 서술."
+    },
+    {
+      "text": "급여/세금을 일반(Generic) 하위 도메인으로, 성과평가/채용을 핵심(Core) 하위 도메인으로 분류한다",
+      "passed": false,
+      "evidence": "채용은 핵심(Core), 성과평가는 핵심(Core)으로 올바르게 분류. 그러나 급여(Payroll)를 지원(Supporting)으로 분류했고 일반(Generic)으로 분류하지 않았다. 세금은 급여 컨텍스트 내의 세부 개념으로만 언급되었을 뿐 별도 하위 도메인이나 일반(Generic)으로 분류하지 않았다."
+    },
+    {
+      "text": "급여 시스템이나 외부 세금 시스템과의 연동에 ACL을 적용한다",
+      "passed": false,
+      "evidence": "Payroll Context에 대한 ACL은 Personnel->Payroll 관계에서 Employee를 Payee로 변환하는 용도로만 적용. 급여 시스템 자체나 외부 세금 시스템과의 연동에 ACL을 적용하는 내용은 없다. 세금 시스템은 외부 연동 대상으로 다루지 않았다."
+    }
+  ]
+}

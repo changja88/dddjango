@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "GeneratedField로 가용 재고(available_stock = inbound - outbound)를 자동 계산한다",
+      "passed": true,
+      "evidence": "models.py line 28-32: available_stock = models.GeneratedField(expression=F('quantity_received') - F('quantity_shipped'), output_field=models.IntegerField(), db_persist=True)"
+    },
+    {
+      "text": "db_default=Now()로 최종 입고일의 DB 기본값을 설정한다",
+      "passed": true,
+      "evidence": "models.py line 33: last_received_at = models.DateTimeField(db_default=Now())"
+    },
+    {
+      "text": "UniqueConstraint로 상품+창고 고유 조건을 설정한다",
+      "passed": true,
+      "evidence": "models.py line 39-42: models.UniqueConstraint(fields=['product', 'warehouse'], name='unique_product_warehouse')"
+    },
+    {
+      "text": "CheckConstraint로 가용 재고 >= 0 조건을 설정하고, clean()에서도 검증한다",
+      "passed": true,
+      "evidence": "models.py line 43-46: CheckConstraint(condition=models.Q(quantity_received__gte=F('quantity_shipped')), name='available_stock_non_negative'). Line 52-60: clean() raises ValidationError when quantity_shipped > quantity_received."
+    }
+  ]
+}

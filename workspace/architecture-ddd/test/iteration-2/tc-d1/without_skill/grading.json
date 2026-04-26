@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "각 비즈니스 단계에 대응하는 도메인 이벤트를 과거형으로 명명한다",
+      "passed": true,
+      "evidence": "OrderPlaced, OrderAccepted, CookingStarted, CookingCompleted, RiderAssigned, OrderPickedUp, OrderDelivered, DeliveryConfirmed, PaymentSettled -- 모든 이벤트가 과거형/과거분사 형태다."
+    },
+    {
+      "text": "이벤트가 애그리거트의 상태 변경 결과로 발행되며, 이벤트 수집-디스패치 패턴을 설명한다",
+      "passed": false,
+      "evidence": "각 이벤트가 애그리거트(Order, Cooking, Delivery, Payment)의 상태 변경 결과로 발행되는 구조는 보여주나, 이벤트 수집-디스패치 패턴(aggregate에서 이벤트를 수집한 뒤 일괄 디스패치하는 메커니즘)에 대한 설명이 없다. Outbox 패턴이나 이벤트 수집 메커니즘에 대한 언급이 전혀 없다."
+    },
+    {
+      "text": "서로 다른 바운디드 컨텍스트 간 통신이 도메인 이벤트와 결과적 일관성으로 처리된다",
+      "passed": true,
+      "evidence": "설계 원칙 1에서 각 BC가 직접 호출하지 않고 도메인 이벤트를 통해서만 통신한다고 명시하고, 설계 원칙 5에서 최종 일관성(Eventual Consistency)을 명시적으로 수용한다고 기술한다."
+    },
+    {
+      "text": "주문, 배달, 결제를 별도 애그리거트/바운디드 컨텍스트로 분리하고 ID 참조를 사용한다",
+      "passed": true,
+      "evidence": "Order(Order Context), Delivery(Delivery Context), Payment(Payment Context)를 별도 BC와 애그리거트로 분리했다. 각 이벤트 페이로드에서 orderId, deliveryId, paymentId 등 ID로만 상호 참조한다."
+    },
+    {
+      "text": "알림 발송을 직접 호출이 아닌 이벤트 핸들러에서 처리하도록 설계한다",
+      "passed": true,
+      "evidence": "Notification Context를 별도 BC로 분리하고, 설계 원칙 2에서 비즈니스 로직 없이 이벤트를 수신하여 알림만 발송하는 순수 구독자로 정의한다. 모든 이벤트의 구독자 테이블에서 Notification Context가 이벤트 핸들러로 알림을 처리하는 구조를 보여준다."
+    }
+  ]
+}

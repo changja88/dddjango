@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "URL 기반 버전 관리를 설정한다 (URLPathVersioning 또는 URL prefix api/v1/, api/v2/)",
+      "passed": true,
+      "evidence": "urls.py uses path(\"api/v1/\", include(router_v1.urls)) and path(\"api/v2/\", include(router_v2.urls)) with separate routers per version."
+    },
+    {
+      "text": "버전별 Serializer를 분리한다 (ProductV1Serializer, ProductV2Serializer)",
+      "passed": true,
+      "evidence": "serializers_v1.py defines ProductListSerializer and ProductDetailSerializer for v1. serializers_v2.py defines separate ProductListSerializer and ProductDetailSerializer for v2 with additional fields (avg_rating, seller, discounted_price)."
+    },
+    {
+      "text": "ViewSet에서 get_serializer_class()로 버전에 따라 Serializer를 분기한다",
+      "passed": true,
+      "evidence": "views_v1.py and views_v2.py each define a ProductViewSet with get_serializer_class() that returns version-specific serializers (list vs detail). Version routing is achieved by URL prefix dispatching to separate ViewSets, each importing from its own serializer module."
+    },
+    {
+      "text": "v2 목록 조회에 select_related('seller') + annotate(avg_rating=Avg(...))로 N+1을 방지한다",
+      "passed": true,
+      "evidence": "views_v2.py get_queryset() chains select_related(\"category\", \"seller\").with_avg_rating(). The with_avg_rating() method in models.py ProductQuerySet is defined as annotate(avg_rating=Avg(\"reviews__rating\"))."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "architecture-violation-review",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "도메인 계층이 인프라에 직접 의존하는 DIP 위반을 지적한다",
+      "passed": true,
+      "evidence": "Section 2.1 '도메인 레이어가 인프라스트럭처에 직접 의존'. 의존성 방향이 역전되어야 한다고 명시"
+    },
+    {
+      "text": "Port 인터페이스를 도메인 계층이 정의하고 소유해야 한다는 Ownership Inversion을 명시적으로 언급",
+      "passed": false,
+      "evidence": "Section 3.1에서 Port ABC를 order/domain/ports.py에 정의하는 코드를 제시했으나, 'Ownership Inversion' 용어를 사용하지 않음. 인터페이스의 소유권 역전 개념을 명시적으로 다루지 않음"
+    },
+    {
+      "text": "부수효과를 지적하고 도메인 이벤트 또는 transaction.on_commit 등으로 분리 제안",
+      "passed": true,
+      "evidence": "Section 2.4 트랜잭션 경계 부재 + Section 2.5 동기적 결합. Section 3.3에서 OrderConfirmed 도메인 이벤트로 이메일/배송 비동기 분리 제안"
+    },
+    {
+      "text": "confirm_order가 상태 변경(Command)과 dict 반환(Query)을 동시에 하는 CQS/CQRS 위반 지적",
+      "passed": false,
+      "evidence": "confirm_order의 return dict에 대한 CQS 위반을 지적하지 않음. SRP 관점에서 5가지 책임 혼합을 지적했으나, Command-Query 혼합은 별도로 식별하지 않음"
+    },
+    {
+      "text": "Unit of Work 패턴으로 트랜잭션 경계를 명시적으로 관리하도록 제안",
+      "passed": false,
+      "evidence": "Section 3.4에서 'transaction.atomic()을 활용할 수 있다'고 언급했으나, Unit of Work를 아키텍처 패턴으로 제안하지 않음. 단순 Django 트랜잭션 관리 수준"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "카테고리를 TextChoices로 정의한다",
+      "passed": true,
+      "evidence": "models.py line 6: class Category(models.TextChoices) with NOTICE, FREE, QUESTION choices defined inside Post model."
+    },
+    {
+      "text": "Serializer가 list/detail/create 최소 3개로 분리되어 있다",
+      "passed": false,
+      "evidence": "serializers.py defines only 2 serializers: PostListSerializer and PostDetailSerializer. There is no separate PostCreateSerializer. views.py get_serializer_class() only switches between list and detail."
+    },
+    {
+      "text": "커스텀 Permission 클래스가 has_object_permission()을 구현하고, 공지 작성 권한도 별도 Permission으로 분리한다",
+      "passed": false,
+      "evidence": "permissions.py defines IsAuthorOrAdminOrReadOnly with has_object_permission() -- this part passes. However, notice-writing permission is enforced via serializer validate_category() (serializers.py lines 32-38), not via a separate Permission class. No dedicated permission class for notice creation exists."
+    },
+    {
+      "text": "조회수 증가에 F('view_count') + 1과 save(update_fields=['view_count'])를 사용한다",
+      "passed": false,
+      "evidence": "views.py line 23: uses Post.objects.filter(pk=instance.pk).update(view_count=instance.view_count + 1). This evaluates view_count in Python (instance.view_count + 1), not using F() expression. Also uses .update() instead of save(update_fields=['view_count']). Neither F() nor save(update_fields=...) is present."
+    }
+  ]
+}

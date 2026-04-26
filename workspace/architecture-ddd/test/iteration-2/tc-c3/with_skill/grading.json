@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "Specification 패턴(is_satisfied_by 메서드를 가진 규칙 객체)을 사용하여 각 대출 조건을 독립 클래스로 캡슐화한다",
+      "passed": true,
+      "evidence": "Specification ABC에 is_satisfied_by 추상 메서드를 정의하고, MinimumCreditScoreRule, MaximumDTIRule, MinimumEmploymentDurationRule, NoDelinquencyHistoryRule, AdditionalReviewRequiredRule 각각을 독립 클래스로 구현했다."
+    },
+    {
+      "text": "AND/OR/NOT 논리 연산으로 Specification을 조합할 수 있는 구조를 제공한다",
+      "passed": true,
+      "evidence": "AndSpecification, OrSpecification, NotSpecification 클래스를 제공하며 __and__, __or__, __invert__ 연산자 오버로딩으로 &, |, ~ 조합이 가능하다. 사용 예시에서 basic_eligibility | premium_eligibility 같은 OR 조합을 시연한다."
+    },
+    {
+      "text": "각 Specification이 단일 비즈니스 규칙을 표현하며, 새 규칙 추가 시 기존 코드 수정 없이 확장 가능함을 보여준다",
+      "passed": true,
+      "evidence": "각 Specification 클래스가 정확히 하나의 비즈니스 규칙을 표현한다. 섹션 3.7에서 MinimumAgeRule을 새로 정의한 뒤 approval_rules.append()만으로 추가하는 예시를 보여주며, 설계 근거 4.1에서 OCP 준수를 명시한다."
+    },
+    {
+      "text": "대출 신청자를 값 객체 또는 엔티티로 모델링하고 Specification에 전달한다",
+      "passed": true,
+      "evidence": "LoanApplication을 @dataclass 엔티티로 모델링하고 CreditScore, DebtToIncomeRatio 등 값 객체를 속성으로 포함한다. Specification[LoanApplication]의 is_satisfied_by(application: LoanApplication) 시그니처로 전달된다."
+    }
+  ]
+}

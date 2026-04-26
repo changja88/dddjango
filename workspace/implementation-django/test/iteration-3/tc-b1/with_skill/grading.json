@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "select_related('classroom__teacher')로 FK 체인을 한 번에 조인한다",
+      "passed": true,
+      "evidence": "변경 1에서 select_related(\"classroom__teacher\")를 명시하고, 전체 리팩토링 결과의 selectors.py에서도 동일하게 적용됨"
+    },
+    {
+      "text": "prefetch_related(Prefetch('enrollment_set__course'))로 M2M 관계를 최적화한다",
+      "passed": true,
+      "evidence": "Prefetch(\"enrollment_set\", queryset=Enrollment.objects.select_related(\"course\"))로 M2M 관계를 최적화함. 단일 문자열 대신 Prefetch 객체 + 내부 select_related 방식이지만 동일한 최적화 달성"
+    },
+    {
+      "text": "FloatField를 DecimalField로 변경하고, 합계를 annotate(total_fee=Sum(...))로 DB에서 계산한다",
+      "passed": true,
+      "evidence": "변경 3에서 fee를 DecimalField(max_digits=10, decimal_places=2)로 변경하고, 변경 2에서 annotate(total_fee=Sum(\"enrollment__course__fee\"))로 DB 레벨 집계 적용"
+    },
+    {
+      "text": "뷰의 딕셔너리 변환 로직을 Serializer 또는 values()로 대체하거나, 커스텀 QuerySet 메서드로 추출한다",
+      "passed": true,
+      "evidence": "변경 4에서 selectors.py에 student_dashboard_list() 함수로 쿼리 로직을 추출하고, 뷰는 데이터 직렬화와 응답 구성만 담당하도록 분리함"
+    }
+  ]
+}

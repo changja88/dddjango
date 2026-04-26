@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "Multi-table 상속 대신 Abstract Base Class + 타입 구분 필드 사용을 권장한다",
+      "passed": false,
+      "evidence": "Section 2에서 MTI 문제를 지적하고 '단일 테이블 + type 필드', 'django-polymorphic', 'GenericForeignKey/OneToOneField'를 대안으로 제시했으나, 'Abstract Base Class'를 명시적으로 권장하지 않음"
+    },
+    {
+      "text": "FloatField 대신 DecimalField 사용을 권장한다",
+      "passed": true,
+      "evidence": "Section 1에서 'FloatField는 부동소수점 연산의 정밀도 문제로 인해 금액 계산 시 오차가 발생한다'고 지적하고 'DecimalField(max_digits=12, decimal_places=2)' 사용을 권장"
+    },
+    {
+      "text": "N+1 쿼리 문제를 지적한다 (루프 내 p.cardpayment 접근)",
+      "passed": true,
+      "evidence": "Section 3에서 '루프 안에서 p.cardpayment에 접근할 때마다 추가 SQL 쿼리가 실행된다. 결제 건수가 N개면 최소 N+1개의 쿼리가 발생한다'고 지적하고 select_related 사용을 권장"
+    },
+    {
+      "text": "필드 순서가 Django 공식 스타일을 따르지 않음을 지적한다 (Meta, __str__ 누락)",
+      "passed": false,
+      "evidence": "리뷰 전체에서 Django 공식 코딩 스타일의 필드 순서(fields -> Manager -> Meta -> __str__ -> save -> custom methods)나 __str__ 메서드 누락에 대한 언급이 전혀 없음"
+    }
+  ]
+}

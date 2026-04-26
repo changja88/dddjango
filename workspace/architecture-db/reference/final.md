@@ -1,0 +1,554 @@
+# 데이터베이스 설계 종합 가이드
+
+> 이 문서는 관계형 데이터베이스(RDB) 설계에 집중한다.
+> NoSQL, ORM 코드, 마이그레이션 도구, 커넥션 풀링은 다루지 않는다.
+
+---
+
+## 목차
+
+1. [데이터베이스 모델링 프로세스](#1-데이터베이스-모델링-프로세스)
+2. [개념적 데이터 모델링 (ERD)](#2-개념적-데이터-모델링-erd)
+3. [정규화 (1NF — BCNF)](#3-정규화-1nf--bcnf)
+4. [역정규화 (Denormalization)](#4-역정규화-denormalization)
+5. [성능 최적화 순서](#5-성능-최적화-순서)
+6. [인덱스 아키텍처: B+Tree](#6-인덱스-아키텍처-btree)
+7. [인덱스 설계 베스트 프랙티스](#7-인덱스-설계-베스트-프랙티스)
+8. [트랜잭션과 격리 수준](#8-트랜잭션과-격리-수준)
+9. [쿼리 최적화](#9-쿼리-최적화)
+10. [데이터 모델링 패턴: 계층 구조](#10-데이터-모델링-패턴-계층-구조)
+11. [데이터 모델링 패턴: 상속과 다형성](#11-데이터-모델링-패턴-상속과-다형성)
+12. [참고 문헌](#12-참고-문헌)
+
+---
+
+## 1. 데이터베이스 모델링 프로세스
+
+### 1.1 작업 순서
+
+```
+업무 파악 → 개념적 데이터 모델링 → 논리적 데이터 모델링 → 물리적 데이터 모델링
+```
+
+| 단계 | 핵심 활동 | 산출물 |
+|------|----------|--------|
+| 업무 파악 | 이해관계자 인터뷰, UI 프로토타입으로 합의 | 업무 기술서 |
+| 개념적 모델링 | 엔티티, 관계, 속성 식별 | ERD |
+| 논리적 모델링 | 정규화, 키 결정, 데이터 타입 | 논리 스키마 |
+| 물리적 모델링 | 인덱스, 파티셔닝, 성능 최적화 | 물리 스키마 |
+
+### 1.2 업무 파악 원칙
+
+- **말을 믿지 말자** — UI를 만들어서 상호 일치된 합의안을 갖자
+- 개념적 데이터 모델링이 가장 중요하다. 이것을 잘 했다면 이후 단계는 자연스럽게 따라온다
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 2. 개념적 데이터 모델링 (ERD)
+
+### 2.1 ERD 구성 요소
+
+ERD(Entity Relationship Diagram)는 데이터 구조를 시각적으로 표현하는 언어다.
+
+| ERD 요소 | 의미 | 물리 대응 |
+|----------|------|----------|
+| 속성 (Attribute) | 정보 | Column |
+| 엔티티 (Entity) | 정보 그룹 | Table |
+| 관계 (Relation) | 엔티티 간 연결 | PK, FK |
+
+### 2.2 ERD 작성 원칙
+
+1. 연관된 정보를 담고 있는 **덩어리를 찾는다**
+2. 그룹별로 조회가 가능하고 조인에 유리하도록 **적절히 분리**한다
+   - 하나의 큰 덩어리: 전체 조회 필요 + 중복 발생
+   - 적절히 분리된 그룹: 그룹별 조회 가능 + 조인 활용
+
+### 2.3 식별자 (Primary Key)
+
+| 키 종류 | 설명 |
+|---------|------|
+| 후보키 (Candidate Key) | 식별자가 될 수 있는 키 |
+| 기본키 (Primary Key) | 후보키 중에서 선택된 키 |
+| 대체키 (Alternate Key) | 후보키 중에서 선택되지 않은 키 |
+| 복합키 (Composite Key) | 두 가지 이상의 키가 합쳐져서 기본키가 된 경우 |
+
+- 자연스럽게 기본키가 될 수 있는 컬럼이 없으면 **인조키(Surrogate Key)**를 만들어 사용한다
+
+### 2.4 Cardinality (기수)
+
+| 관계 | 설명 | 예시 |
+|------|------|------|
+| 1:1 | 한 엔티티가 다른 엔티티와 정확히 하나 대응 | 사용자 — 프로필 |
+| 1:N | 한 엔티티가 여러 엔티티와 대응 | 부서 — 직원 |
+| N:M | 양쪽 모두 여러 엔티티와 대응 | 학생 — 과목 (중간 테이블 필요) |
+
+### 2.5 Optionality (선택성)
+
+한쪽에 NULL이 올 수 있는지 여부를 나타낸다.
+
+- **필수 (1 표기)**: 반드시 있어야 한다
+- **선택 (O 표기)**: NULL일 수 있다
+- 예: "주문은 반드시 고객이 있어야 하지만, 고객은 주문이 없을 수 있다"
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 3. 정규화 (1NF — BCNF)
+
+### 3.1 함수적 종속 (Functional Dependency)
+
+속성 X가 속성 Y를 함수적으로 결정한다(X → Y)는 X의 각 값이 정확히 하나의 Y 값과 대응됨을 의미한다. 정규화의 이론적 기반이다.
+
+### 3.2 정규형 정의
+
+| 정규형 | 조건 | 제거하는 문제 |
+|--------|------|-------------|
+| **1NF** | 모든 컬럼이 원자값, 행이 고유 식별 가능, 반복 그룹 없음 | 중첩/반복 데이터 |
+| **2NF** | 1NF + 부분 종속 제거 (비주요 속성이 전체 복합키에 종속) | 복합키의 일부에만 종속하는 속성 |
+| **3NF** | 2NF + 이행 종속 제거 (비주요 속성이 다른 비주요 속성에 종속 불가) | A→B→C에서 A→C 이행 종속 |
+| **BCNF** | 3NF + 모든 함수적 종속 X→Y에서 X가 슈퍼키 | 후보키가 아닌 결정자 |
+
+### 3.3 정규형 위반 예시
+
+**2NF 위반**: 복합키 (StudentID, CourseID)에서 StudentName이 StudentID에만 종속
+
+```
+수강 테이블 (StudentID, CourseID, StudentName, Grade)
+                                   ^^^^^^^^^^^^^^^^
+StudentName은 StudentID에만 종속 -> 부분 종속 위반
+
+해결: 학생(StudentID, StudentName) + 수강(StudentID, CourseID, Grade)
+```
+
+**3NF 위반**: StudentID → DepartmentID → DepartmentName (이행 종속)
+
+```
+학생 테이블 (StudentID, DepartmentID, DepartmentName)
+                                       ^^^^^^^^^^^^^^^
+DepartmentName은 DepartmentID에 종속, StudentID에 이행 종속
+
+해결: 학생(StudentID, DepartmentID) + 학과(DepartmentID, DepartmentName)
+```
+
+### 3.4 정규화 핵심 원칙
+
+각 정규형은 특정 이상(갱신/삽입/삭제 anomaly)을 순차적으로 제거한다. 과도한 정규화는 JOIN 증가로 읽기 성능 저하, 과소 정규화는 데이터 불일치 유발. **언제 멈출지가 아키텍처 트레이드오프**이지만, 기본 원칙은 **정규화를 먼저 하고, 필요한 경우에만 역정규화**하는 것이다.
+
+> 출처: DigitalOcean - Database Normalization, GeeksforGeeks - Normal Forms in DBMS, 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 4. 역정규화 (Denormalization)
+
+### 4.1 역정규화란
+
+성능이나 개발 편의성을 위해 정규화를 의도적으로 거스르는 것이다.
+
+- 정규화는 대체로 **쓰기**에 초점이 맞춰져 있다
+- 정규화하면 표가 여러 개로 쪼개지고, 읽기 위해서는 **JOIN이 필요**하다 (비싼 작업)
+- 역정규화는 **중복을 허용하여 JOIN을 없애서** 읽기 성능을 올리는 작업이다
+
+### 4.2 핵심 원칙
+
+**반드시 정규화를 먼저 하고, 필요한 경우에 역정규화한다. 읽기가 많다고 바로 역정규화하는 것은 잘못된 접근이다.**
+
+### 4.3 역정규화 4가지 기법
+
+| # | 기법 | 설명 | 대가 |
+|---|------|------|------|
+| 1 | **테이블 병합** | 조인이 자주 발생하는 테이블을 하나로 합침 | 데이터 중복, 갱신 복잡도 증가 |
+| 2 | **파생 컬럼 추가** | 자주 발생하는 집계를 컬럼으로 추가 | 집계값 동기화 필요 |
+| 3-1 | **수직 분할** | 용량이 큰 컬럼만 따로 테이블로 분리 | 조인 필요 (하지만 메인 테이블 경량화) |
+| 3-2 | **수평 분할** | ID 범위 기준으로 다른 테이블로 분리 | 쿼리 라우팅 복잡 |
+| 4 | **관계의 역정규화** | FK를 추가하여 조인 횟수를 줄이는 지름길 | FK 정합성 유지 필요 |
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 5. 성능 최적화 순서
+
+물리적 데이터 모델링 단계에서 성능이 핵심이다. 다음 순서를 반드시 지킨다:
+
+```
+1. 슬로우 쿼리 최적화    ← 가장 먼저 (비용 최소)
+2. 인덱스 적용           ← 읽기 ↑, 쓰기 ↓ 트레이드오프
+3. 애플리케이션 캐시 활용  ← DB 부하 감소
+4. 역정규화              ← 최후의 보루 (대가가 크므로 반드시 위 방법을 모두 시도 후)
+```
+
+**핵심**: 일단 운영을 해봐야 알 수 있는 것들이 많다. 슬로우 쿼리를 찾아서 최적화하는 것부터 시작한다.
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 6. 인덱스 아키텍처: B+Tree
+
+대부분의 RDBMS(MySQL, PostgreSQL)가 사용하는 기본 인덱스 구조.
+
+### 6.1 B+Tree 특징
+
+- 트리 구조, Key 값으로 **정렬**
+- Child 노드가 여러 개 (높은 팬아웃)
+- 각 노드가 메모리가 아닌 **디스크**에 존재
+- **실제 데이터는 리프 노드에만** 존재
+- **Sibling 포인터** → Range 쿼리 가능
+
+### 6.2 읽기
+
+트리를 따라 루트 → 중간 노드 → 리프 노드로 내려가면 바로 데이터를 읽을 수 있다. O(log N) 복잡도.
+
+### 6.3 쓰기
+
+여러 번의 디스크 쓰기가 발생할 수 있다:
+
+1. 새 노드 생성
+2. 부모 노드 업데이트
+3. 옆 노드에서 데이터 이동
+4. 새 데이터 삽입
+
+중간에 DB가 죽으면 데이터 오염 위험이 있으므로 **WAL(Write-Ahead Log)**을 사용한다: 실제 쓰기 전에 어떤 write를 할지 미리 기록하고, 그 다음 실제 업데이트를 진행한다.
+
+### 6.4 인덱스의 근본 트레이드오프
+
+**인덱스는 읽기 성능을 비약적으로 올리고, 쓰기 성능을 비관적으로 희생시킨다.**
+
+모든 INSERT/UPDATE/DELETE는 관련된 모든 인덱스를 갱신해야 한다.
+
+> 출처: B+Tree [Go_Deeper/Wiki/Database]
+
+---
+
+## 7. 인덱스 설계 베스트 프랙티스
+
+### 7.1 복합 인덱스 컬럼 순서
+
+복합 인덱스는 선언 순서대로 정렬된 B-tree이다.
+
+**최좌선 접두사 규칙(Leftmost Prefix Rule)**: 인덱스 (A, B, C)는 (A), (A, B), (A, B, C) 필터 쿼리에 사용 가능하지만, (B)나 (C) 단독으로는 사용 불가.
+
+**"가장 선택적인 컬럼을 먼저" 신화 깨기**: 올바른 규칙은 **가장 많은 쿼리를 서비스하도록** 순서를 정하는 것이다. **등호(=) 조건 컬럼을 범위 조건 컬럼보다 앞에** 배치한다.
+
+```sql
+-- 쿼리: WHERE status = 'active' AND created_at > '2024-01-01'
+-- 좋음: 등호 컬럼 먼저
+CREATE INDEX idx_status_created ON orders (status, created_at);
+
+-- 나쁨: 범위 컬럼이 먼저 -> status 필터에 인덱스 활용 불가
+CREATE INDEX idx_created_status ON orders (created_at, status);
+```
+
+### 7.2 커버링 인덱스 (Index-Only Scan)
+
+쿼리에 필요한 **모든 컬럼을 인덱스에 포함**하면, 힙 테이블 접근 없이 인덱스만으로 데이터를 반환한다. 테이블 룩업 I/O를 제거하여 읽기 성능을 극적으로 개선한다.
+
+```sql
+-- 쿼리: SELECT email FROM users WHERE status = 'active'
+-- 커버링 인덱스: 테이블 접근 불필요
+CREATE INDEX idx_covering ON users (status) INCLUDE (email);
+```
+
+### 7.3 부분 인덱스 (Partial Index)
+
+WHERE 절로 행의 **부분 집합만** 인덱싱한다.
+
+```sql
+-- soft-delete 패턴: 활성 레코드에만 유니크 제약
+CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
+```
+
+작은 인덱스 = 적은 저장소, 빠른 스캔, 저렴한 유지보수.
+
+### 7.4 인덱스 설계 일반 원칙
+
+| 원칙 | 설명 |
+|------|------|
+| 높은 카디널리티 우선 | boolean, gender 같은 저카디널리티 컬럼은 인덱싱 효과 낮음 |
+| 읽기/쓰기 비율 고려 | 읽기 중심 → 인덱스 추가, 쓰기 중심 → 인덱스 최소화 |
+| 미사용 인덱스 감사 | 정기적으로 사용되지 않는 인덱스 확인 후 삭제 |
+| 단일 vs 복합 | RDBMS는 단일 인덱스를 조합(bitmap scan)할 수 있으므로, 복합 인덱스 전에 벤치마크 |
+
+> 출처: [Use The Index, Luke](https://use-the-index-luke.com/), [Heroku - Efficient Use of PostgreSQL Indexes](https://devcenter.heroku.com/articles/postgresql-indexes)
+
+---
+
+## 8. 트랜잭션과 격리 수준
+
+### 8.1 ACID
+
+| 속성 | 의미 |
+|------|------|
+| **Atomicity** | 트랜잭션의 모든 연산이 성공하거나, 모두 실패 (전부 또는 전무) |
+| **Consistency** | 트랜잭션 전후로 데이터베이스가 유효한 상태를 유지 |
+| **Isolation** | 동시 트랜잭션이 서로 간섭하지 않음 |
+| **Durability** | 커밋된 데이터는 시스템 장애 후에도 유지 |
+
+### 8.2 이상 현상 (Phenomena)
+
+| 현상 | 설명 |
+|------|------|
+| **Dirty Read** | 다른 트랜잭션이 아직 커밋하지 않은 데이터를 읽음 |
+| **Non-Repeatable Read** | 같은 트랜잭션 내에서 같은 행을 두 번 읽었을 때 값이 다름 |
+| **Phantom Read** | 같은 조건으로 두 번 조회했을 때 행의 집합이 다름 |
+| **Serialization Anomaly** | 동시 트랜잭션의 결과가 어떤 직렬 실행 순서와도 일치하지 않음 |
+
+### 8.3 4단계 격리 수준
+
+| 격리 수준 | Dirty Read | Non-Repeatable Read | Phantom Read | 직렬화 이상 |
+|-----------|:----------:|:-------------------:|:------------:|:-----------:|
+| Read Uncommitted | 가능 | 가능 | 가능 | 가능 |
+| **Read Committed** (일반 기본값) | 불가 | 가능 | 가능 | 가능 |
+| Repeatable Read | 불가 | 불가 | 가능 | 가능 |
+| Serializable | 불가 | 불가 | 불가 | 불가 |
+
+### 8.4 실전 선택 가이드
+
+| 격리 수준 | 적합한 경우 | 주의 |
+|-----------|-----------|------|
+| **Read Committed** | 대부분의 OLTP 애플리케이션 | 각 SQL 문이 새 스냅샷을 봄 |
+| **Repeatable Read** | 일관된 읽기가 필요한 보고서/배치 | 직렬화 실패 시 재시도 필요 |
+| **Serializable** | 정확성이 최우선인 금융/결제 | 직렬화 실패 시 반드시 재시도 로직 구현 |
+
+**핵심**: 격리 수준이 높을수록 안전하지만, 동시성이 낮아지고 직렬화 실패가 발생할 수 있다. 필요 이상으로 높은 격리 수준은 불필요한 성능 저하를 초래한다.
+
+> 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
+
+---
+
+## 9. 쿼리 최적화
+
+### 9.1 EXPLAIN ANALYZE 읽기
+
+```sql
+EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
+
+-- 출력 예시:
+-- Index Scan using idx_email on users
+--   (cost=0.42..8.44 rows=1 width=244)
+--   (actual time=0.017..0.018 rows=1 loops=1)
+--   Buffers: shared hit=4
+-- Planning Time: 0.105 ms
+-- Execution Time: 0.038 ms
+```
+
+| 항목 | 의미 |
+|------|------|
+| cost (시작..총) | 임의 단위의 예상 비용 (1.0 = 순차 디스크 페이지 1회 읽기) |
+| rows | 예상 반환 행 수 |
+| actual time | 실제 소요 시간 (ms) |
+| Buffers: shared hit/read | 캐시 히트 vs 디스크 읽기 |
+
+**핵심**: 예상 행(rows)과 실제 행(actual rows)이 크게 다르면 `ANALYZE` 실행하여 테이블 통계를 갱신한다.
+
+### 9.2 스캔 유형
+
+| 유형 | 설명 | 주의 |
+|------|------|------|
+| **Seq Scan** | 테이블의 모든 행을 순차 읽기 | 대형 테이블에서 경고 신호 |
+| **Index Scan** | 인덱스로 행을 하나씩 접근 | 소수 행에 효율적 |
+| **Bitmap Heap Scan** | 2단계: 인덱스로 위치 파악 → 물리 순서로 접근 | Index Scan과 Seq Scan 사이 |
+| **Index-Only Scan** | 인덱스만으로 데이터 반환 (커버링 인덱스) | 가장 빠른 읽기 |
+
+### 9.3 조인 유형
+
+| 유형 | 적합한 경우 | 특징 |
+|------|-----------|------|
+| **Nested Loop** | 작은 외부 집합 + 인덱스된 내부 | 소규모 데이터에 최적 |
+| **Hash Join** | 중·대형 비정렬 데이터 | 작은 테이블로 해시 테이블 생성 |
+| **Merge Join** | 조인 키로 사전 정렬된 데이터 | 대규모 정렬 데이터에 효율적 |
+
+### 9.4 N+1 문제
+
+1개 쿼리로 N개 부모를 가져온 후, N개 추가 쿼리로 각 부모의 자식을 개별 조회하는 문제. ORM의 lazy loading이 주 원인.
+
+```
+-- N+1 발생 (1 + N 쿼리)
+SELECT * FROM authors;                          -- 1회
+SELECT * FROM books WHERE author_id = 1;        -- N회 반복
+SELECT * FROM books WHERE author_id = 2;
+...
+
+-- 해결: JOIN 또는 IN 절 (1-2 쿼리)
+SELECT * FROM authors a JOIN books b ON a.id = b.author_id;
+-- 또는
+SELECT * FROM authors;
+SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
+```
+
+### 9.5 쿼리 최적화 일반 원칙
+
+| 원칙 | 설명 |
+|------|------|
+| SELECT * 회피 | 필요한 컬럼만 지정 (커버링 인덱스 활용 가능) |
+| WHERE 절 활용 | 가능한 한 DB 단에서 필터링 (애플리케이션 필터링 회피) |
+| LIMIT 사용 | 결과 집합 크기 제한 |
+| 서브쿼리 vs JOIN | 대부분 JOIN이 서브쿼리보다 효율적 (옵티마이저 의존) |
+
+> 출처: [PostgreSQL Documentation: Using EXPLAIN](https://www.postgresql.org/docs/current/using-explain.html), [Use The Index, Luke](https://use-the-index-luke.com/)
+
+---
+
+## 10. 데이터 모델링 패턴: 계층 구조
+
+조직도, 카테고리 트리, 댓글 스레드 등 계층 구조를 RDB에 표현하는 4가지 패턴.
+
+### 10.1 패턴 비교
+
+| 패턴 | INSERT | 이동 | 하위 트리 조회 | 조상 조회 | 저장 공간 |
+|------|--------|------|--------------|---------|----------|
+| **Adjacency List** | 쉬움 | 쉬움 | 재귀/CTE 필요 | 재귀/CTE 필요 | 최소 |
+| **Nested Set** | 비쌈 (left/right 재작성) | 비쌈 | 단일 쿼리 (BETWEEN) | 단일 쿼리 | 최소 |
+| **Materialized Path** | 쉬움 | 보통 (경로 갱신) | LIKE 'path%' | 경로 분할 | 보통 |
+| **Closure Table** | 보통 (모든 경로 삽입) | 보통 | 단일 쿼리 | 단일 쿼리 | 높음 |
+
+### 10.2 Adjacency List (인접 리스트)
+
+가장 단순한 패턴. 각 행에 parent_id를 저장한다.
+
+```sql
+CREATE TABLE categories (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(100),
+    parent_id INTEGER REFERENCES categories(id)
+);
+
+-- 하위 트리 조회: WITH RECURSIVE (CTE)
+WITH RECURSIVE subtree AS (
+    SELECT id, name, parent_id FROM categories WHERE id = 1
+    UNION ALL
+    SELECT c.id, c.name, c.parent_id
+    FROM categories c JOIN subtree s ON c.parent_id = s.id
+)
+SELECT * FROM subtree;
+```
+
+### 10.3 Closure Table (폐쇄 테이블)
+
+모든 조상-자손 쌍을 별도 테이블에 저장한다. 가장 유연하며 복잡한 계층 쿼리에 적합.
+
+```sql
+CREATE TABLE node_closure (
+    ancestor_id INTEGER REFERENCES nodes(id),
+    descendant_id INTEGER REFERENCES nodes(id),
+    depth INTEGER,
+    PRIMARY KEY (ancestor_id, descendant_id)
+);
+
+-- 트리 A -> B -> C일 때 저장되는 행:
+-- (A, A, 0), (A, B, 1), (A, C, 2), (B, B, 0), (B, C, 1), (C, C, 0)
+
+-- A의 모든 자손 조회 (재귀 불필요)
+SELECT descendant_id FROM node_closure WHERE ancestor_id = 'A';
+
+-- C의 모든 조상 조회
+SELECT ancestor_id FROM node_closure WHERE descendant_id = 'C' AND depth > 0;
+```
+
+### 10.4 선택 가이드
+
+| 상황 | 권장 패턴 |
+|------|----------|
+| 작은/단순 트리, 빈번한 갱신 | Adjacency List |
+| 깊은 계층, 복잡한 조상/자손 쿼리 | Closure Table |
+| 읽기 중심, 안정적 트리 | Nested Set |
+| 단순 트리, 보통 수준 갱신 | Materialized Path |
+
+> 출처: Martin Fowler, [Software Patterns Lexicon - Closure Table](https://softwarepatternslexicon.com/patterns-sql/4/2/4/)
+
+---
+
+## 11. 데이터 모델링 패턴: 상속과 다형성
+
+객체지향의 상속 관계를 RDB에 매핑하는 3가지 패턴과 다형적 연관.
+
+### 11.1 상속 패턴 비교
+
+| 패턴 | 설명 | 적합 | 트레이드오프 |
+|------|------|------|------------|
+| **Single Table (STI)** | 모든 타입 한 테이블 + type 구분자 | 속성 80%+ 공유 | NULL 많음, 테이블 비대 |
+| **Class Table (CTI)** | 계층별 테이블, 공유 PK로 조인 | 속성이 크게 다름, 무결성 중요 | JOIN 필요 |
+| **Concrete Table (TPC)** | 구체 타입별 독립 테이블 | 타입이 완전 독립 | FK 제약 불가, 스키마 중복 |
+
+### 11.2 Single Table Inheritance (STI)
+
+```sql
+CREATE TABLE vehicles (
+    id INTEGER PRIMARY KEY,
+    type VARCHAR(20) NOT NULL,  -- 'car', 'truck', 'motorcycle'
+    brand VARCHAR(100),
+    -- 공통 속성
+    engine_cc INTEGER,
+    -- car 전용
+    trunk_capacity_liters INTEGER,
+    -- truck 전용
+    payload_tons DECIMAL,
+    -- motorcycle 전용
+    has_sidecar BOOLEAN
+);
+```
+
+### 11.3 Class Table Inheritance (CTI)
+
+```sql
+CREATE TABLE vehicles (
+    id INTEGER PRIMARY KEY,
+    type VARCHAR(20) NOT NULL,
+    brand VARCHAR(100),
+    engine_cc INTEGER
+);
+
+CREATE TABLE cars (
+    vehicle_id INTEGER PRIMARY KEY REFERENCES vehicles(id),
+    trunk_capacity_liters INTEGER
+);
+
+CREATE TABLE trucks (
+    vehicle_id INTEGER PRIMARY KEY REFERENCES vehicles(id),
+    payload_tons DECIMAL
+);
+```
+
+### 11.4 다형적 연관 (Polymorphic Associations)
+
+하나의 자식 엔티티가 여러 부모 타입과 관계를 맺는 패턴.
+
+```sql
+CREATE TABLE comments (
+    id INTEGER PRIMARY KEY,
+    body TEXT,
+    commentable_type VARCHAR(50),  -- 'Article', 'Video', 'Photo'
+    commentable_id INTEGER         -- 해당 타입의 PK
+);
+```
+
+**한계**: DB 레벨에서 FK 제약을 강제할 수 없다. 참조 무결성은 애플리케이션 레벨에서 보장해야 한다.
+
+### 11.5 선택 가이드
+
+| 상황 | 권장 패턴 |
+|------|----------|
+| 타입 간 속성 대부분 공유 | STI (단순, JOIN 없음) |
+| 타입별 속성이 크게 다름, 데이터 무결성 중요 | CTI (정규화, FK 제약) |
+| 타입이 완전 독립, 접근 패턴 다름 | TPC (성능 우선) |
+| 여러 부모 타입에 댓글/태그 연결 | Polymorphic Association |
+
+> 출처: Martin Fowler, [Single Table Inheritance](https://martinfowler.com/eaaCatalog/singleTableInheritance.html), [Class Table Inheritance](https://martinfowler.com/eaaCatalog/classTableInheritance.html)
+
+---
+
+## 12. 참고 문헌
+
+| 출처 | 다룬 내용 |
+|------|---------|
+| Go_Deeper/Book/Database/데이터베이스 모델링 | 모델링 프로세스, ERD, 키, 역정규화, 성능 최적화 순서 |
+| Go_Deeper/Wiki/Database/B+Tree | B+Tree 구조, WAL, 읽기/쓰기 특성 |
+| DigitalOcean - Database Normalization | 1NF~BCNF 정의, 함수적 종속 |
+| Use The Index, Luke | 복합 인덱스 순서, 커버링 인덱스, "가장 선택적 먼저" 신화 |
+| PostgreSQL Documentation: Transaction Isolation | ACID, 격리 수준, 이상 현상 |
+| PostgreSQL Documentation: Using EXPLAIN | EXPLAIN ANALYZE 읽기, 스캔/조인 유형 |
+| Martin Fowler - PoEAA | STI, CTI, TPC 상속 패턴 |
+| Software Patterns Lexicon | Closure Table, Adjacency List 계층 패턴 |

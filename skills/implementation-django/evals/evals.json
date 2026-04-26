@@ -1,0 +1,43 @@
+{
+  "skill_name": "implementation-django",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "진료 예약(Appointment) 관리 시스템의 Django 모델과 API를 만들어줘.\n\n- 환자(Patient)와 의사(Doctor) 모델이 있고, 각 예약에는 환자, 의사, 예약일시, 진료과, 상태가 필요해.\n- 상태는 대기/확정/완료/취소 4가지이고, 대기 상태에서만 확정이 가능하고, 확정 상태에서만 완료 처리가 가능해.\n- 예약 목록은 환자가 자기 예약만 볼 수 있어야 하고, 의사는 자기에게 배정된 예약을 볼 수 있어야 해.\n- 진료과는 내과/외과/소아과/정형외과 중 하나야.\n- 같은 의사에게 같은 시간대에 중복 예약이 불가능해야 해.\n- 프로젝트 구조도 잡아줘.\n- API는 Django Ninja를 사용해줘.",
+      "expected_output": "Appointment 모델 + Django Ninja API + 프로젝트 구조. TextChoices, 이중 검증, Fat Model, Schema 분리, Two Scoops 구조 적용.",
+      "files": [],
+      "expectations": [
+        "상태(Status)와 진료과(Department) 모두 TextChoices 클래스로 정의한다",
+        "같은 의사-시간대 중복 방지에 clean() + UniqueConstraint 이중 검증을 적용한다",
+        "상태 전이 로직(confirm/complete/cancel)이 모델 메서드에 있고, 뷰는 위임만 한다",
+        "Django Ninja Schema가 요청/응답별로 분리되고 Router 데코레이터 패턴을 사용한다",
+        "config/ + apps/ 구조에 settings가 base/local/production으로 분리되고 django-environ을 사용한다"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "아래 진료 예약 시스템 코드를 리뷰해줘:\n\n```python\nfrom django.db import models\nfrom django.db.models.signals import post_save\nfrom django.dispatch import receiver\n\nclass Doctor(models.Model):\n    name = models.CharField(max_length=100)\n    is_internal = models.BooleanField(default=False)\n    is_surgeon = models.BooleanField(default=False)\n    is_pediatric = models.BooleanField(default=False)\n    is_orthopedic = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\nclass Patient(models.Model):\n    name = models.CharField(max_length=100)\n    phone = models.CharField(max_length=20)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\nclass Appointment(models.Model):\n    STATUS_CHOICES = [\n        ('pending', 'Pending'),\n        ('confirmed', 'Confirmed'),\n    ]\n    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)\n    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)\n    datetime = models.DateTimeField()\n    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\nclass AppointmentView(View):\n    def get(self, request):\n        appointments = Appointment.objects.all()\n        result = []\n        for apt in appointments:\n            result.append({\n                'patient': apt.patient.name,\n                'doctor': apt.doctor.name,\n                'datetime': str(apt.datetime),\n                'status': apt.status,\n            })\n        return JsonResponse({'appointments': result})\n\n    def post(self, request):\n        data = json.loads(request.body)\n        apt = Appointment.objects.create(\n            patient_id=data['patient_id'],\n            doctor_id=data['doctor_id'],\n            datetime=data['datetime'],\n            status='pending'\n        )\n        apt.status = 'confirmed'\n        apt.save()\n        return JsonResponse({'id': apt.id})\n\n@receiver(post_save, sender=Appointment)\ndef notify_doctor(sender, instance, created, **kwargs):\n    if created:\n        send_notification(instance.doctor, f\"새 예약: {instance.patient.name}\")\n```",
+      "expected_output": "BooleanField 남발, N+1, 같은 앱 시그널, update_fields 누락, timestamp 중복 등의 문제를 구조적으로 지적.",
+      "files": [],
+      "expectations": [
+        "is_internal/is_surgeon/is_pediatric/is_orthopedic BooleanField 4개가 상호 배타적 진료과이므로 TextChoices로 통합해야 한다고 지적한다",
+        "루프 내 apt.patient.name/apt.doctor.name 접근이 N+1 문제이므로 select_related를 권장한다",
+        "같은 앱 내 Appointment post_save 시그널이 안티패턴이므로 save() 오버라이드나 서비스 함수로 대체를 권장한다",
+        "create 직후 status 변경 save()에서 update_fields 누락을 지적한다",
+        "3개 모델의 created_at/updated_at 중복을 TimeStampedModel 추상 베이스 클래스로 추출하도록 권장한다"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "아래 진료 예약 시스템 코드를 리팩토링해줘:\n\n```python\n# settings.py\nSECRET_KEY = 'django-insecure-hospital-secret-key-12345'\nDEBUG = True\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.postgresql',\n        'NAME': 'hospital_db',\n        'USER': 'admin',\n        'PASSWORD': 'admin123',\n    }\n}\n\n# models.py\nclass Appointment(models.Model):\n    patient = models.ForeignKey('Patient', on_delete=models.CASCADE)\n    doctor = models.ForeignKey('Doctor', on_delete=models.CASCADE)\n    date = models.DateTimeField()\n    is_confirmed = models.BooleanField(default=False)\n    is_completed = models.BooleanField(default=False)\n    is_cancelled = models.BooleanField(default=False)\n    notes = models.TextField(blank=True)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\n    def __str__(self):\n        return f\"Appointment {self.id}\"\n\n# views.py\nclass AppointmentConfirmView(View):\n    def post(self, request, pk):\n        apt = Appointment.objects.get(pk=pk)\n        if apt.is_cancelled:\n            return JsonResponse({'error': 'cancelled'}, status=400)\n        if apt.is_completed:\n            return JsonResponse({'error': 'already completed'}, status=400)\n        apt.is_confirmed = True\n        apt.save()\n        return JsonResponse({'status': 'confirmed'})\n```",
+      "expected_output": "BooleanField→TextChoices, settings 분리, Fat Model, update_fields 적용을 before/after 형식으로 리팩토링.",
+      "files": [],
+      "expectations": [
+        "is_confirmed/is_completed/is_cancelled 3개를 Status(TextChoices)로 통합하는 before/after를 보여준다",
+        "settings를 base/local/production으로 분리하고 SECRET_KEY/DB 비밀번호를 django-environ으로 환경 변수 처리한다",
+        "뷰의 상태 검증 로직을 모델 메서드(confirm())로 이동시킨다",
+        "bare save()를 save(update_fields=['status'])로 변경한다"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "skill_name": "architecture-implementation-patterns",
+  "evals": [
+    {
+      "id": 1,
+      "mode": "Design",
+      "eval_name": "ecommerce-architecture-design",
+      "prompt": "전자상거래 시스템의 주문 처리 아키텍처를 설계해줘.\n\n현재 상황:\n- Django 모놀리스로 운영 중\n- 결제는 외부 PG사(토스페이먼츠) API를 사용\n- 주문 확인 후 외부 배송 시스템(CJ대한통운 API)에 알려야 함\n- 주문 조회가 주문 생성보다 10배 많음\n- 향후 배송 서비스를 별도 마이크로서비스로 분리할 수 있어야 함\n\n주문 도메인의 코드 구조와 아키텍처 패턴을 설계해줘.",
+      "expected_output": "헥사고날 구조 + 외부 시스템 ACL + Integration Event + Outbox + 선택적 CQRS 제안",
+      "assertions": [
+        {
+          "id": "design-1",
+          "text": "Hexagonal/Ports & Adapters 구조를 제안하고, Driving Port(주문 생성 Use Case)와 Driven Port(결제, 배송)를 구분한다",
+          "type": "content_check"
+        },
+        {
+          "id": "design-2",
+          "text": "외부 PG사(토스페이먼츠)에 대해 Port 인터페이스를 도메인 계층에 정의하고 Adapter를 인프라 계층에 구현하는 DIP/Ownership Inversion을 적용한다",
+          "type": "content_check"
+        },
+        {
+          "id": "design-3",
+          "text": "배송 시스템 알림에 Domain Event와 구분되는 Integration Event 개념을 사용하거나, 최소한 외부 발행용 이벤트를 내부 이벤트와 분리한다",
+          "type": "content_check"
+        },
+        {
+          "id": "design-4",
+          "text": "이벤트 발행 신뢰성을 위해 Outbox 패턴을 언급하거나, DB 트랜잭션과 메시지 발행의 원자성 문제를 다룬다",
+          "type": "content_check"
+        },
+        {
+          "id": "design-5",
+          "text": "CQRS를 시스템 전체가 아닌 주문 조회 최적화 등 특정 부분에 선택적으로 제안한다 (또는 현 단계에서 불필요하다고 판단한다)",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "mode": "Review",
+      "eval_name": "architecture-violation-review",
+      "prompt": "아래 주문 처리 코드의 아키텍처를 리뷰해줘.\n\n```python\n# order/domain/order_service.py\nimport requests\nfrom stripe import Stripe\nfrom order.infrastructure.email_client import send_confirmation_email\nfrom order.infrastructure.models import OrderModel\n\n\nclass OrderService:\n    \"\"\"주문 처리 서비스\"\"\"\n\n    def confirm_order(self, order_id: int) -> dict:\n        # DB에서 주문 조회\n        order = OrderModel.objects.select_related('user').get(id=order_id)\n\n        # 결제 처리\n        stripe = Stripe(api_key=\"sk_live_xxx\")\n        charge = stripe.charges.create(\n            amount=order.total_amount,\n            currency=\"krw\",\n            source=order.payment_token,\n        )\n\n        # 주문 상태 변경\n        order.status = \"confirmed\"\n        order.payment_id = charge.id\n        order.save()\n\n        # 이메일 발송\n        send_confirmation_email(\n            to=order.user.email,\n            order_number=order.order_number,\n        )\n\n        # 배송 시스템에 알림\n        requests.post(\n            \"http://shipping-service/api/shipments\",\n            json={\"order_id\": order_id, \"address\": order.shipping_address},\n            timeout=5,\n        )\n\n        # 조회용 데이터 반환\n        return {\n            \"order_id\": order.id,\n            \"status\": order.status,\n            \"payment_id\": order.payment_id,\n            \"items\": list(order.items.values(\"name\", \"quantity\", \"price\")),\n        }\n```",
+      "expected_output": "DIP 위반, Port/Adapter 부재, 트랜잭션 내 부수효과, Domain Event 부재 등 지적",
+      "assertions": [
+        {
+          "id": "review-1",
+          "text": "도메인 계층(order/domain/)이 인프라(stripe, requests, infrastructure.models)에 직접 의존하는 DIP 위반을 지적한다",
+          "type": "content_check"
+        },
+        {
+          "id": "review-2",
+          "text": "Port 인터페이스를 도메인 계층에 정의하여 도메인이 소유하는 구조를 제안한다 (Ownership Inversion 개념 적용)",
+          "type": "content_check"
+        },
+        {
+          "id": "review-3",
+          "text": "이메일 발송과 배송 알림이 DB 트랜잭션과 결합되어 있는 문제(부수효과)를 지적하고, 도메인 이벤트 또는 transaction.on_commit 등으로 분리를 제안한다",
+          "type": "content_check"
+        },
+        {
+          "id": "review-4",
+          "text": "confirm_order가 상태를 변경(Command)하면서 동시에 dict를 반환(Query)하는 CQS/CQRS 위반을 지적한다",
+          "type": "content_check"
+        },
+        {
+          "id": "review-5",
+          "text": "Unit of Work 패턴으로 트랜잭션 경계를 명시적으로 관리하도록 제안한다 (단순히 transaction.atomic 언급이 아닌 UoW 패턴 수준)",
+          "type": "content_check"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "mode": "Refactoring",
+      "eval_name": "legacy-integration-refactoring",
+      "prompt": "레거시 ERP 시스템과 통합된 재고 관리 코드를 리팩토링해줘.\n\n현재 문제:\n- 레거시 ERP의 DB를 직접 조회하여 재고를 관리하고 있음\n- ERP의 테이블 구조와 컬럼명이 우리 도메인과 완전히 다름\n- ERP 변경 시 우리 코드도 함께 수정해야 하는 강결합 상태\n- 향후 ERP를 교체할 계획이 있음\n\n```python\n# inventory/services.py\nimport cx_Oracle\n\ndef get_stock(product_code: str) -> int:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\n        \"SELECT ZQTY_AVAIL FROM TB_INV_MASTER WHERE ZITEM_CD = :1\",\n        [product_code]\n    )\n    row = cursor.fetchone()\n    conn.close()\n    return row[0] if row else 0\n\n\ndef reserve_stock(product_code: str, quantity: int) -> bool:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\n        \"UPDATE TB_INV_MASTER SET ZQTY_AVAIL = ZQTY_AVAIL - :1 \"\n        \"WHERE ZITEM_CD = :2 AND ZQTY_AVAIL >= :1\",\n        [quantity, product_code]\n    )\n    affected = cursor.rowcount\n    conn.commit()\n    conn.close()\n    return affected > 0\n\n\ndef sync_product_info(product_code: str) -> dict:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\n        \"SELECT ZITEM_NM, ZITEM_GRP, ZUNIT_PRC FROM TB_ITEM_MASTER \"\n        \"WHERE ZITEM_CD = :1\",\n        [product_code]\n    )\n    row = cursor.fetchone()\n    conn.close()\n    if not row:\n        return {}\n    return {\"name\": row[0], \"category\": row[1], \"price\": row[2]}\n```\n\nBefore/After/Reason 형식으로 리팩토링해줘.",
+      "expected_output": "ACL(Facade+Adapter+Translator) 적용 + 도메인 모델 분리 + Repository 추상화 + Bubble Context 언급",
+      "assertions": [
+        {
+          "id": "refactor-1",
+          "text": "ACL의 3요소(Facade, Adapter, Translator)를 별도 클래스/모듈로 분리하여 구현한다 (단일 어댑터에 통합이 아닌 Evans의 원래 구조)",
+          "type": "content_check"
+        },
+        {
+          "id": "refactor-2",
+          "text": "재고 도메인의 Repository/Port 인터페이스(ABC)를 정의하고, ERP 구현체를 분리하여 향후 ERP 교체 시 구현체만 교체하도록 설계한다",
+          "type": "content_check"
+        },
+        {
+          "id": "refactor-3",
+          "text": "product_code를 Value Object(별도 타입)로 추출하여 원시 타입(str) 대신 도메인 개념으로 표현한다",
+          "type": "content_check"
+        },
+        {
+          "id": "refactor-4",
+          "text": "Before/After/Reason 형식을 사용하고, 각 변경에 구체적인 아키텍처 패턴(ACL, DIP, Hexagonal 등)과 원전(Evans, Cockburn 등)을 근거로 제시한다",
+          "type": "content_check"
+        },
+        {
+          "id": "refactor-5",
+          "text": "현재 상황에서 적용하지 않은 패턴(CQRS, UoW 등)에 대해 명시적 판단과 근거를 제시한다",
+          "type": "content_check"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "model-code-review",
+  "prompt": "아래 Django 코드를 리뷰해줘:\n\n```python\nclass Product(models.Model):\n    name = models.CharField(max_length=200)\n    is_active = models.BooleanField(default=True)\n    is_featured = models.BooleanField(default=False)\n    is_on_sale = models.BooleanField(default=False)\n    price = models.FloatField()\n    category = models.ForeignKey('Category', on_delete=models.CASCADE)\n\n    class Meta:\n        ordering = ['-id']\n\n    def __str__(self):\n        return self.name\n\nclass ProductListView(View):\n    def get(self, request):\n        products = Product.objects.all()\n        result = []\n        for p in products:\n            result.append({\n                'name': p.name,\n                'category': p.category.name,\n                'price': p.price,\n            })\n        return JsonResponse({'products': result})\n\n@receiver(post_save, sender=Product)\ndef update_search_index(sender, instance, **kwargs):\n    rebuild_search_index(instance)\n```",
+  "assertions": [
+    "BooleanField 남발 문제를 지적하고 TextChoices 대안을 제시한다",
+    "FloatField 대신 DecimalField 사용을 권장한다",
+    "N+1 문제를 지적하고 select_related를 권장한다",
+    "같은 앱 내 시그널 사용 안티패턴을 지적한다",
+    "뷰에 직접 딕셔너리 변환 대신 Serializer 또는 values() 사용을 권장한다"
+  ]
+}
