@@ -16,7 +16,8 @@ repository_root/
             base.py          # 공통 설정
             local.py         # 개발 설정
             production.py    # 운영 설정
-            test.py          # 테스트 설정
+            test.py          # tests/isolated/ 전용 (외부 의존성 차단)
+            test_real.py     # tests/real/ 전용 (실 DB/외부 서비스)
         urls.py
         wsgi.py
         asgi.py
@@ -29,14 +30,24 @@ repository_root/
             forms.py
             services.py      # 서비스 레이어 (HS 패턴)
             selectors.py     # 셀렉터 (HS 패턴)
-            tests/
-                __init__.py
-                test_models.py
-                test_views.py
-                test_services.py
             admin.py
         orders/
             ...
+    tests/                   # 1차: 환경, 2차: 범위 (implementation-test 참조)
+        conftest.py
+        isolated/            # 통제된/제공된 환경 (CI 기본)
+            conftest.py      # 네트워크 차단, 시계 고정 autouse
+            unit/
+                test_models.py
+                test_services.py
+            integration/
+                test_api_with_fakes.py
+        real/                # 실 운영 환경 (pre-deploy 게이트)
+            conftest.py      # 자격 증명 가드, 실 DB 세션
+            integration/
+                test_repository_postgres.py
+            e2e/
+                test_checkout_flow.py
     manage.py
     docker-compose.yml
     Dockerfile

@@ -217,16 +217,27 @@ def test_file_processing(tmp_path):
 
 ## 10. 전체 테스트 실행
 
+테스트 디렉토리는 1차 환경(`tests/isolated/`, `tests/real/`), 2차 범위(`unit/`, `integration/`, `e2e/`)로 분리되어 있다. 환경별로 실행 정책이 다르므로 명령도 환경 단위로 나눠 쓴다.
+
 ```bash
-# pytest로 전체 테스트 실행
-pytest tests/
+# CI 기본: 통제된/제공된 환경에서 결정적으로 실행되는 스위트
+pytest tests/isolated/
 
-# 특정 마커만 실행
-pytest -m "not slow"
+# 마커 기반 동등 표현 (isolated/real 마커는 디렉토리에서 자동 부착됨)
+pytest -m "not real"
 
-# 특정 패턴 매칭
-pytest -k "test_auth"
+# 사전 환경 셋업이 필요한 실 환경 스위트 (pre-deploy 잡에서)
+pytest tests/real/
 
-# 실패한 테스트만 재실행
-pytest --lf
+# 범위만 좁혀 실행
+pytest tests/isolated/unit/         # 단위만
+pytest tests/isolated/integration/  # in-memory/testcontainers 통합만
+pytest tests/real/e2e/              # 실 E2E만
+
+# 보조 옵션
+pytest -m "not slow"   # 느린 테스트 제외
+pytest -k "test_auth"  # 이름 패턴 매칭
+pytest --lf            # 직전 실패한 테스트만 재실행
 ```
+
+CI 파이프라인은 두 단계로 분리한다 -- (1) 모든 PR/푸시에서 `pytest tests/isolated/`를 실행해 결정적으로 빠른 피드백을 주고, (2) 배포 직전 게이트에서 자격 증명을 주입해 `pytest tests/real/`을 실행한다.

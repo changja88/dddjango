@@ -76,9 +76,44 @@ ALWAYS use this exact template for the closing section:
 Assert(결과 검증). Act 섹션은 한 줄이다. 여러 AAA 블록은 별도의 테스트를
 의미한다. 동일한 Act에 대한 관련 어설션은 허용된다.
 
+**디렉토리 구조.** 테스트 디렉토리는 두 축으로 분리한다 -- 1차 축은 **실행 환경**,
+2차 축은 **범위**이다. 환경 축이 범위 축보다 항상 위에 온다.
+
+- `tests/isolated/` -- **통제된/제공된 테스트 환경**에서 수행하는 테스트.
+  외부 의존성을 Fake/Mock/in-memory 또는 testcontainers 같은 제공된
+  인프라로 대체한다. 네트워크 호출이 차단되고 시계가 고정되어 결정적이며,
+  CI 기본 스위트로 항상 실행된다.
+- `tests/real/` -- **실제 운영 환경**(또는 운영과 동등한 인프라)에서 수행하는
+  테스트. 실 DB, 실 외부 서비스에 붙어 배포 직전 통합을 검증한다. 사전 환경
+  셋업이 필요하므로 별도 게이트(예: pre-deploy)로 실행한다.
+
+각 환경 아래에 범위(`unit/`, `integration/`, 필요 시 `e2e/`)를 둔다. 환경 축을
+1차로 두는 이유는 격리 보장과 실행 정책(CI 항상 vs 사전 셋업 필요)이 범위보다
+앞서 결정되기 때문이다. 둘을 섞은 평면 `tests/unit/`, `tests/integration/`은
+회귀 -- 같은 `integration/`에 isolated와 real이 섞여 격리가 깨진다.
+
+**Django 프로젝트의 isolated 환경.** Django 프로젝트에서 `tests/isolated/`는
+운영 settings가 아닌 **별도의 테스트 settings 모듈**(예: `config/settings/test.py`)
+에서 실행한다. 이 settings는 외부 의존성을 모두 제공된 더블로 교체한다 --
+`DATABASES`는 SQLite in-memory 또는 testcontainers PostgreSQL,
+`EMAIL_BACKEND`는 `django.core.mail.backends.locmem.EmailBackend`,
+`CACHES`는 `LocMemCache`, `CELERY_TASK_ALWAYS_EAGER = True`와 `CELERY_BROKER_URL = "memory://"`,
+`STORAGES`/`MEDIA_ROOT`는 tmp_path 기반,
+`PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]`(테스트 속도).
+실행 시 `DJANGO_SETTINGS_MODULE=config.settings.test`를 pytest 환경에 주입한다
+(pyproject.toml의 `[tool.pytest.ini_options]`에 `DJANGO_SETTINGS_MODULE` 또는
+`tests/isolated/conftest.py`에서 설정). 운영 settings로 isolated 테스트를 돌리는 것은
+회귀 -- 운영 DB/SMTP/Celery 브로커가 잘못 깨어날 수 있다. `tests/real/`는
+별도의 `config/settings/test_real.py`(또는 stage settings)로 실행해 환경을 명시적으로 분리한다.
+
+> Django 특화 디테일(TestCase 선택, pytest-django 마크, Factory Boy)은
+> implementation-django의 references/testing.md를 따른다.
+
 **픽스처.** 설정/정리에 yield가 있는 pytest 픽스처를 사용한다. 스코프를
 신중하게 선택한다: 격리를 위한 function(기본값), 비용이 큰 리소스를 위한
-module/session. 공유 픽스처에는 conftest.py 계층을 사용한다.
+module/session. 공유 픽스처에는 conftest.py 계층을 사용하며, 환경별 강제
+규칙(isolated에서 네트워크/시계 차단, real에서 실 DB 연결)은 각 환경의
+conftest.py에 둔다.
 
 **검증 우선순위.** 출력 기반 검증(반환 값에 대한 assert)을 상태 기반(객체
 상태에 대한 assert)보다, 상태 기반을 커뮤니케이션 기반(mock.assert_called)
@@ -155,6 +190,51 @@ module/session. 공유 픽스처에는 conftest.py 계층을 사용한다.
 필요한 경우, 전체 재설계를 먼저 적용한 후 위의 형식으로 변경사항을
 제시한다. 개별 변경 후, 사용자가 전체 구조를 파악할 수 있도록
 **완전한 리팩터링된 코드**를 제공한다.
+
+---
+
+## 응답 작성 직전 체크리스트 (필수)
+
+다음 항목을 모두 점검한다. 누락 시 응답 작성 전에 보강한다.
+
+### 작성/리뷰/리팩토링 공통
+- [ ] 시간 모킹은 time-machine을 기본으로 사용 (freezegun 대비 100-200배 빠른 C 확장 -- pytest-codspeed 벤치 인용)
+- [ ] HTTP 외부 호출이 있는 코드는 responses 라이브러리 또는 httpretty/respx로 모킹
+- [ ] Mock 객체에는 spec= 또는 create_autospec으로 인터페이스 강제
+- [ ] Repository/Gateway 같은 의존성은 InMemoryRepository Fake 클래스로 교체 (MagicMock 남발 = Mockery 안티패턴)
+- [ ] fixture는 conftest.py로 추출하여 여러 테스트 모듈에서 공유 (function 스코프 기본)
+- [ ] 경계값 테스트는 mutation testing(mutmut, cosmic-ray) 관점에서 boundary +/-1 케이스 포함
+- [ ] pytest-randomly로 테스트 순서 무작위화하여 격리 검증
+
+### 작성 모드 추가
+- [ ] **fixture는 yield 기반 setup/teardown 패턴 사용 (`yield resource; resource.cleanup()`)**
+- [ ] **HTTP 모킹은 `@responses.activate` 데코레이터 + `responses.add(method, url, json=...)` 실제 코드 사용**
+- [ ] **Hypothesis property-based test에 `@example()` 데코레이터로 회귀 케이스 명시 추가**
+
+### 리뷰 모드 추가
+- [ ] Mockery (모든 의존성을 MagicMock으로 처리) 안티패턴 지적 + InMemoryFake 권고
+- [ ] 외부 네트워크 호출 미모킹 시 responses/httpretty 권고
+- [ ] mutation testing 관점에서 약한 assertion(>=, <= 만 검증, 경계 미검증) 지적
+- [ ] **테스트 setup이 5줄 이상 또는 다중 객체 생성 시 Excessive Setup 안티패턴으로 지적 + Builder/Factory 권고**
+- [ ] **HTTP 외부 호출 미모킹 시 `@responses.activate` + `responses.add` 코드 예시로 권고 (말로만이 아닌)**
+- [ ] **`mock.send.assert_called_once_with(expected_args)` 형태로 호출 인자 검증 누락을 직접 지적 (assert_called만이 아닌)**
+
+### 리팩토링 모드 추가
+- [ ] conftest.py로 fixture 이동 + 여러 테스트 모듈 공유 가능하게 재배치
+- [ ] 경계값 (예: 박수 1 vs 2, 요금 999 vs 1000) parametrize로 확장
+- [ ] InMemoryRepository Fake 클래스 정의 + Mock(spec=...) 또는 raw MagicMock을 모두 교체
+- [ ] mutation testing으로 살아남는 mutant 0이 되도록 boundary 케이스 추가
+- [ ] pytest-randomly와 호환되는 테스트 격리 (fixture function 스코프, monkeypatch 사용)
+- [ ] **fixture를 yield 기반 setup/teardown 패턴으로 전환**
+
+### 잔여 디테일 정밀도 (회귀 방지 — 절대 누락 금지)
+
+다음 3개 항목은 평면 디렉토리, "time-machine을 쓰자"는 단순 권고, 모호한 시간 단위로 회귀하기 쉽다. 반드시 아래의 정확한 형태로 작성한다.
+
+- [ ] **작성 모드에서 테스트 디렉토리는 1차 축이 실행 환경(`tests/isolated/`, `tests/real/`), 2차 축이 범위(`unit/`, `integration/`, 필요 시 `e2e/`)인 2단계 계층 구조로 명시. `tests/isolated/`는 통제된/제공된 테스트 환경(Fake, Mock, in-memory, testcontainers, 네트워크 차단, 시계 고정), `tests/real/`은 실제 운영 환경(실 DB, 실 외부 서비스)으로 의미를 명시한다. pyproject.toml의 pytest testpaths에 `["tests/isolated", "tests/real"]` 두 디렉토리를 모두 등록하는 코드를 제시하고, 환경별 강제 규칙(isolated에서 네트워크/시계 차단 autouse, real에서 실 DB 연결 픽스처)은 각 환경의 `conftest.py`에 두는 예시를 함께 제시한다. 다음은 모두 회귀: 단일 평면 `tests/`, 환경 축이 누락된 `tests/unit/`/`tests/integration/`만 사용, isolated/real 의미 정의 누락, testpaths에 두 디렉토리 모두 등록 누락.**
+- [ ] **Django 프로젝트라면 `tests/isolated/`는 별도의 테스트 settings 모듈(`config/settings/test.py`)에서 실행되며, 이 settings는 외부 의존성을 차단한다 -- `DATABASES`는 SQLite in-memory 또는 testcontainers, `EMAIL_BACKEND`는 `locmem`, `CACHES`는 `LocMemCache`, `CELERY_TASK_ALWAYS_EAGER=True`, `CELERY_BROKER_URL="memory://"`, `PASSWORD_HASHERS`는 `MD5PasswordHasher`. `DJANGO_SETTINGS_MODULE=config.settings.test`를 pyproject.toml `[tool.pytest.ini_options]`의 `DJANGO_SETTINGS_MODULE` 또는 `tests/isolated/conftest.py`에서 설정한다. `tests/real/`은 별도의 `config/settings/test_real.py`(또는 stage settings)로 실행한다. 운영 settings로 isolated 테스트를 돌리는 것은 회귀.**
+- [ ] **time-machine 권고 시 반드시 다음 정확한 근거를 함께 인용: "freezegun은 순수 Python 구현인 반면 time-machine은 C 확장으로 구현되어 있어 동일 작업에서 100~200배 빠름. 시간 모킹이 많은 테스트 스위트에서 실질적인 실행 시간 차이가 발생". 단순히 "time-machine이 더 빠르다", "time-machine을 쓰자"는 회귀 표현. 작성/리뷰/리팩토링 모드 어디서든 동일 근거 명시.**
+- [ ] **리팩토링 모드에서 시간 단위는 **'밀리초 단위'** 또는 **'마이크로초 단위'** 같은 구체 명시(초/분 모호 표현 금지). 테스트 순서 무작위화 도구는 반드시 패키지 이름 **`pytest-randomly`** 를 명시 (단순 "테스트 순서를 랜덤으로 실행하세요"는 회귀). 두 항목 모두 코드/명령 예시(예: `pip install pytest-randomly`, `pytest --randomly-seed=last`)로 제시.**
 
 ---
 

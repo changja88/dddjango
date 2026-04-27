@@ -1,5 +1,24 @@
 # 테스트 패턴
 
+## 테스트 환경 분리: isolated vs real [TSD]
+
+테스트 디렉토리는 1차로 실행 환경(`tests/isolated/`, `tests/real/`), 2차로 범위(`unit/`, `integration/`)로 분리한다. 이 컨벤션의 일반 정의는 implementation-test의 SKILL.md를 따르고, Django 구체화는 다음과 같다.
+
+- `tests/isolated/`는 **`config/settings/test.py`** 로 실행한다. 이 settings는 외부 의존성을 모두 차단한다 -- `DATABASES`는 SQLite in-memory(또는 testcontainers PostgreSQL), `EMAIL_BACKEND`는 `locmem`, `CACHES`는 `LocMemCache`, `CELERY_TASK_ALWAYS_EAGER=True`, `CELERY_BROKER_URL="memory://"`, `PASSWORD_HASHERS`는 `MD5PasswordHasher`(테스트 속도).
+- `tests/real/`는 **`config/settings/test_real.py`** (또는 stage settings)로 실행한다. 실 DB, 실 SMTP, 실 Celery 브로커, 실 외부 API에 붙어 배포 직전 통합을 검증한다. 자격 증명이 없는 환경에서는 자동 스킵되도록 conftest 픽스처에서 가드한다.
+
+운영 settings(`config/settings/production.py`)로 isolated 테스트를 돌리는 것은 회귀 -- 운영 DB나 SMTP가 잘못 깨어날 수 있다. CI 잡은 환경별로 분리하고 settings를 환경 변수로 주입한다.
+
+```bash
+# isolated 잡 (모든 PR/푸시)
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/
+
+# real 잡 (pre-deploy, 자격 증명 주입)
+DJANGO_SETTINGS_MODULE=config.settings.test_real pytest tests/real/
+```
+
+`config/settings/test.py`의 구체적인 내용과 conftest.py 계층은 implementation-test의 `references/pytest-configuration.md`를 따른다.
+
 ## TestCase 선택 기준 [DDoc]
 
 | 클래스 | 특징 | 사용 시나리오 |
