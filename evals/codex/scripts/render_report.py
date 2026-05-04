@@ -32,6 +32,19 @@ def index_by_case_and_variant(records):
     return indexed
 
 
+def load_case_metadata(iteration):
+    indexed = {}
+    answer_key_dir = Path(iteration) / "answer-key"
+    for path in sorted(answer_key_dir.glob("*.json")):
+        data = load_json(path)
+        indexed[path.stem] = {
+            "title": data.get("title", path.stem),
+            "category": data.get("category", ""),
+            "expectations": data.get("expectations", []),
+        }
+    return indexed
+
+
 def average(values):
     return round(sum(values) / len(values), 2) if values else 0.0
 
@@ -40,6 +53,11 @@ def duration_for(timing, case_id, variant):
     record = timing.get((case_id, variant), {})
     value = record.get("duration_sec")
     return value if value is not None else 0.0
+
+
+def returncode_for(timing, case_id, variant):
+    record = timing.get((case_id, variant), {})
+    return record.get("returncode")
 
 
 def verdict(delta, dddjango_grade):
@@ -62,14 +80,37 @@ def css_class_for_verdict(value):
     }[value]
 
 
+def css_class_for_status(value):
+    return {
+        "complete": "good",
+        "partial": "neutral",
+        "pending": "neutral",
+        "error": "bad",
+    }[value]
+
+
 def link(path, label):
     return f'<a href="{escape(str(path))}">{escape(label)}</a>'
 
 
-def build_rows(iteration, grades, timing):
-    cases = sorted({case_id for case_id, _variant in grades})
+def run_status(iteration, case_id, timing):
+    baseline_output = Path(iteration) / "baseline" / f"{case_id}.output.md"
+    dddjango_output = Path(iteration) / "dddjango" / f"{case_id}.output.md"
+    baseline_code = returncode_for(timing, case_id, "baseline")
+    dddjango_code = returncode_for(timing, case_id, "dddjango")
+    if baseline_code not in {None, 0} or dddjango_code not in {None, 0}:
+        return "error"
+    if baseline_output.exists() and dddjango_output.exists():
+        return "complete"
+    if baseline_output.exists() or dddjango_output.exists():
+        return "partial"
+    return "pending"
+
+
+def build_rows(iteration, grades, timing, case_metadata):
+    case_ids = sorted({case_id for case_id, _variant in grades})
     rows = []
-    for case_id in cases:
+    for case_id in case_ids:
         baseline = grades.get((case_id, "baseline"))
         dddjango = grades.get((case_id, "dddjango"))
         if not baseline or not dddjango:
@@ -81,10 +122,15 @@ def build_rows(iteration, grades, timing):
         baseline_duration = duration_for(timing, case_id, "baseline")
         dddjango_duration = duration_for(timing, case_id, "dddjango")
         result = verdict(delta, dddjango)
+        case = case_metadata.get(case_id, {})
 
         rows.append(
             {
                 "case_id": case_id,
+                "title": case.get("title", case_id),
+                "category": case.get("category", ""),
+                "expectations": ", ".join(case.get("expectations", [])),
+                "status": run_status(iteration, case_id, timing),
                 "baseline_score": baseline_score,
                 "dddjango_score": dddjango_score,
                 "delta": delta,
@@ -94,6 +140,8 @@ def build_rows(iteration, grades, timing):
                 "verdict": result,
                 "baseline_note": baseline.get("notes", ""),
                 "dddjango_note": dddjango.get("notes", ""),
+                "dddjango_scores": dddjango.get("scores", {}),
+                "dddjango_flags": dddjango.get("flags", {}),
                 "drf_failed": dddjango.get("flags", {}).get("drf_endorsed", False),
                 "baseline_output": Path("baseline") / f"{case_id}.output.md",
                 "dddjango_output": Path("dddjango") / f"{case_id}.output.md",
@@ -113,6 +161,68 @@ def metric_card(title, value, subtitle="", tone="neutral"):
     )
 
 
+def gate_row(label, passed, value, threshold):
+    tone = "good" if passed else "bad"
+    status = "PASS" if passed else "BLOCKED"
+    return (
+        f"<tr>"
+        f"<td>{escape(label)}</td>"
+        f'<td><span class="pill {tone}">{status}</span></td>'
+        f"<td>{escape(str(value))}</td>"
+        f"<td>{escape(str(threshold))}</td>"
+        f"</tr>"
+    )
+
+
+def percent(count, total):
+    return round((count / total) * 100, 2) if total else 0.0
+
+
+def build_gate_rows(rows, lift_percent, duration_lift, drf_violations):
+    total = len(rows)
+    korean_rate = percent(
+        sum(1 for row in rows if row["dddjango_flags"].get("korean_first")),
+        total,
+    )
+    ninja_relevant = [
+        row
+        for row in rows
+        if row["category"] in {"api-design", "implementation", "negative-control"}
+        or row["case_id"] == "pilot-review-view-logic"
+    ]
+    ninja_rate = percent(
+        sum(1 for row in ninja_relevant if row["dddjango_flags"].get("django_ninja_used")),
+        len(ninja_relevant),
+    )
+    tdd_rows = [row for row in rows if row["category"] == "tdd" or "tdd" in row["case_id"]]
+    tdd_rate = percent(
+        sum(1 for row in tdd_rows if row["dddjango_scores"].get("testing_quality", 0) >= 8),
+        len(tdd_rows),
+    )
+    negative_rows = [row for row in rows if row["category"] == "negative-control"]
+    negative_rate = percent(
+        sum(1 for row in negative_rows if row["dddjango_flags"].get("negative_control_passed")),
+        len(negative_rows),
+    )
+
+    return "\n".join(
+        [
+            gate_row("Quality lift", lift_percent >= 15, f"{lift_percent:+.2f}%", ">= +15%"),
+            gate_row("DRF violations", drf_violations == 0, drf_violations, "0"),
+            gate_row("Korean-first rate", korean_rate >= 95, f"{korean_rate:.2f}%", ">= 95%"),
+            gate_row("Django Ninja compliance", ninja_rate >= 90, f"{ninja_rate:.2f}%", ">= 90%"),
+            gate_row("TDD quality", tdd_rate >= 80, f"{tdd_rate:.2f}%", ">= 80%"),
+            gate_row("Time/cost increase", duration_lift <= 30, f"{duration_lift:+.2f}%", "<= +30%"),
+            gate_row(
+                "Negative-control pass rate",
+                negative_rate >= 80,
+                f"{negative_rate:.2f}%",
+                ">= 80%",
+            ),
+        ]
+    )
+
+
 def render_html(iteration, rows):
     baseline_avg = average([row["baseline_score"] for row in rows])
     dddjango_avg = average([row["dddjango_score"] for row in rows])
@@ -126,11 +236,19 @@ def render_html(iteration, rows):
         else 0.0
     )
     drf_violations = sum(1 for row in rows if row["drf_failed"])
+    complete_count = sum(1 for row in rows if row["status"] == "complete")
+    gate_rows = build_gate_rows(rows, lift_percent, duration_lift, drf_violations)
 
     table_rows = "\n".join(
         f"""
         <tr>
-          <td><code>{escape(row["case_id"])}</code></td>
+          <td><span class="pill {css_class_for_status(row["status"])}">{escape(row["status"])}</span></td>
+          <td>
+            <strong>{escape(row["title"])}</strong>
+            <small><code>{escape(row["case_id"])}</code></small>
+          </td>
+          <td>{escape(row["category"])}</td>
+          <td>{escape(row["expectations"])}</td>
           <td class="number">{row["baseline_score"]:.1f}</td>
           <td class="number">{row["dddjango_score"]:.1f}</td>
           <td class="number {'good' if row["delta"] > 0 else 'bad' if row["delta"] < 0 else 'neutral'}">{row["delta"]:+.1f}</td>
@@ -298,6 +416,7 @@ def render_html(iteration, rows):
       {metric_card("Baseline Time", f"{baseline_duration:.2f}s", "average duration")}
       {metric_card("dddjango Time", f"{dddjango_duration:.2f}s", f"{duration_lift:+.2f}% vs baseline", "bad" if duration_lift > 30 else "neutral")}
       {metric_card("DRF Violations", drf_violations, "dddjango variant", "bad" if drf_violations else "good")}
+      {metric_card("Completed Cases", f"{complete_count}/{len(rows)}", "with and without skill")}
     </div>
 
     <section class="section">
@@ -308,19 +427,39 @@ def render_html(iteration, rows):
     </section>
 
     <section class="section">
-      <h2>Case Comparison</h2>
+      <h2>Release Gate</h2>
       <table>
         <thead>
           <tr>
-            <th>Case</th>
-            <th>Baseline</th>
-            <th>dddjango</th>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          {gate_rows}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Case Comparison: Without Skill vs With dddjango</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Evaluation Item</th>
+            <th>Category</th>
+            <th>Expectations</th>
+            <th>Without Skill</th>
+            <th>With dddjango</th>
             <th>Delta</th>
-            <th>Baseline Time</th>
-            <th>dddjango Time</th>
+            <th>Without Time</th>
+            <th>With Time</th>
             <th>Verdict</th>
-            <th>Baseline Note</th>
-            <th>dddjango Note</th>
+            <th>Without Note</th>
+            <th>With Note</th>
             <th>Artifacts</th>
           </tr>
         </thead>
@@ -339,7 +478,8 @@ def render_report(iteration):
     iteration = Path(iteration)
     grades = index_by_case_and_variant(load_json(iteration / "grades.json"))
     timing = index_by_case_and_variant(load_json(iteration / "timing.json"))
-    rows = build_rows(iteration, grades, timing)
+    case_metadata = load_case_metadata(iteration)
+    rows = build_rows(iteration, grades, timing, case_metadata)
     html = render_html(iteration, rows)
     report_path = iteration / "report.html"
     report_path.write_text(html)

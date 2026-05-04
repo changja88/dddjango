@@ -1,76 +1,175 @@
-**리뷰 결론**
+**리뷰 결과**
 
-주문 생성 로직을 전부 Django Ninja view에 넣는 것은 “가능”하지만, 실서비스 기준으로는 보통 권장하지 않습니다. 주문 생성은 단순 CRUD가 아니라 재고 확인, 가격 스냅샷, 할인/쿠폰, 배송지 검증, 결제 준비, 중복 요청 방지, 트랜잭션, 도메인 예외 처리가 묶이는 유스케이스라서 view에 넣으면 금방 fat endpoint가 됩니다.
+서비스 레이어 없이 Django Ninja view에 주문 생성 로직을 전부 넣는 것은, “장바구니 한 줄 저장” 수준의 매우 얇은 CRUD가 아니라면 권장하지 않습니다. 주문 생성은 보통 재고 차감, 가격 확정, 쿠폰/포인트, 결제 준비, 중복 요청 방지, 알림/이벤트 발행이 묶이는 유스케이스라서 Ninja endpoint가 비대해지기 쉽습니다.
 
-좋은 방향은 view를 HTTP 어댑터로 얇게 두는 것입니다. 즉 Django Ninja view는 요청 Schema 검증, 인증 사용자 확인, 헤더 읽기, 응답 status/schema 매핑 정도만 담당하고, 주문 생성 유스케이스는 `create_order(...)` 같은 application/service 함수로 분리하는 편이 낫습니다.
+[Convention: Fat endpoint] -- Django Ninja endpoint는 HTTP 경계여야 합니다. `Schema`로 입력을 받고, 인증/헤더를 확인한 뒤, application service를 호출하고 응답 스키마로 반환하는 정도가 적절합니다. 주문 생성 규칙을 view에 넣으면 CLI, admin action, batch, webhook 재처리 같은 다른 진입점에서 같은 규칙을 재사용하기 어렵습니다.
 
-**주요 발견사항**
+[DDD: Application Service] -- 서비스 레이어는 “도메인 로직을 전부 넣는 곳”이 아니라 유스케이스 오케스트레이션 계층입니다. 가격 계산, 주문 가능 상태, 수량 검증 같은 핵심 규칙은 `Order`, `OrderLine`, `Money` 같은 도메인 모델/값 객체나 모델 메서드에 두고, 서비스는 트랜잭션, 저장 순서, 외부 포트 호출, 이벤트 예약을 조율해야 합니다.
 
-`[Fat endpoint]` -- 주문 생성 전체를 view에 넣으면 HTTP 관심사와 도메인 규칙이 섞입니다. 같은 주문 생성 로직을 관리자 액션, Celery task, 내부 배치, 다른 API 버전에서 재사용하기 어려워지고 테스트도 “API를 쏴야만 검증되는” 형태가 됩니다.
+[Transaction Boundary] -- 주문 생성은 하나의 명확한 `transaction.atomic()` 경계가 필요합니다. 재고나 멱등성 레코드는 DB unique constraint, `select_for_update()`, 상태 전이로 보호해야 하고, 이메일/알림/외부 API/메시지 발행은 반드시 `transaction.on_commit()` 이후로 밀어야 합니다. 트랜잭션 안에서 외부 호출을 하면 롤백과 부수효과가 어긋납니다.
 
-`[Transaction boundary]` -- 주문 생성은 보통 `Order`, `OrderLine`, 재고 차감, 쿠폰 사용, 결제 intent 생성 같은 여러 변경을 하나의 원자적 작업으로 묶어야 합니다. 이 경계는 view보다 service/use case 안에 두는 편이 명확합니다.
+[API Contract] -- 중요한 `POST /orders`에는 `Idempotency-Key` 처리가 필요합니다. 같은 키로 재시도하면 기존 결과를 반환하거나, 다른 payload면 `409 Conflict`를 반환해야 합니다. 오류 응답은 임의 JSON 대신 RFC 9457 Problem Details 형태로 통일하는 편이 클라이언트 구현에 좋습니다.
 
-`[Idempotency]` -- `POST /orders`는 기본적으로 멱등하지 않습니다. 네트워크 재시도 때문에 같은 주문이 중복 생성될 수 있으므로, 주문 생성 API는 `Idempotency-Key` 처리를 고려해야 합니다. 이 로직도 view에 있으면 지저분해지고 레이스 컨디션 처리가 흩어지기 쉽습니다.
-
-`[Domain invariants]` -- “판매 가능한 상품인가”, “가격은 주문 시점 기준으로 고정되는가”, “재고가 부족하면 어떤 예외인가”, “쿠폰은 언제 사용 처리되는가” 같은 규칙은 HTTP 계층의 규칙이 아닙니다. 서비스나 도메인 객체 쪽에 있어야 중복과 누락이 줄어듭니다.
-
-`[Django Ninja convention]` -- Django Ninja endpoint는 `Schema`, 타입 힌트, `Router` 데코레이터, 명시적 response schema를 갖는 얇은 함수가 가장 다루기 좋습니다. 복잡한 생성 로직까지 endpoint 함수에 넣는 것은 관용적인 API 계층 분리와 맞지 않습니다.
-
-**허용 가능한 경우**
-
-아래 정도라면 view에 직접 넣어도 큰 문제는 아닙니다.
-
-- 프로토타입 또는 throwaway 코드
-- 주문이 실제 도메인 주문이 아니라 단일 모델 row 생성에 가까움
-- 재고, 결제, 할인, 배송, 멱등성, 외부 호출이 없음
-- 같은 로직을 다른 진입점에서 재사용할 가능성이 낮음
-
-다만 “주문 생성”이라는 이름이 붙는 순간 대부분은 이 범위를 빨리 벗어납니다.
-
-**추천 구조**
+**권장 구조**
 
 ```python
-# orders/api.py
-@router.post("/orders", response={201: OrderOut, 409: ProblemDetail})
-def create_order_endpoint(
-    request,
-    payload: CreateOrderIn,
-    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
-):
-    try:
-        order = create_order(
-            customer=request.user,
-            command=payload.to_command(),
-            idempotency_key=idempotency_key,
-        )
-    except OrderConflict as exc:
-        return 409, problem_detail(exc)
+# orders/schemas.py
+from decimal import Decimal
+from ninja import Schema
 
-    return 201, order
+
+class OrderLineIn(Schema):
+    product_id: int
+    quantity: int
+
+
+class OrderCreateIn(Schema):
+    lines: list[OrderLineIn]
+    coupon_code: str | None = None
+
+
+class OrderOut(Schema):
+    id: int
+    status: str
+    total_amount: Decimal
+```
+
+```python
+# orders/errors.py
+class OrderError(Exception):
+    status_code = 400
+    title = "Order error"
+
+    def __init__(self, detail: str):
+        self.detail = detail
+
+
+class DuplicateIdempotencyKey(OrderError):
+    status_code = 409
+    title = "Idempotency conflict"
+
+
+class OutOfStock(OrderError):
+    status_code = 409
+    title = "Out of stock"
 ```
 
 ```python
 # orders/services.py
-@transaction.atomic
-def create_order(
-    *,
-    customer: User,
-    command: CreateOrderCommand,
-    idempotency_key: str | None,
-) -> Order:
-    # validate customer/product/stock
-    # lock inventory rows
-    # snapshot prices
-    # create order and lines
-    # reserve stock / coupon / payment intent
-    # store idempotency result
-    return order
+from dataclasses import dataclass
+from django.db import transaction
+
+from .errors import DuplicateIdempotencyKey, OutOfStock
+from .models import IdempotencyRecord, Order, Product
+from .events import publish_order_created
+
+
+@dataclass(frozen=True)
+class CreateOrderCommand:
+    user_id: int
+    lines: list[dict]
+    coupon_code: str | None
+    idempotency_key: str
+
+
+def create_order(command: CreateOrderCommand) -> Order:
+    with transaction.atomic():
+        idem, created = IdempotencyRecord.objects.select_for_update().get_or_create(
+            user_id=command.user_id,
+            key=command.idempotency_key,
+            defaults={"request_hash": hash_payload(command)},
+        )
+
+        if not created:
+            if idem.request_hash != hash_payload(command):
+                raise DuplicateIdempotencyKey("Same key was used with a different payload.")
+            return idem.order
+
+        order = Order.objects.create_pending(user_id=command.user_id)
+
+        for line in command.lines:
+            product = Product.objects.select_for_update().get(pk=line["product_id"])
+            if product.stock < line["quantity"]:
+                raise OutOfStock(f"Product {product.id} is out of stock.")
+
+            product.decrease_stock(line["quantity"])
+            product.save(update_fields=["stock"])
+            order.add_line(product=product, quantity=line["quantity"])
+
+        order.apply_coupon(command.coupon_code)
+        order.confirm_pricing()
+        order.save()
+
+        idem.order = order
+        idem.save(update_fields=["order"])
+
+        transaction.on_commit(lambda: publish_order_created(order.id))
+
+        return order
 ```
 
-핵심은 “service layer를 무조건 만들자”가 아니라, **주문 생성이라는 유스케이스의 변경 이유를 HTTP view에서 분리하자**입니다. 단순 pass-through service는 의미가 없지만, 주문 생성처럼 규칙과 트랜잭션이 있는 작업은 service/use case 계층이 실제 복잡도를 숨기는 깊은 모듈이 됩니다.
+```python
+# orders/api.py
+from django.http import HttpRequest
+from ninja import Router, Header
+from ninja.security import django_auth
+
+from .errors import OrderError
+from .schemas import OrderCreateIn, OrderOut
+from .services import CreateOrderCommand, create_order
+
+router = Router(auth=django_auth)
+
+
+@router.post("/orders", response={201: OrderOut})
+def create_order_endpoint(
+    request: HttpRequest,
+    payload: OrderCreateIn,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+) -> tuple[int, OrderOut]:
+    order = create_order(
+        CreateOrderCommand(
+            user_id=request.user.id,
+            lines=[line.dict() for line in payload.lines],
+            coupon_code=payload.coupon_code,
+            idempotency_key=idempotency_key,
+        )
+    )
+    return 201, order
+```
+
+```python
+# config/api.py
+from ninja import NinjaAPI
+from orders.api import router as orders_router
+from orders.errors import OrderError
+
+api = NinjaAPI()
+
+
+@api.exception_handler(OrderError)
+def order_error_handler(request, exc: OrderError):
+    return api.create_response(
+        request,
+        {
+            "type": f"https://api.example.com/problems/{exc.title.lower().replace(' ', '-')}",
+            "title": exc.title,
+            "status": exc.status_code,
+            "detail": exc.detail,
+            "instance": request.path,
+        },
+        status=exc.status_code,
+    )
+
+
+api.add_router("", orders_router)
+```
+
+핵심은 “서비스 레이어를 무조건 만들자”가 아니라, 주문 생성처럼 트랜잭션과 도메인 규칙, 부수효과, 멱등성이 얽힌 유스케이스는 endpoint에 두지 말자는 것입니다. Ninja view는 얇게, application service는 유스케이스 조율, 도메인 모델은 불변식 보호, `on_commit`은 커밋 후 부수효과 처리로 나누는 쪽이 유지보수와 테스트 모두에서 낫습니다.
 
 ---
 > **관련 스킬 참조:**
-> - Django Ninja API 구현 → **dddjango:implementation-django-ninja** 스킬
-> - API 멱등성/상태 코드 설계 → **dddjango:architecture-api** 스킬
-> - fat view 리팩토링/책임 분리 → **dddjango:implementation-cleancode** 스킬
+> - Django Ninja Schema/Router/API 오류 처리 → **implementation-django-ninja** 스킬
+> - 서비스 레이어와 transaction.on_commit → **implementation-django** 스킬
+> - 애그리거트/애플리케이션 서비스 경계 → **architecture-ddd** 스킬
+> - POST 멱등성과 Problem Details 오류 계약 → **architecture-api** 스킬

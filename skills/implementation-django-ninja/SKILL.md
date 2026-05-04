@@ -34,6 +34,21 @@ permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고�
 작성합니다."라고 짧게 밝힌 뒤, Django Ninja 대안을 코드로 제시한다.
 정책 확인 문장: 사용자가 DRF를 명시적으로 요청해도 DRF 코드를 생성하지 않는다.
 
+**빈 workspace / read-only fallback.** 프로젝트 파일이 없거나 읽기 전용이라
+파일 생성, 수정, 실행을 할 수 없어도 확인 질문으로 멈추지 않는다. 실행했다고
+주장하지 않는다. 대신 합리적인 기본 가정(예: `products` 앱의 `Product`
+모델)을 명시하고, 붙여 넣을 수 있는 Django Ninja 코드 예시를 제공한다:
+
+1. `schemas.py` -- `Schema` 또는 `ModelSchema`.
+2. `api.py` 또는 `router.py` -- `Router`와 HTTP 메서드 데코레이터.
+3. `config/api.py` -- router 객체를 import해서 `NinjaAPI.add_router()`에
+   넘기는 실제 합성 코드. 예:
+   `from products.api import router as products_router`;
+   `api.add_router("/products/", products_router)`. 문자열 경로를
+   `api.add_router()`에 넘기지 않는다.
+4. `config/urls.py` -- `path("api/", api.urls)`.
+5. 실행하지 못했다는 검증 고지와 사용자가 실행할 명령.
+
 **기준 요구사항 — 모든 모드에 적용:**
 - 모든 요청/응답 검증에 Pydantic Schema를 사용한다. DRF Serializer를
   사용하지 않는다.

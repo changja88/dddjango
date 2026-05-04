@@ -1,273 +1,380 @@
-현재 작업 디렉터리는 읽기 전용이고 `config.toml`/`AGENTS.md`도 발견되지 않아 파일 반영은 못 했습니다. 아래는 그대로 팀 컨벤션 문서에 넣을 수 있는 형태입니다.
+**Django Ninja API Standard: Pagination & Errors**
 
-**Django Ninja Pagination / Error Response Standard**
+아래 표준을 팀 컨벤션 문서에 그대로 넣어도 됩니다. 이 프로젝트 정책은 DRF가 아니라 Django Ninja `Schema`, `Router`, `NinjaAPI.exception_handler()`를 기준으로 합니다.
 
-### 1. Pagination 규칙
+## 1. Pagination 표준
 
-1. 모든 컬렉션 `GET` 엔드포인트는 반드시 페이지네이션을 적용한다. 예외는 enum, 설정값, 20개 이하로 고정된 정적 목록뿐이다.
-2. 공개 API와 변경이 잦은 목록은 `CursorPagination`을 기본으로 사용한다.
-3. 관리자 화면, 내부 백오피스, 랜덤 페이지 접근이 필요한 소규모 목록만 `LimitOffsetPagination`을 허용한다.
-4. 기본 페이지 크기는 `50`, 최대 페이지 크기는 `100`으로 제한한다.
-5. Cursor 기반 목록은 반드시 안정적인 정렬을 가진다. 기본 정렬은 `("-created_at", "-id")`처럼 유니크한 tie-breaker를 포함한다.
-6. 페이지네이션 정렬 필드에는 DB 인덱스를 둔다. 대량 테이블에서 인덱스 없는 정렬은 금지한다.
-7. 클라이언트가 전달하는 `ordering`은 allowlist 기반으로만 허용한다.
-8. 페이지네이션되지 않은 `list[Schema]` 응답은 코드 리뷰에서 차단한다.
+목록 API는 반드시 페이지네이션을 적용한다. 기본은 cursor pagination이며, 작은 관리자성 목록만 예외적으로 limit/offset을 허용한다.
 
-```python
-# common/api/pagination.py
-from collections.abc import Callable
-from typing import Any
-
-from ninja.pagination import CursorPagination, LimitOffsetPagination, paginate
-
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 100
-DEFAULT_CURSOR_ORDERING = ("-created_at", "-id")
-
-
-def cursor_paginate(
-    *,
-    ordering: tuple[str, ...] = DEFAULT_CURSOR_ORDERING,
-    page_size: int = DEFAULT_PAGE_SIZE,
-) -> Callable[..., Any]:
-    return paginate(
-        CursorPagination,
-        ordering=ordering,
-        page_size=page_size,
-        max_page_size=MAX_PAGE_SIZE,
-    )
-
-
-def limit_offset_paginate() -> Callable[..., Any]:
-    return paginate(LimitOffsetPagination)
-```
-
-```python
-# settings.py
-NINJA_PAGINATION_PER_PAGE = 50
-NINJA_PAGINATION_MAX_OFFSET = 10_000
-```
-
-```python
-# projects/api.py
-from django.db.models import QuerySet
-from ninja import Router
-
-from common.api.pagination import cursor_paginate
-from projects.models import Project
-from projects.schemas import ProjectOut
-
-router = Router(tags=["projects"])
-
-
-@router.get("", response=list[ProjectOut])
-@cursor_paginate(ordering=("-created_at", "-id"))
-def list_projects(request) -> QuerySet[Project]:
-    return (
-        Project.objects.visible_to(request.user)
-        .order_by("-created_at", "-id")
-    )
-```
-
-Cursor 응답은 Django Ninja 기본 형식을 사용한다.
+**응답 shape**
 
 ```json
 {
-  "next": "https://api.example.com/v1/projects?cursor=...",
-  "previous": null,
-  "results": [
-    {"id": "prj_123", "name": "Website Renewal"}
+  "items": [],
+  "page": {
+    "next_cursor": "opaque-base64-cursor-or-null",
+    "has_more": true,
+    "limit": 50
+  }
+}
+```
+
+**규칙**
+
+- `items`: 현재 페이지 데이터 배열.
+- `page.next_cursor`: 다음 페이지가 없으면 `null`.
+- `page.has_more`: 다음 페이지 존재 여부.
+- `page.limit`: 실제 적용된 limit.
+- 기본 `limit=50`, 최대 `limit=100`.
+- cursor는 클라이언트가 해석하지 않는 opaque string으로 둔다.
+- 정렬 기준은 안정적이어야 한다. 예: `created_at DESC, id DESC`.
+- `total_count`는 기본 응답에 넣지 않는다. 비용이 싼 화면에서만 별도 필드로 허용한다.
+
+```python
+# schemas.py
+from typing import Generic, TypeVar
+
+from ninja import Schema
+from pydantic import Field
+from pydantic.generics import GenericModel
+
+T = TypeVar("T")
+
+
+class CursorPageSchema(Schema):
+    next_cursor: str | None = None
+    has_more: bool
+    limit: int
+
+
+class CursorListResponse(GenericModel, Generic[T]):
+    items: list[T]
+    page: CursorPageSchema
+
+
+class CursorPaginationInput(Schema):
+    cursor: str | None = None
+    limit: int = Field(default=50, ge=1, le=100)
+```
+
+```python
+# products/schemas.py
+from datetime import datetime
+
+from ninja import ModelSchema
+
+from .models import Product
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = ["id", "name", "price", "created_at"]
+```
+
+```python
+# products/api.py
+from ninja import Router, Query
+
+from common.schemas import CursorListResponse, CursorPaginationInput
+from .models import Product
+from .schemas import ProductOut
+from .pagination import decode_cursor, encode_cursor
+
+router = Router(tags=["products"])
+
+
+@router.get("", response={200: CursorListResponse[ProductOut]})
+def list_products(
+    request,
+    pagination: Query[CursorPaginationInput],
+) -> CursorListResponse[ProductOut]:
+    limit = pagination.limit
+    queryset = Product.objects.order_by("-created_at", "-id")
+
+    if pagination.cursor:
+        created_at, product_id = decode_cursor(pagination.cursor)
+        queryset = queryset.filter(
+            created_at__lt=created_at,
+        ) | queryset.filter(
+            created_at=created_at,
+            id__lt=product_id,
+        )
+
+    rows = list(queryset[: limit + 1])
+    items = rows[:limit]
+    has_more = len(rows) > limit
+
+    next_cursor = None
+    if has_more and items:
+        last = items[-1]
+        next_cursor = encode_cursor(created_at=last.created_at, object_id=last.id)
+
+    return CursorListResponse[ProductOut](
+        items=items,
+        page={
+            "next_cursor": next_cursor,
+            "has_more": has_more,
+            "limit": limit,
+        },
+    )
+```
+
+## 2. Error Response 표준
+
+모든 API 오류는 RFC 9457 Problem Details 형식을 따른다. 커스텀 `{error: ...}` 또는 `{message: ...}` 단독 응답은 사용하지 않는다.
+
+**응답 shape**
+
+```json
+{
+  "type": "https://api.example.com/problems/validation-error",
+  "title": "Validation Error",
+  "status": 422,
+  "detail": "Request validation failed.",
+  "instance": "/api/products",
+  "errors": [
+    {
+      "code": "invalid",
+      "field": "price",
+      "message": "Input should be greater than 0"
+    }
   ]
 }
 ```
 
-### 2. Error Response 규칙
-
-1. 모든 API 에러는 RFC 9457 Problem Details 형식을 사용한다.
-2. 에러 응답 `Content-Type`은 `application/problem+json`이다.
-3. 필수 필드는 `type`, `title`, `status`, `detail`, `instance`다.
-4. `type`은 안정적인 URI로 관리한다. 예: `https://api.example.com/problems/validation-failed`
-5. `title`은 에러 유형별로 고정한다. 요청마다 달라지는 설명은 `detail`에 넣는다.
-6. `message`, `error`, `errors`만 단독으로 반환하는 커스텀 형식은 금지한다.
-7. 검증 오류는 `422`로 반환하고, 필드별 오류는 확장 필드 `errors`에 담는다.
-8. 인증 실패는 `401`, 권한 부족은 `403`, 중복/상태 충돌은 `409`, rate limit은 `429`를 사용한다.
-9. `5xx` 응답에는 내부 예외 메시지, SQL, traceback, secret을 노출하지 않는다.
-10. 엔드포인트의 OpenAPI `response`에는 성공 스키마와 `ProblemDetail`을 함께 선언한다.
-
 ```python
-# common/api/errors.py
-from dataclasses import dataclass, field
+# common/errors.py
 from typing import Any
 
-from django.http import Http404, JsonResponse
-from ninja import NinjaAPI, Schema
-from ninja.errors import (
-    AuthenticationError,
-    AuthorizationError,
-    HttpError,
-    ValidationError,
-)
+from ninja import Schema
 
 
-PROBLEM_BASE_URL = "https://api.example.com/problems/"
+class FieldErrorSchema(Schema):
+    code: str
+    message: str
+    field: str | None = None
 
 
-class ProblemDetail(Schema):
+class ProblemDetailSchema(Schema):
     type: str
     title: str
     status: int
     detail: str
     instance: str
-    code: str | None = None
-    errors: list[dict[str, Any]] | None = None
+    errors: list[FieldErrorSchema] | None = None
 
 
-@dataclass(slots=True)
-class APIProblem(Exception):
-    status: int
-    code: str
-    title: str
-    detail: str
-    extra: dict[str, Any] = field(default_factory=dict)
+class ProblemError(Exception):
+    def __init__(
+        self,
+        *,
+        status: int,
+        title: str,
+        detail: str,
+        type: str,
+        errors: list[dict[str, Any]] | None = None,
+    ) -> None:
+        self.status = status
+        self.title = title
+        self.detail = detail
+        self.type = type
+        self.errors = errors
+```
+
+```python
+# config/api.py
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
+from ninja import NinjaAPI
+from ninja.errors import ValidationError
+
+from common.errors import ProblemDetailSchema, ProblemError
+from products.api import router as products_router
+
+api = NinjaAPI(title="Service API", version="1.0.0")
 
 
-def problem_response(
-    request,
-    *,
-    status: int,
-    code: str,
-    title: str,
-    detail: str,
-    extra: dict[str, Any] | None = None,
-) -> JsonResponse:
-    body = {
-        "type": f"{PROBLEM_BASE_URL}{code}",
-        "title": title,
-        "status": status,
-        "detail": detail,
-        "instance": request.path,
-        "code": code,
-    }
-    if extra:
-        body.update(extra)
-
-    return JsonResponse(
-        body,
+def problem_response(request, *, status: int, title: str, detail: str, type: str, errors=None):
+    return api.create_response(
+        request,
+        {
+            "type": type,
+            "title": title,
+            "status": status,
+            "detail": detail,
+            "instance": request.path,
+            "errors": errors,
+        },
         status=status,
-        content_type="application/problem+json",
     )
 
 
-def install_problem_handlers(api: NinjaAPI) -> None:
-    @api.exception_handler(APIProblem)
-    def handle_api_problem(request, exc: APIProblem):
-        return problem_response(
-            request,
-            status=exc.status,
-            code=exc.code,
-            title=exc.title,
-            detail=exc.detail,
-            extra=exc.extra,
-        )
+@api.exception_handler(ValidationError)
+def validation_error_handler(request, exc: ValidationError):
+    errors = [
+        {
+            "code": "invalid",
+            "field": ".".join(str(part) for part in error["loc"]),
+            "message": error["msg"],
+        }
+        for error in exc.errors
+    ]
+    return problem_response(
+        request,
+        status=422,
+        title="Validation Error",
+        detail="Request validation failed.",
+        type="https://api.example.com/problems/validation-error",
+        errors=errors,
+    )
 
-    @api.exception_handler(ValidationError)
-    def handle_validation_error(request, exc: ValidationError):
-        return problem_response(
-            request,
-            status=422,
-            code="validation-failed",
-            title="Validation Failed",
-            detail="Request validation failed.",
-            extra={"errors": getattr(exc, "errors", [])},
-        )
 
-    @api.exception_handler(AuthenticationError)
-    def handle_authentication_error(request, exc: AuthenticationError):
-        return problem_response(
-            request,
-            status=401,
-            code="authentication-required",
-            title="Authentication Required",
-            detail="Valid authentication credentials are required.",
-        )
+@api.exception_handler(ProblemError)
+def problem_error_handler(request, exc: ProblemError):
+    return problem_response(
+        request,
+        status=exc.status,
+        title=exc.title,
+        detail=exc.detail,
+        type=exc.type,
+        errors=exc.errors,
+    )
 
-    @api.exception_handler(AuthorizationError)
-    def handle_authorization_error(request, exc: AuthorizationError):
-        return problem_response(
-            request,
-            status=403,
-            code="permission-denied",
-            title="Permission Denied",
-            detail="You do not have permission to access this resource.",
-        )
 
-    @api.exception_handler(Http404)
-    def handle_not_found(request, exc: Http404):
-        return problem_response(
-            request,
-            status=404,
-            code="not-found",
-            title="Not Found",
-            detail="The requested resource was not found.",
-        )
+@api.exception_handler(Http404)
+def not_found_handler(request, exc: Http404):
+    return problem_response(
+        request,
+        status=404,
+        title="Not Found",
+        detail="The requested resource was not found.",
+        type="https://api.example.com/problems/not-found",
+    )
 
-    @api.exception_handler(HttpError)
-    def handle_http_error(request, exc: HttpError):
-        status = getattr(exc, "status_code", 500)
-        return problem_response(
-            request,
-            status=status,
-            code="http-error",
-            title="HTTP Error",
-            detail=str(exc),
-        )
 
-    @api.exception_handler(Exception)
-    def handle_unexpected_error(request, exc: Exception):
-        return problem_response(
-            request,
-            status=500,
-            code="internal-server-error",
-            title="Internal Server Error",
-            detail="An unexpected error occurred.",
-        )
+@api.exception_handler(PermissionDenied)
+def permission_denied_handler(request, exc: PermissionDenied):
+    return problem_response(
+        request,
+        status=403,
+        title="Forbidden",
+        detail="You do not have permission to access this resource.",
+        type="https://api.example.com/problems/forbidden",
+    )
+
+
+api.add_router("/products", products_router)
 ```
 
-```python
-# api.py
-from ninja import NinjaAPI
+## 3. `response={...}` 예시
 
-from common.api.errors import install_problem_handlers
-
-api = NinjaAPI(title="Service API", version="1.0.0")
-install_problem_handlers(api)
-```
+상태 코드별 응답 스키마를 명시한다. 성공과 실패 스키마를 함께 선언한다.
 
 ```python
-# projects/api.py
-from ninja.responses import codes_4xx, codes_5xx
+from ninja import Router
 
-from common.api.errors import APIProblem, ProblemDetail
+from common.errors import ProblemDetailSchema, ProblemError
+from common.schemas import CursorListResponse
+from .schemas import ProductCreateIn, ProductOut
+
+router = Router(tags=["products"])
+
+
+@router.get(
+    "",
+    response={
+        200: CursorListResponse[ProductOut],
+        422: ProblemDetailSchema,
+    },
+)
+def list_products(request) -> CursorListResponse[ProductOut]:
+    ...
+
+
+@router.get(
+    "/{product_id}",
+    response={
+        200: ProductOut,
+        404: ProblemDetailSchema,
+    },
+)
+def get_product(request, product_id: int) -> ProductOut:
+    ...
 
 
 @router.post(
     "",
-    response={201: ProjectOut, codes_4xx: ProblemDetail, codes_5xx: ProblemDetail},
+    response={
+        201: ProductOut,
+        409: ProblemDetailSchema,
+        422: ProblemDetailSchema,
+    },
 )
-def create_project(request, payload: ProjectCreateIn):
-    if Project.objects.filter(slug=payload.slug).exists():
-        raise APIProblem(
-            status=409,
-            code="project-slug-conflict",
-            title="Project Slug Conflict",
-            detail="A project with this slug already exists.",
-        )
+def create_product(request, payload: ProductCreateIn) -> tuple[int, ProductOut]:
+    ...
 
-    project = Project.objects.create(**payload.dict())
-    return 201, project
+
+@router.delete(
+    "/{product_id}",
+    response={
+        204: None,
+        404: ProblemDetailSchema,
+        409: ProblemDetailSchema,
+    },
+)
+def delete_product(request, product_id: int) -> tuple[int, None]:
+    return 204, None
 ```
+
+비즈니스 오류는 `ProblemError`로 올린다.
+
+```python
+raise ProblemError(
+    status=409,
+    title="Conflict",
+    detail="A product with this SKU already exists.",
+    type="https://api.example.com/problems/duplicate-sku",
+    errors=[
+        {
+            "code": "duplicate",
+            "field": "sku",
+            "message": "SKU must be unique.",
+        }
+    ],
+)
+```
+
+## 4. 상태 코드 규칙
+
+- `200`: 조회, 수정 성공.
+- `201`: 생성 성공.
+- `204`: 삭제 성공 또는 응답 본문 없는 성공.
+- `400`: 요청 형식은 맞지만 의미가 잘못된 일반 클라이언트 오류.
+- `401`: 인증 필요.
+- `403`: 인증은 됐지만 권한 없음.
+- `404`: 리소스 없음.
+- `409`: 중복, 상태 충돌, 삭제 불가 같은 비즈니스 충돌.
+- `422`: Schema validation 실패.
+- `429`: rate limit 초과.
+- `500`: 예상하지 못한 서버 오류. 상세 내부 정보 노출 금지.
+
+## 5. Edge-Case Checklist
+
+- [ ] 모든 목록 API가 pagination shape `{items, page}`를 반환하는가?
+- [ ] `limit` 기본값과 최대값이 Schema에서 강제되는가?
+- [ ] cursor가 opaque string이며 클라이언트가 내부 값을 의존하지 않는가?
+- [ ] cursor 정렬 기준이 unique tie-breaker를 포함하는가? 예: `created_at`, `id`.
+- [ ] 페이지 조회 중 데이터가 추가/삭제되어도 중복/누락 위험이 낮은가?
+- [ ] 빈 목록은 `items=[]`, `has_more=false`, `next_cursor=null`인가?
+- [ ] 모든 오류가 `ProblemDetailSchema` shape를 따르는가?
+- [ ] validation error는 `422`, auth failure는 `401`, forbidden은 `403`, conflict는 `409`인가?
+- [ ] 예외 응답에 stack trace, SQL, 내부 모델명, secret 값이 노출되지 않는가?
+- [ ] 각 라우터 데코레이터에 `response={...}`가 선언되어 OpenAPI가 정확한가?
+- [ ] 삭제 성공은 본문 없이 `204: None`을 반환하는가?
+- [ ] DRF `Serializer`, `ViewSet`, `APIView`, `permission_classes`를 사용하지 않는가?
 
 ---
 > **관련 스킬 참조:**
-> - API 상태 코드, RFC 9457, 페이지네이션 전략 → **architecture-api** 스킬
-> - Django Ninja `Schema`, `Router`, `@paginate`, 예외 핸들러 구현 → **implementation-django-ninja** 스킬
+> - API 설계 원칙과 상태 코드/페이지네이션 전략 → **architecture-api** 스킬
+> - Django Ninja Schema/Router/exception_handler 구현 → **implementation-django-ninja** 스킬

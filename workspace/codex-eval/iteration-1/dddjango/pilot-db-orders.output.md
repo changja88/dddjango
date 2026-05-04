@@ -1,373 +1,377 @@
-현재 작업 디렉터리에 `config.toml`이 없어서 프로젝트별 규칙은 확인하지 못했습니다. 아래는 **Django + PostgreSQL 기준**의 실무형 설계안입니다. MySQL을 쓴다면 partial index/conditional unique 제약은 별도 방식으로 조정해야 합니다.
+**주요 내용**
 
-**핵심 모델**
+아래 설계는 “주문 1건에 결제 시도 N건, 결제 1건에 환불 N건”을 기준으로 둡니다. 실제 커머스라면 `OrderItem`은 별도 테이블로 두는 것이 맞지만, 요청 범위가 `Order`, `Payment`, `Refund`라서 금액 확정 후 주문 요약값만 `Order`에 둡니다.
 
 ```python
-from decimal import Decimal
+# apps/orders/models.py
+
+import uuid
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 
 
-class Order(models.Model):
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Order(TimeStampedModel):
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        PENDING_PAYMENT = "pending_payment", "Pending payment"
-        PAID = "paid", "Paid"
-        PARTIALLY_REFUNDED = "partially_refunded", "Partially refunded"
-        REFUNDED = "refunded", "Refunded"
-        CANCELED = "canceled", "Canceled"
-        FAILED = "failed", "Failed"
+        PENDING_PAYMENT = "pending_payment", "결제대기"
+        PAID = "paid", "결제완료"
+        CANCELED = "canceled", "취소"
+        PARTIALLY_REFUNDED = "partially_refunded", "부분환불"
+        REFUNDED = "refunded", "환불완료"
 
-    order_number = models.CharField(max_length=32, unique=True)
-    user = models.ForeignKey(
+    id = models.BigAutoField(primary_key=True)
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="orders",
     )
-
     status = models.CharField(
         max_length=32,
         choices=Status.choices,
-        default=Status.DRAFT,
+        default=Status.PENDING_PAYMENT,
     )
-
-    currency = models.CharField(max_length=3, default="KRW")
+    currency = models.CharField(max_length=3)
     subtotal_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    shipping_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
 
-    paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    refunded_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-
-    placed_at = models.DateTimeField(null=True, blank=True)
-    paid_at = models.DateTimeField(null=True, blank=True)
-    canceled_at = models.DateTimeField(null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
+        ordering = ["-created_at"]
         constraints = [
             models.CheckConstraint(
+                condition=Q(subtotal_amount__gte=0)
+                & Q(discount_amount__gte=0)
+                & Q(shipping_amount__gte=0)
+                & Q(tax_amount__gte=0)
+                & Q(total_amount__gte=0),
                 name="order_amounts_non_negative",
-                condition=(
-                    Q(subtotal_amount__gte=0)
-                    & Q(discount_amount__gte=0)
-                    & Q(shipping_amount__gte=0)
-                    & Q(tax_amount__gte=0)
-                    & Q(total_amount__gte=0)
-                    & Q(paid_amount__gte=0)
-                    & Q(refunded_amount__gte=0)
-                ),
             ),
             models.CheckConstraint(
-                name="order_paid_not_over_total",
-                condition=Q(paid_amount__lte=models.F("total_amount")),
-            ),
-            models.CheckConstraint(
-                name="order_refunded_not_over_paid",
-                condition=Q(refunded_amount__lte=models.F("paid_amount")),
+                condition=Q(currency__regex=r"^[A-Z]{3}$"),
+                name="order_currency_iso_4217_format",
             ),
         ]
         indexes = [
-            models.Index(fields=["user", "-created_at"], name="order_user_created_idx"),
+            models.Index(fields=["customer", "-created_at"], name="order_customer_created_idx"),
             models.Index(fields=["status", "-created_at"], name="order_status_created_idx"),
-            models.Index(fields=["placed_at"], name="order_placed_at_idx"),
+            models.Index(
+                fields=["customer", "status", "-created_at"],
+                name="order_customer_status_idx",
+            ),
+            models.Index(
+                fields=["-created_at"],
+                name="order_open_created_idx",
+                condition=Q(status="pending_payment"),
+            ),
         ]
 
+    def __str__(self):
+        return f"Order({self.public_id})"
 
-class Payment(models.Model):
+
+class Payment(TimeStampedModel):
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        AUTHORIZED = "authorized", "Authorized"
-        CAPTURED = "captured", "Captured"
-        FAILED = "failed", "Failed"
-        CANCELED = "canceled", "Canceled"
+        REQUIRES_ACTION = "requires_action", "추가인증필요"
+        AUTHORIZED = "authorized", "승인"
+        CAPTURED = "captured", "매입완료"
+        FAILED = "failed", "실패"
+        CANCELED = "canceled", "취소"
 
-    class Method(models.TextChoices):
-        CARD = "card", "Card"
-        BANK_TRANSFER = "bank_transfer", "Bank transfer"
-        VIRTUAL_ACCOUNT = "virtual_account", "Virtual account"
-        WALLET = "wallet", "Wallet"
-
+    id = models.BigAutoField(primary_key=True)
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     order = models.ForeignKey(
         Order,
         on_delete=models.PROTECT,
         related_name="payments",
     )
-
-    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
-    method = models.CharField(max_length=32, choices=Method.choices)
-    provider = models.CharField(max_length=32)  # toss, iamport, stripe, etc.
-
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=3, default="KRW")
-
     idempotency_key = models.CharField(max_length=128)
-    provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
-    provider_transaction_id = models.CharField(max_length=128, null=True, blank=True)
-
-    failure_code = models.CharField(max_length=64, null=True, blank=True)
-    failure_message = models.TextField(null=True, blank=True)
-
-    requested_at = models.DateTimeField(default=timezone.now)
+    provider = models.CharField(max_length=32)
+    provider_payment_id = models.CharField(max_length=128, blank=True)
+    status = models.CharField(max_length=32, choices=Status.choices)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    currency = models.CharField(max_length=3)
     authorized_at = models.DateTimeField(null=True, blank=True)
     captured_at = models.DateTimeField(null=True, blank=True)
     failed_at = models.DateTimeField(null=True, blank=True)
 
-    raw_response = models.JSONField(default=dict, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
+        ordering = ["-created_at"]
         constraints = [
-            models.CheckConstraint(
-                name="payment_amount_non_negative",
-                condition=Q(amount__gt=0),
-            ),
             models.UniqueConstraint(
-                fields=["provider", "idempotency_key"],
-                name="uniq_payment_provider_idempotency",
+                fields=["order", "idempotency_key"],
+                name="unique_payment_idempotency_per_order",
             ),
             models.UniqueConstraint(
                 fields=["provider", "provider_payment_id"],
-                condition=Q(provider_payment_id__isnull=False),
-                name="uniq_payment_provider_payment_id",
+                condition=~Q(provider_payment_id=""),
+                name="unique_provider_payment_id",
+            ),
+            models.CheckConstraint(
+                condition=Q(amount__gte=0),
+                name="payment_amount_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=Q(currency__regex=r"^[A-Z]{3}$"),
+                name="payment_currency_iso_4217_format",
             ),
         ]
         indexes = [
-            models.Index(fields=["order", "status"], name="payment_order_status_idx"),
+            models.Index(fields=["order", "-created_at"], name="payment_order_created_idx"),
             models.Index(fields=["status", "-created_at"], name="payment_status_created_idx"),
-            models.Index(fields=["provider", "provider_transaction_id"], name="payment_provider_tx_idx"),
             models.Index(
                 fields=["provider", "provider_payment_id"],
-                name="payment_provider_pid_idx",
-                condition=Q(provider_payment_id__isnull=False),
+                name="payment_provider_lookup_idx",
+            ),
+            models.Index(
+                fields=["order", "status"],
+                name="payment_order_status_idx",
+                condition=Q(status__in=["authorized", "captured"]),
             ),
         ]
 
+    def __str__(self):
+        return f"Payment({self.public_id})"
 
-class Refund(models.Model):
+
+class Refund(TimeStampedModel):
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        SUCCEEDED = "succeeded", "Succeeded"
-        FAILED = "failed", "Failed"
-        CANCELED = "canceled", "Canceled"
+        REQUESTED = "requested", "요청"
+        SUCCEEDED = "succeeded", "성공"
+        FAILED = "failed", "실패"
+        CANCELED = "canceled", "취소"
 
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.PROTECT,
-        related_name="refunds",
-    )
+    id = models.BigAutoField(primary_key=True)
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     payment = models.ForeignKey(
         Payment,
         on_delete=models.PROTECT,
         related_name="refunds",
     )
-
-    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
-
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=3, default="KRW")
-    reason = models.CharField(max_length=255, blank=True)
-
-    provider = models.CharField(max_length=32)
     idempotency_key = models.CharField(max_length=128)
-    provider_refund_id = models.CharField(max_length=128, null=True, blank=True)
-
-    failure_code = models.CharField(max_length=64, null=True, blank=True)
-    failure_message = models.TextField(null=True, blank=True)
-
-    requested_at = models.DateTimeField(default=timezone.now)
+    provider_refund_id = models.CharField(max_length=128, blank=True)
+    status = models.CharField(max_length=32, choices=Status.choices)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    currency = models.CharField(max_length=3)
+    reason = models.CharField(max_length=255, blank=True)
     succeeded_at = models.DateTimeField(null=True, blank=True)
     failed_at = models.DateTimeField(null=True, blank=True)
 
-    raw_response = models.JSONField(default=dict, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
+        ordering = ["-created_at"]
         constraints = [
+            models.UniqueConstraint(
+                fields=["payment", "idempotency_key"],
+                name="unique_refund_idempotency_per_payment",
+            ),
+            models.UniqueConstraint(
+                fields=["provider_refund_id"],
+                condition=~Q(provider_refund_id=""),
+                name="unique_provider_refund_id",
+            ),
             models.CheckConstraint(
-                name="refund_amount_positive",
                 condition=Q(amount__gt=0),
+                name="refund_amount_positive",
             ),
-            models.UniqueConstraint(
-                fields=["provider", "idempotency_key"],
-                name="uniq_refund_provider_idempotency",
-            ),
-            models.UniqueConstraint(
-                fields=["provider", "provider_refund_id"],
-                condition=Q(provider_refund_id__isnull=False),
-                name="uniq_refund_provider_refund_id",
+            models.CheckConstraint(
+                condition=Q(currency__regex=r"^[A-Z]{3}$"),
+                name="refund_currency_iso_4217_format",
             ),
         ]
         indexes = [
-            models.Index(fields=["order", "status"], name="refund_order_status_idx"),
-            models.Index(fields=["payment", "status"], name="refund_payment_status_idx"),
+            models.Index(fields=["payment", "-created_at"], name="refund_payment_created_idx"),
             models.Index(fields=["status", "-created_at"], name="refund_status_created_idx"),
             models.Index(
-                fields=["provider", "provider_refund_id"],
-                name="refund_provider_rid_idx",
-                condition=Q(provider_refund_id__isnull=False),
+                fields=["payment", "status"],
+                name="refund_payment_status_idx",
+                condition=Q(status="succeeded"),
             ),
         ]
+
+    def __str__(self):
+        return f"Refund({self.public_id})"
 ```
 
-**설계 포인트**
+핵심 제약은 `idempotency_key`입니다. 결제는 `order + idempotency_key`, 환불은 `payment + idempotency_key`로 유니크하게 잡아야 같은 요청 재시도에서 중복 결제/중복 환불이 생성되지 않습니다. PG사 식별자인 `provider_payment_id`, `provider_refund_id`도 별도 유니크로 두어 웹훅 중복 수신을 막습니다.
 
-`Order`는 주문의 비즈니스 상태와 금액 합계를 담당합니다. 결제 성공 여부를 매번 `Payment` aggregate로 계산하면 정확하지만 조회 비용이 커지므로, `paid_amount`, `refunded_amount`를 `Order`에 denormalized column으로 두고 트랜잭션 안에서만 갱신하는 방식이 실무적으로 좋습니다.
-
-`Payment`는 결제 시도 단위입니다. 한 주문에 여러 결제 시도가 생길 수 있으므로 `Order : Payment = 1:N`이 맞습니다. 예를 들어 카드 결제 실패 후 계좌이체로 재시도할 수 있습니다.
-
-`Refund`는 환불 요청 단위입니다. 부분 환불이 가능하므로 `Payment : Refund = 1:N`이 맞습니다. `order`도 함께 들고 있으면 주문 환불 목록 조회가 빠르고 단순해집니다. 단, `payment.order_id == refund.order_id`는 애플리케이션 레벨 또는 DB trigger로 보장해야 합니다. Django 기본 `CheckConstraint`만으로 cross-table FK 비교는 어렵습니다.
-
-**추천 인덱스**
-
-주문 목록은 보통 `user + created_at`, 운영자 조회는 `status + created_at` 패턴이 많습니다.
+환불 금액 합계가 결제 금액을 넘지 않아야 하는 제약은 단일 행 `CheckConstraint`로 표현할 수 없습니다. 이건 서비스 레이어에서 `select_for_update()`로 `Payment`와 관련 `Refund` 집계를 잠근 뒤 검증해야 합니다.
 
 ```python
-models.Index(fields=["user", "-created_at"])
-models.Index(fields=["status", "-created_at"])
-```
+# apps/orders/services.py
 
-결제/환불은 외부 PG webhook 처리가 중요하므로 provider 식별자 인덱스가 필요합니다.
+from django.db import IntegrityError, transaction
+from django.db.models import Sum
+from django.utils import timezone
 
-```python
-models.Index(fields=["provider", "provider_payment_id"])
-models.Index(fields=["provider", "provider_refund_id"])
-```
+from .models import Order, Payment, Refund
 
-idempotency 처리는 반드시 unique constraint로 막아야 합니다.
 
-```python
-UniqueConstraint(fields=["provider", "idempotency_key"])
-```
+@transaction.atomic
+def payment_capture(*, order_id, amount, currency, idempotency_key, provider):
+    order = Order.objects.select_for_update().get(id=order_id)
 
-PostgreSQL이면 `provider_payment_id IS NOT NULL` 같은 conditional unique/index를 쓰는 게 좋습니다. 결제 생성 직후에는 provider id가 아직 없을 수 있기 때문입니다.
-
-**트랜잭션 전략**
-
-주문 생성은 짧은 DB 트랜잭션으로 처리합니다.
-
-```python
-from django.db import transaction
-
-with transaction.atomic():
-    order = Order.objects.create(
-        user=user,
-        status=Order.Status.PENDING_PAYMENT,
-        subtotal_amount=subtotal,
-        discount_amount=discount,
-        shipping_amount=shipping,
-        tax_amount=tax,
-        total_amount=total,
-        placed_at=timezone.now(),
-    )
-
-    payment = Payment.objects.create(
+    payment, created = Payment.objects.get_or_create(
         order=order,
-        provider="toss",
-        method=Payment.Method.CARD,
-        amount=order.total_amount,
-        currency=order.currency,
         idempotency_key=idempotency_key,
+        defaults={
+            "provider": provider,
+            "status": Payment.Status.CAPTURED,
+            "amount": amount,
+            "currency": currency,
+            "captured_at": timezone.now(),
+        },
     )
-```
 
-외부 PG API 호출은 DB 트랜잭션 밖에서 하는 것을 권장합니다. DB lock을 잡은 채 네트워크 호출을 하면 지연, timeout, deadlock 위험이 커집니다.
+    if not created:
+        return payment
 
-결제 승인/성공 webhook 처리에서는 `select_for_update()`로 `Payment`와 `Order`를 잠급니다.
+    if order.status not in {
+        Order.Status.PENDING_PAYMENT,
+        Order.Status.PARTIALLY_REFUNDED,
+    }:
+        raise ValueError("order is not payable")
 
-```python
-with transaction.atomic():
+    if payment.currency != order.currency:
+        raise ValueError("currency mismatch")
+
+    captured_total = (
+        order.payments.filter(status=Payment.Status.CAPTURED)
+        .aggregate(total=Sum("amount"))
+        .get("total")
+        or 0
+    )
+
+    if captured_total >= order.total_amount:
+        order.status = Order.Status.PAID
+        order.save(update_fields=["status", "updated_at"])
+
+    transaction.on_commit(lambda: notify_payment_captured(payment.id))
+    return payment
+
+
+@transaction.atomic
+def refund_create(*, payment_id, amount, currency, idempotency_key, reason=""):
     payment = (
-        Payment.objects
-        .select_for_update()
+        Payment.objects.select_for_update()
         .select_related("order")
-        .get(provider="toss", provider_payment_id=provider_payment_id)
+        .get(id=payment_id)
     )
     order = Order.objects.select_for_update().get(id=payment.order_id)
 
-    if payment.status == Payment.Status.CAPTURED:
-        return  # webhook 재전송에 대한 idempotent 처리
-
-    if payment.amount != order.total_amount or payment.currency != order.currency:
-        raise ValueError("Payment amount mismatch")
-
-    payment.status = Payment.Status.CAPTURED
-    payment.captured_at = timezone.now()
-    payment.raw_response = payload
-    payment.save(update_fields=["status", "captured_at", "raw_response", "updated_at"])
-
-    order.status = Order.Status.PAID
-    order.paid_amount = payment.amount
-    order.paid_at = timezone.now()
-    order.save(update_fields=["status", "paid_amount", "paid_at", "updated_at"])
-```
-
-환불 요청도 먼저 DB에서 가능 금액을 잠금 상태로 검증하고 `Refund(PENDING)`을 만듭니다. 그다음 PG 환불 API를 트랜잭션 밖에서 호출합니다.
-
-```python
-with transaction.atomic():
-    order = Order.objects.select_for_update().get(id=order_id)
-    payment = Payment.objects.select_for_update().get(id=payment_id, order=order)
-
-    refundable_amount = payment.amount - order.refunded_amount
-    if refund_amount > refundable_amount:
-        raise ValueError("Refund amount exceeds refundable amount")
-
-    refund = Refund.objects.create(
-        order=order,
+    refund, created = Refund.objects.get_or_create(
         payment=payment,
-        provider=payment.provider,
-        amount=refund_amount,
-        currency=payment.currency,
         idempotency_key=idempotency_key,
-        reason=reason,
+        defaults={
+            "status": Refund.Status.REQUESTED,
+            "amount": amount,
+            "currency": currency,
+            "reason": reason,
+        },
     )
+
+    if not created:
+        return refund
+
+    if payment.status != Payment.Status.CAPTURED:
+        raise ValueError("only captured payment can be refunded")
+
+    if currency != payment.currency or currency != order.currency:
+        raise ValueError("currency mismatch")
+
+    refunded_total = (
+        payment.refunds.filter(status=Refund.Status.SUCCEEDED)
+        .aggregate(total=Sum("amount"))
+        .get("total")
+        or 0
+    )
+
+    if refunded_total + amount > payment.amount:
+        raise ValueError("refund amount exceeds captured payment amount")
+
+    transaction.on_commit(lambda: request_provider_refund(refund.id))
+    return refund
 ```
 
-환불 성공 webhook에서는 다시 lock을 잡고 `Refund`와 `Order`를 함께 갱신합니다.
+트랜잭션 전략은 `READ COMMITTED + row lock`을 기본으로 잡는 것이 실용적입니다. 결제 승인, 매입, 환불처럼 금액 상태가 바뀌는 경로에서는 `transaction.atomic()` 안에서 `Order` 또는 `Payment`를 `select_for_update()`로 잠급니다. 외부 PG 호출, 이메일, 알림, 웹훅 발행은 트랜잭션 안에서 실행하지 말고 `transaction.on_commit()` 이후로 넘깁니다.
+
+인덱스는 조회 패턴 기준입니다. 주문 목록은 보통 `customer + created_at`, 운영 콘솔은 `status + created_at`, 결제/환불 웹훅은 `provider_payment_id`, `provider_refund_id`로 찾습니다. 부분 인덱스는 `pending_payment`, `captured`, `succeeded`처럼 자주 조회하지만 전체 행 중 일부인 상태에만 둡니다. 단순히 모든 FK와 모든 status에 인덱스를 추가하면 쓰기 비용만 늘어납니다.
+
+테스트는 최소한 다음을 잡아야 합니다.
 
 ```python
-with transaction.atomic():
-    refund = (
-        Refund.objects
-        .select_for_update()
-        .select_related("order", "payment")
-        .get(provider="toss", provider_refund_id=provider_refund_id)
+import pytest
+from django.db import IntegrityError, transaction
+
+from apps.orders.models import Payment, Refund
+
+
+@pytest.mark.django_db
+def test_payment_idempotency_key_is_unique_per_order(order):
+    Payment.objects.create(
+        order=order,
+        idempotency_key="pay-1",
+        provider="stripe",
+        status=Payment.Status.CAPTURED,
+        amount=order.total_amount,
+        currency=order.currency,
     )
-    order = Order.objects.select_for_update().get(id=refund.order_id)
 
-    if refund.status == Refund.Status.SUCCEEDED:
-        return
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            Payment.objects.create(
+                order=order,
+                idempotency_key="pay-1",
+                provider="stripe",
+                status=Payment.Status.CAPTURED,
+                amount=order.total_amount,
+                currency=order.currency,
+            )
 
-    refund.status = Refund.Status.SUCCEEDED
-    refund.succeeded_at = timezone.now()
-    refund.raw_response = payload
-    refund.save(update_fields=["status", "succeeded_at", "raw_response", "updated_at"])
 
-    order.refunded_amount = order.refunded_amount + refund.amount
-    if order.refunded_amount == order.paid_amount:
-        order.status = Order.Status.REFUNDED
-    else:
-        order.status = Order.Status.PARTIALLY_REFUNDED
+@pytest.mark.django_db
+def test_refund_idempotency_key_is_unique_per_payment(payment):
+    Refund.objects.create(
+        payment=payment,
+        idempotency_key="refund-1",
+        status=Refund.Status.REQUESTED,
+        amount=1000,
+        currency=payment.currency,
+    )
 
-    order.save(update_fields=["refunded_amount", "status", "updated_at"])
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            Refund.objects.create(
+                payment=payment,
+                idempotency_key="refund-1",
+                status=Refund.Status.REQUESTED,
+                amount=1000,
+                currency=payment.currency,
+            )
 ```
 
-**운영 기준**
+마이그레이션 검증은 `python manage.py makemigrations --check --dry-run`, `python manage.py migrate`, `python manage.py sqlmigrate orders <migration_number>`로 제약과 인덱스 SQL을 확인하면 됩니다. PostgreSQL 운영 환경이면 주요 목록/웹훅 조회 쿼리는 실제 데이터 규모에서 `EXPLAIN ANALYZE`로 인덱스 사용 여부까지 확인해야 합니다.
 
-결제/환불 상태 변경은 state machine처럼 제한해야 합니다. 예를 들어 `CAPTURED -> FAILED` 같은 역방향 전이는 막아야 합니다.
-
-Webhook은 중복 수신을 기본값으로 가정해야 합니다. 가능하면 `PaymentWebhookEvent` 같은 별도 테이블을 두고 `provider + event_id` unique constraint를 잡는 것이 가장 안전합니다. 이번 범위가 `Order`, `Payment`, `Refund` 세 테이블이라면 각 테이블의 provider idempotency key와 provider payment/refund id unique constraint로 최소 방어선을 둡니다.
-
-격리 수준은 일반적으로 PostgreSQL `READ COMMITTED` + `select_for_update()`면 충분합니다. 중요한 것은 주문/결제/환불 금액을 갱신하는 모든 코드 경로에서 같은 row lock 순서를 지키는 것입니다. 추천 순서는 항상 `Order -> Payment -> Refund`입니다.
+---
+> **관련 스킬 참조:**
+> - 결제/환불 상태 전이와 서비스 함수 구현 → **implementation-django** 스킬
+> - 실제 쿼리 플랜, 부분 인덱스, 락 경합 검증 → **architecture-db** 스킬

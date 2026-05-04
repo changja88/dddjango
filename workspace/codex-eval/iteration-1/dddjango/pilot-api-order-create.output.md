@@ -1,223 +1,214 @@
-**전제**
+**주요 내용**
 
-현재 `/private/tmp/dddjango-codex-eval` 디렉터리는 비어 있고 `config.toml`도 찾을 수 없었습니다. 그래서 기존 코드 스타일에 맞춘 파일 수정은 하지 않고, Django Ninja로 바로 옮길 수 있는 DDD 기준 설계로 제안합니다.
+전략적 경계는 이렇게 나눕니다.
 
-**추천 접근**
+| Context | 책임 | 금지 동의어 |
+|---|---|---|
+| Ordering | 주문 생성, 주문 금액 계산, 주문 상태 | `cart`, `purchase` |
+| Inventory | 판매 가능 재고 확인/예약 | `stock_count` 직접 수정 |
+| Payment | 결제 준비, payment intent 생성 | `charge`, 즉시 승인 |
 
-주문 생성은 `POST /v1/orders` 하나의 커맨드 API로 두고, 내부에서는 애플리케이션 서비스가 상품 조회, 재고 예약, 금액 계산, 결제 준비를 오케스트레이션합니다. 도메인 모델은 외부 결제사나 Django Ninja를 모르게 유지하고, 결제 준비는 `PaymentGatewayPort`를 통해 인프라 계층으로 격리합니다.
+주문 생성은 `POST /v1/orders`입니다. 결제 준비는 주문 생성 유스케이스의 일부지만, 결제 승인/capture는 별도 API로 분리합니다. `POST`이므로 `Idempotency-Key` 헤더를 필수로 받아 중복 주문/중복 결제 준비를 막습니다.
 
-대안은 두 가지입니다. 첫째, 주문 생성과 결제 준비를 완전 동기로 처리하면 클라이언트가 단순하지만 결제사 장애에 취약합니다. 둘째, 주문만 만들고 결제 준비를 비동기로 처리하면 장애 내성이 좋지만 클라이언트가 폴링/웹훅을 다뤄야 합니다. 여기서는 “체크아웃 API”에 맞게 재고 예약과 결제 준비까지 동기 처리하되, 결제사 호출에는 provider idempotency key와 outbox/retry 기록을 남기는 방식을 추천합니다.
+핵심 흐름:
 
-**API 계약**
+1. `Idempotency-Key`로 기존 성공 응답 확인
+2. DB 트랜잭션 시작
+3. 상품 row를 `select_for_update()`로 잠금
+4. 재고 확인 및 예약
+5. 주문 금액 계산
+6. `PENDING_PAYMENT` 주문 저장
+7. idempotency record 저장
+8. 커밋 후 `PaymentPort.prepare()` 호출
+9. payment intent 정보를 주문에 연결하고 응답
 
-`POST /v1/orders`
-
-필수 헤더:
-
-```http
-Authorization: Bearer <token>
-Idempotency-Key: <uuid-v4>
-Content-Type: application/json
-Accept: application/json
-```
-
-요청 본문:
-
-```json
-{
-  "shipping_address_id": "addr_123",
-  "items": [
-    {"product_id": "prod_1", "quantity": 2},
-    {"product_id": "prod_2", "quantity": 1}
-  ],
-  "coupon_code": "WELCOME10",
-  "payment_method_type": "card",
-  "return_url": "https://shop.example.com/orders/complete"
-}
-```
-
-클라이언트는 `unit_price`, `line_total`, `total_amount`를 보내지 않습니다. 가격은 반드시 서버가 상품 가격 스냅샷으로 계산합니다.
-
-성공 응답: `201 Created`
-
-```http
-Location: /v1/orders/ord_123
-```
-
-```json
-{
-  "id": "ord_123",
-  "status": "payment_pending",
-  "currency": "KRW",
-  "items": [
-    {
-      "product_id": "prod_1",
-      "product_name": "Keyboard",
-      "quantity": 2,
-      "unit_price": 50000,
-      "line_total": 100000
-    }
-  ],
-  "subtotal": 100000,
-  "discount_total": 10000,
-  "shipping_fee": 3000,
-  "tax_total": 0,
-  "total_amount": 93000,
-  "payment": {
-    "provider": "tosspayments",
-    "payment_intent_id": "pi_123",
-    "client_secret": "secret_abc",
-    "expires_at": "2026-05-04T16:30:00+09:00"
-  },
-  "created_at": "2026-05-04T16:00:00+09:00"
-}
-```
-
-**DDD 경계**
-
-`orders` bounded context:
-
-- `Order` aggregate root: 주문 상태 전이, 주문 라인, 총액 불변식 관리
-- `OrderLine`: 상품명/단가/수량 가격 스냅샷 보관
-- `Money`, `Quantity`, `OrderId`, `ProductId`: value object
-- `OrderStatus`: `payment_pending`, `paid`, `cancelled`, `expired`
-- 불변식: 주문 항목은 1개 이상, 수량은 양수, 총액은 라인 합계와 할인/배송비/세금 계산 결과와 일치
-
-`inventory` bounded context:
-
-- `StockItem` 또는 `InventoryReservation`
-- 주문 생성 시 “재고 차감”보다 “재고 예약”을 먼저 수행
-- 결제 성공 시 예약 확정, 결제 만료/취소 시 예약 해제
-- 동시성은 DB row lock 또는 optimistic version으로 처리
-
-`payments` bounded context:
-
-- `PaymentPreparation` 또는 `PaymentIntent`
-- 주문 생성 API에서는 결제 승인/매입이 아니라 결제 준비까지만 수행
-- 실제 결제 완료는 결제사 웹훅으로 `paid` 전이
-
-**애플리케이션 플로우**
-
-1. 인증된 사용자와 `Idempotency-Key`를 검증합니다.
-2. 같은 사용자, 같은 엔드포인트, 같은 키의 기존 결과가 있으면 저장된 응답을 반환합니다.
-3. 같은 키에 다른 요청 본문이 들어오면 `409 Conflict`를 반환합니다.
-4. 상품 목록을 조회하고 판매 가능 상태와 가격 스냅샷을 가져옵니다.
-5. 재고를 잠그고 요청 수량만큼 예약 가능한지 확인합니다.
-6. `PricingService`가 소계, 할인, 배송비, 세금, 총액을 계산합니다.
-7. `Order` aggregate를 생성하고 재고 예약을 기록합니다.
-8. 결제사에 payment intent/session을 생성합니다.
-9. 주문 상태를 `payment_pending`으로 저장하고 `201 Created`를 반환합니다.
-
-외부 결제사 호출은 도메인 모델 안에 넣지 않습니다. `CreateOrderService`가 `PaymentGatewayPort`를 호출하고, 인프라 어댑터가 실제 결제사 SDK/API를 담당합니다.
-
-**Django Ninja 형태**
+외부 결제 호출은 DB 트랜잭션 안에서 하지 않습니다. 트랜잭션은 로컬 불변식, 즉 “재고는 음수가 될 수 없다”, “주문 금액은 주문 항목 가격 합계와 일치한다”까지만 보호합니다.
 
 ```python
-router = Router(tags=["orders"], auth=AuthBearer())
+# apps/orders/domain/repositories.py
+from abc import ABC, abstractmethod
 
-@router.post(
-    "",
-    response={
-        201: OrderCreatedOut,
-        400: ProblemDetail,
-        401: ProblemDetail,
-        403: ProblemDetail,
-        409: ProblemDetail,
-        422: ProblemDetail,
-        429: ProblemDetail,
-        503: ProblemDetail,
-    },
-)
+class OrderRepository(ABC):
+    @abstractmethod
+    def save(self, order: "Order") -> None: ...
+```
+
+```python
+# apps/orders/domain/values.py
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class Money:
+    amount: int
+    currency: str = "KRW"
+
+    def __post_init__(self) -> None:
+        if self.amount < 0:
+            raise InvalidOrderAmount("amount must be non-negative")
+```
+
+```python
+# apps/orders/domain/order.py
+class Order:
+    """Aggregate Root.
+    Invariants:
+    - total_amount equals sum(line.unit_price * line.quantity)
+    - order starts as PENDING_PAYMENT after stock reservation
+    - payment preparation does not mark the order as paid
+    """
+
+    @classmethod
+    def create(cls, *, customer_id, lines) -> "Order":
+        total = Money(sum(line.unit_price.amount * line.quantity for line in lines))
+        return cls(customer_id=customer_id, lines=lines, total_amount=total)
+```
+
+```python
+# apps/payments/ports.py
+from dataclasses import dataclass
+from typing import Protocol
+
+@dataclass(frozen=True)
+class PaymentPreparation:
+    provider_payment_id: str
+    client_secret: str
+
+class PaymentPort(Protocol):
+    def prepare(
+        self,
+        *,
+        order_id: str,
+        amount: int,
+        currency: str,
+        idempotency_key: str,
+    ) -> PaymentPreparation: ...
+```
+
+```python
+# apps/orders/api/schemas.py
+from ninja import Schema
+
+class OrderLineIn(Schema):
+    product_id: int
+    quantity: int
+
+class CreateOrderIn(Schema):
+    lines: list[OrderLineIn]
+
+class PaymentOut(Schema):
+    provider_payment_id: str
+    client_secret: str
+
+class OrderCreatedOut(Schema):
+    order_id: str
+    status: str
+    total_amount: int
+    currency: str
+    payment: PaymentOut
+```
+
+```python
+# apps/orders/application/services.py
+from django.db import transaction
+
+class CreateOrderService:
+    def __init__(self, payment_port: PaymentPort):
+        self.payment_port = payment_port
+
+    def create(self, *, customer_id: int, data: CreateOrderIn, idem_key: str):
+        cached = IdempotencyRecord.objects.find_response(idem_key)
+        if cached:
+            return cached
+
+        with transaction.atomic():
+            products = (
+                Product.objects
+                .select_for_update()
+                .filter(id__in=[line.product_id for line in data.lines])
+            )
+            product_map = {p.id: p for p in products}
+
+            order_lines = []
+            for line in data.lines:
+                product = product_map.get(line.product_id)
+                if product is None:
+                    raise ProductNotFound()
+                if product.available_quantity < line.quantity:
+                    raise InsufficientStock()
+
+                product.available_quantity -= line.quantity
+                product.save(update_fields=["available_quantity"])
+
+                order_lines.append(
+                    OrderLineDraft(
+                        product_id=product.id,
+                        quantity=line.quantity,
+                        unit_price=Money(product.price),
+                    )
+                )
+
+            order = Order.create(customer_id=customer_id, lines=order_lines)
+            order_model = OrderModel.objects.create_from_domain(order)
+
+            IdempotencyRecord.objects.create_pending(
+                key=idem_key,
+                resource_id=order_model.id,
+            )
+
+        payment = self.payment_port.prepare(
+            order_id=str(order_model.id),
+            amount=order.total_amount.amount,
+            currency=order.total_amount.currency,
+            idempotency_key=f"order:{order_model.id}:{idem_key}",
+        )
+
+        OrderModel.objects.filter(id=order_model.id).update(
+            provider_payment_id=payment.provider_payment_id,
+        )
+
+        response = OrderCreatedOut(
+            order_id=str(order_model.id),
+            status="PENDING_PAYMENT",
+            total_amount=order.total_amount.amount,
+            currency=order.total_amount.currency,
+            payment=payment,
+        )
+        IdempotencyRecord.objects.save_response(idem_key, response)
+        return response
+```
+
+```python
+# apps/orders/api/router.py
+from ninja import Header, Router
+from ninja.security import django_auth
+
+router = Router(tags=["orders"], auth=django_auth)
+
+@router.post("", response={201: OrderCreatedOut})
 def create_order(
     request,
     payload: CreateOrderIn,
     idempotency_key: str = Header(..., alias="Idempotency-Key"),
-) -> tuple[int, OrderCreatedOut]:
-    command = CreateOrderCommand.from_request(
-        user=request.auth,
-        payload=payload,
-        idempotency_key=idempotency_key,
+):
+    service = CreateOrderService(payment_port=payment_gateway())
+    return 201, service.create(
+        customer_id=request.user.id,
+        data=payload,
+        idem_key=idempotency_key,
     )
-    result = create_order_service.handle(command)
-    return 201, OrderCreatedOut.from_result(result)
 ```
 
-스키마는 `Schema`를 사용하고, 모델 전체 필드 노출은 피합니다. 금액 필드는 정수 minor unit, 예를 들어 KRW면 원 단위 정수로 통일하는 편이 안전합니다.
+오류는 RFC 9457 Problem Details로 통일합니다.
 
-**오류 설계**
-
-모든 오류는 `application/problem+json` 형식으로 반환합니다.
-
-재고 부족: `409 Conflict`
-
-```json
-{
-  "type": "https://api.example.com/problems/insufficient-stock",
-  "title": "Insufficient stock",
-  "status": 409,
-  "detail": "Requested quantity is not available.",
-  "instance": "/v1/orders",
-  "product_id": "prod_1",
-  "requested_quantity": 3,
-  "available_quantity": 1
-}
-```
-
-주요 상태 코드:
-
-- `400`: JSON 형식 오류, 잘못된 헤더
-- `401`: 인증 없음 또는 토큰 오류
-- `403`: 해당 배송지/고객으로 주문할 권한 없음
-- `409`: 재고 부족, idempotency key 충돌, 동시성 충돌
-- `422`: 빈 items, 중복 product_id, quantity 범위 오류, 판매 중지 상품
-- `429`: 주문 생성 rate limit 초과
-- `503`: 결제사 또는 재고 시스템 일시 장애
-
-**권장 파일 구조**
-
-```text
-orders/
-  api.py
-  schemas.py
-  application/
-    create_order.py
-    ports.py
-  domain/
-    models.py
-    services.py
-    events.py
-  infrastructure/
-    repositories.py
-    payment_gateway.py
-
-inventory/
-  application/
-  domain/
-  infrastructure/
-
-payments/
-  api.py
-  application/
-  domain/
-  infrastructure/
-```
-
-**테스트 기준**
-
-핵심 테스트는 API보다 도메인/애플리케이션 서비스에 집중합니다.
-
-- 빈 주문, 음수 수량, 중복 상품 검증
-- 상품 가격이 클라이언트 입력 없이 서버 스냅샷으로 계산되는지
-- 할인/배송비/세금 포함 총액 계산
-- 재고 부족 시 주문과 결제 준비가 생성되지 않는지
-- 동시 주문에서 oversell이 발생하지 않는지
-- 같은 `Idempotency-Key` 재시도 시 같은 응답을 반환하는지
-- 같은 키에 다른 본문이면 `409`인지
-- 결제 준비 실패 시 예약 해제 또는 재시도 정책이 일관적인지
-- 모든 오류가 RFC 9457 Problem Details 형식인지
+| 상황 | HTTP |
+|---|---:|
+| 재고 부족 | `409 Conflict` |
+| 상품 없음 | `404 Not Found` |
+| 잘못된 수량/빈 주문 | `422 Unprocessable Content` |
+| idempotency key 누락 | `400 Bad Request` |
+| 결제 준비 실패 | `502 Bad Gateway` 또는 재시도 가능한 `202 Accepted` |
 
 ---
 > **관련 스킬 참조:**
-> - Django Ninja Schema/Router 구현 → **implementation-django-ninja** 스킬
-> - REST 상태 코드/멱등성/오류 형식 검토 → **architecture-api** 스킬
-> - 주문 생성 테스트 작성 → **implementation-test** 스킬
+> - 트랜잭션/인덱스/락 상세 설계 → **architecture-db** 스킬
+> - 실제 Django Ninja 구현/테스트 작성 → **implementation-django-ninja** 스킬

@@ -93,6 +93,11 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         for required in [
             "사용자가 DRF를 명시적으로 요청해도 DRF 코드를 생성하지 않는다",
             "Django Ninja Schema/Router로 전환한다",
+            "빈 workspace / read-only fallback",
+            "확인 질문으로 멈추지 않는다",
+            "붙여 넣을 수 있는 Django Ninja 코드",
+            "from products.api import router as products_router",
+            "api.add_router(\"/products/\", products_router)",
             "rest_framework",
             "ViewSet",
             "Serializer",
@@ -346,6 +351,104 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertIn("-m", command)
         self.assertIn("gpt-5.4", command)
         self.assertNotIn("Variant: baseline", " ".join(command))
+        self.assertFalse(
+            any(part.startswith("developer_instructions=") for part in command)
+        )
+
+    def test_run_prompts_can_inject_local_dddjango_skill_instructions(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        instructions = module.dddjango_developer_instructions(ROOT)
+        self.assertIn(str(ROOT / "skills"), instructions)
+        self.assertIn("Django Ninja Schema/Router", instructions)
+        self.assertIn("RED pytest examples", instructions)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prompt_file = Path(temp_dir) / "dddjango/pilot-negative-drf.prompt.md"
+            prompt_file.parent.mkdir()
+            prompt_file.write_text("## Prompt\n\nDRF ViewSet으로 상품 API 만들어줘.\n")
+
+            command = module.build_codex_command(
+                prompt_file=prompt_file,
+                output_file=Path("dddjango/pilot-negative-drf.output.md"),
+                cwd=Path("/tmp/dddjango-eval"),
+                variant="dddjango",
+                model="",
+                profile="",
+                ignore_user_config=False,
+                developer_instructions=instructions,
+            )
+
+        self.assertIn("-c", command)
+        self.assertTrue(
+            any(part.startswith("developer_instructions=") for part in command)
+        )
+        self.assertIn("DRF ViewSet으로 상품 API 만들어줘.", command[-1])
+
+    def test_run_prompts_scopes_dddjango_skill_instructions_by_case(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        negative_drf = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-negative-drf",
+        )
+        tdd_coupon = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-tdd-coupon",
+        )
+
+        self.assertIn("implementation-django-ninja/SKILL.md", negative_drf)
+        self.assertNotIn("implementation-tdd/SKILL.md", negative_drf)
+        self.assertNotIn("For pytest/TDD", negative_drf)
+        self.assertIn("implementation-tdd/SKILL.md", tdd_coupon)
+        self.assertIn("implementation-test/SKILL.md", tdd_coupon)
+        self.assertIn("For pytest/TDD", tdd_coupon)
+        self.assertLess(len(negative_drf), len(module.dddjango_developer_instructions(ROOT)))
+
+        api_standard = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-api-standard",
+        )
+        db_orders = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-db-orders",
+        )
+        review_view_logic = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-review-view-logic",
+        )
+
+        self.assertIn("copyable team standard", api_standard)
+        self.assertIn("edge-case checklist", api_standard)
+        self.assertIn("constraints, indexes, locking", db_orders)
+        self.assertIn("pytest or migration checks", db_orders)
+        self.assertIn("thin Ninja endpoint", review_view_logic)
+        self.assertNotIn("For pytest/TDD", api_standard)
+        self.assertNotIn("For pytest/TDD", db_orders)
+
+        review_fat_model = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-review-fat-model",
+        )
+        self.assertIn("severity-ranked findings", review_fat_model)
+        self.assertIn("assertNumQueries", review_fat_model)
+
+        api_order = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-api-order-create",
+        )
+        implementation_coupon = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="pilot-implementation-coupon",
+        )
+
+        for instructions in [api_order, implementation_coupon]:
+            self.assertIn("Keep under 900 words", instructions)
+            self.assertIn("no full domain model", instructions)
+            self.assertIn("only critical code", instructions)
+
+        self.assertIn("Keep under 700 words", implementation_coupon)
+        self.assertNotIn("architecture-implementation-patterns/SKILL.md", implementation_coupon)
 
     def test_render_report_creates_html_comparison_dashboard(self):
         module = load_module(REPORT_SCRIPT_PATH)
@@ -357,7 +460,16 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             (iteration / "answer-key").mkdir()
             (iteration / "baseline/case-a.output.md").write_text("baseline output")
             (iteration / "dddjango/case-a.output.md").write_text("dddjango output")
-            (iteration / "answer-key/case-a.json").write_text("{}")
+            (iteration / "answer-key/case-a.json").write_text(
+                json.dumps(
+                    {
+                        "title": "Case A title",
+                        "category": "api-design",
+                        "expectations": ["korean_first", "django_ninja_compliance"],
+                    },
+                    ensure_ascii=False,
+                )
+            )
             (iteration / "grades.json").write_text(
                 json.dumps(
                     [
@@ -432,6 +544,14 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertIn("dddjango Codex Evaluation Report", html)
             self.assertIn("Baseline Score", html)
             self.assertIn("dddjango Score", html)
+            self.assertIn("Release Gate", html)
+            self.assertIn("Case Comparison: Without Skill vs With dddjango", html)
+            self.assertIn("Completed Cases", html)
+            self.assertIn("Case A title", html)
+            self.assertIn("api-design", html)
+            self.assertIn("korean_first, django_ninja_compliance", html)
+            self.assertIn("Without Skill", html)
+            self.assertIn("With dddjango", html)
             self.assertIn("+10.0", html)
             self.assertIn("baseline/case-a.output.md", html)
             self.assertIn("dddjango/case-a.output.md", html)
