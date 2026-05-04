@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from evals.codex.scripts.init_iteration import create_iteration
+from evals.codex.scripts.init_iteration import SUITES, create_iteration, resolve_cases_path
 
 
 def main():
@@ -16,8 +16,14 @@ def main():
     )
     parser.add_argument(
         "--cases",
-        default="evals/codex/cases/pilot.jsonl",
+        default=None,
         help="Path to evaluation cases JSONL.",
+    )
+    parser.add_argument(
+        "--suite",
+        default="smoke",
+        choices=sorted(SUITES),
+        help="Named evaluation suite to use when --cases is not provided.",
     )
     parser.add_argument(
         "--schema",
@@ -31,7 +37,7 @@ def main():
     )
     args = parser.parse_args()
 
-    output = create_iteration(args.cases, args.schema, args.output)
+    output = create_iteration(resolve_cases_path(args.cases, args.suite), args.schema, args.output)
     summary = Path(output) / "SUMMARY.md"
     summary.write_text(
         summary.read_text().replace(

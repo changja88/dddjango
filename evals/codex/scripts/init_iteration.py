@@ -6,6 +6,13 @@ from pathlib import Path
 
 
 VARIANTS = ("baseline", "dddjango")
+ROOT = Path(__file__).resolve().parents[3]
+SUITES = {
+    "smoke": ROOT / "evals/codex/cases/pilot.jsonl",
+    "pilot": ROOT / "evals/codex/cases/pilot.jsonl",
+    "benchmark": ROOT / "evals/shared/cases/benchmark.jsonl",
+    "trigger": ROOT / "evals/shared/cases/trigger.jsonl",
+}
 
 
 def load_cases(path):
@@ -50,6 +57,8 @@ def answer_key(case):
         "expectations": case["expectations"],
         "scoring_focus": case["scoring_focus"],
         "prompt": case["prompt"],
+        "trigger_type": case.get("trigger_type", ""),
+        "expected_behavior": case.get("expected_behavior", ""),
     }
 
 
@@ -64,6 +73,12 @@ def empty_grade(case, variant, schema):
             "django_ninja_used": False,
             "drf_endorsed": False,
             "negative_control_passed": False,
+        },
+        "trigger": {
+            "type": case.get("trigger_type", ""),
+            "expected": case.get("expected_behavior", ""),
+            "observed": "",
+            "passed": False,
         },
     }
 
@@ -141,14 +156,30 @@ def create_iteration(cases_path, schema_path, output_path):
     return output
 
 
+def resolve_cases_path(cases_path=None, suite="smoke"):
+    if cases_path:
+        return Path(cases_path)
+    try:
+        return SUITES[suite]
+    except KeyError as exc:
+        choices = ", ".join(sorted(SUITES))
+        raise ValueError(f"unknown suite {suite!r}; choose one of: {choices}") from exc
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Create a manual Codex plugin evaluation iteration workspace."
     )
     parser.add_argument(
         "--cases",
-        default="evals/codex/cases/pilot.jsonl",
+        default=None,
         help="Path to evaluation cases JSONL.",
+    )
+    parser.add_argument(
+        "--suite",
+        default="smoke",
+        choices=sorted(SUITES),
+        help="Named evaluation suite to use when --cases is not provided.",
     )
     parser.add_argument(
         "--schema",
@@ -162,7 +193,7 @@ def main():
     )
     args = parser.parse_args()
 
-    output = create_iteration(args.cases, args.schema, args.output)
+    output = create_iteration(resolve_cases_path(args.cases, args.suite), args.schema, args.output)
     print(f"created evaluation iteration: {output}")
     return 0
 

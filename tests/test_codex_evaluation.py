@@ -9,6 +9,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES_PATH = ROOT / "evals/codex/cases/pilot.jsonl"
+BENCHMARK_CASES_PATH = ROOT / "evals/shared/cases/benchmark.jsonl"
+TRIGGER_CASES_PATH = ROOT / "evals/shared/cases/trigger.jsonl"
 SCHEMA_PATH = ROOT / "evals/codex/rubrics/grading-schema.json"
 GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_outputs.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
@@ -172,6 +174,73 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertIn("reject_drf", drf_case["expectations"])
         self.assertIn("Django Ninja", " ".join(drf_case["scoring_focus"]))
 
+    def test_benchmark_cases_define_full_skill_eval_set(self):
+        cases = [
+            json.loads(line)
+            for line in BENCHMARK_CASES_PATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(len(cases), 24)
+        self.assertEqual(len({case["id"] for case in cases}), 24)
+
+        category_counts = {}
+        for case in cases:
+            category_counts[case["category"]] = category_counts.get(case["category"], 0) + 1
+            self.assertTrue(case["prompt"].strip())
+            self.assertTrue(case["title"].strip())
+            self.assertIn("korean_first", case["expectations"])
+            self.assertTrue(case["scoring_focus"])
+
+        self.assertEqual(
+            category_counts,
+            {
+                "api-design": 4,
+                "ddd-architecture": 4,
+                "db-design": 3,
+                "tdd": 4,
+                "review": 4,
+                "clean-code": 3,
+                "negative-control": 2,
+            },
+        )
+
+        drf_cases = [case for case in cases if "reject_drf" in case["expectations"]]
+        self.assertTrue(drf_cases)
+        for case in drf_cases:
+            self.assertIn("DRF", case["prompt"])
+            self.assertIn("Django Ninja", " ".join(case["scoring_focus"]))
+
+    def test_trigger_cases_define_precision_recall_eval_set(self):
+        cases = [
+            json.loads(line)
+            for line in TRIGGER_CASES_PATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(len(cases), 30)
+        self.assertEqual(len({case["id"] for case in cases}), 30)
+
+        trigger_counts = {}
+        for case in cases:
+            trigger_type = case["trigger_type"]
+            trigger_counts[trigger_type] = trigger_counts.get(trigger_type, 0) + 1
+            self.assertEqual(case["category"], "trigger")
+            self.assertTrue(case["prompt"].strip())
+            self.assertTrue(case["expected_behavior"].strip())
+            self.assertIn("korean_first", case["expectations"])
+            self.assertTrue(case["scoring_focus"])
+
+        self.assertEqual(
+            trigger_counts,
+            {
+                "positive": 10,
+                "negative": 10,
+                "ambiguous": 6,
+                "conflict": 4,
+            },
+        )
+
     def test_grading_schema_weights_sum_to_100(self):
         schema = json.loads(SCHEMA_PATH.read_text())
 
@@ -312,6 +381,64 @@ class CodexEvaluationAssetTests(unittest.TestCase):
                 "safety",
             })
             self.assertIn(first_grade["variant"], {"baseline", "dddjango"})
+
+    def test_init_iteration_can_create_benchmark_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "benchmark-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "benchmark",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 24)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 24)
+            self.assertEqual(len(list((output_dir / "answer-key").glob("*.json"))), 24)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 48)
+
+    def test_init_iteration_can_create_trigger_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "trigger-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "trigger",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            answer_keys = sorted((output_dir / "answer-key").glob("*.json"))
+            grades = json.loads((output_dir / "grades.json").read_text())
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 30)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 30)
+            self.assertEqual(len(answer_keys), 30)
+            self.assertEqual(len(grades), 60)
+            self.assertIn(
+                "trigger_type",
+                json.loads(answer_keys[0].read_text()),
+            )
+            self.assertIn("trigger", grades[0])
 
     def test_run_prompts_extracts_prompt_and_builds_isolated_baseline_command(self):
         module = load_module(RUN_SCRIPT_PATH)
@@ -556,6 +683,112 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertIn("baseline/case-a.output.md", html)
             self.assertIn("dddjango/case-a.output.md", html)
             self.assertIn("answer-key/case-a.json", html)
+
+    def test_render_report_includes_trigger_matrix_and_gates(self):
+        module = load_module(REPORT_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            (iteration / "baseline").mkdir()
+            (iteration / "dddjango").mkdir()
+            (iteration / "answer-key").mkdir()
+            for case_id in ["trigger-positive", "trigger-negative"]:
+                (iteration / f"baseline/{case_id}.output.md").write_text("baseline")
+                (iteration / f"dddjango/{case_id}.output.md").write_text("dddjango")
+            (iteration / "answer-key/trigger-positive.json").write_text(
+                json.dumps(
+                    {
+                        "title": "Positive trigger",
+                        "category": "trigger",
+                        "expectations": ["korean_first"],
+                        "trigger_type": "positive",
+                        "expected_behavior": "Apply dddjango Django Ninja guidance.",
+                    },
+                    ensure_ascii=False,
+                )
+            )
+            (iteration / "answer-key/trigger-negative.json").write_text(
+                json.dumps(
+                    {
+                        "title": "Negative trigger",
+                        "category": "trigger",
+                        "expectations": ["korean_first"],
+                        "trigger_type": "negative",
+                        "expected_behavior": "Do not force Django guidance.",
+                    },
+                    ensure_ascii=False,
+                )
+            )
+            scores = {
+                "domain_fit": 10,
+                "django_ninja_compliance": 10,
+                "actionability": 10,
+                "architecture_quality": 10,
+                "testing_quality": 5,
+                "korean_first": 10,
+                "conciseness": 5,
+                "safety": 5,
+            }
+            flags = {
+                "korean_first": True,
+                "django_ninja_used": False,
+                "drf_endorsed": False,
+                "negative_control_passed": True,
+            }
+            grades = []
+            for case_id, trigger_type, observed in [
+                ("trigger-positive", "positive", "used dddjango guidance"),
+                ("trigger-negative", "negative", "respected FastAPI request"),
+            ]:
+                grades.extend(
+                    [
+                        {
+                            "case_id": case_id,
+                            "variant": "baseline",
+                            "scores": scores,
+                            "flags": flags,
+                            "trigger": {
+                                "type": trigger_type,
+                                "observed": "baseline",
+                                "passed": True,
+                            },
+                        },
+                        {
+                            "case_id": case_id,
+                            "variant": "dddjango",
+                            "scores": scores,
+                            "flags": flags,
+                            "trigger": {
+                                "type": trigger_type,
+                                "observed": observed,
+                                "passed": True,
+                            },
+                        },
+                    ]
+                )
+            (iteration / "grades.json").write_text(json.dumps(grades, ensure_ascii=False) + "\n")
+            (iteration / "timing.json").write_text(
+                json.dumps(
+                    [
+                        {"case_id": "trigger-positive", "variant": "baseline", "duration_sec": 10},
+                        {"case_id": "trigger-positive", "variant": "dddjango", "duration_sec": 11},
+                        {"case_id": "trigger-negative", "variant": "baseline", "duration_sec": 10},
+                        {"case_id": "trigger-negative", "variant": "dddjango", "duration_sec": 11},
+                    ]
+                )
+                + "\n"
+            )
+
+            report_path = module.render_report(iteration)
+            html = report_path.read_text()
+
+            self.assertIn("Trigger Matrix", html)
+            self.assertIn("Trigger Recall", html)
+            self.assertIn("Trigger Precision", html)
+            self.assertIn("Positive trigger", html)
+            self.assertIn("Negative trigger", html)
+            self.assertIn("Apply dddjango Django Ninja guidance.", html)
+            self.assertIn("Do not force Django guidance.", html)
 
 
 if __name__ == "__main__":

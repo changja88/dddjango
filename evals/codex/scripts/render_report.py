@@ -41,6 +41,8 @@ def load_case_metadata(iteration):
             "title": data.get("title", path.stem),
             "category": data.get("category", ""),
             "expectations": data.get("expectations", []),
+            "trigger_type": data.get("trigger_type", ""),
+            "expected_behavior": data.get("expected_behavior", ""),
         }
     return indexed
 
@@ -123,6 +125,7 @@ def build_rows(iteration, grades, timing, case_metadata):
         dddjango_duration = duration_for(timing, case_id, "dddjango")
         result = verdict(delta, dddjango)
         case = case_metadata.get(case_id, {})
+        trigger = dddjango.get("trigger", {})
 
         rows.append(
             {
@@ -130,6 +133,11 @@ def build_rows(iteration, grades, timing, case_metadata):
                 "title": case.get("title", case_id),
                 "category": case.get("category", ""),
                 "expectations": ", ".join(case.get("expectations", [])),
+                "trigger_type": case.get("trigger_type", "") or trigger.get("type", ""),
+                "expected_behavior": case.get("expected_behavior", "")
+                or trigger.get("expected", ""),
+                "trigger_observed": trigger.get("observed", ""),
+                "trigger_passed": trigger.get("passed"),
                 "status": run_status(iteration, case_id, timing),
                 "baseline_score": baseline_score,
                 "dddjango_score": dddjango_score,
@@ -149,6 +157,77 @@ def build_rows(iteration, grades, timing, case_metadata):
             }
         )
     return rows
+
+
+def build_trigger_gate_rows(rows):
+    trigger_rows = [row for row in rows if row["trigger_type"]]
+    if not trigger_rows:
+        return ""
+
+    positive_rows = [row for row in trigger_rows if row["trigger_type"] == "positive"]
+    negative_rows = [row for row in trigger_rows if row["trigger_type"] == "negative"]
+    ambiguous_rows = [row for row in trigger_rows if row["trigger_type"] == "ambiguous"]
+    conflict_rows = [row for row in trigger_rows if row["trigger_type"] == "conflict"]
+
+    def pass_rate(selected):
+        return percent(sum(1 for row in selected if row["trigger_passed"]), len(selected))
+
+    return "\n".join(
+        [
+            gate_row("Trigger Recall", pass_rate(positive_rows) >= 95, f"{pass_rate(positive_rows):.2f}%", ">= 95%"),
+            gate_row("Trigger Precision", pass_rate(negative_rows) >= 95, f"{pass_rate(negative_rows):.2f}%", ">= 95%"),
+            gate_row("Ambiguous Handling", pass_rate(ambiguous_rows) >= 80, f"{pass_rate(ambiguous_rows):.2f}%", ">= 80%"),
+            gate_row("Conflict Handling", pass_rate(conflict_rows) >= 80, f"{pass_rate(conflict_rows):.2f}%", ">= 80%"),
+        ]
+    )
+
+
+def build_trigger_matrix(rows):
+    trigger_rows = [row for row in rows if row["trigger_type"]]
+    if not trigger_rows:
+        return ""
+
+    table_rows = "\n".join(
+        f"""
+        <tr>
+          <td><span class="pill neutral">{escape(row["trigger_type"])}</span></td>
+          <td>
+            <strong>{escape(row["title"])}</strong>
+            <small><code>{escape(row["case_id"])}</code></small>
+          </td>
+          <td>{escape(row["expected_behavior"])}</td>
+          <td>{escape(row["trigger_observed"])}</td>
+          <td><span class="pill {'good' if row["trigger_passed"] else 'bad'}">{'PASS' if row["trigger_passed"] else 'BLOCKED'}</span></td>
+          <td class="links">
+            {link(row["baseline_output"], "baseline")}
+            {link(row["dddjango_output"], "dddjango")}
+            {link(row["answer_key"], "answer key")}
+          </td>
+        </tr>
+        """
+        for row in trigger_rows
+    )
+
+    return f"""
+    <section class="section">
+      <h2>Trigger Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Trigger Type</th>
+            <th>Evaluation Item</th>
+            <th>Expected Behavior</th>
+            <th>Observed Behavior</th>
+            <th>Verdict</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>
+    </section>
+    """
 
 
 def metric_card(title, value, subtitle="", tone="neutral"):
@@ -237,7 +316,16 @@ def render_html(iteration, rows, *, platform="Codex"):
     )
     drf_violations = sum(1 for row in rows if row["drf_failed"])
     complete_count = sum(1 for row in rows if row["status"] == "complete")
-    gate_rows = build_gate_rows(rows, lift_percent, duration_lift, drf_violations)
+    trigger_gate_rows = build_trigger_gate_rows(rows)
+    gate_rows = "\n".join(
+        item
+        for item in [
+            build_gate_rows(rows, lift_percent, duration_lift, drf_violations),
+            trigger_gate_rows,
+        ]
+        if item
+    )
+    trigger_matrix = build_trigger_matrix(rows)
 
     table_rows = "\n".join(
         f"""
@@ -406,12 +494,12 @@ def render_html(iteration, rows, *, platform="Codex"):
 <body>
   <header>
     <h1>dddjango {escape(platform)} Evaluation Report</h1>
-    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 8개 파일럿 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 평가 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
   </header>
   <main>
     <div class="metrics">
-      {metric_card("Baseline Score", baseline_avg, "8-case average")}
-      {metric_card("dddjango Score", dddjango_avg, "8-case average", "good" if dddjango_avg > baseline_avg else "bad")}
+      {metric_card("Baseline Score", baseline_avg, "case average")}
+      {metric_card("dddjango Score", dddjango_avg, "case average", "good" if dddjango_avg > baseline_avg else "bad")}
       {metric_card("Quality Lift", f"{lift:+.2f}", f"{lift_percent:+.2f}% vs baseline", "good" if lift > 0 else "bad")}
       {metric_card("Baseline Time", f"{baseline_duration:.2f}s", "average duration")}
       {metric_card("dddjango Time", f"{dddjango_duration:.2f}s", f"{duration_lift:+.2f}% vs baseline", "bad" if duration_lift > 30 else "neutral")}
@@ -468,6 +556,7 @@ def render_html(iteration, rows, *, platform="Codex"):
         </tbody>
       </table>
     </section>
+    {trigger_matrix}
   </main>
 </body>
 </html>

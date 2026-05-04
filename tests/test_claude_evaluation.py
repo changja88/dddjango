@@ -51,6 +51,62 @@ class ClaudeEvaluationAssetTests(unittest.TestCase):
                 (output_dir / "SUMMARY.md").read_text(),
             )
 
+    def test_claude_init_iteration_can_create_benchmark_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "benchmark-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(CLAUDE_INIT_SCRIPT_PATH),
+                    "--suite",
+                    "benchmark",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 24)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 24)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 48)
+            self.assertIn(
+                "# Claude dddjango Evaluation Iteration",
+                (output_dir / "SUMMARY.md").read_text(),
+            )
+
+    def test_claude_init_iteration_can_create_trigger_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "trigger-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(CLAUDE_INIT_SCRIPT_PATH),
+                    "--suite",
+                    "trigger",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 30)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 30)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 60)
+            self.assertIn(
+                "# Claude dddjango Evaluation Iteration",
+                (output_dir / "SUMMARY.md").read_text(),
+            )
+
     def test_claude_baseline_command_disables_skills_and_plugins(self):
         module = load_module(CLAUDE_RUN_SCRIPT_PATH)
 
