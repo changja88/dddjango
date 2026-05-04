@@ -3,6 +3,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from contextlib import redirect_stdout
+from io import StringIO
 
 import unittest
 
@@ -73,6 +75,29 @@ class FileUpdateTests(unittest.TestCase):
         self.assertIn("dry-run: v1.3.0 릴리즈를 준비합니다.", result.stdout)
         self.assert_json_version(root / ".codex-plugin/plugin.json", "1.2.2")
 
+    def test_release_script_reports_dirty_worktree_without_traceback(self):
+        root = self.create_fixture_repo("1.2.2")
+        subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+        (root / "dirty.txt").write_text("not committed\n")
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/release.py"),
+                "--root",
+                str(root),
+            ],
+            input="1\n",
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("릴리즈를 시작할 수 없습니다.", result.stdout)
+        self.assertIn("커밋되지 않은 변경사항이 있습니다:", result.stdout)
+        self.assertIn("- ?? dirty.txt", result.stdout)
+
     def create_fixture_repo(self, version):
         temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(temp_dir.cleanup)
@@ -116,6 +141,22 @@ class FileUpdateTests(unittest.TestCase):
     def assert_json_version(self, path, expected):
         data = json.loads(path.read_text())
         self.assertEqual(data["version"], expected)
+
+
+class CommandRunTests(unittest.TestCase):
+    def test_quiet_run_hides_success_output(self):
+        stdout = StringIO()
+
+        with redirect_stdout(stdout):
+            release.run(
+                [sys.executable, "-c", "print(chr(88) + chr(89) + chr(90))"],
+                ROOT,
+                quiet=True,
+            )
+
+        output = stdout.getvalue()
+        self.assertEqual(output, "")
+        self.assertNotIn("XYZ", output)
 
 
 if __name__ == "__main__":
