@@ -6,12 +6,18 @@
     "name": "Hyun",
     "url": "https://github.com/changja88"
   },
+  "homepage": "https://github.com/changja88/dddjango",
   "repository": "https://github.com/changja88/dddjango",
   "license": "MIT",
   "keywords": [
     "ddd",
+    "django",
+    "django-ninja",
+    "python",
     "architecture-patterns",
     "db-design",
-    "api-design"
+    "api-design",
+    "tdd",
+    "clean-code"
   ]
 }

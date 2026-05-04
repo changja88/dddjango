@@ -4,14 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 정체
 
-이 저장소는 **`dddjango` Claude Code 플러그인**의 소스 트리다. Python/Django 개발 컨벤션(DDD, 아키텍처 패턴, DB 설계, API 설계)을 스킬·커맨드로 패키징한다.
+이 저장소는 **`dddjango` Claude Code + OpenAI Codex 듀얼 플랫폼 플러그인**의 소스 트리다. Python/Django 개발 컨벤션(DDD, 아키텍처 패턴, DB 설계, API 설계)을 공통 스킬과 Claude용 커맨드로 패키징한다.
 
 레이아웃:
 
 ```
-.claude-plugin/plugin.json     -- 플러그인 메타
-commands/                      -- 슬래시 커맨드 5개 (api, feature, refactor, test, web)
-skills/                        -- 스킬 11개 (architecture-* 4개, implementation-* 7개)
+.claude-plugin/plugin.json     -- Claude Code 플러그인 메타
+.claude-plugin/marketplace.json -- Claude Code marketplace 메타
+.codex-plugin/plugin.json      -- OpenAI Codex 플러그인 메타
+.agents/plugins/marketplace.json -- Codex repo-local marketplace
+commands/                      -- Claude Code 슬래시 커맨드 5개 (api, feature, refactor, test, web)
+skills/                        -- Claude/Codex 공통 스킬 11개 (architecture-* 4개, implementation-* 7개)
   └─ <skill>/
       ├─ SKILL.md              -- 진입점 (frontmatter + 본문)
       ├─ references/*.md       -- 본문 섹션이 가리키는 상세 문서 (지연 로딩)
@@ -26,6 +29,16 @@ workspace/                     -- 작업 보조 자료 + 평가 산출물 (배�
 - 스킬 단위 A/B 평가: `workspace/<skill>/test/iteration-N/<tc>/{with_skill,without_skill}/{outputs/output.md, grading.json, timing.json}`. `grading.json`의 `expectations[].passed`로 합격을 본다. `timing.json`은 token/duration 비교용.
 - 통합 검증: `workspace/test/{final-validation, cross-skill-test, korean-validation, command-test}/.../GRADING.md`. 합격/불합격을 표 형태로 정리한다.
 - 새 evaluation을 추가할 때는 기존 iteration 옆에 `iteration-N+1/`을 만들고 같은 프롬프트를 두 조건(스킬 ON/OFF)으로 비교한다.
+- 듀얼 플랫폼 릴리스 전에는 Claude Code와 Codex에서 같은 대표 프롬프트를 실행해 한국어 응답, DRF 금지, Django Ninja 사용, DDD/계층 분리를 확인한다.
+
+## 플랫폼 패키징 원칙
+
+- `skills/`는 Claude Code와 Codex가 공유하는 단일 원천이다. 플랫폼별 차이를 이유로 스킬 파일을 복제하지 않는다.
+- Claude Code 표면은 `.claude-plugin/plugin.json`과 `commands/`를 포함한다.
+- Codex 표면은 `.codex-plugin/plugin.json`과 `.agents/plugins/marketplace.json`를 포함한다.
+- `.claude-plugin/plugin.json`과 `.codex-plugin/plugin.json`의 `version`은 같은 릴리스에서 항상 동일하게 유지한다.
+- `.claude-plugin/marketplace.json`의 plugin entry version도 같은 릴리스 버전으로 맞춘다.
+- Codex에는 slash command가 주 진입점이 아니므로, 사용 예시는 `.codex-plugin/plugin.json`의 `interface.defaultPrompt`와 README에 반영한다.
 
 ## 스킬 작성 컨벤션
 
@@ -95,7 +108,7 @@ YAML 폴드 스칼라(`description: >`)를 쓴다. 자연어 description을 여�
 
 ## 커맨드 작성 컨벤션
 
-`commands/<name>.md`는 사용자가 호출하는 슬래시 커맨드다. frontmatter는 한 줄 description + 도구 목록:
+`commands/<name>.md`는 Claude Code 사용자가 호출하는 슬래시 커맨드다. frontmatter는 한 줄 description + 도구 목록:
 
 ```yaml
 ---
