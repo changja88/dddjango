@@ -20,6 +20,30 @@ POLICY_SKILL_PATHS = [
     "implementation-tdd",
     "implementation-test",
 ]
+SKILL_PATHS = sorted((ROOT / "skills").glob("*/SKILL.md"))
+
+
+def frontmatter_from_skill(path):
+    text = path.read_text()
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        raise AssertionError(f"missing frontmatter: {path}")
+    return parts[1]
+
+
+def description_from_frontmatter(frontmatter):
+    lines = frontmatter.splitlines()
+    description_lines = []
+    collecting = False
+    for line in lines:
+        if line.startswith("description: >"):
+            collecting = True
+            continue
+        if collecting:
+            if line and not line.startswith("  "):
+                break
+            description_lines.append(line[2:] if line.startswith("  ") else line)
+    return "\n".join(description_lines).strip()
 
 
 def load_module(path):
@@ -30,13 +54,23 @@ def load_module(path):
 
 
 class CodexEvaluationAssetTests(unittest.TestCase):
-    def test_policy_skills_are_synced_to_codex_plugin_mirror(self):
-        for skill_name in POLICY_SKILL_PATHS:
+    def test_skills_are_synced_to_codex_plugin_mirror(self):
+        for skill_path in SKILL_PATHS:
+            skill_name = skill_path.parent.name
             with self.subTest(skill=skill_name):
                 source = ROOT / f"skills/{skill_name}/SKILL.md"
                 mirror = ROOT / f"plugins/dddjango/skills/{skill_name}/SKILL.md"
 
                 self.assertEqual(source.read_text(), mirror.read_text())
+
+    def test_codex_skill_descriptions_stay_within_platform_limit(self):
+        for skill_path in SKILL_PATHS:
+            with self.subTest(skill=skill_path.parent.name):
+                description = description_from_frontmatter(
+                    frontmatter_from_skill(skill_path)
+                )
+
+                self.assertLessEqual(len(description), 1024)
 
     def test_django_ninja_skill_triggers_on_drf_requests_and_overrides_them(self):
         skill = (ROOT / "skills/implementation-django-ninja/SKILL.md").read_text()
@@ -81,6 +115,23 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             ]:
                 with self.subTest(skill=skill_name, required=required):
                     self.assertIn(required, skill)
+
+    def test_tdd_skill_triggers_on_django_pytest_red_green_refactor_requests(self):
+        frontmatter = frontmatter_from_skill(
+            ROOT / "skills/implementation-tdd/SKILL.md"
+        )
+
+        for keyword in [
+            "Django",
+            "pytest",
+            "쿠폰",
+            "실패 테스트",
+            "Red-Green-Refactor",
+            "empty workspace",
+            "read-only",
+        ]:
+            with self.subTest(keyword=keyword):
+                self.assertIn(keyword, frontmatter)
 
     def test_pilot_cases_define_representative_codex_plugin_eval_set(self):
         cases = [

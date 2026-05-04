@@ -1,25 +1,16 @@
 ---
 name: implementation-django-ninja
 description: >
-  This skill should be used when the user asks to "build an API with
-  Django Ninja", "create API endpoints", "write a Schema", "add API
-  authentication", "paginate API results", "filter API data", "handle
-  API errors", "write async views", "test API endpoints", or when any
-  Django Ninja API code generation, review, or refactoring task occurs.
-  Covers Django Ninja Schema/ModelSchema, Router, authentication
-  (APIKey, Bearer, Session), pagination, FilterSchema, error handling,
-  throttling, async views, testing with TestClient, and the
-  django-ninja-extra ecosystem. Use this skill whenever Django Ninja
-  API code is being written, reviewed, or refactored — even for
-  seemingly simple tasks like adding an endpoint or defining a Schema.
-  Also use this skill when the user asks for DRF, Django REST Framework,
-  Serializer, ModelSerializer, ViewSet, APIView, rest_framework,
-  DefaultRouter, or SimpleRouter in this repository; those requests must
-  be converted to Django Ninja instead of implemented with DRF.
-  DRF(Django REST Framework) is NOT used — all API code uses Django
-  Ninja. For Django core (models, ORM, migrations, settings), see
-  implementation-django. For API design principles (REST, status
-  codes, versioning), see architecture-api.
+  Use when the user asks to build Django Ninja APIs, create endpoints,
+  write Schema/ModelSchema, add API auth, paginate/filter data, handle
+  API errors, write async API views, or test API endpoints. Covers Router,
+  Schema/ModelSchema, auth, pagination, FilterSchema, errors, throttling,
+  async views, TestClient, and django-ninja-extra. Also use for DRF,
+  Django REST Framework, Serializer, ModelSerializer, ViewSet, APIView,
+  rest_framework, DefaultRouter, or SimpleRouter requests in this repo;
+  those must be converted to Django Ninja Schema/Router instead of DRF.
+  DRF is not used. For Django core models/ORM/migrations/settings use
+  implementation-django; for REST design use architecture-api.
 ---
 
 # Django Ninja 컨벤션과 패턴

@@ -1,25 +1,18 @@
 ---
 name: architecture-ddd
 description: >
-  Use this skill when the user asks to "design a domain model", "define
-  bounded contexts", "identify aggregates", "apply DDD", "model a domain",
-  "design with domain-driven design", "analyze business domain", "create
-  a context map", "define ubiquitous language", "plan domain events", or
-  when any domain modeling, strategic design, or tactical pattern decision
-  occurs. Covers strategic patterns (bounded contexts, context maps,
-  subdomains, distillation), tactical patterns (aggregates, entities, value
-  objects, repositories, domain services, domain events), and supple design.
-  Use this skill
-  whenever domain boundaries, aggregate design, or business rule modeling
-  is being discussed — even for seemingly simple tasks like deciding where
-  a business rule belongs or how to split responsibilities between services.
-  For architecture patterns (hexagonal, clean, CQRS, event sourcing), see
-  architecture-implementation-patterns. For database schema design, see
-  architecture-db. For REST API design principles, see architecture-api.
-  For Python conventions, see implementation-python. For Django core,
-  see implementation-django. For Django Ninja API, see
-  implementation-django-ninja. For clean code principles, see
-  implementation-cleancode.
+  Use when the user asks to design a domain model, apply DDD, define
+  bounded contexts, identify aggregates, model business rules, create
+  a context map, define ubiquitous language, or plan domain events.
+  Also use for any strategic or tactical domain modeling decision,
+  including where a business rule belongs or how to split service
+  responsibilities. Covers bounded contexts, context maps, subdomains,
+  aggregates, entities, value objects, repositories, domain services,
+  domain events, and supple design. For hexagonal/clean/CQRS/event
+  sourcing use architecture-implementation-patterns; for schema design
+  use architecture-db; for REST API design use architecture-api; for
+  Django/Django Ninja implementation use implementation-django and
+  implementation-django-ninja.
 ---
 
 # DDD 원칙과 패턴

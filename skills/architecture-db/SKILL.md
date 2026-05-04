@@ -1,23 +1,18 @@
 ---
 name: architecture-db
 description: >
-  This skill should be used when the user asks to "design a database
-  schema", "model data", "create an ERD", "normalize tables",
-  "optimize queries", "design indexes", "choose isolation level",
-  "model hierarchical data", "handle table inheritance", or when any
-  relational database design, schema modeling, normalization, index
-  strategy, or query performance decision occurs. Covers the full
-  modeling process (conceptual to physical), normalization (1NF-BCNF),
-  denormalization strategies, B+Tree index architecture, practical
-  index design patterns, transaction isolation levels, EXPLAIN ANALYZE
-  query optimization, and data modeling patterns (hierarchy, inheritance,
-  polymorphism). Use this skill whenever table structure, relationships,
-  keys, indexes, or query performance is being discussed — even for
-  seemingly simple tasks like adding a column or choosing a primary key.
-  This skill focuses on general RDB principles (not PostgreSQL/MySQL
-  specific). For Django ORM code, see implementation-django. For
-  domain model design, see architecture-ddd. For REST API
-  design principles, see architecture-api.
+  Use when the user asks to design a database schema, model data,
+  create an ERD, normalize tables, optimize queries, design indexes,
+  choose isolation level, model hierarchical data, or handle table
+  inheritance. Also use for any relational database design, schema
+  modeling, normalization, index strategy, transaction, or query
+  performance decision, including small changes like adding a column
+  or choosing a primary key. Covers conceptual/logical/physical
+  modeling, normalization, denormalization tradeoffs, B+Tree indexes,
+  transaction isolation, EXPLAIN ANALYZE, hierarchy/inheritance, and
+  polymorphic modeling. Focuses on general RDB principles. For Django
+  ORM code use implementation-django; for domain modeling use
+  architecture-ddd; for REST API design use architecture-api.
 ---
 
 # 데이터베이스 설계 원칙

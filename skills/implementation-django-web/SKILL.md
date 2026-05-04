@@ -1,22 +1,16 @@
 ---
 name: implementation-django-web
 description: >
-  Use this skill when the user asks to "create a web page", "add a template",
-  "build a page", "make a component", "add a design system component",
-  "write a Django template", "organize static files", "add CSS/JS to a page",
-  "create a TemplateView", "set up a base template", "review template code",
-  "refactor templates", or when any Django web frontend (template, static
-  asset, design system, TemplateView) code generation, review, or refactoring
-  task occurs. Covers Django template inheritance, component-based template
-  composition, static file management (collectstatic, ManifestStaticFilesStorage,
-  WhiteNoise), CSS/JS asset pipeline, design system tokens and components,
-  TemplateView patterns, HTMX integration, and CSRF handling for AJAX.
-  Use this skill whenever Django web page code is being written, reviewed,
-  or refactored — even for seemingly simple tasks like adding a block or
-  an include. For Django core (models, ORM, settings), see
-  implementation-django. For API endpoints (Django Ninja), see
-  implementation-django-ninja. For API design principles, see
-  architecture-api.
+  Use when the user asks to create a Django web page, add a template,
+  build a page/component, add design system components, organize static
+  files, add CSS/JS, create TemplateView, set up a base template, review
+  template code, or refactor templates. Covers template inheritance,
+  component includes, static file management, collectstatic,
+  ManifestStaticFilesStorage, WhiteNoise, CSS/JS asset pipeline, design
+  tokens/components, TemplateView, HTMX, and CSRF for AJAX. Use for any
+  Django template/static/frontend task, even adding a block or include.
+  For Django core use implementation-django; for Django Ninja APIs use
+  implementation-django-ninja; for API design use architecture-api.
 ---
 
 # Django 웹 프론트엔드 컨벤션과 패턴

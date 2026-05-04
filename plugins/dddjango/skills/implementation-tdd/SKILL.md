@@ -5,13 +5,14 @@ description: >
   "write tests first", "use Red-Green-Refactor", "apply test-driven
   development", "guide me through TDD", "review TDD practices",
   "implement using TDD cycle", or when any task involves developing
-  code through test-first methodology. Covers the Red-Green-Refactor
-  cycle, classical vs London school, four pillars of good unit tests,
-  red/green bar patterns, testing patterns, Outside-In TDD with double
-  loop, design patterns in TDD, refactoring patterns, test smells,
-  and TDD with AI coding. For test code writing techniques (pytest,
-  fixtures, mocking libraries), see implementation-test. For general
-  clean code principles, see implementation-cleancode.
+  code through test-first methodology. Also use for Django/pytest TDD
+  prompts, Korean prompts mentioning 쿠폰, 실패 테스트, or Red-Green-Refactor,
+  and empty workspace or read-only fallback situations where examples must
+  still be provided without claiming execution. Covers Red-Green-Refactor,
+  classical vs London school, unit test quality, red/green bar patterns,
+  Outside-In TDD, refactoring, test smells, and AI coding. For pytest,
+  fixtures, or mocks, see implementation-test; for clean code, see
+  implementation-cleancode.
 ---
 
 # TDD 개발 방법론

@@ -1,23 +1,18 @@
 ---
 name: implementation-django
 description: >
-  Use this skill when the user asks to "write Django code", "create a Django
-  model", "review Django views", "optimize Django queries", "set up Django
-  project structure", "write Django tests", "add a service layer", "create
-  Django migrations", "configure Django settings", or when any Django code
-  generation, review, or refactoring task occurs. Covers Django 5.x
-  (LTS 5.2), project structure, model design, QuerySet optimization,
-  CBV/FBV, signals, caching, security, testing, and service layer patterns.
-  Use this skill whenever Django code is being written, reviewed, or
-  refactored — even for seemingly simple tasks like adding a model field.
-  For API endpoints (Django Ninja), see implementation-django-ninja.
-  For web pages (templates, static files, design system, TemplateView),
-  see implementation-django-web. Python-specific conventions (type hints,
-  dataclasses, async) are handled by implementation-python; language-agnostic
-  principles (SOLID, naming) by implementation-cleancode. For architecture
-  patterns (hexagonal, CQRS), see architecture-implementation-patterns.
-  For REST API design principles, see architecture-api. This skill adds
-  the Django framework layer on top of both.
+  Use when the user asks to write Django code, create models, review
+  views, optimize queries, set up project structure, write Django tests,
+  add a service layer, create migrations, configure settings, or refactor
+  Django code. Covers Django 5.x/LTS 5.2, project structure, model design,
+  QuerySet optimization, CBV/FBV, signals, caching, security, testing, and
+  service layer patterns. Use for any Django code task, even small changes
+  like adding a model field. For API endpoints use implementation-django-ninja;
+  for templates/static/TemplateView use implementation-django-web; for Python
+  conventions use implementation-python; for clean code use
+  implementation-cleancode; for architecture patterns use
+  architecture-implementation-patterns; for REST API design use
+  architecture-api.
 ---
 
 # Django 프레임워크 컨벤션과 패턴

@@ -1,34 +1,19 @@
 ---
 name: architecture-implementation-patterns
 description: >
-  Use this skill when the user asks to "apply hexagonal architecture", "set up
-  ports and adapters", "implement CQRS", "add event sourcing", "design a clean
-  architecture", "apply onion architecture", "structure the project layers",
-  "separate read and write models", "implement repository pattern", "add unit
-  of work", "apply data mapper", "integrate with legacy systems", "add
-  anti-corruption layer", "implement outbox pattern", "apply dependency
-  injection", "apply DIP", "replace legacy system", or equivalent Korean
-  phrases like "헥사고날 적용", "프로젝트 구조 잡아줘", "레이어 분리", "의존성
-  역전 적용", "레거시 교체/마이그레이션", "CQRS 적용", "이벤트 소싱 도입". Use
-  this skill whenever architecture pattern selection, dependency direction, or
-  infrastructure abstraction is being discussed — even for seemingly simple
-  tasks like deciding where a repository interface belongs or how to isolate
-  external dependencies. Covers architecture styles (hexagonal, clean, onion,
-  layered), CQRS, event sourcing (with outbox, snapshot, projection),
-  persistence patterns (unit of work, data mapper, repository), and integration
-  patterns (ACL, integration events, bubble context). 통합 트리거 — 사용자가
-  "주문 처리 아키텍처 설계", "전자상거래 도메인 구조", "결제 BC 설계" 같은
-  도메인 명사 + 아키텍처 형태로 요청하면 이 스킬 단독으로는 빈 껍데기(Aggregate
-  불변식·VO·Domain Event·Ubiquitous Language 누락)가 나오므로 architecture-ddd를
-  반드시 같이 활성화해서 그 references(aggregates, value-objects-entities,
-  domain-events, bounded-context, filetree-with-django)를 함께 읽는다. This
-  skill handles framework-agnostic pattern selection and design; for
-  Django-specific implementation (ORM, service layer, signals), see
-  implementation-django. For domain modeling (aggregates, entities, bounded
-  contexts, value objects, domain events, ubiquitous language, context map),
-  see architecture-ddd — 도메인 설계가 동반되는 모든 작업에서 반드시 같이
-  활성화. For database schema design, see architecture-db. For REST API
-  design principles, see architecture-api.
+  Use when the user asks to apply hexagonal, clean, onion, layered
+  architecture, ports/adapters, CQRS, event sourcing, repository, unit
+  of work, data mapper, outbox, dependency injection, DIP, anti-corruption
+  layer, or legacy migration. Korean triggers include 헥사고날 적용,
+  프로젝트 구조, 레이어 분리, 의존성 역전, CQRS, 이벤트 소싱. Use for
+  architecture pattern selection, dependency direction, and infrastructure
+  abstraction, including where repository interfaces belong. Covers
+  hexagonal/clean/onion/layered styles, CQRS, event sourcing, persistence
+  patterns, and integration patterns. If the request includes domain nouns
+  such as order/payment/ecommerce plus architecture, also use
+  architecture-ddd so aggregates, value objects, domain events, and bounded
+  contexts are not missed. For Django specifics use implementation-django;
+  for DB use architecture-db; for REST API use architecture-api.
 ---
 
 # 아키텍처 구현 패턴
