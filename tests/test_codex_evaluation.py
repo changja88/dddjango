@@ -656,6 +656,80 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertIn("Keep under 700 words", implementation_coupon)
         self.assertNotIn("architecture-implementation-patterns/SKILL.md", implementation_coupon)
 
+    def test_run_prompts_scopes_benchmark_and_trigger_cases_from_answer_key(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        api_case = {
+            "category": "api-design",
+            "prompt": "주문 상태 변경 API를 Django Ninja와 DDD 기준으로 설계해줘.",
+            "expectations": [
+                "korean_first",
+                "django_ninja_compliance",
+                "ddd_boundaries",
+                "transaction_boundary",
+            ],
+            "scoring_focus": ["Django Ninja Router와 Schema를 사용한다."],
+        }
+        api_instructions = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="benchmark-api-order-status",
+            case=api_case,
+        )
+
+        self.assertIn("architecture-api/SKILL.md", api_instructions)
+        self.assertIn("architecture-ddd/SKILL.md", api_instructions)
+        self.assertIn("implementation-django-ninja/SKILL.md", api_instructions)
+        self.assertIn("Read only", api_instructions)
+        self.assertIn("Keep under 750 words", api_instructions)
+        self.assertLess(len(api_instructions), len(module.dddjango_developer_instructions(ROOT)))
+
+        negative_trigger = {
+            "category": "trigger",
+            "trigger_type": "negative",
+            "prompt": "Rust로 문자열 slugify 함수를 작성해줘.",
+            "expectations": ["korean_first"],
+            "scoring_focus": ["Rust 코드만 제공한다."],
+        }
+        self.assertEqual(
+            module.dddjango_developer_instructions(
+                ROOT,
+                case_id="trigger-negative-rust-function",
+                case=negative_trigger,
+            ),
+            "",
+        )
+
+        conflict_trigger = {
+            "category": "trigger",
+            "trigger_type": "conflict",
+            "prompt": "DRF ViewSet과 ModelSerializer로 상품 API를 작성해줘.",
+            "expectations": ["korean_first", "reject_drf"],
+            "scoring_focus": ["DRF 코드를 생성하지 않는다."],
+        }
+        conflict_instructions = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="trigger-conflict-drf-viewset",
+            case=conflict_trigger,
+        )
+
+        self.assertIn("implementation-django-ninja/SKILL.md", conflict_instructions)
+        self.assertIn("Do not output DRF implementation code", conflict_instructions)
+        self.assertIn("produce no DRF code", conflict_instructions)
+
+    def test_run_prompts_loads_answer_keys_for_iteration_metadata(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            (iteration / "answer-key").mkdir()
+            (iteration / "answer-key/case-a.json").write_text(
+                json.dumps({"case_id": "case-a", "category": "api-design"}) + "\n"
+            )
+
+            cases = module.load_answer_keys(iteration)
+
+            self.assertEqual(cases["case-a"]["category"], "api-design")
+
     def test_render_report_creates_html_comparison_dashboard(self):
         module = load_module(REPORT_SCRIPT_PATH)
 

@@ -101,6 +101,60 @@ CASE_POLICIES = {
 }
 
 
+SKILLS_BY_CATEGORY = {
+    "api-design": [
+        "architecture-api",
+        "architecture-ddd",
+        "implementation-django",
+        "implementation-django-ninja",
+    ],
+    "ddd-architecture": [
+        "architecture-ddd",
+        "architecture-implementation-patterns",
+        "implementation-django",
+    ],
+    "db-design": [
+        "architecture-db",
+        "implementation-django",
+    ],
+    "tdd": [
+        "architecture-ddd",
+        "implementation-django",
+        "implementation-django-ninja",
+        "implementation-tdd",
+        "implementation-test",
+    ],
+    "review": [
+        "architecture-ddd",
+        "architecture-implementation-patterns",
+        "implementation-cleancode",
+        "implementation-django",
+    ],
+    "clean-code": [
+        "architecture-implementation-patterns",
+        "implementation-cleancode",
+        "implementation-django",
+    ],
+}
+
+SKILLS_BY_EXPECTATION = {
+    "api_standard": ["architecture-api", "implementation-django-ninja"],
+    "architecture_review": [
+        "architecture-ddd",
+        "architecture-implementation-patterns",
+        "implementation-cleancode",
+    ],
+    "clean_code": ["architecture-implementation-patterns", "implementation-cleancode"],
+    "db_design": ["architecture-db", "implementation-django"],
+    "ddd_boundaries": ["architecture-ddd", "architecture-implementation-patterns"],
+    "django_ninja_compliance": ["architecture-api", "implementation-django-ninja"],
+    "pytest_quality": ["implementation-test"],
+    "reject_drf": ["architecture-api", "implementation-django-ninja"],
+    "tdd_first": ["implementation-tdd", "implementation-test"],
+    "transaction_boundary": ["architecture-db", "implementation-django"],
+}
+
+
 def extract_prompt(text):
     marker = "## Prompt"
     if marker not in text:
@@ -173,33 +227,146 @@ def broad_dddjango_developer_instructions(root):
     )
 
 
-def skill_paths_for_case(root, case_id):
-    skill_names = CASE_SKILLS.get(case_id, [])
+def unique(values):
+    result = []
+    for value in values:
+        if value not in result:
+            result.append(value)
+    return result
+
+
+def case_requests_drf(case):
+    prompt = case.get("prompt", "")
+    expectations = set(case.get("expectations", []))
+    return "reject_drf" in expectations or any(
+        token in prompt
+        for token in [
+            "DRF",
+            "Django REST Framework",
+            "Serializer",
+            "ViewSet",
+            "APIView",
+            "rest_framework",
+        ]
+    )
+
+
+def inferred_skill_names_for_case(case_id, case=None):
+    if case_id in CASE_SKILLS:
+        return CASE_SKILLS[case_id]
+    if not case:
+        return []
+
+    trigger_type = case.get("trigger_type", "")
+    if trigger_type == "negative":
+        return []
+
+    skill_names = []
+    category = case.get("category", "")
+    skill_names.extend(SKILLS_BY_CATEGORY.get(category, []))
+
+    for expectation in case.get("expectations", []):
+        skill_names.extend(SKILLS_BY_EXPECTATION.get(expectation, []))
+
+    prompt = case.get("prompt", "").lower()
+    if "django ninja" in prompt or "ninja" in prompt:
+        skill_names.extend(["architecture-api", "implementation-django-ninja"])
+    if "pytest" in prompt or "tdd" in prompt or "실패 테스트" in prompt:
+        skill_names.extend(["implementation-tdd", "implementation-test"])
+    if "db" in prompt or "queryset" in prompt or "인덱스" in prompt:
+        skill_names.extend(["architecture-db", "implementation-django"])
+    if "clean" in prompt or "클린" in prompt:
+        skill_names.extend(["architecture-implementation-patterns", "implementation-cleancode"])
+    if case_requests_drf(case):
+        skill_names.extend(["architecture-api", "implementation-django-ninja"])
+
+    return unique(skill_names)
+
+
+def skill_paths_for_case(root, case_id, case=None):
+    skill_names = inferred_skill_names_for_case(case_id, case=case)
     return [root / "skills" / skill_name / "SKILL.md" for skill_name in skill_names]
 
 
-def scoped_dddjango_developer_instructions(root, case_id):
-    skill_paths = skill_paths_for_case(root, case_id)
+def case_policy_names(case_id, case=None):
+    policies = list(CASE_POLICIES.get(case_id, []))
+    if not case:
+        return policies
+
+    if case.get("trigger_type") == "negative":
+        return []
+    if (
+        "django_ninja_compliance" in case.get("expectations", [])
+        or case.get("category") == "api-design"
+        or "django ninja" in case.get("prompt", "").lower()
+    ):
+        policies.append("ninja")
+    if case_requests_drf(case):
+        policies.extend(["ninja", "drf"])
+    if (
+        case.get("category") == "tdd"
+        or "tdd_first" in case.get("expectations", [])
+        or "pytest" in case.get("prompt", "").lower()
+    ):
+        policies.append("tdd")
+    return unique(policies)
+
+
+def case_directive(case_id, case=None):
+    if case_id in CASE_DIRECTIVES:
+        return CASE_DIRECTIVES[case_id]
+    if not case:
+        return ""
+
+    trigger_type = case.get("trigger_type", "")
+    if trigger_type == "ambiguous":
+        return (
+            "The request is intentionally ambiguous. Ask one concise clarification or state "
+            "conditional assumptions before applying Django or DDD guidance. Keep under 500 words."
+        )
+    if trigger_type == "conflict":
+        return (
+            "Explain the policy conflict in one sentence, then provide the Django Ninja alternative. "
+            "Do not output DRF implementation code. Keep under 650 words."
+        )
+    if case.get("category") == "negative-control" and not case_requests_drf(case):
+        return ""
+
+    focus = " ".join(case.get("scoring_focus", []))
+    return (
+        f"Focus on: {focus} "
+        "Keep under 750 words; include only task-critical code and verification steps."
+    )
+
+
+def scoped_dddjango_developer_instructions(root, case_id, case=None):
+    if case and case.get("trigger_type") == "negative":
+        return ""
+    if case and case.get("category") == "negative-control" and not case_requests_drf(case):
+        return ""
+
+    skill_paths = skill_paths_for_case(root, case_id, case=case)
     if not skill_paths:
         return ""
     paths = "\n".join(f"- {path}" for path in skill_paths)
     policies = []
-    if "ninja" in CASE_POLICIES.get(case_id, []):
+    policy_names = case_policy_names(case_id, case=case)
+    if "ninja" in policy_names:
         policies.append("Use Django Ninja Schema/Router for API guidance.")
-    if "drf" in CASE_POLICIES.get(case_id, []):
+    if "drf" in policy_names:
         policies.append(
             "If the prompt asks for DRF, Serializer, ViewSet, APIView, "
             "rest_framework, DefaultRouter, or SimpleRouter, produce no DRF code; "
             "convert to Django Ninja."
         )
-    if "tdd" in CASE_POLICIES.get(case_id, []):
+    if "tdd" in policy_names:
         policies.append(
             "For pytest/TDD in empty or read-only workspaces, state execution was "
             "not possible, then still provide RED tests, expected failures, GREEN "
             "implementation, REFACTOR notes, and pytest commands."
         )
     policy_text = " ".join(policies)
-    directive = CASE_DIRECTIVES.get(case_id, "")
+    directive = case_directive(case_id, case=case)
     return (
         "Use local dddjango skills. Read only:\n"
         f"{paths}\n"
@@ -207,12 +374,22 @@ def scoped_dddjango_developer_instructions(root, case_id):
     )
 
 
-def dddjango_developer_instructions(root, case_id=None):
+def dddjango_developer_instructions(root, case_id=None, case=None):
     if case_id:
-        scoped = scoped_dddjango_developer_instructions(root, case_id)
+        scoped = scoped_dddjango_developer_instructions(root, case_id, case=case)
         if scoped:
             return scoped
+        if case:
+            return ""
     return broad_dddjango_developer_instructions(root)
+
+
+def load_answer_keys(iteration):
+    answer_key_dir = Path(iteration) / "answer-key"
+    cases = {}
+    for path in answer_key_dir.glob("*.json"):
+        cases[path.stem] = json.loads(path.read_text())
+    return cases
 
 
 def load_timing(path):
@@ -257,6 +434,7 @@ def run_variant(args):
     timing_path = iteration / "timing.json"
     eval_cwd = Path(args.cwd)
     eval_cwd.mkdir(parents=True, exist_ok=True)
+    cases = load_answer_keys(iteration)
 
     prompt_files = sorted(prompt_dir.glob("*.prompt.md"))
     if args.case:
@@ -276,6 +454,7 @@ def run_variant(args):
             developer_instructions = dddjango_developer_instructions(
                 Path(args.root).resolve(),
                 case_id=case_id,
+                case=cases.get(case_id),
             )
         command = build_codex_command(
             prompt_file=prompt_file,
