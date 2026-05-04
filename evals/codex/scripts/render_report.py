@@ -223,7 +223,7 @@ def build_gate_rows(rows, lift_percent, duration_lift, drf_violations):
     )
 
 
-def render_html(iteration, rows):
+def render_html(iteration, rows, *, platform="Codex"):
     baseline_avg = average([row["baseline_score"] for row in rows])
     dddjango_avg = average([row["dddjango_score"] for row in rows])
     lift = round(dddjango_avg - baseline_avg, 2)
@@ -279,7 +279,7 @@ def render_html(iteration, rows):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
-  <title>dddjango Codex Evaluation Report</title>
+  <title>dddjango {escape(platform)} Evaluation Report</title>
   <style>
     :root {{
       color-scheme: light;
@@ -405,7 +405,7 @@ def render_html(iteration, rows):
 </head>
 <body>
   <header>
-    <h1>dddjango Codex Evaluation Report</h1>
+    <h1>dddjango {escape(platform)} Evaluation Report</h1>
     <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 8개 파일럿 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
   </header>
   <main>
@@ -474,24 +474,25 @@ def render_html(iteration, rows):
 """
 
 
-def render_report(iteration):
+def render_report(iteration, *, platform="Codex"):
     iteration = Path(iteration)
     grades = index_by_case_and_variant(load_json(iteration / "grades.json"))
     timing = index_by_case_and_variant(load_json(iteration / "timing.json"))
     case_metadata = load_case_metadata(iteration)
     rows = build_rows(iteration, grades, timing, case_metadata)
-    html = render_html(iteration, rows)
+    html = render_html(iteration, rows, platform=platform)
     report_path = iteration / "report.html"
     report_path.write_text(html)
     return report_path
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Render a static HTML Codex eval report.")
+    parser = argparse.ArgumentParser(description="Render a static HTML eval report.")
     parser.add_argument("iteration", help="Evaluation iteration directory.")
+    parser.add_argument("--platform", default="Codex", help="Platform label for the report title.")
     args = parser.parse_args()
 
-    report_path = render_report(Path(args.iteration))
+    report_path = render_report(Path(args.iteration), platform=args.platform)
     print(report_path)
     return 0
 

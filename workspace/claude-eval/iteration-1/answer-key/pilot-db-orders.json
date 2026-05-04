@@ -1,0 +1,18 @@
+{
+  "case_id": "pilot-db-orders",
+  "category": "db-design",
+  "title": "Order payment refund database design",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "db_design",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "정규화, 상태 컬럼, 금액 타입, idempotency key를 고려한다.",
+    "조회 패턴 기반 인덱스를 제안한다.",
+    "결제/환불 동시성 및 트랜잭션 경계를 설명한다."
+  ],
+  "prompt": "Order, Payment, Refund 테이블을 설계하고 인덱스와 트랜잭션 전략을 제안해줘. Django 모델 기준으로 설명해줘."
+}

@@ -1,0 +1,338 @@
+[
+  {
+    "case_id": "pilot-api-order-create",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-implementation-coupon",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-fat-model",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-tdd-coupon",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-db-orders",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-view-logic",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-standard",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-negative-drf",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "Blocked before model response: Claude Code subscription access is disabled and ANTHROPIC_API_KEY is unset.",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-order-create",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-implementation-coupon",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-fat-model",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-tdd-coupon",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-db-orders",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-view-logic",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-standard",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  },
+  {
+    "case_id": "pilot-negative-drf",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 0,
+      "django_ninja_compliance": 0,
+      "actionability": 0,
+      "architecture_quality": 0,
+      "testing_quality": 0,
+      "korean_first": 0,
+      "conciseness": 0,
+      "safety": 0
+    },
+    "notes": "Not run yet; baseline pilot is blocked by Claude Code authentication.",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    }
+  }
+]

@@ -16,6 +16,8 @@ venv/
 # Evaluation run artifacts
 workspace/*/test/
 workspace/test/
+workspace/**/*.codex.log
+workspace/**/*.claude.log
 
 # Editor swap/backup
 *.bak

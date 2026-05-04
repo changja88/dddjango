@@ -93,6 +93,12 @@ Codex evaluation assets live under `evals/codex/`:
 - `scripts/grade_outputs.py`: summarizes manual grades for `baseline` and `dddjango`
 - `scripts/render_report.py`: renders a static HTML comparison dashboard
 
+Claude evaluation uses the same pilot cases, answer keys, grading schema, and
+HTML renderer. Claude-specific runners live under `evals/claude/`:
+
+- `scripts/init_iteration.py`: creates a Claude iteration workspace from the shared pilot cases
+- `scripts/run_prompts.py`: runs generated prompts with `claude -p` and captures outputs
+
 Use a separate Codex profile, machine account, or disposable environment for shared evaluation. Do not install or activate the plugin in a personal development profile when collecting comparable baseline data.
 
 Recommended checks before a release:
@@ -130,7 +136,19 @@ Recommended checks before a release:
 
    Open `workspace/codex-eval/iteration-1/report.html` in a browser to compare scores, duration, verdicts, notes, and raw output links.
 
-8. Run representative prompts in both platforms:
+8. For Claude, create a separate iteration and run a blocked-risk pilot first:
+
+   ```bash
+   python3 evals/claude/scripts/init_iteration.py --output workspace/claude-eval/iteration-1
+   python3 evals/claude/scripts/run_prompts.py --variant baseline --case pilot-negative-drf --iteration workspace/claude-eval/iteration-1
+   python3 evals/claude/scripts/run_prompts.py --variant dddjango --case pilot-negative-drf --iteration workspace/claude-eval/iteration-1
+   python3 evals/codex/scripts/render_report.py workspace/claude-eval/iteration-1 --platform Claude
+   ```
+
+   Claude baseline runs disable slash commands. `dddjango` runs load this repository with `--plugin-dir .`.
+   If Claude Code subscription access is disabled for the organization, set `ANTHROPIC_API_KEY` before running the full Claude evaluation.
+
+9. Run representative prompts in both platforms:
    - `Django Ninja API를 DDD 기준으로 설계해줘.`
    - `이 Django 모델과 서비스 코드를 리뷰해줘.`
    - `pytest와 TDD 방식으로 Django 기능을 구현해줘.`
