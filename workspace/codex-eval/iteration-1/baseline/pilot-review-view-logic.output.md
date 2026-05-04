@@ -1,0 +1,63 @@
+결론부터 말하면, **주문 생성 로직을 전부 Django Ninja view에 넣는 것은 권장하지 않습니다.** 아주 작은 MVP나 내부용 프로토타입이면 가능하지만, 주문 생성은 보통 트랜잭션, 재고, 결제, 쿠폰, 중복 요청, 감사 로그, 이벤트 발행 같은 규칙이 얽히기 쉬워서 view에 몰아넣으면 빠르게 취약해집니다.
+
+주요 리스크는 이렇습니다.
+
+1. **테스트가 어려워짐**
+   view에 로직이 있으면 HTTP 요청/응답까지 포함해서 테스트해야 하므로 주문 생성 규칙만 독립적으로 검증하기 어렵습니다.
+
+2. **트랜잭션 경계가 흐려짐**
+   주문 생성은 보통 `transaction.atomic()`이 필요합니다. view 안에 여러 ORM 조작이 흩어지면 어떤 작업이 하나의 원자적 단위인지 파악하기 어렵습니다.
+
+3. **재사용이 어려움**
+   같은 주문 생성 로직을 관리자 액션, 배치, webhook, Celery task, GraphQL/API v2 등에서 다시 써야 할 때 view에 묶여 있으면 중복이 생깁니다.
+
+4. **Django Ninja schema와 도메인 규칙이 섞임**
+   Ninja view는 요청 파싱, 인증/권한, 응답 변환에 집중하는 편이 좋습니다. 가격 계산, 재고 차감, 주문 상태 전이 같은 규칙은 별도 함수나 서비스로 분리하는 게 낫습니다.
+
+5. **실패 처리와 idempotency가 복잡해짐**
+   주문 생성 API는 중복 클릭, 네트워크 재시도, 결제 콜백 중복 같은 문제가 자주 있습니다. 이 로직이 view에 있으면 점점 길고 깨지기 쉬운 코드가 됩니다.
+
+추천 구조는 보통 이 정도입니다.
+
+```python
+@router.post("/orders", response=OrderOut)
+def create_order(request, payload: OrderCreateIn):
+    order = create_order_service(
+        user=request.user,
+        items=payload.items,
+        coupon_code=payload.coupon_code,
+        idempotency_key=request.headers.get("Idempotency-Key"),
+    )
+    return order
+```
+
+서비스 쪽:
+
+```python
+@transaction.atomic
+def create_order_service(*, user, items, coupon_code=None, idempotency_key=None):
+    # validate business rules
+    # lock inventory if needed
+    # calculate price
+    # create order/order items
+    # apply coupon
+    # emit event or schedule task
+    return order
+```
+
+다만 “서비스 레이어”를 과하게 만들 필요는 없습니다. Java식으로 모든 모델마다 `OrderService`, `OrderRepository`를 만들라는 뜻은 아닙니다. Django에서는 보통 다음 중 하나면 충분합니다.
+
+- `orders/services.py`의 유스케이스 함수
+- model manager/queryset method
+- domain 함수
+- 복잡한 경우 command/use-case 객체
+
+기준은 간단합니다.
+
+- 단순 CRUD면 view에 있어도 괜찮습니다.
+- **여러 모델을 변경한다면 분리하는 게 좋습니다.**
+- **트랜잭션이 필요하면 분리하는 게 좋습니다.**
+- **비즈니스 규칙이 2개 이상 들어가면 분리하는 게 좋습니다.**
+- **다른 진입점에서 재사용될 수 있으면 분리하는 게 좋습니다.**
+
+주문 생성은 거의 항상 이 조건에 걸리므로, Django Ninja view는 얇게 두고 주문 생성 유스케이스는 별도 함수/서비스로 빼는 쪽이 더 안전합니다.

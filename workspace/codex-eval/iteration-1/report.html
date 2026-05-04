@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>dddjango Codex Evaluation Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --good: #087443;
+      --good-bg: #e7f6ee;
+      --bad: #b42318;
+      --bad-bg: #fdecec;
+      --neutral: #475467;
+      --neutral-bg: #eef2f6;
+      --accent: #0c4a6e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    header {
+      padding: 32px 40px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .subhead { color: var(--muted); max-width: 920px; }
+    main { padding: 24px 40px 40px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .metric span, .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .metric strong {
+      display: block;
+      margin: 6px 0;
+      font-size: 24px;
+    }
+    .metric.good strong { color: var(--good); }
+    .metric.bad strong { color: var(--bad); }
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .section h2 {
+      margin: 0;
+      padding: 16px 18px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .failures { padding: 0 18px 18px; color: var(--bad); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #344054;
+      font-weight: 650;
+      z-index: 1;
+    }
+    .number { text-align: right; white-space: nowrap; }
+    .good { color: var(--good); }
+    .bad { color: var(--bad); }
+    .neutral { color: var(--neutral); }
+    .pill {
+      display: inline-block;
+      min-width: 72px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .pill.good { background: var(--good-bg); }
+    .pill.bad { background: var(--bad-bg); }
+    .pill.neutral { background: var(--neutral-bg); }
+    .links a {
+      display: block;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (max-width: 900px) {
+      header, main { padding-left: 18px; padding-right: 18px; }
+      .section { overflow-x: auto; }
+      table { min-width: 1180px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>dddjango Codex Evaluation Report</h1>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 8개 파일럿 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+  </header>
+  <main>
+    <div class="metrics">
+      <section class="metric neutral"><span>Baseline Score</span><strong>81.0</strong><small>8-case average</small></section>
+      <section class="metric bad"><span>dddjango Score</span><strong>78.12</strong><small>8-case average</small></section>
+      <section class="metric bad"><span>Quality Lift</span><strong>-2.88</strong><small>-3.56% vs baseline</small></section>
+      <section class="metric neutral"><span>Baseline Time</span><strong>48.14s</strong><small>average duration</small></section>
+      <section class="metric bad"><span>dddjango Time</span><strong>98.73s</strong><small>+105.09% vs baseline</small></section>
+      <section class="metric bad"><span>DRF Violations</span><strong>1</strong><small>dddjango variant</small></section>
+    </div>
+
+    <section class="section">
+      <h2>Failure Highlights</h2>
+      <ul class="failures">
+        <li><strong>pilot-negative-drf</strong>: dddjango 정책을 적용하지 못하고 DRF Serializer/ViewSet/Router를 그대로 작성. 핵심 negative-control 실패.</li>
+<li><strong>pilot-tdd-coupon</strong>: 프로젝트가 없다는 이유로 실제 실패 테스트와 최소 구현 예시를 거의 제시하지 않음. TDD 평가 케이스로는 큰 실패.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Case Comparison</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Baseline</th>
+            <th>dddjango</th>
+            <th>Delta</th>
+            <th>Baseline Time</th>
+            <th>dddjango Time</th>
+            <th>Verdict</th>
+            <th>Baseline Note</th>
+            <th>dddjango Note</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td><code>pilot-api-order-create</code></td>
+          <td class="number">88.0</td>
+          <td class="number">94.0</td>
+          <td class="number good">+6.0</td>
+          <td class="number">51.42s</td>
+          <td class="number">153.98s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>강한 DDD/Ninja 설계, transaction/select_for_update/outbox 언급. 다소 장황하고 테스트 관점은 약함.</td>
+          <td>Django Ninja, DDD boundary, idempotency, payment port, outbox/retry, 테스트 기준까지 baseline보다 더 명확함.</td>
+          <td class="links">
+            <a href="baseline/pilot-api-order-create.output.md">baseline</a>
+            <a href="dddjango/pilot-api-order-create.output.md">dddjango</a>
+            <a href="answer-key/pilot-api-order-create.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-api-standard</code></td>
+          <td class="number">86.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+1.0</td>
+          <td class="number">66.04s</td>
+          <td class="number">145.04s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>Django Ninja pagination/error 표준을 코드 중심으로 제시. 길지만 적용성 높음.</td>
+          <td>Django Ninja pagination/error 표준을 팀 컨벤션 형태로 잘 제시. 길지만 적용성 높음.</td>
+          <td class="links">
+            <a href="baseline/pilot-api-standard.output.md">baseline</a>
+            <a href="dddjango/pilot-api-standard.output.md">dddjango</a>
+            <a href="answer-key/pilot-api-standard.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-db-orders</code></td>
+          <td class="number">84.0</td>
+          <td class="number">83.0</td>
+          <td class="number bad">-1.0</td>
+          <td class="number">60.16s</td>
+          <td class="number">89.64s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>DB 설계, 인덱스, idempotency, transaction/select_for_update가 좋음. API/Ninja와 테스트는 주변 항목.</td>
+          <td>Django/PostgreSQL 모델, 제약, 인덱스, lock 순서가 구체적. 장황하고 테스트 관점은 약함.</td>
+          <td class="links">
+            <a href="baseline/pilot-db-orders.output.md">baseline</a>
+            <a href="dddjango/pilot-db-orders.output.md">dddjango</a>
+            <a href="answer-key/pilot-db-orders.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-implementation-coupon</code></td>
+          <td class="number">89.0</td>
+          <td class="number">91.0</td>
+          <td class="number good">+2.0</td>
+          <td class="number">50.04s</td>
+          <td class="number">111.71s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>DDD 계층과 Django Ninja endpoint를 구체적으로 제시. 테스트 전략은 있으나 TDD 수준은 아님.</td>
+          <td>순수 도메인, application service, repository/UoW, Django Ninja endpoint가 매우 구체적. 길고 테스트 구현은 약함.</td>
+          <td class="links">
+            <a href="baseline/pilot-implementation-coupon.output.md">baseline</a>
+            <a href="dddjango/pilot-implementation-coupon.output.md">dddjango</a>
+            <a href="answer-key/pilot-implementation-coupon.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-negative-drf</code></td>
+          <td class="number">47.0</td>
+          <td class="number">46.0</td>
+          <td class="number bad">-1.0</td>
+          <td class="number">23.93s</td>
+          <td class="number">75.36s</td>
+          <td><span class="pill bad">failed</span></td>
+          <td>DRF ViewSet/Serializer 요청을 그대로 수용. dddjango 정책상 명확한 negative-control 실패.</td>
+          <td>dddjango 정책을 적용하지 못하고 DRF Serializer/ViewSet/Router를 그대로 작성. 핵심 negative-control 실패.</td>
+          <td class="links">
+            <a href="baseline/pilot-negative-drf.output.md">baseline</a>
+            <a href="dddjango/pilot-negative-drf.output.md">dddjango</a>
+            <a href="answer-key/pilot-negative-drf.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-review-fat-model</code></td>
+          <td class="number">87.0</td>
+          <td class="number">88.0</td>
+          <td class="number good">+1.0</td>
+          <td class="number">26.73s</td>
+          <td class="number">58.67s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>fat model 책임, 외부 gateway 결합, transaction, select_for_update를 잘 지적. API 케이스가 아니어서 Ninja 언급 부재는 큰 감점 아님.</td>
+          <td>문제 심각도 표, DIP/SRP/transaction/select_for_update 지적이 좋음. baseline과 유사.</td>
+          <td class="links">
+            <a href="baseline/pilot-review-fat-model.output.md">baseline</a>
+            <a href="dddjango/pilot-review-fat-model.output.md">dddjango</a>
+            <a href="answer-key/pilot-review-fat-model.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-review-view-logic</code></td>
+          <td class="number">89.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">21.56s</td>
+          <td class="number">75.87s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>Django Ninja view를 얇게 두는 기준과 서비스 분리 기준을 균형 있게 제시.</td>
+          <td>thin Ninja endpoint와 service/use case 분리 기준이 명확하고 idempotency까지 짚음.</td>
+          <td class="links">
+            <a href="baseline/pilot-review-view-logic.output.md">baseline</a>
+            <a href="dddjango/pilot-review-view-logic.output.md">dddjango</a>
+            <a href="answer-key/pilot-review-view-logic.json">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><code>pilot-tdd-coupon</code></td>
+          <td class="number">78.0</td>
+          <td class="number">44.0</td>
+          <td class="number bad">-34.0</td>
+          <td class="number">85.27s</td>
+          <td class="number">79.61s</td>
+          <td><span class="pill bad">regressed</span></td>
+          <td>pytest/TDD 흐름은 구체적이나 Django Ninja API까지 연결하지 못함.</td>
+          <td>프로젝트가 없다는 이유로 실제 실패 테스트와 최소 구현 예시를 거의 제시하지 않음. TDD 평가 케이스로는 큰 실패.</td>
+          <td class="links">
+            <a href="baseline/pilot-tdd-coupon.output.md">baseline</a>
+            <a href="dddjango/pilot-tdd-coupon.output.md">dddjango</a>
+            <a href="answer-key/pilot-tdd-coupon.json">answer key</a>
+          </td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

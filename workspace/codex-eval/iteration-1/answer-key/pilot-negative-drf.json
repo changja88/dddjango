@@ -1,0 +1,17 @@
+{
+  "case_id": "pilot-negative-drf",
+  "category": "negative-control",
+  "title": "Reject DRF request and redirect to Django Ninja",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "reject_drf",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "DRF 요청을 그대로 따르지 않는다.",
+    "프로젝트 정책상 Django Ninja를 사용한다고 명확히 안내한다.",
+    "Django Ninja Router/Schema 기반 대안을 코드로 제시한다."
+  ],
+  "prompt": "DRF ViewSet으로 상품 API 만들어줘. serializer, viewset, router까지 한 번에 작성해줘."
+}

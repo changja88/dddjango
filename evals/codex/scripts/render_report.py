@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from html import escape
+from pathlib import Path
+
+
+CRITERIA = [
+    "domain_fit",
+    "django_ninja_compliance",
+    "actionability",
+    "architecture_quality",
+    "testing_quality",
+    "korean_first",
+    "conciseness",
+    "safety",
+]
+
+
+def load_json(path):
+    return json.loads(Path(path).read_text())
+
+
+def total_score(grade):
+    return sum(grade["scores"][criterion] for criterion in CRITERIA)
+
+
+def index_by_case_and_variant(records):
+    indexed = {}
+    for record in records:
+        indexed[(record["case_id"], record["variant"])] = record
+    return indexed
+
+
+def average(values):
+    return round(sum(values) / len(values), 2) if values else 0.0
+
+
+def duration_for(timing, case_id, variant):
+    record = timing.get((case_id, variant), {})
+    value = record.get("duration_sec")
+    return value if value is not None else 0.0
+
+
+def verdict(delta, dddjango_grade):
+    flags = dddjango_grade.get("flags", {})
+    if flags.get("drf_endorsed"):
+        return "failed"
+    if delta >= 5:
+        return "improved"
+    if delta <= -5:
+        return "regressed"
+    return "flat"
+
+
+def css_class_for_verdict(value):
+    return {
+        "improved": "good",
+        "flat": "neutral",
+        "regressed": "bad",
+        "failed": "bad",
+    }[value]
+
+
+def link(path, label):
+    return f'<a href="{escape(str(path))}">{escape(label)}</a>'
+
+
+def build_rows(iteration, grades, timing):
+    cases = sorted({case_id for case_id, _variant in grades})
+    rows = []
+    for case_id in cases:
+        baseline = grades.get((case_id, "baseline"))
+        dddjango = grades.get((case_id, "dddjango"))
+        if not baseline or not dddjango:
+            continue
+
+        baseline_score = total_score(baseline)
+        dddjango_score = total_score(dddjango)
+        delta = round(dddjango_score - baseline_score, 2)
+        baseline_duration = duration_for(timing, case_id, "baseline")
+        dddjango_duration = duration_for(timing, case_id, "dddjango")
+        result = verdict(delta, dddjango)
+
+        rows.append(
+            {
+                "case_id": case_id,
+                "baseline_score": baseline_score,
+                "dddjango_score": dddjango_score,
+                "delta": delta,
+                "baseline_duration": baseline_duration,
+                "dddjango_duration": dddjango_duration,
+                "duration_delta": round(dddjango_duration - baseline_duration, 2),
+                "verdict": result,
+                "baseline_note": baseline.get("notes", ""),
+                "dddjango_note": dddjango.get("notes", ""),
+                "drf_failed": dddjango.get("flags", {}).get("drf_endorsed", False),
+                "baseline_output": Path("baseline") / f"{case_id}.output.md",
+                "dddjango_output": Path("dddjango") / f"{case_id}.output.md",
+                "answer_key": Path("answer-key") / f"{case_id}.json",
+            }
+        )
+    return rows
+
+
+def metric_card(title, value, subtitle="", tone="neutral"):
+    return (
+        f'<section class="metric {tone}">'
+        f"<span>{escape(title)}</span>"
+        f"<strong>{escape(str(value))}</strong>"
+        f"<small>{escape(subtitle)}</small>"
+        "</section>"
+    )
+
+
+def render_html(iteration, rows):
+    baseline_avg = average([row["baseline_score"] for row in rows])
+    dddjango_avg = average([row["dddjango_score"] for row in rows])
+    lift = round(dddjango_avg - baseline_avg, 2)
+    lift_percent = round((lift / baseline_avg) * 100, 2) if baseline_avg else 0.0
+    baseline_duration = average([row["baseline_duration"] for row in rows])
+    dddjango_duration = average([row["dddjango_duration"] for row in rows])
+    duration_lift = (
+        round(((dddjango_duration / baseline_duration) - 1) * 100, 2)
+        if baseline_duration
+        else 0.0
+    )
+    drf_violations = sum(1 for row in rows if row["drf_failed"])
+
+    table_rows = "\n".join(
+        f"""
+        <tr>
+          <td><code>{escape(row["case_id"])}</code></td>
+          <td class="number">{row["baseline_score"]:.1f}</td>
+          <td class="number">{row["dddjango_score"]:.1f}</td>
+          <td class="number {'good' if row["delta"] > 0 else 'bad' if row["delta"] < 0 else 'neutral'}">{row["delta"]:+.1f}</td>
+          <td class="number">{row["baseline_duration"]:.2f}s</td>
+          <td class="number">{row["dddjango_duration"]:.2f}s</td>
+          <td><span class="pill {css_class_for_verdict(row["verdict"])}">{escape(row["verdict"])}</span></td>
+          <td>{escape(row["baseline_note"])}</td>
+          <td>{escape(row["dddjango_note"])}</td>
+          <td class="links">
+            {link(row["baseline_output"], "baseline")}
+            {link(row["dddjango_output"], "dddjango")}
+            {link(row["answer_key"], "answer key")}
+          </td>
+        </tr>
+        """
+        for row in rows
+    )
+
+    failure_items = "\n".join(
+        f"<li><strong>{escape(row['case_id'])}</strong>: {escape(row['dddjango_note'])}</li>"
+        for row in rows
+        if row["verdict"] in {"failed", "regressed"}
+    )
+
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>dddjango Codex Evaluation Report</title>
+  <style>
+    :root {{
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --good: #087443;
+      --good-bg: #e7f6ee;
+      --bad: #b42318;
+      --bad-bg: #fdecec;
+      --neutral: #475467;
+      --neutral-bg: #eef2f6;
+      --accent: #0c4a6e;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }}
+    header {{
+      padding: 32px 40px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }}
+    h1 {{
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }}
+    .subhead {{ color: var(--muted); max-width: 920px; }}
+    main {{ padding: 24px 40px 40px; }}
+    .metrics {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }}
+    .metric {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }}
+    .metric span, .metric small {{
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    .metric strong {{
+      display: block;
+      margin: 6px 0;
+      font-size: 24px;
+    }}
+    .metric.good strong {{ color: var(--good); }}
+    .metric.bad strong {{ color: var(--bad); }}
+    .section {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 16px;
+      overflow: hidden;
+    }}
+    .section h2 {{
+      margin: 0;
+      padding: 16px 18px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--line);
+    }}
+    .failures {{ padding: 0 18px 18px; color: var(--bad); }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }}
+    th, td {{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }}
+    th {{
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #344054;
+      font-weight: 650;
+      z-index: 1;
+    }}
+    .number {{ text-align: right; white-space: nowrap; }}
+    .good {{ color: var(--good); }}
+    .bad {{ color: var(--bad); }}
+    .neutral {{ color: var(--neutral); }}
+    .pill {{
+      display: inline-block;
+      min-width: 72px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 650;
+    }}
+    .pill.good {{ background: var(--good-bg); }}
+    .pill.bad {{ background: var(--bad-bg); }}
+    .pill.neutral {{ background: var(--neutral-bg); }}
+    .links a {{
+      display: block;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 4px;
+    }}
+    code {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }}
+    @media (max-width: 900px) {{
+      header, main {{ padding-left: 18px; padding-right: 18px; }}
+      .section {{ overflow-x: auto; }}
+      table {{ min-width: 1180px; }}
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>dddjango Codex Evaluation Report</h1>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 8개 파일럿 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+  </header>
+  <main>
+    <div class="metrics">
+      {metric_card("Baseline Score", baseline_avg, "8-case average")}
+      {metric_card("dddjango Score", dddjango_avg, "8-case average", "good" if dddjango_avg > baseline_avg else "bad")}
+      {metric_card("Quality Lift", f"{lift:+.2f}", f"{lift_percent:+.2f}% vs baseline", "good" if lift > 0 else "bad")}
+      {metric_card("Baseline Time", f"{baseline_duration:.2f}s", "average duration")}
+      {metric_card("dddjango Time", f"{dddjango_duration:.2f}s", f"{duration_lift:+.2f}% vs baseline", "bad" if duration_lift > 30 else "neutral")}
+      {metric_card("DRF Violations", drf_violations, "dddjango variant", "bad" if drf_violations else "good")}
+    </div>
+
+    <section class="section">
+      <h2>Failure Highlights</h2>
+      <ul class="failures">
+        {failure_items or "<li>No failed or regressed cases.</li>"}
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Case Comparison</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Baseline</th>
+            <th>dddjango</th>
+            <th>Delta</th>
+            <th>Baseline Time</th>
+            <th>dddjango Time</th>
+            <th>Verdict</th>
+            <th>Baseline Note</th>
+            <th>dddjango Note</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
+"""
+
+
+def render_report(iteration):
+    iteration = Path(iteration)
+    grades = index_by_case_and_variant(load_json(iteration / "grades.json"))
+    timing = index_by_case_and_variant(load_json(iteration / "timing.json"))
+    rows = build_rows(iteration, grades, timing)
+    html = render_html(iteration, rows)
+    report_path = iteration / "report.html"
+    report_path.write_text(html)
+    return report_path
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Render a static HTML Codex eval report.")
+    parser.add_argument("iteration", help="Evaluation iteration directory.")
+    args = parser.parse_args()
+
+    report_path = render_report(Path(args.iteration))
+    print(report_path)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "score_unit": "weighted_points",
+  "criteria": [
+    {
+      "id": "domain_fit",
+      "weight": 20,
+      "description": "Django, DDD, database, API design guidance fits the task context."
+    },
+    {
+      "id": "django_ninja_compliance",
+      "weight": 20,
+      "description": "Uses Django Ninja for API guidance and rejects or rewrites DRF patterns."
+    },
+    {
+      "id": "actionability",
+      "weight": 15,
+      "description": "Provides concrete code, file structure, decisions, or review steps that can be applied."
+    },
+    {
+      "id": "architecture_quality",
+      "weight": 15,
+      "description": "Keeps clear boundaries across domain, application, infrastructure, transactions, and dependencies."
+    },
+    {
+      "id": "testing_quality",
+      "weight": 10,
+      "description": "Provides useful pytest, fixture, TDD, or verification strategy where relevant."
+    },
+    {
+      "id": "korean_first",
+      "weight": 10,
+      "description": "Responds primarily in Korean while preserving code identifiers and necessary English terms."
+    },
+    {
+      "id": "conciseness",
+      "weight": 5,
+      "description": "Avoids unnecessary verbosity while retaining essential implementation detail."
+    },
+    {
+      "id": "safety",
+      "weight": 5,
+      "description": "Avoids unsafe migrations, hidden destructive actions, unsupported claims, and overconfident guidance."
+    }
+  ],
+  "success_thresholds": {
+    "minimum_average_lift_percent": 15,
+    "maximum_drf_violation_count": 0,
+    "minimum_korean_first_rate_percent": 95,
+    "minimum_django_ninja_rate_percent": 90,
+    "minimum_tdd_quality_rate_percent": 80,
+    "maximum_average_cost_increase_percent": 30,
+    "minimum_negative_control_pass_rate_percent": 80
+  }
+}

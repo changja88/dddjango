@@ -33,9 +33,13 @@ class VersionTests(unittest.TestCase):
 class FileUpdateTests(unittest.TestCase):
     def test_readme_prioritizes_codex_distribution(self):
         readme = (ROOT / "README.md").read_text()
+        version = json.loads((ROOT / ".codex-plugin/plugin.json").read_text())["version"]
 
         self.assertLess(readme.index("## OpenAI Codex"), readme.index("## Claude Code"))
-        self.assertIn("codex plugin marketplace add changja88/dddjango --ref v0.1.4", readme)
+        self.assertIn(
+            f"codex plugin marketplace add changja88/dddjango --ref v{version}",
+            readme,
+        )
         self.assertIn("codex plugin marketplace upgrade dddjango-local", readme)
         self.assertIn("Codex Distribution Checklist", readme)
 
