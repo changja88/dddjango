@@ -80,6 +80,19 @@ Raw evaluation outputs under `workspace/*/test/` are ignored. Commit evaluation 
 - Tag the release, for example `v0.1.0`.
 - Update marketplace entries to the release version or tag.
 
+You can prepare the local release commit and tag with:
+
+```bash
+make release
+```
+
+The release command prompts for `patch`, `minor`, or `major`, updates plugin versions, runs metadata validation, creates a `chore: release vX.Y.Z` commit, and creates the local release tag. It does not push; publish manually after review:
+
+```bash
+git push
+git push origin vX.Y.Z
+```
+
 ## License
 
 MIT
