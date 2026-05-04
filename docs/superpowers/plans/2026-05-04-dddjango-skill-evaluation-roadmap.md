@@ -560,7 +560,7 @@ Result:
 873dd4e test: stabilize dddjango codex evaluation gate
 ```
 
-- [ ] **Step 4: gate 통과 후 release한다**
+- [x] **Step 4: gate 통과 후 release한다**
 
 Run:
 
@@ -575,6 +575,13 @@ Expected:
 release commit 생성
 tag 생성
 현재 브랜치와 tag가 원격으로 push됨
+```
+
+Result:
+
+```text
+`make release`에서 patch를 선택해 v0.1.7 릴리즈를 완료했다.
+릴리즈 커밋과 태그를 생성했고 `origin/main`, `origin/v0.1.7` push가 통과했다.
 ```
 
 ## 운영 원칙
