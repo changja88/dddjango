@@ -1,6 +1,6 @@
 {
   "name": "dddjango",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Python and Django development standards for DDD, Django Ninja APIs, database design, testing, and clean architecture.",
   "author": {
     "name": "Hyun",
