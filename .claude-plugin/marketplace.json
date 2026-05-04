@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Django, DDD, Django Ninja, DB design, testing, and clean code skills",
-    "version": "0.1.4"
+    "version": "0.1.5"
   },
   "plugins": [
     {
@@ -16,7 +16,7 @@
         "url": "https://github.com/changja88/dddjango.git"
       },
       "description": "Python and Django development standards for DDD, Django Ninja APIs, database design, testing, and clean architecture.",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "strict": true
     }
   ]
