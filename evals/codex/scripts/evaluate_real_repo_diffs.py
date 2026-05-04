@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -54,7 +55,7 @@ def combined_diff(text):
     return "\n\n".join(block.rstrip() for block in blocks) + "\n"
 
 
-def run_command(command, *, cwd, input_text=None):
+def run_command(command, *, cwd, input_text=None, env=None):
     try:
         result = subprocess.run(
             command,
@@ -63,6 +64,7 @@ def run_command(command, *, cwd, input_text=None):
             text=True,
             capture_output=True,
             timeout=30,
+            env=env,
         )
     except FileNotFoundError as exc:
         return {
@@ -102,6 +104,15 @@ def command_summary(result, limit=500):
     return output
 
 
+def status_for_test_result(result):
+    if result["status"] == "passed":
+        return "passed"
+    output = f"{result.get('stdout', '')}\n{result.get('stderr', '')}".lower()
+    if "no tests ran" in output:
+        return "empty"
+    return result["status"]
+
+
 def run_optional_checks(workspace_path):
     if not (workspace_path / "manage.py").exists():
         return {
@@ -121,14 +132,35 @@ def run_optional_checks(workspace_path):
     )
     django_check["notes"] = command_summary(django_check)
 
+    test_env = os.environ.copy()
+    test_env.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
     if module_available("pytest", cwd=workspace_path):
         pytest_result = run_command(
-            [sys.executable, "-m", "pytest", "-q"],
+            [sys.executable, "-m", "pytest", "-q", "shop/orders/tests.py"],
             cwd=workspace_path,
+            env=test_env,
         )
     else:
         pytest_result = {"status": "skipped", "notes": "pytest is not installed"}
-    pytest_result["notes"] = pytest_result.get("notes", command_summary(pytest_result))
+    pytest_status = status_for_test_result(pytest_result)
+    if pytest_status == "empty":
+        django_test = run_command(
+            [sys.executable, "manage.py", "test", "shop.orders"],
+            cwd=workspace_path,
+            env=test_env,
+        )
+        django_test["notes"] = command_summary(django_test)
+        pytest_result = {
+            "status": django_test["status"],
+            "returncode": django_test.get("returncode"),
+            "stdout": django_test.get("stdout", ""),
+            "stderr": django_test.get("stderr", ""),
+            "notes": f"pytest collected no tests; manage.py test fallback: {django_test['notes']}",
+        }
+    else:
+        pytest_result["status"] = pytest_status
+        pytest_result["notes"] = pytest_result.get("notes", command_summary(pytest_result))
 
     return {
         "django_check": django_check,

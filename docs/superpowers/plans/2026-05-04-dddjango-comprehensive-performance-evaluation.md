@@ -279,15 +279,17 @@
   - baseline patch applied: `6/6`
   - dddjango diff found: `6/6`
   - dddjango patch applied: `6/6`
-  - `python manage.py check`: skipped, local Django dependency not installed
-  - pytest: skipped, local Django dependency not installed
+  - baseline `python manage.py check`: `6/6`
+  - baseline pytest/test fallback: `6/6`
+  - dddjango `python manage.py check`: `6/6`
+  - dddjango pytest/test fallback: `6/6`
 - Observed dddjango strengths:
   - `real-repo-fat-model-refactor`: service layer diff와 pytest 보강 포함.
   - `real-repo-ninja-product-search`: `FilterSchema`, `Query`, allow-list sort, `items/meta`, `HttpRequest`, `application/problem+json` 포함.
   - `real-repo-db-order-index-review`: `Index`, `UniqueConstraint`, migration diff 포함.
   - `real-repo-drf-to-ninja-migration`: `rest_framework`, `ModelSerializer`, `APIView` 제거 diff 포함.
 - Remaining gap:
-  - patch apply까지 자동 검증한다. Django dependency가 있는 환경에서는 `python manage.py check`와 pytest까지 이어서 측정해야 한다.
+  - patch apply, Django system check, pytest/test fallback까지 자동 검증한다.
   - real-repo dddjango 실행 시간이 baseline보다 길다. 이후 full release gate에서는 quality lift와 함께 시간 증가도 별도 판단해야 한다.
 
 ## File Responsibilities
@@ -763,7 +765,8 @@ Result:
 `evaluate_real_repo_diffs.py`가 output markdown의 fenced diff를 추출한다.
 fixture 복사본에 `git apply --recount --check`와 `git apply --recount`를 실행한다.
 결과는 `real_repo_evaluation.json`에 기록되고 HTML report의 Real Repo Patch Evaluation 표에 표시된다.
-현재 로컬은 Django dependency가 없어 `python manage.py check`와 pytest는 skipped로 기록된다.
+pytest가 `tests.py` 기본 수집 패턴 문제로 no tests ran을 반환하면 `python manage.py test shop.orders`로 fallback한다.
+2026-05-05 기준 repo-local `.venv`에서 Django dependency를 설치한 뒤 baseline/dddjango 모두 patch apply, `python manage.py check`, test fallback `6/6` 통과를 확인했다.
 ```
 
 ## Phase 7: Full Benchmark Execution
@@ -960,8 +963,8 @@ Cadence:
 
 1. Claude 인증 blocker를 해결한다.
 2. Phase 2 Step 4를 실행해서 Claude smoke report를 실제 점수로 채운다.
-3. Django dependency가 있는 환경에서 real repo `python manage.py check`와 pytest까지 실행한다.
-4. Codex/Claude full benchmark를 3회 반복 측정한다.
+3. Codex full benchmark를 3회 반복 측정한다.
+4. Claude 인증 blocker 해결 후 Claude smoke/benchmark를 실행한다.
 5. fresh install 검증 후 release gate를 확정한다.
 
 ## Tracking Rules
