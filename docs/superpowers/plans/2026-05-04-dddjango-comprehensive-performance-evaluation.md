@@ -20,7 +20,7 @@
 | Phase 3 | Done | 24-case benchmark suite 확장 | `evals/shared/cases/benchmark.jsonl` |
 | Phase 4 | Done | trigger precision/recall suite 확장 | `evals/shared/cases/trigger.jsonl` |
 | Phase 5 | Done | usability/manual review 체계 추가 | `evals/shared/rubrics/usability-checklist.md` |
-| Phase 6 | Pending | real repo forward test 구성 | `evals/fixtures/django-*` 또는 외부 fixture |
+| Phase 6 | Done | real repo forward test 구성 | `evals/fixtures/django-shop`, `workspace/codex-eval/real-repo-1/report.html` |
 | Phase 7 | In Progress | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-4/report.html`, `workspace/codex-eval/trigger-5/report.html` |
 | Phase 8 | Pending | marketplace/fresh install 검증 | release install log, README 검증 |
 | Phase 9 | Pending | beta 사용자 평가 | feedback summary, regression cases |
@@ -220,6 +220,76 @@
   - 즉각적인 다음 개선 후보는 "스킬 전반"보다 Django Ninja 코드 생성의 현실성이다. 특히 잘못된 import, endpoint type hint, 검증/도메인 규칙 누락을 줄이는 방향이 효과적이다.
   - trigger negative precision은 좋지만, non-Django 요청에서 파일이 없을 때도 최소 일반 가이드나 예시를 제공하도록 개선하면 사용성이 오른다.
 
+## Iteration 6 Targeted Realism Fix
+
+- 평가 일자: 2026-05-05
+- 범위: 수동 사용성 감점 원인이 확인된 타깃 케이스만 dddjango variant로 재실행했다.
+- Fix:
+  - `implementation-django-ninja`에 sync endpoint `request: HttpRequest`, 명시적 return type, `from typing import list` 금지, `application/problem+json` 실제 응답/테스트 검증, `response=list[...]`와 커스텀 envelope 혼용 금지, `transaction.atomic()` rollback과 실패 응답 저장 충돌 방지 규칙을 추가했다.
+  - non-Django negative-control은 dddjango 스킬을 주입하지 않되, 파일이 없어도 요청 기술 스택의 최소 예시나 일반 가이드를 제공하도록 neutral developer instruction을 추가했다.
+  - Codex 하네스의 Django Ninja policy injection에 `request: HttpRequest`와 explicit return type 요구를 추가했다.
+- Targeted rerun:
+  - `benchmark-api-product-search`
+  - `benchmark-api-inventory-reserve`
+  - `benchmark-negative-drf-explicit`
+  - `trigger-negative-react-props`
+  - `trigger-negative-shell-script`
+  - `trigger-conflict-rest-framework-import`
+  - `trigger-conflict-drf-vs-ninja`
+- Verification observations:
+  - `benchmark-api-product-search`는 `HttpRequest`, `application/problem+json`, allow-list sort, `items/meta envelope`를 포함했다.
+  - `benchmark-api-inventory-reserve`는 실패 응답 저장 후 예외를 다시 던지지 않아 `atomic()` rollback으로 멱등성 실패 응답이 사라지는 문제를 명시했다.
+  - `benchmark-negative-drf-explicit`은 재실행 후 모든 endpoint에 `request: HttpRequest`와 return type이 포함됐다.
+  - `trigger-negative-react-props`는 Django/DDD 오염 없이 React props 구조 가이드를 제공했다.
+  - `trigger-negative-shell-script`는 fenced bash block이 정상 출력됐다.
+- Updated automatic summary:
+  - Benchmark dddjango average: `87.58`
+  - Benchmark lift: `+3.91` points, `+4.67%`
+  - Trigger dddjango average: `82.80`
+  - Trigger lift: `+2.43` points, `+3.02%`
+- Current interpretation:
+  - 자동 점수 lift는 여전히 `+15%` release gate에 미달하지만, 이번 변경의 목적이었던 코드 현실성/사용성 감점 원인은 줄었다.
+  - 자동 휴리스틱은 짧고 현실적인 코드에서 architecture term이 줄면 점수를 낮게 줄 수 있으므로, release 판단에는 manual usability와 real-repo forward test를 같이 봐야 한다.
+  - 다음 실행 가능한 단계는 Phase 6 real repo fixture 구성이다. Claude 측정은 인증/결제 blocker가 풀릴 때까지 pending이다.
+
+## Real Repo Forward Test Iteration 1
+
+- 평가 일자: 2026-05-05
+- Fixture strategy: 작고 공개 가능한 Django fixture를 repo 안에 추가했다.
+  - fixture: `evals/fixtures/django-shop`
+  - cases: `evals/shared/cases/real-repo.jsonl`
+  - report: `workspace/codex-eval/real-repo-1/report.html`
+- Fixture coverage:
+  - fat model: `Order.cancel()`
+  - fat view: `reserve_inventory`
+  - legacy DRF: `api_drf.py`
+  - DB/index target: `Order`, `Reservation`, `Product`
+  - thin tests: `shop/orders/tests.py`
+- Real-repo suite:
+  - cases: `6`
+  - baseline executions: `6/6 returncode=0`
+  - dddjango executions: `6/6 returncode=0`
+  - baseline average score: `84.00`
+  - dddjango average score: `88.83`
+  - lift: `+4.83` points, `+5.75%`
+- Diff evaluator:
+  - script: `evals/codex/scripts/evaluate_real_repo_diffs.py`
+  - output: `workspace/codex-eval/real-repo-1/real_repo_evaluation.json`
+  - baseline diff found: `6/6`
+  - baseline patch applied: `6/6`
+  - dddjango diff found: `6/6`
+  - dddjango patch applied: `6/6`
+  - `python manage.py check`: skipped, local Django dependency not installed
+  - pytest: skipped, local Django dependency not installed
+- Observed dddjango strengths:
+  - `real-repo-fat-model-refactor`: service layer diff와 pytest 보강 포함.
+  - `real-repo-ninja-product-search`: `FilterSchema`, `Query`, allow-list sort, `items/meta`, `HttpRequest`, `application/problem+json` 포함.
+  - `real-repo-db-order-index-review`: `Index`, `UniqueConstraint`, migration diff 포함.
+  - `real-repo-drf-to-ninja-migration`: `rest_framework`, `ModelSerializer`, `APIView` 제거 diff 포함.
+- Remaining gap:
+  - patch apply까지 자동 검증한다. Django dependency가 있는 환경에서는 `python manage.py check`와 pytest까지 이어서 측정해야 한다.
+  - real-repo dddjango 실행 시간이 baseline보다 길다. 이후 full release gate에서는 quality lift와 함께 시간 증가도 별도 판단해야 한다.
+
 ## File Responsibilities
 
 - `evals/codex/cases/pilot.jsonl`: Codex smoke suite의 현재 8개 기준 케이스.
@@ -227,8 +297,11 @@
 - `evals/claude/scripts/run_prompts.py`: Claude with/without dddjango 실행 하네스.
 - `evals/codex/scripts/grade_outputs.py`: 수동 grade summary 계산기.
 - `evals/codex/scripts/render_report.py`: Codex/Claude 공용 HTML report renderer.
+- `evals/codex/scripts/evaluate_real_repo_diffs.py`: real repo unified diff 적용 가능성 evaluator.
 - `evals/codex/rubrics/grading-schema.json`: 현재 scoring schema.
 - `evals/codex/rubrics/dddjango-rubric.md`: 현재 수동 채점 기준.
+- `evals/shared/cases/real-repo.jsonl`: real repo forward test suite.
+- `evals/fixtures/django-shop`: 공개 가능한 작은 Django fixture.
 - `workspace/codex-eval/iteration-*`: Codex 실행 결과와 HTML report.
 - `workspace/claude-eval/iteration-*`: Claude 실행 결과와 HTML report.
 - `skills/`: canonical dddjango skill source.
@@ -629,7 +702,7 @@ Result:
 - Modify: `evals/codex/scripts/run_prompts.py`
 - Modify: `evals/claude/scripts/run_prompts.py`
 
-- [ ] **Step 1: fixture 전략을 선택한다**
+- [x] **Step 1: fixture 전략을 선택한다**
 
 Preferred:
 
@@ -643,7 +716,7 @@ Alternative:
 private fixture repo를 사용하되 report에는 anonymized summary만 남긴다.
 ```
 
-- [ ] **Step 2: real-repo task를 작성한다**
+- [x] **Step 2: real-repo task를 작성한다**
 
 Tasks:
 
@@ -656,7 +729,15 @@ view logic service layer 이동
 DRF endpoint를 Django Ninja로 전환
 ```
 
-- [ ] **Step 3: diff 기반 평가를 추가한다**
+Result:
+
+```text
+`evals/shared/cases/real-repo.jsonl`에 6개 forward-diff task를 추가했다.
+`python3 evals/codex/scripts/init_iteration.py --suite real-repo --output workspace/codex-eval/real-repo-1`
+baseline/dddjango 실행과 HTML report 생성을 완료했다.
+```
+
+- [x] **Step 3: diff 기반 평가를 추가한다**
 
 Measure:
 
@@ -674,6 +755,15 @@ Gate:
 테스트 통과율 >= 90%
 reviewer 수정 요청 baseline 대비 20% 이상 감소
 architecture violation baseline 대비 30% 이상 감소
+```
+
+Result:
+
+```text
+`evaluate_real_repo_diffs.py`가 output markdown의 fenced diff를 추출한다.
+fixture 복사본에 `git apply --recount --check`와 `git apply --recount`를 실행한다.
+결과는 `real_repo_evaluation.json`에 기록되고 HTML report의 Real Repo Patch Evaluation 표에 표시된다.
+현재 로컬은 Django dependency가 없어 `python manage.py check`와 pytest는 skipped로 기록된다.
 ```
 
 ## Phase 7: Full Benchmark Execution
@@ -870,10 +960,9 @@ Cadence:
 
 1. Claude 인증 blocker를 해결한다.
 2. Phase 2 Step 4를 실행해서 Claude smoke report를 실제 점수로 채운다.
-3. Django Ninja 코드 생성 현실성 개선안을 스킬에 반영한다.
-4. real repo fixture 전략을 확정한다.
-5. Codex/Claude full benchmark를 3회 반복 측정한다.
-6. fresh install 검증 후 release gate를 확정한다.
+3. Django dependency가 있는 환경에서 real repo `python manage.py check`와 pytest까지 실행한다.
+4. Codex/Claude full benchmark를 3회 반복 측정한다.
+5. fresh install 검증 후 release gate를 확정한다.
 
 ## Tracking Rules
 

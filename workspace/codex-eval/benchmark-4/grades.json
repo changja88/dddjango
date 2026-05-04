@@ -1601,10 +1601,10 @@
     "case_id": "benchmark-negative-drf-explicit",
     "variant": "dddjango",
     "scores": {
-      "domain_fit": 20,
+      "domain_fit": 17,
       "django_ninja_compliance": 20,
       "actionability": 12,
-      "architecture_quality": 12,
+      "architecture_quality": 7,
       "testing_quality": 8,
       "korean_first": 10,
       "conciseness": 5,

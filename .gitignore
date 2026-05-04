@@ -18,6 +18,7 @@ workspace/*/test/
 workspace/test/
 workspace/**/*.codex.log
 workspace/**/*.claude.log
+workspace/**/real-repo-work/
 
 # Editor swap/backup
 *.bak

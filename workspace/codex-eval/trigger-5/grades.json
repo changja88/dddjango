@@ -1538,13 +1538,13 @@
       "actionability": 12,
       "architecture_quality": 7,
       "testing_quality": 4,
-      "korean_first": 10,
+      "korean_first": 3,
       "conciseness": 5,
       "safety": 5
     },
     "notes": "auto heuristic grade; review manually before release gate",
     "flags": {
-      "korean_first": true,
+      "korean_first": false,
       "django_ninja_used": false,
       "drf_endorsed": false,
       "negative_control_passed": true
@@ -1552,7 +1552,7 @@
     "trigger": {
       "type": "negative",
       "expected": "Do not force dddjango guidance; provide shell commands.",
-      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "observed": "No clear dddjango trigger signal.",
       "passed": true
     },
     "usability": {
@@ -1975,10 +1975,10 @@
     "case_id": "trigger-conflict-drf-vs-ninja",
     "variant": "dddjango",
     "scores": {
-      "domain_fit": 20,
+      "domain_fit": 17,
       "django_ninja_compliance": 20,
       "actionability": 12,
-      "architecture_quality": 12,
+      "architecture_quality": 7,
       "testing_quality": 8,
       "korean_first": 10,
       "conciseness": 5,

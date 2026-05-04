@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>real-repo-fat-model-refactor baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>real-repo-fat-model-refactor baseline</h1>
+    <div class="path">workspace/codex-eval/real-repo-1/baseline/real-repo-fat-model-refactor.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래는 읽기 전용 환경 기준으로 제안하는 unified diff입니다. 핵심은 <code>Order.cancel()</code>의 use-case 규칙과 저장 책임을 <code>shop/orders/services.py</code>의 application service로 옮기고, 모델은 상태 전이용 최소 메서드만 갖게 하는 것입니다.</p>
+<pre><code>
+diff --git a/shop/orders/models.py b/shop/orders/models.py
+index 4d6f7f1..8d2f0b4 100644
+--- a/shop/orders/models.py
++++ b/shop/orders/models.py
+@@ -1,5 +1,4 @@
+ from django.db import models
+-from django.utils import timezone
+ 
+ 
+ class Order(models.Model):
+@@ -16,18 +15,14 @@ class Order(models.Model):
+     cancel_reason = models.TextField(blank=True)
+     created_at = models.DateTimeField(auto_now_add=True)
+ 
+-    def cancel(self, reason: str, actor_email: str) -&gt; None:
++    def mark_cancelled(self, *, cancel_reason: str, cancelled_at) -&gt; None:
+         if self.status == self.STATUS_SHIPPED:
+             raise ValueError(&quot;shipped orders cannot be cancelled&quot;)
+-        if self.status == self.STATUS_CANCELLED:
+-            return
+-        if not reason:
++        if not cancel_reason:
+             raise ValueError(&quot;cancel reason is required&quot;)
++
+         self.status = self.STATUS_CANCELLED
+-        self.cancel_reason = f&quot;{reason} by {actor_email}&quot;
+-        self.cancelled_at = timezone.now()
+-        self.save(update_fields=[&quot;status&quot;, &quot;cancel_reason&quot;, &quot;cancelled_at&quot;])
++        self.cancel_reason = cancel_reason
++        self.cancelled_at = cancelled_at
+ 
+ 
+ class Product(models.Model):
+diff --git a/shop/orders/services.py b/shop/orders/services.py
+new file mode 100644
+index 0000000..f2d2e0c
+--- /dev/null
++++ b/shop/orders/services.py
+@@ -0,0 +1,27 @@
++from django.db import transaction
++from django.utils import timezone
++
++from shop.orders.models import Order
++
++
++def cancel_order(*, order_id: int, reason: str, actor_email: str) -&gt; Order:
++    if not reason:
++        raise ValueError(&quot;cancel reason is required&quot;)
++
++    with transaction.atomic():
++        order = Order.objects.select_for_update().get(id=order_id)
++
++        if order.status == Order.STATUS_CANCELLED:
++            return order
++        if order.status == Order.STATUS_SHIPPED:
++            raise ValueError(&quot;shipped orders cannot be cancelled&quot;)
++
++        order.mark_cancelled(
++            cancel_reason=f&quot;{reason} by {actor_email}&quot;,
++            cancelled_at=timezone.now(),
++        )
++        order.save(update_fields=[&quot;status&quot;, &quot;cancel_reason&quot;, &quot;cancelled_at&quot;])
++
++    return order
+diff --git a/shop/orders/views.py b/shop/orders/views.py
+index 90d85bb..e6e79c8 100644
+--- a/shop/orders/views.py
++++ b/shop/orders/views.py
+@@ -5,6 +5,7 @@ from django.http import JsonResponse
+ from django.views.decorators.http import require_POST
+ 
+ from shop.orders.models import Order, Product, Reservation
++from shop.orders.services import cancel_order as cancel_order_service
+ 
+ 
+ @require_POST
+@@ -12,8 +13,8 @@ def cancel_order(request, order_id):
+     payload = json.loads(request.body or &quot;{}&quot;)
+-    order = Order.objects.get(id=order_id)
+-    order.cancel(
++    order = cancel_order_service(
++        order_id=order_id,
+         reason=payload.get(&quot;reason&quot;, &quot;&quot;),
+         actor_email=payload.get(&quot;actor_email&quot;, &quot;system@example.com&quot;),
+     )
+diff --git a/shop/orders/tests.py b/shop/orders/tests.py
+index 4ad8e70..b7fdd25 100644
+--- a/shop/orders/tests.py
++++ b/shop/orders/tests.py
+@@ -1,15 +1,86 @@
+-from django.test import TestCase
++import pytest
++from django.utils import timezone
+ 
+ from shop.orders.models import Order
++from shop.orders.services import cancel_order
+ 
++pytestmark = pytest.mark.django_db
+ 
+-class OrderModelTests(TestCase):
+-    def test_cancel_sets_status(self):
+-        order = Order.objects.create(
+-            customer_email=&quot;buyer@example.com&quot;,
+-            total_amount=&quot;100.00&quot;,
+-        )
+ 
+-        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
++def test_order_model_marks_cancelled_without_saving():
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++    )
++    cancelled_at = timezone.now()
+ 
+-        self.assertEqual(order.status, Order.STATUS_CANCELLED)
++    order.mark_cancelled(
++        cancel_reason=&quot;customer request by ops@example.com&quot;,
++        cancelled_at=cancelled_at,
++    )
++
++    assert order.status == Order.STATUS_CANCELLED
++    assert order.cancel_reason == &quot;customer request by ops@example.com&quot;
++    assert order.cancelled_at == cancelled_at
++
++    order.refresh_from_db()
++    assert order.status == Order.STATUS_PENDING
++    assert order.cancel_reason == &quot;&quot;
++    assert order.cancelled_at is None
++
++
++def test_order_model_rejects_shipped_cancel_transition():
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++        status=Order.STATUS_SHIPPED,
++    )
++
++    with pytest.raises(ValueError, match=&quot;shipped orders cannot be cancelled&quot;):
++        order.mark_cancelled(
++            cancel_reason=&quot;customer request by ops@example.com&quot;,
++            cancelled_at=timezone.now(),
++        )
++
++
++def test_cancel_order_sets_status_reason_and_timestamp():
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++    )
++
++    cancelled = cancel_order(
++        order_id=order.id,
++        reason=&quot;customer request&quot;,
++        actor_email=&quot;ops@example.com&quot;,
++    )
++
++    assert cancelled.status == Order.STATUS_CANCELLED
++    assert cancelled.cancel_reason == &quot;customer request by ops@example.com&quot;
++    assert cancelled.cancelled_at is not None
++
++    order.refresh_from_db()
++    assert order.status == Order.STATUS_CANCELLED
++    assert order.cancel_reason == &quot;customer request by ops@example.com&quot;
++    assert order.cancelled_at is not None
++
++
++def test_cancel_order_requires_reason():
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++    )
++
++    with pytest.raises(ValueError, match=&quot;cancel reason is required&quot;):
++        cancel_order(order_id=order.id, reason=&quot;&quot;, actor_email=&quot;ops@example.com&quot;)
++
++    order.refresh_from_db()
++    assert order.status == Order.STATUS_PENDING
++
++
++def test_cancel_order_is_idempotent_for_already_cancelled_orders():
++    cancelled_at = timezone.now()
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++        status=Order.STATUS_CANCELLED,
++        cancel_reason=&quot;original by ops@example.com&quot;,
++        cancelled_at=cancelled_at,
++    )
++
++    cancelled = cancel_order(
++        order_id=order.id,
++        reason=&quot;new reason&quot;,
++        actor_email=&quot;other@example.com&quot;,
++    )
++
++    assert cancelled.cancel_reason == &quot;original by ops@example.com&quot;
++    assert cancelled.cancelled_at == cancelled_at
+</code></pre>
+<p>테스트는 실행하지 않았습니다. 현재 환경이 read-only라 파일 적용 없이 diff만 제안했습니다.</p></article>
+  </main>
+</body>
+</html>

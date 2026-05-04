@@ -77,7 +77,7 @@
   </header>
   <main>
     <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
-<p>아래는 DRF의 <code>Serializer</code> + <code>APIView</code> 역할을 Django Ninja의 <code>Schema</code> + <code>Router</code>로 바꾼 예제입니다. <code>products</code> 앱에 <code>Product</code> 모델이 있다고 가정합니다.</p>
+<p>아래는 DRF <code>Serializer</code> + <code>APIView</code> 역할을 Django Ninja <code>Schema</code> + <code>Router</code>로 바꾼 예제입니다. <code>products.Product</code> 모델이 있다고 가정합니다.</p>
 <p><strong>products/schemas.py</strong></p>
 <pre><code>
 from ninja import ModelSchema, Schema
@@ -85,13 +85,13 @@ from ninja import ModelSchema, Schema
 from .models import Product
 
 
-class ProductIn(Schema):
+class ProductCreateSchema(Schema):
     name: str
     price: int
     is_active: bool = True
 
 
-class ProductOut(ModelSchema):
+class ProductSchema(ModelSchema):
     class Meta:
         model = Product
         fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;is_active&quot;, &quot;created_at&quot;]
@@ -103,29 +103,25 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from .models import Product
-from .schemas import ProductIn, ProductOut
+from .schemas import ProductCreateSchema, ProductSchema
 
 router = Router(tags=[&quot;products&quot;])
 
 
-@router.get(&quot;&quot;, response=list[ProductOut])
+@router.get(&quot;/&quot;, response=list[ProductSchema])
 def list_products(request: HttpRequest) -&gt; list[Product]:
-    return list(Product.objects.order_by(&quot;-id&quot;))
+    return list(Product.objects.order_by(&quot;-created_at&quot;))
 
 
-@router.post(&quot;&quot;, response={201: ProductOut})
-def create_product(request: HttpRequest, payload: ProductIn) -&gt; tuple[int, Product]:
-    product = Product.objects.create(
-        name=payload.name,
-        price=payload.price,
-        is_active=payload.is_active,
-    )
-    return 201, product
-
-
-@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+@router.get(&quot;/{product_id}/&quot;, response=ProductSchema)
 def get_product(request: HttpRequest, product_id: int) -&gt; Product:
     return get_object_or_404(Product, id=product_id)
+
+
+@router.post(&quot;/&quot;, response={201: ProductSchema})
+def create_product(request: HttpRequest, payload: ProductCreateSchema) -&gt; tuple[int, Product]:
+    product = Product.objects.create(**payload.dict())
+    return 201, product
 </code></pre>
 <p><strong>config/api.py</strong></p>
 <pre><code>
@@ -133,26 +129,26 @@ from ninja import NinjaAPI
 
 from products.api import router as products_router
 
-api = NinjaAPI(title=&quot;Example API&quot;)
-api.add_router(&quot;/products&quot;, products_router)
+api = NinjaAPI(title=&quot;Example API&quot;, version=&quot;1.0.0&quot;)
+api.add_router(&quot;/products/&quot;, products_router)
 </code></pre>
 <p><strong>config/urls.py</strong></p>
 <pre><code>
+from django.contrib import admin
 from django.urls import path
 
 from .api import api
 
 urlpatterns = [
+    path(&quot;admin/&quot;, admin.site.urls),
     path(&quot;api/&quot;, api.urls),
 ]
 </code></pre>
-<p>결과 엔드포인트는 다음처럼 동작합니다.</p>
+<p>검증은 이 환경에서 실행하지 않았습니다. 적용 후 아래를 실행하세요.</p>
 <pre><code>
-GET  /api/products
-POST /api/products
-GET  /api/products/{product_id}
+python manage.py check
+pytest
 </code></pre>
-<p>검증은 실행하지 않았습니다. 현재 워크스페이스가 읽기 전용이고, <code>config.toml</code>도 존재하지 않아 파일 생성이나 테스트 실행 없이 예제 코드만 제공했습니다.</p>
 <p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
   </main>
 </body>

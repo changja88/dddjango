@@ -548,7 +548,7 @@
   {
     "case_id": "trigger-negative-react-props",
     "variant": "dddjango",
-    "duration_sec": 25.68,
+    "duration_sec": 26.05,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -587,7 +587,7 @@
   {
     "case_id": "trigger-negative-shell-script",
     "variant": "dddjango",
-    "duration_sec": 4.33,
+    "duration_sec": 4.6,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -743,7 +743,7 @@
   {
     "case_id": "trigger-conflict-rest-framework-import",
     "variant": "dddjango",
-    "duration_sec": 39.53,
+    "duration_sec": 27.33,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -756,7 +756,7 @@
   {
     "case_id": "trigger-conflict-drf-vs-ninja",
     "variant": "dddjango",
-    "duration_sec": 46.88,
+    "duration_sec": 62.1,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,

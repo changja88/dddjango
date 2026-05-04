@@ -1,0 +1,166 @@
+{
+  "summary": {
+    "baseline": {
+      "count": 6,
+      "diff_found": 6,
+      "patch_check": 6,
+      "patch_applied": 6,
+      "django_check_passed": 0,
+      "pytest_passed": 0
+    },
+    "dddjango": {
+      "count": 6,
+      "diff_found": 6,
+      "patch_check": 6,
+      "patch_applied": 6,
+      "django_check_passed": 0,
+      "pytest_passed": 0
+    }
+  },
+  "records": [
+    {
+      "case_id": "real-repo-db-order-index-review",
+      "variant": "baseline",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/baseline/real-repo-db-order-index-review",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-db-order-index-review",
+      "variant": "dddjango",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/dddjango/real-repo-db-order-index-review",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-drf-to-ninja-migration",
+      "variant": "baseline",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/baseline/real-repo-drf-to-ninja-migration",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-drf-to-ninja-migration",
+      "variant": "dddjango",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/dddjango/real-repo-drf-to-ninja-migration",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-fat-model-refactor",
+      "variant": "baseline",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/baseline/real-repo-fat-model-refactor",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-fat-model-refactor",
+      "variant": "dddjango",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/dddjango/real-repo-fat-model-refactor",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-ninja-product-search",
+      "variant": "baseline",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/baseline/real-repo-ninja-product-search",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-ninja-product-search",
+      "variant": "dddjango",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/dddjango/real-repo-ninja-product-search",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-pytest-coupon",
+      "variant": "baseline",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/baseline/real-repo-pytest-coupon",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-pytest-coupon",
+      "variant": "dddjango",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/dddjango/real-repo-pytest-coupon",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-view-logic-service-layer",
+      "variant": "baseline",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/baseline/real-repo-view-logic-service-layer",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    },
+    {
+      "case_id": "real-repo-view-logic-service-layer",
+      "variant": "dddjango",
+      "fixture": "evals/fixtures/django-shop",
+      "workspace": "real-repo-work/dddjango/real-repo-view-logic-service-layer",
+      "diff_found": true,
+      "patch_check": "passed",
+      "patch_applied": "passed",
+      "django_check": "skipped",
+      "pytest": "skipped",
+      "notes": "django_check: django is not installed | pytest: django is not installed"
+    }
+  ]
+}

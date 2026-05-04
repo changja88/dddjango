@@ -1,0 +1,22 @@
+{
+  "case_id": "real-repo-view-logic-service-layer",
+  "category": "real-repo",
+  "title": "Real repo view logic service layer extraction",
+  "expectations": [
+    "korean_first",
+    "real_repo_applicability",
+    "ddd_boundaries",
+    "transaction_boundary"
+  ],
+  "scoring_focus": [
+    "views.py fat view를 service layer로 분리한다.",
+    "transaction.atomic 경계가 service에 있다.",
+    "view는 request/response 변환만 담당한다.",
+    "테스트 보강 또는 실행 명령을 포함한다."
+  ],
+  "prompt": "Fixture의 `shop/orders/views.py`에서 `reserve_inventory`가 HTTP 파싱, transaction, 재고 차감, 응답 생성을 모두 처리하고 있어. application service를 분리하는 unified diff를 제안하고, view는 HTTP 변환만 담당하게 만들어줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "evals/fixtures/django-shop",
+  "mode": "forward-diff"
+}

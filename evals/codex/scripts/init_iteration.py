@@ -12,6 +12,7 @@ SUITES = {
     "pilot": ROOT / "evals/codex/cases/pilot.jsonl",
     "benchmark": ROOT / "evals/shared/cases/benchmark.jsonl",
     "trigger": ROOT / "evals/shared/cases/trigger.jsonl",
+    "real-repo": ROOT / "evals/shared/cases/real-repo.jsonl",
 }
 
 
@@ -37,6 +38,14 @@ def slug(value):
 
 
 def prompt_markdown(case, variant):
+    fixture_context = ""
+    if case.get("fixture"):
+        fixture_context = (
+            f"Fixture path: {ROOT / case['fixture']}\n"
+            "Read the fixture files before proposing changes. "
+            "Because evaluation runs in a read-only sandbox, return a unified diff "
+            "or review findings instead of editing files directly.\n\n"
+        )
     return (
         f"# {case['id']}\n\n"
         f"Variant: {variant}\n"
@@ -45,6 +54,7 @@ def prompt_markdown(case, variant):
         f"Fixture: {case.get('fixture', 'none')}\n"
         f"Mode: {case.get('mode', 'manual')}\n\n"
         "## Prompt\n\n"
+        f"{fixture_context}"
         f"{case['prompt']}\n"
     )
 
@@ -59,6 +69,8 @@ def answer_key(case):
         "prompt": case["prompt"],
         "trigger_type": case.get("trigger_type", ""),
         "expected_behavior": case.get("expected_behavior", ""),
+        "fixture": case.get("fixture", ""),
+        "mode": case.get("mode", "manual"),
     }
 
 

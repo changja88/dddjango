@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>real-repo-view-logic-service-layer baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>real-repo-view-logic-service-layer baseline</h1>
+    <div class="path">workspace/codex-eval/real-repo-1/baseline/real-repo-view-logic-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래는 적용 제안 diff입니다. <code>reserve_inventory</code> view는 JSON/body/header를 application input으로 변환하고, service 결과/예외를 HTTP 응답으로 변환하는 역할만 남깁니다.</p>
+<pre><code>
+diff --git a/shop/orders/services.py b/shop/orders/services.py
+new file mode 100644
+index 0000000..5e8a7e0
+--- /dev/null
++++ b/shop/orders/services.py
+@@ -0,0 +1,35 @@
++from dataclasses import dataclass
++
++from django.db import transaction
++
++from shop.orders.models import Order, Product, Reservation
++
++
++@dataclass(frozen=True)
++class InsufficientStock:
++    available: int
++
++
++class InsufficientStockError(Exception):
++    def __init__(self, available: int):
++        self.stock = InsufficientStock(available=available)
++        super().__init__(&quot;not enough stock&quot;)
++
++
++def reserve_inventory_for_order(
++    *,
++    order_id: int,
++    product_id: int,
++    quantity: int,
++    idempotency_key: str,
++) -&gt; Reservation:
++    with transaction.atomic():
++        product = Product.objects.select_for_update().get(id=product_id)
++        order = Order.objects.select_for_update().get(id=order_id)
++
++        if product.stock_quantity &lt; quantity:
++            raise InsufficientStockError(available=product.stock_quantity)
++
++        product.stock_quantity -= quantity
++        product.save(update_fields=[&quot;stock_quantity&quot;])
++
++        return Reservation.objects.create(
++            product=product,
++            order=order,
++            quantity=quantity,
++            idempotency_key=idempotency_key,
++        )
+diff --git a/shop/orders/views.py b/shop/orders/views.py
+index 0d43c8b..a3a4d4f 100644
+--- a/shop/orders/views.py
++++ b/shop/orders/views.py
+@@ -1,10 +1,10 @@
+ import json
+ 
+-from django.db import transaction
+ from django.http import JsonResponse
+ from django.views.decorators.http import require_POST
+ 
+-from shop.orders.models import Order, Product, Reservation
++from shop.orders.models import Order
++from shop.orders.services import InsufficientStockError, reserve_inventory_for_order
+ 
+ 
+ @require_POST
+@@ -24,24 +24,17 @@ def reserve_inventory(request, order_id):
+     quantity = int(payload[&quot;quantity&quot;])
+     idempotency_key = request.headers.get(&quot;Idempotency-Key&quot;, &quot;&quot;)
+ 
+-    with transaction.atomic():
+-        product = Product.objects.select_for_update().get(id=product_id)
+-        order = Order.objects.select_for_update().get(id=order_id)
+-        if product.stock_quantity &lt; quantity:
+-            return JsonResponse(
+-                {&quot;error&quot;: &quot;not_enough_stock&quot;, &quot;available&quot;: product.stock_quantity},
+-                status=409,
+-            )
+-        product.stock_quantity -= quantity
+-        product.save(update_fields=[&quot;stock_quantity&quot;])
+-        reservation = Reservation.objects.create(
+-            product=product,
+-            order=order,
++    try:
++        reservation = reserve_inventory_for_order(
++            order_id=order_id,
++            product_id=product_id,
+             quantity=quantity,
+             idempotency_key=idempotency_key,
+         )
++    except InsufficientStockError as exc:
++        return JsonResponse(
++            {&quot;error&quot;: &quot;not_enough_stock&quot;, &quot;available&quot;: exc.stock.available},
++            status=409,
++        )
+ 
+     return JsonResponse({&quot;reservation_id&quot;: reservation.id}, status=201)
+</code></pre>
+<p>테스트는 실행하지 않았습니다. 현재 환경이 read-only라 fixture 파일을 수정하거나 테스트 DB/캐시 생성이 필요한 검증은 수행하지 않았습니다.</p></article>
+  </main>
+</body>
+</html>

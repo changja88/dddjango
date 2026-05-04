@@ -56,6 +56,11 @@ permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고�
   사용하지 않는다.
 - 엔드포인트에 Router 데코레이터 패턴을 사용한다. ViewSet을 사용하지 않는다.
 - 모든 엔드포인트 매개변수와 반환 타입에 타입 힌트가 필수다.
+- sync 엔드포인트 첫 매개변수는 `request: HttpRequest`로 쓰고
+  `from django.http import HttpRequest`를 import한다.
+- Python 3.10+ 예시는 `list[Schema]`를 사용한다. `from typing import list`는
+  존재하지 않는 import이므로 절대 작성하지 않는다. 레거시 Python만
+  `from typing import List`와 `List[Schema]`를 사용한다.
 - Django Ninja의 내장 인증 클래스를 사용한다. DRF의
   permission_classes나 authentication_classes를 사용하지 않는다.
 
@@ -153,13 +158,23 @@ null 필터 값을 건너뛰려면 `ignore_none=True`를 사용한다.
 또는 Enum으로 제한하고, 사용자 입력을 `order_by()`에 직접 넣지
 않는다. 페이지네이션 응답은 팀 표준이 필요하면 `items/meta envelope`를
 명시하고 직접 슬라이싱하거나 `PaginationBase`로 구현한다. @paginate와 커스텀 envelope를 섞지 않는다;
-내장 `@paginate`를 쓰면 해당 paginator의
-응답 형식을 그대로 따른다. 에러 응답은 항상 `RFC 9457 Problem Details`로
-정의한다.
+내장 `@paginate`를 쓰면 해당 paginator의 응답 형식을 그대로 따른다.
+특히 커스텀 envelope를 반환하면서 `response=list[...]`로 선언하지 않는다.
+`response=list[...]`는 plain list 응답일 때만 사용한다. 에러 응답은 항상
+`RFC 9457 Problem Details`로 정의하고 실제 응답 `Content-Type` 또는 테스트
+assertion에 `application/problem+json`을 포함한다.
 
 **에러 처리.** 커스텀 에러 응답에 `@api.exception_handler()`를 사용한다.
 단순 에러에 `HttpError(status, message)`를 사용한다. 모든 API 에러에
-RFC 9457 Problem Details 형식을 반환한다.
+RFC 9457 Problem Details 형식을 반환한다. Problem Details 응답은
+`application/problem+json`으로 내려가도록 `create_response()` 또는 response
+객체의 content type을 명시하고, 테스트에서 이를 검증한다.
+
+**트랜잭션과 멱등성 실패 응답.** `transaction.atomic()` 안에서 재고 부족,
+결제 실패 같은 실패 응답을 저장한 직후 예외를 다시 raise하면 rollback으로
+저장한 실패 상태가 사라질 수 있다. 실패 상태를 멱등성 키에 남겨야 한다면
+예외를 밖으로 전파하지 말고 저장 후 명시적 error result를 반환하거나,
+실패 응답 저장을 rollback 영향을 받지 않는 별도 durable 경계에서 처리한다.
 
 ### Review 모드
 
@@ -322,13 +337,16 @@ django-ninja-extra: 클래스 기반 뷰를 위한 @api_controller, 권한
 - [ ] DRF 사용 금지 (Serializer/ViewSet/permission_classes 발견 시 Ninja Schema/Router/내장 인증으로 전환)
 - [ ] Schema에 fields 명시 (fields='__all__' 금지)
 - [ ] 모든 매개변수/반환에 타입 힌트
-- [ ] 에러는 RFC 9457 Problem Details (HttpError + exception_handler)
+- [ ] sync endpoint는 `request: HttpRequest`, return type, `from django.http import HttpRequest`
+- [ ] `from typing import list` 금지. Python 3.10+는 `list[Schema]`, 레거시는 `List[Schema]`
+- [ ] 에러는 RFC 9457 Problem Details (`application/problem+json`, HttpError + exception_handler)
 - [ ] 비멱등 POST에 Idempotency-Key 헤더 또는 DB UNIQUE 제약 + IntegrityError 캐치
+- [ ] `transaction.atomic()` 안에서 저장한 실패 응답이 rollback으로 사라지지 않게 처리
 
 ### 작성 모드
 - [ ] **FilterSchema에 다중 필드 lookup (예: `title__icontains`, `department`, `grade`) 사용**
 - [ ] **`response={201: SuccessSchema, 409: ProblemDetail, 422: ProblemDetail}` 다중 상태코드 응답 스키마 매핑**
-- [ ] **검색/목록 API 표준 작성 시 `Query[FilterSchema]`, 정렬 allow-list, 페이지네이션 `items/meta envelope`, RFC 9457 에러 표준을 함께 제시**
+- [ ] **검색/목록 API 표준 작성 시 `Query[FilterSchema]`, 정렬 allow-list, 페이지네이션 `items/meta envelope`, RFC 9457 에러 표준을 함께 제시. 커스텀 envelope면 `response=list[...]`를 쓰지 않음**
 
 ### 리뷰 모드
 - [ ] N+1 가능성 있는 직렬화에 select_related/prefetch_related 권고

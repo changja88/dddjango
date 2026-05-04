@@ -1,0 +1,410 @@
+[
+  {
+    "case_id": "real-repo-fat-model-refactor",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-ninja-product-search",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-pytest-coupon",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-db-order-index-review",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-view-logic-service-layer",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 8,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-drf-to-ninja-migration",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-fat-model-refactor",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-ninja-product-search",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-pytest-coupon",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-db-order-index-review",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-view-logic-service-layer",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "real-repo-drf-to-ninja-migration",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  }
+]

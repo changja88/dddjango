@@ -1,10 +1,14 @@
+**주요 내용**
+
 이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.
 
-현재 `/private/tmp/dddjango-codex-eval`에서 `config.toml`을 찾지 못했고, 세션이 read-only라 파일을 직접 만들지는 못했습니다. 아래는 `products.Product` 모델이 있다고 가정한 Django Ninja 대안입니다.
+현재 워크스페이스가 읽기 전용이고 대상 API 상세가 없어 파일 수정은 하지 않았습니다. 아래는 `products.Product(id, name, price, is_active)` 기준의 Django Ninja 대안입니다.
 
 `products/schemas.py`
 
 ```python
+from decimal import Decimal
+
 from ninja import ModelSchema, Schema
 
 from .models import Product
@@ -12,50 +16,79 @@ from .models import Product
 
 class ProductIn(Schema):
     name: str
-    price: int
+    price: Decimal
     is_active: bool = True
+
+
+class ProductPatch(Schema):
+    name: str | None = None
+    price: Decimal | None = None
+    is_active: bool | None = None
 
 
 class ProductOut(ModelSchema):
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "is_active", "created_at"]
+        fields = ["id", "name", "price", "is_active"]
 ```
 
 `products/api.py`
 
 ```python
 from django.db.models import QuerySet
-from django.shortcuts import get_object_or_404
+from django.http import Http404, HttpRequest
 from ninja import Router
-from ninja.pagination import LimitOffsetPagination, paginate
 
 from .models import Product
-from .schemas import ProductIn, ProductOut
+from .schemas import ProductIn, ProductOut, ProductPatch
 
 router = Router(tags=["products"])
 
 
-@router.get("/", response=list[ProductOut])
-@paginate(LimitOffsetPagination)
-def list_products(request) -> QuerySet[Product]:
-    return Product.objects.order_by("-id")
+def get_product_or_404(product_id: int) -> Product:
+    try:
+        return Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        raise Http404("Product not found")
 
 
-@router.get("/{product_id}", response=ProductOut)
-def get_product(request, product_id: int) -> Product:
-    return get_object_or_404(Product, id=product_id)
+@router.get("", response=list[ProductOut])
+def list_products(request: HttpRequest) -> QuerySet[Product]:
+    return Product.objects.all()
 
 
-@router.post("/", response={201: ProductOut})
-def create_product(request, payload: ProductIn) -> tuple[int, Product]:
-    product = Product.objects.create(**payload.dict())
+@router.post("", response={201: ProductOut})
+def create_product(request: HttpRequest, payload: ProductIn) -> tuple[int, Product]:
+    product = Product.objects.create(**payload.model_dump())
     return 201, product
 
 
+@router.get("/{product_id}", response=ProductOut)
+def retrieve_product(request: HttpRequest, product_id: int) -> Product:
+    return get_product_or_404(product_id)
+
+
+@router.patch("/{product_id}", response=ProductOut)
+def update_product(
+    request: HttpRequest,
+    product_id: int,
+    payload: ProductPatch,
+) -> Product:
+    product = get_product_or_404(product_id)
+    updates = payload.model_dump(exclude_unset=True)
+
+    for field, value in updates.items():
+        setattr(product, field, value)
+
+    if updates:
+        product.save(update_fields=list(updates.keys()))
+
+    return product
+
+
 @router.delete("/{product_id}", response={204: None})
-def delete_product(request, product_id: int) -> tuple[int, None]:
-    product = get_object_or_404(Product, id=product_id)
+def delete_product(request: HttpRequest, product_id: int) -> tuple[int, None]:
+    product = get_product_or_404(product_id)
     product.delete()
     return 204, None
 ```
@@ -68,7 +101,7 @@ from ninja import NinjaAPI
 from products.api import router as products_router
 
 api = NinjaAPI()
-api.add_router("/products/", products_router)
+api.add_router("/products", products_router)
 ```
 
 `config/urls.py`
@@ -83,9 +116,14 @@ urlpatterns = [
 ]
 ```
 
-검증은 실행하지 못했습니다. 적용 후에는 프로젝트에서 `python manage.py check`와 관련 API 테스트를 실행하면 됩니다.
+검증은 실행하지 못했습니다. 적용 후에는 다음을 돌리면 됩니다.
+
+```bash
+python manage.py check
+pytest
+```
 
 ---
 > **관련 스킬 참조:**
-> - API 설계 원칙 → **architecture-api** 스킬
+> - REST API 설계 → **architecture-api** 스킬
 > - Django Ninja 구현 → **implementation-django-ninja** 스킬

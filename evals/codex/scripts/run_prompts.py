@@ -227,6 +227,16 @@ def broad_dddjango_developer_instructions(root):
     )
 
 
+def non_dddjango_negative_developer_instructions():
+    return (
+        "This is a non-Django negative-control case. "
+        "Django/DDD를 끼워 넣지 않는다. "
+        "Answer the user's actual requested technology stack and task directly. "
+        "파일이 없어도 요청 기술 스택 기준의 최소 예시나 일반 가이드를 제공한다. "
+        "Do not mention Django, DDD, Django Ninja, DRF, or dddjango unless the prompt explicitly asks for them."
+    )
+
+
 def unique(values):
     result = []
     for value in values:
@@ -347,9 +357,9 @@ def case_directive(case_id, case=None):
 
 def scoped_dddjango_developer_instructions(root, case_id, case=None):
     if case and case.get("trigger_type") == "negative":
-        return ""
+        return non_dddjango_negative_developer_instructions()
     if case and case.get("category") == "negative-control" and not case_requests_drf(case):
-        return ""
+        return non_dddjango_negative_developer_instructions()
 
     skill_paths = skill_paths_for_case(root, case_id, case=case)
     if not skill_paths:
@@ -358,7 +368,11 @@ def scoped_dddjango_developer_instructions(root, case_id, case=None):
     policies = []
     policy_names = case_policy_names(case_id, case=case)
     if "ninja" in policy_names:
-        policies.append("Use Django Ninja Schema/Router for API guidance.")
+        policies.append(
+            "Use Django Ninja Schema/Router for API guidance. "
+            "Every sync endpoint must include request: HttpRequest and an explicit return type. "
+            "Use list[Schema], never from typing import list."
+        )
     if "drf" in policy_names:
         policies.append(
             "If the prompt asks for DRF, Serializer, ViewSet, APIView, "
@@ -463,7 +477,13 @@ def run_variant(args):
                 case_id=case_id,
                 case=cases.get(case_id),
             )
-            if not developer_instructions and cases.get(case_id):
+            case = cases.get(case_id)
+            if case and (
+                case.get("trigger_type") == "negative"
+                or (case.get("category") == "negative-control" and not case_requests_drf(case))
+            ):
+                command_ignore_user_config = True
+            elif not developer_instructions and case:
                 command_ignore_user_config = True
         command = build_codex_command(
             prompt_file=prompt_file,

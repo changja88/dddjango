@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>real-repo-drf-to-ninja-migration answer-key</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>real-repo-drf-to-ninja-migration answer-key</h1>
+    <div class="path">workspace/codex-eval/real-repo-1/answer-key/real-repo-drf-to-ninja-migration.json</div>
+  </header>
+  <main>
+    <pre>{
+  &quot;case_id&quot;: &quot;real-repo-drf-to-ninja-migration&quot;,
+  &quot;category&quot;: &quot;real-repo&quot;,
+  &quot;title&quot;: &quot;Real repo DRF to Django Ninja migration&quot;,
+  &quot;expectations&quot;: [
+    &quot;korean_first&quot;,
+    &quot;real_repo_applicability&quot;,
+    &quot;reject_drf&quot;,
+    &quot;django_ninja_compliance&quot;
+  ],
+  &quot;scoring_focus&quot;: [
+    &quot;DRF import/Serializer/APIView를 제거한다.&quot;,
+    &quot;Django Ninja Schema/Router로 전환한다.&quot;,
+    &quot;fields=&#x27;__all__&#x27; 노출 위험을 고친다.&quot;,
+    &quot;HttpRequest와 return type을 포함한다.&quot;,
+    &quot;unified diff 형식이다.&quot;
+  ],
+  &quot;prompt&quot;: &quot;Fixture의 `shop/orders/api_drf.py`는 DRF `ModelSerializer`와 `APIView`를 사용한다. DRF 코드를 생성하지 말고 Django Ninja Schema/Router로 전환하는 unified diff를 제안해줘. `fields=&#x27;__all__&#x27;` 민감 필드 노출 위험도 같이 고쳐줘.&quot;,
+  &quot;trigger_type&quot;: &quot;&quot;,
+  &quot;expected_behavior&quot;: &quot;&quot;,
+  &quot;fixture&quot;: &quot;evals/fixtures/django-shop&quot;,
+  &quot;mode&quot;: &quot;forward-diff&quot;
+}
+</pre>
+  </main>
+</body>
+</html>

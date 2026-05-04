@@ -512,6 +512,61 @@ def build_usability_summary(rows):
     """
 
 
+def load_real_repo_evaluation(iteration):
+    path = Path(iteration) / "real_repo_evaluation.json"
+    if not path.exists():
+        return {}
+    return load_json(path)
+
+
+def build_real_repo_patch_summary(evaluation):
+    records = evaluation.get("records", [])
+    if not records:
+        return ""
+
+    table_rows = "\n".join(
+        f"""
+        <tr>
+          <td>
+            <strong>{escape(record["case_id"])}</strong>
+            <small><code>{escape(record["variant"])}</code></small>
+          </td>
+          <td><span class="pill {'good' if record.get("diff_found") else 'bad'}">{'DIFF FOUND' if record.get("diff_found") else 'NO DIFF'}</span></td>
+          <td><span class="pill {'good' if record.get("patch_check") == 'passed' else 'bad'}">{escape(record.get("patch_check", ""))}</span></td>
+          <td><span class="pill {'good' if record.get("patch_applied") == 'passed' else 'bad'}">{'PATCH PASS' if record.get("patch_applied") == 'passed' else 'PATCH FAIL'}</span></td>
+          <td><span class="pill {'good' if record.get("django_check") == 'passed' else 'neutral' if record.get("django_check") == 'skipped' else 'bad'}">{escape(record.get("django_check", ""))}</span></td>
+          <td><span class="pill {'good' if record.get("pytest") == 'passed' else 'neutral' if record.get("pytest") == 'skipped' else 'bad'}">{escape(record.get("pytest", ""))}</span></td>
+          <td><code>{escape(record.get("workspace", ""))}</code></td>
+          <td>{escape(record.get("notes", ""))}</td>
+        </tr>
+        """
+        for record in records
+    )
+
+    return f"""
+    <section class="section">
+      <h2>Real Repo Patch Evaluation</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Diff</th>
+            <th>git apply --check</th>
+            <th>Patch Apply</th>
+            <th>Django Check</th>
+            <th>pytest</th>
+            <th>Workspace</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>
+    </section>
+    """
+
+
 def metric_card(title, value, subtitle="", tone="neutral"):
     return (
         f'<section class="metric {tone}">'
@@ -615,6 +670,7 @@ def render_html(iteration, rows, *, platform="Codex"):
     )
     usability_summary = build_usability_summary(rows)
     trigger_matrix = build_trigger_matrix(rows)
+    real_repo_summary = build_real_repo_patch_summary(load_real_repo_evaluation(iteration))
 
     table_rows = "\n".join(
         f"""
@@ -849,6 +905,7 @@ def render_html(iteration, rows, *, platform="Codex"):
     </section>
 {usability_summary}
 {trigger_matrix}
+{real_repo_summary}
   </main>
 </body>
 </html>

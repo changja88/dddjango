@@ -76,121 +76,98 @@
     <div class="path">workspace/codex-eval/benchmark-4/dddjango/benchmark-negative-drf-explicit.output.md</div>
   </header>
   <main>
-    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다. 현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 읽기 전용이라 파일 생성은 못 했습니다. 아래는 <code>orders</code> 앱과 <code>Order</code> 모델이 있다고 가정한 Ninja 대체 구현입니다.</p>
-<p><strong>[주요 내용]</strong></p>
-<p><code>orders/schemas.py</code></p>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다. 현재 워크스페이스가 비어 있고 읽기 전용이라 파일을 직접 생성하지 못했습니다. 아래는 <code>orders</code> 앱에 붙여 넣을 수 있는 <code>Schema</code>/<code>Router</code> 기반 주문 API입니다.</p>
+<p><strong><code>orders/schemas.py</code></strong></p>
 <pre><code>
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from ninja import ModelSchema, Schema
 
 from .models import Order
 
 
-class ProblemDetails(Schema):
-    type: str = &quot;about:blank&quot;
-    title: str
-    status: int
-    detail: str
-    instance: str
-
-
 class OrderOut(ModelSchema):
     class Meta:
         model = Order
-        fields = [&quot;id&quot;, &quot;customer_id&quot;, &quot;status&quot;, &quot;total_amount&quot;, &quot;created_at&quot;, &quot;updated_at&quot;]
+        fields = [&quot;id&quot;, &quot;customer_id&quot;, &quot;status&quot;, &quot;total_amount&quot;, &quot;created_at&quot;]
 
 
-class OrderCreateIn(Schema):
+class OrderCreate(Schema):
     customer_id: int
     status: str
     total_amount: Decimal
 
 
-class OrderUpdateIn(Schema):
+class OrderUpdate(Schema):
     customer_id: int
     status: str
     total_amount: Decimal
 
 
-class OrderPatchIn(Schema):
-    customer_id: Optional[int] = None
-    status: Optional[str] = None
-    total_amount: Optional[Decimal] = None
+class OrderPatch(Schema):
+    customer_id: int | None = None
+    status: str | None = None
+    total_amount: Decimal | None = None
 </code></pre>
-<p><code>orders/api.py</code></p>
+<p><strong><code>orders/api.py</code></strong></p>
 <pre><code>
-from typing import List
-
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router
-from ninja.pagination import LimitOffsetPagination, paginate
 
 from .models import Order
-from .schemas import OrderCreateIn, OrderOut, OrderPatchIn, OrderUpdateIn, ProblemDetails
+from .schemas import OrderCreate, OrderOut, OrderPatch, OrderUpdate
 
 router = Router(tags=[&quot;orders&quot;])
 
 
-def problem(status: int, title: str, detail: str, instance: str) -&gt; ProblemDetails:
-    return ProblemDetails(title=title, status=status, detail=detail, instance=instance)
+@router.get(&quot;&quot;, response=list[OrderOut])
+def list_orders(request: HttpRequest) -&gt; list[Order]:
+    return list(Order.objects.order_by(&quot;-created_at&quot;))
 
 
-@router.get(&quot;&quot;, response=List[OrderOut])
-@paginate(LimitOffsetPagination)
-def list_orders(request):
-    return Order.objects.all().order_by(&quot;-id&quot;)
-
-
-@router.post(&quot;&quot;, response={201: OrderOut, 422: ProblemDetails})
-def create_order(request, payload: OrderCreateIn):
+@router.post(&quot;&quot;, response={201: OrderOut})
+def create_order(request: HttpRequest, payload: OrderCreate) -&gt; tuple[int, Order]:
     order = Order.objects.create(**payload.dict())
     return 201, order
 
 
-@router.get(&quot;/{order_id}&quot;, response={200: OrderOut, 404: ProblemDetails})
-def get_order(request, order_id: int):
-    order = Order.objects.filter(id=order_id).first()
-    if order is None:
-        return 404, problem(404, &quot;Order not found&quot;, f&quot;Order {order_id} does not exist.&quot;, request.path)
-    return order
+@router.get(&quot;/{order_id}&quot;, response=OrderOut)
+def get_order(request: HttpRequest, order_id: int) -&gt; Order:
+    return get_object_or_404(Order, id=order_id)
 
 
-@router.put(&quot;/{order_id}&quot;, response={200: OrderOut, 404: ProblemDetails})
-def update_order(request, order_id: int, payload: OrderUpdateIn):
-    order = Order.objects.filter(id=order_id).first()
-    if order is None:
-        return 404, problem(404, &quot;Order not found&quot;, f&quot;Order {order_id} does not exist.&quot;, request.path)
+@router.put(&quot;/{order_id}&quot;, response=OrderOut)
+def update_order(request: HttpRequest, order_id: int, payload: OrderUpdate) -&gt; Order:
+    order = get_object_or_404(Order, id=order_id)
 
     for field, value in payload.dict().items():
         setattr(order, field, value)
-    order.save(update_fields=[&quot;customer_id&quot;, &quot;status&quot;, &quot;total_amount&quot;, &quot;updated_at&quot;])
+
+    order.save(update_fields=[&quot;customer_id&quot;, &quot;status&quot;, &quot;total_amount&quot;])
     return order
 
 
-@router.patch(&quot;/{order_id}&quot;, response={200: OrderOut, 404: ProblemDetails})
-def patch_order(request, order_id: int, payload: OrderPatchIn):
-    order = Order.objects.filter(id=order_id).first()
-    if order is None:
-        return 404, problem(404, &quot;Order not found&quot;, f&quot;Order {order_id} does not exist.&quot;, request.path)
-
+@router.patch(&quot;/{order_id}&quot;, response=OrderOut)
+def patch_order(request: HttpRequest, order_id: int, payload: OrderPatch) -&gt; Order:
+    order = get_object_or_404(Order, id=order_id)
     update_data = payload.dict(exclude_unset=True)
+
     for field, value in update_data.items():
         setattr(order, field, value)
-    order.save(update_fields=[*update_data.keys(), &quot;updated_at&quot;])
+
+    order.save(update_fields=list(update_data.keys()))
     return order
 
 
-@router.delete(&quot;/{order_id}&quot;, response={204: None, 404: ProblemDetails})
-def delete_order(request, order_id: int):
-    deleted, _ = Order.objects.filter(id=order_id).delete()
-    if deleted == 0:
-        return 404, problem(404, &quot;Order not found&quot;, f&quot;Order {order_id} does not exist.&quot;, request.path)
+@router.delete(&quot;/{order_id}&quot;, response={204: None})
+def delete_order(request: HttpRequest, order_id: int) -&gt; tuple[int, None]:
+    order = get_object_or_404(Order, id=order_id)
+    order.delete()
     return 204, None
 </code></pre>
-<p><code>config/api.py</code></p>
+<p><strong><code>config/api.py</code></strong></p>
 <pre><code>
 from ninja import NinjaAPI
 
@@ -199,7 +176,7 @@ from orders.api import router as orders_router
 api = NinjaAPI(title=&quot;Order API&quot;, version=&quot;1.0.0&quot;)
 api.add_router(&quot;/orders&quot;, orders_router)
 </code></pre>
-<p><code>config/urls.py</code></p>
+<p><strong><code>config/urls.py</code></strong></p>
 <pre><code>
 from django.urls import path
 
@@ -209,14 +186,12 @@ urlpatterns = [
     path(&quot;api/&quot;, api.urls),
 ]
 </code></pre>
-<p>검증은 이 환경에서 실행하지 못했습니다. 실제 프로젝트에서는 아래를 확인하세요.</p>
+<p>검증은 읽기 전용 세션이라 실행하지 못했습니다. 적용 후 아래를 실행하세요.</p>
 <pre><code>
 python manage.py check
 python manage.py test
-python manage.py runserver
 </code></pre>
-<p>엔드포인트는 <code>GET /api/orders</code>, <code>POST /api/orders</code>, <code>GET /api/orders/{order_id}</code>, <code>PUT/PATCH/DELETE /api/orders/{order_id}</code> 형태입니다.</p>
-<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - REST URL/상태 코드 설계 → <strong>architecture-api</strong> 스킬</p></article>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
   </main>
 </body>
 </html>

@@ -137,10 +137,10 @@
   <main>
     <div class="metrics">
       <section class="metric neutral"><span>Baseline Score</span><strong>80.37</strong><small>case average</small></section>
-      <section class="metric good"><span>dddjango Score</span><strong>83.3</strong><small>case average</small></section>
-      <section class="metric good"><span>Quality Lift</span><strong>+2.93</strong><small>+3.65% vs baseline</small></section>
+      <section class="metric good"><span>dddjango Score</span><strong>82.8</strong><small>case average</small></section>
+      <section class="metric good"><span>Quality Lift</span><strong>+2.43</strong><small>+3.02% vs baseline</small></section>
       <section class="metric neutral"><span>Baseline Time</span><strong>34.05s</strong><small>average duration</small></section>
-      <section class="metric neutral"><span>dddjango Time</span><strong>34.87s</strong><small>+2.41% vs baseline</small></section>
+      <section class="metric neutral"><span>dddjango Time</span><strong>34.99s</strong><small>+2.76% vs baseline</small></section>
       <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
       <section class="metric neutral"><span>Completed Cases</span><strong>30/30</strong><small>with and without skill</small></section>
       <section class="metric neutral"><span>Manual Usability</span><strong>18.67</strong><small>dddjango average / 20</small></section>
@@ -165,12 +165,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+3.65%</td><td>&gt;= +15%</td></tr>
+          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+3.02%</td><td>&gt;= +15%</td></tr>
 <tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
-<tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
+<tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>96.67%</td><td>&gt;= 95%</td></tr>
 <tr><td>Django Ninja compliance</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 90%</td></tr>
 <tr><td>TDD quality</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
-<tr><td>Time/cost increase</td><td><span class="pill good">PASS</span></td><td>+2.41%</td><td>&lt;= +30%</td></tr>
+<tr><td>Time/cost increase</td><td><span class="pill good">PASS</span></td><td>+2.76%</td><td>&lt;= +30%</td></tr>
 <tr><td>Negative-control pass rate</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
 <tr><td>Trigger Recall</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
 <tr><td>Trigger Precision</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
@@ -379,11 +379,11 @@
           <td>trigger</td>
           <td>korean_first, django_ninja_compliance, reject_drf, conflict_handling</td>
           <td class="number">85.0</td>
-          <td class="number">92.0</td>
-          <td class="number good">+7.0</td>
+          <td class="number">84.0</td>
+          <td class="number bad">-1.0</td>
           <td class="number">17.73s</td>
-          <td class="number">46.88s</td>
-          <td><span class="pill good">improved</span></td>
+          <td class="number">62.10s</td>
+          <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td class="links">
@@ -406,7 +406,7 @@
           <td class="number">84.0</td>
           <td class="number good">+21.0</td>
           <td class="number">20.97s</td>
-          <td class="number">39.53s</td>
+          <td class="number">27.33s</td>
           <td><span class="pill good">improved</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -598,7 +598,7 @@
           <td class="number">74.0</td>
           <td class="number neutral">+0.0</td>
           <td class="number">29.42s</td>
-          <td class="number">25.68s</td>
+          <td class="number">26.05s</td>
           <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -643,11 +643,11 @@
           <td>trigger</td>
           <td>korean_first, negative_control_passed, trigger_precision</td>
           <td class="number">67.0</td>
-          <td class="number">74.0</td>
-          <td class="number good">+7.0</td>
+          <td class="number">67.0</td>
+          <td class="number neutral">+0.0</td>
           <td class="number">6.03s</td>
-          <td class="number">4.33s</td>
-          <td><span class="pill good">improved</span></td>
+          <td class="number">4.60s</td>
+          <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td class="links">
@@ -1693,7 +1693,7 @@
             <small><code>trigger-negative-shell-script</code></small>
           </td>
           <td>Do not force dddjango guidance; provide shell commands.</td>
-          <td>Korean-first answer without strong Django Ninja signal.</td>
+          <td>No clear dddjango trigger signal.</td>
           <td><span class="pill good">PASS</span></td>
           <td class="links">
             <a href="artifacts/trigger-negative-shell-script-baseline.html">baseline</a>

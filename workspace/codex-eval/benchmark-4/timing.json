@@ -327,7 +327,7 @@
   {
     "case_id": "benchmark-api-product-search",
     "variant": "dddjango",
-    "duration_sec": 43.45,
+    "duration_sec": 94.14,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -340,7 +340,7 @@
   {
     "case_id": "benchmark-api-inventory-reserve",
     "variant": "dddjango",
-    "duration_sec": 62.58,
+    "duration_sec": 63.57,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -613,7 +613,7 @@
   {
     "case_id": "benchmark-negative-drf-explicit",
     "variant": "dddjango",
-    "duration_sec": 62.99,
+    "duration_sec": 45.53,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,

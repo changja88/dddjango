@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES_PATH = ROOT / "evals/codex/cases/pilot.jsonl"
 BENCHMARK_CASES_PATH = ROOT / "evals/shared/cases/benchmark.jsonl"
 TRIGGER_CASES_PATH = ROOT / "evals/shared/cases/trigger.jsonl"
+REAL_REPO_CASES_PATH = ROOT / "evals/shared/cases/real-repo.jsonl"
+REAL_REPO_FIXTURE_PATH = ROOT / "evals/fixtures/django-shop"
 SCHEMA_PATH = ROOT / "evals/codex/rubrics/grading-schema.json"
 USABILITY_CHECKLIST_PATH = ROOT / "evals/shared/rubrics/usability-checklist.md"
 GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_outputs.py"
@@ -20,6 +22,7 @@ AUTO_GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/auto_grade_outputs.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
 RUN_SCRIPT_PATH = ROOT / "evals/codex/scripts/run_prompts.py"
 REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_report.py"
+REAL_REPO_DIFF_SCRIPT_PATH = ROOT / "evals/codex/scripts/evaluate_real_repo_diffs.py"
 POLICY_SKILL_PATHS = [
     "implementation-django-ninja",
     "architecture-api",
@@ -121,9 +124,15 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             "정렬 필드는 allow-list",
             "items/meta envelope",
             "@paginate와 커스텀 envelope를 섞지 않는다",
+            "response=list[...]",
             "RFC 9457 Problem Details",
+            "application/problem+json",
             "FilterSchema",
             "Query[",
+            "HttpRequest",
+            "from typing import list",
+            "transaction.atomic()",
+            "rollback",
         ]:
             with self.subTest(required=required):
                 self.assertIn(required, skill)
@@ -261,6 +270,63 @@ class CodexEvaluationAssetTests(unittest.TestCase):
                 "conflict": 4,
             },
         )
+
+    def test_real_repo_fixture_has_representative_django_project(self):
+        expected_files = [
+            "README.md",
+            "manage.py",
+            "config/settings.py",
+            "config/urls.py",
+            "shop/orders/models.py",
+            "shop/orders/views.py",
+            "shop/orders/api_drf.py",
+            "shop/orders/tests.py",
+        ]
+
+        for relative_path in expected_files:
+            with self.subTest(path=relative_path):
+                self.assertTrue((REAL_REPO_FIXTURE_PATH / relative_path).exists())
+
+        models = (REAL_REPO_FIXTURE_PATH / "shop/orders/models.py").read_text()
+        views = (REAL_REPO_FIXTURE_PATH / "shop/orders/views.py").read_text()
+        legacy_drf = (REAL_REPO_FIXTURE_PATH / "shop/orders/api_drf.py").read_text()
+
+        self.assertIn("class Order", models)
+        self.assertIn("def cancel", models)
+        self.assertIn("transaction.atomic", views)
+        self.assertIn("JsonResponse", views)
+        self.assertIn("rest_framework", legacy_drf)
+        self.assertIn("ModelSerializer", legacy_drf)
+
+    def test_real_repo_cases_define_forward_eval_set(self):
+        cases = [
+            json.loads(line)
+            for line in REAL_REPO_CASES_PATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(len(cases), 6)
+        self.assertEqual(len({case["id"] for case in cases}), 6)
+        self.assertEqual(
+            {case["id"] for case in cases},
+            {
+                "real-repo-fat-model-refactor",
+                "real-repo-ninja-product-search",
+                "real-repo-pytest-coupon",
+                "real-repo-db-order-index-review",
+                "real-repo-view-logic-service-layer",
+                "real-repo-drf-to-ninja-migration",
+            },
+        )
+
+        for case in cases:
+            with self.subTest(case=case["id"]):
+                self.assertEqual(case["fixture"], "evals/fixtures/django-shop")
+                self.assertEqual(case["mode"], "forward-diff")
+                self.assertIn("korean_first", case["expectations"])
+                self.assertIn("real_repo_applicability", case["expectations"])
+                self.assertIn("unified diff", case["prompt"])
+                self.assertTrue(case["scoring_focus"])
 
     def test_grading_schema_weights_sum_to_100(self):
         schema = json.loads(SCHEMA_PATH.read_text())
@@ -703,6 +769,189 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             )
             self.assertIn("trigger", grades[0])
 
+    def test_init_iteration_can_create_real_repo_suite_with_fixture_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "real-repo-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "real-repo",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            prompts = sorted((output_dir / "dddjango").glob("*.prompt.md"))
+            answer_keys = sorted((output_dir / "answer-key").glob("*.json"))
+            grades = json.loads((output_dir / "grades.json").read_text())
+            prompt = (output_dir / "dddjango/real-repo-fat-model-refactor.prompt.md").read_text()
+            answer_key = json.loads(
+                (output_dir / "answer-key/real-repo-fat-model-refactor.json").read_text()
+            )
+
+            self.assertEqual(len(prompts), 6)
+            self.assertEqual(len(answer_keys), 6)
+            self.assertEqual(len(grades), 12)
+            self.assertIn(str(REAL_REPO_FIXTURE_PATH), prompt)
+            self.assertIn("unified diff", prompt)
+            self.assertEqual(answer_key["fixture"], "evals/fixtures/django-shop")
+            self.assertEqual(answer_key["mode"], "forward-diff")
+
+    def test_real_repo_diff_evaluator_extracts_and_applies_unified_diff(self):
+        module = load_module(REAL_REPO_DIFF_SCRIPT_PATH)
+        output = """제안 diff입니다.
+
+```diff
+diff --git a/app/models.py b/app/models.py
+index 83db48f..f735c2d 100644
+--- a/app/models.py
++++ b/app/models.py
+@@ -1 +1,2 @@
+ name = "before"
++status = "after"
+```
+"""
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fixture = Path(temp_dir) / "fixture"
+            (fixture / "app").mkdir(parents=True)
+            (fixture / "app/models.py").write_text('name = "before"\n')
+            workspace = Path(temp_dir) / "workspace"
+
+            result = module.evaluate_output_diff(
+                output,
+                fixture_path=fixture,
+                workspace_path=workspace,
+                run_checks=False,
+            )
+
+            self.assertTrue(result["diff_found"])
+            self.assertEqual(result["patch_check"], "passed")
+            self.assertEqual(result["patch_applied"], "passed")
+            self.assertIn('status = "after"', (workspace / "app/models.py").read_text())
+
+    def test_real_repo_diff_evaluator_writes_summary_and_report_section(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            fixture = root / "fixture"
+            (fixture / "app").mkdir(parents=True)
+            (fixture / "app/models.py").write_text('name = "before"\n')
+
+            iteration = root / "iteration"
+            (iteration / "baseline").mkdir(parents=True)
+            (iteration / "dddjango").mkdir()
+            (iteration / "answer-key").mkdir()
+            answer_key = {
+                "case_id": "real-repo-case",
+                "title": "Real repo case",
+                "category": "real-repo",
+                "expectations": ["real_repo_applicability"],
+                "scoring_focus": ["patch applies"],
+                "fixture": "fixture",
+                "mode": "forward-diff",
+            }
+            (iteration / "answer-key/real-repo-case.json").write_text(
+                json.dumps(answer_key) + "\n"
+            )
+            output = """```diff
+diff --git a/app/models.py b/app/models.py
+index 83db48f..f735c2d 100644
+--- a/app/models.py
++++ b/app/models.py
+@@ -1 +1,2 @@
+ name = "before"
++status = "after"
+```
+"""
+            (iteration / "baseline/real-repo-case.output.md").write_text(output)
+            (iteration / "dddjango/real-repo-case.output.md").write_text(output)
+            (iteration / "grades.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "case_id": "real-repo-case",
+                            "variant": "baseline",
+                            "scores": {criterion: 1 for criterion in [
+                                "domain_fit",
+                                "django_ninja_compliance",
+                                "actionability",
+                                "architecture_quality",
+                                "testing_quality",
+                                "korean_first",
+                                "conciseness",
+                                "safety",
+                            ]},
+                            "flags": {},
+                        },
+                        {
+                            "case_id": "real-repo-case",
+                            "variant": "dddjango",
+                            "scores": {criterion: 2 for criterion in [
+                                "domain_fit",
+                                "django_ninja_compliance",
+                                "actionability",
+                                "architecture_quality",
+                                "testing_quality",
+                                "korean_first",
+                                "conciseness",
+                                "safety",
+                            ]},
+                            "flags": {},
+                        },
+                    ]
+                )
+                + "\n"
+            )
+            (iteration / "timing.json").write_text(
+                json.dumps(
+                    [
+                        {"case_id": "real-repo-case", "variant": "baseline", "duration_sec": 1, "returncode": 0},
+                        {"case_id": "real-repo-case", "variant": "dddjango", "duration_sec": 1, "returncode": 0},
+                    ]
+                )
+                + "\n"
+            )
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(REAL_REPO_DIFF_SCRIPT_PATH),
+                    str(iteration),
+                    "--root",
+                    str(root),
+                    "--skip-checks",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(REPORT_SCRIPT_PATH),
+                    str(iteration),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            summary = json.loads((iteration / "real_repo_evaluation.json").read_text())
+            html = (iteration / "report.html").read_text()
+
+            self.assertEqual(summary["summary"]["dddjango"]["patch_applied"], 1)
+            self.assertIn("Real Repo Patch Evaluation", html)
+            self.assertIn("real-repo-case", html)
+            self.assertIn("PATCH PASS", html)
+
     def test_run_prompts_extracts_prompt_and_builds_isolated_baseline_command(self):
         module = load_module(RUN_SCRIPT_PATH)
         text = (
@@ -864,6 +1113,8 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertIn("architecture-ddd/SKILL.md", api_instructions)
         self.assertIn("implementation-django-ninja/SKILL.md", api_instructions)
         self.assertIn("Read only", api_instructions)
+        self.assertIn("request: HttpRequest", api_instructions)
+        self.assertIn("explicit return type", api_instructions)
         self.assertIn("Keep under 750 words", api_instructions)
         self.assertLess(len(api_instructions), len(module.dddjango_developer_instructions(ROOT)))
 
@@ -874,14 +1125,15 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             "expectations": ["korean_first"],
             "scoring_focus": ["Rust 코드만 제공한다."],
         }
-        self.assertEqual(
-            module.dddjango_developer_instructions(
-                ROOT,
-                case_id="trigger-negative-rust-function",
-                case=negative_trigger,
-            ),
-            "",
+        negative_instructions = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="trigger-negative-rust-function",
+            case=negative_trigger,
         )
+        self.assertIn("Django/DDD를 끼워 넣지 않는다", negative_instructions)
+        self.assertIn("파일이 없어도", negative_instructions)
+        self.assertIn("요청 기술 스택", negative_instructions)
+        self.assertNotIn("/skills/", negative_instructions)
 
         conflict_trigger = {
             "category": "trigger",
@@ -991,9 +1243,14 @@ class CodexEvaluationAssetTests(unittest.TestCase):
 
             self.assertEqual(len(commands), 1)
             self.assertIn("--ignore-user-config", commands[0])
-            self.assertFalse(
-                any(part.startswith("developer_instructions=") for part in commands[0])
+            developer_instruction_args = [
+                part for part in commands[0] if part.startswith("developer_instructions=")
+            ]
+            self.assertEqual(len(developer_instruction_args), 1)
+            developer_instruction = json.loads(
+                developer_instruction_args[0].split("=", 1)[1]
             )
+            self.assertIn("Django/DDD를 끼워 넣지 않는다", developer_instruction)
 
     def test_render_report_creates_html_comparison_dashboard(self):
         module = load_module(REPORT_SCRIPT_PATH)

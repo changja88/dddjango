@@ -1,0 +1,22 @@
+{
+  "case_id": "real-repo-db-order-index-review",
+  "category": "real-repo",
+  "title": "Real repo order query index review",
+  "expectations": [
+    "korean_first",
+    "real_repo_applicability",
+    "db_design",
+    "transaction_boundary"
+  ],
+  "scoring_focus": [
+    "Django migration diff를 제시한다.",
+    "idempotency_key unique 또는 composite unique 제약을 포함한다.",
+    "조회 패턴 기반 index 근거가 있다.",
+    "transaction/locking 영향이 언급된다."
+  ],
+  "prompt": "Fixture의 주문/예약 조회 패턴을 보고 DB index와 constraint 개선 unified diff를 제안해줘. migration 파일 예시, idempotency_key unique 제약, 자주 쓰는 status/created_at 조회 인덱스를 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "evals/fixtures/django-shop",
+  "mode": "forward-diff"
+}

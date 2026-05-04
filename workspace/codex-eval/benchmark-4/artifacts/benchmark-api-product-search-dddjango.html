@@ -77,148 +77,170 @@
   </header>
   <main>
     <article class="markdown"><p><strong>상품 검색 API 팀 컨벤션</strong></p>
-<p>전제: <code>products.Product</code> 모델은 <code>id, name, slug, price, category_id, status, is_active, created_at</code>을 가진다. API는 DRF 없이 Django Ninja <code>Schema / FilterSchema / Router / Query</code>만 사용한다.</p>
-<p><strong>Endpoint</strong></p>
-<pre><code>
-GET /api/v1/products
-</code></pre>
+<p>기본 엔드포인트는 명사형 컬렉션으로 고정한다.</p>
+<p><code>GET /api/v1/products?q=phone&amp;category_id=3&amp;min_price=10000&amp;max_price=500000&amp;in_stock=true&amp;sort=-price&amp;limit=20&amp;offset=0</code></p>
 <p>규칙:</p>
 <ul>
-<li>컬렉션은 복수 명사: <code>/products</code></li>
-<li>검색/필터/정렬/페이지네이션은 query parameter만 사용</li>
-<li>기본 정렬은 최신순: <code>-created_at,-id</code></li>
-<li>사용자 입력 sort 값을 <code>order_by()</code>에 직접 넘기지 않고 allow-list로 매핑</li>
-<li>공개 상품 검색은 cursor pagination을 기본으로 한다</li>
-<li>에러는 모두 <code>application/problem+json</code>의 RFC 9457 Problem Details 형식</li>
+<li>API는 DRF 없이 Django Ninja <code>Schema</code>, <code>FilterSchema</code>, <code>Router</code>만 사용한다.</li>
+<li>목록 응답은 항상 <code>items/meta</code> envelope를 사용한다. 커스텀 envelope를 쓰므로 <code>@paginate</code>와 섞지 않는다.</li>
+<li><code>sort</code>는 allow-list Enum으로만 받는다. 사용자 입력을 <code>order_by()</code>에 직접 넘기지 않는다.</li>
+<li><code>limit</code> 기본값은 <code>20</code>, 최대값은 <code>100</code>, <code>offset</code>은 <code>0</code> 이상이다.</li>
+<li>대용량/무한 스크롤 상품 목록은 cursor 방식으로 별도 확장한다. 일반 검색 결과 화면은 offset 기반을 표준으로 둔다.</li>
+<li>모든 오류는 RFC 9457 Problem Details, <code>Content-Type: application/problem+json</code>으로 반환한다.</li>
+<li>validation error는 422로 통일하고 <code>invalid_params</code> 확장 필드를 사용한다.</li>
 </ul>
-<p><strong>Query 표준</strong></p>
-<p>| Query | 예시 | 규칙 | |---|---|---| | <code>q</code> | <code>q=keyboard</code> | 상품명/slug 검색 | | <code>category_id</code> | <code>category_id=10</code> | 단일 카테고리 | | <code>min_price</code> / <code>max_price</code> | <code>min_price=10000</code> | 금액 범위 | | <code>status</code> | <code>status=on_sale</code> | enum 값만 허용 | | <code>sort</code> | <code>sort=price</code> | <code>relevance</code>, <code>price</code>, <code>-price</code>, <code>newest</code>만 허용 | | <code>cursor</code> | <code>cursor=...</code> | Django Ninja CursorPagination 토큰 | | <code>page_size</code> | <code>page_size=40</code> | 기본 20, 최대 100 |</p>
-<p><strong>schemas.py</strong></p>
 <pre><code>
+# products/api.py
 from decimal import Decimal
-from typing import Literal
+from enum import Enum
+from typing import Annotated
 
-from ninja import FilterSchema, ModelSchema, Schema
-from pydantic import Field
-
-from products.models import Product
-
-
-ProductSort = Literal[&quot;relevance&quot;, &quot;price&quot;, &quot;-price&quot;, &quot;newest&quot;]
-ProductStatus = Literal[&quot;on_sale&quot;, &quot;sold_out&quot;, &quot;hidden&quot;]
-
-
-class ProductSearchQuery(FilterSchema):
-    q: str | None = Field(None, max_length=100)
-    category_id: int | None = None
-    min_price: Decimal | None = Field(None, ge=0)
-    max_price: Decimal | None = Field(None, ge=0)
-    status: ProductStatus | None = None
-    sort: ProductSort = &quot;newest&quot;
-
-
-class ProductOut(ModelSchema):
-    class Meta:
-        model = Product
-        fields = [&quot;id&quot;, &quot;name&quot;, &quot;slug&quot;, &quot;price&quot;, &quot;category_id&quot;, &quot;status&quot;]
-
-
-class ProblemDetail(Schema):
-    type: str = &quot;about:blank&quot;
-    title: str
-    status: int
-    detail: str
-    instance: str
-    errors: list[dict] | None = None
-</code></pre>
-<p><strong>api.py</strong></p>
-<pre><code>
-from typing import list
-
-from django.db.models import Q, QuerySet
-from ninja import Query, Router
-from ninja.pagination import CursorPagination, paginate
+from django.db.models import QuerySet
+from django.http import HttpRequest, JsonResponse
+from ninja import FilterLookup, FilterSchema, Query, Router, Schema
+from pydantic import Field, model_validator
 
 from products.models import Product
-from products.schemas import ProblemDetail, ProductOut, ProductSearchQuery
 
 router = Router(tags=[&quot;products&quot;])
 
+
+class ProductSort(str, Enum):
+    relevance = &quot;relevance&quot;
+    newest = &quot;newest&quot;
+    price_asc = &quot;price&quot;
+    price_desc = &quot;-price&quot;
+
+
+class ProductFilter(FilterSchema):
+    q: Annotated[
+        str | None,
+        FilterLookup([&quot;name__icontains&quot;, &quot;description__icontains&quot;]),
+    ] = Field(default=None, min_length=2, max_length=100)
+    category_id: Annotated[int | None, FilterLookup(&quot;category_id&quot;)] = None
+    brand_id: Annotated[int | None, FilterLookup(&quot;brand_id&quot;)] = None
+    min_price: Annotated[Decimal | None, FilterLookup(&quot;price__gte&quot;)] = None
+    max_price: Annotated[Decimal | None, FilterLookup(&quot;price__lte&quot;)] = None
+    in_stock: Annotated[bool | None, FilterLookup(&quot;stock_quantity__gt&quot;)] = None
+
+    @model_validator(mode=&quot;after&quot;)
+    def validate_price_range(self):
+        if self.min_price and self.max_price and self.min_price &gt; self.max_price:
+            raise ValueError(&quot;min_price must be less than or equal to max_price&quot;)
+        return self
+
+
+class ProductSearchQuery(Schema):
+    sort: ProductSort = ProductSort.relevance
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: Decimal
+    thumbnail_url: str | None
+    brand_name: str | None
+    in_stock: bool
+
+
+class PageMeta(Schema):
+    limit: int
+    offset: int
+    total: int
+    has_more: bool
+
+
+class ProductSearchResponse(Schema):
+    items: list[ProductOut]
+    meta: PageMeta
+
+
 SORT_MAP = {
-    &quot;relevance&quot;: (&quot;-created_at&quot;, &quot;-id&quot;),
-    &quot;newest&quot;: (&quot;-created_at&quot;, &quot;-id&quot;),
-    &quot;price&quot;: (&quot;price&quot;, &quot;id&quot;),
-    &quot;-price&quot;: (&quot;-price&quot;, &quot;-id&quot;),
+    ProductSort.relevance: (&quot;-updated_at&quot;, &quot;-id&quot;),
+    ProductSort.newest: (&quot;-created_at&quot;, &quot;-id&quot;),
+    ProductSort.price_asc: (&quot;price&quot;, &quot;id&quot;),
+    ProductSort.price_desc: (&quot;-price&quot;, &quot;-id&quot;),
 }
 
 
-def search_products(filters: ProductSearchQuery) -&gt; QuerySet[Product]:
-    qs = Product.objects.filter(is_active=True).select_related(&quot;category&quot;)
+@router.get(&quot;&quot;, response=ProductSearchResponse)
+def search_products(
+    request: HttpRequest,
+    filters: Query[ProductFilter],
+    params: Query[ProductSearchQuery],
+) -&gt; ProductSearchResponse:
+    qs: QuerySet[Product] = Product.objects.select_related(&quot;brand&quot;).filter(is_active=True)
+    qs = filters.filter(qs).order_by(*SORT_MAP[params.sort])
 
-    if filters.q:
-        qs = qs.filter(Q(name__icontains=filters.q) | Q(slug__icontains=filters.q))
-    if filters.category_id:
-        qs = qs.filter(category_id=filters.category_id)
-    if filters.min_price is not None:
-        qs = qs.filter(price__gte=filters.min_price)
-    if filters.max_price is not None:
-        qs = qs.filter(price__lte=filters.max_price)
-    if filters.status:
-        qs = qs.filter(status=filters.status)
+    total = qs.count()
+    rows = qs[params.offset : params.offset + params.limit]
 
-    return qs.order_by(*SORT_MAP[filters.sort])
-
-
-@router.get(
-    &quot;&quot;,
-    response={200: list[ProductOut], 422: ProblemDetail},
-)
-@paginate(CursorPagination, page_size=20, max_page_size=100)
-def list_products(request, filters: Query[ProductSearchQuery]):
-    return search_products(filters)
+    return ProductSearchResponse(
+        items=[
+            ProductOut(
+                id=p.id,
+                name=p.name,
+                price=p.price,
+                thumbnail_url=p.thumbnail_url,
+                brand_name=p.brand.name if p.brand_id else None,
+                in_stock=p.stock_quantity &gt; 0,
+            )
+            for p in rows
+        ],
+        meta=PageMeta(
+            limit=params.limit,
+            offset=params.offset,
+            total=total,
+            has_more=params.offset + params.limit &lt; total,
+        ),
+    )
 </code></pre>
-<p><strong>config/api.py</strong></p>
 <pre><code>
+# config/api.py
+from django.http import JsonResponse
 from ninja import NinjaAPI
+from ninja.errors import ValidationError
 
 from products.api import router as products_router
 
-api = NinjaAPI(title=&quot;Commerce API&quot;, version=&quot;1.0.0&quot;)
-api.add_router(&quot;/v1/products&quot;, products_router)
-</code></pre>
-<p><strong>Validation Error 표준</strong></p>
-<p>Django Ninja 기본 validation error도 Problem Details로 변환한다.</p>
-<pre><code>
-from django.http import JsonResponse
-from ninja.errors import ValidationError
-
-from config.api import api
+api = NinjaAPI(version=&quot;1.0.0&quot;)
+api.add_router(&quot;/products&quot;, products_router)
 
 
 @api.exception_handler(ValidationError)
 def validation_error_handler(request, exc):
+    errors_value = getattr(exc, &quot;errors&quot;, [])
+    errors = errors_value() if callable(errors_value) else errors_value
+
     return JsonResponse(
         {
             &quot;type&quot;: &quot;https://api.example.com/problems/validation-error&quot;,
-            &quot;title&quot;: &quot;Validation Error&quot;,
+            &quot;title&quot;: &quot;Validation Failed&quot;,
             &quot;status&quot;: 422,
             &quot;detail&quot;: &quot;Request validation failed.&quot;,
             &quot;instance&quot;: request.path,
-            &quot;errors&quot;: exc.errors,
+            &quot;invalid_params&quot;: [
+                {
+                    &quot;name&quot;: &quot;.&quot;.join(str(part) for part in err.get(&quot;loc&quot;, [])),
+                    &quot;reason&quot;: err.get(&quot;msg&quot;, &quot;Invalid value.&quot;),
+                }
+                for err in errors
+            ],
         },
         status=422,
         content_type=&quot;application/problem+json&quot;,
     )
 </code></pre>
-<p><strong>검증 절차</strong></p>
-<pre><code>
-python manage.py test products
-python manage.py check
-curl &#x27;http://localhost:8000/api/v1/products?q=keyboard&amp;sort=-price&amp;page_size=20&#x27;
-curl &#x27;http://localhost:8000/api/v1/products?min_price=-1&#x27; -i
-</code></pre>
-<p>두 번째 <code>curl</code>은 <code>422</code>와 <code>application/problem+json</code>을 반환해야 한다.</p>
-<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 설계/오류/페이지네이션 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Schema/Router/Query 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+<p>검증 기준:</p>
+<ul>
+<li><code>python manage.py check</code></li>
+<li><code>pytest</code></li>
+<li>검색 API 테스트에서 정상 응답은 <code>items/meta</code> 구조를 assert한다.</li>
+<li>잘못된 <code>limit</code>, <code>sort</code>, 가격 범위 요청은 422와 <code>application/problem+json</code>, <code>invalid_params</code>를 assert한다.</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API URL/오류/페이지네이션 설계 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Schema/Router/Filter 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
   </main>
 </body>
 </html>

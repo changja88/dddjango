@@ -1,199 +1,233 @@
-**재고 예약 API 설계**
+**설계안**
 
-`POST /v1/inventory-reservations`로 설계합니다. URL에는 `reserve` 같은 동사를 넣지 않고, 생성되는 리소스인 `inventory-reservations`를 사용합니다.
+`POST /v1/inventory-reservations`는 재고 예약 생성 리소스입니다. `Idempotency-Key` 헤더를 필수로 받고, 같은 사용자/엔드포인트/key 조합은 같은 응답을 재생합니다.
 
-응답 기준:
+```http
+POST /api/v1/inventory-reservations
+Idempotency-Key: 01HX...
+Content-Type: application/json
+```
 
-- `201 Created`: 최초 예약 생성
-- `200 OK`: 같은 `Idempotency-Key`와 같은 요청 본문 재전송, 저장된 응답 반환
-- `409 Conflict`: 같은 key를 다른 payload로 재사용, 또는 아직 처리 중
-- `422 Unprocessable Entity`: 재고 부족
-- 오류 응답은 RFC 9457 Problem Details
+```json
+{ "sku": "SKU-001", "quantity": 2, "order_id": "ord_123" }
+```
 
-핵심 모델:
+핵심 원칙은 3개입니다.
+
+1. Ninja endpoint는 HTTP 입출력만 담당합니다.
+2. application service가 유스케이스, 트랜잭션, 멱등성, 도메인 호출을 조율합니다.
+3. 재고 동시성은 `select_for_update()`로 재고 row를 잠그거나, 고경합이면 optimistic locking으로 전환합니다.
+
+**모델**
 
 ```python
-class IdempotencyKey(models.Model):
-    class Status(models.TextChoices):
-        PROCESSING = "processing", "Processing"
-        COMPLETED = "completed", "Completed"
-
-    actor_id = models.CharField(max_length=64)
-    scope = models.CharField(max_length=100)
-    key = models.CharField(max_length=255)
-    request_hash = models.CharField(max_length=64)
-    status = models.CharField(max_length=20, choices=Status, default=Status.PROCESSING)
-    response_status = models.PositiveSmallIntegerField(null=True, blank=True)
-    response_body = models.JSONField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["actor_id", "scope", "key"],
-                name="uniq_idempotency_actor_scope_key",
-            ),
-        ]
-
-
 class Inventory(models.Model):
-    sku_id = models.BigIntegerField(unique=True)
-    available_quantity = models.PositiveIntegerField()
-    reserved_quantity = models.PositiveIntegerField(default=0)
+    sku = models.CharField(max_length=64, unique=True)
+    on_hand_qty = models.PositiveIntegerField()
+    reserved_qty = models.PositiveIntegerField(default=0)
     version = models.PositiveIntegerField(default=0)
 
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(available_quantity__gte=0),
-                name="inventory_available_non_negative",
-            ),
+                condition=models.Q(on_hand_qty__gte=models.F("reserved_qty")),
+                name="inventory_on_hand_gte_reserved",
+            )
         ]
 
 
 class InventoryReservation(models.Model):
     class Status(models.TextChoices):
-        RESERVED = "reserved", "Reserved"
-        CANCELLED = "cancelled", "Cancelled"
+        RESERVED = "reserved"
+        REJECTED = "rejected"
+        CANCELLED = "cancelled"
 
-    sku_id = models.BigIntegerField()
-    user_id = models.BigIntegerField()
+    reservation_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    sku = models.CharField(max_length=64)
     quantity = models.PositiveIntegerField()
-    status = models.CharField(max_length=20, choices=Status)
-    idempotency_key = models.OneToOneField(IdempotencyKey, on_delete=models.PROTECT)
+    order_id = models.CharField(max_length=128)
+    status = models.CharField(max_length=16, choices=Status, default=Status.RESERVED)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+
+
+class IdempotencyRequest(models.Model):
+    class Status(models.TextChoices):
+        PROCESSING = "processing"
+        SUCCEEDED = "succeeded"
+        FAILED = "failed"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    key = models.CharField(max_length=255)
+    route = models.CharField(max_length=128)
+    request_hash = models.CharField(max_length=64)
+    status = models.CharField(max_length=16, choices=Status)
+    response_status = models.PositiveSmallIntegerField(null=True)
+    response_body = models.JSONField(null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "route", "key"],
+                name="uniq_idempotency_user_route_key",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["user", "route", "key"]),
+        ]
 ```
 
-Ninja endpoint는 얇게 유지하고, 멱등성/트랜잭션/동시성은 application service가 담당합니다.
+**Application Service**
 
 ```python
-from ninja import Header, Router, Schema
-from ninja.security import django_auth
-from pydantic import Field
+@dataclass(frozen=True)
+class ReserveInventoryCommand:
+    user_id: int
+    sku: str
+    quantity: int
+    order_id: str
+    idempotency_key: str
+    request_hash: str
 
-router = Router(tags=["inventory"], auth=django_auth)
 
+class InventoryApplicationService:
+    route = "POST /v1/inventory-reservations"
 
-class ReservationCreateIn(Schema):
-    sku_id: int
-    quantity: int = Field(gt=0)
+    @transaction.atomic
+    def reserve(self, cmd: ReserveInventoryCommand) -> tuple[int, dict]:
+        idem = self._lock_or_create_idempotency(cmd)
+
+        if idem.request_hash != cmd.request_hash:
+            return 409, {"type": "about:blank", "title": "Idempotency conflict", "status": 409}
+
+        if idem.status in {
+            IdempotencyRequest.Status.SUCCEEDED,
+            IdempotencyRequest.Status.FAILED,
+        }:
+            return idem.response_status, idem.response_body
+
+        inventory = (
+            Inventory.objects
+            .select_for_update()
+            .get(sku=cmd.sku)
+        )
+
+        available = inventory.on_hand_qty - inventory.reserved_qty
+        if available < cmd.quantity:
+            body = {"type": "about:blank", "title": "Insufficient inventory", "status": 409}
+            self._finish(idem, IdempotencyRequest.Status.FAILED, 409, body)
+            return 409, body
+
+        inventory.reserved_qty = F("reserved_qty") + cmd.quantity
+        inventory.save(update_fields=["reserved_qty"])
+
+        reservation = InventoryReservation.objects.create(
+            sku=cmd.sku,
+            quantity=cmd.quantity,
+            order_id=cmd.order_id,
+            created_by_id=cmd.user_id,
+        )
+        body = {"reservation_id": str(reservation.reservation_id), "status": "reserved"}
+        self._finish(idem, IdempotencyRequest.Status.SUCCEEDED, 201, body)
+        return 201, body
+
+    def _lock_or_create_idempotency(self, cmd):
+        try:
+            return IdempotencyRequest.objects.create(
+                user_id=cmd.user_id,
+                route=self.route,
+                key=cmd.idempotency_key,
+                request_hash=cmd.request_hash,
+                status=IdempotencyRequest.Status.PROCESSING,
+            )
+        except IntegrityError:
+            return (
+                IdempotencyRequest.objects
+                .select_for_update()
+                .get(user_id=cmd.user_id, route=self.route, key=cmd.idempotency_key)
+            )
+
+    def _finish(self, idem, status, response_status, response_body):
+        idem.status = status
+        idem.response_status = response_status
+        idem.response_body = response_body
+        idem.save(update_fields=["status", "response_status", "response_body"])
+```
+
+중요한 점: 실패 응답도 `IdempotencyRequest`에 저장한 뒤 예외를 다시 던지지 않습니다. 예외를 던지면 `atomic()` rollback으로 실패 응답 저장이 사라질 수 있습니다.
+
+**Django Ninja**
+
+```python
+class ReserveInventoryIn(Schema):
+    sku: str
+    quantity: int
+    order_id: str
 
 
 class ReservationOut(Schema):
-    id: int
-    sku_id: int
-    quantity: int
+    reservation_id: str
     status: str
+
+
+router = Router(tags=["inventory-reservations"])
 
 
 @router.post(
     "/inventory-reservations",
-    response={201: ReservationOut, 200: ReservationOut},
+    response={201: ReservationOut, 409: dict},
+    auth=django_auth,
 )
-def create_inventory_reservation(
-    request,
-    payload: ReservationCreateIn,
-    idempotency_key: str = Header(..., alias="Idempotency-Key"),
+def reserve_inventory(
+    request: HttpRequest,
+    payload: ReserveInventoryIn,
+    idempotency_key: Header[str],
 ):
-    result = reservation_create(
-        actor_id=str(request.user.id),
-        idempotency_key=idempotency_key,
-        payload=payload,
+    body = payload.dict()
+    status, result = InventoryApplicationService().reserve(
+        ReserveInventoryCommand(
+            user_id=request.user.id,
+            sku=payload.sku,
+            quantity=payload.quantity,
+            order_id=payload.order_id,
+            idempotency_key=idempotency_key,
+            request_hash=hashlib.sha256(
+                json.dumps(body, sort_keys=True).encode()
+            ).hexdigest(),
+        )
     )
-    return result.status_code, result.body
+    return status, result
 ```
 
-서비스 계층:
+**동시성 선택**
+
+`select_for_update()`는 예약 대상 `Inventory` row를 직렬화하므로 단순하고 정확합니다. PostgreSQL 기준 Read Committed에서도 동일 SKU 동시 예약 초과를 막습니다.
+
+고경합 SKU에서 lock wait가 커지면 optimistic locking으로 바꿉니다.
 
 ```python
-@dataclass(frozen=True)
-class ServiceResult:
-    status_code: int
-    body: dict
-
-
-def reservation_create(*, actor_id: str, idempotency_key: str, payload) -> ServiceResult:
-    scope = "POST:/v1/inventory-reservations"
-    request_hash = hash_payload(payload)
-
-    with transaction.atomic():
-        try:
-            idem = IdempotencyKey.objects.create(
-                actor_id=actor_id,
-                scope=scope,
-                key=idempotency_key,
-                request_hash=request_hash,
-            )
-            created = True
-        except IntegrityError:
-            created = False
-            idem = IdempotencyKey.objects.select_for_update().get(
-                actor_id=actor_id,
-                scope=scope,
-                key=idempotency_key,
-            )
-
-        if not created:
-            if idem.request_hash != request_hash:
-                raise IdempotencyConflictError()
-            if idem.status == IdempotencyKey.Status.COMPLETED:
-                return ServiceResult(idem.response_status, idem.response_body)
-            raise RequestAlreadyProcessingError()
-
-        inventory = (
-            Inventory.objects.select_for_update()
-            .get(sku_id=payload.sku_id)
-        )
-
-        if inventory.available_quantity < payload.quantity:
-            body = problem_detail("Insufficient stock", 422)
-            idem.status = IdempotencyKey.Status.COMPLETED
-            idem.response_status = 422
-            idem.response_body = body
-            idem.save(update_fields=["status", "response_status", "response_body"])
-            raise InsufficientStockError(body)
-
-        inventory.available_quantity -= payload.quantity
-        inventory.reserved_quantity += payload.quantity
-        inventory.version += 1
-        inventory.save(
-            update_fields=["available_quantity", "reserved_quantity", "version"]
-        )
-
-        reservation = InventoryReservation.objects.create(
-            sku_id=payload.sku_id,
-            user_id=int(actor_id),
-            quantity=payload.quantity,
-            status=InventoryReservation.Status.RESERVED,
-            idempotency_key=idem,
-        )
-
-        body = {
-            "id": reservation.id,
-            "sku_id": reservation.sku_id,
-            "quantity": reservation.quantity,
-            "status": reservation.status,
-        }
-        idem.status = IdempotencyKey.Status.COMPLETED
-        idem.response_status = 201
-        idem.response_body = body
-        idem.save(update_fields=["status", "response_status", "response_body"])
-
-    return ServiceResult(201, body)
+updated = Inventory.objects.filter(
+    sku=cmd.sku,
+    version=current_version,
+    on_hand_qty__gte=F("reserved_qty") + cmd.quantity,
+).update(
+    reserved_qty=F("reserved_qty") + cmd.quantity,
+    version=F("version") + 1,
+)
 ```
 
-동시성 전략은 기본적으로 `select_for_update()`를 권장합니다. 같은 SKU 예약 요청들이 같은 `Inventory` 행에서 직렬화되어 oversell을 막습니다. 트래픽이 높고 충돌이 잦지 않다면 optimistic locking도 가능합니다: `version` 조건과 `available_quantity__gte=quantity` 조건을 건 `update()`를 실행하고, 갱신 row 수가 `0`이면 재시도하거나 `409/422`로 처리합니다.
+`updated == 0`이면 재조회 후 재시도하거나 409를 반환합니다.
 
-검증은 최소한 다음 테스트가 필요합니다.
+**검증 단계**
 
-```text
-1. 같은 Idempotency-Key + 같은 payload 2회 요청 -> Reservation 1개, 두 번째는 200과 동일 body
-2. 같은 Idempotency-Key + 다른 payload -> 409 Problem Details
-3. 동시에 남은 재고보다 많은 예약 요청 -> available_quantity 음수 불가, 성공 수 제한
-4. 재고 부족 -> 422, 재시도 시 같은 key면 같은 실패 응답
-5. unique constraint 위반 경로에서도 중복 Reservation 생성 없음
+```bash
+python manage.py makemigrations
+python manage.py check
+pytest
+pytest tests/test_inventory_reservations_api.py
 ```
+
+테스트는 최소한 같은 `Idempotency-Key` 재요청이 같은 `reservation_id`를 반환하는지, 다른 body로 같은 key를 쓰면 409인지, 동시 요청 합계가 `on_hand_qty`를 넘지 않는지 검증해야 합니다.
 
 ---
 > **관련 스킬 참조:**
-> - Django Ninja Schema/Router 구현 → **implementation-django-ninja** 스킬
-> - 트랜잭션과 unique constraint 설계 → **architecture-db** 스킬
-> - 애그리거트/서비스 책임 분리 → **architecture-ddd** 스킬
+> - API 구현 세부화 → **implementation-django-ninja** 스킬

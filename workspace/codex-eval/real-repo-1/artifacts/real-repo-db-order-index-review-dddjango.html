@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>real-repo-db-order-index-review dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>real-repo-db-order-index-review dddjango</h1>
+    <div class="path">workspace/codex-eval/real-repo-1/dddjango/real-repo-db-order-index-review.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>fixture에서 확인한 조회는 <code>Order.objects.get(id=...)</code>, <code>Product.objects.select_for_update().get(id=...)</code>, <code>Order.objects.select_for_update().get(id=...)</code>처럼 PK 기반이라 추가 인덱스가 필요 없습니다. 요청된 주문 목록성 조회에는 <code>status = ?</code> 동등 조건 뒤 <code>created_at</code> 정렬/범위가 붙는 패턴을 기준으로 <code>(status, -created_at)</code> 복합 인덱스가 맞습니다. 예약은 <code>idempotency_key</code>로 중복 생성을 막는 DB 제약이 핵심이고, 이 unique 제약 자체가 조회 인덱스 역할도 합니다.</p>
+<pre><code>
+diff --git a/shop/orders/models.py b/shop/orders/models.py
+index 7c31f87..3c4b8a1 100644
+--- a/shop/orders/models.py
++++ b/shop/orders/models.py
+@@ -17,6 +17,14 @@ class Order(models.Model):
+     cancel_reason = models.TextField(blank=True)
+     created_at = models.DateTimeField(auto_now_add=True)
+ 
++    class Meta:
++        indexes = [
++            models.Index(
++                fields=[&quot;status&quot;, &quot;-created_at&quot;],
++                name=&quot;order_status_created_idx&quot;,
++            ),
++        ]
++
+     def cancel(self, reason: str, actor_email: str) -&gt; None:
+         if self.status == self.STATUS_SHIPPED:
+             raise ValueError(&quot;shipped orders cannot be cancelled&quot;)
+@@ -44,3 +52,11 @@ class Reservation(models.Model):
+     quantity = models.PositiveIntegerField()
+     idempotency_key = models.CharField(max_length=128)
+     created_at = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        constraints = [
++            models.UniqueConstraint(
++                fields=[&quot;idempotency_key&quot;],
++                name=&quot;reservation_idempo_key_uniq&quot;,
++            ),
++        ]
+diff --git a/shop/orders/migrations/0002_indexes_constraints.py b/shop/orders/migrations/0002_indexes_constraints.py
+new file mode 100644
+index 0000000..b188aa1
+--- /dev/null
++++ b/shop/orders/migrations/0002_indexes_constraints.py
+@@ -0,0 +1,29 @@
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++    dependencies = [
++        (&quot;orders&quot;, &quot;0001_initial&quot;),
++    ]
++
++    operations = [
++        migrations.AddIndex(
++            model_name=&quot;order&quot;,
++            index=models.Index(
++                fields=[&quot;status&quot;, &quot;-created_at&quot;],
++                name=&quot;order_status_created_idx&quot;,
++            ),
++        ),
++        migrations.AddConstraint(
++            model_name=&quot;reservation&quot;,
++            constraint=models.UniqueConstraint(
++                fields=[&quot;idempotency_key&quot;],
++                name=&quot;reservation_idempo_key_uniq&quot;,
++            ),
++        ),
++    ]
+</code></pre>
+<p>근거:</p>
+<ul>
+<li><code>id</code> 조회와 <code>select_for_update().get(id=...)</code>는 PK 인덱스를 이미 사용하므로 중복 인덱스가 필요 없습니다.</li>
+<li><code>(status, -created_at)</code>는 <code>WHERE status = ... ORDER BY created_at DESC</code> 또는 <code>status + created_at range</code>에 맞습니다. 동등 조건 컬럼을 앞에 두고 범위/정렬 컬럼을 뒤에 둡니다.</li>
+<li><code>Reservation.idempotency_key</code> unique는 동시 요청이 같은 키로 두 번 insert되는 것을 DB에서 차단합니다. 현재 뷰는 <code>Reservation.objects.create()</code>만 하므로, 적용 후에는 중복 키에서 <code>IntegrityError</code>를 잡아 기존 예약을 반환하도록 애플리케이션 코드도 맞추는 것이 좋습니다.</li>
+<li>transaction/locking 영향: 기존 <code>select_for_update()</code>는 <code>Product</code>, <code>Order</code> 행만 잠급니다. unique 제약은 <code>Reservation</code> insert 시 unique index 경합을 만들고, 같은 <code>idempotency_key</code> 동시 insert 중 하나를 실패시킵니다. 인덱스/제약 추가 마이그레이션은 테이블 락과 쓰기 지연이 생길 수 있어 큰 테이블이면 PostgreSQL concurrent index/별도 제약 검증 단계로 분리하세요.</li>
+</ul>
+<p>검증 단계:</p>
+<pre><code>
+python manage.py makemigrations --check --dry-run
+python manage.py sqlmigrate orders 0002
+python manage.py test shop.orders
+</code></pre>
+<p>기존 데이터가 있다면 마이그레이션 전에 중복 키를 확인하세요.</p>
+<pre><code>
+SELECT idempotency_key, COUNT(*)
+FROM orders_reservation
+GROUP BY idempotency_key
+HAVING COUNT(*) &gt; 1;
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - migration rollout / concurrent index 적용 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

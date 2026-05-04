@@ -79,10 +79,13 @@
     <article class="markdown"><pre><code>
 grep &#x27;ERROR&#x27; app.log
 </code></pre>
-<p>파일명이 다르면 <code>app.log</code>를 실제 로그 파일명으로 바꾸면 됩니다.</p>
 <p>대소문자 구분 없이 찾으려면:</p>
 <pre><code>
 grep -i &#x27;ERROR&#x27; app.log
+</code></pre>
+<p>파일로 저장하려면:</p>
+<pre><code>
+grep &#x27;ERROR&#x27; app.log &gt; errors.log
 </code></pre></article>
   </main>
 </body>

@@ -1,0 +1,23 @@
+{
+  "case_id": "real-repo-drf-to-ninja-migration",
+  "category": "real-repo",
+  "title": "Real repo DRF to Django Ninja migration",
+  "expectations": [
+    "korean_first",
+    "real_repo_applicability",
+    "reject_drf",
+    "django_ninja_compliance"
+  ],
+  "scoring_focus": [
+    "DRF import/Serializer/APIView를 제거한다.",
+    "Django Ninja Schema/Router로 전환한다.",
+    "fields='__all__' 노출 위험을 고친다.",
+    "HttpRequest와 return type을 포함한다.",
+    "unified diff 형식이다."
+  ],
+  "prompt": "Fixture의 `shop/orders/api_drf.py`는 DRF `ModelSerializer`와 `APIView`를 사용한다. DRF 코드를 생성하지 말고 Django Ninja Schema/Router로 전환하는 unified diff를 제안해줘. `fields='__all__'` 민감 필드 노출 위험도 같이 고쳐줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "evals/fixtures/django-shop",
+  "mode": "forward-diff"
+}

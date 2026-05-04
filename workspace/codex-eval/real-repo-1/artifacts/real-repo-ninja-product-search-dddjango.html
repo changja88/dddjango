@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>real-repo-ninja-product-search dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>real-repo-ninja-product-search dddjango</h1>
+    <div class="path">workspace/codex-eval/real-repo-1/dddjango/real-repo-ninja-product-search.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>Fixture 기준 제안 diff입니다. Django Ninja <code>Router/Schema</code>만 사용하고, <code>FilterSchema + Query</code>, 정렬 allow-list, <code>items/meta</code> envelope, <code>HttpRequest</code>, 명시 return type, <code>application/problem+json</code> 검증을 포함했습니다.</p>
+<pre><code>
+diff --git a/config/api.py b/config/api.py
+new file mode 100644
+index 0000000..1f6e5b8
+--- /dev/null
++++ b/config/api.py
+@@ -0,0 +1,32 @@
++from django.http import HttpRequest, JsonResponse
++from ninja import NinjaAPI, Schema
++from ninja.errors import ValidationError
++
++from shop.orders.api import router as products_router
++
++
++api = NinjaAPI(title=&quot;Shop API&quot;, version=&quot;1.0.0&quot;)
++api.add_router(&quot;/products/&quot;, products_router)
++
++
++class ProblemDetail(Schema):
++    type: str
++    title: str
++    status: int
++    detail: str
++    instance: str
++    errors: list[dict]
++
++
++@api.exception_handler(ValidationError)
++def validation_error_handler(
++    request: HttpRequest,
++    exc: ValidationError,
++) -&gt; JsonResponse:
++    return JsonResponse(
++        ProblemDetail(
++            type=&quot;https://example.com/problems/validation-error&quot;,
++            title=&quot;Validation Error&quot;,
++            status=422,
++            detail=&quot;Request parameters failed validation.&quot;,
++            instance=request.path,
++            errors=exc.errors,
++        ).dict(),
++        status=422,
++        content_type=&quot;application/problem+json&quot;,
++    )
+diff --git a/config/urls.py b/config/urls.py
+index 1b614d6..f3a8b23 100644
+--- a/config/urls.py
++++ b/config/urls.py
+@@ -1,9 +1,11 @@
+ from django.urls import path
+ 
++from config.api import api
+ from shop.orders import views
+ 
+ 
+ urlpatterns = [
++    path(&quot;api/&quot;, api.urls),
+     path(&quot;orders/&lt;int:order_id&gt;/cancel/&quot;, views.cancel_order),
+     path(&quot;orders/&lt;int:order_id&gt;/reserve/&quot;, views.reserve_inventory),
+ ]
+diff --git a/shop/orders/api.py b/shop/orders/api.py
+new file mode 100644
+index 0000000..a2c88f0
+--- /dev/null
++++ b/shop/orders/api.py
+@@ -0,0 +1,76 @@
++from datetime import datetime
++from decimal import Decimal
++from typing import Annotated, Literal
++
++from django.db.models import Q
++from django.http import HttpRequest
++from ninja import Field, FilterLookup, FilterSchema, Query, Router, Schema
++
++from shop.orders.models import Product
++
++
++router = Router(tags=[&quot;products&quot;])
++
++ProductSort = Literal[
++    &quot;created_at&quot;,
++    &quot;-created_at&quot;,
++    &quot;price&quot;,
++    &quot;-price&quot;,
++    &quot;name&quot;,
++    &quot;-name&quot;,
++    &quot;sku&quot;,
++    &quot;-sku&quot;,
++]
++
++SORT_ORDERING = {
++    &quot;created_at&quot;: &quot;created_at&quot;,
++    &quot;-created_at&quot;: &quot;-created_at&quot;,
++    &quot;price&quot;: &quot;price&quot;,
++    &quot;-price&quot;: &quot;-price&quot;,
++    &quot;name&quot;: &quot;name&quot;,
++    &quot;-name&quot;: &quot;-name&quot;,
++    &quot;sku&quot;: &quot;sku&quot;,
++    &quot;-sku&quot;: &quot;-sku&quot;,
++}
++
++
++class ProductFilterSchema(FilterSchema):
++    search: Annotated[
++        str | None,
++        FilterLookup([&quot;sku__icontains&quot;, &quot;name__icontains&quot;]),
++    ] = None
++    is_active: bool | None = None
++    min_price: Annotated[Decimal | None, FilterLookup(&quot;price__gte&quot;)] = None
++    max_price: Annotated[Decimal | None, FilterLookup(&quot;price__lte&quot;)] = None
++    in_stock: bool | None = None
++
++    def filter_in_stock(self, value: bool) -&gt; Q:
++        if value:
++            return Q(stock_quantity__gt=0)
++        return Q(stock_quantity=0)
++
++
++class ProductListQuery(Schema):
++    limit: int = Field(20, ge=1, le=100)
++    offset: int = Field(0, ge=0)
++    sort: ProductSort = &quot;-created_at&quot;
++
++
++class ProductOut(Schema):
++    id: int
++    sku: str
++    name: str
++    is_active: bool
++    stock_quantity: int
++    price: Decimal
++    created_at: datetime
++
++
++class ProductListMeta(Schema):
++    limit: int
++    offset: int
++    total: int
++    sort: ProductSort
++
++
++class ProductListEnvelope(Schema):
++    items: list[ProductOut]
++    meta: ProductListMeta
++
++
++@router.get(&quot;&quot;, response=ProductListEnvelope)
++def list_products(
++    request: HttpRequest,
++    filters: Query[ProductFilterSchema],
++    pagination: Query[ProductListQuery],
++) -&gt; ProductListEnvelope:
++    queryset = filters.filter(Product.objects.all())
++    queryset = queryset.order_by(SORT_ORDERING[pagination.sort], &quot;id&quot;)
++    total = queryset.count()
++    items = list(queryset[pagination.offset : pagination.offset + pagination.limit])
++    return {
++        &quot;items&quot;: items,
++        &quot;meta&quot;: {
++            &quot;limit&quot;: pagination.limit,
++            &quot;offset&quot;: pagination.offset,
++            &quot;total&quot;: total,
++            &quot;sort&quot;: pagination.sort,
++        },
++    }
+diff --git a/shop/orders/tests.py b/shop/orders/tests.py
+index 3460b38..585a0cf 100644
+--- a/shop/orders/tests.py
++++ b/shop/orders/tests.py
+@@ -1,6 +1,6 @@
+ from django.test import TestCase
+ 
+-from shop.orders.models import Order
++from shop.orders.models import Order, Product
+ 
+ 
+ class OrderModelTests(TestCase):
+@@ -14,3 +14,34 @@ class OrderModelTests(TestCase):
+         order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
+ 
+         self.assertEqual(order.status, Order.STATUS_CANCELLED)
++
++
++class ProductListApiTests(TestCase):
++    def test_list_products_filters_sorts_and_wraps_response(self):
++        Product.objects.create(
++            sku=&quot;HAT-001&quot;,
++            name=&quot;Wool Hat&quot;,
++            is_active=True,
++            stock_quantity=3,
++            price=&quot;19.00&quot;,
++        )
++        Product.objects.create(
++            sku=&quot;MUG-001&quot;,
++            name=&quot;Coffee Mug&quot;,
++            is_active=True,
++            stock_quantity=0,
++            price=&quot;9.00&quot;,
++        )
++
++        response = self.client.get(
++            &quot;/api/products/&quot;,
++            {&quot;search&quot;: &quot;hat&quot;, &quot;in_stock&quot;: &quot;true&quot;, &quot;sort&quot;: &quot;price&quot;},
++        )
++
++        self.assertEqual(response.status_code, 200)
++        self.assertEqual(response.json()[&quot;items&quot;][0][&quot;sku&quot;], &quot;HAT-001&quot;)
++        self.assertEqual(response.json()[&quot;meta&quot;][&quot;total&quot;], 1)
++
++    def test_invalid_query_returns_problem_json(self):
++        response = self.client.get(&quot;/api/products/&quot;, {&quot;limit&quot;: &quot;0&quot;})
++
++        self.assertEqual(response.status_code, 422)
++        self.assertEqual(response[&quot;Content-Type&quot;], &quot;application/problem+json&quot;)
++        self.assertEqual(response.json()[&quot;status&quot;], 422)
+</code></pre>
+<p>검증은 read-only sandbox라 실행하지 않았습니다. 적용 후 fixture 루트에서 실행하세요:</p>
+<pre><code>
+python manage.py check
+python manage.py test
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>
