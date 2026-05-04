@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-ninja-endpoint dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-ninja-endpoint dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/dddjango/benchmark-tdd-ninja-endpoint.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>현재 워크스페이스가 read-only라 파일 생성과 pytest 실행은 하지 못했습니다. 아래는 실제 프로젝트에 그대로 옮겨 TDD로 진행할 수 있는 Django Ninja 예시입니다. <code>TestClient(router)</code> 방식은 빠른 isolated endpoint test에 적합하고, 실제 URL 조합까지 검증하려면 Django <code>client.post(&quot;/api/products/&quot;)</code> 테스트를 별도로 추가하세요.</p>
+<p><strong>RED: endpoint 테스트 먼저</strong></p>
+<pre><code>
+# tests/isolated/api/test_products_api.py
+import pytest
+from ninja.testing import TestClient
+
+from products.api import router
+
+
+class FakeProductService:
+    def __init__(self):
+        self.called_with = None
+
+    def create_product(self, command):
+        self.called_with = command
+        return {&quot;id&quot;: 1, &quot;name&quot;: command.name, &quot;price&quot;: command.price}
+
+
+@pytest.fixture
+def product_service(monkeypatch):
+    service = FakeProductService()
+    monkeypatch.setattr(&quot;products.api.product_service&quot;, service)
+    return service
+
+
+@pytest.fixture
+def client():
+    return TestClient(router)
+
+
+def test_create_product_invalid_request_returns_422(client, product_service):
+    # Arrange
+    payload = {&quot;name&quot;: &quot;&quot;, &quot;price&quot;: -100}
+
+    # Act
+    response = client.post(&quot;/&quot;, json=payload)
+
+    # Assert
+    assert response.status_code == 422
+    assert product_service.called_with is None
+
+    errors = response.json()[&quot;detail&quot;]
+    assert any(&quot;name&quot; in error[&quot;loc&quot;] for error in errors)
+    assert any(&quot;price&quot; in error[&quot;loc&quot;] for error in errors)
+
+
+def test_create_product_valid_request_returns_created_product(client, product_service):
+    # Arrange
+    payload = {&quot;name&quot;: &quot;Keyboard&quot;, &quot;price&quot;: 120000}
+
+    # Act
+    response = client.post(&quot;/&quot;, json=payload)
+
+    # Assert
+    assert response.status_code == 201
+    assert response.json() == {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: &quot;Keyboard&quot;,
+        &quot;price&quot;: 120000,
+    }
+    assert product_service.called_with.name == &quot;Keyboard&quot;
+    assert product_service.called_with.price == 120000
+</code></pre>
+<p><strong>예상 실패</strong></p>
+<p>처음에는 <code>products.api</code>, <code>router</code>, <code>product_service</code>, <code>ProductCreateSchema</code>가 없어서 import 실패합니다. 그 다음 구현 후에는 schema 제약이 없으면 422 테스트가 실패하고, <code>response={201: ...}</code> 또는 status code가 없으면 성공 응답 테스트가 실패합니다.</p>
+<p><strong>GREEN: 최소 구현</strong></p>
+<pre><code>
+# products/schemas.py
+from ninja import Schema
+from pydantic import Field
+
+
+class ProductCreateSchema(Schema):
+    name: str = Field(min_length=1, max_length=100)
+    price: int = Field(gt=0)
+
+
+class ProductResponseSchema(Schema):
+    id: int
+    name: str
+    price: int
+</code></pre>
+<pre><code>
+# products/services.py
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class CreateProductCommand:
+    name: str
+    price: int
+
+
+class ProductService:
+    def create_product(self, command: CreateProductCommand) -&gt; dict:
+        # 실제 프로젝트에서는 Product.objects.create(...) 또는 repository 호출
+        product = {
+            &quot;id&quot;: 1,
+            &quot;name&quot;: command.name,
+            &quot;price&quot;: command.price,
+        }
+        return product
+
+
+product_service = ProductService()
+</code></pre>
+<pre><code>
+# products/api.py
+from ninja import Router
+
+from products.schemas import ProductCreateSchema, ProductResponseSchema
+from products.services import CreateProductCommand, product_service
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.post(&quot;/&quot;, response={201: ProductResponseSchema})
+def create_product(request, payload: ProductCreateSchema):
+    command = CreateProductCommand(name=payload.name, price=payload.price)
+    return 201, product_service.create_product(command)
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI()
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>REFACTOR 방향</strong></p>
+<p>endpoint는 HTTP/schema 변환만 담당하고, 생성 유스케이스는 <code>ProductService</code>로 둡니다. DB가 들어가면 <code>ProductRepository</code> Protocol과 <code>DjangoProductRepository</code>를 분리하고, service 테스트는 <code>InMemoryProductRepository</code>로 검증하세요. endpoint 테스트는 위처럼 validation 실패와 성공 응답만 얇게 유지하는 편이 리팩터링 내성이 좋습니다.</p>
+<p><strong>실행 명령</strong></p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/api/test_products_api.py -q
+</code></pre>
+<p>전체 URL까지 확인하려면 별도 테스트에서 Django pytest client로 실행합니다.</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/api/test_products_api.py tests/isolated/integration/test_products_urls.py -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja endpoint/service 설계 → <strong>implementation-django-ninja</strong> 스킬 &gt; - pytest fixture와 isolated test 구조 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

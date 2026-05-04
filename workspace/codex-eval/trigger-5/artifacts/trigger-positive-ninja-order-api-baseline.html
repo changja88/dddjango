@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-ninja-order-api baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-ninja-order-api baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-positive-ninja-order-api.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 워크스페이스가 비어 있고 읽기 전용이라 파일 생성은 못 했습니다. 아래는 <code>orders</code> 바운디드 컨텍스트 기준으로 바로 적용할 수 있는 DDD + Django Ninja 설계입니다.</p>
+<p><strong>주요 내용</strong></p>
+<p>전략적 경계는 이렇게 잡는 게 좋습니다.</p>
+<p>| Context | 책임 | 관계 | |---|---|---| | <code>orders</code> | 주문 생성, 주문 상태, 주문 금액 불변식 | 핵심/지원 도메인 | | <code>catalog</code> | 상품명, 판매가 조회 | <code>orders</code>가 상품 스냅샷만 사용 | | <code>inventory</code> | 재고 예약/차감 | <code>OrderCreatedEvent</code> 구독 | | <code>payment</code> | 결제 승인 | 주문 생성 이후 별도 흐름 |</p>
+<p>유비쿼터스 언어:</p>
+<p>| 용어 | 의미 | 금지 동의어 | |---|---|---| | <code>Order</code> | 주문 애그리거트 루트 | <code>Purchase</code>, <code>Deal</code> | | <code>OrderLine</code> | 주문 상품 라인 | <code>Item</code>, <code>ProductRow</code> | | <code>Orderer</code> | 주문자 식별자 | <code>User</code>, <code>Member</code> 직접 참조 | | <code>ShippingAddress</code> | 배송지 값 객체 | <code>AddressDict</code> | | <code>OrderCreatedEvent</code> | 주문 생성 완료 사실 | <code>CreateOrderEvent</code> |</p>
+<p>추천 구조:</p>
+<pre><code>
+apps/orders/
+  domain/
+    models.py
+    events.py
+    exceptions.py
+    repositories.py
+  application/
+    commands.py
+    services.py
+  infrastructure/
+    models.py
+    repositories.py
+  api/
+    schemas.py
+    router.py
+config/
+  api.py
+  urls.py
+</code></pre>
+<p>핵심 도메인 모델:</p>
+<pre><code>
+# apps/orders/domain/models.py
+from dataclasses import dataclass, field
+from decimal import Decimal
+from uuid import UUID, uuid4
+
+from .events import OrderCreatedEvent
+from .exceptions import EmptyOrderError, InvalidMoneyError, InvalidQuantityError
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: Decimal
+    currency: str = &quot;KRW&quot;
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt; 0:
+            raise InvalidMoneyError(&quot;금액은 0 이상이어야 합니다.&quot;)
+
+
+@dataclass(frozen=True)
+class OrderLine:
+    product_id: UUID
+    product_name: str
+    unit_price: Money
+    quantity: int
+
+    def __post_init__(self) -&gt; None:
+        if self.quantity &lt;= 0:
+            raise InvalidQuantityError(&quot;주문 수량은 1 이상이어야 합니다.&quot;)
+
+    @property
+    def total_price(self) -&gt; Money:
+        return Money(self.unit_price.amount * self.quantity, self.unit_price.currency)
+
+
+@dataclass(frozen=True)
+class ShippingAddress:
+    receiver_name: str
+    receiver_phone: str
+    postal_code: str
+    address1: str
+    address2: str = &quot;&quot;
+
+
+@dataclass
+class Order:
+    &quot;&quot;&quot;Order 애그리거트 루트.
+
+    불변식:
+    - 주문은 최소 1개 이상의 OrderLine을 가진다.
+    - OrderLine 수량은 1 이상이다.
+    - 주문 총액은 모든 OrderLine 합계와 일치한다.
+    - 외부 애그리거트는 ID로만 참조한다.
+    &quot;&quot;&quot;
+
+    id: UUID
+    orderer_id: UUID
+    lines: list[OrderLine]
+    shipping_address: ShippingAddress
+    _domain_events: list[object] = field(default_factory=list)
+
+    @classmethod
+    def create(
+        cls,
+        orderer_id: UUID,
+        lines: list[OrderLine],
+        shipping_address: ShippingAddress,
+    ) -&gt; &quot;Order&quot;:
+        if not lines:
+            raise EmptyOrderError(&quot;최소 1개 이상의 상품을 주문해야 합니다.&quot;)
+
+        order = cls(
+            id=uuid4(),
+            orderer_id=orderer_id,
+            lines=lines,
+            shipping_address=shipping_address,
+        )
+        order._record_event(
+            OrderCreatedEvent(order_id=order.id, orderer_id=order.orderer_id)
+        )
+        return order
+
+    @property
+    def total_amount(self) -&gt; Money:
+        amount = sum((line.total_price.amount for line in self.lines), Decimal(&quot;0&quot;))
+        return Money(amount)
+
+    def _record_event(self, event: object) -&gt; None:
+        self._domain_events.append(event)
+
+    def collect_events(self) -&gt; list[object]:
+        events = list(self._domain_events)
+        self._domain_events.clear()
+        return events
+</code></pre>
+<pre><code>
+# apps/orders/domain/events.py
+from dataclasses import dataclass, field
+from datetime import datetime
+from uuid import UUID
+
+
+@dataclass(frozen=True)
+class OrderCreatedEvent:
+    order_id: UUID
+    orderer_id: UUID
+    occurred_at: datetime = field(default_factory=datetime.now)
+</code></pre>
+<pre><code>
+# apps/orders/domain/repositories.py
+from abc import ABC, abstractmethod
+from uuid import UUID
+
+from .models import Order
+
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id: UUID) -&gt; Order | None:
+        ...
+
+    @abstractmethod
+    def save(self, order: Order, *, idempotency_key: str | None = None) -&gt; None:
+        ...
+
+    @abstractmethod
+    def find_by_idempotency_key(self, key: str) -&gt; Order | None:
+        ...
+</code></pre>
+<p>응용 서비스는 유스케이스만 조율합니다.</p>
+<pre><code>
+# apps/orders/application/services.py
+from django.db import transaction
+
+from apps.orders.domain.models import Money, Order, OrderLine, ShippingAddress
+from apps.orders.domain.repositories import OrderRepository
+
+from .commands import CreateOrderCommand
+
+
+class CreateOrderService:
+    def __init__(self, orders: OrderRepository) -&gt; None:
+        self.orders = orders
+
+    @transaction.atomic
+    def create(self, command: CreateOrderCommand) -&gt; Order:
+        if command.idempotency_key:
+            existing = self.orders.find_by_idempotency_key(command.idempotency_key)
+            if existing:
+                return existing
+
+        order = Order.create(
+            orderer_id=command.orderer_id,
+            lines=[
+                OrderLine(
+                    product_id=item.product_id,
+                    product_name=item.product_name,
+                    unit_price=Money(item.unit_price),
+                    quantity=item.quantity,
+                )
+                for item in command.items
+            ],
+            shipping_address=ShippingAddress(**command.shipping_address),
+        )
+        self.orders.save(order, idempotency_key=command.idempotency_key)
+
+        events = order.collect_events()
+        transaction.on_commit(lambda: publish_order_events(events))
+        return order
+</code></pre>
+<p>Django Ninja API는 표현 계층에만 둡니다.</p>
+<pre><code>
+# apps/orders/api/router.py
+from uuid import UUID
+
+from ninja import Header, Router
+from ninja.security import django_auth
+
+from apps.orders.application.commands import CreateOrderCommand, CreateOrderItem
+from apps.orders.application.services import CreateOrderService
+from apps.orders.infrastructure.repositories import DjangoOrderRepository
+
+from .schemas import CreateOrderIn, OrderCreatedOut, ProblemDetails
+
+router = Router(tags=[&quot;orders&quot;], auth=django_auth)
+
+
+@router.post(
+    &quot;/&quot;,
+    response={201: OrderCreatedOut, 409: ProblemDetails, 422: ProblemDetails},
+)
+def create_order(
+    request,
+    payload: CreateOrderIn,
+    idempotency_key: str | None = Header(None, alias=&quot;Idempotency-Key&quot;),
+) -&gt; tuple[int, OrderCreatedOut]:
+    service = CreateOrderService(DjangoOrderRepository())
+    order = service.create(
+        CreateOrderCommand(
+            orderer_id=UUID(str(request.user.id)),
+            items=[CreateOrderItem(**item.model_dump()) for item in payload.items],
+            shipping_address=payload.shipping_address.model_dump(),
+            idempotency_key=idempotency_key,
+        )
+    )
+    return 201, OrderCreatedOut(
+        id=order.id,
+        total_amount=order.total_amount.amount,
+        currency=order.total_amount.currency,
+    )
+</code></pre>
+<pre><code>
+# apps/orders/api/schemas.py
+from decimal import Decimal
+from uuid import UUID
+
+from ninja import Schema
+
+
+class CreateOrderItemIn(Schema):
+    product_id: UUID
+    product_name: str
+    unit_price: Decimal
+    quantity: int
+
+
+class ShippingAddressIn(Schema):
+    receiver_name: str
+    receiver_phone: str
+    postal_code: str
+    address1: str
+    address2: str = &quot;&quot;
+
+
+class CreateOrderIn(Schema):
+    items: list[CreateOrderItemIn]
+    shipping_address: ShippingAddressIn
+
+
+class OrderCreatedOut(Schema):
+    id: UUID
+    total_amount: Decimal
+    currency: str
+
+
+class ProblemDetails(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+    instance: str | None = None
+</code></pre>
+<p>라우터 합성:</p>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from apps.orders.api.router import router as orders_router
+
+api = NinjaAPI(title=&quot;Commerce API&quot;, version=&quot;1.0.0&quot;)
+api.add_router(&quot;/orders/&quot;, orders_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from .api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>API 계약은 <code>POST /api/orders/</code>가 맞습니다. URL에 <code>create-order</code> 같은 동사를 넣지 않고, 성공은 <code>201 Created</code>, 입력 검증은 <code>422</code>, 중복 멱등성 충돌은 상황에 따라 <code>409</code>를 사용합니다. 중요한 주문 생성 POST라서 <code>Idempotency-Key</code> 헤더를 받도록 설계했습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - DB 모델/인덱스/마이그레이션 설계 → <strong>architecture-db</strong> 스킬 &gt; - Django ORM 리포지토리 구현 → <strong>implementation-django</strong> 스킬 &gt; - Django Ninja 에러 핸들러/테스트 작성 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

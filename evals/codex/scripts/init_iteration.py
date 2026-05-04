@@ -67,6 +67,10 @@ def empty_grade(case, variant, schema):
         "case_id": case["id"],
         "variant": variant,
         "scores": {criterion["id"]: 0 for criterion in schema["criteria"]},
+        "usability": {
+            **{criterion["id"]: 0 for criterion in schema.get("usability_criteria", [])},
+            "notes": "",
+        },
         "notes": "",
         "flags": {
             "korean_first": False,

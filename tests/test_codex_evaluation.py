@@ -14,6 +14,7 @@ CASES_PATH = ROOT / "evals/codex/cases/pilot.jsonl"
 BENCHMARK_CASES_PATH = ROOT / "evals/shared/cases/benchmark.jsonl"
 TRIGGER_CASES_PATH = ROOT / "evals/shared/cases/trigger.jsonl"
 SCHEMA_PATH = ROOT / "evals/codex/rubrics/grading-schema.json"
+USABILITY_CHECKLIST_PATH = ROOT / "evals/shared/rubrics/usability-checklist.md"
 GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_outputs.py"
 AUTO_GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/auto_grade_outputs.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
@@ -103,12 +104,29 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             "붙여 넣을 수 있는 Django Ninja 코드",
             "from products.api import router as products_router",
             "api.add_router(\"/products/\", products_router)",
+            "python manage.py check",
+            "pytest",
             "rest_framework",
             "ViewSet",
             "Serializer",
         ]:
             with self.subTest(required=required):
                 self.assertIn(required, body)
+
+    def test_django_ninja_skill_defines_search_list_api_standard(self):
+        skill = (ROOT / "skills/implementation-django-ninja/SKILL.md").read_text()
+
+        for required in [
+            "검색/목록 API 표준",
+            "정렬 필드는 allow-list",
+            "items/meta envelope",
+            "@paginate와 커스텀 envelope를 섞지 않는다",
+            "RFC 9457 Problem Details",
+            "FilterSchema",
+            "Query[",
+        ]:
+            with self.subTest(required=required):
+                self.assertIn(required, skill)
 
     def test_tdd_skills_define_empty_workspace_fallback_without_false_verification(self):
         for skill_name in ["implementation-tdd", "implementation-test"]:
@@ -267,24 +285,61 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertEqual(thresholds["minimum_average_lift_percent"], 15)
         self.assertEqual(thresholds["maximum_drf_violation_count"], 0)
 
+    def test_usability_checklist_and_schema_define_manual_review_fields(self):
+        checklist = USABILITY_CHECKLIST_PATH.read_text()
+        schema = json.loads(SCHEMA_PATH.read_text())
+
+        usability_fields = [item["id"] for item in schema["usability_criteria"]]
+        self.assertEqual(
+            usability_fields,
+            [
+                "actionable",
+                "concise",
+                "realistic_file_layout",
+                "korean_quality",
+            ],
+        )
+
+        for item in schema["usability_criteria"]:
+            with self.subTest(item=item["id"]):
+                self.assertEqual(item["max"], 5)
+                self.assertIn(item["label"], checklist)
+
+        for required in [
+            "실행 가능한 Django/Ninja 문법",
+            "파일 구조와 import",
+            "migration, transaction, test",
+            "한국어 요청",
+            "정책 설명이 과하게 반복",
+            "바로 적용 가능한 수준",
+        ]:
+            with self.subTest(required=required):
+                self.assertIn(required, checklist)
+
     def test_grade_outputs_summarizes_baseline_and_dddjango_scores(self):
         module = load_module(GRADE_SCRIPT_PATH)
         schema = {
             "criteria": [
                 {"id": "domain_fit", "weight": 20},
                 {"id": "korean_first", "weight": 10},
-            ]
+            ],
+            "usability_criteria": [
+                {"id": "actionable", "max": 5},
+                {"id": "concise", "max": 5},
+            ],
         }
         grades = [
             {
                 "case_id": "case-1",
                 "variant": "baseline",
                 "scores": {"domain_fit": 10, "korean_first": 5},
+                "usability": {"actionable": 2, "concise": 3, "notes": "plain"},
             },
             {
                 "case_id": "case-1",
                 "variant": "dddjango",
                 "scores": {"domain_fit": 18, "korean_first": 10},
+                "usability": {"actionable": 5, "concise": 4, "notes": "usable"},
             },
         ]
 
@@ -292,6 +347,8 @@ class CodexEvaluationAssetTests(unittest.TestCase):
 
         self.assertEqual(summary["variants"]["baseline"]["average_score"], 15.0)
         self.assertEqual(summary["variants"]["dddjango"]["average_score"], 28.0)
+        self.assertEqual(summary["variants"]["baseline"]["average_usability"], 5.0)
+        self.assertEqual(summary["variants"]["dddjango"]["average_usability"], 9.0)
         self.assertEqual(summary["lift"]["absolute"], 13.0)
         self.assertAlmostEqual(summary["lift"]["percent"], 86.67, places=2)
 
@@ -404,6 +461,121 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertTrue(dddjango["trigger"]["passed"])
             self.assertIn("auto heuristic", dddjango["notes"])
 
+    def test_auto_grade_does_not_treat_generic_serializer_word_as_drf(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+
+        self.assertFalse(
+            module.drf_is_endorsed(
+                "Django view는 serializer/form 검증 후 application service를 호출합니다."
+            )
+        )
+        self.assertFalse(
+            module.drf_is_endorsed(
+                "DRF `Serializer`, `ViewSet`, `APIView`는 쓰지 않고 Django Ninja 패턴으로 작성합니다."
+            )
+        )
+        self.assertTrue(
+            module.drf_is_endorsed(
+                "class ProductSerializer(serializers.ModelSerializer):\n    pass\n"
+            )
+        )
+
+    def test_auto_grade_recognizes_conditional_ambiguous_handling(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+        case = {
+            "trigger_type": "ambiguous",
+            "expected_behavior": "Clarify project context.",
+        }
+        text = (
+            "현재 프로젝트 맥락이 불명확합니다. Django 기준으로는 app 내부 "
+            "services.py가 기본값이고, 비 Django라면 애플리케이션 계층에 둡니다."
+        )
+
+        self.assertTrue(
+            module.trigger_passed(
+                case,
+                text,
+                {
+                    "korean_first": True,
+                    "django_ninja_used": False,
+                    "drf_endorsed": False,
+                    "negative_control_passed": False,
+                },
+            )
+        )
+
+    def test_auto_grade_scores_api_and_db_architecture_terms(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+
+        api_case = {
+            "id": "benchmark-api-product-search",
+            "category": "api-design",
+            "expectations": ["django_ninja_compliance", "api_standard"],
+        }
+        api_text = (
+            "Django Ninja Router와 Schema를 사용합니다. 검색 필터, 정렬 allow-list, "
+            "페이지네이션 meta, RFC 9457 Problem Details 에러 표준을 둡니다."
+        )
+        api_scores, _ = module.base_scores(api_case, api_text, "dddjango")
+        self.assertGreaterEqual(api_scores["architecture_quality"], 12)
+
+        db_case = {
+            "id": "benchmark-db-order-query-index",
+            "category": "db-design",
+            "expectations": ["db_design"],
+        }
+        db_text = (
+            "대표 쿼리 워크로드를 정하고 EXPLAIN ANALYZE로 Seq Scan, Sort, "
+            "actual time을 본 뒤 composite index와 select_related를 검토합니다."
+        )
+        db_scores, _ = module.base_scores(db_case, db_text, "dddjango")
+        self.assertGreaterEqual(db_scores["architecture_quality"], 12)
+
+    def test_auto_grade_uses_boundaries_for_tdd_markers(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+
+        self.assertFalse(
+            module.has_pytest_or_tdd(
+                "created_at과 related_name을 정리하고 redirection URL을 바꿉니다."
+            )
+        )
+        for text in [
+            "pytest로 회귀 테스트를 작성합니다.",
+            "RED-GREEN-REFACTOR 순서로 진행합니다.",
+            "실패 테스트를 먼저 추가합니다.",
+            "도메인 서비스 테스트를 작성합니다.",
+            "test_order_confirm를 추가합니다.",
+            "python manage.py test orders를 실행합니다.",
+            "assert result.status_code == 201",
+        ]:
+            with self.subTest(text=text):
+                self.assertTrue(module.has_pytest_or_tdd(text))
+
+    def test_auto_grade_negative_control_does_not_reward_django_or_api_terms(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+        case = {
+            "id": "benchmark-negative-fastapi",
+            "category": "negative-control",
+            "expectations": ["negative_control_passed"],
+        }
+        text = (
+            "FastAPI로 구현합니다.\n"
+            "pyproject.toml의 name은 dddjango-codex-eval입니다.\n"
+            "```python\n"
+            "from fastapi import FastAPI\n"
+            "app = FastAPI()\n"
+            "@app.get('/health')\n"
+            "def health():\n"
+            "    return {'ok': True}\n"
+            "```\n"
+        )
+
+        scores, flags = module.base_scores(case, text, "dddjango")
+
+        self.assertTrue(flags["negative_control_passed"])
+        self.assertLessEqual(scores["domain_fit"], 11)
+        self.assertEqual(scores["architecture_quality"], 7)
+
     def test_init_iteration_creates_prompt_files_and_grade_template(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "iteration-1"
@@ -461,6 +633,16 @@ class CodexEvaluationAssetTests(unittest.TestCase):
                 "conciseness",
                 "safety",
             })
+            self.assertEqual(
+                first_grade["usability"],
+                {
+                    "actionable": 0,
+                    "concise": 0,
+                    "realistic_file_layout": 0,
+                    "korean_quality": 0,
+                    "notes": "",
+                },
+            )
             self.assertIn(first_grade["variant"], {"baseline", "dddjango"})
 
     def test_init_iteration_can_create_benchmark_suite_by_name(self):
@@ -718,6 +900,22 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertIn("Do not output DRF implementation code", conflict_instructions)
         self.assertIn("produce no DRF code", conflict_instructions)
 
+        ambiguous_trigger = {
+            "category": "trigger",
+            "trigger_type": "ambiguous",
+            "prompt": "서비스 레이어를 어디에 두는 게 좋을까?",
+            "expectations": ["korean_first", "ambiguous_handling"],
+            "scoring_focus": ["조건부로 답한다."],
+        }
+        ambiguous_instructions = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="trigger-ambiguous-service-layer",
+            case=ambiguous_trigger,
+        )
+
+        self.assertIn("맥락이 불명확합니다", ambiguous_instructions)
+        self.assertIn("Django라면", ambiguous_instructions)
+
     def test_run_prompts_loads_answer_keys_for_iteration_metadata(self):
         module = load_module(RUN_SCRIPT_PATH)
 
@@ -838,6 +1036,13 @@ class CodexEvaluationAssetTests(unittest.TestCase):
                                 "safety": 5,
                             },
                             "notes": "baseline note",
+                            "usability": {
+                                "actionable": 3,
+                                "concise": 4,
+                                "realistic_file_layout": 3,
+                                "korean_quality": 5,
+                                "notes": "baseline usable",
+                            },
                             "flags": {
                                 "korean_first": True,
                                 "django_ninja_used": True,
@@ -859,6 +1064,13 @@ class CodexEvaluationAssetTests(unittest.TestCase):
                                 "safety": 5,
                             },
                             "notes": "dddjango note",
+                            "usability": {
+                                "actionable": 5,
+                                "concise": 4,
+                                "realistic_file_layout": 5,
+                                "korean_quality": 5,
+                                "notes": "바로 적용 가능",
+                            },
                             "flags": {
                                 "korean_first": True,
                                 "django_ninja_used": True,
@@ -896,6 +1108,10 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertIn("Baseline Score", html)
             self.assertIn("dddjango Score", html)
             self.assertIn("Release Gate", html)
+            self.assertIn("Usability Summary", html)
+            self.assertIn("Realistic Layout", html)
+            self.assertIn("Korean Quality", html)
+            self.assertIn("바로 적용 가능", html)
             self.assertIn("Case Comparison: Without Skill vs With dddjango", html)
             self.assertIn("Completed Cases", html)
             self.assertIn("Case A title", html)

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-review-query-performance dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-review-query-performance dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/dddjango/benchmark-review-query-performance.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 <code>config.toml</code>도 없어 실제 파일/라인 기준 리뷰는 못 했습니다. 그래서 아래는 주문 목록 API에서 보고된 N+1과 느린 pagination 증상 기준의 구조 리뷰입니다.</p>
+<p><strong>주요 발견</strong></p>
+<p>[Convention: 관계 로딩 전략 혼합] -- 주문 목록 응답에서 <code>order.customer</code>, <code>order.payment</code>, <code>order.lines</code>, <code>line.product</code> 같은 관계를 직렬화하면서 <code>Order.objects.all()</code> 또는 필터만 적용한 QuerySet을 반환하면 Django Ninja serialization 단계에서 N+1이 발생합니다. <code>select_related</code>와 <code>prefetch_related</code>는 용도가 다릅니다.</p>
+<pre><code>
+from django.db.models import Count, Prefetch
+
+def list_orders_queryset():
+    return (
+        Order.objects
+        .select_related(&quot;customer&quot;, &quot;payment&quot;)  # FK / OneToOne
+        .prefetch_related(                      # reverse FK / M2M
+            Prefetch(
+                &quot;lines&quot;,
+                queryset=OrderLine.objects.select_related(&quot;product&quot;)
+                .only(&quot;id&quot;, &quot;order_id&quot;, &quot;product_id&quot;, &quot;quantity&quot;, &quot;unit_price&quot;,
+                      &quot;product__id&quot;, &quot;product__name&quot;),
+                to_attr=&quot;prefetched_lines&quot;,
+            )
+        )
+        .annotate(line_count=Count(&quot;lines&quot;))
+        .order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+    )
+</code></pre>
+<p>[API Design: 목록 응답 schema 과중] -- 주문 목록에서 상세용 중첩 schema를 재사용하면 prefetch 범위가 계속 커지고 payload도 무거워집니다. 목록은 summary schema로 제한하고, 라인/배송지/결제 상세는 <code>GET /orders/{id}</code>로 분리하는 편이 맞습니다. <code>ModelSchema fields=&quot;__all__&quot;</code> 또는 <code>create_schema(depth=1+)</code>는 피해야 합니다.</p>
+<pre><code>
+from ninja import Schema
+from datetime import datetime
+from decimal import Decimal
+
+class OrderListItemSchema(Schema):
+    id: int
+    number: str
+    status: str
+    customer_name: str
+    total_amount: Decimal
+    line_count: int
+    created_at: datetime
+
+    @staticmethod
+    def resolve_customer_name(obj):
+        return obj.customer.name
+</code></pre>
+<p>[Pagination: offset/page-number 한계] -- 주문이 많고 <code>?page=5000</code> 또는 큰 <code>offset</code>을 허용하면 DB는 앞의 행을 계속 스캔/버립니다. 관리자성 랜덤 접근이면 offset이 가능하지만, 고객 주문 목록/운영 피드처럼 최신순 탐색이면 cursor 또는 keyset이 더 적합합니다. 정렬은 반드시 안정적이어야 하므로 <code>(&quot;-created_at&quot;, &quot;-id&quot;)</code>처럼 tie-breaker를 둬야 합니다.</p>
+<pre><code>
+from ninja import Router
+from ninja.pagination import paginate, CursorPagination
+
+router = Router()
+
+@router.get(&quot;/orders&quot;, response=list[OrderListItemSchema])
+@paginate(CursorPagination, ordering=(&quot;-created_at&quot;, &quot;-id&quot;), page_size=50)
+def list_orders(request):
+    return list_orders_queryset()
+</code></pre>
+<p>[DB: 인덱스가 pagination 정렬과 필터를 따라가지 못할 가능성] -- 목록 필터가 <code>customer_id</code>, <code>status</code>, <code>created_at</code> 중심이면 복합 인덱스도 그 워크로드에 맞아야 합니다. 예: 고객별 최신 주문이면 <code>Index(fields=[&quot;customer&quot;, &quot;-created_at&quot;, &quot;-id&quot;])</code>, 상태별 운영 목록이면 <code>Index(fields=[&quot;status&quot;, &quot;-created_at&quot;, &quot;-id&quot;])</code> 후보를 <code>EXPLAIN ANALYZE</code>로 검증하세요.</p>
+<p><strong>측정/테스트</strong></p>
+<p>쿼리 수 회귀 테스트를 먼저 고정하세요.</p>
+<pre><code>
+@pytest.mark.django_db
+def test_order_list_query_count(client, django_assert_num_queries):
+    OrderFactory.create_batch(30, lines__count=3)
+
+    with django_assert_num_queries(4):  # session/user + orders + lines + products 정도로 조정
+        response = client.get(&quot;/api/orders?cursor=&quot;)
+
+    assert response.status_code == 200
+</code></pre>
+<p>성능 확인은 <code>django-debug-toolbar</code>/<code>django-silk</code>로 쿼리 수와 중복 SQL을 보고, 핵심 SQL은 <code>QuerySet.explain(analyze=True, buffers=True)</code> 또는 PostgreSQL <code>EXPLAIN ANALYZE</code>로 확인하면 됩니다. 목표는 “페이지 크기 N이 커져도 쿼리 수가 상수”이고, 큰 페이지 이동에서 offset scan이 사라지는지 확인하는 것입니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django ORM 최적화 → <strong>implementation-django</strong> 스킬 &gt; - Django Ninja Schema/Router/Pagination → <strong>implementation-django-ninja</strong> 스킬 &gt; - 인덱스와 EXPLAIN 검증 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

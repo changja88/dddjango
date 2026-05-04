@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-drf-migration baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-drf-migration baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-api-drf-migration.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><code>/private/tmp/dddjango-codex-eval</code>에는 현재 <code>config.toml</code>이나 Django 코드 파일이 없어 프로젝트 맞춤 파일로 작성하지는 못했습니다. 대신 기존 DRF <code>Serializer/ViewSet</code> 기반 상품 API를 Django Ninja <code>Schema/Router</code> 구조로 옮기는 실무형 마이그레이션 가이드를 아래처럼 정리하면 됩니다.</p>
+<p><strong>DRF 상품 API → Django Ninja 마이그레이션 가이드</strong></p>
+<h2>1. 목표 구조</h2>
+<p>기존 구조가 보통 다음과 같다면:</p>
+<pre><code>
+products/
+  models.py
+  serializers.py
+  views.py
+  urls.py
+</code></pre>
+<p>Django Ninja 전환 후에는 다음처럼 분리한다.</p>
+<pre><code>
+products/
+  models.py
+  schemas.py
+  api.py
+  services.py        # 선택
+</code></pre>
+<p>프로젝트 루트 또는 API 앱에는 Ninja 엔트리포인트를 둔다.</p>
+<pre><code>
+config/
+  urls.py
+  api.py
+</code></pre>
+<h2>2. DRF Serializer를 Ninja Schema로 변환</h2>
+<p>기존 DRF 예시:</p>
+<pre><code>
+# products/serializers.py
+from rest_framework import serializers
+from .models import Product
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;stock&quot;, &quot;created_at&quot;]
+        read_only_fields = [&quot;id&quot;, &quot;created_at&quot;]
+</code></pre>
+<p>Ninja Schema 예시:</p>
+<pre><code>
+# products/schemas.py
+from datetime import datetime
+from ninja import Schema
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: int
+    stock: int
+    created_at: datetime
+
+class ProductCreateIn(Schema):
+    name: str
+    price: int
+    stock: int
+
+class ProductUpdateIn(Schema):
+    name: str | None = None
+    price: int | None = None
+    stock: int | None = None
+</code></pre>
+<p>핵심 차이:</p>
+<ul>
+<li>DRF <code>Serializer</code>는 validation, representation, create/update를 함께 담당한다.</li>
+<li>Ninja <code>Schema</code>는 Pydantic 기반 입출력 타입 정의에 가깝다.</li>
+<li>생성/수정 로직은 Router 함수나 service layer로 이동하는 편이 좋다.</li>
+</ul>
+<h2>3. ViewSet을 Router 함수로 변환</h2>
+<p>기존 DRF ViewSet 예시:</p>
+<pre><code>
+# products/views.py
+from rest_framework.viewsets import ModelViewSet
+from .models import Product
+from .serializers import ProductSerializer
+
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+</code></pre>
+<p>Ninja Router 예시:</p>
+<pre><code>
+# products/api.py
+from ninja import Router
+from django.shortcuts import get_object_or_404
+from .models import Product
+from .schemas import ProductOut, ProductCreateIn, ProductUpdateIn
+
+router = Router(tags=[&quot;products&quot;])
+
+@router.get(&quot;/&quot;, response=list[ProductOut])
+def list_products(request):
+    return Product.objects.all()
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def get_product(request, product_id: int):
+    return get_object_or_404(Product, id=product_id)
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductCreateIn):
+    product = Product.objects.create(**payload.dict())
+    return 201, product
+
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def update_product(request, product_id: int, payload: ProductUpdateIn):
+    product = get_object_or_404(Product, id=product_id)
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+
+    product.save()
+    return product
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None})
+def delete_product(request, product_id: int):
+    product = get_object_or_404(Product, id=product_id)
+    product.delete()
+    return 204, None
+</code></pre>
+<h2>4. URL 연결</h2>
+<p>DRF 기존 방식:</p>
+<pre><code>
+# products/urls.py
+from rest_framework.routers import DefaultRouter
+from .views import ProductViewSet
+
+router = DefaultRouter()
+router.register(&quot;products&quot;, ProductViewSet)
+
+urlpatterns = router.urls
+</code></pre>
+<p>Ninja 방식:</p>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+from products.api import router as products_router
+
+api = NinjaAPI(title=&quot;Commerce API&quot;)
+api.add_router(&quot;/products&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+from .api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>최종 엔드포인트는 다음처럼 된다.</p>
+<pre><code>
+GET     /api/products/
+POST    /api/products/
+GET     /api/products/{product_id}
+PATCH   /api/products/{product_id}
+DELETE  /api/products/{product_id}
+</code></pre>
+<h2>5. 인증/권한 마이그레이션</h2>
+<p>DRF:</p>
+<pre><code>
+permission_classes = [IsAuthenticated]
+</code></pre>
+<p>Ninja에서는 API 또는 Router/Endpoint 단위로 인증을 붙인다.</p>
+<pre><code>
+from ninja.security import django_auth
+
+@router.get(&quot;/&quot;, response=list[ProductOut], auth=django_auth)
+def list_products(request):
+    return Product.objects.all()
+</code></pre>
+<p>전체 API에 적용하려면:</p>
+<pre><code>
+api = NinjaAPI(auth=django_auth)
+</code></pre>
+<p>권한 조건이 복잡하면 endpoint 내부에서 명시적으로 검사한다.</p>
+<pre><code>
+if not request.user.is_staff:
+    return 403, {&quot;detail&quot;: &quot;Forbidden&quot;}
+</code></pre>
+<h2>6. Pagination 처리</h2>
+<p>DRF <code>PageNumberPagination</code>을 사용했다면 Ninja에서는 명시적으로 limit/offset 또는 page 파라미터를 받는 방식이 단순하다.</p>
+<pre><code>
+@router.get(&quot;/&quot;, response=list[ProductOut])
+def list_products(request, limit: int = 20, offset: int = 0):
+    return Product.objects.all()[offset:offset + limit]
+</code></pre>
+<p>응답에 total이 필요하면 별도 응답 Schema를 둔다.</p>
+<pre><code>
+class ProductListOut(Schema):
+    total: int
+    items: list[ProductOut]
+</code></pre>
+<h2>7. Serializer의 validate/create/update 대체</h2>
+<p>DRF Serializer에 있던 로직:</p>
+<pre><code>
+def validate_price(self, value):
+    if value &lt; 0:
+        raise serializers.ValidationError(&quot;가격은 0 이상이어야 합니다.&quot;)
+    return value
+</code></pre>
+<p>Ninja/Pydantic에서는 Schema validator나 service 함수로 옮긴다.</p>
+<pre><code>
+from pydantic import field_validator
+
+class ProductCreateIn(Schema):
+    name: str
+    price: int
+    stock: int
+
+    @field_validator(&quot;price&quot;)
+    @classmethod
+    def validate_price(cls, value):
+        if value &lt; 0:
+            raise ValueError(&quot;가격은 0 이상이어야 합니다.&quot;)
+        return value
+</code></pre>
+<p>비즈니스 규칙이 DB 조회나 여러 모델을 건드리면 <code>services.py</code>로 분리하는 편이 좋다.</p>
+<pre><code>
+# products/services.py
+from .models import Product
+
+def create_product(payload):
+    return Product.objects.create(**payload.dict())
+</code></pre>
+<h2>8. 테스트 변경 방향</h2>
+<p>DRF <code>APIClient</code> 기반 테스트는 Django test client 또는 Ninja test client로 변경한다.</p>
+<pre><code>
+def test_create_product(client):
+    response = client.post(
+        &quot;/api/products/&quot;,
+        data={&quot;name&quot;: &quot;Keyboard&quot;, &quot;price&quot;: 10000, &quot;stock&quot;: 5},
+        content_type=&quot;application/json&quot;,
+    )
+
+    assert response.status_code == 201
+    assert response.json()[&quot;name&quot;] == &quot;Keyboard&quot;
+</code></pre>
+<p>기존 테스트에서 확인해야 할 항목:</p>
+<ul>
+<li>상태 코드가 동일한지</li>
+<li>응답 JSON 필드명이 유지되는지</li>
+<li>validation error 형식 변경이 허용 가능한지</li>
+<li>인증 실패 응답이 기존 클라이언트와 호환되는지</li>
+<li>pagination 응답 구조가 바뀌는지</li>
+</ul>
+<h2>9. 마이그레이션 순서</h2>
+<ul>
+<li><code>django-ninja</code>를 의존성에 추가한다.</li>
+<li><code>config/api.py</code>에 <code>NinjaAPI</code> 엔트리포인트를 만든다.</li>
+<li><code>products/schemas.py</code>에 기존 Serializer 필드를 입출력 Schema로 분리한다.</li>
+<li><code>products/api.py</code>에 list/detail/create/update/delete endpoint를 만든다.</li>
+<li>기존 DRF URL과 Ninja URL을 임시로 병행 운영한다.</li>
+<li>테스트를 Ninja endpoint 기준으로 추가한다.</li>
+<li>클라이언트 호출 경로를 전환한다.</li>
+<li>사용하지 않는 DRF ViewSet/Serializer/Router를 제거한다.</li>
+</ul>
+<h2>10. 주의할 점</h2>
+<ul>
+<li>DRF <code>ModelSerializer</code>처럼 자동 create/update가 되지 않으므로 저장 로직을 직접 작성해야 한다.</li>
+<li><code>read_only_fields</code>, <code>write_only_fields</code>는 입출력 Schema 분리로 표현한다.</li>
+<li>DRF의 permission/filter/search/pagination은 Ninja에서 직접 구현하거나 별도 유틸로 옮겨야 한다.</li>
+<li>기존 API 응답 형식을 유지해야 한다면 Schema 이름보다 JSON shape을 우선한다.</li>
+<li>OpenAPI 문서는 Ninja가 자동 제공하므로 <code>/api/docs</code>에서 확인한다.</li>
+</ul>
+<p>요약하면, <code>Serializer</code>는 <code>schemas.py</code>의 명시적인 입출력 타입으로, <code>ViewSet</code>은 <code>api.py</code>의 endpoint 함수들로 옮기면 된다. DRF가 암묵적으로 처리하던 validation, permission, pagination, create/update 동작은 Ninja에서는 코드로 드러내는 방향으로 정리하는 것이 핵심이다.</p></article>
+  </main>
+</body>
+</html>

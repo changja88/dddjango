@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-refund-transaction baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-refund-transaction baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-db-refund-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django에서 환불 처리로 <code>Payment</code>와 <code>Refund</code>를 함께 업데이트한다면 핵심은 <strong>하나의 DB 트랜잭션 안에서 상태 전이를 원자적으로 처리하고, 동일 결제에 대한 동시 환불 요청을 직렬화하는 것</strong>입니다.</p>
+<p>가장 일반적인 전략은 <code>transaction.atomic()</code> + <code>select_for_update()</code>입니다.</p>
+<pre><code>
+from django.db import transaction
+from django.db.models import F
+
+def process_refund(payment_id, amount, idempotency_key):
+    with transaction.atomic():
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .get(id=payment_id)
+        )
+
+        # 멱등성 체크
+        refund, created = Refund.objects.get_or_create(
+            idempotency_key=idempotency_key,
+            defaults={
+                &quot;payment&quot;: payment,
+                &quot;amount&quot;: amount,
+                &quot;status&quot;: Refund.Status.PENDING,
+            },
+        )
+
+        if not created:
+            return refund
+
+        if payment.refunded_amount + amount &gt; payment.amount:
+            raise ValueError(&quot;Refund amount exceeds payment amount&quot;)
+
+        payment.refunded_amount = F(&quot;refunded_amount&quot;) + amount
+
+        if payment.refunded_amount + amount == payment.amount:
+            payment.status = Payment.Status.REFUNDED
+        else:
+            payment.status = Payment.Status.PARTIALLY_REFUNDED
+
+        payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
+
+        refund.status = Refund.Status.SUCCEEDED
+        refund.save(update_fields=[&quot;status&quot;])
+
+        return refund
+</code></pre>
+<p>주의할 점은 <code>select_for_update()</code>가 <code>Payment</code> row에 락을 걸기 때문에 같은 <code>Payment</code>에 대한 동시 환불 요청은 동시에 계산되지 않고 순서대로 처리된다는 것입니다. 그래서 “현재 환불된 금액 확인 → 환불 가능 여부 판단 → Payment/Refund 업데이트”가 깨지지 않습니다.</p>
+<p>실무에서는 다음도 같이 둡니다.</p>
+<ul>
+<li><code>Refund.idempotency_key</code>에 unique constraint를 둬서 중복 요청 방지</li>
+<li><code>Refund(payment, external_refund_id)</code> 같은 외부 PG 환불 ID에도 unique constraint</li>
+<li><code>Payment.refunded_amount &lt;= Payment.amount</code>를 애플리케이션 레벨뿐 아니라 가능하면 DB constraint로도 방어</li>
+<li>PG API 호출은 조심해서 배치</li>
+</ul>
+<p>PG API 호출 위치는 특히 중요합니다. DB 트랜잭션을 오래 잡은 채 외부 API를 호출하면 락 시간이 길어집니다. 보통은 다음 둘 중 하나를 선택합니다.</p>
+<ul>
+<li><strong>락 안에서 Refund를 PENDING으로 만들고 커밋 후 PG 호출</strong></li>
+<li>이후 콜백/잡에서 <code>Refund</code>를 <code>SUCCEEDED</code>로 바꾸고 <code>Payment</code>를 갱신</li>
+<li>확장성과 장애 복구에 유리</li>
+</ul>
+<ul>
+<li><strong>PG 호출 후 짧은 트랜잭션으로 상태 반영</strong></li>
+<li>단순하지만 PG 성공 후 DB 실패 같은 보상 처리가 필요</li>
+</ul>
+<p>권장 구조는 <code>Refund</code>를 먼저 <code>PENDING</code>으로 생성하고, 실제 환불 성공 이벤트를 기준으로 <code>transaction.atomic()</code> 안에서 <code>Payment</code>와 <code>Refund</code>를 함께 확정하는 방식입니다. 동시성은 <code>Payment.objects.select_for_update()</code>로 잡고, 중복 처리는 unique key 기반 멱등성으로 막는 것이 Django에서 가장 방어적인 패턴입니다.</p></article>
+  </main>
+</body>
+</html>

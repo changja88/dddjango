@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-negative-drf-explicit baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-negative-drf-explicit baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-negative-drf-explicit.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> 디렉터리가 비어 있고, 안내에 나온 <code>config.toml</code>도 없습니다. 게다가 이 세션은 <code>read-only</code> sandbox라 새 Django 파일을 생성하거나 수정할 수 없습니다.</p>
+<p>확인한 내용:</p>
+<ul>
+<li><code>pwd</code>: <code>/private/tmp/dddjango-codex-eval</code></li>
+<li><code>ls -la</code>: 프로젝트 파일 없음</li>
+<li><code>config.toml</code>: <code>No such file or directory</code></li>
+</ul>
+<p>DRF <code>ModelViewSet</code>, <code>ModelSerializer</code>, router 구현을 하려면 최소한 Django 프로젝트/app 파일들이 필요합니다. 쓰기 가능한 세션이나 실제 프로젝트 파일이 있는 경로로 다시 실행해주면 바로 <code>Order</code> 모델 기준으로 serializer/viewset/router까지 연결하겠습니다.</p></article>
+  </main>
+</body>
+</html>

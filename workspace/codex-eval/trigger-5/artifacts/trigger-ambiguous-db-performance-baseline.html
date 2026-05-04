@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-db-performance baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-db-performance baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-ambiguous-db-performance.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>DB 성능은 “느린 느낌”부터 바로 인덱스 추가로 가지 말고, 먼저 느린 쿼리를 특정해야 합니다. 순서는 보통 이렇게 봅니다.</p>
+<ul>
+<li>슬로우 쿼리부터 잡기</li>
+<p>PostgreSQL이면 <code>pg_stat_statements</code>, MySQL이면 slow query log를 켜고 호출 횟수, 평균 시간, 총 소요 시간이 큰 쿼리를 봅니다.</p>
+</ul>
+<ul>
+<li>해당 쿼리에 <code>EXPLAIN ANALYZE</code> 붙이기</li>
+<p>봐야 할 핵심은:</p>
+<li><code>actual time</code>: 실제 오래 걸리는 구간</li>
+<li><code>rows</code> 예상치와 실제 row 차이</li>
+<li><code>Seq Scan</code>: 큰 테이블 전체 스캔 여부</li>
+<li><code>Buffers: shared read</code>: 디스크 읽기가 많은지</li>
+<li>조인 방식: <code>Nested Loop</code>가 큰 데이터에서 반복되는지</li>
+</ul>
+<ul>
+<li>ORM 사용 중이면 N+1 확인</li>
+<p>Django라면 특히 <code>select_related</code>, <code>prefetch_related</code> 누락이 흔합니다. “목록 1번 조회 후 각 row마다 추가 쿼리” 패턴이 있는지 Django Debug Toolbar나 query logging으로 봅니다.</p>
+</ul>
+<ul>
+<li>인덱스는 쿼리 기준으로 설계</li>
+<p>테이블 컬럼을 보고 막 추가하지 말고, 실제 <code>WHERE</code>, <code>JOIN</code>, <code>ORDER BY</code> 조건 기준으로 봐야 합니다. 복합 인덱스는 보통 <code>=</code> 조건 컬럼을 앞에, 범위 조건 <code>&gt;</code>, <code>&lt;</code>, <code>BETWEEN</code> 컬럼을 뒤에 둡니다.</p>
+</ul>
+<ul>
+<li>그래도 느리면 다음 단계</li>
+<p>쿼리 수정 → 인덱스 → 캐시 → 비정규화 순서가 안전합니다. 비정규화는 마지막입니다.</p>
+</ul>
+<p>예를 들어 PostgreSQL이면 첫 진단은 이런 식입니다.</p>
+<pre><code>
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT ...
+</code></pre>
+<p>그리고 Django라면 뷰/API 단위로 실제 실행 SQL 수와 시간을 먼저 확인하세요. “한 요청에 쿼리 200개”면 DB 자체보다 ORM 접근 패턴 문제가 먼저입니다.</p>
+<p>참고로 현재 <code>/private/tmp/dddjango-codex-eval</code>에는 프로젝트 파일이 보이지 않아서 구체적인 쿼리나 모델까지는 못 봤습니다. 느린 API, 쿼리, 모델, 또는 <code>EXPLAIN ANALYZE</code> 결과를 주면 병목을 바로 짚을 수 있습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 쿼리 실행 계획, 인덱스, N+1 진단 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -19,9 +19,9 @@
 | Phase 2 | Blocked | Claude smoke 측정 | `workspace/claude-eval/iteration-1/report.html` |
 | Phase 3 | Done | 24-case benchmark suite 확장 | `evals/shared/cases/benchmark.jsonl` |
 | Phase 4 | Done | trigger precision/recall suite 확장 | `evals/shared/cases/trigger.jsonl` |
-| Phase 5 | Pending | usability/manual review 체계 추가 | `evals/shared/rubrics/usability-checklist.md` |
+| Phase 5 | Done | usability/manual review 체계 추가 | `evals/shared/rubrics/usability-checklist.md` |
 | Phase 6 | Pending | real repo forward test 구성 | `evals/fixtures/django-*` 또는 외부 fixture |
-| Phase 7 | In Progress | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-1/report.html`, `workspace/codex-eval/trigger-1/report.html` |
+| Phase 7 | In Progress | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-4/report.html`, `workspace/codex-eval/trigger-5/report.html` |
 | Phase 8 | Pending | marketplace/fresh install 검증 | release install log, README 검증 |
 | Phase 9 | Pending | beta 사용자 평가 | feedback summary, regression cases |
 | Phase 10 | Pending | 운영 회귀 체계 고정 | smoke/full release gate |
@@ -115,6 +115,110 @@
   - trigger negative/positive/conflict는 통과하지만 ambiguous handling은 아직 약하다.
   - benchmark quality lift는 개선됐지만 `+15%` release gate에는 아직 미달한다.
   - 다음 개선 대상은 `benchmark-api-product-search`, `benchmark-db-order-query-index`, `trigger-positive-clean-code-django`, ambiguous trigger 응답 정책이다.
+
+## Iteration 4 Targeted Rerun
+
+- 평가 일자: 2026-05-05
+- 범위: 전체 재실행 전, 저점/오탐 의심 케이스 5개만 타깃 재측정했다.
+- Fix:
+  - `auto_grade_outputs.py`가 일반적인 `serializer/form` 표현을 DRF 구현으로 오탐하지 않도록 DRF 패턴을 좁혔다.
+  - API 표준과 DB 실행계획 관련 용어를 architecture quality 신호로 인식하도록 자동 채점 휴리스틱을 보정했다.
+  - ambiguous trigger가 `서비스 레이어`, `테스트`, `도메인`, `API` 같은 한국어/혼합 키워드에서도 필요한 스킬을 주입하도록 `run_prompts.py`를 보강했다.
+  - `implementation-django-ninja`에 검색/목록 API 표준을 추가했다: `Query[FilterSchema]`, 정렬 allow-list, `items/meta envelope`, `@paginate`와 커스텀 envelope 혼용 금지, RFC 9457 에러 표준.
+- Benchmark targeted rerun:
+  - report: `workspace/codex-eval/benchmark-3/report.html`
+  - completed cases: `2`
+  - baseline average score: `87.50`
+  - dddjango average score: `87.50`
+  - lift: `0.00` points, `0.00%`
+  - cases:
+    - `benchmark-api-product-search`: baseline `88`, dddjango `88`
+    - `benchmark-db-order-query-index`: baseline `87`, dddjango `87`
+- Trigger targeted rerun:
+  - report: `workspace/codex-eval/trigger-4/report.html`
+  - completed cases: `3`
+  - baseline average score: `77.67`
+  - dddjango average score: `82.33`
+  - lift: `+4.66` points, `+6.00%`
+  - cases:
+    - `trigger-positive-clean-code-django`: baseline `72`, dddjango `80`
+    - `trigger-ambiguous-service-layer`: baseline `77`, dddjango `80`
+    - `trigger-ambiguous-testing`: baseline `84`, dddjango `87`
+- Current interpretation:
+  - DRF/TDD 관련 낮은 점수 일부는 스킬 실패가 아니라 자동 채점 오탐이었다.
+  - ambiguous handling은 타깃 케이스에서 개선됐다.
+  - benchmark quality lift는 아직 full release gate 기준에 충분하지 않다. 다음 단계는 자동 휴리스틱을 보정한 상태에서 24-case benchmark와 30-case trigger를 다시 전체 실행하는 것이다.
+
+## Iteration 5 Full Rerun
+
+- 평가 일자: 2026-05-05
+- 범위: 보정된 스킬 주입/자동 채점 기준으로 Codex full benchmark와 trigger suite를 다시 전체 실행했다.
+- Benchmark full rerun:
+  - report: `workspace/codex-eval/benchmark-4/report.html`
+  - baseline executions: `24/24 returncode=0`
+  - dddjango executions: `24/24 returncode=0`
+  - baseline average score: `83.67`
+  - dddjango average score: `87.92`
+  - lift: `+4.25` points, `+5.08%`
+  - baseline average time: `44.95s`
+  - dddjango average time: `49.47s`
+  - time increase: `+10.06%`
+- Trigger full rerun:
+  - report: `workspace/codex-eval/trigger-5/report.html`
+  - baseline executions: `30/30 returncode=0`
+  - dddjango executions: `30/30 returncode=0`
+  - baseline average score: `80.37`
+  - dddjango average score: `83.30`
+  - lift: `+2.93` points, `+3.65%`
+  - baseline average time: `34.05s`
+  - dddjango average time: `34.87s`
+  - time change: `+2.41%`
+  - trigger recall: `10/10`, `100%`
+  - trigger precision: `10/10`, `100%`
+  - ambiguous handling: `6/6`, `100%`
+  - conflict handling: `4/4`, `100%`
+- Review/fix notes:
+  - TDD 채점이 `created`, `related`, `redirection` 같은 단어의 `red` 부분 문자열에 흔들리지 않도록 단어 경계와 명시적 테스트 표식 기준으로 보정했다.
+  - non-Django negative-control은 FastAPI/Flask/React 같은 요청을 존중했는지 별도 판단하고, 일반 API 용어만으로 Django 점수가 부풀지 않게 보정했다.
+  - `DRF Serializer/ViewSet/APIView는 쓰지 않고...` 같은 한국어 거부 표현을 DRF endorsement로 오탐하지 않게 보정했다.
+  - Django Ninja 스킬은 DRF 대체/API 코드 제시 후 `python manage.py check`와 `pytest` 또는 `python manage.py test` 검증 명령을 포함하도록 강화했다.
+- Current interpretation:
+  - 실행 안정성은 통과했다.
+  - 시간 게이트는 통과했다. Benchmark와 Trigger 모두 `+30%` 이하이다.
+  - Trigger gate는 자동 채점 기준으로 모두 통과했다.
+  - Benchmark suite에는 dddjango가 baseline보다 낮은 케이스가 남아 있지 않다. 동률 케이스는 `benchmark-api-drf-migration`, `benchmark-ddd-bounded-context`, `benchmark-ddd-service-layer`, `benchmark-negative-fastapi` 등이다.
+  - Trigger suite의 남은 소폭 역전은 `trigger-ambiguous-domain-model` `-3`, `trigger-conflict-serializer-migration` `-1`이다. 둘 다 trigger pass 자체는 성공했으므로 다음 단계에서 수동 사용성 점수와 함께 판단한다.
+  - Benchmark quality lift는 `+15%` release gate에 아직 미달한다.
+  - 다음 단계는 자동 점수만으로 결론을 내리지 않고, Phase 5 usability/manual review 체계를 추가해 실제 답변 품질과 트리거 적합성을 수동 점수로 검증하는 것이다.
+
+## Manual Usability Review
+
+- 평가 일자: 2026-05-05
+- 기준: `evals/shared/rubrics/usability-checklist.md`
+- 범위:
+  - Benchmark suite 전체 `24/24` dddjango outputs
+  - Trigger suite 전체 `30/30` dddjango outputs
+- Benchmark usability:
+  - scored cases: `24`
+  - dddjango average usability: `18.92 / 20`
+  - report: `workspace/codex-eval/benchmark-4/report.html`
+  - 감점 주요 원인:
+    - `benchmark-api-product-search`: `from typing import list`는 실제 Python import 오류라 `realistic_file_layout` 감점
+    - `benchmark-negative-drf-explicit`: DRF 거부와 Ninja 대체는 좋지만 endpoint type hint와 도메인 검증이 얕아 감점
+    - `benchmark-api-inventory-reserve`: 멱등성/동시성 설계는 좋지만 재고 부족 예외와 transaction rollback/저장된 실패 응답의 상호작용이 애매함
+- Trigger usability:
+  - scored cases: `30`
+  - dddjango average usability: `18.67 / 20`
+  - report: `workspace/codex-eval/trigger-5/report.html`
+  - 감점 주요 원인:
+    - ambiguous 케이스는 맥락을 잘 인지하지만 실제 코드 적용 단계는 사용자 확인 후 보강 필요
+    - conflict serializer 전환은 간결하나 password/email 같은 도메인 검증은 추가 필요
+    - `trigger-negative-react-props`: Django 오염은 없지만 React props 정리 일반 가이드 없이 파일 부재만 안내해 사용성이 낮음
+    - `trigger-negative-shell-script`: 요청은 충족하지만 markdown fence가 깨져 보이는 출력 문제가 있음
+- Current interpretation:
+  - 자동 score lift는 release gate 기준 `+15%`에 미달하지만, 전체 수동 사용성은 `18+/20`으로 높다.
+  - 즉각적인 다음 개선 후보는 "스킬 전반"보다 Django Ninja 코드 생성의 현실성이다. 특히 잘못된 import, endpoint type hint, 검증/도메인 규칙 누락을 줄이는 방향이 효과적이다.
+  - trigger negative precision은 좋지만, non-Django 요청에서 파일이 없을 때도 최소 일반 가이드나 예시를 제공하도록 개선하면 사용성이 오른다.
 
 ## File Responsibilities
 
@@ -469,7 +573,7 @@ conflict handling >= 80%
 - Modify: `evals/codex/scripts/grade_outputs.py`
 - Modify: `evals/codex/scripts/render_report.py`
 
-- [ ] **Step 1: usability checklist를 작성한다**
+- [x] **Step 1: usability checklist를 작성한다**
 
 Checklist:
 
@@ -482,7 +586,7 @@ Checklist:
 6. 사용자가 바로 적용 가능한 수준인가
 ```
 
-- [ ] **Step 2: manual review score를 grades.json에 추가한다**
+- [x] **Step 2: manual review score를 grades.json에 추가한다**
 
 Fields:
 
@@ -498,12 +602,23 @@ Fields:
 }
 ```
 
-- [ ] **Step 3: HTML에 usability summary를 추가한다**
+- [x] **Step 3: HTML에 usability summary를 추가한다**
 
 HTML table:
 
 ```text
 Case | Actionable | Concise | Realistic Layout | Korean Quality | Notes
+```
+
+Result:
+
+```text
+`evals/shared/rubrics/usability-checklist.md`에 수동 리뷰 기준을 추가했다.
+`evals/codex/rubrics/grading-schema.json`에 `usability_criteria`를 추가했다.
+새 iteration의 `grades.json`에는 `usability` template이 자동 생성된다.
+`grade_outputs.py`는 기록된 usability 점수가 있을 때 variant별 평균을 요약한다.
+`render_report.py`는 dddjango variant 기준 Usability Summary 표와 Manual Usability metric을 표시한다.
+기존 `benchmark-4`, `trigger-5` grades에는 빈 usability template을 추가했고, 수동 채점은 아직 pending이다.
 ```
 
 ## Phase 6: Real Repo Forward Test
@@ -755,7 +870,7 @@ Cadence:
 
 1. Claude 인증 blocker를 해결한다.
 2. Phase 2 Step 4를 실행해서 Claude smoke report를 실제 점수로 채운다.
-3. usability checklist와 manual score 필드를 `grades.json`/report에 추가한다.
+3. Django Ninja 코드 생성 현실성 개선안을 스킬에 반영한다.
 4. real repo fixture 전략을 확정한다.
 5. Codex/Claude full benchmark를 3회 반복 측정한다.
 6. fresh install 검증 후 release gate를 확정한다.

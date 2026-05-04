@@ -1,0 +1,19 @@
+{
+  "case_id": "benchmark-api-product-search",
+  "category": "api-design",
+  "title": "Product search API standard",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "api_standard",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "Django Ninja Query/Schema/Router 기준을 사용한다.",
+    "페이지네이션과 validation error 형식을 일관되게 제안한다.",
+    "팀 문서로 복사 가능한 규칙과 코드 예시를 제공한다."
+  ],
+  "prompt": "상품 검색 API를 Django Ninja로 설계해줘. 필터, 정렬, 페이지네이션, 에러 응답 표준을 팀 컨벤션 형태로 정리해줘.",
+  "trigger_type": "",
+  "expected_behavior": ""
+}

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-flask-api dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-flask-api dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-5/dddjango/trigger-negative-flask-api.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> 디렉터리가 비어 있고, <code>config.toml</code>도 존재하지 않습니다. 또 이 세션은 <code>read-only</code> sandbox라 파일 생성/수정이 차단되어 있어서 Flask API 파일을 직접 만들 수 없습니다.</p>
+<p>아래처럼 최소 Flask todo 생성 API를 추가하면 됩니다:</p>
+<pre><code>
+# app.py
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+todos = []
+next_id = 1
+
+
+@app.post(&quot;/todos&quot;)
+def create_todo():
+    global next_id
+
+    data = request.get_json(silent=True) or {}
+    title = data.get(&quot;title&quot;)
+
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({&quot;error&quot;: &quot;title is required&quot;}), 400
+
+    todo = {
+        &quot;id&quot;: next_id,
+        &quot;title&quot;: title.strip(),
+        &quot;completed&quot;: False,
+    }
+    todos.append(todo)
+    next_id += 1
+
+    return jsonify(todo), 201
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run(debug=True)
+</code></pre>
+<p>실행:</p>
+<pre><code>
+pip install flask
+python app.py
+</code></pre>
+<p>테스트:</p>
+<pre><code>
+curl -X POST http://127.0.0.1:5000/todos \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;title&quot;:&quot;할 일 작성&quot;}&#x27;
+</code></pre>
+<p>예상 응답:</p>
+<pre><code>
+{&quot;completed&quot;:false,&quot;id&quot;:1,&quot;title&quot;:&quot;할 일 작성&quot;}
+</code></pre></article>
+  </main>
+</body>
+</html>

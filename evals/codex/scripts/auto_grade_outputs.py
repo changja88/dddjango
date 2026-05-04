@@ -20,8 +20,9 @@ DRF_PATTERNS = [
     r"\bAPIView\b",
     r"\bViewSet\b",
     r"\bModelViewSet\b",
-    r"\bSerializer\b",
     r"\bModelSerializer\b",
+    r"\bserializers\.Serializer\b",
+    r"class\s+\w+Serializer\s*\(",
     r"\bDefaultRouter\b",
     r"\bSimpleRouter\b",
     r"rest_framework",
@@ -32,7 +33,9 @@ REJECTION_MARKERS = [
     "사용하지",
     "생성하지",
     "권장하지",
+    "쓰지",
     "대신",
+    "대체",
     "전환",
     "마이그레이션",
     "피하고",
@@ -66,7 +69,19 @@ def has_django_ninja(text):
 
 
 def has_pytest_or_tdd(text):
-    return contains_any(text, ["pytest", "red", "green", "refactor", "실패 테스트", "tdd"])
+    lower = text.lower()
+    explicit_markers = [
+        "pytest",
+        "tdd",
+        "실패 테스트",
+        "테스트",
+        "test_",
+        "manage.py test",
+        "assert ",
+    ]
+    return contains_any(lower, explicit_markers) or bool(
+        re.search(r"\b(red|green|refactor)\b", lower)
+    )
 
 
 def has_architecture_terms(text):
@@ -106,6 +121,51 @@ def has_db_terms(text):
     )
 
 
+def has_api_design_terms(text):
+    return contains_any(
+        text,
+        [
+            "pagination",
+            "페이지네이션",
+            "problem details",
+            "rfc 9457",
+            "filter",
+            "필터",
+            "sort",
+            "정렬",
+            "status code",
+            "상태 코드",
+            "error response",
+            "에러 응답",
+            "allow-list",
+            "whitelist",
+        ],
+    )
+
+
+def has_db_architecture_terms(text):
+    return contains_any(
+        text,
+        [
+            "explain analyze",
+            "seq scan",
+            "index scan",
+            "bitmap heap scan",
+            "sort",
+            "actual time",
+            "buffers",
+            "composite index",
+            "partial index",
+            "covering index",
+            "워크로드",
+            "복합 인덱스",
+            "부분 인덱스",
+            "커버링 인덱스",
+            "실행계획",
+        ],
+    )
+
+
 def has_actionable_detail(text):
     return (
         "```" in text
@@ -122,9 +182,33 @@ def drf_is_endorsed(text):
     return not any(marker.lower() in lower for marker in REJECTION_MARKERS)
 
 
+def has_django_contamination(text):
+    lower = text.lower()
+    return contains_any(
+        lower,
+        [
+            "django ninja",
+            "django orm",
+            "django model",
+            "django view",
+            "bounded context",
+            "도메인 계층",
+            "클린 아키텍처",
+        ],
+    ) or bool(re.search(r"\bDDD\b", text))
+
+
 def expectation_applies(case, name):
     expectations = set(case.get("expectations", []))
     return name in expectations or name in case.get("id", "")
+
+
+def is_negative_control(case):
+    return case.get("category") == "negative-control" or case.get("trigger_type") == "negative"
+
+
+def is_non_django_negative_control(case):
+    return is_negative_control(case) and not expectation_applies(case, "reject_drf")
 
 
 def base_scores(case, text, variant):
@@ -133,26 +217,42 @@ def base_scores(case, text, variant):
     django_ninja_used = has_django_ninja(text)
     drf_endorsed = drf_is_endorsed(text)
     architecture = has_architecture_terms(text)
+    api_design = has_api_design_terms(text)
     testing = has_pytest_or_tdd(text)
     db = has_db_terms(text)
+    db_architecture = has_db_architecture_terms(text)
     actionable = has_actionable_detail(text)
 
-    domain_hits = sum([django_ninja_used, architecture, testing, db, "django" in text.lower()])
+    domain_hits = sum(
+        [
+            django_ninja_used,
+            architecture or api_design,
+            testing,
+            db or db_architecture,
+            "django" in text.lower(),
+        ]
+    )
     scores = {
         "domain_fit": min(20, 8 + domain_hits * 3),
         "django_ninja_compliance": 15,
         "actionability": 12 if actionable else 7,
-        "architecture_quality": 12 if architecture else 7,
+        "architecture_quality": 12 if architecture or api_design or db_architecture else 7,
         "testing_quality": 8 if testing else 4,
         "korean_first": 10 if korean_first else 3,
         "conciseness": 5 if word_count <= 900 else 3 if word_count <= 1300 else 1,
         "safety": 5 if not drf_endorsed else 1,
     }
 
+    if is_non_django_negative_control(case):
+        django_contamination = has_django_contamination(text) or drf_endorsed
+        scores["domain_fit"] = 11 if actionable and not django_contamination else 8
+        scores["architecture_quality"] = 7
+        scores["django_ninja_compliance"] = 20 if not django_contamination else 8
+
     if expectation_applies(case, "django_ninja_compliance") or case.get("category") == "api-design":
         scores["django_ninja_compliance"] = 20 if django_ninja_used and not drf_endorsed else 8
     elif case.get("trigger_type") == "negative":
-        scores["django_ninja_compliance"] = 20 if not django_ninja_used else 12
+        scores["django_ninja_compliance"] = 20 if not has_django_contamination(text) else 12
     elif case.get("trigger_type") in {"conflict"}:
         scores["django_ninja_compliance"] = 20 if django_ninja_used and not drf_endorsed else 8
 
@@ -170,15 +270,18 @@ def base_scores(case, text, variant):
         if korean_first:
             scores["korean_first"] = 10
 
+    if expectation_applies(case, "reject_drf") or case.get("trigger_type") == "conflict":
+        negative_control_passed = not drf_endorsed
+    elif is_non_django_negative_control(case):
+        negative_control_passed = not drf_endorsed and not has_django_contamination(text)
+    else:
+        negative_control_passed = False
+
     return scores, {
         "korean_first": korean_first,
         "django_ninja_used": django_ninja_used,
         "drf_endorsed": drf_endorsed,
-        "negative_control_passed": not drf_endorsed
-        and (
-            case.get("category") == "negative-control"
-            or case.get("trigger_type") in {"negative", "conflict"}
-        ),
+        "negative_control_passed": negative_control_passed,
     }
 
 

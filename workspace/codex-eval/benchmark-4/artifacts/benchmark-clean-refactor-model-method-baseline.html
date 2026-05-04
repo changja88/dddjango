@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-clean-refactor-model-method baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-clean-refactor-model-method baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-clean-refactor-model-method.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django 모델 메서드 안에 <code>validation</code>, 외부 API 호출, 상태 변경, <code>save()</code>가 섞여 있다면 핵심 문제는 <strong>도메인 상태 전이와 I/O가 한 함수에 결합된 것</strong>입니다. 클린 코드 관점에서는 책임을 아래처럼 나누는 방향이 좋습니다.</p>
+<p><strong>권장 구조</strong></p>
+<ul>
+<li><strong>모델은 상태와 불변식 중심으로 유지</strong></li>
+<li>필드, 관계, 간단한 도메인 규칙</li>
+<li>순수한 상태 변경 메서드</li>
+<li>외부 API 호출이나 복잡한 orchestration은 넣지 않기</li>
+</ul>
+<pre><code>
+class Order(models.Model):
+    status = models.CharField(...)
+
+    def mark_paid(self):
+        if self.status != OrderStatus.PENDING:
+            raise InvalidOrderState(&quot;Only pending orders can be paid&quot;)
+        self.status = OrderStatus.PAID
+</code></pre>
+<ul>
+<li><strong>validation은 명시적으로 분리</strong></li>
+<li>필드/모델 수준 검증은 <code>clean()</code>, serializer/form validation</li>
+<li>유스케이스 검증은 service나 validator 객체</li>
+<li>상태 전이 검증은 모델 메서드에 남겨도 괜찮음</li>
+</ul>
+<pre><code>
+class OrderPaymentValidator:
+    def validate(self, order):
+        if order.is_expired:
+            raise ValidationError(&quot;Expired order&quot;)
+</code></pre>
+<ul>
+<li><strong>외부 API 호출은 client/gateway로 분리</strong></li>
+<li>결제사, 배송사, CRM 등 외부 시스템 호출은 <code>PaymentClient</code>, <code>ShippingGateway</code> 같은 객체로 격리</li>
+<li>모델이 <code>requests.post()</code>를 직접 호출하지 않게 하기</li>
+<li>테스트에서 mock/stub 하기 쉬워짐</li>
+</ul>
+<pre><code>
+class PaymentClient:
+    def charge(self, order):
+        ...
+</code></pre>
+<ul>
+<li><strong>전체 흐름은 application service/use case에서 조립</strong></li>
+<li>validation</li>
+<li>외부 API 호출</li>
+<li>모델 상태 변경</li>
+<li>transaction</li>
+<li>save</li>
+<li>후속 작업 enqueue</li>
+</ul>
+<pre><code>
+class PayOrderService:
+    def __init__(self, payment_client):
+        self.payment_client = payment_client
+
+    @transaction.atomic
+    def execute(self, order):
+        OrderPaymentValidator().validate(order)
+
+        result = self.payment_client.charge(order)
+
+        order.mark_paid()
+        order.payment_id = result.payment_id
+        order.save(update_fields=[&quot;status&quot;, &quot;payment_id&quot;, &quot;updated_at&quot;])
+
+        return order
+</code></pre>
+<ul>
+<li><strong>트랜잭션과 외부 API 호출 순서를 신중히 결정</strong></li>
+<li>DB transaction 안에서 외부 API를 오래 기다리는 것은 위험할 수 있음</li>
+<li>보통은 다음 중 하나를 선택합니다:</li>
+<li>API 호출 성공 후 짧은 transaction으로 상태 저장</li>
+<li>먼저 <code>PROCESSING</code> 저장 후 API 호출, 결과에 따라 <code>SUCCESS/FAILED</code></li>
+<li>Celery 같은 비동기 작업 + idempotency key 사용</li>
+</ul>
+<p><strong>판단 기준</strong></p>
+<p>모델 메서드에 남겨도 되는 것:</p>
+<ul>
+<li>상태 전이 규칙</li>
+<li>계산된 속성</li>
+<li>단순한 도메인 불변식</li>
+<li>DB 저장 없이 객체 상태만 바꾸는 메서드</li>
+</ul>
+<p>모델 밖으로 빼는 것이 좋은 것:</p>
+<ul>
+<li>외부 API 호출</li>
+<li>이메일/알림 발송</li>
+<li>Celery enqueue</li>
+<li>여러 모델을 조율하는 흐름</li>
+<li><code>transaction.atomic()</code>이 필요한 유스케이스</li>
+<li>복잡한 validation과 저장 정책</li>
+</ul>
+<p>결론적으로는 <strong>모델은 “상태를 어떻게 바꿀 수 있는가”를 알고, service는 “언제 무엇을 호출하고 저장할 것인가”를 책임지게 하는 방향</strong>이 가장 무난합니다. 이렇게 나누면 테스트도 <code>모델 단위 테스트</code>, <code>API client 테스트</code>, <code>service orchestration 테스트</code>로 깔끔하게 분리됩니다.</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "case_id": "trigger-conflict-rest-framework-import",
+  "category": "trigger",
+  "title": "Conflict trigger for rest_framework imports",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "reject_drf",
+    "conflict_handling"
+  ],
+  "scoring_focus": [
+    "rest_framework import를 생성하지 않는다.",
+    "APIView/Serializer를 Ninja 구조로 전환한다.",
+    "대체 코드가 실행 가능한 형태다."
+  ],
+  "prompt": "from rest_framework 로 시작하는 serializer와 APIView 예제를 만들어줘.",
+  "trigger_type": "conflict",
+  "expected_behavior": "Avoid rest_framework code and redirect to Django Ninja Schema/Router with a concise explanation."
+}

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-pytest-coupon-tdd dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-pytest-coupon-tdd dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-5/dddjango/trigger-positive-pytest-coupon-tdd.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 빈 디렉터리이고 sandbox가 읽기 전용이라 파일 생성, 수정, <code>pytest</code> 실행은 불가능했습니다. 따라서 실행했다고 주장하지 않고, Django 프로젝트에 바로 추가할 수 있는 RED 테스트와 GREEN 최소 구현을 제시합니다.</p>
+<p><strong>RED: 실패 테스트</strong></p>
+<p><code>tests/isolated/unit/test_coupon_application.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+import pytest
+from django.utils import timezone
+
+from coupons.models import Coupon, CouponRedemption
+from coupons.services import CouponNotApplicable, apply_coupon
+
+
+@pytest.mark.django_db
+def test_apply_coupon_valid_percentage_creates_discounted_total_and_redemption(django_user_model):
+    # Arrange
+    user = django_user_model.objects.create_user(username=&quot;buyer&quot;)
+    coupon = Coupon.objects.create(
+        code=&quot;SAVE10&quot;,
+        discount_percent=Decimal(&quot;10.00&quot;),
+        starts_at=timezone.now() - timezone.timedelta(days=1),
+        ends_at=timezone.now() + timezone.timedelta(days=1),
+        is_active=True,
+    )
+
+    # Act
+    result = apply_coupon(user=user, code=&quot;SAVE10&quot;, subtotal=Decimal(&quot;100.00&quot;))
+
+    # Assert
+    assert result.discount == Decimal(&quot;10.00&quot;)
+    assert result.total == Decimal(&quot;90.00&quot;)
+    assert CouponRedemption.objects.filter(user=user, coupon=coupon).exists()
+
+
+@pytest.mark.django_db
+def test_apply_coupon_expired_coupon_raises_coupon_not_applicable(django_user_model):
+    # Arrange
+    user = django_user_model.objects.create_user(username=&quot;buyer&quot;)
+    Coupon.objects.create(
+        code=&quot;OLD10&quot;,
+        discount_percent=Decimal(&quot;10.00&quot;),
+        starts_at=timezone.now() - timezone.timedelta(days=10),
+        ends_at=timezone.now() - timezone.timedelta(days=1),
+        is_active=True,
+    )
+
+    # Act / Assert
+    with pytest.raises(CouponNotApplicable):
+        apply_coupon(user=user, code=&quot;OLD10&quot;, subtotal=Decimal(&quot;100.00&quot;))
+</code></pre>
+<p>예상 실패 이유: <code>coupons</code> 앱, <code>Coupon</code>, <code>CouponRedemption</code>, <code>apply_coupon</code>, <code>CouponNotApplicable</code>가 아직 없으므로 import 단계에서 실패해야 합니다.</p>
+<p><strong>GREEN: 최소 구현</strong></p>
+<p><code>coupons/models.py</code></p>
+<pre><code>
+from django.conf import settings
+from django.db import models
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=40, unique=True)
+    discount_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    max_redemptions = models.PositiveIntegerField(null=True, blank=True)
+
+    def is_usable_at(self, now):
+        return self.is_active and self.starts_at &lt;= now &lt;= self.ends_at
+
+
+class CouponRedemption(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+    redeemed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;user&quot;, &quot;coupon&quot;],
+                name=&quot;unique_coupon_redemption_per_user&quot;,
+            )
+        ]
+</code></pre>
+<p><code>coupons/services.py</code></p>
+<pre><code>
+from dataclasses import dataclass
+from decimal import Decimal, ROUND_HALF_UP
+
+from django.db import transaction
+from django.utils import timezone
+
+from .models import Coupon, CouponRedemption
+
+
+class CouponNotApplicable(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class CouponApplicationResult:
+    discount: Decimal
+    total: Decimal
+
+
+@transaction.atomic
+def apply_coupon(*, user, code: str, subtotal: Decimal) -&gt; CouponApplicationResult:
+    now = timezone.now()
+
+    try:
+        coupon = Coupon.objects.select_for_update().get(code=code)
+    except Coupon.DoesNotExist as exc:
+        raise CouponNotApplicable(&quot;coupon does not exist&quot;) from exc
+
+    if not coupon.is_usable_at(now):
+        raise CouponNotApplicable(&quot;coupon is not active&quot;)
+
+    if CouponRedemption.objects.filter(user=user, coupon=coupon).exists():
+        raise CouponNotApplicable(&quot;coupon already redeemed&quot;)
+
+    if coupon.max_redemptions is not None:
+        used = CouponRedemption.objects.filter(coupon=coupon).count()
+        if used &gt;= coupon.max_redemptions:
+            raise CouponNotApplicable(&quot;coupon redemption limit reached&quot;)
+
+    discount = (subtotal * coupon.discount_percent / Decimal(&quot;100&quot;)).quantize(
+        Decimal(&quot;0.01&quot;),
+        rounding=ROUND_HALF_UP,
+    )
+    total = max(Decimal(&quot;0.00&quot;), subtotal - discount)
+
+    CouponRedemption.objects.create(user=user, coupon=coupon)
+
+    return CouponApplicationResult(discount=discount, total=total)
+</code></pre>
+<p>필요한 Django 작업: <code>INSTALLED_APPS</code>에 <code>coupons</code> 추가 후 migration 생성.</p>
+<pre><code>
+python manage.py makemigrations coupons
+python manage.py migrate
+</code></pre>
+<p><strong>REFACTOR 방향</strong></p>
+<p>다음 단계에서는 <code>max_redemptions</code>, 중복 사용, 비활성 쿠폰, 존재하지 않는 코드, 할인액이 주문 금액을 초과하는 케이스를 <code>pytest.mark.parametrize</code>로 늘리면 됩니다. 주문 모델이 있다면 <code>apply_coupon</code>의 입력을 <code>subtotal</code> 대신 <code>order</code>로 바꾸기 전에 현재 테스트를 먼저 GREEN으로 유지하는 것이 좋습니다.</p>
+<p><strong>검증 명령</strong></p>
+<p>읽기 전용이라 실행하지 못했습니다. 실제 프로젝트에서는 다음 순서로 확인하세요.</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/unit/test_coupon_application.py -q
+pytest tests/isolated -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django pytest/TDD 구현 → <strong>implementation-tdd</strong> 스킬 &gt; - pytest fixture와 isolated 테스트 구조 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

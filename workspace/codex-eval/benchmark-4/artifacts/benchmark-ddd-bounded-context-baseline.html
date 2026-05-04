@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-bounded-context baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-bounded-context baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-ddd-bounded-context.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>커머스에서 <code>주문</code>, <code>결제</code>, <code>배송</code>, <code>정산</code> bounded context를 나누는 기준은 “테이블 주제”가 아니라 <strong>비즈니스 의사결정 책임과 상태 전이의 주인</strong>입니다.</p>
+<p><strong>권장 분리 기준</strong></p>
+<p><code>주문 Order</code></p>
+<ul>
+<li>고객이 무엇을, 얼마에, 어떤 조건으로 구매하려 했는가를 책임집니다.</li>
+<li>장바구니 확정, 주문 생성, 주문 취소 요청, 주문 상태 관리가 핵심입니다.</li>
+<li>결제 승인 여부나 송장 번호 자체를 직접 처리하지 않고, 그 결과를 반영합니다.</li>
+<li>예: <code>Order</code>, <code>OrderLine</code>, <code>OrderStatus</code>, <code>ShippingAddressSnapshot</code>, <code>PriceSnapshot</code></li>
+</ul>
+<p><code>결제 Payment</code></p>
+<ul>
+<li>돈을 받는 행위와 PG/VAN/간편결제 연동을 책임집니다.</li>
+<li>승인, 실패, 취소, 환불, 부분 환불, 결제 수단별 처리를 관리합니다.</li>
+<li>주문 금액을 참조할 수는 있지만 주문 도메인의 상세 규칙을 소유하지 않습니다.</li>
+<li>예: <code>Payment</code>, <code>PaymentAttempt</code>, <code>Refund</code>, <code>PaymentTransaction</code></li>
+</ul>
+<p><code>배송 Fulfillment / Delivery</code></p>
+<ul>
+<li>상품을 어떻게 출고하고 고객에게 전달할지를 책임집니다.</li>
+<li>출고 요청, 재고 할당, 송장 등록, 배송 추적, 배송 완료를 관리합니다.</li>
+<li>주문이 “배송 대상”을 제공하면 배송 context가 fulfillment 단위를 생성합니다.</li>
+<li>예: <code>Shipment</code>, <code>ShipmentItem</code>, <code>Carrier</code>, <code>TrackingEvent</code></li>
+</ul>
+<p><code>정산 Settlement</code></p>
+<ul>
+<li>돈을 누구에게 얼마만큼 지급하거나 회계 처리할지를 책임집니다.</li>
+<li>판매자 정산, 수수료, PG 수수료, 쿠폰 부담 주체, 환불 차감, 지급 보류를 다룹니다.</li>
+<li>결제 성공 이벤트와 배송 완료/구매 확정 이벤트를 기반으로 정산 데이터를 만듭니다.</li>
+<li>예: <code>Settlement</code>, <code>SettlementLine</code>, <code>Payout</code>, <code>Commission</code></li>
+</ul>
+<p><strong>핵심 원칙</strong></p>
+<p>각 context는 자기 상태의 최종 판단자가 되어야 합니다.</p>
+<p>예를 들어 주문이 결제 테이블을 직접 수정하면 안 됩니다. 주문은 <code>PaymentCompleted</code>, <code>PaymentFailed</code>, <code>RefundCompleted</code> 같은 결과를 받아 자신의 상태를 바꿉니다.</p>
+<p>반대로 결제 context도 주문 상태를 직접 판단하지 않습니다. 결제는 “10,000원 승인 성공”을 알릴 뿐, 주문이 <code>PAID</code>가 될지 <code>PARTIALLY_PAID</code>가 될지는 주문 context가 결정합니다.</p>
+<p><strong>Django 프로젝트 구조 예시</strong></p>
+<pre><code>
+commerce/
+  config/
+    settings.py
+    urls.py
+
+  apps/
+    orders/
+      models.py
+      services.py
+      selectors.py
+      events.py
+      tasks.py
+      api/
+        views.py
+        serializers.py
+        urls.py
+      tests/
+
+    payments/
+      models.py
+      services.py
+      gateways/
+        base.py
+        toss.py
+        nicepay.py
+      events.py
+      webhooks.py
+      api/
+        views.py
+        serializers.py
+        urls.py
+      tests/
+
+    deliveries/
+      models.py
+      services.py
+      carriers/
+        base.py
+        cj.py
+        hanjin.py
+      events.py
+      tasks.py
+      api/
+        views.py
+        serializers.py
+        urls.py
+      tests/
+
+    settlements/
+      models.py
+      services.py
+      calculators.py
+      events.py
+      tasks.py
+      api/
+        views.py
+        serializers.py
+        urls.py
+      tests/
+
+    catalog/
+      models.py
+
+    customers/
+      models.py
+
+    shared/
+      events.py
+      money.py
+      idempotency.py
+</code></pre>
+<p><strong>의존 방향 예시</strong></p>
+<pre><code>
+orders
+  -&gt; catalog 조회
+  -&gt; customers 조회
+  -&gt; payments에는 명령 요청만 보냄
+
+payments
+  -&gt; orders의 주문 금액 snapshot 참조 또는 payment request 참조
+  -&gt; PG 연동
+  -&gt; PaymentCompleted 이벤트 발행
+
+deliveries
+  -&gt; OrderPaid 또는 FulfillmentRequested 이벤트 구독
+  -&gt; ShipmentCreated, Delivered 이벤트 발행
+
+settlements
+  -&gt; PaymentCompleted, RefundCompleted, Delivered/PurchaseConfirmed 이벤트 구독
+  -&gt; 정산 예정/확정/지급 처리
+</code></pre>
+<p><strong>이벤트 예시</strong></p>
+<pre><code>
+# apps/orders/events.py
+@dataclass(frozen=True)
+class OrderPlaced:
+    order_id: str
+    customer_id: str
+    total_amount: int
+
+
+@dataclass(frozen=True)
+class OrderPaid:
+    order_id: str
+    payment_id: str
+    paid_amount: int
+</code></pre>
+<pre><code>
+# apps/payments/events.py
+@dataclass(frozen=True)
+class PaymentCompleted:
+    payment_id: str
+    order_id: str
+    amount: int
+    method: str
+</code></pre>
+<p><strong>실무적으로 추천하는 시작점</strong></p>
+<p>초기 Django 프로젝트라면 물리적으로 DB까지 완전히 분리하기보다는, 먼저 <code>app</code> 단위로 bounded context를 나누고 다음 규칙을 강제하는 게 현실적입니다.</p>
+<ul>
+<li>다른 context의 모델을 직접 수정하지 않는다.</li>
+<li>cross-context 변경은 <code>service</code> 또는 event handler를 통해서만 한다.</li>
+<li>외부 API 연동은 해당 context 안에 둔다.</li>
+<li>금액, 주소, 상품명은 주문 시점 snapshot을 저장한다.</li>
+<li>정산은 주문 테이블에서 즉석 계산하지 말고 별도 정산 ledger를 만든다.</li>
+</ul>
+<p>이렇게 나누면 주문 변경, PG 교체, 배송사 추가, 정산 정책 변경이 서로 덜 얽힙니다.</p></article>
+  </main>
+</body>
+</html>

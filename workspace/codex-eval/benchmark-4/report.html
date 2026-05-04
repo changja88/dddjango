@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>dddjango Codex Evaluation Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --good: #087443;
+      --good-bg: #e7f6ee;
+      --bad: #b42318;
+      --bad-bg: #fdecec;
+      --neutral: #475467;
+      --neutral-bg: #eef2f6;
+      --accent: #0c4a6e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    header {
+      padding: 32px 40px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .subhead { color: var(--muted); max-width: 920px; }
+    main { padding: 24px 40px 40px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .metric span, .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .metric strong {
+      display: block;
+      margin: 6px 0;
+      font-size: 24px;
+    }
+    .metric.good strong { color: var(--good); }
+    .metric.bad strong { color: var(--bad); }
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .section h2 {
+      margin: 0;
+      padding: 16px 18px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .failures { padding: 0 18px 18px; color: var(--bad); }
+    .empty { padding: 0 18px 18px; color: var(--muted); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #344054;
+      font-weight: 650;
+      z-index: 1;
+    }
+    .number { text-align: right; white-space: nowrap; }
+    .good { color: var(--good); }
+    .bad { color: var(--bad); }
+    .neutral { color: var(--neutral); }
+    .pill {
+      display: inline-block;
+      min-width: 72px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .pill.good { background: var(--good-bg); }
+    .pill.bad { background: var(--bad-bg); }
+    .pill.neutral { background: var(--neutral-bg); }
+    .links a {
+      display: block;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (max-width: 900px) {
+      header, main { padding-left: 18px; padding-right: 18px; }
+      .section { overflow-x: auto; }
+      table { min-width: 1180px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>dddjango Codex Evaluation Report</h1>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 평가 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+  </header>
+  <main>
+    <div class="metrics">
+      <section class="metric neutral"><span>Baseline Score</span><strong>83.67</strong><small>case average</small></section>
+      <section class="metric good"><span>dddjango Score</span><strong>87.92</strong><small>case average</small></section>
+      <section class="metric good"><span>Quality Lift</span><strong>+4.25</strong><small>+5.08% vs baseline</small></section>
+      <section class="metric neutral"><span>Baseline Time</span><strong>44.95s</strong><small>average duration</small></section>
+      <section class="metric neutral"><span>dddjango Time</span><strong>49.47s</strong><small>+10.06% vs baseline</small></section>
+      <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
+      <section class="metric neutral"><span>Completed Cases</span><strong>24/24</strong><small>with and without skill</small></section>
+      <section class="metric neutral"><span>Manual Usability</span><strong>18.92</strong><small>dddjango average / 20</small></section>
+    </div>
+
+    <section class="section">
+      <h2>Failure Highlights</h2>
+      <ul class="failures">
+        <li>No failed or regressed cases.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Release Gate</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+5.08%</td><td>&gt;= +15%</td></tr>
+<tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+<tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
+<tr><td>Django Ninja compliance</td><td><span class="pill bad">BLOCKED</span></td><td>83.33%</td><td>&gt;= 90%</td></tr>
+<tr><td>TDD quality</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
+<tr><td>Time/cost increase</td><td><span class="pill good">PASS</span></td><td>+10.06%</td><td>&lt;= +30%</td></tr>
+<tr><td>Negative-control pass rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Case Comparison: Without Skill vs With dddjango</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Evaluation Item</th>
+            <th>Category</th>
+            <th>Expectations</th>
+            <th>Without Skill</th>
+            <th>With dddjango</th>
+            <th>Delta</th>
+            <th>Without Time</th>
+            <th>With Time</th>
+            <th>Verdict</th>
+            <th>Without Note</th>
+            <th>With Note</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Migrate DRF endpoint guidance to Django Ninja</strong>
+            <small><code>benchmark-api-drf-migration</code></small>
+          </td>
+          <td>api-design</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, actionable_output</td>
+          <td class="number">92.0</td>
+          <td class="number">92.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">50.89s</td>
+          <td class="number">40.31s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-api-drf-migration-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-api-drf-migration-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-api-drf-migration-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Inventory reserve API design</strong>
+            <small><code>benchmark-api-inventory-reserve</code></small>
+          </td>
+          <td>api-design</td>
+          <td>korean_first, django_ninja_compliance, transaction_boundary, db_design, actionable_output</td>
+          <td class="number">90.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+2.0</td>
+          <td class="number">108.80s</td>
+          <td class="number">62.58s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-api-inventory-reserve-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-api-inventory-reserve-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-api-inventory-reserve-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Order status change API with transactional boundaries</strong>
+            <small><code>benchmark-api-order-status</code></small>
+          </td>
+          <td>api-design</td>
+          <td>korean_first, django_ninja_compliance, ddd_boundaries, transaction_boundary, actionable_output</td>
+          <td class="number">91.0</td>
+          <td class="number">95.0</td>
+          <td class="number good">+4.0</td>
+          <td class="number">40.52s</td>
+          <td class="number">43.91s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-api-order-status-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-api-order-status-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-api-order-status-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Product search API standard</strong>
+            <small><code>benchmark-api-product-search</code></small>
+          </td>
+          <td>api-design</td>
+          <td>korean_first, django_ninja_compliance, api_standard, actionable_output</td>
+          <td class="number">88.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+4.0</td>
+          <td class="number">77.51s</td>
+          <td class="number">43.45s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-api-product-search-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-api-product-search-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-api-product-search-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Error handling standard</strong>
+            <small><code>benchmark-clean-error-handling</code></small>
+          </td>
+          <td>clean-code</td>
+          <td>korean_first, django_ninja_compliance, api_standard, actionable_output</td>
+          <td class="number">85.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+7.0</td>
+          <td class="number">70.34s</td>
+          <td class="number">49.46s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-clean-error-handling-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-clean-error-handling-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-clean-error-handling-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Improve naming and boundaries</strong>
+            <small><code>benchmark-clean-naming-boundaries</code></small>
+          </td>
+          <td>clean-code</td>
+          <td>korean_first, ddd_boundaries, actionable_output</td>
+          <td class="number">83.0</td>
+          <td class="number">83.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">24.54s</td>
+          <td class="number">29.21s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-clean-naming-boundaries-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-clean-naming-boundaries-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-clean-naming-boundaries-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Refactor model method responsibilities</strong>
+            <small><code>benchmark-clean-refactor-model-method</code></small>
+          </td>
+          <td>clean-code</td>
+          <td>korean_first, architecture_review, actionable_output</td>
+          <td class="number">87.0</td>
+          <td class="number">87.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">31.99s</td>
+          <td class="number">45.87s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-clean-refactor-model-method-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-clean-refactor-model-method-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-clean-refactor-model-method-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Order query index design</strong>
+            <small><code>benchmark-db-order-query-index</code></small>
+          </td>
+          <td>db-design</td>
+          <td>korean_first, db_design, actionable_output</td>
+          <td class="number">80.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+7.0</td>
+          <td class="number">30.57s</td>
+          <td class="number">28.01s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-db-order-query-index-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-db-order-query-index-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-db-order-query-index-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Payment ledger schema</strong>
+            <small><code>benchmark-db-payment-ledger</code></small>
+          </td>
+          <td>db-design</td>
+          <td>korean_first, db_design, transaction_boundary, actionable_output</td>
+          <td class="number">80.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+7.0</td>
+          <td class="number">38.55s</td>
+          <td class="number">34.98s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-db-payment-ledger-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-db-payment-ledger-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-db-payment-ledger-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Refund transaction strategy</strong>
+            <small><code>benchmark-db-refund-transaction</code></small>
+          </td>
+          <td>db-design</td>
+          <td>korean_first, db_design, transaction_boundary, actionable_output</td>
+          <td class="number">80.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+7.0</td>
+          <td class="number">24.69s</td>
+          <td class="number">38.29s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-db-refund-transaction-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-db-refund-transaction-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-db-refund-transaction-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Commerce bounded contexts</strong>
+            <small><code>benchmark-ddd-bounded-context</code></small>
+          </td>
+          <td>ddd-architecture</td>
+          <td>korean_first, ddd_boundaries, architecture_review, actionable_output</td>
+          <td class="number">80.0</td>
+          <td class="number">80.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">32.64s</td>
+          <td class="number">56.05s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-ddd-bounded-context-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-ddd-bounded-context-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-ddd-bounded-context-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Coupon policy domain service</strong>
+            <small><code>benchmark-ddd-coupon-policy</code></small>
+          </td>
+          <td>ddd-architecture</td>
+          <td>korean_first, ddd_boundaries, actionable_output, testing_strategy</td>
+          <td class="number">77.0</td>
+          <td class="number">90.0</td>
+          <td class="number good">+13.0</td>
+          <td class="number">37.97s</td>
+          <td class="number">36.76s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-ddd-coupon-policy-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-ddd-coupon-policy-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-ddd-coupon-policy-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Order aggregate boundary</strong>
+            <small><code>benchmark-ddd-order-aggregate</code></small>
+          </td>
+          <td>ddd-architecture</td>
+          <td>korean_first, ddd_boundaries, transaction_boundary, actionable_output</td>
+          <td class="number">77.0</td>
+          <td class="number">80.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">17.30s</td>
+          <td class="number">49.98s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-ddd-order-aggregate-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-ddd-order-aggregate-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-ddd-order-aggregate-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Application service placement</strong>
+            <small><code>benchmark-ddd-service-layer</code></small>
+          </td>
+          <td>ddd-architecture</td>
+          <td>korean_first, django_ninja_compliance, ddd_boundaries, actionable_output</td>
+          <td class="number">95.0</td>
+          <td class="number">95.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">30.75s</td>
+          <td class="number">44.70s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-ddd-service-layer-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-ddd-service-layer-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-ddd-service-layer-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Reject explicit DRF implementation request</strong>
+            <small><code>benchmark-negative-drf-explicit</code></small>
+          </td>
+          <td>negative-control</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, negative_control_passed, actionable_output</td>
+          <td class="number">66.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+26.0</td>
+          <td class="number">12.97s</td>
+          <td class="number">62.99s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-negative-drf-explicit-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-negative-drf-explicit-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-negative-drf-explicit-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Do not force Django guidance into FastAPI task</strong>
+            <small><code>benchmark-negative-fastapi</code></small>
+          </td>
+          <td>negative-control</td>
+          <td>korean_first, negative_control_passed, actionable_output</td>
+          <td class="number">74.0</td>
+          <td class="number">74.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">28.62s</td>
+          <td class="number">32.24s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-negative-fastapi-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-negative-fastapi-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-negative-fastapi-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Review overloaded application service</strong>
+            <small><code>benchmark-review-fat-service</code></small>
+          </td>
+          <td>review</td>
+          <td>korean_first, architecture_review, transaction_boundary, actionable_output</td>
+          <td class="number">84.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">17.82s</td>
+          <td class="number">53.13s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-review-fat-service-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-review-fat-service-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-review-fat-service-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Review business logic in Ninja router</strong>
+            <small><code>benchmark-review-ninja-router</code></small>
+          </td>
+          <td>review</td>
+          <td>korean_first, django_ninja_compliance, architecture_review, actionable_output</td>
+          <td class="number">92.0</td>
+          <td class="number">92.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">61.17s</td>
+          <td class="number">68.29s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-review-ninja-router-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-review-ninja-router-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-review-ninja-router-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Review Django queryset performance</strong>
+            <small><code>benchmark-review-query-performance</code></small>
+          </td>
+          <td>review</td>
+          <td>korean_first, django_ninja_compliance, db_design, architecture_review, actionable_output</td>
+          <td class="number">92.0</td>
+          <td class="number">92.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">81.32s</td>
+          <td class="number">71.50s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-review-query-performance-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-review-query-performance-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-review-query-performance-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Review brittle pytest tests</strong>
+            <small><code>benchmark-review-test-quality</code></small>
+          </td>
+          <td>review</td>
+          <td>korean_first, pytest_quality, architecture_review, actionable_output</td>
+          <td class="number">84.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">41.23s</td>
+          <td class="number">66.61s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-review-test-quality-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-review-test-quality-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-review-test-quality-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>TDD for domain policy object</strong>
+            <small><code>benchmark-tdd-domain-policy</code></small>
+          </td>
+          <td>tdd</td>
+          <td>korean_first, tdd_first, pytest_quality, actionable_output</td>
+          <td class="number">84.0</td>
+          <td class="number">84.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">83.64s</td>
+          <td class="number">52.09s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-tdd-domain-policy-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-tdd-domain-policy-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-tdd-domain-policy-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>TDD for inventory reservation</strong>
+            <small><code>benchmark-tdd-inventory-reserve</code></small>
+          </td>
+          <td>tdd</td>
+          <td>korean_first, tdd_first, pytest_quality, transaction_boundary, actionable_output</td>
+          <td class="number">87.0</td>
+          <td class="number">87.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">68.27s</td>
+          <td class="number">63.52s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-tdd-inventory-reserve-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-tdd-inventory-reserve-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-tdd-inventory-reserve-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>TDD for Django Ninja endpoint</strong>
+            <small><code>benchmark-tdd-ninja-endpoint</code></small>
+          </td>
+          <td>tdd</td>
+          <td>korean_first, django_ninja_compliance, tdd_first, pytest_quality, actionable_output</td>
+          <td class="number">84.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+8.0</td>
+          <td class="number">34.65s</td>
+          <td class="number">61.06s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-tdd-ninja-endpoint-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-tdd-ninja-endpoint-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-tdd-ninja-endpoint-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>TDD for order cancellation</strong>
+            <small><code>benchmark-tdd-order-cancel</code></small>
+          </td>
+          <td>tdd</td>
+          <td>korean_first, tdd_first, pytest_quality, actionable_output</td>
+          <td class="number">76.0</td>
+          <td class="number">84.0</td>
+          <td class="number good">+8.0</td>
+          <td class="number">31.99s</td>
+          <td class="number">52.17s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/benchmark-tdd-order-cancel-baseline.html">baseline</a>
+            <a href="artifacts/benchmark-tdd-order-cancel-dddjango.html">dddjango</a>
+            <a href="artifacts/benchmark-tdd-order-cancel-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Usability Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Actionable</th>
+            <th>Concise</th>
+            <th>Realistic Layout</th>
+            <th>Korean Quality</th>
+            <th>Total</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td>
+            <strong>Migrate DRF endpoint guidance to Django Ninja</strong>
+            <small><code>benchmark-api-drf-migration</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">18.0</td>
+          <td>DRF 책임 매핑, Ninja 대체 코드, 회귀 테스트 전략이 바로 적용 가능. 404 처리와 세부 auth는 프로젝트에 맞게 보강 필요.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Inventory reserve API design</strong>
+            <small><code>benchmark-api-inventory-reserve</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">3.0</td>
+          <td class="number">5.0</td>
+          <td class="number">17.0</td>
+          <td>멱등성/unique constraint/select_for_update 설계는 좋지만 재고 부족에서 transaction rollback과 저장된 실패 응답 처리 흐름이 애매해 현실성 감점.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Order status change API with transactional boundaries</strong>
+            <small><code>benchmark-api-order-status</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">18.0</td>
+          <td>DDD 상태 전이, transaction/select_for_update, Ninja endpoint와 검증 절차가 좋음. version 필드는 소개되지만 실제 낙관적 잠금 구현은 없어 약간 감점.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Product search API standard</strong>
+            <small><code>benchmark-api-product-search</code></small>
+          </td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">3.0</td>
+          <td class="number">5.0</td>
+          <td class="number">16.0</td>
+          <td>검색/정렬/Problem Details/검증 절차는 좋지만 from typing import list는 실제 실행 오류라 레이아웃 점수 감점.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Error handling standard</strong>
+            <small><code>benchmark-clean-error-handling</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">19.0</td>
+          <td>도메인 예외와 Problem Details 매핑이 좋음. application/problem+json content type 고정 검증은 더 보강 필요.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Improve naming and boundaries</strong>
+            <small><code>benchmark-clean-naming-boundaries</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>Manager/Service/UseCase/Policy 명명 기준과 규모별 운영 규칙이 팀 컨벤션으로 바로 사용 가능.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Refactor model method responsibilities</strong>
+            <small><code>benchmark-clean-refactor-model-method</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>부작용 제거, on_commit, Protocol, 테스트 예시가 작고 안전한 리팩터링 순서로 제시됨.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Order query index design</strong>
+            <small><code>benchmark-db-order-query-index</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>워크로드별 복합 인덱스, keyset pagination, EXPLAIN, query count 테스트까지 근거가 좋음.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Payment ledger schema</strong>
+            <small><code>benchmark-db-payment-ledger</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">19.0</td>
+          <td>Decimal/currency/idempotency/audit/transaction/on_commit까지 포함되어 실제 설계 검토에 충분함.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Refund transaction strategy</strong>
+            <small><code>benchmark-db-refund-transaction</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>DB 트랜잭션과 외부 PG 호출 분리, idempotency, lock, constraint, 테스트 기준이 실무적으로 충분함.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Commerce bounded contexts</strong>
+            <small><code>benchmark-ddd-bounded-context</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>업무 언어/변경 이유/트랜잭션 경계 기준과 Django app 배치 현실성이 모두 좋음.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Coupon policy domain service</strong>
+            <small><code>benchmark-ddd-coupon-policy</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">19.0</td>
+          <td>정책 객체/도메인 서비스/중복 사용 repository와 pytest edge case가 구체적임. 다소 길지만 적용성은 높음.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Order aggregate boundary</strong>
+            <small><code>benchmark-ddd-order-aggregate</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>Aggregate 경계, Payment/Shipment 분리 기준, 이벤트 기반 통합이 명확하고 실무 판단 기준으로 바로 사용 가능.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Application service placement</strong>
+            <small><code>benchmark-ddd-service-layer</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>Router/application/domain/repository 책임과 과설계 회피 기준이 명확하고 검증 명령도 실용적임.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Reject explicit DRF implementation request</strong>
+            <small><code>benchmark-negative-drf-explicit</code></small>
+          </td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">3.0</td>
+          <td class="number">5.0</td>
+          <td class="number">16.0</td>
+          <td>DRF를 거부하고 Ninja CRUD를 제공했지만 endpoint type hint와 도메인/상태 전이 검증이 얕아 보강 필요.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Do not force Django guidance into FastAPI task</strong>
+            <small><code>benchmark-negative-fastapi</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>Django로 끌고 가지 않고 FastAPI health check 요구를 간결하게 충족함.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Review overloaded application service</strong>
+            <small><code>benchmark-review-fat-service</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">19.0</td>
+          <td>동시성/트랜잭션/책임/쿼리/외부 gateway를 위험도 순으로 잘 짚음. 개선 예시가 다소 압축적임.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Review business logic in Ninja router</strong>
+            <small><code>benchmark-review-ninja-router</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>Fat Router 문제, application service, domain policy, transaction, idempotency와 테스트 방향이 모두 적절함.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Review Django queryset performance</strong>
+            <small><code>benchmark-review-query-performance</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">19.0</td>
+          <td>N+1, schema 과중, cursor pagination, 인덱스, 쿼리 수 테스트가 모두 실제 리뷰에 유용함.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>Review brittle pytest tests</strong>
+            <small><code>benchmark-review-test-quality</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>fixture 남용/약한 assert/slow test 문제를 구조와 예시, 실행 명령까지 현실적으로 제시함.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>TDD for domain policy object</strong>
+            <small><code>benchmark-tdd-domain-policy</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">5.0</td>
+          <td class="number">20.0</td>
+          <td>순수 도메인 정책 테스트, Decimal 경계값, 불변식 검증이 명확하고 바로 적용 가능.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>TDD for inventory reservation</strong>
+            <small><code>benchmark-tdd-inventory-reserve</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">18.0</td>
+          <td>재고 부족/중복/정상 케이스와 select_for_update가 좋음. migration 적용 순서와 동시성 테스트는 추가 보강 필요.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>TDD for Django Ninja endpoint</strong>
+            <small><code>benchmark-tdd-ninja-endpoint</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">18.0</td>
+          <td>RED/GREEN/REFACTOR 흐름과 TestClient 예시가 명확함. 실제 DB service/repository 연결은 프로젝트에서 보강 필요.</td>
+        </tr>
+        
+
+        <tr>
+          <td>
+            <strong>TDD for order cancellation</strong>
+            <small><code>benchmark-tdd-order-cancel</code></small>
+          </td>
+          <td class="number">5.0</td>
+          <td class="number">4.0</td>
+          <td class="number">4.0</td>
+          <td class="number">5.0</td>
+          <td class="number">18.0</td>
+          <td>RED/GREEN/REFACTOR 흐름이 좋고 edge case가 명확함. 실제 Django 저장/서비스 확장은 다음 단계로 남아 있음.</td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </section>
+    
+
+  </main>
+</body>
+</html>

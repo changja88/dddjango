@@ -1,0 +1,19 @@
+{
+  "case_id": "trigger-conflict-drf-viewset",
+  "category": "trigger",
+  "title": "Conflict trigger for explicit DRF ViewSet",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "reject_drf",
+    "conflict_handling"
+  ],
+  "scoring_focus": [
+    "DRF 구현 코드를 생성하지 않는다.",
+    "정책 충돌을 짧게 설명한다.",
+    "Django Ninja 대안을 코드로 제시한다."
+  ],
+  "prompt": "DRF ViewSet과 ModelSerializer로 상품 API를 작성해줘.",
+  "trigger_type": "conflict",
+  "expected_behavior": "Respect user intent enough to explain policy conflict, then provide Django Ninja alternative without generating DRF implementation code."
+}

@@ -47,7 +47,9 @@ permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고�
    `api.add_router("/products/", products_router)`. 문자열 경로를
    `api.add_router()`에 넘기지 않는다.
 4. `config/urls.py` -- `path("api/", api.urls)`.
-5. 실행하지 못했다는 검증 고지와 사용자가 실행할 명령.
+5. 실행하지 못했다는 검증 고지와 사용자가 실행할 명령. API 코드를
+   제시했다면 최소한 `python manage.py check`와 `pytest` 또는
+   `python manage.py test` 중 하나를 포함한다.
 
 **기준 요구사항 — 모든 모드에 적용:**
 - 모든 요청/응답 검증에 Pydantic Schema를 사용한다. DRF Serializer를
@@ -118,6 +120,9 @@ ViewSet, APIView, rest_framework, DefaultRouter, SimpleRouter를 요청하면
    또는 라우터/엔드포인트 `auth=` 설정으로 변환한다.
 6. DRF import 예시는 제공하지 않는다. 필요한 경우 금지 예시는 코드가 아닌
    설명 문장으로만 언급한다.
+7. 마지막에 검증 블록을 둔다. 실제 실행을 못 했으면 그렇게 밝히고,
+   사용자가 실행할 `python manage.py check`와 `pytest`/`python manage.py test`
+   명령을 제시한다.
 
 적용할 핵심 컨벤션:
 
@@ -142,6 +147,15 @@ PageNumberPagination, CursorPagination)와 함께 `@paginate` 데코레이터를
 **필터링.** 타입 안전한 필터링에 `FilterSchema`와 `FilterLookup`을
 사용한다. 복잡한 필터에 표현식 커넥터(OR, AND)를 사용한다.
 null 필터 값을 건너뛰려면 `ignore_none=True`를 사용한다.
+
+**검색/목록 API 표준.** 팀 컨벤션 형태의 검색 API를 만들 때는
+`FilterSchema`와 `Query[...]`로 query parameter를 구조화한다. 정렬 필드는 allow-list
+또는 Enum으로 제한하고, 사용자 입력을 `order_by()`에 직접 넣지
+않는다. 페이지네이션 응답은 팀 표준이 필요하면 `items/meta envelope`를
+명시하고 직접 슬라이싱하거나 `PaginationBase`로 구현한다. @paginate와 커스텀 envelope를 섞지 않는다;
+내장 `@paginate`를 쓰면 해당 paginator의
+응답 형식을 그대로 따른다. 에러 응답은 항상 `RFC 9457 Problem Details`로
+정의한다.
 
 **에러 처리.** 커스텀 에러 응답에 `@api.exception_handler()`를 사용한다.
 단순 에러에 `HttpError(status, message)`를 사용한다. 모든 API 에러에
@@ -314,6 +328,7 @@ django-ninja-extra: 클래스 기반 뷰를 위한 @api_controller, 권한
 ### 작성 모드
 - [ ] **FilterSchema에 다중 필드 lookup (예: `title__icontains`, `department`, `grade`) 사용**
 - [ ] **`response={201: SuccessSchema, 409: ProblemDetail, 422: ProblemDetail}` 다중 상태코드 응답 스키마 매핑**
+- [ ] **검색/목록 API 표준 작성 시 `Query[FilterSchema]`, 정렬 allow-list, 페이지네이션 `items/meta envelope`, RFC 9457 에러 표준을 함께 제시**
 
 ### 리뷰 모드
 - [ ] N+1 가능성 있는 직렬화에 select_related/prefetch_related 권고

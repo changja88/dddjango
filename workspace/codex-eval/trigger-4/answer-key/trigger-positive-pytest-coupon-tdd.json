@@ -1,0 +1,19 @@
+{
+  "case_id": "trigger-positive-pytest-coupon-tdd",
+  "category": "trigger",
+  "title": "Positive trigger for pytest coupon TDD",
+  "expectations": [
+    "korean_first",
+    "tdd_first",
+    "pytest_quality",
+    "trigger_recall"
+  ],
+  "scoring_focus": [
+    "실패 테스트를 먼저 제시한다.",
+    "Django 테스트 맥락을 유지한다.",
+    "실행했다고 허위 주장하지 않는다."
+  ],
+  "prompt": "pytest와 TDD 방식으로 Django 쿠폰 적용 기능을 구현해줘.",
+  "trigger_type": "positive",
+  "expected_behavior": "Apply dddjango TDD guidance: RED test, expected failure, GREEN implementation, REFACTOR direction."
+}

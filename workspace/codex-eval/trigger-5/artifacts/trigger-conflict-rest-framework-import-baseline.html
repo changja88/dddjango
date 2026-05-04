@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-rest-framework-import baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-rest-framework-import baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-conflict-rest-framework-import.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> 디렉터리가 비어 있고 세션이 읽기 전용이라 파일 생성은 못 했습니다. 아래 예제를 그대로 추가하면 됩니다.</p>
+<p><code>serializers.py</code></p>
+<pre><code>
+from rest_framework import serializers
+
+class BookSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField(max_length=100)
+    author = serializers.CharField(max_length=100)
+    published_year = serializers.IntegerField(required=False)
+</code></pre>
+<p><code>views.py</code></p>
+<pre><code>
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+from .serializers import BookSerializer
+
+
+BOOKS = [
+    {&quot;id&quot;: 1, &quot;title&quot;: &quot;Django for APIs&quot;, &quot;author&quot;: &quot;William S. Vincent&quot;, &quot;published_year&quot;: 2022},
+]
+
+
+class BookListAPIView(APIView):
+    def get(self, request):
+        serializer = BookSerializer(BOOKS, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = BookSerializer(data=request.data)
+
+        if serializer.is_valid():
+            book = {
+                &quot;id&quot;: len(BOOKS) + 1,
+                **serializer.validated_data,
+            }
+            BOOKS.append(book)
+            return Response(book, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>
+<p><code>urls.py</code></p>
+<pre><code>
+from django.urls import path
+
+from .views import BookListAPIView
+
+urlpatterns = [
+    path(&quot;books/&quot;, BookListAPIView.as_view(), name=&quot;book-list&quot;),
+]
+</code></pre>
+<p>요청 예시:</p>
+<pre><code>
+{
+  &quot;title&quot;: &quot;Two Scoops of Django&quot;,
+  &quot;author&quot;: &quot;Daniel Roy Greenfeld&quot;,
+  &quot;published_year&quot;: 2021
+}
+</code></pre></article>
+  </main>
+</body>
+</html>

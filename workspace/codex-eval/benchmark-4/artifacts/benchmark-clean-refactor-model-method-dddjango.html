@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-clean-refactor-model-method dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-clean-refactor-model-method dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/dddjango/benchmark-clean-refactor-model-method.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>핵심 방향은 <code>Django model method = 순수 도메인 규칙 + 상태 전이</code>까지만 남기고, <code>외부 API 호출</code>, <code>트랜잭션</code>, <code>save()</code>는 애플리케이션 서비스로 올리는 것입니다. 지금 구조는 CQS 위반입니다. 한 메서드가 “검증한다”, “외부 시스템을 호출한다”, “상태를 바꾼다”, “저장한다”를 동시에 하므로 테스트도 어렵고 실패 지점도 숨겨집니다.</p>
+<p>[Before]</p>
+<pre><code>
+class Order(models.Model):
+    def confirm(self) -&gt; None:
+        if self.status != self.Status.REQUESTED:
+            raise ValidationError(&quot;invalid status&quot;)
+
+        external_api.notify_order_confirmed(self.id)
+
+        self.status = self.Status.CONFIRMED
+        self.confirmed_at = timezone.now()
+        self.save()
+</code></pre>
+<p>[After]</p>
+<pre><code>
+class InvalidOrderState(Exception):
+    pass
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = &quot;requested&quot;, &quot;Requested&quot;
+        CONFIRMED = &quot;confirmed&quot;, &quot;Confirmed&quot;
+
+    def confirm(self, confirmed_at: datetime) -&gt; None:
+        if self.status != self.Status.REQUESTED:
+            raise InvalidOrderState(&quot;order must be requested before confirmation&quot;)
+
+        self.status = self.Status.CONFIRMED
+        self.confirmed_at = confirmed_at
+</code></pre>
+<pre><code>
+class OrderNotifier(Protocol):
+    def order_confirmed(self, order_id: int) -&gt; None:
+        ...
+
+
+@transaction.atomic
+def confirm_order(order_id: int, notifier: OrderNotifier) -&gt; None:
+    order = (
+        Order.objects
+        .select_for_update()
+        .get(id=order_id)
+    )
+
+    order.confirm(confirmed_at=timezone.now())
+    order.full_clean()
+    order.save(update_fields=[&quot;status&quot;, &quot;confirmed_at&quot;, &quot;updated_at&quot;])
+
+    transaction.on_commit(lambda: notifier.order_confirmed(order.id))
+</code></pre>
+<p>[Reason] Clean Code / DDD / Django Convention -- 모델은 도메인 불변식과 상태 전이만 담당합니다. 외부 API는 포트 <code>OrderNotifier</code> 뒤로 숨기고, 실제 호출은 트랜잭션 커밋 이후 <code>transaction.on_commit()</code>에서 실행합니다. 이렇게 해야 DB 롤백 후 외부 알림만 나가는 불일치를 피할 수 있습니다.</p>
+<p>검증도 한곳에 몰지 말고 성격별로 나누는 편이 좋습니다.</p>
+<p>| 검증 종류 | 위치 | |---|---| | 요청 형식, 필수값, 타입 | Form, Django Ninja Schema | | 도메인 불변식, 상태 전이 | 모델 메서드 또는 값 객체 | | DB 수준 제약 | <code>CheckConstraint</code>, <code>UniqueConstraint</code> | | 외부 API 응답 검증 | 인프라 어댑터 또는 애플리케이션 서비스 |</p>
+<p>작게 리팩터링하는 순서는 이렇게 잡는 게 안전합니다.</p>
+<ul>
+<li>현재 모델 메서드의 기존 동작을 테스트로 고정합니다. 성공, 잘못된 상태, 외부 API 실패, 저장 여부를 분리해서 잡습니다.</li>
+<li>외부 API 호출을 <code>Protocol</code> 인터페이스와 어댑터 클래스로 추출합니다. 아직 호출 위치는 바꾸지 않아도 됩니다.</li>
+<li>모델 메서드에서 <code>save()</code>를 제거하고 상태 변경만 남깁니다. 메서드 이름도 <code>validate_and_call_and_save()</code>식이 아니라 <code>confirm()</code>, <code>cancel()</code>, <code>mark_paid()</code>처럼 도메인 동사로 바꿉니다.</li>
+<li><code>confirm_order()</code> 같은 애플리케이션 서비스를 만들고 <code>transaction.atomic</code>, row lock, <code>full_clean()</code>, <code>save(update_fields=...)</code>를 그쪽으로 옮깁니다.</li>
+<li>알림, 이메일, 외부 동기화 같은 부수 효과는 <code>transaction.on_commit()</code>으로 이동합니다. 결제 승인처럼 외부 결과가 상태 전이를 결정하는 작업은 멱등성 키나 outbox까지 검토합니다.</li>
+<li>모델 단위 테스트는 외부 API mock 없이 돌리고, 서비스 테스트에서만 notifier mock과 트랜잭션 후 콜백을 검증합니다.</li>
+</ul>
+<p>검증 단계는 최소한 이 정도가 필요합니다.</p>
+<pre><code>
+def test_order_confirm_changes_state_without_saving_or_calling_api():
+    order = Order(status=Order.Status.REQUESTED)
+
+    order.confirm(confirmed_at=timezone.now())
+
+    assert order.status == Order.Status.CONFIRMED
+
+
+def test_confirm_order_calls_notifier_after_commit(db, mocker):
+    notifier = mocker.Mock(spec=OrderNotifier)
+    order = Order.objects.create(status=Order.Status.REQUESTED)
+
+    with TestCase.captureOnCommitCallbacks(execute=True):
+        confirm_order(order.id, notifier)
+
+    notifier.order_confirmed.assert_called_once_with(order.id)
+</code></pre>
+<p>실행 확인:</p>
+<pre><code>
+python manage.py test
+python manage.py check
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 모델에서 부작용 제거와 서비스 레이어 분리 → <strong>implementation-django</strong> 스킬 &gt; - 순수 도메인 규칙과 상태 전이 설계 → <strong>architecture-ddd</strong> 스킬 &gt; - 외부 API를 포트/어댑터로 격리 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

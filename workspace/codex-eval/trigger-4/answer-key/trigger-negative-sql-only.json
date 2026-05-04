@@ -1,0 +1,18 @@
+{
+  "case_id": "trigger-negative-sql-only",
+  "category": "trigger",
+  "title": "Negative trigger for generic SQL query",
+  "expectations": [
+    "korean_first",
+    "negative_control_passed",
+    "trigger_precision"
+  ],
+  "scoring_focus": [
+    "SQL을 우선 제공한다.",
+    "Django ORM으로 강제 변환하지 않는다.",
+    "필요한 경우에만 선택적 ORM 메모를 둔다."
+  ],
+  "prompt": "PostgreSQL에서 월별 매출 집계 SQL을 작성해줘.",
+  "trigger_type": "negative",
+  "expected_behavior": "Do not force Django ORM guidance unless useful as optional note; provide SQL first."
+}

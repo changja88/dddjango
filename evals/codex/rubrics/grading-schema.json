@@ -43,6 +43,32 @@
       "description": "Avoids unsafe migrations, hidden destructive actions, unsupported claims, and overconfident guidance."
     }
   ],
+  "usability_criteria": [
+    {
+      "id": "actionable",
+      "label": "Actionable",
+      "max": 5,
+      "description": "User can directly apply the answer with concrete code, steps, commands, or decisions."
+    },
+    {
+      "id": "concise",
+      "label": "Concise",
+      "max": 5,
+      "description": "Avoids unnecessary verbosity and repeated policy explanation while keeping essential detail."
+    },
+    {
+      "id": "realistic_file_layout",
+      "label": "Realistic Layout",
+      "max": 5,
+      "description": "Uses realistic Django/Ninja syntax, imports, file layout, migration, transaction, and test considerations."
+    },
+    {
+      "id": "korean_quality",
+      "label": "Korean Quality",
+      "max": 5,
+      "description": "Answers Korean prompts naturally in Korean while preserving code identifiers and necessary English terms."
+    }
+  ],
   "success_thresholds": {
     "minimum_average_lift_percent": 15,
     "maximum_drf_violation_count": 0,

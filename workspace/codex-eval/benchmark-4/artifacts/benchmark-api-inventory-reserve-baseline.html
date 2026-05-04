@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-inventory-reserve baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-inventory-reserve baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-api-inventory-reserve.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>implementation-django-ninja / architecture-api / architecture-db 스킬 기준으로 설계했습니다. 현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 세션이 읽기 전용이라 파일 생성은 못 했습니다. 아래는 그대로 붙여 넣을 수 있는 Django Ninja 설계안입니다.</p>
+<p><strong>주요 내용</strong></p>
+<p>핵심 계약:</p>
+<pre><code>
+POST /api/v1/inventory-reservations
+Idempotency-Key: 01J...client-generated-key
+Content-Type: application/json
+</code></pre>
+<pre><code>
+{
+  &quot;sku&quot;: &quot;SKU-001&quot;,
+  &quot;quantity&quot;: 3,
+  &quot;expires_at&quot;: &quot;2026-05-05T15:00:00+09:00&quot;
+}
+</code></pre>
+<p>응답:</p>
+<ul>
+<li><code>201 Created</code>: 새 예약 생성</li>
+<li><code>200 OK</code>: 같은 <code>Idempotency-Key</code> 재요청, 기존 응답 재생</li>
+<li><code>409 Conflict</code>: 같은 key로 다른 payload 요청</li>
+<li><code>422 Unprocessable Entity</code>: 재고 부족, 만료 시간이 부적절함</li>
+<li><code>423 Locked</code> 또는 <code>409 Conflict</code>: 같은 key 처리 중 재요청 정책 선택 시</li>
+</ul>
+<p>동시성 전략:</p>
+<ul>
+<li>재고 행은 <code>select_for_update()</code>로 잠근다.</li>
+<li>예약 생성과 재고 차감은 같은 <code>transaction.atomic()</code> 안에서 처리한다.</li>
+<li>중복 요청은 <code>IdempotencyRecord(scope, key)</code> 유니크 제약으로 막는다.</li>
+<li>같은 key 재요청은 저장된 <code>response_status</code>, <code>response_body</code>를 반환한다.</li>
+<li>payload hash가 다르면 같은 key 재사용 오류로 <code>409</code>를 반환한다.</li>
+</ul>
+<p><code>inventory/models.py</code></p>
+<pre><code>
+import uuid
+
+from django.conf import settings
+from django.core.validators import MinValueValidator
+from django.db import models
+from django.db.models import Q
+
+
+class InventoryItem(models.Model):
+    sku = models.CharField(max_length=64, unique=True)
+    available_quantity = models.PositiveIntegerField(default=0)
+    reserved_quantity = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = [&quot;sku&quot;]
+        indexes = [
+            models.Index(fields=[&quot;sku&quot;]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(available_quantity__gte=0),
+                name=&quot;inventory_available_quantity_gte_0&quot;,
+            ),
+            models.CheckConstraint(
+                condition=Q(reserved_quantity__gte=0),
+                name=&quot;inventory_reserved_quantity_gte_0&quot;,
+            ),
+        ]
+
+    def __str__(self) -&gt; str:
+        return self.sku
+
+
+class InventoryReservation(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = &quot;active&quot;, &quot;Active&quot;
+        EXPIRED = &quot;expired&quot;, &quot;Expired&quot;
+        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
+        COMMITTED = &quot;committed&quot;, &quot;Committed&quot;
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    item = models.ForeignKey(
+        InventoryItem,
+        on_delete=models.PROTECT,
+        related_name=&quot;reservations&quot;,
+    )
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+    )
+    expires_at = models.DateTimeField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name=&quot;inventory_reservations&quot;,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = [&quot;-created_at&quot;]
+        indexes = [
+            models.Index(fields=[&quot;item&quot;, &quot;status&quot;, &quot;expires_at&quot;]),
+            models.Index(fields=[&quot;created_by&quot;, &quot;-created_at&quot;]),
+        ]
+
+    def __str__(self) -&gt; str:
+        return f&quot;{self.item.sku}:{self.quantity}:{self.status}&quot;
+
+
+class IdempotencyRecord(models.Model):
+    class Status(models.TextChoices):
+        PROCESSING = &quot;processing&quot;, &quot;Processing&quot;
+        COMPLETED = &quot;completed&quot;, &quot;Completed&quot;
+        FAILED = &quot;failed&quot;, &quot;Failed&quot;
+
+    scope = models.CharField(max_length=128)
+    key = models.CharField(max_length=255)
+    request_hash = models.CharField(max_length=64)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PROCESSING,
+    )
+    response_status = models.PositiveSmallIntegerField(null=True, blank=True)
+    response_body = models.JSONField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name=&quot;idempotency_records&quot;,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = [&quot;-created_at&quot;]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;scope&quot;, &quot;key&quot;],
+                name=&quot;uniq_idempotency_scope_key&quot;,
+            ),
+        ]
+        indexes = [
+            models.Index(fields=[&quot;created_by&quot;, &quot;scope&quot;, &quot;key&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;created_at&quot;]),
+        ]
+
+    def __str__(self) -&gt; str:
+        return f&quot;{self.scope}:{self.key}&quot;
+</code></pre>
+<p><code>inventory/schemas.py</code></p>
+<pre><code>
+from datetime import datetime
+from uuid import UUID
+
+from ninja import Schema
+
+
+class ProblemDetail(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+    instance: str | None = None
+
+
+class InventoryReservationCreateIn(Schema):
+    sku: str
+    quantity: int
+    expires_at: datetime
+
+
+class InventoryReservationOut(Schema):
+    id: UUID
+    sku: str
+    quantity: int
+    status: str
+    expires_at: datetime
+    created_at: datetime
+</code></pre>
+<p><code>inventory/services.py</code></p>
+<pre><code>
+import hashlib
+import json
+from dataclasses import asdict, dataclass
+from datetime import timedelta
+from typing import Any
+
+from django.db import transaction
+from django.utils import timezone
+
+from inventory.models import IdempotencyRecord, InventoryItem, InventoryReservation
+
+
+@dataclass(frozen=True)
+class ReservationResult:
+    status_code: int
+    body: dict[str, Any]
+
+
+class IdempotencyConflict(Exception):
+    pass
+
+
+class InsufficientInventory(Exception):
+    pass
+
+
+def stable_payload_hash(payload: dict[str, Any]) -&gt; str:
+    raw = json.dumps(payload, sort_keys=True, separators=(&quot;,&quot;, &quot;:&quot;), default=str)
+    return hashlib.sha256(raw.encode(&quot;utf-8&quot;)).hexdigest()
+
+
+def create_inventory_reservation(
+    *,
+    user,
+    idempotency_key: str,
+    sku: str,
+    quantity: int,
+    expires_at,
+) -&gt; ReservationResult:
+    scope = &quot;inventory-reservations:create&quot;
+    request_hash = stable_payload_hash(
+        {&quot;sku&quot;: sku, &quot;quantity&quot;: quantity, &quot;expires_at&quot;: expires_at}
+    )
+
+    if quantity &lt; 1:
+        raise ValueError(&quot;quantity must be greater than 0&quot;)
+
+    if expires_at &lt;= timezone.now() + timedelta(minutes=1):
+        raise ValueError(&quot;expires_at must be in the future&quot;)
+
+    with transaction.atomic():
+        idem, created = IdempotencyRecord.objects.select_for_update().get_or_create(
+            scope=scope,
+            key=idempotency_key,
+            defaults={
+                &quot;request_hash&quot;: request_hash,
+                &quot;created_by&quot;: user,
+            },
+        )
+
+        if not created:
+            if idem.request_hash != request_hash:
+                raise IdempotencyConflict(&quot;Idempotency-Key was reused with a different request&quot;)
+
+            if idem.status == IdempotencyRecord.Status.COMPLETED:
+                return ReservationResult(
+                    status_code=idem.response_status,
+                    body=idem.response_body,
+                )
+
+        item = InventoryItem.objects.select_for_update().get(sku=sku)
+
+        if item.available_quantity &lt; quantity:
+            body = {
+                &quot;type&quot;: &quot;https://api.example.com/problems/insufficient-inventory&quot;,
+                &quot;title&quot;: &quot;Insufficient inventory&quot;,
+                &quot;status&quot;: 422,
+                &quot;detail&quot;: &quot;Requested quantity exceeds available inventory.&quot;,
+                &quot;available_quantity&quot;: item.available_quantity,
+            }
+            idem.status = IdempotencyRecord.Status.COMPLETED
+            idem.response_status = 422
+            idem.response_body = body
+            idem.save(update_fields=[&quot;status&quot;, &quot;response_status&quot;, &quot;response_body&quot;, &quot;updated_at&quot;])
+            return ReservationResult(status_code=422, body=body)
+
+        reservation = InventoryReservation.objects.create(
+            item=item,
+            quantity=quantity,
+            expires_at=expires_at,
+            created_by=user,
+        )
+
+        item.available_quantity -= quantity
+        item.reserved_quantity += quantity
+        item.save(update_fields=[&quot;available_quantity&quot;, &quot;reserved_quantity&quot;])
+
+        body = {
+            &quot;id&quot;: str(reservation.id),
+            &quot;sku&quot;: item.sku,
+            &quot;quantity&quot;: reservation.quantity,
+            &quot;status&quot;: reservation.status,
+            &quot;expires_at&quot;: reservation.expires_at.isoformat(),
+            &quot;created_at&quot;: reservation.created_at.isoformat(),
+        }
+
+        idem.status = IdempotencyRecord.Status.COMPLETED
+        idem.response_status = 201
+        idem.response_body = body
+        idem.save(update_fields=[&quot;status&quot;, &quot;response_status&quot;, &quot;response_body&quot;, &quot;updated_at&quot;])
+
+        return ReservationResult(status_code=201, body=body)
+</code></pre>
+<p><code>inventory/api.py</code></p>
+<pre><code>
+from typing import Any
+
+from django.shortcuts import get_object_or_404
+from ninja import Header, Router
+from ninja.security import django_auth
+
+from inventory.models import InventoryReservation
+from inventory.schemas import (
+    InventoryReservationCreateIn,
+    InventoryReservationOut,
+    ProblemDetail,
+)
+from inventory.services import (
+    IdempotencyConflict,
+    create_inventory_reservation,
+)
+
+router = Router(auth=django_auth)
+
+
+@router.post(
+    &quot;/inventory-reservations&quot;,
+    response={201: InventoryReservationOut, 200: InventoryReservationOut, 409: ProblemDetail, 422: ProblemDetail},
+)
+def create_reservation(
+    request,
+    payload: InventoryReservationCreateIn,
+    idempotency_key: str = Header(..., alias=&quot;Idempotency-Key&quot;),
+) -&gt; tuple[int, dict[str, Any]]:
+    try:
+        result = create_inventory_reservation(
+            user=request.user,
+            idempotency_key=idempotency_key,
+            sku=payload.sku,
+            quantity=payload.quantity,
+            expires_at=payload.expires_at,
+        )
+        return result.status_code, result.body
+    except IdempotencyConflict as exc:
+        return 409, {
+            &quot;type&quot;: &quot;https://api.example.com/problems/idempotency-key-conflict&quot;,
+            &quot;title&quot;: &quot;Idempotency key conflict&quot;,
+            &quot;status&quot;: 409,
+            &quot;detail&quot;: str(exc),
+        }
+    except ValueError as exc:
+        return 422, {
+            &quot;type&quot;: &quot;https://api.example.com/problems/invalid-reservation-request&quot;,
+            &quot;title&quot;: &quot;Invalid reservation request&quot;,
+            &quot;status&quot;: 422,
+            &quot;detail&quot;: str(exc),
+        }
+
+
+@router.get(
+    &quot;/inventory-reservations/{reservation_id}&quot;,
+    response={200: InventoryReservationOut, 404: ProblemDetail},
+)
+def get_reservation(request, reservation_id: str) -&gt; InventoryReservation:
+    return get_object_or_404(
+        InventoryReservation.objects.select_related(&quot;item&quot;),
+        id=reservation_id,
+        created_by=request.user,
+    )
+</code></pre>
+<p><code>config/api.py</code></p>
+<pre><code>
+from ninja import NinjaAPI
+
+from inventory.api import router as inventory_router
+
+api = NinjaAPI(title=&quot;Inventory API&quot;, version=&quot;1.0.0&quot;)
+api.add_router(&quot;/v1&quot;, inventory_router)
+</code></pre>
+<p><code>config/urls.py</code></p>
+<pre><code>
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>운영 정책은 PostgreSQL 기준을 권장합니다. <code>select_for_update()</code>는 SQLite에서 기대한 행 잠금 의미가 약하고, 재고 같은 동시성 민감 도메인은 PostgreSQL의 row-level lock과 유니크 제약을 전제로 잡는 편이 맞습니다.</p>
+<p>검증은 이 정도가 최소입니다:</p>
+<pre><code>
+python manage.py makemigrations inventory
+python manage.py migrate
+python manage.py test inventory
+</code></pre>
+<p>테스트 케이스는 같은 <code>Idempotency-Key</code> 두 번 호출 시 같은 예약 ID 반환, 같은 key 다른 payload는 <code>409</code>, 동시 요청 N개 중 재고 수량만큼만 성공, 재고 부족 시 <code>422</code>를 확인하면 됩니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 구현 세부화 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 트랜잭션/인덱스 검토 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

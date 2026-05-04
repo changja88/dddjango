@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-rust-function baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-rust-function baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-negative-rust-function.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 디렉터리가 비어 있고 읽기 전용이라 파일에는 반영하지 못했습니다. 아래는 의존성 없는 Rust <code>slugify</code> 함수입니다.</p>
+<pre><code>
+pub fn slugify(input: &amp;str) -&gt; String {
+    let mut slug = String::new();
+    let mut pending_dash = false;
+
+    for ch in input.chars() {
+        if ch.is_ascii_alphanumeric() {
+            if pending_dash &amp;&amp; !slug.is_empty() {
+                slug.push(&#x27;-&#x27;);
+            }
+            slug.push(ch.to_ascii_lowercase());
+            pending_dash = false;
+        } else if !slug.is_empty() {
+            pending_dash = true;
+        }
+    }
+
+    slug
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn slugifies_basic_strings() {
+        assert_eq!(slugify(&quot;Hello, World!&quot;), &quot;hello-world&quot;);
+        assert_eq!(slugify(&quot;  Rust___Slugify  &quot;), &quot;rust-slugify&quot;);
+        assert_eq!(slugify(&quot;A--B--C&quot;), &quot;a-b-c&quot;);
+        assert_eq!(slugify(&quot;Already slugified&quot;), &quot;already-slugified&quot;);
+    }
+
+    #[test]
+    fn skips_non_ascii_chars() {
+        assert_eq!(slugify(&quot;안녕 Rust&quot;), &quot;rust&quot;);
+        assert_eq!(slugify(&quot;café au lait&quot;), &quot;caf-au-lait&quot;);
+    }
+}
+</code></pre>
+<p>이 버전은 ASCII 영문/숫자만 남기고, 나머지 문자는 구분자로 취급해서 중복 <code>-</code>를 하나로 합칩니다. Unicode 음역이 필요하면 <code>deunicode</code> 같은 crate를 쓰는 쪽이 맞습니다.</p></article>
+  </main>
+</body>
+</html>

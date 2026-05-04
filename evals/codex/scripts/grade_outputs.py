@@ -38,10 +38,57 @@ def validate_grade(grade, schema):
                 f"{criterion_id} score must be between 0 and {maximum}, got {value}"
             )
 
+    validate_usability(grade, schema)
+
+
+def validate_usability(grade, schema):
+    if "usability" not in grade:
+        return
+
+    usability = grade["usability"]
+    if not isinstance(usability, dict):
+        raise ValueError(f"{grade['case_id']}:{grade['variant']} usability must be an object")
+
+    allowed = {item["id"]: item["max"] for item in schema.get("usability_criteria", [])}
+    allowed_with_notes = set(allowed) | {"notes"}
+    extra = sorted(set(usability) - allowed_with_notes)
+    if extra:
+        raise ValueError(
+            f"{grade['case_id']}:{grade['variant']} has unknown usability fields: "
+            + ", ".join(extra)
+        )
+
+    for field_id, maximum in allowed.items():
+        value = usability.get(field_id, 0)
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"{field_id} usability score must be numeric")
+        if value < 0 or value > maximum:
+            raise ValueError(
+                f"{field_id} usability score must be between 0 and {maximum}, got {value}"
+            )
+
 
 def total_score(grade, schema):
     validate_grade(grade, schema)
     return round(sum(grade["scores"][item["id"]] for item in schema["criteria"]), 2)
+
+
+def usability_score(grade, schema):
+    validate_grade(grade, schema)
+    usability = grade.get("usability")
+    if not usability or not usability_is_recorded(grade, schema):
+        return None
+    return round(
+        sum(usability.get(item["id"], 0) for item in schema.get("usability_criteria", [])),
+        2,
+    )
+
+
+def usability_is_recorded(grade, schema):
+    usability = grade.get("usability", {})
+    return bool(usability.get("notes")) or any(
+        usability.get(item["id"], 0) > 0 for item in schema.get("usability_criteria", [])
+    )
 
 
 def is_pending_grade(grade):
@@ -62,11 +109,24 @@ def summarize_grades(grades, schema):
             pending.setdefault(grade["variant"], []).append(grade["case_id"])
             continue
         score = total_score(grade, schema)
+        manual_usability = usability_score(grade, schema)
         variant = grade["variant"]
-        buckets.setdefault(variant, {"count": 0, "total_score": 0.0, "case_scores": {}})
+        buckets.setdefault(
+            variant,
+            {
+                "count": 0,
+                "total_score": 0.0,
+                "case_scores": {},
+                "usability_count": 0,
+                "usability_total": 0.0,
+            },
+        )
         buckets[variant]["count"] += 1
         buckets[variant]["total_score"] += score
         buckets[variant]["case_scores"][grade["case_id"]] = score
+        if manual_usability is not None:
+            buckets[variant]["usability_count"] += 1
+            buckets[variant]["usability_total"] += manual_usability
 
     variants = {}
     for variant, bucket in sorted(buckets.items()):
@@ -75,6 +135,11 @@ def summarize_grades(grades, schema):
             "average_score": round(bucket["total_score"] / bucket["count"], 2),
             "case_scores": bucket["case_scores"],
         }
+        if bucket["usability_count"]:
+            variants[variant]["average_usability"] = round(
+                bucket["usability_total"] / bucket["usability_count"],
+                2,
+            )
 
     lift = {}
     if "baseline" in variants and "dddjango" in variants:

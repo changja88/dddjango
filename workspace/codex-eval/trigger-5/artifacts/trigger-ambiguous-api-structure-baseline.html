@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-api-structure baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-api-structure baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-ambiguous-api-structure.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><code>/private/tmp/dddjango-codex-eval</code>은 현재 비어 있고, 세션이 read-only라 파일을 직접 만들 수는 없습니다. 대신 이 프로젝트 정책에 맞춰 Django Ninja 기준으로 API 구조를 이렇게 잡는 게 깔끔합니다.</p>
+<p><strong>권장 구조</strong></p>
+<pre><code>
+config/
+  api.py          # NinjaAPI 생성, 앱 router 합성
+  urls.py         # /api/ 진입점 연결
+
+apps/
+  products/
+    models.py
+    schemas.py   # 요청/응답 Schema
+    filters.py   # FilterSchema, 정렬 allow-list
+    services.py  # 비즈니스 로직
+    selectors.py # 읽기 전용 QuerySet 조립
+    api.py       # Router + endpoint
+    tests/
+      test_api.py
+</code></pre>
+<p><strong>URL 규칙</strong></p>
+<pre><code>
+GET    /api/v1/products
+POST   /api/v1/products
+GET    /api/v1/products/{product_id}
+PATCH  /api/v1/products/{product_id}
+DELETE /api/v1/products/{product_id}
+
+GET    /api/v1/products?status=active&amp;q=keyboard&amp;sort=-created_at&amp;limit=50&amp;cursor=...
+</code></pre>
+<p>핵심 원칙은 다음으로 고정하면 됩니다.</p>
+<ul>
+<li>리소스는 복수 명사: <code>/products</code>, <code>/orders</code></li>
+<li>URL에 동사 금지: <code>/create-product</code> 대신 <code>POST /products</code></li>
+<li>버전은 우선 <code>/api/v1/...</code></li>
+<li>목록 API는 항상 페이지네이션</li>
+<li>정렬 필드는 allow-list로 제한</li>
+<li>에러 응답은 RFC 9457 Problem Details</li>
+<li>생성성 <code>POST</code> 중 중복이 위험한 API는 <code>Idempotency-Key</code> 지원</li>
+</ul>
+<p><strong>Django Ninja 합성 예시</strong></p>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from apps.products.api import router as products_router
+
+api = NinjaAPI(
+    title=&quot;Service API&quot;,
+    version=&quot;1.0.0&quot;,
+)
+
+api.add_router(&quot;/v1/products&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<pre><code>
+# apps/products/api.py
+from ninja import Router, Query
+from django.shortcuts import get_object_or_404
+
+from .models import Product
+from .schemas import ProductIn, ProductOut, ProductPatch
+from .filters import ProductFilter
+from .selectors import list_products
+from .services import create_product, update_product
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(&quot;&quot;, response=list[ProductOut])
+def product_list(request, filters: Query[ProductFilter]) -&gt; list[Product]:
+    return list_products(filters)
+
+
+@router.post(&quot;&quot;, response={201: ProductOut})
+def product_create(request, payload: ProductIn) -&gt; tuple[int, Product]:
+    return 201, create_product(payload)
+
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def product_detail(request, product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+
+
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def product_update(request, product_id: int, payload: ProductPatch) -&gt; Product:
+    product = get_object_or_404(Product, id=product_id)
+    return update_product(product, payload)
+
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None})
+def product_delete(request, product_id: int) -&gt; tuple[int, None]:
+    product = get_object_or_404(Product, id=product_id)
+    product.delete()
+    return 204, None
+</code></pre>
+<p><strong>에러 포맷 표준</strong></p>
+<pre><code>
+{
+  &quot;type&quot;: &quot;https://api.example.com/problems/validation-error&quot;,
+  &quot;title&quot;: &quot;Validation error&quot;,
+  &quot;status&quot;: 422,
+  &quot;detail&quot;: &quot;Request body is invalid.&quot;,
+  &quot;instance&quot;: &quot;/api/v1/products&quot;
+}
+</code></pre>
+<p>직접 적용하려면 먼저 실제 Django 프로젝트 파일이 있어야 합니다. 현재 워크스페이스가 비어 있어서 구현/테스트 실행은 하지 못했습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 도메인/서비스 레이어 분리 → <strong>architecture-ddd</strong> 스킬 &gt; - 테스트 작성 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

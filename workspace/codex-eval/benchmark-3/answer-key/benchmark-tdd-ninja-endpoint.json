@@ -1,0 +1,20 @@
+{
+  "case_id": "benchmark-tdd-ninja-endpoint",
+  "category": "tdd",
+  "title": "TDD for Django Ninja endpoint",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "tdd_first",
+    "pytest_quality",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "Ninja TestClient 또는 현실적인 endpoint test 방식을 제안한다.",
+    "validation 실패와 성공 응답 테스트를 먼저 작성한다.",
+    "endpoint와 service 책임을 분리한다."
+  ],
+  "prompt": "Django Ninja endpoint를 pytest로 테스트 주도 개발하는 예시를 보여줘. 요청 schema validation과 성공 응답을 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": ""
+}

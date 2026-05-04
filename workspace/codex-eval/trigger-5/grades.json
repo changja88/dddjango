@@ -1,0 +1,2042 @@
+[
+  {
+    "case_id": "trigger-positive-ninja-order-api",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango guidance: Django Ninja Router/Schema, DDD boundaries, Korean-first answer.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-pytest-coupon-tdd",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango TDD guidance: RED test, expected failure, GREEN implementation, REFACTOR direction.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-fat-model-review",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango review guidance: severity-ranked findings and Django boundary recommendations.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-db-index",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango DB guidance: query-pattern driven indexes, ORM optimization, measurement.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-service-layer",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango architecture guidance: router/application/domain/repository boundaries.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-domain-event",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango DDD guidance: domain event boundary, transaction timing, integration approach.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-ninja-error-standard",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango API guidance: Ninja exception handlers, Schema, domain exception mapping.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-migration-transaction",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango migration guidance: backward-compatible rollout, data migration safety, verification.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-ninja-test-client",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango testing guidance: endpoint tests, schema validation, service boundary.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-clean-code-django",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango clean code guidance: thin view/router, service extraction, tests.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-fastapi-health",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; answer as a FastAPI task.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-python-csv",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django/DDD guidance; provide a plain Python solution.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-react-props",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; answer as a frontend refactor task.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-node-cli",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django guidance; provide Node.js CLI code.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-sql-only",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django ORM guidance unless useful as optional note; provide SQL first.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-shell-script",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 3,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": false,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; provide shell commands.",
+      "observed": "No clear dddjango trigger signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-data-analysis",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django guidance; answer with pandas code.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-flask-api",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django Ninja guidance; answer as Flask unless suggesting optional Django alternative is explicitly useful.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-rust-function",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; provide Rust code.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-negative-dockerfile",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django deployment guidance; provide a generic Python Dockerfile.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-api-structure",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Ask or state assumptions before applying dddjango strongly; if Django context is assumed, keep guidance conditional.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": false
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-service-layer",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Clarify project context or provide conditional guidance for Django vs non-Django projects.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": false
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-testing",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Ask for stack/context or provide a concise conditional checklist.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-domain-model",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Use DDD principles but avoid assuming Django persistence details without evidence.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-db-performance",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Provide general diagnosis first; mention Django ORM only as conditional if the project uses Django.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-clean-architecture",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 14,
+      "django_ninja_compliance": 15,
+      "actionability": 7,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Clarify scope and avoid forcing full DDD/Django layering unless project context supports it.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": false
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-conflict-drf-viewset",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Respect user intent enough to explain policy conflict, then provide Django Ninja alternative without generating DRF implementation code.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-conflict-rest-framework-import",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 14,
+      "django_ninja_compliance": 5,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 1
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": true,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Avoid rest_framework code and redirect to Django Ninja Schema/Router with a concise explanation.",
+      "observed": "DRF implementation appears endorsed.",
+      "passed": false
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-conflict-drf-vs-ninja",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Explain consistency risk and keep the implementation in Django Ninja unless user explicitly overrides project policy after warning.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-conflict-serializer-migration",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Clarify that Ninja Schema should handle validation, avoid DRF Serializer, and provide Schema-based validation.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    }
+  },
+  {
+    "case_id": "trigger-positive-ninja-order-api",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango guidance: Django Ninja Router/Schema, DDD boundaries, Korean-first answer.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 4,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "DDD/Ninja/Idempotency 설계가 풍부함. UoW 구현과 repository from_django 등 일부 연결부는 실제 프로젝트에서 보강 필요."
+    }
+  },
+  {
+    "case_id": "trigger-positive-pytest-coupon-tdd",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango TDD guidance: RED test, expected failure, GREEN implementation, REFACTOR direction.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 4,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "RED/GREEN과 검증 명령이 좋음. unit 경로라고 했지만 DB 테스트라 테스트 분류 명명은 약간 혼동됨."
+    }
+  },
+  {
+    "case_id": "trigger-positive-fat-model-review",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango review guidance: severity-ranked findings and Django boundary recommendations.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "실제 모델이 없음을 정확히 밝히고 위험도 순 리뷰 기준을 제시함. 코드 없는 상황이라 적용성은 제한적."
+    }
+  },
+  {
+    "case_id": "trigger-positive-db-index",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango DB guidance: query-pattern driven indexes, ORM optimization, measurement.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "쿼리 패턴별 인덱스, select/prefetch 구분, EXPLAIN 기준이 간결하고 실무적임."
+    }
+  },
+  {
+    "case_id": "trigger-positive-service-layer",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango architecture guidance: router/application/domain/repository boundaries.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "Django 규모별 service layer 위치와 책임 구분이 명확하고 과설계 회피 기준도 좋음."
+    }
+  },
+  {
+    "case_id": "trigger-positive-domain-event",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango DDD guidance: domain event boundary, transaction timing, integration approach.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 4,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "Domain Event와 Integration Event, on_commit/outbox 선택 기준이 좋음. 코드가 다소 길지만 유용함."
+    }
+  },
+  {
+    "case_id": "trigger-positive-ninja-error-standard",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango API guidance: Ninja exception handlers, Schema, domain exception mapping.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 4,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "Problem Details와 DomainError 매핑 구조가 복사 가능함. application/problem+json content type 검증은 더 명시 필요."
+    }
+  },
+  {
+    "case_id": "trigger-positive-migration-transaction",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango migration guidance: backward-compatible rollout, data migration safety, verification.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "expand/backfill/contract, 락 위험, rollback 한계, SQL 검증까지 운영 migration 기준이 좋음."
+    }
+  },
+  {
+    "case_id": "trigger-positive-ninja-test-client",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango testing guidance: endpoint tests, schema validation, service boundary.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 4,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "endpoint 테스트 표준과 mock 기준이 좋음. Problem Details instance/path와 실제 auth 테스트는 보강 여지 있음."
+    }
+  },
+  {
+    "case_id": "trigger-positive-clean-code-django",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "positive",
+      "expected": "Apply dddjango clean code guidance: thin view/router, service extraction, tests.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 4,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "view를 application service로 분리하는 흐름은 좋음. dependency 주입 방식과 schema/form 검증은 실제 프로젝트에서 보강 필요."
+    }
+  },
+  {
+    "case_id": "trigger-negative-fastapi-health",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; answer as a FastAPI task.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "FastAPI 요청을 그대로 존중하고 최소 health check와 실행 명령을 제공함."
+    }
+  },
+  {
+    "case_id": "trigger-negative-python-csv",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django/DDD guidance; provide a plain Python solution.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "Django로 끌고 가지 않고 표준 라이브러리 CSV 스크립트와 실행 예시를 정확히 제공함."
+    }
+  },
+  {
+    "case_id": "trigger-negative-react-props",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; answer as a frontend refactor task.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 2,
+      "concise": 5,
+      "realistic_file_layout": 3,
+      "korean_quality": 5,
+      "notes": "Django 개입은 없지만 React props 정리 일반 가이드 없이 파일 부재만 알림. negative precision은 좋지만 사용성은 낮음."
+    }
+  },
+  {
+    "case_id": "trigger-negative-node-cli",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django guidance; provide Node.js CLI code.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "Node CLI parser를 요청 범위에 맞게 간결하고 실행 가능한 코드로 제공함."
+    }
+  },
+  {
+    "case_id": "trigger-negative-sql-only",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django ORM guidance unless useful as optional note; provide SQL first.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "PostgreSQL 월별 집계 SQL을 Django ORM으로 강제하지 않고 필요한 변형까지 간결히 제시함."
+    }
+  },
+  {
+    "case_id": "trigger-negative-shell-script",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; provide shell commands.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "요청에는 맞지만 출력 markdown fence가 깨져 보이고 rg 대안이나 redirect 예시는 없음."
+    }
+  },
+  {
+    "case_id": "trigger-negative-data-analysis",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django guidance; answer with pandas code.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "pandas groupby 예시와 핵심 코드가 간결하며 Django 오염 없음."
+    }
+  },
+  {
+    "case_id": "trigger-negative-flask-api",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django Ninja guidance; answer as Flask unless suggesting optional Django alternative is explicitly useful.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "Flask todo 생성 API와 실행/curl 예시가 요청 범위에 맞고 Django 오염 없음."
+    }
+  },
+  {
+    "case_id": "trigger-negative-rust-function",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force dddjango guidance; provide Rust code.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "Rust slugify 함수와 테스트, Unicode 한계 설명까지 적절함."
+    }
+  },
+  {
+    "case_id": "trigger-negative-dockerfile",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "negative",
+      "expected": "Do not force Django deployment guidance; provide a generic Python Dockerfile.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 5,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "간단한 Python Dockerfile 요구를 정확히 충족하고 실행 명령도 충분함."
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-api-structure",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Ask or state assumptions before applying dddjango strongly; if Django context is assumed, keep guidance conditional.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "불명확한 맥락을 인지하고 Django라면 조건부 구조를 제안함. 구체 도메인 코드는 사용자 확인 후 보강 필요."
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-service-layer",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Clarify project context or provide conditional guidance for Django vs non-Django projects.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "맥락 불명확성을 밝히고 Django라면 조건부 기준을 잘 제시함. 실제 파일 적용은 다음 단계 필요."
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-testing",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Ask for stack/context or provide a concise conditional checklist.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 4,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "확인 질문과 조건부 Django 테스트 구조가 적절함. 실제 재편 diff는 프로젝트 경로 확인 후 필요."
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-domain-model",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Use DDD principles but avoid assuming Django persistence details without evidence.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 4,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "도메인/컨텍스트 기준과 Django 조건부 구조가 적절함. 실제 코드 적용 단계는 별도 작업 필요."
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-db-performance",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Provide general diagnosis first; mention Django ORM only as conditional if the project uses Django.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 5,
+      "korean_quality": 5,
+      "notes": "측정 우선 접근과 Django 조건부 최적화가 균형적임. 구체 SQL/파일 적용은 맥락 확인 후 필요."
+    }
+  },
+  {
+    "case_id": "trigger-ambiguous-clean-architecture",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "ambiguous",
+      "expected": "Clarify scope and avoid forcing full DDD/Django layering unless project context supports it.",
+      "observed": "Korean-first answer without strong Django Ninja signal.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 3,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "Django 강요 없이 범위 확인을 요청함. 다만 일반 구조 예시만 있어 즉시 적용성은 낮음."
+    }
+  },
+  {
+    "case_id": "trigger-conflict-drf-viewset",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Respect user intent enough to explain policy conflict, then provide Django Ninja alternative without generating DRF implementation code.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 4,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "DRF 정책 충돌을 짧게 설명하고 Ninja CRUD를 제시함. 테스트 예시와 request type hint는 더 보강 가능."
+    }
+  },
+  {
+    "case_id": "trigger-conflict-rest-framework-import",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Avoid rest_framework code and redirect to Django Ninja Schema/Router with a concise explanation.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "DRF import를 생성하지 않고 Schema/Router로 전환함. 테스트/검증 명령과 타입 힌트 일관성은 보강 가능."
+    }
+  },
+  {
+    "case_id": "trigger-conflict-drf-vs-ninja",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Explain consistency risk and keep the implementation in Django Ninja unless user explicitly overrides project policy after warning.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "프로젝트 Ninja 정책을 유지하고 DRF 대안을 거부함. check 외 테스트 명령과 검증 예시는 더 보강 필요."
+    }
+  },
+  {
+    "case_id": "trigger-conflict-serializer-migration",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "conflict",
+      "expected": "Clarify that Ninja Schema should handle validation, avoid DRF Serializer, and provide Schema-based validation.",
+      "observed": "Django Ninja guidance appears.",
+      "passed": true
+    },
+    "usability": {
+      "actionable": 4,
+      "concise": 5,
+      "realistic_file_layout": 4,
+      "korean_quality": 5,
+      "notes": "Serializer 대신 Schema 사용법을 간결하게 전환함. password 검증/중복 email 등 도메인 검증은 추가 필요."
+    }
+  }
+]

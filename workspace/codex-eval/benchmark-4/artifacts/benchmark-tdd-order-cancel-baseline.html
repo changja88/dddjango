@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-order-cancel baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-order-cancel baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/baseline/benchmark-tdd-order-cancel.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 디렉터리에 파일이 없어 실제 코드 기준이 아니라, Django + pytest에서 주문 취소 기능을 TDD로 추가하는 표준 흐름으로 작성합니다.</p>
+<p><strong>1. 실패 테스트 작성</strong></p>
+<p>먼저 “취소 가능한 주문은 취소된다”는 비즈니스 규칙부터 테스트합니다.</p>
+<pre><code>
+# tests/test_order_cancel.py
+import pytest
+
+from orders.models import Order
+
+
+@pytest.mark.django_db
+def test_paid_order_can_be_cancelled():
+    order = Order.objects.create(
+        status=Order.Status.PAID,
+        total_price=10000,
+    )
+
+    order.cancel()
+
+    order.refresh_from_db()
+    assert order.status == Order.Status.CANCELLED
+</code></pre>
+<p>실행:</p>
+<pre><code>
+pytest
+</code></pre>
+<p>예상 실패:</p>
+<pre><code>
+AttributeError: &#x27;Order&#x27; object has no attribute &#x27;cancel&#x27;
+</code></pre>
+<p>이 실패는 좋습니다. 아직 <code>cancel()</code> 동작이 없다는 사실을 테스트가 정확히 말해줍니다.</p>
+<p><strong>2. 최소 구현</strong></p>
+<p>테스트를 통과시키는 가장 작은 구현만 추가합니다.</p>
+<pre><code>
+# orders/models.py
+from django.db import models
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PAID = &quot;paid&quot;, &quot;Paid&quot;
+        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+    )
+    total_price = models.PositiveIntegerField()
+
+    def cancel(self):
+        self.status = self.Status.CANCELLED
+        self.save(update_fields=[&quot;status&quot;])
+</code></pre>
+<p>다시 실행:</p>
+<pre><code>
+pytest
+</code></pre>
+<p>이제 첫 테스트는 통과해야 합니다.</p>
+<p><strong>3. 규칙 추가: 이미 취소된 주문은 다시 취소할 수 없다</strong></p>
+<p>다음 비즈니스 규칙을 실패 테스트로 추가합니다.</p>
+<pre><code>
+@pytest.mark.django_db
+def test_cancelled_order_cannot_be_cancelled_again():
+    order = Order.objects.create(
+        status=Order.Status.CANCELLED,
+        total_price=10000,
+    )
+
+    with pytest.raises(ValueError, match=&quot;already cancelled&quot;):
+        order.cancel()
+</code></pre>
+<p>예상 실패:</p>
+<pre><code>
+Failed: DID NOT RAISE &lt;class &#x27;ValueError&#x27;&gt;
+</code></pre>
+<p>최소 구현:</p>
+<pre><code>
+def cancel(self):
+    if self.status == self.Status.CANCELLED:
+        raise ValueError(&quot;Order is already cancelled&quot;)
+
+    self.status = self.Status.CANCELLED
+    self.save(update_fields=[&quot;status&quot;])
+</code></pre>
+<p><strong>4. 규칙 추가: 배송 중인 주문은 취소할 수 없다</strong></p>
+<p>상태를 확장하고 테스트를 먼저 추가합니다.</p>
+<pre><code>
+@pytest.mark.django_db
+def test_shipped_order_cannot_be_cancelled():
+    order = Order.objects.create(
+        status=Order.Status.SHIPPED,
+        total_price=10000,
+    )
+
+    with pytest.raises(ValueError, match=&quot;cannot be cancelled&quot;):
+        order.cancel()
+</code></pre>
+<p>최소 구현:</p>
+<pre><code>
+class Status(models.TextChoices):
+    PAID = &quot;paid&quot;, &quot;Paid&quot;
+    SHIPPED = &quot;shipped&quot;, &quot;Shipped&quot;
+    CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
+</code></pre>
+<pre><code>
+def cancel(self):
+    if self.status == self.Status.CANCELLED:
+        raise ValueError(&quot;Order is already cancelled&quot;)
+
+    if self.status == self.Status.SHIPPED:
+        raise ValueError(&quot;Shipped order cannot be cancelled&quot;)
+
+    self.status = self.Status.CANCELLED
+    self.save(update_fields=[&quot;status&quot;])
+</code></pre>
+<p><strong>5. 리팩터링 방향</strong></p>
+<p>테스트가 통과한 뒤에만 구조를 정리합니다.</p>
+<pre><code>
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PAID = &quot;paid&quot;, &quot;Paid&quot;
+        SHIPPED = &quot;shipped&quot;, &quot;Shipped&quot;
+        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
+
+    CANCELLABLE_STATUSES = {
+        Status.PAID,
+    }
+
+    status = models.CharField(max_length=20, choices=Status.choices)
+    total_price = models.PositiveIntegerField()
+
+    def cancel(self):
+        if not self.can_cancel():
+            raise ValueError(&quot;Order cannot be cancelled&quot;)
+
+        self.status = self.Status.CANCELLED
+        self.save(update_fields=[&quot;status&quot;])
+
+    def can_cancel(self):
+        return self.status in self.CANCELLABLE_STATUSES
+</code></pre>
+<p>테스트도 메시지 세부 구현에 덜 묶이게 정리할 수 있습니다.</p>
+<pre><code>
+@pytest.mark.django_db
+@pytest.mark.parametrize(&quot;status&quot;, [
+    Order.Status.CANCELLED,
+    Order.Status.SHIPPED,
+])
+def test_non_cancellable_order_cannot_be_cancelled(status):
+    order = Order.objects.create(
+        status=status,
+        total_price=10000,
+    )
+
+    with pytest.raises(ValueError):
+        order.cancel()
+</code></pre>
+<p>흐름은 이렇게 잡으면 됩니다.</p>
+<ul>
+<li><code>cancel()</code>이 없어서 실패하는 테스트 작성</li>
+<li>상태를 <code>CANCELLED</code>로 바꾸는 최소 구현</li>
+<li>“이미 취소됨”, “배송 중” 같은 금지 조건을 테스트로 하나씩 추가</li>
+<li>조건문이 늘어나면 <code>can_cancel()</code>이나 상태 정책으로 리팩터링</li>
+<li>서비스 레이어, 환불, 재고 복구, 이벤트 발행은 별도 테스트로 확장</li>
+</ul></article>
+  </main>
+</body>
+</html>

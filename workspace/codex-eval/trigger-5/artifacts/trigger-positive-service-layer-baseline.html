@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-service-layer baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-service-layer baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-positive-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django Ninja 프로젝트에서는 보통 <strong>각 Django app 안에 service layer를 두는 방식</strong>이 가장 좋습니다.</p>
+<p>추천 구조:</p>
+<pre><code>
+project/
+  users/
+    models.py
+    schemas.py
+    api.py
+    services.py
+    selectors.py
+  orders/
+    models.py
+    schemas.py
+    api.py
+    services.py
+    selectors.py
+</code></pre>
+<p>역할은 이렇게 나누는 게 깔끔합니다.</p>
+<ul>
+<li><code>api.py</code>: Django Ninja router, HTTP 요청/응답 처리</li>
+<li><code>schemas.py</code>: 입력/출력 스키마</li>
+<li><code>services.py</code>: 비즈니스 로직, 상태 변경, 트랜잭션</li>
+<li><code>selectors.py</code>: 조회 쿼리, read-only 데이터 접근</li>
+<li><code>models.py</code>: DB 모델과 모델 자체의 불변 조건</li>
+</ul>
+<p>예를 들면:</p>
+<pre><code>
+# orders/api.py
+@router.post(&quot;/orders&quot;)
+def create_order(request, payload: OrderCreateSchema):
+    order = order_services.create_order(
+        user=request.user,
+        product_id=payload.product_id,
+        quantity=payload.quantity,
+    )
+    return order
+</code></pre>
+<pre><code>
+# orders/services.py
+from django.db import transaction
+
+@transaction.atomic
+def create_order(*, user, product_id: int, quantity: int):
+    product = Product.objects.select_for_update().get(id=product_id)
+
+    if product.stock &lt; quantity:
+        raise ValueError(&quot;Not enough stock&quot;)
+
+    order = Order.objects.create(
+        user=user,
+        product=product,
+        quantity=quantity,
+    )
+
+    product.stock -= quantity
+    product.save(update_fields=[&quot;stock&quot;])
+
+    return order
+</code></pre>
+<p>개인적으로는 이 기준을 권합니다.</p>
+<pre><code>
+작은 앱이면: app/services.py
+커지면: app/services/order_service.py, app/services/payment_service.py
+조회가 복잡하면: app/selectors.py 분리
+여러 앱을 엮는 유스케이스면: 별도 app 또는 domain/usecases 계층 고려
+</code></pre>
+<p>즉, 처음부터 <code>core/services/</code> 같은 전역 폴더에 몰아넣기보다는 <strong>도메인별 Django app 내부에 두는 것</strong>이 유지보수에 더 좋습니다. API가 얇아지고, 테스트도 service 단위로 잡기 쉬워집니다.</p></article>
+  </main>
+</body>
+</html>

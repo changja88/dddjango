@@ -1,0 +1,153 @@
+현재 디렉터리에 `config.toml`이 없어 로컬 지침은 확인하지 못했습니다. 질문 기준으로 Django + DDD 구조를 제안하면, 핵심은 “주문 완료”를 **도메인 모델의 상태 변화**로 보고, 이벤트 발행 자체는 **애플리케이션 계층에서 트랜잭션 완료 후 처리**하는 구조가 좋습니다.
+
+**권장 구조**
+
+```text
+orders/
+  domain/
+    models.py
+    events.py
+    repositories.py
+  application/
+    services.py
+    unit_of_work.py
+    event_publisher.py
+  infrastructure/
+    orm_models.py
+    repositories.py
+    message_bus.py
+  views.py
+```
+
+**도메인 이벤트**
+
+```python
+# orders/domain/events.py
+from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID
+
+
+@dataclass(frozen=True)
+class OrderCompleted:
+    order_id: UUID
+    user_id: UUID
+    completed_at: datetime
+```
+
+도메인 모델은 이벤트를 “발행”하지 않고, 자신에게 발생한 이벤트를 기록합니다.
+
+```python
+# orders/domain/models.py
+from datetime import datetime, timezone
+from .events import OrderCompleted
+
+
+class Order:
+    def __init__(self, id, user_id, status):
+        self.id = id
+        self.user_id = user_id
+        self.status = status
+        self.events = []
+
+    def complete(self):
+        if self.status == "COMPLETED":
+            return
+
+        if self.status != "PAID":
+            raise ValueError("Only paid orders can be completed")
+
+        self.status = "COMPLETED"
+        self.events.append(
+            OrderCompleted(
+                order_id=self.id,
+                user_id=self.user_id,
+                completed_at=datetime.now(timezone.utc),
+            )
+        )
+```
+
+**애플리케이션 서비스**
+
+```python
+# orders/application/services.py
+from django.db import transaction
+
+
+class CompleteOrderService:
+    def __init__(self, order_repository, event_publisher):
+        self.order_repository = order_repository
+        self.event_publisher = event_publisher
+
+    def complete(self, order_id):
+        with transaction.atomic():
+            order = self.order_repository.get(order_id)
+
+            order.complete()
+
+            self.order_repository.save(order)
+
+            events = list(order.events)
+            order.events.clear()
+
+            transaction.on_commit(
+                lambda: self.event_publisher.publish_many(events)
+            )
+```
+
+여기서 중요한 점은 `transaction.on_commit()`입니다. DB 커밋 전에 메시지를 발행하면, 주문 저장은 롤백됐는데 이벤트는 이미 외부로 나가는 문제가 생깁니다.
+
+**이벤트 퍼블리셔**
+
+```python
+# orders/application/event_publisher.py
+class EventPublisher:
+    def publish_many(self, events):
+        for event in events:
+            self.publish(event)
+
+    def publish(self, event):
+        raise NotImplementedError
+```
+
+```python
+# orders/infrastructure/message_bus.py
+class CeleryEventPublisher:
+    def publish(self, event):
+        if event.__class__.__name__ == "OrderCompleted":
+            handle_order_completed.delay(
+                order_id=str(event.order_id),
+                user_id=str(event.user_id),
+                completed_at=event.completed_at.isoformat(),
+            )
+```
+
+**DDD 기준 역할 분리**
+
+- `Order.complete()`  
+  주문 완료가 가능한지 판단하고 상태를 바꾸는 **도메인 규칙** 담당
+
+- `OrderCompleted`  
+  도메인에서 이미 발생한 사실을 표현하는 **도메인 이벤트**
+
+- `CompleteOrderService`  
+  트랜잭션, 저장소 호출, 이벤트 전달 시점 제어를 담당하는 **애플리케이션 서비스**
+
+- `EventPublisher`  
+  Celery, Kafka, SNS/SQS, Redis Stream 같은 외부 메시징 기술을 숨기는 **포트**
+
+- `infrastructure/message_bus.py`  
+  실제 메시징 구현체
+
+실무에서는 더 안전하게 하려면 `transaction.on_commit()`만으로 끝내기보다 **Outbox Pattern**을 권장합니다. 주문 저장과 함께 `outbox_events` 테이블에 이벤트를 저장하고, 별도 워커가 이를 읽어 메시지 브로커로 발행하면 메시지 발행 실패에도 재시도와 추적이 가능합니다.
+
+결론적으로는:
+
+```text
+도메인 모델이 이벤트를 생성한다
+애플리케이션 서비스가 트랜잭션을 관리한다
+커밋 이후 이벤트를 발행한다
+운영 안정성이 필요하면 Outbox Pattern을 쓴다
+```
+
+이 구조가 Django에서도 DDD 경계를 비교적 깔끔하게 유지하는 방식입니다.

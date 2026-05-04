@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-serializer-migration dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-serializer-migration dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-5/dddjango/trigger-conflict-serializer-migration.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
+<p>요청 검증용 클래스는 <code>Serializer</code>가 아니라 Django Ninja의 <code>Schema</code>로 만들면 됩니다. 보통 <code>schemas.py</code>에 요청/응답 스키마를 분리합니다.</p>
+<pre><code>
+# accounts/schemas.py
+from ninja import Schema, Field
+
+
+class UserCreateIn(Schema):
+    email: str = Field(..., min_length=5, max_length=255)
+    name: str = Field(..., min_length=1, max_length=100)
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class UserOut(Schema):
+    id: int
+    email: str
+    name: str
+</code></pre>
+<pre><code>
+# accounts/api.py
+from ninja import Router
+
+from .models import User
+from .schemas import UserCreateIn, UserOut
+
+router = Router(tags=[&quot;accounts&quot;])
+
+
+@router.post(&quot;/&quot;, response={201: UserOut})
+def create_user(request, payload: UserCreateIn) -&gt; tuple[int, User]:
+    user = User.objects.create_user(
+        email=payload.email,
+        name=payload.name,
+        password=payload.password,
+    )
+    return 201, user
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from accounts.api import router as accounts_router
+
+api = NinjaAPI()
+api.add_router(&quot;/users/&quot;, accounts_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from .api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>핵심은 <code>payload: UserCreateIn</code>처럼 엔드포인트 파라미터에 <code>Schema</code> 타입을 붙이는 것입니다. 그러면 Django Ninja가 JSON body를 자동 파싱하고 타입/필드 검증을 수행하며, 실패 시 검증 오류 응답을 반환합니다. 응답도 <code>response=...</code>에 <code>Schema</code>를 지정하면 선언한 필드만 직렬화됩니다.</p>
+<p>검증은 여기서 실행하지 못했습니다. 적용 후에는 다음을 돌리면 됩니다.</p>
+<pre><code>
+python manage.py check
+pytest
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 요청/응답 검증과 라우팅 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

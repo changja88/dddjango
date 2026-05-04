@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-migration-transaction dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-migration-transaction dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-5/dddjango/trigger-positive-migration-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>결제 상태 컬럼은 한 번에 <code>NOT NULL + default + backfill</code>로 넣지 말고, 운영에서는 <strong>expand → backfill → contract</strong> 순서로 나누는 게 안전합니다. 핵심은 첫 migration이 오래 락을 잡지 않게 하고, 새 코드와 구 코드가 동시에 떠도 깨지지 않게 하는 것입니다.</p>
+<ul>
+<li><strong>1차 배포: nullable 컬럼만 추가</strong></li>
+</ul>
+<pre><code>
+# orders/models.py
+class PaymentStatus(models.TextChoices):
+    PENDING = &quot;pending&quot;, &quot;Pending&quot;
+    PAID = &quot;paid&quot;, &quot;Paid&quot;
+    FAILED = &quot;failed&quot;, &quot;Failed&quot;
+    CANCELED = &quot;canceled&quot;, &quot;Canceled&quot;
+
+
+class Order(models.Model):
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+</code></pre>
+<p>Migration은 <code>null=True</code> 상태로 추가합니다. 대형 테이블에서 <code>NOT NULL</code>이나 Python/Django default를 동시에 추가하면 테이블 스캔, 락 대기, 긴 transaction이 생길 수 있습니다. 새 코드에서는 신규 주문 생성 시 반드시 <code>payment_status</code>를 명시적으로 저장하게 합니다.</p>
+<pre><code>
+Order.objects.create(
+    # ...
+    payment_status=Order.PaymentStatus.PENDING,
+)
+</code></pre>
+<ul>
+<li><strong>백필: migration 안에 무거운 데이터 변경을 넣지 않는 것을 우선</strong></li>
+</ul>
+<p>작은 테이블이면 <code>RunPython</code>도 가능하지만, 운영 주문 테이블처럼 크거나 쓰기가 많은 테이블이면 별도 management command나 배치 작업으로 처리하는 편이 안전합니다. 데이터 migration은 rollback 시 원래 값 복원이 어렵고, 긴 transaction으로 replication lag나 lock 경합을 만들 수 있습니다.</p>
+<pre><code>
+# 예: 관리 명령/운영 스크립트의 핵심 로직
+BATCH_SIZE = 1000
+
+while True:
+    ids = list(
+        Order.objects.filter(payment_status__isnull=True)
+        .order_by(&quot;id&quot;)
+        .values_list(&quot;id&quot;, flat=True)[:BATCH_SIZE]
+    )
+    if not ids:
+        break
+
+    Order.objects.filter(id__in=ids).update(
+        payment_status=Order.PaymentStatus.PENDING
+    )
+</code></pre>
+<p>기존 결제 테이블이나 PG/VAN 응답 상태에서 유도할 수 있다면 <code>PENDING</code> 고정값보다 실제 데이터 기준으로 매핑해야 합니다. 단, 이 경우 rollback은 더 위험합니다. 예를 들어 <code>paid_at IS NOT NULL → paid</code>로 백필한 뒤 rollback에서 다시 <code>NULL</code>로 돌리면, 백필 전부터 사람이 수정한 상태까지 날릴 수 있습니다. 그래서 데이터 migration의 reverse는 “완전 복원”이 아니라 “제약 추가 전 상태로 되돌릴 수 있는 정도”로 봐야 합니다.</p>
+<ul>
+<li><strong>검증 후 2차 migration: 제약 추가</strong></li>
+</ul>
+<p>백필 완료 후 NULL이 없음을 확인하고 <code>null=False</code>로 변경합니다.</p>
+<pre><code>
+class Order(models.Model):
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+</code></pre>
+<p>가능하면 DB 수준 제약도 둡니다.</p>
+<pre><code>
+class Meta:
+    constraints = [
+        models.CheckConstraint(
+            condition=models.Q(
+                payment_status__in=[&quot;pending&quot;, &quot;paid&quot;, &quot;failed&quot;, &quot;canceled&quot;]
+            ),
+            name=&quot;order_payment_status_valid&quot;,
+        )
+    ]
+</code></pre>
+<p><strong>검증 명령</strong></p>
+<p>배포 전:</p>
+<pre><code>
+python manage.py makemigrations --dry-run --check
+python manage.py sqlmigrate orders 000X
+python manage.py migrate --plan
+python manage.py test
+python manage.py check --deploy
+</code></pre>
+<p>1차 migration 적용 후:</p>
+<pre><code>
+python manage.py migrate orders 000X
+python manage.py showmigrations orders
+</code></pre>
+<p>백필 중/후 DB 검증:</p>
+<pre><code>
+SELECT COUNT(*) FROM orders_order WHERE payment_status IS NULL;
+SELECT payment_status, COUNT(*) FROM orders_order GROUP BY payment_status;
+</code></pre>
+<p>2차 migration 전에는 반드시 <code>NULL count = 0</code>이어야 합니다.</p>
+<p>2차 migration 적용 전 SQL 확인:</p>
+<pre><code>
+python manage.py sqlmigrate orders 000Y
+python manage.py migrate --plan
+</code></pre>
+<p>Rollback은 schema만 되돌릴 수 있다고 가정하는 게 안전합니다.</p>
+<pre><code>
+python manage.py migrate orders 000X
+</code></pre>
+<p>단, 이미 백필된 데이터는 “원래 어떤 row가 NULL이었는지”를 별도 기록하지 않았다면 정확히 복구할 수 없습니다. 결제 상태처럼 감사성과 정산 영향이 있는 데이터는 rollback으로 삭제하지 말고, 필요하면 보정 migration이나 운영 SQL을 별도 승인 절차로 실행하는 게 낫습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 운영 Django migration / 데이터 백필 → <strong>implementation-django</strong> 스킬 &gt; - 컬럼 추가, 제약, 인덱스와 락 위험 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

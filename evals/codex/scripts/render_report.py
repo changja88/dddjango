@@ -17,6 +17,13 @@ CRITERIA = [
     "safety",
 ]
 
+USABILITY_FIELDS = [
+    ("actionable", "Actionable"),
+    ("concise", "Concise"),
+    ("realistic_file_layout", "Realistic Layout"),
+    ("korean_quality", "Korean Quality"),
+]
+
 
 def load_json(path):
     return json.loads(Path(path).read_text())
@@ -24,6 +31,22 @@ def load_json(path):
 
 def total_score(grade):
     return sum(grade["scores"][criterion] for criterion in CRITERIA)
+
+
+def usability_for(grade):
+    usability = grade.get("usability", {})
+    return {
+        field_id: usability.get(field_id, 0)
+        for field_id, _label in USABILITY_FIELDS
+    } | {"notes": usability.get("notes", "")}
+
+
+def usability_total(usability):
+    return sum(usability.get(field_id, 0) for field_id, _label in USABILITY_FIELDS)
+
+
+def usability_recorded(usability):
+    return bool(usability.get("notes")) or usability_total(usability) > 0
 
 
 def index_by_case_and_variant(records):
@@ -354,6 +377,8 @@ def build_rows(iteration, grades, timing, case_metadata):
                 "verdict": result,
                 "baseline_note": baseline.get("notes", ""),
                 "dddjango_note": dddjango.get("notes", ""),
+                "baseline_usability": usability_for(baseline),
+                "dddjango_usability": usability_for(dddjango),
                 "dddjango_scores": dddjango.get("scores", {}),
                 "dddjango_flags": dddjango.get("flags", {}),
                 "drf_failed": dddjango.get("flags", {}).get("drf_endorsed", False),
@@ -426,6 +451,57 @@ def build_trigger_matrix(rows):
             <th>Observed Behavior</th>
             <th>Verdict</th>
             <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>
+    </section>
+    """
+
+
+def build_usability_summary(rows):
+    reviewed_rows = [row for row in rows if usability_recorded(row["dddjango_usability"])]
+    if not reviewed_rows:
+        return """
+        <section class="section">
+          <h2>Usability Summary</h2>
+          <p class="empty">No manual usability scores recorded.</p>
+        </section>
+        """
+
+    table_rows = "\n".join(
+        f"""
+        <tr>
+          <td>
+            <strong>{escape(row["title"])}</strong>
+            <small><code>{escape(row["case_id"])}</code></small>
+          </td>
+          <td class="number">{row["dddjango_usability"]["actionable"]:.1f}</td>
+          <td class="number">{row["dddjango_usability"]["concise"]:.1f}</td>
+          <td class="number">{row["dddjango_usability"]["realistic_file_layout"]:.1f}</td>
+          <td class="number">{row["dddjango_usability"]["korean_quality"]:.1f}</td>
+          <td class="number">{usability_total(row["dddjango_usability"]):.1f}</td>
+          <td>{escape(row["dddjango_usability"]["notes"])}</td>
+        </tr>
+        """
+        for row in reviewed_rows
+    )
+
+    return f"""
+    <section class="section">
+      <h2>Usability Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Actionable</th>
+            <th>Concise</th>
+            <th>Realistic Layout</th>
+            <th>Korean Quality</th>
+            <th>Total</th>
+            <th>Notes</th>
           </tr>
         </thead>
         <tbody>
@@ -522,6 +598,12 @@ def render_html(iteration, rows, *, platform="Codex"):
     )
     drf_violations = sum(1 for row in rows if row["drf_failed"])
     complete_count = sum(1 for row in rows if row["status"] == "complete")
+    usability_values = [
+        usability_total(row["dddjango_usability"])
+        for row in rows
+        if usability_recorded(row["dddjango_usability"])
+    ]
+    usability_avg = average(usability_values)
     trigger_gate_rows = build_trigger_gate_rows(rows)
     gate_rows = "\n".join(
         item
@@ -531,6 +613,7 @@ def render_html(iteration, rows, *, platform="Codex"):
         ]
         if item
     )
+    usability_summary = build_usability_summary(rows)
     trigger_matrix = build_trigger_matrix(rows)
 
     table_rows = "\n".join(
@@ -648,6 +731,7 @@ def render_html(iteration, rows, *, platform="Codex"):
       border-bottom: 1px solid var(--line);
     }}
     .failures {{ padding: 0 18px 18px; color: var(--bad); }}
+    .empty {{ padding: 0 18px 18px; color: var(--muted); }}
     table {{
       width: 100%;
       border-collapse: collapse;
@@ -711,6 +795,7 @@ def render_html(iteration, rows, *, platform="Codex"):
       {metric_card("dddjango Time", f"{dddjango_duration:.2f}s", f"{duration_lift:+.2f}% vs baseline", "bad" if duration_lift > 30 else "neutral")}
       {metric_card("DRF Violations", drf_violations, "dddjango variant", "bad" if drf_violations else "good")}
       {metric_card("Completed Cases", f"{complete_count}/{len(rows)}", "with and without skill")}
+      {metric_card("Manual Usability", f"{usability_avg:.2f}", "dddjango average / 20" if usability_values else "pending / 20")}
     </div>
 
     <section class="section">
@@ -762,6 +847,7 @@ def render_html(iteration, rows, *, platform="Codex"):
         </tbody>
       </table>
     </section>
+{usability_summary}
 {trigger_matrix}
   </main>
 </body>

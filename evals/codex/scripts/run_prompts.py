@@ -269,12 +269,16 @@ def inferred_skill_names_for_case(case_id, case=None):
         skill_names.extend(SKILLS_BY_EXPECTATION.get(expectation, []))
 
     prompt = case.get("prompt", "").lower()
-    if "django ninja" in prompt or "ninja" in prompt:
+    if "django ninja" in prompt or "ninja" in prompt or "api" in prompt:
         skill_names.extend(["architecture-api", "implementation-django-ninja"])
-    if "pytest" in prompt or "tdd" in prompt or "실패 테스트" in prompt:
+    if "pytest" in prompt or "tdd" in prompt or "실패 테스트" in prompt or "테스트" in prompt:
         skill_names.extend(["implementation-tdd", "implementation-test"])
     if "db" in prompt or "queryset" in prompt or "인덱스" in prompt:
         skill_names.extend(["architecture-db", "implementation-django"])
+    if "domain" in prompt or "도메인" in prompt:
+        skill_names.extend(["architecture-ddd", "architecture-implementation-patterns"])
+    if "service layer" in prompt or "서비스 레이어" in prompt:
+        skill_names.extend(["architecture-ddd", "implementation-django"])
     if "clean" in prompt or "클린" in prompt:
         skill_names.extend(["architecture-implementation-patterns", "implementation-cleancode"])
     if case_requests_drf(case):
@@ -321,8 +325,10 @@ def case_directive(case_id, case=None):
     trigger_type = case.get("trigger_type", "")
     if trigger_type == "ambiguous":
         return (
-            "The request is intentionally ambiguous. Ask one concise clarification or state "
-            "conditional assumptions before applying Django or DDD guidance. Keep under 500 words."
+            "The request is intentionally ambiguous. Start with a short Korean sentence that "
+            "includes '맥락이 불명확합니다'. Ask one concise clarification or state conditional "
+            "assumptions before applying Django or DDD guidance. If giving a Django branch, "
+            "label it with 'Django라면'. Keep under 500 words."
         )
     if trigger_type == "conflict":
         return (

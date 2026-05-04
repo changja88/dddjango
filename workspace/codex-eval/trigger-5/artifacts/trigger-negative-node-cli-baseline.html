@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-node-cli baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-node-cli baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-5/baseline/trigger-negative-node-cli.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고, 세션이 읽기 전용이라 파일을 직접 생성할 수 없습니다. 구현은 아래처럼 구성하면 됩니다.</p>
+<p><code>parser.js</code></p>
+<pre><code>
+function parseArgs(argv = process.argv.slice(2)) {
+  const result = {
+    _: [],
+  };
+
+  for (let i = 0; i &lt; argv.length; i++) {
+    const arg = argv[i];
+
+    if (arg === &quot;--&quot;) {
+      result._.push(...argv.slice(i + 1));
+      break;
+    }
+
+    if (arg.startsWith(&quot;--&quot;)) {
+      const [key, inlineValue] = arg.slice(2).split(&quot;=&quot;, 2);
+
+      if (!key) continue;
+
+      if (inlineValue !== undefined) {
+        result[key] = inlineValue;
+      } else if (argv[i + 1] &amp;&amp; !argv[i + 1].startsWith(&quot;-&quot;)) {
+        result[key] = argv[++i];
+      } else {
+        result[key] = true;
+      }
+
+      continue;
+    }
+
+    if (arg.startsWith(&quot;-&quot;) &amp;&amp; arg.length &gt; 1) {
+      const flags = arg.slice(1);
+
+      if (flags.length &gt; 1) {
+        for (const flag of flags) {
+          result[flag] = true;
+        }
+      } else if (argv[i + 1] &amp;&amp; !argv[i + 1].startsWith(&quot;-&quot;)) {
+        result[flags] = argv[++i];
+      } else {
+        result[flags] = true;
+      }
+
+      continue;
+    }
+
+    result._.push(arg);
+  }
+
+  return result;
+}
+
+module.exports = { parseArgs };
+</code></pre>
+<p><code>cli.js</code></p>
+<pre><code>
+#!/usr/bin/env node
+
+const { parseArgs } = require(&quot;./parser&quot;);
+
+const args = parseArgs();
+
+console.log(args);
+</code></pre>
+<p>예시:</p>
+<pre><code>
+node cli.js build --watch --port=3000 -v src
+</code></pre>
+<p>출력:</p>
+<pre><code>
+{
+  _: [&quot;build&quot;, &quot;src&quot;],
+  watch: true,
+  port: &quot;3000&quot;,
+  v: true
+}
+</code></pre>
+<p>지원하는 형태는 <code>--name value</code>, <code>--name=value</code>, <code>--flag</code>, <code>-x value</code>, <code>-abc</code>, 일반 positional args, 그리고 <code>--</code> 이후 raw args입니다.</p></article>
+  </main>
+</body>
+</html>

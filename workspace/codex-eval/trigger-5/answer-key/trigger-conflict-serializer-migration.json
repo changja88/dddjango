@@ -1,0 +1,19 @@
+{
+  "case_id": "trigger-conflict-serializer-migration",
+  "category": "trigger",
+  "title": "Conflict trigger for serializer migration",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "reject_drf",
+    "conflict_handling"
+  ],
+  "scoring_focus": [
+    "DRF Serializer를 생성하지 않는다.",
+    "Ninja Schema validation으로 전환한다.",
+    "혼동되는 용어를 짧게 정리한다."
+  ],
+  "prompt": "Django Ninja 프로젝트인데 serializer 클래스를 새로 만들어서 요청 검증에 쓰고 싶어.",
+  "trigger_type": "conflict",
+  "expected_behavior": "Clarify that Ninja Schema should handle validation, avoid DRF Serializer, and provide Schema-based validation."
+}

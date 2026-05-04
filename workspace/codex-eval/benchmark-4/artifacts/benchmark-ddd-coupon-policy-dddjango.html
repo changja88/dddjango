@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-coupon-policy dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-coupon-policy dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-4/dddjango/benchmark-ddd-coupon-policy.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>쿠폰은 <code>Coupons</code> 바운디드 컨텍스트로 두고, 주문 금액은 <code>Orders</code> 컨텍스트에서 넘어온 스냅샷만 사용합니다. 핵심 원칙은 <code>Coupon.can_apply()</code> 같은 Django model method에 정책을 몰아넣지 않고, 할인 계산과 사용 가능성 판단을 도메인 <code>Policy Object</code>/<code>Domain Service</code>로 분리하는 것입니다.</p>
+<p>| 유비쿼터스 언어 | 의미 | 금지 동의어 | |---|---|---| | Coupon | 발급된 할인 수단 | DiscountModel, PromoData | | DiscountPolicy | 할인 계산 규칙 | model method, helper | | MinimumOrderAmount | 적용 가능한 최소 주문 금액 | min_price | | CouponRedemption | 쿠폰 사용 기록 | coupon_log, usage_row | | DuplicateUseRestriction | 중복 사용 제한 | is_used flag only |</p>
+<pre><code>
+# apps/coupons/domain/model/coupon.py
+from dataclasses import dataclass
+from decimal import Decimal
+from abc import ABC, abstractmethod
+
+
+class CouponPolicyError(Exception): ...
+
+
+class MinimumOrderAmountNotMet(CouponPolicyError): ...
+
+
+class DuplicateCouponUseNotAllowed(CouponPolicyError): ...
+
+
+class InvalidDiscountPolicy(CouponPolicyError): ...
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: Decimal
+    currency: str = &quot;KRW&quot;
+
+    def __post_init__(self):
+        if self.amount &lt; 0:
+            raise ValueError(&quot;Money cannot be negative&quot;)
+
+    def min(self, other: &quot;Money&quot;) -&gt; &quot;Money&quot;:
+        self._ensure_same_currency(other)
+        return self if self.amount &lt;= other.amount else other
+
+    def _ensure_same_currency(self, other: &quot;Money&quot;) -&gt; None:
+        if self.currency != other.currency:
+            raise ValueError(&quot;Currency mismatch&quot;)
+
+
+@dataclass(frozen=True)
+class CouponId:
+    value: str
+
+
+@dataclass(frozen=True)
+class CustomerId:
+    value: str
+
+
+@dataclass(frozen=True)
+class OrderSnapshot:
+    order_id: str
+    customer_id: CustomerId
+    total: Money
+
+
+@dataclass(frozen=True)
+class Coupon:
+    &quot;&quot;&quot;
+    Aggregate Root.
+    Invariants:
+    - 할인 정책은 유효한 금액/비율만 가진다.
+    - 최소 주문 금액 미만 주문에는 적용될 수 없다.
+    - 중복 사용 제한은 CouponUsagePolicy를 통해 일관되게 판단한다.
+    &quot;&quot;&quot;
+    id: CouponId
+    discount_policy: &quot;DiscountPolicy&quot;
+    minimum_order_amount: Money
+    duplicate_restriction: &quot;DuplicateUseRestriction&quot;
+
+
+@dataclass(frozen=True)
+class CouponRedeemedEvent:
+    coupon_id: CouponId
+    customer_id: CustomerId
+    order_id: str
+    discount_amount: Money
+</code></pre>
+<p>할인 계산은 정책 객체로 분리합니다.</p>
+<pre><code>
+# apps/coupons/domain/policies.py
+class DiscountPolicy(ABC):
+    @abstractmethod
+    def calculate(self, order_total: Money) -&gt; Money: ...
+
+
+@dataclass(frozen=True)
+class FixedAmountDiscountPolicy(DiscountPolicy):
+    amount: Money
+
+    def calculate(self, order_total: Money) -&gt; Money:
+        self.amount._ensure_same_currency(order_total)
+        return self.amount.min(order_total)
+
+
+@dataclass(frozen=True)
+class PercentageDiscountPolicy(DiscountPolicy):
+    rate: Decimal
+    max_discount: Money | None = None
+
+    def __post_init__(self):
+        if self.rate &lt;= 0 or self.rate &gt; 100:
+            raise InvalidDiscountPolicy(&quot;rate must be 0 &lt; rate &lt;= 100&quot;)
+
+    def calculate(self, order_total: Money) -&gt; Money:
+        discount = Money(order_total.amount * self.rate / Decimal(&quot;100&quot;), order_total.currency)
+        return discount.min(self.max_discount) if self.max_discount else discount
+
+
+@dataclass(frozen=True)
+class DuplicateUseRestriction:
+    once_per_customer: bool = True
+    once_per_order: bool = True
+</code></pre>
+<p>중복 사용은 과거 사용 이력이 필요하므로 엔티티 단독 메서드보다 도메인 서비스가 맞습니다.</p>
+<pre><code>
+# apps/coupons/domain/services.py
+class CouponRedemptionRepository(ABC):
+    @abstractmethod
+    def exists_for_customer(self, coupon_id: CouponId, customer_id: CustomerId) -&gt; bool: ...
+
+    @abstractmethod
+    def exists_for_order(self, coupon_id: CouponId, order_id: str) -&gt; bool: ...
+
+    @abstractmethod
+    def save_redemption(self, event: CouponRedeemedEvent) -&gt; None: ...
+
+
+class CouponApplicationPolicy:
+    def __init__(self, redemptions: CouponRedemptionRepository):
+        self.redemptions = redemptions
+
+    def apply(self, coupon: Coupon, order: OrderSnapshot) -&gt; CouponRedeemedEvent:
+        if order.total.amount &lt; coupon.minimum_order_amount.amount:
+            raise MinimumOrderAmountNotMet()
+
+        restriction = coupon.duplicate_restriction
+        if restriction.once_per_customer and self.redemptions.exists_for_customer(
+            coupon.id, order.customer_id
+        ):
+            raise DuplicateCouponUseNotAllowed()
+
+        if restriction.once_per_order and self.redemptions.exists_for_order(
+            coupon.id, order.order_id
+        ):
+            raise DuplicateCouponUseNotAllowed()
+
+        discount = coupon.discount_policy.calculate(order.total)
+        return CouponRedeemedEvent(coupon.id, order.customer_id, order.order_id, discount)
+</code></pre>
+<p>Django 쪽은 얇게 둡니다. <code>CouponModel</code>은 저장 구조와 ORM 제약을 담당하고, 정책 판단은 <code>CouponApplicationPolicy</code>가 담당합니다. Application Service는 트랜잭션과 Repository 조율만 합니다.</p>
+<pre><code>
+# apps/coupons/application/services.py
+from django.db import transaction
+
+class ApplyCouponService:
+    def __init__(self, coupons, redemptions):
+        self.coupons = coupons
+        self.redemptions = redemptions
+
+    @transaction.atomic
+    def apply_coupon(self, coupon_id: str, order: OrderSnapshot) -&gt; CouponRedeemedEvent:
+        coupon = self.coupons.find_by_id(CouponId(coupon_id))
+        event = CouponApplicationPolicy(self.redemptions).apply(coupon, order)
+        self.redemptions.save_redemption(event)
+        return event
+</code></pre>
+<p>검증은 pytest로 정책 edge case를 직접 때리는 방식이 좋습니다.</p>
+<pre><code>
+def test_fixed_discount_cannot_exceed_order_total():
+    policy = FixedAmountDiscountPolicy(Money(Decimal(&quot;10000&quot;)))
+    assert policy.calculate(Money(Decimal(&quot;7000&quot;))).amount == Decimal(&quot;7000&quot;)
+
+
+def test_percentage_discount_with_max_discount():
+    policy = PercentageDiscountPolicy(Decimal(&quot;20&quot;), Money(Decimal(&quot;3000&quot;)))
+    assert policy.calculate(Money(Decimal(&quot;50000&quot;))).amount == Decimal(&quot;3000&quot;)
+
+
+def test_minimum_order_amount_blocks_coupon(redemptions):
+    coupon = coupon_fixture(minimum_order_amount=Money(Decimal(&quot;30000&quot;)))
+    order = OrderSnapshot(&quot;o1&quot;, CustomerId(&quot;c1&quot;), Money(Decimal(&quot;10000&quot;)))
+
+    with pytest.raises(MinimumOrderAmountNotMet):
+        CouponApplicationPolicy(redemptions).apply(coupon, order)
+
+
+def test_duplicate_customer_use_is_blocked(redemptions):
+    redemptions.exists_for_customer.return_value = True
+
+    with pytest.raises(DuplicateCouponUseNotAllowed):
+        CouponApplicationPolicy(redemptions).apply(coupon_fixture(), order_fixture())
+</code></pre>
+<p>검증 명령은 <code>pytest apps/coupons/tests/domain/test_coupon_policies.py</code>로 두고, Django ORM 어댑터 테스트는 별도로 <code>pytest.mark.django_db</code>를 붙여 Repository 저장/조회만 확인하면 됩니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/서비스/pytest 구현 → <strong>implementation-django</strong> 스킬 &gt; - Repository, Application Service, 의존성 방향 구체화 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

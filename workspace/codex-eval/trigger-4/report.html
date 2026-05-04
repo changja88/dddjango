@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>dddjango Codex Evaluation Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --good: #087443;
+      --good-bg: #e7f6ee;
+      --bad: #b42318;
+      --bad-bg: #fdecec;
+      --neutral: #475467;
+      --neutral-bg: #eef2f6;
+      --accent: #0c4a6e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    header {
+      padding: 32px 40px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .subhead { color: var(--muted); max-width: 920px; }
+    main { padding: 24px 40px 40px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .metric span, .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .metric strong {
+      display: block;
+      margin: 6px 0;
+      font-size: 24px;
+    }
+    .metric.good strong { color: var(--good); }
+    .metric.bad strong { color: var(--bad); }
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .section h2 {
+      margin: 0;
+      padding: 16px 18px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .failures { padding: 0 18px 18px; color: var(--bad); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #344054;
+      font-weight: 650;
+      z-index: 1;
+    }
+    .number { text-align: right; white-space: nowrap; }
+    .good { color: var(--good); }
+    .bad { color: var(--bad); }
+    .neutral { color: var(--neutral); }
+    .pill {
+      display: inline-block;
+      min-width: 72px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .pill.good { background: var(--good-bg); }
+    .pill.bad { background: var(--bad-bg); }
+    .pill.neutral { background: var(--neutral-bg); }
+    .links a {
+      display: block;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (max-width: 900px) {
+      header, main { padding-left: 18px; padding-right: 18px; }
+      .section { overflow-x: auto; }
+      table { min-width: 1180px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>dddjango Codex Evaluation Report</h1>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 평가 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+  </header>
+  <main>
+    <div class="metrics">
+      <section class="metric neutral"><span>Baseline Score</span><strong>7.77</strong><small>case average</small></section>
+      <section class="metric good"><span>dddjango Score</span><strong>8.23</strong><small>case average</small></section>
+      <section class="metric good"><span>Quality Lift</span><strong>+0.46</strong><small>+5.92% vs baseline</small></section>
+      <section class="metric neutral"><span>Baseline Time</span><strong>1.98s</strong><small>average duration</small></section>
+      <section class="metric bad"><span>dddjango Time</span><strong>3.33s</strong><small>+68.18% vs baseline</small></section>
+      <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
+      <section class="metric neutral"><span>Completed Cases</span><strong>3/30</strong><small>with and without skill</small></section>
+    </div>
+
+    <section class="section">
+      <h2>Failure Highlights</h2>
+      <ul class="failures">
+        <li>No failed or regressed cases.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Release Gate</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+5.92%</td><td>&gt;= +15%</td></tr>
+<tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+<tr><td>Korean-first rate</td><td><span class="pill bad">BLOCKED</span></td><td>10.00%</td><td>&gt;= 95%</td></tr>
+<tr><td>Django Ninja compliance</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 90%</td></tr>
+<tr><td>TDD quality</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
+<tr><td>Time/cost increase</td><td><span class="pill bad">BLOCKED</span></td><td>+68.18%</td><td>&lt;= +30%</td></tr>
+<tr><td>Negative-control pass rate</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
+<tr><td>Trigger Recall</td><td><span class="pill bad">BLOCKED</span></td><td>10.00%</td><td>&gt;= 95%</td></tr>
+<tr><td>Trigger Precision</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 95%</td></tr>
+<tr><td>Ambiguous Handling</td><td><span class="pill bad">BLOCKED</span></td><td>33.33%</td><td>&gt;= 80%</td></tr>
+<tr><td>Conflict Handling</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Case Comparison: Without Skill vs With dddjango</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Evaluation Item</th>
+            <th>Category</th>
+            <th>Expectations</th>
+            <th>Without Skill</th>
+            <th>With dddjango</th>
+            <th>Delta</th>
+            <th>Without Time</th>
+            <th>With Time</th>
+            <th>Verdict</th>
+            <th>Without Note</th>
+            <th>With Note</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Ambiguous trigger for API structure</strong>
+            <small><code>trigger-ambiguous-api-structure</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ambiguous_handling</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-api-structure-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-api-structure-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-api-structure-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Ambiguous trigger for clean architecture</strong>
+            <small><code>trigger-ambiguous-clean-architecture</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ambiguous_handling, architecture_review</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-clean-architecture-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-clean-architecture-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-clean-architecture-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Ambiguous trigger for DB performance</strong>
+            <small><code>trigger-ambiguous-db-performance</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ambiguous_handling, db_design</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-db-performance-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-db-performance-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-db-performance-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Ambiguous trigger for domain model</strong>
+            <small><code>trigger-ambiguous-domain-model</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ambiguous_handling, ddd_boundaries</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-domain-model-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-domain-model-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-domain-model-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Ambiguous trigger for service layer</strong>
+            <small><code>trigger-ambiguous-service-layer</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ambiguous_handling</td>
+          <td class="number">77.0</td>
+          <td class="number">80.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">18.32s</td>
+          <td class="number">25.02s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-service-layer-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-service-layer-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-service-layer-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Ambiguous trigger for testing structure</strong>
+            <small><code>trigger-ambiguous-testing</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ambiguous_handling</td>
+          <td class="number">84.0</td>
+          <td class="number">87.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">16.91s</td>
+          <td class="number">25.40s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-testing-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-testing-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-testing-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Conflict trigger for explicit DRF ViewSet</strong>
+            <small><code>trigger-conflict-drf-viewset</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, conflict_handling</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-drf-viewset-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-drf-viewset-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-drf-viewset-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Conflict trigger asking DRF despite Ninja project</strong>
+            <small><code>trigger-conflict-drf-vs-ninja</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, conflict_handling</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-drf-vs-ninja-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-drf-vs-ninja-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-drf-vs-ninja-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Conflict trigger for rest_framework imports</strong>
+            <small><code>trigger-conflict-rest-framework-import</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, conflict_handling</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-rest-framework-import-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-rest-framework-import-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-rest-framework-import-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Conflict trigger for serializer migration</strong>
+            <small><code>trigger-conflict-serializer-migration</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, conflict_handling</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-serializer-migration-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-serializer-migration-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-serializer-migration-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for pandas analysis</strong>
+            <small><code>trigger-negative-data-analysis</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-data-analysis-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-data-analysis-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-data-analysis-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for generic Dockerfile</strong>
+            <small><code>trigger-negative-dockerfile</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-dockerfile-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-dockerfile-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-dockerfile-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for FastAPI health check</strong>
+            <small><code>trigger-negative-fastapi-health</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-fastapi-health-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-fastapi-health-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-fastapi-health-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for Flask API</strong>
+            <small><code>trigger-negative-flask-api</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-flask-api-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-flask-api-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-flask-api-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for Node CLI</strong>
+            <small><code>trigger-negative-node-cli</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-node-cli-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-node-cli-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-node-cli-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for plain Python CSV script</strong>
+            <small><code>trigger-negative-python-csv</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-python-csv-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-python-csv-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-python-csv-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for React props refactor</strong>
+            <small><code>trigger-negative-react-props</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-react-props-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-react-props-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-react-props-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for Rust code</strong>
+            <small><code>trigger-negative-rust-function</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-rust-function-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-rust-function-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-rust-function-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for shell script</strong>
+            <small><code>trigger-negative-shell-script</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-shell-script-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-shell-script-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-shell-script-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Negative trigger for generic SQL query</strong>
+            <small><code>trigger-negative-sql-only</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, negative_control_passed, trigger_precision</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-sql-only-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-sql-only-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-sql-only-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Positive trigger for Django clean code refactor</strong>
+            <small><code>trigger-positive-clean-code-django</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, architecture_review, actionable_output, trigger_recall</td>
+          <td class="number">72.0</td>
+          <td class="number">80.0</td>
+          <td class="number good">+8.0</td>
+          <td class="number">24.11s</td>
+          <td class="number">49.38s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-clean-code-django-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-clean-code-django-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-clean-code-django-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for Django DB index design</strong>
+            <small><code>trigger-positive-db-index</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, db_design, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-db-index-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-db-index-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-db-index-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for domain events</strong>
+            <small><code>trigger-positive-domain-event</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, ddd_boundaries, transaction_boundary, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-domain-event-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-domain-event-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-domain-event-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for fat model review</strong>
+            <small><code>trigger-positive-fat-model-review</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, architecture_review, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-fat-model-review-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-fat-model-review-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-fat-model-review-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for Django migration safety</strong>
+            <small><code>trigger-positive-migration-transaction</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, db_design, safety, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-migration-transaction-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-migration-transaction-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-migration-transaction-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for Django Ninja error standard</strong>
+            <small><code>trigger-positive-ninja-error-standard</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, api_standard, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-ninja-error-standard-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-ninja-error-standard-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-ninja-error-standard-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for Django Ninja order API</strong>
+            <small><code>trigger-positive-ninja-order-api</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, ddd_boundaries, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-ninja-order-api-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-ninja-order-api-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-ninja-order-api-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for Ninja endpoint tests</strong>
+            <small><code>trigger-positive-ninja-test-client</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, pytest_quality, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-ninja-test-client-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-ninja-test-client-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-ninja-test-client-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for pytest coupon TDD</strong>
+            <small><code>trigger-positive-pytest-coupon-tdd</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, tdd_first, pytest_quality, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-pytest-coupon-tdd-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-pytest-coupon-tdd-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-pytest-coupon-tdd-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">pending</span></td>
+          <td>
+            <strong>Positive trigger for service layer boundary</strong>
+            <small><code>trigger-positive-service-layer</code></small>
+          </td>
+          <td>trigger</td>
+          <td>korean_first, django_ninja_compliance, ddd_boundaries, trigger_recall</td>
+          <td class="number">0.0</td>
+          <td class="number">0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">0.00s</td>
+          <td class="number">0.00s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td></td>
+          <td></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-service-layer-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-service-layer-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-service-layer-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Trigger Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Trigger Type</th>
+            <th>Evaluation Item</th>
+            <th>Expected Behavior</th>
+            <th>Observed Behavior</th>
+            <th>Verdict</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td><span class="pill neutral">ambiguous</span></td>
+          <td>
+            <strong>Ambiguous trigger for API structure</strong>
+            <small><code>trigger-ambiguous-api-structure</code></small>
+          </td>
+          <td>Ask or state assumptions before applying dddjango strongly; if Django context is assumed, keep guidance conditional.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-api-structure-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-api-structure-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-api-structure-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">ambiguous</span></td>
+          <td>
+            <strong>Ambiguous trigger for clean architecture</strong>
+            <small><code>trigger-ambiguous-clean-architecture</code></small>
+          </td>
+          <td>Clarify scope and avoid forcing full DDD/Django layering unless project context supports it.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-clean-architecture-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-clean-architecture-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-clean-architecture-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">ambiguous</span></td>
+          <td>
+            <strong>Ambiguous trigger for DB performance</strong>
+            <small><code>trigger-ambiguous-db-performance</code></small>
+          </td>
+          <td>Provide general diagnosis first; mention Django ORM only as conditional if the project uses Django.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-db-performance-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-db-performance-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-db-performance-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">ambiguous</span></td>
+          <td>
+            <strong>Ambiguous trigger for domain model</strong>
+            <small><code>trigger-ambiguous-domain-model</code></small>
+          </td>
+          <td>Use DDD principles but avoid assuming Django persistence details without evidence.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-domain-model-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-domain-model-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-domain-model-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">ambiguous</span></td>
+          <td>
+            <strong>Ambiguous trigger for service layer</strong>
+            <small><code>trigger-ambiguous-service-layer</code></small>
+          </td>
+          <td>Clarify project context or provide conditional guidance for Django vs non-Django projects.</td>
+          <td>Korean-first answer without strong Django Ninja signal.</td>
+          <td><span class="pill good">PASS</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-service-layer-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-service-layer-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-service-layer-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">ambiguous</span></td>
+          <td>
+            <strong>Ambiguous trigger for testing structure</strong>
+            <small><code>trigger-ambiguous-testing</code></small>
+          </td>
+          <td>Ask for stack/context or provide a concise conditional checklist.</td>
+          <td>Korean-first answer without strong Django Ninja signal.</td>
+          <td><span class="pill good">PASS</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-ambiguous-testing-baseline.html">baseline</a>
+            <a href="artifacts/trigger-ambiguous-testing-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-ambiguous-testing-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">conflict</span></td>
+          <td>
+            <strong>Conflict trigger for explicit DRF ViewSet</strong>
+            <small><code>trigger-conflict-drf-viewset</code></small>
+          </td>
+          <td>Respect user intent enough to explain policy conflict, then provide Django Ninja alternative without generating DRF implementation code.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-drf-viewset-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-drf-viewset-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-drf-viewset-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">conflict</span></td>
+          <td>
+            <strong>Conflict trigger asking DRF despite Ninja project</strong>
+            <small><code>trigger-conflict-drf-vs-ninja</code></small>
+          </td>
+          <td>Explain consistency risk and keep the implementation in Django Ninja unless user explicitly overrides project policy after warning.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-drf-vs-ninja-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-drf-vs-ninja-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-drf-vs-ninja-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">conflict</span></td>
+          <td>
+            <strong>Conflict trigger for rest_framework imports</strong>
+            <small><code>trigger-conflict-rest-framework-import</code></small>
+          </td>
+          <td>Avoid rest_framework code and redirect to Django Ninja Schema/Router with a concise explanation.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-rest-framework-import-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-rest-framework-import-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-rest-framework-import-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">conflict</span></td>
+          <td>
+            <strong>Conflict trigger for serializer migration</strong>
+            <small><code>trigger-conflict-serializer-migration</code></small>
+          </td>
+          <td>Clarify that Ninja Schema should handle validation, avoid DRF Serializer, and provide Schema-based validation.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-conflict-serializer-migration-baseline.html">baseline</a>
+            <a href="artifacts/trigger-conflict-serializer-migration-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-conflict-serializer-migration-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for pandas analysis</strong>
+            <small><code>trigger-negative-data-analysis</code></small>
+          </td>
+          <td>Do not force Django guidance; answer with pandas code.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-data-analysis-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-data-analysis-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-data-analysis-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for generic Dockerfile</strong>
+            <small><code>trigger-negative-dockerfile</code></small>
+          </td>
+          <td>Do not force Django deployment guidance; provide a generic Python Dockerfile.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-dockerfile-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-dockerfile-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-dockerfile-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for FastAPI health check</strong>
+            <small><code>trigger-negative-fastapi-health</code></small>
+          </td>
+          <td>Do not force dddjango guidance; answer as a FastAPI task.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-fastapi-health-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-fastapi-health-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-fastapi-health-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for Flask API</strong>
+            <small><code>trigger-negative-flask-api</code></small>
+          </td>
+          <td>Do not force Django Ninja guidance; answer as Flask unless suggesting optional Django alternative is explicitly useful.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-flask-api-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-flask-api-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-flask-api-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for Node CLI</strong>
+            <small><code>trigger-negative-node-cli</code></small>
+          </td>
+          <td>Do not force Django guidance; provide Node.js CLI code.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-node-cli-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-node-cli-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-node-cli-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for plain Python CSV script</strong>
+            <small><code>trigger-negative-python-csv</code></small>
+          </td>
+          <td>Do not force Django/DDD guidance; provide a plain Python solution.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-python-csv-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-python-csv-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-python-csv-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for React props refactor</strong>
+            <small><code>trigger-negative-react-props</code></small>
+          </td>
+          <td>Do not force dddjango guidance; answer as a frontend refactor task.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-react-props-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-react-props-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-react-props-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for Rust code</strong>
+            <small><code>trigger-negative-rust-function</code></small>
+          </td>
+          <td>Do not force dddjango guidance; provide Rust code.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-rust-function-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-rust-function-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-rust-function-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for shell script</strong>
+            <small><code>trigger-negative-shell-script</code></small>
+          </td>
+          <td>Do not force dddjango guidance; provide shell commands.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-shell-script-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-shell-script-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-shell-script-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">negative</span></td>
+          <td>
+            <strong>Negative trigger for generic SQL query</strong>
+            <small><code>trigger-negative-sql-only</code></small>
+          </td>
+          <td>Do not force Django ORM guidance unless useful as optional note; provide SQL first.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-negative-sql-only-baseline.html">baseline</a>
+            <a href="artifacts/trigger-negative-sql-only-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-negative-sql-only-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for Django clean code refactor</strong>
+            <small><code>trigger-positive-clean-code-django</code></small>
+          </td>
+          <td>Apply dddjango clean code guidance: thin view/router, service extraction, tests.</td>
+          <td>Korean-first answer without strong Django Ninja signal.</td>
+          <td><span class="pill good">PASS</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-clean-code-django-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-clean-code-django-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-clean-code-django-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for Django DB index design</strong>
+            <small><code>trigger-positive-db-index</code></small>
+          </td>
+          <td>Apply dddjango DB guidance: query-pattern driven indexes, ORM optimization, measurement.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-db-index-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-db-index-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-db-index-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for domain events</strong>
+            <small><code>trigger-positive-domain-event</code></small>
+          </td>
+          <td>Apply dddjango DDD guidance: domain event boundary, transaction timing, integration approach.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-domain-event-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-domain-event-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-domain-event-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for fat model review</strong>
+            <small><code>trigger-positive-fat-model-review</code></small>
+          </td>
+          <td>Apply dddjango review guidance: severity-ranked findings and Django boundary recommendations.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-fat-model-review-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-fat-model-review-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-fat-model-review-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for Django migration safety</strong>
+            <small><code>trigger-positive-migration-transaction</code></small>
+          </td>
+          <td>Apply dddjango migration guidance: backward-compatible rollout, data migration safety, verification.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-migration-transaction-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-migration-transaction-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-migration-transaction-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for Django Ninja error standard</strong>
+            <small><code>trigger-positive-ninja-error-standard</code></small>
+          </td>
+          <td>Apply dddjango API guidance: Ninja exception handlers, Schema, domain exception mapping.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-ninja-error-standard-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-ninja-error-standard-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-ninja-error-standard-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for Django Ninja order API</strong>
+            <small><code>trigger-positive-ninja-order-api</code></small>
+          </td>
+          <td>Apply dddjango guidance: Django Ninja Router/Schema, DDD boundaries, Korean-first answer.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-ninja-order-api-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-ninja-order-api-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-ninja-order-api-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for Ninja endpoint tests</strong>
+            <small><code>trigger-positive-ninja-test-client</code></small>
+          </td>
+          <td>Apply dddjango testing guidance: endpoint tests, schema validation, service boundary.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-ninja-test-client-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-ninja-test-client-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-ninja-test-client-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for pytest coupon TDD</strong>
+            <small><code>trigger-positive-pytest-coupon-tdd</code></small>
+          </td>
+          <td>Apply dddjango TDD guidance: RED test, expected failure, GREEN implementation, REFACTOR direction.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-pytest-coupon-tdd-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-pytest-coupon-tdd-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-pytest-coupon-tdd-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+
+        <tr>
+          <td><span class="pill neutral">positive</span></td>
+          <td>
+            <strong>Positive trigger for service layer boundary</strong>
+            <small><code>trigger-positive-service-layer</code></small>
+          </td>
+          <td>Apply dddjango architecture guidance: router/application/domain/repository boundaries.</td>
+          <td></td>
+          <td><span class="pill bad">BLOCKED</span></td>
+          <td class="links">
+            <a href="artifacts/trigger-positive-service-layer-baseline.html">baseline</a>
+            <a href="artifacts/trigger-positive-service-layer-dddjango.html">dddjango</a>
+            <a href="artifacts/trigger-positive-service-layer-answer-key.html">answer key</a>
+          </td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </section>
+    
+  </main>
+</body>
+</html>

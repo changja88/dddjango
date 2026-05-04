@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-testing dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-testing dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-4/dddjango/trigger-ambiguous-testing.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>맥락이 불명확합니다. 현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 <code>config.toml</code>도 없어서, “Django + pytest 프로젝트”라는 가정으로 구조 개선안을 제시합니다.</p>
+<p><strong>[주요 내용]</strong></p>
+<p><strong>Django라면</strong> 테스트 구조는 실행 환경을 1차 축으로 나누는 편이 좋습니다.</p>
+<pre><code>
+tests/
+  isolated/
+    conftest.py
+    unit/
+    integration/
+  real/
+    conftest.py
+    integration/
+    e2e/
+</code></pre>
+<p><code>tests/isolated/</code>는 CI 기본 스위트입니다. 네트워크, SMTP, Celery 브로커, 외부 API를 Fake/Mock/in-memory로 대체하고 항상 결정적으로 실행되게 둡니다.</p>
+<p><code>tests/real/</code>는 실제 DB, 실제 외부 서비스, staging급 인프라를 검증하는 별도 게이트입니다. 기본 CI에 섞지 않습니다.</p>
+<p><code>Django라면</code> isolated 전용 settings도 분리하세요.</p>
+<pre><code>
+config/
+  settings/
+    base.py
+    test.py
+    test_real.py
+</code></pre>
+<p><code>config.settings.test</code>에는 보통 아래 정책을 둡니다.</p>
+<pre><code>
+EMAIL_BACKEND = &quot;django.core.mail.backends.locmem.EmailBackend&quot;
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_BROKER_URL = &quot;memory://&quot;
+PASSWORD_HASHERS = [&quot;django.contrib.auth.hashers.MD5PasswordHasher&quot;]
+
+CACHES = {
+    &quot;default&quot;: {
+        &quot;BACKEND&quot;: &quot;django.core.cache.backends.locmem.LocMemCache&quot;,
+    }
+}
+</code></pre>
+<p>pytest 설정은 다음 방향이 적절합니다.</p>
+<pre><code>
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = &quot;config.settings.test&quot;
+testpaths = [&quot;tests/isolated&quot;]
+python_files = [&quot;test_*.py&quot;]
+</code></pre>
+<p>테스트 작성 규칙은 다음으로 통일하세요.</p>
+<pre><code>
+def test_order_cancel_when_paid_order_cannot_be_cancelled():
+    # Arrange
+
+    # Act
+
+    # Assert
+</code></pre>
+<p>핵심 기준은 세 가지입니다.</p>
+<ul>
+<li>테스트명은 <code>test_&lt;대상&gt;_&lt;조건&gt;_&lt;기대결과&gt;</code> 형식으로 둡니다.</li>
+<li>Act는 한 줄이어야 합니다. Act가 두 개면 테스트를 나눕니다.</li>
+<li>도메인 로직은 Mock하지 말고 실제 객체나 InMemory Fake로 검증합니다. Mock은 이메일, 결제, HTTP 같은 외부 경계에만 씁니다.</li>
+</ul>
+<p>현재는 파일이 없어 실제 리팩터링과 pytest 실행은 하지 못했습니다. 프로젝트 파일을 넣어주면 <code>tests/isolated</code>, <code>tests/real</code>, <code>conftest.py</code>, pytest 설정까지 실제로 재배치하는 방식으로 이어갈 수 있습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 테스트 구조/fixture/Mock 개선 → <strong>implementation-test</strong> 스킬 &gt; - Red-Green-Refactor 흐름 정리 → <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>
