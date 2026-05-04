@@ -1,4 +1,6 @@
 import importlib.util
+import contextlib
+import io
 import json
 import subprocess
 import sys
@@ -729,6 +731,71 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             cases = module.load_answer_keys(iteration)
 
             self.assertEqual(cases["case-a"]["category"], "api-design")
+
+    def test_run_prompts_isolates_non_triggering_dddjango_cases_from_user_config(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir) / "iteration"
+            (iteration / "dddjango").mkdir(parents=True)
+            (iteration / "answer-key").mkdir()
+            (iteration / "dddjango/trigger-negative-rust-function.prompt.md").write_text(
+                "## Prompt\n\nRust로 문자열 slugify 함수를 작성해줘.\n"
+            )
+            (iteration / "timing.json").write_text("[]\n")
+            (iteration / "answer-key/trigger-negative-rust-function.json").write_text(
+                json.dumps(
+                    {
+                        "category": "trigger",
+                        "trigger_type": "negative",
+                        "prompt": "Rust로 문자열 slugify 함수를 작성해줘.",
+                        "expectations": ["korean_first"],
+                        "scoring_focus": ["Rust 코드만 제공한다."],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+
+            args = type(
+                "Args",
+                (),
+                {
+                    "iteration": str(iteration),
+                    "variant": "dddjango",
+                    "case": "trigger-negative-rust-function",
+                    "cwd": str(Path(temp_dir) / "cwd"),
+                    "ignore_user_config": False,
+                    "allow_user_config": False,
+                    "model": "",
+                    "profile": "",
+                    "root": str(ROOT),
+                    "use_local_dddjango_skills": True,
+                    "dry_run": True,
+                    "keep_going": False,
+                },
+            )()
+
+            commands = []
+            original_build = module.build_codex_command
+
+            def capture_command(**kwargs):
+                command = original_build(**kwargs)
+                commands.append(command)
+                return command
+
+            module.build_codex_command = capture_command
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    module.run_variant(args)
+            finally:
+                module.build_codex_command = original_build
+
+            self.assertEqual(len(commands), 1)
+            self.assertIn("--ignore-user-config", commands[0])
+            self.assertFalse(
+                any(part.startswith("developer_instructions=") for part in commands[0])
+            )
 
     def test_render_report_creates_html_comparison_dashboard(self):
         module = load_module(REPORT_SCRIPT_PATH)

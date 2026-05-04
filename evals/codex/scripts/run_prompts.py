@@ -450,12 +450,15 @@ def run_variant(args):
         case_id = case_id_from_prompt_file(prompt_file)
         output_file = output_dir / f"{case_id}.output.md"
         developer_instructions = ""
+        command_ignore_user_config = ignore_user_config
         if args.variant == "dddjango" and args.use_local_dddjango_skills:
             developer_instructions = dddjango_developer_instructions(
                 Path(args.root).resolve(),
                 case_id=case_id,
                 case=cases.get(case_id),
             )
+            if not developer_instructions and cases.get(case_id):
+                command_ignore_user_config = True
         command = build_codex_command(
             prompt_file=prompt_file,
             output_file=output_file,
@@ -463,7 +466,7 @@ def run_variant(args):
             variant=args.variant,
             model=args.model,
             profile=args.profile,
-            ignore_user_config=ignore_user_config,
+            ignore_user_config=command_ignore_user_config,
             developer_instructions=developer_instructions,
         )
 
