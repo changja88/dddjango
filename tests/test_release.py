@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 from contextlib import redirect_stdout
 from io import StringIO
+from unittest import mock
 
 import unittest
 
@@ -157,6 +158,22 @@ class CommandRunTests(unittest.TestCase):
         output = stdout.getvalue()
         self.assertEqual(output, "")
         self.assertNotIn("XYZ", output)
+
+    def test_push_release_pushes_current_branch_and_release_tag(self):
+        root = Path("/repo")
+        calls = []
+
+        def fake_run(command, _root, *, quiet=False):
+            calls.append(command)
+            if command == ["git", "branch", "--show-current"]:
+                return subprocess.CompletedProcess(command, 0, stdout="main\n")
+            return subprocess.CompletedProcess(command, 0, stdout="")
+
+        with mock.patch("release.run", side_effect=fake_run), redirect_stdout(StringIO()):
+            release.push_release(root, "v0.1.3")
+
+        self.assertIn(["git", "push", "origin", "main"], calls)
+        self.assertIn(["git", "push", "origin", "v0.1.3"], calls)
 
 
 if __name__ == "__main__":

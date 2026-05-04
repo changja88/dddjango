@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare a local dddjango plugin release."""
+"""Create and publish a dddjango plugin release."""
 
 from __future__ import annotations
 
@@ -249,10 +249,29 @@ def create_commit_and_tag(root: Path, version: str) -> None:
     run_step("릴리즈 태그 생성", lambda: run(["git", "tag", version], root, quiet=True))
 
 
+def current_branch(root: Path) -> str:
+    result = run(["git", "branch", "--show-current"], root, quiet=True)
+    branch = result.stdout.strip()
+    if not branch:
+        raise ReleaseError(
+            "현재 브랜치를 확인할 수 없습니다.",
+            hints=["detached HEAD 상태라면 브랜치를 체크아웃하세요."],
+        )
+    return branch
+
+
+def push_release(root: Path, version: str, remote: str = "origin") -> None:
+    print_section("원격 push")
+    branch = current_branch(root)
+    run_step(f"브랜치 push ({remote}/{branch})", lambda: run(["git", "push", remote, branch], root, quiet=True))
+    run_step(f"태그 push ({version})", lambda: run(["git", "push", remote, version], root, quiet=True))
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prepare a local dddjango release.")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Repository root")
     parser.add_argument("--dry-run", action="store_true", help="Print the selected release without changing files")
+    parser.add_argument("--remote", default="origin", help="Git remote name")
     parser.add_argument("--debug", action="store_true", help="Print Python traceback for unexpected failures")
     return parser.parse_args(argv)
 
@@ -295,11 +314,10 @@ def run_release(args: argparse.Namespace) -> int:
 
     validate(root)
     create_commit_and_tag(root, version)
+    push_release(root, version, remote=args.remote)
 
     print()
-    print(f"{version} 로컬 릴리즈 준비가 끝났습니다.")
-    print("배포 push는 직접 실행하세요:")
-    print("  make publish")
+    print(f"{version} 릴리즈 완료")
     return 0
 
 

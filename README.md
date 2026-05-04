@@ -49,7 +49,7 @@ codex plugin marketplace add .
 For Git-backed distribution, publish the repository and pin users to a release tag:
 
 ```bash
-codex plugin marketplace add changja88/dddjango --ref v0.1.2
+codex plugin marketplace add changja88/dddjango --ref v0.1.3
 ```
 
 ## Evaluation
@@ -77,22 +77,16 @@ Raw evaluation outputs under `workspace/*/test/` are ignored. Commit evaluation 
 - Validate Claude local plugin loading.
 - Validate Codex local marketplace installation.
 - Run representative dual-platform prompts.
-- Tag the release, for example `v0.1.2`.
+- Tag the release, for example `v0.1.3`.
 - Update marketplace entries to the release version or tag.
 
-You can prepare the local release commit and tag with:
+You can create and publish a release with:
 
 ```bash
 make release
 ```
 
-The release command prompts for `patch`, `minor`, or `major`, updates plugin versions, runs metadata validation, creates a `chore: release vX.Y.Z` commit, and creates the local release tag. It does not push; publish after review with:
-
-```bash
-make publish
-```
-
-The publish command pushes the current branch and the latest semver release tag to `origin`.
+The release command prompts for `patch`, `minor`, or `major`, updates plugin versions, runs metadata validation, creates a `chore: release vX.Y.Z` commit, creates the release tag, then pushes the current branch and release tag to `origin`.
 
 ## License
 
