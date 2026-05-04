@@ -161,6 +161,28 @@ TDD 실천 방식을 리뷰할 때는, 개선사항을 나열하기 전에 코�
 
 ---
 
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] 테스트 함수명: `test_<대상>_<조건>_<기대결과>` 형식
+- [ ] AAA(Arrange-Act-Assert) 구조 명시
+- [ ] 사이클 단계(RED/GREEN/REFACTOR) 라벨링
+
+### 리뷰 모드
+- [ ] 요구사항에 누락된 케이스(예: 대기열, 정원 초과 시 처리) 명시적으로 발견·지적
+- [ ] 잘한 점 먼저 짚고 개선 사항 제시
+- [ ] [원칙: 한 줄] -- 이유 형식
+- [ ] **getter/setter 직접 호출 + 외부 if 분기는 Tell Don't Ask 위반 / anemic 모델로 명시 지적**
+
+### 리팩토링 모드
+- [ ] 외부 의존성(Repository, Gateway)은 InMemory Fake 클래스 정의 + Protocol/ABC로 DI
+- [ ] 함수 반환은 튜플/dict 대신 명시적 결과 타입(`@dataclass(frozen=True) class EnrollmentResult`)
+- [ ] Before/After/Reason 형식 일관 적용
+- [ ] **테스트 코드만이 아닌 프로덕션 코드 전체 제공** (Service, Repository, Domain Model 모두)
+- [ ] 그린 바 유지(리팩토링 중 테스트 깨짐 없음)
+
+---
+
 ## 1. TDD 철학
 
 TDD의 목표는 동작하는 깔끔한 코드이다. TDD는 두려움을 관리한다 --

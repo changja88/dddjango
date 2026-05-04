@@ -38,17 +38,54 @@ Presentation → Domain → Data Source
 | 역할 | 애플리케이션을 구동 | 애플리케이션이 구동 |
 | 예시 | REST Controller, CLI, Test | DB Adapter, 외부 API, Mock |
 
-### 코드 구조
+### 코드 구조 — DDD 의미군 묶음 (필수)
+
+평탄한 `domain/model/` 단일 폴더는 다중 Aggregate로 확장될 때 즉시 깨진다.
+파일 트리는 반드시 **Aggregate 단위 = 폴더 단위 = 트랜잭션 경계**로 묶는다.
 
 ```
-application/              # 핵심 비즈니스 로직
-  ports/
-    driving/              # Primary actor가 호출하는 인터페이스 (Use Case)
-    driven/               # Application이 외부에 요청하는 인터페이스
-adapters/
-  driving/                # UI controller, REST, CLI, test harness
-  driven/                 # DB adapter, mock adapter, 외부 API adapter
+<bounded_context>/                   # ex: order/, inventory/, payment/
+  domain/
+    model/
+      <aggregate>/                   # Aggregate 단위 폴더 (= 트랜잭션 경계)
+        root.py                      # Aggregate Root (불변식 명세 + 도메인 메서드)
+        entities.py                  # Aggregate 내부 Entity (Root를 통해서만 접근)
+        value_objects.py             # 이 Aggregate 전용 VO (frozen=True)
+        events.py                    # 이 Aggregate가 발행하는 도메인 이벤트
+      shared/                        # 여러 Aggregate가 공유하는 VO (Money 등)
+    services/                        # 단일 Aggregate에 캡슐화 어려운 도메인 서비스
+      <purpose>/                     # 목적별 하위 폴더 (pricing, cancellation_policy 등)
+    ports/
+      driving/                       # Use Case 인터페이스 (Primary)
+      driven/                        # Repository, Gateway, Notifier (Secondary)
+  application/
+    commands/                        # Command Handler — 트랜잭션 경계 소유
+    queries/                         # Query Service — CQRS 분리 시
+    sagas/                           # Process Manager (선택)
+  adapters/
+    driving/                         # REST/CLI/Test harness
+    driven/                          # DB Repository, 외부 API Gateway, 메시지 발행
+      <external_system>/             # 외부 시스템별 폴더 (toss/, cj/, erp/)
+        adapter.py
+        translator.py                # ACL Translator (외부 어휘 → 도메인 어휘)
+  composition.py                     # 와이어링 (lru_cache로 Connection Pool 공유)
 ```
+
+**나쁜 예 (평탄, 의미군 없음):**
+
+```
+order/
+  domain/
+    model.py             # 모든 Aggregate, Entity, VO가 한 파일
+    events.py            # 모든 도메인 이벤트가 한 파일
+  ports.py               # driving/driven 구분 없음
+```
+
+→ Aggregate가 추가되면 model.py가 비대해지고, 트랜잭션 경계가 파일 구조에서
+보이지 않는다.
+
+깊은 파일 트리 컨벤션(Django 통합, 모델 파일 분리, app 등록 규칙)은
+`architecture-ddd/references/filetree-with-django.md` 참조.
 
 ---
 

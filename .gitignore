@@ -13,6 +13,10 @@ __pycache__/
 .venv/
 venv/
 
+# Evaluation run artifacts
+workspace/*/test/
+workspace/test/
+
 # Editor swap/backup
 *.bak
 *.swp

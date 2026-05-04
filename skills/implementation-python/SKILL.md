@@ -63,6 +63,32 @@ ALWAYS use this exact template for the closing section:
 
 요청이 여러 모드에 걸치는 경우(예: "리뷰하고 리팩토링해줘"), Review를 먼저 적용한 후 같은 코드에 Refactoring을 적용한다.
 
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] 응답 첫 섹션은 `## [주요 내용]` 헤더로 시작 (한국어)
+- [ ] 응답 마지막에 `## [관련 스킬 참조]` 섹션
+- [ ] 모든 응답 한국어로
+
+### 작성/리뷰/리팩토링 공통
+- [ ] 도메인 카테고리 문자열(genre, status, category 등)은 Enum/StrEnum으로 추출
+- [ ] PEP 604 (X | None) 사용, typing.Optional/Union 회피
+- [ ] PEP 585 내장 제네릭(list[int], dict[str, X]), typing.List/Dict 회피
+- [ ] @dataclass(frozen=True, slots=True) 기본
+- [ ] f-string + 포맷 스펙, % / .format() 회피
+- [ ] 가변 디폴트 인자 금지 (None + 함수 내부 초기화)
+
+### 작성 모드
+- [ ] **PEP 695 제네릭(`class Stack[T]`) 사용 또는 미사용 근거 명시 (Python 3.12+ 환경이면 사용 권장)**
+- [ ] **도메인 예외 클래스(`InvalidTrackError`, `EmptyQueueError` 등)를 모듈 루트에 정의하고 `ValueError` 대신 사용**
+
+### 리뷰 모드
+- [ ] [Convention: 한 줄] -- 상세 형식
+
+### 리팩토링 모드
+- [ ] [Before] / [After] / [Reason] 형식
+- [ ] 카테고리 문자열 → Enum 추출을 발견하면 반드시 적용
+
 ### Writing 모드
 
 모든 Python 컨벤션을 묵시적으로 적용한다. 컨벤션을 설명하는 인라인 주석

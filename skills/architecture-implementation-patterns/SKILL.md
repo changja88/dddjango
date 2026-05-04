@@ -16,12 +16,19 @@ description: >
   external dependencies. Covers architecture styles (hexagonal, clean, onion,
   layered), CQRS, event sourcing (with outbox, snapshot, projection),
   persistence patterns (unit of work, data mapper, repository), and integration
-  patterns (ACL, integration events, bubble context). This skill handles
-  framework-agnostic pattern selection and design; for Django-specific
-  implementation (ORM, service layer, signals), see implementation-django.
-  For domain modeling (aggregates, entities, bounded contexts), see
-  architecture-ddd. For database schema design, see architecture-db.
-  For REST API design principles, see architecture-api.
+  patterns (ACL, integration events, bubble context). 통합 트리거 — 사용자가
+  "주문 처리 아키텍처 설계", "전자상거래 도메인 구조", "결제 BC 설계" 같은
+  도메인 명사 + 아키텍처 형태로 요청하면 이 스킬 단독으로는 빈 껍데기(Aggregate
+  불변식·VO·Domain Event·Ubiquitous Language 누락)가 나오므로 architecture-ddd를
+  반드시 같이 활성화해서 그 references(aggregates, value-objects-entities,
+  domain-events, bounded-context, filetree-with-django)를 함께 읽는다. This
+  skill handles framework-agnostic pattern selection and design; for
+  Django-specific implementation (ORM, service layer, signals), see
+  implementation-django. For domain modeling (aggregates, entities, bounded
+  contexts, value objects, domain events, ubiquitous language, context map),
+  see architecture-ddd — 도메인 설계가 동반되는 모든 작업에서 반드시 같이
+  활성화. For database schema design, see architecture-db. For REST API
+  design principles, see architecture-api.
 ---
 
 # 아키텍처 구현 패턴
@@ -50,6 +57,69 @@ implementation-django-ninja에 위임한다. 클린 코드 원칙(SOLID, 네이�
 - 설계 모드: 아키텍처를 제안하기 전에 관련 참조를 먼저 읽는다.
 - 리뷰 모드: 결과를 확정하기 전에 인용된 모든 패턴의 참조를 읽는다.
 - 리팩터링 모드: 변경 사항을 제시하기 전에 적용된 각 패턴의 참조를 읽는다.
+
+## 도메인 설계가 동반되는 작업 — 강제 위임 규칙
+
+이 스킬의 패턴(Hexagonal, CQRS, Repository, ACL)은 도메인 모델이 비어 있으면
+빈 껍데기다. 다음 신호가 보이면 응답 작성 전에 architecture-ddd 스킬을 반드시
+활성화하고 해당 reference를 함께 읽는다 — 단독 처리하지 않는다.
+
+| 사용자 요청 신호 | 같이 읽어야 할 architecture-ddd reference |
+|---|---|
+| "도메인 설계", "BC 분리", "도메인 모델", "유비쿼터스 언어" | `bounded-context.md`, `subdomains.md`, `knowledge-crunching.md` |
+| "주문/결제/배송/재고/예약" 같은 도메인 명사 + 아키텍처 | `aggregates.md`, `domain-events.md`, `value-objects-entities.md` |
+| 비즈니스 규칙·상태 전이·불변식 언급 | `aggregates.md`, `value-objects-entities.md` |
+| 외부 시스템 통합 + 어휘 정화 (Stripe/Toss/ERP 등 SDK 어휘 침투) | `supple-design.md`, `knowledge-crunching.md` |
+| 파일/디렉토리 트리 작성 | `filetree-with-django.md` (의미군 묶음 의무, `domain/model/<aggregate>/` 깊이) |
+
+위 신호 없이 단순한 패턴 적용(레포지토리 추출, ACL 도입, UoW 도입)만 요청된
+경우에는 단독 처리한다.
+
+**왜 강제인가**: 단독 invoke 시 결과물이 다음 패턴으로 실패한다.
+- "Order Aggregate"라고 부르지만 불변식이 없음 → 단순 데이터 클래스
+- `total_amount: int`가 그대로 노출 → `Money` VO 부재로 통화 혼합 위험
+- `payment_token`, `charge.id` 같은 외부 SDK 어휘가 도메인 필드명에 침투
+- Domain Event 클래스만 정의되고 `_record_event`/`collect_events` 수집 메커니즘 부재
+- 파일 트리가 평탄(`domain/model/`)해서 다중 Aggregate 시 확장 불가
+
+## 응답 작성 직전 — DDD 전술 체크리스트 (필수)
+
+위 위임 규칙에 따라 architecture-ddd refs를 읽었더라도, 구현 코드를 제시할 때
+자주 빠지는 항목이 있다. 응답을 사용자에게 제시하기 전에 반드시
+`references/ddd-tactical-checklist.md`의 11개 체크 항목을 한 번 훑고 누락된
+부분을 보강한다.
+
+핵심 11개:
+1. Ubiquitous Language 사전 표가 응답에 포함됨 (금지 동의어 컬럼 포함)
+2. `AggregateRoot` 추상 베이스 + `_record_event`/`collect_events` 코드가 있음
+3. Aggregate 라이프사이클 메서드가 셋트로 완성됨 (예: reserve/release/commit)
+4. Domain Event(internal)와 Integration Event(published_language)가 폴더로 분리됨
+5. Saga가 Command만 발행하고 외부 I/O는 Handler에서 수행함
+6. Outbox 제시 시 at-least-once + 컨슈머 멱등성 한 줄이 있음
+7. 멱등성 패턴 3중 적용이 모든 비멱등 경로에 일관됨
+8. `transaction.on_commit` vs Outbox 선택 기준이 명시됨
+9. 파일 트리가 의미군 묶음 (`domain/model/<aggregate>/`)
+10. **Money VO + 도메인 ID VO(OrderId, PaymentId) + OrderLine 같은 명세 VO가
+    실제 frozen=True dataclass 클래스 코드로 정의됨** — 개념 언급만으로는 fail.
+    Price에 currency 필드만 추가하는 것도 fail. Money는 별도 클래스로 분리하고
+    currency mismatch 검증(`__add__`에서 `CurrencyMismatch` 예외)이 있어야 함
+11. **낙관적 잠금이 기본 동시성 제어** — `version: int = 0` 필드 + Repository
+    save에서 같은 version으로만 UPDATE 성공 + `ConcurrencyError` 예외. 비관적
+    잠금(`SELECT FOR UPDATE`)은 의도적 선택 + 근거(예: 충돌 빈도 매우 높은
+    핫 아이템)를 명시할 때만 사용
+12. **Context Map의 BC 간 관계에 유형 라벨이 붙어 있음** — Customer-Supplier /
+    Conformist / Published Language / ACL / Shared Kernel / OHS / Partnership 중
+    어떤 관계인지 명시. 단순 BC 목록 나열은 fail
+13. **원전 인용이 패턴별로 다양화됨** — Hexagonal→Cockburn, Clean→R. Martin,
+    Layered/Repository/UoW/Data Mapper→Fowler, CQRS→Greg Young, ACL/BC/Aggregate→Evans
+14. **Repository 내부 `conn.commit()` 완전 제거** — Application Service가 UoW
+    `commit()`을 호출하므로 Repository.save는 staging만 한다 (잔존하면 fail)
+15. **멱등성 3중 분류는 정확한 명칭 사용** — "도메인 상태 검사 / Dedup 테이블 /
+    PG idempotency-key". "낙관적 잠금"은 동시성 제어이지 멱등성이 아니므로 섞지 말 것
+16. **리팩터링 모드: 원본의 모든 함수가 별도 Before/After/Reason 블록으로 처리됨** —
+    "흡수됐다"는 말로 한 함수를 빠뜨리는 것은 fail
+
+> Reference: `references/ddd-tactical-checklist.md` — 각 항목의 구현 스켈레톤
 
 ## 응답 구조
 
@@ -118,6 +188,17 @@ ALWAYS use this exact template for the closing section:
 - [ ] 어댑터 구현에 비즈니스 로직이 포함되어 있지 않은가
 - [ ] 포트 인터페이스가 기술적 연산이 아닌 도메인 의도를 표현하는가
 - [ ] 패턴의 복잡도가 문제의 복잡도에 부합하는가 (과도한 엔지니어링 없음)
+- [ ] Aggregate Root에 불변식(invariant)이 주석/문서로 명시되어 있는가
+- [ ] 상태 전이 규칙이 매트릭스로 정의되고 InvalidStateTransition으로 위반을
+      차단하는가 (단순 `status = "..."` 직접 할당 금지)
+- [ ] AggregateRoot 기반 클래스 + `_record_event`/`collect_events` 패턴으로
+      도메인 이벤트가 수집·디스패치되는가
+- [ ] 도메인 개념(금액·식별자·수량)이 원시 타입(int, str)에서 VO로 추출되었는가
+      (Money에는 currency 포함, ProductCode·Quantity 등)
+- [ ] 외부 SDK 어휘(`payment_token`, `charge.id`, `ZITEM_CD`)가 도메인
+      필드명·클래스명에 침투하지 않았는가 (Ubiquitous Language 정화)
+- [ ] 파일 트리가 평탄(`domain/model/`)이 아닌 의미군 묶음
+      (`domain/model/<aggregate>/`)으로 구성되었는가
 
 ### 리팩터링 모드
 
@@ -146,6 +227,13 @@ ALWAYS use this exact template for the closing section:
 - [ ] 데이터를 반환하는 커맨드 메서드 -> 커맨드 + 쿼리로 분리
 - [ ] 과도하게 엔지니어링된 단순 도메인 -> 적절한 패턴 수준으로 단순화
 - [ ] 의도적으로 적용하지 않은 패턴과 그 이유를 명시
+- [ ] 단순 데이터 클래스인 Aggregate -> 불변식 + 상태 전이 메서드를 가진 Root로
+      재설계 (`order.confirm_payment(...)` 같은 도메인 메서드)
+- [ ] 매직 스트링 상태값(`"confirmed"`) -> 상태 VO + 전이 매트릭스로 추출
+- [ ] 흩어진 이벤트 발행 -> AggregateRoot 기반 + collect-and-dispatch 패턴
+- [ ] 원시 타입 도메인 개념(금액·식별자) -> Value Object로 추출 (currency 포함)
+- [ ] 외부 SDK 어휘 침투 -> ACL Translator + 도메인 어휘 사전으로 정화
+- [ ] 평탄한 파일 트리 -> Aggregate 단위 의미군 묶음으로 재배치
 
 ---
 

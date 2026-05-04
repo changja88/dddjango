@@ -188,6 +188,34 @@ MRO에서 `TemplateView` 앞에 `LoginRequiredMixin`을 적용한다. 외부 서
 
 ---
 
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] {% extends %} + {% block name %}{% endblock name %} 상속
+- [ ] {% include "..." with var=val only %} 컴포넌트 + {# 필수 변수 #} 주석
+- [ ] {% static %} 태그 사용 (절대 경로 하드코딩 금지)
+- [ ] CDN script/style에 integrity + crossorigin SRI 속성
+- [ ] json_script 필터로 서버→JS 데이터 전달 (|safe + JSON 직접 출력 금지)
+- [ ] AJAX POST에 X-CSRFToken 헤더 + 쿠키에서 csrftoken 추출
+- [ ] LoginRequiredMixin은 MRO에서 TemplateView 앞
+
+### 디자인 토큰 (작성/리팩토링 공통)
+- [ ] CSS Custom Properties 3계층:
+      1) primitive: --color-blue-500 (raw value)
+      2) semantic: --color-primary: var(--color-blue-500) (의미)
+      3) component: --button-bg: var(--color-primary) (사용처)
+- [ ] var(--token, fallback) 형식으로 폴백 명시
+- [ ] [data-theme="dark"] 셀렉터로 semantic 레이어만 다크 모드 오버라이드
+      (primitive와 component는 그대로 유지)
+
+### 리팩토링 모드
+- [ ] [Before] / [After] / [Reason] 형식
+- [ ] 인라인 <style>/<script>를 별도 파일로 분리
+- [ ] onclick → addEventListener
+- [ ] **HTMX(hx-post, hx-target) 마이그레이션 채택 또는 미채택을 명시적으로 판단 + 근거 제시**
+
+---
+
 ## 1. 템플릿 아키텍처
 
 Django 템플릿 상속(베이스 템플릿, 블록, `{{ block.super }}`),

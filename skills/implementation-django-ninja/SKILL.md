@@ -265,3 +265,38 @@ django-ninja-extra: 클래스 기반 뷰를 위한 @api_controller, 권한
 자동 CRUD를 위한 모델 컨트롤러.
 
 > Reference: `references/ecosystem.md`
+
+---
+
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] DRF 사용 금지 (Serializer/ViewSet/permission_classes 발견 시 Ninja Schema/Router/내장 인증으로 전환)
+- [ ] Schema에 fields 명시 (fields='__all__' 금지)
+- [ ] 모든 매개변수/반환에 타입 힌트
+- [ ] 에러는 RFC 9457 Problem Details (HttpError + exception_handler)
+- [ ] 비멱등 POST에 Idempotency-Key 헤더 또는 DB UNIQUE 제약 + IntegrityError 캐치
+
+### 작성 모드
+- [ ] **FilterSchema에 다중 필드 lookup (예: `title__icontains`, `department`, `grade`) 사용**
+- [ ] **`response={201: SuccessSchema, 409: ProblemDetail, 422: ProblemDetail}` 다중 상태코드 응답 스키마 매핑**
+
+### 리뷰 모드
+- [ ] N+1 가능성 있는 직렬화에 select_related/prefetch_related 권고
+- [ ] 외부 I/O 많은 엔드포인트는 sync vs async 검토 권고
+- [ ] [Convention: 요약] -- 상세 형식
+
+### 리팩토링 모드
+- [ ] 외부 I/O 많은 핸들러는 async def + httpx로 전환 검토
+- [ ] [Before] / [After] / [Reason] 형식
+- [ ] **fat endpoint를 service layer로 추출하고 [Reason]에 "비즈니스 로직 분리, endpoint는 HTTP 변환만" 명시**
+- [ ] **`response={201: ..., 409: ..., 422: ...}` 다중 응답 스키마로 변환**
+- [ ] **외부 I/O 많은 핸들러는 `async def` + `httpx.AsyncClient`로 sync→async 전환을 실제 코드로 제시 (검토 권고만이 아닌 실제 변환)**
+
+### 잔여 디테일 정밀도 (회귀 방지 — 절대 누락 금지)
+
+다음 3개 항목은 단순 lookup, 일반적인 fields 지적, "Router로 분리하세요"라는 표면적 권고로 회귀하기 쉽다. 반드시 아래의 정확한 형태로 작성한다.
+
+- [ ] **작성 모드에서 FilterSchema는 단일 필드 단일 lookup(`title: str | None = FilterLookup("title__icontains")`)이 아니라 다중 필드/다중 lookup 형태로 정의: 예 `q: str | None = FilterLookup(["title__icontains", "description__icontains"])` 또는 `class XxxFilter(FilterSchema): title: str | None = Field(None, q="title__icontains"); department: str | None = None; grade: int | None = None` 처럼 여러 필드와 여러 lookup을 함께 명시. 단일 필드 단일 lookup만 작성하면 회귀.**
+- [ ] **리뷰 모드에서 Schema의 비밀번호/이메일/주민번호/전화번호 등 민감 필드 노출 위험을 **별도 항목**으로 명시: "fields = '__all__' 또는 명시적 필드 목록에 password/hash/personal_id 등이 포함되어 있는지 — 응답 Schema에 노출되면 보안 사고로 이어짐. UserOutSchema와 UserInSchema를 분리하고 응답에서는 민감 필드를 제외할 것" 형식. "fields 명시" 일반 지적과 합치면 회귀.**
+- [ ] **리팩토링 모드에서 NinjaAPI 합성을 권고할 때는 `config/api.py`에 실제 합성 코드 블록을 직접 제시: `from ninja import NinjaAPI; from apps.users.api import router as users_router; from apps.orders.api import router as orders_router; api = NinjaAPI(); api.add_router("/users/", users_router); api.add_router("/orders/", orders_router)` 형태. "Router로 분리하세요"라는 말만으로 끝내면 회귀.**

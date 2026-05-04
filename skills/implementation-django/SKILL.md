@@ -189,6 +189,53 @@ implementation-django-ninja에 위임한다. 기존 코드에서 DRF 코드를
 
 ---
 
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] DRF 사용 금지 — 모든 API는 Django Ninja
+- [ ] BooleanField 남발 금지 (status TextChoices로 표현)
+- [ ] 같은 앱 내 post_save 시그널 회피 (서비스 레이어로 명시 호출)
+
+### 작성 모드
+- [ ] **selectors 함수 패턴 (api/selectors.py에 read 전용 함수) 사용**
+- [ ] **이메일/외부 API 알림은 transaction.on_commit으로 실제 코드 작성 (멘션만이 아닌 실제 호출)**
+
+### 리뷰 모드
+- [ ] N+1 가능성 있는 쿼리에 assertNumQueries 회귀 방지 테스트 권고
+- [ ] LoginRequiredMixin / PermissionRequiredMixin 누락된 뷰는 인증 필수 추가 지적
+- [ ] [Convention: 한 줄 요약] -- 상세 형식 사용
+- [ ] **`datetime` 필드명이 Python 빌트인 `datetime`과 충돌함을 지적 (다른 이름 권고)**
+- [ ] **Meta 클래스의 `ordering`/`indexes`/`verbose_name` 누락 지적**
+- [ ] **모델 `__str__` 메서드 누락 지적**
+
+### 리팩토링 모드
+- [ ] 컬럼 rename(scheduled_at, status 등)은 무중단 배포 3단계 명시:
+      1단계 add 새 컬럼 + dual write,
+      2단계 backfill 기존 데이터,
+      3단계 drop 기존 컬럼 + 코드 정리
+- [ ] 알림/이메일/외부 API 호출은 transaction.on_commit으로 트랜잭션 후 처리
+- [ ] LoginRequiredMixin / 권한 데코레이터 추가 (인증 누락 뷰)
+- [ ] 변경 사항을 조각으로 나열하지 말고 마지막에 전체 통합 코드 블록 제공
+- [ ] [Before] / [After] / [Reason] 포맷 일관 적용
+- [ ] **settings 보안 강화 시 `X_FRAME_OPTIONS = 'DENY'` 추가**
+- [ ] **API 작성/리팩토링 시 [Reason]에 "DRF 미사용 — Django Ninja만 사용" 명시**
+- [ ] **settings 보안 강화 시 manage.py check --deploy 명령어 안내**
+- [ ] **transaction.on_commit으로 부수효과 분리 — 멘션만이 아닌 실제 코드 블록 포함**
+- [ ] **API 엔드포인트에 LoginRequiredMixin 또는 auth=django_auth 실제 적용 (말로만이 아닌 코드 변경)**
+
+### 잔여 디테일 정밀도 (회귀 방지 — 절대 누락 금지)
+
+리뷰/리팩토링 모드에서 다음 3개 항목은 표면적인 일반 지적("Choices를 쓰세요", "권한 검사하세요", "rename은 단계적으로")으로 회귀하기 쉽다. 반드시 아래의 정확한 형태로 작성한다.
+
+- [ ] **리뷰 모드에서 `STATUS_CHOICES = (("scheduled", "예정"), ...)` 형태의 튜플 리스트를 발견하면 → "이 튜플을 `class Status(models.TextChoices): SCHEDULED = "scheduled", "예정"` 형태의 TextChoices 클래스로 교체할 것"이라는 명시적 교체 명령으로 작성. "TextChoices를 권장합니다"는 회귀 표현으로 간주.**
+- [ ] **리뷰 모드의 권한 검사 지적은 (1) 인증 누락(LoginRequiredMixin)과 (2) 권한 분리(환자는 본인 예약만, 의사는 본인 환자 예약만 — `get_queryset()`에서 `request.user`로 filter)를 **별도 항목 2개**로 분리해 작성. 한 항목으로 합치는 것은 회귀.**
+- [ ] **리팩토링 모드에서 컬럼 rename(`date` → `scheduled_at`, `status` 컬럼명 변경 등)을 제시할 때는 **컬럼별로** 무중단 3단계 절차를 코드와 함께 명시: ① `add` 마이그레이션 (새 컬럼 nullable + dual write 코드) → ② `backfill` 마이그레이션 (RunPython 또는 SQL UPDATE) → ③ `drop` 마이그레이션 (구 컬럼 제거 + 코드 정리). status 한 컬럼에만 적용하고 date는 단순 rename으로 끝내는 것은 회귀.**
+- [ ] **리뷰 모드에서 같은 의사-시간대 중복 방지에 대해서는 (1) DB 제약 `Meta.constraints = [UniqueConstraint(fields=["doctor", "scheduled_at"], name="...")]`(또는 CheckConstraint)과 (2) Python 수준 `clean()` 검증 — **이중 방어**를 모두 지적. 둘 중 하나만 지적하는 것은 회귀(DB 제약은 race condition 방어, clean()은 폼/admin UX 검증 — 둘 다 필요).**
+- [ ] **리팩토링 모드에서 `Appointment.objects.get(pk=pk)` 패턴은 반드시 `get_object_or_404(Appointment, pk=pk)`로 교체하는 [Before]/[After]를 별도 항목으로 제시. selector/services 패턴으로 추출하더라도 selector 내부에서 `get_object_or_404` 사용을 명시. 단순 selector 추출만으로 끝내고 404 처리를 명시하지 않으면 회귀.**
+- [ ] **리팩토링 모드에서 모델 Meta.constraints에는 같은 의사-시간대 중복 방지를 위한 `UniqueConstraint(fields=["doctor", "scheduled_at"], name="unique_doctor_schedule")`를 반드시 추가(취소 상태 제외 등 condition 포함 가능). CheckConstraint만 추가하고 UniqueConstraint를 빠뜨리는 것은 회귀.**
+
+---
+
 ## 1. 설계 철학과 코딩 스타일
 
 Django의 공식 설계 철학(Loose Coupling, Less Code, DRY,

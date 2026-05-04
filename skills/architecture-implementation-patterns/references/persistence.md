@@ -178,6 +178,73 @@ def allocate(line: OrderLine, uow: AbstractUnitOfWork) -> str:
         return batch.reference
 ```
 
+### 트랜잭션 경계의 위치 — Repository 내부 commit 금지
+
+**원칙**: 트랜잭션 경계는 **Use Case 수준(Application Service / Command
+Handler)에서 결정**한다. Repository 내부 commit은 안티패턴이다.
+
+```python
+# 안티패턴 — Repository가 트랜잭션 경계 소유
+class ErpStockRepository:
+    def save(self, item):
+        cursor.execute("UPDATE TB_INV_MASTER ...")
+        conn.commit()                          # ← 금지
+
+# 올바른 패턴 — Application Service가 commit
+class ReserveStockHandler:
+    def __init__(self, uow: AbstractUnitOfWork):
+        self._uow = uow
+
+    def handle(self, cmd: ReserveStockCommand) -> None:
+        with self._uow:
+            stock = self._uow.stock.get(cmd.code)
+            stock.reserve(cmd.qty)             # 도메인 불변식 검증
+            self._uow.stock.save(stock)        # save는 staging만, commit 안 함
+            self._uow.commit()                 # ← 여기서 commit
+        # 커밋 후 도메인 이벤트 디스패치
+        for event in stock.collect_events():
+            self._event_bus.dispatch(event)
+```
+
+**Repository 내부 commit이 만드는 3가지 문제:**
+1. 다중 Aggregate를 원자적으로 갱신할 수 없다 (StockItem + StockReservation을
+   같은 트랜잭션으로 묶지 못함)
+2. 테스트에서 트랜잭션 롤백으로 격리 불가 — 각 save가 즉시 commit
+3. 도메인 이벤트 디스패치 시점이 모호해진다 (commit 전 vs 후)
+
+### Composition Root + Connection Pool
+
+자격증명 하드코딩과 호출마다 새 client 생성을 막기 위해 **lru_cache 기반
+싱글턴 client**를 Composition Root에 둔다.
+
+```python
+# 안티패턴
+def reserve_stock(...):
+    conn = cx_Oracle.connect("erp_user/pass@erp-db:1521/ERPDB")  # 매 호출 새 연결
+
+# 올바른 패턴
+from functools import lru_cache
+from django.conf import settings
+
+@lru_cache(maxsize=1)
+def _erp_client() -> ErpOracleClient:
+    """프로세스 생애주기 동안 단일 Client(Connection Pool) 공유."""
+    return ErpOracleClient(
+        dsn=settings.ERP_DSN,
+        user=settings.ERP_USER,
+        password=settings.ERP_PASSWORD,
+        pool_min=2,
+        pool_max=10,
+    )
+
+def build_reserve_stock_handler() -> ReserveStockHandler:
+    return ReserveStockHandler(uow=ErpUnitOfWork(client=_erp_client()))
+```
+
+이 패턴은 (1) settings 외부화로 자격증명 누출 방지, (2) Connection Pool로
+연결 비용 절감, (3) 테스트에서 `_erp_client()`를 monkeypatch로 Fake로 교체
+가능하게 한다.
+
 ---
 
 ## 6. SQLAlchemy가 구현하는 패턴들

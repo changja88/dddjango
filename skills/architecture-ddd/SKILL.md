@@ -145,6 +145,29 @@ ALWAYS use this exact template for the closing section:
 - [ ] 동기 호출 -> 도메인 이벤트 + 최종 일관성으로 교체
 - [ ] 모호한 경계 -> 바운디드 컨텍스트로 분할
 
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] Aggregate Root 명시 + 불변식 docstring/코드 명시
+- [ ] Value Object frozen=True dataclass + __post_init__ 검증
+- [ ] Domain Event 과거형 명명 (PaidEvent, OrderConfirmedEvent)
+- [ ] Ubiquitous Language 사전 표 + 금지 동의어 컬럼
+
+### 설계 모드
+- [ ] **Repository ABC 인터페이스를 도메인 계층에 정의 (`AuctionRepository(ABC)`, `find_by_id`/`save`)**
+- [ ] **응용 서비스 분리 (`AuctionApplicationService`로 use case 조율, 도메인 레이어와 분리)**
+
+### 리뷰 모드
+- [ ] auction.save() 같은 영속성 호출이 도메인 모델 안에 있으면 Repository 분리 권고
+- [ ] Vernon 4규칙 위반 명시(불변식 보호, 작은 Aggregate, 결과적 일관성, ID 참조)
+- [ ] [원칙] -- 이유 형식
+- [ ] **`raise Exception` 또는 일반 예외 발견 시 도메인 예외(`BidTooLowError`, `AuctionAlreadyClosedError`)로 교체 제안**
+
+### 리팩토링 모드
+- [ ] [Before] / [After] / [Reason] 형식 + DDD 원전 인용 (Evans, Vernon)
+- [ ] 도메인 이벤트 발행 + 수집 메커니즘 코드 (_record_event/collect_events)
+- [ ] **`ValueError`를 도메인 예외 클래스로 교체 (모듈 루트 도메인 예외 정의 후 사용)**
+
 ---
 
 ## 1. DDD 개요

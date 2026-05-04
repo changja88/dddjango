@@ -3,104 +3,73 @@
   "evals": [
     {
       "id": 1,
-      "mode": "Design",
-      "eval_name": "ecommerce-architecture-design",
+      "eval_name": "design",
+      "mode": "design",
       "prompt": "전자상거래 시스템의 주문 처리 아키텍처를 설계해줘.\n\n현재 상황:\n- Django 모놀리스로 운영 중\n- 결제는 외부 PG사(토스페이먼츠) API를 사용\n- 주문 확인 후 외부 배송 시스템(CJ대한통운 API)에 알려야 함\n- 주문 조회가 주문 생성보다 10배 많음\n- 향후 배송 서비스를 별도 마이크로서비스로 분리할 수 있어야 함\n\n주문 도메인의 코드 구조와 아키텍처 패턴을 설계해줘.",
-      "expected_output": "헥사고날 구조 + 외부 시스템 ACL + Integration Event + Outbox + 선택적 CQRS 제안",
-      "assertions": [
-        {
-          "id": "design-1",
-          "text": "Hexagonal/Ports & Adapters 구조를 제안하고, Driving Port(주문 생성 Use Case)와 Driven Port(결제, 배송)를 구분한다",
-          "type": "content_check"
-        },
-        {
-          "id": "design-2",
-          "text": "외부 PG사(토스페이먼츠)에 대해 Port 인터페이스를 도메인 계층에 정의하고 Adapter를 인프라 계층에 구현하는 DIP/Ownership Inversion을 적용한다",
-          "type": "content_check"
-        },
-        {
-          "id": "design-3",
-          "text": "배송 시스템 알림에 Domain Event와 구분되는 Integration Event 개념을 사용하거나, 최소한 외부 발행용 이벤트를 내부 이벤트와 분리한다",
-          "type": "content_check"
-        },
-        {
-          "id": "design-4",
-          "text": "이벤트 발행 신뢰성을 위해 Outbox 패턴을 언급하거나, DB 트랜잭션과 메시지 발행의 원자성 문제를 다룬다",
-          "type": "content_check"
-        },
-        {
-          "id": "design-5",
-          "text": "CQRS를 시스템 전체가 아닌 주문 조회 최적화 등 특정 부분에 선택적으로 제안한다 (또는 현 단계에서 불필요하다고 판단한다)",
-          "type": "content_check"
-        }
+      "expectations": [
+        {"id": "design-01", "text": "Hexagonal/Ports & Adapters 구조를 제안하고 Driving Port(Use Case)와 Driven Port(결제, 배송) 구분을 명시한다", "type": "content_check"},
+        {"id": "design-02", "text": "PaymentGateway/ShippingGateway 같은 Driven Port를 도메인 계층(domain/ports/driven/)에 정의하고 Adapter는 인프라 계층에 두는 DIP/Ownership Inversion을 명시한다", "type": "content_check"},
+        {"id": "design-03", "text": "Aggregate Root에 불변식(invariant)이 docstring 또는 코드 검증으로 명시된다 (예: Order에 INV-1 ~ INV-N)", "type": "content_check"},
+        {"id": "design-04", "text": "AggregateRoot 추상 베이스 + _record_event/collect_events 메커니즘이 코드로 제시된다", "type": "content_check"},
+        {"id": "design-05", "text": "OrderStatus 같은 상태가 VO로 추출되고 _ALLOWED_TRANSITIONS 매트릭스 + InvalidStateTransition으로 위반을 차단한다", "type": "content_check"},
+        {"id": "design-06", "text": "Money VO가 정의되고 currency mismatch 검증(통화가 다른 Money 연산 거부)이 명시된다", "type": "content_check"},
+        {"id": "design-07", "text": "OrderId, PaymentId, OrderLine 등 주요 도메인 개념이 frozen=True dataclass VO로 추출된다", "type": "content_check"},
+        {"id": "design-08", "text": "Ubiquitous Language 사전이 표 형식으로 응답에 포함되고 금지 동의어(외부 SDK 어휘) 컬럼이 있다", "type": "content_check"},
+        {"id": "design-09", "text": "Context Map이 다이어그램 또는 표로 제시되고 BC 간 관계 유형(Customer-Supplier, Conformist, Published Language, ACL 등)이 명시된다", "type": "content_check"},
+        {"id": "design-10", "text": "Domain Event(internal)와 Integration Event(published_language)가 폴더 구조로 분리된다", "type": "content_check"},
+        {"id": "design-11", "text": "Outbox 패턴이 적용되고 at-least-once delivery + 컨슈머 멱등성(event_id dedup) 한 줄이 명시된다", "type": "content_check"},
+        {"id": "design-12", "text": "Saga가 Command만 발행하고 외부 시스템 호출은 Command Handler가 책임진다는 분리가 명시된다", "type": "content_check"},
+        {"id": "design-13", "text": "멱등성 패턴 3중 분류(도메인 상태 검사 / Dedup 테이블 / PG idempotency-key)가 표로 제시되고 critical path에 일관 적용된다", "type": "content_check"},
+        {"id": "design-14", "text": "transaction.on_commit vs Outbox 선택 기준이 표로 제시된다 (BC 경계 넘는 손실 불가 메시지는 Outbox)", "type": "content_check"},
+        {"id": "design-15", "text": "CQRS를 시스템 전체가 아닌 주문 조회 최적화 같은 특정 부분에 선택적으로 제안한다", "type": "content_check"},
+        {"id": "design-16", "text": "파일 트리가 Aggregate 단위 의미군 묶음(`domain/model/<aggregate>/`)으로 구성되고 평탄(`domain/model/`)하지 않다", "type": "content_check"}
       ]
     },
     {
       "id": 2,
-      "mode": "Review",
-      "eval_name": "architecture-violation-review",
-      "prompt": "아래 주문 처리 코드의 아키텍처를 리뷰해줘.\n\n```python\n# order/domain/order_service.py\nimport requests\nfrom stripe import Stripe\nfrom order.infrastructure.email_client import send_confirmation_email\nfrom order.infrastructure.models import OrderModel\n\n\nclass OrderService:\n    \"\"\"주문 처리 서비스\"\"\"\n\n    def confirm_order(self, order_id: int) -> dict:\n        # DB에서 주문 조회\n        order = OrderModel.objects.select_related('user').get(id=order_id)\n\n        # 결제 처리\n        stripe = Stripe(api_key=\"sk_live_xxx\")\n        charge = stripe.charges.create(\n            amount=order.total_amount,\n            currency=\"krw\",\n            source=order.payment_token,\n        )\n\n        # 주문 상태 변경\n        order.status = \"confirmed\"\n        order.payment_id = charge.id\n        order.save()\n\n        # 이메일 발송\n        send_confirmation_email(\n            to=order.user.email,\n            order_number=order.order_number,\n        )\n\n        # 배송 시스템에 알림\n        requests.post(\n            \"http://shipping-service/api/shipments\",\n            json={\"order_id\": order_id, \"address\": order.shipping_address},\n            timeout=5,\n        )\n\n        # 조회용 데이터 반환\n        return {\n            \"order_id\": order.id,\n            \"status\": order.status,\n            \"payment_id\": order.payment_id,\n            \"items\": list(order.items.values(\"name\", \"quantity\", \"price\")),\n        }\n```",
-      "expected_output": "DIP 위반, Port/Adapter 부재, 트랜잭션 내 부수효과, Domain Event 부재 등 지적",
-      "assertions": [
-        {
-          "id": "review-1",
-          "text": "도메인 계층(order/domain/)이 인프라(stripe, requests, infrastructure.models)에 직접 의존하는 DIP 위반을 지적한다",
-          "type": "content_check"
-        },
-        {
-          "id": "review-2",
-          "text": "Port 인터페이스를 도메인 계층에 정의하여 도메인이 소유하는 구조를 제안한다 (Ownership Inversion 개념 적용)",
-          "type": "content_check"
-        },
-        {
-          "id": "review-3",
-          "text": "이메일 발송과 배송 알림이 DB 트랜잭션과 결합되어 있는 문제(부수효과)를 지적하고, 도메인 이벤트 또는 transaction.on_commit 등으로 분리를 제안한다",
-          "type": "content_check"
-        },
-        {
-          "id": "review-4",
-          "text": "confirm_order가 상태를 변경(Command)하면서 동시에 dict를 반환(Query)하는 CQS/CQRS 위반을 지적한다",
-          "type": "content_check"
-        },
-        {
-          "id": "review-5",
-          "text": "Unit of Work 패턴으로 트랜잭션 경계를 명시적으로 관리하도록 제안한다 (단순히 transaction.atomic 언급이 아닌 UoW 패턴 수준)",
-          "type": "content_check"
-        }
+      "eval_name": "review",
+      "mode": "review",
+      "prompt": "아래 주문 처리 코드의 아키텍처를 리뷰해줘.\n\n```python\n# order/domain/order_service.py\nimport requests\nfrom stripe import Stripe\nfrom order.infrastructure.email_client import send_confirmation_email\nfrom order.infrastructure.models import OrderModel\n\n\nclass OrderService:\n    \"\"\"주문 처리 서비스\"\"\"\n\n    def confirm_order(self, order_id: int) -> dict:\n        order = OrderModel.objects.select_related('user').get(id=order_id)\n        stripe = Stripe(api_key=\"sk_live_xxx\")\n        charge = stripe.charges.create(amount=order.total_amount, currency=\"krw\", source=order.payment_token)\n        order.status = \"confirmed\"\n        order.payment_id = charge.id\n        order.save()\n        send_confirmation_email(to=order.user.email, order_number=order.order_number)\n        requests.post(\"http://shipping-service/api/shipments\", json={\"order_id\": order_id, \"address\": order.shipping_address}, timeout=5)\n        return {\"order_id\": order.id, \"status\": order.status, \"payment_id\": order.payment_id, \"items\": list(order.items.values(\"name\", \"quantity\", \"price\"))}\n```",
+      "expectations": [
+        {"id": "review-01", "text": "도메인 계층(order/domain/)이 stripe, requests, infrastructure.models에 직접 의존하는 DIP 위반을 import 라인을 직접 인용하며 지적한다", "type": "content_check"},
+        {"id": "review-02", "text": "Port 인터페이스 4종(PaymentGateway, OrderNotifier/EmailSender, ShippingService, OrderRepository)을 도메인 계층에 정의하는 Ownership Inversion을 명시한다", "type": "content_check"},
+        {"id": "review-03", "text": "ACL Translator가 Stripe 응답(charge.id 등)을 도메인 VO로 변환하는 분리를 제안한다", "type": "content_check"},
+        {"id": "review-04", "text": "이메일·배송 알림이 DB 트랜잭션과 결합된 부수효과 문제를 도메인 이벤트 기반 분리로 제안한다", "type": "content_check"},
+        {"id": "review-05", "text": "transaction.on_commit과 Outbox의 선택 기준을 명시한다 (이메일은 on_commit, 배송 통합 이벤트는 Outbox)", "type": "content_check"},
+        {"id": "review-06", "text": "confirm_order가 상태 변경(Command) + dict 반환(Query)으로 CQS를 위반함을 지적하고 Query Service 분리를 제안한다", "type": "content_check"},
+        {"id": "review-07", "text": "Unit of Work 패턴으로 트랜잭션 경계를 Application Service 수준에서 명시적으로 관리하도록 제안한다", "type": "content_check"},
+        {"id": "review-08", "text": "Order Aggregate Root 설계 — 불변식 명세 + confirm_payment 같은 도메인 메서드를 제시한다", "type": "content_check"},
+        {"id": "review-09", "text": "OrderStatus VO + 전이 매트릭스 + InvalidStateTransition으로 'order.status = \"confirmed\"' 직접 할당 안티패턴을 교정한다", "type": "content_check"},
+        {"id": "review-10", "text": "Money VO 추출 + currency='krw' 하드코딩 제거를 제안한다", "type": "content_check"},
+        {"id": "review-11", "text": "AggregateRoot 추상 베이스 + _record_event/collect_events로 도메인 이벤트 수집·디스패치 메커니즘을 코드로 제시한다", "type": "content_check"},
+        {"id": "review-12", "text": "payment_token, charge.id 같은 Stripe 어휘가 도메인 필드명에 침투한 Ubiquitous Language 오염을 정화 표(현재→도메인 용어)로 지적한다", "type": "content_check"},
+        {"id": "review-13", "text": "멱등성 패턴(도메인 상태 검사 / Dedup 테이블 / PG idempotency-key)을 적용해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-14", "text": "Domain Event vs Integration Event 폴더 분리(internal/published_language)를 제안한다", "type": "content_check"},
+        {"id": "review-15", "text": "리뷰가 제안하는 파일 트리가 Aggregate 단위 의미군 묶음(`domain/model/<aggregate>/`, `application/{commands,queries}/`)으로 구성된다", "type": "content_check"}
       ]
     },
     {
       "id": 3,
-      "mode": "Refactoring",
-      "eval_name": "legacy-integration-refactoring",
-      "prompt": "레거시 ERP 시스템과 통합된 재고 관리 코드를 리팩토링해줘.\n\n현재 문제:\n- 레거시 ERP의 DB를 직접 조회하여 재고를 관리하고 있음\n- ERP의 테이블 구조와 컬럼명이 우리 도메인과 완전히 다름\n- ERP 변경 시 우리 코드도 함께 수정해야 하는 강결합 상태\n- 향후 ERP를 교체할 계획이 있음\n\n```python\n# inventory/services.py\nimport cx_Oracle\n\ndef get_stock(product_code: str) -> int:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\n        \"SELECT ZQTY_AVAIL FROM TB_INV_MASTER WHERE ZITEM_CD = :1\",\n        [product_code]\n    )\n    row = cursor.fetchone()\n    conn.close()\n    return row[0] if row else 0\n\n\ndef reserve_stock(product_code: str, quantity: int) -> bool:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\n        \"UPDATE TB_INV_MASTER SET ZQTY_AVAIL = ZQTY_AVAIL - :1 \"\n        \"WHERE ZITEM_CD = :2 AND ZQTY_AVAIL >= :1\",\n        [quantity, product_code]\n    )\n    affected = cursor.rowcount\n    conn.commit()\n    conn.close()\n    return affected > 0\n\n\ndef sync_product_info(product_code: str) -> dict:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\n        \"SELECT ZITEM_NM, ZITEM_GRP, ZUNIT_PRC FROM TB_ITEM_MASTER \"\n        \"WHERE ZITEM_CD = :1\",\n        [product_code]\n    )\n    row = cursor.fetchone()\n    conn.close()\n    if not row:\n        return {}\n    return {\"name\": row[0], \"category\": row[1], \"price\": row[2]}\n```\n\nBefore/After/Reason 형식으로 리팩토링해줘.",
-      "expected_output": "ACL(Facade+Adapter+Translator) 적용 + 도메인 모델 분리 + Repository 추상화 + Bubble Context 언급",
-      "assertions": [
-        {
-          "id": "refactor-1",
-          "text": "ACL의 3요소(Facade, Adapter, Translator)를 별도 클래스/모듈로 분리하여 구현한다 (단일 어댑터에 통합이 아닌 Evans의 원래 구조)",
-          "type": "content_check"
-        },
-        {
-          "id": "refactor-2",
-          "text": "재고 도메인의 Repository/Port 인터페이스(ABC)를 정의하고, ERP 구현체를 분리하여 향후 ERP 교체 시 구현체만 교체하도록 설계한다",
-          "type": "content_check"
-        },
-        {
-          "id": "refactor-3",
-          "text": "product_code를 Value Object(별도 타입)로 추출하여 원시 타입(str) 대신 도메인 개념으로 표현한다",
-          "type": "content_check"
-        },
-        {
-          "id": "refactor-4",
-          "text": "Before/After/Reason 형식을 사용하고, 각 변경에 구체적인 아키텍처 패턴(ACL, DIP, Hexagonal 등)과 원전(Evans, Cockburn 등)을 근거로 제시한다",
-          "type": "content_check"
-        },
-        {
-          "id": "refactor-5",
-          "text": "현재 상황에서 적용하지 않은 패턴(CQRS, UoW 등)에 대해 명시적 판단과 근거를 제시한다",
-          "type": "content_check"
-        }
+      "eval_name": "refactoring",
+      "mode": "refactoring",
+      "prompt": "레거시 ERP 시스템과 통합된 재고 관리 코드를 리팩토링해줘.\n\n현재 문제:\n- 레거시 ERP의 DB를 직접 조회하여 재고를 관리하고 있음\n- ERP의 테이블 구조와 컬럼명이 우리 도메인과 완전히 다름\n- ERP 변경 시 우리 코드도 함께 수정해야 하는 강결합 상태\n- 향후 ERP를 교체할 계획이 있음\n\n```python\n# inventory/services.py\nimport cx_Oracle\n\ndef get_stock(product_code: str) -> int:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT ZQTY_AVAIL FROM TB_INV_MASTER WHERE ZITEM_CD = :1\", [product_code])\n    row = cursor.fetchone()\n    conn.close()\n    return row[0] if row else 0\n\n\ndef reserve_stock(product_code: str, quantity: int) -> bool:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\"UPDATE TB_INV_MASTER SET ZQTY_AVAIL = ZQTY_AVAIL - :1 WHERE ZITEM_CD = :2 AND ZQTY_AVAIL >= :1\", [quantity, product_code])\n    affected = cursor.rowcount\n    conn.commit()\n    conn.close()\n    return affected > 0\n\n\ndef sync_product_info(product_code: str) -> dict:\n    conn = cx_Oracle.connect(\"erp_user/pass@erp-db:1521/ERPDB\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT ZITEM_NM, ZITEM_GRP, ZUNIT_PRC FROM TB_ITEM_MASTER WHERE ZITEM_CD = :1\", [product_code])\n    row = cursor.fetchone()\n    conn.close()\n    if not row:\n        return {}\n    return {\"name\": row[0], \"category\": row[1], \"price\": row[2]}\n```\n\nBefore/After/Reason 형식으로 리팩토링해줘.",
+      "expectations": [
+        {"id": "refactor-01", "text": "ACL 3요소(Facade/Adapter/Translator)를 별도 클래스/모듈로 분리한다 (단일 어댑터 통합 금지)", "type": "content_check"},
+        {"id": "refactor-02", "text": "재고 도메인의 Repository/Port 인터페이스(ABC)를 도메인 계층에 정의하고 ERP 구현체를 인프라에 둔다", "type": "content_check"},
+        {"id": "refactor-03", "text": "ProductCode와 Quantity가 별도 Value Object(frozen=True dataclass + __post_init__ 검증)로 추출된다", "type": "content_check"},
+        {"id": "refactor-04", "text": "Money VO가 별도로 추출되고 (Price나 다른 클래스에 currency 필드만 추가하는 형태가 아님) currency mismatch 검증을 포함한다", "type": "content_check"},
+        {"id": "refactor-05", "text": "Before/After/Reason 형식이 모든 변경에 사용되고 Evans, Cockburn, Fowler 같은 원전이 인용된다", "type": "content_check"},
+        {"id": "refactor-06", "text": "적용하지 않은 패턴(CQRS, ES, UoW 일부)에 대해 명시적 판단 + 근거를 제시한다", "type": "content_check"},
+        {"id": "refactor-07", "text": "StockItem이 Aggregate Root임을 명시하고 불변식(available 0 이상, reserved≤available 등)이 docstring/코드로 명시된다", "type": "content_check"},
+        {"id": "refactor-08", "text": "AggregateRoot 추상 베이스 + _record_event/collect_events 메커니즘이 적용된다", "type": "content_check"},
+        {"id": "refactor-09", "text": "재고 라이프사이클이 reserve/release/commit 셋트로 완성된다 (예약/반환/확정)", "type": "content_check"},
+        {"id": "refactor-10", "text": "도메인 이벤트 StockReserved/StockReleased/StockCommitted가 정의되고 발행된다", "type": "content_check"},
+        {"id": "refactor-11", "text": "Composition Root + lru_cache 기반 ErpOracleClient 싱글턴 + Connection Pool(SessionPool)이 적용된다", "type": "content_check"},
+        {"id": "refactor-12", "text": "UoW의 트랜잭션 경계가 Application Service 수준에 있고 Repository 내부 commit이 제거된다", "type": "content_check"},
+        {"id": "refactor-13", "text": "낙관적 잠금(version 필드 또는 expected_quantity 가드)이 ConcurrencyError와 함께 적용된다", "type": "content_check"},
+        {"id": "refactor-14", "text": "멱등성 패턴 분류(도메인 상태 / Dedup 테이블 / PG idempotency-key)가 명시되고 reserve/commit 같은 비멱등 경로에 적용된다", "type": "content_check"},
+        {"id": "refactor-15", "text": "파일 트리가 Aggregate 단위 의미군 묶음으로 제시된다 (`inventory/domain/model/stock_item/`)", "type": "content_check"},
+        {"id": "refactor-16", "text": "ProductSyncService(원본 sync_product_info)도 Before/After/Reason 형식으로 리팩토링된다 (CQS 위반 sync()→handle 분리 등)", "type": "content_check"}
       ]
     }
   ]

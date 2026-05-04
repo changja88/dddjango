@@ -147,10 +147,62 @@ Vernon은 "domain event"과 "integration event"라는 분류 자체가 오해를
 
 ---
 
-## 4. 흔한 실수 정리
+## 4. 멱등성 패턴 분류
+
+같은 외부 호출이 두 번 들어와도 한 번만 처리되도록 보장하는 방법은 세 가지이며,
+요청의 출처와 의미에 따라 다르게 적용한다. "멱등성 처리"를 한 단어로 뭉뚱그리지
+않고 분류해서 적용한다.
+
+| 패턴 | 적용 대상 | 구현 방식 |
+|---|---|---|
+| **도메인 상태 검사** | Aggregate 상태 전이 Command (confirm_payment, cancel) | `if order.status == PAID: return` — 같은 상태로 재호출은 자연스럽게 무시 |
+| **Dedup 테이블** | Webhook, Saga step, 외부에서 재전송되는 Command | `INSERT INTO processed_commands(command_id, ...)`; UNIQUE 위반 시 ignore. UoW 트랜잭션 내에서 INSERT |
+| **PG idempotency-key** | 외부 결제·결제 취소 API 재시도 | HTTP 헤더 `Idempotency-Key: <order_id>` 또는 PG가 요구하는 키 형식 |
+
+### 적용 예시 — 결제 확인 Webhook
+
+```python
+# 도메인 상태 검사 + Dedup 테이블 + PG idempotency-key 3중 보호
+
+class ConfirmPaymentCommandHandler:
+    def handle(self, cmd: ConfirmPaymentCommand) -> None:
+        with self._uow:
+            # 1. Dedup 테이블 — 같은 webhook이 두 번 와도 두 번째는 무시
+            try:
+                self._uow.processed.add(cmd.command_id, "confirm_payment")
+            except DuplicateCommand:
+                return                                   # 이미 처리됨
+
+            # 2. 도메인 상태 검사 — Aggregate 자체가 멱등성 보장
+            order = self._uow.orders.get(cmd.order_id)
+            if order.status == OrderStatus.PAID:
+                self._uow.commit()
+                return                                   # 이미 PAID
+
+            order.confirm_payment(cmd.payment_id)
+            self._uow.commit()
+
+
+class TossPaymentAdapter(PaymentGateway):
+    def charge(self, order_id, amount, idempotency_key):
+        # 3. PG idempotency-key — Toss에 같은 키로 재요청해도 한 번만 청구
+        return self._http.post(
+            "/v1/payments",
+            headers={"Idempotency-Key": idempotency_key},
+            json={"orderId": str(order_id), "amount": amount.value},
+        )
+```
+
+세 패턴은 **상호 배타가 아니라 보완적**이다. 결제 같은 critical path에서는
+세 가지를 동시에 적용한다.
+
+---
+
+## 5. 흔한 실수 정리
 
 1. **Domain Event를 그대로 외부에 노출** — 내부 구현이 public API가 되어 강한 coupling
 2. **Integration Event를 동기적으로 처리** — 반드시 비동기
 3. **ACL 없이 외부 모델을 직접 사용** — 외부 변경이 내부를 "오염(corrupt)"
 4. **수신한 이벤트를 모델 깊숙이 직접 소비** — 경계에서 Command로 번역
 5. **Bubble Context에서 자체 데이터 없이 복잡한 로직** — Autonomous Bubble로 전환 필요
+6. **"멱등성 처리"를 한 단어로 뭉뚱그림** — 도메인 상태검사 / Dedup 테이블 / PG idempotency-key 셋 중 어느 것을 어디에 적용할지 분류해서 명시

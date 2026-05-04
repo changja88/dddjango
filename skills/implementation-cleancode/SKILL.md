@@ -53,6 +53,27 @@ ALWAYS use this exact template for the closing section:
 > - [topic] → **[skill-name]** 스킬
 ```
 
+## 응답 작성 직전 체크리스트 (필수)
+
+### 공통
+- [ ] 매직 넘버 → 상수/Enum 추출
+- [ ] Tell-Don't-Ask 원칙 준수
+- [ ] CQS (Command는 void, Query는 부수효과 없음)
+- [ ] 도메인 예외 정의 (None 반환 대신)
+- [ ] 가드 절 사용 (중첩 if 회피)
+- [ ] 함수 길이 제한, 인수 3개 이하, 플래그 인수 금지
+
+### 리뷰 모드 (필수 톤)
+- [ ] **잘된 점을 영향력 큰 문제보다 먼저 짚는다** — 비판 시작 전 인정 한 줄
+- [ ] [Principle] -- 이유 형식
+- [ ] 표/구조화로 위반 항목 정리
+
+### 리팩토링 모드
+- [ ] [Before] / [After] / [Reason] Principle 형식
+- [ ] 전체 리팩토링된 코드 통합 제공 + 변경 요약 표
+- [ ] **None 가드를 Null Object 패턴 또는 타입 시스템(`Optional[T]` → 분기 회피)으로 제거**
+- [ ] **연체료 계산 같은 별도 책임은 `OverdueFeePolicy`/`OverdueFee` 같은 별도 객체로 SRP 분리**
+
 ## 운영 모드
 
 사용자의 요청에 따라 모드를 선택한다:
