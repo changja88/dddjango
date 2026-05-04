@@ -49,7 +49,7 @@ codex plugin marketplace add .
 For Git-backed distribution, publish the repository and pin users to a release tag:
 
 ```bash
-codex plugin marketplace add changja88/dddjango --ref v0.1.1
+codex plugin marketplace add changja88/dddjango --ref v0.1.2
 ```
 
 ## Evaluation
@@ -77,7 +77,7 @@ Raw evaluation outputs under `workspace/*/test/` are ignored. Commit evaluation 
 - Validate Claude local plugin loading.
 - Validate Codex local marketplace installation.
 - Run representative dual-platform prompts.
-- Tag the release, for example `v0.1.1`.
+- Tag the release, for example `v0.1.2`.
 - Update marketplace entries to the release version or tag.
 
 You can prepare the local release commit and tag with:
