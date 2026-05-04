@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-service-layer dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-service-layer dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-positive-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>현재 workspace에는 실제 Django 프로젝트 파일이 없어서, Django Ninja + dddjango 기준의 일반 권장 구조로 답하겠습니다.</p>
+<p>Django Ninja 프로젝트에서 service layer는 <strong>API 라우터 옆이 아니라 도메인 앱 내부</strong>에 두는 것이 좋습니다. 핵심은 <code>Router</code>는 HTTP 입출력 변환만 하고, 유스케이스 실행은 서비스가 맡게 하는 것입니다.</p>
+<p>가장 실용적인 기본 구조는 이렇습니다.</p>
+<pre><code>
+apps/
+  orders/
+    models.py
+    services.py       # 쓰기/명령 로직: order_create, order_confirm
+    selectors.py      # 읽기/조회 로직: order_list, order_detail
+    schemas.py        # Django Ninja 요청/응답 Schema
+    api.py            # Router, HTTP status, auth, schema 변환
+</code></pre>
+<p>역할은 이렇게 나누면 됩니다.</p>
+<pre><code>
+api.py
+  - request/body/path/query를 받는다
+  - Schema로 검증한다
+  - service 또는 selector를 호출한다
+  - HTTP status와 response schema로 변환한다
+
+services.py
+  - 쓰기 유스케이스를 처리한다
+  - 여러 모델 변경, transaction.atomic, 외부 알림 예약 등을 담당한다
+  - 네이밍은 order_create, order_confirm, user_register 처럼 &lt;entity&gt;_&lt;action&gt;
+
+selectors.py
+  - 읽기 전용 QuerySet 조립을 담당한다
+  - select_related, prefetch_related, filter, annotate 등을 모은다
+
+models.py
+  - 단일 모델의 불변식과 상태 전이 메서드
+  - 예: order.confirm(), order.cancel()
+</code></pre>
+<p>예를 들면 <code>api.py</code>는 얇게 둡니다.</p>
+<pre><code>
+from ninja import Router
+
+from .schemas import OrderCreateIn, OrderOut
+from .services import order_create
+from .selectors import order_detail
+
+router = Router()
+
+
+@router.post(&quot;/&quot;, response={201: OrderOut})
+def create_order(request, payload: OrderCreateIn) -&gt; tuple[int, OrderOut]:
+    order = order_create(user=request.user, data=payload)
+    return 201, order
+
+
+@router.get(&quot;/{order_id}&quot;, response=OrderOut)
+def get_order(request, order_id: int) -&gt; OrderOut:
+    return order_detail(order_id=order_id, user=request.user)
+</code></pre>
+<p>규모가 커지고 DDD 경계를 명확히 가져가야 한다면, 앱 하나를 바운디드 컨텍스트로 보고 더 분리합니다.</p>
+<pre><code>
+applications/
+  orders/
+    domain_layer/
+      order/
+        root.py
+        value_objects.py
+        events.py
+      service/
+        pricing/
+      repository/
+        order_repo.py        # Repository ABC
+    application_layer/
+      order_service.py       # 유스케이스 조율
+    infra_layer/
+      django_orders/
+        models/
+      repository/
+        order_repo.py        # Django ORM 구현체
+    presentation_layer/
+      api/
+        order_api.py         # Django Ninja Router
+      schema/
+        order_schema.py
+</code></pre>
+<p>이때도 “service layer”라는 이름 하나로 뭉개지 말고 둘을 구분하는 게 좋습니다.</p>
+<pre><code>
+application_layer/*_service.py
+  - 응용 서비스
+  - 트랜잭션, repository 조회/저장, 유스케이스 흐름 조율
+  - 비즈니스 규칙 자체는 직접 구현하지 않음
+
+domain_layer/service/
+  - 도메인 서비스
+  - 특정 엔티티/값 객체에 넣기 애매한 순수 도메인 계산
+  - 상태 없는 로직
+</code></pre>
+<p>실무 권장 순서는 이렇습니다.</p>
+<ul>
+<li>처음에는 <code>apps/&lt;domain&gt;/services.py</code> + <code>selectors.py</code>로 시작합니다.</li>
+<li>라우터가 비대해지면 먼저 <code>services.py</code>로 쓰기 로직을 뺍니다.</li>
+<li>조회 쿼리가 복잡해지면 <code>selectors.py</code>로 분리합니다.</li>
+<li>여러 애그리거트, 복잡한 불변식, 외부 시스템 통합이 많아지면 <code>application_layer</code>, <code>domain_layer</code>, <code>infra_layer</code>, <code>presentation_layer</code> 구조로 확장합니다.</li>
+</ul>
+<p>피해야 할 위치는 명확합니다.</p>
+<pre><code>
+config/api.py              # 라우터 합성만 담당
+apps/orders/api.py         # HTTP 변환만 담당
+apps/orders/schemas.py     # 데이터 검증/직렬화만 담당
+shared/services.py         # 도메인별 책임이 흐려지기 쉬움
+</code></pre>
+<p>정리하면, <strong>대부분의 Django Ninja 프로젝트는 앱 내부의 <code>services.py</code>와 <code>selectors.py</code>가 가장 좋은 출발점</strong>입니다. DDD를 본격 적용하는 프로젝트라면 <strong>유스케이스 서비스는 <code>application_layer</code>, 순수 도메인 서비스는 <code>domain_layer/service</code></strong>에 둡니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 계층 분리 → <strong>implementation-django-ninja</strong> 스킬 &gt; - Django 서비스/셀렉터 패턴 → <strong>implementation-django</strong> 스킬 &gt; - 응용 서비스와 도메인 서비스 구분 → <strong>architecture-ddd</strong> 스킬 &gt; - 레이어/헥사고날 구조 확장 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

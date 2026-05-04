@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-drf-vs-ninja dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-drf-vs-ninja dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-conflict-drf-vs-ninja.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
+<p><code>Serializer</code>, <code>ViewSet</code>, <code>APIView</code>, <code>DefaultRouter</code> 기반 코드는 만들지 않고, 같은 API를 Django Ninja의 <code>Schema</code> / <code>Router</code> / <code>NinjaAPI.add_router()</code> 구조로 변환해서 구현하겠습니다.</p>
+<p>필요한 정보만 주시면 바로 Ninja 버전으로 작성할 수 있습니다.</p>
+<ul>
+<li>리소스 이름: 예 <code>orders</code>, <code>products</code>, <code>users</code></li>
+<li>필요한 동작: 목록/상세/생성/수정/삭제 중 무엇인지</li>
+<li>모델 필드 또는 기존 모델 코드</li>
+<li>인증 필요 여부</li>
+</ul>
+<p>참고로 현재 작업 디렉터리(<code>/private/tmp/dddjango-codex-eval</code>)에서는 <code>config.toml</code>을 찾지 못했고, sandbox가 read-only라 파일 수정이나 실행은 할 수 없습니다. 대신 붙여 넣을 수 있는 Django Ninja 코드로 제공하겠습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - REST 엔드포인트 설계 → <strong>architecture-api</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

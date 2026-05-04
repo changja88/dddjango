@@ -1,0 +1,20 @@
+{
+  "case_id": "benchmark-tdd-inventory-reserve",
+  "category": "tdd",
+  "title": "TDD for inventory reservation",
+  "expectations": [
+    "korean_first",
+    "tdd_first",
+    "pytest_quality",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "실패 테스트가 구현보다 먼저 나온다.",
+    "동시성 또는 중복 예약 위험을 테스트 관점에서 다룬다.",
+    "Django model/service 경계를 유지한다."
+  ],
+  "prompt": "재고 예약 기능을 pytest와 TDD로 구현해줘. 재고 부족, 중복 예약, 정상 예약 케이스를 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": ""
+}

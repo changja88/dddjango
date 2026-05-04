@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-payment-ledger dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-payment-ledger dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/dddjango/benchmark-db-payment-ledger.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django 모델 기준이면 결제 Ledger는 <strong>append-only 성격의 원장 엔트리</strong>로 두고, 금액은 <code>FloatField</code>가 아니라 <code>DecimalField</code>를 사용합니다. 중복 결제 방지를 위해 <code>idempotency_key</code>는 결제 요청 범위 안에서 유니크하게 잡고, 상태 변경 이력은 별도 audit 테이블로 분리하는 쪽이 운영상 안전합니다.</p>
+<pre><code>
+from __future__ import annotations
+
+from dataclasses import dataclass
+from decimal import Decimal
+from uuid import uuid4
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
+from django.db import models
+from django.db.models import Q
+
+
+@dataclass(frozen=True, slots=True)
+class Money:
+    &quot;&quot;&quot;Value Object: 금액은 음수가 아니며 통화와 함께만 의미가 있다.&quot;&quot;&quot;
+    amount: Decimal
+    currency: str
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt;= 0:
+            raise ValueError(&quot;금액은 0보다 커야 합니다.&quot;)
+        if len(self.currency) != 3:
+            raise ValueError(&quot;통화는 ISO-4217 3자리 코드여야 합니다.&quot;)
+
+
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class PaymentLedger(TimeStampedModel):
+    &quot;&quot;&quot;
+    Aggregate Root: 결제 원장 엔트리.
+
+    불변식:
+    - amount는 0보다 커야 한다.
+    - currency는 ISO-4217 3자리 대문자 코드여야 한다.
+    - 같은 merchant_id + idempotency_key 요청은 한 번만 기록된다.
+    - terminal 상태(succeeded, failed, canceled, refunded)는 되돌리지 않는다.
+    - 금액/통화/방향/외부 참조는 원장 성격상 생성 후 수정하지 않는다.
+    &quot;&quot;&quot;
+
+    class Direction(models.TextChoices):
+        DEBIT = &quot;debit&quot;, &quot;Debit&quot;
+        CREDIT = &quot;credit&quot;, &quot;Credit&quot;
+
+    class Status(models.TextChoices):
+        PENDING = &quot;pending&quot;, &quot;Pending&quot;
+        AUTHORIZED = &quot;authorized&quot;, &quot;Authorized&quot;
+        SUCCEEDED = &quot;succeeded&quot;, &quot;Succeeded&quot;
+        FAILED = &quot;failed&quot;, &quot;Failed&quot;
+        CANCELED = &quot;canceled&quot;, &quot;Canceled&quot;
+        REFUNDED = &quot;refunded&quot;, &quot;Refunded&quot;
+
+    class EntryType(models.TextChoices):
+        PAYMENT = &quot;payment&quot;, &quot;Payment&quot;
+        REFUND = &quot;refund&quot;, &quot;Refund&quot;
+        ADJUSTMENT = &quot;adjustment&quot;, &quot;Adjustment&quot;
+        CHARGEBACK = &quot;chargeback&quot;, &quot;Chargeback&quot;
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    merchant_id = models.UUIDField(db_index=True)
+    customer_id = models.UUIDField(null=True, blank=True, db_index=True)
+
+    entry_type = models.CharField(max_length=20, choices=EntryType)
+    direction = models.CharField(max_length=10, choices=Direction)
+    status = models.CharField(
+        max_length=20,
+        choices=Status,
+        default=Status.PENDING,
+        db_index=True,
+    )
+
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
+    currency = models.CharField(
+        max_length=3,
+        validators=[RegexValidator(r&quot;^[A-Z]{3}$&quot;)],
+    )
+
+    idempotency_key = models.CharField(max_length=255)
+    payment_reference = models.CharField(max_length=255, blank=True)
+    external_provider = models.CharField(max_length=50, blank=True)
+    external_reference = models.CharField(max_length=255, blank=True)
+
+    request_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text=&quot;동일 idempotency_key에 다른 payload가 들어오는 것을 탐지하기 위한 SHA-256 해시&quot;,
+    )
+
+    metadata = models.JSONField(default=dict, blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name=&quot;created_payment_ledger_entries&quot;,
+    )
+    status_changed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = [&quot;-created_at&quot;]
+        verbose_name = &quot;Payment ledger entry&quot;
+        verbose_name_plural = &quot;Payment ledger entries&quot;
+        constraints = [
+            models.CheckConstraint(
+                check=Q(amount__gt=0),
+                name=&quot;payment_ledger_amount_gt_0&quot;,
+            ),
+            models.CheckConstraint(
+                check=Q(currency__regex=r&quot;^[A-Z]{3}$&quot;),
+                name=&quot;payment_ledger_currency_iso_4217&quot;,
+            ),
+            models.UniqueConstraint(
+                fields=[&quot;merchant_id&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uq_payment_ledger_merchant_idempotency&quot;,
+            ),
+            models.UniqueConstraint(
+                fields=[&quot;external_provider&quot;, &quot;external_reference&quot;],
+                condition=~Q(external_provider=&quot;&quot;) &amp; ~Q(external_reference=&quot;&quot;),
+                name=&quot;uq_payment_ledger_external_reference&quot;,
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=[&quot;merchant_id&quot;, &quot;status&quot;, &quot;created_at&quot;],
+                name=&quot;idx_pay_ledg_merchant_status_created&quot;,
+            ),
+            models.Index(
+                fields=[&quot;merchant_id&quot;, &quot;payment_reference&quot;],
+                name=&quot;idx_pay_ledg_merchant_payment_ref&quot;,
+            ),
+            models.Index(
+                fields=[&quot;customer_id&quot;, &quot;created_at&quot;],
+                name=&quot;idx_pay_ledg_customer_created&quot;,
+            ),
+        ]
+
+    def __str__(self) -&gt; str:
+        return f&quot;{self.entry_type}:{self.amount} {self.currency} ({self.status})&quot;
+
+    def clean(self) -&gt; None:
+        if self.amount &lt;= 0:
+            raise ValidationError({&quot;amount&quot;: &quot;금액은 0보다 커야 합니다.&quot;})
+
+        terminal_statuses = {
+            self.Status.SUCCEEDED,
+            self.Status.FAILED,
+            self.Status.CANCELED,
+            self.Status.REFUNDED,
+        }
+
+        if self.pk:
+            previous = type(self).objects.only(
+                &quot;amount&quot;,
+                &quot;currency&quot;,
+                &quot;direction&quot;,
+                &quot;entry_type&quot;,
+                &quot;external_provider&quot;,
+                &quot;external_reference&quot;,
+                &quot;status&quot;,
+            ).get(pk=self.pk)
+
+            immutable_fields = [
+                &quot;amount&quot;,
+                &quot;currency&quot;,
+                &quot;direction&quot;,
+                &quot;entry_type&quot;,
+                &quot;external_provider&quot;,
+                &quot;external_reference&quot;,
+            ]
+            changed = [
+                field
+                for field in immutable_fields
+                if getattr(previous, field) != getattr(self, field)
+            ]
+            if changed:
+                raise ValidationError(
+                    {field: &quot;원장 엔트리의 핵심 필드는 수정할 수 없습니다.&quot; for field in changed}
+                )
+
+            if previous.status in terminal_statuses and previous.status != self.status:
+                raise ValidationError({&quot;status&quot;: &quot;종료 상태는 변경할 수 없습니다.&quot;})
+</code></pre>
+<p>Audit trail은 원장 테이블 안에 JSON으로 뭉개기보다 별도 테이블로 두는 편이 낫습니다. 상태 변경, 운영자 보정, 외부 PG 콜백 반영 같은 행위를 모두 남길 수 있습니다.</p>
+<pre><code>
+class PaymentLedgerAudit(models.Model):
+    class Action(models.TextChoices):
+        CREATED = &quot;created&quot;, &quot;Created&quot;
+        STATUS_CHANGED = &quot;status_changed&quot;, &quot;Status changed&quot;
+        PROVIDER_SYNCED = &quot;provider_synced&quot;, &quot;Provider synced&quot;
+        METADATA_UPDATED = &quot;metadata_updated&quot;, &quot;Metadata updated&quot;
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    ledger = models.ForeignKey(
+        PaymentLedger,
+        on_delete=models.PROTECT,
+        related_name=&quot;audit_events&quot;,
+    )
+    action = models.CharField(max_length=30, choices=Action)
+
+    previous_status = models.CharField(
+        max_length=20,
+        choices=PaymentLedger.Status,
+        blank=True,
+    )
+    new_status = models.CharField(
+        max_length=20,
+        choices=PaymentLedger.Status,
+        blank=True,
+    )
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name=&quot;payment_ledger_audit_events&quot;,
+    )
+    request_id = models.CharField(max_length=255, blank=True)
+    reason = models.TextField(blank=True)
+    snapshot = models.JSONField(default=dict, blank=True)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = [&quot;-occurred_at&quot;]
+        verbose_name = &quot;Payment ledger audit event&quot;
+        verbose_name_plural = &quot;Payment ledger audit events&quot;
+        indexes = [
+            models.Index(fields=[&quot;ledger&quot;, &quot;occurred_at&quot;], name=&quot;idx_pay_audit_ledger_time&quot;),
+            models.Index(fields=[&quot;request_id&quot;], name=&quot;idx_pay_audit_request_id&quot;),
+        ]
+
+    def __str__(self) -&gt; str:
+        return f&quot;{self.ledger_id}:{self.action}&quot;
+</code></pre>
+<p>도메인 용어는 이렇게 고정하는 것을 권합니다.</p>
+<p>| 용어 | 의미 | |---|---| | <code>PaymentLedger</code> | 결제 원장의 단일 엔트리, Aggregate Root | | <code>Money</code> | <code>amount + currency</code> 값 객체 | | <code>idempotency_key</code> | 동일 POST 재시도 중복 처리를 위한 클라이언트 키 | | <code>payment_reference</code> | 내부 결제 흐름의 상관관계 키 | | <code>external_reference</code> | PG사 거래 식별자 | | <code>PaymentLedgerAudit</code> | 원장 변경 감사 이벤트 |</p>
+<p>금지 동의어는 <code>price</code>, <code>cost</code>, <code>fee</code>를 원장 금액 의미로 쓰지 않는 것입니다. 원장에서는 <code>amount</code>로 통일하고, 부호 대신 <code>direction</code>으로 차변/대변 성격을 표현하는 편이 쿼리와 검증이 명확합니다.</p>
+<p>Repository와 Application Service 경계는 최소한 이렇게 분리하면 됩니다.</p>
+<pre><code>
+from abc import ABC, abstractmethod
+
+
+class PaymentLedgerRepository(ABC):
+    @abstractmethod
+    def find_by_idempotency_key(
+        self,
+        *,
+        merchant_id: str,
+        idempotency_key: str,
+    ) -&gt; PaymentLedger | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def save(self, ledger: PaymentLedger) -&gt; PaymentLedger:
+        raise NotImplementedError
+
+
+class PaymentApplicationService:
+    def __init__(self, ledger_repository: PaymentLedgerRepository) -&gt; None:
+        self.ledger_repository = ledger_repository
+
+    def record_payment(self, ledger: PaymentLedger) -&gt; PaymentLedger:
+        existing = self.ledger_repository.find_by_idempotency_key(
+            merchant_id=str(ledger.merchant_id),
+            idempotency_key=ledger.idempotency_key,
+        )
+        if existing is not None:
+            return existing
+
+        return self.ledger_repository.save(ledger)
+</code></pre>
+<p>마이그레이션 후에는 PostgreSQL 기준으로 <code>merchant_id + idempotency_key</code> 유니크 제약이 핵심입니다. 동일 키 동시 요청은 <code>transaction.atomic()</code> 안에서 생성하고, <code>IntegrityError</code> 발생 시 기존 행을 다시 읽어 같은 응답을 반환하는 방식으로 처리하는 것이 안전합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/마이그레이션 구현 → <strong>implementation-django</strong> 스킬 &gt; - 인덱스/정규화/트랜잭션 검토 → <strong>architecture-db</strong> 스킬 &gt; - 결제 도메인 경계와 애그리거트 설계 → <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

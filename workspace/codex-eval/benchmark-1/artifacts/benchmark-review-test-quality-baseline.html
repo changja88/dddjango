@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-review-test-quality baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-review-test-quality baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/baseline/benchmark-review-test-quality.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><code>/private/tmp/dddjango-codex-eval</code> 안에는 실제 Django 프로젝트/테스트 파일이 없어 특정 라인 단위 리뷰는 못 했습니다. 대신 활성화된 <code>implementation-test</code>, <code>implementation-django</code> 기준으로 “DB fixture 과의존 + 약한 assert”에 대한 pytest 품질 리뷰 기준을 정리합니다.</p>
+<p><strong>핵심 리뷰</strong> [Fixture 과의존] -- DB fixture가 시나리오의 전제 조건을 숨기면 테스트가 무엇을 검증하는지 읽히지 않습니다. <code>user</code>, <code>order</code>, <code>paid_order</code>처럼 의미 있는 fixture는 괜찮지만, 거대한 <code>seed_db</code>, <code>sample_data</code>, <code>db_fixture</code>는 테스트 의도를 가립니다.</p>
+<p>[Weak Assertion] -- <code>assert response.status_code == 200</code>, <code>assert obj is not None</code>, <code>assert len(items) &gt; 0</code>만 있으면 회귀 보호가 약합니다. 상태 코드뿐 아니라 응답 JSON, DB 상태 변화, 생성/수정된 필드, 권한/소유권, 부수효과까지 검증해야 합니다.</p>
+<p>[Excessive DB Integration] -- 단위 테스트로 충분한 도메인 규칙까지 DB를 타면 느리고 깨지기 쉽습니다. 순수 로직은 DB 없이 테스트하고, ORM/쿼리/트랜잭션/constraint가 핵심인 경우에만 <code>django_db</code>를 붙이는 기준이 필요합니다.</p>
+<p>[Obscure Test] -- fixture가 여러 단계의 관계 데이터를 자동 생성하면 테스트가 실패했을 때 원인 파악이 어렵습니다. 각 테스트의 Arrange에서 핵심 데이터는 명시하고, 반복 보일러플레이트만 factory/fixture로 숨기는 편이 낫습니다.</p>
+<p>[Missing Behavior Assertion] -- API 테스트는 “요청 성공”이 아니라 “비즈니스 동작 발생”을 검증해야 합니다. 예: 주문 생성이면 응답 코드, 응답 body, <code>Order.objects.count()</code>, <code>status</code>, <code>user</code>, <code>total_price</code>, 재고 차감, 이벤트/메일 enqueue 여부를 함께 봅니다.</p>
+<p><strong>개선 기준</strong></p>
+<ul>
+<li>fixture는 “데이터 덤프”가 아니라 “의미 있는 상태”를 만든다.</li>
+<p>예: <code>user</code>보다 <code>active_user</code>, <code>expired_subscription</code>, <code>paid_order</code>가 낫습니다.</p>
+</ul>
+<ul>
+<li>JSON/DB fixture 파일 의존은 줄이고 <code>factory_boy</code>를 기본으로 둔다.</li>
+<p><code>Trait</code>로 상태를 표현합니다: <code>OrderFactory(paid=True)</code>, <code>UserFactory(staff=True)</code>.</p>
+</ul>
+<ul>
+<li>각 테스트는 AAA 구조를 따른다.</li>
+<p>Act는 한 줄이어야 하고, 여러 Act가 있으면 테스트를 분리합니다.</p>
+</ul>
+<ul>
+<li>assert는 최소 “출력 + 상태 변화”를 검증한다.</li>
+<p>API면 <code>status_code</code>만 보지 말고 응답 body와 DB 변화를 같이 봅니다.</p>
+</ul>
+<ul>
+<li>DB가 필요 없는 테스트는 DB를 쓰지 않는다.</li>
+<p><code>SimpleTestCase</code> 또는 순수 pytest 테스트로 분리하고, <code>@pytest.mark.django_db</code>는 필요한 테스트에만 붙입니다.</p>
+</ul>
+<ul>
+<li>쿼리 성능이 사용자 경로에 중요하면 <code>assertNumQueries</code>를 추가한다.</li>
+<p>list/detail API, dashboard, admin-like 화면은 N+1 회귀 테스트가 있어야 합니다.</p>
+</ul>
+<ul>
+<li>반복 케이스는 fixture 복제가 아니라 <code>pytest.mark.parametrize</code>로 표현한다.</li>
+<p>경계값, 권한 조합, 상태 전이 테스트에 특히 유효합니다.</p>
+</ul>
+<ul>
+<li>외부 의존성만 mock한다.</li>
+<p>핵심 비즈니스 로직을 mock하지 말고 실제 객체나 InMemory Fake를 씁니다. mock을 쓰면 <code>spec</code>/<code>autospec</code>을 강제합니다.</p>
+</ul>
+<p><strong>약한 테스트 예시</strong></p>
+<pre><code>
+def test_create_order(client, user, product):
+    client.force_login(user)
+
+    response = client.post(&quot;/orders/&quot;, {&quot;product_id&quot;: product.id})
+
+    assert response.status_code == 200
+</code></pre>
+<p><strong>개선 예시</strong></p>
+<pre><code>
+@pytest.mark.django_db
+def test_create_order_authenticated_user_creates_pending_order(client, user, product):
+    client.force_login(user)
+
+    response = client.post(&quot;/orders/&quot;, {&quot;product_id&quot;: product.id})
+
+    assert response.status_code == 201
+    assert response.json()[&quot;status&quot;] == &quot;pending&quot;
+
+    order = Order.objects.get()
+    assert order.user == user
+    assert order.product == product
+    assert order.status == Order.Status.PENDING
+    assert order.total_price == product.price
+</code></pre>
+<p>우선 적용할 리뷰 게이트는 이 정도가 적절합니다: “fixture 이름만 보고 상태가 이해되는가”, “Act가 하나인가”, “status code 외에 비즈니스 결과를 검증하는가”, “DB가 정말 필요한 테스트인가”, “실패 시 원인이 한눈에 좁혀지는가”.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - pytest fixture/assert 품질 개선 → <strong>implementation-test</strong> 스킬 &gt; - Django 테스트 구조와 DB 사용 기준 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

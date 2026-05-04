@@ -1,0 +1,18 @@
+{
+  "case_id": "trigger-negative-dockerfile",
+  "category": "trigger",
+  "title": "Negative trigger for generic Dockerfile",
+  "expectations": [
+    "korean_first",
+    "negative_control_passed",
+    "trigger_precision"
+  ],
+  "scoring_focus": [
+    "일반 Python Dockerfile로 답한다.",
+    "Django 설정을 추가하지 않는다.",
+    "필요한 경우 최소 실행 명령을 포함한다."
+  ],
+  "prompt": "간단한 Python 스크립트를 실행하는 Dockerfile을 작성해줘.",
+  "trigger_type": "negative",
+  "expected_behavior": "Do not force Django deployment guidance; provide a generic Python Dockerfile."
+}

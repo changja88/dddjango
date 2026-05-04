@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-service-layer dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-service-layer dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/dddjango/benchmark-ddd-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>Django 프로젝트에서 application service는 <strong>Ninja router와 domain model 사이의 application layer</strong>에 두는 게 좋습니다. 역할은 “HTTP 요청을 처리”하는 것도 아니고, “비즈니스 규칙을 직접 구현”하는 것도 아니라, <strong>하나의 유스케이스를 조율</strong>하는 것입니다.</p>
+<p>권장 위치는 프로젝트의 DDD 적용 강도에 따라 다릅니다.</p>
+<pre><code>
+apps/
+  orders/
+    api.py                       # Django Ninja Router
+    schemas.py                   # 요청/응답 Schema
+    application/
+      services.py                # Application Service
+      commands.py                # Command DTO
+    domain/
+      models.py                  # Aggregate, Entity, Value Object
+      repositories.py            # Repository ABC
+      events.py
+      exceptions.py
+    infrastructure/
+      repositories.py            # Django ORM Repository 구현
+</code></pre>
+<p>작고 실용적인 Django 프로젝트라면 아래처럼 시작해도 됩니다.</p>
+<pre><code>
+apps/
+  orders/
+    api.py
+    schemas.py
+    services.py                  # 쓰기 유스케이스
+    selectors.py                 # 읽기 쿼리
+    models.py                    # Django 모델 + 일부 도메인 로직
+</code></pre>
+<p>다만 “domain model”, “repository”, “application service”를 명확히 나누려는 프로젝트라면 <code>services.py</code>를 앱 루트에 두기보다 <code>application/services.py</code>로 분리하는 편이 경계가 선명합니다.</p>
+<p>관계는 이렇게 잡으면 됩니다.</p>
+<pre><code>
+Django Ninja Router
+  -&gt; Application Service
+    -&gt; Repository
+      -&gt; Domain Model
+    -&gt; Domain Model method
+    -&gt; Repository.save()
+</code></pre>
+<p><code>Ninja router</code>는 얇아야 합니다. 요청 Schema를 받고, 인증/인가에 필요한 request 정보를 확인하고, application service에 command를 넘긴 뒤, 결과를 response Schema로 변환합니다. 이 프로젝트 정책상 API는 DRF가 아니라 <strong>Django Ninja Router/Schema</strong>로 작성합니다.</p>
+<pre><code>
+# apps/orders/api.py
+from ninja import Router
+
+from .application.commands import ConfirmOrderCommand
+from .application.services import OrderApplicationService
+from .schemas import OrderConfirmIn, OrderOut
+
+router = Router(tags=[&quot;orders&quot;])
+
+
+@router.post(&quot;/{order_id}/confirmation&quot;, response={200: OrderOut})
+def confirm_order(request, order_id: str, payload: OrderConfirmIn) -&gt; OrderOut:
+    service = OrderApplicationService.create_default()
+
+    result = service.confirm_order(
+        ConfirmOrderCommand(
+            order_id=order_id,
+            actor_id=str(request.user.id),
+            reason=payload.reason,
+        )
+    )
+
+    return OrderOut.from_domain(result)
+</code></pre>
+<p><code>Application Service</code>는 유스케이스의 흐름을 담당합니다. 트랜잭션을 열고, repository로 aggregate를 조회하고, domain model의 메서드를 호출하고, 변경된 aggregate를 저장합니다. 이메일, 알림, 외부 API 호출 같은 부수 효과는 커밋 이후 실행되도록 <code>transaction.on_commit()</code>에 둡니다.</p>
+<pre><code>
+# apps/orders/application/services.py
+from dataclasses import dataclass
+
+from django.db import transaction
+
+from apps.orders.application.commands import ConfirmOrderCommand
+from apps.orders.domain.repositories import OrderRepository
+from apps.orders.infrastructure.repositories import DjangoOrderRepository
+
+
+@dataclass
+class OrderApplicationService:
+    order_repository: OrderRepository
+
+    @classmethod
+    def create_default(cls) -&gt; &quot;OrderApplicationService&quot;:
+        return cls(order_repository=DjangoOrderRepository())
+
+    def confirm_order(self, command: ConfirmOrderCommand):
+        with transaction.atomic():
+            order = self.order_repository.find_by_id(command.order_id)
+            if order is None:
+                raise OrderNotFoundError(command.order_id)
+
+            order.confirm(actor_id=command.actor_id, reason=command.reason)
+
+            self.order_repository.save(order)
+            events = order.collect_events()
+
+        transaction.on_commit(lambda: publish_events(events))
+
+        return order
+</code></pre>
+<p><code>Domain Model</code>은 비즈니스 규칙을 가져야 합니다. 예를 들어 “이미 취소된 주문은 확정할 수 없다”, “확정 시각은 한 번만 기록된다”, “확정되면 <code>OrderConfirmedEvent</code>가 발생한다” 같은 규칙은 application service가 아니라 aggregate 안에 둡니다.</p>
+<pre><code>
+# apps/orders/domain/models.py
+@dataclass
+class Order:
+    id: str
+    status: OrderStatus
+    confirmed_by: str | None = None
+
+    def confirm(self, *, actor_id: str, reason: str | None) -&gt; None:
+        if self.status != OrderStatus.PENDING:
+            raise OrderCannotBeConfirmedError(self.id)
+
+        self.status = OrderStatus.CONFIRMED
+        self.confirmed_by = actor_id
+        self._record_event(OrderConfirmedEvent(order_id=self.id))
+</code></pre>
+<p><code>Repository</code>는 application service가 domain model을 저장하고 조회하는 포트입니다. DDD를 강하게 적용한다면 <strong>인터페이스는 domain layer</strong>, <strong>Django ORM 구현은 infrastructure layer</strong>에 둡니다. 이렇게 해야 domain model이 Django ORM이나 DB 구조를 몰라도 됩니다.</p>
+<pre><code>
+# apps/orders/domain/repositories.py
+from abc import ABC, abstractmethod
+
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id: str) -&gt; Order | None:
+        ...
+
+    @abstractmethod
+    def save(self, order: Order) -&gt; None:
+        ...
+</code></pre>
+<pre><code>
+# apps/orders/infrastructure/repositories.py
+class DjangoOrderRepository(OrderRepository):
+    def find_by_id(self, order_id: str) -&gt; Order | None:
+        orm_order = OrderModel.objects.filter(id=order_id).first()
+        if orm_order is None:
+            return None
+        return self._to_domain(orm_order)
+
+    def save(self, order: Order) -&gt; None:
+        orm_order = self._to_orm(order)
+        orm_order.save()
+</code></pre>
+<p>실무 기준으로는 이렇게 판단하면 됩니다.</p>
+<p><code>api.py</code>에 두면 안 됩니다. Router는 transport layer라서 HTTP, 인증, Schema 변환만 담당해야 합니다.</p>
+<p><code>domain/models.py</code>에 두면 안 됩니다. Application service는 repository, transaction, 외부 서비스 호출 같은 application concern을 다루기 때문에 순수 domain model보다 바깥 계층입니다.</p>
+<p><code>repository</code>에 두면 안 됩니다. Repository는 저장/조회 추상화입니다. “주문 확정 유스케이스” 같은 흐름 제어는 repository 책임이 아닙니다.</p>
+<p>복잡한 도메인이라면 <code>application/services.py</code>에 둡니다. 가장 DDD에 맞는 위치입니다.</p>
+<p>일반적인 Django CRUD 중심 프로젝트라면 <code>services.py</code>와 <code>selectors.py</code>로 시작합니다. 이후 도메인 복잡도가 커질 때 <code>application/</code>, <code>domain/</code>, <code>infrastructure/</code>로 분리해도 됩니다.</p>
+<p>요약하면, application service는 <strong>각 bounded context 또는 Django app 안의 application layer</strong>에 두고, Ninja router는 service를 호출만 하며, domain model은 비즈니스 규칙을 수행하고, repository는 aggregate 저장/조회만 담당하게 나누는 구조가 가장 깔끔합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - DDD aggregate/repository/application service 설계 → <strong>architecture-ddd</strong> 스킬 &gt; - Django 서비스 레이어와 selectors 구조 → <strong>implementation-django</strong> 스킬 &gt; - Django Ninja Router/Schema API 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

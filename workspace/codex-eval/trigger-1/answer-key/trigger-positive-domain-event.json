@@ -1,0 +1,19 @@
+{
+  "case_id": "trigger-positive-domain-event",
+  "category": "trigger",
+  "title": "Positive trigger for domain events",
+  "expectations": [
+    "korean_first",
+    "ddd_boundaries",
+    "transaction_boundary",
+    "trigger_recall"
+  ],
+  "scoring_focus": [
+    "domain event와 integration event를 구분한다.",
+    "트랜잭션 이후 발행 시점을 고려한다.",
+    "Django 구현 위치를 현실적으로 제안한다."
+  ],
+  "prompt": "Django에서 주문 완료 후 domain event를 발행하는 구조를 DDD 기준으로 제안해줘.",
+  "trigger_type": "positive",
+  "expected_behavior": "Apply dddjango DDD guidance: domain event boundary, transaction timing, integration approach."
+}

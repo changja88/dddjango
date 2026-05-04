@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-rust-function baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-rust-function baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-negative-rust-function.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> 저장소가 비어 있고 <code>config.toml</code>도 없어서 파일에 직접 추가할 위치가 없습니다. 대신 바로 사용할 수 있는 Rust <code>slugify</code> 함수는 아래처럼 작성하면 됩니다.</p>
+<pre><code>
+pub fn slugify(input: &amp;str) -&gt; String {
+    let mut slug = String::new();
+    let mut last_was_dash = false;
+
+    for ch in input.chars().flat_map(|c| c.to_lowercase()) {
+        if ch.is_ascii_alphanumeric() {
+            slug.push(ch);
+            last_was_dash = false;
+        } else if ch.is_whitespace() || ch == &#x27;-&#x27; || ch == &#x27;_&#x27; {
+            if !slug.is_empty() &amp;&amp; !last_was_dash {
+                slug.push(&#x27;-&#x27;);
+                last_was_dash = true;
+            }
+        }
+    }
+
+    if slug.ends_with(&#x27;-&#x27;) {
+        slug.pop();
+    }
+
+    slug
+}
+</code></pre>
+<p>테스트 예시:</p>
+<pre><code>
+#[cfg(test)]
+mod tests {
+    use super::slugify;
+
+    #[test]
+    fn slugifies_basic_text() {
+        assert_eq!(slugify(&quot;Hello, World!&quot;), &quot;hello-world&quot;);
+    }
+
+    #[test]
+    fn collapses_separators() {
+        assert_eq!(slugify(&quot; Rust --- slugify___test &quot;), &quot;rust-slugify-test&quot;);
+    }
+
+    #[test]
+    fn removes_non_ascii_symbols() {
+        assert_eq!(slugify(&quot;Hello @#$ World&quot;), &quot;hello-world&quot;);
+    }
+}
+</code></pre>
+<p>주의: 이 버전은 ASCII 중심입니다. <code>한글</code>, <code>é</code>, <code>ü</code> 같은 비ASCII 문자를 보존하거나 음역하려면 <code>unicode-normalization</code> 같은 크레이트를 쓰는 방식으로 확장해야 합니다.</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-order-status baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-order-status baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/baseline/benchmark-api-order-status.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래는 Django Ninja + DDD 기준의 “주문 상태 변경 API” 설계 예시입니다. 핵심은 API가 상태 전이 규칙을 직접 알지 않고, 애플리케이션 서비스가 유스케이스를 조율하며, 상태 전이 규칙은 도메인 Aggregate 안에 두는 구조입니다.</p>
+<p><strong>상태 전이 규칙</strong></p>
+<pre><code>
+PAYMENT_WAITING  -&gt; PAID
+PAYMENT_WAITING  -&gt; CANCEL_REQUESTED
+PAID             -&gt; CANCEL_REQUESTED
+CANCEL_REQUESTED -&gt; 변경 불가
+</code></pre>
+<h2>디렉터리 예시</h2>
+<pre><code>
+orders/
+  domain/
+    order.py
+    repository.py
+    exceptions.py
+  application/
+    change_order_status.py
+  infrastructure/
+    django_models.py
+    django_repository.py
+  interfaces/
+    api.py
+</code></pre>
+<h2>Domain</h2>
+<pre><code>
+# orders/domain/order.py
+from dataclasses import dataclass
+from enum import StrEnum
+
+
+class OrderStatus(StrEnum):
+    PAYMENT_WAITING = &quot;PAYMENT_WAITING&quot;
+    PAID = &quot;PAID&quot;
+    CANCEL_REQUESTED = &quot;CANCEL_REQUESTED&quot;
+
+
+class InvalidOrderStatusTransition(Exception):
+    pass
+
+
+@dataclass
+class Order:
+    id: int
+    status: OrderStatus
+
+    def mark_as_paid(self) -&gt; None:
+        if self.status != OrderStatus.PAYMENT_WAITING:
+            raise InvalidOrderStatusTransition(
+                f&quot;{self.status} 상태에서는 결제 완료로 변경할 수 없습니다.&quot;
+            )
+
+        self.status = OrderStatus.PAID
+
+    def request_cancel(self) -&gt; None:
+        if self.status not in {
+            OrderStatus.PAYMENT_WAITING,
+            OrderStatus.PAID,
+        }:
+            raise InvalidOrderStatusTransition(
+                f&quot;{self.status} 상태에서는 취소 요청할 수 없습니다.&quot;
+            )
+
+        self.status = OrderStatus.CANCEL_REQUESTED
+</code></pre>
+<pre><code>
+# orders/domain/repository.py
+from abc import ABC, abstractmethod
+
+from orders.domain.order import Order
+
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def get_by_id(self, order_id: int) -&gt; Order:
+        raise NotImplementedError
+
+    @abstractmethod
+    def save(self, order: Order) -&gt; None:
+        raise NotImplementedError
+</code></pre>
+<h2>Application Service</h2>
+<pre><code>
+# orders/application/change_order_status.py
+from dataclasses import dataclass
+from enum import StrEnum
+
+from orders.domain.order import Order, OrderStatus
+from orders.domain.repository import OrderRepository
+
+
+class OrderStatusCommand(StrEnum):
+    PAY = &quot;PAY&quot;
+    REQUEST_CANCEL = &quot;REQUEST_CANCEL&quot;
+
+
+@dataclass(frozen=True)
+class ChangeOrderStatusInput:
+    order_id: int
+    command: OrderStatusCommand
+
+
+@dataclass(frozen=True)
+class ChangeOrderStatusOutput:
+    order_id: int
+    status: OrderStatus
+
+
+class ChangeOrderStatusUseCase:
+    def __init__(self, order_repository: OrderRepository):
+        self.order_repository = order_repository
+
+    def execute(self, data: ChangeOrderStatusInput) -&gt; ChangeOrderStatusOutput:
+        order = self.order_repository.get_by_id(data.order_id)
+
+        match data.command:
+            case OrderStatusCommand.PAY:
+                order.mark_as_paid()
+            case OrderStatusCommand.REQUEST_CANCEL:
+                order.request_cancel()
+
+        self.order_repository.save(order)
+
+        return ChangeOrderStatusOutput(
+            order_id=order.id,
+            status=order.status,
+        )
+</code></pre>
+<h2>Infrastructure</h2>
+<pre><code>
+# orders/infrastructure/django_models.py
+from django.db import models
+
+
+class OrderModel(models.Model):
+    class Status(models.TextChoices):
+        PAYMENT_WAITING = &quot;PAYMENT_WAITING&quot;, &quot;결제 대기&quot;
+        PAID = &quot;PAID&quot;, &quot;결제 완료&quot;
+        CANCEL_REQUESTED = &quot;CANCEL_REQUESTED&quot;, &quot;취소 요청&quot;
+
+    status = models.CharField(
+        max_length=30,
+        choices=Status.choices,
+        default=Status.PAYMENT_WAITING,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+</code></pre>
+<pre><code>
+# orders/infrastructure/django_repository.py
+from django.shortcuts import get_object_or_404
+
+from orders.domain.order import Order, OrderStatus
+from orders.domain.repository import OrderRepository
+from orders.infrastructure.django_models import OrderModel
+
+
+class DjangoOrderRepository(OrderRepository):
+    def get_by_id(self, order_id: int) -&gt; Order:
+        row = get_object_or_404(OrderModel, id=order_id)
+
+        return Order(
+            id=row.id,
+            status=OrderStatus(row.status),
+        )
+
+    def save(self, order: Order) -&gt; None:
+        OrderModel.objects.filter(id=order.id).update(
+            status=order.status.value,
+        )
+</code></pre>
+<h2>Django Ninja API</h2>
+<pre><code>
+# orders/interfaces/api.py
+from ninja import Router, Schema
+from django.db import transaction
+from django.http import HttpRequest
+
+from orders.application.change_order_status import (
+    ChangeOrderStatusInput,
+    ChangeOrderStatusUseCase,
+    OrderStatusCommand,
+)
+from orders.domain.order import InvalidOrderStatusTransition
+from orders.infrastructure.django_repository import DjangoOrderRepository
+
+router = Router(tags=[&quot;orders&quot;])
+
+
+class ChangeOrderStatusRequest(Schema):
+    command: OrderStatusCommand
+
+
+class OrderStatusResponse(Schema):
+    order_id: int
+    status: str
+
+
+class ErrorResponse(Schema):
+    message: str
+
+
+@router.patch(
+    &quot;/orders/{order_id}/status&quot;,
+    response={
+        200: OrderStatusResponse,
+        400: ErrorResponse,
+        404: ErrorResponse,
+    },
+)
+def change_order_status(
+    request: HttpRequest,
+    order_id: int,
+    payload: ChangeOrderStatusRequest,
+):
+    use_case = ChangeOrderStatusUseCase(
+        order_repository=DjangoOrderRepository(),
+    )
+
+    try:
+        with transaction.atomic():
+            result = use_case.execute(
+                ChangeOrderStatusInput(
+                    order_id=order_id,
+                    command=payload.command,
+                )
+            )
+
+    except InvalidOrderStatusTransition as exc:
+        return 400, ErrorResponse(message=str(exc))
+
+    return 200, OrderStatusResponse(
+        order_id=result.order_id,
+        status=result.status.value,
+    )
+</code></pre>
+<h2>URL 등록</h2>
+<pre><code>
+# api.py 또는 project-level urls.py
+from ninja import NinjaAPI
+from orders.interfaces.api import router as orders_router
+
+api = NinjaAPI()
+api.add_router(&quot;&quot;, orders_router)
+</code></pre>
+<h2>요청 예시</h2>
+<p>결제 완료 처리:</p>
+<pre><code>
+PATCH /orders/1/status
+Content-Type: application/json
+
+{
+  &quot;command&quot;: &quot;PAY&quot;
+}
+</code></pre>
+<p>취소 요청:</p>
+<pre><code>
+PATCH /orders/1/status
+Content-Type: application/json
+
+{
+  &quot;command&quot;: &quot;REQUEST_CANCEL&quot;
+}
+</code></pre>
+<p>이 구조에서 중요한 점은 <code>Order.mark_as_paid()</code>와 <code>Order.request_cancel()</code>이 상태 전이의 단일 진실 공급원이라는 점입니다. API, Django Model, Repository는 도메인 규칙을 직접 판단하지 않습니다.</p></article>
+  </main>
+</body>
+</html>

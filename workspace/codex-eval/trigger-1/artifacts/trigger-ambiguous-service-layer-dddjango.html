@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-service-layer dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-service-layer dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-ambiguous-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>일반적인 Django 프로젝트라면 먼저 앱 안에 둡니다.</p>
+<pre><code>
+apps/
+  orders/
+    models.py
+    services.py      # 쓰기/Command 유스케이스
+    selectors.py     # 읽기/Query 전용
+    api.py           # Django Ninja Router가 services/selectors 호출
+</code></pre>
+<p>즉 <code>orders.services.order_confirm()</code>, <code>users.services.user_create()</code>처럼 <strong>도메인 앱별 <code>services.py</code></strong>에 두는 게 가장 실용적입니다. 전역 <code>services/</code> 폴더는 금방 잡탕이 되기 쉬워서 피하는 편이 좋습니다.</p>
+<p>다만 DDD를 더 강하게 적용하는 구조라면 “서비스”를 둘로 나눠야 합니다.</p>
+<pre><code>
+applications/
+  orders/
+    domain_layer/
+      service/              # 도메인 서비스
+    application_layer/
+      order_service.py      # 응용 서비스
+    infra_layer/
+      django_orders/
+        models/
+    presentation_layer/
+      api/
+</code></pre>
+<p>구분 기준은 이렇습니다.</p>
+<p><code>domain_layer/service/</code>에 둘 것: 여러 애그리거트에 걸친 <strong>순수 도메인 계산/판단</strong>이고, DB/HTTP/Django ORM에 의존하지 않는 무상태 로직입니다. 예: 할인 계산, 정산 규칙, 배정 가능성 판단.</p>
+<p><code>application_layer/*_service.py</code> 또는 Django 앱의 <code>services.py</code>에 둘 것: 유스케이스를 조율하는 로직입니다. 예: 주문 조회 → 상태 변경 → 저장 → 커밋 후 알림 예약. 트랜잭션, 리포지토리/ORM 호출, <code>transaction.on_commit()</code>은 여기에 둡니다.</p>
+<p><code>selectors.py</code>에 둘 것: 상태 변경 없는 읽기 전용 쿼리입니다. 예: <code>order_list()</code>, <code>order_detail()</code>, <code>available_products()</code>.</p>
+<p>가장 추천하는 시작점은 이겁니다.</p>
+<pre><code>
+apps/orders/
+  models.py       # 핵심 불변식과 단일 모델/애그리거트의 도메인 메서드
+  services.py     # 쓰기 유스케이스, 트랜잭션, 외부 부수효과 조율
+  selectors.py    # 읽기 쿼리
+</code></pre>
+<p>서비스 레이어에 모든 비즈니스 로직을 몰아넣지는 않는 게 좋습니다. <code>order.confirm()</code>처럼 애그리거트/모델이 스스로 지켜야 하는 상태 전이와 불변식은 모델 쪽에 두고, 서비스는 “무엇을 어떤 순서로 호출할지”만 조율하게 두는 게 유지보수성이 좋습니다.</p>
+<p>현재 워크스페이스에는 <code>config.toml</code>과 실제 프로젝트 파일이 없어, dddjango 기준의 일반 권장안으로 답했습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 서비스 레이어/셀렉터 배치 → <strong>implementation-django</strong> 스킬 &gt; - 도메인 서비스 vs 응용 서비스 구분 → <strong>architecture-ddd</strong> 스킬 &gt; - 헥사고날/클린 구조로 확장 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

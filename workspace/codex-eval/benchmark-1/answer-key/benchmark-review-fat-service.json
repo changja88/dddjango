@@ -1,0 +1,19 @@
+{
+  "case_id": "benchmark-review-fat-service",
+  "category": "review",
+  "title": "Review overloaded application service",
+  "expectations": [
+    "korean_first",
+    "architecture_review",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "책임 과다, ORM query, 동시성, 외부 gateway 의존성을 짚는다.",
+    "위험도 순서로 개선한다.",
+    "무조건 거대한 계층 구조를 강요하지 않는다."
+  ],
+  "prompt": "아래 서비스가 너무 많은 책임을 갖는지 리뷰해줘.\n\n```python\nclass CheckoutService:\n    def checkout(self, user, items, coupon_code, payment_gateway):\n        order = Order.objects.create(user=user)\n        total = 0\n        for item in items:\n            product = Product.objects.get(id=item[\"product_id\"])\n            if product.stock < item[\"quantity\"]:\n                raise ValueError(\"out of stock\")\n            product.stock -= item[\"quantity\"]\n            product.save()\n            total += product.price * item[\"quantity\"]\n        if coupon_code:\n            coupon = Coupon.objects.get(code=coupon_code)\n            total -= coupon.discount_amount\n        payment_gateway.prepare(total)\n        order.total_amount = total\n        order.save()\n        return order\n```",
+  "trigger_type": "",
+  "expected_behavior": ""
+}

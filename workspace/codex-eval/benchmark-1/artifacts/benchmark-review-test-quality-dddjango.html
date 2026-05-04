@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-review-test-quality dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-review-test-quality dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/dddjango/benchmark-review-test-quality.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>검토 범위</strong></p>
+<p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 <code>config.toml</code>도 없어서 실제 테스트 파일을 읽거나 <code>pytest</code>를 실행할 수는 없었습니다. 따라서 아래는 “DB fixture 과의존 + 약한 assert”라는 증상에 대한 pytest/Django 품질 리뷰 기준입니다.</p>
+<p><strong>주요 이슈</strong></p>
+<p>[Independent / Repeatable] -- DB fixture에 지나치게 의존하면 테스트가 데이터셋의 암묵적 상태에 묶입니다. 어떤 레코드가 왜 필요한지 테스트 안에서 보이지 않고, fixture가 바뀌면 관련 없어 보이는 테스트가 깨집니다. JSON dump나 대형 seed fixture는 <code>tests/real/</code> 또는 좁은 통합 테스트로 제한하고, 대부분은 <code>factory_boy</code> 또는 명시적 pytest fixture로 필요한 데이터만 생성해야 합니다.</p>
+<p>[AAA / Obscure Test] -- fixture가 테스트의 Arrange를 숨기면 테스트가 무엇을 검증하는지 읽기 어렵습니다. 테스트 본문에서 “이 조건 때문에 이 결과가 나온다”가 보여야 합니다. 공통 객체 생성은 fixture/factory로 빼되, 상태 변형은 테스트 안에서 명시하세요.</p>
+<p>[Self-Validating / The Liar] -- <code>assert response.status_code == 200</code>, <code>assert obj is not None</code>, <code>assert len(items) &gt; 0</code> 수준은 약합니다. 정상 응답 여부만 확인하고 비즈니스 결과, DB 상태 변화, 응답 schema, 권한 필터링, 부수효과를 검증하지 못합니다.</p>
+<p>[Mutation Testing] -- 경계값이 없으면 <code>&gt;</code>가 <code>&gt;=</code>로 바뀌거나 조건이 반전돼도 테스트가 통과할 수 있습니다. 할인, 상태 전이, 권한, 수량, 날짜 범위 같은 조건은 <code>boundary - 1</code>, <code>boundary</code>, <code>boundary + 1</code>을 <code>parametrize</code>로 검증해야 합니다.</p>
+<p>[Django Testing] -- DB가 필요 없는 도메인/서비스 테스트까지 <code>@pytest.mark.django_db</code>를 붙이면 피드백이 느려지고 설계 결합이 커집니다. 순수 로직은 <code>tests/isolated/unit/</code>에서 DB 없이 테스트하고, ORM query, constraint, transaction, <code>select_related/prefetch_related</code> 동작만 DB 테스트로 둡니다.</p>
+<p><strong>개선 기준</strong></p>
+<ul>
+<li>DB fixture는 “대형 공통 fixture”가 아니라 “테스트별 최소 데이터”로 바꿉니다.</li>
+<p>기준: 테스트 하나가 필요한 모델 인스턴스를 1분 안에 설명할 수 있어야 합니다.</p>
+</ul>
+<ul>
+<li><code>factory_boy</code>를 기본 데이터 생성 방식으로 사용합니다.</li>
+<p>기준: 상태별 객체는 <code>Trait</code>로 표현합니다. 예: <code>OrderFactory(paid=True)</code>, <code>UserFactory(is_staff=True)</code>.</p>
+</ul>
+<ul>
+<li>DB 접근은 명시적으로 제한합니다.</li>
+<p>기준: <code>@pytest.mark.django_db</code>가 붙은 테스트는 ORM 동작, constraint, transaction, queryset, view/API 통합 중 하나를 검증해야 합니다.</p>
+</ul>
+<ul>
+<li>assertion은 결과 중심으로 강화합니다.</li>
+<p>우선순위: 반환값 검증 &gt; 상태 검증 &gt; 외부 협력자 호출 검증. 기준: <code>status_code</code>만 확인하는 API 테스트는 실패입니다. 응답 body, DB 변화, 권한 필터링, 에러 메시지를 함께 검증해야 합니다.</p>
+</ul>
+<ul>
+<li>테스트 이름은 조건과 기대 결과를 포함합니다.</li>
+<p>기준: <code>test_create_order</code>보다 <code>test_order_create_with_valid_items_persists_pending_order</code>처럼 읽혀야 합니다.</p>
+</ul>
+<ul>
+<li>성능 경로는 쿼리 수를 고정합니다.</li>
+<p>기준: list/detail endpoint나 selector 테스트에는 <code>assertNumQueries</code> 또는 <code>django_assert_num_queries</code>를 사용합니다.</p>
+</ul>
+<ul>
+<li>외부 의존성은 실제 호출하지 않습니다.</li>
+<p>기준: HTTP는 <code>responses</code>, 시간은 <code>time-machine</code>, Repository/Gateway는 <code>InMemoryFake</code> 또는 <code>create_autospec</code> 기반 double을 사용합니다.</p>
+</ul>
+<p><strong>RED 예시</strong></p>
+<pre><code>
+import pytest
+
+from orders.models import Order
+from orders.tests.factories import OrderFactory, UserFactory
+
+
+@pytest.mark.django_db
+def test_order_cancel_when_paid_marks_cancelled_and_restores_stock():
+    user = UserFactory()
+    order = OrderFactory(paid=True, user=user, item_count=2)
+
+    result = cancel_order(order_id=order.id, requested_by=user)
+
+    order.refresh_from_db()
+    assert result.cancelled is True
+    assert order.status == Order.Status.CANCELLED
+    assert order.cancelled_by == user
+    assert order.items.count() == 2
+    assert all(item.stock_restored for item in order.items.all())
+</code></pre>
+<p>예상 실패 이유: 기존 테스트가 fixture의 주문 데이터 존재 여부나 <code>status_code == 200</code>만 확인하고 있다면, <code>cancel_order</code>의 반환 타입, 상태 전이, <code>cancelled_by</code>, 재고 복구 같은 실제 동작이 구현되어 있지 않아 실패해야 합니다.</p>
+<p><strong>GREEN 최소 구현 방향</strong></p>
+<pre><code>
+from dataclasses import dataclass
+from django.db import transaction
+
+@dataclass(frozen=True)
+class CancelOrderResult:
+    cancelled: bool
+
+
+@transaction.atomic
+def cancel_order(*, order_id: int, requested_by) -&gt; CancelOrderResult:
+    order = Order.objects.select_for_update().get(id=order_id, user=requested_by)
+    order.status = Order.Status.CANCELLED
+    order.cancelled_by = requested_by
+    order.save(update_fields=[&quot;status&quot;, &quot;cancelled_by&quot;])
+
+    for item in order.items.select_related(&quot;product&quot;):
+        item.restore_stock()
+
+    return CancelOrderResult(cancelled=True)
+</code></pre>
+<p><strong>REFACTOR 방향</strong></p>
+<p>DB fixture dump를 제거하고 <code>tests/isolated/factories.py</code> 또는 앱별 <code>tests/factories.py</code>로 옮기세요. 테스트는 <code>OrderFactory(paid=True)</code>처럼 필요한 상태만 선언하게 만들고, 공통 fixture는 <code>conftest.py</code>에서 function scope로 제공합니다. 약한 assertion은 mutation testing 관점으로 보강하고, 경계값은 <code>pytest.mark.parametrize</code>로 분리합니다.</p>
+<p>실행 명령은 실제 프로젝트에서 다음처럼 나누는 것이 좋습니다.</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/ -q
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/ --randomly-seed=last -q
+mutmut run --paths-to-mutate &quot;apps/&quot; --tests-dir &quot;tests/isolated/&quot;
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - pytest 품질/fixture/assertion 개선 → <strong>implementation-test</strong> 스킬 &gt; - Django 테스트 settings, ORM 테스트, Factory Boy → <strong>implementation-django</strong> 스킬 &gt; - RED/GREEN/REFACTOR 기준 정리 → <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-pytest-coupon-tdd dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-pytest-coupon-tdd dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-positive-pytest-coupon-tdd.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>실제 구현 파일 수정과 pytest 실행은 못 했습니다. 현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 <code>config.toml</code>도 없으며, 세션이 read-only입니다. 그래서 실행했다고 주장하지 않고, 이 프로젝트의 <code>dddjango</code> 규칙에 맞춰 붙여 넣을 수 있는 TDD 산출물로 제공합니다. API는 DRF가 아니라 Django Ninja 기준입니다.</p>
+<p>권장 설계는 <code>Coupon</code>을 쿠폰 규칙의 Aggregate Root로 두고, <code>coupon_apply()</code> 서비스가 <code>Order</code>와 <code>Coupon</code>을 <code>transaction.atomic()</code> + <code>select_for_update()</code>로 조율하는 방식입니다.</p>
+<p><strong>RED</strong></p>
+<p><code>tests/isolated/integration/test_coupon_apply.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+import pytest
+from django.utils import timezone
+
+from apps.coupons.exceptions import CouponMinimumOrderAmountNotMet
+from apps.coupons.models import Coupon
+from apps.coupons.services import coupon_apply
+from apps.orders.models import Order
+
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def user(django_user_model):
+    return django_user_model.objects.create_user(&quot;buyer@example.com&quot;)
+
+
+def test_coupon_apply_valid_fixed_coupon_discounts_order_and_consumes_usage(user):
+    now = timezone.now()
+    order = Order.objects.create(
+        user=user,
+        subtotal=Decimal(&quot;30000.00&quot;),
+        discount_total=Decimal(&quot;0.00&quot;),
+        total=Decimal(&quot;30000.00&quot;),
+        status=Order.Status.DRAFT,
+    )
+    coupon = Coupon.objects.create(
+        code=&quot;WELCOME5000&quot;,
+        discount_type=Coupon.DiscountType.FIXED,
+        amount=Decimal(&quot;5000.00&quot;),
+        minimum_order_amount=Decimal(&quot;10000.00&quot;),
+        valid_from=now,
+        valid_until=now + timezone.timedelta(days=7),
+        usage_limit=10,
+    )
+
+    result = coupon_apply(order_id=order.id, code=&quot; welcome5000 &quot;, user=user)
+
+    order.refresh_from_db()
+    coupon.refresh_from_db()
+    assert result.discount_total == Decimal(&quot;5000.00&quot;)
+    assert order.discount_total == Decimal(&quot;5000.00&quot;)
+    assert order.total == Decimal(&quot;25000.00&quot;)
+    assert order.applied_coupon == coupon
+    assert coupon.used_count == 1
+
+
+def test_coupon_apply_requires_minimum_order_amount(user):
+    now = timezone.now()
+    order = Order.objects.create(
+        user=user,
+        subtotal=Decimal(&quot;9000.00&quot;),
+        discount_total=Decimal(&quot;0.00&quot;),
+        total=Decimal(&quot;9000.00&quot;),
+        status=Order.Status.DRAFT,
+    )
+    Coupon.objects.create(
+        code=&quot;MIN10000&quot;,
+        discount_type=Coupon.DiscountType.FIXED,
+        amount=Decimal(&quot;1000.00&quot;),
+        minimum_order_amount=Decimal(&quot;10000.00&quot;),
+        valid_from=now,
+        valid_until=now + timezone.timedelta(days=7),
+    )
+
+    with pytest.raises(CouponMinimumOrderAmountNotMet):
+        coupon_apply(order_id=order.id, code=&quot;MIN10000&quot;, user=user)
+</code></pre>
+<p>예상 RED 실패 이유: <code>apps.coupons</code> 앱, <code>Coupon</code> 모델, 쿠폰 예외, <code>coupon_apply()</code> 서비스, <code>Order.applied_coupon</code>/<code>discount_total</code> 필드가 아직 없어서 import 또는 ORM 필드 오류로 실패해야 합니다.</p>
+<p><strong>GREEN</strong></p>
+<p><code>apps/coupons/exceptions.py</code></p>
+<pre><code>
+class CouponApplyError(Exception): ...
+
+
+class CouponNotRedeemable(CouponApplyError): ...
+
+
+class CouponMinimumOrderAmountNotMet(CouponNotRedeemable): ...
+
+
+class CouponUsageLimitExceeded(CouponNotRedeemable): ...
+
+
+class CouponApplyNotAllowed(CouponApplyError): ...
+</code></pre>
+<p><code>apps/coupons/models.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import F, Q
+from django.utils import timezone
+
+
+class Coupon(models.Model):
+    class DiscountType(models.TextChoices):
+        FIXED = &quot;fixed&quot;, &quot;Fixed&quot;
+        PERCENT = &quot;percent&quot;, &quot;Percent&quot;
+
+    class Status(models.TextChoices):
+        ACTIVE = &quot;active&quot;, &quot;Active&quot;
+        INACTIVE = &quot;inactive&quot;, &quot;Inactive&quot;
+
+    code = models.CharField(max_length=40, unique=True)
+    discount_type = models.CharField(max_length=10, choices=DiscountType)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    minimum_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField()
+    usage_limit = models.PositiveIntegerField(null=True, blank=True)
+    used_count = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=10, choices=Status, default=Status.ACTIVE)
+
+    class Meta:
+        ordering = [&quot;code&quot;]
+        indexes = [models.Index(fields=[&quot;code&quot;, &quot;status&quot;])]
+        constraints = [
+            models.CheckConstraint(check=Q(amount__gt=0), name=&quot;coupon_amount_positive&quot;),
+            models.CheckConstraint(check=Q(valid_until__gte=F(&quot;valid_from&quot;)), name=&quot;coupon_valid_range&quot;),
+            models.CheckConstraint(
+                check=~Q(discount_type=&quot;percent&quot;) | Q(amount__lte=100),
+                name=&quot;coupon_percent_lte_100&quot;,
+            ),
+            models.CheckConstraint(
+                check=Q(usage_limit__isnull=True) | Q(used_count__lte=F(&quot;usage_limit&quot;)),
+                name=&quot;coupon_usage_not_over_limit&quot;,
+            ),
+        ]
+
+    def __str__(self):
+        return self.code
+
+    def save(self, *args, **kwargs):
+        self.code = self.code.strip().upper()
+        super().save(*args, **kwargs)
+
+    def calculate_discount(self, subtotal):
+        if self.discount_type == self.DiscountType.FIXED:
+            return min(self.amount, subtotal).quantize(Decimal(&quot;0.01&quot;))
+        return min(subtotal * self.amount / Decimal(&quot;100&quot;), subtotal).quantize(Decimal(&quot;0.01&quot;))
+
+    def validate_redeemable(self, subtotal, at=None):
+        from apps.coupons.exceptions import (
+            CouponMinimumOrderAmountNotMet,
+            CouponNotRedeemable,
+            CouponUsageLimitExceeded,
+        )
+
+        at = at or timezone.now()
+        if self.status != self.Status.ACTIVE or not (self.valid_from &lt;= at &lt;= self.valid_until):
+            raise CouponNotRedeemable(&quot;Coupon is not active.&quot;)
+        if subtotal &lt; self.minimum_order_amount:
+            raise CouponMinimumOrderAmountNotMet(&quot;Order amount is below coupon minimum.&quot;)
+        if self.usage_limit is not None and self.used_count &gt;= self.usage_limit:
+            raise CouponUsageLimitExceeded(&quot;Coupon usage limit exceeded.&quot;)
+</code></pre>
+<p><code>apps/orders/models.py</code>에 필요한 최소 필드/메서드:</p>
+<pre><code>
+from decimal import Decimal
+
+from django.db import models
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = &quot;draft&quot;, &quot;Draft&quot;
+        PAID = &quot;paid&quot;, &quot;Paid&quot;
+        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
+
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    applied_coupon = models.ForeignKey(
+        &quot;coupons.Coupon&quot;,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name=&quot;orders&quot;,
+    )
+    status = models.CharField(max_length=12, choices=Status, default=Status.DRAFT)
+
+    def apply_coupon(self, coupon, discount_total):
+        self.applied_coupon = coupon
+        self.discount_total = discount_total
+        self.total = max(self.subtotal - discount_total, Decimal(&quot;0.00&quot;))
+</code></pre>
+<p><code>apps/coupons/services.py</code></p>
+<pre><code>
+from dataclasses import dataclass
+from decimal import Decimal
+
+from django.db import transaction
+from django.utils import timezone
+
+from apps.coupons.exceptions import CouponApplyNotAllowed
+from apps.coupons.models import Coupon
+from apps.orders.models import Order
+
+
+@dataclass(frozen=True)
+class CouponApplyResult:
+    order_id: int
+    code: str
+    discount_total: Decimal
+    total: Decimal
+
+
+@transaction.atomic
+def coupon_apply(*, order_id: int, code: str, user) -&gt; CouponApplyResult:
+    try:
+        order = Order.objects.select_for_update().get(
+            id=order_id,
+            user=user,
+            status=Order.Status.DRAFT,
+        )
+    except Order.DoesNotExist as exc:
+        raise CouponApplyNotAllowed(&quot;Order cannot accept a coupon.&quot;) from exc
+
+    if order.applied_coupon_id:
+        raise CouponApplyNotAllowed(&quot;Order already has a coupon.&quot;)
+
+    coupon = Coupon.objects.select_for_update().get(code=code.strip().upper())
+    coupon.validate_redeemable(order.subtotal, timezone.now())
+
+    discount_total = coupon.calculate_discount(order.subtotal)
+    order.apply_coupon(coupon, discount_total)
+    coupon.used_count += 1
+
+    order.save(update_fields=[&quot;applied_coupon&quot;, &quot;discount_total&quot;, &quot;total&quot;])
+    coupon.save(update_fields=[&quot;used_count&quot;])
+    return CouponApplyResult(order.id, coupon.code, order.discount_total, order.total)
+</code></pre>
+<p>Django Ninja API가 필요하면 <code>apps/coupons/api.py</code>:</p>
+<pre><code>
+from ninja import Router, Schema
+from ninja.errors import HttpError
+from ninja.security import SessionAuth
+
+from apps.coupons.exceptions import CouponApplyError
+from apps.coupons.services import coupon_apply
+
+router = Router(auth=SessionAuth(), tags=[&quot;coupons&quot;])
+
+
+class CouponApplyIn(Schema):
+    code: str
+
+
+class CouponApplyOut(Schema):
+    order_id: int
+    code: str
+    discount_total: str
+    total: str
+
+
+@router.post(&quot;/orders/{order_id}/coupon/&quot;, response=CouponApplyOut)
+def apply_coupon(request, order_id: int, payload: CouponApplyIn) -&gt; CouponApplyOut:
+    try:
+        result = coupon_apply(order_id=order_id, code=payload.code, user=request.auth)
+    except CouponApplyError as exc:
+        raise HttpError(400, str(exc)) from exc
+    return CouponApplyOut(
+        order_id=result.order_id,
+        code=result.code,
+        discount_total=str(result.discount_total),
+        total=str(result.total),
+    )
+</code></pre>
+<p><code>config/api.py</code>에는 문자열 경로가 아니라 직접 import로 합성합니다.</p>
+<pre><code>
+from ninja import NinjaAPI
+
+from apps.coupons.api import router as coupons_router
+
+api = NinjaAPI()
+api.add_router(&quot;/coupons/&quot;, coupons_router)
+</code></pre>
+<p><strong>REFACTOR 방향</strong></p>
+<p>다음 그린 바 이후에는 <code>CouponFactory</code>, <code>OrderFactory</code>를 <code>tests/isolated/conftest.py</code>로 빼고, 만료/비활성/사용량 초과/퍼센트 할인 경계값을 <code>parametrize</code>로 추가하세요. 시간 고정은 <code>time-machine</code>을 사용합니다. freezegun은 순수 Python 구현인 반면 time-machine은 C 확장으로 구현되어 있어 동일 작업에서 100~200배 빠르고, 시간 모킹이 많은 테스트 스위트에서 실질적인 실행 시간 차이가 납니다.</p>
+<p>테스트 배치는 <code>tests/isolated/unit</code>, <code>tests/isolated/integration</code>, <code>tests/real/integration</code>처럼 1차 축을 실행 환경으로 유지하세요. <code>pyproject.toml</code>에는 <code>DJANGO_SETTINGS_MODULE = &quot;config.settings.test&quot;</code>와 <code>testpaths = [&quot;tests/isolated&quot;, &quot;tests/real&quot;]</code>를 둡니다.</p>
+<p>실행 명령:</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/test_coupon_apply.py -q
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated -q
+pip install pytest-randomly
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated --randomly-seed=last -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/서비스 구현 → <strong>implementation-django</strong> 스킬 &gt; - pytest 테스트 구조 → <strong>implementation-test</strong> 스킬 &gt; - Red-Green-Refactor → <strong>implementation-tdd</strong> 스킬 &gt; - 쿠폰 도메인 경계와 Aggregate 설계 → <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

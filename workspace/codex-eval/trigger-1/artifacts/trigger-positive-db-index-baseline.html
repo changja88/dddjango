@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-db-index baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-db-index baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-positive-db-index.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>프로젝트 디렉터리가 비어 있어서 실제 <code>Order</code> 모델/뷰는 확인하지 못했습니다. 대신 Django 주문 목록 조회에서 보통 효과가 큰 최적화 전략은 아래 순서로 잡는 게 좋습니다.</p>
+<p><strong>1. 목록 필터/정렬 기준에 맞춘 복합 인덱스</strong></p>
+<p>주문 목록은 보통 다음 조건을 같이 씁니다.</p>
+<ul>
+<li><code>customer_id</code></li>
+<li><code>status</code></li>
+<li><code>created_at</code></li>
+<li><code>paid_at</code></li>
+<li><code>shop_id</code> / <code>seller_id</code> / <code>tenant_id</code></li>
+<li>최신순 정렬: <code>ORDER BY created_at DESC</code></li>
+<li>기간 검색: <code>created_at BETWEEN ...</code></li>
+</ul>
+<p>예시:</p>
+<pre><code>
+class Order(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField(db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=[&quot;-created_at&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;customer&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;customer&quot;, &quot;-created_at&quot;]),
+        ]
+</code></pre>
+<p>실제 API가 멀티테넌트라면 가장 앞에 <code>shop_id</code>나 <code>tenant_id</code>를 두는 게 중요합니다.</p>
+<pre><code>
+models.Index(fields=[&quot;shop&quot;, &quot;status&quot;, &quot;-created_at&quot;])
+models.Index(fields=[&quot;shop&quot;, &quot;customer&quot;, &quot;-created_at&quot;])
+</code></pre>
+<p>핵심은 “자주 쓰는 <code>WHERE</code> 조건 + <code>ORDER BY</code> 순서”에 맞추는 것입니다.</p>
+<p><strong>2. N+1 제거</strong></p>
+<p>주문 목록에서 고객, 배송지, 결제, 주문상품을 같이 보여주면 N+1이 쉽게 생깁니다.</p>
+<pre><code>
+qs = (
+    Order.objects
+    .select_related(&quot;customer&quot;, &quot;payment&quot;, &quot;shipping_address&quot;)
+    .prefetch_related(&quot;items&quot;, &quot;items__product&quot;)
+)
+</code></pre>
+<ul>
+<li><code>ForeignKey</code>, <code>OneToOneField</code>: <code>select_related</code></li>
+<li>역참조, <code>ManyToMany</code>, 주문상품 목록: <code>prefetch_related</code></li>
+</ul>
+<p>주문상품까지 보여주되 필요한 필드가 적다면:</p>
+<pre><code>
+from django.db.models import Prefetch
+
+qs = Order.objects.prefetch_related(
+    Prefetch(
+        &quot;items&quot;,
+        queryset=OrderItem.objects.select_related(&quot;product&quot;).only(
+            &quot;id&quot;, &quot;order_id&quot;, &quot;quantity&quot;, &quot;price&quot;, &quot;product__name&quot;
+        ),
+    )
+)
+</code></pre>
+<p><strong>3. 필요한 컬럼만 조회</strong></p>
+<p>목록 화면에서 상세 컬럼을 전부 가져오지 않도록 제한합니다.</p>
+<pre><code>
+qs = Order.objects.select_related(&quot;customer&quot;).only(
+    &quot;id&quot;,
+    &quot;order_number&quot;,
+    &quot;status&quot;,
+    &quot;created_at&quot;,
+    &quot;total_amount&quot;,
+    &quot;customer__id&quot;,
+    &quot;customer__name&quot;,
+)
+</code></pre>
+<p>단, <code>only()</code>를 쓸 때 나중에 빠진 필드에 접근하면 추가 쿼리가 발생하므로 serializer/template 접근 필드와 맞춰야 합니다.</p>
+<p><strong>4. count 비용 줄이기</strong></p>
+<p>Django pagination은 기본적으로 <code>COUNT(*)</code>를 실행합니다. 주문 테이블이 크면 이게 병목입니다.</p>
+<p>대안:</p>
+<ul>
+<li>무한 스크롤 또는 cursor pagination 사용</li>
+<li>“다음 페이지 존재 여부”만 확인하도록 <code>limit + 1</code> 조회</li>
+<li>관리자/백오피스에서 정확한 전체 건수가 꼭 필요하지 않다면 estimated count 사용</li>
+</ul>
+<p>예시 cursor 방식:</p>
+<pre><code>
+qs = Order.objects.filter(created_at__lt=cursor).order_by(&quot;-created_at&quot;)[:page_size + 1]
+</code></pre>
+<p>이 경우 인덱스는 <code>created_at DESC</code> 또는 조건 포함 복합 인덱스가 잘 맞습니다.</p>
+<p><strong>5. annotate 남용 주의</strong></p>
+<p>목록에서 주문상품 합계, 리뷰 수, 환불 여부 등을 <code>annotate()</code>로 매번 계산하면 느려질 수 있습니다.</p>
+<p>가능하면:</p>
+<ul>
+<li><code>Order</code>에 집계값 저장: <code>item_count</code>, <code>total_amount</code>, <code>paid_amount</code></li>
+<li>상태값 저장: <code>has_refund</code>, <code>is_delayed</code></li>
+<li>주기적/이벤트 기반 denormalization</li>
+</ul>
+<p>예:</p>
+<pre><code>
+class Order(models.Model):
+    item_count = models.PositiveIntegerField(default=0)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+</code></pre>
+<p><strong>6. 권장 queryset 형태</strong></p>
+<pre><code>
+def get_order_list_queryset(*, shop_id, status=None, customer_id=None):
+    qs = (
+        Order.objects
+        .filter(shop_id=shop_id)
+        .select_related(&quot;customer&quot;, &quot;payment&quot;)
+        .only(
+            &quot;id&quot;,
+            &quot;order_number&quot;,
+            &quot;status&quot;,
+            &quot;created_at&quot;,
+            &quot;total_amount&quot;,
+            &quot;customer__id&quot;,
+            &quot;customer__name&quot;,
+            &quot;payment__method&quot;,
+        )
+        .order_by(&quot;-created_at&quot;)
+    )
+
+    if status:
+        qs = qs.filter(status=status)
+
+    if customer_id:
+        qs = qs.filter(customer_id=customer_id)
+
+    return qs
+</code></pre>
+<p>이에 대응하는 인덱스:</p>
+<pre><code>
+models.Index(fields=[&quot;shop&quot;, &quot;-created_at&quot;]),
+models.Index(fields=[&quot;shop&quot;, &quot;status&quot;, &quot;-created_at&quot;]),
+models.Index(fields=[&quot;shop&quot;, &quot;customer&quot;, &quot;-created_at&quot;]),
+</code></pre>
+<p><strong>7. 적용 전 확인할 것</strong></p>
+<p>실제 인덱스는 감으로 추가하지 말고 아래를 확인하는 게 좋습니다.</p>
+<pre><code>
+print(qs.explain(analyze=True, buffers=True))
+</code></pre>
+<p>PostgreSQL 기준으로 봐야 할 지점:</p>
+<ul>
+<li><code>Seq Scan</code>이 큰 테이블에서 발생하는지</li>
+<li><code>Sort</code> 비용이 큰지</li>
+<li><code>Index Scan</code> 또는 <code>Index Only Scan</code>이 쓰이는지</li>
+<li><code>Rows Removed by Filter</code>가 과도한지</li>
+<li><code>COUNT(*)</code>가 병목인지</li>
+</ul>
+<p>정리하면, 주문 목록은 보통 <code>tenant/shop + filter + created_at desc</code> 복합 인덱스, <code>select_related/prefetch_related</code>로 N+1 제거, cursor pagination, 목록용 필드 제한이 가장 효과가 큽니다. 실제 모델과 API 코드가 있으면 그 기준으로 정확한 인덱스 조합과 queryset을 더 좁혀서 제안할 수 있습니다.</p></article>
+  </main>
+</body>
+</html>

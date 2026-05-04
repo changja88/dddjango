@@ -13,6 +13,7 @@ BENCHMARK_CASES_PATH = ROOT / "evals/shared/cases/benchmark.jsonl"
 TRIGGER_CASES_PATH = ROOT / "evals/shared/cases/trigger.jsonl"
 SCHEMA_PATH = ROOT / "evals/codex/rubrics/grading-schema.json"
 GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_outputs.py"
+AUTO_GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/auto_grade_outputs.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
 RUN_SCRIPT_PATH = ROOT / "evals/codex/scripts/run_prompts.py"
 REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_report.py"
@@ -322,6 +323,84 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertNotIn("dddjango", summary["variants"])
         self.assertEqual(summary["pending"]["dddjango"], ["case-1"])
         self.assertEqual(summary["lift"], {})
+
+    def test_auto_grade_outputs_scores_markdown_outputs_and_trigger_flags(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            (iteration / "baseline").mkdir()
+            (iteration / "dddjango").mkdir()
+            (iteration / "answer-key").mkdir()
+            case = {
+                "case_id": "trigger-positive",
+                "title": "Positive trigger",
+                "category": "trigger",
+                "expectations": ["korean_first", "django_ninja_compliance"],
+                "trigger_type": "positive",
+                "expected_behavior": "Apply dddjango Django Ninja guidance.",
+            }
+            (iteration / "answer-key/trigger-positive.json").write_text(
+                json.dumps(case, ensure_ascii=False) + "\n"
+            )
+            (iteration / "baseline/trigger-positive.output.md").write_text(
+                "Django API를 만들 때 Router와 Schema를 사용할 수 있습니다.\n"
+            )
+            (iteration / "dddjango/trigger-positive.output.md").write_text(
+                "Django Ninja Router와 Schema를 사용하고, 도메인 경계와 "
+                "application service를 분리합니다. pytest 검증도 추가합니다. "
+                "라우터는 요청과 응답 변환만 담당하고, 상태 변경 규칙은 "
+                "도메인 서비스와 애플리케이션 계층에 둡니다.\n"
+            )
+            scores = {
+                "domain_fit": 0,
+                "django_ninja_compliance": 0,
+                "actionability": 0,
+                "architecture_quality": 0,
+                "testing_quality": 0,
+                "korean_first": 0,
+                "conciseness": 0,
+                "safety": 0,
+            }
+            empty_trigger = {
+                "type": "positive",
+                "expected": "Apply dddjango Django Ninja guidance.",
+                "observed": "",
+                "passed": False,
+            }
+            (iteration / "grades.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "case_id": "trigger-positive",
+                            "variant": "baseline",
+                            "scores": scores,
+                            "flags": {},
+                            "trigger": empty_trigger,
+                        },
+                        {
+                            "case_id": "trigger-positive",
+                            "variant": "dddjango",
+                            "scores": scores,
+                            "flags": {},
+                            "trigger": empty_trigger,
+                        },
+                    ],
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+
+            module.auto_grade(iteration)
+            grades = json.loads((iteration / "grades.json").read_text())
+            dddjango = next(grade for grade in grades if grade["variant"] == "dddjango")
+
+            self.assertGreater(dddjango["scores"]["domain_fit"], 0)
+            self.assertTrue(dddjango["flags"]["korean_first"])
+            self.assertTrue(dddjango["flags"]["django_ninja_used"])
+            self.assertFalse(dddjango["flags"]["drf_endorsed"])
+            self.assertTrue(dddjango["trigger"]["passed"])
+            self.assertIn("auto heuristic", dddjango["notes"])
 
     def test_init_iteration_creates_prompt_files_and_grade_template(self):
         with tempfile.TemporaryDirectory() as temp_dir:

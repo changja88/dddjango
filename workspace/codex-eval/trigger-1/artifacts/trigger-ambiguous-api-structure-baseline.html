@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-api-structure baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-api-structure baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-ambiguous-api-structure.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> 작업 디렉터리는 비어 있고, 세션 권한이 읽기 전용이라 파일을 직접 만들 수는 없었습니다. 대신 이 프로젝트 정책에 맞춰 Django Ninja 기준의 깔끔한 API 구조를 잡으면 아래처럼 가는 게 좋습니다.</p>
+<p><strong>권장 구조</strong></p>
+<pre><code>
+config/
+  api.py
+  urls.py
+
+apps/
+  products/
+    models.py
+    schemas.py
+    api.py
+    selectors.py
+    services.py
+</code></pre>
+<p><strong>config/api.py</strong></p>
+<pre><code>
+from ninja import NinjaAPI
+
+from apps.products.api import router as products_router
+
+api = NinjaAPI(
+    title=&quot;Service API&quot;,
+    version=&quot;1.0.0&quot;,
+)
+
+api.add_router(&quot;/v1/products&quot;, products_router, tags=[&quot;products&quot;])
+</code></pre>
+<p><strong>config/urls.py</strong></p>
+<pre><code>
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>apps/products/schemas.py</strong></p>
+<pre><code>
+from ninja import ModelSchema, Schema
+
+from apps.products.models import Product
+
+
+class ProblemDetail(Schema):
+    type: str = &quot;about:blank&quot;
+    title: str
+    status: int
+    detail: str
+    instance: str = &quot;&quot;
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;is_active&quot;, &quot;created_at&quot;]
+
+
+class ProductCreateIn(Schema):
+    name: str
+    price: int
+
+
+class ProductUpdateIn(Schema):
+    name: str | None = None
+    price: int | None = None
+    is_active: bool | None = None
+</code></pre>
+<p><strong>apps/products/selectors.py</strong></p>
+<pre><code>
+from django.shortcuts import get_object_or_404
+
+from apps.products.models import Product
+
+
+def product_list():
+    return Product.objects.filter(is_active=True).order_by(&quot;-created_at&quot;)
+
+
+def product_get(product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+</code></pre>
+<p><strong>apps/products/services.py</strong></p>
+<pre><code>
+from apps.products.models import Product
+from apps.products.schemas import ProductCreateIn, ProductUpdateIn
+
+
+def product_create(data: ProductCreateIn) -&gt; Product:
+    return Product.objects.create(**data.dict())
+
+
+def product_update(product: Product, data: ProductUpdateIn) -&gt; Product:
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+    product.save(update_fields=[*data.dict(exclude_unset=True).keys()])
+    return product
+</code></pre>
+<p><strong>apps/products/api.py</strong></p>
+<pre><code>
+from typing import List
+
+from ninja import Router
+from ninja.pagination import CursorPagination, paginate
+
+from apps.products.schemas import ProductCreateIn, ProductOut, ProductUpdateIn
+from apps.products.selectors import product_get, product_list
+from apps.products.services import product_create, product_update
+
+router = Router()
+
+
+@router.get(&quot;&quot;, response=List[ProductOut])
+@paginate(CursorPagination)
+def list_products(request):
+    return product_list()
+
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def get_product(request, product_id: int):
+    return product_get(product_id)
+
+
+@router.post(&quot;&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductCreateIn):
+    product = product_create(payload)
+    return 201, product
+
+
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def update_product(request, product_id: int, payload: ProductUpdateIn):
+    product = product_get(product_id)
+    return product_update(product, payload)
+
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None})
+def delete_product(request, product_id: int):
+    product = product_get(product_id)
+    product.delete()
+    return 204, None
+</code></pre>
+<p>핵심은 <code>config/api.py</code>에서 API 합성만 하고, 앱별 <code>api.py</code>는 라우팅만, <code>schemas.py</code>는 입출력 계약만, <code>selectors.py</code>는 조회 쿼리, <code>services.py</code>는 변경 로직을 맡기는 구조입니다. URL은 <code>/api/v1/products</code>처럼 버전과 복수 명사 기반으로 잡고, 목록은 반드시 페이지네이션을 붙이는 쪽이 좋습니다.</p>
+<p>검증은 실행하지 못했습니다. 현재 워크스페이스가 비어 있고 읽기 전용입니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - REST URL/상태 코드/오류 형식 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Router/Schema/API 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

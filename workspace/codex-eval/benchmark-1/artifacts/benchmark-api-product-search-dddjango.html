@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-product-search dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-product-search dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/dddjango/benchmark-api-product-search.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 평가 디렉터리에는 <code>config.toml</code>, <code>manage.py</code> 같은 프로젝트 파일이 없어 실행/적용은 하지 못했습니다. 이 프로젝트 정책은 DRF가 아니라 <strong>Django Ninja</strong> 기준이므로, 아래는 Django Ninja로 바로 옮길 수 있는 팀 컨벤션 초안입니다.</p>
+<p><strong>상품 검색 API 설계</strong></p>
+<p>기본 리소스는 <code>products</code>입니다. 검색도 별도 동사 URL을 만들지 않고 컬렉션 조회의 쿼리 파라미터로 표현합니다.</p>
+<pre><code>
+GET /api/v1/products
+GET /api/v1/products/{product_id}
+</code></pre>
+<p><code>/products/search</code>, <code>/search-products</code>는 사용하지 않습니다. 검색은 다음처럼 호출합니다.</p>
+<pre><code>
+GET /api/v1/products?q=keyboard&amp;category_id=10&amp;min_price=10000&amp;max_price=50000&amp;sort=-relevance,-created_at&amp;limit=20&amp;cursor=...
+</code></pre>
+<p><strong>쿼리 파라미터 컨벤션</strong></p>
+<p>필터는 <code>snake_case</code>를 사용하고, 범위 조건은 <code>min_</code>, <code>max_</code>, <code>*_after</code>, <code>*_before</code> 형태로 통일합니다.</p>
+<p>| 파라미터 | 타입 | 의미 | |---|---:|---| | <code>q</code> | string | 상품명, 브랜드명, SKU 등 통합 검색어 | | <code>category_id</code> | int | 카테고리 필터 | | <code>brand_id</code> | int | 브랜드 필터 | | <code>seller_id</code> | int | 판매자 필터 | | <code>min_price</code> | int | 최소 판매가 | | <code>max_price</code> | int | 최대 판매가 | | <code>in_stock</code> | bool | 재고 보유 여부 | | <code>status</code> | string | <code>active</code>, <code>sold_out</code>, <code>hidden</code> 등 | | <code>created_after</code> | datetime | 등록일 시작 | | <code>created_before</code> | datetime | 등록일 종료 | | <code>sort</code> | string | 정렬 필드 목록 | | <code>limit</code> | int | 페이지 크기 | | <code>cursor</code> | string | 다음 페이지 커서 |</p>
+<p>검색어 <code>q</code>는 최소 2자 이상을 권장합니다. 빈 문자열은 필터링하지 않고 무시하거나 <code>422</code>로 처리하되, 팀에서는 <strong>명시적 오류가 디버깅에 유리하므로 422 권장</strong>입니다.</p>
+<p><strong>정렬 컨벤션</strong></p>
+<p><code>sort</code>는 쉼표 구분 목록을 사용합니다. <code>-</code> prefix는 내림차순입니다.</p>
+<pre><code>
+sort=-relevance,-created_at
+sort=price
+sort=-price,name
+</code></pre>
+<p>허용 정렬 필드는 화이트리스트로 제한합니다.</p>
+<p>| 정렬값 | 의미 | |---|---| | <code>relevance</code> | 검색 관련도, <code>q</code>가 있을 때만 허용 | | <code>price</code> | 가격 오름차순 | | <code>-price</code> | 가격 내림차순 | | <code>created_at</code> | 오래된순 | | <code>-created_at</code> | 최신순 | | <code>name</code> | 이름순 |</p>
+<p>기본 정렬은 다음을 권장합니다.</p>
+<pre><code>
+q 있음: -relevance,-created_at,-id
+q 없음: -created_at,-id
+</code></pre>
+<p>항상 마지막에 <code>id</code> 또는 <code>-id</code>를 tie-breaker로 붙여 커서 페이지네이션이 흔들리지 않게 합니다.</p>
+<p><strong>페이지네이션 컨벤션</strong></p>
+<p>상품 검색은 데이터 변동이 잦고 결과 수가 커질 수 있으므로 기본은 <strong>cursor pagination</strong>으로 둡니다. 관리자 화면처럼 임의 페이지 이동이 필요한 경우에만 별도 admin API에서 offset/page number를 씁니다.</p>
+<p>요청:</p>
+<pre><code>
+GET /api/v1/products?limit=20&amp;cursor=eyJjcmVhdGVkX2F0Ijoi...
+</code></pre>
+<p>응답:</p>
+<pre><code>
+{
+  &quot;items&quot;: [
+    {
+      &quot;id&quot;: 123,
+      &quot;name&quot;: &quot;Wireless Keyboard&quot;,
+      &quot;brand_name&quot;: &quot;Acme&quot;,
+      &quot;price&quot;: 39000,
+      &quot;currency&quot;: &quot;KRW&quot;,
+      &quot;in_stock&quot;: true,
+      &quot;thumbnail_url&quot;: &quot;https://cdn.example.com/products/123.jpg&quot;
+    }
+  ],
+  &quot;next_cursor&quot;: &quot;eyJjcmVhdGVkX2F0Ijoi...&quot;,
+  &quot;has_more&quot;: true
+}
+</code></pre>
+<p>팀 기본값:</p>
+<pre><code>
+default limit: 20
+max limit: 100
+cursor: opaque base64 token
+stable ordering: 정렬 필드 + id
+</code></pre>
+<p><strong>Django Ninja 스키마 예시</strong></p>
+<pre><code>
+from datetime import datetime
+from typing import Annotated, Literal
+
+from django.db.models import Q, QuerySet
+from ninja import FilterSchema, Schema
+from ninja.filter_schema import FilterLookup
+from pydantic import Field
+
+
+ProductStatus = Literal[&quot;active&quot;, &quot;sold_out&quot;, &quot;hidden&quot;]
+ProductSort = Literal[
+    &quot;relevance&quot;,
+    &quot;-relevance&quot;,
+    &quot;price&quot;,
+    &quot;-price&quot;,
+    &quot;created_at&quot;,
+    &quot;-created_at&quot;,
+    &quot;name&quot;,
+]
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    brand_name: str | None = None
+    price: int
+    currency: str = &quot;KRW&quot;
+    in_stock: bool
+    thumbnail_url: str | None = None
+
+
+class ProductFilter(FilterSchema):
+    q: str | None = Field(default=None, min_length=2, max_length=100)
+    category_id: Annotated[int | None, FilterLookup(&quot;category_id&quot;)] = None
+    brand_id: Annotated[int | None, FilterLookup(&quot;brand_id&quot;)] = None
+    seller_id: Annotated[int | None, FilterLookup(&quot;seller_id&quot;)] = None
+    min_price: Annotated[int | None, FilterLookup(&quot;price__gte&quot;)] = None
+    max_price: Annotated[int | None, FilterLookup(&quot;price__lte&quot;)] = None
+    in_stock: Annotated[bool | None, FilterLookup(&quot;stock_quantity__gt&quot;)] = None
+    status: Annotated[ProductStatus | None, FilterLookup(&quot;status&quot;)] = None
+    created_after: Annotated[datetime | None, FilterLookup(&quot;created_at__gte&quot;)] = None
+    created_before: Annotated[datetime | None, FilterLookup(&quot;created_at__lte&quot;)] = None
+
+    def filter_q(self, value: str) -&gt; Q:
+        return (
+            Q(name__icontains=value)
+            | Q(brand__name__icontains=value)
+            | Q(sku__icontains=value)
+        )
+
+
+class ProductSearchPage(Schema):
+    items: list[ProductOut]
+    next_cursor: str | None = None
+    has_more: bool
+</code></pre>
+<p><strong>Router 형태</strong></p>
+<pre><code>
+from typing import Annotated
+
+from ninja import Query, Router
+from ninja.errors import HttpError
+
+router = Router(tags=[&quot;products&quot;])
+
+ALLOWED_SORTS = {
+    &quot;relevance&quot;,
+    &quot;-relevance&quot;,
+    &quot;price&quot;,
+    &quot;-price&quot;,
+    &quot;created_at&quot;,
+    &quot;-created_at&quot;,
+    &quot;name&quot;,
+}
+
+
+@router.get(&quot;&quot;, response={200: ProductSearchPage})
+def list_products(
+    request,
+    filters: Query[ProductFilter],
+    sort: str = &quot;-created_at&quot;,
+    limit: int = 20,
+    cursor: str | None = None,
+) -&gt; ProductSearchPage:
+    if limit &lt; 1 or limit &gt; 100:
+        raise HttpError(422, &quot;limit must be between 1 and 100&quot;)
+
+    sort_fields = [field.strip() for field in sort.split(&quot;,&quot;) if field.strip()]
+    invalid_sorts = [field for field in sort_fields if field not in ALLOWED_SORTS]
+    if invalid_sorts:
+        raise HttpError(422, f&quot;Unsupported sort field: {&#x27;, &#x27;.join(invalid_sorts)}&quot;)
+
+    if any(field.lstrip(&quot;-&quot;) == &quot;relevance&quot; for field in sort_fields) and not filters.q:
+        raise HttpError(422, &quot;relevance sort requires q&quot;)
+
+    queryset = Product.objects.select_related(&quot;brand&quot;, &quot;category&quot;)
+    queryset = filters.filter(queryset)
+    queryset = apply_product_sort(queryset, sort_fields, has_query=bool(filters.q))
+    items, next_cursor, has_more = paginate_products(queryset, limit=limit, cursor=cursor)
+
+    return ProductSearchPage(items=items, next_cursor=next_cursor, has_more=has_more)
+</code></pre>
+<p><strong>에러 응답 표준</strong></p>
+<p>모든 API 에러는 RFC 9457 Problem Details 형식으로 통일합니다. <code>Content-Type</code>은 <code>application/problem+json</code>입니다.</p>
+<pre><code>
+{
+  &quot;type&quot;: &quot;https://api.example.com/problems/invalid-query-parameter&quot;,
+  &quot;title&quot;: &quot;Invalid query parameter&quot;,
+  &quot;status&quot;: 422,
+  &quot;detail&quot;: &quot;Unsupported sort field: popularity&quot;,
+  &quot;instance&quot;: &quot;/api/v1/products&quot;,
+  &quot;code&quot;: &quot;INVALID_QUERY_PARAMETER&quot;,
+  &quot;errors&quot;: [
+    {
+      &quot;field&quot;: &quot;sort&quot;,
+      &quot;message&quot;: &quot;Allowed values are relevance, -relevance, price, -price, created_at, -created_at, name&quot;
+    }
+  ]
+}
+</code></pre>
+<p>상태 코드 기준:</p>
+<p>| 상황 | 코드 | |---|---:| | 인증 없음 | <code>401</code> | | 권한 없음 | <code>403</code> | | 상품 없음 | <code>404</code> | | 잘못된 쿼리 파라미터 | <code>422</code> | | 지원하지 않는 정렬값 | <code>422</code> | | 커서 파싱 실패/만료 | <code>422</code> | | Rate limit 초과 | <code>429</code> | | 서버 오류 | <code>500</code> |</p>
+<p>Ninja 전역 핸들러는 이런 형태를 권장합니다.</p>
+<pre><code>
+from django.http import JsonResponse
+from ninja import Schema
+from ninja.errors import HttpError, ValidationError
+
+
+class ProblemDetail(Schema):
+    type: str = &quot;about:blank&quot;
+    title: str
+    status: int
+    detail: str
+    instance: str
+    code: str | None = None
+
+
+def problem_response(request, *, status: int, title: str, detail: str, code: str):
+    return JsonResponse(
+        ProblemDetail(
+            type=f&quot;https://api.example.com/problems/{code.lower().replace(&#x27;_&#x27;, &#x27;-&#x27;)}&quot;,
+            title=title,
+            status=status,
+            detail=detail,
+            instance=request.path,
+            code=code,
+        ).model_dump(),
+        status=status,
+        content_type=&quot;application/problem+json&quot;,
+    )
+
+
+@api.exception_handler(HttpError)
+def handle_http_error(request, exc: HttpError):
+    return problem_response(
+        request,
+        status=exc.status_code,
+        title=&quot;Request failed&quot;,
+        detail=str(exc),
+        code=&quot;REQUEST_FAILED&quot;,
+    )
+
+
+@api.exception_handler(ValidationError)
+def handle_validation_error(request, exc: ValidationError):
+    return problem_response(
+        request,
+        status=422,
+        title=&quot;Validation failed&quot;,
+        detail=&quot;Request parameters are invalid.&quot;,
+        code=&quot;VALIDATION_FAILED&quot;,
+    )
+</code></pre>
+<p><strong>DDD 관점</strong></p>
+<p>상품 검색은 <code>Catalog</code> 바운디드 컨텍스트의 읽기 유스케이스로 둡니다. 검색 API는 상품 상태를 바꾸지 않으므로 도메인 애그리거트를 직접 조작하지 않고, <code>ProductSearchQueryService</code> 또는 read repository가 QuerySet/read model을 조립하는 구조가 적합합니다.</p>
+<p>유비쿼터스 언어는 다음처럼 고정합니다.</p>
+<p>| 권장 용어 | 의미 | 금지 동의어 | |---|---|---| | <code>Product</code> | 판매 가능한 상품 | <code>Item</code>, <code>Goods</code> 혼용 | | <code>Catalog</code> | 상품 탐색/노출 컨텍스트 | <code>Shop</code>, <code>Inventory</code> 혼용 | | <code>in_stock</code> | 구매 가능한 재고 있음 | <code>available</code>, <code>has_stock</code> 혼용 | | <code>price</code> | 현재 판매가 | <code>amount</code>, <code>cost</code> 혼용 | | <code>status</code> | 노출/판매 상태 | <code>state</code>, <code>visibility</code> 혼용 |</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 설계 원칙/오류/페이지네이션 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Router/Schema/FilterSchema 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 상품 도메인 경계/유비쿼터스 언어 → <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

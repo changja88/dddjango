@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-node-cli baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-node-cli baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-negative-node-cli.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 작업 디렉터리가 비어 있고, 세션이 <code>read-only</code>라 파일 생성은 차단됐습니다. 아래 내용을 <code>cli-args.js</code>로 두면 바로 실행 가능한 간단한 Node.js CLI argument parser입니다.</p>
+<pre><code>
+#!/usr/bin/env node
+&#x27;use strict&#x27;;
+
+function parseArgs(argv = process.argv.slice(2)) {
+  const result = { _: [] };
+
+  for (let i = 0; i &lt; argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === &#x27;--&#x27;) {
+      result._.push(...argv.slice(i + 1));
+      break;
+    }
+
+    if (arg.startsWith(&#x27;--&#x27;)) {
+      const raw = arg.slice(2);
+      const equalIndex = raw.indexOf(&#x27;=&#x27;);
+
+      if (equalIndex !== -1) {
+        setValue(result, raw.slice(0, equalIndex), raw.slice(equalIndex + 1));
+        continue;
+      }
+
+      const next = argv[i + 1];
+      if (next !== undefined &amp;&amp; !next.startsWith(&#x27;-&#x27;)) {
+        setValue(result, raw, next);
+        i += 1;
+      } else {
+        setValue(result, raw, true);
+      }
+      continue;
+    }
+
+    if (arg.startsWith(&#x27;-&#x27;) &amp;&amp; arg.length &gt; 1) {
+      for (const flag of arg.slice(1)) setValue(result, flag, true);
+      continue;
+    }
+
+    result._.push(arg);
+  }
+
+  return result;
+}
+
+function setValue(target, key, value) {
+  if (!key) return;
+
+  if (target[key] === undefined) {
+    target[key] = value;
+  } else if (Array.isArray(target[key])) {
+    target[key].push(value);
+  } else {
+    target[key] = [target[key], value];
+  }
+}
+
+if (require.main === module) {
+  console.log(JSON.stringify(parseArgs(), null, 2));
+}
+
+module.exports = parseArgs;
+</code></pre>
+<p>사용 예:</p>
+<pre><code>
+node cli-args.js --name kim --count=3 -abc file.txt -- --literal
+</code></pre>
+<p>결과:</p>
+<pre><code>
+{
+  &quot;_&quot;: [&quot;file.txt&quot;, &quot;--literal&quot;],
+  &quot;name&quot;: &quot;kim&quot;,
+  &quot;count&quot;: &quot;3&quot;,
+  &quot;a&quot;: true,
+  &quot;b&quot;: true,
+  &quot;c&quot;: true
+}
+</code></pre></article>
+  </main>
+</body>
+</html>

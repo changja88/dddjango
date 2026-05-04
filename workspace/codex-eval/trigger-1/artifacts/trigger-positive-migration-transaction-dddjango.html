@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-migration-transaction dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-migration-transaction dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-positive-migration-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>안전한 순서는 한 번에 <code>NOT NULL + default + backfill + index</code>를 몰아서 하지 않고, 배포 가능한 작은 단계로 나누는 것입니다.</p>
+<ul>
+<li>먼저 <code>payment_status</code>를 nullable로 추가합니다.</li>
+<li>애플리케이션 코드를 배포해서 새 주문/결제에는 값을 쓰게 합니다.</li>
+<li>기존 데이터를 배치로 백필합니다.</li>
+<li>백필 검증 후 <code>NOT NULL</code>, 기본값, 제약조건, 필요한 인덱스를 추가합니다.</li>
+</ul>
+<p>예시는 <code>Order</code>에 결제 상태를 추가하는 경우입니다.</p>
+<pre><code>
+# orders/models.py
+from django.db import models
+
+
+class Order(models.Model):
+    class PaymentStatus(models.TextChoices):
+        UNPAID = &quot;unpaid&quot;, &quot;미결제&quot;
+        PENDING = &quot;pending&quot;, &quot;결제대기&quot;
+        PAID = &quot;paid&quot;, &quot;결제완료&quot;
+        FAILED = &quot;failed&quot;, &quot;결제실패&quot;
+        REFUNDED = &quot;refunded&quot;, &quot;환불완료&quot;
+
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus,
+        null=True,
+        blank=True,
+    )
+</code></pre>
+<p>1차 마이그레이션은 컬럼만 추가합니다. 대형 테이블에서는 여기서 <code>default</code>와 <code>null=False</code>를 같이 넣지 않는 것이 안전합니다.</p>
+<pre><code>
+# orders/migrations/0002_add_payment_status.py
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        (&quot;orders&quot;, &quot;0001_initial&quot;),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name=&quot;order&quot;,
+            name=&quot;payment_status&quot;,
+            field=models.CharField(
+                max_length=20,
+                choices=[
+                    (&quot;unpaid&quot;, &quot;미결제&quot;),
+                    (&quot;pending&quot;, &quot;결제대기&quot;),
+                    (&quot;paid&quot;, &quot;결제완료&quot;),
+                    (&quot;failed&quot;, &quot;결제실패&quot;),
+                    (&quot;refunded&quot;, &quot;환불완료&quot;),
+                ],
+                null=True,
+                blank=True,
+            ),
+        ),
+    ]
+</code></pre>
+<p>그 다음 애플리케이션 코드에서 새 레코드 생성 시 값을 반드시 쓰게 배포합니다.</p>
+<pre><code>
+Order.objects.create(
+    user=user,
+    total_amount=amount,
+    payment_status=Order.PaymentStatus.UNPAID,
+)
+</code></pre>
+<p>기존 데이터 백필은 별도 데이터 마이그레이션으로 분리합니다. 직접 <code>Order</code>를 import하지 말고 <code>apps.get_model()</code>을 사용합니다.</p>
+<pre><code>
+# orders/migrations/0003_backfill_payment_status.py
+from django.db import migrations
+
+
+def backfill_payment_status(apps, schema_editor):
+    Order = apps.get_model(&quot;orders&quot;, &quot;Order&quot;)
+
+    Order.objects.filter(payment_status__isnull=True).update(
+        payment_status=&quot;unpaid&quot;
+    )
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        (&quot;orders&quot;, &quot;0002_add_payment_status&quot;),
+    ]
+
+    operations = [
+        migrations.RunPython(
+            backfill_payment_status,
+            migrations.RunPython.noop,
+        ),
+    ]
+</code></pre>
+<p>대형 테이블이면 한 번의 <code>UPDATE</code>가 오래 락을 잡을 수 있으므로 관리 커맨드나 별도 배치 작업으로 <code>id</code> 범위를 나누어 백필하는 편이 더 안전합니다.</p>
+<p>백필 검증 후 마지막으로 <code>null=False</code>, 기본값, DB 제약을 추가합니다.</p>
+<pre><code>
+# orders/models.py
+from django.db import models
+
+
+class Order(models.Model):
+    class PaymentStatus(models.TextChoices):
+        UNPAID = &quot;unpaid&quot;, &quot;미결제&quot;
+        PENDING = &quot;pending&quot;, &quot;결제대기&quot;
+        PAID = &quot;paid&quot;, &quot;결제완료&quot;
+        FAILED = &quot;failed&quot;, &quot;결제실패&quot;
+        REFUNDED = &quot;refunded&quot;, &quot;환불완료&quot;
+
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus,
+        default=PaymentStatus.UNPAID,
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    payment_status__in=[
+                        &quot;unpaid&quot;,
+                        &quot;pending&quot;,
+                        &quot;paid&quot;,
+                        &quot;failed&quot;,
+                        &quot;refunded&quot;,
+                    ]
+                ),
+                name=&quot;order_payment_status_valid&quot;,
+            ),
+        ]
+</code></pre>
+<pre><code>
+# orders/migrations/0004_enforce_payment_status.py
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        (&quot;orders&quot;, &quot;0003_backfill_payment_status&quot;),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name=&quot;order&quot;,
+            name=&quot;payment_status&quot;,
+            field=models.CharField(
+                max_length=20,
+                choices=[
+                    (&quot;unpaid&quot;, &quot;미결제&quot;),
+                    (&quot;pending&quot;, &quot;결제대기&quot;),
+                    (&quot;paid&quot;, &quot;결제완료&quot;),
+                    (&quot;failed&quot;, &quot;결제실패&quot;),
+                    (&quot;refunded&quot;, &quot;환불완료&quot;),
+                ],
+                default=&quot;unpaid&quot;,
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name=&quot;order&quot;,
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    payment_status__in=[
+                        &quot;unpaid&quot;,
+                        &quot;pending&quot;,
+                        &quot;paid&quot;,
+                        &quot;failed&quot;,
+                        &quot;refunded&quot;,
+                    ]
+                ),
+                name=&quot;order_payment_status_valid&quot;,
+            ),
+        ),
+    ]
+</code></pre>
+<p>인덱스는 조회 패턴이 있을 때만 추가하세요. <code>payment_status</code> 단독 인덱스는 값 종류가 적어서 효과가 제한적일 수 있습니다. 예를 들어 “최근 미결제 주문 목록”을 자주 조회한다면 단독 인덱스보다 <code>(payment_status, created_at)</code> 복합 인덱스가 더 적합할 수 있습니다.</p>
+<p>배포 전에는 반드시 실제 SQL과 계획을 확인합니다.</p>
+<pre><code>
+python manage.py makemigrations
+python manage.py sqlmigrate orders 0002
+python manage.py sqlmigrate orders 0003
+python manage.py sqlmigrate orders 0004
+python manage.py migrate --plan
+python manage.py migrate
+</code></pre>
+<p>운영 배포 순서는 보통 이렇게 잡습니다.</p>
+<pre><code>
+배포 1: nullable 컬럼 추가
+배포 2: 애플리케이션에서 payment_status 쓰기 시작
+배포 3: 기존 데이터 백필
+배포 4: null 값 0건 확인
+배포 5: NOT NULL, default, CheckConstraint, 필요한 인덱스 추가
+</code></pre>
+<p>핵심 체크리스트는 이렇습니다.</p>
+<ul>
+<li><code>BooleanField</code> 여러 개 대신 <code>TextChoices</code> 기반 단일 상태 컬럼 사용</li>
+<li>기존 코드와 신코드가 동시에 떠 있어도 실패하지 않도록 처음엔 <code>null=True</code></li>
+<li>백필은 별도 migration 또는 배치로 분리</li>
+<li><code>sqlmigrate</code>로 DDL 확인</li>
+<li>대형 테이블은 락 시간과 인덱스 생성 방식을 별도 검토</li>
+<li>결제 상태별 조회가 실제로 많을 때만 워크로드 기반 인덱스 추가</li>
+<li>최종 단계에서 <code>NOT NULL</code>과 <code>CheckConstraint</code>로 데이터 무결성 고정</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 마이그레이션 구현 → <strong>implementation-django</strong> 스킬 &gt; - 컬럼/인덱스/제약조건 설계 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

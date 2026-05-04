@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-domain-policy baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-domain-policy baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/baseline/benchmark-tdd-domain-policy.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 빈 디렉터리이고 읽기 전용 샌드박스라 파일을 직접 생성할 수 없었습니다. 아래 패치를 적용하면 pytest 기반 TDD 테스트와 할인 정책 객체 구현이 들어갑니다.</p>
+<pre><code>
+*** Begin Patch
+*** Add File: discount_policy.py
++from dataclasses import dataclass
++from decimal import Decimal, ROUND_HALF_UP
++
++
++CENT = Decimal(&quot;0.01&quot;)
++
++
++def money(value: Decimal | int | str) -&gt; Decimal:
++    amount = Decimal(str(value))
++    if amount &lt; 0:
++        raise ValueError(&quot;amount must be greater than or equal to 0&quot;)
++    return amount.quantize(CENT, rounding=ROUND_HALF_UP)
++
++
++class DiscountPolicy:
++    def discount_for(self, subtotal: Decimal, *, quantity: int = 1) -&gt; Decimal:
++        raise NotImplementedError
++
++    def apply(self, subtotal: Decimal, *, quantity: int = 1) -&gt; Decimal:
++        subtotal = money(subtotal)
++        discount = self.discount_for(subtotal, quantity=quantity)
++        return money(max(Decimal(&quot;0&quot;), subtotal - discount))
++
++
++@dataclass(frozen=True)
++class PercentageDiscountPolicy(DiscountPolicy):
++    rate: Decimal
++
++    def __post_init__(self) -&gt; None:
++        rate = Decimal(str(self.rate))
++        if rate &lt; 0 or rate &gt; 1:
++            raise ValueError(&quot;rate must be between 0 and 1&quot;)
++        object.__setattr__(self, &quot;rate&quot;, rate)
++
++    def discount_for(self, subtotal: Decimal, *, quantity: int = 1) -&gt; Decimal:
++        return money(subtotal * self.rate)
++
++
++@dataclass(frozen=True)
++class FixedAmountDiscountPolicy(DiscountPolicy):
++    amount: Decimal
++
++    def __post_init__(self) -&gt; None:
++        object.__setattr__(self, &quot;amount&quot;, money(self.amount))
++
++    def discount_for(self, subtotal: Decimal, *, quantity: int = 1) -&gt; Decimal:
++        return min(self.amount, money(subtotal))
++
++
++@dataclass(frozen=True)
++class QuantityTierDiscountPolicy(DiscountPolicy):
++    minimum_quantity: int
++    delegate: DiscountPolicy
++
++    def __post_init__(self) -&gt; None:
++        if self.minimum_quantity &lt; 1:
++            raise ValueError(&quot;minimum_quantity must be greater than 0&quot;)
++
++    def discount_for(self, subtotal: Decimal, *, quantity: int = 1) -&gt; Decimal:
++        if quantity &lt; 1:
++            raise ValueError(&quot;quantity must be greater than 0&quot;)
++        if quantity &lt; self.minimum_quantity:
++            return Decimal(&quot;0.00&quot;)
++        return self.delegate.discount_for(subtotal, quantity=quantity)
++
++
++@dataclass(frozen=True)
++class BestDiscountPolicy(DiscountPolicy):
++    policies: tuple[DiscountPolicy, ...]
++
++    def __post_init__(self) -&gt; None:
++        if not self.policies:
++            raise ValueError(&quot;policies must not be empty&quot;)
++
++    def discount_for(self, subtotal: Decimal, *, quantity: int = 1) -&gt; Decimal:
++        return max(policy.discount_for(subtotal, quantity=quantity) for policy in self.policies)
+*** Add File: tests/test_discount_policy.py
++from decimal import Decimal
++
++import pytest
++
++from discount_policy import (
++    BestDiscountPolicy,
++    FixedAmountDiscountPolicy,
++    PercentageDiscountPolicy,
++    QuantityTierDiscountPolicy,
++    money,
++)
++
++
++@pytest.fixture
++def subtotal():
++    return Decimal(&quot;100.00&quot;)
++
++
++@pytest.fixture
++def ten_percent_policy():
++    return PercentageDiscountPolicy(Decimal(&quot;0.10&quot;))
++
++
++def test_percentage_discount_policy_applies_rate_to_subtotal(subtotal, ten_percent_policy):
++    assert ten_percent_policy.apply(subtotal) == Decimal(&quot;90.00&quot;)
++
++
++def test_percentage_discount_policy_rounds_to_nearest_cent():
++    policy = PercentageDiscountPolicy(Decimal(&quot;0.155&quot;))
++
++    assert policy.apply(Decimal(&quot;10.00&quot;)) == Decimal(&quot;8.45&quot;)
++
++
++@pytest.mark.parametrize(&quot;rate&quot;, [Decimal(&quot;-0.01&quot;), Decimal(&quot;1.01&quot;)])
++def test_percentage_discount_policy_rejects_rate_outside_zero_to_one(rate):
++    with pytest.raises(ValueError, match=&quot;rate&quot;):
++        PercentageDiscountPolicy(rate)
++
++
++def test_fixed_amount_discount_policy_subtracts_fixed_amount(subtotal):
++    policy = FixedAmountDiscountPolicy(Decimal(&quot;15.00&quot;))
++
++    assert policy.apply(subtotal) == Decimal(&quot;85.00&quot;)
++
++
++def test_fixed_amount_discount_policy_never_makes_total_negative():
++    policy = FixedAmountDiscountPolicy(Decimal(&quot;150.00&quot;))
++
++    assert policy.apply(Decimal(&quot;100.00&quot;)) == Decimal(&quot;0.00&quot;)
++
++
++def test_fixed_amount_discount_policy_rejects_negative_amount():
++    with pytest.raises(ValueError, match=&quot;amount&quot;):
++        FixedAmountDiscountPolicy(Decimal(&quot;-1.00&quot;))
++
++
++def test_quantity_tier_discount_policy_applies_delegate_when_quantity_matches_threshold(
++    subtotal, ten_percent_policy
++):
++    policy = QuantityTierDiscountPolicy(minimum_quantity=3, delegate=ten_percent_policy)
++
++    assert policy.apply(subtotal, quantity=3) == Decimal(&quot;90.00&quot;)
++
++
++def test_quantity_tier_discount_policy_skips_delegate_below_threshold(
++    subtotal, ten_percent_policy
++):
++    policy = QuantityTierDiscountPolicy(minimum_quantity=3, delegate=ten_percent_policy)
++
++    assert policy.apply(subtotal, quantity=2) == Decimal(&quot;100.00&quot;)
++
++
++@pytest.mark.parametrize(&quot;quantity&quot;, [0, -1])
++def test_quantity_tier_discount_policy_rejects_non_positive_quantity(
++    subtotal, ten_percent_policy, quantity
++):
++    policy = QuantityTierDiscountPolicy(minimum_quantity=3, delegate=ten_percent_policy)
++
++    with pytest.raises(ValueError, match=&quot;quantity&quot;):
++        policy.apply(subtotal, quantity=quantity)
++
++
++def test_best_discount_policy_applies_largest_available_discount(subtotal):
++    policy = BestDiscountPolicy(
++        (
++            PercentageDiscountPolicy(Decimal(&quot;0.10&quot;)),
++            FixedAmountDiscountPolicy(Decimal(&quot;20.00&quot;)),
++        )
++    )
++
++    assert policy.apply(subtotal) == Decimal(&quot;80.00&quot;)
++
++
++def test_best_discount_policy_rejects_empty_policy_list():
++    with pytest.raises(ValueError, match=&quot;policies&quot;):
++        BestDiscountPolicy(())
++
++
++def test_money_rejects_negative_subtotal():
++    with pytest.raises(ValueError, match=&quot;amount&quot;):
++        money(Decimal(&quot;-0.01&quot;))
+*** End Patch
+</code></pre>
+<p>실행 명령:</p>
+<pre><code>
+pytest
+</code></pre>
+<p>검증은 수행하지 못했습니다. 현재 디렉터리가 빈 상태이고, 세션 권한이 읽기 전용이라 파일 생성 및 테스트 실행 환경 구성이 불가능했습니다.</p></article>
+  </main>
+</body>
+</html>

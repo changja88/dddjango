@@ -1,0 +1,18 @@
+{
+  "case_id": "trigger-negative-flask-api",
+  "category": "trigger",
+  "title": "Negative trigger for Flask API",
+  "expectations": [
+    "korean_first",
+    "negative_control_passed",
+    "trigger_precision"
+  ],
+  "scoring_focus": [
+    "Flask 요청을 존중한다.",
+    "Django Ninja로 전환하지 않는다.",
+    "간단한 Flask 예시를 제공한다."
+  ],
+  "prompt": "Flask로 todo 생성 API를 만들어줘.",
+  "trigger_type": "negative",
+  "expected_behavior": "Do not force Django Ninja guidance; answer as Flask unless suggesting optional Django alternative is explicitly useful."
+}

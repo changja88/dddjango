@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-ninja-order-api baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-ninja-order-api baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-positive-ninja-order-api.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 읽기 전용이라 파일 생성/실행은 못 했습니다. 아래는 Django Ninja + DDD 기준으로 바로 옮길 수 있는 주문 생성 API 설계입니다.</p>
+<p><strong>전략적 설계</strong></p>
+<p>| 항목 | 설계 | |---|---| | Bounded Context | <code>orders</code> 주문 컨텍스트 | | Aggregate Root | <code>Order</code> | | Value Objects | <code>Money</code>, <code>OrderLine</code>, <code>ShippingAddress</code> | | 외부 Aggregate 참조 | <code>customer_id</code>, <code>product_id</code>처럼 ID로만 참조 | | 주요 불변식 | 주문 라인은 1개 이상, 수량은 1 이상, 금액은 음수 불가 | | Domain Event | <code>OrderCreatedEvent</code> | | API Resource | <code>POST /api/v1/orders</code> | | 성공 상태 | <code>201 Created</code> | | 오류 형식 | RFC 9457 Problem Details |</p>
+<p>금지 동의어:</p>
+<p>| 유비쿼터스 언어 | 사용 | 금지 | |---|---|---| | Order | 주문 Aggregate | Purchase, Transaction | | OrderLine | 주문 상품 라인 | Item, CartItem | | place/create order | 주문 생성 | insert order | | ShippingAddress | 배송지 | AddressInfo |</p>
+<p><strong>권장 구조</strong></p>
+<pre><code>
+apps/orders/
+  domain/
+    models.py
+    events.py
+    exceptions.py
+    repositories.py
+  application/
+    commands.py
+    services.py
+  infrastructure/
+    models.py
+    repositories.py
+  api/
+    schemas.py
+    router.py
+config/
+  api.py
+  urls.py
+</code></pre>
+<p><strong>도메인 계층</strong></p>
+<pre><code>
+# apps/orders/domain/models.py
+from dataclasses import dataclass, field
+from datetime import datetime
+from uuid import uuid4
+
+from .events import DomainEvent, OrderCreatedEvent
+from .exceptions import InvalidOrderError
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: int
+    currency: str = &quot;KRW&quot;
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt; 0:
+            raise InvalidOrderError(&quot;금액은 음수일 수 없습니다.&quot;)
+
+
+@dataclass(frozen=True)
+class OrderLine:
+    product_id: str
+    product_name: str
+    unit_price: Money
+    quantity: int
+
+    def __post_init__(self) -&gt; None:
+        if self.quantity &lt; 1:
+            raise InvalidOrderError(&quot;주문 수량은 1 이상이어야 합니다.&quot;)
+
+    @property
+    def subtotal(self) -&gt; Money:
+        return Money(self.unit_price.amount * self.quantity, self.unit_price.currency)
+
+
+@dataclass(frozen=True)
+class ShippingAddress:
+    receiver_name: str
+    receiver_phone: str
+    postal_code: str
+    address1: str
+    address2: str = &quot;&quot;
+
+
+@dataclass
+class Order:
+    &quot;&quot;&quot;Aggregate Root.
+
+    불변식:
+    - 주문은 최소 하나 이상의 OrderLine을 가진다.
+    - OrderLine, ShippingAddress 변경은 Order를 통해서만 수행한다.
+    - Customer/Product는 객체 참조가 아니라 ID로만 참조한다.
+    &quot;&quot;&quot;
+
+    id: str
+    customer_id: str
+    lines: list[OrderLine]
+    shipping_address: ShippingAddress
+    created_at: datetime
+    _domain_events: list[DomainEvent] = field(default_factory=list)
+
+    @classmethod
+    def create(
+        cls,
+        customer_id: str,
+        lines: list[OrderLine],
+        shipping_address: ShippingAddress,
+    ) -&gt; &quot;Order&quot;:
+        if not lines:
+            raise InvalidOrderError(&quot;최소 한 개 이상의 상품을 주문해야 합니다.&quot;)
+
+        order = cls(
+            id=str(uuid4()),
+            customer_id=customer_id,
+            lines=lines,
+            shipping_address=shipping_address,
+            created_at=datetime.now(),
+        )
+        order._record_event(
+            OrderCreatedEvent(
+                order_id=order.id,
+                customer_id=customer_id,
+                total_amount=order.total_amount.amount,
+            )
+        )
+        return order
+
+    @property
+    def total_amount(self) -&gt; Money:
+        return Money(sum(line.subtotal.amount for line in self.lines))
+
+    def _record_event(self, event: DomainEvent) -&gt; None:
+        self._domain_events.append(event)
+
+    def collect_events(self) -&gt; list[DomainEvent]:
+        events = list(self._domain_events)
+        self._domain_events.clear()
+        return events
+</code></pre>
+<pre><code>
+# apps/orders/domain/events.py
+from dataclasses import dataclass, field
+from datetime import datetime
+
+
+@dataclass(frozen=True)
+class DomainEvent:
+    occurred_at: datetime = field(default_factory=datetime.now)
+
+
+@dataclass(frozen=True)
+class OrderCreatedEvent(DomainEvent):
+    order_id: str = &quot;&quot;
+    customer_id: str = &quot;&quot;
+    total_amount: int = 0
+</code></pre>
+<pre><code>
+# apps/orders/domain/repositories.py
+from abc import ABC, abstractmethod
+
+from .models import Order
+
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id: str) -&gt; Order | None:
+        ...
+
+    @abstractmethod
+    def save(self, order: Order) -&gt; None:
+        ...
+</code></pre>
+<pre><code>
+# apps/orders/domain/exceptions.py
+class OrderDomainError(Exception):
+    pass
+
+
+class InvalidOrderError(OrderDomainError):
+    pass
+</code></pre>
+<p><strong>응용 서비스</strong></p>
+<pre><code>
+# apps/orders/application/commands.py
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class CreateOrderLineCommand:
+    product_id: str
+    product_name: str
+    unit_price: int
+    quantity: int
+
+
+@dataclass(frozen=True)
+class CreateShippingAddressCommand:
+    receiver_name: str
+    receiver_phone: str
+    postal_code: str
+    address1: str
+    address2: str = &quot;&quot;
+
+
+@dataclass(frozen=True)
+class CreateOrderCommand:
+    customer_id: str
+    lines: list[CreateOrderLineCommand]
+    shipping_address: CreateShippingAddressCommand
+</code></pre>
+<pre><code>
+# apps/orders/application/services.py
+from django.db import transaction
+
+from apps.orders.domain.models import Money, Order, OrderLine, ShippingAddress
+from apps.orders.domain.repositories import OrderRepository
+
+from .commands import CreateOrderCommand
+
+
+class OrderApplicationService:
+    def __init__(self, order_repository: OrderRepository) -&gt; None:
+        self._order_repository = order_repository
+
+    @transaction.atomic
+    def create_order(self, command: CreateOrderCommand) -&gt; Order:
+        order = Order.create(
+            customer_id=command.customer_id,
+            lines=[
+                OrderLine(
+                    product_id=line.product_id,
+                    product_name=line.product_name,
+                    unit_price=Money(line.unit_price),
+                    quantity=line.quantity,
+                )
+                for line in command.lines
+            ],
+            shipping_address=ShippingAddress(**command.shipping_address.__dict__),
+        )
+
+        self._order_repository.save(order)
+
+        events = order.collect_events()
+        transaction.on_commit(lambda: self._publish_events(events))
+
+        return order
+
+    def _publish_events(self, events: list[object]) -&gt; None:
+        # Outbox 또는 event bus 연동 지점
+        pass
+</code></pre>
+<p><strong>Django Ninja API</strong></p>
+<pre><code>
+# apps/orders/api/schemas.py
+from datetime import datetime
+
+from ninja import Schema
+
+
+class OrderLineIn(Schema):
+    product_id: str
+    product_name: str
+    unit_price: int
+    quantity: int
+
+
+class ShippingAddressIn(Schema):
+    receiver_name: str
+    receiver_phone: str
+    postal_code: str
+    address1: str
+    address2: str = &quot;&quot;
+
+
+class CreateOrderIn(Schema):
+    customer_id: str
+    lines: list[OrderLineIn]
+    shipping_address: ShippingAddressIn
+
+
+class OrderLineOut(Schema):
+    product_id: str
+    product_name: str
+    unit_price: int
+    quantity: int
+    subtotal: int
+
+
+class OrderOut(Schema):
+    id: str
+    customer_id: str
+    lines: list[OrderLineOut]
+    total_amount: int
+    created_at: datetime
+</code></pre>
+<pre><code>
+# apps/orders/api/router.py
+from ninja import Router
+
+from apps.orders.application.commands import (
+    CreateOrderCommand,
+    CreateOrderLineCommand,
+    CreateShippingAddressCommand,
+)
+from apps.orders.application.services import OrderApplicationService
+from apps.orders.domain.exceptions import OrderDomainError
+from apps.orders.infrastructure.repositories import DjangoOrderRepository
+
+from .schemas import CreateOrderIn, OrderOut
+
+router = Router(tags=[&quot;orders&quot;])
+
+
+@router.post(&quot;&quot;, response={201: OrderOut})
+def create_order(request, payload: CreateOrderIn) -&gt; tuple[int, dict]:
+    service = OrderApplicationService(DjangoOrderRepository())
+    order = service.create_order(
+        CreateOrderCommand(
+            customer_id=payload.customer_id,
+            lines=[
+                CreateOrderLineCommand(
+                    product_id=line.product_id,
+                    product_name=line.product_name,
+                    unit_price=line.unit_price,
+                    quantity=line.quantity,
+                )
+                for line in payload.lines
+            ],
+            shipping_address=CreateShippingAddressCommand(
+                **payload.shipping_address.dict()
+            ),
+        )
+    )
+
+    return 201, {
+        &quot;id&quot;: order.id,
+        &quot;customer_id&quot;: order.customer_id,
+        &quot;lines&quot;: [
+            {
+                &quot;product_id&quot;: line.product_id,
+                &quot;product_name&quot;: line.product_name,
+                &quot;unit_price&quot;: line.unit_price.amount,
+                &quot;quantity&quot;: line.quantity,
+                &quot;subtotal&quot;: line.subtotal.amount,
+            }
+            for line in order.lines
+        ],
+        &quot;total_amount&quot;: order.total_amount.amount,
+        &quot;created_at&quot;: order.created_at,
+    }
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+from ninja.errors import ValidationError
+
+from apps.orders.api.router import router as orders_router
+from apps.orders.domain.exceptions import OrderDomainError
+
+api = NinjaAPI(version=&quot;1.0.0&quot;)
+api.add_router(&quot;/v1/orders&quot;, orders_router)
+
+
+@api.exception_handler(OrderDomainError)
+def order_domain_error_handler(request, exc: OrderDomainError):
+    return api.create_response(
+        request,
+        {
+            &quot;type&quot;: &quot;https://example.com/problems/invalid-order&quot;,
+            &quot;title&quot;: &quot;Invalid order&quot;,
+            &quot;status&quot;: 422,
+            &quot;detail&quot;: str(exc),
+            &quot;instance&quot;: request.path,
+        },
+        status=422,
+    )
+
+
+@api.exception_handler(ValidationError)
+def validation_error_handler(request, exc: ValidationError):
+    return api.create_response(
+        request,
+        {
+            &quot;type&quot;: &quot;https://example.com/problems/validation-error&quot;,
+            &quot;title&quot;: &quot;Validation error&quot;,
+            &quot;status&quot;: 422,
+            &quot;detail&quot;: &quot;요청 본문을 처리할 수 없습니다.&quot;,
+            &quot;instance&quot;: request.path,
+            &quot;errors&quot;: exc.errors,
+        },
+        status=422,
+    )
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from .api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>핵심 포인트는 API 라우터가 주문 생성 유스케이스만 호출하고, 비즈니스 규칙은 <code>Order.create()</code>와 값 객체에 둔다는 점입니다. Django ORM 모델은 <code>infrastructure</code>에 두고, 도메인 모델이 Django를 import하지 않게 유지하는 구조가 DDD 경계를 가장 깔끔하게 지킵니다.</p>
+<p>검증은 실행하지 못했습니다. 현재 워크스페이스가 비어 있고 read-only입니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - DB 모델/마이그레이션 설계 → <strong>architecture-db</strong> 스킬 &gt; - Django ORM 리포지토리 구현 → <strong>implementation-django</strong> 스킬 &gt; - API 테스트 작성 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

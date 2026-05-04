@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-ninja-test-client baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-ninja-test-client baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-positive-ninja-test-client.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>읽기 전용 세션이고 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있어서 파일 생성은 못 했습니다. 아래 내용을 <code>docs/testing/django-ninja-pytest-standard.md</code> 같은 문서로 두면 됩니다.</p>
+<p><strong>Django Ninja Endpoint Pytest 표준</strong></p>
+<ul>
+<li>테스트 위치</li>
+</ul>
+<pre><code>
+tests/
+  conftest.py
+  isolated/
+    conftest.py
+    integration/
+      test_&lt;app&gt;_api.py
+  real/
+    integration/
+      test_&lt;external_flow&gt;.py
+</code></pre>
+<ul>
+<li>기본 API endpoint 테스트는 <code>tests/isolated/integration/</code>에 둔다.</li>
+<li><code>tests/isolated/</code>는 <code>DJANGO_SETTINGS_MODULE=config.settings.test</code>로 실행한다.</li>
+<li>실 DB, 실 외부 API, stage 환경 검증은 <code>tests/real/</code>에만 둔다.</li>
+<li>평면 <code>tests/unit</code>, <code>tests/integration</code> 구조는 사용하지 않는다.</li>
+</ul>
+<ul>
+<li>pytest 설정</li>
+</ul>
+<pre><code>
+[tool.pytest.ini_options]
+minversion = &quot;8.0&quot;
+DJANGO_SETTINGS_MODULE = &quot;config.settings.test&quot;
+testpaths = [&quot;tests/isolated&quot;, &quot;tests/real&quot;]
+addopts = [
+    &quot;-ra&quot;,
+    &quot;-q&quot;,
+    &quot;--strict-markers&quot;,
+    &quot;--strict-config&quot;,
+    &quot;--tb=short&quot;,
+]
+python_files = [&quot;test_*.py&quot;, &quot;*_test.py&quot;]
+python_functions = [&quot;test_*&quot;]
+markers = [
+    &quot;isolated: 통제된 테스트 환경&quot;,
+    &quot;real: 실제 운영 또는 stage 환경&quot;,
+    &quot;integration: 통합 테스트&quot;,
+    &quot;e2e: 엔드투엔드 테스트&quot;,
+    &quot;slow: 느린 테스트&quot;,
+]
+xfail_strict = true
+filterwarnings = [&quot;error&quot;]
+</code></pre>
+<ul>
+<li>공통 fixture</li>
+</ul>
+<pre><code>
+# tests/isolated/integration/conftest.py
+import pytest
+from ninja.testing import TestClient
+
+from orders.api import router as orders_router
+
+
+@pytest.fixture
+def api_client():
+    return TestClient(orders_router)
+
+
+@pytest.fixture
+def authenticated_user(db):
+    from tests.factories import UserFactory
+
+    return UserFactory()
+</code></pre>
+<ul>
+<li>endpoint 테스트 기본 형식</li>
+</ul>
+<pre><code>
+import pytest
+
+from orders.models import Order
+from tests.factories import OrderFactory
+
+
+@pytest.mark.django_db
+def test_get_order_existing_order_returns_order_detail(api_client, authenticated_user):
+    # Arrange
+    order = OrderFactory(user=authenticated_user)
+
+    # Act
+    response = api_client.get(f&quot;/{order.id}&quot;, user=authenticated_user)
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json() == {
+        &quot;id&quot;: order.id,
+        &quot;status&quot;: order.status,
+        &quot;total_price&quot;: str(order.total_price),
+    }
+</code></pre>
+<p>표준 규칙:</p>
+<ul>
+<li>테스트명은 <code>test_&lt;대상&gt;_&lt;조건&gt;_&lt;기대결과&gt;</code> 형식으로 쓴다.</li>
+<li>하나의 테스트에는 하나의 Act만 둔다.</li>
+<li>Arrange, Act, Assert 주석을 유지한다.</li>
+<li>DB 접근이 있으면 <code>@pytest.mark.django_db</code>를 명시한다.</li>
+<li>요청/응답은 실제 HTTP 의미를 검증한다: status code, response body, DB state.</li>
+<li>구현 세부사항 함수 호출 여부보다 사용자 관찰 가능한 결과를 우선 검증한다.</li>
+</ul>
+<ul>
+<li>인증 테스트</li>
+</ul>
+<pre><code>
+@pytest.mark.django_db
+def test_get_my_profile_authenticated_user_returns_profile(api_client, authenticated_user):
+    response = api_client.get(&quot;/me&quot;, user=authenticated_user)
+
+    assert response.status_code == 200
+    assert response.json()[&quot;id&quot;] == authenticated_user.id
+
+
+@pytest.mark.django_db
+def test_get_my_profile_anonymous_user_returns_401(api_client):
+    response = api_client.get(&quot;/me&quot;)
+
+    assert response.status_code == 401
+</code></pre>
+<ul>
+<li>생성 endpoint 테스트</li>
+</ul>
+<pre><code>
+@pytest.mark.django_db
+def test_create_order_valid_payload_creates_order(api_client, authenticated_user):
+    payload = {
+        &quot;product_id&quot;: 1,
+        &quot;quantity&quot;: 2,
+    }
+
+    response = api_client.post(&quot;/orders&quot;, json=payload, user=authenticated_user)
+
+    assert response.status_code == 201
+    assert Order.objects.count() == 1
+    assert response.json()[&quot;quantity&quot;] == 2
+</code></pre>
+<ul>
+<li>validation/error 테스트</li>
+</ul>
+<pre><code>
+@pytest.mark.django_db
+def test_create_order_missing_product_id_returns_422(api_client, authenticated_user):
+    response = api_client.post(
+        &quot;/orders&quot;,
+        json={&quot;quantity&quot;: 2},
+        user=authenticated_user,
+    )
+
+    assert response.status_code == 422
+    assert &quot;detail&quot; in response.json()
+</code></pre>
+<ul>
+<li>목록 endpoint 테스트</li>
+</ul>
+<pre><code>
+@pytest.mark.django_db
+def test_list_orders_authenticated_user_returns_only_own_orders(api_client, authenticated_user):
+    own_order = OrderFactory(user=authenticated_user)
+    OrderFactory()
+
+    response = api_client.get(&quot;/orders&quot;, user=authenticated_user)
+
+    assert response.status_code == 200
+    assert response.json()[&quot;items&quot;] == [
+        {
+            &quot;id&quot;: own_order.id,
+            &quot;status&quot;: own_order.status,
+        }
+    ]
+</code></pre>
+<p>목록 endpoint 표준:</p>
+<ul>
+<li>페이지네이션 응답 구조를 검증한다.</li>
+<li>다른 사용자의 데이터가 섞이지 않는지 검증한다.</li>
+<li>정렬 기준이 API 계약이면 순서까지 검증한다.</li>
+<li>N+1 위험이 있는 목록은 쿼리 수 테스트를 추가한다.</li>
+</ul>
+<ul>
+<li>쿼리 수 회귀 테스트</li>
+</ul>
+<pre><code>
+@pytest.mark.django_db
+def test_list_orders_multiple_orders_uses_constant_queries(
+    api_client,
+    authenticated_user,
+    django_assert_num_queries,
+):
+    OrderFactory.create_batch(5, user=authenticated_user)
+
+    with django_assert_num_queries(3):
+        response = api_client.get(&quot;/orders&quot;, user=authenticated_user)
+
+    assert response.status_code == 200
+</code></pre>
+<ul>
+<li>외부 의존성 표준</li>
+</ul>
+<ul>
+<li>핵심 도메인 로직은 mock하지 않는다.</li>
+<li>결제, 이메일, HTTP API 같은 외부 의존성만 mock 또는 fake로 대체한다.</li>
+<li>HTTP 호출은 <code>responses</code> 또는 <code>respx</code>를 사용한다.</li>
+<li>시간 의존 테스트는 <code>time-machine</code>으로 고정한다.</li>
+<li>raw <code>MagicMock</code> 남발 대신 <code>create_autospec</code> 또는 InMemory Fake를 사용한다.</li>
+</ul>
+<p>실행 명령:</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated -q
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/test_orders_api.py -q
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated -m &quot;not slow&quot; -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja endpoint 구현/리뷰 → <strong>implementation-django-ninja</strong> 스킬 &gt; - pytest fixture와 테스트 품질 → <strong>implementation-test</strong> 스킬 &gt; - Red-Green-Refactor 방식 적용 → <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-service-layer baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-service-layer baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-ambiguous-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django라면 보통 <strong>각 app 내부에 <code>services.py</code> 또는 <code>services/</code> 패키지</strong>를 두는 게 가장 무난합니다.</p>
+<p>예시:</p>
+<pre><code>
+orders/
+  models.py
+  views.py
+  serializers.py
+  services.py
+</code></pre>
+<p>또는 서비스가 커지면:</p>
+<pre><code>
+orders/
+  services/
+    __init__.py
+    checkout.py
+    refund.py
+    pricing.py
+</code></pre>
+<p>기준은 이렇게 잡으면 됩니다.</p>
+<ul>
+<li>특정 도메인/app에만 관련된 로직: <code>app/services.py</code></li>
+<li>파일이 커지거나 기능별 분리가 필요함: <code>app/services/</code></li>
+<li>여러 app을 조율하는 유스케이스: 별도 <code>usecases/</code>, <code>application/</code>, 또는 상위 app의 <code>services/</code></li>
+<li>Django 모델의 단순 불변식/짧은 동작: <code>model</code> 메서드나 custom manager/queryset에 둬도 됨</li>
+<li>view/serializer에서는 orchestration만 하고, 트랜잭션·외부 API·복잡한 상태 변경은 service로 빼는 게 좋음</li>
+</ul>
+<p>개인적으로는 처음부터 전역 <code>services/</code> 디렉터리를 루트에 두기보다, <strong>도메인 app 안에 두고 필요할 때만 상위 orchestration 계층을 추가</strong>하는 쪽을 추천합니다. Django의 app 경계와 잘 맞고, 의존성도 덜 흐려집니다.</p></article>
+  </main>
+</body>
+</html>

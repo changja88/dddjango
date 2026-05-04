@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-clean-code-django baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-clean-code-django baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-1/baseline/trigger-positive-clean-code-django.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>에는 Django 프로젝트 파일이 없고 읽기 전용 환경이라 실제 패치는 적용하지 못했습니다. 대신 기존 view의 주문 생성 로직을 아래 구조로 옮기면 됩니다.</p>
+<p><strong>[Before]</strong></p>
+<pre><code>
+# orders/views.py
+
+@login_required
+def create_order(request):
+    if request.method == &quot;POST&quot;:
+        data = request.POST
+        order = Order.objects.create(user=request.user)
+
+        for item in data.getlist(&quot;items&quot;):
+            product = Product.objects.get(id=item[&quot;product_id&quot;])
+            if product.stock &lt; item[&quot;quantity&quot;]:
+                messages.error(request, &quot;재고가 부족합니다.&quot;)
+                return redirect(&quot;orders:create&quot;)
+
+            product.stock -= item[&quot;quantity&quot;]
+            product.save()
+
+            OrderLine.objects.create(
+                order=order,
+                product=product,
+                quantity=item[&quot;quantity&quot;],
+                price=product.price,
+            )
+
+        send_order_email(order.id)
+        return redirect(&quot;orders:detail&quot;, pk=order.id)
+
+    return render(request, &quot;orders/create.html&quot;)
+</code></pre>
+<p><strong>[After]</strong></p>
+<pre><code>
+# orders/views.py
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
+
+from .forms import CreateOrderForm
+from .services import OrderCreationError, place_order
+
+
+@login_required
+@require_POST
+def create_order(request):
+    form = CreateOrderForm(request.POST)
+
+    if not form.is_valid():
+        return render(request, &quot;orders/create.html&quot;, {&quot;form&quot;: form})
+
+    try:
+        result = place_order(form.to_command(user=request.user))
+    except OrderCreationError as exc:
+        form.add_error(None, str(exc))
+        return render(request, &quot;orders/create.html&quot;, {&quot;form&quot;: form})
+
+    return redirect(&quot;orders:detail&quot;, pk=result.order_id)
+</code></pre>
+<pre><code>
+# orders/services.py
+
+from dataclasses import dataclass
+
+from django.db import transaction
+
+from .models import Order, OrderLine, Product
+from .tasks import send_order_confirmation
+
+
+class OrderCreationError(Exception):
+    pass
+
+
+class EmptyOrder(OrderCreationError):
+    pass
+
+
+class ProductUnavailable(OrderCreationError):
+    pass
+
+
+@dataclass(frozen=True)
+class OrderLineInput:
+    product_id: int
+    quantity: int
+
+
+@dataclass(frozen=True)
+class CreateOrderCommand:
+    user_id: int
+    lines: tuple[OrderLineInput, ...]
+
+
+@dataclass(frozen=True)
+class PlacedOrder:
+    order_id: int
+
+
+def place_order(command: CreateOrderCommand) -&gt; PlacedOrder:
+    if not command.lines:
+        raise EmptyOrder(&quot;주문 항목이 없습니다.&quot;)
+
+    with transaction.atomic():
+        products = _get_locked_products(command.lines)
+        order = Order.objects.create(user_id=command.user_id)
+
+        order_lines = [
+            _build_order_line(order, products[line.product_id], line)
+            for line in command.lines
+        ]
+
+        OrderLine.objects.bulk_create(order_lines)
+        _decrease_stock(products, command.lines)
+
+        transaction.on_commit(
+            lambda: send_order_confirmation.delay(order.id)
+        )
+
+    return PlacedOrder(order_id=order.id)
+
+
+def _get_locked_products(lines: tuple[OrderLineInput, ...]) -&gt; dict[int, Product]:
+    product_ids = {line.product_id for line in lines}
+
+    products = Product.objects.select_for_update().in_bulk(product_ids)
+
+    if len(products) != len(product_ids):
+        raise ProductUnavailable(&quot;구매할 수 없는 상품이 포함되어 있습니다.&quot;)
+
+    return products
+
+
+def _build_order_line(
+    order: Order,
+    product: Product,
+    line: OrderLineInput,
+) -&gt; OrderLine:
+    if product.stock &lt; line.quantity:
+        raise ProductUnavailable(f&quot;{product.name} 재고가 부족합니다.&quot;)
+
+    return OrderLine(
+        order=order,
+        product=product,
+        quantity=line.quantity,
+        unit_price=product.price,
+    )
+
+
+def _decrease_stock(
+    products: dict[int, Product],
+    lines: tuple[OrderLineInput, ...],
+) -&gt; None:
+    for line in lines:
+        product = products[line.product_id]
+        product.stock -= line.quantity
+
+    Product.objects.bulk_update(products.values(), [&quot;stock&quot;])
+</code></pre>
+<p><strong>[Reason] Clean Code / Django</strong> View는 HTTP 입력 검증, service 호출, 응답 선택만 담당합니다. 주문 생성, 재고 차감, 라인 생성, 알림 예약은 application service로 이동해 테스트 가능한 유스케이스가 됩니다. 재고는 <code>select_for_update()</code>와 <code>transaction.atomic()</code>으로 보호하고, 이메일/알림은 <code>transaction.on_commit()</code> 뒤에 실행해 롤백된 주문에 알림이 나가지 않게 합니다.</p>
+<p>추가 테스트는 최소한 다음을 두면 됩니다.</p>
+<pre><code>
+# tests/isolated/orders/test_place_order.py
+
+import pytest
+
+from orders.services import EmptyOrder, ProductUnavailable, place_order
+
+
+def test_place_order_creates_order_lines_and_decreases_stock(user, product):
+    command = create_order_command(user=user, product=product, quantity=2)
+
+    result = place_order(command)
+
+    product.refresh_from_db()
+    assert result.order_id is not None
+    assert product.stock == 8
+
+
+def test_place_order_rejects_empty_lines(user):
+    command = create_order_command(user=user, lines=())
+
+    with pytest.raises(EmptyOrder):
+        place_order(command)
+
+
+def test_place_order_rejects_insufficient_stock(user, product):
+    command = create_order_command(user=user, product=product, quantity=999)
+
+    with pytest.raises(ProductUnavailable):
+        place_order(command)
+</code></pre>
+<p>실제 프로젝트에 적용 후 실행할 명령은 <code>pytest tests/isolated/orders -q</code>입니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django service layer / thin view → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-domain-event dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-domain-event dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-positive-domain-event.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>Django에서 “주문 완료 후 domain event 발행”은 <code>post_save</code> 시그널보다 <strong>Order Aggregate가 이벤트를 기록하고, Application Service가 트랜잭션 경계에서 저장/Outbox 적재를 조율하는 구조</strong>가 DDD 기준에 맞습니다. 핵심은 도메인 모델이 Django ORM, Celery, Kafka, 이메일 같은 인프라를 전혀 모르도록 하는 것입니다.</p>
+<p><strong>전략적 경계</strong></p>
+<p>| Bounded Context | 책임 | 관계 | |---|---|---| | Ordering | 주문 생성, 결제 확정 반영, 주문 완료 상태 전이 | Fulfillment에 <code>Published Language</code>로 통합 이벤트 발행 | | Payment | PG 승인/실패 처리 | Ordering과 <code>Customer-Supplier</code>, PG와는 <code>ACL</code> | | Fulfillment | 출고 요청, 배송 준비 | Ordering의 <code>OrderCompletedV1</code>을 구독 | | Inventory | 재고 예약/확정 | Ordering/Fulfillment와 이벤트 기반 최종 일관성 |</p>
+<p><strong>Ubiquitous Language</strong></p>
+<p>| 도메인 용어 | 정의 | 코드 표현 | 금지 동의어 | |---|---|---|---| | 주문 완료 | 결제 확정 후 주문이 이행 가능한 상태가 된 사실 | <code>OrderCompleted</code>, <code>order.complete()</code> | <code>paid_order</code>, <code>checkout_done</code> | | 결제 확정 | PG 승인 결과가 주문에 반영된 사실 | <code>PaymentConfirmed</code>, <code>order.confirm_payment()</code> | <code>charge</code>, <code>payment_token</code> | | 주문 금액 | 주문 항목 합계의 통화 포함 금액 | <code>Money</code> | <code>price_int</code>, <code>amount_only</code> | | 주문 항목 | 주문 시점 상품/수량/단가 스냅샷 | <code>OrderLine</code> | <code>cart_item</code>, <code>product_row</code> |</p>
+<p>추천 파일 구조는 다음처럼 도메인과 인프라를 분리합니다.</p>
+<pre><code>
+apps/orders/
+  domain/
+    shared/
+      aggregate_root.py
+      money.py
+      identifiers.py
+    model/order/
+      root.py
+      value_objects.py
+      events.py
+      repository.py
+  application/
+    complete_order.py
+    integration_events.py
+  infrastructure/
+    persistence/
+      django_order_repository.py
+      models.py
+      outbox.py
+</code></pre>
+<p>도메인 계층 예시는 이렇게 둡니다.</p>
+<pre><code>
+# apps/orders/domain/shared/aggregate_root.py
+class AggregateRoot:
+    def __init__(self) -&gt; None:
+        self._domain_events: list[object] = []
+
+    def _record_event(self, event: object) -&gt; None:
+        self._domain_events.append(event)
+
+    def collect_events(self) -&gt; list[object]:
+        events, self._domain_events = self._domain_events, []
+        return events
+</code></pre>
+<pre><code>
+# apps/orders/domain/shared/money.py
+from dataclasses import dataclass
+
+
+class CurrencyMismatch(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: int
+    currency: str = &quot;KRW&quot;
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt; 0:
+            raise ValueError(&quot;amount must be non-negative&quot;)
+        if not self.currency:
+            raise ValueError(&quot;currency is required&quot;)
+
+    def __add__(self, other: &quot;Money&quot;) -&gt; &quot;Money&quot;:
+        if self.currency != other.currency:
+            raise CurrencyMismatch(f&quot;{self.currency} != {other.currency}&quot;)
+        return Money(self.amount + other.amount, self.currency)
+
+    def __mul__(self, quantity: int) -&gt; &quot;Money&quot;:
+        if quantity &lt; 0:
+            raise ValueError(&quot;quantity must be non-negative&quot;)
+        return Money(self.amount * quantity, self.currency)
+</code></pre>
+<pre><code>
+# apps/orders/domain/shared/identifiers.py
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class OrderId:
+    value: str
+
+    def __post_init__(self) -&gt; None:
+        if not self.value:
+            raise ValueError(&quot;OrderId is required&quot;)
+
+
+@dataclass(frozen=True)
+class CustomerId:
+    value: str
+
+
+@dataclass(frozen=True)
+class PaymentId:
+    value: str
+
+
+@dataclass(frozen=True)
+class ProductId:
+    value: str
+</code></pre>
+<pre><code>
+# apps/orders/domain/model/order/value_objects.py
+from dataclasses import dataclass
+
+from apps.orders.domain.shared.identifiers import ProductId
+from apps.orders.domain.shared.money import Money
+
+
+@dataclass(frozen=True)
+class OrderLine:
+    product_id: ProductId
+    product_name: str
+    quantity: int
+    unit_price: Money
+
+    def __post_init__(self) -&gt; None:
+        if self.quantity &lt;= 0:
+            raise ValueError(&quot;quantity must be positive&quot;)
+
+    @property
+    def subtotal(self) -&gt; Money:
+        return self.unit_price * self.quantity
+</code></pre>
+<pre><code>
+# apps/orders/domain/model/order/events.py
+from dataclasses import dataclass, field
+from datetime import datetime
+from uuid import uuid4
+
+from apps.orders.domain.shared.identifiers import CustomerId, OrderId, PaymentId
+from apps.orders.domain.shared.money import Money
+
+
+@dataclass(frozen=True)
+class PaymentConfirmed:
+    order_id: OrderId
+    payment_id: PaymentId
+    amount: Money
+    occurred_at: datetime = field(default_factory=datetime.now)
+
+
+@dataclass(frozen=True)
+class OrderCompleted:
+    order_id: OrderId
+    customer_id: CustomerId
+    total_amount: Money
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    occurred_at: datetime = field(default_factory=datetime.now)
+</code></pre>
+<pre><code>
+# apps/orders/domain/model/order/root.py
+from dataclasses import dataclass
+from enum import StrEnum
+
+from apps.orders.domain.model.order.events import OrderCompleted, PaymentConfirmed
+from apps.orders.domain.model.order.value_objects import OrderLine
+from apps.orders.domain.shared.aggregate_root import AggregateRoot
+from apps.orders.domain.shared.identifiers import CustomerId, OrderId, PaymentId
+from apps.orders.domain.shared.money import Money
+
+
+class InvalidOrderState(Exception):
+    pass
+
+
+class OrderStatus(StrEnum):
+    PLACED = &quot;placed&quot;
+    PAYMENT_CONFIRMED = &quot;payment_confirmed&quot;
+    COMPLETED = &quot;completed&quot;
+    CANCELLED = &quot;cancelled&quot;
+
+
+@dataclass
+class Order(AggregateRoot):
+    &quot;&quot;&quot;
+    Aggregate Root: Order
+
+    INV-1: 주문 항목은 1개 이상이어야 한다.
+    INV-2: 완료된 주문은 다시 완료될 수 없다.
+    INV-3: 취소된 주문은 완료될 수 없다.
+    INV-4: 다른 Aggregate는 ID로만 참조한다.
+    &quot;&quot;&quot;
+    id: OrderId
+    customer_id: CustomerId
+    lines: list[OrderLine]
+    status: OrderStatus = OrderStatus.PLACED
+    version: int = 0
+
+    def __post_init__(self) -&gt; None:
+        AggregateRoot.__init__(self)
+        if not self.lines:
+            raise ValueError(&quot;order must have at least one line&quot;)
+
+    @property
+    def total_amount(self) -&gt; Money:
+        total = Money(0, self.lines[0].unit_price.currency)
+        for line in self.lines:
+            total = total + line.subtotal
+        return total
+
+    def confirm_payment(self, payment_id: PaymentId, paid_amount: Money) -&gt; None:
+        if self.status == OrderStatus.COMPLETED:
+            return
+        if self.status == OrderStatus.CANCELLED:
+            raise InvalidOrderState(&quot;cancelled order cannot be completed&quot;)
+        if paid_amount != self.total_amount:
+            raise ValueError(&quot;paid amount does not match order total&quot;)
+
+        self.status = OrderStatus.PAYMENT_CONFIRMED
+        self._record_event(PaymentConfirmed(self.id, payment_id, paid_amount))
+        self.complete()
+
+    def complete(self) -&gt; None:
+        if self.status != OrderStatus.PAYMENT_CONFIRMED:
+            raise InvalidOrderState(&quot;payment must be confirmed first&quot;)
+
+        self.status = OrderStatus.COMPLETED
+        self._record_event(
+            OrderCompleted(
+                order_id=self.id,
+                customer_id=self.customer_id,
+                total_amount=self.total_amount,
+            )
+        )
+
+    def cancel(self) -&gt; None:
+        if self.status == OrderStatus.COMPLETED:
+            raise InvalidOrderState(&quot;completed order cannot be cancelled&quot;)
+        self.status = OrderStatus.CANCELLED
+</code></pre>
+<p>Repository 인터페이스는 도메인 계층이 소유합니다.</p>
+<pre><code>
+# apps/orders/domain/model/order/repository.py
+from abc import ABC, abstractmethod
+
+from apps.orders.domain.model.order.root import Order
+from apps.orders.domain.shared.identifiers import OrderId
+
+
+class ConcurrencyError(Exception):
+    pass
+
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id: OrderId) -&gt; Order | None:
+        ...
+
+    @abstractmethod
+    def save(self, order: Order) -&gt; None:
+        ...
+</code></pre>
+<p>Application Service는 유스케이스와 트랜잭션을 조율합니다. BC 경계를 넘는 이벤트는 <code>transaction.on_commit()</code>으로 직접 Kafka/Celery 발행하지 말고, 주문 변경과 같은 트랜잭션에 Outbox row를 저장합니다.</p>
+<pre><code>
+# apps/orders/application/complete_order.py
+from dataclasses import dataclass
+
+from django.db import transaction
+
+from apps.orders.application.integration_events import OrderCompletedV1
+from apps.orders.domain.model.order.events import OrderCompleted
+from apps.orders.domain.model.order.repository import OrderRepository
+from apps.orders.domain.shared.identifiers import OrderId, PaymentId
+from apps.orders.domain.shared.money import Money
+from apps.orders.infrastructure.persistence.outbox import OutboxMessage
+
+
+@dataclass(frozen=True)
+class CompleteOrderCommand:
+    order_id: str
+    payment_id: str
+    paid_amount: int
+    currency: str = &quot;KRW&quot;
+
+
+class CompleteOrderService:
+    def __init__(self, orders: OrderRepository) -&gt; None:
+        self.orders = orders
+
+    def complete(self, command: CompleteOrderCommand) -&gt; None:
+        with transaction.atomic():
+            order = self.orders.find_by_id(OrderId(command.order_id))
+            if order is None:
+                raise ValueError(&quot;order not found&quot;)
+
+            order.confirm_payment(
+                payment_id=PaymentId(command.payment_id),
+                paid_amount=Money(command.paid_amount, command.currency),
+            )
+            self.orders.save(order)
+
+            for event in order.collect_events():
+                if isinstance(event, OrderCompleted):
+                    integration_event = OrderCompletedV1.from_domain(event)
+                    OutboxMessage.objects.create_from_event(integration_event)
+</code></pre>
+<p>통합 이벤트는 내부 도메인 이벤트와 분리합니다. 내부 이벤트는 자유롭게 바꿀 수 있지만, 통합 이벤트는 외부 계약이므로 버전과 스키마를 고정합니다.</p>
+<pre><code>
+# apps/orders/application/integration_events.py
+from dataclasses import asdict, dataclass
+from datetime import datetime
+
+from apps.orders.domain.model.order.events import OrderCompleted
+
+
+@dataclass(frozen=True)
+class OrderCompletedV1:
+    event_id: str
+    event_type: str
+    schema_version: str
+    occurred_at: datetime
+    order_id: str
+    customer_id: str
+    total_amount_krw: int
+
+    @classmethod
+    def from_domain(cls, event: OrderCompleted) -&gt; &quot;OrderCompletedV1&quot;:
+        return cls(
+            event_id=event.event_id,
+            event_type=&quot;order.completed.v1&quot;,
+            schema_version=&quot;1.0&quot;,
+            occurred_at=event.occurred_at,
+            order_id=event.order_id.value,
+            customer_id=event.customer_id.value,
+            total_amount_krw=event.total_amount.amount,
+        )
+
+    def to_dict(self) -&gt; dict:
+        return asdict(self)
+</code></pre>
+<pre><code>
+# apps/orders/infrastructure/persistence/outbox.py
+from django.db import models
+
+
+class OutboxMessageManager(models.Manager):
+    def create_from_event(self, event) -&gt; &quot;OutboxMessage&quot;:
+        return self.create(
+            event_id=event.event_id,
+            event_type=event.event_type,
+            schema_version=event.schema_version,
+            payload=event.to_dict(),
+        )
+
+
+class OutboxMessage(models.Model):
+    event_id = models.UUIDField(unique=True)
+    event_type = models.CharField(max_length=120, db_index=True)
+    schema_version = models.CharField(max_length=20)
+    payload = models.JSONField()
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = OutboxMessageManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=[&quot;event_type&quot;, &quot;published_at&quot;]),
+            models.Index(fields=[&quot;created_at&quot;]),
+        ]
+</code></pre>
+<p>Repository 구현에서는 낙관적 잠금을 기본으로 둡니다. <code>version</code>이 맞을 때만 update하고, 실패하면 재조회 후 재시도하게 합니다.</p>
+<pre><code>
+# infrastructure repository 핵심 아이디어
+updated = OrderModel.objects.filter(
+    id=order.id.value,
+    version=order.version,
+).update(
+    status=order.status,
+    version=order.version + 1,
+)
+
+if updated == 0:
+    raise ConcurrencyError(&quot;order was modified by another transaction&quot;)
+</code></pre>
+<p>선택 기준은 이렇게 잡으면 됩니다.</p>
+<p>| 상황 | 권장 방식 | |---|---| | 주문 완료 후 같은 프로세스에서 이메일 발송 | <code>transaction.on_commit()</code>으로 Celery enqueue | | 주문 완료를 배송/재고/정산 BC에 전달 | Outbox + Message Bus | | 외부 PG webhook 중복 수신 | Dedup 테이블 + 도메인 상태 검사 | | PG 결제 요청 재시도 | PG idempotency-key |</p>
+<p>Outbox는 at-least-once delivery를 보장한다. 컨슈머는 event_id 기반 dedup 또는 도메인 상태 검사로 멱등성을 처리해야 한다.</p>
+<p>정리하면, 흐름은 다음입니다.</p>
+<pre><code>
+Django Ninja API 또는 View
+  -&gt; CompleteOrderService
+    -&gt; OrderRepository.find_by_id()
+    -&gt; order.confirm_payment()
+       -&gt; PaymentConfirmed 기록
+       -&gt; OrderCompleted 기록
+    -&gt; OrderRepository.save()
+    -&gt; OutboxMessage INSERT
+  -&gt; DB COMMIT
+Outbox Relay
+  -&gt; message bus publish(order.completed.v1)
+Fulfillment/Inventory/Loyalty Consumer
+  -&gt; Dedup 테이블 또는 도메인 상태 검사
+  -&gt; 각 BC의 Command Handler 실행
+</code></pre>
+<p><code>post_save</code> 시그널은 같은 앱의 주문 완료 로직에는 피하는 게 좋습니다. 이벤트 발행 시점과 트랜잭션 경계가 숨어서, 장애 시 이벤트 유실이나 중복 발행을 추적하기 어려워집니다. DDD 기준에서는 Aggregate가 “발생한 사실”을 기록하고, Application Service가 저장과 발행 준비를 명시적으로 조율하는 쪽이 더 견고합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 구현/API 엔드포인트화 → <strong>implementation-django-ninja</strong> 스킬 &gt; - Outbox Relay, 메시지 브로커, UoW 상세화 → <strong>architecture-implementation-patterns</strong> 스킬 &gt; - pytest/TDD로 주문 완료 이벤트 검증 → <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

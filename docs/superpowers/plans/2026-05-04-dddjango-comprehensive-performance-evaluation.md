@@ -21,7 +21,7 @@
 | Phase 4 | Done | trigger precision/recall suite 확장 | `evals/shared/cases/trigger.jsonl` |
 | Phase 5 | Pending | usability/manual review 체계 추가 | `evals/shared/rubrics/usability-checklist.md` |
 | Phase 6 | Pending | real repo forward test 구성 | `evals/fixtures/django-*` 또는 외부 fixture |
-| Phase 7 | Pending | Codex/Claude full benchmark 반복 측정 | iteration별 HTML dashboard |
+| Phase 7 | In Progress | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-1/report.html`, `workspace/codex-eval/trigger-1/report.html` |
 | Phase 8 | Pending | marketplace/fresh install 검증 | release install log, README 검증 |
 | Phase 9 | Pending | beta 사용자 평가 | feedback summary, regression cases |
 | Phase 10 | Pending | 운영 회귀 체계 고정 | smoke/full release gate |
@@ -42,6 +42,40 @@
 - Claude 1차 측정은 CLI 인증/조직 정책으로 blocked 상태다.
   - 관측된 blocker: Claude Code subscription access disabled
   - 필요 조치: `ANTHROPIC_API_KEY` 설정 또는 조직의 Claude Code subscription access 허용
+
+## Latest Codex Full Evaluation
+
+- 평가 일자: 2026-05-04
+- 채점 방식: 1차 자동 휴리스틱 채점. release gate 전 수동 재채점 필요.
+- Benchmark suite:
+  - cases: `24`
+  - baseline executions: `24/24 returncode=0`
+  - dddjango executions: `24/24 returncode=0`
+  - baseline average score: `84.75`
+  - dddjango average score: `86.92`
+  - lift: `+2.17` points, `+2.56%`
+  - baseline average time: `39.60s`
+  - dddjango average time: `96.78s`
+  - report: `workspace/codex-eval/benchmark-1/report.html`
+- Trigger suite:
+  - cases: `30`
+  - baseline executions: `30/30 returncode=0`
+  - dddjango executions: `30/30 returncode=0`
+  - baseline average score: `78.73`
+  - dddjango average score: `83.10`
+  - lift: `+4.37` points, `+5.55%`
+  - baseline average time: `36.24s`
+  - dddjango average time: `87.38s`
+  - trigger recall: `10/10`, `100%`
+  - trigger precision: `10/10`, `100%`
+  - ambiguous handling: `5/6`, `83.33%`
+  - conflict handling: `4/4`, `100%`
+  - report: `workspace/codex-eval/trigger-1/report.html`
+- Current interpretation:
+  - 실행 안정성은 Codex 기준 통과했다.
+  - Trigger gate는 1차 자동 채점 기준으로 대체로 통과했다.
+  - Benchmark quality lift는 release gate 기준 `+15%`에 미달하므로, 수동 재채점과 저점 케이스 원인 분석이 필요하다.
+  - dddjango 평균 실행 시간 증가는 `+30%` gate를 초과하므로, 스킬 로딩 범위와 응답 길이 최적화가 필요하다.
 
 ## File Responsibilities
 

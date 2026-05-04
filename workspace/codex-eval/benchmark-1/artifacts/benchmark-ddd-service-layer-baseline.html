@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-service-layer baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-service-layer baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-1/baseline/benchmark-ddd-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django 프로젝트에서 application service는 보통 <strong>각 Django app 내부의 <code>services.py</code> 또는 <code>services/</code> 패키지</strong>에 두는 게 가장 실용적입니다.</p>
+<p>예를 들면:</p>
+<pre><code>
+orders/
+  api.py              # Ninja router
+  models.py           # Django ORM model
+  repositories.py     # DB 접근 추상화
+  services.py         # application service
+  schemas.py          # Ninja input/output schema
+  domain/
+    models.py         # domain model, value object, entity
+</code></pre>
+<p>규모가 커지면 이렇게 나누는 편이 좋습니다.</p>
+<pre><code>
+orders/
+  api/
+    router.py
+    schemas.py
+  application/
+    services.py
+    commands.py
+  domain/
+    models.py
+    policies.py
+  infrastructure/
+    repositories.py
+  models.py           # Django ORM model
+</code></pre>
+<p>핵심 관계는 이렇게 잡으면 됩니다.</p>
+<pre><code>
+Ninja Router
+  -&gt; Application Service
+    -&gt; Domain Model
+    -&gt; Repository
+      -&gt; Django ORM
+</code></pre>
+<p><code>Ninja router</code>는 HTTP 입출력만 담당하는 얇은 계층이어야 합니다. 요청 schema 검증, 인증된 user 전달, service 호출, response 변환 정도만 하고 비즈니스 흐름을 직접 담지 않는 게 좋습니다.</p>
+<pre><code>
+@router.post(&quot;/orders&quot;)
+def create_order(request, payload: CreateOrderIn):
+    order = order_service.create_order(
+        user_id=request.user.id,
+        product_id=payload.product_id,
+        quantity=payload.quantity,
+    )
+    return OrderOut.from_domain(order)
+</code></pre>
+<p><code>application service</code>는 유스케이스를 조율합니다. 예를 들어 “주문 생성”, “결제 승인”, “회원 탈퇴” 같은 애플리케이션 동작이 여기에 들어갑니다. 트랜잭션 경계도 보통 여기서 잡습니다.</p>
+<pre><code>
+class OrderService:
+    def __init__(self, order_repo, product_repo):
+        self.order_repo = order_repo
+        self.product_repo = product_repo
+
+    @transaction.atomic
+    def create_order(self, user_id, product_id, quantity):
+        product = self.product_repo.get(product_id)
+
+        order = Order.create(
+            user_id=user_id,
+            product=product,
+            quantity=quantity,
+        )
+
+        self.order_repo.save(order)
+        return order
+</code></pre>
+<p><code>domain model</code>은 비즈니스 규칙을 표현합니다. “주문 수량은 1개 이상이어야 한다”, “취소된 주문은 결제할 수 없다” 같은 규칙은 service보다 domain model 안에 있는 편이 좋습니다.</p>
+<pre><code>
+class Order:
+    @classmethod
+    def create(cls, user_id, product, quantity):
+        if quantity &lt; 1:
+            raise InvalidQuantity()
+        if not product.is_available:
+            raise ProductUnavailable()
+
+        return cls(user_id=user_id, product_id=product.id, quantity=quantity)
+</code></pre>
+<p><code>repository</code>는 저장소 접근을 감춥니다. application service가 Django ORM에 직접 강하게 묶이지 않게 해줍니다.</p>
+<pre><code>
+class DjangoOrderRepository:
+    def save(self, order: Order):
+        return OrderModel.objects.create(
+            user_id=order.user_id,
+            product_id=order.product_id,
+            quantity=order.quantity,
+        )
+</code></pre>
+<p>실무적으로는 이렇게 판단하면 됩니다.</p>
+<ul>
+<li>작은 Django app: <code>services.py</code>, <code>repositories.py</code>로 충분</li>
+<li>도메인 규칙이 많음: <code>domain/</code>, <code>application/</code>, <code>infrastructure/</code> 분리</li>
+<li>Ninja router가 길어짐: service로 유스케이스 이동</li>
+<li>service에 validation이 너무 많아짐: domain model이나 policy로 이동</li>
+<li>repository가 단순 CRUD만 감싸고 있음: 꼭 만들 필요는 없음, ORM을 service에서 직접 써도 됨</li>
+</ul>
+<p>가장 추천하는 기준은 이것입니다.</p>
+<p><strong>router는 HTTP를 알고, application service는 유스케이스를 알고, domain model은 비즈니스 규칙을 알고, repository는 저장 방식을 안다.</strong></p>
+<p>이 경계를 지키면 Django Ninja에서도 코드가 얇고 테스트하기 쉬운 구조가 됩니다.</p></article>
+  </main>
+</body>
+</html>

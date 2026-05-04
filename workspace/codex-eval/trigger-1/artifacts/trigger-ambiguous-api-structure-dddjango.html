@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-api-structure dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-api-structure dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-ambiguous-api-structure.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> 워크스페이스는 비어 있고 읽기 전용이라 실제 파일 생성/수정/실행은 못 했습니다. <code>AGENTS.md</code>가 가리키는 <code>config.toml</code>도 현재 위치에는 없습니다. 대신 dddjango 지침에 맞춰 <strong>DRF 없이 Django Ninja 기준</strong>으로 바로 적용 가능한 API 구조를 잡으면 아래처럼 가는 게 깔끔합니다.</p>
+<p><strong>권장 구조</strong></p>
+<pre><code>
+config/
+  api.py
+  urls.py
+
+common/
+  api/
+    errors.py
+
+apps/
+  products/
+    models.py
+    schemas.py
+    filters.py
+    selectors.py
+    services.py
+    api.py
+    tests/
+      test_api.py
+</code></pre>
+<p>핵심 원칙은 간단합니다.</p>
+<ul>
+<li><code>api.py</code>: HTTP 요청/응답 변환만 담당</li>
+<li><code>schemas.py</code>: 요청/응답 Pydantic Schema</li>
+<li><code>filters.py</code>: 목록 필터링</li>
+<li><code>selectors.py</code>: 조회 쿼리 전용</li>
+<li><code>services.py</code>: 생성/수정/삭제 같은 유스케이스</li>
+<li><code>config/api.py</code>: 앱별 Router 합성</li>
+<li><code>common/api/errors.py</code>: RFC 9457 Problem Details 공통 에러 형식</li>
+</ul>
+<p>예시는 <code>products</code> 앱 기준입니다.</p>
+<pre><code>
+# apps/products/schemas.py
+from datetime import datetime
+from decimal import Decimal
+
+from ninja import Schema
+
+
+class ProblemDetail(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+    instance: str | None = None
+
+
+class ProductCreateIn(Schema):
+    name: str
+    sku: str
+    price: Decimal
+
+
+class ProductUpdateIn(Schema):
+    name: str | None = None
+    price: Decimal | None = None
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    sku: str
+    price: Decimal
+    created_at: datetime
+</code></pre>
+<pre><code>
+# apps/products/filters.py
+from ninja import Field, FilterSchema
+
+
+class ProductFilter(FilterSchema):
+    q: str | None = Field(None, q=[&quot;name__icontains&quot;, &quot;sku__icontains&quot;])
+    min_price: float | None = Field(None, q=&quot;price__gte&quot;)
+    max_price: float | None = Field(None, q=&quot;price__lte&quot;)
+</code></pre>
+<pre><code>
+# apps/products/selectors.py
+from django.db.models import QuerySet
+
+from .models import Product
+
+
+def product_list() -&gt; QuerySet[Product]:
+    return Product.objects.order_by(&quot;-created_at&quot;)
+
+
+def product_get(product_id: int) -&gt; Product:
+    return Product.objects.get(id=product_id)
+</code></pre>
+<pre><code>
+# apps/products/services.py
+from django.db import IntegrityError, transaction
+
+from .models import Product
+from .schemas import ProductCreateIn, ProductUpdateIn
+
+
+class ProductAlreadyExistsError(Exception):
+    pass
+
+
+@transaction.atomic
+def product_create(data: ProductCreateIn) -&gt; Product:
+    try:
+        return Product.objects.create(
+            name=data.name,
+            sku=data.sku,
+            price=data.price,
+        )
+    except IntegrityError as exc:
+        raise ProductAlreadyExistsError from exc
+
+
+@transaction.atomic
+def product_update(product: Product, data: ProductUpdateIn) -&gt; Product:
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+    product.save(update_fields=[*data.dict(exclude_unset=True).keys(), &quot;updated_at&quot;])
+    return product
+
+
+@transaction.atomic
+def product_delete(product: Product) -&gt; None:
+    product.delete()
+</code></pre>
+<pre><code>
+# apps/products/api.py
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
+from .filters import ProductFilter
+from .models import Product
+from .schemas import ProblemDetail, ProductCreateIn, ProductOut, ProductUpdateIn
+from .selectors import product_get, product_list
+from .services import ProductAlreadyExistsError, product_create, product_delete, product_update
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(&quot;&quot;, response=list[ProductOut])
+@paginate(LimitOffsetPagination)
+def list_products(request, filters: ProductFilter = ProductFilter()) -&gt; list[Product]:
+    return filters.filter(product_list())
+
+
+@router.get(&quot;/{product_id}&quot;, response={200: ProductOut, 404: ProblemDetail})
+def get_product(request, product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+
+
+@router.post(&quot;&quot;, response={201: ProductOut, 409: ProblemDetail, 422: ProblemDetail})
+def create_product(request, payload: ProductCreateIn) -&gt; tuple[int, Product]:
+    try:
+        return 201, product_create(payload)
+    except ProductAlreadyExistsError:
+        return 409, ProblemDetail(
+            type=&quot;https://api.example.com/problems/product-already-exists&quot;,
+            title=&quot;Product already exists&quot;,
+            status=409,
+            detail=&quot;A product with the same SKU already exists.&quot;,
+            instance=request.path,
+        )
+
+
+@router.patch(&quot;/{product_id}&quot;, response={200: ProductOut, 404: ProblemDetail, 422: ProblemDetail})
+def update_product(request, product_id: int, payload: ProductUpdateIn) -&gt; Product:
+    product = product_get(product_id)
+    return product_update(product, payload)
+
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None, 404: ProblemDetail})
+def delete_product(request, product_id: int) -&gt; tuple[int, None]:
+    product = product_get(product_id)
+    product_delete(product)
+    return 204, None
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from apps.products.api import router as products_router
+
+api = NinjaAPI(title=&quot;Service API&quot;, version=&quot;1.0.0&quot;)
+api.add_router(&quot;/products&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.contrib import admin
+from django.urls import path
+
+from .api import api
+
+urlpatterns = [
+    path(&quot;admin/&quot;, admin.site.urls),
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>검증은 현재 샌드박스에서 실행하지 못했습니다. 실제 프로젝트에 반영한 뒤에는 아래 순서로 확인하면 됩니다.</p>
+<pre><code>
+python manage.py check
+python manage.py makemigrations --check --dry-run
+pytest apps/products/tests/test_api.py
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - REST URL/상태 코드/에러 형식 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Router/Schema/Filter/Pagination 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 서비스/조회 계층 분리와 의존성 방향 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

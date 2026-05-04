@@ -1,0 +1,18 @@
+{
+  "case_id": "trigger-negative-node-cli",
+  "category": "trigger",
+  "title": "Negative trigger for Node CLI",
+  "expectations": [
+    "korean_first",
+    "negative_control_passed",
+    "trigger_precision"
+  ],
+  "scoring_focus": [
+    "Django 언급을 불필요하게 하지 않는다.",
+    "Node.js 코드로 답한다.",
+    "요청 범위를 넘지 않는다."
+  ],
+  "prompt": "Node.js로 간단한 CLI argument parser를 만들어줘.",
+  "trigger_type": "negative",
+  "expected_behavior": "Do not force Django guidance; provide Node.js CLI code."
+}

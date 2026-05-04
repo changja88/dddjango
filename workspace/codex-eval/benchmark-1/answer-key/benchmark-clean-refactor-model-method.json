@@ -1,0 +1,18 @@
+{
+  "case_id": "benchmark-clean-refactor-model-method",
+  "category": "clean-code",
+  "title": "Refactor model method responsibilities",
+  "expectations": [
+    "korean_first",
+    "architecture_review",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "부작용과 순수 도메인 규칙을 분리한다.",
+    "외부 API 호출을 model에서 제거한다.",
+    "리팩터링 단계를 작게 제안한다."
+  ],
+  "prompt": "Django model method에 validation, 외부 API 호출, 상태 변경, save가 섞여 있어. 클린 코드 관점에서 리팩터링 방향을 제안해줘.",
+  "trigger_type": "",
+  "expected_behavior": ""
+}

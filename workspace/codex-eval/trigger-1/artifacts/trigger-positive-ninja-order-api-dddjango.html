@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-ninja-order-api dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-ninja-order-api dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-1/dddjango/trigger-positive-ninja-order-api.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><h2>[주요 내용]</h2>
+<p>현재 <code>/private/tmp/dddjango-codex-eval</code> 워크스페이스에는 <code>config.toml</code>이나 Django 프로젝트 파일이 없어 기존 코드에 맞춘 파일 수정/실행은 불가능했습니다. 아래 설계는 Django 5.x + Django Ninja + DDD/헥사고날 구조를 전제로 한 주문 생성 API 설계안입니다. 이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
+<p><strong>접근안</strong></p>
+<p>| 접근 | 설명 | 판단 | |---|---|---| | 추천: DDD + Application Service + Repository/UoW | 주문 생성이 재고, 결제, 배송으로 확장될 수 있으므로 도메인 규칙과 트랜잭션 경계를 분리 | 기본안 | | 단순 Layered Service | 초기 CRUD에는 빠르지만 주문/결제/재고 불변식이 커지면 서비스가 비대해짐 | MVP 한정 | | CQRS/Saga/Outbox 풀세트 | 결제, 재고, 배송이 비동기 통합이면 적합 | 첫 구현에서는 Outbox만 준비하고 Saga는 결제 도입 시 적용 |</p>
+<p><strong>Bounded Context / Context Map</strong></p>
+<p>| Context | 책임 | 관계 라벨 | |---|---|---| | <code>orders</code> | 주문 접수, 주문 상태 전이, 주문 총액 스냅샷 | 중심 BC | | <code>catalog</code> | 상품명/판매가 제공 | Customer-Supplier: <code>orders</code>가 상품 스냅샷 소비 | | <code>inventory</code> | 재고 예약/해제/확정 | Published Language: <code>OrderPlaced</code> → 재고 예약 | | <code>payments</code> | 결제 승인/실패 | ACL + Published Language: PG 어휘를 <code>PaymentConfirmed</code>로 번역 | | <code>fulfillment</code> | 출고/배송 요청 | Published Language: <code>FulfillmentRequested</code> 소비 |</p>
+<p><strong>Ubiquitous Language</strong></p>
+<p>| 도메인 용어 | 정의 | 코드 표현 | 금지 동의어 | |---|---|---|---| | 주문 접수 | 고객의 주문 의사가 시스템에 기록됨 | <code>Order.place()</code> / <code>OrderPlaced</code> | <code>create_order</code>, <code>insert_order</code> | | 주문 항목 | 주문 시점의 상품명, 단가, 수량 스냅샷 | <code>OrderLine</code> | <code>cart_item</code>, <code>product_row</code> | | 결제 확인 | 결제 BC가 주문 결제 완료를 통보한 사건 | <code>order.confirm_payment()</code> / <code>PaymentConfirmed</code> | <code>charge</code>, <code>payment_token</code> | | 출고 요청 | 결제 완료 후 배송 준비를 요청함 | <code>FulfillmentRequested</code> | <code>shipping_start</code> | | 보상 취소 | 후속 단계 실패로 주문을 무효화 | <code>OrderCancelledForCompensation</code> | <code>rollback</code>, <code>undo</code> |</p>
+<p><strong>API</strong></p>
+<p><code>POST /api/orders</code></p>
+<p>Headers: <code>Authorization: Bearer &lt;token&gt;</code> <code>Idempotency-Key: &lt;uuid-v4&gt;</code></p>
+<p>Request body:</p>
+<pre><code>
+{
+  &quot;customer_id&quot;: &quot;cus_123&quot;,
+  &quot;items&quot;: [
+    {&quot;product_id&quot;: &quot;prd_1&quot;, &quot;quantity&quot;: 2}
+  ],
+  &quot;shipping_address&quot;: {
+    &quot;receiver_name&quot;: &quot;홍길동&quot;,
+    &quot;receiver_phone&quot;: &quot;010-1234-5678&quot;,
+    &quot;zipcode&quot;: &quot;06236&quot;,
+    &quot;address1&quot;: &quot;서울시 강남구 테헤란로&quot;,
+    &quot;address2&quot;: &quot;10층&quot;
+  }
+}
+</code></pre>
+<p>Response: <code>201 Created</code> + <code>Location: /api/orders/{order_id}</code></p>
+<pre><code>
+{
+  &quot;order_id&quot;: &quot;ord_123&quot;,
+  &quot;status&quot;: &quot;payment_waiting&quot;,
+  &quot;total_amount&quot;: {&quot;amount&quot;: 30000, &quot;currency&quot;: &quot;KRW&quot;}
+}
+</code></pre>
+<p>Errors는 RFC 9457 Problem Details로 통일합니다. 대표적으로 <code>401</code> 인증 없음, <code>403</code> 고객 불일치, <code>409</code> 멱등성 키 충돌 또는 낙관적 잠금 충돌, <code>422</code> 상품 판매 불가/수량 오류를 사용합니다.</p>
+<p><strong>파일 구조</strong></p>
+<pre><code>
+apps/orders/
+  domain/
+    shared/
+      aggregate_root.py
+      money.py
+      identifiers.py
+    model/order/
+      root.py
+      value_objects.py
+      events.py
+      repository.py
+    events/
+      internal/order_placed.py
+      published_language/order_created_v1.py
+  application/
+    commands/place_order.py
+    unit_of_work.py
+  adapters/
+    driving/api/schemas.py
+    driving/api/router.py
+    driven/persistence/django_order_repository.py
+  composition.py
+</code></pre>
+<p><strong>핵심 도메인 모델 스켈레톤</strong></p>
+<pre><code>
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import StrEnum
+
+class CurrencyMismatch(Exception): ...
+class EmptyOrderError(Exception): ...
+class InvalidQuantityError(Exception): ...
+class ConcurrencyError(Exception): ...
+
+@dataclass(frozen=True, slots=True)
+class Money:
+    &quot;&quot;&quot;INV-1: amount &gt;= 0. INV-2: 서로 다른 통화는 연산 불가.&quot;&quot;&quot;
+    amount: int
+    currency: str = &quot;KRW&quot;
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt; 0:
+            raise ValueError(&quot;금액은 0 이상이어야 합니다&quot;)
+        if not self.currency:
+            raise ValueError(&quot;통화 코드는 필수입니다&quot;)
+
+    def __add__(self, other: &quot;Money&quot;) -&gt; &quot;Money&quot;:
+        if self.currency != other.currency:
+            raise CurrencyMismatch(f&quot;{self.currency} != {other.currency}&quot;)
+        return Money(self.amount + other.amount, self.currency)
+
+    def __mul__(self, quantity: int) -&gt; &quot;Money&quot;:
+        if quantity &lt;= 0:
+            raise InvalidQuantityError(&quot;수량은 1 이상이어야 합니다&quot;)
+        return Money(self.amount * quantity, self.currency)
+
+@dataclass(frozen=True, slots=True)
+class OrderId:
+    value: str
+
+@dataclass(frozen=True, slots=True)
+class CustomerId:
+    value: str
+
+@dataclass(frozen=True, slots=True)
+class ProductId:
+    value: str
+
+@dataclass(frozen=True, slots=True)
+class OrderLine:
+    product_id: ProductId
+    product_name: str
+    quantity: int
+    unit_price: Money
+
+    @property
+    def subtotal(self) -&gt; Money:
+        return self.unit_price * self.quantity
+</code></pre>
+<pre><code>
+class OrderStatus(StrEnum):
+    PAYMENT_WAITING = &quot;payment_waiting&quot;
+    PAID = &quot;paid&quot;
+    FULFILLMENT_REQUESTED = &quot;fulfillment_requested&quot;
+    CANCELLED = &quot;cancelled&quot;
+
+@dataclass(frozen=True, slots=True)
+class OrderPlaced:
+    order_id: OrderId
+    customer_id: CustomerId
+    total_amount: Money
+    occurred_at: datetime = field(default_factory=datetime.now)
+
+class AggregateRoot:
+    def __init__(self) -&gt; None:
+        self._domain_events: list[object] = []
+
+    def _record_event(self, event: object) -&gt; None:
+        self._domain_events.append(event)
+
+    def collect_events(self) -&gt; list[object]:
+        events, self._domain_events = self._domain_events, []
+        return events
+
+@dataclass
+class Order(AggregateRoot):
+    &quot;&quot;&quot;Aggregate Root.
+    INV-1: 주문 항목은 1개 이상.
+    INV-2: 총액은 주문 항목 subtotal 합계.
+    INV-3: 상태 변경은 place/confirm_payment/request_fulfillment/cancel만 허용.
+    &quot;&quot;&quot;
+    id: OrderId
+    customer_id: CustomerId
+    lines: list[OrderLine]
+    status: OrderStatus = OrderStatus.PAYMENT_WAITING
+    version: int = 0
+
+    def __post_init__(self) -&gt; None:
+        AggregateRoot.__init__(self)
+        if not self.lines:
+            raise EmptyOrderError(&quot;주문 항목은 1개 이상이어야 합니다&quot;)
+
+    @property
+    def total_amount(self) -&gt; Money:
+        total = Money(0, self.lines[0].unit_price.currency)
+        for line in self.lines:
+            total += line.subtotal
+        return total
+
+    def place(self) -&gt; None:
+        self._record_event(OrderPlaced(self.id, self.customer_id, self.total_amount))
+</code></pre>
+<p><strong>Application Service / Repository</strong></p>
+<pre><code>
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+class OrderRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id: OrderId) -&gt; Order | None: ...
+
+    @abstractmethod
+    def save(self, order: Order) -&gt; None: ...
+
+@dataclass(frozen=True, slots=True)
+class PlaceOrderCommand:
+    customer_id: str
+    items: list[dict[str, object]]
+    idempotency_key: str
+
+class OrderApplicationService:
+    def __init__(self, uow: &quot;UnitOfWork&quot;, product_reader: &quot;ProductReader&quot;) -&gt; None:
+        self._uow = uow
+        self._product_reader = product_reader
+
+    def place_order(self, command: PlaceOrderCommand) -&gt; OrderId:
+        with self._uow:
+            if cached := self._uow.idempotency_keys.find(command.idempotency_key):
+                return cached.resource_id
+
+            lines = self._build_lines(command.items)
+            order = Order(OrderId.new(), CustomerId(command.customer_id), lines)
+            order.place()
+
+            self._uow.orders.save(order)
+            self._uow.idempotency_keys.remember(command.idempotency_key, order.id)
+            self._uow.commit()
+
+        for event in order.collect_events():
+            self._uow.event_bus.dispatch(event)
+        return order.id
+</code></pre>
+<p>Repository 내부에서는 <code>commit()</code>을 호출하지 않습니다. 트랜잭션 경계는 Application Service/UoW가 소유합니다. 저장 시에는 <code>version</code> 조건으로 UPDATE하고 실패하면 <code>ConcurrencyError</code>를 발생시키는 낙관적 잠금을 기본으로 둡니다.</p>
+<p><strong>Django Ninja 연결</strong></p>
+<pre><code>
+from ninja import Router, Schema
+from ninja.security import django_auth
+
+router = Router(tags=[&quot;orders&quot;], auth=django_auth)
+
+class OrderItemIn(Schema):
+    product_id: str
+    quantity: int
+
+class ShippingAddressIn(Schema):
+    receiver_name: str
+    receiver_phone: str
+    zipcode: str
+    address1: str
+    address2: str = &quot;&quot;
+
+class PlaceOrderIn(Schema):
+    customer_id: str
+    items: list[OrderItemIn]
+    shipping_address: ShippingAddressIn
+
+class MoneyOut(Schema):
+    amount: int
+    currency: str
+
+class PlaceOrderOut(Schema):
+    order_id: str
+    status: str
+    total_amount: MoneyOut
+
+@router.post(&quot;&quot;, response={201: PlaceOrderOut})
+def place_order(request, payload: PlaceOrderIn) -&gt; tuple[int, PlaceOrderOut]:
+    command = PlaceOrderCommand(
+        customer_id=payload.customer_id,
+        items=[item.model_dump() for item in payload.items],
+        idempotency_key=request.headers[&quot;Idempotency-Key&quot;],
+    )
+    result = build_order_application_service().place_order(command)
+    return 201, PlaceOrderOut(
+        order_id=result.value,
+        status=&quot;payment_waiting&quot;,
+        total_amount=MoneyOut(amount=0, currency=&quot;KRW&quot;),
+    )
+</code></pre>
+<p><code>config/api.py</code>에서는 문자열이 아니라 router 객체를 합성합니다.</p>
+<pre><code>
+from ninja import NinjaAPI
+from apps.orders.adapters.driving.api.router import router as orders_router
+
+api = NinjaAPI(version=&quot;1.0.0&quot;)
+api.add_router(&quot;/orders&quot;, orders_router)
+</code></pre>
+<p><strong>멱등성 / 이벤트 발행</strong></p>
+<p>주문 생성은 중복이 치명적인 POST이므로 <code>Idempotency-Key</code>가 필수입니다. 멱등성은 <code>도메인 상태 검사 / Dedup 테이블 / PG idempotency-key</code>를 구분해 적용합니다. 주문 생성은 Dedup 테이블, 결제 요청은 PG idempotency-key, 상태 전이 재시도는 도메인 상태 검사를 사용합니다.</p>
+<p>Outbox는 at-least-once delivery를 보장합니다. 컨슈머는 <code>event_id</code> 기반 dedup 또는 도메인 상태 검사로 멱등성을 처리해야 합니다. 같은 프로세스 내 알림 정도는 <code>transaction.on_commit</code>, BC 경계를 넘는 재고/결제/배송 통합 이벤트는 Outbox를 선택합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 도메인 모델 세부화 → <strong>architecture-ddd</strong> 스킬 &gt; - Django Ninja 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 트랜잭션/UoW/Outbox 구현 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>
