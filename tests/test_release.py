@@ -31,6 +31,22 @@ class VersionTests(unittest.TestCase):
 
 
 class FileUpdateTests(unittest.TestCase):
+    def test_readme_prioritizes_codex_distribution(self):
+        readme = (ROOT / "README.md").read_text()
+
+        self.assertLess(readme.index("## OpenAI Codex"), readme.index("## Claude Code"))
+        self.assertIn("codex plugin marketplace add changja88/dddjango --ref v0.1.4", readme)
+        self.assertIn("codex plugin marketplace upgrade dddjango-local", readme)
+        self.assertIn("Codex Distribution Checklist", readme)
+
+    def test_readme_uses_supported_claude_plugin_slash_command(self):
+        readme = (ROOT / "README.md").read_text()
+
+        self.assertIn("/plugins marketplace add changja88/dddjango", readme)
+        self.assertIn("/plugins install dddjango@dddjango", readme)
+        self.assertNotIn("/plugin marketplace add", readme)
+        self.assertNotIn("/plugin install", readme)
+
     def test_update_release_files_syncs_plugin_versions_and_readme_tag(self):
         root = self.create_fixture_repo("0.1.0")
 
