@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-api-standard dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-api-standard dddjango</h1>
+    <div class="path">workspace/codex-eval/iteration-1/dddjango/pilot-api-standard.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>Django Ninja API Standard: Pagination &amp; Errors</strong></p>
+<p>아래 표준을 팀 컨벤션 문서에 그대로 넣어도 됩니다. 이 프로젝트 정책은 DRF가 아니라 Django Ninja <code>Schema</code>, <code>Router</code>, <code>NinjaAPI.exception_handler()</code>를 기준으로 합니다.</p>
+<h2>1. Pagination 표준</h2>
+<p>목록 API는 반드시 페이지네이션을 적용한다. 기본은 cursor pagination이며, 작은 관리자성 목록만 예외적으로 limit/offset을 허용한다.</p>
+<p><strong>응답 shape</strong></p>
+<pre><code>
+{
+  &quot;items&quot;: [],
+  &quot;page&quot;: {
+    &quot;next_cursor&quot;: &quot;opaque-base64-cursor-or-null&quot;,
+    &quot;has_more&quot;: true,
+    &quot;limit&quot;: 50
+  }
+}
+</code></pre>
+<p><strong>규칙</strong></p>
+<ul>
+<li><code>items</code>: 현재 페이지 데이터 배열.</li>
+<li><code>page.next_cursor</code>: 다음 페이지가 없으면 <code>null</code>.</li>
+<li><code>page.has_more</code>: 다음 페이지 존재 여부.</li>
+<li><code>page.limit</code>: 실제 적용된 limit.</li>
+<li>기본 <code>limit=50</code>, 최대 <code>limit=100</code>.</li>
+<li>cursor는 클라이언트가 해석하지 않는 opaque string으로 둔다.</li>
+<li>정렬 기준은 안정적이어야 한다. 예: <code>created_at DESC, id DESC</code>.</li>
+<li><code>total_count</code>는 기본 응답에 넣지 않는다. 비용이 싼 화면에서만 별도 필드로 허용한다.</li>
+</ul>
+<pre><code>
+# schemas.py
+from typing import Generic, TypeVar
+
+from ninja import Schema
+from pydantic import Field
+from pydantic.generics import GenericModel
+
+T = TypeVar(&quot;T&quot;)
+
+
+class CursorPageSchema(Schema):
+    next_cursor: str | None = None
+    has_more: bool
+    limit: int
+
+
+class CursorListResponse(GenericModel, Generic[T]):
+    items: list[T]
+    page: CursorPageSchema
+
+
+class CursorPaginationInput(Schema):
+    cursor: str | None = None
+    limit: int = Field(default=50, ge=1, le=100)
+</code></pre>
+<pre><code>
+# products/schemas.py
+from datetime import datetime
+
+from ninja import ModelSchema
+
+from .models import Product
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;created_at&quot;]
+</code></pre>
+<pre><code>
+# products/api.py
+from ninja import Router, Query
+
+from common.schemas import CursorListResponse, CursorPaginationInput
+from .models import Product
+from .schemas import ProductOut
+from .pagination import decode_cursor, encode_cursor
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(&quot;&quot;, response={200: CursorListResponse[ProductOut]})
+def list_products(
+    request,
+    pagination: Query[CursorPaginationInput],
+) -&gt; CursorListResponse[ProductOut]:
+    limit = pagination.limit
+    queryset = Product.objects.order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+
+    if pagination.cursor:
+        created_at, product_id = decode_cursor(pagination.cursor)
+        queryset = queryset.filter(
+            created_at__lt=created_at,
+        ) | queryset.filter(
+            created_at=created_at,
+            id__lt=product_id,
+        )
+
+    rows = list(queryset[: limit + 1])
+    items = rows[:limit]
+    has_more = len(rows) &gt; limit
+
+    next_cursor = None
+    if has_more and items:
+        last = items[-1]
+        next_cursor = encode_cursor(created_at=last.created_at, object_id=last.id)
+
+    return CursorListResponse[ProductOut](
+        items=items,
+        page={
+            &quot;next_cursor&quot;: next_cursor,
+            &quot;has_more&quot;: has_more,
+            &quot;limit&quot;: limit,
+        },
+    )
+</code></pre>
+<h2>2. Error Response 표준</h2>
+<p>모든 API 오류는 RFC 9457 Problem Details 형식을 따른다. 커스텀 <code>{error: ...}</code> 또는 <code>{message: ...}</code> 단독 응답은 사용하지 않는다.</p>
+<p><strong>응답 shape</strong></p>
+<pre><code>
+{
+  &quot;type&quot;: &quot;https://api.example.com/problems/validation-error&quot;,
+  &quot;title&quot;: &quot;Validation Error&quot;,
+  &quot;status&quot;: 422,
+  &quot;detail&quot;: &quot;Request validation failed.&quot;,
+  &quot;instance&quot;: &quot;/api/products&quot;,
+  &quot;errors&quot;: [
+    {
+      &quot;code&quot;: &quot;invalid&quot;,
+      &quot;field&quot;: &quot;price&quot;,
+      &quot;message&quot;: &quot;Input should be greater than 0&quot;
+    }
+  ]
+}
+</code></pre>
+<pre><code>
+# common/errors.py
+from typing import Any
+
+from ninja import Schema
+
+
+class FieldErrorSchema(Schema):
+    code: str
+    message: str
+    field: str | None = None
+
+
+class ProblemDetailSchema(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+    instance: str
+    errors: list[FieldErrorSchema] | None = None
+
+
+class ProblemError(Exception):
+    def __init__(
+        self,
+        *,
+        status: int,
+        title: str,
+        detail: str,
+        type: str,
+        errors: list[dict[str, Any]] | None = None,
+    ) -&gt; None:
+        self.status = status
+        self.title = title
+        self.detail = detail
+        self.type = type
+        self.errors = errors
+</code></pre>
+<pre><code>
+# config/api.py
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
+from ninja import NinjaAPI
+from ninja.errors import ValidationError
+
+from common.errors import ProblemDetailSchema, ProblemError
+from products.api import router as products_router
+
+api = NinjaAPI(title=&quot;Service API&quot;, version=&quot;1.0.0&quot;)
+
+
+def problem_response(request, *, status: int, title: str, detail: str, type: str, errors=None):
+    return api.create_response(
+        request,
+        {
+            &quot;type&quot;: type,
+            &quot;title&quot;: title,
+            &quot;status&quot;: status,
+            &quot;detail&quot;: detail,
+            &quot;instance&quot;: request.path,
+            &quot;errors&quot;: errors,
+        },
+        status=status,
+    )
+
+
+@api.exception_handler(ValidationError)
+def validation_error_handler(request, exc: ValidationError):
+    errors = [
+        {
+            &quot;code&quot;: &quot;invalid&quot;,
+            &quot;field&quot;: &quot;.&quot;.join(str(part) for part in error[&quot;loc&quot;]),
+            &quot;message&quot;: error[&quot;msg&quot;],
+        }
+        for error in exc.errors
+    ]
+    return problem_response(
+        request,
+        status=422,
+        title=&quot;Validation Error&quot;,
+        detail=&quot;Request validation failed.&quot;,
+        type=&quot;https://api.example.com/problems/validation-error&quot;,
+        errors=errors,
+    )
+
+
+@api.exception_handler(ProblemError)
+def problem_error_handler(request, exc: ProblemError):
+    return problem_response(
+        request,
+        status=exc.status,
+        title=exc.title,
+        detail=exc.detail,
+        type=exc.type,
+        errors=exc.errors,
+    )
+
+
+@api.exception_handler(Http404)
+def not_found_handler(request, exc: Http404):
+    return problem_response(
+        request,
+        status=404,
+        title=&quot;Not Found&quot;,
+        detail=&quot;The requested resource was not found.&quot;,
+        type=&quot;https://api.example.com/problems/not-found&quot;,
+    )
+
+
+@api.exception_handler(PermissionDenied)
+def permission_denied_handler(request, exc: PermissionDenied):
+    return problem_response(
+        request,
+        status=403,
+        title=&quot;Forbidden&quot;,
+        detail=&quot;You do not have permission to access this resource.&quot;,
+        type=&quot;https://api.example.com/problems/forbidden&quot;,
+    )
+
+
+api.add_router(&quot;/products&quot;, products_router)
+</code></pre>
+<h2>3. <code>response={...}</code> 예시</h2>
+<p>상태 코드별 응답 스키마를 명시한다. 성공과 실패 스키마를 함께 선언한다.</p>
+<pre><code>
+from ninja import Router
+
+from common.errors import ProblemDetailSchema, ProblemError
+from common.schemas import CursorListResponse
+from .schemas import ProductCreateIn, ProductOut
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(
+    &quot;&quot;,
+    response={
+        200: CursorListResponse[ProductOut],
+        422: ProblemDetailSchema,
+    },
+)
+def list_products(request) -&gt; CursorListResponse[ProductOut]:
+    ...
+
+
+@router.get(
+    &quot;/{product_id}&quot;,
+    response={
+        200: ProductOut,
+        404: ProblemDetailSchema,
+    },
+)
+def get_product(request, product_id: int) -&gt; ProductOut:
+    ...
+
+
+@router.post(
+    &quot;&quot;,
+    response={
+        201: ProductOut,
+        409: ProblemDetailSchema,
+        422: ProblemDetailSchema,
+    },
+)
+def create_product(request, payload: ProductCreateIn) -&gt; tuple[int, ProductOut]:
+    ...
+
+
+@router.delete(
+    &quot;/{product_id}&quot;,
+    response={
+        204: None,
+        404: ProblemDetailSchema,
+        409: ProblemDetailSchema,
+    },
+)
+def delete_product(request, product_id: int) -&gt; tuple[int, None]:
+    return 204, None
+</code></pre>
+<p>비즈니스 오류는 <code>ProblemError</code>로 올린다.</p>
+<pre><code>
+raise ProblemError(
+    status=409,
+    title=&quot;Conflict&quot;,
+    detail=&quot;A product with this SKU already exists.&quot;,
+    type=&quot;https://api.example.com/problems/duplicate-sku&quot;,
+    errors=[
+        {
+            &quot;code&quot;: &quot;duplicate&quot;,
+            &quot;field&quot;: &quot;sku&quot;,
+            &quot;message&quot;: &quot;SKU must be unique.&quot;,
+        }
+    ],
+)
+</code></pre>
+<h2>4. 상태 코드 규칙</h2>
+<ul>
+<li><code>200</code>: 조회, 수정 성공.</li>
+<li><code>201</code>: 생성 성공.</li>
+<li><code>204</code>: 삭제 성공 또는 응답 본문 없는 성공.</li>
+<li><code>400</code>: 요청 형식은 맞지만 의미가 잘못된 일반 클라이언트 오류.</li>
+<li><code>401</code>: 인증 필요.</li>
+<li><code>403</code>: 인증은 됐지만 권한 없음.</li>
+<li><code>404</code>: 리소스 없음.</li>
+<li><code>409</code>: 중복, 상태 충돌, 삭제 불가 같은 비즈니스 충돌.</li>
+<li><code>422</code>: Schema validation 실패.</li>
+<li><code>429</code>: rate limit 초과.</li>
+<li><code>500</code>: 예상하지 못한 서버 오류. 상세 내부 정보 노출 금지.</li>
+</ul>
+<h2>5. Edge-Case Checklist</h2>
+<ul>
+<li>[ ] 모든 목록 API가 pagination shape <code>{items, page}</code>를 반환하는가?</li>
+<li>[ ] <code>limit</code> 기본값과 최대값이 Schema에서 강제되는가?</li>
+<li>[ ] cursor가 opaque string이며 클라이언트가 내부 값을 의존하지 않는가?</li>
+<li>[ ] cursor 정렬 기준이 unique tie-breaker를 포함하는가? 예: <code>created_at</code>, <code>id</code>.</li>
+<li>[ ] 페이지 조회 중 데이터가 추가/삭제되어도 중복/누락 위험이 낮은가?</li>
+<li>[ ] 빈 목록은 <code>items=[]</code>, <code>has_more=false</code>, <code>next_cursor=null</code>인가?</li>
+<li>[ ] 모든 오류가 <code>ProblemDetailSchema</code> shape를 따르는가?</li>
+<li>[ ] validation error는 <code>422</code>, auth failure는 <code>401</code>, forbidden은 <code>403</code>, conflict는 <code>409</code>인가?</li>
+<li>[ ] 예외 응답에 stack trace, SQL, 내부 모델명, secret 값이 노출되지 않는가?</li>
+<li>[ ] 각 라우터 데코레이터에 <code>response={...}</code>가 선언되어 OpenAPI가 정확한가?</li>
+<li>[ ] 삭제 성공은 본문 없이 <code>204: None</code>을 반환하는가?</li>
+<li>[ ] DRF <code>Serializer</code>, <code>ViewSet</code>, <code>APIView</code>, <code>permission_classes</code>를 사용하지 않는가?</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 설계 원칙과 상태 코드/페이지네이션 전략 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Schema/Router/exception_handler 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

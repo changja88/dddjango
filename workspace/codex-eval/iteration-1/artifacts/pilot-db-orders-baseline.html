@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-db-orders baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-db-orders baseline</h1>
+    <div class="path">workspace/codex-eval/iteration-1/baseline/pilot-db-orders.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><code>/private/tmp/dddjango-codex-eval</code>에는 <code>config.toml</code>이 없어서 별도 프로젝트 지침은 확인하지 못했습니다. 아래는 Django + PostgreSQL 기준의 실무형 설계안입니다.</p>
+<p><strong>핵심 방향</strong></p>
+<ul>
+<li><code>Order</code>는 주문의 비즈니스 원장</li>
+<li><code>Payment</code>는 결제 시도 및 승인 결과</li>
+<li><code>Refund</code>는 결제에 대한 환불 원장</li>
+<li>금액은 <code>DecimalField</code>, 통화는 명시</li>
+<li>외부 PG 연동값은 <code>provider</code>, <code>provider_payment_id</code>, <code>provider_refund_id</code>로 보관</li>
+<li>중복 결제/환불 방지를 위해 <code>idempotency_key</code> 유니크 제약 사용</li>
+<li>상태 전이는 트랜잭션 + row lock으로 보호</li>
+</ul>
+<pre><code>
+from django.conf import settings
+from django.db import models
+from django.db.models import Q
+from django.utils import timezone
+
+
+class OrderStatus(models.TextChoices):
+    PENDING = &quot;pending&quot;, &quot;결제 대기&quot;
+    PAID = &quot;paid&quot;, &quot;결제 완료&quot;
+    PARTIALLY_REFUNDED = &quot;partially_refunded&quot;, &quot;부분 환불&quot;
+    REFUNDED = &quot;refunded&quot;, &quot;전체 환불&quot;
+    CANCELED = &quot;canceled&quot;, &quot;취소&quot;
+
+
+class PaymentStatus(models.TextChoices):
+    READY = &quot;ready&quot;, &quot;결제 준비&quot;
+    AUTHORIZED = &quot;authorized&quot;, &quot;승인&quot;
+    CAPTURED = &quot;captured&quot;, &quot;매입 완료&quot;
+    FAILED = &quot;failed&quot;, &quot;실패&quot;
+    CANCELED = &quot;canceled&quot;, &quot;취소&quot;
+    PARTIALLY_REFUNDED = &quot;partially_refunded&quot;, &quot;부분 환불&quot;
+    REFUNDED = &quot;refunded&quot;, &quot;전체 환불&quot;
+
+
+class RefundStatus(models.TextChoices):
+    REQUESTED = &quot;requested&quot;, &quot;요청&quot;
+    SUCCEEDED = &quot;succeeded&quot;, &quot;성공&quot;
+    FAILED = &quot;failed&quot;, &quot;실패&quot;
+    CANCELED = &quot;canceled&quot;, &quot;취소&quot;
+
+
+class Order(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name=&quot;orders&quot;,
+    )
+    order_number = models.CharField(max_length=32, unique=True)
+
+    status = models.CharField(
+        max_length=32,
+        choices=OrderStatus.choices,
+        default=OrderStatus.PENDING,
+    )
+
+    currency = models.CharField(max_length=3, default=&quot;KRW&quot;)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    refunded_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    placed_at = models.DateTimeField(default=timezone.now)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    canceled_at = models.DateTimeField(null=True, blank=True)
+
+    metadata = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=[&quot;user&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;-created_at&quot;]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=Q(total_amount__gte=0),
+                name=&quot;order_total_amount_gte_0&quot;,
+            ),
+            models.CheckConstraint(
+                check=Q(paid_amount__gte=0),
+                name=&quot;order_paid_amount_gte_0&quot;,
+            ),
+            models.CheckConstraint(
+                check=Q(refunded_amount__gte=0),
+                name=&quot;order_refunded_amount_gte_0&quot;,
+            ),
+        ]
+
+
+class Payment(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name=&quot;payments&quot;,
+    )
+
+    status = models.CharField(
+        max_length=32,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.READY,
+    )
+
+    provider = models.CharField(max_length=32)
+    provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
+    idempotency_key = models.CharField(max_length=128, unique=True)
+
+    currency = models.CharField(max_length=3, default=&quot;KRW&quot;)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    captured_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    refunded_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    failure_code = models.CharField(max_length=64, null=True, blank=True)
+    failure_message = models.TextField(null=True, blank=True)
+
+    requested_at = models.DateTimeField(default=timezone.now)
+    authorized_at = models.DateTimeField(null=True, blank=True)
+    captured_at = models.DateTimeField(null=True, blank=True)
+
+    raw_response = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=[&quot;order&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;provider&quot;, &quot;provider_payment_id&quot;]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;provider&quot;, &quot;provider_payment_id&quot;],
+                condition=Q(provider_payment_id__isnull=False),
+                name=&quot;uniq_payment_provider_payment_id&quot;,
+            ),
+            models.CheckConstraint(
+                check=Q(amount__gt=0),
+                name=&quot;payment_amount_gt_0&quot;,
+            ),
+        ]
+
+
+class Refund(models.Model):
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.PROTECT,
+        related_name=&quot;refunds&quot;,
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name=&quot;refunds&quot;,
+    )
+
+    status = models.CharField(
+        max_length=32,
+        choices=RefundStatus.choices,
+        default=RefundStatus.REQUESTED,
+    )
+
+    provider_refund_id = models.CharField(max_length=128, null=True, blank=True)
+    idempotency_key = models.CharField(max_length=128, unique=True)
+
+    currency = models.CharField(max_length=3, default=&quot;KRW&quot;)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reason = models.CharField(max_length=255, blank=True)
+
+    requested_at = models.DateTimeField(default=timezone.now)
+    succeeded_at = models.DateTimeField(null=True, blank=True)
+    failed_at = models.DateTimeField(null=True, blank=True)
+
+    raw_response = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=[&quot;order&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;payment&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;payment&quot;, &quot;provider_refund_id&quot;],
+                condition=Q(provider_refund_id__isnull=False),
+                name=&quot;uniq_refund_payment_provider_refund_id&quot;,
+            ),
+            models.CheckConstraint(
+                check=Q(amount__gt=0),
+                name=&quot;refund_amount_gt_0&quot;,
+            ),
+        ]
+</code></pre>
+<p><strong>인덱스 전략</strong></p>
+<ul>
+<li><code>Order.user + created_at</code>: 마이페이지 주문 목록 조회용</li>
+<li><code>Order.status + created_at</code>: 관리자 주문 상태별 조회용</li>
+<li><code>Payment.order + created_at</code>: 주문 상세에서 결제 이력 조회</li>
+<li><code>Payment.provider + provider_payment_id</code>: PG 웹훅 수신 시 결제 식별</li>
+<li><code>Refund.payment + created_at</code>: 결제별 환불 이력 조회</li>
+<li><code>Refund.order + created_at</code>: 주문 상세에서 환불 이력 조회</li>
+<li><code>idempotency_key unique</code>: 재시도, 중복 요청, 웹훅 중복 수신 방지</li>
+</ul>
+<p><strong>트랜잭션 전략</strong></p>
+<p>결제 승인/매입 반영 시에는 <code>Order</code>를 먼저 잠급니다.</p>
+<pre><code>
+from django.db import transaction
+from django.utils import timezone
+
+@transaction.atomic
+def mark_payment_captured(payment_id):
+    payment = (
+        Payment.objects
+        .select_for_update()
+        .select_related(&quot;order&quot;)
+        .get(id=payment_id)
+    )
+    order = Order.objects.select_for_update().get(id=payment.order_id)
+
+    if payment.status == PaymentStatus.CAPTURED:
+        return payment
+
+    payment.status = PaymentStatus.CAPTURED
+    payment.captured_amount = payment.amount
+    payment.captured_at = timezone.now()
+    payment.save(update_fields=[
+        &quot;status&quot;,
+        &quot;captured_amount&quot;,
+        &quot;captured_at&quot;,
+        &quot;updated_at&quot;,
+    ])
+
+    order.paid_amount += payment.amount
+    order.status = OrderStatus.PAID
+    order.paid_at = order.paid_at or timezone.now()
+    order.save(update_fields=[
+        &quot;paid_amount&quot;,
+        &quot;status&quot;,
+        &quot;paid_at&quot;,
+        &quot;updated_at&quot;,
+    ])
+
+    return payment
+</code></pre>
+<p>환불도 마찬가지로 <code>Order</code>, <code>Payment</code>를 잠그고 처리합니다.</p>
+<pre><code>
+@transaction.atomic
+def mark_refund_succeeded(refund_id):
+    refund = (
+        Refund.objects
+        .select_for_update()
+        .select_related(&quot;order&quot;, &quot;payment&quot;)
+        .get(id=refund_id)
+    )
+    order = Order.objects.select_for_update().get(id=refund.order_id)
+    payment = Payment.objects.select_for_update().get(id=refund.payment_id)
+
+    if refund.status == RefundStatus.SUCCEEDED:
+        return refund
+
+    if payment.refunded_amount + refund.amount &gt; payment.captured_amount:
+        raise ValueError(&quot;Refund amount exceeds captured amount&quot;)
+
+    refund.status = RefundStatus.SUCCEEDED
+    refund.succeeded_at = timezone.now()
+    refund.save(update_fields=[&quot;status&quot;, &quot;succeeded_at&quot;, &quot;updated_at&quot;])
+
+    payment.refunded_amount += refund.amount
+    payment.status = (
+        PaymentStatus.REFUNDED
+        if payment.refunded_amount == payment.captured_amount
+        else PaymentStatus.PARTIALLY_REFUNDED
+    )
+    payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;, &quot;updated_at&quot;])
+
+    order.refunded_amount += refund.amount
+    order.status = (
+        OrderStatus.REFUNDED
+        if order.refunded_amount == order.paid_amount
+        else OrderStatus.PARTIALLY_REFUNDED
+    )
+    order.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;, &quot;updated_at&quot;])
+
+    return refund
+</code></pre>
+<p>실무에서는 PG API 호출 자체는 DB 트랜잭션 밖에서 수행하고, PG 결과를 DB에 반영하는 짧은 구간만 <code>transaction.atomic()</code>으로 묶는 편이 좋습니다. 외부 네트워크 호출을 트랜잭션 안에 넣으면 lock 시간이 길어져 주문/환불 동시 처리에서 병목이 생깁니다.</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-negative-drf dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-negative-drf dddjango</h1>
+    <div class="path">workspace/codex-eval/iteration-1/dddjango/pilot-negative-drf.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
+<p>현재 workspace는 <code>config.toml</code>도 없고 읽기 전용이라 파일 생성/수정 및 테스트 실행은 못 했습니다. 아래는 <code>products</code> 앱에 <code>Product</code> 모델이 이미 있다고 가정한 RED 테스트와 Django Ninja 구현입니다.</p>
+<p><strong>RED Tests</strong></p>
+<p><code>products/tests/test_product_api.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+import pytest
+from django.test import RequestFactory
+from ninja import NinjaAPI
+from ninja.testing import TestClient
+
+from products.api import router
+from products.models import Product
+
+
+@pytest.fixture
+def client():
+    api = NinjaAPI()
+    api.add_router(&quot;/products/&quot;, router)
+    return TestClient(api)
+
+
+@pytest.mark.django_db
+def test_list_products_returns_products(client):
+    Product.objects.create(
+        name=&quot;Keyboard&quot;,
+        description=&quot;Mechanical keyboard&quot;,
+        price=Decimal(&quot;129000.00&quot;),
+        stock=5,
+        is_active=True,
+    )
+
+    response = client.get(&quot;/products/&quot;)
+
+    assert response.status_code == 200
+    data = response.json()
+    results = data[&quot;items&quot;] if &quot;items&quot; in data else data[&quot;results&quot;]
+    assert results[0][&quot;name&quot;] == &quot;Keyboard&quot;
+
+
+@pytest.mark.django_db
+def test_create_product(client):
+    response = client.post(
+        &quot;/products/&quot;,
+        json={
+            &quot;name&quot;: &quot;Mouse&quot;,
+            &quot;description&quot;: &quot;Wireless mouse&quot;,
+            &quot;price&quot;: &quot;59000.00&quot;,
+            &quot;stock&quot;: 10,
+            &quot;is_active&quot;: True,
+        },
+    )
+
+    assert response.status_code == 201
+    assert Product.objects.filter(name=&quot;Mouse&quot;).exists()
+
+
+@pytest.mark.django_db
+def test_update_product(client):
+    product = Product.objects.create(
+        name=&quot;Old&quot;,
+        description=&quot;Old description&quot;,
+        price=Decimal(&quot;1000.00&quot;),
+        stock=1,
+        is_active=True,
+    )
+
+    response = client.patch(
+        f&quot;/products/{product.id}/&quot;,
+        json={&quot;name&quot;: &quot;New&quot;, &quot;stock&quot;: 3},
+    )
+
+    assert response.status_code == 200
+    product.refresh_from_db()
+    assert product.name == &quot;New&quot;
+    assert product.stock == 3
+
+
+@pytest.mark.django_db
+def test_delete_product(client):
+    product = Product.objects.create(
+        name=&quot;Delete me&quot;,
+        description=&quot;&quot;,
+        price=Decimal(&quot;1000.00&quot;),
+        stock=1,
+        is_active=True,
+    )
+
+    response = client.delete(f&quot;/products/{product.id}/&quot;)
+
+    assert response.status_code == 204
+    assert not Product.objects.filter(id=product.id).exists()
+</code></pre>
+<p><strong>Schema</strong></p>
+<p><code>products/schemas.py</code></p>
+<pre><code>
+from decimal import Decimal
+from typing import Optional
+
+from ninja import ModelSchema, Schema
+
+from products.models import Product
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;description&quot;, &quot;price&quot;, &quot;stock&quot;, &quot;is_active&quot;]
+
+
+class ProductCreate(Schema):
+    name: str
+    description: str = &quot;&quot;
+    price: Decimal
+    stock: int
+    is_active: bool = True
+
+
+class ProductUpdate(Schema):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[Decimal] = None
+    stock: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class ProblemDetail(Schema):
+    type: str = &quot;about:blank&quot;
+    title: str
+    status: int
+    detail: str
+</code></pre>
+<p><strong>Router</strong></p>
+<p><code>products/api.py</code></p>
+<pre><code>
+from typing import List
+
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.errors import HttpError
+from ninja.pagination import LimitOffsetPagination, paginate
+
+from products.models import Product
+from products.schemas import ProductCreate, ProductOut, ProductUpdate
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(&quot;/&quot;, response=List[ProductOut])
+@paginate(LimitOffsetPagination)
+def list_products(request):
+    return Product.objects.order_by(&quot;-id&quot;)
+
+
+@router.get(&quot;/{product_id}/&quot;, response=ProductOut)
+def get_product(request, product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductCreate) -&gt; tuple[int, Product]:
+    product = Product.objects.create(**payload.dict())
+    return 201, product
+
+
+@router.patch(&quot;/{product_id}/&quot;, response=ProductOut)
+def update_product(request, product_id: int, payload: ProductUpdate) -&gt; Product:
+    product = get_object_or_404(Product, id=product_id)
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+
+    product.save(update_fields=list(payload.dict(exclude_unset=True).keys()))
+    return product
+
+
+@router.delete(&quot;/{product_id}/&quot;, response={204: None})
+def delete_product(request, product_id: int) -&gt; tuple[int, None]:
+    deleted, _ = Product.objects.filter(id=product_id).delete()
+    if deleted == 0:
+        raise HttpError(404, &quot;Product not found&quot;)
+    return 204, None
+</code></pre>
+<p><strong>API 합성</strong></p>
+<p><code>config/api.py</code></p>
+<pre><code>
+from ninja import NinjaAPI
+from ninja.errors import HttpError
+
+from products.api import router as products_router
+from products.schemas import ProblemDetail
+
+api = NinjaAPI()
+
+
+@api.exception_handler(HttpError)
+def http_error_handler(request, exc: HttpError):
+    return api.create_response(
+        request,
+        {
+            &quot;type&quot;: &quot;about:blank&quot;,
+            &quot;title&quot;: exc.message,
+            &quot;status&quot;: exc.status_code,
+            &quot;detail&quot;: exc.message,
+        },
+        status=exc.status_code,
+    )
+
+
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<p><code>config/urls.py</code></p>
+<pre><code>
+from django.contrib import admin
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;admin/&quot;, admin.site.urls),
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>실행 확인은 이 순서로 하면 됩니다.</p>
+<pre><code>
+pytest products/tests/test_product_api.py
+</code></pre>
+<p>처음에는 라우터/스키마가 없어서 RED로 실패해야 하고, 위 구현을 추가한 뒤 다시 실행하면 GREEN이 되어야 합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/마이그레이션 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

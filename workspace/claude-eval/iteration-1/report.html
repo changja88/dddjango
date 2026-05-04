@@ -131,12 +131,12 @@
 <body>
   <header>
     <h1>dddjango Claude Evaluation Report</h1>
-    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 8개 파일럿 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 평가 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
   </header>
   <main>
     <div class="metrics">
-      <section class="metric neutral"><span>Baseline Score</span><strong>0.0</strong><small>8-case average</small></section>
-      <section class="metric bad"><span>dddjango Score</span><strong>0.0</strong><small>8-case average</small></section>
+      <section class="metric neutral"><span>Baseline Score</span><strong>0.0</strong><small>case average</small></section>
+      <section class="metric bad"><span>dddjango Score</span><strong>0.0</strong><small>case average</small></section>
       <section class="metric bad"><span>Quality Lift</span><strong>+0.00</strong><small>+0.00% vs baseline</small></section>
       <section class="metric neutral"><span>Baseline Time</span><strong>0.43s</strong><small>average duration</small></section>
       <section class="metric neutral"><span>dddjango Time</span><strong>0.00s</strong><small>-100.00% vs baseline</small></section>
@@ -213,9 +213,9 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-api-order-create.output.md">baseline</a>
-            <a href="dddjango/pilot-api-order-create.output.md">dddjango</a>
-            <a href="answer-key/pilot-api-order-create.json">answer key</a>
+            <a href="artifacts/pilot-api-order-create-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-order-create-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-api-order-create-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -237,9 +237,9 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-api-standard.output.md">baseline</a>
-            <a href="dddjango/pilot-api-standard.output.md">dddjango</a>
-            <a href="answer-key/pilot-api-standard.json">answer key</a>
+            <a href="artifacts/pilot-api-standard-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-standard-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-api-standard-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -261,9 +261,9 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-db-orders.output.md">baseline</a>
-            <a href="dddjango/pilot-db-orders.output.md">dddjango</a>
-            <a href="answer-key/pilot-db-orders.json">answer key</a>
+            <a href="artifacts/pilot-db-orders-baseline.html">baseline</a>
+            <a href="artifacts/pilot-db-orders-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-db-orders-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -285,9 +285,9 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-implementation-coupon.output.md">baseline</a>
-            <a href="dddjango/pilot-implementation-coupon.output.md">dddjango</a>
-            <a href="answer-key/pilot-implementation-coupon.json">answer key</a>
+            <a href="artifacts/pilot-implementation-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-implementation-coupon-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-implementation-coupon-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -309,9 +309,9 @@
           <td>Blocked before model response: Claude Code subscription access is disabled and ANTHROPIC_API_KEY is unset.</td>
           <td>Not run yet; baseline pilot is blocked by Claude Code authentication.</td>
           <td class="links">
-            <a href="baseline/pilot-negative-drf.output.md">baseline</a>
-            <a href="dddjango/pilot-negative-drf.output.md">dddjango</a>
-            <a href="answer-key/pilot-negative-drf.json">answer key</a>
+            <a href="artifacts/pilot-negative-drf-baseline.html">baseline</a>
+            <a href="artifacts/pilot-negative-drf-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-negative-drf-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -333,9 +333,9 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-review-fat-model.output.md">baseline</a>
-            <a href="dddjango/pilot-review-fat-model.output.md">dddjango</a>
-            <a href="answer-key/pilot-review-fat-model.json">answer key</a>
+            <a href="artifacts/pilot-review-fat-model-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-fat-model-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-review-fat-model-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -357,9 +357,9 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-review-view-logic.output.md">baseline</a>
-            <a href="dddjango/pilot-review-view-logic.output.md">dddjango</a>
-            <a href="answer-key/pilot-review-view-logic.json">answer key</a>
+            <a href="artifacts/pilot-review-view-logic-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-view-logic-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-review-view-logic-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -381,15 +381,16 @@
           <td></td>
           <td></td>
           <td class="links">
-            <a href="baseline/pilot-tdd-coupon.output.md">baseline</a>
-            <a href="dddjango/pilot-tdd-coupon.output.md">dddjango</a>
-            <a href="answer-key/pilot-tdd-coupon.json">answer key</a>
+            <a href="artifacts/pilot-tdd-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-tdd-coupon-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-tdd-coupon-answer-key.html">answer key</a>
           </td>
         </tr>
         
         </tbody>
       </table>
     </section>
+
   </main>
 </body>
 </html>

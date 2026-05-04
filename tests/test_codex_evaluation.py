@@ -585,8 +585,12 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             (iteration / "baseline").mkdir()
             (iteration / "dddjango").mkdir()
             (iteration / "answer-key").mkdir()
-            (iteration / "baseline/case-a.output.md").write_text("baseline output")
-            (iteration / "dddjango/case-a.output.md").write_text("dddjango output")
+            (iteration / "baseline/case-a.output.md").write_text(
+                "# Baseline Output\n\n- **plain** `result`\n"
+            )
+            (iteration / "dddjango/case-a.output.md").write_text(
+                "# dddjango Output\n\n```python\nprint('ok')\n```\n"
+            )
             (iteration / "answer-key/case-a.json").write_text(
                 json.dumps(
                     {
@@ -680,9 +684,23 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertIn("Without Skill", html)
             self.assertIn("With dddjango", html)
             self.assertIn("+10.0", html)
-            self.assertIn("baseline/case-a.output.md", html)
-            self.assertIn("dddjango/case-a.output.md", html)
-            self.assertIn("answer-key/case-a.json", html)
+            self.assertNotIn("file://", html)
+            self.assertIn('href="artifacts/case-a-baseline.html"', html)
+            self.assertIn('href="artifacts/case-a-dddjango.html"', html)
+            self.assertIn('href="artifacts/case-a-answer-key.html"', html)
+
+            baseline_artifact = iteration / "artifacts/case-a-baseline.html"
+            dddjango_artifact = iteration / "artifacts/case-a-dddjango.html"
+            answer_key_artifact = iteration / "artifacts/case-a-answer-key.html"
+            self.assertTrue(baseline_artifact.exists())
+            self.assertTrue(dddjango_artifact.exists())
+            self.assertTrue(answer_key_artifact.exists())
+            self.assertIn("<h1>Baseline Output</h1>", baseline_artifact.read_text())
+            self.assertIn("<li><strong>plain</strong> <code>result</code></li>", baseline_artifact.read_text())
+            self.assertIn("<h1>dddjango Output</h1>", dddjango_artifact.read_text())
+            self.assertIn("<pre><code>", dddjango_artifact.read_text())
+            self.assertIn("print(&#x27;ok&#x27;)", dddjango_artifact.read_text())
+            self.assertIn("Case A title", answer_key_artifact.read_text())
 
     def test_render_report_includes_trigger_matrix_and_gates(self):
         module = load_module(REPORT_SCRIPT_PATH)

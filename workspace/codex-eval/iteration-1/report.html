@@ -131,12 +131,12 @@
 <body>
   <header>
     <h1>dddjango Codex Evaluation Report</h1>
-    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 8개 파일럿 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 평가 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
   </header>
   <main>
     <div class="metrics">
-      <section class="metric neutral"><span>Baseline Score</span><strong>81.0</strong><small>8-case average</small></section>
-      <section class="metric good"><span>dddjango Score</span><strong>93.25</strong><small>8-case average</small></section>
+      <section class="metric neutral"><span>Baseline Score</span><strong>81.0</strong><small>case average</small></section>
+      <section class="metric good"><span>dddjango Score</span><strong>93.25</strong><small>case average</small></section>
       <section class="metric good"><span>Quality Lift</span><strong>+12.25</strong><small>+15.12% vs baseline</small></section>
       <section class="metric neutral"><span>Baseline Time</span><strong>48.14s</strong><small>average duration</small></section>
       <section class="metric neutral"><span>dddjango Time</span><strong>60.86s</strong><small>+26.42% vs baseline</small></section>
@@ -213,9 +213,9 @@
           <td>강한 DDD/Ninja 설계, transaction/select_for_update/outbox 언급. 다소 장황하고 테스트 관점은 약함.</td>
           <td>Django Ninja, DDD boundary, Idempotency-Key, payment port, transaction, select_for_update, router 코드가 핵심만 남아 적용성 높음. 테스트 예시는 약함.</td>
           <td class="links">
-            <a href="baseline/pilot-api-order-create.output.md">baseline</a>
-            <a href="dddjango/pilot-api-order-create.output.md">dddjango</a>
-            <a href="answer-key/pilot-api-order-create.json">answer key</a>
+            <a href="artifacts/pilot-api-order-create-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-order-create-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-api-order-create-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -237,9 +237,9 @@
           <td>Django Ninja pagination/error 표준을 코드 중심으로 제시. 길지만 적용성 높음.</td>
           <td>Django Ninja pagination/error 표준을 팀 컨벤션 형태로 간결하게 제시. Problem Details, exception_handler, response={...}, checklist가 포함되어 적용성 높음.</td>
           <td class="links">
-            <a href="baseline/pilot-api-standard.output.md">baseline</a>
-            <a href="dddjango/pilot-api-standard.output.md">dddjango</a>
-            <a href="answer-key/pilot-api-standard.json">answer key</a>
+            <a href="artifacts/pilot-api-standard-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-standard-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-api-standard-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -261,9 +261,9 @@
           <td>DB 설계, 인덱스, idempotency, transaction/select_for_update가 좋음. API/Ninja와 테스트는 주변 항목.</td>
           <td>Order/Payment/Refund 모델, 제약, 인덱스, idempotency, select_for_update, on_commit 전략이 집중적으로 정리됨. pytest와 migration/sqlmigrate 검증까지 포함.</td>
           <td class="links">
-            <a href="baseline/pilot-db-orders.output.md">baseline</a>
-            <a href="dddjango/pilot-db-orders.output.md">dddjango</a>
-            <a href="answer-key/pilot-db-orders.json">answer key</a>
+            <a href="artifacts/pilot-db-orders-baseline.html">baseline</a>
+            <a href="artifacts/pilot-db-orders-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-db-orders-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -285,9 +285,9 @@
           <td>DDD 계층과 Django Ninja endpoint를 구체적으로 제시. 테스트 전략은 있으나 TDD 수준은 아님.</td>
           <td>도메인, repository/service, Django model, Django Ninja endpoint, RED pytest checks를 500단어 안팎으로 제시. 이전보다 훨씬 빠르고 짧지만 config/api 합성 등 일부 세부는 생략됨.</td>
           <td class="links">
-            <a href="baseline/pilot-implementation-coupon.output.md">baseline</a>
-            <a href="dddjango/pilot-implementation-coupon.output.md">dddjango</a>
-            <a href="answer-key/pilot-implementation-coupon.json">answer key</a>
+            <a href="artifacts/pilot-implementation-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-implementation-coupon-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-implementation-coupon-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -309,9 +309,9 @@
           <td>DRF ViewSet/Serializer 요청을 그대로 수용. dddjango 정책상 명확한 negative-control 실패.</td>
           <td>DRF 요청을 명시적으로 거부하고 RED 테스트, Django Ninja Schema/Router, 올바른 NinjaAPI.add_router 대안을 제공. DRF 구현 코드는 생성하지 않아 negative-control 통과.</td>
           <td class="links">
-            <a href="baseline/pilot-negative-drf.output.md">baseline</a>
-            <a href="dddjango/pilot-negative-drf.output.md">dddjango</a>
-            <a href="answer-key/pilot-negative-drf.json">answer key</a>
+            <a href="artifacts/pilot-negative-drf-baseline.html">baseline</a>
+            <a href="artifacts/pilot-negative-drf-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-negative-drf-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -333,9 +333,9 @@
           <td>fat model 책임, 외부 gateway 결합, transaction, select_for_update를 잘 지적. API 케이스가 아니어서 Ninja 언급 부재는 큰 감점 아님.</td>
           <td>severity-ranked findings로 gateway 결합, 애그리거트 경계, transaction/on_commit, N+1, assertNumQueries 회귀 테스트까지 구체적으로 지적. baseline보다 명확함.</td>
           <td class="links">
-            <a href="baseline/pilot-review-fat-model.output.md">baseline</a>
-            <a href="dddjango/pilot-review-fat-model.output.md">dddjango</a>
-            <a href="answer-key/pilot-review-fat-model.json">answer key</a>
+            <a href="artifacts/pilot-review-fat-model-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-fat-model-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-review-fat-model-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -357,9 +357,9 @@
           <td>Django Ninja view를 얇게 두는 기준과 서비스 분리 기준을 균형 있게 제시.</td>
           <td>thin Ninja endpoint, application service split, transaction.on_commit, idempotency, Problem Details를 짧고 적용 가능한 코드 스케치로 제시.</td>
           <td class="links">
-            <a href="baseline/pilot-review-view-logic.output.md">baseline</a>
-            <a href="dddjango/pilot-review-view-logic.output.md">dddjango</a>
-            <a href="answer-key/pilot-review-view-logic.json">answer key</a>
+            <a href="artifacts/pilot-review-view-logic-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-view-logic-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-review-view-logic-answer-key.html">answer key</a>
           </td>
         </tr>
         
@@ -381,15 +381,16 @@
           <td>pytest/TDD 흐름은 구체적이나 Django Ninja API까지 연결하지 못함.</td>
           <td>빈 workspace/read-only를 명시하면서도 RED pytest, 예상 실패 이유, GREEN 구현, Django Ninja API, REFACTOR 방향, 실행 명령을 제시. TDD 케이스는 안정적으로 회복됨.</td>
           <td class="links">
-            <a href="baseline/pilot-tdd-coupon.output.md">baseline</a>
-            <a href="dddjango/pilot-tdd-coupon.output.md">dddjango</a>
-            <a href="answer-key/pilot-tdd-coupon.json">answer key</a>
+            <a href="artifacts/pilot-tdd-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-tdd-coupon-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-tdd-coupon-answer-key.html">answer key</a>
           </td>
         </tr>
         
         </tbody>
       </table>
     </section>
+
   </main>
 </body>
 </html>

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
 from html import escape
 from pathlib import Path
 
@@ -93,6 +94,211 @@ def css_class_for_status(value):
 
 def link(path, label):
     return f'<a href="{escape(str(path))}">{escape(label)}</a>'
+
+
+def render_inline_markdown(text):
+    rendered = escape(text)
+    rendered = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", rendered)
+    rendered = re.sub(r"`([^`]+)`", r"<code>\1</code>", rendered)
+    return rendered
+
+
+def markdown_to_html(text):
+    html = []
+    in_code = False
+    in_list = False
+    paragraph = []
+
+    def flush_paragraph():
+        if paragraph:
+            html.append(f"<p>{render_inline_markdown(' '.join(paragraph))}</p>")
+            paragraph.clear()
+
+    def close_list():
+        nonlocal in_list
+        if in_list:
+            html.append("</ul>")
+            in_list = False
+
+    for line in text.splitlines():
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            flush_paragraph()
+            close_list()
+            if in_code:
+                html.append("</code></pre>")
+                in_code = False
+            else:
+                html.append("<pre><code>")
+                in_code = True
+            continue
+
+        if in_code:
+            html.append(escape(line))
+            continue
+
+        if not stripped:
+            flush_paragraph()
+            close_list()
+            continue
+
+        heading = re.match(r"^(#{1,4})\s+(.+)$", stripped)
+        if heading:
+            flush_paragraph()
+            close_list()
+            level = len(heading.group(1))
+            html.append(f"<h{level}>{render_inline_markdown(heading.group(2))}</h{level}>")
+            continue
+
+        if stripped.startswith("- "):
+            flush_paragraph()
+            if not in_list:
+                html.append("<ul>")
+                in_list = True
+            html.append(f"<li>{render_inline_markdown(stripped[2:])}</li>")
+            continue
+
+        numbered = re.match(r"^\d+\.\s+(.+)$", stripped)
+        if numbered:
+            flush_paragraph()
+            if not in_list:
+                html.append("<ul>")
+                in_list = True
+            html.append(f"<li>{render_inline_markdown(numbered.group(1))}</li>")
+            continue
+
+        paragraph.append(stripped)
+
+    flush_paragraph()
+    close_list()
+    if in_code:
+        html.append("</code></pre>")
+    return "\n".join(html)
+
+
+def artifact_viewer_html(title, source_path):
+    source_path = Path(source_path)
+    if source_path.exists():
+        body = source_path.read_text()
+    else:
+        body = f"Missing artifact: {source_path}"
+    if source_path.suffix == ".md":
+        rendered_body = f'<article class="markdown">{markdown_to_html(body)}</article>'
+    else:
+        rendered_body = f"<pre>{escape(body)}</pre>"
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>{escape(title)}</title>
+  <style>
+    body {{
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+    header {{
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }}
+    h1 {{
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }}
+    main {{
+      padding: 24px 28px;
+    }}
+    article.markdown {{
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }}
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {{
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }}
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {{
+      margin-top: 0;
+    }}
+    article.markdown p,
+    article.markdown li {{
+      font-size: 14px;
+      line-height: 1.65;
+    }}
+    article.markdown pre {{
+      margin: 14px 0;
+    }}
+    pre {{
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }}
+    .path {{
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{escape(title)}</h1>
+    <div class="path">{escape(str(source_path))}</div>
+  </header>
+  <main>
+    {rendered_body}
+  </main>
+</body>
+</html>
+"""
+
+
+def write_artifact_viewers(iteration, rows):
+    artifact_dir = Path(iteration) / "artifacts"
+    artifact_dir.mkdir(exist_ok=True)
+    for row in rows:
+        artifacts = [
+            (
+                "baseline_output",
+                "baseline",
+                Path(iteration) / "baseline" / f"{row['case_id']}.output.md",
+            ),
+            (
+                "dddjango_output",
+                "dddjango",
+                Path(iteration) / "dddjango" / f"{row['case_id']}.output.md",
+            ),
+            (
+                "answer_key",
+                "answer-key",
+                Path(iteration) / "answer-key" / f"{row['case_id']}.json",
+            ),
+        ]
+        for row_key, label, source_path in artifacts:
+            viewer_name = f"{row['case_id']}-{label}.html"
+            viewer_path = artifact_dir / viewer_name
+            title = f"{row['case_id']} {label}"
+            viewer_path.write_text(artifact_viewer_html(title, source_path))
+            row[row_key] = Path("artifacts") / viewer_name
 
 
 def run_status(iteration, case_id, timing):
@@ -556,7 +762,7 @@ def render_html(iteration, rows, *, platform="Codex"):
         </tbody>
       </table>
     </section>
-    {trigger_matrix}
+{trigger_matrix}
   </main>
 </body>
 </html>
@@ -569,6 +775,7 @@ def render_report(iteration, *, platform="Codex"):
     timing = index_by_case_and_variant(load_json(iteration / "timing.json"))
     case_metadata = load_case_metadata(iteration)
     rows = build_rows(iteration, grades, timing, case_metadata)
+    write_artifact_viewers(iteration, rows)
     html = render_html(iteration, rows, platform=platform)
     report_path = iteration / "report.html"
     report_path.write_text(html)
