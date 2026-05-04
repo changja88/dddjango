@@ -27,6 +27,11 @@ Django Ninja API 구현(Schema, Router, 스로틀링)에 대해서는
 implementation-django-ninja에 위임한다. 데이터베이스 스키마 설계(정규화,
 인덱스)에 대해서는 architecture-db에 위임한다.
 
+이 저장소에서 Django API 구현 예시가 필요하면 framework-neutral 설계를
+먼저 제시한 뒤 Django Ninja 구현으로 연결한다. 사용자가 DRF, Django REST
+Framework, Serializer, ViewSet, APIView를 요청해도 DRF 구현 예시는 만들지
+않고 implementation-django-ninja에 위임해 Django Ninja 대안으로 전환한다.
+
 **기본 요구사항 — 모든 모드에 적용:**
 - 리소스는 명사, 액션은 HTTP 메서드. URL에 동사를 넣지 않는다.
 - 표준 HTTP 상태 코드를 일관되게 사용한다. 모든 오류는

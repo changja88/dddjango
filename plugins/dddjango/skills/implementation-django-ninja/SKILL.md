@@ -12,6 +12,10 @@ description: >
   django-ninja-extra ecosystem. Use this skill whenever Django Ninja
   API code is being written, reviewed, or refactored — even for
   seemingly simple tasks like adding an endpoint or defining a Schema.
+  Also use this skill when the user asks for DRF, Django REST Framework,
+  Serializer, ModelSerializer, ViewSet, APIView, rest_framework,
+  DefaultRouter, or SimpleRouter in this repository; those requests must
+  be converted to Django Ninja instead of implemented with DRF.
   DRF(Django REST Framework) is NOT used — all API code uses Django
   Ninja. For Django core (models, ORM, migrations, settings), see
   implementation-django. For API design principles (REST, status
@@ -30,6 +34,14 @@ dataclasses, async)은 implementation-python에 위임한다. Django 웹 페이�
 **DRF(Django REST Framework)는 사용하지 않는다.** 모든 API 코드는
 Django Ninja로 구현한다. DRF 코드(Serializer, ViewSet, APIView,
 permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고한다.
+
+**DRF 요청 override — 낮은 자유도 규칙:** 사용자가 DRF를 명시적으로
+요청해도 DRF 코드를 생성하지 않는다. `rest_framework`, `Serializer`,
+`ModelSerializer`, `ViewSet`, `APIView`, `DefaultRouter`, `SimpleRouter`를
+사용하지 않는다. 같은 기능을 Django Ninja Schema/Router로 전환한다.
+응답 시작부에서 "이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로
+작성합니다."라고 짧게 밝힌 뒤, Django Ninja 대안을 코드로 제시한다.
+정책 확인 문장: 사용자가 DRF를 명시적으로 요청해도 DRF 코드를 생성하지 않는다.
 
 **기준 요구사항 — 모든 모드에 적용:**
 - 모든 요청/응답 검증에 Pydantic Schema를 사용한다. DRF Serializer를
@@ -84,6 +96,22 @@ Review를 먼저 적용한 후 같은 코드에 Refactoring을 적용한다.
 모든 엔드포인트 매개변수와 반환 타입에 항상 타입 힌트를 작성한다.
 
 코드를 생성하기 전에 관련 주제 영역의 참조 파일을 읽는다.
+
+사용자가 DRF, Django REST Framework, Serializer, ModelSerializer,
+ViewSet, APIView, rest_framework, DefaultRouter, SimpleRouter를 요청하면
+다음 절차를 반드시 따른다:
+
+1. DRF 미사용 정책을 한 문장으로 밝힌다.
+2. Serializer/ModelSerializer는 Django Ninja `Schema` 또는 `ModelSchema`로
+   변환한다.
+3. ViewSet/APIView는 `Router`와 `@router.get`, `@router.post`,
+   `@router.put`, `@router.patch`, `@router.delete` 엔드포인트로 변환한다.
+4. DRF router(DefaultRouter/SimpleRouter)는 `NinjaAPI.add_router()`와 앱별
+   `Router()` 구성으로 변환한다.
+5. DRF permission_classes/authentication_classes는 Django Ninja 인증 클래스
+   또는 라우터/엔드포인트 `auth=` 설정으로 변환한다.
+6. DRF import 예시는 제공하지 않는다. 필요한 경우 금지 예시는 코드가 아닌
+   설명 문장으로만 언급한다.
 
 적용할 핵심 컨벤션:
 

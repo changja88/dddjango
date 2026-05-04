@@ -14,6 +14,12 @@ GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_outputs.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
 RUN_SCRIPT_PATH = ROOT / "evals/codex/scripts/run_prompts.py"
 REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_report.py"
+POLICY_SKILL_PATHS = [
+    "implementation-django-ninja",
+    "architecture-api",
+    "implementation-tdd",
+    "implementation-test",
+]
 
 
 def load_module(path):
@@ -24,6 +30,58 @@ def load_module(path):
 
 
 class CodexEvaluationAssetTests(unittest.TestCase):
+    def test_policy_skills_are_synced_to_codex_plugin_mirror(self):
+        for skill_name in POLICY_SKILL_PATHS:
+            with self.subTest(skill=skill_name):
+                source = ROOT / f"skills/{skill_name}/SKILL.md"
+                mirror = ROOT / f"plugins/dddjango/skills/{skill_name}/SKILL.md"
+
+                self.assertEqual(source.read_text(), mirror.read_text())
+
+    def test_django_ninja_skill_triggers_on_drf_requests_and_overrides_them(self):
+        skill = (ROOT / "skills/implementation-django-ninja/SKILL.md").read_text()
+        frontmatter, body = skill.split("---", 2)[1:]
+
+        for keyword in [
+            "DRF",
+            "Django REST Framework",
+            "Serializer",
+            "ModelSerializer",
+            "ViewSet",
+            "APIView",
+            "rest_framework",
+            "DefaultRouter",
+            "SimpleRouter",
+        ]:
+            with self.subTest(keyword=keyword):
+                self.assertIn(keyword, frontmatter)
+
+        for required in [
+            "사용자가 DRF를 명시적으로 요청해도 DRF 코드를 생성하지 않는다",
+            "Django Ninja Schema/Router로 전환한다",
+            "rest_framework",
+            "ViewSet",
+            "Serializer",
+        ]:
+            with self.subTest(required=required):
+                self.assertIn(required, body)
+
+    def test_tdd_skills_define_empty_workspace_fallback_without_false_verification(self):
+        for skill_name in ["implementation-tdd", "implementation-test"]:
+            skill = (ROOT / f"skills/{skill_name}/SKILL.md").read_text()
+
+            for required in [
+                "빈 workspace / read-only fallback",
+                "실행했다고 주장하지 않는다",
+                "RED 테스트 예시",
+                "예상 실패 이유",
+                "GREEN 최소 구현",
+                "REFACTOR 방향",
+                "실행 명령",
+            ]:
+                with self.subTest(skill=skill_name, required=required):
+                    self.assertIn(required, skill)
+
     def test_pilot_cases_define_representative_codex_plugin_eval_set(self):
         cases = [
             json.loads(line)
