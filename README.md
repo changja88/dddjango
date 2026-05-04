@@ -86,12 +86,13 @@ You can prepare the local release commit and tag with:
 make release
 ```
 
-The release command prompts for `patch`, `minor`, or `major`, updates plugin versions, runs metadata validation, creates a `chore: release vX.Y.Z` commit, and creates the local release tag. It does not push; publish manually after review:
+The release command prompts for `patch`, `minor`, or `major`, updates plugin versions, runs metadata validation, creates a `chore: release vX.Y.Z` commit, and creates the local release tag. It does not push; publish after review with:
 
 ```bash
-git push
-git push origin vX.Y.Z
+make publish
 ```
+
+The publish command pushes the current branch and the latest semver release tag to `origin`.
 
 ## License
 

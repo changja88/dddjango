@@ -298,9 +298,8 @@ def run_release(args: argparse.Namespace) -> int:
 
     print()
     print(f"{version} 로컬 릴리즈 준비가 끝났습니다.")
-    print("푸시는 직접 실행하세요:")
-    print("  git push")
-    print(f"  git push origin {version}")
+    print("배포 push는 직접 실행하세요:")
+    print("  make publish")
     return 0
 
 
