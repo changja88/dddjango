@@ -310,7 +310,7 @@ Policy violation > TDD weakness > Low actionability > Architecture weakness > Co
 현재 선택: Cost issue를 먼저 줄였고 scoped injection 및 대형 케이스 word budget으로 시간 증가율을 약 +153%에서 +26.41%까지 낮췄다. fallback 스킬에 올바른 `api.add_router()` 예시를 고정해 negative-control 품질 회귀도 회복했다. 낮은 lift 케이스에 edge-case checklist, migration/pytest checks, severity-ranked findings를 추가해 quality lift도 +15.12%로 gate를 통과했다.
 ```
 
-- [ ] **Step 2: 스킬 description을 먼저 점검한다**
+- [x] **Step 2: 스킬 description을 먼저 점검한다**
 
 Check:
 
@@ -332,7 +332,13 @@ Expected:
 OK
 ```
 
-- [ ] **Step 3: SKILL.md 본문을 최소 수정한다**
+Result:
+
+```text
+tests/test_codex_evaluation.py에 description platform limit 회귀 테스트가 유지되어 있으며, `make test-release`에서 함께 통과했다.
+```
+
+- [x] **Step 3: SKILL.md 본문을 최소 수정한다**
 
 Edit rule:
 
@@ -342,7 +348,14 @@ Codex가 이미 아는 Django 일반론은 추가하지 않는다.
 예시는 길게 늘리지 않고 성공 조건을 명확히 만든다.
 ```
 
-- [ ] **Step 4: mirror를 동기화한다**
+Result:
+
+```text
+`implementation-django-ninja`에 Django Ninja router object fallback만 최소 추가했다.
+하네스 쪽은 case별 instruction scoping과 concise output directive로 cost issue를 줄였다.
+```
+
+- [x] **Step 4: mirror를 동기화한다**
 
 Run:
 
@@ -357,7 +370,13 @@ Expected:
 OK
 ```
 
-- [ ] **Step 5: regression test를 추가한다**
+Result:
+
+```text
+`skills/implementation-django-ninja/SKILL.md`와 `plugins/dddjango/skills/implementation-django-ninja/SKILL.md`가 동일하게 갱신되었고 mirror sync 테스트가 `make test-release`에서 통과했다.
+```
+
+- [x] **Step 5: regression test를 추가한다**
 
 Test requirement:
 
@@ -376,6 +395,12 @@ Expected:
 
 ```text
 OK
+```
+
+Result:
+
+```text
+case별 scoped instruction, DRF override, TDD policy, report metadata/release gate 표시, large-case concise directive 회귀 테스트를 추가했다.
 ```
 
 ## Phase 5: 회귀 측정과 gate 판정
@@ -435,7 +460,7 @@ average time/cost increase <= 30% 또는 품질 상승으로 명시적 정당화
 negative-control pass rate >= 80%
 ```
 
-- [ ] **Step 4: gate 실패 시 다음 반복 범위를 줄인다**
+- [x] **Step 4: gate 실패 시 다음 반복 범위를 줄인다**
 
 Decision:
 
@@ -443,6 +468,12 @@ Decision:
 품질 실패이면 Phase 3 bucket으로 돌아간다.
 속도 실패이면 긴 skill body, 과도한 developer_instructions, 중복 guidance를 줄인다.
 부분 케이스만 좋아지고 전체 평균이 낮으면 케이스별 delta가 작은 항목부터 개선한다.
+```
+
+Result:
+
+```text
+Gate가 통과했으므로 추가 반복 범위 축소는 필요하지 않다.
 ```
 
 ## Phase 6: 커밋과 release
@@ -453,7 +484,7 @@ Decision:
 - Run: `git diff --check`
 - Run: `make release`
 
-- [ ] **Step 1: release 전 검증을 실행한다**
+- [x] **Step 1: release 전 검증을 실행한다**
 
 Run:
 
@@ -469,7 +500,14 @@ unittest OK
 git diff --check 출력 없음
 ```
 
-- [ ] **Step 2: 커밋 대상을 stage한다**
+Result:
+
+```text
+`make test-release`: 24 tests OK
+`git diff --check`: 출력 없음
+```
+
+- [x] **Step 2: 커밋 대상을 stage한다**
 
 Default include:
 
@@ -495,7 +533,14 @@ Default exclude:
 workspace/codex-eval/iteration-1/**/*.codex.log
 ```
 
-- [ ] **Step 3: 평가 개선 커밋을 만든다**
+Result:
+
+```text
+하네스, 스킬, 테스트, 계획 문서, 재현 가능한 평가 산출물만 stage했다.
+원시 `.codex.log`는 커밋에서 제외했고 이후 HEAD 상태로 정리했다.
+```
+
+- [x] **Step 3: 평가 개선 커밋을 만든다**
 
 Run:
 
@@ -507,6 +552,12 @@ Expected:
 
 ```text
 commit created
+```
+
+Result:
+
+```text
+873dd4e test: stabilize dddjango codex evaluation gate
 ```
 
 - [ ] **Step 4: gate 통과 후 release한다**
