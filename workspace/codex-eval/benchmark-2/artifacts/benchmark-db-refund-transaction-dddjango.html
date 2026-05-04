@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-refund-transaction dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-refund-transaction dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-db-refund-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>Django에서 환불 처리는 <code>transaction.atomic()</code>만으로는 부족합니다. 기본 격리 수준인 Read Committed에서는 두 요청이 동시에 같은 <code>Payment</code>를 읽고 “아직 환불 가능”하다고 판단할 수 있습니다. 그래서 <code>Payment</code> 기준으로 <code>select_for_update()</code> row lock을 잡고, DB 제약 조건으로 중복 환불을 막아야 합니다.</p>
+<p>핵심 원칙은 세 가지입니다.</p>
+<ul>
+<li>DB 상태 변경은 짧은 <code>transaction.atomic()</code> 안에서 처리한다.</li>
+<li>같은 결제 건의 환불 가능 금액 계산은 <code>Payment.objects.select_for_update()</code>로 직렬화한다.</li>
+<li>외부 PG 호출은 DB transaction 밖에서 실행한다. PG 응답 반영만 다시 짧은 transaction으로 처리한다.</li>
+</ul>
+<p>예시 모델 제약:</p>
+<pre><code>
+class Refund(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = &quot;requested&quot;
+        SUCCEEDED = &quot;succeeded&quot;
+        FAILED = &quot;failed&quot;
+
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT)
+    idempotency_key = models.CharField(max_length=80)
+    amount = models.PositiveIntegerField()
+    status = models.CharField(max_length=20, choices=Status)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;payment&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uniq_refund_payment_idempotency_key&quot;,
+            ),
+        ]
+</code></pre>
+<p>서비스 흐름:</p>
+<pre><code>
+from django.db import IntegrityError, transaction
+
+def request_refund(*, payment_id, amount, idempotency_key):
+    with transaction.atomic():
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .get(id=payment_id)
+        )
+
+        refund, created = Refund.objects.get_or_create(
+            payment=payment,
+            idempotency_key=idempotency_key,
+            defaults={
+                &quot;amount&quot;: amount,
+                &quot;status&quot;: Refund.Status.REQUESTED,
+            },
+        )
+
+        if not created:
+            return refund
+
+        refunded_amount = Refund.objects.filter(
+            payment=payment,
+            status=Refund.Status.SUCCEEDED,
+        ).aggregate(total=Sum(&quot;amount&quot;))[&quot;total&quot;] or 0
+
+        if refunded_amount + amount &gt; payment.amount:
+            raise ValueError(&quot;환불 가능 금액 초과&quot;)
+
+    # 외부 PG 호출은 transaction 밖에서 수행
+    pg_result = pg_client.refund(
+        payment.pg_transaction_id,
+        amount=amount,
+        idempotency_key=idempotency_key,
+    )
+
+    with transaction.atomic():
+        refund = (
+            Refund.objects
+            .select_for_update()
+            .select_related(&quot;payment&quot;)
+            .get(payment_id=payment_id, idempotency_key=idempotency_key)
+        )
+
+        if refund.status != Refund.Status.REQUESTED:
+            return refund
+
+        payment = Payment.objects.select_for_update().get(id=payment_id)
+
+        if pg_result.succeeded:
+            refund.status = Refund.Status.SUCCEEDED
+            payment.refunded_amount = F(&quot;refunded_amount&quot;) + refund.amount
+            payment.save(update_fields=[&quot;refunded_amount&quot;])
+        else:
+            refund.status = Refund.Status.FAILED
+
+        refund.save(update_fields=[&quot;status&quot;])
+
+    return refund
+</code></pre>
+<p>주의할 점은 첫 transaction 안에서 PG API를 호출하지 않는 것입니다. DB lock을 잡은 채 외부 네트워크를 기다리면 lock 대기 시간이 길어지고, 타임아웃이나 장애 시 결제 테이블 전체의 처리량이 급격히 떨어집니다. 대신 DB에는 “환불 요청 생성”까지만 확정하고, PG 호출 후 결과 반영을 별도 transaction으로 나눕니다.</p>
+<p><code>Payment</code> row lock은 환불 가능 금액 계산과 상태 전이를 보호합니다. <code>Refund</code>의 unique constraint는 같은 idempotency key로 들어온 재시도, 브라우저 중복 클릭, worker 재실행을 DB 수준에서 차단합니다. 애플리케이션 체크만으로는 동시성 경쟁을 완전히 막을 수 없습니다.</p>
+<p>검증은 최소한 다음을 포함해야 합니다.</p>
+<pre><code>
+def test_same_idempotency_key_creates_single_refund():
+    ...
+
+def test_concurrent_refunds_do_not_exceed_payment_amount():
+    ...
+
+def test_pg_call_is_not_inside_payment_row_lock():
+    ...
+</code></pre>
+<p>동시성 테스트는 일반 <code>TestCase</code>보다 실제 transaction 경계를 확인할 수 있는 <code>TransactionTestCase</code> 또는 <code>pytest.mark.django_db(transaction=True)</code>가 적합합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 트랜잭션/격리 수준/row lock 설계 → <strong>architecture-db</strong> 스킬 &gt; - Django 서비스 레이어와 ORM 구현 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

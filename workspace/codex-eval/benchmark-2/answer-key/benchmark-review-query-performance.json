@@ -1,0 +1,20 @@
+{
+  "case_id": "benchmark-review-query-performance",
+  "category": "review",
+  "title": "Review Django queryset performance",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "db_design",
+    "architecture_review",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "select_related/prefetch_related와 pagination 전략을 구분한다.",
+    "응답 schema가 과도한 중첩을 만들지 않도록 제안한다.",
+    "측정과 테스트 방법을 포함한다."
+  ],
+  "prompt": "주문 목록 API가 N+1 query와 느린 pagination 문제를 갖고 있어. Django ORM과 Django Ninja 응답 구조 관점에서 리뷰해줘.",
+  "trigger_type": "",
+  "expected_behavior": ""
+}

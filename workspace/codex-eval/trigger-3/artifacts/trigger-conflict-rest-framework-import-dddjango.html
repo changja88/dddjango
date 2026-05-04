@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-rest-framework-import dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-rest-framework-import dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-conflict-rest-framework-import.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다. 아래는 <code>Serializer</code>와 <code>APIView</code> 의도를 각각 Django Ninja <code>Schema</code>와 <code>Router</code> 엔드포인트로 바꾼 예제입니다.</p>
+<p>가정: <code>products</code> 앱에 <code>Product</code> 모델이 있고 <code>id</code>, <code>name</code>, <code>price</code>, <code>is_active</code> 필드가 있습니다.</p>
+<p><code>products/schemas.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+from ninja import Schema
+
+
+class ProductIn(Schema):
+    name: str
+    price: Decimal
+    is_active: bool = True
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: Decimal
+    is_active: bool
+</code></pre>
+<p><code>products/api.py</code></p>
+<pre><code>
+from typing import List
+
+from django.shortcuts import get_object_or_404
+from ninja import Router
+
+from .models import Product
+from .schemas import ProductIn, ProductOut
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(&quot;/&quot;, response=List[ProductOut])
+def list_products(request) -&gt; list[Product]:
+    return list(Product.objects.order_by(&quot;-id&quot;))
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductIn) -&gt; tuple[int, Product]:
+    product = Product.objects.create(**payload.dict())
+    return 201, product
+
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def get_product(request, product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+</code></pre>
+<p><code>config/api.py</code></p>
+<pre><code>
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI(title=&quot;Example API&quot;)
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<p><code>config/urls.py</code></p>
+<pre><code>
+from django.contrib import admin
+from django.urls import path
+
+from .api import api
+
+urlpatterns = [
+    path(&quot;admin/&quot;, admin.site.urls),
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>요청하신 <code>Serializer</code> 역할은 <code>ProductIn</code>/<code>ProductOut</code>이 맡고, <code>APIView</code> 역할은 <code>@router.get</code>, <code>@router.post</code> 엔드포인트 함수들이 맡습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

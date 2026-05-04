@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-testing dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-testing dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-ambiguous-testing.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>현재 <code>/private/tmp/dddjango-codex-eval</code>에는 프로젝트 파일이 없고 세션도 읽기 전용이라 실제 테스트 디렉터리/파일을 만들 수 없었습니다. 대신 적용해야 할 개선 구조를 정리합니다.</p>
+<p>권장 구조:</p>
+<pre><code>
+tests/
+  isolated/
+    conftest.py
+    unit/
+    integration/
+  real/
+    conftest.py
+    integration/
+    e2e/
+</code></pre>
+<p>핵심 변경 방향:</p>
+<ul>
+<li><code>tests/unit</code>, <code>tests/integration</code>처럼 평면 분리하지 말고, 먼저 실행 환경을 <code>isolated</code> / <code>real</code>로 나눕니다.</li>
+<li><code>tests/isolated</code>는 CI 기본 테스트로 둡니다. DB, 캐시, 이메일, Celery, 외부 HTTP는 in-memory, fake, mock, testcontainers 등으로 통제합니다.</li>
+<li><code>tests/real</code>은 실제 DB나 외부 서비스에 붙는 테스트만 둡니다. pre-deploy나 수동 게이트에서 별도로 실행합니다.</li>
+<li>Django라면 isolated 테스트는 운영 settings가 아니라 <code>config.settings.test</code> 같은 별도 테스트 settings로 실행해야 합니다.</li>
+</ul>
+<p>예시 <code>pyproject.toml</code> 설정:</p>
+<pre><code>
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = &quot;config.settings.test&quot;
+python_files = [&quot;test_*.py&quot;]
+testpaths = [&quot;tests/isolated&quot;]
+</code></pre>
+<p>예시 실행 명령:</p>
+<pre><code>
+pytest tests/isolated -q
+pytest tests/real -q --real
+</code></pre>
+<p>테스트 작성 규칙은 AAA 구조로 통일합니다:</p>
+<pre><code>
+def test_coupon_when_expired_rejects_redemption():
+    # Arrange
+    coupon = Coupon(expires_at=past_time)
+
+    # Act
+    result = coupon.redeem(now=current_time)
+
+    # Assert
+    assert result.is_rejected
+</code></pre>
+<p>실제 저장소 파일이 제공되면 위 구조로 <code>conftest.py</code>, pytest 설정, 기존 테스트 이동까지 바로 리팩터링할 수 있습니다. 지금은 파일이 없어 테스트 실행도 하지 못했습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 테스트 구조/fixture/pytest 품질 개선 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

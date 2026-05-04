@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-order-status baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-order-status baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/baseline/benchmark-api-order-status.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>작업 디렉터리가 비어 있고 <code>config.toml</code>도 현재 경로에 없어 실제 파일 수정은 못 했습니다. 대신 Django Ninja + DDD 기준으로 바로 적용 가능한 구현 예시를 정리합니다.</p>
+<p><strong>상태 전이</strong></p>
+<pre><code>
+PAYMENT_PENDING -&gt; PAID
+PAYMENT_PENDING -&gt; CANCEL_REQUESTED
+PAID            -&gt; CANCEL_REQUESTED
+</code></pre>
+<p><code>CANCEL_REQUESTED -&gt; PAID</code> 같은 역전이는 막는 것이 안전합니다.</p>
+<p><strong>권장 구조</strong></p>
+<pre><code>
+orders/
+  domain/
+    order.py
+    exceptions.py
+  application/
+    change_order_status.py
+  infrastructure/
+    models.py
+    repositories.py
+  presentation/
+    api.py
+</code></pre>
+<p><strong>Domain</strong></p>
+<pre><code>
+# orders/domain/order.py
+from dataclasses import dataclass
+from enum import StrEnum
+
+
+class OrderStatus(StrEnum):
+    PAYMENT_PENDING = &quot;payment_pending&quot;
+    PAID = &quot;paid&quot;
+    CANCEL_REQUESTED = &quot;cancel_requested&quot;
+
+
+ALLOWED_TRANSITIONS = {
+    OrderStatus.PAYMENT_PENDING: {
+        OrderStatus.PAID,
+        OrderStatus.CANCEL_REQUESTED,
+    },
+    OrderStatus.PAID: {
+        OrderStatus.CANCEL_REQUESTED,
+    },
+    OrderStatus.CANCEL_REQUESTED: set(),
+}
+
+
+class InvalidOrderStatusTransition(Exception):
+    pass
+
+
+@dataclass
+class Order:
+    id: int
+    status: OrderStatus
+
+    def change_status(self, next_status: OrderStatus) -&gt; None:
+        if next_status == self.status:
+            return
+
+        allowed = ALLOWED_TRANSITIONS[self.status]
+
+        if next_status not in allowed:
+            raise InvalidOrderStatusTransition(
+                f&quot;Cannot change order status from {self.status} to {next_status}&quot;
+            )
+
+        self.status = next_status
+</code></pre>
+<p><strong>Django Model</strong></p>
+<pre><code>
+# orders/infrastructure/models.py
+from django.db import models
+
+
+class OrderModel(models.Model):
+    class Status(models.TextChoices):
+        PAYMENT_PENDING = &quot;payment_pending&quot;, &quot;Payment pending&quot;
+        PAID = &quot;paid&quot;, &quot;Paid&quot;
+        CANCEL_REQUESTED = &quot;cancel_requested&quot;, &quot;Cancel requested&quot;
+
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.PAYMENT_PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+</code></pre>
+<p><strong>Repository</strong></p>
+<pre><code>
+# orders/infrastructure/repositories.py
+from orders.domain.order import Order, OrderStatus
+from orders.infrastructure.models import OrderModel
+
+
+class DjangoOrderRepository:
+    def get_for_update(self, order_id: int) -&gt; Order:
+        model = OrderModel.objects.select_for_update().get(id=order_id)
+
+        return Order(
+            id=model.id,
+            status=OrderStatus(model.status),
+        )
+
+    def save(self, order: Order) -&gt; None:
+        OrderModel.objects.filter(id=order.id).update(status=order.status.value)
+</code></pre>
+<p><strong>Application Service</strong></p>
+<pre><code>
+# orders/application/change_order_status.py
+from dataclasses import dataclass
+
+from django.db import transaction
+
+from orders.domain.order import OrderStatus
+
+
+@dataclass
+class ChangeOrderStatusCommand:
+    order_id: int
+    status: OrderStatus
+
+
+class ChangeOrderStatusService:
+    def __init__(self, order_repository):
+        self.order_repository = order_repository
+
+    @transaction.atomic
+    def execute(self, command: ChangeOrderStatusCommand):
+        order = self.order_repository.get_for_update(command.order_id)
+        order.change_status(command.status)
+        self.order_repository.save(order)
+        return order
+</code></pre>
+<p><code>select_for_update()</code>와 <code>transaction.atomic</code>을 같이 쓰는 이유는 동시에 결제 완료와 취소 요청이 들어오는 경쟁 상황을 막기 위해서입니다.</p>
+<p><strong>Django Ninja API</strong></p>
+<pre><code>
+# orders/presentation/api.py
+from ninja import Router, Schema
+from django.shortcuts import get_object_or_404
+
+from orders.application.change_order_status import (
+    ChangeOrderStatusCommand,
+    ChangeOrderStatusService,
+)
+from orders.domain.order import OrderStatus, InvalidOrderStatusTransition
+from orders.infrastructure.models import OrderModel
+from orders.infrastructure.repositories import DjangoOrderRepository
+
+router = Router(tags=[&quot;orders&quot;])
+
+
+class ChangeOrderStatusIn(Schema):
+    status: OrderStatus
+
+
+class OrderOut(Schema):
+    id: int
+    status: OrderStatus
+
+
+@router.patch(&quot;/{order_id}/status&quot;, response={200: OrderOut, 400: dict, 404: dict})
+def change_order_status(request, order_id: int, payload: ChangeOrderStatusIn):
+    if not OrderModel.objects.filter(id=order_id).exists():
+        return 404, {&quot;detail&quot;: &quot;Order not found&quot;}
+
+    service = ChangeOrderStatusService(
+        order_repository=DjangoOrderRepository(),
+    )
+
+    try:
+        order = service.execute(
+            ChangeOrderStatusCommand(
+                order_id=order_id,
+                status=payload.status,
+            )
+        )
+    except InvalidOrderStatusTransition as exc:
+        return 400, {&quot;detail&quot;: str(exc)}
+
+    return 200, OrderOut(id=order.id, status=order.status)
+</code></pre>
+<p><strong>root API 연결</strong></p>
+<pre><code>
+# config/api.py 또는 urls.py 근처
+from ninja import NinjaAPI
+from orders.presentation.api import router as orders_router
+
+api = NinjaAPI()
+api.add_router(&quot;/orders&quot;, orders_router)
+</code></pre>
+<p>요청 예시는 다음과 같습니다.</p>
+<pre><code>
+PATCH /api/orders/1/status
+Content-Type: application/json
+
+{
+  &quot;status&quot;: &quot;paid&quot;
+}
+</code></pre>
+<pre><code>
+PATCH /api/orders/1/status
+Content-Type: application/json
+
+{
+  &quot;status&quot;: &quot;cancel_requested&quot;
+}
+</code></pre>
+<p>핵심은 상태 전이 규칙을 API나 Django Model에 두지 않고 <code>Order</code> 도메인 객체 안에 둔다는 점입니다. API는 입력과 응답만 담당하고, Application Service는 트랜잭션과 유스케이스 흐름을 담당하며, Repository는 Django ORM 접근을 격리합니다.</p></article>
+  </main>
+</body>
+</html>

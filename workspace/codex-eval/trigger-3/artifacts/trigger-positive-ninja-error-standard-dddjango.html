@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-ninja-error-standard dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-ninja-error-standard dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-positive-ninja-error-standard.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>공통 에러 표준</strong></p>
+<p>워크스페이스가 비어 있고 읽기 전용이라 파일은 생성하지 않았습니다. 아래 코드를 팀 표준으로 복사해 사용하면 됩니다. 핵심은 <code>DomainError</code>에는 HTTP 상태나 응답 형식을 넣지 않고, Django Ninja <code>exception_handler</code>에서만 RFC 9457 Problem Details로 변환하는 것입니다.</p>
+<pre><code>
+# common/api/errors.py
+from dataclasses import dataclass, field
+from typing import Any
+
+from django.http import Http404, JsonResponse
+from ninja import NinjaAPI, Schema
+from ninja.errors import AuthenticationError, AuthorizationError, HttpError, ValidationError
+
+
+class ProblemDetail(Schema):
+    type: str = &quot;about:blank&quot;
+    title: str
+    status: int
+    detail: str
+    instance: str
+
+
+class DomainError(Exception):
+    code: str = &quot;domain_error&quot;
+    message: str = &quot;Domain rule violated&quot;
+
+    def __init__(self, message: str | None = None, **extra: Any) -&gt; None:
+        self.message = message or self.message
+        self.extra = extra
+        super().__init__(self.message)
+
+
+@dataclass(frozen=True)
+class ProblemMapping:
+    status: int
+    title: str
+    type: str
+
+
+PROBLEM_MAP: dict[str, ProblemMapping] = {
+    &quot;domain_error&quot;: ProblemMapping(400, &quot;Bad Request&quot;, &quot;https://api.example.com/problems/domain-error&quot;),
+    &quot;resource_conflict&quot;: ProblemMapping(409, &quot;Conflict&quot;, &quot;https://api.example.com/problems/resource-conflict&quot;),
+    &quot;unprocessable&quot;: ProblemMapping(422, &quot;Unprocessable Entity&quot;, &quot;https://api.example.com/problems/unprocessable&quot;),
+}
+
+
+def problem_response(
+    request,
+    *,
+    status: int,
+    title: str,
+    detail: str,
+    type: str = &quot;about:blank&quot;,
+    **extensions: Any,
+) -&gt; JsonResponse:
+    body = ProblemDetail(
+        type=type,
+        title=title,
+        status=status,
+        detail=detail,
+        instance=request.path,
+    ).model_dump()
+    body.update(extensions)
+    return JsonResponse(body, status=status, content_type=&quot;application/problem+json&quot;)
+
+
+def register_problem_handlers(api: NinjaAPI) -&gt; None:
+    @api.exception_handler(DomainError)
+    def handle_domain_error(request, exc: DomainError):
+        mapping = PROBLEM_MAP.get(exc.code, PROBLEM_MAP[&quot;domain_error&quot;])
+        return problem_response(
+            request,
+            status=mapping.status,
+            title=mapping.title,
+            detail=exc.message,
+            type=mapping.type,
+            code=exc.code,
+            **exc.extra,
+        )
+
+    @api.exception_handler(ValidationError)
+    def handle_validation_error(request, exc: ValidationError):
+        return problem_response(
+            request,
+            status=422,
+            title=&quot;Validation Failed&quot;,
+            detail=&quot;Request validation failed.&quot;,
+            type=&quot;https://api.example.com/problems/validation-failed&quot;,
+            errors=exc.errors,
+        )
+
+    @api.exception_handler(AuthenticationError)
+    def handle_authentication_error(request, exc: AuthenticationError):
+        return problem_response(request, status=401, title=&quot;Unauthorized&quot;, detail=&quot;Authentication is required.&quot;)
+
+    @api.exception_handler(AuthorizationError)
+    def handle_authorization_error(request, exc: AuthorizationError):
+        return problem_response(request, status=403, title=&quot;Forbidden&quot;, detail=&quot;Permission denied.&quot;)
+
+    @api.exception_handler(Http404)
+    def handle_not_found(request, exc: Http404):
+        return problem_response(request, status=404, title=&quot;Not Found&quot;, detail=&quot;Resource not found.&quot;)
+
+    @api.exception_handler(HttpError)
+    def handle_http_error(request, exc: HttpError):
+        return problem_response(request, status=exc.status_code, title=str(exc), detail=str(exc))
+
+    @api.exception_handler(Exception)
+    def handle_unexpected_error(request, exc: Exception):
+        return problem_response(
+            request,
+            status=500,
+            title=&quot;Internal Server Error&quot;,
+            detail=&quot;An unexpected error occurred.&quot;,
+        )
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from common.api.errors import register_problem_handlers
+from products.api import router as products_router
+
+api = NinjaAPI()
+register_problem_handlers(api)
+
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# domain/products/exceptions.py
+from common.api.errors import DomainError
+
+
+class ProductAlreadyExists(DomainError):
+    code = &quot;resource_conflict&quot;
+    message = &quot;Product already exists.&quot;
+</code></pre>
+<pre><code>
+# products/api.py
+from ninja import Router
+
+from domain.products.exceptions import ProductAlreadyExists
+
+router = Router()
+
+
+@router.post(&quot;/&quot;, response={201: dict})
+def create_product(request) -&gt; tuple[int, dict]:
+    raise ProductAlreadyExists(product_id=&quot;sku-123&quot;)
+</code></pre>
+<p><strong>검증</strong></p>
+<pre><code>
+curl -i -X POST http://localhost:8000/api/products/
+</code></pre>
+<p>기대값:</p>
+<pre><code>
+HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+</code></pre>
+<pre><code>
+{
+  &quot;type&quot;: &quot;https://api.example.com/problems/resource-conflict&quot;,
+  &quot;title&quot;: &quot;Conflict&quot;,
+  &quot;status&quot;: 409,
+  &quot;detail&quot;: &quot;Product already exists.&quot;,
+  &quot;instance&quot;: &quot;/api/products/&quot;,
+  &quot;code&quot;: &quot;resource_conflict&quot;,
+  &quot;product_id&quot;: &quot;sku-123&quot;
+}
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 에러 응답 설계 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja 예외 핸들러 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

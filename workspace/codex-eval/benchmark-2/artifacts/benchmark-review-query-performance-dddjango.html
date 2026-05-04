@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-review-query-performance dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-review-query-performance dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-review-query-performance.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p><code>/private/tmp/dddjango-codex-eval</code> 경로가 비어 있고 <code>config.toml</code>도 없어 특정 파일/라인 기반 리뷰는 못 했습니다. 코드 확인 없이도 주문 목록 API에서 우선 봐야 할 위험은 아래 순서입니다.</p>
+<p><strong>Findings</strong></p>
+<ul>
+<li><strong>[Django ORM: N+1 위험] -- 목록 응답 schema가 <code>order.customer</code>, <code>order.payment</code>, <code>order.lines</code>, <code>line.product</code> 같은 관계를 직렬화 중에 접근하면 쿼리가 주문 수에 비례해 증가합니다.</strong></li>
+<p><code>select_related()</code>와 <code>prefetch_related()</code>를 관계 유형별로 분리해야 합니다. <code>customer</code>, <code>payment</code>처럼 FK/O2O 단일 객체는 <code>select_related()</code>. <code>lines</code>, <code>discounts</code>, <code>shipments</code>처럼 M2M 또는 역방향 FK 컬렉션은 <code>prefetch_related()</code> 또는 <code>Prefetch()</code>입니다.</p>
+</ul>
+<ul>
+<li><strong>[API Pagination: offset 기반 페이지네이션 부적합] -- 주문 테이블이 커질수록 <code>LIMIT/OFFSET</code>은 뒤 페이지에서 느려지고, 삽입/삭제가 많은 주문 데이터에서는 누락/중복도 생길 수 있습니다.</strong></li>
+<p>관리자 화면처럼 랜덤 페이지 이동이 중요하면 offset을 유지할 수 있지만, 고객/운영 주문 목록의 기본 API는 <code>created_at + id</code> 기반 cursor/keyset 전략이 더 맞습니다. 정렬 필드는 인덱싱되고 안정적이어야 합니다.</p>
+</ul>
+<ul>
+<li><strong>[Django Ninja Schema: 과도한 중첩] -- <code>OrderSchema</code> 안에 <code>CustomerSchema</code>, <code>OrderLineSchema</code>, <code>ProductSchema</code>, <code>PaymentSchema</code>를 깊게 넣으면 응답 크기와 ORM 접근 경로가 동시에 커집니다.</strong></li>
+<p>목록 API는 상세 API가 아닙니다. 목록 schema는 “스캔에 필요한 요약 필드”만 노출하고, 라인 상세는 <code>/orders/{id}</code>에서 별도 제공하는 편이 낫습니다.</p>
+</ul>
+<p>권장 구조는 아래처럼 읽기 전용 selector와 얕은 응답 schema를 분리하는 방식입니다.</p>
+<pre><code>
+# orders/schemas.py
+from datetime import datetime
+from decimal import Decimal
+from ninja import Schema
+
+class OrderListItemSchema(Schema):
+    id: int
+    number: str
+    status: str
+    placed_at: datetime
+    customer_id: int
+    customer_name: str
+    total_amount: Decimal
+    item_count: int
+</code></pre>
+<pre><code>
+# orders/selectors.py
+from django.db.models import Count, Prefetch
+
+def order_list_queryset(user):
+    return (
+        Order.objects
+        .filter(customer__user=user)
+        .select_related(&quot;customer&quot;)
+        .annotate(item_count=Count(&quot;lines&quot;))
+        .order_by(&quot;-placed_at&quot;, &quot;-id&quot;)
+    )
+</code></pre>
+<p>라인 미리보기가 반드시 필요할 때만 컬렉션을 prefetch합니다.</p>
+<pre><code>
+def order_list_queryset(user):
+    return (
+        Order.objects
+        .filter(customer__user=user)
+        .select_related(&quot;customer&quot;)
+        .prefetch_related(
+            Prefetch(
+                &quot;lines&quot;,
+                queryset=OrderLine.objects.select_related(&quot;product&quot;)
+                .only(&quot;id&quot;, &quot;order_id&quot;, &quot;quantity&quot;, &quot;product__name&quot;),
+                to_attr=&quot;prefetched_lines&quot;,
+            )
+        )
+        .order_by(&quot;-placed_at&quot;, &quot;-id&quot;)
+    )
+</code></pre>
+<pre><code>
+# orders/api.py
+from ninja import Router
+from ninja.pagination import CursorPagination, paginate
+
+router = Router()
+
+@router.get(&quot;&quot;, response=list[OrderListItemSchema])
+@paginate(CursorPagination, ordering=(&quot;-placed_at&quot;, &quot;-id&quot;), page_size=50, max_page_size=100)
+def list_orders(request):
+    return order_list_queryset(request.user)
+</code></pre>
+<p>DB 인덱스는 실제 필터와 정렬에 맞춥니다.</p>
+<pre><code>
+class Meta:
+    indexes = [
+        models.Index(fields=[&quot;customer&quot;, &quot;-placed_at&quot;, &quot;-id&quot;], name=&quot;order_customer_cursor_idx&quot;),
+        models.Index(fields=[&quot;status&quot;, &quot;-placed_at&quot;, &quot;-id&quot;], name=&quot;order_status_cursor_idx&quot;),
+    ]
+</code></pre>
+<p><strong>검증 방법</strong></p>
+<pre><code>
+def test_order_list_query_count(client, django_assert_num_queries, user):
+    create_orders_with_lines(user=user, count=50, lines_per_order=3)
+
+    # lines를 응답하지 않으면 orders + count/join 수준으로 고정되어야 함.
+    with django_assert_num_queries(2):
+        response = client.get(&quot;/api/orders&quot;)
+
+    assert response.status_code == 200
+</code></pre>
+<p>추가로 PostgreSQL에서 실제 API 쿼리에 대해 <code>EXPLAIN ANALYZE</code>를 확인하세요. 기대값은 cursor 정렬 인덱스를 타는 <code>Index Scan</code> 또는 상황에 따라 <code>Bitmap Index Scan</code>이며, 깊은 페이지에서도 실행 시간이 크게 증가하지 않아야 합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - ORM 최적화와 <code>assertNumQueries</code> 회귀 테스트 → <strong>implementation-django</strong> 스킬 &gt; - Django Ninja <code>Schema</code>/<code>Router</code>/pagination 구조 → <strong>implementation-django-ninja</strong> 스킬 &gt; - cursor/keyset pagination과 인덱스 설계 → <strong>architecture-api</strong>, <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

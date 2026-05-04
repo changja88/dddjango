@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-node-cli dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-node-cli dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-negative-node-cli.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 세션이 read-only라 파일 생성은 차단되었습니다. 아래 내용을 <code>cli-parser.js</code>로 만들면 바로 실행할 수 있습니다.</p>
+<pre><code>
+#!/usr/bin/env node
+
+function parseArgs(argv = process.argv.slice(2)) {
+  const options = {};
+  const positionals = [];
+
+  for (let i = 0; i &lt; argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === &#x27;--&#x27;) {
+      positionals.push(...argv.slice(i + 1));
+      break;
+    }
+
+    if (arg.startsWith(&#x27;--&#x27;)) {
+      const [name, inlineValue] = arg.slice(2).split(/=(.*)/s, 2);
+
+      if (!name) throw new Error(`Invalid option: ${arg}`);
+
+      if (inlineValue !== undefined) {
+        options[name] = coerceValue(inlineValue);
+      } else if (argv[i + 1] !== undefined &amp;&amp; !argv[i + 1].startsWith(&#x27;-&#x27;)) {
+        options[name] = coerceValue(argv[i + 1]);
+        i += 1;
+      } else {
+        options[name] = true;
+      }
+
+      continue;
+    }
+
+    if (arg.startsWith(&#x27;-&#x27;) &amp;&amp; arg.length &gt; 1) {
+      const flags = arg.slice(1);
+
+      if (flags.length &gt; 1) {
+        for (const flag of flags) options[flag] = true;
+      } else if (argv[i + 1] !== undefined &amp;&amp; !argv[i + 1].startsWith(&#x27;-&#x27;)) {
+        options[flags] = coerceValue(argv[i + 1]);
+        i += 1;
+      } else {
+        options[flags] = true;
+      }
+
+      continue;
+    }
+
+    positionals.push(arg);
+  }
+
+  return { options, positionals };
+}
+
+function coerceValue(value) {
+  if (value === &#x27;true&#x27;) return true;
+  if (value === &#x27;false&#x27;) return false;
+  if (value !== &#x27;&#x27; &amp;&amp; Number.isFinite(Number(value))) return Number(value);
+  return value;
+}
+
+if (require.main === module) {
+  console.log(JSON.stringify(parseArgs(), null, 2));
+}
+
+module.exports = { parseArgs };
+</code></pre>
+<p>사용 예:</p>
+<pre><code>
+node cli-parser.js build --env=prod --watch -abc --port 3000 src
+</code></pre>
+<p>출력:</p>
+<pre><code>
+{
+  &quot;options&quot;: {
+    &quot;env&quot;: &quot;prod&quot;,
+    &quot;watch&quot;: true,
+    &quot;a&quot;: true,
+    &quot;b&quot;: true,
+    &quot;c&quot;: true,
+    &quot;port&quot;: 3000
+  },
+  &quot;positionals&quot;: [&quot;build&quot;, &quot;src&quot;]
+}
+</code></pre></article>
+  </main>
+</body>
+</html>

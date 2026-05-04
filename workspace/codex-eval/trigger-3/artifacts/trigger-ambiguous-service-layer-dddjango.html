@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-service-layer dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-service-layer dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-ambiguous-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>에는 프로젝트 파일이 없어서 코드 구조 기준 판단은 못 했습니다. Django 기준으로는 보통 이렇게 두는 걸 권합니다.</p>
+<p><strong>추천 위치</strong></p>
+<pre><code>
+apps/
+  orders/
+    models.py
+    views.py
+    serializers.py
+    services.py
+</code></pre>
+<p>또는 서비스가 커지면:</p>
+<pre><code>
+apps/
+  orders/
+    services/
+      __init__.py
+      order_create.py
+      payment_capture.py
+</code></pre>
+<p>앱 단위 유스케이스라면 각 Django app 내부에 두는 게 가장 낫습니다. 예를 들어 <code>orders.services.create_order()</code>처럼요. 이유는 서비스가 결국 해당 도메인의 모델, 정책, 트랜잭션 경계와 강하게 묶이기 때문입니다.</p>
+<p>공통 <code>services/</code> 루트는 피하는 편이 좋습니다.</p>
+<pre><code>
+services/
+  order_service.py
+  user_service.py
+</code></pre>
+<p>이 구조는 시간이 지나면 앱 경계가 흐려지고, “공용 잡동사니 계층”이 되기 쉽습니다.</p>
+<p>내 기준은 이렇습니다.</p>
+<ul>
+<li>한 앱의 유스케이스: <code>app/services.py</code> 또는 <code>app/services/*.py</code></li>
+<li>여러 앱을 조율하는 작업: <code>apps/&lt;주도하는 앱&gt;/services/</code>에 둠</li>
+<li>외부 API 클라이언트: <code>app/clients.py</code>, <code>app/integrations/</code>, 또는 <code>infrastructure/</code></li>
+<li>순수 도메인 규칙: 가능하면 <code>models.py</code>, <code>domain.py</code>, <code>selectors.py</code> 쪽</li>
+<li>읽기 전용 조회 로직: <code>selectors.py</code>로 분리하는 것도 좋음</li>
+</ul>
+<p>예시:</p>
+<pre><code>
+# orders/services.py
+
+from django.db import transaction
+
+@transaction.atomic
+def create_order(*, user, items):
+    order = Order.objects.create(user=user)
+
+    for item in items:
+        OrderLine.objects.create(
+            order=order,
+            product=item.product,
+            quantity=item.quantity,
+        )
+
+    return order
+</code></pre>
+<p>짧게 말하면: <strong>서비스 레이어는 프로젝트 루트가 아니라 해당 Django app 내부에 두는 게 기본값</strong>입니다. 앱 하나 안에서 커지면 <code>services/</code> 패키지로 쪼개면 됩니다.</p></article>
+  </main>
+</body>
+</html>

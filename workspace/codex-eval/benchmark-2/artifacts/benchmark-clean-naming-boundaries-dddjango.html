@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-clean-naming-boundaries dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-clean-naming-boundaries dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-clean-naming-boundaries.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>팀 컨벤션으로는 먼저 이 원칙을 잡는 게 좋습니다: <code>OrderManager</code>, <code>OrderService</code>, <code>OrderUseCase</code>를 같은 문제에 동시에 쓰지 않습니다. 이름이 비슷하면 책임도 겹치고, 결국 “어디에 비즈니스 로직을 넣어야 하지?”가 매번 논쟁이 됩니다.</p>
+<p>| 이름 | 책임 | 허용되는 코드 | 금지 | |---|---|---|---| | <code>OrderManager</code> / <code>OrderQuerySet</code> | Django ORM 조회/생성 편의 | 필터, preload, lock, bulk update, DB 친화적 쿼리 | 주문 확정, 결제 승인, 재고 차감 같은 업무 규칙 | | <code>PlaceOrderUseCase</code> | 하나의 사용자/시스템 유스케이스 조율 | 트랜잭션, 권한/입력 조립, 도메인 메서드 호출, repository/save, on_commit | 가격 계산 규칙, 상태 전이 규칙 자체 | | <code>OrderService</code> | 기본적으로 사용 금지. 너무 넓고 모호함 | 예외적으로 <code>OrderPricingService</code>, <code>ShippingFeePolicy</code>처럼 구체적 도메인 서비스만 허용 | <code>OrderService.create()</code>, <code>OrderService.update_status()</code> 같은 God Service |</p>
+<p>핵심 기준은 이겁니다.</p>
+<p><code>Manager</code>는 <strong>DB 접근 언어</strong>입니다. <code>UseCase</code>는 <strong>애플리케이션 흐름 언어</strong>입니다. <code>Domain Service</code>는 <strong>특정 엔티티에 넣기 애매한 도메인 규칙 언어</strong>입니다.</p>
+<p>예를 들어 주문 확정은 이렇게 나뉩니다.</p>
+<pre><code>
+class OrderQuerySet(models.QuerySet):
+    def payable(self):
+        return self.filter(status=Order.Status.PENDING)
+
+    def with_lines(self):
+        return self.prefetch_related(&quot;lines&quot;)
+
+
+class ConfirmOrderUseCase:
+    def execute(self, order_id: int) -&gt; None:
+        order = self.order_repository.get(order_id)
+        order.confirm()
+        self.order_repository.save(order)
+</code></pre>
+<p><code>order.confirm()</code> 안에는 “어떤 상태에서 확정 가능한가” 같은 불변식이 들어갑니다. <code>ConfirmOrderUseCase</code>는 그 규칙을 판단하지 않고, 트랜잭션과 저장 흐름만 조율합니다. <code>OrderManager.payable()</code>은 조회 조건만 표현합니다.</p>
+<p>프로젝트 규모별 기준은 이렇게 가져가면 과한 추상화를 피할 수 있습니다.</p>
+<p>| 규모 | 추천 구조 | |---|---| | 단순 CRUD | <code>Model</code> + <code>Manager/QuerySet</code> + View/Form. <code>Service</code>, <code>UseCase</code> 만들지 않음 | | 중간 규모 | 여러 모델 변경, 외부 API, 트랜잭션이 생기면 <code>services.py</code>에 함수형 서비스: <code>order_confirm(...)</code>, <code>order_cancel(...)</code> | | DDD 적용 규모 | <code>PlaceOrderUseCase</code>, <code>CancelOrderUseCase</code>, <code>Order</code> Aggregate, <code>OrderRepository</code>. 이때도 <code>OrderService</code>는 피함 | | 복잡한 도메인 규칙 | <code>OrderPricingService</code>, <code>DiscountPolicy</code>, <code>ShippingFeePolicy</code>처럼 구체 이름의 Domain Service만 도입 |</p>
+<p>팀 네이밍 룰은 아래처럼 고정하는 것을 권합니다.</p>
+<ul>
+<li>Entity 단독 이름 + <code>Service</code> 금지</li>
+<p><code>OrderService</code>, <code>PaymentService</code>, <code>UserService</code> 금지. 너무 넓습니다.</p>
+</ul>
+<ul>
+<li>UseCase는 동사 + 목적어</li>
+<p><code>PlaceOrderUseCase</code>, <code>CancelOrderUseCase</code>, <code>ConfirmPaymentUseCase</code>.</p>
+</ul>
+<ul>
+<li>Django Manager/QuerySet 메서드는 조회 의도를 드러냄</li>
+<p><code>for_customer()</code>, <code>payable()</code>, <code>with_lines()</code>, <code>locked_by_id()</code>.</p>
+</ul>
+<ul>
+<li>도메인 메서드는 업무 행위 이름</li>
+<p><code>order.confirm()</code>, <code>order.cancel()</code>, <code>order.mark_as_paid()</code>. <code>update_status()</code> 같은 CRUD 이름은 피합니다.</p>
+</ul>
+<ul>
+<li>Domain Service는 규칙 이름으로 명명</li>
+<p><code>OrderPricingService</code>, <code>CouponDiscountPolicy</code>, <code>ShippingFeeCalculator</code>. “주문을 처리한다”가 아니라 “가격을 계산한다”처럼 좁아야 합니다.</p>
+</ul>
+<ul>
+<li>Application Service와 UseCase 중 하나만 선택</li>
+<p>팀에서 <code>UseCase</code>를 쓰기로 했다면 <code>OrderApplicationService</code>를 만들지 않습니다. 팀에서 <code>ApplicationService</code>를 쓰기로 했다면 <code>PlaceOrderApplicationService</code>처럼 유스케이스 단위로 이름 붙입니다.</p>
+</ul>
+<p>권장 기본안은 이겁니다.</p>
+<pre><code>
+작은 Django 앱:
+- Order
+- OrderQuerySet / OrderManager
+- services.order_confirm()
+
+DDD 앱:
+- Order
+- OrderRepository
+- ConfirmOrderUseCase
+- OrderPricingService   # 필요할 때만
+</code></pre>
+<p>검증 기준은 PR 리뷰에서 이렇게 보면 됩니다.</p>
+<pre><code>
+- Manager에 if status == ... 같은 업무 규칙이 들어갔는가?
+- UseCase가 상태 전이 규칙을 직접 판단하고 있지 않은가?
+- OrderService가 5개 이상의 서로 다른 유스케이스를 품고 있지 않은가?
+- 이름만 보고 DB 조회인지, 유스케이스 조율인지, 도메인 규칙인지 구분되는가?
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 서비스 레이어와 DDD 책임 분리 → <strong>implementation-django</strong>, <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

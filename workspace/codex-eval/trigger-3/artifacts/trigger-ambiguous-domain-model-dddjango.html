@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-domain-model dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-domain-model dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-ambiguous-domain-model.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>정확히 나누려면 “어떤 비즈니스인지”가 필요합니다. 우선은 <strong>Django 기반 업무 서비스이고, 주문/결제/배송/정산처럼 상태 전이와 외부 연동이 있는 도메인</strong>이라는 가정으로 답하겠습니다.</p>
+<p>도메인 모델은 Django 앱이나 DB 테이블 기준이 아니라, 먼저 <strong>바운디드 컨텍스트</strong>로 나누는 게 좋습니다.</p>
+<p>| 후보 Context | 책임 | Aggregate Root | 주요 불변식 | |---|---|---|---| | 주문 | 고객의 구매 의사, 주문 확정/취소 | <code>Order</code> | 확정된 주문은 임의 수정 불가, 취소 가능 상태 제한 | | 결제 | 승인/캡처/환불 | <code>Payment</code> | 승인 금액과 캡처 금액의 통화/한도 일치 | | 재고 | 예약/차감/해제 | <code>StockReservation</code> | 예약 수량은 가용 수량을 초과할 수 없음 | | 배송 | 출고/배송 상태 | <code>Shipment</code> | 출고 후 주소 변경 제한 | | 정산 | 판매자 지급/수수료 | <code>Settlement</code> | 정산 완료 후 금액 변경 불가 |</p>
+<p>나누는 기준은 이 순서로 보면 됩니다.</p>
+<ul>
+<li><strong>같은 단어가 다른 의미로 쓰이면 Context를 분리</strong></li>
+<p>예: 주문의 <code>confirmed</code>는 고객 주문 확정, 결제의 <code>confirmed</code>는 PG 승인 완료일 수 있습니다.</p>
+</ul>
+<ul>
+<li><strong>한 트랜잭션에서 반드시 지켜야 하는 규칙만 같은 Aggregate에 둠</strong></li>
+<p><code>Order</code>가 <code>Payment</code>, <code>Shipment</code>, <code>Stock</code> 객체를 직접 들고 있으면 대개 너무 큽니다. <code>payment_id</code>, <code>shipment_id</code>처럼 ID로 연결하고, 변경은 도메인 이벤트로 이어갑니다.</p>
+</ul>
+<ul>
+<li><strong>Django ORM 모델을 곧바로 도메인 모델로 보지 않음</strong></li>
+<p>복잡한 핵심 도메인은 대략 이렇게 둡니다.</p>
+</ul>
+<pre><code>
+orders/
+  domain/
+    model/order/
+      order.py
+      value_objects.py
+      events.py
+      repository.py
+    service.py
+  application/
+    confirm_order.py
+  infrastructure/
+    django_models.py
+    django_order_repository.py
+</code></pre>
+<p>도메인 계층의 Repository 인터페이스는 사용하는 쪽이 소유합니다.</p>
+<pre><code>
+class OrderRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, order_id: OrderId) -&gt; Order: ...
+
+    @abstractmethod
+    def save(self, order: Order) -&gt; None: ...
+</code></pre>
+<p>Application Service는 유스케이스 조율만 합니다. 비즈니스 판단은 Aggregate 메서드에 둡니다.</p>
+<pre><code>
+class ConfirmOrderService:
+    def confirm(self, order_id: OrderId) -&gt; None:
+        order = self.orders.find_by_id(order_id)
+        order.confirm()
+        self.orders.save(order)
+</code></pre>
+<p>유비쿼터스 언어도 먼저 고정하세요.</p>
+<p>| 권장 용어 | 의미 | 금지 동의어 | |---|---|---| | <code>confirm</code> | 주문 확정 | <code>update_status</code>, <code>set_done</code> | | <code>authorize</code> | 결제 승인 | <code>pay</code>, <code>success</code> | | <code>reserve</code> | 재고 예약 | <code>hold</code>, <code>minus</code> | | <code>dispatch</code> | 출고 처리 | <code>send</code>, <code>ship_start</code> |</p>
+<p>핵심 원칙은 간단합니다: <strong>Context는 언어와 책임 기준으로 나누고, Aggregate는 불변식 기준으로 작게 유지하고, Django/DB 구조는 그다음에 맞춥니다.</strong></p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 구현 구조와 Repository/Service 배치 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

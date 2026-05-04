@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-clean-error-handling dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-clean-error-handling dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-clean-error-handling.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>표준 원칙</strong></p>
+<p>도메인 예외는 HTTP를 몰라야 합니다. 즉 <code>status_code</code>, <code>response</code>, <code>request</code>, <code>HttpError</code>를 domain/service 계층에 넣지 않습니다. 도메인은 “무슨 비즈니스 규칙이 깨졌는가”만 표현하고, API 계층이 Django Ninja exception handler에서 RFC 9457 Problem Details 응답으로 변환합니다.</p>
+<p>권장 구조:</p>
+<pre><code>
+orders/
+  domain/errors.py
+  services.py
+  api/schemas.py
+  api/router.py
+config/
+  api.py
+</code></pre>
+<p><strong>1. Domain Exception</strong></p>
+<pre><code>
+# orders/domain/errors.py
+from dataclasses import dataclass
+
+
+class DomainError(Exception):
+    code = &quot;domain_error&quot;
+    message = &quot;Domain rule was violated.&quot;
+
+
+@dataclass(frozen=True)
+class OrderNotPayable(DomainError):
+    order_id: str
+    reason: str
+
+    code = &quot;order_not_payable&quot;
+    message = &quot;Order cannot be paid.&quot;
+
+
+@dataclass(frozen=True)
+class OrderAlreadyCancelled(DomainError):
+    order_id: str
+
+    code = &quot;order_already_cancelled&quot;
+    message = &quot;Order is already cancelled.&quot;
+</code></pre>
+<p>도메인 예외는 검색 가능한 <code>code</code>, 운영자가 이해할 <code>message</code>, 디버깅용 컨텍스트만 가집니다. HTTP 상태는 없습니다.</p>
+<p><strong>2. API Error Schema</strong></p>
+<pre><code>
+# orders/api/schemas.py
+from ninja import Schema
+
+
+class ProblemDetails(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+    instance: str | None = None
+    code: str
+</code></pre>
+<p><strong>3. Transport Mapping</strong></p>
+<pre><code>
+# config/api.py
+from dataclasses import asdict, is_dataclass
+
+from django.http import HttpRequest, HttpResponse
+from ninja import NinjaAPI
+from ninja.errors import ValidationError
+
+from orders.domain.errors import (
+    DomainError,
+    OrderAlreadyCancelled,
+    OrderNotPayable,
+)
+from orders.api.router import router as orders_router
+
+api = NinjaAPI(title=&quot;Service API&quot;)
+
+
+DOMAIN_ERROR_STATUS: dict[type[DomainError], int] = {
+    OrderNotPayable: 409,
+    OrderAlreadyCancelled: 409,
+}
+
+
+def problem_response(
+    request: HttpRequest,
+    exc: DomainError,
+    status: int,
+) -&gt; HttpResponse:
+    context = asdict(exc) if is_dataclass(exc) else {}
+
+    return api.create_response(
+        request,
+        {
+            &quot;type&quot;: f&quot;https://api.example.com/problems/{exc.code}&quot;,
+            &quot;title&quot;: exc.message,
+            &quot;status&quot;: status,
+            &quot;detail&quot;: exc.message,
+            &quot;instance&quot;: request.path,
+            &quot;code&quot;: exc.code,
+            &quot;context&quot;: context,
+        },
+        status=status,
+    )
+
+
+@api.exception_handler(DomainError)
+def handle_domain_error(request: HttpRequest, exc: DomainError) -&gt; HttpResponse:
+    status = DOMAIN_ERROR_STATUS.get(type(exc), 400)
+    return problem_response(request, exc, status)
+
+
+@api.exception_handler(ValidationError)
+def handle_validation_error(
+    request: HttpRequest,
+    exc: ValidationError,
+) -&gt; HttpResponse:
+    return api.create_response(
+        request,
+        {
+            &quot;type&quot;: &quot;https://api.example.com/problems/validation-error&quot;,
+            &quot;title&quot;: &quot;Validation failed.&quot;,
+            &quot;status&quot;: 422,
+            &quot;detail&quot;: &quot;Request payload is invalid.&quot;,
+            &quot;instance&quot;: request.path,
+            &quot;code&quot;: &quot;validation_error&quot;,
+            &quot;errors&quot;: exc.errors,
+        },
+        status=422,
+    )
+
+
+api.add_router(&quot;/orders/&quot;, orders_router)
+</code></pre>
+<p>팀 표준으로는 <code>DOMAIN_ERROR_STATUS</code>만 API 계층에서 관리합니다. 새 도메인 예외가 생기면 도메인 파일에 예외를 추가하고, API mapping에 상태 코드만 연결합니다.</p>
+<p><strong>4. Router는 try/except 하지 않음</strong></p>
+<pre><code>
+# orders/api/router.py
+from ninja import Router
+
+from orders.api.schemas import ProblemDetails
+from orders.services import pay_order
+
+router = Router(tags=[&quot;orders&quot;])
+
+
+@router.post(
+    &quot;/{order_id}/payments&quot;,
+    response={204: None, 409: ProblemDetails, 422: ProblemDetails},
+)
+def pay_order_api(request, order_id: str) -&gt; tuple[int, None]:
+    pay_order(order_id=order_id)
+    return 204, None
+</code></pre>
+<p>엔드포인트에서 <code>OrderNotPayable</code>을 잡지 않습니다. 잡기 시작하면 transport 정책이 여러 router로 흩어집니다.</p>
+<p><strong>검증 기준</strong></p>
+<pre><code>
+pytest orders/tests/test_domain_errors.py
+pytest orders/tests/test_order_api_errors.py
+python manage.py check
+</code></pre>
+<p>필수 테스트:</p>
+<pre><code>
+def test_domain_errors_do_not_import_django_or_ninja():
+    import orders.domain.errors as errors
+
+    assert &quot;ninja&quot; not in errors.__dict__
+    assert &quot;django&quot; not in errors.__dict__
+
+
+def test_order_not_payable_returns_problem_details(client):
+    response = client.post(&quot;/api/orders/order-1/payments&quot;, json={})
+
+    assert response.status_code == 409
+    assert response.json()[&quot;code&quot;] == &quot;order_not_payable&quot;
+    assert response.json()[&quot;type&quot;].endswith(&quot;/order_not_payable&quot;)
+</code></pre>
+<p>이 표준의 핵심은 “도메인은 예외를 던지고, API는 표현한다”입니다. DRF 없이 Django Ninja <code>Schema</code>, <code>Router</code>, <code>exception_handler</code>만 사용합니다.</p></article>
+  </main>
+</body>
+</html>

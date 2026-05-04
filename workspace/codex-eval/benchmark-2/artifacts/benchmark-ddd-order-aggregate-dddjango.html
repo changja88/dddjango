@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-order-aggregate dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-order-aggregate dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-ddd-order-aggregate.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>기본 경계는 이렇게 잡는 것을 권합니다.</p>
+<p>| 객체 | Aggregate Root 여부 | 이유 | |---|---:|---| | <code>Order</code> | 예 | 주문 생성, 품목, 총액, 주문 상태 전이의 일관성 경계 | | <code>OrderItem</code> | 아니오 | <code>Order</code> 없이는 독립 생명주기가 약함. 보통 <code>Order</code> 내부 엔티티 또는 값 객체 | | <code>Payment</code> | 기본은 별도 root | 승인, 실패, 재시도, 취소, 환불은 결제 컨텍스트의 생명주기 | | <code>Shipment</code> | 기본은 별도 root | 출고, 송장, 배송중, 반품, 배송사 연동은 배송/풀필먼트 컨텍스트의 생명주기 |</p>
+<p>즉, <code>Order</code> aggregate 안에는 <code>OrderItem</code>만 넣는 것을 기본값으로 둡니다. <code>Payment</code>, <code>Shipment</code>는 무조건 <code>Order</code> 내부에 넣지 않습니다. 둘은 보통 <code>order_id</code>로 <code>Order</code>를 참조하는 별도 aggregate root입니다.</p>
+<pre><code>
+class Order:
+    &quot;&quot;&quot;
+    Aggregate Root.
+
+    Invariants:
+    - 주문은 최소 1개 이상의 OrderItem을 가진다.
+    - total_amount는 OrderItem 금액 합계와 일치한다.
+    - 결제 완료 이후에는 주문 품목을 임의 변경할 수 없다.
+    - 취소/확정/배송 요청 같은 상태 전이는 Order를 통해서만 수행한다.
+    &quot;&quot;&quot;
+</code></pre>
+<p><code>OrderItem</code>은 “주문 당시의 상품명, 단가, 수량”을 보존하는 주문 라인입니다. 상품 카탈로그의 <code>Product</code>를 직접 참조하지 말고 <code>product_id</code>, <code>product_name</code>, <code>unit_price</code>, <code>quantity</code> 같은 주문 시점 스냅샷을 갖는 편이 안전합니다. 라인별 취소, 라인별 배송, 라인별 환불처럼 독립 상태가 필요하면 <code>OrderItem</code>은 내부 엔티티가 됩니다. 그런 생명주기가 없으면 값 객체로 충분합니다.</p>
+<p><code>Payment</code>를 <code>Order</code> 안에 넣어도 되는 경우는 제한적입니다. 예를 들어 “무통장 입금 여부만 기록한다”, “결제 실패/재시도/환불/부분취소가 없다”, “결제 시스템과 별도 팀/외부 PG 연동이 없다”처럼 결제가 주문의 단순 속성일 때입니다. 하지만 일반 커머스에서는 결제 승인, capture, cancel, refund, webhook, PG idempotency가 있어서 <code>Payment</code>를 별도 aggregate root로 두는 편이 맞습니다.</p>
+<p><code>Shipment</code>도 마찬가지입니다. “배송지 문자열 하나와 배송 요청 여부” 정도라면 <code>Order</code> 내부의 <code>ShippingInfo</code> 값 객체로 둘 수 있습니다. 하지만 송장번호, 배송사, 출고 작업, 분할 배송, 배송 추적, 반품/교환이 들어오면 <code>Shipment</code>는 별도 aggregate root입니다.</p>
+<p>권장 흐름은 이벤트로 연결합니다.</p>
+<p>| 발생 이벤트 | 후속 처리 | |---|---| | <code>OrderPlacedEvent</code> | 결제 요청 생성 | | <code>PaymentPaidEvent</code> | <code>Order.mark_paid()</code> 호출 | | <code>OrderReadyForShipmentEvent</code> | 배송 생성 | | <code>ShipmentDispatchedEvent</code> | <code>Order.mark_shipped()</code> 또는 조회 모델 갱신 | | <code>ShipmentDeliveredEvent</code> | <code>Order.mark_delivered()</code> 또는 배송 컨텍스트에서 완료 |</p>
+<p>중요한 점은 <code>Order</code>, <code>Payment</code>, <code>Shipment</code>를 같은 DB 트랜잭션에서 항상 함께 바꾸려 하지 않는 것입니다. aggregate boundary는 consistency boundary입니다. <code>Order</code> 저장과 <code>Payment</code> 저장을 하나의 거대한 트랜잭션으로 묶으면 경계가 커지고, 외부 PG/webhook/배송사 연동이 들어올 때 모델이 쉽게 무너집니다. 경계 밖 일관성은 도메인 이벤트와 outbox, 또는 <code>transaction.on_commit()</code> 이후 핸들러로 맞춥니다.</p>
+<p>Django에서는 <code>orders/models.py</code> 안에 <code>Order</code>, <code>OrderItem</code>, <code>Payment</code>, <code>Shipment</code> 모델이 같이 있다고 해서 같은 aggregate라는 뜻이 아닙니다. Django model 배치는 영속성/앱 구조의 문제이고, domain object의 책임과 aggregate boundary는 비즈니스 불변식 기준으로 판단해야 합니다. 같은 Django app에 있어도 <code>OrderRepository</code>, <code>PaymentRepository</code>, <code>ShipmentRepository</code>는 aggregate 단위로 나뉘는 것이 자연스럽습니다.</p>
+<p>최종 추천은 다음입니다.</p>
+<pre><code>
+Ordering Context
+- Aggregate Root: Order
+- 내부 구성: OrderItem, ShippingInfo, Money
+- 참조: payment_id 없음 또는 payment_status 스냅샷 정도만 보유
+
+Payment Context
+- Aggregate Root: Payment
+- 참조: order_id
+
+Fulfillment/Shipping Context
+- Aggregate Root: Shipment
+- 참조: order_id
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/Repository 배치 → <strong>implementation-django</strong> 스킬 &gt; - Outbox, UoW, 이벤트 연동 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

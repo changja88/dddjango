@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-serializer-migration dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-serializer-migration dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-conflict-serializer-migration.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF <code>Serializer</code>는 사용하지 않고 Django Ninja <code>Schema</code>로 요청 검증을 작성합니다.</p>
+<p>Django Ninja에서는 “serializer 클래스” 역할을 <code>Schema</code>가 합니다. 요청 바디에 붙이면 타입 변환, 필수값 검사, 길이/범위 검증, OpenAPI 문서 생성까지 같이 처리됩니다.</p>
+<pre><code>
+# products/schemas.py
+from decimal import Decimal
+
+from ninja import Field, Schema
+
+
+class ProductCreateIn(Schema):
+    name: str = Field(..., min_length=1, max_length=120)
+    price: Decimal = Field(..., gt=0)
+    sku: str | None = Field(None, max_length=40)
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: Decimal
+    sku: str | None
+</code></pre>
+<pre><code>
+# products/api.py
+from ninja import Router
+
+from .models import Product
+from .schemas import ProductCreateIn, ProductOut
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductCreateIn):
+    product = Product.objects.create(
+        name=payload.name,
+        price=payload.price,
+        sku=payload.sku,
+    )
+    return 201, product
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI()
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from .api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>PATCH 검증이 필요하면 별도 입력 스키마를 두는 편이 명확합니다.</p>
+<pre><code>
+# products/schemas.py
+from decimal import Decimal
+
+from ninja import Field, Schema
+
+
+class ProductUpdateIn(Schema):
+    name: str | None = Field(None, min_length=1, max_length=120)
+    price: Decimal | None = Field(None, gt=0)
+    sku: str | None = Field(None, max_length=40)
+</code></pre>
+<pre><code>
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def update_product(request, product_id: int, payload: ProductUpdateIn):
+    product = Product.objects.get(id=product_id)
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+
+    product.save(update_fields=list(payload.dict(exclude_unset=True).keys()))
+    return product
+</code></pre>
+<p>핵심은 <code>Serializer</code>를 새로 만들지 말고, 요청용 <code>SomethingCreateIn</code> / <code>SomethingUpdateIn</code>, 응답용 <code>SomethingOut</code>처럼 <code>Schema</code>를 분리하는 것입니다. 모델 기반 응답 스키마가 필요하면 <code>ModelSchema</code>를 쓰되 <code>fields = &quot;__all__&quot;</code>은 피하고 노출할 필드를 명시하세요.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja 요청/응답 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

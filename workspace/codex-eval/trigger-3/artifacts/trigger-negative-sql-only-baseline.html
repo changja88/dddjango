@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-negative-sql-only baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-negative-sql-only baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-3/baseline/trigger-negative-sql-only.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>PostgreSQL에서 월별 매출 집계는 보통 <code>date_trunc(&#x27;month&#x27;, ...)</code>를 씁니다.</p>
+<pre><code>
+SELECT
+  date_trunc(&#x27;month&#x27;, ordered_at)::date AS sales_month,
+  SUM(total_amount) AS monthly_sales
+FROM orders
+WHERE status = &#x27;paid&#x27;
+GROUP BY date_trunc(&#x27;month&#x27;, ordered_at)
+ORDER BY sales_month;
+</code></pre>
+<p>예시 컬럼 기준:</p>
+<ul>
+<li><code>orders</code>: 주문 테이블</li>
+<li><code>ordered_at</code>: 주문 일시</li>
+<li><code>total_amount</code>: 주문 금액</li>
+<li><code>status = &#x27;paid&#x27;</code>: 결제 완료 주문만 집계</li>
+</ul>
+<p>월을 <code>YYYY-MM</code> 문자열로 보고 싶으면:</p>
+<pre><code>
+SELECT
+  to_char(date_trunc(&#x27;month&#x27;, ordered_at), &#x27;YYYY-MM&#x27;) AS sales_month,
+  SUM(total_amount) AS monthly_sales
+FROM orders
+WHERE status = &#x27;paid&#x27;
+GROUP BY date_trunc(&#x27;month&#x27;, ordered_at)
+ORDER BY date_trunc(&#x27;month&#x27;, ordered_at);
+</code></pre></article>
+  </main>
+</body>
+</html>

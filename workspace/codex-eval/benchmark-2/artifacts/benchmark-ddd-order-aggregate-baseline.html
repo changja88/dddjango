@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-order-aggregate baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-order-aggregate baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/baseline/benchmark-ddd-order-aggregate.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>주문 도메인에서는 보통 <strong><code>Order</code>를 Aggregate Root</strong>로 둡니다.</p>
+<p><code>OrderItem</code>, <code>Payment</code>, <code>Shipment</code>는 각각 성격에 따라 <code>Order</code> 내부 엔티티로 둘 수도 있고, 별도 Aggregate로 분리할 수도 있습니다. 핵심 기준은 <strong>하나의 트랜잭션 안에서 반드시 함께 일관성을 지켜야 하는가</strong>입니다.</p>
+<p><strong>추천 Aggregate Boundary</strong></p>
+<pre><code>
+Order Aggregate
+- Order  (Aggregate Root)
+- OrderItem
+</code></pre>
+<p>그리고 보통은 아래처럼 분리합니다.</p>
+<pre><code>
+Payment Aggregate
+- Payment  (Aggregate Root)
+
+Shipment Aggregate
+- Shipment (Aggregate Root)
+</code></pre>
+<p>즉, 기본적으로는:</p>
+<ul>
+<li><code>Order</code>는 주문의 생명주기와 주문 항목을 관리</li>
+<li><code>OrderItem</code>은 <code>Order</code> 없이 독립적으로 존재하지 않으므로 <code>Order</code> 내부 엔티티</li>
+<li><code>Payment</code>는 결제 승인, 실패, 환불 등 별도 상태와 외부 결제 시스템 연동을 가지므로 별도 Aggregate</li>
+<li><code>Shipment</code>는 출고, 배송 시작, 배송 완료, 반송 등 별도 상태와 물류 시스템 연동을 가지므로 별도 Aggregate</li>
+</ul>
+<p><strong>왜 <code>Order</code>가 Aggregate Root인가</strong></p>
+<p>주문의 핵심 불변식은 보통 <code>Order</code>가 책임집니다.</p>
+<p>예를 들어:</p>
+<ul>
+<li>주문이 확정되기 전까지만 상품 수량을 변경할 수 있다</li>
+<li>주문 총액은 <code>OrderItem</code>들의 합계와 일치해야 한다</li>
+<li>취소된 주문은 결제 요청을 할 수 없다</li>
+<li>주문 상태에 따라 결제나 배송 요청 가능 여부가 달라진다</li>
+</ul>
+<p>이런 규칙은 <code>Order</code>가 중심이 되어 판단해야 하므로 <code>Order</code>가 Aggregate Root가 됩니다.</p>
+<p><strong><code>Payment</code>, <code>Shipment</code>를 Order 내부에 넣지 않는 이유</strong></p>
+<p>결제와 배송은 주문과 강하게 연결되어 있지만, 상태 변화 주기가 다릅니다.</p>
+<p>예를 들어 결제는:</p>
+<pre><code>
+READY -&gt; AUTHORIZED -&gt; CAPTURED -&gt; FAILED -&gt; REFUNDED
+</code></pre>
+<p>배송은:</p>
+<pre><code>
+READY -&gt; PICKED -&gt; SHIPPED -&gt; DELIVERED -&gt; RETURNED
+</code></pre>
+<p>처럼 각각 독립적인 워크플로우가 있습니다. 외부 PG사, 물류사와도 연동됩니다. 이걸 모두 <code>Order</code> Aggregate 안에 넣으면 <code>Order</code>가 너무 커지고, 결제/배송 이벤트마다 주문 전체를 잠그거나 저장해야 해서 복잡도가 올라갑니다.</p>
+<p>그래서 보통은 <code>Order</code>가 직접 <code>Payment</code> 객체를 소유하기보다 <code>paymentId</code>, <code>shipmentId</code> 또는 <code>orderId</code>로 느슨하게 연결합니다.</p>
+<p><strong>정리</strong></p>
+<p>가장 무난한 설계는 이렇습니다.</p>
+<pre><code>
+Order Aggregate
+- Order
+- OrderItem
+
+Payment Aggregate
+- Payment
+
+Shipment Aggregate
+- Shipment
+</code></pre>
+<p><code>Order</code>는 주문 자체의 상태와 주문 항목의 일관성을 책임지고, <code>Payment</code>와 <code>Shipment</code>는 각각 독립 Aggregate로 두되 <code>orderId</code>를 통해 주문과 연결하는 방식이 실무적으로 가장 안정적입니다.</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-ninja-test-client dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-ninja-test-client dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-positive-ninja-test-client.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>사용한 스킬: <code>architecture-api</code>, <code>implementation-django-ninja</code>, <code>implementation-test</code>, <code>implementation-tdd</code>.</p>
+<p>현재 워크스페이스가 read-only라 테스트 파일 생성과 <code>pytest</code> 실행은 하지 못했습니다. 아래는 실제 프로젝트에 그대로 옮겨 적용할 수 있는 Django Ninja endpoint pytest 표준입니다.</p>
+<p><strong>[주요 내용]</strong></p>
+<p>표준 원칙:</p>
+<ul>
+<li>API 테스트는 <code>ninja.testing.TestClient</code>로 Router 또는 API를 직접 호출한다.</li>
+<li>테스트 위치는 <code>tests/isolated/integration/&lt;app&gt;/test_&lt;resource&gt;_api.py</code>를 기본으로 한다.</li>
+<li>성공 응답과 실패 응답을 모두 테스트한다: <code>2xx</code>, 도메인 오류 <code>4xx</code>, 입력 검증 <code>422</code>.</li>
+<li>endpoint 테스트의 책임은 HTTP 계약이다: request parsing, status code, response schema, service 호출 경계.</li>
+<li>비즈니스 규칙은 service 테스트에서 검증하고, endpoint 테스트에서는 service layer를 <code>create_autospec</code> 또는 <code>patch(..., autospec=True)</code>로 대체한다.</li>
+<li>Mock은 endpoint가 import해서 사용하는 위치를 patch한다. 예: endpoint가 <code>products.api.create_product</code>를 호출하면 <code>products.api.create_product</code>를 patch한다.</li>
+<li>Repository, Gateway, 외부 API는 service 테스트에서 Fake 또는 Mock으로 대체한다. endpoint 테스트에서 DB/외부 시스템까지 깊게 들어가지 않는다.</li>
+</ul>
+<p><strong>RED 테스트</strong></p>
+<pre><code>
+# tests/isolated/integration/products/test_product_api.py
+from unittest.mock import patch
+
+import pytest
+from ninja.testing import TestClient
+
+from products.api import router
+from products.services import ProductAlreadyExists, ProductResult
+
+
+client = TestClient(router)
+
+
+def test_create_product_valid_payload_returns_201():
+    payload = {&quot;name&quot;: &quot;Keyboard&quot;, &quot;price&quot;: 39000}
+
+    with patch(&quot;products.api.create_product&quot;, autospec=True) as create_product:
+        create_product.return_value = ProductResult(id=1, name=&quot;Keyboard&quot;, price=39000)
+
+        response = client.post(&quot;/products&quot;, json=payload)
+
+    assert response.status_code == 201
+    assert response.json() == {&quot;id&quot;: 1, &quot;name&quot;: &quot;Keyboard&quot;, &quot;price&quot;: 39000}
+    create_product.assert_called_once_with(name=&quot;Keyboard&quot;, price=39000)
+
+
+def test_create_product_duplicate_name_returns_409_problem_detail():
+    payload = {&quot;name&quot;: &quot;Keyboard&quot;, &quot;price&quot;: 39000}
+
+    with patch(&quot;products.api.create_product&quot;, autospec=True) as create_product:
+        create_product.side_effect = ProductAlreadyExists(&quot;Keyboard&quot;)
+
+        response = client.post(&quot;/products&quot;, json=payload)
+
+    assert response.status_code == 409
+    assert response.json() == {
+        &quot;type&quot;: &quot;https://api.example.com/problems/product-already-exists&quot;,
+        &quot;title&quot;: &quot;Product already exists&quot;,
+        &quot;status&quot;: 409,
+        &quot;detail&quot;: &quot;Product &#x27;Keyboard&#x27; already exists.&quot;,
+    }
+
+
+def test_create_product_invalid_payload_returns_422():
+    response = client.post(&quot;/products&quot;, json={&quot;name&quot;: &quot;&quot;, &quot;price&quot;: -1})
+
+    assert response.status_code == 422
+</code></pre>
+<p>예상 실패 이유:</p>
+<ul>
+<li><code>products.api.router</code>가 아직 없으면 import 단계에서 실패한다.</li>
+<li><code>create_product</code>가 아직 없으면 patch 대상이 없어 실패한다.</li>
+<li>endpoint가 <code>201</code>, <code>409</code>, <code>422</code> 계약을 구현하지 않았으면 assertion이 실패한다.</li>
+<li>실패 응답이 RFC 9457 Problem Details 형식이 아니면 JSON assertion이 실패한다.</li>
+</ul>
+<p><strong>GREEN 최소 구현</strong></p>
+<pre><code>
+# products/schemas.py
+from ninja import Schema
+from pydantic import Field
+
+
+class ProductCreateIn(Schema):
+    name: str = Field(min_length=1)
+    price: int = Field(ge=0)
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: int
+
+
+class ProblemDetail(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+</code></pre>
+<pre><code>
+# products/services.py
+from dataclasses import dataclass
+
+
+class ProductAlreadyExists(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class ProductResult:
+    id: int
+    name: str
+    price: int
+
+
+def create_product(*, name: str, price: int) -&gt; ProductResult:
+    return ProductResult(id=1, name=name, price=price)
+</code></pre>
+<pre><code>
+# products/api.py
+from ninja import Router
+
+from products.schemas import ProblemDetail, ProductCreateIn, ProductOut
+from products.services import ProductAlreadyExists, create_product
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.post(&quot;/products&quot;, response={201: ProductOut, 409: ProblemDetail})
+def create_product_endpoint(request, payload: ProductCreateIn):
+    try:
+        return 201, create_product(name=payload.name, price=payload.price)
+    except ProductAlreadyExists:
+        return 409, {
+            &quot;type&quot;: &quot;https://api.example.com/problems/product-already-exists&quot;,
+            &quot;title&quot;: &quot;Product already exists&quot;,
+            &quot;status&quot;: 409,
+            &quot;detail&quot;: f&quot;Product &#x27;{payload.name}&#x27; already exists.&quot;,
+        }
+</code></pre>
+<p><strong>REFACTOR 기준</strong></p>
+<ul>
+<li>endpoint 함수는 schema 변환과 service 호출만 담당한다.</li>
+<li>중복되는 Problem Details 생성은 <code>api/errors.py</code> 같은 helper로 이동한다.</li>
+<li>service 테스트는 별도로 작성하고, 거기서는 service를 mock하지 않는다.</li>
+<li>service가 repository를 쓰면 <code>InMemoryProductRepository</code> Fake를 우선 사용한다.</li>
+<li>인증이 있으면 endpoint 테스트에 <code>client.force_login(...)</code> 또는 Ninja auth test hook을 별도 fixture로 둔다.</li>
+<li>목록 endpoint는 반드시 pagination 응답 구조와 빈 목록 케이스를 함께 테스트한다.</li>
+</ul>
+<p><strong>검증 명령</strong></p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/products/test_product_api.py -q
+</code></pre>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated -q --randomly-seed=random
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja endpoint 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - pytest 테스트 품질 개선 → <strong>implementation-test</strong> 스킬 &gt; - Red-Green-Refactor 적용 → <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

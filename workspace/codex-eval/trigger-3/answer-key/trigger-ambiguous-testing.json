@@ -1,0 +1,17 @@
+{
+  "case_id": "trigger-ambiguous-testing",
+  "category": "trigger",
+  "title": "Ambiguous trigger for testing structure",
+  "expectations": [
+    "korean_first",
+    "ambiguous_handling"
+  ],
+  "scoring_focus": [
+    "테스트 프레임워크가 불명확함을 인지한다.",
+    "pytest/Django는 조건부로 언급한다.",
+    "사용자에게 필요한 다음 정보를 명확히 한다."
+  ],
+  "prompt": "테스트 구조를 개선해줘.",
+  "trigger_type": "ambiguous",
+  "expected_behavior": "Ask for stack/context or provide a concise conditional checklist."
+}

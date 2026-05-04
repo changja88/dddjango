@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-negative-fastapi dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-negative-fastapi dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-negative-fastapi.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고, 지시된 <code>config.toml</code>도 없습니다. 또한 이 세션의 파일시스템이 <code>read-only</code>라서 <code>main.py</code>, <code>requirements.txt</code>, 테스트 파일 등을 실제로 생성할 수 없습니다.</p>
+<p>제가 만들 설계는 다음처럼 아주 단순하게 잡겠습니다.</p>
+<ul>
+<li>Django는 전혀 사용하지 않음</li>
+<li>FastAPI 앱 하나 생성</li>
+<li><code>GET /health</code>가 <code>200 OK</code>와 JSON 응답 반환</li>
+<li>테스트는 <code>TestClient</code>로 먼저 작성</li>
+<li>최소 파일 구성:</li>
+<li><code>main.py</code></li>
+<li><code>requirements.txt</code></li>
+<li><code>tests/test_health.py</code></li>
+</ul>
+<p>예상 구현 형태는 이렇습니다.</p>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+@app.get(&quot;/health&quot;)
+def health_check():
+    return {&quot;status&quot;: &quot;ok&quot;}
+</code></pre>
+<pre><code>
+# tests/test_health.py
+from fastapi.testclient import TestClient
+
+from main import app
+
+
+def test_health_check_returns_ok():
+    client = TestClient(app)
+
+    response = client.get(&quot;/health&quot;)
+
+    assert response.status_code == 200
+    assert response.json() == {&quot;status&quot;: &quot;ok&quot;}
+</code></pre>
+<pre><code>
+# requirements.txt
+fastapi
+uvicorn
+pytest
+httpx
+</code></pre>
+<p>쓰기 가능한 워크스페이스로 다시 실행되면, 위 구조로 테스트부터 추가하고 실패 확인 후 FastAPI 구현까지 바로 적용하겠습니다.</p></article>
+  </main>
+</body>
+</html>

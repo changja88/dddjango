@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-order-cancel baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-order-cancel baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/baseline/benchmark-tdd-order-cancel.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><code>/private/tmp/dddjango-codex-eval</code> 안에는 현재 <code>config.toml</code>이나 프로젝트 파일이 없어서, Django 주문 도메인을 가정한 TDD 흐름으로 정리합니다.</p>
+<p><strong>1. 실패 테스트 작성</strong></p>
+<p>먼저 “취소 가능한 주문은 취소된다”는 가장 작은 동작부터 고정합니다.</p>
+<pre><code>
+# tests/test_order_cancel.py
+import pytest
+
+from orders.models import Order
+
+
+@pytest.mark.django_db
+def test_paid_order_can_be_cancelled():
+    order = Order.objects.create(
+        status=Order.Status.PAID,
+    )
+
+    order.cancel()
+
+    assert order.status == Order.Status.CANCELLED
+</code></pre>
+<p>추가로 정책 테스트도 먼저 둡니다.</p>
+<pre><code>
+@pytest.mark.django_db
+def test_shipped_order_cannot_be_cancelled():
+    order = Order.objects.create(
+        status=Order.Status.SHIPPED,
+    )
+
+    with pytest.raises(ValueError, match=&quot;cannot be cancelled&quot;):
+        order.cancel()
+
+    order.refresh_from_db()
+    assert order.status == Order.Status.SHIPPED
+</code></pre>
+<p>이 시점에는 <code>cancel()</code>이 없거나 동작하지 않으므로 테스트가 실패해야 합니다.</p>
+<pre><code>
+pytest
+</code></pre>
+<p>예상 실패:</p>
+<pre><code>
+AttributeError: &#x27;Order&#x27; object has no attribute &#x27;cancel&#x27;
+</code></pre>
+<p><strong>2. 최소 구현</strong></p>
+<p>테스트를 통과시키는 만큼만 모델에 구현합니다.</p>
+<pre><code>
+# orders/models.py
+from django.db import models
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PENDING = &quot;pending&quot;, &quot;Pending&quot;
+        PAID = &quot;paid&quot;, &quot;Paid&quot;
+        SHIPPED = &quot;shipped&quot;, &quot;Shipped&quot;
+        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    def cancel(self):
+        if self.status == self.Status.SHIPPED:
+            raise ValueError(&quot;This order cannot be cancelled&quot;)
+
+        self.status = self.Status.CANCELLED
+        self.save(update_fields=[&quot;status&quot;])
+</code></pre>
+<p>다시 실행합니다.</p>
+<pre><code>
+pytest
+</code></pre>
+<p>테스트가 통과하면 다음 정책을 테스트로 추가합니다.</p>
+<pre><code>
+@pytest.mark.django_db
+def test_cancelled_order_cannot_be_cancelled_again():
+    order = Order.objects.create(
+        status=Order.Status.CANCELLED,
+    )
+
+    with pytest.raises(ValueError, match=&quot;cannot be cancelled&quot;):
+        order.cancel()
+</code></pre>
+<p>그 다음 최소 구현을 확장합니다.</p>
+<pre><code>
+def cancel(self):
+    if self.status in [self.Status.SHIPPED, self.Status.CANCELLED]:
+        raise ValueError(&quot;This order cannot be cancelled&quot;)
+
+    self.status = self.Status.CANCELLED
+    self.save(update_fields=[&quot;status&quot;])
+</code></pre>
+<p><strong>3. 리팩터링 방향</strong></p>
+<p>테스트가 초록색이 된 뒤에만 구조를 다듬습니다.</p>
+<pre><code>
+class Order(models.Model):
+    ...
+
+    CANCELLABLE_STATUSES = {
+        Status.PENDING,
+        Status.PAID,
+    }
+
+    def can_cancel(self):
+        return self.status in self.CANCELLABLE_STATUSES
+
+    def cancel(self):
+        if not self.can_cancel():
+            raise ValueError(&quot;This order cannot be cancelled&quot;)
+
+        self.status = self.Status.CANCELLED
+        self.save(update_fields=[&quot;status&quot;])
+</code></pre>
+<p>테스트도 의도를 더 분명히 만들 수 있습니다.</p>
+<pre><code>
+@pytest.mark.django_db
+@pytest.mark.parametrize(&quot;status&quot;, [
+    Order.Status.PENDING,
+    Order.Status.PAID,
+])
+def test_cancellable_order_can_be_cancelled(status):
+    order = Order.objects.create(status=status)
+
+    order.cancel()
+
+    assert order.status == Order.Status.CANCELLED
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(&quot;status&quot;, [
+    Order.Status.SHIPPED,
+    Order.Status.CANCELLED,
+])
+def test_uncancellable_order_cannot_be_cancelled(status):
+    order = Order.objects.create(status=status)
+
+    with pytest.raises(ValueError, match=&quot;cannot be cancelled&quot;):
+        order.cancel()
+</code></pre>
+<p>흐름은 이렇게 잡으면 됩니다.</p>
+<ul>
+<li>실패 테스트: “어떤 상태의 주문이 취소되는가 / 취소되면 안 되는가”를 먼저 명시</li>
+<li>최소 구현: <code>cancel()</code> 메서드와 상태 변경만 구현</li>
+<li>리팩터링: <code>can_cancel()</code> 분리, 상태 목록 상수화, 중복 테스트는 <code>parametrize</code>로 정리</li>
+</ul>
+<p>핵심은 “정책을 테스트로 먼저 고정하고, 구현은 테스트를 통과할 만큼만 키우는 것”입니다.</p></article>
+  </main>
+</body>
+</html>

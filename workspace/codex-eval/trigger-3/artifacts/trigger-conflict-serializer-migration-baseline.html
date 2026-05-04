@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-serializer-migration baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-serializer-migration baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-3/baseline/trigger-conflict-serializer-migration.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja <code>Schema</code>로 작성합니다. 현재 <code>/private/tmp/dddjango-codex-eval</code>에는 프로젝트 파일이 없고 세션도 읽기 전용이라 직접 파일 생성은 못 했습니다. 대신 아래처럼 붙여 넣으면 됩니다.</p>
+<p>[예시: <code>products/schemas.py</code>]</p>
+<pre><code>
+from ninja import Schema
+from pydantic import Field, field_validator
+
+
+class ProductCreateRequest(Schema):
+    name: str = Field(min_length=1, max_length=120)
+    price: int = Field(ge=0)
+    stock: int = Field(ge=0)
+
+    @field_validator(&quot;name&quot;)
+    @classmethod
+    def validate_name(cls, value: str) -&gt; str:
+        value = value.strip()
+        if not value:
+            raise ValueError(&quot;name is required&quot;)
+        return value
+
+
+class ProductResponse(Schema):
+    id: int
+    name: str
+    price: int
+    stock: int
+</code></pre>
+<p>[예시: <code>products/api.py</code>]</p>
+<pre><code>
+from ninja import Router
+
+from products.models import Product
+from products.schemas import ProductCreateRequest, ProductResponse
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.post(&quot;/&quot;, response={201: ProductResponse})
+def create_product(request, payload: ProductCreateRequest) -&gt; tuple[int, Product]:
+    product = Product.objects.create(
+        name=payload.name,
+        price=payload.price,
+        stock=payload.stock,
+    )
+    return 201, product
+</code></pre>
+<p>[예시: <code>config/api.py</code>]</p>
+<pre><code>
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI()
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<p>[예시: <code>config/urls.py</code>]</p>
+<pre><code>
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>핵심은 요청 본문 파라미터에 <code>payload: ProductCreateRequest</code>처럼 <code>Schema</code> 클래스를 타입으로 지정하는 것입니다. 그러면 Django Ninja가 JSON body를 자동으로 파싱하고 타입, 길이, 범위, 커스텀 validator까지 검증합니다.</p>
+<p>검증은 실행하지 못했습니다. 프로젝트 파일을 실제 위치에 둔 뒤 <code>python manage.py test</code> 또는 API 호출로 확인하면 됩니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 요청/응답 Schema 설계 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

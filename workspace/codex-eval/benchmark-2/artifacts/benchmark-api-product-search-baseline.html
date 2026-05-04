@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-product-search baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-product-search baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/baseline/benchmark-api-product-search.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>작업 디렉터리에는 <code>config.toml</code>이 없어 별도 팀 지침은 확인하지 못했습니다. 아래는 Django Ninja 기준으로 바로 팀 컨벤션 문서에 넣을 수 있는 형태의 설계안입니다.</p>
+<p><strong>상품 검색 API 컨벤션</strong></p>
+<p>기본 원칙:</p>
+<ul>
+<li>검색 API는 <code>GET /api/v1/products</code> 단일 엔드포인트를 사용한다.</li>
+<li>필터는 query parameter로 표현한다.</li>
+<li>정렬은 <code>sort</code> 하나로 통일한다.</li>
+<li>페이지네이션은 <code>page</code>, <code>page_size</code> 기반 offset pagination을 기본으로 한다.</li>
+<li>응답은 항상 동일한 envelope 구조를 사용한다.</li>
+<li>에러 응답은 <code>code</code>, <code>message</code>, <code>details</code>를 포함한다.</li>
+</ul>
+<pre><code>
+GET /api/v1/products?q=keyboard&amp;category_id=12&amp;min_price=10000&amp;max_price=50000&amp;brand=logitech&amp;is_active=true&amp;sort=-created_at&amp;page=1&amp;page_size=20
+</code></pre>
+<p><strong>Query Parameters</strong></p>
+<pre><code>
+from typing import Literal
+from ninja import Schema, Query
+from pydantic import Field
+
+
+class ProductSearchQuery(Schema):
+    q: str | None = Field(None, description=&quot;상품명/설명 통합 검색어&quot;)
+
+    category_id: int | None = None
+    brand: str | None = None
+    min_price: int | None = Field(None, ge=0)
+    max_price: int | None = Field(None, ge=0)
+    is_active: bool | None = None
+    in_stock: bool | None = None
+
+    sort: Literal[
+        &quot;created_at&quot;,
+        &quot;-created_at&quot;,
+        &quot;price&quot;,
+        &quot;-price&quot;,
+        &quot;name&quot;,
+        &quot;-name&quot;,
+        &quot;sales_count&quot;,
+        &quot;-sales_count&quot;,
+    ] = &quot;-created_at&quot;
+
+    page: int = Field(1, ge=1)
+    page_size: int = Field(20, ge=1, le=100)
+</code></pre>
+<p><strong>필터 컨벤션</strong></p>
+<p>필터 이름은 명확한 도메인 이름을 사용한다.</p>
+<p>권장:</p>
+<pre><code>
+category_id
+brand
+min_price
+max_price
+is_active
+in_stock
+</code></pre>
+<p>비권장:</p>
+<pre><code>
+cat
+brandName
+price_from
+available
+</code></pre>
+<p>범위 필터는 <code>min_</code>, <code>max_</code> prefix를 사용한다.</p>
+<pre><code>
+?min_price=10000&amp;max_price=50000
+</code></pre>
+<p>boolean 필터는 <code>is_</code>, <code>has_</code>, <code>in_</code> 계열을 사용한다.</p>
+<pre><code>
+?is_active=true&amp;in_stock=false
+</code></pre>
+<p>검색어는 <code>q</code>로 통일한다.</p>
+<pre><code>
+?q=무선 키보드
+</code></pre>
+<p><strong>정렬 컨벤션</strong></p>
+<p>정렬은 <code>sort</code> parameter 하나만 사용한다.</p>
+<ul>
+<li>오름차순: <code>price</code></li>
+<li>내림차순: <code>-price</code></li>
+</ul>
+<pre><code>
+?sort=price
+?sort=-created_at
+</code></pre>
+<p>허용된 정렬 필드만 서버에서 whitelist로 처리한다.</p>
+<pre><code>
+SORT_MAP = {
+    &quot;created_at&quot;: &quot;created_at&quot;,
+    &quot;-created_at&quot;: &quot;-created_at&quot;,
+    &quot;price&quot;: &quot;price&quot;,
+    &quot;-price&quot;: &quot;-price&quot;,
+    &quot;name&quot;: &quot;name&quot;,
+    &quot;-name&quot;: &quot;-name&quot;,
+    &quot;sales_count&quot;: &quot;sales_count&quot;,
+    &quot;-sales_count&quot;: &quot;-sales_count&quot;,
+}
+</code></pre>
+<p><strong>페이지네이션 응답</strong></p>
+<p>응답 구조는 <code>items</code>와 <code>meta</code>를 분리한다.</p>
+<pre><code>
+{
+  &quot;items&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;무선 키보드&quot;,
+      &quot;price&quot;: 39000,
+      &quot;brand&quot;: &quot;Logitech&quot;,
+      &quot;thumbnail_url&quot;: &quot;https://example.com/product.jpg&quot;,
+      &quot;is_active&quot;: true,
+      &quot;stock_count&quot;: 12,
+      &quot;created_at&quot;: &quot;2026-05-04T10:00:00+09:00&quot;
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;page&quot;: 1,
+    &quot;page_size&quot;: 20,
+    &quot;total_count&quot;: 145,
+    &quot;total_pages&quot;: 8,
+    &quot;has_next&quot;: true,
+    &quot;has_previous&quot;: false
+  }
+}
+</code></pre>
+<p>Django Ninja schema 예시:</p>
+<pre><code>
+from datetime import datetime
+from ninja import Schema
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price: int
+    brand: str | None
+    thumbnail_url: str | None
+    is_active: bool
+    stock_count: int
+    created_at: datetime
+
+
+class PaginationMeta(Schema):
+    page: int
+    page_size: int
+    total_count: int
+    total_pages: int
+    has_next: bool
+    has_previous: bool
+
+
+class ProductSearchResponse(Schema):
+    items: list[ProductOut]
+    meta: PaginationMeta
+</code></pre>
+<p><strong>Endpoint 구현 예시</strong></p>
+<pre><code>
+import math
+from django.db.models import Q
+from ninja import Router, Query
+
+router = Router(tags=[&quot;Products&quot;])
+
+
+@router.get(&quot;&quot;, response={200: ProductSearchResponse})
+def search_products(request, params: ProductSearchQuery = Query(...)):
+    qs = Product.objects.all()
+
+    if params.q:
+        qs = qs.filter(
+            Q(name__icontains=params.q) |
+            Q(description__icontains=params.q)
+        )
+
+    if params.category_id is not None:
+        qs = qs.filter(category_id=params.category_id)
+
+    if params.brand:
+        qs = qs.filter(brand__iexact=params.brand)
+
+    if params.min_price is not None:
+        qs = qs.filter(price__gte=params.min_price)
+
+    if params.max_price is not None:
+        qs = qs.filter(price__lte=params.max_price)
+
+    if params.is_active is not None:
+        qs = qs.filter(is_active=params.is_active)
+
+    if params.in_stock is not None:
+        qs = qs.filter(stock_count__gt=0 if params.in_stock else 0)
+
+    qs = qs.order_by(SORT_MAP[params.sort], &quot;id&quot;)
+
+    total_count = qs.count()
+    offset = (params.page - 1) * params.page_size
+    items = qs[offset:offset + params.page_size]
+
+    total_pages = math.ceil(total_count / params.page_size) if total_count else 0
+
+    return {
+        &quot;items&quot;: items,
+        &quot;meta&quot;: {
+            &quot;page&quot;: params.page,
+            &quot;page_size&quot;: params.page_size,
+            &quot;total_count&quot;: total_count,
+            &quot;total_pages&quot;: total_pages,
+            &quot;has_next&quot;: params.page &lt; total_pages,
+            &quot;has_previous&quot;: params.page &gt; 1,
+        },
+    }
+</code></pre>
+<p><strong>에러 응답 표준</strong></p>
+<p>모든 에러는 아래 구조를 따른다.</p>
+<pre><code>
+{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;INVALID_QUERY_PARAMETER&quot;,
+    &quot;message&quot;: &quot;요청 파라미터가 올바르지 않습니다.&quot;,
+    &quot;details&quot;: [
+      {
+        &quot;field&quot;: &quot;page_size&quot;,
+        &quot;message&quot;: &quot;page_size는 1 이상 100 이하이어야 합니다.&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>Schema:</p>
+<pre><code>
+class ErrorDetail(Schema):
+    field: str | None = None
+    message: str
+
+
+class ErrorResponse(Schema):
+    code: str
+    message: str
+    details: list[ErrorDetail] = []
+</code></pre>
+<p>HTTP status별 에러 코드:</p>
+<pre><code>
+400 INVALID_QUERY_PARAMETER
+400 INVALID_FILTER_RANGE
+401 UNAUTHORIZED
+403 FORBIDDEN
+404 PRODUCT_NOT_FOUND
+422 VALIDATION_ERROR
+429 RATE_LIMITED
+500 INTERNAL_SERVER_ERROR
+</code></pre>
+<p>필터 범위 검증 예시:</p>
+<pre><code>
+from ninja.errors import HttpError
+
+if (
+    params.min_price is not None
+    and params.max_price is not None
+    and params.min_price &gt; params.max_price
+):
+    raise HttpError(400, &quot;INVALID_FILTER_RANGE&quot;)
+</code></pre>
+<p><strong>팀 규칙 요약</strong></p>
+<ul>
+<li>검색 엔드포인트는 collection resource에 <code>GET</code>으로 둔다.</li>
+<li>query parameter는 snake_case만 사용한다.</li>
+<li>검색어는 항상 <code>q</code>를 사용한다.</li>
+<li>범위 필터는 <code>min_</code>, <code>max_</code> prefix를 사용한다.</li>
+<li>정렬은 <code>sort</code> 하나로 통일하고, 내림차순은 <code>-field</code>로 표현한다.</li>
+<li>기본 정렬은 <code>-created_at</code>이다.</li>
+<li>페이지네이션은 <code>page</code>, <code>page_size</code>를 사용한다.</li>
+<li><code>page_size</code> 최대값은 <code>100</code>으로 제한한다.</li>
+<li>응답은 <code>{ items, meta }</code> 구조를 사용한다.</li>
+<li>에러는 <code>{ error: { code, message, details } }</code> 구조를 사용한다.</li>
+<li>DB 필드명을 그대로 외부에 노출하지 말고, 허용된 필터와 정렬 필드만 whitelist로 처리한다.</li>
+</ul></article>
+  </main>
+</body>
+</html>

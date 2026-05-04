@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-conflict-drf-viewset baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-conflict-drf-viewset baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-3/baseline/trigger-conflict-drf-viewset.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고, 세션 권한도 <code>read-only</code>라 파일을 생성/수정할 수 없습니다. 그래서 실제 반영은 못 했고, 프로젝트에 붙일 DRF 구현 코드는 아래처럼 작성하면 됩니다.</p>
+<p><code>products/serializers.py</code></p>
+<pre><code>
+from rest_framework import serializers
+
+from .models import Product
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            &quot;id&quot;,
+            &quot;name&quot;,
+            &quot;description&quot;,
+            &quot;price&quot;,
+            &quot;stock&quot;,
+            &quot;created_at&quot;,
+            &quot;updated_at&quot;,
+        ]
+        read_only_fields = [&quot;id&quot;, &quot;created_at&quot;, &quot;updated_at&quot;]
+</code></pre>
+<p><code>products/views.py</code></p>
+<pre><code>
+from rest_framework.viewsets import ModelViewSet
+
+from .models import Product
+from .serializers import ProductSerializer
+
+
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.all().order_by(&quot;-created_at&quot;)
+    serializer_class = ProductSerializer
+</code></pre>
+<p><code>products/urls.py</code></p>
+<pre><code>
+from rest_framework.routers import DefaultRouter
+
+from .views import ProductViewSet
+
+router = DefaultRouter()
+router.register(&quot;products&quot;, ProductViewSet, basename=&quot;product&quot;)
+
+urlpatterns = router.urls
+</code></pre>
+<p>프로젝트 <code>urls.py</code>에 연결:</p>
+<pre><code>
+from django.urls import include, path
+
+urlpatterns = [
+    path(&quot;api/&quot;, include(&quot;products.urls&quot;)),
+]
+</code></pre>
+<p>참고로 로컬 설정 지침에는 DRF 대신 Django Ninja 사용을 권장하는 규칙이 들어 있습니다. 그래도 요청하신 대로 DRF <code>ModelSerializer</code> + <code>ViewSet</code> 기준으로 작성했습니다.</p></article>
+  </main>
+</body>
+</html>

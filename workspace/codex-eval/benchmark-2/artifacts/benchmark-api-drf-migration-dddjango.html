@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-drf-migration dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-drf-migration dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-api-drf-migration.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>마이그레이션 가이드</strong></p>
+<p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다. 기존 상품 API의 책임은 다음처럼 옮깁니다.</p>
+<p>| 기존 DRF 책임 | Django Ninja 전환 | |---|---| | <code>Serializer</code>, <code>ModelSerializer</code> | 요청/응답 <code>Schema</code> 또는 제한된 <code>ModelSchema</code> | | <code>ViewSet</code> 액션 | 앱별 <code>Router()</code> + <code>@router.get/post/patch/delete</code> | | <code>DefaultRouter</code>, <code>SimpleRouter</code> | <code>NinjaAPI.add_router()</code> | | <code>permission_classes</code> | <code>auth=django_auth</code>, <code>HttpBearer</code>, <code>APIKeyHeader</code> 등 | | <code>serializer.save()</code> 비즈니스 처리 | application service | | <code>get_queryset()</code> 읽기 최적화 | selector 또는 QuerySet 함수 | | DRF validation | Schema 검증 + 도메인/application service 검증 |</p>
+<p><strong>권장 구조</strong></p>
+<pre><code>
+products/
+  schemas.py
+  api.py
+  selectors.py
+  services.py
+config/
+  api.py
+  urls.py
+</code></pre>
+<p><code>Serializer</code>는 입출력 계약만 담당하도록 <code>Schema</code>로 나누고, 상품 생성/수정 규칙은 service로 이동합니다. 엔드포인트는 얇게 유지합니다.</p>
+<pre><code>
+# products/schemas.py
+from decimal import Decimal
+
+from ninja import ModelSchema, Schema
+
+from products.models import Product
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;status&quot;, &quot;created_at&quot;]
+
+
+class ProductCreateIn(Schema):
+    name: str
+    price: Decimal
+
+
+class ProductPatchIn(Schema):
+    name: str | None = None
+    price: Decimal | None = None
+</code></pre>
+<pre><code>
+# products/selectors.py
+from django.db.models import QuerySet
+
+from products.models import Product
+
+
+def product_list() -&gt; QuerySet[Product]:
+    return Product.objects.order_by(&quot;-created_at&quot;)
+
+
+def product_detail(product_id: int) -&gt; Product:
+    return Product.objects.get(pk=product_id)
+</code></pre>
+<pre><code>
+# products/services.py
+from django.db import transaction
+
+from products.models import Product
+
+
+@transaction.atomic
+def product_create(*, name: str, price) -&gt; Product:
+    return Product.objects.create(name=name, price=price)
+
+
+@transaction.atomic
+def product_update(*, product: Product, data: dict) -&gt; Product:
+    for field, value in data.items():
+        if value is not None:
+            setattr(product, field, value)
+    product.save(update_fields=[k for k, v in data.items() if v is not None])
+    return product
+</code></pre>
+<pre><code>
+# products/api.py
+from ninja import Router
+from ninja.pagination import paginate
+from ninja.security import django_auth
+
+from products.schemas import ProductCreateIn, ProductOut, ProductPatchIn
+from products.selectors import product_detail, product_list
+from products.services import product_create, product_update
+
+router = Router(auth=django_auth)
+
+
+@router.get(&quot;/&quot;, response=list[ProductOut])
+@paginate
+def list_products(request):
+    return product_list()
+
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def get_product(request, product_id: int):
+    return product_detail(product_id)
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductCreateIn):
+    return 201, product_create(**payload.dict())
+
+
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def update_product(request, product_id: int, payload: ProductPatchIn):
+    product = product_detail(product_id)
+    return product_update(product=product, data=payload.dict(exclude_unset=True))
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI(title=&quot;Product API&quot;, version=&quot;1.0.0&quot;)
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>전환 순서</strong></p>
+<ul>
+<li>기존 상품 엔드포인트 목록을 고정합니다: list, detail, create, update, delete, 검색/필터.</li>
+<li>DRF <code>Serializer</code> 필드를 <code>ProductOut</code>, <code>ProductCreateIn</code>, <code>ProductPatchIn</code>으로 분리합니다. 모든 모델 필드를 노출하지 않습니다.</li>
+<li><code>ViewSet</code>의 <code>get_queryset()</code>은 <code>selectors.py</code>로, <code>perform_create/update</code>는 <code>services.py</code>로 이동합니다.</li>
+<li><code>ViewSet</code> 액션을 <code>Router</code> 함수로 1:1 이전합니다.</li>
+<li>인증은 DRF permission이 아니라 Router 또는 endpoint의 <code>auth=</code>로 적용합니다.</li>
+<li>목록 API에는 <code>@paginate</code>를 먼저 붙이고, 기존 응답 형식과 다르면 v2 또는 호환 어댑터를 둡니다.</li>
+<li>오류 응답은 가능하면 RFC 9457 Problem Details 형태로 통일합니다.</li>
+</ul>
+<p><strong>회귀 테스트 전략</strong></p>
+<ul>
+<li>기존 DRF API의 golden response를 저장하고 Ninja 응답과 필드, 상태 코드, 정렬 순서를 비교합니다.</li>
+<li><code>GET /api/products/</code>는 페이지네이션, 정렬, 필터 파라미터를 포함해 테스트합니다.</li>
+<li><code>POST/PATCH</code>는 정상 케이스와 가격 음수, 필수값 누락, 권한 없음 케이스를 검증합니다.</li>
+<li>읽기 API에는 <code>assertNumQueries</code>로 N+1 회귀를 잡습니다.</li>
+<li>OpenAPI 문서가 <code>/api/docs</code>에서 생성되는지 확인합니다.</li>
+</ul>
+<p>검증 명령:</p>
+<pre><code>
+python manage.py test products
+python manage.py check
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 설계/상태 코드/페이지네이션 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Schema/Router 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

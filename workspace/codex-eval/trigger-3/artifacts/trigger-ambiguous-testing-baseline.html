@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-ambiguous-testing baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-ambiguous-testing baseline</h1>
+    <div class="path">workspace/codex-eval/trigger-3/baseline/trigger-ambiguous-testing.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code>에는 프로젝트 파일이 없고 세션도 읽기 전용이라 테스트 구조를 실제로 수정하지는 못했습니다. <code>config.toml</code>도 해당 경로에는 없고, 인접한 Codex 홈 설정만 확인됐습니다.</p>
+<p>테스트 구조 개선 기준은 이렇게 잡는 게 좋습니다. 프레임워크가 pytest/Django라면:</p>
+<pre><code>
+tests/
+  conftest.py
+  isolated/
+    conftest.py
+    unit/
+    integration/
+  real/
+    conftest.py
+    integration/
+    e2e/
+</code></pre>
+<p>핵심은 <code>unit/integration</code>을 먼저 나누는 게 아니라, 실행 환경을 먼저 나누는 겁니다.</p>
+<ul>
+<li><code>tests/isolated/</code>: CI 기본 스위트. 네트워크 차단, 시간 고정, fake/mock/in-memory/testcontainers 사용</li>
+<li><code>tests/real/</code>: 실 DB, 실 외부 API, stage 환경 등. pre-deploy 같은 별도 게이트에서 실행</li>
+<li>Django라면 <code>isolated</code>는 <code>config.settings.test</code>, <code>real</code>은 <code>config.settings.test_real</code>처럼 settings도 분리</li>
+<li>공통 fixture는 <code>tests/conftest.py</code>, 환경 강제 규칙은 <code>tests/isolated/conftest.py</code>와 <code>tests/real/conftest.py</code>에 배치</li>
+<li>테스트 함수는 AAA 구조와 <code>test_&lt;대상&gt;_&lt;조건&gt;_&lt;기대결과&gt;</code> 이름을 유지</li>
+</ul>
+<p>실제 리팩터링을 하려면 다음 정보가 필요합니다: 사용하는 테스트 프레임워크가 <code>pytest</code>인지 Django <code>TestCase</code> 중심인지, 현재 테스트 디렉터리 구조, <code>pyproject.toml</code> 또는 <code>pytest.ini</code>, 그리고 대표 테스트 파일 2-3개입니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 테스트 구조/fixture/pytest 설정 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

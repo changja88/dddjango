@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-service-layer dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-service-layer dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-ddd-service-layer.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>Django 프로젝트에서 application service는 “Django 앱 내부의 application 계층”에 두는 게 가장 무난합니다. 전역 <code>services/</code> 폴더보다 바운디드 컨텍스트 또는 Django app 기준으로 붙이는 편이 응집도가 좋습니다.</p>
+<p>예시 구조:</p>
+<pre><code>
+apps/orders/
+  api/
+    schemas.py
+    router.py
+  application/
+    services.py
+  domain/
+    models.py
+    repositories.py
+  infrastructure/
+    repositories.py
+</code></pre>
+<p>핵심 역할은 이렇게 나누면 됩니다.</p>
+<p><code>Ninja Router</code>는 HTTP 입출력 변환에 집중합니다. <code>Schema</code>로 요청을 검증하고, application service를 호출하고, 결과를 응답 <code>Schema</code>로 변환합니다. 비즈니스 규칙, 트랜잭션 흐름, ORM 조합을 router에 넣기 시작하면 endpoint가 use case를 먹어버립니다.</p>
+<p><code>Application Service</code>는 use case를 조율합니다. 트랜잭션 경계, repository 호출, domain model 메서드 호출, 도메인 이벤트 수집, <code>transaction.on_commit()</code> 부수효과 예약 같은 “절차”를 담당합니다. 단, 할인 계산, 주문 확정 가능 여부 같은 비즈니스 판단 자체는 domain model 안에 있어야 합니다.</p>
+<p><code>Domain Model</code>은 비즈니스 규칙과 불변식을 가집니다. Django <code>request</code>, Ninja <code>Schema</code>, ORM <code>.save()</code>를 몰라야 합니다.</p>
+<p><code>Repository</code>는 aggregate 저장/조회 책임입니다. 인터페이스는 도메인 언어로 정의하고, 구현은 Django ORM을 사용하는 infrastructure에 둡니다. 테이블 단위가 아니라 aggregate 단위로 잡습니다.</p>
+<p>작은 예시는 이 정도면 충분합니다.</p>
+<pre><code>
+# apps/orders/domain/repositories.py
+from typing import Protocol
+from .models import Order, OrderId
+
+class OrderRepository(Protocol):
+    def get(self, order_id: OrderId) -&gt; Order: ...
+    def save(self, order: Order) -&gt; None: ...
+</code></pre>
+<pre><code>
+# apps/orders/application/services.py
+from django.db import transaction
+from apps.orders.domain.models import OrderId
+from apps.orders.domain.repositories import OrderRepository
+
+class ConfirmOrderService:
+    def __init__(self, orders: OrderRepository) -&gt; None:
+        self.orders = orders
+
+    @transaction.atomic
+    def confirm(self, order_id: OrderId) -&gt; None:
+        order = self.orders.get(order_id)
+        order.confirm()
+        self.orders.save(order)
+</code></pre>
+<pre><code>
+# apps/orders/api/router.py
+from ninja import Router, Schema
+from apps.orders.application.services import ConfirmOrderService
+from apps.orders.infrastructure.repositories import DjangoOrderRepository
+
+router = Router()
+
+class ConfirmOrderIn(Schema):
+    order_id: str
+
+@router.post(&quot;/orders/confirm&quot;, response={204: None})
+def confirm_order(request, payload: ConfirmOrderIn):
+    service = ConfirmOrderService(DjangoOrderRepository())
+    service.confirm(order_id=payload.order_id)
+    return 204, None
+</code></pre>
+<p>실제 REST 설계라면 URL은 동사보다 리소스 중심으로 다듬는 편이 좋습니다. 예를 들어 <code>POST /orders/{order_id}/confirmation</code>처럼 표현할 수 있습니다. 중요한 점은 URL 이름보다 router가 “HTTP 어댑터” 역할에 머무르는 것입니다.</p>
+<p>과설계를 피하는 기준은 단순합니다.</p>
+<p>CRUD에 가깝고 규칙이 거의 없으면 <code>api/router.py + schemas.py + selectors.py</code> 정도로 시작해도 됩니다. 모델 메서드 하나로 충분한 규칙을 굳이 <code>domain/</code>, <code>application/</code>, <code>infrastructure/</code>까지 나누지 않아도 됩니다.</p>
+<p>다만 다음 신호가 보이면 application service를 분리하는 게 맞습니다.</p>
+<ul>
+<li>하나의 요청에서 여러 모델/aggregate를 조율한다.</li>
+<li>트랜잭션 경계가 중요하다.</li>
+<li>외부 API, 이메일, 이벤트 발행 같은 부수효과가 있다.</li>
+<li>같은 use case가 API, admin command, Celery task 등 여러 entrypoint에서 재사용된다.</li>
+<li>router가 20~30줄을 넘으며 절차적 흐름을 갖기 시작한다.</li>
+<li>도메인 규칙을 테스트하려는데 HTTP나 DB 준비가 계속 필요하다.</li>
+</ul>
+<p>검증은 이렇게 보면 됩니다.</p>
+<pre><code>
+1. router에 비즈니스 if 문이 쌓이지 않는가?
+2. domain model이 Django request, Ninja Schema, ORM save를 import하지 않는가?
+3. application service가 use case 흐름과 transaction을 명확히 갖는가?
+4. repository 구현만 ORM을 알고, interface는 aggregate 언어를 쓰는가?
+5. 작은 CRUD에 불필요한 계층을 강제하지 않았는가?
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - Repository/Application Service 분리 → <strong>architecture-implementation-patterns</strong> 스킬 &gt; - Domain Model 책임 설계 → <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

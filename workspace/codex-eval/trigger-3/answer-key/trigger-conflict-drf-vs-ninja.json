@@ -1,0 +1,19 @@
+{
+  "case_id": "trigger-conflict-drf-vs-ninja",
+  "category": "trigger",
+  "title": "Conflict trigger asking DRF despite Ninja project",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "reject_drf",
+    "conflict_handling"
+  ],
+  "scoring_focus": [
+    "프로젝트 일관성 리스크를 설명한다.",
+    "Django Ninja 구현을 제공한다.",
+    "사용자 override 가능성은 정책 설명으로만 다룬다."
+  ],
+  "prompt": "우리 프로젝트는 Django Ninja를 쓰지만 이번 API만 DRF로 만들어줘.",
+  "trigger_type": "conflict",
+  "expected_behavior": "Explain consistency risk and keep the implementation in Django Ninja unless user explicitly overrides project policy after warning."
+}

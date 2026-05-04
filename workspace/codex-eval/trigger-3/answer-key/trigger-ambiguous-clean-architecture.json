@@ -1,0 +1,18 @@
+{
+  "case_id": "trigger-ambiguous-clean-architecture",
+  "category": "trigger",
+  "title": "Ambiguous trigger for clean architecture",
+  "expectations": [
+    "korean_first",
+    "ambiguous_handling",
+    "architecture_review"
+  ],
+  "scoring_focus": [
+    "범위와 기술 스택을 확인한다.",
+    "작은 개선부터 제안한다.",
+    "Django 전용 계층화를 근거 없이 강요하지 않는다."
+  ],
+  "prompt": "클린 아키텍처로 정리해줘.",
+  "trigger_type": "ambiguous",
+  "expected_behavior": "Clarify scope and avoid forcing full DDD/Django layering unless project context supports it."
+}

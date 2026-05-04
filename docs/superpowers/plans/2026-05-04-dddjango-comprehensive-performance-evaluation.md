@@ -77,6 +77,45 @@
   - Benchmark quality lift는 release gate 기준 `+15%`에 미달하므로, 수동 재채점과 저점 케이스 원인 분석이 필요하다.
   - dddjango 평균 실행 시간 증가는 `+30%` gate를 초과하므로, 스킬 로딩 범위와 응답 길이 최적화가 필요하다.
 
+## Iteration 2/3 Findings
+
+- Root cause addressed:
+  - `run_prompts.py`가 pilot 8개만 case-specific skill injection을 지원했다.
+  - benchmark/trigger 전체 케이스는 broad instruction을 받아 모든 dddjango skill을 읽도록 유도됐다.
+  - negative trigger처럼 dddjango가 트리거되지 않아야 하는 케이스에도 broad instruction이 강제 주입됐다.
+- Fix:
+  - answer-key metadata의 `category`, `expectations`, `trigger_type`, `prompt`를 기반으로 필요한 `SKILL.md`만 주입한다.
+  - negative trigger와 non-Django negative-control은 local dddjango instruction을 주입하지 않는다.
+  - local instruction이 없는 dddjango 케이스는 `--ignore-user-config`로 격리해 사용자 설정 오염을 줄인다.
+- Benchmark iteration 2:
+  - report: `workspace/codex-eval/benchmark-2/report.html`
+  - baseline executions: `24/24 returncode=0`
+  - dddjango executions: `24/24 returncode=0`
+  - baseline average score: `82.42`
+  - dddjango average score: `86.62`
+  - lift: `+4.20` points, `+5.10%`
+  - baseline average time: `38.37s`
+  - dddjango average time: `56.02s`
+  - time increase improved from iteration 1 `+144.39%` to `+46.00%`, but still above the `+30%` gate.
+- Trigger iteration 3:
+  - report: `workspace/codex-eval/trigger-3/report.html`
+  - baseline executions: `30/30 returncode=0`
+  - dddjango executions: `30/30 returncode=0`
+  - baseline average score: `80.07`
+  - dddjango average score: `79.20`
+  - lift: `-0.87` points, `-1.09%`
+  - baseline average time: `35.97s`
+  - dddjango average time: `33.08s`
+  - trigger recall: `10/10`, `100%`
+  - trigger precision: `10/10`, `100%`
+  - ambiguous handling: `4/6`, `66.67%`
+  - conflict handling: `4/4`, `100%`
+- Current interpretation:
+  - 스코프 주입 수정으로 실행 시간은 크게 개선됐다.
+  - trigger negative/positive/conflict는 통과하지만 ambiguous handling은 아직 약하다.
+  - benchmark quality lift는 개선됐지만 `+15%` release gate에는 아직 미달한다.
+  - 다음 개선 대상은 `benchmark-api-product-search`, `benchmark-db-order-query-index`, `trigger-positive-clean-code-django`, ambiguous trigger 응답 정책이다.
+
 ## File Responsibilities
 
 - `evals/codex/cases/pilot.jsonl`: Codex smoke suite의 현재 8개 기준 케이스.

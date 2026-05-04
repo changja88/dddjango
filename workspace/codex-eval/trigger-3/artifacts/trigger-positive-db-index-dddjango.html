@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>trigger-positive-db-index dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>trigger-positive-db-index dddjango</h1>
+    <div class="path">workspace/codex-eval/trigger-3/dddjango/trigger-positive-db-index.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>프로젝트 파일이 없어 실제 모델명은 가정합니다. 주문 목록의 대표 조회가 <code>shop_id/customer_id/status/date range + 최신순 페이지네이션</code>이라면, 인덱스는 테이블 구조가 아니라 <strong>조회 패턴 단위</strong>로 잡아야 합니다.</p>
+<p>| 조회 패턴 | 권장 인덱스 | 이유 | |---|---|---| | 관리자 주문 목록: <code>shop_id</code>, <code>status</code>, 최신순 | <code>(shop_id, status, -created_at, -id)</code> | 동등 조건을 앞에, 정렬/커서를 뒤에 둠 | | 전체 상태 탭: <code>shop_id</code>, 최신순 | <code>(shop_id, -created_at, -id)</code> | <code>status</code> 없는 목록도 별도 최적화 필요 | | 고객 주문 내역 | <code>(customer_id, -created_at, -id)</code> | 마이페이지 주문 목록 전용 | | 기간 필터가 핵심 | <code>(shop_id, status, created_at)</code> | <code>created_at BETWEEN</code> 범위 조건은 뒤쪽 | | 주문번호 검색 | <code>order_number</code> unique/index | exact lookup은 단일 인덱스 | | soft delete 사용 | partial index: <code>deleted_at IS NULL</code> | 활성 주문만 조회하면 인덱스 크기 감소 |</p>
+<p>Django 모델 예시는 PostgreSQL 기준입니다.</p>
+<pre><code>
+from django.db import models
+from django.db.models import Q
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PAID = &quot;paid&quot;, &quot;Paid&quot;
+        SHIPPING = &quot;shipping&quot;, &quot;Shipping&quot;
+        DONE = &quot;done&quot;, &quot;Done&quot;
+        CANCELED = &quot;canceled&quot;, &quot;Canceled&quot;
+
+    shop = models.ForeignKey(&quot;shops.Shop&quot;, on_delete=models.PROTECT)
+    customer = models.ForeignKey(&quot;users.User&quot;, on_delete=models.PROTECT)
+    status = models.CharField(max_length=20, choices=Status)
+    order_number = models.CharField(max_length=32, unique=True)
+    created_at = models.DateTimeField(db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=[&quot;shop&quot;, &quot;status&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+                name=&quot;order_shop_status_recent_idx&quot;,
+                condition=Q(deleted_at__isnull=True),
+            ),
+            models.Index(
+                fields=[&quot;shop&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+                name=&quot;order_shop_recent_idx&quot;,
+                condition=Q(deleted_at__isnull=True),
+            ),
+            models.Index(
+                fields=[&quot;customer&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+                name=&quot;order_customer_recent_idx&quot;,
+                condition=Q(deleted_at__isnull=True),
+            ),
+        ]
+</code></pre>
+<p>QuerySet은 목록 화면에서 실제로 렌더링하는 관계만 가져옵니다.</p>
+<pre><code>
+from django.db.models import Prefetch, Q
+
+
+def order_list_qs(*, shop_id, status=None, cursor=None):
+    qs = (
+        Order.objects.filter(shop_id=shop_id, deleted_at__isnull=True)
+        .select_related(&quot;customer&quot;, &quot;shipping_address&quot;)
+        .prefetch_related(
+            Prefetch(
+                &quot;items&quot;,
+                queryset=OrderItem.objects.select_related(&quot;product&quot;).only(
+                    &quot;id&quot;,
+                    &quot;order_id&quot;,
+                    &quot;quantity&quot;,
+                    &quot;product__name&quot;,
+                ),
+                to_attr=&quot;prefetched_items&quot;,
+            )
+        )
+        .order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+    )
+
+    if status:
+        qs = qs.filter(status=status)
+
+    if cursor:
+        qs = qs.filter(
+            Q(created_at__lt=cursor.created_at)
+            | Q(created_at=cursor.created_at, id__lt=cursor.id)
+        )
+
+    return qs[:50]
+</code></pre>
+<p><code>select_related()</code>와 <code>prefetch_related()</code>는 구분해서 써야 합니다.</p>
+<p><code>select_related()</code>는 <code>Order.customer</code>, <code>Order.shipping_address</code>처럼 FK/O2O에 사용합니다. SQL JOIN으로 한 번에 가져오므로 주문 50건의 고객 접근에서 N+1을 막습니다.</p>
+<p><code>prefetch_related()</code>는 <code>Order.items</code>, <code>items.product_options</code> 같은 역방향 FK/M2M에 사용합니다. 별도 쿼리 + Python 매칭 방식이라, 주문 목록에서 주문별 상품 라인을 보여줄 때 적합합니다. 단, 상품까지 FK라면 prefetch 내부 queryset에서 <code>select_related(&quot;product&quot;)</code>를 같이 씁니다.</p>
+<p>검증 기준은 추측이 아니라 측정입니다.</p>
+<pre><code>
+python manage.py sqlmigrate orders 000X
+python manage.py shell
+</code></pre>
+<pre><code>
+qs = order_list_qs(shop_id=1, status=&quot;paid&quot;)
+print(qs.explain(analyze=True, buffers=True))
+</code></pre>
+<p>확인할 기준은 다음입니다.</p>
+<ul>
+<li>대형 주문 테이블에서 <code>Seq Scan</code>이 사라지고 <code>Index Scan</code>, <code>Bitmap Index Scan</code>, 가능하면 <code>Index Only Scan</code>이 나오는지</li>
+<li><code>Execution Time</code>이 목표 SLA 안에 들어오는지, 예: p95 100ms 이하</li>
+<li><code>actual rows</code>와 예상 <code>rows</code> 차이가 크지 않은지, 크면 <code>ANALYZE</code> 필요</li>
+<li>목록 1페이지 렌더링 쿼리 수가 고정인지</li>
+</ul>
+<pre><code>
+with self.assertNumQueries(3):
+    list(order_list_qs(shop_id=shop.id, status=&quot;paid&quot;))
+</code></pre>
+<p>인덱스는 쓰기 비용을 늘리므로 위 후보를 전부 넣지 말고, 실제 목록 endpoint의 필터 조합과 <code>EXPLAIN ANALYZE</code> 결과로 2~3개만 유지하는 쪽이 안전합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 주문 조회 QuerySet 리팩터링 및 회귀 테스트 작성 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-refund-transaction baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-refund-transaction baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/baseline/benchmark-db-refund-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Django에서 환불 처리로 <code>Payment</code>와 <code>Refund</code>를 함께 업데이트할 때 핵심은 다음입니다.</p>
+<ul>
+<li>DB 상태 변경은 <code>transaction.atomic()</code> 안에서 처리</li>
+<li>동시 환불 요청은 <code>select_for_update()</code>로 같은 <code>Payment</code> 행을 잠금</li>
+<li>중복 요청은 idempotency key 또는 unique constraint로 막음</li>
+<li>외부 PG 호출은 DB 트랜잭션 안에 오래 넣지 않음</li>
+<li>트랜잭션 안에서는 상태 전이와 금액 검증만 짧게 처리</li>
+</ul>
+<p>예시는 이런 형태가 안전합니다.</p>
+<pre><code>
+from django.db import transaction
+from django.db.models import Sum
+from django.core.exceptions import ValidationError
+
+def create_refund(*, payment_id, amount, request_key):
+    with transaction.atomic():
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .get(id=payment_id)
+        )
+
+        refund, created = Refund.objects.get_or_create(
+            request_key=request_key,
+            defaults={
+                &quot;payment&quot;: payment,
+                &quot;amount&quot;: amount,
+                &quot;status&quot;: Refund.Status.REQUESTED,
+            },
+        )
+
+        if not created:
+            return refund
+
+        refunded_amount = (
+            Refund.objects
+            .filter(
+                payment=payment,
+                status__in=[
+                    Refund.Status.REQUESTED,
+                    Refund.Status.SUCCEEDED,
+                ],
+            )
+            .aggregate(total=Sum(&quot;amount&quot;))[&quot;total&quot;]
+            or 0
+        )
+
+        if refunded_amount &gt; payment.amount:
+            raise ValidationError(&quot;Refund amount exceeds payment amount&quot;)
+
+        payment.refunded_amount = refunded_amount
+
+        if refunded_amount == payment.amount:
+            payment.status = Payment.Status.REFUNDED
+        else:
+            payment.status = Payment.Status.PARTIALLY_REFUNDED
+
+        payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
+        refund.save()
+
+    return refund
+</code></pre>
+<p>중요한 점은 <code>Payment</code>를 먼저 <code>select_for_update()</code>로 잠근다는 것입니다. 같은 결제에 대해 두 개의 환불 요청이 동시에 들어와도 하나가 먼저 락을 잡고 계산 및 저장을 끝낸 뒤, 다음 요청이 최신 상태를 보고 다시 검증합니다. 그래서 초과 환불을 막을 수 있습니다.</p>
+<p><code>Refund</code>에는 보통 이런 제약을 둡니다.</p>
+<pre><code>
+class Refund(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT)
+    request_key = models.CharField(max_length=100, unique=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=30)
+</code></pre>
+<p>외부 PG 환불 API 호출은 주의해야 합니다. DB 트랜잭션 안에서 PG API를 호출하면 락을 오래 잡게 되고, 장애 시 복구가 어려워집니다. 일반적으로는 다음 흐름이 더 낫습니다.</p>
+<ul>
+<li>트랜잭션에서 <code>Refund(status=REQUESTED)</code> 생성</li>
+<li><code>Payment</code> 잠금 후 환불 가능 금액 검증</li>
+<li>트랜잭션 커밋</li>
+<li>워커 또는 <code>transaction.on_commit()</code> 이후 PG 환불 요청</li>
+<li>PG 결과에 따라 <code>Refund.status</code>, <code>Payment.status</code> 갱신</li>
+</ul>
+<p>PG 호출 결과 반영 시에도 다시 짧은 트랜잭션을 잡습니다.</p>
+<pre><code>
+def mark_refund_succeeded(refund_id):
+    with transaction.atomic():
+        refund = (
+            Refund.objects
+            .select_for_update()
+            .select_related(&quot;payment&quot;)
+            .get(id=refund_id)
+        )
+
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .get(id=refund.payment_id)
+        )
+
+        if refund.status == Refund.Status.SUCCEEDED:
+            return refund
+
+        refund.status = Refund.Status.SUCCEEDED
+        refund.save(update_fields=[&quot;status&quot;])
+
+        succeeded_total = (
+            Refund.objects
+            .filter(payment=payment, status=Refund.Status.SUCCEEDED)
+            .aggregate(total=Sum(&quot;amount&quot;))[&quot;total&quot;]
+            or 0
+        )
+
+        payment.refunded_amount = succeeded_total
+        payment.status = (
+            Payment.Status.REFUNDED
+            if succeeded_total == payment.amount
+            else Payment.Status.PARTIALLY_REFUNDED
+        )
+        payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
+
+    return refund
+</code></pre>
+<p>정리하면, Django 기준 권장 전략은 <code>transaction.atomic()</code> + <code>select_for_update()</code> + idempotency key입니다. 특히 <code>Payment</code>를 기준 행으로 잠그고, 항상 같은 순서로 <code>Payment -&gt; Refund</code>를 다루면 동시성 문제와 데드락 가능성을 줄일 수 있습니다.</p></article>
+  </main>
+</body>
+</html>

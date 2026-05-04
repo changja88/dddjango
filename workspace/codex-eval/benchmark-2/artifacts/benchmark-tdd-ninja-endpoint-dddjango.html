@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-ninja-endpoint dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-ninja-endpoint dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-2/dddjango/benchmark-tdd-ninja-endpoint.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 세션은 읽기 전용이라 파일 생성과 <code>pytest</code> 실행은 하지 못했습니다. 아래는 그대로 프로젝트에 옮겨서 RED → GREEN → REFACTOR 순서로 진행할 수 있는 Django Ninja TDD 예시입니다. API는 DRF 없이 <code>Schema</code>, <code>Router</code>, <code>TestClient</code>를 사용하고, endpoint는 검증/HTTP 변환만, 생성 로직은 service가 맡습니다.</p>
+<p><strong>RED 테스트</strong> <code>tests/isolated/products/test_product_api.py</code></p>
+<pre><code>
+import pytest
+from ninja.testing import TestClient
+
+from products import api
+
+
+@pytest.fixture
+def client():
+    return TestClient(api.router)
+
+
+def test_create_product_invalid_payload_returns_422(client, monkeypatch):
+    # Arrange
+    called = False
+
+    def fake_create_product(*args, **kwargs):
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(api, &quot;product_create&quot;, fake_create_product)
+
+    # Act
+    response = client.post(
+        &quot;/&quot;,
+        json={&quot;name&quot;: &quot;&quot;, &quot;price_cents&quot;: 0},
+    )
+
+    # Assert
+    assert response.status_code == 422
+    assert called is False
+    assert &quot;detail&quot; in response.json()
+
+
+def test_create_product_valid_payload_returns_created_product(client, monkeypatch):
+    # Arrange
+    def fake_create_product(*, name: str, price_cents: int):
+        assert name == &quot;Keyboard&quot;
+        assert price_cents == 12900
+        return {
+            &quot;id&quot;: 1,
+            &quot;name&quot;: name,
+            &quot;price_cents&quot;: price_cents,
+        }
+
+    monkeypatch.setattr(api, &quot;product_create&quot;, fake_create_product)
+
+    # Act
+    response = client.post(
+        &quot;/&quot;,
+        json={&quot;name&quot;: &quot;Keyboard&quot;, &quot;price_cents&quot;: 12900},
+    )
+
+    # Assert
+    assert response.status_code == 201
+    assert response.json() == {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: &quot;Keyboard&quot;,
+        &quot;price_cents&quot;: 12900,
+    }
+</code></pre>
+<p><strong>예상 실패</strong></p>
+<p>처음에는 <code>products.api</code>, <code>router</code>, <code>product_create</code>, 요청/응답 schema가 없어서 import 또는 route resolution 단계에서 실패해야 정상입니다. 구현 후에도 validation이 422가 아니거나 성공 응답이 201이 아니면 테스트가 endpoint 계약을 제대로 잡아냅니다.</p>
+<p><strong>GREEN 최소 구현</strong> <code>products/schemas.py</code></p>
+<pre><code>
+from ninja import Schema
+from pydantic import Field
+
+
+class ProductCreateIn(Schema):
+    name: str = Field(..., min_length=1)
+    price_cents: int = Field(..., gt=0)
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    price_cents: int
+</code></pre>
+<p><code>products/services.py</code></p>
+<pre><code>
+def product_create(*, name: str, price_cents: int) -&gt; dict:
+    return {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: name,
+        &quot;price_cents&quot;: price_cents,
+    }
+</code></pre>
+<p><code>products/api.py</code></p>
+<pre><code>
+from ninja import Router
+
+from products.schemas import ProductCreateIn, ProductOut
+from products.services import product_create
+
+router = Router()
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request, payload: ProductCreateIn):
+    return 201, product_create(
+        name=payload.name,
+        price_cents=payload.price_cents,
+    )
+</code></pre>
+<p>실제 API 합성 위치:</p>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI()
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>REFACTOR 방향</strong></p>
+<p>endpoint test는 <code>Ninja TestClient</code>로 schema validation, status code, response contract만 검증합니다. DB 저장, 중복 상품명 검사, 재고 정책 같은 비즈니스 규칙은 <code>products.services.product_create</code>의 별도 service test로 분리하는 편이 좋습니다. service가 Django ORM을 사용하게 되면 <code>@pytest.mark.django_db</code>를 service test에만 붙이고, 위 endpoint test는 monkeypatch로 빠르게 유지합니다.</p>
+<p>실행 명령:</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/products/test_product_api.py -q
+</code></pre>
+<p>전체 isolated 테스트:</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja endpoint 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - pytest 구조와 fixture 개선 → <strong>implementation-test</strong> 스킬 &gt; - service 책임 분리와 도메인 규칙 설계 → <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>
