@@ -1,0 +1,73 @@
+{
+  "skill_name": "architecture-ddd",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "design",
+      "mode": "design",
+      "prompt": "온라인 경매 시스템을 DDD로 설계해줘.\n\n- 판매자가 상품을 등록하고 경매를 시작할 수 있어\n- 구매자가 입찰할 수 있고, 입찰 금액은 현재 최고 입찰가보다 높아야 해\n- 경매 종료 시간이 되면 최고 입찰자가 낙찰자가 되고, 자동으로 결제가 생성돼\n- 낙찰 후 판매자가 배송을 진행해\n- 구매자는 상품 수령 후 거래 확정을 하고, 판매자에게 정산이 이루어져\n- 구매자와 판매자 모두 서로를 평가할 수 있어\n\n바운디드 컨텍스트, 애그리거트, 도메인 이벤트를 포함해서 설계해줘.",
+      "expectations": [
+        {"id": "design-01", "text": "전략적 설계(바운디드 컨텍스트, 컨텍스트 맵)를 전술 패턴(애그리거트, 엔티티)보다 먼저 제시한다", "type": "content_check"},
+        {"id": "design-02", "text": "바운디드 컨텍스트를 최소 3개 이상 식별한다 (예: 경매, 결제, 배송, 정산, 평가 중 3개 이상)", "type": "content_check"},
+        {"id": "design-03", "text": "각 바운디드 컨텍스트별 유비쿼터스 언어(주요 용어 사전)를 표 또는 리스트 형식으로 정의한다", "type": "content_check"},
+        {"id": "design-04", "text": "컨텍스트 맵을 다이어그램 또는 표로 제시하고 컨텍스트 간 관계 유형(파트너십, 고객-공급자, ACL, 순응주의자, OHS 등)을 명시한다", "type": "content_check"},
+        {"id": "design-05", "text": "하위 도메인을 핵심(Core)/지원(Supporting)/일반(Generic)으로 분류한다 (예: 경매=Core, 결제=Generic, 평가=Supporting)", "type": "content_check"},
+        {"id": "design-06", "text": "Auction 애그리거트 루트를 frozen=False dataclass 또는 클래스로 코드 제시하고 place_bid/close 같은 비즈니스 의도를 드러내는 메서드명을 사용한다", "type": "content_check"},
+        {"id": "design-07", "text": "place_bid 메서드 안에서 입찰 불변식(현재 최고가보다 높아야 함, 종료 시간 검증, 활성 상태 검증)을 자체적으로 보호한다", "type": "content_check"},
+        {"id": "design-08", "text": "Money 또는 Bid를 frozen=True dataclass 값 객체로 추출하고 통화/금액 검증 로직을 캡슐화한다", "type": "content_check"},
+        {"id": "design-09", "text": "Vernon의 4가지 애그리거트 규칙(불변식 보호 / 작은 애그리거트 / ID 참조 / 결과적 일관성) 중 최소 3가지를 명시적으로 인용하거나 적용한다", "type": "content_check"},
+        {"id": "design-10", "text": "Auction이 다른 애그리거트(Seller, Bidder, Item)를 객체 직접 참조가 아닌 ID(seller_id, bidder_id 등)로 참조한다", "type": "content_check"},
+        {"id": "design-11", "text": "도메인 이벤트(BidPlaced, AuctionClosed, PaymentCreated 등)를 과거형 명명으로 정의하고 frozen=True dataclass로 제시한다", "type": "content_check"},
+        {"id": "design-12", "text": "낙찰 후 결제 생성, 배송 시작 등 교차 컨텍스트 통신을 도메인 이벤트로 처리하고 결과적 일관성(eventual consistency)을 명시한다", "type": "content_check"},
+        {"id": "design-13", "text": "OrderStatus처럼 AuctionStatus를 Enum으로 정의하고 상태 전이 규칙(예: ACTIVE -> CLOSED)을 메서드 안에서 검증한다", "type": "content_check"},
+        {"id": "design-14", "text": "리포지토리 인터페이스를 애그리거트 단위로 도메인 계층에 ABC로 정의하고 인프라에서 구현하는 DIP 구조를 제시한다", "type": "content_check"},
+        {"id": "design-15", "text": "응용 서비스(AuctionApplicationService 등)를 도메인 서비스와 구분하고, 응용 서비스는 흐름 제어/트랜잭션 관리만 담당하도록 분리한다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "review",
+      "mode": "review",
+      "prompt": "아래 온라인 경매 시스템의 도메인 모델을 DDD 관점에서 리뷰해줘:\n\n```python\nclass Auction:\n    def __init__(self, id, seller, item, start_price, end_time):\n        self.id = id\n        self.seller = seller  # User 객체 직접 참조\n        self.item = item      # Item 객체 직접 참조\n        self.start_price = start_price  # int 원시 타입\n        self.end_time = end_time\n        self.bids = []  # 모든 입찰 내역을 포함\n        self.status = \"active\"\n        self.winning_bid = None\n        self.payment = None     # Payment 객체 직접 참조\n        self.shipping = None    # Shipping 객체 직접 참조\n        self.reviews = []       # 리뷰 목록 포함\n\nclass AuctionService:\n    def place_bid(self, auction, user, amount):\n        if auction.status != \"active\":\n            raise Exception(\"경매가 종료되었습니다\")\n        if amount <= auction.get_current_price():\n            raise Exception(\"입찰 금액이 현재가보다 낮습니다\")\n        bid = Bid(user=user, amount=amount)\n        auction.bids.append(bid)\n        auction.save()\n\n    def close_auction(self, auction):\n        auction.status = \"closed\"\n        auction.winning_bid = max(auction.bids, key=lambda b: b.amount)\n        payment = Payment.create(\n            buyer=auction.winning_bid.user,\n            seller=auction.seller,\n            amount=auction.winning_bid.amount\n        )\n        auction.payment = payment\n        shipping = Shipping.create(\n            sender=auction.seller,\n            receiver=auction.winning_bid.user,\n            item=auction.item\n        )\n        auction.shipping = shipping\n        auction.save()\n\n    def update_status(self, auction, new_status):\n        auction.status = new_status\n        auction.save()\n```",
+      "expectations": [
+        {"id": "review-01", "text": "Auction 애그리거트가 Bid/Payment/Shipping/Review를 모두 포함하여 너무 크다고 Vernon 규칙 2(작은 애그리거트) 위반을 명시적으로 인용하며 지적한다", "type": "content_check"},
+        {"id": "review-02", "text": "seller/item/payment/shipping이 객체 직접 참조이므로 ID 참조(seller_id, payment_id 등)로 변경해야 한다고 Vernon 규칙 3을 인용하며 지적한다", "type": "content_check"},
+        {"id": "review-03", "text": "빈혈 도메인 모델 안티패턴을 명시적으로 지적한다 -- place_bid/close_auction 로직이 AuctionService에 있고 Auction에는 행동이 없음을 인용한다", "type": "content_check"},
+        {"id": "review-04", "text": "close_auction에서 Payment.create/Shipping.create 직접 호출이 Vernon 규칙 4(결과적 일관성) 위반이며 도메인 이벤트(AuctionClosed)로 대체되어야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-05", "text": "start_price가 int 원시 타입이므로 Money 값 객체로 추출해야 한다는 Primitive Obsession 안티패턴을 지적한다", "type": "content_check"},
+        {"id": "review-06", "text": "update_status가 유비쿼터스 언어를 위반한다고 지적하고 confirm/cancel/ship/close 같은 비즈니스 의도를 드러내는 메서드명으로 교체를 제안한다", "type": "content_check"},
+        {"id": "review-07", "text": "auction.status = \"active\" 같은 매직 스트링/원시 타입 상태를 AuctionStatus Enum 값 객체로 추출해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-08", "text": "Auction이 Auction/Payment/Shipping/Review를 한 트랜잭션에서 수정하는 일관성 경계 위반(Vernon 규칙 1)을 지적한다", "type": "content_check"},
+        {"id": "review-09", "text": "Bid 컬렉션 전체를 Auction 안에 보관하면 입찰이 늘어날수록 로딩 비용이 커진다는 성능 문제(Vernon 규칙 2 근거)를 지적한다", "type": "content_check"},
+        {"id": "review-10", "text": "AuctionService에서 raise Exception(...)이 도메인 의미를 드러내지 않는다 -- 도메인 예외(BidTooLowError, AuctionAlreadyClosedError 등)로 교체를 제안한다", "type": "content_check"},
+        {"id": "review-11", "text": "auction.save()가 도메인 객체에 영속성 책임이 섞여 있는 점을 지적하고 Repository 패턴(애그리거트 단위 영속성)으로 분리를 제안한다", "type": "content_check"},
+        {"id": "review-12", "text": "Bid를 frozen=True 값 객체로 추출 가능한지 검토한다 (Bid는 식별자보다 속성 조합으로 식별 가능한지 논의)", "type": "content_check"},
+        {"id": "review-13", "text": "각 발견 사항을 [원칙] -- 위반 이유 형식 또는 [Convention: ...] -- 상세 형식으로 작성한다", "type": "content_check"},
+        {"id": "review-14", "text": "Auction(경매)/Payment(결제)/Shipping(배송)/Review(평가)를 별도 바운디드 컨텍스트 또는 별도 애그리거트로 분할하고 도메인 이벤트로 연결하라고 제안한다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "refactoring",
+      "mode": "refactoring",
+      "prompt": "아래 온라인 경매 시스템의 빈혈 도메인 모델을 DDD 원칙에 맞게 리팩토링해줘:\n\n```python\nclass Auction:\n    def __init__(self, id, seller_id, item_name, start_price, end_time):\n        self.id = id\n        self.seller_id = seller_id\n        self.item_name = item_name\n        self.start_price = start_price\n        self.end_time = end_time\n        self.bids = []\n        self.status = \"active\"\n\nclass Bid:\n    def __init__(self, auction_id, bidder_id, amount, created_at):\n        self.auction_id = auction_id\n        self.bidder_id = bidder_id\n        self.amount = amount\n        self.created_at = created_at\n\nclass AuctionService:\n    def __init__(self, auction_repo, payment_service, notification_service):\n        self.auction_repo = auction_repo\n        self.payment_service = payment_service\n        self.notification_service = notification_service\n\n    def place_bid(self, auction_id, bidder_id, amount):\n        auction = self.auction_repo.find_by_id(auction_id)\n        if auction.status != \"active\":\n            raise ValueError(\"종료된 경매\")\n        if auction.end_time < datetime.now():\n            raise ValueError(\"경매 시간 종료\")\n        current_max = max([b.amount for b in auction.bids], default=auction.start_price)\n        if amount <= current_max:\n            raise ValueError(\"현재가보다 높아야 합니다\")\n        bid = Bid(auction_id=auction_id, bidder_id=bidder_id, amount=amount, created_at=datetime.now())\n        auction.bids.append(bid)\n        self.auction_repo.save(auction)\n        self.notification_service.notify_outbid(auction.bids[-2].bidder_id if len(auction.bids) > 1 else None)\n\n    def close_auction(self, auction_id):\n        auction = self.auction_repo.find_by_id(auction_id)\n        auction.status = \"closed\"\n        if auction.bids:\n            winning_bid = max(auction.bids, key=lambda b: b.amount)\n            self.payment_service.create_payment(winning_bid.bidder_id, auction.seller_id, winning_bid.amount)\n        self.auction_repo.save(auction)\n        self.notification_service.notify_auction_closed(auction_id)\n```",
+      "expectations": [
+        {"id": "refactoring-01", "text": "각 변경을 [Before] / [After] / [Reason] 형식으로 작성한다", "type": "content_check"},
+        {"id": "refactoring-02", "text": "[Reason] 항목에서 변경 근거를 특정 DDD 원칙(Vernon 규칙 N, 빈혈 도메인 모델, 유비쿼터스 언어 등)에 명시적으로 연결한다", "type": "content_check"},
+        {"id": "refactoring-03", "text": "입찰 검증 로직(상태/시간/최고가)을 AuctionService에서 Auction.place_bid() 메서드로 이동시키는 before/after를 보여준다", "type": "content_check"},
+        {"id": "refactoring-04", "text": "close_auction의 상태 변경/낙찰자 결정 로직을 AuctionService에서 Auction.close() 메서드로 이동시킨다", "type": "content_check"},
+        {"id": "refactoring-05", "text": "amount(int)를 Money 값 객체(frozen=True dataclass)로 추출하고 통화 검증/연산 메서드를 포함시킨다", "type": "content_check"},
+        {"id": "refactoring-06", "text": "status(str)를 AuctionStatus Enum으로 추출하고 매직 스트링(\"active\", \"closed\")을 제거한다", "type": "content_check"},
+        {"id": "refactoring-07", "text": "close_auction에서 payment_service.create_payment 직접 호출을 제거하고 AuctionClosed 또는 AuctionWon 도메인 이벤트 발행으로 대체한다", "type": "content_check"},
+        {"id": "refactoring-08", "text": "notification_service.notify_outbid 직접 호출을 제거하고 BidPlaced 또는 BidOutbid 도메인 이벤트 발행으로 대체한다", "type": "content_check"},
+        {"id": "refactoring-09", "text": "Auction 애그리거트에 _domain_events 또는 _events 리스트를 두고 collect_domain_events/clear_events 같은 이벤트 수집 메커니즘을 코드로 제시한다", "type": "content_check"},
+        {"id": "refactoring-10", "text": "도메인 이벤트 클래스(BidPlaced, AuctionClosed 등)를 frozen=True dataclass로 정의하고 과거형 명명을 사용한다", "type": "content_check"},
+        {"id": "refactoring-11", "text": "ValueError(\"종료된 경매\")처럼 모호한 일반 예외를 도메인 예외(AuctionAlreadyClosedError, BidTooLowError 등)로 교체한다", "type": "content_check"},
+        {"id": "refactoring-12", "text": "Bid를 frozen=True 값 객체로 변환하거나, 식별자가 필요하면 Auction 애그리거트 내부 컴포넌트로 분류 근거를 명시한다", "type": "content_check"},
+        {"id": "refactoring-13", "text": "결과적 일관성(eventual consistency)을 명시적으로 인용하며 결제/알림은 별도 트랜잭션/핸들러에서 처리됨을 설명한다", "type": "content_check"},
+        {"id": "refactoring-14", "text": "리팩터링 후 AuctionService(또는 AuctionApplicationService)는 흐름 제어/트랜잭션/리포지토리 호출만 남고 비즈니스 로직이 모두 Auction 애그리거트로 이동한다", "type": "content_check"},
+        {"id": "refactoring-15", "text": "After 코드에서 Auction 애그리거트가 dataclass + 비즈니스 메서드(place_bid/close)를 모두 가진 풍부한 도메인 모델 형태로 제시된다", "type": "content_check"}
+      ]
+    }
+  ]
+}

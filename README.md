@@ -13,7 +13,7 @@ The plugin is intentionally opinionated: Django REST Framework is not used. API 
 
 ## OpenAI Codex
 
-This repository includes a Codex manifest at `.codex-plugin/plugin.json` and a repo-local marketplace at `.agents/plugins/marketplace.json`.
+This repository includes a Codex manifest at `.codex-plugin/plugin.json`, a packaged Codex plugin at `plugins/dddjango`, and a repo-local marketplace at `.agents/plugins/marketplace.json`.
 
 For users, install the published Git-backed marketplace pinned to the latest release tag:
 
@@ -37,8 +37,8 @@ codex plugin marketplace add .
 
 ## Codex Distribution Checklist
 
-- Keep `.codex-plugin/plugin.json` valid and versioned.
-- Keep `.agents/plugins/marketplace.json` pointing at this repository root with plugin name `dddjango`.
+- Keep `.codex-plugin/plugin.json` and `plugins/dddjango/.codex-plugin/plugin.json` valid and versioned.
+- Keep `.agents/plugins/marketplace.json` pointing at `./plugins/dddjango` with plugin name `dddjango`.
 - Run `make test-release`.
 - Run `make release` to update versions, commit, tag, and push the branch plus tag.
 - Verify a clean Git-backed install from another environment with `codex plugin marketplace add changja88/dddjango --ref vX.Y.Z`.

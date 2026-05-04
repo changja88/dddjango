@@ -1,0 +1,80 @@
+{
+  "skill_name": "implementation-django",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "writing",
+      "mode": "writing",
+      "prompt": "진료 예약(Appointment) 관리 시스템의 Django 모델과 API를 만들어줘.\n\n- 환자(Patient)와 의사(Doctor) 모델이 있고, 각 예약에는 환자, 의사, 예약일시, 진료과, 상태가 필요해.\n- 상태는 대기/확정/완료/취소 4가지이고, 대기 상태에서만 확정이 가능하고, 확정 상태에서만 완료 처리가 가능해.\n- 예약 목록은 환자가 자기 예약만 볼 수 있어야 하고, 의사는 자기에게 배정된 예약을 볼 수 있어야 해.\n- 진료과는 내과/외과/소아과/정형외과 중 하나야.\n- 같은 의사에게 같은 시간대에 중복 예약이 불가능해야 해.\n- 프로젝트 구조도 잡아줘.\n- API는 Django Ninja를 사용해줘.",
+      "expected_output": "Appointment 모델 + Django Ninja API + 프로젝트 구조. TextChoices, 이중 검증, Fat Model, Schema 분리, Two Scoops 구조, Custom Manager/QuerySet, 시그널 회피, transaction.on_commit 적용.",
+      "files": [],
+      "expectations": [
+        {"id": "writing-01", "text": "Status와 Department 모두 models.TextChoices 클래스로 정의되고 BooleanField 4개로 진료과를 표현하지 않는다", "type": "content_check"},
+        {"id": "writing-02", "text": "같은 의사-시간대 중복 방지에 clean() Python 검증 + Meta.constraints의 UniqueConstraint(또는 CheckConstraint)로 이중 방어가 적용된다", "type": "content_check"},
+        {"id": "writing-03", "text": "상태 전이 로직(confirm/complete/cancel)이 모델 메서드 또는 services.py에 있고 뷰는 위임만 하며, 잘못된 전이(예: pending→completed)는 ValidationError를 발생시킨다", "type": "content_check"},
+        {"id": "writing-04", "text": "Appointment.save 호출이 save(update_fields=[...])로 변경 필드만 갱신한다", "type": "content_check"},
+        {"id": "writing-05", "text": "공통 timestamp 필드(created_at/updated_at)를 TimeStampedModel(abstract=True) 추상 베이스 클래스로 추출한다", "type": "content_check"},
+        {"id": "writing-06", "text": "Custom Manager 또는 QuerySet 메서드(예: for_patient/for_doctor 또는 as_manager())로 권한 기반 필터링을 캡슐화하고 뷰에서 raw filter() 체이닝을 하지 않는다", "type": "content_check"},
+        {"id": "writing-07", "text": "Django Ninja Schema가 요청(AppointmentCreateIn/AppointmentConfirmIn 등)과 응답(AppointmentOut)으로 분리되고 Router 패턴(@router.get/post)을 사용한다", "type": "content_check"},
+        {"id": "writing-08", "text": "DRF(Serializer/ViewSet/APIView/permission_classes)를 사용하지 않고 모든 API가 Django Ninja로 구현된다", "type": "content_check"},
+        {"id": "writing-09", "text": "프로젝트 구조가 config/(settings/{base,local,production}.py 분리) + apps/<도메인>/ Two Scoops 레이아웃으로 제시되고 settings는 django-environ으로 환경 변수에서 SECRET_KEY/DATABASE_URL을 읽는다", "type": "content_check"},
+        {"id": "writing-10", "text": "예약 목록 조회에 select_related('patient', 'doctor')가 적용되어 N+1을 방지한다", "type": "content_check"},
+        {"id": "writing-11", "text": "예약 생성/확정에 post_save 시그널을 도입하지 않고 모델 메서드 또는 services.py 함수에서 직접 호출한다", "type": "content_check"},
+        {"id": "writing-12", "text": "필드 순서가 Django 공식 컨벤션(필드 → managers → Meta → __str__ → save → 커스텀 메서드)을 따른다", "type": "content_check"},
+        {"id": "writing-13", "text": "이메일/SMS 알림 같은 부수 효과는 transaction.on_commit() 또는 트랜잭션 블록 밖에 배치되어 롤백 시 발송되지 않도록 한다", "type": "content_check"},
+        {"id": "writing-14", "text": "응답 마지막에 '관련 스킬 참조' 섹션이 있고 API 세부 패턴은 implementation-django-ninja, REST 설계 원칙은 architecture-api로 위임 안내한다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "review",
+      "mode": "review",
+      "prompt": "아래 진료 예약 시스템 코드를 리뷰해줘:\n\n```python\nfrom django.db import models\nfrom django.db.models.signals import post_save\nfrom django.dispatch import receiver\n\nclass Doctor(models.Model):\n    name = models.CharField(max_length=100)\n    is_internal = models.BooleanField(default=False)\n    is_surgeon = models.BooleanField(default=False)\n    is_pediatric = models.BooleanField(default=False)\n    is_orthopedic = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\nclass Patient(models.Model):\n    name = models.CharField(max_length=100)\n    phone = models.CharField(max_length=20)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\nclass Appointment(models.Model):\n    STATUS_CHOICES = [\n        ('pending', 'Pending'),\n        ('confirmed', 'Confirmed'),\n    ]\n    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)\n    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)\n    datetime = models.DateTimeField()\n    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\nclass AppointmentView(View):\n    def get(self, request):\n        appointments = Appointment.objects.all()\n        result = []\n        for apt in appointments:\n            result.append({\n                'patient': apt.patient.name,\n                'doctor': apt.doctor.name,\n                'datetime': str(apt.datetime),\n                'status': apt.status,\n            })\n        return JsonResponse({'appointments': result})\n\n    def post(self, request):\n        data = json.loads(request.body)\n        apt = Appointment.objects.create(\n            patient_id=data['patient_id'],\n            doctor_id=data['doctor_id'],\n            datetime=data['datetime'],\n            status='pending'\n        )\n        apt.status = 'confirmed'\n        apt.save()\n        return JsonResponse({'id': apt.id})\n\n@receiver(post_save, sender=Appointment)\ndef notify_doctor(sender, instance, created, **kwargs):\n    if created:\n        send_notification(instance.doctor, f\"새 예약: {instance.patient.name}\")\n```",
+      "expected_output": "BooleanField 남발, N+1, 같은 앱 시그널, update_fields 누락, timestamp 중복, Fat View, 인증 누락, Meta 누락 등을 [Convention] 형식으로 구조화 지적.",
+      "files": [],
+      "expectations": [
+        {"id": "review-01", "text": "각 발견사항이 '[Convention] -- 설명' 형식으로 구조화되어 작성된다", "type": "content_check"},
+        {"id": "review-02", "text": "is_internal/is_surgeon/is_pediatric/is_orthopedic BooleanField 4개가 상호 배타적 진료과이므로 단일 CharField + TextChoices로 통합해야 한다고 지적한다 (불가능한 상태 조합 위험 명시)", "type": "content_check"},
+        {"id": "review-03", "text": "Appointment.STATUS_CHOICES 튜플 리스트를 TextChoices/IntegerChoices 클래스로 교체해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-04", "text": "AppointmentView GET의 루프 내 apt.patient.name/apt.doctor.name 접근이 N+1 쿼리이므로 select_related('patient', 'doctor')를 추가하라고 지적하며, assertNumQueries로 회귀 방지를 권한다", "type": "content_check"},
+        {"id": "review-05", "text": "같은 앱(Appointment) 내 post_save 시그널이 안티패턴이므로 save() 오버라이드 또는 services.py 함수로 대체해야 한다고 지적하며, 시그널의 동기적 실행과 디버깅 어려움을 근거로 든다", "type": "content_check"},
+        {"id": "review-06", "text": "create 직후 status='confirmed' 변경 후 bare save() 호출에서 update_fields=['status'] 누락을 지적한다", "type": "content_check"},
+        {"id": "review-07", "text": "Doctor/Patient/Appointment 3개 모델의 created_at/updated_at 중복을 TimeStampedModel(abstract=True) 추상 베이스 클래스로 추출해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-08", "text": "AppointmentView의 POST가 비즈니스 로직(생성→상태 변경)을 직접 처리하는 Fat View 안티패턴이므로 모델 메서드(confirm()) 또는 service 함수로 분리해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-09", "text": "AppointmentView가 LoginRequiredMixin 또는 @login_required 인증을 누락했으며, 환자/의사 권한 분리(자기 예약만 조회)가 없음을 지적한다", "type": "content_check"},
+        {"id": "review-10", "text": "Appointment 모델에 같은 의사-시간대 중복 방지 제약(UniqueConstraint 또는 CheckConstraint)과 clean() 검증이 없음을 지적한다", "type": "content_check"},
+        {"id": "review-11", "text": "AppointmentView가 Django Ninja가 아닌 일반 View + json.loads + JsonResponse로 작성된 점을 지적하고 Schema/Router 패턴 마이그레이션을 권고한다 (DRF 사용 시에도 동일하게 Ninja 전환 권고)", "type": "content_check"},
+        {"id": "review-12", "text": "Appointment 모델의 datetime 필드명이 Python 빌트인과 충돌하므로 scheduled_at 또는 appointed_at 등 명확한 이름으로 변경할 것을 지적한다", "type": "content_check"},
+        {"id": "review-13", "text": "전체 모델 모두 Meta(ordering, indexes, verbose_name) 정의가 누락되어 있어 관리자/목록의 정렬 일관성이 깨진다는 점을 지적한다", "type": "content_check"},
+        {"id": "review-14", "text": "모든 모델에 __str__ 메서드가 없어 admin/shell 디버깅이 어렵다는 점을 지적한다", "type": "content_check"},
+        {"id": "review-15", "text": "응답 마지막에 '관련 스킬 참조' 섹션이 있고 (Django Ninja API 마이그레이션 → implementation-django-ninja 등) 다음 단계가 안내된다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "refactoring",
+      "mode": "refactoring",
+      "prompt": "아래 진료 예약 시스템 코드를 리팩토링해줘:\n\n```python\n# settings.py\nSECRET_KEY = 'django-insecure-hospital-secret-key-12345'\nDEBUG = True\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.postgresql',\n        'NAME': 'hospital_db',\n        'USER': 'admin',\n        'PASSWORD': 'admin123',\n    }\n}\n\n# models.py\nclass Appointment(models.Model):\n    patient = models.ForeignKey('Patient', on_delete=models.CASCADE)\n    doctor = models.ForeignKey('Doctor', on_delete=models.CASCADE)\n    date = models.DateTimeField()\n    is_confirmed = models.BooleanField(default=False)\n    is_completed = models.BooleanField(default=False)\n    is_cancelled = models.BooleanField(default=False)\n    notes = models.TextField(blank=True)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n\n    def __str__(self):\n        return f\"Appointment {self.id}\"\n\n# views.py\nclass AppointmentConfirmView(View):\n    def post(self, request, pk):\n        apt = Appointment.objects.get(pk=pk)\n        if apt.is_cancelled:\n            return JsonResponse({'error': 'cancelled'}, status=400)\n        if apt.is_completed:\n            return JsonResponse({'error': 'already completed'}, status=400)\n        apt.is_confirmed = True\n        apt.save()\n        return JsonResponse({'status': 'confirmed'})\n```",
+      "expected_output": "BooleanField→TextChoices, settings 분리, Fat Model, update_fields, get_object_or_404, on_commit, 시그널 회피 등 모든 변경을 [Before]/[After]/[Reason] 형식으로 제시.",
+      "files": [],
+      "expectations": [
+        {"id": "refactor-01", "text": "모든 변경이 [Before] / [After] / [Reason] 형식으로 명시되고 각 [Reason]에 적용된 Django 컨벤션 이름(Fat Model, update_fields, TextChoices 등)이 포함된다", "type": "content_check"},
+        {"id": "refactor-02", "text": "is_confirmed/is_completed/is_cancelled 3개 BooleanField를 단일 status 필드 + Status(TextChoices) 클래스로 통합하는 before/after를 제시한다", "type": "content_check"},
+        {"id": "refactor-03", "text": "settings.py를 config/settings/{base.py, local.py, production.py}로 분리하고 base.py가 django-environ으로 SECRET_KEY/DEBUG/DATABASE_URL을 환경 변수에서 읽도록 변경한다", "type": "content_check"},
+        {"id": "refactor-04", "text": "production.py에 SECURE_SSL_REDIRECT, SECURE_HSTS_SECONDS, SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE, X_FRAME_OPTIONS 등 보안 설정과 manage.py check --deploy 안내를 포함한다", "type": "content_check"},
+        {"id": "refactor-05", "text": "AppointmentConfirmView의 상태 검증 + 변경 로직을 Appointment.confirm() 모델 메서드로 이동시키고 잘못된 전이는 ValidationError를 발생시키도록 한다 (Fat Model, Thin View)", "type": "content_check"},
+        {"id": "refactor-06", "text": "bare save()를 save(update_fields=['status']) 또는 변경된 필드 목록만 포함하도록 수정한다", "type": "content_check"},
+        {"id": "refactor-07", "text": "Appointment.objects.get(pk=pk)를 get_object_or_404(Appointment, pk=pk)로 교체하여 404 처리를 표준화한다", "type": "content_check"},
+        {"id": "refactor-08", "text": "공통 timestamp 필드를 TimeStampedModel(abstract=True) 추상 베이스 클래스로 추출하고 Appointment가 이를 상속받도록 변경한다", "type": "content_check"},
+        {"id": "refactor-09", "text": "Appointment Meta에 indexes(예: ['doctor', 'date'])와 ordering, UniqueConstraint(같은 의사-시간대 중복 방지)를 추가한다", "type": "content_check"},
+        {"id": "refactor-10", "text": "AppointmentConfirmView를 Django Ninja Router + Schema 패턴으로 변환한다(또는 명시적으로 Ninja 마이그레이션을 [After]에 안내)", "type": "content_check"},
+        {"id": "refactor-11", "text": "date 필드를 scheduled_at으로 리네임하고 마이그레이션 시 무중단 배포 3단계(컬럼 추가 → 백필 → 제거)를 언급한다", "type": "content_check"},
+        {"id": "refactor-12", "text": "Appointment.confirm() 내부 또는 호출부에서 알림(notify_doctor 등) 발송이 transaction.on_commit()으로 감싸여 트랜잭션 롤백 시 부수 효과가 발생하지 않도록 한다", "type": "content_check"},
+        {"id": "refactor-13", "text": "리팩토링이 끝난 뒤 모든 변경이 합쳐진 '전체 리팩토링된 코드' 블록(settings/models/views 통합본)이 마지막에 제공된다", "type": "content_check"},
+        {"id": "refactor-14", "text": "AppointmentConfirmView가 LoginRequiredMixin 또는 @login_required로 인증되도록 추가한다", "type": "content_check"},
+        {"id": "refactor-15", "text": "DRF Serializer/ViewSet 패턴으로 마이그레이션하지 않으며, Ninja만을 권장하는 점을 [Reason]에 명시한다", "type": "content_check"},
+        {"id": "refactor-16", "text": "응답 마지막에 '관련 스킬 참조' 섹션이 있고 API 변환은 implementation-django-ninja, 보안 정책은 architecture-* 등 후속 스킬 안내를 포함한다", "type": "content_check"}
+      ]
+    }
+  ]
+}

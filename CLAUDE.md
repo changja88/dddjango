@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 .claude-plugin/plugin.json     -- Claude Code 플러그인 메타
 .claude-plugin/marketplace.json -- Claude Code marketplace 메타
 .codex-plugin/plugin.json      -- OpenAI Codex 플러그인 메타
+plugins/dddjango/              -- Codex marketplace가 실제로 가리키는 배포용 플러그인 루트
 .agents/plugins/marketplace.json -- Codex repo-local marketplace
 commands/                      -- Claude Code 슬래시 커맨드 5개 (api, feature, refactor, test, web)
 skills/                        -- Claude/Codex 공통 스킬 11개 (architecture-* 4개, implementation-* 7개)
@@ -33,7 +34,7 @@ workspace/                     -- 작업 보조 자료 + 평가 산출물 (배�
 
 ## 플랫폼 패키징 원칙
 
-- `skills/`는 Claude Code와 Codex가 공유하는 단일 원천이다. 플랫폼별 차이를 이유로 스킬 파일을 복제하지 않는다.
+- `skills/`는 Claude Code와 Codex가 공유하는 단일 원천이다. Codex marketplace 배포용 `plugins/dddjango/skills`는 배포 mirror이므로 스킬 변경 시 함께 동기화한다.
 - Claude Code 표면은 `.claude-plugin/plugin.json`과 `commands/`를 포함한다.
 - Codex 표면은 `.codex-plugin/plugin.json`과 `.agents/plugins/marketplace.json`를 포함한다.
 - `.claude-plugin/plugin.json`과 `.codex-plugin/plugin.json`의 `version`은 같은 릴리스에서 항상 동일하게 유지한다.

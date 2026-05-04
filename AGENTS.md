@@ -7,6 +7,7 @@
 - 플러그인 이름: `dddjango`
 - Claude 메타데이터: `.claude-plugin/plugin.json`
 - Codex 메타데이터: `.codex-plugin/plugin.json`
+- Codex 배포용 플러그인 루트: `plugins/dddjango/`
 - Codex 로컬 marketplace: `.agents/plugins/marketplace.json`
 - 목적: Python/Django 개발 컨벤션을 Claude Code와 Codex에서 공유 가능한 스킬로 제공
 - 기준 기술: Python, Django 5.x, Django Ninja, pytest, DDD, REST API, RDB 설계
@@ -20,6 +21,9 @@
   marketplace.json         # Claude Code marketplace 메타데이터
 .codex-plugin/
   plugin.json              # OpenAI Codex 플러그인 메타데이터
+plugins/dddjango/
+  .codex-plugin/plugin.json # Codex marketplace가 실제로 가리키는 배포용 manifest
+  skills/                  # Codex 배포용 스킬 mirror
 .agents/plugins/
   marketplace.json         # Codex repo-local 테스트용 marketplace
 commands/
@@ -59,7 +63,7 @@ Implementation 계열은 "코드로 어떻게 작성할지"를 다룬다.
 ## 작업 규칙
 
 - 모든 사용자 응답은 기본적으로 한국어로 작성한다.
-- `skills/`는 Claude Code와 Codex가 공유하는 단일 원천이다. 플랫폼별 차이는 manifest, marketplace, README, 플랫폼 지침 파일에서 흡수하고 스킬을 복제하지 않는다.
+- `skills/`는 Claude Code와 Codex가 공유하는 단일 원천이다. Codex marketplace 배포용 `plugins/dddjango/skills`는 배포 mirror이며, 스킬 내용을 바꿀 때는 두 경로가 어긋나지 않게 동기화한다.
 - `.claude-plugin/plugin.json`과 `.codex-plugin/plugin.json`의 `version`은 릴리스마다 동기화한다.
 - `.claude-plugin/marketplace.json`의 plugin version도 같은 릴리스 버전으로 맞춘다.
 - 스킬 또는 커맨드를 수정할 때는 관련 `SKILL.md`와 `references/*.md`의 연결을 유지한다.

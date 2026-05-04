@@ -1,0 +1,81 @@
+{
+  "skill_name": "implementation-django-web",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "writing",
+      "mode": "writing",
+      "prompt": "도서 대출 시스템의 웹 페이지를 Django 템플릿으로 만들어줘.\n\n- 베이스 레이아웃이 있는 도서 목록 페이지(BookListView)와 상세 페이지(BookDetailView)\n- 도서 카드 컴포넌트는 목록과 추천 섹션 양쪽에서 재사용돼\n- 디자인 토큰(색상, 간격, 폰트)을 적용한 디자인 시스템 컴포넌트로 카드를 구성해줘\n- 상세 페이지에서 \"대출하기\" 버튼은 AJAX로 POST 요청을 보내. CSRF가 필요해\n- 페이지에서 사용할 도서 데이터(JSON)를 서버에서 JS로 전달해야 해\n- 다크 모드와 인증된 사용자만 접근 가능해야 해\n- CDN으로 외부 폰트 또는 JS를 불러올 수 있다면 보안 속성을 잊지 말고\n\n템플릿 상속, 컴포넌트, 디자인 토큰, 정적 파일, AJAX/CSRF, TemplateView까지 모두 포함해서 구현해줘.",
+      "expected_output": "{% extends %}/{% block %} 상속 + {% include only %} 컴포넌트 + CSS 토큰 + json_script + CSRF + LoginRequiredMixin TemplateView 구조",
+      "files": [],
+      "expectations": [
+        {"id": "writing-01", "text": "base.html이 존재하고 자식 템플릿이 {% extends \"base.html\" %}을 첫 번째 태그로 사용하며, {% block name %}...{% endblock name %} 형태로 블록명을 명시한다", "type": "content_check"},
+        {"id": "writing-02", "text": "자식 템플릿에서 {% load static %}을 다시 호출한다 ({% load %} 태그는 부모로부터 상속되지 않으므로 매번 로드한다)", "type": "content_check"},
+        {"id": "writing-03", "text": "도서 카드 컴포넌트가 design_system/ 또는 components/ 폴더에 _ 접두사 파일(예: _book_card.html)로 존재하고 파일 상단에 {# 필수 변수: book (Book 객체), ... #} 형식으로 인터페이스가 문서화된다", "type": "content_check"},
+        {"id": "writing-04", "text": "도서 카드 컴포넌트 호출이 {% include \"...\" with book=book only %} 형태로 only 키워드를 사용하여 컨텍스트를 명시적으로 격리한다", "type": "content_check"},
+        {"id": "writing-05", "text": "모든 정적 파일 참조가 {% static '...' %} 태그를 통해 이루어지고 /static/... 같은 절대 경로 하드코딩이 한 곳도 없다", "type": "content_check"},
+        {"id": "writing-06", "text": "CDN으로 로드되는 외부 폰트/JS/CSS 태그에 integrity=\"sha384-...\"와 crossorigin=\"anonymous\" 속성(SRI)이 모두 포함된다", "type": "content_check"},
+        {"id": "writing-07", "text": "디자인 토큰이 CSS Custom Properties로 primitive(예: --blue-500) → semantic(예: --color-primary) → component(예: --card-bg) 3계층으로 정의되고 상위 계층은 var()로 하위 계층을 참조한다", "type": "content_check"},
+        {"id": "writing-08", "text": "컴포넌트 CSS의 색상/간격/폰트가 var(--token, fallback) 형태로 폴백 값과 함께 사용되고 #ffffff 같은 hex 또는 16px 같은 픽셀 값이 직접 하드코딩되지 않는다", "type": "content_check"},
+        {"id": "writing-09", "text": "[data-theme=\"dark\"] 선택자로 다크 모드 토큰을 재정의하고, semantic 레이어 토큰만 오버라이드한다 (primitive 재정의 아님)", "type": "content_check"},
+        {"id": "writing-10", "text": "서버→JS 데이터 전달이 {{ book_data|json_script:\"book-data\" }} 필터를 사용하고, <script> 태그 안에 {{ value }}를 직접 삽입하는 XSS 위험 패턴이 한 곳도 없다", "type": "content_check"},
+        {"id": "writing-11", "text": "AJAX POST 요청에 X-CSRFToken 헤더가 포함되고, getCookie('csrftoken') 또는 동등한 쿠키 리더로 csrftoken 쿠키에서 토큰을 읽는 코드가 제시된다", "type": "content_check"},
+        {"id": "writing-12", "text": "BookListView, BookDetailView가 LoginRequiredMixin을 TemplateView보다 앞(MRO 순서)에 두고 상속하며, get_context_data로 데이터를 주입한다", "type": "content_check"},
+        {"id": "writing-13", "text": "인라인 <style>이나 인라인 앱 로직 <script>가 템플릿에 작성되지 않고, 별도 .css/.js 파일로 분리되어 {% static %}으로 로드된다 (json_script와 FOUC 방지 인라인 예외 제외)", "type": "content_check"},
+        {"id": "writing-14", "text": "외부 서비스/API 호출이 있는 경우 get_context_data 내부에서 try/except로 오류를 처리하고 사용자에게 보여줄 폴백 값(빈 리스트, 에러 메시지)을 컨텍스트에 넣는다", "type": "content_check"},
+        {"id": "writing-15", "text": "응답이 한국어로 작성되고 마지막에 [관련 스킬 참조] 섹션이 포함되어 implementation-django, implementation-django-ninja, architecture-api 등 관련 스킬로 연결된다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "review",
+      "mode": "review",
+      "prompt": "아래 도서 대출 시스템의 템플릿/뷰 코드를 리뷰해줘:\n\n```html\n<!-- templates/book_list.html -->\n<!DOCTYPE html>\n<html>\n<head>\n  <link rel=\"stylesheet\" href=\"/static/css/style.css\">\n  <link rel=\"stylesheet\" href=\"https://cdn.example.com/lib.css\">\n  <script src=\"https://cdn.example.com/lib.js\"></script>\n  <style>\n    .card { background: #ffffff; padding: 16px; color: #1a1a1a; border-radius: 8px; }\n    .card .btn { background: #4f46e5; color: white; }\n  </style>\n</head>\n<body>\n  <h1>도서 목록</h1>\n  {% for book in books %}\n    {% include \"components/book_card.html\" %}\n  {% endfor %}\n\n  <script>\n    const userName = \"{{ request.user.username }}\";\n    const books = {{ books_json|safe }};\n    fetch('/loan/', {\n      method: 'POST',\n      body: JSON.stringify({ book_id: 1 })\n    });\n  </script>\n</body>\n</html>\n```\n\n```python\n# views.py\nclass BookListView(TemplateView):\n    template_name = \"book_list.html\"\n\n    def get_context_data(self, **kwargs):\n        ctx = super().get_context_data(**kwargs)\n        ctx['books'] = ExternalCatalog.fetch_all()  # 외부 API 직접 호출, try/except 없음\n        return ctx\n```",
+      "expected_output": "정적 파일 하드코딩, CDN SRI 누락, XSS 위험, CSRF 누락, only 누락, 인라인 style/script, 디자인 토큰 부재, LoginRequiredMixin/오류 처리 누락 등을 지적",
+      "files": [],
+      "expectations": [
+        {"id": "review-01", "text": "/static/css/style.css 같은 정적 파일 절대 경로 하드코딩을 {% load static %} + {% static 'css/style.css' %} 태그로 변경해야 한다고 지적하고, 캐시 버스팅을 위한 ManifestStaticFilesStorage 또는 WhiteNoise도 함께 언급한다", "type": "content_check"},
+        {"id": "review-02", "text": "https://cdn.example.com/lib.js와 lib.css의 SRI 누락을 지적하고 integrity=\"sha384-...\"와 crossorigin=\"anonymous\" 속성을 반드시 추가해야 한다고 명시한다", "type": "content_check"},
+        {"id": "review-03", "text": "<script> 안의 \"{{ request.user.username }}\" 직접 삽입이 username에 따옴표/스크립트가 포함되면 발생하는 XSS 취약점임을 지적하고 json_script 필터 또는 |escapejs로 안전하게 전달해야 한다고 명시한다", "type": "content_check"},
+        {"id": "review-04", "text": "{{ books_json|safe }}로 JSON을 그대로 출력하는 부분이 |safe 사용 자체로 XSS 위험이며, {{ books|json_script:\"books-data\" }} + JSON.parse(document.getElementById('books-data').textContent) 패턴으로 교정해야 한다고 명시한다", "type": "content_check"},
+        {"id": "review-05", "text": "{% include \"components/book_card.html\" %}에 only 키워드와 with book=book 명시 전달이 없어 부모 컨텍스트가 암묵적으로 누출되며 컴포넌트 의존성이 불명확함을 지적한다", "type": "content_check"},
+        {"id": "review-06", "text": "fetch POST 요청에 X-CSRFToken 헤더가 누락되어 Django CsrfViewMiddleware에 의해 403이 발생하거나 CSRF 보호가 우회됨을 지적하고 getCookie('csrftoken') 패턴을 제시한다", "type": "content_check"},
+        {"id": "review-07", "text": "fetch 요청에 Content-Type: application/json 헤더와 mode: 'same-origin' 옵션이 누락된 점을 지적한다", "type": "content_check"},
+        {"id": "review-08", "text": "인라인 <style> 블록을 별도 CSS 파일(예: static/books/css/book_list.css)로 분리해야 하며, 인라인 앱 로직 <script>도 static/ 아래 .js 파일로 추출해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-09", "text": "#ffffff, #1a1a1a, #4f46e5, 16px, 8px 같은 색상/간격 하드코딩을 지적하고, var(--color-bg), var(--spacing-md), var(--radius-md) 같은 CSS Custom Property(디자인 토큰)로 추출해야 한다고 명시한다", "type": "content_check"},
+        {"id": "review-10", "text": "<!DOCTYPE html>부터 직접 작성된 평탄한 템플릿이 base.html을 통한 {% extends %} + {% block %} 상속 구조로 재구조화되어야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-11", "text": "BookListView에 LoginRequiredMixin이 누락되었음을 지적하고, MRO에서 LoginRequiredMixin이 TemplateView 앞에 와야 한다는 순서까지 명시한다", "type": "content_check"},
+        {"id": "review-12", "text": "ExternalCatalog.fetch_all() 호출에 try/except가 없어 외부 API 장애가 페이지 전체 500 에러로 이어짐을 지적하고, 폴백 값과 에러 메시지를 컨텍스트에 넣는 패턴을 제안한다", "type": "content_check"},
+        {"id": "review-13", "text": "지적 항목이 [Convention: 한 줄 요약] -- 상세 내용 형식으로 정리되고, 각 항목이 어떤 컨벤션 위반인지 명확히 추적 가능하다", "type": "content_check"},
+        {"id": "review-14", "text": "발견된 이슈를 영향력 순(XSS/CSRF 같은 보안 이슈를 먼저, 디자인 토큰/스타일 분리 같은 유지보수 이슈를 나중에) 우선순위로 정리한다", "type": "content_check"},
+        {"id": "review-15", "text": "응답이 한국어로 작성되고 마지막에 [관련 스킬 참조] 섹션이 포함되어 다음 단계(예: 리팩터링 시 implementation-django-web Refactoring 모드, 보안 점검 시 implementation-django) 스킬로 연결된다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "refactoring",
+      "mode": "refactoring",
+      "prompt": "아래 도서 대출 시스템 템플릿/뷰 코드를 Django 웹 컨벤션에 맞게 리팩터링해줘. Before/After/Reason 형식으로 보여줘.\n\n```html\n<!-- templates/book_detail.html -->\n<html>\n<head>\n  <link rel=\"stylesheet\" href=\"/static/css/main.css\">\n  <script src=\"https://cdn.example.com/htmx.min.js\"></script>\n  <style>\n    .loan-button { background: #6366f1; color: #ffffff; padding: 12px 16px; }\n  </style>\n</head>\n<body>\n  <h1>{{ book.title }}</h1>\n  {% include \"components/book_meta.html\" %}\n\n  <button class=\"loan-button\" onclick=\"loan()\">대출하기</button>\n\n  <script>\n    const book = {{ book_json|safe }};\n    function loan() {\n      fetch('/api/loans', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ book_id: book.id })\n      });\n    }\n  </script>\n</body>\n</html>\n```\n\n```python\n# views.py\nclass BookDetailView(TemplateView):\n    template_name = \"book_detail.html\"\n\n    def get_context_data(self, **kwargs):\n        ctx = super().get_context_data(**kwargs)\n        ctx['book'] = ExternalCatalog.fetch(self.kwargs['pk'])  # 오류 처리 없음\n        return ctx\n```",
+      "expected_output": "{% static %}/SRI 도입, json_script + CSRF, only 키워드, 디자인 토큰 추출, LoginRequiredMixin + 오류 처리 추가를 Before/After/Reason 형식으로 제시",
+      "files": [],
+      "expectations": [
+        {"id": "refactor-01", "text": "/static/css/main.css 같은 절대 경로를 {% load static %} + {% static 'css/main.css' %}로 변환하는 변경이 Before/After/Reason 형식으로 제시된다", "type": "content_check"},
+        {"id": "refactor-02", "text": "https://cdn.example.com/htmx.min.js CDN script에 integrity=\"sha384-...\"와 crossorigin=\"anonymous\" 속성을 추가하는 SRI 적용 변경이 제시된다", "type": "content_check"},
+        {"id": "refactor-03", "text": "{{ book_json|safe }}를 {{ book|json_script:\"book-data\" }} 필터로 변경하고 JSON.parse(document.getElementById('book-data').textContent) 패턴으로 JS에서 소비하는 리팩터링이 제시된다", "type": "content_check"},
+        {"id": "refactor-04", "text": "fetch POST에 getCookie('csrftoken') 헬퍼와 X-CSRFToken 헤더, mode: 'same-origin'을 추가하는 CSRF 적용 변경이 제시된다", "type": "content_check"},
+        {"id": "refactor-05", "text": "{% include \"components/book_meta.html\" %}에 with book=book only 형식으로 only 키워드와 명시적 변수 전달을 추가하는 변경이 제시된다", "type": "content_check"},
+        {"id": "refactor-06", "text": "인라인 <style>의 #6366f1, #ffffff, 12px, 16px 같은 값을 var(--color-primary, ...), var(--color-on-primary, ...), var(--spacing-sm, ...), var(--spacing-md, ...) 형태의 CSS Custom Property + 폴백으로 추출한다", "type": "content_check"},
+        {"id": "refactor-07", "text": "추출된 토큰이 primitive → semantic → component 3계층 구조로 :root에 정의되고, [data-theme=\"dark\"] 다크 모드 오버라이드가 함께 제시된다", "type": "content_check"},
+        {"id": "refactor-08", "text": "인라인 <style>을 static/books/css/book_detail.css 같은 별도 파일로 분리하고 {% static %}으로 로드하는 변경이 제시된다", "type": "content_check"},
+        {"id": "refactor-09", "text": "인라인 <script>의 loan() 함수와 onclick=\"loan()\" 핸들러를 static/books/js/book_detail.js 별도 파일로 분리하고 addEventListener 기반 이벤트 바인딩으로 변경한다 (인라인 onclick 제거)", "type": "content_check"},
+        {"id": "refactor-10", "text": "평탄한 <html>...</html> 구조를 base.html 상속(예: {% extends \"base.html\" %} + {% block body %}{% endblock body %}) 구조로 재구조화한다", "type": "content_check"},
+        {"id": "refactor-11", "text": "BookDetailView에 LoginRequiredMixin을 MRO에서 TemplateView 앞(class BookDetailView(LoginRequiredMixin, TemplateView):)에 추가하는 변경이 제시된다", "type": "content_check"},
+        {"id": "refactor-12", "text": "ExternalCatalog.fetch(self.kwargs['pk']) 호출을 try/except로 감싸 외부 API 실패 시 폴백 컨텍스트(book=None, error_message=\"...\") 또는 Http404를 반환하는 변경이 제시된다", "type": "content_check"},
+        {"id": "refactor-13", "text": "각 변경이 [Before] / [After] / [Reason] Convention -- 설명 형식으로 일관되게 작성되고, Reason에서 어떤 Django 웹 컨벤션(템플릿 상속, json_script XSS-safe, SRI, CSRF, only 컨텍스트 격리 등)을 따르는지 명시된다", "type": "content_check"},
+        {"id": "refactor-14", "text": "리팩터링 후 통합된 완전한 템플릿/뷰/CSS/JS 코드가 응답 마지막에 함께 제시되어 사용자가 전체 구조를 파악할 수 있다", "type": "content_check"},
+        {"id": "refactor-15", "text": "HTMX가 이미 CDN으로 로드되고 있다는 점을 활용하여, 순수 fetch 대신 hx-post + hx-target 기반 HTML 프래그먼트 업데이트로 마이그레이션하는 대안을 명시적 판단(채택/근거 또는 미채택/근거)으로 제시한다", "type": "content_check"},
+        {"id": "refactor-16", "text": "응답이 한국어로 작성되고 마지막에 [관련 스킬 참조] 섹션이 포함되어 implementation-django, implementation-django-ninja, architecture-api 등 다음 단계 스킬로 연결된다", "type": "content_check"}
+      ]
+    }
+  ]
+}

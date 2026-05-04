@@ -1,0 +1,76 @@
+{
+  "skill_name": "architecture-api",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "design",
+      "mode": "design",
+      "prompt": "호텔 예약 서비스의 REST API를 설계해줘.\n\n- 사용자가 도시/체크인/체크아웃/인원으로 객실을 검색할 수 있어\n- 검색된 객실 중 하나를 선택해서 예약을 생성할 수 있어\n- 예약은 결제 후 확정되고, 결제는 동일한 예약 요청이 두 번 들어와도 한 번만 처리되어야 해\n- 사용자는 자기 예약 목록을 조회/취소할 수 있고, 목록은 페이지네이션이 필요해\n- 호텔 운영자는 객실 가격을 변경할 수 있어\n- 향후 v2에서 응답 스키마가 바뀔 수 있으므로 버전 관리도 함께 설계해줘\n- 모든 오류 응답은 표준 형식이어야 해\n\nURL 구조, HTTP 메서드/상태 코드, 오류 형식, 페이지네이션, 멱등성, 버저닝까지 포함해서 설계해줘.",
+      "expectations": [
+        {"id": "design-01", "text": "URL은 복수 명사 + kebab-case 소문자로 구성되고, 동사가 포함되지 않으며, 후행 슬래시가 없고, 최대 3단계 깊이를 유지한다", "type": "content_check"},
+        {"id": "design-02", "text": "리소스/엔드포인트 목록이 표 또는 코드 블록 형태로 제시되고 hotels, rooms, reservations, payments, prices 같은 핵심 리소스가 식별된다", "type": "content_check"},
+        {"id": "design-03", "text": "메서드-리소스 매트릭스(POST/GET/PUT/PATCH/DELETE × 리소스)가 표 형식으로 제시되고 컬렉션과 단건 리소스의 메서드 의미가 구분된다", "type": "content_check"},
+        {"id": "design-04", "text": "예약 생성에 POST + 201 Created + Location 헤더, 조회에 200 OK, 취소(삭제)에 204 No Content를 사용하는 등 상태 코드 매핑이 명시된다", "type": "content_check"},
+        {"id": "design-05", "text": "객실 가격 변경에 PUT(전체 교체) 또는 PATCH(부분 수정) 중 어느 것을 쓰는지 의미와 함께 명시된다", "type": "content_check"},
+        {"id": "design-06", "text": "오류 응답이 RFC 9457 Problem Details 형식(type/title/status/detail/instance)으로 정의되고 Content-Type이 application/problem+json임을 명시한다", "type": "content_check"},
+        {"id": "design-07", "text": "404 Not Found, 409 Conflict(예약 충돌/중복), 422 Unprocessable Entity(유효성), 401/403 같은 주요 오류 상태 코드의 사용 시점이 명시된다", "type": "content_check"},
+        {"id": "design-08", "text": "예약 목록 같은 컬렉션 엔드포인트에 cursor 또는 offset 페이지네이션이 적용되고 limit 파라미터와 has_more 또는 next_cursor 메타가 응답에 포함된다", "type": "content_check"},
+        {"id": "design-09", "text": "결제(payments) 같은 비멱등 POST 엔드포인트에 Idempotency-Key 헤더 적용이 명시되고 V4 UUID·24시간 만료 같은 정책이 언급된다", "type": "content_check"},
+        {"id": "design-10", "text": "URL 경로 버저닝(/v1/) 또는 헤더 버저닝 전략 중 하나를 선택하고 일관 적용을 명시하며, 추가는 자유·제거는 새 버전이라는 정책이 명시된다", "type": "content_check"},
+        {"id": "design-11", "text": "v2로 호환성 깨는 변경(필드 제거/이름 변경/타입 변경)을 옮기는 기준이 명시되고, Sunset 헤더 또는 Deprecation 프로세스(최소 6개월 마이그레이션)가 언급된다", "type": "content_check"},
+        {"id": "design-12", "text": "객실 검색의 필터링/정렬/페이징이 쿼리 파라미터로 설계된다 (예: ?city=...&check_in=...&sort=-price&limit=...)", "type": "content_check"},
+        {"id": "design-13", "text": "민감한 데이터(토큰, 카드 정보)를 쿼리 파라미터에 두지 않고 Authorization 헤더 또는 본문으로 전달함이 명시된다", "type": "content_check"},
+        {"id": "design-14", "text": "예약 취소가 DELETE /reservations/{id} 또는 POST /reservations/{id}/cancellation 같은 하위 리소스 액션 형태로 설계되고 동사 URL을 사용하지 않는다", "type": "content_check"},
+        {"id": "design-15", "text": "응답 본문 또는 응답 예시가 JSON 형식으로 최소 한 번 이상 구체적으로 제시된다 (필드 목록만 나열하지 않고 실제 JSON 블록 포함)", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "review",
+      "mode": "review",
+      "prompt": "아래 호텔 예약 API 명세를 REST 관점에서 리뷰해줘:\n\n```\nGET    /api/getHotelList?page=1\nPOST   /api/createReservation\n         Body: { user_id, hotel_id, check_in, check_out, card_number, cvc }\n         200 OK { \"success\": true, \"reservation\": {...} }\n         200 OK { \"success\": false, \"error\": \"카드 거절\" }\nPOST   /api/reservation/cancel/{id}\n         204 No Content\nPUT    /api/reservation/{id}\n         Body: { status: \"CONFIRMED\" }   # 부분 업데이트인데 PUT 사용\n         200 OK\nGET    /api/reservation?token=eyJhbGciOi...   # JWT를 쿼리 파라미터로 전달\n         200 OK [ {...}, {...}, ... 전체 5만건 ... ]\nDELETE /api/hotel/{id}/room/{rid}/price/history/2024/12/list\n         200 OK\n```\n\n버전 관리 전략은 별도로 없고, 다음 릴리스에서 reservation 응답의 `user_id` 필드를 `customer_id`로 이름 변경하면서 같은 엔드포인트를 그대로 사용할 예정이야.",
+      "expectations": [
+        {"id": "review-01", "text": "URL의 동사(getHotelList, createReservation, cancel, list)를 인용하며 명사 기반 리소스(예: hotels, reservations)로 변경해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-02", "text": "단수 컬렉션(reservation, hotel, room)을 복수형(reservations, hotels, rooms)으로 변경해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-03", "text": "/api/hotel/{id}/room/{rid}/price/history/2024/12/list가 3단계 이상 깊이임을 지적하고 쿼리 파라미터(?year=2024&month=12) 또는 평탄한 리소스로 재설계해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-04", "text": "에러 상황에 200 OK + success:false를 반환하는 패턴을 지적하고 적절한 4xx 상태 코드(예: 422 결제 거절 또는 402)를 사용해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-05", "text": "커스텀 에러 형식({success, error, msg 등})을 RFC 9457 Problem Details 형식(type/title/status/detail/instance)으로 변경해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-06", "text": "부분 업데이트(status 필드만 변경)에 PUT 대신 PATCH를 사용해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-07", "text": "status 같은 상태 전이를 PATCH가 아닌 별도 액션 엔드포인트(예: POST /reservations/{id}/confirmation) 또는 하위 리소스로 분리해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-08", "text": "JWT 토큰을 쿼리 파라미터로 전달하는 점을 지적하고 Authorization 헤더(Bearer ...)로 옮겨야 한다고 명시한다 (서버/프록시 로그 노출 위험 언급)", "type": "content_check"},
+        {"id": "review-09", "text": "card_number, cvc 같은 민감한 결제 정보를 평문 본문으로 받는 점을 지적하고 PCI-DSS 또는 토큰화/PG 위임 등의 대안을 제안한다", "type": "content_check"},
+        {"id": "review-10", "text": "createReservation/결제 POST 엔드포인트에 Idempotency-Key 헤더가 누락되어 중복 결제/예약 위험이 있음을 지적한다", "type": "content_check"},
+        {"id": "review-11", "text": "GET /api/reservation이 5만 건을 무제한 반환하는 점을 지적하고 페이지네이션(cursor 권장, limit 100~200)과 has_more 메타를 추가해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-12", "text": "POST /api/reservation/cancel/{id}에 204 No Content가 (취소 성공 시) 적절할 수 있으나 동사 URL(cancel) 자체를 DELETE /reservations/{id} 또는 POST /reservations/{id}/cancellation으로 바꿔야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-13", "text": "버전 관리 전략 부재를 지적하고 URL path(/v1/) 또는 헤더 버저닝 도입을 제안한다", "type": "content_check"},
+        {"id": "review-14", "text": "user_id → customer_id 같은 필드 이름 변경은 Breaking Change임을 명시하고 새 버전(v2) 또는 Expand-and-Contract 패턴(양 필드 병행 후 Sunset)을 적용해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-15", "text": "각 발견 사항이 [원칙] - 이유 형식 또는 동등한 구조(원칙 인용 + API 사용성/일관성 영향 설명)로 작성된다", "type": "content_check"},
+        {"id": "review-16", "text": "리뷰가 가장 영향이 큰 문제(보안: 토큰/카드 노출, 데이터 손실/중복: 멱등성·페이지네이션, 호환성: 버저닝)를 우선순위로 제시한다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "refactoring",
+      "mode": "refactoring",
+      "prompt": "아래 호텔 예약 API 명세를 RFC 9457과 REST 원칙에 맞게 리팩터링해줘. Before/After/Reason 형식으로 보여줘.\n\n```\nPOST /api/createBooking\n  Body: { user_id, hotel_id, check_in, check_out }\n  200 OK { \"ok\": 1, \"id\": 123 }\n  200 OK { \"ok\": 0, \"msg\": \"방이 없습니다\" }\n\nGET /api/booking/list?user_id=42\n  200 OK [ ...전체 booking 배열... ]\n\nPOST /api/booking/{id}/doCancel\n  200 OK { \"ok\": 1 }\n\nPUT /api/booking/{id}\n  Body: { check_in, check_out }   # 일부 필드만 변경하고 싶을 때도 PUT\n  200 OK\n\nPOST /api/payment\n  Body: { booking_id, amount, card }\n  # 같은 요청이 두 번 들어오면 두 번 결제됨\n  200 OK { \"paid\": true }\n```\n\n또한 향후 응답에서 `id` 필드를 `booking_id`로 이름 변경하기로 결정했어.",
+      "expectations": [
+        {"id": "refactor-01", "text": "모든 변경이 [Before] / [After] / [Reason] 원칙 형식으로 일관되게 제시된다", "type": "content_check"},
+        {"id": "refactor-02", "text": "각 [Reason]에 적용된 원칙(예: '동사 금지', 'RFC 9457', 'PUT vs PATCH', 'Idempotency-Key')을 명시한다", "type": "content_check"},
+        {"id": "refactor-03", "text": "createBooking → POST /v1/bookings, doCancel → DELETE /v1/bookings/{id} 또는 POST /v1/bookings/{id}/cancellation 같이 동사 URL을 명사 기반 복수 리소스로 변경한다", "type": "content_check"},
+        {"id": "refactor-04", "text": "booking → bookings, payment → payments 등 단수 컬렉션을 복수형으로 교체한다", "type": "content_check"},
+        {"id": "refactor-05", "text": "성공 응답이 200 OK + ok 플래그 대신 의미에 맞는 상태 코드(POST 생성에 201 Created + Location 헤더)로 변경된다", "type": "content_check"},
+        {"id": "refactor-06", "text": "실패 응답이 200 OK + ok:0 대신 적절한 4xx 상태 코드(예: 409 Conflict 방 없음, 422 Unprocessable Entity 검증 실패)로 변경된다", "type": "content_check"},
+        {"id": "refactor-07", "text": "에러 본문이 RFC 9457 Problem Details 형식(type/title/status/detail/instance, application/problem+json)의 구체적인 JSON 예시로 제시된다", "type": "content_check"},
+        {"id": "refactor-08", "text": "PUT /api/booking/{id}의 부분 변경이 PATCH로 교정되고 PUT은 전체 교체에만 사용한다는 의미가 [Reason]에 명시된다", "type": "content_check"},
+        {"id": "refactor-09", "text": "GET /api/booking/list가 GET /v1/bookings로 변경되고 cursor 또는 offset 페이지네이션(limit, cursor 또는 offset 파라미터)과 has_more 또는 next_cursor 메타가 응답에 추가된다", "type": "content_check"},
+        {"id": "refactor-10", "text": "POST /api/payment에 Idempotency-Key 헤더가 추가되고 V4 UUID·24시간 만료·서버 측 저장 같은 정책이 명시된다", "type": "content_check"},
+        {"id": "refactor-11", "text": "결제 본문의 card 같은 민감한 데이터를 토큰화 또는 PG 위임으로 옮기거나 본문 평문 노출 문제가 명시적으로 언급된다", "type": "content_check"},
+        {"id": "refactor-12", "text": "버저닝 부재 → URL path 버저닝(/v1/) 도입이 명시되고 모든 After 엔드포인트에 /v1/ 접두사가 일관 적용된다", "type": "content_check"},
+        {"id": "refactor-13", "text": "id → booking_id 필드 이름 변경이 Breaking Change이므로 새 버전(/v2/)에서만 적용 또는 Expand-and-Contract 3단계(Expand: 두 필드 동시 반환 → Migrate: Deprecation/Sunset 헤더 → Contract: v2에서 제거)로 처리해야 함을 명시한다", "type": "content_check"},
+        {"id": "refactor-14", "text": "Sunset 헤더 또는 Deprecation 헤더 같은 디프리케이션 프로세스(최소 6개월 마이그레이션 기간)가 명시된다", "type": "content_check"},
+        {"id": "refactor-15", "text": "관련 스킬 참조 섹션이 응답 끝에 포함되고 다음 단계 워크플로우(예: implementation-django-ninja로 구현, architecture-db로 스키마 설계)가 안내된다", "type": "content_check"},
+        {"id": "refactor-16", "text": "리팩터링 결과가 모든 5개 엔드포인트(createBooking, booking list, doCancel, PUT booking, payment)를 빠짐없이 다룬다", "type": "content_check"}
+      ]
+    }
+  ]
+}

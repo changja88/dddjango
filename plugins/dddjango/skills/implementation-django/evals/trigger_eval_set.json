@@ -1,0 +1,22 @@
+[
+  {"query": "방금 우리 팀 동료가 PR로 올린 Django views.py 좀 같이 봐줄래? 클래스 기반인데 N+1 의심됨", "should_trigger": true},
+  {"query": "장고 모델에 status 필드 추가해야하는데 BooleanField 4개로 할까 TextChoices로 할까", "should_trigger": true},
+  {"query": "config/settings 디렉토리에 base.py local.py production.py 어떻게 분리해야 함?", "should_trigger": true},
+  {"query": "마이그레이션 파일에서 scheduled_at 컬럼명 무중단으로 바꾸려면 단계가 어떻게 됨?", "should_trigger": true},
+  {"query": "Django ORM에서 select_related 쓸지 prefetch_related 쓸지 헷갈림 ManyToMany는 어느쪽이야", "should_trigger": true},
+  {"query": "장고 시그널 post_save 같은 앱에서 쓰는 게 안티패턴이라 들었는데 진짜? 우리 코드베이스에 7군데 있음", "should_trigger": true},
+  {"query": "models.py가 800줄 넘었는데 service layer로 빼는 거 어떻게 시작? entity_action 네이밍 맞음?", "should_trigger": true},
+  {"query": "장고 5.2에서 새로 나온 GeneratedField 쓸만함? 합산 컬럼 만드는데", "should_trigger": true},
+  {"query": "post_save 시그널 대신 쓸 수 있는 패턴 추천해줘 우리 거 예약 시스템 디버깅이 너무 힘듦", "should_trigger": true},
+  {"query": "manage.py check --deploy로 잡힌 보안 경고 4개 있는데 production.py에 뭐 넣어야 함?", "should_trigger": true},
+  {"query": "Django에서 templates/ 디렉토리에 부트스트랩 5 적용한 메인 페이지 만들고 싶어 base.html 어떻게 시작?", "should_trigger": false},
+  {"query": "주문 도메인 모델링을 DDD로 잡아줘 Aggregate Root랑 Value Object 분리해서 ubiquitous language까지", "should_trigger": false},
+  {"query": "REST API 엔드포인트 URL 설계는 어떻게? /users/{id}/posts vs /users/posts/{id} 어느 쪽이 컨벤션?", "should_trigger": false},
+  {"query": "PostgreSQL 인덱스 종류 중 GIN과 GiST 차이 설명해줘 JSONB에 어떤 거 써야 함?", "should_trigger": false},
+  {"query": "pytest fixture 스코프 결정 기준 알려줘 function vs module vs session 언제 어떤 거", "should_trigger": false},
+  {"query": "Python dataclass와 pydantic BaseModel 비교 좀 해줘 어느 상황에 어떤 거 써야 함?", "should_trigger": false},
+  {"query": "헥사고날 아키텍처 + Django 결합해서 Port/Adapter 어디 둘지 디렉토리 구조 잡아줘", "should_trigger": false},
+  {"query": "TDD Red-Green-Refactor 사이클 처음 시작할 때 가이드 알려줘 첫 테스트 어떻게 작성해야 함?", "should_trigger": false},
+  {"query": "Django Channels로 WebSocket 실시간 채팅 구현 어떻게 시작? consumer 작성부터", "should_trigger": false},
+  {"query": "Django Celery 비동기 task queue 셋업 방법 redis broker 쓰려고", "should_trigger": false}
+]

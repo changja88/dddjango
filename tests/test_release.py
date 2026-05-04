@@ -47,6 +47,15 @@ class FileUpdateTests(unittest.TestCase):
         self.assertNotIn("/plugin marketplace add", readme)
         self.assertNotIn("/plugin install", readme)
 
+    def test_codex_marketplace_points_to_non_empty_plugin_path(self):
+        marketplace = json.loads((ROOT / ".agents/plugins/marketplace.json").read_text())
+        plugin = marketplace["plugins"][0]
+
+        self.assertEqual(plugin["name"], "dddjango")
+        self.assertEqual(plugin["source"]["source"], "local")
+        self.assertEqual(plugin["source"]["path"], "./plugins/dddjango")
+        self.assertTrue((ROOT / "plugins/dddjango/.codex-plugin/plugin.json").exists())
+
     def test_update_release_files_syncs_plugin_versions_and_readme_tag(self):
         root = self.create_fixture_repo("0.1.0")
 
@@ -54,10 +63,11 @@ class FileUpdateTests(unittest.TestCase):
 
         self.assertEqual(
             sorted(path.name for path in changed),
-            ["README.md", "marketplace.json", "plugin.json", "plugin.json"],
+            ["README.md", "marketplace.json", "plugin.json", "plugin.json", "plugin.json"],
         )
 
         self.assert_json_version(root / ".codex-plugin/plugin.json", "0.2.0")
+        self.assert_json_version(root / "plugins/dddjango/.codex-plugin/plugin.json", "0.2.0")
         self.assert_json_version(root / ".claude-plugin/plugin.json", "0.2.0")
 
         marketplace = json.loads((root / ".claude-plugin/marketplace.json").read_text())
@@ -120,6 +130,7 @@ class FileUpdateTests(unittest.TestCase):
         self.addCleanup(temp_dir.cleanup)
         root = Path(temp_dir.name)
         (root / ".codex-plugin").mkdir()
+        (root / "plugins/dddjango/.codex-plugin").mkdir(parents=True)
         (root / ".claude-plugin").mkdir()
 
         plugin = {
@@ -129,6 +140,9 @@ class FileUpdateTests(unittest.TestCase):
             "repository": "https://github.com/changja88/dddjango",
         }
         (root / ".codex-plugin/plugin.json").write_text(
+            json.dumps(plugin, indent=2) + "\n"
+        )
+        (root / "plugins/dddjango/.codex-plugin/plugin.json").write_text(
             json.dumps(plugin, indent=2) + "\n"
         )
         (root / ".claude-plugin/plugin.json").write_text(

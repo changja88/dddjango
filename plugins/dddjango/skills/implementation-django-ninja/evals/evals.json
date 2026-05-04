@@ -1,0 +1,83 @@
+{
+  "skill_name": "implementation-django-ninja",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "writing",
+      "mode": "writing",
+      "prompt": "강의 수강신청(Course Enrollment) API를 Django Ninja로 만들어줘.\n\n- 강의(Course) 목록 조회 API: 학과/학년/키워드로 필터링할 수 있고, 대량 결과를 위해 페이지네이션이 필요해\n- 강의 상세 조회 API\n- 인증된 학생만 수강신청을 할 수 있어. 토큰 기반 인증을 사용해\n- 수강신청 API는 같은 요청이 두 번 들어와도 한 번만 등록되어야 해\n- 정원 초과/중복 신청은 표준 오류 형식으로 응답해\n- 학생별 수강 내역 조회 API\n- 모든 요청/응답은 명시적으로 검증되어야 하고, 모든 엔드포인트는 타입 힌트를 가져야 해\n\nSchema, Router, 인증, 페이지네이션, 필터링, 에러 처리까지 모두 포함해서 구현해줘.",
+      "expected_output": "Schema/ModelSchema + Router + 내장 인증 + @paginate + FilterSchema + RFC 9457 에러 응답 + 멱등성을 포함한 Django Ninja 구현",
+      "files": [],
+      "expectations": [
+        {"id": "writing-01", "text": "요청/응답 검증에 `ninja.Schema` 또는 `ModelSchema`를 사용하고 DRF의 `serializers.ModelSerializer`/`serializers.Serializer`를 사용하지 않는다", "type": "content_check"},
+        {"id": "writing-02", "text": "ModelSchema 정의 시 `Meta.fields = '__all__'`을 사용하지 않고 명시적 필드 목록(예: `fields = ['id', 'title', 'department', 'grade']`)을 지정한다", "type": "content_check"},
+        {"id": "writing-03", "text": "엔드포인트는 `Router()` 인스턴스 + `@router.get/@router.post` 데코레이터 패턴으로 정의하고 DRF `ViewSet`/`APIView`를 사용하지 않는다", "type": "content_check"},
+        {"id": "writing-04", "text": "앱별 `Router()`를 정의하고 메인 `NinjaAPI`에서 `api.add_router(\"/courses/\", ...)` 형태로 합성한다", "type": "content_check"},
+        {"id": "writing-05", "text": "모든 엔드포인트의 매개변수와 반환 타입에 타입 힌트가 있다 (`def list_courses(request, filters: Query[CourseFilterSchema]) -> List[CourseSchema]` 등)", "type": "content_check"},
+        {"id": "writing-06", "text": "토큰 기반 인증에 Django Ninja 내장 `HttpBearer`(또는 `APIKeyHeader`)를 상속해 `authenticate()`를 구현하고 DRF `permission_classes`/`authentication_classes`를 사용하지 않는다", "type": "content_check"},
+        {"id": "writing-07", "text": "수강신청 같은 인증 필요 엔드포인트에는 `auth=AuthBearer()`(또는 동등한 인증기)를 명시적으로 부여한다", "type": "content_check"},
+        {"id": "writing-08", "text": "강의 목록 엔드포인트에 `from ninja.pagination import paginate`로 가져온 `@paginate` 데코레이터(`LimitOffsetPagination`/`PageNumberPagination`/`CursorPagination` 중 하나)를 사용한다", "type": "content_check"},
+        {"id": "writing-09", "text": "필터링은 `from ninja import FilterSchema, Query`로 정의한 `FilterSchema` 서브클래스 + `filters.filter(queryset)` 패턴이고, `request.GET.get(...)` 수동 파싱이나 if-체인 분기를 사용하지 않는다", "type": "content_check"},
+        {"id": "writing-10", "text": "키워드 검색에는 `Annotated[Optional[str], FilterLookup([...icontains, ...icontains])]` 형태의 다중 필드 lookup이 사용된다", "type": "content_check"},
+        {"id": "writing-11", "text": "에러 응답이 RFC 9457 Problem Details 형식(`type`, `title`, `status`, `detail`, `instance` 필드)이며 `application/problem+json` Content-Type을 사용한다", "type": "content_check"},
+        {"id": "writing-12", "text": "정원 초과/중복 신청 같은 도메인 에러는 `HttpError(409, ...)` 또는 도메인 예외 + `@api.exception_handler(...)` 핸들러로 처리되고 `{'error': '...'}` 같은 비표준 형식이 아니다", "type": "content_check"},
+        {"id": "writing-13", "text": "수강신청 POST의 멱등성이 처리된다 — `Idempotency-Key` 헤더(`Header(...)`로 추출) 또는 `(student, course)` DB 유니크 제약과 결합한 `get_or_create`/예외 캐치 패턴을 사용한다", "type": "content_check"},
+        {"id": "writing-14", "text": "응답 스키마가 상태 코드별로 분기된다 (`response={201: EnrollmentSchema, 409: ProblemDetail}` 같은 다중 응답 매핑)", "type": "content_check"},
+        {"id": "writing-15", "text": "Path 파라미터에 타입 어노테이션이 있고(`course_id: int`) URL 패턴은 `/{course_id}` 또는 Django 컨버터(`/{int:course_id}`) 형태로 작성된다", "type": "content_check"},
+        {"id": "writing-16", "text": "응답에 `## [관련 스킬 참조]` 섹션이 포함되어 다음 단계(architecture-api, implementation-django, implementation-test 등)로의 연결이 명시된다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "review",
+      "mode": "review",
+      "prompt": "아래 강의 수강신청 API 코드를 리뷰해줘:\n\n```python\nfrom rest_framework import serializers, viewsets\nfrom rest_framework.permissions import IsAuthenticated\nfrom rest_framework.response import Response\n\nclass CourseSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Course\n        fields = '__all__'\n\nclass CourseViewSet(viewsets.ModelViewSet):\n    queryset = Course.objects.all()\n    serializer_class = CourseSerializer\n    permission_classes = [IsAuthenticated]\n\n    def list(self, request):\n        # 페이지네이션 없이 전체 반환\n        department = request.GET.get('department')\n        grade = request.GET.get('grade')\n        keyword = request.GET.get('keyword')\n        qs = Course.objects.all()\n        if department:\n            qs = qs.filter(department=department)\n        if grade:\n            qs = qs.filter(grade=grade)\n        if keyword:\n            qs = qs.filter(title__icontains=keyword)\n        # 직렬화 시 N+1 무시\n        return Response(CourseSerializer(qs, many=True).data)\n\n# 수강신청\ndef enroll(request):\n    data = json.loads(request.body)   # 검증 없음\n    course_id = data['course_id']\n    student_id = data['student_id']\n    course = Course.objects.get(id=course_id)\n    if Enrollment.objects.filter(course=course, student_id=student_id).exists():\n        return JsonResponse({'error': '이미 신청함'}, status=400)\n    if course.enrolled_count >= course.capacity:\n        return JsonResponse({'error': '정원 초과'}, status=400)\n    Enrollment.objects.create(course=course, student_id=student_id)\n    course.enrolled_count += 1\n    course.save()\n    return JsonResponse({'ok': True})\n```",
+      "expected_output": "DRF 사용, fields='__all__', 타입 힌트 누락, 페이지네이션·인증·검증 미흡, 비표준 에러 형식, 멱등성 누락, FilterSchema 미사용 등을 지적",
+      "files": [],
+      "expectations": [
+        {"id": "review-01", "text": "`from rest_framework import serializers, viewsets` import 라인을 인용하며 DRF 사용 자체를 지적하고 Django Ninja Schema/Router로의 전환을 권고한다 (이 저장소의 금지 패턴)", "type": "content_check"},
+        {"id": "review-02", "text": "`CourseSerializer(serializers.ModelSerializer)` → `ninja.ModelSchema`로 교체해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-03", "text": "`fields = '__all__'`를 명시적 필드 목록으로 제한해야 한다고 지적하며 비밀번호/민감 필드 노출 위험을 언급한다", "type": "content_check"},
+        {"id": "review-04", "text": "`CourseViewSet(viewsets.ModelViewSet)` → `Router()` + `@router.get/@router.post` 데코레이터 엔드포인트로 분해해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-05", "text": "`permission_classes = [IsAuthenticated]`를 Django Ninja 내장 인증(`HttpBearer`/`SessionAuth`/`APIKeyHeader` 중 하나) + `auth=` 매개변수로 교체해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-06", "text": "`def list(self, request)`, `def enroll(request)` 모두 매개변수/반환 타입 힌트가 누락되었음을 지적한다", "type": "content_check"},
+        {"id": "review-07", "text": "강의 목록 엔드포인트에 페이지네이션이 없는 점을 지적하고 `@paginate` 데코레이터 적용을 권고한다", "type": "content_check"},
+        {"id": "review-08", "text": "`request.GET.get('department')` 등 수동 쿼리 파라미터 파싱과 if-체인 분기를 `FilterSchema` + `Query[...]` + `filters.filter(qs)`로 교체해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-09", "text": "`enroll` 뷰의 `json.loads(request.body)` 직접 파싱과 검증 부재를 지적하고 `payload: EnrollmentIn` 형태의 Schema 기반 입력 검증을 권고한다", "type": "content_check"},
+        {"id": "review-10", "text": "`enroll` 뷰에 인증이 없는 점을 지적하며 `auth=AuthBearer()` 등 인증 필수임을 언급한다", "type": "content_check"},
+        {"id": "review-11", "text": "`JsonResponse({'error': '...'}, status=400)` 비표준 에러 형식을 RFC 9457 Problem Details(`type`/`title`/`status`/`detail`/`instance`) + `application/problem+json`로 변경해야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-12", "text": "정원 초과는 409 Conflict, 검증 실패는 422 같은 의미 있는 상태 코드를 사용해야 하며 모든 도메인 에러를 400으로 통일하지 말아야 한다고 지적한다", "type": "content_check"},
+        {"id": "review-13", "text": "수강신청 POST의 멱등성 누락을 지적하며 `Idempotency-Key` 헤더 처리 또는 `(student, course)` DB 유니크 제약 + IntegrityError 캐치 패턴을 권고한다", "type": "content_check"},
+        {"id": "review-14", "text": "`enrolled_count += 1` + `course.save()`의 race condition을 지적하며 `F` expression, `select_for_update`, 또는 트랜잭션/낙관적 잠금 적용을 권고한다", "type": "content_check"},
+        {"id": "review-15", "text": "`CourseSerializer(qs, many=True).data` 직렬화 시 N+1 위험을 지적하며 `select_related/prefetch_related` 또는 ModelSchema resolver와 함께 쿼리 최적화를 권고한다", "type": "content_check"},
+        {"id": "review-16", "text": "응답에 `## [관련 스킬 참조]` 섹션이 포함되어 implementation-django(N+1/락), architecture-api(에러/상태 코드) 등으로의 다음 단계가 명시된다", "type": "content_check"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "refactoring",
+      "mode": "refactoring",
+      "prompt": "아래 강의 수강신청 API 코드를 Django Ninja 컨벤션에 맞게 리팩토링해줘. Before/After/Reason 형식으로 보여줘.\n\n```python\nfrom rest_framework import serializers, viewsets\nfrom rest_framework.decorators import action\nfrom rest_framework.permissions import IsAuthenticated\n\nclass CourseSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Course\n        fields = '__all__'\n\nclass CourseViewSet(viewsets.ModelViewSet):\n    queryset = Course.objects.all()\n    serializer_class = CourseSerializer\n    permission_classes = [IsAuthenticated]\n    authentication_classes = [TokenAuthentication]\n\n    def list(self, request):\n        qs = Course.objects.all()\n        dept = request.GET.get('department')\n        if dept:\n            qs = qs.filter(department=dept)\n        return Response(CourseSerializer(qs, many=True).data)\n\n    @action(detail=True, methods=['post'])\n    def enroll(self, request, pk):\n        course = Course.objects.get(pk=pk)\n        student_id = request.data.get('student_id')\n        if not student_id:\n            return Response({'error': 'student_id required'}, status=400)\n        # 같은 요청 두 번 들어오면 두 번 등록됨\n        Enrollment.objects.create(course=course, student_id=student_id)\n        course.enrolled_count += 1\n        course.save()\n        return Response({'enrolled': True})\n```",
+      "expected_output": "DRF→Django Ninja 전환, Schema/Router/인증 도입, @paginate + FilterSchema, RFC 9457, 멱등성 적용을 Before/After/Reason 형식으로 제시",
+      "files": [],
+      "expectations": [
+        {"id": "refactor-01", "text": "모든 변경이 `[Before] / [After] / [Reason]` 포맷으로 제시되고 각 Reason에 어떤 Django Ninja 컨벤션을 따르는지 명시된다", "type": "content_check"},
+        {"id": "refactor-02", "text": "`CourseSerializer(serializers.ModelSerializer, fields='__all__')` → 명시적 `fields=['id', 'title', ...]`를 가진 `ninja.ModelSchema`로 변환하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-03", "text": "`CourseViewSet(viewsets.ModelViewSet)` → `Router()` + `@router.get(\"/\")`/`@router.post(\"/{course_id}/enroll\")` 데코레이터 엔드포인트로 분해하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-04", "text": "`permission_classes = [IsAuthenticated]` + `authentication_classes = [TokenAuthentication]` → Django Ninja `HttpBearer` 서브클래스 + `auth=AuthBearer()` 부여로 교체하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-05", "text": "모든 매개변수/반환에 타입 힌트가 추가된다 (`def enroll(request, course_id: int, payload: EnrollmentIn) -> EnrollmentOut`)", "type": "content_check"},
+        {"id": "refactor-06", "text": "`list` 메서드의 `request.GET.get('department')` + if 분기 → `FilterSchema` + `filters: Query[CourseFilterSchema]` + `filters.filter(qs)`로 변환하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-07", "text": "강의 목록에 `@paginate(PageNumberPagination)` 또는 동등한 페이지네이터를 추가하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-08", "text": "`enroll`의 `request.data.get('student_id')` + 수동 검증 → `payload: EnrollmentIn` Schema 기반 입력 검증으로 교체하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-09", "text": "`Response({'error': '...'}, status=400)` → `HttpError(409, ...)` 또는 도메인 예외 + `@api.exception_handler` + RFC 9457 Problem Details(`application/problem+json`) 응답으로 변환하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-10", "text": "응답에 `response={201: EnrollmentOut, 409: ProblemDetail}` 같은 상태 코드별 다중 응답 스키마가 적용된다", "type": "content_check"},
+        {"id": "refactor-11", "text": "`Enrollment.objects.create(...)`의 비멱등 문제 → `Idempotency-Key` 헤더 처리 또는 `(student, course)` DB 유니크 제약 + `IntegrityError` 캐치(`get_or_create`) 패턴 적용으로 변환하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-12", "text": "`course.enrolled_count += 1; course.save()` race condition → `F('enrolled_count') + 1` 또는 `select_for_update`/트랜잭션 경계 적용으로 변환하는 Before/After가 있다", "type": "content_check"},
+        {"id": "refactor-13", "text": "정원 초과/중복 같은 도메인 규칙은 서비스 레이어 또는 도메인 메서드로 추출되고 엔드포인트가 fat하지 않다 (Reason에 'fat endpoint → service layer' 명시)", "type": "content_check"},
+        {"id": "refactor-14", "text": "프로젝트 구조 — 앱별 `api.py`에 `Router()`를 두고 메인 `NinjaAPI`에서 `add_router()`로 합성하는 권장 구조가 제시된다", "type": "content_check"},
+        {"id": "refactor-15", "text": "외부 I/O가 있는 엔드포인트(있다면)에 대해 sync→async 전환 가능성이 검토되거나, 검토 후 sync 유지 근거가 명시된다", "type": "content_check"},
+        {"id": "refactor-16", "text": "응답에 `## [관련 스킬 참조]` 섹션이 포함되어 implementation-django(F/select_for_update), architecture-api(idempotency/상태 코드), implementation-test(TestClient) 등으로의 다음 단계가 명시된다", "type": "content_check"}
+      ]
+    }
+  ]
+}

@@ -14,6 +14,7 @@ from pathlib import Path
 SEMVER_RE = re.compile(r"^v(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)$")
 VERSION_FILES = (
     Path(".codex-plugin/plugin.json"),
+    Path("plugins/dddjango/.codex-plugin/plugin.json"),
     Path(".claude-plugin/plugin.json"),
     Path(".claude-plugin/marketplace.json"),
     Path("README.md"),
@@ -68,6 +69,7 @@ def update_release_files(root: Path, version: str) -> list[Path]:
     plain_version = version.removeprefix("v")
     changed = [
         update_plugin_json(root / ".codex-plugin/plugin.json", plain_version),
+        update_plugin_json(root / "plugins/dddjango/.codex-plugin/plugin.json", plain_version),
         update_plugin_json(root / ".claude-plugin/plugin.json", plain_version),
         update_marketplace_json(root / ".claude-plugin/marketplace.json", plain_version),
         update_readme(root / "README.md", version),
@@ -220,6 +222,7 @@ def preflight(root: Path, version: str) -> None:
 def validate(root: Path) -> None:
     print_section("검증")
     run_step("Codex plugin JSON", lambda: run(["python3", "-m", "json.tool", ".codex-plugin/plugin.json"], root, quiet=True))
+    run_step("Codex packaged plugin JSON", lambda: run(["python3", "-m", "json.tool", "plugins/dddjango/.codex-plugin/plugin.json"], root, quiet=True))
     run_step("Claude plugin JSON", lambda: run(["python3", "-m", "json.tool", ".claude-plugin/plugin.json"], root, quiet=True))
     run_step("Claude marketplace JSON", lambda: run(["python3", "-m", "json.tool", ".claude-plugin/marketplace.json"], root, quiet=True))
     run_step("Codex marketplace JSON", lambda: run(["python3", "-m", "json.tool", ".agents/plugins/marketplace.json"], root, quiet=True))
@@ -237,6 +240,7 @@ def create_commit_and_tag(root: Path, version: str) -> None:
                 "git",
                 "add",
                 ".codex-plugin/plugin.json",
+                "plugins/dddjango/.codex-plugin/plugin.json",
                 ".claude-plugin/plugin.json",
                 ".claude-plugin/marketplace.json",
                 "README.md",
