@@ -105,18 +105,15 @@ Use a separate Codex profile, machine account, or disposable environment for sha
 Recommended checks before a release:
 
 1. Validate Claude plugin metadata with `/plugins validate .` or `claude plugin validate .`.
-2. Run a Codex smoke or conformance evaluation:
+2. Run the Codex conformance evaluation:
 
    ```bash
-   make smoke-eval
    make eval-conformance
    ```
 
-   Use `make full-eval` for the 24-case Codex benchmark before a larger release.
-
-   These targets are **skill-unit evaluations**: they inject local `SKILL.md`
+   This target is a **skill-unit evaluation**: it injects local `SKILL.md`
    paths so the reusable skill instructions can be tested without relying on a
-   personal Codex plugin profile. They must not be used as the final proof that
+   personal Codex plugin profile. It must not be used as the final proof that
    the published marketplace plugin loads correctly.
 
    To test the installed plugin path, use a disposable Codex profile or
@@ -188,7 +185,6 @@ Evaluation cadence:
 
 - Every skill change: `make eval-conformance`
 - Before release: `make test-release`, `git diff --check`, and the latest HTML report
-- Larger release: `make full-eval`
 - Published plugin verification: `make eval-plugin-real` from a disposable profile with the plugin installed and enabled
 - Claude validation remains blocked until Claude Code subscription access or `ANTHROPIC_API_KEY` is available.
 
