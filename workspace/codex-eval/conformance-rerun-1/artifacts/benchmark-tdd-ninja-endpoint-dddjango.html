@@ -76,138 +76,199 @@
     <div class="path">workspace/codex-eval/conformance-rerun-1/dddjango/benchmark-tdd-ninja-endpoint.output.md</div>
   </header>
   <main>
-    <article class="markdown"><p><strong>주요 내용</strong></p>
-<p>읽기 전용 workspace라 파일 생성/pytest 실행은 하지 못했습니다. 아래는 실제 프로젝트에 옮겨 넣는 TDD 예시입니다. 예시는 <code>POST /reservations</code>가 재고를 예약하는 API이며, validation 실패, 성공, edge case, 도메인 예외, 명시적 <code>Result Type</code>을 포함합니다.</p>
-<p><strong>RED: endpoint test 먼저</strong></p>
+    <article class="markdown"><p>사용 스킬: <code>dddjango:implementation-tdd</code> → <code>implementation-test</code> → <code>architecture-api</code> → <code>implementation-django-ninja</code>.</p>
+<p>현재 워크스페이스가 read-only라서 파일 생성이나 <code>pytest</code> 실행은 하지 못했습니다. 아래는 실제 프로젝트에 옮겨 실행할 수 있는 RED 테스트, 예상 실패, GREEN 구현, REFACTOR 메모입니다. 에러 응답은 <strong>Problem Details</strong> 형식과 <code>application/problem+json</code>을 사용하고, 목록 성공 응답이 필요할 때는 <code>items</code>/<code>meta</code> envelope를 사용합니다.</p>
+<p>가정: <code>POST /api/reservations</code> 엔드포인트가 상품 예약을 생성한다. 수량은 <code>1..10</code>, 같은 <code>Idempotency-Key</code>는 중복 요청으로 처리한다.</p>
+<p><strong>RED 테스트</strong> <code>tests/isolated/integration/test_reservation_api.py</code></p>
 <pre><code>
-# tests/isolated/api/test_reservations_api.py
 import pytest
 from ninja.testing import TestClient
 
-from apps.inventory.api import api
+from reservations.api import router
 
 
 @pytest.fixture
 def client() -&gt; TestClient:
-    return TestClient(api)
+    return TestClient(router)
 
 
-def test_create_reservation_invalid_quantity_returns_422(client: TestClient):
+def test_create_reservation_valid_payload_returns_created(client: TestClient) -&gt; None:
     # Arrange
-    payload = {&quot;product_id&quot;: 1, &quot;quantity&quot;: 0}
+    payload = {&quot;product_id&quot;: &quot;P-001&quot;, &quot;quantity&quot;: 2}
 
     # Act
-    response = client.post(&quot;/reservations&quot;, json=payload)
-
-    # Assert
-    assert response.status_code == 422
-
-
-def test_create_reservation_unknown_product_returns_problem_detail(client: TestClient):
-    # Arrange
-    payload = {&quot;product_id&quot;: 999, &quot;quantity&quot;: 1}
-
-    # Act
-    response = client.post(&quot;/reservations&quot;, json=payload)
-
-    # Assert
-    assert response.status_code == 404
-    assert response[&quot;content-type&quot;] == &quot;application/problem+json&quot;
-    assert response.json()[&quot;type&quot;] == &quot;https://api.example.com/problems/product-not-found&quot;
-
-
-def test_create_reservation_out_of_stock_returns_problem_detail(client: TestClient):
-    # Arrange
-    payload = {&quot;product_id&quot;: 1, &quot;quantity&quot;: 11}
-
-    # Act
-    response = client.post(&quot;/reservations&quot;, json=payload)
-
-    # Assert
-    assert response.status_code == 409
-    assert response.json()[&quot;type&quot;] == &quot;https://api.example.com/problems/out-of-stock&quot;
-
-
-def test_create_reservation_success_returns_result(client: TestClient):
-    # Arrange
-    payload = {&quot;product_id&quot;: 1, &quot;quantity&quot;: 2}
-
-    # Act
-    response = client.post(&quot;/reservations&quot;, json=payload)
+    response = client.post(
+        &quot;/reservations&quot;,
+        json=payload,
+        headers={&quot;Idempotency-Key&quot;: &quot;req-001&quot;},
+    )
 
     # Assert
     assert response.status_code == 201
     assert response.json() == {
-        &quot;product_id&quot;: 1,
-        &quot;reserved_quantity&quot;: 2,
-        &quot;remaining_quantity&quot;: 8,
+        &quot;reservation_id&quot;: &quot;res_req-001&quot;,
+        &quot;product_id&quot;: &quot;P-001&quot;,
+        &quot;quantity&quot;: 2,
+        &quot;status&quot;: &quot;reserved&quot;,
     }
+
+
+@pytest.mark.parametrize(
+    (&quot;payload&quot;, &quot;field&quot;),
+    [
+        ({&quot;product_id&quot;: &quot;&quot;, &quot;quantity&quot;: 1}, &quot;product_id&quot;),
+        ({&quot;product_id&quot;: &quot;P-001&quot;, &quot;quantity&quot;: 0}, &quot;quantity&quot;),
+        ({&quot;product_id&quot;: &quot;P-001&quot;, &quot;quantity&quot;: 11}, &quot;quantity&quot;),
+    ],
+)
+def test_create_reservation_invalid_payload_returns_problem_details(
+    client: TestClient,
+    payload: dict[str, object],
+    field: str,
+) -&gt; None:
+    # Arrange
+
+    # Act
+    response = client.post(
+        &quot;/reservations&quot;,
+        json=payload,
+        headers={&quot;Idempotency-Key&quot;: &quot;req-invalid&quot;},
+    )
+
+    # Assert
+    assert response.status_code == 422
+    assert response[&quot;Content-Type&quot;].startswith(&quot;application/problem+json&quot;)
+    body = response.json()
+    assert body[&quot;type&quot;] == &quot;https://api.example.com/problems/validation-error&quot;
+    assert body[&quot;title&quot;] == &quot;Validation error&quot;
+    assert body[&quot;status&quot;] == 422
+    assert field in body[&quot;detail&quot;]
+
+
+def test_create_reservation_missing_idempotency_key_returns_problem_details(
+    client: TestClient,
+) -&gt; None:
+    # Arrange
+    payload = {&quot;product_id&quot;: &quot;P-001&quot;, &quot;quantity&quot;: 1}
+
+    # Act
+    response = client.post(&quot;/reservations&quot;, json=payload)
+
+    # Assert
+    assert response.status_code == 400
+    assert response[&quot;Content-Type&quot;].startswith(&quot;application/problem+json&quot;)
+    assert response.json() == {
+        &quot;type&quot;: &quot;https://api.example.com/problems/missing-idempotency-key&quot;,
+        &quot;title&quot;: &quot;Missing Idempotency-Key&quot;,
+        &quot;status&quot;: 400,
+        &quot;detail&quot;: &quot;Idempotency-Key header is required.&quot;,
+    }
+
+
+def test_create_reservation_out_of_stock_domain_exception_returns_conflict(
+    client: TestClient,
+) -&gt; None:
+    # Arrange
+    payload = {&quot;product_id&quot;: &quot;SOLD-OUT&quot;, &quot;quantity&quot;: 1}
+
+    # Act
+    response = client.post(
+        &quot;/reservations&quot;,
+        json=payload,
+        headers={&quot;Idempotency-Key&quot;: &quot;req-sold-out&quot;},
+    )
+
+    # Assert
+    assert response.status_code == 409
+    assert response[&quot;Content-Type&quot;].startswith(&quot;application/problem+json&quot;)
+    assert response.json() == {
+        &quot;type&quot;: &quot;https://api.example.com/problems/out-of-stock&quot;,
+        &quot;title&quot;: &quot;Out of stock&quot;,
+        &quot;status&quot;: 409,
+        &quot;detail&quot;: &quot;Product SOLD-OUT does not have enough stock.&quot;,
+    }
+
+
+def test_create_reservation_duplicate_idempotency_key_returns_same_success(
+    client: TestClient,
+) -&gt; None:
+    # Arrange
+    payload = {&quot;product_id&quot;: &quot;P-001&quot;, &quot;quantity&quot;: 1}
+    headers = {&quot;Idempotency-Key&quot;: &quot;req-duplicate&quot;}
+
+    # Act
+    first_response = client.post(&quot;/reservations&quot;, json=payload, headers=headers)
+    second_response = client.post(&quot;/reservations&quot;, json=payload, headers=headers)
+
+    # Assert
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+    assert second_response.json() == first_response.json()
 </code></pre>
 <p><strong>예상 실패 이유</strong></p>
-<p>처음에는 <code>apps.inventory.api</code>, <code>ReservationIn</code>, <code>ReservationOut</code>, 도메인 예외, <code>reserve_stock()</code>이 없으므로 import 또는 404/409 처리에서 실패해야 합니다. 이 실패가 RED입니다.</p>
-<p><strong>GREEN: 최소 구현</strong></p>
+<p>처음에는 <code>reservations.api</code>, <code>ReservationCreateIn</code>, 도메인 예외, <code>CreateReservationResult</code>, 서비스 함수, validation exception handler가 없어서 import error 또는 404/500으로 실패해야 합니다. 특히 validation 실패는 Django Ninja 기본 응답이 Problem Details가 아니므로 커스텀 handler를 추가하기 전에는 <code>Content-Type</code>과 body shape assertion이 실패합니다.</p>
+<p><strong>GREEN 최소 구현</strong> <code>reservations/domain.py</code></p>
 <pre><code>
-# apps/inventory/domain.py
 from dataclasses import dataclass
 
 
-class InventoryDomainError(Exception):
+class ReservationDomainError(Exception):
     pass
 
 
-class ProductNotFound(InventoryDomainError):
-    pass
-
-
-class OutOfStock(InventoryDomainError):
-    pass
+class OutOfStock(ReservationDomainError):
+    def __init__(self, product_id: str) -&gt; None:
+        self.product_id = product_id
+        super().__init__(f&quot;Product {product_id} does not have enough stock.&quot;)
 
 
 @dataclass(frozen=True)
-class ReserveStockResult:
-    product_id: int
-    reserved_quantity: int
-    remaining_quantity: int
-
-
-STOCKS: dict[int, int] = {1: 10}
-
-
-def reserve_stock(product_id: int, quantity: int) -&gt; ReserveStockResult:
-    if product_id not in STOCKS:
-        raise ProductNotFound
-
-    current_quantity = STOCKS[product_id]
-    if quantity &gt; current_quantity:
-        raise OutOfStock
-
-    remaining_quantity = current_quantity - quantity
-    STOCKS[product_id] = remaining_quantity
-
-    return ReserveStockResult(
-        product_id=product_id,
-        reserved_quantity=quantity,
-        remaining_quantity=remaining_quantity,
-    )
+class CreateReservationResult:
+    reservation_id: str
+    product_id: str
+    quantity: int
+    status: str
 </code></pre>
+<p><code>reservations/services.py</code></p>
 <pre><code>
-# apps/inventory/api.py
-from django.http import HttpRequest, JsonResponse
-from ninja import NinjaAPI, Router, Schema
+from reservations.domain import CreateReservationResult, OutOfStock
+
+_RESERVATIONS_BY_KEY: dict[str, CreateReservationResult] = {}
+
+
+def create_reservation(
+    *,
+    product_id: str,
+    quantity: int,
+    idempotency_key: str,
+) -&gt; CreateReservationResult:
+    existing = _RESERVATIONS_BY_KEY.get(idempotency_key)
+    if existing is not None:
+        return existing
+
+    if product_id == &quot;SOLD-OUT&quot;:
+        raise OutOfStock(product_id)
+
+    result = CreateReservationResult(
+        reservation_id=f&quot;res_{idempotency_key}&quot;,
+        product_id=product_id,
+        quantity=quantity,
+        status=&quot;reserved&quot;,
+    )
+    _RESERVATIONS_BY_KEY[idempotency_key] = result
+    return result
+</code></pre>
+<p><code>reservations/api.py</code></p>
+<pre><code>
+from django.http import HttpRequest, HttpResponse
+from ninja import Router, Schema
+from ninja.errors import ValidationError
 from pydantic import Field
 
-from apps.inventory.domain import OutOfStock, ProductNotFound, reserve_stock
+from reservations.domain import OutOfStock
+from reservations.services import create_reservation
 
-
-class ReservationIn(Schema):
-    product_id: int = Field(gt=0)
-    quantity: int = Field(gt=0, le=100)
-
-
-class ReservationOut(Schema):
-    product_id: int
-    reserved_quantity: int
-    remaining_quantity: int
+router = Router()
 
 
 class ProblemDetail(Schema):
@@ -215,66 +276,134 @@ class ProblemDetail(Schema):
     title: str
     status: int
     detail: str
-    instance: str
 
+
+class ReservationCreateIn(Schema):
+    product_id: str = Field(min_length=1)
+    quantity: int = Field(ge=1, le=10)
+
+
+class ReservationOut(Schema):
+    reservation_id: str
+    product_id: str
+    quantity: int
+    status: str
+
+
+def problem_response(
+    request: HttpRequest,
+    *,
+    status: int,
+    type_: str,
+    title: str,
+    detail: str,
+) -&gt; HttpResponse:
+    response = router.api.create_response(
+        request,
+        {&quot;type&quot;: type_, &quot;title&quot;: title, &quot;status&quot;: status, &quot;detail&quot;: detail},
+        status=status,
+    )
+    response[&quot;Content-Type&quot;] = &quot;application/problem+json&quot;
+    return response
+
+
+@router.api.exception_handler(ValidationError)
+def validation_error_handler(request: HttpRequest, exc: ValidationError) -&gt; HttpResponse:
+    return problem_response(
+        request,
+        status=422,
+        type_=&quot;https://api.example.com/problems/validation-error&quot;,
+        title=&quot;Validation error&quot;,
+        detail=str(exc),
+    )
+
+
+@router.api.exception_handler(OutOfStock)
+def out_of_stock_handler(request: HttpRequest, exc: OutOfStock) -&gt; HttpResponse:
+    return problem_response(
+        request,
+        status=409,
+        type_=&quot;https://api.example.com/problems/out-of-stock&quot;,
+        title=&quot;Out of stock&quot;,
+        detail=str(exc),
+    )
+
+
+@router.post(
+    &quot;/reservations&quot;,
+    response={201: ReservationOut, 400: ProblemDetail, 409: ProblemDetail, 422: ProblemDetail},
+)
+def create_reservation_endpoint(
+    request: HttpRequest,
+    payload: ReservationCreateIn,
+) -&gt; tuple[int, ReservationOut] | HttpResponse:
+    idempotency_key = request.headers.get(&quot;Idempotency-Key&quot;)
+    if not idempotency_key:
+        return problem_response(
+            request,
+            status=400,
+            type_=&quot;https://api.example.com/problems/missing-idempotency-key&quot;,
+            title=&quot;Missing Idempotency-Key&quot;,
+            detail=&quot;Idempotency-Key header is required.&quot;,
+        )
+
+    result = create_reservation(
+        product_id=payload.product_id,
+        quantity=payload.quantity,
+        idempotency_key=idempotency_key,
+    )
+    return 201, ReservationOut(
+        reservation_id=result.reservation_id,
+        product_id=result.product_id,
+        quantity=result.quantity,
+        status=result.status,
+    )
+</code></pre>
+<p>API 합성 예시는 이렇게 둡니다.</p>
+<p><code>config/api.py</code></p>
+<pre><code>
+from ninja import NinjaAPI
+
+from reservations.api import router as reservations_router
 
 api = NinjaAPI()
-router = Router()
-
-
-@api.exception_handler(ProductNotFound)
-def handle_product_not_found(request: HttpRequest, exc: ProductNotFound) -&gt; JsonResponse:
-    return JsonResponse(
-        {
-            &quot;type&quot;: &quot;https://api.example.com/problems/product-not-found&quot;,
-            &quot;title&quot;: &quot;Product not found&quot;,
-            &quot;status&quot;: 404,
-            &quot;detail&quot;: &quot;The requested product does not exist.&quot;,
-            &quot;instance&quot;: request.path,
-        },
-        status=404,
-        content_type=&quot;application/problem+json&quot;,
-    )
-
-
-@api.exception_handler(OutOfStock)
-def handle_out_of_stock(request: HttpRequest, exc: OutOfStock) -&gt; JsonResponse:
-    return JsonResponse(
-        {
-            &quot;type&quot;: &quot;https://api.example.com/problems/out-of-stock&quot;,
-            &quot;title&quot;: &quot;Out of stock&quot;,
-            &quot;status&quot;: 409,
-            &quot;detail&quot;: &quot;Requested quantity exceeds available stock.&quot;,
-            &quot;instance&quot;: request.path,
-        },
-        status=409,
-        content_type=&quot;application/problem+json&quot;,
-    )
-
-
-@router.post(&quot;&quot;, response={201: ReservationOut})
-def create_reservation(
-    request: HttpRequest,
-    payload: ReservationIn,
-) -&gt; tuple[int, ReservationOut]:
-    result = reserve_stock(payload.product_id, payload.quantity)
-    return 201, ReservationOut(
-        product_id=result.product_id,
-        reserved_quantity=result.reserved_quantity,
-        remaining_quantity=result.remaining_quantity,
-    )
-
-
-api.add_router(&quot;/reservations&quot;, router)
+api.add_router(&quot;&quot;, reservations_router)
 </code></pre>
-<p><strong>REFACTOR notes</strong></p>
-<p><code>STOCKS</code>는 GREEN용 fake입니다. 다음 단계에서 <code>InventoryRepository</code>를 도메인/애플리케이션 계층의 포트로 분리하고, Django ORM 구현체는 adapter로 둡니다. <code>reserve_stock()</code>은 transaction 경계 안에서 호출하고, 동시성은 <code>version</code> 필드나 조건부 <code>UPDATE</code>로 보호합니다. Validation 실패도 RFC 9457로 통일하려면 <code>ninja.errors.ValidationError</code> 핸들러를 추가해 422 Problem Detail로 변환합니다.</p>
-<p><strong>실행 명령</strong></p>
+<p><code>config/urls.py</code></p>
 <pre><code>
-DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/api/test_reservations_api.py -q
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>목록 응답이 있는 엔드포인트라면 성공 응답은 Problem Details가 아니라 <code>items</code>/<code>meta</code> envelope를 씁니다.</p>
+<pre><code>
+class ReservationListOut(Schema):
+    items: list[ReservationOut]
+    meta: dict[str, int]
+</code></pre>
+<p>예시 shape:</p>
+<pre><code>
+{
+  &quot;items&quot;: [],
+  &quot;meta&quot;: {&quot;limit&quot;: 20, &quot;offset&quot;: 0, &quot;total&quot;: 0}
+}
+</code></pre>
+<p><strong>REFACTOR 방향</strong></p>
+<p>지금 GREEN 구현의 <code>_RESERVATIONS_BY_KEY</code>는 테스트를 통과시키는 최소 fake입니다. 실제 프로젝트에서는 <code>ReservationRepository</code> 경계를 만들고, isolated 테스트에서는 <code>InMemoryReservationRepository</code>, 운영에서는 Django ORM repository로 교체합니다.</p>
+<p><code>OutOfStock</code> 같은 도메인 예외는 API 상태 코드와 분리해서 도메인 계층에 둡니다. API 계층은 예외를 Problem Details로 번역만 합니다.</p>
+<p>멱등성 처리는 DB unique constraint와 transaction으로 보호해야 합니다. 실패 응답을 저장해야 하는 요구가 있다면 <code>transaction.atomic()</code> 안에서 실패 상태를 저장한 뒤 예외를 다시 raise하지 말고, 명시적 Result Type으로 반환해 rollback으로 기록이 사라지지 않게 합니다.</p>
+<p>테스트 디렉터리는 <code>tests/isolated/integration/</code>에 API 테스트를 두고, 운영 인프라를 쓰는 테스트는 <code>tests/real/integration/</code>로 분리합니다. <code>tests/isolated/</code>는 <code>config.settings.test</code>에서 locmem cache, locmem email, in-memory DB 또는 testcontainers DB, eager celery를 쓰도록 분리하는 편이 안전합니다.</p>
+<p><strong>pytest 명령</strong></p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/test_reservation_api.py -q
 python manage.py check
 </code></pre>
-<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja endpoint 테스트 → <strong>implementation-django-ninja</strong> 스킬 &gt; - pytest RED/GREEN/REFACTOR → <strong>implementation-tdd</strong> 스킬</p></article>
+<p>시간 의존 테스트가 추가되면 <code>time-machine</code>을 기본으로 쓰세요. <code>freezegun</code>은 순수 Python 구현인 반면 <code>time-machine</code>은 C 확장으로 구현되어 있어 동일 작업에서 100~200배 빠릅니다. 시간 모킹이 많은 테스트 스위트에서는 실행 시간 차이가 실제로 커집니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - pytest 테스트 구조와 fixture → <strong>implementation-test</strong> 스킬 &gt; - Red-Green-Refactor 진행 → <strong>implementation-tdd</strong> 스킬 &gt; - REST 상태 코드와 Problem Details → <strong>architecture-api</strong> 스킬</p></article>
   </main>
 </body>
 </html>

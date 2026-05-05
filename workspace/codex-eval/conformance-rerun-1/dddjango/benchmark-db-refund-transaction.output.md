@@ -1,33 +1,55 @@
-**주요 내용**
+**조회 패턴 / 워크로드**
 
-핵심은 `Order.refunded_amount`를 “누적 환불 확정 또는 예약 금액”으로 두고, 환불 생성 시 `Order` 행을 잠근 뒤 같은 트랜잭션 안에서 중복 키와 잔액을 검사하는 구조입니다. `Refund`들의 합계를 매번 계산해서 막는 방식은 동시 요청에서 깨지기 쉽고, DB `CHECK`로도 “자식 row 합계 <= 부모 금액”은 직접 표현하기 어렵습니다.
+대표 조회는 아래를 기준으로 인덱스와 잠금 범위를 잡습니다.
 
 ```python
-# orders/models.py
+Refund.objects.filter(order_id=order_id, idempotency_key=key).first()
+Refund.objects.filter(order_id=order_id).order_by("-created_at")
+Refund.objects.filter(status=Refund.Status.PENDING).order_by("created_at")
+Order.objects.select_for_update().get(id=order_id)
+Order.objects.filter(customer_id=customer_id).order_by("-created_at")
+```
+
+핵심은 `Order.refunded_amount`를 주문의 환불 누적 잔액으로 두고, 환불 생성 시 `Order` 행 하나를 `select_for_update()`로 잠그는 구조입니다. “부분 환불 허용”, “중복 요청 방지”, “잔액 초과 방지”를 모두 이 주문 행 잠금 기준으로 직렬화합니다.
+
+**모델 설계**
+
+```python
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import CheckConstraint, F, Q, UniqueConstraint
 
 
 class Order(models.Model):
-    paid_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    refunded_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    class Status(models.TextChoices):
+        PAID = "paid", "Paid"
+        PARTIALLY_REFUNDED = "partially_refunded", "Partially refunded"
+        REFUNDED = "refunded", "Refunded"
+
+    customer = models.ForeignKey("users.User", on_delete=models.PROTECT)
+    status = models.CharField(max_length=32, choices=Status.choices)
+    paid_amount = models.PositiveBigIntegerField()
+    refunded_amount = models.PositiveBigIntegerField(default=0)
 
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                condition=Q(paid_amount__gte=0),
-                name="order_paid_amount_gte_0",
+            CheckConstraint(
+                condition=Q(paid_amount__gt=0),
+                name="orders_order_paid_amount_positive",
             ),
-            models.CheckConstraint(
+            CheckConstraint(
                 condition=Q(refunded_amount__gte=0),
-                name="order_refunded_amount_gte_0",
+                name="orders_order_refunded_amount_non_negative",
             ),
-            models.CheckConstraint(
+            CheckConstraint(
                 condition=Q(refunded_amount__lte=F("paid_amount")),
-                name="order_refunded_amount_lte_paid_amount",
+                name="orders_order_refunded_not_over_paid",
             ),
         ]
+
+    @property
+    def refundable_amount(self) -> int:
+        return self.paid_amount - self.refunded_amount
 
 
 class Refund(models.Model):
@@ -36,136 +58,291 @@ class Refund(models.Model):
         SUCCEEDED = "succeeded", "Succeeded"
         FAILED = "failed", "Failed"
 
-    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="refunds")
-    idempotency_key = models.CharField(max_length=80)
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        validators=[MinValueValidator("0.01")],
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="refunds",
     )
+    idempotency_key = models.CharField(max_length=128)
+    amount = models.PositiveBigIntegerField(validators=[MinValueValidator(1)])
     status = models.CharField(
-        max_length=20,
+        max_length=32,
         choices=Status.choices,
         default=Status.PENDING,
     )
     reason = models.CharField(max_length=255, blank=True)
+    gateway_refund_id = models.CharField(max_length=128, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                condition=Q(amount__gt=0),
-                name="refund_amount_gt_0",
-            ),
-            models.UniqueConstraint(
+            UniqueConstraint(
                 fields=["order", "idempotency_key"],
-                name="uniq_refund_order_idempotency_key",
+                name="orders_refund_order_idempotency_key_unique",
+            ),
+            CheckConstraint(
+                condition=Q(amount__gt=0),
+                name="orders_refund_amount_positive",
             ),
         ]
         indexes = [
-            models.Index(fields=["order", "-created_at"], name="refund_order_created_idx"),
-            models.Index(fields=["order", "status"], name="refund_order_status_idx"),
+            models.Index(
+                fields=["order", "-created_at"],
+                name="orders_refund_order_created_idx",
+            ),
+            models.Index(
+                fields=["status", "created_at"],
+                name="orders_refund_status_created_idx",
+            ),
         ]
 ```
 
-환불 생성은 서비스 함수로 고정합니다. 잔액 초과와 중복 요청은 애플리케이션 체크만 믿지 말고, `select_for_update()`와 DB unique/check constraint를 같이 사용합니다.
+`Refund.amount`들의 합계를 매번 계산해서 잔액을 판단하지 않는 이유는 동시성 때문입니다. 동시 요청 두 개가 같은 잔액을 보고 각각 통과할 수 있습니다. `Order.refunded_amount`를 잠금 대상 누적값으로 두면 주문 단위로 환불 가능 금액 판단이 직렬화됩니다.
+
+**환불 생성 서비스**
 
 ```python
-# orders/services.py
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import F
 
 from .models import Order, Refund
 
 
-class DuplicateRefundRequest(Exception):
-    pass
+class RefundAlreadyExists(Exception):
+    def __init__(self, refund: Refund):
+        self.refund = refund
 
 
-class RefundAmountExceeded(Exception):
-    pass
+def order_refund_request(
+    *,
+    order_id: int,
+    amount: int,
+    idempotency_key: str,
+    reason: str = "",
+) -> Refund:
+    if amount <= 0:
+        raise ValidationError("Refund amount must be positive.")
 
+    with transaction.atomic():
+        order = (
+            Order.objects.select_for_update()
+            .only("id", "status", "paid_amount", "refunded_amount")
+            .get(id=order_id)
+        )
 
-def refund_create(*, order_id: int, amount, idempotency_key: str, reason: str = ""):
-    try:
-        with transaction.atomic():
-            order = (
-                Order.objects
-                .select_for_update()
-                .get(id=order_id)
-            )
-
-            existing = Refund.objects.filter(
-                order=order,
-                idempotency_key=idempotency_key,
-            ).first()
-            if existing:
-                raise DuplicateRefundRequest(existing.id)
-
-            available = order.paid_amount - order.refunded_amount
-            if amount > available:
-                raise RefundAmountExceeded(
-                    f"available={available}, requested={amount}"
+        existing = Refund.objects.filter(
+            order=order,
+            idempotency_key=idempotency_key,
+        ).first()
+        if existing:
+            if existing.amount != amount:
+                raise ValidationError(
+                    "Idempotency key was already used with a different amount."
                 )
+            return existing
 
+        if order.status not in {
+            Order.Status.PAID,
+            Order.Status.PARTIALLY_REFUNDED,
+        }:
+            raise ValidationError("Order is not refundable.")
+
+        if amount > order.refundable_amount:
+            raise ValidationError("Refund amount exceeds refundable balance.")
+
+        try:
             refund = Refund.objects.create(
                 order=order,
-                amount=amount,
                 idempotency_key=idempotency_key,
+                amount=amount,
                 reason=reason,
             )
-
-            Order.objects.filter(id=order.id).update(
-                refunded_amount=F("refunded_amount") + amount
+        except IntegrityError:
+            refund = Refund.objects.get(
+                order=order,
+                idempotency_key=idempotency_key,
             )
-
+            if refund.amount != amount:
+                raise ValidationError(
+                    "Idempotency key was already used with a different amount."
+                )
             return refund
 
-    except IntegrityError as exc:
-        raise DuplicateRefundRequest from exc
+        order.refunded_amount += amount
+        order.status = (
+            Order.Status.REFUNDED
+            if order.refunded_amount == order.paid_amount
+            else Order.Status.PARTIALLY_REFUNDED
+        )
+        order.save(update_fields=["refunded_amount", "status"])
+
+        transaction.on_commit(lambda: enqueue_refund_to_gateway(refund.id))
+
+        return refund
 ```
 
-부분 환불은 자연스럽게 허용됩니다. 예를 들어 `paid_amount=10000`, `refunded_amount=3000`이면 다음 요청은 `7000`까지만 통과합니다. 동시에 두 요청이 들어와도 같은 `Order` row lock 때문에 두 번째 트랜잭션은 첫 번째 커밋 이후의 `refunded_amount`를 보고 다시 검증합니다.
+외부 결제사 호출은 DB 트랜잭션 안에서 직접 하지 않는 편이 안전합니다. DB 잠금을 오래 잡고 외부 네트워크 장애까지 트랜잭션에 묶으면 주문 행 경합과 장애 전파가 커집니다. 위 구조는 내부 환불 예약을 먼저 확정하고, 커밋 후 `on_commit()`에서 작업 큐나 outbox로 결제사 환불을 보냅니다. 결제사에도 같은 `idempotency_key` 또는 `refund.id`를 전달해야 외부 중복 환불까지 막을 수 있습니다.
 
-외부 PG 환불 API가 있다면 DB 트랜잭션 안에서 호출하지 말고, 위 트랜잭션에서는 환불 금액을 “예약”한 뒤 `transaction.on_commit()`으로 워커 작업을 enqueue하세요. 실패 시 별도 보상 트랜잭션에서 `Refund.status=FAILED`로 바꾸고 `Order.refunded_amount`를 차감합니다.
-
-조회 패턴과 인덱스 근거는 다음처럼 잡습니다.
+**결제사 성공/실패 반영**
 
 ```python
-# orders/api/selectors.py
+from django.db import transaction
+from django.utils import timezone
+
 from .models import Refund
 
 
-def refund_history_for_order(order_id: int):
+def refund_mark_succeeded(*, refund_id: int, gateway_refund_id: str) -> None:
+    with transaction.atomic():
+        refund = Refund.objects.select_for_update().get(id=refund_id)
+
+        if refund.status == Refund.Status.SUCCEEDED:
+            return
+
+        if refund.status == Refund.Status.FAILED:
+            raise ValidationError("Failed refund cannot be marked succeeded.")
+
+        refund.status = Refund.Status.SUCCEEDED
+        refund.gateway_refund_id = gateway_refund_id
+        refund.completed_at = timezone.now()
+        refund.save(update_fields=["status", "gateway_refund_id", "completed_at"])
+```
+
+실패 처리 정책은 두 가지 중 하나를 명확히 선택해야 합니다.
+
+1. 결제사 실패 시 환불 잔액을 되돌린다.
+2. 실패는 별도 보정 작업으로 처리하고, `refunded_amount`는 “환불 예약 금액”으로 본다.
+
+일반적으로는 `PENDING` 상태가 오래 남는 장애까지 고려해 outbox/재시도 정책을 둡니다. 결제사에서 최종 실패가 확정된 경우에만 같은 주문 행을 `select_for_update()`로 잠그고 `refunded_amount -= refund.amount`를 수행합니다.
+
+**조회 패턴**
+
+읽기 전용 조회는 selector로 분리합니다.
+
+```python
+from django.db.models import QuerySet
+
+from .models import Refund
+
+
+def refunds_for_order(*, order_id: int) -> QuerySet[Refund]:
     return (
-        Refund.objects
-        .filter(order_id=order_id)
+        Refund.objects.filter(order_id=order_id)
+        .only(
+            "id",
+            "order_id",
+            "amount",
+            "status",
+            "idempotency_key",
+            "created_at",
+            "completed_at",
+        )
         .order_by("-created_at")
     )
 
 
-def active_refunds_for_order(order_id: int):
-    return Refund.objects.filter(
-        order_id=order_id,
-        status__in=[Refund.Status.PENDING, Refund.Status.SUCCEEDED],
+def pending_refunds_for_worker(*, limit: int = 100) -> QuerySet[Refund]:
+    return (
+        Refund.objects.filter(status=Refund.Status.PENDING)
+        .select_related("order")
+        .order_by("created_at")[:limit]
     )
 ```
 
-`refund_order_created_idx(order, -created_at)`는 주문 상세의 환불 내역 조회를 인덱스 순서대로 처리하기 위한 것입니다. `refund_order_status_idx(order, status)`는 특정 주문의 진행 중/성공 환불만 확인하는 운영성 조회에 맞춘 인덱스입니다. `uniq_refund_order_idempotency_key`는 중복 요청 방지의 최종 방어선입니다.
+작업자가 여러 개라면 `select_for_update(skip_locked=True)`로 pending refund를 가져와 같은 환불 작업을 여러 워커가 잡지 않게 합니다.
 
-검증 명령은 마이그레이션 생성 SQL과 실제 적용 가능성을 둘 다 확인합니다.
-
-```bash
-python manage.py makemigrations orders --check --dry-run
-python manage.py makemigrations orders
-python manage.py sqlmigrate orders 000X
-python manage.py migrate --plan
-python manage.py migrate
-python manage.py test orders
+```python
+with transaction.atomic():
+    refunds = list(
+        Refund.objects.select_for_update(skip_locked=True)
+        .filter(status=Refund.Status.PENDING)
+        .order_by("created_at")[:100]
+    )
 ```
 
-PostgreSQL 기준으로는 `sqlmigrate`에서 `CHECK`, `UNIQUE`, `CREATE INDEX`가 의도대로 생성되는지 확인하고, 동시성 테스트는 `TransactionTestCase`에서 별도 DB connection/thread로 같은 주문에 환불 2건을 동시에 요청해 하나만 성공하는지 검증합니다.
+**마이그레이션 순서**
+
+운영 테이블이면 expand → backfill → contract로 나눕니다.
+
+1. `Order.refunded_amount`를 nullable 또는 default `0`으로 추가합니다.
+2. `Refund` 테이블, unique constraint, check constraint, 인덱스를 추가합니다.
+3. 기존 환불 이력이 있다면 `order_id`별 성공 환불 합계로 `refunded_amount`를 백필합니다.
+4. 백필 검증 쿼리로 `refunded_amount > paid_amount` 주문이 없는지 확인합니다.
+5. `refunded_amount`를 `NOT NULL`로 고정하고 `refunded_amount <= paid_amount` check constraint를 추가합니다.
+6. `sqlmigrate`와 DB의 `EXPLAIN`으로 실제 SQL과 인덱스 사용을 확인합니다.
+
+검증용 쿼리는 최소한 아래를 둡니다.
+
+```sql
+SELECT id, paid_amount, refunded_amount
+FROM orders_order
+WHERE refunded_amount > paid_amount;
+
+SELECT order_id, idempotency_key, COUNT(*)
+FROM orders_refund
+GROUP BY order_id, idempotency_key
+HAVING COUNT(*) > 1;
+
+SELECT order_id, SUM(amount)
+FROM orders_refund
+WHERE status IN ('pending', 'succeeded')
+GROUP BY order_id
+HAVING SUM(amount) > (
+    SELECT paid_amount FROM orders_order WHERE id = order_id
+);
+```
+
+**테스트 포인트**
+
+```python
+def test_partial_refund_updates_balance(order):
+    refund = order_refund_request(
+        order_id=order.id,
+        amount=3_000,
+        idempotency_key="refund-1",
+    )
+
+    order.refresh_from_db()
+    assert refund.amount == 3_000
+    assert order.refunded_amount == 3_000
+    assert order.status == Order.Status.PARTIALLY_REFUNDED
+
+
+def test_same_idempotency_key_returns_existing_refund(order):
+    first = order_refund_request(
+        order_id=order.id,
+        amount=3_000,
+        idempotency_key="refund-1",
+    )
+    second = order_refund_request(
+        order_id=order.id,
+        amount=3_000,
+        idempotency_key="refund-1",
+    )
+
+    assert second.id == first.id
+    assert Refund.objects.count() == 1
+
+
+def test_refund_cannot_exceed_remaining_balance(order):
+    order_refund_request(
+        order_id=order.id,
+        amount=7_000,
+        idempotency_key="refund-1",
+    )
+
+    with pytest.raises(ValidationError):
+        order_refund_request(
+            order_id=order.id,
+            amount=4_000,
+            idempotency_key="refund-2",
+        )
+```
+
+동시성 테스트는 PostgreSQL 기반 `TransactionTestCase` 또는 `pytest.mark.django_db(transaction=True)`로 두 트랜잭션을 실제로 겹치게 검증해야 합니다. SQLite에서는 행 잠금 동작이 달라 `select_for_update()` 검증 신뢰도가 낮습니다.
 
 ---
 > **관련 스킬 참조:**
-> - API 엔드포인트 설계와 인증 적용 → **implementation-django-ninja** 스킬
+> - 환불 API 엔드포인트와 HTTP 상태 코드 설계 → **architecture-api** 스킬
+> - Django Ninja로 환불 요청 API 구현 → **implementation-django-ninja** 스킬

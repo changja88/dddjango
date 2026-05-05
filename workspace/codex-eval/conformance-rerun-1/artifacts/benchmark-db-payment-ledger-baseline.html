@@ -76,130 +76,69 @@
     <div class="path">workspace/codex-eval/conformance-rerun-1/baseline/benchmark-db-payment-ledger.output.md</div>
   </header>
   <main>
-    <article class="markdown"><p>아래는 Django 기준의 “불변 결제 원장(payment ledger)” 설계안입니다. 핵심은 <strong>상태 테이블과 이력 테이블을 분리</strong>하고, PG 재시도와 중복 webhook은 <strong>idempotency key + DB 제약조건</strong>으로 막는 구조입니다.</p>
-<p><strong>핵심 모델</strong></p>
+    <article class="markdown"><p>아래 설계는 “결제/환불 이력은 절대 수정하지 않고 append-only로 쌓는다”는 전제를 둡니다. 핵심은 <code>Payment</code> 같은 현재 상태 테이블과, 불변 원장인 <code>PaymentLedgerEntry</code>를 분리하는 방식입니다.</p>
+<p><strong>핵심 테이블</strong></p>
 <pre><code>
 # payments/models.py
 from django.db import models
-from django.utils import timezone
+from django.db.models import Q
 
 
-class PaymentIntent(models.Model):
-    &quot;&quot;&quot;
-    현재 결제 상태를 빠르게 조회하기 위한 mutable aggregate.
-    원장 자체는 PaymentLedgerEntry에 불변으로 남긴다.
-    &quot;&quot;&quot;
+class Payment(models.Model):
     class Status(models.TextChoices):
         PENDING = &quot;pending&quot;
         AUTHORIZED = &quot;authorized&quot;
-        CAPTURED = &quot;captured&quot;
+        PAID = &quot;paid&quot;
         PARTIALLY_REFUNDED = &quot;partially_refunded&quot;
         REFUNDED = &quot;refunded&quot;
         FAILED = &quot;failed&quot;
         CANCELED = &quot;canceled&quot;
 
-    merchant_order_id = models.CharField(max_length=100)
-    user_id = models.BigIntegerField(db_index=True)
+    order_id = models.BigIntegerField(db_index=True)
+    merchant_uid = models.CharField(max_length=100, unique=True)
 
     currency = models.CharField(max_length=3)
-    amount = models.PositiveBigIntegerField()  # minor unit: KRW 1000, USD cents
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    refunded_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
-    status = models.CharField(
-        max_length=32,
-        choices=Status.choices,
-        default=Status.PENDING,
-    )
+    status = models.CharField(max_length=32, choices=Status.choices, db_index=True)
 
-    pg_provider = models.CharField(max_length=32)
-    pg_payment_id = models.CharField(max_length=128, null=True, blank=True)
-
-    authorized_amount = models.PositiveBigIntegerField(default=0)
-    captured_amount = models.PositiveBigIntegerField(default=0)
-    refunded_amount = models.PositiveBigIntegerField(default=0)
-
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=[&quot;merchant_order_id&quot;],
-                name=&quot;uq_payment_intent_merchant_order_id&quot;,
-            ),
-            models.UniqueConstraint(
-                fields=[&quot;pg_provider&quot;, &quot;pg_payment_id&quot;],
-                condition=models.Q(pg_payment_id__isnull=False),
-                name=&quot;uq_payment_intent_pg_payment&quot;,
-            ),
-            models.CheckConstraint(
-                check=models.Q(amount__gt=0),
-                name=&quot;ck_payment_intent_amount_gt_0&quot;,
-            ),
-            models.CheckConstraint(
-                check=models.Q(authorized_amount__gte=0)
-                &amp; models.Q(captured_amount__gte=0)
-                &amp; models.Q(refunded_amount__gte=0),
-                name=&quot;ck_payment_intent_amounts_non_negative&quot;,
-            ),
-            models.CheckConstraint(
-                check=models.Q(refunded_amount__lte=models.F(&quot;captured_amount&quot;)),
-                name=&quot;ck_payment_intent_refund_lte_capture&quot;,
-            ),
-        ]
-        indexes = [
-            models.Index(fields=[&quot;user_id&quot;, &quot;-created_at&quot;], name=&quot;idx_payment_user_created&quot;),
-            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;], name=&quot;idx_payment_status_created&quot;),
-            models.Index(fields=[&quot;merchant_order_id&quot;], name=&quot;idx_payment_order&quot;),
-        ]
 
 
 class PaymentLedgerEntry(models.Model):
-    &quot;&quot;&quot;
-    append-only 불변 원장.
-    결제 승인, 매입, 실패, 취소, 환불, webhook 수신 결과를 모두 event로 남긴다.
-    &quot;&quot;&quot;
     class EntryType(models.TextChoices):
-        AUTHORIZE_REQUESTED = &quot;authorize_requested&quot;
-        AUTHORIZE_SUCCEEDED = &quot;authorize_succeeded&quot;
-        AUTHORIZE_FAILED = &quot;authorize_failed&quot;
-
-        CAPTURE_REQUESTED = &quot;capture_requested&quot;
-        CAPTURE_SUCCEEDED = &quot;capture_succeeded&quot;
-        CAPTURE_FAILED = &quot;capture_failed&quot;
-
+        PAYMENT_REQUESTED = &quot;payment_requested&quot;
+        PAYMENT_AUTHORIZED = &quot;payment_authorized&quot;
+        PAYMENT_CAPTURED = &quot;payment_captured&quot;
+        PAYMENT_FAILED = &quot;payment_failed&quot;
         REFUND_REQUESTED = &quot;refund_requested&quot;
         REFUND_SUCCEEDED = &quot;refund_succeeded&quot;
         REFUND_FAILED = &quot;refund_failed&quot;
-
-        CANCELED = &quot;canceled&quot;
         WEBHOOK_RECEIVED = &quot;webhook_received&quot;
 
     payment = models.ForeignKey(
-        PaymentIntent,
+        Payment,
         on_delete=models.PROTECT,
         related_name=&quot;ledger_entries&quot;,
     )
 
-    entry_type = models.CharField(max_length=64, choices=EntryType.choices)
+    entry_type = models.CharField(max_length=40, choices=EntryType.choices)
+    idempotency_key = models.CharField(max_length=200)
 
-    # + 금액: 결제/매입 증가, - 금액 대신 entry_type으로 의미 구분해도 됨.
-    # 단순성을 위해 amount는 항상 양수, 의미는 entry_type에서 판단.
-    amount = models.PositiveBigIntegerField(default=0)
+    pg_provider = models.CharField(max_length=40)
+    pg_transaction_id = models.CharField(max_length=120, blank=True)
+    pg_event_id = models.CharField(max_length=120, blank=True)
+
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
     currency = models.CharField(max_length=3)
 
-    pg_provider = models.CharField(max_length=32)
-    pg_payment_id = models.CharField(max_length=128, null=True, blank=True)
-    pg_refund_id = models.CharField(max_length=128, null=True, blank=True)
-    pg_event_id = models.CharField(max_length=128, null=True, blank=True)
+    occurred_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    # 내부 요청 재시도/외부 webhook 중복 방지의 핵심
-    idempotency_key = models.CharField(max_length=160)
-
-    # PG 원본 응답/웹훅 payload. 감사 목적.
+    # 원본 webhook / PG 응답 보관. 감사 목적.
     payload = models.JSONField(default=dict)
-
-    occurred_at = models.DateTimeField(default=timezone.now)
-    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [
@@ -209,212 +148,171 @@ class PaymentLedgerEntry(models.Model):
             ),
             models.UniqueConstraint(
                 fields=[&quot;pg_provider&quot;, &quot;pg_event_id&quot;],
-                condition=models.Q(pg_event_id__isnull=False),
+                condition=~Q(pg_event_id=&quot;&quot;),
                 name=&quot;uq_ledger_provider_pg_event_id&quot;,
             ),
-            models.UniqueConstraint(
-                fields=[&quot;pg_provider&quot;, &quot;pg_refund_id&quot;],
-                condition=models.Q(pg_refund_id__isnull=False),
-                name=&quot;uq_ledger_provider_pg_refund_id&quot;,
-            ),
             models.CheckConstraint(
-                check=models.Q(amount__gte=0),
-                name=&quot;ck_ledger_amount_gte_0&quot;,
+                check=Q(amount__gte=0),
+                name=&quot;ck_ledger_amount_non_negative&quot;,
             ),
         ]
         indexes = [
-            models.Index(fields=[&quot;payment&quot;, &quot;created_at&quot;], name=&quot;idx_ledger_payment_created&quot;),
-            models.Index(fields=[&quot;pg_provider&quot;, &quot;pg_payment_id&quot;], name=&quot;idx_ledger_pg_payment&quot;),
-            models.Index(fields=[&quot;pg_provider&quot;, &quot;idempotency_key&quot;], name=&quot;idx_ledger_idempotency&quot;),
-            models.Index(fields=[&quot;entry_type&quot;, &quot;-created_at&quot;], name=&quot;idx_ledger_type_created&quot;),
+            models.Index(
+                fields=[&quot;payment&quot;, &quot;created_at&quot;],
+                name=&quot;idx_ledger_payment_created&quot;,
+            ),
+            models.Index(
+                fields=[&quot;pg_provider&quot;, &quot;pg_transaction_id&quot;],
+                name=&quot;idx_ledger_pg_tx&quot;,
+            ),
+            models.Index(
+                fields=[&quot;entry_type&quot;, &quot;created_at&quot;],
+                name=&quot;idx_ledger_type_created&quot;,
+            ),
+            models.Index(
+                fields=[&quot;created_at&quot;],
+                name=&quot;idx_ledger_created&quot;,
+            ),
         ]
 </code></pre>
-<p><strong>불변성 보장</strong> Django 레벨만 믿으면 부족합니다. 최소한 아래 정책을 둡니다.</p>
+<p><strong>조회 패턴 기준 인덱스</strong></p>
+<p>주요 조회가 아래라면 위 인덱스가 기준입니다.</p>
 <pre><code>
-class PaymentLedgerEntry(models.Model):
-    # fields...
+-- 결제 상세 화면: 결제별 이력 시간순
+WHERE payment_id = ? ORDER BY created_at ASC
 
-    def save(self, *args, **kwargs):
-        if self.pk:
-            raise RuntimeError(&quot;PaymentLedgerEntry is immutable&quot;)
-        return super().save(*args, **kwargs)
+-- webhook 중복 확인
+WHERE pg_provider = ? AND pg_event_id = ?
 
-    def delete(self, *args, **kwargs):
-        raise RuntimeError(&quot;PaymentLedgerEntry cannot be deleted&quot;)
+-- PG 거래번호로 추적
+WHERE pg_provider = ? AND pg_transaction_id = ?
+
+-- 운영/정산 배치
+WHERE entry_type = ? AND created_at BETWEEN ? AND ?
 </code></pre>
-<p>운영 DB에서는 더 강하게 하려면 PostgreSQL trigger로 <code>UPDATE</code>, <code>DELETE</code>를 막는 것을 권장합니다. Django 코드 우회, admin 수정, SQL 콘솔 실수를 막을 수 있습니다.</p>
-<p><strong>조회 패턴</strong> 주요 조회는 보통 네 가지입니다.</p>
+<p><code>idempotency_key</code>는 PG 요청 재시도, webhook 재전송, 내부 잡 재시도 모두를 막는 키입니다. 보통 다음처럼 만듭니다.</p>
 <pre><code>
--- 주문 기준 결제 상태 조회
-WHERE merchant_order_id = ?
-
--- 사용자 결제 목록
-WHERE user_id = ?
-ORDER BY created_at DESC
-
--- PG payment id로 reconciliation
-WHERE pg_provider = ? AND pg_payment_id = ?
-
--- 특정 결제의 원장 이력
-WHERE payment_id = ?
-ORDER BY created_at ASC
+payment:{merchant_uid}:capture:{pg_attempt_id}
+refund:{payment_id}:{refund_request_id}
+webhook:{provider}:{pg_event_id}
 </code></pre>
-<p>그래서 <code>PaymentIntent</code>에는 <code>merchant_order_id</code>, <code>(user_id, -created_at)</code>, <code>(status, -created_at)</code>, <code>(pg_provider, pg_payment_id)</code>가 필요합니다. <code>PaymentLedgerEntry</code>에는 <code>(payment_id, created_at)</code>, <code>(pg_provider, pg_payment_id)</code>, <code>(pg_provider, idempotency_key)</code>, <code>(pg_provider, pg_event_id)</code>가 필요합니다.</p>
-<p><strong>Idempotency 전략</strong> 내부 결제 요청:</p>
+<p>동일 작업을 재시도하면 반드시 같은 key를 사용해야 합니다.</p>
+<p><strong>불변성</strong></p>
+<p>원장 테이블은 update/delete를 애플리케이션 레벨에서 금지합니다.</p>
 <pre><code>
-idempotency_key = &quot;{operation}:{payment_id}:{client_request_id}&quot;
-예: &quot;capture:12345:9db2...&quot;
+class ImmutableLedgerQuerySet(models.QuerySet):
+    def update(self, *args, **kwargs):
+        raise RuntimeError(&quot;Ledger entries are immutable&quot;)
+
+    def delete(self):
+        raise RuntimeError(&quot;Ledger entries are immutable&quot;)
 </code></pre>
-<p>webhook:</p>
+<p>운영 DB에서는 가능하면 DB 트리거까지 둡니다.</p>
 <pre><code>
-idempotency_key = &quot;webhook:{pg_provider}:{pg_event_id}&quot;
+CREATE OR REPLACE FUNCTION prevent_ledger_update_delete()
+RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION &#x27;payment ledger is immutable&#x27;;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_ledger_update
+BEFORE UPDATE OR DELETE ON payments_paymentledgerentry
+FOR EACH ROW EXECUTE FUNCTION prevent_ledger_update_delete();
 </code></pre>
-<p>PG가 event id를 안정적으로 주지 않는다면:</p>
-<pre><code>
-idempotency_key = &quot;webhook:{pg_provider}:{pg_payment_id}:{event_type}:{pg_created_at}:{amount}&quot;
-</code></pre>
-<p>다만 이 fallback은 충돌 가능성이 있으므로 PG가 제공하는 고유 이벤트 ID를 우선해야 합니다.</p>
-<p><strong>트랜잭션 처리</strong> 결제/환불 반영은 반드시 한 transaction 안에서 <code>PaymentIntent</code>를 잠그고 원장 insert와 상태 갱신을 같이 처리합니다.</p>
+<p>Django만으로는 <code>QuerySet.update()</code>나 직접 SQL을 완전히 막을 수 없기 때문에, 회계/정산 성격이면 DB 제약이 더 안전합니다.</p>
+<p><strong>트랜잭션 처리</strong></p>
+<p>결제 상태 갱신과 원장 insert는 같은 transaction 안에서 처리합니다.</p>
 <pre><code>
 from django.db import IntegrityError, transaction
 
+def record_payment_event(*, payment_id, idempotency_key, entry_type, amount, payload):
+    try:
+        with transaction.atomic():
+            payment = (
+                Payment.objects
+                .select_for_update()
+                .get(id=payment_id)
+            )
 
-def record_capture_success(*, payment_id, amount, currency, provider, pg_payment_id, idempotency_key, payload):
-    with transaction.atomic():
-        payment = (
-            PaymentIntent.objects
-            .select_for_update()
-            .get(id=payment_id)
-        )
-
-        try:
-            PaymentLedgerEntry.objects.create(
+            entry = PaymentLedgerEntry.objects.create(
                 payment=payment,
-                entry_type=PaymentLedgerEntry.EntryType.CAPTURE_SUCCEEDED,
-                amount=amount,
-                currency=currency,
-                pg_provider=provider,
-                pg_payment_id=pg_payment_id,
                 idempotency_key=idempotency_key,
+                entry_type=entry_type,
+                pg_provider=payload[&quot;provider&quot;],
+                pg_transaction_id=payload.get(&quot;transaction_id&quot;, &quot;&quot;),
+                pg_event_id=payload.get(&quot;event_id&quot;, &quot;&quot;),
+                amount=amount,
+                currency=payment.currency,
+                occurred_at=payload[&quot;occurred_at&quot;],
                 payload=payload,
             )
-        except IntegrityError:
-            # 이미 같은 idempotency key로 처리됨.
-            return payment
 
-        if payment.captured_amount + amount &gt; payment.amount:
-            raise ValueError(&quot;captured amount exceeds payment amount&quot;)
+            # 현재 상태 테이블은 파생 상태로만 갱신
+            apply_payment_state(payment, entry)
+            payment.save(update_fields=[&quot;status&quot;, &quot;refunded_amount&quot;, &quot;updated_at&quot;])
 
-        payment.captured_amount += amount
-        payment.status = PaymentIntent.Status.CAPTURED
-        payment.pg_payment_id = pg_payment_id
-        payment.save(
-            update_fields=[
-                &quot;captured_amount&quot;,
-                &quot;status&quot;,
-                &quot;pg_payment_id&quot;,
-                &quot;updated_at&quot;,
-            ]
+            return entry, True
+
+    except IntegrityError:
+        # unique idempotency key 또는 pg_event_id 충돌이면 이미 처리된 이벤트
+        existing = PaymentLedgerEntry.objects.get(
+            pg_provider=payload[&quot;provider&quot;],
+            idempotency_key=idempotency_key,
         )
-
-        return payment
+        return existing, False
 </code></pre>
-<p>환불도 동일하게 <code>select_for_update()</code>로 결제 row를 잠근 뒤:</p>
+<p>중요한 점은 <code>select_for_update()</code>로 <code>Payment</code> row를 잠그는 것입니다. refund webhook이 동시에 여러 개 들어와도 <code>refunded_amount</code> 계산과 상태 전이가 꼬이지 않습니다.</p>
+<p><strong>제약조건</strong></p>
+<p>권장 제약은 다음입니다.</p>
 <pre><code>
-if payment.refunded_amount + refund_amount &gt; payment.captured_amount:
-    raise ValueError(&quot;refund amount exceeds captured amount&quot;)
+Payment.merchant_uid unique
+Ledger(pg_provider, idempotency_key) unique
+Ledger(pg_provider, pg_event_id) unique where pg_event_id != &#x27;&#x27;
+Ledger.amount &gt;= 0
+Ledger.payment_id on_delete=PROTECT
 </code></pre>
-<p>검증 후 원장 insert, aggregate 갱신을 같이 수행합니다.</p>
-<p><strong>Webhook 처리 흐름</strong></p>
+<p>추가로 환불 총액이 결제 금액을 넘지 않아야 합니다. 이건 단일 row check constraint로는 어렵기 때문에 transaction 안에서 <code>select_for_update()</code> 후 검증하거나, PostgreSQL trigger/materialized aggregate로 강제합니다.</p>
 <pre><code>
-def handle_webhook(event):
-    idempotency_key = f&quot;webhook:{event.provider}:{event.event_id}&quot;
-
-    with transaction.atomic():
-        payment = (
-            PaymentIntent.objects
-            .select_for_update()
-            .get(pg_provider=event.provider, pg_payment_id=event.payment_id)
-        )
-
-        try:
-            PaymentLedgerEntry.objects.create(
-                payment=payment,
-                entry_type=map_event_type(event),
-                amount=event.amount or 0,
-                currency=event.currency,
-                pg_provider=event.provider,
-                pg_payment_id=event.payment_id,
-                pg_event_id=event.event_id,
-                idempotency_key=idempotency_key,
-                payload=event.raw_payload,
-                occurred_at=event.occurred_at,
-            )
-        except IntegrityError:
-            return &quot;duplicate&quot;
-
-        apply_event_to_payment(payment, event)
-        payment.save()
-        return &quot;processed&quot;
+if payment.refunded_amount + entry.amount &gt; payment.amount:
+    raise ValueError(&quot;Refund amount exceeds paid amount&quot;)
 </code></pre>
-<p>중복 webhook은 <code>uq_ledger_provider_idempotency_key</code> 또는 <code>uq_ledger_provider_pg_event_id</code>에서 막힙니다.</p>
-<p><strong>마이그레이션 검증</strong> 마이그레이션에는 단순 생성만 넣지 말고 DB 제약이 실제로 생성됐는지 테스트해야 합니다.</p>
-<p>테스트 예시:</p>
+<p><strong>Migration 검증</strong></p>
+<p>마이그레이션에는 최소한 다음 검증을 포함합니다.</p>
 <pre><code>
-import pytest
-from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
+from django.db import migrations
 
 
-@pytest.mark.django_db
-def test_ledger_idempotency_key_is_unique(payment):
-    PaymentLedgerEntry.objects.create(
-        payment=payment,
-        entry_type=&quot;capture_succeeded&quot;,
-        amount=1000,
-        currency=&quot;KRW&quot;,
-        pg_provider=&quot;toss&quot;,
-        idempotency_key=&quot;capture:1:req-1&quot;,
+def validate_existing_ledger(apps, schema_editor):
+    Ledger = apps.get_model(&quot;payments&quot;, &quot;PaymentLedgerEntry&quot;)
+
+    duplicated = (
+        Ledger.objects
+        .values(&quot;pg_provider&quot;, &quot;idempotency_key&quot;)
+        .annotate(count=models.Count(&quot;id&quot;))
+        .filter(count__gt=1)
     )
 
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            PaymentLedgerEntry.objects.create(
-                payment=payment,
-                entry_type=&quot;capture_succeeded&quot;,
-                amount=1000,
-                currency=&quot;KRW&quot;,
-                pg_provider=&quot;toss&quot;,
-                idempotency_key=&quot;capture:1:req-1&quot;,
-            )
+    if duplicated.exists():
+        raise RuntimeError(&quot;Duplicate ledger idempotency keys exist&quot;)
 
-
-@pytest.mark.django_db
-def test_refund_cannot_exceed_capture(payment):
-    payment.captured_amount = 1000
-    payment.refunded_amount = 1500
-
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            payment.save()
+    invalid_amount = Ledger.objects.filter(amount__lt=0)
+    if invalid_amount.exists():
+        raise RuntimeError(&quot;Negative ledger amount exists&quot;)
 </code></pre>
-<p>PostgreSQL 기준으로 migration 이후 확인할 항목:</p>
+<p>실제 운영 DB라면 unique constraint 추가 전에 별도 dry-run SQL로 먼저 확인하는 편이 안전합니다.</p>
 <pre><code>
-\d payments_paymentintent
-\d payments_paymentledgerentry
+SELECT pg_provider, idempotency_key, COUNT(*)
+FROM payments_paymentledgerentry
+GROUP BY pg_provider, idempotency_key
+HAVING COUNT(*) &gt; 1;
 
-SELECT indexname, indexdef
-FROM pg_indexes
-WHERE tablename IN (&#x27;payments_paymentintent&#x27;, &#x27;payments_paymentledgerentry&#x27;);
-
-SELECT conname, contype
-FROM pg_constraint
-WHERE conrelid IN (
-  &#x27;payments_paymentintent&#x27;::regclass,
-  &#x27;payments_paymentledgerentry&#x27;::regclass
-);
+SELECT id
+FROM payments_paymentledgerentry
+WHERE amount &lt; 0;
 </code></pre>
-<p><strong>운영 권장사항</strong> 결제 원장은 <code>PaymentLedgerEntry</code>를 정정하지 말고, 잘못된 이벤트가 있으면 “보정 이벤트”를 append 합니다. 상태 조회는 <code>PaymentIntent</code>에서 빠르게 하고, 감사/정산/reconciliation은 원장을 기준으로 재계산 가능해야 합니다.</p>
-<p>정산 정확성이 중요하면 <code>PaymentIntent</code>의 금액 필드는 캐시로 보고, 배치 작업에서 원장 합계와 aggregate 값이 일치하는지 주기적으로 검증하는 reconciliation job을 두는 게 좋습니다.</p></article>
+<p>정리하면, 원장은 append-only 이벤트 저장소로 두고, <code>Payment</code>는 빠른 조회를 위한 현재 상태 projection으로 봐야 합니다. 중복 webhook과 PG 재시도는 <code>idempotency_key</code> unique constraint로 막고, 상태 전이는 <code>transaction.atomic()</code> + <code>select_for_update()</code> 안에서만 수행하는 구조가 가장 안정적입니다.</p></article>
   </main>
 </body>
 </html>

@@ -153,17 +153,17 @@
   </header>
   <main>
     <div class="metrics">
-      <section class="metric neutral"><span>Baseline Score</span><strong>86.8</strong><small>case average</small></section>
-      <section class="metric good"><span>dddjango Score</span><strong>88.0</strong><small>case average</small></section>
-      <section class="metric good"><span>Overall Lift</span><strong>+1.20</strong><small>+1.38% vs baseline</small></section>
-      <section class="metric good"><span>Quality Gate Lift</span><strong>+1.20</strong><small>+1.38% vs applicable baseline; +14.63% headroom</small></section>
-      <section class="metric neutral"><span>Baseline Time</span><strong>45.35s</strong><small>average duration</small></section>
-      <section class="metric neutral"><span>dddjango Time</span><strong>56.97s</strong><small>+25.62% vs baseline</small></section>
+      <section class="metric neutral"><span>Baseline Score</span><strong>86.0</strong><small>case average</small></section>
+      <section class="metric good"><span>dddjango Score</span><strong>87.6</strong><small>case average</small></section>
+      <section class="metric good"><span>Overall Lift</span><strong>+1.60</strong><small>+1.86% vs baseline</small></section>
+      <section class="metric good"><span>Quality Gate Lift</span><strong>+1.60</strong><small>+1.86% vs applicable baseline; +17.78% headroom</small></section>
+      <section class="metric neutral"><span>Baseline Time</span><strong>38.77s</strong><small>average duration</small></section>
+      <section class="metric bad"><span>dddjango Time</span><strong>73.74s</strong><small>+90.20% vs baseline</small></section>
       <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
       <section class="metric neutral"><span>Completed Cases</span><strong>5/5</strong><small>with and without skill</small></section>
       <section class="metric neutral"><span>Manual Usability</span><strong>0.00</strong><small>pending / 20</small></section>
-      <section class="metric good"><span>Convention Score</span><strong>97.78</strong><small>dddjango conformance</small></section>
-<section class="metric good"><span>Convention Delta</span><strong>+2.78</strong><small>with - without</small></section>
+      <section class="metric good"><span>Convention Score</span><strong>100.00</strong><small>dddjango conformance</small></section>
+<section class="metric good"><span>Convention Delta</span><strong>+12.78</strong><small>with - without</small></section>
     </div>
 
     <section class="section">
@@ -185,12 +185,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+1.20 pts / +1.38% / +14.63% headroom</td><td>&gt;= +3 pts or &gt;= 25% headroom</td></tr>
+          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+1.60 pts / +1.86% / +17.78% headroom</td><td>&gt;= +3 pts or &gt;= 25% headroom</td></tr>
 <tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
 <tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
 <tr><td>Django Ninja compliance</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 90%</td></tr>
 <tr><td>TDD quality</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
-<tr><td>Time/cost increase</td><td><span class="pill good">PASS</span></td><td>+25.62%</td><td>&lt;= +30%</td></tr>
+<tr><td>Time/cost increase</td><td><span class="pill bad">BLOCKED</span></td><td>+90.20%</td><td>&lt;= +30%</td></tr>
 <tr><td>Negative-control pass rate</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
         </tbody>
       </table>
@@ -229,8 +229,8 @@
           <td class="number">87.0</td>
           <td class="number">87.0</td>
           <td class="number neutral">+0.0</td>
-          <td class="number">59.03s</td>
-          <td class="number">47.75s</td>
+          <td class="number">44.84s</td>
+          <td class="number">66.36s</td>
           <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -250,11 +250,11 @@
           </td>
           <td>db-design</td>
           <td>korean_first, db_design, transaction_boundary, actionable_output</td>
+          <td class="number">83.0</td>
           <td class="number">87.0</td>
-          <td class="number">87.0</td>
-          <td class="number neutral">+0.0</td>
-          <td class="number">57.61s</td>
-          <td class="number">55.74s</td>
+          <td class="number good">+4.0</td>
+          <td class="number">39.63s</td>
+          <td class="number">70.16s</td>
           <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -277,8 +277,8 @@
           <td class="number">87.0</td>
           <td class="number">87.0</td>
           <td class="number neutral">+0.0</td>
-          <td class="number">37.24s</td>
-          <td class="number">49.72s</td>
+          <td class="number">37.68s</td>
+          <td class="number">73.31s</td>
           <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -299,10 +299,10 @@
           <td>tdd</td>
           <td>korean_first, django_ninja_compliance, tdd_first, pytest_quality, actionable_output</td>
           <td class="number">92.0</td>
-          <td class="number">92.0</td>
-          <td class="number neutral">+0.0</td>
-          <td class="number">37.33s</td>
-          <td class="number">71.02s</td>
+          <td class="number">90.0</td>
+          <td class="number bad">-2.0</td>
+          <td class="number">31.58s</td>
+          <td class="number">76.54s</td>
           <td><span class="pill neutral">flat</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -325,8 +325,8 @@
           <td class="number">81.0</td>
           <td class="number">87.0</td>
           <td class="number good">+6.0</td>
-          <td class="number">35.55s</td>
-          <td class="number">60.64s</td>
+          <td class="number">40.14s</td>
+          <td class="number">82.34s</td>
           <td><span class="pill good">improved</span></td>
           <td>auto heuristic grade; review manually before release gate</td>
           <td>auto heuristic grade; review manually before release gate</td>
@@ -344,10 +344,10 @@
     <section class="section">
       <h2>dddjango Convention Conformance</h2>
       <div class="inline-metrics">
-        <section class="metric neutral"><span>Baseline Conformance</span><strong>95.00</strong><small>without skill</small></section>
-        <section class="metric good"><span>dddjango Conformance</span><strong>97.78</strong><small>with skill</small></section>
-        <section class="metric good"><span>Conformance Delta</span><strong>+2.78</strong><small>with - without</small></section>
-        <section class="metric good"><span>Rule Pass Rate</span><strong>97.78%</strong><small>dddjango required rules</small></section>
+        <section class="metric neutral"><span>Baseline Conformance</span><strong>87.22</strong><small>without skill</small></section>
+        <section class="metric good"><span>dddjango Conformance</span><strong>100.00</strong><small>with skill</small></section>
+        <section class="metric good"><span>Conformance Delta</span><strong>+12.78</strong><small>with - without</small></section>
+        <section class="metric good"><span>Rule Pass Rate</span><strong>100.00%</strong><small>dddjango required rules</small></section>
         <section class="metric good"><span>Critical Violations</span><strong>0</strong><small>dddjango variant</small></section>
         <section class="metric good"><span>Forbidden Patterns</span><strong>0</strong><small>dddjango variant</small></section>
       </div>
@@ -361,8 +361,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>dddjango conformance score</td><td><span class="pill good">PASS</span></td><td>97.78</td><td>85</td></tr>
-<tr><td>Required rule pass rate</td><td><span class="pill good">PASS</span></td><td>97.78</td><td>90</td></tr>
+          <tr><td>dddjango conformance score</td><td><span class="pill good">PASS</span></td><td>100.0</td><td>85</td></tr>
+<tr><td>Required rule pass rate</td><td><span class="pill good">PASS</span></td><td>100.0</td><td>90</td></tr>
 <tr><td>Critical violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
 <tr><td>Forbidden patterns</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
         </tbody>
@@ -409,9 +409,9 @@
                 <strong>benchmark-db-payment-ledger</strong>
                 <small>db-design</small>
               </td>
+              <td class="number">83.3</td>
               <td class="number">100.0</td>
-              <td class="number">100.0</td>
-              <td class="number neutral">+0.0</td>
+              <td class="number good">+16.7</td>
               <td class="number">100.0%</td>
               <td><code>korean_first</code> <code>has_query_pattern_first</code> <code>has_db_constraints_indexes</code> <code>includes_migration_verification</code> <code>includes_verification_commands</code> <code>has_transaction_locking</code></td>
               <td><span class="muted">none</span></td>
@@ -424,9 +424,9 @@
                 <strong>benchmark-db-refund-transaction</strong>
                 <small>db-design</small>
               </td>
+              <td class="number">83.3</td>
               <td class="number">100.0</td>
-              <td class="number">100.0</td>
-              <td class="number neutral">+0.0</td>
+              <td class="number good">+16.7</td>
               <td class="number">100.0%</td>
               <td><code>korean_first</code> <code>has_query_pattern_first</code> <code>has_db_constraints_indexes</code> <code>includes_migration_verification</code> <code>includes_verification_commands</code> <code>has_transaction_locking</code></td>
               <td><span class="muted">none</span></td>
@@ -439,11 +439,11 @@
                 <strong>benchmark-tdd-ninja-endpoint</strong>
                 <small>tdd</small>
               </td>
-              <td class="number">75.0</td>
+              <td class="number">91.7</td>
               <td class="number">100.0</td>
-              <td class="number good">+25.0</td>
+              <td class="number good">+8.3</td>
               <td class="number">100.0%</td>
-              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_value_object</code> <code>has_domain_exception</code> <code>has_result_type</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code> <code>includes_verification_commands</code></td>
+              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_value_object</code> <code>has_domain_exception</code> <code>has_result_type</code> <code>includes_verification_commands</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code></td>
               <td><span class="muted">none</span></td>
               <td><span class="muted">none</span></td>
               <td><span class="muted">none</span></td>
@@ -454,12 +454,12 @@
                 <strong>benchmark-tdd-order-cancel</strong>
                 <small>tdd</small>
               </td>
+              <td class="number">77.8</td>
               <td class="number">100.0</td>
-              <td class="number">88.9</td>
-              <td class="number bad">-11.1</td>
-              <td class="number">88.9%</td>
-              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_value_object</code> <code>has_domain_exception</code> <code>includes_verification_commands</code></td>
-              <td><code>has_result_type</code></td>
+              <td class="number good">+22.2</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_value_object</code> <code>has_domain_exception</code> <code>has_result_type</code> <code>includes_verification_commands</code></td>
+              <td><span class="muted">none</span></td>
               <td><span class="muted">none</span></td>
               <td><span class="muted">none</span></td>
             </tr>

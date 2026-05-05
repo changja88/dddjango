@@ -3,35 +3,36 @@
   "summary": {
     "variants": {
       "baseline": {
-        "average_conformance": 95.0,
-        "average_required_rule_pass_rate": 95.0,
+        "average_conformance": 87.22,
+        "average_required_rule_pass_rate": 87.22,
         "critical_violations": 0,
         "forbidden_pattern_count": 0,
         "case_count": 5
       },
       "dddjango": {
-        "average_conformance": 97.78,
-        "average_required_rule_pass_rate": 97.78,
+        "average_conformance": 100.0,
+        "average_required_rule_pass_rate": 100.0,
         "critical_violations": 0,
         "forbidden_pattern_count": 0,
         "case_count": 5
       }
     },
-    "baseline_avg_conformance": 95.0,
-    "dddjango_avg_conformance": 97.78,
-    "delta": 2.78,
-    "dddjango_required_rule_pass_rate": 97.78,
+    "dddjango_variant": "dddjango",
+    "baseline_avg_conformance": 87.22,
+    "dddjango_avg_conformance": 100.0,
+    "delta": 12.78,
+    "dddjango_required_rule_pass_rate": 100.0,
     "critical_violations": 0,
     "forbidden_pattern_count": 0,
     "release_gate": {
       "dddjango_conformance_score": {
         "passed": true,
-        "value": 97.78,
+        "value": 100.0,
         "required": 85
       },
       "dddjango_required_rule_pass_rate": {
         "passed": true,
-        "value": 97.78,
+        "value": 100.0,
         "required": 90
       },
       "critical_violations": {
@@ -76,8 +77,8 @@
       "case_id": "benchmark-db-payment-ledger",
       "variant": "baseline",
       "category": "db-design",
-      "conformance_score": 100.0,
-      "required_rule_pass_rate": 100.0,
+      "conformance_score": 83.33,
+      "required_rule_pass_rate": 83.33,
       "required_rules": [
         "korean_first",
         "has_query_pattern_first",
@@ -88,13 +89,14 @@
       ],
       "passed_rules": [
         "korean_first",
-        "has_query_pattern_first",
         "has_db_constraints_indexes",
         "includes_migration_verification",
         "includes_verification_commands",
         "has_transaction_locking"
       ],
-      "failed_rules": [],
+      "failed_rules": [
+        "has_query_pattern_first"
+      ],
       "critical_violations": [],
       "forbidden_patterns": [],
       "notes": "conformance heuristics; review manually before release gate"
@@ -103,8 +105,8 @@
       "case_id": "benchmark-db-refund-transaction",
       "variant": "baseline",
       "category": "db-design",
-      "conformance_score": 100.0,
-      "required_rule_pass_rate": 100.0,
+      "conformance_score": 83.33,
+      "required_rule_pass_rate": 83.33,
       "required_rules": [
         "korean_first",
         "has_query_pattern_first",
@@ -115,13 +117,14 @@
       ],
       "passed_rules": [
         "korean_first",
-        "has_query_pattern_first",
         "has_db_constraints_indexes",
         "includes_migration_verification",
         "includes_verification_commands",
         "has_transaction_locking"
       ],
-      "failed_rules": [],
+      "failed_rules": [
+        "has_query_pattern_first"
+      ],
       "critical_violations": [],
       "forbidden_patterns": [],
       "notes": "conformance heuristics; review manually before release gate"
@@ -130,8 +133,8 @@
       "case_id": "benchmark-tdd-ninja-endpoint",
       "variant": "baseline",
       "category": "tdd",
-      "conformance_score": 75.0,
-      "required_rule_pass_rate": 75.0,
+      "conformance_score": 91.67,
+      "required_rule_pass_rate": 91.67,
       "required_rules": [
         "korean_first",
         "has_red_green_refactor",
@@ -141,26 +144,26 @@
         "has_value_object",
         "has_domain_exception",
         "has_result_type",
+        "includes_verification_commands",
         "uses_django_ninja_router",
         "uses_schema_not_serializer",
-        "no_drf_code",
-        "includes_verification_commands"
+        "no_drf_code"
       ],
       "passed_rules": [
         "korean_first",
         "has_red_green_refactor",
         "has_pytest_tests",
+        "has_edge_cases",
         "has_value_object",
         "has_domain_exception",
         "has_result_type",
+        "includes_verification_commands",
+        "uses_django_ninja_router",
         "uses_schema_not_serializer",
-        "no_drf_code",
-        "includes_verification_commands"
+        "no_drf_code"
       ],
       "failed_rules": [
-        "has_expected_failure",
-        "has_edge_cases",
-        "uses_django_ninja_router"
+        "has_expected_failure"
       ],
       "critical_violations": [],
       "forbidden_patterns": [],
@@ -170,8 +173,8 @@
       "case_id": "benchmark-tdd-order-cancel",
       "variant": "baseline",
       "category": "tdd",
-      "conformance_score": 100.0,
-      "required_rule_pass_rate": 100.0,
+      "conformance_score": 77.78,
+      "required_rule_pass_rate": 77.78,
       "required_rules": [
         "korean_first",
         "has_red_green_refactor",
@@ -186,15 +189,16 @@
       "passed_rules": [
         "korean_first",
         "has_red_green_refactor",
-        "has_expected_failure",
         "has_pytest_tests",
         "has_edge_cases",
         "has_value_object",
-        "has_domain_exception",
         "has_result_type",
         "includes_verification_commands"
       ],
-      "failed_rules": [],
+      "failed_rules": [
+        "has_expected_failure",
+        "has_domain_exception"
+      ],
       "critical_violations": [],
       "forbidden_patterns": [],
       "notes": "conformance heuristics; review manually before release gate"
@@ -293,10 +297,10 @@
         "has_value_object",
         "has_domain_exception",
         "has_result_type",
+        "includes_verification_commands",
         "uses_django_ninja_router",
         "uses_schema_not_serializer",
-        "no_drf_code",
-        "includes_verification_commands"
+        "no_drf_code"
       ],
       "passed_rules": [
         "korean_first",
@@ -307,10 +311,10 @@
         "has_value_object",
         "has_domain_exception",
         "has_result_type",
+        "includes_verification_commands",
         "uses_django_ninja_router",
         "uses_schema_not_serializer",
-        "no_drf_code",
-        "includes_verification_commands"
+        "no_drf_code"
       ],
       "failed_rules": [],
       "critical_violations": [],
@@ -321,8 +325,8 @@
       "case_id": "benchmark-tdd-order-cancel",
       "variant": "dddjango",
       "category": "tdd",
-      "conformance_score": 88.89,
-      "required_rule_pass_rate": 88.89,
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
       "required_rules": [
         "korean_first",
         "has_red_green_refactor",
@@ -342,11 +346,10 @@
         "has_edge_cases",
         "has_value_object",
         "has_domain_exception",
+        "has_result_type",
         "includes_verification_commands"
       ],
-      "failed_rules": [
-        "has_result_type"
-      ],
+      "failed_rules": [],
       "critical_violations": [],
       "forbidden_patterns": [],
       "notes": "conformance heuristics; review manually before release gate"

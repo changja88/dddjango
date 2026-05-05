@@ -47,3 +47,18 @@
 - 조치: `run_prompts.py`에서 negative trigger만 격리하고, positive/ambiguous/conflict trigger는 case metadata 기반 관련 스킬을 읽도록 수정했다.
 - 스킬 보강: migration은 조회 패턴 우선, Ninja 에러 표준은 RFC 9457 Problem Details와 `items/meta` envelope, ambiguous service layer는 맥락/가정 고지를 metadata와 초반 규칙에 반영했다.
 - 결과: targeted local conformance `100.00`, required rule pass rate `100.00`, critical violations `0`, forbidden patterns `0`.
+
+## 2026-05-05 Local Conformance Rerun Result
+
+- Command: `make eval-conformance`
+- Report: `workspace/codex-eval/conformance-rerun-1/report.html`
+- Scope: 5 conformance-rerun cases, `baseline` vs local `dddjango` skill-unit.
+- Execution: all 10 Codex runs returned `0`.
+- Baseline conformance: `87.22`
+- dddjango conformance: `100.00`
+- Delta: `+12.78`
+- dddjango required rule pass rate: `100.00`
+- Critical violations: `0`
+- Forbidden patterns: `0`
+- Release gate: PASS
+- Runtime: baseline avg `38.77s` / total `193.87s`; dddjango avg `73.74s` / total `368.71s`.

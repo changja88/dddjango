@@ -41,7 +41,7 @@
       "django_ninja_compliance": 15,
       "actionability": 12,
       "architecture_quality": 12,
-      "testing_quality": 8,
+      "testing_quality": 4,
       "korean_first": 10,
       "conciseness": 5,
       "safety": 5
@@ -56,7 +56,7 @@
     "notes": "auto heuristic grade; review manually before release gate",
     "flags": {
       "korean_first": true,
-      "django_ninja_used": false,
+      "django_ninja_used": true,
       "drf_endorsed": false,
       "negative_control_passed": false
     },
@@ -226,7 +226,7 @@
     "notes": "auto heuristic grade; review manually before release gate",
     "flags": {
       "korean_first": true,
-      "django_ninja_used": false,
+      "django_ninja_used": true,
       "drf_endorsed": false,
       "negative_control_passed": false
     },
@@ -260,7 +260,7 @@
     "notes": "auto heuristic grade; review manually before release gate",
     "flags": {
       "korean_first": true,
-      "django_ninja_used": false,
+      "django_ninja_used": true,
       "drf_endorsed": false,
       "negative_control_passed": false
     },
@@ -281,7 +281,7 @@
       "architecture_quality": 12,
       "testing_quality": 8,
       "korean_first": 10,
-      "conciseness": 5,
+      "conciseness": 3,
       "safety": 5
     },
     "usability": {

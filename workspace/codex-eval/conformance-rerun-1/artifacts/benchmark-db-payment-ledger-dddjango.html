@@ -76,161 +76,226 @@
     <div class="path">workspace/codex-eval/conformance-rerun-1/dddjango/benchmark-db-payment-ledger.output.md</div>
   </header>
   <main>
-    <article class="markdown"><p><strong>[주요 내용]</strong></p>
-<p>대표 조회 패턴을 먼저 고정합니다.</p>
-<ul>
-<li>주문/결제 상세: <code>payment_id</code>로 현재 결제 상태 1건 + 최신 원장 N건 조회</li>
-<li>PG webhook 중복 처리: <code>(pg, merchant_id, webhook_event_id)</code>로 이미 처리한 이벤트 확인</li>
-<li>PG 재시도 idempotency: <code>(pg, merchant_id, idempotency_key)</code>로 같은 요청의 기존 원장 반환</li>
-<li>고객/관리자 이력: <code>merchant_id + order_id + created_at desc</code>, <code>merchant_id + created_at desc</code></li>
-<li>정산/감사: <code>pg + pg_transaction_id</code>, 기간별 <code>created_at</code> 범위 조회</li>
-</ul>
-<p>권장 구조는 “현재 상태 테이블 1개 + 불변 원장 테이블 1개”입니다. 환불 가능 금액 같은 교차 행 검증은 DB <code>CHECK</code>만으로 안전하게 막기 어렵기 때문에, 현재 상태 행을 <code>select_for_update()</code>로 잠그고 원장을 append-only로 씁니다.</p>
+    <article class="markdown"><p><strong>조회 패턴 / 워크로드</strong></p>
+<p>대표 쿼리를 먼저 고정하고 인덱스를 그에 맞춥니다.</p>
 <pre><code>
-class Payment(models.Model):
-    class Status(models.TextChoices):
-        READY = &quot;ready&quot;
-        AUTHORIZED = &quot;authorized&quot;
-        CAPTURED = &quot;captured&quot;
-        PARTIALLY_REFUNDED = &quot;partially_refunded&quot;
-        REFUNDED = &quot;refunded&quot;
-        FAILED = &quot;failed&quot;
+# 주문 상세: 결제/환불 타임라인
+PaymentLedgerEntry.objects.filter(order_id=order_id).order_by(&quot;occurred_at&quot;, &quot;id&quot;)
 
-    merchant_id = models.CharField(max_length=64)
-    order_id = models.CharField(max_length=64)
-    status = models.CharField(max_length=32, choices=Status)
-    currency = models.CharField(max_length=3)
-    captured_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0)
-    refunded_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+# 사용자 결제 내역
+PaymentLedgerEntry.objects.filter(user_id=user_id).order_by(&quot;-occurred_at&quot;)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=[&quot;merchant_id&quot;, &quot;order_id&quot;],
-                name=&quot;uq_payment_merchant_order&quot;,
-            ),
-            models.CheckConstraint(
-                condition=models.Q(captured_amount__gte=0, refunded_amount__gte=0),
-                name=&quot;ck_payment_amount_non_negative&quot;,
-            ),
-            models.CheckConstraint(
-                condition=models.Q(refunded_amount__lte=models.F(&quot;captured_amount&quot;)),
-                name=&quot;ck_payment_refund_lte_capture&quot;,
-            ),
-        ]
-        indexes = [
-            models.Index(fields=[&quot;merchant_id&quot;, &quot;order_id&quot;], name=&quot;ix_payment_order&quot;),
-            models.Index(fields=[&quot;merchant_id&quot;, &quot;-created_at&quot;], name=&quot;ix_payment_recent&quot;),
-        ]
+# PG webhook 중복 처리 확인
+PaymentLedgerEntry.objects.filter(
+    provider=provider,
+    provider_event_id=provider_event_id,
+).exists()
+
+# PG 재시도 idempotency 확인
+PaymentLedgerEntry.objects.filter(
+    merchant_id=merchant_id,
+    idempotency_key=idempotency_key,
+).first()
+
+# 정산/감사 배치
+PaymentLedgerEntry.objects.filter(
+    provider=provider,
+    occurred_at__gte=start,
+    occurred_at__lt=end,
+).order_by(&quot;occurred_at&quot;, &quot;id&quot;)
+</code></pre>
+<p><strong>핵심 설계</strong></p>
+<p>결제 원장은 <code>append-only</code>로 둡니다. 결제 성공, 환불 성공, 취소, 실패 기록을 수정하지 않고 새 행으로만 추가합니다. 상태 정정이 필요하면 기존 행을 수정하지 말고 <code>ADJUSTMENT</code> 또는 <code>REVERSAL</code> 성격의 보정 행을 추가합니다.</p>
+<p>현재 결제 상태가 자주 필요하면 원장 테이블에서 매번 계산하지 말고 별도 <code>Payment</code> projection 테이블에 현재 상태와 누적 금액을 유지해도 됩니다. 다만 진실의 원천은 원장입니다.</p>
+<p><strong>테이블</strong></p>
+<pre><code>
+from django.db import models
+from django.db.models import Q
 
 
 class PaymentLedgerEntry(models.Model):
-    class Kind(models.TextChoices):
-        AUTHORIZE = &quot;authorize&quot;
-        CAPTURE = &quot;capture&quot;
-        REFUND = &quot;refund&quot;
-        FAIL = &quot;fail&quot;
+    class EntryType(models.TextChoices):
+        PAYMENT_CAPTURED = &quot;PAYMENT_CAPTURED&quot;
+        PAYMENT_FAILED = &quot;PAYMENT_FAILED&quot;
+        REFUND_SUCCEEDED = &quot;REFUND_SUCCEEDED&quot;
+        REFUND_FAILED = &quot;REFUND_FAILED&quot;
+        REVERSAL = &quot;REVERSAL&quot;
+        ADJUSTMENT = &quot;ADJUSTMENT&quot;
 
-    payment = models.ForeignKey(
-        Payment,
-        on_delete=models.PROTECT,
-        related_name=&quot;ledger_entries&quot;,
-    )
+    class Provider(models.TextChoices):
+        TOSS = &quot;TOSS&quot;
+        NICE = &quot;NICE&quot;
+        KCP = &quot;KCP&quot;
+        IAMPORT = &quot;IAMPORT&quot;
+
+    id = models.BigAutoField(primary_key=True)
+
     merchant_id = models.CharField(max_length=64)
-    order_id = models.CharField(max_length=64)
-    pg = models.CharField(max_length=32)
-    kind = models.CharField(max_length=32, choices=Kind)
-    amount = models.DecimalField(max_digits=18, decimal_places=2)
-    currency = models.CharField(max_length=3)
+    order_id = models.CharField(max_length=64, db_index=True)
+    user_id = models.BigIntegerField(db_index=True)
+
+    provider = models.CharField(max_length=32, choices=Provider)
+    provider_payment_id = models.CharField(max_length=128)
+    provider_refund_id = models.CharField(max_length=128, blank=True)
+
     idempotency_key = models.CharField(max_length=128)
-    webhook_event_id = models.CharField(max_length=128, null=True, blank=True)
-    pg_transaction_id = models.CharField(max_length=128, null=True, blank=True)
-    raw_payload = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
+    provider_event_id = models.CharField(max_length=128, blank=True)
+
+    entry_type = models.CharField(max_length=32, choices=EntryType)
+    amount_minor = models.BigIntegerField()
+    currency = models.CharField(max_length=3)
+
+    occurred_at = models.DateTimeField()
+    received_at = models.DateTimeField(auto_now_add=True)
+
+    raw_payload = models.JSONField()
+    payload_hash = models.CharField(max_length=64)
 
     class Meta:
+        db_table = &quot;payment_ledger_entries&quot;
         constraints = [
-            models.CheckConstraint(condition=models.Q(amount__gt=0), name=&quot;ck_ledger_amount_positive&quot;),
-            models.UniqueConstraint(
-                fields=[&quot;pg&quot;, &quot;merchant_id&quot;, &quot;idempotency_key&quot;],
-                name=&quot;uq_ledger_idempotency&quot;,
+            models.CheckConstraint(
+                condition=Q(amount_minor__gt=0),
+                name=&quot;payment_ledger_amount_positive&quot;,
+            ),
+            models.CheckConstraint(
+                condition=Q(currency__regex=r&quot;^[A-Z]{3}$&quot;),
+                name=&quot;payment_ledger_currency_iso_4217&quot;,
             ),
             models.UniqueConstraint(
-                fields=[&quot;pg&quot;, &quot;merchant_id&quot;, &quot;webhook_event_id&quot;],
-                condition=models.Q(webhook_event_id__isnull=False),
-                name=&quot;uq_ledger_webhook_event&quot;,
+                fields=[&quot;merchant_id&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uniq_payment_ledger_idempotency_key&quot;,
             ),
             models.UniqueConstraint(
-                fields=[&quot;pg&quot;, &quot;merchant_id&quot;, &quot;pg_transaction_id&quot;, &quot;kind&quot;],
-                condition=models.Q(pg_transaction_id__isnull=False),
-                name=&quot;uq_ledger_pg_tx_kind&quot;,
+                fields=[&quot;provider&quot;, &quot;provider_event_id&quot;],
+                condition=~Q(provider_event_id=&quot;&quot;),
+                name=&quot;uniq_payment_ledger_provider_event&quot;,
+            ),
+            models.UniqueConstraint(
+                fields=[&quot;provider&quot;, &quot;payload_hash&quot;],
+                condition=Q(provider_event_id=&quot;&quot;),
+                name=&quot;uniq_payment_ledger_provider_payload_hash_without_event_id&quot;,
             ),
         ]
         indexes = [
-            models.Index(fields=[&quot;payment&quot;, &quot;-created_at&quot;], name=&quot;ix_ledger_payment_recent&quot;),
-            models.Index(fields=[&quot;merchant_id&quot;, &quot;order_id&quot;, &quot;-created_at&quot;], name=&quot;ix_ledger_order_recent&quot;),
-            models.Index(fields=[&quot;merchant_id&quot;, &quot;-created_at&quot;], name=&quot;ix_ledger_merchant_recent&quot;),
-            models.Index(fields=[&quot;pg&quot;, &quot;pg_transaction_id&quot;], name=&quot;ix_ledger_pg_tx&quot;),
+            models.Index(
+                fields=[&quot;order_id&quot;, &quot;occurred_at&quot;, &quot;id&quot;],
+                name=&quot;idx_payment_ledger_order_time&quot;,
+            ),
+            models.Index(
+                fields=[&quot;user_id&quot;, &quot;-occurred_at&quot;],
+                name=&quot;idx_payment_ledger_user_recent&quot;,
+            ),
+            models.Index(
+                fields=[&quot;provider&quot;, &quot;occurred_at&quot;, &quot;id&quot;],
+                name=&quot;idx_payment_ledger_provider_time&quot;,
+            ),
+            models.Index(
+                fields=[&quot;provider_payment_id&quot;, &quot;occurred_at&quot;],
+                name=&quot;idx_payment_ledger_pg_payment_time&quot;,
+            ),
         ]
 </code></pre>
-<p>불변성은 앱 레벨과 DB 레벨을 같이 둡니다. Django에서는 원장 모델에 <code>save()</code> 업데이트 금지, <code>delete()</code> 금지를 넣고, PostgreSQL에는 <code>BEFORE UPDATE OR DELETE</code> trigger를 마이그레이션으로 추가하는 방식이 안전합니다. 운영자가 ORM을 우회해도 원장이 바뀌면 안 됩니다.</p>
+<p><strong>컬럼 기준</strong></p>
+<p><code>amount_minor</code>는 원 단위/센트 단위 같은 최소 화폐 단위의 양수로 저장합니다. 결제와 환불의 부호는 금액 부호가 아니라 <code>entry_type</code>으로 표현합니다. 이렇게 해야 <code>amount_minor &gt; 0</code> 제약을 유지할 수 있고, 환불 금액 검증도 명확해집니다.</p>
+<p><code>idempotency_key</code>는 클라이언트/API 재시도 단위의 멱등 키입니다. 같은 <code>merchant_id + idempotency_key</code>는 같은 결과를 반환해야 하므로 unique 제약을 둡니다.</p>
+<p><code>provider_event_id</code>는 PG webhook 중복 방지용입니다. PG가 이벤트 ID를 안정적으로 제공하면 <code>provider + provider_event_id</code>를 unique로 둡니다. 이벤트 ID가 없는 PG라면 canonical JSON payload의 SHA-256 같은 <code>payload_hash</code>를 보조 중복 키로 씁니다.</p>
+<p><code>raw_payload</code>는 감사와 장애 대응용 원본입니다. 검색 조건으로 자주 쓰지 않는 이상 JSON 내부 필드 인덱스는 처음부터 만들지 않습니다.</p>
+<p><strong>불변성</strong></p>
+<p>Django 모델만으로 불변성을 보장하면 우회 업데이트에 취약합니다. DB trigger 또는 권한 정책까지 같이 둡니다.</p>
 <pre><code>
-@transaction.atomic
-def record_refund(payment_id, *, pg, merchant_id, idempotency_key, amount, payload):
-    payment = Payment.objects.select_for_update().get(
-        id=payment_id,
-        merchant_id=merchant_id,
-    )
+CREATE OR REPLACE FUNCTION prevent_payment_ledger_mutation()
+RETURNS trigger AS $$
+BEGIN
+    RAISE EXCEPTION &#x27;payment ledger entries are immutable&#x27;;
+END;
+$$ LANGUAGE plpgsql;
 
-    entry, created = PaymentLedgerEntry.objects.get_or_create(
-        pg=pg,
-        merchant_id=merchant_id,
-        idempotency_key=idempotency_key,
-        defaults={
-            &quot;payment&quot;: payment,
-            &quot;order_id&quot;: payment.order_id,
-            &quot;kind&quot;: PaymentLedgerEntry.Kind.REFUND,
-            &quot;amount&quot;: amount,
-            &quot;currency&quot;: payment.currency,
-            &quot;raw_payload&quot;: payload,
-        },
-    )
-    if not created:
-        return entry
+CREATE TRIGGER trg_payment_ledger_no_update
+BEFORE UPDATE ON payment_ledger_entries
+FOR EACH ROW EXECUTE FUNCTION prevent_payment_ledger_mutation();
 
-    if payment.refunded_amount + amount &gt; payment.captured_amount:
-        raise ValueError(&quot;refund exceeds captured amount&quot;)
-
-    payment.refunded_amount = models.F(&quot;refunded_amount&quot;) + amount
-    payment.status = Payment.Status.REFUNDED
-    payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
-    return entry
+CREATE TRIGGER trg_payment_ledger_no_delete
+BEFORE DELETE ON payment_ledger_entries
+FOR EACH ROW EXECUTE FUNCTION prevent_payment_ledger_mutation();
 </code></pre>
-<p>마이그레이션 검증은 필수로 봅니다.</p>
+<p>Django에서는 서비스 레이어에서만 생성하게 하고, <code>save()</code>로 기존 행을 수정하는 코드를 만들지 않습니다. 운영 계정도 가능하면 <code>INSERT</code> 중심 권한으로 제한합니다.</p>
+<p><strong>트랜잭션</strong></p>
+<p>PG 재시도와 webhook 처리는 같은 패턴을 씁니다.</p>
+<pre><code>
+from django.db import IntegrityError, transaction
+
+
+def append_payment_ledger_entry(*, attrs):
+    try:
+        with transaction.atomic():
+            return PaymentLedgerEntry.objects.create(**attrs), True
+    except IntegrityError:
+        return (
+            PaymentLedgerEntry.objects.get(
+                merchant_id=attrs[&quot;merchant_id&quot;],
+                idempotency_key=attrs[&quot;idempotency_key&quot;],
+            ),
+            False,
+        )
+</code></pre>
+<p>핵심은 <code>SELECT 후 INSERT</code>가 아니라 <code>INSERT 후 unique violation 처리</code>입니다. 동시 요청이 들어와도 DB unique constraint가 최종 방어선이 됩니다.</p>
+<p>현재 상태 projection 테이블을 같이 갱신한다면 같은 <code>transaction.atomic()</code> 안에서 원장 insert와 projection update를 묶습니다. 주문/결제 row를 갱신할 때는 <code>select_for_update()</code>로 해당 payment row를 잠그고, 환불 누적액 검증은 잠금 안에서 수행합니다.</p>
+<p>기본 격리 수준은 PostgreSQL의 <code>READ COMMITTED</code>로 충분합니다. 단, “잔여 환불 가능 금액”처럼 현재 누적값 기반 검증이 있으면 해당 payment row를 명시적으로 잠그는 것이 격리 수준을 올리는 것보다 보통 낫습니다.</p>
+<p><strong>환불 제약</strong></p>
+<p>단일 row 제약만으로 “총 환불액 &lt;= 결제액”은 보장할 수 없습니다. 이 규칙은 transaction 안에서 검증해야 합니다.</p>
+<pre><code>
+with transaction.atomic():
+    payment = (
+        Payment.objects
+        .select_for_update()
+        .get(id=payment_id)
+    )
+
+    if payment.refunded_amount_minor + refund_amount &gt; payment.captured_amount_minor:
+        raise ValueError(&quot;refund amount exceeds captured amount&quot;)
+
+    PaymentLedgerEntry.objects.create(...)
+    payment.refunded_amount_minor += refund_amount
+    payment.save(update_fields=[&quot;refunded_amount_minor&quot;, &quot;updated_at&quot;])
+</code></pre>
+<p><strong>마이그레이션 검증</strong></p>
+<p>마이그레이션은 다음을 확인합니다.</p>
 <pre><code>
 python manage.py makemigrations --check --dry-run
 python manage.py sqlmigrate payments 0001
 python manage.py migrate
 python manage.py check
-python manage.py test payments
 </code></pre>
-<p>테스트는 최소한 다음을 포함합니다.</p>
+<p>PostgreSQL 기준으로는 운영 전후에 실제 쿼리 계획을 확인합니다.</p>
 <pre><code>
-def test_same_idempotency_key_creates_one_ledger_entry(db):
-    # 같은 pg, merchant_id, idempotency_key 재호출 시 count == 1
+EXPLAIN ANALYZE
+SELECT *
+FROM payment_ledger_entries
+WHERE order_id = &#x27;ORDER-1&#x27;
+ORDER BY occurred_at, id;
 
-def test_same_webhook_event_is_ignored(db):
-    # 같은 webhook_event_id 중복 수신 시 IntegrityError 또는 기존 entry 반환
-
-def test_refund_cannot_exceed_capture_with_concurrent_requests(transactional_db):
-    # select_for_update 경로로 초과 환불 방지
-
-def test_ledger_entry_cannot_be_updated_or_deleted(db):
-    # ORM update/delete 및 DB trigger 검증
+EXPLAIN ANALYZE
+SELECT 1
+FROM payment_ledger_entries
+WHERE provider = &#x27;TOSS&#x27;
+  AND provider_event_id = &#x27;evt_123&#x27;
+LIMIT 1;
 </code></pre>
-<p>대량 데이터 전에는 <code>EXPLAIN ANALYZE</code>로 대표 조회 5개가 위 인덱스를 타는지 확인합니다. 특히 <code>payment_id + created_at desc</code>, <code>merchant_id + order_id + created_at desc</code>, idempotency unique 조회는 Seq Scan이 나오면 인덱스 설계를 다시 봐야 합니다.</p>
-<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/마이그레이션 구현 → <strong>implementation-django</strong> 스킬 &gt; - 인덱스/트랜잭션 검증 → <strong>architecture-db</strong> 스킬</p></article>
+<p>중복 방지 테스트는 필수입니다.</p>
+<pre><code>
+def test_same_idempotency_key_creates_single_ledger_entry(db):
+    attrs = make_ledger_attrs(idempotency_key=&quot;idem-1&quot;)
+
+    first, created_first = append_payment_ledger_entry(attrs=attrs)
+    second, created_second = append_payment_ledger_entry(attrs=attrs)
+
+    assert created_first is True
+    assert created_second is False
+    assert first.id == second.id
+    assert PaymentLedgerEntry.objects.count() == 1
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja webhook endpoint 설계 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 결제 도메인 aggregate/current projection 설계 → <strong>architecture-ddd</strong> 스킬</p></article>
   </main>
 </body>
 </html>

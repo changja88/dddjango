@@ -2,7 +2,7 @@
   {
     "case_id": "benchmark-db-order-query-index",
     "variant": "baseline",
-    "duration_sec": 59.03,
+    "duration_sec": 44.84,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -15,7 +15,7 @@
   {
     "case_id": "benchmark-db-payment-ledger",
     "variant": "baseline",
-    "duration_sec": 57.61,
+    "duration_sec": 39.63,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -28,7 +28,7 @@
   {
     "case_id": "benchmark-db-refund-transaction",
     "variant": "baseline",
-    "duration_sec": 37.24,
+    "duration_sec": 37.68,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -41,7 +41,7 @@
   {
     "case_id": "benchmark-tdd-ninja-endpoint",
     "variant": "baseline",
-    "duration_sec": 37.33,
+    "duration_sec": 31.58,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -54,7 +54,7 @@
   {
     "case_id": "benchmark-tdd-order-cancel",
     "variant": "baseline",
-    "duration_sec": 35.55,
+    "duration_sec": 40.14,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -67,7 +67,7 @@
   {
     "case_id": "benchmark-db-order-query-index",
     "variant": "dddjango",
-    "duration_sec": 47.75,
+    "duration_sec": 66.36,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -80,7 +80,7 @@
   {
     "case_id": "benchmark-db-payment-ledger",
     "variant": "dddjango",
-    "duration_sec": 55.74,
+    "duration_sec": 70.16,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -93,7 +93,7 @@
   {
     "case_id": "benchmark-db-refund-transaction",
     "variant": "dddjango",
-    "duration_sec": 49.72,
+    "duration_sec": 73.31,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -106,7 +106,7 @@
   {
     "case_id": "benchmark-tdd-ninja-endpoint",
     "variant": "dddjango",
-    "duration_sec": 71.02,
+    "duration_sec": 76.54,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
@@ -119,7 +119,7 @@
   {
     "case_id": "benchmark-tdd-order-cancel",
     "variant": "dddjango",
-    "duration_sec": 60.64,
+    "duration_sec": 82.34,
     "approx_tokens_in": null,
     "approx_tokens_out": null,
     "tool_calls": null,
