@@ -2,6 +2,7 @@
 import argparse
 import json
 import re
+import shutil
 from pathlib import Path
 
 
@@ -153,11 +154,34 @@ def summary_markdown(cases):
     )
 
 
+def clear_generated_outputs(output, variants):
+    for variant in variants:
+        variant_dir = output / variant
+        if not variant_dir.exists():
+            continue
+        for pattern in ("*.output.md", "*.codex.log"):
+            for path in variant_dir.glob(pattern):
+                path.unlink()
+
+    for path in [
+        output / "report.html",
+        output / "conformance.json",
+        output / "real-repo-diff-summary.json",
+    ]:
+        if path.exists():
+            path.unlink()
+
+    artifacts_dir = output / "artifacts"
+    if artifacts_dir.exists():
+        shutil.rmtree(artifacts_dir)
+
+
 def create_iteration(cases_path, schema_path, output_path, variants=VARIANT_SETS["standard"]):
     cases = load_cases(cases_path)
     schema = load_schema(schema_path)
     output = Path(output_path)
     output.mkdir(parents=True, exist_ok=True)
+    clear_generated_outputs(output, variants)
 
     grades = []
     timing = []

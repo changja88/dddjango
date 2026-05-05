@@ -1017,6 +1017,41 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             )
             self.assertIn(first_grade["variant"], {"baseline", "dddjango"})
 
+    def test_init_iteration_clears_stale_generated_outputs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "iteration-1"
+            stale_paths = [
+                output_dir / "baseline/pilot-api-order-create.output.md",
+                output_dir / "baseline/pilot-api-order-create.codex.log",
+                output_dir / "dddjango/pilot-api-order-create.output.md",
+                output_dir / "report.html",
+                output_dir / "conformance.json",
+                output_dir / "artifacts/pilot-api-order-create-baseline.html",
+            ]
+            for path in stale_paths:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("stale\n")
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--cases",
+                    str(CASES_PATH),
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            for path in stale_paths:
+                with self.subTest(path=path):
+                    self.assertFalse(path.exists())
+
     def test_init_iteration_can_create_benchmark_suite_by_name(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "benchmark-iteration"
