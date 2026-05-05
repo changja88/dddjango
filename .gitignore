@@ -18,6 +18,8 @@ __pycache__/
 venv/
 
 # Evaluation run artifacts
+workspace/codex-eval/
+workspace/claude-eval/
 workspace/*/test/
 workspace/test/
 workspace/**/*.codex.log

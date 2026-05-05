@@ -7,7 +7,11 @@ from pathlib import Path
 def load_conformance(iteration):
     path = Path(iteration) / "conformance.json"
     if not path.exists():
-        raise RuntimeError(f"missing conformance report: {path}")
+        raise RuntimeError(
+            f"missing conformance report: {path}. "
+            "Run the matching evaluation target first, for example "
+            "`make eval-conformance` or `make eval-plugin-real`."
+        )
     return json.loads(path.read_text())
 
 
