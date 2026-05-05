@@ -22,7 +22,7 @@
 
 - [x] dddjango positive trigger에 주던 자동 점수 보너스를 제거한다.
 - [x] `items/meta`, migration verification, Result Type, query-pattern-first 규칙을 단순 단어 탐지보다 구조적으로 검증한다.
-- [ ] API/DB/TDD별 구조 검증 규칙을 더 넓힌다.
+- [x] API/DB/TDD별 구조 검증 규칙을 더 넓힌다.
 
 ## Phase 4: 실사용성 평가 확대
 
@@ -33,8 +33,19 @@
 ## Phase 5: Gate 재정의
 
 - [ ] high-baseline suite에는 +15% lift gate 대신 absolute conformance gate를 적용한다.
-- [ ] release gate는 `make eval-conformance`와 `make eval-plugin-real`을 모두 요구한다.
+- [x] `make eval-conformance`, `make eval-plugin-real`, `make eval-release-gate`가 동일한 conformance release gate를 확인하도록 연결한다.
+- [ ] `make release` 자체에 full `plugin-real` 재평가를 강제할지 결정한다. 현재는 릴리즈 시간을 과도하게 늘리지 않기 위해 별도 gate 명령으로 둔다.
 - [ ] Claude 평가는 결제 또는 API key 준비 후 같은 목적 체계로 추가한다.
+
+## Phase 6: 평가 운영 자동화
+
+- [x] 긴 평가 중 현재 variant/case 진행률을 stdout에 즉시 출력한다.
+- [x] 이전 conformance 실패 케이스에서 residual JSONL suite를 자동 생성한다.
+- [x] `make eval-residual`로 실패 케이스만 재측정하고, 실패가 없으면 no-op 처리한다.
+- [x] `make eval-gate`와 `make eval-release-gate`로 HTML 생성 후 같은 gate 결과를 CLI에서도 확인한다.
+- [x] residual run artifacts를 gitignore에 추가한다.
+- [ ] 전체 `v0.1.9` plugin-real 60-run 재평가를 장시간 실행 가능한 시점에 다시 수행한다.
+- [ ] 반복 평가 결과를 버전별 trend report로 누적한다.
 
 ## Current Decision
 
@@ -113,3 +124,28 @@
   - `trigger-positive-ninja-error-standard`
 - Result: installed plugin targeted conformance `100.00`, required rule pass rate `100.00`, critical violations `0`, forbidden patterns `0`.
 - Full `make eval-plugin-real` note: 전체 60-run 재평가는 첫 baseline 구간이 과도하게 지연되어 중단했다. 이번 릴리즈 변경 검증은 잔여 실패를 직접 겨냥한 targeted plugin-real 결과로 판단한다.
+
+## 2026-05-06 Evaluation Automation Result
+
+- Added progress logging to `run_prompts.py`:
+  - run start: variant, case count, iteration path
+  - case start: `[n/total] variant/case: start`
+  - case end: return code and duration
+  - timeout: timeout seconds and elapsed duration
+- Added residual automation:
+  - `evals/codex/scripts/build_residual_cases.py`
+  - `evals/codex/scripts/run_residual_eval.py`
+  - `make eval-residual`
+- Added gate automation:
+  - `evals/codex/scripts/check_release_gate.py`
+  - `make eval-gate`
+  - `make eval-release-gate`
+- Expanded structural conformance rules:
+  - API: explicit status/response mapping
+  - DB: measurement plan such as EXPLAIN, query count, or `QuerySet.explain()`
+  - TDD: test structure markers such as Arrange/Act/Assert, fixture, or test client
+- Current recommendation:
+  - small skill fix: `make eval-residual` first
+  - local conformance: `make eval-conformance`
+  - installed Codex plugin: `make eval-plugin-real`
+  - release decision: `make eval-release-gate`

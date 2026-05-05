@@ -152,6 +152,14 @@ def rule_uses_problem_details(text):
     )
 
 
+def rule_has_api_status_response_mapping(text):
+    return bool(
+        re.search(r"response\s*=\s*\{[\s\S]{0,240}(20\d|40\d|50\d)", text)
+        or re.search(r"\bstatus\s*=\s*(20\d|40\d|50\d)", text)
+        or re.search(r"\b(201|202|204|400|401|403|404|409|422|500)\b[\s\S]{0,120}Schema", text)
+    )
+
+
 def rule_includes_verification_commands(text):
     return contains_any(
         text,
@@ -333,8 +341,49 @@ def rule_has_query_pattern_first(text):
     )
 
 
+def rule_has_db_measurement_plan(text):
+    return contains_any(
+        text,
+        [
+            "EXPLAIN",
+            "ANALYZE",
+            "QuerySet.explain",
+            ".explain(",
+            "assertNumQueries",
+            "pg_stat_statements",
+            "slow query",
+            "쿼리 수",
+            "실행 계획",
+            "측정",
+        ],
+    )
+
+
 def rule_has_before_after_or_diff(text):
     return contains_any(text, ["Before", "After", "diff --git", "unified diff", "[Before]", "[After]"])
+
+
+def rule_has_test_structure(text):
+    return bool(
+        contains_any(text, ["pytest", "test_"])
+        and contains_any(
+            text,
+            [
+                "Arrange",
+                "Act",
+                "Assert",
+                "Given",
+                "When",
+                "Then",
+                "client",
+                "NinjaClient",
+                "TestClient",
+                "fixtures",
+                "fixture",
+                "conftest",
+            ],
+        )
+    )
 
 
 def rule_uses_policy_or_service_extraction(text):
@@ -390,6 +439,7 @@ RULES = {
     "has_explicit_return_type": rule_has_explicit_return_type,
     "uses_items_meta_envelope": rule_uses_items_meta_envelope,
     "uses_problem_details": rule_uses_problem_details,
+    "has_api_status_response_mapping": rule_has_api_status_response_mapping,
     "includes_verification_commands": rule_includes_verification_commands,
     "includes_migration_verification": rule_includes_migration_verification,
     "no_drf_code": rule_no_drf_code,
@@ -404,7 +454,9 @@ RULES = {
     "has_db_constraints_indexes": rule_has_db_constraints_indexes,
     "has_transaction_locking": rule_has_transaction_locking,
     "has_query_pattern_first": rule_has_query_pattern_first,
+    "has_db_measurement_plan": rule_has_db_measurement_plan,
     "has_before_after_or_diff": rule_has_before_after_or_diff,
+    "has_test_structure": rule_has_test_structure,
     "uses_policy_or_service_extraction": rule_uses_policy_or_service_extraction,
     "has_severity_ranked_findings": rule_has_severity_ranked_findings,
     "no_django_contamination": rule_no_django_contamination,

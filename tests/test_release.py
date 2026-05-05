@@ -71,9 +71,13 @@ class FileUpdateTests(unittest.TestCase):
             "full-eval:",
             "eval-conformance:",
             "eval-plugin-real:",
+            "eval-residual:",
+            "eval-release-gate:",
             "--variant-set $(EVAL_VARIANT_SET)",
             "--variant $(EVAL_WITH_VARIANT)",
             "dddjango-plugin",
+            "evals/codex/scripts/build_residual_cases.py",
+            "evals/codex/scripts/check_release_gate.py",
             "evals/codex/scripts/grade_conformance.py",
             "evals/codex/scripts/render_report.py",
         ]:

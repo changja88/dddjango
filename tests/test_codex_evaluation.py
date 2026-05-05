@@ -31,6 +31,8 @@ RUN_SCRIPT_PATH = ROOT / "evals/codex/scripts/run_prompts.py"
 REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_report.py"
 REPEAT_REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_repeat_summary.py"
 REAL_REPO_DIFF_SCRIPT_PATH = ROOT / "evals/codex/scripts/evaluate_real_repo_diffs.py"
+BUILD_RESIDUAL_CASES_SCRIPT_PATH = ROOT / "evals/codex/scripts/build_residual_cases.py"
+CHECK_RELEASE_GATE_SCRIPT_PATH = ROOT / "evals/codex/scripts/check_release_gate.py"
 POLICY_SKILL_PATHS = [
     "implementation-django-ninja",
     "architecture-api",
@@ -932,6 +934,30 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         early_query_pattern = "조회 패턴: status + created_at\n\nmodels.Index(...)\n"
         self.assertFalse(module.rule_has_query_pattern_first(late_query_pattern))
         self.assertTrue(module.rule_has_query_pattern_first(early_query_pattern))
+
+        self.assertFalse(module.rule_has_api_status_response_mapping("@router.get('/x')"))
+        self.assertTrue(
+            module.rule_has_api_status_response_mapping(
+                "@router.post('/orders', response={201: OrderOut, 409: ProblemDetail})\n"
+            )
+        )
+
+        self.assertFalse(module.rule_has_db_measurement_plan("인덱스를 추가합니다."))
+        self.assertTrue(
+            module.rule_has_db_measurement_plan(
+                "QuerySet.explain()과 assertNumQueries로 쿼리 수를 측정합니다."
+            )
+        )
+
+        self.assertFalse(module.rule_has_test_structure("pytest로 테스트합니다."))
+        self.assertTrue(
+            module.rule_has_test_structure(
+                "def test_create_order(client):\n"
+                "    # Arrange\n"
+                "    # Act\n"
+                "    # Assert\n"
+            )
+        )
 
     def test_grade_conformance_flags_negative_control_contamination(self):
         module = load_module(CONFORMANCE_SCRIPT_PATH)
@@ -1979,6 +2005,155 @@ index 83db48f..f735c2d 100644
             self.assertIn("timed out", output)
             self.assertIn("partial stdout", log)
             self.assertIn("partial stderr", log)
+
+    def test_run_prompts_prints_progress_for_each_case(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir) / "iteration"
+            (iteration / "baseline").mkdir(parents=True)
+            (iteration / "answer-key").mkdir()
+            (iteration / "baseline/case-a.prompt.md").write_text(
+                "## Prompt\n\nDjango Ninja API를 설계해줘.\n"
+            )
+            (iteration / "timing.json").write_text("[]\n")
+            (iteration / "answer-key/case-a.json").write_text(
+                json.dumps({"category": "api-design", "prompt": "Django Ninja API"})
+                + "\n"
+            )
+
+            args = type(
+                "Args",
+                (),
+                {
+                    "iteration": str(iteration),
+                    "variant": "baseline",
+                    "case": "",
+                    "cwd": str(Path(temp_dir) / "cwd"),
+                    "ignore_user_config": False,
+                    "allow_user_config": False,
+                    "model": "",
+                    "profile": "",
+                    "root": str(ROOT),
+                    "use_local_dddjango_skills": True,
+                    "dry_run": False,
+                    "keep_going": True,
+                    "timeout_sec": 10,
+                },
+            )()
+
+            original_run = module.subprocess.run
+
+            def success_run(command, **kwargs):
+                output_index = command.index("--output-last-message") + 1
+                Path(command[output_index]).write_text("ok\n")
+                return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+            module.subprocess.run = success_run
+            try:
+                with contextlib.redirect_stdout(io.StringIO()) as stdout:
+                    module.run_variant(args)
+            finally:
+                module.subprocess.run = original_run
+
+            output = stdout.getvalue()
+            self.assertIn("running baseline: 1 case(s)", output)
+            self.assertIn("[1/1] baseline/case-a: start", output)
+            self.assertIn("[1/1] baseline/case-a: returncode=0", output)
+            self.assertIn("finished baseline: 1 case(s)", output)
+
+    def test_build_residual_cases_extracts_failed_dddjango_plugin_cases(self):
+        module = load_module(BUILD_RESIDUAL_CASES_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            conformance_path = root / "conformance.json"
+            source_cases_path = root / "trigger.jsonl"
+            output_path = root / "residual.jsonl"
+            conformance_path.write_text(
+                json.dumps(
+                    {
+                        "summary": {"dddjango_variant": "dddjango-plugin"},
+                        "cases": [
+                            {
+                                "case_id": "case-a",
+                                "variant": "baseline",
+                                "failed_rules": ["rule"],
+                            },
+                            {
+                                "case_id": "case-a",
+                                "variant": "dddjango-plugin",
+                                "failed_rules": ["rule"],
+                            },
+                            {
+                                "case_id": "case-b",
+                                "variant": "dddjango-plugin",
+                                "failed_rules": [],
+                                "critical_violations": [],
+                                "forbidden_patterns": [],
+                            },
+                        ],
+                    }
+                )
+            )
+            source_cases_path.write_text(
+                "\n".join(
+                    [
+                        json.dumps({"id": "case-a", "prompt": "A"}, ensure_ascii=False),
+                        json.dumps({"id": "case-b", "prompt": "B"}, ensure_ascii=False),
+                    ]
+                )
+                + "\n"
+            )
+
+            case_ids = module.build_residual_cases(
+                conformance_path,
+                source_cases_path,
+                output_path,
+            )
+
+            self.assertEqual(case_ids, ["case-a"])
+            output_cases = [
+                json.loads(line) for line in output_path.read_text().splitlines()
+            ]
+            self.assertEqual(output_cases, [{"id": "case-a", "prompt": "A"}])
+
+    def test_check_release_gate_returns_failure_for_failed_gate_item(self):
+        module = load_module(CHECK_RELEASE_GATE_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            (iteration / "conformance.json").write_text(
+                json.dumps(
+                    {
+                        "summary": {
+                            "dddjango_variant": "dddjango-plugin",
+                            "dddjango_avg_conformance": 80,
+                            "dddjango_required_rule_pass_rate": 90,
+                            "critical_violations": 0,
+                            "forbidden_pattern_count": 0,
+                            "release_gate": {
+                                "dddjango_conformance_score": {
+                                    "passed": False,
+                                    "value": 80,
+                                    "required": 85,
+                                },
+                                "critical_violations": {
+                                    "passed": True,
+                                    "value": 0,
+                                    "required": 0,
+                                },
+                            },
+                        }
+                    }
+                )
+            )
+
+            result = module.check_release_gate(iteration)
+
+            self.assertFalse(result["passed"])
+            self.assertEqual(result["variant"], "dddjango-plugin")
+            self.assertIn("dddjango_conformance_score", result["failed"])
 
     def test_render_report_creates_html_comparison_dashboard(self):
         module = load_module(REPORT_SCRIPT_PATH)

@@ -683,7 +683,12 @@ def run_variant(args):
     if args.variant == "baseline" and not args.allow_user_config:
         ignore_user_config = True
 
-    for prompt_file in prompt_files:
+    total = len(prompt_files)
+    print(
+        f"running {args.variant}: {total} case(s) in {iteration}",
+        flush=True,
+    )
+    for index, prompt_file in enumerate(prompt_files, start=1):
         case_id = case_id_from_prompt_file(prompt_file)
         output_file = output_dir / f"{case_id}.output.md"
         developer_instructions = ""
@@ -719,6 +724,10 @@ def run_variant(args):
             print(" ".join(command))
             continue
 
+        print(
+            f"[{index}/{total}] {args.variant}/{case_id}: start",
+            flush=True,
+        )
         started = time.perf_counter()
         timeout_sec = getattr(args, "timeout_sec", 900)
         try:
@@ -758,7 +767,11 @@ def run_variant(args):
                 profile=args.profile,
                 returncode=124,
             )
-            print(f"{args.variant}/{case_id}: timeout after {timeout_sec}s")
+            print(
+                f"[{index}/{total}] {args.variant}/{case_id}: "
+                f"timeout after {timeout_sec}s ({duration:.2f}s)",
+                flush=True,
+            )
             if not args.keep_going:
                 raise RuntimeError(
                     f"codex exec timed out for {args.variant}/{case_id}"
@@ -783,9 +796,14 @@ def run_variant(args):
             profile=args.profile,
             returncode=result.returncode,
         )
-        print(f"{args.variant}/{case_id}: returncode={result.returncode}")
+        print(
+            f"[{index}/{total}] {args.variant}/{case_id}: "
+            f"returncode={result.returncode} ({duration:.2f}s)",
+            flush=True,
+        )
         if result.returncode != 0 and not args.keep_going:
             raise RuntimeError(f"codex exec failed for {args.variant}/{case_id}")
+    print(f"finished {args.variant}: {total} case(s)", flush=True)
 
 
 def main():
