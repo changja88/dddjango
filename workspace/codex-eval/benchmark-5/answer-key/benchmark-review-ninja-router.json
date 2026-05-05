@@ -1,0 +1,21 @@
+{
+  "case_id": "benchmark-review-ninja-router",
+  "category": "review",
+  "title": "Review business logic in Ninja router",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "architecture_review",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "router는 transport layer로 제한한다.",
+    "application service와 domain policy 분리를 제안한다.",
+    "작은 기능에서는 단순성을 유지하는 기준을 제시한다."
+  ],
+  "prompt": "Django Ninja router 함수 안에서 재고 차감, 쿠폰 계산, 결제 준비를 모두 처리하는 코드가 있어. 어떤 문제가 있는지 리뷰하고 개선 방향을 제안해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "review"
+}

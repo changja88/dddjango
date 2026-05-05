@@ -1,0 +1,14 @@
+# benchmark-api-drf-migration
+
+Variant: dddjango
+Category: api-design
+Title: Migrate DRF endpoint guidance to Django Ninja
+Fixture: none
+Mode: implementation
+
+## Prompt
+
+Fixture path: /Users/hyun/Desktop/dddjango/none
+Read the fixture files before proposing changes. Because evaluation runs in a read-only sandbox, return a unified diff or review findings instead of editing files directly.
+
+기존 DRF Serializer/ViewSet 상품 API를 Django Ninja Schema/Router 구조로 바꾸는 마이그레이션 가이드를 작성해줘.

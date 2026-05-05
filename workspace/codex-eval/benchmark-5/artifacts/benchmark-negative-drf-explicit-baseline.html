@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-negative-drf-explicit baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-negative-drf-explicit baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/baseline/benchmark-negative-drf-explicit.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 fixture 경로(<code>/Users/hyun/Desktop/dddjango/none</code>)와 현재 작업 디렉터리 모두 파일이 없어 기존 코드 패턴은 확인할 수 없었습니다. 아래는 일반적인 <code>orders</code> 앱 기준의 unified diff입니다. <code>Order</code> 모델이 이미 있다고 가정하고, DRF <code>ModelSerializer</code>, <code>ModelViewSet</code>, router URL을 추가합니다.</p>
+<pre><code>
+diff --git a/orders/serializers.py b/orders/serializers.py
+new file mode 100644
+index 0000000..b2d4c0a
+--- /dev/null
++++ b/orders/serializers.py
+@@ -0,0 +1,11 @@
++from rest_framework import serializers
++
++from .models import Order
++
++
++class OrderSerializer(serializers.ModelSerializer):
++    class Meta:
++        model = Order
++        fields = &quot;__all__&quot;
++        read_only_fields = (&quot;id&quot;, &quot;created_at&quot;, &quot;updated_at&quot;)
+diff --git a/orders/views.py b/orders/views.py
+new file mode 100644
+index 0000000..8a1df18
+--- /dev/null
++++ b/orders/views.py
+@@ -0,0 +1,11 @@
++from rest_framework.viewsets import ModelViewSet
++
++from .models import Order
++from .serializers import OrderSerializer
++
++
++class OrderViewSet(ModelViewSet):
++    queryset = Order.objects.all()
++    serializer_class = OrderSerializer
+diff --git a/orders/urls.py b/orders/urls.py
+new file mode 100644
+index 0000000..a26553b
+--- /dev/null
++++ b/orders/urls.py
+@@ -0,0 +1,10 @@
++from django.urls import include, path
++from rest_framework.routers import DefaultRouter
++
++from .views import OrderViewSet
++
++router = DefaultRouter()
++router.register(&quot;orders&quot;, OrderViewSet, basename=&quot;order&quot;)
++
++urlpatterns = [
++    path(&quot;&quot;, include(router.urls)),
++]
+diff --git a/config/urls.py b/config/urls.py
+index 1111111..2222222 100644
+--- a/config/urls.py
++++ b/config/urls.py
+@@ -1,6 +1,7 @@
+ from django.contrib import admin
+-from django.urls import path
++from django.urls import include, path
+ 
+ urlpatterns = [
+     path(&quot;admin/&quot;, admin.site.urls),
++    path(&quot;api/&quot;, include(&quot;orders.urls&quot;)),
+ ]
+</code></pre>
+<p><code>Order</code> 모델에 <code>created_at</code> 또는 <code>updated_at</code> 필드가 없다면 <code>read_only_fields</code>에서 해당 필드는 제거해야 합니다.</p></article>
+  </main>
+</body>
+</html>

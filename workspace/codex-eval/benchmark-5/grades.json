@@ -1,0 +1,1634 @@
+[
+  {
+    "case_id": "benchmark-api-order-status",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-product-search",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 1,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-inventory-reserve",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-drf-migration",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-order-aggregate",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 14,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-coupon-policy",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-bounded-context",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 14,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-service-layer",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-db-payment-ledger",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-db-order-query-index",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-db-refund-transaction",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-order-cancel",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-inventory-reserve",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-ninja-endpoint",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-domain-policy",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-fat-service",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-ninja-router",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-query-performance",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 5,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 1
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": true,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-test-quality",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-clean-refactor-model-method",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-clean-naming-boundaries",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 14,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-clean-error-handling",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-negative-fastapi",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-negative-drf-explicit",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 5,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 1
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": true,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-order-status",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-product-search",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-inventory-reserve",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-api-drf-migration",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-order-aggregate",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 14,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-coupon-policy",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-bounded-context",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-ddd-service-layer",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-db-payment-ledger",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-db-order-query-index",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-db-refund-transaction",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-order-cancel",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-inventory-reserve",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-ninja-endpoint",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-tdd-domain-policy",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-fat-service",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-ninja-router",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-query-performance",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-review-test-quality",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-clean-refactor-model-method",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-clean-naming-boundaries",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 15,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-clean-error-handling",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-negative-fastapi",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 11,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 7,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "benchmark-negative-drf-explicit",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  }
+]

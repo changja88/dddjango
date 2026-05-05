@@ -447,6 +447,14 @@ def update_timing(path, *, case_id, variant, duration_sec, model, profile, retur
     Path(path).write_text(json.dumps(records, ensure_ascii=False, indent=2) + "\n")
 
 
+def text_or_empty(value):
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode(errors="replace")
+    return str(value)
+
+
 def run_variant(args):
     iteration = Path(args.iteration)
     prompt_dir = iteration / args.variant
@@ -501,7 +509,50 @@ def run_variant(args):
             continue
 
         started = time.perf_counter()
-        result = subprocess.run(command, text=True, capture_output=True)
+        timeout_sec = getattr(args, "timeout_sec", 900)
+        try:
+            result = subprocess.run(
+                command,
+                text=True,
+                capture_output=True,
+                timeout=timeout_sec,
+            )
+        except subprocess.TimeoutExpired as error:
+            duration = time.perf_counter() - started
+            log_file = output_dir / f"{case_id}.codex.log"
+            stdout = text_or_empty(error.output)
+            stderr = text_or_empty(error.stderr)
+            log_file.write_text(
+                "STDOUT\n"
+                "======\n"
+                f"{stdout}\n\n"
+                "STDERR\n"
+                "======\n"
+                f"{stderr}\n\n"
+                "TIMEOUT\n"
+                "=======\n"
+                f"Command timed out after {timeout_sec}s.\n"
+            )
+            if not output_file.exists():
+                output_file.write_text(
+                    "# Evaluation Timeout\n\n"
+                    f"`{args.variant}/{case_id}` timed out after {timeout_sec}s.\n"
+                )
+            update_timing(
+                timing_path,
+                case_id=case_id,
+                variant=args.variant,
+                duration_sec=duration,
+                model=args.model,
+                profile=args.profile,
+                returncode=124,
+            )
+            print(f"{args.variant}/{case_id}: timeout after {timeout_sec}s")
+            if not args.keep_going:
+                raise RuntimeError(
+                    f"codex exec timed out for {args.variant}/{case_id}"
+                ) from error
+            continue
         duration = time.perf_counter() - started
         log_file = output_dir / f"{case_id}.codex.log"
         log_file.write_text(
@@ -543,6 +594,12 @@ def main():
     parser.add_argument("--profile", default="")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--keep-going", action="store_true")
+    parser.add_argument(
+        "--timeout-sec",
+        type=int,
+        default=900,
+        help="Per-case codex exec timeout in seconds.",
+    )
     parser.add_argument(
         "--ignore-user-config",
         action="store_true",

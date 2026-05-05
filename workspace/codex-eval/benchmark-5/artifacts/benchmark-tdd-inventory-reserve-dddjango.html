@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-inventory-reserve dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-inventory-reserve dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/dddjango/benchmark-tdd-inventory-reserve.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>실행하지 못했습니다. fixture 경로 <code>/Users/hyun/Desktop/dddjango/none</code>는 없고 현재 workspace도 비어 있으며 read-only sandbox라 파일 생성, migration, pytest 실행이 불가능했습니다. 아래는 <strong>RED 테스트를 먼저 추가한 뒤</strong>, 그 테스트를 통과시키는 <strong>GREEN 최소 구현</strong>을 붙이는 unified diff입니다.</p>
+<p><strong>RED → 예상 실패</strong> <code>inventory.models</code>, <code>inventory.services</code>, 도메인 예외가 없어서 import 단계에서 먼저 실패해야 합니다.</p>
+<pre><code>
+diff --git a/tests/isolated/integration/test_inventory_reservations.py b/tests/isolated/integration/test_inventory_reservations.py
+new file mode 100644
+--- /dev/null
++++ b/tests/isolated/integration/test_inventory_reservations.py
+@@ -0,0 +1,54 @@
++import pytest
++
++from inventory.models import InventoryItem, InventoryReservation
++from inventory.services import (
++    DuplicateReservationError,
++    InsufficientStockError,
++    inventory_reserve,
++)
++
++
++pytestmark = pytest.mark.django_db
++
++
++def test_inventory_reserve_when_stock_is_available_creates_reservation():
++    # Arrange
++    item = InventoryItem.objects.create(sku=&quot;SKU-1&quot;, available_quantity=10)
++
++    # Act
++    reservation = inventory_reserve(
++        sku=item.sku,
++        reservation_key=&quot;order-1:SKU-1&quot;,
++        quantity=3,
++    )
++
++    # Assert
++    item.refresh_from_db()
++    assert reservation.sku == &quot;SKU-1&quot;
++    assert reservation.quantity == 3
++    assert item.available_quantity == 7
++
++
++def test_inventory_reserve_when_stock_is_insufficient_raises_error():
++    # Arrange
++    item = InventoryItem.objects.create(sku=&quot;SKU-2&quot;, available_quantity=2)
++
++    # Act / Assert
++    with pytest.raises(InsufficientStockError):
++        inventory_reserve(
++            sku=item.sku,
++            reservation_key=&quot;order-2:SKU-2&quot;,
++            quantity=3,
++        )
++
++    item.refresh_from_db()
++    assert item.available_quantity == 2
++    assert InventoryReservation.objects.count() == 0
++
++
++def test_inventory_reserve_when_same_reservation_key_is_reused_does_not_reserve_twice():
++    &quot;&quot;&quot;중복 요청이 재고를 두 번 차감하지 않는지 검증한다.&quot;&quot;&quot;
++    # Arrange
++    item = InventoryItem.objects.create(sku=&quot;SKU-3&quot;, available_quantity=5)
++
++    # Act
++    first = inventory_reserve(sku=item.sku, reservation_key=&quot;order-3:SKU-3&quot;, quantity=2)
++    second = inventory_reserve(sku=item.sku, reservation_key=&quot;order-3:SKU-3&quot;, quantity=2)
++
++    # Assert
++    item.refresh_from_db()
++    assert second.id == first.id
++    assert item.available_quantity == 3
++    assert InventoryReservation.objects.count() == 1
++
++
++def test_inventory_reserve_when_reservation_key_conflicts_with_different_payload_raises_error():
++    # Arrange
++    item = InventoryItem.objects.create(sku=&quot;SKU-4&quot;, available_quantity=5)
++    inventory_reserve(sku=item.sku, reservation_key=&quot;order-4&quot;, quantity=2)
++
++    # Act / Assert
++    with pytest.raises(DuplicateReservationError):
++        inventory_reserve(sku=item.sku, reservation_key=&quot;order-4&quot;, quantity=3)
+diff --git a/inventory/models.py b/inventory/models.py
+new file mode 100644
+--- /dev/null
++++ b/inventory/models.py
+@@ -0,0 +1,53 @@
++from django.core.exceptions import ValidationError
++from django.db import models
++from django.db.models import Q
++
++
++class InventoryItem(models.Model):
++    &quot;&quot;&quot;Aggregate Root: 재고 수량은 음수가 될 수 없다.&quot;&quot;&quot;
++
++    sku = models.CharField(max_length=64, unique=True)
++    available_quantity = models.PositiveIntegerField()
++    created_at = models.DateTimeField(auto_now_add=True)
++    updated_at = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        ordering = [&quot;sku&quot;]
++        indexes = [models.Index(fields=[&quot;sku&quot;], name=&quot;idx_inventory_item_sku&quot;)]
++        constraints = [
++            models.CheckConstraint(
++                condition=Q(available_quantity__gte=0),
++                name=&quot;inventory_available_quantity_gte_0&quot;,
++            )
++        ]
++
++    def __str__(self) -&gt; str:
++        return self.sku
++
++    def reserve(self, *, quantity: int) -&gt; None:
++        if quantity &lt;= 0:
++            raise ValidationError(&quot;예약 수량은 1 이상이어야 합니다.&quot;)
++        if self.available_quantity &lt; quantity:
++            raise ValidationError(&quot;재고가 부족합니다.&quot;)
++        self.available_quantity -= quantity
++
++
++class InventoryReservation(models.Model):
++    sku = models.CharField(max_length=64)
++    reservation_key = models.CharField(max_length=128, unique=True)
++    quantity = models.PositiveIntegerField()
++    created_at = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        ordering = [&quot;-created_at&quot;]
++        indexes = [
++            models.Index(fields=[&quot;sku&quot;], name=&quot;idx_inventory_reservation_sku&quot;),
++        ]
++        constraints = [
++            models.CheckConstraint(
++                condition=Q(quantity__gt=0),
++                name=&quot;inventory_reservation_quantity_gt_0&quot;,
++            )
++        ]
++
++    def __str__(self) -&gt; str:
++        return self.reservation_key
+diff --git a/inventory/services.py b/inventory/services.py
+new file mode 100644
+--- /dev/null
++++ b/inventory/services.py
+@@ -0,0 +1,51 @@
++from django.core.exceptions import ValidationError
++from django.db import transaction
++
++from inventory.models import InventoryItem, InventoryReservation
++
++
++class InsufficientStockError(Exception):
++    pass
++
++
++class DuplicateReservationError(Exception):
++    pass
++
++
++def inventory_reserve(
++    *,
++    sku: str,
++    reservation_key: str,
++    quantity: int,
++) -&gt; InventoryReservation:
++    with transaction.atomic():
++        existing = InventoryReservation.objects.filter(
++            reservation_key=reservation_key,
++        ).first()
++        if existing is not None:
++            if existing.sku == sku and existing.quantity == quantity:
++                return existing
++            raise DuplicateReservationError(&quot;이미 다른 내용으로 처리된 예약입니다.&quot;)
++
++        item = InventoryItem.objects.select_for_update().get(sku=sku)
++
++        try:
++            item.reserve(quantity=quantity)
++        except ValidationError as exc:
++            raise InsufficientStockError(&quot;재고가 부족합니다.&quot;) from exc
++
++        item.save(update_fields=[&quot;available_quantity&quot;, &quot;updated_at&quot;])
++        return InventoryReservation.objects.create(
++            sku=sku,
++            reservation_key=reservation_key,
++            quantity=quantity,
++        )
+</code></pre>
+<p><strong>REFACTOR 메모</strong> 도메인 규칙은 <code>InventoryItem.reserve()</code>에 두고, 트랜잭션/락/중복 키 처리는 서비스에 둡니다. 실제 동시성 검증은 SQLite보다 PostgreSQL 기반 <code>tests/real/</code>에서 <code>select_for_update()</code> 경합 테스트로 보강하는 편이 정확합니다.</p>
+<p><strong>검증 명령</strong></p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/test_inventory_reservations.py -q
+python manage.py makemigrations inventory
+python manage.py check
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 동시성 재고 검증 → <strong>architecture-db</strong> 스킬 &gt; - Django 서비스/모델 경계 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

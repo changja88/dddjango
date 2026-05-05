@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-payment-ledger dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-payment-ledger dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/dddjango/benchmark-db-payment-ledger.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않았고, 현재 작업 디렉터리에도 읽을 프로젝트 파일이 없어 새 앱 기준 diff로 제안합니다.</p>
+<pre><code>
+diff --git a/apps/payments/models.py b/apps/payments/models.py
+new file mode 100644
+--- /dev/null
++++ b/apps/payments/models.py
+@@
++from django.conf import settings
++from django.core.validators import MinValueValidator
++from django.db import models
++from django.db.models import Q
++
++
++class PaymentLedger(models.Model):
++    class EntryType(models.TextChoices):
++        DEBIT = &quot;debit&quot;, &quot;Debit&quot;
++        CREDIT = &quot;credit&quot;, &quot;Credit&quot;
++
++    class Status(models.TextChoices):
++        PENDING = &quot;pending&quot;, &quot;Pending&quot;
++        POSTED = &quot;posted&quot;, &quot;Posted&quot;
++        FAILED = &quot;failed&quot;, &quot;Failed&quot;
++        REVERSED = &quot;reversed&quot;, &quot;Reversed&quot;
++
++    idempotency_key = models.CharField(max_length=128, unique=True)
++    external_reference = models.CharField(max_length=128, blank=True)
++
++    account_id = models.UUIDField(db_index=True)
++    entry_type = models.CharField(max_length=10, choices=EntryType.choices)
++    amount_minor_units = models.BigIntegerField(validators=[MinValueValidator(1)])
++    currency = models.CharField(max_length=3)
++
++    status = models.CharField(
++        max_length=16,
++        choices=Status.choices,
++        default=Status.PENDING,
++    )
++    posted_at = models.DateTimeField(null=True, blank=True)
++
++    metadata = models.JSONField(default=dict, blank=True)
++    created_by = models.ForeignKey(
++        settings.AUTH_USER_MODEL,
++        null=True,
++        blank=True,
++        on_delete=models.PROTECT,
++        related_name=&quot;created_payment_ledgers&quot;,
++    )
++    updated_by = models.ForeignKey(
++        settings.AUTH_USER_MODEL,
++        null=True,
++        blank=True,
++        on_delete=models.PROTECT,
++        related_name=&quot;updated_payment_ledgers&quot;,
++    )
++    created_at = models.DateTimeField(auto_now_add=True)
++    updated_at = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        ordering = [&quot;-created_at&quot;, &quot;-id&quot;]
++        indexes = [
++            models.Index(fields=[&quot;account_id&quot;, &quot;-created_at&quot;]),
++            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;]),
++            models.Index(fields=[&quot;external_reference&quot;]),
++        ]
++        constraints = [
++            models.CheckConstraint(
++                condition=Q(amount_minor_units__gt=0),
++                name=&quot;payment_ledger_amount_minor_units_positive&quot;,
++            ),
++        ]
++
++    def __str__(self):
++        return (
++            f&quot;{self.entry_type} {self.amount_minor_units} &quot;
++            f&quot;{self.currency} {self.status}&quot;
++        )
++
++
++class PaymentLedgerAudit(models.Model):
++    ledger = models.ForeignKey(
++        PaymentLedger,
++        on_delete=models.CASCADE,
++        related_name=&quot;audit_events&quot;,
++    )
++    from_status = models.CharField(
++        max_length=16,
++        choices=PaymentLedger.Status.choices,
++        blank=True,
++    )
++    to_status = models.CharField(max_length=16, choices=PaymentLedger.Status.choices)
++    reason = models.CharField(max_length=255, blank=True)
++    actor = models.ForeignKey(
++        settings.AUTH_USER_MODEL,
++        null=True,
++        blank=True,
++        on_delete=models.PROTECT,
++        related_name=&quot;payment_ledger_audit_events&quot;,
++    )
++    created_at = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        ordering = [&quot;-created_at&quot;, &quot;-id&quot;]
++        indexes = [
++            models.Index(fields=[&quot;ledger&quot;, &quot;-created_at&quot;]),
++        ]
++
++    def __str__(self):
++        return f&quot;{self.ledger_id}: {self.from_status} -&gt; {self.to_status}&quot;
+diff --git a/apps/payments/services.py b/apps/payments/services.py
+new file mode 100644
+--- /dev/null
++++ b/apps/payments/services.py
+@@
++from django.db import IntegrityError, transaction
++from django.utils import timezone
++
++from .models import PaymentLedger, PaymentLedgerAudit
++
++
++ALLOWED_STATUS_TRANSITIONS = {
++    PaymentLedger.Status.PENDING: {
++        PaymentLedger.Status.POSTED,
++        PaymentLedger.Status.FAILED,
++    },
++    PaymentLedger.Status.POSTED: {PaymentLedger.Status.REVERSED},
++    PaymentLedger.Status.FAILED: set(),
++    PaymentLedger.Status.REVERSED: set(),
++}
++
++
++@transaction.atomic
++def payment_ledger_create_once(
++    *,
++    idempotency_key,
++    account_id,
++    entry_type,
++    amount_minor_units,
++    currency,
++    actor=None,
++    external_reference=&quot;&quot;,
++    metadata=None,
++):
++    try:
++        ledger = PaymentLedger.objects.create(
++            idempotency_key=idempotency_key,
++            account_id=account_id,
++            entry_type=entry_type,
++            amount_minor_units=amount_minor_units,
++            currency=currency.upper(),
++            external_reference=external_reference,
++            metadata=metadata or {},
++            created_by=actor,
++            updated_by=actor,
++        )
++    except IntegrityError:
++        ledger = PaymentLedger.objects.get(idempotency_key=idempotency_key)
++        return ledger, False
++
++    PaymentLedgerAudit.objects.create(
++        ledger=ledger,
++        from_status=&quot;&quot;,
++        to_status=ledger.status,
++        actor=actor,
++        reason=&quot;created&quot;,
++    )
++    return ledger, True
++
++
++@transaction.atomic
++def payment_ledger_transition(*, ledger_id, to_status, actor=None, reason=&quot;&quot;):
++    ledger = PaymentLedger.objects.select_for_update().get(id=ledger_id)
++    allowed = ALLOWED_STATUS_TRANSITIONS[ledger.status]
++
++    if to_status not in allowed:
++        raise ValueError(f&quot;invalid transition: {ledger.status} -&gt; {to_status}&quot;)
++
++    from_status = ledger.status
++    ledger.status = to_status
++    ledger.updated_by = actor
++    if to_status == PaymentLedger.Status.POSTED:
++        ledger.posted_at = timezone.now()
++    ledger.save(update_fields=[&quot;status&quot;, &quot;updated_by&quot;, &quot;posted_at&quot;, &quot;updated_at&quot;])
++
++    PaymentLedgerAudit.objects.create(
++        ledger=ledger,
++        from_status=from_status,
++        to_status=to_status,
++        actor=actor,
++        reason=reason,
++    )
++    return ledger
+</code></pre>
+<p>금액은 <code>DecimalField</code> 대신 <code>amount_minor_units = BigIntegerField</code>로 저장합니다. 결제 원장은 정산/중복 처리/합계 계산이 중요하므로 부동소수점이나 표시용 decimal보다 최소 통화 단위 정수가 안전합니다. 통화는 <code>currency = CharField(max_length=3)</code>로 ISO-4217 코드 기준을 명시합니다.</p>
+<p>상태 전이는 <code>pending -&gt; posted|failed</code>, <code>posted -&gt; reversed</code>만 허용합니다. <code>failed</code>, <code>reversed</code>는 terminal 상태입니다. 전이 함수는 <code>transaction.atomic()</code> 안에서 <code>select_for_update()</code>로 행 잠금을 잡고, ledger 상태 변경과 audit insert를 같은 트랜잭션 경계에 둡니다. 외부 PG/API 호출은 이 트랜잭션 밖에서 수행하고, DB 반영만 이 서비스에 넣는 구조가 맞습니다.</p>
+<p>idempotency는 <code>idempotency_key unique=True</code>가 핵심입니다. 동시 요청이 들어와도 하나만 생성되고, 충돌 시 기존 ledger를 조회해 <code>(ledger, False)</code>를 반환합니다.</p>
+<p>검증 절차:</p>
+<pre><code>
+python manage.py makemigrations payments
+python manage.py sqlmigrate payments &lt;migration_number&gt;
+python manage.py test apps.payments
+</code></pre>
+<p>테스트는 최소한 idempotency 중복 생성 방지, 잘못된 상태 전이 거부, <code>posted</code> 전이 시 audit row 생성과 <code>posted_at</code> 기록을 확인해야 합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 결제 API 엔드포인트 설계 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

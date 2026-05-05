@@ -1,0 +1,14 @@
+# benchmark-db-payment-ledger
+
+Variant: dddjango
+Category: db-design
+Title: Payment ledger schema
+Fixture: none
+Mode: design
+
+## Prompt
+
+Fixture path: /Users/hyun/Desktop/dddjango/none
+Read the fixture files before proposing changes. Because evaluation runs in a read-only sandbox, return a unified diff or review findings instead of editing files directly.
+
+결제 ledger 테이블을 Django 모델 기준으로 설계해줘. 금액 타입, 통화, 상태, idempotency, audit trail을 포함해줘.

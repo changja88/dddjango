@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-drf-migration dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-drf-migration dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/dddjango/benchmark-api-drf-migration.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF 코드는 새로 만들지 않고 Django Ninja로 전환합니다. 지정 fixture path <code>/Users/hyun/Desktop/dddjango/none</code>와 현재 작업 디렉터리에는 읽을 fixture 파일이 없어서, 아래는 <code>products</code> 앱의 <code>Product</code> 모델이 이미 있다는 가정의 마이그레이션 가이드입니다.</p>
+<p><strong>책임 매핑</strong></p>
+<p>| 기존 책임 | Django Ninja 전환 위치 | |---|---| | Serializer 출력 필드 | <code>products/schemas.py</code>의 <code>Schema</code> 또는 <code>ModelSchema</code> | | Serializer 입력 검증 | <code>ProductCreateIn</code>, <code>ProductUpdateIn</code> | | ViewSet action | <code>products/api.py</code>의 <code>Router</code> 엔드포인트 | | queryset 구성 | <code>products/selectors.py</code> | | create/update/delete 유스케이스 | <code>products/services.py</code> | | router 등록 | <code>config/api.py</code>의 <code>api.add_router()</code> |</p>
+<p><strong>전환 순서</strong></p>
+<ul>
+<li><code>schemas.py</code>를 먼저 추가한다. 응답 필드는 명시적으로 제한하고, <code>fields = &quot;__all__&quot;</code>은 쓰지 않는다.</li>
+<li>목록/상세 조회를 <code>selectors.py</code>로 옮긴다. 목록은 페이지네이션을 고려해 <code>QuerySet</code>을 반환한다.</li>
+<li>생성/수정/삭제 로직을 <code>services.py</code>로 분리한다. 트랜잭션, 재고/가격 같은 도메인 규칙은 endpoint 안에 두지 않는다.</li>
+<li><code>api.py</code>에 <code>Router()</code>를 만들고 <code>@router.get/post/patch/delete</code>로 기존 action을 1:1 매핑한다.</li>
+<li><code>config/api.py</code>에서 앱 라우터를 <code>NinjaAPI.add_router()</code>로 합성한다.</li>
+<li>기존 API와 응답 shape가 맞는지 회귀 테스트를 통과시킨 뒤, 기존 Serializer/ViewSet 라우팅을 제거한다.</li>
+</ul>
+<p><strong>핵심 코드 예시</strong></p>
+<pre><code>
+# products/schemas.py
+from decimal import Decimal
+
+from ninja import ModelSchema, Schema
+
+from products.models import Product
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;is_active&quot;, &quot;created_at&quot;]
+
+
+class ProductCreateIn(Schema):
+    name: str
+    price: Decimal
+
+
+class ProductUpdateIn(Schema):
+    name: str | None = None
+    price: Decimal | None = None
+    is_active: bool | None = None
+</code></pre>
+<pre><code>
+# products/selectors.py
+from django.db.models import QuerySet
+from django.shortcuts import get_object_or_404
+
+from products.models import Product
+
+
+def product_list() -&gt; QuerySet[Product]:
+    return Product.objects.filter(is_active=True).order_by(&quot;-created_at&quot;)
+
+
+def product_get(product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+</code></pre>
+<pre><code>
+# products/services.py
+from django.db import transaction
+
+from products.models import Product
+from products.schemas import ProductCreateIn, ProductUpdateIn
+
+
+@transaction.atomic
+def product_create(payload: ProductCreateIn) -&gt; Product:
+    return Product.objects.create(**payload.model_dump())
+
+
+@transaction.atomic
+def product_update(product: Product, payload: ProductUpdateIn) -&gt; Product:
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(product, field, value)
+    product.save(update_fields=[*payload.model_dump(exclude_unset=True), &quot;updated_at&quot;])
+    return product
+
+
+@transaction.atomic
+def product_delete(product: Product) -&gt; None:
+    product.delete()
+</code></pre>
+<pre><code>
+# products/api.py
+from django.http import HttpRequest
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
+from ninja.security import SessionAuth
+
+from products.schemas import ProductCreateIn, ProductOut, ProductUpdateIn
+from products.selectors import product_get, product_list
+from products.services import product_create, product_delete, product_update
+
+router = Router(auth=SessionAuth(), tags=[&quot;products&quot;])
+
+
+@router.get(&quot;/&quot;, response=list[ProductOut])
+@paginate(LimitOffsetPagination)
+def list_products(request: HttpRequest) -&gt; list[ProductOut]:
+    return product_list()
+
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def get_product(request: HttpRequest, product_id: int) -&gt; ProductOut:
+    return product_get(product_id)
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request: HttpRequest, payload: ProductCreateIn) -&gt; tuple[int, ProductOut]:
+    return 201, product_create(payload)
+
+
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def update_product(
+    request: HttpRequest,
+    product_id: int,
+    payload: ProductUpdateIn,
+) -&gt; ProductOut:
+    product = product_get(product_id)
+    return product_update(product, payload)
+
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None})
+def delete_product(request: HttpRequest, product_id: int) -&gt; tuple[int, None]:
+    product_delete(product_get(product_id))
+    return 204, None
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI()
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>회귀 테스트 전략</strong></p>
+<ul>
+<li>기존 목록/상세/생성/수정/삭제 endpoint별 status code와 JSON 필드를 비교한다.</li>
+<li>목록 API는 페이지네이션 파라미터 <code>limit</code>, <code>offset</code> 동작을 검증한다.</li>
+<li>인증 필요 API는 익명 요청 <code>401</code>, 인증 요청 <code>200/201/204</code>를 분리해 검증한다.</li>
+<li>상세/수정/삭제의 없는 상품 ID는 <code>404</code>를 검증한다.</li>
+<li>목록 조회는 <code>assertNumQueries</code>로 N+1 회귀를 막는다.</li>
+<li>실행 명령: <code>python manage.py check</code>, <code>pytest</code> 또는 <code>python manage.py test</code>.</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API endpoint 설계와 오류 형식 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Schema/Router 구현 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

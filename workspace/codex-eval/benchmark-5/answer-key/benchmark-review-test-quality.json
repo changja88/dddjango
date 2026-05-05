@@ -1,0 +1,21 @@
+{
+  "case_id": "benchmark-review-test-quality",
+  "category": "review",
+  "title": "Review brittle pytest tests",
+  "expectations": [
+    "korean_first",
+    "pytest_quality",
+    "architecture_review",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "fixture 남용, 불명확한 assert, slow test 문제를 짚는다.",
+    "domain unit test와 integration test 경계를 제안한다.",
+    "수정 예시가 현실적이다."
+  ],
+  "prompt": "Django 테스트가 DB fixture에 지나치게 의존하고 assert가 약해. pytest 품질 관점에서 리뷰하고 개선 기준을 제안해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "review"
+}

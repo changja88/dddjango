@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-inventory-reserve dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-inventory-reserve dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/dddjango/benchmark-api-inventory-reserve.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Fixture 경로 <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않았고, 현재 작업 디렉터리도 비어 있었습니다. 그래서 실제 파일 수정 대신 붙여 넣을 수 있는 설계 diff로 제안합니다. Django Ninja만 사용하고, endpoint는 얇게 두며 재고 예약 트랜잭션은 application service가 담당합니다.</p>
+<pre><code>
+diff --git a/apps/inventory/models.py b/apps/inventory/models.py
+new file mode 100644
+--- /dev/null
++++ b/apps/inventory/models.py
+@@
++from django.conf import settings
++from django.db import models
++
++
++class StockItem(models.Model):
++    sku = models.CharField(max_length=64, unique=True)
++    available_quantity = models.PositiveIntegerField()
++    version = models.PositiveIntegerField(default=0)
++
++
++class StockReservation(models.Model):
++    class Status(models.TextChoices):
++        RESERVED = &quot;reserved&quot;, &quot;Reserved&quot;
++        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
++
++    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
++    stock_item = models.ForeignKey(StockItem, on_delete=models.PROTECT)
++    quantity = models.PositiveIntegerField()
++    status = models.CharField(max_length=16, choices=Status.choices)
++    created_at = models.DateTimeField(auto_now_add=True)
++
++
++class IdempotencyRecord(models.Model):
++    class State(models.TextChoices):
++        PROCESSING = &quot;processing&quot;, &quot;Processing&quot;
++        COMPLETED = &quot;completed&quot;, &quot;Completed&quot;
++        FAILED = &quot;failed&quot;, &quot;Failed&quot;
++
++    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
++    key = models.CharField(max_length=128)
++    request_hash = models.CharField(max_length=64)
++    state = models.CharField(max_length=16, choices=State.choices)
++    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
++    response_body = models.JSONField(null=True, blank=True)
++    created_at = models.DateTimeField(auto_now_add=True)
++    updated_at = models.DateTimeField(auto_now=True)
++
++    class Meta:
++        constraints = [
++            models.UniqueConstraint(
++                fields=[&quot;user&quot;, &quot;key&quot;],
++                name=&quot;uniq_idempotency_record_user_key&quot;,
++            ),
++        ]
++        indexes = [
++            models.Index(fields=[&quot;user&quot;, &quot;key&quot;]),
++            models.Index(fields=[&quot;state&quot;, &quot;created_at&quot;]),
++        ]
+diff --git a/apps/inventory/schemas.py b/apps/inventory/schemas.py
+new file mode 100644
+--- /dev/null
++++ b/apps/inventory/schemas.py
+@@
++from ninja import Schema
++
++
++class ReserveStockIn(Schema):
++    sku: str
++    quantity: int
++
++
++class ReservationOut(Schema):
++    id: int
++    sku: str
++    quantity: int
++    status: str
++
++
++class ProblemDetail(Schema):
++    type: str
++    title: str
++    status: int
++    detail: str
++    instance: str
+diff --git a/apps/inventory/services.py b/apps/inventory/services.py
+new file mode 100644
+--- /dev/null
++++ b/apps/inventory/services.py
+@@
++import hashlib
++import json
++from dataclasses import dataclass
++
++from django.contrib.auth.models import AbstractBaseUser
++from django.db import IntegrityError, transaction
++
++from .models import IdempotencyRecord, StockItem, StockReservation
++
++
++@dataclass(frozen=True)
++class ReservationResult:
++    status_code: int
++    body: dict
++
++
++class InventoryApplicationService:
++    def reserve(
++        self,
++        *,
++        user: AbstractBaseUser,
++        idempotency_key: str,
++        sku: str,
++        quantity: int,
++    ) -&gt; ReservationResult:
++        payload = {&quot;sku&quot;: sku, &quot;quantity&quot;: quantity}
++        request_hash = hashlib.sha256(
++            json.dumps(payload, sort_keys=True).encode()
++        ).hexdigest()
++
++        with transaction.atomic():
++            try:
++                record = IdempotencyRecord.objects.create(
++                    user=user,
++                    key=idempotency_key,
++                    request_hash=request_hash,
++                    state=IdempotencyRecord.State.PROCESSING,
++                )
++            except IntegrityError:
++                record = IdempotencyRecord.objects.select_for_update().get(
++                    user=user,
++                    key=idempotency_key,
++                )
++            else:
++                record = IdempotencyRecord.objects.select_for_update().get(pk=record.pk)
++
++            if record.state == IdempotencyRecord.State.COMPLETED:
++                if record.request_hash != request_hash:
++                    return ReservationResult(409, {
++                        &quot;type&quot;: &quot;https://api.example.com/problems/idempotency-conflict&quot;,
++                        &quot;title&quot;: &quot;Idempotency key conflict&quot;,
++                        &quot;status&quot;: 409,
++                        &quot;detail&quot;: &quot;Same Idempotency-Key was used with a different request body.&quot;,
++                    })
++                return ReservationResult(record.status_code, record.response_body)
++
++            item = StockItem.objects.select_for_update().get(sku=sku)
++            if quantity &lt; 1 or item.available_quantity &lt; quantity:
++                body = {
++                    &quot;type&quot;: &quot;https://api.example.com/problems/insufficient-stock&quot;,
++                    &quot;title&quot;: &quot;Insufficient stock&quot;,
++                    &quot;status&quot;: 422,
++                    &quot;detail&quot;: &quot;Requested quantity cannot be reserved.&quot;,
++                }
++                record.state = IdempotencyRecord.State.COMPLETED
++                record.status_code = 422
++                record.response_body = body
++                record.save(update_fields=[&quot;state&quot;, &quot;status_code&quot;, &quot;response_body&quot;, &quot;updated_at&quot;])
++                return ReservationResult(422, body)
++
++            item.available_quantity -= quantity
++            item.version += 1
++            item.save(update_fields=[&quot;available_quantity&quot;, &quot;version&quot;])
++            reservation = StockReservation.objects.create(
++                user=user,
++                stock_item=item,
++                quantity=quantity,
++                status=StockReservation.Status.RESERVED,
++            )
++            body = {
++                &quot;id&quot;: reservation.id,
++                &quot;sku&quot;: item.sku,
++                &quot;quantity&quot;: reservation.quantity,
++                &quot;status&quot;: reservation.status,
++            }
++            record.state = IdempotencyRecord.State.COMPLETED
++            record.status_code = 201
++            record.response_body = body
++            record.save(update_fields=[&quot;state&quot;, &quot;status_code&quot;, &quot;response_body&quot;, &quot;updated_at&quot;])
++            return ReservationResult(201, body)
+diff --git a/apps/inventory/api.py b/apps/inventory/api.py
+new file mode 100644
+--- /dev/null
++++ b/apps/inventory/api.py
+@@
++from django.http import HttpRequest
++from ninja import Header, Router
++from ninja.security import django_auth
++
++from .schemas import ProblemDetail, ReservationOut, ReserveStockIn
++from .services import InventoryApplicationService
++
++router = Router(auth=django_auth, tags=[&quot;inventory&quot;])
++
++
++@router.post(
++    &quot;/reservations&quot;,
++    response={201: ReservationOut, 200: ReservationOut, 409: ProblemDetail, 422: ProblemDetail},
++)
++def reserve_stock(
++    request: HttpRequest,
++    payload: ReserveStockIn,
++    idempotency_key: str = Header(..., alias=&quot;Idempotency-Key&quot;),
++) -&gt; tuple[int, dict]:
++    result = InventoryApplicationService().reserve(
++        user=request.user,
++        idempotency_key=idempotency_key,
++        sku=payload.sku,
++        quantity=payload.quantity,
++    )
++    body = result.body | {&quot;instance&quot;: request.path} if result.status_code &gt;= 400 else result.body
++    return result.status_code, body
+diff --git a/config/api.py b/config/api.py
+new file mode 100644
+--- /dev/null
++++ b/config/api.py
+@@
++from ninja import NinjaAPI
++
++from apps.inventory.api import router as inventory_router
++
++api = NinjaAPI()
++api.add_router(&quot;/inventory&quot;, inventory_router)
+</code></pre>
+<p>동시성 전략은 <code>select_for_update()</code> 기반입니다. 같은 <code>Idempotency-Key</code> 요청은 <code>IdempotencyRecord(user, key)</code> unique constraint로 한 행에 수렴시키고, 그 행을 잠가 replay와 충돌 판정을 직렬화합니다. 재고 행도 <code>select_for_update()</code>로 잠가 차감 경쟁을 막습니다. 더 높은 처리량이 필요하면 <code>StockItem.version</code>을 이용한 optimistic locking으로 바꿀 수 있지만, 그 경우 <code>UPDATE ... WHERE version = old_version AND available_quantity &gt;= quantity</code> 실패 시 재시도/409 정책을 명확히 둬야 합니다.</p>
+<p>검증은 이 환경에서 실행하지 못했습니다. 적용 후 최소 실행 항목은 다음입니다.</p>
+<pre><code>
+python manage.py makemigrations inventory
+python manage.py check
+python manage.py test apps.inventory
+</code></pre>
+<p>테스트는 같은 key+같은 body 재요청이 동일 응답을 반환하는지, 같은 key+다른 body가 409인지, 동시 2요청에서 재고가 음수가 되지 않는지를 포함해야 합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja 구현/테스트 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

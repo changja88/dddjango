@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-bounded-context baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-bounded-context baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/baseline/benchmark-ddd-bounded-context.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않아 읽을 fixture 파일은 없었습니다. 대신 인접 저장소의 DDD/Django 지침을 확인했고, 아래는 코드 변경 없이 설계 제안으로 정리합니다.</p>
+<p><strong>[주요 내용]</strong></p>
+<p>커머스에서 <code>주문</code>, <code>결제</code>, <code>배송</code>, <code>정산</code>은 단순 기능 메뉴가 아니라 <strong>변경 이유, 언어, 일관성 경계, 외부 의존성</strong>이 다르기 때문에 별도 bounded context로 나누는 것이 적절합니다.</p>
+<p>| Bounded Context | 핵심 책임 | 주요 변경 이유 | 대표 모델 | |---|---|---|---| | 주문 Order | 고객의 구매 의사, 주문 항목, 주문 상태 전이 관리 | 주문 정책, 취소 가능 조건, 주문 금액 확정 방식 변경 | <code>Order</code>, <code>OrderLine</code>, <code>OrderStatus</code> | | 결제 Payment | 결제 승인, 실패, 취소, 환불 요청 관리 | PG 연동, 승인/취소/환불 규칙, 멱등성 정책 변경 | <code>Payment</code>, <code>PaymentApproval</code>, <code>Refund</code> | | 배송 Shipping | 출고 요청, 운송장, 배송 상태 추적 | 택배사 연동, 출고 정책, 배송 상태 매핑 변경 | <code>Shipment</code>, <code>TrackingNumber</code>, <code>DeliveryStatus</code> | | 정산 Settlement | 판매자/플랫폼 정산 금액 계산, 지급 상태 관리 | 수수료 정책, 지급 주기, 세금/보류금 정책 변경 | <code>Settlement</code>, <code>Payout</code>, <code>Commission</code> |</p>
+<p>나누는 핵심 기준은 다음입니다.</p>
+<ul>
+<li><strong>같은 단어가 다른 의미를 가지는가</strong></li>
+<p>예를 들어 <code>완료</code>는 주문에서는 “주문 처리 종료”, 결제에서는 “승인 완료”, 배송에서는 “배송 완료”, 정산에서는 “지급 완료”입니다. 같은 상태명을 공유하면 모델이 쉽게 오염됩니다.</p>
+</ul>
+<ul>
+<li><strong>트랜잭션으로 반드시 같이 바뀌어야 하는가</strong></li>
+<p>주문 생성과 주문 항목 확정은 한 Aggregate 안에서 강한 일관성이 필요합니다. 반면 결제 승인, 배송 요청, 정산 생성은 이벤트 기반 최종 일관성으로 연결하는 편이 낫습니다.</p>
+</ul>
+<ul>
+<li><strong>외부 시스템 변화가 어디로 들어오는가</strong></li>
+<p>PG사 용어는 결제 BC의 ACL에서 번역하고, 택배사 용어는 배송 BC의 ACL에서 번역해야 합니다. 주문 도메인이 <code>TossPaymentStatus</code>나 <code>CJTrackingCode</code>를 알면 경계가 무너진 것입니다.</p>
+</ul>
+<ul>
+<li><strong>팀 또는 운영 책임이 분리될 수 있는가</strong></li>
+<p>결제 장애 대응, 배송 클레임, 정산 검증은 운영 지표와 장애 대응 방식이 다릅니다. 운영 책임이 다르면 bounded context도 분리 후보입니다.</p>
+</ul>
+<p>권장 Context Map은 다음과 같습니다.</p>
+<pre><code>
+Order BC
+  ├─ publishes OrderPlaced / OrderCancelled
+  ▼
+Payment BC
+  ├─ publishes PaymentApproved / PaymentFailed / RefundCompleted
+  ▼
+Order BC
+  ├─ publishes OrderPaid
+  ▼
+Shipping BC
+  ├─ publishes ShipmentRequested / ShipmentDispatched / Delivered
+  ▼
+Settlement BC
+</code></pre>
+<p>외부 시스템과의 관계는 이렇게 둡니다.</p>
+<p>| 관계 | 패턴 | 설명 | |---|---|---| | Payment BC ↔ PG사 | ACL | PG사의 승인/취소/환불 용어를 내부 결제 모델로 번역 | | Shipping BC ↔ 택배사 | ACL | 택배사 배송 상태 코드를 내부 <code>DeliveryStatus</code>로 번역 | | Order BC → Payment BC | Published Language | 주문은 결제 요청 이벤트/커맨드 계약만 알고 결제 내부 모델은 모름 | | Shipping BC → Settlement BC | Domain Event | 배송 완료 또는 구매 확정 이후 정산 후보 생성 |</p>
+<p>Django 프로젝트 구조 예시는 다음처럼 bounded context를 Django app 단위로 분리하는 방식을 추천합니다.</p>
+<pre><code>
+commerce/
+  config/
+    settings.py
+    urls.py
+
+  orders/
+    domain/
+      models/
+        order.py
+        order_line.py
+        order_status.py
+      events.py
+      exceptions.py
+      repositories.py
+    application/
+      commands.py
+      services.py
+      event_handlers.py
+    infrastructure/
+      django_models.py
+      repositories.py
+      outbox.py
+    interfaces/
+      api.py
+      schemas.py
+    apps.py
+
+  payments/
+    domain/
+      models/
+        payment.py
+        refund.py
+      events.py
+      exceptions.py
+      repositories.py
+    application/
+      services.py
+      event_handlers.py
+    infrastructure/
+      django_models.py
+      repositories.py
+      pg_client.py
+      pg_translator.py
+    interfaces/
+      api.py
+      schemas.py
+    apps.py
+
+  shipping/
+    domain/
+      models/
+        shipment.py
+        delivery_status.py
+      events.py
+      exceptions.py
+      repositories.py
+    application/
+      services.py
+      event_handlers.py
+    infrastructure/
+      django_models.py
+      courier_client.py
+      courier_translator.py
+      repositories.py
+    interfaces/
+      api.py
+      schemas.py
+    apps.py
+
+  settlements/
+    domain/
+      models/
+        settlement.py
+        payout.py
+        commission.py
+      events.py
+      exceptions.py
+      repositories.py
+    application/
+      services.py
+      event_handlers.py
+    infrastructure/
+      django_models.py
+      repositories.py
+    interfaces/
+      api.py
+      schemas.py
+    apps.py
+
+  shared_kernel/
+    money.py
+    ids.py
+    clock.py
+
+  messaging/
+    event_bus.py
+    outbox_dispatcher.py
+</code></pre>
+<p>중요한 점은 <code>shared_kernel</code>을 작게 유지하는 것입니다. <code>Money</code>, <code>OrderId</code>, <code>PaymentId</code>, <code>Clock</code> 같은 기술적/값 객체 수준만 공유하고, <code>OrderStatus</code>, <code>PaymentStatus</code>, <code>DeliveryStatus</code> 같은 도메인 상태는 공유하지 않는 편이 좋습니다.</p>
+<p>예를 들어 주문 BC는 결제 모델을 직접 참조하지 않고 이벤트만 받아 상태를 바꿉니다.</p>
+<pre><code>
+# orders/application/event_handlers.py
+
+def handle_payment_approved(event: PaymentApproved) -&gt; None:
+    order = order_repository.get(event.order_id)
+    order.mark_paid(payment_id=event.payment_id)
+    order_repository.save(order)
+</code></pre>
+<p>반대로 결제 BC도 주문 내부 구조를 모릅니다.</p>
+<pre><code>
+# payments/application/services.py
+
+def approve_payment(command: ApprovePaymentCommand) -&gt; None:
+    payment = payment_repository.get(command.payment_id)
+    payment.approve(
+        approved_amount=command.approved_amount,
+        approved_at=command.approved_at,
+    )
+    payment_repository.save(payment)
+</code></pre>
+<p>초기에는 물리적으로 하나의 Django 프로젝트와 하나의 DB를 써도 됩니다. 다만 코드 경계는 처음부터 BC별 app으로 나누고, 다른 BC의 Django model을 직접 import하지 않는 규칙을 두는 것이 좋습니다. BC 간 연결은 <code>domain event</code>, <code>application service</code>, <code>published schema</code>를 통해서만 허용합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django app / ORM 구현 구조 → <strong>implementation-django</strong> 스킬 &gt; - 이벤트 기반 통합, Outbox, Saga → <strong>architecture-implementation-patterns</strong> 스킬 &gt; - 테이블 경계와 FK 설계 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

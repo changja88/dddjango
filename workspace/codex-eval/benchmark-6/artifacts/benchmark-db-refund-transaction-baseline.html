@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-refund-transaction baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-refund-transaction baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/baseline/benchmark-db-refund-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않았습니다. 대신 평가 repo의 Django fixture인 <code>/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop</code>를 확인했습니다. 현재 fixture에는 <code>Payment</code>/<code>Refund</code> 모델은 없고, <code>reserve_inventory()</code>에서 <code>transaction.atomic()</code> + <code>select_for_update()</code>로 <code>Product</code>와 <code>Order</code>를 잠그는 패턴만 있습니다. 환불 처리도 같은 기준으로 설계하는 게 맞습니다.</p>
+<p>환불에서 핵심은 <code>Payment</code>와 <code>Refund</code>를 같은 DB 트랜잭션 안에서 일관되게 갱신하고, 같은 결제에 대한 동시 환불 요청이 환불 가능 금액을 초과하지 못하게 막는 것입니다.</p>
+<pre><code>
+from django.db import transaction
+from django.utils import timezone
+
+def create_refund(*, payment_id, amount, idempotency_key):
+    with transaction.atomic():
+        payment = (
+            Payment.objects
+            .select_for_update()
+            .get(id=payment_id)
+        )
+
+        existing = Refund.objects.filter(
+            payment=payment,
+            idempotency_key=idempotency_key,
+        ).first()
+        if existing:
+            return existing
+
+        if payment.status not in [Payment.STATUS_PAID, Payment.STATUS_PARTIALLY_REFUNDED]:
+            raise ValueError(&quot;payment is not refundable&quot;)
+
+        if payment.refunded_amount + amount &gt; payment.amount:
+            raise ValueError(&quot;refund amount exceeds paid amount&quot;)
+
+        refund = Refund.objects.create(
+            payment=payment,
+            amount=amount,
+            status=Refund.STATUS_PENDING,
+            idempotency_key=idempotency_key,
+        )
+
+        payment.refunded_amount += amount
+        payment.status = (
+            Payment.STATUS_REFUNDED
+            if payment.refunded_amount == payment.amount
+            else Payment.STATUS_PARTIALLY_REFUNDED
+        )
+        payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
+
+    return refund
+</code></pre>
+<p>중요한 기준은 이렇습니다.</p>
+<p><code>transaction.atomic()</code>은 <code>Payment.refunded_amount</code> 갱신과 <code>Refund</code> 생성이 같이 성공하거나 같이 롤백되게 합니다. 둘 중 하나만 반영되면 결제 상태와 환불 이력이 어긋납니다.</p>
+<p><code>select_for_update()</code>는 같은 <code>Payment</code> row에 대해 동시에 들어온 환불 요청을 직렬화합니다. 예를 들어 결제 금액이 10,000원이고 두 요청이 동시에 7,000원씩 환불하려고 할 때, 잠금이 없으면 둘 다 “가능”하다고 판단할 수 있습니다. <code>Payment</code>를 row lock으로 잡으면 두 번째 요청은 첫 번째 트랜잭션이 끝난 뒤 갱신된 <code>refunded_amount</code>를 보고 초과 여부를 다시 판단합니다.</p>
+<p><code>Refund</code>에는 <code>idempotency_key</code>를 두고, 보통 DB 제약도 같이 둡니다.</p>
+<pre><code>
+class Refund(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=24)
+    idempotency_key = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;payment&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uniq_refund_payment_idempotency_key&quot;,
+            ),
+        ]
+</code></pre>
+<p>외부 PG사 환불 API 호출은 주의가 필요합니다. DB 트랜잭션을 열고 row lock을 잡은 채로 외부 HTTP 요청을 오래 기다리면 잠금 시간이 길어집니다. 실무에서는 보통 두 단계로 나눕니다.</p>
+<ul>
+<li>짧은 트랜잭션 안에서 <code>Refund(status=&quot;pending&quot;)</code>를 만들고 <code>Payment</code>를 잠근 상태로 환불 가능 금액을 예약한다.</li>
+<li>트랜잭션 밖에서 PG 환불 API를 호출한다.</li>
+<li>결과 콜백 또는 후속 처리에서 다시 <code>transaction.atomic()</code> + <code>select_for_update()</code>로 <code>Refund</code>/<code>Payment</code>를 확정 상태로 바꾼다.</li>
+</ul>
+<p>즉, Django 기준의 기본 전략은 <code>Payment</code>를 동시성 기준 row로 삼고, <code>transaction.atomic()</code> 안에서 <code>select_for_update()</code>로 잠근 뒤, 환불 가능 금액 검증, <code>Refund</code> 생성, <code>Payment</code> 상태 갱신을 한 단위로 처리하는 것입니다. idempotency key와 unique constraint는 재시도/중복 요청 방어용으로 반드시 같이 두는 편이 안전합니다.</p></article>
+  </main>
+</body>
+</html>

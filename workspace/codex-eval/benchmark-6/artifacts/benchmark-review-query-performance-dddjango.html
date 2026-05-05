@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-review-query-performance dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-review-query-performance dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/dddjango/benchmark-review-query-performance.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 <code>/Users/hyun/Desktop/dddjango/none</code>은 없어서, 실제로 읽을 수 있는 fixture인 <code>evals/fixtures/django-shop</code>을 기준으로 봤습니다. 이 fixture에는 “주문 목록 API” 자체는 없고, 레거시 DRF 상세 API만 있습니다: [api_drf.py](/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop/shop/orders/api_drf.py:1). 아래 리뷰는 이 코드를 주문 목록 API로 확장/전환할 때의 수정 방향입니다.</p>
+<p><strong>Findings</strong></p>
+<p>High: [Django Ninja 전환] -- [api_drf.py](/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop/shop/orders/api_drf.py:1)는 DRF <code>APIView</code>/<code>ModelSerializer</code>이고 [fields = &quot;__all__&quot;](/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop/shop/orders/api_drf.py:11)를 씁니다. 이 프로젝트 정책에서는 API를 Django Ninja <code>Router</code>/<code>Schema</code>로 옮겨야 하고, 목록 응답은 명시 필드만 노출해야 합니다.</p>
+<p>High: [ORM N+1] -- <code>Order</code>는 현재 FK가 없어서 목록 summary에는 <code>select_related()</code>가 필요 없습니다. 하지만 주문 목록에서 [Reservation.order/product FK](/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop/shop/orders/models.py:41)를 함께 보여주면 reverse FK인 <code>reservation_set</code>은 <code>prefetch_related()</code>, 각 예약의 <code>product</code> FK는 <code>Prefetch(... queryset=Reservation.objects.select_related(&quot;product&quot;))</code>가 맞습니다. <code>select_related</code>와 <code>prefetch_related</code>를 구분하지 않으면 주문 N개마다 예약/상품 조회가 반복됩니다.</p>
+<p>High: [Pagination] -- 목록 엔드포인트와 페이지네이션이 없습니다. 대량 주문에서 offset/page-number는 뒤 페이지로 갈수록 느려지므로 고객 주문 목록/운영 피드에는 <code>created_at,id</code> 기반 cursor pagination을 우선하세요. 랜덤 페이지 이동이 필요한 소규모 관리자 화면만 offset을 허용하는 쪽이 낫습니다.</p>
+<p>Medium: [Schema 과중첩] -- 목록 응답에서 상품 전체 객체, 예약 전체 객체를 중첩하면 payload가 커지고 serializer가 관계를 계속 따라가게 됩니다. 목록은 주문 summary와 얕은 line summary까지만 두고, 상세 API에서 전체 line을 내려주는 구조가 안전합니다.</p>
+<p><strong>Suggested Diff</strong></p>
+<pre><code>
+diff --git a/shop/orders/models.py b/shop/orders/models.py
+@@
+ class Order(models.Model):
+@@
+     created_at = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        indexes = [
++            models.Index(
++                fields=[&quot;-created_at&quot;, &quot;-id&quot;],
++                name=&quot;order_list_cursor_idx&quot;,
++            ),
++        ]
+
+diff --git a/shop/orders/api.py b/shop/orders/api.py
+new file mode 100644
+--- /dev/null
++++ b/shop/orders/api.py
+@@
++from decimal import Decimal
++
++from django.db.models import Count, Prefetch, QuerySet
++from django.http import HttpRequest
++from ninja import Router, Schema
++from ninja.pagination import CursorPagination, paginate
++
++from shop.orders.models import Order, Reservation
++
++router = Router(tags=[&quot;orders&quot;])
++
++
++class OrderLineSummaryOut(Schema):
++    product_id: int
++    product_sku: str
++    product_name: str
++    quantity: int
++
++
++class OrderListOut(Schema):
++    id: int
++    customer_email: str
++    status: str
++    total_amount: Decimal
++    created_at: str
++    line_count: int
++    lines: list[OrderLineSummaryOut]
++
++    @staticmethod
++    def resolve_lines(obj: Order) -&gt; list[OrderLineSummaryOut]:
++        return [
++            OrderLineSummaryOut(
++                product_id=reservation.product_id,
++                product_sku=reservation.product.sku,
++                product_name=reservation.product.name,
++                quantity=reservation.quantity,
++            )
++            for reservation in getattr(obj, &quot;prefetched_reservations&quot;, [])
++        ]
++
++
++class OrderCursorPagination(CursorPagination):
++    ordering = (&quot;-created_at&quot;, &quot;-id&quot;)
++    page_size = 50
++    max_page_size = 100
++
++
++@router.get(&quot;&quot;, response=list[OrderListOut])
++@paginate(OrderCursorPagination)
++def list_orders(request: HttpRequest) -&gt; QuerySet[Order]:
++    reservations = Reservation.objects.select_related(&quot;product&quot;).only(
++        &quot;order_id&quot;,
++        &quot;product_id&quot;,
++        &quot;product__sku&quot;,
++        &quot;product__name&quot;,
++        &quot;quantity&quot;,
++    )
++    return (
++        Order.objects.annotate(line_count=Count(&quot;reservation&quot;))
++        .prefetch_related(
++            Prefetch(
++                &quot;reservation_set&quot;,
++                queryset=reservations,
++                to_attr=&quot;prefetched_reservations&quot;,
++            )
++        )
++        .order_by(&quot;-created_at&quot;, &quot;-id&quot;)
++    )
+</code></pre>
+<p><code>lines</code>가 목록 화면에 꼭 필요 없다면 <code>lines</code>와 <code>prefetch_related()</code>를 제거하고 <code>line_count</code>만 내려주세요. 그 경우 목록 쿼리는 더 가벼워집니다.</p>
+<p><strong>Verification</strong></p>
+<ul>
+<li>N+1 회귀 테스트: 주문 50개, 주문당 예약 2개를 만들고 <code>assertNumQueries(2)</code> 수준으로 고정되는지 확인합니다. line summary를 제거하면 1 query까지 기대할 수 있습니다.</li>
+<li>Pagination 측정: PostgreSQL/stage에서 <code>Order.objects.order_by(&quot;-created_at&quot;, &quot;-id&quot;).explain(analyze=True, buffers=True)</code>로 cursor index 사용 여부를 확인합니다.</li>
+<li>API 테스트: <code>ninja.testing.TestClient(router)</code>로 첫 페이지 응답에 <code>next</code> cursor가 있고, 응답 schema가 <code>OrderListOut</code> 필드만 포함하는지 검증합니다.</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django ORM 쿼리 최적화 → <strong>implementation-django</strong> 스킬 &gt; - Django Ninja Schema/Router/pagination → <strong>implementation-django-ninja</strong> 스킬 &gt; - 인덱스와 EXPLAIN 측정 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

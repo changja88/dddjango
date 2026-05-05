@@ -1,0 +1,21 @@
+{
+  "case_id": "benchmark-db-payment-ledger",
+  "category": "db-design",
+  "title": "Payment ledger schema",
+  "expectations": [
+    "korean_first",
+    "db_design",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "금액 타입과 통화 컬럼을 명시한다.",
+    "idempotency key unique constraint와 audit trail을 고려한다.",
+    "상태 전이와 트랜잭션 경계를 설명한다."
+  ],
+  "prompt": "결제 ledger 테이블을 Django 모델 기준으로 설계해줘. 금액 타입, 통화, 상태, idempotency, audit trail을 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "design"
+}

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-clean-naming-boundaries dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-clean-naming-boundaries dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/dddjango/benchmark-clean-naming-boundaries.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>Fixture 확인: <code>/Users/hyun/Desktop/dddjango/none</code> 경로가 존재하지 않아 읽을 fixture 파일이 없었습니다. 그래서 코드 diff 대신 Django DDD 팀 컨벤션으로 쓸 책임/네이밍 기준을 정리합니다.</p>
+<p>핵심 결론: <code>OrderManager</code>, <code>OrderService</code>, <code>OrderUseCase</code>를 같은 의미로 섞지 말고, 프로젝트 기본 용어는 <strong>Application Service</strong>로 통일하는 편이 가장 덜 헷갈립니다.</p>
+<p>| 이름 | 책임 | 써도 되는 위치 | 피해야 할 것 | |---|---|---|---| | <code>OrderManager</code> | Django ORM 진입점, QuerySet 생성, 저장소 접근 편의 | <code>Order.objects</code>, custom <code>Manager</code>, <code>QuerySet</code> | 주문 확정, 결제, 취소 같은 유스케이스 처리 | | <code>OrderService</code> | 너무 넓은 이름. 가능하면 단독 사용 금지 | 작은 프로젝트에서 <code>services.py</code> 함수 묶음 정도 | 모든 주문 로직을 담는 God Service | | <code>OrderUseCase</code> | 특정 입력으로 하나의 사용자 목적을 수행 | 팀이 Clean Architecture 용어를 명시적으로 채택한 경우 | Django 서비스와 같은 뜻으로 혼용 | | <code>OrderApplicationService</code> | 트랜잭션, 권한/입력 조율, Repository/ORM 호출, 도메인 메서드 호출 | 중형 이상 DDD 구조 | 도메인 규칙 자체를 여기에 몰아넣기 | | <code>Order</code> / <code>OrderLine</code> | 불변식, 상태 전이, 도메인 규칙 | domain model / Django model method | 외부 API, request, response, email 직접 호출 |</p>
+<p><strong>책임 기준</strong></p>
+<ul>
+<li><code>Manager</code>는 저장소/조회 책임이다.</li>
+<p><code>Order.objects.pending().for_customer(user)</code>는 가능하지만 <code>Order.objects.place_order(...)</code>처럼 비즈니스 유스케이스를 실행하면 안 된다.</p>
+</ul>
+<ul>
+<li>도메인 규칙은 <code>Order</code> 안에 둔다.</li>
+<p>예: “취소된 주문은 결제 확정 불가”, “배송 시작 후 취소 불가”, “총액 계산”은 <code>Order.confirm_payment()</code>, <code>Order.cancel()</code> 같은 행위 이름으로 둔다.</p>
+</ul>
+<ul>
+<li>Application Service는 흐름 조율만 한다.</li>
+<p>트랜잭션 시작, 주문 로드, 권한 확인, 도메인 메서드 호출, 저장, <code>transaction.on_commit()</code> 부수효과 예약까지 담당한다. 상태 전이 조건문을 길게 품기 시작하면 도메인 모델로 내려야 한다.</p>
+</ul>
+<ul>
+<li>Domain Service는 드물게 쓴다.</li>
+<p>특정 엔티티/값 객체에 자연스럽게 속하지 않는 순수 도메인 규칙에만 쓴다. 예: 여러 할인 정책을 조합해 최종 가격을 계산하는 <code>OrderPricingService</code>. DB, HTTP, Django request를 알면 Domain Service가 아니다.</p>
+</ul>
+<p><strong>프로젝트 규모별 컨벤션</strong></p>
+<p>작은 Django CRUD/운영툴:</p>
+<pre><code>
+# apps/orders/services.py
+
+@transaction.atomic
+def order_cancel(*, order_id: int, actor: User) -&gt; None:
+    order = Order.objects.select_for_update().get(id=order_id)
+    order.cancel(by=actor)
+    order.save(update_fields=[&quot;status&quot;, &quot;cancelled_at&quot;])
+</code></pre>
+<p>규칙: <code>OrderService</code> 클래스 만들지 말고 <code>&lt;entity&gt;_&lt;action&gt;</code> 함수로 끝낸다.</p>
+<p>중간 규모:</p>
+<pre><code>
+# apps/orders/application/services.py
+
+class CancelOrderService:
+    @transaction.atomic
+    def execute(self, *, order_id: OrderId, actor_id: UserId) -&gt; None:
+        order = self.orders.get(order_id)
+        order.cancel(actor_id=actor_id)
+        self.orders.save(order)
+</code></pre>
+<p>규칙: 클래스명은 <code>CancelOrderService</code>, 메서드는 <code>execute</code>. <code>CancelOrderUseCase</code>와 혼용하지 않는다.</p>
+<p>큰 DDD/헥사고날 구조:</p>
+<pre><code>
+# apps/orders/application/use_cases/cancel_order.py
+
+class CancelOrder:
+    def __call__(self, command: CancelOrderCommand) -&gt; None:
+        order = self.orders.get(command.order_id)
+        order.cancel(actor_id=command.actor_id)
+        self.orders.save(order)
+</code></pre>
+<p>규칙: 이 단계에서만 <code>use_cases/</code> 디렉터리와 <code>Command</code>를 도입한다. 단순 CRUD에 미리 만들지 않는다.</p>
+<p><strong>팀 네이밍 룰</strong></p>
+<ul>
+<li>Django ORM 확장은 반드시 <code>OrderQuerySet</code>, <code>OrderManager</code>.</li>
+<li>읽기 전용 조회는 <code>selectors.py</code>에 <code>order_get_detail</code>, <code>order_list_for_customer</code>.</li>
+<li>쓰기 유스케이스는 작은 프로젝트에서 <code>services.py</code>의 <code>order_&lt;verb&gt;</code>.</li>
+<li>중형 이상은 <code>&lt;Verb&gt;OrderService</code>: <code>PlaceOrderService</code>, <code>CancelOrderService</code>.</li>
+<li>Clean Architecture를 명시적으로 채택한 프로젝트만 <code>&lt;Verb&gt;OrderUseCase</code>.</li>
+<li><code>OrderService</code>, <code>OrderManagerService</code>, <code>OrderUseCaseService</code> 같은 포괄/중복 suffix 금지.</li>
+<li>도메인 메서드는 비즈니스 동사: <code>confirm_payment</code>, <code>cancel</code>, <code>mark_shipped</code>.</li>
+<li>CRUD 동사만 있는 이름은 피한다: <code>update_status</code>, <code>process</code>, <code>handle</code>.</li>
+</ul>
+<p><strong>검증 기준</strong></p>
+<ul>
+<li><code>rg &quot;class Order(Service|UseCase|Manager)|OrderManager|OrderService|OrderUseCase&quot;</code>로 혼용 지점을 찾는다.</li>
+<li>각 이름이 위 표의 책임과 맞는지 확인한다.</li>
+<li>도메인 규칙 조건문이 service/use case에 있으면 <code>Order</code> 메서드로 이동 후보로 표시한다.</li>
+<li><code>Manager</code> 안에 <code>transaction.atomic</code>, 외부 API, 이메일, 상태 전이 로직이 있으면 책임 위반으로 본다.</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 서비스 레이어와 selector 분리 → <strong>implementation-django</strong> 스킬 &gt; - DDD Application Service / Domain Service 책임 분리 → <strong>architecture-ddd</strong> 스킬 &gt; - 네이밍과 과한 추상화 방지 → <strong>implementation-cleancode</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

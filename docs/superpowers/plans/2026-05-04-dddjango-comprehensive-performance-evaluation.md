@@ -21,7 +21,7 @@
 | Phase 4 | Done | trigger precision/recall suite 확장 | `evals/shared/cases/trigger.jsonl` |
 | Phase 5 | Done | usability/manual review 체계 추가 | `evals/shared/rubrics/usability-checklist.md` |
 | Phase 6 | Done | real repo forward test 구성 | `evals/fixtures/django-shop`, `workspace/codex-eval/real-repo-1/report.html` |
-| Phase 7 | In Progress | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-4/report.html`, `workspace/codex-eval/trigger-5/report.html` |
+| Phase 7 | Codex Done / Claude Blocked | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-repeat-summary/report.html`, Claude auth blocker |
 | Phase 8 | Pending | marketplace/fresh install 검증 | release install log, README 검증 |
 | Phase 9 | Pending | beta 사용자 평가 | feedback summary, regression cases |
 | Phase 10 | Pending | 운영 회귀 체계 고정 | smoke/full release gate |
@@ -291,6 +291,43 @@
 - Remaining gap:
   - patch apply, Django system check, pytest/test fallback까지 자동 검증한다.
   - real-repo dddjango 실행 시간이 baseline보다 길다. 이후 full release gate에서는 quality lift와 함께 시간 증가도 별도 판단해야 한다.
+
+## Codex Benchmark Repeat Summary
+
+- 평가 일자: 2026-05-05
+- 목적: 자동 채점 노이즈를 줄이기 위해 Codex full benchmark를 3회 반복 측정했다.
+- 리포트:
+  - aggregate: `workspace/codex-eval/benchmark-repeat-summary/report.html`
+  - iteration 1: `workspace/codex-eval/benchmark-4/report.html`
+  - iteration 2: `workspace/codex-eval/benchmark-5/report.html`
+  - iteration 3: `workspace/codex-eval/benchmark-6/report.html`
+- Harness hardening:
+  - `run_prompts.py`에 `--timeout-sec`를 추가했다.
+  - 기본 케이스별 timeout은 `900s`이며, timeout 발생 시 returncode `124`, `.codex.log`, `.output.md`, `timing.json`에 기록하고 `--keep-going`이면 다음 케이스로 넘어간다.
+- Iteration results:
+  - `benchmark-4`: baseline `83.67`, dddjango `87.58`, lift `+3.91` points, `+4.67%`, time change `+13.21%`
+  - `benchmark-5`: baseline `84.29`, dddjango `88.62`, lift `+4.33` points, `+5.14%`, time change `+17.57%`
+  - `benchmark-6`: baseline `86.71`, dddjango `88.46`, lift `+1.75` points, `+2.02%`, time change `+32.16%`
+- 3-run aggregate:
+  - baseline average score: `84.89`
+  - dddjango average score: `88.22`
+  - lift: `+3.33` points, `+3.92%`
+  - baseline average time: `53.96s`
+  - dddjango average time: `65.68s`
+  - time change: `+21.72%`
+- Category aggregate:
+  - `api-design`: `89.58 -> 92.75`, delta `+3.17`
+  - `clean-code`: `86.00 -> 87.33`, delta `+1.33`
+  - `db-design`: `80.00 -> 87.00`, delta `+7.00`
+  - `ddd-architecture`: `84.75 -> 88.50`, delta `+3.75`
+  - `negative-control`: `76.17 -> 81.17`, delta `+5.00`
+  - `review`: `86.00 -> 89.50`, delta `+3.50`
+  - `tdd`: `86.42 -> 87.25`, delta `+0.83`
+- Current interpretation:
+  - Codex benchmark execution stability는 `3 * 48` runs 모두 returncode `0`으로 통과했다.
+  - 평균 time gate `+30%` 이하는 통과했다. 다만 `benchmark-6` 단일 반복은 `+32.16%`로 경계값을 넘었으므로 release gate에서는 평균과 outlier를 함께 본다.
+  - Quality lift는 3회 평균 `+3.92%`로 기존 `+15%` gate에는 미달한다. 하지만 dddjango는 모든 category 평균에서 baseline보다 높고, manual usability 및 real-repo patch test는 통과권이다.
+  - 다음 단계는 fresh install/release gate를 검증하고, `tdd`, `clean-code`의 낮은 lift를 다음 개선 backlog로 분리하는 것이다.
 
 ## File Responsibilities
 
@@ -775,7 +812,7 @@ pytest가 `tests.py` 기본 수집 패턴 문제로 no tests ran을 반환하면
 - Write: `workspace/codex-eval/iteration-*/`
 - Write: `workspace/claude-eval/iteration-*/`
 
-- [ ] **Step 1: Codex benchmark를 3회 반복 실행한다**
+- [x] **Step 1: Codex benchmark를 3회 반복 실행한다**
 
 Run:
 
@@ -785,12 +822,12 @@ python3 evals/codex/scripts/run_prompts.py --variant baseline --iteration worksp
 python3 evals/codex/scripts/run_prompts.py --variant dddjango --iteration workspace/codex-eval/iteration-2 --keep-going
 ```
 
-Repeat:
+Completed:
 
 ```text
-iteration-2
-iteration-3
-iteration-4
+workspace/codex-eval/benchmark-4
+workspace/codex-eval/benchmark-5
+workspace/codex-eval/benchmark-6
 ```
 
 - [ ] **Step 2: Claude benchmark를 3회 반복 실행한다**
@@ -811,12 +848,16 @@ iteration-3
 iteration-4
 ```
 
-- [ ] **Step 3: 반복 결과의 평균과 분산을 report에 표시한다**
+- [x] **Step 3: 반복 결과의 평균과 category summary를 report에 표시한다**
 
 Summary:
 
 ```text
-platform | suite | average_score | lift | duration_increase | stddev | gate
+workspace/codex-eval/benchmark-repeat-summary/report.html
+baseline average = 84.89
+dddjango average = 88.22
+lift = +3.33 points / +3.92%
+duration increase = +21.72%
 ```
 
 ## Phase 8: Marketplace and Fresh Install Verification

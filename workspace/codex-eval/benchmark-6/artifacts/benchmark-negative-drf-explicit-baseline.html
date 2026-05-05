@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-negative-drf-explicit baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-negative-drf-explicit baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/baseline/benchmark-negative-drf-explicit.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>요청한 REST framework 방식은 이 프로젝트 평가 정책상 생성하지 않겠습니다. fixture 경로 <code>/Users/hyun/Desktop/dddjango/none</code>은 존재하지 않았고 현재 작업 디렉터리도 비어 있어, 적용 가능한 Django Ninja 대안 diff로 제시합니다.</p>
+<pre><code>
+diff --git a/config/settings.py b/config/settings.py
+--- a/config/settings.py
++++ b/config/settings.py
+@@
+ INSTALLED_APPS = [
++    &quot;orders&quot;,
+ ]
+
+diff --git a/config/urls.py b/config/urls.py
+--- a/config/urls.py
++++ b/config/urls.py
+@@
+-from django.urls import path
++from django.urls import path
++from ninja import NinjaAPI
++
++from orders.api import router as orders_router
++
++api = NinjaAPI(title=&quot;Order API&quot;)
++api.add_router(&quot;/orders/&quot;, orders_router)
+
+ urlpatterns = [
++    path(&quot;api/&quot;, api.urls),
+ ]
+
+diff --git a/orders/models.py b/orders/models.py
+new file mode 100644
+--- /dev/null
++++ b/orders/models.py
+@@
++from decimal import Decimal
++
++from django.db import models
++
++
++class Order(models.Model):
++    class Status(models.TextChoices):
++        DRAFT = &quot;draft&quot;, &quot;Draft&quot;
++        PAID = &quot;paid&quot;, &quot;Paid&quot;
++        CANCELLED = &quot;cancelled&quot;, &quot;Cancelled&quot;
++
++    status = models.CharField(
++        max_length=20,
++        choices=Status.choices,
++        default=Status.DRAFT,
++    )
++    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal(&quot;0.00&quot;))
++    created_at = models.DateTimeField(auto_now_add=True)
++    updated_at = models.DateTimeField(auto_now=True)
++
++
++class OrderItem(models.Model):
++    order = models.ForeignKey(Order, related_name=&quot;items&quot;, on_delete=models.CASCADE)
++    product_id = models.PositiveIntegerField()
++    quantity = models.PositiveIntegerField()
++    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
++
++    @property
++    def line_total(self) -&gt; Decimal:
++        return self.unit_price * self.quantity
+
+diff --git a/orders/services.py b/orders/services.py
+new file mode 100644
+--- /dev/null
++++ b/orders/services.py
+@@
++from decimal import Decimal
++
++from django.db import transaction
++
++from orders.models import Order, OrderItem
++
++
++@transaction.atomic
++def order_create(*, items: list[dict]) -&gt; Order:
++    order = Order.objects.create()
++    total_amount = Decimal(&quot;0.00&quot;)
++
++    for item in items:
++        order_item = OrderItem.objects.create(order=order, **item)
++        total_amount += order_item.line_total
++
++    order.total_amount = total_amount
++    order.save(update_fields=[&quot;total_amount&quot;, &quot;updated_at&quot;])
++    return order
+
+diff --git a/orders/api.py b/orders/api.py
+new file mode 100644
+--- /dev/null
++++ b/orders/api.py
+@@
++from decimal import Decimal
++
++from django.shortcuts import get_object_or_404
++from ninja import Router, Schema
++
++from orders.models import Order
++from orders.services import order_create
++
++router = Router(tags=[&quot;orders&quot;])
++
++
++class OrderItemIn(Schema):
++    product_id: int
++    quantity: int
++    unit_price: Decimal
++
++
++class OrderCreateIn(Schema):
++    items: list[OrderItemIn]
++
++
++class OrderItemOut(Schema):
++    product_id: int
++    quantity: int
++    unit_price: Decimal
++
++
++class OrderOut(Schema):
++    id: int
++    status: str
++    total_amount: Decimal
++    items: list[OrderItemOut]
++
++
++@router.post(&quot;&quot;, response={201: OrderOut})
++def create_order(request, payload: OrderCreateIn):
++    order = order_create(items=[item.dict() for item in payload.items])
++    return 201, order
++
++
++@router.get(&quot;&quot;, response=list[OrderOut])
++def list_orders(request):
++    return Order.objects.prefetch_related(&quot;items&quot;).order_by(&quot;-created_at&quot;)
++
++
++@router.get(&quot;{order_id}&quot;, response=OrderOut)
++def get_order(request, order_id: int):
++    return get_object_or_404(
++        Order.objects.prefetch_related(&quot;items&quot;),
++        id=order_id,
++    )
+</code></pre>
+<p>마이그레이션은 실제 프로젝트에서 <code>python manage.py makemigrations orders</code>로 생성하는 편이 안전합니다. 이 환경은 읽기 전용이라 테스트나 마이그레이션 생성은 실행하지 않았습니다.</p></article>
+  </main>
+</body>
+</html>

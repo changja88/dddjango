@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-inventory-reserve baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-inventory-reserve baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/baseline/benchmark-tdd-inventory-reserve.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 <code>/Users/hyun/Desktop/dddjango/none</code> 경로는 없어서 읽을 수 없었습니다. 대신 확인 가능한 fixture인 <code>/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop</code>의 파일들을 읽고, 읽기 전용 환경에 맞춰 적용용 unified diff로 작성했습니다.</p>
+<pre><code>
+diff --git a/shop/orders/test_inventory_reservation.py b/shop/orders/test_inventory_reservation.py
+new file mode 100644
+index 0000000..31c3d2a
+--- /dev/null
++++ b/shop/orders/test_inventory_reservation.py
+@@ -0,0 +1,85 @@
++import pytest
++
++from shop.orders.models import Order, Product, Reservation
++from shop.orders.services import InsufficientStock, reserve_inventory
++
++
++pytestmark = pytest.mark.django_db
++
++
++@pytest.fixture
++def order():
++    return Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++    )
++
++
++@pytest.fixture
++def product():
++    return Product.objects.create(
++        sku=&quot;SKU-001&quot;,
++        name=&quot;Test product&quot;,
++        stock_quantity=5,
++        price=&quot;10.00&quot;,
++    )
++
++
++def test_reserve_inventory_creates_reservation_and_decreases_stock(order, product):
++    reservation = reserve_inventory(
++        order_id=order.id,
++        product_id=product.id,
++        quantity=3,
++        idempotency_key=&quot;reserve-1&quot;,
++    )
++
++    product.refresh_from_db()
++
++    assert reservation.order == order
++    assert reservation.product == product
++    assert reservation.quantity == 3
++    assert reservation.idempotency_key == &quot;reserve-1&quot;
++    assert product.stock_quantity == 2
++
++
++def test_reserve_inventory_rejects_when_stock_is_not_enough(order, product):
++    product.stock_quantity = 2
++    product.save(update_fields=[&quot;stock_quantity&quot;])
++
++    with pytest.raises(InsufficientStock) as error:
++        reserve_inventory(
++            order_id=order.id,
++            product_id=product.id,
++            quantity=3,
++            idempotency_key=&quot;reserve-1&quot;,
++        )
++
++    product.refresh_from_db()
++
++    assert error.value.available == 2
++    assert product.stock_quantity == 2
++    assert Reservation.objects.count() == 0
++
++
++def test_reserve_inventory_is_idempotent_for_duplicate_reservation(order, product):
++    first_reservation = reserve_inventory(
++        order_id=order.id,
++        product_id=product.id,
++        quantity=3,
++        idempotency_key=&quot;reserve-1&quot;,
++    )
++
++    duplicate_reservation = reserve_inventory(
++        order_id=order.id,
++        product_id=product.id,
++        quantity=3,
++        idempotency_key=&quot;reserve-1&quot;,
++    )
++
++    product.refresh_from_db()
++
++    assert duplicate_reservation.id == first_reservation.id
++    assert product.stock_quantity == 2
++    assert Reservation.objects.count() == 1
+diff --git a/shop/orders/models.py b/shop/orders/models.py
+index 3b8f3d7..af73b61 100644
+--- a/shop/orders/models.py
++++ b/shop/orders/models.py
+@@ -44,3 +44,10 @@ class Reservation(models.Model):
+     quantity = models.PositiveIntegerField()
+     idempotency_key = models.CharField(max_length=128)
+     created_at = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        constraints = [
++            models.UniqueConstraint(
++                fields=[&quot;product&quot;, &quot;order&quot;, &quot;idempotency_key&quot;],
++                name=&quot;unique_reservation_idempotency_key_per_order_product&quot;,
++            )
++        ]
+diff --git a/shop/orders/services.py b/shop/orders/services.py
+new file mode 100644
+index 0000000..a7d66bb
+--- /dev/null
++++ b/shop/orders/services.py
+@@ -0,0 +1,50 @@
++from django.db import transaction
++
++from shop.orders.models import Order, Product, Reservation
++
++
++class InsufficientStock(Exception):
++    def __init__(self, available: int):
++        self.available = available
++        super().__init__(&quot;not enough stock&quot;)
++
++
++def reserve_inventory(
++    *,
++    order_id: int,
++    product_id: int,
++    quantity: int,
++    idempotency_key: str,
++) -&gt; Reservation:
++    if quantity &lt;= 0:
++        raise ValueError(&quot;quantity must be positive&quot;)
++
++    with transaction.atomic():
++        product = Product.objects.select_for_update().get(id=product_id)
++        order = Order.objects.select_for_update().get(id=order_id)
++
++        existing_reservation = (
++            Reservation.objects.select_for_update()
++            .filter(
++                product=product,
++                order=order,
++                idempotency_key=idempotency_key,
++            )
++            .first()
++        )
++        if existing_reservation is not None:
++            return existing_reservation
++
++        if product.stock_quantity &lt; quantity:
++            raise InsufficientStock(available=product.stock_quantity)
++
++        product.stock_quantity -= quantity
++        product.save(update_fields=[&quot;stock_quantity&quot;])
++
++        return Reservation.objects.create(
++            product=product,
++            order=order,
++            quantity=quantity,
++            idempotency_key=idempotency_key,
++        )
+diff --git a/shop/orders/views.py b/shop/orders/views.py
+index b8f9222..d672bd1 100644
+--- a/shop/orders/views.py
++++ b/shop/orders/views.py
+@@ -1,10 +1,10 @@
+ import json
+ 
+-from django.db import transaction
+ from django.http import JsonResponse
+ from django.views.decorators.http import require_POST
+ 
+-from shop.orders.models import Order, Product, Reservation
++from shop.orders.models import Order
++from shop.orders.services import InsufficientStock, reserve_inventory as reserve_order_inventory
+ 
+ 
+ @require_POST
+@@ -25,23 +25,18 @@ def reserve_inventory(request, order_id):
+     quantity = int(payload[&quot;quantity&quot;])
+     idempotency_key = request.headers.get(&quot;Idempotency-Key&quot;, &quot;&quot;)
+ 
+-    with transaction.atomic():
+-        product = Product.objects.select_for_update().get(id=product_id)
+-        order = Order.objects.select_for_update().get(id=order_id)
+-        if product.stock_quantity &lt; quantity:
+-            return JsonResponse(
+-                {&quot;error&quot;: &quot;not_enough_stock&quot;, &quot;available&quot;: product.stock_quantity},
+-                status=409,
+-            )
+-        product.stock_quantity -= quantity
+-        product.save(update_fields=[&quot;stock_quantity&quot;])
+-        reservation = Reservation.objects.create(
+-            product=product,
+-            order=order,
+-            quantity=quantity,
+-            idempotency_key=idempotency_key,
++    try:
++        reservation = reserve_order_inventory(
++            order_id=order_id,
++            product_id=product_id,
++            quantity=quantity,
++            idempotency_key=idempotency_key,
++        )
++    except InsufficientStock as error:
++        return JsonResponse(
++            {&quot;error&quot;: &quot;not_enough_stock&quot;, &quot;available&quot;: error.available},
++            status=409,
+         )
+ 
+     return JsonResponse({&quot;reservation_id&quot;: reservation.id}, status=201)
+</code></pre>
+<p>검증은 실행하지 못했습니다. 현재 샌드박스가 read-only라 테스트 파일을 실제로 추가해 <code>pytest</code>를 돌릴 수 없습니다.</p></article>
+  </main>
+</body>
+</html>

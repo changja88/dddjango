@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-api-product-search baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-api-product-search baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/baseline/benchmark-api-product-search.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않아 읽을 파일이 없었습니다. 현재 샌드박스도 read-only라 파일 생성 대신 팀 컨벤션 문서 형태로 정리합니다.</p>
+<p><strong>상품 검색 API 컨벤션</strong></p>
+<h2>1. 기본 원칙</h2>
+<p>상품 검색 API는 Django Ninja 기준으로 다음 책임을 분리한다.</p>
+<ul>
+<li><code>api.py</code>: HTTP 엔드포인트, 인증/권한, 응답 스키마 연결</li>
+<li><code>schemas.py</code>: 요청/응답 DTO</li>
+<li><code>selectors.py</code>: 상품 조회 QuerySet 구성</li>
+<li><code>pagination.py</code>: 공통 페이지네이션 유틸</li>
+<li><code>errors.py</code>: 표준 에러 응답</li>
+<li><code>models.py</code>: 도메인 데이터</li>
+</ul>
+<p>검색 조건, 정렬, 페이지네이션은 Query Parameter로 받는다. 비즈니스 규칙이 들어간 필터링은 view 함수 안에 직접 쓰지 않고 selector로 분리한다.</p>
+<p>---</p>
+<h2>2. Endpoint</h2>
+<pre><code>
+GET /api/products
+</code></pre>
+<p>예시:</p>
+<pre><code>
+GET /api/products?q=iphone&amp;category_id=3&amp;min_price=100000&amp;max_price=2000000&amp;status=active&amp;sort=-created_at&amp;page=1&amp;page_size=20
+</code></pre>
+<p>---</p>
+<h2>3. Query Parameters</h2>
+<pre><code>
+from decimal import Decimal
+from typing import Literal
+
+from ninja import Schema
+
+
+class ProductSearchParams(Schema):
+    q: str | None = None
+
+    category_id: int | None = None
+    brand_id: int | None = None
+
+    min_price: Decimal | None = None
+    max_price: Decimal | None = None
+
+    status: Literal[&quot;active&quot;, &quot;sold_out&quot;, &quot;hidden&quot;] | None = &quot;active&quot;
+
+    sort: Literal[
+        &quot;created_at&quot;,
+        &quot;-created_at&quot;,
+        &quot;price&quot;,
+        &quot;-price&quot;,
+        &quot;name&quot;,
+        &quot;-name&quot;,
+    ] = &quot;-created_at&quot;
+
+    page: int = 1
+    page_size: int = 20
+</code></pre>
+<p>컨벤션:</p>
+<ul>
+<li>검색어는 <code>q</code>를 사용한다.</li>
+<li>범위 조건은 <code>min_</code>, <code>max_</code> prefix를 사용한다.</li>
+<li>정렬은 <code>sort</code> 하나로 처리한다.</li>
+<li>내림차순은 Django ORM 관례와 동일하게 <code>-field</code>를 사용한다.</li>
+<li>페이지는 <code>page</code>, <code>page_size</code>를 사용한다.</li>
+<li>기본 정렬은 최신순 <code>-created_at</code>이다.</li>
+<li>기본 노출 상태는 <code>active</code>이다.</li>
+</ul>
+<p>---</p>
+<h2>4. Response Schema</h2>
+<pre><code>
+from decimal import Decimal
+from datetime import datetime
+
+from ninja import Schema
+
+
+class ProductListItem(Schema):
+    id: int
+    name: str
+    price: Decimal
+    category_id: int
+    category_name: str
+    brand_id: int | None = None
+    brand_name: str | None = None
+    status: str
+    created_at: datetime
+
+
+class PaginationMeta(Schema):
+    page: int
+    page_size: int
+    total_count: int
+    total_pages: int
+    has_next: bool
+    has_previous: bool
+
+
+class ProductSearchResponse(Schema):
+    items: list[ProductListItem]
+    meta: PaginationMeta
+</code></pre>
+<p>응답 예시:</p>
+<pre><code>
+{
+  &quot;items&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;iPhone 15&quot;,
+      &quot;price&quot;: &quot;1250000&quot;,
+      &quot;category_id&quot;: 3,
+      &quot;category_name&quot;: &quot;Smartphones&quot;,
+      &quot;brand_id&quot;: 10,
+      &quot;brand_name&quot;: &quot;Apple&quot;,
+      &quot;status&quot;: &quot;active&quot;,
+      &quot;created_at&quot;: &quot;2026-05-05T10:20:00+09:00&quot;
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;page&quot;: 1,
+    &quot;page_size&quot;: 20,
+    &quot;total_count&quot;: 145,
+    &quot;total_pages&quot;: 8,
+    &quot;has_next&quot;: true,
+    &quot;has_previous&quot;: false
+  }
+}
+</code></pre>
+<p>---</p>
+<h2>5. Selector 설계</h2>
+<pre><code>
+from django.db.models import Q, QuerySet
+
+from .models import Product
+from .schemas import ProductSearchParams
+
+
+ALLOWED_PRODUCT_SORTS = {
+    &quot;created_at&quot;,
+    &quot;-created_at&quot;,
+    &quot;price&quot;,
+    &quot;-price&quot;,
+    &quot;name&quot;,
+    &quot;-name&quot;,
+}
+
+
+def search_products(params: ProductSearchParams) -&gt; QuerySet[Product]:
+    queryset = (
+        Product.objects
+        .select_related(&quot;category&quot;, &quot;brand&quot;)
+        .all()
+    )
+
+    if params.q:
+        queryset = queryset.filter(
+            Q(name__icontains=params.q)
+            | Q(description__icontains=params.q)
+        )
+
+    if params.category_id:
+        queryset = queryset.filter(category_id=params.category_id)
+
+    if params.brand_id:
+        queryset = queryset.filter(brand_id=params.brand_id)
+
+    if params.min_price is not None:
+        queryset = queryset.filter(price__gte=params.min_price)
+
+    if params.max_price is not None:
+        queryset = queryset.filter(price__lte=params.max_price)
+
+    if params.status:
+        queryset = queryset.filter(status=params.status)
+
+    return queryset.order_by(params.sort)
+</code></pre>
+<p>컨벤션:</p>
+<ul>
+<li>API 함수에서 직접 <code>filter()</code> 체인을 길게 만들지 않는다.</li>
+<li>조회 목적 로직은 <code>selectors.py</code>에 둔다.</li>
+<li><code>select_related</code>, <code>prefetch_related</code>는 selector에서 책임진다.</li>
+<li>허용되지 않은 정렬 필드는 스키마 또는 별도 validator에서 차단한다.</li>
+<li>검색 API에서는 N+1 쿼리를 방지하는 구성을 기본으로 한다.</li>
+</ul>
+<p>---</p>
+<h2>6. Pagination</h2>
+<pre><code>
+from math import ceil
+
+from django.core.paginator import EmptyPage, Paginator
+
+
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 100
+
+
+def paginate_queryset(queryset, page: int, page_size: int):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), MAX_PAGE_SIZE)
+
+    paginator = Paginator(queryset, page_size)
+
+    try:
+        page_obj = paginator.page(page)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages or 1)
+
+    return {
+        &quot;items&quot;: list(page_obj.object_list),
+        &quot;meta&quot;: {
+            &quot;page&quot;: page_obj.number,
+            &quot;page_size&quot;: page_size,
+            &quot;total_count&quot;: paginator.count,
+            &quot;total_pages&quot;: paginator.num_pages,
+            &quot;has_next&quot;: page_obj.has_next(),
+            &quot;has_previous&quot;: page_obj.has_previous(),
+        },
+    }
+</code></pre>
+<p>컨벤션:</p>
+<ul>
+<li><code>page</code>는 1부터 시작한다.</li>
+<li><code>page_size</code> 기본값은 <code>20</code>이다.</li>
+<li><code>page_size</code> 최대값은 <code>100</code>이다.</li>
+<li>범위를 초과한 <code>page</code>는 빈 배열 대신 마지막 페이지로 보정하거나, 팀 정책에 따라 <code>400</code>으로 통일한다.</li>
+<li>대량 데이터에서 offset pagination 성능 문제가 생기면 cursor pagination을 별도 API로 추가한다.</li>
+</ul>
+<p>---</p>
+<h2>7. Ninja Router 예시</h2>
+<pre><code>
+from ninja import Router, Query
+
+from .pagination import paginate_queryset
+from .schemas import ProductSearchParams, ProductSearchResponse
+from .selectors import search_products
+
+
+router = Router(tags=[&quot;Products&quot;])
+
+
+@router.get(&quot;&quot;, response={200: ProductSearchResponse})
+def list_products(request, params: Query[ProductSearchParams]):
+    queryset = search_products(params)
+    return paginate_queryset(
+        queryset=queryset,
+        page=params.page,
+        page_size=params.page_size,
+    )
+</code></pre>
+<p>---</p>
+<h2>8. Error Response 표준</h2>
+<p>모든 에러 응답은 아래 형태로 통일한다.</p>
+<pre><code>
+from ninja import Schema
+
+
+class ErrorDetail(Schema):
+    field: str | None = None
+    message: str
+    code: str
+
+
+class ErrorResponse(Schema):
+    error: str
+    message: str
+    details: list[ErrorDetail] = []
+</code></pre>
+<p>예시:</p>
+<pre><code>
+{
+  &quot;error&quot;: &quot;VALIDATION_ERROR&quot;,
+  &quot;message&quot;: &quot;요청 값이 올바르지 않습니다.&quot;,
+  &quot;details&quot;: [
+    {
+      &quot;field&quot;: &quot;page_size&quot;,
+      &quot;message&quot;: &quot;page_size는 100 이하이어야 합니다.&quot;,
+      &quot;code&quot;: &quot;max_value&quot;
+    }
+  ]
+}
+</code></pre>
+<p>권장 에러 코드:</p>
+<pre><code>
+VALIDATION_ERROR
+INVALID_SORT
+INVALID_FILTER
+NOT_FOUND
+UNAUTHORIZED
+FORBIDDEN
+INTERNAL_SERVER_ERROR
+</code></pre>
+<p>HTTP status 기준:</p>
+<pre><code>
+400: 잘못된 필터, 정렬, 페이지 파라미터
+401: 인증 필요
+403: 권한 없음
+404: 리소스 없음
+500: 서버 오류
+</code></pre>
+<p>---</p>
+<h2>9. 팀 컨벤션 요약</h2>
+<ul>
+<li>목록 API 응답은 항상 <code>{ items, meta }</code> 구조를 사용한다.</li>
+<li>검색어 파라미터는 <code>q</code>로 통일한다.</li>
+<li>정렬 파라미터는 <code>sort</code> 하나만 사용한다.</li>
+<li>정렬 가능 필드는 명시적인 allowlist로 제한한다.</li>
+<li>페이지네이션은 <code>page</code>, <code>page_size</code>를 사용한다.</li>
+<li><code>page_size</code> 최대값은 서버에서 강제한다.</li>
+<li>QuerySet 조합은 <code>selectors.py</code>에서 처리한다.</li>
+<li>View 함수는 요청 파싱, selector 호출, 응답 반환만 담당한다.</li>
+<li>에러 응답은 <code>{ error, message, details }</code> 구조로 통일한다.</li>
+<li>필터 조건이 늘어날 때도 성급하게 범용 필터 DSL을 만들지 말고, 반복되는 변경 축이 확인된 뒤 추상화한다.</li>
+</ul></article>
+  </main>
+</body>
+</html>

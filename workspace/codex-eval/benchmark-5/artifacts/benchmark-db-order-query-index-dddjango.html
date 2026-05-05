@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-order-query-index dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-order-query-index dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/dddjango/benchmark-db-order-query-index.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>지정 fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않았고, 현재 워크스페이스에도 fixture/source 파일이 없었습니다. 그래서 아래는 특정 파일 diff가 아니라, Django 관리자 주문 목록에서 검토할 <strong>리뷰 findings + 적용 예시</strong>입니다.</p>
+<ul>
+<li><code>[Index: 조회 조건 + 정렬 순서 기준] -- status/date/order_by 패턴에 맞는 복합 인덱스부터 검토</code></li>
+</ul>
+<p>관리자 주문 목록이 보통 아래처럼 조회된다면:</p>
+<pre><code>
+Order.objects.filter(status=status).order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+</code></pre>
+<p>검토할 1순위 인덱스는 단일 <code>status</code>, 단일 <code>created_at</code>가 아니라 복합 인덱스입니다.</p>
+<pre><code>
+class Meta:
+    indexes = [
+        models.Index(
+            fields=[&quot;status&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+            name=&quot;order_status_created_id_idx&quot;,
+        ),
+    ]
+</code></pre>
+<p>이유: <code>status = ?</code>는 동등 조건이고, <code>created_at DESC, id DESC</code>는 정렬/페이지네이션 조건입니다. 동등 조건을 앞에 두고 정렬 컬럼을 뒤에 둬야 최신 주문 목록에서 sort 비용을 줄일 수 있습니다.</p>
+<ul>
+<li><code>[Index: 조합 필터는 실제 사용 빈도 확인] -- payment_status까지 항상 같이 필터링될 때만 확장</code></li>
+</ul>
+<p>아래 쿼리가 관리자에서 자주 쓰인다면:</p>
+<pre><code>
+Order.objects.filter(
+    status=status,
+    payment_status=payment_status,
+).order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+</code></pre>
+<p>후보는 다음입니다.</p>
+<pre><code>
+models.Index(
+    fields=[&quot;status&quot;, &quot;payment_status&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+    name=&quot;order_status_pay_created_id_idx&quot;,
+)
+</code></pre>
+<p>다만 <code>status</code>, <code>payment_status</code>, <code>created_at</code> 조합을 전부 만들면 쓰기 비용과 저장 공간이 증가합니다. 다음 기준으로 하나만 우선 검토하세요.</p>
+<ul>
+<li><code>status</code> 단독 필터가 대부분: <code>[&quot;status&quot;, &quot;-created_at&quot;, &quot;-id&quot;]</code></li>
+<li><code>status + payment_status</code> 조합이 대부분: <code>[&quot;status&quot;, &quot;payment_status&quot;, &quot;-created_at&quot;, &quot;-id&quot;]</code></li>
+<li><code>payment_status</code> 단독 필터도 독립적으로 많음: 별도 인덱스 후보로 측정</li>
+</ul>
+<ul>
+<li><code>[Index: 기간 필터] -- created_at range는 동등 조건 뒤에 둔다</code></li>
+</ul>
+<pre><code>
+Order.objects.filter(
+    status=status,
+    created_at__gte=start,
+    created_at__lt=end,
+).order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+</code></pre>
+<p>이 경우도 후보는 동일하게:</p>
+<pre><code>
+models.Index(
+    fields=[&quot;status&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+    name=&quot;order_status_created_id_idx&quot;,
+)
+</code></pre>
+<p>범위 조건인 <code>created_at</code>을 <code>status</code>보다 앞에 두면 <code>status</code> 필터 활용도가 떨어질 수 있습니다.</p>
+<ul>
+<li><code>[Index: FK 인덱스와 복합 인덱스 구분] -- customer_id 단일 FK 인덱스만으로는 고객별 최신 주문 정렬이 부족할 수 있음</code></li>
+</ul>
+<p>Django FK는 기본적으로 <code>customer_id</code> 인덱스를 만듭니다. 하지만 아래 쿼리에는 복합 인덱스가 더 적합할 수 있습니다.</p>
+<pre><code>
+Order.objects.filter(customer_id=customer_id).order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+</code></pre>
+<pre><code>
+models.Index(
+    fields=[&quot;customer&quot;, &quot;-created_at&quot;, &quot;-id&quot;],
+    name=&quot;order_customer_created_id_idx&quot;,
+)
+</code></pre>
+<ul>
+<li><code>[QuerySet: select_related와 prefetch_related 비용 분리] -- JOIN 최적화와 페이지네이션 최적화는 다른 문제</code></li>
+</ul>
+<p>관리자 목록에서 FK/O2O 필드를 표시한다면 <code>select_related</code>를 사용합니다.</p>
+<pre><code>
+qs = (
+    Order.objects
+    .select_related(&quot;customer&quot;, &quot;payment&quot;)
+    .order_by(&quot;-created_at&quot;, &quot;-id&quot;)
+)
+</code></pre>
+<p>역방향 FK/M2M, 예를 들어 주문 상품 목록을 표시한다면 <code>prefetch_related</code> 대상입니다.</p>
+<pre><code>
+qs = Order.objects.prefetch_related(&quot;items&quot;)
+</code></pre>
+<p>다만 목록 페이지에서 <code>items</code> 전체를 보여주지 않고 개수만 필요하면 prefetch보다 <code>annotate()</code>가 낫습니다.</p>
+<pre><code>
+qs = Order.objects.annotate(item_count=Count(&quot;items&quot;))
+</code></pre>
+<p>중요한 구분은 이렇습니다.</p>
+<ul>
+<li><code>select_related</code>: N+1 제거용 JOIN. 페이지 수가 작아도 효과 있음.</li>
+<li><code>prefetch_related</code>: 별도 쿼리로 관련 객체를 모음. 페이지 크기만큼만 붙이면 유리하지만, 큰 페이지/무거운 related rows에서는 메모리 비용 증가.</li>
+<li>pagination: <code>COUNT(*)</code>, 큰 <code>OFFSET</code>, 정렬 sort 비용이 핵심. <code>select_related/prefetch_related</code>만으로 해결되지 않음.</li>
+</ul>
+<ul>
+<li><code>[Pagination: 큰 OFFSET 비용] -- 관리자 목록 후반 페이지가 느리면 keyset pagination 또는 admin count 비용을 검토</code></li>
+</ul>
+<p>기본 Django admin pagination은 후반 페이지에서 <code>OFFSET</code> 비용이 커질 수 있고, 전체 건수 <code>COUNT(*)</code>도 비쌀 수 있습니다. 관리자에서 정확한 전체 페이지 수가 덜 중요하다면 <code>show_full_result_count = False</code>를 먼저 검토합니다.</p>
+<pre><code>
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_select_related = (&quot;customer&quot;, &quot;payment&quot;)
+    ordering = (&quot;-created_at&quot;, &quot;-id&quot;)
+    show_full_result_count = False
+</code></pre>
+<ul>
+<li><code>[Verification: 측정 기준] -- 인덱스 추가 전후 EXPLAIN으로 판단</code></li>
+</ul>
+<p>인덱스는 많이 추가하지 말고 아래 기준을 통과할 때만 추가하세요.</p>
+<pre><code>
+qs.explain(analyze=True, buffers=True)
+</code></pre>
+<p>확인할 항목:</p>
+<ul>
+<li>대형 <code>Seq Scan</code>이 <code>Index Scan</code>, <code>Bitmap Index Scan</code>, 가능하면 <code>Index Only Scan</code>으로 바뀌는지</li>
+<li><code>Sort</code> 비용이 줄거나 사라지는지</li>
+<li><code>actual rows</code>와 <code>estimated rows</code> 차이가 큰 경우 <code>ANALYZE</code> 후 재측정</li>
+<li>p95/p99 관리자 목록 응답 시간이 개선되는지</li>
+<li>주문 생성/상태 변경 같은 write 경로가 느려지지 않는지</li>
+<li>테스트에는 목록 표시 경로에 <code>assertNumQueries</code>를 추가해 N+1 회귀를 막는지</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django ORM QuerySet 최적화와 admin 조회 개선 → <strong>implementation-django</strong> 스킬 &gt; - 복합 인덱스, 부분 인덱스, EXPLAIN ANALYZE 기반 검증 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

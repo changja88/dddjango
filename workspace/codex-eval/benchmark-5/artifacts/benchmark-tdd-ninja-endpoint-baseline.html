@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-ninja-endpoint baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-ninja-endpoint baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/baseline/benchmark-tdd-ninja-endpoint.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않았고, 현재 작업 디렉터리에도 소스 파일이 없어 읽을 프로젝트 파일이 없습니다. 아래는 Django Ninja endpoint를 TDD로 추가하는 최소 예시 unified diff입니다. 핵심은 pytest가 먼저 <code>422 validation error</code>와 <code>201 success response</code>를 고정하고, 그에 맞춰 schema와 endpoint를 구현하는 흐름입니다.</p>
+<pre><code>
+diff --git a/shop/api.py b/shop/api.py
+new file mode 100644
+index 0000000..1b7c8a1
+--- /dev/null
++++ b/shop/api.py
+@@ -0,0 +1,31 @@
++from decimal import Decimal
++
++from ninja import NinjaAPI, Schema
++
++
++api = NinjaAPI()
++
++
++class CreateProductRequest(Schema):
++    name: str
++    price: Decimal
++
++
++class ProductResponse(Schema):
++    id: int
++    name: str
++    price: Decimal
++
++
++@api.post(&quot;/products&quot;, response={201: ProductResponse})
++def create_product(request, payload: CreateProductRequest):
++    return 201, {
++        &quot;id&quot;: 1,
++        &quot;name&quot;: payload.name,
++        &quot;price&quot;: payload.price,
++    }
+diff --git a/config/urls.py b/config/urls.py
+index 1111111..2222222 100644
+--- a/config/urls.py
++++ b/config/urls.py
+@@ -1,6 +1,8 @@
+ from django.contrib import admin
+ from django.urls import path
+ 
++from shop.api import api
++
+ urlpatterns = [
+     path(&quot;admin/&quot;, admin.site.urls),
++    path(&quot;api/&quot;, api.urls),
+ ]
+diff --git a/tests/test_product_api.py b/tests/test_product_api.py
+new file mode 100644
+index 0000000..9fd2b63
+--- /dev/null
++++ b/tests/test_product_api.py
+@@ -0,0 +1,31 @@
++import pytest
++
++
++@pytest.mark.django_db
++def test_create_product_rejects_invalid_request_schema(client):
++    response = client.post(
++        &quot;/api/products&quot;,
++        data={&quot;name&quot;: &quot;Keyboard&quot;},
++        content_type=&quot;application/json&quot;,
++    )
++
++    assert response.status_code == 422
++
++    body = response.json()
++    assert body[&quot;detail&quot;][0][&quot;loc&quot;] == [&quot;body&quot;, &quot;payload&quot;, &quot;price&quot;]
++    assert body[&quot;detail&quot;][0][&quot;type&quot;] == &quot;missing&quot;
++
++
++@pytest.mark.django_db
++def test_create_product_returns_created_product(client):
++    response = client.post(
++        &quot;/api/products&quot;,
++        data={
++            &quot;name&quot;: &quot;Keyboard&quot;,
++            &quot;price&quot;: &quot;129.99&quot;,
++        },
++        content_type=&quot;application/json&quot;,
++    )
++
++    assert response.status_code == 201
++    assert response.json() == {
++        &quot;id&quot;: 1,
++        &quot;name&quot;: &quot;Keyboard&quot;,
++        &quot;price&quot;: &quot;129.99&quot;,
++    }
+</code></pre>
+<p>TDD 순서는 이렇게 잡으면 됩니다.</p>
+<ul>
+<li><code>test_create_product_rejects_invalid_request_schema</code> 먼저 작성</li>
+<li>실패 확인: <code>/api/products</code> endpoint 없음 또는 validation 미동작</li>
+<li><code>CreateProductRequest</code> schema와 endpoint 추가</li>
+<li>성공 응답 테스트 작성</li>
+<li>고정값 대신 실제 model 저장 로직으로 교체하면서 테스트 유지</li>
+</ul>
+<p>실행 예시는:</p>
+<pre><code>
+pytest tests/test_product_api.py
+</code></pre></article>
+  </main>
+</body>
+</html>

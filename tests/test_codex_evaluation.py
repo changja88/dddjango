@@ -22,6 +22,7 @@ AUTO_GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/auto_grade_outputs.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
 RUN_SCRIPT_PATH = ROOT / "evals/codex/scripts/run_prompts.py"
 REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_report.py"
+REPEAT_REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_repeat_summary.py"
 REAL_REPO_DIFF_SCRIPT_PATH = ROOT / "evals/codex/scripts/evaluate_real_repo_diffs.py"
 POLICY_SKILL_PATHS = [
     "implementation-django-ninja",
@@ -1252,6 +1253,69 @@ index 83db48f..f735c2d 100644
             )
             self.assertIn("Django/DDD를 끼워 넣지 않는다", developer_instruction)
 
+    def test_run_prompts_records_timeout_and_keeps_going(self):
+        module = load_module(RUN_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir) / "iteration"
+            (iteration / "baseline").mkdir(parents=True)
+            (iteration / "answer-key").mkdir()
+            (iteration / "baseline/case-a.prompt.md").write_text(
+                "## Prompt\n\nDjango Ninja API를 설계해줘.\n"
+            )
+            (iteration / "timing.json").write_text("[]\n")
+            (iteration / "answer-key/case-a.json").write_text(
+                json.dumps({"category": "api-design", "prompt": "Django Ninja API"})
+                + "\n"
+            )
+
+            args = type(
+                "Args",
+                (),
+                {
+                    "iteration": str(iteration),
+                    "variant": "baseline",
+                    "case": "",
+                    "cwd": str(Path(temp_dir) / "cwd"),
+                    "ignore_user_config": False,
+                    "allow_user_config": False,
+                    "model": "",
+                    "profile": "",
+                    "root": str(ROOT),
+                    "use_local_dddjango_skills": True,
+                    "dry_run": False,
+                    "keep_going": True,
+                    "timeout_sec": 1,
+                },
+            )()
+
+            original_run = module.subprocess.run
+
+            def timeout_run(command, **kwargs):
+                raise subprocess.TimeoutExpired(
+                    command,
+                    timeout=kwargs["timeout"],
+                    output="partial stdout",
+                    stderr="partial stderr",
+                )
+
+            module.subprocess.run = timeout_run
+            try:
+                with contextlib.redirect_stdout(io.StringIO()) as stdout:
+                    module.run_variant(args)
+            finally:
+                module.subprocess.run = original_run
+
+            timing = json.loads((iteration / "timing.json").read_text())
+            output = (iteration / "baseline/case-a.output.md").read_text()
+            log = (iteration / "baseline/case-a.codex.log").read_text()
+
+            self.assertEqual(timing[0]["returncode"], 124)
+            self.assertIn("timeout after 1s", stdout.getvalue())
+            self.assertIn("timed out", output)
+            self.assertIn("partial stdout", log)
+            self.assertIn("partial stderr", log)
+
     def test_render_report_creates_html_comparison_dashboard(self):
         module = load_module(REPORT_SCRIPT_PATH)
 
@@ -1394,6 +1458,81 @@ index 83db48f..f735c2d 100644
             self.assertIn("<pre><code>", dddjango_artifact.read_text())
             self.assertIn("print(&#x27;ok&#x27;)", dddjango_artifact.read_text())
             self.assertIn("Case A title", answer_key_artifact.read_text())
+
+    def test_render_repeat_summary_compares_iterations_in_html(self):
+        module = load_module(REPEAT_REPORT_SCRIPT_PATH)
+
+        def scores_for_total(total):
+            base = total // len(module.CRITERIA)
+            scores = {criterion: base for criterion in module.CRITERIA}
+            scores[module.CRITERIA[0]] += total - base * len(module.CRITERIA)
+            return scores
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for index, baseline_score, dddjango_score in [
+                (1, 80, 90),
+                (2, 82, 88),
+            ]:
+                iteration = root / f"benchmark-{index}"
+                (iteration / "answer-key").mkdir(parents=True)
+                (iteration / "answer-key/case-a.json").write_text(
+                    json.dumps({"title": "Case A", "category": "api-design"})
+                    + "\n"
+                )
+                (iteration / "grades.json").write_text(
+                    json.dumps(
+                        [
+                            {
+                                "case_id": "case-a",
+                                "variant": "baseline",
+                                "scores": scores_for_total(baseline_score),
+                                "flags": {},
+                            },
+                            {
+                                "case_id": "case-a",
+                                "variant": "dddjango",
+                                "scores": scores_for_total(dddjango_score),
+                                "flags": {},
+                            },
+                        ]
+                    )
+                    + "\n"
+                )
+                (iteration / "timing.json").write_text(
+                    json.dumps(
+                        [
+                            {
+                                "case_id": "case-a",
+                                "variant": "baseline",
+                                "duration_sec": 10 + index,
+                                "returncode": 0,
+                            },
+                            {
+                                "case_id": "case-a",
+                                "variant": "dddjango",
+                                "duration_sec": 12 + index,
+                                "returncode": 0,
+                            },
+                        ]
+                    )
+                    + "\n"
+                )
+
+            output = root / "summary/report.html"
+            summary = module.render_repeat_summary(
+                [root / "benchmark-1", root / "benchmark-2"],
+                output,
+                title="Benchmark Repeat Summary",
+            )
+            html = output.read_text()
+
+            self.assertEqual(summary["overall"]["baseline_avg"], 81.0)
+            self.assertEqual(summary["overall"]["dddjango_avg"], 89.0)
+            self.assertIn("Benchmark Repeat Summary", html)
+            self.assertIn("benchmark-1", html)
+            self.assertIn("api-design", html)
+            self.assertIn("+8.00", html)
 
     def test_render_report_includes_trigger_matrix_and_gates(self):
         module = load_module(REPORT_SCRIPT_PATH)

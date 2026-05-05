@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-review-fat-service dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-review-fat-service dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/dddjango/benchmark-review-fat-service.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>Fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않아 fixture 파일은 읽을 수 없었습니다 (<code>find: No such file or directory</code>). 제공된 코드 기준으로 리뷰합니다.</p>
+<p><strong>Findings</strong></p>
+<ul>
+<li><strong>High — [Concurrency / DB Transaction] 재고 차감이 레이스 컨디션에 취약합니다.</strong></li>
+<p><code>product.stock &lt; quantity</code> 확인 후 <code>product.stock -= quantity; save()</code> 사이에 다른 checkout이 끼어들면 재고가 음수가 되거나 초과 판매될 수 있습니다. 또한 주문 생성, 재고 차감, 쿠폰 적용, 결제 준비가 하나의 원자적 단위로 묶여 있지 않아 중간 실패 시 부분 반영됩니다.</p>
+</ul>
+<ul>
+<li><strong>High — [External Gateway Dependency] DB 트랜잭션과 외부 gateway 호출 경계가 불명확합니다.</strong></li>
+<p><code>payment_gateway.prepare(total)</code>가 실패하면 이미 재고가 저장됐을 수 있고, 반대로 트랜잭션 안에서 외부 API를 호출하면 DB lock을 오래 잡습니다. 결제 준비가 “외부 부수효과”라면 <code>transaction.on_commit()</code> 이후 실행하거나, payment intent 생성과 order 상태 전이를 명확히 분리해야 합니다.</p>
+</ul>
+<ul>
+<li><strong>Medium — [Responsibility] <code>CheckoutService.checkout()</code>가 유스케이스 조율, 상품 조회, 재고 정책, 쿠폰 조회/계산, 결제 gateway 호출, 영속성까지 모두 압축하고 있습니다.</strong></li>
+<p>서비스가 아예 필요 없다는 뜻은 아닙니다. Checkout은 여러 모델을 조율하므로 application service로 두는 것은 자연스럽습니다. 문제는 도메인 규칙인 “재고 예약 가능 여부”, “총액 계산”, “쿠폰 할인 적용”까지 절차 코드로 흩어져 변경 이유가 섞인 점입니다.</p>
+</ul>
+<ul>
+<li><strong>Medium — [ORM Query] 루프 안의 <code>Product.objects.get()</code>은 item 수만큼 쿼리를 발생시킵니다.</strong></li>
+<p>작은 장바구니에서는 치명적이지 않지만 checkout 경로는 핵심 쓰기 경로입니다. <code>id__in</code>으로 한 번에 조회하고, 재고 차감 대상은 lock을 잡아 처리하는 편이 낫습니다. <code>Coupon.objects.get()</code>도 <code>DoesNotExist</code>가 그대로 올라가 사용자/도메인 예외와 섞입니다.</p>
+</ul>
+<ul>
+<li><strong>Low — [Domain Error] <code>ValueError(&quot;out of stock&quot;)</code>는 호출자가 의미 있게 처리하기 어렵습니다.</strong></li>
+<p><code>OutOfStock</code>, <code>InvalidCoupon</code> 같은 도메인 예외가 더 명확합니다.</p>
+</ul>
+<p><strong>최소 개선 방향</strong></p>
+<p>거대한 계층 구조를 만들기보다, 우선 checkout 트랜잭션과 재고 차감 책임만 분리하는 정도가 적절합니다.</p>
+<pre><code>
+from django.db import transaction
+
+class OutOfStock(Exception):
+    pass
+
+class CheckoutService:
+    def checkout(self, user, items, coupon_code, payment_gateway):
+        with transaction.atomic():
+            products = {
+                p.id: p
+                for p in Product.objects.select_for_update().filter(
+                    id__in=[item[&quot;product_id&quot;] for item in items]
+                )
+            }
+
+            order = Order.objects.create(user=user)
+            total = 0
+
+            for item in items:
+                product = products[item[&quot;product_id&quot;]]
+                quantity = item[&quot;quantity&quot;]
+
+                if product.stock &lt; quantity:
+                    raise OutOfStock(product.id)
+
+                product.stock -= quantity
+                total += product.price * quantity
+
+            Product.objects.bulk_update(products.values(), [&quot;stock&quot;])
+
+            if coupon_code:
+                coupon = Coupon.objects.get(code=coupon_code)
+                total -= coupon.discount_amount
+
+            order.total_amount = total
+            order.save(update_fields=[&quot;total_amount&quot;])
+
+            transaction.on_commit(lambda: payment_gateway.prepare(total))
+
+        return order
+</code></pre>
+<p>이 코드는 완성 설계라기보다 현재 코드의 가장 큰 위험을 줄이는 1차 개선안입니다. 다만 <code>payment_gateway.prepare()</code> 결과가 order 상태에 반드시 필요하다면 <code>on_commit</code>만으로는 부족하고, <code>Order.status = PAYMENT_PENDING/PREPARED/FAILED</code> 같은 명시적 상태 전이와 재시도 가능한 payment 작업으로 분리해야 합니다.</p>
+<p><strong>Verification Steps</strong></p>
+<ul>
+<li>동시 checkout 테스트: 같은 product stock=1에 대해 동시에 quantity=1 요청 2개를 실행하고 하나만 성공하는지 확인.</li>
+<li>쿼리 회귀 테스트: item N개 checkout 시 product 조회가 N회로 늘지 않도록 <code>assertNumQueries</code>로 보호.</li>
+<li>gateway 실패 테스트: <code>payment_gateway.prepare()</code>가 예외를 내도 DB 트랜잭션 커밋/롤백 정책이 의도와 일치하는지 확인.</li>
+<li>쿠폰/재고 예외 테스트: 품절, 존재하지 않는 coupon, 누락된 product id가 도메인 예외로 처리되는지 확인.</li>
+</ul>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django ORM 트랜잭션/쿼리 개선 → <strong>implementation-django</strong> 스킬 &gt; - 책임 분리와 gateway 경계 설계 → <strong>architecture-implementation-patterns</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

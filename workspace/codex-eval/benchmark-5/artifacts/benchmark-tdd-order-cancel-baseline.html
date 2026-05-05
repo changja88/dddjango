@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-order-cancel baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-order-cancel baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/baseline/benchmark-tdd-order-cancel.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 <code>/Users/hyun/Desktop/dddjango/none</code> 경로는 없어서 직접 읽을 수 없었습니다. 대신 실제 fixture로 보이는 <code>/Users/hyun/Desktop/dddjango/evals/fixtures/django-shop</code>를 읽었습니다. 현재 <code>Order.cancel()</code>은 이미 있지만, <code>cancel_order</code> view는 도메인 예외를 HTTP 응답으로 바꾸지 않아 빈 사유나 배송 완료 주문 취소가 500으로 터질 수 있습니다.</p>
+<p>아래는 read-only 환경용 TDD 흐름입니다.</p>
+<p><strong>1. RED: 실패 테스트 추가</strong></p>
+<pre><code>
+diff --git a/shop/orders/tests.py b/shop/orders/tests.py
+index 4a2a9d1..9d4f7f1 100644
+--- a/shop/orders/tests.py
++++ b/shop/orders/tests.py
+@@ -1,17 +1,68 @@
+-from django.test import TestCase
++import json
++
++import pytest
+ 
+ from shop.orders.models import Order
+ 
+ 
+-class OrderModelTests(TestCase):
+-    def test_cancel_sets_status(self):
+-        order = Order.objects.create(
+-            customer_email=&quot;buyer@example.com&quot;,
+-            total_amount=&quot;100.00&quot;,
+-        )
++@pytest.fixture
++def pending_order():
++    return Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++    )
++
++
++@pytest.mark.django_db
++def test_cancel_sets_status_reason_actor_and_timestamp(pending_order):
++    pending_order.cancel(
++        reason=&quot;customer request&quot;,
++        actor_email=&quot;ops@example.com&quot;,
++    )
++
++    pending_order.refresh_from_db()
++
++    assert pending_order.status == Order.STATUS_CANCELLED
++    assert pending_order.cancel_reason == &quot;customer request by ops@example.com&quot;
++    assert pending_order.cancelled_at is not None
++
++
++@pytest.mark.django_db
++def test_cancel_requires_reason(pending_order):
++    with pytest.raises(ValueError, match=&quot;cancel reason is required&quot;):
++        pending_order.cancel(reason=&quot;&quot;, actor_email=&quot;ops@example.com&quot;)
++
++
++@pytest.mark.django_db
++def test_shipped_order_cannot_be_cancelled():
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++        status=Order.STATUS_SHIPPED,
++    )
++
++    with pytest.raises(ValueError, match=&quot;shipped orders cannot be cancelled&quot;):
++        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
++
++
++@pytest.mark.django_db
++def test_cancel_endpoint_returns_400_when_reason_is_missing(client, pending_order):
++    response = client.post(
++        f&quot;/orders/{pending_order.id}/cancel/&quot;,
++        data=json.dumps({&quot;actor_email&quot;: &quot;ops@example.com&quot;}),
++        content_type=&quot;application/json&quot;,
++    )
++
++    assert response.status_code == 400
++    assert response.json() == {&quot;error&quot;: &quot;cancel reason is required&quot;}
++
++
++@pytest.mark.django_db
++def test_cancel_endpoint_returns_409_when_order_is_shipped(client):
++    order = Order.objects.create(
++        customer_email=&quot;buyer@example.com&quot;,
++        total_amount=&quot;100.00&quot;,
++        status=Order.STATUS_SHIPPED,
++    )
+ 
+-        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
++    response = client.post(
++        f&quot;/orders/{order.id}/cancel/&quot;,
++        data=json.dumps({&quot;reason&quot;: &quot;customer request&quot;, &quot;actor_email&quot;: &quot;ops@example.com&quot;}),
++        content_type=&quot;application/json&quot;,
++    )
+ 
+-        self.assertEqual(order.status, Order.STATUS_CANCELLED)
++    assert response.status_code == 409
++    assert response.json() == {&quot;error&quot;: &quot;shipped orders cannot be cancelled&quot;}
+</code></pre>
+<p>예상 RED: 마지막 두 endpoint 테스트가 실패합니다. 현재 view가 <code>ValueError</code>를 잡지 않아 400/409 대신 500을 냅니다.</p>
+<p><strong>2. GREEN: 최소 구현</strong></p>
+<pre><code>
+diff --git a/shop/orders/views.py b/shop/orders/views.py
+index 8f0a1de..0ef7f4a 100644
+--- a/shop/orders/views.py
++++ b/shop/orders/views.py
+@@ -11,12 +11,20 @@ from shop.orders.models import Order, Product, Reservation
+ @require_POST
+ def cancel_order(request, order_id):
+     payload = json.loads(request.body or &quot;{}&quot;)
+     order = Order.objects.get(id=order_id)
+-    order.cancel(
+-        reason=payload.get(&quot;reason&quot;, &quot;&quot;),
+-        actor_email=payload.get(&quot;actor_email&quot;, &quot;system@example.com&quot;),
+-    )
++
++    try:
++        order.cancel(
++            reason=payload.get(&quot;reason&quot;, &quot;&quot;),
++            actor_email=payload.get(&quot;actor_email&quot;, &quot;system@example.com&quot;),
++        )
++    except ValueError as exc:
++        message = str(exc)
++        status = 409 if message == &quot;shipped orders cannot be cancelled&quot; else 400
++        return JsonResponse({&quot;error&quot;: message}, status=status)
++
+     return JsonResponse({&quot;id&quot;: order.id, &quot;status&quot;: order.status})
+</code></pre>
+<p>실행 명령:</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings pytest shop/orders/tests.py -q
+</code></pre>
+<p><strong>3. REFACTOR 방향</strong></p>
+<p>현재 최소 구현은 통과 목적에는 충분하지만, 문자열 비교로 HTTP status를 정하는 부분은 약합니다. 다음 단계에서는 <code>ValueError</code> 대신 <code>CancelReasonRequired</code>와 <code>OrderCannotBeCancelled</code> 같은 명시적 예외를 두고, view는 예외 타입별로 400/409를 매핑하는 정도가 좋습니다.</p>
+<p>또 <code>Order.cancel()</code>은 주문 불변식과 상태 전이를 객체 안에 둔 현재 방향이 맞습니다. API layer는 JSON 파싱, 예외 변환, 응답 생성만 맡기고, 취소 가능 여부와 취소 시점 기록은 <code>Order</code> 안에 남기는 쪽이 변경 이유가 분리됩니다.</p></article>
+  </main>
+</body>
+</html>

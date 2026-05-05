@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-ninja-endpoint baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-ninja-endpoint baseline</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/baseline/benchmark-tdd-ninja-endpoint.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>지정된 fixture path <code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않아 읽을 파일이 없었습니다. 읽기 전용 환경이므로 아래는 적용용 unified diff 예시입니다.</p>
+<pre><code>
+diff --git a/orders/api.py b/orders/api.py
+new file mode 100644
+index 0000000..1f2a3b4
+--- /dev/null
++++ b/orders/api.py
+@@ -0,0 +1,32 @@
++from ninja import NinjaAPI, Schema
++from pydantic import Field
++
++
++api = NinjaAPI()
++
++
++class CreateOrderIn(Schema):
++    product_name: str = Field(min_length=1)
++    quantity: int = Field(gt=0)
++
++
++class OrderOut(Schema):
++    id: int
++    product_name: str
++    quantity: int
++    status: str
++
++
++@api.post(&quot;/orders&quot;, response={201: OrderOut})
++def create_order(request, payload: CreateOrderIn):
++    return 201, {
++        &quot;id&quot;: 1,
++        &quot;product_name&quot;: payload.product_name,
++        &quot;quantity&quot;: payload.quantity,
++        &quot;status&quot;: &quot;created&quot;,
++    }
+diff --git a/config/urls.py b/config/urls.py
+index 1111111..2222222 100644
+--- a/config/urls.py
++++ b/config/urls.py
+@@ -1,6 +1,7 @@
+ from django.contrib import admin
+ from django.urls import path
++from orders.api import api
+ 
+ urlpatterns = [
+     path(&quot;admin/&quot;, admin.site.urls),
++    path(&quot;api/&quot;, api.urls),
+ ]
+diff --git a/tests/test_orders_api.py b/tests/test_orders_api.py
+new file mode 100644
+index 0000000..5c6d7e8
+--- /dev/null
++++ b/tests/test_orders_api.py
+@@ -0,0 +1,36 @@
++import pytest
++from ninja.testing import TestClient
++
++from orders.api import api
++
++
++pytestmark = pytest.mark.django_db
++
++
++client = TestClient(api)
++
++
++def test_create_order_returns_created_order():
++    response = client.post(
++        &quot;/orders&quot;,
++        json={
++            &quot;product_name&quot;: &quot;Keyboard&quot;,
++            &quot;quantity&quot;: 2,
++        },
++    )
++
++    assert response.status_code == 201
++    assert response.json() == {
++        &quot;id&quot;: 1,
++        &quot;product_name&quot;: &quot;Keyboard&quot;,
++        &quot;quantity&quot;: 2,
++        &quot;status&quot;: &quot;created&quot;,
++    }
++
++
++def test_create_order_rejects_invalid_quantity():
++    response = client.post(
++        &quot;/orders&quot;,
++        json={
++            &quot;product_name&quot;: &quot;Keyboard&quot;,
++            &quot;quantity&quot;: 0,
++        },
++    )
++
++    assert response.status_code == 422
++    assert any(
++        error[&quot;loc&quot;][-1] == &quot;quantity&quot;
++        for error in response.json()[&quot;detail&quot;]
++    )
+</code></pre>
+<p>TDD 흐름은 먼저 <code>tests/test_orders_api.py</code>를 추가해 실패를 확인한 뒤, <code>orders/api.py</code>의 schema와 endpoint를 최소 구현해서 통과시키는 방식입니다. <code>quantity: int = Field(gt=0)</code>가 요청 schema validation을 담당하고, 성공 케이스는 <code>201</code>과 <code>OrderOut</code> 응답 schema를 검증합니다.</p></article>
+  </main>
+</body>
+</html>

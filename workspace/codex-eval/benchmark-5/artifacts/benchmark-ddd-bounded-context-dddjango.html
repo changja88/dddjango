@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-ddd-bounded-context dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-ddd-bounded-context dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-5/dddjango/benchmark-ddd-bounded-context.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>지정된 fixture path(<code>/Users/hyun/Desktop/dddjango/none</code>)는 존재하지 않아 읽을 fixture 파일이 없었습니다. 아래는 코드 변경이 아니라 설계 제안입니다.</p>
+<p>커머스에서 <code>주문</code>, <code>결제</code>, <code>배송</code>, <code>정산</code>은 테이블 기준이 아니라 <strong>업무 언어와 변경 이유</strong>로 나누는 게 맞습니다. 같은 <code>상태</code>, <code>금액</code>, <code>취소</code>라는 단어를 써도 의미와 책임자가 다르면 다른 bounded context로 봅니다.</p>
+<p>| Context | 책임 | 자주 바뀌는 이유 | 대표 언어 | 금지할 혼용 | |---|---|---|---|---| | 주문 | 고객의 구매 의사, 주문 라인, 주문 확정/취소 | 프로모션, 주문 정책, 클레임 정책 | Order, OrderLine, Confirmed, Cancelled | 결제 승인번호, 운송장번호를 주문 규칙으로 직접 사용 | | 결제 | 승인, 매입, 환불, PG 연동 | PG 정책, 결제수단, 환불 규칙 | Payment, Authorization, Capture, Refund | 주문 상태를 결제 상태처럼 사용 | | 배송 | 출고, 송장, 배송 상태 추적 | 물류사, 창고, 출고 정책 | Shipment, Fulfillment, Tracking | 결제 완료 여부를 배송 내부 상태로 저장 | | 정산 | 판매자 지급액, 수수료, 지급 보류/확정 | 수수료율, 세금, 지급 주기, 회계 정책 | Settlement, Payable, Fee, Payout | 결제 금액을 곧바로 정산 금액으로 간주 |</p>
+<p>핵심 기준은 다음입니다.</p>
+<ul>
+<li><strong>주문 Context</strong></li>
+<p>주문은 “고객이 무엇을 어떤 조건으로 사기로 했는가”를 보호합니다. Aggregate Root는 <code>Order</code>이고, 불변식은 “확정된 주문의 라인 금액 합계와 주문 총액이 일치해야 한다”, “취소 불가 상태에서는 취소할 수 없다”입니다. 결제 성공은 주문 내부 규칙의 입력일 뿐, PG 응답 구조가 주문 모델로 들어오면 안 됩니다.</p>
+</ul>
+<ul>
+<li><strong>결제 Context</strong></li>
+<p>결제는 “돈을 실제로 승인/매입/환불했는가”를 다룹니다. Aggregate Root는 <code>Payment</code>입니다. 외부 PG 용어는 ACL에서 정화하고, 내부에는 <code>authorize()</code>, <code>capture()</code>, <code>refund()</code> 같은 결제 언어만 둡니다.</p>
+</ul>
+<ul>
+<li><strong>배송 Context</strong></li>
+<p>배송은 “상품을 준비하고 운송사에 넘기고 추적하는 과정”입니다. Aggregate Root는 <code>Shipment</code> 또는 출고 복잡도가 크면 <code>Fulfillment</code>입니다. 배송은 주문 전체 객체를 참조하지 않고 <code>OrderId</code>, 배송 대상, 품목 snapshot만 받습니다.</p>
+</ul>
+<ul>
+<li><strong>정산 Context</strong></li>
+<p>정산은 결제와 분리해야 합니다. 결제는 고객 돈의 흐름이고, 정산은 판매자/플랫폼 간 지급 계산입니다. Aggregate Root는 <code>Settlement</code> 또는 판매자별 지급 단위인 <code>Payout</code>입니다.</p>
+</ul>
+<p>Context 간 통합은 직접 모델 import가 아니라 <strong>Published Language + Integration Event + 필요 시 ACL</strong>로 둡니다.</p>
+<pre><code>
+OrderConfirmedEvent
+  -&gt; Payment Context: 결제 생성/승인 요청
+
+PaymentCapturedEvent
+  -&gt; Order Context: 주문 결제완료 반영
+  -&gt; Shipping Context: 출고 준비 가능
+  -&gt; Settlement Context: 정산 후보 생성
+
+ShipmentDeliveredEvent
+  -&gt; Order Context: 배송완료 반영
+  -&gt; Settlement Context: 구매확정/지급 가능 조건 평가
+
+RefundCompletedEvent
+  -&gt; Order Context: 취소/환불 상태 반영
+  -&gt; Settlement Context: 지급 차감 또는 정산 취소
+</code></pre>
+<p>Django 구조는 bounded context와 app을 <strong>무조건 1:1로 강제하지 않습니다</strong>. Django app은 migration, admin, 배포 단위 성격도 있으므로 팀 규모와 변경 빈도에 맞춥니다. 다만 도메인 경계는 패키지 구조로 명확히 드러냅니다.</p>
+<pre><code>
+config/
+apps/
+  commerce/
+    orders/
+      domain/
+        model/order/
+        events.py
+        repositories.py
+      application/
+        commands.py
+        services.py
+      infra/django_orm/
+        models.py
+        repositories.py
+      api/
+        router.py
+        selectors.py
+
+    payments/
+      domain/
+      application/
+      infra/
+        pg_acl/
+        django_orm/
+      api/
+
+    shipping/
+      domain/
+      application/
+      infra/
+      api/
+
+    settlements/
+      domain/
+      application/
+      infra/
+      api/
+
+    integration/
+      outbox/
+      event_handlers.py
+      published_language.py
+</code></pre>
+<p>작게 시작한다면 <code>apps.commerce</code> 하나의 Django app 안에 네 context 패키지를 두고, migration이 커지거나 팀/배포 경계가 갈라질 때 <code>orders</code>, <code>payments</code>, <code>shipping</code>, <code>settlements</code>를 별도 Django app으로 분리해도 됩니다. 중요한 것은 Django app 개수보다 <strong>도메인 import 방향과 통합 방식</strong>입니다.</p>
+<p>검증 기준은 간단합니다.</p>
+<pre><code>
+python manage.py test
+python manage.py check
+python manage.py makemigrations --check --dry-run
+</code></pre>
+<p>추가로 구조 리뷰 시에는 <code>orders.domain</code>이 <code>payments.infra.pg_acl</code>이나 Django ORM 모델을 직접 import하지 않는지 확인해야 합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - 바운디드 컨텍스트/컨텍스트 맵 상세화 → <strong>architecture-ddd</strong> 스킬 &gt; - Outbox, ACL, Repository, UoW 설계 → <strong>architecture-implementation-patterns</strong> 스킬 &gt; - Django 앱/서비스/selector 구조 구체화 → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

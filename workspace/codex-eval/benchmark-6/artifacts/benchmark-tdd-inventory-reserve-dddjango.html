@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-inventory-reserve dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-inventory-reserve dddjango</h1>
+    <div class="path">workspace/codex-eval/benchmark-6/dddjango/benchmark-tdd-inventory-reserve.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>[주요 내용]</p>
+<p><code>/Users/hyun/Desktop/dddjango/none</code>는 존재하지 않고, 현재 workspace도 비어 있어 파일 수정과 pytest 실행은 못 했습니다. 아래는 테스트가 먼저 실패하는 RED diff와, 그 테스트를 통과시키는 최소 GREEN 구현입니다. <code>select_for_update()</code>로 재고 행을 잠가 중복/동시 예약 시 이중 차감 위험을 줄이고, 도메인 불변식은 <code>StockItem.reserve()</code>에 둡니다.</p>
+<pre><code>
+diff --git a/tests/isolated/integration/test_inventory_reservation.py b/tests/isolated/integration/test_inventory_reservation.py
+new file mode 100644
+--- /dev/null
++++ b/tests/isolated/integration/test_inventory_reservation.py
+@@ -0,0 +1,48 @@
++import pytest
++
++from inventory.models import Reservation, StockItem
++from inventory.services import InsufficientStock, inventory_reserve
++
++
++@pytest.fixture
++def stock_item(db):
++    item = StockItem.objects.create(sku=&quot;SKU-001&quot;, available_quantity=10)
++    yield item
++
++
++@pytest.mark.django_db
++def test_inventory_reserve_available_stock_creates_reservation(stock_item):
++    # Arrange
++    quantity = 3
++
++    # Act
++    reservation = inventory_reserve(
++        stock_item_id=stock_item.id,
++        quantity=quantity,
++        reservation_key=&quot;order-1:SKU-001&quot;,
++    )
++
++    # Assert
++    stock_item.refresh_from_db()
++    assert stock_item.available_quantity == 7
++    assert reservation.quantity == 3
++    assert Reservation.objects.count() == 1
++
++
++@pytest.mark.django_db
++def test_inventory_reserve_insufficient_stock_raises_and_keeps_stock(stock_item):
++    # Arrange
++    quantity = 11
++
++    # Act / Assert
++    with pytest.raises(InsufficientStock, match=&quot;재고 부족&quot;):
++        inventory_reserve(
++            stock_item_id=stock_item.id,
++            quantity=quantity,
++            reservation_key=&quot;order-2:SKU-001&quot;,
++        )
++
++    stock_item.refresh_from_db()
++    assert stock_item.available_quantity == 10
++    assert Reservation.objects.count() == 0
++
++
++@pytest.mark.django_db
++def test_inventory_reserve_duplicate_key_returns_existing_without_decrementing(stock_item):
++    # Arrange
++    first = inventory_reserve(
++        stock_item_id=stock_item.id,
++        quantity=4,
++        reservation_key=&quot;order-3:SKU-001&quot;,
++    )
++
++    # Act
++    second = inventory_reserve(
++        stock_item_id=stock_item.id,
++        quantity=4,
++        reservation_key=&quot;order-3:SKU-001&quot;,
++    )
++
++    # Assert
++    stock_item.refresh_from_db()
++    assert second.id == first.id
++    assert stock_item.available_quantity == 6
++    assert Reservation.objects.count() == 1
+diff --git a/inventory/models.py b/inventory/models.py
+new file mode 100644
+--- /dev/null
++++ b/inventory/models.py
+@@ -0,0 +1,54 @@
++from django.db import models
++
++
++class StockItem(models.Model):
++    sku = models.CharField(max_length=64, unique=True)
++    available_quantity = models.PositiveIntegerField(default=0)
++
++    class Meta:
++        ordering = [&quot;sku&quot;]
++        constraints = [
++            models.CheckConstraint(
++                check=models.Q(available_quantity__gte=0),
++                name=&quot;inventory_stock_available_quantity_non_negative&quot;,
++            ),
++        ]
++
++    def __str__(self) -&gt; str:
++        return self.sku
++
++    def reserve(self, *, quantity: int) -&gt; None:
++        &quot;&quot;&quot;Invariant: available_quantity must never become negative.&quot;&quot;&quot;
++        if quantity &lt;= 0:
++            raise InvalidReservationQuantity(&quot;예약 수량은 1 이상이어야 합니다.&quot;)
++        if self.available_quantity &lt; quantity:
++            raise InsufficientStock(&quot;재고 부족&quot;)
++        self.available_quantity -= quantity
++
++
++class Reservation(models.Model):
++    stock_item = models.ForeignKey(
++        StockItem,
++        on_delete=models.PROTECT,
++        related_name=&quot;reservations&quot;,
++    )
++    reservation_key = models.CharField(max_length=128, unique=True)
++    quantity = models.PositiveIntegerField()
++    created_at = models.DateTimeField(auto_now_add=True)
++
++    class Meta:
++        ordering = [&quot;-created_at&quot;, &quot;id&quot;]
++        constraints = [
++            models.CheckConstraint(
++                check=models.Q(quantity__gt=0),
++                name=&quot;inventory_reservation_quantity_positive&quot;,
++            ),
++        ]
++
++    def __str__(self) -&gt; str:
++        return self.reservation_key
++
++
++class InventoryError(Exception):
++    pass
++
++
++class InvalidReservationQuantity(InventoryError):
++    pass
++
++
++class InsufficientStock(InventoryError):
++    pass
+diff --git a/inventory/services.py b/inventory/services.py
+new file mode 100644
+--- /dev/null
++++ b/inventory/services.py
+@@ -0,0 +1,34 @@
++from django.db import transaction
++
++from inventory.models import (
++    InsufficientStock,
++    InvalidReservationQuantity,
++    Reservation,
++    StockItem,
++)
++
++
++def inventory_reserve(
++    *,
++    stock_item_id: int,
++    quantity: int,
++    reservation_key: str,
++) -&gt; Reservation:
++    with transaction.atomic():
++        stock_item = StockItem.objects.select_for_update().get(pk=stock_item_id)
++
++        existing = Reservation.objects.filter(
++            reservation_key=reservation_key,
++            stock_item=stock_item,
++            quantity=quantity,
++        ).first()
++        if existing is not None:
++            return existing
++
++        stock_item.reserve(quantity=quantity)
++        stock_item.save(update_fields=[&quot;available_quantity&quot;])
++
++        return Reservation.objects.create(
++            stock_item=stock_item,
++            quantity=quantity,
++            reservation_key=reservation_key,
++        )
++
++
++__all__ = [&quot;InsufficientStock&quot;, &quot;InvalidReservationQuantity&quot;, &quot;inventory_reserve&quot;]
+</code></pre>
+<p>RED 예상 실패: <code>inventory</code> 앱, <code>StockItem</code>, <code>Reservation</code>, <code>inventory_reserve</code>, 예외 타입이 없어서 import 단계부터 실패합니다.</p>
+<p>검증은 실행하지 못했습니다. 실제 프로젝트에서는 다음 순서로 확인하세요.</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/test_inventory_reservation.py -q
+python manage.py makemigrations inventory
+python manage.py migrate
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/test_inventory_reservation.py -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/서비스 경계와 pytest TDD → <strong>implementation-django</strong>, <strong>implementation-test</strong>, <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>
