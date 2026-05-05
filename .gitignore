@@ -23,6 +23,9 @@ workspace/test/
 workspace/**/*.codex.log
 workspace/**/*.claude.log
 workspace/**/real-repo-work/
+workspace/codex-eval/benchmark-latest/
+workspace/codex-eval/plugin-real-*/
+workspace/codex-eval/targeted-fix*/
 
 # Editor swap/backup
 *.bak
