@@ -8,8 +8,9 @@ The plugin is intentionally opinionated: Django REST Framework is not used. API 
 
 - `skills/architecture-*`: DDD, implementation patterns, database design, and API design guidance
 - `skills/implementation-*`: Python, Django, Django Ninja, Django web, pytest, TDD, and clean code implementation guidance
+- `skills/workflow-dddjango-subagents`: role-decomposed Django workflow guidance for complex tasks
 - `commands/`: Claude Code slash command workflows for API, feature, refactor, test, and web work
-- `workspace/`: development notes and evaluation artifacts; this is not part of the published plugin surface
+- `workspace/`: development notes; this is not part of the published plugin surface
 
 ## OpenAI Codex
 
@@ -46,7 +47,13 @@ codex plugin marketplace add .
   - `Django Ninja API를 DDD 기준으로 설계해줘.`
   - `이 Django 코드를 클린 아키텍처 관점에서 리뷰해줘.`
   - `pytest와 TDD로 Django 기능을 구현해줘.`
+  - `복잡한 Django 기능을 dddjango subagent workflow로 역할 분해해서 진행해줘.`
 - Confirm responses are Korean-first, reject DRF patterns, and use Django Ninja.
+
+`dddjango` supports subagent-driven Django workflows by providing role
+decomposition, dddjango skill mapping, handoff contracts, integration rules, and
+validation gates. It does not force Codex to spawn subagents. When subagents are
+unavailable, the same role-based workflow can run sequentially.
 
 ## Claude Code
 
@@ -81,112 +88,15 @@ This repository includes `.claude-plugin/marketplace.json`, so it can act as its
 
 ## Evaluation
 
-This repository has no build step. Validation is based on plugin structure checks and skill behavior evaluations.
+The previous evaluation framework has been removed because its scoring did not
+directly measure whether `dddjango` fulfills its purpose: Django Ninja over DRF,
+DDD boundaries, DB design discipline, TDD quality, Korean-first usability, and
+appropriate trigger behavior.
 
-Codex evaluation assets live under `evals/codex/`:
-
-- `cases/pilot.jsonl`: 8-case pilot set for baseline vs `dddjango` comparison
-- `rubrics/grading-schema.json`: 100-point weighted scoring schema
-- `rubrics/dddjango-rubric.md`: manual grading rules and pass thresholds
-- `scripts/init_iteration.py`: creates prompt files, answer keys, and grading templates
-- `scripts/run_prompts.py`: runs generated prompts with `codex exec` and captures outputs
-- `scripts/grade_conformance.py`: scores dddjango-specific convention conformance
-- `scripts/grade_outputs.py`: summarizes manual grades for `baseline` and `dddjango`
-- `scripts/render_report.py`: renders a static HTML comparison dashboard
-
-Claude evaluation uses the same pilot cases, answer keys, grading schema, and
-HTML renderer. Claude-specific runners live under `evals/claude/`:
-
-- `scripts/init_iteration.py`: creates a Claude iteration workspace from the shared pilot cases
-- `scripts/run_prompts.py`: runs generated prompts with `claude -p` and captures outputs
-
-Use a separate Codex profile, machine account, or disposable environment for shared evaluation. Do not install or activate the plugin in a personal development profile when collecting comparable baseline data.
-
-Recommended checks before a release:
-
-1. Validate Claude plugin metadata with `/plugins validate .` or `claude plugin validate .`.
-2. Run the Codex conformance evaluation:
-
-   ```bash
-   make eval-conformance
-   ```
-
-   This target is a **skill-unit evaluation**: it injects local `SKILL.md`
-   paths so the reusable skill instructions can be tested without relying on a
-   personal Codex plugin profile. It must not be used as the final proof that
-   the published marketplace plugin loads correctly.
-
-   To test the installed plugin path, use a disposable Codex profile or
-   `CODEX_HOME`, install `dddjango` from the marketplace, enable it in the
-   Codex plugin UI, then run:
-
-   ```bash
-   make eval-plugin-real
-   ```
-
-3. Create a custom iteration workspace when you need a non-default suite:
-
-   ```bash
-   python3 evals/codex/scripts/init_iteration.py --suite hard-benchmark --output workspace/codex-eval/hard-benchmark-1
-   ```
-
-4. Run each generated prompt in the matching `baseline` and `dddjango` environment. Prompt files intentionally exclude expectations and scoring focus to avoid evaluation leakage. By default, `run_prompts.py` also keeps scoring focus out of `developer_instructions`; only use `--allow-generation-hints` for legacy debugging, not for release gates.
-
-   ```bash
-   python3 evals/codex/scripts/run_prompts.py --variant baseline --dry-run
-   python3 evals/codex/scripts/run_prompts.py --variant baseline
-   python3 evals/codex/scripts/run_prompts.py --variant dddjango --profile dddjango-eval
-   ```
-
-   Baseline runs use `--ignore-user-config` by default and execute from `/private/tmp/dddjango-codex-eval` to avoid this repository's `AGENTS.md` leaking dddjango guidance into the control group.
-   Installed plugin runs use the `dddjango-plugin` variant and do not inject
-   local skill paths or case-specific generation hints.
-
-5. Grade outputs with `evals/codex/rubrics/grading-schema.json`, `evals/codex/conformance-map.json`, and the generated `answer-key/` files.
-6. Summarize manual grades:
-
-   ```bash
-   python3 evals/codex/scripts/grade_outputs.py workspace/codex-eval/iteration-1/grades.json
-   ```
-
-7. Render the browser report:
-
-   ```bash
-   python3 evals/codex/scripts/auto_grade_outputs.py workspace/codex-eval/iteration-1
-   python3 evals/codex/scripts/grade_conformance.py workspace/codex-eval/iteration-1
-   python3 evals/codex/scripts/render_report.py workspace/codex-eval/iteration-1
-   ```
-
-   Open `workspace/codex-eval/iteration-1/report.html` in a browser to compare scores, duration, verdicts, notes, and raw output links.
-
-8. For Claude, create a separate iteration and run a blocked-risk pilot first:
-
-   ```bash
-   python3 evals/claude/scripts/init_iteration.py --output workspace/claude-eval/iteration-1
-   python3 evals/claude/scripts/run_prompts.py --variant baseline --case pilot-negative-drf --iteration workspace/claude-eval/iteration-1
-   python3 evals/claude/scripts/run_prompts.py --variant dddjango --case pilot-negative-drf --iteration workspace/claude-eval/iteration-1
-   python3 evals/codex/scripts/render_report.py workspace/claude-eval/iteration-1 --platform Claude
-   ```
-
-   Claude baseline runs disable slash commands. `dddjango` runs load this repository with `--plugin-dir .`.
-   If Claude Code subscription access is disabled for the organization, set `ANTHROPIC_API_KEY` before running the full Claude evaluation.
-
-9. Run representative prompts in both platforms:
-   - `Django Ninja API를 DDD 기준으로 설계해줘.`
-   - `이 Django 모델과 서비스 코드를 리뷰해줘.`
-   - `pytest와 TDD 방식으로 Django 기능을 구현해줘.`
-9. Confirm the response is Korean-first.
-10. Confirm DRF patterns are rejected or rewritten as Django Ninja patterns.
-11. Compare with and without the plugin for trigger accuracy, quality, token usage, and duration.
-
-Raw evaluation outputs under `workspace/*/test/` are ignored. Commit evaluation seeds, reusable tooling, and summary reports only.
-
-Evaluation cadence:
-
-- Every skill change: `make eval-conformance`
-- Before release: `make test-release`, `git diff --check`, and the latest HTML report
-- Published plugin verification: `make eval-plugin-real` from a disposable profile with the plugin installed and enabled
-- Claude validation remains blocked until Claude Code subscription access or `ANTHROPIC_API_KEY` is available.
+The next evaluation framework should be designed from those product goals first,
+then implemented as a new suite. Until that replacement exists, release checks
+are limited to plugin metadata validation, mirror consistency, and representative
+manual prompts.
 
 ## Release Checklist
 

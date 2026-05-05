@@ -36,7 +36,8 @@
     "defaultPrompt": [
       "Django Ninja API를 DDD 기준으로 설계해줘.",
       "이 Django 코드를 클린 아키텍처 관점에서 리뷰해줘.",
-      "pytest와 TDD로 Django 기능을 구현해줘."
+      "pytest와 TDD로 Django 기능을 구현해줘.",
+      "복잡한 Django 기능을 dddjango subagent workflow로 역할 분해해서 설계, 구현, 테스트까지 진행해줘."
     ],
     "brandColor": "#0C4A6E",
     "screenshots": []

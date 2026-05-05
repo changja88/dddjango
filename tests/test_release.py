@@ -60,36 +60,24 @@ class FileUpdateTests(unittest.TestCase):
         self.assertEqual(plugin["source"]["path"], "./plugins/dddjango")
         self.assertTrue((ROOT / "plugins/dddjango/.codex-plugin/plugin.json").exists())
 
-    def test_makefile_defines_codex_evaluation_targets(self):
+    def test_makefile_defines_release_targets_only(self):
         makefile = (ROOT / "Makefile").read_text()
 
         for required in [
             "# 플러그인 버전을 올리고",
-            "# 릴리즈/평가 자동화와 스킬 mirror 동기화",
-            "# 로컬 skills/ 내용을 주입해",
-            "# 설치된 Codex marketplace 플러그인",
-            "# 이전 conformance 결과에서 실패한 케이스만",
-            "# 이미 생성된 conformance/plugin-real 평가 결과",
+            "# 릴리즈 자동화와 스킬 mirror 동기화",
             "release:",
             "test-release:",
-            "eval-conformance:",
-            "eval-plugin-real:",
-            "eval-residual:",
-            "eval-release-gate:",
-            "--variant-set standard",
-            "--variant dddjango",
-            "--variant-set plugin-real",
-            "--variant dddjango-plugin",
-            "dddjango-plugin",
-            "evals/codex/scripts/run_residual_eval.py",
-            "evals/codex/scripts/check_release_gate.py",
-            "evals/codex/scripts/grade_conformance.py",
-            "evals/codex/scripts/render_report.py",
         ]:
             with self.subTest(required=required):
                 self.assertIn(required, makefile)
 
         for removed in [
+            "eval-conformance:",
+            "eval-plugin-real:",
+            "eval-subagents:",
+            "eval-residual:",
+            "eval-release-gate:",
             "eval-init:",
             "eval-run:",
             "eval-report:",
@@ -98,6 +86,8 @@ class FileUpdateTests(unittest.TestCase):
             "full-eval:",
             "eval-residual-cases:",
             "eval-residual-init:",
+            "evals/codex/",
+            "evals/claude/",
         ]:
             with self.subTest(removed=removed):
                 self.assertNotIn(removed, makefile)

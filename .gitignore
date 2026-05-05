@@ -11,13 +11,13 @@
 .playwright-mcp/
 .serena/
 
-# Python (평가 스크립트 등 향후 추가 시)
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 
-# Evaluation run artifacts
+# Local generated workspaces and run artifacts
 workspace/codex-eval/
 workspace/claude-eval/
 workspace/*/test/
@@ -25,11 +25,6 @@ workspace/test/
 workspace/**/*.codex.log
 workspace/**/*.claude.log
 workspace/**/real-repo-work/
-workspace/codex-eval/benchmark-latest/
-workspace/codex-eval/plugin-real-*/
-workspace/codex-eval/residual-latest/
-workspace/codex-eval/targeted-fix*/
-workspace/codex-eval/targeted-residual-*/
 
 # Editor swap/backup
 *.bak
