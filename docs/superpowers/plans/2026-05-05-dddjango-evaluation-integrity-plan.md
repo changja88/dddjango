@@ -101,3 +101,15 @@
   - `python3 evals/codex/scripts/grade_conformance.py workspace/codex-eval/targeted-residual-1`
 - Result: local targeted conformance `100.00`, required rule pass rate `100.00`, critical violations `0`, forbidden patterns `0`.
 - Note: public Codex plugin에 반영하려면 다음 patch release 후 `plugin-real` 재측정이 필요하다.
+
+## 2026-05-05 Published Residual Plugin Real Result
+
+- Release: `v0.1.9`
+- Install source: `codex plugin marketplace add changja88/dddjango --ref v0.1.9`
+- Installed cache verified: `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.9`
+- Scope: `v0.1.8`에서 실패했던 두 잔여 케이스만 installed `dddjango-plugin`으로 재측정.
+- Cases:
+  - `trigger-negative-data-analysis`
+  - `trigger-positive-ninja-error-standard`
+- Result: installed plugin targeted conformance `100.00`, required rule pass rate `100.00`, critical violations `0`, forbidden patterns `0`.
+- Full `make eval-plugin-real` note: 전체 60-run 재평가는 첫 baseline 구간이 과도하게 지연되어 중단했다. 이번 릴리즈 변경 검증은 잔여 실패를 직접 겨냥한 targeted plugin-real 결과로 판단한다.
