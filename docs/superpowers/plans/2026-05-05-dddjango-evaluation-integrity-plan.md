@@ -62,3 +62,29 @@
 - Forbidden patterns: `0`
 - Release gate: PASS
 - Runtime: baseline avg `38.77s` / total `193.87s`; dddjango avg `73.74s` / total `368.71s`.
+
+## 2026-05-05 Published Codex Plugin Real Result
+
+- Release: `v0.1.8`
+- Install source: `codex plugin marketplace add changja88/dddjango --ref v0.1.8`
+- Installed cache verified: `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.8`
+- Command: `make eval-plugin-real`
+- Report: `workspace/codex-eval/plugin-real-1/report.html`
+- Scope: 30 trigger cases, `baseline` vs installed `dddjango-plugin`.
+- Execution: all 60 Codex runs returned `0`.
+- Baseline conformance: `83.72`
+- dddjango-plugin conformance: `96.00`
+- Delta: `+12.28`
+- dddjango-plugin required rule pass rate: `96.00`
+- Critical violations: `0`
+- Forbidden patterns: `0`
+- Release gate: PASS
+- Trigger pass:
+  - positive: `10/10`
+  - negative: `10/10`
+  - ambiguous: `6/6`
+  - conflict: `4/4`
+- Runtime: baseline avg `26.34s` / total `790.32s`; dddjango-plugin avg `64.43s` / total `1932.85s`.
+- Residual follow-up:
+  - `trigger-negative-data-analysis`: trigger는 통과했지만 `관련 스킬 참조`에 `dddjango:implementation-python`이 붙어 strict `no_django_contamination` conformance rule에서 실패했다.
+  - `trigger-positive-ninja-error-standard`: Problem Details와 `items/meta`는 포함했지만 `Schema` 탐지 규칙 하나가 미통과했다.
