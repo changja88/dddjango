@@ -18,7 +18,7 @@ This repository includes a Codex manifest at `.codex-plugin/plugin.json`, a pack
 For users, install the published Git-backed marketplace pinned to the latest release tag:
 
 ```bash
-codex plugin marketplace add changja88/dddjango --ref v0.1.8
+codex plugin marketplace add changja88/dddjango --ref v0.1.9
 ```
 
 This registers the `dddjango-local` marketplace from the published repository. Then open the Codex plugin directory, select the `dddjango Local` marketplace, and install `dddjango`.
@@ -199,7 +199,7 @@ Evaluation cadence:
 - Validate Claude local plugin loading.
 - Validate Codex local marketplace installation.
 - Run representative dual-platform prompts.
-- Tag the release, for example `v0.1.8`.
+- Tag the release, for example `v0.1.9`.
 - Update marketplace entries to the release version or tag.
 
 You can create and publish a release with:
