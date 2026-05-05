@@ -32,7 +32,7 @@
 
 ## Phase 5: Gate 재정의
 
-- [ ] high-baseline suite에는 +15% lift gate 대신 absolute conformance gate를 적용한다.
+- [x] high-baseline suite에는 +15% lift gate 대신 absolute conformance gate를 적용한다.
 - [x] `make eval-conformance`, `make eval-plugin-real`, `make eval-release-gate`가 동일한 conformance release gate를 확인하도록 연결한다.
 - [ ] `make release` 자체에 full `plugin-real` 재평가를 강제할지 결정한다. 현재는 릴리즈 시간을 과도하게 늘리지 않기 위해 별도 gate 명령으로 둔다.
 - [ ] Claude 평가는 결제 또는 API key 준비 후 같은 목적 체계로 추가한다.
@@ -42,7 +42,7 @@
 - [x] 긴 평가 중 현재 variant/case 진행률을 stdout에 즉시 출력한다.
 - [x] 이전 conformance 실패 케이스에서 residual JSONL suite를 자동 생성한다.
 - [x] `make eval-residual`로 실패 케이스만 재측정하고, 실패가 없으면 no-op 처리한다.
-- [x] `make eval-gate`와 `make eval-release-gate`로 HTML 생성 후 같은 gate 결과를 CLI에서도 확인한다.
+- [x] `make eval-release-gate`로 생성된 평가 결과의 gate를 CLI에서도 확인한다.
 - [x] residual run artifacts를 gitignore에 추가한다.
 - [ ] 전체 `v0.1.9` plugin-real 60-run 재평가를 장시간 실행 가능한 시점에 다시 수행한다.
 - [ ] 반복 평가 결과를 버전별 trend report로 누적한다.
@@ -138,7 +138,6 @@
   - `make eval-residual`
 - Added gate automation:
   - `evals/codex/scripts/check_release_gate.py`
-  - `make eval-gate`
   - `make eval-release-gate`
 - Expanded structural conformance rules:
   - API: explicit status/response mapping
@@ -149,3 +148,10 @@
   - local conformance: `make eval-conformance`
   - installed Codex plugin: `make eval-plugin-real`
   - release decision: `make eval-release-gate`
+
+## 2026-05-06 Documentation Cleanup
+
+- Removed raw evaluation artifacts from Git and kept only summarized results.
+- Moved this document from `docs/superpowers/plans/` to `docs/evaluation/`.
+- Removed older implementation-plan logs that no longer matched the current
+  Makefile and evaluation workflow.
