@@ -7,6 +7,10 @@
 # Claude Code per-user settings (not shared)
 .claude/settings.local.json
 
+# Local agent/browser tooling state
+.playwright-mcp/
+.serena/
+
 # Python (평가 스크립트 등 향후 추가 시)
 __pycache__/
 *.py[cod]
