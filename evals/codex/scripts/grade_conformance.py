@@ -136,7 +136,13 @@ def rule_has_explicit_return_type(text):
 
 
 def rule_uses_items_meta_envelope(text):
-    return contains_any(text, ["items"]) and contains_any(text, ["meta"])
+    return bool(
+        re.search(r"\bitems\s*[:=]", text)
+        and re.search(r"\bmeta\s*[:=]", text)
+    ) or bool(
+        re.search(r"['\"]items['\"]\s*:", text)
+        and re.search(r"['\"]meta['\"]\s*:", text)
+    )
 
 
 def rule_uses_problem_details(text):
@@ -167,17 +173,12 @@ def rule_includes_verification_commands(text):
 
 
 def rule_includes_migration_verification(text):
-    return contains_any(
-        text,
-        [
-            "makemigrations --check",
-            "migrate --plan",
-            "sqlmigrate",
-            "python manage.py check",
-            "manage.py check",
-            "migration",
-            "마이그레이션",
-        ],
+    return bool(
+        re.search(
+            r"(python\s+manage\.py\s+)?(makemigrations\s+--check|migrate\s+--plan|sqlmigrate|check)",
+            text,
+            re.IGNORECASE,
+        )
     )
 
 
@@ -225,9 +226,11 @@ def rule_has_domain_exception(text):
 
 
 def rule_has_result_type(text):
-    return contains_any(
-        text,
-        ["Result Type", "결과 타입", "Result[", "ReserveResult", "ApplyResult", "CancelResult"],
+    return bool(
+        re.search(r"@dataclass\(frozen=True\)[\s\S]{0,160}class\s+\w*Result\b", text)
+        or re.search(r"class\s+\w*Result\b[\s\S]{0,160}@dataclass\(frozen=True\)", text)
+        or re.search(r"\b\w*Result\s*=", text)
+        or re.search(r"->\s*\w*Result\b", text)
     )
 
 
@@ -310,8 +313,9 @@ def rule_has_transaction_locking(text):
 
 
 def rule_has_query_pattern_first(text):
+    first_lines = "\n".join(text.splitlines()[:40])
     return contains_any(
-        text,
+        first_lines,
         [
             "쿼리 패턴",
             "조회 패턴",
@@ -411,6 +415,8 @@ FORBIDDEN_PATTERNS = {
     "drf_endorsed": drf_is_endorsed,
     "django_contamination": has_django_contamination,
 }
+
+DDDJANGO_PRIMARY_VARIANTS = ("dddjango", "dddjango-plugin")
 
 
 def unique_ordered(values):
@@ -522,6 +528,13 @@ def average(values):
     return round(sum(values) / len(values), 2) if values else 0.0
 
 
+def primary_dddjango_variant(variants):
+    for variant in DDDJANGO_PRIMARY_VARIANTS:
+        if variant in variants:
+            return variant
+    return "dddjango"
+
+
 def summarize(records, gate):
     variants = {}
     for variant in sorted({record["variant"] for record in records}):
@@ -537,7 +550,8 @@ def summarize(records, gate):
         }
 
     baseline = variants.get("baseline", {})
-    dddjango = variants.get("dddjango", {})
+    dddjango_variant = primary_dddjango_variant(variants)
+    dddjango = variants.get(dddjango_variant, {})
     delta = round(
         dddjango.get("average_conformance", 0.0)
         - baseline.get("average_conformance", 0.0),
@@ -573,6 +587,7 @@ def summarize(records, gate):
 
     return {
         "variants": variants,
+        "dddjango_variant": dddjango_variant,
         "baseline_avg_conformance": baseline.get("average_conformance", 0.0),
         "dddjango_avg_conformance": dddjango_score,
         "delta": delta,

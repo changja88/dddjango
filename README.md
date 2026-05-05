@@ -114,13 +114,26 @@ Recommended checks before a release:
 
    Use `make full-eval` for the 24-case Codex benchmark before a larger release.
 
+   These targets are **skill-unit evaluations**: they inject local `SKILL.md`
+   paths so the reusable skill instructions can be tested without relying on a
+   personal Codex plugin profile. They must not be used as the final proof that
+   the published marketplace plugin loads correctly.
+
+   To test the installed plugin path, use a disposable Codex profile or
+   `CODEX_HOME`, install `dddjango` from the marketplace, enable it in the
+   Codex plugin UI, then run:
+
+   ```bash
+   make eval-plugin-real
+   ```
+
 3. Create a custom iteration workspace when you need a non-default suite:
 
    ```bash
    python3 evals/codex/scripts/init_iteration.py --suite hard-benchmark --output workspace/codex-eval/hard-benchmark-1
    ```
 
-4. Run each generated prompt in the matching `baseline` and `dddjango` environment. Prompt files intentionally exclude expectations and scoring focus to avoid evaluation leakage.
+4. Run each generated prompt in the matching `baseline` and `dddjango` environment. Prompt files intentionally exclude expectations and scoring focus to avoid evaluation leakage. By default, `run_prompts.py` also keeps scoring focus out of `developer_instructions`; only use `--allow-generation-hints` for legacy debugging, not for release gates.
 
    ```bash
    python3 evals/codex/scripts/run_prompts.py --variant baseline --dry-run
@@ -129,6 +142,8 @@ Recommended checks before a release:
    ```
 
    Baseline runs use `--ignore-user-config` by default and execute from `/private/tmp/dddjango-codex-eval` to avoid this repository's `AGENTS.md` leaking dddjango guidance into the control group.
+   Installed plugin runs use the `dddjango-plugin` variant and do not inject
+   local skill paths or case-specific generation hints.
 
 5. Grade outputs with `evals/codex/rubrics/grading-schema.json`, `evals/codex/conformance-map.json`, and the generated `answer-key/` files.
 6. Summarize manual grades:
@@ -174,6 +189,7 @@ Evaluation cadence:
 - Every skill change: `make eval-conformance`
 - Before release: `make test-release`, `git diff --check`, and the latest HTML report
 - Larger release: `make full-eval`
+- Published plugin verification: `make eval-plugin-real` from a disposable profile with the plugin installed and enabled
 - Claude validation remains blocked until Claude Code subscription access or `ANTHROPIC_API_KEY` is available.
 
 ## Release Checklist

@@ -2,14 +2,15 @@
 
 ## Scope
 
-Use this rubric to compare Codex responses without the plugin (`baseline`) against Codex responses with the `dddjango` plugin enabled (`dddjango`). Keep the prompt, model, reasoning effort, cwd, sandbox policy, and fixture identical between variants.
+Use this rubric to compare Codex responses without the plugin (`baseline`) against either local skill-unit evaluation (`dddjango`) or installed plugin evaluation (`dddjango-plugin`). Keep the prompt, model, reasoning effort, cwd, sandbox policy, and fixture identical between variants.
 
 Do not install or activate the plugin in a personal development profile when running shared evaluation. Use a separate Codex profile, machine account, or disposable environment.
 
 ## Variants
 
 - `baseline`: Codex without `dddjango` installed or enabled.
-- `dddjango`: Codex with `dddjango` installed from the published Git-backed marketplace version under evaluation.
+- `dddjango`: local skill-unit evaluation. The harness may inject local `SKILL.md` paths, but must not inject answer keys, scoring focus, or case-specific solution hints unless a legacy debugging run explicitly opts into `--allow-generation-hints`.
+- `dddjango-plugin`: installed plugin evaluation. The harness must not inject local skill paths or case-specific generation hints; use a disposable profile or `CODEX_HOME` where the published plugin is installed and enabled.
 
 ## Scoring
 
@@ -38,7 +39,8 @@ For every `dddjango` result, record:
 
 The plugin evaluation passes the pilot gate when:
 
-- average `dddjango` score is at least 15% higher than `baseline`
+- average `dddjango` or `dddjango-plugin` score is meaningfully higher than `baseline`; do not require percentage lift on suites where baseline is already near the ceiling
+- installed-plugin release gates must use `dddjango-plugin`, not only local skill-unit results
 - DRF violations are 0
 - Korean-first rate is at least 95%
 - Django Ninja compliance is at least 90%

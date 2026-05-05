@@ -16,8 +16,6 @@ CRITERIA = [
     "safety",
 ]
 
-DDDJANGO_VARIANTS = {"dddjango", "skill-core-only", "oracle-reference"}
-
 DRF_PATTERNS = [
     r"\bAPIView\b",
     r"\bViewSet\b",
@@ -274,11 +272,6 @@ def base_scores(case, text, variant):
         scores["architecture_quality"] = 15 if architecture else 8
     if drf_endorsed:
         scores["django_ninja_compliance"] = min(scores["django_ninja_compliance"], 5)
-
-    if variant in DDDJANGO_VARIANTS and case.get("trigger_type") == "positive":
-        scores["domain_fit"] = max(scores["domain_fit"], 16)
-        if korean_first:
-            scores["korean_first"] = 10
 
     if expectation_applies(case, "reject_drf") or case.get("trigger_type") == "conflict":
         negative_control_passed = not drf_endorsed

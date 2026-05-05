@@ -5,6 +5,7 @@
     "max": 100
   },
   "summary_fields": [
+    "dddjango_variant",
     "baseline_avg_conformance",
     "dddjango_avg_conformance",
     "delta",

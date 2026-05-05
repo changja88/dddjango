@@ -7,6 +7,7 @@ from pathlib import Path
 
 VARIANT_SETS = {
     "standard": ("baseline", "dddjango"),
+    "plugin-real": ("baseline", "dddjango-plugin"),
     "reference-ceiling": (
         "baseline",
         "skill-core-only",

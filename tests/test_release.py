@@ -70,6 +70,10 @@ class FileUpdateTests(unittest.TestCase):
             "smoke-eval:",
             "full-eval:",
             "eval-conformance:",
+            "eval-plugin-real:",
+            "--variant-set $(EVAL_VARIANT_SET)",
+            "--variant $(EVAL_WITH_VARIANT)",
+            "dddjango-plugin",
             "evals/codex/scripts/grade_conformance.py",
             "evals/codex/scripts/render_report.py",
         ]:

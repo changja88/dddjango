@@ -8,6 +8,7 @@ from pathlib import Path
 
 REFERENCE_MAP_PATH = Path("evals/codex/reference-map.json")
 SKILL_VARIANTS = {"dddjango", "skill-core-only", "oracle-reference"}
+PLUGIN_REAL_VARIANTS = {"dddjango-plugin"}
 
 CASE_SKILLS = {
     "pilot-api-order-create": [
@@ -368,27 +369,29 @@ def case_policy_names(case_id, case=None):
     return unique(policies)
 
 
-def case_directive(case_id, case=None):
-    if case_id in CASE_DIRECTIVES:
+def case_directive(case_id, case=None, *, allow_generation_hints=False):
+    if allow_generation_hints and case_id in CASE_DIRECTIVES:
         return CASE_DIRECTIVES[case_id]
     if not case:
         return ""
 
     trigger_type = case.get("trigger_type", "")
-    if trigger_type == "ambiguous":
+    if allow_generation_hints and trigger_type == "ambiguous":
         return (
             "The request is intentionally ambiguous. Start with a short Korean sentence that "
             "includes '맥락이 불명확합니다'. Ask one concise clarification or state conditional "
             "assumptions before applying Django or DDD guidance. If giving a Django branch, "
             "label it with 'Django라면'. Keep under 500 words."
         )
-    if trigger_type == "conflict":
+    if allow_generation_hints and trigger_type == "conflict":
         return (
             "Explain the policy conflict in one sentence, then provide the Django Ninja alternative. "
             "Do not output DRF implementation code. Keep under 650 words."
         )
     if case.get("category") == "negative-control" and not case_requests_drf(case):
         return ""
+    if not allow_generation_hints:
+        return "Keep the answer focused and include only task-critical code and verification steps."
 
     focus = " ".join(case.get("scoring_focus", []))
     return (
@@ -397,10 +400,23 @@ def case_directive(case_id, case=None):
     )
 
 
-def scoped_dddjango_developer_instructions(root, case_id, case=None):
-    if case and case.get("trigger_type") == "negative":
+def scoped_dddjango_developer_instructions(
+    root,
+    case_id,
+    case=None,
+    *,
+    allow_generation_hints=False,
+):
+    if case and case.get("category") == "trigger" and not allow_generation_hints:
+        return ""
+    if case and case.get("trigger_type") == "negative" and allow_generation_hints:
         return non_dddjango_negative_developer_instructions()
-    if case and case.get("category") == "negative-control" and not case_requests_drf(case):
+    if (
+        case
+        and case.get("category") == "negative-control"
+        and not case_requests_drf(case)
+        and allow_generation_hints
+    ):
         return non_dddjango_negative_developer_instructions()
 
     skill_paths = skill_paths_for_case(root, case_id, case=case)
@@ -428,7 +444,11 @@ def scoped_dddjango_developer_instructions(root, case_id, case=None):
             "implementation, REFACTOR notes, and pytest commands."
         )
     policy_text = " ".join(policies)
-    directive = case_directive(case_id, case=case)
+    directive = case_directive(
+        case_id,
+        case=case,
+        allow_generation_hints=allow_generation_hints,
+    )
     return (
         "Use local dddjango skills. Read only:\n"
         f"{paths}\n"
@@ -436,17 +456,34 @@ def scoped_dddjango_developer_instructions(root, case_id, case=None):
     )
 
 
-def skill_core_only_developer_instructions(root, case_id, case=None):
-    if case and case.get("trigger_type") == "negative":
+def skill_core_only_developer_instructions(
+    root,
+    case_id,
+    case=None,
+    *,
+    allow_generation_hints=False,
+):
+    if case and case.get("category") == "trigger" and not allow_generation_hints:
+        return ""
+    if case and case.get("trigger_type") == "negative" and allow_generation_hints:
         return non_dddjango_negative_developer_instructions()
-    if case and case.get("category") == "negative-control" and not case_requests_drf(case):
+    if (
+        case
+        and case.get("category") == "negative-control"
+        and not case_requests_drf(case)
+        and allow_generation_hints
+    ):
         return non_dddjango_negative_developer_instructions()
 
     skill_paths = skill_paths_for_case(root, case_id, case=case)
     if not skill_paths:
         return ""
     paths = "\n".join(f"- {path}" for path in skill_paths)
-    directive = case_directive(case_id, case=case)
+    directive = case_directive(
+        case_id,
+        case=case,
+        allow_generation_hints=allow_generation_hints,
+    )
     return (
         "Use local dddjango SKILL.md only for this reference-ceiling ablation. "
         "Do not open references/ files or use bundled reference documents. "
@@ -456,22 +493,44 @@ def skill_core_only_developer_instructions(root, case_id, case=None):
     )
 
 
-def oracle_reference_developer_instructions(root, case_id, case=None):
-    if case and case.get("trigger_type") == "negative":
+def oracle_reference_developer_instructions(
+    root,
+    case_id,
+    case=None,
+    *,
+    allow_generation_hints=False,
+):
+    if case and case.get("category") == "trigger" and not allow_generation_hints:
+        return ""
+    if case and case.get("trigger_type") == "negative" and allow_generation_hints:
         return non_dddjango_negative_developer_instructions()
-    if case and case.get("category") == "negative-control" and not case_requests_drf(case):
+    if (
+        case
+        and case.get("category") == "negative-control"
+        and not case_requests_drf(case)
+        and allow_generation_hints
+    ):
         return non_dddjango_negative_developer_instructions()
 
     mapping = reference_mapping_for_case(root, case_id, case=case)
     reference_paths = mapping["references"]
     if not reference_paths:
-        return dddjango_developer_instructions(root, case_id=case_id, case=case)
+        return dddjango_developer_instructions(
+            root,
+            case_id=case_id,
+            case=case,
+            allow_generation_hints=allow_generation_hints,
+        )
 
     skill_paths = skill_paths_for_case(root, case_id, case=case)
     skill_path_text = "\n".join(f"- {path}" for path in skill_paths)
     reference_path_text = "\n".join(f"- {path}" for path in reference_paths)
     rules = "\n".join(f"- {rule}" for rule in mapping["expected_rules"])
-    directive = case_directive(case_id, case=case)
+    directive = case_directive(
+        case_id,
+        case=case,
+        allow_generation_hints=allow_generation_hints,
+    )
     return (
         "This is a reference-ceiling oracle run for dddjango. "
         "Read the relevant SKILL.md files and the selected reference files before "
@@ -487,9 +546,14 @@ def oracle_reference_developer_instructions(root, case_id, case=None):
     )
 
 
-def dddjango_developer_instructions(root, case_id=None, case=None):
+def dddjango_developer_instructions(root, case_id=None, case=None, *, allow_generation_hints=False):
     if case_id:
-        scoped = scoped_dddjango_developer_instructions(root, case_id, case=case)
+        scoped = scoped_dddjango_developer_instructions(
+            root,
+            case_id,
+            case=case,
+            allow_generation_hints=allow_generation_hints,
+        )
         if scoped:
             return scoped
         if case:
@@ -497,13 +561,37 @@ def dddjango_developer_instructions(root, case_id=None, case=None):
     return broad_dddjango_developer_instructions(root)
 
 
-def developer_instructions_for_variant(root, variant, case_id, case=None):
+def developer_instructions_for_variant(
+    root,
+    variant,
+    case_id,
+    case=None,
+    *,
+    allow_generation_hints=False,
+):
+    if variant in PLUGIN_REAL_VARIANTS:
+        return ""
     if variant == "dddjango":
-        return dddjango_developer_instructions(root, case_id=case_id, case=case)
+        return dddjango_developer_instructions(
+            root,
+            case_id=case_id,
+            case=case,
+            allow_generation_hints=allow_generation_hints,
+        )
     if variant == "skill-core-only":
-        return skill_core_only_developer_instructions(root, case_id, case=case)
+        return skill_core_only_developer_instructions(
+            root,
+            case_id,
+            case=case,
+            allow_generation_hints=allow_generation_hints,
+        )
     if variant == "oracle-reference":
-        return oracle_reference_developer_instructions(root, case_id, case=case)
+        return oracle_reference_developer_instructions(
+            root,
+            case_id,
+            case=case,
+            allow_generation_hints=allow_generation_hints,
+        )
     return ""
 
 
@@ -588,6 +676,7 @@ def run_variant(args):
                 args.variant,
                 case_id=case_id,
                 case=cases.get(case_id),
+                allow_generation_hints=getattr(args, "allow_generation_hints", False),
             )
             case = cases.get(case_id)
             if case and (
@@ -689,7 +778,13 @@ def main():
     parser.add_argument("--root", default=".")
     parser.add_argument(
         "--variant",
-        choices=["baseline", "dddjango", "skill-core-only", "oracle-reference"],
+        choices=[
+            "baseline",
+            "dddjango",
+            "dddjango-plugin",
+            "skill-core-only",
+            "oracle-reference",
+        ],
         required=True,
     )
     parser.add_argument("--case", help="Run only one case id.")
@@ -723,6 +818,14 @@ def main():
         action="store_false",
         dest="use_local_dddjango_skills",
         help="Do not inject local dddjango skill instructions for dddjango runs.",
+    )
+    parser.add_argument(
+        "--allow-generation-hints",
+        action="store_true",
+        help=(
+            "Allow legacy case directives and scoring-focus hints in generation prompts. "
+            "Leave off for unbiased evaluation."
+        ),
     )
     parser.set_defaults(use_local_dddjango_skills=True)
     args = parser.parse_args()

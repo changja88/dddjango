@@ -28,6 +28,7 @@ VARIANT_LABELS = {
     "baseline": "Baseline",
     "skill-core-only": "Core Only",
     "dddjango": "Full Skill",
+    "dddjango-plugin": "Installed Plugin",
     "oracle-reference": "Oracle Reference",
 }
 

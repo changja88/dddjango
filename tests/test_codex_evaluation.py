@@ -501,6 +501,7 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             conformance_map["release_gate"]["minimum_dddjango_conformance_score"],
             85,
         )
+        self.assertIn("dddjango_variant", schema["summary_fields"])
 
         for category in [
             "api-design",
@@ -903,6 +904,35 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertFalse(dddjango["critical_violations"])
             self.assertGreater(result["summary"]["delta"], 0)
 
+    def test_grade_conformance_uses_structural_rule_checks(self):
+        module = load_module(CONFORMANCE_SCRIPT_PATH)
+
+        self.assertFalse(module.rule_uses_items_meta_envelope("items와 meta를 설명합니다."))
+        self.assertTrue(
+            module.rule_uses_items_meta_envelope(
+                "return {'items': [], 'meta': {'total': 0}}\n"
+            )
+        )
+
+        self.assertFalse(module.rule_includes_migration_verification("마이그레이션 검증"))
+        self.assertTrue(
+            module.rule_includes_migration_verification(
+                "python manage.py makemigrations --check\npython manage.py migrate --plan\n"
+            )
+        )
+
+        self.assertFalse(module.rule_has_result_type("Result Type을 사용합니다."))
+        self.assertTrue(
+            module.rule_has_result_type(
+                "@dataclass(frozen=True)\nclass CancelOrderResult:\n    ok: bool\n"
+            )
+        )
+
+        late_query_pattern = "\n".join(["일반 설명"] * 45 + ["조회 패턴: status + created_at"])
+        early_query_pattern = "조회 패턴: status + created_at\n\nmodels.Index(...)\n"
+        self.assertFalse(module.rule_has_query_pattern_first(late_query_pattern))
+        self.assertTrue(module.rule_has_query_pattern_first(early_query_pattern))
+
     def test_grade_conformance_flags_negative_control_contamination(self):
         module = load_module(CONFORMANCE_SCRIPT_PATH)
 
@@ -1114,6 +1144,32 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 8)
             self.assertEqual(len(list((output_dir / "oracle-reference").glob("*.prompt.md"))), 8)
             self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 32)
+
+    def test_init_iteration_can_create_plugin_real_variant_set(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "plugin-real-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "trigger",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                    "--variant-set",
+                    "plugin-real",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 30)
+            self.assertEqual(len(list((output_dir / "dddjango-plugin").glob("*.prompt.md"))), 30)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 60)
 
     def test_init_iteration_can_create_trigger_suite_by_name(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -1557,11 +1613,14 @@ index 83db48f..f735c2d 100644
             case_id="pilot-review-view-logic",
         )
 
-        self.assertIn("copyable team standard", api_standard)
-        self.assertIn("edge-case checklist", api_standard)
-        self.assertIn("constraints, indexes, locking", db_orders)
-        self.assertIn("pytest or migration checks", db_orders)
-        self.assertIn("thin Ninja endpoint", review_view_logic)
+        self.assertIn("architecture-api/SKILL.md", api_standard)
+        self.assertIn("implementation-django-ninja/SKILL.md", api_standard)
+        self.assertIn("architecture-db/SKILL.md", db_orders)
+        self.assertIn("implementation-django/SKILL.md", db_orders)
+        self.assertIn("implementation-django-ninja/SKILL.md", review_view_logic)
+        self.assertNotIn("copyable team standard", api_standard)
+        self.assertNotIn("constraints, indexes, locking", db_orders)
+        self.assertNotIn("thin Ninja endpoint", review_view_logic)
         self.assertNotIn("For pytest/TDD", api_standard)
         self.assertNotIn("For pytest/TDD", db_orders)
 
@@ -1569,8 +1628,9 @@ index 83db48f..f735c2d 100644
             ROOT,
             case_id="pilot-review-fat-model",
         )
-        self.assertIn("severity-ranked findings", review_fat_model)
-        self.assertIn("assertNumQueries", review_fat_model)
+        self.assertIn("implementation-cleancode/SKILL.md", review_fat_model)
+        self.assertNotIn("severity-ranked findings", review_fat_model)
+        self.assertNotIn("assertNumQueries", review_fat_model)
 
         api_order = module.dddjango_developer_instructions(
             ROOT,
@@ -1582,11 +1642,11 @@ index 83db48f..f735c2d 100644
         )
 
         for instructions in [api_order, implementation_coupon]:
-            self.assertIn("Keep under 900 words", instructions)
-            self.assertIn("no full domain model", instructions)
-            self.assertIn("only critical code", instructions)
+            self.assertNotIn("Keep under 900 words", instructions)
+            self.assertNotIn("no full domain model", instructions)
+            self.assertNotIn("only critical code", instructions)
 
-        self.assertIn("Keep under 700 words", implementation_coupon)
+        self.assertNotIn("Keep under 700 words", implementation_coupon)
         self.assertNotIn("architecture-implementation-patterns/SKILL.md", implementation_coupon)
 
     def test_run_prompts_scopes_benchmark_and_trigger_cases_from_answer_key(self):
@@ -1615,7 +1675,9 @@ index 83db48f..f735c2d 100644
         self.assertIn("Read only", api_instructions)
         self.assertIn("request: HttpRequest", api_instructions)
         self.assertIn("explicit return type", api_instructions)
-        self.assertIn("Keep under 750 words", api_instructions)
+        self.assertIn("Keep the answer focused", api_instructions)
+        self.assertNotIn("Focus on:", api_instructions)
+        self.assertNotIn("Django Ninja Router와 Schema를 사용한다.", api_instructions)
         self.assertLess(len(api_instructions), len(module.dddjango_developer_instructions(ROOT)))
 
         negative_trigger = {
@@ -1630,12 +1692,7 @@ index 83db48f..f735c2d 100644
             case_id="trigger-negative-rust-function",
             case=negative_trigger,
         )
-        self.assertIn("Django/DDD를 끼워 넣지 않는다", negative_instructions)
-        self.assertIn("한국어로 답하되", negative_instructions)
-        self.assertIn("Do not complain about missing fixture paths", negative_instructions)
-        self.assertIn("파일이 없어도", negative_instructions)
-        self.assertIn("요청 기술 스택", negative_instructions)
-        self.assertNotIn("/skills/", negative_instructions)
+        self.assertEqual(negative_instructions, "")
 
         conflict_trigger = {
             "category": "trigger",
@@ -1650,9 +1707,7 @@ index 83db48f..f735c2d 100644
             case=conflict_trigger,
         )
 
-        self.assertIn("implementation-django-ninja/SKILL.md", conflict_instructions)
-        self.assertIn("Do not output DRF implementation code", conflict_instructions)
-        self.assertIn("produce no DRF code", conflict_instructions)
+        self.assertEqual(conflict_instructions, "")
 
         ambiguous_trigger = {
             "category": "trigger",
@@ -1667,8 +1722,23 @@ index 83db48f..f735c2d 100644
             case=ambiguous_trigger,
         )
 
-        self.assertIn("맥락이 불명확합니다", ambiguous_instructions)
-        self.assertIn("Django라면", ambiguous_instructions)
+        self.assertEqual(ambiguous_instructions, "")
+
+        legacy_conflict = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="trigger-conflict-drf-viewset",
+            case=conflict_trigger,
+            allow_generation_hints=True,
+        )
+        legacy_ambiguous = module.dddjango_developer_instructions(
+            ROOT,
+            case_id="trigger-ambiguous-service-layer",
+            case=ambiguous_trigger,
+            allow_generation_hints=True,
+        )
+
+        self.assertIn("Do not output DRF implementation code", legacy_conflict)
+        self.assertIn("맥락이 불명확합니다", legacy_ambiguous)
 
     def test_run_prompts_builds_reference_ceiling_instructions(self):
         module = load_module(RUN_SCRIPT_PATH)
@@ -1703,6 +1773,26 @@ index 83db48f..f735c2d 100644
         self.assertIn("input-filtering.md", oracle)
         self.assertIn("Do not use answer keys", oracle)
         self.assertNotIn("answer-key", oracle)
+
+    def test_run_prompts_does_not_inject_local_skills_for_plugin_real_variant(self):
+        module = load_module(RUN_SCRIPT_PATH)
+        case = {
+            "case_id": "trigger-positive-ninja-order-api",
+            "category": "trigger",
+            "trigger_type": "positive",
+            "prompt": "Django Ninja로 주문 생성 API를 설계해줘.",
+            "expectations": ["korean_first", "django_ninja_compliance"],
+            "scoring_focus": ["Django Ninja Router를 사용한다."],
+        }
+
+        instructions = module.developer_instructions_for_variant(
+            ROOT,
+            "dddjango-plugin",
+            "trigger-positive-ninja-order-api",
+            case,
+        )
+
+        self.assertEqual(instructions, "")
 
     def test_run_prompts_loads_answer_keys_for_iteration_metadata(self):
         module = load_module(RUN_SCRIPT_PATH)
@@ -1782,11 +1872,7 @@ index 83db48f..f735c2d 100644
             developer_instruction_args = [
                 part for part in commands[0] if part.startswith("developer_instructions=")
             ]
-            self.assertEqual(len(developer_instruction_args), 1)
-            developer_instruction = json.loads(
-                developer_instruction_args[0].split("=", 1)[1]
-            )
-            self.assertIn("Django/DDD를 끼워 넣지 않는다", developer_instruction)
+            self.assertEqual(developer_instruction_args, [])
 
     def test_run_prompts_records_timeout_and_keeps_going(self):
         module = load_module(RUN_SCRIPT_PATH)
