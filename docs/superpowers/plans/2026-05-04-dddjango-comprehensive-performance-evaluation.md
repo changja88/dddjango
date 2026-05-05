@@ -22,7 +22,7 @@
 | Phase 5 | Done | usability/manual review 체계 추가 | `evals/shared/rubrics/usability-checklist.md` |
 | Phase 6 | Done | real repo forward test 구성 | `evals/fixtures/django-shop`, `workspace/codex-eval/real-repo-1/report.html` |
 | Phase 7 | Codex Done / Claude Blocked | Codex/Claude full benchmark 반복 측정 | `workspace/codex-eval/benchmark-repeat-summary/report.html`, Claude auth blocker |
-| Phase 8 | Pending | marketplace/fresh install 검증 | release install log, README 검증 |
+| Phase 8 | Codex Done / Claude Blocked | marketplace/fresh install 검증 | Codex temp `CODEX_HOME` install log, README 검증 |
 | Phase 9 | Pending | beta 사용자 평가 | feedback summary, regression cases |
 | Phase 10 | Pending | 운영 회귀 체계 고정 | smoke/full release gate |
 
@@ -328,6 +328,24 @@
   - 평균 time gate `+30%` 이하는 통과했다. 다만 `benchmark-6` 단일 반복은 `+32.16%`로 경계값을 넘었으므로 release gate에서는 평균과 outlier를 함께 본다.
   - Quality lift는 3회 평균 `+3.92%`로 기존 `+15%` gate에는 미달한다. 하지만 dddjango는 모든 category 평균에서 baseline보다 높고, manual usability 및 real-repo patch test는 통과권이다.
   - 다음 단계는 fresh install/release gate를 검증하고, `tdd`, `clean-code`의 낮은 lift를 다음 개선 backlog로 분리하는 것이다.
+
+## Fresh Install Verification
+
+- 평가 일자: 2026-05-05
+- 목적: 사용자 개인 Codex 설정을 건드리지 않고 published Git-backed marketplace 등록이 가능한지 확인한다.
+- Codex local marketplace check:
+  - command: `CODEX_HOME=/private/tmp/dddjango-fresh-codex-home.opzHl0 codex plugin marketplace add .`
+  - result: `Added marketplace dddjango-local from /Users/hyun/Desktop/dddjango.`
+- Codex remote marketplace check:
+  - command: `CODEX_HOME=/private/tmp/dddjango-remote-codex-home.O5Uwsd codex plugin marketplace add changja88/dddjango --ref v0.1.7`
+  - result: `Added marketplace dddjango-local from https://github.com/changja88/dddjango.git#v0.1.7.`
+  - installed root: `/private/tmp/dddjango-remote-codex-home.O5Uwsd/.tmp/marketplaces/dddjango-local`
+  - verified manifest: `plugins/dddjango/.codex-plugin/plugin.json` version `0.1.7`
+  - verified marketplace path: `.agents/plugins/marketplace.json` points to `./plugins/dddjango`
+- Current interpretation:
+  - Codex Git-backed marketplace registration is verified for release tag `v0.1.7`.
+  - Codex CLI currently exposes marketplace add/upgrade/remove. Actual plugin selection still happens in the Codex plugin UI after marketplace registration.
+  - Claude fresh install remains blocked until Claude billing/auth is available.
 
 ## File Responsibilities
 
@@ -868,7 +886,7 @@ duration increase = +21.72%
 - Read: `.claude-plugin/marketplace.json`
 - Read: `README.md`
 
-- [ ] **Step 1: Codex fresh install을 검증한다**
+- [x] **Step 1: Codex fresh install을 검증한다**
 
 Run from a disposable profile:
 
@@ -880,6 +898,13 @@ Expected:
 
 ```text
 dddjango marketplace가 추가되고 설치 가능해야 한다.
+```
+
+Observed:
+
+```text
+임시 CODEX_HOME에서 changja88/dddjango --ref v0.1.7 marketplace add 성공
+plugins/dddjango/.codex-plugin/plugin.json version = 0.1.7
 ```
 
 - [ ] **Step 2: Claude fresh install을 검증한다**
@@ -898,7 +923,7 @@ Expected:
 manifest validation 통과, marketplace 추가, install 성공
 ```
 
-- [ ] **Step 3: README 설치 명령을 실제 명령과 맞춘다**
+- [x] **Step 3: README 설치 명령을 실제 명령과 맞춘다**
 
 Check:
 
