@@ -7,7 +7,10 @@ description: >
   Django code. Covers Django 5.x/LTS 5.2, project structure, model design,
   QuerySet optimization, CBV/FBV, signals, caching, security, testing, and
   service layer patterns. Use for any Django code task, even small changes
-  like adding a model field. For API endpoints use implementation-django-ninja;
+  like adding a model field. Also use for operational migrations such as
+  adding payment/order status columns, backfills, NOT NULL/default rollouts,
+  indexes, and constraints; those answers must start with query/workload
+  patterns before migration steps. For API endpoints use implementation-django-ninja;
   for templates/static/TemplateView use implementation-django-web; for Python
   conventions use implementation-python; for clean code use
   implementation-cleancode; for architecture patterns use
@@ -32,6 +35,18 @@ architecture-api에 위임한다.
 **DRF(Django REST Framework)는 사용하지 않는다. API 구현에는 Django Ninja를
 사용한다.** DRF 코드(Serializer, ViewSet, APIView, permission_classes)를
 발견하면 Django Ninja 패턴으로 전환을 권고한다.
+
+**상태 컬럼 migration low-freedom rule.** 결제/주문 상태 컬럼, 인덱스,
+제약조건, 운영 마이그레이션을 묻는 답변은 첫 줄을 반드시
+`**조회 패턴 / 워크로드**`로 시작한다. 그 첫 섹션 안에
+`filter(status=...).order_by("-created_at")` 같은 대표 쿼리 패턴을 먼저
+쓴 뒤, expand → backfill → contract 절차를 설명한다.
+
+**모호한 Django 적용 가드.** 사용자가 Django 프로젝트라고 명시하지 않은
+일반 설계 질문에는 첫 문장에서 "맥락이 불명확하므로 Django 프로젝트라는
+가정하에 답합니다." 또는 "프로젝트가 Django라면..."처럼 조건을 밝힌다.
+명확히 다른 언어/프레임워크 요청이면 Django, Django Ninja, DDD, dddjango
+관련 스킬 참조를 붙이지 않는다.
 
 **기준 요구사항 — 모든 모드에 적용:**
 - Django의 설계 철학을 따른다: Loose Coupling, Less Code, DRY,
@@ -103,6 +118,12 @@ implementation-django-ninja에 위임한다. 기존 코드에서 DRF 코드를
 **시그널.** 시그널은 디버깅을 어렵게 만드는 보이지 않는 결합을 생성한다 — 직접 결합이 불가능할 때만 사용해야 한다. 서드파티 모델 훅이나 순환 의존성 해소에만 시그널을 사용한다. 같은 앱의 로직에는 `save()` 오버라이드나 서비스 함수를 선호한다.
 
 **마이그레이션.** 마이그레이션은 배포 산출물이다 — 작고, 리뷰되고, 테스트된 마이그레이션이 프로덕션 인시던트를 방지한다. 마이그레이션을 작게 유지한다. `sqlmigrate`로 생성된 SQL을 확인한다. 데이터 마이그레이션에서 `apps.get_model()`을 사용한다. 무중단 배포를 위해: nullable 컬럼 추가 → 백필 → 제약조건 추가.
+컬럼 추가, 인덱스, 제약조건, 결제/주문 상태 마이그레이션을 설명할 때는 답변
+첫 줄을 **조회 패턴 / 워크로드**로 시작한다. 예: 관리자 목록 조회,
+`filter(status=...).order_by("-created_at")`, 사용자별 대기 결제 조회처럼
+실제 쿼리 패턴을 먼저 적고, 그 다음 expand → backfill → contract 절차와
+인덱스/제약조건을 설명한다. 단독 인덱스 여부는 테이블 구조가 아니라 조회
+패턴과 `EXPLAIN` 기준으로 결정한다.
 
 **성능.** 최적화 전에 프로파일링한다 — 조기 최적화는 측정 가능한 이점 없이 복잡성을 추가한다. `save(update_fields=...)`로 변경된 필드만 업데이트한다. 원자적 카운터 업데이트와 동시 필드 수정(재고, 조회수, 잔액)에 `F()` 표현식을 사용하여 레이스 컨디션을 방지한다. queryset 불리언 평가 대신 `exists()`, `len()` 대신 `count()`를 사용한다. 테스트에서 `assertNumQueries`를 사용한다. 추측이 아닌 프로파일링 기반으로 데이터베이스 인덱스를 추가한다.
 

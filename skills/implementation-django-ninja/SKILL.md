@@ -9,7 +9,10 @@ description: >
   Django REST Framework, Serializer, ModelSerializer, ViewSet, APIView,
   rest_framework, DefaultRouter, or SimpleRouter requests in this repo;
   those must be converted to Django Ninja Schema/Router instead of DRF.
-  DRF is not used. For Django core models/ORM/migrations/settings use
+  Also use for common API response standards, error response standards,
+  exception handlers, and validation errors; the standard is RFC 9457 Problem
+  Details with application/problem+json plus success envelopes using items
+  and meta, not custom {"error": {...}} as the standard. DRF is not used. For Django core models/ORM/migrations/settings use
   implementation-django; for REST design use architecture-api.
 ---
 
@@ -25,6 +28,23 @@ dataclasses, async)은 implementation-python에 위임한다. Django 웹 페이�
 **DRF(Django REST Framework)는 사용하지 않는다.** 모든 API 코드는
 Django Ninja로 구현한다. DRF 코드(Serializer, ViewSet, APIView,
 permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고한다.
+
+**API 응답 표준 low-freedom rule.** 사용자가 공통 에러 응답, API 응답 표준,
+error standard, validation error, exception handler를 요청하면 반드시
+RFC 9457 Problem Details와 `application/problem+json`을 사용한다.
+`{"error": {"code": ..., "message": ...}}`를 표준안으로 제안하지 않는다.
+응답 표준 요청에는 성공 목록 응답 예시도 함께 포함하고, 그 예시는 반드시
+`items`와 `meta` 키를 가진다.
+
+응답의 첫 30줄 안에는 반드시 다음 네 단어/표현이 모두 보여야 한다:
+`Problem Details`, `application/problem+json`, `items`, `meta`.
+
+**모호한 API 요청 가드.** 사용자가 Django, Django Ninja, Python 프로젝트라는
+맥락을 명시하지 않고 "API 구조", "엔드포인트", "서비스 레이어"처럼 일반적인
+질문만 하면 첫 문장을 반드시 "맥락이 불명확하므로 Django/Django Ninja
+프로젝트라는 가정하에 답합니다." 또는 "프로젝트가 Django라면..."처럼 쓴다.
+FastAPI, Flask, Node, Rust, SQL-only처럼 명확히 다른 기술이면 Django Ninja,
+DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
 
 **DRF 요청 override — 낮은 자유도 규칙:** 사용자가 DRF를 명시적으로
 요청해도 DRF 코드를 생성하지 않는다. `rest_framework`, `Serializer`,
@@ -50,6 +70,13 @@ permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고�
 5. 실행하지 못했다는 검증 고지와 사용자가 실행할 명령. API 코드를
    제시했다면 최소한 `python manage.py check`와 `pytest` 또는
    `python manage.py test` 중 하나를 포함한다.
+
+에러/응답 표준 fallback은 위 일반 파일 목록보다 우선한다. 이때 산출물에는
+반드시 다음 두 조각이 모두 있어야 한다:
+1. `ProblemDetail` 또는 `problem_response()` 코드와
+   `application/problem+json` content type.
+2. 정상 목록 응답 envelope 예시:
+   `{"items": [...], "meta": {"limit": 20, "offset": 0, "total": 100}}`.
 
 **기준 요구사항 — 모든 모드에 적용:**
 - 모든 요청/응답 검증에 Pydantic Schema를 사용한다. DRF Serializer를
@@ -164,11 +191,26 @@ null 필터 값을 건너뛰려면 `ignore_none=True`를 사용한다.
 `RFC 9457 Problem Details`로 정의하고 실제 응답 `Content-Type` 또는 테스트
 assertion에 `application/problem+json`을 포함한다.
 
+**API 표준화 응답은 envelope까지 함께 제시한다.** 공통 API 표준, 에러 표준,
+응답 포맷 표준을 설계할 때는 에러만 보여주지 말고 정상 목록 응답의
+`items/meta` envelope 예시도 함께 포함한다. 예:
+`{"items": [...], "meta": {"limit": 20, "offset": 0, "total": 100}}`.
+Problem Details는 에러 전용이고, 목록/검색 성공 응답은 `items/meta`로
+일관성을 맞춘다.
+이 규칙은 선택 사항이 아니다. 에러 표준 응답에서 `Problem Details`,
+`application/problem+json`, `items`, `meta` 네 단어가 모두 보여야 한다.
+
 **에러 처리.** 커스텀 에러 응답에 `@api.exception_handler()`를 사용한다.
 단순 에러에 `HttpError(status, message)`를 사용한다. 모든 API 에러에
 RFC 9457 Problem Details 형식을 반환한다. Problem Details 응답은
 `application/problem+json`으로 내려가도록 `create_response()` 또는 response
 객체의 content type을 명시하고, 테스트에서 이를 검증한다.
+
+**Django Ninja 테스트 작성.** `ninja.testing.TestClient` 또는
+`TestAsyncClient` 예시를 제시할 때는 정상, 인증/권한 실패, validation 실패,
+경계/엣지 케이스를 모두 포함한다. 목록 API면 pagination shape와 query count,
+생성 API면 빈 items, 수량 0, 중복/멱등성, 재고 부족 같은 경계 조건을 최소
+하나 이상 테스트한다.
 
 **트랜잭션과 멱등성 실패 응답.** `transaction.atomic()` 안에서 재고 부족,
 결제 실패 같은 실패 응답을 저장한 직후 예외를 다시 raise하면 rollback으로

@@ -10,7 +10,9 @@ description: >
   or choosing a primary key. Covers conceptual/logical/physical
   modeling, normalization, denormalization tradeoffs, B+Tree indexes,
   transaction isolation, EXPLAIN ANALYZE, hierarchy/inheritance, and
-  polymorphic modeling. Focuses on general RDB principles. For Django
+  polymorphic modeling. Also use for payment/order status columns, backfill
+  strategy, NOT NULL/default rollouts, and index/constraint changes; answer
+  query/workload patterns first before schema or migration steps. Focuses on general RDB principles. For Django
   ORM code use implementation-django; for domain modeling use
   architecture-ddd; for REST API design use architecture-api.
 ---
@@ -31,6 +33,14 @@ description: >
 - 모든 테이블에는 명확한 기본키가 필요하다. 자연키 후보가 없으면 대리키를
   선호한다.
 - 인덱스 설계는 테이블 구조가 아닌 쿼리 워크로드를 따른다.
+- 인덱스, 마이그레이션, 상태 컬럼, 결제/주문 테이블 설계를 답할 때는 첫
+  40줄 안에 **조회 패턴 / 쿼리 패턴 / 워크로드**를 먼저 적는다. 예:
+  `filter(status=...).order_by("-created_at")`, 관리자 목록 조회, 사용자별
+  미완료 결제 조회, 정산 배치 조회. 그 다음 스키마, 제약조건, 인덱스,
+  트랜잭션 절차를 제안한다.
+- 결제/주문 상태 컬럼 migration 답변은 첫 줄을 반드시
+  `**조회 패턴 / 워크로드**`로 시작한다. 운영 절차나 nullable 컬럼 설명이
+  그보다 먼저 나오면 안 된다.
 
 아래 섹션에서 다루는 주제를 작업할 때는 링크된 참조 파일을 읽고 상세한
 규칙과 예시를 확인한다.

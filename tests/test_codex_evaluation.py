@@ -1742,7 +1742,9 @@ index 83db48f..f735c2d 100644
             case=conflict_trigger,
         )
 
-        self.assertEqual(conflict_instructions, "")
+        self.assertIn("implementation-django-ninja/SKILL.md", conflict_instructions)
+        self.assertIn("produce no DRF code", conflict_instructions)
+        self.assertNotIn("Focus on:", conflict_instructions)
 
         ambiguous_trigger = {
             "category": "trigger",
@@ -1757,7 +1759,13 @@ index 83db48f..f735c2d 100644
             case=ambiguous_trigger,
         )
 
-        self.assertEqual(ambiguous_instructions, "")
+        self.assertIn(
+            "architecture-implementation-patterns/SKILL.md",
+            ambiguous_instructions,
+        )
+        self.assertIn("implementation-django/SKILL.md", ambiguous_instructions)
+        self.assertIn("Keep the answer focused", ambiguous_instructions)
+        self.assertNotIn("맥락이 불명확합니다", ambiguous_instructions)
 
         legacy_conflict = module.dddjango_developer_instructions(
             ROOT,

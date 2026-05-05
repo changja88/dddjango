@@ -4,9 +4,12 @@ description: >
   This skill should be used when the user asks to "write clean code",
   "review code quality", "refactor for readability", "apply SOLID principles",
   "reduce complexity", or when any code writing, review, or refactoring task
-  is happening. The principles here are language-agnostic. If code is being
-  generated, modified, reviewed, or refactored, these principles apply.
-  For Python-specific conventions, see implementation-python.
+  is happening in a Python, Django, or Django-adjacent project. The principles
+  here are language-agnostic, but this dddjango distribution should not attach
+  itself to clearly unrelated languages or frameworks such as Rust, Node,
+  React, shell, or SQL-only tasks unless the user explicitly asks for dddjango
+  or Python/Django clean-code guidance. For Python-specific conventions, see
+  implementation-python.
 ---
 
 # Clean Code 원칙
@@ -22,6 +25,12 @@ description: >
 두 가지 근본 원인은 통제되지 않는 **의존성**과 **불명확성**이다.
 
 Python 관련 컨벤션(타입 힌트, dataclasses, match/case, 데코레이터, asyncio)은 implementation-python을 참조한다.
+
+**범위 가드.** 요청이 Rust, Node, React, shell, SQL-only, data analysis처럼
+명확히 Python/Django와 무관하면 dddjango 관점, Django, DDD, 관련 스킬 참조를
+붙이지 않는다. 해당 언어/도구의 일반 관례만 간결하게 답한다. 모호한 경우에는
+"맥락이 불명확하므로 Python/Django 프로젝트라면..."처럼 조건을 먼저 밝히고
+강하게 적용하지 않는다.
 
 ## 세 가지 핵심 원칙
 1. 모든 이름은 의도를 드러낸다 — 변수를 설명하는 주석이 필요하면 이름을 바꿔라.

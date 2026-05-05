@@ -102,6 +102,11 @@ gateway를 분리할 경계와 transaction 적용 지점을 명시한다.
 `ReserveInventoryResult`처럼 유스케이스 이름이 드러나는 결과 타입을 반드시
 GREEN 코드에 포함한다. bool, tuple, dict, 문자열 에러코드만 반환하지 않는다.
 
+**API endpoint 테스트 산출물.** Django Ninja `TestClient`나 pytest endpoint
+표준을 다룰 때도 경계/엣지 케이스를 명시한다. 최소 테스트 세트는 정상,
+validation 실패, 인증/권한 실패, 경계값(빈 items, 수량 0, 최대 수량,
+중복/멱등 요청 중 하나)을 포함한다.
+
 적용할 핵심 원칙:
 
 **Red-Green-Refactor 사이클.** 모든 기능은 실패하는 테스트로 시작한다.

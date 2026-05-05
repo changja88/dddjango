@@ -4,16 +4,15 @@ description: >
   Use when the user asks to apply hexagonal, clean, onion, layered
   architecture, ports/adapters, CQRS, event sourcing, repository, unit
   of work, data mapper, outbox, dependency injection, DIP, anti-corruption
-  layer, or legacy migration. Korean triggers include 헥사고날 적용,
-  프로젝트 구조, 레이어 분리, 의존성 역전, CQRS, 이벤트 소싱. Use for
-  architecture pattern selection, dependency direction, and infrastructure
-  abstraction, including where repository interfaces belong. Covers
-  hexagonal/clean/onion/layered styles, CQRS, event sourcing, persistence
-  patterns, and integration patterns. If the request includes domain nouns
-  such as order/payment/ecommerce plus architecture, also use
-  architecture-ddd so aggregates, value objects, domain events, and bounded
-  contexts are not missed. For Django specifics use implementation-django;
-  for DB use architecture-db; for REST API use architecture-api.
+  layer, or legacy migration. Korean triggers include 헥사고날 적용, 프로젝트
+  구조, 레이어 분리, 의존성 역전, CQRS, 이벤트 소싱. Use for pattern
+  selection, dependency direction, infrastructure abstraction, and repository
+  interface ownership. If order/payment/ecommerce domain nouns appear with
+  architecture, also use architecture-ddd. For Django specifics use
+  implementation-django; for DB use architecture-db; for REST API use
+  architecture-api. For ambiguous service layer or project structure questions,
+  say the context is unclear or that the answer assumes Django before applying
+  Django/dddjango guidance.
 ---
 
 # 아키텍처 구현 패턴
@@ -34,6 +33,11 @@ implementation-django-ninja에 위임한다. 클린 코드 원칙(SOLID, 네이�
   (소유권 역전).
 - 현재 복잡도를 처리할 수 있는 가장 단순한 패턴을 선택한다. 단순한 CRUD에는
   레이어드 아키텍처로 충분하다; 모든 곳에 헥사고날을 강제하지 않는다.
+- 서비스 레이어 위치, 프로젝트 구조, 레이어 분리처럼 프레임워크가 명확하지
+  않은 질문은 첫 문장에 반드시 "맥락이 불명확하므로 ..." 또는
+  "Django 프로젝트라는 가정하에 ..."를 포함한다. `serializers.py` 같은 DRF
+  암시 파일명은 쓰지 않는다. Django API 예시가 필요하면 `api.py`,
+  `schemas.py`, `services.py`, `selectors.py`를 사용한다.
 
 아래 섹션에서 다루는 주제를 작업할 때는 링크된 참조 파일을 읽고 상세한
 컨벤션과 코드 예시를 확인한다.

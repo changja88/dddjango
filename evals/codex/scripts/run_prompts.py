@@ -294,7 +294,13 @@ def inferred_skill_names_for_case(case_id, case=None):
     if "domain" in prompt or "도메인" in prompt:
         skill_names.extend(["architecture-ddd", "architecture-implementation-patterns"])
     if "service layer" in prompt or "서비스 레이어" in prompt:
-        skill_names.extend(["architecture-ddd", "implementation-django"])
+        skill_names.extend(
+            [
+                "architecture-ddd",
+                "architecture-implementation-patterns",
+                "implementation-django",
+            ]
+        )
     if "clean" in prompt or "클린" in prompt:
         skill_names.extend(["architecture-implementation-patterns", "implementation-cleancode"])
     if case_requests_drf(case):
@@ -407,7 +413,11 @@ def scoped_dddjango_developer_instructions(
     *,
     allow_generation_hints=False,
 ):
-    if case and case.get("category") == "trigger" and not allow_generation_hints:
+    if (
+        case
+        and case.get("trigger_type") == "negative"
+        and not allow_generation_hints
+    ):
         return ""
     if case and case.get("trigger_type") == "negative" and allow_generation_hints:
         return non_dddjango_negative_developer_instructions()
@@ -463,7 +473,11 @@ def skill_core_only_developer_instructions(
     *,
     allow_generation_hints=False,
 ):
-    if case and case.get("category") == "trigger" and not allow_generation_hints:
+    if (
+        case
+        and case.get("trigger_type") == "negative"
+        and not allow_generation_hints
+    ):
         return ""
     if case and case.get("trigger_type") == "negative" and allow_generation_hints:
         return non_dddjango_negative_developer_instructions()
@@ -500,7 +514,11 @@ def oracle_reference_developer_instructions(
     *,
     allow_generation_hints=False,
 ):
-    if case and case.get("category") == "trigger" and not allow_generation_hints:
+    if (
+        case
+        and case.get("trigger_type") == "negative"
+        and not allow_generation_hints
+    ):
         return ""
     if case and case.get("trigger_type") == "negative" and allow_generation_hints:
         return non_dddjango_negative_developer_instructions()

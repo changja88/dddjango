@@ -9,6 +9,7 @@
 - [x] `dddjango` variant에만 들어가던 `scoring_focus` 기반 `Focus on:` 지시를 기본 비활성화한다.
 - [x] legacy 디버깅용으로만 `--allow-generation-hints`를 둔다.
 - [x] positive/negative/ambiguous/conflict trigger 케이스에서 `trigger_type` 기반 정답 행동 주입을 기본 제거한다.
+- [x] skill-unit trigger 평가는 positive/ambiguous/conflict에만 로컬 `SKILL.md` 경로를 주입하고, negative trigger는 계속 격리한다. 이는 정답 힌트가 아니라 실제 스킬 적용 가능성을 측정하기 위한 입력이다.
 
 ## Phase 2: Skill-unit과 Plugin-real 분리
 
@@ -38,3 +39,11 @@
 ## Current Decision
 
 현재까지의 dddjango 점수는 스킬 유효성 신호로는 참고하되, 최종 배포 성능 판단은 보정된 `plugin-real` 평가 이후에 한다.
+
+## 2026-05-05 Targeted Fix Result
+
+- 범위: `trigger-negative-rust-function`, `trigger-positive-migration-transaction`, `trigger-positive-ninja-error-standard`, `trigger-positive-ninja-test-client`, `trigger-ambiguous-api-structure`, `trigger-ambiguous-service-layer`.
+- 원인: 로컬 `dddjango` skill-unit trigger 평가가 positive/ambiguous 케이스에도 스킬 경로를 주입하지 않아, 스킬 수정이 타깃 재측정에 반영되지 않았다.
+- 조치: `run_prompts.py`에서 negative trigger만 격리하고, positive/ambiguous/conflict trigger는 case metadata 기반 관련 스킬을 읽도록 수정했다.
+- 스킬 보강: migration은 조회 패턴 우선, Ninja 에러 표준은 RFC 9457 Problem Details와 `items/meta` envelope, ambiguous service layer는 맥락/가정 고지를 metadata와 초반 규칙에 반영했다.
+- 결과: targeted local conformance `100.00`, required rule pass rate `100.00`, critical violations `0`, forbidden patterns `0`.
