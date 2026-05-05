@@ -1,0 +1,69 @@
+{
+  "samples": [
+    {
+      "id": "cal-c01-good-drf-rejection",
+      "case_id": "c01-drf-order-api",
+      "variant": "with-dddjango",
+      "path": "samples/c01-good-drf-rejection.md",
+      "expected_gate_status": "pass",
+      "min_score": 80,
+      "required_pass_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "cal-c01-bad-drf-code",
+      "case_id": "c01-drf-order-api",
+      "variant": "without-dddjango",
+      "path": "samples/c01-bad-drf-code.md",
+      "expected_gate_status": "fail",
+      "max_score": 59,
+      "required_fail_gates": [
+        "no_drf"
+      ]
+    },
+    {
+      "id": "cal-c03-good-korean-tdd",
+      "case_id": "c03-tdd-coupon-policy",
+      "variant": "with-dddjango",
+      "path": "samples/c03-good-korean-tdd.md",
+      "expected_gate_status": "pass",
+      "min_score": 75,
+      "required_pass_gates": [
+        "tdd_red_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "cal-t02-good-fastapi",
+      "case_id": "t02-fastapi-no-contamination",
+      "variant": "without-dddjango",
+      "path": "samples/t02-good-fastapi.md",
+      "expected_gate_status": "pass",
+      "min_score": 70
+    },
+    {
+      "id": "cal-t02-bad-django-contamination",
+      "case_id": "t02-fastapi-no-contamination",
+      "variant": "with-dddjango",
+      "path": "samples/t02-bad-django-contamination.md",
+      "expected_gate_status": "fail",
+      "max_score": 59,
+      "required_fail_gates": [
+        "case_forbidden_patterns"
+      ]
+    },
+    {
+      "id": "cal-m01-good-problem-details",
+      "case_id": "m01-ninja-error-standard",
+      "variant": "with-dddjango",
+      "path": "samples/m01-good-problem-details.md",
+      "expected_gate_status": "pass",
+      "min_score": 80
+    }
+  ]
+}

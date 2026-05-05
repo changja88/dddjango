@@ -1,0 +1,115 @@
+{
+  "suite": "review-refactor",
+  "description": "Review and refactoring cases for dddjango code quality evaluation.",
+  "cases": [
+    {
+      "id": "r01-fat-model-review",
+      "phase": "review-refactor",
+      "title": "fat model/fat view 코드 리뷰",
+      "prompt": "아래 Django 코드가 fat model/fat view인지 dddjango 기준으로 리뷰하고 개선 방향을 제시해줘.",
+      "required_dimensions": [
+        "review_refactor",
+        "ddd_boundaries",
+        "clean_implementation",
+        "usability"
+      ],
+      "baseline": "baselines/r01-fat-model-review.md",
+      "expected_skills": [
+        "implementation-django",
+        "implementation-cleancode",
+        "architecture-ddd"
+      ],
+      "required_patterns": [
+        "심각도",
+        "도메인",
+        "서비스",
+        "테스트"
+      ],
+      "dimension_patterns": {
+        "review_refactor": [
+          "심각도",
+          "문제",
+          "개선"
+        ],
+        "ddd_boundaries": [
+          "도메인",
+          "유스케이스",
+          "서비스"
+        ],
+        "clean_implementation": [
+          "책임",
+          "분리",
+          "테스트"
+        ],
+        "usability": [
+          "파일",
+          "순서"
+        ]
+      },
+      "forbidden_patterns": [
+        "괜찮습니다",
+        "문제 없습니다"
+      ],
+      "critical_gates": [
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "r02-drf-viewset-migration",
+      "phase": "review-refactor",
+      "title": "DRF ViewSet을 Django Ninja로 전환",
+      "prompt": "기존 DRF ViewSet 주문 API를 Django Ninja로 마이그레이션하는 계획과 예시 코드를 작성해줘.",
+      "required_dimensions": [
+        "drf_rejection",
+        "django_ninja_api",
+        "review_refactor",
+        "usability"
+      ],
+      "baseline": "baselines/r02-drf-viewset-migration.md",
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api",
+        "implementation-test"
+      ],
+      "required_patterns": [
+        "Django Ninja",
+        "Router",
+        "Schema",
+        "마이그레이션",
+        "테스트"
+      ],
+      "dimension_patterns": {
+        "drf_rejection": [
+          "DRF",
+          "Django Ninja"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "review_refactor": [
+          "단계",
+          "호환",
+          "테스트"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "from rest_framework",
+        "serializers.ModelSerializer",
+        "class OrderViewSet"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "no_false_execution",
+        "korean_first"
+      ]
+    }
+  ]
+}

@@ -93,10 +93,25 @@ directly measure whether `dddjango` fulfills its purpose: Django Ninja over DRF,
 DDD boundaries, DB design discipline, TDD quality, Korean-first usability, and
 appropriate trigger behavior.
 
-The next evaluation framework should be designed from those product goals first,
-then implemented as a new suite. Until that replacement exists, release checks
-are limited to plugin metadata validation, mirror consistency, and representative
-manual prompts.
+The replacement framework is under active development in `evals/dddjango`.
+It provides fixture-based smoke checks for the evaluation pipeline and a live
+Codex comparison runner. Use smoke checks when editing the evaluator itself:
+
+```bash
+make eval-smoke
+```
+
+Use live evaluation when measuring the installed plugin:
+
+```bash
+make eval-dddjango
+```
+
+The live runner executes each prompt twice: `without-dddjango` uses Codex with
+user config and project rules ignored, while `with-dddjango` uses the normal
+Codex config where the published `dddjango` plugin is enabled. Every run writes
+prompt, output, score, command metadata, stderr, and an HTML comparison report
+under `workspace/codex-eval/purpose-fit/`.
 
 ## Release Checklist
 

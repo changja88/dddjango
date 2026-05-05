@@ -1,0 +1,101 @@
+{
+  "suite": "reference-maximum",
+  "description": "Reference maximum checks for detailed dddjango rules.",
+  "cases": [
+    {
+      "id": "m01-ninja-error-standard",
+      "phase": "reference-maximum",
+      "title": "Django Ninja error standard",
+      "prompt": "Django Ninja API 공통 에러 응답 표준을 dddjango 기준으로 설계해줘.",
+      "required_dimensions": [
+        "reference_usage",
+        "django_ninja_api",
+        "usability"
+      ],
+      "baseline": "baselines/m01-ninja-error-standard.md",
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api"
+      ],
+      "required_patterns": [
+        "Problem Details",
+        "application/problem+json",
+        "items",
+        "meta",
+        "response={"
+      ],
+      "dimension_patterns": {
+        "reference_usage": [
+          "Problem Details",
+          "application/problem+json",
+          "items",
+          "meta"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "{\"error\"",
+        "from rest_framework"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "m02-ddd-aggregate-boundary",
+      "phase": "reference-maximum",
+      "title": "DDD aggregate boundary",
+      "prompt": "주문과 결제의 애그리거트 경계를 dddjango reference 기준으로 검토해줘.",
+      "required_dimensions": [
+        "reference_usage",
+        "ddd_boundaries",
+        "usability"
+      ],
+      "baseline": "baselines/m02-ddd-aggregate-boundary.md",
+      "expected_skills": [
+        "architecture-ddd"
+      ],
+      "required_patterns": [
+        "불변식",
+        "작은 애그리거트",
+        "ID",
+        "도메인 이벤트"
+      ],
+      "dimension_patterns": {
+        "reference_usage": [
+          "불변식",
+          "작은 애그리거트",
+          "ID",
+          "최종 일관성"
+        ],
+        "ddd_boundaries": [
+          "애그리거트",
+          "값 객체",
+          "도메인 이벤트"
+        ],
+        "usability": [
+          "판단",
+          "근거"
+        ]
+      },
+      "forbidden_patterns": [
+        "하나의 거대한 애그리거트"
+      ],
+      "critical_gates": [
+        "no_false_execution",
+        "korean_first"
+      ]
+    }
+  ]
+}

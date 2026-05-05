@@ -1,0 +1,291 @@
+{
+  "suite": "core-policy",
+  "description": "Core policy cases for the dddjango purpose-fit evaluation.",
+  "cases": [
+    {
+      "id": "c01-drf-order-api",
+      "phase": "core-policy",
+      "title": "DRF 요청을 Django Ninja로 전환",
+      "prompt": "DRF ViewSet으로 주문 생성 API를 만들어줘.",
+      "required_dimensions": [
+        "drf_rejection",
+        "django_ninja_api",
+        "usability"
+      ],
+      "baseline": "baselines/c01-drf-order-api.md",
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api"
+      ],
+      "required_patterns": [
+        "이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다",
+        "Router",
+        "Schema",
+        "response={"
+      ],
+      "dimension_patterns": {
+        "drf_rejection": [
+          "DRF",
+          "Django Ninja"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "usability": [
+          "python manage.py check",
+          "pytest"
+        ]
+      },
+      "forbidden_patterns": [
+        "from rest_framework",
+        "serializers.ModelSerializer",
+        "class OrderViewSet",
+        "class OrderAPIView"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "c02-ninja-order-create",
+      "phase": "core-policy",
+      "title": "Django Ninja 주문 생성 API 설계",
+      "prompt": "Django Ninja로 주문 생성 API를 DDD 기준에 맞게 설계해줘.",
+      "required_dimensions": [
+        "django_ninja_api",
+        "ddd_boundaries",
+        "db_transaction",
+        "usability"
+      ],
+      "baseline": "baselines/c02-ninja-order-create.md",
+      "expected_skills": [
+        "architecture-ddd",
+        "architecture-db",
+        "implementation-django-ninja"
+      ],
+      "required_patterns": [
+        "Router",
+        "Schema",
+        "response={",
+        "애그리거트",
+        "transaction"
+      ],
+      "dimension_patterns": {
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "ddd_boundaries": [
+          "애그리거트",
+          "도메인 서비스",
+          "유스케이스"
+        ],
+        "db_transaction": [
+          "transaction",
+          "idempotency",
+          "unique"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "from rest_framework",
+        "serializers.ModelSerializer",
+        "ViewSet",
+        "class OrderAPIView"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "no_false_execution",
+        "korean_first",
+        "domain_logic_outside_router"
+      ]
+    },
+    {
+      "id": "c03-tdd-coupon-policy",
+      "phase": "core-policy",
+      "title": "할인 쿠폰 정책 TDD 구현",
+      "prompt": "pytest와 TDD로 할인 쿠폰 정책을 구현해줘. 정상, 경계, 실패, 중복 사용 케이스가 필요해.",
+      "required_dimensions": [
+        "tdd_pytest",
+        "ddd_boundaries",
+        "clean_implementation",
+        "usability"
+      ],
+      "baseline": "baselines/c03-tdd-coupon-policy.md",
+      "expected_skills": [
+        "implementation-tdd",
+        "implementation-test",
+        "architecture-ddd"
+      ],
+      "required_patterns": [
+        "RED",
+        "GREEN",
+        "REFACTOR",
+        "pytest",
+        "Result"
+      ],
+      "dimension_patterns": {
+        "tdd_pytest": [
+          "RED",
+          "GREEN",
+          "REFACTOR",
+          "pytest",
+          "중복"
+        ],
+        "ddd_boundaries": [
+          "값 객체",
+          "도메인 예외",
+          "유스케이스"
+        ],
+        "clean_implementation": [
+          "값 객체",
+          "도메인 예외",
+          "Result"
+        ],
+        "usability": [
+          "pytest",
+          "실행"
+        ]
+      },
+      "forbidden_patterns": [
+        "테스트는 나중에",
+        "bool을 반환",
+        "dict로 에러"
+      ],
+      "critical_gates": [
+        "tdd_red_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "c04-order-state-domain",
+      "phase": "core-policy",
+      "title": "주문 상태 전이 도메인 모델 설계",
+      "prompt": "주문 상태 전이를 DDD 기준으로 설계해줘. 결제 완료, 배송 시작, 취소 실패 조건이 있어.",
+      "required_dimensions": [
+        "ddd_boundaries",
+        "db_transaction",
+        "clean_implementation",
+        "usability"
+      ],
+      "baseline": "baselines/c04-order-state-domain.md",
+      "expected_skills": [
+        "architecture-ddd",
+        "architecture-db",
+        "implementation-python"
+      ],
+      "required_patterns": [
+        "애그리거트",
+        "상태 전이",
+        "불변식",
+        "도메인 이벤트"
+      ],
+      "dimension_patterns": {
+        "ddd_boundaries": [
+          "애그리거트",
+          "불변식",
+          "도메인 이벤트",
+          "값 객체"
+        ],
+        "db_transaction": [
+          "transaction",
+          "locking",
+          "version"
+        ],
+        "clean_implementation": [
+          "Enum",
+          "Result",
+          "예외"
+        ],
+        "usability": [
+          "검증",
+          "테스트"
+        ]
+      },
+      "forbidden_patterns": [
+        "status = request.POST",
+        "router에서 상태 변경"
+      ],
+      "critical_gates": [
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "c05-inventory-reservation",
+      "phase": "core-policy",
+      "title": "인벤토리 예약과 동시성 설계",
+      "prompt": "주문 생성 시 재고 예약을 설계해줘. 동시 주문, 중복 요청, 롤백을 고려해야 해.",
+      "required_dimensions": [
+        "db_transaction",
+        "ddd_boundaries",
+        "tdd_pytest",
+        "usability"
+      ],
+      "baseline": "baselines/c05-inventory-reservation.md",
+      "expected_skills": [
+        "architecture-db",
+        "architecture-ddd",
+        "implementation-tdd"
+      ],
+      "required_patterns": [
+        "transaction",
+        "idempotency",
+        "pytest"
+      ],
+      "alternative_pattern_groups": [
+        {
+          "label": "concurrency_control",
+          "patterns": [
+            "select_for_update",
+            "optimistic locking",
+            "version",
+            "unique"
+          ]
+        }
+      ],
+      "dimension_patterns": {
+        "db_transaction": [
+          "transaction",
+          "select_for_update",
+          "idempotency",
+          "unique"
+        ],
+        "ddd_boundaries": [
+          "재고 예약",
+          "애그리거트",
+          "도메인 이벤트"
+        ],
+        "tdd_pytest": [
+          "pytest",
+          "동시",
+          "중복",
+          "롤백"
+        ],
+        "usability": [
+          "검증",
+          "실행"
+        ]
+      },
+      "forbidden_patterns": [
+        "락은 필요 없다",
+        "중복 요청은 무시해도 된다"
+      ],
+      "critical_gates": [
+        "no_false_execution",
+        "korean_first"
+      ]
+    }
+  ]
+}

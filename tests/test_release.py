@@ -60,14 +60,20 @@ class FileUpdateTests(unittest.TestCase):
         self.assertEqual(plugin["source"]["path"], "./plugins/dddjango")
         self.assertTrue((ROOT / "plugins/dddjango/.codex-plugin/plugin.json").exists())
 
-    def test_makefile_defines_release_targets_only(self):
+    def test_makefile_defines_release_and_purpose_fit_eval_targets(self):
         makefile = (ROOT / "Makefile").read_text()
 
         for required in [
             "# 플러그인 버전을 올리고",
             "# 릴리즈 자동화와 스킬 mirror 동기화",
+            "# dddjango 평가 파이프라인이 동작하는지",
+            "# dddjango를 설치하지 않은 Codex와 설치한 Codex를 같은 prompt",
+            "# 가장 최근 dddjango 평가 결과",
             "release:",
             "test-release:",
+            "eval-smoke:",
+            "eval-dddjango:",
+            "eval-report:",
         ]:
             with self.subTest(required=required):
                 self.assertIn(required, makefile)
@@ -80,7 +86,6 @@ class FileUpdateTests(unittest.TestCase):
             "eval-release-gate:",
             "eval-init:",
             "eval-run:",
-            "eval-report:",
             "eval-gate:",
             "smoke-eval:",
             "full-eval:",

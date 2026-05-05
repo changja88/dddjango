@@ -1,0 +1,68 @@
+{
+  "trigger_accuracy": {
+    "label": "Trigger Accuracy",
+    "weight": 10,
+    "max_score": 100,
+    "description": "Requests activate the appropriate dddjango skill behavior without contaminating unrelated tasks."
+  },
+  "drf_rejection": {
+    "label": "DRF Rejection",
+    "weight": 15,
+    "max_score": 100,
+    "description": "DRF requests are redirected to Django Ninja without generating DRF code."
+  },
+  "django_ninja_api": {
+    "label": "Django Ninja API",
+    "weight": 15,
+    "max_score": 100,
+    "description": "API outputs use Django Ninja Router, Schema, response mappings, and the dddjango error standard."
+  },
+  "ddd_boundaries": {
+    "label": "DDD Boundaries",
+    "weight": 15,
+    "max_score": 100,
+    "description": "Domain boundaries, aggregate rules, value objects, and domain services are placed outside routers and views."
+  },
+  "db_transaction": {
+    "label": "DB/Transaction",
+    "weight": 10,
+    "max_score": 100,
+    "description": "Database constraints, indexes, transaction boundaries, locking, and idempotency are handled explicitly."
+  },
+  "tdd_pytest": {
+    "label": "TDD/Pytest",
+    "weight": 10,
+    "max_score": 100,
+    "description": "TDD requests produce RED/GREEN/REFACTOR flow and pytest cases for normal, boundary, failure, and idempotency behavior."
+  },
+  "clean_implementation": {
+    "label": "Clean Implementation",
+    "weight": 10,
+    "max_score": 100,
+    "description": "Outputs are maintainable, typed, explicit about errors, and avoid unnecessary abstraction."
+  },
+  "review_refactor": {
+    "label": "Review/Refactor",
+    "weight": 5,
+    "max_score": 100,
+    "description": "Review outputs identify high-impact issues and connect fixes to dddjango principles."
+  },
+  "subagent_workflow": {
+    "label": "Subagent Workflow",
+    "weight": 5,
+    "max_score": 100,
+    "description": "Composite work is decomposed into roles with handoff contracts and sequential fallback."
+  },
+  "reference_usage": {
+    "label": "Reference Usage",
+    "weight": 5,
+    "max_score": 100,
+    "description": "Specific rules from dddjango references appear in the output when relevant."
+  },
+  "usability": {
+    "label": "Usability",
+    "weight": 10,
+    "max_score": 100,
+    "description": "Korean-first answers are concrete, runnable, and clear about unexecuted validation."
+  }
+}

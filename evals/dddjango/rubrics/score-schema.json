@@ -1,0 +1,26 @@
+{
+  "required_fields": [
+    "case_id",
+    "variant",
+    "total_score",
+    "score_kind",
+    "automatic_confidence",
+    "manual_required",
+    "gate_status",
+    "dimension_scores",
+    "signal_results",
+    "structural_checks",
+    "gate_results",
+    "rationale",
+    "artifact"
+  ],
+  "variants": [
+    "baseline",
+    "without-dddjango",
+    "with-dddjango"
+  ],
+  "score_range": {
+    "minimum": 0,
+    "maximum": 100
+  }
+}

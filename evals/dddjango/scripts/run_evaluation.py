@@ -1,0 +1,334 @@
+#!/usr/bin/env python3
+"""Create dddjango purpose-fit evaluation runs."""
+
+from __future__ import annotations
+
+import argparse
+import os
+import subprocess
+import time
+from pathlib import Path
+
+from eval_lib import ROOT, VARIANTS, WORKSPACE_ROOT, load_cases, make_run_id, write_json
+
+
+def fixture_output(case: dict, variant: str) -> str:
+    if variant == "without-dddjango":
+        return "\n".join(
+            [
+                f"# {case['title']} - without dddjango fixture",
+                "",
+                "이 출력은 평가 파이프라인 검증용 fixture입니다.",
+                "일반적인 답변은 핵심 dddjango 규칙 일부를 놓칠 수 있습니다.",
+                "",
+                "예시:",
+                "from rest_framework import serializers",
+                "class OrderSerializer(serializers.ModelSerializer):",
+                "    pass",
+                "",
+                "테스트와 검증은 별도로 실행해야 합니다.",
+                "",
+            ]
+        )
+
+    required = case.get("required_patterns", [])
+    dimension_patterns = []
+    for patterns in case.get("dimension_patterns", {}).values():
+        dimension_patterns.extend(patterns)
+    signals = list(dict.fromkeys(required + dimension_patterns))
+    dimensions = set(case.get("required_dimensions", []))
+    lines = [
+        f"# {case['title']} - with dddjango fixture",
+        "",
+        "이 출력은 평가 파이프라인 검증용 fixture입니다.",
+        "실제 테스트는 실행하지 않았습니다. 실행할 명령을 함께 제시합니다.",
+        "",
+    ]
+    if "drf_rejection" in dimensions or "django_ninja_api" in dimensions:
+        lines.extend(
+            [
+                "이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.",
+                "",
+                "## Django Ninja 예시",
+                "```python",
+                "from ninja import Router, Schema",
+                "",
+                "router = Router()",
+                "",
+                "class OrderIn(Schema):",
+                "    pass",
+                "",
+                "class OrderOut(Schema):",
+                "    pass",
+                "",
+                "class ProblemDetail(Schema):",
+                "    pass",
+                "",
+                "@router.post('/orders', response={201: OrderOut, 400: ProblemDetail})",
+                "def create_order(request, payload: OrderIn):",
+                "    pass",
+                "```",
+                "",
+            ]
+        )
+    if "subagent_workflow" in dimensions:
+        lines.extend(
+            [
+                "## Role Map",
+                "- Coordinator",
+                "- Domain Agent",
+                "- DB Agent",
+                "- API Agent",
+                "- Test Agent",
+                "- Review Agent",
+                "",
+                "## Handoff Contract",
+                "- Scope",
+                "- Inputs Used",
+                "- Decisions",
+                "- Files",
+                "- Risks",
+                "- Required Follow-up",
+                "",
+                "## Integration Checklist",
+                "- 순차 실행 fallback",
+                "- conflict priority",
+                "",
+            ]
+        )
+    if "reference_usage" in dimensions:
+        lines.extend(
+            [
+                "## Reference Signals",
+                "- Problem Details",
+                "- application/problem+json",
+                "- items",
+                "- meta",
+                "- 작은 애그리거트",
+                "- 최종 일관성",
+                "",
+            ]
+        )
+    lines.append("## 주요 산출물")
+    if "tdd_pytest" in dimensions:
+        lines.extend(["- RED", "- GREEN", "- REFACTOR", "- pytest"])
+    if "ddd_boundaries" in dimensions:
+        lines.extend(["- 애그리거트", "- 값 객체", "- 도메인 서비스", "- 유스케이스", "- 도메인 이벤트"])
+    if "db_transaction" in dimensions:
+        lines.extend(["- transaction", "- select_for_update", "- idempotency", "- unique", "- locking", "- version"])
+    if "clean_implementation" in dimensions:
+        lines.extend(["- 중복", "- 함수", "- 책임", "- 분리", "- 테스트", "- Result"])
+    if "trigger_accuracy" in dimensions and case["id"].startswith("t02"):
+        lines.extend(["- FastAPI", "- 검증", "- 테스트"])
+    if "trigger_accuracy" in dimensions and case["id"].startswith("t03"):
+        lines.extend(["- Python", "- 리팩터링", "- 변경", "- 검증"])
+    if "trigger_accuracy" in dimensions and case["id"].startswith("t04"):
+        lines.extend(["- PostgreSQL", "- SQL", "- 인덱스", "- EXPLAIN", "- 쿼리", "- 검증", "- 주의"])
+    if "trigger_accuracy" in dimensions and case["id"].startswith("t05"):
+        lines.extend(["- Django", "- template", "- view", "- context", "- 파일", "- 검증"])
+    lines.extend(
+        [
+            "",
+            "## 케이스 신호",
+            "\n".join(f"- {signal}" for signal in signals),
+            "",
+            "## 검증 명령",
+            "- python manage.py check",
+            "- pytest",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def live_prompt(case: dict) -> str:
+    return "\n".join(
+        [
+            "이 작업은 플러그인 성능 평가입니다.",
+            "파일을 생성하거나 수정하지 말고, 최종 답변만 작성하세요.",
+            "답변은 사용자가 바로 실행하거나 검토할 수 있는 수준으로 구체적으로 작성하세요.",
+            "",
+            "사용자 요청:",
+            case["prompt"],
+            "",
+        ]
+    )
+
+
+def codex_command(*, variant: str, output_path: Path, work_dir: Path) -> list[str]:
+    command = [
+        os.environ.get("CODEX_BIN", "codex"),
+        "--ask-for-approval",
+        "never",
+        "exec",
+        "--ephemeral",
+        "--sandbox",
+        "read-only",
+        "--color",
+        "never",
+        "-C",
+        str(work_dir),
+        "-o",
+        str(output_path),
+    ]
+    model = os.environ.get("DDDJANGO_EVAL_MODEL")
+    if model:
+        command.extend(["--model", model])
+    if variant == "without-dddjango":
+        command.extend(["--ignore-user-config", "--ignore-rules"])
+    command.append("-")
+    return command
+
+
+def run_live_case(case: dict, variant: str, run_dir: Path) -> dict:
+    output_path = run_dir / "outputs" / f"{case['id']}.{variant}.md"
+    stderr_path = run_dir / "artifacts" / f"{case['id']}.{variant}.stderr.txt"
+    work_dir = run_dir / "workspaces" / variant / case["id"]
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    prompt = live_prompt(case)
+    command = codex_command(variant=variant, output_path=output_path, work_dir=work_dir)
+    timeout = int(os.environ.get("DDDJANGO_EVAL_TIMEOUT", "900"))
+    started = time.time()
+    try:
+        result = subprocess.run(
+            command,
+            input=prompt,
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+        )
+        stdout = result.stdout
+        stderr = result.stderr
+        exit_status = result.returncode
+    except subprocess.TimeoutExpired as exc:
+        stdout = (exc.stdout or "") if isinstance(exc.stdout, str) else ""
+        stderr = (exc.stderr or "") if isinstance(exc.stderr, str) else ""
+        stderr = (stderr + f"\nTimed out after {timeout} seconds.\n").lstrip()
+        exit_status = 124
+    except OSError as exc:
+        stdout = ""
+        stderr = str(exc)
+        exit_status = 127
+    elapsed = round(time.time() - started, 3)
+    stderr_path.write_text(stderr)
+
+    if not output_path.exists() or not output_path.read_text().strip():
+        output_path.write_text(
+            "\n".join(
+                [
+                    "# Codex live execution failed",
+                    "",
+                    f"case: {case['id']}",
+                    f"variant: {variant}",
+                    f"exit_status: {exit_status}",
+                    "",
+                    "## stdout",
+                    stdout.strip(),
+                    "",
+                    "## stderr",
+                    stderr.strip(),
+                    "",
+                ]
+            )
+        )
+
+    return {
+        "case_id": case["id"],
+        "variant": variant,
+        "command": command,
+        "work_dir": str(work_dir),
+        "output": str(output_path.relative_to(run_dir)),
+        "stderr": str(stderr_path.relative_to(run_dir)),
+        "exit_status": exit_status,
+        "elapsed_seconds": elapsed,
+        "timeout_seconds": timeout,
+    }
+
+
+def create_run(*, suite: str | None, case_id: str | None, variant: str | None, mode: str) -> Path:
+    cases = load_cases(suite)
+    if case_id:
+        cases = [case for case in cases if case["id"] == case_id]
+    if not cases:
+        raise ValueError("No cases matched the requested filters.")
+
+    variants = [variant] if variant else list(VARIANTS)
+    run_id = make_run_id()
+    run_dir = WORKSPACE_ROOT / run_id
+    (run_dir / "outputs").mkdir(parents=True, exist_ok=True)
+    (run_dir / "scores").mkdir(parents=True, exist_ok=True)
+    (run_dir / "artifacts").mkdir(parents=True, exist_ok=True)
+
+    metadata = {
+        "run_id": run_id,
+        "mode": mode,
+        "suite": suite,
+        "case_id": case_id,
+        "variants": variants,
+        "case_count": len(cases),
+        "codex_version": codex_version(),
+        "plugin_version": plugin_version(),
+        "execution": [],
+    }
+    write_json(run_dir / "metadata.json", metadata)
+
+    for case in cases:
+        (run_dir / "prompts" / f"{case['id']}.md").parent.mkdir(parents=True, exist_ok=True)
+        prompt = live_prompt(case) if mode == "live" else case["prompt"] + "\n"
+        (run_dir / "prompts" / f"{case['id']}.md").write_text(prompt)
+        for selected_variant in variants:
+            if mode == "live":
+                metadata["execution"].append(run_live_case(case, selected_variant, run_dir))
+                write_json(run_dir / "metadata.json", metadata)
+            else:
+                output = fixture_output(case, selected_variant)
+                (run_dir / "outputs" / f"{case['id']}.{selected_variant}.md").write_text(output)
+
+    return run_dir
+
+
+def codex_version() -> str:
+    try:
+        result = subprocess.run(
+            [os.environ.get("CODEX_BIN", "codex"), "--version"],
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return "unknown"
+    return (result.stdout or result.stderr).strip() or "unknown"
+
+
+def plugin_version() -> str:
+    plugin_path = ROOT / ".codex-plugin/plugin.json"
+    if not plugin_path.exists():
+        return "unknown"
+    import json
+
+    return str(json.loads(plugin_path.read_text()).get("version", "unknown"))
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--suite")
+    parser.add_argument("--case")
+    parser.add_argument("--variant", choices=VARIANTS)
+    parser.add_argument("--mode", choices=["fixture", "live"], default="fixture")
+    args = parser.parse_args()
+
+    run_dir = create_run(
+        suite=args.suite,
+        case_id=args.case,
+        variant=args.variant,
+        mode=args.mode,
+    )
+    print(f"평가 run 생성 완료: {run_dir}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

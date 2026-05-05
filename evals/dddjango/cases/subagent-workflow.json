@@ -1,0 +1,72 @@
+{
+  "suite": "subagent-workflow",
+  "description": "Role-decomposed workflow cases for complex dddjango work.",
+  "cases": [
+    {
+      "id": "s01-order-feature-role-map",
+      "phase": "subagent-workflow",
+      "title": "복합 주문 기능 역할 분해",
+      "prompt": "복잡한 주문 생성 기능을 dddjango subagents 방식으로 역할 분해해서 진행 계획을 세워줘.",
+      "required_dimensions": [
+        "subagent_workflow",
+        "ddd_boundaries",
+        "db_transaction",
+        "django_ninja_api",
+        "tdd_pytest",
+        "usability"
+      ],
+      "baseline": "baselines/s01-order-feature-role-map.md",
+      "expected_skills": [
+        "workflow-dddjango-subagents",
+        "architecture-ddd",
+        "architecture-db",
+        "implementation-django-ninja",
+        "implementation-tdd"
+      ],
+      "required_patterns": [
+        "Role Map",
+        "Handoff Contract",
+        "Integration Checklist",
+        "순차 실행"
+      ],
+      "dimension_patterns": {
+        "subagent_workflow": [
+          "Role Map",
+          "Handoff Contract",
+          "Integration Checklist",
+          "순차 실행"
+        ],
+        "ddd_boundaries": [
+          "Domain Agent",
+          "애그리거트"
+        ],
+        "db_transaction": [
+          "DB Agent",
+          "transaction"
+        ],
+        "django_ninja_api": [
+          "API Agent",
+          "Router",
+          "response={"
+        ],
+        "tdd_pytest": [
+          "Test Agent",
+          "pytest"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "subagent 실행 완료",
+        "서브 에이전트 실행 완료"
+      ],
+      "critical_gates": [
+        "no_false_subagents",
+        "no_false_execution",
+        "korean_first"
+      ]
+    }
+  ]
+}
