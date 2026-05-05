@@ -88,3 +88,16 @@
 - Residual follow-up:
   - `trigger-negative-data-analysis`: trigger는 통과했지만 `관련 스킬 참조`에 `dddjango:implementation-python`이 붙어 strict `no_django_contamination` conformance rule에서 실패했다.
   - `trigger-positive-ninja-error-standard`: Problem Details와 `items/meta`는 포함했지만 `Schema` 탐지 규칙 하나가 미통과했다.
+
+## 2026-05-05 Residual Local Fix Result
+
+- 범위: published plugin-real `v0.1.8`에서 남은 두 잔여 케이스의 local skill-unit 재측정.
+- 수정:
+  - `implementation-python`: pandas/CSV/일반 스크립트/데이터 분석처럼 명확히 비-Django Python 작업이면 Django/DDD/dddjango 언급과 `dddjango:` 접두 관련 스킬 참조를 금지했다.
+  - `implementation-django-ninja`: 공통 에러 표준 산출물에 `ProblemDetail(Schema)`, `Router`, `@router.get/post`, `api.add_router()`, `response={...: ProblemDetail}`, `application/problem+json`, `items/meta`를 모두 포함하도록 low-freedom rule을 보강했다.
+- Command:
+  - `python3 evals/codex/scripts/run_prompts.py --iteration workspace/codex-eval/targeted-residual-1 --variant dddjango --case trigger-negative-data-analysis --keep-going`
+  - `python3 evals/codex/scripts/run_prompts.py --iteration workspace/codex-eval/targeted-residual-1 --variant dddjango --case trigger-positive-ninja-error-standard --keep-going`
+  - `python3 evals/codex/scripts/grade_conformance.py workspace/codex-eval/targeted-residual-1`
+- Result: local targeted conformance `100.00`, required rule pass rate `100.00`, critical violations `0`, forbidden patterns `0`.
+- Note: public Codex plugin에 반영하려면 다음 patch release 후 `plugin-real` 재측정이 필요하다.

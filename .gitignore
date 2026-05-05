@@ -26,6 +26,7 @@ workspace/**/real-repo-work/
 workspace/codex-eval/benchmark-latest/
 workspace/codex-eval/plugin-real-*/
 workspace/codex-eval/targeted-fix*/
+workspace/codex-eval/targeted-residual-*/
 
 # Editor swap/backup
 *.bak

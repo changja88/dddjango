@@ -35,6 +35,13 @@ RFC 9457 Problem Details와 `application/problem+json`을 사용한다.
 `{"error": {"code": ..., "message": ...}}`를 표준안으로 제안하지 않는다.
 응답 표준 요청에는 성공 목록 응답 예시도 함께 포함하고, 그 예시는 반드시
 `items`와 `meta` 키를 가진다.
+또한 첫 코드 블록에는 반드시 `from ninja import NinjaAPI, Router, Schema`,
+`class ProblemDetail(Schema):`, `class ErrorCode(str, Enum):` 또는 동등한
+에러 코드 Enum, `@api.exception_handler(...)`, 그리고
+`response={400: ProblemDetail, 404: ProblemDetail, 409: ProblemDetail, 422: ProblemDetail}`
+형태의 상태 코드별 응답 스키마 매핑을 포함한다. 예시 엔드포인트는
+`router = Router()`, `@router.get(...)`, `api.add_router(...)` 구조로 쓴다.
+`ProblemDetail`을 dict나 dataclass만으로 제시하지 않는다.
 
 응답의 첫 30줄 안에는 반드시 다음 네 단어/표현이 모두 보여야 한다:
 `Problem Details`, `application/problem+json`, `items`, `meta`.
@@ -73,10 +80,14 @@ DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
 
 에러/응답 표준 fallback은 위 일반 파일 목록보다 우선한다. 이때 산출물에는
 반드시 다음 두 조각이 모두 있어야 한다:
-1. `ProblemDetail` 또는 `problem_response()` 코드와
-   `application/problem+json` content type.
+1. `ProblemDetail(Schema)` 코드, `problem_response()` 코드,
+   `application/problem+json` content type, `@api.exception_handler(...)`.
 2. 정상 목록 응답 envelope 예시:
    `{"items": [...], "meta": {"limit": 20, "offset": 0, "total": 100}}`.
+3. `response={400: ProblemDetail, 404: ProblemDetail, 409: ProblemDetail, 422: ProblemDetail}`
+   같은 상태 코드별 응답 스키마 매핑 예시.
+4. `router = Router()`, `@router.get(...)`, `api.add_router(...)`를 포함한
+   실제 Router 합성 예시.
 
 **기준 요구사항 — 모든 모드에 적용:**
 - 모든 요청/응답 검증에 Pydantic Schema를 사용한다. DRF Serializer를
@@ -205,6 +216,10 @@ Problem Details는 에러 전용이고, 목록/검색 성공 응답은 `items/me
 RFC 9457 Problem Details 형식을 반환한다. Problem Details 응답은
 `application/problem+json`으로 내려가도록 `create_response()` 또는 response
 객체의 content type을 명시하고, 테스트에서 이를 검증한다.
+공통 에러 표준을 작성할 때는 `from ninja import Schema`를 import하고
+`class ProblemDetail(Schema)`를 직접 정의한다. 에러 응답 스키마는
+엔드포인트의 `response={...}` 매핑에도 연결한다. 예시 endpoint는
+`Router`에 붙이고 마지막에 `api.add_router()`로 합성한다.
 
 **Django Ninja 테스트 작성.** `ninja.testing.TestClient` 또는
 `TestAsyncClient` 예시를 제시할 때는 정상, 인증/권한 실패, validation 실패,
@@ -382,6 +397,8 @@ django-ninja-extra: 클래스 기반 뷰를 위한 @api_controller, 권한
 - [ ] sync endpoint는 `request: HttpRequest`, return type, `from django.http import HttpRequest`
 - [ ] `from typing import list` 금지. Python 3.10+는 `list[Schema]`, 레거시는 `List[Schema]`
 - [ ] 에러는 RFC 9457 Problem Details (`application/problem+json`, HttpError + exception_handler)
+- [ ] 공통 에러 표준 요청이면 `ProblemDetail(Schema)`와 `response={...: ProblemDetail}` 예시 포함
+- [ ] 공통 에러 표준 예시도 `Router`, `@router.get/post`, `api.add_router()` 포함
 - [ ] 비멱등 POST에 Idempotency-Key 헤더 또는 DB UNIQUE 제약 + IntegrityError 캐치
 - [ ] `transaction.atomic()` 안에서 저장한 실패 응답이 rollback으로 사라지지 않게 처리
 

@@ -45,6 +45,14 @@ implementation-cleancode에 위임한다.
 사용자는 현재 작업 후 어떤 스킬을 호출해야 하는지 모르는 경우가
 많으므로, 관련 스킬 참조가 워크플로우의 자연스러운 연결을 만든다.
 
+**비-Django Python 정밀도 가드.** 사용자가 pandas, CSV, 일반 스크립트,
+데이터 분석, 알고리즘처럼 Django/DDD와 무관한 Python 작업을 요청하면
+Django, DDD, dddjango, 클린 아키텍처 관점으로 끌고 가지 않는다. 이런
+응답의 관련 스킬 참조에는 `dddjango:` 접두사를 쓰지 말고, 필요한 경우
+`implementation-python`, `implementation-test`, `implementation-cleancode`
+처럼 스킬 이름만 적는다. 명확히 비-Django 작업이면 Django 관련 스킬을
+추천하지 않는다.
+
 ALWAYS use this exact template for the closing section:
 ```
 ---
@@ -69,6 +77,7 @@ ALWAYS use this exact template for the closing section:
 - [ ] 응답 첫 섹션은 `## [주요 내용]` 헤더로 시작 (한국어)
 - [ ] 응답 마지막에 `## [관련 스킬 참조]` 섹션
 - [ ] 모든 응답 한국어로
+- [ ] 비-Django Python 작업이면 Django/DDD/dddjango 언급과 `dddjango:` 접두 참조 없음
 
 ### 작성/리뷰/리팩토링 공통
 - [ ] 도메인 카테고리 문자열(genre, status, category 등)은 Enum/StrEnum으로 추출
