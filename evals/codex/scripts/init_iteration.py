@@ -5,12 +5,23 @@ import re
 from pathlib import Path
 
 
-VARIANTS = ("baseline", "dddjango")
+VARIANT_SETS = {
+    "standard": ("baseline", "dddjango"),
+    "reference-ceiling": (
+        "baseline",
+        "skill-core-only",
+        "dddjango",
+        "oracle-reference",
+    ),
+}
 ROOT = Path(__file__).resolve().parents[3]
 SUITES = {
     "smoke": ROOT / "evals/codex/cases/pilot.jsonl",
     "pilot": ROOT / "evals/codex/cases/pilot.jsonl",
     "benchmark": ROOT / "evals/shared/cases/benchmark.jsonl",
+    "hard-benchmark": ROOT / "evals/shared/cases/hard-benchmark.jsonl",
+    "targeted-rerun": ROOT / "evals/shared/cases/targeted-rerun.jsonl",
+    "conformance-rerun": ROOT / "evals/shared/cases/conformance-rerun.jsonl",
     "trigger": ROOT / "evals/shared/cases/trigger.jsonl",
     "real-repo": ROOT / "evals/shared/cases/real-repo.jsonl",
 }
@@ -39,7 +50,7 @@ def slug(value):
 
 def prompt_markdown(case, variant):
     fixture_context = ""
-    if case.get("fixture"):
+    if case.get("fixture") and case.get("fixture") != "none":
         fixture_context = (
             f"Fixture path: {ROOT / case['fixture']}\n"
             "Read the fixture files before proposing changes. "
@@ -141,7 +152,7 @@ def summary_markdown(cases):
     )
 
 
-def create_iteration(cases_path, schema_path, output_path):
+def create_iteration(cases_path, schema_path, output_path, variants=VARIANT_SETS["standard"]):
     cases = load_cases(cases_path)
     schema = load_schema(schema_path)
     output = Path(output_path)
@@ -151,7 +162,7 @@ def create_iteration(cases_path, schema_path, output_path):
     timing = []
     answer_key_dir = output / "answer-key"
     answer_key_dir.mkdir(exist_ok=True)
-    for variant in VARIANTS:
+    for variant in variants:
         variant_dir = output / variant
         variant_dir.mkdir(exist_ok=True)
         for case in cases:
@@ -207,9 +218,20 @@ def main():
         default="workspace/codex-eval/iteration-1",
         help="Directory to create for this evaluation iteration.",
     )
+    parser.add_argument(
+        "--variant-set",
+        default="standard",
+        choices=sorted(VARIANT_SETS),
+        help="Prompt/grade variant set to generate.",
+    )
     args = parser.parse_args()
 
-    output = create_iteration(resolve_cases_path(args.cases, args.suite), args.schema, args.output)
+    output = create_iteration(
+        resolve_cases_path(args.cases, args.suite),
+        args.schema,
+        args.output,
+        variants=VARIANT_SETS[args.variant_set],
+    )
     print(f"created evaluation iteration: {output}")
     return 0
 

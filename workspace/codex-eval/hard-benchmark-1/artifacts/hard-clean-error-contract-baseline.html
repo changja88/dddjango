@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>hard-clean-error-contract baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>hard-clean-error-contract baseline</h1>
+    <div class="path">workspace/codex-eval/hard-benchmark-1/baseline/hard-clean-error-contract.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 디렉터리에 코드가 없어서 실제 패치 대신, Django Ninja 기준의 리팩터링 방향을 예시로 정리합니다.</p>
+<p>핵심 방향은 이겁니다.</p>
+<p><code>service -&gt; dict | None | &quot;ERROR_CODE&quot;</code> 구조를 버리고, application service는 성공 시 명시적인 결과 객체를 반환하고 실패 시 도메인/application 예외를 던지게 만듭니다. API layer는 성공 응답 조립만 맡고, 실패 응답은 Ninja exception handler가 일관되게 변환합니다.</p>
+<pre><code>
+app/
+  domain/
+    exceptions.py
+  application/
+    services.py
+    dto.py
+  api/
+    router.py
+    schemas.py
+    exception_handlers.py
+  tests/
+    application/
+    api/
+</code></pre>
+<p>예외는 문자열 코드 대신 타입으로 표현합니다.</p>
+<pre><code>
+# domain/exceptions.py
+
+class DomainError(Exception):
+    code = &quot;domain_error&quot;
+    status_code = 400
+
+    def __init__(self, message: str | None = None):
+        self.message = message or self.code
+        super().__init__(self.message)
+
+
+class OrderNotFound(DomainError):
+    code = &quot;order_not_found&quot;
+    status_code = 404
+
+
+class OrderAlreadyPaid(DomainError):
+    code = &quot;order_already_paid&quot;
+    status_code = 409
+</code></pre>
+<p>application service는 HTTP를 모르게 둡니다. <code>JsonResponse</code>, Ninja <code>Schema</code>, status code 같은 API 세부사항을 반환하지 않습니다.</p>
+<pre><code>
+# application/services.py
+
+from app.domain.exceptions import OrderAlreadyPaid, OrderNotFound
+from app.application.dto import PayOrderResult
+
+
+class PayOrderService:
+    def __init__(self, order_repository, payment_gateway):
+        self.order_repository = order_repository
+        self.payment_gateway = payment_gateway
+
+    def execute(self, order_id: int) -&gt; PayOrderResult:
+        order = self.order_repository.get_by_id(order_id)
+
+        if order is None:
+            raise OrderNotFound()
+
+        if order.is_paid:
+            raise OrderAlreadyPaid()
+
+        payment = self.payment_gateway.pay(order.total_price)
+        order.mark_paid(payment.transaction_id)
+        self.order_repository.save(order)
+
+        return PayOrderResult(
+            order_id=order.id,
+            transaction_id=payment.transaction_id,
+        )
+</code></pre>
+<pre><code>
+# application/dto.py
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class PayOrderResult:
+    order_id: int
+    transaction_id: str
+</code></pre>
+<p>API 코드는 성공 흐름만 남깁니다.</p>
+<pre><code>
+# api/router.py
+
+from ninja import Router
+from app.api.schemas import PayOrderResponse
+from app.application.services import PayOrderService
+
+router = Router()
+
+
+@router.post(&quot;/orders/{order_id}/pay&quot;, response={200: PayOrderResponse})
+def pay_order(request, order_id: int):
+    service = PayOrderService(
+        order_repository=request.app_state.order_repository,
+        payment_gateway=request.app_state.payment_gateway,
+    )
+
+    result = service.execute(order_id)
+
+    return PayOrderResponse(
+        order_id=result.order_id,
+        transaction_id=result.transaction_id,
+    )
+</code></pre>
+<p>Django Ninja의 exception handler에서 도메인 예외를 API 응답으로 바꿉니다.</p>
+<pre><code>
+# api/exception_handlers.py
+
+from ninja import NinjaAPI
+from app.domain.exceptions import DomainError
+
+
+def register_exception_handlers(api: NinjaAPI) -&gt; None:
+    @api.exception_handler(DomainError)
+    def handle_domain_error(request, exc: DomainError):
+        return api.create_response(
+            request,
+            {
+                &quot;code&quot;: exc.code,
+                &quot;message&quot;: exc.message,
+            },
+            status=exc.status_code,
+        )
+</code></pre>
+<pre><code>
+# api/__init__.py 또는 urls.py
+
+from ninja import NinjaAPI
+from app.api.exception_handlers import register_exception_handlers
+
+api = NinjaAPI()
+register_exception_handlers(api)
+</code></pre>
+<p>테스트는 세 층으로 나누는 게 좋습니다.</p>
+<p>서비스 테스트는 HTTP 없이 도메인/application 동작만 봅니다.</p>
+<pre><code>
+def test_pay_order_raises_when_order_not_found(order_repository, payment_gateway):
+    service = PayOrderService(order_repository, payment_gateway)
+
+    with pytest.raises(OrderNotFound):
+        service.execute(order_id=1)
+
+
+def test_pay_order_returns_result(order_repository, payment_gateway, unpaid_order):
+    order_repository.add(unpaid_order)
+
+    service = PayOrderService(order_repository, payment_gateway)
+
+    result = service.execute(order_id=unpaid_order.id)
+
+    assert result.order_id == unpaid_order.id
+    assert result.transaction_id
+</code></pre>
+<p>API 테스트는 예외가 응답으로 잘 변환되는지만 봅니다.</p>
+<pre><code>
+def test_pay_order_returns_404_when_order_not_found(client):
+    response = client.post(&quot;/api/orders/999/pay&quot;)
+
+    assert response.status_code == 404
+    assert response.json() == {
+        &quot;code&quot;: &quot;order_not_found&quot;,
+        &quot;message&quot;: &quot;order_not_found&quot;,
+    }
+</code></pre>
+<p>리팩터링 순서는 작게 가는 게 안전합니다.</p>
+<ul>
+<li>기존 문자열 에러코드별로 예외 클래스를 만든다.</li>
+<li>서비스 하나를 골라 <code>None | str</code> 반환을 <code>raise DomainError</code>로 바꾼다.</li>
+<li>API의 <code>if result is None</code>, <code>if result == &quot;...&quot;</code> 분기를 제거한다.</li>
+<li>Ninja exception handler를 등록한다.</li>
+<li>기존 API 테스트는 status/body 기준으로 유지하고, service 테스트는 예외 발생 기준으로 바꾼다.</li>
+<li>같은 패턴을 다른 service로 반복 적용한다.</li>
+</ul>
+<p>중요한 기준은 application service가 “요청 실패”를 반환값으로 숨기지 않는 것입니다. 실패는 예외 타입으로 드러내고, HTTP 표현은 API 경계에서 한 번만 처리하면 API 코드의 조건문이 크게 줄어듭니다.</p></article>
+  </main>
+</body>
+</html>

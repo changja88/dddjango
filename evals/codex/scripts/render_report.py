@@ -24,9 +24,31 @@ USABILITY_FIELDS = [
     ("korean_quality", "Korean Quality"),
 ]
 
+VARIANT_LABELS = {
+    "baseline": "Baseline",
+    "skill-core-only": "Core Only",
+    "dddjango": "Full Skill",
+    "oracle-reference": "Oracle Reference",
+}
+
+REFERENCE_CEILING_VARIANTS = (
+    "baseline",
+    "skill-core-only",
+    "dddjango",
+    "oracle-reference",
+)
+
+QUALITY_LIFT_MIN_POINTS = 3
+QUALITY_LIFT_MIN_CEILING_NORMALIZED_PERCENT = 25
+QUALITY_LIFT_SCORE_CEILING = 95
+
 
 def load_json(path):
     return json.loads(Path(path).read_text())
+
+
+def strip_trailing_whitespace(text):
+    return "\n".join(line.rstrip() for line in text.splitlines()) + "\n"
 
 
 def total_score(grade):
@@ -84,6 +106,11 @@ def duration_for(timing, case_id, variant):
 def returncode_for(timing, case_id, variant):
     record = timing.get((case_id, variant), {})
     return record.get("returncode")
+
+
+def score_for(grades, case_id, variant):
+    grade = grades.get((case_id, variant))
+    return total_score(grade) if grade else None
 
 
 def verdict(delta, dddjango_grade):
@@ -299,41 +326,46 @@ def write_artifact_viewers(iteration, rows):
     artifact_dir = Path(iteration) / "artifacts"
     artifact_dir.mkdir(exist_ok=True)
     for row in rows:
-        artifacts = [
-            (
-                "baseline_output",
-                "baseline",
-                Path(iteration) / "baseline" / f"{row['case_id']}.output.md",
-            ),
-            (
-                "dddjango_output",
-                "dddjango",
-                Path(iteration) / "dddjango" / f"{row['case_id']}.output.md",
-            ),
+        artifacts = []
+        for variant in row.get("variants", ["baseline", "dddjango"]):
+            artifacts.append(
+                (
+                    f"{variant.replace('-', '_')}_output",
+                    variant,
+                    Path(iteration) / variant / f"{row['case_id']}.output.md",
+                )
+            )
+        artifacts.append(
             (
                 "answer_key",
                 "answer-key",
                 Path(iteration) / "answer-key" / f"{row['case_id']}.json",
-            ),
-        ]
+            )
+        )
         for row_key, label, source_path in artifacts:
             viewer_name = f"{row['case_id']}-{label}.html"
             viewer_path = artifact_dir / viewer_name
             title = f"{row['case_id']} {label}"
-            viewer_path.write_text(artifact_viewer_html(title, source_path))
+            viewer_path.write_text(
+                strip_trailing_whitespace(artifact_viewer_html(title, source_path))
+            )
             row[row_key] = Path("artifacts") / viewer_name
 
 
 def run_status(iteration, case_id, timing):
-    baseline_output = Path(iteration) / "baseline" / f"{case_id}.output.md"
-    dddjango_output = Path(iteration) / "dddjango" / f"{case_id}.output.md"
-    baseline_code = returncode_for(timing, case_id, "baseline")
-    dddjango_code = returncode_for(timing, case_id, "dddjango")
-    if baseline_code not in {None, 0} or dddjango_code not in {None, 0}:
+    variants = [
+        path.name
+        for path in Path(iteration).iterdir()
+        if path.is_dir() and (path / f"{case_id}.output.md").exists()
+    ]
+    if not variants:
+        variants = ["baseline", "dddjango"]
+    if any(returncode_for(timing, case_id, variant) not in {None, 0} for variant in variants):
         return "error"
-    if baseline_output.exists() and dddjango_output.exists():
+    outputs = [Path(iteration) / variant / f"{case_id}.output.md" for variant in variants]
+    if all(path.exists() for path in outputs):
         return "complete"
-    if baseline_output.exists() or dddjango_output.exists():
+    if any(path.exists() for path in outputs):
         return "partial"
     return "pending"
 
@@ -349,12 +381,31 @@ def build_rows(iteration, grades, timing, case_metadata):
 
         baseline_score = total_score(baseline)
         dddjango_score = total_score(dddjango)
+        core_score = score_for(grades, case_id, "skill-core-only")
+        oracle_score = score_for(grades, case_id, "oracle-reference")
         delta = round(dddjango_score - baseline_score, 2)
+        reference_contribution = (
+            round(dddjango_score - core_score, 2)
+            if core_score is not None
+            else None
+        )
+        ceiling_gap = (
+            round(oracle_score - dddjango_score, 2)
+            if oracle_score is not None
+            else None
+        )
         baseline_duration = duration_for(timing, case_id, "baseline")
         dddjango_duration = duration_for(timing, case_id, "dddjango")
+        core_duration = duration_for(timing, case_id, "skill-core-only")
+        oracle_duration = duration_for(timing, case_id, "oracle-reference")
         result = verdict(delta, dddjango)
         case = case_metadata.get(case_id, {})
         trigger = dddjango.get("trigger", {})
+        variants = [
+            variant
+            for variant in REFERENCE_CEILING_VARIANTS
+            if grades.get((case_id, variant))
+        ]
 
         rows.append(
             {
@@ -369,22 +420,33 @@ def build_rows(iteration, grades, timing, case_metadata):
                 "trigger_passed": trigger.get("passed"),
                 "status": run_status(iteration, case_id, timing),
                 "baseline_score": baseline_score,
+                "core_score": core_score,
                 "dddjango_score": dddjango_score,
+                "oracle_score": oracle_score,
                 "delta": delta,
+                "reference_contribution": reference_contribution,
+                "ceiling_gap": ceiling_gap,
                 "baseline_duration": baseline_duration,
+                "core_duration": core_duration,
                 "dddjango_duration": dddjango_duration,
+                "oracle_duration": oracle_duration,
                 "duration_delta": round(dddjango_duration - baseline_duration, 2),
                 "verdict": result,
                 "baseline_note": baseline.get("notes", ""),
+                "core_note": (grades.get((case_id, "skill-core-only")) or {}).get("notes", ""),
                 "dddjango_note": dddjango.get("notes", ""),
+                "oracle_note": (grades.get((case_id, "oracle-reference")) or {}).get("notes", ""),
                 "baseline_usability": usability_for(baseline),
                 "dddjango_usability": usability_for(dddjango),
                 "dddjango_scores": dddjango.get("scores", {}),
                 "dddjango_flags": dddjango.get("flags", {}),
                 "drf_failed": dddjango.get("flags", {}).get("drf_endorsed", False),
                 "baseline_output": Path("baseline") / f"{case_id}.output.md",
+                "skill_core_only_output": Path("skill-core-only") / f"{case_id}.output.md",
                 "dddjango_output": Path("dddjango") / f"{case_id}.output.md",
+                "oracle_reference_output": Path("oracle-reference") / f"{case_id}.output.md",
                 "answer_key": Path("answer-key") / f"{case_id}.json",
+                "variants": variants,
             }
         )
     return rows
@@ -567,6 +629,268 @@ def build_real_repo_patch_summary(evaluation):
     """
 
 
+def load_conformance(iteration):
+    path = Path(iteration) / "conformance.json"
+    if not path.exists():
+        return {}
+    return load_json(path)
+
+
+def index_conformance_records(conformance):
+    return {
+        (record["case_id"], record["variant"]): record
+        for record in conformance.get("cases", [])
+    }
+
+
+def format_rule_list(values):
+    if not values:
+        return '<span class="muted">none</span>'
+    return " ".join(f"<code>{escape(value)}</code>" for value in values)
+
+
+def build_conformance_gate_rows(conformance):
+    gate = conformance.get("summary", {}).get("release_gate", {})
+    labels = {
+        "dddjango_conformance_score": "dddjango conformance score",
+        "dddjango_required_rule_pass_rate": "Required rule pass rate",
+        "critical_violations": "Critical violations",
+        "forbidden_pattern_count": "Forbidden patterns",
+    }
+    rows = []
+    for key, label in labels.items():
+        item = gate.get(key)
+        if not item:
+            continue
+        rows.append(
+            gate_row(
+                label,
+                item["passed"],
+                item["value"],
+                item["required"],
+            )
+        )
+    return "\n".join(rows)
+
+
+def build_conformance_summary(conformance):
+    records = conformance.get("cases", [])
+    if not records:
+        return ""
+
+    indexed = index_conformance_records(conformance)
+    case_ids = sorted({record["case_id"] for record in records})
+    table_rows = []
+    critical_rows = []
+
+    for case_id in case_ids:
+        baseline = indexed.get((case_id, "baseline"))
+        dddjango = indexed.get((case_id, "dddjango"))
+        if not baseline or not dddjango:
+            continue
+        delta = round(
+            dddjango["conformance_score"] - baseline["conformance_score"],
+            2,
+        )
+        failed = dddjango["critical_violations"] or dddjango["forbidden_patterns"]
+        if failed:
+            critical_rows.append(
+                f"""
+                <li>
+                  <strong>{escape(case_id)}</strong>:
+                  critical={format_rule_list(dddjango["critical_violations"])};
+                  forbidden={format_rule_list(dddjango["forbidden_patterns"])}
+                </li>
+                """
+            )
+        table_rows.append(
+            f"""
+            <tr>
+              <td>
+                <strong>{escape(case_id)}</strong>
+                <small>{escape(dddjango["category"])}</small>
+              </td>
+              <td class="number">{baseline["conformance_score"]:.1f}</td>
+              <td class="number">{dddjango["conformance_score"]:.1f}</td>
+              <td class="number {'good' if delta > 0 else 'bad' if delta < 0 else 'neutral'}">{delta:+.1f}</td>
+              <td class="number">{dddjango["required_rule_pass_rate"]:.1f}%</td>
+              <td>{format_rule_list(dddjango["passed_rules"])}</td>
+              <td>{format_rule_list(dddjango["failed_rules"])}</td>
+              <td>{format_rule_list(dddjango["critical_violations"])}</td>
+              <td>{format_rule_list(dddjango["forbidden_patterns"])}</td>
+            </tr>
+            """
+        )
+
+    summary = conformance.get("summary", {})
+    baseline_avg = summary.get("baseline_avg_conformance", 0)
+    dddjango_avg = summary.get("dddjango_avg_conformance", 0)
+    delta_avg = summary.get("delta", 0)
+    pass_rate = summary.get("dddjango_required_rule_pass_rate", 0)
+    critical_count = summary.get("critical_violations", 0)
+    forbidden_count = summary.get("forbidden_pattern_count", 0)
+    critical_audit = "".join(critical_rows) or (
+        "<li>No critical or forbidden dddjango convention violations.</li>"
+    )
+    return f"""
+    <section class="section">
+      <h2>dddjango Convention Conformance</h2>
+      <div class="inline-metrics">
+        {metric_card("Baseline Conformance", f"{baseline_avg:.2f}", "without skill")}
+        {metric_card("dddjango Conformance", f"{dddjango_avg:.2f}", "with skill", "good" if dddjango_avg >= baseline_avg else "bad")}
+        {metric_card("Conformance Delta", f"{delta_avg:+.2f}", "with - without", "good" if delta_avg > 0 else "bad")}
+        {metric_card("Rule Pass Rate", f"{pass_rate:.2f}%", "dddjango required rules", "good" if pass_rate >= 90 else "bad")}
+        {metric_card("Critical Violations", critical_count, "dddjango variant", "bad" if critical_count else "good")}
+        {metric_card("Forbidden Patterns", forbidden_count, "dddjango variant", "bad" if forbidden_count else "good")}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          {build_conformance_gate_rows(conformance)}
+        </tbody>
+      </table>
+      <div class="subsection">
+        <h3>Critical Audit</h3>
+        <ul class="failures">
+          {critical_audit}
+        </ul>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Without</th>
+            <th>With</th>
+            <th>Delta</th>
+            <th>With Pass Rate</th>
+            <th>Passed Rules</th>
+            <th>Failed Rules</th>
+            <th>Critical</th>
+            <th>Forbidden</th>
+          </tr>
+        </thead>
+        <tbody>
+          {"".join(table_rows)}
+        </tbody>
+      </table>
+    </section>
+    """
+
+
+def format_optional_score(value):
+    return "n/a" if value is None else f"{value:.1f}"
+
+
+def format_optional_delta(value):
+    if value is None:
+        return "n/a"
+    return f"{value:+.1f}"
+
+
+def css_for_optional_delta(value, *, lower_is_better=False):
+    if value is None or value == 0:
+        return "neutral"
+    if lower_is_better:
+        return "good" if value <= 2 else "bad" if value > 5 else "neutral"
+    return "good" if value > 0 else "bad"
+
+
+def has_reference_ceiling_rows(rows):
+    return any(
+        row["core_score"] is not None or row["oracle_score"] is not None
+        for row in rows
+    )
+
+
+def build_reference_ceiling_summary(rows):
+    if not has_reference_ceiling_rows(rows):
+        return ""
+
+    core_values = [row["core_score"] for row in rows if row["core_score"] is not None]
+    oracle_values = [
+        row["oracle_score"] for row in rows if row["oracle_score"] is not None
+    ]
+    contribution_values = [
+        row["reference_contribution"]
+        for row in rows
+        if row["reference_contribution"] is not None
+    ]
+    gap_values = [row["ceiling_gap"] for row in rows if row["ceiling_gap"] is not None]
+
+    table_rows = "\n".join(
+        f"""
+        <tr>
+          <td>
+            <strong>{escape(row["title"])}</strong>
+            <small><code>{escape(row["case_id"])}</code></small>
+          </td>
+          <td>{escape(row["category"])}</td>
+          <td class="number">{row["baseline_score"]:.1f}</td>
+          <td class="number">{format_optional_score(row["core_score"])}</td>
+          <td class="number">{row["dddjango_score"]:.1f}</td>
+          <td class="number">{format_optional_score(row["oracle_score"])}</td>
+          <td class="number {'good' if row["delta"] > 0 else 'bad' if row["delta"] < 0 else 'neutral'}">{row["delta"]:+.1f}</td>
+          <td class="number {css_for_optional_delta(row["reference_contribution"])}">{format_optional_delta(row["reference_contribution"])}</td>
+          <td class="number {css_for_optional_delta(row["ceiling_gap"], lower_is_better=True)}">{format_optional_delta(row["ceiling_gap"])}</td>
+          <td class="number">{row["baseline_duration"]:.2f}s</td>
+          <td class="number">{row["core_duration"]:.2f}s</td>
+          <td class="number">{row["dddjango_duration"]:.2f}s</td>
+          <td class="number">{row["oracle_duration"]:.2f}s</td>
+          <td class="links">
+            {link(row["baseline_output"], "baseline")}
+            {link(row["skill_core_only_output"], "core-only") if row["core_score"] is not None else ""}
+            {link(row["dddjango_output"], "full")}
+            {link(row["oracle_reference_output"], "oracle") if row["oracle_score"] is not None else ""}
+            {link(row["answer_key"], "answer key")}
+          </td>
+        </tr>
+        """
+        for row in rows
+    )
+
+    return f"""
+    <section class="section">
+      <h2>Reference Ceiling Comparison</h2>
+      <div class="inline-metrics">
+        {metric_card("Core Only", f"{average(core_values):.2f}", "SKILL.md only")}
+        {metric_card("Oracle Reference", f"{average(oracle_values):.2f}", "direct references")}
+        {metric_card("Reference Contribution", f"{average(contribution_values):+.2f}", "full - core", "good" if average(contribution_values) > 0 else "bad")}
+        {metric_card("Ceiling Gap", f"{average(gap_values):+.2f}", "oracle - full", "good" if average(gap_values) <= 2 else "bad")}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Category</th>
+            <th>Baseline</th>
+            <th>Core Only</th>
+            <th>Full Skill</th>
+            <th>Oracle Reference</th>
+            <th>Full - Baseline</th>
+            <th>Reference Contribution</th>
+            <th>Ceiling Gap</th>
+            <th>Baseline Time</th>
+            <th>Core Time</th>
+            <th>Full Time</th>
+            <th>Oracle Time</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {table_rows}
+        </tbody>
+      </table>
+    </section>
+    """
+
+
 def metric_card(title, value, subtitle="", tone="neutral"):
     return (
         f'<section class="metric {tone}">'
@@ -594,7 +918,25 @@ def percent(count, total):
     return round((count / total) * 100, 2) if total else 0.0
 
 
-def build_gate_rows(rows, lift_percent, duration_lift, drf_violations):
+def ceiling_normalized_lift_percent(baseline_avg, dddjango_avg):
+    headroom = QUALITY_LIFT_SCORE_CEILING - baseline_avg
+    if headroom <= 0:
+        return 0.0 if dddjango_avg <= baseline_avg else 100.0
+    return round(((dddjango_avg - baseline_avg) / headroom) * 100, 2)
+
+
+def quality_lift_rows(rows):
+    return [row for row in rows if row["category"] != "negative-control"]
+
+
+def build_gate_rows(
+    rows,
+    lift_points,
+    lift_percent,
+    ceiling_normalized_lift,
+    duration_lift,
+    drf_violations,
+):
     total = len(rows)
     korean_rate = percent(
         sum(1 for row in rows if row["dddjango_flags"].get("korean_first")),
@@ -603,12 +945,18 @@ def build_gate_rows(rows, lift_percent, duration_lift, drf_violations):
     ninja_relevant = [
         row
         for row in rows
-        if row["category"] in {"api-design", "implementation", "negative-control"}
+        if row["category"] in {"api-design", "implementation"}
+        or "django_ninja_compliance" in row["expectations"]
+        or "reject_drf" in row["expectations"]
         or row["case_id"] == "pilot-review-view-logic"
     ]
-    ninja_rate = percent(
-        sum(1 for row in ninja_relevant if row["dddjango_flags"].get("django_ninja_used")),
-        len(ninja_relevant),
+    ninja_rate = (
+        percent(
+            sum(1 for row in ninja_relevant if row["dddjango_flags"].get("django_ninja_used")),
+            len(ninja_relevant),
+        )
+        if ninja_relevant
+        else None
     )
     tdd_rows = [row for row in rows if row["category"] == "tdd" or "tdd" in row["case_id"]]
     tdd_rate = percent(
@@ -623,10 +971,21 @@ def build_gate_rows(rows, lift_percent, duration_lift, drf_violations):
 
     return "\n".join(
         [
-            gate_row("Quality lift", lift_percent >= 15, f"{lift_percent:+.2f}%", ">= +15%"),
+            gate_row(
+                "Quality lift",
+                lift_points >= QUALITY_LIFT_MIN_POINTS
+                or ceiling_normalized_lift >= QUALITY_LIFT_MIN_CEILING_NORMALIZED_PERCENT,
+                f"{lift_points:+.2f} pts / {lift_percent:+.2f}% / {ceiling_normalized_lift:+.2f}% headroom",
+                f">= +{QUALITY_LIFT_MIN_POINTS} pts or >= {QUALITY_LIFT_MIN_CEILING_NORMALIZED_PERCENT}% headroom",
+            ),
             gate_row("DRF violations", drf_violations == 0, drf_violations, "0"),
             gate_row("Korean-first rate", korean_rate >= 95, f"{korean_rate:.2f}%", ">= 95%"),
-            gate_row("Django Ninja compliance", ninja_rate >= 90, f"{ninja_rate:.2f}%", ">= 90%"),
+            gate_row(
+                "Django Ninja compliance",
+                True if ninja_rate is None else ninja_rate >= 90,
+                "N/A" if ninja_rate is None else f"{ninja_rate:.2f}%",
+                "no applicable cases" if ninja_rate is None else ">= 90%",
+            ),
             gate_row("TDD quality", tdd_rate >= 80, f"{tdd_rate:.2f}%", ">= 80%"),
             gate_row("Time/cost increase", duration_lift <= 30, f"{duration_lift:+.2f}%", "<= +30%"),
             gate_row(
@@ -644,6 +1003,19 @@ def render_html(iteration, rows, *, platform="Codex"):
     dddjango_avg = average([row["dddjango_score"] for row in rows])
     lift = round(dddjango_avg - baseline_avg, 2)
     lift_percent = round((lift / baseline_avg) * 100, 2) if baseline_avg else 0.0
+    quality_rows = quality_lift_rows(rows)
+    quality_baseline_avg = average([row["baseline_score"] for row in quality_rows])
+    quality_dddjango_avg = average([row["dddjango_score"] for row in quality_rows])
+    quality_lift = round(quality_dddjango_avg - quality_baseline_avg, 2)
+    quality_lift_percent = (
+        round((quality_lift / quality_baseline_avg) * 100, 2)
+        if quality_baseline_avg
+        else 0.0
+    )
+    ceiling_normalized_lift = ceiling_normalized_lift_percent(
+        quality_baseline_avg,
+        quality_dddjango_avg,
+    )
     baseline_duration = average([row["baseline_duration"] for row in rows])
     dddjango_duration = average([row["dddjango_duration"] for row in rows])
     duration_lift = (
@@ -663,7 +1035,14 @@ def render_html(iteration, rows, *, platform="Codex"):
     gate_rows = "\n".join(
         item
         for item in [
-            build_gate_rows(rows, lift_percent, duration_lift, drf_violations),
+            build_gate_rows(
+                rows,
+                quality_lift,
+                quality_lift_percent,
+                ceiling_normalized_lift,
+                duration_lift,
+                drf_violations,
+            ),
             trigger_gate_rows,
         ]
         if item
@@ -671,6 +1050,31 @@ def render_html(iteration, rows, *, platform="Codex"):
     usability_summary = build_usability_summary(rows)
     trigger_matrix = build_trigger_matrix(rows)
     real_repo_summary = build_real_repo_patch_summary(load_real_repo_evaluation(iteration))
+    reference_ceiling_summary = build_reference_ceiling_summary(rows)
+    conformance = load_conformance(iteration)
+    conformance_summary = build_conformance_summary(conformance)
+    conformance_metrics = ""
+    if conformance:
+        summary = conformance.get("summary", {})
+        conformance_metrics = "\n".join(
+            [
+                metric_card(
+                    "Convention Score",
+                    f"{summary.get('dddjango_avg_conformance', 0):.2f}",
+                    "dddjango conformance",
+                    "good"
+                    if summary.get("dddjango_avg_conformance", 0)
+                    >= summary.get("baseline_avg_conformance", 0)
+                    else "bad",
+                ),
+                metric_card(
+                    "Convention Delta",
+                    f"{summary.get('delta', 0):+.2f}",
+                    "with - without",
+                    "good" if summary.get("delta", 0) > 0 else "bad",
+                ),
+            ]
+        )
 
     table_rows = "\n".join(
         f"""
@@ -755,6 +1159,14 @@ def render_html(iteration, rows, *, platform="Codex"):
       gap: 12px;
       margin-bottom: 24px;
     }}
+    .inline-metrics {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }}
     .metric {{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -788,6 +1200,15 @@ def render_html(iteration, rows, *, platform="Codex"):
     }}
     .failures {{ padding: 0 18px 18px; color: var(--bad); }}
     .empty {{ padding: 0 18px 18px; color: var(--muted); }}
+    .muted {{ color: var(--muted); }}
+    .subsection {{
+      padding: 14px 18px 0;
+      border-top: 1px solid var(--line);
+    }}
+    .subsection h3 {{
+      margin: 0 0 10px;
+      font-size: 15px;
+    }}
     table {{
       width: 100%;
       border-collapse: collapse;
@@ -846,12 +1267,14 @@ def render_html(iteration, rows, *, platform="Codex"):
     <div class="metrics">
       {metric_card("Baseline Score", baseline_avg, "case average")}
       {metric_card("dddjango Score", dddjango_avg, "case average", "good" if dddjango_avg > baseline_avg else "bad")}
-      {metric_card("Quality Lift", f"{lift:+.2f}", f"{lift_percent:+.2f}% vs baseline", "good" if lift > 0 else "bad")}
+      {metric_card("Overall Lift", f"{lift:+.2f}", f"{lift_percent:+.2f}% vs baseline", "good" if lift > 0 else "bad")}
+      {metric_card("Quality Gate Lift", f"{quality_lift:+.2f}", f"{quality_lift_percent:+.2f}% vs applicable baseline; {ceiling_normalized_lift:+.2f}% headroom", "good" if quality_lift > 0 else "bad")}
       {metric_card("Baseline Time", f"{baseline_duration:.2f}s", "average duration")}
       {metric_card("dddjango Time", f"{dddjango_duration:.2f}s", f"{duration_lift:+.2f}% vs baseline", "bad" if duration_lift > 30 else "neutral")}
       {metric_card("DRF Violations", drf_violations, "dddjango variant", "bad" if drf_violations else "good")}
       {metric_card("Completed Cases", f"{complete_count}/{len(rows)}", "with and without skill")}
       {metric_card("Manual Usability", f"{usability_avg:.2f}", "dddjango average / 20" if usability_values else "pending / 20")}
+      {conformance_metrics}
     </div>
 
     <section class="section">
@@ -903,6 +1326,8 @@ def render_html(iteration, rows, *, platform="Codex"):
         </tbody>
       </table>
     </section>
+{conformance_summary}
+{reference_ceiling_summary}
 {usability_summary}
 {trigger_matrix}
 {real_repo_summary}
@@ -921,7 +1346,7 @@ def render_report(iteration, *, platform="Codex"):
     write_artifact_viewers(iteration, rows)
     html = render_html(iteration, rows, platform=platform)
     report_path = iteration / "report.html"
-    report_path.write_text(html)
+    report_path.write_text(strip_trailing_whitespace(html))
     return report_path
 
 

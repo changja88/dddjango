@@ -88,15 +88,15 @@ index 5d7c0c1..c314c22 100644
 +
 +import pytest
  from django.test import TestCase
- 
+
 -from shop.orders.models import Order
 +from shop.orders.models import Coupon, CouponRedemption, Order
- 
- 
+
+
  class OrderModelTests(TestCase):
 @@ -14,3 +18,34 @@ class OrderModelTests(TestCase):
          order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
- 
+
          self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +
 +
@@ -147,12 +147,12 @@ index 55d0b12..2f05d7e 100644
 +from django.db import IntegrityError, models, transaction
 -from django.db import models
  from django.utils import timezone
- 
- 
+
+
 @@ -21,6 +23,19 @@ class Order(models.Model):
          self.cancelled_at = timezone.now()
          self.save(update_fields=[&quot;status&quot;, &quot;cancel_reason&quot;, &quot;cancelled_at&quot;])
- 
+
 +    def apply_coupon(self, coupon: &quot;Coupon&quot;) -&gt; None:
 +        discount_amount = min(
 +            Decimal(str(self.total_amount)),
@@ -171,7 +171,7 @@ index 55d0b12..2f05d7e 100644
 +            self.total_amount = Decimal(str(self.total_amount)) - discount_amount
 +            self.save(update_fields=[&quot;total_amount&quot;])
 +
- 
+
  class Product(models.Model):
      sku = models.CharField(max_length=64, unique=True)
 @@ -41,3 +56,17 @@ class Reservation(models.Model):

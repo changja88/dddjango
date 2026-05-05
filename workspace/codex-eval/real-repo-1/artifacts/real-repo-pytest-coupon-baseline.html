@@ -88,12 +88,12 @@ index 5e77a4d..3f1e0a1 100644
 +
 +from django.db import models, transaction
  from django.utils import timezone
- 
- 
+
+
 @@ -22,6 +25,25 @@ class Order(models.Model):
          self.cancelled_at = timezone.now()
          self.save(update_fields=[&quot;status&quot;, &quot;cancel_reason&quot;, &quot;cancelled_at&quot;])
- 
+
 +    def apply_coupon(self, coupon: &quot;Coupon&quot;, actor_email: str = &quot;&quot;) -&gt; None:
 +        with transaction.atomic():
 +            if CouponRedemption.objects.filter(order=self, coupon=coupon).exists():
@@ -115,7 +115,7 @@ index 5e77a4d..3f1e0a1 100644
 +    discount_amount = models.DecimalField(max_digits=12, decimal_places=2)
 +    created_at = models.DateTimeField(auto_now_add=True)
 +
- 
+
  class Product(models.Model):
      sku = models.CharField(max_length=64, unique=True)
 @@ -40,3 +62,15 @@ class Reservation(models.Model):
@@ -143,15 +143,15 @@ index cf2f2b0..3469196 100644
 +
 +import pytest
  from django.test import TestCase
- 
+
 -from shop.orders.models import Order
 +from shop.orders.models import Coupon, CouponRedemption, Order
- 
- 
+
+
  class OrderModelTests(TestCase):
 @@ -14,3 +18,32 @@ class OrderModelTests(TestCase):
          order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
- 
+
          self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +
 +

@@ -1,0 +1,20 @@
+{
+  "case_id": "hard-negative-fastapi-korean",
+  "category": "negative-control",
+  "title": "Hard FastAPI negative control Korean first",
+  "expectations": [
+    "korean_first",
+    "negative_control_passed",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "Django, DDD, Django Ninja, DRF를 언급하지 않는다.",
+    "FastAPI 요청을 그대로 존중한다.",
+    "한국어 설명과 최소 FastAPI 코드/실행 명령을 제공한다."
+  ],
+  "prompt": "FastAPI로 간단한 health check API를 만들어줘. 한국어로 설명하고, Django는 사용하지 않을 거야. 최소 파일 구조와 실행 명령만 짧게 보여줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "implementation"
+}

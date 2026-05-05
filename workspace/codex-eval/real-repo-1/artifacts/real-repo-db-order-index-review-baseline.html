@@ -85,7 +85,7 @@ index 3a6f7a1..b4db9dd 100644
 @@ -16,6 +16,13 @@ class Order(models.Model):
      cancel_reason = models.TextField(blank=True)
      created_at = models.DateTimeField(auto_now_add=True)
- 
+
 +    class Meta:
 +        indexes = [
 +            models.Index(

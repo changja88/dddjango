@@ -92,10 +92,10 @@ index 7d7c2a1..8a4b2c9 100644
 +from django.http import HttpRequest
 +from django.shortcuts import get_object_or_404
 +from ninja import Router, Schema
- 
+
  from shop.orders.models import Order
- 
- 
+
+
 -class OrderSerializer(serializers.ModelSerializer):
 -    class Meta:
 -        model = Order
@@ -109,8 +109,8 @@ index 7d7c2a1..8a4b2c9 100644
 +    total_amount: Decimal
 +    paid_at: datetime | None
 +    created_at: datetime
- 
- 
+
+
 -class OrderDetailAPIView(APIView):
 -    def get(self, request, order_id):
 -        order = Order.objects.get(id=order_id)

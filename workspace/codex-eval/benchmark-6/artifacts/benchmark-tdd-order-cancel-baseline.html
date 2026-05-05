@@ -97,10 +97,10 @@ index 8d2d9c1..1bb35e4 100644
 +import json
 +
 +import pytest
- 
+
  from shop.orders.models import Order
- 
- 
+
+
 -class OrderModelTests(TestCase):
 -    def test_cancel_sets_status(self):
 -        order = Order.objects.create(
@@ -121,10 +121,10 @@ index 8d2d9c1..1bb35e4 100644
 +
 +def test_cancel_sets_status_reason_and_timestamp():
 +    order = create_order()
- 
+
 -        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
 +    order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
- 
+
 -        self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +    order.refresh_from_db()
 +    assert order.status == Order.STATUS_CANCELLED
@@ -207,7 +207,7 @@ index 5c3bd7a..4cc0dd1 100644
 +++ b/shop/orders/models.py
 @@ -14,12 +14,13 @@ class Order(models.Model):
      created_at = models.DateTimeField(auto_now_add=True)
- 
+
      def cancel(self, reason: str, actor_email: str) -&gt; None:
 +        reason = reason.strip()
 +        if not reason:
@@ -286,15 +286,15 @@ index 15a6f67..08300d1 100644
 +++ b/shop/orders/views.py
 @@ -5,7 +5,8 @@ from django.http import JsonResponse
  from django.views.decorators.http import require_POST
- 
+
  from shop.orders.models import Order, Product, Reservation
 +from shop.orders.services import OrderCancellationError, cancel_order as cancel_order_service
- 
- 
+
+
  @require_POST
 @@ -14,14 +15,13 @@ def cancel_order(request, order_id):
      order = Order.objects.get(id=order_id)
- 
+
      try:
 -        order.cancel(
 +        cancel_order_service(
@@ -308,7 +308,7 @@ index 15a6f67..08300d1 100644
 -        return JsonResponse({&quot;error&quot;: message}, status=status)
 +    except OrderCancellationError as exc:
 +        return JsonResponse({&quot;error&quot;: str(exc)}, status=exc.status_code)
- 
+
      return JsonResponse({
          &quot;id&quot;: order.id,
 </code></pre>

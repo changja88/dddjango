@@ -6,6 +6,9 @@ import time
 from pathlib import Path
 
 
+REFERENCE_MAP_PATH = Path("evals/codex/reference-map.json")
+SKILL_VARIANTS = {"dddjango", "skill-core-only", "oracle-reference"}
+
 CASE_SKILLS = {
     "pilot-api-order-create": [
         "architecture-api",
@@ -231,8 +234,10 @@ def non_dddjango_negative_developer_instructions():
     return (
         "This is a non-Django negative-control case. "
         "Django/DDD를 끼워 넣지 않는다. "
+        "한국어로 답하되 사용자가 요청한 기술 스택 이름, 코드, 실행 명령을 우선한다. "
         "Answer the user's actual requested technology stack and task directly. "
         "파일이 없어도 요청 기술 스택 기준의 최소 예시나 일반 가이드를 제공한다. "
+        "Do not complain about missing fixture paths. "
         "Do not mention Django, DDD, Django Ninja, DRF, or dddjango unless the prompt explicitly asks for them."
     )
 
@@ -300,6 +305,43 @@ def inferred_skill_names_for_case(case_id, case=None):
 def skill_paths_for_case(root, case_id, case=None):
     skill_names = inferred_skill_names_for_case(case_id, case=case)
     return [root / "skills" / skill_name / "SKILL.md" for skill_name in skill_names]
+
+
+def load_reference_map(root):
+    path = root / REFERENCE_MAP_PATH
+    if not path.exists():
+        return {"case_defaults": {}, "expectation_defaults": {}, "cases": {}}
+    return json.loads(path.read_text())
+
+
+def reference_mapping_for_case(root, case_id, case=None):
+    reference_map = load_reference_map(root)
+    explicit = reference_map.get("cases", {}).get(case_id, {})
+    references = list(explicit.get("references", []))
+    expected_rules = list(explicit.get("expected_rules", []))
+
+    case = case or {}
+    category_defaults = reference_map.get("case_defaults", {}).get(
+        case.get("category", ""),
+        {},
+    )
+    references.extend(category_defaults.get("references", []))
+    expected_rules.extend(category_defaults.get("expected_rules", []))
+
+    expectation_defaults = reference_map.get("expectation_defaults", {})
+    for expectation in case.get("expectations", []):
+        references.extend(expectation_defaults.get(expectation, []))
+
+    reference_paths = []
+    for relative_path in unique(references):
+        path = root / relative_path
+        if path.exists():
+            reference_paths.append(path)
+
+    return {
+        "references": reference_paths,
+        "expected_rules": unique(expected_rules),
+    }
 
 
 def case_policy_names(case_id, case=None):
@@ -394,6 +436,57 @@ def scoped_dddjango_developer_instructions(root, case_id, case=None):
     )
 
 
+def skill_core_only_developer_instructions(root, case_id, case=None):
+    if case and case.get("trigger_type") == "negative":
+        return non_dddjango_negative_developer_instructions()
+    if case and case.get("category") == "negative-control" and not case_requests_drf(case):
+        return non_dddjango_negative_developer_instructions()
+
+    skill_paths = skill_paths_for_case(root, case_id, case=case)
+    if not skill_paths:
+        return ""
+    paths = "\n".join(f"- {path}" for path in skill_paths)
+    directive = case_directive(case_id, case=case)
+    return (
+        "Use local dddjango SKILL.md only for this reference-ceiling ablation. "
+        "Do not open references/ files or use bundled reference documents. "
+        "Read only these SKILL.md files:\n"
+        f"{paths}\n"
+        f"{directive} Keep the answer focused and avoid generic filler."
+    )
+
+
+def oracle_reference_developer_instructions(root, case_id, case=None):
+    if case and case.get("trigger_type") == "negative":
+        return non_dddjango_negative_developer_instructions()
+    if case and case.get("category") == "negative-control" and not case_requests_drf(case):
+        return non_dddjango_negative_developer_instructions()
+
+    mapping = reference_mapping_for_case(root, case_id, case=case)
+    reference_paths = mapping["references"]
+    if not reference_paths:
+        return dddjango_developer_instructions(root, case_id=case_id, case=case)
+
+    skill_paths = skill_paths_for_case(root, case_id, case=case)
+    skill_path_text = "\n".join(f"- {path}" for path in skill_paths)
+    reference_path_text = "\n".join(f"- {path}" for path in reference_paths)
+    rules = "\n".join(f"- {rule}" for rule in mapping["expected_rules"])
+    directive = case_directive(case_id, case=case)
+    return (
+        "This is a reference-ceiling oracle run for dddjango. "
+        "Read the relevant SKILL.md files and the selected reference files before "
+        "answering. Apply the skill workflow and the reference rules. "
+        "Do not use answer keys, grading rubrics, previous outputs, or expected scores.\n"
+        "SKILL.md files:\n"
+        f"{skill_path_text}\n"
+        "Reference files:\n"
+        f"{reference_path_text}\n"
+        "Reference rules to consider:\n"
+        f"{rules}\n"
+        f"{directive} Keep the answer focused and avoid generic filler."
+    )
+
+
 def dddjango_developer_instructions(root, case_id=None, case=None):
     if case_id:
         scoped = scoped_dddjango_developer_instructions(root, case_id, case=case)
@@ -402,6 +495,16 @@ def dddjango_developer_instructions(root, case_id=None, case=None):
         if case:
             return ""
     return broad_dddjango_developer_instructions(root)
+
+
+def developer_instructions_for_variant(root, variant, case_id, case=None):
+    if variant == "dddjango":
+        return dddjango_developer_instructions(root, case_id=case_id, case=case)
+    if variant == "skill-core-only":
+        return skill_core_only_developer_instructions(root, case_id, case=case)
+    if variant == "oracle-reference":
+        return oracle_reference_developer_instructions(root, case_id, case=case)
+    return ""
 
 
 def load_answer_keys(iteration):
@@ -479,9 +582,10 @@ def run_variant(args):
         output_file = output_dir / f"{case_id}.output.md"
         developer_instructions = ""
         command_ignore_user_config = ignore_user_config
-        if args.variant == "dddjango" and args.use_local_dddjango_skills:
-            developer_instructions = dddjango_developer_instructions(
+        if args.variant in SKILL_VARIANTS and args.use_local_dddjango_skills:
+            developer_instructions = developer_instructions_for_variant(
                 Path(args.root).resolve(),
+                args.variant,
                 case_id=case_id,
                 case=cases.get(case_id),
             )
@@ -583,7 +687,11 @@ def main():
     )
     parser.add_argument("--iteration", default="workspace/codex-eval/iteration-1")
     parser.add_argument("--root", default=".")
-    parser.add_argument("--variant", choices=["baseline", "dddjango"], required=True)
+    parser.add_argument(
+        "--variant",
+        choices=["baseline", "dddjango", "skill-core-only", "oracle-reference"],
+        required=True,
+    )
     parser.add_argument("--case", help="Run only one case id.")
     parser.add_argument(
         "--cwd",

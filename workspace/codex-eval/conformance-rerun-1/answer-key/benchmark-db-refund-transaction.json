@@ -1,0 +1,21 @@
+{
+  "case_id": "benchmark-db-refund-transaction",
+  "category": "db-design",
+  "title": "Refund transaction DB design conformance rerun",
+  "expectations": [
+    "korean_first",
+    "db_design",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "잔액 초과와 중복 요청을 DB/트랜잭션 기준으로 막는다.",
+    "조회 패턴과 인덱스 근거를 포함한다.",
+    "migration 검증 명령을 포함한다."
+  ],
+  "prompt": "Django에서 주문 환불 처리를 설계해줘. 부분 환불, 중복 요청, 잔액 초과 환불을 막아야 해. DB 제약, transaction.atomic/select_for_update, 조회 패턴, migration 검증을 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "design"
+}

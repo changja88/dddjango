@@ -1,0 +1,1090 @@
+[
+  {
+    "case_id": "pilot-api-order-create",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-implementation-coupon",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-fat-model",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-tdd-coupon",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-db-orders",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-view-logic",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-standard",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-negative-drf",
+    "variant": "baseline",
+    "scores": {
+      "domain_fit": 17,
+      "django_ninja_compliance": 5,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 1
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": true,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-order-create",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-implementation-coupon",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-fat-model",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-tdd-coupon",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-db-orders",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-view-logic",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-standard",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 1,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-negative-drf",
+    "variant": "skill-core-only",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-order-create",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-implementation-coupon",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-fat-model",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-tdd-coupon",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-db-orders",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-view-logic",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-standard",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-negative-drf",
+    "variant": "dddjango",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-order-create",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 4,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-implementation-coupon",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 15,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-fat-model",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 8,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": false,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-tdd-coupon",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-db-orders",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 3,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-review-view-logic",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-api-standard",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 1,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": false
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  },
+  {
+    "case_id": "pilot-negative-drf",
+    "variant": "oracle-reference",
+    "scores": {
+      "domain_fit": 20,
+      "django_ninja_compliance": 20,
+      "actionability": 12,
+      "architecture_quality": 12,
+      "testing_quality": 8,
+      "korean_first": 10,
+      "conciseness": 5,
+      "safety": 5
+    },
+    "usability": {
+      "actionable": 0,
+      "concise": 0,
+      "realistic_file_layout": 0,
+      "korean_quality": 0,
+      "notes": ""
+    },
+    "notes": "auto heuristic grade; review manually before release gate",
+    "flags": {
+      "korean_first": true,
+      "django_ninja_used": true,
+      "drf_endorsed": false,
+      "negative_control_passed": true
+    },
+    "trigger": {
+      "type": "",
+      "expected": "",
+      "observed": "",
+      "passed": false
+    }
+  }
+]

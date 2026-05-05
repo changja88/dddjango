@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-tdd-coupon dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-tdd-coupon dddjango</h1>
+    <div class="path">workspace/codex-eval/reference-ceiling-pilot/dddjango/pilot-tdd-coupon.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>현재 <code>/private/tmp/dddjango-codex-eval</code> workspace는 비어 있고, 세션 권한이 read-only라 파일 생성/수정과 pytest 실행을 실제로 수행할 수 없었습니다. 그래서 실행했다고 주장하지 않고, 바로 옮겨 붙일 수 있는 <strong>RED 테스트 → 예상 실패 → GREEN 구현 → Django Ninja API hook → REFACTOR 메모 → 실행 명령</strong> 형태로 제공합니다.</p>
+<p><strong>RED</strong></p>
+<p><code>tests/isolated/unit/test_coupon_application.py</code></p>
+<pre><code>
+from datetime import date, timedelta
+from decimal import Decimal
+
+import pytest
+
+from apps.coupons.domain import CouponPolicy, DiscountType
+from apps.coupons.services import CouponApplicationError, apply_coupon
+
+
+def test_apply_coupon_percent_coupon_returns_discounted_total():
+    # Arrange
+    coupon = CouponPolicy(
+        code=&quot;WELCOME10&quot;,
+        discount_type=DiscountType.PERCENT,
+        discount_value=Decimal(&quot;10&quot;),
+        min_order_amount=Decimal(&quot;30000&quot;),
+        starts_on=date.today() - timedelta(days=1),
+        ends_on=date.today() + timedelta(days=1),
+        is_active=True,
+    )
+
+    # Act
+    result = apply_coupon(coupon=coupon, order_amount=Decimal(&quot;50000&quot;), today=date.today())
+
+    # Assert
+    assert result.code == &quot;WELCOME10&quot;
+    assert result.discount_amount == Decimal(&quot;5000&quot;)
+    assert result.final_amount == Decimal(&quot;45000&quot;)
+
+
+def test_apply_coupon_fixed_coupon_never_makes_final_amount_negative():
+    # Arrange
+    coupon = CouponPolicy(
+        code=&quot;BIGSAVE&quot;,
+        discount_type=DiscountType.FIXED,
+        discount_value=Decimal(&quot;20000&quot;),
+        min_order_amount=Decimal(&quot;0&quot;),
+        starts_on=date.today() - timedelta(days=1),
+        ends_on=date.today() + timedelta(days=1),
+        is_active=True,
+    )
+
+    # Act
+    result = apply_coupon(coupon=coupon, order_amount=Decimal(&quot;12000&quot;), today=date.today())
+
+    # Assert
+    assert result.discount_amount == Decimal(&quot;12000&quot;)
+    assert result.final_amount == Decimal(&quot;0&quot;)
+
+
+def test_apply_coupon_below_min_order_amount_raises_error():
+    # Arrange
+    coupon = CouponPolicy(
+        code=&quot;WELCOME10&quot;,
+        discount_type=DiscountType.PERCENT,
+        discount_value=Decimal(&quot;10&quot;),
+        min_order_amount=Decimal(&quot;30000&quot;),
+        starts_on=date.today() - timedelta(days=1),
+        ends_on=date.today() + timedelta(days=1),
+        is_active=True,
+    )
+
+    # Act / Assert
+    with pytest.raises(CouponApplicationError, match=&quot;minimum order amount&quot;):
+        apply_coupon(coupon=coupon, order_amount=Decimal(&quot;20000&quot;), today=date.today())
+
+
+def test_apply_coupon_expired_coupon_raises_error():
+    # Arrange
+    coupon = CouponPolicy(
+        code=&quot;OLD10&quot;,
+        discount_type=DiscountType.PERCENT,
+        discount_value=Decimal(&quot;10&quot;),
+        min_order_amount=Decimal(&quot;0&quot;),
+        starts_on=date.today() - timedelta(days=10),
+        ends_on=date.today() - timedelta(days=1),
+        is_active=True,
+    )
+
+    # Act / Assert
+    with pytest.raises(CouponApplicationError, match=&quot;expired&quot;):
+        apply_coupon(coupon=coupon, order_amount=Decimal(&quot;50000&quot;), today=date.today())
+</code></pre>
+<p>예상 RED 실패:</p>
+<pre><code>
+ModuleNotFoundError: No module named &#x27;apps&#x27;
+</code></pre>
+<p>또는 앱이 이미 있다면:</p>
+<pre><code>
+ImportError: cannot import name &#x27;CouponPolicy&#x27;
+ImportError: cannot import name &#x27;apply_coupon&#x27;
+</code></pre>
+<p><strong>GREEN</strong></p>
+<p><code>apps/coupons/domain.py</code></p>
+<pre><code>
+from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal
+from enum import StrEnum
+
+
+class DiscountType(StrEnum):
+    FIXED = &quot;fixed&quot;
+    PERCENT = &quot;percent&quot;
+
+
+@dataclass(frozen=True)
+class CouponPolicy:
+    &quot;&quot;&quot;
+    Coupon aggregate root.
+
+    Invariants:
+    - code must not be blank
+    - discount_value must be positive
+    - min_order_amount must not be negative
+    - starts_on must not be after ends_on
+    - percent discount cannot exceed 100
+    &quot;&quot;&quot;
+
+    code: str
+    discount_type: DiscountType
+    discount_value: Decimal
+    min_order_amount: Decimal
+    starts_on: date
+    ends_on: date
+    is_active: bool
+
+    def __post_init__(self) -&gt; None:
+        if not self.code.strip():
+            raise ValueError(&quot;coupon code is required&quot;)
+        if self.discount_value &lt;= Decimal(&quot;0&quot;):
+            raise ValueError(&quot;discount value must be positive&quot;)
+        if self.min_order_amount &lt; Decimal(&quot;0&quot;):
+            raise ValueError(&quot;minimum order amount must not be negative&quot;)
+        if self.starts_on &gt; self.ends_on:
+            raise ValueError(&quot;coupon period is invalid&quot;)
+        if (
+            self.discount_type == DiscountType.PERCENT
+            and self.discount_value &gt; Decimal(&quot;100&quot;)
+        ):
+            raise ValueError(&quot;percent discount cannot exceed 100&quot;)
+</code></pre>
+<p><code>apps/coupons/services.py</code></p>
+<pre><code>
+from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal, ROUND_DOWN
+
+from apps.coupons.domain import CouponPolicy, DiscountType
+
+
+class CouponApplicationError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class CouponApplicationResult:
+    code: str
+    order_amount: Decimal
+    discount_amount: Decimal
+    final_amount: Decimal
+
+
+def apply_coupon(
+    *,
+    coupon: CouponPolicy,
+    order_amount: Decimal,
+    today: date,
+) -&gt; CouponApplicationResult:
+    if order_amount &lt; Decimal(&quot;0&quot;):
+        raise CouponApplicationError(&quot;order amount must not be negative&quot;)
+    if not coupon.is_active:
+        raise CouponApplicationError(&quot;coupon is inactive&quot;)
+    if today &lt; coupon.starts_on:
+        raise CouponApplicationError(&quot;coupon is not started&quot;)
+    if today &gt; coupon.ends_on:
+        raise CouponApplicationError(&quot;coupon is expired&quot;)
+    if order_amount &lt; coupon.min_order_amount:
+        raise CouponApplicationError(&quot;minimum order amount is not met&quot;)
+
+    discount_amount = _calculate_discount_amount(coupon, order_amount)
+    final_amount = order_amount - discount_amount
+
+    return CouponApplicationResult(
+        code=coupon.code,
+        order_amount=order_amount,
+        discount_amount=discount_amount,
+        final_amount=final_amount,
+    )
+
+
+def _calculate_discount_amount(
+    coupon: CouponPolicy,
+    order_amount: Decimal,
+) -&gt; Decimal:
+    if coupon.discount_type == DiscountType.FIXED:
+        return min(coupon.discount_value, order_amount)
+
+    discount_amount = order_amount * coupon.discount_value / Decimal(&quot;100&quot;)
+    return discount_amount.quantize(Decimal(&quot;1&quot;), rounding=ROUND_DOWN)
+</code></pre>
+<p><strong>Django Model 예시</strong></p>
+<p><code>apps/coupons/models.py</code></p>
+<pre><code>
+from django.db import models
+
+
+class Coupon(models.Model):
+    class DiscountType(models.TextChoices):
+        FIXED = &quot;fixed&quot;, &quot;Fixed&quot;
+        PERCENT = &quot;percent&quot;, &quot;Percent&quot;
+
+    code = models.CharField(max_length=40, unique=True)
+    discount_type = models.CharField(max_length=10, choices=DiscountType.choices)
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2)
+    min_order_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    starts_on = models.DateField()
+    ends_on = models.DateField()
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = [&quot;code&quot;]
+        indexes = [
+            models.Index(fields=[&quot;code&quot;]),
+            models.Index(fields=[&quot;is_active&quot;, &quot;starts_on&quot;, &quot;ends_on&quot;]),
+        ]
+
+    def __str__(self) -&gt; str:
+        return self.code
+</code></pre>
+<p><code>apps/coupons/selectors.py</code></p>
+<pre><code>
+from apps.coupons.models import Coupon
+
+
+def coupon_get_by_code(*, code: str) -&gt; Coupon:
+    return Coupon.objects.get(code=code)
+</code></pre>
+<p><code>apps/coupons/use_cases.py</code></p>
+<pre><code>
+from datetime import date
+from decimal import Decimal
+
+from apps.coupons.domain import CouponPolicy, DiscountType
+from apps.coupons.models import Coupon
+from apps.coupons.selectors import coupon_get_by_code
+from apps.coupons.services import CouponApplicationResult, apply_coupon
+
+
+def coupon_apply_by_code(
+    *,
+    code: str,
+    order_amount: Decimal,
+    today: date,
+) -&gt; CouponApplicationResult:
+    coupon = coupon_get_by_code(code=code)
+
+    policy = CouponPolicy(
+        code=coupon.code,
+        discount_type=DiscountType(coupon.discount_type),
+        discount_value=coupon.discount_value,
+        min_order_amount=coupon.min_order_amount,
+        starts_on=coupon.starts_on,
+        ends_on=coupon.ends_on,
+        is_active=coupon.is_active,
+    )
+
+    return apply_coupon(coupon=policy, order_amount=order_amount, today=today)
+</code></pre>
+<p><strong>Django Ninja API hook</strong></p>
+<p><code>apps/coupons/api/schemas.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+from ninja import Schema
+
+
+class CouponApplyIn(Schema):
+    code: str
+    order_amount: Decimal
+
+
+class CouponApplyOut(Schema):
+    code: str
+    order_amount: Decimal
+    discount_amount: Decimal
+    final_amount: Decimal
+
+
+class ProblemDetailOut(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+</code></pre>
+<p><code>apps/coupons/api/router.py</code></p>
+<pre><code>
+from datetime import date
+
+from django.http import HttpRequest
+from ninja import Router
+
+from apps.coupons.api.schemas import CouponApplyIn, CouponApplyOut, ProblemDetailOut
+from apps.coupons.services import CouponApplicationError
+from apps.coupons.use_cases import coupon_apply_by_code
+
+router = Router(tags=[&quot;coupons&quot;])
+
+
+@router.post(
+    &quot;/apply&quot;,
+    response={200: CouponApplyOut, 400: ProblemDetailOut},
+)
+def apply_coupon_endpoint(
+    request: HttpRequest,
+    payload: CouponApplyIn,
+) -&gt; tuple[int, CouponApplyOut] | tuple[int, ProblemDetailOut]:
+    try:
+        result = coupon_apply_by_code(
+            code=payload.code,
+            order_amount=payload.order_amount,
+            today=date.today(),
+        )
+    except CouponApplicationError as exc:
+        return 400, ProblemDetailOut(
+            type=&quot;https://example.com/problems/coupon-application-failed&quot;,
+            title=&quot;Coupon application failed&quot;,
+            status=400,
+            detail=str(exc),
+        )
+
+    return 200, CouponApplyOut(
+        code=result.code,
+        order_amount=result.order_amount,
+        discount_amount=result.discount_amount,
+        final_amount=result.final_amount,
+    )
+</code></pre>
+<p><code>config/api.py</code></p>
+<pre><code>
+from ninja import NinjaAPI
+
+from apps.coupons.api.router import router as coupons_router
+
+api = NinjaAPI()
+
+api.add_router(&quot;/coupons/&quot;, coupons_router)
+</code></pre>
+<p><code>config/urls.py</code></p>
+<pre><code>
+from django.contrib import admin
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;admin/&quot;, admin.site.urls),
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>REFACTOR</strong></p>
+<p>Green 이후 정리 방향은 이 정도가 적절합니다.</p>
+<ul>
+<li><code>CouponPolicy</code>는 쿠폰 적용 불변식을 가진 Aggregate Root로 유지합니다.</li>
+<li>금액 계산은 <code>Decimal</code>만 사용하고 float는 금지합니다.</li>
+<li><code>CouponApplicationResult</code>처럼 명시적 결과 타입을 유지해 tuple/dict 반환을 피합니다.</li>
+<li>DB 조회는 <code>selectors.py</code>, 유스케이스 조율은 <code>use_cases.py</code>, 순수 도메인 계산은 <code>services.py</code>로 분리합니다.</li>
+<li>API는 DRF 미사용, Django Ninja <code>Schema</code>/<code>Router</code>만 사용합니다.</li>
+<li>sync endpoint는 <code>request: HttpRequest</code>와 명시적 반환 타입을 포함합니다.</li>
+<li>목록 API가 필요해지면 <code>response=list[CouponApplyOut]</code>처럼 <code>list[Schema]</code>를 사용하고 <code>from typing import list</code>는 쓰지 않습니다.</li>
+</ul>
+<p><strong>실행 명령</strong></p>
+<p>실제 프로젝트에 파일을 추가한 뒤 아래 순서로 확인하세요.</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/unit/test_coupon_application.py -q
+</code></pre>
+<p>RED 단계에서는 위 테스트가 import 실패 또는 미구현 실패로 깨져야 합니다.</p>
+<p>GREEN 구현 후:</p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/unit/test_coupon_application.py -q
+python manage.py makemigrations coupons
+python manage.py check
+pytest -q
+</code></pre>
+<p>API까지 확인하려면 Django Ninja endpoint 테스트를 추가합니다.</p>
+<p><code>tests/isolated/integration/test_coupon_api.py</code></p>
+<pre><code>
+from datetime import date, timedelta
+from decimal import Decimal
+
+import pytest
+from ninja.testing import TestClient
+
+from apps.coupons.api.router import router
+from apps.coupons.models import Coupon
+
+
+@pytest.mark.django_db
+def test_apply_coupon_endpoint_returns_discounted_total():
+    # Arrange
+    Coupon.objects.create(
+        code=&quot;WELCOME10&quot;,
+        discount_type=Coupon.DiscountType.PERCENT,
+        discount_value=Decimal(&quot;10&quot;),
+        min_order_amount=Decimal(&quot;30000&quot;),
+        starts_on=date.today() - timedelta(days=1),
+        ends_on=date.today() + timedelta(days=1),
+        is_active=True,
+    )
+    client = TestClient(router)
+
+    # Act
+    response = client.post(
+        &quot;/apply&quot;,
+        json={&quot;code&quot;: &quot;WELCOME10&quot;, &quot;order_amount&quot;: &quot;50000&quot;},
+    )
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json() == {
+        &quot;code&quot;: &quot;WELCOME10&quot;,
+        &quot;order_amount&quot;: &quot;50000&quot;,
+        &quot;discount_amount&quot;: &quot;5000&quot;,
+        &quot;final_amount&quot;: &quot;45000&quot;,
+    }
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django API 구현 → <strong>implementation-django-ninja</strong> 스킬 &gt; - Django 테스트 구조 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

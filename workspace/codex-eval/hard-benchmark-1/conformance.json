@@ -1,0 +1,566 @@
+{
+  "version": 1,
+  "summary": {
+    "variants": {
+      "baseline": {
+        "average_conformance": 72.31,
+        "average_required_rule_pass_rate": 74.19,
+        "critical_violations": 1,
+        "forbidden_pattern_count": 0,
+        "case_count": 8
+      },
+      "dddjango": {
+        "average_conformance": 90.02,
+        "average_required_rule_pass_rate": 90.02,
+        "critical_violations": 0,
+        "forbidden_pattern_count": 0,
+        "case_count": 8
+      }
+    },
+    "baseline_avg_conformance": 72.31,
+    "dddjango_avg_conformance": 90.02,
+    "delta": 17.71,
+    "dddjango_required_rule_pass_rate": 90.02,
+    "critical_violations": 0,
+    "forbidden_pattern_count": 0,
+    "release_gate": {
+      "dddjango_conformance_score": {
+        "passed": true,
+        "value": 90.02,
+        "required": 85
+      },
+      "dddjango_required_rule_pass_rate": {
+        "passed": true,
+        "value": 90.02,
+        "required": 90
+      },
+      "critical_violations": {
+        "passed": true,
+        "value": 0,
+        "required": 0
+      },
+      "forbidden_pattern_count": {
+        "passed": true,
+        "value": 0,
+        "required": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "hard-api-drf-migration-no-imports",
+      "variant": "baseline",
+      "category": "api-design",
+      "conformance_score": 55.56,
+      "required_rule_pass_rate": 55.56,
+      "required_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "includes_verification_commands",
+        "no_drf_code"
+      ],
+      "failed_rules": [
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-api-product-search-contract",
+      "variant": "baseline",
+      "category": "api-design",
+      "conformance_score": 80.0,
+      "required_rule_pass_rate": 80.0,
+      "required_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "has_transaction_locking",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "failed_rules": [
+        "has_http_request_type",
+        "has_transaction_locking"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-clean-error-contract",
+      "variant": "baseline",
+      "category": "clean-code",
+      "conformance_score": 66.67,
+      "required_rule_pass_rate": 66.67,
+      "required_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "uses_items_meta_envelope",
+        "uses_problem_details",
+        "has_before_after_or_diff",
+        "has_domain_exception",
+        "has_result_type",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "has_domain_exception",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "failed_rules": [
+        "uses_items_meta_envelope",
+        "uses_problem_details",
+        "has_before_after_or_diff",
+        "has_result_type"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-clean-fat-model-policy-extraction",
+      "variant": "baseline",
+      "category": "clean-code",
+      "conformance_score": 85.71,
+      "required_rule_pass_rate": 85.71,
+      "required_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "has_before_after_or_diff",
+        "has_domain_exception",
+        "has_result_type"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "has_before_after_or_diff",
+        "has_domain_exception"
+      ],
+      "failed_rules": [
+        "has_result_type"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-db-idempotent-payment-ledger",
+      "variant": "baseline",
+      "category": "db-design",
+      "conformance_score": 83.33,
+      "required_rule_pass_rate": 83.33,
+      "required_rules": [
+        "korean_first",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes",
+        "includes_migration_verification",
+        "has_transaction_locking",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes",
+        "includes_migration_verification",
+        "has_transaction_locking"
+      ],
+      "failed_rules": [
+        "separates_domain_application_infrastructure"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-negative-fastapi-korean",
+      "variant": "baseline",
+      "category": "negative-control",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "passed_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-tdd-domain-policy-red-green",
+      "variant": "baseline",
+      "category": "tdd",
+      "conformance_score": 66.67,
+      "required_rule_pass_rate": 66.67,
+      "required_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_result_type",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_pytest_tests",
+        "has_value_object",
+        "has_domain_exception",
+        "separates_domain_application_infrastructure"
+      ],
+      "failed_rules": [
+        "has_expected_failure",
+        "has_edge_cases",
+        "has_result_type"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-tdd-inventory-idempotency",
+      "variant": "baseline",
+      "category": "tdd",
+      "conformance_score": 40.56,
+      "required_rule_pass_rate": 55.56,
+      "required_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_result_type",
+        "has_transaction_locking"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "has_pytest_tests",
+        "has_value_object",
+        "has_domain_exception",
+        "has_transaction_locking"
+      ],
+      "failed_rules": [
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_edge_cases",
+        "has_result_type"
+      ],
+      "critical_violations": [
+        "has_red_green_refactor"
+      ],
+      "forbidden_patterns": [],
+      "notes": "critical or forbidden rule failed"
+    },
+    {
+      "case_id": "hard-api-drf-migration-no-imports",
+      "variant": "dddjango",
+      "category": "api-design",
+      "conformance_score": 88.89,
+      "required_rule_pass_rate": 88.89,
+      "required_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "uses_items_meta_envelope"
+      ],
+      "failed_rules": [
+        "uses_problem_details"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-api-product-search-contract",
+      "variant": "dddjango",
+      "category": "api-design",
+      "conformance_score": 90.0,
+      "required_rule_pass_rate": 90.0,
+      "required_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "has_transaction_locking",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "failed_rules": [
+        "has_transaction_locking"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-clean-error-contract",
+      "variant": "dddjango",
+      "category": "clean-code",
+      "conformance_score": 83.33,
+      "required_rule_pass_rate": 83.33,
+      "required_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "uses_items_meta_envelope",
+        "uses_problem_details",
+        "has_before_after_or_diff",
+        "has_domain_exception",
+        "has_result_type",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "uses_problem_details",
+        "has_before_after_or_diff",
+        "has_domain_exception",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "failed_rules": [
+        "uses_items_meta_envelope",
+        "has_result_type"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-clean-fat-model-policy-extraction",
+      "variant": "dddjango",
+      "category": "clean-code",
+      "conformance_score": 85.71,
+      "required_rule_pass_rate": 85.71,
+      "required_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "has_before_after_or_diff",
+        "has_domain_exception",
+        "has_result_type"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "has_before_after_or_diff",
+        "has_domain_exception"
+      ],
+      "failed_rules": [
+        "has_result_type"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-db-idempotent-payment-ledger",
+      "variant": "dddjango",
+      "category": "db-design",
+      "conformance_score": 83.33,
+      "required_rule_pass_rate": 83.33,
+      "required_rules": [
+        "korean_first",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes",
+        "includes_migration_verification",
+        "has_transaction_locking",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes",
+        "includes_migration_verification",
+        "has_transaction_locking"
+      ],
+      "failed_rules": [
+        "separates_domain_application_infrastructure"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-negative-fastapi-korean",
+      "variant": "dddjango",
+      "category": "negative-control",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "passed_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-tdd-domain-policy-red-green",
+      "variant": "dddjango",
+      "category": "tdd",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_result_type",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_result_type",
+        "separates_domain_application_infrastructure"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "hard-tdd-inventory-idempotency",
+      "variant": "dddjango",
+      "category": "tdd",
+      "conformance_score": 88.89,
+      "required_rule_pass_rate": 88.89,
+      "required_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_result_type",
+        "has_transaction_locking"
+      ],
+      "passed_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_transaction_locking"
+      ],
+      "failed_rules": [
+        "has_result_type"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    }
+  ]
+}

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-negative-drf oracle-reference</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-negative-drf oracle-reference</h1>
+    <div class="path">workspace/codex-eval/reference-ceiling-pilot/oracle-reference/pilot-negative-drf.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
+<p><strong>RED Tests</strong></p>
+<pre><code>
+# products/tests/test_product_api.py
+from decimal import Decimal
+
+import pytest
+from ninja.testing import TestClient
+
+from products.api import router
+from products.models import Product
+
+pytestmark = pytest.mark.django_db
+
+client = TestClient(router)
+
+
+def test_create_product() -&gt; None:
+    response = client.post(
+        &quot;/&quot;,
+        json={&quot;name&quot;: &quot;Keyboard&quot;, &quot;price&quot;: &quot;129.00&quot;, &quot;stock&quot;: 10, &quot;is_active&quot;: True},
+    )
+
+    assert response.status_code == 201
+    assert response.json()[&quot;name&quot;] == &quot;Keyboard&quot;
+    assert Product.objects.filter(name=&quot;Keyboard&quot;).exists()
+
+
+def test_list_products() -&gt; None:
+    Product.objects.create(name=&quot;Mouse&quot;, price=Decimal(&quot;49.00&quot;), stock=5)
+
+    response = client.get(&quot;/&quot;)
+
+    assert response.status_code == 200
+    assert response.json()[0][&quot;name&quot;] == &quot;Mouse&quot;
+
+
+def test_get_product() -&gt; None:
+    product = Product.objects.create(name=&quot;Monitor&quot;, price=Decimal(&quot;399.00&quot;), stock=2)
+
+    response = client.get(f&quot;/{product.id}&quot;)
+
+    assert response.status_code == 200
+    assert response.json()[&quot;id&quot;] == product.id
+
+
+def test_update_product() -&gt; None:
+    product = Product.objects.create(name=&quot;Old&quot;, price=Decimal(&quot;10.00&quot;), stock=1)
+
+    response = client.put(
+        f&quot;/{product.id}&quot;,
+        json={&quot;name&quot;: &quot;New&quot;, &quot;price&quot;: &quot;20.00&quot;, &quot;stock&quot;: 3, &quot;is_active&quot;: False},
+    )
+
+    assert response.status_code == 200
+    product.refresh_from_db()
+    assert product.name == &quot;New&quot;
+    assert product.price == Decimal(&quot;20.00&quot;)
+    assert product.stock == 3
+    assert product.is_active is False
+
+
+def test_delete_product() -&gt; None:
+    product = Product.objects.create(name=&quot;Cable&quot;, price=Decimal(&quot;9.00&quot;), stock=20)
+
+    response = client.delete(f&quot;/{product.id}&quot;)
+
+    assert response.status_code == 204
+    assert not Product.objects.filter(id=product.id).exists()
+</code></pre>
+<p><strong>Schema</strong></p>
+<pre><code>
+# products/schemas.py
+from decimal import Decimal
+
+from ninja import ModelSchema, Schema
+
+from products.models import Product
+
+
+class ProductIn(Schema):
+    name: str
+    price: Decimal
+    stock: int
+    is_active: bool = True
+
+
+class ProductUpdate(Schema):
+    name: str
+    price: Decimal
+    stock: int
+    is_active: bool
+
+
+class ProductPatch(Schema):
+    name: str | None = None
+    price: Decimal | None = None
+    stock: int | None = None
+    is_active: bool | None = None
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;price&quot;, &quot;stock&quot;, &quot;is_active&quot;, &quot;created_at&quot;, &quot;updated_at&quot;]
+</code></pre>
+<p><strong>Router</strong></p>
+<pre><code>
+# products/api.py
+from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
+from ninja import Router
+
+from products.models import Product
+from products.schemas import ProductIn, ProductOut, ProductPatch, ProductUpdate
+
+router = Router(tags=[&quot;products&quot;])
+
+
+@router.get(&quot;/&quot;, response=list[ProductOut])
+def list_products(request: HttpRequest) -&gt; list[Product]:
+    return list(Product.objects.order_by(&quot;-created_at&quot;))
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut})
+def create_product(request: HttpRequest, payload: ProductIn) -&gt; tuple[int, Product]:
+    product = Product.objects.create(**payload.dict())
+    return 201, product
+
+
+@router.get(&quot;/{product_id}&quot;, response=ProductOut)
+def get_product(request: HttpRequest, product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+
+
+@router.put(&quot;/{product_id}&quot;, response=ProductOut)
+def update_product(
+    request: HttpRequest,
+    product_id: int,
+    payload: ProductUpdate,
+) -&gt; Product:
+    product = get_object_or_404(Product, id=product_id)
+
+    for field, value in payload.dict().items():
+        setattr(product, field, value)
+
+    product.save(update_fields=[&quot;name&quot;, &quot;price&quot;, &quot;stock&quot;, &quot;is_active&quot;, &quot;updated_at&quot;])
+    return product
+
+
+@router.patch(&quot;/{product_id}&quot;, response=ProductOut)
+def patch_product(
+    request: HttpRequest,
+    product_id: int,
+    payload: ProductPatch,
+) -&gt; Product:
+    product = get_object_or_404(Product, id=product_id)
+    changed_fields = []
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+        changed_fields.append(field)
+
+    if changed_fields:
+        product.save(update_fields=[*changed_fields, &quot;updated_at&quot;])
+
+    return product
+
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None})
+def delete_product(request: HttpRequest, product_id: int) -&gt; tuple[int, None]:
+    product = get_object_or_404(Product, id=product_id)
+    product.delete()
+    return 204, None
+</code></pre>
+<p><strong>NinjaAPI.add_router</strong></p>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+
+from products.api import router as products_router
+
+api = NinjaAPI()
+api.add_router(&quot;/products/&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>검증은 이 환경에서 실행하지 않았습니다. 적용 후 다음을 실행하세요.</p>
+<pre><code>
+python manage.py check
+pytest
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - REST URL/상태 코드/페이지네이션 정책 → <strong>architecture-api</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

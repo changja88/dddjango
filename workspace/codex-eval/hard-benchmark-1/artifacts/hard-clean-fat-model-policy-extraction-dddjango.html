@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>hard-clean-fat-model-policy-extraction dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>hard-clean-fat-model-policy-extraction dddjango</h1>
+    <div class="path">workspace/codex-eval/hard-benchmark-1/dddjango/hard-clean-fat-model-policy-extraction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>핵심 분리는 이렇게 잡는 게 좋습니다: <code>Order</code>는 주문 상태 불변식만 지키고, 수수료 계산은 정책 객체, PG/알림은 포트와 어댑터, 전체 유스케이스 순서는 application service가 조율합니다.</p>
+<pre><code>
+# Before: orders/models.py
+class Order(models.Model):
+    def cancel(self):
+        if self.status == &quot;shipped&quot;:
+            raise ValueError(&quot;cannot cancel&quot;)
+        fee = self.calculate_fee()
+        result = self.call_pg(&quot;cancel&quot;, fee)
+        self.status = &quot;cancelled&quot;
+        self.save()
+        self.notify(&quot;cancelled&quot;)
+        return result
+
+    def refund(self): ...
+    def calculate_fee(self): ...
+    def notify(self, event): ...
+    def call_pg(self, action, amount): ...
+</code></pre>
+<pre><code>
+After
+orders/
+  domain/
+    exceptions.py
+    value_objects.py
+    policies.py
+  models.py
+  application/
+    services.py
+    ports.py
+  infrastructure/
+    payment_gateway.py
+    notifier.py
+</code></pre>
+<p><strong>1. <code>cancel</code> 분리</strong></p>
+<pre><code>
+# orders/models.py
+class Order(models.Model):
+    class Status(models.TextChoices):
+        PAID = &quot;paid&quot;
+        CANCELLED = &quot;cancelled&quot;
+        REFUNDED = &quot;refunded&quot;
+        SHIPPED = &quot;shipped&quot;
+
+    def cancel(self, fee: Money) -&gt; None:
+        if self.status == self.Status.SHIPPED:
+            raise OrderNotCancelable(self.id)
+        if self.status == self.Status.CANCELLED:
+            return
+
+        self.cancel_fee_amount = fee.amount
+        self.cancel_fee_currency = fee.currency
+        self.status = self.Status.CANCELLED
+</code></pre>
+<p><strong>Reason — 책임 분리:</strong> <code>Order.cancel()</code>은 “취소 가능한가, 취소되면 상태와 수수료가 어떻게 남는가”만 담당합니다. PG 호출, 저장, 알림은 변경 이유가 다르므로 모델 밖으로 나갑니다.</p>
+<p><strong>2. <code>refund</code> 분리</strong></p>
+<pre><code>
+class Order(models.Model):
+    def mark_refunded(self, amount: Money) -&gt; None:
+        if self.status != self.Status.CANCELLED:
+            raise OrderNotRefundable(self.id)
+        self.refunded_amount = amount.amount
+        self.status = self.Status.REFUNDED
+</code></pre>
+<p>환불 흐름은 application service가 담당합니다.</p>
+<pre><code>
+class CancelOrderService:
+    def __init__(
+        self,
+        orders: OrderRepository,
+        fee_policy: CancellationFeePolicy,
+        payment_gateway: PaymentGateway,
+        notifier: OrderNotifier,
+    ):
+        self.orders = orders
+        self.fee_policy = fee_policy
+        self.payment_gateway = payment_gateway
+        self.notifier = notifier
+
+    def cancel(self, order_id: OrderId) -&gt; None:
+        order = self.orders.get(order_id)
+        fee = self.fee_policy.calculate(order)
+
+        with transaction.atomic():
+            order.cancel(fee)
+            self.orders.save(order)
+            transaction.on_commit(lambda: self.notifier.cancelled(order.id))
+</code></pre>
+<p>PG 호출까지 동기 처리해야 한다면 <code>Order</code>가 아니라 service에서 합니다. 다만 DB 트랜잭션 안에서 외부 API를 오래 붙잡지 않도록, 보통은 <code>CancelRequested</code> 저장 후 <code>on_commit</code> 또는 outbox worker가 PG를 호출하게 두는 편이 안전합니다.</p>
+<p><strong>3. <code>calculate_fee</code> → 정책 객체</strong></p>
+<pre><code>
+@dataclass(frozen=True)
+class Money:
+    amount: Decimal
+    currency: str = &quot;KRW&quot;
+
+    def __post_init__(self):
+        if self.amount &lt; 0:
+            raise InvalidMoney(self.amount)
+
+@dataclass(frozen=True)
+class OrderId:
+    value: int
+
+class CancellationFeePolicy:
+    def calculate(self, order: Order) -&gt; Money:
+        if order.is_within_free_cancel_window():
+            return Money(Decimal(&quot;0&quot;))
+        return Money(order.total_amount * Decimal(&quot;0.10&quot;))
+</code></pre>
+<p><strong>Reason — 정책 객체:</strong> 수수료율, 무료 취소 기간, 회원 등급별 정책은 주문 상태 전이와 다른 이유로 바뀝니다. <code>CancellationFeePolicy</code>는 DB/PG 없이 순수 단위 테스트가 가능합니다.</p>
+<p><strong>4. <code>notify</code> → 포트</strong></p>
+<pre><code>
+class OrderNotifier(Protocol):
+    def cancelled(self, order_id: int) -&gt; None: ...
+    def refunded(self, order_id: int) -&gt; None: ...
+</code></pre>
+<p>Django 이메일, Slack, Kakao 알림은 <code>infrastructure/notifier.py</code>에서 구현합니다. 호출은 <code>transaction.on_commit()</code> 뒤로 밀어 DB 롤백 후 알림이 나가는 회귀를 막습니다.</p>
+<p><strong>5. <code>call_pg</code> → PG 포트/어댑터</strong></p>
+<pre><code>
+class PaymentGateway(Protocol):
+    def cancel_payment(self, order_id: OrderId, fee: Money) -&gt; None: ...
+    def refund_payment(self, order_id: OrderId, amount: Money) -&gt; None: ...
+</code></pre>
+<p>Toss/Stripe 같은 SDK 응답 필드명은 <code>infrastructure/payment_gateway.py</code> 안에 가둡니다. 도메인에는 <code>charge_id</code>, <code>payment_token</code> 같은 PG 어휘를 넣지 않습니다.</p>
+<p><strong>도메인 예외</strong></p>
+<pre><code>
+class OrderDomainError(Exception): pass
+class OrderNotCancelable(OrderDomainError): pass
+class OrderNotRefundable(OrderDomainError): pass
+class InvalidMoney(OrderDomainError): pass
+</code></pre>
+<p><strong>테스트 방향</strong></p>
+<p>RED:</p>
+<pre><code>
+def test_cancellation_fee_policy_after_free_window_returns_10_percent(order):
+    fee = CancellationFeePolicy().calculate(order)
+
+    assert fee == Money(Decimal(&quot;1000&quot;))
+</code></pre>
+<pre><code>
+def test_cancel_order_when_shipped_raises_domain_error(order):
+    order.status = Order.Status.SHIPPED
+
+    with pytest.raises(OrderNotCancelable):
+        order.cancel(Money(Decimal(&quot;0&quot;)))
+</code></pre>
+<pre><code>
+def test_cancel_service_saves_order_without_calling_notifier_before_commit(fake_orders, fake_notifier):
+    service.cancel(OrderId(1))
+
+    assert fake_orders.saved.status == Order.Status.CANCELLED
+</code></pre>
+<p>회귀 테스트는 세 층으로 둡니다: 정책 객체는 DB 없는 unit test, <code>Order.cancel/mark_refunded</code>는 상태 전이 unit test, application service는 <code>FakeRepository/FakeGateway/FakeNotifier</code>로 orchestration test. Django 통합 테스트에서는 <code>transaction.on_commit</code>, <code>assertNumQueries</code>, 실제 모델 저장 필드만 검증합니다.</p>
+<p>실행 예:</p>
+<pre><code>
+pytest tests/isolated/orders/domain -q
+pytest tests/isolated/orders/application -q
+pytest tests/isolated/orders/integration -q
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 서비스 레이어와 트랜잭션 경계 → <strong>implementation-django</strong> 스킬 &gt; - 정책 객체, 값 객체, 도메인 예외 설계 → <strong>architecture-ddd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

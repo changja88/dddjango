@@ -16,6 +16,8 @@ CRITERIA = [
     "safety",
 ]
 
+DDDJANGO_VARIANTS = {"dddjango", "skill-core-only", "oracle-reference"}
+
 DRF_PATTERNS = [
     r"\bAPIView\b",
     r"\bViewSet\b",
@@ -76,6 +78,11 @@ def has_pytest_or_tdd(text):
         "실패 테스트",
         "테스트",
         "test_",
+        "manage.py check",
+        "makemigrations --check",
+        "migrate --plan",
+        "sqlmigrate",
+        "explain analyze",
         "manage.py test",
         "assert ",
     ]
@@ -213,7 +220,10 @@ def is_non_django_negative_control(case):
 
 def base_scores(case, text, variant):
     word_count = len(re.findall(r"\S+", text))
-    korean_first = count_hangul(text) >= 30
+    hangul_count = count_hangul(text)
+    korean_first = hangul_count >= 30 or (
+        is_non_django_negative_control(case) and hangul_count >= 15
+    )
     django_ninja_used = has_django_ninja(text)
     drf_endorsed = drf_is_endorsed(text)
     architecture = has_architecture_terms(text)
@@ -265,7 +275,7 @@ def base_scores(case, text, variant):
     if drf_endorsed:
         scores["django_ninja_compliance"] = min(scores["django_ninja_compliance"], 5)
 
-    if variant == "dddjango" and case.get("trigger_type") == "positive":
+    if variant in DDDJANGO_VARIANTS and case.get("trigger_type") == "positive":
         scores["domain_fit"] = max(scores["domain_fit"], 16)
         if korean_first:
             scores["korean_first"] = 10

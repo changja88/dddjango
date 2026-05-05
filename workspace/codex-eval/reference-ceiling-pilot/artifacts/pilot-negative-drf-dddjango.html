@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-negative-drf dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-negative-drf dddjango</h1>
+    <div class="path">workspace/codex-eval/reference-ceiling-pilot/dddjango/pilot-negative-drf.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.</p>
+<p>아래는 <code>products.models.Product</code>가 이미 있고, <code>sku</code>가 <code>unique=True</code>라고 가정한 상품 CRUD API입니다. 현재 워크스페이스가 비어 있고 읽기 전용이라 파일 생성과 테스트 실행은 하지 못했습니다.</p>
+<p><strong>RED Tests</strong></p>
+<p><code>products/tests/test_product_api.py</code></p>
+<pre><code>
+import pytest
+from ninja.testing import TestClient
+
+from config.api import api
+from products.models import Product
+
+
+@pytest.fixture
+def client() -&gt; TestClient:
+    return TestClient(api)
+
+
+@pytest.mark.django_db
+def test_list_products_filters_and_paginates(client: TestClient) -&gt; None:
+    Product.objects.create(
+        name=&quot;Notebook&quot;,
+        sku=&quot;NOTE-001&quot;,
+        description=&quot;Portable computer&quot;,
+        price=&quot;1200.00&quot;,
+        stock=5,
+        is_active=True,
+    )
+    Product.objects.create(
+        name=&quot;Archived phone&quot;,
+        sku=&quot;PHONE-OLD&quot;,
+        description=&quot;Inactive item&quot;,
+        price=&quot;300.00&quot;,
+        stock=0,
+        is_active=False,
+    )
+
+    response = client.get(&quot;/products/?q=note&amp;is_active=true&amp;limit=10&amp;offset=0&amp;sort=name&quot;)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body[&quot;meta&quot;][&quot;total&quot;] == 1
+    assert body[&quot;items&quot;][0][&quot;sku&quot;] == &quot;NOTE-001&quot;
+
+
+@pytest.mark.django_db
+def test_create_product_returns_201(client: TestClient) -&gt; None:
+    response = client.post(
+        &quot;/products/&quot;,
+        json={
+            &quot;name&quot;: &quot;Keyboard&quot;,
+            &quot;sku&quot;: &quot;KEY-001&quot;,
+            &quot;description&quot;: &quot;Mechanical keyboard&quot;,
+            &quot;price&quot;: &quot;89.90&quot;,
+            &quot;stock&quot;: 20,
+            &quot;is_active&quot;: True,
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()[&quot;sku&quot;] == &quot;KEY-001&quot;
+    assert Product.objects.filter(sku=&quot;KEY-001&quot;).exists()
+
+
+@pytest.mark.django_db
+def test_duplicate_sku_returns_problem_details(client: TestClient) -&gt; None:
+    Product.objects.create(
+        name=&quot;Keyboard&quot;,
+        sku=&quot;KEY-001&quot;,
+        description=&quot;Original&quot;,
+        price=&quot;89.90&quot;,
+        stock=20,
+        is_active=True,
+    )
+
+    response = client.post(
+        &quot;/products/&quot;,
+        json={
+            &quot;name&quot;: &quot;Duplicate Keyboard&quot;,
+            &quot;sku&quot;: &quot;KEY-001&quot;,
+            &quot;description&quot;: &quot;Duplicate&quot;,
+            &quot;price&quot;: &quot;99.90&quot;,
+            &quot;stock&quot;: 10,
+            &quot;is_active&quot;: True,
+        },
+    )
+
+    assert response.status_code == 409
+    assert response[&quot;content-type&quot;].startswith(&quot;application/problem+json&quot;)
+    assert response.json()[&quot;status&quot;] == 409
+</code></pre>
+<p><strong>Schemas</strong></p>
+<p><code>products/schemas.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+from ninja import Field, FilterSchema, ModelSchema, Schema
+
+from products.models import Product
+
+
+class ProblemDetail(Schema):
+    type: str = &quot;about:blank&quot;
+    title: str
+    status: int
+    detail: str
+    instance: str = &quot;&quot;
+
+
+class ProductOut(ModelSchema):
+    class Meta:
+        model = Product
+        fields = [&quot;id&quot;, &quot;name&quot;, &quot;sku&quot;, &quot;description&quot;, &quot;price&quot;, &quot;stock&quot;, &quot;is_active&quot;, &quot;created_at&quot;, &quot;updated_at&quot;]
+
+
+class ProductIn(Schema):
+    name: str
+    sku: str
+    description: str = &quot;&quot;
+    price: Decimal
+    stock: int = 0
+    is_active: bool = True
+
+
+class ProductPatch(Schema):
+    name: str | None = None
+    sku: str | None = None
+    description: str | None = None
+    price: Decimal | None = None
+    stock: int | None = None
+    is_active: bool | None = None
+
+
+class ProductFilter(FilterSchema):
+    q: str | None = Field(None, q=[&quot;name__icontains&quot;, &quot;description__icontains&quot;, &quot;sku__icontains&quot;])
+    is_active: bool | None = None
+    min_price: Decimal | None = Field(None, q=&quot;price__gte&quot;)
+    max_price: Decimal | None = Field(None, q=&quot;price__lte&quot;)
+
+
+class PageMeta(Schema):
+    total: int
+    limit: int
+    offset: int
+
+
+class ProductListResponse(Schema):
+    items: list[ProductOut]
+    meta: PageMeta
+</code></pre>
+<p><strong>Router</strong></p>
+<p><code>products/api.py</code></p>
+<pre><code>
+from enum import Enum
+
+from django.db import IntegrityError
+from django.http import HttpRequest, JsonResponse
+from django.shortcuts import get_object_or_404
+from ninja import Query, Router
+
+from products.models import Product
+from products.schemas import (
+    PageMeta,
+    ProblemDetail,
+    ProductFilter,
+    ProductIn,
+    ProductListResponse,
+    ProductOut,
+    ProductPatch,
+)
+
+router = Router(tags=[&quot;products&quot;])
+
+
+class ProductSort(str, Enum):
+    CREATED_AT_DESC = &quot;-created_at&quot;
+    CREATED_AT_ASC = &quot;created_at&quot;
+    NAME_ASC = &quot;name&quot;
+    PRICE_ASC = &quot;price&quot;
+    PRICE_DESC = &quot;-price&quot;
+
+
+def problem_response(request: HttpRequest, status: int, title: str, detail: str) -&gt; JsonResponse:
+    return JsonResponse(
+        ProblemDetail(
+            title=title,
+            status=status,
+            detail=detail,
+            instance=request.path,
+        ).dict(),
+        status=status,
+        content_type=&quot;application/problem+json&quot;,
+    )
+
+
+@router.get(&quot;/&quot;, response=ProductListResponse)
+def list_products(
+    request: HttpRequest,
+    filters: Query[ProductFilter],
+    limit: int = 20,
+    offset: int = 0,
+    sort: ProductSort = ProductSort.CREATED_AT_DESC,
+) -&gt; ProductListResponse:
+    safe_limit = min(max(limit, 1), 100)
+    safe_offset = max(offset, 0)
+
+    queryset = filters.filter(Product.objects.all()).order_by(sort.value)
+    total = queryset.count()
+    items = list(queryset[safe_offset : safe_offset + safe_limit])
+
+    return ProductListResponse(
+        items=items,
+        meta=PageMeta(total=total, limit=safe_limit, offset=safe_offset),
+    )
+
+
+@router.post(&quot;/&quot;, response={201: ProductOut, 409: ProblemDetail, 422: ProblemDetail})
+def create_product(request: HttpRequest, payload: ProductIn) -&gt; tuple[int, Product] | JsonResponse:
+    try:
+        product = Product.objects.create(**payload.dict())
+    except IntegrityError:
+        return problem_response(
+            request,
+            409,
+            &quot;Duplicate product&quot;,
+            &quot;A product with the same unique value already exists.&quot;,
+        )
+
+    return 201, product
+
+
+@router.get(&quot;/{product_id}&quot;, response={200: ProductOut, 404: ProblemDetail})
+def get_product(request: HttpRequest, product_id: int) -&gt; Product:
+    return get_object_or_404(Product, id=product_id)
+
+
+@router.patch(&quot;/{product_id}&quot;, response={200: ProductOut, 404: ProblemDetail, 409: ProblemDetail, 422: ProblemDetail})
+def update_product(request: HttpRequest, product_id: int, payload: ProductPatch) -&gt; Product | JsonResponse:
+    product = get_object_or_404(Product, id=product_id)
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(product, field, value)
+
+    try:
+        product.save()
+    except IntegrityError:
+        return problem_response(
+            request,
+            409,
+            &quot;Duplicate product&quot;,
+            &quot;A product with the same unique value already exists.&quot;,
+        )
+
+    return product
+
+
+@router.delete(&quot;/{product_id}&quot;, response={204: None, 404: ProblemDetail})
+def delete_product(request: HttpRequest, product_id: int) -&gt; tuple[int, None]:
+    product = get_object_or_404(Product, id=product_id)
+    product.delete()
+    return 204, None
+</code></pre>
+<p><strong>API Composition</strong></p>
+<p><code>config/api.py</code></p>
+<pre><code>
+from django.http import Http404, HttpRequest, JsonResponse
+from ninja import NinjaAPI
+from ninja.errors import HttpError, ValidationError
+
+from products.api import router as products_router
+from products.schemas import ProblemDetail
+
+api = NinjaAPI(title=&quot;Product API&quot;)
+api.add_router(&quot;/products/&quot;, products_router)
+
+
+def problem_detail(request: HttpRequest, status: int, title: str, detail: str) -&gt; JsonResponse:
+    return JsonResponse(
+        ProblemDetail(
+            title=title,
+            status=status,
+            detail=detail,
+            instance=request.path,
+        ).dict(),
+        status=status,
+        content_type=&quot;application/problem+json&quot;,
+    )
+
+
+@api.exception_handler(Http404)
+def handle_404(request: HttpRequest, exc: Http404) -&gt; JsonResponse:
+    return problem_detail(request, 404, &quot;Not Found&quot;, &quot;The requested resource was not found.&quot;)
+
+
+@api.exception_handler(HttpError)
+def handle_http_error(request: HttpRequest, exc: HttpError) -&gt; JsonResponse:
+    return problem_detail(request, exc.status_code, str(exc), str(exc))
+
+
+@api.exception_handler(ValidationError)
+def handle_validation_error(request: HttpRequest, exc: ValidationError) -&gt; JsonResponse:
+    return problem_detail(request, 422, &quot;Validation Error&quot;, &quot;Request validation failed.&quot;)
+</code></pre>
+<p><strong>URLs</strong></p>
+<p><code>config/urls.py</code></p>
+<pre><code>
+from django.contrib import admin
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;admin/&quot;, admin.site.urls),
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p>검증은 이 세션에서 실행하지 못했습니다. 적용 후에는 아래를 실행하세요.</p>
+<pre><code>
+python manage.py check
+pytest products/tests/test_product_api.py
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django core models/migrations → <strong>implementation-django</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>dddjango Codex Evaluation Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --good: #087443;
+      --good-bg: #e7f6ee;
+      --bad: #b42318;
+      --bad-bg: #fdecec;
+      --neutral: #475467;
+      --neutral-bg: #eef2f6;
+      --accent: #0c4a6e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    header {
+      padding: 32px 40px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .subhead { color: var(--muted); max-width: 920px; }
+    main { padding: 24px 40px 40px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .inline-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .metric span, .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .metric strong {
+      display: block;
+      margin: 6px 0;
+      font-size: 24px;
+    }
+    .metric.good strong { color: var(--good); }
+    .metric.bad strong { color: var(--bad); }
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .section h2 {
+      margin: 0;
+      padding: 16px 18px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .failures { padding: 0 18px 18px; color: var(--bad); }
+    .empty { padding: 0 18px 18px; color: var(--muted); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #344054;
+      font-weight: 650;
+      z-index: 1;
+    }
+    .number { text-align: right; white-space: nowrap; }
+    .good { color: var(--good); }
+    .bad { color: var(--bad); }
+    .neutral { color: var(--neutral); }
+    .pill {
+      display: inline-block;
+      min-width: 72px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .pill.good { background: var(--good-bg); }
+    .pill.bad { background: var(--bad-bg); }
+    .pill.neutral { background: var(--neutral-bg); }
+    .links a {
+      display: block;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (max-width: 900px) {
+      header, main { padding-left: 18px; padding-right: 18px; }
+      .section { overflow-x: auto; }
+      table { min-width: 1180px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>dddjango Codex Evaluation Report</h1>
+    <div class="subhead">Baseline과 dddjango 플러그인 활성화 결과를 같은 평가 케이스로 비교합니다. 점수는 100점 만점 rubric 기준이며, 링크는 같은 iteration 디렉터리 안의 raw output과 answer key를 엽니다.</div>
+  </header>
+  <main>
+    <div class="metrics">
+      <section class="metric neutral"><span>Baseline Score</span><strong>82.38</strong><small>case average</small></section>
+      <section class="metric good"><span>dddjango Score</span><strong>89.25</strong><small>case average</small></section>
+      <section class="metric good"><span>Quality Lift</span><strong>+6.87</strong><small>+8.34% vs baseline</small></section>
+      <section class="metric neutral"><span>Baseline Time</span><strong>41.42s</strong><small>average duration</small></section>
+      <section class="metric bad"><span>dddjango Time</span><strong>73.62s</strong><small>+77.74% vs baseline</small></section>
+      <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
+      <section class="metric neutral"><span>Completed Cases</span><strong>8/8</strong><small>with and without skill</small></section>
+      <section class="metric neutral"><span>Manual Usability</span><strong>0.00</strong><small>pending / 20</small></section>
+    </div>
+
+    <section class="section">
+      <h2>Failure Highlights</h2>
+      <ul class="failures">
+        <li>No failed or regressed cases.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Release Gate</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+8.34%</td><td>&gt;= +15%</td></tr>
+<tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+<tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
+<tr><td>Django Ninja compliance</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 90%</td></tr>
+<tr><td>TDD quality</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
+<tr><td>Time/cost increase</td><td><span class="pill bad">BLOCKED</span></td><td>+77.74%</td><td>&lt;= +30%</td></tr>
+<tr><td>Negative-control pass rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Case Comparison: Without Skill vs With dddjango</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Evaluation Item</th>
+            <th>Category</th>
+            <th>Expectations</th>
+            <th>Without Skill</th>
+            <th>With dddjango</th>
+            <th>Delta</th>
+            <th>Without Time</th>
+            <th>With Time</th>
+            <th>Verdict</th>
+            <th>Without Note</th>
+            <th>With Note</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Order creation API design with DDD boundaries</strong>
+            <small><code>pilot-api-order-create</code></small>
+          </td>
+          <td>api-design</td>
+          <td>korean_first, django_ninja_compliance, ddd_boundaries, transaction_boundary, actionable_output</td>
+          <td class="number">95.0</td>
+          <td class="number">91.0</td>
+          <td class="number bad">-4.0</td>
+          <td class="number">44.73s</td>
+          <td class="number">53.95s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-api-order-create-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-order-create-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-api-order-create-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Django Ninja pagination and error standard</strong>
+            <small><code>pilot-api-standard</code></small>
+          </td>
+          <td>api-design</td>
+          <td>korean_first, django_ninja_compliance, api_standard, actionable_output</td>
+          <td class="number">85.0</td>
+          <td class="number">88.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number">66.52s</td>
+          <td class="number">60.04s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-api-standard-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-standard-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-api-standard-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Order payment refund database design</strong>
+            <small><code>pilot-db-orders</code></small>
+          </td>
+          <td>db-design</td>
+          <td>korean_first, django_ninja_compliance, db_design, transaction_boundary, actionable_output</td>
+          <td class="number">73.0</td>
+          <td class="number">90.0</td>
+          <td class="number good">+17.0</td>
+          <td class="number">37.61s</td>
+          <td class="number">80.56s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-db-orders-baseline.html">baseline</a>
+            <a href="artifacts/pilot-db-orders-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-db-orders-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Coupon application implementation</strong>
+            <small><code>pilot-implementation-coupon</code></small>
+          </td>
+          <td>implementation</td>
+          <td>korean_first, django_ninja_compliance, ddd_boundaries, actionable_output, testing_strategy</td>
+          <td class="number">91.0</td>
+          <td class="number">95.0</td>
+          <td class="number good">+4.0</td>
+          <td class="number">46.30s</td>
+          <td class="number">55.03s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-implementation-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-implementation-coupon-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-implementation-coupon-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Reject DRF request and redirect to Django Ninja</strong>
+            <small><code>pilot-negative-drf</code></small>
+          </td>
+          <td>negative-control</td>
+          <td>korean_first, django_ninja_compliance, reject_drf, actionable_output</td>
+          <td class="number">66.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+26.0</td>
+          <td class="number">72.56s</td>
+          <td class="number">118.89s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-negative-drf-baseline.html">baseline</a>
+            <a href="artifacts/pilot-negative-drf-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-negative-drf-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Review a fat Django model</strong>
+            <small><code>pilot-review-fat-model</code></small>
+          </td>
+          <td>review</td>
+          <td>korean_first, django_ninja_compliance, architecture_review, transaction_boundary, actionable_output</td>
+          <td class="number">80.0</td>
+          <td class="number">80.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">25.85s</td>
+          <td class="number">78.48s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-review-fat-model-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-fat-model-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-review-fat-model-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>Review business logic in Django view</strong>
+            <small><code>pilot-review-view-logic</code></small>
+          </td>
+          <td>review</td>
+          <td>korean_first, django_ninja_compliance, architecture_review, actionable_output</td>
+          <td class="number">92.0</td>
+          <td class="number">88.0</td>
+          <td class="number bad">-4.0</td>
+          <td class="number">15.45s</td>
+          <td class="number">54.85s</td>
+          <td><span class="pill neutral">flat</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-review-view-logic-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-view-logic-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-review-view-logic-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td><span class="pill good">complete</span></td>
+          <td>
+            <strong>TDD flow for coupon feature</strong>
+            <small><code>pilot-tdd-coupon</code></small>
+          </td>
+          <td>tdd</td>
+          <td>korean_first, django_ninja_compliance, tdd_first, pytest_quality, actionable_output</td>
+          <td class="number">77.0</td>
+          <td class="number">90.0</td>
+          <td class="number good">+13.0</td>
+          <td class="number">22.36s</td>
+          <td class="number">87.15s</td>
+          <td><span class="pill good">improved</span></td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td>auto heuristic grade; review manually before release gate</td>
+          <td class="links">
+            <a href="artifacts/pilot-tdd-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-tdd-coupon-dddjango.html">dddjango</a>
+            <a href="artifacts/pilot-tdd-coupon-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Reference Ceiling Comparison</h2>
+      <div class="inline-metrics">
+        <section class="metric neutral"><span>Core Only</span><strong>88.00</strong><small>SKILL.md only</small></section>
+        <section class="metric neutral"><span>Oracle Reference</span><strong>86.38</strong><small>direct references</small></section>
+        <section class="metric good"><span>Reference Contribution</span><strong>+1.25</strong><small>full - core</small></section>
+        <section class="metric good"><span>Ceiling Gap</span><strong>-2.88</strong><small>oracle - full</small></section>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Category</th>
+            <th>Baseline</th>
+            <th>Core Only</th>
+            <th>Full Skill</th>
+            <th>Oracle Reference</th>
+            <th>Full - Baseline</th>
+            <th>Reference Contribution</th>
+            <th>Ceiling Gap</th>
+            <th>Baseline Time</th>
+            <th>Core Time</th>
+            <th>Full Time</th>
+            <th>Oracle Time</th>
+            <th>Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+          <td>
+            <strong>Order creation API design with DDD boundaries</strong>
+            <small><code>pilot-api-order-create</code></small>
+          </td>
+          <td>api-design</td>
+          <td class="number">95.0</td>
+          <td class="number">91.0</td>
+          <td class="number">91.0</td>
+          <td class="number">91.0</td>
+          <td class="number bad">-4.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">44.73s</td>
+          <td class="number">62.80s</td>
+          <td class="number">53.95s</td>
+          <td class="number">75.29s</td>
+          <td class="links">
+            <a href="artifacts/pilot-api-order-create-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-order-create-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-api-order-create-dddjango.html">full</a>
+            <a href="artifacts/pilot-api-order-create-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-api-order-create-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>Django Ninja pagination and error standard</strong>
+            <small><code>pilot-api-standard</code></small>
+          </td>
+          <td>api-design</td>
+          <td class="number">85.0</td>
+          <td class="number">88.0</td>
+          <td class="number">88.0</td>
+          <td class="number">84.0</td>
+          <td class="number good">+3.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number good">-4.0</td>
+          <td class="number">66.52s</td>
+          <td class="number">90.10s</td>
+          <td class="number">60.04s</td>
+          <td class="number">173.75s</td>
+          <td class="links">
+            <a href="artifacts/pilot-api-standard-baseline.html">baseline</a>
+            <a href="artifacts/pilot-api-standard-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-api-standard-dddjango.html">full</a>
+            <a href="artifacts/pilot-api-standard-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-api-standard-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>Order payment refund database design</strong>
+            <small><code>pilot-db-orders</code></small>
+          </td>
+          <td>db-design</td>
+          <td class="number">73.0</td>
+          <td class="number">78.0</td>
+          <td class="number">90.0</td>
+          <td class="number">80.0</td>
+          <td class="number good">+17.0</td>
+          <td class="number good">+12.0</td>
+          <td class="number good">-10.0</td>
+          <td class="number">37.61s</td>
+          <td class="number">86.24s</td>
+          <td class="number">80.56s</td>
+          <td class="number">101.15s</td>
+          <td class="links">
+            <a href="artifacts/pilot-db-orders-baseline.html">baseline</a>
+            <a href="artifacts/pilot-db-orders-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-db-orders-dddjango.html">full</a>
+            <a href="artifacts/pilot-db-orders-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-db-orders-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>Coupon application implementation</strong>
+            <small><code>pilot-implementation-coupon</code></small>
+          </td>
+          <td>implementation</td>
+          <td class="number">91.0</td>
+          <td class="number">95.0</td>
+          <td class="number">95.0</td>
+          <td class="number">95.0</td>
+          <td class="number good">+4.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">46.30s</td>
+          <td class="number">58.13s</td>
+          <td class="number">55.03s</td>
+          <td class="number">58.51s</td>
+          <td class="links">
+            <a href="artifacts/pilot-implementation-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-implementation-coupon-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-implementation-coupon-dddjango.html">full</a>
+            <a href="artifacts/pilot-implementation-coupon-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-implementation-coupon-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>Reject DRF request and redirect to Django Ninja</strong>
+            <small><code>pilot-negative-drf</code></small>
+          </td>
+          <td>negative-control</td>
+          <td class="number">66.0</td>
+          <td class="number">92.0</td>
+          <td class="number">92.0</td>
+          <td class="number">77.0</td>
+          <td class="number good">+26.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number good">-15.0</td>
+          <td class="number">72.56s</td>
+          <td class="number">43.53s</td>
+          <td class="number">118.89s</td>
+          <td class="number">43.51s</td>
+          <td class="links">
+            <a href="artifacts/pilot-negative-drf-baseline.html">baseline</a>
+            <a href="artifacts/pilot-negative-drf-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-negative-drf-dddjango.html">full</a>
+            <a href="artifacts/pilot-negative-drf-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-negative-drf-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>Review a fat Django model</strong>
+            <small><code>pilot-review-fat-model</code></small>
+          </td>
+          <td>review</td>
+          <td class="number">80.0</td>
+          <td class="number">80.0</td>
+          <td class="number">80.0</td>
+          <td class="number">80.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number">25.85s</td>
+          <td class="number">45.31s</td>
+          <td class="number">78.48s</td>
+          <td class="number">162.81s</td>
+          <td class="links">
+            <a href="artifacts/pilot-review-fat-model-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-fat-model-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-review-fat-model-dddjango.html">full</a>
+            <a href="artifacts/pilot-review-fat-model-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-review-fat-model-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>Review business logic in Django view</strong>
+            <small><code>pilot-review-view-logic</code></small>
+          </td>
+          <td>review</td>
+          <td class="number">92.0</td>
+          <td class="number">88.0</td>
+          <td class="number">88.0</td>
+          <td class="number">92.0</td>
+          <td class="number bad">-4.0</td>
+          <td class="number neutral">+0.0</td>
+          <td class="number neutral">+4.0</td>
+          <td class="number">15.45s</td>
+          <td class="number">54.03s</td>
+          <td class="number">54.85s</td>
+          <td class="number">106.79s</td>
+          <td class="links">
+            <a href="artifacts/pilot-review-view-logic-baseline.html">baseline</a>
+            <a href="artifacts/pilot-review-view-logic-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-review-view-logic-dddjango.html">full</a>
+            <a href="artifacts/pilot-review-view-logic-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-review-view-logic-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>
+            <strong>TDD flow for coupon feature</strong>
+            <small><code>pilot-tdd-coupon</code></small>
+          </td>
+          <td>tdd</td>
+          <td class="number">77.0</td>
+          <td class="number">92.0</td>
+          <td class="number">90.0</td>
+          <td class="number">92.0</td>
+          <td class="number good">+13.0</td>
+          <td class="number bad">-2.0</td>
+          <td class="number good">+2.0</td>
+          <td class="number">22.36s</td>
+          <td class="number">71.75s</td>
+          <td class="number">87.15s</td>
+          <td class="number">106.26s</td>
+          <td class="links">
+            <a href="artifacts/pilot-tdd-coupon-baseline.html">baseline</a>
+            <a href="artifacts/pilot-tdd-coupon-skill-core-only.html">core-only</a>
+            <a href="artifacts/pilot-tdd-coupon-dddjango.html">full</a>
+            <a href="artifacts/pilot-tdd-coupon-oracle-reference.html">oracle</a>
+            <a href="artifacts/pilot-tdd-coupon-answer-key.html">answer key</a>
+          </td>
+        </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+
+        <section class="section">
+          <h2>Usability Summary</h2>
+          <p class="empty">No manual usability scores recorded.</p>
+        </section>
+
+
+
+  </main>
+</body>
+</html>

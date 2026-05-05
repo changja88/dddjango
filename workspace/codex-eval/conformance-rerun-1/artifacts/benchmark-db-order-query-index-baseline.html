@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-order-query-index baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-order-query-index baseline</h1>
+    <div class="path">workspace/codex-eval/conformance-rerun-1/baseline/benchmark-db-order-query-index.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>관리자 주문 목록이 느릴 때는 “admin이 실제로 어떤 WHERE / ORDER BY / JOIN / COUNT를 만드는지”부터 확인한 뒤, 그 패턴에 맞춰 인덱스와 ORM을 같이 조정하는 게 좋습니다.</p>
+<p><strong>조회 패턴 확인</strong></p>
+<p>우선 Django admin 주문 목록에서 자주 발생하는 조건을 분리해서 봅니다.</p>
+<ul>
+<li>기본 정렬: 보통 <code>ORDER BY -created_at</code>, <code>ORDER BY -id</code></li>
+<li>상태 필터: <code>status</code>, <code>payment_status</code>, <code>fulfillment_status</code></li>
+<li>기간 필터: <code>created_at</code>, <code>paid_at</code>, <code>updated_at</code></li>
+<li>고객/상점 필터: <code>user_id</code>, <code>customer_id</code>, <code>store_id</code></li>
+<li>검색: <code>order_number</code>, <code>user__email</code>, <code>user__name</code>, <code>phone</code></li>
+<li>리스트 표시 JOIN: <code>user</code>, <code>payment</code>, <code>shipping_address</code>, <code>items</code> 등</li>
+<li>admin 페이지네이션용 <code>COUNT(*)</code></li>
+</ul>
+<p>Django admin에서는 다음 항목이 성능에 직접 영향 줍니다.</p>
+<pre><code>
+class OrderAdmin(admin.ModelAdmin):
+    list_display = (...)
+    list_filter = (...)
+    search_fields = (...)
+    ordering = (&quot;-created_at&quot;,)
+    list_select_related = (&quot;user&quot;,)
+    show_full_result_count = False
+</code></pre>
+<p><code>show_full_result_count = False</code>는 대량 테이블에서 admin 검색/필터 시 전체 개수 카운트를 줄이는 데 도움이 됩니다.</p>
+<p><strong>검토할 인덱스</strong></p>
+<p>가장 먼저 볼 후보는 admin의 기본 정렬과 필터 조합입니다.</p>
+<pre><code>
+class Order(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=[&quot;-created_at&quot;]),
+            models.Index(fields=[&quot;status&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;payment_status&quot;, &quot;-created_at&quot;]),
+            models.Index(fields=[&quot;user&quot;, &quot;-created_at&quot;]),
+        ]
+</code></pre>
+<p>자주 <code>store_id + status + created_at</code> 형태로 조회한다면 복합 인덱스가 더 효과적입니다.</p>
+<pre><code>
+models.Index(fields=[&quot;store&quot;, &quot;status&quot;, &quot;-created_at&quot;])
+</code></pre>
+<p>기간 필터가 항상 들어가고 상태도 함께 쓰이면:</p>
+<pre><code>
+models.Index(fields=[&quot;status&quot;, &quot;created_at&quot;])
+</code></pre>
+<p>PostgreSQL에서 “최근 주문 중 미처리 주문”처럼 특정 상태만 압도적으로 자주 본다면 partial index도 검토할 만합니다.</p>
+<pre><code>
+models.Index(
+    fields=[&quot;-created_at&quot;],
+    name=&quot;order_pending_created_idx&quot;,
+    condition=models.Q(status=&quot;pending&quot;),
+)
+</code></pre>
+<p>검색 필드는 별도로 봐야 합니다. <code>order_number</code>처럼 exact/prefix 검색이면 일반 btree 인덱스가 유효합니다.</p>
+<pre><code>
+models.Index(fields=[&quot;order_number&quot;])
+</code></pre>
+<p>하지만 <code>icontains</code> 검색, 예를 들어 admin의 <code>search_fields = (&quot;user__email&quot;,)</code> 또는 <code>(&quot;^order_number&quot;,)</code>가 아닌 기본 검색은 DB에 따라 인덱스를 못 탈 수 있습니다. PostgreSQL에서 <code>icontains</code>가 많으면 <code>pg_trgm</code> + GIN 인덱스를 검토합니다.</p>
+<pre><code>
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.operations import TrigramExtension
+
+class Migration(migrations.Migration):
+    operations = [
+        TrigramExtension(),
+        migrations.AddIndex(
+            model_name=&quot;order&quot;,
+            index=GinIndex(
+                name=&quot;order_number_trgm_idx&quot;,
+                fields=[&quot;order_number&quot;],
+                opclasses=[&quot;gin_trgm_ops&quot;],
+            ),
+        ),
+    ]
+</code></pre>
+<p><strong>ORM 쿼리 개선</strong></p>
+<p>admin 목록에서 FK를 표시한다면 <code>select_related</code>를 우선 적용합니다.</p>
+<pre><code>
+class OrderAdmin(admin.ModelAdmin):
+    list_select_related = (&quot;user&quot;, &quot;payment&quot;)
+</code></pre>
+<p><code>get_queryset()</code>을 쓴다면 명시적으로:</p>
+<pre><code>
+def get_queryset(self, request):
+    qs = super().get_queryset(request)
+    return qs.select_related(&quot;user&quot;, &quot;payment&quot;)
+</code></pre>
+<p>역참조나 M2M, 주문 아이템 집계가 필요하면 <code>prefetch_related</code>를 쓰되, admin 목록에서 모든 주문의 모든 아이템을 가져오는 구조는 피하는 게 좋습니다.</p>
+<pre><code>
+return qs.prefetch_related(
+    Prefetch(&quot;items&quot;, queryset=OrderItem.objects.select_related(&quot;product&quot;))
+)
+</code></pre>
+<p><code>list_display</code> 메서드 안에서 매 행마다 <code>.count()</code>, <code>.exists()</code>, <code>.first()</code>, <code>.aggregate()</code>를 호출하면 N+1이 됩니다. 이 경우 <code>annotate()</code>로 목록 쿼리에 합칩니다.</p>
+<pre><code>
+from django.db.models import Count, Sum
+
+def get_queryset(self, request):
+    return (
+        super()
+        .get_queryset(request)
+        .select_related(&quot;user&quot;)
+        .annotate(
+            item_count=Count(&quot;items&quot;),
+            total_quantity=Sum(&quot;items__quantity&quot;),
+        )
+    )
+</code></pre>
+<p>검색도 조정합니다. <code>search_fields</code>에서 불필요한 JOIN 검색을 줄이고, exact 검색 가능한 필드는 <code>=</code> prefix를 고려합니다.</p>
+<pre><code>
+search_fields = (
+    &quot;=order_number&quot;,
+    &quot;=id&quot;,
+    &quot;user__email&quot;,
+)
+</code></pre>
+<p><strong>Migration 검증</strong></p>
+<p>인덱스 추가 전에는 반드시 실제 SQL과 migration 결과를 확인합니다.</p>
+<pre><code>
+python manage.py makemigrations
+python manage.py sqlmigrate orders 000X
+python manage.py migrate --plan
+</code></pre>
+<p>PostgreSQL 운영 테이블이 크면 잠금도 고려해야 합니다. Django 기본 <code>AddIndex</code>는 상황에 따라 쓰기 잠금을 유발할 수 있으므로, 큰 테이블에서는 <code>CREATE INDEX CONCURRENTLY</code> 전략을 별도 migration으로 검토합니다.</p>
+<p>검증할 것:</p>
+<ul>
+<li>인덱스 이름이 30자 제한/DB 제한에 걸리지 않는지</li>
+<li>복합 인덱스 컬럼 순서가 실제 WHERE + ORDER BY와 맞는지</li>
+<li>이미 유사한 인덱스가 있어서 중복 생성하지 않는지</li>
+<li>partial index 조건이 실제 admin 필터 조건과 정확히 같은지</li>
+<li>migration이 운영 DB에서 긴 lock을 만들지 않는지</li>
+</ul>
+<p><strong>EXPLAIN 기준</strong></p>
+<p>Django ORM에서는 <code>.explain()</code>으로 먼저 확인합니다.</p>
+<pre><code>
+qs = Order.objects.filter(status=&quot;paid&quot;).order_by(&quot;-created_at&quot;)
+print(qs.explain(analyze=True, buffers=True))
+</code></pre>
+<p>PostgreSQL 기준으로는 이런 신호를 봅니다.</p>
+<p>좋은 신호:</p>
+<ul>
+<li><code>Index Scan</code>, <code>Index Only Scan</code>, <code>Bitmap Index Scan</code></li>
+<li><code>Sort</code>가 사라지거나 비용이 작음</li>
+<li><code>Rows Removed by Filter</code>가 과도하지 않음</li>
+<li><code>actual rows</code>와 예상 rows 차이가 크지 않음</li>
+<li><code>shared hit/read buffers</code>가 줄어듦</li>
+<li><code>Execution Time</code>이 개선됨</li>
+</ul>
+<p>나쁜 신호:</p>
+<ul>
+<li>대량 <code>Seq Scan</code></li>
+<li><code>ORDER BY</code> 때문에 큰 <code>Sort</code></li>
+<li><code>Nested Loop</code> 안쪽에서 반복적으로 큰 테이블 조회</li>
+<li>admin 한 페이지 조회인데 수천~수만 row를 읽음</li>
+<li><code>COUNT(*)</code>가 전체 테이블 스캔에 가까움</li>
+</ul>
+<p>비교는 인덱스 추가 전후로 같은 조건에서 합니다.</p>
+<pre><code>
+Order.objects.filter(
+    status=&quot;paid&quot;,
+    created_at__gte=&quot;2026-01-01&quot;,
+).order_by(&quot;-created_at&quot;).explain(analyze=True, buffers=True)
+</code></pre>
+<p>핵심은 단일 컬럼 인덱스를 많이 추가하는 게 아니라, admin의 실제 필터 조합과 정렬 순서에 맞는 소수의 복합 인덱스를 두는 것입니다. 보통 주문 admin에서는 <code>status + created_at</code>, <code>user/customer + created_at</code>, 기본 <code>created_at desc</code>, 그리고 검색 필드용 인덱스부터 검토하는 순서가 현실적입니다.</p></article>
+  </main>
+</body>
+</html>

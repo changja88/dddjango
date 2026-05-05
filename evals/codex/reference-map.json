@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "purpose": "Map evaluation cases to dddjango reference inputs for reference-ceiling tests. This file must not contain answer keys, expected scores, or model outputs.",
+  "case_defaults": {
+    "api-design": {
+      "references": [
+        "skills/architecture-api/references/rest-principles.md",
+        "skills/architecture-api/references/status-codes-errors.md",
+        "skills/implementation-django-ninja/references/routing.md",
+        "skills/implementation-django-ninja/references/schema-validation.md",
+        "skills/implementation-django-ninja/references/response-pagination.md"
+      ],
+      "expected_rules": [
+        "Django Ninja Router와 Schema를 사용한다",
+        "요청/응답 스키마와 에러 계약을 명확히 분리한다",
+        "페이지네이션, 필터, 정렬은 API 표준으로 제시한다"
+      ]
+    },
+    "ddd-architecture": {
+      "references": [
+        "skills/architecture-ddd/references/aggregates.md",
+        "skills/architecture-ddd/references/repositories-services.md",
+        "skills/architecture-ddd/references/architecture.md",
+        "skills/architecture-implementation-patterns/references/hexagonal.md"
+      ],
+      "expected_rules": [
+        "애그리거트 경계와 불변식을 분리한다",
+        "application service와 domain service 책임을 구분한다",
+        "repository와 persistence 의존성을 경계 밖으로 둔다"
+      ]
+    },
+    "db-design": {
+      "references": [
+        "skills/architecture-db/references/modeling.md",
+        "skills/architecture-db/references/index-and-performance.md",
+        "skills/architecture-db/references/query-optimization.md",
+        "skills/architecture-db/references/transactions.md",
+        "skills/implementation-django/references/model-design.md"
+      ],
+      "expected_rules": [
+        "대표 쿼리 워크로드 기준으로 인덱스를 설계한다",
+        "transaction.atomic, locking, uniqueness를 명시한다",
+        "Django model constraint와 migration 검증을 제시한다"
+      ]
+    },
+    "tdd": {
+      "references": [
+        "skills/implementation-tdd/references/red-green-refactor.md",
+        "skills/implementation-tdd/references/red-bar-patterns.md",
+        "skills/implementation-tdd/references/green-bar-patterns.md",
+        "skills/implementation-test/references/pytest-fixtures.md",
+        "skills/implementation-test/references/test-quality.md"
+      ],
+      "expected_rules": [
+        "RED 테스트를 먼저 제시한다",
+        "예상 실패 이유와 GREEN 최소 구현을 분리한다",
+        "pytest 실행 명령과 refactor 기준을 포함한다"
+      ]
+    },
+    "review": {
+      "references": [
+        "skills/architecture-ddd/references/aggregates.md",
+        "skills/architecture-implementation-patterns/references/ddd-tactical-checklist.md",
+        "skills/implementation-cleancode/references/refactoring.md",
+        "skills/implementation-django/references/queryset-manager.md"
+      ],
+      "expected_rules": [
+        "심각도순 finding을 먼저 제시한다",
+        "DDD 경계, N+1, transaction, 테스트 누락을 점검한다",
+        "최소 수정 방향을 코드 또는 파일 단위로 제시한다"
+      ]
+    },
+    "clean-code": {
+      "references": [
+        "skills/implementation-cleancode/references/functions.md",
+        "skills/implementation-cleancode/references/naming.md",
+        "skills/implementation-cleancode/references/error-handling.md",
+        "skills/implementation-cleancode/references/refactoring.md"
+      ],
+      "expected_rules": [
+        "이름, 함수 크기, 오류 경계를 구체적으로 개선한다",
+        "불필요한 추상화와 중복을 구분한다",
+        "행동 변경 없이 작은 단계로 리팩터링한다"
+      ]
+    },
+    "negative-control": {
+      "references": [],
+      "expected_rules": [
+        "비 Django 요청에는 Django, DDD, Django Ninja를 끼워 넣지 않는다",
+        "DRF 요청은 Django Ninja 대체로 전환한다"
+      ]
+    }
+  },
+  "expectation_defaults": {
+    "django_ninja_compliance": [
+      "skills/implementation-django-ninja/references/routing.md",
+      "skills/implementation-django-ninja/references/schema-validation.md"
+    ],
+    "reject_drf": [
+      "skills/implementation-django-ninja/references/routing.md",
+      "skills/implementation-django-ninja/references/schema-validation.md",
+      "skills/architecture-api/references/rest-principles.md"
+    ],
+    "api_standard": [
+      "skills/architecture-api/references/status-codes-errors.md",
+      "skills/architecture-api/references/pagination.md",
+      "skills/implementation-django-ninja/references/response-pagination.md"
+    ],
+    "ddd_boundaries": [
+      "skills/architecture-ddd/references/aggregates.md",
+      "skills/architecture-ddd/references/repositories-services.md"
+    ],
+    "db_design": [
+      "skills/architecture-db/references/index-and-performance.md",
+      "skills/architecture-db/references/query-optimization.md"
+    ],
+    "transaction_boundary": [
+      "skills/architecture-db/references/transactions.md",
+      "skills/implementation-django/references/service-layer.md"
+    ],
+    "tdd_first": [
+      "skills/implementation-tdd/references/red-green-refactor.md",
+      "skills/implementation-test/references/test-quality.md"
+    ],
+    "pytest_quality": [
+      "skills/implementation-test/references/pytest-fixtures.md",
+      "skills/implementation-test/references/test-quality.md"
+    ],
+    "clean_code": [
+      "skills/implementation-cleancode/references/functions.md",
+      "skills/implementation-cleancode/references/refactoring.md"
+    ],
+    "architecture_review": [
+      "skills/architecture-implementation-patterns/references/ddd-tactical-checklist.md",
+      "skills/implementation-cleancode/references/refactoring.md"
+    ]
+  },
+  "cases": {
+    "pilot-negative-drf": {
+      "references": [
+        "skills/implementation-django-ninja/references/routing.md",
+        "skills/implementation-django-ninja/references/schema-validation.md",
+        "skills/architecture-api/references/rest-principles.md"
+      ],
+      "expected_rules": [
+        "DRF 코드를 생성하지 않는다",
+        "Django Ninja Schema/Router로 대체한다",
+        "NinjaAPI.add_router 예시를 포함한다"
+      ]
+    },
+    "pilot-tdd-coupon": {
+      "references": [
+        "skills/implementation-tdd/references/red-green-refactor.md",
+        "skills/implementation-tdd/references/red-bar-patterns.md",
+        "skills/implementation-test/references/pytest-fixtures.md",
+        "skills/implementation-test/references/test-quality.md"
+      ],
+      "expected_rules": [
+        "RED pytest를 먼저 제시한다",
+        "예상 실패 이유와 GREEN 구현을 분리한다",
+        "refactor 기준과 실행 명령을 포함한다"
+      ]
+    },
+    "benchmark-api-product-search": {
+      "references": [
+        "skills/architecture-api/references/pagination.md",
+        "skills/architecture-api/references/status-codes-errors.md",
+        "skills/implementation-django-ninja/references/input-filtering.md",
+        "skills/implementation-django-ninja/references/response-pagination.md",
+        "skills/implementation-django-ninja/references/schema-validation.md"
+      ],
+      "expected_rules": [
+        "Query[FilterSchema]를 사용한다",
+        "정렬 필드는 allow-list로 제한한다",
+        "items/meta envelope와 RFC 9457 에러 계약을 제시한다"
+      ]
+    },
+    "benchmark-db-order-query-index": {
+      "references": [
+        "skills/architecture-db/references/index-and-performance.md",
+        "skills/architecture-db/references/query-optimization.md",
+        "skills/architecture-db/references/transactions.md",
+        "skills/implementation-django/references/queryset-manager.md",
+        "skills/implementation-django/references/model-design.md"
+      ],
+      "expected_rules": [
+        "EXPLAIN ANALYZE 기준으로 쿼리 병목을 판단한다",
+        "복합/부분/커버링 인덱스 후보를 구분한다",
+        "select_related/prefetch_related와 lock 범위를 함께 검토한다"
+      ]
+    }
+  }
+}

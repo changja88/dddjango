@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-tdd-coupon oracle-reference</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-tdd-coupon oracle-reference</h1>
+    <div class="path">workspace/codex-eval/reference-ceiling-pilot/oracle-reference/pilot-tdd-coupon.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>작업 디렉터리 <code>/private/tmp/dddjango-codex-eval</code>은 비어 있고 현재 세션은 read-only라 파일 생성과 pytest 실행은 못 했습니다. 아래는 그대로 붙여 넣어 적용할 수 있는 <strong>RED → 예상 실패 → GREEN → REFACTOR</strong> 순서의 최소 구현입니다. 정책상 API는 DRF가 아니라 <strong>Django Ninja</strong>로 작성합니다.</p>
+<p><strong>도메인 경계</strong> | 용어 | 의미 | 금지 동의어 | |---|---|---| | <code>Coupon</code> | 할인 정책을 가진 Aggregate Root | discount row | | <code>Money</code> | 금액 Value Object | raw decimal | | <code>apply</code> | 주문 금액에 쿠폰을 적용한다 | calculate만 호출 | | <code>CouponAppliedEvent</code> | 쿠폰 적용 완료 도메인 이벤트 | CouponApplyEvent |</p>
+<p>Aggregate Root는 <code>Coupon</code>입니다. 보호할 불변식은 “비활성/기간 외/최소 주문금액 미달 쿠폰은 적용할 수 없고, 할인 후 금액은 0원 미만이 될 수 없다”입니다.</p>
+<p><strong>RED: 실패 pytest 먼저</strong> <code>tests/isolated/unit/coupons/test_coupon_apply.py</code></p>
+<pre><code>
+from datetime import timedelta
+from decimal import Decimal
+
+import pytest
+from django.utils import timezone
+
+from apps.coupons.domain import (
+    Coupon,
+    CouponExpiredError,
+    CouponNotApplicableError,
+    DiscountType,
+    Money,
+)
+
+
+def test_coupon_apply_fixed_discount_returns_discounted_total():
+    # Arrange
+    now = timezone.now()
+    coupon = Coupon(
+        code=&quot;WELCOME10&quot;,
+        discount_type=DiscountType.FIXED,
+        discount_value=Money(&quot;1000&quot;),
+        minimum_order_amount=Money(&quot;5000&quot;),
+        starts_at=now - timedelta(days=1),
+        ends_at=now + timedelta(days=1),
+    )
+
+    # Act
+    result = coupon.apply(Money(&quot;10000&quot;), applied_at=now)
+
+    # Assert
+    assert result.original_amount == Money(&quot;10000&quot;)
+    assert result.discount_amount == Money(&quot;1000&quot;)
+    assert result.final_amount == Money(&quot;9000&quot;)
+    assert result.event.coupon_code == &quot;WELCOME10&quot;
+
+
+def test_coupon_apply_percent_discount_respects_max_discount_amount():
+    # Arrange
+    now = timezone.now()
+    coupon = Coupon(
+        code=&quot;SPRING20&quot;,
+        discount_type=DiscountType.PERCENT,
+        discount_value=Decimal(&quot;20&quot;),
+        minimum_order_amount=Money(&quot;10000&quot;),
+        max_discount_amount=Money(&quot;3000&quot;),
+        starts_at=now - timedelta(days=1),
+        ends_at=now + timedelta(days=1),
+    )
+
+    # Act
+    result = coupon.apply(Money(&quot;50000&quot;), applied_at=now)
+
+    # Assert
+    assert result.discount_amount == Money(&quot;3000&quot;)
+    assert result.final_amount == Money(&quot;47000&quot;)
+
+
+def test_coupon_apply_when_expired_raises_domain_error():
+    # Arrange
+    now = timezone.now()
+    coupon = Coupon(
+        code=&quot;OLD10&quot;,
+        discount_type=DiscountType.FIXED,
+        discount_value=Money(&quot;1000&quot;),
+        minimum_order_amount=Money(&quot;5000&quot;),
+        starts_at=now - timedelta(days=10),
+        ends_at=now - timedelta(days=1),
+    )
+
+    # Act / Assert
+    with pytest.raises(CouponExpiredError):
+        coupon.apply(Money(&quot;10000&quot;), applied_at=now)
+
+
+def test_coupon_apply_when_order_amount_is_too_low_raises_domain_error():
+    # Arrange
+    now = timezone.now()
+    coupon = Coupon(
+        code=&quot;MIN10&quot;,
+        discount_type=DiscountType.FIXED,
+        discount_value=Money(&quot;1000&quot;),
+        minimum_order_amount=Money(&quot;5000&quot;),
+        starts_at=now - timedelta(days=1),
+        ends_at=now + timedelta(days=1),
+    )
+
+    # Act / Assert
+    with pytest.raises(CouponNotApplicableError):
+        coupon.apply(Money(&quot;4000&quot;), applied_at=now)
+</code></pre>
+<p><strong>예상 실패 이유</strong></p>
+<p>첫 실행에서는 <code>apps.coupons.domain</code> 모듈, <code>Coupon</code>, <code>Money</code>, <code>DiscountType</code>, 도메인 예외가 없어서 <code>ModuleNotFoundError</code> 또는 <code>ImportError</code>가 나야 합니다. 이 실패가 RED입니다.</p>
+<p><strong>GREEN: 최소 구현</strong> <code>apps/coupons/domain.py</code></p>
+<pre><code>
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from enum import StrEnum
+
+
+class CouponError(Exception):
+    pass
+
+
+class CouponExpiredError(CouponError):
+    pass
+
+
+class CouponNotApplicableError(CouponError):
+    pass
+
+
+class DiscountType(StrEnum):
+    FIXED = &quot;fixed&quot;
+    PERCENT = &quot;percent&quot;
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: Decimal
+
+    def __init__(self, amount: str | int | Decimal) -&gt; None:
+        value = Decimal(amount)
+        if value &lt; 0:
+            raise ValueError(&quot;amount must be zero or greater&quot;)
+        object.__setattr__(self, &quot;amount&quot;, value)
+
+    def __sub__(self, other: &quot;Money&quot;) -&gt; &quot;Money&quot;:
+        return Money(max(self.amount - other.amount, Decimal(&quot;0&quot;)))
+
+    def min(self, other: &quot;Money&quot;) -&gt; &quot;Money&quot;:
+        return self if self.amount &lt;= other.amount else other
+
+
+@dataclass(frozen=True)
+class CouponAppliedEvent:
+    coupon_code: str
+    original_amount: Money
+    discount_amount: Money
+    final_amount: Money
+
+
+@dataclass(frozen=True)
+class AppliedCoupon:
+    original_amount: Money
+    discount_amount: Money
+    final_amount: Money
+    event: CouponAppliedEvent
+
+
+@dataclass
+class Coupon:
+    &quot;&quot;&quot;Aggregate Root.
+
+    Invariants:
+    - 기간 밖의 쿠폰은 적용할 수 없다.
+    - 최소 주문 금액 미만에는 적용할 수 없다.
+    - 할인 후 금액은 0원 미만이 될 수 없다.
+    &quot;&quot;&quot;
+
+    code: str
+    discount_type: DiscountType
+    discount_value: Money | Decimal
+    minimum_order_amount: Money
+    starts_at: datetime
+    ends_at: datetime
+    max_discount_amount: Money | None = None
+    is_active: bool = True
+
+    def apply(self, order_amount: Money, *, applied_at: datetime) -&gt; AppliedCoupon:
+        if not self.is_active or not (self.starts_at &lt;= applied_at &lt;= self.ends_at):
+            raise CouponExpiredError(&quot;coupon is not active at applied_at&quot;)
+
+        if order_amount.amount &lt; self.minimum_order_amount.amount:
+            raise CouponNotApplicableError(&quot;order amount is below coupon minimum&quot;)
+
+        discount_amount = self._discount_amount(order_amount)
+        final_amount = order_amount - discount_amount
+
+        event = CouponAppliedEvent(
+            coupon_code=self.code,
+            original_amount=order_amount,
+            discount_amount=discount_amount,
+            final_amount=final_amount,
+        )
+        return AppliedCoupon(
+            original_amount=order_amount,
+            discount_amount=discount_amount,
+            final_amount=final_amount,
+            event=event,
+        )
+
+    def _discount_amount(self, order_amount: Money) -&gt; Money:
+        if self.discount_type == DiscountType.FIXED:
+            discount = self.discount_value
+            if not isinstance(discount, Money):
+                discount = Money(discount)
+        else:
+            rate = Decimal(self.discount_value) / Decimal(&quot;100&quot;)
+            discount = Money(order_amount.amount * rate)
+
+        discount = discount.min(order_amount)
+        if self.max_discount_amount is not None:
+            discount = discount.min(self.max_discount_amount)
+        return discount
+</code></pre>
+<p><strong>Django 모델 + Repository</strong> <code>apps/coupons/models.py</code></p>
+<pre><code>
+from django.conf import settings
+from django.db import models
+
+
+class Coupon(models.Model):
+    class DiscountType(models.TextChoices):
+        FIXED = &quot;fixed&quot;, &quot;Fixed&quot;
+        PERCENT = &quot;percent&quot;, &quot;Percent&quot;
+
+    class Status(models.TextChoices):
+        ACTIVE = &quot;active&quot;, &quot;Active&quot;
+        PAUSED = &quot;paused&quot;, &quot;Paused&quot;
+
+    code = models.CharField(max_length=40, unique=True)
+    discount_type = models.CharField(max_length=20, choices=DiscountType.choices)
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2)
+    minimum_order_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    max_discount_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+    )
+
+    class Meta:
+        ordering = [&quot;code&quot;]
+        indexes = [
+            models.Index(fields=[&quot;code&quot;, &quot;status&quot;]),
+            models.Index(fields=[&quot;starts_at&quot;, &quot;ends_at&quot;]),
+        ]
+
+    def __str__(self) -&gt; str:
+        return self.code
+
+
+class CouponRedemption(models.Model):
+    coupon = models.ForeignKey(Coupon, on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    original_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    final_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = [&quot;-created_at&quot;]
+        indexes = [models.Index(fields=[&quot;user&quot;, &quot;created_at&quot;])]
+</code></pre>
+<p><code>apps/coupons/repositories.py</code></p>
+<pre><code>
+from abc import ABC, abstractmethod
+
+from django.shortcuts import get_object_or_404
+
+from apps.coupons import domain
+from apps.coupons.models import Coupon as CouponModel
+
+
+class CouponRepository(ABC):
+    @abstractmethod
+    def find_by_code(self, code: str) -&gt; domain.Coupon:
+        raise NotImplementedError
+
+
+class DjangoCouponRepository(CouponRepository):
+    def find_by_code(self, code: str) -&gt; domain.Coupon:
+        coupon = get_object_or_404(CouponModel, code=code)
+
+        return domain.Coupon(
+            code=coupon.code,
+            discount_type=domain.DiscountType(coupon.discount_type),
+            discount_value=(
+                domain.Money(coupon.discount_value)
+                if coupon.discount_type == CouponModel.DiscountType.FIXED
+                else coupon.discount_value
+            ),
+            minimum_order_amount=domain.Money(coupon.minimum_order_amount),
+            max_discount_amount=(
+                domain.Money(coupon.max_discount_amount)
+                if coupon.max_discount_amount is not None
+                else None
+            ),
+            starts_at=coupon.starts_at,
+            ends_at=coupon.ends_at,
+            is_active=coupon.status == CouponModel.Status.ACTIVE,
+        )
+</code></pre>
+<p><code>apps/coupons/services.py</code></p>
+<pre><code>
+from dataclasses import dataclass
+from decimal import Decimal
+
+from django.db import transaction
+from django.utils import timezone
+
+from apps.coupons.domain import AppliedCoupon, Money
+from apps.coupons.models import Coupon as CouponModel
+from apps.coupons.models import CouponRedemption
+from apps.coupons.repositories import CouponRepository, DjangoCouponRepository
+
+
+@dataclass(frozen=True)
+class ApplyCouponCommand:
+    user_id: int
+    coupon_code: str
+    order_amount: Decimal
+
+
+def apply_coupon(
+    command: ApplyCouponCommand,
+    *,
+    repository: CouponRepository | None = None,
+) -&gt; AppliedCoupon:
+    repository = repository or DjangoCouponRepository()
+
+    with transaction.atomic():
+        coupon = repository.find_by_code(command.coupon_code)
+        result = coupon.apply(Money(command.order_amount), applied_at=timezone.now())
+
+        coupon_model = CouponModel.objects.select_for_update().get(code=coupon.code)
+        CouponRedemption.objects.create(
+            coupon=coupon_model,
+            user_id=command.user_id,
+            original_amount=result.original_amount.amount,
+            discount_amount=result.discount_amount.amount,
+            final_amount=result.final_amount.amount,
+        )
+
+    return result
+</code></pre>
+<p><strong>Django Ninja API Hook</strong> <code>apps/coupons/api.py</code></p>
+<pre><code>
+from decimal import Decimal
+
+from django.http import HttpRequest
+from ninja import Router, Schema
+from ninja.security import django_auth
+
+from apps.coupons.services import ApplyCouponCommand, apply_coupon
+
+router = Router(tags=[&quot;coupons&quot;])
+
+
+class ApplyCouponIn(Schema):
+    code: str
+    order_amount: Decimal
+
+
+class ApplyCouponOut(Schema):
+    code: str
+    original_amount: Decimal
+    discount_amount: Decimal
+    final_amount: Decimal
+
+
+@router.post(&quot;/apply&quot;, response=ApplyCouponOut, auth=django_auth)
+def apply_coupon_api(request: HttpRequest, payload: ApplyCouponIn) -&gt; ApplyCouponOut:
+    result = apply_coupon(
+        ApplyCouponCommand(
+            user_id=request.user.id,
+            coupon_code=payload.code,
+            order_amount=payload.order_amount,
+        )
+    )
+
+    return ApplyCouponOut(
+        code=result.event.coupon_code,
+        original_amount=result.original_amount.amount,
+        discount_amount=result.discount_amount.amount,
+        final_amount=result.final_amount.amount,
+    )
+</code></pre>
+<p><code>config/api.py</code></p>
+<pre><code>
+from ninja import NinjaAPI
+
+from apps.coupons.api import router as coupons_router
+
+api = NinjaAPI()
+api.add_router(&quot;/coupons/&quot;, coupons_router)
+</code></pre>
+<p><code>config/urls.py</code></p>
+<pre><code>
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>API RED 테스트 추가</strong> <code>tests/isolated/integration/coupons/test_apply_coupon_api.py</code></p>
+<pre><code>
+from datetime import timedelta
+from decimal import Decimal
+
+import pytest
+from django.utils import timezone
+from ninja.testing import TestClient
+
+from apps.coupons.api import router
+from apps.coupons.models import Coupon
+
+
+@pytest.mark.django_db
+def test_apply_coupon_api_with_authenticated_user_returns_discount(
+    django_user_model,
+):
+    # Arrange
+    user = django_user_model.objects.create_user(
+        username=&quot;buyer&quot;,
+        password=&quot;password&quot;,
+    )
+    now = timezone.now()
+    Coupon.objects.create(
+        code=&quot;WELCOME10&quot;,
+        discount_type=Coupon.DiscountType.FIXED,
+        discount_value=Decimal(&quot;1000&quot;),
+        minimum_order_amount=Decimal(&quot;5000&quot;),
+        starts_at=now - timedelta(days=1),
+        ends_at=now + timedelta(days=1),
+        status=Coupon.Status.ACTIVE,
+    )
+    client = TestClient(router)
+
+    # Act
+    response = client.post(
+        &quot;/apply&quot;,
+        json={&quot;code&quot;: &quot;WELCOME10&quot;, &quot;order_amount&quot;: &quot;10000&quot;},
+        user=user,
+    )
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json() == {
+        &quot;code&quot;: &quot;WELCOME10&quot;,
+        &quot;original_amount&quot;: &quot;10000&quot;,
+        &quot;discount_amount&quot;: &quot;1000&quot;,
+        &quot;final_amount&quot;: &quot;9000&quot;,
+    }
+</code></pre>
+<p><strong>예상 실패 이유</strong></p>
+<p>API RED는 모델, 마이그레이션, 라우터, 서비스가 없을 때 실패합니다. GREEN 구현 후에도 <code>Coupon</code> 테이블이 없으면 DB 에러가 나므로 마이그레이션 생성이 필요합니다.</p>
+<p><strong>실행 명령</strong></p>
+<pre><code>
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/unit/coupons/test_coupon_apply.py -q
+python manage.py makemigrations coupons
+python manage.py migrate
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/integration/coupons/test_apply_coupon_api.py -q
+DJANGO_SETTINGS_MODULE=config.settings.test pytest tests/isolated/ -q
+python manage.py check
+</code></pre>
+<p><strong>REFACTOR 기준</strong></p>
+<p>GREEN 이후에만 리팩터링합니다. 우선순위는 <code>Coupon.apply()</code>의 도메인 규칙 유지, <code>Money</code> 비교 연산 보강, <code>CouponRedemption</code> 중복 적용 방지 정책 추가, API 에러를 RFC 9457 Problem Details로 매핑, 테스트 fixture를 <code>tests/isolated/conftest.py</code>로 추출하는 순서가 적절합니다. 테스트가 계속 통과하는 동안만 구조를 바꾸고, 할인 정책 종류가 실제로 늘어나기 전에는 전략 객체나 플러그인 구조를 만들지 않는 편이 낫습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja API 에러 처리와 인증 확장 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-order-cancel baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-order-cancel baseline</h1>
+    <div class="path">workspace/codex-eval/conformance-rerun-1/baseline/benchmark-tdd-order-cancel.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래는 <code>pytest</code>와 TDD로 “주문 취소” 기능을 구현하는 흐름 예시입니다. 핵심은 먼저 상태별 실패 테스트를 만들고, 최소 구현으로 통과시킨 뒤, <code>Result Type</code>을 명시해 예외 흐름을 도메인 결과로 드러내는 방식입니다.</p>
+<p><strong>1. 도메인 규칙 정의</strong></p>
+<p>주문 취소 가능 상태:</p>
+<pre><code>
+class OrderStatus:
+    PENDING = &quot;pending&quot;
+    PAID = &quot;paid&quot;
+    PREPARING = &quot;preparing&quot;
+    SHIPPED = &quot;shipped&quot;
+    DELIVERED = &quot;delivered&quot;
+    CANCELLED = &quot;cancelled&quot;
+</code></pre>
+<p>취소 규칙 예시:</p>
+<ul>
+<li><code>PENDING</code>: 취소 가능</li>
+<li><code>PAID</code>: 취소 가능, 환불 필요</li>
+<li><code>PREPARING</code>: 정책에 따라 취소 가능 또는 불가</li>
+<li><code>SHIPPED</code>: 취소 불가</li>
+<li><code>DELIVERED</code>: 취소 불가</li>
+<li><code>CANCELLED</code>: 이미 취소됨</li>
+</ul>
+<p><strong>2. 명시적 Result Type</strong></p>
+<p>예외를 바로 던지기보다, 성공/실패를 명확히 표현합니다.</p>
+<pre><code>
+from dataclasses import dataclass
+from typing import Generic, TypeVar
+
+T = TypeVar(&quot;T&quot;)
+
+
+@dataclass(frozen=True)
+class Result(Generic[T]):
+    ok: bool
+    value: T | None = None
+    error: str | None = None
+
+    @classmethod
+    def success(cls, value: T):
+        return cls(ok=True, value=value)
+
+    @classmethod
+    def failure(cls, error: str):
+        return cls(ok=False, error=error)
+</code></pre>
+<p>도메인 에러 코드는 문자열보다 상수나 Enum이 더 좋습니다.</p>
+<pre><code>
+class CancelOrderError:
+    ALREADY_CANCELLED = &quot;already_cancelled&quot;
+    NOT_CANCELLABLE = &quot;not_cancellable&quot;
+</code></pre>
+<p><strong>3. 실패 테스트 먼저 작성</strong></p>
+<pre><code>
+import pytest
+
+from orders.domain import Order, OrderStatus, CancelOrderError
+
+
+def test_pending_order_can_be_cancelled():
+    order = Order(status=OrderStatus.PENDING)
+
+    result = order.cancel()
+
+    assert result.ok is True
+    assert order.status == OrderStatus.CANCELLED
+
+
+def test_paid_order_can_be_cancelled_and_requires_refund():
+    order = Order(status=OrderStatus.PAID)
+
+    result = order.cancel()
+
+    assert result.ok is True
+    assert order.status == OrderStatus.CANCELLED
+    assert result.value.refund_required is True
+
+
+@pytest.mark.parametrize(
+    &quot;status&quot;,
+    [
+        OrderStatus.SHIPPED,
+        OrderStatus.DELIVERED,
+    ],
+)
+def test_shipped_or_delivered_order_cannot_be_cancelled(status):
+    order = Order(status=status)
+
+    result = order.cancel()
+
+    assert result.ok is False
+    assert result.error == CancelOrderError.NOT_CANCELLABLE
+    assert order.status == status
+
+
+def test_cancelled_order_cannot_be_cancelled_again():
+    order = Order(status=OrderStatus.CANCELLED)
+
+    result = order.cancel()
+
+    assert result.ok is False
+    assert result.error == CancelOrderError.ALREADY_CANCELLED
+    assert order.status == OrderStatus.CANCELLED
+</code></pre>
+<p>이 시점에서는 <code>Order.cancel()</code>이 없거나 미구현이므로 테스트는 실패해야 합니다.</p>
+<p><strong>4. 최소 구현</strong></p>
+<pre><code>
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class CancelOrderResult:
+    refund_required: bool
+
+
+class OrderStatus:
+    PENDING = &quot;pending&quot;
+    PAID = &quot;paid&quot;
+    PREPARING = &quot;preparing&quot;
+    SHIPPED = &quot;shipped&quot;
+    DELIVERED = &quot;delivered&quot;
+    CANCELLED = &quot;cancelled&quot;
+
+
+class CancelOrderError:
+    ALREADY_CANCELLED = &quot;already_cancelled&quot;
+    NOT_CANCELLABLE = &quot;not_cancellable&quot;
+
+
+class Order:
+    def __init__(self, status: str):
+        self.status = status
+
+    def cancel(self) -&gt; Result[CancelOrderResult]:
+        if self.status == OrderStatus.CANCELLED:
+            return Result.failure(CancelOrderError.ALREADY_CANCELLED)
+
+        if self.status in [OrderStatus.SHIPPED, OrderStatus.DELIVERED]:
+            return Result.failure(CancelOrderError.NOT_CANCELLABLE)
+
+        refund_required = self.status == OrderStatus.PAID
+        self.status = OrderStatus.CANCELLED
+
+        return Result.success(
+            CancelOrderResult(refund_required=refund_required)
+        )
+</code></pre>
+<p>이 구현은 테스트를 통과시키는 최소 수준입니다.</p>
+<p><strong>5. 상태별 Edge Case 추가</strong></p>
+<p>다음 테스트를 추가하면서 정책을 더 명확히 합니다.</p>
+<pre><code>
+def test_preparing_order_cancellation_policy_is_explicit():
+    order = Order(status=OrderStatus.PREPARING)
+
+    result = order.cancel()
+
+    assert result.ok is False
+    assert result.error == CancelOrderError.NOT_CANCELLABLE
+    assert order.status == OrderStatus.PREPARING
+</code></pre>
+<p>또는 준비 중 주문을 취소 가능하게 할 수도 있습니다. 중요한 점은 <code>PREPARING</code>을 암묵적으로 “기타 취소 가능 상태”에 포함하지 않는 것입니다.</p>
+<pre><code>
+def test_unknown_status_cannot_be_cancelled():
+    order = Order(status=&quot;unknown&quot;)
+
+    result = order.cancel()
+
+    assert result.ok is False
+    assert result.error == CancelOrderError.NOT_CANCELLABLE
+    assert order.status == &quot;unknown&quot;
+</code></pre>
+<p>이 테스트를 추가하면 기존 최소 구현은 <code>unknown</code>도 취소해버리므로 실패합니다.</p>
+<p><strong>6. 리팩터링 방향</strong></p>
+<p>취소 가능 상태를 명시적으로 분리합니다.</p>
+<pre><code>
+class Order:
+    CANCELLABLE_STATUSES = {
+        OrderStatus.PENDING,
+        OrderStatus.PAID,
+    }
+
+    REFUND_REQUIRED_STATUSES = {
+        OrderStatus.PAID,
+    }
+
+    def __init__(self, status: str):
+        self.status = status
+
+    def cancel(self) -&gt; Result[CancelOrderResult]:
+        if self.status == OrderStatus.CANCELLED:
+            return Result.failure(CancelOrderError.ALREADY_CANCELLED)
+
+        if self.status not in self.CANCELLABLE_STATUSES:
+            return Result.failure(CancelOrderError.NOT_CANCELLABLE)
+
+        refund_required = self.status in self.REFUND_REQUIRED_STATUSES
+        self.status = OrderStatus.CANCELLED
+
+        return Result.success(
+            CancelOrderResult(refund_required=refund_required)
+        )
+</code></pre>
+<p>리팩터링 후 다시 테스트를 실행합니다.</p>
+<pre><code>
+pytest
+</code></pre>
+<p><strong>7. 다음 리팩터링 후보</strong></p>
+<ul>
+<li>상태 문자열을 <code>Enum</code>으로 변경</li>
+<li><code>CancelOrderError</code>도 <code>Enum</code>으로 변경</li>
+<li>환불 생성이 필요하다면 <code>Order.cancel()</code>이 직접 결제 SDK를 호출하지 않게 분리</li>
+<li>DB 저장은 도메인 객체가 아니라 application service에서 처리</li>
+<li>“취소 요청자 권한”, “취소 가능 시간”, “부분 배송”, “환불 실패”는 별도 정책 객체로 분리</li>
+</ul>
+<p>예를 들면 application service는 이렇게 둘 수 있습니다.</p>
+<pre><code>
+class CancelOrderService:
+    def __init__(self, order_repository):
+        self.order_repository = order_repository
+
+    def cancel(self, order_id: int) -&gt; Result[CancelOrderResult]:
+        order = self.order_repository.get(order_id)
+
+        result = order.cancel()
+        if not result.ok:
+            return result
+
+        self.order_repository.save(order)
+        return result
+</code></pre>
+<p>도메인 규칙은 <code>Order.cancel()</code> 안에 두고, 저장소나 외부 결제 연동 같은 세부사항은 바깥으로 밀어내는 구조입니다.</p></article>
+  </main>
+</body>
+</html>

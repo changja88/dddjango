@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-implementation-coupon dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-implementation-coupon dddjango</h1>
+    <div class="path">workspace/codex-eval/reference-ceiling-pilot/dddjango/pilot-implementation-coupon.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래는 <code>coupons</code> 바운디드 컨텍스트를 <code>orders</code> 결제 흐름과 분리한 구조입니다. 쿠폰 적용의 일관성 경계는 <code>Coupon</code> 애그리거트가 갖고, 주문 합계/장바구니 상태는 ID와 금액만 받아 검증합니다.</p>
+<p><strong>유비쿼터스 언어</strong></p>
+<p>| 용어 | 의미 | 금지 동의어 | |---|---|---| | Coupon | 발급된 할인 권리 | Voucher, Promo | | Apply | 주문 금액에 쿠폰을 검증 후 반영 | Use, Redeem | | Discount | 적용 결과 할인액 | Benefit |</p>
+<pre><code>
+# apps/coupons/domain.py
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from decimal import Decimal
+from uuid import UUID
+
+
+class CouponNotApplicableError(Exception): ...
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: Decimal
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt; 0:
+            raise CouponNotApplicableError(&quot;amount must be positive&quot;)
+
+
+@dataclass(frozen=True)
+class CouponAppliedEvent:
+    coupon_id: UUID
+    order_id: UUID
+    discount: Money
+
+
+class Coupon:
+    &quot;&quot;&quot;Aggregate Root.
+    Invariant: active coupon만 적용 가능하며, 최소 주문 금액 이상에서만 할인된다.
+    &quot;&quot;&quot;
+
+    def __init__(self, id: UUID, code: str, active: bool, min_order_amount: Money, discount: Money):
+        self.id = id
+        self.code = code
+        self.active = active
+        self.min_order_amount = min_order_amount
+        self.discount = discount
+
+    def apply_to(self, order_id: UUID, order_total: Money) -&gt; CouponAppliedEvent:
+        if not self.active or order_total.amount &lt; self.min_order_amount.amount:
+            raise CouponNotApplicableError(&quot;coupon is not applicable&quot;)
+        return CouponAppliedEvent(self.id, order_id, self.discount)
+
+
+class CouponRepository(ABC):
+    @abstractmethod
+    def find_by_code_for_update(self, code: str) -&gt; Coupon | None: ...
+
+    @abstractmethod
+    def mark_applied(self, coupon_id: UUID, order_id: UUID) -&gt; None: ...
+</code></pre>
+<pre><code>
+# apps/coupons/models.py
+from django.db import models
+
+
+class CouponModel(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = &quot;ACTIVE&quot;, &quot;Active&quot;
+        EXPIRED = &quot;EXPIRED&quot;, &quot;Expired&quot;
+
+    code = models.CharField(max_length=40, unique=True)
+    status = models.CharField(max_length=20, choices=Status)
+    min_order_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        indexes = [models.Index(fields=[&quot;code&quot;, &quot;status&quot;])]
+
+    def __str__(self) -&gt; str:
+        return self.code
+
+
+class CouponApplicationModel(models.Model):
+    coupon = models.ForeignKey(CouponModel, on_delete=models.PROTECT)
+    order_id = models.UUIDField()
+    applied_at = models.DateTimeField(auto_now_add=True)
+</code></pre>
+<pre><code>
+# apps/coupons/repositories.py
+from uuid import UUID
+
+from .domain import Coupon, CouponRepository, Money
+from .models import CouponApplicationModel, CouponModel
+
+
+class DjangoCouponRepository(CouponRepository):
+    def find_by_code_for_update(self, code: str) -&gt; Coupon | None:
+        row = CouponModel.objects.select_for_update().filter(code=code).first()
+        if row is None:
+            return None
+        return Coupon(
+            id=row.id,
+            code=row.code,
+            active=row.status == CouponModel.Status.ACTIVE,
+            min_order_amount=Money(row.min_order_amount),
+            discount=Money(row.discount_amount),
+        )
+
+    def mark_applied(self, coupon_id: UUID, order_id: UUID) -&gt; None:
+        CouponApplicationModel.objects.create(coupon_id=coupon_id, order_id=order_id)
+</code></pre>
+<pre><code>
+# apps/coupons/services.py
+from decimal import Decimal
+from uuid import UUID
+
+from django.db import transaction
+
+from .domain import CouponNotApplicableError, CouponRepository, Money
+
+
+class ApplyCouponService:
+    def __init__(self, coupons: CouponRepository):
+        self.coupons = coupons
+
+    @transaction.atomic
+    def apply(self, *, code: str, order_id: UUID, order_total: Decimal) -&gt; Decimal:
+        coupon = self.coupons.find_by_code_for_update(code)
+        if coupon is None:
+            raise CouponNotApplicableError(&quot;coupon not found&quot;)
+        event = coupon.apply_to(order_id, Money(order_total))
+        self.coupons.mark_applied(event.coupon_id, event.order_id)
+        return event.discount.amount
+</code></pre>
+<pre><code>
+# apps/coupons/api/schemas.py
+from decimal import Decimal
+from uuid import UUID
+
+from ninja import Schema
+
+
+class ApplyCouponIn(Schema):
+    code: str
+    order_id: UUID
+    order_total: Decimal
+
+
+class ApplyCouponOut(Schema):
+    discount_amount: Decimal
+
+
+class CouponSchema(Schema):
+    code: str
+    status: str
+</code></pre>
+<pre><code>
+# apps/coupons/api/router.py
+from django.http import HttpRequest
+from ninja import Router
+from ninja.errors import HttpError
+from ninja.security import django_auth
+
+from apps.coupons.domain import CouponNotApplicableError
+from apps.coupons.models import CouponModel
+from apps.coupons.repositories import DjangoCouponRepository
+from apps.coupons.services import ApplyCouponService
+
+from .schemas import ApplyCouponIn, ApplyCouponOut, CouponSchema
+
+router = Router(auth=django_auth)
+
+
+@router.post(&quot;/apply&quot;, response=ApplyCouponOut)
+def apply_coupon(request: HttpRequest, payload: ApplyCouponIn) -&gt; ApplyCouponOut:
+    try:
+        discount = ApplyCouponService(DjangoCouponRepository()).apply(**payload.dict())
+    except CouponNotApplicableError as exc:
+        raise HttpError(400, str(exc)) from exc
+    return ApplyCouponOut(discount_amount=discount)
+
+
+@router.get(&quot;&quot;, response=list[CouponSchema])
+def list_coupons(request: HttpRequest) -&gt; list[CouponSchema]:
+    return [CouponSchema(code=c.code, status=c.status) for c in CouponModel.objects.all()]
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+from apps.coupons.api.router import router as coupons_router
+
+api = NinjaAPI()
+api.add_router(&quot;/coupons/&quot;, coupons_router)
+</code></pre>
+<p><strong>RED checks</strong></p>
+<pre><code>
+# tests/test_apply_coupon.py
+import pytest
+from decimal import Decimal
+
+from apps.coupons.domain import CouponNotApplicableError
+from apps.coupons.services import ApplyCouponService
+
+
+def test_expired_coupon_is_rejected(coupon_repo_with_expired_coupon, order_id):
+    service = ApplyCouponService(coupon_repo_with_expired_coupon)
+
+    with pytest.raises(CouponNotApplicableError):
+        service.apply(code=&quot;OLD10&quot;, order_id=order_id, order_total=Decimal(&quot;50000&quot;))
+
+
+def test_coupon_below_minimum_order_amount_is_rejected(coupon_repo_with_active_coupon, order_id):
+    service = ApplyCouponService(coupon_repo_with_active_coupon)
+
+    with pytest.raises(CouponNotApplicableError):
+        service.apply(code=&quot;WELCOME&quot;, order_id=order_id, order_total=Decimal(&quot;1000&quot;))
+</code></pre>
+<p>검증 명령은 <code>python manage.py check</code>와 <code>pytest tests/test_apply_coupon.py</code>입니다. 현재 환경은 읽기 전용이라 실제 파일 생성과 테스트 실행은 하지 않았습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 구현/오류 응답 정교화 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>hard-api-product-search-contract dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>hard-api-product-search-contract dddjango</h1>
+    <div class="path">workspace/codex-eval/hard-benchmark-1/dddjango/hard-api-product-search-contract.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>상품 검색 API 표준</strong></p>
+<p>가정: <code>products.models.Product</code>에 <code>id, name, sku, status, price, category_id, created_at</code>가 있다. DRF 없이 Django Ninja <code>Router/Schema/FilterSchema/Query</code>만 쓴다.</p>
+<pre><code>
+# products/api.py
+from decimal import Decimal
+from enum import StrEnum
+
+from django.db.models import QuerySet
+from django.http import HttpRequest
+from ninja import Field, FilterSchema, Query, Router, Schema
+
+from products.models import Product
+
+router = Router(tags=[&quot;products&quot;])
+
+
+class ProductSort(StrEnum):
+    newest = &quot;-created_at&quot;
+    price_asc = &quot;price&quot;
+    price_desc = &quot;-price&quot;
+    name_asc = &quot;name&quot;
+
+
+class ProductOut(Schema):
+    id: int
+    name: str
+    sku: str
+    status: str
+    price: Decimal
+    category_id: int | None
+
+
+class PageMeta(Schema):
+    limit: int
+    offset: int
+    total: int
+    has_more: bool
+
+
+class ProductSearchResponse(Schema):
+    items: list[ProductOut]
+    meta: PageMeta
+
+
+class ProductSearchQuery(FilterSchema):
+    q: str | None = Field(None, q=[&quot;name__icontains&quot;, &quot;sku__icontains&quot;])
+    status: str | None = None
+    category_id: int | None = None
+    min_price: Decimal | None = Field(None, q=&quot;price__gte&quot;)
+    max_price: Decimal | None = Field(None, q=&quot;price__lte&quot;)
+    sort: ProductSort = ProductSort.newest
+    limit: int = Field(20, ge=1, le=100)
+    offset: int = Field(0, ge=0)
+
+
+@router.get(&quot;&quot;, response={200: ProductSearchResponse})
+def search_products(
+    request: HttpRequest,
+    filters: Query[ProductSearchQuery],
+) -&gt; ProductSearchResponse:
+    qs: QuerySet[Product] = Product.objects.filter(is_active=True)
+    qs = filters.filter(qs)
+
+    ordering = filters.sort.value
+    qs = qs.order_by(ordering, &quot;-id&quot;)
+
+    total = qs.count()
+    rows = list(qs[filters.offset : filters.offset + filters.limit])
+
+    return ProductSearchResponse(
+        items=rows,
+        meta=PageMeta(
+            limit=filters.limit,
+            offset=filters.offset,
+            total=total,
+            has_more=filters.offset + filters.limit &lt; total,
+        ),
+    )
+</code></pre>
+<pre><code>
+# config/api.py
+from django.http import HttpRequest, JsonResponse
+from ninja import NinjaAPI, Schema
+from ninja.errors import HttpError, ValidationError
+
+from products.api import router as products_router
+
+api = NinjaAPI(title=&quot;Commerce API&quot;, version=&quot;1.0.0&quot;)
+
+
+class ProblemDetail(Schema):
+    type: str = &quot;about:blank&quot;
+    title: str
+    status: int
+    detail: str
+    instance: str
+
+
+def problem(
+    request: HttpRequest,
+    *,
+    status: int,
+    title: str,
+    detail: str,
+    type_: str = &quot;about:blank&quot;,
+) -&gt; JsonResponse:
+    return JsonResponse(
+        {
+            &quot;type&quot;: type_,
+            &quot;title&quot;: title,
+            &quot;status&quot;: status,
+            &quot;detail&quot;: detail,
+            &quot;instance&quot;: request.path,
+        },
+        status=status,
+        content_type=&quot;application/problem+json&quot;,
+    )
+
+
+@api.exception_handler(ValidationError)
+def handle_validation_error(request: HttpRequest, exc: ValidationError) -&gt; JsonResponse:
+    return problem(
+        request,
+        status=422,
+        title=&quot;Validation Failed&quot;,
+        detail=&quot;Query parameters are invalid.&quot;,
+        type_=&quot;https://api.example.com/problems/validation-failed&quot;,
+    )
+
+
+@api.exception_handler(HttpError)
+def handle_http_error(request: HttpRequest, exc: HttpError) -&gt; JsonResponse:
+    return problem(
+        request,
+        status=exc.status_code,
+        title=&quot;HTTP Error&quot;,
+        detail=str(exc),
+    )
+
+
+api.add_router(&quot;/products&quot;, products_router)
+</code></pre>
+<pre><code>
+# config/urls.py
+from django.urls import path
+
+from config.api import api
+
+urlpatterns = [
+    path(&quot;api/&quot;, api.urls),
+]
+</code></pre>
+<p><strong>테스트 전략</strong></p>
+<pre><code>
+# tests/isolated/products/test_search_products_api.py
+import pytest
+from ninja.testing import TestClient
+
+from products.api import router
+from products.models import Product
+
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def client() -&gt; TestClient:
+    return TestClient(router)
+
+
+def test_search_products_returns_items_meta(client: TestClient) -&gt; None:
+    Product.objects.create(name=&quot;Keyboard&quot;, sku=&quot;KB-1&quot;, status=&quot;selling&quot;, price=100, is_active=True)
+
+    response = client.get(&quot;&quot;, {&quot;q&quot;: &quot;key&quot;, &quot;limit&quot;: 10, &quot;offset&quot;: 0})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body[&quot;items&quot;][0][&quot;name&quot;] == &quot;Keyboard&quot;
+    assert body[&quot;meta&quot;] == {&quot;limit&quot;: 10, &quot;offset&quot;: 0, &quot;total&quot;: 1, &quot;has_more&quot;: False}
+
+
+def test_search_products_rejects_invalid_limit(client: TestClient) -&gt; None:
+    response = client.get(&quot;&quot;, {&quot;limit&quot;: 1000})
+
+    assert response.status_code == 422
+</code></pre>
+<p>Problem Details의 <code>application/problem+json</code>까지 검증하려면 <code>router</code> 단독 <code>TestClient</code>보다 <code>config.api.api</code>를 대상으로 통합 테스트를 둔다.</p>
+<pre><code>
+python manage.py check
+pytest tests/isolated/products/test_search_products_api.py -q
+</code></pre>
+<p>인덱스는 실제 검색 조건 기준으로 잡는다: <code>is_active, status, category_id</code>, 정렬용 <code>created_at</code>, <code>price</code>, 필요 시 <code>name/sku</code> 검색 인덱스. 정렬은 <code>ProductSort</code> allow-list만 허용하고 사용자 입력을 <code>order_by()</code>에 직접 넘기지 않는다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 설계/오류/페이지네이션 → <strong>architecture-api</strong> 스킬 &gt; - Django Ninja Router/Schema/FilterSchema → <strong>implementation-django-ninja</strong> 스킬 &gt; - 테스트 전략 → <strong>implementation-test</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

@@ -92,6 +92,12 @@ ALWAYS use this exact template for the closing section:
 
 코드를 생성하기 전에 관련 주제 영역의 참조 파일을 읽어 세부 규칙을 적용한다.
 
+생성/개선 요청에서는 원칙 설명만 나열하지 않는다. 가능한 한 파일 단위
+Before/After, unified diff, 또는 붙여 넣을 수 있는 코드 블록으로 끝낸다.
+fat model, dict/None/error-code 반환, 중첩 if, 외부 gateway 직접 호출이
+보이면 정책 객체, 도메인 예외, 명시적 결과 타입, application service,
+Protocol 기반 port로 분리한 최소 구조를 제시한다.
+
 ### Review 모드
 
 잘 구조화된 코드를 리뷰할 때는 개선 사항을 나열하기 전에 코드의 잘된 점을

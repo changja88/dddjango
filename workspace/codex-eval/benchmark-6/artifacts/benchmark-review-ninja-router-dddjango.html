@@ -111,7 +111,7 @@ diff --git a/orders/api.py b/orders/api.py
 +from .services import checkout_order
 +
  router = Router()
- 
+
 -@router.post(&quot;/checkout&quot;)
 -def checkout(request, payload):
 -    # 재고 차감 + 쿠폰 계산 + 결제 준비를 모두 처리

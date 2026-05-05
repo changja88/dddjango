@@ -128,11 +128,11 @@ index 1b614d6..f3a8b23 100644
 +++ b/config/urls.py
 @@ -1,9 +1,11 @@
  from django.urls import path
- 
+
 +from config.api import api
  from shop.orders import views
- 
- 
+
+
  urlpatterns = [
 +    path(&quot;api/&quot;, api.urls),
      path(&quot;orders/&lt;int:order_id&gt;/cancel/&quot;, views.cancel_order),
@@ -249,15 +249,15 @@ index 3460b38..585a0cf 100644
 +++ b/shop/orders/tests.py
 @@ -1,6 +1,6 @@
  from django.test import TestCase
- 
+
 -from shop.orders.models import Order
 +from shop.orders.models import Order, Product
- 
- 
+
+
  class OrderModelTests(TestCase):
 @@ -14,3 +14,34 @@ class OrderModelTests(TestCase):
          order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
- 
+
          self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +
 +

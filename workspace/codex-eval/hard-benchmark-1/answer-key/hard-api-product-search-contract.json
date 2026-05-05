@@ -1,0 +1,21 @@
+{
+  "case_id": "hard-api-product-search-contract",
+  "category": "api-design",
+  "title": "Hard product search API contract",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "api_standard",
+    "transaction_boundary"
+  ],
+  "scoring_focus": [
+    "Django Ninja Router/Schema/FilterSchema/Query를 사용한다.",
+    "items/meta envelope와 RFC 9457 Problem Details를 함께 제시한다.",
+    "정렬 allow-list, 타입 힌트, 검증 명령까지 포함한다."
+  ],
+  "prompt": "상품 검색 API를 팀 표준으로 작성해줘. Django Ninja만 사용하고, 필터/정렬/페이지네이션/items-meta 응답/Problem Details 에러/테스트 전략까지 바로 붙여 넣을 수 있게 정리해줘. DRF는 사용하지 않는다.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "implementation"
+}

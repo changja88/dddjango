@@ -90,6 +90,7 @@ Codex evaluation assets live under `evals/codex/`:
 - `rubrics/dddjango-rubric.md`: manual grading rules and pass thresholds
 - `scripts/init_iteration.py`: creates prompt files, answer keys, and grading templates
 - `scripts/run_prompts.py`: runs generated prompts with `codex exec` and captures outputs
+- `scripts/grade_conformance.py`: scores dddjango-specific convention conformance
 - `scripts/grade_outputs.py`: summarizes manual grades for `baseline` and `dddjango`
 - `scripts/render_report.py`: renders a static HTML comparison dashboard
 
@@ -104,11 +105,19 @@ Use a separate Codex profile, machine account, or disposable environment for sha
 Recommended checks before a release:
 
 1. Validate Claude plugin metadata with `/plugins validate .` or `claude plugin validate .`.
-2. Run the Codex pilot evaluation from `evals/codex/cases/pilot.jsonl` against both `baseline` and `dddjango`.
-3. Create an iteration workspace:
+2. Run a Codex smoke or conformance evaluation:
 
    ```bash
-   python3 evals/codex/scripts/init_iteration.py --output workspace/codex-eval/iteration-1
+   make smoke-eval
+   make eval-conformance
+   ```
+
+   Use `make full-eval` for the 24-case Codex benchmark before a larger release.
+
+3. Create a custom iteration workspace when you need a non-default suite:
+
+   ```bash
+   python3 evals/codex/scripts/init_iteration.py --suite hard-benchmark --output workspace/codex-eval/hard-benchmark-1
    ```
 
 4. Run each generated prompt in the matching `baseline` and `dddjango` environment. Prompt files intentionally exclude expectations and scoring focus to avoid evaluation leakage.
@@ -121,7 +130,7 @@ Recommended checks before a release:
 
    Baseline runs use `--ignore-user-config` by default and execute from `/private/tmp/dddjango-codex-eval` to avoid this repository's `AGENTS.md` leaking dddjango guidance into the control group.
 
-5. Grade outputs with `evals/codex/rubrics/grading-schema.json` and the generated `answer-key/` files.
+5. Grade outputs with `evals/codex/rubrics/grading-schema.json`, `evals/codex/conformance-map.json`, and the generated `answer-key/` files.
 6. Summarize manual grades:
 
    ```bash
@@ -131,6 +140,8 @@ Recommended checks before a release:
 7. Render the browser report:
 
    ```bash
+   python3 evals/codex/scripts/auto_grade_outputs.py workspace/codex-eval/iteration-1
+   python3 evals/codex/scripts/grade_conformance.py workspace/codex-eval/iteration-1
    python3 evals/codex/scripts/render_report.py workspace/codex-eval/iteration-1
    ```
 
@@ -157,6 +168,13 @@ Recommended checks before a release:
 11. Compare with and without the plugin for trigger accuracy, quality, token usage, and duration.
 
 Raw evaluation outputs under `workspace/*/test/` are ignored. Commit evaluation seeds, reusable tooling, and summary reports only.
+
+Evaluation cadence:
+
+- Every skill change: `make eval-conformance`
+- Before release: `make test-release`, `git diff --check`, and the latest HTML report
+- Larger release: `make full-eval`
+- Claude validation remains blocked until Claude Code subscription access or `ANTHROPIC_API_KEY` is available.
 
 ## Release Checklist
 

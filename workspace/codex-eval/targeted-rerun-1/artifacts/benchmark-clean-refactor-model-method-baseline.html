@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-clean-refactor-model-method baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-clean-refactor-model-method baseline</h1>
+    <div class="path">workspace/codex-eval/targeted-rerun-1/baseline/benchmark-clean-refactor-model-method.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>모델 메서드가 <code>validation + 외부 API 호출 + 상태 변경 + save</code>를 모두 한다면, 핵심 문제는 “모델이 도메인 상태의 주인”을 넘어 “애플리케이션 흐름과 인프라 세부사항”까지 떠안고 있다는 점입니다. 리팩터링 방향은 한 번에 전부 분리하기보다 변경 이유 기준으로 나누는 게 좋습니다.</p>
+<p>추천 구조는 이렇습니다.</p>
+<ul>
+<li><strong>모델에는 도메인 불변식과 상태 전이만 남기기</strong></li>
+</ul>
+<p>모델은 자기 상태가 어떤 조건에서 바뀔 수 있는지, 바뀔 때 어떤 필드가 함께 갱신되어야 하는지를 책임지게 합니다.</p>
+<pre><code>
+class Order(models.Model):
+    status = models.CharField(...)
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    def can_approve(self):
+        return self.status == OrderStatus.PENDING
+
+    def approve(self, *, approved_at):
+        if not self.can_approve():
+            raise ValidationError(&quot;Only pending orders can be approved.&quot;)
+
+        self.status = OrderStatus.APPROVED
+        self.approved_at = approved_at
+</code></pre>
+<p>여기서 <code>approve()</code>는 상태를 바꾸지만 <code>save()</code>는 하지 않는 편이 보통 더 명시적입니다. 호출자가 트랜잭션, 저장 시점, 후속 작업을 제어할 수 있기 때문입니다.</p>
+<ul>
+<li><strong>외부 API 호출은 모델 밖으로 빼기</strong></li>
+</ul>
+<p>외부 API는 DB 모델의 내부 책임이 아닙니다. HTTP, SDK, 타임아웃, 재시도, 인증, 응답 포맷 변경 같은 이유로 바뀌기 때문입니다.</p>
+<pre><code>
+class PaymentGateway:
+    def approve_payment(self, order):
+        ...
+</code></pre>
+<p>모델이 <code>requests</code>, SDK client, settings, env var 등을 직접 알면 테스트도 어려워지고 도메인 코드가 인프라에 묶입니다.</p>
+<ul>
+<li><strong>흐름 조율은 서비스/use case 계층으로 옮기기</strong></li>
+</ul>
+<p>검증, 외부 API 호출, 모델 상태 변경, 저장을 하나의 애플리케이션 작업으로 묶는 객체나 함수가 필요합니다.</p>
+<pre><code>
+from django.db import transaction
+from django.utils import timezone
+
+class ApproveOrderService:
+    def __init__(self, payment_gateway):
+        self.payment_gateway = payment_gateway
+
+    @transaction.atomic
+    def execute(self, order):
+        order.validate_can_approve()
+
+        self.payment_gateway.approve_payment(order)
+
+        order.approve(approved_at=timezone.now())
+        order.save(update_fields=[&quot;status&quot;, &quot;approved_at&quot;])
+        return order
+</code></pre>
+<p>이렇게 하면 책임이 분명해집니다.</p>
+<ul>
+<li>모델: “이 상태 전이가 도메인적으로 가능한가?”</li>
+<li>Gateway/API client: “외부 시스템과 어떻게 통신하는가?”</li>
+<li>Service/use case: “이 유스케이스의 순서는 무엇인가?”</li>
+</ul>
+<ul>
+<li><strong>validation 종류를 구분하기</strong></li>
+</ul>
+<p>모든 validation을 모델에 넣는 것도 답은 아닙니다.</p>
+<ul>
+<li>모델에 둘 것: 상태 불변식, 필드 간 규칙, 도메인적으로 항상 참이어야 하는 조건</li>
+<li>서비스에 둘 것: 특정 유스케이스에서만 필요한 조건</li>
+<li>serializer/form에 둘 것: 입력 형식, 사용자 요청 검증, 화면/API 레벨 메시지</li>
+<li>DB constraint에 둘 것: 유일성, null 여부, 참조 무결성처럼 저장소가 강제해야 하는 규칙</li>
+</ul>
+<ul>
+<li><strong><code>save()</code>는 가능한 한 바깥에서 명시적으로 호출하기</strong></li>
+</ul>
+<p>모델 메서드 안에서 <code>save()</code>까지 하면 호출자는 메모리 상태 변경인지 DB 반영까지 일어나는지 예측하기 어렵습니다. 특히 테스트, bulk 처리, 트랜잭션 제어, <code>update_fields</code> 관리가 불편해집니다.</p>
+<p>예외적으로 <code>order.cancel_and_save()</code>처럼 이름이 아주 명시적이고 프로젝트 관례가 있다면 유지할 수 있지만, 기본값은 “상태 변경과 저장 분리”가 더 낫습니다.</p>
+<p>요약하면, 모델 메서드를 바로 얇게 찢기보다 먼저 다음 형태를 목표로 잡으면 됩니다.</p>
+<pre><code>
+# before
+order.approve_with_payment()
+
+# after
+approve_order_service.execute(order)
+</code></pre>
+<p>그리고 내부는:</p>
+<pre><code>
+order.validate_can_approve()
+payment_gateway.approve_payment(order)
+order.approve(approved_at=now)
+order.save(update_fields=[...])
+</code></pre>
+<p>이 방향이 클린 코드 관점에서 가장 무난합니다. 과한 추상화를 피하면서도, 도메인 규칙과 외부 API 세부사항, 저장 흐름의 변경 이유를 분리할 수 있습니다.</p></article>
+  </main>
+</body>
+</html>

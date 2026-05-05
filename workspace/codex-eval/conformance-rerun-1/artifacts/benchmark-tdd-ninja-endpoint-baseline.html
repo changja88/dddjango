@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-tdd-ninja-endpoint baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-tdd-ninja-endpoint baseline</h1>
+    <div class="path">workspace/codex-eval/conformance-rerun-1/baseline/benchmark-tdd-ninja-endpoint.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래는 “쿠폰 적용” Django Ninja endpoint를 pytest로 TDD하는 예시입니다. 핵심은 endpoint가 도메인 예외를 직접 던지지 않고, 도메인 서비스가 <code>Result</code>를 반환하게 만든 뒤 API layer에서 HTTP 응답으로 변환하는 구조입니다.</p>
+<pre><code>
+# app/result.py
+from dataclasses import dataclass
+from typing import Generic, TypeVar, Literal
+
+T = TypeVar(&quot;T&quot;)
+E = TypeVar(&quot;E&quot;)
+
+
+@dataclass(frozen=True)
+class Ok(Generic[T]):
+    value: T
+
+
+@dataclass(frozen=True)
+class Err(Generic[E]):
+    error: E
+
+
+Result = Ok[T] | Err[E]
+</code></pre>
+<pre><code>
+# app/domain.py
+from dataclasses import dataclass
+from decimal import Decimal
+from enum import StrEnum
+
+
+class CouponError(StrEnum):
+    NOT_FOUND = &quot;coupon_not_found&quot;
+    EXPIRED = &quot;coupon_expired&quot;
+    MIN_AMOUNT_NOT_MET = &quot;min_amount_not_met&quot;
+    ALREADY_USED = &quot;coupon_already_used&quot;
+
+
+@dataclass(frozen=True)
+class ApplyCouponCommand:
+    user_id: int
+    coupon_code: str
+    order_amount: Decimal
+
+
+@dataclass(frozen=True)
+class AppliedCoupon:
+    coupon_code: str
+    discount_amount: Decimal
+    final_amount: Decimal
+</code></pre>
+<pre><code>
+# app/services.py
+from decimal import Decimal
+from app.domain import ApplyCouponCommand, AppliedCoupon, CouponError
+from app.result import Ok, Err, Result
+
+
+def apply_coupon(command: ApplyCouponCommand) -&gt; Result[AppliedCoupon, CouponError]:
+    code = command.coupon_code.strip().upper()
+
+    if code == &quot;MISSING&quot;:
+        return Err(CouponError.NOT_FOUND)
+
+    if code == &quot;EXPIRED&quot;:
+        return Err(CouponError.EXPIRED)
+
+    if code == &quot;USED&quot;:
+        return Err(CouponError.ALREADY_USED)
+
+    if command.order_amount &lt; Decimal(&quot;10000&quot;):
+        return Err(CouponError.MIN_AMOUNT_NOT_MET)
+
+    discount = Decimal(&quot;1000&quot;)
+
+    return Ok(
+        AppliedCoupon(
+            coupon_code=code,
+            discount_amount=discount,
+            final_amount=command.order_amount - discount,
+        )
+    )
+</code></pre>
+<pre><code>
+# app/api.py
+from decimal import Decimal
+from ninja import NinjaAPI, Schema
+from pydantic import Field
+
+from app.domain import ApplyCouponCommand, CouponError
+from app.result import Ok, Err
+from app.services import apply_coupon
+
+api = NinjaAPI()
+
+
+class ApplyCouponIn(Schema):
+    user_id: int = Field(gt=0)
+    coupon_code: str = Field(min_length=1, max_length=30)
+    order_amount: Decimal = Field(gt=0)
+
+
+class ApplyCouponOut(Schema):
+    coupon_code: str
+    discount_amount: Decimal
+    final_amount: Decimal
+
+
+class ErrorOut(Schema):
+    code: str
+    message: str
+
+
+ERROR_MESSAGES = {
+    CouponError.NOT_FOUND: &quot;Coupon does not exist.&quot;,
+    CouponError.EXPIRED: &quot;Coupon has expired.&quot;,
+    CouponError.MIN_AMOUNT_NOT_MET: &quot;Order amount does not meet coupon minimum.&quot;,
+    CouponError.ALREADY_USED: &quot;Coupon has already been used.&quot;,
+}
+
+
+@api.post(
+    &quot;/coupons/apply&quot;,
+    response={
+        200: ApplyCouponOut,
+        400: ErrorOut,
+        404: ErrorOut,
+        409: ErrorOut,
+    },
+)
+def apply_coupon_endpoint(request, payload: ApplyCouponIn):
+    result = apply_coupon(
+        ApplyCouponCommand(
+            user_id=payload.user_id,
+            coupon_code=payload.coupon_code,
+            order_amount=payload.order_amount,
+        )
+    )
+
+    if isinstance(result, Ok):
+        return 200, result.value
+
+    error = result.error
+
+    if error == CouponError.NOT_FOUND:
+        return 404, ErrorOut(code=error, message=ERROR_MESSAGES[error])
+
+    if error == CouponError.ALREADY_USED:
+        return 409, ErrorOut(code=error, message=ERROR_MESSAGES[error])
+
+    return 400, ErrorOut(code=error, message=ERROR_MESSAGES[error])
+</code></pre>
+<p>테스트는 endpoint의 계약을 먼저 고정합니다.</p>
+<pre><code>
+# tests/test_apply_coupon_api.py
+import pytest
+from ninja.testing import TestClient
+
+from app.api import api
+
+client = TestClient(api)
+
+
+def test_apply_coupon_success():
+    response = client.post(
+        &quot;/coupons/apply&quot;,
+        json={
+            &quot;user_id&quot;: 1,
+            &quot;coupon_code&quot;: &quot;WELCOME&quot;,
+            &quot;order_amount&quot;: &quot;12000&quot;,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        &quot;coupon_code&quot;: &quot;WELCOME&quot;,
+        &quot;discount_amount&quot;: &quot;1000&quot;,
+        &quot;final_amount&quot;: &quot;11000&quot;,
+    }
+
+
+@pytest.mark.parametrize(
+    &quot;payload, field&quot;,
+    [
+        (
+            {
+                &quot;user_id&quot;: 0,
+                &quot;coupon_code&quot;: &quot;WELCOME&quot;,
+                &quot;order_amount&quot;: &quot;12000&quot;,
+            },
+            &quot;user_id&quot;,
+        ),
+        (
+            {
+                &quot;user_id&quot;: 1,
+                &quot;coupon_code&quot;: &quot;&quot;,
+                &quot;order_amount&quot;: &quot;12000&quot;,
+            },
+            &quot;coupon_code&quot;,
+        ),
+        (
+            {
+                &quot;user_id&quot;: 1,
+                &quot;coupon_code&quot;: &quot;WELCOME&quot;,
+                &quot;order_amount&quot;: &quot;0&quot;,
+            },
+            &quot;order_amount&quot;,
+        ),
+    ],
+)
+def test_apply_coupon_request_schema_validation(payload, field):
+    response = client.post(&quot;/coupons/apply&quot;, json=payload)
+
+    assert response.status_code == 422
+    errors = response.json()[&quot;detail&quot;]
+    assert any(field in str(error[&quot;loc&quot;]) for error in errors)
+
+
+def test_apply_coupon_not_found_failure_response():
+    response = client.post(
+        &quot;/coupons/apply&quot;,
+        json={
+            &quot;user_id&quot;: 1,
+            &quot;coupon_code&quot;: &quot;MISSING&quot;,
+            &quot;order_amount&quot;: &quot;12000&quot;,
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        &quot;code&quot;: &quot;coupon_not_found&quot;,
+        &quot;message&quot;: &quot;Coupon does not exist.&quot;,
+    }
+
+
+def test_apply_coupon_expired_failure_response():
+    response = client.post(
+        &quot;/coupons/apply&quot;,
+        json={
+            &quot;user_id&quot;: 1,
+            &quot;coupon_code&quot;: &quot;EXPIRED&quot;,
+            &quot;order_amount&quot;: &quot;12000&quot;,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        &quot;code&quot;: &quot;coupon_expired&quot;,
+        &quot;message&quot;: &quot;Coupon has expired.&quot;,
+    }
+
+
+def test_apply_coupon_already_used_domain_exception_case():
+    response = client.post(
+        &quot;/coupons/apply&quot;,
+        json={
+            &quot;user_id&quot;: 1,
+            &quot;coupon_code&quot;: &quot;USED&quot;,
+            &quot;order_amount&quot;: &quot;12000&quot;,
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        &quot;code&quot;: &quot;coupon_already_used&quot;,
+        &quot;message&quot;: &quot;Coupon has already been used.&quot;,
+    }
+
+
+def test_apply_coupon_min_amount_edge_case():
+    response = client.post(
+        &quot;/coupons/apply&quot;,
+        json={
+            &quot;user_id&quot;: 1,
+            &quot;coupon_code&quot;: &quot;WELCOME&quot;,
+            &quot;order_amount&quot;: &quot;9999&quot;,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        &quot;code&quot;: &quot;min_amount_not_met&quot;,
+        &quot;message&quot;: &quot;Order amount does not meet coupon minimum.&quot;,
+    }
+
+
+def test_apply_coupon_normalizes_coupon_code_edge_case():
+    response = client.post(
+        &quot;/coupons/apply&quot;,
+        json={
+            &quot;user_id&quot;: 1,
+            &quot;coupon_code&quot;: &quot; welcome &quot;,
+            &quot;order_amount&quot;: &quot;12000&quot;,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()[&quot;coupon_code&quot;] == &quot;WELCOME&quot;
+</code></pre>
+<p>TDD 흐름은 보통 이렇게 갑니다.</p>
+<ul>
+<li><code>test_apply_coupon_success</code>를 먼저 작성한다.</li>
+<li>endpoint, schema, service의 최소 구현으로 통과시킨다.</li>
+<li>validation 테스트를 추가하고 <code>Field(gt=0)</code>, <code>min_length</code> 같은 schema 제약을 넣는다.</li>
+<li>도메인 실패 케이스를 하나씩 추가한다.</li>
+<li>service가 exception 대신 <code>Ok</code> / <code>Err</code>를 반환하게 하여 endpoint의 분기와 응답 계약을 명확히 만든다.</li>
+</ul>
+<p>이 구조의 장점은 도메인 로직 테스트와 API contract 테스트를 분리하기 쉽다는 점입니다. endpoint 테스트는 “HTTP 요청이 어떤 상태 코드와 body로 변환되는가”를 검증하고, service 테스트는 별도로 <code>Result</code> 반환 규칙만 검증하면 됩니다.</p></article>
+  </main>
+</body>
+</html>

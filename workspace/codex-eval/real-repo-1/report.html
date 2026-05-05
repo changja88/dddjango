@@ -47,6 +47,14 @@
       gap: 12px;
       margin-bottom: 24px;
     }
+    .inline-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
     .metric {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -80,6 +88,15 @@
     }
     .failures { padding: 0 18px 18px; color: var(--bad); }
     .empty { padding: 0 18px 18px; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .subsection {
+      padding: 14px 18px 0;
+      border-top: 1px solid var(--line);
+    }
+    .subsection h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -138,12 +155,15 @@
     <div class="metrics">
       <section class="metric neutral"><span>Baseline Score</span><strong>84.0</strong><small>case average</small></section>
       <section class="metric good"><span>dddjango Score</span><strong>88.83</strong><small>case average</small></section>
-      <section class="metric good"><span>Quality Lift</span><strong>+4.83</strong><small>+5.75% vs baseline</small></section>
+      <section class="metric good"><span>Overall Lift</span><strong>+4.83</strong><small>+5.75% vs baseline</small></section>
+      <section class="metric good"><span>Quality Gate Lift</span><strong>+4.83</strong><small>+5.75% vs applicable baseline; +43.91% headroom</small></section>
       <section class="metric neutral"><span>Baseline Time</span><strong>61.45s</strong><small>average duration</small></section>
       <section class="metric bad"><span>dddjango Time</span><strong>103.40s</strong><small>+68.27% vs baseline</small></section>
       <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
       <section class="metric neutral"><span>Completed Cases</span><strong>6/6</strong><small>with and without skill</small></section>
       <section class="metric neutral"><span>Manual Usability</span><strong>0.00</strong><small>pending / 20</small></section>
+      <section class="metric good"><span>Convention Score</span><strong>100.00</strong><small>dddjango conformance</small></section>
+<section class="metric good"><span>Convention Delta</span><strong>+18.61</strong><small>with - without</small></section>
     </div>
 
     <section class="section">
@@ -165,10 +185,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+5.75%</td><td>&gt;= +15%</td></tr>
+          <tr><td>Quality lift</td><td><span class="pill good">PASS</span></td><td>+4.83 pts / +5.75% / +43.91% headroom</td><td>&gt;= +3 pts or &gt;= 25% headroom</td></tr>
 <tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
 <tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 95%</td></tr>
-<tr><td>Django Ninja compliance</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 90%</td></tr>
+<tr><td>Django Ninja compliance</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 90%</td></tr>
 <tr><td>TDD quality</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
 <tr><td>Time/cost increase</td><td><span class="pill bad">BLOCKED</span></td><td>+68.27%</td><td>&lt;= +30%</td></tr>
 <tr><td>Negative-control pass rate</td><td><span class="pill bad">BLOCKED</span></td><td>0.00%</td><td>&gt;= 80%</td></tr>
@@ -197,7 +217,7 @@
           </tr>
         </thead>
         <tbody>
-          
+
         <tr>
           <td><span class="pill good">complete</span></td>
           <td>
@@ -220,7 +240,7 @@
             <a href="artifacts/real-repo-db-order-index-review-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -244,7 +264,7 @@
             <a href="artifacts/real-repo-drf-to-ninja-migration-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -268,7 +288,7 @@
             <a href="artifacts/real-repo-fat-model-refactor-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -292,7 +312,7 @@
             <a href="artifacts/real-repo-ninja-product-search-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -316,7 +336,7 @@
             <a href="artifacts/real-repo-pytest-coupon-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -340,16 +360,160 @@
             <a href="artifacts/real-repo-view-logic-service-layer-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
         </tbody>
       </table>
     </section>
+
+    <section class="section">
+      <h2>dddjango Convention Conformance</h2>
+      <div class="inline-metrics">
+        <section class="metric neutral"><span>Baseline Conformance</span><strong>81.39</strong><small>without skill</small></section>
+        <section class="metric good"><span>dddjango Conformance</span><strong>100.00</strong><small>with skill</small></section>
+        <section class="metric good"><span>Conformance Delta</span><strong>+18.61</strong><small>with - without</small></section>
+        <section class="metric good"><span>Rule Pass Rate</span><strong>100.00%</strong><small>dddjango required rules</small></section>
+        <section class="metric good"><span>Critical Violations</span><strong>0</strong><small>dddjango variant</small></section>
+        <section class="metric good"><span>Forbidden Patterns</span><strong>0</strong><small>dddjango variant</small></section>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>dddjango conformance score</td><td><span class="pill good">PASS</span></td><td>100.0</td><td>85</td></tr>
+<tr><td>Required rule pass rate</td><td><span class="pill good">PASS</span></td><td>100.0</td><td>90</td></tr>
+<tr><td>Critical violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+<tr><td>Forbidden patterns</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <div class="subsection">
+        <h3>Critical Audit</h3>
+        <ul class="failures">
+          <li>No critical or forbidden dddjango convention violations.</li>
+        </ul>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Without</th>
+            <th>With</th>
+            <th>Delta</th>
+            <th>With Pass Rate</th>
+            <th>Passed Rules</th>
+            <th>Failed Rules</th>
+            <th>Critical</th>
+            <th>Forbidden</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td>
+                <strong>real-repo-db-order-index-review</strong>
+                <small>real-repo</small>
+              </td>
+              <td class="number">66.7</td>
+              <td class="number">100.0</td>
+              <td class="number good">+33.3</td>
+              <td class="number">100.0%</td>
+              <td><code>has_transaction_locking</code> <code>has_query_pattern_first</code> <code>has_db_constraints_indexes</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>real-repo-drf-to-ninja-migration</strong>
+                <small>real-repo</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">100.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">100.0%</td>
+              <td><code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>real-repo-fat-model-refactor</strong>
+                <small>real-repo</small>
+              </td>
+              <td class="number">66.7</td>
+              <td class="number">100.0</td>
+              <td class="number good">+33.3</td>
+              <td class="number">100.0%</td>
+              <td><code>has_pytest_tests</code> <code>has_edge_cases</code> <code>separates_domain_application_infrastructure</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>real-repo-ninja-product-search</strong>
+                <small>real-repo</small>
+              </td>
+              <td class="number">80.0</td>
+              <td class="number">100.0</td>
+              <td class="number good">+20.0</td>
+              <td class="number">100.0%</td>
+              <td><code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code> <code>uses_items_meta_envelope</code> <code>uses_problem_details</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>real-repo-pytest-coupon</strong>
+                <small>real-repo</small>
+              </td>
+              <td class="number">75.0</td>
+              <td class="number">100.0</td>
+              <td class="number good">+25.0</td>
+              <td class="number">100.0%</td>
+              <td><code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>real-repo-view-logic-service-layer</strong>
+                <small>real-repo</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">100.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">100.0%</td>
+              <td><code>has_transaction_locking</code> <code>separates_domain_application_infrastructure</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+
 
         <section class="section">
           <h2>Usability Summary</h2>
           <p class="empty">No manual usability scores recorded.</p>
         </section>
-        
+
 
 
     <section class="section">
@@ -368,7 +532,7 @@
           </tr>
         </thead>
         <tbody>
-          
+
         <tr>
           <td>
             <strong>real-repo-db-order-index-review</strong>
@@ -383,7 +547,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -399,7 +563,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -415,7 +579,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -431,7 +595,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -447,7 +611,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.10s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -463,7 +627,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -479,7 +643,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -495,7 +659,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -511,7 +675,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -527,7 +691,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -543,7 +707,7 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
 
         <tr>
           <td>
@@ -559,11 +723,11 @@
           <td>django_check: System check identified no issues (0 silenced). | pytest: .                                                                        [100%]
 1 passed in 0.09s</td>
         </tr>
-        
+
         </tbody>
       </table>
     </section>
-    
+
   </main>
 </body>
 </html>

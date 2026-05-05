@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>pilot-implementation-coupon skill-core-only</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>pilot-implementation-coupon skill-core-only</h1>
+    <div class="path">workspace/codex-eval/reference-ceiling-pilot/skill-core-only/pilot-implementation-coupon.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>가정: <code>orders</code>는 별도 바운디드 컨텍스트이고, 쿠폰 컨텍스트는 <code>order_id</code>, <code>user_id</code>, <code>order_total</code>만 ID/값으로 받습니다. 주문 금액 변경은 쿠폰 컨텍스트가 직접 저장하지 않습니다.</p>
+<p><strong>DDD layers</strong></p>
+<p>| Layer | 책임 | |---|---| | Domain | 쿠폰 적용 가능 여부, 할인 계산, 중복 사용 불변식 | | Application | use case 조율, transaction, repository 호출 | | Infrastructure | Django ORM 모델/Repository 구현 | | Interface | Django Ninja Schema/Router |</p>
+<p>유비쿼터스 언어: <code>Coupon</code>, <code>Redemption</code>, <code>apply</code>, <code>discount_amount</code> 금지 동의어: <code>voucher</code>, <code>promotion_code</code>, <code>sale_code</code></p>
+<pre><code>
+# apps/coupons/domain.py
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from enum import StrEnum
+
+
+class CouponStatus(StrEnum):
+    ACTIVE = &quot;active&quot;
+    EXPIRED = &quot;expired&quot;
+    DISABLED = &quot;disabled&quot;
+
+
+class CouponCannotBeApplied(Exception): ...
+
+
+@dataclass(frozen=True)
+class Money:
+    amount: Decimal
+
+    def __post_init__(self) -&gt; None:
+        if self.amount &lt; 0:
+            raise CouponCannotBeApplied(&quot;amount must be non-negative&quot;)
+
+
+@dataclass(frozen=True)
+class CouponAppliedEvent:
+    coupon_id: int
+    order_id: int
+    user_id: int
+    discount_amount: Decimal
+
+
+@dataclass
+class Coupon:
+    &quot;&quot;&quot;Aggregate Root.
+    Invariants: active period, minimum order amount, redemption limit,
+    one coupon redemption per user/order are protected before apply.
+    &quot;&quot;&quot;
+
+    id: int
+    code: str
+    status: CouponStatus
+    discount_amount: Money
+    min_order_amount: Money
+    valid_from: datetime
+    valid_until: datetime
+    max_redemptions: int
+    redeemed_count: int
+
+    def apply(self, *, order_id: int, user_id: int, order_total: Money, now: datetime) -&gt; CouponAppliedEvent:
+        if self.status != CouponStatus.ACTIVE:
+            raise CouponCannotBeApplied(&quot;coupon is not active&quot;)
+        if not self.valid_from &lt;= now &lt;= self.valid_until:
+            raise CouponCannotBeApplied(&quot;coupon is outside valid period&quot;)
+        if order_total.amount &lt; self.min_order_amount.amount:
+            raise CouponCannotBeApplied(&quot;order total is below minimum&quot;)
+        if self.redeemed_count &gt;= self.max_redemptions:
+            raise CouponCannotBeApplied(&quot;coupon redemption limit reached&quot;)
+
+        discount = min(self.discount_amount.amount, order_total.amount)
+        return CouponAppliedEvent(self.id, order_id, user_id, discount)
+
+
+class CouponRepository(ABC):
+    @abstractmethod
+    def get_by_code_for_update(self, code: str) -&gt; Coupon: ...
+
+    @abstractmethod
+    def has_redemption(self, *, coupon_id: int, order_id: int, user_id: int) -&gt; bool: ...
+
+    @abstractmethod
+    def save_redemption(self, event: CouponAppliedEvent) -&gt; None: ...
+</code></pre>
+<pre><code>
+# apps/coupons/models.py
+from django.db import models
+
+
+class CouponModel(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = &quot;active&quot;, &quot;Active&quot;
+        EXPIRED = &quot;expired&quot;, &quot;Expired&quot;
+        DISABLED = &quot;disabled&quot;, &quot;Disabled&quot;
+
+    code = models.CharField(max_length=40, unique=True)
+    status = models.CharField(max_length=20, choices=Status)
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    min_order_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField()
+    max_redemptions = models.PositiveIntegerField()
+    redeemed_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        indexes = [models.Index(fields=[&quot;code&quot;, &quot;status&quot;])]
+
+    def __str__(self) -&gt; str:
+        return self.code
+
+
+class CouponRedemption(models.Model):
+    coupon = models.ForeignKey(CouponModel, on_delete=models.PROTECT)
+    order_id = models.BigIntegerField()
+    user_id = models.BigIntegerField()
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;coupon&quot;, &quot;order_id&quot;, &quot;user_id&quot;],
+                name=&quot;uniq_coupon_redemption_per_order_user&quot;,
+            )
+        ]
+</code></pre>
+<pre><code>
+# apps/coupons/repositories.py
+from django.db.models import F
+
+from .domain import Coupon, CouponAppliedEvent, CouponRepository, CouponStatus, Money
+from .models import CouponModel, CouponRedemption
+
+
+class DjangoCouponRepository(CouponRepository):
+    def get_by_code_for_update(self, code: str) -&gt; Coupon:
+        row = CouponModel.objects.select_for_update().get(code=code)
+        return Coupon(
+            id=row.id,
+            code=row.code,
+            status=CouponStatus(row.status),
+            discount_amount=Money(row.discount_amount),
+            min_order_amount=Money(row.min_order_amount),
+            valid_from=row.valid_from,
+            valid_until=row.valid_until,
+            max_redemptions=row.max_redemptions,
+            redeemed_count=row.redeemed_count,
+        )
+
+    def has_redemption(self, *, coupon_id: int, order_id: int, user_id: int) -&gt; bool:
+        return CouponRedemption.objects.filter(
+            coupon_id=coupon_id, order_id=order_id, user_id=user_id
+        ).exists()
+
+    def save_redemption(self, event: CouponAppliedEvent) -&gt; None:
+        CouponRedemption.objects.create(
+            coupon_id=event.coupon_id,
+            order_id=event.order_id,
+            user_id=event.user_id,
+            discount_amount=event.discount_amount,
+        )
+        CouponModel.objects.filter(id=event.coupon_id).update(
+            redeemed_count=F(&quot;redeemed_count&quot;) + 1
+        )
+</code></pre>
+<pre><code>
+# apps/coupons/services.py
+from dataclasses import dataclass
+from decimal import Decimal
+
+from django.db import transaction
+from django.utils import timezone
+
+from .domain import CouponCannotBeApplied, CouponRepository, Money
+
+
+@dataclass(frozen=True)
+class ApplyCouponCommand:
+    code: str
+    order_id: int
+    user_id: int
+    order_total: Decimal
+
+
+class ApplyCouponService:
+    def __init__(self, coupons: CouponRepository) -&gt; None:
+        self.coupons = coupons
+
+    @transaction.atomic
+    def apply(self, command: ApplyCouponCommand) -&gt; Decimal:
+        coupon = self.coupons.get_by_code_for_update(command.code)
+
+        if self.coupons.has_redemption(
+            coupon_id=coupon.id, order_id=command.order_id, user_id=command.user_id
+        ):
+            raise CouponCannotBeApplied(&quot;coupon already redeemed for this order&quot;)
+
+        event = coupon.apply(
+            order_id=command.order_id,
+            user_id=command.user_id,
+            order_total=Money(command.order_total),
+            now=timezone.now(),
+        )
+        self.coupons.save_redemption(event)
+        return event.discount_amount
+</code></pre>
+<pre><code>
+# apps/coupons/api.py
+from decimal import Decimal
+
+from django.http import HttpRequest
+from ninja import Router, Schema
+from ninja.security import django_auth
+
+from .domain import CouponCannotBeApplied
+from .repositories import DjangoCouponRepository
+from .services import ApplyCouponCommand, ApplyCouponService
+
+router = Router(tags=[&quot;coupons&quot;])
+
+
+class ApplyCouponIn(Schema):
+    code: str
+    order_id: int
+    order_total: Decimal
+
+
+class ApplyCouponOut(Schema):
+    discount_amount: Decimal
+
+
+@router.post(&quot;/apply&quot;, response={200: ApplyCouponOut, 400: dict}, auth=django_auth)
+def apply_coupon(request: HttpRequest, payload: ApplyCouponIn) -&gt; tuple[int, ApplyCouponOut | dict]:
+    service = ApplyCouponService(DjangoCouponRepository())
+    try:
+        discount = service.apply(
+            ApplyCouponCommand(
+                code=payload.code,
+                order_id=payload.order_id,
+                user_id=request.user.id,
+                order_total=payload.order_total,
+            )
+        )
+    except CouponCannotBeApplied as exc:
+        return 400, {&quot;type&quot;: &quot;coupon-not-applicable&quot;, &quot;title&quot;: str(exc)}
+
+    return 200, ApplyCouponOut(discount_amount=discount)
+</code></pre>
+<pre><code>
+# config/api.py
+from ninja import NinjaAPI
+from apps.coupons.api import router as coupons_router
+
+api = NinjaAPI()
+api.add_router(&quot;/coupons/&quot;, coupons_router)
+</code></pre>
+<p><strong>pytest RED checks</strong></p>
+<pre><code>
+# tests/test_apply_coupon.py
+import pytest
+from apps.coupons.domain import CouponCannotBeApplied
+from apps.coupons.services import ApplyCouponCommand, ApplyCouponService
+
+
+@pytest.mark.django_db
+def test_apply_coupon_rejects_duplicate_redemption(coupon_factory, redemption_factory):
+    coupon = coupon_factory(code=&quot;SAVE10&quot;)
+    redemption_factory(coupon=coupon, order_id=1, user_id=7)
+
+    service = ApplyCouponService(DjangoCouponRepository())
+
+    with pytest.raises(CouponCannotBeApplied):
+        service.apply(ApplyCouponCommand(&quot;SAVE10&quot;, 1, 7, coupon.min_order_amount))
+
+
+@pytest.mark.django_db
+def test_apply_coupon_increments_redemption_count(coupon_factory):
+    coupon = coupon_factory(code=&quot;SAVE10&quot;, redeemed_count=0)
+
+    ApplyCouponService(DjangoCouponRepository()).apply(
+        ApplyCouponCommand(&quot;SAVE10&quot;, 1, 7, coupon.min_order_amount)
+    )
+
+    coupon.refresh_from_db()
+    assert coupon.redeemed_count == 1
+</code></pre>
+<p>검증 명령:</p>
+<pre><code>
+python manage.py check
+pytest tests/test_apply_coupon.py
+</code></pre>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 에러 형식/상태 코드 세부 설계 → <strong>architecture-api</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

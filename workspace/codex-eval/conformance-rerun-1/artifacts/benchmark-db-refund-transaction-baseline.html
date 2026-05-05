@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-refund-transaction baseline</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-refund-transaction baseline</h1>
+    <div class="path">workspace/codex-eval/conformance-rerun-1/baseline/benchmark-db-refund-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p>아래처럼 “환불 요청은 여러 번 올 수 있지만, 실제 환불 가능 금액은 DB와 트랜잭션이 최종적으로 막는다”는 구조로 잡는 게 좋습니다.</p>
+<p><strong>핵심 모델</strong></p>
+<pre><code>
+class Order(models.Model):
+    paid_amount = models.PositiveBigIntegerField()
+    refunded_amount = models.PositiveBigIntegerField(default=0)
+
+    class Status(models.TextChoices):
+        PAID = &quot;paid&quot;
+        PARTIALLY_REFUNDED = &quot;partially_refunded&quot;
+        REFUNDED = &quot;refunded&quot;
+
+    status = models.CharField(max_length=32, choices=Status.choices)
+
+
+class Refund(models.Model):
+    class Status(models.TextChoices):
+        PENDING = &quot;pending&quot;
+        SUCCEEDED = &quot;succeeded&quot;
+        FAILED = &quot;failed&quot;
+
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name=&quot;refunds&quot;)
+    amount = models.PositiveBigIntegerField()
+    idempotency_key = models.CharField(max_length=128)
+    status = models.CharField(max_length=32, choices=Status.choices, default=Status.PENDING)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    succeeded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;order&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uniq_refund_order_idempotency_key&quot;,
+            ),
+            models.CheckConstraint(
+                check=models.Q(amount__gt=0),
+                name=&quot;refund_amount_gt_zero&quot;,
+            ),
+        ]
+</code></pre>
+<p><code>Order.refunded_amount</code>를 별도로 두는 이유는 조회와 잠금이 단순해지기 때문입니다. 매번 <code>Refund.objects.aggregate(Sum(...))</code>로 계산하면 동시성 제어가 까다로워지고, 인덱스와 잠금 범위도 애매해집니다.</p>
+<p><strong>환불 처리 흐름</strong></p>
+<pre><code>
+from django.db import IntegrityError, transaction
+from django.utils import timezone
+
+def refund_order(*, order_id: int, amount: int, idempotency_key: str) -&gt; Refund:
+    if amount &lt;= 0:
+        raise ValueError(&quot;Refund amount must be positive&quot;)
+
+    try:
+        with transaction.atomic():
+            order = (
+                Order.objects
+                .select_for_update()
+                .get(id=order_id)
+            )
+
+            existing = Refund.objects.filter(
+                order=order,
+                idempotency_key=idempotency_key,
+            ).first()
+
+            if existing:
+                return existing
+
+            remaining_amount = order.paid_amount - order.refunded_amount
+
+            if amount &gt; remaining_amount:
+                raise ValueError(&quot;Refund amount exceeds remaining refundable amount&quot;)
+
+            refund = Refund.objects.create(
+                order=order,
+                amount=amount,
+                idempotency_key=idempotency_key,
+                status=Refund.Status.SUCCEEDED,
+                succeeded_at=timezone.now(),
+            )
+
+            order.refunded_amount += amount
+            order.status = (
+                Order.Status.REFUNDED
+                if order.refunded_amount == order.paid_amount
+                else Order.Status.PARTIALLY_REFUNDED
+            )
+            order.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
+
+            return refund
+
+    except IntegrityError:
+        return Refund.objects.get(
+            order_id=order_id,
+            idempotency_key=idempotency_key,
+        )
+</code></pre>
+<p>여기서 중요한 점은 <code>Order</code> 한 row를 <code>select_for_update()</code>로 잠근다는 것입니다. 같은 주문에 대한 환불은 동시에 들어와도 한 트랜잭션씩만 잔액을 검사하고 차감합니다.</p>
+<p><strong>막는 조건</strong></p>
+<p>부분 환불: <code>refunded_amount</code>가 <code>paid_amount</code>보다 작으면 계속 허용합니다.</p>
+<p>중복 요청: <code>UniqueConstraint(order, idempotency_key)</code>로 막습니다. 애플리케이션에서 먼저 조회하더라도 race condition이 있으므로 DB unique constraint가 최종 방어선입니다.</p>
+<p>잔액 초과 환불: <code>select_for_update()</code>로 주문을 잠근 뒤 <code>paid_amount - refunded_amount</code>를 검사합니다. 이 검사는 반드시 같은 <code>transaction.atomic()</code> 안에서 해야 합니다.</p>
+<p><strong>DB 제약</strong></p>
+<p><code>Refund.amount &gt; 0</code>은 <code>CheckConstraint</code>로 강제할 수 있습니다.</p>
+<p><code>Order.refunded_amount &lt;= Order.paid_amount</code>도 가능하면 DB check로 둡니다.</p>
+<pre><code>
+models.CheckConstraint(
+    check=models.Q(refunded_amount__lte=models.F(&quot;paid_amount&quot;)),
+    name=&quot;order_refunded_amount_lte_paid_amount&quot;,
+)
+</code></pre>
+<p>다만 이 제약은 <code>Order</code> row 내부 값만 검증합니다. <code>Refund</code> 합계와 <code>Order.refunded_amount</code>의 일치는 DB check만으로는 보장하기 어렵기 때문에, 서비스 레이어에서 <code>Order.refunded_amount</code>를 단일 출처로 관리하고 테스트로 보호하는 편이 현실적입니다.</p>
+<p><strong>조회 패턴</strong></p>
+<p>목록 화면에서는 <code>Refund</code>를 합산하지 말고 <code>Order.refunded_amount</code>를 바로 읽습니다.</p>
+<pre><code>
+Order.objects.only(&quot;id&quot;, &quot;paid_amount&quot;, &quot;refunded_amount&quot;, &quot;status&quot;)
+</code></pre>
+<p>상세 화면에서는 환불 이력이 필요하므로 prefetch합니다.</p>
+<pre><code>
+Order.objects.prefetch_related(
+    Prefetch(
+        &quot;refunds&quot;,
+        queryset=Refund.objects.order_by(&quot;-created_at&quot;),
+    )
+).get(id=order_id)
+</code></pre>
+<p>환불 처리 경로에서는 aggregate 조회를 피하고, 반드시 주문 row를 잠근 뒤 현재 잔액을 봅니다.</p>
+<pre><code>
+Order.objects.select_for_update().get(id=order_id)
+</code></pre>
+<p><strong>마이그레이션 검증</strong></p>
+<p>기존 데이터가 있다면 제약 추가 전에 데이터 검증 migration을 먼저 넣는 게 좋습니다.</p>
+<p>검증할 것:</p>
+<pre><code>
+# 1. refunded_amount &gt; paid_amount 인 주문이 없는지
+Order.objects.filter(refunded_amount__gt=F(&quot;paid_amount&quot;)).exists()
+
+# 2. Refund.amount &lt;= 0 인 데이터가 없는지
+Refund.objects.filter(amount__lte=0).exists()
+
+# 3. 같은 order + idempotency_key 중복이 없는지
+Refund.objects.values(&quot;order_id&quot;, &quot;idempotency_key&quot;) \
+    .annotate(count=Count(&quot;id&quot;)) \
+    .filter(count__gt=1)
+</code></pre>
+<p>기존 <code>Refund</code> 합계로 <code>Order.refunded_amount</code>를 채워야 한다면 별도 data migration에서 성공한 환불만 집계합니다.</p>
+<pre><code>
+total = Refund.objects.filter(
+    order=order,
+    status=Refund.Status.SUCCEEDED,
+).aggregate(total=Sum(&quot;amount&quot;))[&quot;total&quot;] or 0
+</code></pre>
+<p>그 다음:</p>
+<ul>
+<li>데이터 보정 migration</li>
+<li>검증 migration</li>
+<li>unique/check constraint 추가 migration</li>
+</ul>
+<p>순서로 나누는 게 안전합니다.</p>
+<p><strong>테스트 포인트</strong></p>
+<p>반드시 넣을 테스트는 이 정도입니다.</p>
+<ul>
+<li>같은 <code>idempotency_key</code>로 두 번 요청하면 같은 <code>Refund</code>가 반환된다.</li>
+<li>10,000원 결제 주문에 3,000원, 4,000원 부분 환불이 가능하다.</li>
+<li>남은 금액 3,000원에서 4,000원 환불은 실패한다.</li>
+<li>동시에 같은 주문에 환불 요청이 들어와도 <code>refunded_amount &lt;= paid_amount</code>가 유지된다.</li>
+<li>unique constraint가 <code>IntegrityError</code>를 내도 기존 refund를 조회해 idempotent하게 응답한다.</li>
+</ul>
+<p>정리하면, 환불 잔액은 <code>Order</code> row에 보관하고, 환불 처리 시 <code>transaction.atomic()</code> + <code>select_for_update()</code>로 해당 주문을 잠근 뒤 갱신하는 구조가 가장 단순하고 견고합니다. 중복 방지는 idempotency key unique constraint, 금액 불변식은 check constraint와 트랜잭션 내부 검증을 같이 둡니다.</p></article>
+  </main>
+</body>
+</html>

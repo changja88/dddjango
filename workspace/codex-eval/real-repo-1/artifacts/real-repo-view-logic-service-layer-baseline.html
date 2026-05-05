@@ -131,21 +131,21 @@ index 0d43c8b..a3a4d4f 100644
 +++ b/shop/orders/views.py
 @@ -1,10 +1,10 @@
  import json
- 
+
 -from django.db import transaction
  from django.http import JsonResponse
  from django.views.decorators.http import require_POST
- 
+
 -from shop.orders.models import Order, Product, Reservation
 +from shop.orders.models import Order
 +from shop.orders.services import InsufficientStockError, reserve_inventory_for_order
- 
- 
+
+
  @require_POST
 @@ -24,24 +24,17 @@ def reserve_inventory(request, order_id):
      quantity = int(payload[&quot;quantity&quot;])
      idempotency_key = request.headers.get(&quot;Idempotency-Key&quot;, &quot;&quot;)
- 
+
 -    with transaction.atomic():
 -        product = Product.objects.select_for_update().get(id=product_id)
 -        order = Order.objects.select_for_update().get(id=order_id)
@@ -171,7 +171,7 @@ index 0d43c8b..a3a4d4f 100644
 +            {&quot;error&quot;: &quot;not_enough_stock&quot;, &quot;available&quot;: exc.stock.available},
 +            status=409,
 +        )
- 
+
      return JsonResponse({&quot;reservation_id&quot;: reservation.id}, status=201)
 </code></pre>
 <p>테스트는 실행하지 않았습니다. 현재 환경이 read-only라 fixture 파일을 수정하거나 테스트 DB/캐시 생성이 필요한 검증은 수행하지 않았습니다.</p></article>

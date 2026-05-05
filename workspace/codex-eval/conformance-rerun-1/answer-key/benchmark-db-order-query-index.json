@@ -1,0 +1,20 @@
+{
+  "case_id": "benchmark-db-order-query-index",
+  "category": "db-design",
+  "title": "Order query index design conformance rerun",
+  "expectations": [
+    "korean_first",
+    "db_design",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "조회 조건과 정렬 패턴 기반으로 composite index를 제안한다.",
+    "select_related/prefetch_related와 pagination 비용을 구분한다.",
+    "migration 검증과 EXPLAIN 기준을 포함한다."
+  ],
+  "prompt": "관리자 주문 목록 조회가 느릴 때 어떤 인덱스와 쿼리 개선을 검토할지 Django ORM 기준으로 제안해줘. 조회 패턴, migration 검증, EXPLAIN 기준까지 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "review"
+}

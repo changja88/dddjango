@@ -85,13 +85,13 @@ index 4d6f7f1..8d2f0b4 100644
 @@ -1,5 +1,4 @@
  from django.db import models
 -from django.utils import timezone
- 
- 
+
+
  class Order(models.Model):
 @@ -16,18 +15,14 @@ class Order(models.Model):
      cancel_reason = models.TextField(blank=True)
      created_at = models.DateTimeField(auto_now_add=True)
- 
+
 -    def cancel(self, reason: str, actor_email: str) -&gt; None:
 +    def mark_cancelled(self, *, cancel_reason: str, cancelled_at) -&gt; None:
          if self.status == self.STATUS_SHIPPED:
@@ -108,8 +108,8 @@ index 4d6f7f1..8d2f0b4 100644
 -        self.save(update_fields=[&quot;status&quot;, &quot;cancel_reason&quot;, &quot;cancelled_at&quot;])
 +        self.cancel_reason = cancel_reason
 +        self.cancelled_at = cancelled_at
- 
- 
+
+
  class Product(models.Model):
 diff --git a/shop/orders/services.py b/shop/orders/services.py
 new file mode 100644
@@ -148,11 +148,11 @@ index 90d85bb..e6e79c8 100644
 +++ b/shop/orders/views.py
 @@ -5,6 +5,7 @@ from django.http import JsonResponse
  from django.views.decorators.http import require_POST
- 
+
  from shop.orders.models import Order, Product, Reservation
 +from shop.orders.services import cancel_order as cancel_order_service
- 
- 
+
+
  @require_POST
 @@ -12,8 +13,8 @@ def cancel_order(request, order_id):
      payload = json.loads(request.body or &quot;{}&quot;)
@@ -171,19 +171,19 @@ index 4ad8e70..b7fdd25 100644
 -from django.test import TestCase
 +import pytest
 +from django.utils import timezone
- 
+
  from shop.orders.models import Order
 +from shop.orders.services import cancel_order
- 
+
 +pytestmark = pytest.mark.django_db
- 
+
 -class OrderModelTests(TestCase):
 -    def test_cancel_sets_status(self):
 -        order = Order.objects.create(
 -            customer_email=&quot;buyer@example.com&quot;,
 -            total_amount=&quot;100.00&quot;,
 -        )
- 
+
 -        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
 +def test_order_model_marks_cancelled_without_saving():
 +    order = Order.objects.create(
@@ -191,7 +191,7 @@ index 4ad8e70..b7fdd25 100644
 +        total_amount=&quot;100.00&quot;,
 +    )
 +    cancelled_at = timezone.now()
- 
+
 -        self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +    order.mark_cancelled(
 +        cancel_reason=&quot;customer request by ops@example.com&quot;,

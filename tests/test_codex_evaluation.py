@@ -12,13 +12,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CASES_PATH = ROOT / "evals/codex/cases/pilot.jsonl"
 BENCHMARK_CASES_PATH = ROOT / "evals/shared/cases/benchmark.jsonl"
+HARD_BENCHMARK_CASES_PATH = ROOT / "evals/shared/cases/hard-benchmark.jsonl"
+TARGETED_RERUN_CASES_PATH = ROOT / "evals/shared/cases/targeted-rerun.jsonl"
+CONFORMANCE_RERUN_CASES_PATH = ROOT / "evals/shared/cases/conformance-rerun.jsonl"
 TRIGGER_CASES_PATH = ROOT / "evals/shared/cases/trigger.jsonl"
 REAL_REPO_CASES_PATH = ROOT / "evals/shared/cases/real-repo.jsonl"
+REFERENCE_MAP_PATH = ROOT / "evals/codex/reference-map.json"
+CONFORMANCE_MAP_PATH = ROOT / "evals/codex/conformance-map.json"
 REAL_REPO_FIXTURE_PATH = ROOT / "evals/fixtures/django-shop"
 SCHEMA_PATH = ROOT / "evals/codex/rubrics/grading-schema.json"
+CONFORMANCE_SCHEMA_PATH = ROOT / "evals/codex/rubrics/dddjango-conformance-schema.json"
 USABILITY_CHECKLIST_PATH = ROOT / "evals/shared/rubrics/usability-checklist.md"
 GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_outputs.py"
 AUTO_GRADE_SCRIPT_PATH = ROOT / "evals/codex/scripts/auto_grade_outputs.py"
+CONFORMANCE_SCRIPT_PATH = ROOT / "evals/codex/scripts/grade_conformance.py"
 INIT_SCRIPT_PATH = ROOT / "evals/codex/scripts/init_iteration.py"
 RUN_SCRIPT_PATH = ROOT / "evals/codex/scripts/run_prompts.py"
 REPORT_SCRIPT_PATH = ROOT / "evals/codex/scripts/render_report.py"
@@ -171,6 +178,35 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             with self.subTest(keyword=keyword):
                 self.assertIn(keyword, frontmatter)
 
+    def test_low_lift_skill_updates_define_hard_case_outputs(self):
+        tdd = (ROOT / "skills/implementation-tdd/SKILL.md").read_text()
+        cleancode = (ROOT / "skills/implementation-cleancode/SKILL.md").read_text()
+
+        for required in [
+            "도메인 정책 TDD 산출물",
+            "정상",
+            "경계",
+            "실패",
+            "멱등성/중복 요청",
+            "명시적 결과 타입",
+            "CancelOrderResult",
+            "TransitionOrderStatusResult",
+            "ReserveInventoryResult",
+            "transaction 적용 지점",
+        ]:
+            with self.subTest(skill="implementation-tdd", required=required):
+                self.assertIn(required, tdd)
+
+        for required in [
+            "원칙 설명만 나열하지 않는다",
+            "Before/After",
+            "unified diff",
+            "dict/None/error-code 반환",
+            "Protocol 기반 port",
+        ]:
+            with self.subTest(skill="implementation-cleancode", required=required):
+                self.assertIn(required, cleancode)
+
     def test_pilot_cases_define_representative_codex_plugin_eval_set(self):
         cases = [
             json.loads(line)
@@ -241,6 +277,80 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         for case in drf_cases:
             self.assertIn("DRF", case["prompt"])
             self.assertIn("Django Ninja", " ".join(case["scoring_focus"]))
+
+    def test_hard_benchmark_cases_target_known_low_lift_areas(self):
+        cases = [
+            json.loads(line)
+            for line in HARD_BENCHMARK_CASES_PATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(len(cases), 8)
+        self.assertEqual(len({case["id"] for case in cases}), 8)
+        self.assertEqual(
+            {case["category"] for case in cases},
+            {"api-design", "db-design", "tdd", "clean-code", "negative-control"},
+        )
+
+        case_text = json.dumps(cases, ensure_ascii=False)
+        for required in [
+            "hard-negative-fastapi-korean",
+            "hard-tdd-domain-policy-red-green",
+            "hard-clean-fat-model-policy-extraction",
+            "hard-api-drf-migration-no-imports",
+            "Django Ninja",
+            "RED/GREEN/REFACTOR",
+            "FastAPI",
+        ]:
+            with self.subTest(required=required):
+                self.assertIn(required, case_text)
+
+    def test_targeted_rerun_cases_pin_known_low_lift_regressions(self):
+        cases = [
+            json.loads(line)
+            for line in TARGETED_RERUN_CASES_PATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(
+            {case["id"] for case in cases},
+            {
+                "benchmark-negative-fastapi",
+                "benchmark-tdd-domain-policy",
+                "benchmark-tdd-inventory-reserve",
+                "benchmark-clean-refactor-model-method",
+            },
+        )
+        self.assertEqual(len(cases), 4)
+
+    def test_conformance_rerun_cases_target_remaining_rule_pass_gaps(self):
+        cases = [
+            json.loads(line)
+            for line in CONFORMANCE_RERUN_CASES_PATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+        self.assertEqual(
+            {case["id"] for case in cases},
+            {
+                "benchmark-db-order-query-index",
+                "benchmark-db-payment-ledger",
+                "benchmark-db-refund-transaction",
+                "benchmark-tdd-ninja-endpoint",
+                "benchmark-tdd-order-cancel",
+            },
+        )
+        self.assertEqual(len(cases), 5)
+        case_text = json.dumps(cases, ensure_ascii=False)
+        for required in [
+            "migration 검증",
+            "조회 패턴",
+            "Result Type",
+            "도메인 예외",
+            "edge case",
+        ]:
+            with self.subTest(required=required):
+                self.assertIn(required, case_text)
 
     def test_trigger_cases_define_precision_recall_eval_set(self):
         cases = [
@@ -329,6 +439,29 @@ class CodexEvaluationAssetTests(unittest.TestCase):
                 self.assertIn("unified diff", case["prompt"])
                 self.assertTrue(case["scoring_focus"])
 
+    def test_reference_map_defines_ceiling_eval_inputs_without_answer_leakage(self):
+        reference_map = json.loads(REFERENCE_MAP_PATH.read_text())
+
+        self.assertEqual(reference_map["version"], 1)
+        self.assertIn("case_defaults", reference_map)
+        self.assertIn("cases", reference_map)
+        self.assertIn("api-design", reference_map["case_defaults"])
+
+        for case_id in [
+            "pilot-negative-drf",
+            "pilot-tdd-coupon",
+            "benchmark-api-product-search",
+            "benchmark-db-order-query-index",
+        ]:
+            with self.subTest(case=case_id):
+                self.assertIn(case_id, reference_map["cases"])
+                mapping = reference_map["cases"][case_id]
+                self.assertTrue(mapping["references"])
+                self.assertTrue(mapping["expected_rules"])
+                self.assertNotIn("answer", json.dumps(mapping).lower())
+                for relative_path in mapping["references"]:
+                    self.assertTrue((ROOT / relative_path).exists(), relative_path)
+
     def test_grading_schema_weights_sum_to_100(self):
         schema = json.loads(SCHEMA_PATH.read_text())
 
@@ -349,8 +482,54 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         )
 
         thresholds = schema["success_thresholds"]
-        self.assertEqual(thresholds["minimum_average_lift_percent"], 15)
+        self.assertEqual(thresholds["minimum_average_lift_points"], 3)
+        self.assertEqual(thresholds["minimum_ceiling_normalized_lift_percent"], 25)
+        self.assertEqual(thresholds["quality_lift_score_ceiling"], 95)
         self.assertEqual(thresholds["maximum_drf_violation_count"], 0)
+
+    def test_conformance_schema_and_map_define_dddjango_specific_release_gate(self):
+        schema = json.loads(CONFORMANCE_SCHEMA_PATH.read_text())
+        conformance_map = json.loads(CONFORMANCE_MAP_PATH.read_text())
+
+        self.assertEqual(schema["version"], 1)
+        self.assertEqual(conformance_map["version"], 1)
+        self.assertEqual(
+            schema["release_gate"],
+            conformance_map["release_gate"],
+        )
+        self.assertEqual(
+            conformance_map["release_gate"]["minimum_dddjango_conformance_score"],
+            85,
+        )
+
+        for category in [
+            "api-design",
+            "db-design",
+            "tdd",
+            "clean-code",
+            "negative-control",
+        ]:
+            with self.subTest(category=category):
+                config = conformance_map["category_defaults"][category]
+                self.assertTrue(config["required_rules"])
+
+        for category in ["api-design", "tdd", "clean-code", "negative-control"]:
+            with self.subTest(critical_category=category):
+                self.assertTrue(
+                    conformance_map["category_defaults"][category]["critical_rules"]
+                )
+
+        api_rules = conformance_map["category_defaults"]["api-design"]["required_rules"]
+        self.assertIn("uses_django_ninja_router", api_rules)
+        self.assertIn("no_drf_code", api_rules)
+        self.assertIn(
+            "uses_problem_details",
+            conformance_map["expectation_rules"]["api_standard"],
+        )
+
+        negative_rules = conformance_map["category_defaults"]["negative-control"]["required_rules"]
+        self.assertIn("no_django_contamination", negative_rules)
+        self.assertIn("honors_requested_non_django_framework", negative_rules)
 
     def test_usability_checklist_and_schema_define_manual_review_fields(self):
         checklist = USABILITY_CHECKLIST_PATH.read_text()
@@ -612,6 +791,10 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             "실패 테스트를 먼저 추가합니다.",
             "도메인 서비스 테스트를 작성합니다.",
             "test_order_confirm를 추가합니다.",
+            "python manage.py check를 실행합니다.",
+            "python manage.py makemigrations --check --dry-run을 실행합니다.",
+            "python manage.py migrate --plan으로 검증합니다.",
+            "EXPLAIN ANALYZE로 대표 쿼리를 확인합니다.",
             "python manage.py test orders를 실행합니다.",
             "assert result.status_code == 201",
         ]:
@@ -642,6 +825,97 @@ class CodexEvaluationAssetTests(unittest.TestCase):
         self.assertTrue(flags["negative_control_passed"])
         self.assertLessEqual(scores["domain_fit"], 11)
         self.assertEqual(scores["architecture_quality"], 7)
+
+    def test_auto_grade_allows_concise_korean_negative_control_answers(self):
+        module = load_module(AUTO_GRADE_SCRIPT_PATH)
+        case = {
+            "id": "hard-negative-fastapi-korean",
+            "category": "negative-control",
+            "expectations": ["negative_control_passed"],
+        }
+        text = (
+            "FastAPI 기준 최소 health check API 예시입니다.\n"
+            "실행 명령과 확인 방법만 짧게 정리합니다.\n"
+            "```python\nfrom fastapi import FastAPI\napp = FastAPI()\n```\n"
+        )
+
+        scores, flags = module.base_scores(case, text, "dddjango")
+
+        self.assertTrue(flags["korean_first"])
+        self.assertEqual(scores["korean_first"], 10)
+
+    def test_grade_conformance_scores_dddjango_convention_rules(self):
+        module = load_module(CONFORMANCE_SCRIPT_PATH)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            (iteration / "baseline").mkdir()
+            (iteration / "dddjango").mkdir()
+            (iteration / "answer-key").mkdir()
+            case = {
+                "id": "api-case",
+                "title": "API case",
+                "category": "api-design",
+                "expectations": [
+                    "korean_first",
+                    "django_ninja_compliance",
+                    "api_standard",
+                ],
+            }
+            (iteration / "answer-key/api-case.json").write_text(
+                json.dumps(case, ensure_ascii=False) + "\n"
+            )
+            (iteration / "baseline/api-case.output.md").write_text(
+                "DRF ViewSet과 ModelSerializer로 구현합니다.\n"
+            )
+            (iteration / "dddjango/api-case.output.md").write_text(
+                "Django Ninja Router와 Schema를 사용합니다.\n"
+                "```python\n"
+                "from django.http import HttpRequest\n"
+                "from ninja import Router, Schema\n"
+                "router = Router()\n"
+                "class ProductOut(Schema):\n"
+                "    id: int\n"
+                "@router.get('/products', response=dict)\n"
+                "def list_products(request: HttpRequest) -> dict:\n"
+                "    return {'items': [], 'meta': {'total': 0}}\n"
+                "```\n"
+                "오류는 RFC 9457 Problem Details와 application/problem+json으로 통일합니다.\n"
+                "python manage.py check와 pytest로 검증합니다.\n"
+            )
+
+            output_path = module.grade_conformance(iteration, map_path=CONFORMANCE_MAP_PATH)
+            result = json.loads(output_path.read_text())
+            dddjango = next(
+                record
+                for record in result["cases"]
+                if record["variant"] == "dddjango"
+            )
+            baseline = next(
+                record
+                for record in result["cases"]
+                if record["variant"] == "baseline"
+            )
+
+            self.assertGreater(dddjango["conformance_score"], baseline["conformance_score"])
+            self.assertIn("uses_django_ninja_router", dddjango["passed_rules"])
+            self.assertIn("uses_problem_details", dddjango["passed_rules"])
+            self.assertFalse(dddjango["critical_violations"])
+            self.assertGreater(result["summary"]["delta"], 0)
+
+    def test_grade_conformance_flags_negative_control_contamination(self):
+        module = load_module(CONFORMANCE_SCRIPT_PATH)
+
+        self.assertTrue(
+            module.rule_no_django_contamination(
+                "FastAPI 기준 health check입니다. Django는 사용하지 않습니다."
+            )
+        )
+        self.assertFalse(
+            module.rule_no_django_contamination(
+                "FastAPI 요청이지만 Django Ninja Router와 DDD 구조를 함께 제안합니다."
+            )
+        )
 
     def test_init_iteration_creates_prompt_files_and_grade_template(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -679,6 +953,7 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             first_prompt = baseline_prompts[0].read_text()
             self.assertIn("Variant: baseline", first_prompt)
             self.assertIn("Prompt", first_prompt)
+            self.assertNotIn("Fixture path:", first_prompt)
             self.assertNotIn("Expectations", first_prompt)
             self.assertNotIn("Scoring Focus", first_prompt)
 
@@ -736,6 +1011,109 @@ class CodexEvaluationAssetTests(unittest.TestCase):
             self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 24)
             self.assertEqual(len(list((output_dir / "answer-key").glob("*.json"))), 24)
             self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 48)
+
+    def test_init_iteration_can_create_hard_benchmark_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "hard-benchmark-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "hard-benchmark",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 8)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 8)
+            self.assertEqual(len(list((output_dir / "answer-key").glob("*.json"))), 8)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 16)
+
+    def test_init_iteration_can_create_targeted_rerun_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "targeted-rerun-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "targeted-rerun",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 4)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 4)
+            self.assertEqual(len(list((output_dir / "answer-key").glob("*.json"))), 4)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 8)
+
+    def test_init_iteration_can_create_conformance_rerun_suite_by_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "conformance-rerun-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "conformance-rerun",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 5)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 5)
+            self.assertEqual(len(list((output_dir / "answer-key").glob("*.json"))), 5)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 10)
+
+    def test_init_iteration_can_create_reference_ceiling_variant_set(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "reference-ceiling-iteration"
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(INIT_SCRIPT_PATH),
+                    "--suite",
+                    "pilot",
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--output",
+                    str(output_dir),
+                    "--variant-set",
+                    "reference-ceiling",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(len(list((output_dir / "baseline").glob("*.prompt.md"))), 8)
+            self.assertEqual(len(list((output_dir / "skill-core-only").glob("*.prompt.md"))), 8)
+            self.assertEqual(len(list((output_dir / "dddjango").glob("*.prompt.md"))), 8)
+            self.assertEqual(len(list((output_dir / "oracle-reference").glob("*.prompt.md"))), 8)
+            self.assertEqual(len(json.loads((output_dir / "grades.json").read_text())), 32)
 
     def test_init_iteration_can_create_trigger_suite_by_name(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -953,6 +1331,127 @@ index 83db48f..f735c2d 100644
             self.assertIn("real-repo-case", html)
             self.assertIn("PATCH PASS", html)
 
+    def test_render_report_includes_conformance_summary_when_available(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir) / "iteration"
+            (iteration / "baseline").mkdir(parents=True)
+            (iteration / "dddjango").mkdir()
+            (iteration / "answer-key").mkdir()
+            answer_key = {
+                "id": "api-case",
+                "title": "API case",
+                "category": "api-design",
+                "expectations": ["korean_first", "django_ninja_compliance"],
+            }
+            (iteration / "answer-key/api-case.json").write_text(
+                json.dumps(answer_key, ensure_ascii=False) + "\n"
+            )
+            (iteration / "baseline/api-case.output.md").write_text("plain answer\n")
+            (iteration / "dddjango/api-case.output.md").write_text("Django Ninja Router와 Schema\n")
+            score_fields = {
+                "domain_fit": 10,
+                "django_ninja_compliance": 10,
+                "actionability": 10,
+                "architecture_quality": 10,
+                "testing_quality": 10,
+                "korean_first": 10,
+                "conciseness": 10,
+                "safety": 10,
+            }
+            (iteration / "grades.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "case_id": "api-case",
+                            "variant": "baseline",
+                            "scores": score_fields,
+                            "flags": {},
+                        },
+                        {
+                            "case_id": "api-case",
+                            "variant": "dddjango",
+                            "scores": score_fields,
+                            "flags": {},
+                        },
+                    ],
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            (iteration / "timing.json").write_text(
+                json.dumps(
+                    [
+                        {"case_id": "api-case", "variant": "baseline", "duration_sec": 1, "returncode": 0},
+                        {"case_id": "api-case", "variant": "dddjango", "duration_sec": 1, "returncode": 1},
+                    ]
+                )
+                + "\n"
+            )
+            (iteration / "conformance.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "summary": {
+                            "baseline_avg_conformance": 10,
+                            "dddjango_avg_conformance": 90,
+                            "delta": 80,
+                            "dddjango_required_rule_pass_rate": 95,
+                            "critical_violations": 0,
+                            "forbidden_pattern_count": 0,
+                            "release_gate": {
+                                "dddjango_conformance_score": {
+                                    "passed": True,
+                                    "value": 90,
+                                    "required": 85,
+                                }
+                            },
+                        },
+                        "cases": [
+                            {
+                                "case_id": "api-case",
+                                "variant": "baseline",
+                                "category": "api-design",
+                                "conformance_score": 10,
+                                "required_rule_pass_rate": 10,
+                                "passed_rules": [],
+                                "failed_rules": ["uses_django_ninja_router"],
+                                "critical_violations": ["uses_django_ninja_router"],
+                                "forbidden_patterns": [],
+                            },
+                            {
+                                "case_id": "api-case",
+                                "variant": "dddjango",
+                                "category": "api-design",
+                                "conformance_score": 90,
+                                "required_rule_pass_rate": 95,
+                                "passed_rules": ["uses_django_ninja_router"],
+                                "failed_rules": [],
+                                "critical_violations": [],
+                                "forbidden_patterns": [],
+                            },
+                        ],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(REPORT_SCRIPT_PATH),
+                    str(iteration),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            html = (iteration / "report.html").read_text()
+            self.assertIn("dddjango Convention Conformance", html)
+            self.assertIn("Convention Score", html)
+            self.assertIn("uses_django_ninja_router", html)
+
     def test_run_prompts_extracts_prompt_and_builds_isolated_baseline_command(self):
         module = load_module(RUN_SCRIPT_PATH)
         text = (
@@ -1132,6 +1631,8 @@ index 83db48f..f735c2d 100644
             case=negative_trigger,
         )
         self.assertIn("Django/DDD를 끼워 넣지 않는다", negative_instructions)
+        self.assertIn("한국어로 답하되", negative_instructions)
+        self.assertIn("Do not complain about missing fixture paths", negative_instructions)
         self.assertIn("파일이 없어도", negative_instructions)
         self.assertIn("요청 기술 스택", negative_instructions)
         self.assertNotIn("/skills/", negative_instructions)
@@ -1168,6 +1669,40 @@ index 83db48f..f735c2d 100644
 
         self.assertIn("맥락이 불명확합니다", ambiguous_instructions)
         self.assertIn("Django라면", ambiguous_instructions)
+
+    def test_run_prompts_builds_reference_ceiling_instructions(self):
+        module = load_module(RUN_SCRIPT_PATH)
+        case = {
+            "case_id": "benchmark-api-product-search",
+            "category": "api-design",
+            "prompt": "상품 검색 API를 Django Ninja 기준으로 설계해줘.",
+            "expectations": ["korean_first", "django_ninja_compliance", "api_standard"],
+            "scoring_focus": ["검색 필터와 페이지네이션 표준을 제시한다."],
+        }
+
+        core = module.developer_instructions_for_variant(
+            ROOT,
+            "skill-core-only",
+            "benchmark-api-product-search",
+            case,
+        )
+        oracle = module.developer_instructions_for_variant(
+            ROOT,
+            "oracle-reference",
+            "benchmark-api-product-search",
+            case,
+        )
+
+        self.assertIn("SKILL.md only", core)
+        self.assertIn("Do not open references/", core)
+        self.assertIn("implementation-django-ninja/SKILL.md", core)
+        self.assertNotIn("response-pagination.md", core)
+
+        self.assertIn("reference-ceiling oracle", oracle)
+        self.assertIn("response-pagination.md", oracle)
+        self.assertIn("input-filtering.md", oracle)
+        self.assertIn("Do not use answer keys", oracle)
+        self.assertNotIn("answer-key", oracle)
 
     def test_run_prompts_loads_answer_keys_for_iteration_metadata(self):
         module = load_module(RUN_SCRIPT_PATH)
@@ -1322,13 +1857,21 @@ index 83db48f..f735c2d 100644
         with tempfile.TemporaryDirectory() as temp_dir:
             iteration = Path(temp_dir)
             (iteration / "baseline").mkdir()
+            (iteration / "skill-core-only").mkdir()
             (iteration / "dddjango").mkdir()
+            (iteration / "oracle-reference").mkdir()
             (iteration / "answer-key").mkdir()
             (iteration / "baseline/case-a.output.md").write_text(
                 "# Baseline Output\n\n- **plain** `result`\n"
             )
+            (iteration / "skill-core-only/case-a.output.md").write_text(
+                "# Core Only Output\n\nSKILL.md만 사용한 결과입니다.\n"
+            )
             (iteration / "dddjango/case-a.output.md").write_text(
                 "# dddjango Output\n\n```python\nprint('ok')\n```\n"
+            )
+            (iteration / "oracle-reference/case-a.output.md").write_text(
+                "# Oracle Reference Output\n\nreference를 직접 사용한 결과입니다.\n"
             )
             (iteration / "answer-key/case-a.json").write_text(
                 json.dumps(
@@ -1373,6 +1916,34 @@ index 83db48f..f735c2d 100644
                         },
                         {
                             "case_id": "case-a",
+                            "variant": "skill-core-only",
+                            "scores": {
+                                "domain_fit": 12,
+                                "django_ninja_compliance": 20,
+                                "actionability": 10,
+                                "architecture_quality": 10,
+                                "testing_quality": 5,
+                                "korean_first": 10,
+                                "conciseness": 5,
+                                "safety": 5,
+                            },
+                            "notes": "core note",
+                            "usability": {
+                                "actionable": 4,
+                                "concise": 4,
+                                "realistic_file_layout": 3,
+                                "korean_quality": 5,
+                                "notes": "core usable",
+                            },
+                            "flags": {
+                                "korean_first": True,
+                                "django_ninja_used": True,
+                                "drf_endorsed": False,
+                                "negative_control_passed": False,
+                            },
+                        },
+                        {
+                            "case_id": "case-a",
                             "variant": "dddjango",
                             "scores": {
                                 "domain_fit": 15,
@@ -1399,6 +1970,34 @@ index 83db48f..f735c2d 100644
                                 "negative_control_passed": False,
                             },
                         },
+                        {
+                            "case_id": "case-a",
+                            "variant": "oracle-reference",
+                            "scores": {
+                                "domain_fit": 18,
+                                "django_ninja_compliance": 20,
+                                "actionability": 14,
+                                "architecture_quality": 14,
+                                "testing_quality": 7,
+                                "korean_first": 10,
+                                "conciseness": 4,
+                                "safety": 5,
+                            },
+                            "notes": "oracle note",
+                            "usability": {
+                                "actionable": 5,
+                                "concise": 4,
+                                "realistic_file_layout": 5,
+                                "korean_quality": 5,
+                                "notes": "oracle usable",
+                            },
+                            "flags": {
+                                "korean_first": True,
+                                "django_ninja_used": True,
+                                "drf_endorsed": False,
+                                "negative_control_passed": False,
+                            },
+                        },
                     ],
                     ensure_ascii=False,
                 )
@@ -1414,8 +2013,18 @@ index 83db48f..f735c2d 100644
                         },
                         {
                             "case_id": "case-a",
+                            "variant": "skill-core-only",
+                            "duration_sec": 11.0,
+                        },
+                        {
+                            "case_id": "case-a",
                             "variant": "dddjango",
                             "duration_sec": 12.0,
+                        },
+                        {
+                            "case_id": "case-a",
+                            "variant": "oracle-reference",
+                            "duration_sec": 13.0,
                         },
                     ]
                 )
@@ -1429,11 +2038,20 @@ index 83db48f..f735c2d 100644
             self.assertIn("Baseline Score", html)
             self.assertIn("dddjango Score", html)
             self.assertIn("Release Gate", html)
+            self.assertIn("Overall Lift", html)
+            self.assertIn("Quality Gate Lift", html)
+            self.assertIn("headroom", html)
+            self.assertIn("pts", html)
             self.assertIn("Usability Summary", html)
             self.assertIn("Realistic Layout", html)
             self.assertIn("Korean Quality", html)
             self.assertIn("바로 적용 가능", html)
             self.assertIn("Case Comparison: Without Skill vs With dddjango", html)
+            self.assertIn("Reference Ceiling Comparison", html)
+            self.assertIn("Core Only", html)
+            self.assertIn("Oracle Reference", html)
+            self.assertIn("Reference Contribution", html)
+            self.assertIn("Ceiling Gap", html)
             self.assertIn("Completed Cases", html)
             self.assertIn("Case A title", html)
             self.assertIn("api-design", html)
@@ -1443,14 +2061,20 @@ index 83db48f..f735c2d 100644
             self.assertIn("+10.0", html)
             self.assertNotIn("file://", html)
             self.assertIn('href="artifacts/case-a-baseline.html"', html)
+            self.assertIn('href="artifacts/case-a-skill-core-only.html"', html)
             self.assertIn('href="artifacts/case-a-dddjango.html"', html)
+            self.assertIn('href="artifacts/case-a-oracle-reference.html"', html)
             self.assertIn('href="artifacts/case-a-answer-key.html"', html)
 
             baseline_artifact = iteration / "artifacts/case-a-baseline.html"
+            core_artifact = iteration / "artifacts/case-a-skill-core-only.html"
             dddjango_artifact = iteration / "artifacts/case-a-dddjango.html"
+            oracle_artifact = iteration / "artifacts/case-a-oracle-reference.html"
             answer_key_artifact = iteration / "artifacts/case-a-answer-key.html"
             self.assertTrue(baseline_artifact.exists())
+            self.assertTrue(core_artifact.exists())
             self.assertTrue(dddjango_artifact.exists())
+            self.assertTrue(oracle_artifact.exists())
             self.assertTrue(answer_key_artifact.exists())
             self.assertIn("<h1>Baseline Output</h1>", baseline_artifact.read_text())
             self.assertIn("<li><strong>plain</strong> <code>result</code></li>", baseline_artifact.read_text())
@@ -1639,6 +2263,77 @@ index 83db48f..f735c2d 100644
             self.assertIn("Negative trigger", html)
             self.assertIn("Apply dddjango Django Ninja guidance.", html)
             self.assertIn("Do not force Django guidance.", html)
+
+    def test_render_report_marks_ninja_gate_not_applicable_without_api_cases(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            iteration = Path(temp_dir)
+            (iteration / "baseline").mkdir()
+            (iteration / "dddjango").mkdir()
+            (iteration / "answer-key").mkdir()
+            (iteration / "baseline/case-a.output.md").write_text("baseline")
+            (iteration / "dddjango/case-a.output.md").write_text("dddjango")
+            (iteration / "answer-key/case-a.json").write_text(
+                json.dumps(
+                    {
+                        "title": "Clean code case",
+                        "category": "clean-code",
+                        "expectations": ["korean_first", "clean_code"],
+                    },
+                    ensure_ascii=False,
+                )
+            )
+            scores = {
+                "domain_fit": 10,
+                "django_ninja_compliance": 10,
+                "actionability": 10,
+                "architecture_quality": 10,
+                "testing_quality": 5,
+                "korean_first": 10,
+                "conciseness": 5,
+                "safety": 5,
+            }
+            flags = {
+                "korean_first": True,
+                "django_ninja_used": False,
+                "drf_endorsed": False,
+                "negative_control_passed": False,
+            }
+            (iteration / "grades.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "case_id": "case-a",
+                            "variant": "baseline",
+                            "scores": scores,
+                            "flags": flags,
+                        },
+                        {
+                            "case_id": "case-a",
+                            "variant": "dddjango",
+                            "scores": scores,
+                            "flags": flags,
+                        },
+                    ],
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            (iteration / "timing.json").write_text(
+                json.dumps(
+                    [
+                        {"case_id": "case-a", "variant": "baseline", "duration_sec": 10},
+                        {"case_id": "case-a", "variant": "dddjango", "duration_sec": 10},
+                    ]
+                )
+                + "\n"
+            )
+
+            report_path = load_module(REPORT_SCRIPT_PATH).render_report(iteration)
+            html = report_path.read_text()
+
+            self.assertIn("Django Ninja compliance", html)
+            self.assertIn("N/A", html)
+            self.assertIn("no applicable cases", html)
 
 
 if __name__ == "__main__":

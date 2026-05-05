@@ -69,9 +69,11 @@
       "description": "Answers Korean prompts naturally in Korean while preserving code identifiers and necessary English terms."
     }
   ],
-  "success_thresholds": {
-    "minimum_average_lift_percent": 15,
-    "maximum_drf_violation_count": 0,
+    "success_thresholds": {
+        "minimum_average_lift_points": 3,
+        "minimum_ceiling_normalized_lift_percent": 25,
+        "quality_lift_score_ceiling": 95,
+        "maximum_drf_violation_count": 0,
     "minimum_korean_first_rate_percent": 95,
     "minimum_django_ninja_rate_percent": 90,
     "minimum_tdd_quality_rate_percent": 80,

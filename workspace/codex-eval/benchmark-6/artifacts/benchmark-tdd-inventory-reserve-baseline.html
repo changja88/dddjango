@@ -85,22 +85,22 @@ index 31dfb6f..2b9de22 100644
 @@ -1,16 +1,96 @@
 -from django.test import TestCase
 +import json
- 
+
 -from shop.orders.models import Order
 +import pytest
- 
+
 +from shop.orders.models import Order, Product, Reservation
- 
+
 -class OrderModelTests(TestCase):
 -    def test_cancel_sets_status(self):
 -        order = Order.objects.create(
 -            customer_email=&quot;buyer@example.com&quot;,
 -            total_amount=&quot;100.00&quot;,
 -        )
- 
+
 -        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
 +pytestmark = pytest.mark.django_db
- 
+
 -        self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +
 +@pytest.fixture
@@ -271,11 +271,11 @@ index e653717..72cbad5 100644
 +++ b/shop/orders/views.py
 @@ -1,11 +1,14 @@
  import json
- 
+
 -from django.db import transaction
  from django.http import JsonResponse
  from django.views.decorators.http import require_POST
- 
+
 -from shop.orders.models import Order, Product, Reservation
 +from shop.orders.models import Order
 +from shop.orders.services import (
@@ -283,14 +283,14 @@ index e653717..72cbad5 100644
 +    InsufficientStock,
 +    reserve_inventory as reserve_inventory_service,
 +)
- 
- 
+
+
  @require_POST
 @@ -23,25 +26,26 @@ def reserve_inventory(request, order_id):
      product_id = payload[&quot;product_id&quot;]
      quantity = int(payload[&quot;quantity&quot;])
      idempotency_key = request.headers.get(&quot;Idempotency-Key&quot;, &quot;&quot;)
- 
+
 -    with transaction.atomic():
 -        product = Product.objects.select_for_update().get(id=product_id)
 -        order = Order.objects.select_for_update().get(id=order_id)
@@ -326,7 +326,7 @@ index e653717..72cbad5 100644
 +            },
 +            status=409,
 +        )
- 
+
 -    return JsonResponse({&quot;reservation_id&quot;: reservation.id}, status=201)
 +    status = 201 if result.created else 200
 +    return JsonResponse({&quot;reservation_id&quot;: result.reservation.id}, status=status)

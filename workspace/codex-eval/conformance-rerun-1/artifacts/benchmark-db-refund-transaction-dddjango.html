@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-refund-transaction dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-refund-transaction dddjango</h1>
+    <div class="path">workspace/codex-eval/conformance-rerun-1/dddjango/benchmark-db-refund-transaction.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>주요 내용</strong></p>
+<p>핵심은 <code>Order.refunded_amount</code>를 “누적 환불 확정 또는 예약 금액”으로 두고, 환불 생성 시 <code>Order</code> 행을 잠근 뒤 같은 트랜잭션 안에서 중복 키와 잔액을 검사하는 구조입니다. <code>Refund</code>들의 합계를 매번 계산해서 막는 방식은 동시 요청에서 깨지기 쉽고, DB <code>CHECK</code>로도 “자식 row 합계 &lt;= 부모 금액”은 직접 표현하기 어렵습니다.</p>
+<pre><code>
+# orders/models.py
+from django.core.validators import MinValueValidator
+from django.db import models
+from django.db.models import Q, F
+
+
+class Order(models.Model):
+    paid_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    refunded_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(paid_amount__gte=0),
+                name=&quot;order_paid_amount_gte_0&quot;,
+            ),
+            models.CheckConstraint(
+                condition=Q(refunded_amount__gte=0),
+                name=&quot;order_refunded_amount_gte_0&quot;,
+            ),
+            models.CheckConstraint(
+                condition=Q(refunded_amount__lte=F(&quot;paid_amount&quot;)),
+                name=&quot;order_refunded_amount_lte_paid_amount&quot;,
+            ),
+        ]
+
+
+class Refund(models.Model):
+    class Status(models.TextChoices):
+        PENDING = &quot;pending&quot;, &quot;Pending&quot;
+        SUCCEEDED = &quot;succeeded&quot;, &quot;Succeeded&quot;
+        FAILED = &quot;failed&quot;, &quot;Failed&quot;
+
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name=&quot;refunds&quot;)
+    idempotency_key = models.CharField(max_length=80)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(&quot;0.01&quot;)],
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(amount__gt=0),
+                name=&quot;refund_amount_gt_0&quot;,
+            ),
+            models.UniqueConstraint(
+                fields=[&quot;order&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uniq_refund_order_idempotency_key&quot;,
+            ),
+        ]
+        indexes = [
+            models.Index(fields=[&quot;order&quot;, &quot;-created_at&quot;], name=&quot;refund_order_created_idx&quot;),
+            models.Index(fields=[&quot;order&quot;, &quot;status&quot;], name=&quot;refund_order_status_idx&quot;),
+        ]
+</code></pre>
+<p>환불 생성은 서비스 함수로 고정합니다. 잔액 초과와 중복 요청은 애플리케이션 체크만 믿지 말고, <code>select_for_update()</code>와 DB unique/check constraint를 같이 사용합니다.</p>
+<pre><code>
+# orders/services.py
+from django.db import IntegrityError, transaction
+from django.db.models import F
+
+from .models import Order, Refund
+
+
+class DuplicateRefundRequest(Exception):
+    pass
+
+
+class RefundAmountExceeded(Exception):
+    pass
+
+
+def refund_create(*, order_id: int, amount, idempotency_key: str, reason: str = &quot;&quot;):
+    try:
+        with transaction.atomic():
+            order = (
+                Order.objects
+                .select_for_update()
+                .get(id=order_id)
+            )
+
+            existing = Refund.objects.filter(
+                order=order,
+                idempotency_key=idempotency_key,
+            ).first()
+            if existing:
+                raise DuplicateRefundRequest(existing.id)
+
+            available = order.paid_amount - order.refunded_amount
+            if amount &gt; available:
+                raise RefundAmountExceeded(
+                    f&quot;available={available}, requested={amount}&quot;
+                )
+
+            refund = Refund.objects.create(
+                order=order,
+                amount=amount,
+                idempotency_key=idempotency_key,
+                reason=reason,
+            )
+
+            Order.objects.filter(id=order.id).update(
+                refunded_amount=F(&quot;refunded_amount&quot;) + amount
+            )
+
+            return refund
+
+    except IntegrityError as exc:
+        raise DuplicateRefundRequest from exc
+</code></pre>
+<p>부분 환불은 자연스럽게 허용됩니다. 예를 들어 <code>paid_amount=10000</code>, <code>refunded_amount=3000</code>이면 다음 요청은 <code>7000</code>까지만 통과합니다. 동시에 두 요청이 들어와도 같은 <code>Order</code> row lock 때문에 두 번째 트랜잭션은 첫 번째 커밋 이후의 <code>refunded_amount</code>를 보고 다시 검증합니다.</p>
+<p>외부 PG 환불 API가 있다면 DB 트랜잭션 안에서 호출하지 말고, 위 트랜잭션에서는 환불 금액을 “예약”한 뒤 <code>transaction.on_commit()</code>으로 워커 작업을 enqueue하세요. 실패 시 별도 보상 트랜잭션에서 <code>Refund.status=FAILED</code>로 바꾸고 <code>Order.refunded_amount</code>를 차감합니다.</p>
+<p>조회 패턴과 인덱스 근거는 다음처럼 잡습니다.</p>
+<pre><code>
+# orders/api/selectors.py
+from .models import Refund
+
+
+def refund_history_for_order(order_id: int):
+    return (
+        Refund.objects
+        .filter(order_id=order_id)
+        .order_by(&quot;-created_at&quot;)
+    )
+
+
+def active_refunds_for_order(order_id: int):
+    return Refund.objects.filter(
+        order_id=order_id,
+        status__in=[Refund.Status.PENDING, Refund.Status.SUCCEEDED],
+    )
+</code></pre>
+<p><code>refund_order_created_idx(order, -created_at)</code>는 주문 상세의 환불 내역 조회를 인덱스 순서대로 처리하기 위한 것입니다. <code>refund_order_status_idx(order, status)</code>는 특정 주문의 진행 중/성공 환불만 확인하는 운영성 조회에 맞춘 인덱스입니다. <code>uniq_refund_order_idempotency_key</code>는 중복 요청 방지의 최종 방어선입니다.</p>
+<p>검증 명령은 마이그레이션 생성 SQL과 실제 적용 가능성을 둘 다 확인합니다.</p>
+<pre><code>
+python manage.py makemigrations orders --check --dry-run
+python manage.py makemigrations orders
+python manage.py sqlmigrate orders 000X
+python manage.py migrate --plan
+python manage.py migrate
+python manage.py test orders
+</code></pre>
+<p>PostgreSQL 기준으로는 <code>sqlmigrate</code>에서 <code>CHECK</code>, <code>UNIQUE</code>, <code>CREATE INDEX</code>가 의도대로 생성되는지 확인하고, 동시성 테스트는 <code>TransactionTestCase</code>에서 별도 DB connection/thread로 같은 주문에 환불 2건을 동시에 요청해 하나만 성공하는지 검증합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - API 엔드포인트 설계와 인증 적용 → <strong>implementation-django-ninja</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

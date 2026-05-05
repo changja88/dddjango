@@ -119,7 +119,7 @@ index 1111111..2222222 100644
  from django.contrib import admin
  from django.urls import path
 +from orders.api import api
- 
+
  urlpatterns = [
      path(&quot;admin/&quot;, admin.site.urls),
 +    path(&quot;api/&quot;, api.urls),

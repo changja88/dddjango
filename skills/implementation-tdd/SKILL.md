@@ -91,6 +91,17 @@ TDD로 개발할 때, 사용자를 Red-Green-Refactor 사이클을 통해 안내
 이 fallback에서도 RED/GREEN/REFACTOR 라벨을 유지한다. 테스트를 실행하지
 않았다면 "실행하지 못했습니다"라고 명시하고, 통과했다고 말하지 않는다.
 
+**도메인 정책 TDD 산출물.** 할인, 재고 예약, 주문 상태 변경처럼 정책을
+구현할 때는 일반적인 테스트 목록으로 끝내지 않는다. RED 단계에 정상,
+경계, 실패, 멱등성/중복 요청 케이스를 최소 하나씩 둔다. GREEN 단계에는
+값 객체, 도메인 예외, 명시적 결과 타입(`@dataclass(frozen=True)`)을 포함한
+최소 구현을 제시한다. REFACTOR 단계에는 Django model, repository, external
+gateway를 분리할 경계와 transaction 적용 지점을 명시한다.
+주문 취소, 주문 상태 전이, 재고 예약처럼 결과가 성공/실패/재시도 가능성을
+갖는 정책은 `CancelOrderResult`, `TransitionOrderStatusResult`,
+`ReserveInventoryResult`처럼 유스케이스 이름이 드러나는 결과 타입을 반드시
+GREEN 코드에 포함한다. bool, tuple, dict, 문자열 에러코드만 반환하지 않는다.
+
 적용할 핵심 원칙:
 
 **Red-Green-Refactor 사이클.** 모든 기능은 실패하는 테스트로 시작한다.

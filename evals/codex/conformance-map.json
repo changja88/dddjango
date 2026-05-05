@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "release_gate": {
+    "minimum_dddjango_conformance_score": 85,
+    "minimum_dddjango_required_rule_pass_rate": 90,
+    "maximum_critical_violations": 0,
+    "maximum_forbidden_pattern_count": 0
+  },
+  "category_defaults": {
+    "api-design": {
+      "required_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "has_http_request_type",
+        "has_explicit_return_type",
+        "includes_verification_commands",
+        "no_drf_code"
+      ],
+      "critical_rules": [
+        "uses_django_ninja_router",
+        "no_drf_code"
+      ],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "db-design": {
+      "required_rules": [
+        "korean_first",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes",
+        "includes_migration_verification"
+      ],
+      "critical_rules": [],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "ddd-architecture": {
+      "required_rules": [
+        "korean_first",
+        "has_value_object",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands"
+      ],
+      "critical_rules": [
+        "separates_domain_application_infrastructure"
+      ],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "implementation": {
+      "required_rules": [
+        "korean_first",
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands",
+        "no_drf_code"
+      ],
+      "critical_rules": [
+        "uses_django_ninja_router",
+        "no_drf_code"
+      ],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "tdd": {
+      "required_rules": [
+        "korean_first",
+        "has_red_green_refactor",
+        "has_expected_failure",
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_value_object",
+        "has_domain_exception",
+        "has_result_type"
+      ],
+      "critical_rules": [
+        "has_red_green_refactor",
+        "has_pytest_tests"
+      ],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "review": {
+      "required_rules": [
+        "korean_first",
+        "has_severity_ranked_findings",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands"
+      ],
+      "critical_rules": [
+        "has_severity_ranked_findings"
+      ],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "clean-code": {
+      "required_rules": [
+        "korean_first",
+        "uses_policy_or_service_extraction",
+        "separates_domain_application_infrastructure",
+        "includes_verification_commands"
+      ],
+      "critical_rules": [
+        "uses_policy_or_service_extraction"
+      ],
+      "forbidden_patterns": [
+        "drf_endorsed"
+      ]
+    },
+    "negative-control": {
+      "required_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "critical_rules": [
+        "no_django_contamination"
+      ],
+      "forbidden_patterns": [
+        "django_contamination",
+        "drf_endorsed"
+      ]
+    }
+  },
+  "expectation_rules": {
+    "api_standard": [
+      "uses_items_meta_envelope",
+      "uses_problem_details"
+    ],
+    "django_ninja_compliance": [
+      "uses_django_ninja_router",
+      "uses_schema_not_serializer",
+      "no_drf_code"
+    ],
+    "reject_drf": [
+      "no_drf_code"
+    ],
+    "transaction_boundary": [
+      "has_transaction_locking"
+    ],
+    "db_design": [
+      "has_query_pattern_first",
+      "has_db_constraints_indexes"
+    ],
+    "ddd_boundaries": [
+      "separates_domain_application_infrastructure"
+    ],
+    "tdd_first": [
+      "has_red_green_refactor",
+      "has_expected_failure"
+    ],
+    "pytest_quality": [
+      "has_pytest_tests",
+      "has_edge_cases"
+    ],
+    "clean_code": [
+      "has_before_after_or_diff",
+      "uses_policy_or_service_extraction",
+      "has_domain_exception",
+      "has_result_type"
+    ],
+    "architecture_review": [],
+    "negative_control_passed": [
+      "no_django_contamination"
+    ],
+    "actionable_output": [
+      "includes_verification_commands"
+    ]
+  },
+  "cases": {
+    "hard-negative-fastapi-korean": {
+      "required_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "critical_rules": [
+        "no_django_contamination"
+      ],
+      "forbidden_patterns": [
+        "django_contamination",
+        "drf_endorsed"
+      ]
+    },
+    "benchmark-negative-fastapi": {
+      "required_rules": [
+        "concise_korean_first",
+        "no_django_contamination",
+        "honors_requested_non_django_framework"
+      ],
+      "critical_rules": [
+        "no_django_contamination"
+      ],
+      "forbidden_patterns": [
+        "django_contamination",
+        "drf_endorsed"
+      ]
+    }
+  }
+}

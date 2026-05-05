@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>hard-clean-error-contract dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>hard-clean-error-contract dddjango</h1>
+    <div class="path">workspace/codex-eval/hard-benchmark-1/dddjango/hard-clean-error-contract.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>리팩터링 목표는 “서비스가 HTTP 모양의 결과를 만들지 않게” 하는 것입니다. 성공은 명시적 DTO로 반환하고, 실패는 도메인 예외로 올립니다. API는 그 예외를 RFC 9457 Problem Details로만 변환합니다.</p>
+<pre><code>
+# orders/domain/exceptions.py
+class DomainError(Exception):
+    code = &quot;domain_error&quot;
+
+    def __init__(self, detail: str) -&gt; None:
+        self.detail = detail
+        super().__init__(detail)
+
+
+class ProductOutOfStock(DomainError):
+    code = &quot;product_out_of_stock&quot;
+
+
+class InvalidOrderState(DomainError):
+    code = &quot;invalid_order_state&quot;
+</code></pre>
+<pre><code>
+# orders/application/services.py
+from dataclasses import dataclass
+from orders.domain.exceptions import ProductOutOfStock, InvalidOrderState
+
+@dataclass(frozen=True)
+class PlaceOrderResult:
+    order_id: int
+    status: str
+
+class StockPolicy:
+    def ensure_can_reserve(self, quantity: int, available: int) -&gt; None:
+        if quantity &lt;= 0:
+            raise InvalidOrderState(&quot;quantity must be positive&quot;)
+        if available &lt; quantity:
+            raise ProductOutOfStock(&quot;not enough stock&quot;)
+
+class OrderApplicationService:
+    def __init__(self, repo, stock_policy: StockPolicy) -&gt; None:
+        self.repo = repo
+        self.stock_policy = stock_policy
+
+    def place_order(self, product_id: int, quantity: int) -&gt; PlaceOrderResult:
+        product = self.repo.get_product(product_id)
+        self.stock_policy.ensure_can_reserve(quantity, product.available)
+
+        order = self.repo.create_order(product_id=product_id, quantity=quantity)
+        self.repo.reserve_stock(product_id=product_id, quantity=quantity)
+        return PlaceOrderResult(order_id=order.id, status=order.status)
+</code></pre>
+<pre><code>
+# orders/api/schemas.py
+from ninja import Schema
+
+class PlaceOrderIn(Schema):
+    product_id: int
+    quantity: int
+
+class OrderOut(Schema):
+    order_id: int
+    status: str
+
+class ProblemDetail(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+</code></pre>
+<pre><code>
+# config/api.py
+from django.http import HttpRequest, JsonResponse
+from ninja import NinjaAPI
+
+from orders.domain.exceptions import DomainError, ProductOutOfStock, InvalidOrderState
+from orders.api import router as orders_router
+
+api = NinjaAPI()
+api.add_router(&quot;/orders/&quot;, orders_router)
+
+ERROR_MAP = {
+    ProductOutOfStock: (409, &quot;Out of stock&quot;, &quot;https://example.com/problems/out-of-stock&quot;),
+    InvalidOrderState: (422, &quot;Invalid order state&quot;, &quot;https://example.com/problems/invalid-order-state&quot;),
+}
+
+@api.exception_handler(DomainError)
+def handle_domain_error(request: HttpRequest, exc: DomainError) -&gt; JsonResponse:
+    status, title, type_url = ERROR_MAP.get(
+        type(exc),
+        (400, &quot;Domain error&quot;, &quot;https://example.com/problems/domain-error&quot;),
+    )
+    return JsonResponse(
+        {&quot;type&quot;: type_url, &quot;title&quot;: title, &quot;status&quot;: status, &quot;detail&quot;: exc.detail},
+        status=status,
+        content_type=&quot;application/problem+json&quot;,
+    )
+</code></pre>
+<pre><code>
+# orders/api.py
+from django.http import HttpRequest
+from ninja import Router
+
+from orders.api.schemas import OrderOut, PlaceOrderIn, ProblemDetail
+from orders.application.services import OrderApplicationService, StockPolicy
+
+router = Router()
+
+@router.post(&quot;&quot;, response={201: OrderOut, 409: ProblemDetail, 422: ProblemDetail})
+def place_order(request: HttpRequest, payload: PlaceOrderIn) -&gt; tuple[int, OrderOut]:
+    service = OrderApplicationService(repo=order_repo(), stock_policy=StockPolicy())
+    result = service.place_order(payload.product_id, payload.quantity)
+    return 201, OrderOut(order_id=result.order_id, status=result.status)
+</code></pre>
+<p>Before/After 핵심은 이겁니다.</p>
+<pre><code>
+# before
+result = place_order(...)
+if result is None:
+    return 404, {&quot;error&quot;: &quot;not_found&quot;}
+if result == &quot;OUT_OF_STOCK&quot;:
+    return 409, {&quot;error&quot;: result}
+return result
+
+# after
+result = service.place_order(...)
+return 201, OrderOut(...)
+</code></pre>
+<p><code>if</code>가 많아지는 이유는 API가 도메인 판단까지 묻고 있기 때문입니다. 수량 검증, 재고 예약 가능 여부, 상태 전이 가능 여부는 <code>StockPolicy</code> 같은 정책 객체나 Aggregate 메서드 안에서 guard clause로 끝내고, API는 성공 DTO 조립과 예외 변환만 맡깁니다.</p>
+<p>테스트는 세 층으로 나눕니다.</p>
+<pre><code>
+# tests/isolated/unit/orders/test_stock_policy.py
+import pytest
+from orders.application.services import StockPolicy
+from orders.domain.exceptions import ProductOutOfStock
+
+def test_stock_policy_quantity_exceeds_available_raises_domain_error():
+    policy = StockPolicy()
+
+    with pytest.raises(ProductOutOfStock):
+        policy.ensure_can_reserve(quantity=3, available=1)
+</code></pre>
+<pre><code>
+# tests/isolated/integration/orders/test_order_api.py
+def test_place_order_out_of_stock_returns_problem_detail(client):
+    response = client.post(&quot;/api/orders/&quot;, json={&quot;product_id&quot;: 1, &quot;quantity&quot;: 99})
+
+    assert response.status_code == 409
+    assert response[&quot;content-type&quot;].startswith(&quot;application/problem+json&quot;)
+    assert response.json()[&quot;type&quot;].endswith(&quot;/out-of-stock&quot;)
+</code></pre>
+<p>검증 단계:</p>
+<pre><code>
+python manage.py check
+pytest tests/isolated/unit/orders -q
+pytest tests/isolated/integration/orders/test_order_api.py -q
+</code></pre>
+<p>실제 실행은 하지 않았습니다. 현재 요청은 코드베이스 수정이 아니라 리팩터링 방향 제시로 처리했습니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django Ninja 예외 처리와 Router 구성 → <strong>implementation-django-ninja</strong> 스킬 &gt; - 도메인 예외와 application service 경계 → <strong>architecture-ddd</strong> 스킬 &gt; - 테스트 구조와 RED/GREEN/REFACTOR 적용 → <strong>implementation-test</strong>, <strong>implementation-tdd</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

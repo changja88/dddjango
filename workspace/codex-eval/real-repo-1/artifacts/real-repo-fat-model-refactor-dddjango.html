@@ -91,13 +91,13 @@ index 5e1a111..a8f3b21 100644
 +
 +class OrderCannotBeCancelled(ValueError):
 +    pass
- 
- 
+
+
  class Order(models.Model):
 @@ -16,17 +19,14 @@ class Order(models.Model):
      cancel_reason = models.TextField(blank=True)
      created_at = models.DateTimeField(auto_now_add=True)
- 
+
 -    def cancel(self, reason: str, actor_email: str) -&gt; None:
 +    def mark_cancelled(self, cancel_reason: str, cancelled_at) -&gt; None:
 +        &quot;&quot;&quot;Order aggregate invariant: shipped orders cannot become cancelled.&quot;&quot;&quot;
@@ -114,8 +114,8 @@ index 5e1a111..a8f3b21 100644
 -        self.save(update_fields=[&quot;status&quot;, &quot;cancel_reason&quot;, &quot;cancelled_at&quot;])
 +        self.cancel_reason = cancel_reason
 +        self.cancelled_at = cancelled_at
- 
- 
+
+
  class Product(models.Model):
 diff --git a/shop/orders/services.py b/shop/orders/services.py
 new file mode 100644
@@ -174,11 +174,11 @@ index a9ad153..8d6b4e0 100644
 --- a/shop/orders/views.py
 +++ b/shop/orders/views.py
 @@ -5,6 +5,7 @@ from django.views.decorators.http import require_POST
- 
+
  from shop.orders.models import Order, Product, Reservation
 +from shop.orders.services import CancelOrderCommand, CancelOrderService
- 
- 
+
+
  @require_POST
 @@ -12,8 +13,9 @@ def cancel_order(request, order_id):
      payload = json.loads(request.body or &quot;{}&quot;)
@@ -201,7 +201,7 @@ index 9bf6c42..bf58936 100644
 -from django.test import TestCase
 +import pytest
 +from django.utils import timezone
- 
+
 -from shop.orders.models import Order
 +from shop.orders.models import Order, OrderCannotBeCancelled
 +from shop.orders.services import (
@@ -209,8 +209,8 @@ index 9bf6c42..bf58936 100644
 +    CancelOrderService,
 +    CancelReasonRequired,
 +)
- 
- 
+
+
 -class OrderModelTests(TestCase):
 -    def test_cancel_sets_status(self):
 -        order = Order.objects.create(
@@ -223,9 +223,9 @@ index 9bf6c42..bf58936 100644
 +        customer_email=&quot;buyer@example.com&quot;,
 +        total_amount=&quot;100.00&quot;,
 +    )
- 
+
 -        order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
- 
+
 -        self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +@pytest.mark.django_db
 +def test_cancel_order_service_pending_order_cancels_with_audit_reason(order):

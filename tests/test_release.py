@@ -60,6 +60,22 @@ class FileUpdateTests(unittest.TestCase):
         self.assertEqual(plugin["source"]["path"], "./plugins/dddjango")
         self.assertTrue((ROOT / "plugins/dddjango/.codex-plugin/plugin.json").exists())
 
+    def test_makefile_defines_codex_evaluation_targets(self):
+        makefile = (ROOT / "Makefile").read_text()
+
+        for required in [
+            "eval-init:",
+            "eval-run:",
+            "eval-report:",
+            "smoke-eval:",
+            "full-eval:",
+            "eval-conformance:",
+            "evals/codex/scripts/grade_conformance.py",
+            "evals/codex/scripts/render_report.py",
+        ]:
+            with self.subTest(required=required):
+                self.assertIn(required, makefile)
+
     def test_update_release_files_syncs_plugin_versions_and_readme_tag(self):
         root = self.create_fixture_repo("0.1.0")
 

@@ -1,0 +1,22 @@
+{
+  "case_id": "pilot-review-fat-model",
+  "category": "review",
+  "title": "Review a fat Django model",
+  "expectations": [
+    "korean_first",
+    "django_ninja_compliance",
+    "architecture_review",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "도메인 규칙, ORM 부작용, 외부 gateway 의존성 문제를 짚는다.",
+    "transaction.atomic, locking/select_for_update 필요성을 언급한다.",
+    "무조건적 패턴 적용보다 위험도 중심의 개선 순서를 제안한다."
+  ],
+  "prompt": "아래 Django 모델을 클린 아키텍처 관점에서 리뷰해줘.\n\n```python\nclass Order(models.Model):\n    user = models.ForeignKey(User, on_delete=models.CASCADE)\n    total_amount = models.PositiveIntegerField(default=0)\n    status = models.CharField(max_length=20, default=\"draft\")\n\n    def checkout(self, payment_gateway):\n        if self.status != \"draft\":\n            raise ValueError(\"invalid status\")\n        for item in self.items.all():\n            if item.product.stock < item.quantity:\n                raise ValueError(\"out of stock\")\n            item.product.stock -= item.quantity\n            item.product.save()\n        payment_gateway.prepare(self.total_amount)\n        self.status = \"ready_to_pay\"\n        self.save()\n```",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "review"
+}

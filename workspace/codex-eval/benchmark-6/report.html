@@ -47,6 +47,14 @@
       gap: 12px;
       margin-bottom: 24px;
     }
+    .inline-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
     .metric {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -80,6 +88,15 @@
     }
     .failures { padding: 0 18px 18px; color: var(--bad); }
     .empty { padding: 0 18px 18px; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .subsection {
+      padding: 14px 18px 0;
+      border-top: 1px solid var(--line);
+    }
+    .subsection h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -138,12 +155,15 @@
     <div class="metrics">
       <section class="metric neutral"><span>Baseline Score</span><strong>86.71</strong><small>case average</small></section>
       <section class="metric good"><span>dddjango Score</span><strong>88.46</strong><small>case average</small></section>
-      <section class="metric good"><span>Quality Lift</span><strong>+1.75</strong><small>+2.02% vs baseline</small></section>
+      <section class="metric good"><span>Overall Lift</span><strong>+1.75</strong><small>+2.02% vs baseline</small></section>
+      <section class="metric good"><span>Quality Gate Lift</span><strong>+2.41</strong><small>+2.77% vs applicable baseline; +29.61% headroom</small></section>
       <section class="metric neutral"><span>Baseline Time</span><strong>59.30s</strong><small>average duration</small></section>
       <section class="metric bad"><span>dddjango Time</span><strong>78.37s</strong><small>+32.16% vs baseline</small></section>
       <section class="metric good"><span>DRF Violations</span><strong>0</strong><small>dddjango variant</small></section>
       <section class="metric neutral"><span>Completed Cases</span><strong>24/24</strong><small>with and without skill</small></section>
       <section class="metric neutral"><span>Manual Usability</span><strong>0.00</strong><small>pending / 20</small></section>
+      <section class="metric good"><span>Convention Score</span><strong>89.97</strong><small>dddjango conformance</small></section>
+<section class="metric good"><span>Convention Delta</span><strong>+21.31</strong><small>with - without</small></section>
     </div>
 
     <section class="section">
@@ -165,10 +185,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Quality lift</td><td><span class="pill bad">BLOCKED</span></td><td>+2.02%</td><td>&gt;= +15%</td></tr>
+          <tr><td>Quality lift</td><td><span class="pill good">PASS</span></td><td>+2.41 pts / +2.77% / +29.61% headroom</td><td>&gt;= +3 pts or &gt;= 25% headroom</td></tr>
 <tr><td>DRF violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
 <tr><td>Korean-first rate</td><td><span class="pill good">PASS</span></td><td>95.83%</td><td>&gt;= 95%</td></tr>
-<tr><td>Django Ninja compliance</td><td><span class="pill bad">BLOCKED</span></td><td>83.33%</td><td>&gt;= 90%</td></tr>
+<tr><td>Django Ninja compliance</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 90%</td></tr>
 <tr><td>TDD quality</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
 <tr><td>Time/cost increase</td><td><span class="pill bad">BLOCKED</span></td><td>+32.16%</td><td>&lt;= +30%</td></tr>
 <tr><td>Negative-control pass rate</td><td><span class="pill good">PASS</span></td><td>100.00%</td><td>&gt;= 80%</td></tr>
@@ -197,7 +217,7 @@
           </tr>
         </thead>
         <tbody>
-          
+
         <tr>
           <td><span class="pill good">complete</span></td>
           <td>
@@ -220,7 +240,7 @@
             <a href="artifacts/benchmark-api-drf-migration-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -244,7 +264,7 @@
             <a href="artifacts/benchmark-api-inventory-reserve-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -268,7 +288,7 @@
             <a href="artifacts/benchmark-api-order-status-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -292,7 +312,7 @@
             <a href="artifacts/benchmark-api-product-search-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -316,7 +336,7 @@
             <a href="artifacts/benchmark-clean-error-handling-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -340,7 +360,7 @@
             <a href="artifacts/benchmark-clean-naming-boundaries-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -364,7 +384,7 @@
             <a href="artifacts/benchmark-clean-refactor-model-method-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -388,7 +408,7 @@
             <a href="artifacts/benchmark-db-order-query-index-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -412,7 +432,7 @@
             <a href="artifacts/benchmark-db-payment-ledger-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -436,7 +456,7 @@
             <a href="artifacts/benchmark-db-refund-transaction-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -460,7 +480,7 @@
             <a href="artifacts/benchmark-ddd-bounded-context-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -484,7 +504,7 @@
             <a href="artifacts/benchmark-ddd-coupon-policy-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -508,7 +528,7 @@
             <a href="artifacts/benchmark-ddd-order-aggregate-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -532,7 +552,7 @@
             <a href="artifacts/benchmark-ddd-service-layer-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -556,7 +576,7 @@
             <a href="artifacts/benchmark-negative-drf-explicit-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -580,7 +600,7 @@
             <a href="artifacts/benchmark-negative-fastapi-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -604,7 +624,7 @@
             <a href="artifacts/benchmark-review-fat-service-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -628,7 +648,7 @@
             <a href="artifacts/benchmark-review-ninja-router-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -652,7 +672,7 @@
             <a href="artifacts/benchmark-review-query-performance-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -676,7 +696,7 @@
             <a href="artifacts/benchmark-review-test-quality-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -700,7 +720,7 @@
             <a href="artifacts/benchmark-tdd-domain-policy-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -724,7 +744,7 @@
             <a href="artifacts/benchmark-tdd-inventory-reserve-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -748,7 +768,7 @@
             <a href="artifacts/benchmark-tdd-ninja-endpoint-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
 
         <tr>
           <td><span class="pill good">complete</span></td>
@@ -772,16 +792,430 @@
             <a href="artifacts/benchmark-tdd-order-cancel-answer-key.html">answer key</a>
           </td>
         </tr>
-        
+
         </tbody>
       </table>
     </section>
+
+    <section class="section">
+      <h2>dddjango Convention Conformance</h2>
+      <div class="inline-metrics">
+        <section class="metric neutral"><span>Baseline Conformance</span><strong>68.66</strong><small>without skill</small></section>
+        <section class="metric good"><span>dddjango Conformance</span><strong>89.97</strong><small>with skill</small></section>
+        <section class="metric good"><span>Conformance Delta</span><strong>+21.31</strong><small>with - without</small></section>
+        <section class="metric bad"><span>Rule Pass Rate</span><strong>89.97%</strong><small>dddjango required rules</small></section>
+        <section class="metric good"><span>Critical Violations</span><strong>0</strong><small>dddjango variant</small></section>
+        <section class="metric good"><span>Forbidden Patterns</span><strong>0</strong><small>dddjango variant</small></section>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Status</th>
+            <th>Current</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>dddjango conformance score</td><td><span class="pill good">PASS</span></td><td>89.97</td><td>85</td></tr>
+<tr><td>Required rule pass rate</td><td><span class="pill bad">BLOCKED</span></td><td>89.97</td><td>90</td></tr>
+<tr><td>Critical violations</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+<tr><td>Forbidden patterns</td><td><span class="pill good">PASS</span></td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <div class="subsection">
+        <h3>Critical Audit</h3>
+        <ul class="failures">
+          <li>No critical or forbidden dddjango convention violations.</li>
+        </ul>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Without</th>
+            <th>With</th>
+            <th>Delta</th>
+            <th>With Pass Rate</th>
+            <th>Passed Rules</th>
+            <th>Failed Rules</th>
+            <th>Critical</th>
+            <th>Forbidden</th>
+          </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+              <td>
+                <strong>benchmark-api-drf-migration</strong>
+                <small>api-design</small>
+              </td>
+              <td class="number">71.4</td>
+              <td class="number">100.0</td>
+              <td class="number good">+28.6</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>has_http_request_type</code> <code>has_explicit_return_type</code> <code>includes_verification_commands</code> <code>no_drf_code</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-api-inventory-reserve</strong>
+                <small>api-design</small>
+              </td>
+              <td class="number">90.0</td>
+              <td class="number">90.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">90.0%</td>
+              <td><code>korean_first</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>has_http_request_type</code> <code>has_explicit_return_type</code> <code>includes_verification_commands</code> <code>no_drf_code</code> <code>has_db_constraints_indexes</code> <code>has_transaction_locking</code></td>
+              <td><code>has_query_pattern_first</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-api-order-status</strong>
+                <small>api-design</small>
+              </td>
+              <td class="number">77.8</td>
+              <td class="number">100.0</td>
+              <td class="number good">+22.2</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>has_http_request_type</code> <code>has_explicit_return_type</code> <code>includes_verification_commands</code> <code>no_drf_code</code> <code>separates_domain_application_infrastructure</code> <code>has_transaction_locking</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-api-product-search</strong>
+                <small>api-design</small>
+              </td>
+              <td class="number">66.7</td>
+              <td class="number">100.0</td>
+              <td class="number good">+33.3</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>has_http_request_type</code> <code>has_explicit_return_type</code> <code>includes_verification_commands</code> <code>no_drf_code</code> <code>uses_items_meta_envelope</code> <code>uses_problem_details</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-clean-error-handling</strong>
+                <small>clean-code</small>
+              </td>
+              <td class="number">77.8</td>
+              <td class="number">88.9</td>
+              <td class="number good">+11.1</td>
+              <td class="number">88.9%</td>
+              <td><code>korean_first</code> <code>uses_policy_or_service_extraction</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code> <code>uses_problem_details</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code></td>
+              <td><code>uses_items_meta_envelope</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-clean-naming-boundaries</strong>
+                <small>clean-code</small>
+              </td>
+              <td class="number">75.0</td>
+              <td class="number">100.0</td>
+              <td class="number good">+25.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>uses_policy_or_service_extraction</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-clean-refactor-model-method</strong>
+                <small>clean-code</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">100.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>uses_policy_or_service_extraction</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-db-order-query-index</strong>
+                <small>db-design</small>
+              </td>
+              <td class="number">60.0</td>
+              <td class="number">80.0</td>
+              <td class="number good">+20.0</td>
+              <td class="number">80.0%</td>
+              <td><code>korean_first</code> <code>has_query_pattern_first</code> <code>has_db_constraints_indexes</code> <code>includes_verification_commands</code></td>
+              <td><code>includes_migration_verification</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-db-payment-ledger</strong>
+                <small>db-design</small>
+              </td>
+              <td class="number">33.3</td>
+              <td class="number">83.3</td>
+              <td class="number good">+50.0</td>
+              <td class="number">83.3%</td>
+              <td><code>korean_first</code> <code>has_db_constraints_indexes</code> <code>includes_migration_verification</code> <code>has_transaction_locking</code> <code>includes_verification_commands</code></td>
+              <td><code>has_query_pattern_first</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-db-refund-transaction</strong>
+                <small>db-design</small>
+              </td>
+              <td class="number">66.7</td>
+              <td class="number">66.7</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">66.7%</td>
+              <td><code>korean_first</code> <code>has_db_constraints_indexes</code> <code>has_transaction_locking</code> <code>includes_verification_commands</code></td>
+              <td><code>has_query_pattern_first</code> <code>includes_migration_verification</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-ddd-bounded-context</strong>
+                <small>ddd-architecture</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">100.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_value_object</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-ddd-coupon-policy</strong>
+                <small>ddd-architecture</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">100.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_value_object</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-ddd-order-aggregate</strong>
+                <small>ddd-architecture</small>
+              </td>
+              <td class="number">60.0</td>
+              <td class="number">100.0</td>
+              <td class="number good">+40.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_value_object</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code> <code>has_transaction_locking</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-ddd-service-layer</strong>
+                <small>ddd-architecture</small>
+              </td>
+              <td class="number">71.4</td>
+              <td class="number">85.7</td>
+              <td class="number good">+14.3</td>
+              <td class="number">85.7%</td>
+              <td><code>korean_first</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code></td>
+              <td><code>has_value_object</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-negative-drf-explicit</strong>
+                <small>negative-control</small>
+              </td>
+              <td class="number">75.0</td>
+              <td class="number">87.5</td>
+              <td class="number good">+12.5</td>
+              <td class="number">87.5%</td>
+              <td><code>korean_first</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>has_http_request_type</code> <code>has_explicit_return_type</code> <code>includes_verification_commands</code> <code>no_drf_code</code></td>
+              <td><code>no_django_contamination</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-negative-fastapi</strong>
+                <small>negative-control</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">66.7</td>
+              <td class="number bad">-33.3</td>
+              <td class="number">66.7%</td>
+              <td><code>no_django_contamination</code> <code>honors_requested_non_django_framework</code></td>
+              <td><code>concise_korean_first</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-review-fat-service</strong>
+                <small>review</small>
+              </td>
+              <td class="number">45.0</td>
+              <td class="number">100.0</td>
+              <td class="number good">+55.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_severity_ranked_findings</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code> <code>has_transaction_locking</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-review-ninja-router</strong>
+                <small>review</small>
+              </td>
+              <td class="number">100.0</td>
+              <td class="number">100.0</td>
+              <td class="number neutral">+0.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_severity_ranked_findings</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-review-query-performance</strong>
+                <small>review</small>
+              </td>
+              <td class="number">51.7</td>
+              <td class="number">88.9</td>
+              <td class="number good">+37.2</td>
+              <td class="number">88.9%</td>
+              <td><code>korean_first</code> <code>has_severity_ranked_findings</code> <code>includes_verification_commands</code> <code>has_query_pattern_first</code> <code>has_db_constraints_indexes</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code></td>
+              <td><code>separates_domain_application_infrastructure</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-review-test-quality</strong>
+                <small>review</small>
+              </td>
+              <td class="number">35.0</td>
+              <td class="number">100.0</td>
+              <td class="number good">+65.0</td>
+              <td class="number">100.0%</td>
+              <td><code>korean_first</code> <code>has_severity_ranked_findings</code> <code>separates_domain_application_infrastructure</code> <code>includes_verification_commands</code> <code>has_pytest_tests</code> <code>has_edge_cases</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-tdd-domain-policy</strong>
+                <small>tdd</small>
+              </td>
+              <td class="number">40.6</td>
+              <td class="number">88.9</td>
+              <td class="number good">+48.3</td>
+              <td class="number">88.9%</td>
+              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_value_object</code> <code>has_domain_exception</code> <code>includes_verification_commands</code></td>
+              <td><code>has_result_type</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-tdd-inventory-reserve</strong>
+                <small>tdd</small>
+              </td>
+              <td class="number">45.0</td>
+              <td class="number">80.0</td>
+              <td class="number good">+35.0</td>
+              <td class="number">80.0%</td>
+              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_edge_cases</code> <code>has_domain_exception</code> <code>includes_verification_commands</code> <code>has_transaction_locking</code></td>
+              <td><code>has_value_object</code> <code>has_result_type</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-tdd-ninja-endpoint</strong>
+                <small>tdd</small>
+              </td>
+              <td class="number">50.0</td>
+              <td class="number">75.0</td>
+              <td class="number good">+25.0</td>
+              <td class="number">75.0%</td>
+              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_value_object</code> <code>uses_django_ninja_router</code> <code>uses_schema_not_serializer</code> <code>no_drf_code</code> <code>includes_verification_commands</code></td>
+              <td><code>has_edge_cases</code> <code>has_domain_exception</code> <code>has_result_type</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+            <tr>
+              <td>
+                <strong>benchmark-tdd-order-cancel</strong>
+                <small>tdd</small>
+              </td>
+              <td class="number">55.6</td>
+              <td class="number">77.8</td>
+              <td class="number good">+22.2</td>
+              <td class="number">77.8%</td>
+              <td><code>korean_first</code> <code>has_red_green_refactor</code> <code>has_expected_failure</code> <code>has_pytest_tests</code> <code>has_value_object</code> <code>has_domain_exception</code> <code>includes_verification_commands</code></td>
+              <td><code>has_edge_cases</code> <code>has_result_type</code></td>
+              <td><span class="muted">none</span></td>
+              <td><span class="muted">none</span></td>
+            </tr>
+
+        </tbody>
+      </table>
+    </section>
+
+
 
         <section class="section">
           <h2>Usability Summary</h2>
           <p class="empty">No manual usability scores recorded.</p>
         </section>
-        
+
 
 
   </main>

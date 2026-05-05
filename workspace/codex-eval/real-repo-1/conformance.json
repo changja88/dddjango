@@ -1,0 +1,315 @@
+{
+  "version": 1,
+  "summary": {
+    "variants": {
+      "baseline": {
+        "average_conformance": 81.39,
+        "average_required_rule_pass_rate": 81.39,
+        "critical_violations": 0,
+        "forbidden_pattern_count": 0,
+        "case_count": 6
+      },
+      "dddjango": {
+        "average_conformance": 100.0,
+        "average_required_rule_pass_rate": 100.0,
+        "critical_violations": 0,
+        "forbidden_pattern_count": 0,
+        "case_count": 6
+      }
+    },
+    "baseline_avg_conformance": 81.39,
+    "dddjango_avg_conformance": 100.0,
+    "delta": 18.61,
+    "dddjango_required_rule_pass_rate": 100.0,
+    "critical_violations": 0,
+    "forbidden_pattern_count": 0,
+    "release_gate": {
+      "dddjango_conformance_score": {
+        "passed": true,
+        "value": 100.0,
+        "required": 85
+      },
+      "dddjango_required_rule_pass_rate": {
+        "passed": true,
+        "value": 100.0,
+        "required": 90
+      },
+      "critical_violations": {
+        "passed": true,
+        "value": 0,
+        "required": 0
+      },
+      "forbidden_pattern_count": {
+        "passed": true,
+        "value": 0,
+        "required": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "case_id": "real-repo-db-order-index-review",
+      "variant": "baseline",
+      "category": "real-repo",
+      "conformance_score": 66.67,
+      "required_rule_pass_rate": 66.67,
+      "required_rules": [
+        "has_transaction_locking",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes"
+      ],
+      "passed_rules": [
+        "has_transaction_locking",
+        "has_db_constraints_indexes"
+      ],
+      "failed_rules": [
+        "has_query_pattern_first"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-drf-to-ninja-migration",
+      "variant": "baseline",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "passed_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-fat-model-refactor",
+      "variant": "baseline",
+      "category": "real-repo",
+      "conformance_score": 66.67,
+      "required_rule_pass_rate": 66.67,
+      "required_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "has_pytest_tests",
+        "separates_domain_application_infrastructure"
+      ],
+      "failed_rules": [
+        "has_edge_cases"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-ninja-product-search",
+      "variant": "baseline",
+      "category": "real-repo",
+      "conformance_score": 80.0,
+      "required_rule_pass_rate": 80.0,
+      "required_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "passed_rules": [
+        "uses_schema_not_serializer",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "failed_rules": [
+        "uses_django_ninja_router"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-pytest-coupon",
+      "variant": "baseline",
+      "category": "real-repo",
+      "conformance_score": 75.0,
+      "required_rule_pass_rate": 75.0,
+      "required_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_red_green_refactor",
+        "has_expected_failure"
+      ],
+      "passed_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_red_green_refactor"
+      ],
+      "failed_rules": [
+        "has_expected_failure"
+      ],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-view-logic-service-layer",
+      "variant": "baseline",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "has_transaction_locking",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "has_transaction_locking",
+        "separates_domain_application_infrastructure"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-db-order-index-review",
+      "variant": "dddjango",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "has_transaction_locking",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes"
+      ],
+      "passed_rules": [
+        "has_transaction_locking",
+        "has_query_pattern_first",
+        "has_db_constraints_indexes"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-drf-to-ninja-migration",
+      "variant": "dddjango",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "passed_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-fat-model-refactor",
+      "variant": "dddjango",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "separates_domain_application_infrastructure"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-ninja-product-search",
+      "variant": "dddjango",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "passed_rules": [
+        "uses_django_ninja_router",
+        "uses_schema_not_serializer",
+        "no_drf_code",
+        "uses_items_meta_envelope",
+        "uses_problem_details"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-pytest-coupon",
+      "variant": "dddjango",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_red_green_refactor",
+        "has_expected_failure"
+      ],
+      "passed_rules": [
+        "has_pytest_tests",
+        "has_edge_cases",
+        "has_red_green_refactor",
+        "has_expected_failure"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    },
+    {
+      "case_id": "real-repo-view-logic-service-layer",
+      "variant": "dddjango",
+      "category": "real-repo",
+      "conformance_score": 100.0,
+      "required_rule_pass_rate": 100.0,
+      "required_rules": [
+        "has_transaction_locking",
+        "separates_domain_application_infrastructure"
+      ],
+      "passed_rules": [
+        "has_transaction_locking",
+        "separates_domain_application_infrastructure"
+      ],
+      "failed_rules": [],
+      "critical_violations": [],
+      "forbidden_patterns": [],
+      "notes": "conformance heuristics; review manually before release gate"
+    }
+  ]
+}

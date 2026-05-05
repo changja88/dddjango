@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>benchmark-db-payment-ledger dddjango</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f6f7f9;
+      color: #17202a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #d9dee7;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    main {
+      padding: 24px 28px;
+    }
+    article.markdown {
+      max-width: 980px;
+      padding: 20px 24px;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+    article.markdown h1,
+    article.markdown h2,
+    article.markdown h3,
+    article.markdown h4 {
+      margin: 22px 0 10px;
+      letter-spacing: 0;
+    }
+    article.markdown h1:first-child,
+    article.markdown h2:first-child {
+      margin-top: 0;
+    }
+    article.markdown p,
+    article.markdown li {
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    article.markdown pre {
+      margin: 14px 0;
+    }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d9dee7;
+      border-radius: 8px;
+      background: #ffffff;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .path {
+      margin-top: 6px;
+      color: #667085;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>benchmark-db-payment-ledger dddjango</h1>
+    <div class="path">workspace/codex-eval/conformance-rerun-1/dddjango/benchmark-db-payment-ledger.output.md</div>
+  </header>
+  <main>
+    <article class="markdown"><p><strong>[주요 내용]</strong></p>
+<p>대표 조회 패턴을 먼저 고정합니다.</p>
+<ul>
+<li>주문/결제 상세: <code>payment_id</code>로 현재 결제 상태 1건 + 최신 원장 N건 조회</li>
+<li>PG webhook 중복 처리: <code>(pg, merchant_id, webhook_event_id)</code>로 이미 처리한 이벤트 확인</li>
+<li>PG 재시도 idempotency: <code>(pg, merchant_id, idempotency_key)</code>로 같은 요청의 기존 원장 반환</li>
+<li>고객/관리자 이력: <code>merchant_id + order_id + created_at desc</code>, <code>merchant_id + created_at desc</code></li>
+<li>정산/감사: <code>pg + pg_transaction_id</code>, 기간별 <code>created_at</code> 범위 조회</li>
+</ul>
+<p>권장 구조는 “현재 상태 테이블 1개 + 불변 원장 테이블 1개”입니다. 환불 가능 금액 같은 교차 행 검증은 DB <code>CHECK</code>만으로 안전하게 막기 어렵기 때문에, 현재 상태 행을 <code>select_for_update()</code>로 잠그고 원장을 append-only로 씁니다.</p>
+<pre><code>
+class Payment(models.Model):
+    class Status(models.TextChoices):
+        READY = &quot;ready&quot;
+        AUTHORIZED = &quot;authorized&quot;
+        CAPTURED = &quot;captured&quot;
+        PARTIALLY_REFUNDED = &quot;partially_refunded&quot;
+        REFUNDED = &quot;refunded&quot;
+        FAILED = &quot;failed&quot;
+
+    merchant_id = models.CharField(max_length=64)
+    order_id = models.CharField(max_length=64)
+    status = models.CharField(max_length=32, choices=Status)
+    currency = models.CharField(max_length=3)
+    captured_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    refunded_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[&quot;merchant_id&quot;, &quot;order_id&quot;],
+                name=&quot;uq_payment_merchant_order&quot;,
+            ),
+            models.CheckConstraint(
+                condition=models.Q(captured_amount__gte=0, refunded_amount__gte=0),
+                name=&quot;ck_payment_amount_non_negative&quot;,
+            ),
+            models.CheckConstraint(
+                condition=models.Q(refunded_amount__lte=models.F(&quot;captured_amount&quot;)),
+                name=&quot;ck_payment_refund_lte_capture&quot;,
+            ),
+        ]
+        indexes = [
+            models.Index(fields=[&quot;merchant_id&quot;, &quot;order_id&quot;], name=&quot;ix_payment_order&quot;),
+            models.Index(fields=[&quot;merchant_id&quot;, &quot;-created_at&quot;], name=&quot;ix_payment_recent&quot;),
+        ]
+
+
+class PaymentLedgerEntry(models.Model):
+    class Kind(models.TextChoices):
+        AUTHORIZE = &quot;authorize&quot;
+        CAPTURE = &quot;capture&quot;
+        REFUND = &quot;refund&quot;
+        FAIL = &quot;fail&quot;
+
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.PROTECT,
+        related_name=&quot;ledger_entries&quot;,
+    )
+    merchant_id = models.CharField(max_length=64)
+    order_id = models.CharField(max_length=64)
+    pg = models.CharField(max_length=32)
+    kind = models.CharField(max_length=32, choices=Kind)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    currency = models.CharField(max_length=3)
+    idempotency_key = models.CharField(max_length=128)
+    webhook_event_id = models.CharField(max_length=128, null=True, blank=True)
+    pg_transaction_id = models.CharField(max_length=128, null=True, blank=True)
+    raw_payload = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=models.Q(amount__gt=0), name=&quot;ck_ledger_amount_positive&quot;),
+            models.UniqueConstraint(
+                fields=[&quot;pg&quot;, &quot;merchant_id&quot;, &quot;idempotency_key&quot;],
+                name=&quot;uq_ledger_idempotency&quot;,
+            ),
+            models.UniqueConstraint(
+                fields=[&quot;pg&quot;, &quot;merchant_id&quot;, &quot;webhook_event_id&quot;],
+                condition=models.Q(webhook_event_id__isnull=False),
+                name=&quot;uq_ledger_webhook_event&quot;,
+            ),
+            models.UniqueConstraint(
+                fields=[&quot;pg&quot;, &quot;merchant_id&quot;, &quot;pg_transaction_id&quot;, &quot;kind&quot;],
+                condition=models.Q(pg_transaction_id__isnull=False),
+                name=&quot;uq_ledger_pg_tx_kind&quot;,
+            ),
+        ]
+        indexes = [
+            models.Index(fields=[&quot;payment&quot;, &quot;-created_at&quot;], name=&quot;ix_ledger_payment_recent&quot;),
+            models.Index(fields=[&quot;merchant_id&quot;, &quot;order_id&quot;, &quot;-created_at&quot;], name=&quot;ix_ledger_order_recent&quot;),
+            models.Index(fields=[&quot;merchant_id&quot;, &quot;-created_at&quot;], name=&quot;ix_ledger_merchant_recent&quot;),
+            models.Index(fields=[&quot;pg&quot;, &quot;pg_transaction_id&quot;], name=&quot;ix_ledger_pg_tx&quot;),
+        ]
+</code></pre>
+<p>불변성은 앱 레벨과 DB 레벨을 같이 둡니다. Django에서는 원장 모델에 <code>save()</code> 업데이트 금지, <code>delete()</code> 금지를 넣고, PostgreSQL에는 <code>BEFORE UPDATE OR DELETE</code> trigger를 마이그레이션으로 추가하는 방식이 안전합니다. 운영자가 ORM을 우회해도 원장이 바뀌면 안 됩니다.</p>
+<pre><code>
+@transaction.atomic
+def record_refund(payment_id, *, pg, merchant_id, idempotency_key, amount, payload):
+    payment = Payment.objects.select_for_update().get(
+        id=payment_id,
+        merchant_id=merchant_id,
+    )
+
+    entry, created = PaymentLedgerEntry.objects.get_or_create(
+        pg=pg,
+        merchant_id=merchant_id,
+        idempotency_key=idempotency_key,
+        defaults={
+            &quot;payment&quot;: payment,
+            &quot;order_id&quot;: payment.order_id,
+            &quot;kind&quot;: PaymentLedgerEntry.Kind.REFUND,
+            &quot;amount&quot;: amount,
+            &quot;currency&quot;: payment.currency,
+            &quot;raw_payload&quot;: payload,
+        },
+    )
+    if not created:
+        return entry
+
+    if payment.refunded_amount + amount &gt; payment.captured_amount:
+        raise ValueError(&quot;refund exceeds captured amount&quot;)
+
+    payment.refunded_amount = models.F(&quot;refunded_amount&quot;) + amount
+    payment.status = Payment.Status.REFUNDED
+    payment.save(update_fields=[&quot;refunded_amount&quot;, &quot;status&quot;])
+    return entry
+</code></pre>
+<p>마이그레이션 검증은 필수로 봅니다.</p>
+<pre><code>
+python manage.py makemigrations --check --dry-run
+python manage.py sqlmigrate payments 0001
+python manage.py migrate
+python manage.py check
+python manage.py test payments
+</code></pre>
+<p>테스트는 최소한 다음을 포함합니다.</p>
+<pre><code>
+def test_same_idempotency_key_creates_one_ledger_entry(db):
+    # 같은 pg, merchant_id, idempotency_key 재호출 시 count == 1
+
+def test_same_webhook_event_is_ignored(db):
+    # 같은 webhook_event_id 중복 수신 시 IntegrityError 또는 기존 entry 반환
+
+def test_refund_cannot_exceed_capture_with_concurrent_requests(transactional_db):
+    # select_for_update 경로로 초과 환불 방지
+
+def test_ledger_entry_cannot_be_updated_or_deleted(db):
+    # ORM update/delete 및 DB trigger 검증
+</code></pre>
+<p>대량 데이터 전에는 <code>EXPLAIN ANALYZE</code>로 대표 조회 5개가 위 인덱스를 타는지 확인합니다. 특히 <code>payment_id + created_at desc</code>, <code>merchant_id + order_id + created_at desc</code>, idempotency unique 조회는 Seq Scan이 나오면 인덱스 설계를 다시 봐야 합니다.</p>
+<p>--- &gt; <strong>관련 스킬 참조:</strong> &gt; - Django 모델/마이그레이션 구현 → <strong>implementation-django</strong> 스킬 &gt; - 인덱스/트랜잭션 검증 → <strong>architecture-db</strong> 스킬</p></article>
+  </main>
+</body>
+</html>

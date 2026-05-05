@@ -133,21 +133,21 @@ index 09d9a35..19f9af0 100644
 +++ b/shop/orders/views.py
 @@ -1,10 +1,10 @@
  import json
- 
+
 -from django.db import transaction
  from django.http import JsonResponse
  from django.views.decorators.http import require_POST
- 
+
 -from shop.orders.models import Order, Product, Reservation
 +from shop.orders.models import Order
 +from shop.orders.services import NotEnoughStock, order_reserve_inventory
- 
- 
+
+
  @require_POST
 @@ -24,24 +24,18 @@ def reserve_inventory(request, order_id):
      quantity = int(payload[&quot;quantity&quot;])
      idempotency_key = request.headers.get(&quot;Idempotency-Key&quot;, &quot;&quot;)
- 
+
 -    with transaction.atomic():
 -        product = Product.objects.select_for_update().get(id=product_id)
 -        order = Order.objects.select_for_update().get(id=order_id)
@@ -173,7 +173,7 @@ index 09d9a35..19f9af0 100644
 +            {&quot;error&quot;: &quot;not_enough_stock&quot;, &quot;available&quot;: exc.available},
 +            status=409,
 +        )
- 
+
 -    return JsonResponse({&quot;reservation_id&quot;: reservation.id}, status=201)
 +    return JsonResponse({&quot;reservation_id&quot;: result.reservation_id}, status=201)
 diff --git a/shop/orders/tests.py b/shop/orders/tests.py
@@ -184,16 +184,16 @@ index 8a25b45..99ed73f 100644
 +import json
 +
  from django.test import TestCase
- 
+
 -from shop.orders.models import Order
 +from shop.orders.models import Order, Product, Reservation
 +from shop.orders.services import NotEnoughStock, order_reserve_inventory
- 
- 
+
+
  class OrderModelTests(TestCase):
 @@ -15,3 +18,63 @@ class OrderModelTests(TestCase):
          order.cancel(reason=&quot;customer request&quot;, actor_email=&quot;ops@example.com&quot;)
- 
+
          self.assertEqual(order.status, Order.STATUS_CANCELLED)
 +
 +

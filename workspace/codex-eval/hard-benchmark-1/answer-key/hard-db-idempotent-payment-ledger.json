@@ -1,0 +1,21 @@
+{
+  "case_id": "hard-db-idempotent-payment-ledger",
+  "category": "db-design",
+  "title": "Hard idempotent payment ledger design",
+  "expectations": [
+    "korean_first",
+    "db_design",
+    "transaction_boundary",
+    "ddd_boundaries"
+  ],
+  "scoring_focus": [
+    "대표 쿼리 패턴을 먼저 정의하고 unique/index/constraint를 설계한다.",
+    "멱등성 키와 결제 원장 불변성을 transaction/locking 기준으로 설명한다.",
+    "Django model Meta constraint/index와 migration 검증 명령을 포함한다."
+  ],
+  "prompt": "Django 주문 결제 원장을 설계해줘. PG 재시도 때문에 idempotency key가 있고, 같은 결제 이벤트가 두 번 들어와도 원장이 중복되면 안 된다. 조회 패턴, 인덱스, 제약조건, transaction.atomic/locking, migration 검증을 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "design"
+}

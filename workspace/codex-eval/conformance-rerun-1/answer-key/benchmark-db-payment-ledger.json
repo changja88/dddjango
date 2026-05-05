@@ -1,0 +1,21 @@
+{
+  "case_id": "benchmark-db-payment-ledger",
+  "category": "db-design",
+  "title": "Payment ledger DB design conformance rerun",
+  "expectations": [
+    "korean_first",
+    "db_design",
+    "transaction_boundary",
+    "actionable_output"
+  ],
+  "scoring_focus": [
+    "대표 조회 패턴을 먼저 정의한다.",
+    "idempotency key unique 또는 composite unique를 포함한다.",
+    "transaction/locking과 migration 검증을 포함한다."
+  ],
+  "prompt": "Django 결제 원장 테이블을 설계해줘. PG 재시도와 중복 webhook 때문에 idempotency key가 있고, 결제/환불 이력은 불변이어야 해. 조회 패턴, 인덱스, 제약조건, transaction, migration 검증을 포함해줘.",
+  "trigger_type": "",
+  "expected_behavior": "",
+  "fixture": "none",
+  "mode": "design"
+}
