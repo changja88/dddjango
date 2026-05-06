@@ -15,10 +15,10 @@
     "artifact"
   ],
   "variants": [
-    "baseline",
     "without-dddjango",
     "with-dddjango"
   ],
+  "baseline_role": "golden criteria artifact, not an executed score variant",
   "score_range": {
     "minimum": 0,
     "maximum": 100

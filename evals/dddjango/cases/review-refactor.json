@@ -72,6 +72,7 @@
         "architecture-api",
         "implementation-test"
       ],
+      "allow_legacy_drf_context": true,
       "required_patterns": [
         "Django Ninja",
         "Router",

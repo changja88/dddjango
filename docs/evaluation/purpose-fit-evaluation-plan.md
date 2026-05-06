@@ -15,6 +15,7 @@
 4. 한국어 사용자에게 자연스럽고 실행 가능한 방식으로 답하는가?
 5. 복합 작업에서 역할 분해와 subagent workflow를 사용할 수 있는가?
 6. 스킬 내부 reference가 실제 답변 품질로 이어지는가?
+7. 실제 Django 앱 파일 트리와 코드 책임 배치가 dddjango 의도와 맞는가?
 
 ## 현재 상태
 
@@ -78,8 +79,15 @@ HTML 리포트는 각 케이스마다 `baseline`, `without-dddjango`, `with-dddj
 | DB/Transaction | 데이터 모델, 제약, 인덱스, 트랜잭션 판단이 타당한가? | uniqueness, FK, transaction boundary, locking/idempotency |
 | TDD/Pytest | 테스트 우선 사고와 pytest 품질이 있는가? | RED/GREEN/REFACTOR, 정상/경계/실패/멱등성 테스트 |
 | Clean Implementation | 코드가 유지보수 가능한가? | 타입 힌트, 작은 함수, 명확한 예외, 과한 추상화 없음 |
+| Project Structure | Django 앱 파일 트리가 의도한 경계를 따르는가? | domain, service/usecase, api schema/router, tests 분리 |
 | Review/Refactor | 기존 코드의 문제를 정확히 짚고 개선안을 내는가? | severity, 원칙 연결, 수정 방향, 테스트 보강 |
 | Subagent Workflow | 복합 작업을 역할 기반으로 분해하는가? | Role Map, Handoff Contract, Integration Checklist, 순차 실행 fallback |
+| Subagent Role Decomposition | 표준 역할과 책임 단위 분해가 정확한가? | Coordinator, Domain/DB/API/Test/Review Agent, 책임 중심 분리 |
+| Subagent Skill Mapping | 역할별 dddjango skill 매핑이 맞는가? | `architecture-ddd`, `architecture-db`, `architecture-api`, `implementation-django-ninja`, `implementation-tdd` |
+| Subagent Handoff Contract | 역할 산출물 인수인계가 완전한가? | Scope, Inputs Used, Decisions, Files, Output, Risks, Required Follow-up, dddjango Checks |
+| Subagent Execution Planning | 병렬/순차 판단과 파일 소유권이 안전한가? | 도메인 계약 선행, 읽기 전용 병렬, disjoint file ownership, 순차 실행 |
+| Subagent Integration Verification | 역할 간 충돌을 dddjango 우선순위로 통합하는가? | 도메인 불변식, transaction/idempotency, API contract, test 우선순위 |
+| Subagent Claim Integrity | 실제 실행하지 않은 subagent 수행을 주장하지 않는가? | 허위 완료/검토/결과 수신 주장 없음 |
 | Reference Usage | 스킬 reference의 구체 규칙이 답변에 반영되는가? | reference coverage matrix, specific convention evidence |
 | Usability | 한국어 사용자에게 바로 실행 가능한가? | 명령어, 파일 경로, 검증 고지, 불필요한 설명 없음 |
 
@@ -126,9 +134,12 @@ HTML 리포트는 각 케이스마다 `baseline`, `without-dddjango`, `with-dddj
 
 | ID | 케이스 | 주요 평가 축 |
 | --- | --- | --- |
-| S01 | 복합 주문 기능을 역할 분해로 설계 | Subagent Workflow, DDD, DB, API, TDD |
-| S02 | subagent 불가 상황의 순차 실행 fallback | Subagent Workflow, Usability |
-| S03 | 역할 간 충돌 통합 계획 | Subagent Workflow, Review/Refactor |
+| S01 | 복합 주문 기능을 역할 분해로 설계 | Subagent Workflow, Role Decomposition, Skill Mapping, Handoff |
+| S02 | 단순 Django 수정에서 subagent ceremony 방지 | Trigger Accuracy, Execution Planning, Claim Integrity |
+| S03 | 읽기 전용 병렬 역할 리뷰 | Role Decomposition, Execution Planning, Integration Verification |
+| S04 | 같은 파일 충돌의 순차 통합 | Execution Planning, File Ownership, Integration Verification |
+| S05 | 허위 subagent 완료 주장 방지 | Claim Integrity, Usability |
+| S06 | 역할 간 충돌 통합 우선순위 | Integration Verification, DDD Boundaries, API |
 
 ### Phase 6: Reference Maximum Check
 
@@ -138,6 +149,13 @@ HTML 리포트는 각 케이스마다 `baseline`, `without-dddjango`, `with-dddj
 | M02 | DDD aggregate boundary | Reference Usage, DDD Boundaries |
 | M03 | DB transaction/idempotency | Reference Usage, DB/Transaction |
 | M04 | TDD edge cases | Reference Usage, TDD/Pytest |
+
+### Phase 7: Code Structure Check
+
+| ID | 케이스 | 주요 평가 축 |
+| --- | --- | --- |
+| P01 | 주문 생성 기능 파일 트리와 책임 분리 | Project Structure, Clean Implementation, Django Ninja API |
+| P02 | 도메인 코드 품질과 에러 모델 | Clean Implementation, DDD Boundaries, TDD/Pytest, Reference Usage |
 
 ## 점수 모델
 
@@ -161,9 +179,12 @@ HTML 리포트는 각 케이스마다 `baseline`, `without-dddjango`, `with-dddj
 | DRF rejection | DRF 관련 케이스 100% 통과 |
 | API/TDD core | Django Ninja, DDD, TDD 축 각각 평균 80점 이상 |
 | Reference max | maximum check 케이스 평균 85점 이상 |
+| Code structure quality | Clean Implementation, Project Structure 평균 80점 이상 |
 
 `+15% quality lift`는 보조 지표로만 사용한다. 목적 기반 평가에서는 절대 점수와
 정책 gate가 더 중요하다.
+자동 signal만 있는 live 결과는 `pass`가 아니라 `needs_review`가 될 수 있으며,
+artifact 수동/judge 검토가 완료되어야 release 판단으로 사용할 수 있다.
 
 ## 리포트 요구사항
 

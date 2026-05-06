@@ -86,13 +86,35 @@
         "korean_first"
       ]
     },
-    {
-      "id": "cal-t06-good-flask",
-      "case_id": "t06-flask-no-contamination",
-      "variant": "with-dddjango",
-      "path": "samples/t06-good-flask.md",
-      "expected_gate_status": "pass",
-      "min_score": 70
-    }
-  ]
+        {
+            "id": "cal-t06-good-flask",
+            "case_id": "t06-flask-no-contamination",
+            "variant": "with-dddjango",
+            "path": "samples/t06-good-flask.md",
+            "expected_gate_status": "pass",
+            "min_score": 70
+        },
+        {
+            "id": "cal-h02-bad-keyword-stuffing",
+            "case_id": "h02-keyword-bait-order-design",
+            "variant": "with-dddjango",
+            "path": "samples/h02-bad-keyword-stuffing.md",
+            "expected_gate_status": "fail",
+            "max_score": 59,
+            "required_fail_gates": [
+                "django_ninja_for_api"
+            ]
+        },
+        {
+            "id": "cal-s05-bad-false-subagent-claim",
+            "case_id": "s05-false-subagent-claim",
+            "variant": "with-dddjango",
+            "path": "samples/s05-bad-false-subagent-claim.md",
+            "expected_gate_status": "fail",
+            "max_score": 59,
+            "required_fail_gates": [
+                "no_false_subagents"
+            ]
+        }
+    ]
 }

@@ -1,0 +1,159 @@
+{
+  "suite": "code-structure",
+  "description": "Concrete code quality and Django project structure cases for dddjango.",
+  "cases": [
+    {
+      "id": "p01-order-feature-file-tree",
+      "phase": "code-structure",
+      "title": "주문 생성 기능 파일 트리와 책임 분리",
+      "prompt": "Django Ninja 주문 생성 기능을 DDD 기준으로 구현한다고 가정하고, 파일 트리와 각 파일의 핵심 책임/코드 골격을 제시해줘. domain, service/usecase, api schema/router, tests 경계가 필요해.",
+      "required_dimensions": [
+        "project_structure",
+        "clean_implementation",
+        "ddd_boundaries",
+        "django_ninja_api",
+        "tdd_pytest",
+        "usability"
+      ],
+      "baseline": "baselines/p01-order-feature-file-tree.md",
+      "expected_skills": [
+        "architecture-ddd",
+        "implementation-django",
+        "implementation-django-ninja",
+        "implementation-tdd",
+        "implementation-cleancode"
+      ],
+      "required_patterns": [
+        "domain/",
+        "services.py",
+        "api/",
+        "schemas.py",
+        "tests/",
+        "Router",
+        "Schema",
+        "pytest"
+      ],
+      "dimension_patterns": {
+        "project_structure": [
+          "domain/",
+          "services.py",
+          "api/",
+          "schemas.py",
+          "tests/"
+        ],
+        "clean_implementation": [
+          "책임",
+          "분리",
+          "Result",
+          "도메인 예외"
+        ],
+        "ddd_boundaries": [
+          "애그리거트",
+          "불변식",
+          "유스케이스"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "tdd_pytest": [
+          "pytest",
+          "RED",
+          "GREEN",
+          "REFACTOR"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "views.py에 비즈니스 로직",
+        "router에서 상태 변경",
+        "하나의 파일에 모두 구현",
+        "from rest_framework"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "project_structure_required",
+        "domain_logic_outside_router",
+        "tdd_red_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "p02-domain-code-quality",
+      "phase": "code-structure",
+      "title": "도메인 코드 품질과 에러 모델",
+      "prompt": "할인 쿠폰 도메인 로직을 dddjango 기준으로 코드 품질 중심으로 설계해줘. dict 에러나 bool 반환 대신 타입이 드러나는 Result/도메인 예외, 값 객체, pytest 케이스를 포함해줘.",
+      "required_dimensions": [
+        "clean_implementation",
+        "ddd_boundaries",
+        "tdd_pytest",
+        "reference_usage",
+        "usability"
+      ],
+      "baseline": "baselines/p02-domain-code-quality.md",
+      "expected_skills": [
+        "architecture-ddd",
+        "implementation-python",
+        "implementation-tdd",
+        "implementation-cleancode"
+      ],
+      "required_patterns": [
+        "Result",
+        "도메인 예외",
+        "값 객체",
+        "pytest",
+        "RED",
+        "GREEN",
+        "REFACTOR"
+      ],
+      "dimension_patterns": {
+        "clean_implementation": [
+          "Result",
+          "도메인 예외",
+          "타입",
+          "책임"
+        ],
+        "ddd_boundaries": [
+          "값 객체",
+          "불변식",
+          "도메인"
+        ],
+        "tdd_pytest": [
+          "pytest",
+          "RED",
+          "GREEN",
+          "REFACTOR",
+          "경계",
+          "실패"
+        ],
+        "reference_usage": [
+          "Result",
+          "도메인 예외",
+          "값 객체",
+          "pytest"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "dict로 에러",
+        "bool을 반환",
+        "{\"error\"",
+        "테스트는 나중에"
+      ],
+      "critical_gates": [
+        "tdd_red_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    }
+  ]
+}

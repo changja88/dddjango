@@ -55,6 +55,11 @@ def validate_case(case: dict[str, Any], *, dimensions: dict[str, Any], gates: di
         for item in value:
             require(isinstance(item, str), f"{case_id}: {list_field} entries must be strings", errors)
 
+    if "anti_keyword_stuffing" in case:
+        require(isinstance(case["anti_keyword_stuffing"], bool), f"{case_id}: anti_keyword_stuffing must be a boolean", errors)
+    if "allow_legacy_drf_context" in case:
+        require(isinstance(case["allow_legacy_drf_context"], bool), f"{case_id}: allow_legacy_drf_context must be a boolean", errors)
+
     dimension_patterns = case.get("dimension_patterns", {})
     require(isinstance(dimension_patterns, dict), f"{case_id}: dimension_patterns must be an object", errors)
     if isinstance(dimension_patterns, dict):
@@ -150,6 +155,12 @@ def validate_reference_matrix(case_by_id: dict[str, dict[str, Any]]) -> list[str
                 require(isinstance(path, str), f"reference-matrix.json: {case_id} {field_name} entries must be strings", errors)
                 if isinstance(path, str):
                     require((ROOT / path).exists(), f"reference-matrix.json: {case_id} missing path {path}", errors)
+
+        reference_rules = entry.get("reference_rules", [])
+        require(isinstance(reference_rules, list), f"reference-matrix.json: {case_id} reference_rules must be a list", errors)
+        if isinstance(reference_rules, list):
+            for rule in reference_rules:
+                require(isinstance(rule, str), f"reference-matrix.json: {case_id} reference_rules entries must be strings", errors)
 
         require(
             isinstance(entry.get("diagnostic_use"), str) and bool(entry.get("diagnostic_use", "").strip()),

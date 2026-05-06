@@ -1,0 +1,198 @@
+{
+  "suite": "holdout-adversarial",
+  "description": "Holdout and adversarial cases that reduce keyword overfitting in dddjango evaluation.",
+  "cases": [
+    {
+      "id": "h01-drf-before-after-migration",
+      "phase": "holdout-adversarial",
+      "title": "DRF legacy code migration without reproducing DRF",
+      "prompt": "아래 legacy DRF 코드는 분석 대상으로만 보고, 신규 주문 API는 Django Ninja로 전환하는 마이그레이션 계획과 핵심 코드만 작성해줘. 새 코드에는 rest_framework import나 Serializer/ViewSet을 만들지 마.\n\n```python\nfrom rest_framework import serializers, viewsets\n\nclass LegacyOrderSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Order\n        fields = [\"id\", \"status\"]\n\nclass LegacyOrderViewSet(viewsets.ModelViewSet):\n    serializer_class = LegacyOrderSerializer\n```",
+      "required_dimensions": [
+        "drf_rejection",
+        "django_ninja_api",
+        "review_refactor",
+        "usability"
+      ],
+      "baseline": "baselines/h01-drf-before-after-migration.md",
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api",
+        "implementation-test"
+      ],
+      "allow_legacy_drf_context": true,
+      "required_patterns": [
+        "Django Ninja",
+        "Router",
+        "Schema",
+        "response={",
+        "마이그레이션"
+      ],
+      "dimension_patterns": {
+        "drf_rejection": [
+          "DRF",
+          "Django Ninja"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "review_refactor": [
+          "단계",
+          "호환",
+          "테스트"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "from rest_framework",
+        "serializers.ModelSerializer",
+        "class LegacyOrderViewSet",
+        "viewsets.ModelViewSet"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "h02-keyword-bait-order-design",
+      "phase": "holdout-adversarial",
+      "title": "Keyword bait order design",
+      "prompt": "다음 단어를 단순히 나열하지 말고, 실제 설계 판단으로 주문 생성 기능을 설명해줘: Router, Schema, response={, 애그리거트, transaction, idempotency, pytest. 왜 각 판단이 필요한지도 포함해줘.",
+      "required_dimensions": [
+        "django_ninja_api",
+        "ddd_boundaries",
+        "db_transaction",
+        "tdd_pytest",
+        "usability"
+      ],
+      "baseline": "baselines/h02-keyword-bait-order-design.md",
+      "expected_skills": [
+        "architecture-ddd",
+        "architecture-db",
+        "architecture-api",
+        "implementation-django-ninja",
+        "implementation-tdd"
+      ],
+      "anti_keyword_stuffing": true,
+      "required_patterns": [
+        "Router",
+        "Schema",
+        "response={",
+        "애그리거트",
+        "transaction",
+        "idempotency",
+        "pytest"
+      ],
+      "alternative_pattern_groups": [
+        {
+          "label": "transaction_boundary",
+          "dimension": "db_transaction",
+          "patterns": [
+            "transaction",
+            "트랜잭션"
+          ]
+        },
+        {
+          "label": "idempotency",
+          "dimension": "db_transaction",
+          "patterns": [
+            "idempotency",
+            "멱등"
+          ]
+        },
+        {
+          "label": "concurrency_control",
+          "dimension": "db_transaction",
+          "patterns": [
+            "select_for_update",
+            "optimistic locking",
+            "낙관적 잠금",
+            "version"
+          ]
+        }
+      ],
+      "dimension_patterns": {
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "ddd_boundaries": [
+          "애그리거트",
+          "불변식",
+          "유스케이스"
+        ],
+        "db_transaction": [],
+        "tdd_pytest": [
+          "RED",
+          "GREEN",
+          "REFACTOR",
+          "pytest"
+        ],
+        "usability": [
+          "근거",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "키워드만 나열",
+        "from rest_framework",
+        "ViewSet"
+      ],
+      "critical_gates": [
+        "no_drf",
+        "django_ninja_for_api",
+        "tdd_red_first",
+        "no_false_execution",
+        "korean_first",
+        "domain_logic_outside_router"
+      ]
+    },
+    {
+      "id": "h03-starlette-no-contamination",
+      "phase": "holdout-adversarial",
+      "title": "Starlette request without Django contamination",
+      "prompt": "Starlette로 주문 생성 엔드포인트를 작성해줘. Django 코드는 필요 없어.",
+      "required_dimensions": [
+        "trigger_accuracy",
+        "usability"
+      ],
+      "baseline": "baselines/h03-starlette-no-contamination.md",
+      "expected_skills": [],
+      "required_patterns": [
+        "Starlette"
+      ],
+      "dimension_patterns": {
+        "trigger_accuracy": [
+          "Starlette"
+        ],
+        "usability": [
+          "검증",
+          "테스트"
+        ]
+      },
+      "forbidden_patterns": [
+        "Django Ninja",
+        "dddjango",
+        "관련 스킬 참조"
+      ],
+      "critical_forbidden_patterns": [
+        "from ninja import",
+        "Django Ninja Router",
+        "관련 스킬 참조"
+      ],
+      "forbidden_is_critical": true,
+      "critical_gates": [
+        "no_false_execution",
+        "korean_first"
+      ]
+    }
+  ]
+}

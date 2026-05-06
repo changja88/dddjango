@@ -27,6 +27,8 @@ evals/dddjango/
 │   └── c05-inventory-reservation.md
 ├── cases/
 │   ├── core-policy.json
+│   ├── code-structure.json
+│   ├── holdout-adversarial.json
 │   ├── review-refactor.json
 │   ├── trigger-usability.json
 │   ├── subagent-workflow.json
@@ -212,6 +214,8 @@ python3 evals/dddjango/scripts/render_report.py --run-id <run-id>
 - 케이스별 `baseline`, `without-dddjango`, `with-dddjango` 비교 표
 - 평가 축별 평균
 - critical gate 실패 목록
+- release gate `needs_review` 상태와 수동 검토 필요 케이스
+- reference rule 및 project structure 구조 검사 결과
 - 원본 출력 HTML 변환본 링크
 - 개선 우선순위
 
@@ -356,8 +360,10 @@ python3 evals/dddjango/scripts/run_evaluation.py --suite core-policy --mode live
 - [x] review-refactor 케이스 추가
 - [x] trigger-usability 케이스 추가
 - [x] subagent-workflow 케이스 추가
+- [x] subagent 역할 분해, skill mapping, handoff, 실행 계획, 통합 검증,
+  허위 claim 방지 평가 보강
 - [x] reference-maximum 케이스 추가
-- [ ] release gate 기준 재검토
+- [x] release gate 기준 재검토
 
 완료 기준:
 

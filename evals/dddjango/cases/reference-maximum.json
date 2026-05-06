@@ -235,6 +235,7 @@
         "중복 요청은 무시해도 된다"
       ],
       "critical_gates": [
+        "db_consistency_required",
         "no_false_execution",
         "korean_first"
       ]

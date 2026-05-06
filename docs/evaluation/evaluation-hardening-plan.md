@@ -31,8 +31,11 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 | TDD quality | RED/GREEN/REFACTOR 문자열뿐 아니라 실패 테스트, 최소 구현, 리팩터링 근거를 본다 |
 | Korean-first | 한글 존재 여부가 아니라 한국어 비율과 사용자 실행 가능성을 본다 |
 | Structural checks | Django Ninja import, Router decorator, Schema class, response mapping을 구조적으로 확인한다 |
+| Overfit resistance | keyword stuffing, before/after DRF migration, non-Django framework holdout 케이스를 둔다 |
+| Subagent robustness | 역할 분해, skill mapping, handoff, 병렬/순차 판단, 통합 검증, 허위 subagent claim을 평가한다 |
 | Baseline use | baseline criteria가 리포트 표시뿐 아니라 채점/검토 근거로 연결된다 |
-| Release gate | release gate가 계산되고 실패 시 non-zero exit를 낸다. 단, live mode에서만 적용한다 |
+| Release gate | release gate가 계산되고 실패/수동 검토 필요 시 non-zero exit를 낸다. 단, live mode에서만 적용한다 |
+| Code/file structure | domain, service/usecase, API schema/router, tests 배치를 별도 평가한다 |
 | Auditability | prompt, output, score, gate evidence, metadata, artifact link가 모두 남는다 |
 | Calibration | 좋은/나쁜/경계 샘플이 기대 score/gate 범위로 평가된다 |
 
@@ -132,6 +135,24 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 - [x] Flask 비-Django 요청 오염 방지 케이스를 추가한다.
 - [x] `case -> expected skill -> reference` 매트릭스를 추가해 reference 부족,
   skill 연결 약함, 평가 과요구를 더 빠르게 분류한다.
+- [x] fixture 리포트에 "성능 평가 아님" 배너를 추가하고, fixture delta를
+  `not applicable`로 표시한다.
+- [x] 구조 검사 실패가 관련 dimension 점수의 상한으로 반영되도록 수정했다.
+- [x] keyword stuffing, DRF before/after migration, Starlette non-contamination
+  holdout/adversarial suite를 추가했다.
+- [x] keyword-only calibration 샘플이 실패하도록 보강했다.
+- [x] subagent workflow 평가를 role decomposition, skill mapping, handoff,
+  execution planning, integration verification, claim integrity로 보강했다.
+- [x] 단순 작업 ceremony 방지, 허위 subagent claim, 병렬 read-only 리뷰,
+  같은 파일 충돌 순차 통합, conflict priority 케이스를 추가했다.
+- [x] subagent reference rules와 release gate를 추가했다.
+- [x] low-confidence 자동 signal만으로 release gate가 통과되지 않도록
+  `needs_review` 상태를 추가했다.
+- [x] `reference_rules`를 구조 검사에 연결해 reference usage를 단순 키워드보다
+  강하게 평가한다.
+- [x] code/file structure suite를 추가해 Django 앱 경계와 코드 품질을 별도 평가한다.
+- [x] DRF migration 평가에서 명시적인 legacy/before code block은 신규 DRF 생성과
+  구분한다.
 
 ### P1 완료
 

@@ -33,5 +33,28 @@
     "dimension": "reference_usage",
     "variant": "with-dddjango",
     "minimum_average": 85
+  },
+  "subagent_workflow": {
+    "label": "Subagent workflow",
+    "dimensions": [
+      "subagent_workflow",
+      "subagent_role_decomposition",
+      "subagent_skill_mapping",
+      "subagent_handoff_contract",
+      "subagent_execution_planning",
+      "subagent_integration_verification",
+      "subagent_claim_integrity"
+    ],
+    "variant": "with-dddjango",
+    "minimum_average": 80
+  },
+  "code_structure_quality": {
+    "label": "Code structure quality",
+    "dimensions": [
+      "clean_implementation",
+      "project_structure"
+    ],
+    "variant": "with-dddjango",
+    "minimum_average": 80
   }
 }

@@ -41,6 +41,12 @@
     "max_score": 100,
     "description": "Outputs are maintainable, typed, explicit about errors, and avoid unnecessary abstraction."
   },
+  "project_structure": {
+    "label": "Project Structure",
+    "weight": 10,
+    "max_score": 100,
+    "description": "Outputs place Django, domain, API, service/usecase, and test code in the intended module boundaries."
+  },
   "review_refactor": {
     "label": "Review/Refactor",
     "weight": 5,
@@ -52,6 +58,42 @@
     "weight": 5,
     "max_score": 100,
     "description": "Composite work is decomposed into roles with handoff contracts and sequential fallback."
+  },
+  "subagent_role_decomposition": {
+    "label": "Subagent Role Decomposition",
+    "weight": 5,
+    "max_score": 100,
+    "description": "Composite work is split by responsibility area using standard dddjango role names instead of vague workers or file-only tasks."
+  },
+  "subagent_skill_mapping": {
+    "label": "Subagent Skill Mapping",
+    "weight": 5,
+    "max_score": 100,
+    "description": "Each role is mapped to the appropriate dddjango specialist skills for domain, DB, API, Django, test, and review work."
+  },
+  "subagent_handoff_contract": {
+    "label": "Subagent Handoff Contract",
+    "weight": 5,
+    "max_score": 100,
+    "description": "Role outputs include concrete handoff fields for scope, inputs, decisions, files, output, risks, follow-up, and dddjango checks."
+  },
+  "subagent_execution_planning": {
+    "label": "Subagent Execution Planning",
+    "weight": 5,
+    "max_score": 100,
+    "description": "The plan chooses parallel or sequential execution based on task size, domain contract readiness, and disjoint file ownership."
+  },
+  "subagent_integration_verification": {
+    "label": "Subagent Integration Verification",
+    "weight": 5,
+    "max_score": 100,
+    "description": "The coordinator resolves role conflicts using dddjango priority rules and verifies domain, DB, API, and test consistency."
+  },
+  "subagent_claim_integrity": {
+    "label": "Subagent Claim Integrity",
+    "weight": 5,
+    "max_score": 100,
+    "description": "The output does not claim subagents, tests, or validation ran unless the run actually happened."
   },
   "reference_usage": {
     "label": "Reference Usage",

@@ -58,6 +58,32 @@
     ],
     "message": "비즈니스 규칙을 router/view에 직접 몰아넣으면 실패한다."
   },
+  "project_structure_required": {
+    "severity": "critical",
+    "dimensions": [
+      "project_structure",
+      "clean_implementation"
+    ],
+    "pass_if_all": [
+      "domain/",
+      "services.py",
+      "api/",
+      "schemas.py",
+      "tests/"
+    ],
+    "message": "구현 구조 요청은 domain, service/usecase, API schema/router, tests 경계를 보여야 한다."
+  },
+  "db_consistency_required": {
+    "severity": "critical",
+    "dimensions": [
+      "db_transaction"
+    ],
+    "pass_if_all_regex": [
+      "transaction\\.atomic|transaction|트랜잭션",
+      "idempotency|Idempotency-Key|멱등|select_for_update|optimistic locking|낙관적 잠금|version|UniqueConstraint"
+    ],
+    "message": "동시성/중복 요청이 있는 작업은 transaction boundary와 일관성 장치를 포함해야 한다."
+  },
   "tdd_red_first": {
     "severity": "critical",
     "dimensions": [
@@ -86,12 +112,110 @@
     "severity": "critical",
     "dimensions": [
       "subagent_workflow",
+      "subagent_claim_integrity",
       "usability"
     ],
     "fail_if_regex": [
       "subagent(를)?\\s*(실행|호출|사용).*완료",
-      "서브\\s*에이전트(를)?\\s*(실행|호출|사용).*완료"
+      "서브\\s*에이전트(를)?\\s*(실행|호출|사용).*완료",
+      "(Domain|Architecture|DB|API|Django|Test|Review) Agent(에게|가|는)?\\s*(맡겼|검토했|확인했|완료했|결과를\\s*받)",
+      "에이전트(들)?(이|가)?\\s*(병렬\\s*)?(검토했|확인했|완료했|결과를\\s*반환)",
+      "subagent(들)?(이|가)?\\s*(검토했|확인했|완료했|결과를\\s*반환)"
     ],
     "message": "subagent를 실제로 쓰지 않았는데 사용했다고 말하면 실패한다."
+  },
+  "subagent_no_ceremony_for_simple_task": {
+    "severity": "major",
+    "dimensions": [
+      "trigger_accuracy",
+      "subagent_execution_planning"
+    ],
+    "fail_if_regex": [
+      "Role Map",
+      "Handoff Contract",
+      "Integration Checklist",
+      "Domain Agent",
+      "DB Agent",
+      "API Agent",
+      "Test Agent"
+    ],
+    "message": "단순 작업에서 불필요한 subagent ceremony를 만들면 실패한다."
+  },
+  "subagent_required_role_table": {
+    "severity": "critical",
+    "dimensions": [
+      "subagent_role_decomposition",
+      "subagent_skill_mapping",
+      "subagent_execution_planning"
+    ],
+    "pass_if_all": [
+      "Role",
+      "Responsibility",
+      "dddjango skills",
+      "File ownership",
+      "Coordinator",
+      "Domain Agent",
+      "DB Agent",
+      "API Agent",
+      "Test Agent"
+    ],
+    "message": "복합 workflow는 표준 Role Map 컬럼과 핵심 역할을 포함해야 한다."
+  },
+  "subagent_required_handoff_fields": {
+    "severity": "critical",
+    "dimensions": [
+      "subagent_handoff_contract"
+    ],
+    "pass_if_all": [
+      "Scope",
+      "Inputs Used",
+      "Decisions",
+      "Files",
+      "Output",
+      "Risks",
+      "Required Follow-up",
+      "dddjango Checks"
+    ],
+    "message": "handoff contract 필수 필드가 모두 있어야 한다."
+  },
+  "subagent_domain_contract_first": {
+    "severity": "major",
+    "dimensions": [
+      "subagent_execution_planning",
+      "subagent_integration_verification",
+      "ddd_boundaries"
+    ],
+    "pass_if_ordered_any": [
+      [
+        "Domain Agent",
+        "DB Agent"
+      ],
+      [
+        "Domain Agent",
+        "API Agent"
+      ],
+      [
+        "도메인 계약",
+        "DB"
+      ],
+      [
+        "도메인 계약",
+        "API"
+      ]
+    ],
+    "message": "복합 주문/결제/재고 작업은 Domain 또는 Architecture 계약을 먼저 세워야 한다."
+  },
+  "subagent_integration_conflict_priority": {
+    "severity": "major",
+    "dimensions": [
+      "subagent_integration_verification"
+    ],
+    "pass_if_all": [
+      "도메인 불변식",
+      "transaction",
+      "API contract",
+      "test"
+    ],
+    "message": "통합 충돌은 도메인 불변식, 데이터 일관성, API 계약, 테스트 순으로 해결해야 한다."
   }
 }

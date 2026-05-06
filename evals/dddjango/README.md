@@ -3,11 +3,23 @@
 This directory contains the purpose-fit evaluation framework for `dddjango`.
 Its final goal is to measure whether the plugin enforces its intended Django
 standards: Django Ninja over DRF, DDD boundaries, DB/transaction discipline,
-TDD quality, Korean-first usability, and subagent workflow behavior.
+TDD quality, concrete code/file structure, Korean-first usability, subagent
+workflow behavior, and holdout/adversarial robustness against keyword
+overfitting.
+
+Subagent workflow scoring is intentionally stricter than section-name checks.
+It evaluates role decomposition, dddjango skill mapping, handoff fields,
+execution planning, integration conflict handling, and false subagent claim
+prevention.
 
 Current status: fixture smoke tests plus a live Codex comparison runner.
 Fixture scores validate the evaluation pipeline, not the real plugin
-performance. Use live scores for plugin value claims.
+performance. Fixture reports show `Skill value delta: not applicable` on
+purpose; use only full live scores for plugin value claims.
+
+Release gates do not pass on low-confidence automatic signals alone. A full
+live run can produce `needs_review` when artifacts still require manual/judge
+review before treating the result as a publish-quality verdict.
 
 ## Commands
 

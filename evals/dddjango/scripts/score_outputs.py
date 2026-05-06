@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,7 @@ from eval_lib import (
     load_cases,
     load_dimensions,
     load_gates,
+    load_reference_matrix,
     load_release_gates,
     ordered,
     prose_text,
@@ -24,11 +26,44 @@ from eval_lib import (
 )
 
 
-def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, Any]:
-    evidence: list[str] = []
+def strip_legacy_drf_context(text: str) -> str:
+    """Remove explicitly marked legacy/before DRF code blocks from DRF detection."""
+    legacy_markers = (
+        "legacy",
+        "before",
+        "as-is",
+        "기존",
+        "레거시",
+        "분석 대상",
+        "마이그레이션 전",
+    )
 
-    fail_if_any = substring_matches(gate.get("fail_if_any", []), text)
-    fail_if_regex = regex_matches(gate.get("fail_if_regex", []), text)
+    def replace_fence(match: Any) -> str:
+        prefix = text[max(0, match.start() - 180):match.start()].lower()
+        if any(marker in prefix for marker in legacy_markers):
+            return "\n[legacy drf context omitted for policy detection]\n"
+        return match.group(0)
+
+    return re.sub(r"```[\s\S]*?```", replace_fence, text)
+
+
+def scoped_text_for_gate(text: str, gate_id: str, case: dict[str, Any] | None) -> str:
+    if gate_id == "no_drf" and case and case.get("allow_legacy_drf_context"):
+        return strip_legacy_drf_context(text)
+    return text
+
+
+def evaluate_gate(
+    text: str,
+    gate_id: str,
+    gate: dict[str, Any],
+    case: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    evidence: list[str] = []
+    detection_text = scoped_text_for_gate(text, gate_id, case)
+
+    fail_if_any = substring_matches(gate.get("fail_if_any", []), detection_text)
+    fail_if_regex = regex_matches(gate.get("fail_if_regex", []), detection_text)
     if fail_if_any or fail_if_regex:
         evidence.extend(fail_if_any)
         evidence.extend(fail_if_regex)
@@ -41,7 +76,7 @@ def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, An
         }
 
     pass_if_all = gate.get("pass_if_all", [])
-    missing_all = [pattern for pattern in pass_if_all if pattern.lower() not in text.lower()]
+    missing_all = [pattern for pattern in pass_if_all if pattern.lower() not in detection_text.lower()]
     if missing_all:
         return {
             "gate": gate_id,
@@ -52,7 +87,7 @@ def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, An
         }
 
     pass_if_regex = gate.get("pass_if_regex", [])
-    if pass_if_regex and not regex_matches(pass_if_regex, text):
+    if pass_if_regex and not regex_matches(pass_if_regex, detection_text):
         return {
             "gate": gate_id,
             "status": "fail",
@@ -64,7 +99,7 @@ def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, An
     pass_if_all_regex = gate.get("pass_if_all_regex", [])
     missing_all_regex = [
         pattern for pattern in pass_if_all_regex
-        if not regex_matches([pattern], text)
+        if not regex_matches([pattern], detection_text)
     ]
     if missing_all_regex:
         return {
@@ -76,7 +111,7 @@ def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, An
         }
 
     pass_if_ordered = gate.get("pass_if_ordered", [])
-    if pass_if_ordered and not ordered(text, pass_if_ordered):
+    if pass_if_ordered and not ordered(detection_text, pass_if_ordered):
         return {
             "gate": gate_id,
             "status": "fail",
@@ -86,7 +121,7 @@ def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, An
         }
 
     pass_if_ordered_any = gate.get("pass_if_ordered_any", [])
-    if pass_if_ordered_any and not any(ordered(text, sequence) for sequence in pass_if_ordered_any):
+    if pass_if_ordered_any and not any(ordered(detection_text, sequence) for sequence in pass_if_ordered_any):
         return {
             "gate": gate_id,
             "status": "fail",
@@ -130,8 +165,9 @@ def signal_results(case: dict[str, Any], text: str) -> dict[str, Any]:
     forbidden_patterns = case.get("forbidden_patterns", [])
     penalty_patterns = case.get("critical_forbidden_patterns", forbidden_patterns)
     required_hits = substring_matches(required_patterns, text)
-    forbidden_hits = substring_matches(forbidden_patterns, text)
-    penalty_hits = substring_matches(penalty_patterns, text)
+    forbidden_text = strip_legacy_drf_context(text) if case.get("allow_legacy_drf_context") else text
+    forbidden_hits = substring_matches(forbidden_patterns, forbidden_text)
+    penalty_hits = substring_matches(penalty_patterns, forbidden_text)
     alternative_results = []
     for group in case.get("alternative_pattern_groups", []):
         patterns = group.get("patterns", [])
@@ -165,6 +201,164 @@ def signal_results(case: dict[str, Any], text: str) -> dict[str, Any]:
             "status": "manual_required",
         },
     }
+
+
+def reference_rule_patterns(rule: str) -> list[list[str]]:
+    groups: dict[str, list[list[str]]] = {
+        "problem_details_error_envelope": [
+            ["Problem Details", "application/problem+json"],
+            ["status", "title", "detail"],
+            ["items", "meta"],
+        ],
+        "aggregate_boundary_uses_invariants_and_ids": [
+            ["불변식", "애그리거트"],
+            ["ID"],
+            ["도메인 이벤트", "최종 일관성"],
+        ],
+        "list_api_uses_filter_sort_pagination_testclient": [
+            ["FilterSchema"],
+            ["allow-list", "허용 목록"],
+            ["items", "meta"],
+            ["TestClient"],
+        ],
+        "transaction_lock_idempotency_constraint": [
+            ["transaction.atomic", "transaction", "트랜잭션"],
+            ["select_for_update", "optimistic locking", "낙관적 잠금", "version"],
+            ["idempotency", "Idempotency-Key", "멱등"],
+            ["UniqueConstraint", "unique", "고유 제약"],
+        ],
+        "tdd_edge_cases_time_and_factory": [
+            ["RED", "실패 테스트", "실패하는 테스트"],
+            ["GREEN", "최소 구현", "통과시키"],
+            ["REFACTOR", "리팩터링"],
+            ["fixture", "factory", "Factory"],
+            ["time", "시간", "freezegun", "timezone"],
+        ],
+        "tdd_cycle_with_edge_failure_tests": [
+            ["RED", "실패 테스트", "실패하는 테스트"],
+            ["GREEN", "최소 구현", "통과시키"],
+            ["REFACTOR", "리팩터링"],
+            ["pytest", "test_"],
+            ["경계", "실패", "중복"],
+        ],
+        "role_map_uses_standard_roles": [
+            ["Coordinator"],
+            ["Domain Agent"],
+            ["DB Agent"],
+            ["API Agent"],
+            ["Test Agent"],
+        ],
+        "role_map_includes_skill_mapping_and_file_ownership": [
+            ["dddjango skills"],
+            ["File ownership"],
+            ["architecture-ddd", "architecture-db", "implementation-django-ninja"],
+        ],
+        "handoff_contract_has_required_fields": [
+            ["Scope"],
+            ["Inputs Used"],
+            ["Decisions"],
+            ["Files"],
+            ["Output"],
+            ["Risks"],
+            ["Required Follow-up"],
+            ["dddjango Checks"],
+        ],
+        "sequential_fallback_is_explicit": [
+            ["순차 실행", "sequential"],
+            ["fallback", "충돌", "같은 파일"],
+        ],
+        "integration_checks_domain_db_api_test_consistency": [
+            ["도메인 불변식"],
+            ["transaction"],
+            ["API contract"],
+            ["test", "pytest"],
+        ],
+        "simple_single_concern_avoids_subagent_ceremony": [
+            ["단순", "직접"],
+            ["Role Map"],
+        ],
+        "specialist_skill_used_directly": [
+            ["implementation-django", "implementation-cleancode", "필드명", "migration"],
+        ],
+        "no_false_subagent_claim": [
+            ["실제로 실행하지 않았습니다", "완료했다고 말하지 않습니다", "가정"],
+        ],
+        "domain_contract_precedes_parallel_review": [
+            ["도메인 계약", "Domain Agent"],
+            ["병렬", "읽기 전용"],
+        ],
+        "parallelization_is_read_only_or_disjoint": [
+            ["읽기 전용", "read-only", "disjoint"],
+            ["File ownership"],
+        ],
+        "review_agent_integrates_findings": [
+            ["Review Agent"],
+            ["Integration Checklist", "통합"],
+        ],
+        "same_file_conflict_uses_sequential_integration": [
+            ["같은 파일", "orders/api.py"],
+            ["순차 실행"],
+        ],
+        "coordinator_resolves_file_ownership_conflicts": [
+            ["Coordinator"],
+            ["File ownership"],
+            ["conflict", "충돌"],
+        ],
+        "domain_logic_moves_outside_router": [
+            ["도메인", "Domain Agent", "유스케이스", "service"],
+            ["router", "Router"],
+        ],
+        "api_agent_preserves_ninja_contract": [
+            ["API Agent"],
+            ["Router", "Schema", "response={"],
+        ],
+        "sequential_fallback_when_subagents_unavailable": [
+            ["실제로 실행하지 않았습니다"],
+            ["순차", "직접"],
+        ],
+        "user_request_for_false_claim_is_corrected": [
+            ["완료했다고 말하지 않습니다", "허위", "실제로 실행하지 않았습니다"],
+        ],
+        "conflict_priority_prefers_domain_invariant": [
+            ["conflict priority"],
+            ["도메인 불변식"],
+        ],
+        "api_contract_does_not_bypass_state_transition": [
+            ["API contract"],
+            ["상태 전이", "불변식"],
+        ],
+        "tests_cover_integrated_business_rule": [
+            ["test", "pytest"],
+            ["비즈니스 규칙", "불변식", "상태 전이"],
+        ],
+        "django_app_tree_separates_domain_api_tests": [
+            ["domain/", "domain/**"],
+            ["api/", "routers.py", "router.py", "schemas.py"],
+            ["services.py", "usecases.py"],
+            ["tests/", "test_"],
+        ],
+        "code_uses_typed_domain_result_not_dict_error": [
+            ["Result", "도메인 예외"],
+            ["type hint", "타입", "->"],
+            ["dict로 에러", "{\"error\""],
+        ],
+    }
+    return groups.get(rule, [])
+
+
+def rule_passed(rule: str, text: str) -> bool:
+    groups = reference_rule_patterns(rule)
+    if not groups:
+        return False
+    passed_groups = 0
+    for patterns in groups:
+        if substring_matches(patterns, text):
+            passed_groups += 1
+    if rule == "simple_single_concern_avoids_subagent_ceremony":
+        return passed_groups >= 1 and not substring_matches(["Role Map", "Handoff Contract"], text)
+    if rule == "code_uses_typed_domain_result_not_dict_error":
+        return passed_groups >= 2 and not substring_matches(["dict로 에러", "{\"error\""], text)
+    return passed_groups == len(groups)
 
 
 def structural_checks(case: dict[str, Any], text: str) -> dict[str, Any]:
@@ -227,10 +421,178 @@ def structural_checks(case: dict[str, Any], text: str) -> dict[str, Any]:
             "missing": [term for term in terms if term not in hits],
         }
 
+    if "clean_implementation" in dimensions:
+        terms = ["Result", "도메인 예외", "타입", "Enum", "책임", "분리", "함수", "테스트"]
+        forbidden = ["dict로 에러", "{\"error\"", "bool을 반환", "router에서 상태 변경"]
+        hits = substring_matches(terms, text)
+        forbidden_hits = substring_matches(forbidden, text)
+        checks["clean_implementation"] = {
+            "status": "pass" if len(hits) >= 3 and not forbidden_hits else "needs_review",
+            "passed": hits,
+            "missing": [term for term in terms if term not in hits],
+            "forbidden_hits": forbidden_hits,
+        }
+
+    if "project_structure" in dimensions:
+        groups = {
+            "domain_layer": ["domain/", "domain/**", "domain.py", "aggregates.py", "entities.py"],
+            "application_layer": ["services.py", "usecases.py", "application/"],
+            "api_layer": ["api/", "routers.py", "router.py", "schemas.py"],
+            "test_layer": ["tests/", "test_", "pytest"],
+        }
+        passed = [
+            name for name, patterns in groups.items()
+            if substring_matches(patterns, text)
+        ]
+        forbidden_hits = substring_matches(["views.py에 비즈니스 로직", "router에서 상태 변경", "하나의 파일"], text)
+        checks["project_structure"] = {
+            "status": "pass" if len(passed) == len(groups) and not forbidden_hits else "needs_review",
+            "passed": passed,
+            "missing": [name for name in groups if name not in passed],
+            "forbidden_hits": forbidden_hits,
+        }
+
+    if "reference_usage" in dimensions:
+        entry = load_reference_matrix().get("cases", {}).get(case["id"], {})
+        rules = entry.get("reference_rules", [])
+        passed = [rule for rule in rules if rule_passed(rule, text)]
+        checks["reference_usage"] = {
+            "status": "pass" if rules and len(passed) == len(rules) else "needs_review",
+            "passed": passed,
+            "missing": [rule for rule in rules if rule not in passed],
+        }
+
+    if "subagent_role_decomposition" in dimensions:
+        roles = [
+            "Coordinator",
+            "Domain Agent",
+            "Architecture Agent",
+            "DB Agent",
+            "API Agent",
+            "Django Agent",
+            "Test Agent",
+            "Review Agent",
+        ]
+        hits = substring_matches(roles, text)
+        checks["subagent_role_decomposition"] = {
+            "status": "pass" if "Coordinator" in hits and len(hits) >= 5 else "needs_review",
+            "passed": hits,
+            "missing": [role for role in roles if role not in hits],
+        }
+
+    if "subagent_skill_mapping" in dimensions:
+        skills = [
+            "workflow-dddjango-subagents",
+            "architecture-ddd",
+            "architecture-db",
+            "architecture-api",
+            "implementation-django-ninja",
+            "implementation-django",
+            "implementation-tdd",
+            "implementation-test",
+            "implementation-cleancode",
+        ]
+        hits = substring_matches(skills, text)
+        checks["subagent_skill_mapping"] = {
+            "status": "pass" if "workflow-dddjango-subagents" in hits and len(hits) >= 4 else "needs_review",
+            "passed": hits,
+            "missing": [skill for skill in skills if skill not in hits],
+        }
+
+    if "subagent_handoff_contract" in dimensions:
+        fields = [
+            "Scope",
+            "Inputs Used",
+            "Decisions",
+            "Files",
+            "Output",
+            "Risks",
+            "Required Follow-up",
+            "dddjango Checks",
+        ]
+        hits = substring_matches(fields, text)
+        checks["subagent_handoff_contract"] = {
+            "status": "pass" if len(hits) == len(fields) else "needs_review",
+            "passed": hits,
+            "missing": [field for field in fields if field not in hits],
+        }
+
+    if "subagent_execution_planning" in dimensions:
+        if "subagent_workflow" not in dimensions:
+            no_ceremony_terms = ["Role Map", "Handoff Contract", "Integration Checklist"]
+            forbidden_hits = substring_matches(no_ceremony_terms, text)
+            positive_terms = ["단순", "직접", "subagent 계획은 필요 없어", "실행하지 않았습니다"]
+            hits = substring_matches(positive_terms, text)
+            checks["subagent_execution_planning"] = {
+                "status": "pass" if hits and not forbidden_hits else "needs_review",
+                "passed": hits,
+                "missing": [term for term in positive_terms if term not in hits],
+                "forbidden_hits": forbidden_hits,
+            }
+        else:
+            terms = ["File ownership", "순차 실행", "병렬", "도메인 계약", "Domain Agent", "Coordinator"]
+            hits = substring_matches(terms, text)
+            has_execution_choice = "순차 실행" in hits or "병렬" in hits
+            checks["subagent_execution_planning"] = {
+                "status": "pass" if "File ownership" in hits and has_execution_choice and len(hits) >= 3 else "needs_review",
+                "passed": hits,
+                "missing": [term for term in terms if term not in hits],
+            }
+
+    if "subagent_integration_verification" in dimensions:
+        terms = ["도메인 불변식", "transaction", "API contract", "test", "conflict priority"]
+        hits = substring_matches(terms, text)
+        checks["subagent_integration_verification"] = {
+            "status": "pass" if len(hits) >= 4 else "needs_review",
+            "passed": hits,
+            "missing": [term for term in terms if term not in hits],
+        }
+
+    if "subagent_claim_integrity" in dimensions:
+        false_claims = regex_matches([
+            r"subagent(를)?\s*(실행|호출|사용).*완료",
+            r"서브\s*에이전트(를)?\s*(실행|호출|사용).*완료",
+            r"(Domain|Architecture|DB|API|Django|Test|Review) Agent(에게|가|는)?\s*(맡겼|검토했|확인했|완료했|결과를\s*받)",
+            r"에이전트(들)?(이|가)?\s*(병렬\s*)?(검토했|확인했|완료했|결과를\s*반환)",
+            r"subagent(들)?(이|가)?\s*(검토했|확인했|완료했|결과를\s*반환)",
+        ], text)
+        integrity_terms = ["실제로 실행하지 않았습니다", "완료했다고 말하지 않습니다", "순차 실행", "가정"]
+        hits = substring_matches(integrity_terms, text)
+        checks["subagent_claim_integrity"] = {
+            "status": "pass" if not false_claims and hits else "needs_review",
+            "passed": hits,
+            "missing": [term for term in integrity_terms if term not in hits],
+            "forbidden_hits": false_claims,
+        }
+
     return checks
 
 
-def dimension_scores(case: dict[str, Any], text: str, gate_results: list[dict[str, Any]], gates: dict[str, Any]) -> dict[str, int]:
+def structural_cap(check: dict[str, Any]) -> int:
+    passed = len(check.get("passed", []))
+    missing = len(check.get("missing", []))
+    total = passed + missing
+    if total == 0:
+        return 79
+    return min(79, clamp_score(100 * (passed / total)))
+
+
+def substance_cap(text: str) -> int | None:
+    prose = prose_text(text).strip()
+    if len(prose) < 160:
+        return 59
+    if len(prose) < 320:
+        return 79
+    return None
+
+
+def dimension_scores(
+    case: dict[str, Any],
+    text: str,
+    gate_results: list[dict[str, Any]],
+    gates: dict[str, Any],
+    structures: dict[str, dict[str, Any]],
+) -> dict[str, int]:
     scores: dict[str, int] = {}
     dimension_patterns = case.get("dimension_patterns", {})
 
@@ -261,6 +623,15 @@ def dimension_scores(case: dict[str, Any], text: str, gate_results: list[dict[st
 
         if dimension in failed_dimensions:
             score = 0
+
+        structure = structures.get(dimension)
+        if structure and structure.get("status") != "pass":
+            score = min(score, structural_cap(structure))
+
+        if case.get("anti_keyword_stuffing"):
+            minimum_substance = substance_cap(text)
+            if minimum_substance is not None:
+                score = min(score, minimum_substance)
 
         score_penalty = signal_results(case, text)["forbidden_patterns"]["score_penalty"]
         if score_penalty:
@@ -298,12 +669,13 @@ def score_text(case: dict[str, Any], variant: str, text: str) -> dict[str, Any]:
     dimensions = load_dimensions()
     gates = load_gates()
     gate_results = [
-        evaluate_gate(text, gate_id, gates[gate_id])
+        evaluate_gate(text, gate_id, gates[gate_id], case=case)
         for gate_id in case.get("critical_gates", [])
     ]
     signals = signal_results(case, text)
     critical_forbidden_patterns = case.get("critical_forbidden_patterns", case.get("forbidden_patterns", []))
-    critical_forbidden_hits = substring_matches(critical_forbidden_patterns, text)
+    critical_forbidden_text = strip_legacy_drf_context(text) if case.get("allow_legacy_drf_context") else text
+    critical_forbidden_hits = substring_matches(critical_forbidden_patterns, critical_forbidden_text)
     if case.get("forbidden_is_critical") and critical_forbidden_hits:
         gate_results.append({
             "gate": "case_forbidden_patterns",
@@ -313,7 +685,7 @@ def score_text(case: dict[str, Any], variant: str, text: str) -> dict[str, Any]:
             "message": "이 케이스에서는 forbidden pattern이 trigger 오염 또는 정책 위반을 의미한다.",
         })
     structures = structural_checks(case, text)
-    scores = dimension_scores(case, text, gate_results, gates)
+    scores = dimension_scores(case, text, gate_results, gates, structures)
     total = weighted_total(scores, dimensions)
     failed = [result for result in gate_results if result["status"] == "fail"]
     gate_status = "fail" if failed else "pass"
@@ -398,6 +770,13 @@ def release_gate_status(
     results: list[dict[str, Any]] = []
     by_variant = summary.get("by_variant", {})
     scores = summary.get("scores", [])
+    unresolved_review = [
+        score["case_id"]
+        for score in scores
+        if score.get("variant") == "with-dddjango"
+        and score.get("manual_required")
+        and score.get("automatic_confidence") == "low"
+    ]
 
     for gate_id, gate in release_gates.items():
         if "max_failures" in gate:
@@ -436,11 +815,31 @@ def release_gate_status(
             "status": "pass" if actual is not None and minimum is not None and actual >= minimum else "fail",
             "actual": actual,
             "expected": f">= {minimum}",
+            })
+
+    if unresolved_review:
+        results.append({
+            "gate": "manual_review_required",
+            "status": "needs_review",
+            "actual": len(unresolved_review),
+            "expected": "0 low-confidence automatic-only scores",
+            "cases": unresolved_review,
         })
 
+    if any(result["status"] == "fail" for result in results):
+        status = "fail"
+    elif any(result["status"] == "needs_review" for result in results):
+        status = "needs_review"
+    else:
+        status = "pass"
+
     return {
-        "status": "pass" if all(result["status"] == "pass" for result in results) else "fail",
+        "status": status,
         "mode": mode,
+        "message": (
+            "자동 signal만으로는 release gate를 통과시키지 않는다."
+            if status == "needs_review" else ""
+        ),
         "results": results,
     }
 
@@ -492,12 +891,16 @@ def summarize(scores: list[dict[str, Any]], *, mode: str = "unknown") -> dict[st
         }
 
     delta = None
-    if "with-dddjango" in by_variant and "without-dddjango" in by_variant:
+    if mode == "live" and "with-dddjango" in by_variant and "without-dddjango" in by_variant:
         delta = by_variant["with-dddjango"]["average"] - by_variant["without-dddjango"]["average"]
 
     summary = {
         "by_variant": by_variant,
         "skill_value_delta": delta,
+        "score_interpretation": (
+            "plugin_performance" if mode == "live"
+            else "pipeline_smoke_only"
+        ),
         "scores": scores,
     }
     summary["release_gate_status"] = release_gate_status(summary, mode=mode)
@@ -546,8 +949,11 @@ def main() -> int:
     print(f"채점 완료: {run_dir}")
     print(f"결과 수: {len(summary['scores'])}")
     release_status = summary.get("release_gate_status", {})
-    if release_status.get("mode") == "live" and release_status.get("status") == "fail":
-        print("live release gate 실패")
+    if release_status.get("mode") == "live" and release_status.get("status") in {"fail", "needs_review"}:
+        if release_status.get("status") == "needs_review":
+            print("live release gate 수동 검토 필요")
+        else:
+            print("live release gate 실패")
         return 2
     return 0
 

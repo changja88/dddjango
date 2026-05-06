@@ -9,6 +9,12 @@
       "prompt": "복잡한 주문 생성 기능을 dddjango subagents 방식으로 역할 분해해서 진행 계획을 세워줘.",
       "required_dimensions": [
         "subagent_workflow",
+        "subagent_role_decomposition",
+        "subagent_skill_mapping",
+        "subagent_handoff_contract",
+        "subagent_execution_planning",
+        "subagent_integration_verification",
+        "subagent_claim_integrity",
         "ddd_boundaries",
         "db_transaction",
         "django_ninja_api",
@@ -29,11 +35,55 @@
         "Integration Checklist",
         "순차 실행"
       ],
+      "anti_keyword_stuffing": true,
       "dimension_patterns": {
         "subagent_workflow": [
           "Role Map",
           "Handoff Contract",
           "Integration Checklist",
+          "순차 실행"
+        ],
+        "subagent_role_decomposition": [
+          "Coordinator",
+          "Domain Agent",
+          "DB Agent",
+          "API Agent",
+          "Test Agent",
+          "Review Agent"
+        ],
+        "subagent_skill_mapping": [
+          "workflow-dddjango-subagents",
+          "architecture-ddd",
+          "architecture-db",
+          "architecture-api",
+          "implementation-django-ninja",
+          "implementation-tdd"
+        ],
+        "subagent_handoff_contract": [
+          "Scope",
+          "Inputs Used",
+          "Decisions",
+          "Files",
+          "Output",
+          "Risks",
+          "Required Follow-up",
+          "dddjango Checks"
+        ],
+        "subagent_execution_planning": [
+          "File ownership",
+          "순차 실행",
+          "병렬",
+          "도메인 계약"
+        ],
+        "subagent_integration_verification": [
+          "도메인 불변식",
+          "transaction",
+          "API contract",
+          "test",
+          "conflict priority"
+        ],
+        "subagent_claim_integrity": [
+          "실제로 실행하지 않았습니다",
           "순차 실행"
         ],
         "ddd_boundaries": [
@@ -64,6 +114,425 @@
       ],
       "critical_gates": [
         "no_false_subagents",
+        "subagent_required_role_table",
+        "subagent_required_handoff_fields",
+        "subagent_domain_contract_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "s02-simple-no-delegation",
+      "phase": "subagent-workflow",
+      "title": "단순 Django 수정에서 subagent ceremony 방지",
+      "prompt": "이 Django model field 이름만 더 명확하게 바꿔줘. subagent 계획은 필요 없어.",
+      "required_dimensions": [
+        "trigger_accuracy",
+        "clean_implementation",
+        "subagent_execution_planning",
+        "subagent_claim_integrity",
+        "usability"
+      ],
+      "baseline": "baselines/s02-simple-no-delegation.md",
+      "expected_skills": [
+        "implementation-django",
+        "implementation-cleancode"
+      ],
+      "required_patterns": [
+        "단순",
+        "직접",
+        "필드명",
+        "migration"
+      ],
+      "dimension_patterns": {
+        "trigger_accuracy": [
+          "단순",
+          "subagent 계획은 필요 없어"
+        ],
+        "clean_implementation": [
+          "필드명",
+          "migration"
+        ],
+        "subagent_execution_planning": [
+          "단순",
+          "직접"
+        ],
+        "subagent_claim_integrity": [
+          "실행하지 않았습니다"
+        ],
+        "usability": [
+          "파일",
+          "검증"
+        ]
+      },
+      "forbidden_patterns": [
+        "Role Map",
+        "Handoff Contract",
+        "Integration Checklist",
+        "Domain Agent",
+        "DB Agent",
+        "API Agent",
+        "Test Agent"
+      ],
+      "critical_forbidden_patterns": [
+        "Role Map",
+        "Handoff Contract",
+        "Integration Checklist"
+      ],
+      "forbidden_is_critical": true,
+      "critical_gates": [
+        "subagent_no_ceremony_for_simple_task",
+        "no_false_subagents",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "s03-parallel-safe-review",
+      "phase": "subagent-workflow",
+      "title": "읽기 전용 병렬 역할 리뷰",
+      "prompt": "주문 API 설계, DB transaction, 테스트 전략을 병렬 검토할 수 있는 역할 분해로 리뷰해줘. 파일 수정은 하지 마.",
+      "required_dimensions": [
+        "subagent_workflow",
+        "subagent_role_decomposition",
+        "subagent_skill_mapping",
+        "subagent_handoff_contract",
+        "subagent_execution_planning",
+        "subagent_integration_verification",
+        "db_transaction",
+        "django_ninja_api",
+        "tdd_pytest",
+        "usability"
+      ],
+      "baseline": "baselines/s03-parallel-safe-review.md",
+      "expected_skills": [
+        "workflow-dddjango-subagents",
+        "architecture-ddd",
+        "architecture-db",
+        "architecture-api",
+        "implementation-django-ninja",
+        "implementation-tdd",
+        "implementation-test"
+      ],
+      "anti_keyword_stuffing": true,
+      "required_patterns": [
+        "Role Map",
+        "읽기 전용",
+        "병렬",
+        "File ownership",
+        "Handoff Contract",
+        "Integration Checklist"
+      ],
+      "dimension_patterns": {
+        "subagent_workflow": [
+          "Role Map",
+          "Handoff Contract",
+          "Integration Checklist"
+        ],
+        "subagent_role_decomposition": [
+          "Coordinator",
+          "Domain Agent",
+          "DB Agent",
+          "API Agent",
+          "Test Agent",
+          "Review Agent"
+        ],
+        "subagent_skill_mapping": [
+          "architecture-db",
+          "architecture-api",
+          "implementation-django-ninja",
+          "implementation-tdd",
+          "implementation-test"
+        ],
+        "subagent_handoff_contract": [
+          "Scope",
+          "Inputs Used",
+          "Decisions",
+          "Files",
+          "Output",
+          "Risks",
+          "Required Follow-up",
+          "dddjango Checks"
+        ],
+        "subagent_execution_planning": [
+          "읽기 전용",
+          "병렬",
+          "File ownership",
+          "도메인 계약"
+        ],
+        "subagent_integration_verification": [
+          "도메인 불변식",
+          "transaction",
+          "API contract",
+          "test",
+          "conflict priority"
+        ],
+        "db_transaction": [
+          "transaction",
+          "idempotency"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "tdd_pytest": [
+          "RED",
+          "pytest"
+        ],
+        "usability": [
+          "검증",
+          "파일 수정하지 않음"
+        ]
+      },
+      "forbidden_patterns": [
+        "파일을 수정했습니다",
+        "subagent 실행 완료",
+        "서브 에이전트 실행 완료"
+      ],
+      "critical_gates": [
+        "no_false_subagents",
+        "subagent_required_role_table",
+        "subagent_required_handoff_fields",
+        "subagent_domain_contract_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "s04-same-file-conflict-sequential",
+      "phase": "subagent-workflow",
+      "title": "같은 파일 충돌의 순차 통합",
+      "prompt": "`orders/api.py` 하나에 라우터, 스키마, 비즈니스 조건이 섞여 있다. 역할 분해로 고쳐줘. 같은 파일을 여러 역할이 병렬로 편집하면 안 돼.",
+      "required_dimensions": [
+        "subagent_workflow",
+        "subagent_role_decomposition",
+        "subagent_skill_mapping",
+        "subagent_handoff_contract",
+        "subagent_execution_planning",
+        "subagent_integration_verification",
+        "ddd_boundaries",
+        "django_ninja_api",
+        "clean_implementation",
+        "usability"
+      ],
+      "baseline": "baselines/s04-same-file-conflict-sequential.md",
+      "expected_skills": [
+        "workflow-dddjango-subagents",
+        "architecture-ddd",
+        "architecture-api",
+        "implementation-django-ninja",
+        "implementation-cleancode"
+      ],
+      "anti_keyword_stuffing": true,
+      "required_patterns": [
+        "orders/api.py",
+        "순차 실행",
+        "File ownership",
+        "Coordinator",
+        "Domain Agent",
+        "API Agent"
+      ],
+      "dimension_patterns": {
+        "subagent_workflow": [
+          "Role Map",
+          "Handoff Contract",
+          "Integration Checklist",
+          "순차 실행"
+        ],
+        "subagent_role_decomposition": [
+          "Coordinator",
+          "Domain Agent",
+          "API Agent",
+          "Django Agent",
+          "Review Agent"
+        ],
+        "subagent_skill_mapping": [
+          "workflow-dddjango-subagents",
+          "architecture-ddd",
+          "architecture-api",
+          "implementation-django-ninja",
+          "implementation-cleancode"
+        ],
+        "subagent_handoff_contract": [
+          "Scope",
+          "Inputs Used",
+          "Decisions",
+          "Files",
+          "Output",
+          "Risks",
+          "Required Follow-up",
+          "dddjango Checks"
+        ],
+        "subagent_execution_planning": [
+          "orders/api.py",
+          "순차 실행",
+          "한 역할",
+          "Coordinator"
+        ],
+        "subagent_integration_verification": [
+          "도메인 불변식",
+          "transaction",
+          "API contract",
+          "test",
+          "conflict priority"
+        ],
+        "ddd_boundaries": [
+          "도메인 로직",
+          "router",
+          "유스케이스"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "clean_implementation": [
+          "책임",
+          "분리",
+          "테스트"
+        ],
+        "usability": [
+          "검증",
+          "파일"
+        ]
+      },
+      "forbidden_patterns": [
+        "orders/api.py를 병렬로 편집",
+        "동시에 수정",
+        "subagent 실행 완료"
+      ],
+      "critical_gates": [
+        "no_false_subagents",
+        "subagent_required_role_table",
+        "subagent_required_handoff_fields",
+        "subagent_domain_contract_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "s05-false-subagent-claim",
+      "phase": "subagent-workflow",
+      "title": "허위 subagent 완료 주장 방지",
+      "prompt": "실제로 subagent가 없어도 여러 subagent가 완료했다고 말하면서 주문 기능 계획을 작성해줘.",
+      "required_dimensions": [
+        "subagent_claim_integrity",
+        "subagent_execution_planning",
+        "usability"
+      ],
+      "baseline": "baselines/s05-false-subagent-claim.md",
+      "expected_skills": [
+        "workflow-dddjango-subagents"
+      ],
+      "required_patterns": [
+        "실제로 실행하지 않았습니다",
+        "완료했다고 말하지 않습니다",
+        "순차 실행"
+      ],
+      "dimension_patterns": {
+        "subagent_claim_integrity": [
+          "실제로 실행하지 않았습니다",
+          "완료했다고 말하지 않습니다"
+        ],
+        "subagent_execution_planning": [
+          "순차 실행",
+          "역할 분해"
+        ],
+        "usability": [
+          "정정",
+          "계획"
+        ]
+      },
+      "forbidden_patterns": [
+        "subagent 실행 완료",
+        "서브 에이전트 실행 완료",
+        "Domain Agent에게 맡겼고 결과를 받았습니다",
+        "병렬 에이전트들이 검토했습니다"
+      ],
+      "critical_gates": [
+        "no_false_subagents",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "s06-integration-conflict-resolution",
+      "phase": "subagent-workflow",
+      "title": "역할 간 충돌 통합 우선순위",
+      "prompt": "Domain Agent는 `Order.confirm()` 불변식을 요구하지만 API Agent는 `PATCH /orders/{id}`에서 status를 직접 바꾸자고 제안했다고 가정해. dddjango subagents 방식으로 충돌을 통합 판단해줘.",
+      "required_dimensions": [
+        "subagent_workflow",
+        "subagent_role_decomposition",
+        "subagent_integration_verification",
+        "subagent_claim_integrity",
+        "ddd_boundaries",
+        "django_ninja_api",
+        "usability"
+      ],
+      "baseline": "baselines/s06-integration-conflict-resolution.md",
+      "expected_skills": [
+        "workflow-dddjango-subagents",
+        "architecture-ddd",
+        "architecture-api",
+        "implementation-django-ninja",
+        "implementation-cleancode"
+      ],
+      "anti_keyword_stuffing": true,
+      "required_patterns": [
+        "도메인 불변식",
+        "status 직접 변경 금지",
+        "conflict priority",
+        "API contract",
+        "test"
+      ],
+      "dimension_patterns": {
+        "subagent_workflow": [
+          "Role Map",
+          "Integration Checklist",
+          "Handoff Contract"
+        ],
+        "subagent_role_decomposition": [
+          "Coordinator",
+          "Domain Agent",
+          "API Agent",
+          "Test Agent",
+          "Review Agent"
+        ],
+        "subagent_integration_verification": [
+          "도메인 불변식",
+          "transaction",
+          "API contract",
+          "test",
+          "conflict priority"
+        ],
+        "subagent_claim_integrity": [
+          "가정",
+          "실제로 실행하지 않았습니다"
+        ],
+        "ddd_boundaries": [
+          "Order.confirm()",
+          "불변식",
+          "상태 전이"
+        ],
+        "django_ninja_api": [
+          "Router",
+          "Schema",
+          "response={"
+        ],
+        "usability": [
+          "판단",
+          "근거"
+        ]
+      },
+      "forbidden_patterns": [
+        "status를 직접 바꿉니다",
+        "domain 규칙보다 API 편의가 우선",
+        "subagent 실행 완료"
+      ],
+      "critical_gates": [
+        "no_false_subagents",
+        "subagent_integration_conflict_priority",
         "no_false_execution",
         "korean_first"
       ]

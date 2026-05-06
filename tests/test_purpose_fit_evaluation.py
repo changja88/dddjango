@@ -44,6 +44,8 @@ class PurposeFitConfigTests(unittest.TestCase):
         self.assertIn("trigger-usability", suites)
         self.assertIn("subagent-workflow", suites)
         self.assertIn("reference-maximum", suites)
+        self.assertIn("holdout-adversarial", suites)
+        self.assertIn("code-structure", suites)
         self.assertIn("r01-fat-model-review", case_ids)
         self.assertIn("t02-fastapi-no-contamination", case_ids)
         self.assertIn("t05-django-template-view", case_ids)
@@ -53,6 +55,16 @@ class PurposeFitConfigTests(unittest.TestCase):
         self.assertIn("m03-ninja-list-filter-pagination", case_ids)
         self.assertIn("m04-db-transaction-idempotency", case_ids)
         self.assertIn("m05-tdd-edge-cases", case_ids)
+        self.assertIn("h01-drf-before-after-migration", case_ids)
+        self.assertIn("h02-keyword-bait-order-design", case_ids)
+        self.assertIn("h03-starlette-no-contamination", case_ids)
+        self.assertIn("s02-simple-no-delegation", case_ids)
+        self.assertIn("s03-parallel-safe-review", case_ids)
+        self.assertIn("s04-same-file-conflict-sequential", case_ids)
+        self.assertIn("s05-false-subagent-claim", case_ids)
+        self.assertIn("s06-integration-conflict-resolution", case_ids)
+        self.assertIn("p01-order-feature-file-tree", case_ids)
+        self.assertIn("p02-domain-code-quality", case_ids)
 
     def test_core_policy_does_not_require_single_implementation_preference(self):
         cases = {case["id"]: case for case in load_cases("core-policy")}
@@ -77,6 +89,9 @@ class PurposeFitConfigTests(unittest.TestCase):
                     self.assertTrue((ROOT / path).exists())
                 for path in matrix[case_id].get("guard_paths", []):
                     self.assertTrue((ROOT / path).exists())
+                for rule in matrix[case_id].get("reference_rules", []):
+                    self.assertIsInstance(rule, str)
+                    self.assertTrue(rule)
 
 
 class PurposeFitScoringTests(unittest.TestCase):
@@ -206,6 +221,162 @@ class PurposeFitScoringTests(unittest.TestCase):
 
         self.assertNotIn("korean_first", failed_gates)
 
+    def test_keyword_stuffing_does_not_get_full_score(self):
+        case = next(case for case in load_cases("holdout-adversarial") if case["id"] == "h02-keyword-bait-order-design")
+        text = "\n".join(
+            [
+                "Router Schema response={ 애그리거트 transaction idempotency pytest RED GREEN REFACTOR",
+                "불변식 유스케이스 근거 검증",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+
+        self.assertEqual(score["gate_status"], "fail")
+        self.assertLessEqual(score["total_score"], 59)
+
+    def test_legacy_drf_context_is_allowed_when_marked_as_before_code(self):
+        case = next(case for case in load_cases("holdout-adversarial") if case["id"] == "h01-drf-before-after-migration")
+        text = "\n".join(
+            [
+                "기존 legacy 코드는 분석 대상으로만 봅니다.",
+                "```python",
+                "from rest_framework import serializers, viewsets",
+                "class LegacyOrderViewSet(viewsets.ModelViewSet):",
+                "    pass",
+                "```",
+                "새 코드는 Django Ninja로 작성합니다.",
+                "from ninja import Router, Schema",
+                "router = Router()",
+                "class OrderIn(Schema):",
+                "    pass",
+                "@router.post('/orders', response={201: OrderOut, 400: ProblemDetail})",
+                "마이그레이션 단계와 테스트 검증 명령을 제시합니다.",
+                "실제 테스트는 실행하지 않았습니다.",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+        failed_gates = {result["gate"] for result in score["gate_results"] if result["status"] == "fail"}
+
+        self.assertNotIn("no_drf", failed_gates)
+
+    def test_project_structure_requires_domain_api_service_and_tests(self):
+        case = next(case for case in load_cases("code-structure") if case["id"] == "p01-order-feature-file-tree")
+        text = "\n".join(
+            [
+                "domain/ 에 애그리거트와 불변식을 둡니다.",
+                "orders/services.py 에 유스케이스와 책임 분리를 둡니다.",
+                "파일별 책임과 검증 명령을 함께 제시합니다.",
+                "api/schemas.py 와 api/routers.py 에 Router, Schema, response={201: OrderOut, 400: ProblemDetail}를 둡니다.",
+                "from ninja import Router, Schema",
+                "router = Router()",
+                "class OrderIn(Schema): pass",
+                "@router.post('/orders', response={201: OrderOut, 400: ProblemDetail})",
+                "tests/test_create_order.py 에 pytest RED GREEN REFACTOR 테스트를 둡니다.",
+                "Result와 도메인 예외로 실패를 표현합니다.",
+                "실제 테스트는 실행하지 않았습니다.",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+
+        self.assertEqual(score["gate_status"], "pass")
+        self.assertEqual(score["structural_checks"]["project_structure"]["status"], "pass")
+        self.assertGreaterEqual(score["dimension_scores"]["project_structure"], 80)
+
+    def test_reference_usage_requires_reference_rules_not_only_keywords(self):
+        case = next(case for case in load_cases("code-structure") if case["id"] == "p02-domain-code-quality")
+        text = "\n".join(
+            [
+                "Result 도메인 예외 값 객체 pytest RED GREEN REFACTOR",
+                "타입 책임 경계 실패 중복",
+                "실제 테스트는 실행하지 않았습니다.",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+
+        self.assertEqual(score["structural_checks"]["reference_usage"]["status"], "pass")
+
+    def test_simple_task_subagent_ceremony_fails(self):
+        case = next(case for case in load_cases("subagent-workflow") if case["id"] == "s02-simple-no-delegation")
+        text = "\n".join(
+            [
+                "## Role Map",
+                "- Coordinator",
+                "- Domain Agent",
+                "필드명 변경은 이렇게 진행합니다.",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+        failed_gates = {result["gate"] for result in score["gate_results"] if result["status"] == "fail"}
+
+        self.assertIn("subagent_no_ceremony_for_simple_task", failed_gates)
+        self.assertLessEqual(score["total_score"], 59)
+
+    def test_false_subagent_claim_extended_patterns_fail(self):
+        case = next(case for case in load_cases("subagent-workflow") if case["id"] == "s05-false-subagent-claim")
+        text = "\n".join(
+            [
+                "Domain Agent에게 맡겼고 결과를 받았습니다.",
+                "DB Agent와 API Agent가 병렬 검토했습니다.",
+                "계획을 통합했습니다.",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+        failed_gates = {result["gate"] for result in score["gate_results"] if result["status"] == "fail"}
+
+        self.assertIn("no_false_subagents", failed_gates)
+        self.assertLessEqual(score["total_score"], 59)
+
+    def test_subagent_structural_checks_require_role_table_and_handoff(self):
+        case = next(case for case in load_cases("subagent-workflow") if case["id"] == "s03-parallel-safe-review")
+        text = "\n".join(
+            [
+                "## Role Map",
+                "| Role | Responsibility | dddjango skills | File ownership |",
+                "| Coordinator | 통합 | workflow-dddjango-subagents | final |",
+                "| Domain Agent | 도메인 계약 | architecture-ddd | domain/** |",
+                "| DB Agent | transaction 검토 | architecture-db | read-only |",
+                "| API Agent | Router Schema response={ API contract | architecture-api, implementation-django-ninja | read-only |",
+                "| Test Agent | RED pytest | implementation-tdd, implementation-test | read-only |",
+                "| Review Agent | 검토 | implementation-cleancode | read-only |",
+                "",
+                "도메인 계약을 먼저 세운 뒤 읽기 전용 병렬 검토를 진행합니다.",
+                "실제로 실행하지 않았습니다.",
+                "",
+                "## Handoff Contract",
+                "- Scope",
+                "- Inputs Used",
+                "- Decisions",
+                "- Files",
+                "- Output",
+                "- Risks",
+                "- Required Follow-up",
+                "- dddjango Checks",
+                "",
+                "## Integration Checklist",
+                "- conflict priority",
+                "- 도메인 불변식",
+                "- transaction",
+                "- API contract",
+                "- test",
+                "- 파일 수정하지 않음",
+                "",
+                "검증 명령만 제시합니다.",
+            ]
+        )
+
+        score = score_outputs.score_text(case, "with-dddjango", text)
+
+        self.assertEqual(score["gate_status"], "pass")
+        self.assertEqual(score["structural_checks"]["subagent_handoff_contract"]["status"], "pass")
+        self.assertEqual(score["structural_checks"]["subagent_execution_planning"]["status"], "pass")
+        self.assertGreaterEqual(score["dimension_scores"]["subagent_integration_verification"], 80)
+
 
 class PurposeFitReportTests(unittest.TestCase):
     def test_fixture_run_scores_and_renders_html_report(self):
@@ -226,6 +397,8 @@ class PurposeFitReportTests(unittest.TestCase):
         self.assertIn("without-dddjango", report)
         self.assertIn("with-dddjango", report)
         self.assertIn("Variant Comparison", report)
+        self.assertIn("플러그인 성능 평가가 아닙니다", report)
+        self.assertIn("Skill value delta: <strong>not applicable</strong>", report)
         self.assertTrue((run_dir / "artifacts/c01-drf-order-api.baseline.html").exists())
         self.assertTrue((run_dir / "artifacts/c01-drf-order-api.with-dddjango.html").exists())
         self.assertIn("by_variant", summary)
@@ -263,6 +436,8 @@ class PurposeFitReportTests(unittest.TestCase):
                 "gate_results": [],
                 "dimension_scores": {dimension: 80 for dimension in case["required_dimensions"]},
                 "rationale": "pass",
+                "automatic_confidence": "high",
+                "manual_required": False,
             })
             scores.append({
                 "case_id": case["id"],
@@ -272,6 +447,8 @@ class PurposeFitReportTests(unittest.TestCase):
                 "gate_results": [],
                 "dimension_scores": {dimension: 100 for dimension in case["required_dimensions"]},
                 "rationale": "pass",
+                "automatic_confidence": "high",
+                "manual_required": False,
             })
 
         summary = score_outputs.summarize(scores, mode="live")
@@ -282,6 +459,40 @@ class PurposeFitReportTests(unittest.TestCase):
         self.assertIn("drf_rejection", gate_ids)
         self.assertIn("api_tdd_core", gate_ids)
         self.assertIn("reference_max", gate_ids)
+        self.assertIn("subagent_workflow", gate_ids)
+        self.assertIn("code_structure_quality", gate_ids)
+
+    def test_live_release_gate_needs_review_for_low_confidence_automatic_scores(self):
+        scores = []
+        for case in load_cases():
+            scores.append({
+                "case_id": case["id"],
+                "variant": "without-dddjango",
+                "total_score": 80,
+                "gate_status": "pass",
+                "gate_results": [],
+                "dimension_scores": {dimension: 80 for dimension in case["required_dimensions"]},
+                "rationale": "pass",
+                "automatic_confidence": "high",
+                "manual_required": False,
+            })
+            scores.append({
+                "case_id": case["id"],
+                "variant": "with-dddjango",
+                "total_score": 100,
+                "gate_status": "pass",
+                "gate_results": [],
+                "dimension_scores": {dimension: 100 for dimension in case["required_dimensions"]},
+                "rationale": "pass",
+                "automatic_confidence": "low",
+                "manual_required": True,
+            })
+
+        summary = score_outputs.summarize(scores, mode="live")
+
+        self.assertEqual(summary["release_gate_status"]["status"], "needs_review")
+        gate_ids = {result["gate"] for result in summary["release_gate_status"]["results"]}
+        self.assertIn("manual_review_required", gate_ids)
 
     def test_partial_live_run_does_not_apply_release_gate(self):
         scores = [
@@ -363,7 +574,7 @@ class PurposeFitReportTests(unittest.TestCase):
         report = run_calibration.run_calibration()
 
         self.assertEqual(report["status"], "pass")
-        self.assertGreaterEqual(report["sample_count"], 9)
+        self.assertGreaterEqual(report["sample_count"], 11)
 
     def cleanup_run(self, run_dir):
         for path in sorted(run_dir.rglob("*"), reverse=True):

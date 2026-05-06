@@ -53,7 +53,27 @@ def load_score_map(run_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:
     return score_map
 
 
-def render_summary(summary: dict[str, Any]) -> str:
+def render_mode_notice(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    mode = metadata.get("mode", "-")
+    interpretation = summary.get("score_interpretation", "-")
+    if mode == "live":
+        return (
+            "<section class=\"notice live\"><h2>Interpretation</h2>"
+            "<p>이 리포트는 실제 Codex 실행 결과입니다. 단, 자동 점수는 낮은 신뢰도의 signal이므로 "
+            "artifact 수동 검토와 함께 해석해야 합니다.</p>"
+            "</section>"
+        )
+    return (
+        "<section class=\"notice fixture\"><h2>Interpretation</h2>"
+        "<p><strong>이 리포트는 플러그인 성능 평가가 아닙니다.</strong> "
+        "fixture/smoke 결과는 평가 파이프라인, 채점기, HTML 렌더링이 동작하는지만 확인합니다. "
+        "with-dddjango 점수와 delta를 플러그인 가치 판단에 사용하지 마세요.</p>"
+        f"<p class=\"muted\">mode={html.escape(str(mode))}, interpretation={html.escape(str(interpretation))}</p>"
+        "</section>"
+    )
+
+
+def render_summary(summary: dict[str, Any], metadata: dict[str, Any]) -> str:
     rows = []
     for variant, data in summary.get("by_variant", {}).items():
         rows.append(
@@ -65,9 +85,15 @@ def render_summary(summary: dict[str, Any]) -> str:
             + "</tr>"
         )
     delta = summary.get("skill_value_delta")
-    delta_html = "<p class=\"metric\">Skill value delta: <strong>{}</strong></p>".format(
-        html.escape(str(delta)) if delta is not None else "-"
-    )
+    if metadata.get("mode") == "live":
+        delta_html = "<p class=\"metric\">Skill value delta: <strong>{}</strong></p>".format(
+            html.escape(str(delta)) if delta is not None else "-"
+        )
+    else:
+        delta_html = (
+            "<p class=\"metric\">Skill value delta: <strong>not applicable</strong> "
+            "<span class=\"muted\">fixture/smoke 점수는 성능 lift로 해석하지 않는다.</span></p>"
+        )
     return (
         "<section><h2>Summary</h2>"
         + delta_html
@@ -87,19 +113,23 @@ def render_release_gates(summary: dict[str, Any]) -> str:
             + td(result.get("status", ""))
             + td(result.get("actual", ""))
             + td(result.get("expected", ""))
+            + (f"<td class=\"muted\">{html.escape(', '.join(result.get('cases', [])[:8]))}</td>" if result.get("cases") else "<td class=\"muted\">-</td>")
             + "</tr>"
         )
     if not rows:
         rows.append(
-            "<tr><td colspan=\"4\" class=\"muted\">"
+            "<tr><td colspan=\"5\" class=\"muted\">"
             + html.escape(release_status.get("message", "No release gate result"))
             + "</td></tr>"
         )
+    message = release_status.get("message", "")
+    message_html = f"<p class=\"muted\">{html.escape(message)}</p>" if message else ""
     return (
         "<section><h2>Release Gates</h2>"
         f"<p class=\"metric\">Status: <strong>{html.escape(str(release_status.get('status', '-')))}</strong> "
         f"<span class=\"muted\">mode={html.escape(str(release_status.get('mode', '-')))}</span></p>"
-        "<table><thead><tr><th>Gate</th><th>Status</th><th>Actual</th><th>Expected</th></tr></thead><tbody>"
+        + message_html
+        + "<table><thead><tr><th>Gate</th><th>Status</th><th>Actual</th><th>Expected</th><th>Cases</th></tr></thead><tbody>"
         + "".join(rows)
         + "</tbody></table></section>"
     )
@@ -248,13 +278,17 @@ def render_report(run_dir: Path, suite: str | None = None, case_id: str | None =
             "    .good { background: #dcfce7; color: #166534; }",
             "    .warn { background: #fef3c7; color: #92400e; }",
             "    .bad { background: #fee2e2; color: #991b1b; }",
+            "    .notice { border: 1px solid #d1d5db; padding: 12px 14px; border-radius: 6px; }",
+            "    .notice.fixture { background: #fff7ed; border-color: #fed7aa; }",
+            "    .notice.live { background: #ecfdf5; border-color: #a7f3d0; }",
             "  </style>",
             "</head>",
             "<body>",
             "  <main>",
             "    <h1>dddjango Purpose-Fit Evaluation</h1>",
             f"    <p class=\"muted\">Run: {html.escape(run_dir.name)} / Mode: {html.escape(str(metadata.get('mode', '-')))}</p>",
-            render_summary(summary),
+            render_mode_notice(metadata, summary),
+            render_summary(summary, metadata),
             render_release_gates(summary),
             render_variant_table(run_dir, cases, score_map),
             render_dimension_table(score_map),

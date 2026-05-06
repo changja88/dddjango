@@ -242,6 +242,7 @@
         "router에서 상태 변경"
       ],
       "critical_gates": [
+        "db_consistency_required",
         "no_false_execution",
         "korean_first"
       ]
@@ -332,6 +333,7 @@
         "중복 요청은 무시해도 된다"
       ],
       "critical_gates": [
+        "db_consistency_required",
         "no_false_execution",
         "korean_first"
       ]
