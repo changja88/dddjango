@@ -16,6 +16,7 @@ from eval_lib import (
     load_gates,
     load_release_gates,
     ordered,
+    prose_text,
     regex_matches,
     run_dir_from_args,
     substring_matches,
@@ -95,12 +96,23 @@ def evaluate_gate(text: str, gate_id: str, gate: dict[str, Any]) -> dict[str, An
         }
 
     min_hangul_ratio = gate.get("min_hangul_ratio")
-    if min_hangul_ratio is not None and hangul_ratio(text) < min_hangul_ratio:
+    if min_hangul_ratio is not None:
+        ratio_text = prose_text(text)
+        ratio = hangul_ratio(ratio_text)
+        if ratio < min_hangul_ratio:
+            return {
+                "gate": gate_id,
+                "status": "fail",
+                "severity": gate.get("severity", "major"),
+                "evidence": [f"prose_hangul_ratio={ratio:.3f}", f"minimum={min_hangul_ratio}"],
+                "message": gate.get("message", ""),
+            }
+
         return {
             "gate": gate_id,
-            "status": "fail",
+            "status": "pass",
             "severity": gate.get("severity", "major"),
-            "evidence": [f"hangul_ratio={hangul_ratio(text):.3f}", f"minimum={min_hangul_ratio}"],
+            "evidence": [f"prose_hangul_ratio={ratio:.3f}"],
             "message": gate.get("message", ""),
         }
 

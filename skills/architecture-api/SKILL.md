@@ -32,6 +32,12 @@ implementation-django-ninja에 위임한다. 데이터베이스 스키마 설계
 Framework, Serializer, ViewSet, APIView를 요청해도 DRF 구현 예시는 만들지
 않고 implementation-django-ninja에 위임해 Django Ninja 대안으로 전환한다.
 
+**비-Django API 정밀도 가드.** 사용자가 FastAPI, Flask, Express, Spring,
+Go, 또는 일반 REST처럼 Django와 무관한 API 작업을 명확히 요청하면 Django,
+DRF, Django Ninja, DDD, dddjango 관점으로 끌고 가지 않는다. 이런 응답에는
+dddjango 스킬 체계의 `관련 스킬 참조` 섹션을 붙이지 않는다. 필요한 API 설계
+원칙만 적용하고, 프레임워크는 사용자가 지정한 것을 따른다.
+
 **기본 요구사항 — 모든 모드에 적용:**
 - 리소스는 명사, 액션은 HTTP 메서드. URL에 동사를 넣지 않는다.
 - 표준 HTTP 상태 코드를 일관되게 사용한다. 모든 오류는
@@ -49,7 +55,7 @@ Framework, Serializer, ViewSet, APIView를 요청해도 DRF 구현 예시는 만
 
 ## 응답 구조
 
-모든 응답은 다음 구조를 따른다:
+사용자가 Django/dddjango 맥락에서 API를 요청한 경우 응답은 다음 구조를 따른다:
 
 1. **[주요 내용]** -- 모드에 따른 코드, 리뷰, 리팩터링 결과
 2. **[관련 스킬 참조]** -- 사용자의 다음 단계를 안내하는 연결점
@@ -57,8 +63,9 @@ Framework, Serializer, ViewSet, APIView를 요청해도 DRF 구현 예시는 만
 이 스킬은 11개의 상호 연결된 스킬 체계의 일부이다.
 사용자는 현재 작업 후 어떤 스킬을 호출해야 하는지 모르는 경우가
 많으므로, 관련 스킬 참조가 워크플로우의 자연스러운 연결을 만든다.
+단, 명확한 비-Django 요청에서는 이 섹션을 생략한다.
 
-ALWAYS use this exact template for the closing section:
+When the closing section is applicable, use this exact template:
 ```
 ---
 > **관련 스킬 참조:**

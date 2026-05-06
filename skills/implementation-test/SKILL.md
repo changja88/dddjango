@@ -26,6 +26,12 @@ TDD 방법론(Red-Green-Refactor)은 implementation-tdd를 참조한다.
 Python 특화 컨벤션(타입 힌트, dataclasses 등)은 implementation-python을 참조한다.
 Django 특화 테스트 컨벤션(TestCase, pytest-django)은 implementation-django를 참조한다.
 
+**비-Django 테스트 정밀도 가드.** 사용자가 FastAPI, 일반 Python, CLI,
+라이브러리 테스트처럼 Django와 무관한 테스트를 명확히 요청하면 Django,
+DDD, dddjango, pytest-django, Django settings 구조로 끌고 가지 않는다. 이런
+응답에는 dddjango 스킬 체계의 `관련 스킬 참조` 섹션을 붙이지 않는다. 필요한
+경우 pytest, TestClient, fixture 등 해당 프레임워크에 맞는 테스트만 제시한다.
+
 ## 세 가지 핵심 원칙
 1. 모든 테스트는 명확한 Arrange-Act-Assert 구조를 통해 하나의 동작을 검증한다.
 2. 모든 테스트는 독립적이다 -- 테스트 간 공유 가변 상태가 없어야 한다.
@@ -35,7 +41,7 @@ Django 특화 테스트 컨벤션(TestCase, pytest-django)은 implementation-dja
 
 ## 응답 구조
 
-모든 응답은 다음 구조를 따른다:
+사용자가 Django/dddjango 맥락에서 테스트를 요청한 경우 응답은 다음 구조를 따른다:
 
 1. **[주요 내용]** -- 모드에 따른 코드, 리뷰, 리팩터링 결과
 2. **[관련 스킬 참조]** -- 사용자의 다음 단계를 안내하는 연결점
@@ -43,8 +49,9 @@ Django 특화 테스트 컨벤션(TestCase, pytest-django)은 implementation-dja
 이 스킬은 11개의 상호 연결된 스킬 체계의 일부이다.
 사용자는 현재 작업 후 어떤 스킬을 호출해야 하는지 모르는 경우가
 많으므로, 관련 스킬 참조가 워크플로우의 자연스러운 연결을 만든다.
+단, 명확한 비-Django 요청에서는 이 섹션을 생략한다.
 
-ALWAYS use this exact template for the closing section:
+When the closing section is applicable, use this exact template:
 ```
 ---
 > **관련 스킬 참조:**

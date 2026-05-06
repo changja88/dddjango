@@ -150,6 +150,9 @@ class PurposeFitScoringTests(unittest.TestCase):
         text = "\n".join(
             [
                 "한국어",
+                "Use Django Ninja Router and Schema for this endpoint.",
+                "Return a Problem Details response for validation errors.",
+                "Explain the implementation steps and test commands.",
                 "from ninja import Router, Schema",
                 "router = Router()",
                 "class OrderIn(Schema):",
@@ -162,6 +165,28 @@ class PurposeFitScoringTests(unittest.TestCase):
         failed_gates = {result["gate"] for result in score["gate_results"] if result["status"] == "fail"}
 
         self.assertIn("korean_first", failed_gates)
+
+    def test_korean_first_ignores_fenced_code_blocks(self):
+        text = "\n".join(
+            [
+                "이 프로젝트 정책상 DRF는 사용하지 않고 Django Ninja로 작성합니다.",
+                "아래 코드는 주문 생성 API의 예시이며, 테스트는 실행하지 않았습니다.",
+                "```python",
+                "from ninja import Router, Schema",
+                "router = Router()",
+                "class OrderIn(Schema):",
+                "    pass",
+                "@router.post('/orders', response={201: OrderOut, 400: ProblemDetail})",
+                "def create_order(request, payload: OrderIn):",
+                "    return 201, {}",
+                "```",
+            ]
+        )
+
+        score = score_outputs.score_text(self.case, "with-dddjango", text)
+        failed_gates = {result["gate"] for result in score["gate_results"] if result["status"] == "fail"}
+
+        self.assertNotIn("korean_first", failed_gates)
 
 
 class PurposeFitReportTests(unittest.TestCase):

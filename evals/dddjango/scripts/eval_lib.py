@@ -124,6 +124,13 @@ def hangul_ratio(text: str) -> float:
     return len(hangul) / len(letters)
 
 
+def prose_text(text: str) -> str:
+    """Return markdown prose with fenced code blocks removed."""
+    without_fences = re.sub(r"```[\s\S]*?```", " ", text)
+    without_inline_code = re.sub(r"`[^`\n]+`", " ", without_fences)
+    return without_inline_code
+
+
 def regex_matches(patterns: list[str], text: str) -> list[str]:
     matches: list[str] = []
     for pattern in patterns:

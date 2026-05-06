@@ -65,13 +65,14 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 - [x] 누락된 output을 실패 score로 생성한다.
 - [x] release gate evaluator를 구현한다.
 - [x] fixture mode에서는 release gate를 실행하지 않거나 항상 "not applicable"로 표시한다.
-- [ ] live mode에서 release gate 실패 시 non-zero exit를 낸다.
+- [x] live mode에서 release gate 실패 시 non-zero exit를 낸다.
 
 ### Phase 3.5: 평가 항목 캘리브레이션
 
 - [x] 좋은 DRF 거부 답변이 DRF gate 오탐 없이 통과한다.
 - [x] 실제 DRF 코드 생성 답변은 실패한다.
 - [x] 한국어 TDD 표현도 TDD gate를 통과한다.
+- [x] 코드 블록이 긴 답변에서도 `korean_first`는 자연어 설명 기준으로 평가한다.
 - [x] FastAPI 요청에 dddjango 오염이 없으면 통과한다.
 - [x] FastAPI 요청에 Django Ninja를 섞으면 실패한다.
 - [x] Problem Details reference maximum 샘플이 통과한다.
@@ -93,13 +94,6 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 
 ## 다음 작업
 
-다음 구현은 Phase 1부터 진행한다. 즉, 케이스를 더 많이 만들기 전에 평가 데이터
-모델과 채점 구조를 먼저 고친다.
-
-권장 작업 순서:
-
-1. scoring 결과에 `score_kind`를 추가한다: `signal`, `structural`, `manual_required`.
-2. `required_patterns`를 채점에 반영하되, hard fail이 아니라 signal로 둔다.
-3. missing output 실패 처리를 구현한다.
-4. DRF/TDD/Korean gate 오탐을 먼저 줄인다.
-5. release gate evaluator를 live 전용으로 추가한다.
+현재 평가 hardening의 1차 구현은 완료되었다. 다음 작업은 최신 스킬 변경을
+릴리즈한 뒤 전체 live 평가를 다시 실행하고, 남은 실패 케이스가 있으면 해당
+스킬 지침을 좁혀 개선하는 것이다.
