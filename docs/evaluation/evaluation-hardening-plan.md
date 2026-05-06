@@ -124,14 +124,28 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 
 - [ ] DRF migration 평가에서 before 코드 인용과 after 코드 생성을 더 정교하게
   구분한다.
-- [ ] Django Ninja `FilterSchema`, auth, pagination, TestClient 평가 케이스를
+- [x] Django Ninja `FilterSchema`, auth, pagination, TestClient 평가 케이스를
   reference-maximum suite에 추가한다.
-- [ ] Django web/template의 `json_script`, CSRF, static/SRI, `LoginRequiredMixin`
+- [x] Django web/template의 `json_script`, CSRF, static/SRI, `LoginRequiredMixin`
   평가 케이스를 추가한다.
-- [ ] implementation-test의 fixture, factory, time mocking, HTTP mocking 평가
-  케이스를 추가한다.
+- [x] implementation-test의 fixture, factory, time mocking 평가 케이스를 추가한다.
+- [x] Flask 비-Django 요청 오염 방지 케이스를 추가한다.
 - [ ] `case -> expected skill -> reference` 매트릭스를 추가해 reference 부족,
   skill 연결 약함, 평가 과요구를 더 빠르게 분류한다.
+
+### P1 완료
+
+- [x] `m03-ninja-list-filter-pagination`: FilterSchema, 정렬 allow-list, 인증,
+  items/meta pagination, TestClient를 검증한다.
+- [x] `m04-db-transaction-idempotency`: transaction boundary, pessimistic/optimistic
+  locking, Idempotency-Key, UniqueConstraint를 검증한다.
+- [x] `m05-tdd-edge-cases`: 정상/경계/실패/중복/시간 의존 TDD와 fixture/factory
+  사용을 검증한다.
+- [x] `t05-django-template-view`: json_script, csrf, static, LoginRequiredMixin
+  기준을 추가했다.
+- [x] `t06-flask-no-contamination`: Flask 요청에서 dddjango/Django Ninja 오염이
+  없는지 검증한다.
+- [x] 새 P1 케이스의 calibration 샘플을 추가했다.
 
 현재 단계에서는 배포 전이므로 full live 평가는 보류한다. 최신 수정이 설치된
 플러그인에 반영되기 전까지 live 결과는 이전 태그 기준 결과로 해석해야 한다.

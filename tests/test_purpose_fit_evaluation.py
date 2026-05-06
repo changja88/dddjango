@@ -47,8 +47,12 @@ class PurposeFitConfigTests(unittest.TestCase):
         self.assertIn("r01-fat-model-review", case_ids)
         self.assertIn("t02-fastapi-no-contamination", case_ids)
         self.assertIn("t05-django-template-view", case_ids)
+        self.assertIn("t06-flask-no-contamination", case_ids)
         self.assertIn("s01-order-feature-role-map", case_ids)
         self.assertIn("m01-ninja-error-standard", case_ids)
+        self.assertIn("m03-ninja-list-filter-pagination", case_ids)
+        self.assertIn("m04-db-transaction-idempotency", case_ids)
+        self.assertIn("m05-tdd-edge-cases", case_ids)
 
     def test_core_policy_does_not_require_single_implementation_preference(self):
         cases = {case["id"]: case for case in load_cases("core-policy")}
@@ -346,7 +350,7 @@ class PurposeFitReportTests(unittest.TestCase):
         report = run_calibration.run_calibration()
 
         self.assertEqual(report["status"], "pass")
-        self.assertGreaterEqual(report["sample_count"], 6)
+        self.assertGreaterEqual(report["sample_count"], 9)
 
     def cleanup_run(self, run_dir):
         for path in sorted(run_dir.rglob("*"), reverse=True):

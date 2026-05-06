@@ -208,6 +208,10 @@
         "template",
         "view",
         "context",
+        "json_script",
+        "csrf",
+        "static",
+        "LoginRequiredMixin",
         "테스트"
       ],
       "dimension_patterns": {
@@ -218,7 +222,11 @@
         "clean_implementation": [
           "view",
           "context",
-          "template"
+          "template",
+          "json_script",
+          "csrf",
+          "static",
+          "LoginRequiredMixin"
         ],
         "usability": [
           "파일",
@@ -234,6 +242,45 @@
         "from ninja import",
         "Router(",
         "Django Ninja API"
+      ],
+      "forbidden_is_critical": true,
+      "critical_gates": [
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "t06-flask-no-contamination",
+      "phase": "trigger-usability",
+      "title": "Flask 요청에서 dddjango 오염 방지",
+      "prompt": "Flask로 주문 생성 엔드포인트를 만들어줘.",
+      "required_dimensions": [
+        "trigger_accuracy",
+        "usability"
+      ],
+      "baseline": "baselines/t06-flask-no-contamination.md",
+      "expected_skills": [],
+      "required_patterns": [
+        "Flask"
+      ],
+      "dimension_patterns": {
+        "trigger_accuracy": [
+          "Flask"
+        ],
+        "usability": [
+          "검증",
+          "테스트"
+        ]
+      },
+      "forbidden_patterns": [
+        "Django Ninja",
+        "dddjango",
+        "관련 스킬 참조"
+      ],
+      "critical_forbidden_patterns": [
+        "from ninja import",
+        "Django Ninja Router",
+        "관련 스킬 참조"
       ],
       "forbidden_is_critical": true,
       "critical_gates": [

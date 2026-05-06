@@ -64,6 +64,35 @@
       "path": "samples/m01-good-problem-details.md",
       "expected_gate_status": "pass",
       "min_score": 80
+    },
+    {
+      "id": "cal-m04-good-db-idempotency",
+      "case_id": "m04-db-transaction-idempotency",
+      "variant": "with-dddjango",
+      "path": "samples/m04-good-db-idempotency.md",
+      "expected_gate_status": "pass",
+      "min_score": 80
+    },
+    {
+      "id": "cal-m05-good-tdd-edge-cases",
+      "case_id": "m05-tdd-edge-cases",
+      "variant": "with-dddjango",
+      "path": "samples/m05-good-tdd-edge-cases.md",
+      "expected_gate_status": "pass",
+      "min_score": 75,
+      "required_pass_gates": [
+        "tdd_red_first",
+        "no_false_execution",
+        "korean_first"
+      ]
+    },
+    {
+      "id": "cal-t06-good-flask",
+      "case_id": "t06-flask-no-contamination",
+      "variant": "with-dddjango",
+      "path": "samples/t06-good-flask.md",
+      "expected_gate_status": "pass",
+      "min_score": 70
     }
   ]
 }
