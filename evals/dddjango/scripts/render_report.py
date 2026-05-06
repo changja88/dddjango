@@ -13,6 +13,7 @@ from eval_lib import (
     VARIANTS,
     load_cases,
     load_dimensions,
+    load_reference_matrix,
     markdown_to_html,
     read_json,
     run_dir_from_args,
@@ -190,6 +191,33 @@ def render_gate_table(score_map: dict[tuple[str, str], dict[str, Any]]) -> str:
     )
 
 
+def render_reference_matrix(cases: list[dict[str, Any]]) -> str:
+    matrix = load_reference_matrix().get("cases", {})
+    rows = []
+    for case in cases:
+        entry = matrix.get(case["id"], {})
+        references = entry.get("reference_paths", [])
+        guards = entry.get("guard_paths", [])
+        ref_text = "<br>".join(html.escape(path) for path in references) if references else "<span class=\"muted\">-</span>"
+        guard_text = "<br>".join(html.escape(path) for path in guards) if guards else "<span class=\"muted\">-</span>"
+        rows.append(
+            "<tr>"
+            + td(case["id"])
+            + td(", ".join(entry.get("expected_skills", [])))
+            + f"<td>{ref_text}</td>"
+            + f"<td>{guard_text}</td>"
+            + td(entry.get("diagnostic_use", ""))
+            + "</tr>"
+        )
+
+    return (
+        "<section><h2>Reference Matrix</h2>"
+        "<table><thead><tr><th>Case</th><th>Expected skills</th><th>References</th><th>Guard paths</th><th>Diagnostic use</th></tr></thead><tbody>"
+        + "".join(rows)
+        + "</tbody></table></section>"
+    )
+
+
 def render_report(run_dir: Path, suite: str | None = None, case_id: str | None = None) -> Path:
     cases = load_cases(suite)
     if case_id:
@@ -231,6 +259,7 @@ def render_report(run_dir: Path, suite: str | None = None, case_id: str | None =
             render_variant_table(run_dir, cases, score_map),
             render_dimension_table(score_map),
             render_gate_table(score_map),
+            render_reference_matrix(cases),
             "  </main>",
             "</body>",
             "</html>",

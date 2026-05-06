@@ -38,6 +38,10 @@ def load_release_gates() -> dict[str, dict[str, Any]]:
     return read_json(EVAL_ROOT / "rubrics/release-gates.json")
 
 
+def load_reference_matrix() -> dict[str, Any]:
+    return read_json(EVAL_ROOT / "reference-matrix.json")
+
+
 def load_case_suites() -> list[dict[str, Any]]:
     return [read_json(path) for path in sorted((EVAL_ROOT / "cases").glob("*.json"))]
 

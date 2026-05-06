@@ -16,7 +16,7 @@ import run_evaluation  # noqa: E402
 import run_calibration  # noqa: E402
 import score_outputs  # noqa: E402
 import validate_eval_config  # noqa: E402
-from eval_lib import latest_run_dir, load_cases, load_dimensions, load_gates, read_json  # noqa: E402
+from eval_lib import latest_run_dir, load_cases, load_dimensions, load_gates, load_reference_matrix, read_json  # noqa: E402
 
 
 class PurposeFitConfigTests(unittest.TestCase):
@@ -64,6 +64,19 @@ class PurposeFitConfigTests(unittest.TestCase):
             for group in cases["c05-inventory-reservation"]["alternative_pattern_groups"]
         }
         self.assertIn("concurrency_control", group_labels)
+
+    def test_reference_matrix_covers_all_cases(self):
+        cases = {case["id"]: case for case in load_cases()}
+        matrix = load_reference_matrix()["cases"]
+
+        self.assertEqual(set(matrix), set(cases))
+        for case_id, case in cases.items():
+            with self.subTest(case=case_id):
+                self.assertEqual(matrix[case_id]["expected_skills"], case["expected_skills"])
+                for path in matrix[case_id].get("reference_paths", []):
+                    self.assertTrue((ROOT / path).exists())
+                for path in matrix[case_id].get("guard_paths", []):
+                    self.assertTrue((ROOT / path).exists())
 
 
 class PurposeFitScoringTests(unittest.TestCase):

@@ -130,7 +130,7 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
   평가 케이스를 추가한다.
 - [x] implementation-test의 fixture, factory, time mocking 평가 케이스를 추가한다.
 - [x] Flask 비-Django 요청 오염 방지 케이스를 추가한다.
-- [ ] `case -> expected skill -> reference` 매트릭스를 추가해 reference 부족,
+- [x] `case -> expected skill -> reference` 매트릭스를 추가해 reference 부족,
   skill 연결 약함, 평가 과요구를 더 빠르게 분류한다.
 
 ### P1 완료
@@ -146,6 +146,7 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 - [x] `t06-flask-no-contamination`: Flask 요청에서 dddjango/Django Ninja 오염이
   없는지 검증한다.
 - [x] 새 P1 케이스의 calibration 샘플을 추가했다.
+- [x] `reference-matrix.json`을 추가하고, 설정 검증과 HTML 리포트에 연결했다.
 
 현재 단계에서는 배포 전이므로 full live 평가는 보류한다. 최신 수정이 설치된
 플러그인에 반영되기 전까지 live 결과는 이전 태그 기준 결과로 해석해야 한다.

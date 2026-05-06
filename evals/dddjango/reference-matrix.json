@@ -1,0 +1,267 @@
+{
+  "description": "Maps each purpose-fit case to the dddjango skills and reference files it is intended to validate.",
+  "cases": {
+    "c01-drf-order-api": {
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api"
+      ],
+      "reference_paths": [
+        "skills/implementation-django-ninja/SKILL.md",
+        "skills/implementation-django-ninja/references/routing.md",
+        "skills/implementation-django-ninja/references/schema-validation.md",
+        "skills/architecture-api/references/status-codes-errors.md"
+      ],
+      "diagnostic_use": "If DRF appears in new code, treat as skill policy failure. If Router/Schema/response mapping is missing, inspect Django Ninja routing and schema references."
+    },
+    "c02-ninja-order-create": {
+      "expected_skills": [
+        "architecture-ddd",
+        "architecture-db",
+        "architecture-api",
+        "implementation-django-ninja"
+      ],
+      "reference_paths": [
+        "skills/architecture-ddd/references/aggregates.md",
+        "skills/architecture-ddd/references/repositories-services.md",
+        "skills/architecture-db/references/transactions.md",
+        "skills/architecture-api/references/rate-limit-idempotency.md",
+        "skills/implementation-django-ninja/references/routing.md"
+      ],
+      "diagnostic_use": "If idempotency is missing, inspect architecture-api linkage. If domain logic stays in router, inspect DDD and service boundary references."
+    },
+    "c03-tdd-coupon-policy": {
+      "expected_skills": [
+        "implementation-tdd",
+        "implementation-test",
+        "architecture-ddd"
+      ],
+      "reference_paths": [
+        "skills/implementation-tdd/references/red-green-refactor.md",
+        "skills/implementation-tdd/references/testing-patterns.md",
+        "skills/implementation-test/references/pytest-fixtures.md",
+        "skills/architecture-ddd/references/value-objects-entities.md"
+      ],
+      "diagnostic_use": "If RED/GREEN/REFACTOR or edge cases are missing, inspect TDD references before changing scoring."
+    },
+    "c04-order-state-domain": {
+      "expected_skills": [
+        "architecture-ddd",
+        "architecture-db",
+        "implementation-python"
+      ],
+      "reference_paths": [
+        "skills/architecture-ddd/references/aggregates.md",
+        "skills/architecture-ddd/references/domain-events.md",
+        "skills/architecture-ddd/references/value-objects-entities.md",
+        "skills/architecture-db/references/transactions.md",
+        "skills/implementation-python/references/type-hints.md"
+      ],
+      "diagnostic_use": "If state rules are procedural or anemic, inspect aggregate, invariant, and domain event references."
+    },
+    "c05-inventory-reservation": {
+      "expected_skills": [
+        "architecture-db",
+        "architecture-api",
+        "implementation-django",
+        "architecture-ddd",
+        "implementation-tdd"
+      ],
+      "reference_paths": [
+        "skills/architecture-db/references/transactions.md",
+        "skills/architecture-api/references/rate-limit-idempotency.md",
+        "skills/implementation-django/references/performance-caching.md",
+        "skills/implementation-tdd/references/testing-patterns.md"
+      ],
+      "diagnostic_use": "If concurrency or duplicate handling is weak, inspect DB transaction and idempotency references first."
+    },
+    "r01-fat-model-review": {
+      "expected_skills": [
+        "implementation-django",
+        "implementation-cleancode",
+        "architecture-ddd"
+      ],
+      "reference_paths": [
+        "skills/implementation-django/references/service-layer.md",
+        "skills/implementation-django/references/model-design.md",
+        "skills/implementation-django/references/views.md",
+        "skills/implementation-cleancode/references/refactoring.md",
+        "skills/architecture-ddd/references/architecture.md"
+      ],
+      "diagnostic_use": "If review is generic, inspect whether the prompt code exposes enough responsibility and boundary problems."
+    },
+    "r02-drf-viewset-migration": {
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api",
+        "implementation-test"
+      ],
+      "reference_paths": [
+        "skills/implementation-django-ninja/SKILL.md",
+        "skills/implementation-django-ninja/references/routing.md",
+        "skills/implementation-django-ninja/references/schema-validation.md",
+        "skills/implementation-django-ninja/references/testing.md",
+        "skills/implementation-test/references/test-strategy.md"
+      ],
+      "diagnostic_use": "If before-code citation triggers DRF failure, refine migration scoring before changing the skill."
+    },
+    "s01-order-feature-role-map": {
+      "expected_skills": [
+        "workflow-dddjango-subagents",
+        "architecture-ddd",
+        "architecture-db",
+        "implementation-django-ninja",
+        "implementation-tdd"
+      ],
+      "reference_paths": [
+        "skills/workflow-dddjango-subagents/SKILL.md",
+        "skills/workflow-dddjango-subagents/references/role-map.md",
+        "skills/workflow-dddjango-subagents/references/handoff-contract.md",
+        "skills/workflow-dddjango-subagents/references/integration-checklist.md",
+        "skills/workflow-dddjango-subagents/references/delegation-rules.md"
+      ],
+      "diagnostic_use": "If the output claims subagents were executed, treat as false execution. If role split is vague, inspect workflow references."
+    },
+    "t01-korean-django-api": {
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api"
+      ],
+      "reference_paths": [
+        "skills/implementation-django-ninja/references/routing.md",
+        "skills/implementation-django-ninja/references/schema-validation.md",
+        "skills/architecture-api/references/status-codes-errors.md"
+      ],
+      "diagnostic_use": "If Django API does not become Django Ninja, inspect trigger wording and Ninja skill metadata."
+    },
+    "t02-fastapi-no-contamination": {
+      "expected_skills": [],
+      "reference_paths": [],
+      "guard_paths": [
+        "skills/architecture-api/SKILL.md",
+        "skills/implementation-python/SKILL.md",
+        "skills/implementation-test/SKILL.md"
+      ],
+      "diagnostic_use": "If dddjango language appears, inspect non-Django trigger guards rather than Django references."
+    },
+    "t03-python-refactor-no-django": {
+      "expected_skills": [
+        "implementation-python",
+        "implementation-cleancode"
+      ],
+      "reference_paths": [
+        "skills/implementation-python/references/functions-idioms.md",
+        "skills/implementation-python/references/type-hints.md",
+        "skills/implementation-cleancode/references/refactoring.md",
+        "skills/implementation-cleancode/references/functions.md"
+      ],
+      "guard_paths": [
+        "skills/implementation-python/SKILL.md",
+        "skills/implementation-cleancode/SKILL.md"
+      ],
+      "diagnostic_use": "If Django or DDD appears, inspect non-Django guard text in Python and clean-code skills."
+    },
+    "t04-sql-index-no-django": {
+      "expected_skills": [
+        "architecture-db"
+      ],
+      "reference_paths": [
+        "skills/architecture-db/references/index-and-performance.md",
+        "skills/architecture-db/references/query-optimization.md",
+        "skills/architecture-db/references/modeling.md"
+      ],
+      "diagnostic_use": "If Django code appears, inspect DB skill trigger scope and trigger-usability forbidden patterns."
+    },
+    "t05-django-template-view": {
+      "expected_skills": [
+        "implementation-django-web",
+        "implementation-django"
+      ],
+      "reference_paths": [
+        "skills/implementation-django-web/SKILL.md",
+        "skills/implementation-django-web/references/template-architecture.md",
+        "skills/implementation-django-web/references/view-layer.md",
+        "skills/implementation-django-web/references/asset-management.md",
+        "skills/implementation-django/references/views.md"
+      ],
+      "diagnostic_use": "If API or Django Ninja appears, inspect trigger routing. If template security is missing, inspect Django web references."
+    },
+    "t06-flask-no-contamination": {
+      "expected_skills": [],
+      "reference_paths": [],
+      "guard_paths": [
+        "skills/architecture-api/SKILL.md",
+        "skills/implementation-python/SKILL.md",
+        "skills/implementation-test/SKILL.md"
+      ],
+      "diagnostic_use": "If dddjango or Django Ninja appears, inspect non-Django API guard paths."
+    },
+    "m01-ninja-error-standard": {
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api"
+      ],
+      "reference_paths": [
+        "skills/implementation-django-ninja/references/error-throttling.md",
+        "skills/implementation-django-ninja/references/response-pagination.md",
+        "skills/architecture-api/references/status-codes-errors.md"
+      ],
+      "diagnostic_use": "If plain error envelopes appear, inspect Problem Details reference consistency."
+    },
+    "m02-ddd-aggregate-boundary": {
+      "expected_skills": [
+        "architecture-ddd"
+      ],
+      "reference_paths": [
+        "skills/architecture-ddd/references/aggregates.md",
+        "skills/architecture-ddd/references/bounded-context.md",
+        "skills/architecture-ddd/references/domain-events.md"
+      ],
+      "diagnostic_use": "If aggregate advice is generic, inspect Vernon rules and ID/reference guidance."
+    },
+    "m03-ninja-list-filter-pagination": {
+      "expected_skills": [
+        "implementation-django-ninja",
+        "architecture-api",
+        "implementation-test"
+      ],
+      "reference_paths": [
+        "skills/implementation-django-ninja/references/input-filtering.md",
+        "skills/implementation-django-ninja/references/response-pagination.md",
+        "skills/implementation-django-ninja/references/testing.md",
+        "skills/implementation-django-ninja/references/authentication.md",
+        "skills/architecture-api/references/pagination.md",
+        "skills/architecture-api/references/auth.md"
+      ],
+      "diagnostic_use": "If list API lacks FilterSchema, pagination envelope, or TestClient tests, inspect Ninja references before changing gates."
+    },
+    "m04-db-transaction-idempotency": {
+      "expected_skills": [
+        "architecture-db",
+        "architecture-api",
+        "implementation-django"
+      ],
+      "reference_paths": [
+        "skills/architecture-db/references/transactions.md",
+        "skills/architecture-api/references/rate-limit-idempotency.md",
+        "skills/implementation-django/references/migrations.md",
+        "skills/implementation-django/references/postgres-specific.md"
+      ],
+      "diagnostic_use": "If locking/idempotency details are missing, inspect DB transaction reference and expected skill linkage."
+    },
+    "m05-tdd-edge-cases": {
+      "expected_skills": [
+        "implementation-tdd",
+        "implementation-test"
+      ],
+      "reference_paths": [
+        "skills/implementation-tdd/references/red-green-refactor.md",
+        "skills/implementation-tdd/references/testing-patterns.md",
+        "skills/implementation-test/references/pytest-fixtures.md",
+        "skills/implementation-test/references/test-data-factory.md",
+        "skills/implementation-test/references/time-mocking.md"
+      ],
+      "diagnostic_use": "If edge cases or time control are missing, inspect TDD/test references before adjusting prompt difficulty."
+    }
+  }
+}

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from eval_lib import EVAL_ROOT, load_case_suites, load_dimensions, load_gates, read_json
+from eval_lib import EVAL_ROOT, ROOT, load_case_suites, load_dimensions, load_gates, load_reference_matrix, read_json
 
 
 class ConfigError(Exception):
@@ -89,6 +89,7 @@ def validate_all() -> None:
     require(bool(suite_files), "cases/*.json must exist", errors)
 
     seen_ids: set[str] = set()
+    case_by_id: dict[str, dict[str, Any]] = {}
     for suite_path in suite_files:
         suite = read_json(suite_path)
         require("suite" in suite, f"{suite_path.name}: missing suite", errors)
@@ -99,13 +100,64 @@ def validate_all() -> None:
             require(case_id not in seen_ids, f"duplicate case id: {case_id}", errors)
             if case_id:
                 seen_ids.add(case_id)
+                case_by_id[case_id] = case
             errors.extend(validate_case(case, dimensions=dimensions, gates=gates))
 
     read_json(EVAL_ROOT / "rubrics/release-gates.json")
     read_json(EVAL_ROOT / "rubrics/score-schema.json")
+    errors.extend(validate_reference_matrix(case_by_id))
 
     if errors:
         raise ConfigError("\n".join(f"- {error}" for error in errors))
+
+
+def validate_reference_matrix(case_by_id: dict[str, dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    matrix = load_reference_matrix()
+    entries = matrix.get("cases", {})
+    require(isinstance(entries, dict), "reference-matrix.json: cases must be an object", errors)
+    if not isinstance(entries, dict):
+        return errors
+
+    matrix_ids = set(entries)
+    case_ids = set(case_by_id)
+    for case_id in sorted(case_ids - matrix_ids):
+        errors.append(f"reference-matrix.json: missing case {case_id}")
+    for case_id in sorted(matrix_ids - case_ids):
+        errors.append(f"reference-matrix.json: unknown case {case_id}")
+
+    for case_id, entry in entries.items():
+        if not isinstance(entry, dict):
+            errors.append(f"reference-matrix.json: {case_id} entry must be an object")
+            continue
+
+        expected_skills = entry.get("expected_skills")
+        require(isinstance(expected_skills, list), f"reference-matrix.json: {case_id} expected_skills must be a list", errors)
+        if case_id in case_by_id and isinstance(expected_skills, list):
+            require(
+                expected_skills == case_by_id[case_id].get("expected_skills", []),
+                f"reference-matrix.json: {case_id} expected_skills must match case definition",
+                errors,
+            )
+
+        reference_paths = entry.get("reference_paths", [])
+        guard_paths = entry.get("guard_paths", [])
+        for field_name, paths in [("reference_paths", reference_paths), ("guard_paths", guard_paths)]:
+            require(isinstance(paths, list), f"reference-matrix.json: {case_id} {field_name} must be a list", errors)
+            if not isinstance(paths, list):
+                continue
+            for path in paths:
+                require(isinstance(path, str), f"reference-matrix.json: {case_id} {field_name} entries must be strings", errors)
+                if isinstance(path, str):
+                    require((ROOT / path).exists(), f"reference-matrix.json: {case_id} missing path {path}", errors)
+
+        require(
+            isinstance(entry.get("diagnostic_use"), str) and bool(entry.get("diagnostic_use", "").strip()),
+            f"reference-matrix.json: {case_id} diagnostic_use is required",
+            errors,
+        )
+
+    return errors
 
 
 def main() -> int:
