@@ -244,9 +244,18 @@ def dimension_scores(case: dict[str, Any], text: str, gate_results: list[dict[st
 
     for dimension in case.get("required_dimensions", []):
         patterns = dimension_patterns.get(dimension, [])
-        if patterns:
-            hits = substring_matches(patterns, text)
-            score = 100 * (len(hits) / len(patterns))
+        relevant_groups = [
+            group for group in case.get("alternative_pattern_groups", [])
+            if group.get("dimension") == dimension
+        ]
+        hits = substring_matches(patterns, text)
+        group_hits = [
+            group for group in relevant_groups
+            if substring_matches(group.get("patterns", []), text)
+        ]
+        denominator = len(patterns) + len(relevant_groups)
+        if denominator:
+            score = 100 * ((len(hits) + len(group_hits)) / denominator)
         else:
             score = 100
 
@@ -272,6 +281,17 @@ def weighted_total(scores: dict[str, int], dimensions: dict[str, Any]) -> int:
         total_weight += weight
         weighted += score * weight
     return clamp_score(weighted / total_weight)
+
+
+def has_critical_failure(score: dict[str, Any]) -> bool:
+    gate_results = score.get("gate_results", [])
+    if not gate_results:
+        return score.get("gate_status") == "fail"
+    return any(
+        result.get("status") == "fail"
+        and result.get("severity", "critical") == "critical"
+        for result in gate_results
+    )
 
 
 def score_text(case: dict[str, Any], variant: str, text: str) -> dict[str, Any]:
@@ -352,7 +372,12 @@ def missing_score(case: dict[str, Any], variant: str) -> dict[str, Any]:
     }
 
 
-def release_gate_status(summary: dict[str, Any], *, mode: str) -> dict[str, Any]:
+def release_gate_status(
+    summary: dict[str, Any],
+    *,
+    mode: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     release_gates = load_release_gates()
     if mode != "live":
         return {
@@ -362,40 +387,89 @@ def release_gate_status(summary: dict[str, Any], *, mode: str) -> dict[str, Any]
             "results": [],
         }
 
+    if metadata and not is_full_live_run(metadata):
+        return {
+            "status": "not_applicable",
+            "mode": mode,
+            "message": "부분 live run에는 release gate를 적용하지 않는다.",
+            "results": [],
+        }
+
     results: list[dict[str, Any]] = []
     by_variant = summary.get("by_variant", {})
-    critical_failures = len(by_variant.get("with-dddjango", {}).get("critical_failures", []))
-    max_failures = release_gates["critical_policy_failures"]["max_failures"]
-    results.append({
-        "gate": "critical_policy_failures",
-        "status": "pass" if critical_failures <= max_failures else "fail",
-        "actual": critical_failures,
-        "expected": f"<= {max_failures}",
-    })
+    scores = summary.get("scores", [])
 
-    with_average = by_variant.get("with-dddjango", {}).get("average")
-    min_average = release_gates["with_dddjango_average"]["minimum_average"]
-    results.append({
-        "gate": "with_dddjango_average",
-        "status": "pass" if with_average is not None and with_average >= min_average else "fail",
-        "actual": with_average,
-        "expected": f">= {min_average}",
-    })
+    for gate_id, gate in release_gates.items():
+        if "max_failures" in gate:
+            critical_failures = len(by_variant.get("with-dddjango", {}).get("critical_failures", []))
+            max_failures = gate["max_failures"]
+            results.append({
+                "gate": gate_id,
+                "status": "pass" if critical_failures <= max_failures else "fail",
+                "actual": critical_failures,
+                "expected": f"<= {max_failures}",
+            })
+            continue
 
-    delta = summary.get("skill_value_delta")
-    min_delta = release_gates["skill_value_delta"]["minimum_delta"]
-    results.append({
-        "gate": "skill_value_delta",
-        "status": "pass" if delta is not None and delta >= min_delta else "fail",
-        "actual": delta,
-        "expected": f">= {min_delta}",
-    })
+        if gate_id == "skill_value_delta":
+            delta = summary.get("skill_value_delta")
+            min_delta = gate["minimum_delta"]
+            results.append({
+                "gate": gate_id,
+                "status": "pass" if delta is not None and delta >= min_delta else "fail",
+                "actual": delta,
+                "expected": f">= {min_delta}",
+            })
+            continue
+
+        variant = gate.get("variant", "with-dddjango")
+        minimum = gate.get("minimum_average")
+        if "dimension" in gate:
+            actual = dimension_average(scores, variant=variant, dimensions=[gate["dimension"]])
+        elif "dimensions" in gate:
+            actual = dimension_average(scores, variant=variant, dimensions=gate["dimensions"])
+        else:
+            actual = by_variant.get(variant, {}).get("average")
+
+        results.append({
+            "gate": gate_id,
+            "status": "pass" if actual is not None and minimum is not None and actual >= minimum else "fail",
+            "actual": actual,
+            "expected": f">= {minimum}",
+        })
 
     return {
         "status": "pass" if all(result["status"] == "pass" for result in results) else "fail",
         "mode": mode,
         "results": results,
     }
+
+
+def is_full_live_run(metadata: dict[str, Any]) -> bool:
+    if metadata.get("suite") is not None or metadata.get("case_id") is not None:
+        return False
+    if tuple(metadata.get("variants", [])) != VARIANTS:
+        return False
+    return metadata.get("case_count") == len(load_cases())
+
+
+def dimension_average(
+    scores: list[dict[str, Any]],
+    *,
+    variant: str,
+    dimensions: list[str],
+) -> int | None:
+    values: list[int] = []
+    for score in scores:
+        if score.get("variant") != variant:
+            continue
+        dimension_scores = score.get("dimension_scores", {})
+        for dimension in dimensions:
+            if dimension in dimension_scores:
+                values.append(dimension_scores[dimension])
+    if not values:
+        return None
+    return clamp_score(sum(values) / len(values))
 
 
 def summarize(scores: list[dict[str, Any]], *, mode: str = "unknown") -> dict[str, Any]:
@@ -409,7 +483,7 @@ def summarize(scores: list[dict[str, Any]], *, mode: str = "unknown") -> dict[st
         failures = [
             {"case_id": item["case_id"], "rationale": item["rationale"]}
             for item in items
-            if item["gate_status"] == "fail"
+            if has_critical_failure(item)
         ]
         by_variant[variant] = {
             "average": clamp_score(average),
@@ -436,10 +510,12 @@ def score_run(run_dir: Path, suite: str | None = None, case_id: str | None = Non
         cases = [case for case in cases if case["id"] == case_id]
     metadata_path = run_dir / "metadata.json"
     mode = "unknown"
+    metadata: dict[str, Any] | None = None
     if metadata_path.exists():
         import json
 
-        mode = json.loads(metadata_path.read_text()).get("mode", "unknown")
+        metadata = json.loads(metadata_path.read_text())
+        mode = metadata.get("mode", "unknown")
     scores: list[dict[str, Any]] = []
     for case in cases:
         for variant in VARIANTS:
@@ -452,6 +528,7 @@ def score_run(run_dir: Path, suite: str | None = None, case_id: str | None = Non
             write_json(run_dir / "scores" / f"{case['id']}.{variant}.score.json", result)
 
     summary = summarize(scores, mode=mode)
+    summary["release_gate_status"] = release_gate_status(summary, mode=mode, metadata=metadata)
     write_json(run_dir / "scores/summary.json", summary)
     return summary
 

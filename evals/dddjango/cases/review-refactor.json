@@ -6,7 +6,7 @@
       "id": "r01-fat-model-review",
       "phase": "review-refactor",
       "title": "fat model/fat view 코드 리뷰",
-      "prompt": "아래 Django 코드가 fat model/fat view인지 dddjango 기준으로 리뷰하고 개선 방향을 제시해줘.",
+      "prompt": "아래 Django 코드가 fat model/fat view인지 dddjango 기준으로 리뷰하고 개선 방향을 제시해줘.\n\n```python\n# orders/models.py\nclass Order(models.Model):\n    status = models.CharField(max_length=20, default=\"draft\")\n    total_amount = models.IntegerField(default=0)\n\n    def submit(self, coupon_code=None):\n        if self.status != \"draft\":\n            raise ValueError(\"이미 제출된 주문입니다\")\n        if coupon_code:\n            coupon = Coupon.objects.get(code=coupon_code)\n            self.total_amount -= coupon.discount_amount\n            coupon.used_count += 1\n            coupon.save()\n        self.status = \"submitted\"\n        self.save()\n        requests.post(\"https://warehouse.example.com/reserve\", json={\"order_id\": self.id})\n\n# orders/views.py\ndef submit_order(request, order_id):\n    order = Order.objects.get(id=order_id)\n    order.submit(request.POST.get(\"coupon\"))\n    return JsonResponse({\"ok\": True, \"status\": order.status})\n```",
       "required_dimensions": [
         "review_refactor",
         "ddd_boundaries",
@@ -59,7 +59,7 @@
       "id": "r02-drf-viewset-migration",
       "phase": "review-refactor",
       "title": "DRF ViewSet을 Django Ninja로 전환",
-      "prompt": "기존 DRF ViewSet 주문 API를 Django Ninja로 마이그레이션하는 계획과 예시 코드를 작성해줘.",
+      "prompt": "기존 DRF ViewSet 주문 API를 Django Ninja로 마이그레이션하는 계획과 예시 코드를 작성해줘. 기존 코드는 분석 대상으로만 사용하고, 새 코드에는 DRF를 생성하지 마.\n\n```python\n# legacy/orders/api.py\nfrom rest_framework import serializers, viewsets\n\nclass OrderSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Order\n        fields = [\"id\", \"status\", \"total_amount\"]\n\nclass OrderViewSet(viewsets.ModelViewSet):\n    queryset = Order.objects.all()\n    serializer_class = OrderSerializer\n\n    def perform_create(self, serializer):\n        serializer.save(created_by=self.request.user)\n```",
       "required_dimensions": [
         "drf_rejection",
         "django_ninja_api",

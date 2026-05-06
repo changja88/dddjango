@@ -97,3 +97,41 @@ HTML 리포트를 렌더링할 수 있는지만 보여준다.
 현재 평가 hardening의 1차 구현은 완료되었다. 다음 작업은 최신 스킬 변경을
 릴리즈한 뒤 전체 live 평가를 다시 실행하고, 남은 실패 케이스가 있으면 해당
 스킬 지침을 좁혀 개선하는 것이다.
+
+## Agent Review Follow-up
+
+2026-05-06 독립 리뷰에서 평가 방향은 목적에 대체로 맞지만, 아래 항목은 live
+성능 측정 전에 먼저 보정해야 한다고 판단했다.
+
+### P0 완료
+
+- [x] `release-gates.json`에 정의된 `drf_rejection`, `api_tdd_core`,
+  `reference_max`가 실제 release gate 계산에 반영되도록 수정했다.
+- [x] 부분 live run은 release 판단에서 제외한다. 단일 case/suite/variant 실행은
+  smoke 또는 진단 결과이지 릴리즈 가능 판정이 아니다.
+- [x] R01/R02 리뷰 케이스에 실제 Django/DRF 입력 코드를 추가했다.
+- [x] C02/C05의 idempotency 요구와 reference 위치가 어긋나지 않도록
+  `architecture-api`, `implementation-django` 연결을 보강했다.
+- [x] DB 동시성 평가는 `select_for_update` 단일 선호가 아니라 비관적 잠금,
+  낙관적 잠금, version, unique 제약을 대안 그룹으로 인정한다.
+- [x] Django Ninja error reference의 `{"error": ...}` 예시를 Problem Details로
+  통일했다.
+- [x] pagination reference에 `items/meta` envelope 예시를 보강했다.
+- [x] DDD aggregate 예시의 오래된 `typing.List`와 일반 `ValueError` 사용을
+  현대 Python 타입과 도메인 예외로 정리했다.
+
+### 남은 개선 후보
+
+- [ ] DRF migration 평가에서 before 코드 인용과 after 코드 생성을 더 정교하게
+  구분한다.
+- [ ] Django Ninja `FilterSchema`, auth, pagination, TestClient 평가 케이스를
+  reference-maximum suite에 추가한다.
+- [ ] Django web/template의 `json_script`, CSRF, static/SRI, `LoginRequiredMixin`
+  평가 케이스를 추가한다.
+- [ ] implementation-test의 fixture, factory, time mocking, HTTP mocking 평가
+  케이스를 추가한다.
+- [ ] `case -> expected skill -> reference` 매트릭스를 추가해 reference 부족,
+  skill 연결 약함, 평가 과요구를 더 빠르게 분류한다.
+
+현재 단계에서는 배포 전이므로 full live 평가는 보류한다. 최신 수정이 설치된
+플러그인에 반영되기 전까지 live 결과는 이전 태그 기준 결과로 해석해야 한다.

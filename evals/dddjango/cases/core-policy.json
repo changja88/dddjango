@@ -66,6 +66,7 @@
       "expected_skills": [
         "architecture-ddd",
         "architecture-db",
+        "architecture-api",
         "implementation-django-ninja"
       ],
       "required_patterns": [
@@ -74,6 +75,33 @@
         "response={",
         "애그리거트",
         "transaction"
+      ],
+      "alternative_pattern_groups": [
+        {
+          "label": "transaction_boundary",
+          "dimension": "db_transaction",
+          "patterns": [
+            "transaction",
+            "트랜잭션"
+          ]
+        },
+        {
+          "label": "idempotency",
+          "dimension": "db_transaction",
+          "patterns": [
+            "idempotency",
+            "멱등"
+          ]
+        },
+        {
+          "label": "uniqueness",
+          "dimension": "db_transaction",
+          "patterns": [
+            "unique",
+            "유니크",
+            "고유 제약"
+          ]
+        }
       ],
       "dimension_patterns": {
         "django_ninja_api": [
@@ -86,11 +114,7 @@
           "도메인 서비스",
           "유스케이스"
         ],
-        "db_transaction": [
-          "transaction",
-          "idempotency",
-          "unique"
-        ],
+        "db_transaction": [],
         "usability": [
           "파일",
           "검증"
@@ -236,6 +260,8 @@
       "baseline": "baselines/c05-inventory-reservation.md",
       "expected_skills": [
         "architecture-db",
+        "architecture-api",
+        "implementation-django",
         "architecture-ddd",
         "implementation-tdd"
       ],
@@ -246,22 +272,45 @@
       ],
       "alternative_pattern_groups": [
         {
+          "label": "transaction_boundary",
+          "dimension": "db_transaction",
+          "patterns": [
+            "transaction",
+            "트랜잭션"
+          ]
+        },
+        {
+          "label": "idempotency",
+          "dimension": "db_transaction",
+          "patterns": [
+            "idempotency",
+            "멱등"
+          ]
+        },
+        {
+          "label": "uniqueness",
+          "dimension": "db_transaction",
+          "patterns": [
+            "unique",
+            "유니크",
+            "고유 제약"
+          ]
+        },
+        {
           "label": "concurrency_control",
+          "dimension": "db_transaction",
           "patterns": [
             "select_for_update",
             "optimistic locking",
+            "낙관적 잠금",
             "version",
+            "버전",
             "unique"
           ]
         }
       ],
       "dimension_patterns": {
-        "db_transaction": [
-          "transaction",
-          "select_for_update",
-          "idempotency",
-          "unique"
-        ],
+        "db_transaction": [],
         "ddd_boundaries": [
           "재고 예약",
           "애그리거트",

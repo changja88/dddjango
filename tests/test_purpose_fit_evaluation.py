@@ -55,10 +55,11 @@ class PurposeFitConfigTests(unittest.TestCase):
 
         self.assertNotIn("@dataclass", cases["c03-tdd-coupon-policy"]["required_patterns"])
         self.assertNotIn("select_for_update", cases["c05-inventory-reservation"]["required_patterns"])
-        self.assertEqual(
-            cases["c05-inventory-reservation"]["alternative_pattern_groups"][0]["label"],
-            "concurrency_control",
-        )
+        group_labels = {
+            group["label"]
+            for group in cases["c05-inventory-reservation"]["alternative_pattern_groups"]
+        }
+        self.assertIn("concurrency_control", group_labels)
 
 
 class PurposeFitScoringTests(unittest.TestCase):
@@ -235,27 +236,60 @@ class PurposeFitReportTests(unittest.TestCase):
         self.assertEqual(missing["gate_status"], "fail")
 
     def test_live_release_gate_counts_with_dddjango_policy_failures_only(self):
-        scores = [
-            {
-                "case_id": "c01-drf-order-api",
+        scores = []
+        for case in load_cases():
+            scores.append({
+                "case_id": case["id"],
                 "variant": "without-dddjango",
-                "total_score": 59,
-                "gate_status": "fail",
-                "rationale": "baseline failed korean_first",
-            },
+                "total_score": 80,
+                "gate_status": "pass",
+                "gate_results": [],
+                "dimension_scores": {dimension: 80 for dimension in case["required_dimensions"]},
+                "rationale": "pass",
+            })
+            scores.append({
+                "case_id": case["id"],
+                "variant": "with-dddjango",
+                "total_score": 100,
+                "gate_status": "pass",
+                "gate_results": [],
+                "dimension_scores": {dimension: 100 for dimension in case["required_dimensions"]},
+                "rationale": "pass",
+            })
+
+        summary = score_outputs.summarize(scores, mode="live")
+
+        self.assertEqual(summary["skill_value_delta"], 20)
+        self.assertEqual(summary["release_gate_status"]["status"], "pass")
+        gate_ids = {result["gate"] for result in summary["release_gate_status"]["results"]}
+        self.assertIn("drf_rejection", gate_ids)
+        self.assertIn("api_tdd_core", gate_ids)
+        self.assertIn("reference_max", gate_ids)
+
+    def test_partial_live_run_does_not_apply_release_gate(self):
+        scores = [
             {
                 "case_id": "c01-drf-order-api",
                 "variant": "with-dddjango",
                 "total_score": 100,
                 "gate_status": "pass",
+                "gate_results": [],
+                "dimension_scores": {"drf_rejection": 100},
                 "rationale": "pass",
-            },
+            }
         ]
-
         summary = score_outputs.summarize(scores, mode="live")
+        metadata = {
+            "mode": "live",
+            "suite": None,
+            "case_id": "c01-drf-order-api",
+            "variants": ["with-dddjango"],
+            "case_count": 1,
+        }
 
-        self.assertEqual(summary["skill_value_delta"], 41)
-        self.assertEqual(summary["release_gate_status"]["status"], "pass")
+        release = score_outputs.release_gate_status(summary, mode="live", metadata=metadata)
+
+        self.assertEqual(release["status"], "not_applicable")
 
     def test_latest_run_ignores_calibration_directories(self):
         calibration_dir = ROOT / "workspace/codex-eval/purpose-fit/calibration-99999999"
