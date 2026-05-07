@@ -20,7 +20,7 @@ eval-smoke:
 	python3 evals/dddjango/scripts/validate_eval_config.py
 	python3 evals/dddjango/scripts/run_calibration.py --write-report
 	@run_id_file=$$(mktemp); \
-	python3 evals/dddjango/scripts/run_evaluation.py --mode fixture $(EVAL_RUN_ARGS) --run-id-output $$run_id_file; \
+	python3 evals/dddjango/scripts/run_evaluation.py --mode fixture $(EVAL_RUN_ARGS) --run-id-output $$run_id_file || { status=$$?; rm -f $$run_id_file; exit $$status; }; \
 	run_id=$$(cat $$run_id_file); \
 	rm -f $$run_id_file; \
 	python3 evals/dddjango/scripts/score_outputs.py --run-id $$run_id $(EVAL_REPORT_ARGS); \
@@ -31,7 +31,7 @@ eval-dddjango:
 	python3 evals/dddjango/scripts/validate_eval_config.py
 	python3 evals/dddjango/scripts/run_calibration.py --write-report
 	@run_id_file=$$(mktemp); \
-	python3 evals/dddjango/scripts/run_evaluation.py --mode live $(EVAL_RUN_ARGS) --run-id-output $$run_id_file; \
+	python3 evals/dddjango/scripts/run_evaluation.py --mode live $(EVAL_RUN_ARGS) --run-id-output $$run_id_file || { status=$$?; rm -f $$run_id_file; exit $$status; }; \
 	run_id=$$(cat $$run_id_file); \
 	rm -f $$run_id_file; \
 	status=0; \
