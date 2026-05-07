@@ -82,7 +82,11 @@
         "ddd_boundaries": [
           "애그리거트",
           "값 객체",
-          "도메인 이벤트"
+          "OrderId",
+          "PaymentId",
+          "Money",
+          "도메인 이벤트",
+          "불변식"
         ],
         "usability": []
       },
@@ -121,6 +125,8 @@
           "label": "actionability",
           "patterns": [
             "점검표",
+            "체크리스트",
+            "검증 체크리스트",
             "검토 기준",
             "바로 적용할",
             "검색식",

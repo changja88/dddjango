@@ -412,13 +412,31 @@ def structural_checks(case: dict[str, Any], text: str) -> dict[str, Any]:
         }
 
     if "ddd_boundaries" in dimensions:
-        terms = ["애그리거트", "값 객체", "도메인 서비스", "유스케이스", "도메인 이벤트", "불변식"]
-        hits = substring_matches(terms, text)
-        checks["ddd_boundaries"] = {
-            "status": "pass" if len(hits) >= 2 else "needs_review",
-            "passed": hits,
-            "missing": [term for term in terms if term not in hits],
-        }
+        if case.get("id") == "m02-ddd-aggregate-boundary":
+            groups = {
+                "aggregate_boundary": ["애그리거트", "작은 애그리거트", "경계"],
+                "value_objects_or_ids": ["값 객체", "OrderId", "PaymentId", "Money"],
+                "domain_events_consistency": ["도메인 이벤트", "최종 일관성", "Outbox"],
+                "invariant_methods": ["불변식", "confirm_payment()", "confirm()", "상태 전이"],
+                "coordination_boundary": ["응용 서비스", "이벤트 핸들러", "handler", "유스케이스"],
+            }
+            passed = [
+                name for name, patterns in groups.items()
+                if substring_matches(patterns, text)
+            ]
+            checks["ddd_boundaries"] = {
+                "status": "pass" if len(passed) >= 4 else "needs_review",
+                "passed": passed,
+                "missing": [name for name in groups if name not in passed],
+            }
+        else:
+            terms = ["애그리거트", "값 객체", "도메인 서비스", "유스케이스", "도메인 이벤트", "불변식"]
+            hits = substring_matches(terms, text)
+            checks["ddd_boundaries"] = {
+                "status": "pass" if len(hits) >= 2 else "needs_review",
+                "passed": hits,
+                "missing": [term for term in terms if term not in hits],
+            }
 
     if "db_transaction" in dimensions:
         terms = ["transaction", "select_for_update", "idempotency", "unique", "locking", "version", "트랜잭션"]

@@ -46,8 +46,8 @@ dddjango 평가 개선은 점수가 낮은 케이스를 바로 스킬 문구로 
 
 Track A result:
 
-- `m02` live output 재채점: `100`
-  (`reference_usage=100`, `ddd_boundaries=100`, `usability=100`)
+- `m02` latest local-marketplace live output 재채점: `93`
+  (`reference_usage=100`, `ddd_boundaries=86`, `usability=100`)
 - `h03` live output 재채점: `100`
   (`trigger_accuracy=100`, `usability=100`)
 - 두 케이스 모두 forbidden hit 없음.
