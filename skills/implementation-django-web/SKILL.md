@@ -21,6 +21,12 @@ implementation-django를 참조한다. API 엔드포인트(Django Ninja)는
 implementation-django-ninja를 참조한다. Python 컨벤션(타입 힌트,
 dataclasses)은 implementation-python을 참조한다.
 
+**Trigger guard 우선순위.** 이 섹션은 아래의 응답 구조와 관련 스킬 참조보다
+우선한다. 템플릿, static, TemplateView, FBV/CBV, HTMX, 디자인 시스템처럼
+Django 웹 페이지 요청으로 판정한 경우에는 Django Ninja API, Router,
+Schema, API response mapping을 기본 연결로 붙이지 않는다. API 구현을
+명시적으로 요청한 경우에만 implementation-django-ninja로 연결한다.
+
 **기본 요구사항 -- 모든 모드에 적용:**
 - 페이지 레이아웃에 Django의 템플릿 상속(`{% extends %}`, `{% block %}`)을
   사용한다. 컴포넌트 합성에는 `{% include ... only %}`를 사용한다.
@@ -43,7 +49,9 @@ dataclasses)은 implementation-python을 참조한다.
 
 ## 응답 구조
 
-모든 응답은 다음 구조를 따른다:
+이 스킬이 실제로 적용되는 Django web/template 응답은 다음 구조를 따른다.
+API 구현을 명시하지 않은 template/view/static 답변에는 Django Ninja API,
+Router, Schema 관련 스킬 참조를 붙이지 않는다.
 
 1. **[주요 내용]** -- 모드에 따른 코드, 리뷰, 리팩터링 결과
 2. **[관련 스킬 참조]** -- 사용자의 다음 단계를 안내하는 연결점
@@ -51,6 +59,9 @@ dataclasses)은 implementation-python을 참조한다.
 이 스킬은 11개의 상호 연결된 스킬 체계의 일부이다.
 사용자는 현재 작업 후 어떤 스킬을 호출해야 하는지 모르는 경우가
 많으므로, 관련 스킬 참조가 워크플로우의 자연스러운 연결을 만든다.
+단, template/view/static 요청에서는 implementation-django 또는
+implementation-test처럼 직접 관련된 스킬만 연결하고, API 구현을 명시하지
+않은 한 implementation-django-ninja를 연결하지 않는다.
 
 ALWAYS use this exact template for the closing section:
 ```

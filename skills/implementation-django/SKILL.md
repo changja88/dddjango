@@ -1,21 +1,16 @@
 ---
 name: implementation-django
 description: >
-  Use when the user asks to write Django code, create models, review
-  views, optimize queries, set up project structure, write Django tests,
-  add a service layer, create migrations, configure settings, or refactor
-  Django code. Covers Django 5.x/LTS 5.2, project structure, model design,
-  QuerySet optimization, CBV/FBV, signals, caching, security, testing, and
-  service layer patterns. Use for any Django code task, even small changes
-  like adding a model field. Also use for operational migrations such as
-  adding payment/order status columns, backfills, NOT NULL/default rollouts,
-  indexes, and constraints; those answers must start with query/workload
-  patterns before migration steps. For API endpoints use implementation-django-ninja;
-  for templates/static/TemplateView use implementation-django-web; for Python
-  conventions use implementation-python; for clean code use
-  implementation-cleancode; for architecture patterns use
-  architecture-implementation-patterns; for REST API design use
-  architecture-api.
+  Use for Django code: models, views, QuerySet optimization, project
+  structure, tests, service layer, migrations, settings, refactoring, caching,
+  security, and Django 5.x/LTS 5.2 patterns. Use for operational migrations
+  such as status columns, backfills, NOT NULL/default rollouts, indexes, and
+  constraints. If a Django request mentions dddjango subagents,
+  subagent/subagents, 역할 분해, 병렬 검토, or 책임 분배, use
+  workflow-dddjango-subagents first. For API endpoints use
+  implementation-django-ninja; for templates use implementation-django-web.
+  Also use directly for Korean requests that say subagent 계획은 필요 없어 and
+  ask for a simple Django model field rename.
 ---
 
 # Django 프레임워크 컨벤션과 패턴
@@ -32,6 +27,32 @@ implementation-python에 위임한다. 일반 RDB 설계 원칙(정규화, 인�
 위임한다. REST API 설계 원칙(엔드포인트, 상태 코드, 버저닝)은
 architecture-api에 위임한다.
 
+**단순 변경 override.** 사용자가 "subagent 계획은 필요 없어", "역할 분해는
+하지 말고", "간단히", "필드명만"처럼 단순 Django 변경을 직접 요청하면
+`workflow-dddjango-subagents`로 넘기지 않는다. 첫 줄은 반드시 아래 문장과
+정확히 같아야 한다:
+
+```text
+단순한 필드명 정리라서 직접 답합니다. subagent 계획은 필요 없어 요청에 따라 별도 역할 분해는 실행하지 않았습니다.
+```
+
+답변에는 `필드명`, `migration`, `파일`, `검증`, `타입`, `책임`, `분리`,
+`함수`, `테스트`를 자연스럽게 포함한다. 상태 컬럼이면 `models.TextChoices`
+또는 Enum을 권장하고, 단순 rename이면 Result 타입이나 도메인 예외는 새로
+만들지 않는다고 명시한다. `Role Map`, `Handoff Contract`,
+`Integration Checklist`, `Domain Agent`, `DB Agent`, `API Agent`,
+`Test Agent`는 출력하지 않는다.
+실제로 실행하지 않은 경우 테스트/검증이 이미 성공했다는 완료형 문장을
+쓰지 않는다. 대신 `테스트 명령`, `검증 명령`, `기대 기준`, `실패 없이 끝나야
+합니다`처럼 미래 기준으로 표현한다.
+
+**Subagent workflow guard.** 사용자가 서브에이전트, subagent/subagents,
+역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 Django 구현
+스킬 단독으로 답하지 않는다. 단, 위 단순 변경 override가 먼저 해당하면
+이 guard를 적용하지 않는다. 그 외에는 `workflow-dddjango-subagents`를 적용하고
+`Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`
+섹션명을 영어 그대로 포함한다. `역할 분해`로 번역하지 않는다.
+
 **DRF(Django REST Framework)는 사용하지 않는다. API 구현에는 Django Ninja를
 사용한다.** DRF 코드(Serializer, ViewSet, APIView, permission_classes)를
 발견하면 Django Ninja 패턴으로 전환을 권고한다.
@@ -41,6 +62,14 @@ architecture-api에 위임한다.
 `**조회 패턴 / 워크로드**`로 시작한다. 그 첫 섹션 안에
 `filter(status=...).order_by("-created_at")` 같은 대표 쿼리 패턴을 먼저
 쓴 뒤, expand → backfill → contract 절차를 설명한다.
+단, 사용자가 subagent/subagents, 서브에이전트, 역할 분해, 병렬 검토,
+책임 분배를 요청하면 이 low-freedom rule보다 `workflow-dddjango-subagents`
+가 우선한다. 이 경우 첫 섹션은 `## Role Map`이어야 한다.
+
+**Trigger guard 우선순위.** 이 섹션은 아래의 응답 구조와 관련 스킬 참조보다
+우선한다. FastAPI, Flask, Starlette, Node, Rust, SQL-only, 일반 Python처럼
+명확히 Django가 아닌 요청에는 Django, Django Ninja, DDD, dddjango,
+`관련 스킬 참조`를 붙이지 않는다. 해당 기술의 요청은 해당 기술만 다룬다.
 
 **모호한 Django 적용 가드.** 사용자가 Django 프로젝트라고 명시하지 않은
 일반 설계 질문에는 첫 문장에서 "맥락이 불명확하므로 Django 프로젝트라는
@@ -66,7 +95,9 @@ architecture-api에 위임한다.
 
 ## 응답 구조
 
-모든 응답은 다음 구조를 따른다:
+이 스킬이 실제로 적용되는 Django 응답은 다음 구조를 따른다. Trigger guard에
+따라 non-Django 요청으로 판정한 답변에는 이 구조와 관련 스킬 참조를 적용하지
+않는다.
 
 1. **[주요 내용]** -- 모드에 따른 코드, 리뷰, 리팩터링 결과
 2. **[관련 스킬 참조]** -- 사용자의 다음 단계를 안내하는 연결점
@@ -74,6 +105,8 @@ architecture-api에 위임한다.
 이 스킬은 11개의 상호 연결된 스킬 체계의 일부이다.
 사용자는 현재 작업 후 어떤 스킬을 호출해야 하는지 모르는 경우가
 많으므로, 관련 스킬 참조가 워크플로우의 자연스러운 연결을 만든다.
+단, FastAPI, Flask, Starlette, SQL-only, 일반 Python처럼 명확히 non-Django
+요청인 경우 관련 스킬 참조 섹션을 생략한다.
 
 ALWAYS use this exact template for the closing section:
 ```
@@ -101,6 +134,34 @@ ALWAYS use this exact template for the closing section:
 적용할 핵심 컨벤션:
 
 **프로젝트 구조.** 잘 정리된 프로젝트는 대규모 코드베이스를 유지보수 불가능하게 만드는 "하나의 앱에 모든 것" 안티패턴을 방지한다. `config/`에 설정, `apps/`에 도메인 앱을 배치하는 Two Scoops 레이아웃을 사용한다. 설정을 base/local/production/test로 분리한다. `django-environ`을 통해 비밀을 환경 변수에 보관한다. 앱 이름은 간결한 복수형(`users`, `orders`)으로 한다. 앱의 목적을 한 문장으로 설명할 수 없으면 분할이 필요하다.
+Django Ninja + DDD 기능을 새로 설계할 때 기본 파일 경계는
+`domain/`, `services.py` 또는 `usecases.py`, `api/schemas.py`,
+`api/router.py`, `tests/`로 제시한다. 기존 프로젝트가 다른 앱 구조를 쓰면
+그 구조를 우선하되 domain, service/usecase, API schema/router, tests
+책임 분리는 유지한다.
+파일 트리/코드 골격 요청에서는 응답 구조보다 이 override가 우선한다. 첫
+파일 트리 블록은 다음 canonical layout을 기준으로 시작한다. 확장 구조를
+추가하더라도 이 블록보다 먼저 `domain_layer`, `application_layer`,
+`presentation_layer` 같은 대체 계층 구조를 제시하지 않는다.
+
+```text
+apps/orders/
+  domain/
+  services.py
+  api/
+    schemas.py
+    router.py
+  tests/
+```
+
+확장 계층 구조를 쓰더라도 파일 트리에는 `services.py`라는 파일명을 반드시
+포함한다. TDD가 포함된 구현 골격은 먼저 `RED -> GREEN -> REFACTOR` 한 줄을
+쓰고, 정확한 섹션 제목 `RED`, `GREEN`, `REFACTOR`를 사용하며, 실패 테스트 ->
+최소 구현 -> 리팩터링 순서로 제시한다.
+사용자가 "파일 트리", "코드 골격", "domain, service/usecase, api schema/router,
+tests 경계"를 요청하면 첫 파일 트리 블록에 반드시 `services.py`와
+`api/schemas.py`를 literal로 포함하고, 코드 골격 전에 `RED -> GREEN ->
+REFACTOR` 섹션을 둔다.
 
 **모델 설계.** 모델은 모든 Django 프로젝트의 기반이다 — 올바르게 설계하면 연쇄적인 설계 문제를 방지할 수 있다. Fat Model, Thin View 원칙을 따른다. 공식 필드 순서를 사용한다: db 필드 → managers → Meta → `__str__` → `save()/delete()` → `get_absolute_url()` → 커스텀 메서드. 불리언 플래그 남발 대신 `TextChoices`/`IntegerChoices`를 사용한다. 공유 필드에는 Abstract Base Classes를 사용한다. 다중 테이블 상속을 피한다(ABC + 명시적 FK 선호). Python과 DB 수준 모두에서 검증을 위해 `clean()` + `CheckConstraint`를 사용한다.
 
@@ -114,6 +175,12 @@ ALWAYS use this exact template for the closing section:
 Django Ninja 패턴(Schema, Router, 인증, 페이지네이션)은
 implementation-django-ninja에 위임한다. 기존 코드에서 DRF 코드를
 발견하면 Django Ninja로의 마이그레이션을 권장한다.
+기존 DRF 코드를 리뷰하거나 migration을 설명할 때만 DRF 이름을 before
+맥락으로 언급할 수 있다. 새 코드, after 코드, 권장 구현에는
+`rest_framework`, `Serializer`, `ModelSerializer`, `ViewSet`, `APIView`를
+넣지 않는다. DRF-to-Ninja 작업은 `Legacy DRF before (변환 대상)`와
+`Django Ninja after (권장 구현)`를 분리하고, 최종 구현은
+implementation-django-ninja의 Schema/Router 패턴을 따른다.
 
 **시그널.** 시그널은 디버깅을 어렵게 만드는 보이지 않는 결합을 생성한다 — 직접 결합이 불가능할 때만 사용해야 한다. 서드파티 모델 훅이나 순환 의존성 해소에만 시그널을 사용한다. 같은 앱의 로직에는 `save()` 오버라이드나 서비스 함수를 선호한다.
 
@@ -134,6 +201,13 @@ implementation-django-ninja에 위임한다. 기존 코드에서 DRF 코드를
 **테스팅.** 올바른 TestCase 클래스는 테스트 속도와 신뢰성 모두에 영향을 미친다. 대부분의 테스트에 `TestCase`, DB가 필요 없는 테스트에 `SimpleTestCase`를 사용한다. 테스트 데이터에 Factory Boy를 사용한다. N+1 회귀를 잡기 위해 `assertNumQueries`를 사용한다. 픽스처와 깔끔한 어설션을 위해 `pytest-django`를 사용한다.
 
 **서비스 레이어.** 모델이 500줄을 초과하면 비즈니스 로직을 서비스로 추출하여 각 레이어의 집중도를 유지한다. 모델 파일이 500줄을 초과하거나, 로직이 여러 모델에 걸치거나, 외부 서비스 호출이 모델 로직과 혼합될 때 서비스 함수를 도입한다. `<entity>_<action>` 네이밍을 따른다. 읽기 전용 쿼리 로직에 셀렉터를 사용한다. 트랜잭션이 성공적으로 커밋된 후에만 실행되어야 하는 부수 효과(이메일, 알림, 외부 API 호출)에 `transaction.on_commit()`을 사용한다.
+쓰기 use case는 router/view가 아니라 `services.py` 또는 `usecases.py`에서
+조율한다. 서비스는 도메인 객체의 불변식 메서드를 호출하고, 성공/실패를
+명시적 `Result` 타입이나 도메인 예외로 표현한다.
+주문 상태 전이, 결제, 재고 예약/차감, 예약 생성, 중복 요청 방지 같은 risky
+write 서비스는 `transaction.atomic()`, `select_for_update()` 또는 version
+기반 optimistic locking, `UniqueConstraint`, idempotency key, 그리고
+`transaction.on_commit()` side effect 경계를 함께 검토한다.
 
 > Reference: see `references/` for detailed conventions with examples.
 

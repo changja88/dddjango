@@ -32,6 +32,13 @@ Python 관련 컨벤션(타입 힌트, dataclasses, match/case, 데코레이터,
 "맥락이 불명확하므로 Python/Django 프로젝트라면..."처럼 조건을 먼저 밝히고
 강하게 적용하지 않는다.
 
+**Typed domain result guard.** 도메인 로직에서 dict 에러나 bool 반환 대신
+Result/도메인 예외/값 객체를 요청받으면, 금지 예시로도 literal JSON error
+payload를 쓰지 않는다. 특히 `{"error"` 형태의 문자열을 출력하지 않는다.
+대신 "untyped error mapping", "dict error payload"처럼 설명한다. 답변에는
+`책임`, `함수`, `타입`, `분리`, `테스트`, `Result`, `도메인 예외`, `값 객체`를
+포함하고, 함수가 하나의 책임만 갖도록 나눈다.
+
 ## 세 가지 핵심 원칙
 1. 모든 이름은 의도를 드러낸다 — 변수를 설명하는 주석이 필요하면 이름을 바꿔라.
 2. 모든 함수는 하나의 추상화 수준에서 하나의 일만 한다.

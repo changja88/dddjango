@@ -51,6 +51,11 @@ implementation-cleancode에 위임한다.
 않는다. 이런 응답에는 dddjango 스킬 체계의 `관련 스킬 참조` 섹션을 붙이지
 않는다. 필요한 Python 관용구와 테스트 코드만 제공하고, 프레임워크는 사용자가
 지정한 것을 따른다.
+명확한 비-Django 요청에서는 `## [관련 스킬 참조]`, `관련 스킬 참조`,
+closing template, 후속 dddjango skill 목록을 절대 출력하지 않는다.
+FastAPI, Flask, Starlette 요청에서는 literal substring `관련 스킬 참조`가
+금지어다. 답변 끝에는 실행 명령, 테스트 방법, 또는 참고한 공식 문서만 둘 수
+있고 dddjango skill 추천 목록을 붙이지 않는다.
 
 When the task is in Django/dddjango context and the closing section is applicable,
 use this exact template:

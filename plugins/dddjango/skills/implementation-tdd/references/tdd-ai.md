@@ -36,11 +36,11 @@ def test_parse_korean_date_edge_cases():
         parse_date("2026년 13월 1일")  # 13월은 없다
 
 # 2단계: AI에게 구현을 요청한다 (Green)
-# "위 테스트를 통과하는 parse_date 함수를 구현해줘"
+# "위 RED 예시가 기대하는 parse_date 함수를 구현해줘"
 # -> AI가 구현 제안
 
 # 3단계: 개발자가 AI 구현을 검증하고 리팩토링한다 (Refactor)
-# - 테스트가 통과하는가?
+# - 기대 결과를 만족하는가?
 # - 코드가 의도대로인가?
 # - 보안 문제나 환각(hallucination)이 없는가?
 ```

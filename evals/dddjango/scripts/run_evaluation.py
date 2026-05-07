@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -353,13 +355,69 @@ def plugin_version() -> str:
     return str(json.loads(plugin_path.read_text()).get("version", "unknown"))
 
 
+def tree_fingerprint(path: Path) -> str:
+    digest = hashlib.sha256()
+    for file_path in sorted(path.rglob("*")):
+        if not file_path.is_file():
+            continue
+        relative = file_path.relative_to(path).as_posix()
+        digest.update(relative.encode())
+        digest.update(b"\0")
+        digest.update(file_path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def installed_plugin_dir(version: str) -> Path | None:
+    cache_root = Path.home() / ".codex" / "plugins" / "cache"
+    candidates = sorted(cache_root.glob(f"*/dddjango/{version}"))
+    return candidates[0] if candidates else None
+
+
+def ensure_live_plugin_matches_worktree(variants: list[str]) -> None:
+    if "with-dddjango" not in variants:
+        return
+    if os.environ.get("DDDJANGO_EVAL_ALLOW_STALE_PLUGIN") == "1":
+        return
+
+    version = plugin_version()
+    worktree_plugin = ROOT / "plugins" / "dddjango"
+    worktree_skills = worktree_plugin / "skills"
+    installed_plugin = installed_plugin_dir(version)
+    if not installed_plugin:
+        raise RuntimeError(
+            "설치된 dddjango 플러그인 캐시를 찾지 못했습니다. "
+            "live 평가는 설치된 플러그인을 기준으로 실행되므로 먼저 플러그인을 설치/업데이트하세요."
+        )
+
+    installed_skills = installed_plugin / "skills"
+    if not installed_skills.exists():
+        raise RuntimeError(
+            f"설치된 dddjango 플러그인 캐시에 skills가 없습니다: {installed_plugin}. "
+            "플러그인 설치/업데이트 후 다시 실행하세요."
+        )
+
+    if tree_fingerprint(worktree_skills) != tree_fingerprint(installed_skills):
+        raise RuntimeError(
+            "설치된 dddjango 플러그인 캐시가 현재 작업트리와 다릅니다. "
+            "이 상태에서 live 평가는 stale 플러그인을 측정합니다. "
+            "변경사항을 릴리즈/설치 캐시에 반영한 뒤 다시 실행하세요. "
+            "의도적으로 설치된 버전을 측정하려면 DDDJANGO_EVAL_ALLOW_STALE_PLUGIN=1을 지정하세요."
+        )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--suite")
     parser.add_argument("--case")
     parser.add_argument("--variant", choices=VARIANTS)
     parser.add_argument("--mode", choices=["fixture", "live"], default="fixture")
+    parser.add_argument("--run-id-output")
     args = parser.parse_args()
+
+    selected_variants = [args.variant] if args.variant else list(VARIANTS)
+    if args.mode == "live":
+        ensure_live_plugin_matches_worktree(selected_variants)
 
     run_dir = create_run(
         suite=args.suite,
@@ -367,9 +425,15 @@ def main() -> int:
         variant=args.variant,
         mode=args.mode,
     )
+    if args.run_id_output:
+        Path(args.run_id_output).write_text(run_dir.name)
     print(f"평가 run 생성 완료: {run_dir}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except RuntimeError as exc:
+        print(f"평가 실행 전 확인 실패: {exc}", file=sys.stderr)
+        raise SystemExit(2)

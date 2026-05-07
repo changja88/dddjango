@@ -128,11 +128,20 @@ def handle_insufficient_balance(request, exc):
 ```python
 @api.exception_handler(MyCustomError)
 def handle_my_error(request, exc):
-    return api.create_response(
+    response = api.create_response(
         request,
-        {"error": str(exc), "code": "CUSTOM_ERROR"},
+        {
+            "type": "https://api.example.com/probs/custom-error",
+            "title": "Custom Error",
+            "status": 400,
+            "detail": str(exc),
+            "instance": request.path,
+            "code": "CUSTOM_ERROR",
+        },
         status=400,
     )
+    response["Content-Type"] = "application/problem+json"
+    return response
 ```
 
 ## 5. ValidationError 커스터마이징
@@ -275,20 +284,36 @@ class BusinessLogicError(Exception):
 
 @api.exception_handler(BusinessLogicError)
 def handle_business_error(request, exc):
-    return api.create_response(
+    response = api.create_response(
         request,
-        {"error": exc.message, "code": exc.code},
+        {
+            "type": f"https://api.example.com/probs/{exc.code.lower()}",
+            "title": "Business Rule Violation",
+            "status": 400,
+            "detail": exc.message,
+            "instance": request.path,
+            "code": exc.code,
+        },
         status=400,
     )
+    response["Content-Type"] = "application/problem+json"
+    return response
 
 @api.exception_handler(ValidationError)
 def handle_validation_error(request, exc):
-    return api.create_response(
+    response = api.create_response(
         request,
         {
-            "error": "Validation failed",
-            "details": exc.errors,
+            "type": "https://api.example.com/probs/validation-error",
+            "title": "Validation Error",
+            "status": 422,
+            "detail": "Request validation failed.",
+            "instance": request.path,
+            "items": exc.errors,
+            "meta": {"code": "VALIDATION_ERROR"},
         },
         status=422,
     )
+    response["Content-Type"] = "application/problem+json"
+    return response
 ```

@@ -75,7 +75,7 @@ def test_walking_skeleton_health_check(client):
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 
-# 이 테스트가 통과하려면:
+# 이 RED 예시의 기대 결과를 만족하려면:
 # - 웹 서버 기동
 # - 라우팅 설정
 # - 응답 직렬화

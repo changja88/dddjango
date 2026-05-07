@@ -1,20 +1,14 @@
 ---
 name: architecture-db
 description: >
-  Use when the user asks to design a database schema, model data,
-  create an ERD, normalize tables, optimize queries, design indexes,
-  choose isolation level, model hierarchical data, or handle table
-  inheritance. Also use for any relational database design, schema
-  modeling, normalization, index strategy, transaction, or query
-  performance decision, including small changes like adding a column
-  or choosing a primary key. Covers conceptual/logical/physical
-  modeling, normalization, denormalization tradeoffs, B+Tree indexes,
-  transaction isolation, EXPLAIN ANALYZE, hierarchy/inheritance, and
-  polymorphic modeling. Also use for payment/order status columns, backfill
-  strategy, NOT NULL/default rollouts, and index/constraint changes; answer
-  query/workload patterns first before schema or migration steps. Focuses on general RDB principles. For Django
-  ORM code use implementation-django; for domain modeling use
-  architecture-ddd; for REST API design use architecture-api.
+  Use for relational database design: schema modeling, ERD, normalization,
+  indexes, constraints, transaction isolation, query performance, EXPLAIN
+  ANALYZE, hierarchy/inheritance, and operational migrations such as status
+  columns, backfills, NOT NULL/default rollouts, indexes, and constraints.
+  For Django ORM code use implementation-django; for domain modeling use
+  architecture-ddd; for REST API design use architecture-api. If a Django
+  request mentions dddjango subagents, subagent/subagents, 역할 분해, 병렬 검토,
+  or 책임 분배, use workflow-dddjango-subagents first.
 ---
 
 # 데이터베이스 설계 원칙
@@ -26,6 +20,15 @@ description: >
 위임한다. Django ORM 코드(QuerySet, select_related, 마이그레이션, PostgreSQL
 기능)에 대해서는 implementation-django에 위임한다. REST API 설계 원칙
 (엔드포인트, 페이지네이션, 상태 코드)에 대해서는 architecture-api에 위임한다.
+
+**Subagent workflow guard.** 사용자가 서브에이전트, subagent/subagents,
+역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 DB 설계만
+단독으로 답하지 않는다. `workflow-dddjango-subagents`를 적용하고
+`Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`
+섹션명을 영어 그대로 포함한다. `역할 분해`로 번역하지 않는다.
+이 guard는 아래의 `조회 패턴 / 워크로드` 첫 줄 규칙보다 우선한다. subagent
+workflow 요청이면 첫 섹션은 반드시 `## Role Map`이고, DB 조회 패턴은
+`DB Agent` 책임이나 `Integration Checklist` 안에 넣는다.
 
 **기본 요구사항 — 모든 모드에 적용:**
 - 먼저 정규화하고, 측정된 성능이 요구할 때만 비정규화한다. 최적화 순서는:
@@ -41,6 +44,28 @@ description: >
 - 결제/주문 상태 컬럼 migration 답변은 첫 줄을 반드시
   `**조회 패턴 / 워크로드**`로 시작한다. 운영 절차나 nullable 컬럼 설명이
   그보다 먼저 나오면 안 된다.
+
+**Risky write consistency block.** 주문 상태 전이, 결제, 재고 예약/차감,
+예약 생성, 중복 요청 방지, 외부 결제/배송 연동처럼 한 번의 쓰기가 돈,
+재고, 권한, 외부 side effect에 영향을 주는 경우에는 DB 일관성 block을
+조건부로 포함한다. 단순 조회, low-risk CRUD, analytics query에는 이 block을
+강제로 붙이지 않는다.
+
+Risky write에서는 다음 결정을 빠뜨리지 않는다:
+
+- transaction boundary: Django라면 `transaction.atomic()` 위치를 명시한다.
+- locking strategy: 경합 row에는 `select_for_update()` 같은 비관적 잠금 또는
+  `version` 컬럼 기반 optimistic locking을 선택하고 선택 이유를 적는다.
+- uniqueness/idempotency: 중복 주문/결제/예약 방지를 위해 `UniqueConstraint`
+  또는 idempotency key 저장소를 설계한다.
+- API contract: 멱등하지 않은 POST에는 `Idempotency-Key`를 검토한다.
+- side effect: 이메일, 알림, 외부 결제/배송 호출은 commit 이전에 확정하지
+  않고 `transaction.on_commit` 또는 domain event 이후 처리한다.
+- 주문 생성/재고 예약/중복 요청/롤백 설계에서는 `transaction.atomic`,
+  `select_for_update`, `optimistic locking`, `idempotency`, `UniqueConstraint`
+  literal을 모두 포함한다. 낙관적 잠금이라고 번역하더라도 영어
+  `optimistic locking`을 함께 쓴다. unique만 쓰지 말고 Django 모델 제약 예시는
+  `models.UniqueConstraint(...)` 형태로 제시한다.
 
 아래 섹션에서 다루는 주제를 작업할 때는 링크된 참조 파일을 읽고 상세한
 규칙과 예시를 확인한다.

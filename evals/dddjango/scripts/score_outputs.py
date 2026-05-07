@@ -955,6 +955,22 @@ def main() -> int:
         else:
             print("live release gate 실패")
         return 2
+    if release_status.get("mode") == "live" and release_status.get("status") == "not_applicable":
+        selected_variants = set()
+        metadata_path = run_dir / "metadata.json"
+        if metadata_path.exists():
+            import json
+
+            run_metadata = json.loads(metadata_path.read_text())
+            selected_variants = set(run_metadata.get("variants", []))
+        failed_scores = [
+            score for score in summary.get("scores", [])
+            if score.get("variant") == "with-dddjango" and score.get("gate_status") == "fail"
+            and (not selected_variants or score.get("variant") in selected_variants)
+        ]
+        if failed_scores:
+            print("live subset gate 실패")
+            return 2
     return 0
 
 

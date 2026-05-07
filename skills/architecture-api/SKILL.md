@@ -1,23 +1,13 @@
 ---
 name: architecture-api
 description: >
-  This skill should be used when the user asks to "design an API",
-  "design REST endpoints", "define API resources", "choose HTTP
-  status codes", "design error responses", "set up pagination",
-  "version an API", "handle rate limiting", "design URL structure",
-  or when any REST API design, endpoint naming, request/response
-  format, or API evolution decision occurs. Covers REST principles,
-  HTTP methods and idempotency, URL/resource naming rules,
-  status codes, error format (RFC 9457), content negotiation,
-  authentication/authorization concepts, pagination patterns,
-  versioning strategies, backward compatibility, rate limiting,
-  and idempotency keys. Use this skill whenever API endpoints,
-  response formats, or API lifecycle decisions are being discussed
-  — even for seemingly simple tasks like choosing a status code
-  or naming a URL path. This skill focuses on design principles
-  (not framework-specific). For Django Ninja API implementation, see
-  implementation-django-ninja. For database schema design, see
-  architecture-db.
+  Use for REST API design: resources, endpoints, URL structure, HTTP methods,
+  status codes, error responses, pagination, versioning, idempotency keys,
+  rate limiting, and request/response format. Framework-neutral by default.
+  For Django Ninja implementation use implementation-django-ninja; for DB
+  schema use architecture-db. If a Django request mentions dddjango subagents,
+  subagent/subagents, 역할 분해, 병렬 검토, or 책임 분배, use
+  workflow-dddjango-subagents first.
 ---
 
 # REST API 설계 원칙
@@ -26,6 +16,12 @@ description: >
 Django Ninja API 구현(Schema, Router, 스로틀링)에 대해서는
 implementation-django-ninja에 위임한다. 데이터베이스 스키마 설계(정규화,
 인덱스)에 대해서는 architecture-db에 위임한다.
+
+**Subagent workflow guard.** 사용자가 서브에이전트, subagent/subagents,
+역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 API 설계만
+단독으로 답하지 않는다. `workflow-dddjango-subagents`를 적용하고
+`Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`
+섹션명을 영어 그대로 포함한다. `역할 분해`로 번역하지 않는다.
 
 이 저장소에서 Django API 구현 예시가 필요하면 framework-neutral 설계를
 먼저 제시한 뒤 Django Ninja 구현으로 연결한다. 사용자가 DRF, Django REST
@@ -37,6 +33,11 @@ Go, 또는 일반 REST처럼 Django와 무관한 API 작업을 명확히 요청�
 DRF, Django Ninja, DDD, dddjango 관점으로 끌고 가지 않는다. 이런 응답에는
 dddjango 스킬 체계의 `관련 스킬 참조` 섹션을 붙이지 않는다. 필요한 API 설계
 원칙만 적용하고, 프레임워크는 사용자가 지정한 것을 따른다.
+명확한 비-Django 요청에서는 `## [관련 스킬 참조]`, `관련 스킬 참조`,
+closing template, 후속 dddjango skill 목록을 절대 출력하지 않는다.
+FastAPI, Flask, Starlette 요청에서는 literal substring `관련 스킬 참조`가
+금지어다. 답변 끝에는 실행 명령, 검증 방법, 또는 참고한 공식 문서만 둘 수
+있고 dddjango skill 추천 목록을 붙이지 않는다.
 
 **기본 요구사항 — 모든 모드에 적용:**
 - 리소스는 명사, 액션은 HTTP 메서드. URL에 동사를 넣지 않는다.

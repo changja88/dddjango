@@ -31,7 +31,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List
 from uuid import uuid4
 
 
@@ -64,6 +63,10 @@ class ShippingInfo:
     receiver_name: str
     receiver_phone: str
     address: Address
+
+
+class OrderInvariantViolation(Exception):
+    """주문 애그리거트 불변식 위반."""
 ```
 
 ## 안티패턴: 너무 큰 애그리거트 (Vernon 규칙 2 위반)
@@ -75,8 +78,8 @@ class BigProduct:
     """모든 것을 하나의 애그리거트에 넣은 나쁜 예"""
     id: str
     name: str
-    reviews: List["Review"] = field(default_factory=list)       # 수천 건
-    images: List["ProductImage"] = field(default_factory=list)   # 수십 건
+    reviews: list["Review"] = field(default_factory=list)        # 수천 건
+    images: list["ProductImage"] = field(default_factory=list)    # 수십 건
     inventory: "Inventory" = None                                # 별도 관심사
     # 리뷰 추가 시 Product 전체를 로딩하고 락을 잡아야 함 -> 성능 저하
 
@@ -123,10 +126,10 @@ class Order:
     """
     id: str = field(default_factory=lambda: str(uuid4()))
     orderer_id: str = ""  # Member 애그리거트를 ID로 참조
-    order_lines: List[OrderLineItem] = field(default_factory=list)
+    order_lines: list[OrderLineItem] = field(default_factory=list)
     shipping_info: ShippingInfo = None
     _status: OrderStatus = field(default=OrderStatus.PAYMENT_WAITING)
-    _events: List = field(default_factory=list)
+    _events: list[object] = field(default_factory=list)
 
     def __post_init__(self):
         self._verify_at_least_one_order_line()
@@ -134,7 +137,7 @@ class Order:
 
     def _verify_at_least_one_order_line(self) -> None:
         if not self.order_lines:
-            raise ValueError("최소 한 종류 이상의 상품을 주문해야 합니다")
+            raise OrderInvariantViolation("최소 한 종류 이상의 상품을 주문해야 합니다")
 
     def _calculate_total_amounts(self) -> None:
         total = Money(0)
@@ -144,13 +147,13 @@ class Order:
 
     def change_shipping_info(self, new_info: ShippingInfo) -> None:
         if not self._status.is_shippable:
-            raise ValueError("배송지를 변경할 수 없는 상태입니다")
+            raise OrderInvariantViolation("배송지를 변경할 수 없는 상태입니다")
         self.shipping_info = new_info
 
     def place(self) -> None:
         """주문 접수 -- 결과적 일관성을 위해 이벤트를 발행"""
         if self._status != OrderStatus.PAYMENT_WAITING:
-            raise ValueError("결제 대기 상태에서만 접수할 수 있습니다")
+            raise OrderInvariantViolation("결제 대기 상태에서만 접수할 수 있습니다")
         self._status = OrderStatus.PREPARING
         self._events.append(
             OrderPlacedEvent(
@@ -163,10 +166,10 @@ class Order:
 
     def ship(self) -> None:
         if self._status != OrderStatus.PREPARING:
-            raise ValueError("준비 상태에서만 출고할 수 있습니다")
+            raise OrderInvariantViolation("준비 상태에서만 출고할 수 있습니다")
         self._status = OrderStatus.SHIPPED
 
-    def collect_domain_events(self) -> List:
+    def collect_domain_events(self) -> list[object]:
         events = list(self._events)
         self._events.clear()
         return events

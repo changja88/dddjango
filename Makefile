@@ -19,16 +19,25 @@ eval-calibrate:
 eval-smoke:
 	python3 evals/dddjango/scripts/validate_eval_config.py
 	python3 evals/dddjango/scripts/run_calibration.py --write-report
-	python3 evals/dddjango/scripts/run_evaluation.py --mode fixture $(EVAL_RUN_ARGS)
-	python3 evals/dddjango/scripts/score_outputs.py --latest $(EVAL_REPORT_ARGS)
-	python3 evals/dddjango/scripts/render_report.py --latest $(EVAL_REPORT_ARGS)
+	@run_id_file=$$(mktemp); \
+	python3 evals/dddjango/scripts/run_evaluation.py --mode fixture $(EVAL_RUN_ARGS) --run-id-output $$run_id_file; \
+	run_id=$$(cat $$run_id_file); \
+	rm -f $$run_id_file; \
+	python3 evals/dddjango/scripts/score_outputs.py --run-id $$run_id $(EVAL_REPORT_ARGS); \
+	python3 evals/dddjango/scripts/render_report.py --run-id $$run_id $(EVAL_REPORT_ARGS)
 
 # dddjango를 설치하지 않은 Codex와 설치한 Codex를 같은 prompt로 live 실행해 성능표를 생성한다.
 eval-dddjango:
 	python3 evals/dddjango/scripts/validate_eval_config.py
 	python3 evals/dddjango/scripts/run_calibration.py --write-report
-	python3 evals/dddjango/scripts/run_evaluation.py --mode live $(EVAL_RUN_ARGS)
-	@status=0; python3 evals/dddjango/scripts/score_outputs.py --latest $(EVAL_REPORT_ARGS) || status=$$?; python3 evals/dddjango/scripts/render_report.py --latest $(EVAL_REPORT_ARGS); exit $$status
+	@run_id_file=$$(mktemp); \
+	python3 evals/dddjango/scripts/run_evaluation.py --mode live $(EVAL_RUN_ARGS) --run-id-output $$run_id_file; \
+	run_id=$$(cat $$run_id_file); \
+	rm -f $$run_id_file; \
+	status=0; \
+	python3 evals/dddjango/scripts/score_outputs.py --run-id $$run_id $(EVAL_REPORT_ARGS) || status=$$?; \
+	python3 evals/dddjango/scripts/render_report.py --run-id $$run_id $(EVAL_REPORT_ARGS); \
+	exit $$status
 
 # 가장 최근 dddjango 평가 결과를 HTML 리포트로 다시 렌더링한다.
 eval-report:

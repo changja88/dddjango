@@ -1,18 +1,14 @@
 ---
 name: architecture-ddd
 description: >
-  Use when the user asks to design a domain model, apply DDD, define
-  bounded contexts, identify aggregates, model business rules, create
-  a context map, define ubiquitous language, or plan domain events.
-  Also use for any strategic or tactical domain modeling decision,
-  including where a business rule belongs or how to split service
-  responsibilities. Covers bounded contexts, context maps, subdomains,
-  aggregates, entities, value objects, repositories, domain services,
-  domain events, and supple design. For hexagonal/clean/CQRS/event
-  sourcing use architecture-implementation-patterns; for schema design
-  use architecture-db; for REST API design use architecture-api; for
-  Django/Django Ninja implementation use implementation-django and
-  implementation-django-ninja.
+  Use for DDD/domain modeling: bounded contexts, context maps, ubiquitous
+  language, aggregates, entities, value objects, repositories, domain services,
+  domain events, business rules, and service responsibility splits. For
+  hexagonal/clean/CQRS/event sourcing use architecture-implementation-patterns;
+  for schema design use architecture-db; for REST API design use
+  architecture-api; for Django/Ninja implementation use implementation-django
+  and implementation-django-ninja. If a Django request mentions subagents or
+  역할 분해, use workflow-dddjango-subagents first.
 ---
 
 # DDD 원칙과 패턴
@@ -27,12 +23,88 @@ Django 코어(모델, ORM, 설정)에 대해서는 implementation-django에 위�
 Django Ninja API(Schema, Router)에 대해서는 implementation-django-ninja에 위임한다.
 클린 코드 원칙(SOLID, 네이밍)에 대해서는 implementation-cleancode에 위임한다.
 
+**Subagent workflow guard.** 사용자가 서브에이전트, subagent/subagents,
+역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 이 스킬 단독의
+일반 설계 답변으로 끝내지 않는다. `workflow-dddjango-subagents`를 적용하고
+`Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`
+섹션명을 영어 그대로 포함한다. `역할 분해`로 번역하지 않는다.
+
 **기본 요구사항 — 모든 모드에 적용:**
 - 전략적 설계(바운디드 컨텍스트, 컨텍스트 맵)는 항상 전술적 패턴보다 먼저 수행한다.
   잘못된 경계 안에서 좋은 전술적 패턴을 적용해도 복잡성은 해결되지 않는다.
 - 모델은 유비쿼터스 언어를 반영해야 한다 — 클래스명과 메서드명이 도메인 전문가
   용어와 일치해야 한다.
 - 애그리거트는 작게 유지한다 — 이상적으로 애그리거트당 엔티티 하나.
+- 주문/결제 같은 애그리거트 경계 검토에서는 `작은 애그리거트`, `ID`,
+  `도메인 이벤트`, `최종 일관성` literal을 포함한다. 서로 다른 생명주기와
+  트랜잭션 경계를 가진 객체는 하나의 거대한 애그리거트로 묶지 않고, ID 참조와
+  도메인 이벤트로 연결한다.
+
+**Django feature skeleton.** Django Ninja 기능을 DDD 기준으로 설계하거나
+구현할 때는 기존 프로젝트 구조가 없다는 전제에서 다음 기본 파일 경계를
+제시한다. 기존 프로젝트가 이미 다른 구조를 쓰면 그 구조를 우선하고, 같은
+책임 경계를 유지한다.
+
+```text
+apps/orders/
+  domain/
+    models.py        # Aggregate, Entity, Value Object, invariant
+    exceptions.py    # domain exception
+    events.py        # domain event
+  services.py        # application service 또는 use case
+  api/
+    schemas.py       # Django Ninja Schema/ModelSchema
+    router.py        # Router, response={...}
+  tests/
+    test_order_create.py
+```
+
+도메인 로직은 router/view에 두지 않는다. router는 Schema 검증과 use case 호출,
+HTTP status-code response mapping만 담당한다. 성공/실패가 갈리는 정책은
+bool, dict error, 문자열 코드만 반환하지 말고 `Result` 타입, 도메인 예외,
+값 객체, 불변식으로 표현한다.
+Django Ninja router 코드 예시를 함께 제시할 때는 `@router.post` 함수 안에
+`for ... items`, `if ... status`, `inventory`, `discount`, `cancel` 같은
+비즈니스 흐름을 넣지 않는다. 요청 변환은 `payload.to_command()` 같은 얇은
+메서드로 감추고, 반복/분기/재고/할인/상태 전이 판단은 `services.py` 또는
+domain 계층에 둔다. 주문 생성의 DB 일관성 설명에는 `transaction.atomic()`과
+`select_for_update()` 또는 `version` 기반 locking을 함께 언급한다.
+파일 트리/코드 골격 요청에서는 응답 구조보다 이 override가 우선한다. 첫
+파일 트리 블록은 위 canonical layout을 기준으로 시작한다. 확장 구조를
+추가하더라도 이 블록보다 먼저 `domain_layer`, `application_layer`,
+`presentation_layer` 같은 대체 계층 구조를 제시하지 않는다.
+파일 트리에는 확장 구조를 쓰더라도 `services.py`라는 파일명을 반드시 포함한다.
+TDD 또는 구현 골격이 포함되면 먼저 `RED -> GREEN -> REFACTOR` 한 줄을 쓰고,
+섹션 제목에 정확히 `RED`, `GREEN`, `REFACTOR`를 사용한다. 실패 테스트 -> 최소
+구현 -> 리팩터링 순서를 지킨다.
+사용자가 "파일 트리", "코드 골격", "domain, service/usecase, api schema/router,
+tests 경계"를 요청하면 첫 파일 트리 블록에 반드시 `services.py`와
+`api/schemas.py`를 literal로 포함하고, 코드 골격 전에 `RED -> GREEN ->
+REFACTOR` 섹션을 둔다.
+
+**도메인 코드 품질 / 에러 모델.** 사용자가 할인 쿠폰, 주문 정책 같은 도메인
+로직을 코드 품질 중심으로 설계하면서 dict 에러나 bool 대신 Result/도메인
+예외/값 객체/pytest를 요청하면, 답변은 `RED -> GREEN -> REFACTOR` 순서로
+시작한다. 성공/업무상 거절은 타입이 드러나는 `Result`(`Ok`/`Err` 또는
+명시적 dataclass union)로, 깨진 불변식은 `도메인 예외`로, 원시 문자열/숫자는
+`값 객체`로 표현한다. 설명과 코드에서 literal JSON error payload를 쓰지
+않는다. 특히 `{"error"` 형태의 문자열을 예시로도 출력하지 않는다. 금지
+대안은 "dict error payload", "untyped error mapping"처럼 풀어 쓴다.
+clean code 설명에는 `책임`, `함수`, `타입`, `분리`, `테스트`를 포함하고,
+각 함수가 하나의 책임만 갖는 이유를 짧게 붙인다.
+
+**주문 상태 전이 설계.** 결제 완료, 배송 시작, 취소 실패 조건이 있는 주문
+상태 전이를 DDD 기준으로 설계할 때는 `Order` 애그리거트, `OrderId`,
+`PaymentId`, `Money`, `CancellationReason` 값 객체, `TransitionOrderStatusResult`
+Result 타입, `OrderDomainError` 도메인 예외, `PaymentConfirmed`,
+`ShippingStarted`, `OrderCancellationFailed` 도메인 이벤트를 함께 제시한다.
+답변에는 `값 객체`, `도메인 이벤트`, `타입`이라는 literal 표현을 섹션이나
+표 설명에 포함한다.
+상태 변경은 `confirm_payment()`, `start_shipping()`, `cancel()` 함수로 분리하고
+각 함수의 책임을 설명한다. DB 일관성 섹션에는 `transaction.atomic()`,
+`select_for_update()`, `version` 기반 optimistic locking, 상태 전이 중복
+방지를 위한 `idempotency` key, `unique` constraint를 포함한다. 이 섹션은
+검증 방법까지 포함해야 하며, 실제로 실행하지 않았다면 실행 결과를 확인한 것처럼 쓰지 않는다.
 
 아래 섹션에서 다루는 주제를 작업할 때는 링크된 참조 파일을 읽고 상세한
 컨벤션과 코드 예시를 확인한다.

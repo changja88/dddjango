@@ -235,15 +235,19 @@ class CustomPagination(PaginationBase):
 
     class Output(Schema):
         items: List[Any]
-        total: int
-        per_page: int
+        meta: dict[str, int]
 
     def paginate_queryset(self, queryset, pagination: Input, **params):
         skip = pagination.skip
+        per_page = 5
+        items = queryset[skip: skip + per_page]
         return {
-            'items': queryset[skip: skip + 5],
-            'total': queryset.count(),
-            'per_page': 5,
+            'items': items,
+            'meta': {
+                'total': queryset.count(),
+                'limit': per_page,
+                'offset': skip,
+            },
         }
 
 @api.get('/users', response=List[UserSchema])

@@ -33,7 +33,7 @@ Django 특화 테스트 컨벤션(TestCase, pytest-django)은 implementation-dja
 ## 세 가지 핵심 원칙
 1. 프로덕션 코드를 작성하기 전에 실패하는 테스트를 먼저 작성한다.
 2. 실패하는 테스트를 통과시키기에 충분한 만큼만 프로덕션 코드를 작성한다.
-3. 모든 테스트가 통과할 때만 리팩터링한다.
+3. 모든 기대 기준이 만족된 뒤에만 리팩터링한다.
 
 다른 모든 원칙은 이 세 가지를 위해 존재한다.
 
@@ -77,19 +77,20 @@ TDD로 개발할 때, 사용자를 Red-Green-Refactor 사이클을 통해 안내
 
 **빈 workspace / read-only fallback.** 프로젝트 파일이 없거나 읽기 전용이라
 파일 생성, 수정, pytest 실행을 할 수 없어도 TDD 요청을 중단하지 않는다.
-실행했다고 주장하지 않는다. 대신 다음 산출물을 제공한다:
+실행 결과를 확인한 것처럼 쓰지 않는다. 대신 다음 산출물을 제공한다:
 
 1. **RED 테스트 예시** -- 사용자가 실제 프로젝트에 옮길 수 있는 실패하는
    pytest 테스트 코드.
 2. **예상 실패 이유** -- 아직 없는 함수, 서비스, 예외, 모델 동작 때문에
    왜 실패해야 하는지.
-3. **GREEN 최소 구현** -- 위 테스트만 통과시키는 최소 프로덕션 코드.
-4. **REFACTOR 방향** -- 그린 상태에서 분리할 도메인 객체, 서비스, 예외,
+3. **GREEN 최소 구현** -- 위 RED 예시가 기대하는 동작만 만족시키는 최소 프로덕션 코드.
+4. **REFACTOR 방향** -- GREEN 기준을 만족한 뒤 분리할 도메인 객체, 서비스, 예외,
    fixture 개선 방향.
 5. **실행 명령** -- 사용자가 실제 프로젝트에서 실행할 pytest 명령.
 
 이 fallback에서도 RED/GREEN/REFACTOR 라벨을 유지한다. 테스트를 실행하지
-않았다면 "실행하지 못했습니다"라고 명시하고, 통과했다고 말하지 않는다.
+않았다면 "아직 검증 명령을 직접 돌리지 않았습니다"라고 명시하고,
+테스트/pytest/검증이 이미 성공했다는 완료형 문장을 쓰지 않는다.
 
 **도메인 정책 TDD 산출물.** 할인, 재고 예약, 주문 상태 변경처럼 정책을
 구현할 때는 일반적인 테스트 목록으로 끝내지 않는다. RED 단계에 정상,
@@ -97,10 +98,28 @@ TDD로 개발할 때, 사용자를 Red-Green-Refactor 사이클을 통해 안내
 값 객체, 도메인 예외, 명시적 결과 타입(`@dataclass(frozen=True)`)을 포함한
 최소 구현을 제시한다. REFACTOR 단계에는 Django model, repository, external
 gateway를 분리할 경계와 transaction 적용 지점을 명시한다.
+할인 쿠폰 정책 TDD에서는 `Coupon`을 애그리거트로, `CouponCode`, `Money`,
+`DiscountBenefit`, `RedemptionPeriod`를 값 객체로, `RedeemCouponUseCase`를
+유스케이스로 명시한다. `CouponRedeemed` 같은 도메인 이벤트와 쿠폰 불변식도
+짧게 포함한다. clean code 설명에는 `책임`, `함수`, `타입`, `분리`,
+`테스트`를 포함하고, 단일 책임 함수로 나누는 이유를 적는다.
 주문 취소, 주문 상태 전이, 재고 예약처럼 결과가 성공/실패/재시도 가능성을
 갖는 정책은 `CancelOrderResult`, `TransitionOrderStatusResult`,
 `ReserveInventoryResult`처럼 유스케이스 이름이 드러나는 결과 타입을 반드시
 GREEN 코드에 포함한다. bool, tuple, dict, 문자열 에러코드만 반환하지 않는다.
+
+**구현 설계에서도 TDD 순서 유지.** 사용자가 "구현한다고 가정하고 파일 트리와
+코드 골격을 제시"처럼 실제 파일을 만들지 않는 설계형 요청을 하더라도
+TDD가 관련된 Django 기능이면 RED/GREEN/REFACTOR 섹션을 포함한다. RED에는
+실패해야 하는 pytest 파일과 케이스명을 먼저 쓰고, GREEN에는 최소 domain 또는
+service/usecase 코드 골격을, REFACTOR에는 책임 분리와 fixture/edge case 확장을
+제시한다.
+주문 생성 설계에서 `pytest`, `idempotency`, `transaction`, `Router`,
+`Schema`, `response={` 같은 구현 판단을 함께 설명할 때도 첫 테스트 산출물
+앞에 정확히 `RED -> GREEN -> REFACTOR`를 한 줄로 쓴다. `RED` 섹션에는
+idempotency 재시도, 재고 부족, validation 실패 같은 실패/경계 테스트를
+포함하고, 실제로 실행하지 않은 경우 테스트/검증이 이미 성공했다는 완료형
+문장을 쓰지 않는다.
 
 **API endpoint 테스트 산출물.** Django Ninja `TestClient`나 pytest endpoint
 표준을 다룰 때도 경계/엣지 케이스를 명시한다. 최소 테스트 세트는 정상,
@@ -110,7 +129,7 @@ validation 실패, 인증/권한 실패, 경계값(빈 items, 수량 0, 최대 �
 적용할 핵심 원칙:
 
 **Red-Green-Refactor 사이클.** 모든 기능은 실패하는 테스트로 시작한다.
-통과하기에 충분한 코드만 작성한다. 그린 바 상태에서 리팩터링한다. 이 사이클은
+기대 동작을 만족시키기에 충분한 코드만 작성한다. GREEN 기준을 만족한 상태에서 리팩터링한다. 이 사이클은
 TDD의 심장 박동이다 -- 절대 단계를 건너뛰지 않는다.
 
 **테스트 선택.** 가장 단순한 경우(빈 입력, 0, null)부터 시작한다.
@@ -269,7 +288,7 @@ Khorikov의 네 가지 기둥: 회귀 보호, 리팩터링 내성, 빠른 피드
 
 ## 6. Green Bar 패턴
 
-테스트를 통과시키는 방법: Fake It(상수를 반환한 후 일반화),
+GREEN을 만드는 방법: Fake It(상수를 반환한 후 일반화),
 Triangulation(두 예제가 추상화를 강제), Obvious Implementation
 (확신이 있을 때 바로 구현).
 

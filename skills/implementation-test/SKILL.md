@@ -31,6 +31,8 @@ Django 특화 테스트 컨벤션(TestCase, pytest-django)은 implementation-dja
 DDD, dddjango, pytest-django, Django settings 구조로 끌고 가지 않는다. 이런
 응답에는 dddjango 스킬 체계의 `관련 스킬 참조` 섹션을 붙이지 않는다. 필요한
 경우 pytest, TestClient, fixture 등 해당 프레임워크에 맞는 테스트만 제시한다.
+명확한 비-Django 요청에서는 `## [관련 스킬 참조]`, `관련 스킬 참조`,
+closing template, 후속 dddjango skill 목록을 절대 출력하지 않는다.
 
 ## 세 가지 핵심 원칙
 1. 모든 테스트는 명확한 Arrange-Act-Assert 구조를 통해 하나의 동작을 검증한다.
@@ -79,18 +81,19 @@ When the closing section is applicable, use this exact template:
 
 **빈 workspace / read-only fallback.** 프로젝트 파일이 없거나 읽기 전용이라
 테스트 파일 생성 또는 pytest 실행이 불가능해도 테스트 작성 요청을 중단하지
-않는다. 실행했다고 주장하지 않는다. 대신 다음 산출물을 제공한다:
+않는다. 실행 결과를 확인한 것처럼 쓰지 않는다. 대신 다음 산출물을 제공한다:
 
 1. **RED 테스트 예시** -- `tests/isolated/...` 아래에 둘 수 있는 pytest 코드.
 2. **예상 실패 이유** -- 아직 구현되지 않은 함수, 서비스, repository, 예외
    때문에 실패해야 하는 이유.
-3. **GREEN 최소 구현** -- 테스트를 통과시키는 최소 코드 스케치.
+3. **GREEN 최소 구현** -- RED 예시가 기대하는 동작만 만족시키는 최소 코드 스케치.
 4. **REFACTOR 방향** -- fixture, fake repository, domain service, 예외 타입을
    정리하는 방향.
 5. **실행 명령** -- `pytest ... -q` 형태의 실제 실행 명령.
 
-실제 실행 여부와 예시 산출물을 구분한다. 실행하지 못했다면 통과했다고 말하지
-말고, 사용자가 실제 프로젝트에서 실행할 다음 명령을 제시한다.
+실제 실행 여부와 예시 산출물을 구분한다. 직접 돌리지 않았다면 테스트/pytest/검증이
+이미 성공했다는 완료형 문장을 쓰지 말고, 사용자가 실제 프로젝트에서 실행할
+다음 명령을 제시한다.
 
 적용할 핵심 컨벤션:
 

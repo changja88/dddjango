@@ -70,7 +70,7 @@
         {"id": "refactor-09", "text": "결과 반환을 None/dict 대신 EnrollmentResult 같은 명시적 도메인 결과 타입(dataclass/Enum/Value Object)으로 교체한다", "type": "content_check"},
         {"id": "refactor-10", "text": "통신 기반 검증(MagicMock.assert_called)에 의존하지 않고 출력 기반(반환값) 또는 상태 기반(InMemory 저장소 상태) 검증으로 전환하여 리팩토링 내성을 높인다", "type": "content_check"},
         {"id": "refactor-11", "text": "누락된 엣지 케이스(시간 충돌, 선수과목 미이수, 학점 한도 경계 18/19, 정원 정확히 가득 참 등)에 대한 테스트가 추가된다", "type": "content_check"},
-        {"id": "refactor-12", "text": "리팩토링이 그린 바 상태(모든 테스트가 통과하는 상태)에서만 수행된다는 점을 명시하거나 단계별로 그린을 유지하며 진행함을 드러낸다", "type": "content_check"},
+        {"id": "refactor-12", "text": "리팩토링이 GREEN 기준을 만족한 상태에서만 수행된다는 점을 명시하거나 단계별로 GREEN을 유지하며 진행함을 드러낸다", "type": "content_check"},
         {"id": "refactor-13", "text": "변경 후 테스트 데이터가 의미 있는 값(capacity=2로 경계 케이스, credits=15/3으로 학점 한도 18 경계)으로 선택되어 매직 넘버 냄새를 해소한다", "type": "content_check"},
         {"id": "refactor-14", "text": "리팩토링이 적용한 패턴 카탈로그(Extract Method, Extract Interface, Move Method, Value Object 추출 등) 중 최소 2개 이상이 명시적으로 인용되며 적용된다", "type": "content_check"},
         {"id": "refactor-15", "text": "마지막에 전체 리팩터링된 테스트 파일과 EnrollmentResult 같은 도메인 결과 타입을 포함한 프로덕션 코드 전체를 한 번에 제시하여 사용자가 결과 구조를 파악할 수 있게 한다", "type": "content_check"},

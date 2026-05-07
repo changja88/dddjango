@@ -1,19 +1,14 @@
 ---
 name: implementation-django-ninja
 description: >
-  Use when the user asks to build Django Ninja APIs, create endpoints,
-  write Schema/ModelSchema, add API auth, paginate/filter data, handle
-  API errors, write async API views, or test API endpoints. Covers Router,
-  Schema/ModelSchema, auth, pagination, FilterSchema, errors, throttling,
-  async views, TestClient, and django-ninja-extra. Also use for DRF,
-  Django REST Framework, Serializer, ModelSerializer, ViewSet, APIView,
-  rest_framework, DefaultRouter, or SimpleRouter requests in this repo;
-  those must be converted to Django Ninja Schema/Router instead of DRF.
-  Also use for common API response standards, error response standards,
-  exception handlers, and validation errors; the standard is RFC 9457 Problem
-  Details with application/problem+json plus success envelopes using items
-  and meta, not custom {"error": {...}} as the standard. DRF is not used. For Django core models/ORM/migrations/settings use
-  implementation-django; for REST design use architecture-api.
+  Use for Django Ninja APIs: Router, Schema/ModelSchema, auth, pagination,
+  FilterSchema, errors, throttling, async views, TestClient, endpoints, and API
+  tests. DRF, Serializer, ViewSet, APIView, rest_framework, DefaultRouter, and
+  SimpleRouter requests must be converted to Django Ninja Schema/Router. Use
+  RFC 9457 Problem Details for API error standards. If a Django request
+  mentions dddjango subagents, subagent/subagents, 역할 분해, 병렬 검토, or
+  책임 분배, use workflow-dddjango-subagents first. For Django core models/ORM
+  use implementation-django; for REST design use architecture-api.
 ---
 
 # Django Ninja 컨벤션과 패턴
@@ -25,9 +20,30 @@ Django 코어(모델, QuerySet, 마이그레이션, 설정)는 implementation-dj
 dataclasses, async)은 implementation-python에 위임한다. Django 웹 페이지
 (템플릿, 정적 파일, 디자인 시스템)는 implementation-django-web에 위임한다.
 
+**Subagent workflow guard.** 사용자가 서브에이전트, subagent/subagents,
+역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 API 구현
+스킬 단독으로 답하지 않는다. `workflow-dddjango-subagents`를 적용하고
+`Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`
+섹션명을 영어 그대로 포함한다. `역할 분해`로 번역하지 않는다.
+
 **DRF(Django REST Framework)는 사용하지 않는다.** 모든 API 코드는
 Django Ninja로 구현한다. DRF 코드(Serializer, ViewSet, APIView,
 permission_classes)를 발견하면 Django Ninja 패턴으로 전환을 권고한다.
+
+**목록 조회 API low-freedom rule.** 사용자가 Django Ninja 목록 조회 API와
+검색 필터, 정렬 allow-list, 인증, `items/meta` 페이지네이션, `TestClient`
+테스트를 함께 요청하면 응답 첫 20줄 안에 다음 두 줄을 그대로 포함한다:
+
+```text
+FilterSchema, Query[...], allow-list, items, meta, TestClient
+RED -> GREEN -> REFACTOR
+```
+
+이 케이스의 테스트 섹션 제목은 반드시 `RED`, `GREEN`, `REFACTOR`를 포함한다.
+`RED`에는 `TestClient` 테스트를 먼저 두고, 테스트 함수명이나 주석에 하이픈
+literal `allow-list`를 포함한다. underscore `allow_list`만 쓰지 않는다.
+`FilterSchema`, `Query[...]`, `items`, `meta`, `TestClient`, `allow-list` 중
+하나라도 빠지면 dddjango reference 적용 실패로 본다.
 
 **API 응답 표준 low-freedom rule.** 사용자가 공통 에러 응답, API 응답 표준,
 error standard, validation error, exception handler를 요청하면 반드시
@@ -46,12 +62,20 @@ RFC 9457 Problem Details와 `application/problem+json`을 사용한다.
 응답의 첫 30줄 안에는 반드시 다음 네 단어/표현이 모두 보여야 한다:
 `Problem Details`, `application/problem+json`, `items`, `meta`.
 
+**Trigger guard 우선순위.** 이 섹션은 아래의 응답 구조, 관련 스킬 참조,
+fallback 규칙보다 우선한다. FastAPI, Flask, Starlette, Node, Rust,
+SQL-only처럼 명확히 다른 기술을 요청하면 이 스킬의 Django Ninja 규칙을
+적용하지 않는다. 그런 답변에는 `Django Ninja`, `dddjango`, `DDD`,
+`관련 스킬 참조`, `Router`, `Schema` 연결을 붙이지 않는다.
+FastAPI, Flask, Starlette 요청에서는 literal substring `관련 스킬 참조`가
+금지어다. 이 스킬의 closing template을 절대 출력하지 않는다.
+
 **모호한 API 요청 가드.** 사용자가 Django, Django Ninja, Python 프로젝트라는
 맥락을 명시하지 않고 "API 구조", "엔드포인트", "서비스 레이어"처럼 일반적인
 질문만 하면 첫 문장을 반드시 "맥락이 불명확하므로 Django/Django Ninja
 프로젝트라는 가정하에 답합니다." 또는 "프로젝트가 Django라면..."처럼 쓴다.
-FastAPI, Flask, Node, Rust, SQL-only처럼 명확히 다른 기술이면 Django Ninja,
-DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
+FastAPI, Flask, Starlette, Node, Rust, SQL-only처럼 명확히 다른 기술이면
+해당 기술만 다룬다.
 
 **DRF 요청 override — 낮은 자유도 규칙:** 사용자가 DRF를 명시적으로
 요청해도 DRF 코드를 생성하지 않는다. `rest_framework`, `Serializer`,
@@ -61,9 +85,22 @@ DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
 작성합니다."라고 짧게 밝힌 뒤, Django Ninja 대안을 코드로 제시한다.
 정책 확인 문장: 사용자가 DRF를 명시적으로 요청해도 DRF 코드를 생성하지 않는다.
 
+**DRF legacy/review 경계.** 기존 DRF 코드를 리뷰하거나 DRF-to-Ninja migration을
+설명할 때만 DRF 이름을 문제 원인 또는 before 코드 맥락으로 언급할 수 있다.
+이 경우에도 새 코드 블록, after 코드, 권장 구현에는 `rest_framework`,
+`Serializer`, `ModelSerializer`, `ViewSet`, `APIView`, DRF router를 넣지
+않는다. before 코드를 인용해야 한다면 `Legacy DRF before (변환 대상)`이라고
+명확히 표시하고, 바로 아래에 `Django Ninja after (권장 구현)`를 제공한다.
+신규 코드 예시는 항상 `Schema`/`ModelSchema`, `Router`, `response={...}`,
+`api.add_router(...)`로 끝난다.
+사용자가 legacy DRF 코드를 분석 대상으로만 보고 Django Ninja 마이그레이션을
+요청하면 첫 문장에 반드시 "기존 DRF 코드는 분석 대상으로만 보고, 신규 코드는
+Django Ninja로 작성합니다."라고 쓴다. 이 문장은 DRF 거부 정책 확인이며,
+새 코드에는 DRF import, Serializer, ViewSet을 만들지 않는다.
+
 **빈 workspace / read-only fallback.** 프로젝트 파일이 없거나 읽기 전용이라
-파일 생성, 수정, 실행을 할 수 없어도 확인 질문으로 멈추지 않는다. 실행했다고
-주장하지 않는다. 대신 합리적인 기본 가정(예: `products` 앱의 `Product`
+파일 생성, 수정, 실행을 할 수 없어도 확인 질문으로 멈추지 않는다. 실행 결과를
+확인한 것처럼 쓰지 않는다. 대신 합리적인 기본 가정(예: `products` 앱의 `Product`
 모델)을 명시하고, 붙여 넣을 수 있는 Django Ninja 코드 예시를 제공한다:
 
 1. `schemas.py` -- `Schema` 또는 `ModelSchema`.
@@ -74,9 +111,60 @@ DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
    `api.add_router("/products/", products_router)`. 문자열 경로를
    `api.add_router()`에 넘기지 않는다.
 4. `config/urls.py` -- `path("api/", api.urls)`.
-5. 실행하지 못했다는 검증 고지와 사용자가 실행할 명령. API 코드를
+5. 아직 검증 명령을 직접 돌리지 않았다는 고지와 사용자가 실행할 명령. API 코드를
    제시했다면 최소한 `python manage.py check`와 `pytest` 또는
    `python manage.py test` 중 하나를 포함한다.
+
+DDD 기능 설계 또는 구현 요청이면 위 fallback을 더 구체화해
+`domain/`, `services.py` 또는 `usecases.py`, `api/schemas.py`,
+`api/router.py`, `tests/` 경계를 함께 제시한다. `api/router.py`는
+`Router`, `Schema`, `response={...}` 매핑과 use case 호출만 담당하고,
+상태 변경, 가격/재고/쿠폰 정책, 불변식은 domain 또는 service/usecase에 둔다.
+파일 트리/코드 골격 요청에서는 응답 구조보다 이 override가 우선한다. 첫
+파일 트리 블록은 다음 canonical layout을 기준으로 시작한다. 확장 구조를
+추가하더라도 이 블록보다 먼저 `domain_layer`, `application_layer`,
+`presentation_layer` 같은 대체 계층 구조를 제시하지 않는다.
+
+```text
+apps/orders/
+  domain/
+  services.py
+  api/
+    schemas.py
+    router.py
+  tests/
+```
+
+확장 계층 구조를 쓰더라도 파일 트리에는 `services.py`라는 파일명을 반드시
+포함한다. TDD가 포함된 구현 골격은 먼저 `RED -> GREEN -> REFACTOR` 한 줄을
+쓰고, 정확한 섹션 제목 `RED`, `GREEN`, `REFACTOR`를 사용하며, 실패 테스트 ->
+최소 구현 -> 리팩터링 순서로 제시한다.
+사용자가 "파일 트리", "코드 골격", "domain, service/usecase, api schema/router,
+tests 경계"를 요청하면 첫 파일 트리 블록에 반드시 `services.py`와
+`api/schemas.py`를 literal로 포함하고, 코드 골격 전에 `RED -> GREEN ->
+REFACTOR` 섹션을 둔다.
+
+**주문 생성 설계 keyword-bait 방지.** 사용자가 `Router`, `Schema`,
+`response={`, `애그리거트`, `transaction`, `idempotency`, `pytest` 같은
+단어를 단순 나열하지 말고 실제 설계 판단으로 설명하라고 요청하면, 표면적
+설명으로 끝내지 않는다. 답변에는 반드시 다음 산출물을 모두 포함한다:
+1. `RED -> GREEN -> REFACTOR` 한 줄과 `RED`, `GREEN`, `REFACTOR` 섹션.
+2. `apps/orders/api/schemas.py` 코드 블록. 이 블록은
+   `from ninja import Schema`, `class ProblemDetail(Schema):`,
+   `class CreateOrderIn(Schema):`, `class OrderCreatedOut(Schema):`를 직접
+   정의한다. 이름만 언급하지 않는다.
+3. `apps/orders/api/router.py` 코드 블록. 이 블록은 `router = Router()`,
+   `@router.post(...)`, `response={201: OrderCreatedOut, 400: ProblemDetail,
+   409: ProblemDetail, 422: ProblemDetail}`를 포함하고, router 안에는
+   비즈니스 규칙을 넣지 않는다.
+   특히 router 함수 안에 `for ... items`, `if ... status`, `inventory`,
+   `discount`, `cancel` 같은 흐름을 쓰지 않는다. 입력 변환은
+   `payload.to_command()`로 처리하고, 반복/분기/재고/할인/상태 전이는
+   service/usecase/domain에 둔다.
+4. transaction/idempotency 설명에는 `transaction.atomic()`과
+   `select_for_update()` 또는 `version` 기반 locking을 함께 포함한다.
+5. pytest 예시는 실패/경계/중복 또는 idempotency 케이스를 먼저 보여주고,
+   테스트 결과를 확인한 완료 사실처럼 쓰지 않는다.
 
 에러/응답 표준 fallback은 위 일반 파일 목록보다 우선한다. 이때 산출물에는
 반드시 다음 두 조각이 모두 있어야 한다:
@@ -112,7 +200,9 @@ DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
 
 ## 응답 구조
 
-모든 응답은 다음 구조를 따른다:
+이 스킬이 실제로 적용되는 Django Ninja 또는 DRF-to-Ninja 응답은 다음 구조를
+따른다. Trigger guard에 따라 non-Django 요청으로 판정한 답변에는 이 구조와
+관련 스킬 참조를 적용하지 않는다.
 
 1. **[주요 내용]** -- 모드에 따른 코드, 리뷰, 리팩터링 결과
 2. **[관련 스킬 참조]** -- 사용자의 다음 단계를 안내하는 연결점
@@ -120,6 +210,8 @@ DDD, dddjango 관련 스킬 참조를 붙이지 않는다.
 이 스킬은 11개의 상호 연결된 스킬 체계의 일부이다.
 사용자는 현재 작업 후 어떤 스킬을 호출해야 하는지 모르는 경우가
 많으므로, 관련 스킬 참조가 워크플로우의 자연스러운 연결을 만든다.
+단, FastAPI, Flask, Starlette, SQL-only, 일반 Python처럼 명확히 non-Django
+요청인 경우 관련 스킬 참조 섹션을 생략한다.
 
 ALWAYS use this exact template for the closing section:
 ```
@@ -201,6 +293,27 @@ null 필터 값을 건너뛰려면 `ignore_none=True`를 사용한다.
 `response=list[...]`는 plain list 응답일 때만 사용한다. 에러 응답은 항상
 `RFC 9457 Problem Details`로 정의하고 실제 응답 `Content-Type` 또는 테스트
 assertion에 `application/problem+json`을 포함한다.
+Django Ninja 목록 조회 API에서 검색 필터, 정렬 allow-list, 인증,
+items/meta 페이지네이션, TestClient 테스트를 함께 요청받으면 답변 첫 부분에
+`FilterSchema`, `Query[...]`, `allow-list`, `items`, `meta`, `TestClient`를
+literal로 모두 포함한다. 코드에서도 정렬 상수명, 주석, 또는 설명에 반드시
+하이픈이 있는 literal `allow-list`를 쓴다. `allow_list`처럼 underscore만 쓰면
+안 된다. 테스트 코드 블록 직전에는 반드시 다음 라벨을 그대로 쓴다:
+`RED -> GREEN -> REFACTOR`, `RED`, `GREEN`, `REFACTOR`. `RED` 아래에는
+pagination shape, invalid sort, 인증 실패, 필터 적용 케이스를 `TestClient`로
+보여주고, invalid sort 테스트 함수명 또는 주석에는 literal `allow-list`를
+포함한다.
+이 상황에서 목록 필터 입력을 plain `Schema`로 만들지 않는다. 첫 번째
+schemas/router 코드 블록은 반드시 `from ninja import FilterSchema, Query,
+Router, Schema` 또는 동등한 import를 포함하고,
+`class OrderFilter(FilterSchema):`를 직접 정의한다. 정렬 검증 설명과 코드
+주석 중 하나에는 반드시 하이픈이 있는 literal `allow-list`를 쓴다.
+`allow_list`, `PUBLIC_ORDER_SORTS`만으로 끝내면 안 된다.
+실제로 테스트를 실행하지 않은 목록 API 답변에서는 테스트/pytest/검증이 이미
+성공했다는 완료형 문장을 쓰지 않는다. 부정문도 완료 주장 문장처럼 읽히지
+않게 쓴다. 대신 `검증 명령`, `기대 결과`,
+`실패 없이 끝나야 합니다`, `완료 기준을 만족해야 합니다`처럼 미래 기준으로
+표현한다.
 
 **API 표준화 응답은 envelope까지 함께 제시한다.** 공통 API 표준, 에러 표준,
 응답 포맷 표준을 설계할 때는 에러만 보여주지 말고 정상 목록 응답의
