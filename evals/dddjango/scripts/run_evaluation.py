@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -350,7 +351,6 @@ def plugin_version() -> str:
     plugin_path = ROOT / ".codex-plugin/plugin.json"
     if not plugin_path.exists():
         return "unknown"
-    import json
 
     return str(json.loads(plugin_path.read_text()).get("version", "unknown"))
 
@@ -374,6 +374,55 @@ def installed_plugin_dir(version: str) -> Path | None:
     return candidates[0] if candidates else None
 
 
+def configured_local_plugin_dir() -> Path | None:
+    """Return the dddjango plugin directory for a local Codex marketplace."""
+    config_path = Path.home() / ".codex" / "config.toml"
+    if not config_path.exists():
+        return None
+
+    marketplaces: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+    for raw_line in config_path.read_text().splitlines():
+        line = raw_line.strip()
+        if line.startswith("[marketplaces.") and line.endswith("]"):
+            current = {}
+            marketplaces.append(current)
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current = None
+            continue
+        if current is None or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        current[key.strip()] = value.strip().strip('"')
+
+    for marketplace in marketplaces:
+        if marketplace.get("source_type") != "local":
+            continue
+        source = marketplace.get("source")
+        if not source:
+            continue
+        root = Path(source).expanduser().resolve()
+        manifest = root / ".agents" / "plugins" / "marketplace.json"
+        if manifest.exists():
+            data = json.loads(manifest.read_text())
+            for plugin in data.get("plugins", []):
+                if plugin.get("name") != "dddjango":
+                    continue
+                plugin_source = plugin.get("source", {})
+                if plugin_source.get("source") != "local":
+                    continue
+                plugin_path = (root / plugin_source.get("path", ".")).resolve()
+                if (plugin_path / ".codex-plugin" / "plugin.json").exists():
+                    return plugin_path
+        if (root / ".codex-plugin" / "plugin.json").exists():
+            data = json.loads((root / ".codex-plugin" / "plugin.json").read_text())
+            if data.get("name") == "dddjango":
+                return root
+
+    return None
+
+
 def ensure_live_plugin_matches_worktree(variants: list[str]) -> None:
     if "with-dddjango" not in variants:
         return
@@ -383,6 +432,23 @@ def ensure_live_plugin_matches_worktree(variants: list[str]) -> None:
     version = plugin_version()
     worktree_plugin = ROOT / "plugins" / "dddjango"
     worktree_skills = worktree_plugin / "skills"
+
+    local_plugin = configured_local_plugin_dir()
+    if local_plugin is not None:
+        local_skills = local_plugin / "skills"
+        if not local_skills.exists():
+            raise RuntimeError(
+                f"로컬 dddjango marketplace에 skills가 없습니다: {local_plugin}. "
+                "플러그인 marketplace 설정을 확인하세요."
+            )
+        if tree_fingerprint(worktree_skills) != tree_fingerprint(local_skills):
+            raise RuntimeError(
+                "로컬 dddjango marketplace가 현재 작업트리와 다릅니다. "
+                f"configured={local_plugin}, expected={worktree_plugin}. "
+                "로컬 marketplace 경로를 현재 repo로 다시 등록하세요."
+            )
+        return
+
     installed_plugin = installed_plugin_dir(version)
     if not installed_plugin:
         raise RuntimeError(
