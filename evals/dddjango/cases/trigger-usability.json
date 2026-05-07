@@ -208,8 +208,6 @@
         "template",
         "view",
         "context",
-        "json_script",
-        "csrf",
         "static",
         "LoginRequiredMixin",
         "테스트"
@@ -219,23 +217,57 @@
           "Django",
           "template"
         ],
-        "clean_implementation": [
-          "view",
-          "context",
-          "template",
-          "json_script",
-          "csrf",
-          "static",
-          "LoginRequiredMixin"
-        ],
+        "clean_implementation": [],
         "usability": [
           "파일",
           "검증"
         ]
       },
+      "alternative_pattern_groups": [
+        {
+          "dimension": "clean_implementation",
+          "label": "view_context_boundary",
+          "patterns": [
+            "TemplateView",
+            "get_context_data",
+            "context"
+          ]
+        },
+        {
+          "dimension": "clean_implementation",
+          "label": "template_composition_static",
+          "patterns": [
+            "{% extends",
+            "{% include",
+            "only",
+            "{% static"
+          ]
+        },
+        {
+          "dimension": "clean_implementation",
+          "label": "query_selector_n_plus_one",
+          "patterns": [
+            "selector",
+            "select_related",
+            "prefetch_related",
+            "N+1"
+          ]
+        },
+        {
+          "dimension": "clean_implementation",
+          "label": "access_pagination_tests",
+          "patterns": [
+            "LoginRequiredMixin",
+            "Paginator",
+            "pagination",
+            "테스트"
+          ]
+        }
+      ],
       "forbidden_patterns": [
-        "Django Ninja",
-        "Router",
+        "from ninja import",
+        "Router(",
+        "Django Ninja API",
         "APIView"
       ],
       "critical_forbidden_patterns": [

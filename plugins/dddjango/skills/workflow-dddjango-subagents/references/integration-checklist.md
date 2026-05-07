@@ -11,6 +11,11 @@ Use this before finalizing a role-decomposed answer or patch.
 - API uses Django Ninja Schema/Router and does not endorse DRF implementation.
 - State transitions are modeled as explicit domain/application operations, not
   as arbitrary status-field mutation.
+- Router/API handlers must call an application service or use case for state
+  changes; they must not mutate aggregate status directly.
+- Cross-aggregate side effects such as payment, inventory, or shipping should
+  be checked for domain event/outbox needs instead of being hidden in the API
+  handler.
 - Transaction boundaries and locking/idempotency are described for non-idempotent
   writes.
 - Tests include happy path, failure path, and at least one business invariant or
@@ -45,4 +50,3 @@ For design:
 - present the domain contract first
 - then DB/API/test implications
 - include unresolved assumptions
-

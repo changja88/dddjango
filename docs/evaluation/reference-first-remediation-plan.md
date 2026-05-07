@@ -17,17 +17,63 @@ dddjango 평가 개선은 점수가 낮은 케이스를 바로 스킬 문구로 
 
 ## Global Checklist
 
-- [ ] 각 케이스마다 reference 부족 여부를 먼저 판정한다.
-- [ ] reference가 부족한 케이스만 reference 파일을 보강한다.
-- [ ] reference는 충분하지만 출력에 반영되지 않는 경우 `SKILL.md`의 low-freedom rule을 보강한다.
-- [ ] reference도 출력도 충분한데 점수가 낮으면 평가 기준을 수정한다.
-- [ ] non-Django 케이스는 dddjango 지원 범위를 확장하지 않고 오염 방지 기준만 강화한다.
-- [ ] 수정 후 `skills/`와 `plugins/dddjango/skills/`를 동기화한다.
-- [ ] 설정 검증과 캘리브레이션을 먼저 통과시킨다.
-- [ ] subset live 평가로 4개 케이스를 확인한다.
-- [ ] subset 산출물을 수동 리뷰해 목적 적합성, 오염 없음, 키워드 패딩 없음,
+- [x] 각 케이스마다 reference 부족 여부를 먼저 판정한다.
+- [x] reference가 부족한 케이스만 reference 파일을 보강한다.
+- [x] reference는 충분하지만 출력에 반영되지 않는 경우 `SKILL.md`의 low-freedom rule을 보강한다.
+- [x] reference도 출력도 충분한데 점수가 낮으면 평가 기준을 수정한다.
+- [x] non-Django 케이스는 dddjango 지원 범위를 확장하지 않고 오염 방지 기준만 강화한다.
+- [x] 수정 후 `skills/`와 `plugins/dddjango/skills/`를 동기화한다.
+- [x] 설정 검증과 캘리브레이션을 먼저 통과시킨다.
+- [x] 기존 subset live output 재채점으로 4개 케이스를 확인한다.
+- [x] subset 산출물을 수동 리뷰해 목적 적합성, 오염 없음, 키워드 패딩 없음,
   실행 가능성을 확인한다.
 - [ ] 4개 케이스가 안정화되면 full live 평가를 실행한다.
+
+## Work Tracks
+
+### Track A: Reference 보강 불필요
+
+먼저 진행한다. 이 트랙은 스킬 지식 자체를 늘리지 않고, 평가 기준이 dddjango의
+목적을 제대로 측정하도록 정렬한다.
+
+- [x] `m02-ddd-aggregate-boundary`: `reference_usage=100`,
+  `ddd_boundaries=100`이 이미 확인되었으므로 usability 평가 기준만 정렬한다.
+- [x] `h03-starlette-no-contamination`: Starlette reference를 추가하지 않고,
+  non-Django 오염 방지와 실행 가능성 평가만 정렬한다.
+- [x] `m02`/`h03` 캘리브레이션 샘플을 추가한다.
+- [x] `validate_eval_config.py`와 `run_calibration.py --write-report`를 통과시킨다.
+- [x] subset live 평가로 `m02`, `h03`만 확인한다.
+
+Track A result:
+
+- `m02` live output 재채점: `100`
+  (`reference_usage=100`, `ddd_boundaries=100`, `usability=100`)
+- `h03` live output 재채점: `100`
+  (`trigger_accuracy=100`, `usability=100`)
+- 두 케이스 모두 forbidden hit 없음.
+
+### Track B: Reference 또는 스킬 지침 보강 후보
+
+Track A가 안정화된 뒤 진행한다.
+
+- [x] `s06-integration-conflict-resolution`: reference 소폭 보강이 필요한지 확인하고
+  행위 기반 평가 기준을 정렬한다.
+- [x] `t05-django-template-view`: 기존 web reference가 충분한지 재확인한 뒤,
+  조건부 response rule 또는 web 전용 clean 기준을 정렬한다.
+- [x] Track B 변경 후 cross-suite regression을 실행한다.
+
+Track B interim result:
+
+- `s06`은 새 reference를 만들지 않고 기존
+  `repositories-services.md`, `domain-events.md`를 reference matrix에 연결했다.
+  같은 live output 재채점 기준 `with-dddjango=90`, `without-dddjango=40`.
+- `t05`는 reference 보강 없이 GET-only template page 기준으로 평가를 정렬했다.
+  같은 live output 재채점 기준 `with-dddjango=100`, `without-dddjango=67`.
+  `json_script`와 `csrf`는 JS 데이터 주입 또는 POST/AJAX/HTMX 상태 변경 요청의
+  조건부 검토 항목으로 둔다.
+- Cross-suite regression 재채점:
+  `t02=75/pass`, `t06=100/pass`, `h02=92/pass`, `s05=100/pass`,
+  `s04=83/pass`.
 
 ## Agent Review Summary
 
@@ -75,24 +121,24 @@ Integration Checklist는 잘 만들지만, 충돌 통합 판단에서 DDD refere
 
 ### Improvement Plan
 
-- [ ] `reference-matrix.json`의 `s06` reference paths에
+- [x] `reference-matrix.json`의 `s06` reference paths에
   `repositories-services.md`, `domain-events.md`만 추가한다.
-- [ ] `workflow-dddjango-subagents/references/integration-checklist.md`에 충돌
+- [x] `workflow-dddjango-subagents/references/integration-checklist.md`에 충돌
   판단 시 aggregate root, application use case, cross-aggregate side effect가
   있는지 확인하는 항목을 추가한다.
-- [ ] `workflow-dddjango-subagents/SKILL.md`는 새 키워드 나열 규칙보다 기존
+- [x] `workflow-dddjango-subagents/SKILL.md`는 새 키워드 나열 규칙보다 기존
   `Order.confirm()` 직접 상태 변경 금지 규칙을 유지하고, 필요한 경우 한두 줄만
   보강한다.
-- [ ] `s06` 평가는 일반 DDD literal 전체가 아니라 다음 행위 기반 신호를
+- [x] `s06` 평가는 일반 DDD literal 전체가 아니라 다음 행위 기반 신호를
   인정하도록 조정한다:
   `Order.confirm()`, 상태 전이, application service/use case 경유, router 직접
   상태 변경 금지, command endpoint, transaction, test impact.
-- [ ] `값 객체`, `도메인 이벤트`는 있으면 가산할 수 있지만 모든 충돌 판단의
+- [x] `값 객체`, `도메인 이벤트`는 있으면 가산할 수 있지만 모든 충돌 판단의
   필수 신호로 강제하지 않는다.
-- [ ] 실제 subagent를 실행하지 않은 경우 다음 의미를 명확히 포함한다:
+- [x] 실제 subagent를 실행하지 않은 경우 다음 의미를 명확히 포함한다:
   "가정 기반 역할 분해이며 실제 subagent 실행/호출 완료가 아니다."
-- [ ] API contract는 `PATCH /orders/{id}` status 직접 변경 대신 command endpoint나 application use case를 호출하도록 정리한다.
-- [ ] DDD 용어만 나열하고 실제 충돌 판단이 없는 답변을 실패시키는 negative
+- [x] API contract는 `PATCH /orders/{id}` status 직접 변경 대신 command endpoint나 application use case를 호출하도록 정리한다.
+- [x] DDD 용어만 나열하고 실제 충돌 판단이 없는 답변을 실패시키는 negative
   calibration을 추가한다.
 
 ### Validation
@@ -143,19 +189,19 @@ Target:
 
 ### Improvement Plan
 
-- [ ] `implementation-django-web/SKILL.md`의 template page response rule을 보강한다.
-- [ ] 템플릿 기반 페이지 설계 요청이면 다음을 web clean 기준으로 평가한다:
+- [x] `implementation-django-web/SKILL.md`의 기존 template page response rule을 유지하고 평가 기준을 정렬한다.
+- [x] 템플릿 기반 페이지 설계 요청이면 다음을 web clean 기준으로 평가한다:
   `{% static %}`, `LoginRequiredMixin`, `context`, `include`, selector/service 분리,
   pagination, N+1 방지, template에 비즈니스 로직 금지, tests.
-- [ ] `json_script`는 서버 데이터를 JavaScript에 주입할 때 필수로 평가한다.
+- [x] `json_script`는 서버 데이터를 JavaScript에 주입할 때 필수로 평가한다.
   GET-only 목록 페이지에서는 "검토 항목"이면 충분하다.
-- [ ] `csrf`는 POST/AJAX/HTMX/상태 변경 form이 있을 때 필수로 평가한다.
+- [x] `csrf`는 POST/AJAX/HTMX/상태 변경 form이 있을 때 필수로 평가한다.
   GET-only 필터 폼에서는 필수로 두지 않는다.
-- [ ] view/template에 비즈니스 로직을 넣지 않고 selector/service로 분리하는 구조를 명시한다.
-- [ ] `t05` 평가 기준에 web 전용 clean dimension 또는 alternative structural group을 추가한다.
-- [ ] 범용 clean structural check의 `Result`, `도메인 예외`, `Enum` 같은
+- [x] view/template에 비즈니스 로직을 넣지 않고 selector/service로 분리하는 구조를 명시한다.
+- [x] `t05` 평가 기준에 web 전용 clean dimension 또는 alternative structural group을 추가한다.
+- [x] 범용 clean structural check의 `Result`, `도메인 예외`, `Enum` 같은
   API/domain 구현 신호가 web/template 케이스를 과도하게 낮추지 않도록 조정한다.
-- [ ] GET-only 좋은 답변과 POST/HTMX/JS 데이터 주입 답변을 구분하는
+- [x] GET-only 좋은 답변과 POST/HTMX/JS 데이터 주입 답변을 구분하는
   calibration을 추가한다.
 
 ### Validation
@@ -310,14 +356,16 @@ Target:
 
 ## Execution Order
 
-1. `s06` 행위 기반 평가 정렬 + reference 소폭 보강.
-2. `t05` web 전용 평가 기준 정렬 + 조건부 response rule 보강.
-3. `m02` usability 그룹 평가 정렬.
-4. `h03` non-Django contamination 평가 정렬.
-5. calibration과 cross-suite regression 추가/실행.
-6. 4개 subset live 평가.
-7. subset 산출물 manual review.
-8. 결과가 안정화되면 full live 평가.
+1. [x] Track A: `m02` usability 그룹 평가 정렬.
+2. [x] Track A: `h03` non-Django contamination 평가 정렬.
+3. [x] Track A: `m02`/`h03` calibration 추가/실행.
+4. [x] Track A: `m02`/`h03` subset live 평가와 산출물 manual review.
+5. [x] Track B: `s06` 행위 기반 평가 정렬 + 필요한 reference만 소폭 보강.
+6. [x] Track B: `t05` web 전용 평가 기준 정렬 + 조건부 response rule 보강.
+7. [x] calibration과 cross-suite regression 추가/실행.
+8. [x] 4개 기존 subset live output 재채점.
+9. [x] subset 산출물 manual review.
+10. 결과가 안정화되면 full live 평가.
 
 ## Stop Conditions
 

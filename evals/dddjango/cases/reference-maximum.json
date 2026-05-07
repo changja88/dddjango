@@ -84,14 +84,52 @@
           "값 객체",
           "도메인 이벤트"
         ],
-        "usability": [
-          "판단",
-          "근거"
-        ]
+        "usability": []
       },
       "forbidden_patterns": [
-        "하나의 거대한 애그리거트"
+        "하나의 거대한 애그리거트로 설계",
+        "하나로 묶어 관리",
+        "Order 안에 Payment 전체를 포함"
       ],
+      "alternative_pattern_groups": [
+        {
+          "dimension": "usability",
+          "label": "decision_or_recommendation",
+          "patterns": [
+            "판단",
+            "판정",
+            "결론",
+            "최종 권고",
+            "권장 경계"
+          ]
+        },
+        {
+          "dimension": "usability",
+          "label": "rationale",
+          "patterns": [
+            "근거",
+            "주요 발견",
+            "불변식",
+            "생명주기",
+            "실패 조건",
+            "외부 연동",
+            "경계"
+          ]
+        },
+        {
+          "dimension": "usability",
+          "label": "actionability",
+          "patterns": [
+            "점검표",
+            "검토 기준",
+            "바로 적용할",
+            "검색식",
+            "권장 흐름",
+            "예시"
+          ]
+        }
+      ],
+      "anti_keyword_stuffing": true,
       "critical_gates": [
         "no_false_execution",
         "korean_first"

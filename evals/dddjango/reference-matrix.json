@@ -271,6 +271,8 @@
         "skills/workflow-dddjango-subagents/references/integration-checklist.md",
         "skills/workflow-dddjango-subagents/references/role-map.md",
         "skills/architecture-ddd/references/aggregates.md",
+        "skills/architecture-ddd/references/repositories-services.md",
+        "skills/architecture-ddd/references/domain-events.md",
         "skills/implementation-django-ninja/references/routing.md"
       ],
       "reference_rules": [

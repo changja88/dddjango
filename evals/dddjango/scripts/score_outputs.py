@@ -366,12 +366,20 @@ def structural_checks(case: dict[str, Any], text: str) -> dict[str, Any]:
     dimensions = set(case.get("required_dimensions", []))
 
     if "django_ninja_api" in dimensions:
-        patterns = {
-            "router_instance": r"\bRouter\s*\(",
-            "schema_class": r"\bclass\s+\w+\s*\(\s*Schema\s*\)",
-            "router_decorator": r"@router\.(get|post|put|patch|delete)",
-            "response_mapping": r"response\s*=\s*\{",
-        }
+        if case.get("id") == "s06-integration-conflict-resolution":
+            patterns = {
+                "router_decorator": r"@router\.(post|patch)",
+                "response_mapping": r"response\s*=\s*\{",
+                "command_endpoint": r"/orders/\{order_id\}/confirm|/orders/\{id\}/confirm|command endpoint|명령형 endpoint",
+                "no_status_patch_contract": r"status.*(제외|없음|금지)|PATCH[\s\S]{0,160}status[\s\S]{0,160}(거부|제외|금지)",
+            }
+        else:
+            patterns = {
+                "router_instance": r"\bRouter\s*\(",
+                "schema_class": r"\bclass\s+\w+\s*\(\s*Schema\s*\)",
+                "router_decorator": r"@router\.(get|post|put|patch|delete)",
+                "response_mapping": r"response\s*=\s*\{",
+            }
         passed = [name for name, pattern in patterns.items() if regex_matches([pattern], text)]
         checks["django_ninja_api"] = {
             "status": "pass" if len(passed) == len(patterns) else "needs_review",
@@ -422,16 +430,35 @@ def structural_checks(case: dict[str, Any], text: str) -> dict[str, Any]:
         }
 
     if "clean_implementation" in dimensions:
-        terms = ["Result", "도메인 예외", "타입", "Enum", "책임", "분리", "함수", "테스트"]
-        forbidden = ["dict로 에러", "{\"error\"", "bool을 반환", "router에서 상태 변경"]
-        hits = substring_matches(terms, text)
-        forbidden_hits = substring_matches(forbidden, text)
-        checks["clean_implementation"] = {
-            "status": "pass" if len(hits) >= 3 and not forbidden_hits else "needs_review",
-            "passed": hits,
-            "missing": [term for term in terms if term not in hits],
-            "forbidden_hits": forbidden_hits,
-        }
+        if case.get("id") == "t05-django-template-view":
+            groups = {
+                "view_context": ["TemplateView", "get_context_data", "context"],
+                "template_composition": ["{% extends", "{% include", "only", "{% static"],
+                "access_and_query": ["LoginRequiredMixin", "selector", "select_related", "prefetch_related", "N+1"],
+                "pagination_and_tests": ["Paginator", "pagination", "테스트", "검증"],
+            }
+            passed = [
+                name for name, patterns in groups.items()
+                if substring_matches(patterns, text)
+            ]
+            forbidden_hits = substring_matches(["from ninja import", "Router(", "APIView", "Django Ninja API"], text)
+            checks["clean_implementation"] = {
+                "status": "pass" if len(passed) >= 3 and not forbidden_hits else "needs_review",
+                "passed": passed,
+                "missing": [name for name in groups if name not in passed],
+                "forbidden_hits": forbidden_hits,
+            }
+        else:
+            terms = ["Result", "도메인 예외", "타입", "Enum", "책임", "분리", "함수", "테스트"]
+            forbidden = ["dict로 에러", "{\"error\"", "bool을 반환", "router에서 상태 변경"]
+            hits = substring_matches(terms, text)
+            forbidden_hits = substring_matches(forbidden, text)
+            checks["clean_implementation"] = {
+                "status": "pass" if len(hits) >= 3 and not forbidden_hits else "needs_review",
+                "passed": hits,
+                "missing": [term for term in terms if term not in hits],
+                "forbidden_hits": forbidden_hits,
+            }
 
     if "project_structure" in dimensions:
         groups = {

@@ -210,11 +210,11 @@
     "dimensions": [
       "subagent_integration_verification"
     ],
-    "pass_if_all": [
-      "도메인 불변식",
-      "transaction",
-      "API contract",
-      "test"
+    "pass_if_all_regex": [
+      "도메인\\s*불변식|domain\\s+invariant|aggregate\\s+invariant",
+      "transaction|트랜잭션|select_for_update|idempotency|멱등",
+      "API\\s*contract|API\\s*계약|command\\s*endpoint|명령형\\s*endpoint",
+      "\\btest\\b|pytest|테스트"
     ],
     "message": "통합 충돌은 도메인 불변식, 데이터 일관성, API 계약, 테스트 순으로 해결해야 한다."
   }

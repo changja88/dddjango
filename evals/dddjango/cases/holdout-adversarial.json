@@ -173,20 +173,68 @@
         "trigger_accuracy": [
           "Starlette"
         ],
-        "usability": [
-          "검증",
-          "테스트"
-        ]
+        "usability": []
       },
-      "forbidden_patterns": [
-        "Django Ninja",
-        "dddjango",
-        "관련 스킬 참조"
+      "alternative_pattern_groups": [
+        {
+          "dimension": "usability",
+          "label": "install_or_run",
+          "patterns": [
+            "pip install",
+            "python -m pip",
+            "uvicorn",
+            "Starlette"
+          ]
+        },
+        {
+          "dimension": "usability",
+          "label": "request_example",
+          "patterns": [
+            "curl",
+            "POST /orders",
+            "content-type"
+          ]
+        },
+        {
+          "dimension": "usability",
+          "label": "response_contract",
+          "patterns": [
+            "201",
+            "HTTPStatus.CREATED",
+            "JSONResponse",
+            "422",
+            "오류 응답"
+          ]
+        },
+        {
+          "dimension": "usability",
+          "label": "test_direction",
+          "patterns": [
+            "TestClient",
+            "pytest",
+            "검증",
+            "테스트"
+          ]
+        }
       ],
-      "critical_forbidden_patterns": [
+      "forbidden_patterns": [
+        "from django",
+        "django.conf",
         "from ninja import",
         "Django Ninja Router",
-        "관련 스킬 참조"
+        "관련 스킬 참조",
+        "dddjango 기준",
+        "Django app 구조",
+        "Django ORM"
+      ],
+      "critical_forbidden_patterns": [
+        "from django",
+        "django.conf",
+        "from ninja import",
+        "Django Ninja Router",
+        "관련 스킬 참조",
+        "Django app 구조",
+        "Django ORM"
       ],
       "forbidden_is_critical": true,
       "critical_gates": [

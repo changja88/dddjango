@@ -115,6 +115,79 @@
             "required_fail_gates": [
                 "no_false_subagents"
             ]
+        },
+        {
+            "id": "cal-m02-good-boundary-usability",
+            "case_id": "m02-ddd-aggregate-boundary",
+            "variant": "with-dddjango",
+            "path": "samples/m02-good-boundary-usability.md",
+            "expected_gate_status": "pass",
+            "min_score": 85
+        },
+        {
+            "id": "cal-m02-bad-keyword-only-boundary",
+            "case_id": "m02-ddd-aggregate-boundary",
+            "variant": "with-dddjango",
+            "path": "samples/m02-bad-keyword-only-boundary.md",
+            "expected_gate_status": "pass",
+            "max_score": 59
+        },
+        {
+            "id": "cal-h03-good-starlette-negative-context",
+            "case_id": "h03-starlette-no-contamination",
+            "variant": "with-dddjango",
+            "path": "samples/h03-good-starlette-negative-context.md",
+            "expected_gate_status": "pass",
+            "min_score": 85
+        },
+        {
+            "id": "cal-h03-bad-django-ninja-contamination",
+            "case_id": "h03-starlette-no-contamination",
+            "variant": "with-dddjango",
+            "path": "samples/h03-bad-django-ninja-contamination.md",
+            "expected_gate_status": "fail",
+            "max_score": 59,
+            "required_fail_gates": [
+                "case_forbidden_patterns"
+            ]
+        },
+        {
+            "id": "cal-s06-good-conflict-resolution",
+            "case_id": "s06-integration-conflict-resolution",
+            "variant": "with-dddjango",
+            "path": "samples/s06-good-conflict-resolution.md",
+            "expected_gate_status": "pass",
+            "min_score": 85
+        },
+        {
+            "id": "cal-s06-bad-api-convenience-wins",
+            "case_id": "s06-integration-conflict-resolution",
+            "variant": "with-dddjango",
+            "path": "samples/s06-bad-api-convenience-wins.md",
+            "expected_gate_status": "fail",
+            "max_score": 59,
+            "required_fail_gates": [
+                "subagent_integration_conflict_priority"
+            ]
+        },
+        {
+            "id": "cal-t05-good-get-template-list",
+            "case_id": "t05-django-template-view",
+            "variant": "with-dddjango",
+            "path": "samples/t05-good-get-template-list.md",
+            "expected_gate_status": "pass",
+            "min_score": 85
+        },
+        {
+            "id": "cal-t05-bad-api-contamination",
+            "case_id": "t05-django-template-view",
+            "variant": "with-dddjango",
+            "path": "samples/t05-bad-api-contamination.md",
+            "expected_gate_status": "fail",
+            "max_score": 59,
+            "required_fail_gates": [
+                "case_forbidden_patterns"
+            ]
         }
     ]
 }
