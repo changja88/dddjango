@@ -268,14 +268,29 @@
           "Flask"
         ],
         "usability": [
-          "검증",
-          "테스트"
+          "pip install",
+          "curl",
+          "201"
         ]
       },
       "forbidden_patterns": [
-        "Django Ninja",
-        "dddjango",
-        "관련 스킬 참조"
+        "from ninja import",
+        "Django Ninja Router",
+        "관련 스킬 참조",
+        "dddjango 기준",
+        "Django app 구조",
+        "Django ORM"
+      ],
+      "alternative_pattern_groups": [
+        {
+          "dimension": "trigger_accuracy",
+          "label": "non_django_scope_boundary",
+          "patterns": [
+            "Django/DRF/Django Ninja 없이",
+            "순수 Flask",
+            "Flask만 사용"
+          ]
+        }
       ],
       "critical_forbidden_patterns": [
         "from ninja import",

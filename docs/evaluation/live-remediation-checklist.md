@@ -435,6 +435,11 @@ make eval-dddjango CASE=p01-order-feature-file-tree VARIANT=with-dddjango
   `subagent_workflow` 92, `code_structure_quality` 87. 남은 `needs_review`는
   모든 live 점수가 automatic low-confidence로 표시되는 평가 체계상의 수동
   검토 요구다.
+- `t06-flask-no-contamination`은 Flask 구현 능력을 dddjango 가치로 보지
+  않는다. 평가 목적을 비-Django 요청에서 dddjango/Django Ninja 오염을
+  방지하고, 순수 Flask 범위를 인정하는 것으로 정정했다. 기존 run
+  `20260507-151743-002462` 재채점 기준 `t06`은 with/without 모두 score 100,
+  gate pass다.
 
 Subset live 진단 예시:
 
