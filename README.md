@@ -86,33 +86,6 @@ claude plugin install dddjango@dddjango
 
 This repository includes `.claude-plugin/marketplace.json`, so it can act as its own Claude Code marketplace after it is published.
 
-## Evaluation
-
-The previous evaluation framework has been removed because its scoring did not
-directly measure whether `dddjango` fulfills its purpose: Django Ninja over DRF,
-DDD boundaries, DB design discipline, TDD quality, Korean-first usability, and
-appropriate trigger behavior.
-
-The replacement framework is under active development in `evals/dddjango`.
-It provides fixture-based smoke checks for the evaluation pipeline and a live
-Codex comparison runner. Use smoke checks when editing the evaluator itself:
-
-```bash
-make eval-smoke
-```
-
-Use live evaluation when measuring the installed plugin:
-
-```bash
-make eval-dddjango
-```
-
-The live runner executes each prompt twice: `without-dddjango` uses Codex with
-user config and project rules ignored, while `with-dddjango` uses the normal
-Codex config where the published `dddjango` plugin is enabled. Every run writes
-prompt, output, score, command metadata, stderr, and an HTML comparison report
-under `workspace/codex-eval/purpose-fit/`.
-
 ## Release Checklist
 
 - Update `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` to the same version.

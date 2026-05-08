@@ -38,7 +38,6 @@ skills/
 workspace/
   skill-hierarchy.md       # 스킬 계층과 위임 관계
   <skill>/reference/       # 스킬 작성 당시 참고 자료
-  <skill>/test/            # 스킬 평가 산출물
 ```
 
 ## 스킬 구성
@@ -70,7 +69,7 @@ Implementation 계열은 "코드로 어떻게 작성할지"를 다룬다.
 - `skills/<skill>/SKILL.md`는 짧은 진입점이며, 상세 규칙은 `skills/<skill>/references/*.md`로 분리한다.
 - `workspace/<skill>/reference/`는 스킬 작성 당시의 참고 자료이고, `skills/<skill>/references/`는 실제 스킬이 지연 로딩하는 문서다. 단수/복수 디렉터리를 혼동하지 않는다.
 - 새 스킬이나 책임 변경이 있으면 `workspace/skill-hierarchy.md`, 관련 `SKILL.md` frontmatter, 영향을 받는 `commands/*.md`를 함께 갱신한다.
-- DRF 금지처럼 중요한 정책을 추가하거나 바꿀 때는 스킬 description, 본문, 평가 assertion을 함께 갱신한다.
+- DRF 금지처럼 중요한 정책을 추가하거나 바꿀 때는 스킬 description과 본문을 함께 갱신한다.
 - 사용자가 Django API를 요청하면 Django Ninja를 기준으로 설계/구현한다.
 
 ## 커맨드 작성 규칙
@@ -82,14 +81,13 @@ Implementation 계열은 "코드로 어떻게 작성할지"를 다룬다.
 - 커맨드 본문에서는 모드를 영어로 표기한다. 예: `Design`, `Writing`, `Review`, `Refactoring`.
 - `commands/feature.md`가 가장 종합적인 예시다.
 
-## 평가와 검증
+## 검증
 
-이 저장소는 마크다운/JSON 자산 중심이라 별도 빌드 단계가 없다. 검증은 스킬 응답 평가 산출물로 관리한다.
+이 저장소는 마크다운/JSON 자산 중심이라 별도 빌드 단계가 없다. 릴리스 전 검증은 메타데이터, mirror 동기화, 대표 프롬프트 수동 확인을 중심으로 한다.
 
-- 스킬별 A/B 평가: `workspace/<skill>/test/iteration-N/...`
-- 통합 검증: `workspace/test/.../GRADING.md`
-- 평가 결과는 `grading.json`의 `expectations[].passed`, `timing.json`의 토큰/시간 데이터를 함께 본다.
-- 새 평가를 추가할 때는 기존 iteration 옆에 `iteration-N+1/` 구조를 만든다.
+- `make test-release`로 릴리스 자동화와 스킬 mirror 동기화를 확인한다.
+- Claude Code와 Codex에서 대표 프롬프트를 실행해 한국어 응답, DRF 금지, Django Ninja 사용을 확인한다.
+- 새 평가 구조를 정하기 전까지 플러그인 평가 러너, 점수표, 평가 산출물은 저장소에 추가하지 않는다.
 
 ## 현재 상태 참고
 

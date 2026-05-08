@@ -19,18 +19,16 @@ skills/                        -- Claude/Codex 공통 스킬 11개 (architecture
   └─ <skill>/
       ├─ SKILL.md              -- 진입점 (frontmatter + 본문)
       ├─ references/*.md       -- 본문 섹션이 가리키는 상세 문서 (지연 로딩)
-      └─ evals/evals.json      -- (일부 스킬) 평가 시드
-workspace/                     -- 작업 보조 자료 + 평가 산출물 (배포 패키지 외 영역)
+workspace/                     -- 작업 보조 자료 (배포 패키지 외 영역)
 ```
 
-## 평가 워크플로
+## 검증 워크플로
 
-이 플러그인은 마크다운/JSON 자산이라 빌드 단계가 없다. "테스트"는 스킬 응답을 평가하는 작업이다.
+이 플러그인은 마크다운/JSON 자산이라 빌드 단계가 없다. 릴리스 전 검증은 메타데이터, mirror 동기화, 대표 프롬프트 수동 확인을 중심으로 한다.
 
-- 스킬 단위 A/B 평가: `workspace/<skill>/test/iteration-N/<tc>/{with_skill,without_skill}/{outputs/output.md, grading.json, timing.json}`. `grading.json`의 `expectations[].passed`로 합격을 본다. `timing.json`은 token/duration 비교용.
-- 통합 검증: `workspace/test/{final-validation, cross-skill-test, korean-validation, command-test}/.../GRADING.md`. 합격/불합격을 표 형태로 정리한다.
-- 새 evaluation을 추가할 때는 기존 iteration 옆에 `iteration-N+1/`을 만들고 같은 프롬프트를 두 조건(스킬 ON/OFF)으로 비교한다.
+- `make test-release`로 릴리스 자동화와 Codex 배포 mirror 동기화를 확인한다.
 - 듀얼 플랫폼 릴리스 전에는 Claude Code와 Codex에서 같은 대표 프롬프트를 실행해 한국어 응답, DRF 금지, Django Ninja 사용, DDD/계층 분리를 확인한다.
+- 새 검증 구조를 도입하기 전까지 별도의 플러그인 평가 러너나 점수 산출물은 저장소에 두지 않는다.
 
 ## 플랫폼 패키징 원칙
 
@@ -105,7 +103,7 @@ YAML 폴드 스칼라(`description: >`)를 쓴다. 자연어 description을 여�
 
 ### 금지 패턴
 
-- **DRF(Django REST Framework) 사용 금지** — 모든 API는 Django Ninja로 작성한다. DRF Serializer/ViewSet/APIView/`permission_classes`를 발견하면 Ninja 패턴으로 전환을 권고한다. 이 정책은 `architecture-api`, `implementation-django`, `implementation-django-ninja`의 description과 본문 양쪽에 명시되어 있고 평가에서도 검증된다.
+- **DRF(Django REST Framework) 사용 금지** — 모든 API는 Django Ninja로 작성한다. DRF Serializer/ViewSet/APIView/`permission_classes`를 발견하면 Ninja 패턴으로 전환을 권고한다. 이 정책은 `architecture-api`, `implementation-django`, `implementation-django-ninja`의 description과 본문 양쪽에 명시한다.
 
 ## 커맨드 작성 컨벤션
 
@@ -126,13 +124,11 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion
 
 ## workspace 디렉토리 사용 규칙
 
-`workspace/`는 **개발 보조 자료 + 평가 산출물 보관소**이지 플러그인 패키지의 일부가 아니다. 추후 `.skill` 패키징 시 별도 처리가 필요한 영역이다.
+`workspace/`는 **개발 보조 자료 보관소**이지 플러그인 패키지의 일부가 아니다. 추후 `.skill` 패키징 시 별도 처리가 필요한 영역이다.
 
 분류:
 
 - `workspace/<skill>/reference/{external, internal, review, final}.md` — 스킬 작성 시 참고한 외부 자료, 내부 정리, 검토 노트, 최종 종합. **단수 `reference/`**. (스킬 내부의 `references/`는 복수.)
-- `workspace/<skill>/test/iteration-N/...` — 스킬별 A/B 평가 산출물(과거 iteration 누적).
-- `workspace/test/{final-validation, cross-skill-test, korean-validation, command-test}/...` — 통합 검증 산출물. `GRADING.md`가 PASS/FAIL 표.
 - `workspace/skill-hierarchy.md` — 11개 스킬의 레벨 분류와 위임 관계 정리.
 
 스킬을 수정·확장할 때는 해당 스킬의 `workspace/<skill>/reference/`를 먼저 훑으면 작성 당시 맥락 파악이 빠르다.
@@ -148,7 +144,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion
 
 ## 작업 시 알아둘 점
 
-- **응답 언어** — 사용자 답변과 스킬 출력 모두 한국어. `workspace/test/korean-validation/`이 이를 검증한다.
+- **응답 언어** — 사용자 답변과 스킬 출력 모두 한국어.
 - **새 스킬을 만들 때** — `workspace/skill-hierarchy.md`에서 책임 분리·위임 관계를 먼저 정하고, 기존 SKILL.md 한 개를 템플릿으로 복사해 시작한다. frontmatter description의 트리거 키워드 정밀도가 invocation 정확도를 좌우하므로, description 후보를 여러 안 써 두고 비교한다.
-- **금지 패턴 추가/수정 시** — DRF 정책처럼 "이 패턴은 쓰지 말 것"을 추가하거나 변경할 때는 description과 본문 양쪽에 명시하고, 평가 assertion에도 반영해 회귀를 막는다.
+- **금지 패턴 추가/수정 시** — DRF 정책처럼 "이 패턴은 쓰지 말 것"을 추가하거나 변경할 때는 description과 본문 양쪽에 명시한다.
 - **위임 관계 변경 시** — 한 스킬의 책임이 바뀌면 (1) 양쪽 SKILL.md frontmatter description, (2) `workspace/skill-hierarchy.md`, (3) 영향받는 commands를 같이 갱신한다.
