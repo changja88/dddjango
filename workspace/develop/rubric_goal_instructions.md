@@ -27,7 +27,7 @@
 - 이미 유효한 내용이 있는 rubric은 기본적으로 다시 쓰지 않고, 먼저 리뷰한 뒤 필요한 부분만 수정한다.
 - 각 rubric이 completed, blocked, accepted-exception 중 하나가 되는 즉시 `workspace/develop/plan.md`를 갱신한다.
 - 실제로 수행하지 않은 테스트, 검증, 리뷰, subagent 실행을 완료했다고 말하지 않는다.
-- 리뷰는 기본적으로 동일 agent의 세 관점 self-review다. 실제 subagent를 실행한 경우에만 subagent review라고 부른다.
+- 리뷰는 기본적으로 동일 agent의 네 관점 self-review다. 실제 subagent를 실행한 경우에만 subagent review라고 부른다.
 - 완료 상태는 의도가 아니라 파일 내용을 다시 확인한 뒤에만 표시한다.
 
 ## Rubric별 필수 조건
@@ -71,7 +71,7 @@ dddjango 평가 자료는 한국어 사용자 입력을 우선 검증한다. sec
 
 ## 리뷰 루프
 
-각 rubric은 다음 세 관점으로 리뷰한다.
+각 rubric은 다음 네 관점으로 리뷰한다.
 
 - skill authoring과 validation integrity
 - dddjango product/docs alignment
@@ -81,14 +81,14 @@ dddjango 평가 자료는 한국어 사용자 입력을 우선 검증한다. sec
 각 rubric은 아래 순서를 반복한다.
 
 1. rubric 초안을 작성하거나 기존 내용을 검토한다.
-2. 위 세 관점으로 리뷰 finding을 작성한다.
+2. 위 네 관점으로 리뷰 finding을 작성한다.
 3. finding을 `blocking`, `major`, `minor`로 분류한다.
 4. 수정 계획을 짧게 세운 뒤 rubric을 수정한다.
-5. 같은 세 관점으로 다시 리뷰한다.
+5. 같은 네 관점으로 다시 리뷰한다.
 6. `blocking`, `major`, `minor` finding이 모두 0개가 될 때까지 반복한다.
 
 실제 subagent를 실행할 수 있고 실행한 경우에만 subagent review라고 부른다.
-실제 subagent를 실행하지 않은 경우에는 동일 agent의 세 관점 self-review라고
+실제 subagent를 실행하지 않은 경우에는 동일 agent의 네 관점 self-review라고
 명시한다. 어떤 경우에도 실행하지 않은 agent review를 완료했다고 말하지 않는다.
 
 리뷰 finding은 다음 기준으로 분류한다.
@@ -105,7 +105,7 @@ Rubric은 다음 조건을 모두 만족하면 completed로 본다.
 - core scored dimensions는 5점을 목표로 하되, 낮은 점수는 source limitation, provisional status, accepted trade-off로 정당화되어야 한다.
 - blocking finding과 major finding이 0개다.
 - minor finding이 0개다.
-- 세 리뷰 관점 사이에 해결되지 않은 충돌 판단이 없다.
+- 네 리뷰 관점 사이에 해결되지 않은 충돌 판단이 없다.
 
 일반적인 minor finding은 accepted exception으로 넘기지 않는다. 표현 개선,
 예시 보강, 중복 정리, scoring note 명확화 같은 minor는 수정한 뒤 다시

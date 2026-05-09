@@ -49,7 +49,7 @@
 - [x] 각 평가표에 positive prompt, negative prompt, expected routing을 포함한다.
 - [x] 각 평가표에 required reference coverage와 failure criteria를 포함한다.
 - [x] provisional 스킬의 평가표에 fallback source와 한계를 명시한다.
-- [x] 평가표 전체를 동일 agent의 세 관점 self-review로 리뷰하고 수정한다. 실제 subagent review는 이 단계에서 실행하지 않았다.
+- [x] 평가표 전체를 동일 agent의 네 관점 self-review로 리뷰하고 수정한다. 실제 subagent review는 이 단계에서 실행하지 않았다.
 - [x] 공통 Language Policy를 `common_rubric.md`와 `rubric_goal_instructions.md`에 반영한다.
 - [x] 각 평가표의 public prompt를 한국어 자연어, 한국어/영어 혼합, 구어적/모호한 사용자 요청, 단순 negative case까지 보강한다.
 - [x] 각 평가표의 private grader key에 추가 public prompt family의 expected routing과 failure criteria를 반영한다.
