@@ -9,7 +9,7 @@
 - Fallback sources: `architecture-ddd/reference/final.md`, `implementation-django/reference/final.md`, `implementation-python/reference/final.md`, and product docs
 - Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
 - Runtime references: `pattern-selection.md`, `ports-adapters.md`, `repository-uow.md`, `outbox-acl.md`
-- Rubric status: not opened during draft; reserved for post-source-review verification
+- Rubric status: completed after source review; only source-backed runtime issues were reflected
 
 ## Sources Used
 
@@ -35,11 +35,11 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `architecture-ddd`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize fallback sources. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with provisional status. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 헥사고날, 클린 아키텍처, 의존성 역전, repository/UoW, outbox, ACL, and 프로젝트 구조 included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 계층, 클린 아키텍처, 헥사고날, 포트-어댑터, 의존성 역전, repository/UoW, CQRS, 이벤트 소싱, 사가, outbox, ACL, 레거시 연동, service layer, and 프로젝트 구조 included. |
 | `## Provisional Skill 처리` | included | `SKILL.md`, this status | Provisional status, source policy decision, and fallback source scope are explicit. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Workflow, DDD, DB, API, and implementation boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
@@ -51,6 +51,11 @@
 | `## 1. 목표` | included | `SKILL.md`, references | DDD model maps to implementation architecture before Django code. |
 | `## 2. 설계 원칙` | included | references | Strategy before tactics, aggregate consistency, outbox, Django pragmatism, and adapter boundaries included. |
 | `## 3. 스킬 종류` | included | `SKILL.md` Routing | Implementation-pattern responsibility and adjacent skill boundaries included. |
+| `### Core DDD` | delegated-to-other-skill | `architecture-ddd`, `SKILL.md` Routing | Domain model, context, aggregate, and invariant decisions must be clear before pattern selection. |
+| `### Implementation Mapping` | included | `SKILL.md`, references | This skill maps DDD decisions to dependency direction, pattern choice, adapters, and persistence boundaries before concrete code. |
+| `### Supporting Architecture` | merged | `SKILL.md` Routing, references | DB/API architecture receives pattern handoffs while detailed schema/API decisions route away. |
+| `### Quality` | merged | `SKILL.md`, references | Anti-overengineering, verification honesty, and lightest-pattern guidance are reflected. |
+| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Coordinated multi-role implementation or review routes to workflow before this skill; direct pattern-selection decisions stay here. |
 | `## 4. 산출물 기준` | included | `SKILL.md`, references | Pattern decisions, dependency direction, integration boundaries, and handoffs included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/architecture-implementation-patterns/` | Plugin-bundled structure used; no cache edits. |
@@ -82,11 +87,12 @@
 | `## implementation-python` | delegated-to-other-skill | `implementation-python` | Python syntax/type mechanics route away; Protocol boundary concept used as fallback. |
 | `## implementation-cleancode` | delegated-to-other-skill | `implementation-cleancode` | General refactoring quality routes away unless architecture pattern decision is central. |
 | `## implementation-tdd` / `## implementation-test` | delegated-to-other-skill | test skills | Test method and pytest mechanics route away. |
-| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite/subagent work routes to workflow. |
-| `## 공통 필수 출력` / `### Risky Write Consistency Block` | included | `SKILL.md`, `outbox-acl.md` | Pattern skill identifies transaction owner and side-effect/reliability boundary, then hands DB locking/isolation, API idempotency, and test criteria to owning skills. |
+| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Coordinated multi-role implementation or review, subagent, and role-decomposed Django work routes to workflow. Direct risky pattern selection remains this skill's responsibility. |
+| `## 공통 필수 출력` | merged | `SKILL.md`, `outbox-acl.md` | Pattern skill owns pattern choice, transaction owner/use case, side-effect timing, reliability boundary, and uniqueness/idempotency storage need before handing detailed DB/API/Test work to owning skills. |
+| `### Risky Write Consistency Block` | merged | `SKILL.md`, `outbox-acl.md` | Runtime now requires a visible section or table titled `Risky Write Consistency Block` with pattern decisions plus handoff for concrete locking/isolation/retry, `Idempotency-Key` behavior, and integration/concurrency tests. |
 | `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | Pattern skill sits after DDD and before DB/API/implementation when structure is unresolved. |
 | `workflow.md` `## 1. 기본 흐름` | merged | `SKILL.md` Routing | Pattern choice follows DDD and precedes implementation mapping. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; composite/subagent work routes to workflow. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; coordinated multi-role or subagent work routes to workflow, while standalone pattern selection stays here. |
 | `## 3. 역할 분해` | delegated-to-other-skill | `workflow-dddjango-subagents` | Architecture Agent role belongs to workflow skill. |
 | `## 4. Sequential Fallback` / `## 5. Handoff Contract` | delegated-to-other-skill | `workflow-dddjango-subagents` | Workflow orchestration belongs elsewhere. |
 | `## 6. 통합 우선순위` | merged | `SKILL.md`, references | Pattern decisions inform DB/API/Django/Test handoffs. |
@@ -105,11 +111,24 @@
 | `## 10. Python 매핑` | delegated-to-other-skill | `implementation-python`, `ports-adapters.md` | Protocol boundary concept used; detailed Python mechanics delegated. |
 | `## 11. 테스트 매핑` | delegated-to-other-skill | `implementation-test`, `implementation-tdd` | Test design consumes pattern decision; mechanics route away. |
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, validation report | Real prompt/artifact/diff/test evidence and over-application checks reflected. |
-| `## 2. 대표 시나리오` / `### Architecture Pattern Selection` | included | `SKILL.md`, `pattern-selection.md`, `outbox-acl.md` | Hexagonal/repository/outbox prompt covered through need/cost comparison, ACL, transaction boundary, and outbox decision. |
-| `### Negative Case: 단순 필드 rename` / `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple field rename or short explanation must not trigger heavy pattern structure. |
-| `### Negative Case: false subagent claim` | included | `SKILL.md` Runtime Rules | Only actually executed subagent work may be reported. |
+| `## 2. 대표 시나리오` | merged | `SKILL.md`, references, scenario coverage table | Architecture-pattern scenario is direct; adjacent scenarios are delegated or merged by boundary. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Pattern fit, anti-overapplication, source limitation, and verification honesty reflected. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked; missing future skills are reported separately. |
+
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | merged | `SKILL.md`, `outbox-acl.md`, `repository-uow.md` | Order creation can need service layer, transaction owner, outbox, and idempotency storage decisions before DB/API/test details route away. |
+| `### 쿠폰 정책 TDD` | delegated-to-other-skill | `architecture-ddd`, `implementation-tdd` | Coupon policy modeling and TDD mechanics route away unless pattern structure is explicitly requested. |
+| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API framework migration and REST contract decisions route away; pattern skill may only advise adapter boundaries if needed. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | merged | `repository-uow.md`, `ports-adapters.md`, `implementation-cleancode` | Pattern skill can identify service/selector or adapter boundaries; concrete review and refactor routing belongs to clean-code or implementation skills. |
+| `### 운영 마이그레이션`, `### 트랜잭션과 동시성` | merged | `outbox-acl.md`, `repository-uow.md`, `architecture-db` | Pattern skill identifies transaction owner and reliability boundary; locking, isolation, and rollout details route to DB. |
+| `### Django Web` | delegated-to-other-skill | `implementation-django-web` | Template/static/web implementation routes away unless adapter boundary is the central question. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python`, `ports-adapters.md` | Protocol boundary concept is included; detailed typing mechanics route away. |
+| `### Architecture Pattern Selection` | included | `SKILL.md`, `pattern-selection.md`, `ports-adapters.md`, `repository-uow.md`, `outbox-acl.md` | Hexagonal, repository, outbox, ACL, and transaction-boundary trade-offs are this skill's primary scenario. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple field rename or short explanation must not trigger heavy pattern structure. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md` Runtime Rules | Runtime forbids claiming tests, validation, review, browser checks, or subagent work not actually executed. |
 
 ## Fallback Reference Heading Coverage
 
@@ -143,7 +162,10 @@
 
 ## Review Notes
 
-- Source self-review: local review found 1 minor issue: `agents/openai.yaml` did not make the provisional/fallback status explicit enough; fixed; remaining blocking/major/minor findings 0.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, one-level references, explicit provisional source policy, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: first pass found 0 blocking, 3 major, and 0 minor; fixes applied for validation-plan crosswalk coverage, risky-write common output coverage, and frontmatter `architecture-api` boundary; re-review reported blocking/major/minor findings 0.
-- Rubric review: source-backed runtime issues 0 after prior source-review fixes; eval-only/private rubric details were not copied into runtime docs; rubric defects 0; accepted trade-offs 0; remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in composite/risky workflow routing, Korean trigger coverage, layered dependency wording, `spec.md` child-heading tracking, validation scenario heading coverage, Risky Write Consistency Block handoff coverage, metadata specificity, and stale review completion claims from an earlier draft. Runtime files and this crosswalk were updated.
+- 2026-05-10 independent source review found 1 major issue: direct risky pattern-selection prompts were routed too broadly to workflow. Runtime routing was narrowed so coordinated multi-role implementation/review goes to workflow, while direct hexagonal/repository/outbox/ACL/CQRS/saga decisions remain in this skill.
+- 2026-05-10 rubric review found 1 source-backed runtime issue: risky-write outputs needed the named consistency block required by product docs. `SKILL.md` and `outbox-acl.md` were updated; rubric re-check returned blocking 0, major 0, minor 0.
+- 2026-05-10 positive runtime smoke initially produced correct pattern decisions but missed the visible risky-write block heading. `SKILL.md` and `outbox-acl.md` now require a visible section or table titled `Risky Write Consistency Block`.
+- Source and rubric review loops are closed with blocking 0, major 0, minor 0 after the runtime-smoke wording fix.
+- Runtime checks completed: `codex debug prompt-input` exposed updated metadata for positive, boundary, and negative prompts. Read-only `codex exec` samples in `/private/tmp/pattern-smoke` covered direct payment pattern selection, coordinated workflow boundary, and simple `verbose_name` negative behavior. The positive re-check produced a visible `Risky Write Consistency Block`; boundary output used workflow headings and did not claim subagents; negative output stayed direct.
+- Validator, leakage checks, cache diff, and plan update were executed after runtime cache sync.

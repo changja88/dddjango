@@ -7,7 +7,7 @@
 - Source status: ready
 - Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
 - Runtime references: `rest-contracts.md`, `problem-details.md`, `pagination-versioning.md`, `idempotency-openapi.md`
-- Rubric status: opened only after source self-review, skill-creator review, and independent subagent review; no source-backed runtime issues found
+- Rubric status: opened only after source self-review; review completed with no remaining blocking/major/minor findings
 
 ## Sources Used
 
@@ -31,11 +31,11 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `architecture-db`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for REST, API contract, status, errors, pagination, versioning, idempotency, OpenAPI included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, and OpenAPI included. |
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent workflow, DDD, DB, Django Ninja implementation, and test boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
@@ -47,6 +47,11 @@
 | `## 1. 목표` | included | `SKILL.md`, references | API contracts map domain use cases to external behavior. |
 | `## 2. 설계 원칙` | included | `SKILL.md` Routing | API stays adapter-level; unclear domain rules route to DDD. |
 | `## 3. 스킬 종류` | included | `SKILL.md` Routing | API responsibility and adjacent skill boundaries included. |
+| `### Core DDD` | delegated-to-other-skill | `architecture-ddd`, `SKILL.md` Routing | Use cases, invariants, and aggregate boundaries route to DDD when unclear. |
+| `### Implementation Mapping` | delegated-to-other-skill | `implementation-django-ninja`, `SKILL.md` Routing | Concrete Router/Schema/API test implementation routes away after contract design. |
+| `### Supporting Architecture` | included | `SKILL.md`, references | REST contract, Problem Details, pagination, versioning, idempotency behavior, and OpenAPI impact are this skill's support scope. |
+| `### Quality` | merged | `SKILL.md`, references | Verification honesty, anti-overapplication for simple API questions, and thin adapter boundaries are reflected. |
+| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Coordinated multi-role implementation or review routes to workflow; standalone API contract design stays here. |
 | `## 4. 산출물 기준` | included | `SKILL.md`, references | Endpoint, request/response, status, Problem Details, and OpenAPI artifacts included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/architecture-api/` | Plugin-bundled structure used; no cache edits. |
@@ -79,29 +84,47 @@
 | `## implementation-django` / `## implementation-django-web` | delegated-to-other-skill | implementation skills | Django internals and web/template implementation route away. |
 | `## implementation-python` / `## implementation-cleancode` | delegated-to-other-skill | implementation/quality skills | Python typing and refactoring quality route away unless they affect API contract assumptions. |
 | `## implementation-tdd` / `## implementation-test` | delegated-to-other-skill | test skills | Test design consumes API contract criteria; TDD/pytest mechanics route away. |
-| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite/risky/subagent Django work routes to workflow. |
+| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Coordinated multi-role implementation or review, subagent, and role-decomposed Django work routes to workflow; direct API contract design remains here. |
 | `## 공통 필수 출력` / `### Risky Write Consistency Block` | delegated-to-other-skill | `architecture-db`, workflow | API owns user-visible idempotency behavior; full consistency block belongs to DB/workflow when risky writes are involved. |
 | `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | API sits after DDD when domain behavior is unclear and before Django Ninja implementation. |
 | `workflow.md` `## 1. 기본 흐름` | merged | `SKILL.md` Routing | API follows DDD and informs implementation/test. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; composite/subagent work routes to workflow. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; coordinated multi-role or subagent work routes to workflow, while standalone API design stays here. |
 | `## 3. 역할 분해` | delegated-to-other-skill | `workflow-dddjango-subagents` | API Agent role belongs to workflow skill. |
 | `## 4. Sequential Fallback` / `## 5. Handoff Contract` | delegated-to-other-skill | `workflow-dddjango-subagents` | Workflow orchestration belongs elsewhere. |
 | `## 6. 통합 우선순위` / `## 7. Integration Checklist` | merged | `SKILL.md`, references | API contract feeds implementation/test handoffs. |
 | `## 8. Reference Loading` | included | `SKILL.md` Reference Loading | Runtime references directly linked. |
 | `## 9. 검증 방식` | included | `SKILL.md` Runtime Rules | Only actual validation may be claimed. |
 | `ddd-implementation-standard.md` `## 1. 판단 순서` | included | `SKILL.md` Routing | Domain understanding precedes endpoint contract when unclear. |
-| `## 2. 하위 도메인별 구현 강도` / `## 3. 바운디드 컨텍스트와 언어` | delegated-to-other-skill | `architecture-ddd` | Domain classification and language boundaries precede API design when unclear. |
+| `## 2. 하위 도메인별 구현 강도` | delegated-to-other-skill | `architecture-ddd` | Domain complexity controls implementation intensity and routes to DDD when unclear. |
+| `## 3. 바운디드 컨텍스트와 언어` | delegated-to-other-skill | `architecture-ddd` | Ubiquitous language and context boundaries precede API naming when unclear. |
 | `## 4. 애그리거트와 불변식` | delegated-to-other-skill | `architecture-ddd` | API exposes use cases; it does not define aggregate invariants. |
-| `## 5. Domain Events` / `## 6. Application Service와 Domain Service` | delegated-to-other-skill | DDD/patterns/implementation skills | Event dispatch and service ownership are upstream implementation architecture concerns; API records external contract effects only. |
+| `## 5. Domain Events` | delegated-to-other-skill | `architecture-ddd`, `architecture-implementation-patterns` | Event semantics and dispatch timing route away; API records observable async/status effects when exposed to clients. |
+| `## 6. Application Service와 Domain Service` | delegated-to-other-skill | `architecture-ddd`, implementation skills | Service ownership routes away; API stays at external contract and adapter boundaries. |
+| `## 7. Django ORM 매핑` | delegated-to-other-skill | `implementation-django`, `architecture-db` | ORM mapping, QuerySet behavior, and database model implementation route away; API contracts must not expose ORM/query implementation details. |
 | `## 8. Repository와 Transaction` | delegated-to-other-skill | `architecture-db`, patterns | Transaction/storage decisions route away. |
 | `## 9. API 매핑` | included | `SKILL.md`, references | REST API as external use-case contract reflected. |
 | `## 10. Python 매핑` | delegated-to-other-skill | `implementation-python` | Python type boundaries route to implementation skills. |
 | `## 11. 테스트 매핑` | delegated-to-other-skill | `implementation-test` | API test criteria are output; pytest mechanics route away. |
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, validation report | Real validation only and over-application checks reflected. |
-| `## 2. 대표 시나리오` / `### 주문 생성 API` | merged | `SKILL.md` Routing | Composite order API routes to workflow; API contract responsibility remains clear. |
-| `### Negative Case: 단순 필드 rename` / `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple API questions avoid full workflow. |
+| `## 2. 대표 시나리오` | merged | `SKILL.md`, references, scenario coverage table | API scenarios are direct when contract-focused; composite implementation scenarios are delegated by boundary. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Data/API consistency, test/verification, and pragmatism reflected. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | merged | `SKILL.md`, `idempotency-openapi.md`, `problem-details.md`, `workflow-dddjango-subagents` | API owns REST contract, Problem Details, OpenAPI impact, and user-visible idempotency behavior; multi-role implementation routes to workflow. |
+| `### 쿠폰 정책 TDD` | delegated-to-other-skill | `architecture-ddd`, `implementation-tdd` | Coupon policy modeling and TDD mechanics route away unless API contract is explicitly in scope. |
+| `### DRF to Django Ninja 전환` | included | `SKILL.md`, `rest-contracts.md`, `problem-details.md`, `implementation-django-ninja` | API owns compatibility, status/error/OpenAPI contract effects; concrete Django Ninja conversion routes to implementation. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | delegated-to-other-skill | `implementation-cleancode`, `architecture-ddd` | Review and ownership decisions route away unless API adapter contract or Router boundary is the main issue. |
+| `### 운영 마이그레이션` | delegated-to-other-skill | `architecture-db`, `implementation-django` | Operational DB migration and rollout safety are outside API contract unless compatibility or status behavior changes. |
+| `### 트랜잭션과 동시성` | delegated-to-other-skill | `architecture-db` | Transaction/locking/storage decisions route to DB; API keeps retry/conflict/idempotency behavior when user-visible. |
+| `### Django Web` | delegated-to-other-skill | `implementation-django-web` | Template/static/web work routes away. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python` | Python typing mechanics route away. |
+| `### Architecture Pattern Selection` | delegated-to-other-skill | `architecture-implementation-patterns` | Pattern selection routes away; API keeps observable contract consequences only. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple field rename or short API question must not trigger full workflow. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md` Runtime Rules | Runtime forbids claiming tests, validation, review, browser checks, or subagent work not actually executed. |
 
 ## API Reference Heading Coverage
 
@@ -158,7 +181,9 @@
 
 ## Review Notes
 
-- Source self-review: found and fixed 4 minor issues: DRF-to-Ninja routing visibility, PRG/303 coverage, auth mechanism selection, and missing delegated product headings; remaining blocking/major/minor findings 0.
-- Skill-creator/writing-skills review: no extraneous files, direct one-level reference links, concise `SKILL.md`, frontmatter with only `name`/`description`, and `agents/openai.yaml` aligned with `SKILL.md`; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: Aquinas found 0 blocking, 0 major, and 2 minor issues; fixes applied for `WWW-Authenticate` guidance on `401` and page-size guidance for pagination. Re-review returned blocking 0, major 0, minor 0.
-- Rubric review: no source-backed runtime issues found. Eval-only/private rubric material was not copied. Final remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in direct API contract vs workflow routing, Korean trigger coverage for auth/header/compatibility language, `### Source Coverage Crosswalk` heading tracking, `spec.md` child-heading coverage, `ddd-implementation-standard.md` heading coverage, validation scenario heading coverage, metadata specificity, and stale review/rubric completion claims from an earlier draft. Runtime files and this crosswalk were updated.
+- Independent source review initially found a minor crosswalk gap for `ddd-implementation-standard.md` `## 7. Django ORM 매핑`; this crosswalk was updated to delegate ORM mapping to `implementation-django` and `architecture-db`. Independent source re-review returned blocking 0, major 0, minor 0.
+- Rubric review was performed only after source review. A source-backed runtime issue was found: API contract output should state acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant. `SKILL.md` was updated with that runtime rule. Independent rubric review returned blocking 0, major 0, minor 0, and no runtime leakage concern.
+- Runtime checks were executed with `codex debug prompt-input` for a positive API contract prompt, a coordinated DDD/DB/API/Django/test boundary prompt, and a simple Django field-rename negative prompt. The positive prompt exposed `architecture-api`; the boundary prompt exposed the workflow/API metadata needed for coordinated routing; the negative prompt did not require API contract work.
+- Isolated read-only `codex exec` smoke outputs were written under `/private/tmp/api-smoke`. The positive sample produced REST contract, status code, Problem Details, `Idempotency-Key`, OpenAPI, auth/error, and no-test-claim behavior. The boundary sample produced `Role Map`, `Sequential Fallback`, `Handoff Contract`, and `Integration Checklist` without claiming actual subagent execution. The negative sample stayed outside API/OpenAPI design and reported no target Django code.
+- Validator, leakage check, cache diff, and plan update are part of the final completion commands for this skill. Completion requires those commands to pass after this crosswalk update.

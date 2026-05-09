@@ -22,6 +22,12 @@ Use this reference for CSRF, AJAX/HTMX request safety, XSS, secure cookies, midd
 - Keep security settings aligned with deployment: HTTPS redirect, secure cookies, HSTS, content type sniffing, and frame options.
 - Use `check --deploy` when security settings are changed and a deploy check is practical.
 
+## SQL Injection And Raw Queries
+
+- Prefer ORM query APIs for view context preparation.
+- If a web view or selector must use `raw()` or `extra()`, never interpolate user input into SQL strings.
+- Use parameterized values for raw SQL and delegate deeper query design, QuerySet/Manager choices, and DB performance work to `implementation-django`.
+
 ## Verification
 
 - For template changes, check render paths and context variable names.

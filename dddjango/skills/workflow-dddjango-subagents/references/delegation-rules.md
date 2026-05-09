@@ -51,3 +51,7 @@ If subagents are unavailable or not authorized, keep the role order and execute 
 8. Integration
 
 Sequential fallback is still a workflow. It is not a claim that subagents ran.
+
+## Review-Focused Work
+
+For review requests, lead with findings ordered by severity and grounded in evidence. If the review spans multiple role areas, use the role map and handoff/integration checks after the findings to show coordination and follow-up ownership.

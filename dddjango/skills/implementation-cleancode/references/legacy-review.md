@@ -16,6 +16,8 @@ Use this reference for code smells, safe refactoring, characterization tests, se
 - Prefer small steps: extract method, introduce parameter/value object, decompose conditional, replace nested conditional with guard clauses, or move method to the data owner.
 - Use table-driven logic only when it reduces branching complexity and keeps policy visible.
 - Keep refactoring separate from feature changes when the blast radius is significant.
+- For major design/interface decisions, compare at least two materially different approaches before committing to one.
+- Improve obvious nearby quality problems in the touched scope when the fix is behavior-preserving; when cleanup is too risky or too broad, leave a clear residual-risk note or follow-up.
 
 ## Legacy Code
 

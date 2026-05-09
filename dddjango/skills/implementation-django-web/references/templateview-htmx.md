@@ -23,13 +23,20 @@ Use this reference for TemplateView, CBV/FBV choice, context preparation, forms,
 - Use `select_related()`/`prefetch_related()` before rendering lists that traverse relationships.
 - Do not perform hidden database work from templates by passing underprepared objects into loops.
 
+## Auth And Permissions
+
+- Apply view-level auth and permission checks before rendering protected pages.
+- For FBVs, use project-standard decorators such as `login_required` and `permission_required`.
+- For CBVs, use project-standard mixins such as `LoginRequiredMixin` and `PermissionRequiredMixin`.
+- Keep permission policy out of templates; templates may show or hide UI from prepared context but must not own authorization decisions.
+
 ## Forms
 
 - Keep form validation responsible for input shape and presentation errors.
 - Respect Django form validation order: field cleaning, field-specific `clean_<fieldname>()`, then form-wide `clean()`.
 - Put durable domain invariants in model/service/DB boundaries when they must hold outside the form.
 - Reuse custom validators when the same input validation belongs in both forms and model fields.
-- Use explicit `ModelForm.fields`; avoid `fields = "__all__"` because new model fields can become accidentally editable.
+- Use explicit `ModelForm.Meta.fields`; avoid `fields = "__all__"` and `exclude` because new model fields can become accidentally editable or unintentionally exposed.
 - Keep POST handling and redirects clear; use POST/Redirect/GET when it prevents duplicate submissions for ordinary web forms.
 
 ## HTMX And Fragments

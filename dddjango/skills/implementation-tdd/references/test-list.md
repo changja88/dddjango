@@ -8,6 +8,7 @@ Use this reference for test lists, starting tests, boundary cases, AAA, test qua
 - Choose the next test that teaches something new and feels implementable.
 - Start with a simple case where the operation does little or nothing when that gives fast feedback.
 - Include regression tests for reported bugs before fixing them.
+- Keep tests independent: they must not depend on execution order, shared mutable state, or data leaked from earlier tests.
 
 ## Test Shape
 

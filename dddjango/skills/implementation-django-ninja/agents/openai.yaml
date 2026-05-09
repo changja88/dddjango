@@ -1,4 +1,4 @@
 interface:
   display_name: "Django Ninja Implementation"
   short_description: "Provisional fallback Django Ninja APIs"
-  default_prompt: "Use $implementation-django-ninja to implement Django Ninja routers, schemas, auth, errors, OpenAPI, and API tests."
+  default_prompt: "Use $implementation-django-ninja to implement Django Ninja routers, schemas, auth, errors, OpenAPI, and TestClient acceptance criteria."

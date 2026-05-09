@@ -7,7 +7,7 @@
 - Source status: ready
 - Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
 - Runtime references: `delegation-rules.md`, `role-map.md`, `handoff-contract.md`, `integration-checklist.md`
-- Rubric status: opened only after source self-review, skill-creator review, and independent subagent review; source-backed runtime issue fixed
+- Rubric status: completed after source review; source-backed runtime issue only
 
 ## Sources Used
 
@@ -30,11 +30,11 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `architecture-api`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize workflow source. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, 순차 실행 included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프, 통합 체크리스트, 검증 분담, and 위험 작업 included. |
 | `## Provisional Skill 처리` | omitted | n/a | This skill has ready workflow source and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Workflow precedence and simple opt-out boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
@@ -46,6 +46,11 @@
 | `## 1. 목표` | included | `SKILL.md`, references | Composite/risky work coordination supports DDD plugin goal. |
 | `## 2. 설계 원칙` | included | `delegation-rules.md`, `integration-checklist.md` | Role decomposition, domain-first ordering, and validation integrity included. |
 | `## 3. 스킬 종류` | included | `role-map.md`, `SKILL.md` | Workflow responsibility and all related skills included. |
+| `### Core DDD` | included | `role-map.md`, `integration-checklist.md` | Domain and Architecture roles preserve DDD-first ordering. |
+| `### Implementation Mapping` | included | `role-map.md`, `handoff-contract.md` | Django, API implementation, web, Python, and file ownership responsibilities are represented. |
+| `### Supporting Architecture` | included | `role-map.md`, `integration-checklist.md` | DB and API architecture roles are included with transaction, schema, API contract, and compatibility checks. |
+| `### Quality` | included | `role-map.md`, `integration-checklist.md` | TDD/Test and Review roles cover tests, verification, and clean-code review. |
+| `### Workflow` | included | `SKILL.md`, references | This skill owns role decomposition, real subagent/sequential fallback, and integration. |
 | `## 4. 산출물 기준` | included | `handoff-contract.md`, `integration-checklist.md` | Role map, handoff, integration, and validation outputs included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/workflow-dddjango-subagents/` | Plugin-bundled structure used; role-map sync honored. |
@@ -91,13 +96,29 @@
 | `## 3. 평가 항목` | included | `SKILL.md`, references | Over-application, workflow contract, role map sync, and validation honesty covered. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
 
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | included | `SKILL.md`, `role-map.md`, `handoff-contract.md`, `integration-checklist.md` | Composite order API work requires role map, sequential fallback, handoff, integration checklist, Risky Write Consistency Block, and no false test/subagent claim. |
+| `### 쿠폰 정책 TDD` | delegated-to-other-skill | `implementation-tdd`, `implementation-test`, optionally `architecture-ddd` through `role-map.md` | Coupon policy may stay with TDD/domain roles unless multiple role areas are genuinely coupled. |
+| `### DRF to Django Ninja 전환` | included | `role-map.md`, `integration-checklist.md` | API and Django implementation roles cover Django Ninja conversion, compatibility, Problem Details, OpenAPI, and no greenfield DRF implementation. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | included | `SKILL.md`, `delegation-rules.md`, `role-map.md`, `handoff-contract.md` | Review-focused or cross-role responsibility analysis leads with severity-ordered findings, then assigns Review, Domain, Architecture, Django, and API follow-up ownership when workflow coordination is needed. |
+| `### 운영 마이그레이션` | included | `role-map.md`, `integration-checklist.md` | DB and Django roles split rollout constraints, backfill/index-lock risk, and concrete migration ownership. |
+| `### 트랜잭션과 동시성` | included | `integration-checklist.md` | Risky write consistency decisions include transaction owner, locking, idempotency, side effects, isolation/retry, and concurrency tests. |
+| `### Django Web` | included | `role-map.md` | Django Agent includes `implementation-django-web` and template/static/web responsibility when web work is in scope. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python` through `role-map.md` | Pure typing refactors can stay direct; composite work assigns Python support to Django Agent. |
+| `### Architecture Pattern Selection` | included | `role-map.md`, `integration-checklist.md` | Architecture Agent owns pattern/dependency decisions and integration resolves conflicts by priority. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md`, `delegation-rules.md` | Simple direct work and short explanations are explicit anti-routes for full workflow ceremony. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md`, `delegation-rules.md`, `integration-checklist.md` | Runtime rules require refusing false subagent/review/test claims and reporting actual execution status. |
+
 ## Workflow Source Heading Coverage
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
 | `workflow.md` `## 1. 기본 흐름` | included | `delegation-rules.md`, `integration-checklist.md` | Domain-first-to-verification sequence included. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md`, `delegation-rules.md` | Simple, DDD, composite, risky, and review routing included. |
-| `## 3. 역할 분해` | included | `role-map.md` | Canonical roles, responsibilities, and related skills copied without reduction. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md`, `delegation-rules.md` | Simple, DDD, composite, risky, and review routing included; review-focused work keeps findings first, with workflow sections after findings when needed. |
+| `## 3. 역할 분해` | included | `SKILL.md`, `role-map.md` | Canonical roles, responsibilities, and related skills copied without reduction. |
 | `## 4. Sequential Fallback` | included | `delegation-rules.md`, `SKILL.md` | Fallback order included. |
 | `## 5. Handoff Contract` | included | `handoff-contract.md` | Required fields and `May edit`/`Must not edit` included. |
 | `## 6. 통합 우선순위` | included | `integration-checklist.md` | Conflict priority order included. |
@@ -107,7 +128,9 @@
 
 ## Review Notes
 
-- Source self-review: validator found missing workflow role visibility in `SKILL.md`, Django Agent template/static/web wording mismatch, and missing cache sync reporting in `SKILL.md`; fixes applied. Remaining blocking/major/minor findings 0 by local review.
-- Skill-creator/writing-skills review: no extraneous files, direct one-level reference links, concise `SKILL.md`, frontmatter with only `name`/`description`, and `agents/openai.yaml` aligned with `SKILL.md`; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: Einstein found 0 blocking, 2 major, and 0 minor issues; fixes applied so composite/risky workflow cannot drop the four required sections and role-map output cannot omit canonical roles. Re-review returned blocking 0, major 0, minor 0.
-- Rubric review: found 1 source-backed runtime issue: simple decorative workflow requests needed a clearer anti-overapplication rule; fixed. Eval-only/private rubric material was not copied. Final remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in stale review/rubric completion claims, `### Source Coverage Crosswalk` heading precision, Korean trigger coverage for 역할 맵/핸드오프/통합 체크리스트/검증 분담/위험 작업, `spec.md` child-heading coverage, validation scenario heading coverage, and `agents/openai.yaml` handoff/integration wording. Runtime files and this crosswalk were updated.
+- Independent source review found major 1 and minor 1: review-focused workflow output could conflict with findings-first review ordering, and the `SKILL.md` role table lacked the canonical responsibility column. `SKILL.md`, `delegation-rules.md`, and this crosswalk were updated. Independent source re-review returned blocking 0, major 0, minor 0.
+- Rubric review was performed only after source review. A source-backed runtime issue was found: the workflow output rule should pin the required `Handoff Contract` fields so composite/risky outputs do not omit ownership and follow-up fields. `SKILL.md` was updated. Independent rubric review returned blocking 0, major 0, minor 0, and no runtime leakage concern.
+- Runtime positive smoke then exposed one remaining source-backed issue: risky order creation output included the consistency decisions but did not visibly title them as `Risky Write Consistency Block`. `SKILL.md` was updated to require a visible section or table for risky writes.
+- Runtime checks completed: `codex debug prompt-input` exposed updated workflow metadata for positive, review-boundary, false-claim, and simple negative prompts. Isolated read-only `codex exec` samples in `/private/tmp/workflow-smoke` covered composite order workflow, review findings-first workflow, false subagent claim correction, and simple memo-field negative behavior. The positive re-run produced `## Role Map`, `## Sequential Fallback`, `## Handoff Contract`, `## Integration Checklist`, all required Handoff fields, and a visible `### Risky Write Consistency Block`; it also reported actual subagent use and did not claim unrun tests.
+- Final findings: source self-review blocking 0, major 0, minor 0; independent source re-review blocking 0, major 0, minor 0; rubric review blocking 0, major 0, minor 0.

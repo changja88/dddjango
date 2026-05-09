@@ -1,4 +1,4 @@
 interface:
   display_name: "DB Architecture"
-  short_description: "Design schemas, constraints, indexes, transactions, rollout."
-  default_prompt: "Use $architecture-db to design relational schemas, constraints, indexes, transactions, and rollout constraints."
+  short_description: "Design schemas, constraints, indexes, transactions, locking, rollout."
+  default_prompt: "Use $architecture-db to design relational schemas, constraints, indexes, transactions, locking, and rollout constraints."

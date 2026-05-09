@@ -31,16 +31,17 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `implementation-cleancode`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, rubric sequencing tracked. |
+| `### Source Coverage Crosswalk` | included | this crosswalk | Heading status, runtime location, and included/merged/delegated/omitted/source-gap reasons are tracked for source `##` headings and runtime-relevant subheadings. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is short and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for TDD, 실패 테스트, 테스트 먼저, 쿠폰 정책 included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for TDD/테스트 주도 개발/테스트주도 개발, 테스트 목록, 실패 테스트/실패하는 테스트, 테스트 먼저, Red-Green-Refactor/레드-그린-리팩터, 경계값 테스트, 쿠폰 정책 included. |
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent DDD, test, implementation, and workflow boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
-| `## 검증` | included | final validation report | Only executed validation is reported. |
-| `## 완료 보고` | included | final response | Required report fields will be included. |
+| `## Completed 조건` | included | Review Notes, pending final validation report | Completion requires zero remaining blocking/major/minor findings; final evidence is pending for this skill. |
+| `## 검증` | included | pending final validation report | Only executed validation will be reported; completion validation is pending. |
+| `## 완료 보고` | included | pending final response | Required report fields will be included after this skill completes. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md` Routing | Tests as domain/API specification and workflow delegation reflected. |
@@ -72,16 +73,16 @@
 |---|---|---|---|
 | `skill-contracts.md` `## architecture-ddd` | delegated-to-other-skill | `SKILL.md` Routing | Unclear domain rules route to DDD before tests. |
 | `## architecture-implementation-patterns` | delegated-to-other-skill | `architecture-implementation-patterns` | Architecture pattern selection is outside TDD method. |
-| `## architecture-db` / `## architecture-api` | delegated-to-other-skill | `architecture-db`, `architecture-api` | DB/API contract design routes away. |
+| `## architecture-db` / `## architecture-api` | delegated-to-other-skill | `SKILL.md` Routing, `architecture-db`, `architecture-api` | DB/API contract, transaction, locking, rollout, and consistency decisions route away before test expectations are locked. |
 | `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | `SKILL.md` Routing | Framework implementation follows once tests clarify target behavior. |
 | `## implementation-python` / `## implementation-cleancode` | delegated-to-other-skill | `implementation-python`, `implementation-cleancode` | Python/refactor details route away unless part of Refactor step. |
 | `## implementation-tdd` | included | `SKILL.md`, references | Test list, failing tests, small implementation, refactor checkpoints, and Test Agent file ownership covered. |
 | `## implementation-test` | delegated-to-other-skill | `implementation-test` | Fixture/mock/factory/tool details route away. |
-| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite/subagent work routes to workflow. |
+| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite, risky, subagent, and role-decomposed Django work routes to workflow. |
 | `## 공통 필수 출력` | delegated-to-other-skill | `workflow-dddjango-subagents`, implementation skills | Risky write consistency is not TDD-specific, though tests should cover it. |
 | `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | TDD is a bottom method skill and can combine with implementation/test skills. |
 | `workflow.md` `## 1. 기본 흐름` | merged | `SKILL.md` Routing | Domain ambiguity routes before tests; test strategy follows domain/API decisions. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple TDD work direct; composite work routes to workflow. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple TDD work direct; composite/risky work routes to workflow. |
 | `## 3. 역할 분해` | delegated-to-other-skill | `workflow-dddjango-subagents` | Test Agent role belongs to workflow skill. |
 | `## 4. Sequential Fallback` / `## 5. Handoff Contract` | delegated-to-other-skill | `workflow-dddjango-subagents` | Workflow orchestration belongs elsewhere. |
 | `## 6. 통합 우선순위` | merged | `SKILL.md`, references | Tests protect domain/data/API decisions and verification honesty. |
@@ -99,6 +100,21 @@
 | `## 2. 대표 시나리오` / `### 쿠폰 정책 TDD` | included | `SKILL.md`, references | Test list, failing tests, boundary cases, Red/Green/Refactor included. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Domain/API tests and verification reflected. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | delegated-to-other-skill | `workflow-dddjango-subagents`, `architecture-ddd`, `architecture-api`, `architecture-db`, `implementation-django-ninja`, `implementation-test` | Composite API/domain/DB/test work routes through workflow and adjacent skills; TDD can own test-list/Red-Green-Refactor portions after contracts are clear. |
+| `### 쿠폰 정책 TDD` | included | `SKILL.md`, `test-list.md`, `red-green-refactor.md`, `inside-out-outside-in.md` | Coupon policy TDD is this skill's primary validation scenario: test list, failing tests, boundary cases, and Red/Green/Refactor must be explicit. |
+| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `implementation-test` | Migration/API implementation and API test mechanics are not TDD-method primary work. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | delegated-to-other-skill | `implementation-cleancode`, `architecture-ddd` | Review/refactor responsibility belongs to clean-code/DDD; TDD may supply characterization tests only when asked. |
+| `### 운영 마이그레이션`, `### 트랜잭션과 동시성` | delegated-to-other-skill | `architecture-db`, `implementation-django`, `implementation-test` | Migration, transaction, locking, and concurrency mechanics must be decided outside TDD before writing stable expectations. |
+| `### Django Web` | delegated-to-other-skill | `implementation-django-web`, `implementation-test` | Template/static/web implementation and browser/render test mechanics route away. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python` | Python typing implementation is not TDD-method work. |
+| `### Architecture Pattern Selection` | delegated-to-other-skill | `architecture-implementation-patterns` | Pattern choice routes away; tests can validate chosen behavior afterward. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Tiny explanation or simple change should not trigger full workflow or forced TDD ceremony. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md`, `ai-assisted-tdd.md` | Runtime forbids claiming tests or subagent review that were not actually executed. |
 
 ## TDD Reference Heading Coverage
 
@@ -123,7 +139,7 @@
 | `## 6. 초록 막대 패턴` | included | `red-green-refactor.md` | Fake it, triangulation, obvious implementation included. |
 | `### 6.1 가짜로 구현하기` / `### 6.2 삼각측량` / `### 6.3 명백한 구현` | included | `red-green-refactor.md` | Green strategies included. |
 | `## 7. 테스팅 패턴` | included | `test-list.md`, `inside-out-outside-in.md` | AAA, test data, names, isolation, mock role guidance included. |
-| `### 7.1 테스트 격리` | included | `test-list.md` | Independent tests and shared-state smell included. |
+| `### 7.1 테스트 격리` | included | `test-list.md` | Independent tests, execution-order independence, and shared-state removal included. |
 | `### 7.2 AAA 패턴` | included | `test-list.md` | Arrange-Act-Assert and Assert First reflected. |
 | `### 7.3 테스트 데이터` / `### 7.4 명백한 데이터` | included | `test-list.md` | Meaningful data and visible expected relationship included. |
 | `### 7.5 테스트 명명 규칙` | included | `test-list.md` | Unit/condition/expected behavior naming included. |
@@ -145,7 +161,7 @@
 | `## 13. 레거시 코드 다루기` | delegated-to-other-skill | `implementation-cleancode` | Source points legacy code to clean-code reference. |
 | `## 14. Property-Based Testing` | delegated-to-other-skill | `implementation-test` | Source delegates property-based testing. |
 | `## 15. Mutation Testing` | delegated-to-other-skill | `implementation-test` | Source delegates mutation testing. |
-| `## 16. BDD` | delegated-to-other-skill | `implementation-test` | pytest-bdd implementation details delegated; BDD relation not central runtime rule. |
+| `## 16. BDD`, `### 16.1 TDD와 BDD의 관계` | delegated-to-other-skill | `implementation-test` | pytest-bdd implementation details are delegated; BDD relation can inform examples but is not central TDD-method runtime behavior. |
 | `## 17. TDD와 AI 코딩의 관계` | included | `ai-assisted-tdd.md` | Plan/Red/Green/Refactor/Validate and AI false-claim prevention included. |
 | `### 17.1 TDD as Prompt Engineering` / `### 17.2 AI 보조 TDD 워크플로우` | included | `ai-assisted-tdd.md` | Tests as executable prompts and AI-assisted loop included. |
 | `### 17.3 TDD가 AI 코딩에서 더 중요한 이유` | included | `ai-assisted-tdd.md` | AI hallucination and intent risks reflected. |
@@ -155,7 +171,7 @@
 
 ## Review Notes
 
-- Source self-review: local review found 1 minor Test Agent ownership gap; fixed; remaining blocking/major/minor findings 0.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: first pass found 0 blocking, 2 major, and 0 minor; fixes applied; re-review reported blocking/major/minor findings 0.
-- Rubric review: source-backed runtime issues 0; eval-only calibration issues 0; rubric defects 0; accepted trade-offs 0; remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in Korean trigger coverage, API/DB architecture routing, workflow over-routing via broad responsibility wording, validation scenario heading coverage, test isolation guidance, mock-role/TDD boundary wording, and stale review/rubric completion claims from an earlier draft. Runtime files and this crosswalk were updated.
+- 2026-05-10 independent source re-review by Kierkegaard returned blocking 0, major 0, minor 0 after fixes.
+- 2026-05-10 rubric review ran after source review. No new source-backed runtime issues were found. Final rubric finding counts: blocking 0, major 0, minor 0.
+- 2026-05-10 runtime checks completed: `codex debug prompt-input` positive/boundary/negative metadata exposure, isolated read-only `codex exec` positive coupon-policy TDD planning, composite order API workflow/TDD boundary, and README typo negative behavior. Validator, leakage grep, cache sync, and source/cache diff passed; `workspace/develop/plan.md` was updated.

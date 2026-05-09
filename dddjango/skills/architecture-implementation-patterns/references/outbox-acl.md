@@ -25,9 +25,9 @@ Decision points:
 
 For simple in-process follow-up after a successful Django transaction, `transaction.on_commit()` may be enough. For cross-service publication, prefer a durable outbox-style handoff.
 
-## Risky Write Handoff
+## Risky Write Consistency Block Handoff
 
-For payment, inventory, reservation, refund, permission, ledger, or similar risky writes, this skill owns the architecture pattern decision but should leave concrete DB/API/test details to the owning skills.
+For payment, inventory, reservation, refund, permission, ledger, or similar risky writes, output a visible `Risky Write Consistency Block`. This skill owns the architecture pattern decision but should leave concrete DB/API/test details to the owning skills.
 
 Record:
 

@@ -1,7 +1,7 @@
 ---
 name: implementation-cleancode
 description: >
-  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, and maintainability findings. Use for 코드 리뷰, 리팩터링, 책임 분리, 품질 개선. Prefer architecture-ddd for domain modeling, implementation-python for Python typing, implementation-django for Django ORM/migrations, and workflow-dddjango-subagents for composite/subagent work.
+  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍/이름, 함수 분리, 비대한 모델/긴 함수/흩어진 로직, 캡슐화, 추상화, 중복 제거, 오류 처리, 레거시, 코드 냄새/스멜, 유지보수. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-python for Python typing, implementation-django for concrete Django ORM/migrations, implementation-django-ninja for Router/Schema API implementation, and workflow-dddjango-subagents for composite/subagent work.
 ---
 
 # Clean Code
@@ -11,11 +11,13 @@ Use this skill when the task is to review, refactor, or improve maintainability.
 ## Routing
 
 - If domain rules, invariants, aggregate ownership, or bounded context are unclear, use `architecture-ddd` before judging structure.
+- If the main question is architecture/design pattern selection, use `architecture-implementation-patterns`; use this skill to judge whether an already proposed pattern reduces maintainability risk.
+- If REST contract, DB schema, transaction, locking, migration rollout, or consistency decisions are unresolved, use `architecture-api` or `architecture-db` before treating the issue as only code quality.
 - If Python typing, dataclasses, enums, Protocol, pydantic, Ruff, or typecheck compatibility are the main work, use `implementation-python` with this skill.
-- If Django ORM, migrations, QuerySets, transactions, settings, or service/selector implementation are the main work, use `implementation-django`.
+- If concrete Django ORM, migration, QuerySet, transaction, settings, or service/selector implementation details are primary, use `implementation-django`; keep this skill central for Fat Model, View/Router business-logic, responsibility, duplication, naming, or maintainability reviews.
 - If API Router/Schema/status/error implementation is the main work, use `implementation-django-ninja`.
 - If test fixtures, mocks, factories, coverage, or TDD method are the main work, use `implementation-test` or `implementation-tdd`.
-- If the user explicitly asks for subagents, role decomposition, parallel review, or responsibility splitting in a Django task, use `workflow-dddjango-subagents` first.
+- If the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
 - For a tiny naming question, typo, or formatter-only issue, answer or edit directly without DDD/workflow ceremony.
 
 ## Reference Loading
@@ -28,11 +30,13 @@ Use this skill when the task is to review, refactor, or improve maintainability.
 ## Runtime Rules
 
 - For code review requests, lead with findings ordered by severity and cite concrete files/lines.
-- For review-only requests or workflow Review Agent handoffs, do not edit code unless the coordinator/user explicitly assigns edits; for direct refactor requests, make scoped behavior-preserving changes.
+- For review-only requests or workflow Review Agent handoffs, produce findings/proposals only. For direct user/coordinator refactor requests that explicitly assign edits, make scoped behavior-preserving changes.
 - Separate code by reason to change, not by file size or arbitrary layer count.
 - Keep domain rules readable and protected; do not let style preferences outrank domain invariants.
 - Prefer behavior-preserving small refactors. Add or use characterization tests before risky legacy changes when practical.
 - Avoid speculative generality: add abstractions only when they remove real complexity, meaningful duplication, or a proven change axis.
+- For major interface or architecture changes, compare at least two materially different options before choosing.
 - Prefer clear names and simple functions, but keep public modules/classes deep enough that callers are not forced through implementation steps.
 - Treat DRY as single-source business knowledge, not mechanical removal of every similar-looking line.
+- Fix obvious nearby quality problems in the touched scope when doing so preserves behavior; if time or risk prevents cleanup, note the residual risk rather than silently leaving it.
 - Report only verification actually run. If tests, linters, typechecks, or review subagents were not run, say so.

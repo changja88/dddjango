@@ -1,7 +1,7 @@
 ---
 name: workflow-dddjango-subagents
 description: >
-  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, 순차 실행, handoff, integration checklist, or dddjango workflow. Do not use for simple single-file changes, small field renames, short explanations, or when the user opts out of subagent planning.
+  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, handoff/핸드오프, 통합 체크리스트, 검증 분담, 위험 작업, or dddjango workflow. Do not use for simple single-file changes, small field renames, short explanations, or when the user opts out of subagent planning.
 ---
 
 # dddjango Workflow
@@ -27,20 +27,26 @@ Use this skill to coordinate complex dddjango work across domain, architecture, 
 
 ## Canonical Roles
 
-| Role | Related skills |
-|---|---|
-| Coordinator | `workflow-dddjango-subagents` |
-| Domain Agent | `architecture-ddd` |
-| Architecture Agent | `architecture-implementation-patterns` |
-| DB Agent | `architecture-db`, `implementation-django` |
-| API Agent | `architecture-api`, `implementation-django-ninja` |
-| Django Agent | `implementation-django`, `implementation-django-web`, `implementation-python`; owns ORM/service/selector, concrete migration files, transactions, settings/security/performance, and template/static/web with templates/static files when web work is in scope |
-| Test Agent | `implementation-tdd`, `implementation-test` |
-| Review Agent | `implementation-cleancode` |
+| Role | Responsibility | Related skills |
+|---|---|---|
+| Coordinator | Work scope, role assignment, result integration | `workflow-dddjango-subagents` |
+| Domain Agent | Subdomain, context, language, aggregate, invariant, domain event | `architecture-ddd` |
+| Architecture Agent | Implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` |
+| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
+| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+| Django Agent | ORM, service, selector, concrete migration files, transaction, settings/security/performance, template/static/web, templates/static files | `implementation-django`, `implementation-django-web`, `implementation-python` |
+| Test Agent | TDD flow, pytest, fixtures, test doubles, API/integration tests, ownership of `tests/**` files | `implementation-tdd`, `implementation-test` |
+| Review Agent | Code quality, design risk, missing verification, regressions | `implementation-cleancode` |
 
 ## Output Shape
 
-For composite or risky workflow answers, the first visible heading must be `## Role Map`, followed by `## Sequential Fallback`, `## Handoff Contract`, and `## Integration Checklist`. Shorten the content inside those sections if needed, but do not remove the sections.
+For composite or risky implementation/planning workflow answers, the first visible heading must be `## Role Map`, followed by `## Sequential Fallback`, `## Handoff Contract`, and `## Integration Checklist`. Shorten the content inside those sections if needed, but do not remove the sections.
+
+For review-focused work, findings must lead, ordered by severity with evidence. If the review also needs coordinated workflow output, include `## Role Map`, `## Sequential Fallback`, `## Handoff Contract`, and `## Integration Checklist` after the findings instead of before them.
+
+`Handoff Contract` must include `Scope`, `Inputs Used`, `Decisions`, `Files` with `May edit` and `Must not edit`, `Output`, `Risks`, `Required Follow-up`, and `dddjango Checks`.
+
+For risky writes, `## Integration Checklist` must include a visible `Risky Write Consistency Block` section or table with transaction owner, locking strategy, uniqueness or idempotency storage, `Idempotency-Key` API behavior, external side-effect timing, isolation/retry decision, and integration or concurrency test criteria. If a decision is outside the current role, assign it to the responsible role rather than omitting it.
 
 If actual subagents are used, list their role, task, and result. If subagents are not used, say the workflow was executed sequentially or planned only; never imply a review or implementation happened in a subagent when it did not. Include a Cache sync report when plugin cache outside the workspace was edited, naming the cache path and workspace canonical source.
 

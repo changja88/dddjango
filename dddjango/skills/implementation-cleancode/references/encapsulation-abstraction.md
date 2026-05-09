@@ -7,7 +7,9 @@ Use this reference for information hiding, deep modules, object design, SOLID, D
 - Expose stable behavior and intent; hide representation, ordering requirements, and invariant maintenance.
 - Tell objects what to do instead of pulling their internals apart and applying rules outside them.
 - Keep data and the logic that protects that data close together unless there is a clear boundary reason to separate them.
+- Keep variable/state scope and lifetime as narrow as the behavior allows.
 - Use value objects for immutable meaningful values when mutation or primitive obsession hides rules.
+- Avoid exposing public mutable state when callers can use an intention-revealing method or read model instead.
 
 ## Abstraction
 
@@ -22,5 +24,6 @@ Use this reference for information hiding, deep modules, object design, SOLID, D
 - First try to remove unnecessary error states by design; use exceptions and explicit contracts for remaining failures.
 - Handle exceptions at the abstraction level that can make a useful decision.
 - Use guard clauses to separate exceptional paths from the main flow.
+- Use contract-style checks where boundary assumptions must be explicit; distinguish internal assertions from user-facing or runtime error handling.
 - Treat DRY as single-source knowledge. Do not abstract coincidentally similar code that represents different domain facts.
 - Remove duplicated business rules earlier than duplicated mechanics.

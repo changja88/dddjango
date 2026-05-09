@@ -31,22 +31,27 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `implementation-tdd`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 테스트 작성 and flaky 테스트 included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 테스트 코드 작성/리뷰, pytest 픽스처, 모킹/mock, 테스트 더블, 팩토리, 커버리지, 뮤테이션 테스트, 속성 기반 테스트, 중복 요청/동시성 테스트, flaky/불안정 테스트 included. |
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent TDD, DDD, implementation, and workflow boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
-| `## 검증` | included | validation commands | Only executed validation will be reported. |
-| `## 완료 보고` | included | final report | Required report fields will be included. |
+| `## Completed 조건` | included | Review Notes, pending final validation report | Completion requires zero remaining blocking/major/minor findings; final evidence is pending for this skill. |
+| `## 검증` | included | pending final validation report | Only executed validation will be reported; completion validation is pending. |
+| `## 완료 보고` | included | pending final response | Required report fields will be included after this skill completes. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md`, references | Tests protect domain/API rules and executable verification. |
 | `## 2. 설계 원칙` | included | `SKILL.md`, references | Domain/API tests, behavior focus, and validation honesty reflected. |
 | `## 3. 스킬 종류` | included | `SKILL.md` Routing | Test responsibility and adjacent skill boundaries included. |
+| `### Core DDD` | delegated-to-other-skill | `architecture-ddd`, `architecture-implementation-patterns` | Domain modeling and implementation architecture choices route away before test assertions are locked. |
+| `### Implementation Mapping` | merged | `SKILL.md` Routing, `coverage-mutation.md` | Django/Ninja/Web/Python production implementation routes away; this skill owns tests for those mapped behaviors when assigned. |
+| `### Supporting Architecture` | merged | `SKILL.md` Routing, `coverage-mutation.md` | DB/API architecture routes away while DB/API contract tests, idempotency, and concurrency criteria are supported after decisions are clear. |
+| `### Quality` | included | `SKILL.md`, references | `implementation-test` responsibility, TDD boundary, and clean-code adjacency are reflected. |
+| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Composite/risky role decomposition routes to workflow. |
 | `## 4. 산출물 기준` | included | `SKILL.md`, references | Test artifacts, factories, doubles, and honest verification included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-test/` | Plugin-bundled structure used; no cache edits. |
@@ -78,11 +83,12 @@
 | `## implementation-python` / `## implementation-cleancode` | delegated-to-other-skill | `implementation-python`, `implementation-cleancode` | Python/refactor details route away unless writing tests for them. |
 | `## implementation-tdd` | delegated-to-other-skill | `SKILL.md` Routing | Red-Green-Refactor flow routes to TDD skill; pytest mechanics remain here. |
 | `## implementation-test` | included | `SKILL.md`, references | Pytest, fixtures, doubles, factories, property tests, coverage, mutation, and file ownership covered. |
-| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite/subagent work routes to workflow. |
-| `## 공통 필수 출력` | delegated-to-other-skill | `workflow-dddjango-subagents`, implementation skills | Risky write consistency is not test-specific, though tests should cover it. |
+| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite, risky, subagent, and role-decomposed Django work routes to workflow. |
+| `## 공통 필수 출력` | merged | `workflow-dddjango-subagents`, `SKILL.md`, `coverage-mutation.md` | The named block belongs to workflow/composite outputs; this skill must still cover test criteria for risky write consistency. |
+| `### Risky Write Consistency Block` | merged | `SKILL.md`, `coverage-mutation.md` | Transaction owner, locking, idempotency, API behavior, side-effect timing, isolation/retry, and integration/concurrency test criteria are supported after responsible architecture roles make the decisions. |
 | `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | Test skill is an implementation support skill and can combine with TDD/Django/API skills. |
 | `workflow.md` `## 1. 기본 흐름` | merged | `SKILL.md` Routing | Domain ambiguity routes before tests; tests verify resulting decisions. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple pytest work direct; composite work routes to workflow. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple pytest work direct; composite/risky work routes to workflow. |
 | `## 3. 역할 분해` | included | `SKILL.md`, references | Test Agent ownership of `tests/**`, fixtures, doubles, API/integration tests reflected. |
 | `## 4. Sequential Fallback` / `## 5. Handoff Contract` | delegated-to-other-skill | `workflow-dddjango-subagents` | Workflow orchestration belongs elsewhere. |
 | `## 6. 통합 우선순위` | merged | `SKILL.md`, references | Tests protect domain/data/API decisions and verification honesty. |
@@ -100,6 +106,21 @@
 | `## 2. 대표 시나리오` / `### 쿠폰 정책 TDD` | delegated-to-other-skill | `implementation-tdd`, this skill | TDD sequence routes to TDD; pytest files/cases are supported here. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Behavior-focused tests, API contracts, and verification honesty reflected. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | included | `SKILL.md`, `coverage-mutation.md`, `test-doubles.md` | Domain state, API contract, idempotency, risky write, concurrency, and integration/API tests are test-skill responsibilities after domain/API/DB contracts are clear. |
+| `### 쿠폰 정책 TDD` | delegated-to-other-skill | `implementation-tdd`, this skill | TDD owns sequencing; this skill owns concrete pytest cases and boundary assertions. |
+| `### DRF to Django Ninja 전환` | included | `SKILL.md`, `coverage-mutation.md` | Django Ninja `TestClient`, API contract tests, compatibility checks, and no greenfield DRF standard are supported; conversion implementation routes to Ninja skill. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | delegated-to-other-skill | `implementation-cleancode`, `architecture-ddd`, this skill | Review/refactor decisions route away; this skill supports behavior-preservation or adapter/usecase tests when assigned. |
+| `### 운영 마이그레이션`, `### 트랜잭션과 동시성` | included | `SKILL.md`, `coverage-mutation.md` | Migration, transaction, isolation, idempotency, and concurrency assertions are covered after architecture/DB decisions are clear. |
+| `### Django Web` | delegated-to-other-skill | `implementation-django-web`, this skill | Web/template implementation routes to web skill; render/browser or CSRF behavior tests are supported when assigned. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python` | Typecheck/runtime typing choices route to Python skill; this skill can test behavior around them only when needed. |
+| `### Architecture Pattern Selection` | delegated-to-other-skill | `architecture-implementation-patterns` | Pattern choice routes away; tests verify selected behavior, seams, or contracts afterward. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Small assertion, fixture, import ordering, typo, pytest command, or short explanation stays direct without DDD/workflow ceremony. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md` Runtime Rules | Runtime forbids claiming tests, coverage, mutation checks, or subagent reviews that were not actually run. |
 
 ## Test Reference Heading Coverage
 
@@ -198,7 +219,7 @@
 
 ## Review Notes
 
-- Source self-review: local review found 2 minor issues: metadata did not mention factories in the short summary and crosswalk wording produced a false positive in private/eval leakage search; fixed; remaining blocking/major/minor findings 0.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, one-level references, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: first pass found 0 blocking, 4 major, and 1 minor; fixes applied for DB/API routing, crosswalk overclaims, Korean triggers, review-note status, and metadata capability coverage; re-review reported blocking/major/minor findings 0.
-- Rubric review: classified source-backed runtime issues for API/idempotency trigger discoverability and risky-write/flaky-test criteria; fixed. Eval-only/private rubric details were not copied into runtime docs; rubric defects 0; accepted trade-offs 0; remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in Korean trigger coverage, risky/composite workflow routing, broad workflow responsibility wording, validation scenario heading coverage, and stale review/rubric completion claims from an earlier draft. Runtime files and this crosswalk were updated.
+- Independent source re-review by Carver found the crosswalk missing runtime-relevant `spec.md` child headings and `Risky Write Consistency Block` coverage; fixes were applied and re-review returned blocking 0, major 0, minor 0.
+- Rubric review found one source-backed small-task boundary improvement for test-file import ordering; runtime routing was updated without copying evaluation-only private material. Independent rubric review by Carver returned blocking 0, major 0, minor 0 and no leakage risk.
+- Runtime checks completed with positive, boundary/combined, and negative prompts through `codex debug prompt-input`; isolated read-only `codex exec` smoke ran in `/private/tmp/test-smoke` for Django Ninja API contract tests, risky DDD/API/test workflow, and import-order negative behavior. Validator, leakage check, cache sync, and source/cache diff completed for this skill.

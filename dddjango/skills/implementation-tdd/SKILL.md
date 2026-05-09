@@ -1,7 +1,7 @@
 ---
 name: implementation-tdd
 description: >
-  Use for TDD methodology: test list, failing tests before implementation, Red-Green-Refactor, Inside-Out vs Outside-In, acceptance/unit loops, boundary cases, refactoring checkpoints, and AI-assisted TDD. Use for TDD, 실패 테스트, 테스트 먼저, Red-Green-Refactor, 쿠폰 정책 TDD. Prefer workflow-dddjango-subagents for composite/subagent Django work, implementation-test for pytest fixtures/mocks/factories, and architecture-ddd when domain rules or invariants are unclear.
+  Use for TDD methodology: test list, failing tests before implementation, Red-Green-Refactor, Inside-Out vs Outside-In, acceptance/unit loops, boundary cases, refactoring checkpoints, state vs behavior verification choice, mock-role guidance, and AI-assisted TDD. Use for TDD/테스트 주도 개발/테스트주도 개발, 테스트 목록, 실패 테스트/실패하는 테스트, 테스트 먼저, Red-Green-Refactor/레드-그린-리팩터, 경계값 테스트, 쿠폰 정책 TDD. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, implementation-test for pytest fixture/factory/tool mechanics, architecture-ddd when domain rules or invariants are unclear, and architecture-api or architecture-db when API/DB contracts are unclear.
 ---
 
 # TDD Implementation
@@ -11,9 +11,10 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 ## Routing
 
 - If domain rules, invariants, aggregate ownership, or ubiquitous language are unclear, use `architecture-ddd` before writing domain tests.
+- If API contract, DB constraint, transaction, locking, migration rollout, or consistency decisions are unclear, use `architecture-api` or `architecture-db` before locking test expectations.
 - If the main work is pytest fixtures, mocks, factories, property-based tests, coverage, mutation testing, or testcontainers, use `implementation-test`.
 - If the main work is Django ORM/migrations/services or Django Ninja API implementation, use the relevant implementation skill after the test target is clear.
-- If the user explicitly asks for subagents, role decomposition, parallel review, or responsibility splitting in a Django task, use `workflow-dddjango-subagents` first.
+- If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
 - For a tiny explanation of TDD terminology, answer directly without role maps or full workflow ceremony.
 
 ## Reference Loading
@@ -32,5 +33,5 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 - Green means the smallest implementation that passes the current test, not the final architecture.
 - Refactor only while tests are green; preserve externally visible behavior unless the user requests a behavior change.
 - Prefer output/state verification for domain logic; use behavior verification/mocks mainly for external roles and boundaries.
-- Keep pytest fixture/mock/factory mechanics in `implementation-test`; this skill owns the TDD sequence and test selection.
+- Keep pytest fixture/mock/factory mechanics in `implementation-test`; this skill owns the TDD sequence, test selection, and state-vs-behavior verification choice.
 - Report only verification actually run. Never claim failing tests, passing tests, or subagent review happened without evidence.

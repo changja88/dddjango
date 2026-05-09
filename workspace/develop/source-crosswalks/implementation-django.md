@@ -41,6 +41,7 @@
 | `## Completed 조건` | included | review notes, validation | Completion criteria checked for this skill. |
 | `## 검증` | included | final report | Validation commands selected and reported honestly. |
 | `## 완료 보고` | included | final report | Required report fields tracked. |
+| `## Goal Objective Template` | omitted | n/a | Goal prompt template for future runs; not runtime skill guidance, but accounted for by this crosswalk. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files are under repo-root `dddjango/` because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-django/` | Plugin-bundled structure followed; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Only trigger, routing, references, and runtime rules. |
@@ -193,7 +194,8 @@
 
 ## Review Notes
 
-- Source self-review: fixed 3 minor findings before external review: Django 5.x trigger, selector metadata, and validation-plan crosswalk coverage; remaining blocking/major/minor findings 0 by local review.
+- Source self-review: fixed 3 minor findings before external review: Django 5.x trigger, selector metadata, and validation-plan crosswalk coverage; later evaluation pass fixed workflow routing, test-implementation boundary, and `Goal Objective Template` crosswalk coverage; remaining blocking/major/minor findings 0 by local review.
 - Skill-creator review: 0 findings after checking frontmatter-only metadata, concise body, direct one-level reference links, no TODO placeholders, no banned auxiliary docs, and no runtime rubric leakage.
 - Independent review subagent `Zeno` executed: fixed 3 major and 3 minor findings from the first pass; second-pass wording follow-up was addressed in subsequent local cleanup; current remaining blocking/major/minor findings 0 by local review.
-- Rubric review: fixed 1 source-backed runtime issue from `Risky Write Consistency Block` naming/completeness; eval-only/private grader material was not copied into runtime docs. Blocking 0, major 0, minor 0 after fix.
+- Independent evaluation review subagent `Confucius` executed: fixed 3 source-backed findings and 1 metadata finding; current remaining blocking/major/minor findings 0 by local review.
+- Rubric review: fixed 1 source-backed runtime issue from `Risky Write Consistency Block` naming/completeness; eval-only rubric material was not copied into runtime docs. Blocking 0, major 0, minor 0 after fix.

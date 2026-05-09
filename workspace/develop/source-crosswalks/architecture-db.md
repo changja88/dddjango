@@ -7,7 +7,7 @@
 - Source status: ready
 - Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
 - Runtime references: `schema-modeling.md`, `constraints-indexes.md`, `transactions-locking.md`, `rollout-constraints.md`
-- Rubric status: opened only after source self-review, skill-creator review, and independent subagent review; source-backed runtime issues fixed
+- Rubric status: opened after source review; no source-backed runtime issues remain after metadata specificity fix
 
 ## Sources Used
 
@@ -31,11 +31,11 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `architecture-implementation-patterns`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for ERD, 정규화, 인덱스, constraint, transaction, locking, 동시성, migration risk included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for ERD, 정규화, 인덱스, 제약조건, transaction/트랜잭션, locking, 동시성, 멱등성 저장, 중복 요청 방지, 부분 인덱스, EXPLAIN ANALYZE, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, rolling deploy, and migration risk included. |
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent workflow, DDD, API, Django implementation, and test boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
@@ -47,6 +47,11 @@
 | `## 1. 목표` | included | `SKILL.md`, references | DB decisions map domain invariants to relational design. |
 | `## 2. 설계 원칙` | included | `SKILL.md`, references | Aggregate consistency, transaction, and outbox handoff reflected. |
 | `## 3. 스킬 종류` | included | `SKILL.md` Routing | DB responsibility and adjacent skill boundaries included. |
+| `### Core DDD` | delegated-to-other-skill | `architecture-ddd`, `SKILL.md` Routing | Domain model, invariants, and aggregate boundaries route to DDD when unclear. |
+| `### Implementation Mapping` | delegated-to-other-skill | `implementation-django`, `SKILL.md` Routing | Concrete Django migration/model implementation routes away after DB design. |
+| `### Supporting Architecture` | included | `SKILL.md`, references | Relational schema, constraints, indexes, transactions, rollout, and operational risk are this skill's core support scope. |
+| `### Quality` | merged | `SKILL.md`, references | Verification honesty, anti-overapplication for simple changes, and DB invariant protection are reflected. |
+| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Coordinated multi-role implementation or review routes to workflow; standalone DB design stays here. |
 | `## 4. 산출물 기준` | included | `SKILL.md`, references | Data constraints, transaction, and rollout artifacts included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/architecture-db/` | Plugin-bundled structure used; no cache edits. |
@@ -79,28 +84,47 @@
 | `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | implementation skills | API router/web template implementation is outside DB architecture. |
 | `## implementation-python` / `## implementation-cleancode` | delegated-to-other-skill | implementation/quality skills | Python typing and refactoring quality route away unless they affect DB design assumptions. |
 | `## implementation-test` / `## implementation-tdd` | delegated-to-other-skill | test skills | Test design consumes DB criteria; mechanics route away. |
-| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite/risky/subagent Django work routes to workflow. |
+| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Coordinated multi-role implementation or review, subagent, and role-decomposed Django work routes to workflow; direct DB design remains here. |
 | `## 공통 필수 출력` / `### Risky Write Consistency Block` | included | `SKILL.md`, `transactions-locking.md` | Risky write consistency items included. |
 | `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | DB skill sits after DDD/pattern decisions when invariants or architecture are unclear and before Django migration implementation. |
 | `workflow.md` `## 1. 기본 흐름` | merged | `SKILL.md` Routing | DB follows DDD and informs implementation/test. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; composite/subagent work routes to workflow. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; coordinated multi-role or subagent work routes to workflow, while standalone DB design stays here. |
 | `## 3. 역할 분해` | delegated-to-other-skill | `workflow-dddjango-subagents` | DB Agent role belongs to workflow skill. |
 | `## 4. Sequential Fallback` / `## 5. Handoff Contract` | delegated-to-other-skill | `workflow-dddjango-subagents` | Workflow orchestration belongs elsewhere. |
 | `## 6. 통합 우선순위` / `## 7. Integration Checklist` | merged | `SKILL.md`, references | DB invariants and transaction criteria feed implementation/test handoffs. |
 | `## 8. Reference Loading` | included | `SKILL.md` Reference Loading | Runtime references directly linked. |
 | `## 9. 검증 방식` | included | `SKILL.md` Runtime Rules | Only actual validation may be claimed. |
 | `ddd-implementation-standard.md` `## 1. 판단 순서` | included | `SKILL.md` Routing | Domain invariants precede schema design. |
+| `## 2. 하위 도메인별 구현 강도` | merged | `SKILL.md`, `schema-modeling.md` | DB rigor follows business value, invariant strength, query/write pressure, and rollout risk. |
+| `## 3. 바운디드 컨텍스트와 언어` | delegated-to-other-skill | `architecture-ddd`, `SKILL.md` Routing | Bounded context language routes to DDD; DB uses the resulting model and invariants. |
 | `## 4. 애그리거트와 불변식` | included | `SKILL.md`, `transactions-locking.md` | Aggregate consistency and transaction boundary reflected. |
+| `## 5. Domain Events` | delegated-to-other-skill | `architecture-ddd`, `architecture-implementation-patterns` | Event semantics and outbox pattern selection route away; DB retains side-effect timing and transactional storage implications. |
+| `## 6. Application Service와 Domain Service` | delegated-to-other-skill | `architecture-ddd`, `implementation-django` | Service ownership routes away; DB records transaction and consistency criteria that services must satisfy. |
 | `## 7. Django ORM 매핑` | delegated-to-other-skill | `implementation-django` | ORM code and model implementation route away. |
 | `## 8. Repository와 Transaction` | included | `transactions-locking.md`, `rollout-constraints.md` | Transaction, concurrency, and consistency block included. |
 | `## 9. API 매핑` | delegated-to-other-skill | `architecture-api` | API contract routes away; idempotency storage remains DB handoff. |
+| `## 10. Python 매핑` | delegated-to-other-skill | `implementation-python` | Python typing and runtime object mapping are outside DB architecture. |
 | `## 11. 테스트 매핑` | delegated-to-other-skill | `implementation-test` | DB integration/concurrency test criteria are output; pytest mechanics route away. |
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, validation report | Real validation only and over-application checks reflected. |
-| `## 2. 대표 시나리오` / `### 운영 마이그레이션` | included | `rollout-constraints.md` | Expand/backfill/contract and rollout safety included. |
-| `### 트랜잭션과 동시성` | included | `transactions-locking.md` | Isolation, locking, uniqueness/idempotency, and test criteria included. |
-| `### Negative Case: 단순 필드 rename` / `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple cases avoid full DB ceremony. |
+| `## 2. 대표 시나리오` | merged | `SKILL.md`, references, scenario coverage table | DB scenarios are direct; adjacent scenarios are delegated or merged by boundary. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Data/API consistency, test/verification, and pragmatism reflected. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | merged | `transactions-locking.md`, `constraints-indexes.md`, `architecture-api`, `workflow-dddjango-subagents` | DB owns idempotency storage, uniqueness, locking, and transaction criteria; REST/API and multi-role implementation route away. |
+| `### 쿠폰 정책 TDD` | delegated-to-other-skill | `architecture-ddd`, `implementation-tdd` | Coupon policy modeling and TDD mechanics route away unless DB constraints are explicitly in scope. |
+| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API migration routes away; DB applies only if schema/storage impact is present. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | delegated-to-other-skill | `implementation-cleancode`, `architecture-ddd` | Review and ownership decisions route away unless DB invariant or query/transaction risk is the main issue. |
+| `### 운영 마이그레이션` | included | `rollout-constraints.md`, `SKILL.md` Routing | Expand/backfill/contract, rolling deploy compatibility, index-lock risk, and DB-vs-Django migration split are core DB scope. |
+| `### 트랜잭션과 동시성` | included | `transactions-locking.md`, `SKILL.md` Routing | Transaction boundary, locking, unique constraint, optimistic/pessimistic locking, idempotency storage, side-effect timing, and risky-write block are core DB scope. |
+| `### Django Web` | delegated-to-other-skill | `implementation-django-web` | Template/static/web work routes away unless DB query shape or rollout risk is central. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python` | Python typing mechanics route away. |
+| `### Architecture Pattern Selection` | delegated-to-other-skill | `architecture-implementation-patterns` | Repository/UoW/outbox/CQRS/hexagonal pattern selection routes away; DB keeps concrete storage/transaction implications. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple field rename or short explanation must not trigger full DB ceremony. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md` Runtime Rules | Runtime forbids claiming tests, validation, review, browser checks, or subagent work not actually executed. |
 
 ## DB Reference Heading Coverage
 
@@ -146,7 +170,8 @@
 
 ## Review Notes
 
-- Source self-review: local review found 1 minor crosswalk completeness issue: some `skill-contracts.md` implementation headings and `skill-hierarchy.md` were not explicitly classified; fixed. Independent review later found 0 blocking, 5 major, and 1 minor; fixes applied for composite/risky workflow routing, implementation-patterns boundary, Django `transaction.on_commit()` side-effect wording, join optimization coverage, review-note status, and Korean rollout triggers.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, one-level references, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: Cicero re-review returned blocking 0, major 0, minor 0; no remaining source-backed findings.
-- Rubric review: found 2 source-backed runtime issues after draft (`Risky Write Consistency Block` naming and idempotency storage detail); both fixed. Eval-only/private rubric material was not copied. Final remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in direct DB design vs workflow routing, Korean trigger coverage for idempotency/rollout/query-plan language, `### Source Coverage Crosswalk` heading tracking, `spec.md` child-heading coverage, `ddd-implementation-standard.md` heading coverage, validation scenario heading coverage, and stale review/rubric completion claims from an earlier draft. Runtime files and this crosswalk were updated.
+- Independent source review by Feynman returned blocking 0, major 0, minor 0. The review checked direct DB design vs workflow routing, risky transaction/concurrency coverage, operational migration/backfill/index-lock scope, idempotency storage vs API behavior boundary, and crosswalk heading coverage.
+- Rubric review was performed only after source review. Local review found one source-backed minor issue: `agents/openai.yaml` summarized the skill more narrowly than `SKILL.md` by omitting locking/concurrency signals. `short_description` and `default_prompt` were updated. Independent rubric review by Feynman returned blocking 0, major 0, minor 0, with no runtime leakage risk found.
+- Runtime checks completed: `codex debug prompt-input` exposed updated metadata for positive DB concurrency, coordinated workflow boundary, and simple negative prompts. Read-only `codex exec` samples in `/private/tmp/db-smoke` covered risky stock/reservation DB design, workflow handoff, and a simple `verbose_name` negative behavior. Positive output included a visible `Risky Write Consistency Block`; boundary output used workflow headings and did not claim subagents; negative output stayed outside DB design.
+- Validation completed: `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills` passed with 0 warnings. Cache was synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff, leakage check, and `git diff --check` are recorded in the plan. Pytest, Django checks, and app tests were not run because this was a runtime skill evaluation, not a Django app implementation.

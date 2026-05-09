@@ -1,7 +1,7 @@
 ---
 name: implementation-django
 description: >
-  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration tests. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, and architecture-ddd/db when domain or DB contracts are undecided.
+  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration test acceptance criteria. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, implementation-test for pytest/fixture/test code details, workflow-dddjango-subagents for composite or risky Django/DDD work, and architecture-ddd or architecture-db when domain or DB contracts are undecided.
 ---
 
 # Django Implementation
@@ -14,7 +14,8 @@ Use this skill to implement already-scoped Django work. Keep simple CRUD simple;
 - If schema, constraint, transaction isolation, locking, or rollout strategy is undecided, use `architecture-db` before writing migrations.
 - If the work is REST API contract design, use `architecture-api`; if it is Django Ninja Router/Schema endpoint implementation, use `implementation-django-ninja`.
 - If the work is templates, static assets, TemplateView page composition, HTMX, or CSRF-aware frontend behavior, use `implementation-django-web`.
-- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
+- If the work is pytest fixtures, mocks, factories, API test code, concurrency test mechanics, or coverage strategy, use `implementation-test`; this skill only states Django acceptance criteria unless it is implementing Django-side test hooks.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, or the Django/DDD work is composite or risky across domain, DB, API, implementation, and tests, use `workflow-dddjango-subagents` first.
 
 ## Reference Loading
 

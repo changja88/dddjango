@@ -1,7 +1,7 @@
 ---
 name: implementation-python
 description: >
-  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing, dataclass/Enum 리팩터링, Protocol boundary, pydantic v2 migration, modern Python. Prefer implementation-cleancode for general refactoring, implementation-django for ORM/migrations, implementation-test for pytest, and architecture-ddd for domain modeling.
+  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Enum/StrEnum/열거형, Protocol/프로토콜 boundary, pydantic v2 런타임 검증, 비동기, 예외 처리, modern Python. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-django-ninja for Router/Schema/API implementation, implementation-cleancode for general refactoring, implementation-django for ORM/migrations, and implementation-test for pytest.
 ---
 
 # Python Implementation
@@ -11,6 +11,7 @@ Use this skill for the Python-language layer of a dddjango task: expressing cont
 ## Routing
 
 - If domain terms, invariants, aggregate boundaries, or state-transition rules are unclear, use `architecture-ddd` before choosing Python constructs.
+- If REST resources, status codes, Problem Details, OpenAPI, DB schema, transaction, locking, or migration rollout decisions are unresolved, use `architecture-api` or `architecture-db` before encoding them in Python types.
 - If the main work is Django ORM, migrations, transactions, QuerySets, or settings, use `implementation-django`.
 - If the main work is Django Ninja Router/Schema/API tests, use `implementation-django-ninja`.
 - If the main work is pytest fixtures, mocks, factories, or coverage, use `implementation-test`; if the method is Red-Green-Refactor, use `implementation-tdd`.
@@ -33,5 +34,5 @@ Use this skill for the Python-language layer of a dddjango task: expressing cont
 - Use `@dataclass(frozen=True, slots=True)` for value objects when immutability and memory shape help; avoid dataclasses for behavior-heavy services.
 - Use `Protocol` only for replaceable boundaries or structural contracts that callers really benefit from.
 - Use pydantic v2 for external input/output DTOs, config, and runtime validation. Do not make pydantic the default domain model.
-- Align code with the project’s configured Python version, Ruff, mypy, and pyright settings before using 3.12+ or 3.13+ syntax.
+- Align code with the project’s configured Python version, Ruff, mypy, and pyright settings before using 3.12+, 3.13+, or 3.14+ syntax.
 - Report only verification actually run. If Ruff, typecheck, tests, or runtime checks were not run, say so.

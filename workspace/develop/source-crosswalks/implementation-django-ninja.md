@@ -36,13 +36,14 @@
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter only `name` and `description`; concise body with direct references. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Source summarized into runtime references; no source copy. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata is aligned and provisional. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean/mixed triggers include Router/Schema 구현, API 테스트, Problem Details/OpenAPI, and DRF ViewSet/APIView/Serializer를 Ninja로 전환. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean/mixed triggers include Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, and DRF ViewSet/APIView/Serializer를 Ninja로 전환. |
 | `## Provisional Skill 처리` | included | `SKILL.md`, this crosswalk, `agents/openai.yaml` | Source limitation, fallback source, and policy decision recorded. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Delegates REST contract, domain, ORM/migration, web, explicit subagent, and composite/risky workflow cases. |
 | `## Review 기준` | included | review notes | Source/rubric categories used. |
 | `## Completed 조건` | included | review notes, validation | Provisional completed criteria checked. |
 | `## 검증` | included | final report | Validation commands tracked. |
 | `## 완료 보고` | included | final report | Required report fields tracked. |
+| `## Goal Objective Template` | omitted | n/a | Goal prompt template for future runs; not runtime skill guidance, but accounted for by this crosswalk. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files are under repo-root plugin artifact. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-django-ninja/` | Plugin-bundled structure used; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, boundaries only. |
@@ -53,14 +54,14 @@
 | `## 8. 금지 사항` | included | file tree | No README/changelog/install guide; no false validation claim. |
 | `skill-contracts.md` `## architecture-ddd` | delegated-to-other-skill | `SKILL.md` Routing | Unclear domain rules route to DDD. |
 | `## architecture-implementation-patterns` | delegated-to-other-skill | `SKILL.md` Routing | Implementation architecture decisions are outside this skill. |
-| `## architecture-db` | delegated-to-other-skill | `problem-details-openapi.md` | DB idempotency/storage coordination routes to DB/Django as needed. |
+| `## architecture-db` | delegated-to-other-skill | `SKILL.md`, `problem-details-openapi.md` | Undecided idempotency storage, unique constraints, locking, isolation, retry, and DB consistency decisions route to DB architecture. |
 | `## architecture-api` | delegated-to-other-skill | `SKILL.md` Routing | Undecided REST contract belongs to API architecture. |
 | `## implementation-django` | delegated-to-other-skill | `SKILL.md` Routing | ORM/service/migration/transaction implementation belongs to Django skill. |
 | `## implementation-django-ninja` | included | `SKILL.md`, all references | Router, URL registration, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient covered. |
 | `## implementation-django-web` | delegated-to-other-skill | `SKILL.md` Routing | Template/static/page work is not API implementation. |
 | `## implementation-python` | delegated-to-other-skill | `router-schema.md` | Python typing details are not owned here. |
 | `## implementation-tdd` | delegated-to-other-skill | `testclient.md` | TDD methodology belongs to TDD skill. |
-| `## implementation-test` | delegated-to-other-skill | `testclient.md` | Fixture/mock mechanics belong to test skill. |
+| `## implementation-test` | delegated-to-other-skill | `SKILL.md`, `testclient.md` | Fixture/mock, concurrency test mechanics, and detailed pytest implementation belong to test skill; this skill states Django Ninja TestClient acceptance criteria. |
 | `## implementation-cleancode` | delegated-to-other-skill | runtime rules | Broad refactoring/review belongs to clean-code skill. |
 | `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Role decomposition requests route to workflow. |
 | `## 공통 필수 출력` / `### Risky Write Consistency Block` | merged | `problem-details-openapi.md`, `testclient.md` | API-facing idempotency and test criteria included; full block owned by composite workflow/risky write context. |
@@ -97,7 +98,7 @@
 | `## 11. 테스트 매핑` | included | `testclient.md` | Django Ninja API TestClient acceptance criteria included. |
 | `validation-plan.md` `## 1. 검증 원칙` | included | review notes | Real artifacts and honest verification used. |
 | `## 2. 대표 시나리오` | merged | references | 주문 생성 API and DRF-to-Ninja scenarios reflected; unrelated scenarios delegated. |
-| `### 주문 생성 API` | included | `problem-details-openapi.md`, `testclient.md` | Problem Details, idempotency, OpenAPI, API tests included. |
+| `### 주문 생성 API` | included | `problem-details-openapi.md`, `testclient.md` | Problem Details, idempotency, OpenAPI, and API contract test criteria included. |
 | `### DRF to Django Ninja 전환` | included | `router-schema.md`, `problem-details-openapi.md`, `testclient.md` | Legacy DRF conversion and compatibility reflected. |
 | `### Negative Case: false subagent claim` | included | `SKILL.md`, `testclient.md` | Verification honesty reflected. |
 | `## 3. 평가 항목` | included | review notes | Product checks used in source review. |
@@ -131,7 +132,7 @@
 | `### 5.3 핵심 규칙` | included | `problem-details-openapi.md` | `type`, `title`, `detail`, consistency rules included. |
 | `## 6. HTTP 헤더와 콘텐츠 협상` | merged | `auth-pagination-filtering.md`, `problem-details-openapi.md` | Headers relevant to auth/rate/idempotency/cache reflected. |
 | `### 6.1 표현 관련 헤더` | merged | `problem-details-openapi.md` | Content-Type status/error handling reflected. |
-| `### 6.2 콘텐츠 협상` | omitted | n/a | No Django Ninja source for content negotiation implementation; leave to API contract/project conventions. |
+| `### 6.2 콘텐츠 협상` | delegated-to-other-skill | `SKILL.md` Routing | Fallback API source covers content negotiation; undecided header/media/language behavior routes to `architecture-api` because no dedicated Django Ninja source exists. |
 | `### 6.3 캐시 관련 헤더` | delegated-to-other-skill | `architecture-api` / `implementation-django` | Cache contract/storage not central to Ninja implementation. |
 | `## 7. 인증과 인가` | included | `auth-pagination-filtering.md` | 401/403, header auth, boundary included. |
 | `### 7.1 인증 vs 인가` | included | `auth-pagination-filtering.md` | 401 vs 403 included. |
@@ -172,7 +173,7 @@
 
 ## Review Notes
 
-- Source self-review: fixed 1 major finding before external review: runtime `SKILL.md` no longer exposes workspace-only source paths as final reference paths while still naming the provisional fallback source. Blocking 0, major 0, minor 0 after fix.
+- Source self-review: fixed 1 major finding before external review: runtime `SKILL.md` no longer exposes workspace-only source paths as final reference paths while still naming the provisional fallback source. Later evaluation pass fixed test implementation boundary wording, `Goal Objective Template` crosswalk coverage, `architecture-db` idempotency/locking routing, Korean trigger coverage, and content negotiation delegation. Blocking 0, major 0, minor 0 after fix.
 - Skill-creator review: 0 findings after checking frontmatter-only metadata, trigger-centered description, concise body, direct one-level reference links, provisional disclosure, no TODO placeholders, no banned auxiliary docs, and no runtime rubric leakage.
 - Independent review subagent `Meitner` executed: fixed 4 major and 4 minor findings from the first pass, then fixed 1 major and 1 minor from re-review by making composite/risky workflow precedence the first routing rule and updating stale trigger text in the crosswalk. Final re-review reported blocking 0, major 0, minor 0.
-- Rubric review: fixed 2 source-backed minor runtime issues after opening rubric: made simple explanation/tiny Router edit anti-overapplication explicit, and added URL registration plus `FilterSchema` coverage. Eval-only/private grader material was not copied into runtime docs. Blocking 0, major 0, minor 0 after fix.
+- Rubric review: fixed 2 source-backed minor runtime issues after opening rubric: made simple explanation/tiny Router edit anti-overapplication explicit, and added URL registration plus `FilterSchema` coverage. Eval-only rubric material was not copied into runtime docs. Blocking 0, major 0, minor 0 after fix.

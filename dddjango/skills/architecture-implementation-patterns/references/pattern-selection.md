@@ -13,7 +13,7 @@ Load this when deciding whether to use layered, clean, hexagonal, CQRS, event so
 
 ## Defaults
 
-- Layered flow is the default fallback: presentation/interface -> application -> domain -> infrastructure.
+- Layered call flow is the default fallback: interface/presentation -> application -> domain, while infrastructure implements details behind inward-facing abstractions.
 - Django-native model methods plus service/selectors are enough for many projects.
 - Supporting or simple CRUD subdomains can use transaction script or straightforward service functions.
 - Do not introduce repository, Unit of Work, ports, or CQRS just to look like DDD.

@@ -6,7 +6,7 @@
 - Runtime target: `dddjango/skills/implementation-django-web/`
 - Source status: provisional until dedicated Django Web source reference exists
 - Source policy decision: `allow-provisional-with-fallback`
-- Fallback source: `workspace/reference/implementation-django/reference/final.md` template/static/view/form/security sections and `workspace/docs` product decisions
+- Fallback source: `workspace/reference/implementation-django/reference/final.md` URL/template/view/form/security/auth/middleware sections plus `workspace/docs` product decisions for static files, CSS/JS, HTMX, and CSRF-aware AJAX
 - Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
 - Runtime references: `templates.md`, `static-assets.md`, `templateview-htmx.md`, `csrf-ajax.md`
 
@@ -22,7 +22,7 @@
 - `workspace/docs/ddd-implementation-standard.md`
 - `workspace/docs/workflow.md`
 - `workspace/docs/validation-plan.md`
-- `workspace/reference/implementation-django/reference/final.md` template/static/view/form/security sections
+- `workspace/reference/implementation-django/reference/final.md` URL/template/view/form/security/auth/middleware sections
 
 ## Authoring Instructions Coverage
 
@@ -35,7 +35,7 @@
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is short and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata reflects provisional fallback scope. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean trigger terms such as Django 페이지 and HTMX/CSRF included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean trigger and boundary terms such as 템플릿, 정적 파일, 화면, 폼, 렌더링, REST API, ORM, 마이그레이션, 복합/위험 작업 included. |
 | `## Provisional Skill 처리` | included | `SKILL.md`, this crosswalk | `allow-provisional-with-fallback` and fallback source are explicit. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | API, ORM, DDD, and workflow boundaries are routed. |
 | `## Review 기준` | included | Review Notes | Review types and finding closure tracked. |
@@ -149,16 +149,18 @@
 | `### 6.4 FBV 올바른 사용` | included | `templateview-htmx.md` | FBV for custom flow and request parameter included. |
 | `## 7. 폼과 유효성 검증` | included | `templateview-htmx.md` | Form boundary and validation included. |
 | `### 7.1 폼 유효성 검증 순서` | included | `templateview-htmx.md` | Field cleaning, field-specific clean method, and form-wide clean order included. |
-| `### 7.2 ModelForm 활용` | included | `templateview-htmx.md`, `SKILL.md` | Explicit fields and no `__all__` included. |
+| `### 7.2 ModelForm 활용` | included | `templateview-htmx.md`, `SKILL.md` | Explicit `ModelForm.Meta.fields` and no `__all__` or `exclude` included. |
 | `### 7.3 커스텀 Validator 재사용` | included | `templateview-htmx.md` | Reusable validator guidance included. |
 | `## 8. Django REST Framework 패턴` | delegated-to-other-skill | `implementation-django-ninja` | DRF/API work is not web skill responsibility. |
 | `## 9. 시그널 사용 가이드라인` | delegated-to-other-skill | `implementation-django` | Signals/event timing belong to core Django/DDD skills. |
 | `## 10. 마이그레이션 베스트 프랙티스` | delegated-to-other-skill | `implementation-django`, `architecture-db` | Migration rollout belongs elsewhere. |
 | `## 11. 성능 최적화` | merged | `templateview-htmx.md` | Web-facing N+1 avoidance included; deeper DB performance delegated. |
 | `## 12. 캐싱 전략` | delegated-to-other-skill | `implementation-django` | General caching strategy belongs to core Django skill. |
-| `## 13. 보안` | included | `csrf-ajax.md` | CSRF, XSS, secure settings, deploy checks included. |
-| `### 13.1 Django 내장 보안 기능` | included | `csrf-ajax.md` | CSRF/XSS/clickjacking protections included. |
+| `## 13. 보안` | included | `csrf-ajax.md`, `templateview-htmx.md` | CSRF, XSS, SQL injection safety, auth/permission, secure settings, deploy checks included. |
+| `### 13.1 Django 내장 보안 기능` | included | `csrf-ajax.md` | CSRF/XSS/clickjacking protections and SQL injection cautions included. |
 | `### 13.2 보안 설정 체크리스트` | included | `csrf-ajax.md` | HTTPS, secure cookies, HSTS, frame/content settings included. |
+| `### 13.3 Raw SQL 안전하게 사용` | included | `csrf-ajax.md` | Raw SQL string interpolation is forbidden; deeper query design routes to `implementation-django`. |
+| `### 13.4 인증과 인가` | included | `templateview-htmx.md` | FBV decorators, CBV mixins, and no template-owned permission policy included. |
 | `## 14. 테스트 패턴` | delegated-to-other-skill | `implementation-test` | Test mechanics belong to test skill; web verification criteria stay here. |
 | `## 15. 미들웨어` | included | `csrf-ajax.md` | Middleware ordering and safety included. |
 | `## 16. Django와 서비스 레이어 아키텍처` | delegated-to-other-skill | `implementation-django`, `architecture-implementation-patterns` | Service layer architecture belongs outside web rendering skill. |
@@ -168,7 +170,10 @@
 
 ## Review Notes
 
-- Source self-review: first pass found source-backed gaps in fallback specificity, URL/view/form details, and crosswalk granularity; fixes applied; remaining blocking/major/minor findings 0 by local review.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: first pass found 3 major and 1 minor; fixes applied; re-review reported blocking/major/minor findings 0.
-- Rubric review: 1 source-backed crosswalk issue found (`spec.md` source coverage); fixed. Source-backed runtime issues 0; eval-only calibration issues 0; rubric defects 0; accepted trade-offs 0; remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review: found source-backed gaps in test-mechanics delegation, API/DB boundary wording, Korean trigger coverage, and stale review claims from an earlier draft. Runtime wording and metadata were updated; this note now only records evidence from the current evaluation loop.
+- 2026-05-10 independent source review by subagents found source-backed gaps in auth/permission coverage, ModelForm `exclude`, raw SQL safety, provisional static-source precision, agent metadata, and progressive reference loading. Runtime files and this crosswalk were updated.
+- Independent source re-review reported blocking 0, major 0, minor 0.
+- Rubric review ran after source self-review. No additional source-backed runtime issue remained; blocking 0, major 0, minor 0.
+- Runtime checks: `codex debug prompt-input` smoke checks were run for positive, boundary/combined, and API negative prompts. The output exposes dddjango plugin metadata globally, so it is useful as a runtime cache/metadata exposure check but not as sole evidence of routing quality.
+- Runtime behavior checks: read-only `codex exec` positive prompt used `implementation-django-web` and produced a TemplateView/template/static/HTMX/CSRF plan; boundary prompt used web, Django, and test references and separated service/HTMX/render-test responsibilities; negative REST API prompt rejected template-owned order creation logic and answered as API contract/service separation rather than web/template work.
+- Validation so far: `validate_skill_docs.py --phase all`, `git diff --check`, leakage grep, cache sync, and source/cache diff passed. Actual Django render tests, browser screenshots, `collectstatic`, and pytest were not run because this was runtime skill evaluation, not an app implementation.

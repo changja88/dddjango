@@ -1,7 +1,7 @@
 ---
 name: architecture-db
 description: >
-  Use for relational database architecture: ERD, conceptual/logical/physical modeling, normalization/denormalization, primary/foreign keys, unique/check/not-null constraints, cascade behavior, indexes, composite/covering/partial indexes, transactions, isolation, locking, concurrency, query performance, EXPLAIN ANALYZE, hierarchy/inheritance modeling, rollout constraints, backfill/index-lock risk, migration safety. Use for ERD, 정규화, 인덱스, 제약조건, constraint, transaction/트랜잭션, locking, 동시성, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, migration risk. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/hexagonal/dependency direction, architecture-api for REST contracts/idempotency API behavior, and implementation-django for concrete Django migration files.
+  Use for relational database architecture: ERD, conceptual/logical/physical modeling, normalization/denormalization, primary/foreign keys, unique/check/not-null constraints, cascade behavior, composite/covering/partial indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, hierarchy/inheritance modeling, rollout constraints, backfill/index-lock risk, migration safety. Use for ERD, 정규화, 인덱스, 제약조건, transaction/트랜잭션, locking, 동시성, 멱등성 저장, 중복 요청 방지, 부분 인덱스, EXPLAIN ANALYZE, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, rolling deploy, migration risk. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/hexagonal/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files.
 ---
 
 # DB Architecture
@@ -10,8 +10,8 @@ Use this skill to design relational data structures that protect domain invarian
 
 ## Routing
 
-- If the user explicitly asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow in a Django task, use `workflow-dddjango-subagents` first.
-- If a Django/DDD task combines domain rules, DB schema, API contract, implementation, tests, transactions, duplicate prevention, or risky nouns such as 주문, 결제, 재고, 예약, 환불, 권한, or ledger, prefer `workflow-dddjango-subagents` before this skill.
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct DB design questions here, including risky transaction, locking, isolation, uniqueness, idempotency storage, backfill, and index-lock examples, when the user is asking for database architecture rather than multi-role implementation.
 - If aggregate boundaries, domain invariants, ubiquitous language, or state transitions are unclear, use `architecture-ddd` before designing the schema.
 - If the main work is repository/UoW, outbox architecture, CQRS, hexagonal/ports-adapters, ACL, or dependency direction, use `architecture-implementation-patterns`; keep concrete storage, constraints, and transaction choices here.
 - If the main work is REST resources, status codes, Problem Details, pagination, versioning, `Idempotency-Key` contract, or OpenAPI, use `architecture-api`; keep DB storage implications here.

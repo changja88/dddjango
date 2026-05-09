@@ -7,7 +7,7 @@
 - Source status: ready
 - Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
 - Runtime references: `strategic-design.md`, `tactical-patterns.md`, `context-map.md`, `domain-events.md`
-- Rubric status: not opened during draft; reserved for post-source-review verification
+- Rubric status: completed after source review; only source-backed runtime issues may be reflected
 
 ## Sources Used
 
@@ -31,22 +31,27 @@
 | `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
 | `## 구현 순서` | included | plan order | This follows `implementation-test`. |
 | `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
 | `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 도메인 규칙, 상태 전이, 불변식, 바운디드 컨텍스트, 애그리거트, and 도메인 이벤트 included. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for DDD 설계, 도메인 모델링, 도메인 규칙, 상태 전이, 정책, 불변식, 하위 도메인, 바운디드 컨텍스트, 유비쿼터스 언어, 애그리거트, 컨텍스트 맵, 도메인 이벤트, and 일관성 경계 included. |
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent workflow, DB, API, implementation-pattern, and implementation boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
-| `## 검증` | included | validation commands | Only executed validation will be reported. |
-| `## 완료 보고` | included | final report | Required report fields will be included. |
+| `## Completed 조건` | included | Review Notes, validation evidence | Completion requires zero remaining blocking/major/minor findings with executed validation evidence. |
+| `## 검증` | included | Review Notes, validation commands | Only executed validation is reported. |
+| `## 완료 보고` | included | plan and final report | Required report fields are tracked after completion. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | included | `SKILL.md`, references | DDD model decisions guide DB/API/Django/test work. |
 | `## 2. 설계 원칙` | included | `SKILL.md`, references | Domain boundary before implementation and adapter boundaries reflected. |
 | `## 3. 스킬 종류` | included | `SKILL.md` Routing | DDD responsibility and adjacent skill boundaries included. |
+| `### Core DDD` | included | `SKILL.md`, references | DDD modeling responsibilities are this skill's core scope. |
+| `### Implementation Mapping` | delegated-to-other-skill | `SKILL.md` Routing | Django/Python concrete implementation routes away after domain decisions. |
+| `### Supporting Architecture` | merged | `SKILL.md` Routing | DB/API/pattern architecture receives DDD decisions through handoffs. |
+| `### Quality` | merged | `SKILL.md`, references | DDD quality boundaries, anemic-model warning, and validation honesty are reflected. |
+| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Composite/risky role decomposition routes to workflow. |
 | `## 4. 산출물 기준` | included | `SKILL.md`, references | Context, invariant, event, and use-case outputs included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/architecture-ddd/` | Plugin-bundled structure used; no cache edits. |
@@ -77,11 +82,12 @@
 | `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | `SKILL.md` Routing | Django code implementation is outside DDD modeling. |
 | `## implementation-python` / `## implementation-cleancode` | delegated-to-other-skill | implementation skills | Python/refactor details route away unless naming/domain model quality is the current concern. |
 | `## implementation-tdd` / `## implementation-test` | delegated-to-other-skill | test skills | Test method and pytest mechanics route away after invariants are known. |
-| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite/subagent work routes to workflow. |
-| `## 공통 필수 출력` | delegated-to-other-skill | workflow/implementation skills | Risky write consistency details become DB/API/test handoffs. |
+| `## workflow-dddjango-subagents` | delegated-to-other-skill | `SKILL.md` Routing | Composite, risky, subagent, and role-decomposed Django work routes to workflow. |
+| `## 공통 필수 출력` | merged | workflow/implementation skills, `SKILL.md`, `domain-events.md` | DDD owns invariant, aggregate boundary, consistency boundary, and event/side-effect timing; transaction, locking, idempotency storage, API behavior, retry, and test criteria are assigned to workflow/DB/API/Test responsibilities unless this step explicitly owns them. |
+| `### Risky Write Consistency Block` | merged | `SKILL.md`, `domain-events.md` | Runtime now requires a DDD-owned risky-write handoff before DB/API/test roles decide transaction ownership, locking, idempotency storage, `Idempotency-Key`, isolation/retry, and concurrency tests. |
 | `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | DDD is a higher-order architecture skill before DB/API/implementation when rules are unclear. |
 | `workflow.md` `## 1. 기본 흐름` | merged | `SKILL.md` Routing | Domain decisions feed DB/API/Django/Test handoffs. |
-| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; composite/subagent work routes to workflow. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md` Routing | Simple work direct; composite/risky/subagent work routes to workflow. |
 | `## 3. 역할 분해` | delegated-to-other-skill | `workflow-dddjango-subagents` | Domain Agent role belongs to workflow skill. |
 | `## 4. Sequential Fallback` / `## 5. Handoff Contract` | delegated-to-other-skill | `workflow-dddjango-subagents` | Workflow orchestration belongs elsewhere. |
 | `## 6. 통합 우선순위` | merged | `SKILL.md`, references | Domain/invariant decisions come before data/API/implementation/test details. |
@@ -102,6 +108,21 @@
 | `## 2. 대표 시나리오` | merged | `SKILL.md`, references | Order API and coupon policy scenarios need DDD decisions before implementation/test. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Domain language, invariants, and over-application boundary reflected. |
 | `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+
+## Validation Scenario Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `validation-plan.md` `### 주문 생성 API` | included | `SKILL.md`, `tactical-patterns.md`, `domain-events.md` | Order creation needs use case, invariant, aggregate/consistency boundary, event timing, and handoff decisions before DB/API/test implementation. |
+| `### 쿠폰 정책 TDD` | included | `SKILL.md`, `tactical-patterns.md` | Coupon policy needs domain rule, invariant, value object/entity choice, and example boundaries before TDD/test mechanics. |
+| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API framework migration routes away unless domain language or adapter business-rule ownership is unclear. |
+| `### Fat Model 리뷰`, `### View Logic 리뷰` | merged | `SKILL.md`, `tactical-patterns.md`, `implementation-cleancode` | DDD identifies misplaced domain rules and target domain/application ownership; concrete clean-code review routes away. |
+| `### 운영 마이그레이션`, `### 트랜잭션과 동시성` | delegated-to-other-skill | `architecture-db`, this skill | DB mechanics route away; DDD supplies invariant and consistency boundary when unclear. |
+| `### Django Web` | delegated-to-other-skill | `implementation-django-web` | Template/static/web implementation routes away; DDD only applies if web logic owns domain policy. |
+| `### Python Typing` | delegated-to-other-skill | `implementation-python` | Typing implementation routes away. |
+| `### Architecture Pattern Selection` | merged | `architecture-implementation-patterns`, this skill | Pattern selection routes away after DDD model, boundary, and invariant decisions are clear. |
+| `### Negative Case: 단순 필드 rename`, `### Negative Case: 짧은 설명` | included | `SKILL.md` Routing | Simple CRUD, field rename, or tiny wording explanation stays direct without forced aggregates, context maps, or event storming. |
+| `### Negative Case: false subagent claim` | included | `SKILL.md` Runtime Rules | Runtime forbids claiming tests, validation, review, browser checks, or subagent work not actually executed. |
 
 ## DDD Reference Heading Coverage
 
@@ -158,7 +179,6 @@
 
 ## Review Notes
 
-- Source self-review: local review found 2 minor issues: Korean triggers were missing `하위 도메인`/`유비쿼터스 언어`, and context-map runtime reference did not name the legacy unbounded-context pattern explicitly; fixed; remaining blocking/major/minor findings 0.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, one-level references, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: first pass found 0 blocking, 3 major, and 0 minor; fixes applied for validation honesty runtime guard, Korean workflow/subagent routing triggers, and overclaimed reference coverage for knowledge crunching, standalone classes, closure of operations, and large-scale structure; re-review reported blocking/major/minor findings 0.
-- Rubric review: classified source-backed runtime issues for Django mapping pragmatism and adapter business-rule boundary; fixed. Eval-only/private rubric details were not copied into runtime docs; rubric defects 0; accepted trade-offs 0; remaining blocking/major/minor findings 0.
+- 2026-05-10 source review loop is closed with blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, `spec.md` child-heading tracking, validation scenario heading coverage, Risky Write Consistency Block handoff coverage, metadata specificity, combined-work implementation wording, and stale completion claims from an earlier draft.
+- 2026-05-10 rubric review loop is closed with blocking 0, major 0, minor 0. No source-backed runtime issue remained, and evaluation-only material was not copied into runtime docs.
+- 2026-05-10 runtime checks covered positive DDD modeling, composite/risky workflow handoff, and simple negative naming prompts. `codex debug prompt-input` exposed the updated skill metadata, and read-only `codex exec` samples in `/private/tmp/ddd-smoke` produced the expected architecture behavior without file edits or false validation claims.

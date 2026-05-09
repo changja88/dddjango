@@ -6,19 +6,19 @@
 
 ## 진행 현황
 
-- 현재 단계: runtime evaluation preflight 완료
-- 최근 완료: Codex local marketplace/cache가 `./dddjango` plugin bundle의 12개 skill metadata를 로드하는지 확인
-- 다음 작업: 개별/연계 skill 평가 prompt 실행 및 개선 반복
+- 현재 단계: 개별 runtime skill 평가 및 개선 완료
+- 최근 완료: `workflow-dddjango-subagents` source/runtime/rubric 평가 반복 및 runtime re-check
+- 다음 작업: 종합 평가표 작성
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
 - [x] 개별 스킬 평가표 빈 파일 생성: `workspace/develop/rubrics/*_rubric.md`
 - [x] 개별 스킬 평가표 작성
 - [x] 개별 스킬 구현
-- [ ] 개별 스킬 평가 및 개선
+- [x] 개별 스킬 평가 및 개선
 - [x] 스킬 연계 평가표 작성
 - [x] 스킬 연계용 스킬 구현
-- [ ] 스킬 연계 평가 및 개선
+- [x] 스킬 연계 평가 및 개선
 - [ ] 종합 평가표 작성
 - [ ] 종합 플러그인 평가 및 개선
 - [ ] 최종 검증 및 커밋
@@ -42,7 +42,7 @@
 - [x] `description` YAML plain scalar의 `: ` 문제를 block scalar로 수정해 12개 skill이 모두 로드되게 한다.
 - [x] 새 Codex prompt input에서 12개 dddjango skill metadata가 로드되는지 확인한다.
 - [x] smoke prompt 3개에서 dddjango 12개 skill metadata가 노출되는지 확인한다.
-- [ ] 개별 평가 prompt로 실제 trigger/routing 품질을 확인한다.
+- [x] 개별 평가 prompt로 실제 trigger/routing 품질을 확인한다.
 
 통과 기준:
 
@@ -160,12 +160,12 @@
 반복 체크리스트:
 
 - [x] 구조 검증을 실행한다.
-- [ ] 개별 평가 prompt를 실행한다.
-- [ ] 실패 원인을 `trigger`, `routing`, `instruction`, `reference`, `eval` 문제로 분류한다.
-- [ ] `description`, 본문, reference, 평가표 중 수정 대상을 정한다.
-- [ ] 수정 후 같은 평가를 다시 실행한다.
-- [ ] 실패가 발생하면 원인과 수정 위치를 기록한다.
-- [ ] 모든 개별 스킬의 통과 상태를 기록한다.
+- [x] 개별 평가 prompt를 실행한다.
+- [x] 실패 원인을 `trigger`, `routing`, `instruction`, `reference`, `eval` 문제로 분류한다.
+- [x] `description`, 본문, reference, 평가표 중 수정 대상을 정한다.
+- [x] 수정 후 같은 평가를 다시 실행한다.
+- [x] 실패가 발생하면 원인과 수정 위치를 기록한다.
+- [x] 모든 개별 스킬의 통과 상태를 기록한다.
 
 검증 명령:
 
@@ -175,10 +175,29 @@ python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir 
 
 통과 기준:
 
-- [ ] 개별 평가표의 필수 항목을 충족한다.
-- [ ] negative prompt에서 과한 skill routing이 발생하지 않는다.
+- [x] 개별 평가표의 필수 항목을 충족한다.
+- [x] negative prompt에서 과한 skill routing이 발생하지 않는다.
 - [x] 실행하지 않은 테스트나 검증을 완료했다고 말하지 않는다.
 - [x] 모든 개별 스킬이 독립 실행 기준을 통과한다.
+
+### Evaluation Progress
+
+| Skill | Status | Source review | Runtime trigger checks | Rubric review | Notes |
+|---|---|---|---|---|---|
+| `implementation-django` | completed | blocking 0, major 0, minor 0 after fixing workflow routing, test boundary, crosswalk heading, and metadata wording | positive, boundary/combined, and negative prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were also run for positive and boundary behavior before the final wording patch, and negative behavior after the final patch | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Actual code/migration tests were not run because these were skill evaluation prompts, not a Django app implementation. |
+| `implementation-django-ninja` | completed | blocking 0, major 0, minor 0 after fixing test boundary wording, `architecture-db` idempotency/locking routing, Korean trigger coverage, content negotiation delegation, and crosswalk heading coverage | positive, DRF migration/boundary, Korean auth/pagination/filtering, idempotency storage/locking, short-explanation negative, and greenfield DRF anti-trigger prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for short explanation and greenfield DRF behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Provisional status and fallback source remain explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. TestClient/OpenAPI/pytest were not run because these were skill evaluation prompts, not an app implementation. |
+| `implementation-django-web` | completed | blocking 0, major 0, minor 0 after fixing test-mechanics delegation, API/DB routing, Korean trigger coverage, auth/permission coverage, ModelForm `exclude`, raw SQL safety, provisional static-source precision, metadata, and progressive reference loading | positive, boundary/combined, and API negative prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for TemplateView/static/HTMX positive behavior, HTMX/CSRF/service/test boundary behavior, and REST API negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Provisional status and fallback/product-source split remain explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Render tests, browser screenshots, `collectstatic`, and pytest were not run because these were skill evaluation prompts, not an app implementation. |
+| `implementation-python` | completed | blocking 0, major 0, minor 0 after fixing API/DB routing, function contract coverage, decorator signature preservation, class API shape, TypeVarTuple/type defaults, collection choice, Python 3.14 gates, Korean trigger coverage, Django Ninja boundary wording, and deprecation guidance | positive, pydantic-boundary, and simple negative prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for state-transition typing, pydantic/domain boundary, and small helper type-hint behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Ruff, mypy, pyright, pytest, and runtime app checks were not run because these were skill evaluation prompts, not an app implementation. |
+| `implementation-cleancode` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, API/DB and pattern routing, Django Fat Model/View responsibility boundaries, detailed source/crosswalk heading coverage, state/error details, review/edit boundary, design-it-twice guidance, and false validation claim handling; independent source re-review by Socrates returned 0 findings | positive, boundary/view-logic, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/cleancode-smoke` for Fat Model, View Logic, and simple naming behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts, not a Django app implementation. |
+| `implementation-tdd` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, API/DB routing, risky/composite workflow routing, Source Coverage Crosswalk heading tracking, validation scenario heading coverage, test isolation guidance, mock-role/TDD boundary wording, and stale review claims; independent source re-review by Kierkegaard returned 0 findings | positive, composite boundary, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/tdd-smoke` for coupon-policy TDD planning, risky order API workflow/TDD boundary, and README typo negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+| `implementation-test` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, broad workflow responsibility wording, validation scenario heading coverage, `spec.md` child-heading coverage, Risky Write Consistency Block coverage, stale review claims, and import-order negative boundary; independent source re-review and rubric review by Carver returned 0 findings | positive, boundary/combined, and import-order negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/test-smoke` for Django Ninja API contract tests, risky DDD/API/test workflow, and import-order negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and rubric-private material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, coverage, mutation testing, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+| `architecture-ddd` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, `spec.md` child-heading coverage, validation scenario heading coverage, Risky Write DDD handoff, metadata specificity, combined-work implementation boundary, and stale completion claims | positive, composite/risky boundary, and simple naming negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/ddd-smoke` for order DDD design, workflow handoff, and category-code naming behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+| `architecture-implementation-patterns` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, direct pattern-selection vs workflow routing, layered dependency wording, `spec.md` child-heading coverage, validation scenario coverage, Risky Write Consistency Block output shape, metadata specificity, and stale review claims; independent source re-review returned 0 findings | positive, coordinated workflow boundary, and simple `verbose_name` negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/pattern-smoke` for payment pattern selection, workflow handoff, and negative direct-edit behavior, with positive re-run after block-heading wording fix | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Provisional fallback status remains explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+| `architecture-db` | completed | blocking 0, major 0, minor 0 after fixing direct DB design vs workflow routing, Korean trigger coverage for idempotency/rollout/query-plan language, `spec.md` child-heading coverage, validation scenario coverage, ddd-implementation-standard heading coverage, stale review claims, and metadata specificity; independent source review returned 0 findings | positive DB concurrency, coordinated workflow boundary, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/db-smoke` for stock/reservation DB design, workflow handoff, and simple `verbose_name` negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+| `architecture-api` | completed | blocking 0, major 0, minor 0 after fixing direct API contract vs workflow routing, Korean trigger coverage for auth/header/compatibility language, `spec.md` child-heading coverage, validation scenario coverage, ddd-implementation-standard heading coverage, metadata specificity, API contract acceptance-criteria output, and stale review claims; independent source re-review returned 0 findings | positive API contract, coordinated workflow boundary, and simple Django negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/api-smoke` for order API contract, workflow handoff, and simple memo-field negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, OpenAPI generation, TestClient, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+| `workflow-dddjango-subagents` | completed | blocking 0, major 0, minor 0 after fixing stale review/rubric claims, source crosswalk heading precision, Korean trigger coverage for role-map/handoff/integration/check terms, `spec.md` child-heading coverage, validation scenario coverage, metadata wording, review-focused findings-first output order, canonical role responsibility coverage, handoff field pinning, and visible Risky Write Consistency Block output; independent source re-review returned 0 findings | positive composite/risky workflow, review-focused boundary, false-subagent claim, and simple Django negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/workflow-smoke` for composite order workflow, review findings-first workflow, false-claim correction, and simple memo-field negative behavior, with positive re-run after Risky Write block wording fix | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, migrations, OpenAPI generation, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+
+Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills` passed with 0 warnings; `git diff --check` was clean; runtime and current crosswalk leakage grep found no private grader/scoring/expected material; `/private/tmp/workflow-smoke/*.txt` leakage grep found no private evaluator material; source/cache `diff -qr dddjango /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10` was clean; final `codex debug prompt-input` smoke artifact at `/private/tmp/dddjango-final-runtime-debug.json` exposed all 12 dddjango skill metadata entries from cache version `0.1.10`.
 
 ## 4. 스킬 연계 평가표 작성
 
@@ -238,12 +257,12 @@ python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir 
 
 반복 체크리스트:
 
-- [ ] 연계 평가 prompt를 실행한다.
-- [ ] role map과 handoff 산출물을 확인한다.
-- [ ] 하위 스킬 reference가 필요한 시점에만 읽히는지 확인한다.
-- [ ] 과한 구조 적용이나 역할 누락을 수정한다.
-- [ ] 수정 후 같은 평가를 다시 실행한다.
-- [ ] 연계 실패 원인과 수정 위치를 기록한다.
+- [x] 연계 평가 prompt를 실행한다.
+- [x] role map과 handoff 산출물을 확인한다.
+- [x] 하위 스킬 reference가 필요한 시점에만 읽히는지 확인한다.
+- [x] 과한 구조 적용이나 역할 누락을 수정한다.
+- [x] 수정 후 같은 평가를 다시 실행한다.
+- [x] 연계 실패 원인과 수정 위치를 기록한다.
 
 검증 기준:
 
@@ -252,11 +271,11 @@ python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir 
 
 통과 기준:
 
-- [ ] 복합 작업에서 DDD 판단이 구현보다 먼저 나온다.
-- [ ] Django Ninja가 API 구현 표준으로 유지된다.
-- [ ] DB transaction, constraint, migration 책임이 구현 책임과 구분된다.
-- [ ] 테스트가 도메인 규칙과 API 계약을 보호한다.
-- [ ] 단순 prompt에서는 workflow를 출력하지 않는다.
+- [x] 복합 작업에서 DDD 판단이 구현보다 먼저 나온다.
+- [x] Django Ninja가 API 구현 표준으로 유지된다.
+- [x] DB transaction, constraint, migration 책임이 구현 책임과 구분된다.
+- [x] 테스트가 도메인 규칙과 API 계약을 보호한다.
+- [x] 단순 prompt에서는 workflow를 출력하지 않는다.
 
 ## 7. 종합 평가표 작성
 

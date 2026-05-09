@@ -20,6 +20,7 @@ Use this reference for names, function shape, arguments, side effects, command/q
 - Separate commands from queries. A function should either change state or answer a question, not surprise callers by doing both.
 - Make side effects visible in the name or isolate them in an orchestration function.
 - Prefer guard clauses when they make the main path clearer.
+- When a routine has many decisions or branches, consider decomposing conditionals, table-driven logic, or a policy object only if the resulting policy stays visible and easier to change.
 
 ## Formatting And Docstrings
 

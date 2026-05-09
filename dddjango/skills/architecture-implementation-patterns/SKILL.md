@@ -1,7 +1,7 @@
 ---
 name: architecture-implementation-patterns
 description: >
-  Provisional until dedicated source reference exists; use fallback sources for DDD implementation architecture patterns: layered architecture, clean architecture, hexagonal/ports-adapters, dependency direction, repository, Unit of Work, CQRS, event sourcing, outbox, ACL, saga, and legacy integration. Use for 헥사고날, 클린 아키텍처, 의존성 역전, repository/UoW, outbox, ACL, 프로젝트 구조. Prefer workflow-dddjango-subagents for composite/subagent Django work, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transactions, architecture-api for REST/API contracts, status codes, Problem Details, idempotency, versioning, or OpenAPI, and implementation skills for concrete Django/Python code.
+  Provisional until dedicated source reference exists; use fallback sources when choosing DDD implementation architecture patterns: layered/계층, clean/클린 아키텍처, hexagonal/헥사고날, ports-adapters/포트-어댑터, dependency direction/DIP/의존성 역전, repository/UoW, CQRS, event sourcing/이벤트 소싱, saga/사가, outbox, ACL/레거시 연동, service layer, and project structure. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transaction details, architecture-api for REST contracts, and implementation skills for concrete code.
 ---
 
 # Implementation Patterns
@@ -19,7 +19,8 @@ Use this skill after the DDD model is clear and before concrete Django/Python co
 
 ## Routing
 
-- If the user explicitly asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow in a Django task, use `workflow-dddjango-subagents` first.
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct pattern-selection questions here, including risky or external-system examples, when the user is deciding whether to use hexagonal architecture, repository/UoW, outbox, saga, ACL, CQRS, or a simpler Django-native structure.
 - If subdomains, bounded contexts, ubiquitous language, aggregates, or invariants are unclear, use `architecture-ddd` before choosing implementation patterns.
 - If the main question is table design, constraints, indexes, locking, isolation, rollout constraints, or operational migration safety, use `architecture-db`.
 - If the main question is REST resource design, status codes, Problem Details, idempotency key behavior, pagination, versioning, or OpenAPI, use `architecture-api`.
@@ -41,6 +42,6 @@ Use this skill after the DDD model is clear and before concrete Django/Python co
 - Keep domain/application code independent from infrastructure details. Frameworks, ORM calls, SDK clients, HTTP requests, and environment access belong in adapters or infrastructure.
 - Treat CQRS, event sourcing, saga, outbox, and ACL as conditional tools, not as default architecture.
 - For external side effects, state whether the effect runs after commit, through an outbox-style handoff, or through another reliable integration boundary.
-- For risky writes, identify transaction owner and side-effect/reliability boundary, then hand off DB locking/isolation, API idempotency behavior, and integration/concurrency tests to the owning skills.
+- For risky writes, output a visible section or table titled `Risky Write Consistency Block`. This skill owns the pattern decision: Django-native transaction, service layer, port/adapter, outbox, saga, ACL, or no extra pattern. State the transaction owner or owning use case, side-effect timing or reliability boundary, and whether uniqueness/idempotency storage is needed, then hand off concrete DB locking/isolation/retry, `Idempotency-Key` API behavior, and integration/concurrency tests to the owning skills.
 - If source limits affect a recommendation, say the skill is using fallback sources and identify the assumption.
 - Only report tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.

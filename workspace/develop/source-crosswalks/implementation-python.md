@@ -38,9 +38,9 @@
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent implementation, DDD, test, clean-code, and workflow boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
-| `## 검증` | included | final validation report | Only executed validation is reported. |
-| `## 완료 보고` | included | final response | Required report fields will be included. |
+| `## Completed 조건` | included | Review Notes, pending final validation report | Completion requires zero remaining blocking/major/minor findings; final evidence is pending for this skill. |
+| `## 검증` | included | pending final validation report | Only executed validation will be reported; completion validation is pending. |
+| `## 완료 보고` | included | pending final response | Required report fields will be included after this skill completes. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime skill behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md` Routing | Python/Django ecosystem, simple-vs-complex judgment, and workflow delegation reflected. |
@@ -112,21 +112,21 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `implementation-python/final.md` `## 1. 타입 힌트와 타입 시스템` | included | `typing.md`, `SKILL.md` | 1.1-1.14 covered as type contracts, `X | None`, generics, TypedDict, advanced typing, version gates. |
+| `implementation-python/final.md` `## 1. 타입 힌트와 타입 시스템` | included | `typing.md`, `SKILL.md` | 1.1-1.14 covered as type contracts, `X | None`, generics, TypedDict, TypeVarTuple/Unpack, type parameter defaults, advanced typing, version gates. |
 | `## 2. 구조적 패턴 매칭` | merged | `dataclasses-enums.md` | State-machine and dataclass pattern matching guidance included. |
-| `## 3. 컬렉션 선택과 데이터 구조` | merged | `typing.md` | Collection type contracts included; detailed data-structure performance remains task-specific. |
-| `## 4. 함수 설계: Python 특화 기법` | merged | `typing.md`, `protocols-boundaries.md` | Mutable default, keyword-only, `None` return, and callable contract concerns reflected. |
-| `## 5. 데코레이터` | merged | `typing.md` | `ParamSpec` and `Concatenate` signature preservation included. |
+| `## 3. 컬렉션 선택과 데이터 구조` | included | `typing.md` | Collection role selection, missing-key defaults, explicit sorting keys, and performance-sensitive collection choices included. |
+| `## 4. 함수 설계: Python 특화 기법` | included | `typing.md`, `protocols-boundaries.md` | Mutable/time-sensitive defaults, keyword-only controls, positional-only caution, `None` return, and callable contract concerns reflected. |
+| `## 5. 데코레이터` | included | `typing.md` | `functools.wraps`, `ParamSpec`, and `Concatenate` signature preservation included. |
 | `## 6. 디스크립터` | omitted | n/a | Descriptor framework details are advanced implementation mechanics, not core runtime skill trigger/reference split. |
 | `## 7. @property와 애트리뷰트 접근` | merged | `protocols-boundaries.md` | Property contracts in Protocols and ordinary attribute preference reflected. |
-| `## 8. 클래스 설계: Python 특화 패턴` | merged | `dataclasses-enums.md`, `protocols-boundaries.md` | Factory/classmethod, repr/str, protected attributes, mixins/container protocols folded into class/boundary guidance. |
+| `## 8. 클래스 설계: Python 특화 패턴` | included | `dataclasses-enums.md`, `protocols-boundaries.md` | `__call__`, factory/classmethod, staticmethod, repr/str, protected attributes, `__init_subclass__`, mixins/container protocols folded into class/boundary guidance. |
 | `## 9. Protocol 심화` | included | `protocols-boundaries.md`, `SKILL.md` | Protocol use, composition, generics, runtime_checkable caveat included. |
 | `## 10. Enum, dataclass, NamedTuple` | included | `dataclasses-enums.md`, `SKILL.md` | Enum/StrEnum, dataclass options, NamedTuple, value-object guidance included. |
 | `## 11. 연산자 오버로딩과 Python 데이터 모델 심화` | omitted | n/a | Specialized data-model implementation; not first-class in product contract. |
 | `## 12. pydantic v2` | included | `pydantic-v2.md`, `SKILL.md` | v2 APIs, validators, strict mode, and domain boundary included. |
 | `## 13. 이터레이터, 제너레이터, 컴프리헨션` | omitted | n/a | General Python fluency; not part of runtime split except when project task requires local judgment. |
 | `## 14. 컨텍스트 매니저와 with문` | merged | `protocols-boundaries.md` | Resource cleanup/context manager guidance included. |
-| `## 15. 예외 처리` | included | `protocols-boundaries.md` | Module exception root, explicit exceptions, `try` block roles included. |
+| `## 15. 예외 처리` | included | `protocols-boundaries.md` | Module exception root, explicit exceptions, `try` block roles, and Python-version-gated deprecation guidance included. |
 | `## 16. 동시성과 병렬성` | merged | `protocols-boundaries.md` | TaskGroup/thread/GIL version-specific guidance included. |
 | `## 17. 성능 프로파일링과 최적화` | delegated-to-other-skill | `implementation-cleancode`, project-specific profiling | Performance tuning needs task-specific evidence; not central runtime split. |
 | `## 18. f-문자열 개선과 PEG 파서` | omitted | n/a | Syntax detail not central to dddjango Python contract. |
@@ -139,7 +139,7 @@
 | `## 25. 디버깅 기법` | omitted | n/a | Debugging tools are not product contract for this skill. |
 | `## 26. 독스트링과 문서화` | delegated-to-other-skill | `implementation-cleancode` | Documentation style belongs to clean-code/review. |
 | `## 27. 정밀 연산` | merged | `dataclasses-enums.md` | Precision-sensitive value-object choice can use value objects; detailed Decimal/Fraction is task-specific. |
-| `## 28. Python 3.14 주요 변경사항` | merged | `typing.md`, `protocols-boundaries.md` | Version gates for 3.13+/3.14 features included. |
+| `## 28. Python 3.14 주요 변경사항` | merged | `typing.md`, `protocols-boundaries.md`, `SKILL.md` | Project-target gates for 3.12+/3.13+/3.14 features included; detailed 3.14 APIs remain task-specific. |
 | `## 부록 A: Python 3.10-3.14 핵심 변경사항 요약` | merged | all references | Version-gated modern Python guidance reflected. |
 | `## 부록 B: 타입 시스템 진화 요약` | merged | `typing.md` | Modern typing evolution reflected. |
 | `## 부록 C: 주요 매직 메서드 요약` | omitted | n/a | Detailed magic method reference is outside runtime skill scope. |
@@ -147,7 +147,11 @@
 
 ## Review Notes
 
-- Source self-review: local review found 1 minor wording cleanup and no remaining blocking/major/minor findings.
-- Skill-creator/writing-skills review: no extraneous files, direct reference links, concise `SKILL.md`, and frontmatter length under 1024; remaining blocking/major/minor findings 0 by local review.
-- Independent subagent review: first pass found 0 blocking, 0 major, and 3 minor; fixes applied; re-review reported blocking/major/minor findings 0.
-- Rubric review: 1 source-backed runtime issue found (async boundary constraints); fixed. Eval-only calibration issues 0; rubric defects 0; accepted trade-offs 0; remaining blocking/major/minor findings 0.
+- 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in unresolved API/DB contract routing, function contract coverage, decorator metadata/signature preservation, class API shape guidance, and stale review claims from an earlier draft. Runtime files and this crosswalk were updated.
+- 2026-05-10 independent source review found source-backed gaps in TypeVarTuple/type parameter defaults, collection/data-structure coverage, Python 3.14 version-gate wording, Korean trigger coverage, Django Ninja boundary wording, and forward-looking completion evidence rows. Runtime files and this crosswalk were updated.
+- 2026-05-10 source re-review found remaining source-backed gaps in `__call__`, `__init_subclass__`, and Python 3.13 deprecation guidance. Runtime files and this crosswalk were updated.
+- Final source-only re-review reported blocking 0, major 0, minor 0.
+- Rubric review ran after source self-review. No additional source-backed runtime issue remained; blocking 0, major 0, minor 0.
+- Runtime checks: `codex debug prompt-input` smoke checks were run for positive, pydantic-boundary, and simple negative prompts. The output exposes dddjango plugin metadata globally, so it is useful as a runtime cache/metadata exposure check but not as sole evidence of routing quality.
+- Runtime behavior checks: read-only `codex exec` positive prompt used `implementation-python` and `architecture-ddd` for state-transition/invariant planning and kept pydantic at the external boundary; pydantic boundary prompt used `implementation-python` and separated `BaseModel`, command dataclass, and domain objects; simple helper type-hint prompt stayed direct without DDD/workflow/subagent expansion.
+- Validation so far: `validate_skill_docs.py --phase all`, `git diff --check`, leakage grep, cache sync, and source/cache diff passed. Ruff, mypy, pyright, pytest, and runtime app checks were not run because this was runtime skill evaluation, not an app implementation.
