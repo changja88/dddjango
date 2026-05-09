@@ -1,0 +1,4 @@
+interface:
+  display_name: "Django Implementation"
+  short_description: "Django models, services, migrations, transactions"
+  default_prompt: "Use $implementation-django to implement Django models, services, migrations, and transactions."

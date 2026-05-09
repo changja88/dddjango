@@ -1,0 +1,4 @@
+interface:
+  display_name: "Django Web Implementation"
+  short_description: "Provisional fallback Django web flows"
+  default_prompt: "Use $implementation-django-web to implement Django templates, static files, TemplateView, HTMX, and CSRF-aware web flows."

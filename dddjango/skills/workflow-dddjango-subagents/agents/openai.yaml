@@ -1,0 +1,4 @@
+interface:
+  display_name: "dddjango Workflow"
+  short_description: "Coordinate role-decomposed DDD/Django work across skills."
+  default_prompt: "Use $workflow-dddjango-subagents to coordinate role-decomposed DDD/Django work across domain, DB, API, implementation, test, and review roles."

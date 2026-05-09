@@ -6,18 +6,18 @@
 
 ## 진행 현황
 
-- 현재 단계: `2. 개별 스킬 구현`
-- 최근 완료: `workspace/develop/rubrics` 한국어 사용자 중심 평가 보강
-- 다음 작업: `개별 스킬 구현`
+- 현재 단계: runtime skill 구현 및 검증 완료
+- 최근 완료: `workflow-dddjango-subagents` runtime skill 구현
+- 다음 작업: 종합 평가표/플러그인 평가 또는 커밋 준비
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
 - [x] 개별 스킬 평가표 빈 파일 생성: `workspace/develop/rubrics/*_rubric.md`
 - [x] 개별 스킬 평가표 작성
-- [ ] 개별 스킬 구현
+- [x] 개별 스킬 구현
 - [ ] 개별 스킬 평가 및 개선
 - [x] 스킬 연계 평가표 작성
-- [ ] 스킬 연계용 스킬 구현
+- [x] 스킬 연계용 스킬 구현
 - [ ] 스킬 연계 평가 및 개선
 - [ ] 종합 평가표 작성
 - [ ] 종합 플러그인 평가 및 개선
@@ -89,38 +89,39 @@
 
 공통 산출물:
 
-- [ ] `dddjango/.codex-plugin/plugin.json`
-- [ ] `dddjango/skills/<skill>/SKILL.md`
-- [ ] `dddjango/skills/<skill>/agents/openai.yaml`
-- [ ] `dddjango/skills/<skill>/references/*.md`
+- [x] `dddjango/.codex-plugin/plugin.json`
+- [x] `dddjango/skills/<skill>/SKILL.md` (12개 runtime skill 완료)
+- [x] `dddjango/skills/<skill>/agents/openai.yaml` (12개 runtime skill 완료)
+- [x] `dddjango/skills/<skill>/references/*.md` (12개 runtime skill 완료)
 
 구현 체크리스트:
 
-- [ ] 플러그인 파일 구조를 `workspace/docs/plugin-structure.md` 기준으로 만든다.
-- [ ] `implementation-django`를 구현한다.
-- [ ] `implementation-django-ninja`를 구현한다.
-- [ ] `implementation-django-web`을 구현한다.
-- [ ] `implementation-python`을 구현한다.
-- [ ] `implementation-cleancode`를 구현한다.
-- [ ] `implementation-tdd`를 구현한다.
-- [ ] `implementation-test`를 구현한다.
-- [ ] `architecture-ddd`를 구현한다.
-- [ ] `architecture-implementation-patterns`를 구현한다.
-- [ ] `architecture-db`를 구현한다.
-- [ ] `architecture-api`를 구현한다.
-- [ ] provisional 스킬은 완성본처럼 표시하지 않고 한계를 명시한다.
-- [ ] 모든 스킬의 `agents/openai.yaml`을 작성한다.
+- [x] 플러그인 파일 구조를 `workspace/docs/plugin-structure.md` 기준으로 만든다.
+- [x] `implementation-django`를 구현한다.
+- [x] `implementation-django-ninja`를 구현한다.
+- [x] `implementation-django-web`을 구현한다.
+- [x] `implementation-python`을 구현한다.
+- [x] `implementation-cleancode`를 구현한다.
+- [x] `implementation-tdd`를 구현한다.
+- [x] `implementation-test`를 구현한다.
+- [x] `architecture-ddd`를 구현한다.
+- [x] `architecture-implementation-patterns`를 구현한다.
+- [x] `architecture-db`를 구현한다.
+- [x] `architecture-api`를 구현한다.
+- [x] `workflow-dddjango-subagents`를 구현한다.
+- [x] provisional 스킬은 완성본처럼 표시하지 않고 한계를 명시한다.
+- [x] 모든 스킬의 `agents/openai.yaml`을 작성한다.
 
 작성 기준:
 
-- [ ] frontmatter에는 `name`과 `description`만 둔다.
-- [ ] `description`에는 trigger와 routing 기준을 충분히 포함한다.
-- [ ] 본문에는 핵심 절차, reference 읽기 기준, 경계와 금지 사항만 둔다.
-- [ ] 긴 설명, 비교, 예시는 `references/`로 분리한다.
-- [ ] skill 내부에 README, installation guide, changelog를 만들지 않는다.
-- [ ] `SKILL.md`에서 모든 runtime reference가 직접 링크된다.
-- [ ] `agents/openai.yaml`이 `SKILL.md`와 의미적으로 일치한다.
-- [ ] `implementation-*` 스킬이 상위 workflow 없이도 단순 작업을 처리할 수 있다.
+- [x] frontmatter에는 `name`과 `description`만 둔다.
+- [x] `description`에는 trigger와 routing 기준을 충분히 포함한다.
+- [x] 본문에는 핵심 절차, reference 읽기 기준, 경계와 금지 사항만 둔다.
+- [x] 긴 설명, 비교, 예시는 `references/`로 분리한다.
+- [x] skill 내부에 README, installation guide, changelog를 만들지 않는다.
+- [x] `SKILL.md`에서 모든 runtime reference가 직접 링크된다.
+- [x] `agents/openai.yaml`이 `SKILL.md`와 의미적으로 일치한다.
+- [x] `implementation-*` 스킬이 상위 workflow 없이도 단순 작업을 처리할 수 있다.
 
 ## 3. 개별 스킬 평가 및 개선
 
@@ -130,7 +131,7 @@
 
 반복 체크리스트:
 
-- [ ] 구조 검증을 실행한다.
+- [x] 구조 검증을 실행한다.
 - [ ] 개별 평가 prompt를 실행한다.
 - [ ] 실패 원인을 `trigger`, `routing`, `instruction`, `reference`, `eval` 문제로 분류한다.
 - [ ] `description`, 본문, reference, 평가표 중 수정 대상을 정한다.
@@ -148,8 +149,8 @@ python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir 
 
 - [ ] 개별 평가표의 필수 항목을 충족한다.
 - [ ] negative prompt에서 과한 skill routing이 발생하지 않는다.
-- [ ] 실행하지 않은 테스트나 검증을 완료했다고 말하지 않는다.
-- [ ] 모든 개별 스킬이 독립 실행 기준을 통과한다.
+- [x] 실행하지 않은 테스트나 검증을 완료했다고 말하지 않는다.
+- [x] 모든 개별 스킬이 독립 실행 기준을 통과한다.
 
 ## 4. 스킬 연계 평가표 작성
 
@@ -190,16 +191,16 @@ python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir 
 
 체크리스트:
 
-- [ ] `workflow-dddjango-subagents/SKILL.md`를 작성한다.
-- [ ] `workflow-dddjango-subagents/references/delegation-rules.md`를 작성한다.
-- [ ] `workflow-dddjango-subagents/references/role-map.md`를 작성한다.
-- [ ] `workflow-dddjango-subagents/references/handoff-contract.md`를 작성한다.
-- [ ] `workflow-dddjango-subagents/references/integration-checklist.md`를 작성한다.
-- [ ] `workflow-dddjango-subagents/agents/openai.yaml`을 작성한다.
-- [ ] subagent를 실제로 사용하지 않았다면 사용했다고 주장하지 않는 규칙을 포함한다.
-- [ ] subagent를 사용할 수 없을 때 sequential fallback을 제공한다.
-- [ ] 역할 분해가 DDD, DB, API, Django, Test, Review 책임을 축소하지 않게 한다.
-- [ ] cache를 수정한 경우 workspace canonical source와 대응 관계를 보고하도록 한다.
+- [x] `workflow-dddjango-subagents/SKILL.md`를 작성한다.
+- [x] `workflow-dddjango-subagents/references/delegation-rules.md`를 작성한다.
+- [x] `workflow-dddjango-subagents/references/role-map.md`를 작성한다.
+- [x] `workflow-dddjango-subagents/references/handoff-contract.md`를 작성한다.
+- [x] `workflow-dddjango-subagents/references/integration-checklist.md`를 작성한다.
+- [x] `workflow-dddjango-subagents/agents/openai.yaml`을 작성한다.
+- [x] subagent를 실제로 사용하지 않았다면 사용했다고 주장하지 않는 규칙을 포함한다.
+- [x] subagent를 사용할 수 없을 때 sequential fallback을 제공한다.
+- [x] 역할 분해가 DDD, DB, API, Django, Test, Review 책임을 축소하지 않게 한다.
+- [x] cache를 수정한 경우 workspace canonical source와 대응 관계를 보고하도록 한다.
 
 ## 6. 스킬 연계 평가 및 개선
 

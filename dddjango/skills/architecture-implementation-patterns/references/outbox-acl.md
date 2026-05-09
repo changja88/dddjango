@@ -1,0 +1,63 @@
+# Outbox, ACL, And Integration Patterns
+
+This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
+
+Load this when domain events cross aggregate or context boundaries, external side effects exist, upstream models conflict with the domain, or event sourcing/saga is being considered.
+
+## Domain Events And Integration Events
+
+- Domain events are internal business facts raised by aggregate behavior.
+- Integration events cross bounded context or service boundaries and should use the published language of the integration contract.
+- Keep event names past tense and scoped to the language of the owning context.
+- Do not expose internal aggregate structure as an integration event contract.
+
+## Outbox
+
+Use outbox when state change and message delivery must be reliably connected.
+
+Decision points:
+
+- What transaction writes the aggregate and the outbox message?
+- Who owns dispatch after commit?
+- Is delivery at-least-once, and are consumers idempotent?
+- What retry/dead-letter behavior is needed?
+- Which event fields form the published language?
+
+For simple in-process follow-up after a successful Django transaction, `transaction.on_commit()` may be enough. For cross-service publication, prefer a durable outbox-style handoff.
+
+## Risky Write Handoff
+
+For payment, inventory, reservation, refund, permission, ledger, or similar risky writes, this skill owns the architecture pattern decision but should leave concrete DB/API/test details to the owning skills.
+
+Record:
+
+- transaction owner or owning use case;
+- side-effect timing: after commit, outbox, or another reliable handoff;
+- whether uniqueness/idempotency storage is needed;
+- follow-up owner for DB locking, isolation, and retry details;
+- follow-up owner for `Idempotency-Key` API behavior;
+- follow-up owner for integration, replay, or concurrency tests.
+
+## Saga
+
+Use saga when a long-running or distributed business process spans multiple local transactions.
+
+- Choreography keeps services autonomous but can hide the process flow.
+- Orchestration centralizes the process but can concentrate workflow logic.
+- Compensation must be explicit and idempotent.
+
+Do not use saga for a single local invariant that can be protected by one transaction.
+
+## Event Sourcing
+
+Use event sourcing only when history, audit, replay, or temporal reconstruction is central to the domain.
+
+Event sourcing is not required just because the system has domain events.
+
+## Anticorruption Layer
+
+Use ACL to protect a downstream model from an upstream or legacy language.
+
+- Translate external identifiers, statuses, units, and lifecycle concepts.
+- Keep translation near the integration boundary.
+- Do not let legacy terms leak into aggregates, value objects, or ubiquitous language.

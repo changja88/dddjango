@@ -1,0 +1,4 @@
+interface:
+  display_name: "Python Implementation"
+  short_description: "Apply modern Python typing, dataclasses, Protocols, enums, pydantic boundaries, and Ruff."
+  default_prompt: "Use $implementation-python to apply modern Python typing, dataclasses, Protocols, enums, pydantic boundaries, and Ruff."

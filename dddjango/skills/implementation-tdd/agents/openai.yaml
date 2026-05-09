@@ -1,0 +1,4 @@
+interface:
+  display_name: "TDD Implementation"
+  short_description: "Drive work through test lists, failing tests, and Red-Green-Refactor."
+  default_prompt: "Use $implementation-tdd to drive work through test lists, failing tests, Red-Green-Refactor, and TDD choices."

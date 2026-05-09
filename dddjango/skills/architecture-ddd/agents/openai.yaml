@@ -1,0 +1,4 @@
+interface:
+  display_name: "DDD Architecture"
+  short_description: "Model contexts, aggregates, invariants, and events."
+  default_prompt: "Use $architecture-ddd to model bounded contexts, aggregates, invariants, and domain events."

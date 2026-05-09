@@ -1,0 +1,113 @@
+# Source Coverage Crosswalk: workflow-dddjango-subagents
+
+## Status
+
+- Skill: `workflow-dddjango-subagents`
+- Runtime target: `dddjango/skills/workflow-dddjango-subagents/`
+- Source status: ready
+- Runtime reference split: follows `workspace/docs/plugin-structure.md` without deviation
+- Runtime references: `delegation-rules.md`, `role-map.md`, `handoff-contract.md`, `integration-checklist.md`
+- Rubric status: opened only after source self-review, skill-creator review, and independent subagent review; source-backed runtime issue fixed
+
+## Sources Used
+
+- `workspace/develop/skill_goal_instructions.md`
+- `workspace/docs/spec.md`
+- `workspace/docs/plugin-structure.md`
+- `workspace/docs/skill-contracts.md`
+- `workspace/docs/skill-hierarchy.md`
+- `workspace/docs/skill-authoring.md`
+- `workspace/docs/reference-index.md`
+- `workspace/docs/ddd-implementation-standard.md`
+- `workspace/docs/workflow.md`
+- `workspace/docs/validation-plan.md`
+
+## Authoring And Product Docs
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `skill_goal_instructions.md` `## 범위` | included | runtime path, this crosswalk | Plugin-bundled target and crosswalk location followed. |
+| `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
+| `## 구현 순서` | included | plan order | This follows `architecture-api`. |
+| `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
+| `## Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
+| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
+| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize workflow source. |
+| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
+| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, 순차 실행 included. |
+| `## Provisional Skill 처리` | omitted | n/a | This skill has ready workflow source and is not provisional. |
+| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Workflow precedence and simple opt-out boundaries included. |
+| `## Review 기준` | included | Review Notes | Review types and findings tracked. |
+| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
+| `## 검증` | included | validation commands | Only executed validation will be reported. |
+| `## 완료 보고` | included | final report | Required report fields will be included. |
+| `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
+| `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
+| `## 1. 목표` | included | `SKILL.md`, references | Composite/risky work coordination supports DDD plugin goal. |
+| `## 2. 설계 원칙` | included | `delegation-rules.md`, `integration-checklist.md` | Role decomposition, domain-first ordering, and validation integrity included. |
+| `## 3. 스킬 종류` | included | `role-map.md`, `SKILL.md` | Workflow responsibility and all related skills included. |
+| `## 4. 산출물 기준` | included | `handoff-contract.md`, `integration-checklist.md` | Role map, handoff, integration, and validation outputs included. |
+| `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
+| `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/workflow-dddjango-subagents/` | Plugin-bundled structure used; role-map sync honored. |
+| `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, and runtime rules only. |
+| `## 4. Reference 파일 기준` | included | `references/*.md` | One-level references directly linked. |
+| `## 5. Claude Code와 Codex 공통성` | included | `SKILL.md`, references | Shared skill name and workflow responsibility preserved. |
+| `## 6. 작성 순서` | included | this workflow | Docs/reference read before rubric review. |
+| `## 7. Runtime Reference Split Plan` | included | four reference files | Exact split for `workflow-dddjango-subagents` used. |
+| `## 8. 금지 사항` | included | file tree, `SKILL.md` | No auxiliary docs; no false validation or subagent claim. |
+| `skill-authoring.md` `## 1. 작성 원칙` | included | `SKILL.md` | Trigger/routing and boundaries are in description/body. |
+| `## 2. Frontmatter 입력 표` | included | `SKILL.md` description | Workflow signals and anti-routes included. |
+| `## 3. Cross-Skill Precedence` | included | `SKILL.md` Routing | Workflow is first for composite/risky/subagent work. |
+| `## 4. Agents Metadata Inputs` | included | `agents/openai.yaml` | Display name, short description, and default prompt align. |
+| `reference-index.md` `## Architecture` / `## Implementation` | merged | `role-map.md` | All domain, DB, API, implementation, test, and review skills represented through roles. |
+| `## Reference 사용 원칙` | included | `SKILL.md`, references | Runtime references summarize workflow source and avoid workspace source paths. |
+| `## Reference Gap` | omitted | n/a | This skill has ready workflow source. |
+| `## DRF Guardrail` | included | `integration-checklist.md` | Composite workflow checks no greenfield DRF implementation in API path. |
+| `## Reference에서 도출한 제품 결정` | included | `integration-checklist.md` | Django Ninja, DDD, DB, API, and validation product decisions integrated. |
+
+## Contracts, Workflow, And Standard Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `skill-contracts.md` `## architecture-ddd` | included | `role-map.md`, `integration-checklist.md` | Domain Agent and domain-first integration included. |
+| `## architecture-implementation-patterns` | included | `role-map.md` | Architecture Agent included with pattern/dependency responsibility. |
+| `## architecture-db` | included | `role-map.md`, `integration-checklist.md` | DB Agent and data/transaction checks included. |
+| `## architecture-api` | included | `role-map.md`, `integration-checklist.md` | API Agent and API contract checks included. |
+| `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | included | `role-map.md`, `integration-checklist.md` | Django, API implementation, and web/static responsibilities included. |
+| `## implementation-python` / `## implementation-cleancode` | included | `role-map.md`, `integration-checklist.md` | Python support and Review Agent included. |
+| `## implementation-tdd` / `## implementation-test` | included | `role-map.md`, `integration-checklist.md` | TDD/Test Agent included. |
+| `## workflow-dddjango-subagents` | included | `SKILL.md`, references | Role decomposition, real subagent/sequential fallback, and integration included. |
+| `## 공통 필수 출력` / `### Risky Write Consistency Block` | included | `integration-checklist.md`, `SKILL.md` | Risky write decisions included and assigned to roles. |
+| `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md`, `role-map.md` | Workflow precedence and downstream skill roles included. |
+| `ddd-implementation-standard.md` `## 1. 판단 순서` | included | `delegation-rules.md`, `integration-checklist.md` | Domain-first order reflected. |
+| `## 2. 하위 도메인별 구현 강도` / `## 3. 바운디드 컨텍스트와 언어` | delegated-to-other-skill | `architecture-ddd` via `role-map.md` | Domain Agent owns details; workflow ensures order. |
+| `## 4. 애그리거트와 불변식` | included | `integration-checklist.md` | Domain invariants are top integration priority. |
+| `## 5. Domain Events` / `## 6. Application Service와 Domain Service` | merged | `integration-checklist.md`, `role-map.md` | Domain events and service ownership assigned to Domain/Architecture/Django roles. |
+| `## 7. Django ORM 매핑` / `## 8. Repository와 Transaction` | included | `role-map.md`, `integration-checklist.md` | Django/DB/Architecture responsibilities included. |
+| `## 9. API 매핑` | included | `role-map.md`, `integration-checklist.md` | API Agent and API contract checks included. |
+| `## 10. Python 매핑` / `## 11. 테스트 매핑` | included | `role-map.md` | Django/Python and Test Agent responsibilities included. |
+| `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, `integration-checklist.md` | Real validation only and source-backed checks included. |
+| `## 2. 대표 시나리오` | included | `delegation-rules.md`, `integration-checklist.md` | Composite/risky, simple negative, and false-subagent cases covered. |
+| `## 3. 평가 항목` | included | `SKILL.md`, references | Over-application, workflow contract, role map sync, and validation honesty covered. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+
+## Workflow Source Heading Coverage
+
+| Source heading | Status | Runtime location | Reason |
+|---|---|---|---|
+| `workflow.md` `## 1. 기본 흐름` | included | `delegation-rules.md`, `integration-checklist.md` | Domain-first-to-verification sequence included. |
+| `## 2. 작업 유형별 흐름` | included | `SKILL.md`, `delegation-rules.md` | Simple, DDD, composite, risky, and review routing included. |
+| `## 3. 역할 분해` | included | `role-map.md` | Canonical roles, responsibilities, and related skills copied without reduction. |
+| `## 4. Sequential Fallback` | included | `delegation-rules.md`, `SKILL.md` | Fallback order included. |
+| `## 5. Handoff Contract` | included | `handoff-contract.md` | Required fields and `May edit`/`Must not edit` included. |
+| `## 6. 통합 우선순위` | included | `integration-checklist.md` | Conflict priority order included. |
+| `## 7. Integration Checklist` | included | `integration-checklist.md` | Checklist items and cache sync report included. |
+| `## 8. Reference Loading` | included | `SKILL.md` Reference Loading | Runtime references directly linked and workspace source paths avoided in runtime docs. |
+| `## 9. 검증 방식` | included | `SKILL.md`, `integration-checklist.md` | Only actual validation may be claimed. |
+
+## Review Notes
+
+- Source self-review: validator found missing workflow role visibility in `SKILL.md`, Django Agent template/static/web wording mismatch, and missing cache sync reporting in `SKILL.md`; fixes applied. Remaining blocking/major/minor findings 0 by local review.
+- Skill-creator/writing-skills review: no extraneous files, direct one-level reference links, concise `SKILL.md`, frontmatter with only `name`/`description`, and `agents/openai.yaml` aligned with `SKILL.md`; remaining blocking/major/minor findings 0 by local review.
+- Independent subagent review: Einstein found 0 blocking, 2 major, and 0 minor issues; fixes applied so composite/risky workflow cannot drop the four required sections and role-map output cannot omit canonical roles. Re-review returned blocking 0, major 0, minor 0.
+- Rubric review: found 1 source-backed runtime issue: simple decorative workflow requests needed a clearer anti-overapplication rule; fixed. Eval-only/private rubric material was not copied. Final remaining blocking/major/minor findings 0.

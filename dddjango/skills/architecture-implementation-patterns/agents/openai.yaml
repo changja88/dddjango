@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Patterns"
+  short_description: "Provisional: choose patterns with fallback sources."
+  default_prompt: "Use $architecture-implementation-patterns with fallback sources to choose DDD implementation patterns, dependency direction, ports/adapters, repository, outbox, and ACL trade-offs."

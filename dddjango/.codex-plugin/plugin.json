@@ -1,0 +1,28 @@
+{
+  "name": "dddjango",
+  "version": "0.1.0",
+  "description": "Python and Django development standards for DDD, Django Ninja APIs, database design, testing, and clean architecture.",
+  "keywords": [
+    "django",
+    "ddd",
+    "django-ninja",
+    "python",
+    "pytest"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "dddjango",
+    "shortDescription": "Django and DDD development standards for Codex.",
+    "longDescription": "Use dddjango skills to model DDD boundaries and implement them with Django, Django Ninja, Python, pytest, database design, and review workflows.",
+    "developerName": "dddjango",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Design a Django feature with DDD boundaries.",
+      "Implement a Django Ninja API with tests.",
+      "Review Django code against dddjango standards."
+    ]
+  }
+}

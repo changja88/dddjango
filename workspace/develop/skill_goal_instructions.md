@@ -14,6 +14,8 @@
 - `dddjango/skills/<skill>/references/*.md`
 - 진행 상태 문서: `workspace/develop/plan.md`
 
+이 프로젝트의 runtime target은 standalone Codex skill 위치인 `$CODEX_HOME/skills` 또는 `~/.codex/skills`가 아니다. 최종 산출물은 Codex에서도 동작하는 plugin-bundled skill이므로, 모든 runtime skill은 repo root의 `dddjango/skills/<skill>/` 아래에 생성한다. `dddjango/skills/.gitkeep`은 개별 skill 생성 전 빈 skills 디렉터리를 추적하기 위한 placeholder이며, 실제 skill 구현을 대체하지 않는다.
+
 작성 중 검토 산출물은 다음 위치에 둔다.
 
 - Source Coverage Crosswalk: `workspace/develop/source-crosswalks/<skill>.md`

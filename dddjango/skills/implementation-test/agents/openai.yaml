@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Implementation"
+  short_description: "Pytest fixtures, doubles, factories, property tests, coverage."
+  default_prompt: "Use $implementation-test to write pytest tests, fixtures, doubles, factories, property tests, and coverage strategy."
