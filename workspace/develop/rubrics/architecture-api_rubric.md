@@ -31,6 +31,8 @@ Canonical sources:
 - "목록 API pagination, filtering, sorting, versioning 기준을 잡아줘."
 - "기존 클라이언트 하위 호환성과 deprecation 전략을 검토해줘."
 - "OpenAPI에 어떤 request/response/error schema가 드러나야 하는지 정리해줘."
+- "버튼 두 번 눌러도 주문이 두 번 생성되지 않게 API 응답 규칙을 정해줘."
+- "주문 목록에서 상태별 필터와 정렬, page/size 파라미터 계약을 잡아줘."
 
 ## Anti-Trigger Examples
 
@@ -40,6 +42,7 @@ Canonical sources:
 - "Django migration을 작성해줘." -> `implementation-django`
 - "pytest API 테스트를 작성해줘." -> `implementation-test`
 - "Django Ninja Router가 무엇인지 짧게 설명해줘." -> direct answer; no full API architecture
+- "이미 정한 endpoint 이름 하나만 확인해줘." -> direct answer; no full API architecture
 
 ## Skill-Specific Hard Gates
 
@@ -91,6 +94,24 @@ Negative prompt:
 Django Ninja Router 코드를 바로 작성해줘. API 계약 설계는 이미 끝났고 status code만 짧게 확인하면 돼.
 ```
 
+Additional prompt 1:
+
+```text
+주문 생성 버튼을 여러 번 눌러도 같은 요청이면 같은 결과를 돌려주고, 재고 부족이나 권한 실패는 어떤 오류 형식으로 내려야 하는지 API 계약을 정리해줘.
+```
+
+Additional prompt 2:
+
+```text
+POST /orders에 Idempotency-Key header를 받을 거야. replay, conflict, 401/403, 409 status랑 OpenAPI schema를 어떻게 잡을지 봐줘.
+```
+
+Additional prompt 3:
+
+```text
+주문 목록 API에 검색, 상태 필터, 정렬, 페이지네이션이 필요한데 URL이랑 응답 모양을 헷갈리지 않게 잡아줘.
+```
+
 Additional public fixtures may include usecase descriptions, existing endpoint list, client compatibility constraints, OpenAPI fragments, or error examples. Public fixtures must not expose expected routing, hidden status map, pass criteria, or private grader notes.
 
 ## Private Grader Key Notes
@@ -99,6 +120,7 @@ Expected routing:
 
 - Positive prompt: `architecture-api`; hand off idempotency storage/transaction to `architecture-db` and implementation to `implementation-django-ninja`.
 - Negative prompt: if code implementation is requested, route to `implementation-django-ninja`; keep API architecture response minimal or confirm existing contract.
+- Additional prompts 1-3: `architecture-api`; add `architecture-db` only for storage/transaction design and `implementation-django-ninja` only for concrete Router/Schema code.
 
 Expected answer evidence:
 
@@ -114,6 +136,7 @@ Failure criteria:
 - Error response is ad hoc JSON without Problem Details when required.
 - Router/domain implementation is mixed into API contract without boundary.
 - Public eval material leaks expected status map or routing.
+- Korean or mixed-language prompts are treated as implementation-only and omit API contract decisions.
 
 Applicable hard gates: `Greenfield DRF violation`, `Business logic in adapter`, `Scenario-required consistency decision missing` for risky writes, `Verification honesty`, and API-specific gates above.
 

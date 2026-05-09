@@ -94,6 +94,10 @@ Forward-test는 가능하면 clean temp workspace 또는 allowlist artifact만 �
 
 Private material이 public packet에 섞이면 `Validation contamination` hard gate 실패다. 단, `skill-authoring-protocol` forward-test에서 skill-under-test와 path를 명시하는 것은 contamination이 아니다.
 
+## Language Policy
+
+dddjango eval material is Korean-first because the expected plugin users primarily write Korean or Korean/English mixed developer requests. Keep section headings, skill names, hard gate ids, scenario tags, and canonical technical terms in English for validator and grader stability. Public prompts should include natural Korean, Korean/English mixed phrasing, colloquial or ambiguous user phrasing, and a simple negative case that should not trigger DDD/workflow/subagent over-application. Private grader keys must map each public prompt family to expected routing, applicable hard gates, and failure criteria without leaking those labels or classifications into the public packet.
+
 ## Scoring Scale
 
 공통 rubric과 개별 skill rubric은 기본적으로 1/3/5 BARS 점수를 사용한다.

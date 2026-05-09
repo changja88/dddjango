@@ -7,7 +7,7 @@
 ## 진행 현황
 
 - 현재 단계: `2. 개별 스킬 구현`
-- 최근 완료: `workspace/develop/rubrics/workflow-dddjango-subagents_rubric.md`
+- 최근 완료: `workspace/develop/rubrics` 한국어 사용자 중심 평가 보강
 - 다음 작업: `개별 스킬 구현`
 
 - [x] 기준 문서 정리: `workspace/docs`
@@ -50,6 +50,10 @@
 - [x] 각 평가표에 required reference coverage와 failure criteria를 포함한다.
 - [x] provisional 스킬의 평가표에 fallback source와 한계를 명시한다.
 - [x] 평가표 전체를 동일 agent의 세 관점 self-review로 리뷰하고 수정한다. 실제 subagent review는 이 단계에서 실행하지 않았다.
+- [x] 공통 Language Policy를 `common_rubric.md`와 `rubric_goal_instructions.md`에 반영한다.
+- [x] 각 평가표의 public prompt를 한국어 자연어, 한국어/영어 혼합, 구어적/모호한 사용자 요청, 단순 negative case까지 보강한다.
+- [x] 각 평가표의 private grader key에 추가 public prompt family의 expected routing과 failure criteria를 반영한다.
+- [x] 한국어 사용자 coverage, routing correctness, public/private integrity, product alignment, anti-overapplication 관점으로 파일별 self-review를 수행하고 남은 finding 0개로 정리한다. 실제 subagent review는 실행하지 않았다.
 
 통과 기준:
 
@@ -57,6 +61,23 @@
 - [x] 다른 스킬을 호출해야 하는 상황과 호출하지 않아야 하는 상황을 구분한다.
 - [x] 단순 작업에 DDD나 subagent workflow를 과하게 적용하지 않는 negative case가 포함된다.
 - [x] 모든 평가표가 `common_rubric.md`, `workspace/docs`, `workspace/reference`와 충돌하지 않는다.
+- [x] 한국어/한영 혼합/구어체 prompt에서도 skill routing과 hard gate를 평가할 수 있다.
+- [x] public eval material에는 expected routing, scenario classification, scoring key, hidden failure criteria가 노출되지 않는다.
+
+한국어 coverage self-review:
+
+- [x] `architecture-api_rubric.md`: 한국어 API 계약, Idempotency-Key, pagination/filtering prompt 보강; findings 0.
+- [x] `architecture-db_rubric.md`: 기존 데이터 채우기, 필수값 전환, rolling deploy, 중복 저장 방지 prompt 보강; findings 0.
+- [x] `architecture-ddd_rubric.md`: bounded context 언어 차이, coupon invariant, DDD 적용 범위 판단 prompt 보강; findings 0.
+- [x] `architecture-implementation-patterns_rubric.md`: port/adapter, ACL, outbox, CQRS 적용/비적용 판단 prompt 보강; findings 0.
+- [x] `implementation-django_rubric.md`: Django migration sequence, backfill, NOT NULL, transaction/on_commit prompt 보강; findings 0.
+- [x] `implementation-django-ninja_rubric.md`: Django Ninja 구현, DRF-to-Ninja migration, fat Router 방지 prompt 보강; findings 0.
+- [x] `implementation-django-web_rubric.md`: template/static, HTMX/CSRF, template business logic 방지 prompt 보강; findings 0.
+- [x] `implementation-python_rubric.md`: Enum/StrEnum, pydantic boundary, Protocol 적용 판단 prompt 보강; findings 0.
+- [x] `implementation-cleancode_rubric.md`: view/model/service 책임 분리, 중복/추상화 판단, 긴 함수 리뷰 prompt 보강; findings 0.
+- [x] `implementation-tdd_rubric.md`: 실패 테스트 우선, boundary test, Red-Green-Refactor 순서 prompt 보강; findings 0.
+- [x] `implementation-test_rubric.md`: API contract test, fixture/factory, fake/mock/flaky 판단 prompt 보강; findings 0.
+- [x] `workflow-dddjango-subagents_rubric.md`: composite/risky, sequential fallback, false subagent claim, simple negative prompt 보강; findings 0.
 
 ## 2. 개별 스킬 구현
 

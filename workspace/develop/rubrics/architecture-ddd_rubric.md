@@ -32,6 +32,8 @@ Canonical sources:
 - "쿠폰 정책의 aggregate, value object, invariant를 판단해줘."
 - "도메인 이벤트를 써야 하는지, dispatch timing과 consistency boundary를 정해줘."
 - "Core/Supporting/Generic 하위 도메인별 구현 강도를 판단해줘."
+- "주문, 결제, 배송에서 같은 '상태'라는 말이 다르게 쓰이는지 bounded context를 나눠서 봐줘."
+- "쿠폰을 한 번만 쓸 수 있다는 규칙을 어느 aggregate가 지켜야 하는지 판단해줘."
 
 ## Anti-Trigger Examples
 
@@ -41,6 +43,7 @@ Canonical sources:
 - "Ninja Router와 Schema를 만들어줘." -> `implementation-django-ninja`
 - "pytest fixture를 작성해줘." -> `implementation-test`
 - "Django Ninja Router가 무엇인지 짧게 설명해줘." -> direct short answer; no DDD workflow
+- "관리자용 코드값 CRUD 이름만 바꿔줘." -> direct implementation/cleanup; no DDD ceremony
 
 ## Skill-Specific Hard Gates
 
@@ -92,6 +95,24 @@ Negative prompt:
 관리자 화면의 단순 카테고리 CRUD 모델 이름만 정리해줘. 복잡한 DDD 설계는 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+주문, 결제, 배송에서 '완료'라는 말이 각각 다르게 쓰이는 것 같아. bounded context와 ubiquitous language를 먼저 정리해줘.
+```
+
+Additional prompt 2:
+
+```text
+쿠폰은 한 번만 쓸 수 있고 최소 주문 금액도 있어. Coupon aggregate, value object, invariant를 어떻게 잡을지 봐줘.
+```
+
+Additional prompt 3:
+
+```text
+이 기능이 그냥 관리자 CRUD인지, 아니면 주문 도메인 규칙으로 봐야 하는지 헷갈려. DDD를 어디까지 적용할지 판단해줘.
+```
+
 Additional public fixtures may include domain glossary, state transition notes, event examples, existing model snippets, or business rules. Public fixtures must not expose expected routing, hidden aggregate decisions, scoring keys, or private grader notes.
 
 ## Private Grader Key Notes
@@ -100,6 +121,7 @@ Expected routing:
 
 - Positive prompt: `architecture-ddd`; likely handoff to `architecture-db`, `architecture-api`, `implementation-django`, `implementation-tdd`, and workflow if full implementation is requested.
 - Negative prompt: no DDD ceremony; route to simple implementation/clean-code handling.
+- Additional prompts 1-3: `architecture-ddd`; prompt 3 may explicitly choose a lighter implementation route if the scenario lacks domain complexity.
 
 Expected answer evidence:
 
@@ -116,6 +138,7 @@ Failure criteria:
 - Forces generic/shared model across conflicting contexts.
 - Proposes domain events without timing/consistency decision.
 - Public eval packet leaks expected aggregate or routing.
+- Korean domain-language ambiguity is flattened into a shared model without bounded-context reasoning.
 
 Applicable hard gates: `Workflow over-application`, `Business logic in adapter`, `Scenario-required consistency decision missing` for risky writes, `Unsafe external side effect` when event/external effects are present, plus DDD-specific gates above.
 

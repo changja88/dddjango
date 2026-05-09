@@ -33,6 +33,8 @@ The rubric must explicitly allow this provisional state and must not claim a com
 - "HTMX partial update와 CSRF for AJAX를 Django template에서 처리해줘."
 - "Django template에 도메인 로직이 들어간 부분을 view/service 경계로 빼줘."
 - "collectstatic/ManifestStaticFilesStorage/WhiteNoise 영향까지 확인해줘."
+- "주문 상세 화면에서 상태 변경 버튼을 누르면 일부 영역만 갱신되게 만들어줘."
+- "템플릿에 if문으로 주문 취소 가능 여부를 계산하고 있는데 어디로 빼야 할지 봐줘."
 
 ## Anti-Trigger Examples
 
@@ -42,6 +44,7 @@ The rubric must explicitly allow this provisional state and must not claim a com
 - "주문 정책 aggregate와 invariant를 설계해줘." -> `architecture-ddd`
 - "Python dataclass/Enum으로 상태 전이를 고쳐줘." -> `implementation-python`
 - "Django Ninja Router가 무엇인지 짧게 설명해줘." -> direct answer; no web skill
+- "CSS 클래스 이름 하나만 바꿔줘." -> direct template/static edit; no DDD/workflow ceremony
 
 ## Skill-Specific Hard Gates
 
@@ -92,6 +95,24 @@ Negative prompt:
 주문 생성 REST API를 새로 만들어줘. Django template 파일에 처리 로직을 넣어도 괜찮아.
 ```
 
+Additional prompt 1:
+
+```text
+주문 상세 페이지를 Django template로 만들고 상태 배지, 취소 버튼, 빈 상태 화면까지 정리해줘. 필요한 static CSS도 같이 봐줘.
+```
+
+Additional prompt 2:
+
+```text
+HTMX로 주문 상태 변경 버튼을 누르면 partial만 갱신하고 싶어. CSRF랑 view/template 책임 분리를 확인해줘.
+```
+
+Additional prompt 3:
+
+```text
+템플릿에서 할인 가능 여부를 계산하는 if문이 길어졌어. 이걸 template에 둬도 되는지, view/service로 빼야 하는지 봐줘.
+```
+
 Additional public fixtures may include existing templates, views, URL config, static layout, rendered HTML, screenshots, or failing template tests. Public materials must not include expected routing, hidden hard gates, scoring notes, or private expected answer.
 
 ## Private Grader Key Notes
@@ -100,6 +121,7 @@ Expected routing:
 
 - Positive prompt: `implementation-django-web`; add `implementation-django` only if view/service code or model query changes are required.
 - Negative prompt: route REST API work to `architecture-api`/`implementation-django-ninja`; reject template-owned business/API logic.
+- Additional prompts 1-3: `implementation-django-web`; add `implementation-django` only when view/service/model query changes are required.
 
 Expected answer evidence:
 
@@ -116,6 +138,7 @@ Failure criteria:
 - CSRF is omitted for scenario-required AJAX/HTMX write.
 - Public eval packet leaks expected routing or failure criteria.
 - Render/screenshot/test execution is claimed without evidence.
+- Korean "화면" prompts are treated as REST/API work or template-owned domain logic without boundary reasoning.
 
 Applicable hard gates: `Business logic in adapter`, `Provisional misrepresentation`, `Verification honesty`, `Workflow over-application`, plus CSRF/static omissions when scenario-required.
 

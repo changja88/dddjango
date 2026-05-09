@@ -32,6 +32,8 @@ Canonical sources:
 - "재고 차감과 예약 확정의 transaction isolation과 locking 전략을 설계해줘."
 - "운영 중 status 컬럼 backfill, NOT NULL, index rollout 계획을 세워줘."
 - "이 조회 패턴에 필요한 index와 정규화/역정규화 trade-off를 판단해줘."
+- "주문 상태값을 필수로 바꾸기 전에 기존 데이터 채우기와 배포 순서를 잡아줘."
+- "동시에 결제가 들어와도 같은 주문이 두 번 잡히지 않게 DB 쪽 보장을 설계해줘."
 
 ## Anti-Trigger Examples
 
@@ -41,6 +43,7 @@ Canonical sources:
 - "Ninja Router와 Schema를 구현해줘." -> `implementation-django-ninja`
 - "pytest fixture를 작성해줘." -> `implementation-test`
 - "간단한 모델 필드 rename만 해줘." -> `implementation-django`; no DB architecture ceremony unless production rollout risk exists
+- "로컬에서 쓰는 작은 lookup table 이름만 바꿔줘." -> direct implementation; no DB architecture ceremony
 
 ## Skill-Specific Hard Gates
 
@@ -90,6 +93,24 @@ Negative prompt:
 Order 모델의 memo 필드를 note로 바꾸는 작은 Django 수정만 해줘. 운영 DB 설계 리뷰나 subagent 계획은 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+주문 상태값을 새로 추가하고 기존 주문 데이터도 채운 다음 필수값으로 바꾸고 싶어. 운영 배포 중 잠금이나 롤백 위험까지 DB 관점에서 봐줘.
+```
+
+Additional prompt 2:
+
+```text
+orders.status backfill 후 NOT NULL, partial index, unique constraint를 넣을지 판단해줘. rolling deploy에서 안전한 순서가 필요해.
+```
+
+Additional prompt 3:
+
+```text
+사용자가 결제 버튼을 두 번 눌러도 주문/결제가 중복 저장되지 않게 테이블이랑 constraint를 어떻게 잡아야 해?
+```
+
 Additional public fixtures may include domain rules, query patterns, existing schema, migration constraints, EXPLAIN output, or production rollout constraints. Public materials must not expose expected locking strategy, hidden scoring notes, or private failure criteria.
 
 ## Private Grader Key Notes
@@ -98,6 +119,7 @@ Expected routing:
 
 - Positive prompt: `architecture-db`; add `architecture-ddd` if invariant is unclear and `implementation-django` for migration implementation.
 - Negative prompt: direct `implementation-django`; DB architecture only if rollout risk is explicitly present.
+- Additional prompts 1-3: `architecture-db`; prompt 1/2 may hand off concrete migration code to `implementation-django`; prompt 3 may hand off user-visible idempotency behavior to `architecture-api`.
 
 Expected answer evidence:
 
@@ -113,6 +135,7 @@ Failure criteria:
 - Production migration jumps to NOT NULL/index with no rollout plan.
 - Indexes are suggested without query/write trade-off.
 - Public eval packet leaks expected DB strategy or private criteria.
+- Korean rollout wording such as "기존 데이터 채우기" or "필수값" is missed as backfill/NOT NULL operational migration risk.
 
 Applicable hard gates: `Scenario-required consistency decision missing`, `Risky Write Consistency Block missing`, `Operational migration safety missing`, `Verification honesty`, and `Workflow over-application` for simple negatives.
 

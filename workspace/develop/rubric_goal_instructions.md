@@ -65,6 +65,10 @@
 
 Public eval material에는 expected routing, expected answer, private grader key, scoring key, hidden failure criteria를 노출하지 않는다.
 
+## Language Policy
+
+dddjango 평가 자료는 한국어 사용자 입력을 우선 검증한다. section heading, skill name, hard gate id, scenario tag, canonical technical term은 영어를 유지한다. 각 skill rubric의 public prompt에는 자연스러운 한국어, 한국어/영어 혼합 개발자식 표현, 구어적이거나 모호한 표현, 단순 작업에 DDD/workflow/subagent를 과적용하지 않아야 하는 negative case가 포함되어야 한다. Private Grader Key Notes에는 각 public prompt family의 expected routing, applicable hard gates, failure criteria를 둔다. Public material에는 prompt family의 private classification이나 expected route를 노출하지 않는다.
+
 ## 리뷰 루프
 
 각 rubric은 다음 세 관점으로 리뷰한다.
@@ -72,6 +76,7 @@ Public eval material에는 expected routing, expected answer, private grader key
 - skill authoring과 validation integrity
 - dddjango product/docs alignment
 - routing, reference, protocol correctness
+- Korean user coverage와 한영 혼합 prompt routing correctness
 
 각 rubric은 아래 순서를 반복한다.
 

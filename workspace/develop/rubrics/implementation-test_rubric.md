@@ -33,6 +33,8 @@ Canonical sources:
 - "외부 결제 API를 fake/mock 중 무엇으로 테스트할지 판단해줘."
 - "flaky test 원인을 찾고 안정화해줘."
 - "coverage 또는 mutation testing 기준을 제안해줘."
+- "경계값 테스트랑 fixture를 보기 좋게 정리해줘."
+- "중복 요청이 한 번만 처리되는지 Django DB까지 붙여서 검증해줘."
 
 ## Anti-Trigger Examples
 
@@ -42,6 +44,7 @@ Canonical sources:
 - "REST contract를 설계해줘." -> `architecture-api`
 - "Ninja Router를 구현해줘." -> `implementation-django-ninja`
 - "단순 설명만 해줘." -> direct answer; no test suite design
+- "테스트 파일 import 순서만 고쳐줘." -> direct small edit; no full strategy
 
 ## Skill-Specific Hard Gates
 
@@ -91,6 +94,24 @@ Negative prompt:
 테스트 파일 하나의 import 정렬만 고쳐줘. 전체 TDD 계획이나 subagent 리뷰는 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+주문 생성 테스트에 성공, 인증 실패, 재고 부족 Problem Details, 중복 요청 replay 케이스를 pytest로 추가해줘.
+```
+
+Additional prompt 2:
+
+```text
+Django Ninja TestClient로 POST /orders API contract test를 만들고 fixture/factory_boy 데이터도 정리해줘.
+```
+
+Additional prompt 3:
+
+```text
+외부 결제 API 테스트가 자꾸 흔들려. fake를 둘지 mock을 둘지, flaky 원인을 어떻게 잡을지 봐줘.
+```
+
 Additional public fixtures may include code under test, existing tests, failure output, fixtures, factories, HTTP/time dependencies, or database setup. Public fixtures must not expose expected routing, pass criteria, hidden failure cases, or private scoring notes.
 
 ## Private Grader Key Notes
@@ -99,6 +120,7 @@ Expected routing:
 
 - Positive prompt: `implementation-test`; add `implementation-django-ninja` only if Router behavior itself must change.
 - Negative prompt: direct small edit; no full test strategy.
+- Additional prompts 1-3: `implementation-test`; add `implementation-django-ninja` only when endpoint implementation changes are required.
 
 Expected answer evidence:
 
@@ -115,6 +137,7 @@ Failure criteria:
 - Risky write prompt lacks idempotency/concurrency/constraint test criteria.
 - Flaky test is hidden with skip/xfail without cause analysis.
 - Public eval packet leaks private expected coverage or scoring notes.
+- Korean fixture/flaky wording is answered with broad TDD methodology instead of concrete pytest/test-double decisions.
 
 Applicable hard gates: `Verification honesty`, `Scenario-required consistency decision missing` for risky writes, `Risky Write Consistency Block missing` only when product-docs output requires it, `Workflow over-application`, plus skill-specific test-quality gates above.
 

@@ -30,6 +30,8 @@ Canonical sources:
 - "책임 분리와 추상화가 과한지 dddjango 기준으로 리뷰해줘."
 - "중복을 제거해야 할지, 아직 유지해야 할지 판단해줘."
 - "legacy 코드에 characterization test를 두고 안전하게 개선할 계획을 세워줘."
+- "view에 비즈니스 규칙이 섞인 것 같은데 dddjango 기준으로 리뷰해줘."
+- "비슷한 함수가 세 군데 있는데 공통화해야 할지 아직 두는 게 나은지 봐줘."
 
 ## Anti-Trigger Examples
 
@@ -39,6 +41,7 @@ Canonical sources:
 - "pytest fixture와 mock을 작성해줘." -> `implementation-test`
 - "REST endpoint 계약을 설계해줘." -> `architecture-api`
 - "단순 오타 수정만 해줘." -> direct small edit; no broad review ceremony
+- "변수명 하나만 고쳐줘." -> direct small edit; no full review/workflow ceremony
 
 ## Skill-Specific Hard Gates
 
@@ -89,6 +92,24 @@ Negative prompt:
 이 작은 함수 이름 하나만 더 명확하게 바꿔줘. 전체 DDD 설계나 subagent 계획은 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+주문 취소 로직이 view, model, service에 조금씩 흩어져 있어. dddjango 기준으로 책임 분리와 리팩터링 방향을 리뷰해줘.
+```
+
+Additional prompt 2:
+
+```text
+비슷한 validation 코드가 세 군데 있는데 바로 추상화해야 할지, 중복을 조금 더 두는 게 나은지 판단해줘.
+```
+
+Additional prompt 3:
+
+```text
+이 함수가 너무 길어 보여. 그런데 동작은 바꾸면 안 돼. 어떤 부분만 안전하게 쪼갤 수 있는지 리뷰해줘.
+```
+
 Additional public fixtures may include code snippets, diffs, failing tests, coverage output, or dependency graphs. Public fixtures must not expose expected findings, scoring notes, hidden failure criteria, or private grader key.
 
 ## Private Grader Key Notes
@@ -97,6 +118,7 @@ Expected routing:
 
 - Positive prompt: `implementation-cleancode`; add `architecture-ddd` if aggregate/invariant ownership is unresolved.
 - Negative prompt: direct small refactor; no workflow role map.
+- Additional prompts 1-3: `implementation-cleancode`; add `architecture-ddd` only when business invariant ownership is not derivable from the code.
 
 Expected answer evidence:
 
@@ -112,6 +134,7 @@ Failure criteria:
 - Business rule duplication or adapter leakage is missed in a dddjango review fixture.
 - Behavior-changing refactor is presented as safe without verification.
 - Public eval packet leaks expected findings or private scoring key.
+- Korean "길다/흩어져 있다/중복" prompts are answered with generic style advice instead of evidence-backed findings.
 
 Applicable hard gates: `Verification honesty`, `Business logic in adapter` when review involves adapters, `Workflow over-application`, plus skill-specific review/refactor gates above.
 

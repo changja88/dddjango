@@ -32,6 +32,8 @@ Canonical sources:
 - "Inside-Out과 Outside-In 중 어떤 TDD 흐름이 맞는지 판단해줘."
 - "실패 테스트를 먼저 쓰고 최소 구현, 리팩터링 체크포인트를 잡아줘."
 - "AI가 구현부터 하지 않게 TDD 사이클로 진행해줘."
+- "쿠폰 정책을 구현하기 전에 실패하는 테스트부터 보여줘."
+- "경계값을 먼저 테스트 목록으로 뽑고 하나씩 red-green으로 가자."
 
 ## Anti-Trigger Examples
 
@@ -41,6 +43,7 @@ Canonical sources:
 - "주문 bounded context와 aggregate를 설계해줘." -> `architecture-ddd`
 - "작은 오타 하나만 고쳐줘." -> direct small edit; no TDD ceremony
 - "테스트 실행 결과만 해석해줘." -> direct analysis or `implementation-test` if test design changes
+- "이미 구현된 함수에 assertion 하나만 추가해줘." -> `implementation-test`; no full TDD cycle unless changing behavior
 
 ## Skill-Specific Hard Gates
 
@@ -90,6 +93,24 @@ Negative prompt:
 README의 오타 하나만 고쳐줘. 테스트 계획이나 DDD 설명은 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+쿠폰 할인 정책을 구현하기 전에 실패 테스트부터 작성해줘. 최소 주문 금액 바로 아래/같음/초과, 만료일, 중복 사용을 나눠서 진행해줘.
+```
+
+Additional prompt 2:
+
+```text
+Red-Green-Refactor로 coupon apply 기능을 작게 구현하자. pytest fixture 세부보다 테스트 순서와 첫 실패가 중요해.
+```
+
+Additional prompt 3:
+
+```text
+일단 코드부터 만들고 나중에 테스트 붙이면 안 돼? TDD로 해야 하는 부분만 최소로 잡아줘.
+```
+
 Additional public fixtures may include current tests, source files, failing output, domain rules, or API contract snippets. Public fixtures must not expose expected routing, hidden pass criteria, scoring keys, or private grader notes.
 
 ## Private Grader Key Notes
@@ -98,6 +119,7 @@ Expected routing:
 
 - Positive prompt: `implementation-tdd`; add `implementation-test` for pytest fixture/mock details and implementation skills for production code.
 - Negative prompt: direct small edit; no TDD workflow.
+- Additional prompts 1-3: `implementation-tdd`; add `implementation-test` only for concrete pytest fixture/mock mechanics.
 
 Expected answer evidence:
 
@@ -114,6 +136,7 @@ Failure criteria:
 - Mock-heavy tests verify implementation calls instead of coupon policy outcomes.
 - Refactor phase is absent.
 - Public eval packet leaks expected answer or private scoring notes.
+- Korean "나중에 테스트" prompt is accepted as TDD without correcting the order.
 
 Applicable hard gates: `Verification honesty`, `Workflow over-application`, and skill-specific TDD order/false red-green gates above.
 

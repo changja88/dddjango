@@ -34,6 +34,8 @@ DRF 내용은 legacy review, migration, comparison, compatibility 맥락에서�
 - "운영 중인 테이블에 nullable 컬럼을 추가한 뒤 backfill, NOT NULL, index를 적용하는 Django migration을 만들어줘."
 - "Django service에서 `transaction.atomic()`과 `transaction.on_commit()`을 어떻게 배치할지 구현해줘."
 - "도메인 판단은 끝났고 Django model/service 코드로 옮겨줘."
+- "주문 상태값을 모델에 추가하고 기존 데이터 채우는 migration까지 작성해줘."
+- "버튼 두 번 눌러도 주문이 중복 생성되지 않게 Django service 코드를 고쳐줘."
 
 ## Anti-Trigger Examples
 
@@ -44,6 +46,7 @@ DRF 내용은 legacy review, migration, comparison, compatibility 맥락에서�
 - "TemplateView 기반 주문 상세 페이지와 static 구조를 만들어줘." -> `implementation-django-web`
 - "Python dataclass/Enum으로 상태 전이를 표현해줘." -> `implementation-python`
 - "Order 모델이 너무 커졌는지 리뷰해줘." -> `implementation-cleancode` plus `architecture-ddd` when domain boundaries matter
+- "Order 필드 verbose_name만 바꿔줘." -> direct `implementation-django`; no architecture/workflow ceremony
 
 ## Skill-Specific Hard Gates
 
@@ -96,6 +99,24 @@ Negative prompt:
 Order 모델의 memo 필드를 note로 바꾸는 작은 Django 수정만 해줘. subagent 계획은 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+주문 상태값을 새 필드로 추가하고 예전 주문 데이터도 채운 뒤 필수값으로 바꾸는 Django migration을 만들어줘.
+```
+
+Additional prompt 2:
+
+```text
+Order.status nullable field를 추가하고 backfill, NOT NULL, index 적용까지 Django migration sequence로 구현해줘.
+```
+
+Additional prompt 3:
+
+```text
+주문 생성 service에서 결제 승인 후 알림을 보내는데 transaction commit 전에 나가도 되는지 모르겠어. 코드 배치를 고쳐줘.
+```
+
 Additional public fixtures may include existing `models.py`, migration files, failing test output, query count output, or service code. Public fixtures must not reveal expected routing, scoring keys, hidden failure criteria, or the private answer.
 
 ## Private Grader Key Notes
@@ -104,6 +125,7 @@ Expected routing:
 
 - Positive prompt: `implementation-django`; also `architecture-db` if schema/rollout decisions are not already specified.
 - Negative prompt: `implementation-django` direct handling; no full workflow, no role map.
+- Additional prompts 1-3: `implementation-django`; add `architecture-db` when rollout/schema decisions are not supplied and `architecture-ddd` only when invariant ownership is unclear.
 
 Expected answer evidence:
 
@@ -118,6 +140,7 @@ Failure criteria:
 - Claims `pytest`, `sqlmigrate`, or migration execution without evidence.
 - Uses DRF as greenfield implementation standard.
 - Public eval packet exposes this expected routing or failure criteria.
+- Korean migration phrases such as "기존 데이터 채우기" or "필수값으로 바꾸기" are not handled as backfill/NOT NULL rollout risk.
 
 Applicable hard gates: `Verification honesty`, `Operational migration safety missing`, `Scenario-required consistency decision missing` when risky writes are present, `Unsafe external side effect` when external effects are present, `Workflow over-application` for simple negative cases.
 

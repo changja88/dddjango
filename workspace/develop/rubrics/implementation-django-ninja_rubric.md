@@ -33,6 +33,8 @@ The rubric must not imply a complete first-class Django Ninja reference exists. 
 - "Django Ninja에서 Problem Details 오류 응답과 OpenAPI schema를 맞춰줘."
 - "Ninja `TestClient`로 status code, auth, pagination을 검증하는 API test를 작성해줘."
 - "DRF Serializer로 새 API를 만들어달라는 요청을 dddjango 기준으로 처리해줘."
+- "새 주문 API를 만들 때 DRF 말고 dddjango 표준인 Django Ninja로 잡아줘."
+- "Router에 가격 계산을 넣어도 되는지 보고 얇은 adapter로 고쳐줘."
 
 ## Anti-Trigger Examples
 
@@ -42,6 +44,7 @@ The rubric must not imply a complete first-class Django Ninja reference exists. 
 - "Django TemplateView 주문 상세 페이지를 만들어줘." -> `implementation-django-web`
 - "pytest fixture와 factory만 정리해줘." -> `implementation-test`
 - "Django Ninja가 무엇인지 짧게 설명해줘." -> direct short answer; no full workflow
+- "이미 있는 Ninja endpoint의 경로 문자열만 바꿔줘." -> direct small edit; no full workflow
 
 ## Skill-Specific Hard Gates
 
@@ -92,6 +95,24 @@ Negative prompt:
 새 주문 API를 DRF ViewSet과 Serializer로 만들어줘. dddjango 기준이면 편한 방식으로 해줘.
 ```
 
+Additional prompt 1:
+
+```text
+주문 생성 API를 Django Ninja로 구현해줘. 성공, 인증 실패, 재고 부족 Problem Details 응답과 OpenAPI schema도 맞춰줘.
+```
+
+Additional prompt 2:
+
+```text
+기존 rest_framework ViewSet을 Ninja Router/Schema로 바꾸고 싶은데, 클라이언트가 쓰던 URL과 응답은 최대한 유지해야 해.
+```
+
+Additional prompt 3:
+
+```text
+Router 안에서 할인 계산까지 다 해도 돼? 아니면 service/usecase로 빼고 Ninja는 request/response만 맡게 고쳐줘.
+```
+
 Additional public fixtures may include legacy DRF code, target URL patterns, schema examples, failing API test output, or OpenAPI snapshots. Public fixtures must not expose expected routing, expected conversion strategy, hidden hard gates, or private scoring notes.
 
 ## Private Grader Key Notes
@@ -100,6 +121,7 @@ Expected routing:
 
 - Positive prompt: `implementation-django-ninja` plus `architecture-api` if the API contract is under-specified; DRF is treated as legacy input.
 - Negative prompt: `implementation-django-ninja`; response should refuse greenfield DRF as the target and use Django Ninja or ask to confirm legacy constraints.
+- Additional prompts 1-3: `implementation-django-ninja`; add `architecture-api` when contract details are missing and `implementation-django` only for service/model changes.
 
 Expected answer evidence:
 
@@ -115,6 +137,7 @@ Failure criteria:
 - Error format is ad hoc despite scenario requiring Problem Details.
 - Test execution or OpenAPI verification is claimed without evidence.
 - Public eval material reveals that DRF must be rejected.
+- Korean greenfield API requests are implemented with DRF because the prompt used familiar DRF terms.
 
 Applicable hard gates: `Greenfield DRF violation`, `Business logic in adapter`, `Provisional misrepresentation`, `Verification honesty`, `Scenario-required consistency decision missing` for risky writes, `Workflow over-application` for simple cases.
 

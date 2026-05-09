@@ -31,6 +31,8 @@ Canonical sources:
 - "외부 결제 SDK adapter에 `Protocol`을 도입해야 하는지 봐줘."
 - "pydantic v2 모델과 도메인 dataclass의 경계를 정리해줘."
 - "Python 3.12 타입 문법과 Ruff 기준에 맞게 함수 시그니처를 고쳐줘."
+- "상태값 문자열이 여기저기 흩어져 있는데 Enum이나 Literal로 정리해줘."
+- "외부 결제 클라이언트를 테스트하기 쉽게 Protocol로 뺄지 판단해줘."
 
 ## Anti-Trigger Examples
 
@@ -40,6 +42,7 @@ Canonical sources:
 - "Django Ninja Router와 Schema를 구현해줘." -> `implementation-django-ninja`
 - "이 레거시 서비스 코드의 책임 분리를 리뷰해줘." -> `implementation-cleancode`, plus this skill only for Python typing details
 - "pytest fixture를 만들어줘." -> `implementation-test`
+- "작은 함수 하나에 반환 타입만 달아줘." -> direct `implementation-python`; no workflow/domain expansion
 
 ## Skill-Specific Hard Gates
 
@@ -89,6 +92,24 @@ Negative prompt:
 작은 helper 함수 하나에 타입 힌트만 추가해줘. DDD 설계나 subagent 계획은 필요 없어.
 ```
 
+Additional prompt 1:
+
+```text
+주문 상태 문자열을 여기저기 비교하고 있어. Enum이나 StrEnum, 타입 힌트로 잘못된 상태가 덜 나오게 리팩터링해줘.
+```
+
+Additional prompt 2:
+
+```text
+pydantic v2 Schema랑 domain dataclass가 섞였어. 외부 입력 검증과 도메인 객체 경계를 Python 타입 기준으로 정리해줘.
+```
+
+Additional prompt 3:
+
+```text
+결제 SDK를 바로 호출하는 함수가 테스트하기 어려워. Protocol을 쓰는 게 맞는지, 그냥 함수 주입이면 충분한지 봐줘.
+```
+
 Additional public fixtures may include Python modules, typecheck output, Ruff output, pydantic DTOs, dataclass/domain code, or runtime errors. Public fixtures must not include expected routing, scoring keys, hidden failures, or private grader notes.
 
 ## Private Grader Key Notes
@@ -97,6 +118,7 @@ Expected routing:
 
 - Positive prompt: `implementation-python`; add `architecture-ddd` only if state transitions/invariants are not defined.
 - Negative prompt: direct `implementation-python`; no workflow, no domain model expansion.
+- Additional prompts 1-3: `implementation-python`; add `implementation-cleancode` for broad refactor review and `architecture-ddd` only when invariant ownership is unclear.
 
 Expected answer evidence:
 
@@ -112,6 +134,7 @@ Failure criteria:
 - Adds Protocol, generic base classes, or complex type aliases that do not serve the current code.
 - Public eval material leaks expected routing or hidden failure criteria.
 - Claims typecheck/lint/test execution without evidence.
+- Korean state/value wording is left as loose strings when the scenario asks to reduce invalid states.
 
 Applicable hard gates: `Verification honesty`, `Workflow over-application`, and skill-specific type/pydantic/protocol gates above.
 

@@ -35,6 +35,8 @@ The rubric must not present pattern guidance as fully sourced beyond these fallb
 - "Django 프로젝트에서 service/repository/port adapter 경계를 어디까지 둘지 정해줘."
 - "CQRS나 event sourcing이 이 조회/쓰기 모델에 필요한지 판단해줘."
 - "의존성 방향과 infrastructure adapter 소유권을 정리해줘."
+- "외부 PG SDK가 서비스 코드에 바로 들어와 있는데 port/adapter로 빼야 할지 판단해줘."
+- "단순 CRUD에도 repository interface를 다 만들어야 하는지 dddjango 기준으로 봐줘."
 
 ## Anti-Trigger Examples
 
@@ -44,6 +46,7 @@ The rubric must not present pattern guidance as fully sourced beyond these fallb
 - "Django model/service 코드를 구현해줘." -> `implementation-django`
 - "단순 CRUD model을 만들어줘." -> direct implementation skill; no pattern ceremony
 - "테스트 fixture를 작성해줘." -> `implementation-test`
+- "작은 helper 함수 위치만 정리해줘." -> direct cleanup; no architecture pattern ceremony
 
 ## Skill-Specific Hard Gates
 
@@ -94,6 +97,24 @@ Negative prompt:
 단순 상품 카테고리 CRUD를 Django 모델과 기본 admin으로 처리하려고 해. repository와 hexagonal architecture까지 꼭 넣어야 해?
 ```
 
+Additional prompt 1:
+
+```text
+외부 결제 SDK 호출이 주문 서비스 안에 바로 있어. port/adapter, ACL, outbox를 어디까지 적용해야 할지 판단해줘.
+```
+
+Additional prompt 2:
+
+```text
+Django app 구조를 clean architecture처럼 domain/application/infrastructure로 나누고 싶은데, 지금 결제 승인 유스케이스에 과한지 봐줘.
+```
+
+Additional prompt 3:
+
+```text
+조회 화면이 느려서 CQRS나 read model을 써야 하나 고민돼. 단순 select 최적화로 충분한지도 같이 판단해줘.
+```
+
 Additional public fixtures may include current package structure, external SDK code, domain model notes, transaction flow, or event publishing code. Public materials must not expose expected pattern decisions, hidden scoring notes, or private failure criteria.
 
 ## Private Grader Key Notes
@@ -102,6 +123,7 @@ Expected routing:
 
 - Positive prompt: `architecture-implementation-patterns`; also `architecture-ddd` if domain boundaries are missing and `architecture-db`/`implementation-django` for transaction implementation follow-up.
 - Negative prompt: answer should recommend minimal Django structure and reject unnecessary pattern ceremony.
+- Additional prompts 1-3: `architecture-implementation-patterns`; add `architecture-ddd` when invariant/context is missing and `architecture-db` when transaction/outbox storage details are required.
 
 Expected answer evidence:
 
@@ -118,6 +140,7 @@ Failure criteria:
 - External side effect timing omitted for payment/event flow.
 - Public eval material leaks the expected pattern decision.
 - Dedicated source status is misrepresented.
+- Korean "구조를 나누고 싶다" prompts become blanket clean architecture advice without apply/not-apply reasoning.
 
 Applicable hard gates: `Provisional misrepresentation`, `Workflow over-application`, `Unsafe external side effect`, `Scenario-required consistency decision missing` for risky writes, plus pattern-specific gates above.
 
