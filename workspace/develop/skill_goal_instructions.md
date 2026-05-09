@@ -14,6 +14,10 @@
 - `dddjango/skills/<skill>/references/*.md`
 - 진행 상태 문서: `workspace/develop/plan.md`
 
+작성 중 검토 산출물은 다음 위치에 둔다.
+
+- Source Coverage Crosswalk: `workspace/develop/source-crosswalks/<skill>.md`
+
 사용할 source 문서는 다음과 같다.
 
 - 플러그인 구조: `workspace/docs/plugin-structure.md`
@@ -43,20 +47,20 @@
 
 ## 구현 순서
 
-먼저 runtime plugin skeleton을 만든 뒤, implementation skill을 바닥 skill로 구현하고, architecture skill과 workflow skill을 뒤에 둔다.
+먼저 runtime plugin skeleton을 만든 뒤, `workspace/develop/plan.md`의 2단계 체크리스트 순서로 implementation skill을 구현하고, architecture skill과 workflow skill을 뒤에 둔다.
 
 1. `dddjango/.codex-plugin/plugin.json`
-2. `implementation-python`
-3. `implementation-cleancode`
-4. `implementation-test`
-5. `implementation-tdd`
-6. `implementation-django`
-7. `implementation-django-ninja`
-8. `implementation-django-web`
+2. `implementation-django`
+3. `implementation-django-ninja`
+4. `implementation-django-web`
+5. `implementation-python`
+6. `implementation-cleancode`
+7. `implementation-tdd`
+8. `implementation-test`
 9. `architecture-ddd`
-10. `architecture-db`
-11. `architecture-api`
-12. `architecture-implementation-patterns`
+10. `architecture-implementation-patterns`
+11. `architecture-db`
+12. `architecture-api`
 13. `workflow-dddjango-subagents`
 
 순서를 바꿀 수 있는 경우:
@@ -75,19 +79,42 @@
 2. `workspace/docs/reference-index.md`에서 source reference와 source gap을 확인한다.
 3. 필요한 `workspace/reference/**/final.md`만 읽는다. `internal.md`, `external.md`, `review.md`는 `final.md`가 애매할 때만 읽는다.
 4. `workspace/docs/skill-authoring.md`에서 frontmatter 입력과 agents metadata 입력을 확인한다.
-5. 해당 skill의 runtime reference split을 설계한다.
-6. Rubric을 열지 않고 `SKILL.md`, `references/*.md`, `agents/openai.yaml` 초안을 작성한다.
-7. Source 문서 기준 self-review를 수행한다.
-8. Source self-review finding을 `blocking`, `major`, `minor`로 분류한다.
-9. Source self-review finding이 0개가 될 때까지 수정한다.
-10. 그 다음에만 해당 rubric과 `common_rubric.md`를 열어 평가 기준과 비교한다.
-11. Rubric review finding을 `blocking`, `major`, `minor`로 분류한다.
-12. Runtime 문서를 수정해야 하는 finding과 rubric 자체가 잘못된 finding을 구분한다.
+5. `workspace/docs/plugin-structure.md`의 Runtime Reference Split Plan을 기본 파일명과 책임 경계로 삼아 해당 skill의 runtime reference split을 설계한다.
+6. Source Coverage Crosswalk를 작성한다.
+7. Rubric을 열지 않고 `SKILL.md`, `references/*.md`, `agents/openai.yaml` 초안을 작성한다.
+8. Source 문서 기준 self-review를 수행한다.
+9. Source self-review finding을 `blocking`, `major`, `minor`로 분류한다.
+10. Source self-review finding이 0개가 될 때까지 수정한다.
+11. 그 다음에만 해당 rubric과 `common_rubric.md`를 열어 평가 기준과 비교한다.
+12. Rubric review finding을 분류하고, runtime 문서 수정 대상인지 평가 자료 수정 대상인지 구분한다.
 13. Runtime 문서 finding이 0개가 될 때까지 수정과 리뷰를 반복한다.
 14. 구조 검증과 관련 문서 검증을 실행한다.
 15. `workspace/develop/plan.md`를 갱신한다.
 
 Rubric과 source가 충돌하면 source 문서를 우선한다. 충돌이 실제로 존재하면 runtime 문서를 source 기준으로 유지하고, 충돌 내용을 보고한다.
+
+### Source Coverage Crosswalk
+
+Crosswalk는 source reference의 모든 heading과 runtime 작업에 관련된 세부사항을 runtime skill에 어떻게 반영했는지 추적하기 위한 작성 중 산출물이다. 기본 위치는 `workspace/develop/source-crosswalks/<skill>.md`이며, runtime skill 폴더 안에는 두지 않는다.
+
+각 skill마다 다음을 남긴다.
+
+- 사용한 source 문서 목록
+- source 문서의 `##` heading 전체
+- runtime 규칙, reference 내용, skill boundary, 또는 명시적 제외 판단에 영향을 주는 `###` heading
+- 각 heading의 처리 상태: `included`, `merged`, `delegated-to-other-skill`, `omitted`, `source-gap`
+- 반영 위치: `SKILL.md` section, runtime `references/*.md` 파일명, 또는 관련 skill 이름
+- 제외 또는 병합 이유
+
+Crosswalk 기준:
+
+- `included`: 해당 주제가 runtime `SKILL.md` 또는 `references/`에 직접 반영됨
+- `merged`: 별도 heading은 없지만 더 넓은 runtime reference 주제 안에 반영됨
+- `delegated-to-other-skill`: 해당 skill 책임 밖이며 다른 skill의 책임 계약에 속함
+- `omitted`: runtime 작업에 필요 없거나 일반 지식이라 제외함. 이유를 반드시 남김
+- `source-gap`: 전용 source가 부족해 provisional 처리 또는 fallback source가 필요함
+
+Source self-review를 시작하기 전에 `unreviewed`나 빈 처리 상태가 없어야 한다. `omitted`와 `merged`는 source 내용이 누락되지 않았음을 설명할 수 있을 때만 사용한다.
 
 ## SKILL.md 작성 규칙
 
@@ -103,13 +130,14 @@ Rubric과 source가 충돌하면 source 문서를 우선한다. 충돌이 실제
 
 본문 규칙:
 
-- 핵심 절차, reference loading 기준, hard gate, 관련 skill boundary, 금지 행동만 둔다.
+- 핵심 절차, reference loading 기준, 반드시 지킬 runtime 규칙, 관련 skill boundary, 금지 행동만 둔다.
 - `SKILL.md` body는 짧게 유지한다. 긴 설명은 `references/`로 분리한다.
 - 모든 runtime reference 파일은 `SKILL.md`에서 직접 링크한다.
 - 깊은 중첩 reference를 만들지 않는다.
 - 명령형으로 작성한다.
 - 일반 지식이나 Codex가 이미 아는 내용을 장황하게 설명하지 않는다.
 - 실행하지 않은 테스트나 검증을 통과했다고 말하지 말라는 규칙을 포함한다.
+- Rubric의 hard gate id, scenario tag, scoring 표현을 runtime 문서에 그대로 넣지 않는다. Source와 제품 문서에서 필요한 규칙만 자연스러운 `must`/`never` 문장으로 바꾼다.
 
 본문에 넣지 않을 내용:
 
@@ -128,6 +156,8 @@ Rubric과 source가 충돌하면 source 문서를 우선한다. 충돌이 실제
 
 - `workspace/reference/**/final.md`를 그대로 복사하지 않는다.
 - Skill이 실제로 읽을 주제 단위로 요약하거나 분할한다.
+- 기본 파일명과 분할 단위는 `workspace/docs/plugin-structure.md`의 Runtime Reference Split Plan을 따른다.
+- 파일명을 바꾸거나 reference를 합치거나 나누면 Crosswalk와 완료 보고에 deviation reason을 남긴다.
 - 각 reference는 한 단계 아래에 둔다.
 - 100줄을 넘는 reference에는 상단에 간단한 목차를 둔다.
 - `SKILL.md`와 reference 사이에 같은 내용을 중복하지 않는다.
@@ -159,7 +189,7 @@ dddjango plugin은 한국어 사용자를 우선 고려한다.
 
 - Runtime skill의 trigger와 boundary에는 자연스러운 한국어 개발자 표현을 반영한다.
 - 한국어/영어 혼합 표현을 고려한다. 예: `Django Ninja로 주문 API`, `쿠폰 정책 TDD`, `상태 컬럼 backfill`, `ViewSet을 Ninja로 전환`.
-- Section heading, skill name, hard gate id, canonical technical term은 영어를 유지할 수 있다.
+- Section heading, skill name, canonical technical term은 영어를 유지할 수 있다.
 - 코드, class, function, package, protocol 이름은 번역하지 않는다.
 - 한국어 예시는 user-facing trigger 이해를 돕는 범위에서만 사용한다.
 - 단순 작업에 DDD, workflow, subagent를 과적용하지 않는 boundary를 반드시 둔다.
@@ -174,10 +204,12 @@ dddjango plugin은 한국어 사용자를 우선 고려한다.
 
 Provisional skill 작성 규칙:
 
+- 작성 전에 `source policy decision`을 남긴다: `create-dedicated-source`, `block-until-source-exists`, `allow-provisional-with-fallback` 중 하나를 선택한다.
 - 전용 source reference가 부족하다는 점을 body 또는 reference에 명시한다.
 - 어떤 fallback source를 사용했는지 명시한다.
 - 완성된 전용 source가 있는 것처럼 표현하지 않는다.
 - `agents/openai.yaml`에서도 provisional 상태를 과장 없이 반영한다.
+- `allow-provisional-with-fallback`을 선택한 경우 completed 조건은 source limitation과 fallback 범위가 명시됐는지로 판단한다.
 - Provisional 상태 때문에 completed 조건을 만족할 수 없으면 accepted-exception 또는 blocked로 기록한다.
 
 ## Cross-Skill Routing 기준
@@ -211,14 +243,24 @@ Source self-review와 rubric review 모두 다음 관점으로 수행한다.
 - routing, reference, protocol correctness
 - Korean user coverage와 한영 혼합 trigger correctness
 - anti-overapplication과 simple-case boundary
+- Source Coverage Crosswalk completeness
 
 Finding 분류:
 
 - `blocking`: 필수 runtime 파일 누락, frontmatter 규격 위반, public/private eval leakage, source와 정면 충돌, provisional misrepresentation, false validation/subagent claim
-- `major`: trigger 또는 anti-trigger 불명확, reference loading 기준 부족, skill responsibility conflict, 한국어 trigger coverage 부족, workflow/DDD 과적용 위험
+- `major`: trigger 또는 anti-trigger 불명확, reference loading 기준 부족, source heading의 반영 또는 제외 근거 누락, skill responsibility conflict, 한국어 trigger coverage 부족, workflow/DDD 과적용 위험
 - `minor`: 표현 개선, 예시 보강, 중복 정리, reference 링크 명확화, metadata 문구 개선
 
 일반적인 minor finding은 accepted exception으로 넘기지 않는다. 표현 개선, 예시 보강, 중복 정리, metadata 명확화 같은 minor는 수정한 뒤 다시 리뷰한다.
+
+Rubric review finding은 먼저 다음 중 하나로 분류한다.
+
+- `source-backed runtime issue`: `workspace/docs` 또는 `workspace/reference`에도 근거가 있으므로 runtime 문서를 수정한다.
+- `eval-only calibration issue`: 평가 prompt, grader key, scoring 문구 문제이므로 runtime 문서에 반영하지 않는다.
+- `rubric defect`: rubric이 source와 충돌하거나 과도한 요구를 하므로 충돌 내용을 보고한다.
+- `accepted trade-off`: source limitation 또는 명시적 제품 결정 때문에 runtime 문서를 바꾸지 않는다. 이유를 남긴다.
+
+Runtime 문서는 `source-backed runtime issue`만 반영한다. Rubric의 prompt family, expected route, hidden failure criteria, scoring note, calibration sample 문장을 runtime 문서에 복사하지 않는다.
 
 ## Completed 조건
 
@@ -229,12 +271,15 @@ Finding 분류:
 - `description`이 trigger/routing 조건 중심이고 workflow 요약이 아니다.
 - `SKILL.md`가 concise하고 progressive disclosure 구조를 따른다.
 - 필요한 runtime reference가 `SKILL.md`에서 직접 링크된다.
+- Source Coverage Crosswalk의 모든 source heading이 `included`, `merged`, `delegated-to-other-skill`, `omitted`, `source-gap` 중 하나로 처리되어 있고 이유가 남아 있다.
+- Runtime reference split이 `workspace/docs/plugin-structure.md`의 기본 계획을 따르거나 deviation reason이 기록되어 있다.
 - `agents/openai.yaml`이 `SKILL.md`와 의미적으로 일치한다.
 - Runtime 문서에 rubric/private grader 정보가 섞이지 않았다.
 - Source 문서와 충돌하지 않는다.
 - 한국어/한영 혼합 trigger와 anti-trigger가 반영되어 있다.
 - 단순 작업에 DDD, architecture, workflow, subagent를 과적용하지 않는 boundary가 있다.
 - Provisional skill은 source limitation과 fallback source를 명시한다.
+- Provisional skill은 `source policy decision`이 기록되어 있다.
 - Source self-review finding이 0개다.
 - Rubric review의 blocking, major, minor finding이 0개다.
 - 실행한 검증 명령이 통과했거나, 실행하지 못한 명령과 이유가 명확히 보고되어 있다.
@@ -253,8 +298,11 @@ Skill 구현 중 가능한 검증:
 
 - `python3 workspace/scripts/validate_skill_docs.py --phase docs`
 - `python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills`
-- `git diff --check -- dddjango workspace/develop/plan.md`
+- `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills`
+- `git diff --check -- dddjango workspace/develop/plan.md workspace/develop/source-crosswalks`
 - 필요한 경우 `wc -l dddjango/skills/*/SKILL.md`
+
+설치된 runtime cache를 보정한 경우 `python3 workspace/scripts/validate_skill_docs.py --phase runtime`도 실행한다. Runtime smoke는 완료 게이트가 아니며, 실제 skill folder 생성 후 완료 판단은 `--phase all --skills-dir dddjango/skills` 결과를 우선한다.
 
 실행한 명령, 실행하지 못한 명령, 실행하지 못한 이유를 보고한다. 실행하지 않은 검증을 완료했다고 보고하지 않는다.
 
@@ -265,6 +313,7 @@ Skill 구현 중 가능한 검증:
 - completed, blocked, accepted-exception skill 목록
 - skill별 수정 파일 목록
 - source self-review와 rubric review 요약
+- Source Coverage Crosswalk 요약과 남은 `omitted`, `source-gap`, deviation reason
 - 남은 finding이 없는지, 또는 blocked/accepted-exception의 source limitation
 - 검증 결과
 - `plan.md` 갱신 내용
