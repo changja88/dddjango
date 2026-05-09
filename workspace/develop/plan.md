@@ -6,17 +6,17 @@
 
 ## 진행 현황
 
-- 현재 단계: `1. 개별 스킬 평가표 작성`
-- 최근 완료: `workspace/develop/rubrics/common_rubric.md`
-- 다음 작업: `workspace/develop/rubrics/implementation-django_rubric.md`
+- 현재 단계: `2. 개별 스킬 구현`
+- 최근 완료: `workspace/develop/rubrics/workflow-dddjango-subagents_rubric.md`
+- 다음 작업: `개별 스킬 구현`
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
 - [x] 개별 스킬 평가표 빈 파일 생성: `workspace/develop/rubrics/*_rubric.md`
-- [ ] 개별 스킬 평가표 작성
+- [x] 개별 스킬 평가표 작성
 - [ ] 개별 스킬 구현
 - [ ] 개별 스킬 평가 및 개선
-- [ ] 스킬 연계 평가표 작성
+- [x] 스킬 연계 평가표 작성
 - [ ] 스킬 연계용 스킬 구현
 - [ ] 스킬 연계 평가 및 개선
 - [ ] 종합 평가표 작성
@@ -35,28 +35,28 @@
 
 - [x] 공통 평가 기준을 작성한다: `common_rubric.md`
 - [x] 스킬별 평가표 파일을 생성한다.
-- [ ] `implementation-django_rubric.md`를 작성한다.
-- [ ] `implementation-django-ninja_rubric.md`를 작성한다.
-- [ ] `implementation-django-web_rubric.md`를 작성한다.
-- [ ] `implementation-python_rubric.md`를 작성한다.
-- [ ] `implementation-cleancode_rubric.md`를 작성한다.
-- [ ] `implementation-tdd_rubric.md`를 작성한다.
-- [ ] `implementation-test_rubric.md`를 작성한다.
-- [ ] `architecture-ddd_rubric.md`를 작성한다.
-- [ ] `architecture-implementation-patterns_rubric.md`를 작성한다.
-- [ ] `architecture-db_rubric.md`를 작성한다.
-- [ ] `architecture-api_rubric.md`를 작성한다.
-- [ ] 각 평가표에 positive prompt, negative prompt, expected routing을 포함한다.
-- [ ] 각 평가표에 required reference coverage와 failure criteria를 포함한다.
-- [ ] provisional 스킬의 평가표에 fallback source와 한계를 명시한다.
-- [ ] 평가표 전체를 리뷰하고 수정한다.
+- [x] `implementation-django_rubric.md`를 작성한다.
+- [x] `implementation-django-ninja_rubric.md`를 작성한다.
+- [x] `implementation-django-web_rubric.md`를 작성한다.
+- [x] `implementation-python_rubric.md`를 작성한다.
+- [x] `implementation-cleancode_rubric.md`를 작성한다.
+- [x] `implementation-tdd_rubric.md`를 작성한다.
+- [x] `implementation-test_rubric.md`를 작성한다.
+- [x] `architecture-ddd_rubric.md`를 작성한다.
+- [x] `architecture-implementation-patterns_rubric.md`를 작성한다.
+- [x] `architecture-db_rubric.md`를 작성한다.
+- [x] `architecture-api_rubric.md`를 작성한다.
+- [x] 각 평가표에 positive prompt, negative prompt, expected routing을 포함한다.
+- [x] 각 평가표에 required reference coverage와 failure criteria를 포함한다.
+- [x] provisional 스킬의 평가표에 fallback source와 한계를 명시한다.
+- [x] 평가표 전체를 동일 agent의 세 관점 self-review로 리뷰하고 수정한다. 실제 subagent review는 이 단계에서 실행하지 않았다.
 
 통과 기준:
 
-- [ ] 각 평가표가 해당 스킬 단독 책임을 검증한다.
-- [ ] 다른 스킬을 호출해야 하는 상황과 호출하지 않아야 하는 상황을 구분한다.
-- [ ] 단순 작업에 DDD나 subagent workflow를 과하게 적용하지 않는 negative case가 포함된다.
-- [ ] 모든 평가표가 `common_rubric.md`, `workspace/docs`, `workspace/reference`와 충돌하지 않는다.
+- [x] 각 평가표가 해당 스킬 단독 책임을 검증한다.
+- [x] 다른 스킬을 호출해야 하는 상황과 호출하지 않아야 하는 상황을 구분한다.
+- [x] 단순 작업에 DDD나 subagent workflow를 과하게 적용하지 않는 negative case가 포함된다.
+- [x] 모든 평가표가 `common_rubric.md`, `workspace/docs`, `workspace/reference`와 충돌하지 않는다.
 
 ## 2. 개별 스킬 구현
 
@@ -139,22 +139,22 @@ python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir 
 
 체크리스트:
 
-- [ ] `workflow-dddjango-subagents_rubric.md`를 작성한다.
-- [ ] 역할별 handoff 기대 산출물을 정의한다.
-- [ ] sequential fallback 기준을 정의한다.
-- [ ] integration checklist 기준을 정의한다.
-- [ ] 단순 작업에서 workflow를 생략하는 negative routing을 포함한다.
-- [ ] DDD 설계에서 Django 구현까지 이어지는 평가 prompt를 작성한다.
-- [ ] Django Ninja API 설계와 구현 연계 평가 prompt를 작성한다.
-- [ ] DB schema, transaction, migration 연계 평가 prompt를 작성한다.
-- [ ] TDD와 pytest 구현 연계 평가 prompt를 작성한다.
+- [x] `workflow-dddjango-subagents_rubric.md`를 작성한다.
+- [x] 역할별 handoff 기대 산출물을 정의한다.
+- [x] sequential fallback 기준을 정의한다.
+- [x] integration checklist 기준을 정의한다.
+- [x] 단순 작업에서 workflow를 생략하는 negative routing을 포함한다.
+- [x] DDD 설계에서 Django 구현까지 이어지는 평가 prompt를 작성한다.
+- [x] Django Ninja API 설계와 구현 연계 평가 prompt를 작성한다.
+- [x] DB schema, transaction, migration 연계 평가 prompt를 작성한다.
+- [x] TDD와 pytest 구현 연계 평가 prompt를 작성한다.
 
 통과 기준:
 
-- [ ] 복합 작업에서는 `Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`가 유지된다.
-- [ ] 역할별 책임과 관련 skill 구성이 `workspace/docs/workflow.md`와 일치한다.
-- [ ] Django template/static/web 책임이 있으면 `implementation-django-web`이 누락되지 않는다.
-- [ ] 연계 평가가 개별 스킬 평가와 중복되지 않고 조합 실패를 잡는다.
+- [x] 복합 작업에서는 `Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`가 유지된다.
+- [x] 역할별 책임과 관련 skill 구성이 `workspace/docs/workflow.md`와 일치한다.
+- [x] Django template/static/web 책임이 있으면 `implementation-django-web`이 누락되지 않는다.
+- [x] 연계 평가가 개별 스킬 평가와 중복되지 않고 조합 실패를 잡는다.
 
 ## 5. 스킬 연계용 스킬 구현
 
