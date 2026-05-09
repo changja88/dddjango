@@ -1,7 +1,7 @@
 # 코딩 테스트 문서 상충/모순/불일치 의사결정
 
-Internal: `/docs/internal/coding-test.md`
-External: `/docs/external/coding-test.md`
+Internal: `workspace/reference/implementation-test/reference/internal.md`
+External: `workspace/reference/implementation-test/reference/external.md`
 
 ---
 

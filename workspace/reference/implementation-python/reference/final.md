@@ -1,7 +1,7 @@
 # Python 언어 특화 가이드
 
 > Python에서만 적용되는 관례, 패턴, 기법을 정리한 문서.
-> 클린코드 범용 원칙(네이밍, 함수 설계, SOLID 등)은 coding-cleancode.md에서 다룬다.
+> 클린코드 범용 원칙(네이밍, 함수 설계, SOLID 등)은 `workspace/reference/implementation-cleancode/reference/final.md`에서 다룬다.
 > Python 3.10+ 이후 도입된 기능을 적극 채택하며, 최신 패턴을 기본으로 제시한다.
 
 ---
@@ -2124,7 +2124,7 @@ def to_str(bytes_or_str):
 
 ## 20. 디자인 패턴 (Python 고유 구현)
 
-범용 디자인 패턴의 개념은 **coding-cleancode.md**를 참조한다.
+범용 디자인 패턴의 개념은 `workspace/reference/implementation-cleancode/reference/final.md`를 참조한다.
 
 ### 20.1 `__init_subclass__` 레지스트리 패턴
 
@@ -2191,7 +2191,7 @@ config = Config.from_env()
 
 ## 21. Repository / Unit of Work
 
-Repository/Unit of Work 등 아키텍처 패턴은 **architecture-hexagonal.md**를 참조한다.
+Repository/Unit of Work 등 아키텍처 패턴은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
 
 ---
 
@@ -2379,7 +2379,7 @@ def handle_result(result: Result) -> str:
 
 ## 24. 테스트
 
-테스트와 디버깅은 **coding-test.md**를 참조한다.
+테스트와 디버깅은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
 
 ---
 

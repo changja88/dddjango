@@ -1,6 +1,6 @@
 # Python 테스트 코드 작성 종합 가이드
 
-> 이 문서는 테스트 코드 **작성법**에 집중한다. TDD 방법론(Red-Green-Refactor 등)은 coding-tdd.md에서 다룬다.
+> 이 문서는 테스트 코드 **작성법**에 집중한다. TDD 방법론(Red-Green-Refactor 등)은 `workspace/reference/implementation-tdd/reference/final.md`에서 다룬다.
 
 ---
 
@@ -2340,7 +2340,7 @@ def error_occurred(order_result, message):
 
 ## 19. 테스트 디버깅 기법
 
-범용 Python 디버깅(repr, pdb, breakpoint)은 **coding-python.md**를 참조한다.
+범용 Python 디버깅(repr, pdb, breakpoint)은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
 
 ### 19.1 pytest에서 디버거 진입
 

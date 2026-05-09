@@ -1552,7 +1552,7 @@ class GraphEditor:
         self._tool.on_mouse_up(x, y)    # 조건문 없음
 ```
 
-> Python 고유 구현 트릭(`__init_subclass__` 레지스트리 등)은 **coding-python.md**를 참조한다.
+> Python 고유 구현 트릭(`__init_subclass__` 레지스트리 등)은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
 
 ---
 
@@ -2587,7 +2587,7 @@ def calculate_total_with_tax(order_data: dict) -> float:
 
 ## 18. Python 관용구와 스타일
 
-Python 언어 특화 관례와 패턴은 **coding-python.md**를 참조한다.
+Python 언어 특화 관례와 패턴은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
 
 ---
 

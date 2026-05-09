@@ -1,7 +1,7 @@
 # Django 프레임워크 특화 가이드
 
 > Django에서만 적용되는 관례, 설계 철학, 코딩 패턴을 정리한 문서.
-> 범용 클린코드 원칙(네이밍, SOLID 등)은 coding-cleancode.md, Python 관용구는 coding-python.md에서 다룬다.
+> 범용 클린코드 원칙(네이밍, SOLID 등)은 `workspace/reference/implementation-cleancode/reference/final.md`, Python 관용구는 `workspace/reference/implementation-python/reference/final.md`에서 다룬다.
 > Django 5.x(LTS 5.2) 기준으로 최신 패턴을 기본으로 제시한다.
 >
 > **출처 약어:**

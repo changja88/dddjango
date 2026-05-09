@@ -589,7 +589,7 @@ def test_lifecycle_order():
 
 ## 8. 테스트 더블 분류 체계
 
-테스트 더블의 상세 분류와 Python 구현은 **coding-test.md**를 참조한다.
+테스트 더블의 상세 분류와 Python 구현은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
 
 ---
 
@@ -1008,19 +1008,19 @@ def test_calculate_shipping_fee_for_domestic_order():
 
 ## 13. 레거시 코드 다루기
 
-레거시 코드 다루기는 **coding-cleancode.md**를 참조한다.
+레거시 코드 다루기는 `workspace/reference/implementation-cleancode/reference/final.md`를 참조한다.
 
 ---
 
 ## 14. Property-Based Testing
 
-Property-Based Testing은 **coding-test.md**를 참조한다.
+Property-Based Testing은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
 
 ---
 
 ## 15. Mutation Testing
 
-Mutation Testing은 **coding-test.md**를 참조한다.
+Mutation Testing은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
 
 ---
 
@@ -1043,7 +1043,7 @@ TDD (코드 정확성) -> ATDD (인수 테스트) -> BDD (행위 명세 + 소통
 | 산출물 | 단위 테스트 | 살아있는 문서(living documentation) |
 | 참여자 | 개발자 | 개발자 + 기획자 + QA |
 
-pytest-bdd 구현 상세는 **coding-test.md**를 참조한다.
+pytest-bdd 구현 상세는 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
 
 ---
 
@@ -1111,7 +1111,7 @@ def test_parse_korean_date_edge_cases():
 
 ## 18. Python 테스트 생태계 심화
 
-Python 테스트 도구 생태계는 **coding-test.md**를 참조한다.
+Python 테스트 도구 생태계는 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
 
 ---
 

@@ -1476,7 +1476,7 @@ class CalculateDiscountService:
 
 > 출처: [C]
 
-[C]는 헥사고날 아키텍처를 DDD 구현의 주요 아키텍처 스타일로 권장한다. 포트와 어댑터의 상세한 설명과 구현은 **architecture-hexagonal.md**를 참조한다.
+[C]는 헥사고날 아키텍처를 DDD 구현의 주요 아키텍처 스타일로 권장한다. 포트와 어댑터의 상세한 설명과 구현은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
 
 ### 5.4 CQRS (커맨드-쿼리 책임 분리)
 
@@ -1487,7 +1487,7 @@ class CalculateDiscountService:
 
 커맨드(상태 변경)와 쿼리(데이터 조회)의 모델을 분리한다. 핵심 원칙: "질문하는 행동이 대답을 바꿔서는 안 된다." 시스템 전체가 아닌 필요한 컨텍스트에만 선택 적용하는 것이 안전하다.
 
-CQRS의 상세 구현과 아키텍처 패턴은 **architecture-hexagonal.md**를 참조한다.
+CQRS의 상세 구현과 아키텍처 패턴은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
 
 ### 5.5 대규모 구조 (Large-Scale Structure)
 
@@ -1624,7 +1624,7 @@ my_project/
 
 > 출처: Cosmic Python
 
-ORM은 도메인 모델을 임포트해야 하며, 도메인 모델이 ORM에 의존해서는 안 된다. Data Mapper 패턴의 상세 구현은 **architecture-hexagonal.md**를 참조한다.
+ORM은 도메인 모델을 임포트해야 하며, 도메인 모델이 ORM에 의존해서는 안 된다. Data Mapper 패턴의 상세 구현은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
 
 ### 6.3 Repository + Unit of Work 패턴
 

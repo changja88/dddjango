@@ -1,7 +1,7 @@
 # Python 언어 특화 가이드 — 상충/모순/불일치 의사결정 문서
 
-> Internal: `coding-python.md` (내부 자료)
-> External: `coding-python.md` (외부 자료)
+> Internal: `workspace/reference/implementation-python/reference/internal.md` (내부 자료)
+> External: `workspace/reference/implementation-python/reference/external.md` (외부 자료)
 
 ---
 
