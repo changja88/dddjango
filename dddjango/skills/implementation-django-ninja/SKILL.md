@@ -1,6 +1,7 @@
 ---
 name: implementation-django-ninja
-description: Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient, DRF-to-Ninja migration, and API tests. Use for Router/Schema 구현, API 테스트, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST contracts, and implementation-django for ORM/service/migration work.
+description: >
+  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient, DRF-to-Ninja migration, and API tests. Use for Router/Schema 구현, API 테스트, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST contracts, and implementation-django for ORM/service/migration work.
 ---
 
 # Django Ninja Implementation

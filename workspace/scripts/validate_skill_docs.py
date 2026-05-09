@@ -18,7 +18,7 @@ DEFAULT_PLUGIN_SKILLS = ROOT / "dddjango" / "skills"
 DEFAULT_RUNTIME_SKILLS = Path(
     os.environ.get(
         "DDDJANGO_RUNTIME_SKILLS",
-        "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.9/skills",
+        "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills",
     )
 )
 
@@ -134,6 +134,21 @@ def frontmatter_value(text: str, key: str) -> Optional[str]:
 def frontmatter_block(text: str) -> str:
     match = re.match(r"^---\n(?P<body>.*?)\n---\n", text, re.DOTALL)
     return match.group("body") if match else ""
+
+
+def check_frontmatter_yaml_safety(check: Check, skill_md: Path, text: str) -> None:
+    frontmatter = frontmatter_block(text)
+    for line in frontmatter.splitlines():
+        match = re.match(r"^description:\s+(.+)$", line)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value in {">", "|"} or value.startswith(("'", '"')):
+            return
+        check.require(
+            ": " not in value,
+            f"description with ': ' must use a quoted value or block scalar: {skill_md}",
+        )
 
 
 def check_required_docs(check: Check) -> None:
@@ -270,6 +285,7 @@ def check_skill_folder(check: Check, skill_dir: Path, require_metadata: bool) ->
             frontmatter_value(text, "description"),
             f"missing frontmatter description: {skill_md}",
         )
+        check_frontmatter_yaml_safety(check, skill_md, text)
 
     openai_yaml = skill_dir / "agents" / "openai.yaml"
     if require_metadata:

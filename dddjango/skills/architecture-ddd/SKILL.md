@@ -1,6 +1,7 @@
 ---
 name: architecture-ddd
-description: Use for DDD/domain modeling: subdomain classification, bounded contexts, context maps, ubiquitous language, aggregates, entities, value objects, invariants, domain events, domain services, use cases, and consistency boundaries. Use for 도메인 규칙, 상태 전이, 정책, 불변식, 하위 도메인, 바운디드 컨텍스트, 유비쿼터스 언어, 애그리거트, 컨텍스트 맵, 도메인 이벤트. Prefer workflow-dddjango-subagents for composite/subagent/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow requests, architecture-db for schema/transactions, architecture-api for REST contracts, architecture-implementation-patterns for ports/adapters/CQRS/outbox structure, and implementation skills for Django code.
+description: >
+  Use for DDD/domain modeling: subdomain classification, bounded contexts, context maps, ubiquitous language, aggregates, entities, value objects, invariants, domain events, domain services, use cases, and consistency boundaries. Use for 도메인 규칙, 상태 전이, 정책, 불변식, 하위 도메인, 바운디드 컨텍스트, 유비쿼터스 언어, 애그리거트, 컨텍스트 맵, 도메인 이벤트. Prefer workflow-dddjango-subagents for composite/subagent/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow requests, architecture-db for schema/transactions, architecture-api for REST contracts, architecture-implementation-patterns for ports/adapters/CQRS/outbox structure, and implementation skills for Django code.
 ---
 
 # DDD Architecture

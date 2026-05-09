@@ -1,6 +1,7 @@
 ---
 name: implementation-django-web
-description: Provisional until dedicated source reference exists; use with fallback source for Django web/template/static implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, and render checks. Use for Django 페이지, template/static 구조, TemplateView 주문 상세, HTMX/CSRF. Prefer workflow-dddjango-subagents for composite/subagent work, implementation-django-ninja for REST APIs, and implementation-django for ORM/service/migration work.
+description: >
+  Provisional until dedicated source reference exists; use with fallback source for Django web/template/static implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, and render checks. Use for Django 페이지, template/static 구조, TemplateView 주문 상세, HTMX/CSRF. Prefer workflow-dddjango-subagents for composite/subagent work, implementation-django-ninja for REST APIs, and implementation-django for ORM/service/migration work.
 ---
 
 # Django Web Implementation

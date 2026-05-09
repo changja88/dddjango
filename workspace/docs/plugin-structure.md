@@ -96,11 +96,19 @@ dddjango/
       agents/
         openai.yaml
       references/
+
+.agents/
+  plugins/
+    marketplace.json
+plugins/
+  dddjango -> ../dddjango
 ```
 
 `workspace/docs`는 스킬 개발 전 설계 문서의 canonical 위치다. `workspace/reference`는 기존 source reference corpus다. 런타임 플러그인에 들어가는 skill-bundled reference는 `dddjango/skills/<skill>/references/` 아래에 둔다.
 
 `dddjango/`가 workspace 밖 또는 repo root 아래에 생성되는 경우는 플러그인 런타임이 해당 위치를 요구할 때만 허용한다. 그 외 개발 산출물은 `workspace/` 아래에 둔다.
+
+`.agents/plugins/marketplace.json`은 Codex local marketplace가 repo root를 source로 읽을 때 `dddjango` plugin bundle을 발견하기 위한 repo-root 예외 파일이다. Codex local marketplace의 표준 배치가 `./plugins/<plugin-name>`이므로 `plugins/dddjango`는 canonical plugin root인 `../dddjango`를 가리키는 symlink다. 실제 수정 source of truth는 `dddjango/`이다.
 
 현재 `dddjango/skills/...`는 계획된 런타임 플러그인 구조다. 실제 스킬 폴더를 생성하기 전에는 `workspace/docs`와 `workspace/reference`를 authoring source로 사용한다.
 

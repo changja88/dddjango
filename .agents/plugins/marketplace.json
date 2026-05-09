@@ -1,0 +1,20 @@
+{
+  "name": "dddjango-local",
+  "interface": {
+    "displayName": "dddjango Local"
+  },
+  "plugins": [
+    {
+      "name": "dddjango",
+      "source": {
+        "source": "local",
+        "path": "./plugins/dddjango"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Coding"
+    }
+  ]
+}

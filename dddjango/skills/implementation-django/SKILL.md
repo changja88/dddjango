@@ -1,6 +1,7 @@
 ---
 name: implementation-django
-description: Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration tests. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, and architecture-ddd/db when domain or DB contracts are undecided.
+description: >
+  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration tests. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, and architecture-ddd/db when domain or DB contracts are undecided.
 ---
 
 # Django Implementation

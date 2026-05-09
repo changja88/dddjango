@@ -1,6 +1,7 @@
 ---
 name: implementation-cleancode
-description: Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, and maintainability findings. Use for 코드 리뷰, 리팩터링, 책임 분리, 품질 개선. Prefer architecture-ddd for domain modeling, implementation-python for Python typing, implementation-django for Django ORM/migrations, and workflow-dddjango-subagents for composite/subagent work.
+description: >
+  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, and maintainability findings. Use for 코드 리뷰, 리팩터링, 책임 분리, 품질 개선. Prefer architecture-ddd for domain modeling, implementation-python for Python typing, implementation-django for Django ORM/migrations, and workflow-dddjango-subagents for composite/subagent work.
 ---
 
 # Clean Code

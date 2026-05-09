@@ -1,6 +1,7 @@
 ---
 name: implementation-python
-description: Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing, dataclass/Enum 리팩터링, Protocol boundary, pydantic v2 migration, modern Python. Prefer implementation-cleancode for general refactoring, implementation-django for ORM/migrations, implementation-test for pytest, and architecture-ddd for domain modeling.
+description: >
+  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing, dataclass/Enum 리팩터링, Protocol boundary, pydantic v2 migration, modern Python. Prefer implementation-cleancode for general refactoring, implementation-django for ORM/migrations, implementation-test for pytest, and architecture-ddd for domain modeling.
 ---
 
 # Python Implementation

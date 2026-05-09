@@ -1,6 +1,7 @@
 ---
 name: architecture-api
-description: Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 형식, Problem Details, 페이지네이션, 버전 관리, rate limit, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+description: >
+  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 형식, Problem Details, 페이지네이션, 버전 관리, rate limit, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
 ---
 
 # API Architecture

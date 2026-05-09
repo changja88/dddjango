@@ -1,6 +1,7 @@
 ---
 name: implementation-tdd
-description: Use for TDD methodology: test list, failing tests before implementation, Red-Green-Refactor, Inside-Out vs Outside-In, acceptance/unit loops, boundary cases, refactoring checkpoints, and AI-assisted TDD. Use for TDD, 실패 테스트, 테스트 먼저, Red-Green-Refactor, 쿠폰 정책 TDD. Prefer workflow-dddjango-subagents for composite/subagent Django work, implementation-test for pytest fixtures/mocks/factories, and architecture-ddd when domain rules or invariants are unclear.
+description: >
+  Use for TDD methodology: test list, failing tests before implementation, Red-Green-Refactor, Inside-Out vs Outside-In, acceptance/unit loops, boundary cases, refactoring checkpoints, and AI-assisted TDD. Use for TDD, 실패 테스트, 테스트 먼저, Red-Green-Refactor, 쿠폰 정책 TDD. Prefer workflow-dddjango-subagents for composite/subagent Django work, implementation-test for pytest fixtures/mocks/factories, and architecture-ddd when domain rules or invariants are unclear.
 ---
 
 # TDD Implementation

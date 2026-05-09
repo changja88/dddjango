@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: runtime skill 구현 및 검증 완료
-- 최근 완료: `workflow-dddjango-subagents` runtime skill 구현
-- 다음 작업: 종합 평가표/플러그인 평가 또는 커밋 준비
+- 현재 단계: runtime evaluation preflight 완료
+- 최근 완료: Codex local marketplace/cache가 `./dddjango` plugin bundle의 12개 skill metadata를 로드하는지 확인
+- 다음 작업: 개별/연계 skill 평가 prompt 실행 및 개선 반복
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -22,6 +22,34 @@
 - [ ] 종합 평가표 작성
 - [ ] 종합 플러그인 평가 및 개선
 - [ ] 최종 검증 및 커밋
+
+## 0. Runtime Evaluation Preflight
+
+목적:
+
+- 평가 대상이 기존 설치 cache가 아니라 repo의 최신 `dddjango/` plugin bundle임을 고정한다.
+- Codex local marketplace가 repo root에서 `./dddjango` plugin root를 발견하게 만든다.
+- 성능 평가 전에 구조 검증, cache sync, smoke trigger 확인을 끝낸다.
+
+체크리스트:
+
+- [x] 평가 대상 canonical source를 `/Users/hyun/Desktop/dddjango/dddjango`로 고정한다.
+- [x] repo root에 `.agents/plugins/marketplace.json`을 추가하고 `source.path`를 `./plugins/dddjango`로 지정한다.
+- [x] `plugins/dddjango -> ../dddjango` symlink로 Codex local marketplace 표준 배치와 canonical source를 연결한다.
+- [x] `dddjango/.codex-plugin/plugin.json` 버전을 기존 cache `0.1.9`보다 높은 `0.1.10`으로 맞춘다.
+- [x] local marketplace 재등록 후 stale cache를 제거하고 repo source를 `dddjango/0.1.10` cache에 동기화한다.
+- [x] 갱신된 cache가 `dddjango/0.1.10`이고 repo source와 동기화되었는지 확인한다.
+- [x] `description` YAML plain scalar의 `: ` 문제를 block scalar로 수정해 12개 skill이 모두 로드되게 한다.
+- [x] 새 Codex prompt input에서 12개 dddjango skill metadata가 로드되는지 확인한다.
+- [x] smoke prompt 3개에서 dddjango 12개 skill metadata가 노출되는지 확인한다.
+- [ ] 개별 평가 prompt로 실제 trigger/routing 품질을 확인한다.
+
+통과 기준:
+
+- [x] `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills`가 통과한다.
+- [x] `git diff --check -- dddjango .agents plugins workspace/docs/plugin-structure.md workspace/develop/plan.md workspace/scripts/validate_skill_docs.py`가 통과한다.
+- [x] private rubric/scoring/expected/routing 누출 검색 결과가 없다.
+- [x] Codex runtime cache와 repo source가 평가 대상 버전 기준으로 일치한다.
 
 ## 1. 개별 스킬 평가표 작성
 

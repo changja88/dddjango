@@ -1,6 +1,7 @@
 ---
 name: architecture-implementation-patterns
-description: Provisional until dedicated source reference exists; use fallback sources for DDD implementation architecture patterns: layered architecture, clean architecture, hexagonal/ports-adapters, dependency direction, repository, Unit of Work, CQRS, event sourcing, outbox, ACL, saga, and legacy integration. Use for 헥사고날, 클린 아키텍처, 의존성 역전, repository/UoW, outbox, ACL, 프로젝트 구조. Prefer workflow-dddjango-subagents for composite/subagent Django work, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transactions, architecture-api for REST/API contracts, status codes, Problem Details, idempotency, versioning, or OpenAPI, and implementation skills for concrete Django/Python code.
+description: >
+  Provisional until dedicated source reference exists; use fallback sources for DDD implementation architecture patterns: layered architecture, clean architecture, hexagonal/ports-adapters, dependency direction, repository, Unit of Work, CQRS, event sourcing, outbox, ACL, saga, and legacy integration. Use for 헥사고날, 클린 아키텍처, 의존성 역전, repository/UoW, outbox, ACL, 프로젝트 구조. Prefer workflow-dddjango-subagents for composite/subagent Django work, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transactions, architecture-api for REST/API contracts, status codes, Problem Details, idempotency, versioning, or OpenAPI, and implementation skills for concrete Django/Python code.
 ---
 
 # Implementation Patterns

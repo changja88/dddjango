@@ -1,6 +1,7 @@
 ---
 name: implementation-test
-description: Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, test doubles, fake/mock/stub/spy/dummy, factory_boy/Faker, Hypothesis property tests, time/HTTP mocking, testcontainers, coverage, mutation testing, BDD, flaky tests, Django Ninja TestClient/API contract tests, idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 뮤테이션 테스트, 속성 기반 테스트, 중복 요청 테스트. Prefer workflow-dddjango-subagents for composite/subagent Django work, implementation-tdd for Red-Green-Refactor flow, and architecture-ddd/architecture-db/architecture-api when invariants, data constraints, or REST contracts are unclear.
+description: >
+  Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, test doubles, fake/mock/stub/spy/dummy, factory_boy/Faker, Hypothesis property tests, time/HTTP mocking, testcontainers, coverage, mutation testing, BDD, flaky tests, Django Ninja TestClient/API contract tests, idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 뮤테이션 테스트, 속성 기반 테스트, 중복 요청 테스트. Prefer workflow-dddjango-subagents for composite/subagent Django work, implementation-tdd for Red-Green-Refactor flow, and architecture-ddd/architecture-db/architecture-api when invariants, data constraints, or REST contracts are unclear.
 ---
 
 # Test Implementation

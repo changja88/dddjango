@@ -1,6 +1,7 @@
 ---
 name: workflow-dddjango-subagents
-description: Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, 순차 실행, handoff, integration checklist, or dddjango workflow. Do not use for simple single-file changes, small field renames, short explanations, or when the user opts out of subagent planning.
+description: >
+  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, 순차 실행, handoff, integration checklist, or dddjango workflow. Do not use for simple single-file changes, small field renames, short explanations, or when the user opts out of subagent planning.
 ---
 
 # dddjango Workflow
