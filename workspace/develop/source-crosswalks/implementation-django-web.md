@@ -125,7 +125,7 @@
 | `## 2. 대표 시나리오` | included | `SKILL.md`, references | Django Web scenario and relevant routing negatives reflected. |
 | `### Django Web` | included | `SKILL.md`, references | TemplateView, template/static structure, CSRF/HTMX, and no template domain rules included. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Skill activation, output quality, routing, and validation honesty reflected. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked with validator. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator. |
 
 ## Fallback Source Heading Coverage
 
@@ -176,4 +176,4 @@
 - Rubric review ran after source self-review. No additional source-backed runtime issue remained; blocking 0, major 0, minor 0.
 - Runtime checks: `codex debug prompt-input` smoke checks were run for positive, boundary/combined, and API negative prompts. The output exposes dddjango plugin metadata globally, so it is useful as a runtime cache/metadata exposure check but not as sole evidence of routing quality.
 - Runtime behavior checks: read-only `codex exec` positive prompt used `implementation-django-web` and produced a TemplateView/template/static/HTMX/CSRF plan; boundary prompt used web, Django, and test references and separated service/HTMX/render-test responsibilities; negative REST API prompt rejected template-owned order creation logic and answered as API contract/service separation rather than web/template work.
-- Validation so far: `validate_skill_docs.py --phase all`, `git diff --check`, leakage grep, cache sync, and source/cache diff passed. Actual Django render tests, browser screenshots, `collectstatic`, and pytest were not run because this was runtime skill evaluation, not an app implementation.
+- Final validation: `validate_skill_docs.py --phase all`, `git diff --check`, leakage grep, cache sync, and source/cache diff passed. Actual Django render tests, browser screenshots, `collectstatic`, and pytest were not run because this was runtime skill evaluation, not an app implementation.

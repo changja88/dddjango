@@ -107,7 +107,7 @@
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md` | Real executed validation only. |
 | `## 2. 대표 시나리오` | merged | `SKILL.md`, references | Order API and coupon policy scenarios need DDD decisions before implementation/test. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Domain language, invariants, and over-application boundary reflected. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator. |
 
 ## Validation Scenario Heading Coverage
 

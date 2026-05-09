@@ -113,7 +113,7 @@
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, validation report | Real prompt/artifact/diff/test evidence and over-application checks reflected. |
 | `## 2. 대표 시나리오` | merged | `SKILL.md`, references, scenario coverage table | Architecture-pattern scenario is direct; adjacent scenarios are delegated or merged by boundary. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Pattern fit, anti-overapplication, source limitation, and verification honesty reflected. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked; missing future skills are reported separately. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator; missing future skills are reported separately. |
 
 ## Validation Scenario Heading Coverage
 

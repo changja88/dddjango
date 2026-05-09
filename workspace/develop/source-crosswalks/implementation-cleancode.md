@@ -38,9 +38,9 @@
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent DDD, API/DB architecture, implementation, test, and workflow boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, pending final validation report | Completion requires zero remaining blocking/major/minor findings; final evidence is pending for this skill. |
-| `## 검증` | included | pending final validation report | Only executed validation will be reported; completion validation is pending. |
-| `## 완료 보고` | included | pending final response | Required report fields will be included after this skill completes. |
+| `## Completed 조건` | included | Review Notes, final validation record | Completion requires zero remaining blocking/major/minor findings; final evidence is recorded for this skill. |
+| `## 검증` | included | final validation record | Only executed validation is reported; completion validation was performed. |
+| `## 완료 보고` | included | plan final record | Required report fields are captured in `workspace/develop/plan.md`. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md` Routing | DDD-first, simple-vs-complex, and workflow delegation reflected. |
@@ -104,7 +104,7 @@
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md` | Real executed validation only. |
 | `## 2. 대표 시나리오` | included | `SKILL.md`, references | Fat Model and View Logic review scenarios covered by responsibility/adapter boundary rules. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Implementation pragmatism, maintainability, workflow fit, and verification reflected. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator. |
 
 ## Validation Scenario Heading Coverage
 

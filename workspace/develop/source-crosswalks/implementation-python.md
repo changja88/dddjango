@@ -38,9 +38,9 @@
 | `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
 | `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent implementation, DDD, test, clean-code, and workflow boundaries included. |
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, pending final validation report | Completion requires zero remaining blocking/major/minor findings; final evidence is pending for this skill. |
-| `## 검증` | included | pending final validation report | Only executed validation will be reported; completion validation is pending. |
-| `## 완료 보고` | included | pending final response | Required report fields will be included after this skill completes. |
+| `## Completed 조건` | included | Review Notes, final validation record | Completion requires zero remaining blocking/major/minor findings; final evidence is recorded for this skill. |
+| `## 검증` | included | final validation record | Only executed validation is reported; completion validation was performed. |
+| `## 완료 보고` | included | plan final record | Required report fields are captured in `workspace/develop/plan.md`. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime skill behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md` Routing | Python/Django ecosystem, simple-vs-complex judgment, and workflow delegation reflected. |
@@ -106,7 +106,7 @@
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md` | Real executed validation only. |
 | `## 2. 대표 시나리오` / `### Python Typing` | included | `SKILL.md`, references | Enum/StrEnum, dataclass, pydantic-not-domain-default covered. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Implementation pragmatism, routing, and verification reflected. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator. |
 
 ## Python Reference Heading Coverage
 
@@ -154,4 +154,4 @@
 - Rubric review ran after source self-review. No additional source-backed runtime issue remained; blocking 0, major 0, minor 0.
 - Runtime checks: `codex debug prompt-input` smoke checks were run for positive, pydantic-boundary, and simple negative prompts. The output exposes dddjango plugin metadata globally, so it is useful as a runtime cache/metadata exposure check but not as sole evidence of routing quality.
 - Runtime behavior checks: read-only `codex exec` positive prompt used `implementation-python` and `architecture-ddd` for state-transition/invariant planning and kept pydantic at the external boundary; pydantic boundary prompt used `implementation-python` and separated `BaseModel`, command dataclass, and domain objects; simple helper type-hint prompt stayed direct without DDD/workflow/subagent expansion.
-- Validation so far: `validate_skill_docs.py --phase all`, `git diff --check`, leakage grep, cache sync, and source/cache diff passed. Ruff, mypy, pyright, pytest, and runtime app checks were not run because this was runtime skill evaluation, not an app implementation.
+- Final validation: `validate_skill_docs.py --phase all`, `git diff --check`, leakage grep, cache sync, and source/cache diff passed. Ruff, mypy, pyright, pytest, and runtime app checks were not run because this was runtime skill evaluation, not an app implementation.

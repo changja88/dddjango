@@ -108,7 +108,7 @@
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, validation report | Real validation only and over-application checks reflected. |
 | `## 2. 대표 시나리오` | merged | `SKILL.md`, references, scenario coverage table | API scenarios are direct when contract-focused; composite implementation scenarios are delegated by boundary. |
 | `## 3. 평가 항목` | merged | `SKILL.md`, references | Data/API consistency, test/verification, and pragmatism reflected. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator. |
 
 ## Validation Scenario Heading Coverage
 

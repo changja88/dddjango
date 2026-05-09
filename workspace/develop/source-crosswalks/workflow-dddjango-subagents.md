@@ -94,7 +94,7 @@
 | `validation-plan.md` `## 1. 검증 원칙` | included | `SKILL.md`, `integration-checklist.md` | Real validation only and source-backed checks included. |
 | `## 2. 대표 시나리오` | included | `delegation-rules.md`, `integration-checklist.md` | Composite/risky, simple negative, and false-subagent cases covered. |
 | `## 3. 평가 항목` | included | `SKILL.md`, references | Over-application, workflow contract, role map sync, and validation honesty covered. |
-| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder will be checked. |
+| `## 4. Skill Folder 검증` | included | validation commands | Generated skill folder was checked with the final validator. |
 
 ## Validation Scenario Heading Coverage
 
