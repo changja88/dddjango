@@ -32,11 +32,13 @@ OUTPUT_SCHEMA = """{
   "baseline": {
     "score": "0 / 5",
     "verdict": "fail",
+    "evaluation_summary": "One concise evaluator-only summary grounded in the answer oracle.",
     "evaluation": "One concise evaluator-only explanation grounded in the answer oracle."
   },
   "with_dddjango": {
     "score": "0 / 5",
     "verdict": "fail",
+    "evaluation_summary": "One concise evaluator-only summary grounded in the answer oracle.",
     "evaluation": "One concise evaluator-only explanation grounded in the answer oracle."
   },
   "observations": [
@@ -44,14 +46,6 @@ OUTPUT_SCHEMA = """{
   ],
   "status": "ok"
 }"""
-
-CODE_ARTIFACTS = (
-    ("baseline diff", Path("baseline/diff.patch")),
-    ("with-ddjango diff", Path("with-ddjango/diff.patch")),
-    ("baseline changed files", Path("baseline/changed-files.json")),
-    ("with-ddjango changed files", Path("with-ddjango/changed-files.json")),
-)
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -142,14 +136,49 @@ def artifact_section(title: str, path: Path, text: str) -> str:
     )
 
 
+def binary_looking(contents: bytes) -> bool:
+    sample = contents[:4096]
+    if b"\0" in sample:
+        return True
+    if not sample:
+        return False
+    text = sample.decode("utf-8", errors="replace")
+    replacement_ratio = text.count("\ufffd") / max(len(text), 1)
+    if replacement_ratio > 0.05:
+        return True
+    control_chars = sum(
+        1 for char in text if ord(char) < 32 and char not in "\n\r\t\f\b"
+    )
+    return control_chars / max(len(text), 1) > 0.30
+
+
+def read_text_artifact(path: Path) -> str | None:
+    contents = path.read_bytes()
+    if binary_looking(contents):
+        return None
+    return contents.decode("utf-8", errors="replace")
+
+
 def optional_code_artifacts(run_dir: Path, case_id: str) -> list[tuple[str, Path, str]]:
     artifacts: list[tuple[str, Path, str]] = []
     base = run_dir / "code" / case_id
-    for title, rel_path in CODE_ARTIFACTS:
-        path = base / rel_path
-        if path.is_file():
-            display_path = Path("code") / case_id / rel_path
-            artifacts.append((title, display_path, common.read_text(path)))
+    for variant in common.VARIANTS:
+        variant_root = base / variant
+        if not variant_root.is_dir():
+            continue
+        variant_root_resolved = variant_root.resolve()
+        paths = sorted(path for path in variant_root.rglob("*") if path.is_file())
+        for path in paths:
+            resolved = path.resolve(strict=False)
+            try:
+                rel_path = resolved.relative_to(variant_root_resolved)
+            except ValueError:
+                continue
+            text = read_text_artifact(path)
+            if text is None:
+                continue
+            display_path = Path("code") / case_id / variant / rel_path
+            artifacts.append((f"{variant} {rel_path.as_posix()}", display_path, text))
     return artifacts
 
 
@@ -239,10 +268,24 @@ def parse_and_validate(stdout: str, case_id: str) -> dict[str, Any]:
         oracle = common.extract_json_object(stdout)
     except ValueError as exc:
         raise SystemExit(f"{case_id}: evaluator stdout did not contain a JSON object") from exc
+    normalize_oracle(oracle)
     error = common.validate_oracle_schema(oracle, case_id)
     if error is not None:
         raise SystemExit(f"{case_id}: invalid oracle schema: {error}")
     return oracle
+
+
+def normalize_oracle(oracle: dict[str, Any]) -> None:
+    for variant_key in ("baseline", "with_dddjango"):
+        variant_oracle = oracle.get(variant_key)
+        if not isinstance(variant_oracle, dict):
+            continue
+        evaluation = variant_oracle.get("evaluation")
+        summary = variant_oracle.get("evaluation_summary")
+        if common.has_non_empty_text(evaluation) and not common.has_non_empty_text(summary):
+            variant_oracle["evaluation_summary"] = evaluation
+        elif common.has_non_empty_text(summary) and not common.has_non_empty_text(evaluation):
+            variant_oracle["evaluation"] = summary
 
 
 def evaluate_case(

@@ -66,10 +66,16 @@ class EvaluateEvalRunTests(unittest.TestCase):
         return {
             "caseId": case_id,
             "answerOracleEvaluated": True,
-            "baseline": {"score": "2 / 5", "verdict": "fail", "evaluation": "weak"},
+            "baseline": {
+                "score": "2 / 5",
+                "verdict": "fail",
+                "evaluation_summary": "weak",
+                "evaluation": "weak",
+            },
             "with_dddjango": {
                 "score": "5 / 5",
                 "verdict": "pass",
+                "evaluation_summary": "strong",
                 "evaluation": "strong",
             },
             "observations": ["clear improvement"],
@@ -93,6 +99,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
             self.assertEqual(timeout_seconds, 1800)
             self.assertIn("EVALUATOR-ONLY ANSWER ORACLE", prompt)
             self.assertIn('"answerOracleEvaluated": true', prompt)
+            self.assertIn('"evaluation_summary"', prompt)
             self.assertIn("baseline answer", prompt)
             self.assertIn("with answer", prompt)
             return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
@@ -254,19 +261,31 @@ class EvaluateEvalRunTests(unittest.TestCase):
         self.write_case_and_run(bucket="code", case_id=case_id, run_id=run_id)
         run_dir = self.evaluator.EVAL_ROOT / "code/runs" / run_id
         long_text = "x" * (self.evaluator.MAX_ARTIFACT_CHARS + 20)
-        for variant in ("baseline", "with-ddjango"):
+        with_variant = self.evaluator.common.VARIANTS[1]
+        for variant in self.evaluator.common.VARIANTS:
             artifact_dir = run_dir / "code" / case_id / variant
+            files_dir = artifact_dir / "files" / "apps" / "orders"
             artifact_dir.mkdir(parents=True, exist_ok=True)
+            files_dir.mkdir(parents=True, exist_ok=True)
             (artifact_dir / "diff.patch").write_text(long_text, encoding="utf-8")
             (artifact_dir / "changed-files.json").write_text(
                 json.dumps({"files": [{"path": f"{variant}.py"}]}),
+                encoding="utf-8",
+            )
+            (files_dir / "service.py").write_text(
+                f"class {variant.replace('-', '_').title().replace('_', '')}OrderService:\n"
+                f"    source = {variant!r}\n",
                 encoding="utf-8",
             )
         payload = self.valid_payload(case_id)
 
         def fake_run(command, *, prompt, cwd, timeout_seconds):
             self.assertIn(f"code/{case_id}/baseline/diff.patch", prompt)
-            self.assertIn(f"code/{case_id}/with-ddjango/diff.patch", prompt)
+            self.assertIn(f"code/{case_id}/{with_variant}/diff.patch", prompt)
+            self.assertIn(f"code/{case_id}/baseline/files/apps/orders/service.py", prompt)
+            self.assertIn(f"code/{case_id}/{with_variant}/files/apps/orders/service.py", prompt)
+            self.assertIn("BaselineOrderService", prompt)
+            self.assertIn("WithDddjangoOrderService", prompt)
             self.assertIn("[TRUNCATED after 80000 characters]", prompt)
             self.assertNotIn("x" * (self.evaluator.MAX_ARTIFACT_CHARS + 1), prompt)
             return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
@@ -284,6 +303,74 @@ class EvaluateEvalRunTests(unittest.TestCase):
             )
 
         self.assertEqual(result, 0)
+
+    def test_canonical_oracle_backfills_missing_evaluation_summary(self) -> None:
+        self.write_case_and_run()
+        payload = self.valid_payload()
+        for variant_key in ("baseline", "with_dddjango"):
+            del payload[variant_key]["evaluation_summary"]
+
+        with patch.object(
+            self.evaluator,
+            "run_command",
+            return_value=subprocess.CompletedProcess(["codex"], 0, json.dumps(payload), ""),
+        ):
+            result = self.evaluator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-one",
+                    "--case",
+                    "case-response-one",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        output = (
+            self.evaluator.EVAL_ROOT
+            / "response/runs/run-one/raw/case-response-one-answer-oracle-evaluation.json"
+        )
+        value = json.loads(output.read_text(encoding="utf-8"))
+        for variant_key in ("baseline", "with_dddjango"):
+            self.assertEqual(
+                value[variant_key]["evaluation_summary"],
+                value[variant_key]["evaluation"],
+            )
+
+    def test_canonical_oracle_backfills_missing_evaluation(self) -> None:
+        self.write_case_and_run()
+        payload = self.valid_payload()
+        for variant_key in ("baseline", "with_dddjango"):
+            del payload[variant_key]["evaluation"]
+
+        with patch.object(
+            self.evaluator,
+            "run_command",
+            return_value=subprocess.CompletedProcess(["codex"], 0, json.dumps(payload), ""),
+        ):
+            result = self.evaluator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-one",
+                    "--case",
+                    "case-response-one",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        output = (
+            self.evaluator.EVAL_ROOT
+            / "response/runs/run-one/raw/case-response-one-answer-oracle-evaluation.json"
+        )
+        value = json.loads(output.read_text(encoding="utf-8"))
+        for variant_key in ("baseline", "with_dddjango"):
+            self.assertEqual(
+                value[variant_key]["evaluation"],
+                value[variant_key]["evaluation_summary"],
+            )
 
     def test_unsafe_run_ids_are_rejected(self) -> None:
         self.write_case_and_run()
