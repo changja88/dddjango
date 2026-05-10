@@ -269,13 +269,37 @@ def validate_code_artifacts(
             findings.append(error)
             continue
         assert manifest is not None
-        if manifest.get("caseId") not in (None, case_id):
-            findings.append(f"{manifest_path}: caseId mismatch")
-        if manifest.get("variant") not in (None, variant):
-            findings.append(f"{manifest_path}: variant mismatch")
-        files = manifest.get("files")
-        if files is None:
+
+        required_manifest_keys = {
+            "caseId",
+            "variant",
+            "evidenceMode",
+            "diffPath",
+            "noCodeProduced",
+            "files",
+        }
+        missing = sorted(required_manifest_keys - set(manifest))
+        if missing:
+            findings.append(f"{manifest_path}: missing keys: {', '.join(missing)}")
             continue
+        if manifest.get("caseId") != case_id:
+            findings.append(f"{manifest_path}: caseId mismatch")
+        if manifest.get("variant") != variant:
+            findings.append(f"{manifest_path}: variant mismatch")
+        if manifest.get("evidenceMode") != "code-backed":
+            findings.append(f"{manifest_path}: evidenceMode must be code-backed")
+        diff_value = manifest.get("diffPath")
+        if not isinstance(diff_value, str):
+            findings.append(f"{manifest_path}: diffPath must be a string")
+        elif not diff_value:
+            findings.append(f"{manifest_path}: diffPath must not be empty")
+        else:
+            _, path_error = safe_run_relative_path(run_dir, diff_value)
+            if path_error is not None:
+                findings.append(f"{manifest_path}: {path_error}")
+        if not isinstance(manifest.get("noCodeProduced"), bool):
+            findings.append(f"{manifest_path}: noCodeProduced must be a boolean")
+        files = manifest.get("files")
         if not isinstance(files, list):
             findings.append(f"{manifest_path}: files must be a list")
             continue
@@ -283,9 +307,17 @@ def validate_code_artifacts(
             if not isinstance(entry, dict):
                 findings.append(f"{manifest_path}: file entry must be an object")
                 continue
+            binary = entry.get("binary")
+            if binary is not None and not isinstance(binary, bool):
+                findings.append(f"{manifest_path}: binary must be boolean")
+                continue
             if entry.get("binary") is True:
                 continue
-            artifact_value = str(entry.get("artifactPath", ""))
+            artifact_raw = entry.get("artifactPath")
+            if not isinstance(artifact_raw, str) or not artifact_raw:
+                findings.append(f"{manifest_path}: artifactPath is required for non-binary file entries")
+                continue
+            artifact_value = artifact_raw
             artifact_file, path_error = safe_run_relative_path(run_dir, artifact_value)
             if path_error is not None:
                 findings.append(f"{manifest_path}: {path_error}")
@@ -299,11 +331,17 @@ def validate_code_artifacts(
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    run_id = validate_run_id(args.run_id)
-    bucket = common.bucket_paths(args.bucket)
-    case_paths = common.selected_case_paths(args.bucket, args.case)
-    variants = selected_variants(args.variant)
-    run_dir = resolved_under(bucket.runs_dir, run_id, description="run path")
+    try:
+        run_id = validate_run_id(args.run_id)
+        bucket = common.bucket_paths(args.bucket)
+        case_paths = common.selected_case_paths(args.bucket, args.case)
+        variants = selected_variants(args.variant)
+        run_dir = resolved_under(bucket.runs_dir, run_id, description="run path")
+    except SystemExit as exc:
+        if isinstance(exc.code, int):
+            raise
+        print(f"FAIL: {exc.code}")
+        raise SystemExit(1) from exc
     raw_dir = run_dir / "raw"
 
     findings: list[str] = []

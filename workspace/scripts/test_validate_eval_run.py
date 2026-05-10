@@ -124,13 +124,38 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
         return run_dir
 
+    def write_code_capture_metadata(self, case_id: str) -> None:
+        metadata = self.validator.CODE_CAPTURE_METADATA
+        metadata.parent.mkdir(parents=True, exist_ok=True)
+        metadata.write_text(
+            json.dumps({"cases": {case_id: {"captureCode": True}}}) + "\n",
+            encoding="utf-8",
+        )
+
+    def write_code_variant_artifacts(
+        self,
+        run_dir: Path,
+        case_id: str,
+        variant: str,
+        manifest: dict[str, object],
+    ) -> None:
+        artifact_dir = run_dir / "code" / case_id / variant
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        (artifact_dir / "diff.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+        (artifact_dir / "changed-files.json").write_text(
+            json.dumps(manifest) + "\n",
+            encoding="utf-8",
+        )
+
     def run_validator(self, argv: list[str]) -> tuple[int | None, str]:
         stdout = io.StringIO()
         try:
             with contextlib.redirect_stdout(stdout):
                 result = self.validator.main(argv)
         except SystemExit as exc:
-            return int(exc.code), stdout.getvalue()
+            if isinstance(exc.code, int):
+                return exc.code, stdout.getvalue()
+            return None, stdout.getvalue()
         return result, stdout.getvalue()
 
     def assertFailsWith(self, argv: list[str], expected: str) -> None:
@@ -218,33 +243,27 @@ class ValidateEvalRunTests(unittest.TestCase):
     def test_code_manifest_missing_copied_text_file_fails(self) -> None:
         case_id = "case-code-one"
         run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id="run-code")
-        metadata = self.validator.CODE_CAPTURE_METADATA
-        metadata.parent.mkdir(parents=True, exist_ok=True)
-        metadata.write_text(
-            json.dumps({"cases": {case_id: {"captureCode": True}}}) + "\n",
-            encoding="utf-8",
-        )
-        for variant in ("baseline", "with-ddjango"):
-            artifact_dir = run_dir / "code" / case_id / variant
-            artifact_dir.mkdir(parents=True, exist_ok=True)
-            (artifact_dir / "diff.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
-            (artifact_dir / "changed-files.json").write_text(
-                json.dumps(
-                    {
-                        "caseId": case_id,
-                        "variant": variant,
-                        "files": [
-                            {
-                                "path": "app.py",
-                                "status": "modified",
-                                "artifactPath": f"code/{case_id}/{variant}/files/app.py",
-                                "binary": False,
-                            }
-                        ],
-                    }
-                )
-                + "\n",
-                encoding="utf-8",
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                {
+                    "caseId": case_id,
+                    "variant": variant,
+                    "evidenceMode": "code-backed",
+                    "diffPath": f"code/{case_id}/{variant}/diff.patch",
+                    "noCodeProduced": False,
+                    "files": [
+                        {
+                            "path": "app.py",
+                            "status": "modified",
+                            "artifactPath": f"code/{case_id}/{variant}/files/app.py",
+                            "binary": False,
+                        }
+                    ],
+                },
             )
 
         self.assertFailsWith(
@@ -252,13 +271,79 @@ class ValidateEvalRunTests(unittest.TestCase):
             "missing copied source file",
         )
 
+    def test_code_manifest_empty_object_fails(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id="run-code")
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(run_dir, case_id, variant, {})
+
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", "run-code", "--case", case_id],
+            "missing keys",
+        )
+
+    def test_code_manifest_deleted_binary_file_without_artifact_passes(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id="run-code")
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                {
+                    "caseId": case_id,
+                    "variant": variant,
+                    "evidenceMode": "code-backed",
+                    "diffPath": f"code/{case_id}/{variant}/diff.patch",
+                    "noCodeProduced": False,
+                    "files": [
+                        {
+                            "path": "old.bin",
+                            "status": "deleted",
+                            "artifactPath": "",
+                            "binary": True,
+                        }
+                    ],
+                },
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "code", "--run-id", "run-code", "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
     def test_unsafe_run_id_fails(self) -> None:
         for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", ""):
             with self.subTest(run_id=run_id):
-                with self.assertRaisesRegex(SystemExit, "unsafe run id"):
-                    self.validator.main(
-                        ["--bucket", "response", "--run-id", run_id, "--case", "case-response-one"]
-                    )
+                result, output = self.run_validator(
+                    ["--bucket", "response", "--run-id", run_id, "--case", "case-response-one"]
+                )
+
+                self.assertEqual(result, 1)
+                self.assertIn("FAIL: unsafe run id", output)
+
+    def test_unsafe_run_id_failure_reports_fail_prefix(self) -> None:
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", "../escape", "--case", "case-response-one"]
+        )
+
+        self.assertEqual(result, 1)
+        self.assertIn("FAIL: unsafe run id", output)
+
+    def test_unknown_case_failure_reports_fail_prefix(self) -> None:
+        self.write_case(bucket="response", case_id="case-response-one")
+
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-missing"]
+        )
+
+        self.assertEqual(result, 1)
+        self.assertIn("FAIL: Unknown case id(s) for response: case-response-missing", output)
+
 
 
 if __name__ == "__main__":
