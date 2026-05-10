@@ -12,3 +12,8 @@ This bucket is for process evaluation: whether an agent applies dddjango workflo
 - workflow under-application on composite or risky tasks
 
 Do not use this bucket to score generated source code correctness. That belongs in `eval/code`.
+
+Current workflow cases:
+
+- `cases/plugin/public/case-005.md`
+- `cases/plugin/public/case-006.md`

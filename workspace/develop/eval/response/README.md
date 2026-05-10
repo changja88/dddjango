@@ -1,25 +1,41 @@
-# dddjango Plugin Response Eval Pack
+# dddjango Response Eval
 
-This directory contains the response-level plugin eval prompt pack for `dddjango`.
+This bucket contains response-only eval material for `dddjango`.
 
-Use this pack after the individual skill rubrics and the workflow rubric have already passed. The source of truth for response scoring is `workspace/develop/eval/response/rubrics/plugin_rubric.md`; this directory turns that rubric into executable prompt packets, private evaluator guidance, and an HTML run-report template.
+A response eval compares the final answer text from baseline and with-dddjango variants. It may inspect raw command/event artifacts to verify honesty, but it does not treat runtime discovery, source provenance, workflow execution, or generated code as primary completion criteria.
+
+## Scope
+
+In scope:
+
+- Korean and Korean/English public prompts
+- baseline vs with-dddjango final response transcripts
+- private response scoring keys
+- response-only rubric criteria
+- answer usefulness, technical judgment, scope control, and verification honesty
+- refusal to leak private eval material or claim unrun work
+- self-contained HTML report for inspecting response artifacts
+
+Out of scope:
+
+- plugin install/discovery/cache checks: use `workspace/develop/eval/runtime`
+- source crosswalk coverage: use `workspace/develop/eval/source`
+- role-map/handoff process adherence as a primary outcome: use `workspace/develop/eval/workflow`
+- generated source, diffs, and executable checks: use `workspace/develop/eval/code`
+- integrated plugin acceptance verdicts: use `workspace/develop/eval/plugin`
 
 ## Directory Layout
 
 ```text
 workspace/develop/eval/response/
-  rubric_goal_instructions.md
   rubrics/
-    common_rubric.md
-    *_rubric.md
+    response_rubric.md
   cases/plugin/public/
-    case-001.md ... case-017.md
-    case-101.md
-  cases/plugin/code-capture.json
+    case-003.md
+    case-004.md
+    case-007.md ... case-015.md
   cases/plugin/private/
     case-map.md
-  fixtures/
-    code-artifact-sample/
   templates/
     case-analysis.html
     public-packet.md
@@ -30,66 +46,37 @@ workspace/develop/eval/response/
 
 ## Execution Rules
 
-- Give forward-test agents or prompt runners only files from `cases/plugin/public/` plus task-local fixture files.
-- Do not give forward-test agents `cases/plugin/private/`, rubric files, prior findings, expected routes, scoring notes, or intended fixes.
-- Store raw outputs under `workspace/develop/eval/response/runs/<run-id>/raw/`.
-- Store actual generated code for code-backed cases under `workspace/develop/eval/response/runs/<run-id>/code/<case-id>/<variant>/`.
-- Store case-level human analysis pages under `workspace/develop/eval/response/runs/<run-id>/analysis/`.
-- Store findings, reruns, and the final HTML report under the same run directory.
-- Copy `templates/run-report.html` to `runs/<run-id>/report.html` and edit the embedded `REPORT_DATA` object for the run.
-- The HTML report is self-contained and must work from `file://`; do not make it depend on external assets, CDN links, or local JSON fetched with browser APIs.
-- Record baseline and with-dddjango results against the same public packets so the report can show score, pass-rate, routing, hard-gate, finding, and scenario-family deltas.
-- Artifact links in the HTML report are relative links from the run directory. Create analysis artifacts such as `analysis/<case-id>.html` and raw artifacts such as `raw/<case-id>-public-prompt.md`, `raw/<case-id>-baseline.txt`, `raw/<case-id>-with-dddjango.txt`, prompt-input JSON, command logs, screenshots, and leakage-scan logs before marking an artifact as present.
-- Code-backed case links must point to real `changed-files.json`, `diff.patch`, and copied source files. If those files do not exist, mark the case as `response-only` or `No code captured`.
-- Case-level analysis HTML should explain the prompt, baseline setup, with-dddjango setup, what each variant did well or poorly, hard-gate/routing differences, score rationale, final score, and links back to raw evidence.
-- If runtime cache is used, record the cache path and compare it with canonical source `dddjango/`.
-- If a command, smoke check, review, or subagent pass was not run, mark it as not run with a reason.
+- Give prompt runners only files from `cases/plugin/public/` plus task-local files required by the user request.
+- Do not give prompt runners `cases/plugin/private/`, rubrics, prior findings, expected routes, scoring notes, or intended fixes.
+- Run baseline and with-dddjango against the same public prompt and same task-local evidence.
+- Record raw outputs under `workspace/develop/eval/response/runs/<run-id>/raw/`.
+- Store case-level human analysis under `workspace/develop/eval/response/runs/<run-id>/analysis/`.
+- Store findings, reruns, and final report under the same run directory.
+- The report must label missing raw response, command, event, or evaluator artifacts as `blocked` or `not scored`; do not retain a pass from stale static data.
+- If a command, smoke check, review, or subagent pass was not run, the response evaluation may score only whether the answer reported that honestly.
 
 ## Required Run Artifacts
 
-Each complete run records:
+Each complete response run records:
 
 - git commit or working-tree state
-- plugin version from `dddjango/.codex-plugin/plugin.json`
-- validation command output
-- `git diff --check` output
-- runtime leakage scan command, scope, patterns, output, and semantic review note
-- runtime cache path and source/cache comparison when cache is used
-- prompt-input or equivalent metadata exposure artifact
 - public packet paths actually supplied
-- case-level analysis HTML for baseline vs with-dddjango comparisons
-- raw outputs and transcripts
-- for code-backed cases, `code/<case>/<variant>/changed-files.json`, `code/<case>/<variant>/diff.patch`, and copied source files under `code/<case>/<variant>/files/`
-- findings with severity, scenario family, case id, defect type, failed gate or dimension, artifact path, and rerun scope
-- rerun evidence after fixes
-- final not-run list
+- raw baseline and with-dddjango response transcripts
+- command and event artifacts when available
+- case-level response analysis
+- response scores loaded from run-specific evaluator output or recorded human judgment
+- findings with severity, case id, failed response criterion, artifact path, and rerun scope
+- final not-run list for any omitted checks mentioned by a response
 
 ## Completion Rule
 
-The plugin response eval is complete only when:
+The response eval is complete only when:
 
-- every public case in this pack has been run or is explicitly marked not-run as a blocker
-- plugin-level and applicable common hard gate failures are 0
-- blocking, major, and minor findings are all 0
-- every required scenario family in `plugin_rubric.md` has passing evidence
-- generated/all validation passes against `dddjango/skills`
-- runtime leakage scan finds no private evaluation material under runtime paths
-- runtime cache is not used, or it matches canonical `dddjango/` source for the evaluated version
+- every response public case has been run or is explicitly marked not-run as a blocker
+- response hard gate failures are 0
+- blocking, major, and minor response findings are all 0
+- raw response evidence exists for every scored row
+- private grader material is not included in public packets or runtime files
+- non-response cases are not counted in the response score
 
-Do not mark the plugin response eval complete from smoke checks alone.
-
-## Code Artifact Evidence
-
-`workspace/develop/eval/response/cases/plugin/code-capture.json` is the source of truth for deciding whether a public case requires actual code artifacts.
-
-- `raw/<case>-<variant>.txt`: final model response transcript.
-- `raw/<case>-<variant>-events.jsonl`: Codex event stream.
-- `code/<case>/<variant>/files/*`: actual generated source files copied from the isolated workspace.
-- `code/<case>/<variant>/diff.patch`: actual generated code diff.
-- `code/<case>/<variant>/changed-files.json`: machine-readable changed-file manifest.
-
-Reports may say "actual code was evaluated" only when both `changed-files.json` and `diff.patch` exist for the case and variant. Cases without those artifacts must be labeled `response-only` or `No code captured`.
-
-## Related Buckets
-
-Use `workspace/develop/eval/source/crosswalks/` for source coverage crosswalks. Use `workspace/develop/eval/runtime/` for plugin installation, discovery, cache, and host integration checks. Use `workspace/develop/eval/workflow/` for process adherence checks that are broader than response wording.
+Do not use this bucket to claim the plugin is complete. Passing response eval only means the final answer text satisfied the response rubric for the cases in this bucket.

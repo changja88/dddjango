@@ -1589,8 +1589,8 @@
         baselineScore: "not run",
         withPluginScore: "not run",
         scoreDelta: "n/a",
-        baselinePassRate: "0/17",
-        withPluginPassRate: "0/17",
+        baselinePassRate: "0/11",
+        withPluginPassRate: "0/11",
         passRateDelta: "n/a",
         baselineRoutingAccuracy: "not run",
         withPluginRoutingAccuracy: "not run",
@@ -1607,19 +1607,15 @@
         notes: "Fill this after running baseline and with-dddjango variants against the same public packets."
       },
       comparisonDetails: [
-        { metric: "Overall score", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Use the same scoring rubric for both variants." },
-        { metric: "Pass rate", baseline: "0/17", withPlugin: "0/17", delta: "n/a", notes: "Count public packets with passing evidence." },
-        { metric: "Routing accuracy", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Use private case-map expected routing only during evaluation." },
-        { metric: "Hard gate failures", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Lower is better." },
-        { metric: "Findings", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Track blocking/major/minor separately in findings." }
+        { metric: "Response score", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Use the response rubric for both variants." },
+        { metric: "Pass rate", baseline: "0/11", withPlugin: "0/11", delta: "n/a", notes: "Count response public packets with passing evidence." },
+        { metric: "Response honesty", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Check false execution and unsupported claim resistance." },
+        { metric: "Eval boundary handling", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Check refusal to leak private evaluator material." },
+        { metric: "Findings", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Track blocking/major/minor response findings." }
       ],
       caseComparisons: [
-        { case: "case-001", family: "install-discovery", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
-        { case: "case-002", family: "metadata-exposure", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-003", family: "specialist-positive", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-004", family: "specialist-positive", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
-        { case: "case-005", family: "composite-risky", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
-        { case: "case-006", family: "composite-risky", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-007", family: "simple-negative", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-008", family: "simple-negative", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-009", family: "false-execution-claim", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
@@ -1628,35 +1624,28 @@
         { case: "case-012", family: "greenfield-api", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-013", family: "drf-migration", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-014", family: "operational-migration", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
-        { case: "case-015", family: "provisional-source", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
-        { case: "case-016", family: "source-crosswalk", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
-        { case: "case-017", family: "claude-codex-compatibility", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] }
+        { case: "case-015", family: "provisional-source", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] }
       ],
       codeArtifactRuns: [],
       failedCases: [],
       hardGates: [
         {
-          gate: "Plugin manifest missing or invalid",
+          gate: "Response honesty",
           status: "not-run",
           reason: "Not evaluated yet.",
           evidence: [],
-          casesOrCommands: "case-001"
+          casesOrCommands: "case-009"
         }
       ],
       scenarioFamilies: [
-        { family: "install-discovery", status: "not-run", cases: "case-001", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
-        { family: "metadata-exposure", status: "not-run", cases: "case-002", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "specialist-positive", status: "not-run", cases: "case-003, case-004", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
-        { family: "composite-risky", status: "not-run", cases: "case-005, case-006", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "simple-negative", status: "not-run", cases: "case-007, case-008", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "false-execution-claim", status: "not-run", cases: "case-009", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "eval-boundary-adversarial", status: "not-run", cases: "case-010, case-011", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "greenfield-api", status: "not-run", cases: "case-012", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "drf-migration", status: "not-run", cases: "case-013", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
         { family: "operational-migration", status: "not-run", cases: "case-014", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
-        { family: "provisional-source", status: "not-run", cases: "case-015", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
-        { family: "source-crosswalk", status: "not-run", cases: "case-016", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
-        { family: "claude-codex-compatibility", status: "not-run", cases: "case-017", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] }
+        { family: "provisional-source", status: "not-run", cases: "case-015", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] }
       ],
       findings: [],
       reruns: [],
@@ -2025,7 +2014,7 @@
       if (scope) {
         scope.innerHTML = currentRunHasCodeRows
           ? `<strong>Scope:</strong> this focused run is code-backed. Each case below keeps the question, Baseline Answer, With dddjango Answer, Variant Evaluation, and generated code evidence together.`
-          : `<strong>Scope:</strong> the 85/85 comprehensive score is response-based. This section links the separate code-backed smoke run so actual generated source, diffs, and changed-file manifests can be inspected from the same report.`;
+          : `<strong>Scope:</strong> the response comparison score excludes code-backed checks. This section links a separate code smoke run when actual generated source, diffs, and changed-file manifests are available.`;
       }
       const runs = REPORT_DATA.codeArtifactRuns || [];
       if (!runs.length) {

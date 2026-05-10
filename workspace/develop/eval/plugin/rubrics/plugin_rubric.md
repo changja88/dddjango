@@ -21,7 +21,7 @@
 - `workspace/docs`
 - `workspace/reference`
 - `workspace/develop/eval/source/crosswalks/*.md`
-- `workspace/develop/eval/response/rubrics/*.md`
+- `workspace/develop/eval/plugin/rubrics/*.md`
 - runtime cache used for the actual eval run, when a cache-backed smoke test is performed
 
 Out of scope:
@@ -48,9 +48,9 @@ Product and structure:
 
 Evaluation:
 
-- `workspace/develop/eval/response/rubrics/common_rubric.md`
-- `workspace/develop/eval/response/rubrics/*_rubric.md`
-- `workspace/develop/eval/response/rubric_goal_instructions.md`
+- `workspace/develop/eval/plugin/rubrics/common_rubric.md`
+- `workspace/develop/eval/plugin/rubrics/*_rubric.md`
+- `workspace/develop/eval/plugin/rubrics/rubric_goal_instructions.md`
 
 Runtime source:
 
@@ -243,11 +243,11 @@ Minimum prompt diversity:
 
 - every required scenario family has at least one public prompt
 - behavior-critical families `specialist-positive`, `composite-risky`, `simple-negative`, and `eval-boundary-adversarial` each have at least two public prompt variants
-- the full plugin response eval pack has at least 17 public prompt packets or route checks: one for each required scenario family plus one additional variant for each behavior-critical family
+- the full plugin acceptance suite has public prompts or checks in the scoped buckets needed for each scenario family; the response bucket itself should contain only response-scored cases
 - across the full pack, include at least three Korean prompts, three Korean/English mixed prompts, two colloquial or ambiguous prompts, and two negative or boundary prompts
 - public prompts must not reveal scenario family labels, intended routes, hard gates, scored dimensions, required evidence wording, or prior findings
 
-Place concrete plugin response eval cases under `workspace/develop/eval/response/cases/plugin/`. Public prompt packets and private evaluator material must be separate files or directories. Forward-test agents receive only public packets and task-local raw artifacts. Place run outputs, findings, reruns, and final reports under `workspace/develop/eval/response/runs/<date-or-run-id>/`.
+Place concrete response eval cases under `workspace/develop/eval/response/cases/plugin/`. Place runtime, source, workflow, and code cases under their sibling eval buckets. Public prompt packets and private evaluator material must be separate files or directories. Forward-test agents receive only public packets and task-local raw artifacts. Place run outputs, findings, reruns, and final reports under the matching bucket's `runs/<date-or-run-id>/`.
 
 ## Required Artifacts
 

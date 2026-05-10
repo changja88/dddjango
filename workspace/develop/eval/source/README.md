@@ -10,3 +10,7 @@ This bucket is for source-provenance evaluation: whether runtime skill guidance 
 - source-backed review evidence for runtime skill guidance
 
 Do not use this bucket to score final answer wording. That belongs in `eval/response`.
+
+Current source-provenance cases:
+
+- `cases/plugin/public/case-016.md`

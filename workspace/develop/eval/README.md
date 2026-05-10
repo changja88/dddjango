@@ -9,6 +9,7 @@ This directory groups evaluation material by the thing being judged.
 - `runtime/`: install, discovery, plugin cache, marketplace, symlink, and host integration checks.
 - `source/`: source-provenance evaluation. This includes crosswalks that trace runtime skill guidance back to `workspace/docs` and `workspace/reference`.
 - `workflow/`: process evaluation. This covers TDD, DDD, subagent coordination, verification honesty, and over-application or under-application of workflow rules.
+- `plugin/`: integrated plugin acceptance material that intentionally spans response, code, runtime, source, and workflow checks.
 
 ## Shared Protocol Checks
 

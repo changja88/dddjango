@@ -10,7 +10,7 @@ from typing import Any
 
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-METADATA_PATH = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/code-capture.json"
+METADATA_PATH = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/code-capture.json"
 VALID_VARIANTS = ("baseline", "with-dddjango")
 
 

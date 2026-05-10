@@ -17,8 +17,10 @@ from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
 PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
-CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/code-capture.json"
-RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
+CODE_PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/public"
+CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/code-capture.json"
+RESPONSE_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
+CODE_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/code/runs"
 DEFAULT_WORKSPACE_ROOT = Path("/private/tmp/dddjango-eval-workspaces")
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_REASONING = "xhigh"
@@ -57,6 +59,7 @@ ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".pytest_cache"),
     Path("workspace/develop/eval/code/rubrics"),
     Path("workspace/develop/eval/code/runs"),
+    Path("workspace/develop/eval/plugin/rubrics"),
     Path("workspace/develop/eval/response/runs"),
     Path("workspace/develop/eval/response/cases/plugin/private"),
     Path("workspace/develop/eval/response/rubrics"),
@@ -79,7 +82,7 @@ BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", help="Existing or new run id. Defaults to timestamped id.")
-    parser.add_argument("--case", action="append", help="Case id to run, e.g. case-001. Repeatable.")
+    parser.add_argument("--case", action="append", help="Case id to run, e.g. case-003. Repeatable.")
     parser.add_argument(
         "--variant",
         action="append",
@@ -104,13 +107,15 @@ def now_text() -> str:
 def case_paths(selected: list[str] | None) -> list[Path]:
     paths = sorted(PUBLIC_CASES.glob("case-*.md"))
     if not selected:
-        return [path for path in paths if path.stem != "case-101"]
+        return paths
     wanted = set(selected)
-    found = {path.stem for path in paths}
+    code_paths = sorted(CODE_PUBLIC_CASES.glob("case-*.md"))
+    all_paths = paths + code_paths
+    found = {path.stem for path in all_paths}
     missing = sorted(wanted - found)
     if missing:
         raise SystemExit(f"Unknown case id(s): {', '.join(missing)}")
-    return [path for path in paths if path.stem in wanted]
+    return [path for path in all_paths if path.stem in wanted]
 
 
 def load_code_capture_metadata() -> dict[str, object]:
@@ -290,6 +295,7 @@ def write_baseline_isolation_artifact(
         Path("dddjango/.codex-plugin/plugin.json"),
         Path(".agents/plugins/marketplace.json"),
         Path("plugins/dddjango"),
+        Path("workspace/develop/eval/plugin/rubrics"),
         Path("workspace/develop/eval/response/rubrics"),
         Path("workspace/develop/eval/response/cases/plugin/private"),
         Path("workspace/develop/eval/response/runs"),
@@ -492,7 +498,8 @@ def codex_exec_command(
 def main() -> int:
     args = parse_args()
     run_id = args.run_id or f"{now_text()}-plugin-eval"
-    run_dir = RUNS_DIR / run_id
+    runs_dir = CODE_RUNS_DIR if args.capture_code else RESPONSE_RUNS_DIR
+    run_dir = runs_dir / run_id
     raw_dir = run_dir / "raw"
     analysis_dir = run_dir / "analysis"
     raw_dir.mkdir(parents=True, exist_ok=True)

@@ -25,6 +25,12 @@ workspace/develop/eval/code/
 
 Keep generated run outputs under `runs/<run-id>/`; they are local artifacts and are ignored by git.
 
+Current code-backed material:
+
+- `cases/plugin/public/case-101.md`
+- `cases/plugin/code-capture.json`
+- `fixtures/code-artifact-sample/`
+
 ## Boundary
 
 This directory should not replace `eval/response`. A passing response eval proves that the plugin routes and explains work well. A passing code eval should prove that the plugin can produce source changes that satisfy executable project checks.

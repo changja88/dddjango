@@ -3,7 +3,7 @@
     "case-101": {
       "captureCode": true,
       "evidenceMode": "code-backed",
-      "subjectRepo": "workspace/develop/eval/response/fixtures/code-artifact-sample",
+      "subjectRepo": "workspace/develop/eval/code/fixtures/code-artifact-sample",
       "requiredArtifacts": [
         "changed-files.json",
         "diff.patch"

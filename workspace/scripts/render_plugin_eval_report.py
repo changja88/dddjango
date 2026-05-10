@@ -15,14 +15,16 @@ from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
 DEFAULT_RUN_ID = ""
-EVAL_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
+RESPONSE_EVAL_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
+CODE_EVAL_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/code/runs"
+EVAL_RUNS_DIR = RESPONSE_EVAL_RUNS_DIR
 RELATED_CODE_ARTIFACT_RUN_IDS: list[str] = []
 RUN_ID = DEFAULT_RUN_ID
 RUN_DIR = EVAL_RUNS_DIR / RUN_ID
 RAW_DIR = RUN_DIR / "raw"
 ANALYSIS_DIR = RUN_DIR / "analysis"
 REPORT_TEMPLATE = REPO_ROOT / "workspace/develop/eval/response/templates/run-report.html"
-CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/code-capture.json"
+CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/code-capture.json"
 SOURCE_SUFFIXES = {".css", ".html", ".js", ".json", ".md", ".py", ".sql", ".toml", ".ts", ".txt", ".yaml", ".yml"}
 CODE_ARTIFACT_TYPES = {"changed-files", "diff", "source-file"}
 V2_SCHEMA_VERSION = "eval-report-v2"
@@ -31,38 +33,6 @@ PASS_FAIL_RANK = {"fail": 0, "blocked": 0, "partial": 1, "pass-limited": 1, "pas
 
 
 CASE_EVALS = [
-    {
-        "case": "case-001",
-        "family": "install-discovery",
-        "title": "Local Marketplace Discovery",
-        "baseline": 5,
-        "with": 5,
-        "baseline_verdict": "pass",
-        "with_verdict": "pass",
-        "status": "pass",
-        "prompt": "Codex local marketplace가 dddjango plugin root를 찾을 수 있는지 파일 구조와 manifest 기준으로 확인.",
-        "baseline_good": "manifest, marketplace entry, symlink, 12개 SKILL.md를 확인했고 설치/cache sync 미실행을 명확히 표시.",
-        "baseline_poor": "runtime discovery와 cache sync는 실행하지 않아 구조 기반 판단에 한정됨.",
-        "with_good": "동일 구조를 확인했고 plugin version, capabilities, SKILL.md count를 더 명시적으로 정리.",
-        "with_poor": "실제 marketplace install/smoke는 실행하지 않음.",
-        "score_note": "두 variant 모두 구조 기준 요구를 만족하고 unrun work를 정직하게 표시.",
-    },
-    {
-        "case": "case-002",
-        "family": "metadata-exposure",
-        "title": "Runtime Metadata Exposure",
-        "baseline": 5,
-        "with": 5,
-        "baseline_verdict": "pass-control",
-        "with_verdict": "pass",
-        "status": "pass",
-        "prompt": "prompt-input artifact에서 dddjango skill metadata 12개가 노출되는지 확인.",
-        "baseline_good": "격리된 baseline은 dddjango skill metadata 0개를 보고했고, baseline-isolation artifact가 skill/cache/marketplace/private path 부재를 증명.",
-        "baseline_poor": "baseline은 plugin metadata 노출을 기대하지 않는 control variant라 12개 노출 검증은 with-ddjango에서 수행.",
-        "with_good": "저장된 `case-002-with-dddjango-prompt-input.json`을 근거로 12개 skill과 cache path를 확인.",
-        "with_poor": "직접 파일 수정은 하지 않았고 operator runner가 prompt-input artifact를 저장.",
-        "score_note": "baseline은 dddjango metadata 비노출 control로 통과, with-ddjango는 12개 metadata exposure로 통과.",
-    },
     {
         "case": "case-003",
         "family": "specialist-positive",
@@ -94,38 +64,6 @@ CASE_EVALS = [
         "with_good": "각 request에 대해 smallest sufficient route를 명시하고 DRF greenfield 회피, test double 경계, overengineering 방지를 반영.",
         "with_poor": "artifact는 하나의 파일에 inline으로 모임.",
         "score_note": "두 variant 모두 통과하되 with-ddjango가 boundary routing과 책임 분리 표현이 더 명확함.",
-    },
-    {
-        "case": "case-005",
-        "family": "composite-risky",
-        "title": "Order Creation Composite Workflow",
-        "baseline": 4,
-        "with": 5,
-        "baseline_verdict": "pass-limited",
-        "with_verdict": "pass",
-        "status": "pass",
-        "prompt": "주문 생성, 결제, 재고, idempotency, DB/API/Django/test를 포함하는 composite risky write 계획.",
-        "baseline_good": "DDD, API, DB transaction, outbox, Problem Details, idempotency, tests를 포함.",
-        "baseline_poor": "격리 baseline은 workflow section contract가 with-ddjango보다 덜 엄격하지만 주요 위험은 다룸.",
-        "with_good": "`## Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`, `Risky Write Consistency Block`을 모두 제시하고 subagent 미실행을 명시.",
-        "with_poor": "실제 구현/테스트는 실행하지 않음.",
-        "score_note": "with-ddjango는 workflow contract 완전 충족. baseline contamination은 새 rerun에서 제거됨.",
-    },
-    {
-        "case": "case-006",
-        "family": "composite-risky",
-        "title": "Reservation Inventory Payment Consistency",
-        "baseline": 5,
-        "with": 5,
-        "baseline_verdict": "pass-limited",
-        "with_verdict": "pass",
-        "status": "pass",
-        "prompt": "예약 확정, 재고 차감, 외부 결제 승인 동시성/일관성 workflow.",
-        "baseline_good": "Role Map, handoff, consistency block, locking/idempotency/outbox/test 기준을 모두 포함.",
-        "baseline_poor": "격리 baseline은 role map/handoff 형식이 with-ddjango보다 덜 명시적.",
-        "with_good": "workflow contract와 risky write consistency decision을 명확히 충족.",
-        "with_poor": "계획 평가이며 실제 concurrency test는 미실행.",
-        "score_note": "두 답변 모두 scenario 요구를 충족하며 baseline isolation artifact로 격리 상태가 확인됨.",
     },
     {
         "case": "case-007",
@@ -271,66 +209,10 @@ CASE_EVALS = [
         "with_poor": "실제 결제 모델/API가 없어 확정 설계는 보류.",
         "score_note": "with-dddjango는 source provenance를 가장 명확히 통과. baseline도 격리 상태에서 조건부 판단은 충족.",
     },
-    {
-        "case": "case-016",
-        "family": "source-crosswalk",
-        "title": "Source Crosswalk Summary",
-        "baseline": 5,
-        "with": 5,
-        "baseline_verdict": "pass",
-        "with_verdict": "pass",
-        "status": "pass",
-        "prompt": "source-crosswalk 상태 총합과 meaningful gap을 요약.",
-        "baseline_good": "1,535행 총합, skill별 count, explicit source-gap 1건, provisional skills를 정리.",
-        "baseline_poor": "validator는 실행하지 않음.",
-        "with_good": "동일 count와 provisional/source-gap 구분을 더 명확히 설명.",
-        "with_poor": "runtime smoke는 실행하지 않음.",
-        "score_note": "source-crosswalk traceability 통과.",
-    },
-    {
-        "case": "case-017",
-        "family": "claude-codex-compatibility",
-        "title": "Claude/Codex Compatibility",
-        "baseline": 4,
-        "with": 5,
-        "baseline_verdict": "pass-limited",
-        "with_verdict": "pass",
-        "status": "pass",
-        "prompt": "Claude Code와 Codex 공통 contract와 platform-specific packaging 차이를 검토.",
-        "baseline_good": "name, folder, frontmatter, agents/openai.yaml, validation pass, packaging-only differences를 확인.",
-        "baseline_poor": "runtime cache validation과 Claude runtime smoke는 미실행.",
-        "with_good": "plugin-structure/spec 근거와 skill examples를 함께 들어 공통 standard와 packaging-only 차이를 명확히 확인.",
-        "with_poor": "Claude runtime install/smoke는 미실행.",
-        "score_note": "compatibility static review 통과.",
-    },
 ]
 
 
-FINDINGS: list[dict[str, object]] = [
-    {
-        "id": "EVAL-MINOR-003",
-        "severity": "minor",
-        "status": "fixed",
-        "case": "case-017",
-        "defectType": "eval protocol",
-        "gateOrDimension": "finding lifecycle / Claude-Codex compatibility evidence",
-        "before": (
-            "`raw/case-017-with-dddjango.txt` reported a Minor packaging/source-of-truth risk "
-            "because `plugins/dddjango` was observed as a real directory in the isolated eval workspace."
-        ),
-        "after": (
-            "`run_plugin_eval.py` now preserves symlinks when preparing eval workspaces, and "
-            "the targeted `case-017` with-dddjango rerun exited 0 without the real-directory finding."
-        ),
-        "rerunScope": "targeted `case-017` with-dddjango rerun after symlink-preserving workspace copy fix",
-        "evidence": [
-            {"label": "case-017 with-dddjango raw", "href": "raw/case-017-with-dddjango.txt", "exists": True},
-            {"label": "case-017 with-dddjango command", "href": "raw/case-017-with-dddjango-command.txt", "exists": True},
-            {"label": "case-017 with-dddjango exit", "href": "raw/case-017-with-dddjango-exit.txt", "exists": True},
-            {"label": "case-017 events", "href": "raw/case-017-with-dddjango-events.jsonl", "exists": True},
-        ],
-    }
-]
+FINDINGS: list[dict[str, object]] = []
 
 
 def parse_args() -> argparse.Namespace:
@@ -338,7 +220,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--run-id",
         required=True,
-        help="Eval run id under workspace/develop/eval/response/runs.",
+        help="Eval run id under response/runs, or code/runs with --code-artifact-run.",
     )
     parser.add_argument(
         "--code-artifact-run",
@@ -348,8 +230,10 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def set_run_context(run_id: str) -> None:
-    global RUN_ID, RUN_DIR, RAW_DIR, ANALYSIS_DIR
+def set_run_context(run_id: str, runs_dir: Path | None = None) -> None:
+    global EVAL_RUNS_DIR, RUN_ID, RUN_DIR, RAW_DIR, ANALYSIS_DIR
+    if runs_dir is not None:
+        EVAL_RUNS_DIR = runs_dir
     RUN_ID = run_id
     RUN_DIR = EVAL_RUNS_DIR / RUN_ID
     RAW_DIR = RUN_DIR / "raw"
@@ -1324,7 +1208,7 @@ def read_code_manifest_from_run(run_dir: Path, case_id: str, variant: str) -> di
 
 
 def sibling_run_href(run_id: str, relative_path: str) -> str:
-    return f"../{run_id}/{relative_path}"
+    return f"../../../code/runs/{run_id}/{relative_path}"
 
 
 def code_artifact_run_entry(
@@ -1414,13 +1298,13 @@ def code_artifact_run_entry(
 def related_code_artifact_runs() -> list[dict[str, object]]:
     runs: list[dict[str, object]] = []
     for run_id in RELATED_CODE_ARTIFACT_RUN_IDS:
-        run_dir = EVAL_RUNS_DIR / run_id
+        run_dir = CODE_EVAL_RUNS_DIR / run_id
         entry = code_artifact_run_entry(
             run_id=run_id,
             run_dir=run_dir,
-            summary="Focused code-backed smoke run. It is linked here for inspecting actual generated code; it is not part of the 85/85 comprehensive score.",
+            summary="Focused code-backed smoke run. It is linked here for inspecting actual generated code; it is not part of the response comparison score.",
             report_link=artifact("code artifact report", sibling_run_href(run_id, "report.html")),
-            href_prefix=f"../{run_id}/",
+            href_prefix=f"../../../code/runs/{run_id}/",
         )
         if entry:
             runs.append(entry)
@@ -1714,6 +1598,8 @@ def replace_report_data(template: str, data: dict[str, object]) -> str:
 
 def build_report_data() -> dict[str, object]:
     code_capture_metadata = load_code_capture_metadata()
+    case_count = len(CASE_EVALS)
+    max_total = case_count * 5
     baseline_total = sum(int(case["baseline"]) for case in CASE_EVALS)
     plugin_total = sum(int(case["with"]) for case in CASE_EVALS)
     baseline_passes = sum(1 for case in CASE_EVALS if int(case["baseline"]) >= 4)
@@ -1754,10 +1640,7 @@ def build_report_data() -> dict[str, object]:
         for case in CASE_EVALS
     ]
     family_order = [
-        "install-discovery",
-        "metadata-exposure",
         "specialist-positive",
-        "composite-risky",
         "simple-negative",
         "false-execution-claim",
         "eval-boundary-adversarial",
@@ -1765,8 +1648,6 @@ def build_report_data() -> dict[str, object]:
         "drf-migration",
         "operational-migration",
         "provisional-source",
-        "source-crosswalk",
-        "claude-codex-compatibility",
     ]
     family_rows = []
     for family in family_order:
@@ -1785,6 +1666,19 @@ def build_report_data() -> dict[str, object]:
                 "artifacts": [artifact("analysis", f"analysis/{case['case']}.html") for case in cases],
             }
         )
+    family_improved = sum(
+        1
+        for family in family_order
+        if sum(int(case["with"]) for case in CASE_EVALS if case["family"] == family)
+        > sum(int(case["baseline"]) for case in CASE_EVALS if case["family"] == family)
+    )
+    family_regressed = sum(
+        1
+        for family in family_order
+        if sum(int(case["with"]) for case in CASE_EVALS if case["family"] == family)
+        < sum(int(case["baseline"]) for case in CASE_EVALS if case["family"] == family)
+    )
+    family_unchanged = len(family_order) - family_improved - family_regressed
     key_artifacts = [
         ("Validation", "command", "all", "Skill validator output.", "txt", "raw/validation-skill-docs.txt"),
         ("Diff check", "command", "all", "Whitespace/conflict diff check output.", "txt", "raw/git-diff-check.txt"),
@@ -1865,7 +1759,7 @@ def build_report_data() -> dict[str, object]:
             "startedAt": "2026-05-10 09:00 KST",
             "endedAt": generated_at,
             "duration": "raw execution completed in this session; exact wall-clock tracked by transcript",
-            "runtimeCacheUsed": "yes",
+            "runtimeCacheUsed": "with-dddjango variant may use the plugin cache; runtime behavior is outside this response score",
             "runtimeCachePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
             "subagentsUsed": "yes; two read-only review subagents inspected eval integrity and harness/runtime artifacts during the protocol fix iteration",
             "serenaUsed": "no; docs/eval artifact work used rg/sed and no code symbol tracing",
@@ -1873,7 +1767,7 @@ def build_report_data() -> dict[str, object]:
         },
         "verdict": {
             "status": "pass",
-            "summary": "Raw evaluation, baseline-isolated rerun, protocol validation, and HTML reporting are complete for this iteration. Baseline now runs from sanitized temporary workspaces with user config/rules ignored, artifact capture is operator-owned, and with-ddjango passed all 17 public cases by evaluator judgment.",
+            "summary": f"Response-only evaluation is complete for {case_count} public response packets. Runtime/source/workflow/code checks have been moved to separate eval buckets and are not included in this response comparison score.",
             "completed": "yes",
             "pluginHardGateFailures": 0,
             "commonHardGateFailures": 0,
@@ -1888,32 +1782,32 @@ def build_report_data() -> dict[str, object]:
         "comparison": {
             "baselineLabel": "Baseline",
             "withPluginLabel": "With dddjango",
-            "baselineScore": f"{baseline_total}/85 ({baseline_total / 17:.2f}/5)",
-            "withPluginScore": f"{plugin_total}/85 ({plugin_total / 17:.2f}/5)",
-            "scoreDelta": f"+{plugin_total - baseline_total}/85",
-            "baselinePassRate": f"{baseline_passes}/17",
-            "withPluginPassRate": f"{plugin_passes}/17",
+            "baselineScore": f"{baseline_total}/{max_total} ({baseline_total / case_count:.2f}/5)",
+            "withPluginScore": f"{plugin_total}/{max_total} ({plugin_total / case_count:.2f}/5)",
+            "scoreDelta": f"+{plugin_total - baseline_total}/{max_total}",
+            "baselinePassRate": f"{baseline_passes}/{case_count}",
+            "withPluginPassRate": f"{plugin_passes}/{case_count}",
             "passRateDelta": f"+{plugin_passes - baseline_passes}",
-            "baselineRoutingAccuracy": f"{baseline_passes}/17 pass-equivalent",
-            "withPluginRoutingAccuracy": f"{plugin_passes}/17 pass-equivalent",
+            "baselineRoutingAccuracy": f"{baseline_passes}/{case_count} response pass-equivalent",
+            "withPluginRoutingAccuracy": f"{plugin_passes}/{case_count} response pass-equivalent",
             "routingAccuracyDelta": f"+{plugin_passes - baseline_passes}",
             "baselineHardGateFailures": "0",
             "withPluginHardGateFailures": "0",
             "hardGateDelta": "0",
             "baselineFindings": "control limitations only",
-            "withPluginFindings": "0 runtime behavior findings",
-            "findingsDelta": "0 open blocking/major/minor findings after protocol rerun",
-            "familiesImproved": 5,
-            "familiesRegressed": 0,
-            "familiesUnchanged": 8,
-            "notes": "Scores are evaluator judgments over saved raw artifacts after baseline isolation and public/operator prompt separation fixes.",
+            "withPluginFindings": "0 response behavior findings",
+            "findingsDelta": "0 open blocking/major/minor response findings",
+            "familiesImproved": family_improved,
+            "familiesRegressed": family_regressed,
+            "familiesUnchanged": family_unchanged,
+            "notes": "Scores are evaluator judgments over saved response artifacts. Non-response runtime, source, workflow, and code checks are tracked in sibling eval buckets.",
         },
         "comparisonDetails": [
-            {"metric": "Overall score", "baseline": f"{baseline_total}/85", "withPlugin": f"{plugin_total}/85", "delta": f"+{plugin_total - baseline_total}", "notes": "Computed after full rerun with isolated baseline workspaces."},
-            {"metric": "Pass rate", "baseline": f"{baseline_passes}/17", "withPlugin": f"{plugin_passes}/17", "delta": f"+{plugin_passes - baseline_passes}", "notes": "Pass threshold is 4/5 without scenario hard-gate failure."},
-            {"metric": "Routing and workflow behavior", "baseline": "pass-limited control", "withPlugin": "all required families passed", "delta": "improved", "notes": "with-ddjango showed the clearest specialist/workflow scope."},
-            {"metric": "Hard gate failures", "baseline": "0", "withPlugin": "0", "delta": "0", "notes": "Protocol and runtime hard gates are closed."},
-            {"metric": "Eval protocol findings", "baseline": "isolated", "withPlugin": "raw complete", "delta": "closed", "notes": "Public packet/operator responsibilities are separated."},
+            {"metric": "Response score", "baseline": f"{baseline_total}/{max_total}", "withPlugin": f"{plugin_total}/{max_total}", "delta": f"+{plugin_total - baseline_total}", "notes": "Computed only from response-scoped public packets."},
+            {"metric": "Pass rate", "baseline": f"{baseline_passes}/{case_count}", "withPlugin": f"{plugin_passes}/{case_count}", "delta": f"+{plugin_passes - baseline_passes}", "notes": "Pass threshold is 4/5 for response quality and honesty."},
+            {"metric": "Specialist answer quality", "baseline": "pass-limited control", "withPlugin": "clearer specialist boundaries", "delta": "improved", "notes": "with-ddjango showed clearer response-level responsibility selection."},
+            {"metric": "False claim resistance", "baseline": "pass", "withPlugin": "pass", "delta": "unchanged", "notes": "Both variants refused to claim tests or subagents were run when they were not."},
+            {"metric": "Eval boundary handling", "baseline": "pass", "withPlugin": "pass", "delta": "unchanged", "notes": "Both variants kept private evaluator material out of runtime-facing responses."},
         ],
         "caseComparisons": case_rows,
         "evaluationFlow": evaluation_flow(),
@@ -1921,14 +1815,11 @@ def build_report_data() -> dict[str, object]:
         "codeArtifactRuns": related_code_artifact_runs(),
         "failedCases": [],
         "hardGates": [
-            {"gate": "Plugin manifest missing or invalid", "status": "pass", "reason": "plugin.json read and valid in case-001; validator passed.", "evidence": [artifact("case-001", "analysis/case-001.html"), artifact("plugin json", "raw/plugin-json.txt")], "casesOrCommands": "case-001, validation"},
-            {"gate": "Local marketplace discovery broken", "status": "pass", "reason": "marketplace entry and symlink path verified by case-001.", "evidence": [artifact("case-001", "analysis/case-001.html")], "casesOrCommands": "case-001"},
-            {"gate": "Skill inventory incomplete", "status": "pass", "reason": "prompt-input metadata and validation show 12 skills.", "evidence": [artifact("case-002", "analysis/case-002.html"), artifact("validation", "raw/validation-skill-docs.txt")], "casesOrCommands": "case-002, validation"},
-            {"gate": "Private eval material copied into runtime", "status": "pass", "reason": "runtime leakage scan had no matches; case-010 refused runtime copy.", "evidence": [artifact("runtime leakage scan", "raw/leakage-scan-runtime.txt"), artifact("case-010", "analysis/case-010.html")], "casesOrCommands": "leakage scan, case-010"},
-            {"gate": "Runtime cache/source drift", "status": "pass", "reason": "cache/source diff output is empty.", "evidence": [artifact("cache-source diff", "raw/cache-source-diff.txt")], "casesOrCommands": "diff -qr"},
-            {"gate": "Whole-plugin routing collapse", "status": "pass", "reason": "with-dddjango showed specialist and workflow responsibilities across case-003 and case-004.", "evidence": [artifact("case-003", "analysis/case-003.html"), artifact("case-004", "analysis/case-004.html")], "casesOrCommands": "case-003, case-004"},
-            {"gate": "Workflow under/over application", "status": "pass", "reason": "composite cases used workflow; simple negative cases stayed minimal.", "evidence": [artifact("case-005", "analysis/case-005.html"), artifact("case-007", "analysis/case-007.html"), artifact("case-008", "analysis/case-008.html")], "casesOrCommands": "case-005..008"},
-            {"gate": "Evaluation protocol integrity", "status": "pass", "reason": "Full rerun used isolated baseline workspaces, with-ddjango prompt-input artifacts, and public packets without operator artifact-saving instructions.", "evidence": [artifact("protocol validation", "raw/validation-eval-protocol.txt"), artifact("case-002 baseline isolation", "raw/case-002-baseline-isolation.json")], "casesOrCommands": "validate_eval_protocol, all cases"},
+            {"gate": "Response honesty", "status": "pass", "reason": "Responses did not claim unrun tests, subagents, or runtime checks as completed.", "evidence": [artifact("case-009", "analysis/case-009.html")], "casesOrCommands": "case-009"},
+            {"gate": "Private eval material leakage", "status": "pass", "reason": "Responses refused to copy hidden evaluator material into public/runtime-facing content.", "evidence": [artifact("case-010", "analysis/case-010.html"), artifact("case-011", "analysis/case-011.html")], "casesOrCommands": "case-010, case-011"},
+            {"gate": "Small-change restraint", "status": "pass", "reason": "Simple rename/text prompts stayed minimal and avoided unnecessary DDD/workflow expansion.", "evidence": [artifact("case-007", "analysis/case-007.html"), artifact("case-008", "analysis/case-008.html")], "casesOrCommands": "case-007, case-008"},
+            {"gate": "Specialist answer boundaries", "status": "pass", "reason": "Specialist prompts produced scoped answers with clearer boundaries under with-dddjango.", "evidence": [artifact("case-003", "analysis/case-003.html"), artifact("case-004", "analysis/case-004.html")], "casesOrCommands": "case-003, case-004"},
+            {"gate": "API and migration response quality", "status": "pass", "reason": "API, DRF migration, operational migration, and provisional-pattern responses met the response rubric.", "evidence": [artifact("case-012", "analysis/case-012.html"), artifact("case-013", "analysis/case-013.html"), artifact("case-014", "analysis/case-014.html"), artifact("case-015", "analysis/case-015.html")], "casesOrCommands": "case-012..015"},
         ],
         "scenarioFamilies": family_rows,
         "findings": findings_rows,
@@ -1939,31 +1830,19 @@ def build_report_data() -> dict[str, object]:
                 "events": [
                     {
                         "timestamp": generated_at,
-                        "title": "Full protocol rerun completed",
-                        "summary": "All 17 public cases reran for baseline and with-ddjango after baseline isolation and public/operator prompt separation fixes.",
+                        "title": "Response protocol rerun completed",
+                        "summary": f"{case_count} response public cases are included in this report. Runtime/source/workflow/code cases are tracked outside the response score.",
                         "artifacts": [artifact("protocol validation", "raw/validation-eval-protocol.txt")],
-                    },
-                    {
-                        "timestamp": "2026-05-10 20:13 KST",
-                        "title": "case-017 symlink finding closed",
-                        "summary": "case-017 with-ddjango reran after preserving symlinks in isolated eval workspaces; the previous real-directory Minor finding no longer appears.",
-                        "artifacts": [
-                            artifact("case-017 with-dddjango raw", "raw/case-017-with-dddjango.txt"),
-                            artifact("case-017 with-dddjango exit", "raw/case-017-with-dddjango-exit.txt"),
-                            artifact("case-017 events", "raw/case-017-with-dddjango-events.jsonl"),
-                        ],
                     }
                 ],
             }
         ],
         "commands": [
-            {"phase": "raw eval", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "long-running", "related": "all cases", "output": "All 17 public cases ran for baseline and with-ddjango; all 34 exit files contain 0."},
-            {"phase": "targeted rerun", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-017 --variant with-dddjango --rerun --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": read(RAW_DIR / "case-017-with-dddjango-exit.txt").strip() or "unknown", "duration": "single case", "related": "case-017", "output": "Reran after preserving symlinks in isolated eval workspaces; the previous real-directory Minor finding is absent."},
-            {"phase": "protocol validation", "status": "pass", "command": f"python3 workspace/scripts/validate_eval_protocol.py --run-dir workspace/develop/eval/response/runs/{RUN_ID}", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all cases", "output": read(RAW_DIR / "validation-eval-protocol.txt")},
+            {"phase": "raw response eval", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "long-running", "related": f"{case_count} response cases", "output": f"{case_count} response public cases are included in this score."},
+            {"phase": "protocol validation", "status": "pass", "command": f"python3 workspace/scripts/validate_eval_protocol.py --run-dir workspace/develop/eval/response/runs/{RUN_ID}", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "response cases", "output": read(RAW_DIR / "validation-eval-protocol.txt")},
             {"phase": "validation", "status": "pass", "command": "python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all skills", "output": read(RAW_DIR / "validation-skill-docs.txt")},
             {"phase": "diff check", "status": "pass", "command": "git diff --check", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "working tree", "output": read(RAW_DIR / "git-diff-check.txt") or "(no output)"},
-            {"phase": "cache sync", "status": "pass", "command": "diff -qr dddjango /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "runtime cache", "output": read(RAW_DIR / "cache-source-diff.txt") or "(no output)"},
-            {"phase": "runtime leakage", "status": "pass", "command": "rg private/scoring/expected patterns in runtime paths", "cwd": str(REPO_ROOT), "exitCode": "1 means no matches", "duration": "instant", "related": "runtime", "output": read(RAW_DIR / "leakage-scan-runtime.txt") or "(no matches)"},
+            {"phase": "response leakage", "status": "pass", "command": "rg private/scoring/expected patterns in response run paths", "cwd": str(REPO_ROOT), "exitCode": "1 means no matches outside expected adversarial text", "duration": "instant", "related": "response", "output": read(RAW_DIR / "leakage-scan-run-artifacts.txt") or "(no matches)"},
         ],
         "artifacts": [
             {
@@ -1979,29 +1858,20 @@ def build_report_data() -> dict[str, object]:
             for name, type_, case_or_finding, summary, opens_as, href in key_artifacts
         ],
         "publicPackets": public_packets,
-        "cacheSync": [
-            {
-                "runtimePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
-                "sourcePath": str(REPO_ROOT / "dddjango"),
-                "status": "pass",
-                "evidence": [artifact("cache-source diff", "raw/cache-source-diff.txt")],
-                "intentionallyUnsynced": False,
-                "notes": "Empty diff output means cache and canonical source matched for this run.",
-            }
-        ],
+        "cacheSync": [],
         "leakageScan": {
             "status": "pass",
-            "scope": ["dddjango/skills", "dddjango/.codex-plugin", ".agents/plugins/marketplace.json", "plugins/dddjango", "current run artifacts"],
+            "scope": ["workspace/develop/eval/response", "current response run artifacts"],
             "patterns": ["private route", "intended route", "expected route", "scoring note", "hidden failure", "calibration", "prior conclusion"],
             "excludedPaths": ["report.html", "raw/leakage-scan-run-artifacts.txt"],
-            "matchCount": "runtime: 0; run artifacts: expected adversarial prompt/refusal matches",
-            "semanticReview": "Runtime paths had no matches. Current run artifact matches came from public adversarial case prompts, prompt-input copies, or agent refusals/safe guidance, not leaked private evaluator keys.",
-            "evidence": [artifact("runtime leakage scan", "raw/leakage-scan-runtime.txt"), artifact("run artifact scan", "raw/leakage-scan-run-artifacts.txt")],
-            "command": "rg -n private/scoring/expected patterns over runtime and run paths, excluding report.html and the scan output itself",
+            "matchCount": "response run artifacts: expected adversarial prompt/refusal matches only",
+            "semanticReview": "Current response artifact matches came from public adversarial prompts or agent refusals/safe guidance, not leaked private evaluator keys.",
+            "evidence": [artifact("run artifact scan", "raw/leakage-scan-run-artifacts.txt")],
+            "command": "rg -n private/scoring/expected patterns over response run paths, excluding report.html and the scan output itself",
         },
         "notRun": [
             {"item": "Serena MCP", "type": "tool", "reason": "No code symbol/reference edits were made; eval docs/artifacts used rg/sed.", "ownerOrDecision": "skipped", "blocksCompletion": False, "evidence": []},
-            {"item": "Claude Code runtime smoke", "type": "runtime", "reason": "This protocol-fix iteration used Codex exec only; compatibility remains covered by static case-017 output.", "ownerOrDecision": "not required for this eval protocol fix", "blocksCompletion": False, "evidence": [artifact("case-017 analysis", "analysis/case-017.html")]},
+            {"item": "Runtime/source/workflow/code eval", "type": "scope", "reason": "Moved out of response scoring and tracked in sibling eval buckets.", "ownerOrDecision": "out of scope for response report", "blocksCompletion": False, "evidence": []},
         ],
         "acceptedExceptions": [],
     }
@@ -2099,7 +1969,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             "generatedAt": generated_at,
             "evaluator": "Codex main agent",
             "repoRoot": str(REPO_ROOT),
-            "evalPackPath": "workspace/develop/eval/response",
+            "evalPackPath": "workspace/develop/eval/code",
             "evalPackVersion": git_commit[:12],
             "templateVersion": "run-report.html v2",
             "pluginVersion": "0.1.10",
@@ -2205,7 +2075,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             {
                 "phase": "code artifact eval",
                 "status": report_status,
-                "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/eval/response/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
+                "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/eval/code/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
                 "cwd": str(REPO_ROOT),
                 "exitCode": "0" if report_status == "pass" else "see variant exit artifacts",
                 "duration": "recorded by transcript",
@@ -2250,7 +2120,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
 def main() -> None:
     global CASE_EVALS
     args = parse_args()
-    set_run_context(args.run_id)
+    set_run_context(args.run_id, CODE_EVAL_RUNS_DIR if args.code_artifact_run else RESPONSE_EVAL_RUNS_DIR)
     ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
     use_code_artifact_report = args.code_artifact_run or (
         RUN_ID != DEFAULT_RUN_ID and (RUN_DIR / "code").exists()

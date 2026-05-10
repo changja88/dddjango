@@ -11,3 +11,9 @@ This bucket is for checks that prove the plugin can be installed, discovered, lo
 - host integration smoke checks
 
 Do not use this bucket to score answer wording or generated Django application code.
+
+Current runtime cases:
+
+- `cases/plugin/public/case-001.md`
+- `cases/plugin/public/case-002.md`
+- `cases/plugin/public/case-017.md`

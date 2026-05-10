@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def selected_case_ids(public_cases_dir: Path, selected: list[str] | None) -> list[str]:
-    case_ids = sorted(path.stem for path in public_cases_dir.glob("case-*.md") if path.stem != "case-101")
+    case_ids = sorted(path.stem for path in public_cases_dir.glob("case-*.md"))
     if not selected:
         return case_ids
     known = set(case_ids)
