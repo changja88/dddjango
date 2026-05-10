@@ -212,6 +212,34 @@ class ValidateEvalRunTests(unittest.TestCase):
             "baseline exit is not 0",
         )
 
+    def test_skipped_exits_fail_by_default_but_pass_when_allowed(self) -> None:
+        run_dir = self.write_valid_run()
+        for variant in ("baseline", "with-dddjango"):
+            (run_dir / f"raw/case-response-one-{variant}-exit.txt").write_text(
+                "skipped\n",
+                encoding="utf-8",
+            )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            "baseline exit is not 0",
+        )
+
+        result, output = self.run_validator(
+            [
+                "--bucket",
+                "response",
+                "--run-id",
+                "run-one",
+                "--case",
+                "case-response-one",
+                "--allow-skipped-exits",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
     def test_baseline_contamination_fails(self) -> None:
         self.write_valid_run(
             baseline_text="The dddjango:implementation-django skill says to proceed.\n"

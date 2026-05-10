@@ -136,8 +136,10 @@ def validator_command(args: argparse.Namespace, bucket: str, run_id: str) -> lis
         run_id,
     ]
     append_case_args(command, args.case)
-    if args.skip_oracle or args.render_only:
+    if args.skip_oracle:
         command.append("--skip-oracle")
+    if args.skip_exec:
+        command.append("--allow-skipped-exits")
     return command
 
 

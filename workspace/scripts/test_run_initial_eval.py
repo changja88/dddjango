@@ -85,9 +85,10 @@ class RunInitialEvalTests(unittest.TestCase):
         self.assertIn("--reasoning", evaluator)
         self.assertIn("high", evaluator)
         self.assertNotIn("--skip-oracle", validator)
+        self.assertIn("--allow-skipped-exits", validator)
         self.assertNotIn("--case", renderer)
 
-    def test_render_only_skips_runner_and_evaluator_and_relaxes_validator_oracle(self) -> None:
+    def test_render_only_skips_runner_and_evaluator_without_relaxing_validator_oracle(self) -> None:
         with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
             result = self.orchestrator.main(
                 [
@@ -104,7 +105,29 @@ class RunInitialEvalTests(unittest.TestCase):
             self.script_names(),
             ["validate_eval_run.py", "render_eval_review_html.py"],
         )
+        self.assertNotIn("--skip-oracle", self.commands[0])
+        self.assertNotIn("--allow-skipped-exits", self.commands[0])
+
+    def test_render_only_with_explicit_skip_oracle_passes_validator_flag(self) -> None:
+        with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
+            result = self.orchestrator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-one",
+                    "--render-only",
+                    "--skip-oracle",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(
+            self.script_names(),
+            ["validate_eval_run.py", "render_eval_review_html.py"],
+        )
         self.assertIn("--skip-oracle", self.commands[0])
+        self.assertNotIn("--allow-skipped-exits", self.commands[0])
 
     def test_skip_oracle_skips_evaluator_and_passes_validator_flag(self) -> None:
         with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
@@ -124,6 +147,29 @@ class RunInitialEvalTests(unittest.TestCase):
             ["run_eval_bucket.py", "validate_eval_run.py", "render_eval_review_html.py"],
         )
         self.assertIn("--skip-oracle", self.commands[1])
+        self.assertNotIn("--allow-skipped-exits", self.commands[1])
+
+    def test_skip_exec_skip_oracle_allows_skipped_exit_validation(self) -> None:
+        with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
+            result = self.orchestrator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-one",
+                    "--skip-exec",
+                    "--skip-oracle",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(
+            self.script_names(),
+            ["run_eval_bucket.py", "validate_eval_run.py", "render_eval_review_html.py"],
+        )
+        validator = self.commands[1]
+        self.assertIn("--skip-oracle", validator)
+        self.assertIn("--allow-skipped-exits", validator)
 
     def test_evaluator_model_can_be_overridden(self) -> None:
         with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):

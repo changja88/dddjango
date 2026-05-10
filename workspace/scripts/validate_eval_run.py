@@ -43,6 +43,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--case", action="append", help="Case id to validate. Repeatable.")
     parser.add_argument("--variant", action="append", choices=common.VARIANTS)
     parser.add_argument("--skip-oracle", action="store_true")
+    parser.add_argument("--allow-skipped-exits", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -120,6 +121,7 @@ def validate_common_run_artifacts(
     raw_dir: Path,
     case_id: str,
     variants: list[str],
+    allow_skipped_exits: bool,
 ) -> list[str]:
     findings: list[str] = []
     require_file(findings, raw_dir / f"{case_id}-public-prompt.md", "public prompt artifact")
@@ -154,7 +156,10 @@ def validate_common_run_artifacts(
         exit_path = raw_dir / f"{case_id}-{variant}-exit.txt"
         if exit_path.is_file():
             exit_text = exit_path.read_text(encoding="utf-8", errors="replace")
-            if exit_text.strip() != "0":
+            allowed_exits = {"0"}
+            if allow_skipped_exits:
+                allowed_exits.add("skipped")
+            if exit_text.strip() not in allowed_exits:
                 findings.append(f"{case_id} {variant} exit is not 0: {exit_text.strip()}")
 
     if "baseline" in variants:
@@ -366,6 +371,7 @@ def main(argv: list[str] | None = None) -> int:
                 raw_dir=raw_dir,
                 case_id=case_id,
                 variants=variants,
+                allow_skipped_exits=args.allow_skipped_exits,
             )
         )
         if not args.skip_oracle:
