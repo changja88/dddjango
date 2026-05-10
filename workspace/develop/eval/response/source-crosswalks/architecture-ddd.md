@@ -11,7 +11,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/spec.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
@@ -27,32 +26,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | runtime path, this crosswalk | Plugin-bundled target and crosswalk location followed. |
-| `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
-| `## 구현 순서` | included | plan order | This follows `implementation-test`. |
-| `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for DDD 설계, 도메인 모델링, 도메인 규칙, 상태 전이, 정책, 불변식, 하위 도메인, 바운디드 컨텍스트, 유비쿼터스 언어, 애그리거트, 컨텍스트 맵, 도메인 이벤트, and 일관성 경계 included. |
-| `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent workflow, DB, API, implementation-pattern, and implementation boundaries included. |
-| `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation evidence | Completion requires zero remaining blocking/major/minor findings with executed validation evidence. |
-| `## 검증` | included | Review Notes, validation commands | Only executed validation is reported. |
-| `## 완료 보고` | included | plan and final report | Required report fields are tracked after completion. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
-| `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
-| `## 1. 목표` | included | `SKILL.md`, references | DDD model decisions guide DB/API/Django/test work. |
-| `## 2. 설계 원칙` | included | `SKILL.md`, references | Domain boundary before implementation and adapter boundaries reflected. |
-| `## 3. 스킬 종류` | included | `SKILL.md` Routing | DDD responsibility and adjacent skill boundaries included. |
-| `### Core DDD` | included | `SKILL.md`, references | DDD modeling responsibilities are this skill's core scope. |
-| `### Implementation Mapping` | delegated-to-other-skill | `SKILL.md` Routing | Django/Python concrete implementation routes away after domain decisions. |
-| `### Supporting Architecture` | merged | `SKILL.md` Routing | DB/API/pattern architecture receives DDD decisions through handoffs. |
-| `### Quality` | merged | `SKILL.md`, references | DDD quality boundaries, anemic-model warning, and validation honesty are reflected. |
-| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Composite/risky role decomposition routes to workflow. |
-| `## 4. 산출물 기준` | included | `SKILL.md`, references | Context, invariant, event, and use-case outputs included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/architecture-ddd/` | Plugin-bundled structure used; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, and runtime rules only. |

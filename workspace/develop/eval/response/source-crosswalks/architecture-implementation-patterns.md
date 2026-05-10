@@ -13,7 +13,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/spec.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
@@ -31,32 +30,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | runtime path, this crosswalk | Plugin-bundled target and crosswalk location followed. |
-| `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
-| `## 구현 순서` | included | plan order | This follows `architecture-ddd`. |
-| `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize fallback sources. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with provisional status. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 계층, 클린 아키텍처, 헥사고날, 포트-어댑터, 의존성 역전, repository/UoW, CQRS, 이벤트 소싱, 사가, outbox, ACL, 레거시 연동, service layer, and 프로젝트 구조 included. |
-| `## Provisional Skill 처리` | included | `SKILL.md`, this status | Provisional status, source policy decision, and fallback source scope are explicit. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Workflow, DDD, DB, API, and implementation boundaries included. |
-| `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings; provisional conditions tracked. |
-| `## 검증` | included | validation commands | Only executed validation will be reported. |
-| `## 완료 보고` | included | final report | Required report fields will be included. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
-| `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
-| `## 1. 목표` | included | `SKILL.md`, references | DDD model maps to implementation architecture before Django code. |
-| `## 2. 설계 원칙` | included | references | Strategy before tactics, aggregate consistency, outbox, Django pragmatism, and adapter boundaries included. |
-| `## 3. 스킬 종류` | included | `SKILL.md` Routing | Implementation-pattern responsibility and adjacent skill boundaries included. |
-| `### Core DDD` | delegated-to-other-skill | `architecture-ddd`, `SKILL.md` Routing | Domain model, context, aggregate, and invariant decisions must be clear before pattern selection. |
-| `### Implementation Mapping` | included | `SKILL.md`, references | This skill maps DDD decisions to dependency direction, pattern choice, adapters, and persistence boundaries before concrete code. |
-| `### Supporting Architecture` | merged | `SKILL.md` Routing, references | DB/API architecture receives pattern handoffs while detailed schema/API decisions route away. |
-| `### Quality` | merged | `SKILL.md`, references | Anti-overengineering, verification honesty, and lightest-pattern guidance are reflected. |
-| `### Workflow` | delegated-to-other-skill | `SKILL.md` Routing, `workflow-dddjango-subagents` | Coordinated multi-role implementation or review routes to workflow before this skill; direct pattern-selection decisions stay here. |
-| `## 4. 산출물 기준` | included | `SKILL.md`, references | Pattern decisions, dependency direction, integration boundaries, and handoffs included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/architecture-implementation-patterns/` | Plugin-bundled structure used; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, and runtime rules only. |

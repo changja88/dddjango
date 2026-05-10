@@ -13,7 +13,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
 - `workspace/docs/skill-hierarchy.md`
@@ -29,21 +28,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | `SKILL.md`, this crosswalk | Runtime target and crosswalk path followed. |
-| `## 실행 규칙` | included | this crosswalk, review notes | One-skill sequencing, rubric isolation, honest verification followed. |
-| `## 구현 순서` | included | completion sequence | Continued after completed `implementation-django`. |
-| `## Skill별 작성 루프` / `### Source Coverage Crosswalk` | included | this crosswalk | Source coverage tracked before rubric. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter only `name` and `description`; concise body with direct references. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Source summarized into runtime references; no source copy. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata is aligned and provisional. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean/mixed triggers include Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, and DRF ViewSet/APIView/Serializer를 Ninja로 전환. |
-| `## Provisional Skill 처리` | included | `SKILL.md`, this crosswalk, `agents/openai.yaml` | Source limitation, fallback source, and policy decision recorded. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Delegates REST contract, domain, ORM/migration, web, explicit subagent, and composite/risky workflow cases. |
-| `## Review 기준` | included | review notes | Source/rubric categories used. |
-| `## Completed 조건` | included | review notes, validation | Provisional completed criteria checked. |
-| `## 검증` | included | final report | Validation commands tracked. |
-| `## 완료 보고` | included | final report | Required report fields tracked. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt template for future runs; not runtime skill guidance, but accounted for by this crosswalk. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files are under repo-root plugin artifact. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-django-ninja/` | Plugin-bundled structure used; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, boundaries only. |

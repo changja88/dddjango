@@ -12,7 +12,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/spec.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
@@ -28,31 +27,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | runtime path, this crosswalk | Plugin-bundled target and crosswalk location followed. |
-| `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
-| `## 구현 순서` | included | plan order | This follows `implementation-django-ninja` and precedes `implementation-python`. |
-| `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, crosswalk, draft, review, rubric sequencing tracked. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is short and procedural. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata reflects provisional fallback scope. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean trigger and boundary terms such as 템플릿, 정적 파일, 화면, 폼, 렌더링, REST API, ORM, 마이그레이션, 복합/위험 작업 included. |
-| `## Provisional Skill 처리` | included | `SKILL.md`, this crosswalk | `allow-provisional-with-fallback` and fallback source are explicit. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | API, ORM, DDD, and workflow boundaries are routed. |
-| `## Review 기준` | included | Review Notes | Review types and finding closure tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
-| `## 검증` | included | final validation report | Only executed validation is reported. |
-| `## 완료 보고` | included | final response | Required report fields will be included. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime skill behavior. |
-
-## Product Docs Coverage
-
-| Source heading | Status | Runtime location | Reason |
-|---|---|---|---|
-| `spec.md` `## 관련 문서` | included | this crosswalk | Linked docs are the source set used for this skill. |
-| `## 1. 목표` | merged | `SKILL.md` Routing | Django Ninja API standard, simple-vs-complex judgment, and workflow delegation reflected. |
-| `## 2. 설계 원칙` | merged | `SKILL.md`, references | Adapter boundary, simple Django structure, and evidence-based validation reflected. |
-| `## 3. 스킬 종류` | included | `SKILL.md` Routing | `implementation-django-web` ownership and adjacent skill boundaries included. |
-| `## 4. 산출물 기준` | included | `SKILL.md`, references | Implementation boundary and honest verification requirements included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under repo-root plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` | included | `dddjango/skills/implementation-django-web/` | Folder shape matches planned plugin-bundled skill structure. |
 | `## 2.1 Runtime 동기화 기준` | included | this workflow | Workspace docs/reference treated as canonical; no cache edits. |

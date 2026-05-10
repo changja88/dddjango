@@ -12,7 +12,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
 - `workspace/docs/skill-hierarchy.md`
@@ -27,21 +26,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | `SKILL.md`, this crosswalk | Runtime target and review artifact locations followed. |
-| `## 실행 규칙` | included | this crosswalk, review notes | One-skill sequencing, no rubric before draft, and honest verification followed. |
-| `## 구현 순서` | included | completion sequence | Implemented next skill after skeleton: `implementation-django`. |
-| `## Skill별 작성 루프` / `### Source Coverage Crosswalk` | included | this crosswalk | Loop and crosswalk format followed. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only `name` and `description`; body is concise and reference-linked. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Source was summarized and split, not copied. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata generated from final skill responsibility. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean and mixed triggers include 상태 컬럼, backfill, ORM 최적화, service layer. |
-| `## Provisional Skill 처리` | omitted | this crosswalk | Not applicable; this skill has dedicated source. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Delegates DDD, DB, API, web, and workflow cases. |
-| `## Review 기준` | included | review notes | Source and rubric review categories used. |
-| `## Completed 조건` | included | review notes, validation | Completion criteria checked for this skill. |
-| `## 검증` | included | final report | Validation commands selected and reported honestly. |
-| `## 완료 보고` | included | final report | Required report fields tracked. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt template for future runs; not runtime skill guidance, but accounted for by this crosswalk. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files are under repo-root `dddjango/` because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-django/` | Plugin-bundled structure followed; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Only trigger, routing, references, and runtime rules. |

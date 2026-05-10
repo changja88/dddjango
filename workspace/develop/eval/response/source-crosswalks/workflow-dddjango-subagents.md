@@ -11,7 +11,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/spec.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
@@ -26,32 +25,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | runtime path, this crosswalk | Plugin-bundled target and crosswalk location followed. |
-| `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
-| `## 구현 순서` | included | plan order | This follows `architecture-api`. |
-| `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, and rubric sequencing tracked. |
-| `### Source Coverage Crosswalk` | included | this file | Source headings and runtime treatment tracked. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is concise and procedural. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize workflow source. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프, 통합 체크리스트, 검증 분담, and 위험 작업 included. |
-| `## Provisional Skill 처리` | omitted | n/a | This skill has ready workflow source and is not provisional. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Workflow precedence and simple opt-out boundaries included. |
-| `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, validation report | Completion requires zero remaining blocking/major/minor findings. |
-| `## 검증` | included | validation commands | Only executed validation will be reported. |
-| `## 완료 보고` | included | final report | Required report fields will be included. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
-| `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
-| `## 1. 목표` | included | `SKILL.md`, references | Composite/risky work coordination supports DDD plugin goal. |
-| `## 2. 설계 원칙` | included | `delegation-rules.md`, `integration-checklist.md` | Role decomposition, domain-first ordering, and validation integrity included. |
-| `## 3. 스킬 종류` | included | `role-map.md`, `SKILL.md` | Workflow responsibility and all related skills included. |
-| `### Core DDD` | included | `role-map.md`, `integration-checklist.md` | Domain and Architecture roles preserve DDD-first ordering. |
-| `### Implementation Mapping` | included | `role-map.md`, `handoff-contract.md` | Django, API implementation, web, Python, and file ownership responsibilities are represented. |
-| `### Supporting Architecture` | included | `role-map.md`, `integration-checklist.md` | DB and API architecture roles are included with transaction, schema, API contract, and compatibility checks. |
-| `### Quality` | included | `role-map.md`, `integration-checklist.md` | TDD/Test and Review roles cover tests, verification, and clean-code review. |
-| `### Workflow` | included | `SKILL.md`, references | This skill owns role decomposition, real subagent/sequential fallback, and integration. |
-| `## 4. 산출물 기준` | included | `handoff-contract.md`, `integration-checklist.md` | Role map, handoff, integration, and validation outputs included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/workflow-dddjango-subagents/` | Plugin-bundled structure used; role-map sync honored. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, and runtime rules only. |

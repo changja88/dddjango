@@ -51,7 +51,6 @@ Evaluation:
 - `workspace/develop/eval/response/rubrics/common_rubric.md`
 - `workspace/develop/eval/response/rubrics/*_rubric.md`
 - `workspace/develop/eval/response/rubric_goal_instructions.md`
-- `workspace/develop/skill_goal_instructions.md`
 
 Runtime source:
 

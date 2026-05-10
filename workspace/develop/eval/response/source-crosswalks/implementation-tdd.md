@@ -11,7 +11,6 @@
 
 ## Sources Used
 
-- `workspace/develop/skill_goal_instructions.md`
 - `workspace/docs/spec.md`
 - `workspace/docs/plugin-structure.md`
 - `workspace/docs/skill-contracts.md`
@@ -27,27 +26,6 @@
 
 | Source heading | Status | Runtime location | Reason |
 |---|---|---|---|
-| `skill_goal_instructions.md` `## 범위` | included | runtime path, this crosswalk | Plugin-bundled target and crosswalk location followed. |
-| `## 실행 규칙` | included | this workflow | One skill at a time; rubrics not used during draft. |
-| `## 구현 순서` | included | plan order | This follows `implementation-cleancode`. |
-| `## Skill별 작성 루프` | included | this crosswalk, review notes | Source scope, draft, review, rubric sequencing tracked. |
-| `### Source Coverage Crosswalk` | included | this crosswalk | Heading status, runtime location, and included/merged/delegated/omitted/source-gap reasons are tracked for source `##` headings and runtime-relevant subheadings. |
-| `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only name/description; body is short and procedural. |
-| `## Runtime Reference 작성 규칙` | included | `references/*.md` | Four one-level references summarize source rather than copying it. |
-| `## Agents Metadata 작성 규칙` | included | `agents/openai.yaml` | Metadata aligns with source and runtime skill. |
-| `## 한국어 사용자 기준` | included | `SKILL.md` description | Korean triggers for TDD/테스트 주도 개발/테스트주도 개발, 테스트 목록, 실패 테스트/실패하는 테스트, 테스트 먼저, Red-Green-Refactor/레드-그린-리팩터, 경계값 테스트, 쿠폰 정책 included. |
-| `## Provisional Skill 처리` | omitted | n/a | This skill has dedicated source reference and is not provisional. |
-| `## Cross-Skill Routing 기준` | included | `SKILL.md` Routing | Adjacent DDD, test, implementation, and workflow boundaries included. |
-| `## Review 기준` | included | Review Notes | Review types and findings tracked. |
-| `## Completed 조건` | included | Review Notes, final validation record | Completion requires zero remaining blocking/major/minor findings; final evidence is recorded for this skill. |
-| `## 검증` | included | final validation record | Only executed validation is reported; completion validation was performed. |
-| `## 완료 보고` | included | completion report | Required report fields are captured in the completion report and commit history. |
-| `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
-| `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
-| `## 1. 목표` | merged | `SKILL.md` Routing | Tests as domain/API specification and workflow delegation reflected. |
-| `## 2. 설계 원칙` | included | `SKILL.md`, references | Test list and failing test before domain/API implementation reflected. |
-| `## 3. 스킬 종류` | included | `SKILL.md`, references | TDD responsibility and adjacent test/Python/Django boundaries included. |
-| `## 4. 산출물 기준` | included | `SKILL.md`, references | Test artifacts and honest verification included. |
 | `plugin-structure.md` `## 1. 개발 위치` | included | runtime path | Runtime files live under plugin artifact because plugin runtime requires it. |
 | `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-tdd/` | Plugin-bundled structure used; no cache edits. |
 | `## 3. Skill 파일 기준` | included | `SKILL.md` | Trigger, routing, references, and runtime rules only. |
