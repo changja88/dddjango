@@ -867,6 +867,124 @@ def evaluation_item_v2(case: dict[str, object]) -> dict[str, object]:
     }
 
 
+def slugify_item_id(value: object, fallback: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", str(value).strip().lower()).strip("-")
+    return slug or fallback
+
+
+def parse_numeric_value(score: object) -> float | None:
+    if isinstance(score, bool):
+        return None
+    if isinstance(score, (int, float)):
+        return float(score)
+    match = re.search(r"-?\d+(?:\.\d+)?", str(score))
+    if not match:
+        return None
+    return float(match.group(0))
+
+
+def comparison_detail_score_type(metric_text: str) -> str:
+    if "Hard gate" in metric_text:
+        return "hard_gate"
+    if "Routing" in metric_text or "Eval protocol" in metric_text:
+        return "narrative"
+    if "Pass rate" in metric_text or "Overall score" in metric_text:
+        return "numeric"
+    return "narrative"
+
+
+def comparison_detail_direction(
+    score_type: str,
+    baseline_score: object,
+    with_score: object,
+    delta: object,
+) -> str:
+    if score_type == "hard_gate":
+        baseline_value = parse_numeric_value(baseline_score)
+        with_value = parse_numeric_value(with_score)
+        if baseline_value is None or with_value is None:
+            return "not_comparable"
+        if with_value == baseline_value:
+            return "unchanged"
+        return "improved" if with_value < baseline_value else "regressed"
+    if score_type == "numeric":
+        return compare_numeric_scores(baseline_score, with_score)
+
+    delta_text = str(delta).strip().lower()
+    if delta_text in {"0", "+0", "-0", "unchanged", "no change", "same"}:
+        return "unchanged"
+    if delta_text in {"improved", "closed"}:
+        return "improved"
+    if delta_text in {"regressed", "worse", "worsened"}:
+        return "regressed"
+    return "not_comparable"
+
+
+def comparison_detail_variant_v2(
+    detail: dict[str, object],
+    value_key: str,
+    metric_text: str,
+) -> dict[str, object]:
+    score = detail.get(value_key, "not recorded")
+    notes = str(detail.get("notes") or "Aggregate comparison detail from the saved run summary.")
+    delta = str(detail.get("delta") or "not recorded")
+    variant_label = "Baseline" if value_key == "baseline" else "With dddjango"
+    evaluation = "\n\n".join(
+        [
+            f"Metric: {metric_text}",
+            f"{variant_label}: {score}",
+            f"Delta: {delta}",
+            f"Notes: {notes}",
+        ]
+    )
+    return {
+        "score": score,
+        "response_summary": f"{variant_label} aggregate value for {metric_text}: {score}",
+        "response": f"{variant_label} aggregate comparison value for {metric_text}: {score}.",
+        "evaluation_summary": f"{metric_text}: delta {delta}.",
+        "evaluation": evaluation,
+        "evidence": [],
+    }
+
+
+def comparison_detail_item_v2(
+    detail: dict[str, object],
+    index: int,
+    cases: list[dict[str, object]],
+) -> dict[str, object]:
+    metric_text = str(detail.get("metric") or f"Comparison detail {index + 1}")
+    baseline = comparison_detail_variant_v2(detail, "baseline", metric_text)
+    with_dddjango = comparison_detail_variant_v2(detail, "withPlugin", metric_text)
+    score_type = comparison_detail_score_type(metric_text)
+    direction = comparison_detail_direction(
+        score_type,
+        baseline["score"],
+        with_dddjango["score"],
+        detail.get("delta"),
+    )
+    source_case_ids = [str(case["case"]) for case in cases]
+    return {
+        "id": f"comparison-{index + 1}-{slugify_item_id(metric_text, 'detail')}",
+        "title": metric_text,
+        "family": "aggregate-comparison",
+        "description_ko": f"전체 실행 요약의 `{metric_text}` 집계 항목입니다.",
+        "source_granularity": "rubric",
+        "source_case_ids": source_case_ids,
+        "test_content_ko": f"전체 케이스({', '.join(source_case_ids)}) 기준으로 `{metric_text}` 집계 결과를 비교합니다.",
+        "score_type": score_type,
+        "score_type_source": "explicit",
+        "higher_is_better": score_type != "hard_gate",
+        "baseline": baseline,
+        "with_dddjango": with_dddjango,
+        "change": {
+            "direction": direction,
+            "label": change_label(direction),
+            "baseline_score": baseline["score"],
+            "with_dddjango_score": with_dddjango["score"],
+        },
+    }
+
+
 def metric(label: str, value: object) -> dict[str, object]:
     return {"label": label, "value": value}
 
@@ -979,13 +1097,24 @@ def build_summary_v2(items: list[dict[str, object]]) -> dict[str, object]:
         "sections": sections,
         "conclusion": conclusion,
         "risks": [
-            "The existing report template still renders legacy sections until Task 3 wires the v2 UI.",
+            "Case-level rows use saved evaluator judgments rather than rerunning model evaluation during report rendering.",
+            "Request, rubric, and hard-gate rows depend on source artifacts that expose both baseline and with-dddjango variants.",
         ],
     }
 
 
-def attach_v2_contract(data: dict[str, object], cases: list[dict[str, object]]) -> dict[str, object]:
+def attach_v2_contract(
+    data: dict[str, object],
+    cases: list[dict[str, object]],
+    include_comparison_details: bool = False,
+) -> dict[str, object]:
     evaluation_items = [evaluation_item_v2(case) for case in cases]
+    if include_comparison_details:
+        evaluation_items.extend(
+            comparison_detail_item_v2(detail, index, cases)
+            for index, detail in enumerate(data.get("comparisonDetails", []))
+            if isinstance(detail, dict)
+        )
     data["schema_version"] = V2_SCHEMA_VERSION
     data["summary"] = build_summary_v2(evaluation_items)
     data["evaluation_items"] = evaluation_items
@@ -1701,7 +1830,7 @@ def build_report_data() -> dict[str, object]:
             "repoRoot": str(REPO_ROOT),
             "evalPackPath": "workspace/develop/evals",
             "evalPackVersion": git_commit[:12],
-            "templateVersion": "run-report.html v1",
+            "templateVersion": "run-report.html v2",
             "pluginVersion": "0.1.10",
             "pluginSource": str(REPO_ROOT / "dddjango"),
             "gitBranch": git_branch,
@@ -1840,7 +1969,7 @@ def build_report_data() -> dict[str, object]:
         ],
         "acceptedExceptions": [],
     }
-    return attach_v2_contract(data, CASE_EVALS)
+    return attach_v2_contract(data, CASE_EVALS, include_comparison_details=True)
 
 
 def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str, object]:
@@ -1938,7 +2067,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             "repoRoot": str(REPO_ROOT),
             "evalPackPath": "workspace/develop/evals",
             "evalPackVersion": git_commit[:12],
-            "templateVersion": "run-report.html v1",
+            "templateVersion": "run-report.html v2",
             "pluginVersion": "0.1.10",
             "pluginSource": str(REPO_ROOT / "dddjango"),
             "gitBranch": git_branch,
