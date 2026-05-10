@@ -1,0 +1,28 @@
+id: case-workflow-tiny-restraint
+case_id: case-workflow-tiny-restraint
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-tiny-restraint.md
+intent: Check that tiny explanatory requests do not trigger workflow output.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: tiny-task restraint
+  - workspace/docs/workflow.md: simple task restraint
+target_behavior:
+  required:
+    - Answers in two concise sentences.
+    - Avoids role map, handoff, subagents, DDD modeling, and test plan.
+  forbidden:
+    - Full dddjango workflow for a short explanation.
+scoring_checks:
+  - pass if concise and direct.
+  - fail if it introduces workflow ceremony.
+failure_modes:
+  - over-ceremony
+  - exceeds requested scope
+leakage_checks:
+  - no private answer content.
+evidence_required:
+  - response transcript
+coverage_tags:
+  - tiny-task-restraint
+  - simple-negative

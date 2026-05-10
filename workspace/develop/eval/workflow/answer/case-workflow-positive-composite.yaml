@@ -1,0 +1,36 @@
+id: case-workflow-positive-composite
+case_id: case-workflow-positive-composite
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-positive-composite.md
+intent: Validate full positive composite workflow for risky order/payment/inventory work.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: positive composite workflow
+  - workspace/docs/workflow.md: role map, sequential fallback, handoff contract, integration checklist
+  - workspace/docs/validation-plan.md: order creation API
+target_behavior:
+  required:
+    - Uses Role Map with Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration responsibilities.
+    - If subagents are available, delegates honestly; otherwise uses sequential fallback in canonical order.
+    - Includes Handoff Contract fields and Integration Checklist.
+    - Includes Risky Write Consistency Block for idempotency, transaction, locking, side effects, and tests.
+  forbidden:
+    - Skipping DDD and starting at Django code structure.
+    - Claiming actual subagent execution without trace.
+scoring_checks:
+  - pass if role decisions are concrete and integration closes risks.
+  - fail if roles are only names with no handoff content.
+failure_modes:
+  - missing Role Map
+  - missing risky write block
+  - false delegation claim
+leakage_checks:
+  - no private answer content in workflow response.
+evidence_required:
+  - workflow transcript
+  - handoff artifact
+  - integration checklist
+coverage_tags:
+  - positive-composite
+  - handoff-contract
+  - integration-checklist

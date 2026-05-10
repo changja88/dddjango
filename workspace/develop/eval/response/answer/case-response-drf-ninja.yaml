@@ -1,0 +1,36 @@
+id: case-response-drf-ninja
+case_id: case-response-drf-ninja
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-drf-ninja.md
+intent: Check mixed-boundary DRF migration advice while preserving Django Ninja as the new implementation target.
+reference_basis:
+  - workspace/develop/eval/response/eval_goal.md: mixed-boundary and Django/Ninja routing
+  - workspace/docs/reference-index.md: DRF guardrail
+  - workspace/docs/skill-contracts.md: architecture-api and implementation-django-ninja boundaries
+  - workspace/docs/validation-plan.md: DRF to Django Ninja transition
+target_behavior:
+  required:
+    - Treats DRF as legacy input or migration source, not a greenfield standard.
+    - Separates API contract decisions from Django Ninja implementation details.
+    - Calls out status code, Problem Details, compatibility, auth, OpenAPI diff, and TestClient/golden contract checks.
+  forbidden:
+    - Rewriting domain rules into Router.
+    - Ignoring existing-client compatibility.
+scoring_checks:
+  - pass if the answer gives a migration plan with contract freeze, schema mapping, compatibility checks, and rollback risk.
+  - fail if it keeps DRF as preferred new API framework.
+failure_modes:
+  - DRF greenfield recommendation
+  - compatibility omitted
+  - OpenAPI impact omitted
+leakage_checks:
+  - no evaluator-only route names or answer file content in output.
+evidence_required:
+  - response transcript
+  - prompt-input isolation review
+coverage_tags:
+  - mixed-boundary
+  - django-ninja
+  - drf-guardrail
+  - api-contract

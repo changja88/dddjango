@@ -1,0 +1,33 @@
+id: case-workflow-risky-write
+case_id: case-workflow-risky-write
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
+intent: Validate Risky Write Consistency Block for concurrency-heavy design.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: risky write consistency
+  - workspace/docs/skill-contracts.md: Risky Write Consistency Block
+  - workspace/docs/validation-plan.md: transaction and concurrency
+target_behavior:
+  required:
+    - Includes transaction owner, locking/isolation, uniqueness/idempotency storage, external side effect timing, retry, and concurrency test criteria.
+    - Connects Domain/DB/API/Django/Test decisions in integration order.
+    - Does not treat transaction.atomic alone as sufficient.
+  forbidden:
+    - External payment side effects before durable commit without mitigation.
+    - Missing idempotency conflict/replay decision.
+scoring_checks:
+  - pass if all risky write fields are present and mutually consistent.
+  - fail if concurrency is generic.
+failure_modes:
+  - side-effect timing omitted
+  - no concurrency tests
+leakage_checks:
+  - no private oracle wording.
+evidence_required:
+  - risky write block
+  - integration checklist
+coverage_tags:
+  - risky-write-consistency
+  - transaction-concurrency
+  - integration-closure

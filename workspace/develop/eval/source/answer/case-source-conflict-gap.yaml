@@ -1,0 +1,31 @@
+id: case-source-conflict-gap
+case_id: case-source-conflict-gap
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-conflict-gap.md
+intent: Evaluate conflict/gap handling across reference final/internal/external/review materials.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Conflict and gap handling
+  - workspace/reference/*/reference/review.md
+  - workspace/reference/*/reference/final.md
+  - workspace/docs/reference-index.md
+target_behavior:
+  required:
+    - Consults final.md first, then review/internal/external when final is ambiguous or gap-related.
+    - Separates resolved conflicts, open gaps, and provisional decisions.
+    - Records allowed and forbidden claims for unresolved gaps.
+  forbidden:
+    - Flattening review conflicts into final guidance without decision.
+scoring_checks:
+  - pass if each conflict/gap has status and evidence.
+  - fail if gaps are presented as completed source coverage.
+failure_modes:
+  - unresolved gap overclaimed
+  - review conflict ignored
+leakage_checks:
+  - no private eval answer text in source docs.
+evidence_required:
+  - conflict/gap ledger
+coverage_tags:
+  - conflict-gap-decision
+  - source-review

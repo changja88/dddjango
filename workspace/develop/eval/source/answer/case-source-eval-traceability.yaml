@@ -1,0 +1,30 @@
+id: case-source-eval-traceability
+case_id: case-source-eval-traceability
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-eval-traceability.md
+intent: Ensure eval cases and answers can trace observations back to source references.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Eval traceability
+  - workspace/develop/eval/*/eval_goal.md
+  - workspace/docs/reference-index.md
+target_behavior:
+  required:
+    - Specifies reference_basis and coverage_tags expectations for each bucket.
+    - Ensures answer oracles carry source references while public cases avoid private criteria.
+    - Supports manual or machine-readable evaluation notes.
+  forbidden:
+    - Creating a separate rubrics directory detached from per-case answer files.
+scoring_checks:
+  - pass if each bucket has a traceability rule tied to its eval_goal.
+  - fail if answer files are not connected to source references.
+failure_modes:
+  - orphan case
+  - untraceable scoring check
+leakage_checks:
+  - public cases do not include hidden scoring checks.
+evidence_required:
+  - eval bucket traceability map
+coverage_tags:
+  - eval-traceability
+  - answer-oracle-boundary

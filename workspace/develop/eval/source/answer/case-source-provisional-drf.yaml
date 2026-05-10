@@ -1,0 +1,33 @@
+id: case-source-provisional-drf
+case_id: case-source-provisional-drf
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-provisional-drf.md
+intent: Check provisional source handling and DRF guardrail together.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Provisional source handling and DRF guardrail
+  - workspace/docs/reference-index.md: Reference Gap and DRF Guardrail
+  - workspace/docs/skill-authoring.md
+target_behavior:
+  required:
+    - Identifies implementation patterns, Django Ninja, and Django Web as source-gap/provisional unless dedicated source exists.
+    - Confirms DRF material is legacy/migration/comparison only.
+    - Requires runtime metadata to show fallback/provisional status.
+  forbidden:
+    - Using DRF as greenfield API implementation standard.
+    - Claiming dedicated source coverage for missing areas.
+scoring_checks:
+  - pass if provisional and DRF decisions are explicit and separable.
+  - fail if Django Ninja is sourced from DRF greenfield guidance.
+failure_modes:
+  - DRF guardrail failure
+  - provisional overclaim
+leakage_checks:
+  - no private answer material in runtime references.
+evidence_required:
+  - provisional ledger
+  - DRF guardrail check
+coverage_tags:
+  - provisional-handling
+  - drf-guardrail
+  - source-gap

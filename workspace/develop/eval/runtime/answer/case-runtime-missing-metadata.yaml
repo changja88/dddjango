@@ -1,0 +1,31 @@
+id: case-runtime-missing-metadata
+case_id: case-runtime-missing-metadata
+bucket: runtime
+kind: runtime
+public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-missing-metadata.md
+intent: Evaluate missing agents metadata impact in runtime exposure.
+reference_basis:
+  - workspace/develop/eval/runtime/eval_goal.md: missing skill metadata
+  - workspace/docs/skill-authoring.md: metadata/default prompt criteria
+  - workspace/docs/validation-plan.md: skill folder validation
+target_behavior:
+  required:
+    - Checks that SKILL.md and agents/openai.yaml both exist and semantically align.
+    - Explains how missing metadata may reduce prompt exposure or UI/default prompt routing.
+    - Requires generated/all validation, not only file existence.
+  forbidden:
+    - Ignoring metadata because SKILL.md exists.
+scoring_checks:
+  - pass if missing metadata is treated as runtime quality failure with evidence.
+  - fail if only SKILL.md is inspected.
+failure_modes:
+  - metadata missing
+  - semantic mismatch ignored
+leakage_checks:
+  - private scoring data absent from replacement metadata.
+evidence_required:
+  - skill tree snapshot
+  - validation command output
+coverage_tags:
+  - missing-skill-metadata
+  - agents-metadata

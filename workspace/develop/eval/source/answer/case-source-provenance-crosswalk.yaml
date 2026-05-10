@@ -1,0 +1,32 @@
+id: case-source-provenance-crosswalk
+case_id: case-source-provenance-crosswalk
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-provenance-crosswalk.md
+intent: Require source-to-runtime provenance mapping for every first-class dimension.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Reference provenance and crosswalk
+  - workspace/docs/reference-index.md
+  - workspace/docs/workflow.md
+  - dddjango/skills/*/references/*.md
+target_behavior:
+  required:
+    - Produces a per-skill crosswalk from workspace/reference or docs source to runtime bundled references.
+    - Marks provisional skills and fallback source basis separately.
+    - Includes DDD, patterns, DB, API, Django, Ninja, Web, Python, Clean Code, TDD, Test, Workflow.
+  forbidden:
+    - Treating runtime references as source of truth without provenance.
+scoring_checks:
+  - pass if all first-class dimensions have source and runtime columns.
+  - fail if provisional dimensions are omitted.
+failure_modes:
+  - missing provenance
+  - runtime-only source claim
+leakage_checks:
+  - answer oracle not included in crosswalk output.
+evidence_required:
+  - source-to-runtime crosswalk
+coverage_tags:
+  - source-provenance
+  - crosswalk
+  - runtime-reference-trace

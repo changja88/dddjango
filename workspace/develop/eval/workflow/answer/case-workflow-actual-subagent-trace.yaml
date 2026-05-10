@@ -1,0 +1,31 @@
+id: case-workflow-actual-subagent-trace
+case_id: case-workflow-actual-subagent-trace
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-actual-subagent-trace.md
+intent: Define evidence required when actual subagents were used versus sequential fallback.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: actual-subagent trace
+  - workspace/docs/workflow.md: handoff contract and integration checklist
+target_behavior:
+  required:
+    - Distinguishes actual execution trace from planned roles.
+    - Requires role output summaries, files may edit/must not edit, risks, follow-up, and integration closure.
+    - Requires fallback statement if no subagents ran.
+  forbidden:
+    - Saying agents reviewed when only main-agent analysis occurred.
+scoring_checks:
+  - pass if evidence requirements are explicit and falsifiable.
+  - fail if trace can be satisfied by role names only.
+failure_modes:
+  - no execution trace
+  - vague handoff
+leakage_checks:
+  - no private run findings copied into public prompt.
+evidence_required:
+  - subagent ids or execution trace when actual
+  - fallback transcript when sequential
+coverage_tags:
+  - actual-subagent-trace
+  - handoff-contract
+  - delegation-honesty

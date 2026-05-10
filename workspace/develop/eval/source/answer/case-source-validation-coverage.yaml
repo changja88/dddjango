@@ -1,0 +1,31 @@
+id: case-source-validation-coverage
+case_id: case-source-validation-coverage
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-validation-coverage.md
+intent: Verify validation plan coverage across all dddjango first-class dimensions.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Validation coverage
+  - workspace/docs/validation-plan.md
+  - workspace/docs/skill-contracts.md
+target_behavior:
+  required:
+    - Maps validation scenarios to DDD, DB, API, Django, Ninja, Web, Python, TDD, Test, Clean Code, Workflow.
+    - Includes operational migration, concurrency, Django Web, Python typing, architecture pattern selection, false-subagent negative case.
+    - Notes gaps and proposes focused additions without creating unrelated docs.
+  forbidden:
+    - Counting one order scenario as complete coverage for all dimensions without explanation.
+scoring_checks:
+  - pass if coverage map has scenario, dimension, expected evidence, and gap columns.
+  - fail if negative cases or validation honesty are omitted.
+failure_modes:
+  - negative case missing
+  - workflow contract missing
+leakage_checks:
+  - no private answer criteria embedded in public validation docs.
+evidence_required:
+  - validation coverage map
+coverage_tags:
+  - validation-coverage
+  - negative-cases
+  - validation-honesty

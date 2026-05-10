@@ -1,0 +1,42 @@
+id: case-code-small-rename
+case_id: case-code-small-rename
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-small-rename.md
+intent: Ensure a small rename stays minimal while still producing code.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: negative implementation restraint
+  - workspace/docs/validation-plan.md: Negative Case simple field rename
+  - workspace/docs/workflow.md: simple task restraint
+code_expected: true
+target_behavior:
+  required:
+    - Renames memo to note consistently in fixture code, template, and tests.
+    - Avoids full role map, new architecture layers, or unrelated cleanup.
+    - Runs compile/unit tests or reports exact failure.
+  forbidden:
+    - Repository/UoW/DDD workflow output.
+    - Unrelated files.
+allowed_paths:
+  - apps/orders/**
+  - tests/**
+forbidden_paths:
+  - apps/coupons/**
+  - apps/payments/**
+  - workspace/develop/eval/**
+scoring_checks:
+  - pass if the diff is narrow and behavior remains covered.
+  - fail if it performs broad redesign.
+failure_modes:
+  - over-ceremony
+  - incomplete rename
+leakage_checks:
+  - no answer material in diff.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - verification output
+coverage_tags:
+  - negative-implementation-restraint
+  - minimal-code
+  - simple-rename

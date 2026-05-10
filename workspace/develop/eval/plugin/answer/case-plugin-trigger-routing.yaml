@@ -1,0 +1,33 @@
+id: case-plugin-trigger-routing
+case_id: case-plugin-trigger-routing
+bucket: plugin
+kind: plugin
+public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-trigger-routing.md
+intent: Evaluate skill trigger description quality and routing boundaries.
+reference_basis:
+  - workspace/develop/eval/plugin/eval_goal.md: Skill trigger quality
+  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: frontmatter description importance
+  - workspace/docs/skill-authoring.md: positive signals, negative routing, Korean trigger, precedence
+target_behavior:
+  required:
+    - Reviews frontmatter description, not just skill body.
+    - Checks positive trigger, negative routing, Korean terms, and cross-skill precedence.
+    - Flags body-only trigger rules and responsibility bleed.
+  forbidden:
+    - Treating long descriptions as automatically better.
+    - Moving every detail into frontmatter instead of concise trigger guidance.
+scoring_checks:
+  - pass if findings identify concrete stale/missing trigger risks by skill or category.
+  - fail if answer only says descriptions look fine without evidence.
+failure_modes:
+  - no skill-creator criteria
+  - no negative routing review
+leakage_checks:
+  - private answer text must not be suggested for runtime metadata.
+evidence_required:
+  - SKILL.md inventory
+  - frontmatter review notes
+coverage_tags:
+  - trigger-quality
+  - skill-creator
+  - routing-boundary

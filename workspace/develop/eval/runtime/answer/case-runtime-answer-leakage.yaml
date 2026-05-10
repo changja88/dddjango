@@ -1,0 +1,30 @@
+id: case-runtime-answer-leakage
+case_id: case-runtime-answer-leakage
+bucket: runtime
+kind: runtime
+public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-answer-leakage.md
+intent: Check answer leakage sentinel handling in bundled runtime references.
+reference_basis:
+  - workspace/develop/eval/runtime/eval_goal.md: answer leakage sentinel
+  - workspace/docs/plugin-structure.md: runtime reference boundary
+target_behavior:
+  required:
+    - Scans bundled references and prompt-input for answer paths, evaluator-only terms, prior run paths, and workspace-only source paths used as final instructions.
+    - Treats any hit as hard failure until removed and rerun.
+    - Distinguishes source reference paths used during authoring from runtime final reference paths.
+  forbidden:
+    - Masking leakage by editing report only.
+scoring_checks:
+  - pass if leakage patterns and hard-fail policy are concrete.
+  - fail if leakage is called harmless.
+failure_modes:
+  - answer text in bundled reference
+  - workspace-only source path in runtime final instruction
+leakage_checks:
+  - answer directory content absent from runtime package.
+evidence_required:
+  - runtime reference scan
+  - prompt-input scan
+coverage_tags:
+  - answer-leakage-sentinel
+  - runtime-reference-boundary

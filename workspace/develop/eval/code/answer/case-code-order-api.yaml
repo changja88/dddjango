@@ -1,0 +1,46 @@
+id: case-code-order-api
+case_id: case-code-order-api
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-order-api.md
+intent: Verify code-backed DDD/API/DB mapping for idempotent order creation.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: DDD-to-code, Django Ninja API, DB consistency
+  - workspace/docs/validation-plan.md: order creation API
+  - workspace/docs/skill-contracts.md: DDD, DB, API, Django Ninja, Test boundaries
+code_expected: true
+target_behavior:
+  required:
+    - Keeps API function thin and moves idempotency/order creation decisions into service or narrow helper.
+    - Stores idempotency key with request fingerprint and replay/conflict behavior.
+    - Adds tests for replay and conflict cases.
+    - Reports compile/unit test command results or honest not-run reason.
+  forbidden:
+    - Business rule directly owned by API adapter.
+    - DRF serializer/viewset introduction.
+    - Repository/UoW/hexagonal structure unless justified by actual fixture need.
+allowed_paths:
+  - apps/orders/**
+  - tests/**
+forbidden_paths:
+  - workspace/develop/eval/**
+  - dddjango/**
+scoring_checks:
+  - pass if diff includes service-side idempotency and tests for same-key replay and payload conflict.
+  - fail if it only adds prose or untested placeholder fields.
+failure_modes:
+  - duplicate order still created
+  - conflict not distinguishable
+  - false command success
+leakage_checks:
+  - answer oracle and private paths must not be read or copied.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - copied source files
+  - command output or not-run reason
+coverage_tags:
+  - ddd-to-code
+  - django-ninja-api
+  - db-consistency
+  - idempotency

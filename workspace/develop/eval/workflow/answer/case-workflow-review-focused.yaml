@@ -1,0 +1,31 @@
+id: case-workflow-review-focused
+case_id: case-workflow-review-focused
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-review-focused.md
+intent: Ensure review requests lead with findings before optional workflow planning.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: review-focused workflow
+  - workspace/docs/workflow.md: review task flow
+  - workspace/docs/skill-contracts.md: implementation-cleancode and review boundaries
+target_behavior:
+  required:
+    - Findings first, ordered by severity with concrete risk.
+    - Optional workflow/handoff sections appear after findings only if useful.
+    - Separates Router adapter issues, model/domain invariant issues, side-effect timing, and test gaps.
+  forbidden:
+    - Starting with role map before findings.
+    - Generic "split responsibilities" without grounded findings.
+scoring_checks:
+  - pass if findings-first stance and follow-up workflow are both respected.
+  - fail if the review is buried under process.
+failure_modes:
+  - no severity ordering
+  - process before findings
+leakage_checks:
+  - no answer oracle references.
+evidence_required:
+  - review transcript
+coverage_tags:
+  - review-focused
+  - findings-first

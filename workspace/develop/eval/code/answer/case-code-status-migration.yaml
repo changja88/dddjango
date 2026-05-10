@@ -1,0 +1,44 @@
+id: case-code-status-migration
+case_id: case-code-status-migration
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-status-migration.md
+intent: Check operational migration code planning and safe rollout representation.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: Django implementation and migration/DB safety
+  - workspace/docs/validation-plan.md: operational migration
+  - workspace/reference/architecture-db/reference/final.md: constraints, indexes, rollout risk
+  - workspace/reference/implementation-django/reference/final.md: migrations
+code_expected: true
+target_behavior:
+  required:
+    - Adds or edits migration-like files with expand/backfill/contract notes or steps.
+    - Uses Django migration conventions such as historical model access where data migration is shown.
+    - Calls out hot-table lock/index risk in code comments or final report.
+    - Runs compile or explains why DB-specific commands are not runnable in fixture.
+  forbidden:
+    - Single irreversible migration that immediately assumes safe NOT NULL and index on existing data.
+    - Fake sqlmigrate output.
+allowed_paths:
+  - apps/orders/**
+  - tests/**
+forbidden_paths:
+  - workspace/develop/eval/**
+scoring_checks:
+  - pass if rollout sequence and migration responsibility are explicit and fixture remains executable.
+  - fail if operational risk is hidden.
+failure_modes:
+  - backfill omitted
+  - lock risk omitted
+  - command honesty failure
+leakage_checks:
+  - private answer content absent from changed files.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - command output
+coverage_tags:
+  - django-implementation
+  - migration-safety
+  - db-consistency
+  - operational-rollout

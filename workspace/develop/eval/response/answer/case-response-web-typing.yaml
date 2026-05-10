@@ -1,0 +1,33 @@
+id: case-response-web-typing
+case_id: case-response-web-typing
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-web-typing.md
+intent: Verify routing between Django Web and Python typing guidance.
+reference_basis:
+  - workspace/develop/eval/response/eval_goal.md: Django/Web/Python routing
+  - workspace/docs/validation-plan.md: Django Web and Python Typing
+  - workspace/docs/skill-contracts.md: implementation-django-web and implementation-python
+target_behavior:
+  required:
+    - Routes TemplateView/template/static/HTMX/CSRF concerns to web responsibility.
+    - Routes Enum/dataclass/type-contract decisions to Python implementation responsibility.
+    - Keeps domain state rules out of templates and avoids pydantic as domain default.
+  forbidden:
+    - Treating a template as owner of order state transitions.
+    - Starting full DDD workflow without evidence of cross-domain risk.
+scoring_checks:
+  - pass if web and Python responsibilities are separated but integrated around display behavior.
+  - fail if it gives only generic frontend advice.
+failure_modes:
+  - template business logic
+  - pydantic overuse
+  - workflow over-application
+leakage_checks:
+  - no private evaluator wording.
+evidence_required:
+  - response transcript
+coverage_tags:
+  - django-web
+  - python-typing
+  - mixed-boundary

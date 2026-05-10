@@ -1,0 +1,33 @@
+id: case-runtime-wrong-routing
+case_id: case-runtime-wrong-routing
+bucket: runtime
+kind: runtime
+public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-wrong-routing.md
+intent: Check routing correctness when metadata exists but a specialized web skill is skipped.
+reference_basis:
+  - workspace/develop/eval/runtime/eval_goal.md: wrong routing despite metadata
+  - workspace/docs/workflow.md: Django Agent includes implementation-django-web
+  - workspace/docs/skill-contracts.md: implementation-django-web boundary
+target_behavior:
+  required:
+    - Compares runtime skill description, role-map reference, and canonical workflow table.
+    - Requires implementation-django-web responsibility for template/static/web requests.
+    - Separates generic Django ORM/service work from web/template/static work.
+  forbidden:
+    - Treating metadata presence as proof of correct routing.
+    - Dropping web skill from role map.
+scoring_checks:
+  - pass if the answer identifies all three sources to compare and expected web routing.
+  - fail if it only says rerun validation.
+failure_modes:
+  - role-map shrink
+  - wrong skill precedence
+leakage_checks:
+  - no private route key copied to runtime.
+evidence_required:
+  - prompt-input artifact
+  - role-map source/cache comparison
+coverage_tags:
+  - wrong-routing
+  - role-map-sync
+  - django-web

@@ -1,0 +1,36 @@
+{
+  "cases": {
+    "case-code-order-api": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-status-migration": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-coupon-tdd": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-web-detail": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-python-state": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-fat-model": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-small-rename": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    },
+    "case-code-clarify-external": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+    }
+  }
+}

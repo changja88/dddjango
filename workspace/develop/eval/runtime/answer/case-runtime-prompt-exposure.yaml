@@ -1,0 +1,33 @@
+id: case-runtime-prompt-exposure
+case_id: case-runtime-prompt-exposure
+bucket: runtime
+kind: runtime
+public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-prompt-exposure.md
+intent: Validate with-dddjango prompt-input exposure for relevant runtime metadata.
+reference_basis:
+  - workspace/develop/eval/runtime/eval_goal.md: Prompt-input exposure
+  - workspace/docs/plugin-structure.md: runtime synchronization
+  - workspace/docs/workflow.md: role map
+target_behavior:
+  required:
+    - Requires prompt-input or equivalent artifact for with-ddjango.
+    - Checks exposed dddjango skill ids, descriptions, reference hints, and workflow role-map responsibilities.
+    - Compares exposure against canonical dddjango/skills and workspace/docs/workflow.md.
+  forbidden:
+    - Treating a raw model answer as enough runtime evidence.
+    - Exposing private answer material.
+scoring_checks:
+  - pass if with-ddjango metadata is current and scoped to relevant skills.
+  - fail if prompt-input is missing or stale.
+failure_modes:
+  - missing prompt-input artifact
+  - stale skill description
+leakage_checks:
+  - answer directory, prior runs, and private evaluator text absent from prompt-input.
+evidence_required:
+  - codex debug prompt-input output
+  - runtime skill snapshot
+coverage_tags:
+  - prompt-input-exposure
+  - skill-metadata
+  - role-map-sync

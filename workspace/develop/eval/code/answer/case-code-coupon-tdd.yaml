@@ -1,0 +1,42 @@
+id: case-code-coupon-tdd
+case_id: case-code-coupon-tdd
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-coupon-tdd.md
+intent: Validate TDD/test implementation for coupon policy boundaries.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: TDD/test implementation
+  - workspace/docs/validation-plan.md: coupon policy TDD
+  - workspace/reference/implementation-tdd/reference/final.md
+  - workspace/reference/implementation-test/reference/final.md
+code_expected: true
+target_behavior:
+  required:
+    - Adds behavior tests for minimum amount boundary, expiration day, expired coupon, and used coupon.
+    - Makes minimal implementation changes only if tests expose a gap.
+    - Reports Red-Green-Refactor intent honestly; no claim of seeing failing tests unless actually run.
+  forbidden:
+    - Testing private implementation details instead of policy behavior.
+    - Adding broad DB/API architecture.
+allowed_paths:
+  - apps/coupons/**
+  - tests/**
+forbidden_paths:
+  - apps/orders/api.py
+  - workspace/develop/eval/**
+scoring_checks:
+  - pass if tests protect policy outcomes and implementation is minimal.
+  - fail if no boundary tests are added.
+failure_modes:
+  - missing edge cases
+  - overbroad refactor
+leakage_checks:
+  - answer-only test expectations not copied verbatim into public artifacts.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - unit test output
+coverage_tags:
+  - tdd
+  - test-implementation
+  - domain-policy

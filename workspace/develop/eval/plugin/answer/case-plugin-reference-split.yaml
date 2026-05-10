@@ -1,0 +1,34 @@
+id: case-plugin-reference-split
+case_id: case-plugin-reference-split
+bucket: plugin
+kind: plugin
+public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-reference-split.md
+intent: Evaluate progressive disclosure and runtime reference split quality.
+reference_basis:
+  - workspace/develop/eval/plugin/eval_goal.md: Progressive disclosure and runtime reference split
+  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: progressive disclosure
+  - workspace/docs/plugin-structure.md: reference file criteria
+  - workspace/docs/reference-index.md: DRF guardrail
+target_behavior:
+  required:
+    - Checks SKILL.md body concision and direct one-level references.
+    - Confirms detailed source material is not copied wholesale into runtime instructions.
+    - Maps each reference file to load conditions and negative conditions.
+    - Flags DRF content that looks like greenfield standard.
+  forbidden:
+    - Creating README/install/changelog auxiliary docs as a fix.
+scoring_checks:
+  - pass if answer includes concrete split/routing findings.
+  - fail if it only lists reference files.
+failure_modes:
+  - source-copy bloat
+  - missing reference routing matrix
+leakage_checks:
+  - no eval answer content in bundled references.
+evidence_required:
+  - skill tree snapshot
+  - reference link inventory
+coverage_tags:
+  - progressive-disclosure
+  - runtime-reference-split
+  - auxiliary-docs-ban

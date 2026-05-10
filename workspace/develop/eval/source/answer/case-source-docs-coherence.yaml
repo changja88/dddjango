@@ -1,0 +1,36 @@
+id: case-source-docs-coherence
+case_id: case-source-docs-coherence
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-docs-coherence.md
+intent: Audit canonical docs coherence across product, skill, workflow, validation, and plugin structure decisions.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Canonical docs coherence
+  - workspace/docs/spec.md
+  - workspace/docs/reference-index.md
+  - workspace/docs/skill-contracts.md
+  - workspace/docs/workflow.md
+  - workspace/docs/validation-plan.md
+  - workspace/docs/plugin-structure.md
+  - workspace/docs/skill-authoring.md
+target_behavior:
+  required:
+    - Checks the docs as a connected decision set, not isolated files.
+    - Confirms Django Ninja as greenfield API target and DRF as legacy/migration/comparison only.
+    - Confirms workflow role map and validation plan agree on roles and completion gates.
+  forbidden:
+    - Declaring coherence from docs existence alone.
+scoring_checks:
+  - pass if concrete cross-doc decisions and mismatches are listed with source paths.
+  - fail if answer is a generic summary.
+failure_modes:
+  - docs contradiction missed
+  - validation-plan mismatch missed
+leakage_checks:
+  - private answer content not proposed for docs.
+evidence_required:
+  - source inventory
+  - docs coherence notes
+coverage_tags:
+  - docs-coherence
+  - canonical-decisions

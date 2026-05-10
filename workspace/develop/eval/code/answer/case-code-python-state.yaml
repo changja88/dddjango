@@ -1,0 +1,42 @@
+id: case-code-python-state
+case_id: case-code-python-state
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-python-state.md
+intent: Validate Python typing/value-object improvement without framework overreach.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: Python and clean code
+  - workspace/docs/validation-plan.md: Python Typing
+  - workspace/reference/implementation-python/reference/final.md
+code_expected: true
+target_behavior:
+  required:
+    - Converts Money toward an explicit value object, preferably frozen/slots dataclass or equivalent.
+    - Preserves currency mismatch invariant and tests it.
+    - Avoids pydantic as domain default and avoids unnecessary Protocol.
+  forbidden:
+    - Large architecture pattern introduction.
+    - Weakening type contracts.
+allowed_paths:
+  - apps/payments/**
+  - apps/orders/models.py
+  - tests/**
+forbidden_paths:
+  - workspace/develop/eval/**
+scoring_checks:
+  - pass if type/value semantics are clearer and tests cover invariant.
+  - fail if only annotations are changed with no behavioral protection.
+failure_modes:
+  - mutable value object remains unsafe
+  - pydantic overuse
+leakage_checks:
+  - no private answer references.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - test output
+coverage_tags:
+  - python-typing
+  - dataclass
+  - value-object
+  - clean-code

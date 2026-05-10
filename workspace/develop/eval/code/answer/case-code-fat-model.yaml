@@ -1,0 +1,42 @@
+id: case-code-fat-model
+case_id: case-code-fat-model
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-fat-model.md
+intent: Check minimal clean-code refactor around model/service responsibilities and side-effect timing.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: Python and clean code, negative implementation restraint
+  - workspace/docs/validation-plan.md: Fat Model and View Logic review
+  - workspace/docs/workflow.md: integration priority and side-effect timing
+code_expected: true
+target_behavior:
+  required:
+    - Keeps status invariant local and understandable.
+    - Introduces a small side-effect boundary or after-commit placeholder without requiring full outbox unless justified.
+    - Adds regression tests around confirmation behavior.
+    - Reports verification honestly.
+  forbidden:
+    - Broad repository/UoW/hexagonal rewrite for the tiny fixture.
+    - Hiding side effects inside domain state transition.
+allowed_paths:
+  - apps/orders/**
+  - tests/**
+forbidden_paths:
+  - workspace/develop/eval/**
+scoring_checks:
+  - pass if responsibility split improves with small diff and tests.
+  - fail if refactor is broad or untested.
+failure_modes:
+  - side effect still coupled to invariant method
+  - overengineering
+leakage_checks:
+  - answer text absent from changed source.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - tests or not-run reason
+coverage_tags:
+  - clean-code
+  - responsibility-split
+  - side-effect-timing
+  - negative-restraint

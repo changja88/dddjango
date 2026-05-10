@@ -1,0 +1,35 @@
+id: case-response-operational-migration
+case_id: case-response-operational-migration
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-operational-migration.md
+intent: Evaluate operational migration advice with DB and Django migration responsibility separation.
+reference_basis:
+  - workspace/develop/eval/response/eval_goal.md: risky DB/API and validation-plan representative scenarios
+  - workspace/docs/validation-plan.md: operational migration
+  - workspace/reference/architecture-db/reference/final.md: rollout constraints and indexes
+  - workspace/reference/implementation-django/reference/final.md: migrations
+target_behavior:
+  required:
+    - Uses expand/backfill/contract or equivalent rolling sequence.
+    - Separates DB constraint/index risk from concrete Django migration implementation.
+    - Mentions lock risk, batched backfill, nullable-to-not-null transition, index strategy, and rollback or forward-fix plan.
+    - States commands to run only as planned or not yet run.
+  forbidden:
+    - One-shot NOT NULL backfill on a hot table without risk discussion.
+    - Claiming sqlmigrate or migration tests were executed.
+scoring_checks:
+  - pass if the plan is operationally safe and specific to Django migrations.
+  - fail if it is just a schema checklist.
+failure_modes:
+  - lock risk omitted
+  - rollout compatibility omitted
+  - false command result
+leakage_checks:
+  - no private run or answer material in response.
+evidence_required:
+  - response transcript
+coverage_tags:
+  - operational-migration
+  - db-consistency
+  - validation-honesty

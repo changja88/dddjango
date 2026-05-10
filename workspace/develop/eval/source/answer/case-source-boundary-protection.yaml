@@ -1,0 +1,32 @@
+id: case-source-boundary-protection
+case_id: case-source-boundary-protection
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-boundary-protection.md
+intent: Define boundary protection checks among source, runtime, public cases, answers, and runs.
+reference_basis:
+  - workspace/develop/eval/source/eval_goal.md: Boundary protection
+  - workspace/docs/plugin-structure.md
+  - workspace/scripts/run_plugin_eval.py
+target_behavior:
+  required:
+    - Distinguishes authoring source paths from runtime bundled reference paths.
+    - Requires answer and run outputs to stay out of public cases, fixtures, runtime references, and prompt input.
+    - Defines forbidden path/pattern scan for public/runtime artifacts.
+  forbidden:
+    - Copying source docs wholesale into runtime skills.
+    - Using run output as source truth.
+scoring_checks:
+  - pass if boundary rules cover all five roles and include leakage checks.
+  - fail if source/runtime/public/answer roles are blurred.
+failure_modes:
+  - answer leakage
+  - workspace-only source path in runtime final instruction
+leakage_checks:
+  - no answer content in public case or runtime bundle.
+evidence_required:
+  - boundary scan report
+coverage_tags:
+  - boundary-protection
+  - leakage-scan
+  - source-runtime-split

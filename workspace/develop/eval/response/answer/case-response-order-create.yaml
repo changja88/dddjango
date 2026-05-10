@@ -1,0 +1,39 @@
+id: case-response-order-create
+case_id: case-response-order-create
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-order-create.md
+intent: Validate specialist-positive reasoning for a risky order creation API without file edits.
+reference_basis:
+  - workspace/develop/eval/response/eval_goal.md: specialist-positive, risky DB/API, DDD dimensions
+  - workspace/docs/validation-plan.md: order creation API
+  - workspace/docs/workflow.md: risky workflow and consistency ordering
+  - workspace/docs/skill-contracts.md: DDD, DB, API, Django Ninja, Test boundaries
+target_behavior:
+  required:
+    - Starts from DDD terms, bounded context, aggregate, invariants, and state transitions before tactical code patterns.
+    - Defines REST/Django Ninja contract with Problem Details, OpenAPI impact, auth assumption, and idempotency key semantics.
+    - Discusses DB uniqueness/idempotency storage, transaction boundary, locking or retry tradeoff, and side effect timing after commit.
+    - Gives domain/API/test verification plan without claiming commands were run.
+  forbidden:
+    - Recommending DRF ViewSet/Serializer as greenfield standard.
+    - Placing business rules in Router or treating repository/UoW as mandatory without need.
+scoring_checks:
+  - pass if DDD, DB, API, Django Ninja, and tests are all connected through the same order invariant.
+  - fail if it only lists skills or patterns without an order-specific consistency decision.
+failure_modes:
+  - tactical-pattern-first answer
+  - body-field idempotency without replay/conflict semantics
+  - false verification claim
+leakage_checks:
+  - public response must not mention answer path, private scoring text, or prior run notes.
+evidence_required:
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - answer-oracle evaluation notes
+coverage_tags:
+  - specialist-positive
+  - strategic-ddd
+  - db-api-architecture
+  - validation-plan-order-create
+  - risky-write-consistency

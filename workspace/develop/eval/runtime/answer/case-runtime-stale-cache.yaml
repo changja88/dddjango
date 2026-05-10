@@ -1,0 +1,32 @@
+id: case-runtime-stale-cache
+case_id: case-runtime-stale-cache
+bucket: runtime
+kind: runtime
+public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-stale-cache.md
+intent: Detect stale runtime cache and prevent cache-only completion.
+reference_basis:
+  - workspace/develop/eval/runtime/eval_goal.md: stale cache and cache/source consistency
+  - workspace/docs/plugin-structure.md: Runtime synchronization criteria
+target_behavior:
+  required:
+    - Compares installed/cache skill metadata with canonical dddjango source.
+    - Requires matching workspace docs/source intent before completion.
+    - Uses validate_skill_docs.py --phase runtime as smoke only, not sole completion gate.
+  forbidden:
+    - Declaring completion after editing cache alone.
+    - Importing cache blindly into canonical source.
+scoring_checks:
+  - pass if stale cache is identified with source/cache paths and sync evidence.
+  - fail if cache-only hotfix is accepted.
+failure_modes:
+  - cache-only fix
+  - canonical source mismatch
+leakage_checks:
+  - no private eval packet copied into cache.
+evidence_required:
+  - cache snapshot
+  - canonical source comparison
+  - runtime validation output
+coverage_tags:
+  - stale-cache
+  - cache-source-consistency

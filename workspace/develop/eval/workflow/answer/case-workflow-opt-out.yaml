@@ -1,0 +1,30 @@
+id: case-workflow-opt-out
+case_id: case-workflow-opt-out
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-opt-out.md
+intent: Ensure explicit user opt-out prevents full workflow ceremony for small rename.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: subagent opt-out
+  - workspace/docs/workflow.md: simple task and opt-out restraint
+  - workspace/docs/validation-plan.md: simple field rename
+target_behavior:
+  required:
+    - Acknowledges no full role decomposition is needed.
+    - Provides only minimal migration/rename considerations.
+    - Does not output Role Map, Handoff Contract, or Integration Checklist.
+  forbidden:
+    - Ignoring opt-out and producing workflow sections.
+scoring_checks:
+  - pass if response is short and scoped.
+  - fail if workflow is over-applied.
+failure_modes:
+  - opt-out ignored
+  - ceremony overload
+leakage_checks:
+  - no private answer text.
+evidence_required:
+  - response transcript
+coverage_tags:
+  - subagent-opt-out
+  - tiny-task-restraint

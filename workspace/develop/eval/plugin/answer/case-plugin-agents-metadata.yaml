@@ -1,0 +1,33 @@
+id: case-plugin-agents-metadata
+case_id: case-plugin-agents-metadata
+bucket: plugin
+kind: plugin
+public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-agents-metadata.md
+intent: Check UI metadata semantic match against runtime skills.
+reference_basis:
+  - workspace/develop/eval/plugin/eval_goal.md: Agents metadata
+  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: agents/openai.yaml metadata
+  - workspace/docs/skill-authoring.md: metadata/default prompt criteria
+target_behavior:
+  required:
+    - Compares display_name, short_description, and default_prompt with SKILL.md semantics.
+    - Verifies default_prompt uses exact skill name.
+    - Flags stale UI copy, overclaim, and cross-skill responsibility drift.
+  forbidden:
+    - Judging metadata by file existence only.
+    - Adding optional branding fields without explicit source.
+scoring_checks:
+  - pass if field-level checks and semantic mismatch risks are reported.
+  - fail if only YAML syntax is checked.
+failure_modes:
+  - stale default prompt missed
+  - wrong skill name missed
+leakage_checks:
+  - answer criteria not copied into agents/openai.yaml.
+evidence_required:
+  - agents/openai.yaml review notes
+  - SKILL.md semantic comparison
+coverage_tags:
+  - agents-metadata
+  - field-level-checks
+  - stale-ui-copy

@@ -1,0 +1,34 @@
+id: case-workflow-cache-sync
+case_id: case-workflow-cache-sync
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-cache-sync.md
+intent: Confirm workflow cache sync reporting after role-map changes.
+reference_basis:
+  - workspace/develop/eval/workflow/eval_goal.md: cache sync report
+  - workspace/docs/workflow.md: Cache sync report
+  - workspace/docs/plugin-structure.md: Runtime synchronization criteria
+target_behavior:
+  required:
+    - Reports canonical workspace source change and cache path touched.
+    - Confirms runtime role-map responsibilities did not shrink from workspace/docs/workflow.md.
+    - Requires validation command output or explicit not-run reason.
+  forbidden:
+    - Reporting cache-only update as complete.
+    - Omitting workspace source evidence.
+scoring_checks:
+  - pass if workspace/cache evidence and validation status are both present.
+  - fail if only runtime cache is mentioned.
+failure_modes:
+  - cache-only completion
+  - role-map shrink
+leakage_checks:
+  - no answer or prior run content in cache report.
+evidence_required:
+  - workspace source path
+  - cache path
+  - validation output
+coverage_tags:
+  - cache-sync-report
+  - role-map-sync
+  - completion-honesty

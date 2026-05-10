@@ -1,0 +1,44 @@
+id: case-code-web-detail
+case_id: case-code-web-detail
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-web-detail.md
+intent: Check Django Web implementation boundary and safe rendering-oriented changes.
+reference_basis:
+  - workspace/develop/eval/code/eval_goal.md: Django Web implementation
+  - workspace/docs/validation-plan.md: Django Web
+  - workspace/docs/skill-contracts.md: implementation-django-web
+code_expected: true
+target_behavior:
+  required:
+    - Keeps template and context focused on presentation.
+    - Avoids domain state changes in template/view context.
+    - Adds a small test or compile-level verification.
+    - Touches template/static/view files only as needed.
+  forbidden:
+    - Moving business rules into HTML conditionals.
+    - Rewriting API/domain architecture for a page display task.
+allowed_paths:
+  - apps/orders/views.py
+  - apps/orders/templates/**
+  - apps/orders/static/**
+  - tests/**
+forbidden_paths:
+  - apps/orders/api.py
+  - workspace/develop/eval/**
+scoring_checks:
+  - pass if display code is clearer and domain logic remains outside template.
+  - fail if template owns state decisions.
+failure_modes:
+  - template business logic
+  - no verification
+leakage_checks:
+  - private oracle content absent from fixture changes.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - compile/test output
+coverage_tags:
+  - django-web
+  - template-static
+  - safe-rendering

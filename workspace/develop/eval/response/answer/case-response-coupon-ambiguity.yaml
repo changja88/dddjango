@@ -1,0 +1,36 @@
+id: case-response-coupon-ambiguity
+case_id: case-response-coupon-ambiguity
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-coupon-ambiguity.md
+intent: Verify ambiguity handling for TDD policy design before implementation.
+reference_basis:
+  - workspace/develop/eval/response/eval_goal.md: ambiguity, TDD/Test/Clean Code
+  - workspace/docs/validation-plan.md: coupon policy TDD
+  - workspace/reference/implementation-tdd/reference/final.md: Red-Green-Refactor
+  - workspace/reference/implementation-test/reference/final.md: boundary and behavior tests
+target_behavior:
+  required:
+    - Asks or lists the unresolved policy decisions before prescribing implementation.
+    - Provides a scoped test list for confirmed rules and marks unresolved rules as pending decisions.
+    - Distinguishes value object/domain service possibilities without forcing pydantic or DB design.
+  forbidden:
+    - Pretending ambiguous coupon stacking/refund rules are already decided.
+    - Claiming failing tests were written or run.
+scoring_checks:
+  - pass if uncertainty is explicit and the answer still gives useful TDD next steps.
+  - fail if it invents business rules silently.
+failure_modes:
+  - overconfident invented policy
+  - no test list
+  - false Red/Green execution claim
+leakage_checks:
+  - no private evaluator hints in public response.
+evidence_required:
+  - response transcript
+  - answer-oracle evaluation notes
+coverage_tags:
+  - ambiguity
+  - tdd
+  - test-list
+  - validation-honesty

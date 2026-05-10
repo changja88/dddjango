@@ -1,0 +1,35 @@
+id: case-response-fat-view-review
+case_id: case-response-fat-view-review
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-fat-view-review.md
+intent: Check severity-first review for fat model and view/router logic boundaries.
+reference_basis:
+  - workspace/develop/eval/response/eval_goal.md: TDD/Test/Clean Code and review scenarios
+  - workspace/docs/validation-plan.md: Fat Model review and View Logic review
+  - workspace/docs/skill-contracts.md: implementation-cleancode and implementation-django-ninja boundaries
+target_behavior:
+  required:
+    - Leads with findings ordered by severity.
+    - Keeps domain invariants near the model/domain behavior and moves orchestration to service/usecase.
+    - Treats Router as adapter for validation/auth/call/response conversion, not business rule owner.
+    - Includes behavior-preserving tests or review evidence gaps.
+  forbidden:
+    - Splitting only because the model is large.
+    - Hiding findings behind a long summary.
+scoring_checks:
+  - pass if findings are concrete, severity ordered, and map each responsibility to a boundary.
+  - fail if it gives generic refactoring slogans.
+failure_modes:
+  - no findings-first review stance
+  - router retains business decision
+  - no test/regression mention
+leakage_checks:
+  - no answer YAML details in response.
+evidence_required:
+  - response transcript
+coverage_tags:
+  - specialist-positive
+  - clean-code
+  - view-logic-review
+  - fat-model-review
