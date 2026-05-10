@@ -319,6 +319,27 @@
       border-left-color: var(--warn);
     }
 
+    .case-evidence-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .case-evidence-note p {
+      margin: 0;
+      min-width: min(640px, 100%);
+    }
+
+    .cell-note {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
     details {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -385,7 +406,7 @@
       z-index: 1000;
       display: grid;
       place-items: center;
-      padding: 24px;
+      padding: 10px;
       background: rgba(16, 24, 40, 0.62);
     }
 
@@ -394,8 +415,9 @@
     }
 
     .artifact-viewer {
-      width: min(1180px, 100%);
-      max-height: min(860px, calc(100vh - 48px));
+      width: min(1680px, calc(100vw - 20px));
+      height: min(1080px, calc(100vh - 20px));
+      max-height: calc(100vh - 20px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -456,7 +478,7 @@
     .artifact-viewer-body iframe {
       display: block;
       width: 100%;
-      height: min(760px, calc(100vh - 150px));
+      height: calc(100vh - 138px);
       border: 0;
       background: #ffffff;
     }
@@ -756,10 +778,574 @@
       overflow-wrap: anywhere;
     }
 
-    .artifact-link::after {
-      content: " view";
+    .eval-flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .eval-flow-step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    .eval-flow-step span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--info-bg);
+      color: var(--info);
+      font-weight: 700;
+    }
+
+    .eval-flow-step strong {
+      display: block;
+      margin-top: 8px;
+    }
+
+    .eval-flow-step p {
+      margin: 6px 0 0;
+      color: var(--muted);
+    }
+
+    .case-story-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .case-story-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 14px;
+    }
+
+    .case-story-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .case-story-header h3 {
+      margin: 0;
+    }
+
+    .answer-comparison {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .answer-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--panel-alt);
+      min-width: 0;
+    }
+
+    .answer-panel h4 {
+      margin: 0 0 8px;
+    }
+
+    .answer-body {
+      max-height: 320px;
+      overflow: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .evidence-trail {
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      padding-top: 10px;
+    }
+
+    .code-artifact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .code-artifact-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    .code-artifact-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .code-artifact-card p {
+      margin: 0 0 10px;
+      color: var(--muted);
+    }
+
+    .variant-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .variant-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--panel-alt);
+      min-width: 0;
+    }
+
+    .variant-card strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .case-story {
+      display: grid;
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .question-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--panel-alt);
+    }
+
+    .question-panel h4,
+    .variant-panel h4,
+    .variant-evaluation h5 {
+      margin: 0 0 8px;
+      letter-spacing: 0;
+    }
+
+    .question-text,
+    .answer-text {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .answer-text {
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    .variant-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    .variant-panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .variant-evaluation {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--panel-alt);
+      margin: 10px 0;
+    }
+
+    .evaluation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .evaluation-item {
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+    }
+
+    .evaluation-item span {
+      display: block;
       color: var(--muted);
       font-size: 12px;
+    }
+
+    .evaluation-item strong {
+      display: block;
+      margin-top: 2px;
+      overflow-wrap: anywhere;
+    }
+
+    .evaluation-list {
+      margin: 6px 0 0 18px;
+      padding: 0;
+    }
+
+    .evaluation-list li {
+      margin-bottom: 4px;
+    }
+
+    .artifact-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .artifact-button,
+    .artifact-related a,
+    .artifact-action {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 3px 9px;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .artifact-button:hover,
+    .artifact-related a:hover,
+    .artifact-action:hover {
+      border-color: #b8cdfa;
+      background: var(--info-bg);
+      text-decoration: none;
+    }
+
+    .artifact-type {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .artifact-link::after {
+      content: "";
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .report-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .report-summary-card {
+      min-width: 0;
+      min-height: 84px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+    }
+
+    .report-summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .report-summary-card strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 24px;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .report-summary-note {
+      margin: 0 0 14px;
+      max-width: 980px;
+      color: #344054;
+    }
+
+    .evaluation-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .evaluation-header h2 {
+      margin: 0;
+    }
+
+    .evaluation-count {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .evaluation-filters {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-alt);
+    }
+
+    .filter-field {
+      min-width: 0;
+    }
+
+    .filter-field label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .filter-field select,
+    .filter-field input {
+      width: 100%;
+    }
+
+    .evaluation-table {
+      min-width: 1120px;
+    }
+
+    .evaluation-table td:first-child {
+      min-width: 220px;
+    }
+
+    .evaluation-table .score-cell {
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .change-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .change-pill.improved {
+      color: var(--pass);
+      border-color: #b8e1ca;
+      background: var(--pass-bg);
+    }
+
+    .change-pill.regressed {
+      color: var(--fail);
+      border-color: #f2b8b5;
+      background: var(--fail-bg);
+    }
+
+    .change-pill.unchanged {
+      color: var(--muted);
+      border-color: #d0d5dd;
+      background: #f2f4f7;
+    }
+
+    .detail-button {
+      min-height: 32px;
+      border: 1px solid #b8cdfa;
+      border-radius: 6px;
+      padding: 4px 10px;
+      background: var(--info-bg);
+      color: var(--info);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .detail-button:hover,
+    .detail-button:focus {
+      outline: 2px solid #b8cdfa;
+      outline-offset: 1px;
+    }
+
+    .evidence-index-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .evidence-card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+    }
+
+    .evidence-card h3 {
+      margin: 0 0 6px;
+      overflow-wrap: anywhere;
+    }
+
+    .evidence-card p {
+      margin: 0 0 8px;
+      color: var(--muted);
+    }
+
+    .comparison-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 950;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(16, 24, 40, 0.66);
+    }
+
+    .comparison-modal-backdrop[hidden] {
+      display: none;
+    }
+
+    .comparison-modal {
+      width: min(95vw, 1600px);
+      height: min(90vh, 1000px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 24px 56px rgba(16, 24, 40, 0.28);
+    }
+
+    .comparison-modal-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-alt);
+    }
+
+    .comparison-modal-header h2 {
+      margin: 4px 0 0;
+      overflow-wrap: anywhere;
+    }
+
+    #comparison-modal-meta {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    #comparison-modal-close {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #comparison-modal-body {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    .comparison-modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .comparison-column {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .comparison-column-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-alt);
+    }
+
+    .comparison-column-header h3 {
+      margin: 0 0 6px;
+    }
+
+    .comparison-section {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .comparison-section:last-child {
+      border-bottom: 0;
+    }
+
+    .comparison-section h4 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #344054;
+    }
+
+    .modal-markdown {
+      max-height: 360px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .modal-markdown pre {
+      min-height: 0;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
     }
 
     @media (max-width: 1100px) {
@@ -786,6 +1372,11 @@
       .meta-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .report-summary-grid,
+      .evidence-index-grid {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+      }
     }
 
     @media (max-width: 680px) {
@@ -800,6 +1391,15 @@
       .summary-grid,
       .comparison-grid,
       .meta-grid,
+      .report-summary-grid,
+      .evaluation-filters,
+      .evidence-index-grid,
+      .comparison-modal-grid,
+      .code-artifact-grid,
+      .eval-flow,
+      .answer-comparison,
+      .variant-grid,
+      .evaluation-grid,
       .artifact-summary-grid {
         grid-template-columns: 1fr;
       }
@@ -809,7 +1409,22 @@
       }
 
       .artifact-viewer-backdrop {
-        padding: 12px;
+        padding: 6px;
+      }
+
+      .artifact-viewer {
+        width: calc(100vw - 12px);
+        height: calc(100vh - 12px);
+        max-height: calc(100vh - 12px);
+      }
+
+      .comparison-modal-backdrop {
+        padding: 6px;
+      }
+
+      .comparison-modal {
+        width: calc(100vw - 12px);
+        height: calc(100vh - 12px);
       }
 
       input[type="search"] {
@@ -828,283 +1443,91 @@
 
   <div class="shell">
     <nav aria-label="Report sections">
-      <a href="#summary">Summary</a>
-      <a href="#comparison">Baseline Comparison</a>
-      <a href="#case-comparison">Case Comparison</a>
-      <a href="#failed-cases">Failed / Blocked Cases</a>
-      <a href="#hard-gates">Hard Gates</a>
-      <a href="#scenario-families">Scenario Families</a>
-      <a href="#findings">Findings</a>
-      <a href="#reruns">Rerun Evidence</a>
-      <a href="#commands">Commands</a>
-      <a href="#artifacts">Artifact Index</a>
-      <a href="#packets">Public Packets</a>
-      <a href="#cache-sync">Cache / Source Sync</a>
-      <a href="#leakage">Leakage Scan</a>
-      <a href="#not-run">Not Run</a>
-      <a href="#final-verdict">Final Verdict</a>
+      <a href="#report-summary">Report Summary</a>
+      <a href="#evaluation-items">Evaluation Items</a>
+      <a href="#evaluation-filters">Evaluation Filters</a>
+      <a href="#evaluation-items-table">Evaluation Items Table</a>
+      <a href="#evaluation-empty-state">Evaluation Empty State</a>
+      <a href="#evidence-artifacts">Evidence Artifacts</a>
+      <a href="#artifact-index-content">Artifact Index Content</a>
     </nav>
 
     <main>
-      <section id="summary" aria-labelledby="summary-heading">
-        <h2 id="summary-heading">Summary</h2>
-        <div class="summary-grid" id="summary-grid"></div>
-        <div class="meta-grid" id="metadata-grid"></div>
+      <section id="report-summary" aria-labelledby="report-summary-heading">
+        <h2 id="report-summary-heading">Report Summary</h2>
+        <p id="report-summary-note" class="report-summary-note"></p>
+        <div class="report-summary-grid" id="report-summary-grid"></div>
+        <div class="meta-grid" id="report-metadata-grid"></div>
       </section>
 
-      <section id="comparison" aria-labelledby="comparison-heading">
-        <h2 id="comparison-heading">Baseline Comparison</h2>
-        <div class="comparison-grid" id="comparison-grid"></div>
+      <section id="evaluation-items" aria-labelledby="evaluation-items-heading">
+        <div class="evaluation-header">
+          <h2 id="evaluation-items-heading">Evaluation Items</h2>
+          <span id="evaluation-count" class="evaluation-count"></span>
+        </div>
+        <div id="evaluation-filters" class="evaluation-filters" aria-label="Evaluation filters">
+          <div class="filter-field">
+            <label for="score-type-filter">Score Type</label>
+            <select id="score-type-filter">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="change-direction-filter">Change</label>
+            <select id="change-direction-filter">
+              <option value="">All</option>
+              <option value="improved">Improved</option>
+              <option value="regressed">Regressed</option>
+              <option value="unchanged">Unchanged</option>
+              <option value="not_comparable">Not comparable</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="evaluation-search">Search</label>
+            <input id="evaluation-search" type="search" placeholder="Case, family, verdict, evidence">
+          </div>
+        </div>
         <div class="table-wrap">
-          <table id="comparison-detail-table">
+          <table id="evaluation-items-table" class="evaluation-table">
             <thead>
               <tr>
-                <th>Metric</th>
-                <th>Baseline</th>
-                <th>With dddjango</th>
-                <th>Delta</th>
-                <th>Notes</th>
+                <th>평가 항목</th>
+                <th>Type</th>
+                <th>Baseline 점수</th>
+                <th>With dddjango 점수</th>
+                <th>변화</th>
+                <th>Baseline 응답/평가</th>
+                <th>With dddjango 응답/평가</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
+        <div id="evaluation-empty-state" class="empty" hidden>No evaluation rows match the current filters.</div>
       </section>
 
-      <section id="case-comparison" aria-labelledby="case-comparison-heading">
-        <h2 id="case-comparison-heading">Case Comparison</h2>
-        <div class="toolbar">
-          <label for="case-comparison-status">Status</label>
-          <select id="case-comparison-status" data-filter-table="case-comparison-table" data-filter-key="status">
-            <option value="">All</option>
-            <option value="improved">Improved</option>
-            <option value="regressed">Regressed</option>
-            <option value="unchanged">Unchanged</option>
-            <option value="not-run">Not run</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table id="case-comparison-table">
-            <thead>
-              <tr>
-                <th>Case</th>
-                <th>Family</th>
-                <th>Baseline Score</th>
-                <th>With dddjango Score</th>
-                <th>Delta</th>
-                <th>Baseline Verdict</th>
-                <th>With dddjango Verdict</th>
-                <th>Status</th>
-                <th>Evidence</th>
-                <th>Baseline Code</th>
-                <th>With dddjango Code</th>
-                <th>Diffs</th>
-                <th>Artifacts</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="failed-cases" aria-labelledby="failed-cases-heading">
-        <h2 id="failed-cases-heading">Failed / Blocked Cases</h2>
-        <div id="failed-cases-content"></div>
-      </section>
-
-      <section id="hard-gates" aria-labelledby="hard-gates-heading">
-        <h2 id="hard-gates-heading">Hard Gates</h2>
-        <div class="toolbar">
-          <label for="hard-gate-status">Status</label>
-          <select id="hard-gate-status" data-filter-table="hard-gates-table" data-filter-key="status">
-            <option value="">All</option>
-            <option value="pass">Pass</option>
-            <option value="fail">Fail</option>
-            <option value="blocked">Blocked</option>
-            <option value="not-run">Not run</option>
-            <option value="n/a">N/A</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table id="hard-gates-table">
-            <thead>
-              <tr>
-                <th>Gate</th>
-                <th>Status</th>
-                <th>Reason</th>
-                <th>Evidence</th>
-                <th>Cases / Commands</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="scenario-families" aria-labelledby="scenario-families-heading">
-        <h2 id="scenario-families-heading">Scenario Families</h2>
-        <div class="table-wrap">
-          <table id="scenario-table">
-            <thead>
-              <tr>
-                <th>Family</th>
-                <th>Status</th>
-                <th>Cases</th>
-                <th>Passed</th>
-                <th>Failed</th>
-                <th>Blocked</th>
-                <th>Skipped</th>
-                <th>Rerun Passed</th>
-                <th>Accepted Exceptions</th>
-                <th>Artifacts</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="findings" aria-labelledby="findings-heading">
-        <h2 id="findings-heading">Findings</h2>
-        <div class="toolbar">
-          <label for="finding-severity">Severity</label>
-          <select id="finding-severity" data-filter-table="findings-table" data-filter-key="severity">
-            <option value="">All</option>
-            <option value="blocking">Blocking</option>
-            <option value="major">Major</option>
-            <option value="minor">Minor</option>
-          </select>
-          <label for="finding-status">Status</label>
-          <select id="finding-status" data-filter-table="findings-table" data-filter-key="status">
-            <option value="">All</option>
-            <option value="open">Open</option>
-            <option value="fixed">Fixed</option>
-            <option value="waived">Waived</option>
-            <option value="rerun-passed">Rerun passed</option>
-          </select>
-          <label class="visually-hidden" for="finding-search">Search findings</label>
-          <input id="finding-search" type="search" placeholder="Search findings">
-        </div>
-        <div class="table-wrap">
-          <table id="findings-table">
-            <thead>
-              <tr>
-                <th>Severity</th>
-                <th>Status</th>
-                <th>Case</th>
-                <th>Defect Type</th>
-                <th>Before</th>
-                <th>After / Disposition</th>
-                <th>Gate or Dimension</th>
-                <th>Evidence</th>
-                <th>Rerun Scope</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="reruns" aria-labelledby="reruns-heading">
-        <h2 id="reruns-heading">Rerun Evidence</h2>
-        <div id="rerun-content"></div>
-      </section>
-
-      <section id="commands" aria-labelledby="commands-heading">
-        <h2 id="commands-heading">Commands</h2>
-        <div id="command-content"></div>
-      </section>
-
-      <section id="artifacts" aria-labelledby="artifacts-heading">
-        <h2 id="artifacts-heading">Artifact Index</h2>
+      <section id="evidence-artifacts" aria-labelledby="evidence-artifacts-heading">
+        <h2 id="evidence-artifacts-heading">Evidence Artifacts</h2>
         <div class="callout">
           <strong>Artifact behavior:</strong>
-          linked artifacts open in this report's embedded viewer when available, so review stays usable after the temporary localhost server is stopped. Missing files are marked explicitly instead of failing silently.
+          evidence links open in this report's embedded artifact viewer when the artifact was embedded into REPORT_DATA.
         </div>
-        <div class="table-wrap">
-          <table id="artifacts-table">
-            <thead>
-              <tr>
-                <th>Artifact</th>
-                <th>Type</th>
-                <th>Case / Finding</th>
-                <th>Summary</th>
-                <th>Opens As</th>
-                <th>Exists</th>
-                <th>Link</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="packets" aria-labelledby="packets-heading">
-        <h2 id="packets-heading">Public Packets Supplied</h2>
-        <div class="table-wrap">
-          <table id="packets-table">
-            <thead>
-              <tr>
-                <th>Case</th>
-                <th>Public Packet</th>
-                <th>Raw Output</th>
-                <th>Supplied Context</th>
-                <th>Artifact Exists</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="cache-sync" aria-labelledby="cache-sync-heading">
-        <h2 id="cache-sync-heading">Cache / Source Sync</h2>
-        <div class="table-wrap">
-          <table id="cache-table">
-            <thead>
-              <tr>
-                <th>Runtime / Cache Path</th>
-                <th>Canonical Source Path</th>
-                <th>Status</th>
-                <th>Evidence</th>
-                <th>Intentionally Unsynced</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="leakage" aria-labelledby="leakage-heading">
-        <h2 id="leakage-heading">Leakage Scan</h2>
-        <div id="leakage-content"></div>
-      </section>
-
-      <section id="not-run" aria-labelledby="not-run-heading">
-        <h2 id="not-run-heading">Not Run</h2>
-        <div class="table-wrap">
-          <table id="not-run-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Type</th>
-                <th>Reason</th>
-                <th>Owner / Decision</th>
-                <th>Blocks Completion</th>
-                <th>Evidence</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="final-verdict" aria-labelledby="final-verdict-heading">
-        <h2 id="final-verdict-heading">Final Verdict</h2>
-        <div id="final-verdict-content"></div>
+        <div id="artifact-index-content" class="evidence-index-grid"></div>
       </section>
     </main>
+  </div>
+
+  <div id="comparison-modal" class="comparison-modal-backdrop" hidden>
+    <div class="comparison-modal" role="dialog" aria-modal="true" aria-labelledby="comparison-modal-title" aria-describedby="comparison-modal-meta">
+      <div class="comparison-modal-header">
+        <div>
+          <span id="comparison-modal-meta">Evaluation comparison</span>
+          <h2 id="comparison-modal-title">Comparison</h2>
+        </div>
+        <button type="button" id="comparison-modal-close">Close</button>
+      </div>
+      <div id="comparison-modal-body"></div>
+    </div>
   </div>
 
   <div id="artifact-viewer-backdrop" class="artifact-viewer-backdrop" hidden>
@@ -1209,6 +1632,7 @@
         { case: "case-016", family: "source-crosswalk", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
         { case: "case-017", family: "claude-codex-compatibility", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] }
       ],
+      codeArtifactRuns: [],
       failedCases: [],
       hardGates: [
         {
@@ -1275,6 +1699,7 @@
     const normalizeArtifactHref = (href) => String(href || "").replace(/^\.\//, "");
     const embeddedArtifacts = () => REPORT_DATA.embeddedArtifacts || {};
     const hasEmbeddedArtifact = (href) => Boolean(embeddedArtifacts()[normalizeArtifactHref(href)]);
+    const isJsRenderedReport = (href) => /(^|\/)report\.html(?:[#?].*)?$/.test(normalizeArtifactHref(href));
 
     const links = (items) => {
       if (!items || items.length === 0) return "";
@@ -1284,7 +1709,9 @@
         const rawHref = normalizeArtifactHref(item.href || "#");
         const href = escapeHtml(rawHref);
         const exists = item.exists === false ? ` ${badge("missing")}` : "";
-        const attributes = hasEmbeddedArtifact(rawHref) ? ` class="artifact-link" data-artifact-href="${href}"` : "";
+        const attributes = hasEmbeddedArtifact(rawHref) && !isJsRenderedReport(rawHref)
+          ? ` class="artifact-action artifact-link" data-artifact-href="${href}"`
+          : ` class="artifact-action"`;
         return `<a href="${href}"${attributes}>${label}</a>${exists}`;
       }).join("<br>");
     };
@@ -1296,14 +1723,34 @@
         { label: "prompt", href: `raw/${caseRow.case}-public-prompt.md`, exists: false },
         { label: "baseline", href: `raw/${caseRow.case}-baseline.txt`, exists: false },
         { label: "with-dddjango", href: `raw/${caseRow.case}-with-dddjango.txt`, exists: false },
-        { label: "prompt-input", href: `raw/${caseRow.case}-prompt-input.json`, exists: false }
+        { label: "baseline isolation", href: `raw/${caseRow.case}-baseline-isolation.json`, exists: false },
+        { label: "with prompt-input", href: `raw/${caseRow.case}-with-dddjango-prompt-input.json`, exists: false }
       ];
     };
 
-    const codeLinks = (items) => {
-      if (!items || !items.length) return `<span class="muted">No code captured</span>`;
+    const hasLinkedCodeArtifacts = () => (REPORT_DATA.codeArtifactRuns || []).some((run) =>
+      (run.cases || []).some((caseItem) =>
+        (caseItem.variants || []).some((variant) =>
+          (variant.files || []).length || variant.changedFiles || variant.diff
+        )
+      )
+    );
+
+    const responseOnlyCodeCell = () => `
+      <span class="badge info">response-only</span>
+      <small class="cell-note">source files were not captured for this row</small>
+    `;
+
+    const codeLinks = (items, caseRow) => {
+      if (!items || !items.length) {
+        if ((caseRow && caseRow.evidenceMode) !== "code-backed") return responseOnlyCodeCell();
+        return `<span class="muted">No code captured</span>`;
+      }
       const existing = items.filter((item) => item.exists !== false);
-      if (!existing.length) return `<span class="muted">No code captured</span>`;
+      if (!existing.length) {
+        if ((caseRow && caseRow.evidenceMode) !== "code-backed") return responseOnlyCodeCell();
+        return `<span class="muted">No code captured</span>`;
+      }
       return links(items);
     };
 
@@ -1311,6 +1758,34 @@
       const mode = caseRow.evidenceMode || "response-only";
       const status = caseRow.codeEvidenceStatus || (mode === "code-backed" ? "No code captured" : "response-only");
       return `${badge(mode)}<br><small>${escapeHtml(status)}</small>`;
+    };
+
+    const artifactTypeLabel = (artifact) => {
+      const typeGroup = artifact.typeGroup || artifact.type || "artifact";
+      const subtype = artifact.type && artifact.type !== typeGroup
+        ? `<small class="cell-note">subtype: ${escapeHtml(artifact.type)}</small>`
+        : "";
+      return `<span class="artifact-type">${escapeHtml(typeGroup)}</span>${subtype}`;
+    };
+
+    const renderCaseCodeEvidenceNote = () => {
+      const container = document.getElementById("case-code-evidence-note");
+      const cases = REPORT_DATA.caseComparisons || [];
+      if (!container || !cases.length) return;
+      const responseOnlyCases = cases.filter((caseRow) => (caseRow.evidenceMode || "response-only") !== "code-backed").length;
+      if (!responseOnlyCases) {
+        container.innerHTML = "";
+        return;
+      }
+      const linkedRunText = hasLinkedCodeArtifacts()
+        ? `<a class="artifact-action" href="#code-artifacts">Open code artifacts</a>`
+        : "";
+      container.innerHTML = `
+        <div class="callout info case-evidence-note">
+          <p><strong>Code evidence:</strong> ${responseOnlyCases}/${cases.length} comparison rows are response-only scoring rows. Actual generated source, changed-file manifests, and diffs are shown in the separate Code Artifacts section below.</p>
+          ${linkedRunText}
+        </div>
+      `;
     };
 
     const setRows = (tableId, rows) => {
@@ -1382,6 +1857,193 @@
       `));
     };
 
+    const renderEvaluationFlow = () => {
+      const container = document.getElementById("evaluation-flow-content");
+      if (!container) return;
+      const steps = REPORT_DATA.evaluationFlow || [];
+      container.innerHTML = `
+        <div class="eval-flow">
+          ${steps.map((step, index) => `
+            <div class="eval-flow-step">
+              <span>${index + 1}</span>
+              <strong>${escapeHtml(step.step)}</strong>
+              <p>${escapeHtml(step.summary)}</p>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    };
+
+    const renderEvaluationList = (items) => {
+      const list = Array.isArray(items) ? items.filter(Boolean) : [];
+      if (!list.length) return `<div class="cell-note">No detail recorded.</div>`;
+      return `<ul class="evaluation-list">${list.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+    };
+
+    const renderVariantEvaluation = (variant) => {
+      const evaluation = variant.evaluation || {};
+      return `
+        <div class="variant-evaluation">
+          <h5>Variant Evaluation</h5>
+          <div class="evaluation-grid">
+            <div class="evaluation-item"><span>Status</span><strong>${badge(evaluation.status || variant.status || "unknown")}</strong></div>
+            <div class="evaluation-item"><span>Score</span><strong>${escapeHtml(evaluation.score || "not scored")}</strong></div>
+          </div>
+          <p>${escapeHtml(evaluation.summary || "No evaluation summary recorded.")}</p>
+          <div class="evaluation-item">
+            <span>Strengths</span>
+            ${renderEvaluationList(evaluation.strengths)}
+          </div>
+          <div class="evaluation-item">
+            <span>Gaps / Limits</span>
+            ${renderEvaluationList(evaluation.gaps)}
+          </div>
+          <div class="evaluation-item">
+            <span>Evidence Checks</span>
+            ${renderEvaluationList(evaluation.checks)}
+          </div>
+        </div>
+      `;
+    };
+
+    const renderVariantStory = (variant) => `
+      <div class="answer-panel">
+        <h4>${escapeHtml(variant.label)}</h4>
+        <div class="artifact-summary-grid">
+          <div class="artifact-summary-card"><span>Score</span><strong>${escapeHtml(variant.score)}</strong></div>
+          <div class="artifact-summary-card"><span>Verdict</span><strong>${badge(variant.verdict)}</strong></div>
+          <div class="artifact-summary-card"><span>Checks</span><strong>${escapeHtml((variant.checks || []).length)}</strong></div>
+          <div class="artifact-summary-card"><span>Evidence</span><strong>${escapeHtml((variant.artifacts || []).length)}</strong></div>
+        </div>
+        <div class="answer-body">${escapeHtml(variant.answer || "No answer captured.")}</div>
+        <div class="evaluation-item"><span>Strengths</span>${renderEvaluationList(variant.strengths)}</div>
+        <div class="evaluation-item"><span>Gaps / Limits</span>${renderEvaluationList(variant.gaps)}</div>
+        <div class="evaluation-item"><span>Checks</span>${renderEvaluationList(variant.checks)}</div>
+        <div class="artifact-actions">${links(variant.artifacts || [])}</div>
+      </div>
+    `;
+
+    const renderCaseStory = (story) => `
+      <article class="case-story-card" id="case-story-${escapeHtml(story.case)}" data-case="${escapeHtml(story.case)}">
+        <div class="case-story-header">
+          <h3>${escapeHtml(story.case)}: ${escapeHtml(story.title)}</h3>
+          <div>${badge(story.status)} ${escapeHtml(story.family)}</div>
+        </div>
+        <div class="question-panel">
+          <h4>Question</h4>
+          <p class="question-text">${escapeHtml(story.question)}</p>
+          <div class="artifact-actions">${links([story.prompt].filter(Boolean))}</div>
+        </div>
+        <div class="callout warn">
+          <h4>Evaluator Judgment</h4>
+          <p>${escapeHtml(story.evaluation && story.evaluation.scoreNote)}</p>
+          <p><strong>Delta:</strong> ${escapeHtml(story.evaluation && story.evaluation.delta || "n/a")} <strong>Better:</strong> ${badge(story.evaluation && story.evaluation.betterAnswer || "n/a")}</p>
+          <p><strong>Baseline:</strong> ${badge(story.evaluation && story.evaluation.baselineVerdict || "n/a")} <strong>dddjango:</strong> ${badge(story.evaluation && story.evaluation.withDddjangoVerdict || "n/a")}</p>
+        </div>
+        <h4>Answer Comparison</h4>
+        <div class="answer-comparison">
+          ${renderVariantStory(story.baseline || {})}
+          ${renderVariantStory(story.withDddjango || {})}
+        </div>
+        <div class="evidence-trail">
+          <h4>Evidence Trail</h4>
+          <div class="artifact-actions">${links(story.evidenceTrail || [])}</div>
+        </div>
+      </article>
+    `;
+
+    const renderCaseStories = () => {
+      const stories = REPORT_DATA.caseStories || [];
+      const filter = document.getElementById("case-story-filter");
+      if (filter && filter.options.length === 1) {
+        filter.insertAdjacentHTML("beforeend", stories.map((story) => `<option value="${escapeHtml(story.case)}">${escapeHtml(story.case)}</option>`).join(""));
+        filter.addEventListener("change", () => renderCaseStories());
+      }
+      const selected = filter ? filter.value : "";
+      const visibleStories = selected ? stories.filter((story) => story.case === selected) : stories;
+      document.getElementById("case-story-content").innerHTML = `
+        <div class="case-story-list">${visibleStories.map(renderCaseStory).join("")}</div>
+      `;
+    };
+
+    const attachCaseStoryJumps = () => {
+      document.querySelectorAll("[data-case-jump]").forEach((link) => {
+        link.addEventListener("click", () => {
+          const filter = document.getElementById("case-story-filter");
+          if (filter) {
+            filter.value = link.dataset.caseJump;
+            renderCaseStories();
+          }
+        });
+      });
+    };
+
+    const renderCodeArtifactVariant = (variant) => {
+      const heading = variant.variant === "baseline" ? "Baseline Answer" : "With dddjango Answer";
+      return `
+        <div class="variant-panel">
+          <div class="variant-panel-header">
+            <h4>${heading}</h4>
+            ${badge(variant.status)}
+          </div>
+          <pre class="answer-text">${escapeHtml(variant.responseText || "No response transcript captured.")}</pre>
+          ${renderVariantEvaluation(variant)}
+          <div>${escapeHtml(variant.fileCount || 0)} changed file(s)</div>
+          <div class="artifact-actions">
+            ${links([variant.response, variant.changedFiles, variant.diff].filter(Boolean))}
+          </div>
+          ${(variant.files || []).length ? `
+            <div class="artifact-actions">
+              ${(variant.files || []).map((file) => links([file])).join("")}
+            </div>
+          ` : `<div class="empty">No source files captured.</div>`}
+        </div>
+      `;
+    };
+
+    const renderCodeArtifactCase = (caseItem) => `
+      <div class="code-artifact-card">
+        <h3>${escapeHtml(caseItem.case)}: ${escapeHtml(caseItem.title || "Code Artifact")}</h3>
+        <div class="artifact-actions">${links([caseItem.analysis, caseItem.prompt].filter(Boolean))}</div>
+        <div class="case-story">
+          <div class="question-panel">
+            <h4>Question</h4>
+            <p class="question-text">${escapeHtml(caseItem.questionText || caseItem.promptText || "No question captured.")}</p>
+            ${caseItem.evaluationNote ? `<p class="cell-note">${escapeHtml(caseItem.evaluationNote)}</p>` : ""}
+          </div>
+          <div class="variant-grid">
+            ${(caseItem.variants || []).map(renderCodeArtifactVariant).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const renderCodeArtifacts = () => {
+      const container = document.getElementById("code-artifact-content");
+      const scope = document.getElementById("code-artifact-scope");
+      const currentRunHasCodeRows = (REPORT_DATA.caseComparisons || []).some((caseRow) => caseRow.evidenceMode === "code-backed");
+      if (scope) {
+        scope.innerHTML = currentRunHasCodeRows
+          ? `<strong>Scope:</strong> this focused run is code-backed. Each case below keeps the question, Baseline Answer, With dddjango Answer, Variant Evaluation, and generated code evidence together.`
+          : `<strong>Scope:</strong> the 85/85 comprehensive score is response-based. This section links the separate code-backed smoke run so actual generated source, diffs, and changed-file manifests can be inspected from the same report.`;
+      }
+      const runs = REPORT_DATA.codeArtifactRuns || [];
+      if (!runs.length) {
+        container.innerHTML = `<div class="empty">No code-backed artifact run is linked to this report.</div>`;
+        return;
+      }
+      container.innerHTML = runs.map((run) => `
+        <div class="code-artifact-card">
+          <h3>${escapeHtml(run.runId)} ${badge(run.status)}</h3>
+          <p>${escapeHtml(run.summary || "")}</p>
+          <div class="artifact-actions">${links([run.report].filter(Boolean))}</div>
+          <div class="code-artifact-grid">
+            ${(run.cases || []).map(renderCodeArtifactCase).join("")}
+          </div>
+        </div>
+      `).join("");
+    };
+
     const renderFailedCases = () => {
       const container = document.getElementById("failed-cases-content");
       if (!REPORT_DATA.failedCases.length) {
@@ -1414,7 +2076,7 @@
 
       setRows("case-comparison-table", REPORT_DATA.caseComparisons.map((c) => `
         <tr data-status="${escapeHtml(c.status)}">
-          <td>${escapeHtml(c.case)}</td>
+          <td><a href="#case-stories" data-case-jump="${escapeHtml(c.case)}">${escapeHtml(c.case)}</a></td>
           <td>${escapeHtml(c.family)}</td>
           <td>${escapeHtml(c.baselineScore)}</td>
           <td>${escapeHtml(c.withPluginScore)}</td>
@@ -1423,9 +2085,9 @@
           <td>${badge(c.withPluginVerdict)}</td>
           <td>${badge(c.status)}</td>
           <td>${renderCaseCodeComparison(c)}</td>
-          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.baseline)}</td>
-          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.withPlugin)}</td>
-          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.diffs)}</td>
+          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.baseline, c)}</td>
+          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.withPlugin, c)}</td>
+          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.diffs, c)}</td>
           <td>${links(caseArtifacts(c))}</td>
         </tr>
       `));
@@ -1469,13 +2131,18 @@
         </tr>
       `));
 
+      const artifactTypes = [...new Set((REPORT_DATA.artifacts || []).map((a) => a.typeGroup || a.type).filter(Boolean))].sort();
+      const artifactTypeFilter = document.getElementById("artifact-type-filter");
+      if (artifactTypeFilter && artifactTypeFilter.options.length === 1) {
+        artifactTypeFilter.insertAdjacentHTML("beforeend", artifactTypes.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join(""));
+      }
       setRows("artifacts-table", REPORT_DATA.artifacts.map((a) => `
-        <tr>
+        <tr data-type="${escapeHtml(a.typeGroup || a.type)}" data-case="${escapeHtml(a.caseOrFinding)}" data-search="${escapeHtml([a.name, a.typeGroup, a.type, a.caseOrFinding, a.summary, a.opensAs].join(" ").toLowerCase())}">
           <td>${escapeHtml(a.name)}</td>
-          <td>${escapeHtml(a.type)}</td>
-          <td>${escapeHtml(a.caseOrFinding)}</td>
+          <td>${artifactTypeLabel(a)}</td>
+          <td><code>${escapeHtml(a.caseOrFinding)}</code></td>
           <td>${escapeHtml(a.summary)}</td>
-          <td>${escapeHtml(a.opensAs)}</td>
+          <td>${badge(a.opensAs)}</td>
           <td>${badge(a.exists ? "yes" : "missing")}</td>
           <td>${links([a.link])}</td>
         </tr>
@@ -1616,7 +2283,9 @@
       const rawHref = normalizeArtifactHref(item.href || "#");
       const href = escapeHtml(rawHref);
       const label = escapeHtml(item.label || item.href || "artifact");
-      const attributes = hasEmbeddedArtifact(rawHref) ? ` class="artifact-link" data-artifact-href="${href}"` : "";
+      const attributes = hasEmbeddedArtifact(rawHref) && !isJsRenderedReport(rawHref)
+        ? ` class="artifact-action artifact-link" data-artifact-href="${href}"`
+        : ` class="artifact-action"`;
       return `<a href="${href}"${attributes}>${label}</a>`;
     };
 
@@ -1700,6 +2369,8 @@
       try {
         const manifest = JSON.parse(artifact.content || "{}");
         const files = Array.isArray(manifest.files) ? manifest.files : [];
+        const prefix = artifact.linkPrefix || "";
+        const diffPath = manifest.diffPath ? `${prefix}${manifest.diffPath}` : "";
         return `
           ${renderArtifactSummaryGrid(artifact, artifact.label)}
           <div class="artifact-summary-grid">
@@ -1708,13 +2379,14 @@
             <div class="artifact-summary-card"><span>No Code Produced</span><strong>${manifest.noCodeProduced ? "yes" : "no"}</strong></div>
             <div class="artifact-summary-card"><span>Variant</span><strong>${escapeHtml(manifest.variant || artifact.variant || "n/a")}</strong></div>
           </div>
+          ${diffPath ? `<div class="artifact-actions">${links([{ label: "open diff", href: diffPath, exists: hasEmbeddedArtifact(diffPath) }])}</div>` : ""}
           ${files.length ? `
             <div class="changed-file-list">
               ${files.map((file) => `
                 <div class="changed-file-row">
                   <strong>${escapeHtml(file.path)}</strong>
                   <div>${badge(file.status || "changed")} ${escapeHtml(file.language || "text")} / ${escapeHtml(file.lineCount ?? 0)} lines / ${escapeHtml(file.byteCount ?? 0)} bytes</div>
-                  ${file.artifactPath ? links([{ label: "source", href: file.artifactPath, exists: hasEmbeddedArtifact(file.artifactPath) }]) : ""}
+                  ${file.artifactPath ? `<div class="artifact-actions">${links([{ label: "source", href: `${prefix}${file.artifactPath}`, exists: hasEmbeddedArtifact(`${prefix}${file.artifactPath}`) }])}</div>` : ""}
                 </div>
               `).join("")}
             </div>
@@ -1729,7 +2401,7 @@
       let output = escapeHtml(text);
       output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) => {
         const rawHref = normalizeArtifactHref(href);
-        const attributes = hasEmbeddedArtifact(rawHref)
+        const attributes = hasEmbeddedArtifact(rawHref) && !isJsRenderedReport(rawHref)
           ? ` class="artifact-link" data-artifact-href="${escapeHtml(rawHref)}"`
           : "";
         return `<a href="${escapeHtml(rawHref)}"${attributes}>${label}</a>`;
@@ -1934,7 +2606,7 @@
           <div class="artifact-summary-card"><span>Family</span><strong>${escapeHtml(c.family || "n/a")}</strong></div>
         </div>
         ${renderRelatedArtifacts(artifact)}
-        ${c.scoreNote ? `<div class="callout warn"><h3>Score Rationale</h3><p>${escapeHtml(c.scoreNote)}</p></div>` : ""}
+        ${c.scoreNote ? `<div class="callout warn"><h3>Evaluator Judgment</h3><p>${escapeHtml(c.scoreNote)}</p></div>` : ""}
         ${renderMarkdownArtifact(artifact.content || "")}
       `;
     };
@@ -2066,6 +2738,8 @@
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && !document.getElementById("artifact-viewer-backdrop").hidden) {
           hideArtifact();
+          event.preventDefault();
+          event.stopImmediatePropagation();
         }
       });
     };
@@ -2087,18 +2761,301 @@
           row.hidden = term && !row.textContent.toLowerCase().includes(term);
         });
       });
+
+      const artifactSearch = document.getElementById("artifact-search");
+      if (artifactSearch) {
+        artifactSearch.addEventListener("input", (event) => {
+          const term = event.target.value.toLowerCase();
+          document.querySelectorAll("#artifacts-table tbody tr").forEach((row) => {
+            const typeFilter = document.getElementById("artifact-type-filter").value;
+            const typeHidden = typeFilter && row.dataset.type !== typeFilter;
+            const searchHidden = term && !(row.dataset.search || row.textContent.toLowerCase()).includes(term);
+            row.hidden = Boolean(typeHidden || searchHidden);
+          });
+        });
+      }
+
+      const artifactTypeFilter = document.getElementById("artifact-type-filter");
+      if (artifactTypeFilter) {
+        artifactTypeFilter.addEventListener("change", () => {
+          const term = (document.getElementById("artifact-search").value || "").toLowerCase();
+          document.querySelectorAll("#artifacts-table tbody tr").forEach((row) => {
+            const typeHidden = artifactTypeFilter.value && row.dataset.type !== artifactTypeFilter.value;
+            const searchHidden = term && !(row.dataset.search || row.textContent.toLowerCase()).includes(term);
+            row.hidden = Boolean(typeHidden || searchHidden);
+          });
+        });
+      }
     };
 
-    renderSummary();
-    renderComparison();
-    renderFailedCases();
-    renderTables();
-    renderReruns();
-    renderCommands();
-    renderLeakage();
-    renderFinalVerdict();
+    let comparisonModalTrigger = null;
+
+    const evaluationItems = () => {
+      if (Array.isArray(REPORT_DATA.evaluation_items)) return REPORT_DATA.evaluation_items;
+      return (REPORT_DATA.caseComparisons || []).map((row) => {
+        const story = (REPORT_DATA.caseStories || []).find((item) => item.case === row.case) || {};
+        return {
+          id: row.case,
+          title: story.title || row.case,
+          family: row.family || story.family || "",
+          test_content_ko: story.question || "",
+          score_type: "numeric",
+          baseline: {
+            score: row.baselineScore,
+            response_summary: story.baseline && story.baseline.answer ? story.baseline.answer.slice(0, 160) : row.baselineVerdict,
+            response: story.baseline && story.baseline.answer,
+            evaluation_summary: story.baseline && story.baseline.strengths ? story.baseline.strengths.join(" ") : row.baselineVerdict,
+            evaluation: story.evaluation && story.evaluation.scoreNote,
+            evidence: story.baseline && story.baseline.artifacts || caseArtifacts(row),
+          },
+          with_dddjango: {
+            score: row.withPluginScore,
+            response_summary: story.withDddjango && story.withDddjango.answer ? story.withDddjango.answer.slice(0, 160) : row.withPluginVerdict,
+            response: story.withDddjango && story.withDddjango.answer,
+            evaluation_summary: story.withDddjango && story.withDddjango.strengths ? story.withDddjango.strengths.join(" ") : row.withPluginVerdict,
+            evaluation: story.evaluation && story.evaluation.scoreNote,
+            evidence: story.withDddjango && story.withDddjango.artifacts || caseArtifacts(row),
+          },
+          change: {
+            direction: row.status === "pass" && row.delta && String(row.delta).startsWith("+") ? "improved" : "unchanged",
+            label: row.delta || row.status || "n/a",
+          },
+        };
+      });
+    };
+
+    const compactText = (value, fallback = "Not recorded.") => {
+      const text = String(value || "").trim();
+      return text || fallback;
+    };
+
+    const renderReportSummary = () => {
+      document.getElementById("report-title").textContent = REPORT_DATA.title || "Plugin Eval Report";
+      const summary = REPORT_DATA.summary || {};
+      const verdict = REPORT_DATA.verdict || {};
+      const comparisonData = REPORT_DATA.comparison || {};
+      const items = evaluationItems();
+      const improved = items.filter((item) => item.change && item.change.direction === "improved").length;
+      const regressed = items.filter((item) => item.change && item.change.direction === "regressed").length;
+      const unchanged = items.filter((item) => item.change && item.change.direction === "unchanged").length;
+      const sections = Array.isArray(summary.sections) ? summary.sections : [];
+      const cards = [
+        ["Verdict", badge(verdict.status || "n/a")],
+        ["Items", items.length],
+        ["Baseline", comparisonData.baselineScore || "n/a"],
+        ["With dddjango", comparisonData.withPluginScore || "n/a"],
+        ["Change", comparisonData.scoreDelta || `${improved} improved`],
+        ["Improved", improved],
+        ["Regressed", regressed],
+        ["Unchanged", unchanged],
+      ];
+
+      document.getElementById("report-summary-note").textContent =
+        summary.conclusion || verdict.summary || comparisonData.notes || "";
+      document.getElementById("report-summary-grid").innerHTML = cards.map(([label, value]) => `
+        <div class="report-summary-card"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>
+      `).join("");
+
+      const run = REPORT_DATA.run || {};
+      const meta = [
+        ["Run ID", run.id],
+        ["Generated", run.generatedAt],
+        ["Template", run.templateVersion],
+        ["Schema", REPORT_DATA.schema_version || "legacy"],
+        ["Plugin", run.pluginVersion],
+        ["Git", `${run.gitBranch || ""} / ${run.gitCommit || ""} / ${run.gitDirtyState || ""}`],
+        ["Summary Sections", sections.map((section) => section.title || section.type).join(", ") || "n/a"],
+        ["Serena", run.serenaUsed],
+      ];
+      document.getElementById("report-metadata-grid").innerHTML = meta.map(([label, value]) => `
+        <div class="meta-item"><span>${escapeHtml(label)}</span><code>${escapeHtml(value || "n/a")}</code></div>
+      `).join("");
+    };
+
+    const scoreTypeLabel = (value) => ({
+      numeric: "Numeric",
+      pass_fail: "Pass/Fail",
+      hard_gate: "Hard Gate",
+      narrative: "Narrative",
+    }[value] || value || "n/a");
+
+    const changeClass = (direction) => {
+      if (direction === "improved") return "improved";
+      if (direction === "regressed") return "regressed";
+      if (direction === "unchanged") return "unchanged";
+      return "";
+    };
+
+    const changePill = (change) => {
+      const direction = change && change.direction || "not_comparable";
+      const label = change && change.label || direction;
+      return `<span class="change-pill ${changeClass(direction)}">${escapeHtml(label)}</span>`;
+    };
+
+    const itemSearchText = (item) => [
+      item.id,
+      item.title,
+      item.family,
+      item.test_content_ko,
+      item.description_ko,
+      item.baseline && item.baseline.response_summary,
+      item.baseline && item.baseline.evaluation_summary,
+      item.with_dddjango && item.with_dddjango.response_summary,
+      item.with_dddjango && item.with_dddjango.evaluation_summary,
+    ].join(" ").toLowerCase();
+
+    const filteredEvaluationItems = () => {
+      const type = document.getElementById("score-type-filter").value;
+      const direction = document.getElementById("change-direction-filter").value;
+      const term = document.getElementById("evaluation-search").value.trim().toLowerCase();
+      return evaluationItems().filter((item) => {
+        const typeMatches = !type || item.score_type === type;
+        const directionMatches = !direction || (item.change && item.change.direction) === direction;
+        const searchMatches = !term || itemSearchText(item).includes(term);
+        return typeMatches && directionMatches && searchMatches;
+      });
+    };
+
+    const renderVariantCell = (item, variantKey) => {
+      const variant = item[variantKey] || {};
+      return `
+        <div>${escapeHtml(compactText(variant.response_summary, "Response summary not recorded."))}</div>
+        <small class="cell-note">${escapeHtml(compactText(variant.evaluation_summary, "Evaluation summary not recorded."))}</small>
+        <button type="button" class="detail-button" data-comparison-item="${escapeHtml(item.id)}">상세 보기</button>
+      `;
+    };
+
+    const populateScoreTypeFilter = (items) => {
+      const select = document.getElementById("score-type-filter");
+      const selected = select.value;
+      const types = [...new Set(items.map((item) => item.score_type).filter(Boolean))].sort();
+      select.innerHTML = `<option value="">All</option>${types.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(scoreTypeLabel(type))}</option>`).join("")}`;
+      if (types.includes(selected)) select.value = selected;
+    };
+
+    const renderEvaluationItems = () => {
+      const items = evaluationItems();
+      populateScoreTypeFilter(items);
+      const visible = filteredEvaluationItems();
+      const tbody = document.querySelector("#evaluation-items-table tbody");
+      tbody.innerHTML = visible.map((item) => `
+        <tr>
+          <td>
+            <strong>${escapeHtml(item.id || "")}: ${escapeHtml(item.title || "")}</strong>
+            <small class="cell-note">${escapeHtml(item.family || "")}</small>
+          </td>
+          <td>${escapeHtml(scoreTypeLabel(item.score_type))}</td>
+          <td class="score-cell">${escapeHtml(item.baseline && item.baseline.score || "n/a")}</td>
+          <td class="score-cell">${escapeHtml(item.with_dddjango && item.with_dddjango.score || "n/a")}</td>
+          <td>${changePill(item.change)}</td>
+          <td>${renderVariantCell(item, "baseline")}</td>
+          <td>${renderVariantCell(item, "with_dddjango")}</td>
+        </tr>
+      `).join("");
+      document.getElementById("evaluation-count").textContent = `${visible.length}/${items.length} shown`;
+      document.getElementById("evaluation-empty-state").hidden = visible.length !== 0;
+    };
+
+    const renderModalVariant = (label, variant) => `
+      <article class="comparison-column">
+        <div class="comparison-column-header">
+          <h3>${escapeHtml(label)}</h3>
+          <div><strong>Score:</strong> ${escapeHtml(variant && variant.score || "n/a")}</div>
+        </div>
+        <div class="comparison-section">
+          <h4>Response</h4>
+          <div class="modal-markdown">${renderMarkdownArtifact(compactText(variant && variant.response, "No response captured."))}</div>
+        </div>
+        <div class="comparison-section">
+          <h4>Evaluation Summary</h4>
+          <p>${escapeHtml(compactText(variant && variant.evaluation_summary))}</p>
+        </div>
+        <div class="comparison-section">
+          <h4>Detailed Evaluation</h4>
+          <div class="modal-markdown">${renderMarkdownArtifact(compactText(variant && variant.evaluation))}</div>
+        </div>
+        <div class="comparison-section">
+          <h4>Evidence Links</h4>
+          <div class="artifact-actions">${links(variant && variant.evidence || []) || `<span class="cell-note">No evidence links recorded.</span>`}</div>
+        </div>
+      </article>
+    `;
+
+    const openComparisonModal = (itemId, trigger) => {
+      const item = evaluationItems().find((candidate) => candidate.id === itemId);
+      if (!item) return;
+      comparisonModalTrigger = trigger || document.activeElement;
+      document.getElementById("comparison-modal-title").textContent = `${item.id}: ${item.title || "Evaluation item"}`;
+      document.getElementById("comparison-modal-meta").textContent = `${scoreTypeLabel(item.score_type)} | ${item.family || "n/a"} | ${item.change && item.change.label || "n/a"}`;
+      document.getElementById("comparison-modal-body").innerHTML = `
+        <div class="callout">
+          <strong>Test content:</strong>
+          <p>${escapeHtml(compactText(item.test_content_ko || item.description_ko))}</p>
+        </div>
+        <div class="comparison-modal-grid">
+          ${renderModalVariant("Baseline", item.baseline || {})}
+          ${renderModalVariant("With dddjango", item.with_dddjango || {})}
+        </div>
+      `;
+      document.getElementById("comparison-modal").hidden = false;
+      document.getElementById("comparison-modal-close").focus();
+    };
+
+    const closeComparisonModal = () => {
+      const modal = document.getElementById("comparison-modal");
+      if (modal.hidden) return;
+      modal.hidden = true;
+      document.getElementById("comparison-modal-body").innerHTML = "";
+      if (comparisonModalTrigger && typeof comparisonModalTrigger.focus === "function") {
+        comparisonModalTrigger.focus();
+      }
+      comparisonModalTrigger = null;
+    };
+
+    const renderArtifactIndex = () => {
+      const artifacts = REPORT_DATA.artifacts || [];
+      const container = document.getElementById("artifact-index-content");
+      if (!artifacts.length) {
+        container.innerHTML = `<div class="empty">No evidence artifacts were recorded.</div>`;
+        return;
+      }
+      container.innerHTML = artifacts.map((artifactItem) => `
+        <article class="evidence-card">
+          <h3>${escapeHtml(artifactItem.name || "artifact")}</h3>
+          <p>${escapeHtml(artifactItem.summary || artifactItem.caseOrFinding || "")}</p>
+          <div>${artifactTypeLabel(artifactItem)} ${badge(artifactItem.exists ? "yes" : "missing")}</div>
+          <div class="artifact-actions">${links([artifactItem.link].filter(Boolean))}</div>
+        </article>
+      `).join("");
+    };
+
+    const attachV2Events = () => {
+      ["score-type-filter", "change-direction-filter", "evaluation-search"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", renderEvaluationItems);
+        document.getElementById(id).addEventListener("change", renderEvaluationItems);
+      });
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-comparison-item]");
+        if (!button) return;
+        openComparisonModal(button.dataset.comparisonItem, button);
+      });
+      document.getElementById("comparison-modal-close").addEventListener("click", closeComparisonModal);
+      document.getElementById("comparison-modal").addEventListener("click", (event) => {
+        if (event.target.id === "comparison-modal") closeComparisonModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (!document.getElementById("artifact-viewer-backdrop").hidden) return;
+        if (event.key === "Escape" && !document.getElementById("comparison-modal").hidden) {
+          closeComparisonModal();
+        }
+      });
+    };
+
+    renderReportSummary();
+    renderEvaluationItems();
+    renderArtifactIndex();
     attachArtifactViewer();
-    attachFilters();
+    attachV2Events();
   </script>
 
   <noscript>
