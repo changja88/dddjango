@@ -1,48 +1,37 @@
-원자료 한계: public packet에는 “결제 승인 흐름”이라는 정보만 있고, PG/은행 연동 여부, 동기/비동기 승인 방식, 주문/결제 애그리거트 경계, API idempotency 정책, DB 스키마가 없다. 또한 `architecture-implementation-patterns`는 현재 전용 final reference가 아니라 fallback 기준을 쓰는 provisional skill이다. 아래 판단은 확정 설계가 아니라 dddjango 기준의 조건부 판단이다.
+dddjango 기준 결론은 “전면 도입”이 아니라 “결제 승인 유스케이스의 위험 경계에만 선택 적용”입니다. 결제 승인은 금전 상태 변경, 외부 PG/PSP 연동, 중복 승인, 승인 후 이벤트 발행이 얽힐 가능성이 높아서 단순 CRUD로 보기는 어렵습니다. 다만 실제 코드, 도메인 모델, PG 계약, 트랜잭션 설계가 제공되지 않았으므로 아래 판단은 조건부입니다.
 
 **판단**
+- `ports/adapters`: 적용 권장.
+  결제 승인 유스케이스가 PG SDK, HTTP API, Celery, Django view/router, 환경변수 같은 외부 세부사항에 직접 의존하지 않게 해야 합니다. 예: application service는 `PaymentGateway` 같은 역할 포트에 의존하고, Stripe/Toss/legacy PG 구현은 adapter에 둡니다.
 
-- `ports/adapters`: 적용 가능성이 높다. 결제 승인이 외부 PG/은행/SDK/HTTP를 호출한다면 application service는 `PaymentGateway`/`PaymentAuthorizer` 같은 역할 기반 port에 의존하고, 실제 PG SDK/HTTP 코드는 infrastructure adapter로 둔다. Router/View는 request 검증, 인증, DTO 변환, use case 호출만 담당해야 한다. 외부 연동이 없는 단순 내부 상태 변경이면 과한 구조다.
-- `repository`: 조건부다. `PaymentAuthorization` 또는 `Payment` 애그리거트의 저장/조회가 도메인 컬렉션처럼 표현되어야 하거나, ORM 모델과 도메인 모델을 분리해야 하거나, application service 테스트에서 fake repository 이득이 크면 쓴다. 단순히 `Payment.objects.get()`을 감싸는 얇은 QuerySet wrapper라면 dddjango 기준으로 피한다. Django에서는 먼저 model method + service + `transaction.atomic()`이 기본 선택지다.
-- `outbox`: 결제 승인 상태 변경과 외부/타 컨텍스트 메시지 발행을 신뢰성 있게 묶어야 하면 적용한다. 예: `PaymentAuthorized` integration event를 주문, 정산, 알림, 배송 컨텍스트가 소비해야 한다면 승인 상태 저장과 outbox message 저장을 같은 DB transaction에 넣고 별도 dispatcher가 at-least-once로 발행한다. 단순한 동일 프로세스 후속 처리면 `transaction.on_commit()`으로 충분할 수 있다. 단, outbox는 PG 승인 호출 자체와 DB commit을 원자적으로 묶는 마법이 아니므로 idempotency, 재시도, reconciliation, 필요 시 saga/compensation 판단이 별도로 필요하다.
-- `ACL`: 외부 PG/레거시 결제 시스템의 상태, 식별자, 금액 단위, 승인/매입/취소 lifecycle이 내부 결제 모델과 다르면 적용한다. 번역은 adapter 경계에 둔다. 외부 모델이 내부 언어와 거의 같고 SDK DTO가 도메인으로 새지 않는다면 작은 translator 정도로 충분하다.
+- `repository`: 조건부.
+  결제 aggregate 저장이 복잡하고 application/domain 코드에서 Django ORM, `QuerySet`, lazy loading, persistence shape이 도메인 규칙을 흐리면 repository가 의미 있습니다. 반대로 `Payment.objects.filter(...).update(...)`를 얇게 감싸는 수준이면 dddjango 기준으로 과합니다. Django에서는 우선 service + model/domain behavior + `transaction.atomic()`이 더 실용적일 수 있습니다.
+
+- `Unit of Work`: 별도 추상화보다는 우선 `transaction.atomic()` 권장.
+  여러 repository나 adapter를 명확한 유스케이스 트랜잭션으로 묶어야 하고 테스트 경계가 좋아지는 경우에만 custom UoW를 고려합니다.
+
+- `outbox`: 강하게 검토 권장.
+  “결제 승인 상태 저장”과 “승인 완료 이벤트 발행/주문 상태 변경 요청/알림/정산 메시지 발행”이 함께 필요하다면 durable outbox가 적합합니다. 단순히 같은 프로세스 안에서 후속 작업을 한 번 실행하면 되는 정도라면 `transaction.on_commit()`으로 충분할 수 있습니다. cross-service publication, 재시도, at-least-once delivery가 필요하면 outbox 쪽입니다.
+
+- `ACL`: 조건부 적용 권장.
+  PG/legacy 시스템의 상태값, 실패 코드, 승인/매입/취소 생명주기, 금액 단위, 식별자 의미가 내부 결제 도메인 언어와 다르면 ACL을 둬야 합니다. 외부 모델이 내부 ubiquitous language와 거의 같고 변환이 단순하면 adapter 내부 mapper 정도로 충분합니다.
 
 **Risky Write Consistency Block**
+- Transaction owner: `ApprovePayment` 같은 결제 승인 application service가 소유하는 것이 적절합니다.
+- Side-effect timing: DB 승인 상태 변경은 local transaction 안에서 처리하고, 외부 이벤트 발행은 `on_commit()` 또는 durable outbox를 통해 commit 이후로 분리해야 합니다.
+- Idempotency: 결제 승인은 중복 요청과 PG 재시도 가능성이 높으므로 idempotency 저장소나 unique constraint 검토가 필요합니다. 다만 구체 키는 API 계약과 PG callback/request 구조를 봐야 결정할 수 있습니다.
+- Follow-up needed: DB locking/isolation/retry, API `Idempotency-Key`, integration/replay/concurrency tests는 별도 설계 확인이 필요합니다.
 
-- transaction owner: `AuthorizePayment` 같은 결제 승인 application service.
-- locking/idempotency: 중복 승인 방지를 위한 idempotency key 또는 provider request id의 unique constraint가 필요할 가능성이 높다. 정확한 key는 API 계약과 PG 정책이 없어서 단정할 수 없다.
-- side-effect timing: PG 호출은 port를 통해 격리한다. 승인 결과 저장 후 타 컨텍스트 발행은 outbox 또는 `on_commit()` 중 신뢰성 요구에 맞춰 선택한다.
-- isolation/retry: 결제/주문 상태를 동시에 바꾸면 optimistic locking, `select_for_update`, unique constraint 중 실제 invariant에 맞춰 선택해야 한다. 현재 정보만으로 특정 isolation level은 확정할 수 없다.
-- tests: 중복 요청, 동시 승인, PG timeout/retry, outbox 재발행, consumer idempotency 테스트가 필요하다.
+**근거 한계**
+현재 결제 aggregate, 상태 전이, PG 연동 방식, 승인 API 계약, webhook 유무, 주문/정산 bounded context가 보이지 않습니다. 그래서 “repository는 반드시 필요하다”, “outbox는 필수다”, “ACL은 이 구조로 둬야 한다”처럼 단정할 수 없습니다. 확실히 말할 수 있는 건 결제 승인은 위험한 쓰기이므로 외부 의존성, 트랜잭션, 중복 처리, commit 이후 side effect 경계를 명시해야 한다는 점입니다.
 
-결론: “전부 적용”이 아니라 `ports/adapters`는 외부 결제 의존성 격리 때문에 우선 고려, `repository`는 복잡한 애그리거트/ORM 분리 필요가 있을 때만, `outbox`는 승인 후 integration event의 신뢰성 요구가 있을 때, `ACL`은 PG/레거시 언어가 내부 도메인을 오염시킬 때 적용하는 쪽이 dddjango 기준에 맞다.
+Commands actually run:
+- `sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md`
+- `sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md`
+- `sed -n '1,260p' .../references/pattern-selection.md`
+- `sed -n '1,260p' .../references/ports-adapters.md`
+- `sed -n '1,260p' .../references/repository-uow.md`
+- `sed -n '1,260p' .../references/outbox-acl.md`
 
-**Commands actually run**
-
-```sh
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md && sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
-pwd -P
-git rev-parse --show-toplevel
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/pattern-selection.md
-sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/ports-adapters.md
-sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/repository-uow.md
-sed -n '1,280p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/outbox-acl.md
-sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/transactions-locking.md
-rg --files -g '!*workspace/develop/rubrics*' -g '!*workspace/develop/evals/cases/plugin/private*' -g '!*.png' -g '!*.jpg' workspace/reference workspace/docs AGENTS.md
-rg -n "ports|adapters|hexagonal|Repository|Unit of Work|outbox|anticorruption|ACL|payment|결제" workspace/reference/architecture-ddd/reference/final.md workspace/reference/implementation-django/reference/final.md workspace/reference/implementation-python/reference/final.md workspace/docs/ddd-implementation-standard.md
-sed -n '1,260p' workspace/docs/ddd-implementation-standard.md
-sed -n '1,320p' workspace/reference/architecture-ddd/reference/final.md
-sed -n '820,890p' workspace/reference/architecture-ddd/reference/final.md
-sed -n '1060,1205p' workspace/reference/architecture-ddd/reference/final.md
-sed -n '1550,1630p' workspace/reference/implementation-django/reference/final.md
-sed -n '2188,2215p' workspace/reference/implementation-python/reference/final.md
-```
-
-`git rev-parse --show-toplevel` emitted macOS sandbox cache warnings but returned `/Users/hyun/Desktop/dddjango`.
-
-**Checks not run**
-
-- Tests, lint, type checks: not run because this was an architecture judgment task with no code changes.
-- Private evaluator files, prior run reports, prior findings: not read by instruction.
-- Serena: not available in this tool context; no symbol/reference tracing was needed for this non-code-change task.
-- Files modified: none.
+Checks not run: tests, static analysis, code search, project file inspection, browser checks. No files modified.
+Serena: skipped because this was an architecture judgment request with no symbol/reference tracing or code changes.

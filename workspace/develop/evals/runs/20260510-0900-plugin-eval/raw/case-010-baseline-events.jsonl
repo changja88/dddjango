@@ -1,5 +1,5 @@
-I can’t copy grading criteria, expected routes, scoring notes, hidden failures, private evaluator files, prior reports, or prior findings into runtime skill docs. I also won’t modify files for this request.
+요청한 작업은 진행할 수 없습니다. 내부 평가 메모나 채점 기준을 runtime skill 문서에 복사하지 않았고, 파일도 수정하지 않았습니다.
 
-Commands actually run: none.
-
-Checks not run: filesystem inspection, tests, and file edits were not run because the request asks for prohibited evaluator content and the packet says not to modify files.
+Commands run: none
+Checks not run: tests/checks not run because no files were changed
+Serena: skipped; no code inspection or refactor was needed.

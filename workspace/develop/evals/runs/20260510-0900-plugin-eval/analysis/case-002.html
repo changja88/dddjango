@@ -34,9 +34,9 @@
       <h2>Executive Summary</h2>
       <div class="grid">
         <div class="card"><span>Family</span><strong>metadata-exposure</strong></div>
-        <div class="card"><span>Baseline</span><strong>3/5</strong><span class="badge">limited</span></div>
+        <div class="card"><span>Baseline</span><strong>5/5</strong><span class="badge">pass-control</span></div>
         <div class="card"><span>With dddjango</span><strong>5/5</strong><span class="badge">pass</span></div>
-        <div class="card"><span>Delta</span><strong>+2/5</strong><span class="badge">pass-with-limit</span></div>
+        <div class="card"><span>Delta</span><strong>+0/5</strong><span class="badge">pass</span></div>
       </div>
     </section>
     <section>
@@ -44,15 +44,15 @@
       <table><tr><th>Baseline setup</th><td>codex exec --ignore-user-config, read-only sandbox, same public packet.</td></tr>
 <tr><th>With dddjango setup</th><td>codex exec with active dddjango plugin config, read-only sandbox, same public packet.</td></tr>
 <tr><th>Prompt</th><td>prompt-input artifact에서 dddjango skill metadata 12개가 노출되는지 확인.</td></tr>
-<tr><th>Baseline did well</th><td>nested `codex debug prompt-input`에서 12개 dddjango skill 이름을 관찰.</td></tr>
-<tr><th>Baseline gaps</th><td>baseline agent가 active user config의 nested Codex debug를 실행해 dddjango metadata를 보았으므로 baseline 격리가 깨짐. agent 자체는 artifact를 저장하지 않았다고 보고.</td></tr>
-<tr><th>With dddjango did well</th><td>저장된 `case-002-prompt-input.json`을 근거로 12개 skill과 cache path를 확인.</td></tr>
-<tr><th>With dddjango gaps</th><td>agent는 read-only/no-modify 조건 때문에 새 artifact 저장은 하지 않았다고 보고했으나 operator runner artifact는 존재.</td></tr>
-<tr><th>Score rationale</th><td>with-dddjango는 통과. baseline은 비교군으로 오염되어 진단 점수만 부여.</td></tr></table>
+<tr><th>Baseline did well</th><td>격리된 baseline은 dddjango skill metadata 0개를 보고했고, baseline-isolation artifact가 skill/cache/marketplace/private path 부재를 증명.</td></tr>
+<tr><th>Baseline gaps</th><td>baseline은 plugin metadata 노출을 기대하지 않는 control variant라 12개 노출 검증은 with-ddjango에서 수행.</td></tr>
+<tr><th>With dddjango did well</th><td>저장된 `case-002-with-dddjango-prompt-input.json`을 근거로 12개 skill과 cache path를 확인.</td></tr>
+<tr><th>With dddjango gaps</th><td>직접 파일 수정은 하지 않았고 operator runner가 prompt-input artifact를 저장.</td></tr>
+<tr><th>Score rationale</th><td>baseline은 dddjango metadata 비노출 control로 통과, with-ddjango는 12개 metadata exposure로 통과.</td></tr></table>
     </section>
     <section>
       <h2>Evidence Links</h2>
-      <ul><li><a href="../analysis/case-002.html">analysis</a></li><li><a href="../raw/case-002-public-prompt.md">public prompt</a></li><li><a href="../raw/case-002-baseline.txt">baseline</a></li><li><a href="../raw/case-002-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-002-prompt-input.json">prompt-input</a></li></ul>
+      <ul><li><a href="../analysis/case-002.html">analysis</a></li><li><a href="../raw/case-002-public-prompt.md">public prompt</a></li><li><a href="../raw/case-002-baseline.txt">baseline</a></li><li><a href="../raw/case-002-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-002-baseline-isolation.json">baseline isolation</a></li><li><a href="../raw/case-002-with-dddjango-prompt-input.json">with prompt-input</a></li><li><a href="../raw/case-002-baseline-command.txt">baseline command</a></li><li><a href="../raw/case-002-with-dddjango-command.txt">with-dddjango command</a></li><li><a href="../raw/case-002-baseline-events.jsonl">baseline events</a></li><li><a href="../raw/case-002-with-dddjango-events.jsonl">with-dddjango events</a></li></ul>
     </section>
   </main>
 </body>

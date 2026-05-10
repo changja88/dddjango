@@ -1,155 +1,94 @@
-**Raw Answer**
+현재 디렉터리에는 실제 Django 앱보다 평가/문서 자료가 중심으로 보여서, 파일 수정 없이 구현 계획만 정리합니다.
 
-주문 생성은 `Ordering` bounded context의 `CreateOrder` use case로 두고, 결제와 재고는 별도 context/adapter로 분리합니다. Router는 얇게 두고, 실제 규칙과 트랜잭션은 application service가 소유합니다.
+**구현 계획**
 
-**DDD 설계**
-- Aggregate: `Order`
-- Entity/VO: `OrderLine`, `Money`, `Quantity`, `Address`
-- 상태: `payment_pending -> confirmed | payment_failed | cancelled`
-- 핵심 invariant:
-  - 주문 라인은 비어 있을 수 없음
-  - 수량은 1 이상
-  - 주문 총액은 라인 합계와 일치
-  - 결제 승인 전에는 확정 주문이 아님
-  - 동일 주문에 대한 재고 예약/차감은 한 번만 가능
-- Domain events:
-  - `OrderCreated`
-  - `InventoryReserved`
-  - `PaymentAuthorizationRequested`
-  - `PaymentAuthorized`
-  - `PaymentFailed`
-  - `OrderConfirmed`
-  - `OrderCancelled`
+1. DDD 경계 분리
+- `orders/domain`: `Order` aggregate, `OrderLine`, `Money`, `Quantity`, `OrderStatus`
+- `inventory/domain`: `Stock` 또는 `InventoryItem`, 재고 예약/차감 규칙
+- `payments/domain`: `PaymentAttempt`, `PaymentStatus`, 승인 결과 값 객체
+- `orders/application`: `CreateOrderService`
+- `orders/api`: Django Ninja router/schema
+- `orders/infra`: Django ORM repository, payment gateway adapter, idempotency store
 
-**API 계약**
-- `POST /api/v1/orders`
-- `Idempotency-Key` header 필수
-- Request: customer/shipping address/order lines/payment method token
-- Success: `201 Created`, `Location: /api/v1/orders/{order_id}`
-- Response에는 `order_id`, `status=payment_pending`, `payment_status=authorization_pending`, `inventory_status=reserved` 포함
-- 오류는 RFC 9457 Problem Details:
-  - `422`: 잘못된 수량, 품절, 도메인 검증 실패
-  - `409`: idempotency key 충돌, 재고 경합, 상태 충돌
-  - `401/403`: 인증/권한 실패
+2. 주문 생성 흐름
+```text
+POST /orders
+Header: Idempotency-Key
 
-**Idempotency**
-- 저장소: `idempotency_keys`
-- unique scope: `(customer_id, operation, idempotency_key)`
-- 저장 필드:
-  - `request_hash`
-  - `status`: `processing/succeeded/failed`
-  - `response_status`
-  - `response_body`
-  - `resource_id`
-  - `expires_at`
-- 동일 key + 동일 request hash:
-  - 완료됨: 저장된 응답 replay
-  - 처리 중: `409` 또는 `Retry-After` 포함 conflict
-- 동일 key + 다른 request hash:
-  - `409 idempotency_conflict`
+1. 요청 body canonical hash 생성
+2. transaction.atomic()
+   - idempotency row 생성/lock
+   - 같은 key + 같은 hash + 완료됨이면 저장된 응답 반환
+   - 같은 key + 다른 hash면 409
+   - 상품/재고 row를 SKU 정렬 후 select_for_update()
+   - Order(PENDING_PAYMENT) 생성
+   - 재고 reserve 또는 available 차감
+   - PaymentAttempt(PENDING) 생성
+3. DB commit 후 결제 gateway 승인 호출
+4. transaction.atomic()
+   - 승인 성공: payment APPROVED, order CONFIRMED/PAID, 재고 차감 확정
+   - 승인 실패: payment DECLINED, order PAYMENT_FAILED, 예약 재고 release
+   - idempotency 응답 저장
+5. 응답 반환
+```
 
-**DB Transaction**
-- transaction owner: `CreateOrderService`
-- `transaction.atomic()` 범위:
-  - idempotency row 생성/잠금
-  - order/order_lines 생성
-  - inventory stock row를 SKU 정렬 후 `select_for_update()`로 잠금
-  - 재고 예약 또는 차감 기록 생성
-  - outbox event 저장
-  - idempotency 성공 응답 저장
-- 외부 결제 API 호출은 DB transaction 안에서 하지 않습니다.
-- 결제 승인은 commit 이후 outbox worker 또는 `transaction.on_commit()` handoff로 실행합니다.
-- 결제 provider에도 별도 idempotency key를 사용합니다. 예: `payment_authorization:{order_id}`
+핵심은 결제 승인 외부 호출을 DB transaction 안에 오래 물고 있지 않는 것입니다. DB 상태 변경은 `transaction.atomic()`으로 묶고, 결제 gateway에는 동일한 `Idempotency-Key` 기반 gateway idempotency key를 넘겨 중복 승인을 막습니다.
 
-**Payment / Inventory 흐름**
-1. 주문 생성 요청 수신
-2. idempotency key 확보
-3. 주문 생성 + 재고 예약을 한 DB transaction에서 처리
-4. `PaymentAuthorizationRequested` outbox 저장
-5. API는 `201 Created`와 `payment_pending` 반환
-6. outbox worker가 결제 승인 요청
-7. 승인 성공 시 `OrderConfirmed`, 예약 재고를 확정 차감
-8. 승인 실패/timeout 시 `OrderCancelled`, 재고 예약 해제
+3. DB 모델/제약
+- `Order`: `id`, `user_id`, `status`, `total_amount`, `currency`, timestamps
+- `OrderLine`: `order_id`, `sku`, `unit_price`, `quantity`, `line_total`
+- `InventoryStock`: `sku unique`, `available`, `reserved`, check `available >= 0`, `reserved >= 0`
+- `PaymentAttempt`: `order_id`, `gateway`, `gateway_payment_id`, `status`, `amount`
+- `IdempotencyRecord`: `scope`, `key`, `request_hash`, `status`, `response_status`, `response_body`
+- unique constraints:
+  - `(user_id, scope, idempotency_key)`
+  - gateway payment id
+  - order number if exposed
 
-**Risky Write Consistency Block**
-- Transaction owner: `CreateOrderService`
-- Locking: inventory rows `select_for_update()` 또는 조건부 atomic update
-- Duplicate prevention: idempotency unique constraint
-- Side effect timing: payment authorization after commit via outbox
-- Isolation: 기본 `READ COMMITTED` + explicit row lock, serialization/deadlock retry 정책 명시
-- DB constraints:
-  - idempotency unique constraint
-  - order line quantity check
-  - stock/reserved quantity non-negative check
-  - reservation unique by `(order_id, sku_id)`
-- Tests:
-  - duplicate POST replay
-  - different payload conflict
-  - concurrent stock contention
-  - payment failure compensation
-  - outbox rollback/commit behavior
+4. Django Ninja API
+- `POST /orders`
+  - required header: `Idempotency-Key`
+  - body: `items[{sku, quantity}], payment_method`
+  - response: `order_id`, `status`, `payment_status`, `total`, `lines`
+- error mapping:
+  - validation error: `400`
+  - idempotency key body mismatch: `409`
+  - insufficient stock: `409`
+  - payment declined: `402` or domain-specific `409`
+  - gateway timeout: `202` with `PENDING_PAYMENT` if retry/reconciliation is supported
 
-**Django Ninja 구현 계획**
-1. `orders/api.py`: `Router` + request/response schemas
-2. `orders/application/create_order.py`: use case service, transaction boundary
-3. `orders/domain.py` or model methods: order invariant/state transition
-4. `inventory/models.py`: stock/reservation model and locking helper
-5. `payments/ports.py`: `PaymentGateway` protocol
-6. `payments/adapters.py`: provider implementation
-7. `outbox/models.py`: durable event table
-8. `outbox/worker.py`: payment authorization dispatch
-9. Problem Details exception mapper 추가
-10. OpenAPI에 `Idempotency-Key` header, `201/409/422` response 명시
+5. Domain tests
+- 빈 주문 생성 거부
+- 수량 0 이하 거부
+- 주문 총액 계산
+- 상태 전이 검증: `PENDING_PAYMENT -> CONFIRMED`, `PENDING_PAYMENT -> PAYMENT_FAILED`
+- 결제 실패 시 재고 예약 해제
+- 재고 부족 시 주문 생성 실패
 
-**Test Plan**
-- Domain tests:
-  - empty lines rejected
-  - invalid quantity rejected
-  - total amount calculation
-  - invalid state transition rejected
-- Application/DB tests:
-  - order + stock reservation commits atomically
-  - rollback 시 order/stock/outbox 모두 사라짐
-  - concurrent requests cannot oversell
-  - idempotency replay returns same response
-  - same key with different body returns `409`
-- API tests with Django Ninja `TestClient`:
-  - successful `POST /orders`
-  - missing `Idempotency-Key`
-  - invalid payload Problem Details
-  - insufficient stock Problem Details
-  - replay/conflict behavior
-  - auth `401/403`
-- Payment tests:
-  - payment gateway fake/spy 사용
-  - payment approval success confirms order
-  - payment failure cancels order and releases inventory
-  - payment call is dispatched after commit, not inside transaction
+6. API/application tests
+- 같은 `Idempotency-Key` + 같은 body 재요청 시 주문/결제 중복 없음
+- 같은 key + 다른 body는 `409`
+- 결제 승인 성공 시 주문 확정 및 재고 차감
+- 결제 거절 시 주문 실패 및 재고 복구
+- 결제 gateway timeout 시 pending/outbox/retry 상태 확인
+- 동시 주문에서 `select_for_update()`로 재고 음수 방지
+  이 테스트는 `TransactionTestCase`와 PostgreSQL 기준으로 작성하는 것이 안전합니다.
 
-**Commands Actually Run**
+7. 구현 순서
+- 도메인 객체와 상태 전이 테스트 작성
+- ORM 모델과 migration 작성
+- repository/payment/idempotency port 정의
+- `CreateOrderService` 구현
+- Django Ninja router 연결
+- idempotency/concurrency/payment failure 테스트 추가
+- outbox 또는 reconciliation job은 MVP 이후라도 결제 성공 후 DB 반영 실패 복구를 위해 계획에 포함
+
+Commands actually run:
 - `pwd -P`
-- `ls -la`
-- `rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*findings*' -g '!**/run_reports/**'`
-- `sed -n '1,220p' dddjango/skills/architecture-ddd/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/implementation-django-ninja/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/architecture-api/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/architecture-db/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/implementation-test/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/architecture-implementation-patterns/SKILL.md`
-- `sed -n '1,220p' dddjango/skills/architecture-api/references/idempotency-openapi.md`
-- `sed -n '1,240p' dddjango/skills/architecture-db/references/transactions-locking.md`
-- `sed -n '1,240p' dddjango/skills/implementation-django/references/transactions-performance-security.md`
-- `sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/router-schema.md`
-- `sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/testclient.md`
-- `sed -n '1,240p' dddjango/skills/architecture-ddd/references/tactical-patterns.md`
-- `sed -n '1,220p' dddjango/skills/architecture-ddd/references/domain-events.md`
-- `sed -n '1,220p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md`
-- `sed -n '1,220p' dddjango/skills/implementation-test/references/test-doubles.md`
-- `git status --short`
+- `rg --files`
 
-**Checks Not Run**
-- No tests, linters, migrations, OpenAPI generation, or Django checks were run because this was a read-only planning eval and no files were modified.
-- `git status --short` ran but emitted macOS/Xcode cache warnings under the read-only sandbox.
-- Private evaluator files, rubric files, and prior report contents were not opened.
-- Serena: skipped; this was a planning-only task with no code symbol tracing or refactor.
+Checks not run:
+- 테스트, migration, lint, type check는 실행하지 않았습니다.
+- 파일은 수정하지 않았습니다.
+
+Serena: skipped because this was a planning-only request and no symbol/reference tracing was needed.

@@ -1,46 +1,20 @@
-**Raw Answer**
+현재 cwd에서 확인 가능한 코드에는 `Order` 모델이나 `memo` 필드가 없습니다. 실제 Django 앱에 해당 모델이 있다면 필요한 작업은 딱 이 정도입니다.
 
-`Order.memo`를 `note`로 바꾸는 정도면 과하게 설계하지 않고 아래만 하면 됩니다.
+1. `Order` 모델 필드명 변경: `memo = ...` → `note = ...`
+2. Django 마이그레이션 추가: `migrations.RenameField(model_name="order", old_name="memo", new_name="note")`
+3. `memo` 참조만 `note`로 교체: admin/form/serializer/view/test/factory 정도만 확인
+4. 테스트 실행: 관련 앱 테스트와 마이그레이션 체크
 
-1. `Order` 모델 필드명을 `memo`에서 `note`로 변경
-2. 코드에서 `order.memo`, `memo=...`, form/schema/admin/template/test fixture 참조를 `note`로 변경
-3. 마이그레이션은 데이터 보존을 위해 `RenameField`로 생성/확인
+과하게 할 필요 없는 것: 별도 도메인 리팩터링, 호환 alias, 서비스 계층 추가, 데이터 마이그레이션. 단순 rename이면 `RenameField`가 맞습니다.
 
-```bash
-python manage.py makemigrations
-```
-
-생성된 migration이 대략 아래 형태인지 확인하면 됩니다.
-
-```python
-migrations.RenameField(
-    model_name="order",
-    old_name="memo",
-    new_name="note",
-)
-```
-
-검증은 최소로:
-
-```bash
-python manage.py test
-python manage.py migrate --plan
-```
-
-DB 컬럼명까지 바뀌는 변경이라 API 응답/요청 키가 외부 계약이면 `memo -> note`가 깨지는 변경인지도 한 번만 확인하세요. 내부 필드명 변경이면 여기서 끝내면 됩니다.
-
-**Commands Actually Run**
-
+실제로 실행한 명령:
 ```bash
 pwd -P
-rg --files -g '!*workspace/develop/rubrics/**' -g '!*workspace/develop/evals/cases/plugin/private/**' -g '!**/*report*' -g '!**/*finding*'
-sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md
-sed -n '1,220p' dddjango/skills/implementation-django/references/migrations.md
-sed -n '1,180p' dddjango/skills/implementation-django/references/models-orm.md
+rg --files
+rg -n "class Order|\bOrder\b|\bmemo\b|\bnote\b" workspace/develop/evals/fixtures/code-artifact-sample
+rg --files workspace/develop/evals/fixtures/code-artifact-sample
+sed -n '1,220p' workspace/develop/evals/fixtures/code-artifact-sample/orders/services.py
+sed -n '1,180p' workspace/develop/evals/fixtures/code-artifact-sample/README.md
 ```
 
-**Checks Not Run**
-
-No tests, migrations, `sqlmigrate`, or Django checks were run because this eval packet requested a concise answer only and explicitly said not to modify files.
-
-Serena: not used; this was a read-only guidance task with no symbol/reference tracing needed.
+수정은 하지 않았고, 테스트/마이그레이션은 실행하지 않았습니다. Serena: 작은 읽기 전용 확인이라 생략했고 `rg`로 확인했습니다.

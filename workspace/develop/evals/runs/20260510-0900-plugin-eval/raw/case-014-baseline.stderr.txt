@@ -1,22 +1,22 @@
 OpenAI Codex v0.130.0
 --------
-workdir: /Users/hyun/Desktop/dddjango
+workdir: /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-014/baseline
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: xhigh
 reasoning summaries: none
-session id: 019e0fa9-695c-7a10-89a7-273ce20981ba
+session id: 019e107b-6a24-7110-b730-42f3fe2a9937
 --------
 user
-You are executing a public forward-eval packet for the dddjango plugin.
-Use only the public packet below and task-local repository files if needed.
-Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Answer the user request directly.
+Use only files in the current working directory when local files are needed.
+Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.
 Do not modify files. If a check is not actually run, state that it was not run.
-Keep the answer concise but include commands actually run and checks not run.
+Keep the answer concise and include commands actually run plus checks not run.
 
------ PUBLIC PACKET START -----
+----- USER REQUEST START -----
 # Case 014
 
 ## User Request
@@ -24,107 +24,94 @@ Keep the answer concise but include commands actually run and checks not run.
 ```text
 운영 중인 주문 테이블에 status 컬럼을 추가하고 기존 데이터를 채운 다음 NOT NULL, check constraint, index를 순차 적용하려고 해. rolling deploy 기준으로 안전한 migration plan을 세워줘.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- Raw answer or command transcript.
-- Commands actually run.
-- Not-run checks and reasons.
------ PUBLIC PACKET END -----
+----- USER REQUEST END -----
 
 codex
-요청은 저장소 변경 없이 마이그레이션 전략을 작성하는 범위라 파일은 읽지 않고 답변만 구성하겠습니다. 실행하지 않은 검증은 마지막에 명확히 적겠습니다.
-codex
-가정: Django + PostgreSQL 기준입니다.
+가정: PostgreSQL + Django, `orders` 테이블이 운영 중이고 rolling deploy가 필요함.
 
-**Rolling Deploy Migration Plan**
+**Migration Plan**
 
-1. **앱을 먼저 양방향 호환으로 배포**
-   - 모델에는 `status`를 nullable로 추가할 예정이라고 보고, 새 코드가 `status IS NULL`도 정상 처리하게 만듭니다.
-   - 신규 주문 생성/수정 경로에서는 앱 코드가 반드시 `status` 값을 쓰게 합니다.
-   - 예: `NULL`이면 기존 컬럼 기준으로 상태를 계산하거나 기본값처럼 읽기.
+1. **앱 선배포**
+   - 새 코드가 `status` 컬럼이 없어도 동작하거나, 최소한 nullable 상태를 허용하게 만든다.
+   - 신규 주문 생성 시 애플리케이션에서 `status` 값을 반드시 채우도록 한다.
+   - 읽기 경로는 일시적으로 `status IS NULL`을 기존 기본 상태로 해석하게 둔다.
 
-2. **Migration 1: nullable 컬럼만 추가**
-   - `status` 컬럼을 `null=True`로 추가합니다.
-   - 운영 테이블이면 처음부터 `NOT NULL`, `CHECK`, 인덱스를 같이 넣지 않습니다.
-   - DB default도 가능하면 처음에는 피하고 앱에서 값을 씁니다.
+2. **DB expand migration**
+   ```sql
+   ALTER TABLE orders ADD COLUMN status text;
+   ```
+   - 처음에는 `NOT NULL`, `DEFAULT`, `CHECK`, index를 붙이지 않는다.
+   - 대형 테이블이면 즉시 검증/스캔/락을 유발하는 작업을 피한다.
 
-3. **Backfill**
-   - 별도 management command 또는 `atomic = False` data migration으로 배치 처리합니다.
-   - 한 번에 전체 테이블 업데이트하지 말고 PK 범위나 작은 batch 단위로 처리합니다.
-   - idempotent 하게 작성합니다.
+3. **앱 배포**
+   - 모든 신규/수정 주문이 `status`를 쓰도록 rolling deploy한다.
+   - 이 시점에도 구버전 앱이 살아있을 수 있으므로 DB 제약은 아직 걸지 않는다.
 
-   예시 SQL:
-
+4. **기존 데이터 backfill**
+   - 작은 배치로 반복 처리한다.
    ```sql
    UPDATE orders
-   SET status = CASE
-     WHEN paid_at IS NOT NULL THEN 'paid'
-     WHEN cancelled_at IS NOT NULL THEN 'cancelled'
-     ELSE 'pending'
-   END
+   SET status = 'pending'
    WHERE status IS NULL
    AND id >= :start_id
    AND id < :end_id;
    ```
+   - 배치마다 짧게 커밋한다.
+   - lock timeout, statement timeout, sleep/throttle을 둔다.
+   - 진행 중에는 `COUNT(*) WHERE status IS NULL`을 모니터링한다.
 
-4. **검증**
-   - backfill 후 다음을 확인합니다.
-
-   ```sql
-   SELECT COUNT(*) FROM orders WHERE status IS NULL;
-
-   SELECT status, COUNT(*)
-   FROM orders
-   GROUP BY status;
-   ```
-
-5. **Migration 2: check constraint를 먼저 느슨하게 추가**
-   - PostgreSQL이면 `NOT VALID`로 추가 후 별도 검증합니다.
-
+5. **check constraint 추가**
    ```sql
    ALTER TABLE orders
-   ADD CONSTRAINT orders_status_check
-   CHECK (status IN ('pending', 'paid', 'cancelled'))
+   ADD CONSTRAINT orders_status_valid
+   CHECK (status IN ('pending', 'paid', 'cancelled', 'shipped'))
    NOT VALID;
-
-   ALTER TABLE orders
-   VALIDATE CONSTRAINT orders_status_check;
    ```
 
-6. **Migration 3: index 추가**
-   - 트래픽 있는 테이블이면 concurrent index를 사용합니다.
-   - Django migration은 `atomic = False`가 필요합니다.
-
-   ```sql
-   CREATE INDEX CONCURRENTLY orders_status_idx
-   ON orders (status);
-   ```
-
-7. **Migration 4: NOT NULL 적용**
-   - `status IS NULL`이 0임을 다시 확인한 뒤 적용합니다.
-
+6. **NOT NULL 보호용 check 추가**
    ```sql
    ALTER TABLE orders
-   ALTER COLUMN status SET NOT NULL;
+   ADD CONSTRAINT orders_status_not_null
+   CHECK (status IS NOT NULL)
+   NOT VALID;
    ```
 
-8. **후속 정리**
-   - Django model에서 `null=False`로 변경합니다.
-   - 읽기 코드의 `NULL` fallback은 충분한 배포 안정 기간 후 제거합니다.
+7. **constraint validate**
+   ```sql
+   ALTER TABLE orders VALIDATE CONSTRAINT orders_status_valid;
+   ALTER TABLE orders VALIDATE CONSTRAINT orders_status_not_null;
+   ```
+   - PostgreSQL에서는 `VALIDATE CONSTRAINT`가 일반 쓰기를 오래 막지 않으므로 rolling deploy에 적합하다.
 
-**Commands Actually Run**
+8. **index 생성**
+   ```sql
+   CREATE INDEX CONCURRENTLY idx_orders_status ON orders (status);
+   ```
+   - Django migration에서는 `atomic = False`가 필요하다.
+   - 실제 쿼리가 `WHERE status = ... ORDER BY created_at` 형태라면 복합 인덱스를 검토한다.
 
-None.
+9. **최종 NOT NULL 적용**
+   ```sql
+   ALTER TABLE orders ALTER COLUMN status SET NOT NULL;
+   ```
+   - 이미 validated `CHECK (status IS NOT NULL)`이 있으면 PostgreSQL 버전에 따라 테이블 전체 검증 비용을 줄일 수 있다.
+   - 적용 전 반드시 `SELECT COUNT(*) FROM orders WHERE status IS NULL;` 결과가 `0`인지 확인한다.
 
-**Checks Not Run**
+10. **정리**
+   - 앱의 `NULL` fallback 로직 제거.
+   - 필요하면 `orders_status_not_null` check는 `NOT NULL`과 중복이므로 제거 가능.
+   ```sql
+   ALTER TABLE orders DROP CONSTRAINT orders_status_not_null;
+   ```
 
-- No repository files were read.
-- No tests, migrations, or database checks were run because the request asked for a migration plan only and files must not be modified.
+**Django 주의점**
+
+- `AddField(null=True)` 먼저.
+- backfill은 `RunPython`보다 별도 관리 커맨드나 배치 잡이 안전한 경우가 많다.
+- `CREATE INDEX CONCURRENTLY`는 `RunSQL` + `atomic = False`.
+- `ALTER COLUMN SET NOT NULL`은 마지막 별도 migration으로 분리한다.
+
+실행한 명령: 없음.
+실행하지 않은 체크: 실제 DB 크기, PostgreSQL 버전, 현재 Django 모델/마이그레이션 파일, 쿼리 패턴, 락 타임아웃 설정 확인.
 tokens used
-2,815
+5,989

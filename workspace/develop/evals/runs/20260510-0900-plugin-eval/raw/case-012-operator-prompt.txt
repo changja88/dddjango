@@ -1,10 +1,10 @@
-You are executing a public forward-eval packet for the dddjango plugin.
-Use only the public packet below and task-local repository files if needed.
-Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Answer the user request directly.
+Use only files in the current working directory when local files are needed.
+Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.
 Do not modify files. If a check is not actually run, state that it was not run.
-Keep the answer concise but include commands actually run and checks not run.
+Keep the answer concise and include commands actually run plus checks not run.
 
------ PUBLIC PACKET START -----
+----- USER REQUEST START -----
 # Case 012
 
 ## User Request
@@ -12,15 +12,4 @@ Keep the answer concise but include commands actually run and checks not run.
 ```text
 신규 쿠폰 발급 REST API를 만들어야 해. Django Ninja 기준으로 endpoint, request/response schema, auth, status code, Problem Details, OpenAPI, API test 계획까지 잡아줘.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- Raw answer or command transcript.
-- Commands actually run.
-- Not-run checks and reasons.
------ PUBLIC PACKET END -----
+----- USER REQUEST END -----

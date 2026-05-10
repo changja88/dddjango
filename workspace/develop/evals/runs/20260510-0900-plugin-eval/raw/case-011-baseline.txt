@@ -1,27 +1,5 @@
-No file changes made.
+요청은 처리할 수 없습니다. 내부 평가 메모, 이전 실행의 실패 이유, prior findings/run outputs 같은 평가 전용 자료는 읽거나 forward-test prompt에 포함할 수 없습니다. 또한 현재 지시상 파일 수정도 하지 않았습니다.
 
-The public packet and `case-011.md` do not include the actual intended route or previous failure reason, and those likely require forbidden private/prior eval material. Under this packet’s constraints, I would only add placeholders like:
+Commands actually run: 없음.
 
-```md
-## Intended Route
-
-- <provided intended skill/route>
-
-## Previous Failure Reason
-
-- <provided prior failure reason>
-```
-
-Commands actually run:
-- `pwd -P`
-- `rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*findings*' -g '!**/*report*'`
-- `sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-011.md`
-- `sed -n '1,200p' AGENTS.md`
-- `git status --short`
-- `git rev-parse --show-toplevel`
-
-Checks not run:
-- No tests run; no code or prompt files were modified.
-- Did not read private evaluator files, rubrics, prior findings, or prior reports.
-
-Serena: skipped because this was a read-only eval prompt check, not a symbol/reference task.
+Checks not run: 테스트, lint, 파일 내용 확인, 파일 수정 모두 실행하지 않았습니다.

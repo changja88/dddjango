@@ -1,70 +1,34 @@
-**Raw Answer**
+현재 작업 디렉터리에는 실제 DRF 주문 `ViewSet/Serializer` 구현이 없어 구체 코드 diff는 못 했습니다. 그래서 호환성 관점의 전환 기준으로 보면, 같은 API 버전을 유지한다면 **URL, trailing slash, path param 이름, status code, error JSON shape를 DRF와 동일하게 맞춘 뒤** 내부만 Django Ninja `Router/Schema`로 옮기는 게 맞습니다. 새 계약으로 바꿀 수 있을 때만 Problem Details와 Ninja 기본 validation error를 노출하세요.
 
-실제 주문 API 구현 파일은 이 저장소에 없어서 코드 기준 diff는 못 봤고, 공개 `dddjango` 가이드 기준으로 DRF → Django Ninja 이전 체크리스트를 정리합니다.
+핵심 차이:
+- DRF router는 기본적으로 `{prefix}/`, `{prefix}/{lookup}/` 형태의 trailing slash를 붙입니다. Ninja route는 명시한 path가 그대로 계약이므로 기존 `/orders/`, `/orders/{pk}/`를 유지해야 합니다.
+- DRF validation error는 보통 `400` + `{field: ["..."], "non_field_errors": [...]}`입니다. Django Ninja 기본 request validation error는 `422` + `{"detail": [...]}`라서, 기존 클라이언트 호환이 목표면 `ValidationError` handler로 `400`과 DRF형 body를 맞춰야 합니다.
+- `create/list/retrieve/update/partial_update/destroy`는 Ninja에서 각각 `post/get/get/put/patch/delete` operation으로 풀어 쓰고, `201`, `200`, `204`, `400`, `401`, `403`, `404`, `409` 같은 응답을 `response={...}`에 명시해야 OpenAPI도 맞습니다.
+- 기존 DRF custom `@action`은 URL과 method를 그대로 보존해서 별도 Ninja route로 옮겨야 합니다.
+- OpenAPI는 component schema 이름, required/nullable, readOnly/writeOnly, operationId, auth scheme, error response schema가 달라질 가능성이 큽니다. 생성된 `old_openapi.json`/`new_openapi.json`을 diff해서 “삭제된 path/status/schema 필드 없음”을 기준으로 봐야 합니다.
 
-DRF `ViewSet/Serializer`는 Ninja에서 명시적인 `Router` operation과 request/response `Schema`로 나누는 게 맞습니다. Router에는 요청 파싱, 인증/인가 연결, 서비스 호출, 응답 매핑, 오류 변환만 두고 주문 생성/상태 전이/재고/결제 같은 규칙은 서비스나 도메인 쪽에 남기세요.
+권장 마이그레이션 순서:
+1. 기존 DRF API의 golden contract를 먼저 고정: 성공/검증 실패/권한 실패/404/비즈니스 충돌 응답의 status와 body.
+2. `Serializer`를 request schema와 response schema로 분리: DRF의 `read_only`, `write_only`, `source`, nested serializer 동작을 Ninja/Pydantic schema에 명시.
+3. ViewSet 액션을 Ninja Router operation으로 1:1 매핑: 비즈니스 규칙은 router에 넣지 말고 기존 service/usecase로 유지.
+4. 중앙 error handler 작성: 같은 v1이면 DRF error shape 유지, 새 v2면 Problem Details로 전환.
+5. Ninja `TestClient`로 status/error/body 계약 테스트를 먼저 통과시킨 뒤 OpenAPI diff를 확인.
 
-호환성에서 먼저 고정할 것:
-- 기존 URL, method, trailing slash, versioning 전략
-- 응답 field 이름/type/nullability/decimal/date 포맷
-- list pagination envelope와 query parameter
-- filter/sort/search parameter 이름
-- 인증 실패 `401`과 권한 실패 `403` 구분
-- 기존 클라이언트가 의존하는 DRF error shape
+실행한 명령:
+- `pwd -P`
+- `git rev-parse --show-toplevel`
+- `rg --files`
+- `rg -n "ViewSet|ModelViewSet|Serializer|Django Ninja|ninja|Order|orders|DRF|rest_framework" --glob '!workspace/reference/**' --glob '!**/private/**' --glob '!**/rubric*' --glob '!**/prior*'`
+- `find . -maxdepth 4 -type f \( -name '*.py' -o -name '*.md' -o -name '*.json' \)`
+- `sed -n ...`로 `workspace/docs/spec.md`, `ddd-implementation-standard.md`, `reference-index.md`, `skill-contracts.md` 일부 확인
 
-권장 status code 기준:
-- `GET /orders`: `200`
-- `GET /orders/{id}`: `200`, 없거나 숨김이면 `404`
-- `POST /orders`: `201` + 가능하면 `Location`
-- 비동기 주문 생성이면 `202`
-- `PATCH/PUT /orders/{id}`: body 반환 시 `200`, 반환 없으면 `204`
-- 삭제/취소가 body 없으면 `204`
-- malformed request는 `400`
-- 의미상 유효하지 않은 주문 요청은 계약에 따라 `422`
-- 중복 주문, 상태 충돌, idempotency payload 불일치는 `409`
-- rate limit은 `429`
+실행하지 않은 체크:
+- 실제 코드 수정 없음
+- pytest/API 테스트 미실행
+- DRF/Ninja OpenAPI 생성 및 diff 미실행
+- 실제 주문 endpoint 호출 미실행
 
-Error response는 같은 API version 안에서는 기존 DRF shape를 깨지 않는 게 우선입니다. 새 버전으로 분리할 수 있다면 RFC 9457 Problem Details를 표준으로 두고 `application/problem+json`, `type`, `title`, `status`, `detail`, 필요 시 `instance`와 문서화된 extension field를 쓰세요. DRF의 `{field: ["..."]}`, `non_field_errors`, `detail` 형태와 Ninja/Pydantic validation error 형태는 달라질 수 있으므로 exception handler에서 명시적으로 매핑해야 합니다.
+Serena: 사용 가능한 Serena 도구가 없어 생략했고, `rg`/파일 읽기로 확인했습니다.
 
-주문 생성은 재시도 중복 위험이 높으니 `Idempotency-Key`를 지원하거나 요구하는 계약을 정하세요. 같은 key+같은 payload는 저장된 첫 응답을 replay하고, 같은 key+다른 payload는 `409`로 두는 방식이 안전합니다. 저장 위치, TTL, 동시성 처리는 DB/트랜잭션 설계와 같이 결정해야 합니다.
-
-OpenAPI 차이는 반드시 diff 대상입니다:
-- path/method/operationId/tag
-- request schema와 response schema 분리
-- status별 response body
-- Problem Details 또는 legacy error schema
-- auth requirement
-- pagination/filter/sort params
-- `Idempotency-Key` header
-- enum/nullable/required field 차이
-
-**Commands Actually Run**
-
-```sh
-pwd -P
-git rev-parse --show-toplevel
-rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*findings*' -g '!**/*report*'
-sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-013.md
-sed -n '1,240p' dddjango/skills/implementation-django-ninja/SKILL.md
-sed -n '1,220p' dddjango/skills/architecture-api/SKILL.md
-sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md
-sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/router-schema.md
-sed -n '1,280p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
-sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
-sed -n '1,260p' dddjango/skills/architecture-api/references/rest-contracts.md
-sed -n '1,260p' dddjango/skills/architecture-api/references/problem-details.md
-sed -n '1,260p' dddjango/skills/architecture-api/references/pagination-versioning.md
-sed -n '1,260p' dddjango/skills/architecture-api/references/idempotency-openapi.md
-sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/testclient.md
-rg -n "\b(Order|Orders|order|orders|ViewSet|Serializer|ModelSerializer|rest_framework|DefaultRouter)\b" -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/runs/**'
-rg --files -g '*.py' -g '!workspace/develop/**' -g '!workspace/reference/**'
-rg -n "\b(Order|Orders|order|orders|ViewSet|Serializer|ModelSerializer|rest_framework|DefaultRouter)\b" dddjango workspace/docs workspace/scripts -g '!workspace/develop/**' -g '!workspace/reference/**'
-```
-
-**Not Run**
-
-- No file modifications: requested public eval only and sandbox is read-only.
-- No pytest/TestClient checks: no target Django order API implementation/config was present.
-- No OpenAPI generation or schema diff: no runnable app/schema artifacts were available.
-- No private evaluator files, private cases, prior run reports, or prior findings were intentionally read.
-- Serena: skipped; no Serena MCP tool was available and this was a read-only eval response.
+참고: Django Ninja 공식 문서의 validation error 기본값은 422, DRF 공식 문서의 validation error 기본값은 400입니다.
+Sources: https://django-ninja.dev/guides/errors/ , https://www.django-rest-framework.org/api-guide/exceptions/ , https://www.django-rest-framework.org/api-guide/routers/

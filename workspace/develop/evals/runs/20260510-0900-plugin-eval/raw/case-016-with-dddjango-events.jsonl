@@ -1,71 +1,30 @@
-No files were modified. Summary is based on `workspace/develop/source-crosswalks/*.md` plus the runtime `dddjango/skills/*/SKILL.md` and reference-file inventory.
+기준 파일은 `workspace/develop/source-crosswalks/*.md`, 런타임은 `dddjango/skills/*`로 봤습니다. `dddjango/skills`와 `plugins/dddjango/skills`는 `diff -qr` 결과 차이가 없어서 같은 런타임 스킬로 판단했습니다.
 
 **요약**
-`source-crosswalks`의 table status 기준으로 총 1,535개 source-heading 반영 행이 있었습니다.
+| skill | included | merged | delegated | omitted | source-gap | 판단 |
+|---|---:|---:|---:|---:|---:|---|
+| architecture-api | 88 | 11 | 32 | 5 | 0 | REST 계약, Problem Details, pagination/versioning/idempotency를 직접 반영 |
+| architecture-db | 82 | 10 | 28 | 5 | 0 | schema/constraint/index/transaction/rollout을 직접 반영 |
+| architecture-ddd | 82 | 18 | 29 | 5 | 0 | DDD 전략/전술/컨텍스트맵/도메인이벤트를 직접 반영 |
+| architecture-implementation-patterns | 74 | 16 | 21 | 1 | 1 | 전용 source 부재로 fallback 기반 provisional |
+| implementation-cleancode | 77 | 16 | 30 | 4 | 0 | 책임, 네이밍, 캡슐화, 레거시 리뷰를 직접 반영 |
+| implementation-django | 91 | 25 | 35 | 8 | 0 | 모델/ORM/service/migration/transaction/security를 직접 반영 |
+| implementation-django-ninja | 74 | 27 | 29 | 6 | 0 | 전용 Ninja source 부재, API/Django fallback 기반 provisional |
+| implementation-django-web | 64 | 16 | 31 | 3 | 0 | 전용 Web source 부재, Django/web product docs fallback 기반 provisional |
+| implementation-python | 51 | 19 | 28 | 9 | 0 | typing/dataclass/Protocol/pydantic 경계를 직접 반영 |
+| implementation-tdd | 81 | 10 | 31 | 4 | 0 | Red-Green-Refactor, test list, inside/outside-in을 직접 반영 |
+| implementation-test | 131 | 16 | 21 | 6 | 0 | pytest fixture/double/factory/property/coverage를 가장 촘촘히 반영 |
+| workflow-dddjango-subagents | 76 | 2 | 3 | 3 | 0 | 역할 분해, handoff, integration checklist를 직접 반영 |
 
-| 구분 | 개수 | 의미 |
-|---|---:|---|
-| 포함 `included` | 971 | Runtime `SKILL.md`, routing, runtime rules, 또는 `references/*.md`에 직접 반영 |
-| 병합 `merged` | 186 | 여러 heading을 하나의 runtime rule/reference/routing 판단으로 압축 |
-| 다른 skill 위임 `delegated-to-other-skill` | 318 | 현재 skill 책임 밖이라 routing으로 DDD/API/DB/Django/Test/Workflow 등으로 위임 |
-| 생략 `omitted` | 59 | 목차, 참고문헌, provenance, goal template, 비-provisional skill의 provisional 처리처럼 runtime 행동이 아닌 heading |
-| 명시적 source gap `source-gap` | 1 | `architecture-implementation-patterns`의 Repository/UoW 전용 source 부재 |
+**구분별 결론**
+- 포함: 각 스킬의 핵심 source heading은 `SKILL.md`의 trigger/routing/runtime rules와 `references/*.md`로 대부분 직접 반영되어 있습니다.
+- 병합: 공통 제품 문서, workflow/hierarchy, validation, `Risky Write Consistency Block` 같은 cross-skill 성격의 heading은 개별 heading 그대로가 아니라 runtime rule이나 reference 요약으로 합쳐졌습니다.
+- 다른 skill 위임: DDD 불명확성은 `architecture-ddd`, DB/transaction은 `architecture-db`, REST 계약은 `architecture-api`, Ninja/Web/Django/Python/test/TDD 세부 구현은 각 implementation skill, 복합/위험/서브에이전트 흐름은 `workflow-dddjango-subagents`로 라우팅됩니다.
+- 생략: 목차, 참고문헌, source provenance, goal prompt template, provider 예시, 단순 배경 설명, 런타임 동작이 아닌 release-note성 항목은 주로 생략됐습니다.
+- source gap: 명시적 gap은 `architecture-implementation-patterns`에 1건 있습니다. 추가로 `architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`는 crosswalk status 자체가 provisional이며 전용 reference 부재를 fallback source로 처리합니다.
 
-**Skill별 status count**
+**실행 명령**
+`pwd -P`; `rg --files workspace/develop/source-crosswalks`; `rg --files workspace`; `rg --files -g 'SKILL.md'`; `diff -qr dddjango/skills plugins/dddjango/skills`; `find dddjango/.codex-plugin plugins/dddjango/.codex-plugin -maxdepth 2 -type f | sort`; `sed`로 주요 crosswalk/SKILL/plugin.json 확인; `rg`로 status/source-gap/provisional 확인; `perl`로 status count 집계.
 
-| Skill | included | merged | delegated | omitted | source-gap |
-|---|---:|---:|---:|---:|---:|
-| architecture-api | 88 | 11 | 32 | 5 | 0 |
-| architecture-db | 82 | 10 | 28 | 5 | 0 |
-| architecture-ddd | 82 | 18 | 29 | 5 | 0 |
-| architecture-implementation-patterns | 74 | 16 | 21 | 1 | 1 |
-| implementation-cleancode | 77 | 16 | 30 | 4 | 0 |
-| implementation-django | 91 | 25 | 35 | 8 | 0 |
-| implementation-django-ninja | 74 | 27 | 29 | 6 | 0 |
-| implementation-django-web | 64 | 16 | 31 | 3 | 0 |
-| implementation-python | 51 | 19 | 28 | 9 | 0 |
-| implementation-tdd | 81 | 10 | 31 | 4 | 0 |
-| implementation-test | 131 | 16 | 21 | 6 | 0 |
-| workflow-dddjango-subagents | 76 | 2 | 3 | 3 | 0 |
-
-**Source gap / provisional 구분**
-
-- Ready source skill: `architecture-api`, `architecture-db`, `architecture-ddd`, `implementation-cleancode`, `implementation-django`, `implementation-python`, `implementation-tdd`, `implementation-test`, `workflow-dddjango-subagents`.
-- Provisional with fallback: `architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`.
-- Explicit `source-gap` row: `architecture-implementation-patterns.md` line for `implementation-python/final.md` `## 21. Repository / Unit of Work`; runtime keeps this as fallback/provisional rather than pretending a dedicated source exists.
-- `implementation-django-ninja` has no table-row `source-gap`, but the skill-level status says no dedicated Django Ninja source exists; it uses API architecture, product decisions, and DRF legacy material as fallback.
-- `implementation-django-web` likewise has no table-row `source-gap`, but skill-level status says no dedicated Django Web source exists; it uses selected Django source sections plus product decisions for static/HTMX/CSRF.
-
-**Commands Actually Run**
-```sh
-sed -n '1,180p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
-pwd -P
-git rev-parse --show-toplevel
-rg --files workspace/develop/source-crosswalks
-rg --files workspace/runtime workspace/plugins workspace/dist 2>/dev/null | rg 'SKILL\.md$|skills/.+'
-ls -la
-find workspace -maxdepth 3 -type d \( -path 'workspace/develop/rubrics' -o -path 'workspace/develop/evals' \) -prune -o -type d -print
-rg --files -g 'SKILL.md' -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*report*' -g '!**/*findings*'
-sed -n '1,220p' workspace/develop/source-crosswalks/architecture-ddd.md
-sed -n '1,220p' dddjango/skills/architecture-ddd/SKILL.md
-sed -n '1,220p' workspace/develop/source-crosswalks/implementation-django-ninja.md
-sed -n '1,220p' dddjango/skills/implementation-django-ninja/SKILL.md
-rg -n '^# Source Coverage Crosswalk:|^- Skill:|^- Source status:|^- Source policy decision:|^- Fallback source:|^- Runtime references:' workspace/develop/source-crosswalks
-rg -n '\|[^\n]*\| (included|merged|delegated-to-other-skill|omitted) \|' workspace/develop/source-crosswalks
-rg -n 'source gap|Source Gap|Reference Gap|provisional|dedicated source|fallback|allow-provisional|no dedicated|does not exist|gap' workspace/develop/source-crosswalks dddjango/skills -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*report*' -g '!**/*findings*'
-awk -F'|' '<count status column per crosswalk file>' workspace/develop/source-crosswalks/*.md
-awk -F'|' '<count status column totals>' workspace/develop/source-crosswalks/*.md
-awk -F'|' '<print source-gap rows>' workspace/develop/source-crosswalks/*.md
-sed -n '1,160p' dddjango/skills/architecture-implementation-patterns/SKILL.md
-sed -n '1,160p' dddjango/skills/implementation-django-web/SKILL.md
-sed -n '1,140p' dddjango/skills/implementation-django-ninja/SKILL.md
-find dddjango/skills -maxdepth 2 -type f \( -name 'SKILL.md' -o -path '*/references/*.md' \) | sort
-find dddjango/skills -path '*/references/*.md' -type f | sort
-```
-
-**Checks Not Run**
-
-- Did not read `workspace/develop/rubrics`, `workspace/develop/evals/cases/plugin/private`, prior run reports, or prior findings.
-- Did not run pytest, runtime validators, private eval harnesses, browser checks, or `codex debug` smoke checks because the request was a read-only crosswalk summary and no files were changed.
-- `git rev-parse --show-toplevel` printed macOS/xcode temp-cache warnings under the read-only sandbox but still returned `/Users/hyun/Desktop/dddjango`.
-- Serena: skipped; no Serena MCP tools were available in this session, and `rg`/`awk` over public crosswalks was sufficient.
+**실행하지 않은 체크**
+테스트, validator, smoke runtime 실행, rubric/private evaluator 문서 열람은 하지 않았습니다. Serena: 이 작업은 read-only 문서 요약이라 사용하지 않았습니다.

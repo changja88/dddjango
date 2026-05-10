@@ -1,67 +1,89 @@
-Artifacts were **not saved to disk** because this session is read-only and the packet also says not to modify files. I evaluated each request independently and include the raw artifacts inline.
+**1. Ninja Router/Schema + Problem Details**
 
-**Raw Artifacts**
+DRF로 새로 만들지 말고 Django Ninja 기준으로 잡는 게 맞습니다. Router는 HTTP adapter로만 두고, 비즈니스 규칙은 service/usecase 쪽으로 빼야 합니다.
 
-`case-004-01`
+결정안:
+- `Router`: 요청 파싱, auth/permission 연결, schema validation, service 호출, response mapping, exception translation만 담당
+- `Schema`: create/update/detail/list를 분리하고, 모델 필드를 전부 노출하지 않음
+- 오류 응답: RFC 9457 Problem Details 사용
+- `Content-Type`: `application/problem+json`
+- 상태 코드: 생성 `201`, 조회/수정 `200`, 삭제 `204`, 충돌 `409`, 의미 검증 실패 `422`, 인증/인가 `401/403`
+- 중복 주문/결제 생성 같은 POST는 `Idempotency-Key` 계약을 API에 드러내고 저장/동시성 처리는 service/DB 쪽으로 넘김
+
+예외 매핑 기준:
 ```text
-Request: 이 API, 그냥 DRF 말고 Ninja Router/Schema로 새로 잡고 Problem Details까지 맞춰줘.
-Route: architecture-api -> implementation-django-ninja
-Output: Treat DRF only as legacy comparison. First lock the REST contract: resource URL, method, success status, auth, validation/conflict/not-found errors, and OpenAPI impact. Implement as thin Django Ninja Router operations plus request/response Schema or ModelSchema. Router owns HTTP parsing, auth wiring, service invocation, response mapping, and domain/application error translation only. Use RFC 9457 Problem Details with application/problem+json, aligned status, stable type/title, occurrence detail, optional instance, documented extensions. TestClient/OpenAPI/schema diff not run.
+DomainValidationError -> 422 Problem Details
+PermissionDenied -> 403 Problem Details
+NotFound -> 404 Problem Details
+Conflict / invalid state transition -> 409 Problem Details
+Malformed request -> 400 Problem Details
 ```
 
-`case-004-02`
-```text
-Request: 모델에 몰린 validation/상태변경/외부 호출 흐름을 좀 봐줘. 어디까지 domain이고 어디부터 application service인지 모르겠어.
-Route: architecture-ddd -> implementation-django service/selector guidance
-Output: Domain owns invariants, meaningful validation, value objects, entity/aggregate state transitions, and domain events describing completed business facts. Application service owns use-case orchestration: load aggregate, start transaction, call domain behavior, persist, schedule after-commit work, and coordinate external providers. Django model methods are acceptable for simple explicit domain behavior. Split outward when ORM lifecycle, lazy loading, HTTP/schema concerns, or SDK calls start shaping the rule. External calls should leave the model and run through an application service plus adapter/port, usually after commit or via reliable handoff.
-```
+**2. 모델 validation/상태변경/외부 호출 경계**
 
-`case-004-03`
-```text
-Request: pytest에서 주문 생성 테스트 fixture가 너무 복잡해졌어. factory랑 fake/mock 경계를 다시 잡아줘.
-Route: implementation-test
-Output: Keep factory defaults valid, minimal, and unsurprising. Use traits for meaningful order states like paid/cancelled/shipped, SubFactory only for required relationships, and inline literals when clearer than a factory. Fixtures should express scenario setup, not hide a long object graph. Prefer output/state assertions for order creation. Use fakes for useful in-memory collaborators such as repository/provider behavior when they clarify the test. Use mocks/spies mainly for external boundaries like payment, email, HTTP, SDK, broker, clock; configure autospec/spec and keep important arguments explicit. Pytest not run.
-```
+모델에 전부 몰려 있다면 이렇게 나누는 게 낫습니다.
 
-`case-004-04`
-```text
-Request: payment provider 붙일 때 repository랑 outbox까지 필요한지 모르겠어. 과한 설계면 빼고 판단해줘.
-Route: architecture-implementation-patterns
-Output: Do not add repository by default if it only wraps QuerySet calls. Start with Django model behavior plus an application service owning the payment use case and transaction. Add a provider port/adapter because the SDK/HTTP provider is an external boundary. Add repository only if aggregate persistence needs a domain collection seam, fake repository materially improves tests, or ORM details distort application/domain code. Add outbox only when state change and external message/provider command delivery must be durably connected.
+- Domain: 주문 금액 계산, 주문 가능 여부, 상태 전이 규칙, 취소 가능 조건, 결제 가능 조건 같은 비즈니스 불변식
+- Domain model method: `order.confirm()`, `order.cancel()`, `order.mark_paid()`처럼 상태를 바꾸는 핵심 행위
+- Domain service: 여러 값/정책이 필요하지만 특정 엔티티 하나에 자연스럽게 붙지 않는 순수 규칙
+- Application service: 주문 로드, 트랜잭션 시작, domain method 호출, 저장, 결제 adapter 호출 예약
+- Infrastructure/adapter: payment SDK, HTTP client, email, message broker
+
+외부 호출은 모델에서 빼야 합니다. 결제 호출은 application service가 트랜잭션 이후 `transaction.on_commit()` 또는 outbox를 통해 실행하게 두는 쪽이 안전합니다.
+
+**3. pytest 주문 생성 fixture/factory/mock 경계**
+
+복잡한 fixture 체인은 줄이고, factory는 “유효한 최소 주문”을 만드는 데 집중시키는 게 좋습니다.
+
+- Factory: `OrderFactory`, `OrderItemFactory`, `UserFactory`처럼 DB 객체 생성
+- Factory trait: `paid`, `cancelled`, `shipped`, `with_items` 같은 의미 있는 상태
+- Fixture: 테스트에서 반복되는 역할 조립만 담당. 너무 많은 암묵 setup을 숨기지 않음
+- Fake: application service 테스트에서 `FakePaymentProvider`, `FakeOrderRepository`처럼 동작이 있는 대체 구현이 필요할 때
+- Mock/Spy: payment provider 호출 여부, email 발송, webhook 전송처럼 외부 협력 자체가 계약일 때만 사용
+- Domain 테스트: 가능하면 real domain object로 output/state 검증, mock 남발 금지
+
+우선순위는 `반환값 검증 -> 상태 검증 -> 외부 호출 검증`입니다.
+
+**4. payment provider에 repository/outbox가 필요한가**
+
+과한 설계를 피하면 기본 판단은 이렇습니다.
 
 Risky Write Consistency Block:
-- Transaction owner: payment initiation/capture application service.
-- Side-effect timing: outside model; after commit, provider idempotency key, or durable outbox-style command if async/retry reliability is required.
-- Idempotency storage: needed for duplicate-prone payment/order POSTs, but DB/API details not designed here.
-- DB locking/isolation/retry, Idempotency-Key API behavior, and integration/concurrency tests not run.
-```
+- transaction owner: `payment_authorize_order` 또는 `order_pay` 같은 application service
+- repository: 단순히 `Order.objects.get()`/`save()` 감싸는 정도면 불필요. Django service + ORM + `transaction.atomic()`으로 충분
+- custom Unit of Work: 여러 repository를 조합하거나 persistence를 숨겨야 할 명확한 이유가 없으면 불필요
+- outbox: 결제 성공/실패 이벤트를 외부 시스템에 반드시 전달해야 하고 DB 상태 변경과 메시지 발행을 안정적으로 묶어야 하면 필요
+- `transaction.on_commit()`: 단순한 내부 후속 작업이나 실패 시 재처리 요구가 낮은 작업이면 충분
+- idempotency storage: 결제 요청은 중복 위험이 크므로 필요할 가능성이 높음
+- saga: 단일 DB 트랜잭션 + 결제 provider 호출 수준이면 아직 과함. 여러 서비스의 장기 프로세스와 보상 트랜잭션이 생길 때 검토
 
-**Commands Actually Run**
+즉, repository는 일단 빼고 service/ORM으로 시작해도 됩니다. outbox는 “결제 상태 변경 이벤트를 유실 없이 발행해야 하는가”가 yes일 때만 넣는 게 맞습니다.
 
-```sh
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md ...
+Commands actually run:
+```text
 pwd -P
 git rev-parse --show-toplevel
-rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*report*' -g '!**/*finding*'
-rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/runs/**'
-sed -n '1,220p' workspace/scripts/run_plugin_eval.py
-sed -n '1,180p' workspace/develop/evals/cases/plugin/public/case-004.md
-sed -n '1,220p' dddjango/skills/implementation-django-ninja/SKILL.md
-sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/router-schema.md
+rg --files
+sed -n '1,200p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-ddd/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+sed -n '1,220p' workspace/reference/architecture-api/reference/final.md
+sed -n '1,220p' workspace/reference/architecture-ddd/reference/final.md
+sed -n '1,220p' workspace/reference/implementation-test/reference/final.md
+sed -n '1,220p' workspace/reference/architecture-db/reference/final.md
+sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/router-schema.md
 sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
-sed -n '1,220p' dddjango/skills/architecture-ddd/references/tactical-patterns.md
-sed -n '1,220p' dddjango/skills/architecture-ddd/references/domain-events.md
-sed -n '1,240p' dddjango/skills/implementation-test/references/pytest-fixtures.md
-sed -n '1,260p' dddjango/skills/implementation-test/references/factories-property-tests.md
-sed -n '1,260p' dddjango/skills/implementation-test/references/test-doubles.md
-sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
-sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+sed -n '1,260p' dddjango/skills/architecture-ddd/references/tactical-patterns.md
 sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
-sed -n '1,220p' dddjango/skills/implementation-django/references/services-selectors.md
-sed -n '1,220p' dddjango/skills/architecture-api/references/problem-details.md
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/verification-before-completion/SKILL.md
+sed -n '1,240p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+sed -n '1,240p' dddjango/skills/implementation-test/references/factories-property-tests.md
+sed -n '1,240p' dddjango/skills/implementation-test/references/test-doubles.md
+sed -n '1,240p' dddjango/skills/implementation-django/references/services-selectors.md
 ```
 
-**Not Run**
-
-Eval harness, `codex exec`, `codex debug prompt-input`, pytest, TestClient, OpenAPI generation, schema diff, browser checks, and artifact file writes were not run because the packet says not to modify files and the sandbox is read-only. Serena: skipped because no Serena MCP tools are available in this session; repository/path checks used shell commands. One early file-listing command returned prior-run filenames only; I did not open or read prior-run contents.
+Checks not run: no pytest, no Django Ninja `TestClient`, no OpenAPI generation/schema diff, no code modification.
+Serena: skipped because Serena tools were not available in this session; workspace inspection used `rg --files`.

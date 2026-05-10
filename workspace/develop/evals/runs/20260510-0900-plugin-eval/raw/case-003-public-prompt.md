@@ -1,6 +1,6 @@
 # Case 003
 
-Run each request independently and save raw output or prompt-input artifacts for each item.
+각 요청을 독립적인 사용자 요청으로 보고, 서로 섞지 말고 순서대로 답해줘.
 
 ## Requests
 
@@ -51,14 +51,3 @@ Django Ninja API contract test를 pytest fixture, factory, test double 기준으
 ```text
 주문 생성 기능을 DDD 설계부터 DB/API/Django 구현과 테스트까지 역할별로 나눠 진행 계획을 세워줘.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- One raw artifact per request.
-- Commands actually run.
-- Not-run checks and reasons.

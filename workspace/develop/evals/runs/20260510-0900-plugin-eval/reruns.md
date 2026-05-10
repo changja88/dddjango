@@ -1,5 +1,7 @@
 # Reruns
 
-No fix/rerun loop was executed in this phase.
+Protocol fix/rerun loop completed.
 
-Reason: the requested scope was evaluation execution and report writing first. The next iteration should fix the eval protocol findings and rerun affected cases.
+- Baseline isolation fixed and full 17-case public pack rerun for baseline and with-ddjango.
+- Public packets no longer contain operator artifact-saving instructions.
+- `validate_eval_protocol.py` passed for the full run.

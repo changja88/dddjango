@@ -1,32 +1,20 @@
-**Raw Answer**
-
-현재 정보만으로 “전부 적용”은 과합니다. dddjango 기준으로는 결제 승인은 risky write이므로 경계와 일관성은 명시해야 하지만, 패턴은 조건부입니다.
+결론: `dddjango` 기준으로는 “전부 무조건 적용”이 아니라, 결제 승인 흐름을 위험한 쓰기 + 외부 시스템 통합으로 보고 필요한 만큼 적용하는 쪽이 맞습니다.
 
 | 패턴 | 판단 |
 |---|---|
-| ports/adapters | 결제 PG/외부 SDK/API가 있다면 적용 권장. `PaymentAuthorizer` 같은 역할 기반 port를 application/use case 쪽에 두고, PG SDK/HTTP/env 처리는 adapter에 둡니다. 외부 시스템이 없고 Django 내부 상태 전이뿐이면 과합니다. |
-| repository | 기본 적용 아님. Django model/service + `transaction.atomic()`으로 충분하면 repository는 만들지 않습니다. ORM/QuerySet이 도메인 규칙을 흐리거나 aggregate persistence를 숨겨야 하거나 fake repository 테스트 이득이 크면 aggregate 단위 repository를 고려합니다. |
-| outbox | cross-service event, 메시지 발행, 승인 후 후속 처리를 DB commit과 안정적으로 묶어야 하면 적용 권장. 단순 in-process 후속 작업이면 `transaction.on_commit()`으로 충분할 수 있습니다. |
-| ACL | PG/레거시 결제 상태, 금액 단위, 승인/매입/취소 lifecycle 의미가 내부 결제 도메인 언어와 다르면 적용합니다. 단순 필드 매핑이면 full ACL보다 adapter-local mapper 정도가 적절합니다. |
+| Ports/Adapters | 적용 권장. API Router는 얇은 adapter로 두고, 결제 승인 유스케이스는 application service가 조정해야 합니다. 외부 PG/SDK 호출은 adapter 뒤로 숨겨 도메인 규칙이 SDK/HTTP 응답 구조에 묶이지 않게 하는 근거가 충분합니다. |
+| Repository | 조건부. `PaymentApproval`, `Payment`, `Order` 같은 애그리거트 불변식과 상태 전이가 중요하면 도메인 관점의 load/save 경계로 둘 가치가 있습니다. 단순 `QuerySet` wrapper라면 만들지 않는 게 dddjango 기준입니다. |
+| Outbox | 조건부 강하게 검토. 승인 결과를 주문, ledger, 알림, 정산 등 다른 컨텍스트/외부 메시지로 안정적으로 전파해야 하면 필요합니다. 단순히 DB에 승인 상태만 저장하고 끝나는 흐름이면 `transaction.on_commit()`이나 단순 이벤트 처리로 충분할 수 있습니다. 단, outbox가 PG 승인 호출 자체를 DB 트랜잭션과 원자적으로 만들어주지는 않습니다. |
+| ACL | 외부 결제사 모델이 내부 도메인을 오염시킬 위험이 있으면 적용. 예: PG별 상태값, 오류 코드, 취소/매입/승인 용어가 내부 모델에 퍼질 가능성이 있으면 adapter 안에 변환 계층을 둡니다. 단순 매핑 한두 개면 “무거운 ACL”보다 adapter mapping으로 충분합니다. |
 
-**Risky Write Consistency Block**
+부족한 근거: 실제 도메인 규칙, 외부 PG 계약, 동기/비동기 승인 요구, 재시도 정책, 이벤트 소비자, 기존 코드 구조가 없어서 Core/Supporting/Generic 하위 도메인 판단은 확정할 수 없습니다. 결제가 차별화 핵심이면 더 강한 도메인 모델이 맞고, PG 연동 중심이면 Supporting/Generic에 가까워 단순 구조가 맞을 수 있습니다.
 
-- Transaction owner: `payment_authorize` application service 후보.
-- Side effect timing: PG 호출/결과 저장/이벤트 발행 순서를 별도 설계해야 함. 메시지 발행은 commit 이후 또는 outbox.
-- Idempotency: 결제 승인은 중복 승인 방지를 위해 idempotency key 또는 unique constraint 검토 필요.
-- 한계: 현재 packet에는 bounded context, PG 종류, sync/async 승인, 기존 모델, API 계약, 재시도 정책 정보가 없어 최종 구조 확정은 불가합니다.
+위험한 쓰기라면 최소한 `transaction owner`, locking/idempotency key 저장 위치, 외부 side effect의 commit 이후 처리, retry/isolation, 통합/동시성 테스트 기준은 명시해야 합니다.
 
-**Commands Actually Run**
+실행한 명령:
+`pwd -P`, `rg --files`, `rg -n ...`, `sed -n ... workspace/docs/...`
 
-- `pwd -P`
-- `rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*finding*'`
-- `find . -maxdepth 3 -type f \( -name 'AGENTS.md' -o -name 'README*' -o -name '*.md' \) ...`
-- `sed -n` on relevant public/local dddjango docs under `dddjango/skills/...` and `workspace/docs/...`
+실행하지 않은 체크:
+테스트, 린트, 타입체크, 코드 변경 검증은 실행하지 않았습니다. 파일도 수정하지 않았습니다.
 
-Note: the broad `rg --files` output listed filenames under prior run directories, but I did not open/read their contents.
-
-**Checks Not Run**
-
-- Tests/typechecks: not run; no code change requested.
-- Private rubric/private evaluator/prior run contents: not read per packet.
-- Serena: skipped; this was a doc/design judgment, not symbol/reference-sensitive code work.
+Serena: 짧은 설계 판단이고 심볼/참조 추적 작업이 아니라 생략했으며, 공개 문서 기준은 `rg`/`sed`로 확인했습니다.

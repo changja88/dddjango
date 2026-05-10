@@ -34,9 +34,9 @@
       <h2>Executive Summary</h2>
       <div class="grid">
         <div class="card"><span>Family</span><strong>specialist-positive</strong></div>
-        <div class="card"><span>Baseline</span><strong>2/5</strong><span class="badge">fail</span></div>
+        <div class="card"><span>Baseline</span><strong>4/5</strong><span class="badge">pass-limited</span></div>
         <div class="card"><span>With dddjango</span><strong>5/5</strong><span class="badge">pass</span></div>
-        <div class="card"><span>Delta</span><strong>+3/5</strong><span class="badge">pass-with-baseline-fail</span></div>
+        <div class="card"><span>Delta</span><strong>+1/5</strong><span class="badge">pass</span></div>
       </div>
     </section>
     <section>
@@ -44,15 +44,15 @@
       <table><tr><th>Baseline setup</th><td>codex exec --ignore-user-config, read-only sandbox, same public packet.</td></tr>
 <tr><th>With dddjango setup</th><td>codex exec with active dddjango plugin config, read-only sandbox, same public packet.</td></tr>
 <tr><th>Prompt</th><td>Ninja/API, domain/application boundary, pytest fixture, architecture pattern 판단을 혼합 언어로 검증.</td></tr>
-<tr><th>Baseline did well</th><td>public/private 경계를 지키고 validation을 실행.</td></tr>
-<tr><th>Baseline gaps</th><td>실제 per-request model output 대신 prompt-input run으로 대체되어 routing/output evidence가 부족.</td></tr>
+<tr><th>Baseline did well</th><td>네 요청을 독립적으로 답했고 DRF greenfield 회피, domain/application boundary, fixture/test double 경계, payment pattern trade-off를 다룸.</td></tr>
+<tr><th>Baseline gaps</th><td>specialist route metadata는 없고 일부 항목은 runtime skill보다 간략함.</td></tr>
 <tr><th>With dddjango did well</th><td>각 request에 대해 smallest sufficient route를 명시하고 DRF greenfield 회피, test double 경계, overengineering 방지를 반영.</td></tr>
 <tr><th>With dddjango gaps</th><td>artifact는 하나의 파일에 inline으로 모임.</td></tr>
-<tr><th>Score rationale</th><td>with-dddjango는 boundary routing을 통과. baseline은 evidence 부족.</td></tr></table>
+<tr><th>Score rationale</th><td>두 variant 모두 통과하되 with-ddjango가 boundary routing과 책임 분리 표현이 더 명확함.</td></tr></table>
     </section>
     <section>
       <h2>Evidence Links</h2>
-      <ul><li><a href="../analysis/case-004.html">analysis</a></li><li><a href="../raw/case-004-public-prompt.md">public prompt</a></li><li><a href="../raw/case-004-baseline.txt">baseline</a></li><li><a href="../raw/case-004-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-004-prompt-input.json">prompt-input</a></li></ul>
+      <ul><li><a href="../analysis/case-004.html">analysis</a></li><li><a href="../raw/case-004-public-prompt.md">public prompt</a></li><li><a href="../raw/case-004-baseline.txt">baseline</a></li><li><a href="../raw/case-004-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-004-baseline-isolation.json">baseline isolation</a></li><li><a href="../raw/case-004-with-dddjango-prompt-input.json">with prompt-input</a></li><li><a href="../raw/case-004-baseline-command.txt">baseline command</a></li><li><a href="../raw/case-004-with-dddjango-command.txt">with-dddjango command</a></li><li><a href="../raw/case-004-baseline-events.jsonl">baseline events</a></li><li><a href="../raw/case-004-with-dddjango-events.jsonl">with-dddjango events</a></li></ul>
     </section>
   </main>
 </body>

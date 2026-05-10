@@ -1,25 +1,25 @@
 OpenAI Codex v0.130.0
 --------
-workdir: /Users/hyun/Desktop/dddjango
+workdir: /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: xhigh
 reasoning summaries: auto
-session id: 019e0f93-884c-7342-8e7b-4b0ae2465f49
+session id: 019e1068-233b-7403-9167-9beae3935a55
 --------
 user
-You are executing a public forward-eval packet for the dddjango plugin.
-Use only the public packet below and task-local repository files if needed.
-Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Answer the user request directly.
+Use only files in the current working directory when local files are needed.
+Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.
 Do not modify files. If a check is not actually run, state that it was not run.
-Keep the answer concise but include commands actually run and checks not run.
+Keep the answer concise and include commands actually run plus checks not run.
 
------ PUBLIC PACKET START -----
+----- USER REQUEST START -----
 # Case 004
 
-Run each request independently and save raw output or prompt-input artifacts for each item.
+각 요청을 독립적인 사용자 요청으로 보고, 서로 섞지 말고 순서대로 답해줘.
 
 ## Requests
 
@@ -38,23 +38,14 @@ pytest에서 주문 생성 테스트 fixture가 너무 복잡해졌어. factory�
 ```text
 payment provider 붙일 때 repository랑 outbox까지 필요한지 모르겠어. 과한 설계면 빼고 판단해줘.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- One raw artifact per request.
-- Commands actually run.
-- Not-run checks and reasons.
------ PUBLIC PACKET END -----
+----- USER REQUEST END -----
 
 codex
-I’ll treat this as an eval dry run: independent classification/handling for each prompt, no repo-private eval files, and no file writes. I’m reading only the required skill instructions and repository surface metadata needed to report what was actually checked.
+Using `dddjango` skills for the four Django/API/domain/test architecture questions, plus the required Superpowers startup guidance. I’ll inspect only the current workspace and keep this read-only.
 exec
-/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-ddd/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,200p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
 ---
 name: using-superpowers
@@ -173,48 +164,57 @@ The skill itself tells you which.
 ## User Instructions
 
 Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+
+ succeeded in 0ms:
 ---
-name: architecture-api
+name: implementation-django-ninja
 description: >
-  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
 ---
 
-# API Architecture
+# Django Ninja Implementation
 
-Use this skill to turn use cases and client needs into REST contracts. This skill designs external API behavior; it does not implement framework code.
+This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
+
+## Fallback Source
+
+- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
+- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
+- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
 
 ## Routing
 
-- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
-- Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
-- If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
-- If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.
-- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
-- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
-- If the user asks for pytest/API contract tests, use `implementation-test` after contract criteria are known.
-- For a simple status-code, URL naming, or error-format question, answer directly without forcing a full DDD workflow.
+- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
+- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
+- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
+- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
+- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
+- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
+- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
+- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
 
 ## Reference Loading
 
-- Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, headers, auth/authz, content negotiation, and cache semantics.
-- Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
-- Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.
-- Read [idempotency-openapi.md](references/idempotency-openapi.md) for `Idempotency-Key`, duplicate POST behavior, and OpenAPI contract impact.
+- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
+- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
+- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
+- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
 
 ## Runtime Rules
 
-- Start from the external use case, resource identity, client workflow, authorization needs, error conditions, compatibility constraints, and expected query patterns.
-- Choose resources and URLs as stable nouns; avoid leaking database table names or imperative action names into URLs.
-- Choose HTTP methods by safety and idempotency. Use POST for creation/actions, PUT for full replacement, PATCH for partial update, DELETE for deletion, and GET only for safe reads.
-- Specify status codes with response body expectations, especially 201 with `Location`, 202 for accepted async work, 204 for no-content delete, 409 for conflicts, 422 for semantic validation, 429 for rate limits, and 503 with retry guidance.
-- Use RFC 9457 Problem Details consistently for API errors; keep `status` aligned with the HTTP response and keep `title` reusable while `detail` describes the occurrence.
-- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
-- For duplicate-sensitive POSTs, define `Idempotency-Key` acceptance, replay response, conflict behavior, and storage handoff to `architecture-db`.
-- Choose pagination from scenario facts: offset for small/admin use, cursor or keyset for large or changing datasets, and include next-page metadata.
-- Treat response field removal, type changes, required request additions, URL changes, status changes, and error shape changes as breaking unless versioned or migrated.
-- Record OpenAPI impact whenever endpoints, schemas, status responses, auth, pagination, rate limits, or idempotency behavior change.
-- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
-- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
+- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
+- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
+- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
+- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
+- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
+- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-ddd/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+ succeeded in 0ms:
 ---
 name: architecture-ddd
 description: >
@@ -258,6 +258,19 @@ Use this skill to turn business language and state changes into domain boundarie
 - Return concrete design decisions: subdomain type, bounded context, context-map relationship, key terms, aggregate candidates, invariants, events, consistency boundary, and use case candidates.
 - Do not write Django model, Router, migration, or test code during DDD-only modeling. In combined work, make the DDD decisions first and hand implementation to the relevant skills or assigned implementation step.
 - Only report tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+**Exploring skills for implementation**
+
+I think it might be a good idea to read up on various skills like implementation testing and architecture patterns. I’m also considering API architecture and database concepts. It seems like gathering all this knowledge can help in a single tool call. I wonder how a well-rounded understanding of these areas can improve outcomes and efficiency. There’s a lot to consider, and I want to make sure I'm thorough!
+codex
+I’m loading only the relevant dddjango guidance, then I’ll inspect the repository shape and any order/payment/API files that exist. No edits will be made.
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+ succeeded in 0ms:
 ---
 name: implementation-test
 description: >
@@ -296,6 +309,50 @@ Use this skill to write or review concrete pytest tests, fixtures, factories, do
 - Treat coverage and mutation scores as signals to inspect, not proof that behavior is fully tested.
 - In composite workflows, own `tests/**`, `conftest.py`, and factory files; coordinate with implementation skills without changing production code unless assigned.
 - Report only tests, coverage, mutation checks, or subagent reviews that were actually run. If a command was not run, state that directly.
+
+ succeeded in 0ms:
+---
+name: architecture-db
+description: >
+  Use for relational database architecture: ERD, conceptual/logical/physical modeling, normalization/denormalization, primary/foreign keys, unique/check/not-null constraints, cascade behavior, composite/covering/partial indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, hierarchy/inheritance modeling, rollout constraints, backfill/index-lock risk, migration safety. Use for ERD, 정규화, 인덱스, 제약조건, transaction/트랜잭션, locking, 동시성, 멱등성 저장, 중복 요청 방지, 부분 인덱스, EXPLAIN ANALYZE, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, rolling deploy, migration risk. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/hexagonal/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files.
+---
+
+# DB Architecture
+
+Use this skill to design relational data structures that protect domain invariants and support query/write patterns. This skill decides the database shape and operational constraints; it does not write concrete Django migration files.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct DB design questions here, including risky transaction, locking, isolation, uniqueness, idempotency storage, backfill, and index-lock examples, when the user is asking for database architecture rather than multi-role implementation.
+- If aggregate boundaries, domain invariants, ubiquitous language, or state transitions are unclear, use `architecture-ddd` before designing the schema.
+- If the main work is repository/UoW, outbox architecture, CQRS, hexagonal/ports-adapters, ACL, or dependency direction, use `architecture-implementation-patterns`; keep concrete storage, constraints, and transaction choices here.
+- If the main work is REST resources, status codes, Problem Details, pagination, versioning, `Idempotency-Key` contract, or OpenAPI, use `architecture-api`; keep DB storage implications here.
+- If the user asks to implement Django `models.py`, `RunPython`, `apps.get_model()`, `sqlmigrate`, or migration files, use `implementation-django` after DB design is clear.
+- If the user asks for pytest integration/concurrency tests, use `implementation-test` after DB invariants and transaction criteria are known.
+- For a simple field rename or local CRUD model with no invariant/rollout risk, do not force full ERD, locking, or migration strategy ceremony.
+
+## Reference Loading
+
+- Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism.
+- Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost.
+- Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs.
+- Read [rollout-constraints.md](references/rollout-constraints.md) for EXPLAIN ANALYZE, query optimization, N+1, backfill/index-lock risk, expand/backfill/contract rollout, and rollback considerations.
+
+## Runtime Rules
+
+- Start from domain invariants, aggregates/entities, query patterns, write contention, and rollout constraints; do not let ORM convenience erase DB invariants.
+- Model conceptually first, then logical schema, then physical indexes/partitioning/performance choices.
+- Normalize first to remove update/insert/delete anomalies; denormalize only for measured read pressure or clear operational need.
+- Use database constraints for invariants the database can enforce: primary keys, foreign keys, unique, check, not null, and appropriate cascade rules.
+- Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
+- For risky writes, include a `Risky Write Consistency Block` with transaction owner, locking strategy, uniqueness/idempotency storage, API idempotency handoff, side-effect timing, isolation/retry, and integration/concurrency test criteria.
+- For operational changes, separate DB design from concrete Django migration implementation; hand off migration file details to `implementation-django`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+ succeeded in 0ms:
 ---
 name: architecture-implementation-patterns
 description: >
@@ -344,64 +401,57 @@ Use this skill after the DDD model is clear and before concrete Django/Python co
 - If source limits affect a recommendation, say the skill is using fallback sources and identify the assumption.
 - Only report tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
 
-codex
-I’ve loaded the applicable process and dddjango routing instructions. Next I’m checking the repository shape without entering the private eval/rubric/prior-report paths, then I’ll produce the per-request raw artifacts in the response because this environment is read-only and the packet also says not to modify files.
-exec
-/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-/Users/hyun/Desktop/dddjango
-
-exec
-/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md" in /Users/hyun/Desktop/dddjango
  succeeded in 0ms:
 ---
-name: implementation-django-ninja
+name: architecture-api
 description: >
-  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
 ---
 
-# Django Ninja Implementation
+# API Architecture
 
-This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
-
-## Fallback Source
-
-- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
-- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
-- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
+Use this skill to turn use cases and client needs into REST contracts. This skill designs external API behavior; it does not implement framework code.
 
 ## Routing
 
-- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
-- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
-- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
-- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
-- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
-- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
-- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
-- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
-- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
-- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
+- If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
+- If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.
+- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
+- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+- If the user asks for pytest/API contract tests, use `implementation-test` after contract criteria are known.
+- For a simple status-code, URL naming, or error-format question, answer directly without forcing a full DDD workflow.
 
 ## Reference Loading
 
-- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
-- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
-- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
-- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
+- Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, headers, auth/authz, content negotiation, and cache semantics.
+- Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
+- Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.
+- Read [idempotency-openapi.md](references/idempotency-openapi.md) for `Idempotency-Key`, duplicate POST behavior, and OpenAPI contract impact.
 
 ## Runtime Rules
 
-- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
-- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
-- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
-- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
-- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
-- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
-- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
+- Start from the external use case, resource identity, client workflow, authorization needs, error conditions, compatibility constraints, and expected query patterns.
+- Choose resources and URLs as stable nouns; avoid leaking database table names or imperative action names into URLs.
+- Choose HTTP methods by safety and idempotency. Use POST for creation/actions, PUT for full replacement, PATCH for partial update, DELETE for deletion, and GET only for safe reads.
+- Specify status codes with response body expectations, especially 201 with `Location`, 202 for accepted async work, 204 for no-content delete, 409 for conflicts, 422 for semantic validation, 429 for rate limits, and 503 with retry guidance.
+- Use RFC 9457 Problem Details consistently for API errors; keep `status` aligned with the HTTP response and keep `title` reusable while `detail` describes the occurrence.
+- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
+- For duplicate-sensitive POSTs, define `Idempotency-Key` acceptance, replay response, conflict behavior, and storage handoff to `architecture-db`.
+- Choose pagination from scenario facts: offset for small/admin use, cursor or keyset for large or changing datasets, and include next-page metadata.
+- Treat response field removal, type changes, required request additions, URL changes, status changes, and error shape changes as breaking unless versioned or migrated.
+- Record OpenAPI impact whenever endpoints, schemas, status responses, auth, pagination, rate limits, or idempotency behavior change.
+- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
 
 exec
-/bin/zsh -lc "rg --files -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!**/*prior*'"' -g '"'!**/*report*'"' -g '"'!**/*finding*'"'" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc 'pwd -P' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+ succeeded in 0ms:
+/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+
+exec
+/bin/zsh -lc 'rg --files' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
 AGENTS.md
 workspace/reference/implementation-test/reference/review.md
@@ -430,26 +480,28 @@ workspace/reference/implementation-python/reference/review.md
 workspace/reference/implementation-python/reference/internal.md
 workspace/reference/implementation-python/reference/final.md
 workspace/reference/implementation-python/reference/external.md
-LICENSE
-workspace/reference/architecture-ddd/reference/external.md
-workspace/reference/architecture-ddd/reference/final.md
-workspace/reference/architecture-ddd/reference/internal.md
 workspace/reference/architecture-ddd/reference/review.md
-workspace/docs/ddd-implementation-standard.md
-workspace/docs/skill-hierarchy.md
-workspace/docs/workflow.md
-workspace/scripts/run_plugin_eval.py
+workspace/reference/architecture-ddd/reference/internal.md
+workspace/reference/architecture-ddd/reference/final.md
+workspace/reference/architecture-ddd/reference/external.md
 workspace/scripts/validate_skill_docs.py
-workspace/docs/validation-plan.md
+workspace/scripts/validate_eval_protocol.py
+workspace/scripts/validate_eval_code_artifacts.py
+workspace/scripts/validate_eval_report_readability.py
+workspace/scripts/run_plugin_eval.py
+workspace/scripts/render_plugin_eval_report.py
 workspace/docs/reference-index.md
 workspace/docs/spec.md
 workspace/docs/skill-contracts.md
 workspace/docs/skill-authoring.md
 workspace/docs/plugin-structure.md
+workspace/docs/validation-plan.md
+workspace/docs/workflow.md
+workspace/docs/skill-hierarchy.md
+workspace/docs/ddd-implementation-standard.md
 workspace/develop/skill_goal_instructions.md
 workspace/develop/rubric_goal_instructions.md
 workspace/develop/plan.md
-dddjango/skills/implementation-test/SKILL.md
 workspace/develop/source-crosswalks/implementation-test.md
 workspace/develop/source-crosswalks/implementation-django.md
 workspace/develop/source-crosswalks/implementation-django-ninja.md
@@ -462,120 +514,21 @@ workspace/develop/source-crosswalks/architecture-implementation-patterns.md
 workspace/develop/source-crosswalks/architecture-api.md
 workspace/develop/source-crosswalks/architecture-ddd.md
 workspace/develop/source-crosswalks/implementation-django-web.md
-dddjango/skills/implementation-test/agents/openai.yaml
-dddjango/skills/workflow-dddjango-subagents/SKILL.md
-dddjango/skills/implementation-test/references/pytest-fixtures.md
-dddjango/skills/implementation-test/references/factories-property-tests.md
-dddjango/skills/implementation-test/references/test-doubles.md
-dddjango/skills/implementation-test/references/coverage-mutation.md
-dddjango/skills/architecture-implementation-patterns/SKILL.md
-dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
-dddjango/skills/implementation-django/SKILL.md
-dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
-dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
-dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
-dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
-dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-public-prompt.md
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-prompt-input.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-operator-prompt.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-operator-prompt.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-operator-prompt.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-prompt-input.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-public-prompt.md
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-operator-prompt.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-exit.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-prompt-input.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-prompt-input.json
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-public-prompt.md
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-events.jsonl
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-command.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango.stderr.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-prompt-input.json
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-prompt-input.json
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-public-prompt.md
-workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango.txt
-workspace/develop/evals/runs/20260510-0900-plugin-eval/operator-notes.md
-workspace/develop/evals/runs/20260510-0900-plugin-eval/RUN_ID.txt
-dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
-dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
-dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
-dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
-dddjango/skills/implementation-cleancode/SKILL.md
-workspace/develop/evals/runs/README.md
-dddjango/skills/implementation-django/agents/openai.yaml
-dddjango/skills/implementation-django-ninja/SKILL.md
-dddjango/skills/implementation-cleancode/agents/openai.yaml
-dddjango/skills/implementation-django-ninja/agents/openai.yaml
-workspace/develop/evals/templates/case-analysis.html
-workspace/develop/evals/templates/public-packet.md
-workspace/develop/evals/templates/private-evaluator.md
+LICENSE
 workspace/develop/evals/README.md
-dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
-dddjango/skills/implementation-django/references/services-selectors.md
-dddjango/skills/implementation-cleancode/references/responsibility.md
-dddjango/skills/implementation-cleancode/references/legacy-review.md
-dddjango/skills/implementation-django/references/transactions-performance-security.md
-dddjango/skills/implementation-cleancode/references/naming-functions.md
-dddjango/skills/implementation-django/references/models-orm.md
-dddjango/skills/implementation-django/references/migrations.md
-dddjango/skills/implementation-django-ninja/references/router-schema.md
-dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
-dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
-dddjango/skills/implementation-django-ninja/references/testclient.md
-dddjango/skills/implementation-tdd/SKILL.md
-dddjango/skills/architecture-api/SKILL.md
-dddjango/skills/architecture-db/SKILL.md
-dddjango/skills/implementation-tdd/agents/openai.yaml
-dddjango/skills/architecture-api/agents/openai.yaml
-dddjango/skills/architecture-db/agents/openai.yaml
-dddjango/skills/implementation-tdd/references/test-list.md
-dddjango/skills/implementation-tdd/references/red-green-refactor.md
-dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
-dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
-dddjango/skills/architecture-api/references/pagination-versioning.md
-dddjango/skills/architecture-api/references/idempotency-openapi.md
-dddjango/skills/architecture-api/references/rest-contracts.md
-dddjango/skills/architecture-api/references/problem-details.md
-workspace/develop/evals/cases/plugin/public/case-015.md
-dddjango/skills/architecture-db/references/constraints-indexes.md
-dddjango/skills/implementation-python/SKILL.md
-dddjango/skills/architecture-db/references/transactions-locking.md
-dddjango/skills/architecture-db/references/schema-modeling.md
-dddjango/skills/architecture-db/references/rollout-constraints.md
+workspace/develop/evals/fixtures/code-artifact-sample/orders/services.py
+workspace/develop/evals/fixtures/code-artifact-sample/README.md
+workspace/develop/evals/templates/run-report.html
+workspace/develop/evals/templates/private-evaluator.md
+workspace/develop/evals/templates/public-packet.md
+workspace/develop/evals/templates/case-analysis.html
+dddjango/skills/implementation-test/SKILL.md
+workspace/develop/evals/cases/plugin/code-capture.json
+plugins/dddjango/skills/implementation-tdd/SKILL.md
+plugins/dddjango/skills/implementation-test/SKILL.md
+plugins/dddjango/skills/implementation-python/SKILL.md
+dddjango/skills/implementation-test/agents/openai.yaml
+plugins/dddjango/skills/implementation-tdd/agents/openai.yaml
 workspace/develop/evals/cases/plugin/public/case-008.md
 workspace/develop/evals/cases/plugin/public/case-009.md
 workspace/develop/evals/cases/plugin/public/case-002.md
@@ -589,553 +542,1069 @@ workspace/develop/evals/cases/plugin/public/case-013.md
 workspace/develop/evals/cases/plugin/public/case-004.md
 workspace/develop/evals/cases/plugin/public/case-014.md
 workspace/develop/evals/cases/plugin/public/case-010.md
+workspace/develop/evals/cases/plugin/public/case-101.md
 workspace/develop/evals/cases/plugin/public/case-001.md
 workspace/develop/evals/cases/plugin/public/case-011.md
 workspace/develop/evals/cases/plugin/public/case-005.md
-dddjango/skills/implementation-python/agents/openai.yaml
+workspace/develop/evals/cases/plugin/public/case-015.md
+plugins/dddjango/skills/implementation-python/agents/openai.yaml
+plugins/dddjango/skills/implementation-test/agents/openai.yaml
+dddjango/skills/implementation-test/references/pytest-fixtures.md
+dddjango/skills/implementation-test/references/factories-property-tests.md
+dddjango/skills/implementation-test/references/test-doubles.md
+dddjango/skills/implementation-test/references/coverage-mutation.md
+plugins/dddjango/skills/implementation-tdd/references/test-list.md
+plugins/dddjango/skills/implementation-tdd/references/red-green-refactor.md
+plugins/dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+plugins/dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
+dddjango/skills/architecture-implementation-patterns/SKILL.md
+plugins/dddjango/skills/implementation-test/references/pytest-fixtures.md
+plugins/dddjango/skills/implementation-python/references/protocols-boundaries.md
+dddjango/skills/implementation-django/SKILL.md
+plugins/dddjango/skills/implementation-python/references/pydantic-v2.md
+plugins/dddjango/skills/implementation-python/references/typing.md
+plugins/dddjango/skills/implementation-python/references/dataclasses-enums.md
+plugins/dddjango/skills/implementation-test/references/factories-property-tests.md
+plugins/dddjango/skills/implementation-test/references/test-doubles.md
+plugins/dddjango/skills/implementation-test/references/coverage-mutation.md
+dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
+plugins/dddjango/skills/architecture-implementation-patterns/SKILL.md
+dddjango/skills/implementation-django/agents/openai.yaml
+plugins/dddjango/skills/architecture-ddd/SKILL.md
+plugins/dddjango/skills/implementation-django/SKILL.md
+dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+dddjango/skills/implementation-django/references/services-selectors.md
+dddjango/skills/implementation-django/references/transactions-performance-security.md
+dddjango/skills/implementation-django/references/models-orm.md
+dddjango/skills/implementation-django/references/migrations.md
+plugins/dddjango/skills/architecture-ddd/agents/openai.yaml
+plugins/dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
+plugins/dddjango/skills/implementation-django/agents/openai.yaml
+dddjango/skills/implementation-django-ninja/SKILL.md
+dddjango/skills/architecture-api/SKILL.md
+plugins/dddjango/skills/architecture-ddd/references/domain-events.md
+plugins/dddjango/skills/architecture-ddd/references/tactical-patterns.md
+plugins/dddjango/skills/architecture-ddd/references/strategic-design.md
+plugins/dddjango/skills/architecture-ddd/references/context-map.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+plugins/dddjango/skills/implementation-django/references/services-selectors.md
+plugins/dddjango/skills/implementation-django/references/transactions-performance-security.md
+plugins/dddjango/skills/implementation-django/references/models-orm.md
+plugins/dddjango/skills/implementation-django/references/migrations.md
+dddjango/skills/architecture-api/agents/openai.yaml
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md
+plugins/dddjango/skills/workflow-dddjango-subagents/SKILL.md
+dddjango/skills/implementation-django-ninja/agents/openai.yaml
+plugins/dddjango/skills/architecture-api/SKILL.md
+dddjango/skills/architecture-api/references/problem-details.md
+dddjango/skills/architecture-api/references/pagination-versioning.md
+dddjango/skills/architecture-api/references/idempotency-openapi.md
+dddjango/skills/architecture-api/references/rest-contracts.md
+dddjango/skills/implementation-django-ninja/references/router-schema.md
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+dddjango/skills/implementation-django-ninja/references/testclient.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+plugins/dddjango/skills/implementation-django-ninja/agents/openai.yaml
+dddjango/skills/architecture-db/SKILL.md
+dddjango/skills/architecture-db/agents/openai.yaml
+dddjango/skills/architecture-db/references/transactions-locking.md
+dddjango/skills/architecture-db/references/schema-modeling.md
+dddjango/skills/architecture-db/references/rollout-constraints.md
+dddjango/skills/architecture-db/references/constraints-indexes.md
+dddjango/skills/implementation-tdd/SKILL.md
+plugins/dddjango/skills/architecture-api/agents/openai.yaml
+plugins/dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
+plugins/dddjango/skills/implementation-django-web/SKILL.md
+plugins/dddjango/skills/architecture-db/SKILL.md
+dddjango/skills/implementation-tdd/agents/openai.yaml
+plugins/dddjango/skills/architecture-api/references/pagination-versioning.md
+plugins/dddjango/skills/architecture-api/references/idempotency-openapi.md
+plugins/dddjango/skills/architecture-api/references/rest-contracts.md
+plugins/dddjango/skills/architecture-api/references/problem-details.md
+plugins/dddjango/skills/implementation-django-web/references/static-assets.md
+plugins/dddjango/skills/implementation-django-web/references/csrf-ajax.md
+plugins/dddjango/skills/implementation-django-web/references/templateview-htmx.md
+plugins/dddjango/skills/implementation-django-web/references/templates.md
 dddjango/skills/architecture-ddd/SKILL.md
-dddjango/skills/implementation-python/references/protocols-boundaries.md
-dddjango/skills/implementation-python/references/pydantic-v2.md
-dddjango/skills/implementation-python/references/typing.md
-dddjango/skills/implementation-python/references/dataclasses-enums.md
 dddjango/skills/implementation-django-web/SKILL.md
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md
+plugins/dddjango/skills/implementation-cleancode/SKILL.md
+plugins/dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+plugins/dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+plugins/dddjango/skills/implementation-django-ninja/references/testclient.md
+dddjango/skills/implementation-python/SKILL.md
+dddjango/skills/workflow-dddjango-subagents/SKILL.md
+plugins/dddjango/skills/architecture-db/agents/openai.yaml
+plugins/dddjango/skills/architecture-db/references/transactions-locking.md
+plugins/dddjango/skills/architecture-db/references/schema-modeling.md
+plugins/dddjango/skills/architecture-db/references/rollout-constraints.md
+plugins/dddjango/skills/architecture-db/references/constraints-indexes.md
+plugins/dddjango/skills/implementation-django-web/agents/openai.yaml
+dddjango/skills/implementation-cleancode/SKILL.md
+dddjango/skills/implementation-tdd/references/test-list.md
+dddjango/skills/implementation-tdd/references/red-green-refactor.md
+dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
 dddjango/skills/architecture-ddd/agents/openai.yaml
 dddjango/skills/implementation-django-web/agents/openai.yaml
-dddjango/skills/architecture-ddd/references/domain-events.md
 dddjango/skills/implementation-django-web/references/static-assets.md
+dddjango/skills/implementation-django-web/references/csrf-ajax.md
+dddjango/skills/implementation-django-web/references/templateview-htmx.md
+dddjango/skills/implementation-django-web/references/templates.md
+dddjango/skills/architecture-ddd/references/domain-events.md
+dddjango/skills/architecture-ddd/references/tactical-patterns.md
 dddjango/skills/architecture-ddd/references/strategic-design.md
 dddjango/skills/architecture-ddd/references/context-map.md
-dddjango/skills/architecture-ddd/references/tactical-patterns.md
-dddjango/skills/implementation-django-web/references/templateview-htmx.md
-dddjango/skills/implementation-django-web/references/csrf-ajax.md
-dddjango/skills/implementation-django-web/references/templates.md
+dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
+dddjango/skills/implementation-cleancode/references/responsibility.md
+dddjango/skills/implementation-cleancode/references/legacy-review.md
+dddjango/skills/implementation-cleancode/references/naming-functions.md
+dddjango/skills/implementation-cleancode/agents/openai.yaml
+dddjango/skills/implementation-python/references/protocols-boundaries.md
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
+dddjango/skills/implementation-python/agents/openai.yaml
+plugins/dddjango/skills/implementation-cleancode/agents/openai.yaml
+plugins/dddjango/skills/implementation-cleancode/references/legacy-review.md
+plugins/dddjango/skills/implementation-cleancode/references/naming-functions.md
+dddjango/skills/implementation-python/references/typing.md
+plugins/dddjango/skills/implementation-cleancode/references/responsibility.md
+plugins/dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
+dddjango/skills/implementation-python/references/dataclasses-enums.md
+dddjango/skills/implementation-python/references/pydantic-v2.md
+dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+dddjango/skills/workflow-dddjango-subagents/references/role-map.md
 
 exec
-/bin/zsh -lc 'git rev-parse --show-toplevel' in /Users/hyun/Desktop/dddjango
- succeeded in 1948ms:
-2026-05-10 10:50:22.333 xcodebuild[74885:2595853]  DVTFilePathFSEvents: Failed to start fs event stream.
-2026-05-10 10:50:22.490 xcodebuild[74885:2595852] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/bin/zsh -lc 'git rev-parse --show-toplevel' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+ succeeded in 2028ms:
+2026-05-10 14:42:37.672 xcodebuild[51042:3112784]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 14:42:37.837 xcodebuild[51042:3112783] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
 git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
-git: error: couldn't create cache file '/tmp/xcrun_db-KaWiNfbS' (errno=Operation not permitted)
-2026-05-10 10:50:22.993 xcodebuild[74887:2595874]  DVTFilePathFSEvents: Failed to start fs event stream.
-2026-05-10 10:50:23.148 xcodebuild[74887:2595872] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
-/Users/hyun/Desktop/dddjango
+git: error: couldn't create cache file '/tmp/xcrun_db-Tf08SUak' (errno=Operation not permitted)
+2026-05-10 14:42:38.352 xcodebuild[51053:3112827]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 14:42:38.520 xcodebuild[51053:3112826] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
 
-**Planning response strategy**
+**Clarifying file reading needs**
 
-I need to consider how to handle each request by producing an expected skill routing and response plan. It feels like I should treat each request independently, almost as if they're being asked one at a time. Since I can't save raw outputs, I'll include the relevant raw input for each item instead. I should note that this isn't about modifying any code, just responding effectively to the user's requests.
+I need to be careful about reading files while focusing on the current working directory (cwd) since the user asked for specific outputs. The developer's instructions suggest I should be skilled at handling paths correctly. I should probably read only what’s necessary in the cwd. There are samples I might inspect, like the orders/services.py file, but I'll double-check if I'm re-reading anything unnecessary. It's good to keep the user’s expectations in mind while gathering relevant context.
 codex
-The repository contains public case files and local dddjango skill/reference material, plus prior run artifacts under `workspace/develop/evals/runs`. I’m not opening those prior run files; I’ll use the public packet text supplied in the prompt and local skill definitions/reference files only.
+This workspace looks like a plugin/reference repository rather than a Django application with order/payment source code. I’m going to base the answer on the dddjango reference material here, and I’ll avoid evaluator/private files.
 exec
-/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django-ninja/SKILL.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,220p' workspace/reference/architecture-ddd/reference/final.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
 exec
-/bin/zsh -lc "sed -n '1,180p' workspace/develop/evals/cases/plugin/public/case-004.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,220p' workspace/reference/implementation-test/reference/final.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
 exec
-/bin/zsh -lc "sed -n '1,220p' workspace/scripts/run_plugin_eval.py" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,220p' workspace/reference/architecture-db/reference/final.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' workspace/reference/architecture-api/reference/final.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
-#!/usr/bin/env python3
-"""Run dddjango plugin eval public packets with and without the plugin config."""
+# REST API 설계 종합 가이드
 
-from __future__ import annotations
+> 이 문서는 REST API 설계 원칙에 집중한다. 프레임워크 구현(DRF 등)은 다루지 않는다.
+> GraphQL, gRPC, SOAP, WebSocket, HATEOAS, API Gateway는 범위 밖이다.
 
-import argparse
-import os
-import shutil
-import subprocess
-import sys
+---
+
+## 목차
+
+1. [REST 아키텍처 원칙](#1-rest-아키텍처-원칙)
+2. [HTTP 메서드와 멱등성](#2-http-메서드와-멱등성)
+3. [URL/리소스 설계 규칙](#3-url리소스-설계-규칙)
+4. [HTTP 상태 코드](#4-http-상태-코드)
+5. [에러 응답 형식 (RFC 9457)](#5-에러-응답-형식-rfc-9457)
+6. [HTTP 헤더와 콘텐츠 협상](#6-http-헤더와-콘텐츠-협상)
+7. [인증과 인가](#7-인증과-인가)
+8. [페이지네이션](#8-페이지네이션)
+9. [버전 관리](#9-버전-관리)
+10. [하위 호환성과 Deprecation](#10-하위-호환성과-deprecation)
+11. [Rate Limiting](#11-rate-limiting)
+12. [멱등성 키 (Idempotency-Key)](#12-멱등성-키-idempotency-key)
+13. [OpenAPI](#13-openapi)
+14. [참고 문헌](#14-참고-문헌)
+
+---
+
+## 1. REST 아키텍처 원칙
+
+### 1.1 REST 정의
+
+REST(REpresentational State Transfer)는 네트워크로 연결된 시스템 설계에 대한 아이디어 모음이다. 로이 필딩의 논문에서 처음 소개되었다.
+
+### 1.2 구성 요소
+
+| 구성 | 설명 | 예시 |
+|------|------|------|
+| **자원(Resource)** | 고유한 URI로 식별되는 모든 것 | `/users/123` |
+| **행위** | HTTP 메서드 | GET, POST, PUT, PATCH, DELETE |
+| **표현(Representation)** | 자원의 상태를 전달하는 형식 | JSON, XML |
+
+### 1.3 핵심 원칙
+
+- **무상태(Stateless)**: 요청에 필요한 모든 정보가 요청 자체에 포함. 서버는 별도 상태를 관리하지 않음
+- **Client-Server 분리**: 관심사를 분리하여 독립적 진화 가능
+- **자원 기반 설계**: 중간 매개체 없이 URI로 자원을 직접 식별
+- **균일한 인터페이스(Uniform Interface)**: HTTP 메서드와 상태 코드의 일관된 사용
+
+### 1.4 REST의 한계
+
+- 공식 표준이 없다 (가이드라인일 뿐)
+- 실무에서는 트레이드오프를 고려하여 균형점을 찾는 것이 중요하다
+
+> 출처: 로이 필딩 논문, Go_Deeper/Wiki/REST&SOAP, Go_Deeper/Book/Architecture/DesigningAPIS
+
+---
+
+## 2. HTTP 메서드와 멱등성
+
+### 2.1 메서드별 안전성과 멱등성
+
+| 메서드 | 안전 | 멱등 | 용도 |
+|--------|:----:|:----:|------|
+| **GET** | O | O | 자원 조회. 부수효과 없음 |
+| **HEAD** | O | O | GET과 동일하지만 본문 없음 |
+| **OPTIONS** | O | O | 통신 옵션 확인 |
+| **POST** | X | X | 자원 생성. 매번 새 자원 생성 가능 |
+| **PUT** | X | O | 자원 **전체 교체**. 반복해도 같은 결과 |
+| **PATCH** | X | X | 자원 **부분 수정**. 반복 시 결과 달라질 수 있음 |
+| **DELETE** | X | O | 자원 삭제. 반복해도 같은 효과 |
+
+### 2.2 PUT vs PATCH
+
+| 구분 | PUT | PATCH |
+|------|-----|-------|
+| 교체 범위 | **전체** — 누락된 필드는 기본값 또는 NULL | **부분** — 전달된 필드만 수정 |
+| 멱등성 | O (같은 전체 상태로 교체) | X (상대적 변경이 가능, 예: `{"views": "+1"}`) |
+| 필수 필드 | 모든 필드 포함 필요 | 변경할 필드만 |
+
+### 2.3 메서드-리소스 매트릭스
+
+| 리소스 | POST | GET | PUT | PATCH | DELETE |
+|--------|------|-----|-----|-------|--------|
+| `/customers` | 새로 생성 | 전체 조회 | 일괄 교체 | — | 전체 삭제 |
+| `/customers/1` | 에러 | 단건 조회 | 단건 교체 | 부분 수정 | 단건 삭제 |
+| `/customers/1/orders` | 주문 생성 | 주문 목록 | — | — | — |
+
+> 출처: RFC 9110, Microsoft REST API Design, IETF
+
+---
+
+## 3. URL/리소스 설계 규칙
+
+### 3.1 명명 규칙
+
+| 규칙 | 좋음 | 나쁨 |
+|------|------|------|
+| 명사 사용 (동사 아님) | `/orders` | `/create-order` |
+| 복수 명사 (컬렉션) | `/customers/5` | `/customer/5` |
+| 케밥 케이스, 소문자 | `/order-items` | `/orderItems`, `/order_items` |
+| 후행 슬래시 없음 | `/orders` | `/orders/` |
+| DB 구조 비반영 | `/products` | `/tbl_products` |
+
+### 3.2 계층적 하위 리소스
+
+부모-자식 관계에 슬래시를 사용한다. **3단계 이상 깊이는 피한다.**
+
+```
+GET /customers/5/orders          # 고객 5의 주문 목록
+GET /customers/5/orders/10       # 고객 5의 주문 10
+GET /customers/5/orders/10/items # 3단계 — 허용하되 더 깊이는 피함
+```
+
+### 3.3 필터링, 정렬, 검색 패턴
+
+```
+GET /orders?status=shipped&minCost=100      # 필터링
+GET /orders?sort=-price,name                 # 정렬 (- = DESC)
+GET /orders?fields=id,name,total             # 필드 선택 (sparse fieldset)
+GET /orders?limit=25&offset=50               # 페이지네이션
+GET /items?price=gte:10&price=lte:100        # 범위 필터
+GET /products?q=keyboard                     # 검색
+```
+
+> 출처: Microsoft REST API Design, Google API Design Guide, restfulapi.net
+
+---
+
+## 4. HTTP 상태 코드
+
+### 4.1 분류
+
+| 코드 범위 | 분류 | 설명 |
+|----------|------|------|
+| 1xx | Informational | 요청 수신, 처리 중 (거의 사용 안 함) |
+| 2xx | Successful | 요청 정상 처리 |
+| 3xx | Redirection | 추가 행동 필요 |
+| 4xx | Client Error | 클라이언트 오류 |
+| 5xx | Server Error | 서버 오류 (재시도 시 성공할 수 있음) |
+
+### 4.2 API에서 자주 사용하는 상태 코드
+
+**성공 (2xx):**
+
+| 코드 | 의미 | API 용도 |
+|------|------|----------|
+| 200 | OK | GET, PUT, PATCH 성공 |
+| 201 | Created | POST로 자원 생성 성공. Location 헤더에 새 자원 URI |
+| 202 | Accepted | 비동기 처리 접수됨 (배치, 장시간 작업) |
+| 204 | No Content | DELETE 성공. 응답 본문 없음 |
+
+**클라이언트 오류 (4xx):**
+
+| 코드 | 의미 | API 용도 |
+|------|------|----------|
+| 400 | Bad Request | 잘못된 요청 형식, 유효성 검증 실패 |
+| 401 | Unauthorized | **인증** 필요 (누구인지 모름) |
+| 403 | Forbidden | **인가** 부족 (누구인지는 알지만 권한 없음) |
+| 404 | Not Found | 자원 없음 (또는 존재를 숨기기 위해) |
+| 409 | Conflict | 자원 충돌 (중복 생성, 동시 수정) |
+| 422 | Unprocessable Entity | 문법은 맞지만 의미적으로 처리 불가 |
+| 429 | Too Many Requests | Rate Limit 초과 |
+
+**서버 오류 (5xx):**
+
+| 코드 | 의미 | API 용도 |
+|------|------|----------|
+| 500 | Internal Server Error | 서버 문제. 애매하면 500 |
+| 503 | Service Unavailable | 일시 과부하/정비. Retry-After 헤더 가능 |
+
+### 4.3 PRG (POST/Redirect/GET) 패턴
+
+POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로고침 시 중복 주문 방지.
+
+> 출처: Go_Deeper/Wiki/Http/StatusCode, RFC 9110
+
+---
+
+## 5. 에러 응답 형식 (RFC 9457)
+
+### 5.1 Problem Details for HTTP APIs
+
+**Content-Type**: `application/problem+json`
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `type` | URI | 문제 유형 식별. 생략 시 `about:blank` |
+| `title` | string | 문제 유형의 짧은 요약 (동일 유형이면 동일 제목) |
+| `status` | integer | HTTP 상태 코드 (실제 응답과 일치) |
+| `detail` | string | 이 **특정 발생**에 대한 설명 |
+| `instance` | URI | 이 특정 발생의 식별자 |
+
+### 5.2 예시
+
+```json
+HTTP/1.1 403 Forbidden
+Content-Type: application/problem+json
+
+{
+  "type": "https://example.com/probs/out-of-credit",
+  "title": "You do not have enough credit.",
+  "status": 403,
+  "detail": "Your current balance is 30, but that costs 50.",
+  "instance": "/account/12345/msgs/abc",
+  "balance": 30,
+  "accounts": ["/account/12345", "/account/67890"]
+}
+```
+
+`balance`와 `accounts`는 **확장 필드**. 문제 유형 정의에서 추가 가능. 클라이언트는 인식하지 못하는 확장 필드를 무시해야 한다.
+
+### 5.3 핵심 규칙
+
+- `type`은 문서화 역할을 하는 안정적 URI
+- `title`은 **유형**(재사용), `detail`은 **특정 발생**
+- 모든 API 에러 응답에 이 형식을 일관되게 적용
+
+> 출처: IETF RFC 9457
+
+---
+
+
+ succeeded in 0ms:
+# 데이터베이스 설계 종합 가이드
+
+> 이 문서는 관계형 데이터베이스(RDB) 설계에 집중한다.
+> NoSQL, ORM 코드, 마이그레이션 도구, 커넥션 풀링은 다루지 않는다.
+
+---
+
+## 목차
+
+1. [데이터베이스 모델링 프로세스](#1-데이터베이스-모델링-프로세스)
+2. [개념적 데이터 모델링 (ERD)](#2-개념적-데이터-모델링-erd)
+3. [정규화 (1NF — BCNF)](#3-정규화-1nf--bcnf)
+4. [역정규화 (Denormalization)](#4-역정규화-denormalization)
+5. [성능 최적화 순서](#5-성능-최적화-순서)
+6. [인덱스 아키텍처: B+Tree](#6-인덱스-아키텍처-btree)
+7. [인덱스 설계 베스트 프랙티스](#7-인덱스-설계-베스트-프랙티스)
+8. [트랜잭션과 격리 수준](#8-트랜잭션과-격리-수준)
+9. [쿼리 최적화](#9-쿼리-최적화)
+10. [데이터 모델링 패턴: 계층 구조](#10-데이터-모델링-패턴-계층-구조)
+11. [데이터 모델링 패턴: 상속과 다형성](#11-데이터-모델링-패턴-상속과-다형성)
+12. [참고 문헌](#12-참고-문헌)
+
+---
+
+## 1. 데이터베이스 모델링 프로세스
+
+### 1.1 작업 순서
+
+```
+업무 파악 → 개념적 데이터 모델링 → 논리적 데이터 모델링 → 물리적 데이터 모델링
+```
+
+| 단계 | 핵심 활동 | 산출물 |
+|------|----------|--------|
+| 업무 파악 | 이해관계자 인터뷰, UI 프로토타입으로 합의 | 업무 기술서 |
+| 개념적 모델링 | 엔티티, 관계, 속성 식별 | ERD |
+| 논리적 모델링 | 정규화, 키 결정, 데이터 타입 | 논리 스키마 |
+| 물리적 모델링 | 인덱스, 파티셔닝, 성능 최적화 | 물리 스키마 |
+
+### 1.2 업무 파악 원칙
+
+- **말을 믿지 말자** — UI를 만들어서 상호 일치된 합의안을 갖자
+- 개념적 데이터 모델링이 가장 중요하다. 이것을 잘 했다면 이후 단계는 자연스럽게 따라온다
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 2. 개념적 데이터 모델링 (ERD)
+
+### 2.1 ERD 구성 요소
+
+ERD(Entity Relationship Diagram)는 데이터 구조를 시각적으로 표현하는 언어다.
+
+| ERD 요소 | 의미 | 물리 대응 |
+|----------|------|----------|
+| 속성 (Attribute) | 정보 | Column |
+| 엔티티 (Entity) | 정보 그룹 | Table |
+| 관계 (Relation) | 엔티티 간 연결 | PK, FK |
+
+### 2.2 ERD 작성 원칙
+
+1. 연관된 정보를 담고 있는 **덩어리를 찾는다**
+2. 그룹별로 조회가 가능하고 조인에 유리하도록 **적절히 분리**한다
+   - 하나의 큰 덩어리: 전체 조회 필요 + 중복 발생
+   - 적절히 분리된 그룹: 그룹별 조회 가능 + 조인 활용
+
+### 2.3 식별자 (Primary Key)
+
+| 키 종류 | 설명 |
+|---------|------|
+| 후보키 (Candidate Key) | 식별자가 될 수 있는 키 |
+| 기본키 (Primary Key) | 후보키 중에서 선택된 키 |
+| 대체키 (Alternate Key) | 후보키 중에서 선택되지 않은 키 |
+| 복합키 (Composite Key) | 두 가지 이상의 키가 합쳐져서 기본키가 된 경우 |
+
+- 자연스럽게 기본키가 될 수 있는 컬럼이 없으면 **인조키(Surrogate Key)**를 만들어 사용한다
+
+### 2.4 Cardinality (기수)
+
+| 관계 | 설명 | 예시 |
+|------|------|------|
+| 1:1 | 한 엔티티가 다른 엔티티와 정확히 하나 대응 | 사용자 — 프로필 |
+| 1:N | 한 엔티티가 여러 엔티티와 대응 | 부서 — 직원 |
+| N:M | 양쪽 모두 여러 엔티티와 대응 | 학생 — 과목 (중간 테이블 필요) |
+
+### 2.5 Optionality (선택성)
+
+한쪽에 NULL이 올 수 있는지 여부를 나타낸다.
+
+- **필수 (1 표기)**: 반드시 있어야 한다
+- **선택 (O 표기)**: NULL일 수 있다
+- 예: "주문은 반드시 고객이 있어야 하지만, 고객은 주문이 없을 수 있다"
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 3. 정규화 (1NF — BCNF)
+
+### 3.1 함수적 종속 (Functional Dependency)
+
+속성 X가 속성 Y를 함수적으로 결정한다(X → Y)는 X의 각 값이 정확히 하나의 Y 값과 대응됨을 의미한다. 정규화의 이론적 기반이다.
+
+### 3.2 정규형 정의
+
+| 정규형 | 조건 | 제거하는 문제 |
+|--------|------|-------------|
+| **1NF** | 모든 컬럼이 원자값, 행이 고유 식별 가능, 반복 그룹 없음 | 중첩/반복 데이터 |
+| **2NF** | 1NF + 부분 종속 제거 (비주요 속성이 전체 복합키에 종속) | 복합키의 일부에만 종속하는 속성 |
+| **3NF** | 2NF + 이행 종속 제거 (비주요 속성이 다른 비주요 속성에 종속 불가) | A→B→C에서 A→C 이행 종속 |
+| **BCNF** | 3NF + 모든 함수적 종속 X→Y에서 X가 슈퍼키 | 후보키가 아닌 결정자 |
+
+### 3.3 정규형 위반 예시
+
+**2NF 위반**: 복합키 (StudentID, CourseID)에서 StudentName이 StudentID에만 종속
+
+```
+수강 테이블 (StudentID, CourseID, StudentName, Grade)
+                                   ^^^^^^^^^^^^^^^^
+StudentName은 StudentID에만 종속 -> 부분 종속 위반
+
+해결: 학생(StudentID, StudentName) + 수강(StudentID, CourseID, Grade)
+```
+
+**3NF 위반**: StudentID → DepartmentID → DepartmentName (이행 종속)
+
+```
+학생 테이블 (StudentID, DepartmentID, DepartmentName)
+                                       ^^^^^^^^^^^^^^^
+DepartmentName은 DepartmentID에 종속, StudentID에 이행 종속
+
+해결: 학생(StudentID, DepartmentID) + 학과(DepartmentID, DepartmentName)
+```
+
+### 3.4 정규화 핵심 원칙
+
+각 정규형은 특정 이상(갱신/삽입/삭제 anomaly)을 순차적으로 제거한다. 과도한 정규화는 JOIN 증가로 읽기 성능 저하, 과소 정규화는 데이터 불일치 유발. **언제 멈출지가 아키텍처 트레이드오프**이지만, 기본 원칙은 **정규화를 먼저 하고, 필요한 경우에만 역정규화**하는 것이다.
+
+> 출처: DigitalOcean - Database Normalization, GeeksforGeeks - Normal Forms in DBMS, 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 4. 역정규화 (Denormalization)
+
+### 4.1 역정규화란
+
+성능이나 개발 편의성을 위해 정규화를 의도적으로 거스르는 것이다.
+
+- 정규화는 대체로 **쓰기**에 초점이 맞춰져 있다
+- 정규화하면 표가 여러 개로 쪼개지고, 읽기 위해서는 **JOIN이 필요**하다 (비싼 작업)
+- 역정규화는 **중복을 허용하여 JOIN을 없애서** 읽기 성능을 올리는 작업이다
+
+### 4.2 핵심 원칙
+
+**반드시 정규화를 먼저 하고, 필요한 경우에 역정규화한다. 읽기가 많다고 바로 역정규화하는 것은 잘못된 접근이다.**
+
+### 4.3 역정규화 4가지 기법
+
+| # | 기법 | 설명 | 대가 |
+|---|------|------|------|
+| 1 | **테이블 병합** | 조인이 자주 발생하는 테이블을 하나로 합침 | 데이터 중복, 갱신 복잡도 증가 |
+| 2 | **파생 컬럼 추가** | 자주 발생하는 집계를 컬럼으로 추가 | 집계값 동기화 필요 |
+| 3-1 | **수직 분할** | 용량이 큰 컬럼만 따로 테이블로 분리 | 조인 필요 (하지만 메인 테이블 경량화) |
+| 3-2 | **수평 분할** | ID 범위 기준으로 다른 테이블로 분리 | 쿼리 라우팅 복잡 |
+| 4 | **관계의 역정규화** | FK를 추가하여 조인 횟수를 줄이는 지름길 | FK 정합성 유지 필요 |
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 5. 성능 최적화 순서
+
+물리적 데이터 모델링 단계에서 성능이 핵심이다. 다음 순서를 반드시 지킨다:
+
+```
+1. 슬로우 쿼리 최적화    ← 가장 먼저 (비용 최소)
+2. 인덱스 적용           ← 읽기 ↑, 쓰기 ↓ 트레이드오프
+3. 애플리케이션 캐시 활용  ← DB 부하 감소
+4. 역정규화              ← 최후의 보루 (대가가 크므로 반드시 위 방법을 모두 시도 후)
+```
+
+**핵심**: 일단 운영을 해봐야 알 수 있는 것들이 많다. 슬로우 쿼리를 찾아서 최적화하는 것부터 시작한다.
+
+> 출처: 데이터베이스 모델링 [Go_Deeper]
+
+---
+
+## 6. 인덱스 아키텍처: B+Tree
+
+대부분의 RDBMS(MySQL, PostgreSQL)가 사용하는 기본 인덱스 구조.
+
+### 6.1 B+Tree 특징
+
+- 트리 구조, Key 값으로 **정렬**
+- Child 노드가 여러 개 (높은 팬아웃)
+- 각 노드가 메모리가 아닌 **디스크**에 존재
+- **실제 데이터는 리프 노드에만** 존재
+- **Sibling 포인터** → Range 쿼리 가능
+
+### 6.2 읽기
+
+트리를 따라 루트 → 중간 노드 → 리프 노드로 내려가면 바로 데이터를 읽을 수 있다. O(log N) 복잡도.
+
+### 6.3 쓰기
+
+여러 번의 디스크 쓰기가 발생할 수 있다:
+
+1. 새 노드 생성
+2. 부모 노드 업데이트
+3. 옆 노드에서 데이터 이동
+4. 새 데이터 삽입
+
+중간에 DB가 죽으면 데이터 오염 위험이 있으므로 **WAL(Write-Ahead Log)**을 사용한다: 실제 쓰기 전에 어떤 write를 할지 미리 기록하고, 그 다음 실제 업데이트를 진행한다.
+
+### 6.4 인덱스의 근본 트레이드오프
+
+**인덱스는 읽기 성능을 비약적으로 올리고, 쓰기 성능을 비관적으로 희생시킨다.**
+
+모든 INSERT/UPDATE/DELETE는 관련된 모든 인덱스를 갱신해야 한다.
+
+ succeeded in 0ms:
+# DDD(도메인 주도 설계) 종합 가이드
+
+> **Internal 출처:** [A] 도메인 주도 개발 시작하기, [B] 도메인 주도 설계 첫걸음, [C] 도메인 주도 설계 구현(빨간책)
+> **External 출처:** Eric Evans 파란책, Vaughn Vernon "Effective Aggregate Design" / "DDD Distilled", Scott Millett, Harry Percival & Bob Gregory "Cosmic Python", Greg Young, Martin Fowler, Alberto Brandolini
+
+---
+
+## 1. DDD란 무엇인가
+
+DDD(Domain-Driven Design)는 복잡한 소프트웨어를 비즈니스 도메인 중심으로 설계하는 방법론이다. 소프트웨어의 핵심은 비즈니스 도메인이며, 도메인 전문가와 개발자가 공통 언어를 사용하여 모델을 구축하고 이를 코드로 구현한다.
+
+### 1.1 DDD의 핵심 요약
+
+> "DDD는 명시적으로 경계 지어진 컨텍스트 안에서 솔루션을 모델링하고, 다른 바운디드 컨텍스트와의 통합을 지원하는 것이다." -- Vaughn Vernon, DDD Distilled
+
+### 1.2 전략 설계 우선 원칙
+
+> **[의사결정 #6] External 채택**: 전략 설계(바운디드 컨텍스트, 컨텍스트 맵)가 반드시 전술 패턴보다 먼저다.
+
+Vernon은 많은 팀이 전술 패턴(Entity, Repository 등)에만 집중하는 실수를 지적하며, 전략 설계가 먼저라는 원칙을 강조한다 (Vernon, DDD Distilled):
+
+1. 핵심 도메인을 식별하라
+2. 바운디드 컨텍스트를 설계하라
+3. 컨텍스트 매핑을 정의하라
+4. **그 다음에** 전술 패턴을 적용하라
+
+전술 패턴 중심의 실무 가이드 ([A] 도메인 주도 개발 시작하기)는 구현 단계에서 활용하되, 전략 설계 없이 전술 패턴만 적용하면 "잘못된 경계에서 좋은 코드를 작성하는 결과"가 된다.
+
+### 1.3 주요 참고 자료의 관점 차이
+
+| 관점 | [A] 도메인 주도 개발 시작하기 | [B] 도메인 주도 설계 첫걸음 | [C] 도메인 주도 설계 구현(빨간책) |
+|------|--------------------------|--------------------------|-------------------------------|
+| 초점 | 전술 패턴 중심의 실무 구현 | 전략 패턴 중심의 비즈니스 분석 | 전략+전술을 아키텍처와 함께 종합 |
+| 대상 | DDD 입문자 | 비즈니스 설계자/아키텍트 | 실무 구현 개발자 |
+| 강조점 | 계층 아키텍처와 DIP | 하위 도메인 유형과 바운디드 컨텍스트 경계 | 핵사고날 아키텍처와 CQRS |
+
+---
+
+## 2. 전략 패턴 (Strategic Patterns)
+
+### 2.1 지식 탐구 (Knowledge Crunching)
+
+> 출처: Eric Evans, "DDD" Part I
+
+Evans는 유비쿼터스 언어를 만드는 **과정** 자체를 핵심으로 강조한다. 지식 탐구(Knowledge Crunching)란 도메인 전문가로부터 쏟아지는 정보의 홍수 속에서 관련 있는 것만 걸러내고, 하나의 조직 아이디어를 시도한 뒤 또 다른 아이디어로 교체하며, 복잡한 데이터를 단순하게 설명하는 관점을 찾아가는 반복 과정이다.
+
+핵심 원칙:
+- 모델은 한 번에 완성되지 않는다. 반복적인 정제(iterative refinement)를 통해 깊은 통찰(deeper insight)에 도달한다.
+- 도메인 전문가와 개발자가 **함께** 모델을 만들어야 한다. 개발자가 단독으로 모델을 만들고 전문가에게 검증받는 방식은 지식 탐구가 아니다.
+- "코드를 리팩터링하는 것이 아니라, 코드 아래에 있는 **모델을 리팩터링**한다"
+
+```python
+# 지식 탐구 전: 개발자가 기술적으로 해석한 모델
+class Shipment:
+    def __init__(self, cargo_id: str, origin: str, destination: str):
+        self.cargo_id = cargo_id
+        self.origin = origin
+        self.destination = destination
+        self.status = "pending"
+
+    def update_status(self, new_status: str) -> None:
+        self.status = new_status  # 비즈니스 규칙이 없는 단순 상태 변경
+
+
+# 지식 탐구 후: 도메인 전문가와 반복 대화를 통해 발견한 모델
+# "화물은 항해 일정(Itinerary)에 따라 이동하며,
+#  각 구간(Leg)은 선박의 항해(Voyage)에 적재된다"
 from dataclasses import dataclass
-from datetime import datetime
-from pathlib import Path
-from zoneinfo import ZoneInfo
-
-
-REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-PUBLIC_CASES = REPO_ROOT / "workspace/develop/evals/cases/plugin/public"
-RUNS_DIR = REPO_ROOT / "workspace/develop/evals/runs"
-DEFAULT_MODEL = "gpt-5.5"
-DEFAULT_REASONING = "xhigh"
+from typing import Optional
 
 
 @dataclass(frozen=True)
-class Variant:
+class Leg:
+    """항해 구간 -- 하나의 Voyage에 실려 이동하는 단위"""
+    voyage_id: str
+    load_location: str
+    unload_location: str
+
+
+@dataclass(frozen=True)
+class Itinerary:
+    """운송 경로 -- Leg의 순서 있는 목록"""
+    legs: tuple[Leg, ...]
+
+    def final_destination(self) -> str:
+        return self.legs[-1].unload_location if self.legs else ""
+
+
+@dataclass
+class Cargo:
+    """화물 애그리거트 루트 -- 지식 탐구를 통해 발견된 핵심 개념"""
+    tracking_id: str
+    origin: str
+    route_specification: "RouteSpecification"
+    itinerary: Optional[Itinerary] = None
+
+    def assign_to_route(self, itinerary: Itinerary) -> None:
+        if not self.route_specification.is_satisfied_by(itinerary):
+            raise ValueError("경로가 운송 요건을 충족하지 않습니다")
+        self.itinerary = itinerary
+
+    def is_misrouted(self) -> bool:
+        """현재 경로가 요건에 맞지 않으면 True"""
+        if self.itinerary is None:
+            return True
+        return not self.route_specification.is_satisfied_by(self.itinerary)
+```
+
+### 2.2 도메인과 하위 도메인
+
+> 출처: [A][B][C], Evans 파란책, Millett
+
+도메인은 소프트웨어가 해결하려는 비즈니스 영역이며, 여러 하위 도메인으로 구성된다. [C]에서는 하위 도메인을 "문제점 공간(problem space)"의 일부로 정의하고, 바운디드 컨텍스트를 "해결책 공간(solution space)"으로 분리하여 설명한다.
+
+**하위 도메인 유형** [B]:
+
+| 유형 | 경쟁 우위 | 복잡성 | 변동성 | 솔루션 전략 |
+|------|----------|--------|--------|------------|
+| 핵심(Core) | 직접적 경쟁력 | 높음 | 잦은 변경 | 사내 구현 필수 |
+| 일반(Generic) | 없음 | 높음 (알려진 문제) | 낮음 | 외부 솔루션/오픈소스 |
+| 지원(Supporting) | 없음 | 낮음 (CRUD 수준) | 낮음 | 하청 가능, RAD |
+
+**문제 공간과 솔루션 공간의 분리** (Millett):
+
+| 구분 | 문제 공간 (Problem Space) | 솔루션 공간 (Solution Space) |
+|------|-------------------------|---------------------------|
+| 질문 | "비즈니스가 해결해야 할 문제는 무엇인가?" | "문제를 어떻게 소프트웨어로 해결할 것인가?" |
+| 도구 | 도메인, 하위 도메인 | 바운디드 컨텍스트, 컨텍스트 맵 |
+| 활동 | 도메인 발견, 지식 탐구 | 모델링, 설계, 구현 |
+| 산출물 | 도메인 비전 선언문, 하위 도메인 맵 | 유비쿼터스 언어, 도메인 모델, 코드 |
+
+```python
+from dataclasses import dataclass
+from enum import Enum
+
+
+class SubdomainType(Enum):
+    CORE = "core"           # 핵심: 경쟁 우위의 원천
+    GENERIC = "generic"     # 일반: 모든 회사가 동일하게 수행
+    SUPPORTING = "supporting"  # 지원: 비즈니스 활동 보조
+
+
+@dataclass(frozen=True)
+class Subdomain:
     name: str
-    ignore_user_config: bool
+    type: SubdomainType
+    description: str
+
+    @property
+    def should_build_in_house(self) -> bool:
+        return self.type == SubdomainType.CORE
 
 
-VARIANTS = {
-    "baseline": Variant("baseline", True),
-    "with-dddjango": Variant("with-dddjango", False),
-}
+# 예시: 온라인 쇼핑몰 도메인 분석
+recommendation_engine = Subdomain(
+    name="추천 엔진",
+    type=SubdomainType.CORE,
+    description="사용자 행동 기반 개인화 추천 알고리즘",
+)
+
+authentication = Subdomain(
+    name="인증/권한",
+    type=SubdomainType.GENERIC,
+    description="사용자 로그인 및 권한 관리",
+)
+
+admin_panel = Subdomain(
+    name="관리자 페이지",
+    type=SubdomainType.SUPPORTING,
+    description="상품/주문 CRUD 인터페이스",
+)
+```
+
+### 2.3 유비쿼터스 언어 (Ubiquitous Language)
+
+> 출처: [A][B][C], Evans 파란책
+
+도메인 전문가, 관계자, 개발자가 공통으로 사용하는 언어다. 코드, 문서, 대화 모든 곳에서 동일한 용어를 사용한다.
+
+**핵심 원칙:**
+- 기술 용어가 아닌 비즈니스 용어로 구성해야 한다
+- 모호성이 없어야 하며 하나의 용어는 하나의 의미만 가져야 한다
+- 유비쿼터스 언어는 바운디드 컨텍스트 경계 안에서만 보편적으로 적용된다
+
+[B]는 유비쿼터스 언어를 포착하는 도구로 **거킨 테스트(Gherkin test)**를 강조한다:
+
+```gherkin
+Scenario: 에이전트에게 새로운 지원 케이스를 알린다
+  Given: 빈센트 줄스는 새로운 지원 케이스를 제출한다
+  When: 티켓이 울프씨에게 할당된다
+  Then: 에이전트는 새로운 티켓에 대해 알림을 받는다
+```
+
+```python
+# 유비쿼터스 언어가 반영되지 않은 코드 (나쁜 예)
+class OrderManager:
+    def process(self, data: dict):
+        data["status"] = 2  # 매직 넘버, 비즈니스 의미 불명확
+        self.db.update(data)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-id", help="Existing or new run id. Defaults to timestamped id.")
-    parser.add_argument("--case", action="append", help="Case id to run, e.g. case-001. Repeatable.")
-    parser.add_argument(
-        "--variant",
-        action="append",
-        choices=sorted(VARIANTS),
-        help="Variant to run. Defaults to both variants.",
-    )
-    parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--reasoning", default=DEFAULT_REASONING)
-    parser.add_argument("--timeout-seconds", type=int, default=1800)
-    parser.add_argument("--rerun", action="store_true", help="Overwrite existing non-empty outputs.")
-    parser.add_argument("--skip-exec", action="store_true", help="Create metadata/prompt artifacts only.")
-    return parser.parse_args()
+# 유비쿼터스 언어가 반영된 코드 (좋은 예)
+class Order:
+    """주문 애그리거트 - '주문'이라는 도메인 용어를 그대로 사용"""
 
+    def place(self) -> None:
+        """주문을 '접수'한다"""
+        self._status = OrderStatus.PLACED
 
-def now_text() -> str:
-    return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d-%H%M")
+    def ship(self) -> None:
+        """주문을 '출고'한다"""
+        if not self._status.is_shippable:
+            raise OrderCannotBeShippedException("출고 가능한 상태가 아닙니다")
+        self._status = OrderStatus.SHIPPED
+```
 
+### 2.4 바운디드 컨텍스트 (Bounded Context)
 
-def case_paths(selected: list[str] | None) -> list[Path]:
-    paths = sorted(PUBLIC_CASES.glob("case-*.md"))
-    if not selected:
-        return paths
-    wanted = set(selected)
-    found = {path.stem for path in paths}
-    missing = sorted(wanted - found)
-    if missing:
-        raise SystemExit(f"Unknown case id(s): {', '.join(missing)}")
-    return [path for path in paths if path.stem in wanted]
+> 출처: [A][B][C], Evans 파란책
 
-
-def build_prompt(public_packet: str) -> str:
-    return (
-        "You are executing a public forward-eval packet for the dddjango plugin.\n"
-        "Use only the public packet below and task-local repository files if needed.\n"
-        "Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, "
-        "prior run reports, or prior findings.\n"
-        "Do not modify files. If a check is not actually run, state that it was not run.\n"
-        "Keep the answer concise but include commands actually run and checks not run.\n\n"
-        "----- PUBLIC PACKET START -----\n"
-        f"{public_packet.rstrip()}\n"
-        "----- PUBLIC PACKET END -----\n"
-    )
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def run_command(
-    command: list[str],
-    *,
-    prompt: str | None,
-    cwd: Path,
-    timeout_seconds: int,
-) -> subprocess.CompletedProcess[str]:
-    env = os.environ.copy()
-    env.setdefault("NO_COLOR", "1")
-    return subprocess.run(
-        command,
-        cwd=cwd,
-        input=prompt,
-        text=True,
-        capture_output=True,
-        timeout=timeout_seconds,
-        env=env,
-        check=False,
-    )
-
-
-def codex_exec_command(
-    variant: Variant,
-    *,
-    output_path: Path,
-    model: str,
-    reasoning: str,
-) -> list[str]:
-    command = [
-        "codex",
-        "-a",
-        "never",
-        "exec",
-        "--ephemeral",
-        "--color",
-        "never",
-        "-C",
-        str(REPO_ROOT),
-        "-s",
-        "read-only",
-        "-m",
-        model,
-        "-c",
-        f'model_reasoning_effort="{reasoning}"',
-        "-o",
-        str(output_path),
-    ]
-    if variant.ignore_user_config:
-        command.append("--ignore-user-config")
-    command.append("-")
-    return command
-
-
-def main() -> int:
-    args = parse_args()
-    run_id = args.run_id or f"{now_text()}-plugin-eval"
-    run_dir = RUNS_DIR / run_id
-    raw_dir = run_dir / "raw"
-    analysis_dir = run_dir / "analysis"
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    analysis_dir.mkdir(parents=True, exist_ok=True)
-
-    cases = case_paths(args.case)
-    variants = [VARIANTS[name] for name in (args.variant or ["baseline", "with-dddjango"])]
-
-    write_text(run_dir / "RUN_ID.txt", run_id + "\n")
-    write_text(
-        run_dir / "operator-notes.md",
-        "\n".join(
-            [
-                f"# Eval Run {run_id}",
-                "",
-                f"- Started: {datetime.now(ZoneInfo('Asia/Seoul')).isoformat(timespec='seconds')}",
-                f"- Model: {args.model}",
-                f"- Reasoning: {args.reasoning}",
-                "- Baseline command uses `codex exec --ignore-user-config`.",
-                "- With-dddjango command uses the active user config and enabled dddjango plugin.",
-                "- Sandbox: read-only.",
-                "- Approval policy: never.",
-                "",
-            ]
-        ),
-    )
-
-    for case_path in cases:
-        case_id = case_path.stem
-        public_packet = case_path.read_text(encoding="utf-8")
-        prompt = build_prompt(public_packet)
-        shutil.copyfile(case_path, raw_dir / f"{case_id}-public-prompt.md")
-        write_text(raw_dir / f"{case_id}-operator-prompt.txt", prompt)
-
-        prompt_input_path = raw_dir / f"{case_id}-prompt-input.json"
-        if args.rerun or not prompt_input_path.exists():
-            debug_result = run_command(
-                ["codex", "debug", "prompt-input", prompt],
-                prompt=None,
-                cwd=REPO_ROOT,
-                timeout_seconds=args.timeout_seconds,
-            )
-            write_text(prompt_input_path, debug_result.stdout)
-            write_text(raw_dir / f"{case_id}-prompt-input.stderr.txt", debug_result.stderr)
-
-        for variant in variants:
-            output_path = raw_dir / f"{case_id}-{variant.name}.txt"
-            stdout_path = raw_dir / f"{case_id}-{variant.name}-events.jsonl"
-            stderr_path = raw_dir / f"{case_id}-{variant.name}.stderr.txt"
-            command_path = raw_dir / f"{case_id}-{variant.name}-command.txt"
-            exit_path = raw_dir / f"{case_id}-{variant.name}-exit.txt"
-            if output_path.exists() and output_path.stat().st_size > 0 and not args.rerun:
-                print(f"skip existing {case_id} {variant.name}")
-                continue
-            command = codex_exec_command(
-                variant,
-                output_path=output_path,
-                model=args.model,
-                reasoning=args.reasoning,
-            )
-            write_text(command_path, " ".join(command) + "\n")
-            if args.skip_exec:
-                write_text(output_path, "NOT RUN: --skip-exec was used.\n")
-                write_text(exit_path, "skipped\n")
-                continue
-            print(f"run {case_id} {variant.name}", flush=True)
-            try:
-                result = run_command(
-                    command,
-                    prompt=prompt,
-                    cwd=REPO_ROOT,
-                    timeout_seconds=args.timeout_seconds,
-                )
-            except subprocess.TimeoutExpired as exc:
-                write_text(stdout_path, exc.stdout or "")
 
  succeeded in 0ms:
----
-name: implementation-django-ninja
-description: >
-  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+# Python 테스트 코드 작성 종합 가이드
+
+> 이 문서는 테스트 코드 **작성법**에 집중한다. TDD 방법론(Red-Green-Refactor 등)은 `workspace/reference/implementation-tdd/reference/final.md`에서 다룬다.
+
 ---
 
-# Django Ninja Implementation
+## 목차
 
-This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
+1. [테스트 전략과 피라미드](#1-테스트-전략과-피라미드)
+2. [테스트 더블 분류 체계](#2-테스트-더블-분류-체계)
+3. [pytest 기본 구조와 Fixture](#3-pytest-기본-구조와-fixture)
+4. [pytest 심화 설정](#4-pytest-심화-설정)
+5. [pytest 마커 시스템](#5-pytest-마커-시스템)
+6. [pytest 플러그인 생태계](#6-pytest-플러그인-생태계)
+7. [Mock과 테스트 더블 실전](#7-mock과-테스트-더블-실전)
+8. [Property-Based Testing (Hypothesis)](#8-property-based-testing-hypothesis)
+9. [테스트 데이터 팩토리 (factory_boy + Faker)](#9-테스트-데이터-팩토리-factory_boy--faker)
+10. [시간 모킹 (freezegun / time-machine)](#10-시간-모킹-freezegun--time-machine)
+11. [HTTP 모킹 (responses / aioresponses)](#11-http-모킹-responses--aioresponses)
+12. [Docker 기반 통합 테스트 (testcontainers)](#12-docker-기반-통합-테스트-testcontainers)
+13. [커버리지 설정 (coverage.py)](#13-커버리지-설정-coveragepy)
+14. [멀티환경 테스트 (tox / nox)](#14-멀티환경-테스트-tox--nox)
+15. [테스트 코드 품질 원칙](#15-테스트-코드-품질-원칙)
+16. [테스트 안티패턴](#16-테스트-안티패턴)
+17. [Mutation Testing](#17-mutation-testing-mutmut)
+18. [BDD pytest-bdd 구현](#18-bdd-pytest-bdd-구현)
+19. [테스트 디버깅 기법](#19-테스트-디버깅-기법)
+20. [참고 문헌](#20-참고-문헌)
 
-## Fallback Source
+---
 
-- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
-- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
-- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
+## 1. 테스트 전략과 피라미드
 
-## Routing
+### 1.1 Martin Fowler의 테스트 피라미드
 
-- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
-- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
-- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
-- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
-- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
-- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
-- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
-- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
-- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
-- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+Mike Cohn이 "Succeeding with Agile"에서 처음 제안하고, Martin Fowler가 확장한 개념이다.
 
-## Reference Loading
-
-- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
-- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
-- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
-- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
-
-## Runtime Rules
-
-- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
-- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
-- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
-- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
-- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
-- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
-- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
-
- succeeded in 0ms:
-# Case 004
-
-Run each request independently and save raw output or prompt-input artifacts for each item.
-
-## Requests
-
-```text
-이 API, 그냥 DRF 말고 Ninja Router/Schema로 새로 잡고 Problem Details까지 맞춰줘.
+```
+        /  E2E  \          <- 적게, 느리지만 높은 신뢰도
+       /----------\
+      / Integration \      <- 중간 수준
+     /----------------\
+    /    Unit Tests     \  <- 많이, 빠르고 저렴
+   /--------------------\
 ```
 
-```text
-모델에 몰린 validation/상태변경/외부 호출 흐름을 좀 봐줘. 어디까지 domain이고 어디부터 application service인지 모르겠어.
+**핵심 비율 (Google 기준)**:
+- 단위 테스트: ~80%
+- 통합 테스트: ~15%
+- E2E 테스트: ~5%
+
+**계층별 특성**:
+
+| 구분 | 단위 | 통합 | E2E |
+|------|------|------|-----|
+| 속도 | 밀리초 | 초 | 분 |
+| 범위 | 함수/클래스 | 모듈 간 | 전체 시스템 |
+| 격리 | 완전 격리 | 부분 격리 | 실제 환경 |
+| 유지비용 | 낮음 | 중간 | 높음 |
+
+**Martin Fowler의 핵심 조언**: "상위 레벨 테스트에서 버그를 발견하면, 해당 버그를 재현하는 단위 테스트를 먼저 작성한 후 수정하라."
+
+> 출처: [The Practical Test Pyramid - Ham Vocke](https://martinfowler.com/articles/practical-test-pyramid.html), [Test Pyramid - Martin Fowler](https://martinfowler.com/bliki/TestPyramid.html)
+
+### 1.2 Google의 SMURF 프레임워크
+
+Google Testing Blog(2024.10)에서 발표한 테스트 피라미드의 확장 모델이다. 테스트 스위트가 성장하면서 단순한 피라미드만으로는 부족한 트레이드오프를 다루기 위한 5가지 차원을 제시한다.
+
+**SMURF = Speed + Maintainability + Utilization + Reliability + Fidelity**
+
+- **Speed(속도)**: 단위 테스트는 빠르므로 자주 실행할 수 있고, 문제를 일찍 발견한다.
+- **Maintainability(유지보수성)**: 테스트 디버깅과 유지보수의 누적 비용은 빠르게 증가한다.
+- **Utilization(활용도)**: 테스트가 실제로 결함을 발견하는 빈도와 효과.
+- **Reliability(신뢰성)**: 테스트 결과의 일관성. flaky 테스트는 신뢰를 떨어뜨린다.
+- **Fidelity(충실도)**: 실제 운영 환경에 가까운 테스트일수록 프로덕션 동작을 정확히 예측한다.
+
+**핵심 인사이트**: 이 5개 차원은 종종 긴장 관계에 있다. 한 차원을 개선하면 다른 차원이 영향받을 수 있지만, 다른 차원을 해치지 않으면서 개선할 수 있다면 반드시 그렇게 해야 한다.
+
+> 출처: [Google Testing Blog: SMURF: Beyond the Test Pyramid](https://testing.googleblog.com/2024/10/smurf-beyond-test-pyramid.html)
+
+### 1.3 Google의 테스트 크기 분류
+
+Google은 테스트를 유형(unit/integration/e2e)보다 **크기(size)**로 분류한다.
+
+| 크기 | 제약 |
+|------|------|
+| Small | 단일 스레드, 단일 프로세스, 단일 머신, I/O 금지, sleep 금지, 블로킹 콜 금지 |
+| Medium | 단일 머신, 다중 프로세스 허용 |
+| Large | 다중 머신 허용, 네트워크 호출 허용 |
+
+"테스트의 크기는 코드 줄 수가 아니라, 어떻게 실행되고 무엇이 허용되며 얼마나 많은 자원을 소비하는지로 결정된다." - Adam Bender, Software Engineering at Google
+
+> 출처: [Software Engineering at Google - Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html), [Google Testing Blog: Just Say No to More End-to-End Tests](https://testing.googleblog.com/2015/04/just-say-no-to-more-end-to-end-tests.html)
+
+---
+
+## 2. 테스트 더블 분류 체계
+
+Meszaros의 5분류를 기본으로 사용한다. 테스트 의도를 명확히 전달하고, Mock과 Stub의 혼용을 방지하기 위해 세밀한 분류가 필요하다. [Unit Testing - Khorikov]
+
+| 종류 | 역할 | 예시 |
+|------|------|------|
+| **Dummy** | 빈 값 전달용. 호출되지 않는다 | 생성자에 넣는 `None` |
+| **Stub** | 미리 정해진 값을 반환한다 | `mock.return_value = 25.0` |
+| **Spy** | 호출 기록을 남겨 나중에 검증한다 | `assert_called_once_with(...)` |
+| **Mock** | 호출 자체를 검증한다 (통신 기반 테스트) | `mock.assert_called_with("서울")` |
+| **Fake** | 간소화된 실제 구현을 제공한다 | 메모리 내 데이터베이스, FakeRepository |
+
+> 출처: [Unit Testing Principles, Practices, and Patterns - Vladimir Khorikov](https://www.manning.com/books/unit-testing)
+
+---
+
+## 3. pytest 기본 구조와 Fixture
+
+### 3.1 pytest 기본 구조 [파이썬코딩의기술]
+
+```python
+# test_calculator.py
+import pytest
+
+
+class TestCalculator:
+    """연관된 행동 방식을 TestCase 하위 클래스로 그룹화한다"""
+
+    def test_add_positive_numbers(self):
+        assert add(2, 3) == 5
+
+    def test_add_negative_numbers(self):
+        assert add(-1, -2) == -3
+
+    def test_add_raises_on_invalid_type(self):
+        with pytest.raises(TypeError):
+            add("a", 1)
 ```
 
-```text
-pytest에서 주문 생성 테스트 fixture가 너무 복잡해졌어. factory랑 fake/mock 경계를 다시 잡아줘.
+### 3.2 Fixture (setUp/tearDown) [테스트주도 개발 + 파이썬코딩의기술]
+
+여러 테스트에서 공통으로 사용하는 객체들을 생성할 때 픽스처를 사용한다.
+
+**xUnit 스타일 (unittest)**:
+
+```python
+from unittest import TestCase
+
+
+class TestDatabase(TestCase):
+    def setUp(self):
+        """각 테스트 메서드 실행 전에 호출"""
+        self.db = create_test_database()
+        self.db.connect()
+
+    def tearDown(self):
+        """각 테스트 메서드 실행 후에 호출 (자원 해제)"""
+        self.db.disconnect()
+
+    def test_query(self):
+        result = self.db.query("SELECT 1")
+        self.assertEqual(result, 1)
 ```
 
-```text
-payment provider 붙일 때 repository랑 outbox까지 필요한지 모르겠어. 과한 설계면 빼고 판단해줘.
+**pytest 스타일 (권장)**:
+
+```python
+import pytest
+
+
+@pytest.fixture
+def db():
+    """픽스처: 테스트 전 DB 연결, 테스트 후 해제"""
+    database = create_test_database()
+    database.connect()
+    yield database  # 테스트에 database 제공
+    database.disconnect()  # teardown
+
+
+@pytest.fixture
+def empty_cart():
+    return ShoppingCart()
+
+
+def test_query(db):
+    result = db.query("SELECT 1")
+    assert result == 1
+
+
+def test_empty_cart_total(empty_cart):
+    assert empty_cart.total() == 0
 ```
 
-## Context
+**모듈 단위 픽스처** (비용이 큰 통합 테스트용) [파이썬코딩의기술]:
 
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
+```python
+import pytest
 
-## Output To Save
 
-- One raw artifact per request.
-- Commands actually run.
-- Not-run checks and reasons.
+@pytest.fixture(scope="module")
+def database_server():
+    """모듈당 한 번만 실행 -- 비싼 자원 초기화"""
+    server = start_database_server()
+    yield server
+    server.shutdown()
 
-exec
-/bin/zsh -lc "rg --files -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!workspace/develop/evals/runs/**'"'" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-AGENTS.md
-workspace/reference/implementation-test/reference/review.md
-workspace/reference/implementation-test/reference/internal.md
-workspace/reference/implementation-test/reference/final.md
-workspace/reference/implementation-test/reference/external.md
-workspace/reference/implementation-django/reference/final.md
-workspace/reference/architecture-api/reference/review.md
-workspace/reference/architecture-api/reference/internal.md
-workspace/reference/architecture-api/reference/final.md
-workspace/reference/architecture-api/reference/external.md
-workspace/reference/spec.md
-workspace/reference/implementation-cleancode/reference/review.md
-workspace/reference/implementation-cleancode/reference/internal.md
-workspace/reference/implementation-cleancode/reference/final.md
-workspace/reference/implementation-cleancode/reference/external.md
-workspace/reference/implementation-tdd/reference/review.md
-workspace/reference/implementation-tdd/reference/internal.md
-workspace/reference/implementation-tdd/reference/final.md
-workspace/reference/implementation-tdd/reference/external.md
-workspace/reference/architecture-db/reference/review.md
-workspace/reference/architecture-db/reference/internal.md
-workspace/reference/architecture-db/reference/final.md
-workspace/reference/architecture-db/reference/external.md
-workspace/reference/implementation-python/reference/review.md
-workspace/reference/implementation-python/reference/internal.md
-workspace/reference/implementation-python/reference/final.md
-workspace/reference/implementation-python/reference/external.md
-workspace/scripts/validate_skill_docs.py
-workspace/scripts/run_plugin_eval.py
-workspace/develop/skill_goal_instructions.md
-workspace/develop/rubric_goal_instructions.md
-workspace/develop/plan.md
-workspace/reference/architecture-ddd/reference/review.md
-workspace/reference/architecture-ddd/reference/internal.md
-workspace/reference/architecture-ddd/reference/final.md
-workspace/reference/architecture-ddd/reference/external.md
-workspace/docs/reference-index.md
-workspace/docs/spec.md
-workspace/docs/skill-contracts.md
-workspace/docs/skill-authoring.md
-workspace/docs/plugin-structure.md
-workspace/docs/validation-plan.md
-workspace/docs/workflow.md
-workspace/docs/skill-hierarchy.md
-workspace/docs/ddd-implementation-standard.md
-LICENSE
-workspace/develop/source-crosswalks/implementation-test.md
-workspace/develop/source-crosswalks/implementation-django.md
-workspace/develop/source-crosswalks/implementation-django-ninja.md
-workspace/develop/source-crosswalks/implementation-cleancode.md
-workspace/develop/source-crosswalks/implementation-tdd.md
-workspace/develop/source-crosswalks/workflow-dddjango-subagents.md
-workspace/develop/source-crosswalks/implementation-python.md
-workspace/develop/source-crosswalks/architecture-db.md
-workspace/develop/source-crosswalks/architecture-implementation-patterns.md
-workspace/develop/source-crosswalks/architecture-api.md
-workspace/develop/source-crosswalks/architecture-ddd.md
-workspace/develop/source-crosswalks/implementation-django-web.md
-workspace/develop/evals/README.md
-dddjango/skills/implementation-test/SKILL.md
-workspace/develop/evals/templates/case-analysis.html
-workspace/develop/evals/templates/public-packet.md
-workspace/develop/evals/templates/private-evaluator.md
-workspace/develop/evals/templates/run-report.html
-dddjango/skills/implementation-test/agents/openai.yaml
-dddjango/skills/architecture-implementation-patterns/SKILL.md
-dddjango/skills/implementation-test/references/pytest-fixtures.md
-dddjango/skills/implementation-test/references/factories-property-tests.md
-dddjango/skills/implementation-test/references/test-doubles.md
-dddjango/skills/implementation-test/references/coverage-mutation.md
-dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
-workspace/develop/evals/cases/plugin/public/case-004.md
-workspace/develop/evals/cases/plugin/public/case-014.md
-workspace/develop/evals/cases/plugin/public/case-010.md
-workspace/develop/evals/cases/plugin/public/case-001.md
-workspace/develop/evals/cases/plugin/public/case-011.md
-workspace/develop/evals/cases/plugin/public/case-005.md
-workspace/develop/evals/cases/plugin/public/case-015.md
-workspace/develop/evals/cases/plugin/public/case-016.md
-workspace/develop/evals/cases/plugin/public/case-007.md
-workspace/develop/evals/cases/plugin/public/case-017.md
-workspace/develop/evals/cases/plugin/public/case-003.md
-workspace/develop/evals/cases/plugin/public/case-013.md
-workspace/develop/evals/cases/plugin/public/case-002.md
-workspace/develop/evals/cases/plugin/public/case-012.md
-workspace/develop/evals/cases/plugin/public/case-008.md
-workspace/develop/evals/cases/plugin/public/case-006.md
-workspace/develop/evals/cases/plugin/public/case-009.md
-dddjango/skills/implementation-django/SKILL.md
-dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
-dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
-dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
-dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
-dddjango/skills/implementation-python/SKILL.md
-dddjango/skills/implementation-tdd/SKILL.md
-dddjango/skills/implementation-django/agents/openai.yaml
-dddjango/skills/workflow-dddjango-subagents/SKILL.md
-dddjango/skills/architecture-ddd/SKILL.md
-dddjango/skills/implementation-django-ninja/SKILL.md
-dddjango/skills/architecture-api/SKILL.md
-dddjango/skills/implementation-cleancode/SKILL.md
-dddjango/skills/implementation-django/references/services-selectors.md
-dddjango/skills/implementation-django/references/transactions-performance-security.md
-dddjango/skills/implementation-django/references/models-orm.md
-dddjango/skills/implementation-django/references/migrations.md
-dddjango/skills/implementation-python/agents/openai.yaml
-dddjango/skills/architecture-db/SKILL.md
-dddjango/skills/implementation-django-web/SKILL.md
-dddjango/skills/implementation-tdd/agents/openai.yaml
-dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
-dddjango/skills/implementation-python/references/protocols-boundaries.md
-dddjango/skills/implementation-python/references/pydantic-v2.md
-dddjango/skills/implementation-python/references/typing.md
-dddjango/skills/implementation-python/references/dataclasses-enums.md
-dddjango/skills/implementation-cleancode/agents/openai.yaml
-dddjango/skills/implementation-django-web/references/static-assets.md
-dddjango/skills/implementation-django-web/references/csrf-ajax.md
-dddjango/skills/implementation-django-web/references/templateview-htmx.md
-dddjango/skills/implementation-django-web/references/templates.md
-dddjango/skills/architecture-ddd/agents/openai.yaml
-dddjango/skills/architecture-ddd/references/domain-events.md
-dddjango/skills/architecture-ddd/references/tactical-patterns.md
-dddjango/skills/architecture-ddd/references/strategic-design.md
-dddjango/skills/architecture-ddd/references/context-map.md
-dddjango/skills/architecture-db/references/transactions-locking.md
-dddjango/skills/architecture-db/references/schema-modeling.md
-dddjango/skills/architecture-db/references/rollout-constraints.md
-dddjango/skills/architecture-db/references/constraints-indexes.md
-dddjango/skills/architecture-api/references/pagination-versioning.md
-dddjango/skills/architecture-api/references/idempotency-openapi.md
-dddjango/skills/architecture-api/references/rest-contracts.md
-dddjango/skills/architecture-api/references/problem-details.md
-dddjango/skills/implementation-django-ninja/agents/openai.yaml
-dddjango/skills/architecture-api/agents/openai.yaml
-dddjango/skills/architecture-db/agents/openai.yaml
-dddjango/skills/implementation-django-web/agents/openai.yaml
-dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
-dddjango/skills/implementation-django-ninja/references/router-schema.md
-dddjango/skills/implementation-tdd/references/test-list.md
-dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
-dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
-dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
-dddjango/skills/implementation-django-ninja/references/testclient.md
-dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
-dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
-dddjango/skills/implementation-tdd/references/red-green-refactor.md
-dddjango/skills/implementation-cleancode/references/legacy-review.md
-dddjango/skills/implementation-cleancode/references/naming-functions.md
-dddjango/skills/implementation-cleancode/references/responsibility.md
-dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
-dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
 
+@pytest.fixture
+def db_connection(database_server):
+    """각 테스트마다 새 연결"""
+    conn = database_server.connect()
+    yield conn
+    conn.close()
+```
+
+### 3.3 xUnit 패턴과 pytest 매핑 [테스트주도 개발 + 파이썬코딩의기술]
+
+| xUnit 개념 | pytest 대응 |
+|-----------|-----------|
+| setUp() | `@pytest.fixture` 또는 `setup_method()` |
+| tearDown() | fixture의 `yield` 이후 코드 |
+| setUpModule() | `@pytest.fixture(scope="module")` |
+| tearDownModule() | module 스코프 fixture의 teardown |
+| TestSuite | `pytest.mark` 또는 디렉토리 구조 |
+
+**Researching Django skills**
+
+I think I need to dive deeper into specific references for Django, especially regarding Ninja Router Problem Details and DDD tactics. I'm looking into test doubles and factories as well as patterns like outbox and repository. My current working directory has the `dddjango/skills/...` which is great, so I should focus on exploring those targeted references to enhance my understanding. It feels important to clarify these concepts for better results!
 codex
-For the four independent prompts, I’m loading only the local public skill/reference material directly tied to the requested topic: Ninja/Problem Details, DDD boundaries, pytest factories/doubles, and repository/outbox pattern selection.
+There isn’t an app module to review directly, so I’m narrowing to the reference sections that map to each requested decision: Ninja/Problem Details, domain vs service, test doubles/factories, and repository/outbox.
 exec
-/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/router-schema.md" in /Users/hyun/Desktop/dddjango
-exec
-/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-# Problem Details, Idempotency, And OpenAPI
-
-Use this reference for API error responses, status codes, idempotency behavior, compatibility, and OpenAPI effects.
-
-## Status Codes
-
-- Use 200 for successful reads and updates that return a body.
-- Use 201 for created resources and include the new resource location when the contract requires it.
-- Use 202 for accepted asynchronous work.
-- Use 204 for successful deletes or updates with no body.
-- Use 400 for malformed requests, 401 for authentication failure, 403 for authorization failure, 404 for missing or intentionally hidden resources, 409 for conflicts, 422 for semantically invalid input when the contract uses it, and 429 for rate limits.
-- Keep status-code changes compatible with existing clients or version them.
-
-## Problem Details
-
-- Use `application/problem+json` as the response media type for Problem Details errors.
-- Use RFC 9457 Problem Details for API errors unless a legacy compatibility contract explicitly says otherwise.
-- Keep `status` aligned with the HTTP response status.
-- Use `title` for reusable problem type summaries and `detail` for the specific occurrence.
-- Use a stable `type` URI or `about:blank` when no stable type exists.
-- Include `instance` when the specific occurrence has a useful request or problem identifier URI.
-- Add extension fields only when they are documented and safe for clients to ignore.
-
-## Idempotency-Key
-
-- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
-- Store the first request result in durable storage such as DB or Redis according to the service transaction design.
-- Return the stored response for repeated requests with the same key when the request is equivalent.
-- Define conflict behavior for the same key with a different payload.
-- Coordinate key TTL, storage owner, transaction boundary, and concurrency behavior with `implementation-django` and `architecture-db`.
-
-## OpenAPI
-
-- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
-- Check names, required fields, nullable fields, enum values, status responses, error schema, auth requirements, pagination shape, and tags.
-- For migrations from DRF, compare old and new generated schema when possible and document client-visible differences.
-- Do not claim OpenAPI generation or schema diff was run unless it was actually executed.
-
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/router-schema.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
 # Router And Schema
 
@@ -1175,7 +1644,76 @@ Use this reference for Django Ninja Router, Schema/ModelSchema, endpoint adapter
 - Are OpenAPI and compatibility impacts visible in the implementation notes?
 
 exec
-/bin/zsh -lc "sed -n '1,220p' dddjango/skills/architecture-ddd/references/tactical-patterns.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+ succeeded in 0ms:
+# Outbox, ACL, And Integration Patterns
+
+This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
+
+Load this when domain events cross aggregate or context boundaries, external side effects exist, upstream models conflict with the domain, or event sourcing/saga is being considered.
+
+## Domain Events And Integration Events
+
+- Domain events are internal business facts raised by aggregate behavior.
+- Integration events cross bounded context or service boundaries and should use the published language of the integration contract.
+- Keep event names past tense and scoped to the language of the owning context.
+- Do not expose internal aggregate structure as an integration event contract.
+
+## Outbox
+
+Use outbox when state change and message delivery must be reliably connected.
+
+Decision points:
+
+- What transaction writes the aggregate and the outbox message?
+- Who owns dispatch after commit?
+- Is delivery at-least-once, and are consumers idempotent?
+- What retry/dead-letter behavior is needed?
+- Which event fields form the published language?
+
+For simple in-process follow-up after a successful Django transaction, `transaction.on_commit()` may be enough. For cross-service publication, prefer a durable outbox-style handoff.
+
+## Risky Write Consistency Block Handoff
+
+For payment, inventory, reservation, refund, permission, ledger, or similar risky writes, output a visible `Risky Write Consistency Block`. This skill owns the architecture pattern decision but should leave concrete DB/API/test details to the owning skills.
+
+Record:
+
+- transaction owner or owning use case;
+- side-effect timing: after commit, outbox, or another reliable handoff;
+- whether uniqueness/idempotency storage is needed;
+- follow-up owner for DB locking, isolation, and retry details;
+- follow-up owner for `Idempotency-Key` API behavior;
+- follow-up owner for integration, replay, or concurrency tests.
+
+## Saga
+
+Use saga when a long-running or distributed business process spans multiple local transactions.
+
+- Choreography keeps services autonomous but can hide the process flow.
+- Orchestration centralizes the process but can concentrate workflow logic.
+- Compensation must be explicit and idempotent.
+
+Do not use saga for a single local invariant that can be protected by one transaction.
+
+## Event Sourcing
+
+Use event sourcing only when history, audit, replay, or temporal reconstruction is central to the domain.
+
+Event sourcing is not required just because the system has domain events.
+
+## Anticorruption Layer
+
+Use ACL to protect a downstream model from an upstream or legacy language.
+
+- Translate external identifiers, statuses, units, and lifecycle concepts.
+- Keep translation near the integration boundary.
+- Do not let legacy terms leak into aggregates, value objects, or ubiquitous language.
+
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-ddd/references/tactical-patterns.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
 # Tactical Patterns
 
@@ -1228,109 +1766,51 @@ Load this after strategic boundaries are clear and the task needs aggregate, ent
 - Keep standalone domain classes when a concept can be understood without unnecessary collaborators.
 - Prefer operations closed over the same value type when that makes the domain algebra clear, such as `Money + Money -> Money`.
 
-exec
-/bin/zsh -lc "sed -n '1,220p' dddjango/skills/architecture-ddd/references/domain-events.md" in /Users/hyun/Desktop/dddjango
  succeeded in 0ms:
-# Domain Events And Consistency
+# Problem Details, Idempotency, And OpenAPI
 
-Load this when state changes should produce events, multiple aggregates or contexts must react, external side effects exist, or event sourcing/saga is being considered.
+Use this reference for API error responses, status codes, idempotency behavior, compatibility, and OpenAPI effects.
 
-## Domain Events
+## Status Codes
 
-- Name events in past tense using domain language.
-- Raise events from aggregate behavior after a meaningful business fact occurs.
-- Collect events inside the aggregate or unit of work boundary; do not publish directly from random application code.
-- Include enough identity and facts for consumers without leaking the whole aggregate state.
+- Use 200 for successful reads and updates that return a body.
+- Use 201 for created resources and include the new resource location when the contract requires it.
+- Use 202 for accepted asynchronous work.
+- Use 204 for successful deletes or updates with no body.
+- Use 400 for malformed requests, 401 for authentication failure, 403 for authorization failure, 404 for missing or intentionally hidden resources, 409 for conflicts, 422 for semantically invalid input when the contract uses it, and 429 for rate limits.
+- Keep status-code changes compatible with existing clients or version them.
 
-## Dispatch Timing
+## Problem Details
 
-Always state dispatch timing when events affect consistency:
+- Use `application/problem+json` as the response media type for Problem Details errors.
+- Use RFC 9457 Problem Details for API errors unless a legacy compatibility contract explicitly says otherwise.
+- Keep `status` aligned with the HTTP response status.
+- Use `title` for reusable problem type summaries and `detail` for the specific occurrence.
+- Use a stable `type` URI or `about:blank` when no stable type exists.
+- Include `instance` when the specific occurrence has a useful request or problem identifier URI.
+- Add extension fields only when they are documented and safe for clients to ignore.
 
-- Before commit: handlers participate in the same transaction and failure should roll back the operation.
-- After commit: external side effects happen only after durable state exists.
-- Outbox-style handoff: store the event/message with the state change, then publish asynchronously for reliable integration.
+## Idempotency-Key
 
-If payment, notification, message publishing, or another external effect is involved, do not leave timing implicit.
+- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
+- Store the first request result in durable storage such as DB or Redis according to the service transaction design.
+- Return the stored response for repeated requests with the same key when the request is equivalent.
+- Define conflict behavior for the same key with a different payload.
+- Coordinate key TTL, storage owner, transaction boundary, and concurrency behavior with `implementation-django` and `architecture-db`.
 
-## Cross-Aggregate Consistency
+## OpenAPI
 
-- One transaction should usually modify one aggregate.
-- If another aggregate must react, prefer a domain event and eventual consistency unless there is a strong local transaction reason.
-- If the operation is a risky write, hand off transaction, idempotency, locking, and replay details to `architecture-db` and `architecture-api`.
-
-## Event Sourcing And Saga
-
-- Event sourcing is a modeling choice where state can be rebuilt from an event log. Use it only when audit/history/replay is central enough to justify the complexity.
-- Saga coordinates long-running or distributed business transactions with compensating actions.
-- Compensation must be idempotent.
-- Detailed event store, outbox processor, and saga orchestration implementation belongs to `architecture-implementation-patterns` after the domain decision is made.
-
-## Integration Events
-
-- Domain events are internal to a bounded context.
-- Integration events cross context boundaries and should use the published language of the integration contract.
-- Translate external events through an anticorruption layer when the upstream language conflicts with the downstream model.
+- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
+- Check names, required fields, nullable fields, enum values, status responses, error schema, auth requirements, pagination shape, and tags.
+- For migrations from DRF, compare old and new generated schema when possible and document client-visible differences.
+- Do not claim OpenAPI generation or schema diff was run unless it was actually executed.
 
 exec
-/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-test/references/pytest-fixtures.md" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-# Pytest And Fixtures
-
-Load this when writing pytest tests, fixtures, shared `conftest.py`, parametrized cases, markers, async tests, or pytest command guidance.
-
-## Test Shape
-
-- Use plain test functions or small `Test*` classes when grouping related behavior improves scanning.
-- Name tests by behavior and expected result, not by implementation method.
-- Use `assert` statements that automatically decide pass/fail; avoid print-based manual checks.
-- Use `pytest.raises(ExpectedError, match=...)` for expected exceptions.
-- Use `pytest.approx` for floating point comparisons.
-- Use `pytest.mark.parametrize` when the same behavior must be checked across meaningful examples or boundary values.
-
-## Fixtures
-
-- Use fixtures for shared setup, teardown, and expensive resources.
-- Use `yield` fixtures when teardown must always run after the test.
-- Keep fixture scope as narrow as practical. Use `module` or `session` scope only for expensive resources with explicit isolation around each test.
-- Put broadly shared fixtures in `tests/conftest.py`; put unit/integration-specific fixtures in nested `conftest.py` files near the tests that use them.
-- Avoid fixture chains that hide the behavior under test. A fixture should make the test clearer than inline setup.
-
-## Isolation Helpers
-
-- Use `monkeypatch` for environment variables and small module-level seams.
-- Use `tmp_path` for filesystem work so tests do not depend on the developer machine.
-- Do not use real network calls in unit tests. Guard or mock them at the boundary.
-- For time-dependent logic, prefer dedicated time tools from `test-doubles.md` instead of hand-patching `datetime` in many modules.
-
-## Configuration And Markers
-
-- Register custom markers in pytest config and enable strict marker checking when possible.
-- Use markers such as `slow`, `integration`, `database`, and `e2e` to make test cost explicit.
-- Use `skip` and `skipif` for unavailable environments.
-- Use `xfail(strict=True)` only for a known, tracked bug or unsupported behavior; do not hide unexpected failures.
-- Use marker selection commands such as `pytest -m "not slow"` or `pytest -m "database and not slow"` when reporting how to run subsets.
-- For rare marker-driven setup, read marker arguments through `request.node.get_closest_marker(...)` inside a fixture. Prefer explicit fixture parameters when that is clearer.
-
-## Plugins And Commands
-
-- Use `pytest-asyncio` for `async def` tests and async fixtures; choose `auto` mode for asyncio-only projects and `strict` when multiple async frameworks coexist.
-- Use `pytest-xdist` only when tests are isolated enough for parallel execution.
-- Use `pytest-cov` when the project prefers direct pytest integration, such as `pytest --cov=src --cov-report=html tests/`, `pytest --cov=src --cov-fail-under=80 tests/`, or `pytest --cov=src --cov-branch tests/`.
-- Use `pytest-randomly` to expose order dependence and record the seed when investigating failures.
-- Use `pytest-timeout` for hanging tests, especially integration tests.
-- Common commands:
-  - `pytest tests/`
-  - `pytest -k "name_fragment"`
-  - `pytest -m "not slow"`
-  - `pytest --lf`
-  - `pytest -x --pdb`
-
-Only report a command as passing if it was actually executed.
-
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-test/references/test-doubles.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
 exec
-/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-test/references/test-doubles.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-test/references/factories-property-tests.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
 exec
-/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-test/references/factories-property-tests.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
 # Test Doubles
 
@@ -1418,51 +1898,6 @@ Avoid property tests whose assertions only restate the implementation. The prope
 - Do not hide complex assertions behind vague step names.
 - Store reusable domain language in feature files only when the team will actually read or maintain them.
 
-exec
-/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-# Pattern Selection
-
-This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
-
-Load this when deciding whether to use layered, clean, hexagonal, CQRS, event sourcing, saga, transaction script, or a simpler Django-native structure.
-
-## Selection Order
-
-1. Confirm the DDD model: bounded context, aggregate, invariant, use case, and integration boundary.
-2. Identify the pressure: external dependency, persistence mapping, transaction boundary, query/read complexity, reliability, legacy model mismatch, or testability.
-3. Choose the lightest pattern that addresses that pressure.
-4. State patterns intentionally not chosen and why.
-
-## Defaults
-
-- Layered call flow is the default fallback: interface/presentation -> application -> domain, while infrastructure implements details behind inward-facing abstractions.
-- Django-native model methods plus service/selectors are enough for many projects.
-- Supporting or simple CRUD subdomains can use transaction script or straightforward service functions.
-- Do not introduce repository, Unit of Work, ports, or CQRS just to look like DDD.
-
-## Pattern Triggers
-
-| Pattern | Consider when | Avoid when |
-|---|---|---|
-| Layered architecture | You need clear presentation/application/domain/infrastructure responsibility | The app is simple enough that extra folders only hide the flow |
-| Clean/hexagonal architecture | External adapters, SDKs, persistence, or API frameworks would otherwise shape the domain | The domain is simple and Django conventions remain clear |
-| Ports/adapters | A core use case must be independent from framework or external service details | There is only one stable local implementation and no testing or replacement need |
-| Repository/UoW | Aggregate persistence and transaction boundaries need a replaceable seam | It would be a thin QuerySet wrapper with no domain benefit |
-| CQRS | Command and read models have genuinely different needs | A simple query method or selector is enough |
-| Event sourcing | Audit, replay, or event history is central to the domain | You only need notification or integration after a state change |
-| Saga | A long-running or distributed transaction needs compensation | A single local transaction can protect the invariant |
-| Outbox | External message delivery must be reliable after a DB commit | There is no external side effect or at-least-once delivery need |
-| ACL | An upstream/legacy model would corrupt downstream domain language | The external model already matches the bounded context language |
-
-## Django Pragmatism
-
-- Preserve Django advantages such as admin, migrations, forms, QuerySet, and straightforward model behavior when they do not obscure the domain.
-- Split pure domain and ORM models only when ORM lifecycle, lazy loading, schema fields, or framework concerns distort the domain rule.
-- Prefer incremental pattern adoption around the boundary that hurts now.
-
-exec
-/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md" in /Users/hyun/Desktop/dddjango
  succeeded in 0ms:
 # Repository And Unit Of Work
 
@@ -1515,118 +1950,7 @@ Split ORM and domain models when:
 Keep them together when the rule is simple and Django model behavior is explicit.
 
 exec
-/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-# Outbox, ACL, And Integration Patterns
-
-This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
-
-Load this when domain events cross aggregate or context boundaries, external side effects exist, upstream models conflict with the domain, or event sourcing/saga is being considered.
-
-## Domain Events And Integration Events
-
-- Domain events are internal business facts raised by aggregate behavior.
-- Integration events cross bounded context or service boundaries and should use the published language of the integration contract.
-- Keep event names past tense and scoped to the language of the owning context.
-- Do not expose internal aggregate structure as an integration event contract.
-
-## Outbox
-
-Use outbox when state change and message delivery must be reliably connected.
-
-Decision points:
-
-- What transaction writes the aggregate and the outbox message?
-- Who owns dispatch after commit?
-- Is delivery at-least-once, and are consumers idempotent?
-- What retry/dead-letter behavior is needed?
-- Which event fields form the published language?
-
-For simple in-process follow-up after a successful Django transaction, `transaction.on_commit()` may be enough. For cross-service publication, prefer a durable outbox-style handoff.
-
-## Risky Write Consistency Block Handoff
-
-For payment, inventory, reservation, refund, permission, ledger, or similar risky writes, output a visible `Risky Write Consistency Block`. This skill owns the architecture pattern decision but should leave concrete DB/API/test details to the owning skills.
-
-Record:
-
-- transaction owner or owning use case;
-- side-effect timing: after commit, outbox, or another reliable handoff;
-- whether uniqueness/idempotency storage is needed;
-- follow-up owner for DB locking, isolation, and retry details;
-- follow-up owner for `Idempotency-Key` API behavior;
-- follow-up owner for integration, replay, or concurrency tests.
-
-## Saga
-
-Use saga when a long-running or distributed business process spans multiple local transactions.
-
-- Choreography keeps services autonomous but can hide the process flow.
-- Orchestration centralizes the process but can concentrate workflow logic.
-- Compensation must be explicit and idempotent.
-
-Do not use saga for a single local invariant that can be protected by one transaction.
-
-## Event Sourcing
-
-Use event sourcing only when history, audit, replay, or temporal reconstruction is central to the domain.
-
-Event sourcing is not required just because the system has domain events.
-
-## Anticorruption Layer
-
-Use ACL to protect a downstream model from an upstream or legacy language.
-
-- Translate external identifiers, statuses, units, and lifecycle concepts.
-- Keep translation near the integration boundary.
-- Do not let legacy terms leak into aggregates, value objects, or ubiquitous language.
-
-exec
-/bin/zsh -lc "sed -n '1,220p' dddjango/skills/architecture-api/references/problem-details.md" in /Users/hyun/Desktop/dddjango
-exec
-/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django/references/services-selectors.md" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-# Problem Details
-
-Load this for RFC 9457 error response design, error field semantics, extension fields, and status/error consistency.
-
-## RFC 9457 Contract
-
-Use `application/problem+json` for API errors unless an existing contract requires another format.
-
-Core fields:
-
-- `type`: stable URI identifying the problem type; `about:blank` is the default if omitted.
-- `title`: short summary of the problem type; reuse the same title for the same type.
-- `status`: HTTP status code and must match the actual response.
-- `detail`: occurrence-specific explanation.
-- `instance`: URI identifying this specific occurrence.
-
-## Extension Fields
-
-- Add extension fields only when clients can use them.
-- Document extension fields as part of the problem type.
-- Design clients to ignore extension fields they do not understand.
-
-## Error Mapping
-
-- Keep validation, conflict, permission, not-found, rate-limit, and server errors distinguishable.
-- Use `409` for state conflicts or duplicate creation and `422` for semantically invalid request content.
-- Use one consistent error envelope across the API.
-- Do not expose secrets, stack traces, internal class names, or infrastructure topology in `detail`.
-
-## Output Checklist
-
-For each relevant error, record:
-
-- HTTP status;
-- problem `type`;
-- reusable `title`;
-- occurrence-specific `detail` shape;
-- extension fields;
-- whether the error is retryable;
-- OpenAPI response impact.
-
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-django/references/services-selectors.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-004/with-dddjango
  succeeded in 0ms:
 # Services And Selectors
 
@@ -1681,236 +2005,101 @@ Start with Django model methods and QuerySets for simple work. Add a service whe
 - Are side effects and transactions ordered so rollback cannot leave external systems inconsistent?
 - Does the design avoid both fat views and unnecessary architecture layers?
 
-**Evaluating architectural requirements**
+**Considering command executions**
 
-I need to consider reading some architecture API REST contracts, but maybe just the minimal necessary. For the second request, I'm wondering if the tactical and domain-events aspects are sufficient. Should I dive into implementation clean code as well? There’s a lot to unpack regarding model validation and external calls. There's also a need to think about the payment provider's architecture patterns. I should start planning carefully based on the prompt’s requirements. Tests don’t seem necessary, and I don't think subagents or tools are required.
-**Considering eval plugin execution**
+I’m thinking I might need to consult the spec docs, but not the private ones. The workspace documentation could be useful. I wonder if I really need to run tests or if modifications are necessary, maybe not. Running `git status --short` could help, but there might be errors due to xcrun. I’ve encountered Xcode warnings before. The user didn’t specifically ask for status checks, so I might skip those. I’ll include the commands that were actually run, and aim for conciseness while summarizing.
+**Preparing a command list**
 
-I'm thinking about running the `python workspace/scripts/run_plugin_eval.py --help` command, but it seems unnecessary since the source indicates it writes outputs. I’ll include a check to confirm the eval harness doesn't run, as it creates a run directory and writes artifacts, which isn’t allowed. I'm also considering noting that prompt-input artifacts aren't saved to disk for this reason. I should mention that I'll run each request independently and generate raw outputs inline, labeling them as "not saved to disk."
-**Defining artifact content**
-
-I'm considering what the artifact content should include. It might be helpful to define it as a prompt input artifact for the agent, noting the request, expected skills, and raw response. However, I realize that "raw output" could refer to outputs from independent requests or prompt-input artifacts. Since we didn't run the Codex eval harness, I can create a prompt-input artifact for each request. The guidelines say to run each request independently and save the relevant artifacts.
-**Considering command visibility**
-
-I’m thinking that if the final output shows the commands that were actually run, the user might see them. I need to clarify that no contents were read. There's a potential issue because we ran `sed -n` on installed cache skills, which aren’t from local task repo files, but the system required those skills. Maybe it’s best to skip including it in the final output while ensuring we include the commands executed.
-**Considering verification tools**
-
-I used local repository files for my case reasoning. That's good! I’m considering using "sha/sed" but it seems unnecessary. I might need to use the plan tool, but again, maybe that's not needed. I should definitely use the `superpowers:verification-before-completion` since I'm close to claiming my work complete. The skill states to apply it before making any commitments or pull requests. I'll make sure to handle the evaluation packet and commands carefully. I’ll double-check the guidelines!
+I think it's important to provide a concise grouped list of commands, like “sed -n ... (skills/read refs)” and include the exact ones ran, such as `pwd -P`, `git rev-parse`, `rg --files`. I wonder if I can categorize them under "read-only inspection commands." The user probably expects these in a code block, along with an explanation of checks that weren’t run, like tests and schema differences. I'll also clarify that there were no modifications made since the workspace is for reference and plugin documentation, not a Django app.
 codex
-I’m at the reporting stage. Before closing, I’m checking the completion-verification instructions so the final answer only claims work that was actually performed and clearly lists the skipped checks.
-exec
-/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/verification-before-completion/SKILL.md" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
----
-name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
----
+**1. Ninja Router/Schema + Problem Details**
 
-# Verification Before Completion
+DRF로 새로 만들지 말고 Django Ninja 기준으로 잡는 게 맞습니다. Router는 HTTP adapter로만 두고, 비즈니스 규칙은 service/usecase 쪽으로 빼야 합니다.
 
-## Overview
+결정안:
+- `Router`: 요청 파싱, auth/permission 연결, schema validation, service 호출, response mapping, exception translation만 담당
+- `Schema`: create/update/detail/list를 분리하고, 모델 필드를 전부 노출하지 않음
+- 오류 응답: RFC 9457 Problem Details 사용
+- `Content-Type`: `application/problem+json`
+- 상태 코드: 생성 `201`, 조회/수정 `200`, 삭제 `204`, 충돌 `409`, 의미 검증 실패 `422`, 인증/인가 `401/403`
+- 중복 주문/결제 생성 같은 POST는 `Idempotency-Key` 계약을 API에 드러내고 저장/동시성 처리는 service/DB 쪽으로 넘김
 
-Claiming work is complete without verification is dishonesty, not efficiency.
-
-**Core principle:** Evidence before claims, always.
-
-**Violating the letter of this rule is violating the spirit of this rule.**
-
-## The Iron Law
-
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes.
-
-## The Gate Function
-
-```
-BEFORE claiming any status or expressing satisfaction:
-
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-   - If NO: State actual status with evidence
-   - If YES: State claim WITH evidence
-5. ONLY THEN: Make the claim
-
-Skip any step = lying, not verifying
-```
-
-## Common Failures
-
-| Claim | Requires | Not Sufficient |
-|-------|----------|----------------|
-| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
-| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
-| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
-| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Regression test works | Red-green cycle verified | Test passes once |
-| Agent completed | VCS diff shows changes | Agent reports "success" |
-| Requirements met | Line-by-line checklist | Tests passing |
-
-## Red Flags - STOP
-
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-- Thinking "just this once"
-- Tired and wanting work over
-- **ANY wording implying success without having run verification**
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Agent said success" | Verify independently |
-| "I'm tired" | Exhaustion ≠ excuse |
-| "Partial check is enough" | Partial proves nothing |
-| "Different words so rule doesn't apply" | Spirit over letter |
-
-## Key Patterns
-
-**Tests:**
-```
-✅ [Run test command] [See: 34/34 pass] "All tests pass"
-❌ "Should pass now" / "Looks correct"
-```
-
-**Regression tests (TDD Red-Green):**
-```
-✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
-❌ "I've written a regression test" (without red-green verification)
-```
-
-**Build:**
-```
-✅ [Run build] [See: exit 0] "Build passes"
-❌ "Linter passed" (linter doesn't check compilation)
-```
-
-**Requirements:**
-```
-✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
-❌ "Tests pass, phase complete"
-```
-
-**Agent delegation:**
-```
-✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
-❌ Trust agent report
-```
-
-## Why This Matters
-
-From 24 failure memories:
-- your human partner said "I don't believe you" - trust broken
-- Undefined functions shipped - would crash
-- Missing requirements shipped - incomplete features
-- Time wasted on false completion → redirect → rework
-- Violates: "Honesty is a core value. If you lie, you'll be replaced."
-
-## When To Apply
-
-**ALWAYS before:**
-- ANY variation of success/completion claims
-- ANY expression of satisfaction
-- ANY positive statement about work state
-- Committing, PR creation, task completion
-- Moving to next task
-- Delegating to agents
-
-**Rule applies to:**
-- Exact phrases
-- Paraphrases and synonyms
-- Implications of success
-- ANY communication suggesting completion/correctness
-
-## The Bottom Line
-
-**No shortcuts for verification.**
-
-Run the command. Read the output. THEN claim the result.
-
-This is non-negotiable.
-
-**Considering payment processing**
-
-I'm exploring how to handle integration events after payment state changes. If I emit these events, I might use an outbox. If I just call the provider from the service and save the result, I can skip the outbox initially, but payment processing is risky. One option is creating a local `PaymentAttempt` as pending in a transaction, then calling the provider. If I need guarantees, maybe an async worker with an outbox could be necessary, but it could overcomplicate things!
-codex
-Artifacts were **not saved to disk** because this session is read-only and the packet also says not to modify files. I evaluated each request independently and include the raw artifacts inline.
-
-**Raw Artifacts**
-
-`case-004-01`
+예외 매핑 기준:
 ```text
-Request: 이 API, 그냥 DRF 말고 Ninja Router/Schema로 새로 잡고 Problem Details까지 맞춰줘.
-Route: architecture-api -> implementation-django-ninja
-Output: Treat DRF only as legacy comparison. First lock the REST contract: resource URL, method, success status, auth, validation/conflict/not-found errors, and OpenAPI impact. Implement as thin Django Ninja Router operations plus request/response Schema or ModelSchema. Router owns HTTP parsing, auth wiring, service invocation, response mapping, and domain/application error translation only. Use RFC 9457 Problem Details with application/problem+json, aligned status, stable type/title, occurrence detail, optional instance, documented extensions. TestClient/OpenAPI/schema diff not run.
+DomainValidationError -> 422 Problem Details
+PermissionDenied -> 403 Problem Details
+NotFound -> 404 Problem Details
+Conflict / invalid state transition -> 409 Problem Details
+Malformed request -> 400 Problem Details
 ```
 
-`case-004-02`
-```text
-Request: 모델에 몰린 validation/상태변경/외부 호출 흐름을 좀 봐줘. 어디까지 domain이고 어디부터 application service인지 모르겠어.
-Route: architecture-ddd -> implementation-django service/selector guidance
-Output: Domain owns invariants, meaningful validation, value objects, entity/aggregate state transitions, and domain events describing completed business facts. Application service owns use-case orchestration: load aggregate, start transaction, call domain behavior, persist, schedule after-commit work, and coordinate external providers. Django model methods are acceptable for simple explicit domain behavior. Split outward when ORM lifecycle, lazy loading, HTTP/schema concerns, or SDK calls start shaping the rule. External calls should leave the model and run through an application service plus adapter/port, usually after commit or via reliable handoff.
-```
+**2. 모델 validation/상태변경/외부 호출 경계**
 
-`case-004-03`
-```text
-Request: pytest에서 주문 생성 테스트 fixture가 너무 복잡해졌어. factory랑 fake/mock 경계를 다시 잡아줘.
-Route: implementation-test
-Output: Keep factory defaults valid, minimal, and unsurprising. Use traits for meaningful order states like paid/cancelled/shipped, SubFactory only for required relationships, and inline literals when clearer than a factory. Fixtures should express scenario setup, not hide a long object graph. Prefer output/state assertions for order creation. Use fakes for useful in-memory collaborators such as repository/provider behavior when they clarify the test. Use mocks/spies mainly for external boundaries like payment, email, HTTP, SDK, broker, clock; configure autospec/spec and keep important arguments explicit. Pytest not run.
-```
+모델에 전부 몰려 있다면 이렇게 나누는 게 낫습니다.
 
-`case-004-04`
-```text
-Request: payment provider 붙일 때 repository랑 outbox까지 필요한지 모르겠어. 과한 설계면 빼고 판단해줘.
-Route: architecture-implementation-patterns
-Output: Do not add repository by default if it only wraps QuerySet calls. Start with Django model behavior plus an application service owning the payment use case and transaction. Add a provider port/adapter because the SDK/HTTP provider is an external boundary. Add repository only if aggregate persistence needs a domain collection seam, fake repository materially improves tests, or ORM details distort application/domain code. Add outbox only when state change and external message/provider command delivery must be durably connected.
+- Domain: 주문 금액 계산, 주문 가능 여부, 상태 전이 규칙, 취소 가능 조건, 결제 가능 조건 같은 비즈니스 불변식
+- Domain model method: `order.confirm()`, `order.cancel()`, `order.mark_paid()`처럼 상태를 바꾸는 핵심 행위
+- Domain service: 여러 값/정책이 필요하지만 특정 엔티티 하나에 자연스럽게 붙지 않는 순수 규칙
+- Application service: 주문 로드, 트랜잭션 시작, domain method 호출, 저장, 결제 adapter 호출 예약
+- Infrastructure/adapter: payment SDK, HTTP client, email, message broker
+
+외부 호출은 모델에서 빼야 합니다. 결제 호출은 application service가 트랜잭션 이후 `transaction.on_commit()` 또는 outbox를 통해 실행하게 두는 쪽이 안전합니다.
+
+**3. pytest 주문 생성 fixture/factory/mock 경계**
+
+복잡한 fixture 체인은 줄이고, factory는 “유효한 최소 주문”을 만드는 데 집중시키는 게 좋습니다.
+
+- Factory: `OrderFactory`, `OrderItemFactory`, `UserFactory`처럼 DB 객체 생성
+- Factory trait: `paid`, `cancelled`, `shipped`, `with_items` 같은 의미 있는 상태
+- Fixture: 테스트에서 반복되는 역할 조립만 담당. 너무 많은 암묵 setup을 숨기지 않음
+- Fake: application service 테스트에서 `FakePaymentProvider`, `FakeOrderRepository`처럼 동작이 있는 대체 구현이 필요할 때
+- Mock/Spy: payment provider 호출 여부, email 발송, webhook 전송처럼 외부 협력 자체가 계약일 때만 사용
+- Domain 테스트: 가능하면 real domain object로 output/state 검증, mock 남발 금지
+
+우선순위는 `반환값 검증 -> 상태 검증 -> 외부 호출 검증`입니다.
+
+**4. payment provider에 repository/outbox가 필요한가**
+
+과한 설계를 피하면 기본 판단은 이렇습니다.
 
 Risky Write Consistency Block:
-- Transaction owner: payment initiation/capture application service.
-- Side-effect timing: outside model; after commit, provider idempotency key, or durable outbox-style command if async/retry reliability is required.
-- Idempotency storage: needed for duplicate-prone payment/order POSTs, but DB/API details not designed here.
-- DB locking/isolation/retry, Idempotency-Key API behavior, and integration/concurrency tests not run.
-```
+- transaction owner: `payment_authorize_order` 또는 `order_pay` 같은 application service
+- repository: 단순히 `Order.objects.get()`/`save()` 감싸는 정도면 불필요. Django service + ORM + `transaction.atomic()`으로 충분
+- custom Unit of Work: 여러 repository를 조합하거나 persistence를 숨겨야 할 명확한 이유가 없으면 불필요
+- outbox: 결제 성공/실패 이벤트를 외부 시스템에 반드시 전달해야 하고 DB 상태 변경과 메시지 발행을 안정적으로 묶어야 하면 필요
+- `transaction.on_commit()`: 단순한 내부 후속 작업이나 실패 시 재처리 요구가 낮은 작업이면 충분
+- idempotency storage: 결제 요청은 중복 위험이 크므로 필요할 가능성이 높음
+- saga: 단일 DB 트랜잭션 + 결제 provider 호출 수준이면 아직 과함. 여러 서비스의 장기 프로세스와 보상 트랜잭션이 생길 때 검토
 
-**Commands Actually Run**
+즉, repository는 일단 빼고 service/ORM으로 시작해도 됩니다. outbox는 “결제 상태 변경 이벤트를 유실 없이 발행해야 하는가”가 yes일 때만 넣는 게 맞습니다.
 
-```sh
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md ...
+Commands actually run:
+```text
 pwd -P
 git rev-parse --show-toplevel
-rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*report*' -g '!**/*finding*'
-rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/runs/**'
-sed -n '1,220p' workspace/scripts/run_plugin_eval.py
-sed -n '1,180p' workspace/develop/evals/cases/plugin/public/case-004.md
-sed -n '1,220p' dddjango/skills/implementation-django-ninja/SKILL.md
-sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/router-schema.md
+rg --files
+sed -n '1,200p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-ddd/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+sed -n '1,220p' workspace/reference/architecture-api/reference/final.md
+sed -n '1,220p' workspace/reference/architecture-ddd/reference/final.md
+sed -n '1,220p' workspace/reference/implementation-test/reference/final.md
+sed -n '1,220p' workspace/reference/architecture-db/reference/final.md
+sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/router-schema.md
 sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
-sed -n '1,220p' dddjango/skills/architecture-ddd/references/tactical-patterns.md
-sed -n '1,220p' dddjango/skills/architecture-ddd/references/domain-events.md
-sed -n '1,240p' dddjango/skills/implementation-test/references/pytest-fixtures.md
-sed -n '1,260p' dddjango/skills/implementation-test/references/factories-property-tests.md
-sed -n '1,260p' dddjango/skills/implementation-test/references/test-doubles.md
-sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
-sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+sed -n '1,260p' dddjango/skills/architecture-ddd/references/tactical-patterns.md
 sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
-sed -n '1,220p' dddjango/skills/implementation-django/references/services-selectors.md
-sed -n '1,220p' dddjango/skills/architecture-api/references/problem-details.md
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/verification-before-completion/SKILL.md
+sed -n '1,240p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+sed -n '1,240p' dddjango/skills/implementation-test/references/factories-property-tests.md
+sed -n '1,240p' dddjango/skills/implementation-test/references/test-doubles.md
+sed -n '1,240p' dddjango/skills/implementation-django/references/services-selectors.md
 ```
 
-**Not Run**
-
-Eval harness, `codex exec`, `codex debug prompt-input`, pytest, TestClient, OpenAPI generation, schema diff, browser checks, and artifact file writes were not run because the packet says not to modify files and the sandbox is read-only. Serena: skipped because no Serena MCP tools are available in this session; repository/path checks used shell commands. One early file-listing command returned prior-run filenames only; I did not open or read prior-run contents.
+Checks not run: no pytest, no Django Ninja `TestClient`, no OpenAPI generation/schema diff, no code modification.
+Serena: skipped because Serena tools were not available in this session; workspace inspection used `rg --files`.
 tokens used
-61,140
+58,336

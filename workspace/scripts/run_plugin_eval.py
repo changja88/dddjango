@@ -42,12 +42,30 @@ TEXT_SUFFIX_LANGUAGES = {
 class Variant:
     name: str
     ignore_user_config: bool
+    isolated_baseline: bool = False
 
 
 VARIANTS = {
-    "baseline": Variant("baseline", True),
+    "baseline": Variant("baseline", True, True),
     "with-dddjango": Variant("with-dddjango", False),
 }
+
+ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = [
+    Path(".git"),
+    Path(".venv"),
+    Path("__pycache__"),
+    Path(".pytest_cache"),
+    Path("workspace/develop/evals/runs"),
+    Path("workspace/develop/evals/cases/plugin/private"),
+    Path("workspace/develop/rubrics"),
+]
+
+BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
+    Path(".agents"),
+    Path("plugins"),
+    Path("dddjango"),
+    Path("workspace/develop/source-crosswalks"),
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -78,7 +96,7 @@ def now_text() -> str:
 def case_paths(selected: list[str] | None) -> list[Path]:
     paths = sorted(PUBLIC_CASES.glob("case-*.md"))
     if not selected:
-        return paths
+        return [path for path in paths if path.stem != "case-101"]
     wanted = set(selected)
     found = {path.stem for path in paths}
     missing = sorted(wanted - found)
@@ -103,21 +121,20 @@ def case_capture_config(metadata: dict[str, object], case_id: str) -> dict[str, 
 
 def build_prompt(public_packet: str, *, allow_workspace_edits: bool) -> str:
     edit_policy = (
-        "You may edit files in the task workspace to complete this eval case.\n"
-        "Do not write into workspace/develop/evals, workspace/develop/rubrics, or private eval paths.\n"
+        "You may edit files in the current working directory to complete the user's request.\n"
+        "Do not write into eval-private or run-output directories if they exist.\n"
         if allow_workspace_edits
         else "Do not modify files. If a check is not actually run, state that it was not run.\n"
     )
     return (
-        "You are executing a public forward-eval packet for the dddjango plugin.\n"
-        "Use only the public packet below and task-local repository files if needed.\n"
-        "Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, "
-        "prior run reports, or prior findings.\n"
+        "Answer the user request directly.\n"
+        "Use only files in the current working directory when local files are needed.\n"
+        "Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.\n"
         f"{edit_policy}"
-        "Keep the answer concise but include commands actually run and checks not run.\n\n"
-        "----- PUBLIC PACKET START -----\n"
+        "Keep the answer concise and include commands actually run plus checks not run.\n\n"
+        "----- USER REQUEST START -----\n"
         f"{public_packet.rstrip()}\n"
-        "----- PUBLIC PACKET END -----\n"
+        "----- USER REQUEST END -----\n"
     )
 
 
@@ -195,6 +212,132 @@ def prepare_workspace(source_repo: Path, workspace_root: Path, run_id: str, case
         timeout_seconds=120,
     )
     return workspace
+
+
+def remove_path(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink(missing_ok=True)
+    elif path.is_dir():
+        shutil.rmtree(path)
+
+
+def prepare_eval_workspace(
+    source_repo: Path,
+    workspace_root: Path,
+    run_id: str,
+    case_id: str,
+    variant: Variant,
+) -> Path:
+    workspace = workspace_root / run_id / case_id / variant.name
+    if workspace.exists():
+        shutil.rmtree(workspace)
+    ignore = shutil.ignore_patterns(
+        ".git",
+        ".venv",
+        "__pycache__",
+        ".pytest_cache",
+    )
+    shutil.copytree(source_repo, workspace, ignore=ignore)
+    excluded = list(ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE)
+    if variant.isolated_baseline:
+        excluded.extend(BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE)
+    for rel_path in excluded:
+        remove_path(workspace / rel_path)
+    run_command(["git", "init"], prompt=None, cwd=workspace, timeout_seconds=120)
+    run_command(["git", "add", "."], prompt=None, cwd=workspace, timeout_seconds=120)
+    run_command(
+        [
+            "git",
+            "-c",
+            "user.name=dddjango Eval",
+            "-c",
+            "user.email=eval@example.invalid",
+            "commit",
+            "-m",
+            "eval sanitized workspace",
+        ],
+        prompt=None,
+        cwd=workspace,
+        timeout_seconds=120,
+    )
+    return workspace
+
+
+def relative_presence(workspace: Path, rel_paths: list[Path]) -> dict[str, bool]:
+    return {path.as_posix(): (workspace / path).exists() for path in rel_paths}
+
+
+def write_baseline_isolation_artifact(
+    *,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    workspace: Path,
+    workspace_root: Path,
+    command: list[str],
+    prompt: str,
+) -> None:
+    forbidden_rel_paths = [
+        Path("dddjango/skills"),
+        Path("dddjango/.codex-plugin/plugin.json"),
+        Path(".agents/plugins/marketplace.json"),
+        Path("plugins/dddjango"),
+        Path("workspace/develop/rubrics"),
+        Path("workspace/develop/evals/cases/plugin/private"),
+        Path("workspace/develop/evals/runs"),
+        Path("workspace/develop/source-crosswalks"),
+    ]
+    presence = relative_presence(workspace, forbidden_rel_paths)
+    prompt_metadata_markers = [
+        "dddjango:implementation-django",
+        "dddjango:implementation-django-ninja",
+        "dddjango:implementation-django-web",
+        "dddjango:implementation-python",
+        "dddjango:implementation-cleancode",
+        "dddjango:implementation-tdd",
+        "dddjango:implementation-test",
+        "dddjango:architecture-ddd",
+        "dddjango:architecture-implementation-patterns",
+        "dddjango:architecture-db",
+        "dddjango:architecture-api",
+        "dddjango:workflow-dddjango-subagents",
+    ]
+    artifact = {
+        "caseId": case_id,
+        "variant": "baseline",
+        "evidenceMode": "baseline-isolation",
+        "workspace": str(workspace),
+        "workspaceUnderEvalRoot": str(workspace).startswith(str(workspace_root)),
+        "originalRepoRoot": str(REPO_ROOT),
+        "runsFromOriginalRepoRoot": workspace.resolve() == REPO_ROOT.resolve(),
+        "commandUsesIgnoreUserConfig": "--ignore-user-config" in command,
+        "commandUsesIgnoreRules": "--ignore-rules" in command,
+        "forbiddenPathPresence": presence,
+        "forbiddenPathsAbsent": not any(presence.values()),
+        "operatorPromptContainsOriginalRepoRoot": str(REPO_ROOT) in prompt,
+        "operatorPromptDddjangoSkillMetadataMentions": [
+            marker for marker in prompt_metadata_markers if marker in prompt
+        ],
+        "baselinePromptInputPolicy": (
+            "The runner does not create active-user-config prompt-input artifacts for baseline. "
+            "Baseline evidence is command isolation plus sanitized workspace absence checks."
+        ),
+        "runtimeCachePathNotMountedInWorkspace": not (
+            workspace / "Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10"
+        ).exists(),
+        "pass": (
+            workspace.resolve() != REPO_ROOT.resolve()
+            and "--ignore-user-config" in command
+            and "--ignore-rules" in command
+            and not any(presence.values())
+            and str(REPO_ROOT) not in prompt
+            and not any(marker in prompt for marker in prompt_metadata_markers)
+        ),
+    }
+    write_text(
+        raw_dir / f"{case_id}-baseline-isolation.json",
+        json.dumps(artifact, ensure_ascii=False, indent=2) + "\n",
+    )
 
 
 def porcelain_status(workspace: Path) -> list[tuple[str, str]]:
@@ -325,6 +468,7 @@ def codex_exec_command(
     ]
     if variant.ignore_user_config:
         command.append("--ignore-user-config")
+        command.append("--ignore-rules")
     command.append("-")
     return command
 
@@ -370,7 +514,7 @@ def main() -> int:
         shutil.copyfile(case_path, raw_dir / f"{case_id}-public-prompt.md")
         write_text(raw_dir / f"{case_id}-operator-prompt.txt", prompt)
 
-        prompt_input_path = raw_dir / f"{case_id}-prompt-input.json"
+        prompt_input_path = raw_dir / f"{case_id}-with-dddjango-prompt-input.json"
         if args.rerun or not prompt_input_path.exists():
             debug_result = run_command(
                 ["codex", "debug", "prompt-input", prompt],
@@ -379,7 +523,7 @@ def main() -> int:
                 timeout_seconds=args.timeout_seconds,
             )
             write_text(prompt_input_path, debug_result.stdout)
-            write_text(raw_dir / f"{case_id}-prompt-input.stderr.txt", debug_result.stderr)
+            write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", debug_result.stderr)
 
         for variant in variants:
             output_path = raw_dir / f"{case_id}-{variant.name}.txt"
@@ -401,6 +545,8 @@ def main() -> int:
                     raise SystemExit(f"subject repo does not exist: {subject_repo}")
                 exec_cwd = prepare_workspace(subject_repo, args.workspace_root, run_id, case_id, variant.name)
                 sandbox = "workspace-write"
+            else:
+                exec_cwd = prepare_eval_workspace(REPO_ROOT, args.workspace_root, run_id, case_id, variant)
             command = codex_exec_command(
                 variant,
                 output_path=output_path,
@@ -410,6 +556,16 @@ def main() -> int:
                 sandbox=sandbox,
             )
             write_text(command_path, " ".join(command) + "\n")
+            if variant.isolated_baseline:
+                write_baseline_isolation_artifact(
+                    run_dir=run_dir,
+                    raw_dir=raw_dir,
+                    case_id=case_id,
+                    workspace=exec_cwd,
+                    workspace_root=args.workspace_root,
+                    command=command,
+                    prompt=prompt,
+                )
             if args.skip_exec:
                 write_text(output_path, "NOT RUN: --skip-exec was used.\n")
                 write_text(exit_path, "skipped\n")

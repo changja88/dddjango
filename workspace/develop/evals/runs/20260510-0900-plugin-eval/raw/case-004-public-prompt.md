@@ -1,6 +1,6 @@
 # Case 004
 
-Run each request independently and save raw output or prompt-input artifacts for each item.
+각 요청을 독립적인 사용자 요청으로 보고, 서로 섞지 말고 순서대로 답해줘.
 
 ## Requests
 
@@ -19,14 +19,3 @@ pytest에서 주문 생성 테스트 fixture가 너무 복잡해졌어. factory�
 ```text
 payment provider 붙일 때 repository랑 outbox까지 필요한지 모르겠어. 과한 설계면 빼고 판단해줘.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- One raw artifact per request.
-- Commands actually run.
-- Not-run checks and reasons.

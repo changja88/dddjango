@@ -1,22 +1,22 @@
 OpenAI Codex v0.130.0
 --------
-workdir: /Users/hyun/Desktop/dddjango
+workdir: /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: xhigh
 reasoning summaries: auto
-session id: 019e0fa8-9583-75d3-8249-8b67b89560e0
+session id: 019e1079-5a4c-7c93-a1ab-9b2a2bbc44c5
 --------
 user
-You are executing a public forward-eval packet for the dddjango plugin.
-Use only the public packet below and task-local repository files if needed.
-Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Answer the user request directly.
+Use only files in the current working directory when local files are needed.
+Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.
 Do not modify files. If a check is not actually run, state that it was not run.
-Keep the answer concise but include commands actually run and checks not run.
+Keep the answer concise and include commands actually run plus checks not run.
 
------ PUBLIC PACKET START -----
+----- USER REQUEST START -----
 # Case 013
 
 ## User Request
@@ -24,28 +24,137 @@ Keep the answer concise but include commands actually run and checks not run.
 ```text
 기존 DRF ViewSet/Serializer로 된 주문 API를 Django Ninja로 옮기고 싶어. 기존 클라이언트 호환성, status code, error response, OpenAPI 차이를 같이 봐줘.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- Raw answer or command transcript.
-- Commands actually run.
-- Not-run checks and reasons.
------ PUBLIC PACKET END -----
+----- USER REQUEST END -----
 
 codex
-Using `dddjango:architecture-api` and `dddjango:implementation-django-ninja` because the packet asks for DRF-to-Ninja migration compatibility, response contracts, status codes, errors, and OpenAPI.
+관련 스킬을 먼저 확인하겠습니다: `superpowers:using-superpowers`, `dddjango:architecture-api`, `dddjango:implementation-django-ninja`, `dddjango:implementation-test`. 요청이 API 계약과 Ninja 전환 검토라 코드 변경 없이 읽기 전용으로 확인하겠습니다.
 exec
-/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
-exec
-/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md" in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
  succeeded in 0ms:
-/Users/hyun/Desktop/dddjango
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
 
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## Instruction Priority
+
+Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+2. **Superpowers skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins. The `skill` tool works the same as Claude Code's `Skill` tool.
+
+**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+## Platform Adaptation
+
+Skills use Claude Code tool names. Non-CC platforms: see `references/copilot-tools.md` (Copilot CLI), `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "About to EnterPlanMode?" [shape=doublecircle];
+    "Already brainstormed?" [shape=diamond];
+    "Invoke brainstorming skill" [shape=box];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "About to EnterPlanMode?" -> "Already brainstormed?";
+    "Already brainstormed?" -> "Invoke brainstorming skill" [label="no"];
+    "Already brainstormed?" -> "Might any skill apply?" [label="yes"];
+    "Invoke brainstorming skill" -> "Might any skill apply?";
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
  succeeded in 0ms:
 ---
 name: architecture-api
@@ -90,8 +199,46 @@ Use this skill to turn use cases and client needs into REST contracts. This skil
 - State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
 - Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
 
-exec
-/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: implementation-test
+description: >
+  Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, test doubles, fake/mock/stub/spy/dummy, factory_boy/Faker, Hypothesis property tests, time/HTTP mocking, testcontainers, coverage, mutation testing, BDD, flaky tests, Django Ninja TestClient/API contract tests, idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 뮤테이션 테스트, 속성 기반 테스트, 중복 요청/동시성 테스트, flaky/불안정 테스트. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, implementation-tdd for Red-Green-Refactor flow, and architecture-ddd/architecture-db/architecture-api when invariants, data constraints, or REST contracts are unclear.
+---
+
+# Test Implementation
+
+Use this skill to write or review concrete pytest tests, fixtures, factories, doubles, property tests, and test quality checks. The test should verify behavior, invariants, and contracts rather than implementation details.
+
+## Routing
+
+- If the user asks for Red-Green-Refactor, failing-test-first sequencing, or TDD coaching, use `implementation-tdd`; use this skill for the pytest mechanics behind that flow.
+- If domain invariants, policy ownership, aggregates, or bounded context language are unclear, use `architecture-ddd` before locking in assertions.
+- If DB schema, constraints, transactions, locking, query performance, or rollout behavior is unresolved, use `architecture-db` before encoding those assumptions in tests.
+- If REST resources, status codes, Problem Details, pagination, idempotency, or OpenAPI contract behavior is unresolved, use `architecture-api` before writing API contract assertions.
+- If the work is Django ORM, migration, service, selector, or Django Ninja implementation, use the relevant implementation skill for production code and this skill for `tests/**`, `conftest.py`, factories, and doubles.
+- If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
+- For a small assertion, fixture, import ordering, typo, or pytest command explanation, answer directly without DDD or workflow ceremony.
+
+## Reference Loading
+
+- Read [pytest-fixtures.md](references/pytest-fixtures.md) for pytest structure, assertions, fixtures, `conftest.py`, parametrization, markers, plugins, async tests, and execution commands.
+- Read [test-doubles.md](references/test-doubles.md) for dummy/stub/spy/mock/fake selection, output/state/communication verification, `Mock`, `AsyncMock`, `seal`, monkeypatch, time mocking, and HTTP mocking.
+- Read [factories-property-tests.md](references/factories-property-tests.md) for factory_boy, Faker, traits, Django factories, Hypothesis, stateful property tests, and pytest-bdd.
+- Read [coverage-mutation.md](references/coverage-mutation.md) for test pyramid strategy, testcontainers, coverage.py, tox/nox, FIRST, AAA, anti-patterns, mutation testing, and debugging.
+
+## Runtime Rules
+
+- Choose the smallest test level that protects the behavior: fast domain unit tests first, integration tests for ORM/transactions/constraints/query performance, and Django Ninja `TestClient` tests for request/response contracts.
+- Prefer output and state verification for domain logic. Use communication verification and mocks mainly for external systems, adapters, or collaboration that must be observed.
+- Do not mock every collaborator by default. Use fakes for useful in-memory behavior and mocks for external roles such as payment, email, HTTP, or SDK boundaries.
+- Keep tests independent, repeatable, self-validating, and readable. Isolate time, randomness, filesystem, environment, network, and database state.
+- Put shared setup in fixtures or factories only when it makes the test clearer; avoid hidden fixture chains that obscure the behavior under test.
+- Use property-based tests for invariants over broad input spaces and example tests for named boundary cases.
+- Treat coverage and mutation scores as signals to inspect, not proof that behavior is fully tested.
+- In composite workflows, own `tests/**`, `conftest.py`, and factory files; coordinate with implementation skills without changing production code unless assigned.
+- Report only tests, coverage, mutation checks, or subagent reviews that were actually run. If a command was not run, state that directly.
+
  succeeded in 0ms:
 ---
 name: implementation-django-ninja
@@ -140,87 +287,839 @@ This skill is provisional. Dedicated Django Ninja source reference does not exis
 - Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
 
 codex
-기존 DRF 주문 API를 Django Ninja로 옮길 때는 “같은 URL과 같은 계약을 유지하는 어댑터 교체”로 보는 게 안전합니다. 먼저 기존 `ViewSet/Serializer`의 외부 계약을 표로 고정한 뒤 Ninja `Router/Schema`가 그 계약을 그대로 재현하는지 확인하세요.
+이제 현재 저장소의 구조와 주문 API 관련 파일만 확인하겠습니다. Serena MCP는 이 세션 도구 목록에 없어 사용할 수 없으므로, 경로 확인 후 `rg` 기반으로 참조를 따라가겠습니다.
+exec
+/bin/zsh -lc 'pwd -P' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+ succeeded in 0ms:
+/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
 
-**마이그레이션 체크포인트**
+exec
+/bin/zsh -lc "rg --files -g '"'!**/.git/**'"' -g '"'!**/*rubric*'"' -g '"'!**/*Rubric*'"' -g '"'!**/*prior*'"' -g '"'!**/*Prior*'"' -g '"'!**/*finding*'"' -g '"'!**/*Finding*'"' -g '"'!**/*case-map*'"' -g '"'!**/*private*'"'" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+ succeeded in 0ms:
+AGENTS.md
+workspace/reference/implementation-test/reference/review.md
+workspace/reference/implementation-test/reference/internal.md
+workspace/reference/implementation-test/reference/final.md
+workspace/reference/implementation-test/reference/external.md
+workspace/reference/implementation-django/reference/final.md
+workspace/reference/architecture-api/reference/review.md
+workspace/reference/architecture-api/reference/internal.md
+workspace/reference/architecture-api/reference/final.md
+workspace/reference/architecture-api/reference/external.md
+workspace/reference/spec.md
+workspace/reference/implementation-cleancode/reference/review.md
+workspace/reference/implementation-cleancode/reference/internal.md
+workspace/reference/implementation-cleancode/reference/final.md
+workspace/reference/implementation-cleancode/reference/external.md
+workspace/reference/implementation-tdd/reference/review.md
+workspace/reference/implementation-tdd/reference/internal.md
+workspace/reference/implementation-tdd/reference/final.md
+workspace/reference/implementation-tdd/reference/external.md
+workspace/reference/architecture-db/reference/review.md
+workspace/reference/architecture-db/reference/internal.md
+workspace/reference/architecture-db/reference/final.md
+workspace/reference/architecture-db/reference/external.md
+workspace/reference/implementation-python/reference/review.md
+workspace/reference/implementation-python/reference/internal.md
+workspace/reference/implementation-python/reference/final.md
+workspace/reference/implementation-python/reference/external.md
+workspace/reference/architecture-ddd/reference/review.md
+workspace/reference/architecture-ddd/reference/internal.md
+workspace/reference/architecture-ddd/reference/final.md
+workspace/reference/architecture-ddd/reference/external.md
+workspace/scripts/validate_skill_docs.py
+workspace/scripts/validate_eval_protocol.py
+workspace/scripts/validate_eval_code_artifacts.py
+workspace/scripts/validate_eval_report_readability.py
+workspace/scripts/run_plugin_eval.py
+workspace/scripts/render_plugin_eval_report.py
+LICENSE
+workspace/docs/reference-index.md
+workspace/docs/spec.md
+workspace/docs/skill-contracts.md
+workspace/docs/skill-authoring.md
+workspace/docs/plugin-structure.md
+workspace/docs/validation-plan.md
+workspace/docs/workflow.md
+workspace/docs/skill-hierarchy.md
+workspace/docs/ddd-implementation-standard.md
+workspace/develop/skill_goal_instructions.md
+workspace/develop/plan.md
+workspace/develop/source-crosswalks/implementation-test.md
+workspace/develop/source-crosswalks/implementation-django.md
+workspace/develop/source-crosswalks/implementation-django-ninja.md
+workspace/develop/source-crosswalks/implementation-cleancode.md
+workspace/develop/source-crosswalks/implementation-tdd.md
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md
+workspace/develop/source-crosswalks/implementation-python.md
+workspace/develop/source-crosswalks/architecture-db.md
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md
+workspace/develop/source-crosswalks/architecture-api.md
+workspace/develop/source-crosswalks/architecture-ddd.md
+workspace/develop/source-crosswalks/implementation-django-web.md
+dddjango/skills/implementation-test/SKILL.md
+plugins/dddjango/skills/implementation-test/SKILL.md
+dddjango/skills/implementation-test/agents/openai.yaml
+plugins/dddjango/skills/implementation-test/agents/openai.yaml
+dddjango/skills/implementation-test/references/pytest-fixtures.md
+dddjango/skills/implementation-test/references/factories-property-tests.md
+dddjango/skills/implementation-test/references/test-doubles.md
+dddjango/skills/implementation-test/references/coverage-mutation.md
+plugins/dddjango/skills/implementation-test/references/pytest-fixtures.md
+plugins/dddjango/skills/implementation-test/references/factories-property-tests.md
+plugins/dddjango/skills/implementation-test/references/test-doubles.md
+plugins/dddjango/skills/implementation-test/references/coverage-mutation.md
+dddjango/skills/implementation-django/SKILL.md
+plugins/dddjango/skills/implementation-django/SKILL.md
+workspace/develop/evals/fixtures/code-artifact-sample/orders/services.py
+dddjango/skills/implementation-django/agents/openai.yaml
+workspace/develop/evals/fixtures/code-artifact-sample/README.md
+plugins/dddjango/skills/implementation-django/agents/openai.yaml
+dddjango/skills/implementation-django/references/services-selectors.md
+dddjango/skills/implementation-django/references/transactions-performance-security.md
+dddjango/skills/implementation-django/references/models-orm.md
+dddjango/skills/implementation-django/references/migrations.md
+workspace/develop/evals/templates/case-analysis.html
+workspace/develop/evals/templates/public-packet.md
+workspace/develop/evals/templates/run-report.html
+workspace/develop/evals/README.md
+plugins/dddjango/skills/implementation-django/references/services-selectors.md
+plugins/dddjango/skills/implementation-django/references/transactions-performance-security.md
+plugins/dddjango/skills/implementation-django/references/models-orm.md
+plugins/dddjango/skills/implementation-django/references/migrations.md
+dddjango/skills/architecture-api/SKILL.md
+plugins/dddjango/skills/architecture-api/SKILL.md
+dddjango/skills/architecture-api/agents/openai.yaml
+workspace/develop/evals/cases/plugin/code-capture.json
+plugins/dddjango/skills/architecture-api/agents/openai.yaml
+dddjango/skills/architecture-api/references/pagination-versioning.md
+dddjango/skills/architecture-api/references/idempotency-openapi.md
+dddjango/skills/architecture-api/references/rest-contracts.md
+dddjango/skills/architecture-api/references/problem-details.md
+plugins/dddjango/skills/architecture-api/references/pagination-versioning.md
+plugins/dddjango/skills/architecture-api/references/idempotency-openapi.md
+plugins/dddjango/skills/architecture-api/references/rest-contracts.md
+plugins/dddjango/skills/architecture-api/references/problem-details.md
+workspace/develop/evals/cases/plugin/public/case-008.md
+workspace/develop/evals/cases/plugin/public/case-009.md
+workspace/develop/evals/cases/plugin/public/case-002.md
+workspace/develop/evals/cases/plugin/public/case-012.md
+workspace/develop/evals/cases/plugin/public/case-006.md
+workspace/develop/evals/cases/plugin/public/case-016.md
+workspace/develop/evals/cases/plugin/public/case-007.md
+workspace/develop/evals/cases/plugin/public/case-017.md
+workspace/develop/evals/cases/plugin/public/case-003.md
+workspace/develop/evals/cases/plugin/public/case-013.md
+workspace/develop/evals/cases/plugin/public/case-004.md
+workspace/develop/evals/cases/plugin/public/case-014.md
+workspace/develop/evals/cases/plugin/public/case-010.md
+workspace/develop/evals/cases/plugin/public/case-101.md
+workspace/develop/evals/cases/plugin/public/case-001.md
+workspace/develop/evals/cases/plugin/public/case-011.md
+workspace/develop/evals/cases/plugin/public/case-005.md
+workspace/develop/evals/cases/plugin/public/case-015.md
+dddjango/skills/workflow-dddjango-subagents/SKILL.md
+plugins/dddjango/skills/workflow-dddjango-subagents/SKILL.md
+plugins/dddjango/skills/architecture-db/SKILL.md
+dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
+plugins/dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
+plugins/dddjango/skills/architecture-db/agents/openai.yaml
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+dddjango/skills/implementation-cleancode/SKILL.md
+plugins/dddjango/skills/architecture-db/references/transactions-locking.md
+plugins/dddjango/skills/architecture-db/references/schema-modeling.md
+plugins/dddjango/skills/architecture-db/references/rollout-constraints.md
+plugins/dddjango/skills/architecture-db/references/constraints-indexes.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+plugins/dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+dddjango/skills/implementation-cleancode/agents/openai.yaml
+plugins/dddjango/skills/implementation-django-web/SKILL.md
+plugins/dddjango/skills/implementation-cleancode/SKILL.md
+plugins/dddjango/skills/implementation-django-web/agents/openai.yaml
+dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
+dddjango/skills/implementation-cleancode/references/responsibility.md
+dddjango/skills/implementation-cleancode/references/legacy-review.md
+dddjango/skills/implementation-cleancode/references/naming-functions.md
+plugins/dddjango/skills/implementation-cleancode/agents/openai.yaml
+dddjango/skills/implementation-tdd/SKILL.md
+plugins/dddjango/skills/implementation-django-web/references/static-assets.md
+plugins/dddjango/skills/implementation-django-web/references/csrf-ajax.md
+plugins/dddjango/skills/implementation-django-web/references/templateview-htmx.md
+plugins/dddjango/skills/implementation-django-web/references/templates.md
+plugins/dddjango/skills/architecture-ddd/SKILL.md
+plugins/dddjango/skills/architecture-implementation-patterns/SKILL.md
+plugins/dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
+dddjango/skills/architecture-ddd/SKILL.md
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md
+dddjango/skills/implementation-django-web/SKILL.md
+dddjango/skills/implementation-python/SKILL.md
+plugins/dddjango/skills/implementation-cleancode/references/responsibility.md
+plugins/dddjango/skills/implementation-cleancode/references/legacy-review.md
+plugins/dddjango/skills/implementation-cleancode/references/naming-functions.md
+plugins/dddjango/skills/implementation-tdd/SKILL.md
+dddjango/skills/implementation-tdd/agents/openai.yaml
+plugins/dddjango/skills/architecture-ddd/agents/openai.yaml
+dddjango/skills/implementation-django-ninja/SKILL.md
+plugins/dddjango/skills/implementation-python/SKILL.md
+plugins/dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
+dddjango/skills/architecture-ddd/agents/openai.yaml
+dddjango/skills/architecture-ddd/references/domain-events.md
+dddjango/skills/architecture-ddd/references/tactical-patterns.md
+dddjango/skills/architecture-ddd/references/strategic-design.md
+dddjango/skills/architecture-ddd/references/context-map.md
+dddjango/skills/implementation-python/agents/openai.yaml
+dddjango/skills/implementation-django-web/agents/openai.yaml
+plugins/dddjango/skills/implementation-django-ninja/agents/openai.yaml
+dddjango/skills/implementation-python/references/protocols-boundaries.md
+dddjango/skills/implementation-python/references/pydantic-v2.md
+dddjango/skills/implementation-python/references/typing.md
+dddjango/skills/implementation-python/references/dataclasses-enums.md
+plugins/dddjango/skills/implementation-tdd/references/test-list.md
+plugins/dddjango/skills/implementation-tdd/references/red-green-refactor.md
+plugins/dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+plugins/dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
+dddjango/skills/implementation-django-ninja/agents/openai.yaml
+dddjango/skills/implementation-tdd/references/test-list.md
+dddjango/skills/implementation-tdd/references/red-green-refactor.md
+dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
+dddjango/skills/architecture-db/SKILL.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+plugins/dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+dddjango/skills/implementation-django-web/references/static-assets.md
+dddjango/skills/implementation-django-web/references/csrf-ajax.md
+dddjango/skills/implementation-django-web/references/templateview-htmx.md
+dddjango/skills/implementation-django-web/references/templates.md
+plugins/dddjango/skills/implementation-python/references/protocols-boundaries.md
+plugins/dddjango/skills/implementation-python/references/pydantic-v2.md
+plugins/dddjango/skills/implementation-python/references/typing.md
+plugins/dddjango/skills/implementation-python/references/dataclasses-enums.md
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md
+plugins/dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+plugins/dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+plugins/dddjango/skills/implementation-django-ninja/references/testclient.md
+plugins/dddjango/skills/implementation-tdd/agents/openai.yaml
+dddjango/skills/architecture-implementation-patterns/SKILL.md
+plugins/dddjango/skills/implementation-python/agents/openai.yaml
+dddjango/skills/implementation-django-ninja/references/testclient.md
+dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+plugins/dddjango/skills/architecture-ddd/references/context-map.md
+plugins/dddjango/skills/architecture-ddd/references/strategic-design.md
+plugins/dddjango/skills/architecture-ddd/references/tactical-patterns.md
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+dddjango/skills/implementation-django-ninja/references/router-schema.md
+plugins/dddjango/skills/architecture-ddd/references/domain-events.md
+dddjango/skills/architecture-db/agents/openai.yaml
+dddjango/skills/architecture-db/references/transactions-locking.md
+dddjango/skills/architecture-db/references/schema-modeling.md
+dddjango/skills/architecture-db/references/rollout-constraints.md
+dddjango/skills/architecture-db/references/constraints-indexes.md
+dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
 
-| 항목 | 확인할 것 |
-|---|---|
-| URL/메서드 | 기존 `/orders/`, `/orders/{id}/`, custom action URL 유지 여부 |
-| status code | `list/detail/create/update/delete/action`별 기존 응답 코드와 Ninja 응답 코드 일치 |
-| 응답 필드 | 필드명, nullable, enum 값, datetime 포맷, nested object 구조 |
-| 요청 검증 | DRF `Serializer` validation error shape와 Ninja/Pydantic validation error shape 차이 |
-| 인증/권한 | DRF permission class, authentication class, object permission 동작 보존 |
-| pagination | DRF pagination의 `count/next/previous/results` 형태 유지 여부 |
-| filter/sort | 기존 query param 이름, 기본 정렬, 빈 결과 동작 |
-| error response | 기존 클라이언트가 DRF error shape에 의존하면 호환 레이어 필요 |
-| OpenAPI | operationId, path param 타입, request/response schema, error responses 명시 차이 |
+exec
+/bin/zsh -lc 'git rev-parse --show-toplevel' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+ succeeded in 1989ms:
+2026-05-10 15:01:28.751 xcodebuild[61625:3166184]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 15:01:28.911 xcodebuild[61625:3166183] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
+git: error: couldn't create cache file '/tmp/xcrun_db-dedCXjGt' (errno=Operation not permitted)
+2026-05-10 15:01:29.419 xcodebuild[61627:3166218]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 15:01:29.579 xcodebuild[61627:3166217] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
 
-권장 구조는 `Router`를 얇게 두고, 주문 생성/취소/조회 같은 비즈니스 규칙은 기존 service/usecase 계층으로 빼는 방식입니다. DRF `Serializer`가 하던 역할은 Ninja `Schema`로 나누되, 기존 클라이언트 호환이 중요하면 응답 스키마 이름과 필드 구조를 먼저 고정해야 합니다.
+codex
+파일 목록상 실제 Django 앱보다는 `dddjango` 플러그인/문서 저장소로 보입니다. 기존 주문 ViewSet 구현이 있는지 먼저 검색하고, 없으면 현재 저장소의 dddjango Ninja/API 기준에 맞춰 마이그레이션 검토안을 제시하겠습니다.
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/router-schema.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-api/references/problem-details.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/architecture-api/references/rest-contracts.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+ succeeded in 0ms:
+# Problem Details
 
-```python
-router = Router(tags=["orders"])
+Load this for RFC 9457 error response design, error field semantics, extension fields, and status/error consistency.
 
-@router.get("/orders/{order_id}", response={200: OrderOut, 404: ProblemDetail})
-def get_order(request, order_id: int):
-    try:
-        order = order_service.get_order(user=request.user, order_id=order_id)
-    except OrderNotFound as exc:
-        return 404, problem_detail(
-            status=404,
-            title="Order not found",
-            detail=str(exc),
-        )
-    return OrderOut.from_domain(order)
-```
+## RFC 9457 Contract
 
-error response는 둘 중 하나를 선택해야 합니다.
+Use `application/problem+json` for API errors unless an existing contract requires another format.
 
-1. 기존 DRF 호환 유지: `{"field": ["message"]}` 또는 `{"detail": "..."}` 형태를 유지합니다. 기존 앱/프론트가 깨질 가능성이 가장 낮습니다.
-2. 새 표준 도입: RFC 9457 Problem Details 형태로 `type/title/status/detail/instance`를 씁니다. 단, 기존 클라이언트에는 breaking change라 버전 분리나 호환 기간이 필요합니다.
+Core fields:
 
-status code는 최소한 아래를 계약 테스트로 고정하는 게 좋습니다.
+- `type`: stable URI identifying the problem type; `about:blank` is the default if omitted.
+- `title`: short summary of the problem type; reuse the same title for the same type.
+- `status`: HTTP status code and must match the actual response.
+- `detail`: occurrence-specific explanation.
+- `instance`: URI identifying this specific occurrence.
 
-```text
-GET /orders/              -> 200
-GET /orders/{id}          -> 200, 404
-POST /orders/             -> 201, Location header 여부 확인
-PATCH /orders/{id}        -> 200 또는 204, 기존 DRF 동작과 일치
-DELETE /orders/{id}       -> 204 또는 기존 동작과 일치
-validation error          -> 기존 400 유지 여부 또는 422 전환 여부 명시
-permission denied         -> 403
-unauthenticated           -> 401
-conflict/cancel failure   -> 409 권장, 기존 동작 있으면 우선 유지
-```
+## Extension Fields
 
-OpenAPI는 DRF에서 Ninja로 바뀌면 schema 생성 방식이 달라지므로, 기존 문서와 새 문서를 비교해야 합니다. 특히 `requestBody`, `responses`, pagination schema, validation error schema, auth security scheme, operationId가 클라이언트 SDK 생성에 영향을 줍니다.
+- Add extension fields only when clients can use them.
+- Document extension fields as part of the problem type.
+- Design clients to ignore extension fields they do not understand.
 
-실제 전환 순서는 이렇게 잡겠습니다.
+## Error Mapping
 
-1. 기존 DRF API의 URL, status code, request/response/error 샘플을 golden contract로 캡처
-2. Ninja `Schema`와 `Router` 작성
-3. DRF error 또는 Problem Details 중 하나로 error adapter 고정
-4. 기존 클라이언트 호환 테스트 작성
-5. OpenAPI JSON diff 확인
-6. 같은 endpoint를 교체하거나 `/v2`로 병행 운영 결정
+- Keep validation, conflict, permission, not-found, rate-limit, and server errors distinguishable.
+- Use `409` for state conflicts or duplicate creation and `422` for semantically invalid request content.
+- Use one consistent error envelope across the API.
+- Do not expose secrets, stack traces, internal class names, or infrastructure topology in `detail`.
 
-Commands actually run:
+## Output Checklist
 
-```bash
-pwd -P
+For each relevant error, record:
+
+- HTTP status;
+- problem `type`;
+- reusable `title`;
+- occurrence-specific `detail` shape;
+- extension fields;
+- whether the error is retryable;
+- OpenAPI response impact.
+
+ succeeded in 0ms:
+# Router And Schema
+
+Use this reference for Django Ninja Router, Schema/ModelSchema, endpoint adapter boundaries, and DRF-to-Ninja conversion. This skill is provisional: exact framework syntax must be verified against the project’s installed Django Ninja version and existing code.
+
+## Router Boundary
+
+- Treat a Router operation as an HTTP adapter, not a business-rule owner.
+- Keep Router code limited to request parsing, auth/permission wiring, schema validation, service/usecase invocation, response mapping, and error translation.
+- Keep URL registration explicit and consistent with the project’s existing Ninja API layout.
+- Move state transitions, invariants, transactional writes, complex ORM query construction, and external SDK calls to model/service/usecase code owned by `implementation-django`.
+- If a route needs a domain decision that has not been made, stop and route to `architecture-ddd` or `architecture-api` as appropriate.
+
+## Schema And ModelSchema
+
+- Use request schemas for input shape and response schemas for output shape; do not expose every model field by default.
+- Separate create/update/list/detail schemas when fields, permissions, or performance needs differ.
+- Keep schema validation focused on transport/input shape. Put reusable domain invariants in model/service/DB boundaries.
+- Avoid leaking internal model names or DB structure when the API contract uses a different public language.
+- Treat field additions as generally compatible and field removals, renames, type changes, new required fields, status-code changes, and error-shape changes as breaking unless versioned.
+
+## DRF-To-Ninja Conversion
+
+- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
+- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
+- Replace DRF-specific pagination, permissions, and exception behavior with the project’s Django Ninja equivalents while preserving the public API contract.
+- Compare old and new endpoint URLs, methods, status codes, response fields, error shapes, auth behavior, pagination, and OpenAPI schema.
+- Use DRF references only to understand the legacy source; do not keep DRF as the greenfield standard.
+
+## Endpoint Review Questions
+
+- Is the HTTP contract already decided by `architecture-api`?
+- Is the Router registered in the expected API namespace/version?
+- Is the Router thin enough that business behavior can be tested without HTTP?
+- Are request and response schemas intentionally scoped to public API fields?
+- Are domain/application errors mapped consistently to Problem Details?
+- Are OpenAPI and compatibility impacts visible in the implementation notes?
+
+ succeeded in 0ms:
+# REST Contracts
+
+Load this for REST resource design, URL structure, HTTP method choice, status codes, headers, authentication/authorization semantics, content negotiation, and cache contracts.
+
+## REST Shape
+
+- Treat resources as nouns identified by stable URIs.
+- Keep the interface uniform: HTTP method, status code, representation, and headers must carry the contract.
+- Keep requests stateless; every request contains what the server needs to process it.
+- Balance REST purity with practical client workflow needs.
+
+## URL And Resource Design
+
+- Use plural nouns, lowercase kebab-case, and no trailing slash.
+- Do not expose database table names or internal implementation structures in URLs.
+- Use parent-child subresources when the relationship is part of the client workflow, but avoid nesting deeper than three levels.
+- Use query parameters for filtering, sorting, search, sparse fieldsets, and pagination.
+
+## HTTP Methods
+
+- `GET`, `HEAD`, and `OPTIONS` are safe and idempotent.
+- `POST` creates resources or triggers non-idempotent actions.
+- `PUT` replaces a whole resource and should be idempotent.
+- `PATCH` updates part of a resource; confirm whether the patch document itself is idempotent.
+- `DELETE` removes a resource and should be idempotent from the client contract perspective.
+
+## Status Codes
+
+- Use 2xx for successful processing, 3xx for required follow-up action, 4xx for client/request problems, and 5xx for server-side or temporary service failures.
+- `200 OK`: successful read or update with a response body.
+- `201 Created`: successful creation; include `Location` for the new resource when possible.
+- `202 Accepted`: asynchronous or long-running work accepted but not completed.
+- `204 No Content`: successful delete or update with no body.
+- `303 See Other`: redirect to a GET result after POST when applying PRG.
+- `400 Bad Request`: malformed request syntax or shape.
+- `401 Unauthorized`: authentication is missing or invalid.
+- `403 Forbidden`: authenticated principal lacks permission.
+- `404 Not Found`: resource missing or intentionally hidden.
+- `409 Conflict`: duplicate creation or concurrent state conflict.
+- `422 Unprocessable Entity`: syntactically valid but semantically invalid request.
+- `429 Too Many Requests`: rate limit exceeded.
+- `500 Internal Server Error`: unexpected server failure.
+- `503 Service Unavailable`: temporary overload or maintenance; include retry guidance when possible.
+
+## Headers And Representation
+
+- Use `Content-Type` to state representation format.
+- Use `Accept`, `Accept-Language`, and `Accept-Encoding` for content negotiation when the API supports multiple representations.
+- Use `Cache-Control`, `ETag`/`If-None-Match`, or `Last-Modified`/`If-Modified-Since` when caching is part of the contract.
+- Return `304 Not Modified` only when validators show the representation has not changed.
+
+## Auth And Security
+
+- Authentication asks who the caller is; authorization asks what that caller may do.
+- Return `401` for missing or invalid authentication and `403` for authenticated but unauthorized access.
+- For `401`, include `WWW-Authenticate` when the client needs to know the authentication method.
+- Choose the mechanism by client type: API keys for simple server-to-server/internal APIs, OAuth 2.0 for delegated third-party access, and bearer JWTs for stateless service or user-token contracts when expiry and revocation are addressed.
+- Put credentials in `Authorization`, not query parameters.
+- Require HTTPS for APIs that carry credentials, personal data, or sensitive business actions.
+
+exec
+/bin/zsh -lc "rg -n \"\\b(Order|orders|OrderViewSet|ViewSet|Serializer|rest_framework|ninja|Router|Schema)\\b\" -g '"'!workspace/reference/**'"' -g '"'!workspace/develop/evals/cases/**'"' -g '"'!**/.git/**'"' -g '"'!**/*rubric*'"' -g '"'!**/*prior*'"' -g '"'!**/*finding*'"'" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+ succeeded in 0ms:
+workspace/scripts/validate_skill_docs.py:39:    "implementation-django-ninja",
+workspace/scripts/validate_skill_docs.py:49:    "implementation-django-ninja",
+workspace/scripts/validate_skill_docs.py:63:    "API Agent": ["architecture-api", "implementation-django-ninja"],
+workspace/scripts/validate_skill_docs.py:77:    "API Agent": re.compile(r"\|\s*API Agent\s*\|[^|\n]*\|[^|\n]*`architecture-api`[^|\n]*`implementation-django-ninja`", re.MULTILINE),
+workspace/scripts/run_plugin_eval.py:293:        "dddjango:implementation-django-ninja",
+workspace/scripts/render_plugin_eval_report.py:95:        "title": "Order Creation Composite Workflow",
+workspace/scripts/render_plugin_eval_report.py:133:        "prompt": "Order.memo를 note로 바꾸는 작은 변경에서 과한 DDD/workflow를 피하는지 확인.",
+workspace/scripts/render_plugin_eval_report.py:214:        "baseline_good": "Ninja-like Router/Schema, status code, Problem Details, OpenAPI, API tests를 포함하고 DRF를 권장하지 않음.",
+workspace/scripts/render_plugin_eval_report.py:216:        "with_good": "resource-oriented endpoint, `Idempotency-Key` header, Problem Details, OpenAPI, Test Plan, thin Router/usecase 분리를 명확히 제시.",
+workspace/scripts/render_plugin_eval_report.py:230:        "baseline_good": "DRF를 legacy input으로 보고 Router/Schema mapping, compatibility, status/error/OpenAPI diff를 다룸.",
+workspace/scripts/render_plugin_eval_report.py:232:        "with_good": "기존 외부 계약 고정, Router/Schema 전환, error compatibility 선택지, OpenAPI diff, 단계적 전환 순서를 명확히 제시.",
+workspace/docs/reference-index.md:19:| Django Ninja | 전용 source reference 필요. 임시로 `architecture-api/reference/final.md`와 사용자 제품 결정을 조합 | Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient |
+workspace/docs/reference-index.md:44:| `implementation-django-ninja` | 전용 Django Ninja source reference가 필요하다. 만들기 전까지 DRF 문서를 신규 구현 근거로 사용하지 않는다. |
+workspace/docs/reference-index.md:61:신규 API 구현은 `implementation-django-ninja` 기준으로 작성한다.
+workspace/docs/spec.md:54:- `implementation-django-ninja`: 유스케이스와 API 계약을 Django Ninja Schema, Router, auth, pagination, FilterSchema, Problem Details, TestClient로 구현한다.
+workspace/docs/skill-contracts.md:33:- Django model, Router, migration 코드 구현을 직접 소유하지 않는다.
+workspace/docs/skill-contracts.md:120:- Django Ninja 구현 세부는 `implementation-django-ninja`가 담당한다.
+workspace/docs/skill-contracts.md:150:## `implementation-django-ninja`
+workspace/docs/skill-contracts.md:154:- API 계약을 Django Ninja Router, Schema, auth, pagination, FilterSchema, Problem Details, TestClient로 구현한다.
+workspace/docs/skill-contracts.md:166:- Router
+workspace/docs/skill-contracts.md:167:- Schema/ModelSchema
+workspace/docs/skill-contracts.md:175:- DRF ViewSet/Serializer/APIView를 신규 표준으로 만들지 않는다.
+workspace/docs/skill-authoring.md:18:`architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`은 전용 source reference가 아직 부족하다. 이 세 skill은 전용 reference를 먼저 만들거나 provisional skill로 표시한 뒤 작성한다.
+workspace/docs/skill-authoring.md:31:| `architecture-api` | REST API contract design: resources, URL, methods, status codes, Problem Details, pagination, versioning, rate limit, idempotency, OpenAPI. | REST 설계, API 계약, 상태 코드, 오류 형식, OpenAPI | Django Ninja code는 `implementation-django-ninja` |
+workspace/docs/skill-authoring.md:32:| `implementation-django` | Django implementation: models, ORM, QuerySet, Manager, service, selector, migration files, transaction, settings, security, performance. | Django model, migration, service, selector, ORM 최적화 | API Router/Schema는 `implementation-django-ninja`; web template은 `implementation-django-web` |
+workspace/docs/skill-authoring.md:33:| `implementation-django-ninja` | Provisional until dedicated source reference exists; Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient. Use fallback source until finalized. Convert DRF greenfield requests to Ninja. | Django Ninja, Router, Schema, DRF-to-Ninja, API test | DRF ViewSet/Serializer/APIView 신규 구현 금지 |
+workspace/docs/skill-authoring.md:34:| `implementation-django-web` | Provisional until dedicated source reference exists; Django web/template/static implementation: TemplateView, templates, static files, base template, component include, HTMX, CSRF for AJAX. Use fallback source until finalized. | template, static, CSS/JS, TemplateView, HTMX | REST API는 `implementation-django-ninja` |
+workspace/docs/skill-authoring.md:67:| `implementation-django-ninja` | Django Ninja Implementation | Provisional until dedicated source reference exists; use fallback source to implement Django Ninja routers, schemas, auth, errors, OpenAPI, and API tests. | `$implementation-django-ninja` |
+workspace/docs/plugin-structure.md:64:    implementation-django-ninja/
+workspace/docs/plugin-structure.md:193:`architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`은 현재 전용 source reference가 부족하다. 이 세 skill은 다음 중 하나를 만족하기 전까지 완성된 runtime skill로 표시하지 않는다.
+workspace/docs/plugin-structure.md:207:| `implementation-django-ninja` | provisional until dedicated source reference exists | `router-schema.md`, `auth-pagination-filtering.md`, `problem-details-openapi.md`, `testclient.md` |
+workspace/docs/validation-plan.md:54:- DRF Serializer/ViewSet 신규 구현
+workspace/docs/validation-plan.md:84:기존 DRF ViewSet 주문 API를 Django Ninja로 전환해줘. 기존 클라이언트 호환성도 확인해줘.
+workspace/docs/validation-plan.md:89:- 기존 DRF ViewSet/Serializer API를 Django Ninja Router/Schema로 전환한다.
+workspace/docs/validation-plan.md:105:Order 모델이 너무 커졌는지 dddjango 기준으로 리뷰해줘. 어떤 로직을 남기고 어떤 로직을 service/usecase로 뺄지 판단해줘.
+workspace/docs/validation-plan.md:225:Order 모델의 memo 필드를 note로 바꾸는 작은 Django 수정만 해줘. subagent 계획은 필요 없어.
+workspace/docs/workflow.md:46:| API Agent | REST 계약, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+workspace/docs/workflow.md:107:- API contract: Django Ninja Router/Schema, status code, Problem Details, OpenAPI 영향, DRF 신규 구현 금지를 확인한다.
+workspace/docs/workflow.md:126:| Django Ninja Router/Schema/API 구현 | 전용 source reference 필요. 임시로 `architecture-api`와 제품 결정을 조합. DRF section은 신규 구현에 사용하지 않음 | `dddjango/skills/implementation-django-ninja/references/*.md`; provisional이면 표시 필요 |
+workspace/docs/skill-hierarchy.md:16:      - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:26:      - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:37:      - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:42:    - `implementation-django-ninja`
+workspace/docs/ddd-implementation-standard.md:146:- 컬렉션은 `list[Order]`, `dict[str, int]`처럼 내부 타입을 드러낸다.
+workspace/develop/skill_goal_instructions.md:56:3. `implementation-django-ninja`
+workspace/develop/skill_goal_instructions.md:204:- `implementation-django-ninja`
+workspace/develop/skill_goal_instructions.md:226:- REST API contract는 `architecture-api`가 설계하고 `implementation-django-ninja`가 구현한다.
+workspace/develop/skill_goal_instructions.md:236:- 신규 greenfield API에 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`를 표준으로 권장하지 않는다.
+workspace/develop/skill_goal_instructions.md:237:- Router, view, template에 핵심 비즈니스 규칙을 두라고 안내하지 않는다.
+workspace/develop/plan.md:102:- [x] `implementation-django-ninja_rubric.md`: Django Ninja 구현, DRF-to-Ninja migration, fat Router 방지 prompt 보강; findings 0.
+workspace/develop/plan.md:129:- [x] `implementation-django-ninja`를 구현한다.
+workspace/develop/plan.md:188:| `implementation-django-ninja` | completed | blocking 0, major 0, minor 0 after fixing test boundary wording, `architecture-db` idempotency/locking routing, Korean trigger coverage, content negotiation delegation, and crosswalk heading coverage | positive, DRF migration/boundary, Korean auth/pagination/filtering, idempotency storage/locking, short-explanation negative, and greenfield DRF anti-trigger prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for short explanation and greenfield DRF behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Provisional status and fallback source remain explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. TestClient/OpenAPI/pytest were not run because these were skill evaluation prompts, not an app implementation. |
+workspace/develop/source-crosswalks/implementation-test.md:72:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API framework choice outside test implementation. |
+workspace/develop/source-crosswalks/implementation-test.md:82:| `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | `SKILL.md` Routing | Production implementation routes away; tests are owned here. |
+workspace/develop/source-crosswalks/implementation-test.md:157:| `### 6.4 pytest-randomly` | included | `pytest-fixtures.md`, `coverage-mutation.md` | Order dependence and seed reporting included. |
+dddjango/skills/implementation-django/SKILL.md:4:  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration test acceptance criteria. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, implementation-test for pytest/fixture/test code details, workflow-dddjango-subagents for composite or risky Django/DDD work, and architecture-ddd or architecture-db when domain or DB contracts are undecided.
+dddjango/skills/implementation-django/SKILL.md:15:- If the work is REST API contract design, use `architecture-api`; if it is Django Ninja Router/Schema endpoint implementation, use `implementation-django-ninja`.
+dddjango/skills/implementation-django/SKILL.md:35:- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+workspace/develop/source-crosswalks/implementation-django.md:58:| `## implementation-django-ninja` | delegated-to-other-skill | `SKILL.md` Routing | Router/Schema/API endpoint work routes to Ninja implementation. |
+workspace/develop/source-crosswalks/implementation-django.md:94:| `## 9. API 매핑` | delegated-to-other-skill | `implementation-django-ninja` | API adapter implementation belongs to Ninja skill. |
+workspace/develop/source-crosswalks/implementation-django.md:115:| `### 1.4 URL 설계 철학` | delegated-to-other-skill | `implementation-django-web`, `implementation-django-ninja` | URL/API/page routing is not this skill’s main responsibility. |
+workspace/develop/source-crosswalks/implementation-django.md:140:| `### 5.4 annotate()와 aggregate()` | included | `models-orm.md` | Order sensitivity and alias included. |
+workspace/develop/source-crosswalks/implementation-django.md:151:| `## 8. Django REST Framework 패턴` | delegated-to-other-skill | `implementation-django-ninja` | DRF is legacy/migration/comparison only. |
+workspace/develop/source-crosswalks/implementation-django.md:152:| `### 8.1 Serializer 설계` | delegated-to-other-skill | `implementation-django-ninja` | Not new API standard. |
+workspace/develop/source-crosswalks/implementation-django.md:153:| `### 8.2 ViewSet과 Router` | delegated-to-other-skill | `implementation-django-ninja` | Not new API standard. |
+workspace/develop/source-crosswalks/implementation-django.md:154:| `### 8.3 Permission 패턴` | delegated-to-other-skill | `implementation-django-ninja` | API permission detail. |
+workspace/develop/source-crosswalks/implementation-django.md:155:| `### 8.4 Pagination 설정` | delegated-to-other-skill | `implementation-django-ninja` | API pagination detail. |
+workspace/develop/source-crosswalks/implementation-django.md:156:| `### 8.5 API 버전 관리` | delegated-to-other-skill | `architecture-api`, `implementation-django-ninja` | API contract responsibility. |
+plugins/dddjango/skills/implementation-django/SKILL.md:4:  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration test acceptance criteria. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, implementation-test for pytest/fixture/test code details, workflow-dddjango-subagents for composite or risky Django/DDD work, and architecture-ddd or architecture-db when domain or DB contracts are undecided.
+plugins/dddjango/skills/implementation-django/SKILL.md:15:- If the work is REST API contract design, use `architecture-api`; if it is Django Ninja Router/Schema endpoint implementation, use `implementation-django-ninja`.
+plugins/dddjango/skills/implementation-django/SKILL.md:35:- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+workspace/develop/source-crosswalks/implementation-django-ninja.md:1:# Source Coverage Crosswalk: implementation-django-ninja
+workspace/develop/source-crosswalks/implementation-django-ninja.md:5:- Skill: `implementation-django-ninja`
+workspace/develop/source-crosswalks/implementation-django-ninja.md:6:- Runtime target: `dddjango/skills/implementation-django-ninja/`
+workspace/develop/source-crosswalks/implementation-django-ninja.md:39:| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean/mixed triggers include Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, and DRF ViewSet/APIView/Serializer를 Ninja로 전환. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:48:| `## 2. 목표 구조` / `## 2.1 Runtime 동기화 기준` | included | `dddjango/skills/implementation-django-ninja/` | Plugin-bundled structure used; no cache edits. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:53:| `## 7. Runtime Reference Split Plan` | included | four reference files | Used exact split for `implementation-django-ninja`. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:60:| `## implementation-django-ninja` | included | `SKILL.md`, all references | Router, URL registration, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient covered. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:91:| `## 4. 애그리거트와 불변식` | merged | `SKILL.md`, `router-schema.md` | Router must not own invariants. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:93:| `## 6. Application Service와 Domain Service` | merged | `SKILL.md`, `router-schema.md` | Router calls usecase/service; does not own core rules. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:96:| `## 9. API 매핑` | included | `SKILL.md`, all references | Thin Router, Problem Details, response schema, OpenAPI included. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:114:| `### 1.2 구성 요소` | included | `router-schema.md` | Resource/method/representation mapped to Router/Schema. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:164:| `### 13.2 용도` | merged | `problem-details-openapi.md` | Schema tests/consistency reflected. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:168:| `### 8.1 Serializer 설계` | merged | `router-schema.md` | Converted to request/response schema split; not DRF standard. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:169:| `### 8.2 ViewSet과 Router` | merged | `router-schema.md` | Converted to explicit Ninja operations; no greenfield DRF. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:179:- Rubric review: fixed 2 source-backed minor runtime issues after opening rubric: made simple explanation/tiny Router edit anti-overapplication explicit, and added URL registration plus `FilterSchema` coverage. Eval-only rubric material was not copied into runtime docs. Blocking 0, major 0, minor 0 after fix.
+workspace/develop/source-crosswalks/implementation-cleancode.md:66:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API/DRF routing outside clean-code skill. |
+workspace/develop/source-crosswalks/implementation-cleancode.md:77:| `## implementation-django` | delegated-to-other-skill | `SKILL.md` Routing | Concrete ORM/migration/settings implementation routes to Django skill; Fat Model and View/Router business-logic reviews stay centered in this skill. |
+workspace/develop/source-crosswalks/implementation-cleancode.md:78:| `## implementation-django-ninja` | delegated-to-other-skill | `SKILL.md` Routing | Router/Schema/API work routes to Ninja skill. |
+workspace/develop/source-crosswalks/implementation-cleancode.md:101:| `## 9. API 매핑` | delegated-to-other-skill | `implementation-django-ninja` | API adapter work routes away. |
+workspace/develop/source-crosswalks/implementation-cleancode.md:113:| `validation-plan.md` `### 주문 생성 API` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API contract and Django Ninja implementation are not clean-code primary work. |
+workspace/develop/source-crosswalks/implementation-cleancode.md:115:| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja` | DRF migration and API compatibility belong to the Ninja skill. |
+workspace/develop/source-crosswalks/implementation-cleancode.md:117:| `### View Logic 리뷰` | included | `SKILL.md`, `responsibility.md`, `encapsulation-abstraction.md` | View/Router business-logic review remains centered in this skill while adapter/application/domain responsibilities are separated. |
+workspace/develop/source-crosswalks/implementation-tdd.md:67:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API/DRF routing outside TDD skill. |
+workspace/develop/source-crosswalks/implementation-tdd.md:77:| `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | `SKILL.md` Routing | Framework implementation follows once tests clarify target behavior. |
+workspace/develop/source-crosswalks/implementation-tdd.md:108:| `validation-plan.md` `### 주문 생성 API` | delegated-to-other-skill | `workflow-dddjango-subagents`, `architecture-ddd`, `architecture-api`, `architecture-db`, `implementation-django-ninja`, `implementation-test` | Composite API/domain/DB/test work routes through workflow and adjacent skills; TDD can own test-list/Red-Green-Refactor portions after contracts are clear. |
+workspace/develop/source-crosswalks/implementation-tdd.md:110:| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `implementation-test` | Migration/API implementation and API test mechanics are not TDD-method primary work. |
+dddjango/skills/implementation-django/references/transactions-performance-security.md:18:- `Idempotency-Key` API behavior, coordinated with `architecture-api` and `implementation-django-ninja` when the risky write is exposed over HTTP
+plugins/dddjango/skills/implementation-django/references/transactions-performance-security.md:18:- `Idempotency-Key` API behavior, coordinated with `architecture-api` and `implementation-django-ninja` when the risky write is exposed over HTTP
+dddjango/skills/implementation-django/references/models-orm.md:3:Use this reference for Django app layout, settings access, models, fields, validation, QuerySets, managers, forms, views, and signals. For API Router/Schema work use `implementation-django-ninja`; for templates/static/frontend work use `implementation-django-web`.
+dddjango/skills/implementation-django/references/models-orm.md:8:- Keep apps aligned to cohesive domain concepts such as `orders`, `payments`, or `users`. Reconsider an app that cannot be described in one sentence or creates circular dependencies.
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:81:| `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | included | `role-map.md`, `integration-checklist.md` | Django, API implementation, and web/static responsibilities included. |
+plugins/dddjango/skills/implementation-django/references/models-orm.md:3:Use this reference for Django app layout, settings access, models, fields, validation, QuerySets, managers, forms, views, and signals. For API Router/Schema work use `implementation-django-ninja`; for templates/static/frontend work use `implementation-django-web`.
+plugins/dddjango/skills/implementation-django/references/models-orm.md:8:- Keep apps aligned to cohesive domain concepts such as `orders`, `payments`, or `users`. Reconsider an app that cannot be described in one sentence or creates circular dependencies.
+dddjango/skills/architecture-implementation-patterns/SKILL.md:27:- If the user asks to edit Django model, service, selector, migration, Router, template, or Python code after the pattern is already decided, use the relevant implementation skill.
+workspace/develop/source-crosswalks/implementation-django-web.md:33:| `## 구현 순서` | included | plan order | This follows `implementation-django-ninja` and precedes `implementation-python`. |
+workspace/develop/source-crosswalks/implementation-django-web.md:73:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API/DRF work routes away from this skill. |
+workspace/develop/source-crosswalks/implementation-django-web.md:83:| `## architecture-api` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | REST contract/API work routes away. |
+workspace/develop/source-crosswalks/implementation-django-web.md:85:| `## implementation-django-ninja` | delegated-to-other-skill | `SKILL.md` Routing | Router/Schema/API error/OpenAPI work routes to Ninja skill. |
+workspace/develop/source-crosswalks/implementation-django-web.md:116:| `## 9. API 매핑` | delegated-to-other-skill | `implementation-django-ninja` | API adapter work belongs to Ninja skill. |
+workspace/develop/source-crosswalks/implementation-django-web.md:154:| `## 8. Django REST Framework 패턴` | delegated-to-other-skill | `implementation-django-ninja` | DRF/API work is not web skill responsibility. |
+plugins/dddjango/skills/architecture-api/SKILL.md:4:  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+plugins/dddjango/skills/architecture-api/SKILL.md:17:- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
+plugins/dddjango/skills/architecture-api/SKILL.md:18:- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+plugins/dddjango/skills/architecture-api/SKILL.md:36:- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
+plugins/dddjango/skills/architecture-api/SKILL.md:41:- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
+workspace/develop/source-crosswalks/architecture-db.md:72:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API framework choice outside DB design. |
+workspace/develop/source-crosswalks/architecture-db.md:84:| `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | implementation skills | API router/web template implementation is outside DB architecture. |
+workspace/develop/source-crosswalks/architecture-db.md:119:| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API migration routes away; DB applies only if schema/storage impact is present. |
+workspace/develop/source-crosswalks/architecture-api.md:51:| `### Implementation Mapping` | delegated-to-other-skill | `implementation-django-ninja`, `SKILL.md` Routing | Concrete Router/Schema/API test implementation routes away after contract design. |
+workspace/develop/source-crosswalks/architecture-api.md:72:| `## DRF Guardrail` | delegated-to-other-skill | `SKILL.md`, `implementation-django-ninja` | Greenfield DRF implementation terms route to Django Ninja implementation while API contract remains framework-neutral. |
+workspace/develop/source-crosswalks/architecture-api.md:83:| `## implementation-django-ninja` | delegated-to-other-skill | `SKILL.md` Routing | Router/Schema/auth/TestClient implementation routes away after contract. |
+workspace/develop/source-crosswalks/architecture-api.md:119:| `### DRF to Django Ninja 전환` | included | `SKILL.md`, `rest-contracts.md`, `problem-details.md`, `implementation-django-ninja` | API owns compatibility, status/error/OpenAPI contract effects; concrete Django Ninja conversion routes to implementation. |
+workspace/develop/source-crosswalks/architecture-api.md:120:| `### Fat Model 리뷰`, `### View Logic 리뷰` | delegated-to-other-skill | `implementation-cleancode`, `architecture-ddd` | Review and ownership decisions route away unless API adapter contract or Router boundary is the main issue. |
+dddjango/skills/architecture-api/SKILL.md:4:  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+dddjango/skills/architecture-api/SKILL.md:17:- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
+dddjango/skills/architecture-api/SKILL.md:18:- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+dddjango/skills/architecture-api/SKILL.md:36:- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
+dddjango/skills/architecture-api/SKILL.md:41:- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
+dddjango/skills/implementation-django-ninja/SKILL.md:2:name: implementation-django-ninja
+dddjango/skills/implementation-django-ninja/SKILL.md:4:  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+dddjango/skills/implementation-django-ninja/SKILL.md:19:- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+dddjango/skills/implementation-django-ninja/SKILL.md:26:- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+dddjango/skills/implementation-django-ninja/SKILL.md:28:- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+dddjango/skills/implementation-django-ninja/SKILL.md:32:- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
+dddjango/skills/implementation-django-ninja/SKILL.md:39:- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
+dddjango/skills/implementation-django-ninja/SKILL.md:40:- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
+dddjango/skills/implementation-django-web/SKILL.md:4:  Provisional until dedicated source reference exists; use with fallback source for Django web/template/static implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, view auth/permissions, and web render acceptance checks. Use for Django 페이지, 템플릿/정적 파일, 화면 폼, 렌더링 확인, TemplateView 주문 상세, HTMX/CSRF. Prefer implementation-test for pytest/browser test mechanics, workflow-dddjango-subagents for composite/subagent work, implementation-django-ninja or architecture-api for REST APIs, and implementation-django or architecture-db for ORM/DB/migration work.
+dddjango/skills/implementation-django-web/SKILL.md:19:- If the request is REST API implementation with Router, Schema, Problem Details API error, or OpenAPI wiring, use `implementation-django-ninja`.
+dddjango/skills/implementation-django-web/SKILL.md:26:- Korean trigger boundary: `템플릿`, `정적 파일`, `화면`, `폼`, `렌더링`, `HTMX`, `CSRF` belong here; `REST API/Router/Schema`는 `implementation-django-ninja` 또는 `architecture-api`, `ORM/마이그레이션/트랜잭션`은 `implementation-django` 또는 `architecture-db`, `복합/위험 작업`은 `workflow-dddjango-subagents`로 보낸다.
+plugins/dddjango/skills/architecture-implementation-patterns/SKILL.md:27:- If the user asks to edit Django model, service, selector, migration, Router, template, or Python code after the pattern is already decided, use the relevant implementation skill.
+plugins/dddjango/skills/workflow-dddjango-subagents/SKILL.md:35:| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
+plugins/dddjango/skills/workflow-dddjango-subagents/SKILL.md:36:| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+workspace/develop/source-crosswalks/implementation-python.md:66:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API/DRF routing outside Python skill. |
+workspace/develop/source-crosswalks/implementation-python.md:78:| `## implementation-django-ninja` | delegated-to-other-skill | `SKILL.md` Routing | Router/Schema/API tests route to Ninja skill. |
+workspace/develop/source-crosswalks/implementation-python.md:103:| `## 9. API 매핑` | delegated-to-other-skill | `implementation-django-ninja` | API adapter implementation routes away. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:76:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API framework choice outside implementation-pattern selection. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:85:| `## architecture-db` / `## architecture-api` | delegated-to-other-skill | `SKILL.md` Routing | Schema/transaction/API contract design routes away. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:86:| `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | implementation skills | Concrete Django code routes away after pattern decision. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:110:| `## 9. API 매핑` | delegated-to-other-skill | `architecture-api`, `implementation-django-ninja` | API contract design and implementation route away; adapter boundary retained. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:122:| `validation-plan.md` `### 주문 생성 API` | merged | `SKILL.md`, `outbox-acl.md`, `repository-uow.md` | Order creation can need service layer, transaction owner, outbox, and idempotency storage decisions before DB/API/test details route away. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:124:| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API framework migration and REST contract decisions route away; pattern skill may only advise adapter boundaries if needed. |
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md:7:## Selection Order
+workspace/develop/source-crosswalks/architecture-ddd.md:72:| `## DRF Guardrail` | delegated-to-other-skill | `implementation-django-ninja` | API framework choice outside DDD modeling. |
+workspace/develop/source-crosswalks/architecture-ddd.md:81:| `## architecture-db` / `## architecture-api` | delegated-to-other-skill | `SKILL.md` Routing | Schema/transaction/API contract design routes away after DDD boundaries. |
+workspace/develop/source-crosswalks/architecture-ddd.md:82:| `## implementation-django` / `## implementation-django-ninja` / `## implementation-django-web` | delegated-to-other-skill | `SKILL.md` Routing | Django code implementation is outside DDD modeling. |
+workspace/develop/source-crosswalks/architecture-ddd.md:104:| `## 9. API 매핑` | delegated-to-other-skill | `architecture-api`, `implementation-django-ninja` | REST/API implementation routes away. |
+workspace/develop/source-crosswalks/architecture-ddd.md:108:| `## 2. 대표 시나리오` | merged | `SKILL.md`, references | Order API and coupon policy scenarios need DDD decisions before implementation/test. |
+workspace/develop/source-crosswalks/architecture-ddd.md:116:| `validation-plan.md` `### 주문 생성 API` | included | `SKILL.md`, `tactical-patterns.md`, `domain-events.md` | Order creation needs use case, invariant, aggregate/consistency boundary, event timing, and handoff decisions before DB/API/test implementation. |
+workspace/develop/source-crosswalks/architecture-ddd.md:118:| `### DRF to Django Ninja 전환` | delegated-to-other-skill | `implementation-django-ninja`, `architecture-api` | API framework migration routes away unless domain language or adapter business-rule ownership is unclear. |
+dddjango/skills/implementation-cleancode/SKILL.md:4:  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍/이름, 함수 분리, 비대한 모델/긴 함수/흩어진 로직, 캡슐화, 추상화, 중복 제거, 오류 처리, 레거시, 코드 냄새/스멜, 유지보수. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-python for Python typing, implementation-django for concrete Django ORM/migrations, implementation-django-ninja for Router/Schema API implementation, and workflow-dddjango-subagents for composite/subagent work.
+dddjango/skills/implementation-cleancode/SKILL.md:17:- If concrete Django ORM, migration, QuerySet, transaction, settings, or service/selector implementation details are primary, use `implementation-django`; keep this skill central for Fat Model, View/Router business-logic, responsibility, duplication, naming, or maintainability reviews.
+dddjango/skills/implementation-cleancode/SKILL.md:18:- If API Router/Schema/status/error implementation is the main work, use `implementation-django-ninja`.
+workspace/develop/evals/fixtures/code-artifact-sample/README.md:5:The intended change for `case-101` is to implement `orders.services.create_order_summary()` so it returns a dictionary with `total` and `line_count`.
+dddjango/skills/implementation-django-ninja/agents/openai.yaml:4:  default_prompt: "Use $implementation-django-ninja to implement Django Ninja routers, schemas, auth, errors, OpenAPI, and TestClient acceptance criteria."
+dddjango/skills/implementation-python/references/pydantic-v2.md:9:- If Django Ninja schemas already own API serialization, coordinate with `implementation-django-ninja` before adding separate pydantic DTOs.
+dddjango/skills/implementation-python/SKILL.md:4:  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Enum/StrEnum/열거형, Protocol/프로토콜 boundary, pydantic v2 런타임 검증, 비동기, 예외 처리, modern Python. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-django-ninja for Router/Schema/API implementation, implementation-cleancode for general refactoring, implementation-django for ORM/migrations, and implementation-test for pytest.
+dddjango/skills/implementation-python/SKILL.md:16:- If the main work is Django Ninja Router/Schema/API tests, use `implementation-django-ninja`.
+dddjango/skills/implementation-python/SKILL.md:32:- Prefer `T | None`, `A | B`, and built-in generics such as `list[Order]` when the project target supports them.
+dddjango/skills/workflow-dddjango-subagents/SKILL.md:35:| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
+dddjango/skills/workflow-dddjango-subagents/SKILL.md:36:| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+dddjango/skills/implementation-python/references/typing.md:9:- Use built-in collection generics such as `list[Order]`, `dict[str, int]`, and `tuple[str, ...]`.
+plugins/dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md:7:## Selection Order
+dddjango/skills/architecture-db/references/schema-modeling.md:1:# Schema Modeling
+dddjango/skills/implementation-django-web/references/templateview-htmx.md:48:- Coordinate API-like JSON behavior with `implementation-django-ninja` instead of turning HTMX views into ad hoc REST APIs.
+dddjango/skills/architecture-ddd/SKILL.md:38:- If the target design puts core business rules in a Router, view, template, serializer/schema, or other adapter, identify it as a boundary problem and move the rule to domain or application responsibility before implementation.
+dddjango/skills/architecture-ddd/SKILL.md:42:- Do not write Django model, Router, migration, or test code during DDD-only modeling. In combined work, make the DDD decisions first and hand implementation to the relevant skills or assigned implementation step.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:1:# Router And Schema
+dddjango/skills/implementation-django-ninja/references/router-schema.md:3:Use this reference for Django Ninja Router, Schema/ModelSchema, endpoint adapter boundaries, and DRF-to-Ninja conversion. This skill is provisional: exact framework syntax must be verified against the project’s installed Django Ninja version and existing code.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:5:## Router Boundary
+dddjango/skills/implementation-django-ninja/references/router-schema.md:7:- Treat a Router operation as an HTTP adapter, not a business-rule owner.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:8:- Keep Router code limited to request parsing, auth/permission wiring, schema validation, service/usecase invocation, response mapping, and error translation.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:13:## Schema And ModelSchema
+dddjango/skills/implementation-django-ninja/references/router-schema.md:23:- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:24:- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:32:- Is the Router registered in the expected API namespace/version?
+dddjango/skills/implementation-django-ninja/references/router-schema.md:33:- Is the Router thin enough that business behavior can be tested without HTTP?
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md:34:- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
+plugins/dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:21:- API contract: Django Ninja Router/Schema mapping, status codes, Problem Details, OpenAPI impact, and no greenfield DRF implementation are confirmed.
+plugins/dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:22:- Implementation mapping: domain logic is not owned by Router, view, schema, or template; Django service/selector/model boundaries are clear.
+dddjango/skills/architecture-db/references/rollout-constraints.md:16:## Performance Order
+dddjango/skills/architecture-db/references/constraints-indexes.md:25:- Order columns by the query shapes the index must serve.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:2:name: implementation-django-ninja
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:4:  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:19:- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:26:- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:28:- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:32:- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:39:- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
+plugins/dddjango/skills/implementation-django-ninja/SKILL.md:40:- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
+plugins/dddjango/skills/implementation-django-web/SKILL.md:4:  Provisional until dedicated source reference exists; use with fallback source for Django web/template/static implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, view auth/permissions, and web render acceptance checks. Use for Django 페이지, 템플릿/정적 파일, 화면 폼, 렌더링 확인, TemplateView 주문 상세, HTMX/CSRF. Prefer implementation-test for pytest/browser test mechanics, workflow-dddjango-subagents for composite/subagent work, implementation-django-ninja or architecture-api for REST APIs, and implementation-django or architecture-db for ORM/DB/migration work.
+plugins/dddjango/skills/implementation-django-web/SKILL.md:19:- If the request is REST API implementation with Router, Schema, Problem Details API error, or OpenAPI wiring, use `implementation-django-ninja`.
+plugins/dddjango/skills/implementation-django-web/SKILL.md:26:- Korean trigger boundary: `템플릿`, `정적 파일`, `화면`, `폼`, `렌더링`, `HTMX`, `CSRF` belong here; `REST API/Router/Schema`는 `implementation-django-ninja` 또는 `architecture-api`, `ORM/마이그레이션/트랜잭션`은 `implementation-django` 또는 `architecture-db`, `복합/위험 작업`은 `workflow-dddjango-subagents`로 보낸다.
+dddjango/skills/workflow-dddjango-subagents/references/role-map.md:10:| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, optionally `implementation-django` |
+dddjango/skills/workflow-dddjango-subagents/references/role-map.md:11:| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:21:- API contract: Django Ninja Router/Schema mapping, status codes, Problem Details, OpenAPI impact, and no greenfield DRF implementation are confirmed.
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:22:- Implementation mapping: domain logic is not owned by Router, view, schema, or template; Django service/selector/model boundaries are clear.
+plugins/dddjango/skills/workflow-dddjango-subagents/references/role-map.md:10:| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, optionally `implementation-django` |
+plugins/dddjango/skills/workflow-dddjango-subagents/references/role-map.md:11:| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+plugins/dddjango/skills/implementation-cleancode/SKILL.md:4:  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍/이름, 함수 분리, 비대한 모델/긴 함수/흩어진 로직, 캡슐화, 추상화, 중복 제거, 오류 처리, 레거시, 코드 냄새/스멜, 유지보수. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-python for Python typing, implementation-django for concrete Django ORM/migrations, implementation-django-ninja for Router/Schema API implementation, and workflow-dddjango-subagents for composite/subagent work.
+plugins/dddjango/skills/implementation-cleancode/SKILL.md:17:- If concrete Django ORM, migration, QuerySet, transaction, settings, or service/selector implementation details are primary, use `implementation-django`; keep this skill central for Fat Model, View/Router business-logic, responsibility, duplication, naming, or maintainability reviews.
+plugins/dddjango/skills/implementation-cleancode/SKILL.md:18:- If API Router/Schema/status/error implementation is the main work, use `implementation-django-ninja`.
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:1:# Router And Schema
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:3:Use this reference for Django Ninja Router, Schema/ModelSchema, endpoint adapter boundaries, and DRF-to-Ninja conversion. This skill is provisional: exact framework syntax must be verified against the project’s installed Django Ninja version and existing code.
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:5:## Router Boundary
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:7:- Treat a Router operation as an HTTP adapter, not a business-rule owner.
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:8:- Keep Router code limited to request parsing, auth/permission wiring, schema validation, service/usecase invocation, response mapping, and error translation.
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:13:## Schema And ModelSchema
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:23:- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:24:- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:32:- Is the Router registered in the expected API namespace/version?
+plugins/dddjango/skills/implementation-django-ninja/references/router-schema.md:33:- Is the Router thin enough that business behavior can be tested without HTTP?
+plugins/dddjango/skills/implementation-django-ninja/agents/openai.yaml:4:  default_prompt: "Use $implementation-django-ninja to implement Django Ninja routers, schemas, auth, errors, OpenAPI, and TestClient acceptance criteria."
+dddjango/skills/architecture-ddd/references/strategic-design.md:5:## Strategic Order
+plugins/dddjango/skills/implementation-python/SKILL.md:4:  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Enum/StrEnum/열거형, Protocol/프로토콜 boundary, pydantic v2 런타임 검증, 비동기, 예외 처리, modern Python. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-django-ninja for Router/Schema/API implementation, implementation-cleancode for general refactoring, implementation-django for ORM/migrations, and implementation-test for pytest.
+plugins/dddjango/skills/implementation-python/SKILL.md:16:- If the main work is Django Ninja Router/Schema/API tests, use `implementation-django-ninja`.
+plugins/dddjango/skills/implementation-python/SKILL.md:32:- Prefer `T | None`, `A | B`, and built-in generics such as `list[Order]` when the project target supports them.
+plugins/dddjango/skills/architecture-ddd/SKILL.md:38:- If the target design puts core business rules in a Router, view, template, serializer/schema, or other adapter, identify it as a boundary problem and move the rule to domain or application responsibility before implementation.
+plugins/dddjango/skills/architecture-ddd/SKILL.md:42:- Do not write Django model, Router, migration, or test code during DDD-only modeling. In combined work, make the DDD decisions first and hand implementation to the relevant skills or assigned implementation step.
+plugins/dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md:34:- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
+plugins/dddjango/skills/implementation-django-web/references/templateview-htmx.md:48:- Coordinate API-like JSON behavior with `implementation-django-ninja` instead of turning HTMX views into ad hoc REST APIs.
+plugins/dddjango/skills/architecture-ddd/references/strategic-design.md:5:## Strategic Order
+plugins/dddjango/skills/implementation-python/references/pydantic-v2.md:9:- If Django Ninja schemas already own API serialization, coordinate with `implementation-django-ninja` before adding separate pydantic DTOs.
+plugins/dddjango/skills/implementation-python/references/typing.md:9:- Use built-in collection generics such as `list[Order]`, `dict[str, int]`, and `tuple[str, ...]`.
+plugins/dddjango/skills/architecture-db/references/schema-modeling.md:1:# Schema Modeling
+plugins/dddjango/skills/architecture-db/references/rollout-constraints.md:16:## Performance Order
+plugins/dddjango/skills/architecture-db/references/constraints-indexes.md:25:- Order columns by the query shapes the index must serve.
+
+**Considering output needs**
+
+I need to make sure I have the right outputs lined up. I think I should check the poll git for any updates. Also, it might be helpful to go through the auth-pagination-filtering and problem-details-openapi documents, as well as the test client, to ensure I'm clear on what’s needed. I might need to use the current directory for my work too. It’s all about getting everything organized!
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/testclient.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-013/with-dddjango
+ succeeded in 0ms:
+# Problem Details, Idempotency, And OpenAPI
+
+Use this reference for API error responses, status codes, idempotency behavior, compatibility, and OpenAPI effects.
+
+## Status Codes
+
+- Use 200 for successful reads and updates that return a body.
+- Use 201 for created resources and include the new resource location when the contract requires it.
+- Use 202 for accepted asynchronous work.
+- Use 204 for successful deletes or updates with no body.
+- Use 400 for malformed requests, 401 for authentication failure, 403 for authorization failure, 404 for missing or intentionally hidden resources, 409 for conflicts, 422 for semantically invalid input when the contract uses it, and 429 for rate limits.
+- Keep status-code changes compatible with existing clients or version them.
+
+## Problem Details
+
+- Use `application/problem+json` as the response media type for Problem Details errors.
+- Use RFC 9457 Problem Details for API errors unless a legacy compatibility contract explicitly says otherwise.
+- Keep `status` aligned with the HTTP response status.
+- Use `title` for reusable problem type summaries and `detail` for the specific occurrence.
+- Use a stable `type` URI or `about:blank` when no stable type exists.
+- Include `instance` when the specific occurrence has a useful request or problem identifier URI.
+- Add extension fields only when they are documented and safe for clients to ignore.
+
+## Idempotency-Key
+
+- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
+- Store the first request result in durable storage such as DB or Redis according to the service transaction design.
+- Return the stored response for repeated requests with the same key when the request is equivalent.
+- Define conflict behavior for the same key with a different payload.
+- Coordinate key TTL, storage owner, transaction boundary, and concurrency behavior with `implementation-django` and `architecture-db`.
+
+## OpenAPI
+
+- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
+- Check names, required fields, nullable fields, enum values, status responses, error schema, auth requirements, pagination shape, and tags.
+- For migrations from DRF, compare old and new generated schema when possible and document client-visible differences.
+- Do not claim OpenAPI generation or schema diff was run unless it was actually executed.
+
+ succeeded in 0ms:
+# TestClient And API Verification
+
+Use this reference for Django Ninja API test acceptance criteria and verification reporting. Detailed pytest fixture and test-double mechanics belong to `implementation-test`; TDD workflow belongs to `implementation-tdd`.
+
+## What To Test
+
+- Request schema validation for valid and invalid payloads.
+- Response schema fields and types for list/detail/create/update/delete operations.
+- Status codes and headers for success, validation errors, auth errors, conflicts, rate limits, and async acceptance.
+- Problem Details shape for errors.
+- Authentication and authorization behavior, including 401 vs 403.
+- Pagination and filtering behavior, including maximum page size and stable ordering.
+- Idempotency replay, conflict behavior, and concurrent duplicate request handling for risky POST endpoints.
+- DRF-to-Ninja compatibility: URL, method, field, status, auth, pagination, error, and OpenAPI differences.
+
+## Test Boundaries
+
+- Test business rules at the domain/service layer where possible.
+- Use API tests for HTTP contract, auth/permission wiring, serialization, error mapping, and compatibility.
+- Do not hide domain behavior only inside API tests when faster domain/service tests would express the rule more clearly.
+- Coordinate model, transaction, and migration behavior tests with `implementation-django`.
+
+## Verification Reporting
+
+- Report the exact command run, such as a focused pytest path, TestClient test run, OpenAPI generation command, or schema comparison command.
+- If tests were not run, say `Not run` and state why.
+- Do not claim endpoints, schemas, OpenAPI, or compatibility checks passed without command output or reviewed artifacts.
+- When source is provisional, mention any framework syntax that still needs verification against the installed Django Ninja version.
+
+ succeeded in 0ms:
+# Auth, Pagination, Filtering, And Versioning
+
+Use this reference when implementing Django Ninja authentication/authorization wiring, list endpoints, filtering, sorting, pagination, rate limiting, and versioning.
+
+## Authentication And Authorization
+
+- Authentication answers who the caller is; authorization answers whether the caller can perform the action.
+- Return 401 when authentication is required or invalid; return 403 when the caller is authenticated but lacks permission.
+- Prefer `Authorization` headers for API credentials. Do not put secrets in query parameters.
+- Require HTTPS for API traffic unless the environment is an explicitly local development setup.
+- Keep adapter-level auth checks in the API boundary, but move reusable object/action authorization rules into services or domain policies when multiple entry points need them.
+- For object-level permission checks, avoid loading more data than the endpoint needs; coordinate query shape with selectors/services.
+
+## Filtering, Sorting, And Search
+
+- Keep filtering and sorting parameters part of the public API contract.
+- Use Django Ninja `FilterSchema` or the project’s existing filtering pattern when it improves validation and OpenAPI clarity.
+- Prefer query parameters for filters, sort keys, sparse fieldsets, and search terms.
+- Do not reflect internal DB table names or accidental ORM structure in public parameter names.
+- Validate allowed filters and sort fields. Avoid arbitrary user-controlled ORM field names.
+- Delegate reusable read logic and N+1 optimization to selectors or QuerySet methods from `implementation-django`.
+
+## Pagination
+
+- Choose pagination strategy from the API contract. Use offset for small/admin-like collections and cursor/keyset for large, real-time, or consistency-sensitive lists.
+- Enforce a maximum page size.
+- Return enough metadata for clients to fetch the next page, such as `has_more`, `next_cursor`, or equivalent project contract.
+- For cursor/keyset pagination, use stable indexed ordering, usually timestamp plus ID.
+- If pagination behavior is undecided, route to `architecture-api` before implementation.
+
+## Rate Limiting
+
+- Apply rate limiting before expensive authentication, database, or external work when the project has a rate-limit mechanism.
+- Return 429 with `Retry-After` and rate-limit headers such as limit, remaining, and reset information when the project exposes them.
+- Keep rate-limit policy visible in API documentation/OpenAPI notes when public clients depend on it.
+
+## Versioning And Compatibility
+
+- Follow the project’s chosen versioning strategy; do not mix URL, header, and query strategies without a compatibility reason.
+- Prefer additive changes for existing clients.
+- Use deprecation and migration windows for breaking changes.
+- When converting from DRF, compare version behavior and document any change that can affect clients.
+
+**Evaluating the migration task**
+
+I need to inspect the package but it looks like there's no app present. I might want to use `find` to check for Python files, but it seems there's only a sample service available. The user specifically asked about migrating an existing DRF ViewSet/Serializer order API to Django Ninja, considering compatibility and related differences. Since there’s no code in the repo, I’ll suggest that I haven't found the actual DRF implementation files in the current directory, and that I may have overlooked some things.
+**Compiling command checks**
+
+I’m considering running checks with commands like `find . -maxdepth 3 -type f`, which might be enough. I need to include the commands that were actually run, and it seems like the final output should be concise, potentially in Korean. It's important to note that "Serena was skipped because no Serena MCP is in active tools," and I've verified references with `rg`. I'll clarify that there were no files modified, and that `git rev-parse` produced warnings but confirmed the current directory as the path. Ultimately, I'll summarize key `rg` outputs, pointing out that no actual DRF order API was found.
+**Planning compatibility and tests**
+
+I’m thinking about the steps to take. First, I need to add a compatibility exception handler and then run contract tests along with an OpenAPI diff. After that, I'm considering a release with a dual route or feature flag.
+
+The user didn’t ask for actual code implementation. I should provide a concise skeleton or sample mapping, keeping it simple. Since there’s no order API in the repo, I’ll need to clarify what to check regarding commands that were actually run.
+**Clarifying migration review checklist**
+
+I need to be careful about the search results. I found a sample file `orders/services.py`, but there was no ViewSet, which complicates things. It seems I might have excluded certain cases but included eval fixtures. Notably, I didn’t find a concrete implementation of `OrderViewSet` or its Serializer in the project files. This translates to a migration review checklist rather than a file-specific diff. I’ll draft my findings carefully in Korean and ensure to verify Django Ninja syntax compatibility!
+**Verifying validation error status**
+
+I need to check if Django Ninja indeed returns a 422 status for validation errors, as my current understanding suggests it does. It seems that validation errors are typically categorized as "Unprocessable Entity." I should also mention that Ninja’s default validation status and structure might differ from the Django Rest Framework (DRF), so checking the installed version is crucial. This ensures accuracy in how I present the information and what the user can expect from handling errors in their application.
+codex
+확인 결과, 현재 작업 디렉터리에서 실제 DRF `OrderViewSet`/`Serializer` 구현은 찾지 못했습니다. 그래서 파일별 diff가 아니라, 기존 주문 API를 Django Ninja로 옮길 때 반드시 고정해야 할 호환성 검토 기준으로 정리합니다. 파일은 수정하지 않았습니다.
+
+**마이그레이션 기준**
+
+1. 기존 외부 계약을 먼저 고정하세요.
+   기존 URL, trailing slash 여부, HTTP method, request/response field, pagination shape, auth 방식, permission 결과, status code, error body를 “변경 금지 계약”으로 잡아야 합니다. DRF `DefaultRouter`가 `/orders/`를 쓰고 있었다면 Ninja에서 REST 취향대로 `/orders`로 바꾸는 것은 기존 클라이언트에는 breaking change입니다.
+
+2. DRF 구성요소 매핑은 이렇게 보는 게 안전합니다.
+   `ViewSet` action은 Ninja `Router`의 명시적 operation으로 옮기고, `Serializer`는 input schema와 output schema를 분리합니다. `Serializer.validate()`에 있던 주문 상태 전이, 재고, 결제, 중복 생성 같은 규칙은 Router/Schema에 두지 말고 service/usecase 쪽으로 빼는 게 맞습니다.
+
+3. status code는 DRF 동작을 우선 보존해야 합니다.
+   일반적으로 list/detail은 `200`, create는 `201`, delete는 `204`를 유지합니다. DRF validation error는 보통 `400`인데, Ninja/Pydantic validation은 기본 동작과 error shape가 달라질 수 있으므로 같은 URL에서 그대로 교체한다면 custom exception handler로 `400`과 기존 body를 맞추는 편이 안전합니다. 주문 중복 생성이나 상태 충돌은 새 계약에서는 `409`가 더 명확하지만, 기존 클라이언트가 `400`을 기대한다면 버전 분리 없이 바꾸면 안 됩니다.
+
+4. error response는 가장 큰 호환성 리스크입니다.
+   DRF 기본 형태는 대개 `{"field": ["..."]}` 또는 `{"detail": "..."}`이고, 권장 신규 계약은 RFC 9457 Problem Details 형태입니다: `type`, `title`, `status`, `detail`, `instance`. 기존 URL을 유지한다면 legacy error shape를 유지하거나, `errors` 확장 필드에 field error를 담는 transitional Problem Details를 명시해야 합니다. 조용히 `application/problem+json`으로 바꾸면 기존 클라이언트 파서가 깨질 수 있습니다.
+
+5. OpenAPI는 반드시 diff 대상입니다.
+   DRF의 drf-spectacular/drf-yasg 스키마와 Ninja 생성 스키마는 operationId, schema name, required/nullable 판정, enum 표현, auth scheme, pagination wrapper, error response 정의가 달라질 수 있습니다. Ninja Router에는 response schema, status별 response, tags, operation id를 명시해서 클라이언트 생성 코드가 불필요하게 흔들리지 않게 해야 합니다.
+
+**권장 전환 순서**
+
+1. 기존 DRF OpenAPI JSON과 대표 요청/응답 golden sample을 저장합니다.
+2. Ninja Router/Schema를 같은 서비스 계층을 호출하도록 얇게 만듭니다.
+3. 기존 클라이언트 호환 URL이면 status code와 legacy error envelope를 먼저 맞춥니다.
+4. Problem Details, `422`, URL 변경, pagination 변경은 새 버전 경로에서 도입합니다.
+5. Ninja `TestClient`로 URL/method/status/header/body/error/pagination/auth 계약 테스트를 작성합니다.
+6. 기존 OpenAPI와 신규 OpenAPI를 diff해서 breaking change를 명시적으로 승인합니다.
+7. 주문 생성처럼 중복 요청 위험이 있으면 `Idempotency-Key` 정책을 계약에 포함합니다.
+
+**실행한 명령**
+
+```sh
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
 sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
 sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!**/.git/**' -g '!**/*rubric*' -g '!**/*Rubric*' -g '!**/*prior*' -g '!**/*Prior*' -g '!**/*finding*' -g '!**/*Finding*' -g '!**/*case-map*' -g '!**/*private*'
+rg -n "\b(Order|orders|OrderViewSet|ViewSet|Serializer|rest_framework|ninja|Router|Schema)\b" -g '!workspace/reference/**' -g '!workspace/develop/evals/cases/**' -g '!**/.git/**' -g '!**/*rubric*' -g '!**/*prior*' -g '!**/*finding*'
+sed -n '1,240p' dddjango/skills/architecture-api/references/rest-contracts.md
+sed -n '1,260p' dddjango/skills/architecture-api/references/problem-details.md
+sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/router-schema.md
+sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/testclient.md
 ```
 
-Checks not run:
+**실행하지 않은 체크**
 
-```text
-pytest/TestClient: not run because no concrete order API files or test target were provided.
-OpenAPI generation/diff: not run because no project API entrypoint or existing schema file was identified.
-DRF-to-Ninja code migration: not run because the packet requested analysis only and explicitly said not to modify files.
-Repository source inspection: not run because the public packet was sufficient for a contract-level answer.
-```
+`pytest`, Django Ninja `TestClient`, OpenAPI 생성/스키마 diff, 서버 실행은 하지 않았습니다. 현재 디렉터리에서 실제 주문 DRF API 구현을 찾지 못했고, 요청 조건상 파일 수정도 하지 않았기 때문입니다.
 
-Serena: skipped because this was an advisory eval with no symbol/reference tracing or code modification.
+Serena: 현재 세션에 Serena MCP 도구가 없어 생략했고, `rg`로 참조를 확인했습니다.
 tokens used
-26,700
+34,781

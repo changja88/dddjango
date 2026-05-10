@@ -1,0 +1,1 @@
+readability validation passed: 22 evaluation items, 301 embedded artifacts

@@ -45,14 +45,14 @@
 <tr><th>With dddjango setup</th><td>codex exec with active dddjango plugin config, read-only sandbox, same public packet.</td></tr>
 <tr><th>Prompt</th><td>주문 생성, 결제, 재고, idempotency, DB/API/Django/test를 포함하는 composite risky write 계획.</td></tr>
 <tr><th>Baseline did well</th><td>DDD, API, DB transaction, outbox, Problem Details, idempotency, tests를 포함.</td></tr>
-<tr><th>Baseline gaps</th><td>baseline agent가 repo의 dddjango skill docs를 읽어 비교군 순수성이 낮음.</td></tr>
+<tr><th>Baseline gaps</th><td>격리 baseline은 workflow section contract가 with-ddjango보다 덜 엄격하지만 주요 위험은 다룸.</td></tr>
 <tr><th>With dddjango did well</th><td>`## Role Map`, `Sequential Fallback`, `Handoff Contract`, `Integration Checklist`, `Risky Write Consistency Block`을 모두 제시하고 subagent 미실행을 명시.</td></tr>
 <tr><th>With dddjango gaps</th><td>실제 구현/테스트는 실행하지 않음.</td></tr>
-<tr><th>Score rationale</th><td>with-dddjango는 workflow contract 완전 충족. baseline도 좋은 답변이나 오염됨.</td></tr></table>
+<tr><th>Score rationale</th><td>with-ddjango는 workflow contract 완전 충족. baseline contamination은 새 rerun에서 제거됨.</td></tr></table>
     </section>
     <section>
       <h2>Evidence Links</h2>
-      <ul><li><a href="../analysis/case-005.html">analysis</a></li><li><a href="../raw/case-005-public-prompt.md">public prompt</a></li><li><a href="../raw/case-005-baseline.txt">baseline</a></li><li><a href="../raw/case-005-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-005-prompt-input.json">prompt-input</a></li></ul>
+      <ul><li><a href="../analysis/case-005.html">analysis</a></li><li><a href="../raw/case-005-public-prompt.md">public prompt</a></li><li><a href="../raw/case-005-baseline.txt">baseline</a></li><li><a href="../raw/case-005-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-005-baseline-isolation.json">baseline isolation</a></li><li><a href="../raw/case-005-with-dddjango-prompt-input.json">with prompt-input</a></li><li><a href="../raw/case-005-baseline-command.txt">baseline command</a></li><li><a href="../raw/case-005-with-dddjango-command.txt">with-dddjango command</a></li><li><a href="../raw/case-005-baseline-events.jsonl">baseline events</a></li><li><a href="../raw/case-005-with-dddjango-events.jsonl">with-dddjango events</a></li></ul>
     </section>
   </main>
 </body>

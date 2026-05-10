@@ -45,14 +45,14 @@
 <tr><th>With dddjango setup</th><td>codex exec with active dddjango plugin config, read-only sandbox, same public packet.</td></tr>
 <tr><th>Prompt</th><td>예약 확정, 재고 차감, 외부 결제 승인 동시성/일관성 workflow.</td></tr>
 <tr><th>Baseline did well</th><td>Role Map, handoff, consistency block, locking/idempotency/outbox/test 기준을 모두 포함.</td></tr>
-<tr><th>Baseline gaps</th><td>public dddjango source를 읽어 baseline delta가 희석됨.</td></tr>
+<tr><th>Baseline gaps</th><td>격리 baseline은 role map/handoff 형식이 with-ddjango보다 덜 명시적.</td></tr>
 <tr><th>With dddjango did well</th><td>workflow contract와 risky write consistency decision을 명확히 충족.</td></tr>
 <tr><th>With dddjango gaps</th><td>계획 평가이며 실제 concurrency test는 미실행.</td></tr>
-<tr><th>Score rationale</th><td>두 답변 모두 scenario 요구를 충족하나 baseline은 격리 한계가 있음.</td></tr></table>
+<tr><th>Score rationale</th><td>두 답변 모두 scenario 요구를 충족하며 baseline isolation artifact로 격리 상태가 확인됨.</td></tr></table>
     </section>
     <section>
       <h2>Evidence Links</h2>
-      <ul><li><a href="../analysis/case-006.html">analysis</a></li><li><a href="../raw/case-006-public-prompt.md">public prompt</a></li><li><a href="../raw/case-006-baseline.txt">baseline</a></li><li><a href="../raw/case-006-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-006-prompt-input.json">prompt-input</a></li></ul>
+      <ul><li><a href="../analysis/case-006.html">analysis</a></li><li><a href="../raw/case-006-public-prompt.md">public prompt</a></li><li><a href="../raw/case-006-baseline.txt">baseline</a></li><li><a href="../raw/case-006-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-006-baseline-isolation.json">baseline isolation</a></li><li><a href="../raw/case-006-with-dddjango-prompt-input.json">with prompt-input</a></li><li><a href="../raw/case-006-baseline-command.txt">baseline command</a></li><li><a href="../raw/case-006-with-dddjango-command.txt">with-dddjango command</a></li><li><a href="../raw/case-006-baseline-events.jsonl">baseline events</a></li><li><a href="../raw/case-006-with-dddjango-events.jsonl">with-dddjango events</a></li></ul>
     </section>
   </main>
 </body>

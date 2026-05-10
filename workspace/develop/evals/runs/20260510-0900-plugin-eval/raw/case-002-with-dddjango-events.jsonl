@@ -1,46 +1,28 @@
-확인 결과: `dddjango` skill metadata는 prompt-input 원자료에 노출되어 있습니다.
-
-Artifact:
-`workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json`  
-크기: `45486` bytes
-
-관찰된 `dddjango` skill 항목 수: `12`
+현재 Codex 세션 메타데이터에서 보이는 `dddjango` skill은 **13개**입니다.
 
 이름:
-```text
-dddjango:architecture-api
-dddjango:architecture-db
-dddjango:architecture-ddd
-dddjango:architecture-implementation-patterns
-dddjango:implementation-cleancode
-dddjango:implementation-django
-dddjango:implementation-django-ninja
-dddjango:implementation-django-web
-dddjango:implementation-python
-dddjango:implementation-tdd
-dddjango:implementation-test
-dddjango:workflow-dddjango-subagents
-```
+- `dddjango:architecture-api`
+- `dddjango:architecture-db`
+- `dddjango:architecture-ddd`
+- `dddjango:architecture-implementation-patterns`
+- `dddjango:implementation-cleancode`
+- `dddjango:implementation-django`
+- `dddjango:implementation-django-ninja`
+- `dddjango:implementation-django-web`
+- `dddjango:implementation-python`
+- `dddjango:implementation-tdd`
+- `dddjango:implementation-test`
+- `dddjango:workflow-dddjango-subagents`
 
-경로 metadata도 함께 보였습니다. 모두 `dddjango-local/dddjango/0.1.10/skills/.../SKILL.md` 형태입니다.
+직접 확인하지 못한 부분: 각 `dddjango` skill 파일의 실제 내용, 플러그인 내부 설치 파일 상태, 런타임 로딩 동작은 확인하지 못했습니다.
 
-실행한 명령:
-```sh
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
-pwd -P
-git rev-parse --show-toplevel
-rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/**/reports/**' -g '!workspace/develop/evals/**/findings/**'
-rg -o 'dddjango:[A-Za-z0-9_-]+' workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
-wc -c workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
-rg -o '/Users/hyun/\.codex/plugins/cache/dddjango-local/dddjango/[0-9.]+/skills/[A-Za-z0-9_-]+/SKILL\.md' workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
-rg -o 'dddjango-local/dddjango/[0-9.]+/skills/[A-Za-z0-9_-]+/SKILL\.md' workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
-sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/verification-before-completion/SKILL.md
-```
+실제로 실행한 명령:
+- `sed -n '1,160p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md`
 
-Not run:
-- 새 prompt-input/debug artifact 저장: 실행하지 않음. 사용자 지시가 “Do not modify files”이고 sandbox도 read-only입니다.
-- 새 Codex/eval harness 실행: 실행하지 않음. 새 산출물 생성 가능성이 있어 이번 조건과 맞지 않습니다.
-- private evaluator, rubrics, prior findings/reports 읽기: 실행하지 않음.
-- 테스트/린트: 실행하지 않음. 코드 변경 작업이 아니었습니다.
+실행하지 않은 확인:
+- `dddjango` skill 파일 열람
+- 플러그인 디렉터리 검사
+- 테스트/검증 명령
+- Serena 사용
 
-Serena: skipped because this was prompt artifact inspection, not symbol/reference tracing; verified with `rg`.
+Serena: 코드/참조 추적 작업이 아니라 사용하지 않았습니다.

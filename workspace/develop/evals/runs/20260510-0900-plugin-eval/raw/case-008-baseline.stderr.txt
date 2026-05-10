@@ -1,22 +1,22 @@
 OpenAI Codex v0.130.0
 --------
-workdir: /Users/hyun/Desktop/dddjango
+workdir: /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
 model: gpt-5.5
 provider: openai
 approval: never
 sandbox: read-only
 reasoning effort: xhigh
 reasoning summaries: none
-session id: 019e0f9e-b3fd-7523-9b3c-d19e1f1f7538
+session id: 019e1071-39f8-7a02-b39b-a047aaae39c1
 --------
 user
-You are executing a public forward-eval packet for the dddjango plugin.
-Use only the public packet below and task-local repository files if needed.
-Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Answer the user request directly.
+Use only files in the current working directory when local files are needed.
+Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.
 Do not modify files. If a check is not actually run, state that it was not run.
-Keep the answer concise but include commands actually run and checks not run.
+Keep the answer concise and include commands actually run plus checks not run.
 
------ PUBLIC PACKET START -----
+----- USER REQUEST START -----
 # Case 008
 
 ## User Request
@@ -24,282 +24,1003 @@ Keep the answer concise but include commands actually run and checks not run.
 ```text
 README 오타 하나랑 verbose_name 문구만 고치면 될 듯해. 역할 나누거나 DDD 설계까지는 필요 없어.
 ```
-
-## Context
-
-- Repository: `/Users/hyun/Desktop/dddjango`
-- Do not read private evaluator files or prior run findings.
-
-## Output To Save
-
-- Raw answer or command transcript.
-- Commands actually run.
-- Not-run checks and reasons.
------ PUBLIC PACKET END -----
+----- USER REQUEST END -----
 
 codex
-공개 패킷 범위 안에서만 확인하겠습니다. 파일은 읽기만 하고, 금지된 평가/리포트 경로는 건드리지 않습니다.
+요청 범위가 문구 수정처럼 보이지만, 이번 지시에는 파일을 수정하지 말라고 되어 있어서 읽기 전용으로만 확인하겠습니다. README와 `verbose_name` 위치만 좁혀서 보겠습니다.
 exec
-/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+/bin/zsh -lc 'pwd -P' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
  succeeded in 0ms:
-/Users/hyun/Desktop/dddjango
+/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
 
 exec
-/bin/zsh -lc 'git rev-parse --show-toplevel' in /Users/hyun/Desktop/dddjango
- succeeded in 1969ms:
-2026-05-10 11:02:18.266 xcodebuild[78905:2620580]  DVTFilePathFSEvents: Failed to start fs event stream.
-2026-05-10 11:02:18.424 xcodebuild[78905:2620579] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/bin/zsh -lc "rg --files -g 'README*' -g '"'!**/prior*'"' -g '"'!**/evaluator*'"' -g '"'!**/rubric*'"' -g '"'!**/findings*'"'" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+ succeeded in 0ms:
+workspace/develop/evals/README.md
+workspace/develop/evals/fixtures/code-artifact-sample/README.md
+
+exec
+/bin/zsh -lc "rg -n \"verbose_name|verbose name|verbose\" . -g '"'!**/prior*'"' -g '"'!**/evaluator*'"' -g '"'!**/rubric*'"' -g '"'!**/findings*'"'" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+ succeeded in 0ms:
+./workspace/reference/implementation-django/reference/final.md:176:        verbose_name_plural = "people"
+./workspace/develop/plan.md:195:| `architecture-implementation-patterns` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, direct pattern-selection vs workflow routing, layered dependency wording, `spec.md` child-heading coverage, validation scenario coverage, Risky Write Consistency Block output shape, metadata specificity, and stale review claims; independent source re-review returned 0 findings | positive, coordinated workflow boundary, and simple `verbose_name` negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/pattern-smoke` for payment pattern selection, workflow handoff, and negative direct-edit behavior, with positive re-run after block-heading wording fix | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Provisional fallback status remains explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+./workspace/develop/plan.md:196:| `architecture-db` | completed | blocking 0, major 0, minor 0 after fixing direct DB design vs workflow routing, Korean trigger coverage for idempotency/rollout/query-plan language, `spec.md` child-heading coverage, validation scenario coverage, ddd-implementation-standard heading coverage, stale review claims, and metadata specificity; independent source review returned 0 findings | positive DB concurrency, coordinated workflow boundary, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/db-smoke` for stock/reservation DB design, workflow handoff, and simple `verbose_name` negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+./workspace/scripts/render_plugin_eval_report.py:143:        "title": "README Typo And verbose_name",
+./workspace/scripts/render_plugin_eval_report.py:149:        "prompt": "README 오타와 verbose_name 문구 수정만 요구하는 단순 작업.",
+./workspace/develop/evals/cases/plugin/public/case-008.md:6:README 오타 하나랑 verbose_name 문구만 고치면 될 듯해. 역할 나누거나 DDD 설계까지는 필요 없어.
+
+codex
+`verbose_name`은 실제 코드보다 문서/평가 관련 파일에서만 잡힙니다. 수정 지시가 금지되어 있으니, 다음은 README 쪽 실제 후보와 문구가 들어간 파일만 더 좁혀 보겠습니다.
+exec
+/bin/zsh -lc "sed -n '1,220p' workspace/develop/evals/README.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+exec
+/bin/zsh -lc "sed -n '1,220p' workspace/develop/evals/fixtures/code-artifact-sample/README.md" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+ succeeded in 0ms:
+# Code Artifact Sample
+
+Small fixture repository for validating code-backed eval artifact capture.
+
+The intended change for `case-101` is to implement `orders.services.create_order_summary()` so it returns a dictionary with `total` and `line_count`.
+
+ succeeded in 0ms:
+# dddjango Plugin Eval Pack
+
+This directory contains the comprehensive plugin eval prompt pack for `dddjango`.
+
+Use this pack after the individual skill rubrics and the workflow rubric have already passed. The source of truth for scoring is `workspace/develop/rubrics/plugin_rubric.md`; this directory only turns that rubric into executable prompt packets, private evaluator guidance, and an HTML run-report template.
+
+## Directory Layout
+
+```text
+workspace/develop/evals/
+  cases/plugin/public/
+    case-001.md ... case-017.md
+    case-101.md
+  cases/plugin/code-capture.json
+  cases/plugin/private/
+    case-map.md
+  fixtures/
+    code-artifact-sample/
+  templates/
+    case-analysis.html
+    public-packet.md
+    private-evaluator.md
+    run-report.html
+  runs/
+```
+
+## Execution Rules
+
+- Give forward-test agents or prompt runners only files from `cases/plugin/public/` plus task-local fixture files.
+- Do not give forward-test agents `cases/plugin/private/`, rubric files, prior findings, expected routes, scoring notes, or intended fixes.
+- Store raw outputs under `workspace/develop/evals/runs/<run-id>/raw/`.
+- Store actual generated code for code-backed cases under `workspace/develop/evals/runs/<run-id>/code/<case-id>/<variant>/`.
+- Store case-level human analysis pages under `workspace/develop/evals/runs/<run-id>/analysis/`.
+- Store findings, reruns, and the final HTML report under the same run directory.
+- Copy `templates/run-report.html` to `runs/<run-id>/report.html` and edit the embedded `REPORT_DATA` object for the run.
+- The HTML report is self-contained and must work from `file://`; do not make it depend on external assets, CDN links, or local JSON fetched with browser APIs.
+- Record baseline and with-dddjango results against the same public packets so the report can show score, pass-rate, routing, hard-gate, finding, and scenario-family deltas.
+- Artifact links in the HTML report are relative links from the run directory. Create analysis artifacts such as `analysis/<case-id>.html` and raw artifacts such as `raw/<case-id>-public-prompt.md`, `raw/<case-id>-baseline.txt`, `raw/<case-id>-with-dddjango.txt`, prompt-input JSON, command logs, screenshots, and leakage-scan logs before marking an artifact as present.
+- Code-backed case links must point to real `changed-files.json`, `diff.patch`, and copied source files. If those files do not exist, mark the case as `response-only` or `No code captured`.
+- Case-level analysis HTML should explain the prompt, baseline setup, with-dddjango setup, what each variant did well or poorly, hard-gate/routing differences, score rationale, final score, and links back to raw evidence.
+- If runtime cache is used, record the cache path and compare it with canonical source `dddjango/`.
+- If a command, smoke check, review, or subagent pass was not run, mark it as not run with a reason.
+
+## Required Run Artifacts
+
+Each complete run records:
+
+- git commit or working-tree state
+- plugin version from `dddjango/.codex-plugin/plugin.json`
+- validation command output
+- `git diff --check` output
+- runtime leakage scan command, scope, patterns, output, and semantic review note
+- runtime cache path and source/cache comparison when cache is used
+- prompt-input or equivalent metadata exposure artifact
+- public packet paths actually supplied
+- case-level analysis HTML for baseline vs with-dddjango comparisons
+- raw outputs and transcripts
+- for code-backed cases, `code/<case>/<variant>/changed-files.json`, `code/<case>/<variant>/diff.patch`, and copied source files under `code/<case>/<variant>/files/`
+- findings with severity, scenario family, case id, defect type, failed gate or dimension, artifact path, and rerun scope
+- rerun evidence after fixes
+- final not-run list
+
+## Completion Rule
+
+The comprehensive plugin eval is complete only when:
+
+- every public case in this pack has been run or is explicitly marked not-run as a blocker
+- plugin-level and applicable common hard gate failures are 0
+- blocking, major, and minor findings are all 0
+- every required scenario family in `plugin_rubric.md` has passing evidence
+- generated/all validation passes against `dddjango/skills`
+- runtime leakage scan finds no private evaluation material under runtime paths
+- runtime cache is not used, or it matches canonical `dddjango/` source for the evaluated version
+
+Do not mark the plugin eval complete from smoke checks alone.
+
+## Code Artifact Evidence
+
+`workspace/develop/evals/cases/plugin/code-capture.json` is the source of truth for deciding whether a public case requires actual code artifacts.
+
+- `raw/<case>-<variant>.txt`: final model response transcript.
+- `raw/<case>-<variant>-events.jsonl`: Codex event stream.
+- `code/<case>/<variant>/files/*`: actual generated source files copied from the isolated workspace.
+- `code/<case>/<variant>/diff.patch`: actual generated code diff.
+- `code/<case>/<variant>/changed-files.json`: machine-readable changed-file manifest.
+
+Reports may say "actual code was evaluated" only when both `changed-files.json` and `diff.patch` exist for the case and variant. Cases without those artifacts must be labeled `response-only` or `No code captured`.
+
+exec
+/bin/zsh -lc "rg -n \"verbose_name|Django|django|DDD|역할|문구|오타\" workspace -g '"'!**/prior*'"' -g '"'!**/evaluator*'"' -g '"'!**/rubric*'"' -g '"'!**/findings*'"'" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+ succeeded in 0ms:
+workspace/reference/implementation-test/reference/final.md:101:| 종류 | 역할 | 예시 |
+workspace/reference/implementation-test/reference/final.md:889:`seal()`은 Mock 객체를 봉인하여, 미리 설정하지 않은 속성/메서드에 접근하면 에러를 발생시킨다. 오타나 잘못된 속성 접근을 방지한다.
+workspace/reference/implementation-test/reference/final.md:1140:factory_boy는 테스트 객체 생성을 위한 "청사진" 역할을 한다. JSON fixture 파일 대신 Python 코드로 테스트 데이터를 선언적으로 정의한다.
+workspace/reference/implementation-test/reference/final.md:1280:### 9.6 SQLAlchemy / Django ORM 통합
+workspace/reference/implementation-test/reference/final.md:1293:# Django
+workspace/reference/implementation-test/reference/final.md:1294:class UserFactory(factory.django.DjangoModelFactory):
+workspace/reference/implementation-test/reference/final.md:1297:        django_get_or_create = ("username",)  # 중복 방지
+workspace/reference/implementation-test/reference/final.md:1845:# 파라미터화: Django 버전별 테스트
+workspace/reference/implementation-test/reference/final.md:1847:@nox.parametrize("django", ["4.2", "5.0", "5.1"])
+workspace/reference/implementation-test/reference/final.md:1848:def test_django(session, django):
+workspace/reference/implementation-test/reference/final.md:1849:    session.install(f"django=={django}", "pytest", "pytest-django")
+workspace/reference/implementation-test/reference/external.md:591:`seal()`은 Mock 객체를 봉인하여, 미리 설정하지 않은 속성/메서드에 접근하면 에러를 발생시킨다. 오타나 잘못된 속성 접근을 방지한다.
+workspace/reference/implementation-test/reference/external.md:844:factory_boy는 테스트 객체 생성을 위한 "청사진" 역할을 한다. JSON fixture 파일 대신 Python 코드로 테스트 데이터를 선언적으로 정의한다.
+workspace/reference/implementation-test/reference/external.md:984:### 7.6 SQLAlchemy / Django ORM 통합
+workspace/reference/implementation-test/reference/external.md:997:# Django
+workspace/reference/implementation-test/reference/external.md:998:class UserFactory(factory.django.DjangoModelFactory):
+workspace/reference/implementation-test/reference/external.md:1001:        django_get_or_create = ("username",)  # 중복 방지
+workspace/reference/implementation-test/reference/external.md:1600:# 파라미터화: Django 버전별 테스트
+workspace/reference/implementation-test/reference/external.md:1602:@nox.parametrize("django", ["4.2", "5.0", "5.1"])
+workspace/reference/implementation-test/reference/external.md:1603:def test_django(session, django):
+workspace/reference/implementation-test/reference/external.md:1604:    session.install(f"django=={django}", "pytest", "pytest-django")
+workspace/reference/implementation-test/reference/external.md:1628:nox -s "test_django(django='5.1')"
+workspace/reference/implementation-test/reference/external.md:1969:Django 기반 웹 애플리케이션의 TDD를 다룬다:
+workspace/reference/implementation-django/reference/final.md:1:# Django 프레임워크 특화 가이드
+workspace/reference/implementation-django/reference/final.md:3:> Django에서만 적용되는 관례, 설계 철학, 코딩 패턴을 정리한 문서.
+workspace/reference/implementation-django/reference/final.md:5:> Django 5.x(LTS 5.2) 기준으로 최신 패턴을 기본으로 제시한다.
+workspace/reference/implementation-django/reference/final.md:8:> - **[DDoc]** Django 공식 문서 (https://docs.djangoproject.com/)
+workspace/reference/implementation-django/reference/final.md:9:> - **[DDP]** Django Design Philosophies (https://docs.djangoproject.com/en/5.2/misc/design-philosophies/)
+workspace/reference/implementation-django/reference/final.md:10:> - **[DCS]** Django Coding Style (https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/)
+workspace/reference/implementation-django/reference/final.md:11:> - **[TSD]** Two Scoops of Django 3.x (Daniel & Audrey Feldroy)
+workspace/reference/implementation-django/reference/final.md:12:> - **[DfP]** Django for Professionals (William Vincent)
+workspace/reference/implementation-django/reference/final.md:14:> - **[HS]** HackSoft Django Styleguide (https://github.com/HackSoftware/Django-Styleguide)
+workspace/reference/implementation-django/reference/final.md:15:> - **[DRF]** Django REST Framework 공식 문서 (https://www.django-rest-framework.org/)
+workspace/reference/implementation-django/reference/final.md:17:> - **[OWASP]** Django Security Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Django_Security_Cheat_Sheet.html)
+workspace/reference/implementation-django/reference/final.md:23:1. [Django 설계 철학](#1-django-설계-철학)
+workspace/reference/implementation-django/reference/final.md:24:2. [Django 코딩 스타일](#2-django-코딩-스타일)
+workspace/reference/implementation-django/reference/final.md:30:8. [Django REST Framework 패턴](#8-django-rest-framework-패턴)
+workspace/reference/implementation-django/reference/final.md:38:16. [Django와 서비스 레이어 아키텍처](#16-django와-서비스-레이어-아키텍처)
+workspace/reference/implementation-django/reference/final.md:39:17. [Django 5.x 새 기능](#17-django-5x-새-기능)
+workspace/reference/implementation-django/reference/final.md:43:## 1. Django 설계 철학
+workspace/reference/implementation-django/reference/final.md:45:Django 공식 문서에 명시된 설계 철학은 모든 Django 코드 작성의 기반이다. **[DDP]**
+workspace/reference/implementation-django/reference/final.md:94:## 2. Django 코딩 스타일
+workspace/reference/implementation-django/reference/final.md:96:Django 공식 코딩 스타일은 PEP 8을 기반으로 하되, 고유한 규칙을 추가한다. **[DCS]**
+workspace/reference/implementation-django/reference/final.md:119:# 4. Django 컴포넌트
+workspace/reference/implementation-django/reference/final.md:120:from django.http import Http404
+workspace/reference/implementation-django/reference/final.md:121:from django.http.response import (
+workspace/reference/implementation-django/reference/final.md:127:# 5. 로컬 Django 컴포넌트 (한 점 상대 임포트)
+workspace/reference/implementation-django/reference/final.md:138:- **편의 임포트를 사용한다**: `from django.views import View` (O), `from django.views.generic.base import View` (X).
+workspace/reference/implementation-django/reference/final.md:176:        verbose_name_plural = "people"
+workspace/reference/implementation-django/reference/final.md:200:# 좋은 예: Enumeration 타입 (Django 3.0+, 권장)
+workspace/reference/implementation-django/reference/final.md:213:# Django 5.0+ 딕셔너리 구문도 가능
+workspace/reference/implementation-django/reference/final.md:266:Two Scoops of Django가 권장하는 구조.
+workspace/reference/implementation-django/reference/final.md:356:- **비밀 정보는 절대 코드에 하드코딩하지 않는다** -- `django-environ` 또는 `python-decouple`로 환경 변수에서 읽는다.
+workspace/reference/implementation-django/reference/final.md:363:from django.conf import settings
+workspace/reference/implementation-django/reference/final.md:364:from django.urls import get_callable
+workspace/reference/implementation-django/reference/final.md:369:from django.conf import settings
+workspace/reference/implementation-django/reference/final.md:372:    from django.urls import get_callable
+workspace/reference/implementation-django/reference/final.md:384:비즈니스 로직은 뷰가 아닌 모델(또는 서비스 레이어)에 둔다. Two Scoops of Django는 이를 **"Fat Models, Utility Modules, Thin Views, Stupid Templates"**로 정리한다.
+workspace/reference/implementation-django/reference/final.md:425:Django는 세 가지 모델 상속을 제공한다.
+workspace/reference/implementation-django/reference/final.md:604:from django.db.models import Prefetch
+workspace/reference/implementation-django/reference/final.md:645:from django.db.models import Count, Avg, F, Q
+workspace/reference/implementation-django/reference/final.md:660:# alias(): 최종 결과에 포함하지 않으면서 필터/정렬에 사용 (Django 3.2+)
+workspace/reference/implementation-django/reference/final.md:714:from django.views.generic import ListView, DetailView, CreateView
+workspace/reference/implementation-django/reference/final.md:763:from django.contrib.auth.decorators import login_required
+workspace/reference/implementation-django/reference/final.md:764:from django.views.decorators.http import require_http_methods
+workspace/reference/implementation-django/reference/final.md:787:Django 폼 유효성 검증은 다음 순서로 실행된다:
+workspace/reference/implementation-django/reference/final.md:845:from django.core.validators import RegexValidator
+workspace/reference/implementation-django/reference/final.md:863:## 8. Django REST Framework 패턴
+workspace/reference/implementation-django/reference/final.md:1014:시그널은 Django에서 가장 논쟁적인 기능 중 하나다. **올바른 사용 시나리오를 명확히 알아야 한다.**
+workspace/reference/implementation-django/reference/final.md:1020:from django.contrib.auth.models import User
+workspace/reference/implementation-django/reference/final.md:1021:from django.db.models.signals import post_save
+workspace/reference/implementation-django/reference/final.md:1022:from django.dispatch import receiver
+workspace/reference/implementation-django/reference/final.md:1088:from django.db import migrations
+workspace/reference/implementation-django/reference/final.md:1131:- PostgreSQL에서는 `django-pg-zero-downtime-migrations` 같은 도구를 고려한다.
+workspace/reference/implementation-django/reference/final.md:1142:# 1. django-debug-toolbar -- 개발 환경에서 쿼리 수 실시간 확인
+workspace/reference/implementation-django/reference/final.md:1143:# 2. django-silk -- 프로파일링 미들웨어
+workspace/reference/implementation-django/reference/final.md:1148:from django.test import TestCase
+workspace/reference/implementation-django/reference/final.md:1185:- Django Debug Toolbar로 느린 쿼리를 식별하고, `EXPLAIN ANALYZE`로 확인한다.
+workspace/reference/implementation-django/reference/final.md:1226:Django는 세 가지 수준의 캐싱을 제공한다.
+workspace/reference/implementation-django/reference/final.md:1230:from django.views.decorators.cache import cache_page
+workspace/reference/implementation-django/reference/final.md:1238:from django.views.decorators.cache import cache_page
+workspace/reference/implementation-django/reference/final.md:1250:from django.core.cache import cache
+workspace/reference/implementation-django/reference/final.md:1285:### 13.1 Django 내장 보안 기능 [DDoc] [OWASP]
+workspace/reference/implementation-django/reference/final.md:1287:Django는 주요 웹 취약점에 대한 방어를 내장하고 있다.
+workspace/reference/implementation-django/reference/final.md:1289:| 공격 유형 | Django 방어 | 주의사항 |
+workspace/reference/implementation-django/reference/final.md:1315:CSRF_COOKIE_HTTPONLY = True  # 주의: Django 공식 문서는 CSRF에 대한 실질적 보호 효과가 없다고 명시. 보안 감사 요구사항이 있을 때만 사용. AJAX 사용 시 문제 발생 가능
+workspace/reference/implementation-django/reference/final.md:1321:# Django 보안 체크 실행
+workspace/reference/implementation-django/reference/final.md:1345:from django.contrib.auth.decorators import login_required, permission_required
+workspace/reference/implementation-django/reference/final.md:1353:from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+workspace/reference/implementation-django/reference/final.md:1374:from django.test import TestCase
+workspace/reference/implementation-django/reference/final.md:1390:from factory.django import DjangoModelFactory
+workspace/reference/implementation-django/reference/final.md:1392:class UserFactory(DjangoModelFactory):
+workspace/reference/implementation-django/reference/final.md:1400:class ArticleFactory(DjangoModelFactory):
+workspace/reference/implementation-django/reference/final.md:1432:### 14.3 pytest-django 활용 [TDD]
+workspace/reference/implementation-django/reference/final.md:1436:from django.test import Client
+workspace/reference/implementation-django/reference/final.md:1447:@pytest.mark.django_db
+workspace/reference/implementation-django/reference/final.md:1465:- `@pytest.mark.django_db`로 DB 접근을 명시한다.
+workspace/reference/implementation-django/reference/final.md:1469:### 14.4 테스트에서의 Django 공식 규칙 [DCS]
+workspace/reference/implementation-django/reference/final.md:1547:## 16. Django와 서비스 레이어 아키텍처
+workspace/reference/implementation-django/reference/final.md:1595:### 16.3 DDD와 Django의 트레이드오프 [CP]
+workspace/reference/implementation-django/reference/final.md:1598:# Django ORM은 Active Record 패턴 -- 도메인 모델과 영속성 모델이 같은 객체
+workspace/reference/implementation-django/reference/final.md:1599:# DDD의 Repository 패턴을 적용하려면 수동 변환 레이어가 필요
+workspace/reference/implementation-django/reference/final.md:1601:# 방법 A: Django ORM 직접 사용 (대부분의 프로젝트에 적합)
+workspace/reference/implementation-django/reference/final.md:1602:# - Django의 배터리(admin, forms, migrations)를 그대로 활용
+workspace/reference/implementation-django/reference/final.md:1618:# 단점: Django의 풍부한 QuerySet API를 래핑하는 추가 비용
+workspace/reference/implementation-django/reference/final.md:1622:- 대부분의 Django 프로젝트에서는 **모델 메서드 + 서비스 함수**로 충분하다.
+workspace/reference/implementation-django/reference/final.md:1624:- DDD의 모든 패턴을 Django에 강제하면 Django의 장점(admin, migrations, forms)을 재구현하게 된다. **[CP]**
+workspace/reference/implementation-django/reference/final.md:1629:## 17. Django 5.x 새 기능
+workspace/reference/implementation-django/reference/final.md:1631:### 17.1 Django 5.0 주요 기능 [DDoc]
+workspace/reference/implementation-django/reference/final.md:1636:from django.db.models.functions import Now, Pi
+workspace/reference/implementation-django/reference/final.md:1666:# Django 5.0+ 간결한 구문
+workspace/reference/implementation-django/reference/final.md:1674:### 17.2 Django 5.1 주요 기능 [DDoc]
+workspace/reference/implementation-django/reference/final.md:1680:    "django.contrib.auth.middleware.LoginRequiredMiddleware",
+workspace/reference/implementation-django/reference/final.md:1684:from django.contrib.auth.decorators import login_not_required
+workspace/reference/implementation-django/reference/final.md:1691:### 17.3 Django 5.2 주요 기능 (LTS) [DDoc]
+workspace/reference/implementation-django/reference/final.md:1696:from django.db.models import CompositePrimaryKey
+workspace/reference/implementation-django/reference/final.md:1711:# Django 5.2+: shell 실행 시 모든 앱의 모델이 자동 임포트됨
+workspace/reference/implementation-django/reference/final.md:1719:# Django 5.2: GeneratedField를 사용하는 CheckConstraint 검증 지원
+workspace/reference/implementation-django/reference/final.md:1723:- Django 5.2는 **LTS** (Long-Term Support)로, 2028년 4월까지 보안 업데이트를 받는다.
+workspace/reference/implementation-django/reference/final.md:1731:- [Django Design Philosophies](https://docs.djangoproject.com/en/5.2/misc/design-philosophies/)
+workspace/reference/implementation-django/reference/final.md:1732:- [Django Coding Style](https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/)
+workspace/reference/implementation-django/reference/final.md:1733:- [Django Security](https://docs.djangoproject.com/en/5.2/topics/security/)
+workspace/reference/implementation-django/reference/final.md:1734:- [Django Database Optimization](https://docs.djangoproject.com/en/5.2/topics/db/optimization/)
+workspace/reference/implementation-django/reference/final.md:1735:- [Django Testing](https://docs.djangoproject.com/en/5.2/topics/testing/)
+workspace/reference/implementation-django/reference/final.md:1736:- [Django 5.2 Release Notes](https://docs.djangoproject.com/en/5.2/releases/5.2/)
+workspace/reference/implementation-django/reference/final.md:1737:- [DRF Official Docs](https://www.django-rest-framework.org/)
+workspace/reference/implementation-django/reference/final.md:1738:- [OWASP Django Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Django_Security_Cheat_Sheet.html)
+workspace/reference/implementation-django/reference/final.md:1741:- Two Scoops of Django 3.x (Daniel & Audrey Feldroy)
+workspace/reference/implementation-django/reference/final.md:1742:- Django for Professionals (William Vincent)
+workspace/reference/implementation-django/reference/final.md:1747:- [HackSoft Django Styleguide](https://github.com/HackSoftware/Django-Styleguide)
+workspace/reference/implementation-django/reference/final.md:1748:- [Django Anti-Patterns](https://www.django-antipatterns.com/)
+workspace/reference/implementation-django/reference/final.md:1749:- [Django Best Practices (Lincoln Loop)](https://lincolnloop.com/blog/django-anti-patterns-signals/)
+workspace/reference/architecture-api/reference/review.md:123:### [C-5] architecture-api와 implementation-django(DRF)의 경계
+workspace/reference/architecture-api/reference/review.md:125:External의 내용 중 일부는 구현에 가깝다: Rate Limiting 알고리즘(Fixed Window, Token Bucket 등), Idempotency-Key 서버 구현, RFC 9457 에러 응답 구현 등. 이들은 DRF(Django REST Framework) 구현과 직접 겹칠 수 있다.
+workspace/reference/architecture-api/reference/review.md:128:9. architecture-api에는 "무엇을 왜" (원칙, 패턴, 선택 기준)만 두고, "어떻게" (DRF serializer, throttling 설정 등)는 implementation-django로 이동할 것인가?
+workspace/reference/architecture-api/reference/review.md:218:| 9-10 | architecture-api vs implementation-django 경계 | 타 스킬과 경계 |
+workspace/reference/architecture-api/reference/final.md:213:- `type`은 문서화 역할을 하는 안정적 URI
+workspace/reference/architecture-api/reference/external.md:172:- `type`은 문서화 역할을 하는 안정적 URI
+workspace/reference/spec.md:3:`dddjango`의 canonical product spec은 `workspace/docs/spec.md`다.
+workspace/reference/implementation-cleancode/reference/review.md:8:### [1] 주석의 역할과 필요성
+workspace/reference/implementation-cleancode/reference/review.md:131:| 1 | 주석의 역할과 필요성 | 모순 | 병합 |
+workspace/reference/implementation-cleancode/reference/internal.md:175:### 2.8 역할 제시형 작명 [IP]
+workspace/reference/implementation-cleancode/reference/internal.md:177:변수 이름은 연산에서의 역할을 반영하여 짓는다. 생명기간, 범위, 타입은 문맥에서 전달된다.
+workspace/reference/implementation-cleancode/reference/internal.md:184:results = get_items()         # 컬렉터 역할
+workspace/reference/implementation-cleancode/reference/internal.md:185:pending_count = len(queue)    # 카운터 역할
+workspace/reference/implementation-cleancode/reference/internal.md:914:### 12.1 역할, 책임, 협력 [OO]
+workspace/reference/implementation-cleancode/reference/internal.md:916:> "객체지향에서 가장 중요한 개념은 역할, 책임, 협력이다." **[OO]**
+workspace/reference/implementation-cleancode/reference/internal.md:918:- **역할**: 대체 가능성을 의미한다 (다형성)
+workspace/reference/implementation-cleancode/reference/internal.md:920:- **협력**: 역할과 책임을 조화롭게 연결
+workspace/reference/implementation-cleancode/reference/final.md:210:### 2.8 역할 제시형 작명 [IP]
+workspace/reference/implementation-cleancode/reference/final.md:212:변수 이름은 연산에서의 역할을 반영하여 짓는다. 생명기간, 범위, 타입은 문맥에서 전달된다.
+workspace/reference/implementation-cleancode/reference/final.md:219:results = get_items()         # 컬렉터 역할
+workspace/reference/implementation-cleancode/reference/final.md:220:pending_count = len(queue)    # 카운터 역할
+workspace/reference/implementation-cleancode/reference/final.md:1869:### 14.1 역할, 책임, 협력 [OO]
+workspace/reference/implementation-cleancode/reference/final.md:1871:> "객체지향에서 가장 중요한 개념은 역할, 책임, 협력이다." **[OO]**
+workspace/reference/implementation-cleancode/reference/final.md:1873:- **역할**: 대체 가능성을 의미한다 (다형성)
+workspace/reference/implementation-cleancode/reference/final.md:1875:- **협력**: 역할과 책임을 조화롭게 연결
+workspace/reference/implementation-cleancode/reference/final.md:2574:| 점진적으로 살을 붙인다 | 정찰/정보 수집 역할 |
+workspace/reference/implementation-cleancode/reference/external.md:1380:| 점진적으로 살을 붙인다 | 정찰/정보 수집 역할 |
+workspace/reference/implementation-cleancode/reference/external.md:1984:    if color == "red":       # 오타 위험: "rde"
+workspace/reference/implementation-cleancode/reference/external.md:1998:    if color == Color.RED:   # IDE 자동완성, 오타 불가
+workspace/docs/reference-index.md:9:| DDD | `workspace/reference/architecture-ddd/reference/final.md` | 전략 설계 우선, 하위 도메인 유형, 바운디드 컨텍스트, 유비쿼터스 언어, 컨텍스트 맵, 애그리거트, 도메인 이벤트 |
+workspace/docs/reference-index.md:10:| Implementation Patterns | 전용 source reference 필요. 임시로 `architecture-ddd/reference/final.md`, `implementation-django/reference/final.md`, `implementation-python/reference/final.md`를 조합 | layered/hexagonal/clean architecture, ports/adapters, repository, CQRS, outbox, ACL, 의존성 방향 |
+workspace/docs/reference-index.md:18:| Django | `workspace/reference/implementation-django/reference/final.md` | Django 설계 철학, 모델/QuerySet/Manager, 뷰, 마이그레이션, 성능, 보안, 테스트, 서비스 레이어 |
+workspace/docs/reference-index.md:19:| Django Ninja | 전용 source reference 필요. 임시로 `architecture-api/reference/final.md`와 사용자 제품 결정을 조합 | Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient |
+workspace/docs/reference-index.md:20:| Django Web | 전용 source reference 필요. 임시로 `implementation-django/reference/final.md`의 template/view/static 관련 내용을 조합 | template inheritance, static files, TemplateView, component include, HTMX, CSRF for AJAX |
+workspace/docs/reference-index.md:25:| Workflow | 생성 전 authoring source: `workspace/docs/workflow.md`; 생성 후 runtime bundled reference: `dddjango/skills/workflow-dddjango-subagents/references/` | 역할 분해, handoff contract, sequential fallback, integration priority |
+workspace/docs/reference-index.md:43:| `architecture-implementation-patterns` | 전용 source reference를 만들기 전까지 DDD, Django, Python reference에서 필요한 패턴만 조합한다. |
+workspace/docs/reference-index.md:44:| `implementation-django-ninja` | 전용 Django Ninja source reference가 필요하다. 만들기 전까지 DRF 문서를 신규 구현 근거로 사용하지 않는다. |
+workspace/docs/reference-index.md:45:| `implementation-django-web` | 전용 Django Web source reference가 필요하다. 만들기 전까지 Django reference의 template/static/view 부분만 사용한다. |
+workspace/docs/reference-index.md:46:| `workflow-dddjango-subagents` | `workspace/docs/workflow.md`를 source로 삼고, 이후 `dddjango/skills/workflow-dddjango-subagents/references/`로 runtime reference를 생성한다. |
+workspace/docs/reference-index.md:52:`implementation-django/reference/final.md`의 DRF 섹션은 신규 API 구현 지침이 아니다.
+workspace/docs/reference-index.md:57:- DRF-to-Django-Ninja 마이그레이션
+workspace/docs/reference-index.md:58:- 기존 DRF API와 Django Ninja 구현의 비교
+workspace/docs/reference-index.md:61:신규 API 구현은 `implementation-django-ninja` 기준으로 작성한다.
+workspace/docs/reference-index.md:67:| DDD 전략 설계를 전술 패턴보다 먼저 둔다 | `architecture-ddd/reference/final.md` |
+workspace/docs/reference-index.md:71:| 신규 API 구현 표준은 Django Ninja로 둔다 | 사용자 제품 결정. 전용 Django Ninja source reference가 필요하다. |
+workspace/docs/reference-index.md:72:| Django 구현은 Django 철학을 따르되 복잡한 도메인에서는 서비스/경계 분리를 허용한다 | `implementation-django/reference/final.md`, DDD reference |
+workspace/docs/validation-plan.md:3:이 문서는 `dddjango` 스킬을 만든 뒤 제대로 동작하는지 확인하기 위한 대표 작업 세트다. 스킬 개발 전에 평가 기준을 고정하기 위해 작성한다.
+workspace/docs/validation-plan.md:20:주문 생성 유스케이스를 DDD 기준으로 설계하고 Django Ninja API와 테스트까지 구현해줘. 중복 요청 방지도 고려해줘.
+workspace/docs/validation-plan.md:25:- 주문 생성 유스케이스를 DDD로 모델링한다.
+workspace/docs/validation-plan.md:27:- Django ORM과 Django Ninja API로 매핑한다.
+workspace/docs/validation-plan.md:45:- runtime `workflow-dddjango-subagents` role map의 Django Agent는 `implementation-django-web`을 누락하지 않는다.
+workspace/docs/validation-plan.md:50:- Domain Agent, Architecture Agent, DB Agent, API Agent, Django Agent, Test Agent, Review Agent 역할 필요
+workspace/docs/validation-plan.md:79:### DRF to Django Ninja 전환
+workspace/docs/validation-plan.md:84:기존 DRF ViewSet 주문 API를 Django Ninja로 전환해줘. 기존 클라이언트 호환성도 확인해줘.
+workspace/docs/validation-plan.md:89:- 기존 DRF ViewSet/Serializer API를 Django Ninja Router/Schema로 전환한다.
+workspace/docs/validation-plan.md:105:Order 모델이 너무 커졌는지 dddjango 기준으로 리뷰해줘. 어떤 로직을 남기고 어떤 로직을 service/usecase로 뺄지 판단해줘.
+workspace/docs/validation-plan.md:110:- Django model에 과도하게 모인 책임을 리뷰한다.
+workspace/docs/validation-plan.md:125:Django view 또는 Ninja Router에 비즈니스 로직이 들어간 코드를 dddjango 기준으로 리뷰하고 개선 방향을 제안해줘.
+workspace/docs/validation-plan.md:130:- Django view 또는 Ninja Router에 있는 비즈니스 로직을 리뷰한다.
+workspace/docs/validation-plan.md:156:- DB constraint와 Django migration 책임을 구분한다.
+workspace/docs/validation-plan.md:157:- DB Agent는 rollout constraints를, Django Agent는 실제 migration 파일 구현을 담당한다.
+workspace/docs/validation-plan.md:178:### Django Web
+workspace/docs/validation-plan.md:183:Django TemplateView 기반 주문 상세 페이지를 추가하고 template/static 구조를 dddjango 기준으로 정리해줘.
+workspace/docs/validation-plan.md:188:- `implementation-django-web` 책임으로 분류된다.
+workspace/docs/validation-plan.md:225:Order 모델의 memo 필드를 note로 바꾸는 작은 Django 수정만 해줘. subagent 계획은 필요 없어.
+workspace/docs/validation-plan.md:230:- 전체 역할 분해를 출력하지 않는다.
+workspace/docs/validation-plan.md:239:Django Ninja Router가 무엇인지 짧게 설명해줘.
+workspace/docs/validation-plan.md:244:- DDD workflow를 시작하지 않는다.
+workspace/docs/validation-plan.md:258:- 정정 문구를 먼저 출력한다.
+workspace/docs/validation-plan.md:265:| DDD 반영 | 전략 설계가 전술 패턴보다 먼저 나오는가 |
+workspace/docs/validation-plan.md:266:| 구현 현실성 | Django/Python 관용구와 충돌하지 않는가 |
+workspace/docs/validation-plan.md:268:| API 표준 | Django Ninja와 Problem Details 기준을 지키는가 |
+workspace/docs/validation-plan.md:273:| 과적용 방지 | 단순 작업에 역할 분해를 강제하지 않는가 |
+workspace/docs/validation-plan.md:276:| runtime role-map sync | `workflow.md`의 역할 분해 표와 runtime `workflow-dddjango-subagents` role map의 책임/skill 구성이 일치하는가 |
+workspace/docs/validation-plan.md:292:python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills
+workspace/docs/validation-plan.md:304:python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills
+workspace/docs/validation-plan.md:313:- `workflow-dddjango-subagents` runtime `SKILL.md`와 `references/role-map.md`는 `workspace/docs/workflow.md`의 역할 분해 표에서 책임과 관련 skill을 축소하지 않는다.
+workspace/docs/validation-plan.md:314:- Django Agent가 template/static/web 책임을 포함하면 runtime role map에도 `implementation-django-web`이 포함된다.
+workspace/docs/spec.md:1:# dddjango Spec
+workspace/docs/spec.md:6:- [DDD Implementation Standard](ddd-implementation-standard.md)
+workspace/docs/spec.md:16:`dddjango`는 DDD 기반 애플리케이션을 Python/Django 생태계에서 일관되게 구현하기 위한 Claude Code와 Codex 공통 플러그인이다.
+workspace/docs/spec.md:18:핵심 목표는 에이전트가 구현 세부에 바로 뛰어들지 않고, 먼저 도메인 경계, 유비쿼터스 언어, 애그리거트, 불변식, 유스케이스를 정리한 뒤 이를 Django ORM, application service, selector, Django Ninja API, pytest 테스트로 매핑하게 만드는 것이다.
+workspace/docs/spec.md:20:`dddjango`의 API 구현 표준은 Django Ninja로 둔다. DRF는 신규 구현 표준이 아니라 레거시 코드 리뷰, 마이그레이션, 비교 참고 자료로만 다룬다.
+workspace/docs/spec.md:22:단순 CRUD나 지원 하위 도메인에는 Django다운 최소 구조를 유지하고, 복잡한 도메인 규칙이 있는 작업에는 DDD 모델링과 구현 아키텍처 패턴을 필요한 만큼 적용한다.
+workspace/docs/spec.md:24:복합적이거나 위험한 작업에는 역할 분해와 전문 스킬 조합으로 도메인 모델, 구현 매핑, 데이터 모델, API 계약, 테스트, 리뷰를 통합한다.
+workspace/docs/spec.md:34:Core domain에는 도메인 모델의 표현력과 불변식 보호를 우선한다. Supporting domain이나 단순 CRUD에는 Django 모델, QuerySet, service 함수 중심의 간단한 구조를 허용한다. Generic domain에는 외부 솔루션이나 기존 라이브러리 사용을 우선 고려한다.
+workspace/docs/spec.md:38:Django ORM 모델과 도메인 모델은 항상 분리하지 않는다. 불변식이 단순하고 Django 모델만으로 충분히 표현되면 Django 모델을 도메인 객체로 사용할 수 있다. 반대로 도메인 규칙이 ORM, HTTP, 외부 SDK, 프레임워크 세부사항에 묶이면 도메인 객체와 인프라 구현을 분리한다.
+workspace/docs/spec.md:40:API 계층은 유스케이스를 외부에 노출하는 adapter다. Django Ninja Router는 요청 검증, 인증/인가 연결, 유스케이스 호출, 응답 변환을 담당하고, 핵심 비즈니스 규칙을 소유하지 않는다.
+workspace/docs/spec.md:46:### Core DDD
+workspace/docs/spec.md:49:- `architecture-implementation-patterns`: DDD 모델을 코드 구조로 옮기기 위한 layered architecture, hexagonal architecture, clean architecture, ports/adapters, repository, CQRS, event sourcing, outbox, dependency inversion, anti-corruption layer를 다룬다.
+workspace/docs/spec.md:53:- `implementation-django`: 도메인 모델과 유스케이스를 Django model, ORM, QuerySet, Manager, service, selector, migration, transaction, Django test 관용구로 매핑한다.
+workspace/docs/spec.md:54:- `implementation-django-ninja`: 유스케이스와 API 계약을 Django Ninja Schema, Router, auth, pagination, FilterSchema, Problem Details, TestClient로 구현한다.
+workspace/docs/spec.md:55:- `implementation-django-web`: Django template, static files, base template, component include, CSS/JS, TemplateView, HTMX, CSRF for AJAX를 다룬다.
+workspace/docs/spec.md:71:- `workflow-dddjango-subagents`: 복합 DDD/Django 작업의 역할 분해, subagent 조정, 순차 실행 fallback, 결과 통합을 다룬다.
+workspace/docs/spec.md:75:`dddjango`가 만드는 산출물은 도메인 판단과 구현 판단이 분리되어 추적 가능해야 한다.
+workspace/docs/spec.md:79:구현 산출물은 Django/Python 관용구를 따르되, 비즈니스 규칙이 HTTP adapter, serializer/schema, ORM 쿼리 세부사항, 외부 SDK에 흩어지지 않게 해야 한다.
+workspace/scripts/validate_skill_docs.py:2:"""Validate dddjango planning docs, generated skill folders, and runtime cache."""
+workspace/scripts/validate_skill_docs.py:17:DEFAULT_PLUGIN_SKILLS = ROOT / "dddjango" / "skills"
+workspace/scripts/validate_skill_docs.py:20:        "DDDJANGO_RUNTIME_SKILLS",
+workspace/scripts/validate_skill_docs.py:21:        "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills",
+workspace/scripts/validate_skill_docs.py:39:    "implementation-django-ninja",
+workspace/scripts/validate_skill_docs.py:40:    "implementation-django-web",
+workspace/scripts/validate_skill_docs.py:48:    "implementation-django",
+workspace/scripts/validate_skill_docs.py:49:    "implementation-django-ninja",
+workspace/scripts/validate_skill_docs.py:50:    "implementation-django-web",
+workspace/scripts/validate_skill_docs.py:55:    "workflow-dddjango-subagents",
+workspace/scripts/validate_skill_docs.py:59:    "Coordinator": ["workflow-dddjango-subagents"],
+workspace/scripts/validate_skill_docs.py:62:    "DB Agent": ["architecture-db", "implementation-django"],
+workspace/scripts/validate_skill_docs.py:63:    "API Agent": ["architecture-api", "implementation-django-ninja"],
+workspace/scripts/validate_skill_docs.py:64:    "Django Agent": ["implementation-django", "implementation-django-web", "implementation-python"],
+workspace/scripts/validate_skill_docs.py:70:    "Coordinator": re.compile(r"\|\s*Coordinator\s*\|[^|\n]*\|[^|\n]*`workflow-dddjango-subagents`", re.MULTILINE),
+workspace/scripts/validate_skill_docs.py:76:    "DB Agent": re.compile(r"\|\s*DB Agent\s*\|[^|\n]*\|[^|\n]*`architecture-db`[^|\n]*`implementation-django`", re.MULTILINE),
+workspace/scripts/validate_skill_docs.py:77:    "API Agent": re.compile(r"\|\s*API Agent\s*\|[^|\n]*\|[^|\n]*`architecture-api`[^|\n]*`implementation-django-ninja`", re.MULTILINE),
+workspace/scripts/validate_skill_docs.py:78:    "Django Agent": re.compile(
+workspace/scripts/validate_skill_docs.py:79:        r"\|\s*Django Agent\s*\|[^|\n]*template/static/web[^|\n]*\|[^|\n]*`implementation-django`[^|\n]*`implementation-django-web`[^|\n]*`implementation-python`",
+workspace/scripts/validate_skill_docs.py:166:        and "implementation-django-web" in workflow
+workspace/scripts/validate_skill_docs.py:168:        "workflow.md must declare the role map canonical and include Django web ownership",
+workspace/scripts/validate_skill_docs.py:256:    if skill_dir.name == "workflow-dddjango-subagents":
+workspace/scripts/validate_skill_docs.py:320:        "implementation-django-web" in skill_text
+workspace/scripts/validate_skill_docs.py:323:        "runtime SKILL.md Django Agent must include implementation-django-web and template/static ownership",
+workspace/scripts/validate_skill_docs.py:326:        "implementation-django-web" in role_text
+workspace/scripts/validate_skill_docs.py:330:        "runtime role-map.md Django Agent must include implementation-django-web and template/static ownership defaults",
+workspace/scripts/validate_skill_docs.py:333:        "`implementation-django`, `implementation-django-web`, `implementation-python`" in role_text,
+workspace/scripts/validate_skill_docs.py:334:        "runtime role-map.md Django Agent skill list must match the mandatory template",
+workspace/scripts/validate_skill_docs.py:370:    workflow_skill = runtime_skills / "workflow-dddjango-subagents"
+workspace/scripts/validate_skill_docs.py:393:        if skill_dir.name == "workflow-dddjango-subagents":
+workspace/develop/skill_goal_instructions.md:3:이 문서는 dddjango 개별 skill 구현 goal에서 참조하는 실행 지침이다. Goal objective에는 짧은 목표와 이 파일 경로만 적고, 자세한 작업 규칙은 이 문서를 따른다.
+workspace/develop/skill_goal_instructions.md:11:- `dddjango/.codex-plugin/plugin.json`
+workspace/develop/skill_goal_instructions.md:12:- `dddjango/skills/<skill>/SKILL.md`
+workspace/develop/skill_goal_instructions.md:13:- `dddjango/skills/<skill>/agents/openai.yaml`
+workspace/develop/skill_goal_instructions.md:14:- `dddjango/skills/<skill>/references/*.md`
+workspace/develop/skill_goal_instructions.md:17:이 프로젝트의 runtime target은 standalone Codex skill 위치인 `$CODEX_HOME/skills` 또는 `~/.codex/skills`가 아니다. 최종 산출물은 Codex에서도 동작하는 plugin-bundled skill이므로, 모든 runtime skill은 repo root의 `dddjango/skills/<skill>/` 아래에 생성한다. `dddjango/skills/.gitkeep`은 개별 skill 생성 전 빈 skills 디렉터리를 추적하기 위한 placeholder이며, 실제 skill 구현을 대체하지 않는다.
+workspace/develop/skill_goal_instructions.md:30:- DDD 구현 표준: `workspace/docs/ddd-implementation-standard.md`
+workspace/develop/skill_goal_instructions.md:54:1. `dddjango/.codex-plugin/plugin.json`
+workspace/develop/skill_goal_instructions.md:55:2. `implementation-django`
+workspace/develop/skill_goal_instructions.md:56:3. `implementation-django-ninja`
+workspace/develop/skill_goal_instructions.md:57:4. `implementation-django-web`
+workspace/develop/skill_goal_instructions.md:66:13. `workflow-dddjango-subagents`
+workspace/develop/skill_goal_instructions.md:130:- Workflow 요약, 단계 나열, scoring 기준, 평가 문구를 넣지 않는다.
+workspace/develop/skill_goal_instructions.md:157:`dddjango/skills/<skill>/references/`에는 해당 skill이 실제 작업 중 필요할 때 읽을 세부 지식을 둔다.
+workspace/develop/skill_goal_instructions.md:166:- DRF 내용은 legacy review, DRF-to-Django-Ninja migration, compatibility, comparison 범위로만 둔다.
+workspace/develop/skill_goal_instructions.md:167:- 신규 API 구현 기준은 Django Ninja로 둔다.
+workspace/develop/skill_goal_instructions.md:190:dddjango plugin은 한국어 사용자를 우선 고려한다.
+workspace/develop/skill_goal_instructions.md:193:- 한국어/영어 혼합 표현을 고려한다. 예: `Django Ninja로 주문 API`, `쿠폰 정책 TDD`, `상태 컬럼 backfill`, `ViewSet을 Ninja로 전환`.
+workspace/develop/skill_goal_instructions.md:197:- 단순 작업에 DDD, workflow, subagent를 과적용하지 않는 boundary를 반드시 둔다.
+workspace/develop/skill_goal_instructions.md:204:- `implementation-django-ninja`
+workspace/develop/skill_goal_instructions.md:205:- `implementation-django-web`
+workspace/develop/skill_goal_instructions.md:225:- DB schema, transaction, locking, rollout constraint는 `architecture-db`가 설계하고 `implementation-django`가 migration 구현을 맡는다.
+workspace/develop/skill_goal_instructions.md:226:- REST API contract는 `architecture-api`가 설계하고 `implementation-django-ninja`가 구현한다.
+workspace/develop/skill_goal_instructions.md:227:- Django template/static/frontend 책임은 `implementation-django-web`이 맡는다.
+workspace/develop/skill_goal_instructions.md:229:- Clean code review와 refactoring 판단은 `implementation-cleancode`가 맡되, Python/Django 세부 구현에는 관련 implementation skill을 함께 고려한다.
+workspace/develop/skill_goal_instructions.md:230:- `workflow-dddjango-subagents`는 복합적이거나 위험한 Django/DDD 작업, 또는 user가 subagent/역할 분해를 명시한 경우에 사용한다.
+workspace/develop/skill_goal_instructions.md:234:- 단순 필드 rename이나 작은 Django 구현에 workflow skill을 강제하지 않는다.
+workspace/develop/skill_goal_instructions.md:235:- 모든 Django 작업에 DDD tactical pattern을 강제하지 않는다.
+workspace/develop/skill_goal_instructions.md:244:- dddjango product/docs alignment
+workspace/develop/skill_goal_instructions.md:253:- `major`: trigger 또는 anti-trigger 불명확, reference loading 기준 부족, source heading의 반영 또는 제외 근거 누락, skill responsibility conflict, 한국어 trigger coverage 부족, workflow/DDD 과적용 위험
+workspace/develop/skill_goal_instructions.md:254:- `minor`: 표현 개선, 예시 보강, 중복 정리, reference 링크 명확화, metadata 문구 개선
+workspace/develop/skill_goal_instructions.md:261:- `eval-only calibration issue`: 평가 prompt, grader key, scoring 문구 문제이므로 runtime 문서에 반영하지 않는다.
+workspace/develop/skill_goal_instructions.md:282:- 단순 작업에 DDD, architecture, workflow, subagent를 과적용하지 않는 boundary가 있다.
+workspace/develop/skill_goal_instructions.md:295:- `rg -n "^---$|^name:|^description:" dddjango/skills/<skill>/SKILL.md`
+workspace/develop/skill_goal_instructions.md:296:- `rg -n "README|INSTALLATION|CHANGELOG|expected routing|grader key|scoring note" dddjango/skills/<skill>`
+workspace/develop/skill_goal_instructions.md:297:- `find dddjango/skills/<skill> -maxdepth 3 -type f | sort`
+workspace/develop/skill_goal_instructions.md:302:- `python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills`
+workspace/develop/skill_goal_instructions.md:303:- `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills`
+workspace/develop/skill_goal_instructions.md:304:- `git diff --check -- dddjango workspace/develop/plan.md workspace/develop/source-crosswalks`
+workspace/develop/skill_goal_instructions.md:305:- 필요한 경우 `wc -l dddjango/skills/*/SKILL.md`
+workspace/develop/skill_goal_instructions.md:307:설치된 runtime cache를 보정한 경우 `python3 workspace/scripts/validate_skill_docs.py --phase runtime`도 실행한다. Runtime smoke는 완료 게이트가 아니며, 실제 skill folder 생성 후 완료 판단은 `--phase all --skills-dir dddjango/skills` 결과를 우선한다.
+workspace/develop/skill_goal_instructions.md:328:dddjango 개별 스킬 구현을 진행한다.
+workspace/reference/implementation-tdd/reference/review.md:5:### 1. Mock 객체의 역할과 가치 평가
+workspace/docs/workflow.md:1:# dddjango Workflow
+workspace/docs/workflow.md:3:이 문서는 `dddjango` 작업이 어떤 순서로 사고되고 통합되어야 하는지 정의한다. 개별 스킬의 trigger 문서가 아니라, dddjango 작업으로 들어온 뒤의 흐름 문서다.
+workspace/docs/workflow.md:8:2. 도메인 규칙, 상태 전이, 정책, 불변식이 있으면 DDD 판단을 먼저 한다.
+workspace/docs/workflow.md:14:8. DB, API, Django/Python 구현으로 매핑한다.
+workspace/docs/workflow.md:23:| DDD 작업 | 상태 전이, 정책, 불변식, 도메인 용어가 중요함 | `architecture-ddd` 판단 후 구현 매핑 |
+workspace/docs/workflow.md:24:| 복합 작업 | DDD, DB, API, Django, 테스트 중 여러 관점이 얽힘 | 역할 분해 후 통합 |
+workspace/docs/workflow.md:25:| 위험 작업 | 위험 도메인 명사와 상태 전이, 트랜잭션, 스키마, API, 테스트 영향이 함께 있음 | 역할 분해와 검증 우선 |
+workspace/docs/workflow.md:28:역할 분해는 다음 중 하나일 때 적용한다.
+workspace/docs/workflow.md:30:- DDD, DB, API, Django, 테스트, 리팩터링 중 둘 이상의 책임 영역이 실제로 얽혀 있다.
+workspace/docs/workflow.md:31:- 사용자가 subagent 실행, 역할 분해, 병렬 검토, 책임 분배를 명시적으로 요청한다.
+workspace/docs/workflow.md:34:단순 단일 파일 수정, 작은 필드 rename, 짧은 설명 요청, 이미 도메인 계약이 확정된 작은 구현에는 전체 역할 분해를 강제하지 않는다. 사용자가 `subagent 계획은 필요 없어`처럼 opt-out을 명시하면 전체 역할 분해를 출력하지 않는다.
+workspace/docs/workflow.md:36:## 3. 역할 분해
+workspace/docs/workflow.md:38:복합 작업에서는 다음 역할을 사용한다.
+workspace/docs/workflow.md:40:| 역할 | 책임 | 관련 skill |
+workspace/docs/workflow.md:42:| Coordinator | 작업 범위, 역할 배분, 결과 통합 | `workflow-dddjango-subagents` |
+workspace/docs/workflow.md:45:| DB Agent | 스키마, 제약조건, 인덱스, 트랜잭션, rollout constraints, backfill/index-lock risk | `architecture-db`, 필요 시 `implementation-django` |
+workspace/docs/workflow.md:46:| API Agent | REST 계약, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+workspace/docs/workflow.md:47:| Django Agent | ORM, service, selector, concrete migration files, transaction, settings/security/performance, web template/static | `implementation-django`, `implementation-django-web`, `implementation-python` |
+workspace/docs/workflow.md:51:이 표는 runtime `workflow-dddjango-subagents` role map의 canonical source다. runtime `SKILL.md`와 `references/role-map.md`로 옮길 때 역할명, 책임 범위, 관련 skill을 임의로 줄이지 않는다. 특히 Django Agent가 `web template/static` 책임을 가진다면 `implementation-django-web`을 반드시 포함한다.
+workspace/docs/workflow.md:53:Domain Agent의 판단이 DB Agent, API Agent, Django Agent, Test Agent의 기준이 된다.
+workspace/docs/workflow.md:57:subagent를 사용할 수 없거나 사용하지 않는 경우에도 역할 순서는 유지한다.
+workspace/docs/workflow.md:65:5. Django
+workspace/docs/workflow.md:74:역할 간 전달은 다음 필드를 포함한다.
+workspace/docs/workflow.md:85:- dddjango Checks
+workspace/docs/workflow.md:87:결정한 내용과 결정하지 않은 내용은 `Decisions`에 둔다. 다음 역할이 반드시 확인해야 할 질문은 `Required Follow-up`에 둔다.
+workspace/docs/workflow.md:98:6. Django/Python 관용구
+workspace/docs/workflow.md:107:- API contract: Django Ninja Router/Schema, status code, Problem Details, OpenAPI 영향, DRF 신규 구현 금지를 확인한다.
+workspace/docs/workflow.md:108:- Implementation mapping: domain logic이 router/view에 들어가지 않고 Django service/selector/model 경계와 맞는지 확인한다.
+workspace/docs/workflow.md:110:- Role handoff closure: 각 역할의 `Risks`와 `Required Follow-up`이 통합 결정에 반영됐는지 확인한다.
+workspace/docs/workflow.md:117:스킬 폴더를 생성하기 전에는 `workspace/reference`의 source reference와 `workspace/docs`를 읽는다. runtime skill을 생성한 뒤에는 각 `SKILL.md`에서 직접 링크한 `dddjango/skills/<skill>/references/*.md`를 읽는다. runtime `SKILL.md`에는 workspace-only source path를 최종 reference 경로처럼 남기지 않는다.
+workspace/docs/workflow.md:121:| 도메인 경계/모델링 | `workspace/reference/architecture-ddd/reference/final.md` | `dddjango/skills/architecture-ddd/references/strategic-design.md`, `context-map.md`, `tactical-patterns.md` |
+workspace/docs/workflow.md:122:| 구현 아키텍처 패턴 | 전용 source reference 필요. 임시로 `architecture-ddd`, `implementation-django`, `implementation-python` source reference를 조합 | `dddjango/skills/architecture-implementation-patterns/references/*.md`; provisional이면 표시 필요 |
+workspace/docs/workflow.md:123:| DB schema/transaction/index | `workspace/reference/architecture-db/reference/final.md` | `dddjango/skills/architecture-db/references/*.md` |
+workspace/docs/workflow.md:124:| REST 계약/API 오류 | `workspace/reference/architecture-api/reference/final.md` | `dddjango/skills/architecture-api/references/*.md` |
+workspace/docs/workflow.md:125:| Django ORM/migration/service | `workspace/reference/implementation-django/reference/final.md` | `dddjango/skills/implementation-django/references/*.md` |
+workspace/docs/workflow.md:126:| Django Ninja Router/Schema/API 구현 | 전용 source reference 필요. 임시로 `architecture-api`와 제품 결정을 조합. DRF section은 신규 구현에 사용하지 않음 | `dddjango/skills/implementation-django-ninja/references/*.md`; provisional이면 표시 필요 |
+workspace/docs/workflow.md:127:| Django template/static/web | 전용 source reference 필요. 임시로 Django source reference의 template/static/view 부분만 사용 | `dddjango/skills/implementation-django-web/references/*.md`; provisional이면 표시 필요 |
+workspace/docs/workflow.md:128:| Python typing/dataclass/protocol | `workspace/reference/implementation-python/reference/final.md` | `dddjango/skills/implementation-python/references/*.md` |
+workspace/docs/workflow.md:129:| TDD 흐름 | `workspace/reference/implementation-tdd/reference/final.md` | `dddjango/skills/implementation-tdd/references/*.md` |
+workspace/docs/workflow.md:130:| pytest/mock/factory | `workspace/reference/implementation-test/reference/final.md` | `dddjango/skills/implementation-test/references/*.md` |
+workspace/docs/workflow.md:131:| 리팩터링/리뷰 | `workspace/reference/implementation-cleancode/reference/final.md` | `dddjango/skills/implementation-cleancode/references/*.md` |
+workspace/docs/workflow.md:132:| 역할 분해/handoff | `workspace/docs/workflow.md` | `dddjango/skills/workflow-dddjango-subagents/references/*.md` |
+workspace/reference/architecture-db/reference/review.md:111:External에 SQLAlchemy 커넥션 풀 설정, Django select_related/prefetch_related, SQLAlchemy joinedload/selectinload 등 ORM 코드가 포함되어 있다.
+workspace/reference/architecture-db/reference/review.md:114:5. ORM별 코드 예시를 architecture-db에 포함할 것인가, implementation-django/implementation-python 등 구현 스킬로 이동할 것인가?
+workspace/reference/architecture-db/reference/review.md:115:6. SQLAlchemy와 Django ORM 중 하나만 다룰 것인가, 둘 다 다룰 것인가?
+workspace/reference/architecture-db/reference/review.md:124:7. Expand-and-Contract 같은 전략적 마이그레이션 패턴은 architecture-db에, Alembic/Django migrations 같은 도구별 가이드는 implementation 스킬에 배치하는 것이 맞는가?
+workspace/reference/architecture-ddd/reference/review.md:1:# DDD 아키텍처 의사결정 문서: Internal vs External 상충 분석
+workspace/reference/architecture-ddd/reference/review.md:4:> External 출처: Eric Evans 파란책, Vaughn Vernon "Effective Aggregate Design" / "DDD Distilled", Scott Millett, Harry Percival & Bob Gregory "Cosmic Python", Greg Young, Martin Fowler
+workspace/reference/architecture-ddd/reference/review.md:14:| 출처 | [A] 도메인 주도 개발 시작하기 | Scott Millett, Patterns Principles and Practices of DDD |
+workspace/reference/architecture-ddd/reference/review.md:18:**External 근거**: Millett는 빈혈 도메인 모델을 "가장 흔한 DDD 실패 사례"로 지적하며, 엔티티가 독립적으로 존재하는 것이 아니라 풍부한 도메인 모델의 구성 요소로서 행동과 불변식을 캡슐화해야 한다고 주장한다. Evans 원전도 엔티티를 애그리거트 내에서 다룬다.
+workspace/reference/architecture-ddd/reference/review.md:83:### [6] DDD 도입 시 전략 패턴 vs 전술 패턴의 우선순위
+workspace/reference/architecture-ddd/reference/review.md:89:| 출처 | [A] 도메인 주도 개발 시작하기 | Vaughn Vernon, "DDD Distilled" |
+workspace/reference/architecture-ddd/reference/review.md:92:**Internal 근거**: [A]는 "전술 패턴 중심의 실무 구현"을 초점으로 하며, 바운디드 컨텍스트보다는 도메인 영역 내부의 모듈 구성에 집중한다. DDD 입문자를 대상으로 하여 즉시 코드에 적용 가능한 패턴을 우선 제시한다.
+workspace/reference/architecture-ddd/reference/review.md:108:**External 근거**: Bogard의 패턴과 Cosmic Python은 "수집 -> 커밋 직전에 디스패치 -> 커밋" 또는 "커밋 -> 커밋 직후 디스패치"라는 명확한 타이밍을 제시하며, Unit of Work가 이 역할을 담당한다. 커밋 전 디스패치는 동일 트랜잭션 내 부수 효과에, 커밋 후 디스패치는 외부 통합에 적합하다.
+workspace/reference/architecture-ddd/reference/review.md:119:| 출처 | [A] 도메인 주도 개발 시작하기 (Django 패키지 구조) | Cosmic Python, [C] 도메인 주도 설계 구현(빨간책) |
+workspace/reference/architecture-ddd/reference/review.md:122:**Internal 근거**: [A]의 Django 프로젝트 구조에서 `services/` 디렉토리에 `order_service.py`(응용 서비스 성격)와 `discount_service.py`(도메인 서비스)를 함께 배치한다. `views/`에 표현 계층과 응용 계층을 합치는 등 실용적이지만 경계가 모호한 구조이다.
+workspace/reference/architecture-ddd/reference/review.md:124:**추천**: External ▶ (도메인 서비스와 응용 서비스의 혼합 배치는 비즈니스 로직의 누수를 유발하므로, 4계층 명확 분리를 기본으로 하되 Django 등 프레임워크 제약 시 [A] 방식을 차선으로 허용)
+workspace/docs/skill-contracts.md:33:- Django model, Router, migration 코드 구현을 직접 소유하지 않는다.
+workspace/docs/skill-contracts.md:40:- DDD 모델을 구현 구조로 옮길 아키텍처 패턴을 선택한다.
+workspace/docs/skill-contracts.md:46:- DDD 모델
+workspace/docs/skill-contracts.md:90:- Django migration 파일의 세부 구현은 `implementation-django`가 담당한다.
+workspace/docs/skill-contracts.md:120:- Django Ninja 구현 세부는 `implementation-django-ninja`가 담당한다.
+workspace/docs/skill-contracts.md:123:## `implementation-django`
+workspace/docs/skill-contracts.md:127:- 확정된 도메인 모델과 유스케이스를 Django model, ORM, QuerySet, Manager, service, selector, migration, transaction으로 구현한다.
+workspace/docs/skill-contracts.md:128:- Django 성능, 보안, 설정, 구체적인 migration 파일 구현, 테스트 관용구를 적용한다.
+workspace/docs/skill-contracts.md:132:- DDD 모델
+workspace/docs/skill-contracts.md:135:- 기존 Django 코드
+workspace/docs/skill-contracts.md:139:- Django model/manager/queryset/service/selector 코드
+workspace/docs/skill-contracts.md:143:- Django 통합 테스트 acceptance criteria. 복합 workflow에서 테스트 파일 소유는 기본적으로 Test Agent가 맡는다.
+workspace/docs/skill-contracts.md:148:- domain/application 판단 없이 Django 구조부터 만들지 않는다.
+workspace/docs/skill-contracts.md:150:## `implementation-django-ninja`
+workspace/docs/skill-contracts.md:154:- API 계약을 Django Ninja Router, Schema, auth, pagination, FilterSchema, Problem Details, TestClient로 구현한다.
+workspace/docs/skill-contracts.md:155:- DRF 기반 신규 구현 요청은 Django Ninja 기준으로 전환한다.
+workspace/docs/skill-contracts.md:177:## `implementation-django-web`
+workspace/docs/skill-contracts.md:181:- Django template/static/frontend 작업을 구현한다.
+workspace/docs/skill-contracts.md:187:- Django view/context
+workspace/docs/skill-contracts.md:308:## `workflow-dddjango-subagents`
+workspace/docs/skill-contracts.md:312:- 복합 DDD/Django 작업을 역할로 나누고 결과를 통합한다.
+workspace/docs/skill-contracts.md:313:- subagent를 사용할 수 있으면 실제로 위임하고, 사용할 수 없으면 같은 역할 순서로 순차 실행한다.
+workspace/docs/skill-contracts.md:324:- 역할 분해
+workspace/docs/skill-contracts.md:332:- 단순 작업에 역할 분해를 과하게 적용하지 않는다.
+workspace/docs/skill-contracts.md:338:주문, 결제, 재고, 예약, 환불, 권한, ledger처럼 위험한 쓰기 작업에서는 관련 역할이 다음 항목을 남긴다.
+workspace/reference/implementation-python/reference/internal.md:164:    def get_colour(self) -> str:  # 타입 체커 에러: 오타
+workspace/scripts/validate_eval_protocol.py:2:"""Validate dddjango plugin eval protocol isolation artifacts."""
+workspace/scripts/validate_eval_protocol.py:13:REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+workspace/scripts/validate_eval_protocol.py:16:VARIANTS = ("baseline", "with-dddjango")
+workspace/scripts/validate_eval_protocol.py:27:    "dddjango skill metadata": re.compile(r"dddjango:[a-z0-9_-]+", re.I),
+workspace/scripts/validate_eval_protocol.py:28:    "runtime skill path": re.compile(r"dddjango/skills|dddjango-local/dddjango|plugins/cache/dddjango", re.I),
+workspace/scripts/validate_eval_protocol.py:29:    "local marketplace path": re.compile(r"\.agents/plugins/marketplace\.json|plugins/dddjango", re.I),
+workspace/scripts/validate_eval_protocol.py:31:    "canonical plugin source path": re.compile(re.escape(str(REPO_ROOT / "dddjango"))),
+workspace/scripts/validate_eval_protocol.py:122:        metadata_mentions = artifact.get("operatorPromptDddjangoSkillMetadataMentions")
+workspace/scripts/validate_eval_protocol.py:124:            findings.append(f"{case_id}: baseline operator prompt contains dddjango skill metadata names")
+workspace/develop/plan.md:1:# dddjango Plugin Development Plan
+workspace/develop/plan.md:3:이 문서는 `dddjango` 플러그인을 실제 스킬 묶음으로 개발하기 위한 실행 계획과 진행 체크리스트이다.
+workspace/develop/plan.md:5:기준 문서는 `workspace/docs`이고, source reference corpus는 `workspace/reference`이다. 개발 산출물은 기본적으로 workspace 안에 둔다. 플러그인 런타임이 요구하는 경우에만 repo root의 `dddjango/` 또는 설치된 plugin cache를 다룬다.
+workspace/develop/plan.md:30:- 평가 대상이 기존 설치 cache가 아니라 repo의 최신 `dddjango/` plugin bundle임을 고정한다.
+workspace/develop/plan.md:31:- Codex local marketplace가 repo root에서 `./dddjango` plugin root를 발견하게 만든다.
+workspace/develop/plan.md:36:- [x] 평가 대상 canonical source를 `/Users/hyun/Desktop/dddjango/dddjango`로 고정한다.
+workspace/develop/plan.md:37:- [x] repo root에 `.agents/plugins/marketplace.json`을 추가하고 `source.path`를 `./plugins/dddjango`로 지정한다.
+workspace/develop/plan.md:38:- [x] `plugins/dddjango -> ../dddjango` symlink로 Codex local marketplace 표준 배치와 canonical source를 연결한다.
+workspace/develop/plan.md:39:- [x] `dddjango/.codex-plugin/plugin.json` 버전을 기존 cache `0.1.9`보다 높은 `0.1.10`으로 맞춘다.
+workspace/develop/plan.md:40:- [x] local marketplace 재등록 후 stale cache를 제거하고 repo source를 `dddjango/0.1.10` cache에 동기화한다.
+workspace/develop/plan.md:41:- [x] 갱신된 cache가 `dddjango/0.1.10`이고 repo source와 동기화되었는지 확인한다.
+workspace/develop/plan.md:43:- [x] 새 Codex prompt input에서 12개 dddjango skill metadata가 로드되는지 확인한다.
+workspace/develop/plan.md:44:- [x] smoke prompt 3개에서 dddjango 12개 skill metadata가 노출되는지 확인한다.
+workspace/develop/plan.md:49:- [x] `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills`가 통과한다.
+workspace/develop/plan.md:50:- [x] `git diff --check -- dddjango .agents plugins workspace/docs/plugin-structure.md workspace/develop/plan.md workspace/scripts/validate_skill_docs.py`가 통과한다.
+workspace/develop/plan.md:66:- [x] `implementation-django_rubric.md`를 작성한다.
+workspace/develop/plan.md:67:- [x] `implementation-django-ninja_rubric.md`를 작성한다.
+workspace/develop/plan.md:68:- [x] `implementation-django-web_rubric.md`를 작성한다.
+workspace/develop/plan.md:90:- [x] 단순 작업에 DDD나 subagent workflow를 과하게 적용하지 않는 negative case가 포함된다.
+workspace/develop/plan.md:99:- [x] `architecture-ddd_rubric.md`: bounded context 언어 차이, coupon invariant, DDD 적용 범위 판단 prompt 보강; findings 0.
+workspace/develop/plan.md:101:- [x] `implementation-django_rubric.md`: Django migration sequence, backfill, NOT NULL, transaction/on_commit prompt 보강; findings 0.
+workspace/develop/plan.md:102:- [x] `implementation-django-ninja_rubric.md`: Django Ninja 구현, DRF-to-Ninja migration, fat Router 방지 prompt 보강; findings 0.
+workspace/develop/plan.md:103:- [x] `implementation-django-web_rubric.md`: template/static, HTMX/CSRF, template business logic 방지 prompt 보강; findings 0.
+workspace/develop/plan.md:108:- [x] `workflow-dddjango-subagents_rubric.md`: composite/risky, sequential fallback, false subagent claim, simple negative prompt 보강; findings 0.
+workspace/develop/plan.md:120:- [x] `dddjango/.codex-plugin/plugin.json`
+workspace/develop/plan.md:121:- [x] `dddjango/skills/<skill>/SKILL.md` (12개 runtime skill 완료)
+workspace/develop/plan.md:122:- [x] `dddjango/skills/<skill>/agents/openai.yaml` (12개 runtime skill 완료)
+workspace/develop/plan.md:123:- [x] `dddjango/skills/<skill>/references/*.md` (12개 runtime skill 완료)
+workspace/develop/plan.md:128:- [x] `implementation-django`를 구현한다.
+workspace/develop/plan.md:129:- [x] `implementation-django-ninja`를 구현한다.
+workspace/develop/plan.md:130:- [x] `implementation-django-web`을 구현한다.
+workspace/develop/plan.md:139:- [x] `workflow-dddjango-subagents`를 구현한다.
+workspace/develop/plan.md:173:python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills
+workspace/develop/plan.md:187:| `implementation-django` | completed | blocking 0, major 0, minor 0 after fixing workflow routing, test boundary, crosswalk heading, and metadata wording | positive, boundary/combined, and negative prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were also run for positive and boundary behavior before the final wording patch, and negative behavior after the final patch | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Actual code/migration tests were not run because these were skill evaluation prompts, not a Django app implementation. |
+workspace/develop/plan.md:188:| `implementation-django-ninja` | completed | blocking 0, major 0, minor 0 after fixing test boundary wording, `architecture-db` idempotency/locking routing, Korean trigger coverage, content negotiation delegation, and crosswalk heading coverage | positive, DRF migration/boundary, Korean auth/pagination/filtering, idempotency storage/locking, short-explanation negative, and greenfield DRF anti-trigger prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for short explanation and greenfield DRF behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Provisional status and fallback source remain explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. TestClient/OpenAPI/pytest were not run because these were skill evaluation prompts, not an app implementation. |
+workspace/develop/plan.md:189:| `implementation-django-web` | completed | blocking 0, major 0, minor 0 after fixing test-mechanics delegation, API/DB routing, Korean trigger coverage, auth/permission coverage, ModelForm `exclude`, raw SQL safety, provisional static-source precision, metadata, and progressive reference loading | positive, boundary/combined, and API negative prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for TemplateView/static/HTMX positive behavior, HTMX/CSRF/service/test boundary behavior, and REST API negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Provisional status and fallback/product-source split remain explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Render tests, browser screenshots, `collectstatic`, and pytest were not run because these were skill evaluation prompts, not an app implementation. |
+workspace/develop/plan.md:190:| `implementation-python` | completed | blocking 0, major 0, minor 0 after fixing API/DB routing, function contract coverage, decorator signature preservation, class API shape, TypeVarTuple/type defaults, collection choice, Python 3.14 gates, Korean trigger coverage, Django Ninja boundary wording, and deprecation guidance | positive, pydantic-boundary, and simple negative prompts executed with `codex debug prompt-input`; read-only `codex exec` samples were run for state-transition typing, pydantic/domain boundary, and small helper type-hint behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Ruff, mypy, pyright, pytest, and runtime app checks were not run because these were skill evaluation prompts, not an app implementation. |
+workspace/develop/plan.md:191:| `implementation-cleancode` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, API/DB and pattern routing, Django Fat Model/View responsibility boundaries, detailed source/crosswalk heading coverage, state/error details, review/edit boundary, design-it-twice guidance, and false validation claim handling; independent source re-review by Socrates returned 0 findings | positive, boundary/view-logic, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/cleancode-smoke` for Fat Model, View Logic, and simple naming behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts, not a Django app implementation. |
+workspace/develop/plan.md:192:| `implementation-tdd` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, API/DB routing, risky/composite workflow routing, Source Coverage Crosswalk heading tracking, validation scenario heading coverage, test isolation guidance, mock-role/TDD boundary wording, and stale review claims; independent source re-review by Kierkegaard returned 0 findings | positive, composite boundary, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/tdd-smoke` for coupon-policy TDD planning, risky order API workflow/TDD boundary, and README typo negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:193:| `implementation-test` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, broad workflow responsibility wording, validation scenario heading coverage, `spec.md` child-heading coverage, Risky Write Consistency Block coverage, stale review claims, and import-order negative boundary; independent source re-review and rubric review by Carver returned 0 findings | positive, boundary/combined, and import-order negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/test-smoke` for Django Ninja API contract tests, risky DDD/API/test workflow, and import-order negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and rubric-private material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, coverage, mutation testing, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:194:| `architecture-ddd` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, `spec.md` child-heading coverage, validation scenario heading coverage, Risky Write DDD handoff, metadata specificity, combined-work implementation boundary, and stale completion claims | positive, composite/risky boundary, and simple naming negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/ddd-smoke` for order DDD design, workflow handoff, and category-code naming behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:195:| `architecture-implementation-patterns` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, direct pattern-selection vs workflow routing, layered dependency wording, `spec.md` child-heading coverage, validation scenario coverage, Risky Write Consistency Block output shape, metadata specificity, and stale review claims; independent source re-review returned 0 findings | positive, coordinated workflow boundary, and simple `verbose_name` negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/pattern-smoke` for payment pattern selection, workflow handoff, and negative direct-edit behavior, with positive re-run after block-heading wording fix | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Provisional fallback status remains explicit. Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:196:| `architecture-db` | completed | blocking 0, major 0, minor 0 after fixing direct DB design vs workflow routing, Korean trigger coverage for idempotency/rollout/query-plan language, `spec.md` child-heading coverage, validation scenario coverage, ddd-implementation-standard heading coverage, stale review claims, and metadata specificity; independent source review returned 0 findings | positive DB concurrency, coordinated workflow boundary, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/db-smoke` for stock/reservation DB design, workflow handoff, and simple `verbose_name` negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:197:| `architecture-api` | completed | blocking 0, major 0, minor 0 after fixing direct API contract vs workflow routing, Korean trigger coverage for auth/header/compatibility language, `spec.md` child-heading coverage, validation scenario coverage, ddd-implementation-standard heading coverage, metadata specificity, API contract acceptance-criteria output, and stale review claims; independent source re-review returned 0 findings | positive API contract, coordinated workflow boundary, and simple Django negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/api-smoke` for order API contract, workflow handoff, and simple memo-field negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, OpenAPI generation, TestClient, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:198:| `workflow-dddjango-subagents` | completed | blocking 0, major 0, minor 0 after fixing stale review/rubric claims, source crosswalk heading precision, Korean trigger coverage for role-map/handoff/integration/check terms, `spec.md` child-heading coverage, validation scenario coverage, metadata wording, review-focused findings-first output order, canonical role responsibility coverage, handoff field pinning, and visible Risky Write Consistency Block output; independent source re-review returned 0 findings | positive composite/risky workflow, review-focused boundary, false-subagent claim, and simple Django negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/workflow-smoke` for composite order workflow, review findings-first workflow, false-claim correction, and simple memo-field negative behavior, with positive re-run after Risky Write block wording fix | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, migrations, OpenAPI generation, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:200:Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills` passed with 0 warnings; `git diff --check` was clean; runtime and current crosswalk leakage grep found no private grader/scoring/expected material; `/private/tmp/workflow-smoke/*.txt` leakage grep found no private evaluator material; source/cache `diff -qr dddjango /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10` was clean; final `codex debug prompt-input` smoke artifact at `/private/tmp/dddjango-final-runtime-debug.json` exposed all 12 dddjango skill metadata entries from cache version `0.1.10`.
+workspace/develop/plan.md:207:- DDD 구현 흐름이 실제 개발 작업에서 유지되는지 확인한다.
+workspace/develop/plan.md:211:- [x] `workflow-dddjango-subagents_rubric.md`를 작성한다.
+workspace/develop/plan.md:212:- [x] 역할별 handoff 기대 산출물을 정의한다.
+workspace/develop/plan.md:216:- [x] DDD 설계에서 Django 구현까지 이어지는 평가 prompt를 작성한다.
+workspace/develop/plan.md:217:- [x] Django Ninja API 설계와 구현 연계 평가 prompt를 작성한다.
+workspace/develop/plan.md:224:- [x] 역할별 책임과 관련 skill 구성이 `workspace/docs/workflow.md`와 일치한다.
+workspace/develop/plan.md:225:- [x] Django template/static/web 책임이 있으면 `implementation-django-web`이 누락되지 않는다.
+workspace/develop/plan.md:237:- `workflow-dddjango-subagents`
+workspace/develop/plan.md:241:- [x] `workflow-dddjango-subagents/SKILL.md`를 작성한다.
+workspace/develop/plan.md:242:- [x] `workflow-dddjango-subagents/references/delegation-rules.md`를 작성한다.
+workspace/develop/plan.md:243:- [x] `workflow-dddjango-subagents/references/role-map.md`를 작성한다.
+workspace/develop/plan.md:244:- [x] `workflow-dddjango-subagents/references/handoff-contract.md`를 작성한다.
+workspace/develop/plan.md:245:- [x] `workflow-dddjango-subagents/references/integration-checklist.md`를 작성한다.
+workspace/develop/plan.md:246:- [x] `workflow-dddjango-subagents/agents/openai.yaml`을 작성한다.
+workspace/develop/plan.md:249:- [x] 역할 분해가 DDD, DB, API, Django, Test, Review 책임을 축소하지 않게 한다.
+workspace/develop/plan.md:263:- [x] 과한 구조 적용이나 역할 누락을 수정한다.
+workspace/develop/plan.md:274:- [x] 복합 작업에서 DDD 판단이 구현보다 먼저 나온다.
+workspace/develop/plan.md:275:- [x] Django Ninja가 API 구현 표준으로 유지된다.
+workspace/develop/plan.md:300:- [x] DDD 구현 일관성
+workspace/develop/plan.md:301:- [x] Django Ninja 표준
+workspace/develop/plan.md:323:- Summary: baseline/with-dddjango 17개 public case raw output과 case analysis HTML을 작성했다.
+workspace/develop/plan.md:324:- Result: with-ddjango는 17/17 public case를 evaluator judgment 기준으로 통과했지만, baseline isolation 오염과 artifact instruction 충돌이라는 major eval-protocol finding 2개 때문에 종합 eval 완료 상태로 보지 않는다.
+workspace/develop/plan.md:340:python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills
+workspace/develop/plan.md:346:- [ ] generated/all phase가 실제 `dddjango/skills`를 대상으로 통과한다.
+workspace/docs/skill-hierarchy.md:9:- `dddjango`
+workspace/docs/skill-hierarchy.md:10:  - `workflow-dddjango-subagents`
+workspace/docs/skill-hierarchy.md:15:      - `implementation-django`
+workspace/docs/skill-hierarchy.md:16:      - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:17:      - `implementation-django-web`
+workspace/docs/skill-hierarchy.md:25:      - `implementation-django`
+workspace/docs/skill-hierarchy.md:26:      - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:27:      - `implementation-django-web`
+workspace/docs/skill-hierarchy.md:32:      - `implementation-django`
+workspace/docs/skill-hierarchy.md:37:      - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:41:    - `implementation-django`
+workspace/docs/skill-hierarchy.md:42:    - `implementation-django-ninja`
+workspace/docs/skill-hierarchy.md:43:    - `implementation-django-web`
+workspace/reference/architecture-ddd/reference/internal.md:1:# DDD(도메인 주도 설계) 종합 가이드
+workspace/reference/architecture-ddd/reference/internal.md:7:## 1. DDD란 무엇인가
+workspace/reference/architecture-ddd/reference/internal.md:9:DDD(Domain-Driven Design)는 복잡한 소프트웨어를 비즈니스 도메인 중심으로 설계하는 방법론이다. 소프트웨어의 핵심은 비즈니스 도메인이며, 도메인 전문가와 개발자가 공통 언어를 사용하여 모델을 구축하고 이를 코드로 구현한다.
+workspace/reference/architecture-ddd/reference/internal.md:16:| 대상 | DDD 입문자 | 비즈니스 설계자/아키텍트 | 실무 구현 개발자 |
+workspace/reference/architecture-ddd/reference/internal.md:344:- [C]: "DDD의 전술 도구 가운데 가장 이해도가 낮은 도구"라며, 작은 객체 클러스터로 일관성 경계를 구축할 것을 권고한다.
+workspace/reference/architecture-ddd/reference/internal.md:492:class DjangoOrderRepository(OrderRepository):
+workspace/reference/architecture-ddd/reference/internal.md:493:    """Django ORM 기반 리포지토리 구현체"""
+workspace/reference/architecture-ddd/reference/internal.md:609:    외부 시스템(역할 관리 시스템)과의 연동을 추상화"""
+workspace/reference/architecture-ddd/reference/internal.md:628:도메인 영역과 표현 영역을 연결하는 매개체(파사드) 역할이다. 비즈니스 로직을 직접 구현하지 않으며, 도메인 객체에 위임한다.
+workspace/reference/architecture-ddd/reference/internal.md:991:[B]는 DDD의 전술 패턴이 모든 상황에 적합하지 않음을 강조하며, 단순한 비즈니스 로직을 위한 패턴을 소개한다.
+workspace/reference/architecture-ddd/reference/internal.md:1026:    - Django Model과 유사한 패턴
+workspace/reference/architecture-ddd/reference/internal.md:1048:### Django 프로젝트에 DDD 적용 [A]
+workspace/reference/architecture-ddd/reference/internal.md:1051:order/                          # 바운디드 컨텍스트 (또는 Django App)
+workspace/reference/architecture-ddd/reference/internal.md:1062:    django_order_repository.py  #   - 리포지토리 구현체
+workspace/reference/architecture-ddd/reference/internal.md:1066:### 일반적인 DDD 프로젝트 [C]
+workspace/reference/architecture-ddd/reference/internal.md:1138:[B]는 DDD의 전술 패턴이 궁극적으로 **시스템의 자유도를 줄여 복잡성을 낮추는 수단**임을 설명한다.
+workspace/reference/implementation-tdd/reference/internal.md:241:        result.add_listener(self)  # 테스트 자체가 리스너 역할
+workspace/docs/skill-authoring.md:18:`architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`은 전용 source reference가 아직 부족하다. 이 세 skill은 전용 reference를 먼저 만들거나 provisional skill로 표시한 뒤 작성한다.
+workspace/docs/skill-authoring.md:22:아래 표는 최종 문구가 아니라 작성 입력이다. 실제 `SKILL.md`를 만들 때 더 짧고 명확한 description으로 다듬는다.
+workspace/docs/skill-authoring.md:28:| `architecture-ddd` | DDD/domain modeling: subdomain, bounded context, context map, ubiquitous language, aggregate, invariant, domain event, domain service. | 도메인 규칙, 상태 전이, 정책, 불변식, 바운디드 컨텍스트, 애그리거트 | DB schema는 `architecture-db`; HTTP API는 `architecture-api`; Django 구현은 implementation skills |
+workspace/docs/skill-authoring.md:29:| `architecture-implementation-patterns` | Provisional until dedicated source reference exists; implementation architecture patterns for DDD mapping: layered, hexagonal, clean architecture, ports/adapters, repository, CQRS, outbox, ACL, dependency direction. Use fallback source until finalized. | 헥사고날, 클린 아키텍처, 의존성 역전, repository, outbox, ACL, 프로젝트 구조 | 단순 CRUD는 implementation skill 직접 사용 |
+workspace/docs/skill-authoring.md:30:| `architecture-db` | Relational DB design supporting the domain model: schema, constraints, indexes, transactions, isolation, locking, rollout constraints. | ERD, 정규화, 인덱스, constraint, transaction, locking, migration risk | Django migration file 구현은 `implementation-django` |
+workspace/docs/skill-authoring.md:31:| `architecture-api` | REST API contract design: resources, URL, methods, status codes, Problem Details, pagination, versioning, rate limit, idempotency, OpenAPI. | REST 설계, API 계약, 상태 코드, 오류 형식, OpenAPI | Django Ninja code는 `implementation-django-ninja` |
+workspace/docs/skill-authoring.md:32:| `implementation-django` | Django implementation: models, ORM, QuerySet, Manager, service, selector, migration files, transaction, settings, security, performance. | Django model, migration, service, selector, ORM 최적화 | API Router/Schema는 `implementation-django-ninja`; web template은 `implementation-django-web` |
+workspace/docs/skill-authoring.md:33:| `implementation-django-ninja` | Provisional until dedicated source reference exists; Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient. Use fallback source until finalized. Convert DRF greenfield requests to Ninja. | Django Ninja, Router, Schema, DRF-to-Ninja, API test | DRF ViewSet/Serializer/APIView 신규 구현 금지 |
+workspace/docs/skill-authoring.md:34:| `implementation-django-web` | Provisional until dedicated source reference exists; Django web/template/static implementation: TemplateView, templates, static files, base template, component include, HTMX, CSRF for AJAX. Use fallback source until finalized. | template, static, CSS/JS, TemplateView, HTMX | REST API는 `implementation-django-ninja` |
+workspace/docs/skill-authoring.md:37:| `implementation-test` | Python/Django test implementation: pytest, fixtures, test doubles, fake/mock/stub, factories, property-based tests, coverage, mutation testing. | pytest, fixture, mock, factory, coverage, testcontainers | TDD 흐름 자체는 `implementation-tdd` |
+workspace/docs/skill-authoring.md:39:| `workflow-dddjango-subagents` | Role-decomposed dddjango workflow for composite or risky Django/DDD work; coordinates Domain, Architecture, DB, API, Django, Test, Review roles. | subagent, 역할 분해, 병렬 검토, DDD+DB+API+테스트 복합 작업 | 단순 단일 파일 수정이나 짧은 설명은 직접 처리 |
+workspace/docs/skill-authoring.md:45:1. `workflow-dddjango-subagents`
+workspace/docs/skill-authoring.md:62:| `architecture-ddd` | DDD Architecture | Model bounded contexts, aggregates, invariants, and domain events. | `$architecture-ddd` |
+workspace/docs/skill-authoring.md:66:| `implementation-django` | Django Implementation | Implement Django models, ORM, services, selectors, migrations, and transactions. | `$implementation-django` |
+workspace/docs/skill-authoring.md:67:| `implementation-django-ninja` | Django Ninja Implementation | Provisional until dedicated source reference exists; use fallback source to implement Django Ninja routers, schemas, auth, errors, OpenAPI, and API tests. | `$implementation-django-ninja` |
+workspace/docs/skill-authoring.md:68:| `implementation-django-web` | Django Web Implementation | Provisional until dedicated source reference exists; use fallback source to implement Django templates, static files, TemplateView, HTMX, and CSRF-aware web flows. | `$implementation-django-web` |
+workspace/docs/skill-authoring.md:73:| `workflow-dddjango-subagents` | dddjango Workflow | Coordinate role-decomposed DDD/Django work across domain, DB, API, implementation, test, and review roles. | `$workflow-dddjango-subagents` |
+workspace/scripts/validate_eval_code_artifacts.py:12:REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+workspace/scripts/validate_eval_code_artifacts.py:14:VALID_VARIANTS = ("baseline", "with-dddjango")
+workspace/reference/architecture-db/reference/external.md:180:| Django | `select_related` (FK JOIN) / `prefetch_related` (별도 쿼리) |
+workspace/docs/ddd-implementation-standard.md:1:# DDD Implementation Standard
+workspace/docs/ddd-implementation-standard.md:3:이 문서는 `dddjango`가 DDD를 Python/Django 코드로 구현할 때 따르는 기준이다. Django는 구현 생태계이며, 판단의 출발점은 도메인 모델이다.
+workspace/docs/ddd-implementation-standard.md:7:DDD 작업은 다음 순서로 판단한다.
+workspace/docs/ddd-implementation-standard.md:17:9. Django ORM, DB schema, API, test로 매핑한다.
+workspace/docs/ddd-implementation-standard.md:26:| Supporting | 비즈니스 보조, CRUD 중심, 낮은 복잡도 | Django다운 단순 구조, 필요한 service만 추가 |
+workspace/docs/ddd-implementation-standard.md:29:모든 기능에 같은 수준의 DDD 구조를 강제하지 않는다. 구조의 무게는 도메인 복잡도와 변경 위험에 맞춘다.
+workspace/docs/ddd-implementation-standard.md:89:## 7. Django ORM 매핑
+workspace/docs/ddd-implementation-standard.md:91:Django model을 도메인 객체로 사용할 수 있는 경우:
+workspace/docs/ddd-implementation-standard.md:94:- Django model method로 도메인 행위를 명확히 표현할 수 있다.
+workspace/docs/ddd-implementation-standard.md:111:트랜잭션은 유스케이스의 일관성 경계다. Django에서는 `transaction.atomic()`을 기본 도구로 사용하되, 외부 side effect는 transaction commit 이후로 미룬다.
+workspace/docs/ddd-implementation-standard.md:129:Django Ninja Router는 얇은 adapter로 유지한다.
+workspace/docs/ddd-implementation-standard.md:158:Django ORM, transaction, constraint, query 성능은 통합 테스트로 검증한다.
+workspace/docs/ddd-implementation-standard.md:160:Django Ninja API는 TestClient로 request/response contract, status code, Problem Details, auth, pagination을 검증한다.
+workspace/reference/architecture-ddd/reference/final.md:1:# DDD(도메인 주도 설계) 종합 가이드
+workspace/reference/architecture-ddd/reference/final.md:4:> **External 출처:** Eric Evans 파란책, Vaughn Vernon "Effective Aggregate Design" / "DDD Distilled", Scott Millett, Harry Percival & Bob Gregory "Cosmic Python", Greg Young, Martin Fowler, Alberto Brandolini
+workspace/reference/architecture-ddd/reference/final.md:8:## 1. DDD란 무엇인가
+workspace/reference/architecture-ddd/reference/final.md:10:DDD(Domain-Driven Design)는 복잡한 소프트웨어를 비즈니스 도메인 중심으로 설계하는 방법론이다. 소프트웨어의 핵심은 비즈니스 도메인이며, 도메인 전문가와 개발자가 공통 언어를 사용하여 모델을 구축하고 이를 코드로 구현한다.
+workspace/reference/architecture-ddd/reference/final.md:12:### 1.1 DDD의 핵심 요약
+workspace/reference/architecture-ddd/reference/final.md:14:> "DDD는 명시적으로 경계 지어진 컨텍스트 안에서 솔루션을 모델링하고, 다른 바운디드 컨텍스트와의 통합을 지원하는 것이다." -- Vaughn Vernon, DDD Distilled
+workspace/reference/architecture-ddd/reference/final.md:20:Vernon은 많은 팀이 전술 패턴(Entity, Repository 등)에만 집중하는 실수를 지적하며, 전략 설계가 먼저라는 원칙을 강조한다 (Vernon, DDD Distilled):
+workspace/reference/architecture-ddd/reference/final.md:34:| 대상 | DDD 입문자 | 비즈니스 설계자/아키텍트 | 실무 구현 개발자 |
+workspace/reference/architecture-ddd/reference/final.md:43:> 출처: Eric Evans, "DDD" Part I
+workspace/reference/architecture-ddd/reference/final.md:261:> 출처: [B][C], Evans 파란책 Chapter 14, Open Group DDD Strategic Patterns
+workspace/reference/architecture-ddd/reference/final.md:413:> 출처: Alberto Brandolini, "Introducing EventStorming"; Vernon "DDD Distilled"
+workspace/reference/architecture-ddd/reference/final.md:415:도메인 발견 기법이다. DDD의 전략 설계(바운디드 컨텍스트 식별, 핵심 도메인 발견)를 실행하기 위한 워크숍 방법론이다.
+workspace/reference/architecture-ddd/reference/final.md:427:| 작은 노란색 | 액터 (Actor/Person) | 커맨드를 실행하는 사용자 역할 | -- |
+workspace/reference/architecture-ddd/reference/final.md:438:### 2.8 전략 DDD와 팀 토폴로지
+workspace/reference/architecture-ddd/reference/final.md:446:| 팀 토폴로지 유형 | DDD 개념 매핑 |
+workspace/reference/architecture-ddd/reference/final.md:538:엔티티를 애그리거트 없이 독립 사용하면 일관성 경계가 모호해진다. Millett는 빈혈 도메인 모델을 "가장 흔한 DDD 실패 사례"로 지적하며, 엔티티가 풍부한 도메인 모델의 구성 요소로서 행동과 불변식을 캡슐화해야 한다고 주장한다.
+workspace/reference/architecture-ddd/reference/final.md:599:# === 풍부한 도메인 모델 (Rich Domain Model) -- DDD 지향 ===
+workspace/reference/architecture-ddd/reference/final.md:854:class DjangoOrderRepository(OrderRepository):
+workspace/reference/architecture-ddd/reference/final.md:855:    """Django ORM 기반 리포지토리 구현체"""
+workspace/reference/architecture-ddd/reference/final.md:980:도메인 영역과 표현 영역을 연결하는 매개체(파사드) 역할이다. 비즈니스 로직을 직접 구현하지 않으며, 도메인 객체에 위임한다.
+workspace/reference/architecture-ddd/reference/final.md:1479:[C]는 헥사고날 아키텍처를 DDD 구현의 주요 아키텍처 스타일로 권장한다. 포트와 어댑터의 상세한 설명과 구현은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
+workspace/reference/architecture-ddd/reference/final.md:1621:> Django 등 프레임워크 제약 시 [A]의 간소화된 구조(`views/`, `services/`, `domain/`, `infrastructure/`)를 차선으로 허용한다.
+workspace/reference/architecture-ddd/reference/final.md:1900:DDD의 전술 패턴이 모든 상황에 적합하지 않다. 단순한 비즈니스 로직을 위한 패턴도 알아야 한다.
+workspace/reference/architecture-ddd/reference/final.md:1925:### 6.7 마이크로서비스와 DDD
+workspace/reference/architecture-ddd/reference/final.md:1927:> 출처: Microsoft Learn -- Tactical DDD for Microservices
+workspace/reference/architecture-ddd/reference/final.md:1980:DDD의 전술 패턴은 궁극적으로 **시스템의 자유도를 줄여 복잡성을 낮추는 수단**이다.
+workspace/reference/architecture-ddd/reference/final.md:2023:| 6 | 전략 vs 전술 우선순위 | External | 전략 설계 우선 (Vernon DDD Distilled) |
+workspace/reference/architecture-ddd/reference/final.md:2054:- Eric Evans, [DDD Reference 2015](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf) (무료 PDF)
+workspace/reference/architecture-ddd/reference/final.md:2076:- [Microsoft Learn -- Tactical DDD for Microservices](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/tactical-ddd)
+workspace/reference/architecture-ddd/reference/final.md:2078:- [DDD Crew -- Context Mapping](https://github.com/ddd-crew/context-mapping)
+workspace/docs/plugin-structure.md:3:이 문서는 `dddjango` 플러그인의 파일 구조와 배치 기준을 정의한다. 개발은 기본적으로 workspace 안에서 진행한다.
+workspace/docs/plugin-structure.md:29:    implementation-django/
+workspace/docs/plugin-structure.md:35:dddjango/
+workspace/docs/plugin-structure.md:59:    implementation-django/
+workspace/docs/plugin-structure.md:64:    implementation-django-ninja/
+workspace/docs/plugin-structure.md:69:    implementation-django-web/
+workspace/docs/plugin-structure.md:94:    workflow-dddjango-subagents/
+workspace/docs/plugin-structure.md:104:  dddjango -> ../dddjango
+workspace/docs/plugin-structure.md:107:`workspace/docs`는 스킬 개발 전 설계 문서의 canonical 위치다. `workspace/reference`는 기존 source reference corpus다. 런타임 플러그인에 들어가는 skill-bundled reference는 `dddjango/skills/<skill>/references/` 아래에 둔다.
+workspace/docs/plugin-structure.md:109:`dddjango/`가 workspace 밖 또는 repo root 아래에 생성되는 경우는 플러그인 런타임이 해당 위치를 요구할 때만 허용한다. 그 외 개발 산출물은 `workspace/` 아래에 둔다.
+workspace/docs/plugin-structure.md:111:`.agents/plugins/marketplace.json`은 Codex local marketplace가 repo root를 source로 읽을 때 `dddjango` plugin bundle을 발견하기 위한 repo-root 예외 파일이다. Codex local marketplace의 표준 배치가 `./plugins/<plugin-name>`이므로 `plugins/dddjango`는 canonical plugin root인 `../dddjango`를 가리키는 symlink다. 실제 수정 source of truth는 `dddjango/`이다.
+workspace/docs/plugin-structure.md:113:현재 `dddjango/skills/...`는 계획된 런타임 플러그인 구조다. 실제 스킬 폴더를 생성하기 전에는 `workspace/docs`와 `workspace/reference`를 authoring source로 사용한다.
+workspace/docs/plugin-structure.md:123:- `workflow-dddjango-subagents`의 role map은 `workspace/docs/workflow.md`의 역할 분해 표와 동일한 책임 및 skill 구성을 유지한다.
+workspace/docs/plugin-structure.md:124:- runtime `SKILL.md`와 `references/role-map.md`는 표현 언어를 바꿀 수 있지만 역할의 책임과 관련 skill을 축소하지 않는다.
+workspace/docs/plugin-structure.md:125:- Django Agent가 template/static/web 책임을 포함하면 `implementation-django-web`을 반드시 포함한다.
+workspace/docs/plugin-structure.md:172:- DDD 구현 표준
+workspace/docs/plugin-structure.md:173:- Django Ninja API 표준
+workspace/docs/plugin-structure.md:187:8. validation scenario와 skill folder validation으로 실제 동작과 구조를 확인한다. 문서 단계 검증은 `python3 workspace/scripts/validate_skill_docs.py --phase docs`로 실행하고, skill folder 생성 뒤에는 `python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills`를 실행한다.
+workspace/docs/plugin-structure.md:193:`architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`은 현재 전용 source reference가 부족하다. 이 세 skill은 다음 중 하나를 만족하기 전까지 완성된 runtime skill로 표시하지 않는다.
+workspace/docs/plugin-structure.md:206:| `implementation-django` | ready | `models-orm.md`, `services-selectors.md`, `migrations.md`, `transactions-performance-security.md` |
+workspace/docs/plugin-structure.md:207:| `implementation-django-ninja` | provisional until dedicated source reference exists | `router-schema.md`, `auth-pagination-filtering.md`, `problem-details-openapi.md`, `testclient.md` |
+workspace/docs/plugin-structure.md:208:| `implementation-django-web` | provisional until dedicated source reference exists | `templates.md`, `static-assets.md`, `templateview-htmx.md`, `csrf-ajax.md` |
+workspace/docs/plugin-structure.md:213:| `workflow-dddjango-subagents` | ready | `delegation-rules.md`, `role-map.md`, `handoff-contract.md`, `integration-checklist.md` |
+workspace/docs/plugin-structure.md:219:- 단순 CRUD에 DDD 구조를 강제하지 않는다.
+workspace/reference/implementation-tdd/reference/final.md:566:        result.add_listener(self)  # 테스트 자체가 리스너 역할
+workspace/reference/implementation-tdd/reference/final.md:675:Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다.
+workspace/reference/implementation-tdd/reference/final.md:681:# 역할(Role)을 Protocol로 정의
+workspace/reference/implementation-tdd/reference/final.md:690:# 프로덕션 코드는 역할(인터페이스)에 의존
+workspace/reference/implementation-tdd/reference/final.md:703:    """역할(PaymentGateway, ReceiptSender)을 Mock한다.
+workspace/reference/implementation-tdd/reference/final.md:704:    구체적 구현 클래스(StripeGateway, SmtpSender)가 아닌 역할을 대체."""
+workspace/reference/implementation-tdd/reference/final.md:1096:| 의도와 다른 구현 | 테스트가 명세 역할을 하여 의도를 명시 |
+workspace/scripts/validate_eval_report_readability.py:12:REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+workspace/scripts/validate_eval_report_readability.py:66:            "raw/case-003-with-dddjango.txt": "case-output",
+workspace/scripts/validate_eval_report_readability.py:68:            "raw/case-003-with-dddjango-prompt-input.json": "json",
+workspace/scripts/validate_eval_report_readability.py:70:            "raw/case-003-with-dddjango-events.jsonl": "jsonl",
+workspace/scripts/validate_eval_report_readability.py:71:            "raw/case-003-with-dddjango-command.txt": "command",
+workspace/scripts/validate_eval_report_readability.py:80:            f"raw/{first_case}-with-dddjango.txt": "case-output",
+workspace/scripts/validate_eval_report_readability.py:82:            f"raw/{first_case}-with-dddjango-prompt-input.json": "json",
+workspace/scripts/validate_eval_report_readability.py:83:            f"raw/{first_case}-with-dddjango-events.jsonl": "jsonl",
+workspace/scripts/validate_eval_report_readability.py:84:            f"raw/{first_case}-with-dddjango-command.txt": "command",
+workspace/scripts/validate_eval_report_readability.py:91:                    f"code/{first_case}/with-dddjango/changed-files.json": "changed-files",
+workspace/scripts/validate_eval_report_readability.py:92:                    f"code/{first_case}/with-dddjango/diff.patch": "diff",
+workspace/develop/evals/README.md:1:# dddjango Plugin Eval Pack
+workspace/develop/evals/README.md:3:This directory contains the comprehensive plugin eval prompt pack for `dddjango`.
+workspace/develop/evals/README.md:37:- Record baseline and with-dddjango results against the same public packets so the report can show score, pass-rate, routing, hard-gate, finding, and scenario-family deltas.
+workspace/develop/evals/README.md:38:- Artifact links in the HTML report are relative links from the run directory. Create analysis artifacts such as `analysis/<case-id>.html` and raw artifacts such as `raw/<case-id>-public-prompt.md`, `raw/<case-id>-baseline.txt`, `raw/<case-id>-with-dddjango.txt`, prompt-input JSON, command logs, screenshots, and leakage-scan logs before marking an artifact as present.
+workspace/develop/evals/README.md:40:- Case-level analysis HTML should explain the prompt, baseline setup, with-dddjango setup, what each variant did well or poorly, hard-gate/routing differences, score rationale, final score, and links back to raw evidence.
+workspace/develop/evals/README.md:41:- If runtime cache is used, record the cache path and compare it with canonical source `dddjango/`.
+workspace/develop/evals/README.md:49:- plugin version from `dddjango/.codex-plugin/plugin.json`
+workspace/develop/evals/README.md:56:- case-level analysis HTML for baseline vs with-dddjango comparisons
+workspace/develop/evals/README.md:71:- generated/all validation passes against `dddjango/skills`
+workspace/develop/evals/README.md:73:- runtime cache is not used, or it matches canonical `dddjango/` source for the evaluated version
+workspace/reference/implementation-tdd/reference/external.md:567:Freeman과 Pryce의 핵심 원칙: Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다.
+workspace/reference/implementation-tdd/reference/external.md:573:# 역할(Role)을 Protocol로 정의
+workspace/reference/implementation-tdd/reference/external.md:582:# 프로덕션 코드는 역할(인터페이스)에 의존
+workspace/reference/implementation-tdd/reference/external.md:595:    """역할(PaymentGateway, ReceiptSender)을 Mock한다.
+workspace/reference/implementation-tdd/reference/external.md:596:    구체적 구현 클래스(StripeGateway, SmtpSender)가 아닌 역할을 대체."""
+workspace/reference/implementation-tdd/reference/external.md:1268:| 의도와 다른 구현 | 테스트가 명세 역할을 하여 의도를 명시 |
+workspace/scripts/run_plugin_eval.py:2:"""Run dddjango plugin eval public packets with and without the plugin config."""
+workspace/scripts/run_plugin_eval.py:18:REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+workspace/scripts/run_plugin_eval.py:22:DEFAULT_WORKSPACE_ROOT = Path("/private/tmp/dddjango-eval-workspaces")
+workspace/scripts/run_plugin_eval.py:50:    "with-dddjango": Variant("with-dddjango", False),
+workspace/scripts/run_plugin_eval.py:66:    Path("dddjango"),
+workspace/scripts/run_plugin_eval.py:203:            "user.name=dddjango Eval",
+workspace/scripts/run_plugin_eval.py:252:            "user.name=dddjango Eval",
+workspace/scripts/run_plugin_eval.py:281:        Path("dddjango/skills"),
+workspace/scripts/run_plugin_eval.py:282:        Path("dddjango/.codex-plugin/plugin.json"),
+workspace/scripts/run_plugin_eval.py:284:        Path("plugins/dddjango"),
+workspace/scripts/run_plugin_eval.py:292:        "dddjango:implementation-django",
+workspace/scripts/run_plugin_eval.py:293:        "dddjango:implementation-django-ninja",
+workspace/scripts/run_plugin_eval.py:294:        "dddjango:implementation-django-web",
+workspace/scripts/run_plugin_eval.py:295:        "dddjango:implementation-python",
+workspace/scripts/run_plugin_eval.py:296:        "dddjango:implementation-cleancode",
+workspace/scripts/run_plugin_eval.py:297:        "dddjango:implementation-tdd",
+workspace/scripts/run_plugin_eval.py:298:        "dddjango:implementation-test",
+workspace/scripts/run_plugin_eval.py:299:        "dddjango:architecture-ddd",
+workspace/scripts/run_plugin_eval.py:300:        "dddjango:architecture-implementation-patterns",
+workspace/scripts/run_plugin_eval.py:301:        "dddjango:architecture-db",
+workspace/scripts/run_plugin_eval.py:302:        "dddjango:architecture-api",
+workspace/scripts/run_plugin_eval.py:303:        "dddjango:workflow-dddjango-subagents",
+workspace/scripts/run_plugin_eval.py:318:        "operatorPromptDddjangoSkillMetadataMentions": [
+workspace/scripts/run_plugin_eval.py:326:            workspace / "Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10"
+workspace/scripts/run_plugin_eval.py:486:    variants = [VARIANTS[name] for name in (args.variant or ["baseline", "with-dddjango"])]
+workspace/scripts/run_plugin_eval.py:500:                "- With-dddjango command uses the active user config and enabled dddjango plugin.",
+workspace/scripts/run_plugin_eval.py:517:        prompt_input_path = raw_dir / f"{case_id}-with-dddjango-prompt-input.json"
+workspace/scripts/run_plugin_eval.py:526:            write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", debug_result.stderr)
+workspace/reference/architecture-ddd/reference/external.md:1:# DDD(도메인 주도 설계) 외부 자료 종합 가이드
+workspace/reference/architecture-ddd/reference/external.md:10:> 참고: [DDD Reference 2015](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf) -- Evans가 원전의 모든 패턴을 요약하고 3개 신규 패턴을 추가한 무료 레퍼런스
+workspace/reference/architecture-ddd/reference/external.md:82:> 출처: Evans, "DDD" Chapter 10 -- Supple Design; [DDD Reference 2015](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf)
+workspace/reference/architecture-ddd/reference/external.md:83:> 참고: [herbertograca.com -- DDD.10 Supple Design](https://herbertograca.com/2015/12/07/ddd-10-supple-design/)
+workspace/reference/architecture-ddd/reference/external.md:197:> 출처: Evans, "DDD" Chapter 15 -- Distillation
+workspace/reference/architecture-ddd/reference/external.md:198:> 참고: [herbertograca.com -- DDD.15 Distillation](https://herbertograca.com/2016/05/09/ddd-15-distillation/)
+workspace/reference/architecture-ddd/reference/external.md:254:> 출처: Evans, "DDD" Chapter 16 -- Large-Scale Structure
+workspace/reference/architecture-ddd/reference/external.md:342:> 원문: [DDD Community -- Vernon 2011](https://www.dddcommunity.org/library/vernon_2011/), [Part I PDF](https://www.dddcommunity.org/wp-content/uploads/files/pdf_articles/Vernon_2011_1.pdf)
+workspace/reference/architecture-ddd/reference/external.md:516:내부 자료에서 다루지 않는 **도메인 발견 기법**이다. DDD의 전략 설계(바운디드 컨텍스트 식별, 핵심 도메인 발견)를 실행하기 위한 워크숍 방법론이다.
+workspace/reference/architecture-ddd/reference/external.md:536:| 작은 노란색 | 액터 (Actor/Person) | 커맨드를 실행하는 사용자 역할 | -- |
+workspace/reference/architecture-ddd/reference/external.md:619:> 출처: Eric Evans, "DDD" Chapter 14; [Open Group -- DDD Strategic Patterns](https://pubs.opengroup.org/architecture/o-aa-standard/DDD-strategic-patterns.html)
+workspace/reference/architecture-ddd/reference/external.md:620:> 참고: [Context Mapper](https://contextmapper.org/docs/), [DDD Crew -- Context Mapping](https://github.com/ddd-crew/context-mapping)
+workspace/reference/architecture-ddd/reference/external.md:749:## 5. 전략 DDD와 팀 토폴로지
+workspace/reference/architecture-ddd/reference/external.md:752:> 참고: [archman.dev -- Team Topologies and Conway's Law Alignment](https://archman.dev/docs/domain-driven-design/strategic-design/team-topologies-and-conways-law-alignment), [Martin Fowler -- Conway's Law](https://martinfowler.com/bliki/ConwaysLaw.html), [ardalis.com -- Conway's Law, DDD, and Microservices](https://ardalis.com/conways-law-ddd-and-microservices/)
+workspace/reference/architecture-ddd/reference/external.md:760:DDD의 바운디드 컨텍스트는 이 과정에서 핵심 도구가 된다:
+workspace/reference/architecture-ddd/reference/external.md:765:### 5.2 팀 토폴로지와 DDD 매핑
+workspace/reference/architecture-ddd/reference/external.md:767:| 팀 토폴로지 유형 | DDD 개념 매핑 |
+workspace/reference/architecture-ddd/reference/external.md:778:| Facilitating | (직접 매핑 없음 -- Enabling Team의 역할) |
+workspace/reference/architecture-ddd/reference/external.md:1543:## 10. Python DDD 구현 패턴
+workspace/reference/architecture-ddd/reference/external.md:1855:### 10.5 Python DDD 프로젝트 구조
+workspace/reference/architecture-ddd/reference/external.md:1916:## 11. DDD Distilled (Vaughn Vernon) 핵심 요약
+workspace/reference/architecture-ddd/reference/external.md:1923:### 11.1 "DDD는 주로 바운디드 컨텍스트 안에서 모델링하는 것"
+workspace/reference/architecture-ddd/reference/external.md:1925:Vernon은 DDD의 핵심을 한 문장으로 요약한다: "DDD는 명시적으로 경계 지어진 컨텍스트 안에서 솔루션을 모델링하고, 다른 바운디드 컨텍스트와의 통합을 지원하는 것이다."
+workspace/reference/architecture-ddd/reference/external.md:1929:DDD Distilled는 Event Storming을 전략 설계의 실행 방법론으로 상세히 다룬다. 이는 Evans의 파란책에는 없는 내용이다.
+workspace/reference/architecture-ddd/reference/external.md:1942:## 12. Patterns, Principles, and Practices of DDD (Scott Millett)
+workspace/reference/architecture-ddd/reference/external.md:1954:# Millett는 이것이 "가장 흔한 DDD 실패 사례"라고 지적
+workspace/reference/architecture-ddd/reference/external.md:1982:# === 풍부한 도메인 모델 (Rich Domain Model) -- DDD 지향 ===
+workspace/reference/architecture-ddd/reference/external.md:2017:Millett는 DDD의 두 공간을 체계적으로 구분한다:
+workspace/reference/architecture-ddd/reference/external.md:2028:## 13. DDD와 마이크로서비스
+workspace/reference/architecture-ddd/reference/external.md:2030:> 참고: [Microsoft Learn -- Use Tactical DDD to Design Microservices](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/tactical-ddd), [Microsoft Learn -- Identify Microservice Domain Model Boundaries](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/architect-microservice-container-applications/identify-microservice-domain-model-boundaries)
+workspace/reference/architecture-ddd/reference/external.md:2109:- Eric Evans, [DDD Reference 2015](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf) (무료 PDF)
+workspace/reference/architecture-ddd/reference/external.md:2124:- Martin Fowler, [DDD Tagged Articles](https://martinfowler.com/tags/domain%20driven%20design.html)
+workspace/reference/architecture-ddd/reference/external.md:2129:- [Microsoft Learn -- Tactical DDD for Microservices](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/tactical-ddd)
+workspace/reference/architecture-ddd/reference/external.md:2132:- [Open Group -- DDD Strategic Patterns](https://pubs.opengroup.org/architecture/o-aa-standard/DDD-strategic-patterns.html)
+workspace/reference/architecture-ddd/reference/external.md:2134:- [DDD Crew -- Context Mapping](https://github.com/ddd-crew/context-mapping)
+workspace/reference/architecture-ddd/reference/external.md:2138:- [Ardalis -- Conway's Law, DDD, and Microservices](https://ardalis.com/conways-law-ddd-and-microservices/)
+workspace/scripts/render_plugin_eval_report.py:2:"""Render dddjango plugin eval reports from recorded raw artifacts."""
+workspace/scripts/render_plugin_eval_report.py:16:REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+workspace/scripts/render_plugin_eval_report.py:37:        "prompt": "Codex local marketplace가 dddjango plugin root를 찾을 수 있는지 파일 구조와 manifest 기준으로 확인.",
+workspace/scripts/render_plugin_eval_report.py:53:        "prompt": "prompt-input artifact에서 dddjango skill metadata 12개가 노출되는지 확인.",
+workspace/scripts/render_plugin_eval_report.py:54:        "baseline_good": "nested `codex debug prompt-input`에서 12개 dddjango skill 이름을 관찰.",
+workspace/scripts/render_plugin_eval_report.py:55:        "baseline_poor": "baseline agent가 active user config의 nested Codex debug를 실행해 dddjango metadata를 보았으므로 baseline 격리가 깨짐. agent 자체는 artifact를 저장하지 않았다고 보고.",
+workspace/scripts/render_plugin_eval_report.py:56:        "with_good": "저장된 `case-002-with-dddjango-prompt-input.json`을 근거로 12개 skill과 cache path를 확인.",
+workspace/scripts/render_plugin_eval_report.py:58:        "score_note": "with-dddjango는 통과. baseline은 비교군으로 오염되어 진단 점수만 부여.",
+workspace/scripts/render_plugin_eval_report.py:72:        "with_good": "12개 요청 각각에 대해 Django, Ninja, Web, Python, Clean Code, TDD, Test, DDD, patterns, DB, API, workflow 책임이 분리된 inline artifact를 생성.",
+workspace/scripts/render_plugin_eval_report.py:74:        "score_note": "with-dddjango는 모든 책임을 도달 가능하게 보여줌. baseline은 실행 방식상 실패.",
+workspace/scripts/render_plugin_eval_report.py:90:        "score_note": "with-dddjango는 boundary routing을 통과. baseline은 evidence 부족.",
+workspace/scripts/render_plugin_eval_report.py:101:        "prompt": "주문 생성, 결제, 재고, idempotency, DB/API/Django/test를 포함하는 composite risky write 계획.",
+workspace/scripts/render_plugin_eval_report.py:102:        "baseline_good": "DDD, API, DB transaction, outbox, Problem Details, idempotency, tests를 포함.",
+workspace/scripts/render_plugin_eval_report.py:103:        "baseline_poor": "baseline agent가 repo의 dddjango skill docs를 읽어 비교군 순수성이 낮음.",
+workspace/scripts/render_plugin_eval_report.py:106:        "score_note": "with-dddjango는 workflow contract 완전 충족. baseline도 좋은 답변이나 오염됨.",
+workspace/scripts/render_plugin_eval_report.py:119:        "baseline_poor": "public dddjango source를 읽어 baseline delta가 희석됨.",
+workspace/scripts/render_plugin_eval_report.py:133:        "prompt": "Order.memo를 note로 바꾸는 작은 변경에서 과한 DDD/workflow를 피하는지 확인.",
+workspace/scripts/render_plugin_eval_report.py:136:        "with_good": "RenameField, 데이터 손실 방지, 최소 검증만 제시하고 DDD/event/expand-contract 과적용을 명시적으로 배제.",
+workspace/scripts/render_plugin_eval_report.py:143:        "title": "README Typo And verbose_name",
+workspace/scripts/render_plugin_eval_report.py:149:        "prompt": "README 오타와 verbose_name 문구 수정만 요구하는 단순 작업.",
+workspace/scripts/render_plugin_eval_report.py:150:        "baseline_good": "역할 분리/DDD/구조 변경 없이 최소 범위로 제한.",
+workspace/scripts/render_plugin_eval_report.py:202:        "score_note": "with-dddjango는 통과. baseline은 eval contamination boundary 실패.",
+workspace/scripts/render_plugin_eval_report.py:213:        "prompt": "새 쿠폰 발급 REST API를 Django Ninja 기준으로 설계.",
+workspace/scripts/render_plugin_eval_report.py:218:        "score_note": "greenfield DRF violation 없음. with-dddjango가 더 완성도 높음.",
+workspace/scripts/render_plugin_eval_report.py:223:        "title": "DRF To Django Ninja Migration",
+workspace/scripts/render_plugin_eval_report.py:229:        "prompt": "기존 DRF 주문 API를 Django Ninja로 옮기며 compatibility와 OpenAPI diff를 검토.",
+workspace/scripts/render_plugin_eval_report.py:234:        "score_note": "둘 다 DRF greenfield violation 없이 통과. with-dddjango가 더 명확함.",
+workspace/scripts/render_plugin_eval_report.py:247:        "baseline_poor": "Django operation 책임 분리와 index cardinality trade-off가 상대적으로 약함.",
+workspace/scripts/render_plugin_eval_report.py:250:        "score_note": "operational migration 통과. with-dddjango가 더 안전함.",
+workspace/scripts/render_plugin_eval_report.py:266:        "score_note": "with-dddjango는 source provenance 통과. baseline은 source gap disclosure가 부족.",
+workspace/scripts/render_plugin_eval_report.py:310:        "before": "Baseline was intended to run without dddjango plugin guidance, but agents could read repo runtime skill files and nested `codex debug prompt-input` used active user config.",
+workspace/scripts/render_plugin_eval_report.py:318:        "rerunScope": "Rerun baseline outside repo plugin source or with dddjango runtime files hidden; ensure nested codex debug uses isolated config.",
+workspace/scripts/render_plugin_eval_report.py:332:            {"label": "case-003 with-dddjango", "href": "raw/case-003-with-dddjango.txt"},
+workspace/scripts/render_plugin_eval_report.py:426:        artifact("with-dddjango", f"raw/{case_id}-with-dddjango.txt"),
+workspace/scripts/render_plugin_eval_report.py:428:        artifact("with prompt-input", f"raw/{case_id}-with-dddjango-prompt-input.json"),
+workspace/scripts/render_plugin_eval_report.py:430:        artifact("with-dddjango events", f"raw/{case_id}-with-dddjango-events.jsonl"),
+workspace/scripts/render_plugin_eval_report.py:441:            artifact("with-dddjango changed files", f"code/{case_id}/with-dddjango/changed-files.json"),
+workspace/scripts/render_plugin_eval_report.py:442:            artifact("with-dddjango diff", f"code/{case_id}/with-dddjango/diff.patch"),
+workspace/scripts/render_plugin_eval_report.py:446:            artifact("with-dddjango diff", f"code/{case_id}/with-dddjango/diff.patch"),
+workspace/scripts/render_plugin_eval_report.py:471:    code_manifest_match = re.match(r"^code/(case-\d{3})/(baseline|with-dddjango)/changed-files\.json$", href)
+workspace/scripts/render_plugin_eval_report.py:472:    code_diff_match = re.match(r"^code/(case-\d{3})/(baseline|with-dddjango)/diff\.patch$", href)
+workspace/scripts/render_plugin_eval_report.py:473:    code_file_match = re.match(r"^code/(case-\d{3})/(baseline|with-dddjango)/files/(.+)$", href)
+workspace/scripts/render_plugin_eval_report.py:497:    elif re.match(r"^raw/case-\d{3}-(baseline|with-dddjango)\.txt$", href):
+workspace/scripts/render_plugin_eval_report.py:498:        variant = "with-dddjango" if "-with-dddjango.txt" in href else "baseline"
+workspace/scripts/render_plugin_eval_report.py:508:        variant = "with-dddjango" if "-with-dddjango-" in href else "baseline" if "-baseline-" in href else ""
+workspace/scripts/render_plugin_eval_report.py:515:        variant = "with-dddjango" if "-with-dddjango-" in href else "baseline" if "-baseline-" in href else ""
+workspace/scripts/render_plugin_eval_report.py:519:        variant = "with-dddjango" if "-with-dddjango-" in href else "baseline" if "-baseline-" in href else ""
+workspace/scripts/render_plugin_eval_report.py:523:        variant = "with-dddjango" if "-with-dddjango." in href else "baseline" if "-baseline." in href else ""
+workspace/scripts/render_plugin_eval_report.py:576:            score_key = "with" if variant == "with-dddjango" else "baseline"
+workspace/scripts/render_plugin_eval_report.py:577:            verdict_key = "with_verdict" if variant == "with-dddjango" else "baseline_verdict"
+workspace/scripts/render_plugin_eval_report.py:621:        artifact("with-dddjango", f"raw/{case_id}-with-dddjango.txt"),
+workspace/scripts/render_plugin_eval_report.py:623:        artifact("with prompt-input", f"raw/{case_id}-with-dddjango-prompt-input.json"),
+workspace/scripts/render_plugin_eval_report.py:631:        ("With dddjango setup", "codex exec with active dddjango plugin config, read-only sandbox, same public packet."),
+workspace/scripts/render_plugin_eval_report.py:635:        ("With dddjango did well", str(case["with_good"])),
+workspace/scripts/render_plugin_eval_report.py:636:        ("With dddjango gaps", str(case["with_poor"])),
+workspace/scripts/render_plugin_eval_report.py:674:    <p>dddjango eval case analysis</p>
+workspace/scripts/render_plugin_eval_report.py:683:        <div class="card"><span>With dddjango</span><strong>{case["with"]}/5</strong><span class="badge">{escape(str(case["with_verdict"]))}</span></div>
+workspace/scripts/render_plugin_eval_report.py:713:        case_id, "with-dddjango"
+workspace/scripts/render_plugin_eval_report.py:761:        with_status = read_exit_status(case_id, "with-dddjango")
+workspace/scripts/render_plugin_eval_report.py:764:        with_files = code_file_count(case_id, "with-dddjango")
+workspace/scripts/render_plugin_eval_report.py:794:        ("With dddjango setup", "codex exec with active dddjango plugin config in an isolated writable fixture workspace."),
+workspace/scripts/render_plugin_eval_report.py:797:        ("With dddjango artifact result", str(case["with_good"])),
+workspace/scripts/render_plugin_eval_report.py:803:        artifact("with-dddjango response", f"raw/{case_id}-with-dddjango.txt"),
+workspace/scripts/render_plugin_eval_report.py:806:        artifact("with-dddjango changed files", f"code/{case_id}/with-dddjango/changed-files.json"),
+workspace/scripts/render_plugin_eval_report.py:807:        artifact("with-dddjango diff", f"code/{case_id}/with-dddjango/diff.patch"),
+workspace/scripts/render_plugin_eval_report.py:838:    <p>dddjango eval code artifact analysis</p>
+workspace/scripts/render_plugin_eval_report.py:896:            "rawOutput": artifact("with-dddjango raw", f"raw/{case['case']}-with-dddjango.txt"),
+workspace/scripts/render_plugin_eval_report.py:1014:        "title": "dddjango Plugin Eval Report",
+workspace/scripts/render_plugin_eval_report.py:1024:            "pluginSource": str(REPO_ROOT / "dddjango"),
+workspace/scripts/render_plugin_eval_report.py:1033:            "runtimeCachePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
+workspace/scripts/render_plugin_eval_report.py:1040:            "summary": "Raw evaluation and HTML reporting are complete for this iteration. With-dddjango passed all 17 public cases by evaluator judgment, but the comprehensive eval is not complete because two major eval-protocol issues remain: baseline isolation was contaminated by repo/runtime skill access, and public packet artifact instructions conflict with read-only/no-modify execution. Fix the eval harness and rerun before using the score delta as final evidence.",
+workspace/scripts/render_plugin_eval_report.py:1059:            "withPluginLabel": "With dddjango",
+workspace/scripts/render_plugin_eval_report.py:1074:            "findingsDelta": "with-dddjango cleaner; eval protocol still open",
+workspace/scripts/render_plugin_eval_report.py:1081:            {"metric": "Overall score", "baseline": f"{baseline_total}/85", "withPlugin": f"{plugin_total}/85", "delta": f"+{plugin_total - baseline_total}", "notes": "Diagnostic only because baseline could inspect dddjango source/runtime metadata."},
+workspace/scripts/render_plugin_eval_report.py:1083:            {"metric": "Routing and workflow behavior", "baseline": "weak on specialist/eval-boundary/source-provenance", "withPlugin": "all required families passed", "delta": "improved", "notes": "with-dddjango showed smallest sufficient specialist or workflow scope."},
+workspace/scripts/render_plugin_eval_report.py:1106:                "disposition": "Baseline-only failure; with-dddjango passed.",
+workspace/scripts/render_plugin_eval_report.py:1116:                "disposition": "Baseline-only failure; with-dddjango passed.",
+workspace/scripts/render_plugin_eval_report.py:1126:            {"gate": "Whole-plugin routing collapse", "status": "pass", "reason": "with-dddjango showed specialist and workflow responsibilities across case-003 and case-004.", "evidence": [artifact("case-003", "analysis/case-003.html"), artifact("case-004", "analysis/case-004.html")], "casesOrCommands": "case-003, case-004"},
+workspace/scripts/render_plugin_eval_report.py:1147:            {"phase": "raw eval", "status": "pass", "command": "python3 workspace/scripts/run_plugin_eval.py --run-id 20260510-0900-plugin-eval --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "long-running", "related": "all cases", "output": "All 17 public cases ran for baseline and with-dddjango; all 34 exit files contain 0."},
+workspace/scripts/render_plugin_eval_report.py:1148:            {"phase": "validation", "status": "pass", "command": "python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all skills", "output": read(RAW_DIR / "validation-skill-docs.txt")},
+workspace/scripts/render_plugin_eval_report.py:1150:            {"phase": "cache sync", "status": "pass", "command": "diff -qr dddjango /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "runtime cache", "output": read(RAW_DIR / "cache-source-diff.txt") or "(no output)"},
+workspace/scripts/render_plugin_eval_report.py:1168:                "runtimePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
+workspace/scripts/render_plugin_eval_report.py:1169:                "sourcePath": str(REPO_ROOT / "dddjango"),
+workspace/scripts/render_plugin_eval_report.py:1178:            "scope": ["dddjango/skills", "dddjango/.codex-plugin", ".agents/plugins/marketplace.json", "plugins/dddjango", "current run artifacts"],
+workspace/scripts/render_plugin_eval_report.py:1234:                (f"{case_id} with-dddjango output", "case-output", case_id, "With-dddjango model response.", "markdown", f"raw/{case_id}-with-dddjango.txt"),
+workspace/scripts/render_plugin_eval_report.py:1237:                (f"{case_id} with-dddjango changed files", "changed-files", case_id, "With-dddjango changed-file manifest.", "changed-files", f"code/{case_id}/with-dddjango/changed-files.json"),
+workspace/scripts/render_plugin_eval_report.py:1238:                (f"{case_id} with-dddjango diff", "diff", case_id, "With-dddjango generated diff.", "diff", f"code/{case_id}/with-dddjango/diff.patch"),
+workspace/scripts/render_plugin_eval_report.py:1270:            "rawOutput": artifact("with-dddjango raw", f"raw/{case['case']}-with-dddjango.txt"),
+workspace/scripts/render_plugin_eval_report.py:1278:        "title": "dddjango Code Artifact Eval Report",
+workspace/scripts/render_plugin_eval_report.py:1288:            "pluginSource": str(REPO_ROOT / "dddjango"),
+workspace/scripts/render_plugin_eval_report.py:1296:            "runtimeCacheUsed": "yes for with-dddjango variant",
+workspace/scripts/render_plugin_eval_report.py:1297:            "runtimeCachePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
+workspace/scripts/render_plugin_eval_report.py:1318:            "withPluginLabel": "With dddjango",
+workspace/scripts/render_plugin_eval_report.py:1352:                "evidence": [artifact("case-101 baseline manifest", "code/case-101/baseline/changed-files.json"), artifact("case-101 with-dddjango manifest", "code/case-101/with-dddjango/changed-files.json")],
+workspace/scripts/render_plugin_eval_report.py:1376:                "command": "python3 workspace/scripts/run_plugin_eval.py --run-id local-code-artifact-real --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/evals/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
+workspace/scripts/render_plugin_eval_report.py:1456:                "- All 17 public cases rerun with isolated baseline and with-dddjango artifacts.",
+workspace/scripts/render_plugin_eval_report.py:1465:                "1. Fix baseline isolation so baseline cannot read `dddjango/skills`, runtime cache skill files, or active dddjango prompt-input metadata.",
+workspace/scripts/render_plugin_eval_report.py:1468:                "4. If rerun changes any with-ddjango result, update case analysis and report.",
+workspace/develop/evals/templates/public-packet.md:15:- Repository: `/Users/hyun/Desktop/dddjango`
+workspace/develop/evals/templates/run-report.html:6:  <title>dddjango Plugin Eval Report</title>
+workspace/develop/evals/templates/run-report.html:824:      <p class="eyebrow">dddjango comprehensive plugin evaluation</p>
+workspace/develop/evals/templates/run-report.html:864:                <th>With dddjango</th>
+workspace/develop/evals/templates/run-report.html:893:                <th>With dddjango Score</th>
+workspace/develop/evals/templates/run-report.html:896:                <th>With dddjango Verdict</th>
+workspace/develop/evals/templates/run-report.html:900:                <th>With dddjango Code</th>
+workspace/develop/evals/templates/run-report.html:1125:      title: "dddjango Plugin Eval Report",
+workspace/develop/evals/templates/run-report.html:1130:        repoRoot: "/Users/hyun/Desktop/dddjango",
+workspace/develop/evals/templates/run-report.html:1135:        pluginSource: "/Users/hyun/Desktop/dddjango/dddjango",
+workspace/develop/evals/templates/run-report.html:1144:        runtimeCachePath: "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10 or not run",
+workspace/develop/evals/templates/run-report.html:1165:        withPluginLabel: "With dddjango",
+workspace/develop/evals/templates/run-report.html:1184:        notes: "Fill this after running baseline and with-dddjango variants against the same public packets."
+workspace/develop/evals/templates/run-report.html:1298:        { label: "with-dddjango", href: `raw/${caseRow.case}-with-dddjango.txt`, exists: false },
+workspace/develop/evals/templates/run-report.html:1300:        { label: "with prompt-input", href: `raw/${caseRow.case}-with-dddjango-prompt-input.json`, exists: false }
+workspace/develop/evals/templates/run-report.html:1364:        ["With dddjango score", c.withPluginScore, c.withPluginPassRate],
+workspace/develop/evals/templates/run-report.html:1849:        const dddjangoSkillMentions = (serialized.match(/dddjango:/g) || []).length;
+workspace/develop/evals/templates/run-report.html:1854:            <div class="artifact-summary-card"><span>dddjango mentions</span><strong>${dddjangoSkillMentions}</strong></div>
+workspace/develop/evals/templates/case-analysis.html:211:    <p class="eyebrow">dddjango eval case analysis</p>
+workspace/develop/evals/templates/case-analysis.html:220:        <div class="card"><span>With dddjango</span><strong>WITH_DDDJANGO_SCORE</strong><span class="badge warn">WITH_DDDJANGO_VERDICT</span></div>
+workspace/develop/evals/templates/case-analysis.html:247:            <td>With dddjango</td>
+workspace/develop/evals/templates/case-analysis.html:248:            <td>Describe how the dddjango-enabled variant was run.</td>
+workspace/develop/evals/templates/case-analysis.html:250:            <td><a href="../raw/CASE_ID-with-dddjango.txt">with-dddjango raw output</a></td>
+workspace/develop/evals/templates/case-analysis.html:273:          <h3>With dddjango</h3>
+workspace/develop/evals/templates/case-analysis.html:274:          <p><span class="badge warn">WITH_DDDJANGO_VERDICT</span> Score: <strong>WITH_DDDJANGO_SCORE</strong></p>
+workspace/develop/evals/templates/case-analysis.html:291:          <tr><th>Dimension</th><th>Baseline</th><th>With dddjango</th><th>Judgment</th></tr>
+workspace/develop/evals/templates/case-analysis.html:297:            <td>WITH_DDDJANGO_OBSERVATION</td>
+workspace/develop/evals/templates/case-analysis.html:303:            <td>WITH_DDDJANGO_HARD_GATE_RESULT</td>
+workspace/develop/evals/templates/case-analysis.html:309:            <td>WITH_DDDJANGO_OBSERVATION</td>
+workspace/develop/evals/templates/case-analysis.html:320:          <tr><th>Criterion</th><th>Baseline</th><th>With dddjango</th><th>Delta</th><th>Rationale</th></tr>
+workspace/develop/evals/templates/case-analysis.html:326:            <td>WITH_DDDJANGO_SCORE</td>
+workspace/develop/evals/templates/case-analysis.html:333:            <td>WITH_DDDJANGO_SCORE</td>
+workspace/develop/evals/templates/case-analysis.html:340:            <td>WITH_DDDJANGO_SCORE</td>
+workspace/develop/evals/templates/case-analysis.html:353:        <li><a href="../raw/CASE_ID-with-dddjango.txt">With dddjango raw output</a></li>
+workspace/develop/evals/cases/plugin/public/case-008.md:6:README 오타 하나랑 verbose_name 문구만 고치면 될 듯해. 역할 나누거나 DDD 설계까지는 필요 없어.
+workspace/develop/evals/cases/plugin/public/case-002.md:6:현재 Codex 세션에서 dddjango 플러그인의 skill metadata가 보이는지 확인해줘. 보이는 항목 수와 이름만 요약하고, 직접 확인하지 못한 부분은 확인하지 못했다고 말해줘.
+workspace/develop/evals/cases/plugin/public/case-012.md:6:신규 쿠폰 발급 REST API를 만들어야 해. Django Ninja 기준으로 endpoint, request/response schema, auth, status code, Problem Details, OpenAPI, API test 계획까지 잡아줘.
+workspace/develop/evals/cases/plugin/public/case-001.md:6:현재 저장소에서 dddjango 플러그인이 Codex local marketplace 구조로 발견될 수 있는지 확인해줘. 실제 설치나 cache sync를 실행하지 않았다면 실행하지 않았다고 표시하고, 파일 구조와 manifest 기준으로 확인한 결과만 정리해줘.
+workspace/develop/evals/cases/plugin/public/case-005.md:6:주문 생성 API를 DDD 기준으로 설계하고 Django Ninja API, DB transaction, idempotency, domain/API test까지 구현 계획을 세워줘. 결제 승인과 재고 차감도 함께 고려해야 해.
+workspace/develop/evals/cases/plugin/public/case-017.md:6:dddjango 플러그인이 Claude Code와 Codex에서 같은 이름, 책임, reference, DDD 표준, Django Ninja 표준, 검증 원칙을 유지하는지 정적 리뷰해줘. 플랫폼별 metadata 차이가 있으면 packaging 차이인지 판단해줘.
+workspace/develop/evals/cases/plugin/public/case-007.md:6:Order 모델의 memo 필드를 note로 rename하는 작은 변경만 하면 돼. dddjango 기준으로 과하게 하지 말고 필요한 작업만 알려줘.
+workspace/develop/evals/cases/plugin/public/case-006.md:6:예약 확정과 재고 차감이 동시에 들어오고, 외부 결제 승인도 붙어 있어. DDD, DB locking, API contract, Django implementation, tests까지 한 번에 안전하게 작업하려면 어떻게 나눠야 해?
+workspace/develop/evals/cases/plugin/public/case-013.md:6:기존 DRF ViewSet/Serializer로 된 주문 API를 Django Ninja로 옮기고 싶어. 기존 클라이언트 호환성, status code, error response, OpenAPI 차이를 같이 봐줘.
+workspace/develop/evals/cases/plugin/public/case-015.md:6:결제 승인 흐름에 ports/adapters, repository, outbox, ACL을 적용할지 dddjango 기준으로 판단해줘. 근거가 부족한 부분은 확실한 것처럼 쓰지 말고 한계를 밝혀줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:8:주문 상태 컬럼을 추가하고 기존 데이터를 backfill한 뒤 NOT NULL과 index를 적용하는 Django migration 계획을 세워줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:12:Django Ninja로 주문 목록 API를 만들고 auth, pagination, filtering, response schema 기준을 정리해줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:16:Django TemplateView 기반 주문 상세 페이지를 추가하고 template/static/HTMX/CSRF 구조를 정리해줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:32:Django Ninja API contract test를 pytest fixture, factory, test double 기준으로 작성해줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:36:주문 도메인의 bounded context, aggregate, invariant, domain event를 DDD 기준으로 설계해줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:52:주문 생성 기능을 DDD 설계부터 DB/API/Django 구현과 테스트까지 역할별로 나눠 진행 계획을 세워줘.
+workspace/develop/evals/cases/plugin/public/case-016.md:6:workspace/develop/source-crosswalks를 기준으로 dddjango runtime skill들이 source heading을 어떻게 반영했는지 요약해줘. 포함, 병합, 다른 skill 위임, 생략, source gap이 있으면 구분해서 알려줘.
+
+codex
+읽기 전용 확인 결과, 현재 워크스페이스에는 이 요청을 적용할 일반 Django 앱 코드가 보이지 않고 eval/reference 문서 쪽 결과가 많이 섞입니다. 마지막으로 변경 없음만 확인하겠습니다.
+exec
+/bin/zsh -lc "find . -maxdepth 3 -type f \\( -name 'README*' -o -name '*.py' -o -name 'models.py' \\) | sort" in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+ succeeded in 0ms:
+./workspace/scripts/render_plugin_eval_report.py
+./workspace/scripts/run_plugin_eval.py
+./workspace/scripts/validate_eval_code_artifacts.py
+./workspace/scripts/validate_eval_protocol.py
+./workspace/scripts/validate_eval_report_readability.py
+./workspace/scripts/validate_skill_docs.py
+
+exec
+/bin/zsh -lc 'git status --short' in /private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-008/baseline
+ succeeded in 2086ms:
+2026-05-10 14:52:37.212 xcodebuild[56165:3139266]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 14:52:37.384 xcodebuild[56165:3139265] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
 git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
-git: error: couldn't create cache file '/tmp/xcrun_db-Ew3EdlGP' (errno=Operation not permitted)
-2026-05-10 11:02:18.939 xcodebuild[78915:2620625]  DVTFilePathFSEvents: Failed to start fs event stream.
-2026-05-10 11:02:19.095 xcodebuild[78915:2620624] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
-/Users/hyun/Desktop/dddjango
+git: error: couldn't create cache file '/tmp/xcrun_db-nqDq2war' (errno=Operation not permitted)
+2026-05-10 14:52:37.912 xcodebuild[56167:3139285]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 14:52:38.071 xcodebuild[56167:3139284] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
 
 codex
-저장소 위치만 확인했고, `git rev-parse`는 읽기 명령이지만 macOS 개발자 도구 캐시 경고가 함께 나왔습니다. 이제 공개 요청과 직접 관련된 README 및 `verbose_name` 후보만 좁혀서 확인합니다.
-exec
-/bin/zsh -lc "rg -n \"verbose_name\" -g '*.py' -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!workspace/develop/**/prior*/**'"'" in /Users/hyun/Desktop/dddjango
-exec
-/bin/zsh -lc "rg --files -g 'README*' -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!workspace/develop/**/prior*/**'"'" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-workspace/develop/evals/runs/README.md
-workspace/develop/evals/README.md
+파일은 수정하지 않았습니다. 현재 지시에 `Do not modify files`가 있어 README/`verbose_name` 후보만 읽기 전용으로 확인했습니다.
 
- exited 1 in 0ms:
-exec
-/bin/zsh -lc 'ls -la' in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-total 40
-drwxr-xr-x  15 hyun  staff   480 May 10 09:58 .
-drwx------@ 15 hyun  staff   480 May 10 09:24 ..
--rw-r--r--@  1 hyun  staff  6148 Apr 26 14:34 .DS_Store
-drwxr-xr-x@  3 hyun  staff    96 May 10 00:11 .agents
-drwxr-xr-x@ 14 hyun  staff   448 May 10 10:20 .git
--rw-r--r--@  1 hyun  staff   469 May  8 12:13 .gitignore
-drwxr-xr-x@ 10 hyun  staff   320 May 10 09:39 .idea
-drwxr-xr-x@ 19 hyun  staff   608 May 10 10:19 .playwright-mcp
-drwxr-xr-x@  6 hyun  staff   192 May  5 12:39 .pytest_cache
-drwxr-xr-x@  6 hyun  staff   192 May  5 03:17 .venv
--rw-r--r--@  1 hyun  staff  1325 May  8 19:49 AGENTS.md
--rw-r--r--@  1 hyun  staff  1061 May  4 13:10 LICENSE
-drwxr-xr-x@  4 hyun  staff   128 May  9 21:32 dddjango
-drwxr-xr-x@  3 hyun  staff    96 May 10 00:15 plugins
-drwxr-xr-x@  6 hyun  staff   192 May  9 00:03 workspace
-
-exec
-/bin/zsh -lc "find dddjango plugins workspace -maxdepth 3 -type f \\( -name 'README*' -o -name '*.py' -o -name '*.md' \\) "'! -path '"'workspace/develop/rubrics/*' "'! -path '"'workspace/develop/evals/cases/plugin/private/*' "'! -path '"'workspace/develop/evals/runs/*' "'! -path '"'workspace/develop/*/prior*/*'" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-dddjango/skills/architecture-ddd/SKILL.md
-dddjango/skills/implementation-python/SKILL.md
-dddjango/skills/implementation-django-web/SKILL.md
-dddjango/skills/architecture-db/SKILL.md
-dddjango/skills/implementation-django-ninja/SKILL.md
-dddjango/skills/architecture-implementation-patterns/SKILL.md
-dddjango/skills/implementation-tdd/SKILL.md
-dddjango/skills/implementation-cleancode/SKILL.md
-dddjango/skills/workflow-dddjango-subagents/SKILL.md
-dddjango/skills/architecture-api/SKILL.md
-dddjango/skills/implementation-django/SKILL.md
-dddjango/skills/implementation-test/SKILL.md
-workspace/develop/evals/README.md
-workspace/develop/source-crosswalks/implementation-django-web.md
-workspace/develop/source-crosswalks/architecture-ddd.md
-workspace/develop/source-crosswalks/architecture-api.md
-workspace/develop/source-crosswalks/architecture-implementation-patterns.md
-workspace/develop/source-crosswalks/architecture-db.md
-workspace/develop/source-crosswalks/implementation-python.md
-workspace/develop/source-crosswalks/workflow-dddjango-subagents.md
-workspace/develop/source-crosswalks/implementation-tdd.md
-workspace/develop/source-crosswalks/implementation-cleancode.md
-workspace/develop/source-crosswalks/implementation-django-ninja.md
-workspace/develop/source-crosswalks/implementation-django.md
-workspace/develop/source-crosswalks/implementation-test.md
-workspace/develop/plan.md
-workspace/develop/rubric_goal_instructions.md
-workspace/develop/skill_goal_instructions.md
-workspace/docs/ddd-implementation-standard.md
-workspace/docs/skill-hierarchy.md
-workspace/docs/workflow.md
-workspace/docs/validation-plan.md
-workspace/docs/plugin-structure.md
-workspace/docs/skill-authoring.md
-workspace/docs/skill-contracts.md
-workspace/docs/spec.md
-workspace/docs/reference-index.md
-workspace/scripts/run_plugin_eval.py
-workspace/scripts/validate_skill_docs.py
-workspace/reference/spec.md
-
-exec
-/bin/zsh -lc "rg --files dddjango plugins workspace -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!workspace/develop/evals/runs/**'"' -g '"'!workspace/develop/**/prior*/**'"'" in /Users/hyun/Desktop/dddjango
- succeeded in 0ms:
-workspace/docs/reference-index.md
-workspace/docs/spec.md
-workspace/docs/skill-contracts.md
-workspace/docs/skill-authoring.md
-workspace/docs/plugin-structure.md
-workspace/docs/validation-plan.md
-workspace/docs/workflow.md
-workspace/docs/skill-hierarchy.md
-workspace/docs/ddd-implementation-standard.md
-workspace/develop/skill_goal_instructions.md
-workspace/develop/rubric_goal_instructions.md
-workspace/develop/plan.md
-workspace/reference/implementation-test/reference/review.md
-workspace/reference/implementation-test/reference/internal.md
-workspace/reference/implementation-test/reference/final.md
-workspace/reference/implementation-test/reference/external.md
-dddjango/skills/implementation-test/SKILL.md
-dddjango/skills/implementation-test/agents/openai.yaml
-workspace/reference/implementation-django/reference/final.md
-dddjango/skills/implementation-test/references/pytest-fixtures.md
-dddjango/skills/implementation-test/references/factories-property-tests.md
-dddjango/skills/implementation-test/references/test-doubles.md
-dddjango/skills/implementation-test/references/coverage-mutation.md
-workspace/develop/source-crosswalks/implementation-test.md
-workspace/develop/source-crosswalks/implementation-django.md
-workspace/develop/source-crosswalks/implementation-django-ninja.md
-workspace/develop/source-crosswalks/implementation-cleancode.md
-workspace/develop/source-crosswalks/implementation-tdd.md
-workspace/develop/source-crosswalks/workflow-dddjango-subagents.md
-workspace/develop/source-crosswalks/implementation-python.md
-workspace/develop/source-crosswalks/architecture-db.md
-workspace/develop/source-crosswalks/architecture-implementation-patterns.md
-workspace/develop/source-crosswalks/architecture-api.md
-workspace/develop/source-crosswalks/architecture-ddd.md
-workspace/develop/source-crosswalks/implementation-django-web.md
-dddjango/skills/implementation-django/SKILL.md
-workspace/reference/architecture-api/reference/review.md
-workspace/reference/architecture-api/reference/internal.md
-workspace/reference/architecture-api/reference/final.md
-workspace/reference/architecture-api/reference/external.md
-workspace/reference/spec.md
-dddjango/skills/implementation-django/agents/openai.yaml
-dddjango/skills/implementation-django/references/services-selectors.md
-dddjango/skills/implementation-django/references/transactions-performance-security.md
-dddjango/skills/implementation-django/references/models-orm.md
-dddjango/skills/implementation-django/references/migrations.md
-workspace/reference/implementation-cleancode/reference/review.md
-workspace/reference/implementation-cleancode/reference/internal.md
-workspace/reference/implementation-cleancode/reference/final.md
-workspace/reference/implementation-cleancode/reference/external.md
-workspace/develop/evals/templates/case-analysis.html
-workspace/develop/evals/templates/public-packet.md
-workspace/develop/evals/templates/private-evaluator.md
-workspace/develop/evals/templates/run-report.html
-workspace/develop/evals/README.md
-dddjango/skills/architecture-api/SKILL.md
-dddjango/skills/architecture-api/agents/openai.yaml
-workspace/reference/implementation-tdd/reference/review.md
-workspace/reference/implementation-tdd/reference/internal.md
-workspace/reference/implementation-tdd/reference/final.md
-workspace/reference/implementation-tdd/reference/external.md
-dddjango/skills/architecture-api/references/pagination-versioning.md
-dddjango/skills/architecture-api/references/idempotency-openapi.md
-dddjango/skills/architecture-api/references/rest-contracts.md
-dddjango/skills/architecture-api/references/problem-details.md
-workspace/reference/architecture-db/reference/review.md
-workspace/reference/architecture-db/reference/internal.md
-workspace/reference/architecture-db/reference/final.md
-workspace/reference/architecture-db/reference/external.md
-dddjango/skills/workflow-dddjango-subagents/SKILL.md
-dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
-workspace/develop/evals/cases/plugin/public/case-008.md
-workspace/develop/evals/cases/plugin/public/case-009.md
-workspace/develop/evals/cases/plugin/public/case-002.md
-workspace/develop/evals/cases/plugin/public/case-012.md
-workspace/develop/evals/cases/plugin/public/case-006.md
-workspace/develop/evals/cases/plugin/public/case-016.md
-workspace/develop/evals/cases/plugin/public/case-007.md
-workspace/develop/evals/cases/plugin/public/case-017.md
-workspace/develop/evals/cases/plugin/public/case-003.md
-workspace/develop/evals/cases/plugin/public/case-013.md
-workspace/develop/evals/cases/plugin/public/case-004.md
-workspace/develop/evals/cases/plugin/public/case-014.md
-workspace/develop/evals/cases/plugin/public/case-010.md
-workspace/develop/evals/cases/plugin/public/case-001.md
-workspace/develop/evals/cases/plugin/public/case-011.md
-workspace/develop/evals/cases/plugin/public/case-005.md
-workspace/develop/evals/cases/plugin/public/case-015.md
-workspace/reference/implementation-python/reference/review.md
-workspace/reference/implementation-python/reference/internal.md
-workspace/reference/implementation-python/reference/final.md
-workspace/reference/implementation-python/reference/external.md
-dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
-dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
-dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
-dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-dddjango/skills/architecture-db/SKILL.md
-dddjango/skills/implementation-cleancode/SKILL.md
-dddjango/skills/architecture-db/agents/openai.yaml
-workspace/reference/architecture-ddd/reference/review.md
-workspace/reference/architecture-ddd/reference/internal.md
-workspace/reference/architecture-ddd/reference/final.md
-workspace/reference/architecture-ddd/reference/external.md
-dddjango/skills/implementation-cleancode/agents/openai.yaml
-dddjango/skills/architecture-db/references/transactions-locking.md
-workspace/scripts/validate_skill_docs.py
-dddjango/skills/architecture-db/references/schema-modeling.md
-dddjango/skills/architecture-db/references/rollout-constraints.md
-dddjango/skills/architecture-db/references/constraints-indexes.md
-workspace/scripts/run_plugin_eval.py
-dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
-dddjango/skills/implementation-cleancode/references/responsibility.md
-dddjango/skills/implementation-cleancode/references/legacy-review.md
-dddjango/skills/implementation-cleancode/references/naming-functions.md
-dddjango/skills/implementation-django-web/SKILL.md
-dddjango/skills/implementation-tdd/SKILL.md
-dddjango/skills/architecture-ddd/SKILL.md
-dddjango/skills/implementation-django-web/agents/openai.yaml
-dddjango/skills/implementation-tdd/agents/openai.yaml
-dddjango/skills/architecture-ddd/agents/openai.yaml
-dddjango/skills/implementation-django-web/references/static-assets.md
-dddjango/skills/implementation-django-web/references/csrf-ajax.md
-dddjango/skills/implementation-django-web/references/templateview-htmx.md
-dddjango/skills/implementation-django-web/references/templates.md
-dddjango/skills/implementation-tdd/references/test-list.md
-dddjango/skills/implementation-tdd/references/red-green-refactor.md
-dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
-dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
-dddjango/skills/architecture-ddd/references/domain-events.md
-dddjango/skills/architecture-ddd/references/tactical-patterns.md
-dddjango/skills/architecture-ddd/references/strategic-design.md
-dddjango/skills/architecture-ddd/references/context-map.md
-dddjango/skills/implementation-python/SKILL.md
-dddjango/skills/architecture-implementation-patterns/SKILL.md
-dddjango/skills/implementation-django-ninja/SKILL.md
-dddjango/skills/implementation-python/agents/openai.yaml
-dddjango/skills/implementation-django-ninja/agents/openai.yaml
-dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
-dddjango/skills/implementation-python/references/protocols-boundaries.md
-dddjango/skills/implementation-python/references/pydantic-v2.md
-dddjango/skills/implementation-python/references/typing.md
-dddjango/skills/implementation-python/references/dataclasses-enums.md
-dddjango/skills/implementation-django-ninja/references/router-schema.md
-dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
-dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
-dddjango/skills/implementation-django-ninja/references/testclient.md
-dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
-dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
-dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
-dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
-
-codex
-**Raw Answer**
-네. 범위는 README 오타 1개와 `verbose_name` 문구 수정으로만 제한하겠습니다. 역할 분리, DDD 설계, 구조 변경은 하지 않고 관련 위치만 확인해 최소 변경으로 처리하겠습니다.
-
-**Commands Actually Run**
+Commands run:
 - `pwd -P`
-- `git rev-parse --show-toplevel`
 - `rg --files -g 'README*' ...`
-- `rg -n "verbose_name" -g '*.py' ...`
-- `ls -la`
-- `rg --files dddjango plugins workspace ...`
-- `find dddjango plugins workspace ...`
+- `rg -n "verbose_name|verbose name|verbose" . ...`
+- `sed -n '1,220p' workspace/develop/evals/README.md`
+- `sed -n '1,220p' workspace/develop/evals/fixtures/code-artifact-sample/README.md`
+- `rg -n "verbose_name|Django|django|DDD|역할|문구|오타" workspace ...`
+- `git status --short`
+- `find . -maxdepth 3 -type f \( -name 'README*' -o -name '*.py' -o -name 'models.py' \) | sort`
 
-**Checks Not Run**
-- Tests, lint, and type checks were not run because no files were modified.
-- Private eval files, rubrics, prior reports, and prior findings were not opened or read.
-- Serena: skipped because this was an eval-response task with no code change or symbol/reference analysis needed.
+Checks not run:
+- No tests, lint, Django checks, or `git diff --check` were run.
+- No file edits were made.
+
+Serena: skipped because this was a small read-only text check and no symbol/reference refactor was needed.
 tokens used
-14,355
+21,310
