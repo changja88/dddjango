@@ -11,6 +11,8 @@ from html import escape
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from eval_run_common import validate_oracle_schema
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EVAL_ROOT = REPO_ROOT / "workspace/develop/eval"
@@ -91,34 +93,6 @@ def load_json(path: Path) -> tuple[dict[str, object], str]:
     if not isinstance(value, dict):
         return {}, "invalid_schema"
     return value, "ready"
-
-
-def has_non_empty_text(value: object) -> bool:
-    return bool(str(value or "").strip())
-
-
-def validate_oracle_schema(oracle: dict[str, object], case_id: str) -> str | None:
-    if oracle.get("caseId") != case_id:
-        return "caseId mismatch"
-    if oracle.get("answerOracleEvaluated") is not True:
-        return "answerOracleEvaluated must be true"
-    for variant_key in ("baseline", "with_dddjango"):
-        variant_oracle = oracle.get(variant_key)
-        if not isinstance(variant_oracle, dict):
-            return f"{variant_key} must be an object"
-        if not has_non_empty_text(variant_oracle.get("score")):
-            return f"{variant_key}.score is required"
-        if not has_non_empty_text(variant_oracle.get("verdict")):
-            return f"{variant_key}.verdict is required"
-        if not (
-            has_non_empty_text(variant_oracle.get("evaluation"))
-            or has_non_empty_text(variant_oracle.get("evaluation_summary"))
-        ):
-            return f"{variant_key}.evaluation is required"
-    observations = oracle.get("observations")
-    if not isinstance(observations, list) or not observations:
-        return "observations must be a non-empty list"
-    return None
 
 
 def score_value(score: object, verdict: str = "") -> float | None:

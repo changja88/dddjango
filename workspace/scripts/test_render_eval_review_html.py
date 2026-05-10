@@ -14,6 +14,9 @@ MODULE_PATH = Path(__file__).with_name("render_eval_review_html.py")
 
 
 def load_renderer():
+    scripts_dir = str(MODULE_PATH.parent)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
     spec = importlib.util.spec_from_file_location("render_eval_review_html", MODULE_PATH)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
