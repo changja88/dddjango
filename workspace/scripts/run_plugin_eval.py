@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -18,12 +19,15 @@ from zoneinfo import ZoneInfo
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
 PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
 CODE_PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/public"
+RESPONSE_ANSWER = REPO_ROOT / "workspace/develop/eval/response/answer"
+CODE_ANSWER = REPO_ROOT / "workspace/develop/eval/code/answer"
 CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/code-capture.json"
 RESPONSE_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
 CODE_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/code/runs"
 DEFAULT_WORKSPACE_ROOT = Path("/private/tmp/dddjango-eval-workspaces")
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_REASONING = "xhigh"
+EVAL_BUCKETS = ("code", "plugin", "response", "runtime", "source", "workflow")
 TEXT_SUFFIX_LANGUAGES = {
     ".css": "css",
     ".html": "html",
@@ -57,17 +61,13 @@ ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".venv"),
     Path("__pycache__"),
     Path(".pytest_cache"),
-    Path("workspace/develop/eval/code/rubrics"),
+    *(Path(f"workspace/develop/eval/{bucket}/answer") for bucket in EVAL_BUCKETS),
     Path("workspace/develop/eval/code/runs"),
-    Path("workspace/develop/eval/plugin/rubrics"),
+    Path("workspace/develop/eval/plugin/runs"),
     Path("workspace/develop/eval/response/runs"),
     Path("workspace/develop/eval/response/cases/plugin/private"),
-    Path("workspace/develop/eval/response/rubrics"),
-    Path("workspace/develop/eval/runtime/rubrics"),
     Path("workspace/develop/eval/runtime/runs"),
-    Path("workspace/develop/eval/source/rubrics"),
     Path("workspace/develop/eval/source/runs"),
-    Path("workspace/develop/eval/workflow/rubrics"),
     Path("workspace/develop/eval/workflow/runs"),
 ]
 
@@ -104,32 +104,72 @@ def now_text() -> str:
     return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d-%H%M")
 
 
-def case_paths(selected: list[str] | None) -> list[Path]:
-    paths = sorted(PUBLIC_CASES.glob("case-*.md"))
+def case_paths(selected: list[str] | None, *, capture_code: bool) -> list[Path]:
+    paths = sorted((CODE_PUBLIC_CASES if capture_code else PUBLIC_CASES).glob("case-*.md"))
     if not selected:
+        if not paths:
+            raise SystemExit(
+                f"No public cases found in {CODE_PUBLIC_CASES if capture_code else PUBLIC_CASES}"
+            )
         return paths
     wanted = set(selected)
-    code_paths = sorted(CODE_PUBLIC_CASES.glob("case-*.md"))
-    all_paths = paths + code_paths
-    found = {path.stem for path in all_paths}
+    found = {path.stem for path in paths}
     missing = sorted(wanted - found)
     if missing:
+        other_root = PUBLIC_CASES if capture_code else CODE_PUBLIC_CASES
+        other_ids = {path.stem for path in other_root.glob("case-*.md")}
+        wrong_mode = sorted(set(missing) & other_ids)
+        if wrong_mode:
+            required = "--capture-code" if not capture_code else "response mode without --capture-code"
+            raise SystemExit(f"Case id(s) require {required}: {', '.join(wrong_mode)}")
         raise SystemExit(f"Unknown case id(s): {', '.join(missing)}")
-    return [path for path in all_paths if path.stem in wanted]
+    return [path for path in paths if path.stem in wanted]
 
 
-def load_code_capture_metadata() -> dict[str, object]:
+def validate_answer_oracles(case_files: list[Path], answer_dir: Path, *, kind: str) -> None:
+    for case_file in case_files:
+        case_id = case_file.stem
+        answer_path = answer_dir / f"{case_id}.yaml"
+        try:
+            text = answer_path.read_text(encoding="utf-8")
+        except FileNotFoundError as exc:
+            raise SystemExit(f"missing answer oracle for {case_id}: {answer_path}") from exc
+        if not text.strip():
+            raise SystemExit(f"empty answer oracle for {case_id}: {answer_path}")
+        case_pattern = re.compile(
+            rf"(?m)^\s*case_id\s*:\s*['\"]?{re.escape(case_id)}['\"]?\s*(?:#.*)?$"
+        )
+        kind_pattern = re.compile(
+            rf"(?m)^\s*kind\s*:\s*['\"]?{re.escape(kind)}['\"]?\s*(?:#.*)?$"
+        )
+        if not case_pattern.search(text):
+            raise SystemExit(f"{answer_path} must declare case_id: {case_id}")
+        if not kind_pattern.search(text):
+            raise SystemExit(f"{answer_path} must declare kind: {kind}")
+
+
+def load_code_capture_metadata(*, required: bool) -> dict[str, object]:
     if not CODE_CAPTURE_METADATA.exists():
+        if required:
+            raise SystemExit(f"missing code capture metadata: {CODE_CAPTURE_METADATA}")
         return {"cases": {}}
     return json.loads(CODE_CAPTURE_METADATA.read_text(encoding="utf-8"))
 
 
-def case_capture_config(metadata: dict[str, object], case_id: str) -> dict[str, object]:
+def case_capture_config(metadata: dict[str, object], case_id: str, *, required: bool = False) -> dict[str, object]:
     cases = metadata.get("cases")
     if not isinstance(cases, dict):
+        if required:
+            raise SystemExit("code capture metadata must contain a cases object")
         return {}
     value = cases.get(case_id, {})
-    return value if isinstance(value, dict) else {}
+    if not isinstance(value, dict):
+        if required:
+            raise SystemExit(f"code capture metadata for {case_id} must be an object")
+        return {}
+    if required and not value.get("captureCode"):
+        raise SystemExit(f"{case_id} must have captureCode: true for --capture-code")
+    return value
 
 
 def build_prompt(public_packet: str, *, allow_workspace_edits: bool) -> str:
@@ -142,7 +182,7 @@ def build_prompt(public_packet: str, *, allow_workspace_edits: bool) -> str:
     return (
         "Answer the user request directly.\n"
         "Use only files in the current working directory when local files are needed.\n"
-        "Do not read evaluator-only rubrics, private case maps, prior run outputs, or prior findings if present.\n"
+        "Do not read evaluator-only answer oracles, private case maps, prior run outputs, or prior findings if present.\n"
         f"{edit_policy}"
         "Keep the answer concise and include commands actually run plus checks not run.\n\n"
         "----- USER REQUEST START -----\n"
@@ -207,6 +247,8 @@ def prepare_workspace(source_repo: Path, workspace_root: Path, run_id: str, case
         "workspace/develop/eval/response/runs",
     )
     shutil.copytree(source_repo, workspace, symlinks=True, ignore=ignore)
+    for rel_path in ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE:
+        remove_path(workspace / rel_path)
     run_command(["git", "init"], prompt=None, cwd=workspace, timeout_seconds=120)
     run_command(["git", "add", "."], prompt=None, cwd=workspace, timeout_seconds=120)
     run_command(
@@ -295,18 +337,14 @@ def write_baseline_isolation_artifact(
         Path("dddjango/.codex-plugin/plugin.json"),
         Path(".agents/plugins/marketplace.json"),
         Path("plugins/dddjango"),
-        Path("workspace/develop/eval/plugin/rubrics"),
-        Path("workspace/develop/eval/response/rubrics"),
+        *(Path(f"workspace/develop/eval/{bucket}/answer") for bucket in EVAL_BUCKETS),
         Path("workspace/develop/eval/response/cases/plugin/private"),
         Path("workspace/develop/eval/response/runs"),
-        Path("workspace/develop/eval/code/rubrics"),
         Path("workspace/develop/eval/code/runs"),
-        Path("workspace/develop/eval/runtime/rubrics"),
+        Path("workspace/develop/eval/plugin/runs"),
         Path("workspace/develop/eval/runtime/runs"),
         Path("workspace/develop/eval/source/crosswalks"),
-        Path("workspace/develop/eval/source/rubrics"),
         Path("workspace/develop/eval/source/runs"),
-        Path("workspace/develop/eval/workflow/rubrics"),
         Path("workspace/develop/eval/workflow/runs"),
     ]
     presence = relative_presence(workspace, forbidden_rel_paths)
@@ -502,18 +540,25 @@ def main() -> int:
     run_dir = runs_dir / run_id
     raw_dir = run_dir / "raw"
     analysis_dir = run_dir / "analysis"
+    cases = case_paths(args.case, capture_code=args.capture_code)
+    variants = [VARIANTS[name] for name in (args.variant or ["baseline", "with-dddjango"])]
+    validate_answer_oracles(
+        cases,
+        CODE_ANSWER if args.capture_code else RESPONSE_ANSWER,
+        kind="code" if args.capture_code else "response",
+    )
+    code_capture_metadata = load_code_capture_metadata(required=args.capture_code)
+
     raw_dir.mkdir(parents=True, exist_ok=True)
     analysis_dir.mkdir(parents=True, exist_ok=True)
-
-    cases = case_paths(args.case)
-    variants = [VARIANTS[name] for name in (args.variant or ["baseline", "with-dddjango"])]
-    code_capture_metadata = load_code_capture_metadata()
 
     write_text(run_dir / "RUN_ID.txt", run_id + "\n")
     for case_path in cases:
         case_id = case_path.stem
-        capture_config = case_capture_config(code_capture_metadata, case_id)
+        capture_config = case_capture_config(code_capture_metadata, case_id, required=args.capture_code)
         should_capture_code = bool(args.capture_code and capture_config.get("captureCode"))
+        if args.capture_code and not (args.subject_repo or capture_config.get("subjectRepo")):
+            raise SystemExit(f"{case_id} is code-backed but has no subjectRepo")
         public_packet = case_path.read_text(encoding="utf-8")
         prompt = build_prompt(public_packet, allow_workspace_edits=should_capture_code)
         shutil.copyfile(case_path, raw_dir / f"{case_id}-public-prompt.md")

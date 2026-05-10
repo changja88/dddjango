@@ -12,7 +12,7 @@ from pathlib import Path
 V2_SCHEMA_VERSION = "eval-report-v2"
 SCORE_TYPES = {"numeric", "pass_fail", "hard_gate", "narrative"}
 SCORE_TYPE_SOURCES = {"explicit", "inferred"}
-SOURCE_GRANULARITIES = {"case", "request", "rubric", "hard_gate", "artifact_check"}
+SOURCE_GRANULARITIES = {"case", "request", "answer_oracle", "hard_gate", "artifact_check"}
 CHANGE_DIRECTIONS = {"improved", "regressed", "unchanged", "mixed", "not_comparable"}
 VARIANT_KEYS = ("baseline", "with_dddjango")
 REQUIRED_VARIANT_KEYS = {

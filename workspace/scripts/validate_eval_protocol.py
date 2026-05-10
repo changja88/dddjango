@@ -12,13 +12,17 @@ from typing import Any
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
 PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
+ANSWER_DIR = REPO_ROOT / "workspace/develop/eval/response/answer"
 VARIANTS = ("baseline", "with-dddjango")
 
 PUBLIC_PACKET_FORBIDDEN_PATTERNS = {
     "artifact persistence": re.compile(r"\b(output to save|artifact|raw output|prompt-input/debug)\b", re.I),
     "operator transcript": re.compile(r"\bcommand transcript|commands actually run|not-run checks\b", re.I),
     "absolute repo path": re.compile(re.escape(str(REPO_ROOT))),
-    "private evaluator wording": re.compile(r"\bprivate evaluator|prior run findings\b", re.I),
+}
+
+PUBLIC_PACKET_CONDITIONAL_PATTERNS = {
+    "private evaluator wording": re.compile(r"\bprivate evaluator|prior run findings|answer oracle\b", re.I),
     "private route key wording": re.compile(r"\bexpected route|intended route|scoring note|hidden failure\b", re.I),
 }
 
@@ -35,6 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--case", action="append", dest="cases")
     parser.add_argument("--variant", action="append", choices=VARIANTS)
     parser.add_argument("--public-cases-dir", type=Path, default=PUBLIC_CASES)
+    parser.add_argument("--answer-dir", type=Path, default=ANSWER_DIR)
     parser.add_argument("--skip-run-artifacts", action="store_true")
     return parser.parse_args()
 
@@ -42,12 +47,17 @@ def parse_args() -> argparse.Namespace:
 def selected_case_ids(public_cases_dir: Path, selected: list[str] | None) -> list[str]:
     case_ids = sorted(path.stem for path in public_cases_dir.glob("case-*.md"))
     if not selected:
+        if not case_ids:
+            raise AssertionError(f"no public cases found in {public_cases_dir}")
         return case_ids
     known = set(case_ids)
     missing = sorted(set(selected) - known)
     if missing:
         raise AssertionError(f"unknown public case(s): {', '.join(missing)}")
-    return [case_id for case_id in case_ids if case_id in set(selected)]
+    selected_ids = [case_id for case_id in case_ids if case_id in set(selected)]
+    if not selected_ids:
+        raise AssertionError("selected public case count is zero")
+    return selected_ids
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -62,13 +72,59 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def lint_public_packets(public_cases_dir: Path) -> list[str]:
+def validate_answer_oracles(answer_dir: Path, case_ids: list[str], *, kind: str) -> list[str]:
+    findings: list[str] = []
+    for case_id in case_ids:
+        path = answer_dir / f"{case_id}.yaml"
+        try:
+            text = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            findings.append(f"missing answer oracle: {path}")
+            continue
+        if not text.strip():
+            findings.append(f"empty answer oracle: {path}")
+            continue
+        case_pattern = re.compile(
+            rf"(?m)^\s*case_id\s*:\s*['\"]?{re.escape(case_id)}['\"]?\s*(?:#.*)?$"
+        )
+        kind_pattern = re.compile(
+            rf"(?m)^\s*kind\s*:\s*['\"]?{re.escape(kind)}['\"]?\s*(?:#.*)?$"
+        )
+        if not case_pattern.search(text):
+            findings.append(f"{path}: missing matching case_id: {case_id}")
+        if not kind_pattern.search(text):
+            findings.append(f"{path}: missing kind: {kind}")
+    return findings
+
+
+def answer_allows_adversarial_public_terms(answer_dir: Path, case_id: str) -> bool:
+    path = answer_dir / f"{case_id}.yaml"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return False
+    return bool(
+        re.search(r"(?m)^\s*allow_adversarial_public_terms\s*:\s*true\s*(?:#.*)?$", text, re.I)
+    )
+
+
+def lint_public_packets(public_cases_dir: Path, answer_dir: Path) -> list[str]:
     findings: list[str] = []
     for path in sorted(public_cases_dir.glob("case-*.md")):
         text = path.read_text(encoding="utf-8")
         for label, pattern in PUBLIC_PACKET_FORBIDDEN_PATTERNS.items():
             if pattern.search(text):
                 findings.append(f"{path.relative_to(REPO_ROOT)}: {label}")
+        conditional_hits = [
+            label
+            for label, pattern in PUBLIC_PACKET_CONDITIONAL_PATTERNS.items()
+            if pattern.search(text)
+        ]
+        if conditional_hits and not answer_allows_adversarial_public_terms(answer_dir, path.stem):
+            findings.append(
+                f"{path.relative_to(REPO_ROOT)}: conditional evaluator wording requires "
+                f"allow_adversarial_public_terms: true in answer oracle ({', '.join(conditional_hits)})"
+            )
     return findings
 
 
@@ -167,10 +223,12 @@ def main() -> int:
         if args.public_cases_dir.is_absolute()
         else REPO_ROOT / args.public_cases_dir
     )
+    answer_dir = args.answer_dir if args.answer_dir.is_absolute() else REPO_ROOT / args.answer_dir
     case_ids = selected_case_ids(public_cases_dir, args.cases)
     variants = args.variant or list(VARIANTS)
 
-    findings = lint_public_packets(public_cases_dir)
+    findings = lint_public_packets(public_cases_dir, answer_dir)
+    findings.extend(validate_answer_oracles(answer_dir, case_ids, kind="response"))
     if not args.skip_run_artifacts:
         findings.extend(validate_run_completeness(run_dir, case_ids, variants))
         if "baseline" in variants:
