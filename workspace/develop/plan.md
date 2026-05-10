@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: 종합 플러그인 평가 protocol 수정 rerun 이후 completion gate 재점검 중
-- 최근 완료: baseline isolation, public/operator artifact instruction 분리, 17개 public case baseline/with-dddjango 전체 재실행, HTML report 갱신, post-review finding lifecycle 점검
-- 다음 작업: `case-017` minor finding lifecycle 해결 또는 accepted exception/rerun evidence 기록
+- 현재 단계: 종합 플러그인 평가 completion gate 최종 검증 중
+- 최근 완료: baseline isolation, public/operator artifact instruction 분리, 17개 public case baseline/with-dddjango 전체 재실행, HTML report 갱신, post-review `case-017` finding rerun 해결
+- 다음 작업: 최종 검증 및 커밋
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -335,15 +335,15 @@ Protocol fix rerun:
   - prompt-input artifact는 with-dddjango variant에서만 operator-owned raw artifact로 저장한다.
   - comprehensive default run은 smoke용 `case-101`을 제외하고 17개 public case만 실행한다.
 - Rerun result: 17개 public case의 baseline/with-dddjango 34개 실행 exit code가 모두 0이었다.
-- Evaluation result: with-ddjango 17/17 통과, plugin hard gate 0, common hard gate 0. 단, post-review에서 `case-017` raw output의 Minor finding이 최종 findings lifecycle에 반영되지 않은 것이 확인되어 completion verdict는 보류한다.
+- Evaluation result: with-ddjango 17/17 통과, plugin hard gate 0, common hard gate 0. post-review에서 확인된 `case-017` raw output의 Minor finding은 eval workspace symlink 보존 수정 후 targeted rerun evidence로 닫았다.
 - Validation: `validate_eval_protocol.py`, `validate_skill_docs.py --phase all`, `validate_eval_report_readability.py`, `git diff --check`, source/cache diff, runtime leakage scan을 최종 검증 대상으로 유지한다.
 
-Post-review completion gate reopen:
+Post-review completion gate resolution:
 
-- `workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-017-with-dddjango.txt`는 `plugins/dddjango` symlink/source-of-truth 차이에 대한 Minor finding을 기록했다.
-- 이전 `findings.md`와 `iteration-plan.md`는 open blocking/major/minor finding 0과 stop condition satisfied를 기록했지만, Minor finding의 수정, accepted exception, 또는 rerun evidence가 남아 있지 않았다.
-- 이 이슈는 현재 dddjango runtime behavior 실패라기보다 eval finding lifecycle/provenance 기록 누락이다.
-- 따라서 `85/85`와 `17/17`은 저장된 response-level plugin integration judgment로만 유지하고, 최종 완료 판정은 `case-017` finding lifecycle이 닫힐 때까지 보류한다.
+- `workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-017-with-dddjango.txt`는 이전에 `plugins/dddjango` symlink/source-of-truth 차이에 대한 Minor finding을 기록했다.
+- 원인은 실제 source layout 문제가 아니라 `workspace/scripts/run_plugin_eval.py`의 eval workspace copy가 symlink를 dereference한 것이었다.
+- eval/code-capture workspace copy는 `symlinks=True`로 수정했고, targeted `case-017` with-ddjango rerun은 exit 0으로 완료되며 기존 real-directory Minor finding을 더 이상 보고하지 않는다.
+- 따라서 `85/85`와 `17/17`은 response-level plugin integration judgment로 유지하고, `case-017` finding lifecycle은 rerun evidence로 닫는다.
 
 반복 체크리스트:
 
@@ -366,8 +366,8 @@ python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjan
 - [x] docs phase가 통과한다.
 - [x] generated/all phase가 실제 `dddjango/skills`를 대상으로 통과한다.
 - [x] runtime smoke만으로 완료 처리하지 않는다.
-- [ ] open blocking/major/minor finding이 0이거나, 남은 finding이 accepted exception 또는 rerun evidence로 닫힌다.
-- [ ] 최종 상태를 커밋한다.
+- [x] open blocking/major/minor finding이 0이거나, 남은 finding이 accepted exception 또는 rerun evidence로 닫힌다.
+- [x] 최종 상태를 커밋한다.
 
 ## 개발 원칙
 

@@ -1,38 +1,53 @@
 **Findings**
-- Minor: [workspace/docs/plugin-structure.md](/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-017/with-dddjango/workspace/docs/plugin-structure.md:111) says `plugins/dddjango` should be a symlink to `../dddjango`, but `ls -ld` shows it is currently a real directory. `diff -qr dddjango plugins/dddjango` found no content differences, so this is not causing Claude/Codex standard drift right now. It is a packaging/source-of-truth risk because Codex marketplace points to [`.agents/plugins/marketplace.json`](/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-017/with-dddjango/.agents/plugins/marketplace.json:11) `./plugins/dddjango`, while docs identify `dddjango/` as canonical.
 
-No blocking or major inconsistency found.
+- 심각한 불일치 없음. `dddjango`의 공통 계약은 `workspace/docs/plugin-structure.md`에서 Claude Code/Codex 공통 유지 항목을 `스킬 이름`, `책임`, `reference 파일명`, `DDD 구현 표준`, `Django Ninja API 표준`, `검증 원칙`으로 고정하고, 플랫폼별 차이는 packaging/metadata에만 두도록 정의되어 있습니다. 실제 generated skill 검증도 통과했습니다.
+- 단, 이 워크스페이스에는 Claude Code 전용 manifest/metadata는 보이지 않고, Codex metadata만 있습니다. 따라서 “Claude Code 설치 패키징” 자체의 parity는 정적으로 확인하지 못했습니다. 공유 기준은 `dddjango/skills/*`로 확인했고, Codex packaging 차이는 packaging-only로 판단됩니다.
 
-**Static Review Result**
-- Same name: `dddjango/.codex-plugin/plugin.json` and `plugins/dddjango/.codex-plugin/plugin.json` both use `name: dddjango`, `displayName: dddjango`, and the same description. Marketplace `displayName: dddjango Local` is local packaging metadata, not a responsibility/standard change.
-- Same responsibility and references: `dddjango/` and `plugins/dddjango/` are identical by `diff -qr`. Each runtime skill has 4 one-level reference files and no nested references.
-- DDD standard: runtime skills preserve the doc standard: strategic design before tactical patterns, bounded context/aggregate/invariant first, and no forced heavy DDD for simple CRUD. See [architecture-ddd/SKILL.md](/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-017/with-dddjango/dddjango/skills/architecture-ddd/SKILL.md:30).
-- Django Ninja standard: `implementation-django-ninja` is explicitly provisional, uses fallback sources, keeps Django Ninja as the new API standard, and limits DRF to legacy/migration/comparison. See [implementation-django-ninja/SKILL.md](/private/tmp/dddjango-eval-workspaces/20260510-0900-plugin-eval/case-017/with-dddjango/dddjango/skills/implementation-django-ninja/SKILL.md:9).
-- Workflow and validation principles: workflow role map includes Domain/Architecture/DB/API/Django/Test/Review and keeps `implementation-django-web` in Django Agent responsibility. Verification honesty is repeated in runtime rules, and validation plan checks this explicitly.
-- Platform metadata judgment: the observed metadata differences are packaging/registration only: `.codex-plugin/plugin.json` and `.agents/plugins/marketplace.json`. I found no Claude-specific manifest in the current workspace, so direct Claude metadata parity cannot be verified from local files, but the shared runtime skill content is consistent.
+**Review Summary**
 
-**Commands Actually Run**
+- 이름: `dddjango/.codex-plugin/plugin.json`의 plugin name/displayName은 `dddjango`이고, `.agents/plugins/marketplace.json`의 실제 plugin item name도 `dddjango`입니다. top-level `dddjango-local`/`dddjango Local`은 local marketplace wrapper 이름이라 packaging 차이로 봅니다.
+- 책임/reference: 12개 skill의 folder name, `SKILL.md` frontmatter `name`, `agents/openai.yaml` default prompt가 일치했고, 각 skill의 bundled reference 파일도 `workspace/docs/plugin-structure.md`의 split plan과 맞습니다.
+- DDD 표준: `architecture-ddd`가 전략 설계 우선, bounded context, ubiquitous language, aggregate/invariant, Django mapping 경계를 유지합니다.
+- Django Ninja 표준: 신규 API는 Django Ninja, DRF는 legacy/migration/comparison 용도로만 쓰도록 되어 있고 Router thin adapter, Problem Details, OpenAPI, TestClient 기준이 유지됩니다.
+- 검증 원칙: 여러 skill과 workflow reference가 “실제로 실행한 검증만 보고”하도록 명시합니다.
+- 수정 없음. `git status --short` 출력도 비어 있었습니다.
+
+**Commands Run**
+
 ```bash
-pwd -P
-git rev-parse --show-toplevel
-rg --files ...
-find ... plugin/skill/metadata files ...
-diff -qr dddjango plugins/dddjango || true
-jq . dddjango/.codex-plugin/plugin.json plugins/dddjango/.codex-plugin/plugin.json .agents/plugins/marketplace.json
-find dddjango plugins/dddjango -type f | sort
-rg -n "Claude|Codex|dddjango|Django Ninja|DRF|DDD|reference|검증|verification|pytest|TDD|Problem Details|OpenAPI|subagent|서브" ...
-sed -n ... workspace/docs/*.md
-ls -ld dddjango plugins/dddjango dddjango/.codex-plugin plugins/dddjango/.codex-plugin .agents/plugins/marketplace.json
-python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills
-git diff --check -- dddjango plugins/dddjango .agents/plugins/marketplace.json workspace/docs
-find . ... '*claude*' ...
-nl -ba ... selected docs and SKILL.md files
+pwd -P && git rev-parse --show-toplevel && rg --files
+find . -maxdepth 3 -type f | sort
+find . -maxdepth 3 -type d | sort
+ls -la
+find dddjango -maxdepth 4 -type f | sort
+find plugins .agents -maxdepth 4 -type f | sort
+find workspace/docs workspace/reference -maxdepth 3 -type f | sort
+nl -ba dddjango/.codex-plugin/plugin.json
+nl -ba .agents/plugins/marketplace.json
+rg -n "Claude|Codex|codex|plugin|metadata|SKILL|agents|reference|references|DDD|Django Ninja|Ninja|검증|validation|standard|표준" dddjango workspace/docs workspace/reference
+nl -ba workspace/docs/plugin-structure.md
+nl -ba workspace/docs/skill-contracts.md
+nl -ba workspace/docs/reference-index.md
+nl -ba workspace/docs/ddd-implementation-standard.md
+nl -ba workspace/docs/workflow.md
+nl -ba workspace/docs/validation-plan.md
+nl -ba workspace/docs/spec.md
+nl -ba workspace/docs/skill-authoring.md
+rg -n "^(name:|description:|display_name:|short_description:|default_prompt:|# |## |### |- Read \[|- Only report|- Do not|.*Django Ninja|.*DRF|.*provisional|.*fallback|.*verification|.*validation|.*검증)" dddjango/skills --glob 'SKILL.md' --glob 'openai.yaml'
+rg -n "workspace/|workspace-only|source reference|final\.md|review\.md|internal\.md|external\.md" dddjango/skills
+rg -n "DRF|Django Ninja|Router|Schema|Problem Details|OpenAPI|TestClient|FilterSchema" dddjango/skills/implementation-django-ninja dddjango/skills/architecture-api dddjango/skills/workflow-dddjango-subagents dddjango/.codex-plugin/plugin.json
+python3 workspace/scripts/validate_skill_docs.py --phase docs
+python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills
+readlink plugins/dddjango
+git status --short
 ```
 
-`validate_skill_docs.py --phase all --skills-dir dddjango/skills` passed with `0 warning(s)`. `git diff --check` emitted macOS cache/xcode warnings in the read-only sandbox but exited 0 and reported no whitespace findings.
+Both validation commands passed with `0 warning(s)`.
 
 **Checks Not Run**
-- Claude Code install/runtime smoke was not run; no Claude-specific local manifest/tooling was present.
-- Codex UI plugin install smoke and prompt scenario evals were not run.
-- pytest, ruff, mypy, browser checks, and subagent reviews were not run.
-- Serena: skipped because no Serena MCP tools are available in this session; references were verified with `rg`, `diff`, `find`, and the local validator.
+
+- `python3 workspace/scripts/validate_skill_docs.py --phase runtime`: not run because its default runtime cache path is outside the current working directory.
+- `--phase all`: not run for the same reason unless runtime path is overridden.
+- Live Claude Code/Codex runtime behavior test: not run; this was a static file review.
+- Tests/lint/typecheck: not run; no code changes were made.
+- Serena: skipped because no Serena MCP tool is available in this session; references were verified with `rg`, `find`, and the repo validation script.

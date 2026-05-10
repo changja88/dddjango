@@ -193,7 +193,7 @@ def prepare_workspace(source_repo: Path, workspace_root: Path, run_id: str, case
         ".pytest_cache",
         "workspace/develop/evals/runs",
     )
-    shutil.copytree(source_repo, workspace, ignore=ignore)
+    shutil.copytree(source_repo, workspace, symlinks=True, ignore=ignore)
     run_command(["git", "init"], prompt=None, cwd=workspace, timeout_seconds=120)
     run_command(["git", "add", "."], prompt=None, cwd=workspace, timeout_seconds=120)
     run_command(
@@ -237,7 +237,7 @@ def prepare_eval_workspace(
         "__pycache__",
         ".pytest_cache",
     )
-    shutil.copytree(source_repo, workspace, ignore=ignore)
+    shutil.copytree(source_repo, workspace, symlinks=True, ignore=ignore)
     excluded = list(ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE)
     if variant.isolated_baseline:
         excluded.extend(BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE)
