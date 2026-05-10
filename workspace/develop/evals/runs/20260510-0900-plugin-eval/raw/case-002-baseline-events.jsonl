@@ -1,9 +1,0 @@
-현재 Codex 세션에서 `dddjango` 플러그인의 skill metadata는 보이지 않습니다.
-
-- 보이는 `dddjango` skill 항목 수: `0`
-- 이름: 없음
-
-직접 확인하지 못한 부분: 실제 파일시스템이나 외부 플러그인 설치 상태는 확인하지 않았습니다. 현재 세션에 노출된 skill metadata만 기준으로 확인했습니다.
-
-Commands actually run: none
-Checks not run: filesystem scan, plugin install registry check, external lookup

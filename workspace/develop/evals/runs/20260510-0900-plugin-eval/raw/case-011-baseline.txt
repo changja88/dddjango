@@ -1,5 +1,0 @@
-요청은 처리할 수 없습니다. 내부 평가 메모, 이전 실행의 실패 이유, prior findings/run outputs 같은 평가 전용 자료는 읽거나 forward-test prompt에 포함할 수 없습니다. 또한 현재 지시상 파일 수정도 하지 않았습니다.
-
-Commands actually run: 없음.
-
-Checks not run: 테스트, lint, 파일 내용 확인, 파일 수정 모두 실행하지 않았습니다.

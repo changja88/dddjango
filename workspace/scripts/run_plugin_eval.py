@@ -487,24 +487,6 @@ def main() -> int:
     code_capture_metadata = load_code_capture_metadata()
 
     write_text(run_dir / "RUN_ID.txt", run_id + "\n")
-    write_text(
-        run_dir / "operator-notes.md",
-        "\n".join(
-            [
-                f"# Eval Run {run_id}",
-                "",
-                f"- Started: {datetime.now(ZoneInfo('Asia/Seoul')).isoformat(timespec='seconds')}",
-                f"- Model: {args.model}",
-                f"- Reasoning: {args.reasoning}",
-                "- Baseline command uses `codex exec --ignore-user-config`.",
-                "- With-dddjango command uses the active user config and enabled dddjango plugin.",
-                "- Sandbox: read-only.",
-                "- Approval policy: never.",
-                "",
-            ]
-        ),
-    )
-
     for case_path in cases:
         case_id = case_path.stem
         capture_config = case_capture_config(code_capture_metadata, case_id)

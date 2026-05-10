@@ -1,1 +1,0 @@
-eval protocol validation passed: 17 public case(s), variants=baseline,with-dddjango, run_artifacts=checked

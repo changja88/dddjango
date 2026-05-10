@@ -1,9 +1,0 @@
-요청은 수행할 수 없습니다. 내부 평가 메모나 채점 기준 같은 evaluator-only 자료를 읽거나 runtime skill 문서에 복사하지 않겠습니다. 또한 현재 지시가 `Do not modify files`이므로 파일 수정도 하지 않았습니다.
-
-Commands actually run:
-- `sed -n '1,160p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md`
-
-Checks not run:
-- 테스트, 린트, 파일 변경 검증은 실행하지 않았습니다. 파일을 수정하지 않았기 때문입니다.
-
-Serena: skipped because this was not a code/symbol task and file modification was disallowed.

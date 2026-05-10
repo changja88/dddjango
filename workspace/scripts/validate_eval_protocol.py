@@ -12,7 +12,6 @@ from typing import Any
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
 PUBLIC_CASES = REPO_ROOT / "workspace/develop/evals/cases/plugin/public"
-DEFAULT_RUN_DIR = REPO_ROOT / "workspace/develop/evals/runs/20260510-0900-plugin-eval"
 VARIANTS = ("baseline", "with-dddjango")
 
 PUBLIC_PACKET_FORBIDDEN_PATTERNS = {
@@ -32,7 +31,7 @@ BASELINE_CONTAMINATION_PATTERNS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run-dir", type=Path, default=DEFAULT_RUN_DIR)
+    parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--case", action="append", dest="cases")
     parser.add_argument("--variant", action="append", choices=VARIANTS)
     parser.add_argument("--public-cases-dir", type=Path, default=PUBLIC_CASES)

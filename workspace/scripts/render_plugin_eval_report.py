@@ -14,9 +14,9 @@ from zoneinfo import ZoneInfo
 
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-DEFAULT_RUN_ID = "20260510-0900-plugin-eval"
+DEFAULT_RUN_ID = ""
 EVAL_RUNS_DIR = REPO_ROOT / "workspace/develop/evals/runs"
-RELATED_CODE_ARTIFACT_RUN_IDS = ["local-code-artifact-real"]
+RELATED_CODE_ARTIFACT_RUN_IDS: list[str] = []
 RUN_ID = DEFAULT_RUN_ID
 RUN_DIR = EVAL_RUNS_DIR / RUN_ID
 RAW_DIR = RUN_DIR / "raw"
@@ -337,8 +337,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--run-id",
-        default=DEFAULT_RUN_ID,
-        help="Eval run id under workspace/develop/evals/runs. Defaults to the canonical plugin eval run.",
+        required=True,
+        help="Eval run id under workspace/develop/evals/runs.",
     )
     parser.add_argument(
         "--code-artifact-run",
@@ -1786,15 +1786,11 @@ def build_report_data() -> dict[str, object]:
             }
         )
     key_artifacts = [
-        ("Run notes", "note", "run", "Operator notes and model/variant setup.", "md", "operator-notes.md"),
         ("Validation", "command", "all", "Skill validator output.", "txt", "raw/validation-skill-docs.txt"),
         ("Diff check", "command", "all", "Whitespace/conflict diff check output.", "txt", "raw/git-diff-check.txt"),
         ("Runtime leakage scan", "command", "all", "Runtime leakage grep output.", "txt", "raw/leakage-scan-runtime.txt"),
         ("Run artifact leakage scan", "command", "all", "Current run artifact leakage grep output and adversarial prompt matches.", "txt", "raw/leakage-scan-run-artifacts.txt"),
         ("Cache/source diff", "command", "all", "Canonical source vs runtime cache diff.", "txt", "raw/cache-source-diff.txt"),
-        ("Findings", "report", "all", "Finding lifecycle and closure evidence.", "md", "findings.md"),
-        ("Reruns", "report", "all", "Rerun status.", "md", "reruns.md"),
-        ("Iteration plan", "report", "all", "Next iteration plan.", "md", "iteration-plan.md"),
     ]
     key_artifacts.extend(
         (
@@ -1945,7 +1941,7 @@ def build_report_data() -> dict[str, object]:
                         "timestamp": generated_at,
                         "title": "Full protocol rerun completed",
                         "summary": "All 17 public cases reran for baseline and with-ddjango after baseline isolation and public/operator prompt separation fixes.",
-                        "artifacts": [artifact("protocol validation", "raw/validation-eval-protocol.txt"), artifact("iteration plan", "iteration-plan.md")],
+                        "artifacts": [artifact("protocol validation", "raw/validation-eval-protocol.txt")],
                     },
                     {
                         "timestamp": "2026-05-10 20:13 KST",
@@ -1961,9 +1957,9 @@ def build_report_data() -> dict[str, object]:
             }
         ],
         "commands": [
-            {"phase": "raw eval", "status": "pass", "command": "python3 workspace/scripts/run_plugin_eval.py --run-id 20260510-0900-plugin-eval --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "long-running", "related": "all cases", "output": "All 17 public cases ran for baseline and with-dddjango; all 34 exit files contain 0."},
-            {"phase": "targeted rerun", "status": "pass", "command": "python3 workspace/scripts/run_plugin_eval.py --run-id 20260510-0900-plugin-eval --case case-017 --variant with-dddjango --rerun --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": read(RAW_DIR / "case-017-with-dddjango-exit.txt").strip() or "unknown", "duration": "single case", "related": "case-017", "output": "Reran after preserving symlinks in isolated eval workspaces; the previous real-directory Minor finding is absent."},
-            {"phase": "protocol validation", "status": "pass", "command": "python3 workspace/scripts/validate_eval_protocol.py --run-dir workspace/develop/evals/runs/20260510-0900-plugin-eval", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all cases", "output": read(RAW_DIR / "validation-eval-protocol.txt")},
+            {"phase": "raw eval", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "long-running", "related": "all cases", "output": "All 17 public cases ran for baseline and with-ddjango; all 34 exit files contain 0."},
+            {"phase": "targeted rerun", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-017 --variant with-dddjango --rerun --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": read(RAW_DIR / "case-017-with-dddjango-exit.txt").strip() or "unknown", "duration": "single case", "related": "case-017", "output": "Reran after preserving symlinks in isolated eval workspaces; the previous real-directory Minor finding is absent."},
+            {"phase": "protocol validation", "status": "pass", "command": f"python3 workspace/scripts/validate_eval_protocol.py --run-dir workspace/develop/evals/runs/{RUN_ID}", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all cases", "output": read(RAW_DIR / "validation-eval-protocol.txt")},
             {"phase": "validation", "status": "pass", "command": "python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all skills", "output": read(RAW_DIR / "validation-skill-docs.txt")},
             {"phase": "diff check", "status": "pass", "command": "git diff --check", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "working tree", "output": read(RAW_DIR / "git-diff-check.txt") or "(no output)"},
             {"phase": "cache sync", "status": "pass", "command": "diff -qr dddjango /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "runtime cache", "output": read(RAW_DIR / "cache-source-diff.txt") or "(no output)"},
@@ -2040,9 +2036,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
         for case in cases
     ]
 
-    key_artifacts: list[tuple[str, str, str, str, str, str]] = [
-        ("Run notes", "note", "run", "Operator notes and model/variant setup.", "md", "operator-notes.md"),
-    ]
+    key_artifacts: list[tuple[str, str, str, str, str, str]] = []
     for case in cases:
         case_id = str(case["case"])
         key_artifacts.extend(
@@ -2211,7 +2205,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             {
                 "phase": "code artifact eval",
                 "status": report_status,
-                "command": "python3 workspace/scripts/run_plugin_eval.py --run-id local-code-artifact-real --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/evals/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
+                "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/evals/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
                 "cwd": str(REPO_ROOT),
                 "exitCode": "0" if report_status == "pass" else "see variant exit artifacts",
                 "duration": "recorded by transcript",
@@ -2253,83 +2247,6 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
     return attach_v2_contract(data, cases)
 
 
-def write_markdown_sidecars() -> None:
-    findings_text = ["# Findings", ""]
-    for finding in FINDINGS:
-        findings_text.extend(
-            [
-                f"## {finding['id']} - {finding['severity'].upper()} - {finding['status']}",
-                "",
-                f"- Case(s): {finding['case']}",
-                f"- Defect type: {finding['defectType']}",
-                f"- Gate/dimension: {finding['gateOrDimension']}",
-                f"- Before: {finding['before']}",
-                f"- After: {finding['after']}",
-                f"- Rerun scope: {finding['rerunScope']}",
-                "- Evidence:",
-            ]
-        )
-        findings_text.extend(f"  - [{item['label']}]({item['href']})" for item in finding["evidence"])
-        findings_text.append("")
-    open_findings = [
-        finding
-        for finding in FINDINGS
-        if str(finding["status"]).lower() not in {"fixed", "closed", "accepted"}
-    ]
-    if not open_findings:
-        findings_text.extend(["No open blocking, major, or minor findings after the protocol rerun.", ""])
-    (RUN_DIR / "findings.md").write_text("\n".join(findings_text), encoding="utf-8")
-
-    (RUN_DIR / "reruns.md").write_text(
-        "\n".join(
-            [
-                "# Reruns",
-                "",
-                "Protocol fix/rerun loop completed.",
-                "",
-                "- Baseline isolation fixed and full 17-case public pack rerun for baseline and with-ddjango.",
-                "- Public packets no longer contain operator artifact-saving instructions.",
-                "- `validate_eval_protocol.py` passed for the full run.",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    (RUN_DIR / "iteration-plan.md").write_text(
-        "\n".join(
-            [
-                "# Iteration Plan",
-                "",
-                "## Stop Condition",
-                "",
-                "- All 17 public cases rerun with isolated baseline and with-dddjango artifacts.",
-                "- plugin hard gate failures: 0",
-                "- common hard gate failures: 0",
-                "- blocking/major/minor findings: 0",
-                "- runtime validation, diff check, leakage scan, and cache/source diff pass.",
-                "- `report.html` links only to existing artifacts.",
-                "",
-                "Status: satisfied after targeted `case-017` rerun.",
-                "",
-                "## Resolution",
-                "",
-                "- `case-017` originally reported `plugins/dddjango` as a real directory in the isolated eval workspace.",
-                "- Root cause: the runner used `shutil.copytree()` without `symlinks=True`, so the eval copy dereferenced `plugins/dddjango -> ../dddjango`.",
-                "- Fix: eval and code-capture workspace preparation now preserves symlinks.",
-                "- Evidence: targeted `case-017` with-ddjango rerun exited 0 and no longer reports the real-directory Minor finding.",
-                "",
-                "## Next Steps",
-                "",
-                "1. Keep the current protocol validator in the completion gate for future eval runs.",
-                "2. Add scored code-backed cases and progressive-disclosure/trigger-mutation checks in the next eval iteration.",
-                "3. If runtime skill behavior changes later, rerun the full public pack with the same isolated baseline protocol.",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-
-
 def main() -> None:
     global CASE_EVALS
     args = parse_args()
@@ -2346,7 +2263,6 @@ def main() -> None:
     else:
         for case in CASE_EVALS:
             write_analysis(case)
-        write_markdown_sidecars()
         data = build_report_data()
     data["embeddedArtifacts"] = collect_embedded_artifacts(data)
     template = REPORT_TEMPLATE.read_text(encoding="utf-8")

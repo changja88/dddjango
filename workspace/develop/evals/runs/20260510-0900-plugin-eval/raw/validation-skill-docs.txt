@@ -1,1 +1,0 @@
-OK: validation passed with 0 warning(s)

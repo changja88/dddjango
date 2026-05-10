@@ -25,6 +25,9 @@ workspace/test/
 workspace/**/*.codex.log
 workspace/**/*.claude.log
 workspace/**/real-repo-work/
+workspace/develop/evals/runs/*
+!workspace/develop/evals/runs/.gitkeep
+!workspace/develop/evals/runs/README.md
 
 # Editor swap/backup
 *.bak

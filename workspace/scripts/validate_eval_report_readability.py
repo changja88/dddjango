@@ -9,8 +9,6 @@ import re
 from pathlib import Path
 
 
-REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-DEFAULT_REPORT = REPO_ROOT / "workspace/develop/evals/runs/20260510-0900-plugin-eval/report.html"
 V2_SCHEMA_VERSION = "eval-report-v2"
 SCORE_TYPES = {"numeric", "pass_fail", "hard_gate", "narrative"}
 SCORE_TYPE_SOURCES = {"explicit", "inferred"}
@@ -29,7 +27,7 @@ REQUIRED_VARIANT_KEYS = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
+    parser.add_argument("--report", type=Path, required=True)
     parser.add_argument(
         "--require-code-artifacts",
         action="store_true",

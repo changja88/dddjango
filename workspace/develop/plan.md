@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: 종합 플러그인 평가 completion gate 최종 검증 중
-- 최근 완료: baseline isolation, public/operator artifact instruction 분리, 17개 public case baseline/with-dddjango 전체 재실행, HTML report 갱신, post-review `case-017` finding rerun 해결
-- 다음 작업: 최종 검증 및 커밋
+- 현재 단계: 종합 플러그인 평가 completion gate 통과
+- 최근 완료: baseline isolation, public/operator artifact instruction 분리, 17개 public case baseline/with-dddjango 전체 재실행, post-review `case-017` finding rerun 해결, 평가 요약의 `plan.md` 통합
+- 다음 작업: 필수 완료 게이트 없음. 차기 평가 고도화는 별도 backlog로 관리한다.
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -21,7 +21,7 @@
 - [x] 스킬 연계 평가 및 개선
 - [x] 종합 평가표 작성
 - [x] 종합 플러그인 평가 및 개선
-- [ ] 최종 검증 및 커밋
+- [x] 최종 검증 및 커밋
 
 ## 0. Runtime Evaluation Preflight
 
@@ -316,34 +316,15 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 
 - 실제 사용 가능한 플러그인 상태까지 검증하고 반복 개선한다.
 
-1차 run:
+평가 요약:
 
-- Run ID: `20260510-0900-plugin-eval`
-- Report: `workspace/develop/evals/runs/20260510-0900-plugin-eval/report.html`
-- Summary: baseline/with-dddjango 17개 public case raw output과 case analysis HTML을 작성했다.
-- Result: with-ddjango는 17/17 public case를 evaluator judgment 기준으로 통과했지만, baseline isolation 오염과 artifact instruction 충돌이라는 major eval-protocol finding 2개 때문에 종합 eval 완료 상태로 보지 않는다.
-- Next: `workspace/develop/evals/runs/20260510-0900-plugin-eval/iteration-plan.md` 기준으로 eval harness/public packet 실행 방식을 수정하고 영향 케이스를 재실행한다.
-
-Protocol fix rerun:
-
-- Run ID: `20260510-0900-plugin-eval`
-- Report: `workspace/develop/evals/runs/20260510-0900-plugin-eval/report.html`
-- Fixes:
-  - baseline은 `/private/tmp/dddjango-eval-workspaces/<run>/<case>/baseline`의 sanitized workspace에서 실행한다.
-  - baseline command는 `--ignore-user-config --ignore-rules`를 사용하고, repo runtime plugin/cache/source-crosswalk/eval prior artifacts를 workspace에서 제거한다.
-  - public prompt에는 artifact 저장 책임, raw path, runner 지시, private rubric/scoring/expected routing 용어를 넣지 않는다.
-  - prompt-input artifact는 with-dddjango variant에서만 operator-owned raw artifact로 저장한다.
-  - comprehensive default run은 smoke용 `case-101`을 제외하고 17개 public case만 실행한다.
-- Rerun result: 17개 public case의 baseline/with-dddjango 34개 실행 exit code가 모두 0이었다.
-- Evaluation result: with-ddjango 17/17 통과, plugin hard gate 0, common hard gate 0. post-review에서 확인된 `case-017` raw output의 Minor finding은 eval workspace symlink 보존 수정 후 targeted rerun evidence로 닫았다.
-- Validation: `validate_eval_protocol.py`, `validate_skill_docs.py --phase all`, `validate_eval_report_readability.py`, `git diff --check`, source/cache diff, runtime leakage scan을 최종 검증 대상으로 유지한다.
-
-Post-review completion gate resolution:
-
-- `workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-017-with-dddjango.txt`는 이전에 `plugins/dddjango` symlink/source-of-truth 차이에 대한 Minor finding을 기록했다.
-- 원인은 실제 source layout 문제가 아니라 `workspace/scripts/run_plugin_eval.py`의 eval workspace copy가 symlink를 dereference한 것이었다.
-- eval/code-capture workspace copy는 `symlinks=True`로 수정했고, targeted `case-017` with-ddjango rerun은 exit 0으로 완료되며 기존 real-directory Minor finding을 더 이상 보고하지 않는다.
-- 따라서 `85/85`와 `17/17`은 response-level plugin integration judgment로 유지하고, `case-017` finding lifecycle은 rerun evidence로 닫는다.
+- 17개 public case에서 baseline/with-dddjango를 isolated workspace로 실행했다.
+- baseline isolation 오염과 artifact instruction 충돌은 eval protocol 문제로 분류하고 runner/public packet을 수정했다.
+- `case-017`의 `plugins/dddjango` real-directory 관찰은 실제 source layout 문제가 아니라 eval workspace copy가 symlink를 dereference한 문제였다.
+- eval/code-capture workspace copy를 `symlinks=True`로 수정했고, targeted `case-017` with-dddjango rerun에서 해당 finding이 재발하지 않았다.
+- 최종 response-level plugin integration judgment는 `85/85`, public case 통과는 `17/17`이다.
+- 최종 open blocking/major/minor finding은 0이다.
+- run별 raw/report/analysis/finding 메모는 완료 요약을 이 계획에 흡수한 뒤 저장소에서 정리한다.
 
 반복 체크리스트:
 
@@ -368,6 +349,13 @@ python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjan
 - [x] runtime smoke만으로 완료 처리하지 않는다.
 - [x] open blocking/major/minor finding이 0이거나, 남은 finding이 accepted exception 또는 rerun evidence로 닫힌다.
 - [x] 최종 상태를 커밋한다.
+
+차기 평가 고도화 backlog:
+
+- [ ] scored code-backed case를 추가해 실제 코드 변경 품질을 점수화한다.
+- [ ] progressive-disclosure 체크를 추가해 필요한 reference만 읽히는지 검증한다.
+- [ ] trigger-mutation 체크를 추가해 유사/변형 프롬프트에서도 스킬 routing이 안정적인지 검증한다.
+- [ ] runtime skill behavior가 바뀌면 동일한 isolated baseline protocol로 full public pack을 재실행한다.
 
 ## 개발 원칙
 
