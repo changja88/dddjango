@@ -31,7 +31,7 @@
 |---|---|---|---|
 | `skill_goal_instructions.md` `## 범위` | included | `SKILL.md`, this crosswalk | Runtime target and crosswalk path followed. |
 | `## 실행 규칙` | included | this crosswalk, review notes | One-skill sequencing, rubric isolation, honest verification followed. |
-| `## 구현 순서` | included | `plan.md` update | Continued after completed `implementation-django`. |
+| `## 구현 순서` | included | completion sequence | Continued after completed `implementation-django`. |
 | `## Skill별 작성 루프` / `### Source Coverage Crosswalk` | included | this crosswalk | Source coverage tracked before rubric. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter only `name` and `description`; concise body with direct references. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Source summarized into runtime references; no source copy. |

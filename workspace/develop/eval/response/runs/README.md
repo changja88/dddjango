@@ -20,4 +20,4 @@ Use `workspace/develop/eval/response/templates/run-report.html` for `report.html
 Use `workspace/develop/eval/response/templates/case-analysis.html` as the shape for case-level comparison analysis pages.
 
 Do not store private evaluator keys inside `raw/` or any directory supplied to forward-test agents.
-After a run is complete, consolidate durable decisions into `workspace/develop/plan.md`, `workspace/develop/eval/response/rubrics`, scripts, or skill sources. Delete or leave the generated run directory ignored.
+After a run is complete, consolidate durable decisions into `workspace/develop/eval/response/README.md`, `workspace/develop/eval/response/rubrics`, scripts, skill sources, or commit history. Delete or leave the generated run directory ignored.

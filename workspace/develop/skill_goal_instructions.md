@@ -4,7 +4,7 @@
 
 ## 범위
 
-`workspace/develop/plan.md`의 2단계 개별 스킬 구현과 5단계 workflow skill 구현을 다룬다.
+개별 runtime skill 구현과 `workflow-dddjango-subagents` skill 구현을 다룬다.
 
 작성 대상은 다음 runtime 산출물이다.
 
@@ -12,7 +12,6 @@
 - `dddjango/skills/<skill>/SKILL.md`
 - `dddjango/skills/<skill>/agents/openai.yaml`
 - `dddjango/skills/<skill>/references/*.md`
-- 진행 상태 문서: `workspace/develop/plan.md`
 
 이 프로젝트의 runtime target은 standalone Codex skill 위치인 `$CODEX_HOME/skills` 또는 `~/.codex/skills`가 아니다. 최종 산출물은 Codex에서도 동작하는 plugin-bundled skill이므로, 모든 runtime skill은 repo root의 `dddjango/skills/<skill>/` 아래에 생성한다. `dddjango/skills/.gitkeep`은 개별 skill 생성 전 빈 skills 디렉터리를 추적하기 위한 placeholder이며, 실제 skill 구현을 대체하지 않는다.
 
@@ -42,14 +41,14 @@
 - 초안 작성 단계에서는 `workspace/develop/eval/response/rubrics` 파일을 열지 않는다.
 - 이전 대화나 context에 rubric 내용이 남아 있어도 runtime skill 문서의 작성 재료로 사용하지 않는다.
 - Runtime skill 문서는 평가표가 아니라 실제 에이전트가 작업할 때 읽는 절차 문서로 작성한다.
-- 각 skill이 completed, blocked, accepted-exception 중 하나가 되는 즉시 `workspace/develop/plan.md`를 갱신한다.
+- 각 skill이 completed, blocked, accepted-exception 중 하나가 되는 즉시 완료 보고에 상태와 근거를 기록한다.
 - 실제로 수행하지 않은 테스트, 검증, 리뷰, subagent 실행을 완료했다고 말하지 않는다.
 - 실제 subagent를 실행한 경우에만 subagent review라고 부른다.
 - 완료 상태는 의도가 아니라 파일 내용과 검증 결과를 다시 확인한 뒤에만 표시한다.
 
 ## 구현 순서
 
-먼저 runtime plugin skeleton을 만든 뒤, `workspace/develop/plan.md`의 2단계 체크리스트 순서로 implementation skill을 구현하고, architecture skill과 workflow skill을 뒤에 둔다.
+먼저 runtime plugin skeleton을 만든 뒤, implementation skill을 구현하고, architecture skill과 workflow skill을 뒤에 둔다.
 
 1. `dddjango/.codex-plugin/plugin.json`
 2. `implementation-django`
@@ -91,7 +90,7 @@
 12. Rubric review finding을 분류하고, runtime 문서 수정 대상인지 평가 자료 수정 대상인지 구분한다.
 13. Runtime 문서 finding이 0개가 될 때까지 수정과 리뷰를 반복한다.
 14. 구조 검증과 관련 문서 검증을 실행한다.
-15. `workspace/develop/plan.md`를 갱신한다.
+15. 완료 상태, 검증 결과, 남은 finding을 완료 보고에 기록한다.
 
 Rubric과 source가 충돌하면 source 문서를 우선한다. 충돌이 실제로 존재하면 runtime 문서를 source 기준으로 유지하고, 충돌 내용을 보고한다.
 
@@ -286,7 +285,7 @@ Runtime 문서는 `source-backed runtime issue`만 반영한다. Rubric의 promp
 - Rubric review의 blocking, major, minor finding이 0개다.
 - 실행한 검증 명령이 통과했거나, 실행하지 못한 명령과 이유가 명확히 보고되어 있다.
 
-Source limitation, docs conflict, 상위 지침 충돌 때문에 completed 조건을 만족할 수 없으면 `plan.md`에 blocked 또는 accepted-exception으로 기록하고 이유를 남긴다.
+Source limitation, docs conflict, 상위 지침 충돌 때문에 completed 조건을 만족할 수 없으면 완료 보고에 blocked 또는 accepted-exception으로 기록하고 이유를 남긴다.
 
 ## 검증
 
@@ -301,7 +300,7 @@ Skill 구현 중 가능한 검증:
 - `python3 workspace/scripts/validate_skill_docs.py --phase docs`
 - `python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills`
 - `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills`
-- `git diff --check -- dddjango workspace/develop/plan.md workspace/develop/eval/response/source-crosswalks`
+- `git diff --check -- dddjango workspace/develop/eval/response/source-crosswalks`
 - 필요한 경우 `wc -l dddjango/skills/*/SKILL.md`
 
 설치된 runtime cache를 보정한 경우 `python3 workspace/scripts/validate_skill_docs.py --phase runtime`도 실행한다. Runtime smoke는 완료 게이트가 아니며, 실제 skill folder 생성 후 완료 판단은 `--phase all --skills-dir dddjango/skills` 결과를 우선한다.
@@ -318,7 +317,7 @@ Skill 구현 중 가능한 검증:
 - Source Coverage Crosswalk 요약과 남은 `omitted`, `source-gap`, deviation reason
 - 남은 finding이 없는지, 또는 blocked/accepted-exception의 source limitation
 - 검증 결과
-- `plan.md` 갱신 내용
+- durable decision 기록 위치 또는 기록하지 않은 이유
 - 실제 subagent를 사용했는지 여부
 - Serena 사용 여부 또는 생략 이유
 

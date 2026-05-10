@@ -1869,7 +1869,7 @@ def build_report_data() -> dict[str, object]:
             "runtimeCachePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
             "subagentsUsed": "yes; two read-only review subagents inspected eval integrity and harness/runtime artifacts during the protocol fix iteration",
             "serenaUsed": "no; docs/eval artifact work used rg/sed and no code symbol tracing",
-            "planUpdate": "workspace/develop/plan.md updated with protocol fix, full rerun, and completed comprehensive eval status",
+            "durableRecord": "protocol fixes, rerun outcome, and completed response-eval status are recorded in eval/response docs, scripts, and commit history",
         },
         "verdict": {
             "status": "pass",
@@ -2115,7 +2115,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             "runtimeCachePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
             "subagentsUsed": "no; no subagents were spawned for this focused artifact capture run",
             "serenaUsed": "no; this was eval artifact generation, not code symbol tracing",
-            "planUpdate": "not updated for this focused artifact viewer check",
+            "durableRecord": "not updated for this focused artifact viewer check",
         },
         "verdict": {
             "status": report_status,

@@ -11,21 +11,20 @@
 - 공통 rubric 및 템플릿: `workspace/develop/eval/response/rubrics/common_rubric.md`
 - 제품 계약 문서: `workspace/docs`
 - reference corpus: `workspace/reference`
-- 진행 상태 문서: `workspace/develop/plan.md`
 
 이 goal은 다음 범위를 함께 다룬다.
 
-- `plan.md` 1단계의 개별 skill rubric
-- `plan.md` 4단계의 `workflow-dddjango-subagents_rubric.md`
+- 개별 skill rubric
+- `workflow-dddjango-subagents_rubric.md`
 
-작성 순서는 먼저 `plan.md` 1단계 체크리스트를 따르고, 그 다음 4단계 workflow rubric을 작성한다.
+작성 순서는 먼저 implementation skill rubric, architecture skill rubric, workflow rubric 순서를 따른다.
 
 ## 실행 규칙
 
 - 문서는 반드시 한 개씩 작성한다.
 - 현재 rubric이 completed, blocked, accepted-exception 중 하나가 되기 전에는 다음 rubric을 시작하지 않는다.
 - 이미 유효한 내용이 있는 rubric은 기본적으로 다시 쓰지 않고, 먼저 리뷰한 뒤 필요한 부분만 수정한다.
-- 각 rubric이 completed, blocked, accepted-exception 중 하나가 되는 즉시 `workspace/develop/plan.md`를 갱신한다.
+- 각 rubric이 completed, blocked, accepted-exception 중 하나가 되는 즉시 완료 보고에 상태와 근거를 기록한다.
 - 실제로 수행하지 않은 테스트, 검증, 리뷰, subagent 실행을 완료했다고 말하지 않는다.
 - 리뷰는 기본적으로 동일 agent의 네 관점 self-review다. 실제 subagent를 실행한 경우에만 subagent review라고 부른다.
 - 완료 상태는 의도가 아니라 파일 내용을 다시 확인한 뒤에만 표시한다.
@@ -112,7 +111,7 @@ Rubric은 다음 조건을 모두 만족하면 completed로 본다.
 리뷰한다.
 
 Source limitation, docs conflict, 상위 지침 충돌 때문에 completed 조건을
-만족할 수 없으면, 해당 rubric을 `plan.md`에 blocked 또는
+만족할 수 없으면, 해당 rubric을 완료 보고에 blocked 또는
 accepted-exception으로 기록하고 이유를 남긴다. 이 경우에도 남은 finding이
 무엇이며 왜 문서 수정으로 해결할 수 없는지 구체적으로 기록한다.
 
@@ -132,7 +131,7 @@ accepted-exception으로 기록하고 이유를 남긴다. 이 경우에도 남�
 
 - `rg -n "^## " <rubric-file>` 또는 동등한 heading check를 실행하거나 수동으로 수행한다.
 - 파일이 비어 있지 않은지 확인한다.
-- `workspace/develop/plan.md`를 갱신한다.
+- 완료 상태와 검증 결과를 완료 보고에 기록한다.
 
 최종 점검에서 다음을 수행한다.
 
@@ -150,4 +149,4 @@ accepted-exception으로 기록하고 이유를 남긴다. 이 경우에도 남�
 - 파일별 리뷰 요약
 - 남은 finding이 없는지, 또는 blocked/accepted-exception의 source limitation
 - 검증 결과
-- `plan.md` 갱신 내용
+- durable decision 기록 위치 또는 기록하지 않은 이유

@@ -413,6 +413,6 @@ A completion report for plugin eval must include:
 - scenario families executed
 - findings by severity before and after fixes
 - remaining accepted exceptions, if any
-- `plan.md` updates
+- durable decision record updates
 - subagent usage status
 - Serena usage status or skip reason

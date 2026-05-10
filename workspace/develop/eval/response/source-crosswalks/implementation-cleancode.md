@@ -40,7 +40,7 @@
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
 | `## Completed 조건` | included | Review Notes, final validation record | Completion requires zero remaining blocking/major/minor findings; final evidence is recorded for this skill. |
 | `## 검증` | included | final validation record | Only executed validation is reported; completion validation was performed. |
-| `## 완료 보고` | included | plan final record | Required report fields are captured in `workspace/develop/plan.md`. |
+| `## 완료 보고` | included | completion report | Required report fields are captured in the completion report and commit history. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md` Routing | DDD-first, simple-vs-complex, and workflow delegation reflected. |
@@ -180,4 +180,4 @@
 - 2026-05-10 source self-review in the current evaluation loop found source-backed gaps in Korean trigger coverage, API/DB architecture routing, design-it-twice guidance for major decisions, nearby cleanup/residual-risk handling, and stale review claims from an earlier draft. Runtime files and this crosswalk were updated.
 - 2026-05-10 independent source re-review by Socrates returned blocking 0, major 0, minor 0 after fixes for validation scenario heading coverage and pattern/state coverage evidence.
 - 2026-05-10 rubric review ran after source review. One source-backed runtime improvement was applied for Korean/user trigger coverage around fat models, long functions, and scattered logic. Final rubric finding counts: blocking 0, major 0, minor 0.
-- 2026-05-10 runtime checks completed: `codex debug prompt-input` positive/boundary/negative metadata exposure, isolated read-only `codex exec` positive Fat Model review, boundary View Logic review, and simple naming negative behavior. Validator, leakage grep, cache sync, and source/cache diff passed; `workspace/develop/plan.md` was updated.
+- 2026-05-10 runtime checks completed: `codex debug prompt-input` positive/boundary/negative metadata exposure, isolated read-only `codex exec` positive Fat Model review, boundary View Logic review, and simple naming negative behavior. Validator, leakage grep, cache sync, and source/cache diff passed; durable results were recorded in completion notes and commit history.

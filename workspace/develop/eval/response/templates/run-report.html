@@ -1567,7 +1567,7 @@
         runtimeCachePath: "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10 or not run",
         subagentsUsed: "yes/no plus ids or reason",
         serenaUsed: "yes/no plus reason",
-        planUpdate: "workspace/develop/plan.md updated or not updated with reason"
+        durableRecord: "where durable decisions were recorded, or why no durable record was needed"
       },
       verdict: {
         status: "blocked",
@@ -1821,7 +1821,7 @@
         ["Runtime Cache", `${r.runtimeCacheUsed}: ${r.runtimeCachePath}`],
         ["Subagents", r.subagentsUsed],
         ["Serena", r.serenaUsed],
-        ["Plan Update", r.planUpdate],
+        ["Durable Record", r.durableRecord || r.planUpdate],
         ["Eval Pack", `${r.evalPackPath} (${r.evalPackVersion})`],
         ["Source", r.pluginSource],
         ["Duration", `${r.startedAt} - ${r.endedAt} (${r.duration})`]

@@ -40,7 +40,7 @@
 | `## Review 기준` | included | Review Notes | Review types and findings tracked. |
 | `## Completed 조건` | included | Review Notes, final validation record | Completion requires zero remaining blocking/major/minor findings; final evidence is recorded for this skill. |
 | `## 검증` | included | final validation record | Only executed validation is reported; completion validation was performed. |
-| `## 완료 보고` | included | plan final record | Required report fields are captured in `workspace/develop/plan.md`. |
+| `## 완료 보고` | included | completion report | Required report fields are captured in the completion report and commit history. |
 | `## Goal Objective Template` | omitted | n/a | Goal prompt authoring content is not runtime skill behavior. |
 | `spec.md` `## 관련 문서` | included | Sources Used | Linked product docs are covered. |
 | `## 1. 목표` | merged | `SKILL.md` Routing | Python/Django ecosystem, simple-vs-complex judgment, and workflow delegation reflected. |

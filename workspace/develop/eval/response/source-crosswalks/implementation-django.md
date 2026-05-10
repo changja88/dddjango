@@ -29,7 +29,7 @@
 |---|---|---|---|
 | `skill_goal_instructions.md` `## 범위` | included | `SKILL.md`, this crosswalk | Runtime target and review artifact locations followed. |
 | `## 실행 규칙` | included | this crosswalk, review notes | One-skill sequencing, no rubric before draft, and honest verification followed. |
-| `## 구현 순서` | included | `plan.md` update | Implemented next skill after skeleton: `implementation-django`. |
+| `## 구현 순서` | included | completion sequence | Implemented next skill after skeleton: `implementation-django`. |
 | `## Skill별 작성 루프` / `### Source Coverage Crosswalk` | included | this crosswalk | Loop and crosswalk format followed. |
 | `## SKILL.md 작성 규칙` | included | `SKILL.md` | Frontmatter has only `name` and `description`; body is concise and reference-linked. |
 | `## Runtime Reference 작성 규칙` | included | `references/*.md` | Source was summarized and split, not copied. |
