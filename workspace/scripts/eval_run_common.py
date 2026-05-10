@@ -65,14 +65,20 @@ def write_text(path: Path, text: str) -> None:
 
 def extract_json_object(text: str) -> dict[str, Any]:
     fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S)
-    candidate = fenced.group(1) if fenced else text.strip()
-    try:
-        value = json.loads(candidate)
-    except json.JSONDecodeError as exc:
-        raise SystemExit(f"Could not parse JSON object: {exc}") from exc
-    if not isinstance(value, dict):
-        raise SystemExit("JSON payload must be an object")
-    return value
+    candidates = [fenced.group(1)] if fenced else []
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        candidates.append(text[first_brace : last_brace + 1])
+    candidates.append(text.strip())
+    for candidate in candidates:
+        try:
+            value = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            return value
+    raise ValueError("no JSON object found")
 
 
 def has_non_empty_text(value: object) -> bool:

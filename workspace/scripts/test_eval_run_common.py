@@ -58,6 +58,17 @@ class EvalRunCommonTests(unittest.TestCase):
 
         self.assertEqual(value, {"caseId": "case-a"})
 
+    def test_extract_json_object_accepts_embedded_non_fenced_json(self) -> None:
+        text = 'prefix {"caseId": "case-a"} suffix'
+
+        value = self.common.extract_json_object(text)
+
+        self.assertEqual(value, {"caseId": "case-a"})
+
+    def test_extract_json_object_raises_when_no_json_object_parses(self) -> None:
+        with self.assertRaisesRegex(ValueError, "no JSON object found"):
+            self.common.extract_json_object("[]")
+
     def test_validate_oracle_schema_requires_both_variants(self) -> None:
         error = self.common.validate_oracle_schema(
             {
