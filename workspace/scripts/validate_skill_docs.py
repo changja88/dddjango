@@ -18,7 +18,7 @@ DEFAULT_PLUGIN_SKILLS = ROOT / "dddjango" / "skills"
 DEFAULT_RUNTIME_SKILLS = Path(
     os.environ.get(
         "DDDJANGO_RUNTIME_SKILLS",
-        "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills",
+        str(ROOT / "plugins/dddjango/skills"),
     )
 )
 

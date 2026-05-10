@@ -10,7 +10,7 @@
 
 평가 case는 다음 source를 함께 반영해야 한다.
 
-- `/Users/hyun/.codex/skills/.system/skill-creator/SKILL.md`
+- `skill-creator` system skill guidance
 - `workspace/docs/plugin-structure.md`, `skill-authoring.md`, `skill-contracts.md`, `skill-hierarchy.md`, `reference-index.md`, `validation-plan.md`
 - `workspace/reference/*/reference/{final,internal,external,review}.md`
 - `dddjango/skills/*/SKILL.md`, `dddjango/skills/*/agents/openai.yaml`, `dddjango/skills/*/references/*.md`

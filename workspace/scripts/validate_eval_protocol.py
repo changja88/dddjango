@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
 ANSWER_DIR = REPO_ROOT / "workspace/develop/eval/response/answer"
 VARIANTS = ("baseline", "with-dddjango")
@@ -18,6 +18,15 @@ VARIANTS = ("baseline", "with-dddjango")
 PUBLIC_PACKET_FORBIDDEN_PATTERNS = {
     "artifact persistence": re.compile(r"\b(output to save|artifact|raw output|prompt-input/debug)\b", re.I),
     "operator transcript": re.compile(r"\bcommand transcript|commands actually run|not-run checks\b", re.I),
+    "answer field: reference_basis": re.compile(r"(?<![A-Za-z0-9_])reference_basis(?![A-Za-z0-9_])"),
+    "answer field: target_behavior": re.compile(r"(?<![A-Za-z0-9_])target_behavior(?![A-Za-z0-9_])"),
+    "answer field: scoring_checks": re.compile(r"(?<![A-Za-z0-9_])scoring_checks(?![A-Za-z0-9_])"),
+    "answer field: failure_modes": re.compile(r"(?<![A-Za-z0-9_])failure_modes(?![A-Za-z0-9_])"),
+    "answer field: leakage_checks": re.compile(r"(?<![A-Za-z0-9_])leakage_checks(?![A-Za-z0-9_])"),
+    "answer field: evidence_required": re.compile(r"(?<![A-Za-z0-9_])evidence_required(?![A-Za-z0-9_])"),
+    "answer field: coverage_tags": re.compile(r"(?<![A-Za-z0-9_])coverage_tags(?![A-Za-z0-9_])"),
+    "answer field: case_id": re.compile(r"\bcase_id\s*:"),
+    "Korean private answer wording": re.compile(r"비공개\s*정답|정답\s*파일"),
     "absolute repo path": re.compile(re.escape(str(REPO_ROOT))),
 }
 

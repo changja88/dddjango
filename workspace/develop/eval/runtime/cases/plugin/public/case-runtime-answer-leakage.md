@@ -1,3 +1,3 @@
-runtime bundled reference 안에 평가용 비공개 정답처럼 보이는 문장이 섞였는지 확인하려고 해.
+runtime bundled reference 안에 평가용 내부 판정 문장처럼 보이는 내용이 섞였는지 확인하려고 해.
 
 어떤 문자열이나 경로 패턴을 찾아야 하고, 발견되면 해당 run을 어떻게 판정해야 하는지 설명해줘.

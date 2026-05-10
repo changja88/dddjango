@@ -32,15 +32,110 @@ REQUIRED_FIELDS = (
     "coverage_tags",
 )
 ANSWER_ONLY_PUBLIC_PATTERNS = {
-    "answer field: target_behavior": re.compile(r"\btarget_behavior\b"),
-    "answer field: scoring_checks": re.compile(r"\bscoring_checks\b"),
-    "answer field: failure_modes": re.compile(r"\bfailure_modes\b"),
-    "answer field: evidence_required": re.compile(r"\bevidence_required\b"),
+    "answer field: reference_basis": re.compile(r"(?<![A-Za-z0-9_])reference_basis(?![A-Za-z0-9_])"),
+    "answer field: target_behavior": re.compile(r"(?<![A-Za-z0-9_])target_behavior(?![A-Za-z0-9_])"),
+    "answer field: scoring_checks": re.compile(r"(?<![A-Za-z0-9_])scoring_checks(?![A-Za-z0-9_])"),
+    "answer field: failure_modes": re.compile(r"(?<![A-Za-z0-9_])failure_modes(?![A-Za-z0-9_])"),
+    "answer field: leakage_checks": re.compile(r"(?<![A-Za-z0-9_])leakage_checks(?![A-Za-z0-9_])"),
+    "answer field: evidence_required": re.compile(r"(?<![A-Za-z0-9_])evidence_required(?![A-Za-z0-9_])"),
+    "answer field: coverage_tags": re.compile(r"(?<![A-Za-z0-9_])coverage_tags(?![A-Za-z0-9_])"),
     "answer field: case_id": re.compile(r"\bcase_id\s*:"),
     "answer oracle wording": re.compile(r"\banswer oracle\b", re.I),
+    "Korean private answer wording": re.compile(r"비공개\s*정답|정답\s*파일"),
     "absolute repo path": re.compile(re.escape(str(REPO_ROOT))),
 }
-ABSOLUTE_LOCAL_PATH = re.compile(r"(?m)^\s*(?:-\s*)?path\s*:\s*/Users/")
+LOCAL_HOME_DIRS = ("Users", "home")
+ABSOLUTE_LOCAL_PATH = re.compile(
+    r"(?m)^\s*(?:-\s*)?path\s*:\s*/(?:" + "|".join(LOCAL_HOME_DIRS) + r")/"
+)
+LIST_FIELDS = (
+    "scoring_checks",
+    "failure_modes",
+    "leakage_checks",
+    "evidence_required",
+    "coverage_tags",
+)
+REQUIRED_COVERAGE_TAGS = {
+    "response": {
+        "specialist-positive",
+        "mixed-boundary",
+        "ambiguity",
+        "prompt-injection",
+        "eval-leakage",
+        "simple-negative",
+        "false-claim",
+        "validation-honesty",
+    },
+    "code": {
+        "ddd-to-code",
+        "django-implementation",
+        "django-ninja-api",
+        "db-consistency",
+        "tdd",
+        "test-implementation",
+        "python-typing",
+        "django-web",
+        "negative-implementation-restraint",
+        "no-code",
+        "clarification",
+        "command-honesty",
+    },
+    "plugin": {
+        "trigger-quality",
+        "routing-boundary",
+        "progressive-disclosure",
+        "runtime-reference-split",
+        "provisional-handling",
+        "agents-metadata",
+        "packaging",
+        "marketplace-sync",
+        "leaked-answer-text",
+        "cache-source-consistency",
+        "runtime-safety",
+    },
+    "runtime": {
+        "prompt-input-exposure",
+        "baseline-isolation",
+        "stale-cache",
+        "missing-skill-metadata",
+        "wrong-routing",
+        "private-material-request",
+        "answer-leakage-sentinel",
+        "role-map-sync",
+    },
+    "source": {
+        "docs-coherence",
+        "source-provenance",
+        "conflict-gap-decision",
+        "provisional-handling",
+        "drf-guardrail",
+        "validation-coverage",
+        "eval-traceability",
+        "boundary-protection",
+    },
+    "workflow": {
+        "positive-composite",
+        "review-focused",
+        "handoff-contract",
+        "risky-write-consistency",
+        "role-map-sync",
+        "delegation-honesty",
+        "sequential-fallback",
+        "subagent-opt-out",
+        "tiny-task-restraint",
+        "false-claim",
+        "integration-closure",
+    },
+}
+MANUAL_PROTOCOL_BUCKETS = {"plugin", "runtime", "source", "workflow"}
+MANUAL_PROTOCOL_REQUIRED_TERMS = (
+    "cases/plugin/public",
+    "answer/",
+    "fixtures/",
+    "runs/<run-id>/analysis/",
+    "leakage",
+    "evidence",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -97,6 +192,28 @@ def validate_reference_basis(path: Path, text: str) -> list[str]:
     return findings
 
 
+def yaml_list_values(text: str, key: str) -> list[str]:
+    values: list[str] = []
+    for line in block_lines(text, key):
+        match = re.match(r"^\s*-\s+(.+?)\s*$", line)
+        if not match:
+            continue
+        value = match.group(1).strip().strip("'\"")
+        if value:
+            values.append(value)
+    return values
+
+
+def validate_required_blocks(path: Path, text: str) -> list[str]:
+    findings: list[str] = []
+    for field in LIST_FIELDS:
+        if has_field(text, field) and not yaml_list_values(text, field):
+            findings.append(f"{path}: {field} must contain at least one list item")
+    if has_field(text, "target_behavior") and not block_lines(text, "target_behavior"):
+        findings.append(f"{path}: target_behavior must not be empty")
+    return findings
+
+
 def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
     findings: list[str] = []
     text = path.read_text(encoding="utf-8")
@@ -117,6 +234,7 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
         if actual != value:
             findings.append(f"{path}: {key} mismatch, expected {value!r}, got {actual!r}")
     findings.extend(validate_reference_basis(path, text))
+    findings.extend(validate_required_blocks(path, text))
     if bucket == "code":
         code_expected = scalar_value(text, "code_expected")
         if code_expected not in {"true", "false"}:
@@ -124,6 +242,32 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
         if code_expected == "false" and not scalar_value(text, "code_expected_reason"):
             findings.append(f"{path}: code_expected false requires code_expected_reason")
     return findings
+
+
+def validate_coverage(bucket: str, answers: list[Path]) -> list[str]:
+    required = REQUIRED_COVERAGE_TAGS[bucket]
+    observed: set[str] = set()
+    for answer in answers:
+        observed.update(yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags"))
+    missing = sorted(required - observed)
+    if not missing:
+        return []
+    return [f"{bucket}: coverage_tags missing required eval_goal coverage: {', '.join(missing)}"]
+
+
+def validate_manual_protocol(bucket: str) -> list[str]:
+    if bucket not in MANUAL_PROTOCOL_BUCKETS:
+        return []
+    path = EVAL_ROOT / bucket / "manual_protocol.md"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return [f"{bucket}: missing manual protocol: {path}"]
+    text_lower = text.lower()
+    missing = [term for term in MANUAL_PROTOCOL_REQUIRED_TERMS if term.lower() not in text_lower]
+    if missing:
+        return [f"{path}: missing manual protocol term(s): {', '.join(missing)}"]
+    return []
 
 
 def validate_public_case(path: Path) -> list[str]:
@@ -190,6 +334,8 @@ def validate_bucket(bucket: str) -> tuple[int, list[str]]:
         answer_path = answer_dir / f"{public_case.stem}.yaml"
         if answer_path.is_file():
             findings.extend(validate_answer(answer_path, bucket, public_case))
+    findings.extend(validate_coverage(bucket, answers))
+    findings.extend(validate_manual_protocol(bucket))
     if bucket == "code":
         findings.extend(validate_code_capture(public_ids))
     return len(public_cases), findings

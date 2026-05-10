@@ -16,7 +16,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 
-REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
 CODE_PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/public"
 RESPONSE_ANSWER = REPO_ROOT / "workspace/develop/eval/response/answer"
@@ -82,7 +82,7 @@ BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", help="Existing or new run id. Defaults to timestamped id.")
-    parser.add_argument("--case", action="append", help="Case id to run, e.g. case-003. Repeatable.")
+    parser.add_argument("--case", action="append", help="Case id to run, e.g. case-response-order-create. Repeatable.")
     parser.add_argument(
         "--variant",
         action="append",
@@ -382,9 +382,16 @@ def write_baseline_isolation_artifact(
             "The runner does not create active-user-config prompt-input artifacts for baseline. "
             "Baseline evidence is command isolation plus sanitized workspace absence checks."
         ),
-        "runtimeCachePathNotMountedInWorkspace": not (
-            workspace / "Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10"
-        ).exists(),
+        "runtimeCachePathNotMountedInWorkspace": not any(
+            relative_presence(
+                workspace,
+                [
+                    Path(".codex/plugins/cache/dddjango-local"),
+                    Path("plugins/cache/dddjango-local"),
+                    Path("plugins/dddjango"),
+                ],
+            ).values()
+        ),
         "pass": (
             workspace.resolve() != REPO_ROOT.resolve()
             and "--ignore-user-config" in command
