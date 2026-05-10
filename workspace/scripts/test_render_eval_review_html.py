@@ -224,6 +224,110 @@ coverage_tags:
         self.assertEqual(row["detail_status"], "invalid oracle schema")
         self.assertEqual(row["status"], "unscored")
 
+    def test_oracle_case_id_mismatch_is_invalid_schema_and_unscored(self) -> None:
+        run_dir = self.write_case(
+            oracle={
+                "caseId": "case-response-other",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "4 / 5",
+                    "verdict": "pass",
+                    "evaluation": "Baseline evaluation text",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation": "With dddjango evaluation text",
+                },
+                "observations": ["case id mismatch must block scoring"],
+            },
+        )
+
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        row = data["cases"][0]
+        self.assertEqual(row["detail_status"], "invalid oracle schema")
+        self.assertEqual(row["status"], "unscored")
+        self.assertEqual(row["baseline"]["verdict"], "unscored")
+        self.assertEqual(row["with_dddjango"]["verdict"], "unscored")
+        self.assertEqual(row["baseline"]["score"], "not scored")
+        self.assertEqual(row["with_dddjango"]["score"], "not scored")
+
+    def test_missing_variant_schema_is_invalid_schema_and_unscored(self) -> None:
+        cases = (
+            (
+                "missing with evaluation",
+                {
+                    "caseId": "case-response-order-create",
+                    "answerOracleEvaluated": True,
+                    "baseline": {
+                        "score": "4 / 5",
+                        "verdict": "pass",
+                        "evaluation": "Baseline evaluation text",
+                    },
+                    "with_dddjango": {
+                        "score": "5 / 5",
+                        "verdict": "pass",
+                    },
+                    "observations": ["with-dddjango evaluation missing"],
+                },
+            ),
+            (
+                "missing with variant",
+                {
+                    "caseId": "case-response-order-create",
+                    "answerOracleEvaluated": True,
+                    "baseline": {
+                        "score": "4 / 5",
+                        "verdict": "pass",
+                        "evaluation": "Baseline evaluation text",
+                    },
+                    "observations": ["with-dddjango object missing"],
+                },
+            ),
+        )
+        for label, oracle in cases:
+            with self.subTest(label=label):
+                run_dir = self.write_case(oracle=oracle)
+
+                data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+                row = data["cases"][0]
+                self.assertEqual(row["detail_status"], "invalid oracle schema")
+                self.assertEqual(row["status"], "unscored")
+                self.assertEqual(row["baseline"]["verdict"], "unscored")
+                self.assertEqual(row["with_dddjango"]["verdict"], "unscored")
+                self.assertEqual(row["baseline"]["score"], "not scored")
+                self.assertEqual(row["with_dddjango"]["score"], "not scored")
+
+    def test_evaluation_summary_only_oracle_is_ready_and_populates_evaluation(self) -> None:
+        run_dir = self.write_case(
+            oracle={
+                "caseId": "case-response-order-create",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "3 / 5",
+                    "verdict": "partial",
+                    "evaluation_summary": "Baseline summary-only evaluation.",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation_summary": "With summary-only evaluation.",
+                },
+                "observations": ["summary-only oracle is valid"],
+            },
+        )
+
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        row = data["cases"][0]
+        self.assertEqual(row["detail_status"], "ready")
+        self.assertEqual(row["baseline"]["evaluation"], "Baseline summary-only evaluation.")
+        self.assertEqual(row["with_dddjango"]["evaluation"], "With summary-only evaluation.")
+        self.assertEqual(row["baseline"]["score"], "3 / 5")
+        self.assertEqual(row["with_dddjango"]["score"], "5 / 5")
+
     def test_main_rejects_missing_run_dir_even_with_temp_output(self) -> None:
         output = self.root / "tmp-report.html"
         argv = [
