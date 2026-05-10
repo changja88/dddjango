@@ -270,6 +270,56 @@ def build_case(bucket: str, public_case: Path, run_dir: Path) -> dict[str, objec
     return case
 
 
+def case_ids_with_run_artifacts(raw_dir: Path, public_cases: list[Path]) -> set[str]:
+    public_case_ids = {path.stem for path in public_cases}
+    artifact_suffixes = [
+        "-public-prompt.md",
+        "-operator-prompt.txt",
+        "-answer-oracle-evaluation.json",
+        "-answer-oracle-evaluation.raw.txt",
+        "-answer-oracle-evaluation.stderr.txt",
+        "-answer-oracle-evaluation-command.txt",
+        "-answer-oracle-evaluation-exit.txt",
+    ]
+    for variant in VARIANTS:
+        artifact_suffixes.extend(
+            [
+                f"-{variant}.txt",
+                f"-{variant}.stderr.txt",
+                f"-{variant}-events.jsonl",
+                f"-{variant}-command.txt",
+                f"-{variant}-exit.txt",
+                f"-{variant}-isolation.json",
+                f"-{variant}-prompt-input.json",
+                f"-{variant}-prompt-input.stderr.txt",
+            ]
+        )
+
+    case_ids: set[str] = set()
+    if not raw_dir.is_dir():
+        return case_ids
+    for artifact in raw_dir.iterdir():
+        if not artifact.is_file():
+            continue
+        for suffix in artifact_suffixes:
+            if not artifact.name.endswith(suffix):
+                continue
+            case_id = artifact.name[: -len(suffix)]
+            if case_id in public_case_ids:
+                case_ids.add(case_id)
+            break
+    return case_ids
+
+
+def public_cases_for_run(bucket: str, run_dir: Path) -> list[Path]:
+    public_dir = EVAL_ROOT / bucket / "cases/plugin/public"
+    public_cases = sorted(public_dir.glob("case-*.md"))
+    run_case_ids = case_ids_with_run_artifacts(run_dir / "raw", public_cases)
+    if not run_case_ids:
+        return public_cases
+    return [case_path for case_path in public_cases if case_path.stem in run_case_ids]
+
+
 def sort_key(case: dict[str, object]) -> tuple[int, float, str]:
     status_rank = {"blocked": 0, "fail": 1, "partial": 2, "unscored": 3, "pass": 4}
     delta = case.get("delta_value")
@@ -329,10 +379,9 @@ def reportability(summary: dict[str, object]) -> str:
 
 
 def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, object]:
-    public_dir = EVAL_ROOT / bucket / "cases/plugin/public"
     cases = [
         build_case(bucket, public_case, run_dir)
-        for public_case in sorted(public_dir.glob("case-*.md"))
+        for public_case in public_cases_for_run(bucket, run_dir)
     ]
     cases.sort(key=sort_key)
     summary = build_summary(cases)
@@ -632,7 +681,7 @@ def render_html(data: dict[str, object]) -> str:
         </details>`;
     }}
 
-    function selectCase(index) {{
+    function selectCase(index, options) {{
       const cases = REPORT_DATA.cases || [];
       const caseData = cases[index];
       const detail = document.getElementById("case-detail");
@@ -650,11 +699,17 @@ def render_html(data: dict[str, object]) -> str:
           ${{variantHtml("with-dddjango", caseData.with_dddjango)}}
         </div>
         ${{evaluatorHtml(caseData)}}`;
+      if (options && options.scroll) {{
+        const detailPanel = detail.closest(".panel");
+        if (detailPanel) {{
+          detailPanel.scrollIntoView({{ behavior: "smooth", block: "start" }});
+        }}
+      }}
     }}
 
     document.querySelectorAll("[data-case-index]").forEach(function (node) {{
       node.addEventListener("click", function () {{
-        selectCase(Number(node.dataset.caseIndex));
+        selectCase(Number(node.dataset.caseIndex), {{ scroll: true }});
       }});
     }});
     if ((REPORT_DATA.cases || []).length > 0) {{

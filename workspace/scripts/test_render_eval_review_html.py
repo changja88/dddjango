@@ -168,6 +168,46 @@ coverage_tags:
         self.assertEqual(data["summary"]["with_dddjango_average"], "3.0")
         self.assertEqual(data["summary"]["delta"], "+3.0")
 
+    def test_report_includes_only_cases_present_in_run_artifacts(self) -> None:
+        run_dir = self.write_case()
+        extra_public_path = (
+            self.renderer.EVAL_ROOT
+            / "response/cases/plugin/public/case-response-not-run.md"
+        )
+        extra_answer_path = self.renderer.EVAL_ROOT / "response/answer/case-response-not-run.yaml"
+        extra_public_path.write_text("This case was not part of the run.\n", encoding="utf-8")
+        extra_answer_path.write_text(
+            """id: case-response-not-run
+case_id: case-response-not-run
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-not-run.md
+intent: Not run.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: test basis
+target_behavior:
+  required:
+    - Not run.
+scoring_checks:
+  - not run.
+failure_modes:
+  - not run
+leakage_checks:
+  - no private material
+evidence_required:
+  - evaluation notes
+coverage_tags:
+  - not-run
+""",
+            encoding="utf-8",
+        )
+
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        self.assertEqual(data["summary"]["total_cases"], 1)
+        self.assertEqual([case["id"] for case in data["cases"]], ["case-response-order-create"])
+
     def test_missing_artifacts_are_unscored_not_pass(self) -> None:
         run_dir = self.write_case(baseline_response=None, oracle={})
 
@@ -405,6 +445,15 @@ coverage_tags:
         self.assertIn("With dddjango response text", html)
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
+
+    def test_detail_click_scrolls_detail_panel_into_view(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertIn("scrollIntoView", html)
+        self.assertIn("selectCase(Number(node.dataset.caseIndex), { scroll: true })", html)
 
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:
         run_dir = self.write_case()
