@@ -70,16 +70,16 @@ class EvaluateEvalRunTests(unittest.TestCase):
             "baseline": {
                 "score": "2 / 5",
                 "verdict": "fail",
-                "evaluation_summary": "weak",
-                "evaluation": "weak",
+                "evaluation_summary": "기준 충족이 약합니다.",
+                "evaluation": "기준 충족이 약합니다.",
             },
             "with_dddjango": {
                 "score": "5 / 5",
                 "verdict": "pass",
-                "evaluation_summary": "strong",
-                "evaluation": "strong",
+                "evaluation_summary": "기준을 잘 충족합니다.",
+                "evaluation": "기준을 잘 충족합니다.",
             },
-            "observations": ["clear improvement"],
+            "observations": ["with-dddjango 응답이 명확히 개선되었습니다."],
             "status": "ok",
         }
 
@@ -101,6 +101,8 @@ class EvaluateEvalRunTests(unittest.TestCase):
             self.assertIn("EVALUATOR-ONLY ANSWER ORACLE", prompt)
             self.assertIn('"answerOracleEvaluated": true', prompt)
             self.assertIn('"evaluation_summary"', prompt)
+            self.assertIn("한국어", prompt)
+            self.assertIn("All human-readable", prompt)
             self.assertIn("baseline answer", prompt)
             self.assertIn("with answer", prompt)
             return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
@@ -132,6 +134,31 @@ class EvaluateEvalRunTests(unittest.TestCase):
             raw / "case-response-one-answer-oracle-evaluation-command.txt"
         ).read_text(encoding="utf-8")
         self.assertIn("codex exec --ephemeral", command_text)
+
+    def test_english_only_evaluator_explanation_is_rejected(self) -> None:
+        self.write_case_and_run()
+        payload = self.valid_payload()
+        payload["baseline"]["evaluation_summary"] = "Weak answer"
+        payload["baseline"]["evaluation"] = "Weak answer"
+
+        with patch.object(
+            self.evaluator,
+            "run_command",
+            return_value=subprocess.CompletedProcess(["codex"], 0, json.dumps(payload), ""),
+        ):
+            with self.assertRaises(SystemExit) as raised:
+                self.evaluator.main(
+                    [
+                        "--bucket",
+                        "response",
+                        "--run-id",
+                        "run-one",
+                        "--case",
+                        "case-response-one",
+                    ]
+                )
+
+        self.assertIn("must include Korean", str(raised.exception))
 
     def test_json_embedded_in_prose_is_parsed(self) -> None:
         self.write_case_and_run()

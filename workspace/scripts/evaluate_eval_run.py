@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -32,17 +33,17 @@ OUTPUT_SCHEMA = """{
   "baseline": {
     "score": "0 / 5",
     "verdict": "fail",
-    "evaluation_summary": "One concise evaluator-only summary grounded in the answer oracle.",
-    "evaluation": "One concise evaluator-only explanation grounded in the answer oracle."
+    "evaluation_summary": "answer oracle에 근거한 한국어 한 문장 요약.",
+    "evaluation": "answer oracle에 근거한 한국어 평가 설명."
   },
   "with_dddjango": {
     "score": "0 / 5",
     "verdict": "fail",
-    "evaluation_summary": "One concise evaluator-only summary grounded in the answer oracle.",
-    "evaluation": "One concise evaluator-only explanation grounded in the answer oracle."
+    "evaluation_summary": "answer oracle에 근거한 한국어 한 문장 요약.",
+    "evaluation": "answer oracle에 근거한 한국어 평가 설명."
   },
   "observations": [
-    "One run-level note about delta, evidence, leakage, or hard gate status."
+    "delta, evidence, leakage, hard gate 상태에 대한 한국어 실행 단위 관찰."
   ],
   "status": "ok"
 }"""
@@ -199,6 +200,10 @@ def build_prompt(
         "You are privately evaluating a completed dddjango eval run.",
         "Use the evaluator-only answer oracle below as the scoring authority.",
         "Compare the baseline output and with-ddjango output against the public case and oracle.",
+        "All human-readable evaluator strings MUST be written in Korean.",
+        "한국어로 작성해야 하는 필드: baseline.evaluation_summary, baseline.evaluation, "
+        "with_dddjango.evaluation_summary, with_dddjango.evaluation, observations.",
+        "Keep allowed enum-like fields in the schema language, such as verdict and status.",
         "Return only one JSON object matching the exact output schema. Do not include prose.",
         "",
         "Exact output schema:",
@@ -273,7 +278,31 @@ def parse_and_validate(stdout: str, case_id: str) -> dict[str, Any]:
     error = common.validate_oracle_schema(oracle, case_id)
     if error is not None:
         raise SystemExit(f"{case_id}: invalid oracle schema: {error}")
+    language_error = validate_oracle_language(oracle)
+    if language_error is not None:
+        raise SystemExit(f"{case_id}: invalid oracle language: {language_error}")
     return oracle
+
+
+def contains_korean(text: object) -> bool:
+    return bool(re.search(r"[가-힣]", str(text or "")))
+
+
+def validate_oracle_language(oracle: dict[str, Any]) -> str | None:
+    for variant_key in ("baseline", "with_dddjango"):
+        variant_oracle = oracle.get(variant_key)
+        if not isinstance(variant_oracle, dict):
+            continue
+        for field in ("evaluation_summary", "evaluation"):
+            if not contains_korean(variant_oracle.get(field)):
+                return f"{variant_key}.{field} must include Korean"
+
+    observations = oracle.get("observations")
+    if isinstance(observations, list):
+        for index, observation in enumerate(observations):
+            if not contains_korean(observation):
+                return f"observations[{index}] must include Korean"
+    return None
 
 
 def normalize_oracle(oracle: dict[str, Any]) -> None:
