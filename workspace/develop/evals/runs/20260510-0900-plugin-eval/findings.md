@@ -1,27 +1,16 @@
 # Findings
 
-## EVAL-MAJOR-001 - MAJOR - open
+## EVAL-MINOR-003 - MINOR - open
 
-- Case(s): case-002, case-003, case-004, case-005, case-006, case-015
+- Case(s): case-017
 - Defect type: eval protocol
-- Gate/dimension: Evaluation Protocol Integrity / baseline comparison validity
-- Before: Baseline was intended to run without dddjango plugin guidance, but agents could read repo runtime skill files and nested `codex debug prompt-input` used active user config.
-- After: Not fixed in this run.
-- Rerun scope: Rerun baseline outside repo plugin source or with dddjango runtime files hidden; ensure nested codex debug uses isolated config.
+- Gate/dimension: finding lifecycle / Claude-Codex compatibility evidence
+- Before: `raw/case-017-with-dddjango.txt` reported a Minor packaging/source-of-truth risk because `workspace/docs/plugin-structure.md` describes `plugins/dddjango` as a symlink to `../dddjango`, while the observed eval workspace had `plugins/dddjango` as a real directory.
+- Current gap: the previous final findings summary said there were no open blocking, major, or minor findings, so this Minor finding did not receive a resolution, accepted exception, or rerun evidence.
+- Impact: not currently a runtime behavior failure because the raw output also records `diff -qr dddjango plugins/dddjango` as clean, but it blocks a completed plugin eval verdict under the private case-map severity defaults.
+- Required resolution: fix the source layout/docs mismatch and rerun `case-017`, or record a narrow accepted exception with owner, revisit condition, and evidence.
 - Evidence:
-  - [case-002 baseline](raw/case-002-baseline.txt)
-  - [case-003 baseline](raw/case-003-baseline.txt)
-  - [case-005 baseline](raw/case-005-baseline.txt)
+  - [case-017 with-dddjango raw](raw/case-017-with-dddjango.txt)
+  - [private case-map severity defaults](../../cases/plugin/private/case-map.md)
 
-## EVAL-MAJOR-002 - MAJOR - open
-
-- Case(s): case-002, case-003, case-004
-- Defect type: eval protocol
-- Gate/dimension: Required artifacts / reproducibility
-- Before: Public packets ask for raw artifacts but runner wrapper also says `Do not modify files`; several agents therefore refused to save requested per-request artifacts.
-- After: Operator runner saved case-level raw outputs, but public packet wording was not fixed in this run.
-- Rerun scope: Update runner wrapper/public packet execution wording so forward agents answer normally while operator, not agent, owns artifact persistence.
-- Evidence:
-  - [case-003 baseline](raw/case-003-baseline.txt)
-  - [case-004 baseline](raw/case-004-baseline.txt)
-  - [case-003 with-dddjango](raw/case-003-with-dddjango.txt)
+No open blocking or major findings after the protocol rerun. One open minor finding remains.

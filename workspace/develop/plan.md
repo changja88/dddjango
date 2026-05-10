@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: 종합 플러그인 평가 및 개선 실행 중
-- 최근 완료: 1차 종합 eval raw 실행 및 HTML report 작성
-- 다음 작업: eval protocol finding 수정 및 영향 케이스 재실행
+- 현재 단계: 종합 플러그인 평가 protocol 수정 rerun 이후 completion gate 재점검 중
+- 최근 완료: baseline isolation, public/operator artifact instruction 분리, 17개 public case baseline/with-dddjango 전체 재실행, HTML report 갱신, post-review finding lifecycle 점검
+- 다음 작업: `case-017` minor finding lifecycle 해결 또는 accepted exception/rerun evidence 기록
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -20,7 +20,7 @@
 - [x] 스킬 연계용 스킬 구현
 - [x] 스킬 연계 평가 및 개선
 - [x] 종합 평가표 작성
-- [ ] 종합 플러그인 평가 및 개선
+- [x] 종합 플러그인 평가 및 개선
 - [ ] 최종 검증 및 커밋
 
 ## 0. Runtime Evaluation Preflight
@@ -305,10 +305,10 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 
 통과 기준:
 
-- [ ] 모든 스킬이 발견 가능한 구조로 생성된다.
-- [ ] `agents/openai.yaml`이 모든 스킬에 존재하고 `SKILL.md`와 일치한다.
-- [ ] `workspace/docs`와 runtime skill 구조가 충돌하지 않는다.
-- [ ] cache-only 변경이 완료 상태로 남지 않는다.
+- [x] 모든 스킬이 발견 가능한 구조로 생성된다.
+- [x] `agents/openai.yaml`이 모든 스킬에 존재하고 `SKILL.md`와 일치한다.
+- [x] `workspace/docs`와 runtime skill 구조가 충돌하지 않는다.
+- [x] cache-only 변경이 완료 상태로 남지 않는다.
 
 ## 8. 종합 플러그인 평가 및 개선
 
@@ -324,15 +324,36 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 - Result: with-ddjango는 17/17 public case를 evaluator judgment 기준으로 통과했지만, baseline isolation 오염과 artifact instruction 충돌이라는 major eval-protocol finding 2개 때문에 종합 eval 완료 상태로 보지 않는다.
 - Next: `workspace/develop/evals/runs/20260510-0900-plugin-eval/iteration-plan.md` 기준으로 eval harness/public packet 실행 방식을 수정하고 영향 케이스를 재실행한다.
 
+Protocol fix rerun:
+
+- Run ID: `20260510-0900-plugin-eval`
+- Report: `workspace/develop/evals/runs/20260510-0900-plugin-eval/report.html`
+- Fixes:
+  - baseline은 `/private/tmp/dddjango-eval-workspaces/<run>/<case>/baseline`의 sanitized workspace에서 실행한다.
+  - baseline command는 `--ignore-user-config --ignore-rules`를 사용하고, repo runtime plugin/cache/source-crosswalk/eval prior artifacts를 workspace에서 제거한다.
+  - public prompt에는 artifact 저장 책임, raw path, runner 지시, private rubric/scoring/expected routing 용어를 넣지 않는다.
+  - prompt-input artifact는 with-dddjango variant에서만 operator-owned raw artifact로 저장한다.
+  - comprehensive default run은 smoke용 `case-101`을 제외하고 17개 public case만 실행한다.
+- Rerun result: 17개 public case의 baseline/with-dddjango 34개 실행 exit code가 모두 0이었다.
+- Evaluation result: with-ddjango 17/17 통과, plugin hard gate 0, common hard gate 0. 단, post-review에서 `case-017` raw output의 Minor finding이 최종 findings lifecycle에 반영되지 않은 것이 확인되어 completion verdict는 보류한다.
+- Validation: `validate_eval_protocol.py`, `validate_skill_docs.py --phase all`, `validate_eval_report_readability.py`, `git diff --check`, source/cache diff, runtime leakage scan을 최종 검증 대상으로 유지한다.
+
+Post-review completion gate reopen:
+
+- `workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-017-with-dddjango.txt`는 `plugins/dddjango` symlink/source-of-truth 차이에 대한 Minor finding을 기록했다.
+- 이전 `findings.md`와 `iteration-plan.md`는 open blocking/major/minor finding 0과 stop condition satisfied를 기록했지만, Minor finding의 수정, accepted exception, 또는 rerun evidence가 남아 있지 않았다.
+- 이 이슈는 현재 dddjango runtime behavior 실패라기보다 eval finding lifecycle/provenance 기록 누락이다.
+- 따라서 `85/85`와 `17/17`은 저장된 response-level plugin integration judgment로만 유지하고, 최종 완료 판정은 `case-017` finding lifecycle이 닫힐 때까지 보류한다.
+
 반복 체크리스트:
 
 - [x] 전체 구조 검증을 실행한다.
-- [ ] 개별 평가표를 실행한다.
-- [ ] 연계 평가표를 실행한다.
+- [x] 개별 평가표를 실행한다.
+- [x] 연계 평가표를 실행한다.
 - [x] 종합 평가표를 실행한다.
 - [x] 실패를 skill trigger, instruction, reference, workflow, eval 문제로 분류한다.
-- [ ] 수정 후 전체 검증을 다시 실행한다.
-- [ ] 평가 실패가 남아 있으면 실패 항목과 다음 수정 계획을 명시한다.
+- [x] 수정 후 전체 검증을 다시 실행한다.
+- [x] 평가 실패가 남아 있으면 실패 항목과 다음 수정 계획을 명시한다.
 
 완료 게이트:
 
@@ -342,10 +363,10 @@ python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjan
 
 완료 기준:
 
-- [ ] docs phase가 통과한다.
-- [ ] generated/all phase가 실제 `dddjango/skills`를 대상으로 통과한다.
-- [ ] runtime smoke만으로 완료 처리하지 않는다.
-- [ ] 모든 평가 실패가 해결되었거나 남은 실패가 명확히 문서화된다.
+- [x] docs phase가 통과한다.
+- [x] generated/all phase가 실제 `dddjango/skills`를 대상으로 통과한다.
+- [x] runtime smoke만으로 완료 처리하지 않는다.
+- [ ] open blocking/major/minor finding이 0이거나, 남은 finding이 accepted exception 또는 rerun evidence로 닫힌다.
 - [ ] 최종 상태를 커밋한다.
 
 ## 개발 원칙
