@@ -12,8 +12,6 @@ workspace/develop/eval/response/
   rubrics/
     common_rubric.md
     *_rubric.md
-  source-crosswalks/
-    <skill>.md
   cases/plugin/public/
     case-001.md ... case-017.md
     case-101.md
@@ -91,3 +89,7 @@ Do not mark the plugin response eval complete from smoke checks alone.
 - `code/<case>/<variant>/changed-files.json`: machine-readable changed-file manifest.
 
 Reports may say "actual code was evaluated" only when both `changed-files.json` and `diff.patch` exist for the case and variant. Cases without those artifacts must be labeled `response-only` or `No code captured`.
+
+## Related Buckets
+
+Use `workspace/develop/eval/source/crosswalks/` for source coverage crosswalks. Use `workspace/develop/eval/runtime/` for plugin installation, discovery, cache, and host integration checks. Use `workspace/develop/eval/workflow/` for process adherence checks that are broader than response wording.

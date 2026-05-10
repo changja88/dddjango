@@ -12,7 +12,7 @@ Use `eval/response` for response-level routing, workflow, and judgment quality. 
 - command evidence such as `pytest`, `ruff`, type checks, migrations, API contract checks, or focused smoke tests
 - scoring rubrics for generated-code correctness, maintainability, safety, and verification honesty
 
-## Expected Layout
+## Directory Layout
 
 ```text
 workspace/develop/eval/code/
@@ -23,7 +23,7 @@ workspace/develop/eval/code/
   runs/
 ```
 
-Create those subdirectories when the first code-backed eval is specified. Keep generated run outputs under `runs/<run-id>/`; they are local artifacts and are ignored by git.
+Keep generated run outputs under `runs/<run-id>/`; they are local artifacts and are ignored by git.
 
 ## Boundary
 

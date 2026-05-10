@@ -20,7 +20,7 @@
 - `dddjango/skills/*/references/*.md`
 - `workspace/docs`
 - `workspace/reference`
-- `workspace/develop/eval/response/source-crosswalks/*.md`
+- `workspace/develop/eval/source/crosswalks/*.md`
 - `workspace/develop/eval/response/rubrics/*.md`
 - runtime cache used for the actual eval run, when a cache-backed smoke test is performed
 
@@ -62,7 +62,7 @@ Runtime source:
 Source provenance:
 
 - `workspace/reference`
-- `workspace/develop/eval/response/source-crosswalks/*.md`
+- `workspace/develop/eval/source/crosswalks/*.md`
 
 `workspace/docs` wins for product contracts. `workspace/reference` wins for source-backed domain and implementation judgment. Runtime cache wins only for observing the installed behavior of a specific eval run; it is not canonical source.
 

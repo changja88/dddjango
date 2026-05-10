@@ -55,16 +55,24 @@ ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".venv"),
     Path("__pycache__"),
     Path(".pytest_cache"),
+    Path("workspace/develop/eval/code/rubrics"),
+    Path("workspace/develop/eval/code/runs"),
     Path("workspace/develop/eval/response/runs"),
     Path("workspace/develop/eval/response/cases/plugin/private"),
     Path("workspace/develop/eval/response/rubrics"),
+    Path("workspace/develop/eval/runtime/rubrics"),
+    Path("workspace/develop/eval/runtime/runs"),
+    Path("workspace/develop/eval/source/rubrics"),
+    Path("workspace/develop/eval/source/runs"),
+    Path("workspace/develop/eval/workflow/rubrics"),
+    Path("workspace/develop/eval/workflow/runs"),
 ]
 
 BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".agents"),
     Path("plugins"),
     Path("dddjango"),
-    Path("workspace/develop/eval/response/source-crosswalks"),
+    Path("workspace/develop/eval/source/crosswalks"),
 ]
 
 
@@ -285,7 +293,15 @@ def write_baseline_isolation_artifact(
         Path("workspace/develop/eval/response/rubrics"),
         Path("workspace/develop/eval/response/cases/plugin/private"),
         Path("workspace/develop/eval/response/runs"),
-        Path("workspace/develop/eval/response/source-crosswalks"),
+        Path("workspace/develop/eval/code/rubrics"),
+        Path("workspace/develop/eval/code/runs"),
+        Path("workspace/develop/eval/runtime/rubrics"),
+        Path("workspace/develop/eval/runtime/runs"),
+        Path("workspace/develop/eval/source/crosswalks"),
+        Path("workspace/develop/eval/source/rubrics"),
+        Path("workspace/develop/eval/source/runs"),
+        Path("workspace/develop/eval/workflow/rubrics"),
+        Path("workspace/develop/eval/workflow/runs"),
     ]
     presence = relative_presence(workspace, forbidden_rel_paths)
     prompt_metadata_markers = [
