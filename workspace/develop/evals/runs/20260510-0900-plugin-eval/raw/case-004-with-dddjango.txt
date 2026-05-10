@@ -1,0 +1,67 @@
+Artifacts were **not saved to disk** because this session is read-only and the packet also says not to modify files. I evaluated each request independently and include the raw artifacts inline.
+
+**Raw Artifacts**
+
+`case-004-01`
+```text
+Request: 이 API, 그냥 DRF 말고 Ninja Router/Schema로 새로 잡고 Problem Details까지 맞춰줘.
+Route: architecture-api -> implementation-django-ninja
+Output: Treat DRF only as legacy comparison. First lock the REST contract: resource URL, method, success status, auth, validation/conflict/not-found errors, and OpenAPI impact. Implement as thin Django Ninja Router operations plus request/response Schema or ModelSchema. Router owns HTTP parsing, auth wiring, service invocation, response mapping, and domain/application error translation only. Use RFC 9457 Problem Details with application/problem+json, aligned status, stable type/title, occurrence detail, optional instance, documented extensions. TestClient/OpenAPI/schema diff not run.
+```
+
+`case-004-02`
+```text
+Request: 모델에 몰린 validation/상태변경/외부 호출 흐름을 좀 봐줘. 어디까지 domain이고 어디부터 application service인지 모르겠어.
+Route: architecture-ddd -> implementation-django service/selector guidance
+Output: Domain owns invariants, meaningful validation, value objects, entity/aggregate state transitions, and domain events describing completed business facts. Application service owns use-case orchestration: load aggregate, start transaction, call domain behavior, persist, schedule after-commit work, and coordinate external providers. Django model methods are acceptable for simple explicit domain behavior. Split outward when ORM lifecycle, lazy loading, HTTP/schema concerns, or SDK calls start shaping the rule. External calls should leave the model and run through an application service plus adapter/port, usually after commit or via reliable handoff.
+```
+
+`case-004-03`
+```text
+Request: pytest에서 주문 생성 테스트 fixture가 너무 복잡해졌어. factory랑 fake/mock 경계를 다시 잡아줘.
+Route: implementation-test
+Output: Keep factory defaults valid, minimal, and unsurprising. Use traits for meaningful order states like paid/cancelled/shipped, SubFactory only for required relationships, and inline literals when clearer than a factory. Fixtures should express scenario setup, not hide a long object graph. Prefer output/state assertions for order creation. Use fakes for useful in-memory collaborators such as repository/provider behavior when they clarify the test. Use mocks/spies mainly for external boundaries like payment, email, HTTP, SDK, broker, clock; configure autospec/spec and keep important arguments explicit. Pytest not run.
+```
+
+`case-004-04`
+```text
+Request: payment provider 붙일 때 repository랑 outbox까지 필요한지 모르겠어. 과한 설계면 빼고 판단해줘.
+Route: architecture-implementation-patterns
+Output: Do not add repository by default if it only wraps QuerySet calls. Start with Django model behavior plus an application service owning the payment use case and transaction. Add a provider port/adapter because the SDK/HTTP provider is an external boundary. Add repository only if aggregate persistence needs a domain collection seam, fake repository materially improves tests, or ORM details distort application/domain code. Add outbox only when state change and external message/provider command delivery must be durably connected.
+
+Risky Write Consistency Block:
+- Transaction owner: payment initiation/capture application service.
+- Side-effect timing: outside model; after commit, provider idempotency key, or durable outbox-style command if async/retry reliability is required.
+- Idempotency storage: needed for duplicate-prone payment/order POSTs, but DB/API details not designed here.
+- DB locking/isolation/retry, Idempotency-Key API behavior, and integration/concurrency tests not run.
+```
+
+**Commands Actually Run**
+
+```sh
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md ...
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*report*' -g '!**/*finding*'
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/runs/**'
+sed -n '1,220p' workspace/scripts/run_plugin_eval.py
+sed -n '1,180p' workspace/develop/evals/cases/plugin/public/case-004.md
+sed -n '1,220p' dddjango/skills/implementation-django-ninja/SKILL.md
+sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/router-schema.md
+sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+sed -n '1,220p' dddjango/skills/architecture-ddd/references/tactical-patterns.md
+sed -n '1,220p' dddjango/skills/architecture-ddd/references/domain-events.md
+sed -n '1,240p' dddjango/skills/implementation-test/references/pytest-fixtures.md
+sed -n '1,260p' dddjango/skills/implementation-test/references/factories-property-tests.md
+sed -n '1,260p' dddjango/skills/implementation-test/references/test-doubles.md
+sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+sed -n '1,260p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+sed -n '1,220p' dddjango/skills/implementation-django/references/services-selectors.md
+sed -n '1,220p' dddjango/skills/architecture-api/references/problem-details.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/verification-before-completion/SKILL.md
+```
+
+**Not Run**
+
+Eval harness, `codex exec`, `codex debug prompt-input`, pytest, TestClient, OpenAPI generation, schema diff, browser checks, and artifact file writes were not run because the packet says not to modify files and the sandbox is read-only. Serena: skipped because no Serena MCP tools are available in this session; repository/path checks used shell commands. One early file-listing command returned prior-run filenames only; I did not open or read prior-run contents.

@@ -1,0 +1,5 @@
+I can’t copy grading criteria, expected routes, scoring notes, hidden failures, private evaluator files, prior reports, or prior findings into runtime skill docs. I also won’t modify files for this request.
+
+Commands actually run: none.
+
+Checks not run: filesystem inspection, tests, and file edits were not run because the request asks for prohibited evaluator content and the packet says not to modify files.

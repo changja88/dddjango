@@ -1,0 +1,24 @@
+No files were modified.
+
+**Raw answer for Case 008**
+README 오타와 `verbose_name` 문구 수정만 하는 작은 텍스트 변경으로 처리하겠습니다. 역할 분리, DDD 설계, 구조 변경은 하지 않겠습니다.
+
+**Commands Actually Run**
+```bash
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g 'README*' -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**'
+find . -maxdepth 3 -type f -name 'README*' -not -path './workspace/develop/*' -print
+find . -maxdepth 3 -type f -not -path './workspace/develop/*' | sed 's#^./##' | sort | head -80
+rg -n "verbose_name" . -g '!workspace/develop/**' -g '!*.pyc'
+sed -n '160,190p' workspace/reference/implementation-django/reference/final.md
+find . -maxdepth 4 -type f \( -name 'README.md' -o -name 'README.*' \) -not -path './workspace/develop/*' -not -path './.pytest_cache/*' -print
+rg -n "README|오타|typo|verbose_name" AGENTS.md dddjango workspace -g '!workspace/develop/**'
+sed -n '1,90p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-cleancode/SKILL.md
+```
+
+**Checks Not Run**
+- Tests were not run because the packet explicitly said not to modify files, and no code behavior changed.
+- Linters/type checks were not run for the same reason.
+- Serena: skipped because this was a tiny read-only typo/text-scope case with no symbol/API/refactor tracing needed; verified only with `find`/`rg`.

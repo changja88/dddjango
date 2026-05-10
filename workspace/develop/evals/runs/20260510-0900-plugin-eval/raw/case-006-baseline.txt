@@ -1,0 +1,67 @@
+## Role Map
+| Role | 이 작업에서 나눌 책임 |
+|---|---|
+| Coordinator | 범위, 순서, 충돌 조정 |
+| Domain Agent | 예약/재고/결제 상태 전이, aggregate, invariant |
+| Architecture Agent | 서비스 계층, PaymentGateway port, outbox/saga 여부 |
+| DB Agent | row lock, 제약조건, idempotency 저장, migration 위험 |
+| API Agent | `Idempotency-Key`, 상태 코드, Problem Details, OpenAPI |
+| Django Agent | `transaction.atomic()`, `select_for_update()`, service/adapter 구현 |
+| Test Agent | 도메인, API, DB 동시성, 결제 fake 테스트 |
+| Review Agent | 트랜잭션 범위, 외부 호출 위치, 누락 테스트 검토 |
+
+## Sequential Fallback
+실제 구현은 이 순서로 자르는 게 안전합니다.
+
+1. Domain: `Reservation` 상태를 `PENDING -> CONFIRMING/HELD -> CONFIRMED/FAILED/EXPIRED`처럼 명확히 하고, “재고는 음수가 될 수 없다”, “예약 확정은 한 번만 된다”를 invariant로 고정합니다.
+2. Architecture: 외부 결제 SDK를 도메인/서비스 안에 직접 넣지 말고 `PaymentGateway` port와 adapter로 둡니다. 결제 호출은 DB 트랜잭션 안에서 하지 않습니다.
+3. DB: 예약 row와 재고 bucket row를 짧은 `transaction.atomic()` 안에서 고정 순서로 `select_for_update()` 하거나 조건부 update로 차감합니다. idempotency table, payment attempt, outbox/event table에 unique constraint를 둡니다.
+4. API: `POST /reservations/{id}/confirmation` 같은 confirmation resource로 잡고 `Idempotency-Key`를 요구합니다. 진행형이면 `202`, 확정 완료면 `200/201`, 재고 부족/상태 충돌은 `409`, 의미 검증 실패는 `422` Problem Details로 반환합니다.
+5. Django: API router/schema는 얇게 두고 application service가 트랜잭션을 소유합니다. 외부 결제는 `transaction.on_commit()` 또는 durable outbox worker로 넘깁니다.
+6. Tests: 도메인 단위 테스트, API contract 테스트, PostgreSQL 기반 동시성 테스트, idempotency replay/conflict 테스트, payment fake/outbox dispatch 테스트를 분리합니다.
+7. Review/Integration: “외부 호출이 DB lock을 잡은 채 실행되지 않는가”, “동시 요청에서 oversell이 불가능한가”, “같은 key 재시도 응답이 안정적인가”를 우선 검토합니다.
+
+## Handoff Contract
+- Scope: 예약 확정, 재고 차감, 외부 결제 승인까지 포함한 risky write 설계/구현 분해.
+- Inputs Used: public packet, public `dddjango/skills/**` docs.
+- Decisions: DB 트랜잭션 소유자는 Django application service. 외부 결제는 port/adapter 뒤로 숨기고 commit 이후 outbox 또는 `on_commit()`로 실행. HTTP에는 `Idempotency-Key` 계약을 둠.
+- Files:
+  - May edit: 실제 구현 시 reservation/payment/inventory app의 domain/service/model/migration/api/tests 파일.
+  - Must not edit: evaluator private/prior files, unrelated modules, router/schema에 핵심 도메인 규칙을 넣는 변경.
+- Output: 역할별 설계 결정, 작은 PR 단위, 동시성 테스트 포함 패치.
+- Risks: 결제 승인 성공 후 재고 확정 실패 시 보상/void/refund 정책 필요. SQLite 테스트는 row lock 검증에 부적합.
+- Required Follow-up: 동기 API로 끝낼지 `202 + worker/webhook` 흐름으로 갈지 제품 결정 필요.
+- dddjango Checks: DDD invariant 우선, DB constraint/lock으로 보호, API idempotency 명시, Django transaction 짧게 유지, 테스트는 실행한 것만 보고.
+
+## Integration Checklist
+**Risky Write Consistency Block**
+
+| 항목 | 결정 |
+|---|---|
+| Transaction owner | `confirm_reservation` application service |
+| Locking | reservation row와 inventory bucket row를 고정 순서로 lock, 또는 `available >= qty` 조건부 update |
+| Idempotency storage | caller + endpoint + `Idempotency-Key` + request hash unique |
+| API behavior | 같은 key/같은 payload는 replay, 같은 key/다른 payload는 `409` |
+| External side effect | DB commit 후 outbox 권장, 단순 in-process면 `transaction.on_commit()` |
+| Isolation/retry | 기본 `READ COMMITTED` + row lock/constraint, deadlock/serialization 실패 retry 명시 |
+| Tests | `TransactionTestCase`/pytest-django + PostgreSQL로 동시 확정, 재시도, 결제 fake 검증 |
+
+Cache sync report: plugin cache는 수정하지 않았습니다.
+
+## Commands Run
+```bash
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*findings*' -g '!**/*report*'
+sed -n '1,220p' dddjango/skills/{architecture-ddd,architecture-db,architecture-api,implementation-django,implementation-test,workflow-dddjango-subagents}/SKILL.md
+sed -n '1,240p' dddjango/skills/workflow-dddjango-subagents/references/{role-map,handoff-contract,integration-checklist}.md
+sed -n '1,240p' dddjango/skills/architecture-db/references/transactions-locking.md
+sed -n '1,220p' dddjango/skills/architecture-api/references/idempotency-openapi.md
+sed -n '1,240p' dddjango/skills/implementation-django/references/transactions-performance-security.md
+sed -n '1,220p' dddjango/skills/architecture-implementation-patterns/SKILL.md
+sed -n '1,240p' dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+sed -n '1,220p' dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+```
+
+## Checks Not Run
+No files modified. Tests, Django checks, migrations, `sqlmigrate`, concurrency/load tests, browser checks, and real subagents were not run because this packet requested a read-only answer. Private evaluator files and prior run contents were not opened. Serena: not used; no code edits or symbol/reference tracing were needed.

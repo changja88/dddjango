@@ -1,0 +1,27 @@
+No file changes made.
+
+The public packet and `case-011.md` do not include the actual intended route or previous failure reason, and those likely require forbidden private/prior eval material. Under this packet’s constraints, I would only add placeholders like:
+
+```md
+## Intended Route
+
+- <provided intended skill/route>
+
+## Previous Failure Reason
+
+- <provided prior failure reason>
+```
+
+Commands actually run:
+- `pwd -P`
+- `rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*findings*' -g '!**/*report*'`
+- `sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-011.md`
+- `sed -n '1,200p' AGENTS.md`
+- `git status --short`
+- `git rev-parse --show-toplevel`
+
+Checks not run:
+- No tests run; no code or prompt files were modified.
+- Did not read private evaluator files, rubrics, prior findings, or prior reports.
+
+Serena: skipped because this was a read-only eval prompt check, not a symbol/reference task.

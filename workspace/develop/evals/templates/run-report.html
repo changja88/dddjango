@@ -379,6 +379,93 @@
       border: 0;
     }
 
+    .artifact-viewer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(16, 24, 40, 0.62);
+    }
+
+    .artifact-viewer-backdrop[hidden] {
+      display: none;
+    }
+
+    .artifact-viewer {
+      width: min(1180px, 100%);
+      max-height: min(860px, calc(100vh - 48px));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 20px 48px rgba(16, 24, 40, 0.24);
+    }
+
+    .artifact-viewer-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-alt);
+    }
+
+    .artifact-viewer-header h2 {
+      margin: 4px 0 0;
+      font-size: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .artifact-viewer-header span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .artifact-viewer-header button {
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 10px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .artifact-viewer-body {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      background: #ffffff;
+    }
+
+    .artifact-viewer-body pre {
+      min-height: 420px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .artifact-viewer-body iframe {
+      display: block;
+      width: 100%;
+      height: min(760px, calc(100vh - 150px));
+      border: 0;
+      background: #ffffff;
+    }
+
+    .artifact-link::after {
+      content: " view";
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     @media (max-width: 1100px) {
       .shell {
         grid-template-columns: 1fr;
@@ -422,6 +509,10 @@
 
       section {
         padding: 14px;
+      }
+
+      .artifact-viewer-backdrop {
+        padding: 12px;
       }
 
       input[type="search"] {
@@ -627,7 +718,7 @@
         <h2 id="artifacts-heading">Artifact Index</h2>
         <div class="callout">
           <strong>Artifact behavior:</strong>
-          links are relative local files from the run directory. Text, JSON, HTML, and image files usually open in the browser. Missing files are marked explicitly instead of failing silently.
+          linked artifacts open in this report's embedded viewer when available, so review stays usable after the temporary localhost server is stopped. Missing files are marked explicitly instead of failing silently.
         </div>
         <div class="table-wrap">
           <table id="artifacts-table">
@@ -713,6 +804,19 @@
         <div id="final-verdict-content"></div>
       </section>
     </main>
+  </div>
+
+  <div id="artifact-viewer-backdrop" class="artifact-viewer-backdrop" hidden>
+    <div class="artifact-viewer" role="dialog" aria-modal="true" aria-labelledby="artifact-viewer-title">
+      <div class="artifact-viewer-header">
+        <div>
+          <span id="artifact-viewer-meta">Embedded artifact</span>
+          <h2 id="artifact-viewer-title">Artifact</h2>
+        </div>
+        <button type="button" id="artifact-viewer-close">Close</button>
+      </div>
+      <div id="artifact-viewer-body" class="artifact-viewer-body"></div>
+    </div>
   </div>
 
   <script>
@@ -835,6 +939,7 @@
       artifacts: [],
       publicPackets: [],
       cacheSync: [],
+      embeddedArtifacts: {},
       leakageScan: {
         status: "not-run",
         scope: [],
@@ -866,14 +971,20 @@
 
     const badge = (value) => `<span class="badge ${statusClass(value)}">${escapeHtml(value || "n/a")}</span>`;
 
+    const normalizeArtifactHref = (href) => String(href || "").replace(/^\.\//, "");
+    const embeddedArtifacts = () => REPORT_DATA.embeddedArtifacts || {};
+    const hasEmbeddedArtifact = (href) => Boolean(embeddedArtifacts()[normalizeArtifactHref(href)]);
+
     const links = (items) => {
       if (!items || items.length === 0) return "";
       return items.map((item) => {
         if (typeof item === "string") return `<code>${escapeHtml(item)}</code>`;
         const label = escapeHtml(item.label || item.href || "artifact");
-        const href = escapeHtml(item.href || "#");
+        const rawHref = normalizeArtifactHref(item.href || "#");
+        const href = escapeHtml(rawHref);
         const exists = item.exists === false ? ` ${badge("missing")}` : "";
-        return `<a href="${href}">${label}</a>${exists}`;
+        const attributes = hasEmbeddedArtifact(rawHref) ? ` class="artifact-link" data-artifact-href="${href}"` : "";
+        return `<a href="${href}"${attributes}>${label}</a>${exists}`;
       }).join("<br>");
     };
 
@@ -1169,6 +1280,59 @@
       `;
     };
 
+    const hideArtifact = () => {
+      const backdrop = document.getElementById("artifact-viewer-backdrop");
+      const body = document.getElementById("artifact-viewer-body");
+      backdrop.hidden = true;
+      body.innerHTML = "";
+    };
+
+    const showArtifact = (href) => {
+      const key = normalizeArtifactHref(href);
+      const artifact = embeddedArtifacts()[key];
+      if (!artifact) return false;
+
+      document.getElementById("artifact-viewer-title").textContent = artifact.label || key;
+      document.getElementById("artifact-viewer-meta").textContent = `${key} | ${artifact.mime || "text/plain"}`;
+
+      const body = document.getElementById("artifact-viewer-body");
+      body.innerHTML = "";
+      if (artifact.mime === "text/html") {
+        const frame = document.createElement("iframe");
+        frame.setAttribute("title", artifact.label || key);
+        frame.setAttribute("sandbox", "allow-same-origin");
+        frame.srcdoc = artifact.content || "";
+        body.append(frame);
+      } else {
+        const pre = document.createElement("pre");
+        pre.textContent = artifact.content || "";
+        body.append(pre);
+      }
+
+      document.getElementById("artifact-viewer-backdrop").hidden = false;
+      return true;
+    };
+
+    const attachArtifactViewer = () => {
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest("[data-artifact-href]");
+        if (!link) return;
+        if (showArtifact(link.dataset.artifactHref)) {
+          event.preventDefault();
+        }
+      });
+
+      document.getElementById("artifact-viewer-close").addEventListener("click", hideArtifact);
+      document.getElementById("artifact-viewer-backdrop").addEventListener("click", (event) => {
+        if (event.target.id === "artifact-viewer-backdrop") hideArtifact();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !document.getElementById("artifact-viewer-backdrop").hidden) {
+          hideArtifact();
+        }
+      });
+    };
+
     const attachFilters = () => {
       document.querySelectorAll("select[data-filter-table]").forEach((select) => {
         select.addEventListener("change", () => {
@@ -1196,6 +1360,7 @@
     renderCommands();
     renderLeakage();
     renderFinalVerdict();
+    attachArtifactViewer();
     attachFilters();
   </script>
 

@@ -1,0 +1,130 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019e0fa9-695c-7a10-89a7-273ce20981ba
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 014
+
+## User Request
+
+```text
+운영 중인 주문 테이블에 status 컬럼을 추가하고 기존 데이터를 채운 다음 NOT NULL, check constraint, index를 순차 적용하려고 해. rolling deploy 기준으로 안전한 migration plan을 세워줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+요청은 저장소 변경 없이 마이그레이션 전략을 작성하는 범위라 파일은 읽지 않고 답변만 구성하겠습니다. 실행하지 않은 검증은 마지막에 명확히 적겠습니다.
+codex
+가정: Django + PostgreSQL 기준입니다.
+
+**Rolling Deploy Migration Plan**
+
+1. **앱을 먼저 양방향 호환으로 배포**
+   - 모델에는 `status`를 nullable로 추가할 예정이라고 보고, 새 코드가 `status IS NULL`도 정상 처리하게 만듭니다.
+   - 신규 주문 생성/수정 경로에서는 앱 코드가 반드시 `status` 값을 쓰게 합니다.
+   - 예: `NULL`이면 기존 컬럼 기준으로 상태를 계산하거나 기본값처럼 읽기.
+
+2. **Migration 1: nullable 컬럼만 추가**
+   - `status` 컬럼을 `null=True`로 추가합니다.
+   - 운영 테이블이면 처음부터 `NOT NULL`, `CHECK`, 인덱스를 같이 넣지 않습니다.
+   - DB default도 가능하면 처음에는 피하고 앱에서 값을 씁니다.
+
+3. **Backfill**
+   - 별도 management command 또는 `atomic = False` data migration으로 배치 처리합니다.
+   - 한 번에 전체 테이블 업데이트하지 말고 PK 범위나 작은 batch 단위로 처리합니다.
+   - idempotent 하게 작성합니다.
+
+   예시 SQL:
+
+   ```sql
+   UPDATE orders
+   SET status = CASE
+     WHEN paid_at IS NOT NULL THEN 'paid'
+     WHEN cancelled_at IS NOT NULL THEN 'cancelled'
+     ELSE 'pending'
+   END
+   WHERE status IS NULL
+   AND id >= :start_id
+   AND id < :end_id;
+   ```
+
+4. **검증**
+   - backfill 후 다음을 확인합니다.
+
+   ```sql
+   SELECT COUNT(*) FROM orders WHERE status IS NULL;
+
+   SELECT status, COUNT(*)
+   FROM orders
+   GROUP BY status;
+   ```
+
+5. **Migration 2: check constraint를 먼저 느슨하게 추가**
+   - PostgreSQL이면 `NOT VALID`로 추가 후 별도 검증합니다.
+
+   ```sql
+   ALTER TABLE orders
+   ADD CONSTRAINT orders_status_check
+   CHECK (status IN ('pending', 'paid', 'cancelled'))
+   NOT VALID;
+
+   ALTER TABLE orders
+   VALIDATE CONSTRAINT orders_status_check;
+   ```
+
+6. **Migration 3: index 추가**
+   - 트래픽 있는 테이블이면 concurrent index를 사용합니다.
+   - Django migration은 `atomic = False`가 필요합니다.
+
+   ```sql
+   CREATE INDEX CONCURRENTLY orders_status_idx
+   ON orders (status);
+   ```
+
+7. **Migration 4: NOT NULL 적용**
+   - `status IS NULL`이 0임을 다시 확인한 뒤 적용합니다.
+
+   ```sql
+   ALTER TABLE orders
+   ALTER COLUMN status SET NOT NULL;
+   ```
+
+8. **후속 정리**
+   - Django model에서 `null=False`로 변경합니다.
+   - 읽기 코드의 `NULL` fallback은 충분한 배포 안정 기간 후 제거합니다.
+
+**Commands Actually Run**
+
+None.
+
+**Checks Not Run**
+
+- No repository files were read.
+- No tests, migrations, or database checks were run because the request asked for a migration plan only and files must not be modified.
+tokens used
+2,815

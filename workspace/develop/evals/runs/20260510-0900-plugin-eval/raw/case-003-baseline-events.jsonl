@@ -1,0 +1,43 @@
+Executed Case 003 in read-only/no-modify mode.
+
+**Artifacts**
+- Request 01-12: `codex debug prompt-input '<request>'` was run independently for each request.
+- Prompt-input JSON was emitted to stdout for each direct run.
+- No raw artifacts were saved to files because the packet says not to modify files and the active sandbox is read-only.
+- A Python batch attempt to hash/save-like metadata failed because nested `codex debug` returned `Operation not permitted`; the later direct per-request CLI runs succeeded.
+
+**Commands Run**
+```sh
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**'
+sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-003.md
+sed -n '1,240p' workspace/scripts/run_plugin_eval.py
+sed -n '1,220p' workspace/develop/evals/README.md
+codex --version
+codex debug prompt-input --help
+sed -n '1,220p' dddjango/.codex-plugin/plugin.json
+sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md
+sed -n '1,220p' dddjango/skills/workflow-dddjango-subagents/SKILL.md
+codex exec --help
+codex debug prompt-input '<each of the 12 public requests>'
+git status --short
+git diff --check
+python3 workspace/scripts/validate_skill_docs.py dddjango/skills
+python3 workspace/scripts/validate_skill_docs.py --skills-dir dddjango/skills
+```
+
+**Check Results**
+- `codex --version`: `codex-cli 0.130.0`
+- Plugin metadata read: `dddjango` version `0.1.10`
+- `git status --short`: showed existing untracked `workspace/develop/evals/runs/20260510-0900-plugin-eval/` and `workspace/scripts/run_plugin_eval.py`; I did not modify files.
+- `git diff --check`: no diff-check findings printed, only macOS sandbox warnings.
+- First validation command failed due wrong CLI args.
+- Correct validation passed: `OK: validation passed with 0 warning(s)`
+
+**Not Run**
+- `workspace/scripts/run_plugin_eval.py`: not run because it writes run artifacts.
+- `codex exec` model-output runs: not run; I generated prompt-input artifacts only.
+- Raw artifact file writes under `workspace/develop/evals/runs/`: not run due no-modify/read-only constraint.
+- Private evaluator/rubric/prior-run analysis: not run/read, per packet.
+- Serena: skipped because this was eval artifact generation, not symbol/reference code analysis.

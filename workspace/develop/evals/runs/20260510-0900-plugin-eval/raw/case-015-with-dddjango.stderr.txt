@@ -1,0 +1,1530 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: auto
+session id: 019e0fad-1ccb-73a3-81c8-82cb313a61e9
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 015
+
+## User Request
+
+```text
+결제 승인 흐름에 ports/adapters, repository, outbox, ACL을 적용할지 dddjango 기준으로 판단해줘. 근거가 부족한 부분은 확실한 것처럼 쓰지 말고 한계를 밝혀줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+**Evaluating user task**
+
+I need to respond to the user while following the instructions. Since I’m in read-only mode, I can't make modifications, but I should utilize my skills effectively. It sounds like I need to open the "using-superpowers" skill before any response or clarifying questions.
+
+The user is asking about evaluating a packet for the dddjango plugin and applying ports/adapters to the repository outbox ACL. It seems like I'll need to consider several dddjango aspects and ensure I only refer to public packet materials.
+**Revisiting skill usage and requirements**
+
+I see that I need to focus solely on the public packet and task-local repository files as instructed by the user. This might conflict with what the developer says about needing to use skills, which leads to some confusion.
+
+The skill instructions indicate I should check relevant files, but those are in the .codex cache and not task-local. The developer's guidelines take priority here. I may need to review the skill documentation, especially around architecture and implementation patterns relevant to the task to figure this all out.
+**Clarifying approach for user request**
+
+It seems I should utilize a minimal set of skills, primarily focusing on architecture-implementation-patterns. The user specifically asked for “판단해줘” which suggests they're seeking analysis rather than code changes. 
+
+If the outbox relates to a database, I might also incorporate architecture-db for that aspect. Keeping the user’s request for conciseness in mind, I should include a brief line about skill usage. My final response could note: "Skill: dddjango:architecture-implementation-patterns; dddjango:architecture-db for outbox persistence."
+codex
+Skill use: `superpowers:using-superpowers` first, then `dddjango:architecture-implementation-patterns` with `architecture-db` context for outbox/repository 판단. Read-only eval constraints mean I’ll inspect only allowed public/repo files if needed and won’t modify anything.
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md && sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## Instruction Priority
+
+Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+2. **Superpowers skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins. The `skill` tool works the same as Claude Code's `Skill` tool.
+
+**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+## Platform Adaptation
+
+Skills use Claude Code tool names. Non-CC platforms: see `references/copilot-tools.md` (Copilot CLI), `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "About to EnterPlanMode?" [shape=doublecircle];
+    "Already brainstormed?" [shape=diamond];
+    "Invoke brainstorming skill" [shape=box];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "About to EnterPlanMode?" -> "Already brainstormed?";
+    "Already brainstormed?" -> "Invoke brainstorming skill" [label="no"];
+    "Already brainstormed?" -> "Might any skill apply?" [label="yes"];
+    "Invoke brainstorming skill" -> "Might any skill apply?";
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+---
+name: architecture-implementation-patterns
+description: >
+  Provisional until dedicated source reference exists; use fallback sources when choosing DDD implementation architecture patterns: layered/계층, clean/클린 아키텍처, hexagonal/헥사고날, ports-adapters/포트-어댑터, dependency direction/DIP/의존성 역전, repository/UoW, CQRS, event sourcing/이벤트 소싱, saga/사가, outbox, ACL/레거시 연동, service layer, and project structure. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transaction details, architecture-api for REST contracts, and implementation skills for concrete code.
+---
+
+# Implementation Patterns
+
+This skill is provisional. A dedicated `workspace/reference/architecture-implementation-patterns/reference/final.md` source does not exist yet.
+
+Source policy decision: `allow-provisional-with-fallback`. Use the fallback scope below without presenting it as a finalized dedicated reference:
+
+- `workspace/reference/architecture-ddd/reference/final.md` for layered architecture, DIP, ports/adapters, CQRS, package structure, repository/UoW, event sourcing, saga, ACL, and integration events.
+- `workspace/reference/implementation-django/reference/final.md` for Django project/app structure, Fat Model/Thin View, service/selectors, and pragmatic Django vs DDD trade-offs.
+- `workspace/reference/implementation-python/reference/final.md` for Protocol boundaries and repository/UoW placeholder guidance.
+- `workspace/docs/ddd-implementation-standard.md` and product docs for Django-specific boundary and transaction decisions.
+
+Use this skill after the DDD model is clear and before concrete Django/Python code when architecture pattern choice will affect dependency direction, adapters, persistence boundaries, or integration reliability.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct pattern-selection questions here, including risky or external-system examples, when the user is deciding whether to use hexagonal architecture, repository/UoW, outbox, saga, ACL, CQRS, or a simpler Django-native structure.
+- If subdomains, bounded contexts, ubiquitous language, aggregates, or invariants are unclear, use `architecture-ddd` before choosing implementation patterns.
+- If the main question is table design, constraints, indexes, locking, isolation, rollout constraints, or operational migration safety, use `architecture-db`.
+- If the main question is REST resource design, status codes, Problem Details, idempotency key behavior, pagination, versioning, or OpenAPI, use `architecture-api`.
+- If the user asks to edit Django model, service, selector, migration, Router, template, or Python code after the pattern is already decided, use the relevant implementation skill.
+- For simple CRUD, a small field rename, or a short explanation, do not introduce repository/UoW, hexagonal layers, CQRS, outbox, or ACL unless the scenario has a real boundary or consistency need.
+
+## Reference Loading
+
+- Read [pattern-selection.md](references/pattern-selection.md) for when to choose or avoid layered, clean, hexagonal, CQRS, event sourcing, saga, transaction script, or Django-native structures.
+- Read [ports-adapters.md](references/ports-adapters.md) for dependency direction, ports, adapters, Protocol/ABC boundaries, Django adapter boundaries, and ACL placement.
+- Read [repository-uow.md](references/repository-uow.md) for repository and Unit of Work decisions, Django service/selectors, QuerySet trade-offs, and testability costs.
+- Read [outbox-acl.md](references/outbox-acl.md) for outbox, domain vs integration events, external side-effect timing, ACL, and legacy/upstream model protection.
+
+## Runtime Rules
+
+- Choose the lightest pattern that protects the domain boundary, dependency direction, or consistency requirement.
+- Keep strategy before structure: do not select repository, UoW, CQRS, or outbox before aggregate, invariant, use case, and integration boundaries are known.
+- Default Django path for many projects is model methods plus services/selectors. Add repository/UoW or pure domain separation only when the benefit exceeds Django integration cost.
+- Keep domain/application code independent from infrastructure details. Frameworks, ORM calls, SDK clients, HTTP requests, and environment access belong in adapters or infrastructure.
+- Treat CQRS, event sourcing, saga, outbox, and ACL as conditional tools, not as default architecture.
+- For external side effects, state whether the effect runs after commit, through an outbox-style handoff, or through another reliable integration boundary.
+- For risky writes, output a visible section or table titled `Risky Write Consistency Block`. This skill owns the pattern decision: Django-native transaction, service layer, port/adapter, outbox, saga, ACL, or no extra pattern. State the transaction owner or owning use case, side-effect timing or reliability boundary, and whether uniqueness/idempotency storage is needed, then hand off concrete DB locking/isolation/retry, `Idempotency-Key` API behavior, and integration/concurrency tests to the owning skills.
+- If source limits affect a recommendation, say the skill is using fallback sources and identify the assumption.
+- Only report tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+---
+name: architecture-db
+description: >
+  Use for relational database architecture: ERD, conceptual/logical/physical modeling, normalization/denormalization, primary/foreign keys, unique/check/not-null constraints, cascade behavior, composite/covering/partial indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, hierarchy/inheritance modeling, rollout constraints, backfill/index-lock risk, migration safety. Use for ERD, 정규화, 인덱스, 제약조건, transaction/트랜잭션, locking, 동시성, 멱등성 저장, 중복 요청 방지, 부분 인덱스, EXPLAIN ANALYZE, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, rolling deploy, migration risk. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/hexagonal/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files.
+---
+
+# DB Architecture
+
+Use this skill to design relational data structures that protect domain invariants and support query/write patterns. This skill decides the database shape and operational constraints; it does not write concrete Django migration files.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct DB design questions here, including risky transaction, locking, isolation, uniqueness, idempotency storage, backfill, and index-lock examples, when the user is asking for database architecture rather than multi-role implementation.
+- If aggregate boundaries, domain invariants, ubiquitous language, or state transitions are unclear, use `architecture-ddd` before designing the schema.
+- If the main work is repository/UoW, outbox architecture, CQRS, hexagonal/ports-adapters, ACL, or dependency direction, use `architecture-implementation-patterns`; keep concrete storage, constraints, and transaction choices here.
+- If the main work is REST resources, status codes, Problem Details, pagination, versioning, `Idempotency-Key` contract, or OpenAPI, use `architecture-api`; keep DB storage implications here.
+- If the user asks to implement Django `models.py`, `RunPython`, `apps.get_model()`, `sqlmigrate`, or migration files, use `implementation-django` after DB design is clear.
+- If the user asks for pytest integration/concurrency tests, use `implementation-test` after DB invariants and transaction criteria are known.
+- For a simple field rename or local CRUD model with no invariant/rollout risk, do not force full ERD, locking, or migration strategy ceremony.
+
+## Reference Loading
+
+- Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism.
+- Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost.
+- Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs.
+- Read [rollout-constraints.md](references/rollout-constraints.md) for EXPLAIN ANALYZE, query optimization, N+1, backfill/index-lock risk, expand/backfill/contract rollout, and rollback considerations.
+
+## Runtime Rules
+
+- Start from domain invariants, aggregates/entities, query patterns, write contention, and rollout constraints; do not let ORM convenience erase DB invariants.
+- Model conceptually first, then logical schema, then physical indexes/partitioning/performance choices.
+- Normalize first to remove update/insert/delete anomalies; denormalize only for measured read pressure or clear operational need.
+- Use database constraints for invariants the database can enforce: primary keys, foreign keys, unique, check, not null, and appropriate cascade rules.
+- Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
+- For risky writes, include a `Risky Write Consistency Block` with transaction owner, locking strategy, uniqueness/idempotency storage, API idempotency handoff, side-effect timing, isolation/retry, and integration/concurrency test criteria.
+- For operational changes, separate DB design from concrete Django migration implementation; hand off migration file details to `implementation-django`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+**Exploring Django standards**
+
+I should check the repository documentation for Django standards. I can read through the docs and related references, but there's no need to run code tests since there aren't any code changes being made. Instead, I'll focus on running the necessary commands and include checks that don’t require running along with their reasons. Also, it looks like I might need to prepare a response in Korean if the user requests that.
+codex
+I’m going to ground the answer in the public packet plus the plugin’s public architecture references under this repo. I’ll avoid private eval paths and prior reports, and I’ll keep the output as an answer transcript with the exact commands I ran.
+exec
+/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+/Users/hyun/Desktop/dddjango
+
+exec
+/bin/zsh -lc "sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/ports-adapters.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/pattern-selection.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Pattern Selection
+
+This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
+
+Load this when deciding whether to use layered, clean, hexagonal, CQRS, event sourcing, saga, transaction script, or a simpler Django-native structure.
+
+## Selection Order
+
+1. Confirm the DDD model: bounded context, aggregate, invariant, use case, and integration boundary.
+2. Identify the pressure: external dependency, persistence mapping, transaction boundary, query/read complexity, reliability, legacy model mismatch, or testability.
+3. Choose the lightest pattern that addresses that pressure.
+4. State patterns intentionally not chosen and why.
+
+## Defaults
+
+- Layered call flow is the default fallback: interface/presentation -> application -> domain, while infrastructure implements details behind inward-facing abstractions.
+- Django-native model methods plus service/selectors are enough for many projects.
+- Supporting or simple CRUD subdomains can use transaction script or straightforward service functions.
+- Do not introduce repository, Unit of Work, ports, or CQRS just to look like DDD.
+
+## Pattern Triggers
+
+| Pattern | Consider when | Avoid when |
+|---|---|---|
+| Layered architecture | You need clear presentation/application/domain/infrastructure responsibility | The app is simple enough that extra folders only hide the flow |
+| Clean/hexagonal architecture | External adapters, SDKs, persistence, or API frameworks would otherwise shape the domain | The domain is simple and Django conventions remain clear |
+| Ports/adapters | A core use case must be independent from framework or external service details | There is only one stable local implementation and no testing or replacement need |
+| Repository/UoW | Aggregate persistence and transaction boundaries need a replaceable seam | It would be a thin QuerySet wrapper with no domain benefit |
+| CQRS | Command and read models have genuinely different needs | A simple query method or selector is enough |
+| Event sourcing | Audit, replay, or event history is central to the domain | You only need notification or integration after a state change |
+| Saga | A long-running or distributed transaction needs compensation | A single local transaction can protect the invariant |
+| Outbox | External message delivery must be reliable after a DB commit | There is no external side effect or at-least-once delivery need |
+| ACL | An upstream/legacy model would corrupt downstream domain language | The external model already matches the bounded context language |
+
+## Django Pragmatism
+
+- Preserve Django advantages such as admin, migrations, forms, QuerySet, and straightforward model behavior when they do not obscure the domain.
+- Split pure domain and ORM models only when ORM lifecycle, lazy loading, schema fields, or framework concerns distort the domain rule.
+- Prefer incremental pattern adoption around the boundary that hurts now.
+
+ succeeded in 0ms:
+# Ports And Adapters
+
+This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
+
+Load this when dependency direction, clean/hexagonal structure, port ownership, adapter placement, Protocol/ABC contracts, or ACL placement is the main question.
+
+## Dependency Direction
+
+- Domain owns domain concepts and rules.
+- Application owns use case orchestration and depends on domain abstractions.
+- Infrastructure implements external details such as ORM, SDKs, message brokers, filesystem, cache, and environment access.
+- Interface adapters convert HTTP, CLI, admin, task queue, or message input into application calls.
+- Dependencies should point inward toward domain/application policy.
+
+## Port Ownership
+
+- Define a port only when the application/domain needs a stable role independent from an external detail.
+- Name ports by role, not by technology: `PaymentGateway`, not `StripeClient`.
+- Keep port methods narrow and use domain/application DTOs or value objects.
+- Use Python `Protocol` for structural seams when it improves type checking and test doubles.
+- Use ABCs when explicit inheritance or runtime registration is useful.
+
+Do not create an interface for every class. A direct dependency is acceptable for simple, stable, internal collaborators.
+
+## Adapter Boundaries
+
+- Routers, views, templates, forms, schemas, serializers, management commands, Celery tasks, and external message handlers are adapters.
+- Adapters may validate input, authenticate/authorize, translate DTOs, call use cases, and map responses.
+- Adapters should not own core state transitions, policies, or aggregate invariants.
+- Infrastructure adapters should translate ORM/SDK details into application/domain-facing roles.
+
+## Anticorruption Layer
+
+- Use ACL when an upstream or legacy model uses language that conflicts with the downstream bounded context.
+- Put translation at the boundary, not throughout the domain model.
+- Translate both data shape and meaning: statuses, units, identifiers, and lifecycle semantics.
+- If the integration contract is public to many consumers, coordinate with `architecture-api` for Published Language and versioning.
+
+exec
+/bin/zsh -lc 'git rev-parse --show-toplevel' in /Users/hyun/Desktop/dddjango
+ succeeded in 1977ms:
+2026-05-10 11:18:18.726 xcodebuild[85689:2659071]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:18:18.907 xcodebuild[85689:2659070] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
+git: error: couldn't create cache file '/tmp/xcrun_db-cZqVMQNj' (errno=Operation not permitted)
+2026-05-10 11:18:19.415 xcodebuild[85691:2659089]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:18:19.572 xcodebuild[85691:2659088] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/Users/hyun/Desktop/dddjango
+
+exec
+/bin/zsh -lc "sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/repository-uow.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,280p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/outbox-acl.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Outbox, ACL, And Integration Patterns
+
+This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
+
+Load this when domain events cross aggregate or context boundaries, external side effects exist, upstream models conflict with the domain, or event sourcing/saga is being considered.
+
+## Domain Events And Integration Events
+
+- Domain events are internal business facts raised by aggregate behavior.
+- Integration events cross bounded context or service boundaries and should use the published language of the integration contract.
+- Keep event names past tense and scoped to the language of the owning context.
+- Do not expose internal aggregate structure as an integration event contract.
+
+## Outbox
+
+Use outbox when state change and message delivery must be reliably connected.
+
+Decision points:
+
+- What transaction writes the aggregate and the outbox message?
+- Who owns dispatch after commit?
+- Is delivery at-least-once, and are consumers idempotent?
+- What retry/dead-letter behavior is needed?
+- Which event fields form the published language?
+
+For simple in-process follow-up after a successful Django transaction, `transaction.on_commit()` may be enough. For cross-service publication, prefer a durable outbox-style handoff.
+
+## Risky Write Consistency Block Handoff
+
+For payment, inventory, reservation, refund, permission, ledger, or similar risky writes, output a visible `Risky Write Consistency Block`. This skill owns the architecture pattern decision but should leave concrete DB/API/test details to the owning skills.
+
+Record:
+
+- transaction owner or owning use case;
+- side-effect timing: after commit, outbox, or another reliable handoff;
+- whether uniqueness/idempotency storage is needed;
+- follow-up owner for DB locking, isolation, and retry details;
+- follow-up owner for `Idempotency-Key` API behavior;
+- follow-up owner for integration, replay, or concurrency tests.
+
+## Saga
+
+Use saga when a long-running or distributed business process spans multiple local transactions.
+
+- Choreography keeps services autonomous but can hide the process flow.
+- Orchestration centralizes the process but can concentrate workflow logic.
+- Compensation must be explicit and idempotent.
+
+Do not use saga for a single local invariant that can be protected by one transaction.
+
+## Event Sourcing
+
+Use event sourcing only when history, audit, replay, or temporal reconstruction is central to the domain.
+
+Event sourcing is not required just because the system has domain events.
+
+## Anticorruption Layer
+
+Use ACL to protect a downstream model from an upstream or legacy language.
+
+- Translate external identifiers, statuses, units, and lifecycle concepts.
+- Keep translation near the integration boundary.
+- Do not let legacy terms leak into aggregates, value objects, or ubiquitous language.
+
+ succeeded in 0ms:
+# Repository And Unit Of Work
+
+This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
+
+Load this when deciding whether to introduce repository, Unit of Work, data mapper, service/selectors, or Django ORM direct access.
+
+## Repository Decision
+
+Use repository when:
+
+- persistence should be expressed as aggregate collection operations;
+- tests benefit from fake repositories around application services;
+- domain/application code should not know ORM or QuerySet details;
+- persistence mapping is complex enough that a translation boundary helps.
+
+Avoid repository when:
+
+- it only wraps `Model.objects.filter(...)` without changing language or responsibility;
+- QuerySet composition is the real business need;
+- Django model methods plus service/selectors are clearer;
+- the domain is simple CRUD or supporting-domain workflow.
+
+Repositories should be aggregate-oriented. Do not create separate repositories for every child entity by default.
+
+## Unit Of Work Decision
+
+Use Unit of Work when the use case needs an explicit transaction boundary across repositories or adapters.
+
+In Django, `transaction.atomic()` is often the practical unit-of-work tool. A custom UoW abstraction is only worth the cost when it clarifies use case boundaries, improves testing, or decouples persistence implementation.
+
+External side effects should not run inside the DB transaction unless the system can tolerate rollback mismatch. Prefer post-commit hooks or outbox-style handoff when reliability matters.
+
+## Django Service And Selector Path
+
+- Use services for write/use-case operations that coordinate multiple models, external services, or transactions.
+- Use selectors for read/query logic and QuerySet optimization.
+- Keep naming searchable and role-based.
+- Keep business policies in model/domain behavior or domain services; services coordinate rather than own the policy.
+
+## Data Mapper Split
+
+Split ORM and domain models when:
+
+- a rich domain model needs fast pure unit tests;
+- ORM lifecycle or lazy loading would leak into rules;
+- schema shape differs from domain language;
+- external systems or persistence details force awkward domain objects.
+
+Keep them together when the rule is simple and Django model behavior is explicit.
+
+exec
+/bin/zsh -lc "sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/transactions-locking.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Transactions And Locking
+
+Load this for ACID, isolation levels, concurrency anomalies, transaction boundaries, locking strategy, risky writes, and side-effect timing.
+
+## ACID And Isolation
+
+- Atomicity: all operations in the transaction succeed or all fail.
+- Consistency: constraints and invariants remain valid.
+- Isolation: concurrent transactions do not break assumptions.
+- Durability: committed data survives failure.
+
+Common phenomena:
+
+- Dirty read: reads uncommitted data.
+- Non-repeatable read: repeated row read changes within a transaction.
+- Phantom read: repeated predicate read returns a different row set.
+- Serialization anomaly: concurrent result cannot match any serial order.
+
+## Isolation Choice
+
+- Read Committed is a practical default for many OLTP systems, but each SQL statement sees a new snapshot.
+- Repeatable Read helps consistent read workloads but may require retry behavior.
+- Serializable maximizes correctness for critical finance/payment-like operations but can reduce concurrency and requires retry handling.
+
+Choose the lowest isolation level that protects the invariant, then add explicit locking or constraints when needed.
+
+## Locking And Consistency
+
+- Prefer unique constraints for duplicate prevention when the invariant is uniqueness.
+- Use optimistic locking when conflicts are rare and retry is acceptable.
+- Use pessimistic locking when concurrent writers would otherwise corrupt a high-value invariant.
+- Document deadlock, timeout, and serialization failure retry behavior when the strategy can fail under load.
+
+## Risky Write Consistency
+
+For order, payment, inventory, reservation, refund, permission, ledger, or similar risky writes, include a `Risky Write Consistency Block` and record:
+
+- transaction owner;
+- locking strategy;
+- uniqueness or idempotency storage key, owner, location, and unique constraint;
+- API `Idempotency-Key` replay/conflict behavior handoff to `architecture-api`;
+- external side-effect timing such as Django `transaction.on_commit()`, domain event, or outbox;
+- isolation level and retry decision;
+- integration or concurrency test criteria.
+
+## Side Effects
+
+Do not run external payment, notification, SDK, or message publishing inside a DB transaction without a clear consistency reason. In Django, prefer `transaction.on_commit()` for local post-commit handoff, or use a domain event/outbox-style handoff when the side effect needs reliable cross-process delivery.
+
+exec
+/bin/zsh -lc "rg --files -g '"'!*workspace/develop/rubrics*'"' -g '"'!*workspace/develop/evals/cases/plugin/private*'"' -g '"'!*.png'"' -g '"'!*.jpg'"' workspace/reference workspace/docs AGENTS.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+AGENTS.md
+workspace/docs/reference-index.md
+workspace/docs/spec.md
+workspace/docs/skill-contracts.md
+workspace/docs/skill-authoring.md
+workspace/docs/plugin-structure.md
+workspace/docs/validation-plan.md
+workspace/docs/workflow.md
+workspace/docs/skill-hierarchy.md
+workspace/docs/ddd-implementation-standard.md
+workspace/reference/implementation-test/reference/review.md
+workspace/reference/implementation-test/reference/internal.md
+workspace/reference/implementation-test/reference/final.md
+workspace/reference/implementation-test/reference/external.md
+workspace/reference/implementation-tdd/reference/review.md
+workspace/reference/implementation-tdd/reference/internal.md
+workspace/reference/implementation-tdd/reference/final.md
+workspace/reference/implementation-tdd/reference/external.md
+workspace/reference/implementation-django/reference/final.md
+workspace/reference/architecture-db/reference/review.md
+workspace/reference/architecture-db/reference/internal.md
+workspace/reference/architecture-db/reference/final.md
+workspace/reference/architecture-db/reference/external.md
+workspace/reference/architecture-api/reference/review.md
+workspace/reference/architecture-api/reference/internal.md
+workspace/reference/architecture-api/reference/final.md
+workspace/reference/architecture-api/reference/external.md
+workspace/reference/spec.md
+workspace/reference/implementation-python/reference/review.md
+workspace/reference/implementation-python/reference/internal.md
+workspace/reference/implementation-python/reference/final.md
+workspace/reference/implementation-python/reference/external.md
+workspace/reference/implementation-cleancode/reference/review.md
+workspace/reference/implementation-cleancode/reference/internal.md
+workspace/reference/implementation-cleancode/reference/final.md
+workspace/reference/implementation-cleancode/reference/external.md
+workspace/reference/architecture-ddd/reference/review.md
+workspace/reference/architecture-ddd/reference/internal.md
+workspace/reference/architecture-ddd/reference/final.md
+workspace/reference/architecture-ddd/reference/external.md
+
+codex
+The repo has public reference material under `workspace/reference` and `workspace/docs`; I’m checking only the terms relevant to this architecture decision. The git root check completed despite sandbox-related cache warnings, and it resolved to the expected repository.
+exec
+/bin/zsh -lc 'rg -n "ports|adapters|hexagonal|Repository|Unit of Work|outbox|anticorruption|ACL|payment|결제" workspace/reference/architecture-ddd/reference/final.md workspace/reference/implementation-django/reference/final.md workspace/reference/implementation-python/reference/final.md workspace/docs/ddd-implementation-standard.md' in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+workspace/docs/ddd-implementation-standard.md:55:하나의 트랜잭션은 기본적으로 하나의 애그리거트 불변식을 보호한다. 여러 애그리거트 간 일관성은 도메인 이벤트, eventual consistency, outbox를 검토한다.
+workspace/docs/ddd-implementation-standard.md:70:- outbox가 필요한지
+workspace/docs/ddd-implementation-standard.md:107:## 8. Repository와 Transaction
+workspace/docs/ddd-implementation-standard.md:109:Repository는 도메인 관점의 컬렉션처럼 동작해야 한다. 단순 QuerySet wrapper를 만들기 위해 repository를 만들지 않는다.
+workspace/reference/implementation-django/reference/final.md:317:# core/ -- 사용자, 주문, 상품, 결제 전부 포함
+workspace/reference/implementation-django/reference/final.md:321:- 앱 이름은 **간결한 복수형 단어** 사용: `users`, `orders`, `payments`.
+workspace/reference/implementation-django/reference/final.md:1556:- 외부 서비스(이메일, 결제 등) 호출이 모델에 섞일 때
+workspace/reference/implementation-django/reference/final.md:1599:# DDD의 Repository 패턴을 적용하려면 수동 변환 레이어가 필요
+workspace/reference/implementation-django/reference/final.md:1605:# 방법 B: Repository 패턴 도입 (복잡한 도메인에 적합)
+workspace/reference/implementation-django/reference/final.md:1606:class ArticleRepository:
+workspace/reference/implementation-django/reference/final.md:1617:# 장점: 테스트에서 Fake Repository로 교체 가능
+workspace/reference/implementation-django/reference/final.md:1623:- 도메인이 정말 복잡해질 때만 Repository 패턴을 점진적으로 도입한다.
+workspace/reference/implementation-python/reference/final.md:1145:class SupportsLessThan(Protocol):
+workspace/reference/implementation-python/reference/final.md:1146:    def __lt__(self, other: 'SupportsLessThan') -> bool: ...
+workspace/reference/implementation-python/reference/final.md:1153:class Sortable[T: SupportsLessThan](Protocol):
+workspace/reference/implementation-python/reference/final.md:2192:## 21. Repository / Unit of Work
+workspace/reference/implementation-python/reference/final.md:2194:Repository/Unit of Work 등 아키텍처 패턴은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
+workspace/reference/architecture-ddd/reference/final.md:20:Vernon은 많은 팀이 전술 패턴(Entity, Repository 등)에만 집중하는 실수를 지적하며, 전략 설계가 먼저라는 원칙을 강조한다 (Vernon, DDD Distilled):
+workspace/reference/architecture-ddd/reference/final.md:273:| 사용자-제공자 | 충돌 방지 계층(ACL) | 업스트림 모델을 자신의 모델로 변환 | 업스트림 모델이 다운스트림 도메인과 맞지 않을 때 |
+workspace/reference/architecture-ddd/reference/final.md:277:| 분리형 | 큰 진흙공(Big Ball of Mud) | 경계가 없는 혼돈 상태 | ACL을 두어 진흙 공이 퍼지지 않도록 방어 |
+workspace/reference/architecture-ddd/reference/final.md:284:# === 충돌 방지 계층(ACL) 패턴 구현 예시 ===
+workspace/reference/architecture-ddd/reference/final.md:305:# ACL: 외부 모델을 내부 모델로 변환하는 계층
+workspace/reference/architecture-ddd/reference/final.md:318:# === 레거시 ERP ACL 예시 (External) ===
+workspace/reference/architecture-ddd/reference/final.md:341:    """ACL: 레거시 ERP -> 우리 도메인 모델 번역"""
+workspace/reference/architecture-ddd/reference/final.md:673:    PAYMENT_WAITING = "payment_waiting"
+workspace/reference/architecture-ddd/reference/final.md:769:            raise ValueError("결제 대기 상태에서만 접수할 수 있습니다")
+workspace/reference/architecture-ddd/reference/final.md:820:### 3.4 리포지토리 (Repository)
+workspace/reference/architecture-ddd/reference/final.md:834:class OrderRepository(ABC):
+workspace/reference/architecture-ddd/reference/final.md:854:class DjangoOrderRepository(OrderRepository):
+workspace/reference/architecture-ddd/reference/final.md:962:    def calculate_payment(
+workspace/reference/architecture-ddd/reference/final.md:971:        self._payment_amounts = Money(
+workspace/reference/architecture-ddd/reference/final.md:1012:        order_repository: OrderRepository,
+workspace/reference/architecture-ddd/reference/final.md:1013:        member_repository: "MemberRepository",
+workspace/reference/architecture-ddd/reference/final.md:1014:        product_repository: "ProductRepository",
+workspace/reference/architecture-ddd/reference/final.md:1082:2. Unit of Work가 커밋 **직전**(동일 트랜잭션 내 부수 효과) 또는 **직후**(외부 통합)에 디스패치한다
+workspace/reference/architecture-ddd/reference/final.md:1128:# === 이벤트 디스패처와 Unit of Work 연동 ===
+workspace/reference/architecture-ddd/reference/final.md:1147:    """Unit of Work -- 트랜잭션 경계에서 이벤트를 디스패치"""
+workspace/reference/architecture-ddd/reference/final.md:1182:    def __init__(self, outbox_repo: "OutboxRepository", broker: "MessageBroker"):
+workspace/reference/architecture-ddd/reference/final.md:1183:        self._repo = outbox_repo
+workspace/reference/architecture-ddd/reference/final.md:1629:### 6.3 Repository + Unit of Work 패턴
+workspace/reference/architecture-ddd/reference/final.md:1640:class AbstractBatchRepository(ABC):
+workspace/reference/architecture-ddd/reference/final.md:1649:class SqlAlchemyBatchRepository(AbstractBatchRepository):
+workspace/reference/architecture-ddd/reference/final.md:1664:# Unit of Work: 트랜잭션 경계 관리
+workspace/reference/architecture-ddd/reference/final.md:1666:    batches: AbstractBatchRepository
+workspace/reference/architecture-ddd/reference/final.md:1687:        self.batches = SqlAlchemyBatchRepository(self._session)
+workspace/reference/architecture-ddd/reference/final.md:1934:| ACL | API Gateway, 어댑터 서비스 |
+workspace/reference/architecture-ddd/reference/final.md:1957:# 재고 컨텍스트의 ACL: 통합 이벤트를 내부 도메인 커맨드로 변환
+workspace/reference/architecture-ddd/reference/final.md:1958:class InventoryACL:
+workspace/reference/architecture-ddd/reference/final.md:2035:| 전략 | 컨텍스트 맵 | 바운디드 컨텍스트 간의 관계(파트너십, ACL, OHS 등)를 시각화 |
+
+exec
+/bin/zsh -lc "sed -n '1,260p' workspace/docs/ddd-implementation-standard.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,320p' workspace/reference/architecture-ddd/reference/final.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# DDD Implementation Standard
+
+이 문서는 `dddjango`가 DDD를 Python/Django 코드로 구현할 때 따르는 기준이다. Django는 구현 생태계이며, 판단의 출발점은 도메인 모델이다.
+
+## 1. 판단 순서
+
+DDD 작업은 다음 순서로 판단한다.
+
+1. 해결하려는 비즈니스 문제를 식별한다.
+2. 하위 도메인이 Core, Supporting, Generic 중 무엇인지 판단한다.
+3. 바운디드 컨텍스트 경계를 잡는다.
+4. 컨텍스트 간 관계를 컨텍스트 맵으로 정리한다.
+5. 유비쿼터스 언어를 정리한다.
+6. 애그리거트, 엔티티, 값 객체, 불변식을 식별한다.
+7. 유스케이스와 application service의 책임을 정한다.
+8. 트랜잭션 경계와 일관성 요구를 판단한다.
+9. Django ORM, DB schema, API, test로 매핑한다.
+
+전략 설계 없이 repository, entity, service 같은 전술 패턴부터 적용하지 않는다.
+
+## 2. 하위 도메인별 구현 강도
+
+| 하위 도메인 | 기준 | 구현 전략 |
+|---|---|---|
+| Core | 경쟁력의 원천, 복잡하고 자주 바뀌는 규칙 | 풍부한 도메인 모델, 명시적 invariant, 테스트 우선 |
+| Supporting | 비즈니스 보조, CRUD 중심, 낮은 복잡도 | Django다운 단순 구조, 필요한 service만 추가 |
+| Generic | 업계 공통 문제, 차별화 낮음 | 외부 솔루션, 라이브러리, 기존 패키지 우선 |
+
+모든 기능에 같은 수준의 DDD 구조를 강제하지 않는다. 구조의 무게는 도메인 복잡도와 변경 위험에 맞춘다.
+
+## 3. 바운디드 컨텍스트와 언어
+
+유비쿼터스 언어는 바운디드 컨텍스트 안에서만 일관된다. 같은 단어가 다른 컨텍스트에서 다른 의미를 갖는 경우 하나의 공통 모델로 억지로 합치지 않는다.
+
+컨텍스트 간 통합은 관계 유형을 먼저 판단한다.
+
+- Partnership: 두 컨텍스트가 함께 계획하고 함께 변경해야 할 때
+- Shared Kernel: 작은 공통 모델을 두 팀이 함께 관리할 때
+- Customer-Supplier: 상류/하류 팀의 요구 조율이 필요한 때
+- Conformist: 하류가 상류 모델을 그대로 따르는 것이 더 현실적일 때
+- Anti-Corruption Layer: 외부/레거시 모델이 내부 도메인을 오염시킬 위험이 있을 때
+- Open Host Service: 다른 컨텍스트가 안정적으로 사용할 공개 API가 필요할 때
+- Published Language: 통합 메시지나 API 계약의 공통 언어가 필요할 때
+- Separated Ways: 통합 비용이 이득보다 클 때
+- Big Ball of Mud: 경계가 무너진 레거시 모델을 격리해서 다뤄야 할 때
+
+## 4. 애그리거트와 불변식
+
+애그리거트는 불변식을 보호하는 최소 경계다.
+
+애그리거트는 작게 유지한다. 한 애그리거트가 너무 많은 엔티티와 규칙을 소유하면 동시성, 성능, 이해 비용이 증가한다.
+
+다른 애그리거트는 객체 참조보다 식별자 참조를 기본으로 한다. 여러 애그리거트를 한 번에 변경해야 한다면 경계가 잘못되었는지 먼저 의심한다.
+
+하나의 트랜잭션은 기본적으로 하나의 애그리거트 불변식을 보호한다. 여러 애그리거트 간 일관성은 도메인 이벤트, eventual consistency, outbox를 검토한다.
+
+값 객체는 식별자가 아니라 값과 불변식으로 정의한다. 금액, 기간, 좌표, 수량, 이메일, 정책 조건처럼 유효성 자체가 의미인 개념은 값 객체 후보로 본다.
+
+## 5. Domain Events
+
+도메인 이벤트는 이미 발생한 도메인 사실을 표현한다. 이름은 과거형으로 둔다.
+
+도메인 이벤트를 사용할 때는 다음을 명시한다.
+
+- 이벤트 이름
+- 이벤트를 발생시키는 aggregate 또는 use case
+- 영향을 받는 aggregate, bounded context, 외부 시스템
+- 같은 트랜잭션 안에서 처리해야 하는지, eventual consistency로 처리해도 되는지
+- transaction commit 전/후 dispatch timing
+- outbox가 필요한지
+- 내부 domain event인지, cross-context integration event인지
+
+외부 메시지나 다른 bounded context로 공개되는 event는 Published Language와 하위 호환성을 함께 고려한다.
+
+## 6. Application Service와 Domain Service
+
+Application service는 유스케이스 흐름을 조정한다.
+
+- 입력을 받는다.
+- repository나 ORM을 통해 필요한 객체를 가져온다.
+- 도메인 객체의 행위를 호출한다.
+- 트랜잭션 경계를 관리한다.
+- 결과를 반환한다.
+
+Application service는 핵심 비즈니스 판단을 소유하지 않는다. 규칙은 가능한 한 entity, value object, aggregate method, domain service에 둔다.
+
+Domain service는 특정 entity나 value object에 자연스럽게 속하지 않는 도메인 규칙이 있을 때만 만든다.
+
+## 7. Django ORM 매핑
+
+Django model을 도메인 객체로 사용할 수 있는 경우:
+
+- 불변식이 단순하다.
+- Django model method로 도메인 행위를 명확히 표현할 수 있다.
+- ORM 세부사항이 도메인 규칙을 흐리지 않는다.
+- 테스트가 느리거나 깨지기 쉬워지지 않는다.
+
+도메인 모델과 ORM 모델을 분리할 수 있는 경우:
+
+- 도메인 규칙이 복잡하다.
+- ORM lifecycle, lazy loading, QuerySet, field type이 도메인 사고를 방해한다.
+- 외부 시스템, DB transaction, API schema가 도메인 객체에 섞인다.
+- 순수 단위 테스트로 도메인 규칙을 빠르게 검증해야 한다.
+
+분리는 기본값이 아니다. 복잡도와 이득이 분명할 때 선택한다.
+
+## 8. Repository와 Transaction
+
+Repository는 도메인 관점의 컬렉션처럼 동작해야 한다. 단순 QuerySet wrapper를 만들기 위해 repository를 만들지 않는다.
+
+트랜잭션은 유스케이스의 일관성 경계다. Django에서는 `transaction.atomic()`을 기본 도구로 사용하되, 외부 side effect는 transaction commit 이후로 미룬다.
+
+동시성 위험이 있으면 optimistic locking, pessimistic locking, unique constraint, idempotency key 중 무엇이 문제에 맞는지 판단한다.
+
+위험한 쓰기 작업은 다음 consistency block을 남긴다.
+
+- transaction owner
+- locking 전략
+- uniqueness 또는 idempotency 저장 위치
+- `Idempotency-Key` API 동작
+- 외부 side effect를 `transaction.on_commit()` 또는 domain event 이후로 미루는 방식
+- isolation level과 retry 필요 여부
+- 통합 테스트 또는 동시성 테스트 기준
+
+## 9. API 매핑
+
+REST API는 유스케이스의 외부 계약이다.
+
+Django Ninja Router는 얇은 adapter로 유지한다.
+
+- request schema 검증
+- auth/permission 연결
+- usecase 호출
+- domain/application error를 Problem Details로 변환
+- response schema 반환
+- OpenAPI schema 영향 확인
+
+Router에 비즈니스 규칙, 상태 전이, 복잡한 ORM 쿼리, 외부 SDK 호출을 직접 두지 않는다.
+
+## 10. Python 매핑
+
+Python 구현은 도메인 계약을 명시적으로 표현해야 한다.
+
+- 공개 함수와 method에는 입력/출력 타입을 명시한다.
+- `Optional[T]`보다 `T | None`을 기본으로 사용한다.
+- 컬렉션은 `list[Order]`, `dict[str, int]`처럼 내부 타입을 드러낸다.
+- 유한 상태는 `Enum` 또는 `StrEnum`을 우선 고려한다.
+- 값 객체는 필요할 때 `frozen=True`, `slots=True` dataclass로 표현한다.
+- `Protocol`은 교체 가능한 boundary에서만 사용한다.
+- pydantic v2는 외부 DTO, config, runtime validation에 사용하고 도메인 모델의 기본값으로 강제하지 않는다.
+
+## 11. 테스트 매핑
+
+도메인 규칙은 빠른 단위 테스트로 검증한다.
+
+Application service는 repository fake나 필요한 test double을 사용해 유스케이스 흐름을 검증한다.
+
+Django ORM, transaction, constraint, query 성능은 통합 테스트로 검증한다.
+
+Django Ninja API는 TestClient로 request/response contract, status code, Problem Details, auth, pagination을 검증한다.
+
+Mock은 외부 시스템과 관찰해야 하는 협력에 사용한다. 도메인 객체 간 협력은 가능한 한 실제 객체와 상태 검증을 우선한다.
+
+ succeeded in 0ms:
+# DDD(도메인 주도 설계) 종합 가이드
+
+> **Internal 출처:** [A] 도메인 주도 개발 시작하기, [B] 도메인 주도 설계 첫걸음, [C] 도메인 주도 설계 구현(빨간책)
+> **External 출처:** Eric Evans 파란책, Vaughn Vernon "Effective Aggregate Design" / "DDD Distilled", Scott Millett, Harry Percival & Bob Gregory "Cosmic Python", Greg Young, Martin Fowler, Alberto Brandolini
+
+---
+
+## 1. DDD란 무엇인가
+
+DDD(Domain-Driven Design)는 복잡한 소프트웨어를 비즈니스 도메인 중심으로 설계하는 방법론이다. 소프트웨어의 핵심은 비즈니스 도메인이며, 도메인 전문가와 개발자가 공통 언어를 사용하여 모델을 구축하고 이를 코드로 구현한다.
+
+### 1.1 DDD의 핵심 요약
+
+> "DDD는 명시적으로 경계 지어진 컨텍스트 안에서 솔루션을 모델링하고, 다른 바운디드 컨텍스트와의 통합을 지원하는 것이다." -- Vaughn Vernon, DDD Distilled
+
+### 1.2 전략 설계 우선 원칙
+
+> **[의사결정 #6] External 채택**: 전략 설계(바운디드 컨텍스트, 컨텍스트 맵)가 반드시 전술 패턴보다 먼저다.
+
+Vernon은 많은 팀이 전술 패턴(Entity, Repository 등)에만 집중하는 실수를 지적하며, 전략 설계가 먼저라는 원칙을 강조한다 (Vernon, DDD Distilled):
+
+1. 핵심 도메인을 식별하라
+2. 바운디드 컨텍스트를 설계하라
+3. 컨텍스트 매핑을 정의하라
+4. **그 다음에** 전술 패턴을 적용하라
+
+전술 패턴 중심의 실무 가이드 ([A] 도메인 주도 개발 시작하기)는 구현 단계에서 활용하되, 전략 설계 없이 전술 패턴만 적용하면 "잘못된 경계에서 좋은 코드를 작성하는 결과"가 된다.
+
+### 1.3 주요 참고 자료의 관점 차이
+
+| 관점 | [A] 도메인 주도 개발 시작하기 | [B] 도메인 주도 설계 첫걸음 | [C] 도메인 주도 설계 구현(빨간책) |
+|------|--------------------------|--------------------------|-------------------------------|
+| 초점 | 전술 패턴 중심의 실무 구현 | 전략 패턴 중심의 비즈니스 분석 | 전략+전술을 아키텍처와 함께 종합 |
+| 대상 | DDD 입문자 | 비즈니스 설계자/아키텍트 | 실무 구현 개발자 |
+| 강조점 | 계층 아키텍처와 DIP | 하위 도메인 유형과 바운디드 컨텍스트 경계 | 핵사고날 아키텍처와 CQRS |
+
+---
+
+## 2. 전략 패턴 (Strategic Patterns)
+
+### 2.1 지식 탐구 (Knowledge Crunching)
+
+> 출처: Eric Evans, "DDD" Part I
+
+Evans는 유비쿼터스 언어를 만드는 **과정** 자체를 핵심으로 강조한다. 지식 탐구(Knowledge Crunching)란 도메인 전문가로부터 쏟아지는 정보의 홍수 속에서 관련 있는 것만 걸러내고, 하나의 조직 아이디어를 시도한 뒤 또 다른 아이디어로 교체하며, 복잡한 데이터를 단순하게 설명하는 관점을 찾아가는 반복 과정이다.
+
+핵심 원칙:
+- 모델은 한 번에 완성되지 않는다. 반복적인 정제(iterative refinement)를 통해 깊은 통찰(deeper insight)에 도달한다.
+- 도메인 전문가와 개발자가 **함께** 모델을 만들어야 한다. 개발자가 단독으로 모델을 만들고 전문가에게 검증받는 방식은 지식 탐구가 아니다.
+- "코드를 리팩터링하는 것이 아니라, 코드 아래에 있는 **모델을 리팩터링**한다"
+
+```python
+# 지식 탐구 전: 개발자가 기술적으로 해석한 모델
+class Shipment:
+    def __init__(self, cargo_id: str, origin: str, destination: str):
+        self.cargo_id = cargo_id
+        self.origin = origin
+        self.destination = destination
+        self.status = "pending"
+
+    def update_status(self, new_status: str) -> None:
+        self.status = new_status  # 비즈니스 규칙이 없는 단순 상태 변경
+
+
+# 지식 탐구 후: 도메인 전문가와 반복 대화를 통해 발견한 모델
+# "화물은 항해 일정(Itinerary)에 따라 이동하며,
+#  각 구간(Leg)은 선박의 항해(Voyage)에 적재된다"
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass(frozen=True)
+class Leg:
+    """항해 구간 -- 하나의 Voyage에 실려 이동하는 단위"""
+    voyage_id: str
+    load_location: str
+    unload_location: str
+
+
+@dataclass(frozen=True)
+class Itinerary:
+    """운송 경로 -- Leg의 순서 있는 목록"""
+    legs: tuple[Leg, ...]
+
+    def final_destination(self) -> str:
+        return self.legs[-1].unload_location if self.legs else ""
+
+
+@dataclass
+class Cargo:
+    """화물 애그리거트 루트 -- 지식 탐구를 통해 발견된 핵심 개념"""
+    tracking_id: str
+    origin: str
+    route_specification: "RouteSpecification"
+    itinerary: Optional[Itinerary] = None
+
+    def assign_to_route(self, itinerary: Itinerary) -> None:
+        if not self.route_specification.is_satisfied_by(itinerary):
+            raise ValueError("경로가 운송 요건을 충족하지 않습니다")
+        self.itinerary = itinerary
+
+    def is_misrouted(self) -> bool:
+        """현재 경로가 요건에 맞지 않으면 True"""
+        if self.itinerary is None:
+            return True
+        return not self.route_specification.is_satisfied_by(self.itinerary)
+```
+
+### 2.2 도메인과 하위 도메인
+
+> 출처: [A][B][C], Evans 파란책, Millett
+
+도메인은 소프트웨어가 해결하려는 비즈니스 영역이며, 여러 하위 도메인으로 구성된다. [C]에서는 하위 도메인을 "문제점 공간(problem space)"의 일부로 정의하고, 바운디드 컨텍스트를 "해결책 공간(solution space)"으로 분리하여 설명한다.
+
+**하위 도메인 유형** [B]:
+
+| 유형 | 경쟁 우위 | 복잡성 | 변동성 | 솔루션 전략 |
+|------|----------|--------|--------|------------|
+| 핵심(Core) | 직접적 경쟁력 | 높음 | 잦은 변경 | 사내 구현 필수 |
+| 일반(Generic) | 없음 | 높음 (알려진 문제) | 낮음 | 외부 솔루션/오픈소스 |
+| 지원(Supporting) | 없음 | 낮음 (CRUD 수준) | 낮음 | 하청 가능, RAD |
+
+**문제 공간과 솔루션 공간의 분리** (Millett):
+
+| 구분 | 문제 공간 (Problem Space) | 솔루션 공간 (Solution Space) |
+|------|-------------------------|---------------------------|
+| 질문 | "비즈니스가 해결해야 할 문제는 무엇인가?" | "문제를 어떻게 소프트웨어로 해결할 것인가?" |
+| 도구 | 도메인, 하위 도메인 | 바운디드 컨텍스트, 컨텍스트 맵 |
+| 활동 | 도메인 발견, 지식 탐구 | 모델링, 설계, 구현 |
+| 산출물 | 도메인 비전 선언문, 하위 도메인 맵 | 유비쿼터스 언어, 도메인 모델, 코드 |
+
+```python
+from dataclasses import dataclass
+from enum import Enum
+
+
+class SubdomainType(Enum):
+    CORE = "core"           # 핵심: 경쟁 우위의 원천
+    GENERIC = "generic"     # 일반: 모든 회사가 동일하게 수행
+    SUPPORTING = "supporting"  # 지원: 비즈니스 활동 보조
+
+
+@dataclass(frozen=True)
+class Subdomain:
+    name: str
+    type: SubdomainType
+    description: str
+
+    @property
+    def should_build_in_house(self) -> bool:
+        return self.type == SubdomainType.CORE
+
+
+# 예시: 온라인 쇼핑몰 도메인 분석
+recommendation_engine = Subdomain(
+    name="추천 엔진",
+    type=SubdomainType.CORE,
+    description="사용자 행동 기반 개인화 추천 알고리즘",
+)
+
+authentication = Subdomain(
+    name="인증/권한",
+    type=SubdomainType.GENERIC,
+    description="사용자 로그인 및 권한 관리",
+)
+
+admin_panel = Subdomain(
+    name="관리자 페이지",
+    type=SubdomainType.SUPPORTING,
+    description="상품/주문 CRUD 인터페이스",
+)
+```
+
+### 2.3 유비쿼터스 언어 (Ubiquitous Language)
+
+> 출처: [A][B][C], Evans 파란책
+
+도메인 전문가, 관계자, 개발자가 공통으로 사용하는 언어다. 코드, 문서, 대화 모든 곳에서 동일한 용어를 사용한다.
+
+**핵심 원칙:**
+- 기술 용어가 아닌 비즈니스 용어로 구성해야 한다
+- 모호성이 없어야 하며 하나의 용어는 하나의 의미만 가져야 한다
+- 유비쿼터스 언어는 바운디드 컨텍스트 경계 안에서만 보편적으로 적용된다
+
+[B]는 유비쿼터스 언어를 포착하는 도구로 **거킨 테스트(Gherkin test)**를 강조한다:
+
+```gherkin
+Scenario: 에이전트에게 새로운 지원 케이스를 알린다
+  Given: 빈센트 줄스는 새로운 지원 케이스를 제출한다
+  When: 티켓이 울프씨에게 할당된다
+  Then: 에이전트는 새로운 티켓에 대해 알림을 받는다
+```
+
+```python
+# 유비쿼터스 언어가 반영되지 않은 코드 (나쁜 예)
+class OrderManager:
+    def process(self, data: dict):
+        data["status"] = 2  # 매직 넘버, 비즈니스 의미 불명확
+        self.db.update(data)
+
+
+# 유비쿼터스 언어가 반영된 코드 (좋은 예)
+class Order:
+    """주문 애그리거트 - '주문'이라는 도메인 용어를 그대로 사용"""
+
+    def place(self) -> None:
+        """주문을 '접수'한다"""
+        self._status = OrderStatus.PLACED
+
+    def ship(self) -> None:
+        """주문을 '출고'한다"""
+        if not self._status.is_shippable:
+            raise OrderCannotBeShippedException("출고 가능한 상태가 아닙니다")
+        self._status = OrderStatus.SHIPPED
+```
+
+### 2.4 바운디드 컨텍스트 (Bounded Context)
+
+> 출처: [A][B][C], Evans 파란책
+
+유비쿼터스 언어가 적용되는 명시적 경계다. 같은 용어(예: "리드")가 마케팅과 영업에서 다른 의미를 가질 때, 각각을 별도의 바운디드 컨텍스트로 분리한다.
+
+**관점 차이:**
+- [B]: "하위 도메인은 발견하고, 바운디드 컨텍스트는 설계한다"는 점을 가장 강조. 바운디드 컨텍스트는 물리적/소유권 경계이며, 한 팀에서만 구현/유지관리해야 한다.
+- [C]: 바운디드 컨텍스트를 "도메인 모델을 적용할 수 있는 개념적 경계"로 정의. 하나의 바운디드 컨텍스트는 하나의 프로젝트 안에 머물러야 하며, 유스케이스 집합을 포함한다.
+- [A]: 바운디드 컨텍스트보다는 도메인 영역 내부의 모듈 구성에 집중한다.
+
+하위 도메인과 바운디드 컨텍스트를 1:1로 묶으려는 시도는 바람직한 목표이지만, 반드시 그래야 하는 것은 아니다 [C].
+
+```python
+# 마케팅 컨텍스트에서의 '리드'
+# marketing/domain/lead.py
+@dataclass
+class Lead:
+    """잠재 고객 - 마케팅 채널을 통해 유입된 연락처"""
+    contact_id: str
+    source_channel: str  # 유입 채널
+    campaign_id: str     # 캠페인 ID
+
+    def qualify(self) -> None:
+        """리드를 검증하여 MQL(Marketing Qualified Lead)로 전환"""
+        ...
+
+
+# 영업 컨텍스트에서의 '리드'
+# sales/domain/lead.py
+@dataclass
+class Lead:
+    """영업 기회 - 영업 파이프라인에 진입한 잠재 거래"""
+    opportunity_id: str
+    estimated_revenue: Money
+    assigned_sales_rep: str
+
+    def convert_to_deal(self) -> "Deal":
+        """리드를 거래(Deal)로 전환"""
+        ...
+```
+
+### 2.5 컨텍스트 맵 (Context Map)
+
+> 출처: [B][C], Evans 파란책 Chapter 14, Open Group DDD Strategic Patterns
+
+바운디드 컨텍스트 간의 관계를 시각적으로 표현한 도식이다.
+
+**전체 연동 패턴 정리:**
+
+| 패턴 그룹 | 패턴 | 설명 | 선택 기준 |
+|-----------|------|------|----------|
+| 협력형 | 파트너십(Partnership) | 양 팀이 애드훅 방식으로 API 변경을 조정 | 두 컨텍스트의 개발 실패가 양쪽 모두의 배포 실패를 야기할 때 |
+| 협력형 | 공유 커널(Shared Kernel) | 모델의 일부를 공유 | 중복 비용 > 조율 비용일 때만 사용. 공유 범위 최소화 필수 |
+| 사용자-제공자 | 고객-공급자(Customer-Supplier) | 업스트림이 다운스트림 요구를 계획에 반영 | 업스트림이 다운스트림 없이도 성공 가능할 때 |
+| 사용자-제공자 | 순응주의자(Conformist) | 업스트림 모델을 그대로 수용 | 업스트림이 다운스트림 요구를 수용할 의지/능력이 없을 때 |
+| 사용자-제공자 | 충돌 방지 계층(ACL) | 업스트림 모델을 자신의 모델로 변환 | 업스트림 모델이 다운스트림 도메인과 맞지 않을 때 |
+| 제공형 | 오픈 호스트 서비스(OHS) | 퍼블릭 프로토콜로 다수 다운스트림에 서비스 | REST API, gRPC 등 공개 인터페이스 |
+| 제공형 | 발행된 언어(Published Language) | OHS와 함께 사용하는 공유 언어 | JSON Schema, Protobuf, Avro 등 |
+| 분리형 | 분리된 노선(Separated Ways) | 통합하지 않고 기능 중복 허용 | 통합 비용 > 기능 중복 비용일 때 |
+| 분리형 | 큰 진흙공(Big Ball of Mud) | 경계가 없는 혼돈 상태 | ACL을 두어 진흙 공이 퍼지지 않도록 방어 |
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+
+# === 충돌 방지 계층(ACL) 패턴 구현 예시 ===
+
+# 외부 시스템(업스트림)의 모델 - 우리가 제어할 수 없음
+@dataclass
+class ExternalUserDTO:
+    """외부 인증 시스템의 사용자 데이터"""
+    usr_id: str
+    usr_nm: str
+    usr_email: str
+    role_cd: int
+
+
+# 우리 도메인(다운스트림)의 모델
+@dataclass(frozen=True)
+class Author:
+    """협업 컨텍스트에서의 작성자 값 객체"""
+    user_id: str
+    display_name: str
+    email: str
+
+
+# ACL: 외부 모델을 내부 모델로 변환하는 계층
+class CollaboratorTranslator:
+    """충돌 방지 계층 - 외부 인증 컨텍스트의 모델을
+    협업 컨텍스트의 도메인 모델로 변환한다"""
+
+    def to_author(self, external_user: ExternalUserDTO) -> Author:
+        return Author(
+            user_id=external_user.usr_id,
+            display_name=external_user.usr_nm,
+            email=external_user.usr_email,
+        )
+
+
+# === 레거시 ERP ACL 예시 (External) ===
+
+@dataclass
+
+**Evaluating architecture needs**
+
+I think I need to generate output for the architecture around domain-driven design (DDD), but it seems I want to be careful not to make it too long. I should focus on the relevant sections related to the repository and outbox concepts from the DDD framework and how they apply to Django implementation. Using specific ranges with sed should help streamline the process. Let’s break this down and make sure to cover just what’s necessary!
+exec
+/bin/zsh -lc "sed -n '820,890p' workspace/reference/architecture-ddd/reference/final.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1060,1205p' workspace/reference/architecture-ddd/reference/final.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+### 3.4 리포지토리 (Repository)
+
+> 출처: [A][B][C], Cosmic Python
+
+애그리거트 단위로 도메인 객체의 영속성을 처리한다. 도메인 영역에 인터페이스를 정의하고, 인프라 영역에서 구현한다 (DIP).
+
+> "ORM이 도메인 모델을 임포트하게 하라. 도메인 모델이 ORM을 임포트하면 안 된다." -- Cosmic Python
+
+```python
+from abc import ABC, abstractmethod
+from typing import Optional
+
+
+# 도메인 영역: 리포지토리 인터페이스 (고수준 모듈)
+class OrderRepository(ABC):
+    """주문 리포지토리 인터페이스
+    - 애그리거트 단위로 저장/조회한다
+    - OrderLineItem을 위한 별도 리포지토리는 만들지 않는다
+    """
+
+    @abstractmethod
+    def find_by_id(self, order_id: str) -> Optional[Order]:
+        ...
+
+    @abstractmethod
+    def save(self, order: Order) -> None:
+        ...
+
+    @abstractmethod
+    def delete(self, order: Order) -> None:
+        ...
+
+
+# 인프라 영역: 리포지토리 구현 (저수준 모듈)
+class DjangoOrderRepository(OrderRepository):
+    """Django ORM 기반 리포지토리 구현체"""
+
+    def find_by_id(self, order_id: str) -> Optional[Order]:
+        try:
+            orm_order = OrderModel.objects.get(id=order_id)
+            return self._to_domain(orm_order)
+        except OrderModel.DoesNotExist:
+            return None
+
+    def save(self, order: Order) -> None:
+        orm_order = self._to_orm(order)
+        orm_order.save()
+
+    def delete(self, order: Order) -> None:
+        OrderModel.objects.filter(id=order.id).delete()
+
+    def _to_domain(self, orm_obj) -> Order:
+        """ORM 모델 -> 도메인 모델 변환"""
+        ...
+
+    def _to_orm(self, domain_obj: Order):
+        """도메인 모델 -> ORM 모델 변환"""
+        ...
+```
+
+### 3.5 도메인 서비스 (Domain Service)
+
+> 출처: [A][B][C], Cosmic Python
+> **[의사결정 #3] External 채택**: 애그리거트가 도메인 서비스를 모르도록 분리한다.
+
+여러 애그리거트에 걸친 도메인 로직을 구현한다. **상태 없이(stateless) 로직만 구현**한다.
+
+**응용 서비스 vs 도메인 서비스 구분법** [A]:
+- 해당 로직이 애그리거트의 상태를 변경하거나 상태 값을 계산하는가? -> 도메인 서비스
+- 트랜잭션 처리, 도메인 객체 조회/저장 조율인가? -> 응용 서비스
+
+
+ succeeded in 0ms:
+        for item in items:
+            product = self._product_repo.find_by_id(item["product_id"])
+            result.append(
+                OrderLineItem(
+                    product_id=product.id,
+                    product_name=product.name,
+                    price=product.price,
+                    quantity=item["quantity"],
+                )
+            )
+        return result
+```
+
+### 3.7 도메인 이벤트 (Domain Event)
+
+> 출처: [B][C], Jimmy Bogard, Cosmic Python
+> **[의사결정 #7] External 채택**: UoW 커밋 전후 디스패치 타이밍을 명시한다.
+
+비즈니스 도메인에서 발생한 중요한 사건을 나타낸다. 애그리거트 커맨드 실행의 결과로 발행된다.
+
+**이벤트 수집 -> 디스패치 패턴:**
+1. 애그리거트 안에 `_domain_events` 리스트를 두고 이벤트를 수집한다
+2. Unit of Work가 커밋 **직전**(동일 트랜잭션 내 부수 효과) 또는 **직후**(외부 통합)에 디스패치한다
+3. 디스패치 타이밍이 명시되지 않으면 이벤트 유실이나 트랜잭션 불일치가 발생한다
+
+```python
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Callable, Dict, List, Type
+
+
+@dataclass(frozen=True)
+class DomainEvent:
+    """도메인 이벤트 기본 클래스"""
+    occurred_at: datetime = field(default_factory=datetime.now)
+
+
+@dataclass(frozen=True)
+class ItemAddedToCart(DomainEvent):
+    cart_id: str = ""
+    product_id: str = ""
+    quantity: int = 0
+
+
+@dataclass(frozen=True)
+class CartCheckedOut(DomainEvent):
+    cart_id: str = ""
+    total_amount: int = 0
+
+
+class AggregateRoot:
+    """이벤트 수집 기능을 가진 애그리거트 루트 기반 클래스"""
+
+    def __init__(self):
+        self._domain_events: List[DomainEvent] = []
+
+    def _raise_event(self, event: DomainEvent) -> None:
+        """이벤트를 내부 컬렉션에 수집 (즉시 발행하지 않음)"""
+        self._domain_events.append(event)
+
+    @property
+    def domain_events(self) -> List[DomainEvent]:
+        return list(self._domain_events)
+
+    def clear_events(self) -> None:
+        self._domain_events.clear()
+
+
+# === 이벤트 디스패처와 Unit of Work 연동 ===
+
+class EventBus:
+    """인프로세스 이벤트 버스 -- 이벤트 타입별 핸들러 등록 및 디스패치"""
+
+    def __init__(self):
+        self._handlers: Dict[Type[DomainEvent], List[Callable]] = {}
+
+    def subscribe(self, event_type: Type[DomainEvent], handler: Callable) -> None:
+        if event_type not in self._handlers:
+            self._handlers[event_type] = []
+        self._handlers[event_type].append(handler)
+
+    def publish(self, event: DomainEvent) -> None:
+        for handler in self._handlers.get(type(event), []):
+            handler(event)
+
+
+class UnitOfWork:
+    """Unit of Work -- 트랜잭션 경계에서 이벤트를 디스패치"""
+
+    def __init__(self, event_bus: EventBus):
+        self._event_bus = event_bus
+
+    def commit(self) -> None:
+        ...  # DB 커밋 로직
+
+    def _dispatch_events(self, aggregate: AggregateRoot) -> None:
+        """커밋 직전에 수집된 이벤트를 디스패치"""
+        for event in aggregate.domain_events:
+            self._event_bus.publish(event)
+        aggregate.clear_events()
+```
+
+#### Outbox 패턴
+
+이벤트의 신뢰성 있는 발행을 보장하기 위해, 이벤트를 애그리거트와 같은 트랜잭션에서 Outbox 테이블에 저장하고, 별도 프로세스가 Outbox에서 이벤트를 읽어 메시지 브로커에 발행한다.
+
+```python
+@dataclass
+class OutboxMessage:
+    """Outbox 테이블에 저장되는 메시지"""
+    id: str
+    aggregate_type: str
+    aggregate_id: str
+    event_type: str
+    payload: str         # JSON 직렬화된 이벤트 데이터
+    created_at: datetime
+    published: bool = False
+
+
+class OutboxProcessor:
+    """별도 프로세스/스케줄러: Outbox에서 미발행 메시지를 읽어 브로커에 발행"""
+
+    def __init__(self, outbox_repo: "OutboxRepository", broker: "MessageBroker"):
+        self._repo = outbox_repo
+        self._broker = broker
+
+    def process(self) -> None:
+        messages = self._repo.find_unpublished()
+        for msg in messages:
+            self._broker.publish(topic=msg.event_type, message=msg.payload)
+            msg.published = True
+            self._repo.update(msg)
+```
+
+### 3.8 Specification 패턴
+
+> 출처: Eric Evans & Martin Fowler, "Specifications" (1997)
+
+비즈니스 규칙을 독립적인 객체로 캡슐화하고, 논리 연산(AND, OR, NOT)으로 조합할 수 있게 하는 패턴이다.
+
+**세 가지 용도:**
+
+| 용도 | 설명 | 예시 |
+|------|------|------|
+| 검증 (Validation) | 객체가 비즈니스 규칙을 만족하는지 확인 | `eligible_for_premium.is_satisfied_by(customer)` |
+| 선택 (Selection/Query) | 컬렉션에서 조건에 맞는 객체를 필터링 | `[c for c in customers if spec.is_satisfied_by(c)]` |
+
+exec
+/bin/zsh -lc "sed -n '1550,1630p' workspace/reference/implementation-django/reference/final.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+
+Fat Model이 비대해지면 서비스 레이어를 도입한다. 기준점:
+
+- 모델 파일이 500줄을 넘길 때
+- 하나의 비즈니스 동작이 여러 모델에 걸칠 때
+- 동일한 로직이 여러 뷰에서 중복될 때
+- 외부 서비스(이메일, 결제 등) 호출이 모델에 섞일 때
+
+### 16.2 HackSoft 서비스/셀렉터 패턴 [HS]
+
+```python
+# services.py -- 쓰기(Command) 로직
+def user_create(*, email: str, password: str) -> User:
+    """사용자를 생성하고 환영 이메일을 보낸다."""
+    user = User.objects.create_user(email=email, password=password)
+    Profile.objects.create(user=user)
+    send_welcome_email(user=user)
+    return user
+
+def order_confirm(*, order: Order) -> Order:
+    """주문을 확정한다."""
+    if order.status != Order.Status.PENDING:
+        raise ValidationError("확정할 수 없는 상태입니다.")
+    order.status = Order.Status.CONFIRMED
+    order.confirmed_at = timezone.now()
+    order.save(update_fields=["status", "confirmed_at"])
+    notify_warehouse(order=order)
+    return order
+
+# selectors.py -- 읽기(Query) 로직
+def article_list(*, author: User | None = None, status: str | None = None):
+    """필터 조건에 따라 기사 목록을 반환한다."""
+    qs = Article.objects.select_related("author")
+    if author:
+        qs = qs.filter(author=author)
+    if status:
+        qs = qs.filter(status=status)
+    return qs.order_by("-published_at")
+```
+
+**네이밍 규칙: `<entity>_<action>`** -- `user_create`, `order_confirm`, `article_list`
+
+- 네임스페이싱: `user_` 접두사로 사용자 관련 서비스를 묶는다.
+- 검색 용이: `grep "def user_"` 로 모든 사용자 관련 동작을 찾을 수 있다.
+
+### 16.3 DDD와 Django의 트레이드오프 [CP]
+
+```python
+# Django ORM은 Active Record 패턴 -- 도메인 모델과 영속성 모델이 같은 객체
+# DDD의 Repository 패턴을 적용하려면 수동 변환 레이어가 필요
+
+# 방법 A: Django ORM 직접 사용 (대부분의 프로젝트에 적합)
+# - Django의 배터리(admin, forms, migrations)를 그대로 활용
+# - 도메인 로직은 모델 메서드 + 서비스 레이어에 배치
+
+# 방법 B: Repository 패턴 도입 (복잡한 도메인에 적합)
+class ArticleRepository:
+    def get_by_id(self, article_id: int) -> Article:
+        return Article.objects.get(pk=article_id)
+
+    def save(self, article: Article) -> None:
+        article.save()
+
+    def published_by_author(self, author: User) -> QuerySet:
+        return Article.objects.filter(
+            author=author, status=Article.Status.PUBLISHED
+        )
+# 장점: 테스트에서 Fake Repository로 교체 가능
+# 단점: Django의 풍부한 QuerySet API를 래핑하는 추가 비용
+```
+
+**실용적 권고:**
+- 대부분의 Django 프로젝트에서는 **모델 메서드 + 서비스 함수**로 충분하다.
+- 도메인이 정말 복잡해질 때만 Repository 패턴을 점진적으로 도입한다.
+- DDD의 모든 패턴을 Django에 강제하면 Django의 장점(admin, migrations, forms)을 재구현하게 된다. **[CP]**
+- 서비스 레이어는 좋은 출발점 -- 뷰와 모델 사이에 얇은 계층을 두어 비즈니스 로직을 격리한다.
+
+---
+
+## 17. Django 5.x 새 기능
+
+
+exec
+/bin/zsh -lc "sed -n '2188,2215p' workspace/reference/implementation-python/reference/final.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+```
+
+---
+
+## 21. Repository / Unit of Work
+
+Repository/Unit of Work 등 아키텍처 패턴은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
+
+---
+
+## 22. Ruff -- 통합 린터/포매터
+
+> 출처: [Ruff 공식 문서](https://docs.astral.sh/ruff/)
+
+Ruff는 Rust로 작성된 초고속 Python 린터/포매터로, 약 50개 flake8 플러그인의 규칙을 재구현하며, Flake8, Black, isort 등을 대체한다. 기존 도구 대비 10-100배 빠르다.
+
+### 22.1 권장 pyproject.toml 설정
+
+```toml
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "F",     # Pyflakes: 미사용 import, 정의되지 않은 이름
+    "E",     # pycodestyle 에러
+    "W",     # pycodestyle 경고
+
+**Designing reliable system interactions**
+
+I’m considering the need for reliability in state changes and event delivery, which calls for a durable outbox. If the response is from the same process, it might not work as expected. The pattern suggests that external side effects after a commit are crucial — like actual charges or authorizations for payments. I realize that if I call the Payment Gateway (PG) after the database commit, it can fail, but if I call it before, the reverse can happen. I really need to strategize this design!
+**Considering source limits**
+
+I need to note that the "architecture-implementation-patterns" skill is provisional, relying on fallback sources. This limitation impacts my recommendations due to the lack of specific case details. I should clarify that "source limits affect recommendations." It’s essential I mention the guidelines I have for workspace docs, file references, and commands, ensuring the final response is concise. I need to explicitly include "근거 부족한 부분" to highlight areas lacking support.
+codex
+원자료 한계: public packet에는 “결제 승인 흐름”이라는 정보만 있고, PG/은행 연동 여부, 동기/비동기 승인 방식, 주문/결제 애그리거트 경계, API idempotency 정책, DB 스키마가 없다. 또한 `architecture-implementation-patterns`는 현재 전용 final reference가 아니라 fallback 기준을 쓰는 provisional skill이다. 아래 판단은 확정 설계가 아니라 dddjango 기준의 조건부 판단이다.
+
+**판단**
+
+- `ports/adapters`: 적용 가능성이 높다. 결제 승인이 외부 PG/은행/SDK/HTTP를 호출한다면 application service는 `PaymentGateway`/`PaymentAuthorizer` 같은 역할 기반 port에 의존하고, 실제 PG SDK/HTTP 코드는 infrastructure adapter로 둔다. Router/View는 request 검증, 인증, DTO 변환, use case 호출만 담당해야 한다. 외부 연동이 없는 단순 내부 상태 변경이면 과한 구조다.
+- `repository`: 조건부다. `PaymentAuthorization` 또는 `Payment` 애그리거트의 저장/조회가 도메인 컬렉션처럼 표현되어야 하거나, ORM 모델과 도메인 모델을 분리해야 하거나, application service 테스트에서 fake repository 이득이 크면 쓴다. 단순히 `Payment.objects.get()`을 감싸는 얇은 QuerySet wrapper라면 dddjango 기준으로 피한다. Django에서는 먼저 model method + service + `transaction.atomic()`이 기본 선택지다.
+- `outbox`: 결제 승인 상태 변경과 외부/타 컨텍스트 메시지 발행을 신뢰성 있게 묶어야 하면 적용한다. 예: `PaymentAuthorized` integration event를 주문, 정산, 알림, 배송 컨텍스트가 소비해야 한다면 승인 상태 저장과 outbox message 저장을 같은 DB transaction에 넣고 별도 dispatcher가 at-least-once로 발행한다. 단순한 동일 프로세스 후속 처리면 `transaction.on_commit()`으로 충분할 수 있다. 단, outbox는 PG 승인 호출 자체와 DB commit을 원자적으로 묶는 마법이 아니므로 idempotency, 재시도, reconciliation, 필요 시 saga/compensation 판단이 별도로 필요하다.
+- `ACL`: 외부 PG/레거시 결제 시스템의 상태, 식별자, 금액 단위, 승인/매입/취소 lifecycle이 내부 결제 모델과 다르면 적용한다. 번역은 adapter 경계에 둔다. 외부 모델이 내부 언어와 거의 같고 SDK DTO가 도메인으로 새지 않는다면 작은 translator 정도로 충분하다.
+
+**Risky Write Consistency Block**
+
+- transaction owner: `AuthorizePayment` 같은 결제 승인 application service.
+- locking/idempotency: 중복 승인 방지를 위한 idempotency key 또는 provider request id의 unique constraint가 필요할 가능성이 높다. 정확한 key는 API 계약과 PG 정책이 없어서 단정할 수 없다.
+- side-effect timing: PG 호출은 port를 통해 격리한다. 승인 결과 저장 후 타 컨텍스트 발행은 outbox 또는 `on_commit()` 중 신뢰성 요구에 맞춰 선택한다.
+- isolation/retry: 결제/주문 상태를 동시에 바꾸면 optimistic locking, `select_for_update`, unique constraint 중 실제 invariant에 맞춰 선택해야 한다. 현재 정보만으로 특정 isolation level은 확정할 수 없다.
+- tests: 중복 요청, 동시 승인, PG timeout/retry, outbox 재발행, consumer idempotency 테스트가 필요하다.
+
+결론: “전부 적용”이 아니라 `ports/adapters`는 외부 결제 의존성 격리 때문에 우선 고려, `repository`는 복잡한 애그리거트/ORM 분리 필요가 있을 때만, `outbox`는 승인 후 integration event의 신뢰성 요구가 있을 때, `ACL`은 PG/레거시 언어가 내부 도메인을 오염시킬 때 적용하는 쪽이 dddjango 기준에 맞다.
+
+**Commands actually run**
+
+```sh
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md && sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md && sed -n '1,180p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+pwd -P
+git rev-parse --show-toplevel
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/pattern-selection.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/ports-adapters.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/repository-uow.md
+sed -n '1,280p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/references/outbox-acl.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/transactions-locking.md
+rg --files -g '!*workspace/develop/rubrics*' -g '!*workspace/develop/evals/cases/plugin/private*' -g '!*.png' -g '!*.jpg' workspace/reference workspace/docs AGENTS.md
+rg -n "ports|adapters|hexagonal|Repository|Unit of Work|outbox|anticorruption|ACL|payment|결제" workspace/reference/architecture-ddd/reference/final.md workspace/reference/implementation-django/reference/final.md workspace/reference/implementation-python/reference/final.md workspace/docs/ddd-implementation-standard.md
+sed -n '1,260p' workspace/docs/ddd-implementation-standard.md
+sed -n '1,320p' workspace/reference/architecture-ddd/reference/final.md
+sed -n '820,890p' workspace/reference/architecture-ddd/reference/final.md
+sed -n '1060,1205p' workspace/reference/architecture-ddd/reference/final.md
+sed -n '1550,1630p' workspace/reference/implementation-django/reference/final.md
+sed -n '2188,2215p' workspace/reference/implementation-python/reference/final.md
+```
+
+`git rev-parse --show-toplevel` emitted macOS sandbox cache warnings but returned `/Users/hyun/Desktop/dddjango`.
+
+**Checks not run**
+
+- Tests, lint, type checks: not run because this was an architecture judgment task with no code changes.
+- Private evaluator files, prior run reports, prior findings: not read by instruction.
+- Serena: not available in this tool context; no symbol/reference tracing was needed for this non-code-change task.
+- Files modified: none.
+tokens used
+50,365

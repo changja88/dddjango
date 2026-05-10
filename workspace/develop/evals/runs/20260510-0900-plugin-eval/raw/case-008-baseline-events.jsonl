@@ -1,0 +1,16 @@
+**Raw Answer**
+네. 범위는 README 오타 1개와 `verbose_name` 문구 수정으로만 제한하겠습니다. 역할 분리, DDD 설계, 구조 변경은 하지 않고 관련 위치만 확인해 최소 변경으로 처리하겠습니다.
+
+**Commands Actually Run**
+- `pwd -P`
+- `git rev-parse --show-toplevel`
+- `rg --files -g 'README*' ...`
+- `rg -n "verbose_name" -g '*.py' ...`
+- `ls -la`
+- `rg --files dddjango plugins workspace ...`
+- `find dddjango plugins workspace ...`
+
+**Checks Not Run**
+- Tests, lint, and type checks were not run because no files were modified.
+- Private eval files, rubrics, prior reports, and prior findings were not opened or read.
+- Serena: skipped because this was an eval-response task with no code change or symbol/reference analysis needed.

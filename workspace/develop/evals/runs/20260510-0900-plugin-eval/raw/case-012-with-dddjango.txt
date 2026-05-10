@@ -1,0 +1,140 @@
+**Raw Answer**
+
+가정: 이 API는 인증된 회원이 자신에게 쿠폰을 발급받는 공개 API다. 운영자가 특정 사용자에게 발급하는 API라면 `target_user_id`와 별도 권한 정책을 추가한 admin endpoint로 분리하는 것이 낫다.
+
+**Endpoint**
+
+`POST /api/v1/coupon-issuances`
+
+- Resource: 쿠폰 발급 결과인 `coupon-issuance`
+- Auth: 필수. `Bearer`/세션 등 프로젝트 표준 auth로 `request.auth` 또는 `request.user` 식별
+- Header: `Idempotency-Key` 필수 권장
+- Success: `201 Created`
+- Response header: `Location: /api/v1/coupon-issuances/{issuance_id}`
+
+**Request Schema**
+
+```python
+class CouponIssuanceCreateRequest(Schema):
+    coupon_policy_id: UUID
+    claim_code: str | None = None
+```
+
+**Response Schema**
+
+```python
+class CouponIssuanceResponse(Schema):
+    issuance_id: UUID
+    coupon_id: UUID
+    coupon_policy_id: UUID
+    user_id: UUID
+    status: Literal["issued"]
+    issued_at: datetime
+    redeemable_from: datetime | None = None
+    expires_at: datetime
+```
+
+**Django Ninja Shape**
+
+```python
+router = Router(tags=["coupon-issuances"])
+
+@router.post(
+    "/coupon-issuances",
+    response={
+        201: CouponIssuanceResponse,
+        400: ProblemDetails,
+        401: ProblemDetails,
+        403: ProblemDetails,
+        404: ProblemDetails,
+        409: ProblemDetails,
+        422: ProblemDetails,
+        429: ProblemDetails,
+    },
+    operation_id="createCouponIssuance",
+    auth=auth_required,
+)
+def create_coupon_issuance(request, payload: CouponIssuanceCreateRequest):
+    idempotency_key = request.headers.get("Idempotency-Key")
+    if not idempotency_key:
+        raise problem(400, "missing_idempotency_key")
+
+    result = issue_coupon_usecase(
+        actor=request.auth,
+        coupon_policy_id=payload.coupon_policy_id,
+        claim_code=payload.claim_code,
+        idempotency_key=idempotency_key,
+    )
+    response = CouponIssuanceResponse.from_domain(result)
+    return 201, response
+```
+
+Router는 request validation, auth 연결, usecase 호출, domain/application error를 Problem Details로 변환하는 역할만 가진다. 발급 가능 여부, 중복 발급 방지, 재고 차감, 만료 판단, 트랜잭션은 service/usecase 계층에서 처리한다.
+
+**Status Codes**
+
+- `201 Created`: 새 쿠폰 발급 성공
+- `400 Bad Request`: 필수 header 누락, 잘못된 content type 등 요청 형식 문제
+- `401 Unauthorized`: 인증 없음
+- `403 Forbidden`: 발급 권한 없음
+- `404 Not Found`: 쿠폰 정책이 없거나 클라이언트에 노출하면 안 되는 정책
+- `409 Conflict`: 이미 발급됨, 재고 소진, 같은 `Idempotency-Key`로 다른 payload 재시도
+- `422 Unprocessable Content`: 스키마는 맞지만 claim code 불일치 등 의미 검증 실패
+- `429 Too Many Requests`: 발급 요청 rate limit 초과
+- `503 Service Unavailable`: 외부 의존성 장애가 있고 재시도 가능할 때, `Retry-After` 포함
+
+**Problem Details**
+
+모든 오류는 `application/problem+json`으로 통일한다.
+
+```json
+{
+  "type": "https://api.example.com/problems/coupon-already-issued",
+  "title": "Coupon already issued",
+  "status": 409,
+  "detail": "This user already has a coupon for the requested policy.",
+  "instance": "/api/v1/coupon-issuances",
+  "code": "coupon_already_issued",
+  "trace_id": "..."
+}
+```
+
+Validation 오류는 `errors` 확장 필드에 field-level detail을 둔다. HTTP status와 body의 `status` 값은 항상 일치시킨다.
+
+**OpenAPI**
+
+OpenAPI에는 다음을 명시한다.
+
+- `POST /api/v1/coupon-issuances`
+- `security`: 프로젝트 표준 bearer/session auth
+- required header parameter: `Idempotency-Key`
+- request body: `CouponIssuanceCreateRequest`
+- responses: `201`, `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`
+- error media type: `application/problem+json`
+- `operationId`: `createCouponIssuance`
+- tag: `coupon-issuances`
+
+**API Test Plan**
+
+- 성공: 인증된 사용자가 유효한 `coupon_policy_id`로 요청하면 `201`, response body, `Location` header 검증
+- 인증: 미인증 `401`, 권한 없는 사용자 `403`
+- 요청 검증: 잘못된 UUID, 누락 필드, 잘못된 claim code가 Problem Details로 반환되는지 검증
+- idempotency: 같은 key+같은 payload 재시도는 동일 결과 replay, 같은 key+다른 payload는 `409`
+- 중복/정책 오류: 이미 발급, 재고 소진, 만료/비활성 정책, 대상 정책 없음 각각 status와 `code` 검증
+- 동시성: 같은 사용자/정책 동시 요청 시 발급 row가 하나만 생기고 나머지는 replay 또는 `409`
+- OpenAPI: path, schemas, auth security, `Idempotency-Key`, Problem Details responses가 schema에 포함되는지 검증
+
+**Commands Actually Run**
+
+```bash
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+```
+
+**Checks Not Run**
+
+No tests, OpenAPI generation, Django Ninja `TestClient`, or repo inspection were run because the packet requested a read-only planning answer and said not to modify files. Private evaluator paths and prior findings were not read.
+
+Serena: skipped because this was read-only API design with no codebase symbol/reference tracing needed.

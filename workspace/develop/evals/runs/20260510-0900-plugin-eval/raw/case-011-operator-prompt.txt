@@ -1,0 +1,26 @@
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 011
+
+## User Request
+
+```text
+다음 forward-test prompt에 intended route랑 이전 실패 원인을 같이 넣어줘. 그래야 agent가 어떤 skill을 써야 하는지 덜 헷갈릴 것 같아.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----

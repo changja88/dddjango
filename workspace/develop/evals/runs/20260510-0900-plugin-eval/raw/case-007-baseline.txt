@@ -1,0 +1,46 @@
+**Raw Answer**
+
+`Order.memo`를 `note`로 바꾸는 정도면 과하게 설계하지 않고 아래만 하면 됩니다.
+
+1. `Order` 모델 필드명을 `memo`에서 `note`로 변경
+2. 코드에서 `order.memo`, `memo=...`, form/schema/admin/template/test fixture 참조를 `note`로 변경
+3. 마이그레이션은 데이터 보존을 위해 `RenameField`로 생성/확인
+
+```bash
+python manage.py makemigrations
+```
+
+생성된 migration이 대략 아래 형태인지 확인하면 됩니다.
+
+```python
+migrations.RenameField(
+    model_name="order",
+    old_name="memo",
+    new_name="note",
+)
+```
+
+검증은 최소로:
+
+```bash
+python manage.py test
+python manage.py migrate --plan
+```
+
+DB 컬럼명까지 바뀌는 변경이라 API 응답/요청 키가 외부 계약이면 `memo -> note`가 깨지는 변경인지도 한 번만 확인하세요. 내부 필드명 변경이면 여기서 끝내면 됩니다.
+
+**Commands Actually Run**
+
+```bash
+pwd -P
+rg --files -g '!*workspace/develop/rubrics/**' -g '!*workspace/develop/evals/cases/plugin/private/**' -g '!**/*report*' -g '!**/*finding*'
+sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md
+sed -n '1,220p' dddjango/skills/implementation-django/references/migrations.md
+sed -n '1,180p' dddjango/skills/implementation-django/references/models-orm.md
+```
+
+**Checks Not Run**
+
+No tests, migrations, `sqlmigrate`, or Django checks were run because this eval packet requested a concise answer only and explicitly said not to modify files.
+
+Serena: not used; this was a read-only guidance task with no symbol/reference tracing needed.

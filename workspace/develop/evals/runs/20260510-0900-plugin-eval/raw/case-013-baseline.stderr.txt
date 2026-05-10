@@ -1,0 +1,1427 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019e0fa6-e70e-7161-a555-61fb9e613ea6
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 013
+
+## User Request
+
+```text
+기존 DRF ViewSet/Serializer로 된 주문 API를 Django Ninja로 옮기고 싶어. 기존 클라이언트 호환성, status code, error response, OpenAPI 차이를 같이 봐줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+공개 패킷 범위 안에서만 확인하겠습니다. 우선 저장소 구조와 공개 작업 파일만 살펴보고, 금지된 `workspace/develop/rubrics`, private case, prior reports/findings 경로는 건드리지 않겠습니다.
+exec
+/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+/Users/hyun/Desktop/dddjango
+
+exec
+/bin/zsh -lc "rg --files -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!**/*prior*'"' -g '"'!**/*findings*'"' -g '"'!**/*report*'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+AGENTS.md
+workspace/reference/implementation-test/reference/review.md
+workspace/reference/implementation-test/reference/internal.md
+workspace/reference/implementation-test/reference/final.md
+workspace/reference/implementation-test/reference/external.md
+workspace/reference/implementation-django/reference/final.md
+workspace/reference/architecture-api/reference/review.md
+workspace/reference/architecture-api/reference/internal.md
+workspace/reference/architecture-api/reference/final.md
+workspace/reference/architecture-api/reference/external.md
+workspace/reference/spec.md
+workspace/reference/implementation-cleancode/reference/review.md
+workspace/reference/implementation-cleancode/reference/internal.md
+workspace/reference/implementation-cleancode/reference/final.md
+workspace/reference/implementation-cleancode/reference/external.md
+workspace/reference/implementation-tdd/reference/review.md
+workspace/reference/implementation-tdd/reference/internal.md
+workspace/reference/implementation-tdd/reference/final.md
+workspace/reference/implementation-tdd/reference/external.md
+workspace/reference/architecture-db/reference/review.md
+workspace/reference/architecture-db/reference/internal.md
+workspace/reference/architecture-db/reference/final.md
+workspace/reference/architecture-db/reference/external.md
+workspace/reference/implementation-python/reference/review.md
+workspace/reference/implementation-python/reference/internal.md
+workspace/reference/implementation-python/reference/final.md
+workspace/reference/implementation-python/reference/external.md
+workspace/reference/architecture-ddd/reference/review.md
+workspace/reference/architecture-ddd/reference/internal.md
+workspace/reference/architecture-ddd/reference/final.md
+workspace/reference/architecture-ddd/reference/external.md
+workspace/scripts/validate_skill_docs.py
+workspace/scripts/run_plugin_eval.py
+workspace/docs/reference-index.md
+workspace/docs/spec.md
+workspace/docs/skill-contracts.md
+workspace/docs/skill-authoring.md
+workspace/docs/plugin-structure.md
+workspace/docs/validation-plan.md
+workspace/docs/workflow.md
+workspace/docs/skill-hierarchy.md
+workspace/docs/ddd-implementation-standard.md
+workspace/develop/skill_goal_instructions.md
+workspace/develop/rubric_goal_instructions.md
+workspace/develop/plan.md
+workspace/develop/source-crosswalks/implementation-test.md
+workspace/develop/source-crosswalks/implementation-django.md
+workspace/develop/source-crosswalks/implementation-django-ninja.md
+workspace/develop/source-crosswalks/implementation-cleancode.md
+workspace/develop/source-crosswalks/implementation-tdd.md
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md
+workspace/develop/source-crosswalks/implementation-python.md
+workspace/develop/source-crosswalks/architecture-db.md
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md
+workspace/develop/source-crosswalks/architecture-api.md
+workspace/develop/source-crosswalks/architecture-ddd.md
+workspace/develop/source-crosswalks/implementation-django-web.md
+workspace/develop/evals/README.md
+workspace/develop/evals/runs/README.md
+LICENSE
+workspace/develop/evals/templates/case-analysis.html
+workspace/develop/evals/templates/private-evaluator.md
+workspace/develop/evals/templates/public-packet.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/RUN_ID.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/operator-notes.md
+dddjango/skills/implementation-test/SKILL.md
+dddjango/skills/implementation-test/agents/openai.yaml
+workspace/develop/evals/cases/plugin/public/case-008.md
+workspace/develop/evals/cases/plugin/public/case-009.md
+workspace/develop/evals/cases/plugin/public/case-002.md
+workspace/develop/evals/cases/plugin/public/case-012.md
+workspace/develop/evals/cases/plugin/public/case-006.md
+workspace/develop/evals/cases/plugin/public/case-016.md
+workspace/develop/evals/cases/plugin/public/case-007.md
+workspace/develop/evals/cases/plugin/public/case-017.md
+workspace/develop/evals/cases/plugin/public/case-003.md
+workspace/develop/evals/cases/plugin/public/case-013.md
+workspace/develop/evals/cases/plugin/public/case-004.md
+workspace/develop/evals/cases/plugin/public/case-014.md
+workspace/develop/evals/cases/plugin/public/case-010.md
+workspace/develop/evals/cases/plugin/public/case-001.md
+workspace/develop/evals/cases/plugin/public/case-011.md
+workspace/develop/evals/cases/plugin/public/case-005.md
+workspace/develop/evals/cases/plugin/public/case-015.md
+dddjango/skills/implementation-test/references/pytest-fixtures.md
+dddjango/skills/implementation-test/references/factories-property-tests.md
+dddjango/skills/implementation-test/references/test-doubles.md
+dddjango/skills/implementation-test/references/coverage-mutation.md
+dddjango/skills/architecture-implementation-patterns/SKILL.md
+dddjango/skills/implementation-django/SKILL.md
+dddjango/skills/implementation-django/agents/openai.yaml
+dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
+dddjango/skills/implementation-django/references/services-selectors.md
+dddjango/skills/implementation-django/references/transactions-performance-security.md
+dddjango/skills/implementation-django/references/models-orm.md
+dddjango/skills/implementation-django/references/migrations.md
+dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+dddjango/skills/implementation-django-ninja/SKILL.md
+dddjango/skills/architecture-api/SKILL.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-013-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-013-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-013-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-013-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-012-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-010-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-013-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-008-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-011-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-009-prompt-input.stderr.txt
+dddjango/skills/implementation-django-ninja/agents/openai.yaml
+dddjango/skills/architecture-api/agents/openai.yaml
+dddjango/skills/implementation-django-web/SKILL.md
+dddjango/skills/implementation-django-ninja/references/router-schema.md
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+dddjango/skills/implementation-django-ninja/references/testclient.md
+dddjango/skills/architecture-api/references/pagination-versioning.md
+dddjango/skills/implementation-django-web/agents/openai.yaml
+dddjango/skills/architecture-api/references/idempotency-openapi.md
+dddjango/skills/architecture-api/references/rest-contracts.md
+dddjango/skills/architecture-api/references/problem-details.md
+dddjango/skills/architecture-db/SKILL.md
+dddjango/skills/workflow-dddjango-subagents/SKILL.md
+dddjango/skills/implementation-django-web/references/static-assets.md
+dddjango/skills/implementation-django-web/references/csrf-ajax.md
+dddjango/skills/implementation-django-web/references/templateview-htmx.md
+dddjango/skills/implementation-django-web/references/templates.md
+dddjango/skills/architecture-db/agents/openai.yaml
+dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
+dddjango/skills/implementation-python/SKILL.md
+dddjango/skills/architecture-db/references/transactions-locking.md
+dddjango/skills/architecture-db/references/schema-modeling.md
+dddjango/skills/architecture-db/references/rollout-constraints.md
+dddjango/skills/architecture-db/references/constraints-indexes.md
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+dddjango/skills/implementation-python/agents/openai.yaml
+dddjango/skills/implementation-tdd/SKILL.md
+dddjango/skills/implementation-cleancode/SKILL.md
+dddjango/skills/implementation-python/references/protocols-boundaries.md
+dddjango/skills/implementation-python/references/pydantic-v2.md
+dddjango/skills/implementation-python/references/typing.md
+dddjango/skills/implementation-python/references/dataclasses-enums.md
+dddjango/skills/implementation-tdd/agents/openai.yaml
+dddjango/skills/implementation-cleancode/agents/openai.yaml
+dddjango/skills/architecture-ddd/SKILL.md
+dddjango/skills/implementation-tdd/references/test-list.md
+dddjango/skills/architecture-ddd/agents/openai.yaml
+dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
+dddjango/skills/implementation-cleancode/references/responsibility.md
+dddjango/skills/implementation-cleancode/references/legacy-review.md
+dddjango/skills/implementation-cleancode/references/naming-functions.md
+dddjango/skills/implementation-tdd/references/red-green-refactor.md
+dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
+dddjango/skills/architecture-ddd/references/domain-events.md
+dddjango/skills/architecture-ddd/references/tactical-patterns.md
+dddjango/skills/architecture-ddd/references/strategic-design.md
+dddjango/skills/architecture-ddd/references/context-map.md
+
+exec
+/bin/zsh -lc 'git rev-parse --show-toplevel' in /Users/hyun/Desktop/dddjango
+ succeeded in 1955ms:
+2026-05-10 11:11:13.003 xcodebuild[83174:2643803]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:11:13.161 xcodebuild[83174:2643802] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
+git: error: couldn't create cache file '/tmp/xcrun_db-KhhagwVF' (errno=Operation not permitted)
+2026-05-10 11:11:13.670 xcodebuild[83176:2643818]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:11:13.824 xcodebuild[83176:2643817] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/Users/hyun/Desktop/dddjango
+
+codex
+저장소 루트와 파일 목록을 확인했습니다. 이제 공개 case 013과 이 요청에 직접 관련된 `dddjango` 공개 skill 문서만 읽어 답변 기준을 맞추겠습니다.
+exec
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/architecture-api/SKILL.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-django-ninja/SKILL.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-013.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Case 013
+
+## User Request
+
+```text
+기존 DRF ViewSet/Serializer로 된 주문 API를 Django Ninja로 옮기고 싶어. 기존 클라이언트 호환성, status code, error response, OpenAPI 차이를 같이 봐줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+
+ succeeded in 0ms:
+---
+name: architecture-api
+description: >
+  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+---
+
+# API Architecture
+
+Use this skill to turn use cases and client needs into REST contracts. This skill designs external API behavior; it does not implement framework code.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
+- If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
+- If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.
+- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
+- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+- If the user asks for pytest/API contract tests, use `implementation-test` after contract criteria are known.
+- For a simple status-code, URL naming, or error-format question, answer directly without forcing a full DDD workflow.
+
+## Reference Loading
+
+- Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, headers, auth/authz, content negotiation, and cache semantics.
+- Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
+- Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.
+- Read [idempotency-openapi.md](references/idempotency-openapi.md) for `Idempotency-Key`, duplicate POST behavior, and OpenAPI contract impact.
+
+## Runtime Rules
+
+- Start from the external use case, resource identity, client workflow, authorization needs, error conditions, compatibility constraints, and expected query patterns.
+- Choose resources and URLs as stable nouns; avoid leaking database table names or imperative action names into URLs.
+- Choose HTTP methods by safety and idempotency. Use POST for creation/actions, PUT for full replacement, PATCH for partial update, DELETE for deletion, and GET only for safe reads.
+- Specify status codes with response body expectations, especially 201 with `Location`, 202 for accepted async work, 204 for no-content delete, 409 for conflicts, 422 for semantic validation, 429 for rate limits, and 503 with retry guidance.
+- Use RFC 9457 Problem Details consistently for API errors; keep `status` aligned with the HTTP response and keep `title` reusable while `detail` describes the occurrence.
+- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
+- For duplicate-sensitive POSTs, define `Idempotency-Key` acceptance, replay response, conflict behavior, and storage handoff to `architecture-db`.
+- Choose pagination from scenario facts: offset for small/admin use, cursor or keyset for large or changing datasets, and include next-page metadata.
+- Treat response field removal, type changes, required request additions, URL changes, status changes, and error shape changes as breaking unless versioned or migrated.
+- Record OpenAPI impact whenever endpoints, schemas, status responses, auth, pagination, rate limits, or idempotency behavior change.
+- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+ succeeded in 0ms:
+---
+name: implementation-django-ninja
+description: >
+  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+---
+
+# Django Ninja Implementation
+
+This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
+
+## Fallback Source
+
+- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
+- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
+- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
+
+## Routing
+
+- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
+- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
+- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
+- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
+- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
+- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
+- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
+- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+
+## Reference Loading
+
+- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
+- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
+- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
+- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
+
+## Runtime Rules
+
+- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
+- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
+- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
+- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
+- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
+- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
+- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: implementation-django
+description: >
+  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration test acceptance criteria. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, implementation-test for pytest/fixture/test code details, workflow-dddjango-subagents for composite or risky Django/DDD work, and architecture-ddd or architecture-db when domain or DB contracts are undecided.
+---
+
+# Django Implementation
+
+Use this skill to implement already-scoped Django work. Keep simple CRUD simple; do not force DDD, repository, workflow, or subagent structure onto small model, migration, service, or ORM changes.
+
+## Routing
+
+- If domain rules, state transitions, policies, invariants, or bounded context are unclear, use `architecture-ddd` before implementation.
+- If schema, constraint, transaction isolation, locking, or rollout strategy is undecided, use `architecture-db` before writing migrations.
+- If the work is REST API contract design, use `architecture-api`; if it is Django Ninja Router/Schema endpoint implementation, use `implementation-django-ninja`.
+- If the work is templates, static assets, TemplateView page composition, HTMX, or CSRF-aware frontend behavior, use `implementation-django-web`.
+- If the work is pytest fixtures, mocks, factories, API test code, concurrency test mechanics, or coverage strategy, use `implementation-test`; this skill only states Django acceptance criteria unless it is implementing Django-side test hooks.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, or the Django/DDD work is composite or risky across domain, DB, API, implementation, and tests, use `workflow-dddjango-subagents` first.
+
+## Reference Loading
+
+- Read [models-orm.md](references/models-orm.md) for app layout, settings, model fields, validation, managers, QuerySets, forms, views, and signal boundaries.
+- Read [services-selectors.md](references/services-selectors.md) for service layer, selector, application service, repository trade-off, and Django/DDD mapping choices.
+- Read [migrations.md](references/migrations.md) for migration files, `RunPython`, `apps.get_model()`, `sqlmigrate`, backfill, expand/backfill/contract, and index rollout.
+- Read [transactions-performance-security.md](references/transactions-performance-security.md) for `transaction.atomic()`, `on_commit()`, locking, query performance, caching, security, middleware, and Django test acceptance criteria.
+
+## Runtime Rules
+
+- Put business rules in model methods, domain/application services, or domain services; do not scatter core rules across views, forms, schemas, signals, or templates.
+- Use Django model methods and QuerySets directly when the domain is simple. Add services/selectors when one use case spans models, views, transactions, external side effects, or repeated orchestration.
+- Use custom QuerySet methods for chainable read predicates and selectors for larger read use cases.
+- For risky writes, include a `Risky Write Consistency Block` with transaction owner, lock/idempotency strategy, DB constraint, `Idempotency-Key` API coordination when relevant, external side-effect timing, isolation/retry decision, and test or verification plan.
+- Keep migrations small and version controlled. Use historical models in data migrations and split operational rollouts into expand, backfill, and contract steps.
+- Prefer Django and Python conventions already present in the project; do not introduce a repository, UoW, or clean architecture layer unless complexity and testability justify it.
+- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+- Report only verification actually run. If tests, `sqlmigrate`, `check --deploy`, query-count checks, or migration checks were not run, say so.
+
+codex
+요청은 DRF에서 Ninja로 옮길 때의 API 계약 검토라서 `implementation-django-ninja`와 `architecture-api` 기준을 같이 적용하겠습니다. 특히 호환성, status code, error shape, OpenAPI 영향만 좁게 확인합니다.
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-api/references/rest-contracts.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,280p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# REST Contracts
+
+Load this for REST resource design, URL structure, HTTP method choice, status codes, headers, authentication/authorization semantics, content negotiation, and cache contracts.
+
+## REST Shape
+
+- Treat resources as nouns identified by stable URIs.
+- Keep the interface uniform: HTTP method, status code, representation, and headers must carry the contract.
+- Keep requests stateless; every request contains what the server needs to process it.
+- Balance REST purity with practical client workflow needs.
+
+## URL And Resource Design
+
+- Use plural nouns, lowercase kebab-case, and no trailing slash.
+- Do not expose database table names or internal implementation structures in URLs.
+- Use parent-child subresources when the relationship is part of the client workflow, but avoid nesting deeper than three levels.
+- Use query parameters for filtering, sorting, search, sparse fieldsets, and pagination.
+
+## HTTP Methods
+
+- `GET`, `HEAD`, and `OPTIONS` are safe and idempotent.
+- `POST` creates resources or triggers non-idempotent actions.
+- `PUT` replaces a whole resource and should be idempotent.
+- `PATCH` updates part of a resource; confirm whether the patch document itself is idempotent.
+- `DELETE` removes a resource and should be idempotent from the client contract perspective.
+
+## Status Codes
+
+- Use 2xx for successful processing, 3xx for required follow-up action, 4xx for client/request problems, and 5xx for server-side or temporary service failures.
+- `200 OK`: successful read or update with a response body.
+- `201 Created`: successful creation; include `Location` for the new resource when possible.
+- `202 Accepted`: asynchronous or long-running work accepted but not completed.
+- `204 No Content`: successful delete or update with no body.
+- `303 See Other`: redirect to a GET result after POST when applying PRG.
+- `400 Bad Request`: malformed request syntax or shape.
+- `401 Unauthorized`: authentication is missing or invalid.
+- `403 Forbidden`: authenticated principal lacks permission.
+- `404 Not Found`: resource missing or intentionally hidden.
+- `409 Conflict`: duplicate creation or concurrent state conflict.
+- `422 Unprocessable Entity`: syntactically valid but semantically invalid request.
+- `429 Too Many Requests`: rate limit exceeded.
+- `500 Internal Server Error`: unexpected server failure.
+- `503 Service Unavailable`: temporary overload or maintenance; include retry guidance when possible.
+
+## Headers And Representation
+
+- Use `Content-Type` to state representation format.
+- Use `Accept`, `Accept-Language`, and `Accept-Encoding` for content negotiation when the API supports multiple representations.
+- Use `Cache-Control`, `ETag`/`If-None-Match`, or `Last-Modified`/`If-Modified-Since` when caching is part of the contract.
+- Return `304 Not Modified` only when validators show the representation has not changed.
+
+## Auth And Security
+
+- Authentication asks who the caller is; authorization asks what that caller may do.
+- Return `401` for missing or invalid authentication and `403` for authenticated but unauthorized access.
+- For `401`, include `WWW-Authenticate` when the client needs to know the authentication method.
+- Choose the mechanism by client type: API keys for simple server-to-server/internal APIs, OAuth 2.0 for delegated third-party access, and bearer JWTs for stateless service or user-token contracts when expiry and revocation are addressed.
+- Put credentials in `Authorization`, not query parameters.
+- Require HTTPS for APIs that carry credentials, personal data, or sensitive business actions.
+
+ succeeded in 0ms:
+# Problem Details, Idempotency, And OpenAPI
+
+Use this reference for API error responses, status codes, idempotency behavior, compatibility, and OpenAPI effects.
+
+## Status Codes
+
+- Use 200 for successful reads and updates that return a body.
+- Use 201 for created resources and include the new resource location when the contract requires it.
+- Use 202 for accepted asynchronous work.
+- Use 204 for successful deletes or updates with no body.
+- Use 400 for malformed requests, 401 for authentication failure, 403 for authorization failure, 404 for missing or intentionally hidden resources, 409 for conflicts, 422 for semantically invalid input when the contract uses it, and 429 for rate limits.
+- Keep status-code changes compatible with existing clients or version them.
+
+## Problem Details
+
+- Use `application/problem+json` as the response media type for Problem Details errors.
+- Use RFC 9457 Problem Details for API errors unless a legacy compatibility contract explicitly says otherwise.
+- Keep `status` aligned with the HTTP response status.
+- Use `title` for reusable problem type summaries and `detail` for the specific occurrence.
+- Use a stable `type` URI or `about:blank` when no stable type exists.
+- Include `instance` when the specific occurrence has a useful request or problem identifier URI.
+- Add extension fields only when they are documented and safe for clients to ignore.
+
+## Idempotency-Key
+
+- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
+- Store the first request result in durable storage such as DB or Redis according to the service transaction design.
+- Return the stored response for repeated requests with the same key when the request is equivalent.
+- Define conflict behavior for the same key with a different payload.
+- Coordinate key TTL, storage owner, transaction boundary, and concurrency behavior with `implementation-django` and `architecture-db`.
+
+## OpenAPI
+
+- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
+- Check names, required fields, nullable fields, enum values, status responses, error schema, auth requirements, pagination shape, and tags.
+- For migrations from DRF, compare old and new generated schema when possible and document client-visible differences.
+- Do not claim OpenAPI generation or schema diff was run unless it was actually executed.
+
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/router-schema.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Router And Schema
+
+Use this reference for Django Ninja Router, Schema/ModelSchema, endpoint adapter boundaries, and DRF-to-Ninja conversion. This skill is provisional: exact framework syntax must be verified against the project’s installed Django Ninja version and existing code.
+
+## Router Boundary
+
+- Treat a Router operation as an HTTP adapter, not a business-rule owner.
+- Keep Router code limited to request parsing, auth/permission wiring, schema validation, service/usecase invocation, response mapping, and error translation.
+- Keep URL registration explicit and consistent with the project’s existing Ninja API layout.
+- Move state transitions, invariants, transactional writes, complex ORM query construction, and external SDK calls to model/service/usecase code owned by `implementation-django`.
+- If a route needs a domain decision that has not been made, stop and route to `architecture-ddd` or `architecture-api` as appropriate.
+
+## Schema And ModelSchema
+
+- Use request schemas for input shape and response schemas for output shape; do not expose every model field by default.
+- Separate create/update/list/detail schemas when fields, permissions, or performance needs differ.
+- Keep schema validation focused on transport/input shape. Put reusable domain invariants in model/service/DB boundaries.
+- Avoid leaking internal model names or DB structure when the API contract uses a different public language.
+- Treat field additions as generally compatible and field removals, renames, type changes, new required fields, status-code changes, and error-shape changes as breaking unless versioned.
+
+## DRF-To-Ninja Conversion
+
+- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
+- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
+- Replace DRF-specific pagination, permissions, and exception behavior with the project’s Django Ninja equivalents while preserving the public API contract.
+- Compare old and new endpoint URLs, methods, status codes, response fields, error shapes, auth behavior, pagination, and OpenAPI schema.
+- Use DRF references only to understand the legacy source; do not keep DRF as the greenfield standard.
+
+## Endpoint Review Questions
+
+- Is the HTTP contract already decided by `architecture-api`?
+- Is the Router registered in the expected API namespace/version?
+- Is the Router thin enough that business behavior can be tested without HTTP?
+- Are request and response schemas intentionally scoped to public API fields?
+- Are domain/application errors mapped consistently to Problem Details?
+- Are OpenAPI and compatibility impacts visible in the implementation notes?
+
+exec
+/bin/zsh -lc "sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Auth, Pagination, Filtering, And Versioning
+
+Use this reference when implementing Django Ninja authentication/authorization wiring, list endpoints, filtering, sorting, pagination, rate limiting, and versioning.
+
+## Authentication And Authorization
+
+- Authentication answers who the caller is; authorization answers whether the caller can perform the action.
+- Return 401 when authentication is required or invalid; return 403 when the caller is authenticated but lacks permission.
+- Prefer `Authorization` headers for API credentials. Do not put secrets in query parameters.
+- Require HTTPS for API traffic unless the environment is an explicitly local development setup.
+- Keep adapter-level auth checks in the API boundary, but move reusable object/action authorization rules into services or domain policies when multiple entry points need them.
+- For object-level permission checks, avoid loading more data than the endpoint needs; coordinate query shape with selectors/services.
+
+## Filtering, Sorting, And Search
+
+- Keep filtering and sorting parameters part of the public API contract.
+- Use Django Ninja `FilterSchema` or the project’s existing filtering pattern when it improves validation and OpenAPI clarity.
+- Prefer query parameters for filters, sort keys, sparse fieldsets, and search terms.
+- Do not reflect internal DB table names or accidental ORM structure in public parameter names.
+- Validate allowed filters and sort fields. Avoid arbitrary user-controlled ORM field names.
+- Delegate reusable read logic and N+1 optimization to selectors or QuerySet methods from `implementation-django`.
+
+## Pagination
+
+- Choose pagination strategy from the API contract. Use offset for small/admin-like collections and cursor/keyset for large, real-time, or consistency-sensitive lists.
+- Enforce a maximum page size.
+- Return enough metadata for clients to fetch the next page, such as `has_more`, `next_cursor`, or equivalent project contract.
+- For cursor/keyset pagination, use stable indexed ordering, usually timestamp plus ID.
+- If pagination behavior is undecided, route to `architecture-api` before implementation.
+
+## Rate Limiting
+
+- Apply rate limiting before expensive authentication, database, or external work when the project has a rate-limit mechanism.
+- Return 429 with `Retry-After` and rate-limit headers such as limit, remaining, and reset information when the project exposes them.
+- Keep rate-limit policy visible in API documentation/OpenAPI notes when public clients depend on it.
+
+## Versioning And Compatibility
+
+- Follow the project’s chosen versioning strategy; do not mix URL, header, and query strategies without a compatibility reason.
+- Prefer additive changes for existing clients.
+- Use deprecation and migration windows for breaking changes.
+- When converting from DRF, compare version behavior and document any change that can affect clients.
+
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-api/references/pagination-versioning.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Pagination, Versioning, And Limits
+
+Load this for pagination selection, response metadata, versioning strategy, backward compatibility, deprecation, and rate limiting.
+
+## Pagination
+
+- Offset pagination is simple and supports random access, but can degrade on large datasets and can miss/duplicate rows while data changes.
+- Cursor pagination is better for large or changing datasets because it preserves position more reliably.
+- Keyset pagination is efficient when the API can sort by indexed, stable, unique keys.
+
+Choose from scenario facts:
+
+- Small data or admin pages: offset can be acceptable.
+- Real-time feeds, high-volume lists, or changing datasets: prefer cursor.
+- High-performance ordered reads: consider keyset.
+
+Use stable ordering. For cursor/keyset pagination, prefer an immutable timestamp plus ID or another unique indexed ordering key. Encode cursors opaquely, include `has_more` or `next_cursor`, and keep page size bounded, commonly around 100-200 results per page unless the product has a stronger constraint.
+
+## Versioning
+
+- Pick one versioning strategy and apply it consistently.
+- URL path versioning is visible and easy to route, but pollutes resource URLs.
+- Header versioning keeps cleaner URLs, but is harder to inspect manually.
+- Query parameter versioning is visible but can mix awkwardly with filters and caches.
+- A common compromise is major version in the path and minor or date version in headers.
+
+## Compatibility And Deprecation
+
+- Additive response fields and optional request fields are usually non-breaking.
+- Removing fields, renaming fields, changing field types, adding required request fields, changing URLs, changing status codes, or changing error shapes are breaking changes.
+- Prefer additive changes. When breaking change is unavoidable, version it.
+- For deprecation, document the change, send deprecation/sunset signals when the platform supports them, provide migration guidance, and keep a migration window.
+
+## Rate Limiting
+
+- Apply rate limits before expensive authentication, database, or external calls when possible.
+- Return `429 Too Many Requests` with `Retry-After`.
+- Document limit, remaining quota, and reset semantics when exposing rate-limit headers.
+- Choose algorithm by product need: token bucket for controlled bursts, sliding window for smoother precision, fixed window for simple internal APIs, leaky bucket for traffic shaping.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/testclient.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# TestClient And API Verification
+
+Use this reference for Django Ninja API test acceptance criteria and verification reporting. Detailed pytest fixture and test-double mechanics belong to `implementation-test`; TDD workflow belongs to `implementation-tdd`.
+
+## What To Test
+
+- Request schema validation for valid and invalid payloads.
+- Response schema fields and types for list/detail/create/update/delete operations.
+- Status codes and headers for success, validation errors, auth errors, conflicts, rate limits, and async acceptance.
+- Problem Details shape for errors.
+- Authentication and authorization behavior, including 401 vs 403.
+- Pagination and filtering behavior, including maximum page size and stable ordering.
+- Idempotency replay, conflict behavior, and concurrent duplicate request handling for risky POST endpoints.
+- DRF-to-Ninja compatibility: URL, method, field, status, auth, pagination, error, and OpenAPI differences.
+
+## Test Boundaries
+
+- Test business rules at the domain/service layer where possible.
+- Use API tests for HTTP contract, auth/permission wiring, serialization, error mapping, and compatibility.
+- Do not hide domain behavior only inside API tests when faster domain/service tests would express the rule more clearly.
+- Coordinate model, transaction, and migration behavior tests with `implementation-django`.
+
+## Verification Reporting
+
+- Report the exact command run, such as a focused pytest path, TestClient test run, OpenAPI generation command, or schema comparison command.
+- If tests were not run, say `Not run` and state why.
+- Do not claim endpoints, schemas, OpenAPI, or compatibility checks passed without command output or reviewed artifacts.
+- When source is provisional, mention any framework syntax that still needs verification against the installed Django Ninja version.
+
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-api/references/problem-details.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Problem Details
+
+Load this for RFC 9457 error response design, error field semantics, extension fields, and status/error consistency.
+
+## RFC 9457 Contract
+
+Use `application/problem+json` for API errors unless an existing contract requires another format.
+
+Core fields:
+
+- `type`: stable URI identifying the problem type; `about:blank` is the default if omitted.
+- `title`: short summary of the problem type; reuse the same title for the same type.
+- `status`: HTTP status code and must match the actual response.
+- `detail`: occurrence-specific explanation.
+- `instance`: URI identifying this specific occurrence.
+
+## Extension Fields
+
+- Add extension fields only when clients can use them.
+- Document extension fields as part of the problem type.
+- Design clients to ignore extension fields they do not understand.
+
+## Error Mapping
+
+- Keep validation, conflict, permission, not-found, rate-limit, and server errors distinguishable.
+- Use `409` for state conflicts or duplicate creation and `422` for semantically invalid request content.
+- Use one consistent error envelope across the API.
+- Do not expose secrets, stack traces, internal class names, or infrastructure topology in `detail`.
+
+## Output Checklist
+
+For each relevant error, record:
+
+- HTTP status;
+- problem `type`;
+- reusable `title`;
+- occurrence-specific `detail` shape;
+- extension fields;
+- whether the error is retryable;
+- OpenAPI response impact.
+
+exec
+/bin/zsh -lc "sed -n '1,260p' dddjango/skills/architecture-api/references/idempotency-openapi.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Idempotency And OpenAPI
+
+Load this for duplicate-sensitive POST contracts, `Idempotency-Key` behavior, retry semantics, and OpenAPI impact.
+
+## Idempotency-Key
+
+Use `Idempotency-Key` for duplicate-sensitive POST operations such as payments, order creation, reservations, or other actions where retry can create harmful duplicates.
+
+Contract decisions:
+
+- whether the endpoint accepts or requires `Idempotency-Key`;
+- key uniqueness scope, such as caller plus operation or resource owner;
+- replay behavior for the same key and same request;
+- conflict behavior for the same key with different request content;
+- key retention window;
+- storage durability handoff to `architecture-db`;
+- concurrency/race handling handoff to `architecture-db`;
+- test criteria for replay, conflict, and simultaneous duplicate requests.
+
+POST needs this treatment because a client may retry after the server processed the request but the response was lost. GET, PUT, and DELETE already have idempotent method semantics, though their implementation still must preserve the contract.
+
+For browser-like POST workflows where duplicate form resubmission is the main risk, consider POST/Redirect/GET with `303 See Other` to a GET result resource. For API clients that retry unsafe POST requests, prefer `Idempotency-Key`.
+
+## OpenAPI Impact
+
+Record OpenAPI changes whenever the API contract changes:
+
+- path, method, operation ID, tags;
+- request body schema and examples;
+- response schemas by status code;
+- Problem Details error responses;
+- authentication and authorization requirements;
+- pagination parameters and response metadata;
+- rate-limit and retry headers;
+- `Idempotency-Key` header and behavior notes;
+- versioning or deprecation metadata.
+
+Keep OpenAPI aligned with the contract so tests, client SDKs, documentation, and compatibility review all use the same source.
+
+codex
+실제 주문 API 코드가 있는지 확인해서, 있으면 파일 기준으로 말하고 없으면 이 저장소의 공개 가이드 기준으로만 답하겠습니다. 실행은 읽기 전용 검색만 합니다.
+exec
+/bin/zsh -lc "rg -n \"\\b(Order|Orders|order|orders|ViewSet|Serializer|ModelSerializer|rest_framework|DefaultRouter)\\b\" -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"' -g '"'!workspace/develop/evals/runs/**'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+workspace/reference/implementation-test/reference/internal.md:152:    order = db.query(f"SELECT * FROM orders WHERE id={order_id}")
+workspace/reference/implementation-test/reference/internal.md:154:    email_service.send(order.customer_email, "주문 완료")
+workspace/reference/implementation-test/reference/internal.md:164:        order = self.db.get_order(order_id)
+workspace/reference/implementation-test/reference/internal.md:165:        self.email_service.send(order.customer_email, "주문 완료")
+workspace/reference/implementation-test/reference/internal.md:170:    mock_db.get_order.return_value = Order(email="test@test.com")
+workspace/reference/implementation-test/reference/final.md:766:    order = db.query(f"SELECT * FROM orders WHERE id={order_id}")
+workspace/reference/implementation-test/reference/final.md:768:    email_service.send(order.customer_email, "주문 완료")
+workspace/reference/implementation-test/reference/final.md:778:        order = self.db.get_order(order_id)
+workspace/reference/implementation-test/reference/final.md:779:        self.email_service.send(order.customer_email, "주문 완료")
+workspace/reference/implementation-test/reference/final.md:784:    mock_db.get_order.return_value = Order(email="test@test.com")
+workspace/reference/implementation-test/reference/final.md:1215:        model = Order
+workspace/reference/implementation-test/reference/final.md:2083:    assert order.total == 30
+workspace/reference/implementation-test/reference/final.md:2129:    result = service.process(order)
+workspace/reference/implementation-test/reference/final.md:2254:# features/order.feature
+workspace/reference/implementation-test/reference/final.md:2280:@scenario("../features/order.feature", "재고가 있는 상품 주문")
+workspace/reference/implementation-test/reference/final.md:2285:@scenario("../features/order.feature", "재고 부족 시 주문 실패")
+workspace/reference/implementation-test/reference/final.md:2316:        order = service.place_order(cart)
+workspace/reference/implementation-test/reference/final.md:2317:        return {"success": True, "order": order}
+workspace/reference/implementation-test/reference/external.md:919:        model = Order
+workspace/reference/implementation-test/reference/external.md:1840:    assert order.total == 30
+workspace/reference/implementation-test/reference/external.md:1898:    result = service.process(order)
+workspace/reference/implementation-django/reference/final.md:201:class Order(models.Model):
+workspace/reference/implementation-django/reference/final.md:301:        orders/
+workspace/reference/implementation-django/reference/final.md:313:# orders/ -- 주문 관리
+workspace/reference/implementation-django/reference/final.md:321:- 앱 이름은 **간결한 복수형 단어** 사용: `users`, `orders`, `payments`.
+workspace/reference/implementation-django/reference/final.md:390:        order = Order.objects.get(pk=request.POST["order_id"])
+workspace/reference/implementation-django/reference/final.md:391:        if order.total > 100:
+workspace/reference/implementation-django/reference/final.md:392:            order.discount = order.total * 0.1
+workspace/reference/implementation-django/reference/final.md:393:        order.status = "confirmed"
+workspace/reference/implementation-django/reference/final.md:394:        order.save()
+workspace/reference/implementation-django/reference/final.md:395:        send_mail("Order confirmed", ..., [order.user.email])
+workspace/reference/implementation-django/reference/final.md:396:        return redirect("order-detail", pk=order.pk)
+workspace/reference/implementation-django/reference/final.md:399:class Order(models.Model):
+workspace/reference/implementation-django/reference/final.md:411:        send_mail("Order confirmed", ..., [self.user.email])
+workspace/reference/implementation-django/reference/final.md:416:        order = get_object_or_404(Order, pk=pk)
+workspace/reference/implementation-django/reference/final.md:417:        order.confirm()
+workspace/reference/implementation-django/reference/final.md:418:        return redirect("order-detail", pk=order.pk)
+workspace/reference/implementation-django/reference/final.md:465:class Order(models.Model):
+workspace/reference/implementation-django/reference/final.md:469:class ExpensiveOrder(Order):
+workspace/reference/implementation-django/reference/final.md:632:stats = Order.objects.values("status").annotate(count=Count("id"))
+workspace/reference/implementation-django/reference/final.md:756:- Mixin은 **왼쪽에서 오른쪽으로** MRO(Method Resolution Order)가 적용된다.
+workspace/reference/implementation-django/reference/final.md:865:### 8.1 Serializer 설계 [DRF]
+workspace/reference/implementation-django/reference/final.md:868:# 좋은 예: 읽기/쓰기 Serializer 분리
+workspace/reference/implementation-django/reference/final.md:869:class ArticleListSerializer(serializers.ModelSerializer):
+workspace/reference/implementation-django/reference/final.md:877:class ArticleDetailSerializer(serializers.ModelSerializer):
+workspace/reference/implementation-django/reference/final.md:886:class ArticleCreateSerializer(serializers.ModelSerializer):
+workspace/reference/implementation-django/reference/final.md:905:from rest_framework import viewsets, permissions
+workspace/reference/implementation-django/reference/final.md:906:from rest_framework.decorators import action
+workspace/reference/implementation-django/reference/final.md:907:from rest_framework.response import Response
+workspace/reference/implementation-django/reference/final.md:930:from rest_framework.routers import DefaultRouter
+workspace/reference/implementation-django/reference/final.md:932:router = DefaultRouter()
+workspace/reference/implementation-django/reference/final.md:939:- `DefaultRouter`를 사용하면 URL 패턴이 자동 생성된다.
+workspace/reference/implementation-django/reference/final.md:944:from rest_framework.permissions import BasePermission
+workspace/reference/implementation-django/reference/final.md:955:- ViewSet 레벨에서 `permission_classes`로 오버라이드.
+workspace/reference/implementation-django/reference/final.md:963:    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+workspace/reference/implementation-django/reference/final.md:982:    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.AcceptHeaderVersioning",
+workspace/reference/implementation-django/reference/final.md:989:    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+workspace/reference/implementation-django/reference/final.md:1043:@receiver(post_save, sender=Order)
+workspace/reference/implementation-django/reference/final.md:1049:class Order(models.Model):
+workspace/reference/implementation-django/reference/final.md:1058:    order = Order.objects.create(user=user)
+workspace/reference/implementation-django/reference/final.md:1059:    order.add_items(items)
+workspace/reference/implementation-django/reference/final.md:1060:    send_confirmation_email(order)
+workspace/reference/implementation-django/reference/final.md:1061:    return order
+workspace/reference/implementation-django/reference/final.md:1120:            model_name="order",
+workspace/reference/implementation-django/reference/final.md:1569:def order_confirm(*, order: Order) -> Order:
+workspace/reference/implementation-django/reference/final.md:1571:    if order.status != Order.Status.PENDING:
+workspace/reference/implementation-django/reference/final.md:1573:    order.status = Order.Status.CONFIRMED
+workspace/reference/implementation-django/reference/final.md:1574:    order.confirmed_at = timezone.now()
+workspace/reference/implementation-django/reference/final.md:1575:    order.save(update_fields=["status", "confirmed_at"])
+workspace/reference/implementation-django/reference/final.md:1576:    notify_warehouse(order=order)
+workspace/reference/implementation-django/reference/final.md:1577:    return order
+workspace/reference/implementation-django/reference/final.md:1700:    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+workspace/reference/architecture-api/reference/review.md:168:대량 생성/수정/삭제 API 설계 패턴이 없다. 단건 CRUD만 다루고 있다. 실전에서는 `POST /orders/batch`, 부분 성공 처리(207 Multi-Status), 비동기 배치 처리(202 Accepted + polling) 등이 빈번하다.
+workspace/reference/architecture-api/reference/final.md:85:| `/customers/1/orders` | 주문 생성 | 주문 목록 | — | — | — |
+workspace/reference/architecture-api/reference/final.md:97:| 명사 사용 (동사 아님) | `/orders` | `/create-order` |
+workspace/reference/architecture-api/reference/final.md:99:| 케밥 케이스, 소문자 | `/order-items` | `/orderItems`, `/order_items` |
+workspace/reference/architecture-api/reference/final.md:100:| 후행 슬래시 없음 | `/orders` | `/orders/` |
+workspace/reference/architecture-api/reference/final.md:108:GET /customers/5/orders          # 고객 5의 주문 목록
+workspace/reference/architecture-api/reference/final.md:109:GET /customers/5/orders/10       # 고객 5의 주문 10
+workspace/reference/architecture-api/reference/final.md:110:GET /customers/5/orders/10/items # 3단계 — 허용하되 더 깊이는 피함
+workspace/reference/architecture-api/reference/final.md:116:GET /orders?status=shipped&minCost=100      # 필터링
+workspace/reference/architecture-api/reference/final.md:117:GET /orders?sort=-price,name                 # 정렬 (- = DESC)
+workspace/reference/architecture-api/reference/final.md:118:GET /orders?fields=id,name,total             # 필드 선택 (sparse fieldset)
+workspace/reference/architecture-api/reference/final.md:119:GET /orders?limit=25&offset=50               # 페이지네이션
+workspace/reference/architecture-api/reference/external.md:9:- **명사, 동사 아님**: URI는 자원(thing)을 나타낸다. `/orders`이지 `/create-order`가 아니다. 행위는 HTTP 메서드로 표현
+workspace/reference/architecture-api/reference/external.md:11:- **계층적 하위 리소스**: 부모-자식 관계에 슬래시 사용. `/customers/5/orders`. 3단계 이상 깊이는 피한다
+workspace/reference/architecture-api/reference/external.md:13:- **후행 슬래시 없음**: `/orders`가 맞고 `/orders/`는 틀리다
+workspace/reference/architecture-api/reference/external.md:19:GET /orders?minCost=100&status=shipped          # 필터링
+workspace/reference/architecture-api/reference/external.md:20:GET /orders?sort=-price,name                     # 정렬 (- = DESC)
+workspace/reference/architecture-api/reference/external.md:21:GET /orders?fields=id,name                       # 필드 선택
+workspace/reference/architecture-api/reference/external.md:22:GET /orders?limit=25&offset=50                   # 페이지네이션
+workspace/reference/architecture-api/reference/external.md:32:| /customers/1/orders | 고객 1의 주문 생성 | 고객 1의 주문 조회 | 일괄 수정 | 전체 삭제 |
+workspace/reference/architecture-api/reference/external.md:230:    "self": { "href": "/orders/123" },
+workspace/reference/architecture-api/reference/external.md:231:    "next": { "href": "/orders?page=2" },
+workspace/reference/implementation-cleancode/reference/internal.md:507:if order.get_status() == "paid":
+workspace/reference/implementation-cleancode/reference/internal.md:508:    order.set_status("shipped")
+workspace/reference/implementation-cleancode/reference/internal.md:509:    warehouse.remove_stock(order.get_items())
+workspace/reference/implementation-cleancode/reference/internal.md:512:order.ship(warehouse)  # 주문 객체가 자율적으로 처리
+workspace/reference/implementation-cleancode/reference/internal.md:935:class Order:
+workspace/reference/implementation-cleancode/reference/internal.md:943:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:493:def process_order(order):
+workspace/reference/implementation-cleancode/reference/final.md:494:    if order.status == "new":
+workspace/reference/implementation-cleancode/reference/final.md:495:        if order.payment_method == "credit":
+workspace/reference/implementation-cleancode/reference/final.md:496:            if order.amount > 1000:
+workspace/reference/implementation-cleancode/reference/final.md:497:                if order.customer.is_vip:
+workspace/reference/implementation-cleancode/reference/final.md:508:    def process(self, order):
+workspace/reference/implementation-cleancode/reference/final.md:509:        handler = self._status_handlers.get(order.status)
+workspace/reference/implementation-cleancode/reference/final.md:511:            raise ValueError(f"Unknown status: {order.status}")
+workspace/reference/implementation-cleancode/reference/final.md:512:        return handler(order)
+workspace/reference/implementation-cleancode/reference/final.md:969:if order.get_status() == "paid":
+workspace/reference/implementation-cleancode/reference/final.md:970:    order.set_status("shipped")
+workspace/reference/implementation-cleancode/reference/final.md:971:    warehouse.remove_stock(order.get_items())
+workspace/reference/implementation-cleancode/reference/final.md:974:order.ship(warehouse)  # 주문 객체가 자율적으로 처리
+workspace/reference/implementation-cleancode/reference/final.md:1406:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:1417:    def on_order_completed(self, order: "Order") -> None: ...
+workspace/reference/implementation-cleancode/reference/final.md:1419:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:1432:    def on_order_completed(self, order: Order) -> None:
+workspace/reference/implementation-cleancode/reference/final.md:1433:        print(f"확인 메일 발송: {order}")
+workspace/reference/implementation-cleancode/reference/final.md:1436:    def on_order_completed(self, order: Order) -> None:
+workspace/reference/implementation-cleancode/reference/final.md:1437:        print(f"재고 갱신: {order}")
+workspace/reference/implementation-cleancode/reference/final.md:1440:order = Order()
+workspace/reference/implementation-cleancode/reference/final.md:1441:order.add_observer(EmailNotifier())
+workspace/reference/implementation-cleancode/reference/final.md:1442:order.add_observer(StockUpdater())
+workspace/reference/implementation-cleancode/reference/final.md:1443:order.complete()
+workspace/reference/implementation-cleancode/reference/final.md:1890:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:1898:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:2108:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:2124:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:2169:    def print_details(self, order):
+workspace/reference/implementation-cleancode/reference/final.md:2170:        print(f"Customer: {order.customer.name}")
+workspace/reference/implementation-cleancode/reference/final.md:2171:        print(f"Address: {order.customer.address.street}")
+workspace/reference/implementation-cleancode/reference/final.md:2172:        print(f"Total: {order.total()}")
+workspace/reference/implementation-cleancode/reference/final.md:2173:        print(f"Tax: {order.total() * order.tax_rate}")
+workspace/reference/implementation-cleancode/reference/final.md:2176:class Order:
+workspace/reference/implementation-cleancode/reference/final.md:2198:    for order in self.orders:
+workspace/reference/implementation-cleancode/reference/final.md:2199:        outstanding += order.amount
+workspace/reference/implementation-cleancode/reference/final.md:2216:    return sum(order.amount for order in self.orders)
+workspace/reference/implementation-cleancode/reference/final.md:2373:    def place_order(self, order: Order) -> None:
+workspace/reference/implementation-cleancode/reference/final.md:2388:    def place_order(self, order: Order) -> None:
+workspace/reference/implementation-cleancode/reference/final.md:2390:            to=order.customer_email,
+workspace/reference/implementation-cleancode/reference/final.md:2391:            subject="Order Confirmation",
+workspace/reference/implementation-cleancode/reference/final.md:2392:            body=f"Order {order.id} placed.",
+workspace/reference/implementation-cleancode/reference/final.md:2561:        raise ValueError("Order data must contain 'amount'")
+workspace/reference/implementation-cleancode/reference/external.md:545:class Order:
+workspace/reference/implementation-cleancode/reference/external.md:565:class Order:
+workspace/reference/implementation-cleancode/reference/external.md:610:    def print_details(self, order):
+workspace/reference/implementation-cleancode/reference/external.md:612:        print(f"Customer: {order.customer.name}")
+workspace/reference/implementation-cleancode/reference/external.md:613:        print(f"Address: {order.customer.address.street}")
+workspace/reference/implementation-cleancode/reference/external.md:614:        print(f"Total: {order.total()}")
+workspace/reference/implementation-cleancode/reference/external.md:615:        print(f"Tax: {order.total() * order.tax_rate}")
+workspace/reference/implementation-cleancode/reference/external.md:618:class Order:
+workspace/reference/implementation-cleancode/reference/external.md:645:    for order in self.orders:
+workspace/reference/implementation-cleancode/reference/external.md:646:        outstanding += order.amount
+workspace/reference/implementation-cleancode/reference/external.md:664:    return sum(order.amount for order in self.orders)
+workspace/reference/implementation-cleancode/reference/external.md:1102:def process_order(order):
+workspace/reference/implementation-cleancode/reference/external.md:1103:    if order.status == "new":
+workspace/reference/implementation-cleancode/reference/external.md:1104:        if order.payment_method == "credit":
+workspace/reference/implementation-cleancode/reference/external.md:1105:            if order.amount > 1000:
+workspace/reference/implementation-cleancode/reference/external.md:1106:                if order.customer.is_vip:
+workspace/reference/implementation-cleancode/reference/external.md:1112:        elif order.payment_method == "debit":
+workspace/reference/implementation-cleancode/reference/external.md:1114:        elif order.payment_method == "cash":
+workspace/reference/implementation-cleancode/reference/external.md:1116:    elif order.status == "pending":
+workspace/reference/implementation-cleancode/reference/external.md:1128:    def process(self, order):
+workspace/reference/implementation-cleancode/reference/external.md:1129:        handler = self._status_handlers.get(order.status)
+workspace/reference/implementation-cleancode/reference/external.md:1131:            raise ValueError(f"Unknown status: {order.status}")
+workspace/reference/implementation-cleancode/reference/external.md:1132:        return handler(order)
+workspace/reference/implementation-cleancode/reference/external.md:1367:        raise ValueError("Order data must contain 'amount'")
+workspace/reference/implementation-cleancode/reference/external.md:1472:    def place_order(self, order: Order) -> None:
+workspace/reference/implementation-cleancode/reference/external.md:1488:    def place_order(self, order: Order) -> None:
+workspace/reference/implementation-cleancode/reference/external.md:1491:            to=order.customer_email,
+workspace/reference/implementation-cleancode/reference/external.md:1492:            subject="Order Confirmation",
+workspace/reference/implementation-cleancode/reference/external.md:1493:            body=f"Order {order.id} placed.",
+workspace/reference/architecture-ddd/reference/review.md:62:**Internal 근거**: [A]의 `change_shipping_info` 예시에서 `order.change_shipping_info(new_info)` 후 `member.change_address(new_info.address)`를 같은 응용 서비스 메서드 내에서 수행한다. "애그리거트에서 다른 애그리거트를 직접 수정하지 말고 응용 서비스에서 각각 수정하도록 구현한다"는 가이드를 제시한다.
+workspace/docs/skill-contracts.md:175:- DRF ViewSet/Serializer/APIView를 신규 표준으로 만들지 않는다.
+workspace/reference/implementation-tdd/reference/external.md:32:class Order:
+workspace/reference/implementation-tdd/reference/external.md:45:    order = Order()
+workspace/reference/implementation-tdd/reference/external.md:46:    order.add_item("사과")
+workspace/reference/implementation-tdd/reference/external.md:47:    order.add_item("바나나")
+workspace/reference/implementation-tdd/reference/external.md:50:    assert order.item_count() == 2
+workspace/reference/implementation-tdd/reference/external.md:51:    assert "사과" in order.items
+workspace/reference/implementation-tdd/reference/external.md:61:        order = {"user_id": user_id, "items": items}
+workspace/reference/implementation-tdd/reference/external.md:62:        self.repository.save(order)
+workspace/reference/implementation-tdd/reference/external.md:344:    orders = real_db.query("SELECT * FROM orders WHERE user_id = 'user-1'")
+workspace/reference/implementation-tdd/reference/external.md:345:    assert len(orders) == 1
+workspace/reference/implementation-tdd/reference/external.md:359:        "INSERT INTO orders (user_id, items) VALUES (?, ?)",
+workspace/reference/implementation-tdd/reference/external.md:602:    txn_id = service.checkout("order-1", 50000, "buyer@test.com")
+workspace/reference/implementation-tdd/reference/external.md:606:    mock_receipt.send_receipt.assert_called_once_with("order-1", "buyer@test.com")
+workspace/reference/implementation-tdd/reference/external.md:616:    def process(self, order):
+workspace/reference/implementation-tdd/reference/external.md:617:        if order.get_status() == "pending":
+workspace/reference/implementation-tdd/reference/external.md:618:            if order.get_total() > 0:
+workspace/reference/implementation-tdd/reference/external.md:619:                order.set_status("confirmed")
+workspace/reference/implementation-tdd/reference/external.md:620:                self.notifier.send(order.get_email(), "확인됨")
+workspace/reference/implementation-tdd/reference/external.md:625:    def process(self, order):
+workspace/reference/implementation-tdd/reference/external.md:626:        order.confirm(self.notifier)  # 객체에게 "확인하라"고 말한다
+workspace/reference/implementation-tdd/reference/external.md:629:class Order:
+workspace/reference/implementation-tdd/reference/external.md:751:    def process(self, order):
+workspace/reference/implementation-tdd/reference/external.md:753:        self._validate_inventory(order)  # Sprout: 새 기능을 별도 메서드로
+workspace/reference/implementation-tdd/reference/external.md:756:    def _validate_inventory(self, order):
+workspace/reference/implementation-tdd/reference/external.md:758:        for item in order.items:
+workspace/reference/implementation-tdd/reference/external.md:766:    order = Order(items=["사과"])
+workspace/reference/implementation-tdd/reference/external.md:767:    processor._validate_inventory(order)  # 예외 없이 통과
+workspace/reference/implementation-tdd/reference/external.md:769:    order_out = Order(items=["두리안"])
+workspace/reference/implementation-tdd/reference/external.md:1134:# features/order.feature
+workspace/reference/implementation-tdd/reference/external.md:1160:@scenario("../features/order.feature", "재고가 있는 상품 주문")
+workspace/reference/implementation-tdd/reference/external.md:1165:@scenario("../features/order.feature", "재고 부족 시 주문 실패")
+workspace/reference/implementation-tdd/reference/external.md:1196:        order = service.place_order(cart)
+workspace/reference/implementation-tdd/reference/external.md:1197:        return {"success": True, "order": order}
+workspace/docs/ddd-implementation-standard.md:146:- 컬렉션은 `list[Order]`, `dict[str, int]`처럼 내부 타입을 드러낸다.
+workspace/reference/implementation-tdd/reference/final.md:87:class Order:
+workspace/reference/implementation-tdd/reference/final.md:100:    order = Order()
+workspace/reference/implementation-tdd/reference/final.md:101:    order.add_item("사과")
+workspace/reference/implementation-tdd/reference/final.md:102:    order.add_item("바나나")
+workspace/reference/implementation-tdd/reference/final.md:105:    assert order.item_count() == 2
+workspace/reference/implementation-tdd/reference/final.md:106:    assert "사과" in order.items
+workspace/reference/implementation-tdd/reference/final.md:116:        order = {"user_id": user_id, "items": items}
+workspace/reference/implementation-tdd/reference/final.md:117:        self.repository.save(order)
+workspace/reference/implementation-tdd/reference/final.md:263:    orders = real_db.query("SELECT * FROM orders WHERE user_id = 'user-1'")
+workspace/reference/implementation-tdd/reference/final.md:264:    assert len(orders) == 1
+workspace/reference/implementation-tdd/reference/final.md:278:        "INSERT INTO orders (user_id, items) VALUES (?, ?)",
+workspace/reference/implementation-tdd/reference/final.md:710:    txn_id = service.checkout("order-1", 50000, "buyer@test.com")
+workspace/reference/implementation-tdd/reference/final.md:714:    mock_receipt.send_receipt.assert_called_once_with("order-1", "buyer@test.com")
+workspace/reference/implementation-tdd/reference/final.md:724:    def process(self, order):
+workspace/reference/implementation-tdd/reference/final.md:725:        if order.get_status() == "pending":
+workspace/reference/implementation-tdd/reference/final.md:726:            if order.get_total() > 0:
+workspace/reference/implementation-tdd/reference/final.md:727:                order.set_status("confirmed")
+workspace/reference/implementation-tdd/reference/final.md:728:                self.notifier.send(order.get_email(), "확인됨")
+workspace/reference/implementation-tdd/reference/final.md:733:    def process(self, order):
+workspace/reference/implementation-tdd/reference/final.md:734:        order.confirm(self.notifier)  # 객체에게 "확인하라"고 말한다
+workspace/reference/implementation-tdd/reference/final.md:737:class Order:
+workspace/reference/architecture-ddd/reference/internal.md:106:class Order:
+workspace/reference/architecture-ddd/reference/internal.md:387:class Order:
+workspace/reference/architecture-ddd/reference/internal.md:479:    def find_by_id(self, order_id: str) -> Optional[Order]:
+workspace/reference/architecture-ddd/reference/internal.md:483:    def save(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/internal.md:487:    def delete(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/internal.md:495:    def find_by_id(self, order_id: str) -> Optional[Order]:
+workspace/reference/architecture-ddd/reference/internal.md:502:    def save(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/internal.md:503:        # Order 애그리거트에 속한 모든 객체를 함께 저장
+workspace/reference/architecture-ddd/reference/internal.md:504:        orm_order = self._to_orm(order)
+workspace/reference/architecture-ddd/reference/internal.md:507:    def delete(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/internal.md:508:        OrderModel.objects.filter(id=order.id).delete()
+workspace/reference/architecture-ddd/reference/internal.md:510:    def _to_domain(self, orm_obj) -> Order:
+workspace/reference/architecture-ddd/reference/internal.md:514:    def _to_orm(self, domain_obj: Order):
+workspace/reference/architecture-ddd/reference/internal.md:585:class OrderWithDiscount(Order):
+workspace/reference/architecture-ddd/reference/internal.md:692:        order = Order(
+workspace/reference/architecture-ddd/reference/internal.md:699:        self._order_repo.save(order)
+workspace/reference/architecture-ddd/reference/internal.md:700:        return order.id
+workspace/reference/architecture-ddd/reference/internal.md:704:        order = self._order_repo.find_by_id(order_id)
+workspace/reference/architecture-ddd/reference/internal.md:705:        if order is None:
+workspace/reference/architecture-ddd/reference/internal.md:707:        order.cancel()  # 도메인 로직은 Order 애그리거트에 위임
+workspace/reference/architecture-ddd/reference/internal.md:718:        order = self._order_repo.find_by_id(order_id)
+workspace/reference/architecture-ddd/reference/internal.md:720:        order.change_shipping_info(new_info)
+workspace/reference/architecture-ddd/reference/internal.md:723:            member = self._member_repo.find_by_id(order.orderer_id)
+workspace/reference/architecture-ddd/reference/internal.md:839:    def save(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/internal.md:843:    def find_by_id(self, order_id: str) -> Optional[Order]:
+workspace/reference/architecture-ddd/reference/internal.md:869:        order = Order(orderer_id=cmd.orderer_id, order_lines=[], ...)
+workspace/reference/architecture-ddd/reference/internal.md:870:        self._persistence.save(order)
+workspace/reference/architecture-ddd/reference/internal.md:871:        self._notification.send_order_confirmation(order.id, "user@example.com")
+workspace/reference/architecture-ddd/reference/internal.md:872:        return order.id
+workspace/reference/architecture-ddd/reference/internal.md:894:    def save(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/internal.md:898:    def find_by_id(self, order_id: str) -> Optional[Order]:
+workspace/reference/architecture-ddd/reference/internal.md:947:    def save(self, order: OrderCommandModel) -> None: ...
+workspace/reference/architecture-ddd/reference/internal.md:1051:order/                          # 바운디드 컨텍스트 (또는 Django App)
+workspace/reference/architecture-ddd/reference/internal.md:1059:    order.py                    #   - 엔티티, 값 객체, 애그리거트
+workspace/reference/architecture-ddd/reference/internal.md:1069:com.mycompany.order/                   # 바운디드 컨텍스트
+workspace/docs/skill-authoring.md:33:| `implementation-django-ninja` | Provisional until dedicated source reference exists; Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient. Use fallback source until finalized. Convert DRF greenfield requests to Ninja. | Django Ninja, Router, Schema, DRF-to-Ninja, API test | DRF ViewSet/Serializer/APIView 신규 구현 금지 |
+workspace/reference/implementation-python/reference/internal.md:308:    for name in order
+workspace/reference/architecture-db/reference/final.md:239:CREATE INDEX idx_status_created ON orders (status, created_at);
+workspace/reference/architecture-db/reference/final.md:242:CREATE INDEX idx_created_status ON orders (created_at, status);
+workspace/reference/architecture-ddd/reference/external.md:260:| 진화하는 질서 (Evolving Order) | 대규모 구조를 처음부터 완벽히 설계하지 말고, 시스템과 함께 진화시켜라 |
+workspace/reference/architecture-ddd/reference/external.md:365:class Order:
+workspace/reference/architecture-ddd/reference/external.md:444:    product: "Product"       # Order 로딩 시 Customer, Product도 함께 로딩
+workspace/reference/architecture-ddd/reference/external.md:474:class Order:
+workspace/reference/architecture-ddd/reference/external.md:975:        order = Order(id=order_id, customer_id=cmd.customer_id)
+workspace/reference/architecture-ddd/reference/external.md:977:            order.add_line(OrderLine(**item))
+workspace/reference/architecture-ddd/reference/external.md:978:        self._repo.save(order)
+workspace/reference/architecture-ddd/reference/external.md:982:        order = self._repo.find_by_id(cmd.order_id)
+workspace/reference/architecture-ddd/reference/external.md:983:        order.cancel(cmd.reason)
+workspace/reference/architecture-ddd/reference/external.md:984:        self._repo.save(order)
+workspace/reference/architecture-ddd/reference/external.md:1969:    def place_order(self, order: OrderAnemic) -> None:
+workspace/reference/architecture-ddd/reference/external.md:1970:        if not order.items:
+workspace/reference/architecture-ddd/reference/external.md:1972:        order.total = sum(i["price"] * i["qty"] for i in order.items)
+workspace/reference/architecture-ddd/reference/external.md:1973:        order.status = "placed"
+workspace/reference/architecture-ddd/reference/external.md:1976:    def cancel_order(self, order: OrderAnemic) -> None:
+workspace/reference/architecture-ddd/reference/external.md:1977:        if order.status not in ("placed", "preparing"):
+workspace/reference/architecture-ddd/reference/external.md:1979:        order.status = "cancelled"
+workspace/reference/architecture-ddd/reference/final.md:203:class Order:
+workspace/reference/architecture-ddd/reference/final.md:592:    def place_order(self, order: OrderAnemic) -> None:
+workspace/reference/architecture-ddd/reference/final.md:593:        if not order.items:
+workspace/reference/architecture-ddd/reference/final.md:595:        order.total = sum(i["price"] * i["qty"] for i in order.items)
+workspace/reference/architecture-ddd/reference/final.md:596:        order.status = "placed"
+workspace/reference/architecture-ddd/reference/final.md:732:class Order:
+workspace/reference/architecture-ddd/reference/final.md:841:    def find_by_id(self, order_id: str) -> Optional[Order]:
+workspace/reference/architecture-ddd/reference/final.md:845:    def save(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/final.md:849:    def delete(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/final.md:857:    def find_by_id(self, order_id: str) -> Optional[Order]:
+workspace/reference/architecture-ddd/reference/final.md:864:    def save(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/final.md:865:        orm_order = self._to_orm(order)
+workspace/reference/architecture-ddd/reference/final.md:868:    def delete(self, order: Order) -> None:
+workspace/reference/architecture-ddd/reference/final.md:869:        OrderModel.objects.filter(id=order.id).delete()
+workspace/reference/architecture-ddd/reference/final.md:871:    def _to_domain(self, orm_obj) -> Order:
+workspace/reference/architecture-ddd/reference/final.md:875:    def _to_orm(self, domain_obj: Order):
+workspace/reference/architecture-ddd/reference/final.md:952:        order = self._order_repo.find_by_id(order_id)
+workspace/reference/architecture-ddd/reference/final.md:954:            order.order_lines, coupons, grade
+workspace/reference/architecture-ddd/reference/final.md:956:        order.apply_discount(discount)  # 애그리거트는 Money 값만 받음 (서비스 모름)
+workspace/reference/architecture-ddd/reference/final.md:957:        self._order_repo.save(order)
+workspace/reference/architecture-ddd/reference/final.md:1041:        order = Order(
+workspace/reference/architecture-ddd/reference/final.md:1048:        self._order_repo.save(order)
+workspace/reference/architecture-ddd/reference/final.md:1049:        return order.id
+workspace/reference/architecture-ddd/reference/final.md:1053:        order = self._order_repo.find_by_id(order_id)
+workspace/reference/architecture-ddd/reference/final.md:1054:        if order is None:
+workspace/reference/architecture-ddd/reference/final.md:1056:        order.cancel()  # 도메인 로직은 Order 애그리거트에 위임
+workspace/reference/architecture-ddd/reference/final.md:1500:| 진화하는 질서 (Evolving Order) | 대규모 구조를 처음부터 완벽히 설계하지 말고, 시스템과 함께 진화시켜라 |
+workspace/reference/implementation-python/reference/final.md:616:    for name in order
+workspace/docs/validation-plan.md:54:- DRF Serializer/ViewSet 신규 구현
+workspace/docs/validation-plan.md:84:기존 DRF ViewSet 주문 API를 Django Ninja로 전환해줘. 기존 클라이언트 호환성도 확인해줘.
+workspace/docs/validation-plan.md:89:- 기존 DRF ViewSet/Serializer API를 Django Ninja Router/Schema로 전환한다.
+workspace/docs/validation-plan.md:105:Order 모델이 너무 커졌는지 dddjango 기준으로 리뷰해줘. 어떤 로직을 남기고 어떤 로직을 service/usecase로 뺄지 판단해줘.
+workspace/docs/validation-plan.md:225:Order 모델의 memo 필드를 note로 바꾸는 작은 Django 수정만 해줘. subagent 계획은 필요 없어.
+dddjango/skills/workflow-dddjango-subagents/SKILL.md:9:Use this skill to coordinate complex dddjango work across domain, architecture, DB, API, Django, test, and review responsibilities. Real subagents may be used only when actually available and explicitly requested or clearly authorized by the user; otherwise keep the same role order as a sequential fallback.
+dddjango/skills/workflow-dddjango-subagents/SKILL.md:59:- Preserve the role order in sequential fallback: Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration.
+dddjango/skills/implementation-test/references/pytest-fixtures.md:43:- Use `pytest-randomly` to expose order dependence and record the seed when investigating failures.
+dddjango/skills/architecture-api/SKILL.md:18:- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+dddjango/skills/implementation-django-ninja/SKILL.md:4:  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+dddjango/skills/implementation-django-ninja/SKILL.md:19:- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+dddjango/skills/implementation-django-ninja/SKILL.md:26:- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+workspace/develop/plan.md:192:| `implementation-tdd` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, API/DB routing, risky/composite workflow routing, Source Coverage Crosswalk heading tracking, validation scenario heading coverage, test isolation guidance, mock-role/TDD boundary wording, and stale review claims; independent source re-review by Kierkegaard returned 0 findings | positive, composite boundary, and simple negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/tdd-smoke` for coupon-policy TDD planning, risky order API workflow/TDD boundary, and README typo negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:193:| `implementation-test` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, broad workflow responsibility wording, validation scenario heading coverage, `spec.md` child-heading coverage, Risky Write Consistency Block coverage, stale review claims, and import-order negative boundary; independent source re-review and rubric review by Carver returned 0 findings | positive, boundary/combined, and import-order negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/test-smoke` for Django Ninja API contract tests, risky DDD/API/test workflow, and import-order negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and rubric-private material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, coverage, mutation testing, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:194:| `architecture-ddd` | completed | blocking 0, major 0, minor 0 after fixing Korean trigger coverage, risky/composite workflow routing, `spec.md` child-heading coverage, validation scenario heading coverage, Risky Write DDD handoff, metadata specificity, combined-work implementation boundary, and stale completion claims | positive, composite/risky boundary, and simple naming negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/ddd-smoke` for order DDD design, workflow handoff, and category-code naming behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:197:| `architecture-api` | completed | blocking 0, major 0, minor 0 after fixing direct API contract vs workflow routing, Korean trigger coverage for auth/header/compatibility language, `spec.md` child-heading coverage, validation scenario coverage, ddd-implementation-standard heading coverage, metadata specificity, API contract acceptance-criteria output, and stale review claims; independent source re-review returned 0 findings | positive API contract, coordinated workflow boundary, and simple Django negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/api-smoke` for order API contract, workflow handoff, and simple memo-field negative behavior | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, OpenAPI generation, TestClient, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+workspace/develop/plan.md:198:| `workflow-dddjango-subagents` | completed | blocking 0, major 0, minor 0 after fixing stale review/rubric claims, source crosswalk heading precision, Korean trigger coverage for role-map/handoff/integration/check terms, `spec.md` child-heading coverage, validation scenario coverage, metadata wording, review-focused findings-first output order, canonical role responsibility coverage, handoff field pinning, and visible Risky Write Consistency Block output; independent source re-review returned 0 findings | positive composite/risky workflow, review-focused boundary, false-subagent claim, and simple Django negative prompts executed with `codex debug prompt-input`; isolated read-only `codex exec` samples were run in `/private/tmp/workflow-smoke` for composite order workflow, review findings-first workflow, false-claim correction, and simple memo-field negative behavior, with positive re-run after Risky Write block wording fix | blocking 0, major 0, minor 0; source-backed runtime issues reflected only and evaluation-only material not copied | Cache synced to `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10`; source/cache diff clean. Pytest, Django checks, migrations, OpenAPI generation, and app tests were not run because these were skill evaluation prompts/read-only smoke checks, not a code implementation. |
+dddjango/skills/implementation-django/SKILL.md:35:- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+workspace/develop/skill_goal_instructions.md:236:- 신규 greenfield API에 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`를 표준으로 권장하지 않는다.
+workspace/develop/rubric_goal_instructions.md:123:- 신규 표준으로 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`를 권장하지 않는다.
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md:7:## Selection Order
+dddjango/skills/implementation-django-ninja/references/router-schema.md:23:- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:24:- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
+dddjango/skills/implementation-python/SKILL.md:32:- Prefer `T | None`, `A | B`, and built-in generics such as `list[Order]` when the project target supports them.
+dddjango/skills/architecture-api/references/idempotency-openapi.md:7:Use `Idempotency-Key` for duplicate-sensitive POST operations such as payments, order creation, reservations, or other actions where retry can create harmful duplicates.
+dddjango/skills/architecture-db/SKILL.md:35:- Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md:26:- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md:11:- risky domain nouns such as order, payment, inventory, reservation, refund, permission, or ledger appear together with state transitions, transactions, schema, API contracts, or tests.
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md:42:If subagents are unavailable or not authorized, keep the role order and execute the reasoning sequentially:
+workspace/develop/source-crosswalks/architecture-db.md:32:| `## 구현 순서` | included | plan order | This follows `architecture-implementation-patterns`. |
+workspace/develop/source-crosswalks/architecture-db.md:146:| `## 4. 역정규화` | included | `schema-modeling.md`, `rollout-constraints.md` | Denormalization trade-offs and performance order included. |
+workspace/develop/source-crosswalks/architecture-db.md:148:| `## 5. 성능 최적화 순서` | included | `rollout-constraints.md` | Slow queries, indexes, cache, denormalization order included. |
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:7:Resolve conflicts in this order:
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:29:For risky writes such as order, payment, inventory, reservation, refund, permission, or ledger, ensure the relevant roles provide:
+workspace/develop/source-crosswalks/implementation-test.md:32:| `## 구현 순서` | included | plan order | This follows `implementation-tdd`. |
+workspace/develop/source-crosswalks/implementation-test.md:157:| `### 6.4 pytest-randomly` | included | `pytest-fixtures.md`, `coverage-mutation.md` | Order dependence and seed reporting included. |
+workspace/develop/source-crosswalks/implementation-test.md:225:- Runtime checks completed with positive, boundary/combined, and negative prompts through `codex debug prompt-input`; isolated read-only `codex exec` smoke ran in `/private/tmp/test-smoke` for Django Ninja API contract tests, risky DDD/API/test workflow, and import-order negative behavior. Validator, leakage check, cache sync, and source/cache diff completed for this skill.
+dddjango/skills/architecture-ddd/references/strategic-design.md:5:## Strategic Order
+workspace/develop/source-crosswalks/architecture-ddd.md:32:| `## 구현 순서` | included | plan order | This follows `implementation-test`. |
+workspace/develop/source-crosswalks/architecture-ddd.md:88:| `skill-hierarchy.md` `## Skill Hierarchy` | included | `SKILL.md` Routing | DDD is a higher-order architecture skill before DB/API/implementation when rules are unclear. |
+workspace/develop/source-crosswalks/architecture-ddd.md:108:| `## 2. 대표 시나리오` | merged | `SKILL.md`, references | Order API and coupon policy scenarios need DDD decisions before implementation/test. |
+workspace/develop/source-crosswalks/architecture-ddd.md:116:| `validation-plan.md` `### 주문 생성 API` | included | `SKILL.md`, `tactical-patterns.md`, `domain-events.md` | Order creation needs use case, invariant, aggregate/consistency boundary, event timing, and handoff decisions before DB/API/test implementation. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:36:| `## 구현 순서` | included | plan order | This follows `architecture-ddd`. |
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md:122:| `validation-plan.md` `### 주문 생성 API` | merged | `SKILL.md`, `outbox-acl.md`, `repository-uow.md` | Order creation can need service layer, transaction owner, outbox, and idempotency storage decisions before DB/API/test details route away. |
+dddjango/skills/implementation-django-web/references/templateview-htmx.md:36:- Respect Django form validation order: field cleaning, field-specific `clean_<fieldname>()`, then form-wide `clean()`.
+workspace/develop/source-crosswalks/implementation-django-web.md:33:| `## 구현 순서` | included | plan order | This follows `implementation-django-ninja` and precedes `implementation-python`. |
+workspace/develop/source-crosswalks/implementation-django-web.md:102:| `## 4. Sequential Fallback` | delegated-to-other-skill | `workflow-dddjango-subagents` | Sequential role order belongs to workflow skill. |
+workspace/develop/source-crosswalks/implementation-django-web.md:151:| `### 7.1 폼 유효성 검증 순서` | included | `templateview-htmx.md` | Field cleaning, field-specific clean method, and form-wide clean order included. |
+workspace/develop/source-crosswalks/implementation-django-web.md:178:- Runtime behavior checks: read-only `codex exec` positive prompt used `implementation-django-web` and produced a TemplateView/template/static/HTMX/CSRF plan; boundary prompt used web, Django, and test references and separated service/HTMX/render-test responsibilities; negative REST API prompt rejected template-owned order creation logic and answered as API contract/service separation rather than web/template work.
+workspace/develop/source-crosswalks/implementation-django.md:140:| `### 5.4 annotate()와 aggregate()` | included | `models-orm.md` | Order sensitivity and alias included. |
+workspace/develop/source-crosswalks/implementation-django.md:152:| `### 8.1 Serializer 설계` | delegated-to-other-skill | `implementation-django-ninja` | Not new API standard. |
+dddjango/skills/architecture-db/references/transactions-locking.md:17:- Serialization anomaly: concurrent result cannot match any serial order.
+dddjango/skills/architecture-db/references/transactions-locking.md:36:For order, payment, inventory, reservation, refund, permission, ledger, or similar risky writes, include a `Risky Write Consistency Block` and record:
+dddjango/skills/implementation-django/references/models-orm.md:8:- Keep apps aligned to cohesive domain concepts such as `orders`, `payments`, or `users`. Reconsider an app that cannot be described in one sentence or creates circular dependencies.
+dddjango/skills/implementation-django/references/models-orm.md:43:- Treat `annotate()` and `filter()` order as meaningful. Use `alias()` when a calculated expression is needed only for filtering or ordering.
+dddjango/skills/implementation-tdd/references/test-list.md:11:- Keep tests independent: they must not depend on execution order, shared mutable state, or data leaked from earlier tests.
+dddjango/skills/implementation-tdd/references/test-list.md:16:- Keep final test code in Arrange-Act-Assert order.
+workspace/develop/source-crosswalks/implementation-python.md:32:| `## 구현 순서` | included | plan order | This follows `implementation-django-web`. |
+dddjango/skills/architecture-db/references/rollout-constraints.md:16:## Performance Order
+workspace/develop/source-crosswalks/architecture-api.md:32:| `## 구현 순서` | included | plan order | This follows `architecture-db`. |
+workspace/develop/source-crosswalks/implementation-tdd.md:32:| `## 구현 순서` | included | plan order | This follows `implementation-cleancode`. |
+workspace/develop/source-crosswalks/implementation-tdd.md:142:| `### 7.1 테스트 격리` | included | `test-list.md` | Independent tests, execution-order independence, and shared-state removal included. |
+workspace/develop/source-crosswalks/implementation-tdd.md:177:- 2026-05-10 runtime checks completed: `codex debug prompt-input` positive/boundary/negative metadata exposure, isolated read-only `codex exec` positive coupon-policy TDD planning, composite order API workflow/TDD boundary, and README typo negative behavior. Validator, leakage grep, cache sync, and source/cache diff passed; `workspace/develop/plan.md` was updated.
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:31:| `## 구현 순서` | included | plan order | This follows `architecture-api`. |
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:87:| `ddd-implementation-standard.md` `## 1. 판단 순서` | included | `delegation-rules.md`, `integration-checklist.md` | Domain-first order reflected. |
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:88:| `## 2. 하위 도메인별 구현 강도` / `## 3. 바운디드 컨텍스트와 언어` | delegated-to-other-skill | `architecture-ddd` via `role-map.md` | Domain Agent owns details; workflow ensures order. |
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:103:| `validation-plan.md` `### 주문 생성 API` | included | `SKILL.md`, `role-map.md`, `handoff-contract.md`, `integration-checklist.md` | Composite order API work requires role map, sequential fallback, handoff, integration checklist, Risky Write Consistency Block, and no false test/subagent claim. |
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:122:| `## 4. Sequential Fallback` | included | `delegation-rules.md`, `SKILL.md` | Fallback order included. |
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:124:| `## 6. 통합 우선순위` | included | `integration-checklist.md` | Conflict priority order included. |
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:134:- Runtime positive smoke then exposed one remaining source-backed issue: risky order creation output included the consistency decisions but did not visibly title them as `Risky Write Consistency Block`. `SKILL.md` was updated to require a visible section or table for risky writes.
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md:135:- Runtime checks completed: `codex debug prompt-input` exposed updated workflow metadata for positive, review-boundary, false-claim, and simple negative prompts. Isolated read-only `codex exec` samples in `/private/tmp/workflow-smoke` covered composite order workflow, review findings-first workflow, false subagent claim correction, and simple memo-field negative behavior. The positive re-run produced `## Role Map`, `## Sequential Fallback`, `## Handoff Contract`, `## Integration Checklist`, all required Handoff fields, and a visible `### Risky Write Consistency Block`; it also reported actual subagent use and did not claim unrun tests.
+dddjango/skills/implementation-python/references/dataclasses-enums.md:7:- Use `Enum` or `StrEnum` for meaningful finite states such as order status, payment state, or permission level.
+workspace/develop/source-crosswalks/implementation-django-ninja.md:39:| `## 한국어 사용자 기준` | included | `SKILL.md` description/routing | Korean/mixed triggers include Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, and DRF ViewSet/APIView/Serializer를 Ninja로 전환. |
+workspace/develop/source-crosswalks/implementation-django-ninja.md:168:| `### 8.1 Serializer 설계` | merged | `router-schema.md` | Converted to request/response schema split; not DRF standard. |
+dddjango/skills/architecture-db/references/constraints-indexes.md:3:Load this for relational constraints, B+Tree index trade-offs, composite index order, covering indexes, partial indexes, and write-cost decisions.
+dddjango/skills/architecture-db/references/constraints-indexes.md:25:- Order columns by the query shapes the index must serve.
+dddjango/skills/architecture-db/references/constraints-indexes.md:42:- columns and order;
+dddjango/skills/implementation-python/references/typing.md:9:- Use built-in collection generics such as `list[Order]`, `dict[str, int]`, and `tuple[str, ...]`.
+workspace/develop/source-crosswalks/implementation-cleancode.md:32:| `## 구현 순서` | included | plan order | This follows `implementation-python`. |
+workspace/develop/evals/cases/plugin/public/case-007.md:6:Order 모델의 memo 필드를 note로 rename하는 작은 변경만 하면 돼. dddjango 기준으로 과하게 하지 말고 필요한 작업만 알려줘.
+workspace/develop/evals/cases/plugin/public/case-003.md:24:Order 모델이 너무 커졌는지 리뷰하고 어떤 로직을 model method에 남길지, service/usecase로 뺄지 판단해줘.
+workspace/develop/evals/cases/plugin/public/case-013.md:6:기존 DRF ViewSet/Serializer로 된 주문 API를 Django Ninja로 옮기고 싶어. 기존 클라이언트 호환성, status code, error response, OpenAPI 차이를 같이 봐줘.
+
+codex
+검색 결과상 이 저장소는 실제 주문 앱 코드보다 플러그인/레퍼런스 문서가 중심입니다. 방금 넓은 검색 출력에 개발 계획 문서 일부가 섞였지만, 답변에는 사용하지 않고 공개 case와 `dddjango/skills` 공개 문서만 근거로 삼겠습니다.
+exec
+/bin/zsh -lc "rg --files -g '*.py' -g '"'!workspace/develop/**'"' -g '"'!workspace/reference/**'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+workspace/scripts/validate_skill_docs.py
+workspace/scripts/run_plugin_eval.py
+
+exec
+/bin/zsh -lc "rg -n \"\\b(Order|Orders|order|orders|ViewSet|Serializer|ModelSerializer|rest_framework|DefaultRouter)\\b\" dddjango workspace/docs workspace/scripts -g '"'!workspace/develop/**'"' -g '"'!workspace/reference/**'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+workspace/docs/skill-contracts.md:175:- DRF ViewSet/Serializer/APIView를 신규 표준으로 만들지 않는다.
+workspace/docs/validation-plan.md:54:- DRF Serializer/ViewSet 신규 구현
+workspace/docs/validation-plan.md:84:기존 DRF ViewSet 주문 API를 Django Ninja로 전환해줘. 기존 클라이언트 호환성도 확인해줘.
+workspace/docs/validation-plan.md:89:- 기존 DRF ViewSet/Serializer API를 Django Ninja Router/Schema로 전환한다.
+workspace/docs/validation-plan.md:105:Order 모델이 너무 커졌는지 dddjango 기준으로 리뷰해줘. 어떤 로직을 남기고 어떤 로직을 service/usecase로 뺄지 판단해줘.
+workspace/docs/validation-plan.md:225:Order 모델의 memo 필드를 note로 바꾸는 작은 Django 수정만 해줘. subagent 계획은 필요 없어.
+workspace/docs/skill-authoring.md:33:| `implementation-django-ninja` | Provisional until dedicated source reference exists; Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient. Use fallback source until finalized. Convert DRF greenfield requests to Ninja. | Django Ninja, Router, Schema, DRF-to-Ninja, API test | DRF ViewSet/Serializer/APIView 신규 구현 금지 |
+workspace/docs/ddd-implementation-standard.md:146:- 컬렉션은 `list[Order]`, `dict[str, int]`처럼 내부 타입을 드러낸다.
+dddjango/skills/implementation-test/references/pytest-fixtures.md:43:- Use `pytest-randomly` to expose order dependence and record the seed when investigating failures.
+dddjango/skills/implementation-django/SKILL.md:35:- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md:7:## Selection Order
+dddjango/skills/implementation-django-web/references/templateview-htmx.md:36:- Respect Django form validation order: field cleaning, field-specific `clean_<fieldname>()`, then form-wide `clean()`.
+dddjango/skills/implementation-django-ninja/SKILL.md:4:  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+dddjango/skills/implementation-django-ninja/SKILL.md:19:- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+dddjango/skills/implementation-django-ninja/SKILL.md:26:- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+dddjango/skills/implementation-python/SKILL.md:32:- Prefer `T | None`, `A | B`, and built-in generics such as `list[Order]` when the project target supports them.
+dddjango/skills/implementation-django/references/models-orm.md:8:- Keep apps aligned to cohesive domain concepts such as `orders`, `payments`, or `users`. Reconsider an app that cannot be described in one sentence or creates circular dependencies.
+dddjango/skills/implementation-django/references/models-orm.md:43:- Treat `annotate()` and `filter()` order as meaningful. Use `alias()` when a calculated expression is needed only for filtering or ordering.
+dddjango/skills/architecture-api/SKILL.md:18:- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:23:- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
+dddjango/skills/implementation-django-ninja/references/router-schema.md:24:- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md:26:- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
+dddjango/skills/implementation-python/references/typing.md:9:- Use built-in collection generics such as `list[Order]`, `dict[str, int]`, and `tuple[str, ...]`.
+dddjango/skills/implementation-python/references/dataclasses-enums.md:7:- Use `Enum` or `StrEnum` for meaningful finite states such as order status, payment state, or permission level.
+dddjango/skills/architecture-api/references/idempotency-openapi.md:7:Use `Idempotency-Key` for duplicate-sensitive POST operations such as payments, order creation, reservations, or other actions where retry can create harmful duplicates.
+dddjango/skills/architecture-db/SKILL.md:35:- Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
+dddjango/skills/workflow-dddjango-subagents/SKILL.md:9:Use this skill to coordinate complex dddjango work across domain, architecture, DB, API, Django, test, and review responsibilities. Real subagents may be used only when actually available and explicitly requested or clearly authorized by the user; otherwise keep the same role order as a sequential fallback.
+dddjango/skills/workflow-dddjango-subagents/SKILL.md:59:- Preserve the role order in sequential fallback: Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration.
+dddjango/skills/architecture-db/references/transactions-locking.md:17:- Serialization anomaly: concurrent result cannot match any serial order.
+dddjango/skills/architecture-db/references/transactions-locking.md:36:For order, payment, inventory, reservation, refund, permission, ledger, or similar risky writes, include a `Risky Write Consistency Block` and record:
+dddjango/skills/architecture-ddd/references/strategic-design.md:5:## Strategic Order
+dddjango/skills/architecture-db/references/rollout-constraints.md:16:## Performance Order
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md:11:- risky domain nouns such as order, payment, inventory, reservation, refund, permission, or ledger appear together with state transitions, transactions, schema, API contracts, or tests.
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md:42:If subagents are unavailable or not authorized, keep the role order and execute the reasoning sequentially:
+dddjango/skills/architecture-db/references/constraints-indexes.md:3:Load this for relational constraints, B+Tree index trade-offs, composite index order, covering indexes, partial indexes, and write-cost decisions.
+dddjango/skills/architecture-db/references/constraints-indexes.md:25:- Order columns by the query shapes the index must serve.
+dddjango/skills/architecture-db/references/constraints-indexes.md:42:- columns and order;
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:7:Resolve conflicts in this order:
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md:29:For risky writes such as order, payment, inventory, reservation, refund, permission, or ledger, ensure the relevant roles provide:
+dddjango/skills/implementation-tdd/references/test-list.md:11:- Keep tests independent: they must not depend on execution order, shared mutable state, or data leaked from earlier tests.
+dddjango/skills/implementation-tdd/references/test-list.md:16:- Keep final test code in Arrange-Act-Assert order.
+
+codex
+**Raw Answer**
+
+실제 주문 API 구현 파일은 이 저장소에 없어서 코드 기준 diff는 못 봤고, 공개 `dddjango` 가이드 기준으로 DRF → Django Ninja 이전 체크리스트를 정리합니다.
+
+DRF `ViewSet/Serializer`는 Ninja에서 명시적인 `Router` operation과 request/response `Schema`로 나누는 게 맞습니다. Router에는 요청 파싱, 인증/인가 연결, 서비스 호출, 응답 매핑, 오류 변환만 두고 주문 생성/상태 전이/재고/결제 같은 규칙은 서비스나 도메인 쪽에 남기세요.
+
+호환성에서 먼저 고정할 것:
+- 기존 URL, method, trailing slash, versioning 전략
+- 응답 field 이름/type/nullability/decimal/date 포맷
+- list pagination envelope와 query parameter
+- filter/sort/search parameter 이름
+- 인증 실패 `401`과 권한 실패 `403` 구분
+- 기존 클라이언트가 의존하는 DRF error shape
+
+권장 status code 기준:
+- `GET /orders`: `200`
+- `GET /orders/{id}`: `200`, 없거나 숨김이면 `404`
+- `POST /orders`: `201` + 가능하면 `Location`
+- 비동기 주문 생성이면 `202`
+- `PATCH/PUT /orders/{id}`: body 반환 시 `200`, 반환 없으면 `204`
+- 삭제/취소가 body 없으면 `204`
+- malformed request는 `400`
+- 의미상 유효하지 않은 주문 요청은 계약에 따라 `422`
+- 중복 주문, 상태 충돌, idempotency payload 불일치는 `409`
+- rate limit은 `429`
+
+Error response는 같은 API version 안에서는 기존 DRF shape를 깨지 않는 게 우선입니다. 새 버전으로 분리할 수 있다면 RFC 9457 Problem Details를 표준으로 두고 `application/problem+json`, `type`, `title`, `status`, `detail`, 필요 시 `instance`와 문서화된 extension field를 쓰세요. DRF의 `{field: ["..."]}`, `non_field_errors`, `detail` 형태와 Ninja/Pydantic validation error 형태는 달라질 수 있으므로 exception handler에서 명시적으로 매핑해야 합니다.
+
+주문 생성은 재시도 중복 위험이 높으니 `Idempotency-Key`를 지원하거나 요구하는 계약을 정하세요. 같은 key+같은 payload는 저장된 첫 응답을 replay하고, 같은 key+다른 payload는 `409`로 두는 방식이 안전합니다. 저장 위치, TTL, 동시성 처리는 DB/트랜잭션 설계와 같이 결정해야 합니다.
+
+OpenAPI 차이는 반드시 diff 대상입니다:
+- path/method/operationId/tag
+- request schema와 response schema 분리
+- status별 response body
+- Problem Details 또는 legacy error schema
+- auth requirement
+- pagination/filter/sort params
+- `Idempotency-Key` header
+- enum/nullable/required field 차이
+
+**Commands Actually Run**
+
+```sh
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*findings*' -g '!**/*report*'
+sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-013.md
+sed -n '1,240p' dddjango/skills/implementation-django-ninja/SKILL.md
+sed -n '1,220p' dddjango/skills/architecture-api/SKILL.md
+sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md
+sed -n '1,260p' dddjango/skills/implementation-django-ninja/references/router-schema.md
+sed -n '1,280p' dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+sed -n '1,240p' dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+sed -n '1,260p' dddjango/skills/architecture-api/references/rest-contracts.md
+sed -n '1,260p' dddjango/skills/architecture-api/references/problem-details.md
+sed -n '1,260p' dddjango/skills/architecture-api/references/pagination-versioning.md
+sed -n '1,260p' dddjango/skills/architecture-api/references/idempotency-openapi.md
+sed -n '1,220p' dddjango/skills/implementation-django-ninja/references/testclient.md
+rg -n "\b(Order|Orders|order|orders|ViewSet|Serializer|ModelSerializer|rest_framework|DefaultRouter)\b" -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/runs/**'
+rg --files -g '*.py' -g '!workspace/develop/**' -g '!workspace/reference/**'
+rg -n "\b(Order|Orders|order|orders|ViewSet|Serializer|ModelSerializer|rest_framework|DefaultRouter)\b" dddjango workspace/docs workspace/scripts -g '!workspace/develop/**' -g '!workspace/reference/**'
+```
+
+**Not Run**
+
+- No file modifications: requested public eval only and sandbox is read-only.
+- No pytest/TestClient checks: no target Django order API implementation/config was present.
+- No OpenAPI generation or schema diff: no runnable app/schema artifacts were available.
+- No private evaluator files, private cases, prior run reports, or prior findings were intentionally read.
+- Serena: skipped; no Serena MCP tool was available and this was a read-only eval response.
+tokens used
+45,198

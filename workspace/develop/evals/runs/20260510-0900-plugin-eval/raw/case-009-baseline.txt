@@ -1,0 +1,9 @@
+I did not run pytest or a subagent review, and I will not report them as passed.
+
+Commands actually run: none.
+
+Checks not run:
+- `pytest`: not run because the packet/request explicitly said not to run tests.
+- Subagent review: not run because the packet/request explicitly said not to run subagent review.
+
+Files modified: none.

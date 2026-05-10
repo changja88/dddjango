@@ -1,0 +1,82 @@
+기존 DRF 주문 API를 Django Ninja로 옮길 때는 “같은 URL과 같은 계약을 유지하는 어댑터 교체”로 보는 게 안전합니다. 먼저 기존 `ViewSet/Serializer`의 외부 계약을 표로 고정한 뒤 Ninja `Router/Schema`가 그 계약을 그대로 재현하는지 확인하세요.
+
+**마이그레이션 체크포인트**
+
+| 항목 | 확인할 것 |
+|---|---|
+| URL/메서드 | 기존 `/orders/`, `/orders/{id}/`, custom action URL 유지 여부 |
+| status code | `list/detail/create/update/delete/action`별 기존 응답 코드와 Ninja 응답 코드 일치 |
+| 응답 필드 | 필드명, nullable, enum 값, datetime 포맷, nested object 구조 |
+| 요청 검증 | DRF `Serializer` validation error shape와 Ninja/Pydantic validation error shape 차이 |
+| 인증/권한 | DRF permission class, authentication class, object permission 동작 보존 |
+| pagination | DRF pagination의 `count/next/previous/results` 형태 유지 여부 |
+| filter/sort | 기존 query param 이름, 기본 정렬, 빈 결과 동작 |
+| error response | 기존 클라이언트가 DRF error shape에 의존하면 호환 레이어 필요 |
+| OpenAPI | operationId, path param 타입, request/response schema, error responses 명시 차이 |
+
+권장 구조는 `Router`를 얇게 두고, 주문 생성/취소/조회 같은 비즈니스 규칙은 기존 service/usecase 계층으로 빼는 방식입니다. DRF `Serializer`가 하던 역할은 Ninja `Schema`로 나누되, 기존 클라이언트 호환이 중요하면 응답 스키마 이름과 필드 구조를 먼저 고정해야 합니다.
+
+```python
+router = Router(tags=["orders"])
+
+@router.get("/orders/{order_id}", response={200: OrderOut, 404: ProblemDetail})
+def get_order(request, order_id: int):
+    try:
+        order = order_service.get_order(user=request.user, order_id=order_id)
+    except OrderNotFound as exc:
+        return 404, problem_detail(
+            status=404,
+            title="Order not found",
+            detail=str(exc),
+        )
+    return OrderOut.from_domain(order)
+```
+
+error response는 둘 중 하나를 선택해야 합니다.
+
+1. 기존 DRF 호환 유지: `{"field": ["message"]}` 또는 `{"detail": "..."}` 형태를 유지합니다. 기존 앱/프론트가 깨질 가능성이 가장 낮습니다.
+2. 새 표준 도입: RFC 9457 Problem Details 형태로 `type/title/status/detail/instance`를 씁니다. 단, 기존 클라이언트에는 breaking change라 버전 분리나 호환 기간이 필요합니다.
+
+status code는 최소한 아래를 계약 테스트로 고정하는 게 좋습니다.
+
+```text
+GET /orders/              -> 200
+GET /orders/{id}          -> 200, 404
+POST /orders/             -> 201, Location header 여부 확인
+PATCH /orders/{id}        -> 200 또는 204, 기존 DRF 동작과 일치
+DELETE /orders/{id}       -> 204 또는 기존 동작과 일치
+validation error          -> 기존 400 유지 여부 또는 422 전환 여부 명시
+permission denied         -> 403
+unauthenticated           -> 401
+conflict/cancel failure   -> 409 권장, 기존 동작 있으면 우선 유지
+```
+
+OpenAPI는 DRF에서 Ninja로 바뀌면 schema 생성 방식이 달라지므로, 기존 문서와 새 문서를 비교해야 합니다. 특히 `requestBody`, `responses`, pagination schema, validation error schema, auth security scheme, operationId가 클라이언트 SDK 생성에 영향을 줍니다.
+
+실제 전환 순서는 이렇게 잡겠습니다.
+
+1. 기존 DRF API의 URL, status code, request/response/error 샘플을 golden contract로 캡처
+2. Ninja `Schema`와 `Router` 작성
+3. DRF error 또는 Problem Details 중 하나로 error adapter 고정
+4. 기존 클라이언트 호환 테스트 작성
+5. OpenAPI JSON diff 확인
+6. 같은 endpoint를 교체하거나 `/v2`로 병행 운영 결정
+
+Commands actually run:
+
+```bash
+pwd -P
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+```
+
+Checks not run:
+
+```text
+pytest/TestClient: not run because no concrete order API files or test target were provided.
+OpenAPI generation/diff: not run because no project API entrypoint or existing schema file was identified.
+DRF-to-Ninja code migration: not run because the packet requested analysis only and explicitly said not to modify files.
+Repository source inspection: not run because the public packet was sufficient for a contract-level answer.
+```
+
+Serena: skipped because this was an advisory eval with no symbol/reference tracing or code modification.

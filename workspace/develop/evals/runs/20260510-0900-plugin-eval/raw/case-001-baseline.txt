@@ -1,0 +1,42 @@
+**결론**
+파일 구조와 manifest 기준으로는 `dddjango` 플러그인이 Codex local marketplace 구조에서 발견될 수 있습니다.
+
+근거:
+- `.agents/plugins/marketplace.json` 존재
+- marketplace에 `name: dddjango`, `source.source: local`, `source.path: ./plugins/dddjango`, `policy.installation: AVAILABLE`
+- `plugins/dddjango -> ../dddjango` symlink 존재
+- `dddjango/.codex-plugin/plugin.json` 존재
+- plugin manifest에 `name: dddjango`, `version: 0.1.10`, `skills: ./skills/`
+- `plugins/dddjango/skills/*/SKILL.md` 12개 확인
+
+**Commands Actually Run**
+```sh
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/prior*' -g '!**/*prior*'
+find . -maxdepth 4 \( -path './workspace/develop/rubrics' -o -path './workspace/develop/evals/cases/plugin/private' -o -path './workspace/develop/evals/runs' \) -prune -o -print
+rg --hidden --files -g '.codex-plugin/plugin.json' -g '.agents/plugins/marketplace.json' -g 'plugin.json' -g 'marketplace.json' -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!workspace/develop/evals/runs/**'
+find dddjango -maxdepth 3 -type f -print
+jq . .agents/plugins/marketplace.json
+jq . dddjango/.codex-plugin/plugin.json
+ls -la .agents .agents/plugins dddjango dddjango/.codex-plugin plugins
+find dddjango -maxdepth 2 -type d -print
+jq -e '.plugins[] | select(.name=="dddjango" and .source.source=="local" and .source.path=="./plugins/dddjango" and .policy.installation=="AVAILABLE")' .agents/plugins/marketplace.json
+jq -e '.name=="dddjango" and .skills=="./skills/" and .interface.displayName=="dddjango" and (.interface.capabilities | index("Read") != null) and (.interface.capabilities | index("Write") != null)' dddjango/.codex-plugin/plugin.json
+readlink plugins/dddjango
+find plugins/dddjango -maxdepth 2 \( -path 'plugins/dddjango/.codex-plugin/plugin.json' -o -path 'plugins/dddjango/skills' \) -print
+test -f plugins/dddjango/.codex-plugin/plugin.json
+test -d plugins/dddjango/skills
+find -L plugins/dddjango/skills -mindepth 2 -maxdepth 2 -name SKILL.md -print
+```
+
+참고: 첫 `rg --files`는 prior run 파일명을 일부 나열했지만, 해당 파일 내용은 읽지 않았고 판단에 사용하지 않았습니다.
+
+**Not Run**
+- 실제 Codex 설치: 실행하지 않음.
+- cache sync: 실행하지 않음.
+- Codex runtime marketplace discovery: 실행하지 않음.
+- private evaluator, rubrics, prior run report 내용 확인: 금지되어 실행하지 않음.
+- 파일 수정: 없음.
+
+Serena: 단순 manifest/파일 구조 확인이라 사용하지 않았습니다.

@@ -1,0 +1,66 @@
+**요약**
+
+`workspace/develop/source-crosswalks` 기준으로 총 반영 상태는 다음과 같습니다.
+
+| 상태 | 건수 | 의미 |
+|---|---:|---|
+| included | 971 | source heading이 `SKILL.md`, runtime reference, metadata, 검증/라우팅 규칙에 직접 반영됨 |
+| merged | 186 | 여러 source heading을 하나의 runtime 규칙/참조 섹션으로 압축 반영 |
+| delegated-to-other-skill | 318 | 해당 skill이 직접 소유하지 않고 DDD/DB/API/Django/Test/Workflow 등 다른 skill로 위임 |
+| omitted | 59 | 목차, 참고문헌, goal template, 비런타임 배경/설치 목록 등 runtime 동작이 아닌 항목 |
+| source-gap | 1 | 명시적 source gap |
+
+**Skill별 상태 수**
+
+| skill | included | merged | delegated | omitted | source-gap |
+|---|---:|---:|---:|---:|---:|
+| architecture-api | 88 | 11 | 32 | 5 | 0 |
+| architecture-db | 82 | 10 | 28 | 5 | 0 |
+| architecture-ddd | 82 | 18 | 29 | 5 | 0 |
+| architecture-implementation-patterns | 74 | 16 | 21 | 1 | 1 |
+| implementation-cleancode | 77 | 16 | 30 | 4 | 0 |
+| implementation-django | 91 | 25 | 35 | 8 | 0 |
+| implementation-django-ninja | 74 | 27 | 29 | 6 | 0 |
+| implementation-django-web | 64 | 16 | 31 | 3 | 0 |
+| implementation-python | 51 | 19 | 28 | 9 | 0 |
+| implementation-tdd | 81 | 10 | 31 | 4 | 0 |
+| implementation-test | 131 | 16 | 21 | 6 | 0 |
+| workflow-dddjango-subagents | 76 | 2 | 3 | 3 | 0 |
+
+**Source Gap**
+
+명시적 `source-gap`은 1건입니다: [architecture-implementation-patterns.md](/Users/hyun/Desktop/dddjango/workspace/develop/source-crosswalks/architecture-implementation-patterns.md:161)의 `implementation-python/final.md ## 21. Repository / Unit of Work`. 이유는 dedicated implementation-pattern reference가 아직 없어서 provisional fallback 상태를 유지한다는 것입니다.
+
+추가로 crosswalk상 `Source status: provisional`인 skill은 `architecture-implementation-patterns`, `implementation-django-ninja`, `implementation-django-web`입니다. 다만 `implementation-django-ninja`와 `implementation-django-web`은 명시적 `source-gap` status row가 아니라 `allow-provisional-with-fallback` 및 `Reference Gap` included로 처리되어 있습니다.
+
+**반영 방식**
+
+대부분의 핵심 source heading은 각 runtime skill의 `SKILL.md` 라우팅, `Runtime Rules`, `Reference Loading`, 그리고 4개 runtime reference 파일로 옮겨졌습니다. 경계가 겹치는 항목은 직접 복제하지 않고 다른 skill 위임으로 정리되어 있고, 목차/참고문헌/goal template/일반 배경 설명은 주로 생략되었습니다.
+
+**Commands Actually Run**
+
+```bash
+pwd -P
+git rev-parse --show-toplevel
+find workspace/develop/source-crosswalks -maxdepth 2 -type f | sort
+find workspace -maxdepth 4 \( -path 'workspace/develop/rubrics' -o -path 'workspace/develop/evals/cases/plugin/private' \) -prune -o -name 'SKILL.md' -print | sort
+find . -maxdepth 3 -type d | sort
+find workspace -maxdepth 6 \( -path 'workspace/develop/rubrics' -o -path 'workspace/develop/evals/cases/plugin/private' \) -prune -o -type f \( -name 'SKILL.md' -o -name '*.md' -o -name '*.json' \) -print | sort
+sed -n '1,220p' workspace/develop/source-crosswalks/architecture-api.md
+sed -n '1,220p' dddjango/skills/architecture-api/SKILL.md
+find dddjango/skills -maxdepth 2 -name 'SKILL.md' -print | sort
+rg -n "\| (included|merged|delegated-to-other-skill|omitted|source-gap|gap) \|" workspace/develop/source-crosswalks
+awk ... workspace/develop/source-crosswalks/*.md   # failed: BSD awk lacks asorti
+perl ... workspace/develop/source-crosswalks/*.md  # status counts
+rg -n "\| .* \| source-gap \|" workspace/develop/source-crosswalks
+rg -n "\| .* \| omitted \|" workspace/develop/source-crosswalks
+find dddjango/skills -maxdepth 2 -type f | sort
+find dddjango/skills -maxdepth 3 -type f | sort
+rg -n "^(name:|description:|# |## Routing|## Reference Loading|## Runtime Rules|## Runtime Protocol|## Output|## Runtime Responsibilities|## Execution)" dddjango/skills/*/SKILL.md
+rg -n "^- Runtime references:|^- Source status:|^- Runtime target:" workspace/develop/source-crosswalks/*.md
+rg -n "Source status|Reference Gap|source-gap|provisional|dedicated source" workspace/develop/source-crosswalks/architecture-implementation-patterns.md workspace/develop/source-crosswalks/implementation-django-ninja.md workspace/develop/source-crosswalks/implementation-django-web.md
+```
+
+**Not Run**
+
+테스트, validator, private evaluator, rubrics, prior run report 내용 읽기는 실행하지 않았습니다. 이 작업은 read-only 요약이고, packet에서 private/prior 자료 사용을 금지했기 때문입니다. 파일은 수정하지 않았습니다. Serena: skipped; code symbol/reference tracing이 필요한 변경 작업이 아니었습니다.

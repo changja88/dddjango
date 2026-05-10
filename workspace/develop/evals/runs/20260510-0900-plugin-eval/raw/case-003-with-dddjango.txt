@@ -1,0 +1,43 @@
+Read-only execution completed. I did not write artifact files because the packet also says “Do not modify files” and the sandbox is read-only, so the raw artifacts are inline only. I did not read the forbidden private/prior paths.
+
+**Inline Artifacts**
+| ID | Raw artifact |
+|---|---|
+| 003-01 | 주문 상태 컬럼 migration: expand 단계에서 nullable `status` 추가, historical model 기반 batched `RunPython` backfill, 검증 쿼리로 null 잔여 확인, contract 단계에서 `NOT NULL` 적용, 별도 migration으로 index 추가. 대용량이면 index는 DB별 online/concurrent 전략을 분리하고 rollback은 상태 기본값/역방향 backfill 가능성까지 문서화. |
+| 003-02 | Django Ninja 주문 목록 API: `GET /api/orders`; auth는 인증 사용자와 tenant/customer ownership 필터를 분리. pagination은 변경 많은 목록이면 cursor/keyset, 소규모 admin이면 offset. filtering은 `status`, `created_from/to`, `customer_id`, `payment_status`; response는 `OrderListItemSchema`와 page metadata, 에러는 Problem Details 기준. |
+| 003-03 | TemplateView 주문 상세: `OrderDetailView(LoginRequiredMixin, TemplateView)`는 permission/context orchestration만 담당하고 조회는 selector/service로 분리. `templates/orders/detail.html`, `_status.html`, `_actions.html`; `static/orders/detail.css/js`; HTMX action endpoint는 CSRF 토큰 헤더와 partial template 응답을 명확히 둔다. |
+| 003-04 | 상태 전이 리팩터링: `StrEnum OrderStatus`, `@dataclass(frozen=True, slots=True) StatusTransition`, `dict[OrderStatus, frozenset[OrderStatus]]` 전이표, `can_transition()`/`transition_to()`에 명시 타입을 둔다. 잘못된 전이는 domain exception으로 처리하고 문자열 literal 분산을 제거. |
+| 003-05 | Fat Order 리뷰 기준: 단일 aggregate invariant인 상태 전이, cancel 가능 여부, line total 계산처럼 Order 내부 상태만 필요한 규칙은 model method에 남긴다. 결제 승인, 쿠폰 적용, 재고 예약, 외부 API, transaction orchestration, 여러 aggregate 조합은 service/usecase로 분리. 복잡한 read는 selector/queryset. |
+| 003-06 | 쿠폰 TDD: 테스트 목록부터 작성. 최소 주문 금액은 just below/equal/above, 중복 사용 금지는 같은 order/customer 정책별 케이스, 만료일은 `expires_at == now` 경계 의미를 먼저 고정. fake clock fixture를 쓰고 Red-Green-Refactor로 `CouponPolicy`/domain service를 최소 구현. 테스트는 실행하지 않음. |
+| 003-07 | Django Ninja contract tests: pytest fixtures는 authenticated `api_client`, `user`, `OrderFactory`; factory는 상태/생성일 trait 제공. 검증은 200 schema, pagination metadata, filter 결과, 401/403, Problem Details shape. test double은 외부 auth/payment 같은 boundary에만 사용하고 DB 조회 자체는 mock하지 않음. |
+| 003-08 | 주문 DDD: Ordering bounded context를 중심으로 Payment/Inventory/Fulfillment와 분리. `Order` aggregate root, `OrderLine`, value object `Money`, `Quantity`, `Address`. invariants: 빈 주문 금지, 금액 합계 일관성, 허용 상태 전이, 출고 후 취소 금지. events: `OrderCreated`, `OrderPaid`, `OrderCancelled`, `OrderReadyForFulfillment`. |
+| 003-09 | 결제 승인 architecture 판단: 외부 PG 연동이 있으면 `PaymentGateway` port/adapter와 ACL은 적용 가치가 높다. repository/UoW는 Django ORM transaction만으로 충분하면 보류하고, 여러 aggregate와 저장소 교체 필요가 있으면 도입. 승인 후 fulfillment/email/inventory side effect가 있으면 outbox 또는 `on_commit` handoff 필요. |
+| 003-10 | 재고 차감/예약 확정 동시성: `transaction.atomic()` 안에서 SKU 정렬 후 `select_for_update()`로 lock 순서 고정. DB constraint로 재고/예약 수량 non-negative, reservation uniqueness, idempotency key uniqueness 보장. idempotency table에 request hash/status/response 저장. 외부 side effect는 commit 후 outbox. 동시성 테스트 필요. |
+| 003-11 | 주문 생성 REST API: `POST /api/orders`; 성공은 `201 Created` + `Location`; 비동기 접수면 `202`. `Idempotency-Key`는 중복 POST에 요구/권장하고 동일 payload replay는 기존 응답, 다른 payload는 `409`. 오류는 RFC 9457 Problem Details: validation `422`, auth `401/403`, conflict `409`, rate limit `429`. OpenAPI에 header, schemas, responses 명시. |
+| 003-12 | `## Role Map`: Coordinator, Domain, Architecture, DB, API, Django, Test, Review. `## Sequential Fallback`: Domain 설계 -> pattern 결정 -> schema/transaction -> REST contract -> Django service/router/migration -> pytest/TDD -> review. `## Handoff Contract`: Scope 주문 생성, Inputs public request, Files may edit는 구현 시 해당 app/tests, must not edit private eval files. `## Integration Checklist`: Risky Write Consistency Block 포함: transaction owner `CreateOrderUseCase`, inventory lock/idempotency/API key/outbox/test criteria를 각 role에 배정. |
+
+**Commands Run**
+```bash
+pwd -P
+git rev-parse --show-toplevel
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-web/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-python/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-cleancode/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-ddd/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-implementation-patterns/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-tdd/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+```
+
+`git rev-parse --show-toplevel` emitted macOS cache warnings under the read-only sandbox, then returned `/Users/hyun/Desktop/dddjango`.
+
+**Checks Not Run**
+No tests, linters, migrations, browser checks, eval harness, or artifact file writes were run. Reasons: the packet required no file modification, the sandbox is read-only, and the public packet did not provide an executable harness.
+
+Serena: skipped because no Serena MCP tool is available in this session and no symbol/reference-changing code work was performed.

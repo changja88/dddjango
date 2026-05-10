@@ -1,0 +1,47 @@
+**Raw Answer**
+
+필요한 작업만 하면 됩니다.
+
+1. `Order` 모델에서 `memo` 필드명을 `note`로 변경합니다.
+2. `order.memo`, `memo=`, `"memo"`처럼 해당 필드를 직접 참조하는 코드만 `note`로 바꿉니다. 관리자, 폼, 스키마/API 응답, 템플릿, 테스트에 노출된 이름도 실제로 쓰는 곳만 같이 수정합니다.
+3. 마이그레이션은 반드시 `RenameField`인지 확인합니다.
+
+```bash
+python manage.py makemigrations <app_name> --name rename_order_memo_to_note
+```
+
+생성된 migration이 아래처럼 나와야 데이터 보존 관점에서 맞습니다.
+
+```python
+migrations.RenameField(
+    model_name="order",
+    old_name="memo",
+    new_name="note",
+)
+```
+
+`RemoveField` + `AddField`로 생성되면 데이터 손실 가능성이 있으니 `RenameField`로 고쳐야 합니다. 단순 필드명 변경이면 DDD 계층 추가, 서비스 분리, 별도 도메인 이벤트, expand/contract rollout까지는 필요 없습니다.
+
+검증은 최소로:
+
+```bash
+python manage.py test <affected_app_or_tests>
+python manage.py migrate --plan
+```
+
+**Commands Actually Run**
+
+```bash
+sed -n '1,180p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/SKILL.md
+pwd -P
+git rev-parse --show-toplevel
+```
+
+`git rev-parse --show-toplevel` emitted macOS/Xcode cache warnings under the read-only sandbox, then returned `/Users/hyun/Desktop/dddjango`.
+
+**Checks Not Run**
+
+No repository source search, migration generation, tests, `migrate --plan`, or `sqlmigrate` were run because the packet requested no file modification and only the necessary work to advise.
+
+Serena: skipped because no Serena MCP tools are available in this session; repo root was confirmed with shell commands.

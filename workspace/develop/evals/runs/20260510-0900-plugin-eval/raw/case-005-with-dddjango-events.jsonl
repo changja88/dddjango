@@ -1,0 +1,72 @@
+## Role Map
+| Role | Plan Responsibility |
+|---|---|
+| Coordinator | 범위 통합: 주문 생성, 결제 승인, 재고 차감, 멱등성, 트랜잭션, 테스트를 하나의 구현 계획으로 정렬 |
+| Domain Agent | `Order` 애그리거트, 주문 상태, 결제/재고 불변식, 도메인 이벤트 정의 |
+| Architecture Agent | 애플리케이션 서비스 중심 구조, Router는 얇게 유지, 외부 결제/재고는 포트로 분리 |
+| DB Agent | 주문/주문라인/멱등성/재고 원장 또는 예약 테이블, 제약조건, 잠금, 트랜잭션 설계 |
+| API Agent | Django Ninja `POST /orders`, `Idempotency-Key`, RFC 9457 Problem Details, OpenAPI 계약 |
+| Django Agent | ORM 모델, 서비스/usecase, `transaction.atomic()`, `select_for_update()`, `transaction.on_commit()` 구현 계획 |
+| Test Agent | 도메인 단위 테스트, API 계약 테스트, 멱등성/동시성/트랜잭션 테스트 |
+| Review Agent | 결제 중복 승인, 재고 음수, 외부 부작용 타이밍, 라우터 비대화, 테스트 누락 점검 |
+
+## Sequential Fallback
+실제 subagent는 실행하지 않았고, 계획만 순차적으로 정리한다.
+
+1. Domain: 주문 생성 use case는 `PendingPayment -> Paid/Confirmed` 같은 명시 상태 전이를 갖는다. 주문 생성 시 고객, 주문라인, 금액, 재고 차감 가능성, 결제 승인 결과가 핵심 불변식이다.
+2. Architecture: `CreateOrderService`가 트랜잭션과 도메인 흐름을 소유한다. Django Ninja Router는 요청 검증, 인증 연결, 서비스 호출, 응답/오류 매핑만 담당한다.
+3. DB: `orders`, `order_lines`, `idempotency_keys`, `inventory_items` 또는 `inventory_reservations/ledger`를 둔다. 재고 차감 대상 row는 `select_for_update()`로 잠그고, 멱등성은 `(scope, key)` unique constraint로 보호한다.
+4. API: `POST /orders`는 `Idempotency-Key` 헤더를 요구한다. 성공은 `201 Created`와 `Location`, 동일 요청 replay는 저장된 동일 응답, 같은 key 다른 payload는 `409 Conflict` Problem Details.
+5. Django: 서비스 내부에서 `transaction.atomic()`을 열고 멱등성 row를 먼저 확보한 뒤 주문 생성, 재고 차감, 결제 승인 요청 기록을 처리한다. 외부 결제 호출은 가능하면 DB 트랜잭션 안에서 직접 호출하지 않고, 승인 요청/outbox 저장 후 `on_commit()` 또는 비동기 worker로 실행한다.
+6. Test: 도메인 테스트는 총액 계산, 상태 전이, 재고 부족 거절을 검증한다. API 테스트는 201/409/422, Problem Details, `Idempotency-Key` replay를 검증한다. DB 테스트는 동시 주문에서 재고가 음수가 되지 않는지 확인한다.
+7. Review: 중복 결제 승인 방지와 재고 차감 원자성이 가장 큰 위험이다.
+
+## Handoff Contract
+Scope: 주문 생성 API 설계와 구현 계획.
+
+Inputs Used: 공개 packet의 사용자 요청, dddjango public skill guidance.
+
+Decisions: Django Ninja 사용, Router thin adapter, 주문 생성 application service가 transaction owner, DB unique constraint 기반 idempotency, 재고 row locking, RFC 9457 오류 응답.
+
+Files:
+May edit: 구현 시 `orders/models.py`, `orders/services.py`, `orders/api.py`, `orders/schemas.py`, `orders/tests/**`, migration files.
+Must not edit: private evaluator files, prior findings, unrelated workspace/develop private paths.
+
+Output: 구현 계획과 acceptance criteria. 실제 파일 수정 없음.
+
+Risks: 결제 승인 외부 호출과 DB commit의 불일치, 같은 idempotency key의 payload mismatch, 동시 재고 차감 race, migration rollout lock risk.
+
+Required Follow-up: 기존 프로젝트 앱 구조, 인증 방식, 결제 provider API, 재고 모델 존재 여부 확인 후 concrete files 확정.
+
+dddjango Checks: DDD invariant 먼저 확정, DB 제약과 transaction으로 보호, API는 Problem Details/idempotency 명시, 테스트는 domain/API/concurrency 포함.
+
+## Integration Checklist
+Risky Write Consistency Block:
+
+| 항목 | 결정 |
+|---|---|
+| Transaction owner | `CreateOrderService` |
+| Locking strategy | 재고 row `select_for_update()`, idempotency row unique insert/lock |
+| Idempotency storage | `idempotency_keys(scope, key, request_hash, status, response_body, resource_id)` |
+| API behavior | `Idempotency-Key` 필수, replay는 동일 응답, payload mismatch는 `409` |
+| External side effect timing | 결제 승인 직접 호출 대신 outbox/승인 요청 저장 후 commit 이후 실행 권장 |
+| Isolation/retry | 기본 `READ COMMITTED` + row lock, deadlock/serialization failure는 제한적 retry |
+| Test criteria | 동일 key 중복 요청, 다른 payload conflict, 동시 재고 차감, 결제 실패 rollback/compensation |
+
+**Commands Actually Run**
+```bash
+sed -n '1,180p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-ddd/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/references/delegation-rules.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/references/role-map.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/references/handoff-contract.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/references/integration-checklist.md
+```
+
+**Checks Not Run**
+No files were modified. `pytest`, lint/type checks, Django migrations, OpenAPI generation, browser checks, and subagent execution were not run because this packet requested a read-only implementation plan. Serena: skipped because no symbol/reference-tracking code change was needed.

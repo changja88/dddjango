@@ -1,0 +1,109 @@
+**Raw Answer**
+
+가정: Django + PostgreSQL 기준. rolling deploy에서는 “old app과 new app이 동시에 orders를 쓰는 기간”이 핵심 위험이다.
+
+안전한 순서는 `expand -> app 호환 배포 -> backfill -> 검증 -> contract`로 나눈다.
+
+1. **Expand migration**
+   - `orders.status`를 `NULL 허용`으로 추가한다.
+   - 처음부터 `NOT NULL`이나 강한 check를 걸지 않는다.
+   - old app이 계속 주문을 생성할 수 있으므로, status 기본값이 도메인상 항상 맞는 경우에만 DB default를 둔다. 아니면 nullable 상태로 두고 backfill/catch-up 대상에 포함한다.
+
+2. **호환 app 배포**
+   - new app은 신규 주문 생성/상태 변경 시 `status`를 항상 쓴다.
+   - 읽기 로직은 임시로 `status IS NULL`을 허용하고 기존 필드에서 status를 유추하거나 fallback한다.
+   - 이 배포가 전체 인스턴스에 완료되기 전까지 `NOT NULL`을 적용하지 않는다.
+
+3. **Backfill**
+   - 대용량이면 Django migration 한 번에 처리하지 말고 management command/운영 job으로 배치 처리한다.
+   - 조건은 반드시 idempotent하게 둔다: `WHERE status IS NULL`.
+   - PK range 또는 `SELECT ... FOR UPDATE SKIP LOCKED` 방식으로 작은 배치 단위 커밋을 사용한다.
+   - 배치마다 replication lag, lock wait, deadlock, write latency를 모니터링한다.
+   - 모든 app 인스턴스가 status를 쓰는 버전으로 바뀐 뒤 catch-up backfill을 한 번 더 실행한다.
+
+4. **데이터 검증**
+   - `status IS NULL` count가 0인지 확인한다.
+   - 허용 enum 밖의 값이 없는지 확인한다.
+   - 주문 상태 유추 규칙과 맞지 않는 row를 샘플링한다.
+   - 검증 쿼리 예:
+     ```sql
+     SELECT count(*) FROM orders WHERE status IS NULL;
+     SELECT status, count(*) FROM orders GROUP BY status;
+     SELECT count(*) FROM orders WHERE status NOT IN ('pending', 'paid', 'cancelled', 'fulfilled');
+     ```
+
+5. **Check constraint**
+   - PostgreSQL이면 먼저 `NOT VALID`로 추가하고 나중에 validate한다.
+   - 예:
+     ```sql
+     ALTER TABLE orders
+       ADD CONSTRAINT orders_status_valid
+       CHECK (status IN ('pending', 'paid', 'cancelled', 'fulfilled'))
+       NOT VALID;
+
+     ALTER TABLE orders VALIDATE CONSTRAINT orders_status_valid;
+     ```
+   - Django에서는 가능하면 `django.contrib.postgres.operations.AddConstraintNotValid` / `ValidateConstraint`를 쓰고, 프로젝트/Django 버전에서 어렵다면 `RunSQL`로 분리한다.
+
+6. **NOT NULL**
+   - 바로 `ALTER COLUMN SET NOT NULL`이 큰 테이블 scan/lock을 만들 수 있으므로 별도 migration으로 분리한다.
+   - PostgreSQL에서는 보조 check를 먼저 validate한 뒤 `SET NOT NULL`을 짧게 적용하는 방식을 검토한다.
+     ```sql
+     ALTER TABLE orders
+       ADD CONSTRAINT orders_status_not_null
+       CHECK (status IS NOT NULL)
+       NOT VALID;
+
+     ALTER TABLE orders VALIDATE CONSTRAINT orders_status_not_null;
+
+     ALTER TABLE orders ALTER COLUMN status SET NOT NULL;
+     ```
+   - 적용 전에는 old app writer가 완전히 사라졌고 null count가 0임을 확인해야 한다.
+
+7. **Index**
+   - status 단일 컬럼은 low-cardinality라 항상 좋은 인덱스가 아니다. 실제 쿼리가 `WHERE status = ... ORDER BY created_at`이면 보통 `(status, created_at)` 또는 특정 상태 partial index가 더 낫다.
+   - 대용량 PostgreSQL에서는 `CREATE INDEX CONCURRENTLY` 또는 Django `AddIndexConcurrently`를 사용하고 migration은 `atomic = False`로 둔다.
+   - 예:
+     ```sql
+     CREATE INDEX CONCURRENTLY orders_status_created_at_idx
+       ON orders (status, created_at DESC);
+     ```
+   - backfill 전에 index를 만들면 backfill update마다 index write 비용이 붙으므로, 보통 backfill 후 생성한다.
+
+8. **Contract app 배포**
+   - DB constraint와 NOT NULL이 검증된 뒤 app에서 `status` nullable fallback을 제거한다.
+   - Django model도 `null=False` 상태와 DB migration 상태가 어긋나지 않게 별도 배포 단계로 맞춘다.
+
+Rollback은 column/constraint를 지우는 방향보다 forward-fix가 안전하다. nullable column 추가는 그대로 둬도 old app과 호환된다. constraint validate 실패 시 constraint 적용을 중단하고 invalid/null 데이터를 수정한 뒤 재시도한다. concurrent index 실패 시 leftover invalid index가 있는지 확인하고 필요하면 `DROP INDEX CONCURRENTLY` 후 재생성한다.
+
+Risky Write Consistency Block:
+- transaction owner: backfill job 또는 migration command
+- locking: 작은 배치, 짧은 transaction, 필요 시 `SKIP LOCKED`
+- constraint: value check 후 NOT NULL
+- isolation/retry: 기본 `READ COMMITTED`, deadlock/lock timeout 재시도
+- side effects: 없음
+- verification: null/invalid count, `sqlmigrate`, 실제 DB lock 검토, index `EXPLAIN ANALYZE`
+
+**Commands Actually Run**
+
+```sh
+pwd -P
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/SKILL.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/rollout-constraints.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/constraints-indexes.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/references/migrations.md
+git rev-parse --show-toplevel
+```
+
+`git rev-parse --show-toplevel` returned `/Users/hyun/Desktop/dddjango` after macOS sandbox cache warnings.
+
+**Checks Not Run**
+
+- Tests: not run; no code changes and no test target was required by the packet.
+- `sqlmigrate`: not run; no concrete Django app/migration file exists in the packet.
+- DB validation queries / `EXPLAIN ANALYZE`: not run; no live database connection or schema details were provided.
+- Private evaluator files and prior findings: not read, per instruction.
+- File modifications: none.
+- Serena: skipped because no code symbol/reference tracing or repository modification was needed.

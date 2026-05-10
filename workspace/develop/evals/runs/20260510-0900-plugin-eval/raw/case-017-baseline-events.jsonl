@@ -1,0 +1,20 @@
+**Findings**
+No blocking Claude/Codex drift found. The plugin name is consistently `dddjango`, skill folder names match `SKILL.md` frontmatter names, `agents/openai.yaml` prompts use the same `$skill-name`, and generated skill validation passed with 0 warnings.
+
+One portability note: [architecture-implementation-patterns/SKILL.md](/Users/hyun/Desktop/dddjango/dddjango/skills/architecture-implementation-patterns/SKILL.md:9) lists `workspace/reference/...` fallback source paths. This is allowed by the documented provisional policy in [plugin-structure.md](/Users/hyun/Desktop/dddjango/workspace/docs/plugin-structure.md:191), but if this is packaged standalone, those workspace paths may not exist. It is not a platform-specific metadata drift, but keep it provisional or replace it with bundled runtime references before marking final.
+
+Platform metadata differences look like packaging only: Codex has [plugin.json](/Users/hyun/Desktop/dddjango/dddjango/.codex-plugin/plugin.json:2), local marketplace has `dddjango-local` as registry display metadata while the plugin entry remains `dddjango` in [marketplace.json](/Users/hyun/Desktop/dddjango/.agents/plugins/marketplace.json:8). I did not find separate Claude-specific metadata to compare; shared `SKILL.md` plus `references/` appear to be the common cross-platform surface.
+
+**Checks Run**
+- `PYTHONDONTWRITEBYTECODE=1 python3 workspace/scripts/validate_skill_docs.py --phase docs` -> passed, 0 warnings.
+- `PYTHONDONTWRITEBYTECODE=1 python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills` -> passed, 0 warnings.
+- Static reads with `find`, `rg`, `sed`, `awk`, `nl`, `ls` over `dddjango`, `.agents/plugins`, `plugins`, and `workspace/docs`.
+- Checked one-level runtime references, banned skill docs, plugin/marketplace metadata, workflow role-map sync, DDD/Django Ninja/validation guardrails.
+
+**Not Run**
+- Runtime cache validation was not run because it would read outside the task-local repo (`/Users/hyun/.codex/...`).
+- Claude Code or Codex runtime install/smoke tests were not run; this was a static review.
+- Private evaluator files, rubrics, and prior run contents were not opened. One initial file inventory listed prior-run path names, but I did not read or use their contents afterward.
+- No files were modified.
+
+Serena: not used because Serena MCP tools were not available in this session; verified with `rg` and read-only file inspection.

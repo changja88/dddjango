@@ -1,0 +1,548 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: auto
+session id: 019e0fa9-f0e8-7c02-bc07-893437325cc5
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 014
+
+## User Request
+
+```text
+운영 중인 주문 테이블에 status 컬럼을 추가하고 기존 데이터를 채운 다음 NOT NULL, check constraint, index를 순차 적용하려고 해. rolling deploy 기준으로 안전한 migration plan을 세워줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+I’ll keep this evaluation bounded to the public packet and repository-local checks only. I’m not going to inspect private eval folders or prior reports, and I won’t modify files.
+exec
+/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+/Users/hyun/Desktop/dddjango
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: architecture-db
+description: >
+  Use for relational database architecture: ERD, conceptual/logical/physical modeling, normalization/denormalization, primary/foreign keys, unique/check/not-null constraints, cascade behavior, composite/covering/partial indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, hierarchy/inheritance modeling, rollout constraints, backfill/index-lock risk, migration safety. Use for ERD, 정규화, 인덱스, 제약조건, transaction/트랜잭션, locking, 동시성, 멱등성 저장, 중복 요청 방지, 부분 인덱스, EXPLAIN ANALYZE, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, rolling deploy, migration risk. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/hexagonal/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files.
+---
+
+# DB Architecture
+
+Use this skill to design relational data structures that protect domain invariants and support query/write patterns. This skill decides the database shape and operational constraints; it does not write concrete Django migration files.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct DB design questions here, including risky transaction, locking, isolation, uniqueness, idempotency storage, backfill, and index-lock examples, when the user is asking for database architecture rather than multi-role implementation.
+- If aggregate boundaries, domain invariants, ubiquitous language, or state transitions are unclear, use `architecture-ddd` before designing the schema.
+- If the main work is repository/UoW, outbox architecture, CQRS, hexagonal/ports-adapters, ACL, or dependency direction, use `architecture-implementation-patterns`; keep concrete storage, constraints, and transaction choices here.
+- If the main work is REST resources, status codes, Problem Details, pagination, versioning, `Idempotency-Key` contract, or OpenAPI, use `architecture-api`; keep DB storage implications here.
+- If the user asks to implement Django `models.py`, `RunPython`, `apps.get_model()`, `sqlmigrate`, or migration files, use `implementation-django` after DB design is clear.
+- If the user asks for pytest integration/concurrency tests, use `implementation-test` after DB invariants and transaction criteria are known.
+- For a simple field rename or local CRUD model with no invariant/rollout risk, do not force full ERD, locking, or migration strategy ceremony.
+
+## Reference Loading
+
+- Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism.
+- Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost.
+- Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs.
+- Read [rollout-constraints.md](references/rollout-constraints.md) for EXPLAIN ANALYZE, query optimization, N+1, backfill/index-lock risk, expand/backfill/contract rollout, and rollback considerations.
+
+## Runtime Rules
+
+- Start from domain invariants, aggregates/entities, query patterns, write contention, and rollout constraints; do not let ORM convenience erase DB invariants.
+- Model conceptually first, then logical schema, then physical indexes/partitioning/performance choices.
+- Normalize first to remove update/insert/delete anomalies; denormalize only for measured read pressure or clear operational need.
+- Use database constraints for invariants the database can enforce: primary keys, foreign keys, unique, check, not null, and appropriate cascade rules.
+- Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
+- For risky writes, include a `Risky Write Consistency Block` with transaction owner, locking strategy, uniqueness/idempotency storage, API idempotency handoff, side-effect timing, isolation/retry, and integration/concurrency test criteria.
+- For operational changes, separate DB design from concrete Django migration implementation; hand off migration file details to `implementation-django`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## Instruction Priority
+
+Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+2. **Superpowers skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins. The `skill` tool works the same as Claude Code's `Skill` tool.
+
+**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+## Platform Adaptation
+
+Skills use Claude Code tool names. Non-CC platforms: see `references/copilot-tools.md` (Copilot CLI), `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "About to EnterPlanMode?" [shape=doublecircle];
+    "Already brainstormed?" [shape=diamond];
+    "Invoke brainstorming skill" [shape=box];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "About to EnterPlanMode?" -> "Already brainstormed?";
+    "Already brainstormed?" -> "Invoke brainstorming skill" [label="no"];
+    "Already brainstormed?" -> "Might any skill apply?" [label="yes"];
+    "Invoke brainstorming skill" -> "Might any skill apply?";
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: implementation-django
+description: >
+  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration test acceptance criteria. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, implementation-test for pytest/fixture/test code details, workflow-dddjango-subagents for composite or risky Django/DDD work, and architecture-ddd or architecture-db when domain or DB contracts are undecided.
+---
+
+# Django Implementation
+
+Use this skill to implement already-scoped Django work. Keep simple CRUD simple; do not force DDD, repository, workflow, or subagent structure onto small model, migration, service, or ORM changes.
+
+## Routing
+
+- If domain rules, state transitions, policies, invariants, or bounded context are unclear, use `architecture-ddd` before implementation.
+- If schema, constraint, transaction isolation, locking, or rollout strategy is undecided, use `architecture-db` before writing migrations.
+- If the work is REST API contract design, use `architecture-api`; if it is Django Ninja Router/Schema endpoint implementation, use `implementation-django-ninja`.
+- If the work is templates, static assets, TemplateView page composition, HTMX, or CSRF-aware frontend behavior, use `implementation-django-web`.
+- If the work is pytest fixtures, mocks, factories, API test code, concurrency test mechanics, or coverage strategy, use `implementation-test`; this skill only states Django acceptance criteria unless it is implementing Django-side test hooks.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, or the Django/DDD work is composite or risky across domain, DB, API, implementation, and tests, use `workflow-dddjango-subagents` first.
+
+## Reference Loading
+
+- Read [models-orm.md](references/models-orm.md) for app layout, settings, model fields, validation, managers, QuerySets, forms, views, and signal boundaries.
+- Read [services-selectors.md](references/services-selectors.md) for service layer, selector, application service, repository trade-off, and Django/DDD mapping choices.
+- Read [migrations.md](references/migrations.md) for migration files, `RunPython`, `apps.get_model()`, `sqlmigrate`, backfill, expand/backfill/contract, and index rollout.
+- Read [transactions-performance-security.md](references/transactions-performance-security.md) for `transaction.atomic()`, `on_commit()`, locking, query performance, caching, security, middleware, and Django test acceptance criteria.
+
+## Runtime Rules
+
+- Put business rules in model methods, domain/application services, or domain services; do not scatter core rules across views, forms, schemas, signals, or templates.
+- Use Django model methods and QuerySets directly when the domain is simple. Add services/selectors when one use case spans models, views, transactions, external side effects, or repeated orchestration.
+- Use custom QuerySet methods for chainable read predicates and selectors for larger read use cases.
+- For risky writes, include a `Risky Write Consistency Block` with transaction owner, lock/idempotency strategy, DB constraint, `Idempotency-Key` API coordination when relevant, external side-effect timing, isolation/retry decision, and test or verification plan.
+- Keep migrations small and version controlled. Use historical models in data migrations and split operational rollouts into expand, backfill, and contract steps.
+- Prefer Django and Python conventions already present in the project; do not introduce a repository, UoW, or clean architecture layer unless complexity and testability justify it.
+- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+- Report only verification actually run. If tests, `sqlmigrate`, `check --deploy`, query-count checks, or migration checks were not run, say so.
+
+**Considering reading references**
+
+I'm realizing I need to read not just the skills but also references since the skill mentions that. For my task, I must check the architecture-db, specifically rollout-constraints, constraints-indexes, and possibly transactions. It seems essential for the operation I’m working on related to adding a status column to the order table, among other requirements. I want to ensure I’m following the rules about which directories I can access, so I’ll read only the relevant references.
+codex
+Using `dddjango:architecture-db` for the operational constraint rollout and `dddjango:implementation-django` for Django migration sequencing. I’ll only read the skill guidance needed for migration safety and then produce the packet answer.
+exec
+/bin/zsh -lc "sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/rollout-constraints.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Rollout Constraints And Query Performance
+
+Load this for EXPLAIN ANALYZE, query optimization, N+1, operational migrations, backfills, index-lock risk, rollout sequencing, and rollback considerations.
+
+## Query Optimization
+
+- Start with slow query evidence before denormalizing.
+- Use `EXPLAIN ANALYZE` to compare estimates and actual execution.
+- Check row estimates, actual time, loops, and buffer hits/reads.
+- If estimated rows and actual rows diverge heavily, refresh statistics or revisit predicates.
+- Watch scan types: sequential scan on large tables may be a warning, index scan suits selective reads, bitmap heap scan sits between, and index-only scan avoids heap access when possible.
+- Watch join strategy: nested loop fits small outer sets with indexed inner lookups, hash join fits larger unsorted sets, and merge join fits pre-sorted or index-ordered join keys.
+- Prefer JOIN over subqueries when it gives the optimizer clearer or cheaper access paths, but verify with the actual plan.
+- Prefer filtering in the database, selecting only needed columns, using LIMIT where appropriate, and avoiding N+1 lazy-loading patterns.
+
+## Performance Order
+
+1. Optimize slow queries.
+2. Add or adjust indexes.
+3. Use application caching where it reduces repeated load.
+4. Denormalize as a last resort with consistency maintenance.
+
+## Operational Rollout
+
+For production data changes, separate design from concrete Django migration implementation.
+
+- Expand: add nullable columns, tables, or indexes without breaking old code.
+- Backfill: populate data in batches with monitoring and retry safety.
+- Contract: add NOT NULL/unique/check constraints or remove old structures after compatibility is proven.
+
+Hand concrete migration file operations, `RunPython`, `apps.get_model()`, `sqlmigrate`, and Django migration code to `implementation-django`.
+
+## Backfill And Index Risk
+
+- Large backfills can lock rows, increase replication lag, and overload workers.
+- Adding constraints before data is clean can fail deploys.
+- Adding indexes can lock or slow writes depending on database and options.
+- Validate whether concurrent/online index creation is needed.
+- Plan rollback or forward-fix for partially completed data changes.
+
+## Rollout Output
+
+Record:
+
+- current data risk;
+- expand/backfill/contract sequence;
+- lock/index risk;
+- batching or monitoring needs;
+- rollback or forward-fix approach;
+- tests or verification commands that were run, or explicitly not run.
+
+exec
+/bin/zsh -lc "sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/constraints-indexes.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/references/migrations.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Constraints And Indexes
+
+Load this for relational constraints, B+Tree index trade-offs, composite index order, covering indexes, partial indexes, and write-cost decisions.
+
+## Constraints
+
+- Use primary keys for row identity.
+- Use foreign keys to protect references where the database can enforce the relationship.
+- Use unique constraints for natural uniqueness, duplicate prevention, and idempotency storage.
+- Use check constraints for local value invariants.
+- Use not-null only after existing data is backfilled and rollout safety is clear.
+- Choose cascade behavior deliberately: restrict, protect, cascade, set null, or soft delete depending on domain ownership and audit needs.
+
+Constraints should support domain invariants. Do not abandon a DB-enforceable invariant because the ORM can validate it in application code.
+
+## Index Trade-Off
+
+- B+Tree indexes improve reads but slow writes because every insert/update/delete must update relevant indexes.
+- Avoid indexes on low-cardinality columns unless paired with other filters or partial index conditions.
+- Audit unused indexes in mature systems.
+- Benchmark before adding many overlapping indexes.
+
+## Composite Indexes
+
+- Order columns by the query shapes the index must serve.
+- Put equality filters before range filters.
+- Respect the leftmost-prefix rule: an index on `(a, b, c)` can serve `(a)`, `(a, b)`, and `(a, b, c)` but not `(b)` alone.
+- Do not rely on the “most selective first” myth without considering equality/range predicates and query coverage.
+
+## Covering And Partial Indexes
+
+- Use covering indexes when the query can be answered from index columns alone.
+- Use included columns when the database supports them and they avoid heap/table lookup.
+- Use partial indexes for meaningful subsets such as active records, soft-delete uniqueness, or common filtered states.
+- Partial unique indexes are useful for constraints such as unique email among non-deleted users.
+
+## Index Output
+
+For each proposed index, state:
+
+- query or invariant it supports;
+- columns and order;
+- whether it is unique, partial, or covering;
+- write/storage cost;
+- expected validation method such as EXPLAIN ANALYZE or query plan comparison.
+
+ succeeded in 0ms:
+# Migrations
+
+Use this reference for Django migration files, historical models, data migrations, rollout sequencing, backfills, indexes, and operational migration risk.
+
+## Basic Rules
+
+- Keep migration files in version control.
+- Keep migrations small and reviewable.
+- Use `python manage.py sqlmigrate <app> <migration>` when SQL shape, lock behavior, or index creation matters.
+- Do not import current model classes in migrations. Use `apps.get_model()` to load the historical model state.
+- Make reverse migrations explicit. Use a no-op reverse only when rollback cannot reconstruct data and that trade-off is acceptable.
+
+## Data Migrations
+
+- Keep data migrations idempotent when possible.
+- Process large tables in batches rather than loading all rows into memory.
+- Use `update_fields` for per-row saves when only selected columns change.
+- Prefer set-based `update()` with `F()` expressions when signals, custom `save()`, and per-instance validation are not required.
+- Document assumptions such as old value shape, nullability, uniqueness, and expected row count.
+
+## Expand, Backfill, Contract
+
+Use a staged rollout for risky production schema changes.
+
+1. Expand: add nullable columns, tables, or compatible indexes without requiring new code to be the only deployed version.
+2. Backfill: populate existing rows with a data migration, management command, or operational job.
+3. Contract: enforce `NOT NULL`, remove old columns, tighten constraints, or delete compatibility code after the backfill and deployment window are safe.
+
+Do not add a non-nullable field and deploy code that older application versions cannot satisfy.
+
+## Constraints And Indexes
+
+- Add DB constraints for invariants that must hold across all writers.
+- Use explicit names for constraints and indexes when the project convention supports it.
+- Add indexes for fields frequently used in `filter()`, `exclude()`, and `order_by()`, but verify the query plan when possible.
+- Remember indexes speed reads but slow writes and increase storage.
+- For PostgreSQL, consider concurrent index creation tooling or project-specific operations for large tables.
+- Coordinate unique constraints with deduplication and application-level error handling.
+
+## Rollout Checklist
+
+- Identify the transaction owner for any backfill or data rewrite.
+- Identify lock risk, table size, expected duration, and rollback behavior.
+- Decide whether old and new application versions must run simultaneously.
+- Decide whether the migration should be split from the code deployment.
+- Verify SQL with `sqlmigrate` or a database review when risk is non-trivial.
+- Add or request integration tests for migration-sensitive behavior when practical.
+
+exec
+/bin/zsh -lc 'git rev-parse --show-toplevel' in /Users/hyun/Desktop/dddjango
+ succeeded in 1953ms:
+2026-05-10 11:14:51.020 xcodebuild[84559:2651993]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:14:51.177 xcodebuild[84559:2651992] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
+git: error: couldn't create cache file '/tmp/xcrun_db-tAsWxJYM' (errno=Operation not permitted)
+2026-05-10 11:14:51.685 xcodebuild[84561:2652003]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:14:51.838 xcodebuild[84561:2652002] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/Users/hyun/Desktop/dddjango
+
+**Evaluating Git Status**
+
+I'm thinking we have a git command, `git rev-parse`, still running, possibly related to Xcode. It seems like I need to check its status or poll it to see if it's done. I wonder if it's causing any delays or issues with my workflow. It’s important to keep things moving smoothly, so I’ll figure out how to manage this process effectively. Getting stuck on something like this can be frustrating!
+**Considering database constraints**
+
+I’m realizing that if old code is inserting rows without a status, those rows will end up with NULL. This could complicate later backfilling processes. During a rolling window, I must avoid enforcing NOT NULL until all writers have populated the data. I could use nullable with a database default to reduce the number of nulls, but only if that default is universally valid for the initial status. It's tricky!
+**Planning database constraints**
+
+I’m considering how to implement a check constraint in PostgreSQL, maybe using `CHECK (status IS NOT NULL) NOT VALID`. It seems PostgreSQL can use existing valid check constraints to avoid a full table scan for the `SET NOT NULL` command. I should plan to first add the check, validate it, then alter the column to `SET NOT NULL`. Since the user is interested in a check constraint, I might need a separate not-null check and include it in the Django migration.
+**Organizing database updates**
+
+I’m thinking that if I don't use a helper, I should perform the `SET NOT NULL` during low traffic since it might involve a scan and take a lock. I need to consider the order of operations: first, I might add a check to verify if the status is valid, then validate that, add a helper not-null check, and lastly alter the column to set it as not null. It seems safe to handle the check before the NOT NULL, and I should consider presenting the updates in phases.
+**Evaluating app database constraints**
+
+I’m considering whether to require non-null status in the app’s model. It seems that setting `null=False` in the model should happen after confirming DB constraints and migrations. I should note that this can affect forms and validation, but it typically doesn’t block DB access.
+
+With rolling deployments, the goal is to ensure backward compatibility. If the app rolls back, having a nullable column helps. I'll need to handle any constraint failures by addressing null or invalid data when necessary.
+codex
+**Raw Answer**
+
+가정: Django + PostgreSQL 기준. rolling deploy에서는 “old app과 new app이 동시에 orders를 쓰는 기간”이 핵심 위험이다.
+
+안전한 순서는 `expand -> app 호환 배포 -> backfill -> 검증 -> contract`로 나눈다.
+
+1. **Expand migration**
+   - `orders.status`를 `NULL 허용`으로 추가한다.
+   - 처음부터 `NOT NULL`이나 강한 check를 걸지 않는다.
+   - old app이 계속 주문을 생성할 수 있으므로, status 기본값이 도메인상 항상 맞는 경우에만 DB default를 둔다. 아니면 nullable 상태로 두고 backfill/catch-up 대상에 포함한다.
+
+2. **호환 app 배포**
+   - new app은 신규 주문 생성/상태 변경 시 `status`를 항상 쓴다.
+   - 읽기 로직은 임시로 `status IS NULL`을 허용하고 기존 필드에서 status를 유추하거나 fallback한다.
+   - 이 배포가 전체 인스턴스에 완료되기 전까지 `NOT NULL`을 적용하지 않는다.
+
+3. **Backfill**
+   - 대용량이면 Django migration 한 번에 처리하지 말고 management command/운영 job으로 배치 처리한다.
+   - 조건은 반드시 idempotent하게 둔다: `WHERE status IS NULL`.
+   - PK range 또는 `SELECT ... FOR UPDATE SKIP LOCKED` 방식으로 작은 배치 단위 커밋을 사용한다.
+   - 배치마다 replication lag, lock wait, deadlock, write latency를 모니터링한다.
+   - 모든 app 인스턴스가 status를 쓰는 버전으로 바뀐 뒤 catch-up backfill을 한 번 더 실행한다.
+
+4. **데이터 검증**
+   - `status IS NULL` count가 0인지 확인한다.
+   - 허용 enum 밖의 값이 없는지 확인한다.
+   - 주문 상태 유추 규칙과 맞지 않는 row를 샘플링한다.
+   - 검증 쿼리 예:
+     ```sql
+     SELECT count(*) FROM orders WHERE status IS NULL;
+     SELECT status, count(*) FROM orders GROUP BY status;
+     SELECT count(*) FROM orders WHERE status NOT IN ('pending', 'paid', 'cancelled', 'fulfilled');
+     ```
+
+5. **Check constraint**
+   - PostgreSQL이면 먼저 `NOT VALID`로 추가하고 나중에 validate한다.
+   - 예:
+     ```sql
+     ALTER TABLE orders
+       ADD CONSTRAINT orders_status_valid
+       CHECK (status IN ('pending', 'paid', 'cancelled', 'fulfilled'))
+       NOT VALID;
+
+     ALTER TABLE orders VALIDATE CONSTRAINT orders_status_valid;
+     ```
+   - Django에서는 가능하면 `django.contrib.postgres.operations.AddConstraintNotValid` / `ValidateConstraint`를 쓰고, 프로젝트/Django 버전에서 어렵다면 `RunSQL`로 분리한다.
+
+6. **NOT NULL**
+   - 바로 `ALTER COLUMN SET NOT NULL`이 큰 테이블 scan/lock을 만들 수 있으므로 별도 migration으로 분리한다.
+   - PostgreSQL에서는 보조 check를 먼저 validate한 뒤 `SET NOT NULL`을 짧게 적용하는 방식을 검토한다.
+     ```sql
+     ALTER TABLE orders
+       ADD CONSTRAINT orders_status_not_null
+       CHECK (status IS NOT NULL)
+       NOT VALID;
+
+     ALTER TABLE orders VALIDATE CONSTRAINT orders_status_not_null;
+
+     ALTER TABLE orders ALTER COLUMN status SET NOT NULL;
+     ```
+   - 적용 전에는 old app writer가 완전히 사라졌고 null count가 0임을 확인해야 한다.
+
+7. **Index**
+   - status 단일 컬럼은 low-cardinality라 항상 좋은 인덱스가 아니다. 실제 쿼리가 `WHERE status = ... ORDER BY created_at`이면 보통 `(status, created_at)` 또는 특정 상태 partial index가 더 낫다.
+   - 대용량 PostgreSQL에서는 `CREATE INDEX CONCURRENTLY` 또는 Django `AddIndexConcurrently`를 사용하고 migration은 `atomic = False`로 둔다.
+   - 예:
+     ```sql
+     CREATE INDEX CONCURRENTLY orders_status_created_at_idx
+       ON orders (status, created_at DESC);
+     ```
+   - backfill 전에 index를 만들면 backfill update마다 index write 비용이 붙으므로, 보통 backfill 후 생성한다.
+
+8. **Contract app 배포**
+   - DB constraint와 NOT NULL이 검증된 뒤 app에서 `status` nullable fallback을 제거한다.
+   - Django model도 `null=False` 상태와 DB migration 상태가 어긋나지 않게 별도 배포 단계로 맞춘다.
+
+Rollback은 column/constraint를 지우는 방향보다 forward-fix가 안전하다. nullable column 추가는 그대로 둬도 old app과 호환된다. constraint validate 실패 시 constraint 적용을 중단하고 invalid/null 데이터를 수정한 뒤 재시도한다. concurrent index 실패 시 leftover invalid index가 있는지 확인하고 필요하면 `DROP INDEX CONCURRENTLY` 후 재생성한다.
+
+Risky Write Consistency Block:
+- transaction owner: backfill job 또는 migration command
+- locking: 작은 배치, 짧은 transaction, 필요 시 `SKIP LOCKED`
+- constraint: value check 후 NOT NULL
+- isolation/retry: 기본 `READ COMMITTED`, deadlock/lock timeout 재시도
+- side effects: 없음
+- verification: null/invalid count, `sqlmigrate`, 실제 DB lock 검토, index `EXPLAIN ANALYZE`
+
+**Commands Actually Run**
+
+```sh
+pwd -P
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/SKILL.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/rollout-constraints.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-db/references/constraints-indexes.md
+sed -n '1,260p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django/references/migrations.md
+git rev-parse --show-toplevel
+```
+
+`git rev-parse --show-toplevel` returned `/Users/hyun/Desktop/dddjango` after macOS sandbox cache warnings.
+
+**Checks Not Run**
+
+- Tests: not run; no code changes and no test target was required by the packet.
+- `sqlmigrate`: not run; no concrete Django app/migration file exists in the packet.
+- DB validation queries / `EXPLAIN ANALYZE`: not run; no live database connection or schema details were provided.
+- Private evaluator files and prior findings: not read, per instruction.
+- File modifications: none.
+- Serena: skipped because no code symbol/reference tracing or repository modification was needed.
+tokens used
+52,133

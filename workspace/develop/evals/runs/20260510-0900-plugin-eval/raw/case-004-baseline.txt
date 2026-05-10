@@ -1,0 +1,29 @@
+Case 004 handled as a read-only prompt-input run.
+
+**Result**
+- Plugin version checked: `dddjango` `0.1.10`.
+- Four independent `codex debug prompt-input` runs completed, one per request.
+- Raw prompt-input artifacts were emitted to stdout only. They were not saved to files because the packet says not to modify files and this session is read-only.
+- `python3 workspace/scripts/validate_skill_docs.py` passed: `OK: validation passed with 0 warning(s)`.
+- `git diff --check` exited `0`; macOS/xcrun cache warnings appeared due read-only temp/cache restrictions.
+- No private evaluator files, rubrics, or prior report/finding contents were read.
+
+**Commands Run**
+- `pwd -P`
+- `git rev-parse --show-toplevel`
+- `rg --files ...`
+- `sed -n ...` for public case, eval README, runner script, workflow and skill docs
+- `codex --version`
+- `codex debug prompt-input --help`
+- `codex debug prompt-input -c sandbox_mode='"read-only"' ...` for Requests 1-4
+- `python3 workspace/scripts/validate_skill_docs.py`
+- `git diff --check`
+- `sed -n '1,200p' dddjango/.codex-plugin/plugin.json`
+- `git status --short`
+
+**Not Run**
+- Full per-request `codex exec` model outputs: not run after a smoke attempt failed with `failed to initialize in-process app-server client: Operation not permitted`.
+- File artifact saving under `workspace/develop/evals/runs/...`: not run because file modification was prohibited.
+- Baseline vs with-dddjango comparison: not run; would require full `codex exec` and saved artifacts.
+- Pytest/runtime app checks: not run; no target app code was modified or provided for execution.
+- Serena: skipped; no code edits or symbol/reference tracing were needed, and no Serena tools are available in this session.

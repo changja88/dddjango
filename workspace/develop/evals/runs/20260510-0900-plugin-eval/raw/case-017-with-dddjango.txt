@@ -1,0 +1,45 @@
+**Findings**
+
+No blocking inconsistency found. Static review indicates `dddjango` keeps the same core plugin name, skill responsibilities, reference structure, DDD standard, Django Ninja standard, and verification-honesty rules across the shared skill artifacts.
+
+The platform-specific differences look like packaging/metadata, not divergent standards: Codex uses [dddjango/.codex-plugin/plugin.json](/Users/hyun/Desktop/dddjango/dddjango/.codex-plugin/plugin.json:2) with `"name": "dddjango"` and `skills: "./skills/"`, while the local marketplace wrapper uses [`.agents/plugins/marketplace.json`](/Users/hyun/Desktop/dddjango/.agents/plugins/marketplace.json:1) as `dddjango-local` pointing to `./plugins/dddjango`. The symlink `plugins/dddjango -> ../dddjango` matches the packaging explanation in [plugin-structure.md](/Users/hyun/Desktop/dddjango/workspace/docs/plugin-structure.md:111).
+
+The common-standard contract is explicit in [plugin-structure.md](/Users/hyun/Desktop/dddjango/workspace/docs/plugin-structure.md:165): skill name, responsibility, reference filenames, DDD standard, Django Ninja API standard, and verification principles must remain common; platform differences are limited to packaging/metadata. The repo-local generated validation passed: `OK: validation passed with 0 warning(s)`.
+
+DDD and Ninja standards are aligned: [spec.md](/Users/hyun/Desktop/dddjango/workspace/docs/spec.md:16) defines this as a Claude Code/Codex common plugin, [spec.md](/Users/hyun/Desktop/dddjango/workspace/docs/spec.md:20) fixes Django Ninja as the new API standard rather than DRF, [architecture-ddd/SKILL.md](/Users/hyun/Desktop/dddjango/dddjango/skills/architecture-ddd/SKILL.md:28) preserves strategic DDD-first rules, and [implementation-django-ninja/SKILL.md](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django-ninja/SKILL.md:9) correctly marks Ninja as provisional with fallback sources instead of pretending a dedicated source reference exists.
+
+Verification honesty is consistently present: [spec.md](/Users/hyun/Desktop/dddjango/workspace/docs/spec.md:81), [implementation-test/SKILL.md](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-test/SKILL.md:38), and [workflow-dddjango-subagents/SKILL.md](/Users/hyun/Desktop/dddjango/dddjango/skills/workflow-dddjango-subagents/SKILL.md:63) all require reporting only checks that actually ran.
+
+**Commands Run**
+
+```bash
+pwd -P
+git rev-parse --show-toplevel
+git status --short
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/*finding*'
+find dddjango -maxdepth 4 -type f | sort
+find workspace/docs -maxdepth 2 -type f | sort
+find workspace/reference -maxdepth 4 -type f | sort
+sed -n '1,220p' dddjango/.codex-plugin/plugin.json
+sed -n '1,260p' workspace/docs/plugin-structure.md
+sed -n '1,260p' workspace/docs/skill-contracts.md
+sed -n '1,260p' workspace/docs/validation-plan.md
+sed -n '1,620p' workspace/scripts/validate_skill_docs.py
+PYTHONDONTWRITEBYTECODE=1 python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills
+rg -n '.' dddjango/skills/*/agents/openai.yaml
+rg -n '\(references/[^)]*\.md\)|`references/[^`]*\.md`' dddjango/skills -g 'SKILL.md'
+find .agents plugins -maxdepth 3 -print
+sed -n '1,220p' .agents/plugins/marketplace.json
+ls -la plugins/dddjango dddjango .agents/plugins/marketplace.json
+zsh -f -c 'for d in dddjango/skills/*(/N); do skill=${d:t}; name=$(awk "/^name:/ {print \$2; exit}" "$d/SKILL.md"); prompt=$(awk -F"\"" "/default_prompt:/ {print \$2; exit}" "$d/agents/openai.yaml"); ref_count=$(find "$d/references" -maxdepth 1 -type f -name "*.md" 2>/dev/null | wc -l | tr -d " "); linked_count=$(rg -o "references/[^)#]+\\.md" "$d/SKILL.md" | sort -u | wc -l | tr -d " "); stat_text=OK; [[ "$name" == "$skill" ]] || stat_text=NAME_MISMATCH; [[ "$prompt" == *\$${skill}* ]] || stat_text=${stat_text}:PROMPT_MISMATCH; [[ "$ref_count" == "$linked_count" ]] || stat_text=${stat_text}:REF_LINK_MISMATCH; prompt_ref=no; [[ "$prompt" == *\$${skill}* ]] && prompt_ref=yes; print "$skill name=$name refs=$ref_count linked=$linked_count prompt_ref=$prompt_ref status=$stat_text"; done'
+```
+
+Also ran `sed`/`nl -ba` reads on the cited docs and skill files for line-numbered evidence. Two attempted helper commands failed and were not used: one quoted `rg` command had `unmatched "`, and one Python here-doc failed because the read-only sandbox could not create a temp file.
+
+**Not Run**
+
+Did not read private evaluator files, rubrics, or prior run contents. One broad `rg --files` command listed paths under `workspace/develop/evals/runs`; I did not open or use those files.
+
+Did not run `--phase all` or `--phase runtime`, because that would include runtime cache outside the task-local repository. Did not run pytest, lint, typecheck, OpenAPI generation, or Django Ninja TestClient checks because this was a static plugin metadata/docs review, not an application behavior test.
+
+Serena: skipped because no Serena MCP tool namespace was available in this session; references and consistency were verified with `rg`, file reads, and the repo validator. No files were modified.

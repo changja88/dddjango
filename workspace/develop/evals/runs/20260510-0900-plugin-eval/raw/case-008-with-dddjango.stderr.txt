@@ -1,0 +1,428 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: auto
+session id: 019e0f9f-afde-7c33-82c1-0deaa5d1580d
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 008
+
+## User Request
+
+```text
+README 오타 하나랑 verbose_name 문구만 고치면 될 듯해. 역할 나누거나 DDD 설계까지는 필요 없어.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+Using `superpowers:using-superpowers` to satisfy the session skill requirement before I inspect anything.
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## Instruction Priority
+
+Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+2. **Superpowers skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins. The `skill` tool works the same as Claude Code's `Skill` tool.
+
+**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+## Platform Adaptation
+
+Skills use Claude Code tool names. Non-CC platforms: see `references/copilot-tools.md` (Copilot CLI), `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "About to EnterPlanMode?" [shape=doublecircle];
+    "Already brainstormed?" [shape=diamond];
+    "Invoke brainstorming skill" [shape=box];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "About to EnterPlanMode?" -> "Already brainstormed?";
+    "Already brainstormed?" -> "Invoke brainstorming skill" [label="no"];
+    "Already brainstormed?" -> "Might any skill apply?" [label="yes"];
+    "Invoke brainstorming skill" -> "Might any skill apply?";
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+
+codex
+I’ll keep this read-only and avoid the forbidden evaluator paths. I’m just confirming the repository location and looking for public/local references relevant to README and `verbose_name`.
+exec
+/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+/Users/hyun/Desktop/dddjango
+
+exec
+/bin/zsh -lc "rg --files -g 'README*' -g '"'!workspace/develop/rubrics/**'"' -g '"'!workspace/develop/evals/cases/plugin/private/**'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+workspace/develop/evals/README.md
+workspace/develop/evals/runs/README.md
+
+exec
+/bin/zsh -lc 'git rev-parse --show-toplevel' in /Users/hyun/Desktop/dddjango
+ succeeded in 1950ms:
+2026-05-10 11:03:36.299 xcodebuild[79358:2623466]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:03:36.455 xcodebuild[79358:2623465] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+git: warning: confstr() failed with code 5: couldn't get path of DARWIN_USER_TEMP_DIR; using /tmp instead
+git: error: couldn't create cache file '/tmp/xcrun_db-xMNqDpId' (errno=Operation not permitted)
+2026-05-10 11:03:36.972 xcodebuild[79360:2623480]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-05-10 11:03:37.128 xcodebuild[79360:2623479] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+/Users/hyun/Desktop/dddjango
+
+codex
+The only README matches from the broad search were under evaluator folders, so I’m narrowing the search to non-evaluator workspace content. No file contents have been read from the prohibited paths.
+exec
+/bin/zsh -lc "find . -maxdepth 3 -type f -name 'README*' -not -path './workspace/develop/*' -print" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+./.pytest_cache/README.md
+
+exec
+/bin/zsh -lc "find . -maxdepth 3 -type f -not -path './workspace/develop/*' | sed 's#"'^./##'"' | sort | head -80" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+.DS_Store
+.agents/plugins/marketplace.json
+.git/COMMIT_EDITMSG
+.git/FETCH_HEAD
+.git/HEAD
+.git/ORIG_HEAD
+.git/config
+.git/description
+.git/hooks/applypatch-msg.sample
+.git/hooks/commit-msg.sample
+.git/hooks/fsmonitor-watchman.sample
+.git/hooks/post-update.sample
+.git/hooks/pre-applypatch.sample
+.git/hooks/pre-commit.sample
+.git/hooks/pre-merge-commit.sample
+.git/hooks/pre-push.sample
+.git/hooks/pre-rebase.sample
+.git/hooks/pre-receive.sample
+.git/hooks/prepare-commit-msg.sample
+.git/hooks/push-to-checkout.sample
+.git/hooks/sendemail-validate.sample
+.git/hooks/update.sample
+.git/index
+.git/info/exclude
+.git/logs/HEAD
+.gitignore
+.idea/.gitignore
+.idea/dddjango.iml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/pyProjectModel.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.playwright-mcp/console-2026-05-10T00-47-02-348Z.log
+.playwright-mcp/console-2026-05-10T00-57-31-793Z.log
+.playwright-mcp/console-2026-05-10T00-57-55-232Z.log
+.playwright-mcp/console-2026-05-10T01-05-45-177Z.log
+.playwright-mcp/page-2026-05-10T00-47-02-526Z.yml
+.playwright-mcp/page-2026-05-10T00-47-17-052Z.yml
+.playwright-mcp/page-2026-05-10T00-51-58-854Z.yml
+.playwright-mcp/page-2026-05-10T00-57-31-962Z.yml
+.playwright-mcp/page-2026-05-10T00-57-55-295Z.yml
+.playwright-mcp/page-2026-05-10T01-02-59-274Z.yml
+.playwright-mcp/page-2026-05-10T01-03-28-057Z.yml
+.playwright-mcp/page-2026-05-10T01-05-45-244Z.yml
+.playwright-mcp/page-2026-05-10T01-06-02-146Z.yml
+.playwright-mcp/page-2026-05-10T01-12-01-165Z.yml
+.playwright-mcp/page-2026-05-10T01-12-14-260Z.yml
+.playwright-mcp/page-2026-05-10T01-19-43-931Z.yml
+.playwright-mcp/page-2026-05-10T01-19-57-973Z.yml
+.pytest_cache/.gitignore
+.pytest_cache/CACHEDIR.TAG
+.pytest_cache/README.md
+.venv/bin/Activate.ps1
+.venv/bin/activate
+.venv/bin/activate.csh
+.venv/bin/activate.fish
+.venv/bin/django-admin
+.venv/bin/pip
+.venv/bin/pip3
+.venv/bin/pip3.9
+.venv/bin/py.test
+.venv/bin/pygmentize
+.venv/bin/pytest
+.venv/bin/sqlformat
+.venv/pyvenv.cfg
+AGENTS.md
+LICENSE
+dddjango/.codex-plugin/plugin.json
+dddjango/skills/.gitkeep
+workspace/docs/ddd-implementation-standard.md
+workspace/docs/plugin-structure.md
+workspace/docs/reference-index.md
+workspace/docs/skill-authoring.md
+workspace/docs/skill-contracts.md
+workspace/docs/skill-hierarchy.md
+workspace/docs/spec.md
+workspace/docs/validation-plan.md
+
+exec
+/bin/zsh -lc "rg -n \"verbose_name\" . -g '"'!workspace/develop/**'"' -g '"'!*.pyc'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+./workspace/reference/implementation-django/reference/final.md:176:        verbose_name_plural = "people"
+
+**Exploring task details**
+
+I'm looking into listed files like .git logs, .playwright, and .venv, which seem to be non-private. I should consider if I need to read AGENTS since the user provided that context. The README isn't present, but there are .pytest_cache and eval files. I might inspect these or look for verbose_name occurrences, though it feels more like a reference document than actual code. The public packet also mentions a README typo and talks about verbose_name, so I’ll keep an eye out for "verbose" too.
+codex
+I found one non-evaluator `verbose_name` occurrence in a reference file and no project README outside cache/evaluator areas. I’ll read the nearby public workspace lines so the transcript can say exactly what was inspected.
+exec
+/bin/zsh -lc "sed -n '160,190p' workspace/reference/implementation-django/reference/final.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+```
+
+### 2.4 모델 코딩 스타일 [DCS]
+
+```python
+class Person(models.Model):
+    # 1. 데이터베이스 필드 (all lowercase with underscores)
+    first_name = models.CharField(max_length=20)
+    last_name = models.CharField(max_length=40)
+    email = models.EmailField(unique=True)
+
+    # 2. 커스텀 Manager
+    objects = PersonManager()
+
+    # 3. class Meta
+    class Meta:
+        verbose_name_plural = "people"
+        ordering = ["last_name", "first_name"]
+
+    # 4. __str__ 및 기타 Python 매직 메서드
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+    # 5. save(), delete()
+    def save(self, *args, **kwargs):
+        self.email = self.email.lower()
+        super().save(*args, **kwargs)
+
+    # 6. get_absolute_url()
+    def get_absolute_url(self):
+        return reverse("person-detail", kwargs={"pk": self.pk})
+
+exec
+/bin/zsh -lc "rg -n \"README|오타|typo|verbose_name\" AGENTS.md dddjango workspace -g '"'!workspace/develop/**'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+dddjango/skills/implementation-test/SKILL.md:19:- For a small assertion, fixture, import ordering, typo, or pytest command explanation, answer directly without DDD or workflow ceremony.
+workspace/reference/implementation-test/reference/final.md:889:`seal()`은 Mock 객체를 봉인하여, 미리 설정하지 않은 속성/메서드에 접근하면 에러를 발생시킨다. 오타나 잘못된 속성 접근을 방지한다.
+workspace/reference/implementation-test/reference/external.md:591:`seal()`은 Mock 객체를 봉인하여, 미리 설정하지 않은 속성/메서드에 접근하면 에러를 발생시킨다. 오타나 잘못된 속성 접근을 방지한다.
+dddjango/skills/implementation-test/references/test-doubles.md:27:- Use `seal()` after configuring a mock when accidental attribute creation would hide a typo.
+workspace/reference/implementation-django/reference/final.md:176:        verbose_name_plural = "people"
+workspace/reference/implementation-cleancode/reference/external.md:1984:    if color == "red":       # 오타 위험: "rde"
+workspace/reference/implementation-cleancode/reference/external.md:1998:    if color == Color.RED:   # IDE 자동완성, 오타 불가
+dddjango/skills/implementation-cleancode/SKILL.md:21:- For a tiny naming question, typo, or formatter-only issue, answer or edit directly without DDD/workflow ceremony.
+workspace/scripts/validate_skill_docs.py:94:    "README.md",
+workspace/reference/implementation-python/reference/internal.md:164:    def get_colour(self) -> str:  # 타입 체커 에러: 오타
+workspace/docs/plugin-structure.md:217:- 스킬마다 README, 설치 가이드, changelog 같은 보조 문서를 늘리지 않는다.
+workspace/docs/validation-plan.md:316:- README, installation guide, changelog 같은 보조 문서를 skill 내부에 만들지 않는다.
+
+exec
+/bin/zsh -lc "find . -maxdepth 4 -type f \\( -name 'README.md' -o -name 'README.*' \\) -not -path './workspace/develop/*' -not -path './.pytest_cache/*' -print" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+codex
+Using `dddjango:implementation-cleancode` only for its small-change guidance, since the public case is explicitly a typo/text-only request and says not to do DDD design.
+exec
+/bin/zsh -lc "sed -n '1,90p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-cleancode/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: implementation-cleancode
+description: >
+  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍/이름, 함수 분리, 비대한 모델/긴 함수/흩어진 로직, 캡슐화, 추상화, 중복 제거, 오류 처리, 레거시, 코드 냄새/스멜, 유지보수. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-python for Python typing, implementation-django for concrete Django ORM/migrations, implementation-django-ninja for Router/Schema API implementation, and workflow-dddjango-subagents for composite/subagent work.
+---
+
+# Clean Code
+
+Use this skill when the task is to review, refactor, or improve maintainability. The goal is code that is easier to understand and change while preserving behavior and domain intent.
+
+## Routing
+
+- If domain rules, invariants, aggregate ownership, or bounded context are unclear, use `architecture-ddd` before judging structure.
+- If the main question is architecture/design pattern selection, use `architecture-implementation-patterns`; use this skill to judge whether an already proposed pattern reduces maintainability risk.
+- If REST contract, DB schema, transaction, locking, migration rollout, or consistency decisions are unresolved, use `architecture-api` or `architecture-db` before treating the issue as only code quality.
+- If Python typing, dataclasses, enums, Protocol, pydantic, Ruff, or typecheck compatibility are the main work, use `implementation-python` with this skill.
+- If concrete Django ORM, migration, QuerySet, transaction, settings, or service/selector implementation details are primary, use `implementation-django`; keep this skill central for Fat Model, View/Router business-logic, responsibility, duplication, naming, or maintainability reviews.
+- If API Router/Schema/status/error implementation is the main work, use `implementation-django-ninja`.
+- If test fixtures, mocks, factories, coverage, or TDD method are the main work, use `implementation-test` or `implementation-tdd`.
+- If the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
+- For a tiny naming question, typo, or formatter-only issue, answer or edit directly without DDD/workflow ceremony.
+
+## Reference Loading
+
+- Read [responsibility.md](references/responsibility.md) for change reasons, SRP, cohesion/coupling, responsibility-driven design, comments, and review output.
+- Read [naming-functions.md](references/naming-functions.md) for naming, function design, arguments, command/query separation, side effects, formatting, and docstrings.
+- Read [encapsulation-abstraction.md](references/encapsulation-abstraction.md) for information hiding, deep modules, object design, SOLID, DRY, errors, and dependency management.
+- Read [legacy-review.md](references/legacy-review.md) for code smells, behavior-preserving refactoring, characterization tests, seams, sprout/wrap methods, and legacy risk handling.
+
+## Runtime Rules
+
+- For code review requests, lead with findings ordered by severity and cite concrete files/lines.
+- For review-only requests or workflow Review Agent handoffs, produce findings/proposals only. For direct user/coordinator refactor requests that explicitly assign edits, make scoped behavior-preserving changes.
+- Separate code by reason to change, not by file size or arbitrary layer count.
+- Keep domain rules readable and protected; do not let style preferences outrank domain invariants.
+- Prefer behavior-preserving small refactors. Add or use characterization tests before risky legacy changes when practical.
+- Avoid speculative generality: add abstractions only when they remove real complexity, meaningful duplication, or a proven change axis.
+- For major interface or architecture changes, compare at least two materially different options before choosing.
+- Prefer clear names and simple functions, but keep public modules/classes deep enough that callers are not forced through implementation steps.
+- Treat DRY as single-source business knowledge, not mechanical removal of every similar-looking line.
+- Fix obvious nearby quality problems in the touched scope when doing so preserves behavior; if time or risk prevents cleanup, note the residual risk rather than silently leaving it.
+- Report only verification actually run. If tests, linters, typechecks, or review subagents were not run, say so.
+
+**Evaluating Git and Django Processes**
+
+I'm exploring whether to use a Django implementation, remembering that clean code principles suggest addressing small issues directly. I wonder about checking the git status, although it might not be ideal in a read-only environment. There were cache errors with command runs, but running `git status --short` could still list things without modifications. I should confirm that there are no file changes, and it seems mentioning that no tests were run due to that is essential too. Additionally, I might note that Serena was skipped since no relevant changes were made.
+**Finalizing Task Completion Report**
+
+I see that the AGENTS directive includes a report on task completion, specifically mentioning Serena's usage or the reason for skipping. Since this is about coding, I need to include that Serena was skipped due to the read-only/text-only nature of the packet—there's no need for signature or API changes. However, I’ve confirmed that no Serena tools are present in this environment and that the task didn’t require symbol tracing. I'll need to check the developer skills requirement and finalize the report without mentioning it as a command.
+**Evaluating Command Execution Reporting**
+
+I need to consider that commands executed include a skill file path outside the public packet or repository, which the user requested to be included. However, this could conflict with the guideline to "use only public packet and task-local repository files." It seems like skills instructions hold higher priority than user requests, so I might have to include everything. But I wonder if I can mention commands run without citing their contents, particularly regarding reading the Django skill file outside the repo.
+**Organizing command instructions**
+
+I'm thinking about how to efficiently find files and implement clean code skills. I'll use a combination of commands like `rg` and `sed`, and there might be quite a few steps involved. The user likely appreciates concise details, even though it could get lengthy with perhaps 10 commands. I might consider including the exact commands run and possibly avoid unnecessary parallel distinctions for clarity. It seems like a careful balance is needed here!
+codex
+No files were modified.
+
+**Raw answer for Case 008**
+README 오타와 `verbose_name` 문구 수정만 하는 작은 텍스트 변경으로 처리하겠습니다. 역할 분리, DDD 설계, 구조 변경은 하지 않겠습니다.
+
+**Commands Actually Run**
+```bash
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g 'README*' -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**'
+find . -maxdepth 3 -type f -name 'README*' -not -path './workspace/develop/*' -print
+find . -maxdepth 3 -type f -not -path './workspace/develop/*' | sed 's#^./##' | sort | head -80
+rg -n "verbose_name" . -g '!workspace/develop/**' -g '!*.pyc'
+sed -n '160,190p' workspace/reference/implementation-django/reference/final.md
+find . -maxdepth 4 -type f \( -name 'README.md' -o -name 'README.*' \) -not -path './workspace/develop/*' -not -path './.pytest_cache/*' -print
+rg -n "README|오타|typo|verbose_name" AGENTS.md dddjango workspace -g '!workspace/develop/**'
+sed -n '1,90p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-cleancode/SKILL.md
+```
+
+**Checks Not Run**
+- Tests were not run because the packet explicitly said not to modify files, and no code behavior changed.
+- Linters/type checks were not run for the same reason.
+- Serena: skipped because this was a tiny read-only typo/text-scope case with no symbol/API/refactor tracing needed; verified only with `find`/`rg`.
+tokens used
+12,686

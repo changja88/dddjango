@@ -1,0 +1,226 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: auto
+session id: 019e0fa8-9583-75d3-8249-8b67b89560e0
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 013
+
+## User Request
+
+```text
+기존 DRF ViewSet/Serializer로 된 주문 API를 Django Ninja로 옮기고 싶어. 기존 클라이언트 호환성, status code, error response, OpenAPI 차이를 같이 봐줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+Using `dddjango:architecture-api` and `dddjango:implementation-django-ninja` because the packet asks for DRF-to-Ninja migration compatibility, response contracts, status codes, errors, and OpenAPI.
+exec
+/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+/Users/hyun/Desktop/dddjango
+
+ succeeded in 0ms:
+---
+name: architecture-api
+description: >
+  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+---
+
+# API Architecture
+
+Use this skill to turn use cases and client needs into REST contracts. This skill designs external API behavior; it does not implement framework code.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
+- If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
+- If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.
+- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
+- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+- If the user asks for pytest/API contract tests, use `implementation-test` after contract criteria are known.
+- For a simple status-code, URL naming, or error-format question, answer directly without forcing a full DDD workflow.
+
+## Reference Loading
+
+- Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, headers, auth/authz, content negotiation, and cache semantics.
+- Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
+- Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.
+- Read [idempotency-openapi.md](references/idempotency-openapi.md) for `Idempotency-Key`, duplicate POST behavior, and OpenAPI contract impact.
+
+## Runtime Rules
+
+- Start from the external use case, resource identity, client workflow, authorization needs, error conditions, compatibility constraints, and expected query patterns.
+- Choose resources and URLs as stable nouns; avoid leaking database table names or imperative action names into URLs.
+- Choose HTTP methods by safety and idempotency. Use POST for creation/actions, PUT for full replacement, PATCH for partial update, DELETE for deletion, and GET only for safe reads.
+- Specify status codes with response body expectations, especially 201 with `Location`, 202 for accepted async work, 204 for no-content delete, 409 for conflicts, 422 for semantic validation, 429 for rate limits, and 503 with retry guidance.
+- Use RFC 9457 Problem Details consistently for API errors; keep `status` aligned with the HTTP response and keep `title` reusable while `detail` describes the occurrence.
+- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
+- For duplicate-sensitive POSTs, define `Idempotency-Key` acceptance, replay response, conflict behavior, and storage handoff to `architecture-db`.
+- Choose pagination from scenario facts: offset for small/admin use, cursor or keyset for large or changing datasets, and include next-page metadata.
+- Treat response field removal, type changes, required request additions, URL changes, status changes, and error shape changes as breaking unless versioned or migrated.
+- Record OpenAPI impact whenever endpoints, schemas, status responses, auth, pagination, rate limits, or idempotency behavior change.
+- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: implementation-django-ninja
+description: >
+  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+---
+
+# Django Ninja Implementation
+
+This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
+
+## Fallback Source
+
+- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
+- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
+- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
+
+## Routing
+
+- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
+- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
+- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
+- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
+- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
+- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
+- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
+- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+
+## Reference Loading
+
+- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
+- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
+- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
+- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
+
+## Runtime Rules
+
+- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
+- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
+- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
+- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
+- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
+- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
+- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
+
+codex
+기존 DRF 주문 API를 Django Ninja로 옮길 때는 “같은 URL과 같은 계약을 유지하는 어댑터 교체”로 보는 게 안전합니다. 먼저 기존 `ViewSet/Serializer`의 외부 계약을 표로 고정한 뒤 Ninja `Router/Schema`가 그 계약을 그대로 재현하는지 확인하세요.
+
+**마이그레이션 체크포인트**
+
+| 항목 | 확인할 것 |
+|---|---|
+| URL/메서드 | 기존 `/orders/`, `/orders/{id}/`, custom action URL 유지 여부 |
+| status code | `list/detail/create/update/delete/action`별 기존 응답 코드와 Ninja 응답 코드 일치 |
+| 응답 필드 | 필드명, nullable, enum 값, datetime 포맷, nested object 구조 |
+| 요청 검증 | DRF `Serializer` validation error shape와 Ninja/Pydantic validation error shape 차이 |
+| 인증/권한 | DRF permission class, authentication class, object permission 동작 보존 |
+| pagination | DRF pagination의 `count/next/previous/results` 형태 유지 여부 |
+| filter/sort | 기존 query param 이름, 기본 정렬, 빈 결과 동작 |
+| error response | 기존 클라이언트가 DRF error shape에 의존하면 호환 레이어 필요 |
+| OpenAPI | operationId, path param 타입, request/response schema, error responses 명시 차이 |
+
+권장 구조는 `Router`를 얇게 두고, 주문 생성/취소/조회 같은 비즈니스 규칙은 기존 service/usecase 계층으로 빼는 방식입니다. DRF `Serializer`가 하던 역할은 Ninja `Schema`로 나누되, 기존 클라이언트 호환이 중요하면 응답 스키마 이름과 필드 구조를 먼저 고정해야 합니다.
+
+```python
+router = Router(tags=["orders"])
+
+@router.get("/orders/{order_id}", response={200: OrderOut, 404: ProblemDetail})
+def get_order(request, order_id: int):
+    try:
+        order = order_service.get_order(user=request.user, order_id=order_id)
+    except OrderNotFound as exc:
+        return 404, problem_detail(
+            status=404,
+            title="Order not found",
+            detail=str(exc),
+        )
+    return OrderOut.from_domain(order)
+```
+
+error response는 둘 중 하나를 선택해야 합니다.
+
+1. 기존 DRF 호환 유지: `{"field": ["message"]}` 또는 `{"detail": "..."}` 형태를 유지합니다. 기존 앱/프론트가 깨질 가능성이 가장 낮습니다.
+2. 새 표준 도입: RFC 9457 Problem Details 형태로 `type/title/status/detail/instance`를 씁니다. 단, 기존 클라이언트에는 breaking change라 버전 분리나 호환 기간이 필요합니다.
+
+status code는 최소한 아래를 계약 테스트로 고정하는 게 좋습니다.
+
+```text
+GET /orders/              -> 200
+GET /orders/{id}          -> 200, 404
+POST /orders/             -> 201, Location header 여부 확인
+PATCH /orders/{id}        -> 200 또는 204, 기존 DRF 동작과 일치
+DELETE /orders/{id}       -> 204 또는 기존 동작과 일치
+validation error          -> 기존 400 유지 여부 또는 422 전환 여부 명시
+permission denied         -> 403
+unauthenticated           -> 401
+conflict/cancel failure   -> 409 권장, 기존 동작 있으면 우선 유지
+```
+
+OpenAPI는 DRF에서 Ninja로 바뀌면 schema 생성 방식이 달라지므로, 기존 문서와 새 문서를 비교해야 합니다. 특히 `requestBody`, `responses`, pagination schema, validation error schema, auth security scheme, operationId가 클라이언트 SDK 생성에 영향을 줍니다.
+
+실제 전환 순서는 이렇게 잡겠습니다.
+
+1. 기존 DRF API의 URL, status code, request/response/error 샘플을 golden contract로 캡처
+2. Ninja `Schema`와 `Router` 작성
+3. DRF error 또는 Problem Details 중 하나로 error adapter 고정
+4. 기존 클라이언트 호환 테스트 작성
+5. OpenAPI JSON diff 확인
+6. 같은 endpoint를 교체하거나 `/v2`로 병행 운영 결정
+
+Commands actually run:
+
+```bash
+pwd -P
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+```
+
+Checks not run:
+
+```text
+pytest/TestClient: not run because no concrete order API files or test target were provided.
+OpenAPI generation/diff: not run because no project API entrypoint or existing schema file was identified.
+DRF-to-Ninja code migration: not run because the packet requested analysis only and explicitly said not to modify files.
+Repository source inspection: not run because the public packet was sufficient for a contract-level answer.
+```
+
+Serena: skipped because this was an advisory eval with no symbol/reference tracing or code modification.
+tokens used
+26,700

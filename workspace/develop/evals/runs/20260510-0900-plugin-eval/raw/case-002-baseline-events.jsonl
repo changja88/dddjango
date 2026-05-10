@@ -1,0 +1,50 @@
+확인 결과: 새 `codex debug prompt-input` 출력에 `dddjango` 플러그인 skill metadata가 노출됩니다. Raw prompt input 안에서 보인 `dddjango:*` skill 항목은 12개입니다.
+
+Names observed:
+
+```text
+dddjango:architecture-api
+dddjango:architecture-db
+dddjango:architecture-ddd
+dddjango:architecture-implementation-patterns
+dddjango:implementation-cleancode
+dddjango:implementation-django
+dddjango:implementation-django-ninja
+dddjango:implementation-django-web
+dddjango:implementation-python
+dddjango:implementation-tdd
+dddjango:implementation-test
+dddjango:workflow-dddjango-subagents
+```
+
+Artifact: 파일로 저장하지 않았습니다. 이번 packet의 “Do not modify files” 지시 때문에 `prompt-input.json` 같은 산출물을 만들지 않고 stdout raw output만 확인했습니다.
+
+Commands actually run, grouped:
+
+```sh
+pwd -P
+git rev-parse --show-toplevel
+rg --files -g '!workspace/develop/rubrics/**' -g '!workspace/develop/evals/cases/plugin/private/**' -g '!**/*prior*' -g '!**/prior/**' -g '!**/*findings*'
+sed -n '1,240p' workspace/scripts/run_plugin_eval.py
+sed -n '1,220p' workspace/develop/evals/cases/plugin/public/case-002.md
+find dddjango/skills -maxdepth 2 -name 'SKILL.md' -print | sort
+codex debug prompt-input '<public packet prompt>'
+codex debug prompt-input --help
+codex debug prompt-input '<public packet prompt>' | python3 -c '<json parse/count probe>'
+codex debug prompt-input test
+codex debug prompt-input test | wc -c
+script -q /dev/null codex debug prompt-input test
+codex plugin list
+codex plugin --help
+```
+
+Not-run checks:
+
+```text
+- Did not save prompt-input/debug artifact to disk: file modification was prohibited.
+- Did not run workspace/scripts/run_plugin_eval.py: it writes eval run artifacts.
+- Did not run full codex exec baseline/with-dddjango variants: not needed for metadata exposure and would create outputs.
+- Did not read private/rubric/prior report contents.
+```
+
+One note: the broad `rg --files` listing showed prior run paths, but I did not open or read their contents.

@@ -1,0 +1,491 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019e0f9d-14a4-7e13-a270-81fa990efaaf
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 007
+
+## User Request
+
+```text
+Order 모델의 memo 필드를 note로 rename하는 작은 변경만 하면 돼. dddjango 기준으로 과하게 하지 말고 필요한 작업만 알려줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+I’ll treat this as a read-only eval run: I’ll inspect only the allowed local files needed to understand the plugin guidance, then produce the raw answer plus the exact commands run.
+exec
+/bin/zsh -lc 'pwd -P' in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+/Users/hyun/Desktop/dddjango
+
+exec
+/bin/zsh -lc "rg --files -g '"'!*workspace/develop/rubrics/**'"' -g '"'!*workspace/develop/evals/cases/plugin/private/**'"' -g '"'!**/*report*'"' -g '"'!**/*finding*'"'" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+AGENTS.md
+workspace/reference/implementation-test/reference/review.md
+workspace/reference/implementation-test/reference/internal.md
+workspace/reference/implementation-test/reference/final.md
+workspace/reference/implementation-test/reference/external.md
+workspace/reference/implementation-django/reference/final.md
+workspace/reference/architecture-api/reference/review.md
+workspace/reference/architecture-api/reference/internal.md
+workspace/reference/architecture-api/reference/final.md
+workspace/reference/architecture-api/reference/external.md
+workspace/reference/spec.md
+workspace/reference/implementation-cleancode/reference/review.md
+workspace/reference/implementation-cleancode/reference/internal.md
+workspace/reference/implementation-cleancode/reference/final.md
+workspace/reference/implementation-cleancode/reference/external.md
+workspace/reference/implementation-tdd/reference/review.md
+workspace/reference/implementation-tdd/reference/internal.md
+workspace/reference/implementation-tdd/reference/final.md
+workspace/reference/implementation-tdd/reference/external.md
+workspace/reference/architecture-db/reference/review.md
+workspace/reference/architecture-db/reference/internal.md
+workspace/reference/architecture-db/reference/final.md
+workspace/reference/architecture-db/reference/external.md
+workspace/reference/implementation-python/reference/review.md
+workspace/reference/implementation-python/reference/internal.md
+workspace/reference/implementation-python/reference/final.md
+workspace/reference/implementation-python/reference/external.md
+workspace/reference/architecture-ddd/reference/review.md
+workspace/reference/architecture-ddd/reference/internal.md
+workspace/reference/architecture-ddd/reference/final.md
+workspace/reference/architecture-ddd/reference/external.md
+workspace/scripts/validate_skill_docs.py
+workspace/scripts/run_plugin_eval.py
+workspace/docs/reference-index.md
+workspace/docs/spec.md
+workspace/docs/skill-contracts.md
+workspace/docs/skill-authoring.md
+workspace/docs/plugin-structure.md
+workspace/docs/validation-plan.md
+workspace/docs/workflow.md
+workspace/docs/skill-hierarchy.md
+workspace/docs/ddd-implementation-standard.md
+workspace/develop/skill_goal_instructions.md
+workspace/develop/rubric_goal_instructions.md
+workspace/develop/plan.md
+workspace/develop/source-crosswalks/implementation-test.md
+workspace/develop/source-crosswalks/implementation-django.md
+workspace/develop/source-crosswalks/implementation-django-ninja.md
+workspace/develop/source-crosswalks/implementation-cleancode.md
+workspace/develop/source-crosswalks/implementation-tdd.md
+workspace/develop/source-crosswalks/workflow-dddjango-subagents.md
+workspace/develop/source-crosswalks/implementation-python.md
+workspace/develop/source-crosswalks/architecture-db.md
+workspace/develop/source-crosswalks/architecture-implementation-patterns.md
+workspace/develop/source-crosswalks/architecture-api.md
+workspace/develop/source-crosswalks/architecture-ddd.md
+workspace/develop/source-crosswalks/implementation-django-web.md
+LICENSE
+workspace/develop/evals/README.md
+workspace/develop/evals/runs/README.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/RUN_ID.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/operator-notes.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-prompt-input.json
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-events.jsonl
+workspace/develop/evals/templates/case-analysis.html
+workspace/develop/evals/templates/public-packet.md
+workspace/develop/evals/templates/private-evaluator.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-public-prompt.md
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-baseline-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-005-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-004-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-baseline-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-baseline.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-command.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-007-prompt-input.stderr.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-001-with-dddjango-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-003-with-dddjango-events.jsonl
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-006-baseline-exit.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-operator-prompt.txt
+workspace/develop/evals/runs/20260510-0900-plugin-eval/raw/case-002-with-dddjango.stderr.txt
+dddjango/skills/implementation-test/SKILL.md
+dddjango/skills/implementation-test/agents/openai.yaml
+dddjango/skills/implementation-test/references/pytest-fixtures.md
+dddjango/skills/implementation-test/references/factories-property-tests.md
+dddjango/skills/implementation-test/references/test-doubles.md
+dddjango/skills/implementation-test/references/coverage-mutation.md
+workspace/develop/evals/cases/plugin/public/case-008.md
+workspace/develop/evals/cases/plugin/public/case-009.md
+workspace/develop/evals/cases/plugin/public/case-002.md
+workspace/develop/evals/cases/plugin/public/case-012.md
+workspace/develop/evals/cases/plugin/public/case-006.md
+workspace/develop/evals/cases/plugin/public/case-016.md
+workspace/develop/evals/cases/plugin/public/case-007.md
+workspace/develop/evals/cases/plugin/public/case-017.md
+workspace/develop/evals/cases/plugin/public/case-003.md
+workspace/develop/evals/cases/plugin/public/case-013.md
+workspace/develop/evals/cases/plugin/public/case-004.md
+workspace/develop/evals/cases/plugin/public/case-014.md
+workspace/develop/evals/cases/plugin/public/case-010.md
+workspace/develop/evals/cases/plugin/public/case-001.md
+workspace/develop/evals/cases/plugin/public/case-011.md
+workspace/develop/evals/cases/plugin/public/case-005.md
+workspace/develop/evals/cases/plugin/public/case-015.md
+dddjango/skills/implementation-django/SKILL.md
+dddjango/skills/implementation-django/agents/openai.yaml
+dddjango/skills/implementation-django-ninja/SKILL.md
+dddjango/skills/implementation-django/references/services-selectors.md
+dddjango/skills/implementation-django/references/transactions-performance-security.md
+dddjango/skills/implementation-django/references/models-orm.md
+dddjango/skills/implementation-django/references/migrations.md
+dddjango/skills/implementation-django-ninja/agents/openai.yaml
+dddjango/skills/architecture-api/SKILL.md
+dddjango/skills/implementation-django-ninja/references/router-schema.md
+dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+dddjango/skills/implementation-django-ninja/references/auth-pagination-filtering.md
+dddjango/skills/implementation-django-ninja/references/testclient.md
+dddjango/skills/architecture-api/agents/openai.yaml
+dddjango/skills/architecture-db/SKILL.md
+dddjango/skills/architecture-api/references/pagination-versioning.md
+dddjango/skills/architecture-api/references/idempotency-openapi.md
+dddjango/skills/architecture-api/references/rest-contracts.md
+dddjango/skills/architecture-api/references/problem-details.md
+dddjango/skills/architecture-db/agents/openai.yaml
+dddjango/skills/workflow-dddjango-subagents/SKILL.md
+dddjango/skills/architecture-db/references/transactions-locking.md
+dddjango/skills/architecture-db/references/schema-modeling.md
+dddjango/skills/architecture-db/references/rollout-constraints.md
+dddjango/skills/architecture-db/references/constraints-indexes.md
+dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml
+dddjango/skills/implementation-django-web/SKILL.md
+dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+dddjango/skills/implementation-django-web/agents/openai.yaml
+dddjango/skills/implementation-cleancode/SKILL.md
+dddjango/skills/implementation-django-web/references/static-assets.md
+dddjango/skills/implementation-django-web/references/csrf-ajax.md
+dddjango/skills/implementation-django-web/references/templateview-htmx.md
+dddjango/skills/implementation-django-web/references/templates.md
+dddjango/skills/implementation-cleancode/agents/openai.yaml
+dddjango/skills/implementation-python/SKILL.md
+dddjango/skills/implementation-cleancode/references/encapsulation-abstraction.md
+dddjango/skills/implementation-cleancode/references/responsibility.md
+dddjango/skills/implementation-cleancode/references/legacy-review.md
+dddjango/skills/implementation-cleancode/references/naming-functions.md
+dddjango/skills/implementation-python/agents/openai.yaml
+dddjango/skills/implementation-tdd/SKILL.md
+dddjango/skills/implementation-python/references/protocols-boundaries.md
+dddjango/skills/implementation-python/references/pydantic-v2.md
+dddjango/skills/implementation-python/references/typing.md
+dddjango/skills/implementation-python/references/dataclasses-enums.md
+dddjango/skills/implementation-tdd/agents/openai.yaml
+dddjango/skills/architecture-ddd/SKILL.md
+dddjango/skills/implementation-tdd/references/test-list.md
+dddjango/skills/implementation-tdd/references/red-green-refactor.md
+dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
+dddjango/skills/architecture-implementation-patterns/SKILL.md
+dddjango/skills/architecture-ddd/agents/openai.yaml
+dddjango/skills/architecture-implementation-patterns/agents/openai.yaml
+dddjango/skills/architecture-ddd/references/domain-events.md
+dddjango/skills/architecture-ddd/references/tactical-patterns.md
+dddjango/skills/architecture-ddd/references/strategic-design.md
+dddjango/skills/architecture-ddd/references/context-map.md
+dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+
+codex
+I found the plugin skill files under `dddjango/skills`. I won’t open eval run outputs or private evaluator paths; I’m only checking the Django skill guidance needed for this case.
+exec
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,220p' dddjango/skills/implementation-django/references/migrations.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,180p' dddjango/skills/implementation-django/references/models-orm.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+# Migrations
+
+Use this reference for Django migration files, historical models, data migrations, rollout sequencing, backfills, indexes, and operational migration risk.
+
+## Basic Rules
+
+- Keep migration files in version control.
+- Keep migrations small and reviewable.
+- Use `python manage.py sqlmigrate <app> <migration>` when SQL shape, lock behavior, or index creation matters.
+- Do not import current model classes in migrations. Use `apps.get_model()` to load the historical model state.
+- Make reverse migrations explicit. Use a no-op reverse only when rollback cannot reconstruct data and that trade-off is acceptable.
+
+## Data Migrations
+
+- Keep data migrations idempotent when possible.
+- Process large tables in batches rather than loading all rows into memory.
+- Use `update_fields` for per-row saves when only selected columns change.
+- Prefer set-based `update()` with `F()` expressions when signals, custom `save()`, and per-instance validation are not required.
+- Document assumptions such as old value shape, nullability, uniqueness, and expected row count.
+
+## Expand, Backfill, Contract
+
+Use a staged rollout for risky production schema changes.
+
+1. Expand: add nullable columns, tables, or compatible indexes without requiring new code to be the only deployed version.
+2. Backfill: populate existing rows with a data migration, management command, or operational job.
+3. Contract: enforce `NOT NULL`, remove old columns, tighten constraints, or delete compatibility code after the backfill and deployment window are safe.
+
+Do not add a non-nullable field and deploy code that older application versions cannot satisfy.
+
+## Constraints And Indexes
+
+- Add DB constraints for invariants that must hold across all writers.
+- Use explicit names for constraints and indexes when the project convention supports it.
+- Add indexes for fields frequently used in `filter()`, `exclude()`, and `order_by()`, but verify the query plan when possible.
+- Remember indexes speed reads but slow writes and increase storage.
+- For PostgreSQL, consider concurrent index creation tooling or project-specific operations for large tables.
+- Coordinate unique constraints with deduplication and application-level error handling.
+
+## Rollout Checklist
+
+- Identify the transaction owner for any backfill or data rewrite.
+- Identify lock risk, table size, expected duration, and rollback behavior.
+- Decide whether old and new application versions must run simultaneously.
+- Decide whether the migration should be split from the code deployment.
+- Verify SQL with `sqlmigrate` or a database review when risk is non-trivial.
+- Add or request integration tests for migration-sensitive behavior when practical.
+
+ succeeded in 0ms:
+---
+name: implementation-django
+description: >
+  Use for Django 5.x/LTS implementation: 모델/model, ORM/QuerySet/Manager, 서비스/셀렉터, migration/마이그레이션, transaction/트랜잭션, settings, caching, security, performance, and Django integration test acceptance criteria. Use for 상태 컬럼 backfill, migration rollout, ORM 최적화, service layer. Prefer architecture-api for REST contract design, implementation-django-ninja for Router/Schema endpoints, implementation-django-web for templates/static, implementation-test for pytest/fixture/test code details, workflow-dddjango-subagents for composite or risky Django/DDD work, and architecture-ddd or architecture-db when domain or DB contracts are undecided.
+---
+
+# Django Implementation
+
+Use this skill to implement already-scoped Django work. Keep simple CRUD simple; do not force DDD, repository, workflow, or subagent structure onto small model, migration, service, or ORM changes.
+
+## Routing
+
+- If domain rules, state transitions, policies, invariants, or bounded context are unclear, use `architecture-ddd` before implementation.
+- If schema, constraint, transaction isolation, locking, or rollout strategy is undecided, use `architecture-db` before writing migrations.
+- If the work is REST API contract design, use `architecture-api`; if it is Django Ninja Router/Schema endpoint implementation, use `implementation-django-ninja`.
+- If the work is templates, static assets, TemplateView page composition, HTMX, or CSRF-aware frontend behavior, use `implementation-django-web`.
+- If the work is pytest fixtures, mocks, factories, API test code, concurrency test mechanics, or coverage strategy, use `implementation-test`; this skill only states Django acceptance criteria unless it is implementing Django-side test hooks.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, or the Django/DDD work is composite or risky across domain, DB, API, implementation, and tests, use `workflow-dddjango-subagents` first.
+
+## Reference Loading
+
+- Read [models-orm.md](references/models-orm.md) for app layout, settings, model fields, validation, managers, QuerySets, forms, views, and signal boundaries.
+- Read [services-selectors.md](references/services-selectors.md) for service layer, selector, application service, repository trade-off, and Django/DDD mapping choices.
+- Read [migrations.md](references/migrations.md) for migration files, `RunPython`, `apps.get_model()`, `sqlmigrate`, backfill, expand/backfill/contract, and index rollout.
+- Read [transactions-performance-security.md](references/transactions-performance-security.md) for `transaction.atomic()`, `on_commit()`, locking, query performance, caching, security, middleware, and Django test acceptance criteria.
+
+## Runtime Rules
+
+- Put business rules in model methods, domain/application services, or domain services; do not scatter core rules across views, forms, schemas, signals, or templates.
+- Use Django model methods and QuerySets directly when the domain is simple. Add services/selectors when one use case spans models, views, transactions, external side effects, or repeated orchestration.
+- Use custom QuerySet methods for chainable read predicates and selectors for larger read use cases.
+- For risky writes, include a `Risky Write Consistency Block` with transaction owner, lock/idempotency strategy, DB constraint, `Idempotency-Key` API coordination when relevant, external side-effect timing, isolation/retry decision, and test or verification plan.
+- Keep migrations small and version controlled. Use historical models in data migrations and split operational rollouts into expand, backfill, and contract steps.
+- Prefer Django and Python conventions already present in the project; do not introduce a repository, UoW, or clean architecture layer unless complexity and testability justify it.
+- Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+- Report only verification actually run. If tests, `sqlmigrate`, `check --deploy`, query-count checks, or migration checks were not run, say so.
+
+ succeeded in 0ms:
+# Models And ORM
+
+Use this reference for Django app layout, settings access, models, fields, validation, QuerySets, managers, forms, views, and signals. For API Router/Schema work use `implementation-django-ninja`; for templates/static/frontend work use `implementation-django-web`.
+
+## Project And Settings
+
+- Prefer a conventional split such as `config/settings/base.py`, `local.py`, `production.py`, and `test.py` when a project already follows or needs that layout.
+- Keep apps aligned to cohesive domain concepts such as `orders`, `payments`, or `users`. Reconsider an app that cannot be described in one sentence or creates circular dependencies.
+- Do not hardcode secrets in settings. Read secrets and environment-specific values from environment variables through the project’s existing configuration tool.
+- Avoid settings access at module import time when the value can be resolved lazily inside a function or method.
+
+## Model Design
+
+- Keep model information needed to understand an object close to the model: fields, metadata, managers, string representation, URLs, and domain methods.
+- Use model methods for simple behavior that naturally belongs to one model. Move orchestration to services when behavior spans models, external systems, or transactions.
+- Use `TextChoices` or `IntegerChoices` for finite states instead of multiple booleans that permit impossible combinations.
+- Use `DecimalField` for money and avoid `FloatField` for monetary values.
+- Use `JSONField` only for genuinely schemaless data; prefer relational fields for structured domain data.
+- Prefer abstract base classes for shared fields. Use multi-table inheritance only with a clear reason for the extra joins. Use proxy models for alternate Python behavior over the same table.
+
+## Django 5.x Notes
+
+- Use `db_default` when a default must be computed by the database rather than Python, including paths such as bulk inserts where the SQL `DEFAULT` matters.
+- Use `GeneratedField` only when the derived value belongs in the database model and the project accepts stored vs virtual generated-column trade-offs.
+- Treat Django 5.2 composite primary keys as constrained: existing models cannot be migrated to composite PKs directly, foreign keys to composite-PK models are limited, and admin support is not available.
+- Prefer Django 5.2 LTS behavior for new baseline guidance unless the project pins another supported Django version.
+
+## Validation And Constraints
+
+- Use `clean()` for Python-level cross-field validation where it fits the existing project style.
+- Add DB constraints for invariants the database must protect, such as `CheckConstraint`, `UniqueConstraint`, and explicit indexes.
+- Remember `save()` does not automatically call `full_clean()`. Ensure forms, services, or explicit code paths invoke validation when needed.
+- Keep form validation responsible for user input shape and presentation errors; keep domain invariants in model/service/DB boundaries when they must hold outside the form.
+
+## QuerySet And Manager
+
+- Put chainable read predicates on custom QuerySet methods, then expose them through `as_manager()` or a thin manager.
+- Use `select_related()` for `ForeignKey` and `OneToOneField`.
+- Use `prefetch_related()` for `ManyToManyField` and reverse foreign keys.
+- Use `Prefetch()` when the prefetched relation needs its own filtered or ordered QuerySet.
+- Use `only()` and `defer()` only when profiling shows large field or conversion cost; they can add hidden lazy queries.
+- Use `values()` and `values_list()` for projection queries that do not need model instances.
+- Treat `annotate()` and `filter()` order as meaningful. Use `alias()` when a calculated expression is needed only for filtering or ordering.
+- Use `bulk_create()`, `bulk_update()`, and QuerySet `update()` for large batch operations when model `save()` hooks and per-instance validation are not required.
+
+## Views, Forms, And Signals
+
+- Keep views thin: request parsing, permission checks, orchestration call, response/redirect.
+- Use FBV when the view is simple. Use CBV or mixins only when they reduce real duplication or match existing project style.
+- Use signals for third-party model hooks, avoiding circular dependencies, or applying one handler across many models.
+- Do not use signals as hidden control flow inside the same app when an explicit service call or model method is clearer.
+- Avoid putting durable business rules in views, forms, signals, templates, or API schemas.
+
+codex
+**Raw Answer**
+
+`Order.memo`를 `note`로 바꾸는 정도면 과하게 설계하지 않고 아래만 하면 됩니다.
+
+1. `Order` 모델 필드명을 `memo`에서 `note`로 변경
+2. 코드에서 `order.memo`, `memo=...`, form/schema/admin/template/test fixture 참조를 `note`로 변경
+3. 마이그레이션은 데이터 보존을 위해 `RenameField`로 생성/확인
+
+```bash
+python manage.py makemigrations
+```
+
+생성된 migration이 대략 아래 형태인지 확인하면 됩니다.
+
+```python
+migrations.RenameField(
+    model_name="order",
+    old_name="memo",
+    new_name="note",
+)
+```
+
+검증은 최소로:
+
+```bash
+python manage.py test
+python manage.py migrate --plan
+```
+
+DB 컬럼명까지 바뀌는 변경이라 API 응답/요청 키가 외부 계약이면 `memo -> note`가 깨지는 변경인지도 한 번만 확인하세요. 내부 필드명 변경이면 여기서 끝내면 됩니다.
+
+**Commands Actually Run**
+
+```bash
+pwd -P
+rg --files -g '!*workspace/develop/rubrics/**' -g '!*workspace/develop/evals/cases/plugin/private/**' -g '!**/*report*' -g '!**/*finding*'
+sed -n '1,220p' dddjango/skills/implementation-django/SKILL.md
+sed -n '1,220p' dddjango/skills/implementation-django/references/migrations.md
+sed -n '1,180p' dddjango/skills/implementation-django/references/models-orm.md
+```
+
+**Checks Not Run**
+
+No tests, migrations, `sqlmigrate`, or Django checks were run because this eval packet requested a concise answer only and explicitly said not to modify files.
+
+Serena: not used; this was a read-only guidance task with no symbol/reference tracing needed.
+tokens used
+15,223

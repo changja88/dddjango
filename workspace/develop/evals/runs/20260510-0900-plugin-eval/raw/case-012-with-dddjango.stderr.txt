@@ -1,0 +1,448 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: auto
+session id: 019e0fa5-8049-7d13-8db3-a62cb172a433
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 012
+
+## User Request
+
+```text
+신규 쿠폰 발급 REST API를 만들어야 해. Django Ninja 기준으로 endpoint, request/response schema, auth, status code, Problem Details, OpenAPI, API test 계획까지 잡아줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## Instruction Priority
+
+Superpowers skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, GEMINI.md, AGENTS.md, direct requests) — highest priority
+2. **Superpowers skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, GEMINI.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In Copilot CLI:** Use the `skill` tool. Skills are auto-discovered from installed plugins. The `skill` tool works the same as Claude Code's `Skill` tool.
+
+**In Gemini CLI:** Skills activate via the `activate_skill` tool. Gemini loads skill metadata at session start and activates the full content on demand.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+## Platform Adaptation
+
+Skills use Claude Code tool names. Non-CC platforms: see `references/copilot-tools.md` (Copilot CLI), `references/codex-tools.md` (Codex) for tool equivalents. Gemini CLI users get the tool mapping loaded automatically via GEMINI.md.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "About to EnterPlanMode?" [shape=doublecircle];
+    "Already brainstormed?" [shape=diamond];
+    "Invoke brainstorming skill" [shape=box];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "About to EnterPlanMode?" -> "Already brainstormed?";
+    "Already brainstormed?" -> "Invoke brainstorming skill" [label="no"];
+    "Already brainstormed?" -> "Might any skill apply?" [label="yes"];
+    "Invoke brainstorming skill" -> "Might any skill apply?";
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+
+codex
+Using `dddjango:architecture-api`, `dddjango:implementation-django-ninja`, and `dddjango:implementation-test` to shape the REST contract, Ninja schemas, and API test plan. I will keep this read-only and avoid the private evaluator paths named in the packet.
+exec
+/bin/zsh -lc "sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md" in /Users/hyun/Desktop/dddjango
+exec
+/bin/zsh -lc "sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md" in /Users/hyun/Desktop/dddjango
+ succeeded in 0ms:
+---
+name: architecture-api
+description: >
+  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+---
+
+# API Architecture
+
+Use this skill to turn use cases and client needs into REST contracts. This skill designs external API behavior; it does not implement framework code.
+
+## Routing
+
+- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
+- If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
+- If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.
+- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
+- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
+- If the user asks for pytest/API contract tests, use `implementation-test` after contract criteria are known.
+- For a simple status-code, URL naming, or error-format question, answer directly without forcing a full DDD workflow.
+
+## Reference Loading
+
+- Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, headers, auth/authz, content negotiation, and cache semantics.
+- Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
+- Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.
+- Read [idempotency-openapi.md](references/idempotency-openapi.md) for `Idempotency-Key`, duplicate POST behavior, and OpenAPI contract impact.
+
+## Runtime Rules
+
+- Start from the external use case, resource identity, client workflow, authorization needs, error conditions, compatibility constraints, and expected query patterns.
+- Choose resources and URLs as stable nouns; avoid leaking database table names or imperative action names into URLs.
+- Choose HTTP methods by safety and idempotency. Use POST for creation/actions, PUT for full replacement, PATCH for partial update, DELETE for deletion, and GET only for safe reads.
+- Specify status codes with response body expectations, especially 201 with `Location`, 202 for accepted async work, 204 for no-content delete, 409 for conflicts, 422 for semantic validation, 429 for rate limits, and 503 with retry guidance.
+- Use RFC 9457 Problem Details consistently for API errors; keep `status` aligned with the HTTP response and keep `title` reusable while `detail` describes the occurrence.
+- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
+- For duplicate-sensitive POSTs, define `Idempotency-Key` acceptance, replay response, conflict behavior, and storage handoff to `architecture-db`.
+- Choose pagination from scenario facts: offset for small/admin use, cursor or keyset for large or changing datasets, and include next-page metadata.
+- Treat response field removal, type changes, required request additions, URL changes, status changes, and error shape changes as breaking unless versioned or migrated.
+- Record OpenAPI impact whenever endpoints, schemas, status responses, auth, pagination, rate limits, or idempotency behavior change.
+- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
+- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+
+ succeeded in 0ms:
+---
+name: implementation-django-ninja
+description: >
+  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+---
+
+# Django Ninja Implementation
+
+This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
+
+## Fallback Source
+
+- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
+- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
+- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
+
+## Routing
+
+- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
+- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
+- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
+- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
+- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
+- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
+- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
+- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
+- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
+- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+
+## Reference Loading
+
+- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
+- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
+- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
+- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
+
+## Runtime Rules
+
+- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
+- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
+- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
+- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
+- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
+- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
+- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
+
+ succeeded in 0ms:
+---
+name: implementation-test
+description: >
+  Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, test doubles, fake/mock/stub/spy/dummy, factory_boy/Faker, Hypothesis property tests, time/HTTP mocking, testcontainers, coverage, mutation testing, BDD, flaky tests, Django Ninja TestClient/API contract tests, idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 뮤테이션 테스트, 속성 기반 테스트, 중복 요청/동시성 테스트, flaky/불안정 테스트. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, implementation-tdd for Red-Green-Refactor flow, and architecture-ddd/architecture-db/architecture-api when invariants, data constraints, or REST contracts are unclear.
+---
+
+# Test Implementation
+
+Use this skill to write or review concrete pytest tests, fixtures, factories, doubles, property tests, and test quality checks. The test should verify behavior, invariants, and contracts rather than implementation details.
+
+## Routing
+
+- If the user asks for Red-Green-Refactor, failing-test-first sequencing, or TDD coaching, use `implementation-tdd`; use this skill for the pytest mechanics behind that flow.
+- If domain invariants, policy ownership, aggregates, or bounded context language are unclear, use `architecture-ddd` before locking in assertions.
+- If DB schema, constraints, transactions, locking, query performance, or rollout behavior is unresolved, use `architecture-db` before encoding those assumptions in tests.
+- If REST resources, status codes, Problem Details, pagination, idempotency, or OpenAPI contract behavior is unresolved, use `architecture-api` before writing API contract assertions.
+- If the work is Django ORM, migration, service, selector, or Django Ninja implementation, use the relevant implementation skill for production code and this skill for `tests/**`, `conftest.py`, factories, and doubles.
+- If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
+- For a small assertion, fixture, import ordering, typo, or pytest command explanation, answer directly without DDD or workflow ceremony.
+
+## Reference Loading
+
+- Read [pytest-fixtures.md](references/pytest-fixtures.md) for pytest structure, assertions, fixtures, `conftest.py`, parametrization, markers, plugins, async tests, and execution commands.
+- Read [test-doubles.md](references/test-doubles.md) for dummy/stub/spy/mock/fake selection, output/state/communication verification, `Mock`, `AsyncMock`, `seal`, monkeypatch, time mocking, and HTTP mocking.
+- Read [factories-property-tests.md](references/factories-property-tests.md) for factory_boy, Faker, traits, Django factories, Hypothesis, stateful property tests, and pytest-bdd.
+- Read [coverage-mutation.md](references/coverage-mutation.md) for test pyramid strategy, testcontainers, coverage.py, tox/nox, FIRST, AAA, anti-patterns, mutation testing, and debugging.
+
+## Runtime Rules
+
+- Choose the smallest test level that protects the behavior: fast domain unit tests first, integration tests for ORM/transactions/constraints/query performance, and Django Ninja `TestClient` tests for request/response contracts.
+- Prefer output and state verification for domain logic. Use communication verification and mocks mainly for external systems, adapters, or collaboration that must be observed.
+- Do not mock every collaborator by default. Use fakes for useful in-memory behavior and mocks for external roles such as payment, email, HTTP, or SDK boundaries.
+- Keep tests independent, repeatable, self-validating, and readable. Isolate time, randomness, filesystem, environment, network, and database state.
+- Put shared setup in fixtures or factories only when it makes the test clearer; avoid hidden fixture chains that obscure the behavior under test.
+- Use property-based tests for invariants over broad input spaces and example tests for named boundary cases.
+- Treat coverage and mutation scores as signals to inspect, not proof that behavior is fully tested.
+- In composite workflows, own `tests/**`, `conftest.py`, and factory files; coordinate with implementation skills without changing production code unless assigned.
+- Report only tests, coverage, mutation checks, or subagent reviews that were actually run. If a command was not run, state that directly.
+
+**Designing API endpoints**
+
+I'm working on creating an endpoint that includes details like request/response schema, authentication, status codes, and problem details. Since there aren't specific domain facts, I'll propose a conservative contract. It's important to mention optional idempotency because coupon issuance is sensitive to duplicates, so an Idempotency-Key will be necessary. I want to specify the resource as "issued coupons," possibly using `POST /api/v1/coupon-issues`, or maybe `/api/v1/coupons/issuances`. I should probably avoid action naming like "issue."
+**Considering UI calls and schemas**
+
+I’m thinking about whether UI calls can retry when there's a missing status, like 400 for a required header or 428 for a precondition. I could mention “required for write clients, return 400 `missing_idempotency_key`.” Also, in Django Ninja, I can use `ninja.Schema` with Pydantic v2, but I don’t need to verify the docs. It might be helpful to provide a brief Python snippet for the request/response schema and include a ProblemDetails response for errors.
+codex
+**Raw Answer**
+
+가정: 이 API는 인증된 회원이 자신에게 쿠폰을 발급받는 공개 API다. 운영자가 특정 사용자에게 발급하는 API라면 `target_user_id`와 별도 권한 정책을 추가한 admin endpoint로 분리하는 것이 낫다.
+
+**Endpoint**
+
+`POST /api/v1/coupon-issuances`
+
+- Resource: 쿠폰 발급 결과인 `coupon-issuance`
+- Auth: 필수. `Bearer`/세션 등 프로젝트 표준 auth로 `request.auth` 또는 `request.user` 식별
+- Header: `Idempotency-Key` 필수 권장
+- Success: `201 Created`
+- Response header: `Location: /api/v1/coupon-issuances/{issuance_id}`
+
+**Request Schema**
+
+```python
+class CouponIssuanceCreateRequest(Schema):
+    coupon_policy_id: UUID
+    claim_code: str | None = None
+```
+
+**Response Schema**
+
+```python
+class CouponIssuanceResponse(Schema):
+    issuance_id: UUID
+    coupon_id: UUID
+    coupon_policy_id: UUID
+    user_id: UUID
+    status: Literal["issued"]
+    issued_at: datetime
+    redeemable_from: datetime | None = None
+    expires_at: datetime
+```
+
+**Django Ninja Shape**
+
+```python
+router = Router(tags=["coupon-issuances"])
+
+@router.post(
+    "/coupon-issuances",
+    response={
+        201: CouponIssuanceResponse,
+        400: ProblemDetails,
+        401: ProblemDetails,
+        403: ProblemDetails,
+        404: ProblemDetails,
+        409: ProblemDetails,
+        422: ProblemDetails,
+        429: ProblemDetails,
+    },
+    operation_id="createCouponIssuance",
+    auth=auth_required,
+)
+def create_coupon_issuance(request, payload: CouponIssuanceCreateRequest):
+    idempotency_key = request.headers.get("Idempotency-Key")
+    if not idempotency_key:
+        raise problem(400, "missing_idempotency_key")
+
+    result = issue_coupon_usecase(
+        actor=request.auth,
+        coupon_policy_id=payload.coupon_policy_id,
+        claim_code=payload.claim_code,
+        idempotency_key=idempotency_key,
+    )
+    response = CouponIssuanceResponse.from_domain(result)
+    return 201, response
+```
+
+Router는 request validation, auth 연결, usecase 호출, domain/application error를 Problem Details로 변환하는 역할만 가진다. 발급 가능 여부, 중복 발급 방지, 재고 차감, 만료 판단, 트랜잭션은 service/usecase 계층에서 처리한다.
+
+**Status Codes**
+
+- `201 Created`: 새 쿠폰 발급 성공
+- `400 Bad Request`: 필수 header 누락, 잘못된 content type 등 요청 형식 문제
+- `401 Unauthorized`: 인증 없음
+- `403 Forbidden`: 발급 권한 없음
+- `404 Not Found`: 쿠폰 정책이 없거나 클라이언트에 노출하면 안 되는 정책
+- `409 Conflict`: 이미 발급됨, 재고 소진, 같은 `Idempotency-Key`로 다른 payload 재시도
+- `422 Unprocessable Content`: 스키마는 맞지만 claim code 불일치 등 의미 검증 실패
+- `429 Too Many Requests`: 발급 요청 rate limit 초과
+- `503 Service Unavailable`: 외부 의존성 장애가 있고 재시도 가능할 때, `Retry-After` 포함
+
+**Problem Details**
+
+모든 오류는 `application/problem+json`으로 통일한다.
+
+```json
+{
+  "type": "https://api.example.com/problems/coupon-already-issued",
+  "title": "Coupon already issued",
+  "status": 409,
+  "detail": "This user already has a coupon for the requested policy.",
+  "instance": "/api/v1/coupon-issuances",
+  "code": "coupon_already_issued",
+  "trace_id": "..."
+}
+```
+
+Validation 오류는 `errors` 확장 필드에 field-level detail을 둔다. HTTP status와 body의 `status` 값은 항상 일치시킨다.
+
+**OpenAPI**
+
+OpenAPI에는 다음을 명시한다.
+
+- `POST /api/v1/coupon-issuances`
+- `security`: 프로젝트 표준 bearer/session auth
+- required header parameter: `Idempotency-Key`
+- request body: `CouponIssuanceCreateRequest`
+- responses: `201`, `400`, `401`, `403`, `404`, `409`, `422`, `429`, `503`
+- error media type: `application/problem+json`
+- `operationId`: `createCouponIssuance`
+- tag: `coupon-issuances`
+
+**API Test Plan**
+
+- 성공: 인증된 사용자가 유효한 `coupon_policy_id`로 요청하면 `201`, response body, `Location` header 검증
+- 인증: 미인증 `401`, 권한 없는 사용자 `403`
+- 요청 검증: 잘못된 UUID, 누락 필드, 잘못된 claim code가 Problem Details로 반환되는지 검증
+- idempotency: 같은 key+같은 payload 재시도는 동일 결과 replay, 같은 key+다른 payload는 `409`
+- 중복/정책 오류: 이미 발급, 재고 소진, 만료/비활성 정책, 대상 정책 없음 각각 status와 `code` 검증
+- 동시성: 같은 사용자/정책 동시 요청 시 발급 row가 하나만 생기고 나머지는 replay 또는 `409`
+- OpenAPI: path, schemas, auth security, `Idempotency-Key`, Problem Details responses가 schema에 포함되는지 검증
+
+**Commands Actually Run**
+
+```bash
+sed -n '1,220p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-django-ninja/SKILL.md
+sed -n '1,240p' /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/implementation-test/SKILL.md
+```
+
+**Checks Not Run**
+
+No tests, OpenAPI generation, Django Ninja `TestClient`, or repo inspection were run because the packet requested a read-only planning answer and said not to modify files. Private evaluator paths and prior findings were not read.
+
+Serena: skipped because this was read-only API design with no codebase symbol/reference tracing needed.
+tokens used
+32,485

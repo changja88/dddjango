@@ -1,0 +1,51 @@
+결론: **파일 구조와 manifest 기준으로는 Codex local marketplace에서 `dddjango` 플러그인을 발견할 수 있는 상태로 보입니다.**
+
+확인 근거:
+- `.agents/plugins/marketplace.json` 존재
+- marketplace에 `dddjango` 플러그인 등록됨
+- 등록 경로가 `./plugins/dddjango`
+- `plugins/dddjango -> ../dddjango` 심볼릭 링크로 실제 플러그인 디렉터리를 가리킴
+- `plugins/dddjango/.codex-plugin/plugin.json` 존재
+- manifest JSON 파싱 성공
+- manifest 기준:
+  - `name`: `dddjango`
+  - `version`: `0.1.10`
+  - `skills`: `./skills/`
+  - `interface.displayName`: `dddjango`
+  - `category`: `Coding`
+  - `capabilities`: `Interactive, Read, Write`
+- `plugins/dddjango/skills` 아래 `SKILL.md` 12개 확인
+
+실제 설치나 cache sync는 **실행하지 않았습니다**. Codex 런타임에서 marketplace 목록에 실제로 뜨는지도 실행 검증하지 않았고, 요청대로 파일 구조와 manifest만 확인했습니다.
+
+Commands actually run:
+```sh
+sed -n '1,180p' /Users/hyun/.codex/plugins/cache/openai-curated/superpowers/63976030/skills/using-superpowers/SKILL.md
+pwd -P
+git rev-parse --show-toplevel
+find . -maxdepth 4 \( -path './workspace/develop/rubrics' -o -path './workspace/develop/rubrics/*' -o -path './workspace/develop/evals/cases/plugin/private' -o -path './workspace/develop/evals/cases/plugin/private/*' \) -prune -o -print
+sed -n '1,220p' .agents/plugins/marketplace.json
+sed -n '1,220p' dddjango/.codex-plugin/plugin.json
+find dddjango -maxdepth 3 -print
+find .agents -maxdepth 4 -print
+find plugins -maxdepth 4 -print
+ls -la plugins plugins/dddjango dddjango
+test -f plugins/dddjango/.codex-plugin/plugin.json && printf 'exists\n' || printf 'missing\n'
+test -f dddjango/.codex-plugin/plugin.json && printf 'exists\n' || printf 'missing\n'
+stat -f '%N -> %Y' plugins/dddjango
+jq empty .agents/plugins/marketplace.json
+jq empty dddjango/.codex-plugin/plugin.json
+jq -r '.plugins[] | [.name, .source.source, .source.path, .policy.installation, .policy.authentication, .category] | @tsv' .agents/plugins/marketplace.json
+jq -r '[.name, .version, .skills, .interface.displayName, .interface.category, (.interface.capabilities|join(","))] | @tsv' dddjango/.codex-plugin/plugin.json
+find -L plugins/dddjango -maxdepth 3 -print
+find -L plugins/dddjango/skills -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
+find -L plugins/dddjango/skills -mindepth 2 -maxdepth 2 -name SKILL.md -print | wc -l
+```
+
+Checks not run:
+- 실제 플러그인 설치: 실행하지 않음.
+- cache sync: 실행하지 않음.
+- Codex marketplace/runtime discovery command: 실행하지 않음. 파일 구조와 manifest 기준 확인만 수행.
+- private evaluator files, prior run reports/findings: 의도적으로 읽지 않음.
+
+Serena: skipped because this was a manifest/file-structure check, not symbol/reference analysis.

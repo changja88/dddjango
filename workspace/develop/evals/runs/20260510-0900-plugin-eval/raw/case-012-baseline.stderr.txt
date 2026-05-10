@@ -1,0 +1,153 @@
+OpenAI Codex v0.130.0
+--------
+workdir: /Users/hyun/Desktop/dddjango
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019e0fa5-15f7-72e1-9c9d-f5f094819d7f
+--------
+user
+You are executing a public forward-eval packet for the dddjango plugin.
+Use only the public packet below and task-local repository files if needed.
+Do not read workspace/develop/rubrics, workspace/develop/evals/cases/plugin/private, prior run reports, or prior findings.
+Do not modify files. If a check is not actually run, state that it was not run.
+Keep the answer concise but include commands actually run and checks not run.
+
+----- PUBLIC PACKET START -----
+# Case 012
+
+## User Request
+
+```text
+신규 쿠폰 발급 REST API를 만들어야 해. Django Ninja 기준으로 endpoint, request/response schema, auth, status code, Problem Details, OpenAPI, API test 계획까지 잡아줘.
+```
+
+## Context
+
+- Repository: `/Users/hyun/Desktop/dddjango`
+- Do not read private evaluator files or prior run findings.
+
+## Output To Save
+
+- Raw answer or command transcript.
+- Commands actually run.
+- Not-run checks and reasons.
+----- PUBLIC PACKET END -----
+
+codex
+아래는 공개 패킷 기준의 원본 답변입니다. 파일은 읽거나 수정하지 않았습니다.
+
+**신규 쿠폰 발급 REST API 설계**
+
+Endpoint:
+
+```http
+POST /api/v1/coupons/issue
+```
+
+Request schema:
+
+```python
+class CouponIssueRequest(Schema):
+    user_id: int
+    coupon_policy_id: int
+    idempotency_key: str
+```
+
+Response schema:
+
+```python
+class CouponIssueResponse(Schema):
+    coupon_id: int
+    user_id: int
+    coupon_policy_id: int
+    status: Literal["issued"]
+    issued_at: datetime
+    expires_at: datetime | None
+```
+
+Auth:
+
+```python
+@router.post(
+    "/coupons/issue",
+    response={201: CouponIssueResponse, 400: ProblemDetails, 401: ProblemDetails, 403: ProblemDetails, 409: ProblemDetails},
+    auth=django_auth,
+)
+def issue_coupon(request, payload: CouponIssueRequest):
+    ...
+```
+
+권한 정책:
+
+- 인증 필수
+- 관리자 또는 쿠폰 발급 권한 보유자만 발급 가능
+- 일반 사용자가 자기 자신에게 발급하는 정책이 필요하면 별도 permission으로 분리
+
+Status code:
+
+- `201 Created`: 쿠폰 발급 성공
+- `400 Bad Request`: 요청 값 오류, 만료된 정책, 발급 불가능한 정책
+- `401 Unauthorized`: 미인증
+- `403 Forbidden`: 권한 없음
+- `404 Not Found`: 사용자 또는 쿠폰 정책 없음
+- `409 Conflict`: 중복 발급, 재고 소진, idempotency 충돌
+- `422 Unprocessable Entity`: schema validation 실패가 Ninja 기본 정책이면 사용
+
+Problem Details:
+
+```python
+class ProblemDetails(Schema):
+    type: str
+    title: str
+    status: int
+    detail: str
+    instance: str | None = None
+    code: str | None = None
+```
+
+예시:
+
+```json
+{
+  "type": "https://api.example.com/problems/coupon-already-issued",
+  "title": "Coupon already issued",
+  "status": 409,
+  "detail": "The user already has this coupon.",
+  "code": "COUPON_ALREADY_ISSUED"
+}
+```
+
+OpenAPI 계획:
+
+- `operation_id`: `issueCoupon`
+- `summary`: `Issue a coupon`
+- `tags`: `["Coupons"]`
+- request body에 `CouponIssueRequest`
+- response에 `201`, `400`, `401`, `403`, `404`, `409`, `422`
+- 모든 에러 응답은 `application/problem+json`
+- 인증 스키마는 프로젝트 기준에 맞춰 session, bearer token, JWT 중 하나로 명시
+
+API test 계획:
+
+- 성공: 권한 있는 사용자가 유효한 정책으로 쿠폰 발급 시 `201`
+- 인증 실패: 미인증 요청 시 `401`
+- 권한 실패: 권한 없는 사용자 요청 시 `403`
+- 사용자 없음: 존재하지 않는 `user_id` 요청 시 `404`
+- 정책 없음: 존재하지 않는 `coupon_policy_id` 요청 시 `404`
+- 중복 발급: 이미 발급된 쿠폰이면 `409`
+- 재고 소진: 발급 수량 초과 시 `409`
+- 만료 정책: 발급 기간이 지난 정책이면 `400`
+- idempotency: 같은 `idempotency_key` 재요청 시 같은 결과 반환
+- OpenAPI: schema와 response status가 문서에 노출되는지 확인
+
+Commands actually run: none.
+
+Checks not run: no repository inspection, tests, lint, or OpenAPI generation were run because the packet requested no file modification and the answer could be produced from the public packet alone.
+
+Serena: skipped because this was a planning answer with no codebase symbol or reference tracing.
+tokens used
+5,991

@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: 종합 플러그인 평가 및 개선 준비 중
-- 최근 완료: 전체 eval prompt 묶음 작성
-- 다음 작업: 종합 플러그인 평가 및 개선 실행
+- 현재 단계: 종합 플러그인 평가 및 개선 실행 중
+- 최근 완료: 1차 종합 eval raw 실행 및 HTML report 작성
+- 다음 작업: eval protocol finding 수정 및 영향 케이스 재실행
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -316,13 +316,21 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 
 - 실제 사용 가능한 플러그인 상태까지 검증하고 반복 개선한다.
 
+1차 run:
+
+- Run ID: `20260510-0900-plugin-eval`
+- Report: `workspace/develop/evals/runs/20260510-0900-plugin-eval/report.html`
+- Summary: baseline/with-dddjango 17개 public case raw output과 case analysis HTML을 작성했다.
+- Result: with-ddjango는 17/17 public case를 evaluator judgment 기준으로 통과했지만, baseline isolation 오염과 artifact instruction 충돌이라는 major eval-protocol finding 2개 때문에 종합 eval 완료 상태로 보지 않는다.
+- Next: `workspace/develop/evals/runs/20260510-0900-plugin-eval/iteration-plan.md` 기준으로 eval harness/public packet 실행 방식을 수정하고 영향 케이스를 재실행한다.
+
 반복 체크리스트:
 
-- [ ] 전체 구조 검증을 실행한다.
+- [x] 전체 구조 검증을 실행한다.
 - [ ] 개별 평가표를 실행한다.
 - [ ] 연계 평가표를 실행한다.
-- [ ] 종합 평가표를 실행한다.
-- [ ] 실패를 skill trigger, instruction, reference, workflow, eval 문제로 분류한다.
+- [x] 종합 평가표를 실행한다.
+- [x] 실패를 skill trigger, instruction, reference, workflow, eval 문제로 분류한다.
 - [ ] 수정 후 전체 검증을 다시 실행한다.
 - [ ] 평가 실패가 남아 있으면 실패 항목과 다음 수정 계획을 명시한다.
 

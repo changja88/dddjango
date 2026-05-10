@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>case-017 Analysis</title>
+  <link rel="icon" href="data:,">
+  <style>
+    body { margin: 0; background: #f6f7f9; color: #1f2933; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { background: #101828; color: white; padding: 24px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 20px 24px 48px; }
+    section { background: white; border: 1px solid #d8dee6; border-radius: 8px; padding: 18px; margin-bottom: 16px; }
+    h1, h2 { margin: 0 0 12px; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .card { border: 1px solid #d8dee6; border-radius: 8px; padding: 12px; background: white; }
+    .card span { display: block; color: #667085; font-size: 12px; }
+    .card strong { display: block; font-size: 24px; margin: 4px 0; }
+    .badge { display: inline-block; border-radius: 999px; padding: 2px 8px; font-weight: 700; font-size: 12px; background: #eaf1ff; color: #175cd3; }
+    table { width: 100%; border-collapse: collapse; border: 1px solid #d8dee6; }
+    th, td { border-bottom: 1px solid #d8dee6; padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { width: 220px; background: #f0f3f6; }
+    a { color: #175cd3; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } main { padding: 14px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p>dddjango eval case analysis</p>
+    <h1>case-017: Claude/Codex Compatibility</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Executive Summary</h2>
+      <div class="grid">
+        <div class="card"><span>Family</span><strong>claude-codex-compatibility</strong></div>
+        <div class="card"><span>Baseline</span><strong>4/5</strong><span class="badge">pass-limited</span></div>
+        <div class="card"><span>With dddjango</span><strong>5/5</strong><span class="badge">pass</span></div>
+        <div class="card"><span>Delta</span><strong>+1/5</strong><span class="badge">pass</span></div>
+      </div>
+    </section>
+    <section>
+      <h2>Analysis</h2>
+      <table><tr><th>Baseline setup</th><td>codex exec --ignore-user-config, read-only sandbox, same public packet.</td></tr>
+<tr><th>With dddjango setup</th><td>codex exec with active dddjango plugin config, read-only sandbox, same public packet.</td></tr>
+<tr><th>Prompt</th><td>Claude Code와 Codex 공통 contract와 platform-specific packaging 차이를 검토.</td></tr>
+<tr><th>Baseline did well</th><td>name, folder, frontmatter, agents/openai.yaml, validation pass, packaging-only differences를 확인.</td></tr>
+<tr><th>Baseline gaps</th><td>runtime cache validation과 Claude runtime smoke는 미실행.</td></tr>
+<tr><th>With dddjango did well</th><td>plugin-structure/spec 근거와 skill examples를 함께 들어 공통 standard와 packaging-only 차이를 명확히 확인.</td></tr>
+<tr><th>With dddjango gaps</th><td>Claude runtime install/smoke는 미실행.</td></tr>
+<tr><th>Score rationale</th><td>compatibility static review 통과.</td></tr></table>
+    </section>
+    <section>
+      <h2>Evidence Links</h2>
+      <ul><li><a href="../analysis/case-017.html">analysis</a></li><li><a href="../raw/case-017-public-prompt.md">public prompt</a></li><li><a href="../raw/case-017-baseline.txt">baseline</a></li><li><a href="../raw/case-017-with-dddjango.txt">with-dddjango</a></li><li><a href="../raw/case-017-prompt-input.json">prompt-input</a></li></ul>
+    </section>
+  </main>
+</body>
+</html>
