@@ -5,10 +5,14 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-provenance-crosswalk.md
 intent: Require source-to-runtime provenance mapping for every first-class dimension.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Reference provenance and crosswalk
-  - workspace/docs/reference-index.md
-  - workspace/docs/workflow.md
-  - dddjango/skills/*/references/*.md
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Reference provenance and crosswalk
+  - path: workspace/docs/reference-index.md
+    basis: required reference source
+  - path: workspace/docs/workflow.md
+    basis: required reference source
+  - path: dddjango/skills/*/references/*.md
+    basis: required reference source
 target_behavior:
   required:
     - Produces a per-skill crosswalk from workspace/reference or docs source to runtime bundled references.

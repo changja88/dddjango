@@ -5,9 +5,12 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
 intent: Validate Risky Write Consistency Block for concurrency-heavy design.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: risky write consistency
-  - workspace/docs/skill-contracts.md: Risky Write Consistency Block
-  - workspace/docs/validation-plan.md: transaction and concurrency
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: risky write consistency
+  - path: workspace/docs/skill-contracts.md
+    basis: Risky Write Consistency Block
+  - path: workspace/docs/validation-plan.md
+    basis: transaction and concurrency
 target_behavior:
   required:
     - Includes transaction owner, locking/isolation, uniqueness/idempotency storage, external side effect timing, retry, and concurrency test criteria.

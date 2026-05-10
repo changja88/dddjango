@@ -5,10 +5,14 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-conflict-gap.md
 intent: Evaluate conflict/gap handling across reference final/internal/external/review materials.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Conflict and gap handling
-  - workspace/reference/*/reference/review.md
-  - workspace/reference/*/reference/final.md
-  - workspace/docs/reference-index.md
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Conflict and gap handling
+  - path: workspace/reference/*/reference/review.md
+    basis: required reference source
+  - path: workspace/reference/*/reference/final.md
+    basis: required reference source
+  - path: workspace/docs/reference-index.md
+    basis: required reference source
 target_behavior:
   required:
     - Consults final.md first, then review/internal/external when final is ambiguous or gap-related.

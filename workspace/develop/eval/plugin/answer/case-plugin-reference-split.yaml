@@ -5,10 +5,14 @@ kind: plugin
 public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-reference-split.md
 intent: Evaluate progressive disclosure and runtime reference split quality.
 reference_basis:
-  - workspace/develop/eval/plugin/eval_goal.md: Progressive disclosure and runtime reference split
-  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: progressive disclosure
-  - workspace/docs/plugin-structure.md: reference file criteria
-  - workspace/docs/reference-index.md: DRF guardrail
+  - path: workspace/develop/eval/plugin/eval_goal.md
+    basis: Progressive disclosure and runtime reference split
+  - path: skill-creator-system-skill
+    basis: progressive disclosure
+  - path: workspace/docs/plugin-structure.md
+    basis: reference file criteria
+  - path: workspace/docs/reference-index.md
+    basis: DRF guardrail
 target_behavior:
   required:
     - Checks SKILL.md body concision and direct one-level references.

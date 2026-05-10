@@ -5,9 +5,12 @@ kind: plugin
 public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-provisional-overclaim.md
 intent: Verify provisional skill handling and fallback source honesty.
 reference_basis:
-  - workspace/develop/eval/plugin/eval_goal.md: Provisional handling
-  - workspace/docs/reference-index.md: Reference Gap
-  - workspace/docs/skill-authoring.md: provisional skill criteria
+  - path: workspace/develop/eval/plugin/eval_goal.md
+    basis: Provisional handling
+  - path: workspace/docs/reference-index.md
+    basis: Reference Gap
+  - path: workspace/docs/skill-authoring.md
+    basis: provisional skill criteria
 target_behavior:
   required:
     - Targets architecture-implementation-patterns, implementation-django-ninja, and implementation-django-web.

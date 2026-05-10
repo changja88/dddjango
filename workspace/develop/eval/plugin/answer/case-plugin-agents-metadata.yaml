@@ -5,9 +5,12 @@ kind: plugin
 public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-agents-metadata.md
 intent: Check UI metadata semantic match against runtime skills.
 reference_basis:
-  - workspace/develop/eval/plugin/eval_goal.md: Agents metadata
-  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: agents/openai.yaml metadata
-  - workspace/docs/skill-authoring.md: metadata/default prompt criteria
+  - path: workspace/develop/eval/plugin/eval_goal.md
+    basis: Agents metadata
+  - path: skill-creator-system-skill
+    basis: agents/openai.yaml metadata
+  - path: workspace/docs/skill-authoring.md
+    basis: metadata/default prompt criteria
 target_behavior:
   required:
     - Compares display_name, short_description, and default_prompt with SKILL.md semantics.

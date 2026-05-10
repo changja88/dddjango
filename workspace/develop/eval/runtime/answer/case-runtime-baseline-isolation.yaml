@@ -5,8 +5,10 @@ kind: runtime
 public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-baseline-isolation.md
 intent: Check baseline isolation from plugin metadata and evaluator materials.
 reference_basis:
-  - workspace/develop/eval/runtime/eval_goal.md: Baseline isolation
-  - workspace/scripts/validate_eval_protocol.py: baseline artifact expectations
+  - path: workspace/develop/eval/runtime/eval_goal.md
+    basis: Baseline isolation
+  - path: workspace/scripts/validate_eval_protocol.py
+    basis: baseline artifact expectations
 target_behavior:
   required:
     - Requires baseline isolation JSON with pass true and ignore-user-config/ignore-rules evidence.

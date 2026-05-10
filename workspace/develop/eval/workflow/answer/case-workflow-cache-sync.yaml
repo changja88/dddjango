@@ -5,9 +5,12 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-cache-sync.md
 intent: Confirm workflow cache sync reporting after role-map changes.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: cache sync report
-  - workspace/docs/workflow.md: Cache sync report
-  - workspace/docs/plugin-structure.md: Runtime synchronization criteria
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: cache sync report
+  - path: workspace/docs/workflow.md
+    basis: Cache sync report
+  - path: workspace/docs/plugin-structure.md
+    basis: Runtime synchronization criteria
 target_behavior:
   required:
     - Reports canonical workspace source change and cache path touched.

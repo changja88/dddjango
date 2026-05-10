@@ -5,10 +5,14 @@ kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-coupon-tdd.md
 intent: Validate TDD/test implementation for coupon policy boundaries.
 reference_basis:
-  - workspace/develop/eval/code/eval_goal.md: TDD/test implementation
-  - workspace/docs/validation-plan.md: coupon policy TDD
-  - workspace/reference/implementation-tdd/reference/final.md
-  - workspace/reference/implementation-test/reference/final.md
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: TDD/test implementation
+  - path: workspace/docs/validation-plan.md
+    basis: coupon policy TDD
+  - path: workspace/reference/implementation-tdd/reference/final.md
+    basis: required reference source
+  - path: workspace/reference/implementation-test/reference/final.md
+    basis: required reference source
 code_expected: true
 target_behavior:
   required:

@@ -5,9 +5,12 @@ kind: runtime
 public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-prompt-exposure.md
 intent: Validate with-dddjango prompt-input exposure for relevant runtime metadata.
 reference_basis:
-  - workspace/develop/eval/runtime/eval_goal.md: Prompt-input exposure
-  - workspace/docs/plugin-structure.md: runtime synchronization
-  - workspace/docs/workflow.md: role map
+  - path: workspace/develop/eval/runtime/eval_goal.md
+    basis: Prompt-input exposure
+  - path: workspace/docs/plugin-structure.md
+    basis: runtime synchronization
+  - path: workspace/docs/workflow.md
+    basis: role map
 target_behavior:
   required:
     - Requires prompt-input or equivalent artifact for with-ddjango.

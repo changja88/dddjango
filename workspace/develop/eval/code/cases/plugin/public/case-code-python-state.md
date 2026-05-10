@@ -3,5 +3,5 @@
 요구사항:
 - `Money`는 값 객체처럼 동작해야 하고, 다른 통화끼리 더하는 규칙을 테스트해.
 - 주문 상태는 명시적 타입을 유지하되 과한 pydantic 모델을 도메인 기본값으로 만들지 마.
-- 필요한 경우 frozen/slots dataclass나 Enum을 사용해.
+- fixture의 Python 버전을 존중하면서 필요한 경우 frozen dataclass나 Enum을 사용해.
 - 관련 테스트를 추가하고 검증 결과를 보고해줘.

@@ -5,10 +5,14 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-operational-migration.md
 intent: Evaluate operational migration advice with DB and Django migration responsibility separation.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: risky DB/API and validation-plan representative scenarios
-  - workspace/docs/validation-plan.md: operational migration
-  - workspace/reference/architecture-db/reference/final.md: rollout constraints and indexes
-  - workspace/reference/implementation-django/reference/final.md: migrations
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: risky DB/API and validation-plan representative scenarios
+  - path: workspace/docs/validation-plan.md
+    basis: operational migration
+  - path: workspace/reference/architecture-db/reference/final.md
+    basis: rollout constraints and indexes
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: migrations
 target_behavior:
   required:
     - Uses expand/backfill/contract or equivalent rolling sequence.

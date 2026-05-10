@@ -5,8 +5,10 @@ kind: runtime
 public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-stale-cache.md
 intent: Detect stale runtime cache and prevent cache-only completion.
 reference_basis:
-  - workspace/develop/eval/runtime/eval_goal.md: stale cache and cache/source consistency
-  - workspace/docs/plugin-structure.md: Runtime synchronization criteria
+  - path: workspace/develop/eval/runtime/eval_goal.md
+    basis: stale cache and cache/source consistency
+  - path: workspace/docs/plugin-structure.md
+    basis: Runtime synchronization criteria
 target_behavior:
   required:
     - Compares installed/cache skill metadata with canonical dddjango source.

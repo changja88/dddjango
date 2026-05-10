@@ -5,9 +5,12 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-opt-out.md
 intent: Ensure explicit user opt-out prevents full workflow ceremony for small rename.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: subagent opt-out
-  - workspace/docs/workflow.md: simple task and opt-out restraint
-  - workspace/docs/validation-plan.md: simple field rename
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: subagent opt-out
+  - path: workspace/docs/workflow.md
+    basis: simple task and opt-out restraint
+  - path: workspace/docs/validation-plan.md
+    basis: simple field rename
 target_behavior:
   required:
     - Acknowledges no full role decomposition is needed.

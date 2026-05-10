@@ -5,9 +5,12 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-positive-composite.md
 intent: Validate full positive composite workflow for risky order/payment/inventory work.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: positive composite workflow
-  - workspace/docs/workflow.md: role map, sequential fallback, handoff contract, integration checklist
-  - workspace/docs/validation-plan.md: order creation API
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: positive composite workflow
+  - path: workspace/docs/workflow.md
+    basis: role map, sequential fallback, handoff contract, integration checklist
+  - path: workspace/docs/validation-plan.md
+    basis: order creation API
 target_behavior:
   required:
     - Uses Role Map with Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration responsibilities.

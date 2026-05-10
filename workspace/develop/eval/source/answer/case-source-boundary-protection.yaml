@@ -5,9 +5,12 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-boundary-protection.md
 intent: Define boundary protection checks among source, runtime, public cases, answers, and runs.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Boundary protection
-  - workspace/docs/plugin-structure.md
-  - workspace/scripts/run_plugin_eval.py
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Boundary protection
+  - path: workspace/docs/plugin-structure.md
+    basis: required reference source
+  - path: workspace/scripts/run_plugin_eval.py
+    basis: required reference source
 target_behavior:
   required:
     - Distinguishes authoring source paths from runtime bundled reference paths.

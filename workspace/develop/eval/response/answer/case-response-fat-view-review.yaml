@@ -5,9 +5,12 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-fat-view-review.md
 intent: Check severity-first review for fat model and view/router logic boundaries.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: TDD/Test/Clean Code and review scenarios
-  - workspace/docs/validation-plan.md: Fat Model review and View Logic review
-  - workspace/docs/skill-contracts.md: implementation-cleancode and implementation-django-ninja boundaries
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: TDD/Test/Clean Code and review scenarios
+  - path: workspace/docs/validation-plan.md
+    basis: Fat Model review and View Logic review
+  - path: workspace/docs/skill-contracts.md
+    basis: implementation-cleancode and implementation-django-ninja boundaries
 target_behavior:
   required:
     - Leads with findings ordered by severity.

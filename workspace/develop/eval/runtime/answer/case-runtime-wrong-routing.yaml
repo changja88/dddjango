@@ -5,9 +5,12 @@ kind: runtime
 public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-wrong-routing.md
 intent: Check routing correctness when metadata exists but a specialized web skill is skipped.
 reference_basis:
-  - workspace/develop/eval/runtime/eval_goal.md: wrong routing despite metadata
-  - workspace/docs/workflow.md: Django Agent includes implementation-django-web
-  - workspace/docs/skill-contracts.md: implementation-django-web boundary
+  - path: workspace/develop/eval/runtime/eval_goal.md
+    basis: wrong routing despite metadata
+  - path: workspace/docs/workflow.md
+    basis: Django Agent includes implementation-django-web
+  - path: workspace/docs/skill-contracts.md
+    basis: implementation-django-web boundary
 target_behavior:
   required:
     - Compares runtime skill description, role-map reference, and canonical workflow table.

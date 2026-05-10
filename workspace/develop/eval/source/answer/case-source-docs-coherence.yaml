@@ -5,14 +5,22 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-docs-coherence.md
 intent: Audit canonical docs coherence across product, skill, workflow, validation, and plugin structure decisions.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Canonical docs coherence
-  - workspace/docs/spec.md
-  - workspace/docs/reference-index.md
-  - workspace/docs/skill-contracts.md
-  - workspace/docs/workflow.md
-  - workspace/docs/validation-plan.md
-  - workspace/docs/plugin-structure.md
-  - workspace/docs/skill-authoring.md
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Canonical docs coherence
+  - path: workspace/docs/spec.md
+    basis: required reference source
+  - path: workspace/docs/reference-index.md
+    basis: required reference source
+  - path: workspace/docs/skill-contracts.md
+    basis: required reference source
+  - path: workspace/docs/workflow.md
+    basis: required reference source
+  - path: workspace/docs/validation-plan.md
+    basis: required reference source
+  - path: workspace/docs/plugin-structure.md
+    basis: required reference source
+  - path: workspace/docs/skill-authoring.md
+    basis: required reference source
 target_behavior:
   required:
     - Checks the docs as a connected decision set, not isolated files.

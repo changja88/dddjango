@@ -5,10 +5,14 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-coupon-ambiguity.md
 intent: Verify ambiguity handling for TDD policy design before implementation.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: ambiguity, TDD/Test/Clean Code
-  - workspace/docs/validation-plan.md: coupon policy TDD
-  - workspace/reference/implementation-tdd/reference/final.md: Red-Green-Refactor
-  - workspace/reference/implementation-test/reference/final.md: boundary and behavior tests
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: ambiguity, TDD/Test/Clean Code
+  - path: workspace/docs/validation-plan.md
+    basis: coupon policy TDD
+  - path: workspace/reference/implementation-tdd/reference/final.md
+    basis: Red-Green-Refactor
+  - path: workspace/reference/implementation-test/reference/final.md
+    basis: boundary and behavior tests
 target_behavior:
   required:
     - Asks or lists the unresolved policy decisions before prescribing implementation.

@@ -5,9 +5,12 @@ kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-small-rename.md
 intent: Ensure a small rename stays minimal while still producing code.
 reference_basis:
-  - workspace/develop/eval/code/eval_goal.md: negative implementation restraint
-  - workspace/docs/validation-plan.md: Negative Case simple field rename
-  - workspace/docs/workflow.md: simple task restraint
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: negative implementation restraint
+  - path: workspace/docs/validation-plan.md
+    basis: Negative Case simple field rename
+  - path: workspace/docs/workflow.md
+    basis: simple task restraint
 code_expected: true
 target_behavior:
   required:

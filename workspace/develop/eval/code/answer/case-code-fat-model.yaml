@@ -5,9 +5,12 @@ kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-fat-model.md
 intent: Check minimal clean-code refactor around model/service responsibilities and side-effect timing.
 reference_basis:
-  - workspace/develop/eval/code/eval_goal.md: Python and clean code, negative implementation restraint
-  - workspace/docs/validation-plan.md: Fat Model and View Logic review
-  - workspace/docs/workflow.md: integration priority and side-effect timing
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: Python and clean code, negative implementation restraint
+  - path: workspace/docs/validation-plan.md
+    basis: Fat Model and View Logic review
+  - path: workspace/docs/workflow.md
+    basis: integration priority and side-effect timing
 code_expected: true
 target_behavior:
   required:

@@ -5,9 +5,12 @@ kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-web-detail.md
 intent: Check Django Web implementation boundary and safe rendering-oriented changes.
 reference_basis:
-  - workspace/develop/eval/code/eval_goal.md: Django Web implementation
-  - workspace/docs/validation-plan.md: Django Web
-  - workspace/docs/skill-contracts.md: implementation-django-web
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: Django Web implementation
+  - path: workspace/docs/validation-plan.md
+    basis: Django Web
+  - path: workspace/docs/skill-contracts.md
+    basis: implementation-django-web
 code_expected: true
 target_behavior:
   required:

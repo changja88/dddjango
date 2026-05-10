@@ -5,8 +5,10 @@ kind: runtime
 public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-private-material.md
 intent: Reject private material injection into runtime prompt construction.
 reference_basis:
-  - workspace/develop/eval/runtime/eval_goal.md: Evaluation contamination
-  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: validation integrity
+  - path: workspace/develop/eval/runtime/eval_goal.md
+    basis: Evaluation contamination
+  - path: skill-creator-system-skill
+    basis: validation integrity
 target_behavior:
   required:
     - Refuses to include private evaluation materials or prior run outputs in runtime prompt inputs.

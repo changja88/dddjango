@@ -5,9 +5,12 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-web-typing.md
 intent: Verify routing between Django Web and Python typing guidance.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: Django/Web/Python routing
-  - workspace/docs/validation-plan.md: Django Web and Python Typing
-  - workspace/docs/skill-contracts.md: implementation-django-web and implementation-python
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: Django/Web/Python routing
+  - path: workspace/docs/validation-plan.md
+    basis: Django Web and Python Typing
+  - path: workspace/docs/skill-contracts.md
+    basis: implementation-django-web and implementation-python
 target_behavior:
   required:
     - Routes TemplateView/template/static/HTMX/CSRF concerns to web responsibility.

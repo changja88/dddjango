@@ -5,9 +5,12 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-review-focused.md
 intent: Ensure review requests lead with findings before optional workflow planning.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: review-focused workflow
-  - workspace/docs/workflow.md: review task flow
-  - workspace/docs/skill-contracts.md: implementation-cleancode and review boundaries
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: review-focused workflow
+  - path: workspace/docs/workflow.md
+    basis: review task flow
+  - path: workspace/docs/skill-contracts.md
+    basis: implementation-cleancode and review boundaries
 target_behavior:
   required:
     - Findings first, ordered by severity with concrete risk.

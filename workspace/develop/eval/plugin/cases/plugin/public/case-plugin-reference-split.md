@@ -1,7 +1,3 @@
-dddjango skill들의 runtime reference 분리가 적절한지 리뷰해줘.
+dddjango skill을 실제 런타임에서 읽을 때 context가 너무 무겁거나 source 문서가 그대로 들어간 느낌이 없는지 리뷰해줘.
 
-확인할 것:
-- `SKILL.md`에 긴 source 문서가 그대로 복사되어 있지 않은가
-- `references/`가 한 단계 아래 파일로 구성되어 있고 직접 링크 가능한가
-- 각 reference 파일이 언제 읽혀야 하는지 조건이 분명한가
-- DRF 관련 내용이 신규 API 표준처럼 보이지 않는가
+`SKILL.md`와 runtime reference 파일 구성이 에이전트가 필요한 자료만 골라 읽기 좋은 구조인지 보고, Django API 관련 reference가 신규 구현 기준을 흐리지 않는지도 함께 봐줘.

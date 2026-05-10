@@ -5,9 +5,12 @@ kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-order-api.md
 intent: Verify code-backed DDD/API/DB mapping for idempotent order creation.
 reference_basis:
-  - workspace/develop/eval/code/eval_goal.md: DDD-to-code, Django Ninja API, DB consistency
-  - workspace/docs/validation-plan.md: order creation API
-  - workspace/docs/skill-contracts.md: DDD, DB, API, Django Ninja, Test boundaries
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: DDD-to-code, Django Ninja API, DB consistency
+  - path: workspace/docs/validation-plan.md
+    basis: order creation API
+  - path: workspace/docs/skill-contracts.md
+    basis: DDD, DB, API, Django Ninja, Test boundaries
 code_expected: true
 target_behavior:
   required:

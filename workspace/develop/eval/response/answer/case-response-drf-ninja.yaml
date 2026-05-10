@@ -5,10 +5,14 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-drf-ninja.md
 intent: Check mixed-boundary DRF migration advice while preserving Django Ninja as the new implementation target.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: mixed-boundary and Django/Ninja routing
-  - workspace/docs/reference-index.md: DRF guardrail
-  - workspace/docs/skill-contracts.md: architecture-api and implementation-django-ninja boundaries
-  - workspace/docs/validation-plan.md: DRF to Django Ninja transition
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: mixed-boundary and Django/Ninja routing
+  - path: workspace/docs/reference-index.md
+    basis: DRF guardrail
+  - path: workspace/docs/skill-contracts.md
+    basis: architecture-api and implementation-django-ninja boundaries
+  - path: workspace/docs/validation-plan.md
+    basis: DRF to Django Ninja transition
 target_behavior:
   required:
     - Treats DRF as legacy input or migration source, not a greenfield standard.

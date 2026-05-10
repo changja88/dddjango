@@ -5,8 +5,10 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-tiny-restraint.md
 intent: Check that tiny explanatory requests do not trigger workflow output.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: tiny-task restraint
-  - workspace/docs/workflow.md: simple task restraint
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: tiny-task restraint
+  - path: workspace/docs/workflow.md
+    basis: simple task restraint
 target_behavior:
   required:
     - Answers in two concise sentences.

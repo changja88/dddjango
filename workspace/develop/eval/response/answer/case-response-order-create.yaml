@@ -5,10 +5,14 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-order-create.md
 intent: Validate specialist-positive reasoning for a risky order creation API without file edits.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: specialist-positive, risky DB/API, DDD dimensions
-  - workspace/docs/validation-plan.md: order creation API
-  - workspace/docs/workflow.md: risky workflow and consistency ordering
-  - workspace/docs/skill-contracts.md: DDD, DB, API, Django Ninja, Test boundaries
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: specialist-positive, risky DB/API, DDD dimensions
+  - path: workspace/docs/validation-plan.md
+    basis: order creation API
+  - path: workspace/docs/workflow.md
+    basis: risky workflow and consistency ordering
+  - path: workspace/docs/skill-contracts.md
+    basis: DDD, DB, API, Django Ninja, Test boundaries
 target_behavior:
   required:
     - Starts from DDD terms, bounded context, aggregate, invariants, and state transitions before tactical code patterns.

@@ -5,9 +5,12 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-eval-traceability.md
 intent: Ensure eval cases and answers can trace observations back to source references.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Eval traceability
-  - workspace/develop/eval/*/eval_goal.md
-  - workspace/docs/reference-index.md
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Eval traceability
+  - path: workspace/develop/eval/*/eval_goal.md
+    basis: required reference source
+  - path: workspace/docs/reference-index.md
+    basis: required reference source
 target_behavior:
   required:
     - Specifies reference_basis and coverage_tags expectations for each bucket.

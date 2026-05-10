@@ -1,9 +1,3 @@
-dddjango skill들의 `SKILL.md` frontmatter description을 리뷰해줘.
+dddjango skill 목록을 보니 비슷한 Django/DDD 요청에서 어떤 skill이 선택될지 헷갈릴 수 있을 것 같아.
 
-확인하고 싶은 점:
-- 언제 해당 skill을 써야 하는지 positive trigger가 충분한가
-- 다른 skill을 우선해야 하는 negative routing이 description에 드러나는가
-- 한국어 trigger와 cross-skill precedence가 body 안에만 숨어 있지 않은가
-- description이 너무 길거나 모호하지 않은가
-
-파일을 수정하지 말고 findings와 수정 방향만 보고해줘.
+`SKILL.md` frontmatter description만 보고도 사용 시점과 경계가 충분히 드러나는지 리뷰해줘. 파일을 수정하지 말고 findings와 수정 방향만 보고해줘.

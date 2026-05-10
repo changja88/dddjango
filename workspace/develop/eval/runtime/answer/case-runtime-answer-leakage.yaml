@@ -5,8 +5,10 @@ kind: runtime
 public_case: workspace/develop/eval/runtime/cases/plugin/public/case-runtime-answer-leakage.md
 intent: Check answer leakage sentinel handling in bundled runtime references.
 reference_basis:
-  - workspace/develop/eval/runtime/eval_goal.md: answer leakage sentinel
-  - workspace/docs/plugin-structure.md: runtime reference boundary
+  - path: workspace/develop/eval/runtime/eval_goal.md
+    basis: answer leakage sentinel
+  - path: workspace/docs/plugin-structure.md
+    basis: runtime reference boundary
 target_behavior:
   required:
     - Scans bundled references and prompt-input for answer paths, evaluator-only terms, prior run paths, and workspace-only source paths used as final instructions.

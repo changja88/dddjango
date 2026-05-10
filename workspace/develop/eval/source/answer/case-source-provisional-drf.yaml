@@ -5,9 +5,12 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-provisional-drf.md
 intent: Check provisional source handling and DRF guardrail together.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Provisional source handling and DRF guardrail
-  - workspace/docs/reference-index.md: Reference Gap and DRF Guardrail
-  - workspace/docs/skill-authoring.md
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Provisional source handling and DRF guardrail
+  - path: workspace/docs/reference-index.md
+    basis: Reference Gap and DRF Guardrail
+  - path: workspace/docs/skill-authoring.md
+    basis: required reference source
 target_behavior:
   required:
     - Identifies implementation patterns, Django Ninja, and Django Web as source-gap/provisional unless dedicated source exists.

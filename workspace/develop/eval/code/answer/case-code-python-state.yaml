@@ -5,13 +5,16 @@ kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-python-state.md
 intent: Validate Python typing/value-object improvement without framework overreach.
 reference_basis:
-  - workspace/develop/eval/code/eval_goal.md: Python and clean code
-  - workspace/docs/validation-plan.md: Python Typing
-  - workspace/reference/implementation-python/reference/final.md
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: Python and clean code
+  - path: workspace/docs/validation-plan.md
+    basis: Python Typing
+  - path: workspace/reference/implementation-python/reference/final.md
+    basis: required reference source
 code_expected: true
 target_behavior:
   required:
-    - Converts Money toward an explicit value object, preferably frozen/slots dataclass or equivalent.
+    - Converts Money toward an explicit value object, using a frozen dataclass or equivalent while respecting the fixture Python version.
     - Preserves currency mismatch invariant and tests it.
     - Avoids pydantic as domain default and avoids unnecessary Protocol.
   forbidden:

@@ -5,9 +5,12 @@ kind: plugin
 public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-trigger-routing.md
 intent: Evaluate skill trigger description quality and routing boundaries.
 reference_basis:
-  - workspace/develop/eval/plugin/eval_goal.md: Skill trigger quality
-  - /Users/hyun/.codex/skills/.system/skill-creator/SKILL.md: frontmatter description importance
-  - workspace/docs/skill-authoring.md: positive signals, negative routing, Korean trigger, precedence
+  - path: workspace/develop/eval/plugin/eval_goal.md
+    basis: Skill trigger quality
+  - path: skill-creator-system-skill
+    basis: frontmatter description importance
+  - path: workspace/docs/skill-authoring.md
+    basis: positive signals, negative routing, Korean trigger, precedence
 target_behavior:
   required:
     - Reviews frontmatter description, not just skill body.

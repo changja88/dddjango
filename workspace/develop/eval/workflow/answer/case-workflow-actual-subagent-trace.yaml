@@ -5,8 +5,10 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-actual-subagent-trace.md
 intent: Define evidence required when actual subagents were used versus sequential fallback.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: actual-subagent trace
-  - workspace/docs/workflow.md: handoff contract and integration checklist
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: actual-subagent trace
+  - path: workspace/docs/workflow.md
+    basis: handoff contract and integration checklist
 target_behavior:
   required:
     - Distinguishes actual execution trace from planned roles.

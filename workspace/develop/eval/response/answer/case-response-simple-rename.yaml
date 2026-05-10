@@ -5,9 +5,12 @@ kind: response
 public_case: workspace/develop/eval/response/cases/plugin/public/case-response-simple-rename.md
 intent: Ensure a simple field rename does not trigger DDD workflow or subagent ceremony.
 reference_basis:
-  - workspace/develop/eval/response/eval_goal.md: simple-negative
-  - workspace/docs/validation-plan.md: Negative Case simple field rename
-  - workspace/docs/workflow.md: simple task restraint
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: simple-negative
+  - path: workspace/docs/validation-plan.md
+    basis: Negative Case simple field rename
+  - path: workspace/docs/workflow.md
+    basis: simple task restraint
 target_behavior:
   required:
     - Answers briefly.

@@ -5,9 +5,12 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-validation-coverage.md
 intent: Verify validation plan coverage across all dddjango first-class dimensions.
 reference_basis:
-  - workspace/develop/eval/source/eval_goal.md: Validation coverage
-  - workspace/docs/validation-plan.md
-  - workspace/docs/skill-contracts.md
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Validation coverage
+  - path: workspace/docs/validation-plan.md
+    basis: required reference source
+  - path: workspace/docs/skill-contracts.md
+    basis: required reference source
 target_behavior:
   required:
     - Maps validation scenarios to DDD, DB, API, Django, Ninja, Web, Python, TDD, Test, Clean Code, Workflow.

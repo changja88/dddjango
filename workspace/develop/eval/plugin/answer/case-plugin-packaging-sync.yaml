@@ -5,8 +5,10 @@ kind: plugin
 public_case: workspace/develop/eval/plugin/cases/plugin/public/case-plugin-packaging-sync.md
 intent: Check packaging path, manifest, marketplace, and symlink coherence.
 reference_basis:
-  - workspace/develop/eval/plugin/eval_goal.md: Packaging
-  - workspace/docs/plugin-structure.md: root exceptions and plugin layout
+  - path: workspace/develop/eval/plugin/eval_goal.md
+    basis: Packaging
+  - path: workspace/docs/plugin-structure.md
+    basis: root exceptions and plugin layout
 target_behavior:
   required:
     - Verifies plugin.json, marketplace entry, plugins/dddjango, and canonical dddjango source point to the same plugin identity.

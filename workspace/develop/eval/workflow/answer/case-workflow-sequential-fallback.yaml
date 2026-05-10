@@ -5,9 +5,12 @@ kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-sequential-fallback.md
 intent: Check sequential fallback order and handoff decisions when subagents cannot run.
 reference_basis:
-  - workspace/develop/eval/workflow/eval_goal.md: sequential fallback
-  - workspace/docs/workflow.md: Sequential Fallback
-  - dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: sequential fallback
+  - path: workspace/docs/workflow.md
+    basis: Sequential Fallback
+  - path: dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+    basis: required reference source
 target_behavior:
   required:
     - Explicitly says subagents are not being executed.
