@@ -1,0 +1,1 @@
+codex -a never exec --ephemeral --color never -C /private/tmp/dddjango-eval-workspaces/local-code-artifact-real/case-101/with-dddjango -s workspace-write -m gpt-5.4-mini -c model_reasoning_effort="low" -o /Users/hyun/Desktop/dddjango/workspace/develop/evals/runs/local-code-artifact-real/raw/case-101-with-dddjango.txt -

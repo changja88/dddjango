@@ -10,8 +10,12 @@ Use this pack after the individual skill rubrics and the workflow rubric have al
 workspace/develop/evals/
   cases/plugin/public/
     case-001.md ... case-017.md
+    case-101.md
+  cases/plugin/code-capture.json
   cases/plugin/private/
     case-map.md
+  fixtures/
+    code-artifact-sample/
   templates/
     case-analysis.html
     public-packet.md
@@ -25,12 +29,14 @@ workspace/develop/evals/
 - Give forward-test agents or prompt runners only files from `cases/plugin/public/` plus task-local fixture files.
 - Do not give forward-test agents `cases/plugin/private/`, rubric files, prior findings, expected routes, scoring notes, or intended fixes.
 - Store raw outputs under `workspace/develop/evals/runs/<run-id>/raw/`.
+- Store actual generated code for code-backed cases under `workspace/develop/evals/runs/<run-id>/code/<case-id>/<variant>/`.
 - Store case-level human analysis pages under `workspace/develop/evals/runs/<run-id>/analysis/`.
 - Store findings, reruns, and the final HTML report under the same run directory.
 - Copy `templates/run-report.html` to `runs/<run-id>/report.html` and edit the embedded `REPORT_DATA` object for the run.
 - The HTML report is self-contained and must work from `file://`; do not make it depend on external assets, CDN links, or local JSON fetched with browser APIs.
 - Record baseline and with-dddjango results against the same public packets so the report can show score, pass-rate, routing, hard-gate, finding, and scenario-family deltas.
 - Artifact links in the HTML report are relative links from the run directory. Create analysis artifacts such as `analysis/<case-id>.html` and raw artifacts such as `raw/<case-id>-public-prompt.md`, `raw/<case-id>-baseline.txt`, `raw/<case-id>-with-dddjango.txt`, prompt-input JSON, command logs, screenshots, and leakage-scan logs before marking an artifact as present.
+- Code-backed case links must point to real `changed-files.json`, `diff.patch`, and copied source files. If those files do not exist, mark the case as `response-only` or `No code captured`.
 - Case-level analysis HTML should explain the prompt, baseline setup, with-dddjango setup, what each variant did well or poorly, hard-gate/routing differences, score rationale, final score, and links back to raw evidence.
 - If runtime cache is used, record the cache path and compare it with canonical source `dddjango/`.
 - If a command, smoke check, review, or subagent pass was not run, mark it as not run with a reason.
@@ -49,6 +55,7 @@ Each complete run records:
 - public packet paths actually supplied
 - case-level analysis HTML for baseline vs with-dddjango comparisons
 - raw outputs and transcripts
+- for code-backed cases, `code/<case>/<variant>/changed-files.json`, `code/<case>/<variant>/diff.patch`, and copied source files under `code/<case>/<variant>/files/`
 - findings with severity, scenario family, case id, defect type, failed gate or dimension, artifact path, and rerun scope
 - rerun evidence after fixes
 - final not-run list
@@ -66,3 +73,15 @@ The comprehensive plugin eval is complete only when:
 - runtime cache is not used, or it matches canonical `dddjango/` source for the evaluated version
 
 Do not mark the plugin eval complete from smoke checks alone.
+
+## Code Artifact Evidence
+
+`workspace/develop/evals/cases/plugin/code-capture.json` is the source of truth for deciding whether a public case requires actual code artifacts.
+
+- `raw/<case>-<variant>.txt`: final model response transcript.
+- `raw/<case>-<variant>-events.jsonl`: Codex event stream.
+- `code/<case>/<variant>/files/*`: actual generated source files copied from the isolated workspace.
+- `code/<case>/<variant>/diff.patch`: actual generated code diff.
+- `code/<case>/<variant>/changed-files.json`: machine-readable changed-file manifest.
+
+Reports may say "actual code was evaluated" only when both `changed-files.json` and `diff.patch` exist for the case and variant. Cases without those artifacts must be labeled `response-only` or `No code captured`.

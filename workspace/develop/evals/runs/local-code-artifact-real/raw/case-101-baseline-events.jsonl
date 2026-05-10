@@ -1,0 +1,26 @@
+`orders.services.create_order_summary()`를 구현해서 `total`과 `line_count`를 함께 반환하도록 했고, 이를 검증하는 테스트도 추가했습니다.
+
+변경 파일:
+- [`orders/services.py`](/private/tmp/dddjango-eval-workspaces/local-code-artifact-real/case-101/baseline/orders/services.py)
+- [`test_orders_services.py`](/private/tmp/dddjango-eval-workspaces/local-code-artifact-real/case-101/baseline/test_orders_services.py)
+
+핵심 변경:
+- 각 라인의 `quantity * unit_price`를 `Decimal("0")`부터 합산
+- 반환값을 `{"total": ..., "line_count": len(lines)}`로 구성
+- 새 테스트에서 예시 입력에 대해 `Decimal("11.00")`과 `2`를 기대하도록 검증
+
+실행한 명령:
+- `pwd -P && git rev-parse --show-toplevel && rg -n "create_order_summary|order summary|total|line count|line_count" -S .`
+- `rg --files .`
+- `sed -n '1,200p' orders/services.py`
+- `sed -n '1,200p' README.md`
+- `python -m pytest -q`
+- `git status --short && git diff -- orders/services.py test_orders_services.py && git diff --no-index -- /dev/null test_orders_services.py`
+
+체크 결과:
+- `python -m pytest -q` 통과: `1 passed`
+
+하지 않은 체크:
+- 별도 타입체크/린트는 실행하지 않았습니다. 저장소에 해당 설정이 없고, 이번 변경은 단일 함수와 단일 테스트라 `pytest`만으로 확인했습니다.
+
+Serena: 사용하지 않았습니다. 현재 작업은 단일 파일 구현과 소규모 테스트 추가라 기본 파일 읽기/패치로 충분했습니다.

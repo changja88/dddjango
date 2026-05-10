@@ -1,0 +1,13 @@
+{
+  "cases": {
+    "case-101": {
+      "captureCode": true,
+      "evidenceMode": "code-backed",
+      "subjectRepo": "workspace/develop/evals/fixtures/code-artifact-sample",
+      "requiredArtifacts": [
+        "changed-files.json",
+        "diff.patch"
+      ]
+    }
+  }
+}

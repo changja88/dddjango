@@ -1,0 +1,19 @@
+{
+  "caseId": "case-101",
+  "variant": "with-dddjango",
+  "workspace": "/private/tmp/dddjango-eval-workspaces/local-code-artifact-real/case-101/with-dddjango",
+  "evidenceMode": "code-backed",
+  "diffPath": "code/case-101/with-dddjango/diff.patch",
+  "noCodeProduced": false,
+  "files": [
+    {
+      "path": "orders/services.py",
+      "status": "modified",
+      "language": "python",
+      "artifactPath": "code/case-101/with-dddjango/files/orders/services.py",
+      "lineCount": 17,
+      "byteCount": 410,
+      "binary": false
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+diff --git a/orders/services.py b/orders/services.py
+index dd804ec..e187756 100644
+--- a/orders/services.py
++++ b/orders/services.py
+@@ -10,4 +10,8 @@ class OrderLine(TypedDict):
+
+
+ def create_order_summary(lines: list[OrderLine]) -> dict[str, object]:
+-    raise NotImplementedError("Implement order summary calculation.")
++    total = sum((line["quantity"] * line["unit_price"] for line in lines), start=Decimal("0"))
++    return {
++        "total": total,
++        "line_count": len(lines),
++    }
+diff --git a/test_orders_services.py b/test_orders_services.py
+new file mode 100644
+index 0000000..6d9057a
+--- /dev/null
++++ b/test_orders_services.py
+@@ -0,0 +1,17 @@
++from decimal import Decimal
++
++from orders.services import create_order_summary
++
++
++def test_create_order_summary_returns_total_and_line_count():
++    lines = [
++        {"quantity": 2, "unit_price": Decimal("3.50")},
++        {"quantity": 1, "unit_price": Decimal("4.00")},
++    ]
++
++    summary = create_order_summary(lines)
++
++    assert summary == {
++        "total": Decimal("11.00"),
++        "line_count": 2,
++    }

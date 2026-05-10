@@ -446,7 +446,8 @@
       background: #ffffff;
     }
 
-    .artifact-viewer-body pre {
+    .artifact-viewer-body pre,
+    .artifact-raw-panel pre {
       min-height: 420px;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -458,6 +459,301 @@
       height: min(760px, calc(100vh - 150px));
       border: 0;
       background: #ffffff;
+    }
+
+    .artifact-view {
+      min-height: 0;
+    }
+
+    .artifact-tabs {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      gap: 6px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .artifact-tabs button {
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 10px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .artifact-tabs button[aria-selected="true"] {
+      border-color: #b8cdfa;
+      background: var(--info-bg);
+      color: var(--info);
+      font-weight: 700;
+    }
+
+    .artifact-panel {
+      padding: 16px;
+    }
+
+    .artifact-panel[hidden] {
+      display: none;
+    }
+
+    .artifact-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .artifact-summary-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    .artifact-summary-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .artifact-summary-card strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .artifact-prose {
+      max-width: 980px;
+    }
+
+    .artifact-prose h1,
+    .artifact-prose h2,
+    .artifact-prose h3 {
+      margin: 18px 0 8px;
+    }
+
+    .artifact-prose p {
+      margin: 0 0 10px;
+    }
+
+    .artifact-prose ul {
+      margin: 0 0 12px 20px;
+      padding: 0;
+    }
+
+    .artifact-prose li {
+      margin-bottom: 4px;
+    }
+
+    .artifact-prose table {
+      min-width: 0;
+      margin: 10px 0 14px;
+      border: 1px solid var(--line);
+    }
+
+    .artifact-prose pre {
+      min-height: 0;
+      border-radius: 8px;
+    }
+
+    .artifact-related {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 14px;
+    }
+
+    .artifact-related a {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: #ffffff;
+      font-size: 12px;
+    }
+
+    .artifact-meta-table {
+      min-width: 0;
+    }
+
+    .json-tree {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+
+    .json-tree details {
+      margin: 4px 0 4px 14px;
+      border: 0;
+      background: transparent;
+    }
+
+    .json-tree summary {
+      padding: 2px 0;
+      background: transparent;
+      font-weight: 700;
+    }
+
+    .json-entry {
+      margin-left: 14px;
+      padding: 2px 0;
+    }
+
+    .json-key {
+      color: var(--info);
+      font-weight: 700;
+    }
+
+    .event-timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .event-row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .event-row strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .log-lines {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .log-line {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 8px;
+      padding: 3px 8px;
+      border-bottom: 1px solid #edf0f3;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+
+    .log-line:last-child {
+      border-bottom: 0;
+    }
+
+    .log-line.warn {
+      background: var(--warn-bg);
+    }
+
+    .log-line.fail {
+      background: var(--fail-bg);
+    }
+
+    .code-viewer {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+      margin: 10px 0;
+    }
+
+    .code-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-alt);
+    }
+
+    .code-file-path {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .code-language {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .code-lines {
+      overflow: auto;
+      background: #0b1220;
+      color: #e6edf6;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 64px minmax(max-content, 1fr);
+      min-width: 100%;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .code-line-number {
+      user-select: none;
+      padding: 0 10px;
+      color: #8ba3bd;
+      text-align: right;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .code-line-content {
+      padding: 0 10px;
+      white-space: pre;
+    }
+
+    .diff-line-add {
+      background: rgba(22, 121, 76, 0.24);
+    }
+
+    .diff-line-del {
+      background: rgba(180, 35, 24, 0.26);
+    }
+
+    .diff-line-hunk {
+      background: rgba(23, 92, 211, 0.24);
+      color: #d8e5ff;
+    }
+
+    .diff-line-file {
+      background: rgba(102, 112, 133, 0.28);
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .changed-file-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .changed-file-row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .changed-file-row strong {
+      display: block;
+      margin-bottom: 4px;
+      overflow-wrap: anywhere;
     }
 
     .artifact-link::after {
@@ -503,7 +799,8 @@
 
       .summary-grid,
       .comparison-grid,
-      .meta-grid {
+      .meta-grid,
+      .artifact-summary-grid {
         grid-template-columns: 1fr;
       }
 
@@ -598,6 +895,10 @@
                 <th>Baseline Verdict</th>
                 <th>With dddjango Verdict</th>
                 <th>Status</th>
+                <th>Evidence</th>
+                <th>Baseline Code</th>
+                <th>With dddjango Code</th>
+                <th>Diffs</th>
                 <th>Artifacts</th>
               </tr>
             </thead>
@@ -999,6 +1300,19 @@
       ];
     };
 
+    const codeLinks = (items) => {
+      if (!items || !items.length) return `<span class="muted">No code captured</span>`;
+      const existing = items.filter((item) => item.exists !== false);
+      if (!existing.length) return `<span class="muted">No code captured</span>`;
+      return links(items);
+    };
+
+    const renderCaseCodeComparison = (caseRow) => {
+      const mode = caseRow.evidenceMode || "response-only";
+      const status = caseRow.codeEvidenceStatus || (mode === "code-backed" ? "No code captured" : "response-only");
+      return `${badge(mode)}<br><small>${escapeHtml(status)}</small>`;
+    };
+
     const setRows = (tableId, rows) => {
       const tbody = document.querySelector(`#${tableId} tbody`);
       tbody.innerHTML = rows.join("");
@@ -1108,6 +1422,10 @@
           <td>${badge(c.baselineVerdict)}</td>
           <td>${badge(c.withPluginVerdict)}</td>
           <td>${badge(c.status)}</td>
+          <td>${renderCaseCodeComparison(c)}</td>
+          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.baseline)}</td>
+          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.withPlugin)}</td>
+          <td>${codeLinks(c.codeArtifacts && c.codeArtifacts.diffs)}</td>
           <td>${links(caseArtifacts(c))}</td>
         </tr>
       `));
@@ -1287,27 +1605,446 @@
       body.innerHTML = "";
     };
 
+    const readableSize = (bytes) => {
+      const value = Number(bytes || 0);
+      if (value < 1024) return `${value} B`;
+      if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+      return `${(value / 1024 / 1024).toFixed(1)} MB`;
+    };
+
+    const artifactAnchor = (item) => {
+      const rawHref = normalizeArtifactHref(item.href || "#");
+      const href = escapeHtml(rawHref);
+      const label = escapeHtml(item.label || item.href || "artifact");
+      const attributes = hasEmbeddedArtifact(rawHref) ? ` class="artifact-link" data-artifact-href="${href}"` : "";
+      return `<a href="${href}"${attributes}>${label}</a>`;
+    };
+
+    const renderRelatedArtifacts = (artifact) => {
+      const related = artifact.relatedArtifacts || [];
+      if (!related.length) return "";
+      return `<div class="artifact-related">${related.map(artifactAnchor).join("")}</div>`;
+    };
+
+    const renderArtifactSummaryGrid = (artifact, key) => `
+      <div class="artifact-summary-grid">
+        <div class="artifact-summary-card"><span>Kind</span><strong>${escapeHtml(artifact.kind || "text")}</strong></div>
+        <div class="artifact-summary-card"><span>Case</span><strong>${escapeHtml(artifact.caseId || "run")}</strong></div>
+        <div class="artifact-summary-card"><span>Variant</span><strong>${escapeHtml(artifact.variant || "n/a")}</strong></div>
+        <div class="artifact-summary-card"><span>Size</span><strong>${readableSize(artifact.byteCount)} / ${escapeHtml(artifact.lineCount || 0)} lines</strong></div>
+      </div>
+      <div class="callout info">
+        <h3>${escapeHtml(artifact.label || key)}</h3>
+        <p>${escapeHtml(artifact.summary || "Artifact rendered from embedded report data.")}</p>
+      </div>
+    `;
+
+    const renderCodeBlock = (code, language = "text", path = "") => {
+      const text = String(code || "");
+      const lines = text ? text.split(/\r?\n/) : [""];
+      return `
+        <div class="code-viewer">
+          <div class="code-toolbar">
+            <span class="code-file-path">${escapeHtml(path || "inline code")}</span>
+            <span class="code-language">${escapeHtml(language || "text")}</span>
+          </div>
+          <div class="code-lines">
+            ${lines.map((line, index) => `
+              <div class="code-line">
+                <span class="code-line-number">${index + 1}</span>
+                <code class="code-line-content">${escapeHtml(line)}</code>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    };
+
+    const renderSourceFileArtifact = (artifact, key) => `
+      ${renderArtifactSummaryGrid(artifact, key)}
+      ${renderRelatedArtifacts(artifact)}
+      ${renderCodeBlock(artifact.content || "", artifact.language || "text", artifact.repoPath || key)}
+    `;
+
+    const renderDiffArtifact = (artifact) => {
+      const content = String(artifact.content || "");
+      if (!content.trim()) {
+        return `${renderArtifactSummaryGrid(artifact, artifact.label)}<div class="callout warn"><h3>No diff content</h3><p>No generated source diff was captured for this variant.</p></div>`;
+      }
+      const rows = content.split(/\r?\n/).map((line, index) => {
+        let cls = "";
+        if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("diff --git")) cls = "diff-line-file";
+        else if (line.startsWith("@@")) cls = "diff-line-hunk";
+        else if (line.startsWith("+")) cls = "diff-line-add";
+        else if (line.startsWith("-")) cls = "diff-line-del";
+        return `
+          <div class="code-line ${cls}">
+            <span class="code-line-number">${index + 1}</span>
+            <code class="code-line-content">${escapeHtml(line)}</code>
+          </div>
+        `;
+      }).join("");
+      return `
+        ${renderArtifactSummaryGrid(artifact, artifact.label)}
+        <div class="code-viewer">
+          <div class="code-toolbar">
+            <span class="code-file-path">${escapeHtml(artifact.label || "diff.patch")}</span>
+            <span class="code-language">diff</span>
+          </div>
+          <div class="code-lines">${rows}</div>
+        </div>
+      `;
+    };
+
+    const renderChangedFilesArtifact = (artifact) => {
+      try {
+        const manifest = JSON.parse(artifact.content || "{}");
+        const files = Array.isArray(manifest.files) ? manifest.files : [];
+        return `
+          ${renderArtifactSummaryGrid(artifact, artifact.label)}
+          <div class="artifact-summary-grid">
+            <div class="artifact-summary-card"><span>Evidence</span><strong>${escapeHtml(manifest.evidenceMode || "code-backed")}</strong></div>
+            <div class="artifact-summary-card"><span>Files</span><strong>${files.length}</strong></div>
+            <div class="artifact-summary-card"><span>No Code Produced</span><strong>${manifest.noCodeProduced ? "yes" : "no"}</strong></div>
+            <div class="artifact-summary-card"><span>Variant</span><strong>${escapeHtml(manifest.variant || artifact.variant || "n/a")}</strong></div>
+          </div>
+          ${files.length ? `
+            <div class="changed-file-list">
+              ${files.map((file) => `
+                <div class="changed-file-row">
+                  <strong>${escapeHtml(file.path)}</strong>
+                  <div>${badge(file.status || "changed")} ${escapeHtml(file.language || "text")} / ${escapeHtml(file.lineCount ?? 0)} lines / ${escapeHtml(file.byteCount ?? 0)} bytes</div>
+                  ${file.artifactPath ? links([{ label: "source", href: file.artifactPath, exists: hasEmbeddedArtifact(file.artifactPath) }]) : ""}
+                </div>
+              `).join("")}
+            </div>
+          ` : `<div class="empty">No changed source files were captured.</div>`}
+        `;
+      } catch (error) {
+        return `${renderArtifactSummaryGrid(artifact, artifact.label)}<div class="callout fail"><h3>Invalid changed-files manifest</h3><p>${escapeHtml(error.message)}</p></div>${renderLogLines(artifact.content || "")}`;
+      }
+    };
+
+    const inlineMarkdown = (text) => {
+      let output = escapeHtml(text);
+      output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) => {
+        const rawHref = normalizeArtifactHref(href);
+        const attributes = hasEmbeddedArtifact(rawHref)
+          ? ` class="artifact-link" data-artifact-href="${escapeHtml(rawHref)}"`
+          : "";
+        return `<a href="${escapeHtml(rawHref)}"${attributes}>${label}</a>`;
+      });
+      output = output.replace(/`([^`]+)`/g, "<code>$1</code>");
+      output = output.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      return output;
+    };
+
+    const renderMarkdownTable = (lines) => {
+      const rows = lines
+        .filter((line) => !/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line))
+        .map((line) => line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim()));
+      if (!rows.length) return "";
+      const [head, ...bodyRows] = rows;
+      return `
+        <table>
+          <thead><tr>${head.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join("")}</tr></thead>
+          <tbody>${bodyRows.map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell)}</td>`).join("")}</tr>`).join("")}</tbody>
+        </table>
+      `;
+    };
+
+    const renderMarkdownArtifact = (content) => {
+      const lines = String(content || "").split(/\r?\n/);
+      const parts = [];
+      let inCode = false;
+      let codeLines = [];
+      let codeLanguage = "text";
+      let listOpen = false;
+      const closeList = () => {
+        if (listOpen) {
+          parts.push("</ul>");
+          listOpen = false;
+        }
+      };
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const trimmed = line.trim();
+        if (trimmed.startsWith("```")) {
+          if (inCode) {
+            parts.push(renderCodeBlock(codeLines.join("\n"), codeLanguage));
+            codeLines = [];
+            codeLanguage = "text";
+            inCode = false;
+          } else {
+            closeList();
+            inCode = true;
+            codeLanguage = trimmed.slice(3).trim() || "text";
+          }
+          continue;
+        }
+        if (inCode) {
+          codeLines.push(line);
+          continue;
+        }
+        if (!trimmed) {
+          closeList();
+          continue;
+        }
+        if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+          closeList();
+          const tableLines = [];
+          while (index < lines.length && lines[index].trim().startsWith("|") && lines[index].trim().endsWith("|")) {
+            tableLines.push(lines[index]);
+            index += 1;
+          }
+          index -= 1;
+          parts.push(renderMarkdownTable(tableLines));
+          continue;
+        }
+        const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+          closeList();
+          const level = heading[1].length;
+          parts.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+          continue;
+        }
+        const item = trimmed.match(/^[-*]\s+(.+)$/);
+        if (item) {
+          if (!listOpen) {
+            parts.push("<ul>");
+            listOpen = true;
+          }
+          parts.push(`<li>${inlineMarkdown(item[1])}</li>`);
+          continue;
+        }
+        closeList();
+        parts.push(`<p>${inlineMarkdown(trimmed)}</p>`);
+      }
+      closeList();
+      if (inCode) parts.push(renderCodeBlock(codeLines.join("\n"), codeLanguage));
+      return `<div class="artifact-prose">${parts.join("") || `<div class="empty">No content.</div>`}</div>`;
+    };
+
+    const renderJsonValue = (value, name = "root", depth = 0) => {
+      if (value === null || typeof value !== "object") {
+        return `<div class="json-entry"><span class="json-key">${escapeHtml(name)}:</span> ${escapeHtml(JSON.stringify(value))}</div>`;
+      }
+      const isArray = Array.isArray(value);
+      const entries = isArray ? value.map((item, index) => [String(index), item]) : Object.entries(value);
+      const summary = `${escapeHtml(name)} ${isArray ? "array" : "object"} (${entries.length})`;
+      return `
+        <details ${depth < 2 ? "open" : ""}>
+          <summary>${summary}</summary>
+          ${entries.map(([key, child]) => renderJsonValue(child, key, depth + 1)).join("")}
+        </details>
+      `;
+    };
+
+    const renderJsonArtifact = (artifact) => {
+      try {
+        const value = JSON.parse(artifact.content || "{}");
+        const serialized = JSON.stringify(value);
+        const dddjangoSkillMentions = (serialized.match(/dddjango:/g) || []).length;
+        return `
+          ${renderArtifactSummaryGrid(artifact, artifact.label)}
+          <div class="artifact-summary-grid">
+            <div class="artifact-summary-card"><span>Top-level type</span><strong>${Array.isArray(value) ? "array" : typeof value}</strong></div>
+            <div class="artifact-summary-card"><span>dddjango mentions</span><strong>${dddjangoSkillMentions}</strong></div>
+            <div class="artifact-summary-card"><span>Characters</span><strong>${serialized.length}</strong></div>
+            <div class="artifact-summary-card"><span>Parse</span><strong>valid JSON</strong></div>
+          </div>
+          <div class="json-tree">${renderJsonValue(value)}</div>
+        `;
+      } catch (error) {
+        return `${renderArtifactSummaryGrid(artifact, artifact.label)}<div class="callout fail"><h3>Invalid JSON</h3><p>${escapeHtml(error.message)}</p></div>${renderLogLines(artifact.content || "")}`;
+      }
+    };
+
+    const summarizeEvent = (event, index) => {
+      if (event && typeof event === "object") {
+        const type = event.type || event.event || event.role || event.name || `event-${index + 1}`;
+        const text = event.text || event.message || event.content || event.output || JSON.stringify(event);
+        return { type: String(type), text: String(text) };
+      }
+      return { type: `line-${index + 1}`, text: String(event) };
+    };
+
+    const renderJsonlArtifact = (artifact) => {
+      const lines = String(artifact.content || "").split(/\r?\n/).filter((line) => line.trim());
+      const parsed = [];
+      const rawLines = [];
+      lines.forEach((line) => {
+        try {
+          parsed.push(JSON.parse(line));
+        } catch (_error) {
+          rawLines.push(line);
+        }
+      });
+      if (!parsed.length) {
+        return `
+          ${renderArtifactSummaryGrid(artifact, artifact.label)}
+          <div class="callout warn"><h3>Plain event stream</h3><p>This file uses a JSONL extension but the saved content is plain text. The formatted view shows it as readable log lines.</p></div>
+          ${renderLogLines(lines.join("\n"))}
+        `;
+      }
+      return `
+        ${renderArtifactSummaryGrid(artifact, artifact.label)}
+        ${rawLines.length ? `<div class="callout warn"><h3>Partial parse</h3><p>${rawLines.length} line(s) were not valid JSON and remain available in Raw.</p></div>` : ""}
+        <div class="event-timeline">
+          ${parsed.map((event, index) => {
+            const summary = summarizeEvent(event, index);
+            return `<div class="event-row"><strong>${escapeHtml(index + 1)}. ${escapeHtml(summary.type)}</strong><div>${escapeHtml(summary.text).slice(0, 600)}</div></div>`;
+          }).join("")}
+        </div>
+      `;
+    };
+
+    const renderLogLines = (content) => {
+      const lines = String(content || "").split(/\r?\n/);
+      if (!String(content || "").trim()) {
+        return `<div class="empty">No output.</div>`;
+      }
+      return `
+        <div class="log-lines">
+          ${lines.map((line, index) => {
+            const lower = line.toLowerCase();
+            const level = lower.includes("error") || lower.includes("traceback") || lower.includes("exception") ? "fail" : lower.includes("warn") ? "warn" : "";
+            return `<div class="log-line ${level}"><span>${index + 1}</span><code>${escapeHtml(line)}</code></div>`;
+          }).join("")}
+        </div>
+      `;
+    };
+
+    const renderCommandArtifact = (artifact) => {
+      if (artifact.empty) {
+        return `${renderArtifactSummaryGrid(artifact, artifact.label)}<div class="callout pass"><h3>No output</h3><p>The artifact is empty. For diff, cache, and leakage scan outputs this usually means the check produced no findings.</p></div>`;
+      }
+      return `${renderArtifactSummaryGrid(artifact, artifact.label)}${renderLogLines(artifact.content || "")}`;
+    };
+
+    const renderCaseOutputArtifact = (artifact, key) => {
+      const c = artifact.case || {};
+      return `
+        ${renderArtifactSummaryGrid(artifact, key)}
+        <div class="artifact-summary-grid">
+          <div class="artifact-summary-card"><span>Title</span><strong>${escapeHtml(c.title || artifact.caseId || "case")}</strong></div>
+          <div class="artifact-summary-card"><span>Score</span><strong>${escapeHtml(artifact.score || "n/a")}</strong></div>
+          <div class="artifact-summary-card"><span>Verdict</span><strong>${escapeHtml(artifact.verdict || "n/a")}</strong></div>
+          <div class="artifact-summary-card"><span>Family</span><strong>${escapeHtml(c.family || "n/a")}</strong></div>
+        </div>
+        ${renderRelatedArtifacts(artifact)}
+        ${c.scoreNote ? `<div class="callout warn"><h3>Score Rationale</h3><p>${escapeHtml(c.scoreNote)}</p></div>` : ""}
+        ${renderMarkdownArtifact(artifact.content || "")}
+      `;
+    };
+
+    const renderArtifactMetadata = (artifact, key) => {
+      const rows = [
+        ["Path", key],
+        ["Label", artifact.label],
+        ["Kind", artifact.kind],
+        ["Role", artifact.role],
+        ["MIME", artifact.mime],
+        ["Case", artifact.caseId || "run"],
+        ["Variant", artifact.variant || "n/a"],
+        ["Lines", artifact.lineCount],
+        ["Bytes", artifact.byteCount],
+        ["Empty", artifact.empty ? "yes" : "no"],
+      ];
+      return `
+        <div class="table-wrap">
+          <table class="artifact-meta-table">
+            <tbody>${rows.map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value ?? "")}</td></tr>`).join("")}</tbody>
+          </table>
+        </div>
+        <h3>Related Artifacts</h3>
+        ${renderRelatedArtifacts(artifact) || `<div class="empty">No related artifacts.</div>`}
+      `;
+    };
+
+    const renderFormattedArtifact = (container, artifact, key) => {
+      if (artifact.kind === "case-analysis" || artifact.mime === "text/html") {
+        container.innerHTML = `${renderArtifactSummaryGrid(artifact, key)}${renderRelatedArtifacts(artifact)}`;
+        const frame = document.createElement("iframe");
+        frame.setAttribute("title", artifact.label || key);
+        frame.setAttribute("sandbox", "allow-same-origin");
+        frame.srcdoc = artifact.content || "";
+        container.append(frame);
+        return;
+      }
+      if (artifact.kind === "case-output") {
+        container.innerHTML = renderCaseOutputArtifact(artifact, key);
+        return;
+      }
+      if (artifact.kind === "source-file") {
+        container.innerHTML = renderSourceFileArtifact(artifact, key);
+        return;
+      }
+      if (artifact.kind === "diff") {
+        container.innerHTML = renderDiffArtifact(artifact);
+        return;
+      }
+      if (artifact.kind === "changed-files") {
+        container.innerHTML = renderChangedFilesArtifact(artifact);
+        return;
+      }
+      if (artifact.kind === "markdown") {
+        container.innerHTML = `${renderArtifactSummaryGrid(artifact, key)}${renderRelatedArtifacts(artifact)}${renderMarkdownArtifact(artifact.content || "")}`;
+        return;
+      }
+      if (artifact.kind === "json") {
+        container.innerHTML = renderJsonArtifact(artifact);
+        return;
+      }
+      if (artifact.kind === "jsonl") {
+        container.innerHTML = renderJsonlArtifact(artifact);
+        return;
+      }
+      if (artifact.kind === "command" || artifact.kind === "empty") {
+        container.innerHTML = renderCommandArtifact(artifact);
+        return;
+      }
+      container.innerHTML = `${renderArtifactSummaryGrid(artifact, key)}${renderLogLines(artifact.content || "")}`;
+    };
+
+    const attachArtifactTabs = (body) => {
+      body.querySelectorAll("[data-artifact-tab]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const selected = button.dataset.artifactTab;
+          body.querySelectorAll("[data-artifact-tab]").forEach((tab) => {
+            tab.setAttribute("aria-selected", String(tab.dataset.artifactTab === selected));
+          });
+          body.querySelectorAll("[data-artifact-panel]").forEach((panel) => {
+            panel.hidden = panel.dataset.artifactPanel !== selected;
+          });
+        });
+      });
+    };
+
     const showArtifact = (href) => {
       const key = normalizeArtifactHref(href);
       const artifact = embeddedArtifacts()[key];
       if (!artifact) return false;
 
       document.getElementById("artifact-viewer-title").textContent = artifact.label || key;
-      document.getElementById("artifact-viewer-meta").textContent = `${key} | ${artifact.mime || "text/plain"}`;
+      document.getElementById("artifact-viewer-meta").textContent = `${key} | ${artifact.kind || "text"} | ${artifact.mime || "text/plain"}`;
 
       const body = document.getElementById("artifact-viewer-body");
-      body.innerHTML = "";
-      if (artifact.mime === "text/html") {
-        const frame = document.createElement("iframe");
-        frame.setAttribute("title", artifact.label || key);
-        frame.setAttribute("sandbox", "allow-same-origin");
-        frame.srcdoc = artifact.content || "";
-        body.append(frame);
-      } else {
-        const pre = document.createElement("pre");
-        pre.textContent = artifact.content || "";
-        body.append(pre);
-      }
+      body.innerHTML = `
+        <div class="artifact-view">
+          <div class="artifact-tabs" role="tablist">
+            <button type="button" data-artifact-tab="formatted" aria-selected="true">Formatted</button>
+            <button type="button" data-artifact-tab="raw" aria-selected="false">Raw</button>
+            <button type="button" data-artifact-tab="metadata" aria-selected="false">Metadata</button>
+          </div>
+          <div class="artifact-panel" data-artifact-panel="formatted"></div>
+          <div class="artifact-panel artifact-raw-panel" data-artifact-panel="raw" hidden><pre>${escapeHtml(artifact.content || "")}</pre></div>
+          <div class="artifact-panel" data-artifact-panel="metadata" hidden>${renderArtifactMetadata(artifact, key)}</div>
+        </div>
+      `;
+      renderFormattedArtifact(body.querySelector('[data-artifact-panel="formatted"]'), artifact, key);
+      attachArtifactTabs(body);
 
       document.getElementById("artifact-viewer-backdrop").hidden = false;
       return true;

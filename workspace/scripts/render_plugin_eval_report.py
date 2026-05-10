@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Render the 20260510 dddjango plugin eval report from recorded raw artifacts."""
+"""Render dddjango plugin eval reports from recorded raw artifacts."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import subprocess
@@ -13,11 +14,14 @@ from zoneinfo import ZoneInfo
 
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-RUN_ID = "20260510-0900-plugin-eval"
+DEFAULT_RUN_ID = "20260510-0900-plugin-eval"
+RUN_ID = DEFAULT_RUN_ID
 RUN_DIR = REPO_ROOT / "workspace/develop/evals/runs" / RUN_ID
 RAW_DIR = RUN_DIR / "raw"
 ANALYSIS_DIR = RUN_DIR / "analysis"
 REPORT_TEMPLATE = REPO_ROOT / "workspace/develop/evals/templates/run-report.html"
+CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/evals/cases/plugin/code-capture.json"
+SOURCE_SUFFIXES = {".css", ".html", ".js", ".json", ".md", ".py", ".sql", ".toml", ".ts", ".txt", ".yaml", ".yml"}
 
 
 CASE_EVALS = [
@@ -332,6 +336,29 @@ FINDINGS = [
 ]
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--run-id",
+        default=DEFAULT_RUN_ID,
+        help="Eval run id under workspace/develop/evals/runs. Defaults to the canonical plugin eval run.",
+    )
+    parser.add_argument(
+        "--code-artifact-run",
+        action="store_true",
+        help="Render a focused report for code-backed artifact capture runs such as case-101.",
+    )
+    return parser.parse_args()
+
+
+def set_run_context(run_id: str) -> None:
+    global RUN_ID, RUN_DIR, RAW_DIR, ANALYSIS_DIR
+    RUN_ID = run_id
+    RUN_DIR = REPO_ROOT / "workspace/develop/evals/runs" / RUN_ID
+    RAW_DIR = RUN_DIR / "raw"
+    ANALYSIS_DIR = RUN_DIR / "analysis"
+
+
 def run_text(command: list[str]) -> str:
     result = subprocess.run(command, cwd=REPO_ROOT, text=True, capture_output=True, check=False)
     return (result.stdout + result.stderr).strip()
@@ -341,8 +368,15 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-def artifact(label: str, href: str, *, base: Path = RUN_DIR) -> dict[str, object]:
-    return {"label": label, "href": href, "exists": (base / href).exists()}
+def load_code_capture_metadata() -> dict[str, object]:
+    if not CODE_CAPTURE_METADATA.exists():
+        return {"cases": {}}
+    return json.loads(CODE_CAPTURE_METADATA.read_text(encoding="utf-8"))
+
+
+def artifact(label: str, href: str, *, base: Path | None = None) -> dict[str, object]:
+    artifact_base = RUN_DIR if base is None else base
+    return {"label": label, "href": href, "exists": (artifact_base / href).exists()}
 
 
 def artifact_path(href: str) -> Path | None:
@@ -360,10 +394,16 @@ def artifact_path(href: str) -> Path | None:
 
 def artifact_mime(path: Path) -> str:
     suffix = path.suffix.lower()
+    if suffix in {".patch", ".diff"}:
+        return "text/x-diff"
+    if suffix in SOURCE_SUFFIXES and "/files/" in path.as_posix():
+        return "text/source"
     if suffix == ".html":
         return "text/html"
     if suffix == ".json":
         return "application/json"
+    if suffix == ".jsonl":
+        return "application/x-ndjson"
     if suffix == ".md":
         return "text/markdown"
     if suffix in {".txt", ".log", ".out"}:
@@ -371,7 +411,175 @@ def artifact_mime(path: Path) -> str:
     return "text/plain"
 
 
-def collect_embedded_artifacts(data: dict[str, object]) -> dict[str, dict[str, str]]:
+def case_meta(case_id: str) -> dict[str, object] | None:
+    for case in CASE_EVALS:
+        if case["case"] == case_id:
+            return case
+    return None
+
+
+def case_related_artifacts(case_id: str) -> list[dict[str, object]]:
+    return [
+        artifact("analysis", f"analysis/{case_id}.html"),
+        artifact("prompt", f"raw/{case_id}-public-prompt.md"),
+        artifact("baseline", f"raw/{case_id}-baseline.txt"),
+        artifact("with-dddjango", f"raw/{case_id}-with-dddjango.txt"),
+        artifact("prompt-input", f"raw/{case_id}-prompt-input.json"),
+        artifact("baseline events", f"raw/{case_id}-baseline-events.jsonl"),
+        artifact("with-dddjango events", f"raw/{case_id}-with-dddjango-events.jsonl"),
+    ]
+
+
+def case_code_artifacts(case_id: str) -> dict[str, list[dict[str, object]]]:
+    return {
+        "baseline": [
+            artifact("baseline changed files", f"code/{case_id}/baseline/changed-files.json"),
+            artifact("baseline diff", f"code/{case_id}/baseline/diff.patch"),
+        ],
+        "withPlugin": [
+            artifact("with-dddjango changed files", f"code/{case_id}/with-dddjango/changed-files.json"),
+            artifact("with-dddjango diff", f"code/{case_id}/with-dddjango/diff.patch"),
+        ],
+        "diffs": [
+            artifact("baseline diff", f"code/{case_id}/baseline/diff.patch"),
+            artifact("with-dddjango diff", f"code/{case_id}/with-dddjango/diff.patch"),
+        ],
+    }
+
+
+def case_evidence_mode(case_id: str, code_capture_metadata: dict[str, object]) -> str:
+    cases = code_capture_metadata.get("cases")
+    if not isinstance(cases, dict):
+        return "response-only"
+    case_meta = cases.get(case_id)
+    if isinstance(case_meta, dict) and case_meta.get("captureCode"):
+        return "code-backed"
+    return "response-only"
+
+
+def code_evidence_status(case_id: str, evidence_mode: str) -> str:
+    if evidence_mode != "code-backed":
+        return "response-only"
+    return "code captured" if code_artifacts_present(case_id) else "No code captured"
+
+
+def classify_artifact(href: str, path: Path, content: str) -> dict[str, object]:
+    name = path.name
+    suffix = path.suffix.lower()
+    empty = not content.strip()
+    code_manifest_match = re.match(r"^code/(case-\d{3})/(baseline|with-dddjango)/changed-files\.json$", href)
+    code_diff_match = re.match(r"^code/(case-\d{3})/(baseline|with-dddjango)/diff\.patch$", href)
+    code_file_match = re.match(r"^code/(case-\d{3})/(baseline|with-dddjango)/files/(.+)$", href)
+    case_match = re.match(r"^(?:analysis|raw)/(case-\d{3})(?:[-.]|$)", href)
+    case_id = case_match.group(1) if case_match else ""
+    case = case_meta(case_id) if case_id else None
+    variant = ""
+    role = "artifact"
+    kind = "text"
+    repo_path = ""
+
+    if code_manifest_match:
+        case_id, variant = code_manifest_match.groups()
+        kind = "changed-files"
+        role = "changed file manifest"
+    elif code_diff_match:
+        case_id, variant = code_diff_match.groups()
+        kind = "diff"
+        role = "generated diff"
+    elif code_file_match:
+        case_id, variant, repo_path = code_file_match.groups()
+        kind = "source-file"
+        role = "captured source"
+    elif re.match(r"^analysis/case-\d{3}\.html$", href):
+        kind = "case-analysis"
+        role = "analysis"
+    elif re.match(r"^raw/case-\d{3}-(baseline|with-dddjango)\.txt$", href):
+        variant = "with-dddjango" if "-with-dddjango.txt" in href else "baseline"
+        kind = "case-output"
+        role = "model output"
+    elif href.endswith("-public-prompt.md") or suffix == ".md":
+        kind = "markdown"
+        role = "markdown"
+    elif suffix == ".json":
+        kind = "json"
+        role = "json"
+    elif suffix == ".jsonl":
+        variant = "with-dddjango" if "-with-dddjango-" in href else "baseline" if "-baseline-" in href else ""
+        kind = "jsonl"
+        role = "events"
+    elif empty:
+        kind = "empty"
+        role = "empty output"
+    elif name.endswith("-command.txt"):
+        variant = "with-dddjango" if "-with-dddjango-" in href else "baseline" if "-baseline-" in href else ""
+        kind = "command"
+        role = "command"
+    elif name.endswith("-exit.txt"):
+        variant = "with-dddjango" if "-with-dddjango-" in href else "baseline" if "-baseline-" in href else ""
+        kind = "command"
+        role = "exit code"
+    elif name.endswith(".stderr.txt"):
+        variant = "with-dddjango" if "-with-dddjango." in href else "baseline" if "-baseline." in href else ""
+        kind = "command"
+        role = "stderr"
+    elif "scan" in name or "validation" in name or "diff" in name:
+        kind = "command"
+        role = "command output"
+
+    summary = {
+        "case-analysis": "Case-level score, comparison, and evidence analysis.",
+        "case-output": f"{variant or 'variant'} model response for this eval case.",
+        "markdown": "Markdown document rendered as structured prose.",
+        "json": "JSON artifact rendered as a collapsible tree.",
+        "jsonl": "JSON Lines event stream rendered as a timeline.",
+        "command": f"{role.title()} artifact with command/output status.",
+        "empty": "Empty artifact; treated as a clean/no-output result when expected.",
+        "changed-files": "Changed-file manifest for a code-backed eval variant.",
+        "diff": "Generated source diff for a code-backed eval variant.",
+        "source-file": "Captured generated source file.",
+        "text": "Text artifact rendered with line-preserving formatting.",
+    }[kind]
+
+    result: dict[str, object] = {
+        "kind": kind,
+        "role": role,
+        "caseId": case_id,
+        "variant": variant,
+        "summary": summary,
+        "lineCount": 0 if not content else len(content.splitlines()),
+        "byteCount": len(content.encode("utf-8")),
+        "empty": empty,
+        "opensAs": kind,
+    }
+    if repo_path:
+        result["repoPath"] = repo_path
+        result["language"] = path.suffix.lower().lstrip(".") or "text"
+    if kind in {"changed-files", "diff", "source-file"}:
+        result["evidenceMode"] = "code-backed"
+    if case_id and case is None:
+        case = case_meta(case_id)
+    if case:
+        result["case"] = {
+            "id": case_id,
+            "family": case["family"],
+            "title": case["title"],
+            "status": case["status"],
+            "baselineScore": score_text(case, "baseline"),
+            "withPluginScore": score_text(case, "with"),
+            "baselineVerdict": case["baseline_verdict"],
+            "withPluginVerdict": case["with_verdict"],
+            "scoreNote": case["score_note"],
+        }
+        result["relatedArtifacts"] = case_related_artifacts(case_id)
+        if variant:
+            score_key = "with" if variant == "with-dddjango" else "baseline"
+            verdict_key = "with_verdict" if variant == "with-dddjango" else "baseline_verdict"
+            result["score"] = score_text(case, score_key)
+            result["verdict"] = case[verdict_key]
+    return result
+
+
+def collect_embedded_artifacts(data: dict[str, object]) -> dict[str, dict[str, object]]:
     hrefs: set[str] = set()
 
     def collect(value: object) -> None:
@@ -388,16 +596,18 @@ def collect_embedded_artifacts(data: dict[str, object]) -> dict[str, dict[str, s
                 collect(child)
 
     collect(data)
-    embedded: dict[str, dict[str, str]] = {}
+    embedded: dict[str, dict[str, object]] = {}
     for href in sorted(hrefs):
         path = artifact_path(href)
         if not path or not path.is_file():
             continue
         key = href.split("#", 1)[0].split("?", 1)[0].removeprefix("./")
+        content = path.read_text(encoding="utf-8", errors="replace")
         embedded[key] = {
             "label": path.name,
             "mime": artifact_mime(path),
-            "content": path.read_text(encoding="utf-8", errors="replace"),
+            "content": content,
+            **classify_artifact(key, path, content),
         }
     return embedded
 
@@ -487,8 +697,171 @@ def write_analysis(case: dict[str, object]) -> None:
     (ANALYSIS_DIR / f"{case_id}.html").write_text(html, encoding="utf-8")
 
 
+def read_exit_status(case_id: str, variant: str) -> str:
+    value = read(RAW_DIR / f"{case_id}-{variant}-exit.txt").strip()
+    if value == "0":
+        return "executed"
+    if value:
+        return f"failed ({value})"
+    return "not-run"
+
+
+def code_artifacts_present(case_id: str) -> bool:
+    return variant_code_artifacts_present(case_id, "baseline") and variant_code_artifacts_present(
+        case_id, "with-dddjango"
+    )
+
+
+def variant_code_artifacts_present(case_id: str, variant: str) -> bool:
+    manifest_path = RUN_DIR / f"code/{case_id}/{variant}/changed-files.json"
+    diff_path = RUN_DIR / f"code/{case_id}/{variant}/diff.patch"
+    manifest = code_manifest(case_id, variant)
+    files = manifest.get("files")
+    return (
+        manifest_path.exists()
+        and diff_path.exists()
+        and manifest.get("noCodeProduced") is False
+        and isinstance(files, list)
+        and len(files) > 0
+    )
+
+
+def code_manifest(case_id: str, variant: str) -> dict[str, object]:
+    path = RUN_DIR / f"code/{case_id}/{variant}/changed-files.json"
+    if not path.exists():
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def code_file_count(case_id: str, variant: str) -> int:
+    manifest = code_manifest(case_id, variant)
+    files = manifest.get("files")
+    return len(files) if isinstance(files, list) else 0
+
+
+def discover_code_artifact_cases() -> list[dict[str, object]]:
+    case_ids: set[str] = set()
+    for path in RAW_DIR.glob("case-*-public-prompt.md"):
+        match = re.match(r"^(case-\d{3})-public-prompt\.md$", path.name)
+        if match:
+            case_ids.add(match.group(1))
+    for path in (RUN_DIR / "code").glob("case-*"):
+        if path.is_dir():
+            case_ids.add(path.name)
+
+    cases: list[dict[str, object]] = []
+    for case_id in sorted(case_ids):
+        baseline_status = read_exit_status(case_id, "baseline")
+        with_status = read_exit_status(case_id, "with-dddjango")
+        captured = code_artifacts_present(case_id)
+        baseline_files = code_file_count(case_id, "baseline")
+        with_files = code_file_count(case_id, "with-dddjango")
+        status = "pass" if captured and baseline_status == "executed" and with_status == "executed" else "blocked"
+        title = {
+            "case-101": "Code Artifact Capture Smoke",
+        }.get(case_id, "Code Artifact Capture")
+        cases.append(
+            {
+                "case": case_id,
+                "family": "code-artifact-capture",
+                "title": title,
+                "baseline": "not scored",
+                "with": "not scored",
+                "baseline_verdict": f"{baseline_status}; {baseline_files} file(s)",
+                "with_verdict": f"{with_status}; {with_files} file(s)",
+                "status": status,
+                "prompt": read(RAW_DIR / f"{case_id}-public-prompt.md").strip(),
+                "baseline_good": f"Captured {baseline_files} changed source file(s)." if baseline_files else "No changed source files captured.",
+                "baseline_poor": "Rubric scoring was not run for this focused artifact-capture smoke.",
+                "with_good": f"Captured {with_files} changed source file(s)." if with_files else "No changed source files captured.",
+                "with_poor": "Rubric scoring was not run for this focused artifact-capture smoke.",
+                "score_note": "This report verifies whether real code artifacts are captured and readable. It is not a comprehensive plugin score.",
+            }
+        )
+    return cases
+
+
+def write_code_artifact_analysis(case: dict[str, object]) -> None:
+    case_id = str(case["case"])
+    rows = [
+        ("Baseline setup", "codex exec --ignore-user-config in an isolated writable fixture workspace."),
+        ("With dddjango setup", "codex exec with active dddjango plugin config in an isolated writable fixture workspace."),
+        ("Prompt", str(case["prompt"])),
+        ("Baseline artifact result", str(case["baseline_good"])),
+        ("With dddjango artifact result", str(case["with_good"])),
+        ("Score status", str(case["score_note"])),
+    ]
+    evidence = [
+        artifact("public prompt", f"raw/{case_id}-public-prompt.md"),
+        artifact("baseline response", f"raw/{case_id}-baseline.txt"),
+        artifact("with-dddjango response", f"raw/{case_id}-with-dddjango.txt"),
+        artifact("baseline changed files", f"code/{case_id}/baseline/changed-files.json"),
+        artifact("baseline diff", f"code/{case_id}/baseline/diff.patch"),
+        artifact("with-dddjango changed files", f"code/{case_id}/with-dddjango/changed-files.json"),
+        artifact("with-dddjango diff", f"code/{case_id}/with-dddjango/diff.patch"),
+    ]
+    table_rows = "\n".join(
+        f"<tr><th>{escape(label)}</th><td>{escape(value)}</td></tr>" for label, value in rows
+    )
+    evidence_links = "".join(
+        f'<li><a href="../{escape(str(item["href"]))}">{escape(str(item["label"]))}</a></li>'
+        for item in evidence
+    )
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{escape(case_id)} Code Artifact Analysis</title>
+  <link rel="icon" href="data:,">
+  <style>
+    body {{ margin: 0; background: #f6f7f9; color: #1f2933; font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }}
+    header {{ background: #101828; color: white; padding: 24px; }}
+    main {{ max-width: 1100px; margin: 0 auto; padding: 20px 24px 48px; }}
+    section {{ background: white; border: 1px solid #d8dee6; border-radius: 8px; padding: 18px; margin-bottom: 16px; }}
+    h1, h2 {{ margin: 0 0 12px; }}
+    table {{ width: 100%; border-collapse: collapse; border: 1px solid #d8dee6; }}
+    th, td {{ border-bottom: 1px solid #d8dee6; padding: 10px 12px; text-align: left; vertical-align: top; }}
+    th {{ width: 220px; background: #f0f3f6; }}
+    a {{ color: #175cd3; text-decoration: none; }}
+    a:hover {{ text-decoration: underline; }}
+  </style>
+</head>
+<body>
+  <header>
+    <p>dddjango eval code artifact analysis</p>
+    <h1>{escape(case_id)}: {escape(str(case["title"]))}</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Analysis</h2>
+      <table>{table_rows}</table>
+    </section>
+    <section>
+      <h2>Evidence Links</h2>
+      <ul>{evidence_links}</ul>
+    </section>
+  </main>
+</body>
+</html>
+"""
+    (ANALYSIS_DIR / f"{case_id}.html").write_text(html, encoding="utf-8")
+
+
 def score_label(value: int) -> str:
     return f"{value}/5"
+
+
+def score_text(case: dict[str, object], key: str) -> str:
+    value = case.get(key, "not scored")
+    try:
+        return score_label(int(value))
+    except (TypeError, ValueError):
+        return str(value)
 
 
 def replace_report_data(template: str, data: dict[str, object]) -> str:
@@ -504,6 +877,7 @@ def replace_report_data(template: str, data: dict[str, object]) -> str:
 
 
 def build_report_data() -> dict[str, object]:
+    code_capture_metadata = load_code_capture_metadata()
     baseline_total = sum(int(case["baseline"]) for case in CASE_EVALS)
     plugin_total = sum(int(case["with"]) for case in CASE_EVALS)
     baseline_passes = sum(1 for case in CASE_EVALS if int(case["baseline"]) >= 4)
@@ -533,6 +907,12 @@ def build_report_data() -> dict[str, object]:
             "baselineVerdict": case["baseline_verdict"],
             "withPluginVerdict": case["with_verdict"],
             "status": case["status"],
+            "evidenceMode": case_evidence_mode(str(case["case"]), code_capture_metadata),
+            "codeEvidenceStatus": code_evidence_status(
+                str(case["case"]),
+                case_evidence_mode(str(case["case"]), code_capture_metadata),
+            ),
+            "codeArtifacts": case_code_artifacts(str(case["case"])),
             "artifacts": case_artifacts(str(case["case"])),
         }
         for case in CASE_EVALS
@@ -591,6 +971,29 @@ def build_report_data() -> dict[str, object]:
         )
         for case in CASE_EVALS
     )
+    seen_artifact_hrefs = {str(item[5]) for item in key_artifacts}
+    for path in sorted(RUN_DIR.rglob("*")):
+        if not path.is_file() or path.name == "report.html":
+            continue
+        href = path.relative_to(RUN_DIR).as_posix()
+        if href in seen_artifact_hrefs:
+            continue
+        content = path.read_text(encoding="utf-8", errors="replace")
+        metadata = classify_artifact(href, path, content)
+        case_or_finding = str(metadata.get("caseId") or "run")
+        role = str(metadata.get("role") or "artifact")
+        name = f"{case_or_finding} {role}" if case_or_finding != "run" else path.name
+        key_artifacts.append(
+            (
+                name,
+                str(metadata["kind"]),
+                case_or_finding,
+                str(metadata["summary"]),
+                str(metadata["opensAs"]),
+                href,
+            )
+        )
+        seen_artifact_hrefs.add(href)
     findings_rows = [
         {
             "severity": finding["severity"],
@@ -788,6 +1191,226 @@ def build_report_data() -> dict[str, object]:
     }
 
 
+def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str, object]:
+    generated_at = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST")
+    git_branch = run_text(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+    git_commit = run_text(["git", "rev-parse", "HEAD"])
+    git_dirty = "dirty" if run_text(["git", "status", "--short"]) else "clean"
+    changed = run_text(["git", "status", "--short"]) or "none"
+    captured_cases = sum(1 for case in cases if code_artifacts_present(str(case["case"])))
+    total_cases = len(cases)
+    report_status = "pass" if total_cases and captured_cases == total_cases else "blocked"
+
+    case_rows = [
+        {
+            "case": case["case"],
+            "family": case["family"],
+            "baselineScore": score_text(case, "baseline"),
+            "withPluginScore": score_text(case, "with"),
+            "delta": "not scored",
+            "baselineVerdict": case["baseline_verdict"],
+            "withPluginVerdict": case["with_verdict"],
+            "status": case["status"],
+            "evidenceMode": "code-backed",
+            "codeEvidenceStatus": code_evidence_status(str(case["case"]), "code-backed"),
+            "codeArtifacts": case_code_artifacts(str(case["case"])),
+            "artifacts": case_artifacts(str(case["case"])),
+        }
+        for case in cases
+    ]
+
+    key_artifacts: list[tuple[str, str, str, str, str, str]] = [
+        ("Run notes", "note", "run", "Operator notes and model/variant setup.", "md", "operator-notes.md"),
+    ]
+    for case in cases:
+        case_id = str(case["case"])
+        key_artifacts.extend(
+            [
+                (f"{case_id} analysis", "analysis", case_id, str(case["title"]), "html", f"analysis/{case_id}.html"),
+                (f"{case_id} public prompt", "markdown", case_id, "Public eval packet.", "markdown", f"raw/{case_id}-public-prompt.md"),
+                (f"{case_id} baseline output", "case-output", case_id, "Baseline model response.", "markdown", f"raw/{case_id}-baseline.txt"),
+                (f"{case_id} with-dddjango output", "case-output", case_id, "With-dddjango model response.", "markdown", f"raw/{case_id}-with-dddjango.txt"),
+                (f"{case_id} baseline changed files", "changed-files", case_id, "Baseline changed-file manifest.", "changed-files", f"code/{case_id}/baseline/changed-files.json"),
+                (f"{case_id} baseline diff", "diff", case_id, "Baseline generated diff.", "diff", f"code/{case_id}/baseline/diff.patch"),
+                (f"{case_id} with-dddjango changed files", "changed-files", case_id, "With-dddjango changed-file manifest.", "changed-files", f"code/{case_id}/with-dddjango/changed-files.json"),
+                (f"{case_id} with-dddjango diff", "diff", case_id, "With-dddjango generated diff.", "diff", f"code/{case_id}/with-dddjango/diff.patch"),
+            ]
+        )
+
+    seen_artifact_hrefs = {str(item[5]) for item in key_artifacts}
+    for path in sorted(RUN_DIR.rglob("*")):
+        if not path.is_file() or path.name == "report.html":
+            continue
+        href = path.relative_to(RUN_DIR).as_posix()
+        if href in seen_artifact_hrefs:
+            continue
+        content = path.read_text(encoding="utf-8", errors="replace")
+        metadata = classify_artifact(href, path, content)
+        case_or_finding = str(metadata.get("caseId") or "run")
+        role = str(metadata.get("role") or "artifact")
+        name = f"{case_or_finding} {role}" if case_or_finding != "run" else path.name
+        key_artifacts.append(
+            (
+                name,
+                str(metadata["kind"]),
+                case_or_finding,
+                str(metadata["summary"]),
+                str(metadata["opensAs"]),
+                href,
+            )
+        )
+        seen_artifact_hrefs.add(href)
+
+    public_packets = [
+        {
+            "case": case["case"],
+            "publicPacket": artifact("public packet", f"raw/{case['case']}-public-prompt.md"),
+            "rawOutput": artifact("with-dddjango raw", f"raw/{case['case']}-with-dddjango.txt"),
+            "suppliedContext": "public packet + isolated code fixture workspace; private evaluator/rubrics/prior findings forbidden",
+            "artifactExists": True,
+        }
+        for case in cases
+    ]
+
+    return {
+        "title": "dddjango Code Artifact Eval Report",
+        "run": {
+            "id": RUN_ID,
+            "generatedAt": generated_at,
+            "evaluator": "Codex main agent",
+            "repoRoot": str(REPO_ROOT),
+            "evalPackPath": "workspace/develop/evals",
+            "evalPackVersion": git_commit[:12],
+            "templateVersion": "run-report.html v1",
+            "pluginVersion": "0.1.10",
+            "pluginSource": str(REPO_ROOT / "dddjango"),
+            "gitBranch": git_branch,
+            "gitCommit": git_commit[:12],
+            "gitDirtyState": git_dirty,
+            "changedFilesSummary": changed,
+            "startedAt": read(RUN_DIR / "RUN_ID.txt").strip() or RUN_ID,
+            "endedAt": generated_at,
+            "duration": "recorded by command artifacts",
+            "runtimeCacheUsed": "yes for with-dddjango variant",
+            "runtimeCachePath": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10",
+            "subagentsUsed": "no; no subagents were spawned for this focused artifact capture run",
+            "serenaUsed": "no; this was eval artifact generation, not code symbol tracing",
+            "planUpdate": "not updated for this focused artifact viewer check",
+        },
+        "verdict": {
+            "status": report_status,
+            "summary": f"{captured_cases}/{total_cases} code-backed case(s) produced real changed-file manifests, diffs, and copied source files. This report checks artifact readability only; rubric scoring and plugin completion were not run.",
+            "completed": "no",
+            "pluginHardGateFailures": 0,
+            "commonHardGateFailures": 0,
+            "blockingFindings": 0 if report_status == "pass" else 1,
+            "majorFindings": 0,
+            "minorFindings": 0,
+            "notRunCount": 2,
+            "acceptedExceptionCount": 0,
+            "commandFailures": 0 if report_status == "pass" else 1,
+            "failedCaseLinks": [],
+        },
+        "comparison": {
+            "baselineLabel": "Baseline",
+            "withPluginLabel": "With dddjango",
+            "baselineScore": "not scored",
+            "withPluginScore": "not scored",
+            "scoreDelta": "not scored",
+            "baselinePassRate": f"{captured_cases}/{total_cases} code artifact capture",
+            "withPluginPassRate": f"{captured_cases}/{total_cases} code artifact capture",
+            "passRateDelta": "n/a",
+            "baselineRoutingAccuracy": "not evaluated",
+            "withPluginRoutingAccuracy": "not evaluated",
+            "routingAccuracyDelta": "n/a",
+            "baselineHardGateFailures": "not evaluated",
+            "withPluginHardGateFailures": "not evaluated",
+            "hardGateDelta": "n/a",
+            "baselineFindings": "not evaluated",
+            "withPluginFindings": "not evaluated",
+            "findingsDelta": "n/a",
+            "familiesImproved": 0,
+            "familiesRegressed": 0,
+            "familiesUnchanged": 1 if total_cases else 0,
+            "notes": "Focused run for verifying that artifact links open readable source, diff, manifest, prompt, and raw response views.",
+        },
+        "comparisonDetails": [
+            {"metric": "Code manifests", "baseline": "required", "withPlugin": "required", "delta": "n/a", "notes": "Each variant must have changed-files.json."},
+            {"metric": "Diffs", "baseline": "required", "withPlugin": "required", "delta": "n/a", "notes": "Each variant must have diff.patch."},
+            {"metric": "Copied source", "baseline": "required", "withPlugin": "required", "delta": "n/a", "notes": "Source files under code/<case>/<variant>/files must open in the embedded viewer."},
+            {"metric": "Rubric score", "baseline": "not run", "withPlugin": "not run", "delta": "n/a", "notes": "This is not a scoring run."},
+        ],
+        "caseComparisons": case_rows,
+        "failedCases": [],
+        "hardGates": [
+            {
+                "gate": "Code artifact capture",
+                "status": report_status,
+                "reason": "Both variants must produce changed-file manifest, diff, and at least one copied source file.",
+                "evidence": [artifact("case-101 baseline manifest", "code/case-101/baseline/changed-files.json"), artifact("case-101 with-dddjango manifest", "code/case-101/with-dddjango/changed-files.json")],
+                "casesOrCommands": ", ".join(str(case["case"]) for case in cases),
+            }
+        ],
+        "scenarioFamilies": [
+            {
+                "family": "code-artifact-capture",
+                "status": report_status,
+                "cases": ", ".join(str(case["case"]) for case in cases),
+                "passed": captured_cases,
+                "failed": total_cases - captured_cases,
+                "blocked": 0 if report_status == "pass" else total_cases - captured_cases,
+                "skipped": 0,
+                "rerunPassed": 0,
+                "acceptedExceptions": 0,
+                "artifacts": [artifact("analysis", f"analysis/{case['case']}.html") for case in cases],
+            }
+        ],
+        "findings": [],
+        "reruns": [],
+        "commands": [
+            {
+                "phase": "code artifact eval",
+                "status": report_status,
+                "command": "python3 workspace/scripts/run_plugin_eval.py --run-id local-code-artifact-real --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/evals/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
+                "cwd": str(REPO_ROOT),
+                "exitCode": "0" if report_status == "pass" else "see variant exit artifacts",
+                "duration": "recorded by transcript",
+                "related": "case-101",
+                "output": "See raw command, stderr, events, and exit artifacts.",
+            }
+        ],
+        "artifacts": [
+            {
+                "name": name,
+                "type": type_,
+                "caseOrFinding": case_or_finding,
+                "summary": summary,
+                "opensAs": opens_as,
+                "exists": (RUN_DIR / href).exists(),
+                "link": artifact(name, href),
+            }
+            for name, type_, case_or_finding, summary, opens_as, href in key_artifacts
+        ],
+        "publicPackets": public_packets,
+        "cacheSync": [],
+        "leakageScan": {
+            "status": "not-run",
+            "scope": [],
+            "patterns": [],
+            "excludedPaths": [],
+            "matchCount": "not-run",
+            "semanticReview": "Not run for this focused artifact-capture report.",
+            "evidence": [],
+            "command": "",
+        },
+        "notRun": [
+            {"item": "Rubric scoring", "type": "eval", "reason": "This focused run only verifies real code artifact capture and report readability.", "ownerOrDecision": "deferred to comprehensive eval", "blocksCompletion": True, "evidence": []},
+            {"item": "Serena MCP", "type": "tool", "reason": "No repository code symbol edit/review was performed in this report-render step.", "ownerOrDecision": "skipped", "blocksCompletion": False, "evidence": []},
+        ],
+        "acceptedExceptions": [],
+    }
+
+
 def write_markdown_sidecars() -> None:
     findings_text = ["# Findings", ""]
     for finding in FINDINGS:
@@ -850,11 +1473,23 @@ def write_markdown_sidecars() -> None:
 
 
 def main() -> None:
+    global CASE_EVALS
+    args = parse_args()
+    set_run_context(args.run_id)
     ANALYSIS_DIR.mkdir(parents=True, exist_ok=True)
-    for case in CASE_EVALS:
-        write_analysis(case)
-    write_markdown_sidecars()
-    data = build_report_data()
+    use_code_artifact_report = args.code_artifact_run or (
+        RUN_ID != DEFAULT_RUN_ID and (RUN_DIR / "code").exists()
+    )
+    if use_code_artifact_report:
+        CASE_EVALS = discover_code_artifact_cases()
+        for case in CASE_EVALS:
+            write_code_artifact_analysis(case)
+        data = build_code_artifact_report_data(CASE_EVALS)
+    else:
+        for case in CASE_EVALS:
+            write_analysis(case)
+        write_markdown_sidecars()
+        data = build_report_data()
     data["embeddedArtifacts"] = collect_embedded_artifacts(data)
     template = REPORT_TEMPLATE.read_text(encoding="utf-8")
     (RUN_DIR / "report.html").write_text(replace_report_data(template, data), encoding="utf-8")
