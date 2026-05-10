@@ -471,16 +471,18 @@ def render_html(data: dict[str, object]) -> str:
             else {}
         )
         status = str(case_data.get("status") or "unscored")
-        selected = " selected" if index == 0 else ""
         rows.append(
-            f"""          <tr class="{status_class(status)}{selected}" data-case-index="{index}">
-            <td class="question-cell">{escape(str(case_data.get("question") or ""))}</td>
+            f"""          <tr class="{status_class(status)}">
+            <td class="question-cell">
+              <div class="case-id">{escape(str(case_data.get("id") or ""))}</div>
+              <div class="question-preview">{escape(str(case_data.get("question") or ""))}</div>
+            </td>
             <td>{escape(str(case_data.get("bucket") or ""))}</td>
-            <td>{escape(str(baseline.get("score") or "not scored"))}</td>
-            <td>{escape(str(with_dddjango.get("score") or "not scored"))}</td>
-            <td>{escape(str(case_data.get("delta") or "n/a"))}</td>
-            <td><span class="status-pill {status_class(status)}">{escape(status)}</span></td>
-            <td><button type="button" class="detail-button" data-case-index="{index}">상세</button></td>
+            <td class="score-cell">{escape(str(baseline.get("score") or "not scored"))}</td>
+            <td class="score-cell">{escape(str(with_dddjango.get("score") or "not scored"))}</td>
+            <td class="delta-cell">{escape(str(case_data.get("delta") or "n/a"))}</td>
+            <td class="status-cell"><span class="status-pill {status_class(status)}">{escape(status)}</span></td>
+            <td class="action-cell"><button type="button" class="detail-button" aria-haspopup="dialog" data-detail-index="{index}">상세</button></td>
           </tr>"""
         )
 
@@ -513,6 +515,7 @@ def render_html(data: dict[str, object]) -> str:
       --muted: #626d7f;
       --line: #d9dee8;
       --accent: #225ea8;
+      --accent-soft: #eaf2ff;
       --pass: #17663a;
       --partial: #8a5a00;
       --fail: #a32929;
@@ -552,12 +555,37 @@ def render_html(data: dict[str, object]) -> str:
     }}
     .metric-label {{ color: var(--muted); font-size: 12px; }}
     .metric-value {{ margin-top: 6px; font-size: 22px; font-weight: 700; }}
+    .table-wrap {{
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }}
     table {{ width: 100%; border-collapse: collapse; table-layout: fixed; }}
-    th, td {{ border-bottom: 1px solid var(--line); padding: 10px; text-align: left; vertical-align: top; }}
+    th, td {{
+      border-bottom: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: middle;
+    }}
+    th:last-child, td:last-child {{ border-right: 0; }}
     th {{ color: var(--muted); font-size: 12px; font-weight: 700; background: #f1f4f8; }}
-    tbody tr {{ cursor: pointer; }}
-    tbody tr:hover, tbody tr.selected {{ background: #eef5ff; }}
-    .question-cell {{ width: 42%; white-space: pre-wrap; word-break: break-word; }}
+    tbody tr:hover {{ background: var(--accent-soft); }}
+    tbody tr:last-child td {{ border-bottom: 0; }}
+    .question-cell {{ white-space: normal; word-break: break-word; }}
+    .case-id {{
+      margin-bottom: 4px;
+      color: var(--muted);
+      font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }}
+    .question-preview {{
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+    }}
+    .score-cell, .delta-cell, .status-cell, .action-cell {{ text-align: center; }}
     .status-pill {{
       display: inline-block;
       min-width: 72px;
@@ -586,6 +614,45 @@ def render_html(data: dict[str, object]) -> str:
       padding: 5px 10px;
       cursor: pointer;
     }}
+    .detail-button:hover {{ background: var(--accent); color: #fff; }}
+    dialog {{
+      width: min(1180px, calc(100vw - 48px));
+      max-height: calc(100vh - 48px);
+      border: 0;
+      border-radius: 8px;
+      padding: 0;
+      color: var(--text);
+      box-shadow: 0 24px 80px rgba(29, 36, 51, 0.28);
+    }}
+    dialog::backdrop {{ background: rgba(29, 36, 51, 0.45); }}
+    .dialog-shell {{ max-height: calc(100vh - 48px); overflow: auto; background: #fff; }}
+    .dialog-header {{
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }}
+    .dialog-header h2 {{ margin: 0 0 4px; }}
+    .dialog-meta {{ color: var(--muted); font-size: 12px; }}
+    .dialog-close {{
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      min-width: 34px;
+      min-height: 34px;
+    }}
+    .dialog-close:hover {{ border-color: var(--accent); color: var(--accent); }}
+    .dialog-body {{ padding: 18px; }}
     .detail-question {{
       margin: 0 0 14px;
       padding: 12px;
@@ -626,6 +693,8 @@ def render_html(data: dict[str, object]) -> str:
     .empty {{ color: var(--muted); text-align: center; }}
     @media (max-width: 900px) {{
       main {{ padding: 14px; }}
+      dialog {{ width: calc(100vw - 20px); max-height: calc(100vh - 20px); }}
+      .dialog-shell {{ max-height: calc(100vh - 20px); }}
       .detail-grid {{ grid-template-columns: 1fr; }}
       table {{ table-layout: auto; }}
       th, td {{ padding: 8px; }}
@@ -646,7 +715,17 @@ def render_html(data: dict[str, object]) -> str:
     </section>
     <section class="panel" aria-labelledby="cases-title">
       <h2 id="cases-title">평가 질문 목록</h2>
+      <div class="table-wrap">
       <table>
+        <colgroup>
+          <col style="width: 38%">
+          <col style="width: 10%">
+          <col style="width: 12%">
+          <col style="width: 14%">
+          <col style="width: 8%">
+          <col style="width: 10%">
+          <col style="width: 8%">
+        </colgroup>
         <thead>
           <tr>
             <th>평가 질문</th>
@@ -662,13 +741,22 @@ def render_html(data: dict[str, object]) -> str:
 {rows_html}
         </tbody>
       </table>
+      </div>
 {run_scope_note}
     </section>
-    <section class="panel" aria-labelledby="detail-title">
-      <h2 id="detail-title">상세</h2>
-      <div id="case-detail" class="empty">No case selected.</div>
-    </section>
   </main>
+  <dialog id="case-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-shell">
+      <header class="dialog-header">
+        <div>
+          <h2 id="dialog-title">상세</h2>
+          <div id="case-dialog-meta" class="dialog-meta"></div>
+        </div>
+        <button type="button" class="dialog-close" id="case-dialog-close" aria-label="닫기">×</button>
+      </header>
+      <div id="case-dialog-body" class="dialog-body"></div>
+    </div>
+  </dialog>
   <script>
     const REPORT_DATA = {report_data};
 
@@ -715,39 +803,46 @@ def render_html(data: dict[str, object]) -> str:
         </details>`;
     }}
 
-    function selectCase(index, options) {{
+    const caseDialog = document.getElementById("case-dialog");
+    const caseDialogBody = document.getElementById("case-dialog-body");
+    const caseDialogMeta = document.getElementById("case-dialog-meta");
+    const caseDialogClose = document.getElementById("case-dialog-close");
+
+    function openDialog(index) {{
       const cases = REPORT_DATA.cases || [];
       const caseData = cases[index];
-      const detail = document.getElementById("case-detail");
-      if (!caseData || !detail) {{
+      if (!caseData || !caseDialog || !caseDialogBody || !caseDialogMeta) {{
         return;
       }}
-      document.querySelectorAll("[data-case-index]").forEach(function (node) {{
-        node.classList.toggle("selected", Number(node.dataset.caseIndex) === index && node.tagName === "TR");
-      }});
-      detail.classList.remove("empty");
-      detail.innerHTML = `
+      caseDialogMeta.textContent = `${{caseData.id || ""}} · ${{caseData.bucket || ""}} · delta ${{caseData.delta || "n/a"}}`;
+      caseDialogBody.innerHTML = `
         <div class="detail-question"><strong>문제</strong>\\n${{esc(caseData.question || "")}}</div>
         <div class="detail-grid">
           ${{variantHtml("Baseline", caseData.baseline)}}
           ${{variantHtml("with-dddjango", caseData.with_dddjango)}}
         </div>
         ${{evaluatorHtml(caseData)}}`;
-      if (options && options.scroll) {{
-        const detailPanel = detail.closest(".panel");
-        if (detailPanel) {{
-          detailPanel.scrollIntoView({{ behavior: "smooth", block: "start" }});
-        }}
+      if (typeof caseDialog.showModal === "function") {{
+        caseDialog.showModal();
+      }} else {{
+        caseDialog.setAttribute("open", "");
       }}
     }}
 
-    document.querySelectorAll("[data-case-index]").forEach(function (node) {{
+    document.querySelectorAll("[data-detail-index]").forEach(function (node) {{
       node.addEventListener("click", function () {{
-        selectCase(Number(node.dataset.caseIndex), {{ scroll: true }});
+        openDialog(Number(node.dataset.detailIndex));
       }});
     }});
-    if ((REPORT_DATA.cases || []).length > 0) {{
-      selectCase(0);
+    if (caseDialog && caseDialogClose) {{
+      caseDialogClose.addEventListener("click", function () {{
+        caseDialog.close();
+      }});
+      caseDialog.addEventListener("click", function (event) {{
+        if (event.target === caseDialog) {{
+          caseDialog.close();
+        }}
+      }});
     }}
   </script>
 </body>

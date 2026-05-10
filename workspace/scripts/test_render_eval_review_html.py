@@ -456,14 +456,31 @@ coverage_tags:
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
 
-    def test_detail_click_scrolls_detail_panel_into_view(self) -> None:
+    def test_detail_click_opens_dialog_instead_of_inline_panel(self) -> None:
         run_dir = self.write_case()
         data = self.renderer.build_report_data("response", "sample-run", run_dir)
 
         html = self.renderer.render_html(data)
 
-        self.assertIn("scrollIntoView", html)
-        self.assertIn("selectCase(Number(node.dataset.caseIndex), { scroll: true })", html)
+        self.assertIn("<dialog id=\"case-dialog\"", html)
+        self.assertIn("openDialog(Number(node.dataset.detailIndex))", html)
+        self.assertIn("caseDialog.showModal()", html)
+        self.assertIn("caseDialog.close()", html)
+        self.assertNotIn("id=\"case-detail\"", html)
+        self.assertNotIn("scrollIntoView", html)
+
+    def test_case_table_uses_compact_preview_and_visible_column_boundaries(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertIn("class=\"table-wrap\"", html)
+        self.assertIn("border-right: 1px solid var(--line)", html)
+        self.assertIn("class=\"case-id\"", html)
+        self.assertIn("class=\"question-preview\"", html)
+        self.assertIn("-webkit-line-clamp: 3", html)
+        self.assertNotIn("selected", html)
 
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:
         run_dir = self.write_case()
