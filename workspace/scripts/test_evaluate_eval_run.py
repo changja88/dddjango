@@ -63,6 +63,37 @@ class EvaluateEvalRunTests(unittest.TestCase):
         (raw / f"{case_id}-{with_variant}.txt").write_text(with_ddjango_text, encoding="utf-8")
         return raw
 
+    def write_trace_summary(
+        self,
+        raw: Path,
+        *,
+        case_id: str,
+        variant: str,
+        trace_status: str = "fallback-stated",
+    ) -> None:
+        (raw / f"{case_id}-{variant}-subagent-trace.json").write_text(
+            json.dumps(
+                {
+                    "caseId": case_id,
+                    "variant": variant,
+                    "parserVersion": 1,
+                    "sourceKind": "stdout-transcript",
+                    "traceCaptureReliable": False,
+                    "responseSource": f"raw/{case_id}-{variant}.txt",
+                    "eventSource": f"raw/{case_id}-{variant}-events.jsonl",
+                    "spawnEventCount": 0,
+                    "waitEventCount": 0,
+                    "subagentToolEvents": [],
+                    "explicitActualClaims": [],
+                    "explicitFallbackClaims": ["subagent는 사용하지 않고 순차 검토했습니다."],
+                    "rolesMentioned": ["Domain Agent"],
+                    "traceStatus": trace_status,
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
     def valid_payload(self, case_id: str = "case-response-one") -> dict[str, object]:
         return {
             "caseId": case_id,
@@ -134,6 +165,33 @@ class EvaluateEvalRunTests(unittest.TestCase):
             raw / "case-response-one-answer-oracle-evaluation-command.txt"
         ).read_text(encoding="utf-8")
         self.assertIn("codex exec --ephemeral", command_text)
+
+    def test_workflow_trace_summary_is_included_as_evaluator_evidence(self) -> None:
+        case_id = "case-workflow-one"
+        raw = self.write_case_and_run(
+            bucket="workflow",
+            case_id=case_id,
+            baseline_text="baseline workflow answer\n",
+            with_ddjango_text="with workflow answer\n",
+        )
+        for variant in self.evaluator.common.VARIANTS:
+            self.write_trace_summary(raw, case_id=case_id, variant=variant)
+        payload = self.valid_payload(case_id)
+
+        def fake_run(command, *, prompt, cwd, timeout_seconds):
+            self.assertIn("Workflow subagent trace summary", prompt)
+            self.assertIn(f"raw/{case_id}-baseline-subagent-trace.json", prompt)
+            self.assertIn(f"raw/{case_id}-with-dddjango-subagent-trace.json", prompt)
+            self.assertIn("rolesMentioned", prompt)
+            self.assertIn("Do not use rolesMentioned alone as scoring proof", prompt)
+            return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+        with patch.object(self.evaluator, "run_command", side_effect=fake_run):
+            result = self.evaluator.main(
+                ["--bucket", "workflow", "--run-id", "run-one", "--case", case_id]
+            )
+
+        self.assertEqual(result, 0)
 
     def test_english_only_evaluator_explanation_is_rejected(self) -> None:
         self.write_case_and_run()

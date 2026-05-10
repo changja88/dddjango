@@ -183,6 +183,16 @@ def optional_code_artifacts(run_dir: Path, case_id: str) -> list[tuple[str, Path
     return artifacts
 
 
+def optional_workflow_trace_artifacts(run_dir: Path, case_id: str) -> list[tuple[str, Path, str]]:
+    artifacts: list[tuple[str, Path, str]] = []
+    for variant in common.VARIANTS:
+        rel_path = Path("raw") / f"{case_id}-{variant}-subagent-trace.json"
+        path = run_dir / rel_path
+        if path.is_file():
+            artifacts.append((f"{variant} trace", rel_path, path.read_text(encoding="utf-8", errors="replace")))
+    return artifacts
+
+
 def build_prompt(
     *,
     bucket: str,
@@ -192,6 +202,7 @@ def build_prompt(
     baseline_output: str,
     with_ddjango_output: str,
     code_artifacts: list[tuple[str, Path, str]],
+    workflow_trace_artifacts: list[tuple[str, Path, str]],
 ) -> str:
     with_variant = common.VARIANTS[1]
     sections = [
@@ -223,6 +234,18 @@ def build_prompt(
             with_ddjango_output,
         ),
     ]
+    if workflow_trace_artifacts:
+        sections.extend(
+            [
+                "Workflow subagent trace summary",
+                "Use this only as supporting evidence about execution trace availability and "
+                "claim/evidence consistency. Do not use rolesMentioned alone as scoring proof; "
+                "responsibility split quality must be judged from the final response and answer oracle.",
+                "",
+            ]
+        )
+    for title, path, text in workflow_trace_artifacts:
+        sections.append(artifact_section(f"Workflow trace: {title}", path, text))
     for title, path, text in code_artifacts:
         sections.append(artifact_section(f"Code artifact: {title}", path, text))
     return "\n".join(sections)
@@ -345,6 +368,9 @@ def evaluate_case(
         "with-ddjango output",
     )
     code_artifacts = optional_code_artifacts(run_dir, case_id) if bucket.bucket == "code" else []
+    workflow_trace_artifacts = (
+        optional_workflow_trace_artifacts(run_dir, case_id) if bucket.bucket == "workflow" else []
+    )
     prompt = build_prompt(
         bucket=bucket.bucket,
         case_id=case_id,
@@ -353,6 +379,7 @@ def evaluate_case(
         baseline_output=baseline_output,
         with_ddjango_output=with_ddjango_output,
         code_artifacts=code_artifacts,
+        workflow_trace_artifacts=workflow_trace_artifacts,
     )
     command = codex_evaluator_command(model=model, reasoning=reasoning)
 

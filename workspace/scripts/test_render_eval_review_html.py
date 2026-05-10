@@ -112,6 +112,50 @@ coverage_tags:
             )
         return bucket_root / "runs/sample-run"
 
+    def write_trace_marker_and_summaries(
+        self,
+        run_dir: Path,
+        *,
+        case_id: str,
+    ) -> None:
+        (run_dir / "SUBAGENT_TRACE_CAPTURE.json").write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "bucket": "workflow",
+                    "createdBy": "run_eval_bucket.py",
+                    "tracePolicy": "response-text-claims-plus-structured-events-when-available",
+                    "stderrUsedForClaims": False,
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        raw = run_dir / "raw"
+        for variant in ("baseline", "with-dddjango"):
+            (raw / f"{case_id}-{variant}-subagent-trace.json").write_text(
+                json.dumps(
+                    {
+                        "caseId": case_id,
+                        "variant": variant,
+                        "parserVersion": 1,
+                        "sourceKind": "stdout-transcript",
+                        "traceCaptureReliable": False,
+                        "responseSource": f"raw/{case_id}-{variant}.txt",
+                        "eventSource": f"raw/{case_id}-{variant}-events.jsonl",
+                        "spawnEventCount": 0,
+                        "waitEventCount": 0,
+                        "subagentToolEvents": [],
+                        "explicitActualClaims": [],
+                        "explicitFallbackClaims": ["subagent는 사용하지 않고 순차 검토했습니다."],
+                        "rolesMentioned": ["Domain Agent", "DB Agent"],
+                        "traceStatus": "fallback-stated",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
     def test_build_report_data_includes_summary_rows_and_detail(self) -> None:
         run_dir = self.write_case()
 
@@ -455,6 +499,35 @@ coverage_tags:
         self.assertIn("With dddjango response text", html)
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
+
+    def test_workflow_trace_summary_is_loaded_and_rendered(self) -> None:
+        case_id = "case-workflow-live-delegation"
+        run_dir = self.write_case(bucket="workflow", case_id=case_id)
+        self.write_trace_marker_and_summaries(run_dir, case_id=case_id)
+
+        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+        row = data["cases"][0]
+        html = self.renderer.render_html(data)
+
+        self.assertEqual(row["with_dddjango"]["trace"]["traceStatus"], "fallback-stated")
+        self.assertEqual(row["trace_table"]["trace"], "fallback-stated")
+        self.assertEqual(row["trace_table"]["claim"], "fallback")
+        self.assertEqual(row["trace_table"]["evidence"], "증거 부족")
+        self.assertIn("<th>trace</th>", html)
+        self.assertIn("<th>claim</th>", html)
+        self.assertIn("<th>evidence</th>", html)
+        self.assertIn("traceStatus", html)
+        self.assertIn("fallback-stated", html)
+        self.assertIn("Domain Agent", html)
+
+    def test_existing_workflow_run_without_marker_shows_trace_not_captured(self) -> None:
+        run_dir = self.write_case(bucket="workflow", case_id="case-workflow-one")
+
+        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+
+        row = data["cases"][0]
+        self.assertEqual(row["trace_table"]["trace"], "trace not captured")
+        self.assertEqual(row["with_dddjango"]["trace"]["traceStatus"], "trace not captured")
 
     def test_detail_click_opens_dialog_instead_of_inline_panel(self) -> None:
         run_dir = self.write_case()

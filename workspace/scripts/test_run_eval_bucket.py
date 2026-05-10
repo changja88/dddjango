@@ -243,12 +243,80 @@ class RunEvalBucketTests(unittest.TestCase):
         )
         baseline_command = (raw / "case-response-one-baseline-command.txt").read_text(encoding="utf-8")
         with_ddjango_command = (raw / f"case-response-one-{with_variant}-command.txt").read_text(encoding="utf-8")
+        self.assertIn("--json", baseline_command)
+        self.assertIn("--json", with_ddjango_command)
         self.assertIn("--ignore-user-config", baseline_command)
         self.assertIn("--ignore-rules", baseline_command)
         self.assertNotIn("--ignore-user-config", with_ddjango_command)
         self.assertNotIn("--ignore-rules", with_ddjango_command)
         self.assertTrue((raw / f"case-response-one-{with_variant}-prompt-input.json").is_file())
         self.assertFalse((raw / "case-response-one-baseline-prompt-input.json").exists())
+
+    def test_workflow_bucket_writes_trace_marker_and_skipped_trace_artifacts(self) -> None:
+        self.write_case(bucket="workflow", case_id="case-workflow-one")
+
+        result = self.runner.main(
+            [
+                "--bucket",
+                "workflow",
+                "--run-id",
+                "run-workflow",
+                "--case",
+                "case-workflow-one",
+                "--workspace-root",
+                str(self.workspace_root),
+                "--skip-exec",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        run_dir = self.runner.common.EVAL_ROOT / "workflow/runs/run-workflow"
+        marker = json.loads((run_dir / "SUBAGENT_TRACE_CAPTURE.json").read_text(encoding="utf-8"))
+        self.assertEqual(marker["bucket"], "workflow")
+        self.assertFalse(marker["stderrUsedForClaims"])
+        raw = run_dir / "raw"
+        for variant in self.runner.common.VARIANTS:
+            trace_path = raw / f"case-workflow-one-{variant}-subagent-trace.json"
+            self.assertTrue(trace_path.is_file(), trace_path)
+            trace = json.loads(trace_path.read_text(encoding="utf-8"))
+            self.assertEqual(trace["caseId"], "case-workflow-one")
+            self.assertEqual(trace["variant"], variant)
+            self.assertEqual(trace["traceStatus"], "skipped")
+            self.assertEqual(trace["responseSource"], f"raw/case-workflow-one-{variant}.txt")
+
+    def test_workflow_bucket_regenerates_missing_trace_for_skipped_existing_output(self) -> None:
+        self.write_case(bucket="workflow", case_id="case-workflow-one")
+        raw = self.runner.common.EVAL_ROOT / "workflow/runs/run-workflow/raw"
+        raw.mkdir(parents=True, exist_ok=True)
+        for variant in self.runner.common.VARIANTS:
+            (raw / f"case-workflow-one-{variant}.txt").write_text(
+                "subagent는 사용하지 않고 순차 검토했습니다.\n",
+                encoding="utf-8",
+            )
+            (raw / f"case-workflow-one-{variant}-events.jsonl").write_text("", encoding="utf-8")
+            (raw / f"case-workflow-one-{variant}-exit.txt").write_text("0\n", encoding="utf-8")
+
+        result = self.runner.main(
+            [
+                "--bucket",
+                "workflow",
+                "--run-id",
+                "run-workflow",
+                "--case",
+                "case-workflow-one",
+                "--workspace-root",
+                str(self.workspace_root),
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        for variant in self.runner.common.VARIANTS:
+            trace = json.loads(
+                (raw / f"case-workflow-one-{variant}-subagent-trace.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(trace["traceStatus"], "fallback-stated")
 
     def test_code_bucket_rejects_case_without_capture_code_enabled(self) -> None:
         self.write_case(bucket="code", case_id="case-code-one")

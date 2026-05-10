@@ -18,6 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 EVAL_ROOT = REPO_ROOT / "workspace/develop/eval"
 BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
 VARIANTS = ("baseline", "with-dddjango")
+SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -93,6 +94,60 @@ def load_json(path: Path) -> tuple[dict[str, object], str]:
     if not isinstance(value, dict):
         return {}, "invalid_schema"
     return value, "ready"
+
+
+def workflow_trace_marker_exists(run_dir: Path) -> bool:
+    return (run_dir / SUBAGENT_TRACE_MARKER).is_file()
+
+
+def trace_data(run_dir: Path, case_id: str, variant: str) -> dict[str, object]:
+    if not workflow_trace_marker_exists(run_dir):
+        return {
+            "state": "not_captured",
+            "traceStatus": "trace not captured",
+            "traceCaptureReliable": False,
+            "sourceKind": "unavailable",
+            "explicitActualClaims": [],
+            "explicitFallbackClaims": [],
+            "rolesMentioned": [],
+            "evidence": [],
+        }
+    rel_path = Path("raw") / f"{case_id}-{variant}-subagent-trace.json"
+    trace, state = load_json(run_dir / rel_path)
+    if state != "ready":
+        return {
+            "state": state,
+            "traceStatus": "missing trace",
+            "traceCaptureReliable": False,
+            "sourceKind": "unavailable",
+            "explicitActualClaims": [],
+            "explicitFallbackClaims": [],
+            "rolesMentioned": [],
+            "evidence": [rel_path.as_posix()],
+        }
+    trace["state"] = "ready"
+    trace["evidence"] = [rel_path.as_posix()]
+    return trace
+
+
+def claim_label(trace: dict[str, object]) -> str:
+    actual = trace.get("explicitActualClaims")
+    fallback = trace.get("explicitFallbackClaims")
+    if isinstance(actual, list) and actual:
+        return "actual"
+    if isinstance(fallback, list) and fallback:
+        return "fallback"
+    return "none"
+
+
+def evidence_label(trace: dict[str, object]) -> str:
+    if trace.get("traceStatus") == "trace not captured":
+        return "trace not captured"
+    if trace.get("traceCaptureReliable") is True:
+        return "reliable"
+    if trace.get("traceStatus") == "missing trace":
+        return "missing trace"
+    return "증거 부족"
 
 
 def score_value(score: object, verdict: str = "") -> float | None:
@@ -177,6 +232,7 @@ def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, ob
         "response": response,
         "evaluation": evaluation,
         "evidence": [f"raw/{raw_name}"],
+        "trace": trace_data(run_dir, case_id, variant),
     }
 
 
@@ -256,6 +312,17 @@ def build_case(bucket: str, public_case: Path, run_dir: Path) -> dict[str, objec
         "hard_gate": hard_gate,
         "baseline": baseline,
         "with_dddjango": with_dddjango,
+        "trace_table": {
+            "trace": str(with_dddjango["trace"].get("traceStatus") or "n/a")
+            if isinstance(with_dddjango.get("trace"), dict)
+            else "n/a",
+            "claim": claim_label(with_dddjango["trace"])
+            if isinstance(with_dddjango.get("trace"), dict)
+            else "none",
+            "evidence": evidence_label(with_dddjango["trace"])
+            if isinstance(with_dddjango.get("trace"), dict)
+            else "n/a",
+        },
         "delta_value": (
             with_score - baseline_score
             if isinstance(with_score, float) and isinstance(baseline_score, float)
@@ -292,6 +359,7 @@ def case_ids_with_run_artifacts(raw_dir: Path, public_cases: list[Path]) -> set[
                 f"-{variant}-isolation.json",
                 f"-{variant}-prompt-input.json",
                 f"-{variant}-prompt-input.stderr.txt",
+                f"-{variant}-subagent-trace.json",
             ]
         )
 
@@ -481,12 +549,15 @@ def render_html(data: dict[str, object]) -> str:
             <td class="score-cell">{escape(str(baseline.get("score") or "not scored"))}</td>
             <td class="score-cell">{escape(str(with_dddjango.get("score") or "not scored"))}</td>
             <td class="delta-cell">{escape(str(case_data.get("delta") or "n/a"))}</td>
+            <td>{escape(str((case_data.get("trace_table") or {}).get("trace", "n/a") if isinstance(case_data.get("trace_table"), dict) else "n/a"))}</td>
+            <td>{escape(str((case_data.get("trace_table") or {}).get("claim", "none") if isinstance(case_data.get("trace_table"), dict) else "none"))}</td>
+            <td>{escape(str((case_data.get("trace_table") or {}).get("evidence", "n/a") if isinstance(case_data.get("trace_table"), dict) else "n/a"))}</td>
             <td class="status-cell"><span class="status-pill {status_class(status)}">{escape(status)}</span></td>
             <td class="action-cell"><button type="button" class="detail-button" aria-haspopup="dialog" data-detail-index="{index}">상세</button></td>
           </tr>"""
         )
 
-    rows_html = "\n".join(rows) or """          <tr><td colspan="7" class="empty">No cases found.</td></tr>"""
+    rows_html = "\n".join(rows) or """          <tr><td colspan="10" class="empty">No cases found.</td></tr>"""
     run_scope_note = (
         f"""      <details class="run-scope-note">
         <summary>미실행 질문 {escape(str(summary.get('unrun_cases', 0)))}개</summary>
@@ -718,13 +789,16 @@ def render_html(data: dict[str, object]) -> str:
       <div class="table-wrap">
       <table>
         <colgroup>
-          <col style="width: 38%">
+          <col style="width: 28%">
+          <col style="width: 8%">
           <col style="width: 10%">
           <col style="width: 12%">
-          <col style="width: 14%">
+          <col style="width: 7%">
+          <col style="width: 11%">
           <col style="width: 8%">
-          <col style="width: 10%">
           <col style="width: 8%">
+          <col style="width: 5%">
+          <col style="width: 5%">
         </colgroup>
         <thead>
           <tr>
@@ -733,6 +807,9 @@ def render_html(data: dict[str, object]) -> str:
             <th>baseline 점수</th>
             <th>with-dddjango 점수</th>
             <th>delta</th>
+            <th>trace</th>
+            <th>claim</th>
+            <th>evidence</th>
             <th>status</th>
             <th>상세</th>
           </tr>
@@ -774,6 +851,7 @@ def render_html(data: dict[str, object]) -> str:
 
     function variantHtml(label, item) {{
       item = item || {{}};
+      const trace = item.trace || {{}};
       return `
         <article class="variant">
           <h3>${{esc(label)}}</h3>
@@ -782,6 +860,18 @@ def render_html(data: dict[str, object]) -> str:
           <pre>${{esc(item.response || "")}}</pre>
           <div class="section-label">평가</div>
           <pre>${{esc(item.evaluation || "")}}</pre>
+          <div class="section-label">trace summary</div>
+          <pre>traceStatus: ${{esc(trace.traceStatus || "n/a")}}
+traceCaptureReliable: ${{esc(trace.traceCaptureReliable ?? "n/a")}}
+sourceKind: ${{esc(trace.sourceKind || "n/a")}}
+actualClaims:
+${{esc((trace.explicitActualClaims || []).join("\\n"))}}
+fallbackClaims:
+${{esc((trace.explicitFallbackClaims || []).join("\\n"))}}
+rolesMentioned:
+${{esc((trace.rolesMentioned || []).join("\\n"))}}
+evidence:
+${{esc((trace.evidence || []).join("\\n"))}}</pre>
         </article>`;
     }}
 

@@ -22,6 +22,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import extract_subagent_trace
 
 
 REPO_ROOT = common.REPO_ROOT
@@ -81,6 +82,7 @@ def all_bucket_excluded_paths() -> list[Path]:
 
 
 ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = all_bucket_excluded_paths()
+SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
 BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".agents"),
     Path(".codex/plugins/cache"),
@@ -497,6 +499,7 @@ def codex_exec_command(
         "--ephemeral",
         "--color",
         "never",
+        "--json",
         "-C",
         str(cwd),
         "-s",
@@ -516,6 +519,48 @@ def codex_exec_command(
 
 def write_command_artifact(path: Path, command: list[str]) -> None:
     common.write_text(path, shlex.join(command) + "\n")
+
+
+def write_subagent_trace_marker(run_dir: Path, bucket: str) -> None:
+    if bucket != "workflow":
+        return
+    marker = {
+        "version": 1,
+        "bucket": bucket,
+        "createdBy": "run_eval_bucket.py",
+        "tracePolicy": extract_subagent_trace.TRACE_CAPTURE_POLICY,
+        "stderrUsedForClaims": False,
+    }
+    common.write_text(
+        run_dir / SUBAGENT_TRACE_MARKER,
+        json.dumps(marker, ensure_ascii=False, indent=2) + "\n",
+    )
+
+
+def trace_artifact_path(raw_dir: Path, case_id: str, variant: str) -> Path:
+    return raw_dir / f"{case_id}-{variant}-subagent-trace.json"
+
+
+def write_workflow_trace_artifact(
+    *,
+    bucket: str,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variant: str,
+    skipped: bool,
+) -> None:
+    if bucket != "workflow":
+        return
+    extract_subagent_trace.write_trace_summary(
+        output_path=trace_artifact_path(raw_dir, case_id, variant),
+        case_id=case_id,
+        variant=variant,
+        run_dir=run_dir,
+        response_path=raw_dir / f"{case_id}-{variant}.txt",
+        event_path=raw_dir / f"{case_id}-{variant}-events.jsonl",
+        skipped=skipped,
+    )
 
 
 def clean_forbidden_prompt_input_artifacts(raw_dir: Path, case_id: str) -> None:
@@ -622,6 +667,7 @@ def main(argv: list[str] | None = None) -> int:
     raw_dir = run_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     common.write_text(run_dir / "RUN_ID.txt", run_id + "\n")
+    write_subagent_trace_marker(run_dir, args.bucket)
 
     for case_path in cases:
         case_id = case_path.stem
@@ -651,6 +697,18 @@ def main(argv: list[str] | None = None) -> int:
                 rerun=args.rerun,
             ):
                 print(f"skip existing {case_id} {variant.name}")
+                if args.bucket == "workflow" and not trace_artifact_path(
+                    raw_dir, case_id, variant.name
+                ).is_file():
+                    skipped = common.read_text(exit_path).strip() == "skipped"
+                    write_workflow_trace_artifact(
+                        bucket=args.bucket,
+                        run_dir=run_dir,
+                        raw_dir=raw_dir,
+                        case_id=case_id,
+                        variant=variant.name,
+                        skipped=skipped,
+                    )
                 continue
 
             exec_cwd, sandbox = workspace_for_case_variant(
@@ -687,6 +745,14 @@ def main(argv: list[str] | None = None) -> int:
                 common.write_text(exit_path, "skipped\n")
                 if args.bucket == "code":
                     capture_code_artifacts(exec_cwd, run_dir, case_id, variant.name)
+                write_workflow_trace_artifact(
+                    bucket=args.bucket,
+                    run_dir=run_dir,
+                    raw_dir=raw_dir,
+                    case_id=case_id,
+                    variant=variant.name,
+                    skipped=True,
+                )
                 continue
 
             print(f"run {case_id} {variant.name}", flush=True)
@@ -703,6 +769,14 @@ def main(argv: list[str] | None = None) -> int:
                 common.write_text(exit_path, f"timeout after {args.timeout_seconds}s\n")
                 if not output_path.exists():
                     common.write_text(output_path, "")
+                write_workflow_trace_artifact(
+                    bucket=args.bucket,
+                    run_dir=run_dir,
+                    raw_dir=raw_dir,
+                    case_id=case_id,
+                    variant=variant.name,
+                    skipped=False,
+                )
                 continue
 
             common.write_text(stdout_path, result.stdout)
@@ -712,6 +786,14 @@ def main(argv: list[str] | None = None) -> int:
                 common.write_text(output_path, "")
             if args.bucket == "code":
                 capture_code_artifacts(exec_cwd, run_dir, case_id, variant.name)
+            write_workflow_trace_artifact(
+                bucket=args.bucket,
+                run_dir=run_dir,
+                raw_dir=raw_dir,
+                case_id=case_id,
+                variant=variant.name,
+                skipped=False,
+            )
 
     return 0
 

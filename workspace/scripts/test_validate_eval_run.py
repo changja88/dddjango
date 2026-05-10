@@ -147,6 +147,52 @@ class ValidateEvalRunTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def write_trace_marker(self, run_dir: Path) -> None:
+        (run_dir / "SUBAGENT_TRACE_CAPTURE.json").write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "bucket": "workflow",
+                    "createdBy": "run_eval_bucket.py",
+                    "tracePolicy": "response-text-claims-plus-structured-events-when-available",
+                    "stderrUsedForClaims": False,
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def write_trace(
+        self,
+        run_dir: Path,
+        *,
+        case_id: str = "case-workflow-one",
+        variant: str = "with-dddjango",
+        trace_capture_reliable: bool = False,
+        actual_claims: list[str] | None = None,
+        spawn_count: int = 0,
+        wait_count: int = 0,
+        trace_status: str = "no-trace",
+    ) -> None:
+        trace = {
+            "caseId": case_id,
+            "variant": variant,
+            "parserVersion": 1,
+            "sourceKind": "structured-events" if trace_capture_reliable else "stdout-transcript",
+            "traceCaptureReliable": trace_capture_reliable,
+            "responseSource": f"raw/{case_id}-{variant}.txt",
+            "eventSource": f"raw/{case_id}-{variant}-events.jsonl",
+            "spawnEventCount": spawn_count,
+            "waitEventCount": wait_count,
+            "subagentToolEvents": [],
+            "explicitActualClaims": actual_claims or [],
+            "explicitFallbackClaims": [],
+            "rolesMentioned": [],
+            "traceStatus": trace_status,
+        }
+        path = run_dir / "raw" / f"{case_id}-{variant}-subagent-trace.json"
+        path.write_text(json.dumps(trace) + "\n", encoding="utf-8")
+
     def run_validator(self, argv: list[str]) -> tuple[int | None, str]:
         stdout = io.StringIO()
         try:
@@ -263,6 +309,67 @@ class ValidateEvalRunTests(unittest.TestCase):
                 "case-response-one",
                 "--skip-oracle",
             ]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_workflow_run_without_trace_marker_does_not_require_trace_artifacts(self) -> None:
+        case_id = "case-workflow-one"
+        self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+
+        result, output = self.run_validator(
+            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_workflow_trace_marker_requires_variant_trace_artifacts(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        self.write_trace_marker(run_dir)
+
+        self.assertFailsWith(
+            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id],
+            "missing workflow subagent trace artifact",
+        )
+
+    def test_workflow_trace_hard_fails_reliable_actual_claim_without_trace_events(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        self.write_trace_marker(run_dir)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_trace(
+                run_dir,
+                case_id=case_id,
+                variant=variant,
+                trace_capture_reliable=True,
+                actual_claims=["Domain Agent가 검토 완료했습니다."],
+                trace_status="claim-without-reliable-trace",
+            )
+
+        self.assertFailsWith(
+            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id],
+            "actual subagent claim has no reliable spawn/wait trace",
+        )
+
+    def test_workflow_trace_unreliable_actual_claim_is_not_validator_hard_fail(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        self.write_trace_marker(run_dir)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_trace(
+                run_dir,
+                case_id=case_id,
+                variant=variant,
+                trace_capture_reliable=False,
+                actual_claims=["Domain Agent가 검토 완료했습니다."],
+                trace_status="claim-without-reliable-trace",
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
         )
 
         self.assertEqual(result, 0)

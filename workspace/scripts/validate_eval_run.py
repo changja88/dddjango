@@ -21,6 +21,7 @@ import eval_run_common as common
 REPO_ROOT = common.REPO_ROOT
 EVAL_ROOT = common.EVAL_ROOT
 CODE_CAPTURE_METADATA = EVAL_ROOT / "code/cases/plugin/code-capture.json"
+SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
 
 BASELINE_CONTAMINATION_PATTERNS = {
     "dddjango marker": re.compile(
@@ -224,6 +225,109 @@ def validate_oracle(raw_dir: Path, case_id: str) -> list[str]:
     return []
 
 
+def workflow_trace_marker_exists(run_dir: Path) -> bool:
+    return (run_dir / SUBAGENT_TRACE_MARKER).is_file()
+
+
+def validate_workflow_trace_schema(
+    *,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variant: str,
+) -> list[str]:
+    path = raw_dir / f"{case_id}-{variant}-subagent-trace.json"
+    trace, error = load_json_object(path)
+    if error is not None:
+        return [f"{case_id} {variant}: missing workflow subagent trace artifact: {path}"]
+    assert trace is not None
+
+    findings: list[str] = []
+    required_keys = {
+        "caseId",
+        "variant",
+        "parserVersion",
+        "sourceKind",
+        "traceCaptureReliable",
+        "responseSource",
+        "eventSource",
+        "spawnEventCount",
+        "waitEventCount",
+        "subagentToolEvents",
+        "explicitActualClaims",
+        "explicitFallbackClaims",
+        "rolesMentioned",
+        "traceStatus",
+    }
+    missing = sorted(required_keys - set(trace))
+    if missing:
+        findings.append(f"{path}: missing keys: {', '.join(missing)}")
+        return findings
+    if trace.get("caseId") != case_id:
+        findings.append(f"{path}: caseId mismatch")
+    if trace.get("variant") != variant:
+        findings.append(f"{path}: variant mismatch")
+    if not isinstance(trace.get("traceCaptureReliable"), bool):
+        findings.append(f"{path}: traceCaptureReliable must be boolean")
+    for key in ("spawnEventCount", "waitEventCount"):
+        if not isinstance(trace.get(key), int):
+            findings.append(f"{path}: {key} must be integer")
+    for key in (
+        "subagentToolEvents",
+        "explicitActualClaims",
+        "explicitFallbackClaims",
+        "rolesMentioned",
+    ):
+        if not isinstance(trace.get(key), list):
+            findings.append(f"{path}: {key} must be a list")
+
+    for key in ("responseSource", "eventSource"):
+        value = trace.get(key)
+        if not isinstance(value, str):
+            findings.append(f"{path}: {key} must be a string")
+            continue
+        _, path_error = safe_run_relative_path(run_dir, value)
+        if path_error is not None:
+            findings.append(f"{path}: {key}: {path_error}")
+
+    reliable = trace.get("traceCaptureReliable") is True
+    actual_claims = trace.get("explicitActualClaims")
+    spawn_count = trace.get("spawnEventCount")
+    wait_count = trace.get("waitEventCount")
+    if (
+        reliable
+        and isinstance(actual_claims, list)
+        and actual_claims
+        and isinstance(spawn_count, int)
+        and isinstance(wait_count, int)
+        and spawn_count + wait_count == 0
+    ):
+        findings.append(f"{path}: actual subagent claim has no reliable spawn/wait trace")
+    return findings
+
+
+def validate_workflow_trace_artifacts(
+    *,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+) -> list[str]:
+    if not workflow_trace_marker_exists(run_dir):
+        return []
+    findings: list[str] = []
+    for variant in variants:
+        findings.extend(
+            validate_workflow_trace_schema(
+                run_dir=run_dir,
+                raw_dir=raw_dir,
+                case_id=case_id,
+                variant=variant,
+            )
+        )
+    return findings
+
+
 def load_code_capture_metadata() -> tuple[dict[str, Any], list[str]]:
     metadata, error = load_json_object(CODE_CAPTURE_METADATA)
     if error is not None:
@@ -383,6 +487,15 @@ def main(argv: list[str] | None = None) -> int:
                     case_id=case_id,
                     variants=variants,
                     metadata=code_metadata,
+                )
+            )
+        if args.bucket == "workflow":
+            findings.extend(
+                validate_workflow_trace_artifacts(
+                    run_dir=run_dir,
+                    raw_dir=raw_dir,
+                    case_id=case_id,
+                    variants=variants,
                 )
             )
 
