@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>dddjango Plugin Eval Report</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --panel-alt: #f0f3f6;
+      --text: #1f2933;
+      --muted: #667085;
+      --line: #d8dee6;
+      --pass: #16794c;
+      --pass-bg: #e8f5ee;
+      --fail: #b42318;
+      --fail-bg: #fdecea;
+      --warn: #986a00;
+      --warn-bg: #fff4d6;
+      --info: #175cd3;
+      --info-bg: #eaf1ff;
+      --blocked: #6f2c91;
+      --blocked-bg: #f2e9fb;
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    a {
+      color: var(--info);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      background: #101828;
+      color: #ffffff;
+      padding: 24px;
+      border-bottom: 1px solid #0b1220;
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #bac7d5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .shell {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 20px 24px 48px;
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    nav {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    nav a:hover {
+      background: var(--panel-alt);
+      text-decoration: none;
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      padding: 18px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .comparison-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      min-height: 96px;
+    }
+
+    .comparison-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .comparison-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 28px;
+      line-height: 1.05;
+    }
+
+    .comparison-card small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+    }
+
+    .metric {
+      min-height: 72px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .meta-item {
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      min-width: 0;
+    }
+
+    .meta-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .meta-item code,
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .toolbar label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    select,
+    input[type="search"] {
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 9px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input[type="search"] {
+      min-width: 220px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+      background: #ffffff;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--panel-alt);
+      color: #344054;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pass { color: var(--pass); background: var(--pass-bg); border-color: #b8e1ca; }
+    .fail { color: var(--fail); background: var(--fail-bg); border-color: #f2b8b5; }
+    .blocked { color: var(--blocked); background: var(--blocked-bg); border-color: #ddc5f0; }
+    .warn { color: var(--warn); background: var(--warn-bg); border-color: #efd27a; }
+    .info { color: var(--info); background: var(--info-bg); border-color: #b8cdfa; }
+    .muted { color: var(--muted); background: #f2f4f7; border-color: #d0d5dd; }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--info);
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      margin-bottom: 12px;
+    }
+
+    .callout.fail {
+      border-left-color: var(--fail);
+    }
+
+    .callout.warn {
+      border-left-color: var(--warn);
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      background: var(--panel-alt);
+      font-weight: 700;
+    }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      overflow: auto;
+      background: #0b1220;
+      color: #e6edf6;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      border-left: 3px solid var(--line);
+      padding-left: 12px;
+    }
+
+    .timeline-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--muted);
+      background: #ffffff;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        position: static;
+      }
+
+      nav a {
+        display: inline-block;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .comparison-grid {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      header {
+        padding: 18px;
+      }
+
+      .shell {
+        padding: 14px;
+      }
+
+      .summary-grid,
+      .comparison-grid,
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 14px;
+      }
+
+      input[type="search"] {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <p class="eyebrow">dddjango comprehensive plugin evaluation</p>
+      <h1 id="report-title">Plugin Eval Report</h1>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav aria-label="Report sections">
+      <a href="#summary">Summary</a>
+      <a href="#comparison">Baseline Comparison</a>
+      <a href="#case-comparison">Case Comparison</a>
+      <a href="#failed-cases">Failed / Blocked Cases</a>
+      <a href="#hard-gates">Hard Gates</a>
+      <a href="#scenario-families">Scenario Families</a>
+      <a href="#findings">Findings</a>
+      <a href="#reruns">Rerun Evidence</a>
+      <a href="#commands">Commands</a>
+      <a href="#artifacts">Artifact Index</a>
+      <a href="#packets">Public Packets</a>
+      <a href="#cache-sync">Cache / Source Sync</a>
+      <a href="#leakage">Leakage Scan</a>
+      <a href="#not-run">Not Run</a>
+      <a href="#final-verdict">Final Verdict</a>
+    </nav>
+
+    <main>
+      <section id="summary" aria-labelledby="summary-heading">
+        <h2 id="summary-heading">Summary</h2>
+        <div class="summary-grid" id="summary-grid"></div>
+        <div class="meta-grid" id="metadata-grid"></div>
+      </section>
+
+      <section id="comparison" aria-labelledby="comparison-heading">
+        <h2 id="comparison-heading">Baseline Comparison</h2>
+        <div class="comparison-grid" id="comparison-grid"></div>
+        <div class="table-wrap">
+          <table id="comparison-detail-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>With dddjango</th>
+                <th>Delta</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="case-comparison" aria-labelledby="case-comparison-heading">
+        <h2 id="case-comparison-heading">Case Comparison</h2>
+        <div class="toolbar">
+          <label for="case-comparison-status">Status</label>
+          <select id="case-comparison-status" data-filter-table="case-comparison-table" data-filter-key="status">
+            <option value="">All</option>
+            <option value="improved">Improved</option>
+            <option value="regressed">Regressed</option>
+            <option value="unchanged">Unchanged</option>
+            <option value="not-run">Not run</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="case-comparison-table">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Family</th>
+                <th>Baseline Score</th>
+                <th>With dddjango Score</th>
+                <th>Delta</th>
+                <th>Baseline Verdict</th>
+                <th>With dddjango Verdict</th>
+                <th>Status</th>
+                <th>Artifacts</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="failed-cases" aria-labelledby="failed-cases-heading">
+        <h2 id="failed-cases-heading">Failed / Blocked Cases</h2>
+        <div id="failed-cases-content"></div>
+      </section>
+
+      <section id="hard-gates" aria-labelledby="hard-gates-heading">
+        <h2 id="hard-gates-heading">Hard Gates</h2>
+        <div class="toolbar">
+          <label for="hard-gate-status">Status</label>
+          <select id="hard-gate-status" data-filter-table="hard-gates-table" data-filter-key="status">
+            <option value="">All</option>
+            <option value="pass">Pass</option>
+            <option value="fail">Fail</option>
+            <option value="blocked">Blocked</option>
+            <option value="not-run">Not run</option>
+            <option value="n/a">N/A</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="hard-gates-table">
+            <thead>
+              <tr>
+                <th>Gate</th>
+                <th>Status</th>
+                <th>Reason</th>
+                <th>Evidence</th>
+                <th>Cases / Commands</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="scenario-families" aria-labelledby="scenario-families-heading">
+        <h2 id="scenario-families-heading">Scenario Families</h2>
+        <div class="table-wrap">
+          <table id="scenario-table">
+            <thead>
+              <tr>
+                <th>Family</th>
+                <th>Status</th>
+                <th>Cases</th>
+                <th>Passed</th>
+                <th>Failed</th>
+                <th>Blocked</th>
+                <th>Skipped</th>
+                <th>Rerun Passed</th>
+                <th>Accepted Exceptions</th>
+                <th>Artifacts</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="findings" aria-labelledby="findings-heading">
+        <h2 id="findings-heading">Findings</h2>
+        <div class="toolbar">
+          <label for="finding-severity">Severity</label>
+          <select id="finding-severity" data-filter-table="findings-table" data-filter-key="severity">
+            <option value="">All</option>
+            <option value="blocking">Blocking</option>
+            <option value="major">Major</option>
+            <option value="minor">Minor</option>
+          </select>
+          <label for="finding-status">Status</label>
+          <select id="finding-status" data-filter-table="findings-table" data-filter-key="status">
+            <option value="">All</option>
+            <option value="open">Open</option>
+            <option value="fixed">Fixed</option>
+            <option value="waived">Waived</option>
+            <option value="rerun-passed">Rerun passed</option>
+          </select>
+          <label class="visually-hidden" for="finding-search">Search findings</label>
+          <input id="finding-search" type="search" placeholder="Search findings">
+        </div>
+        <div class="table-wrap">
+          <table id="findings-table">
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Case</th>
+                <th>Defect Type</th>
+                <th>Before</th>
+                <th>After / Disposition</th>
+                <th>Gate or Dimension</th>
+                <th>Evidence</th>
+                <th>Rerun Scope</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reruns" aria-labelledby="reruns-heading">
+        <h2 id="reruns-heading">Rerun Evidence</h2>
+        <div id="rerun-content"></div>
+      </section>
+
+      <section id="commands" aria-labelledby="commands-heading">
+        <h2 id="commands-heading">Commands</h2>
+        <div id="command-content"></div>
+      </section>
+
+      <section id="artifacts" aria-labelledby="artifacts-heading">
+        <h2 id="artifacts-heading">Artifact Index</h2>
+        <div class="callout">
+          <strong>Artifact behavior:</strong>
+          links are relative local files from the run directory. Text, JSON, HTML, and image files usually open in the browser. Missing files are marked explicitly instead of failing silently.
+        </div>
+        <div class="table-wrap">
+          <table id="artifacts-table">
+            <thead>
+              <tr>
+                <th>Artifact</th>
+                <th>Type</th>
+                <th>Case / Finding</th>
+                <th>Summary</th>
+                <th>Opens As</th>
+                <th>Exists</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="packets" aria-labelledby="packets-heading">
+        <h2 id="packets-heading">Public Packets Supplied</h2>
+        <div class="table-wrap">
+          <table id="packets-table">
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Public Packet</th>
+                <th>Raw Output</th>
+                <th>Supplied Context</th>
+                <th>Artifact Exists</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="cache-sync" aria-labelledby="cache-sync-heading">
+        <h2 id="cache-sync-heading">Cache / Source Sync</h2>
+        <div class="table-wrap">
+          <table id="cache-table">
+            <thead>
+              <tr>
+                <th>Runtime / Cache Path</th>
+                <th>Canonical Source Path</th>
+                <th>Status</th>
+                <th>Evidence</th>
+                <th>Intentionally Unsynced</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="leakage" aria-labelledby="leakage-heading">
+        <h2 id="leakage-heading">Leakage Scan</h2>
+        <div id="leakage-content"></div>
+      </section>
+
+      <section id="not-run" aria-labelledby="not-run-heading">
+        <h2 id="not-run-heading">Not Run</h2>
+        <div class="table-wrap">
+          <table id="not-run-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Reason</th>
+                <th>Owner / Decision</th>
+                <th>Blocks Completion</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="final-verdict" aria-labelledby="final-verdict-heading">
+        <h2 id="final-verdict-heading">Final Verdict</h2>
+        <div id="final-verdict-content"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const REPORT_DATA = {
+      title: "dddjango Plugin Eval Report",
+      run: {
+        id: "YYYYMMDD-HHMM-plugin-eval",
+        generatedAt: "YYYY-MM-DD HH:MM",
+        evaluator: "name or agent id",
+        repoRoot: "/Users/hyun/Desktop/dddjango",
+        evalPackPath: "workspace/develop/evals",
+        evalPackVersion: "working-tree or commit SHA",
+        templateVersion: "run-report.html v1",
+        pluginVersion: "0.1.10",
+        pluginSource: "/Users/hyun/Desktop/dddjango/dddjango",
+        gitBranch: "branch-name",
+        gitCommit: "commit-sha",
+        gitDirtyState: "dirty or clean",
+        changedFilesSummary: "list changed/untracked files included in this run",
+        startedAt: "YYYY-MM-DD HH:MM",
+        endedAt: "YYYY-MM-DD HH:MM",
+        duration: "0m",
+        runtimeCacheUsed: "yes/no",
+        runtimeCachePath: "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10 or not run",
+        subagentsUsed: "yes/no plus ids or reason",
+        serenaUsed: "yes/no plus reason",
+        planUpdate: "workspace/develop/plan.md updated or not updated with reason"
+      },
+      verdict: {
+        status: "blocked",
+        summary: "Replace this with the decision paragraph. Explain pass/fail in one compact paragraph and link to blockers.",
+        completed: "no",
+        pluginHardGateFailures: 0,
+        commonHardGateFailures: 0,
+        blockingFindings: 0,
+        majorFindings: 0,
+        minorFindings: 0,
+        notRunCount: 0,
+        acceptedExceptionCount: 0,
+        commandFailures: 0,
+        failedCaseLinks: []
+      },
+      comparison: {
+        baselineLabel: "Baseline",
+        withPluginLabel: "With dddjango",
+        baselineScore: "not run",
+        withPluginScore: "not run",
+        scoreDelta: "n/a",
+        baselinePassRate: "0/17",
+        withPluginPassRate: "0/17",
+        passRateDelta: "n/a",
+        baselineRoutingAccuracy: "not run",
+        withPluginRoutingAccuracy: "not run",
+        routingAccuracyDelta: "n/a",
+        baselineHardGateFailures: "not run",
+        withPluginHardGateFailures: "not run",
+        hardGateDelta: "n/a",
+        baselineFindings: "not run",
+        withPluginFindings: "not run",
+        findingsDelta: "n/a",
+        familiesImproved: 0,
+        familiesRegressed: 0,
+        familiesUnchanged: 0,
+        notes: "Fill this after running baseline and with-dddjango variants against the same public packets."
+      },
+      comparisonDetails: [
+        { metric: "Overall score", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Use the same scoring rubric for both variants." },
+        { metric: "Pass rate", baseline: "0/17", withPlugin: "0/17", delta: "n/a", notes: "Count public packets with passing evidence." },
+        { metric: "Routing accuracy", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Use private case-map expected routing only during evaluation." },
+        { metric: "Hard gate failures", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Lower is better." },
+        { metric: "Findings", baseline: "not run", withPlugin: "not run", delta: "n/a", notes: "Track blocking/major/minor separately in findings." }
+      ],
+      caseComparisons: [
+        { case: "case-001", family: "install-discovery", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-002", family: "metadata-exposure", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-003", family: "specialist-positive", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-004", family: "specialist-positive", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-005", family: "composite-risky", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-006", family: "composite-risky", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-007", family: "simple-negative", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-008", family: "simple-negative", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-009", family: "false-execution-claim", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-010", family: "eval-boundary-adversarial", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-011", family: "eval-boundary-adversarial", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-012", family: "greenfield-api", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-013", family: "drf-migration", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-014", family: "operational-migration", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-015", family: "provisional-source", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-016", family: "source-crosswalk", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] },
+        { case: "case-017", family: "claude-codex-compatibility", baselineScore: "not run", withPluginScore: "not run", delta: "n/a", baselineVerdict: "not-run", withPluginVerdict: "not-run", status: "not-run", artifacts: [] }
+      ],
+      failedCases: [],
+      hardGates: [
+        {
+          gate: "Plugin manifest missing or invalid",
+          status: "not-run",
+          reason: "Not evaluated yet.",
+          evidence: [],
+          casesOrCommands: "case-001"
+        }
+      ],
+      scenarioFamilies: [
+        { family: "install-discovery", status: "not-run", cases: "case-001", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "metadata-exposure", status: "not-run", cases: "case-002", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "specialist-positive", status: "not-run", cases: "case-003, case-004", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "composite-risky", status: "not-run", cases: "case-005, case-006", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "simple-negative", status: "not-run", cases: "case-007, case-008", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "false-execution-claim", status: "not-run", cases: "case-009", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "eval-boundary-adversarial", status: "not-run", cases: "case-010, case-011", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "greenfield-api", status: "not-run", cases: "case-012", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "drf-migration", status: "not-run", cases: "case-013", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "operational-migration", status: "not-run", cases: "case-014", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "provisional-source", status: "not-run", cases: "case-015", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "source-crosswalk", status: "not-run", cases: "case-016", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] },
+        { family: "claude-codex-compatibility", status: "not-run", cases: "case-017", passed: 0, failed: 0, blocked: 0, skipped: 0, rerunPassed: 0, acceptedExceptions: 0, artifacts: [] }
+      ],
+      findings: [],
+      reruns: [],
+      commands: [],
+      artifacts: [],
+      publicPackets: [],
+      cacheSync: [],
+      leakageScan: {
+        status: "not-run",
+        scope: [],
+        patterns: [],
+        excludedPaths: [],
+        matchCount: 0,
+        semanticReview: "Not run.",
+        evidence: [],
+        command: ""
+      },
+      notRun: [],
+      acceptedExceptions: []
+    };
+
+    const statusClass = (value) => {
+      const normalized = String(value || "").toLowerCase();
+      if (["pass", "passed", "complete", "completed", "clean", "rerun-passed", "fixed"].includes(normalized)) return "pass";
+      if (["fail", "failed", "open"].includes(normalized)) return "fail";
+      if (["blocked", "blocking"].includes(normalized)) return "blocked";
+      if (["warn", "warning", "waived", "skipped", "not-run", "n/a"].includes(normalized)) return "warn";
+      return "muted";
+    };
+
+    const escapeHtml = (value) => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+    const badge = (value) => `<span class="badge ${statusClass(value)}">${escapeHtml(value || "n/a")}</span>`;
+
+    const links = (items) => {
+      if (!items || items.length === 0) return "";
+      return items.map((item) => {
+        if (typeof item === "string") return `<code>${escapeHtml(item)}</code>`;
+        const label = escapeHtml(item.label || item.href || "artifact");
+        const href = escapeHtml(item.href || "#");
+        const exists = item.exists === false ? ` ${badge("missing")}` : "";
+        return `<a href="${href}">${label}</a>${exists}`;
+      }).join("<br>");
+    };
+
+    const caseArtifacts = (caseRow) => {
+      if (caseRow.artifacts && caseRow.artifacts.length) return caseRow.artifacts;
+      return [
+        { label: "analysis", href: `analysis/${caseRow.case}.html`, exists: false },
+        { label: "prompt", href: `raw/${caseRow.case}-public-prompt.md`, exists: false },
+        { label: "baseline", href: `raw/${caseRow.case}-baseline.txt`, exists: false },
+        { label: "with-dddjango", href: `raw/${caseRow.case}-with-dddjango.txt`, exists: false },
+        { label: "prompt-input", href: `raw/${caseRow.case}-prompt-input.json`, exists: false }
+      ];
+    };
+
+    const setRows = (tableId, rows) => {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = rows.join("");
+    };
+
+    const renderSummary = () => {
+      document.getElementById("report-title").textContent = REPORT_DATA.title;
+      const v = REPORT_DATA.verdict;
+      const metrics = [
+        ["Verdict", badge(v.status)],
+        ["Hard Gates", `${v.pluginHardGateFailures} plugin / ${v.commonHardGateFailures} common`],
+        ["Blocking", v.blockingFindings],
+        ["Major", v.majorFindings],
+        ["Minor", v.minorFindings],
+        ["Not Run", v.notRunCount],
+        ["Accepted Exceptions", v.acceptedExceptionCount],
+        ["Command Failures", v.commandFailures],
+        ["Completed", badge(v.completed)]
+      ];
+      document.getElementById("summary-grid").innerHTML = metrics.map(([label, value]) => `
+        <div class="metric"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>
+      `).join("");
+
+      const r = REPORT_DATA.run;
+      const meta = [
+        ["Run ID", r.id],
+        ["Generated", r.generatedAt],
+        ["Plugin Version", r.pluginVersion],
+        ["Git", `${r.gitBranch} / ${r.gitCommit} / ${r.gitDirtyState}`],
+        ["Changed Files", r.changedFilesSummary],
+        ["Runtime Cache", `${r.runtimeCacheUsed}: ${r.runtimeCachePath}`],
+        ["Subagents", r.subagentsUsed],
+        ["Serena", r.serenaUsed],
+        ["Plan Update", r.planUpdate],
+        ["Eval Pack", `${r.evalPackPath} (${r.evalPackVersion})`],
+        ["Source", r.pluginSource],
+        ["Duration", `${r.startedAt} - ${r.endedAt} (${r.duration})`]
+      ];
+      document.getElementById("metadata-grid").innerHTML = meta.map(([label, value]) => `
+        <div class="meta-item"><span>${escapeHtml(label)}</span><code>${escapeHtml(value)}</code></div>
+      `).join("");
+    };
+
+    const renderComparison = () => {
+      const c = REPORT_DATA.comparison;
+      const cards = [
+        ["Baseline score", c.baselineScore, c.baselinePassRate],
+        ["With dddjango score", c.withPluginScore, c.withPluginPassRate],
+        ["Score delta", c.scoreDelta, "overall improvement"],
+        ["Routing accuracy delta", c.routingAccuracyDelta, `${c.baselineRoutingAccuracy} -> ${c.withPluginRoutingAccuracy}`],
+        ["Hard gate failures", `${c.baselineHardGateFailures} -> ${c.withPluginHardGateFailures}`, c.hardGateDelta],
+        ["Findings", `${c.baselineFindings} -> ${c.withPluginFindings}`, c.findingsDelta],
+        ["Families improved", c.familiesImproved, "scenario-family count"],
+        ["Families regressed", c.familiesRegressed, "scenario-family count"]
+      ];
+      document.getElementById("comparison-grid").innerHTML = cards.map(([label, value, note]) => `
+        <div class="comparison-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(note)}</small></div>
+      `).join("");
+      setRows("comparison-detail-table", REPORT_DATA.comparisonDetails.map((row) => `
+        <tr>
+          <td>${escapeHtml(row.metric)}</td>
+          <td>${escapeHtml(row.baseline)}</td>
+          <td>${escapeHtml(row.withPlugin)}</td>
+          <td>${escapeHtml(row.delta)}</td>
+          <td>${escapeHtml(row.notes)}</td>
+        </tr>
+      `));
+    };
+
+    const renderFailedCases = () => {
+      const container = document.getElementById("failed-cases-content");
+      if (!REPORT_DATA.failedCases.length) {
+        container.innerHTML = `<div class="empty">No failed or blocked cases recorded yet.</div>`;
+        return;
+      }
+      container.innerHTML = REPORT_DATA.failedCases.map((item) => `
+        <div class="callout fail">
+          <h3>${escapeHtml(item.case)} ${badge(item.severity || item.status)}</h3>
+          <p><strong>Family:</strong> ${escapeHtml(item.family || "")}</p>
+          <p><strong>Expected vs actual:</strong> ${escapeHtml(item.expectedVsActual || "")}</p>
+          <p><strong>Failed command:</strong> <code>${escapeHtml(item.failedCommand || "")}</code></p>
+          <p><strong>Rerun status:</strong> ${badge(item.rerunStatus || "not-run")}</p>
+          <p><strong>Disposition:</strong> ${escapeHtml(item.disposition || "")}</p>
+          <p>${links(item.artifacts)}</p>
+        </div>
+      `).join("");
+    };
+
+    const renderTables = () => {
+      setRows("hard-gates-table", REPORT_DATA.hardGates.map((g) => `
+        <tr data-status="${escapeHtml(g.status)}">
+          <td>${escapeHtml(g.gate)}</td>
+          <td>${badge(g.status)}</td>
+          <td>${escapeHtml(g.reason)}</td>
+          <td>${links(g.evidence)}</td>
+          <td>${escapeHtml(g.casesOrCommands)}</td>
+        </tr>
+      `));
+
+      setRows("case-comparison-table", REPORT_DATA.caseComparisons.map((c) => `
+        <tr data-status="${escapeHtml(c.status)}">
+          <td>${escapeHtml(c.case)}</td>
+          <td>${escapeHtml(c.family)}</td>
+          <td>${escapeHtml(c.baselineScore)}</td>
+          <td>${escapeHtml(c.withPluginScore)}</td>
+          <td>${escapeHtml(c.delta)}</td>
+          <td>${badge(c.baselineVerdict)}</td>
+          <td>${badge(c.withPluginVerdict)}</td>
+          <td>${badge(c.status)}</td>
+          <td>${links(caseArtifacts(c))}</td>
+        </tr>
+      `));
+
+      setRows("scenario-table", REPORT_DATA.scenarioFamilies.map((f) => `
+        <tr>
+          <td>${escapeHtml(f.family)}</td>
+          <td>${badge(f.status)}</td>
+          <td>${escapeHtml(f.cases)}</td>
+          <td>${escapeHtml(f.passed)}</td>
+          <td>${escapeHtml(f.failed)}</td>
+          <td>${escapeHtml(f.blocked)}</td>
+          <td>${escapeHtml(f.skipped)}</td>
+          <td>${escapeHtml(f.rerunPassed)}</td>
+          <td>${escapeHtml(f.acceptedExceptions)}</td>
+          <td>${links(f.artifacts)}</td>
+        </tr>
+      `));
+
+      setRows("findings-table", REPORT_DATA.findings.map((f) => `
+        <tr data-severity="${escapeHtml(f.severity)}" data-status="${escapeHtml(f.status)}">
+          <td>${badge(f.severity)}</td>
+          <td>${badge(f.status)}</td>
+          <td>${escapeHtml(f.case)}</td>
+          <td>${escapeHtml(f.defectType)}</td>
+          <td>${escapeHtml(f.before)}</td>
+          <td>${escapeHtml(f.after)}</td>
+          <td>${escapeHtml(f.gateOrDimension)}</td>
+          <td>${links(f.evidence)}</td>
+          <td>${escapeHtml(f.rerunScope)}</td>
+        </tr>
+      `));
+
+      setRows("packets-table", REPORT_DATA.publicPackets.map((p) => `
+        <tr>
+          <td>${escapeHtml(p.case)}</td>
+          <td>${links([p.publicPacket])}</td>
+          <td>${links([p.rawOutput])}</td>
+          <td>${escapeHtml(p.suppliedContext)}</td>
+          <td>${badge(p.artifactExists ? "yes" : "missing")}</td>
+        </tr>
+      `));
+
+      setRows("artifacts-table", REPORT_DATA.artifacts.map((a) => `
+        <tr>
+          <td>${escapeHtml(a.name)}</td>
+          <td>${escapeHtml(a.type)}</td>
+          <td>${escapeHtml(a.caseOrFinding)}</td>
+          <td>${escapeHtml(a.summary)}</td>
+          <td>${escapeHtml(a.opensAs)}</td>
+          <td>${badge(a.exists ? "yes" : "missing")}</td>
+          <td>${links([a.link])}</td>
+        </tr>
+      `));
+
+      setRows("cache-table", REPORT_DATA.cacheSync.map((c) => `
+        <tr>
+          <td><code>${escapeHtml(c.runtimePath)}</code></td>
+          <td><code>${escapeHtml(c.sourcePath)}</code></td>
+          <td>${badge(c.status)}</td>
+          <td>${links(c.evidence)}</td>
+          <td>${badge(c.intentionallyUnsynced ? "yes" : "no")}</td>
+          <td>${escapeHtml(c.notes)}</td>
+        </tr>
+      `));
+
+      setRows("not-run-table", REPORT_DATA.notRun.map((n) => `
+        <tr>
+          <td>${escapeHtml(n.item)}</td>
+          <td>${escapeHtml(n.type)}</td>
+          <td>${escapeHtml(n.reason)}</td>
+          <td>${escapeHtml(n.ownerOrDecision)}</td>
+          <td>${badge(n.blocksCompletion ? "yes" : "no")}</td>
+          <td>${links(n.evidence)}</td>
+        </tr>
+      `));
+    };
+
+    const renderReruns = () => {
+      const container = document.getElementById("rerun-content");
+      if (!REPORT_DATA.reruns.length) {
+        container.innerHTML = `<div class="empty">No rerun evidence recorded yet.</div>`;
+        return;
+      }
+      container.innerHTML = REPORT_DATA.reruns.map((group) => `
+        <details open>
+          <summary>${escapeHtml(group.case)} ${badge(group.status)}</summary>
+          <div class="timeline">
+            ${(group.events || []).map((event) => `
+              <div class="timeline-item">
+                <strong>${escapeHtml(event.timestamp)} - ${escapeHtml(event.title)}</strong>
+                <div>${escapeHtml(event.summary)}</div>
+                <div>${links(event.artifacts)}</div>
+              </div>
+            `).join("")}
+          </div>
+        </details>
+      `).join("");
+    };
+
+    const renderCommands = () => {
+      const container = document.getElementById("command-content");
+      if (!REPORT_DATA.commands.length) {
+        container.innerHTML = `<div class="empty">No commands recorded yet.</div>`;
+        return;
+      }
+      container.innerHTML = REPORT_DATA.commands.map((cmd) => `
+        <details>
+          <summary>${badge(cmd.status)} ${escapeHtml(cmd.phase)} - <code>${escapeHtml(cmd.command)}</code></summary>
+          <div style="padding: 10px 12px;">
+            <p><strong>cwd:</strong> <code>${escapeHtml(cmd.cwd)}</code></p>
+            <p><strong>exit:</strong> ${escapeHtml(cmd.exitCode)} | <strong>duration:</strong> ${escapeHtml(cmd.duration)} | <strong>related:</strong> ${escapeHtml(cmd.related || "")}</p>
+          </div>
+          <pre>${escapeHtml(cmd.output || "")}</pre>
+        </details>
+      `).join("");
+    };
+
+    const renderLeakage = () => {
+      const l = REPORT_DATA.leakageScan;
+      document.getElementById("leakage-content").innerHTML = `
+        <div class="callout ${statusClass(l.status)}">
+          <h3>${badge(l.status)} Leakage Scan</h3>
+          <p><strong>Command:</strong> <code>${escapeHtml(l.command)}</code></p>
+          <p><strong>Scope:</strong> ${escapeHtml((l.scope || []).join(", "))}</p>
+          <p><strong>Patterns:</strong> ${escapeHtml((l.patterns || []).join(", "))}</p>
+          <p><strong>Excluded paths:</strong> ${escapeHtml((l.excludedPaths || []).join(", "))}</p>
+          <p><strong>Match count:</strong> ${escapeHtml(l.matchCount)}</p>
+          <p><strong>Semantic review:</strong> ${escapeHtml(l.semanticReview)}</p>
+          <p>${links(l.evidence)}</p>
+        </div>
+      `;
+    };
+
+    const renderFinalVerdict = () => {
+      const v = REPORT_DATA.verdict;
+      const exceptions = REPORT_DATA.acceptedExceptions || [];
+      document.getElementById("final-verdict-content").innerHTML = `
+        <div class="callout ${statusClass(v.status)}">
+          <h3>${badge(v.status)} Completed: ${badge(v.completed)}</h3>
+          <p>${escapeHtml(v.summary)}</p>
+          <p>
+            Plugin hard gate failures: <strong>${escapeHtml(v.pluginHardGateFailures)}</strong>,
+            common hard gate failures: <strong>${escapeHtml(v.commonHardGateFailures)}</strong>,
+            blocking: <strong>${escapeHtml(v.blockingFindings)}</strong>,
+            major: <strong>${escapeHtml(v.majorFindings)}</strong>,
+            minor: <strong>${escapeHtml(v.minorFindings)}</strong>.
+          </p>
+        </div>
+        ${exceptions.length ? `
+          <h3>Accepted Exceptions</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Exception</th><th>Source Gap</th><th>Owner</th><th>Expiry / Revisit</th><th>Follow-up</th><th>Reason</th></tr></thead>
+              <tbody>
+                ${exceptions.map((e) => `
+                  <tr>
+                    <td>${escapeHtml(e.name)}</td>
+                    <td>${escapeHtml(e.sourceGap)}</td>
+                    <td>${escapeHtml(e.owner)}</td>
+                    <td>${escapeHtml(e.expiry)}</td>
+                    <td>${escapeHtml(e.followUp)}</td>
+                    <td>${escapeHtml(e.reason)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        ` : `<div class="empty">No accepted exceptions recorded.</div>`}
+      `;
+    };
+
+    const attachFilters = () => {
+      document.querySelectorAll("select[data-filter-table]").forEach((select) => {
+        select.addEventListener("change", () => {
+          const table = document.getElementById(select.dataset.filterTable);
+          const key = select.dataset.filterKey;
+          table.querySelectorAll("tbody tr").forEach((row) => {
+            row.hidden = select.value && row.dataset[key] !== select.value;
+          });
+        });
+      });
+
+      document.getElementById("finding-search").addEventListener("input", (event) => {
+        const term = event.target.value.toLowerCase();
+        document.querySelectorAll("#findings-table tbody tr").forEach((row) => {
+          row.hidden = term && !row.textContent.toLowerCase().includes(term);
+        });
+      });
+    };
+
+    renderSummary();
+    renderComparison();
+    renderFailedCases();
+    renderTables();
+    renderReruns();
+    renderCommands();
+    renderLeakage();
+    renderFinalVerdict();
+    attachFilters();
+  </script>
+
+  <noscript>
+    This report template uses inline JavaScript to render embedded report data. Enable JavaScript or inspect the REPORT_DATA object in the file.
+  </noscript>
+</body>
+</html>

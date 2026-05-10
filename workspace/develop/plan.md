@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: 종합 평가표 작성 중
-- 최근 완료: `workspace/develop/rubrics/plugin_rubric.md` 작성
-- 다음 작업: 전체 eval prompt 묶음 작성
+- 현재 단계: 종합 플러그인 평가 및 개선 준비 중
+- 최근 완료: 전체 eval prompt 묶음 작성
+- 다음 작업: 종합 플러그인 평가 및 개선 실행
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -19,7 +19,7 @@
 - [x] 스킬 연계 평가표 작성
 - [x] 스킬 연계용 스킬 구현
 - [x] 스킬 연계 평가 및 개선
-- [ ] 종합 평가표 작성
+- [x] 종합 평가표 작성
 - [ ] 종합 플러그인 평가 및 개선
 - [ ] 최종 검증 및 커밋
 
@@ -289,7 +289,7 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 - [x] install/discovery 검증 항목을 포함한다.
 - [x] Claude Code와 Codex 공통성 검증 항목을 포함한다.
 - [x] runtime cache 동기화 검증 항목을 포함한다.
-- [ ] 전체 eval prompt 묶음을 작성한다.
+- [x] 전체 eval prompt 묶음을 작성한다: `workspace/develop/evals/cases/plugin/public`, `workspace/develop/evals/cases/plugin/private`
 
 평가 항목:
 
