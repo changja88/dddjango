@@ -6,9 +6,9 @@
 
 ## 진행 현황
 
-- 현재 단계: 개별 runtime skill 평가 및 개선 완료
-- 최근 완료: `workflow-dddjango-subagents` source/runtime/rubric 평가 반복 및 runtime re-check
-- 다음 작업: 종합 평가표 작성
+- 현재 단계: 종합 평가표 작성 중
+- 최근 완료: `workspace/develop/rubrics/plugin_rubric.md` 작성
+- 다음 작업: 전체 eval prompt 묶음 작성
 
 - [x] 기준 문서 정리: `workspace/docs`
 - [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
@@ -285,23 +285,23 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 
 체크리스트:
 
-- [ ] 종합 평가표를 작성한다.
-- [ ] install/discovery 검증 항목을 포함한다.
-- [ ] Claude Code와 Codex 공통성 검증 항목을 포함한다.
-- [ ] runtime cache 동기화 검증 항목을 포함한다.
+- [x] 종합 평가표를 작성한다: `workspace/develop/rubrics/plugin_rubric.md`
+- [x] install/discovery 검증 항목을 포함한다.
+- [x] Claude Code와 Codex 공통성 검증 항목을 포함한다.
+- [x] runtime cache 동기화 검증 항목을 포함한다.
 - [ ] 전체 eval prompt 묶음을 작성한다.
 
 평가 항목:
 
-- [ ] 플러그인 구조
-- [ ] 스킬 발견과 trigger
-- [ ] 스킬 위계
-- [ ] reference 반영
-- [ ] DDD 구현 일관성
-- [ ] Django Ninja 표준
-- [ ] 과적용 방지
-- [ ] 검증 정직성
-- [ ] runtime cache와 workspace source 동기화
+- [x] 플러그인 구조
+- [x] 스킬 발견과 trigger
+- [x] 스킬 위계
+- [x] reference 반영
+- [x] DDD 구현 일관성
+- [x] Django Ninja 표준
+- [x] 과적용 방지
+- [x] 검증 정직성
+- [x] runtime cache와 workspace source 동기화
 
 통과 기준:
 
