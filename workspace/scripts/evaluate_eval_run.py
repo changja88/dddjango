@@ -192,6 +192,7 @@ def build_prompt(
     with_ddjango_output: str,
     code_artifacts: list[tuple[str, Path, str]],
 ) -> str:
+    with_variant = common.VARIANTS[1]
     sections = [
         "EVALUATOR-ONLY ANSWER ORACLE",
         "",
@@ -213,7 +214,7 @@ def build_prompt(
         artifact_section("Baseline output", Path(f"raw/{case_id}-baseline.txt"), baseline_output),
         artifact_section(
             "With-ddjango output",
-            Path(f"raw/{case_id}-with-ddjango.txt"),
+            Path(f"raw/{case_id}-{with_variant}.txt"),
             with_ddjango_output,
         ),
     ]
@@ -309,8 +310,9 @@ def evaluate_case(
     public_case = required_text(case_path, "public case")
     answer_oracle = required_text(bucket.answer_dir / f"{case_id}.yaml", "answer oracle")
     baseline_output = required_text(raw_dir / f"{case_id}-baseline.txt", "baseline output")
+    with_variant = common.VARIANTS[1]
     with_ddjango_output = required_text(
-        raw_dir / f"{case_id}-with-ddjango.txt",
+        raw_dir / f"{case_id}-{with_variant}.txt",
         "with-ddjango output",
     )
     code_artifacts = optional_code_artifacts(run_dir, case_id) if bucket.bucket == "code" else []

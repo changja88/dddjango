@@ -59,7 +59,8 @@ class EvaluateEvalRunTests(unittest.TestCase):
             encoding="utf-8",
         )
         (raw / f"{case_id}-baseline.txt").write_text(baseline_text, encoding="utf-8")
-        (raw / f"{case_id}-with-ddjango.txt").write_text(with_ddjango_text, encoding="utf-8")
+        with_variant = self.evaluator.common.VARIANTS[1]
+        (raw / f"{case_id}-{with_variant}.txt").write_text(with_ddjango_text, encoding="utf-8")
         return raw
 
     def valid_payload(self, case_id: str = "case-response-one") -> dict[str, object]:
