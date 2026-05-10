@@ -1,13 +1,19 @@
-# dddjango Plugin Eval Pack
+# dddjango Plugin Response Eval Pack
 
-This directory contains the comprehensive plugin eval prompt pack for `dddjango`.
+This directory contains the response-level plugin eval prompt pack for `dddjango`.
 
-Use this pack after the individual skill rubrics and the workflow rubric have already passed. The source of truth for scoring is `workspace/develop/rubrics/plugin_rubric.md`; this directory only turns that rubric into executable prompt packets, private evaluator guidance, and an HTML run-report template.
+Use this pack after the individual skill rubrics and the workflow rubric have already passed. The source of truth for response scoring is `workspace/develop/eval/response/rubrics/plugin_rubric.md`; this directory turns that rubric into executable prompt packets, private evaluator guidance, and an HTML run-report template.
 
 ## Directory Layout
 
 ```text
-workspace/develop/evals/
+workspace/develop/eval/response/
+  rubric_goal_instructions.md
+  rubrics/
+    common_rubric.md
+    *_rubric.md
+  source-crosswalks/
+    <skill>.md
   cases/plugin/public/
     case-001.md ... case-017.md
     case-101.md
@@ -28,9 +34,9 @@ workspace/develop/evals/
 
 - Give forward-test agents or prompt runners only files from `cases/plugin/public/` plus task-local fixture files.
 - Do not give forward-test agents `cases/plugin/private/`, rubric files, prior findings, expected routes, scoring notes, or intended fixes.
-- Store raw outputs under `workspace/develop/evals/runs/<run-id>/raw/`.
-- Store actual generated code for code-backed cases under `workspace/develop/evals/runs/<run-id>/code/<case-id>/<variant>/`.
-- Store case-level human analysis pages under `workspace/develop/evals/runs/<run-id>/analysis/`.
+- Store raw outputs under `workspace/develop/eval/response/runs/<run-id>/raw/`.
+- Store actual generated code for code-backed cases under `workspace/develop/eval/response/runs/<run-id>/code/<case-id>/<variant>/`.
+- Store case-level human analysis pages under `workspace/develop/eval/response/runs/<run-id>/analysis/`.
 - Store findings, reruns, and the final HTML report under the same run directory.
 - Copy `templates/run-report.html` to `runs/<run-id>/report.html` and edit the embedded `REPORT_DATA` object for the run.
 - The HTML report is self-contained and must work from `file://`; do not make it depend on external assets, CDN links, or local JSON fetched with browser APIs.
@@ -62,7 +68,7 @@ Each complete run records:
 
 ## Completion Rule
 
-The comprehensive plugin eval is complete only when:
+The plugin response eval is complete only when:
 
 - every public case in this pack has been run or is explicitly marked not-run as a blocker
 - plugin-level and applicable common hard gate failures are 0
@@ -72,11 +78,11 @@ The comprehensive plugin eval is complete only when:
 - runtime leakage scan finds no private evaluation material under runtime paths
 - runtime cache is not used, or it matches canonical `dddjango/` source for the evaluated version
 
-Do not mark the plugin eval complete from smoke checks alone.
+Do not mark the plugin response eval complete from smoke checks alone.
 
 ## Code Artifact Evidence
 
-`workspace/develop/evals/cases/plugin/code-capture.json` is the source of truth for deciding whether a public case requires actual code artifacts.
+`workspace/develop/eval/response/cases/plugin/code-capture.json` is the source of truth for deciding whether a public case requires actual code artifacts.
 
 - `raw/<case>-<variant>.txt`: final model response transcript.
 - `raw/<case>-<variant>-events.jsonl`: Codex event stream.

@@ -15,14 +15,14 @@ from zoneinfo import ZoneInfo
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
 DEFAULT_RUN_ID = ""
-EVAL_RUNS_DIR = REPO_ROOT / "workspace/develop/evals/runs"
+EVAL_RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
 RELATED_CODE_ARTIFACT_RUN_IDS: list[str] = []
 RUN_ID = DEFAULT_RUN_ID
 RUN_DIR = EVAL_RUNS_DIR / RUN_ID
 RAW_DIR = RUN_DIR / "raw"
 ANALYSIS_DIR = RUN_DIR / "analysis"
-REPORT_TEMPLATE = REPO_ROOT / "workspace/develop/evals/templates/run-report.html"
-CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/evals/cases/plugin/code-capture.json"
+REPORT_TEMPLATE = REPO_ROOT / "workspace/develop/eval/response/templates/run-report.html"
+CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/code-capture.json"
 SOURCE_SUFFIXES = {".css", ".html", ".js", ".json", ".md", ".py", ".sql", ".toml", ".ts", ".txt", ".yaml", ".yml"}
 CODE_ARTIFACT_TYPES = {"changed-files", "diff", "source-file"}
 V2_SCHEMA_VERSION = "eval-report-v2"
@@ -338,7 +338,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--run-id",
         required=True,
-        help="Eval run id under workspace/develop/evals/runs.",
+        help="Eval run id under workspace/develop/eval/response/runs.",
     )
     parser.add_argument(
         "--code-artifact-run",
@@ -1847,13 +1847,13 @@ def build_report_data() -> dict[str, object]:
         if str(finding["status"]).lower() not in {"fixed", "closed", "accepted"}
     ]
     data = {
-        "title": "dddjango Plugin Eval Report",
+        "title": "dddjango Plugin Response Eval Report",
         "run": {
             "id": RUN_ID,
             "generatedAt": generated_at,
             "evaluator": "Codex main agent",
             "repoRoot": str(REPO_ROOT),
-            "evalPackPath": "workspace/develop/evals",
+            "evalPackPath": "workspace/develop/eval/response",
             "evalPackVersion": git_commit[:12],
             "templateVersion": "run-report.html v2",
             "pluginVersion": "0.1.10",
@@ -1959,7 +1959,7 @@ def build_report_data() -> dict[str, object]:
         "commands": [
             {"phase": "raw eval", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "long-running", "related": "all cases", "output": "All 17 public cases ran for baseline and with-ddjango; all 34 exit files contain 0."},
             {"phase": "targeted rerun", "status": "pass", "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-017 --variant with-dddjango --rerun --timeout-seconds 1800", "cwd": str(REPO_ROOT), "exitCode": read(RAW_DIR / "case-017-with-dddjango-exit.txt").strip() or "unknown", "duration": "single case", "related": "case-017", "output": "Reran after preserving symlinks in isolated eval workspaces; the previous real-directory Minor finding is absent."},
-            {"phase": "protocol validation", "status": "pass", "command": f"python3 workspace/scripts/validate_eval_protocol.py --run-dir workspace/develop/evals/runs/{RUN_ID}", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all cases", "output": read(RAW_DIR / "validation-eval-protocol.txt")},
+            {"phase": "protocol validation", "status": "pass", "command": f"python3 workspace/scripts/validate_eval_protocol.py --run-dir workspace/develop/eval/response/runs/{RUN_ID}", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all cases", "output": read(RAW_DIR / "validation-eval-protocol.txt")},
             {"phase": "validation", "status": "pass", "command": "python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "all skills", "output": read(RAW_DIR / "validation-skill-docs.txt")},
             {"phase": "diff check", "status": "pass", "command": "git diff --check", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "working tree", "output": read(RAW_DIR / "git-diff-check.txt") or "(no output)"},
             {"phase": "cache sync", "status": "pass", "command": "diff -qr dddjango /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10", "cwd": str(REPO_ROOT), "exitCode": "0", "duration": "instant", "related": "runtime cache", "output": read(RAW_DIR / "cache-source-diff.txt") or "(no output)"},
@@ -2099,7 +2099,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             "generatedAt": generated_at,
             "evaluator": "Codex main agent",
             "repoRoot": str(REPO_ROOT),
-            "evalPackPath": "workspace/develop/evals",
+            "evalPackPath": "workspace/develop/eval/response",
             "evalPackVersion": git_commit[:12],
             "templateVersion": "run-report.html v2",
             "pluginVersion": "0.1.10",
@@ -2205,7 +2205,7 @@ def build_code_artifact_report_data(cases: list[dict[str, object]]) -> dict[str,
             {
                 "phase": "code artifact eval",
                 "status": report_status,
-                "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/evals/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
+                "command": f"python3 workspace/scripts/run_plugin_eval.py --run-id {RUN_ID} --case case-101 --variant baseline --variant with-dddjango --capture-code --subject-repo workspace/develop/eval/response/fixtures/code-artifact-sample --workspace-root /private/tmp/dddjango-eval-workspaces --rerun --model gpt-5.4-mini --reasoning low --timeout-seconds 900",
                 "cwd": str(REPO_ROOT),
                 "exitCode": "0" if report_status == "pass" else "see variant exit artifacts",
                 "duration": "recorded by transcript",

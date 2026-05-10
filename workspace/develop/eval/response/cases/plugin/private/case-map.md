@@ -2,7 +2,7 @@
 
 This file is private evaluator material. Do not pass it to forward-test agents or include it in public prompt packets.
 
-Source rubric: `workspace/develop/rubrics/plugin_rubric.md`.
+Source rubric: `workspace/develop/eval/response/rubrics/plugin_rubric.md`.
 
 ## Coverage Summary
 

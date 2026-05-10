@@ -16,9 +16,9 @@ from zoneinfo import ZoneInfo
 
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-PUBLIC_CASES = REPO_ROOT / "workspace/develop/evals/cases/plugin/public"
-CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/evals/cases/plugin/code-capture.json"
-RUNS_DIR = REPO_ROOT / "workspace/develop/evals/runs"
+PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
+CODE_CAPTURE_METADATA = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/code-capture.json"
+RUNS_DIR = REPO_ROOT / "workspace/develop/eval/response/runs"
 DEFAULT_WORKSPACE_ROOT = Path("/private/tmp/dddjango-eval-workspaces")
 DEFAULT_MODEL = "gpt-5.5"
 DEFAULT_REASONING = "xhigh"
@@ -55,16 +55,16 @@ ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".venv"),
     Path("__pycache__"),
     Path(".pytest_cache"),
-    Path("workspace/develop/evals/runs"),
-    Path("workspace/develop/evals/cases/plugin/private"),
-    Path("workspace/develop/rubrics"),
+    Path("workspace/develop/eval/response/runs"),
+    Path("workspace/develop/eval/response/cases/plugin/private"),
+    Path("workspace/develop/eval/response/rubrics"),
 ]
 
 BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".agents"),
     Path("plugins"),
     Path("dddjango"),
-    Path("workspace/develop/source-crosswalks"),
+    Path("workspace/develop/eval/response/source-crosswalks"),
 ]
 
 
@@ -191,7 +191,7 @@ def prepare_workspace(source_repo: Path, workspace_root: Path, run_id: str, case
         ".venv",
         "__pycache__",
         ".pytest_cache",
-        "workspace/develop/evals/runs",
+        "workspace/develop/eval/response/runs",
     )
     shutil.copytree(source_repo, workspace, symlinks=True, ignore=ignore)
     run_command(["git", "init"], prompt=None, cwd=workspace, timeout_seconds=120)
@@ -282,10 +282,10 @@ def write_baseline_isolation_artifact(
         Path("dddjango/.codex-plugin/plugin.json"),
         Path(".agents/plugins/marketplace.json"),
         Path("plugins/dddjango"),
-        Path("workspace/develop/rubrics"),
-        Path("workspace/develop/evals/cases/plugin/private"),
-        Path("workspace/develop/evals/runs"),
-        Path("workspace/develop/source-crosswalks"),
+        Path("workspace/develop/eval/response/rubrics"),
+        Path("workspace/develop/eval/response/cases/plugin/private"),
+        Path("workspace/develop/eval/response/runs"),
+        Path("workspace/develop/eval/response/source-crosswalks"),
     ]
     presence = relative_presence(workspace, forbidden_rel_paths)
     prompt_metadata_markers = [

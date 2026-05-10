@@ -11,7 +11,7 @@ from typing import Any
 
 
 REPO_ROOT = Path("/Users/hyun/Desktop/dddjango")
-PUBLIC_CASES = REPO_ROOT / "workspace/develop/evals/cases/plugin/public"
+PUBLIC_CASES = REPO_ROOT / "workspace/develop/eval/response/cases/plugin/public"
 VARIANTS = ("baseline", "with-dddjango")
 
 PUBLIC_PACKET_FORBIDDEN_PATTERNS = {

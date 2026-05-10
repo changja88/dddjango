@@ -4,11 +4,11 @@
 
 ## 범위
 
-`workspace/develop/rubrics` 안의 skill별 rubric 파일을 작성한다. 단, `common_rubric.md`는 작성 대상에서 제외한다.
+`workspace/develop/eval/response/rubrics` 안의 skill별 rubric 파일을 작성한다. 단, `common_rubric.md`는 작성 대상에서 제외한다.
 
 사용할 기준 문서는 다음과 같다.
 
-- 공통 rubric 및 템플릿: `workspace/develop/rubrics/common_rubric.md`
+- 공통 rubric 및 템플릿: `workspace/develop/eval/response/rubrics/common_rubric.md`
 - 제품 계약 문서: `workspace/docs`
 - reference corpus: `workspace/reference`
 - 진행 상태 문서: `workspace/develop/plan.md`
@@ -136,7 +136,7 @@ accepted-exception으로 기록하고 이유를 남긴다. 이 경우에도 남�
 
 최종 점검에서 다음을 수행한다.
 
-- `wc -l workspace/develop/rubrics/*_rubric.md`
+- `wc -l workspace/develop/eval/response/rubrics/*_rubric.md`
 - 가능하면 `python3 workspace/scripts/validate_skill_docs.py --phase docs`
 - 실행한 명령, 실행하지 못한 명령, 실행하지 못한 이유를 보고한다.
 

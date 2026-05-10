@@ -11,8 +11,8 @@
 - 다음 작업: 필수 완료 게이트 없음. 차기 평가 고도화는 별도 backlog로 관리한다.
 
 - [x] 기준 문서 정리: `workspace/docs`
-- [x] 공통 평가 기준 작성: `workspace/develop/rubrics/common_rubric.md`
-- [x] 개별 스킬 평가표 빈 파일 생성: `workspace/develop/rubrics/*_rubric.md`
+- [x] 공통 평가 기준 작성: `workspace/develop/eval/response/rubrics/common_rubric.md`
+- [x] 개별 스킬 평가표 빈 파일 생성: `workspace/develop/eval/response/rubrics/*_rubric.md`
 - [x] 개별 스킬 평가표 작성
 - [x] 개별 스킬 구현
 - [x] 개별 스킬 평가 및 개선
@@ -78,7 +78,7 @@
 - [x] 각 평가표에 required reference coverage와 failure criteria를 포함한다.
 - [x] provisional 스킬의 평가표에 fallback source와 한계를 명시한다.
 - [x] 평가표 전체를 동일 agent의 네 관점 self-review로 리뷰하고 수정한다. 실제 subagent review는 이 단계에서 실행하지 않았다.
-- [x] 공통 Language Policy를 `common_rubric.md`와 `rubric_goal_instructions.md`에 반영한다.
+- [x] 공통 Language Policy를 `common_rubric.md`와 `eval/response/rubric_goal_instructions.md`에 반영한다.
 - [x] 각 평가표의 public prompt를 한국어 자연어, 한국어/영어 혼합, 구어적/모호한 사용자 요청, 단순 negative case까지 보강한다.
 - [x] 각 평가표의 private grader key에 추가 public prompt family의 expected routing과 failure criteria를 반영한다.
 - [x] 한국어 사용자 coverage, routing correctness, public/private integrity, product alignment, anti-overapplication 관점으로 파일별 self-review를 수행하고 남은 finding 0개로 정리한다. 실제 subagent review는 실행하지 않았다.
@@ -285,11 +285,11 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 
 체크리스트:
 
-- [x] 종합 평가표를 작성한다: `workspace/develop/rubrics/plugin_rubric.md`
+- [x] 종합 평가표를 작성한다: `workspace/develop/eval/response/rubrics/plugin_rubric.md`
 - [x] install/discovery 검증 항목을 포함한다.
 - [x] Claude Code와 Codex 공통성 검증 항목을 포함한다.
 - [x] runtime cache 동기화 검증 항목을 포함한다.
-- [x] 전체 eval prompt 묶음을 작성한다: `workspace/develop/evals/cases/plugin/public`, `workspace/develop/evals/cases/plugin/private`
+- [x] 전체 response eval prompt 묶음을 작성한다: `workspace/develop/eval/response/cases/plugin/public`, `workspace/develop/eval/response/cases/plugin/private`
 
 평가 항목:
 
@@ -310,18 +310,18 @@ Final runtime skill evaluation verification on 2026-05-10: `python3 workspace/sc
 - [x] `workspace/docs`와 runtime skill 구조가 충돌하지 않는다.
 - [x] cache-only 변경이 완료 상태로 남지 않는다.
 
-## 8. 종합 플러그인 평가 및 개선
+## 8. 종합 플러그인 response eval 및 개선
 
 목적:
 
-- 실제 사용 가능한 플러그인 상태까지 검증하고 반복 개선한다.
+- 실제 사용 가능한 플러그인 상태를 response-level로 검증하고 반복 개선한다.
 
 평가 요약:
 
 - 17개 public case에서 baseline/with-dddjango를 isolated workspace로 실행했다.
 - baseline isolation 오염과 artifact instruction 충돌은 eval protocol 문제로 분류하고 runner/public packet을 수정했다.
 - `case-017`의 `plugins/dddjango` real-directory 관찰은 실제 source layout 문제가 아니라 eval workspace copy가 symlink를 dereference한 문제였다.
-- eval/code-capture workspace copy를 `symlinks=True`로 수정했고, targeted `case-017` with-dddjango rerun에서 해당 finding이 재발하지 않았다.
+- eval/response code-capture workspace copy를 `symlinks=True`로 수정했고, targeted `case-017` with-dddjango rerun에서 해당 finding이 재발하지 않았다.
 - 최종 response-level plugin integration judgment는 `85/85`, public case 통과는 `17/17`이다.
 - 최종 open blocking/major/minor finding은 0이다.
 - run별 raw/report/analysis/finding 메모는 완료 요약을 이 계획에 흡수한 뒤 저장소에서 정리한다.
@@ -352,7 +352,7 @@ python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjan
 
 차기 평가 고도화 backlog:
 
-- [ ] scored code-backed case를 추가해 실제 코드 변경 품질을 점수화한다.
+- [ ] `workspace/develop/eval/code`에 scored code-backed case를 추가해 실제 코드 변경 품질을 점수화한다.
 - [ ] progressive-disclosure 체크를 추가해 필요한 reference만 읽히는지 검증한다.
 - [ ] trigger-mutation 체크를 추가해 유사/변형 프롬프트에서도 스킬 routing이 안정적인지 검증한다.
 - [ ] runtime skill behavior가 바뀌면 동일한 isolated baseline protocol로 full public pack을 재실행한다.

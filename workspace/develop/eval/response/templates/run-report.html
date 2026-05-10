@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>dddjango Plugin Eval Report</title>
+  <title>dddjango Plugin Response Eval Report</title>
   <link rel="icon" href="data:,">
   <style>
     :root {
@@ -1436,8 +1436,8 @@
 <body>
   <header>
     <div class="header-inner">
-      <p class="eyebrow">dddjango comprehensive plugin evaluation</p>
-      <h1 id="report-title">Plugin Eval Report</h1>
+      <p class="eyebrow">dddjango plugin response evaluation</p>
+      <h1 id="report-title">Plugin Response Eval Report</h1>
     </div>
   </header>
 
@@ -1545,13 +1545,13 @@
 
   <script>
     const REPORT_DATA = {
-      title: "dddjango Plugin Eval Report",
+      title: "dddjango Plugin Response Eval Report",
       run: {
         id: "YYYYMMDD-HHMM-plugin-eval",
         generatedAt: "YYYY-MM-DD HH:MM",
         evaluator: "name or agent id",
         repoRoot: "/Users/hyun/Desktop/dddjango",
-        evalPackPath: "workspace/develop/evals",
+        evalPackPath: "workspace/develop/eval/response",
         evalPackVersion: "working-tree or commit SHA",
         templateVersion: "run-report.html v1",
         pluginVersion: "0.1.10",
@@ -2830,7 +2830,7 @@
     };
 
     const renderReportSummary = () => {
-      document.getElementById("report-title").textContent = REPORT_DATA.title || "Plugin Eval Report";
+      document.getElementById("report-title").textContent = REPORT_DATA.title || "Plugin Response Eval Report";
       const summary = REPORT_DATA.summary || {};
       const verdict = REPORT_DATA.verdict || {};
       const comparisonData = REPORT_DATA.comparison || {};

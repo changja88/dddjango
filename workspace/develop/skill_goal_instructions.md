@@ -18,7 +18,7 @@
 
 작성 중 검토 산출물은 다음 위치에 둔다.
 
-- Source Coverage Crosswalk: `workspace/develop/source-crosswalks/<skill>.md`
+- Source Coverage Crosswalk: `workspace/develop/eval/response/source-crosswalks/<skill>.md`
 
 사용할 source 문서는 다음과 같다.
 
@@ -32,14 +32,14 @@
 - 검증 계획: `workspace/docs/validation-plan.md`
 - source reference corpus: `workspace/reference`
 
-`workspace/develop/rubrics`는 초안 작성 source가 아니다. Rubric은 초안 작성과 source self-review가 끝난 뒤 평가와 개선 단계에서만 사용한다.
+`workspace/develop/eval/response/rubrics`는 초안 작성 source가 아니다. Rubric은 초안 작성과 source self-review가 끝난 뒤 평가와 개선 단계에서만 사용한다.
 
 ## 실행 규칙
 
 - 문서는 반드시 한 skill씩 작성한다.
 - 현재 skill이 completed, blocked, accepted-exception 중 하나가 되기 전에는 다음 skill을 시작하지 않는다.
 - 이미 유효한 runtime 파일이 있으면 다시 쓰기 전에 먼저 리뷰하고, 필요한 부분만 수정한다.
-- 초안 작성 단계에서는 `workspace/develop/rubrics` 파일을 열지 않는다.
+- 초안 작성 단계에서는 `workspace/develop/eval/response/rubrics` 파일을 열지 않는다.
 - 이전 대화나 context에 rubric 내용이 남아 있어도 runtime skill 문서의 작성 재료로 사용하지 않는다.
 - Runtime skill 문서는 평가표가 아니라 실제 에이전트가 작업할 때 읽는 절차 문서로 작성한다.
 - 각 skill이 completed, blocked, accepted-exception 중 하나가 되는 즉시 `workspace/develop/plan.md`를 갱신한다.
@@ -97,7 +97,7 @@ Rubric과 source가 충돌하면 source 문서를 우선한다. 충돌이 실제
 
 ### Source Coverage Crosswalk
 
-Crosswalk는 source reference의 모든 heading과 runtime 작업에 관련된 세부사항을 runtime skill에 어떻게 반영했는지 추적하기 위한 작성 중 산출물이다. 기본 위치는 `workspace/develop/source-crosswalks/<skill>.md`이며, runtime skill 폴더 안에는 두지 않는다.
+Crosswalk는 source reference의 모든 heading과 runtime 작업에 관련된 세부사항을 runtime skill에 어떻게 반영했는지 추적하기 위한 작성 중 산출물이다. 기본 위치는 `workspace/develop/eval/response/source-crosswalks/<skill>.md`이며, runtime skill 폴더 안에는 두지 않는다.
 
 각 skill마다 다음을 남긴다.
 
@@ -301,7 +301,7 @@ Skill 구현 중 가능한 검증:
 - `python3 workspace/scripts/validate_skill_docs.py --phase docs`
 - `python3 workspace/scripts/validate_skill_docs.py --phase generated --skills-dir dddjango/skills`
 - `python3 workspace/scripts/validate_skill_docs.py --phase all --skills-dir dddjango/skills`
-- `git diff --check -- dddjango workspace/develop/plan.md workspace/develop/source-crosswalks`
+- `git diff --check -- dddjango workspace/develop/plan.md workspace/develop/eval/response/source-crosswalks`
 - 필요한 경우 `wc -l dddjango/skills/*/SKILL.md`
 
 설치된 runtime cache를 보정한 경우 `python3 workspace/scripts/validate_skill_docs.py --phase runtime`도 실행한다. Runtime smoke는 완료 게이트가 아니며, 실제 skill folder 생성 후 완료 판단은 `--phase all --skills-dir dddjango/skills` 결과를 우선한다.
