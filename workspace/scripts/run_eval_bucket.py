@@ -501,6 +501,14 @@ def debug_prompt_input(case_id: str, raw_dir: Path, prompt: str, timeout_seconds
     common.write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", debug_result.stderr)
 
 
+def write_skipped_prompt_input(case_id: str, raw_dir: Path) -> None:
+    common.write_text(
+        raw_dir / f"{case_id}-with-dddjango-prompt-input.json",
+        json.dumps({"skipped": True, "reason": "--skip-exec"}, ensure_ascii=False) + "\n",
+    )
+    common.write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", "")
+
+
 def response_text(value: str | bytes | None) -> str:
     if value is None:
         return ""
@@ -570,7 +578,9 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copyfile(case_path, raw_dir / f"{case_id}-public-prompt.md")
         common.write_text(raw_dir / f"{case_id}-operator-prompt.txt", prompt)
         clean_forbidden_prompt_input_artifacts(raw_dir, case_id)
-        if not args.skip_exec and any(variant.name == "with-dddjango" for variant in variants):
+        if args.skip_exec:
+            write_skipped_prompt_input(case_id, raw_dir)
+        else:
             debug_prompt_input(case_id, raw_dir, prompt, args.timeout_seconds)
 
         for variant in variants:

@@ -117,6 +117,8 @@ class RunEvalBucketTests(unittest.TestCase):
         for name in (
             "case-response-one-public-prompt.md",
             "case-response-one-operator-prompt.txt",
+            f"case-response-one-{with_variant}-prompt-input.json",
+            f"case-response-one-{with_variant}-prompt-input.stderr.txt",
             "case-response-one-baseline.txt",
             f"case-response-one-{with_variant}.txt",
             "case-response-one-baseline-isolation.json",
@@ -131,9 +133,55 @@ class RunEvalBucketTests(unittest.TestCase):
         ):
             self.assertTrue((raw / name).is_file(), name)
         self.assertFalse((raw / "case-response-one-baseline-prompt-input.json").exists())
+        self.assertFalse((raw / "case-response-one-baseline-prompt-input.stderr.txt").exists())
+        prompt_input = json.loads(
+            (raw / f"case-response-one-{with_variant}-prompt-input.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(prompt_input, {"skipped": True, "reason": "--skip-exec"})
+        self.assertEqual(
+            (raw / f"case-response-one-{with_variant}-prompt-input.stderr.txt").read_text(
+                encoding="utf-8"
+            ),
+            "",
+        )
         isolation = json.loads((raw / "case-response-one-baseline-isolation.json").read_text(encoding="utf-8"))
         self.assertTrue(isolation["commandUsesIgnoreUserConfig"])
         self.assertTrue(isolation["forbiddenPathsAbsent"])
+
+    def test_baseline_only_still_writes_with_ddjango_prompt_input_debug_artifacts(self) -> None:
+        self.write_case()
+        self.commands = []
+
+        with patch.object(self.runner, "run_command", side_effect=self.fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-baseline-only",
+                    "--case",
+                    "case-response-one",
+                    "--variant",
+                    "baseline",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        raw = self.runner.common.EVAL_ROOT / "response/runs/run-baseline-only/raw"
+        with_variant = self.runner.common.VARIANTS[1]
+        self.assertTrue((raw / f"case-response-one-{with_variant}-prompt-input.json").is_file())
+        self.assertTrue(
+            (raw / f"case-response-one-{with_variant}-prompt-input.stderr.txt").is_file()
+        )
+        self.assertFalse((raw / "case-response-one-baseline-prompt-input.json").exists())
+        self.assertFalse((raw / "case-response-one-baseline-prompt-input.stderr.txt").exists())
+        debug_commands = [
+            command for command, _prompt, _cwd, _timeout_seconds in self.commands
+            if command[:3] == ["codex", "debug", "prompt-input"]
+        ]
+        self.assertEqual(len(debug_commands), 1)
 
     def test_exec_mode_writes_command_exit_stdout_and_stderr_artifacts(self) -> None:
         self.write_case()
