@@ -206,7 +206,17 @@ coverage_tags:
         data = self.renderer.build_report_data("response", "sample-run", run_dir)
 
         self.assertEqual(data["summary"]["total_cases"], 1)
+        self.assertEqual(data["summary"]["total_public_cases"], 2)
+        self.assertEqual(data["summary"]["run_cases"], 1)
+        self.assertEqual(data["summary"]["unrun_cases"], 1)
+        self.assertEqual(data["unrun_case_ids"], ["case-response-not-run"])
         self.assertEqual([case["id"] for case in data["cases"]], ["case-response-order-create"])
+
+        html = self.renderer.render_html(data)
+        self.assertIn("전체 public", html)
+        self.assertIn("이번 실행", html)
+        self.assertIn("미실행", html)
+        self.assertIn("case-response-not-run", html)
 
     def test_missing_artifacts_are_unscored_not_pass(self) -> None:
         run_dir = self.write_case(baseline_response=None, oracle={})

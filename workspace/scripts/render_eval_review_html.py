@@ -370,6 +370,20 @@ def build_summary(cases: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
+def add_run_scope(
+    summary: dict[str, object],
+    *,
+    total_public_cases: int,
+    run_cases: int,
+) -> dict[str, object]:
+    return {
+        "total_public_cases": total_public_cases,
+        "run_cases": run_cases,
+        "unrun_cases": max(total_public_cases - run_cases, 0),
+        **summary,
+    }
+
+
 def reportability(summary: dict[str, object]) -> str:
     if int(summary.get("hard_gate_failures") or 0) > 0:
         return "blocked"
@@ -379,18 +393,26 @@ def reportability(summary: dict[str, object]) -> str:
 
 
 def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, object]:
-    cases = [
-        build_case(bucket, public_case, run_dir)
-        for public_case in public_cases_for_run(bucket, run_dir)
-    ]
+    public_dir = EVAL_ROOT / bucket / "cases/plugin/public"
+    public_cases = sorted(public_dir.glob("case-*.md"))
+    run_public_cases = public_cases_for_run(bucket, run_dir)
+    run_case_ids = {path.stem for path in run_public_cases}
+    cases = [build_case(bucket, public_case, run_dir) for public_case in run_public_cases]
     cases.sort(key=sort_key)
-    summary = build_summary(cases)
+    summary = add_run_scope(
+        build_summary(cases),
+        total_public_cases=len(public_cases),
+        run_cases=len(cases),
+    )
     return {
         "bucket": bucket,
         "run_id": run_id,
         "generated_at": datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds"),
         "reportability": reportability(summary),
         "summary": summary,
+        "unrun_case_ids": [
+            public_case.stem for public_case in public_cases if public_case.stem not in run_case_ids
+        ],
         "cases": cases,
     }
 
@@ -415,8 +437,11 @@ def js_json(data: object) -> str:
 def render_html(data: dict[str, object]) -> str:
     summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
     cases = data.get("cases") if isinstance(data.get("cases"), list) else []
+    unrun_case_ids = data.get("unrun_case_ids") if isinstance(data.get("unrun_case_ids"), list) else []
     summary_keys = (
-        ("total_cases", "전체"),
+        ("total_public_cases", "전체 public"),
+        ("run_cases", "이번 실행"),
+        ("unrun_cases", "미실행"),
         ("pass", "pass"),
         ("partial", "partial"),
         ("fail", "fail"),
@@ -460,6 +485,14 @@ def render_html(data: dict[str, object]) -> str:
         )
 
     rows_html = "\n".join(rows) or """          <tr><td colspan="7" class="empty">No cases found.</td></tr>"""
+    run_scope_note = (
+        f"""      <details class="run-scope-note">
+        <summary>미실행 질문 {escape(str(summary.get('unrun_cases', 0)))}개</summary>
+        <pre>{escape(chr(10).join(str(case_id) for case_id in unrun_case_ids) or '없음')}</pre>
+      </details>"""
+        if int(summary.get("unrun_cases") or 0) > 0
+        else ""
+    )
     report_data = js_json(data)
     title = (
         f"dddjango eval review: {escape(str(data.get('bucket') or 'unknown'))} / "
@@ -629,6 +662,7 @@ def render_html(data: dict[str, object]) -> str:
 {rows_html}
         </tbody>
       </table>
+{run_scope_note}
     </section>
     <section class="panel" aria-labelledby="detail-title">
       <h2 id="detail-title">상세</h2>
