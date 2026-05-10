@@ -96,6 +96,33 @@ class RunEvalBucketTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 7, "event stream\n", "stderr text\n")
         return subprocess.CompletedProcess(command, 0, "", "")
 
+    def init_git_workspace(self, workspace: Path) -> None:
+        workspace.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "init"], cwd=workspace, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ["git", "config", "user.name", "Eval Test"],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "eval-test@example.invalid"],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        (workspace / "README.md").write_text("fixture\n", encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=workspace, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ["git", "commit", "-m", "initial"],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
     def test_skip_exec_writes_required_raw_artifacts_for_both_variants(self) -> None:
         self.write_case()
 
@@ -268,6 +295,112 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue((run_dir / "code/case-code-one/baseline/diff.patch").is_file())
         command = (run_dir / "raw/case-code-one-baseline-command.txt").read_text(encoding="utf-8")
         self.assertIn("-s workspace-write", command)
+
+    def test_capture_code_artifacts_lists_untracked_nested_files_individually(self) -> None:
+        workspace = Path(self.tmp.name) / "code-workspace"
+        run_dir = Path(self.tmp.name) / "run"
+        self.init_git_workspace(workspace)
+        nested_file = workspace / "new_package" / "nested" / "created.py"
+        nested_file.parent.mkdir(parents=True)
+        nested_file.write_text("print('created')\n", encoding="utf-8")
+
+        self.runner.capture_code_artifacts(workspace, run_dir, "case-code-one", "baseline")
+
+        manifest_path = run_dir / "code/case-code-one/baseline/changed-files.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        files = manifest["files"]
+        self.assertEqual([entry["path"] for entry in files], ["new_package/nested/created.py"])
+        copied_file = run_dir / files[0]["artifactPath"]
+        self.assertTrue(copied_file.is_file())
+        self.assertEqual(copied_file.read_text(encoding="utf-8"), "print('created')\n")
+
+    def test_deleted_file_manifest_does_not_require_copied_source_artifact(self) -> None:
+        workspace = Path(self.tmp.name) / "delete-workspace"
+        run_dir = Path(self.tmp.name) / "run-delete"
+        self.init_git_workspace(workspace)
+        tracked_file = workspace / "obsolete.py"
+        tracked_file.write_text("print('remove me')\n", encoding="utf-8")
+        subprocess.run(["git", "add", "."], cwd=workspace, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ["git", "commit", "-m", "add obsolete"],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        tracked_file.unlink()
+
+        self.runner.capture_code_artifacts(workspace, run_dir, "case-code-one", "baseline")
+
+        manifest_path = run_dir / "code/case-code-one/baseline/changed-files.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(len(manifest["files"]), 1)
+        entry = manifest["files"][0]
+        self.assertEqual(entry["path"], "obsolete.py")
+        self.assertEqual(entry["status"], "deleted")
+        self.assertTrue(entry["binary"])
+        self.assertEqual(entry["artifactPath"], "")
+
+    def test_previous_skip_exec_output_does_not_skip_later_execution(self) -> None:
+        self.write_case()
+        skip_result = self.runner.main(
+            [
+                "--bucket",
+                "response",
+                "--run-id",
+                "run-after-skip",
+                "--case",
+                "case-response-one",
+                "--variant",
+                "baseline",
+                "--workspace-root",
+                str(self.workspace_root),
+                "--skip-exec",
+            ]
+        )
+        self.assertEqual(skip_result, 0)
+        self.commands = []
+
+        with patch.object(self.runner, "run_command", side_effect=self.fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-after-skip",
+                    "--case",
+                    "case-response-one",
+                    "--variant",
+                    "baseline",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        exec_commands = [command for command, _prompt, _cwd, _timeout in self.commands if "exec" in command]
+        self.assertEqual(len(exec_commands), 1)
+        raw = self.runner.common.EVAL_ROOT / "response/runs/run-after-skip/raw"
+        self.assertEqual((raw / "case-response-one-baseline-exit.txt").read_text(encoding="utf-8"), "7\n")
+
+    def test_unsafe_run_ids_are_rejected(self) -> None:
+        self.write_case()
+        for run_id in ("../escape", "nested/run", "/tmp/escape"):
+            with self.subTest(run_id=run_id):
+                with self.assertRaisesRegex(SystemExit, "unsafe run id"):
+                    self.runner.main(
+                        [
+                            "--bucket",
+                            "response",
+                            "--run-id",
+                            run_id,
+                            "--case",
+                            "case-response-one",
+                            "--workspace-root",
+                            str(self.workspace_root),
+                            "--skip-exec",
+                        ]
+                    )
 
 
 if __name__ == "__main__":

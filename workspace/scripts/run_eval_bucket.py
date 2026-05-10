@@ -106,6 +106,32 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def validate_run_id(run_id: str) -> str:
+    path = Path(run_id)
+    if (
+        not run_id
+        or path.is_absolute()
+        or len(path.parts) != 1
+        or run_id in {".", ".."}
+        or ".." in run_id
+        or "/" in run_id
+        or "\\" in run_id
+    ):
+        raise SystemExit(f"unsafe run id: {run_id}")
+    return run_id
+
+
+def resolved_under(root: Path, *parts: str | Path, description: str) -> Path:
+    root_resolved = root.resolve()
+    path = root.joinpath(*parts)
+    resolved = path.resolve(strict=False)
+    try:
+        resolved.relative_to(root_resolved)
+    except ValueError as exc:
+        raise SystemExit(f"{description} escapes intended root: {path}") from exc
+    return path
+
+
 def now_text() -> str:
     return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d-%H%M")
 
@@ -190,7 +216,13 @@ def prepare_isolated_workspace(
     case_id: str,
     variant: Variant,
 ) -> Path:
-    workspace = workspace_root / run_id / case_id / variant.name
+    workspace = resolved_under(
+        workspace_root,
+        run_id,
+        case_id,
+        variant.name,
+        description="workspace path",
+    )
     if workspace.exists():
         shutil.rmtree(workspace)
     ignore = shutil.ignore_patterns(
@@ -206,7 +238,7 @@ def prepare_isolated_workspace(
     if variant.isolated_baseline:
         excluded.extend(BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE)
     for rel_path in excluded:
-        remove_path(workspace / rel_path)
+        remove_path(resolved_under(workspace, rel_path, description="workspace cleanup path"))
     initialize_git_snapshot(workspace)
     return workspace
 
@@ -351,7 +383,12 @@ def safe_relative_path(path_text: str) -> Path:
 
 
 def porcelain_status(workspace: Path) -> list[tuple[str, str]]:
-    result = run_command(["git", "status", "--porcelain=v1"], prompt=None, cwd=workspace, timeout_seconds=120)
+    result = run_command(
+        ["git", "status", "--porcelain=v1", "-uall"],
+        prompt=None,
+        cwd=workspace,
+        timeout_seconds=120,
+    )
     entries: list[tuple[str, str]] = []
     for line in result.stdout.splitlines():
         if not line:
@@ -402,13 +439,15 @@ def capture_code_artifacts(workspace: Path, run_dir: Path, case_id: str, variant
         rel_path = safe_relative_path(path_text)
         source_path = workspace / rel_path
         status = status_label(status_code)
-        binary = source_path.exists() and is_binary(source_path)
+        is_deleted = status == "deleted"
+        binary = True if is_deleted else source_path.exists() and is_binary(source_path)
         artifact_path = Path("code") / case_id / variant / "files" / rel_path
+        artifact_path_text = "" if is_deleted else artifact_path.as_posix()
         entry: dict[str, object] = {
             "path": rel_path.as_posix(),
             "status": status,
             "language": language_for_path(rel_path),
-            "artifactPath": artifact_path.as_posix(),
+            "artifactPath": artifact_path_text,
             "lineCount": 0,
             "byteCount": 0,
             "binary": binary,
@@ -509,6 +548,21 @@ def write_skipped_prompt_input(case_id: str, raw_dir: Path) -> None:
     common.write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", "")
 
 
+def should_skip_existing_output(
+    *,
+    output_path: Path,
+    exit_path: Path,
+    current_skip_exec: bool,
+    rerun: bool,
+) -> bool:
+    if rerun or not output_path.exists() or output_path.stat().st_size == 0:
+        return False
+    previous_exit = common.read_text(exit_path).strip()
+    if not current_skip_exec and previous_exit == "skipped":
+        return False
+    return True
+
+
 def response_text(value: str | bytes | None) -> str:
     if value is None:
         return ""
@@ -557,14 +611,14 @@ def workspace_for_case_variant(
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    run_id = args.run_id or f"{now_text()}-{args.bucket}-eval"
+    run_id = validate_run_id(args.run_id or f"{now_text()}-{args.bucket}-eval")
     bucket = common.bucket_paths(args.bucket)
     cases = common.selected_case_paths(args.bucket, args.case)
     variants = selected_variants(args.variant)
     validate_answer_oracles(cases, bucket.answer_dir, args.bucket)
     code_metadata = load_code_capture_metadata(required=args.bucket == "code")
 
-    run_dir = bucket.runs_dir / run_id
+    run_dir = resolved_under(bucket.runs_dir, run_id, description="run path")
     raw_dir = run_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     common.write_text(run_dir / "RUN_ID.txt", run_id + "\n")
@@ -590,7 +644,12 @@ def main(argv: list[str] | None = None) -> int:
             command_path = raw_dir / f"{case_id}-{variant.name}-command.txt"
             exit_path = raw_dir / f"{case_id}-{variant.name}-exit.txt"
 
-            if output_path.exists() and output_path.stat().st_size > 0 and not args.rerun:
+            if should_skip_existing_output(
+                output_path=output_path,
+                exit_path=exit_path,
+                current_skip_exec=args.skip_exec,
+                rerun=args.rerun,
+            ):
                 print(f"skip existing {case_id} {variant.name}")
                 continue
 
