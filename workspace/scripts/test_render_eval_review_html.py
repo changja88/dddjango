@@ -650,6 +650,21 @@ coverage_tags:
         self.assertNotIn("id=\"case-detail\"", html)
         self.assertNotIn("scrollIntoView", html)
 
+    def test_detail_dialog_uses_large_readable_layout(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertIn("width: min(1760px, calc(100vw - 28px));", html)
+        self.assertIn("max-height: calc(100vh - 28px);", html)
+        self.assertIn(".dialog-body { padding: 24px; font-size: 16px; line-height: 1.55; }", html)
+        self.assertIn(".dialog-header h2 { margin: 0 0 6px; font-size: 22px; }", html)
+        self.assertIn(".dialog-meta { color: var(--muted); font-size: 14px; }", html)
+        self.assertIn(".variant h3 { margin: 0 0 10px; font-size: 18px; }", html)
+        self.assertIn("font-size: 14px;", html)
+        self.assertIn("line-height: 1.55;", html)
+
     def test_case_table_uses_compact_preview_and_visible_column_boundaries(self) -> None:
         run_dir = self.write_case()
         data = self.renderer.build_report_data("response", "sample-run", run_dir)

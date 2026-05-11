@@ -891,8 +891,8 @@ def render_html(data: dict[str, object]) -> str:
     }}
     .detail-button:hover {{ background: var(--accent); color: #fff; }}
     dialog {{
-      width: min(1180px, calc(100vw - 48px));
-      max-height: calc(100vh - 48px);
+      width: min(1760px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
       border: 0;
       border-radius: 8px;
       padding: 0;
@@ -900,7 +900,7 @@ def render_html(data: dict[str, object]) -> str:
       box-shadow: 0 24px 80px rgba(29, 36, 51, 0.28);
     }}
     dialog::backdrop {{ background: rgba(29, 36, 51, 0.45); }}
-    .dialog-shell {{ max-height: calc(100vh - 48px); overflow: auto; background: #fff; }}
+    .dialog-shell {{ max-height: calc(100vh - 28px); overflow: auto; background: #fff; }}
     .dialog-header {{
       position: sticky;
       top: 0;
@@ -909,28 +909,28 @@ def render_html(data: dict[str, object]) -> str:
       justify-content: space-between;
       align-items: flex-start;
       gap: 16px;
-      padding: 16px 18px;
+      padding: 20px 24px;
       border-bottom: 1px solid var(--line);
       background: #fff;
     }}
-    .dialog-header h2 {{ margin: 0 0 4px; }}
-    .dialog-meta {{ color: var(--muted); font-size: 12px; }}
+    .dialog-header h2 {{ margin: 0 0 6px; font-size: 22px; }}
+    .dialog-meta {{ color: var(--muted); font-size: 14px; }}
     .dialog-close {{
       border: 1px solid var(--line);
       border-radius: 6px;
       background: #fff;
       color: var(--text);
       cursor: pointer;
-      font-size: 18px;
+      font-size: 22px;
       line-height: 1;
-      min-width: 34px;
-      min-height: 34px;
+      min-width: 40px;
+      min-height: 40px;
     }}
     .dialog-close:hover {{ border-color: var(--accent); color: var(--accent); }}
-    .dialog-body {{ padding: 18px; }}
+    .dialog-body {{ padding: 24px; font-size: 16px; line-height: 1.55; }}
     .detail-question {{
       margin: 0 0 14px;
-      padding: 12px;
+      padding: 16px;
       border: 1px solid var(--line);
       border-radius: 6px;
       background: #fbfcfe;
@@ -944,16 +944,16 @@ def render_html(data: dict[str, object]) -> str:
     .variant {{
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 14px;
+      padding: 18px;
       min-width: 0;
     }}
-    .variant h3 {{ margin: 0 0 8px; font-size: 16px; }}
-    .score-line {{ margin-bottom: 12px; color: var(--muted); }}
+    .variant h3 {{ margin: 0 0 10px; font-size: 18px; }}
+    .score-line {{ margin-bottom: 14px; color: var(--muted); font-size: 15px; }}
     .section-label {{ margin: 14px 0 6px; font-weight: 700; }}
     pre {{
       margin: 0;
-      padding: 12px;
-      max-height: 420px;
+      padding: 14px;
+      max-height: 56vh;
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-word;
@@ -961,7 +961,8 @@ def render_html(data: dict[str, object]) -> str:
       border-radius: 6px;
       background: #f8fafc;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 12px;
+      font-size: 14px;
+      line-height: 1.55;
     }}
     details {{ margin-top: 14px; }}
     summary {{ cursor: pointer; font-weight: 700; }}
@@ -979,8 +980,10 @@ def render_html(data: dict[str, object]) -> str:
         min-width: max-content;
       }}
       .bucket-tab {{ white-space: nowrap; }}
-      dialog {{ width: calc(100vw - 20px); max-height: calc(100vh - 20px); }}
-      .dialog-shell {{ max-height: calc(100vh - 20px); }}
+      dialog {{ width: calc(100vw - 12px); max-height: calc(100vh - 12px); }}
+      .dialog-shell {{ max-height: calc(100vh - 12px); }}
+      .dialog-header {{ padding: 16px; }}
+      .dialog-body {{ padding: 16px; }}
       .detail-grid {{ grid-template-columns: 1fr; }}
       table {{ table-layout: auto; }}
       th, td {{ padding: 8px; }}
