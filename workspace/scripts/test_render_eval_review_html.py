@@ -511,8 +511,8 @@ coverage_tags:
 
         self.assertIn("평가 요약", html)
         self.assertIn("평가 질문", html)
-        self.assertIn("baseline 점수", html)
-        self.assertIn("with-dddjango 점수", html)
+        self.assertIn("<span>baseline</span><span>점수</span>", html)
+        self.assertIn("<span>with-dddjango</span><span>점수</span>", html)
         self.assertIn("Baseline", html)
         self.assertIn("with-dddjango", html)
         self.assertIn("Django Ninja 주문 생성 API를 설계하고 구현 방향을 제시하라.", html)
@@ -536,6 +536,30 @@ coverage_tags:
             "핵심 목표는 평가 리뷰 화면 상단에서 사용자가 이 bucket의 판단 범위를 바로 이해하는 것이다.",
             html,
         )
+
+    def test_score_columns_use_stacked_headers_and_reduced_width(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertIn('<col class="baseline-score-col" style="width: 8%">', html)
+        self.assertIn('<col class="with-score-col" style="width: 10%">', html)
+        self.assertIn('<th class="score-header"><span class="score-heading"><span>baseline</span><span>점수</span></span></th>', html)
+        self.assertIn('<th class="score-header"><span class="score-heading"><span>with-dddjango</span><span>점수</span></span></th>', html)
+        self.assertNotIn("<th>baseline 점수</th>", html)
+        self.assertNotIn("<th>with-dddjango 점수</th>", html)
+
+    def test_workflow_score_columns_stay_stacked_with_trace_columns(self) -> None:
+        run_dir = self.write_case(bucket="workflow", case_id="case-workflow-live-delegation")
+        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertIn('<col class="baseline-score-col" style="width: 7%">', html)
+        self.assertIn('<col class="with-score-col" style="width: 9%">', html)
+        self.assertIn("<th>subagent trace</th>", html)
+        self.assertIn('<th class="score-header"><span class="score-heading"><span>with-dddjango</span><span>점수</span></span></th>', html)
 
     def test_case_status_tracks_with_dddjango_verdict_not_baseline_failure(self) -> None:
         run_dir = self.write_case(

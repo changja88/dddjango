@@ -564,20 +564,20 @@ def bucket_tab_html(tab: dict[str, object]) -> str:
 
 def table_colgroup_html(show_trace_columns: bool) -> str:
     if show_trace_columns:
-        return """          <col style="width: 29%">
+        return """          <col style="width: 34%">
           <col style="width: 7%">
-          <col style="width: 9%">
-          <col style="width: 12%">
+          <col class="baseline-score-col" style="width: 7%">
+          <col class="with-score-col" style="width: 9%">
           <col style="width: 6%">
           <col style="width: 10%">
           <col style="width: 8%">
           <col style="width: 8%">
           <col class="status-col" style="width: 6%">
           <col class="action-col" style="width: 5%">"""
-    return """          <col style="width: 38%">
+    return """          <col style="width: 47%">
           <col style="width: 9%">
-          <col style="width: 12%">
-          <col style="width: 15%">
+          <col class="baseline-score-col" style="width: 8%">
+          <col class="with-score-col" style="width: 10%">
           <col style="width: 10%">
           <col class="status-col" style="width: 8%">
           <col class="action-col" style="width: 8%">"""
@@ -842,6 +842,15 @@ def render_html(data: dict[str, object]) -> str:
       -webkit-line-clamp: 3;
     }}
     .score-cell, .delta-cell, .action-cell {{ text-align: center; }}
+    .score-header {{ text-align: center; }}
+    .score-heading {{
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      line-height: 1.15;
+      white-space: normal;
+    }}
     .status-cell {{ text-align: center; white-space: nowrap; }}
     .action-cell {{ white-space: nowrap; }}
     .status-pill {{
@@ -1013,8 +1022,8 @@ def render_html(data: dict[str, object]) -> str:
           <tr>
             <th>평가 질문</th>
             <th>bucket</th>
-            <th>baseline 점수</th>
-            <th>with-dddjango 점수</th>
+            <th class="score-header"><span class="score-heading"><span>baseline</span><span>점수</span></span></th>
+            <th class="score-header"><span class="score-heading"><span>with-dddjango</span><span>점수</span></span></th>
             <th>delta</th>
 {table_trace_header_html(show_trace_columns).rstrip()}
             <th>with-dddjango 판정</th>
