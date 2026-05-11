@@ -477,12 +477,36 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
         "run_id": run_id,
         "generated_at": datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds"),
         "reportability": reportability(summary),
+        "bucket_tabs": build_bucket_tabs(bucket, run_id),
         "summary": summary,
         "unrun_case_ids": [
             public_case.stem for public_case in public_cases if public_case.stem not in run_case_ids
         ],
         "cases": cases,
     }
+
+
+def bucket_report_href(current_bucket: str, target_bucket: str, run_id: str) -> str:
+    if target_bucket == current_bucket:
+        return "report.html"
+    return f"../../../../{target_bucket}/runs/{run_id}/analysis/report.html"
+
+
+def build_bucket_tabs(current_bucket: str, run_id: str) -> list[dict[str, object]]:
+    tabs: list[dict[str, object]] = []
+    for bucket in BUCKETS:
+        report_path = EVAL_ROOT / bucket / "runs" / run_id / "analysis/report.html"
+        is_current = bucket == current_bucket
+        tabs.append(
+            {
+                "bucket": bucket,
+                "label": bucket,
+                "href": bucket_report_href(current_bucket, bucket, run_id),
+                "current": is_current,
+                "exists": is_current or report_path.is_file(),
+            }
+        )
+    return tabs
 
 
 def status_class(value: object) -> str:
@@ -502,10 +526,22 @@ def js_json(data: object) -> str:
     return encoded.replace("\\u003c\\/script\\u003e", "<\\/script>")
 
 
+def bucket_tab_html(tab: dict[str, object]) -> str:
+    label = escape(str(tab.get("label") or tab.get("bucket") or "unknown"))
+    if tab.get("exists") is not True:
+        return f"""          <span class="bucket-tab is-disabled">{label}</span>"""
+
+    current_class = " is-current" if tab.get("current") is True else ""
+    current_attr = ' aria-current="page"' if tab.get("current") is True else ""
+    href = escape(str(tab.get("href") or "#"), quote=True)
+    return f"""          <a class="bucket-tab{current_class}" href="{href}"{current_attr}>{label}</a>"""
+
+
 def render_html(data: dict[str, object]) -> str:
     summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
     cases = data.get("cases") if isinstance(data.get("cases"), list) else []
     unrun_case_ids = data.get("unrun_case_ids") if isinstance(data.get("unrun_case_ids"), list) else []
+    bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
     summary_keys = (
         ("total_public_cases", "전체 public"),
         ("run_cases", "이번 실행"),
@@ -520,6 +556,9 @@ def render_html(data: dict[str, object]) -> str:
         ("delta", "delta"),
         ("hard_gate_failures", "hard gate failures"),
         ("missing_or_weak_evidence", "missing/weak evidence"),
+    )
+    bucket_tabs_html = "\n".join(
+        bucket_tab_html(tab if isinstance(tab, dict) else {}) for tab in bucket_tabs
     )
     summary_cards = "\n".join(
         f"""        <div class="metric {status_class(key) if key in {'pass', 'partial', 'fail', 'blocked', 'unscored'} else ''}">
@@ -600,10 +639,56 @@ def render_html(data: dict[str, object]) -> str:
       color: var(--text);
       font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }}
-    main {{ max-width: 1320px; margin: 0 auto; padding: 24px; }}
+    main {{ max-width: 1500px; margin: 0 auto; padding: 24px; }}
     h1 {{ margin: 0 0 6px; font-size: 24px; letter-spacing: 0; }}
     h2 {{ margin: 0 0 14px; font-size: 18px; letter-spacing: 0; }}
     .meta {{ margin: 0 0 20px; color: var(--muted); }}
+    .report-shell {{
+      display: grid;
+      grid-template-columns: 168px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }}
+    .report-content {{ min-width: 0; }}
+    .bucket-nav {{
+      position: sticky;
+      top: 16px;
+      padding: 4px 0;
+    }}
+    .bucket-nav-title {{
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .bucket-tabs {{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }}
+    .bucket-tab {{
+      display: flex;
+      align-items: center;
+      min-height: 36px;
+      border-left: 3px solid transparent;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+    }}
+    .bucket-tab:hover {{ background: #eef3fa; }}
+    .bucket-tab.is-current {{
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }}
+    .bucket-tab.is-disabled {{
+      color: var(--muted);
+      cursor: not-allowed;
+      opacity: 0.55;
+    }}
+    .bucket-tab.is-disabled:hover {{ background: transparent; }}
     .panel {{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -764,6 +849,17 @@ def render_html(data: dict[str, object]) -> str:
     .empty {{ color: var(--muted); text-align: center; }}
     @media (max-width: 900px) {{
       main {{ padding: 14px; }}
+      .report-shell {{ display: block; }}
+      .bucket-nav {{
+        position: static;
+        margin-bottom: 14px;
+        overflow-x: auto;
+      }}
+      .bucket-tabs {{
+        flex-direction: row;
+        min-width: max-content;
+      }}
+      .bucket-tab {{ white-space: nowrap; }}
       dialog {{ width: calc(100vw - 20px); max-height: calc(100vh - 20px); }}
       .dialog-shell {{ max-height: calc(100vh - 20px); }}
       .detail-grid {{ grid-template-columns: 1fr; }}
@@ -774,6 +870,14 @@ def render_html(data: dict[str, object]) -> str:
 </head>
 <body>
   <main>
+    <div class="report-shell">
+      <aside class="bucket-nav" aria-label="평가 카테고리">
+        <div class="bucket-nav-title">평가 카테고리</div>
+        <nav class="bucket-tabs">
+{bucket_tabs_html}
+        </nav>
+      </aside>
+      <div class="report-content">
     <header>
       <h1>평가 리뷰</h1>
       <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
@@ -821,6 +925,8 @@ def render_html(data: dict[str, object]) -> str:
       </div>
 {run_scope_note}
     </section>
+      </div>
+    </div>
   </main>
   <dialog id="case-dialog" aria-labelledby="dialog-title">
     <div class="dialog-shell">

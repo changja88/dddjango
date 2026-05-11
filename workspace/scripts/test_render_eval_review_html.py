@@ -555,6 +555,28 @@ coverage_tags:
         self.assertIn("-webkit-line-clamp: 3", html)
         self.assertNotIn("selected", html)
 
+    def test_report_includes_left_bucket_tabs_for_same_run_id(self) -> None:
+        run_dir = self.write_case()
+        code_report = (
+            self.renderer.EVAL_ROOT
+            / "code/runs/sample-run/analysis/report.html"
+        )
+        code_report.parent.mkdir(parents=True, exist_ok=True)
+        code_report.write_text("<!doctype html>\n", encoding="utf-8")
+
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        html = self.renderer.render_html(data)
+
+        self.assertIn("class=\"report-shell\"", html)
+        self.assertIn("aria-label=\"평가 카테고리\"", html)
+        self.assertIn("aria-current=\"page\">response</a>", html)
+        self.assertIn(
+            "href=\"../../../../code/runs/sample-run/analysis/report.html\"",
+            html,
+        )
+        self.assertIn(">code</a>", html)
+        self.assertIn("class=\"bucket-tab is-disabled\">plugin</span>", html)
+
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:
         run_dir = self.write_case()
         public_path = (
