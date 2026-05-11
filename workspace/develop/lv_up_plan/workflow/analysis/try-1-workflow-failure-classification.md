@@ -1,6 +1,7 @@
 # Workflow 실패 원인 분류
 
 작성일: 2026-05-11
+시도: `try-1`
 기준 run: `workspace/develop/eval/workflow/runs/20260511-0413-initial-full`
 기준 문서: `workspace/develop/lv_up_plan/plan_guide.md`
 
@@ -123,10 +124,11 @@ python3 -B workspace/scripts/run_initial_eval.py \
 
 ## 6. 커밋 계획
 
-이번 문서화 커밋에는 다음만 포함한다.
+try-1 기록 커밋에는 다음만 포함한다.
 
 - `workspace/develop/lv_up_plan/plan_guide.md`
-- `workspace/develop/lv_up_plan/workflow/분석/workflow-failure-classification.md`
+- `workspace/develop/lv_up_plan/workflow/analysis/try-1-workflow-failure-classification.md`
+- `workspace/develop/lv_up_plan/workflow/plan/try-1-direct-answer-mode-plan.md`
 
 다음 구현 커밋에는 다음 후보만 포함한다.
 

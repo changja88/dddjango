@@ -27,6 +27,11 @@
     - skill/plugin/source/eval case 수정만 커밋
     - runs/, report html, raw output 같은 개발 산출물은 커밋하지 않음
 
+7. 시도별 기록
+    - `analysis/`, `plan/` 아래 새 문서는 `try-n-<short-topic>.md` 형식으로 기록한다.
+    - 같은 실패 family를 다시 시도하면 `try-2`, `try-3`처럼 번호를 올린다.
+    - `try-n`의 analysis와 plan은 같은 번호를 공유한다.
+
   1. workflow: subagent 책임 분리, 실제 실행 claim, fallback이 핵심이라 dddjango의 차별점에 직접 연결됨
   2. runtime / plugin: with-dddjango가 제대로 노출되고 baseline과 격리되는지 확인
   3. source: reference basis가 충분한지 확인
