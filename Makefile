@@ -28,8 +28,8 @@ eval-all:
 			--timeout-seconds "$(TIMEOUT_SECONDS)" \
 			$(EXTRA_ARGS)
 
-# 특정 평가 항목(bucket) 하나만 실행한다.
-# 사용: make eval-one BUCKET=workflow
+# 특정 평가 항목(bucket) 하나를 실행한다. JOBS는 bucket 내부 case 병렬 수다.
+# 사용: make eval-one BUCKET=workflow JOBS=4
 # 단일 case만 다시 실행: make eval-one BUCKET=workflow CASE=case-workflow-tiny-restraint EXTRA_ARGS=--rerun
 .PHONY: eval-one
 eval-one:
@@ -41,6 +41,7 @@ eval-one:
 		--evaluator-model "$(EVALUATOR_MODEL)" \
 		--evaluator-reasoning "$(EVALUATOR_REASONING)" \
 		--timeout-seconds "$(TIMEOUT_SECONDS)" \
+		--case-jobs "$(JOBS)" \
 		$(CASE_ARG) $(EXTRA_ARGS)
 
 # 이전 이름 호환용 alias. 새 명령은 eval-all / eval-one을 사용한다.

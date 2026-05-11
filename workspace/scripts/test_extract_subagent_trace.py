@@ -57,6 +57,34 @@ class ExtractSubagentTraceTests(unittest.TestCase):
         self.assertEqual(self.extractor.detect_source_kind(transcript_path), "stdout-transcript")
         self.assertEqual(self.extractor.detect_source_kind(self.raw / "missing.jsonl"), "unavailable")
 
+    def test_reasoning_text_mentioning_spawn_agent_is_not_structured_event(self) -> None:
+        response_path, event_path = self.write_variant(
+            response="실제 subagent 실행이나 파일 수정은 하지 않았습니다.\n",
+            events=json.dumps(
+                {
+                    "type": "item.completed",
+                    "item": {
+                        "type": "reasoning",
+                        "text": "I considered whether to call spawn_agent but decided not to.",
+                    },
+                }
+            )
+            + "\n",
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["sourceKind"], "stdout-transcript")
+        self.assertEqual(summary["spawnEventCount"], 0)
+        self.assertEqual(summary["resultEventCount"], 0)
+        self.assertEqual(summary["traceStatus"], "fallback-stated")
+
     def test_hypothetical_subagent_sentence_is_not_actual_claim(self) -> None:
         response_path, event_path = self.write_variant(
             response="실제 subagent를 사용했다면 trace를 남겨야 합니다.\n"
@@ -128,6 +156,30 @@ class ExtractSubagentTraceTests(unittest.TestCase):
         self.assertEqual(summary["explicitActualClaims"], [])
         self.assertEqual(summary["traceStatus"], "no-trace")
 
+    def test_planned_role_table_with_transaction_is_not_actual_claim(self) -> None:
+        response_path, event_path = self.write_variant(
+            response=(
+                "승인해주면 실제 subagent 실행은 아래 역할로 나누겠습니다.\n\n"
+                "| 역할 | 왜 필요한가 |\n"
+                "|---|---|\n"
+                "| Django Agent | ORM/service 구현 위치, `transaction.atomic`, `on_commit`, "
+                "외부 결제 호출 타이밍 검토 |\n"
+                "\n이 역할 분해로 실제 subagent 검토를 실행해도 될까요?\n"
+            )
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["explicitActualClaims"], [])
+        self.assertEqual(summary["traceStatus"], "no-trace")
+        self.assertIn("Django Agent", summary["rolesMentioned"])
+
     def test_stderr_text_is_never_used_for_claims_or_roles(self) -> None:
         response_path, event_path = self.write_variant(response="최종 응답입니다.\n")
         stderr_path = self.raw / "case-workflow-one-with-dddjango.stderr.txt"
@@ -168,7 +220,99 @@ class ExtractSubagentTraceTests(unittest.TestCase):
         self.assertEqual(summary["traceCaptureReliable"], True)
         self.assertEqual(summary["spawnEventCount"], 1)
         self.assertEqual(summary["waitEventCount"], 1)
+        self.assertEqual(summary["resultEventCount"], 1)
         self.assertEqual(summary["traceStatus"], "actual-trace")
+
+    def test_started_and_completed_events_for_same_tool_call_count_once(self) -> None:
+        response_path, event_path = self.write_variant(
+            response="Domain Agent가 검토 완료했습니다.\n",
+            events="\n".join(
+                [
+                    json.dumps(
+                        {
+                            "type": "item.started",
+                            "item": {"id": "item_1", "type": "collab_tool_call", "tool": "spawn_agent"},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {"id": "item_1", "type": "collab_tool_call", "tool": "spawn_agent"},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "item.started",
+                            "item": {"id": "item_2", "type": "collab_tool_call", "tool": "wait_agent"},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {"id": "item_2", "type": "collab_tool_call", "tool": "wait_agent"},
+                        }
+                    ),
+                ]
+            )
+            + "\n",
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["spawnEventCount"], 1)
+        self.assertEqual(summary["waitEventCount"], 1)
+        self.assertEqual(summary["resultEventCount"], 1)
+        self.assertEqual(summary["traceStatus"], "actual-trace")
+
+    def test_close_agent_counts_as_result_collection(self) -> None:
+        response_path, event_path = self.write_variant(
+            response="Domain Agent가 검토 완료했습니다.\n",
+            events="\n".join(
+                [
+                    json.dumps({"type": "tool_call", "name": "spawn_agent", "role": "Domain Agent"}),
+                    json.dumps({"type": "tool_call", "name": "close_agent", "role": "Domain Agent"}),
+                ]
+            )
+            + "\n",
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["spawnEventCount"], 1)
+        self.assertEqual(summary["waitEventCount"], 0)
+        self.assertEqual(summary["resultEventCount"], 1)
+        self.assertEqual(summary["traceStatus"], "actual-trace")
+
+    def test_spawn_without_result_collection_is_incomplete_trace(self) -> None:
+        response_path, event_path = self.write_variant(
+            response="Domain Agent가 검토 완료했습니다.\n",
+            events=json.dumps({"type": "tool_call", "name": "spawn_agent", "role": "Domain Agent"})
+            + "\n",
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["spawnEventCount"], 1)
+        self.assertEqual(summary["resultEventCount"], 0)
+        self.assertEqual(summary["traceStatus"], "actual-trace-incomplete")
 
     def test_skipped_trace_status(self) -> None:
         response_path, event_path = self.write_variant(response="NOT RUN: --skip-exec was used.\n")

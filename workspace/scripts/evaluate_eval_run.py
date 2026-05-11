@@ -241,6 +241,9 @@ def build_prompt(
                 "Use this only as supporting evidence about execution trace availability and "
                 "claim/evidence consistency. Do not use rolesMentioned alone as scoring proof; "
                 "responsibility split quality must be judged from the final response and answer oracle.",
+                "If the workflow oracle includes workflow_execution_expectation, use it to judge "
+                "whether subagents were required, forbidden, consent-gated, or optional, and whether "
+                "responsibility assignment was concrete enough.",
                 "",
             ]
         )

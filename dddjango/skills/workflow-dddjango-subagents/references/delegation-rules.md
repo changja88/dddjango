@@ -40,6 +40,8 @@ Use real subagents only when they are actually available, the user has authorize
 - validation expectations.
 
 Do not claim a subagent review, implementation, or validation happened unless it actually ran.
+After spawning real subagents, collect each result with `wait_agent` or `close_agent` before integrating it or reporting it as complete. A spawned or pending subagent is not a completed review.
+Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report blocked or partial execution and do not integrate missing subagent results. Do not write `wait_agent`, `close_agent`, or role result summaries unless those calls actually completed.
 
 ## Sequential Fallback
 

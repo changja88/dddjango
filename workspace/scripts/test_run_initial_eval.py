@@ -195,6 +195,58 @@ class RunInitialEvalTests(unittest.TestCase):
         self.assertIn("--reasoning", evaluator)
         self.assertIn("medium", evaluator)
 
+    def test_case_jobs_runs_case_pipelines_in_parallel_then_full_validate_and_render(self) -> None:
+        cases = [
+            Path("/eval/response/cases/plugin/public/case-response-one.md"),
+            Path("/eval/response/cases/plugin/public/case-response-two.md"),
+        ]
+        with patch.object(self.orchestrator.common, "selected_case_paths", return_value=cases):
+            with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
+                result = self.orchestrator.main(
+                    [
+                        "--bucket",
+                        "response",
+                        "--run-id",
+                        "run-one",
+                        "--case-jobs",
+                        "2",
+                    ]
+                )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(self.script_names().count("run_eval_bucket.py"), 2)
+        self.assertEqual(self.script_names().count("evaluate_eval_run.py"), 2)
+        self.assertEqual(self.script_names().count("validate_eval_run.py"), 3)
+        self.assertEqual(self.script_names().count("render_eval_review_html.py"), 1)
+
+        case_commands = [
+            command
+            for command in self.commands
+            if Path(command[1]).name
+            in {"run_eval_bucket.py", "evaluate_eval_run.py", "validate_eval_run.py"}
+            and "--case" in command
+        ]
+        rendered = [
+            command for command in self.commands if Path(command[1]).name == "render_eval_review_html.py"
+        ]
+        full_validators = [
+            command
+            for command in self.commands
+            if Path(command[1]).name == "validate_eval_run.py" and "--case" not in command
+        ]
+        seen_cases = {
+            command[command.index("--case") + 1]
+            for command in case_commands
+        }
+        self.assertEqual(seen_cases, {"case-response-one", "case-response-two"})
+        self.assertEqual(len(full_validators), 1)
+        self.assertEqual(len(rendered), 1)
+        self.assertNotIn("--case", rendered[0])
+
+    def test_case_jobs_must_be_positive(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "case-jobs must be positive"):
+            self.orchestrator.main(["--bucket", "response", "--run-id", "run-one", "--case-jobs", "0"])
+
     def test_keep_going_continues_later_buckets_but_returns_nonzero(self) -> None:
         def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
             self.commands.append(command)

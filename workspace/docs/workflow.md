@@ -108,7 +108,7 @@ subagent를 사용할 수 없거나 사용하지 않는 경우에도 역할 순�
 - Implementation mapping: domain logic이 router/view에 들어가지 않고 Django service/selector/model 경계와 맞는지 확인한다.
 - Tests and verification: domain rule, API contract, migration risk에 대한 테스트 또는 실행하지 못한 검증 명령을 명확히 남긴다.
 - Role handoff closure: 각 역할의 `Risks`와 `Required Follow-up`이 통합 결정에 반영됐는지 확인한다.
-- Cache sync report: workspace 밖 plugin cache를 수정했다면 cache 경로와 대응되는 workspace canonical source 위치를 함께 보고한다.
+- Cache sync report: workspace 밖 plugin cache를 수정했다면 cache 경로, 대응되는 workspace canonical source 위치, 검증 실행/미실행 상태를 함께 보고한다. `workflow-dddjango-subagents` role map 변경은 `workspace/docs/workflow.md`의 역할명, 책임 범위, related skills가 runtime/cache에서 축소되지 않았는지 확인한다.
 
 ## 8. Reference Loading
 

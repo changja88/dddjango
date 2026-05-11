@@ -49,17 +49,17 @@ For review-focused work, findings must lead, ordered by severity with evidence. 
 
 For risky writes, `## Integration Checklist` must include a visible `Risky Write Consistency Block` section or table with transaction owner, locking strategy, uniqueness or idempotency storage, `Idempotency-Key` API behavior, external side-effect timing, isolation/retry decision, and integration or concurrency test criteria. If a decision is outside the current role, assign it to the responsible role rather than omitting it.
 
-If actual subagents are used, list their role, task, and result. If subagents are not used, say the workflow was executed sequentially or planned only; never imply a review or implementation happened in a subagent when it did not. Include a Cache sync report when plugin cache outside the workspace was edited, naming the cache path and workspace canonical source.
+If actual subagents are used, list their role, task, result, and result collection method. Result collection requires `wait_agent` or `close_agent`; do not report a subagent's review, validation, or implementation as complete while it is only spawned, pending, or in progress. Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report that as blocked and do not integrate or summarize missing subagent results. Do not write `wait_agent`, `close_agent`, or result summaries in the final answer unless those calls actually completed. If subagents are not used, say the workflow was executed sequentially or planned only; never imply a review or implementation happened in a subagent when it did not. Include a Cache sync report when plugin cache outside the workspace was edited, naming the cache path and workspace canonical source. For workflow role-map changes, explicitly compare the runtime skill/cache against `workspace/docs/workflow.md` and confirm role responsibilities and related skills did not shrink.
 
 ## Runtime Rules
 
 - Start by deciding whether the work is simple, DDD-focused, composite, risky, or review-focused.
 - Let Domain decisions guide DB, API, Django, and Test decisions.
-- Use real subagents only for concrete, bounded, parallelizable tasks with honest handoff; do not delegate the immediate critical-path blocker when you need it locally.
+- Use real subagents only for concrete, bounded, parallelizable tasks with honest handoff; do not delegate the immediate critical-path blocker when you need it locally. After spawning, collect each subagent result with `wait_agent` or `close_agent` before integrating or claiming completion. If any spawned subagent has not returned through `wait_agent` or `close_agent`, stop and report blocked or partial execution instead of producing a normal integrated answer.
 - Keep file ownership explicit in handoffs with `May edit` and `Must not edit`.
 - Preserve the role order in sequential fallback: Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration.
 - For risky writes, include the `Risky Write Consistency Block` decisions or assign the missing decisions to the responsible role.
 - Final integration must close each role's risks and required follow-up or explicitly leave them unresolved.
-- If plugin cache outside the workspace was edited, report the Cache sync report with the workspace canonical source mapping.
+- If plugin cache outside the workspace was edited, report the Cache sync report with the workspace canonical source mapping. For `workflow-dddjango-subagents`, include `workspace/docs/workflow.md` role-map parity, the runtime skill/reference paths, and validation run or not-run status.
 - Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
 - For direct implementation work, keep the final report limited to concrete changed files and verification that must be reported; do not add workflow sections unless the task becomes composite or risky.

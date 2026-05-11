@@ -15,6 +15,18 @@ target_behavior:
     - Avoids role map, handoff, subagents, DDD modeling, and test plan.
   forbidden:
     - Full dddjango workflow for a short explanation.
+workflow_execution_expectation:
+  expected_mode: direct_required
+  acceptable_modes:
+    - direct
+  forbidden_modes:
+    - actual_subagent
+    - sequential_fallback
+    - false_actual_claim
+    - role_map
+  decision_rule: The request is a two-sentence explanation, so asking to use subagents or running workflow is over-application.
+  responsibility_rule: No responsibility split is needed; the response should be concise and direct.
+  report_label: direct answer only
 scoring_checks:
   - pass if concise and direct.
   - fail if it introduces workflow ceremony.

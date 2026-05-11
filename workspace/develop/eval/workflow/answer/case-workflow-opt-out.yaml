@@ -18,6 +18,18 @@ target_behavior:
     - Does not output Role Map, Handoff Contract, or Integration Checklist.
   forbidden:
     - Ignoring opt-out and producing workflow sections.
+workflow_execution_expectation:
+  expected_mode: direct_required
+  acceptable_modes:
+    - direct
+  forbidden_modes:
+    - actual_subagent
+    - sequential_fallback
+    - false_actual_claim
+    - role_map
+  decision_rule: The user explicitly opted out of subagent planning and full workflow decomposition.
+  responsibility_rule: No subagent responsibility assignment is needed for this small rename.
+  report_label: direct response, opt-out honored
 scoring_checks:
   - pass if response is short and scoped.
   - fail if workflow is over-applied.

@@ -51,7 +51,11 @@ def block_lines(text: str, key: str) -> list[str]:
     base_indent = len(match.group("indent"))
     lines: list[str] = []
     for line in text[match.end() :].splitlines():
-        if line.strip() and len(line) - len(line.lstrip()) <= base_indent:
+        if (
+            line.strip()
+            and len(line) - len(line.lstrip()) <= base_indent
+            and not line.lstrip().startswith("-")
+        ):
             break
         lines.append(line.strip())
     return [line for line in lines if line]
@@ -153,24 +157,133 @@ def trace_data(run_dir: Path, case_id: str, variant: str) -> dict[str, object]:
     return trace
 
 
-def claim_label(trace: dict[str, object]) -> str:
+def execution_claim_label(trace: dict[str, object]) -> str:
     actual = trace.get("explicitActualClaims")
     fallback = trace.get("explicitFallbackClaims")
-    if isinstance(actual, list) and actual:
-        return "actual"
-    if isinstance(fallback, list) and fallback:
-        return "fallback"
-    return "none"
+    has_actual = isinstance(actual, list) and bool(actual)
+    has_fallback = isinstance(fallback, list) and bool(fallback)
+    if has_actual and has_fallback:
+        return "혼합 주장"
+    if has_actual:
+        return "실제 실행 주장"
+    if has_fallback:
+        return "fallback 명시"
+    return "주장 없음"
 
 
-def evidence_label(trace: dict[str, object]) -> str:
-    if trace.get("traceStatus") == "trace not captured":
-        return "trace not captured"
+def trace_mode_label(trace: dict[str, object]) -> str:
+    status = str(trace.get("traceStatus") or "")
+    if status == "trace not captured":
+        return "trace 미수집"
+    if status == "missing trace":
+        return "trace 파일 없음"
+    if status == "actual-trace":
+        return "실제 실행 trace 있음"
+    if status == "fallback-stated":
+        return "순차 fallback 명시"
+    if status == "claim-without-reliable-trace":
+        return "실행 주장 검증 필요"
+    if status == "no-trace":
+        return "실행 주장 없음"
+    if status == "skipped":
+        return "실행 생략"
+    return status or "n/a"
+
+
+def execution_trace_label(trace: dict[str, object]) -> str:
+    status = str(trace.get("traceStatus") or "")
+    if status == "trace not captured":
+        return "trace 수집 안 됨"
+    if status == "missing trace":
+        return "trace 파일 없음"
+    if status == "actual-trace-incomplete":
+        return "결과 회수 없음"
     if trace.get("traceCaptureReliable") is True:
-        return "reliable"
-    if trace.get("traceStatus") == "missing trace":
-        return "missing trace"
-    return "증거 부족"
+        return "구조화 trace 있음"
+    if status == "fallback-stated":
+        return "fallback 문구 있음"
+    if status == "claim-without-reliable-trace":
+        return "실행 주장만 있음"
+    if status == "no-trace":
+        return "실행 trace 없음"
+    if status == "skipped":
+        return "실행 생략"
+    return "trace 불명확"
+
+
+def actual_workflow_mode(trace: dict[str, object]) -> str:
+    status = str(trace.get("traceStatus") or "")
+    if status == "actual-trace":
+        return "actual_subagent"
+    if status == "actual-trace-incomplete":
+        return "actual_subagent_incomplete"
+    if status == "fallback-stated":
+        return "sequential_fallback"
+    if status == "claim-without-reliable-trace":
+        return "false_actual_claim"
+    if status == "no-trace":
+        return "direct"
+    if status == "trace not captured":
+        return "trace_not_captured"
+    if status == "missing trace":
+        return "trace_missing"
+    if status == "skipped":
+        return "not_run"
+    return "unknown"
+
+
+def workflow_mode_label(mode: str) -> str:
+    labels = {
+        "actual_subagent": "실제 subagent 사용",
+        "actual_subagent_incomplete": "subagent 결과 회수 없음",
+        "sequential_fallback": "subagent 없이 순차 검토",
+        "direct": "직접 답변",
+        "false_actual_claim": "썼다고 했지만 로그 없음",
+        "trace_not_captured": "trace 미수집",
+        "trace_missing": "trace 파일 없음",
+        "not_run": "실행 생략",
+        "unknown": "불명확",
+    }
+    return labels.get(mode, mode or "n/a")
+
+
+def workflow_alignment(
+    *,
+    actual_mode: str,
+    acceptable_modes: list[str],
+    forbidden_modes: list[str],
+) -> str:
+    if actual_mode in forbidden_modes:
+        return "위반"
+    if actual_mode in acceptable_modes:
+        return "정상"
+    if actual_mode in {"false_actual_claim", "actual_subagent_incomplete"}:
+        return "위반"
+    return "확인 필요"
+
+
+def workflow_expectation(answer_text: str, trace: dict[str, object]) -> dict[str, object]:
+    block = "\n".join(block_lines(answer_text, "workflow_execution_expectation"))
+    expected_mode = scalar_value(block, "expected_mode")
+    acceptable_modes = yaml_list_values(block, "acceptable_modes")
+    forbidden_modes = yaml_list_values(block, "forbidden_modes")
+    actual_mode = actual_workflow_mode(trace)
+    report_label = scalar_value(block, "report_label") or expected_mode or "n/a"
+    return {
+        "expected_mode": expected_mode,
+        "report_label": report_label,
+        "acceptable_modes": acceptable_modes,
+        "forbidden_modes": forbidden_modes,
+        "actual_mode": actual_mode,
+        "actual_label": workflow_mode_label(actual_mode),
+        "alignment": workflow_alignment(
+            actual_mode=actual_mode,
+            acceptable_modes=acceptable_modes,
+            forbidden_modes=forbidden_modes,
+        )
+        if expected_mode
+        else "n/a",
+    }
 
 
 def score_value(score: object, verdict: str = "") -> float | None:
@@ -315,6 +428,7 @@ def build_case(bucket: str, public_case: Path, run_dir: Path) -> dict[str, objec
     reportable_oracle = oracle if oracle_state == "ready" else {}
     baseline = variant_data(run_dir, case_id, "baseline", reportable_oracle)
     with_dddjango = variant_data(run_dir, case_id, "with-dddjango", reportable_oracle)
+    with_trace = with_dddjango["trace"] if isinstance(with_dddjango.get("trace"), dict) else {}
     baseline_score = baseline["score_value"]
     with_score = with_dddjango["score_value"]
     hard_gate = hard_gate_from_oracle(reportable_oracle)
@@ -329,6 +443,15 @@ def build_case(bucket: str, public_case: Path, run_dir: Path) -> dict[str, objec
         "evidence": [f"raw/{case_id}-answer-oracle-evaluation.json"],
         "evidence_required": evidence_required,
     }
+    workflow_expectation_value = (
+        workflow_expectation(answer_text, with_trace) if bucket == "workflow" else {}
+    )
+    if (
+        bucket == "workflow"
+        and isinstance(workflow_expectation_value, dict)
+        and workflow_expectation_value.get("alignment") == "위반"
+    ):
+        hard_gate = "workflow execution violation"
     case: dict[str, object] = {
         "id": case_id,
         "bucket": bucket,
@@ -348,16 +471,11 @@ def build_case(bucket: str, public_case: Path, run_dir: Path) -> dict[str, objec
         "hard_gate": hard_gate,
         "baseline": baseline,
         "with_dddjango": with_dddjango,
+        "workflow_expectation": workflow_expectation_value,
         "trace_table": {
-            "trace": str(with_dddjango["trace"].get("traceStatus") or "n/a")
-            if isinstance(with_dddjango.get("trace"), dict)
-            else "n/a",
-            "claim": claim_label(with_dddjango["trace"])
-            if isinstance(with_dddjango.get("trace"), dict)
-            else "none",
-            "evidence": evidence_label(with_dddjango["trace"])
-            if isinstance(with_dddjango.get("trace"), dict)
-            else "n/a",
+            "mode": trace_mode_label(with_trace) if with_trace else "n/a",
+            "claim": execution_claim_label(with_trace) if with_trace else "주장 없음",
+            "proof": execution_trace_label(with_trace) if with_trace else "n/a",
         },
         "delta_value": (
             with_score - baseline_score
@@ -796,17 +914,19 @@ def bucket_tab_html(tab: dict[str, object]) -> str:
 
 def table_colgroup_html(show_trace_columns: bool) -> str:
     if show_trace_columns:
-        return """          <col style="width: 30%">
+        return """          <col style="width: 24%">
           <col style="width: 6%">
           <col class="baseline-score-col" style="width: 6%">
           <col class="with-score-col" style="width: 8%">
           <col style="width: 5%">
-          <col class="change-col" style="width: 8%">
-          <col style="width: 9%">
+          <col class="change-col" style="width: 7%">
+          <col style="width: 8%">
+          <col style="width: 8%">
+          <col style="width: 6%">
           <col style="width: 7%">
           <col style="width: 7%">
           <col class="status-col" style="width: 6%">
-          <col class="action-col" style="width: 5%">"""
+          <col class="action-col" style="width: 2%">"""
     return """          <col style="width: 39%">
           <col style="width: 9%">
           <col class="baseline-score-col" style="width: 8%">
@@ -820,9 +940,11 @@ def table_colgroup_html(show_trace_columns: bool) -> str:
 def table_trace_header_html(show_trace_columns: bool) -> str:
     if not show_trace_columns:
         return ""
-    return """            <th>subagent trace</th>
-            <th>subagent claim</th>
-            <th>trace evidence</th>
+    return """            <th>기대 실행</th>
+            <th>실제 실행</th>
+            <th>실행 판정</th>
+            <th>응답 설명</th>
+            <th>실제 로그</th>
 """
 
 
@@ -830,9 +952,16 @@ def table_trace_cells_html(case_data: dict[str, object], show_trace_columns: boo
     if not show_trace_columns:
         return ""
     trace_table = case_data.get("trace_table") if isinstance(case_data.get("trace_table"), dict) else {}
-    return f"""            <td>{escape(str(trace_table.get("trace", "n/a")))}</td>
-            <td>{escape(str(trace_table.get("claim", "none")))}</td>
-            <td>{escape(str(trace_table.get("evidence", "n/a")))}</td>
+    expectation = (
+        case_data.get("workflow_expectation")
+        if isinstance(case_data.get("workflow_expectation"), dict)
+        else {}
+    )
+    return f"""            <td>{escape(str(expectation.get("report_label", "n/a")))}</td>
+            <td>{escape(str(expectation.get("actual_label", "n/a")))}</td>
+            <td>{escape(str(expectation.get("alignment", "n/a")))}</td>
+            <td>{escape(str(trace_table.get("claim", "주장 없음")))}</td>
+            <td>{escape(str(trace_table.get("proof", "n/a")))}</td>
 """
 
 
@@ -843,7 +972,7 @@ def render_html(data: dict[str, object]) -> str:
     bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
     bucket_goal = data.get("bucket_goal") if isinstance(data.get("bucket_goal"), list) else []
     show_trace_columns = str(data.get("bucket") or "") == "workflow"
-    table_column_count = 11 if show_trace_columns else 8
+    table_column_count = 13 if show_trace_columns else 8
     summary_keys = (
         ("total_public_cases", "전체 public"),
         ("run_cases", "이번 실행"),
@@ -857,7 +986,7 @@ def render_html(data: dict[str, object]) -> str:
         ("with_dddjango_average", "with-dddjango 평균"),
         ("delta", "delta"),
         ("hard_gate_failures", "hard gate failures"),
-        ("missing_or_weak_evidence", "missing/weak evidence"),
+        ("missing_or_weak_evidence", "평가 불충분"),
     )
     bucket_tabs_html = "\n".join(
         bucket_tab_html(tab if isinstance(tab, dict) else {}) for tab in bucket_tabs

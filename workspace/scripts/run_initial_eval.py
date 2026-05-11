@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
 import sys
 from datetime import datetime
@@ -39,6 +40,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--evaluator-model")
     parser.add_argument("--evaluator-reasoning", default=DEFAULT_EVALUATOR_REASONING)
     parser.add_argument("--timeout-seconds", type=int, default=1800)
+    parser.add_argument("--case-jobs", type=int, default=1)
     parser.add_argument("--rerun", action="store_true")
     parser.add_argument("--skip-exec", action="store_true")
     parser.add_argument("--skip-oracle", action="store_true")
@@ -82,7 +84,20 @@ def append_case_args(command: list[str], cases: list[str] | None) -> None:
         command.extend(["--case", case_id])
 
 
-def runner_command(args: argparse.Namespace, bucket: str, run_id: str) -> list[str]:
+def append_selected_case_args(
+    command: list[str],
+    args: argparse.Namespace,
+    cases: list[str] | None,
+) -> None:
+    append_case_args(command, args.case if cases is None else cases)
+
+
+def runner_command(
+    args: argparse.Namespace,
+    bucket: str,
+    run_id: str,
+    cases: list[str] | None = None,
+) -> list[str]:
     command = [
         sys.executable,
         str(SCRIPT_DIR / "run_eval_bucket.py"),
@@ -97,7 +112,7 @@ def runner_command(args: argparse.Namespace, bucket: str, run_id: str) -> list[s
         "--timeout-seconds",
         str(args.timeout_seconds),
     ]
-    append_case_args(command, args.case)
+    append_selected_case_args(command, args, cases)
     if args.rerun:
         command.append("--rerun")
     if args.skip_exec:
@@ -105,7 +120,12 @@ def runner_command(args: argparse.Namespace, bucket: str, run_id: str) -> list[s
     return command
 
 
-def evaluator_command(args: argparse.Namespace, bucket: str, run_id: str) -> list[str]:
+def evaluator_command(
+    args: argparse.Namespace,
+    bucket: str,
+    run_id: str,
+    cases: list[str] | None = None,
+) -> list[str]:
     command = [
         sys.executable,
         str(SCRIPT_DIR / "evaluate_eval_run.py"),
@@ -120,13 +140,18 @@ def evaluator_command(args: argparse.Namespace, bucket: str, run_id: str) -> lis
         "--timeout-seconds",
         str(args.timeout_seconds),
     ]
-    append_case_args(command, args.case)
+    append_selected_case_args(command, args, cases)
     if args.rerun:
         command.append("--rerun")
     return command
 
 
-def validator_command(args: argparse.Namespace, bucket: str, run_id: str) -> list[str]:
+def validator_command(
+    args: argparse.Namespace,
+    bucket: str,
+    run_id: str,
+    cases: list[str] | None = None,
+) -> list[str]:
     command = [
         sys.executable,
         str(SCRIPT_DIR / "validate_eval_run.py"),
@@ -135,7 +160,7 @@ def validator_command(args: argparse.Namespace, bucket: str, run_id: str) -> lis
         "--run-id",
         run_id,
     ]
-    append_case_args(command, args.case)
+    append_selected_case_args(command, args, cases)
     if args.skip_oracle:
         command.append("--skip-oracle")
     if args.skip_exec:
@@ -159,11 +184,92 @@ def run_command(command: list[str]) -> int:
     return result.returncode
 
 
+def run_pipeline_commands(bucket: str, commands: list[list[str]], *, case_id: str | None = None) -> bool:
+    label = f"{bucket}/{case_id}" if case_id else bucket
+    for command in commands:
+        returncode = run_command(command)
+        if returncode != 0:
+            print(f"FAIL: {label}: {Path(command[1]).name} exited {returncode}", file=sys.stderr)
+            return False
+    return True
+
+
 def report_path(bucket: str, run_id: str) -> Path:
     return Path("workspace/develop/eval") / bucket / "runs" / run_id / "analysis/report.html"
 
 
+def case_pipeline_commands(
+    args: argparse.Namespace,
+    bucket: str,
+    run_id: str,
+    case_id: str,
+) -> list[list[str]]:
+    commands: list[list[str]] = []
+    case = [case_id]
+    if not args.render_only:
+        commands.append(runner_command(args, bucket, run_id, case))
+    if not args.skip_oracle and not args.render_only:
+        commands.append(evaluator_command(args, bucket, run_id, case))
+    commands.append(validator_command(args, bucket, run_id, case))
+    return commands
+
+
+def run_case_pipeline(args: argparse.Namespace, bucket: str, run_id: str, case_id: str) -> bool:
+    return run_pipeline_commands(
+        bucket,
+        case_pipeline_commands(args, bucket, run_id, case_id),
+        case_id=case_id,
+    )
+
+
+def selected_case_ids(bucket: str, selected: list[str] | None) -> list[str]:
+    return [path.stem for path in common.selected_case_paths(bucket, selected)]
+
+
+def run_cases_parallel(
+    args: argparse.Namespace,
+    bucket: str,
+    run_id: str,
+    case_ids: list[str],
+) -> bool:
+    worker_count = min(args.case_jobs, len(case_ids))
+    print(f"run {bucket}: {len(case_ids)} case(s) with {worker_count} parallel job(s)", flush=True)
+    failed = False
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        future_to_case = {
+            executor.submit(run_case_pipeline, args, bucket, run_id, case_id): case_id
+            for case_id in case_ids
+        }
+        for future in as_completed(future_to_case):
+            case_id = future_to_case[future]
+            try:
+                ok = future.result()
+            except Exception as exc:  # pragma: no cover - defensive subprocess orchestration guard
+                print(f"FAIL: {bucket}/{case_id}: unexpected error: {exc}", file=sys.stderr)
+                ok = False
+            if not ok:
+                failed = True
+    return not failed
+
+
+def final_bucket_commands(args: argparse.Namespace, bucket: str, run_id: str) -> list[list[str]]:
+    return [
+        validator_command(args, bucket, run_id),
+        renderer_command(bucket, run_id),
+    ]
+
+
 def run_bucket(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
+    if args.case_jobs > 1 and not args.render_only:
+        case_ids = selected_case_ids(bucket, args.case)
+        if len(case_ids) > 1:
+            if not run_cases_parallel(args, bucket, run_id, case_ids):
+                return False
+            if not run_pipeline_commands(bucket, final_bucket_commands(args, bucket, run_id)):
+                return False
+            print(report_path(bucket, run_id))
+            return True
+
     commands: list[list[str]] = []
     if not args.render_only:
         commands.append(runner_command(args, bucket, run_id))
@@ -172,11 +278,8 @@ def run_bucket(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
     commands.append(validator_command(args, bucket, run_id))
     commands.append(renderer_command(bucket, run_id))
 
-    for command in commands:
-        returncode = run_command(command)
-        if returncode != 0:
-            print(f"FAIL: {bucket}: {Path(command[1]).name} exited {returncode}", file=sys.stderr)
-            return False
+    if not run_pipeline_commands(bucket, commands):
+        return False
 
     print(report_path(bucket, run_id))
     return True
@@ -184,6 +287,8 @@ def run_bucket(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.case_jobs < 1:
+        raise SystemExit("case-jobs must be positive")
     run_id = validate_run_id(args.run_id if args.run_id is not None else f"{now_text()}-initial-eval")
     buckets = selected_buckets(args.bucket)
 

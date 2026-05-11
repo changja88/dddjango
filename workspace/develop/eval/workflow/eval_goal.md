@@ -26,10 +26,13 @@
 - Risky Write Consistency Block: transaction owner, locking, uniqueness/idempotency storage, `Idempotency-Key`, external side effect timing, isolation/retry, integration/concurrency test criteria가 빠지지 않는가.
 - Role-map sync: Domain Agent 판단이 DB/API/Django/Test 기준으로 이어지고, Django Agent에 template/static/web 책임이 있을 때 `implementation-django-web`이 포함되는가.
 - Delegation honesty: 실제 subagent를 사용하지 않았는데 사용했다고 말하지 않고, sequential fallback이면 그렇게 보고하는가.
+- Delegation consent gate: 사용자가 실제 subagent 실행을 명시적으로 허용하지 않은 복합 작업에서, 실행 전에 subagent 사용 여부와 역할 분해 방식을 먼저 확인하는가.
+- Actual subagent use: 사용자가 실제 subagent/parallel delegation을 명시적으로 허용한 복합 작업에서, 실행 가능한 bounded sidecar task를 실제 subagent에 맡기고 trace와 결과를 남기는가.
 - Negative workflow restraint: 단순 단일 파일 수정, 작은 rename, 짧은 설명, user opt-out에서 전체 역할 분해를 출력하지 않는가.
 - Direct answer shape: 설계-only 또는 answer-only 요청에서 사용자가 요구한 bullet/sentence 개수와 종료 지점을 보존하고 command/check/tool footer를 붙이지 않는가.
 - Critical-path delegation restraint: subagent를 허용하더라도 즉시 필요한 핵심 판단은 main agent가 먼저 내리고, sidecar 검토만 병렬 위임하는가.
 - Parallel ownership: 병렬 역할 분해에서 `May edit`/`Must not edit`가 겹치지 않고 integration owner가 명확한가.
+- Responsibility assignment quality: subagent handoff가 role name만 넘기지 않고 scope, inputs, owned files, forbidden files, output, risks, required follow-up, integration owner를 구체적으로 넘기는가.
 - Integration closure: 각 role의 risk와 required follow-up이 최종 통합 판단에서 닫히거나 명시적으로 남는가.
 
 ## Minimum Coverage
@@ -45,6 +48,8 @@ Workflow checks는 다음을 명시적으로 평가한다.
 - Direct answer and meta-tail restraint: pure answer-only/design-only 요청에서 사용자가 요구한 형식 뒤에 실행 명령, 미실행 체크, tool/Serena 보고를 추가하지 않는가.
 - Critical-path delegation boundary: 즉시 필요한 blocking decision을 위임해 대기하지 않고, 병렬화 가능한 sidecar 검토만 구체적으로 나누는가.
 - Parallel file ownership: 병렬 역할의 `May edit` 범위가 겹치지 않고, 겹칠 수 있는 파일은 단일 owner나 read-only review로 제한되는가.
+- Consent before execution: 사용자가 실제 subagent 실행을 승인하지 않은 경우 실제 실행하지 않고, 필요한 이유와 role split을 제시하며 승인 질문을 남기는가.
+- Actual execution when authorized: 사용자가 실제 subagent/parallel delegation을 명시적으로 요청한 경우, 단순 계획으로 대체하지 않고 실행 trace, result collection evidence, role output, integration summary를 남기는가.
 
 ## Answer Oracle
 
@@ -53,6 +58,7 @@ Workflow checks는 다음을 명시적으로 평가한다.
 `answer`는 최소한 다음을 담는다.
 
 - workflow type: positive, review-focused, negative, false-claim, opt-out
+- workflow_execution_expectation: expected_mode, acceptable_modes, forbidden_modes, decision_rule, responsibility_rule, report_label
 - required sections and allowed section ordering
 - required role decisions and handoff fields
 - risky write consistency requirements when applicable
@@ -64,7 +70,7 @@ Workflow checks는 다음을 명시적으로 평가한다.
 
 - workflow response transcript
 - role map and handoff artifact
-- sequential fallback or actual subagent execution trace
+- sequential fallback or actual subagent execution trace with result collection evidence
 - integration checklist
 - risky write consistency block
 - review findings and resolution notes

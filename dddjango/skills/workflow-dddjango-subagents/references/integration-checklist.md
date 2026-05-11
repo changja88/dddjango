@@ -22,7 +22,7 @@ Resolve conflicts in this order:
 - Implementation mapping: domain logic is not owned by Router, view, schema, or template; Django service/selector/model boundaries are clear.
 - Tests and verification: domain rules, API contract, and migration risks have tests or explicit not-run verification notes.
 - Role handoff closure: each role's `Risks` and `Required Follow-up` are either closed or carried as unresolved.
-- Cache sync report: if plugin cache outside the workspace was edited, report the cache path and matching workspace canonical source.
+- Cache sync report: if plugin cache outside the workspace was edited, report the cache path, matching workspace canonical source, and validation status. For `workflow-dddjango-subagents` role-map changes, use `workspace/docs/workflow.md` as the responsibility parity source and confirm runtime/cache role names, responsibility scope, and related skills did not shrink.
 
 ## Risky Write Consistency Block
 

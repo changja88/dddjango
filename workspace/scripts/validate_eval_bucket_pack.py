@@ -55,6 +55,14 @@ LIST_FIELDS = (
     "evidence_required",
     "coverage_tags",
 )
+WORKFLOW_EXPECTATION_REQUIRED_FIELDS = (
+    "expected_mode",
+    "acceptable_modes",
+    "forbidden_modes",
+    "decision_rule",
+    "responsibility_rule",
+    "report_label",
+)
 REQUIRED_COVERAGE_TAGS = {
     "response": {
         "specialist-positive",
@@ -214,6 +222,25 @@ def validate_required_blocks(path: Path, text: str) -> list[str]:
     return findings
 
 
+def validate_workflow_execution_expectation(path: Path, text: str) -> list[str]:
+    findings: list[str] = []
+    if not has_field(text, "workflow_execution_expectation"):
+        return [f"{path}: missing workflow_execution_expectation"]
+    block = "\n".join(block_lines(text, "workflow_execution_expectation"))
+    for field in WORKFLOW_EXPECTATION_REQUIRED_FIELDS:
+        if not re.search(rf"(?m)^\s*{re.escape(field)}\s*:", block):
+            findings.append(
+                f"{path}: workflow_execution_expectation missing {field}"
+            )
+    for field in ("acceptable_modes", "forbidden_modes"):
+        values = yaml_list_values(block, field)
+        if not values:
+            findings.append(
+                f"{path}: workflow_execution_expectation {field} must contain at least one list item"
+            )
+    return findings
+
+
 def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
     findings: list[str] = []
     text = path.read_text(encoding="utf-8")
@@ -235,6 +262,8 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
             findings.append(f"{path}: {key} mismatch, expected {value!r}, got {actual!r}")
     findings.extend(validate_reference_basis(path, text))
     findings.extend(validate_required_blocks(path, text))
+    if bucket == "workflow":
+        findings.extend(validate_workflow_execution_expectation(path, text))
     if bucket == "code":
         code_expected = scalar_value(text, "code_expected")
         if code_expected not in {"true", "false"}:

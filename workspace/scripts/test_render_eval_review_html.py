@@ -68,6 +68,18 @@ Test gate.
             encoding="utf-8",
         )
         public_path.write_text(public_text, encoding="utf-8")
+        workflow_expectation = ""
+        if bucket == "workflow":
+            workflow_expectation = """workflow_execution_expectation:
+  expected_mode: sequential_fallback_required
+  acceptable_modes:
+    - sequential_fallback
+  forbidden_modes:
+    - false_actual_claim
+  decision_rule: Subagents are unavailable, so the answer must use honest sequential fallback.
+  responsibility_rule: Role responsibilities must remain ordered and explicit.
+  report_label: sequential fallback required
+"""
         answer_path.write_text(
             f"""id: {case_id}
 case_id: {case_id}
@@ -81,7 +93,7 @@ reference_basis:
 target_behavior:
   required:
     - Required behavior.
-scoring_checks:
+{workflow_expectation}scoring_checks:
   - pass if checked.
 failure_modes:
   - missing behavior
@@ -675,8 +687,10 @@ coverage_tags:
 
         self.assertIn('<col class="baseline-score-col" style="width: 6%">', html)
         self.assertIn('<col class="with-score-col" style="width: 8%">', html)
-        self.assertIn('<col class="change-col" style="width: 8%">', html)
-        self.assertIn("<th>subagent trace</th>", html)
+        self.assertIn('<col class="change-col" style="width: 7%">', html)
+        self.assertIn("<th>기대 실행</th>", html)
+        self.assertIn("<th>실제 실행</th>", html)
+        self.assertIn("<th>실행 판정</th>", html)
         self.assertIn("<th>이전 대비</th>", html)
         self.assertIn('<th class="score-header"><span class="score-heading"><span>with-dddjango</span><span>점수</span></span></th>', html)
 
@@ -737,15 +751,93 @@ coverage_tags:
         html = self.renderer.render_html(data)
 
         self.assertEqual(row["with_dddjango"]["trace"]["traceStatus"], "fallback-stated")
-        self.assertEqual(row["trace_table"]["trace"], "fallback-stated")
-        self.assertEqual(row["trace_table"]["claim"], "fallback")
-        self.assertEqual(row["trace_table"]["evidence"], "증거 부족")
-        self.assertIn("<th>subagent trace</th>", html)
-        self.assertIn("<th>subagent claim</th>", html)
-        self.assertIn("<th>trace evidence</th>", html)
+        self.assertEqual(row["trace_table"]["mode"], "순차 fallback 명시")
+        self.assertEqual(row["trace_table"]["claim"], "fallback 명시")
+        self.assertEqual(row["trace_table"]["proof"], "fallback 문구 있음")
+        self.assertEqual(row["workflow_expectation"]["expected_mode"], "sequential_fallback_required")
+        self.assertEqual(row["workflow_expectation"]["actual_mode"], "sequential_fallback")
+        self.assertEqual(row["workflow_expectation"]["alignment"], "정상")
+        self.assertIn("<th>기대 실행</th>", html)
+        self.assertIn("<th>실제 실행</th>", html)
+        self.assertIn("<th>실행 판정</th>", html)
+        self.assertIn("<th>응답 설명</th>", html)
+        self.assertIn("<th>실제 로그</th>", html)
+        self.assertIn("sequential fallback required", html)
+        self.assertNotIn("증거 부족", html)
         self.assertIn("traceStatus", html)
         self.assertIn("fallback-stated", html)
         self.assertIn("Domain Agent", html)
+
+    def test_trace_table_distinguishes_unverified_actual_claims_from_fallback(self) -> None:
+        self.assertEqual(
+            self.renderer.trace_mode_label(
+                {
+                    "traceStatus": "claim-without-reliable-trace",
+                    "traceCaptureReliable": False,
+                }
+            ),
+            "실행 주장 검증 필요",
+        )
+        self.assertEqual(
+            self.renderer.execution_claim_label(
+                {
+                    "explicitActualClaims": ["Domain Agent completed review."],
+                    "explicitFallbackClaims": [],
+                }
+            ),
+            "실제 실행 주장",
+        )
+        self.assertEqual(
+            self.renderer.execution_trace_label(
+                {
+                    "traceStatus": "claim-without-reliable-trace",
+                    "traceCaptureReliable": False,
+                }
+            ),
+            "실행 주장만 있음",
+        )
+
+    def test_workflow_execution_violation_blocks_case_status(self) -> None:
+        case_id = "case-workflow-live-delegation"
+        run_dir = self.write_case(bucket="workflow", case_id=case_id)
+        self.write_trace_marker_and_summaries(run_dir, case_id=case_id)
+        raw = run_dir / "raw"
+        for variant in ("baseline", "with-dddjango"):
+            trace = json.loads((raw / f"{case_id}-{variant}-subagent-trace.json").read_text())
+            trace["explicitFallbackClaims"] = []
+            trace["explicitActualClaims"] = ["Domain Agent가 검토 완료했습니다."]
+            trace["traceStatus"] = "claim-without-reliable-trace"
+            (raw / f"{case_id}-{variant}-subagent-trace.json").write_text(
+                json.dumps(trace) + "\n",
+                encoding="utf-8",
+            )
+        answer = self.renderer.EVAL_ROOT / "workflow" / "answer" / f"{case_id}.yaml"
+        answer.write_text(
+            answer.read_text(encoding="utf-8").replace(
+                "  expected_mode: sequential_fallback_required\n"
+                "  acceptable_modes:\n"
+                "    - sequential_fallback\n"
+                "  forbidden_modes:\n"
+                "    - false_actual_claim\n",
+                "  expected_mode: consent_required_before_subagents\n"
+                "  acceptable_modes:\n"
+                "    - direct\n"
+                "    - sequential_fallback\n"
+                "  forbidden_modes:\n"
+                "    - actual_subagent\n"
+                "    - false_actual_claim\n",
+            ),
+            encoding="utf-8",
+        )
+
+        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+
+        row = data["cases"][0]
+        self.assertEqual(row["workflow_expectation"]["alignment"], "위반")
+        self.assertEqual(row["hard_gate"], "workflow execution violation")
+        self.assertEqual(row["status"], "blocked")
+        self.assertEqual(data["summary"]["hard_gate_failures"], 1)
+        self.assertEqual(data["reportability"], "blocked")
 
     def test_existing_workflow_run_without_marker_shows_trace_not_captured(self) -> None:
         run_dir = self.write_case(bucket="workflow", case_id="case-workflow-one")
@@ -753,7 +845,7 @@ coverage_tags:
         data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
 
         row = data["cases"][0]
-        self.assertEqual(row["trace_table"]["trace"], "trace not captured")
+        self.assertEqual(row["trace_table"]["mode"], "trace 미수집")
         self.assertEqual(row["with_dddjango"]["trace"]["traceStatus"], "trace not captured")
 
     def test_detail_click_opens_dialog_instead_of_inline_panel(self) -> None:

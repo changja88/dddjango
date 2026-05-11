@@ -356,6 +356,21 @@ def check_workflow_role_map(check: Check, workflow_skill: Path) -> None:
         "Cache sync report" in skill_text and "workspace canonical source" in skill_text,
         "runtime workflow SKILL.md must surface cache sync reporting in its output rules/checklist",
     )
+    check.require(
+        "wait_agent" in skill_text
+        and "close_agent" in skill_text
+        and "result collection" in skill_text,
+        "runtime workflow SKILL.md must require wait_agent/close_agent result collection before reporting actual subagent completion",
+    )
+    check.require(
+        "Before writing the final answer" in skill_text
+        and "If result collection is unavailable or times out" in skill_text,
+        "runtime workflow SKILL.md must make subagent result collection a final-answer gate with an explicit blocked fallback",
+    )
+    check.require(
+        "Do not write `wait_agent`, `close_agent`, or result summaries in the final answer unless those calls actually completed." in skill_text,
+        "runtime workflow SKILL.md must prohibit fabricated result-collection claims",
+    )
     check_reference_links(check, workflow_skill)
 
 

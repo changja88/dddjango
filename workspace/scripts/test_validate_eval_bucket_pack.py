@@ -107,6 +107,36 @@ coverage_tags:
 
         self.assertTrue(any("coverage_tags" in finding for finding in findings))
 
+    def test_workflow_answer_requires_execution_expectation(self) -> None:
+        self.write_case_pair(
+            "workflow",
+            "case-workflow-one",
+            coverage_tags=[
+                "positive-composite",
+                "review-focused",
+                "handoff-contract",
+                "risky-write-consistency",
+                "role-map-sync",
+                "delegation-honesty",
+                "sequential-fallback",
+                "subagent-opt-out",
+                "tiny-task-restraint",
+                "false-claim",
+                "integration-closure",
+            ],
+        )
+        answer_path = self.validator.EVAL_ROOT / "workflow/answer/case-workflow-one.yaml"
+        public_path = (
+            self.validator.EVAL_ROOT
+            / "workflow/cases/plugin/public/case-workflow-one.md"
+        )
+
+        findings = self.validator.validate_answer(answer_path, "workflow", public_path)
+
+        self.assertTrue(
+            any("workflow_execution_expectation" in finding for finding in findings)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

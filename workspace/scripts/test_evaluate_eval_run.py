@@ -184,6 +184,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
             self.assertIn(f"raw/{case_id}-with-dddjango-subagent-trace.json", prompt)
             self.assertIn("rolesMentioned", prompt)
             self.assertIn("Do not use rolesMentioned alone as scoring proof", prompt)
+            self.assertIn("If the workflow oracle includes workflow_execution_expectation", prompt)
             return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
 
         with patch.object(self.evaluator, "run_command", side_effect=fake_run):

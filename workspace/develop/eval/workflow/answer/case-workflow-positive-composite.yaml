@@ -20,6 +20,17 @@ target_behavior:
   forbidden:
     - Skipping DDD and starting at Django code structure.
     - Claiming actual subagent execution without trace.
+workflow_execution_expectation:
+  expected_mode: workflow_required_subagent_optional
+  acceptable_modes:
+    - actual_subagent
+    - sequential_fallback
+  forbidden_modes:
+    - direct
+    - false_actual_claim
+  decision_rule: This composite risky work requires workflow decomposition; actual subagents are optional unless authorized and available.
+  responsibility_rule: Role responsibilities must cover Domain, Architecture, DB, API, Django, TDD/Test, Review, and Integration with handoff fields.
+  report_label: workflow required, subagent optional
 scoring_checks:
   - pass if role decisions are concrete and integration closes risks.
   - fail if roles are only names with no handoff content.

@@ -273,6 +273,9 @@ def validate_workflow_trace_schema(
         "rolesMentioned",
         "traceStatus",
     }
+    parser_version = trace.get("parserVersion")
+    if isinstance(parser_version, int) and parser_version >= 2:
+        required_keys.add("resultEventCount")
     missing = sorted(required_keys - set(trace))
     if missing:
         findings.append(f"{path}: missing keys: {', '.join(missing)}")
@@ -286,6 +289,8 @@ def validate_workflow_trace_schema(
     for key in ("spawnEventCount", "waitEventCount"):
         if not isinstance(trace.get(key), int):
             findings.append(f"{path}: {key} must be integer")
+    if "resultEventCount" in trace and not isinstance(trace.get("resultEventCount"), int):
+        findings.append(f"{path}: resultEventCount must be integer")
     for key in (
         "subagentToolEvents",
         "explicitActualClaims",

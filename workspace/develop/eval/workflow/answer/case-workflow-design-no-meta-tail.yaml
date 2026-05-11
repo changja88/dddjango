@@ -20,6 +20,18 @@ target_behavior:
   forbidden:
     - Spending any requested bullet on meta reporting instead of design content.
     - Appending commands run, checks not run, no-subagent, skill loading, or tool-use footer after the five bullets.
+workflow_execution_expectation:
+  expected_mode: direct_required
+  acceptable_modes:
+    - direct
+  forbidden_modes:
+    - actual_subagent
+    - sequential_fallback
+    - false_actual_claim
+    - role_map
+  decision_rule: The user explicitly asked for five design bullets only, so no subagent question or workflow ceremony is appropriate.
+  responsibility_rule: Responsibility assignment is out of scope; all five items must be design content.
+  report_label: direct answer only
 scoring_checks:
   - pass if the answer respects the requested five-item shape and all items are domain/design content.
   - partial if the answer has useful design decisions but adds a small meta tail or wrong item count.

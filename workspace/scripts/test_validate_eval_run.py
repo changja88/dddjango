@@ -172,12 +172,14 @@ class ValidateEvalRunTests(unittest.TestCase):
         actual_claims: list[str] | None = None,
         spawn_count: int = 0,
         wait_count: int = 0,
+        result_count: int = 0,
         trace_status: str = "no-trace",
+        parser_version: int = 1,
     ) -> None:
         trace = {
             "caseId": case_id,
             "variant": variant,
-            "parserVersion": 1,
+            "parserVersion": parser_version,
             "sourceKind": "structured-events" if trace_capture_reliable else "stdout-transcript",
             "traceCaptureReliable": trace_capture_reliable,
             "responseSource": f"raw/{case_id}-{variant}.txt",
@@ -190,6 +192,8 @@ class ValidateEvalRunTests(unittest.TestCase):
             "rolesMentioned": [],
             "traceStatus": trace_status,
         }
+        if parser_version >= 2:
+            trace["resultEventCount"] = result_count
         path = run_dir / "raw" / f"{case_id}-{variant}-subagent-trace.json"
         path.write_text(json.dumps(trace) + "\n", encoding="utf-8")
 
@@ -384,6 +388,56 @@ class ValidateEvalRunTests(unittest.TestCase):
                 trace_capture_reliable=False,
                 actual_claims=["Domain Agent가 검토 완료했습니다."],
                 trace_status="claim-without-reliable-trace",
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_workflow_trace_parser_v2_allows_incomplete_actual_trace_for_scoring(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        self.write_trace_marker(run_dir)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_trace(
+                run_dir,
+                case_id=case_id,
+                variant=variant,
+                trace_capture_reliable=True,
+                actual_claims=["Domain Agent가 검토 완료했습니다."],
+                spawn_count=1,
+                wait_count=0,
+                result_count=0,
+                trace_status="actual-trace-incomplete",
+                parser_version=2,
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_workflow_trace_parser_v2_accepts_close_or_wait_result_collection(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        self.write_trace_marker(run_dir)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_trace(
+                run_dir,
+                case_id=case_id,
+                variant=variant,
+                trace_capture_reliable=True,
+                actual_claims=["Domain Agent가 검토 완료했습니다."],
+                spawn_count=1,
+                wait_count=0,
+                result_count=1,
+                trace_status="actual-trace",
+                parser_version=2,
             )
 
         result, output = self.run_validator(

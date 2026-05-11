@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 
-PARSER_VERSION = 1
+PARSER_VERSION = 2
 SOURCE_STRUCTURED_EVENTS = "structured-events"
 SOURCE_STDOUT_TRANSCRIPT = "stdout-transcript"
 SOURCE_UNAVAILABLE = "unavailable"
@@ -93,16 +93,25 @@ def recursive_values(value: Any) -> list[str]:
     return values
 
 
-def object_mentions_subagent_tool(value: dict[str, Any]) -> bool:
-    values = [item.lower() for item in recursive_values(value)]
-    return any(event_name in item for event_name in SUBAGENT_EVENT_NAMES for item in values)
+def subagent_tool_name(value: dict[str, Any]) -> str | None:
+    item = value.get("item")
+    if isinstance(item, dict):
+        tool = item.get("tool")
+        if item.get("type") == "collab_tool_call" and isinstance(tool, str):
+            return tool if tool in SUBAGENT_EVENT_NAMES else None
+
+    for key in ("tool", "name"):
+        tool = value.get(key)
+        if isinstance(tool, str) and tool in SUBAGENT_EVENT_NAMES:
+            return tool
+    return None
 
 
 def detect_source_kind(path: Path) -> str:
     if not path.is_file() or path.stat().st_size == 0:
         return SOURCE_UNAVAILABLE
     objects = iter_json_objects(path)
-    if any(object_mentions_subagent_tool(item) for item in objects):
+    if any(subagent_tool_name(item) for item in objects):
         return SOURCE_STRUCTURED_EVENTS
     return SOURCE_STDOUT_TRANSCRIPT
 
@@ -144,7 +153,8 @@ def sentence_is_negated_or_fallback(sentence: str) -> bool:
     lowered = sentence.lower()
     return bool(
         re.search(
-            r"사용하지|실행하지|쓰지 않고|not used|no subagents|without subagents|sequential fallback|순차|계획만|planned only",
+            r"사용하지|사용[^\n.!?。！？]{0,40}하지|실행하지|실행[^\n.!?。！？]{0,40}하지"
+            r"|쓰지 않고|not used|no subagents|without subagents|sequential fallback|순차|계획만|planned only",
             lowered,
         )
     )
@@ -154,7 +164,8 @@ def sentence_has_actual_completion(sentence: str) -> bool:
     lowered = sentence.lower()
     return bool(
         re.search(
-            r"검토 완료|완료했습니다|완료했|실행했습니다|실행했|사용했습니다|사용했|spawned|ran|reviewed|completed|delegated",
+            r"검토 완료|완료했습니다|완료했|실행했습니다|실행했|사용했습니다|사용했"
+            r"|\bspawned\b|\bran\b|\breviewed\b|\bcompleted\b|\bdelegated\b",
             lowered,
         )
     )
@@ -185,20 +196,29 @@ def roles_mentioned(response_text: str) -> list[str]:
     return mentioned
 
 
-def extract_structured_events(event_path: Path) -> tuple[int, int, list[dict[str, Any]]]:
-    spawn_count = 0
-    wait_count = 0
+def extract_structured_events(event_path: Path) -> tuple[int, int, int, list[dict[str, Any]]]:
+    spawn_ids: set[str] = set()
+    wait_ids: set[str] = set()
+    result_ids: set[str] = set()
     events: list[dict[str, Any]] = []
-    for item in iter_json_objects(event_path):
-        values = [value.lower() for value in recursive_values(item)]
-        if not any(name in value for name in SUBAGENT_EVENT_NAMES for value in values):
+    for index, item in enumerate(iter_json_objects(event_path)):
+        tool_name = subagent_tool_name(item)
+        if tool_name is None:
             continue
-        if any("spawn_agent" in value for value in values):
-            spawn_count += 1
-        if any("wait_agent" in value for value in values):
-            wait_count += 1
+        event_item = item.get("item")
+        if isinstance(event_item, dict) and event_item.get("id"):
+            event_id = str(event_item["id"])
+        else:
+            event_id = f"line-{index}"
+        if tool_name == "spawn_agent":
+            spawn_ids.add(event_id)
+        if tool_name == "wait_agent":
+            wait_ids.add(event_id)
+            result_ids.add(event_id)
+        if tool_name == "close_agent":
+            result_ids.add(event_id)
         events.append(item)
-    return spawn_count, wait_count, events
+    return len(spawn_ids), len(wait_ids), len(result_ids), events
 
 
 def trace_status(
@@ -207,12 +227,17 @@ def trace_status(
     trace_capture_reliable: bool,
     spawn_event_count: int,
     wait_event_count: int,
+    result_event_count: int,
     explicit_actual_claims: list[str],
     explicit_fallback_claims: list[str],
 ) -> str:
     if skipped:
         return "skipped"
-    if trace_capture_reliable and (spawn_event_count > 0 or wait_event_count > 0):
+    if trace_capture_reliable and spawn_event_count > 0 and result_event_count > 0:
+        return "actual-trace"
+    if trace_capture_reliable and spawn_event_count > 0:
+        return "actual-trace-incomplete"
+    if trace_capture_reliable and wait_event_count > 0:
         return "actual-trace"
     if explicit_fallback_claims:
         return "fallback-stated"
@@ -235,9 +260,15 @@ def build_trace_summary(
     trace_capture_reliable = source_kind == SOURCE_STRUCTURED_EVENTS
     spawn_event_count = 0
     wait_event_count = 0
+    result_event_count = 0
     subagent_tool_events: list[dict[str, Any]] = []
     if trace_capture_reliable:
-        spawn_event_count, wait_event_count, subagent_tool_events = extract_structured_events(event_path)
+        (
+            spawn_event_count,
+            wait_event_count,
+            result_event_count,
+            subagent_tool_events,
+        ) = extract_structured_events(event_path)
     actual_claims, fallback_claims = extract_response_claims(response)
 
     status = trace_status(
@@ -245,6 +276,7 @@ def build_trace_summary(
         trace_capture_reliable=trace_capture_reliable,
         spawn_event_count=spawn_event_count,
         wait_event_count=wait_event_count,
+        result_event_count=result_event_count,
         explicit_actual_claims=actual_claims,
         explicit_fallback_claims=fallback_claims,
     )
@@ -258,6 +290,7 @@ def build_trace_summary(
         "eventSource": safe_relative(run_dir, event_path),
         "spawnEventCount": spawn_event_count,
         "waitEventCount": wait_event_count,
+        "resultEventCount": result_event_count,
         "subagentToolEvents": subagent_tool_events,
         "explicitActualClaims": actual_claims,
         "explicitFallbackClaims": fallback_claims,
