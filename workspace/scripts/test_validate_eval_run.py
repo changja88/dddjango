@@ -286,14 +286,32 @@ class ValidateEvalRunTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertIn("PASS:", output)
 
-    def test_baseline_contamination_fails(self) -> None:
+    def test_baseline_output_allows_eval_domain_terms_from_public_task(self) -> None:
         self.write_valid_run(
-            baseline_text="The dddjango:implementation-django skill says to proceed.\n"
+            baseline_text=(
+                "Check dddjango/skills, plugins/dddjango, dddjango:* markers, "
+                "answer-oracle files, and workspace/develop/eval/runtime/runs paths.\n"
+            )
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_baseline_hidden_repo_path_contamination_fails(self) -> None:
+        self.write_valid_run(
+            baseline_text=(
+                f"The runtime skill was loaded from "
+                f"{self.root / '.codex/plugins/cache/dddjango-local'}.\n"
+            )
         )
 
         self.assertFailsWith(
             ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
-            "baseline output contains dddjango marker",
+            "baseline output contains hidden repo path",
         )
 
     def test_skip_oracle_succeeds_without_canonical_oracle(self) -> None:

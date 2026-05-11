@@ -23,20 +23,6 @@ EVAL_ROOT = common.EVAL_ROOT
 CODE_CAPTURE_METADATA = EVAL_ROOT / "code/cases/plugin/code-capture.json"
 SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
 
-BASELINE_CONTAMINATION_PATTERNS = {
-    "dddjango marker": re.compile(
-        r"(dddjango:|dddjango/skills|\.codex/plugins/cache/dddjango-local|"
-        r"plugins/cache/dddjango-local|plugins/dddjango|workflow-dddjango|"
-        r"architecture-ddd|implementation-django|source/crosswalks)",
-        re.I,
-    ),
-    "evaluator-only artifact marker": re.compile(
-        r"(answer-oracle|cases/plugin/private|workspace/develop/eval/[^/\s]+/(answer|runs))",
-        re.I,
-    ),
-}
-
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bucket", choices=common.BUCKETS, required=True)
@@ -203,14 +189,42 @@ def validate_baseline_output(raw_dir: Path, case_id: str, run_dir: Path) -> list
         return []
     text = path.read_text(encoding="utf-8", errors="replace")
     findings: list[str] = []
-    for label, pattern in BASELINE_CONTAMINATION_PATTERNS.items():
-        if pattern.search(text):
+    for marker in baseline_hidden_repo_path_markers():
+        if marker in text:
             try:
                 display_path = path.relative_to(run_dir)
             except ValueError:
                 display_path = path
-            findings.append(f"{display_path}: baseline output contains {label}")
+            findings.append(f"{display_path}: baseline output contains hidden repo path")
     return findings
+
+
+def baseline_forbidden_paths() -> list[Path]:
+    paths = [
+        Path("dddjango/skills"),
+        Path("dddjango/.codex-plugin/plugin.json"),
+        Path(".agents/plugins/marketplace.json"),
+        Path(".codex/plugins/cache/dddjango-local"),
+        Path("plugins/dddjango"),
+        Path("plugins/cache/dddjango-local"),
+        Path("workspace/develop/eval/source/crosswalks"),
+    ]
+    for bucket in common.BUCKETS:
+        paths.append(Path("workspace/develop/eval") / bucket / "answer")
+        paths.append(Path("workspace/develop/eval") / bucket / "runs")
+        paths.append(Path("workspace/develop/eval") / bucket / "cases/plugin/private")
+    return paths
+
+
+def baseline_hidden_repo_path_markers() -> list[str]:
+    markers: list[str] = []
+    for rel_path in baseline_forbidden_paths():
+        absolute = REPO_ROOT / rel_path
+        markers.append(absolute.as_posix())
+        resolved = absolute.resolve(strict=False).as_posix()
+        if resolved != markers[-1]:
+            markers.append(resolved)
+    return sorted(set(markers))
 
 
 def validate_oracle(raw_dir: Path, case_id: str) -> list[str]:
