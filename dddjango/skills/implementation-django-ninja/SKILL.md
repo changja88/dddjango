@@ -27,6 +27,14 @@ This skill is provisional. Dedicated Django Ninja source reference does not exis
 - If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
 - For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
 
+## Output Shape
+
+- For pure answer-only requests, output only the requested answer. If the user asks for a fixed number of sentences or bullets, return exactly that many units and stop at the final requested unit. Do not append or embed extra paragraphs, headings, command lists, checks, tool reports, Serena notes, or skill/reference loading reports.
+- Treat a requested answer shape as the user's explicit instruction; it overrides generic completion-report habits for commands, checks, tools, or skill loading.
+- Forbidden answer-only phrases include `Commands run`, `commands run`, `Commands actually run`, `Checks not run`, `checks not run`, `실행한 명령`, `명령 실행`, `체크`, `체크: 미실행`, `검증 미실행`, and `Serena`, even when placed before or compressed into the final requested unit.
+- For definition questions, define the requested Django Ninja concept and its ordinary use; do not add implementation guidance, testing notes, or service-layer advice unless the user asks for those details.
+- Skill/reference loading commands are not user-task work and must not be reported as commands run.
+
 ## Reference Loading
 
 - Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
@@ -42,4 +50,4 @@ This skill is provisional. Dedicated Django Ninja source reference does not exis
 - Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
 - For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
 - Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
-- Report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so.
+- For implementation work, report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so. For pure answer-only requests, omit verification-not-run reporting.

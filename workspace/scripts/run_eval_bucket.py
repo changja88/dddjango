@@ -178,25 +178,52 @@ def validate_answer_oracles(case_files: list[Path], answer_dir: Path, bucket: st
             raise SystemExit(f"{answer_path} must declare kind: {bucket}")
 
 
+FIXED_ANSWER_SHAPE = re.compile(
+    r"(?i)(?:"
+    r"\b\d+\s*(?:개\s*)?(?:bullet|bullets|sentence|sentences|문장|항목|불릿)\b"
+    r"|(?:한|두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s*(?:개\s*)?(?:문장|항목|불릿)"
+    r"|(?:bullet|bullets|문장|항목|불릿)[^\n]{0,30}(?:끝내|끝내줘|만)"
+    r")"
+)
+
+
+def requests_fixed_answer_shape(public_packet: str) -> bool:
+    return bool(FIXED_ANSWER_SHAPE.search(public_packet))
+
+
 def build_prompt(public_packet: str, *, allow_workspace_edits: bool) -> str:
+    fixed_answer_shape = not allow_workspace_edits and requests_fixed_answer_shape(public_packet)
     if allow_workspace_edits:
         edit_policy = (
             "You may edit files in the current working directory to complete the user's request.\n"
             "Do not write into evaluator-only directories, private case maps, or run-output directories.\n"
             "Preserve unrelated user changes and do not revert files you did not change.\n"
         )
+        completion_policy = "Keep the answer concise and include commands actually run plus checks not run.\n\n"
+    elif fixed_answer_shape:
+        edit_policy = (
+            "Do not modify files.\n"
+            "Preserve the current file-edit policy by avoiding writes in this read-only evaluation.\n"
+        )
+        completion_policy = (
+            "Keep the answer concise. Preserve the requested answer shape exactly. "
+            "If the user asks for a fixed sentence or bullet count, every requested unit must "
+            "answer the user's request and the response must stop at the final requested unit; "
+            "do not add command, check, tool, or verification notes unless the user specifically asks for them.\n\n"
+        )
     else:
         edit_policy = (
             "Do not modify files. If a check is not actually run, state that it was not run.\n"
             "Preserve the current file-edit policy by avoiding writes in this read-only evaluation.\n"
         )
+        completion_policy = "Keep the answer concise and include commands actually run plus checks not run.\n\n"
     return (
         "Answer the user request directly.\n"
         "Use only files in the current working directory when local files are needed.\n"
         "Do not read evaluator-only answer oracles, private case maps, prior run outputs, "
         "private scoring notes, or crosswalk files if present.\n"
         f"{edit_policy}"
-        "Keep the answer concise and include commands actually run plus checks not run.\n\n"
+        f"{completion_policy}"
         "----- USER REQUEST START -----\n"
         f"{public_packet.rstrip()}\n"
         "----- USER REQUEST END -----\n"

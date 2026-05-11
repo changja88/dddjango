@@ -252,6 +252,26 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue((raw / f"case-response-one-{with_variant}-prompt-input.json").is_file())
         self.assertFalse((raw / "case-response-one-baseline-prompt-input.json").exists())
 
+    def test_fixed_shape_answer_prompt_does_not_force_command_footer(self) -> None:
+        prompt = self.runner.build_prompt(
+            "핵심 설계 결정만 5개 bullet로 끝내줘.\n",
+            allow_workspace_edits=False,
+        )
+
+        self.assertNotIn("include commands actually run plus checks not run", prompt)
+        self.assertNotIn("If a check is not actually run, state that it was not run.", prompt)
+        self.assertIn("Preserve the requested answer shape exactly.", prompt)
+        self.assertIn("do not add command, check, tool, or verification notes", prompt)
+
+    def test_open_shape_answer_prompt_keeps_command_honesty_footer(self) -> None:
+        prompt = self.runner.build_prompt(
+            "주문 생성 workflow를 검토해줘.\n",
+            allow_workspace_edits=False,
+        )
+
+        self.assertIn("include commands actually run plus checks not run", prompt)
+        self.assertIn("If a check is not actually run, state that it was not run.", prompt)
+
     def test_workflow_bucket_writes_trace_marker_and_skipped_trace_artifacts(self) -> None:
         self.write_case(bucket="workflow", case_id="case-workflow-one")
 

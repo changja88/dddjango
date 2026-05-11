@@ -27,6 +27,9 @@
 - Role-map sync: Domain Agent 판단이 DB/API/Django/Test 기준으로 이어지고, Django Agent에 template/static/web 책임이 있을 때 `implementation-django-web`이 포함되는가.
 - Delegation honesty: 실제 subagent를 사용하지 않았는데 사용했다고 말하지 않고, sequential fallback이면 그렇게 보고하는가.
 - Negative workflow restraint: 단순 단일 파일 수정, 작은 rename, 짧은 설명, user opt-out에서 전체 역할 분해를 출력하지 않는가.
+- Direct answer shape: 설계-only 또는 answer-only 요청에서 사용자가 요구한 bullet/sentence 개수와 종료 지점을 보존하고 command/check/tool footer를 붙이지 않는가.
+- Critical-path delegation restraint: subagent를 허용하더라도 즉시 필요한 핵심 판단은 main agent가 먼저 내리고, sidecar 검토만 병렬 위임하는가.
+- Parallel ownership: 병렬 역할 분해에서 `May edit`/`Must not edit`가 겹치지 않고 integration owner가 명확한가.
 - Integration closure: 각 role의 risk와 required follow-up이 최종 통합 판단에서 닫히거나 명시적으로 남는가.
 
 ## Minimum Coverage
@@ -39,6 +42,9 @@ Workflow checks는 다음을 명시적으로 평가한다.
 - Sequential fallback order: Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration 순서가 유지되는가.
 - Full handoff fields: `Scope`, `Inputs Used`, `Decisions`, `Files` with `May edit`/`Must not edit`, `Output`, `Risks`, `Required Follow-up`, `dddjango Checks`.
 - Risk closure: 각 role의 risks와 required follow-up이 통합 판단에서 닫히거나 다음 action으로 carry-forward 되는가.
+- Direct answer and meta-tail restraint: pure answer-only/design-only 요청에서 사용자가 요구한 형식 뒤에 실행 명령, 미실행 체크, tool/Serena 보고를 추가하지 않는가.
+- Critical-path delegation boundary: 즉시 필요한 blocking decision을 위임해 대기하지 않고, 병렬화 가능한 sidecar 검토만 구체적으로 나누는가.
+- Parallel file ownership: 병렬 역할의 `May edit` 범위가 겹치지 않고, 겹칠 수 있는 파일은 단일 owner나 read-only review로 제한되는가.
 
 ## Answer Oracle
 

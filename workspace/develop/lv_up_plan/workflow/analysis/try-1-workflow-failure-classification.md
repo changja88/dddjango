@@ -64,6 +64,7 @@ with-dddjango 응답은 workflow ceremony를 출력하지 않았지만, 두 문�
 추가 수정 후보:
 
 - `dddjango/skills/workflow-dddjango-subagents/agents/openai.yaml`: 현재 default prompt는 role-decomposed workflow에 맞춰져 있고 tiny case의 직접 원인은 아니다. 이번 루프에서는 수정하지 않는다.
+- `dddjango/skills/implementation-django-ninja/SKILL.md`: targeted eval 중 실제로 short Django Ninja explanation에서 로드되는 skill로 확인되면, direct answer output discipline을 함께 보강한다. 단, case-specific 정답 문구는 넣지 않는다.
 - `dddjango/.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`: routing/cache/source 불일치 증거가 없다. 이번 루프에서는 수정하지 않는다.
 - `workspace/develop/eval/workflow/answer/case-workflow-tiny-restraint.yaml`: oracle은 적절하므로 수정하지 않는다.
 - `workspace/develop/eval/workflow/cases/plugin/public/case-workflow-tiny-restraint.md`: public case가 명확하므로 수정하지 않는다.
@@ -146,3 +147,13 @@ try-1 기록 커밋에는 다음만 포함한다.
 ## 7. 다음 액션
 
 다음 단계는 이 문서의 P0 수정안만 적용하는 것이다. 수정 후 `case-workflow-tiny-restraint`를 먼저 재실행하고, 통과하면 `case-workflow-opt-out`, `case-workflow-sequential-fallback`으로 회귀를 확인한다.
+
+## 8. 구현 중 추가 관찰
+
+`workflow-dddjango-subagents`만 보강한 뒤 targeted eval을 실행하자, 실제 with-ddjango 응답은 `implementation-django-ninja`와 `using-superpowers` skill loading 명령을 최종 답변에 보고했다. 즉 P0 실패의 직접 출력 경로는 workflow skill 하나가 아니라, short Django Ninja explanation을 처리하는 `implementation-django-ninja`의 answer-only output discipline까지 포함한다.
+
+추가 결론:
+
+- `workflow-dddjango-subagents`: opt-out/direct path 원칙을 닫는 공통 위치로 유지한다.
+- `implementation-django-ninja`: short Django Ninja explanation의 실제 처리 위치이므로 `Output Shape`를 추가한다.
+- installed plugin cache: eval runtime이 `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/...`를 읽으므로, targeted eval 전 workspace canonical source와 cache를 동기화해야 한다.

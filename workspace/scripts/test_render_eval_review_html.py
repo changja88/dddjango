@@ -43,11 +43,12 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         with_response: str | None = "With dddjango response text",
         oracle: dict[str, object] | None = None,
         oracle_text: str | None = None,
+        run_id: str = "sample-run",
     ) -> Path:
         bucket_root = self.renderer.EVAL_ROOT / bucket
         public_path = bucket_root / "cases/plugin/public" / f"{case_id}.md"
         answer_path = bucket_root / "answer" / f"{case_id}.yaml"
-        raw_dir = bucket_root / "runs/sample-run/raw"
+        raw_dir = bucket_root / f"runs/{run_id}/raw"
         public_path.parent.mkdir(parents=True, exist_ok=True)
         answer_path.parent.mkdir(parents=True, exist_ok=True)
         raw_dir.mkdir(parents=True, exist_ok=True)
@@ -125,7 +126,7 @@ coverage_tags:
                 json.dumps(oracle, ensure_ascii=False),
                 encoding="utf-8",
             )
-        return bucket_root / "runs/sample-run"
+        return bucket_root / f"runs/{run_id}"
 
     def write_trace_marker_and_summaries(
         self,
@@ -204,6 +205,37 @@ coverage_tags:
         self.assertEqual(row["evaluator_only"]["leakage_notes"], ["no private material"])
         self.assertEqual(row["evaluator_only"]["evidence_required"], ["evaluation notes"])
 
+    def test_ok_oracle_observations_with_leakage_and_fail_words_do_not_block(self) -> None:
+        run_dir = self.write_case(
+            oracle={
+                "caseId": "case-response-order-create",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "4 / 5",
+                    "verdict": "pass",
+                    "evaluation": "Baseline evaluation text",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation": "With dddjango evaluation text",
+                },
+                "observations": [
+                    "leakage: evaluator-only oracle text was not leaked.",
+                    "hard gate: no hard fail condition occurred.",
+                ],
+                "status": "ok",
+            },
+        )
+
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        row = data["cases"][0]
+        self.assertEqual(row["hard_gate"], "ok")
+        self.assertEqual(row["status"], "pass")
+        self.assertEqual(data["summary"]["hard_gate_failures"], 0)
+        self.assertEqual(data["reportability"], "reportable")
+
     def test_summary_delta_uses_only_paired_scored_cases(self) -> None:
         self.write_case()
         run_dir = self.write_case(
@@ -233,6 +265,91 @@ coverage_tags:
         self.assertEqual(data["summary"]["baseline_average"], "2.0")
         self.assertEqual(data["summary"]["with_dddjango_average"], "3.0")
         self.assertEqual(data["summary"]["delta"], "+3.0")
+
+    def test_build_report_data_compares_current_run_to_previous_run(self) -> None:
+        self.write_case(
+            run_id="run-a",
+            oracle={
+                "caseId": "case-response-order-create",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "2 / 5",
+                    "verdict": "fail",
+                    "evaluation": "Previous baseline evaluation text",
+                },
+                "with_dddjango": {
+                    "score": "3 / 5",
+                    "verdict": "fail",
+                    "evaluation": "Previous with dddjango evaluation text",
+                },
+                "observations": ["previous run was weak"],
+            },
+        )
+        run_dir = self.write_case(
+            run_id="run-b",
+            oracle={
+                "caseId": "case-response-order-create",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "2 / 5",
+                    "verdict": "fail",
+                    "evaluation": "Current baseline evaluation text",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation": "Current with dddjango evaluation text",
+                },
+                "observations": ["current run improved"],
+            },
+        )
+
+        data = self.renderer.build_report_data("response", "run-b", run_dir)
+
+        self.assertEqual(data["previous_run"]["run_id"], "run-a")
+        self.assertTrue(data["previous_run"]["available"])
+        self.assertEqual(data["summary"]["with_dddjango_average_change"], "+2.0")
+        self.assertEqual(data["summary"]["pass_change"], "+1")
+        self.assertEqual(data["summary"]["fail_change"], "-1")
+        self.assertEqual(data["summary"]["improved_cases"], 1)
+        self.assertEqual(data["summary"]["unchanged_cases"], 0)
+        self.assertEqual(data["summary"]["regressed_cases"], 0)
+        row = data["cases"][0]
+        self.assertEqual(row["previous"]["with_dddjango"]["score"], "3 / 5")
+        self.assertEqual(row["run_change"]["with_dddjango_delta"], "+2.0")
+        self.assertEqual(row["run_change"]["with_dddjango_verdict_change"], "fail -> pass")
+        self.assertEqual(row["run_change"]["direction"], "improved")
+
+    def test_render_html_shows_previous_run_change_in_summary_table_and_dialog(self) -> None:
+        self.write_case(
+            run_id="run-a",
+            oracle={
+                "caseId": "case-response-order-create",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "2 / 5",
+                    "verdict": "fail",
+                    "evaluation": "Previous baseline evaluation text",
+                },
+                "with_dddjango": {
+                    "score": "3 / 5",
+                    "verdict": "fail",
+                    "evaluation": "Previous with dddjango evaluation text",
+                },
+                "observations": ["previous run was weak"],
+            },
+        )
+        run_dir = self.write_case(run_id="run-b")
+
+        data = self.renderer.build_report_data("response", "run-b", run_dir)
+        html = self.renderer.render_html(data)
+
+        self.assertIn("이전 평가 대비", html)
+        self.assertIn("직전 run", html)
+        self.assertIn("run-a", html)
+        self.assertIn("<th>이전 대비</th>", html)
+        self.assertIn("fail -&gt; pass", html)
+        self.assertIn("previous with-dddjango", html)
 
     def test_report_includes_only_cases_present_in_run_artifacts(self) -> None:
         run_dir = self.write_case()
@@ -556,9 +673,11 @@ coverage_tags:
 
         html = self.renderer.render_html(data)
 
-        self.assertIn('<col class="baseline-score-col" style="width: 7%">', html)
-        self.assertIn('<col class="with-score-col" style="width: 9%">', html)
+        self.assertIn('<col class="baseline-score-col" style="width: 6%">', html)
+        self.assertIn('<col class="with-score-col" style="width: 8%">', html)
+        self.assertIn('<col class="change-col" style="width: 8%">', html)
         self.assertIn("<th>subagent trace</th>", html)
+        self.assertIn("<th>이전 대비</th>", html)
         self.assertIn('<th class="score-header"><span class="score-heading"><span>with-dddjango</span><span>점수</span></span></th>', html)
 
     def test_case_status_tracks_with_dddjango_verdict_not_baseline_failure(self) -> None:

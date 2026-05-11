@@ -17,6 +17,7 @@ Use this skill to coordinate complex dddjango work across domain, architecture, 
 - If a simple task asks for decorative workflow ceremony such as a Role Map, avoid the full workflow unless multiple real responsibilities are involved.
 - If the user says `subagent 계획은 필요 없어` or otherwise opts out, do not output a full role map; proceed with the most relevant implementation or architecture skill.
 - If the user asks you to say subagents completed work without actually running them, refuse that claim and report the actual execution status.
+- Direct Answer Mode: if staying direct for a short explanation, tiny edit, or explicit opt-out, preserve the user's requested output shape. For pure answer-only requests, answer with the requested content only; do not add anything before or after it, including workflow sections, subagent status, validation footer, command-honesty boilerplate, command/check notes, or skill/reference loading reports.
 
 ## Reference Loading
 
@@ -61,3 +62,4 @@ If actual subagents are used, list their role, task, and result. If subagents ar
 - Final integration must close each role's risks and required follow-up or explicitly leave them unresolved.
 - If plugin cache outside the workspace was edited, report the Cache sync report with the workspace canonical source mapping.
 - Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+- For direct implementation work, keep the final report limited to concrete changed files and verification that must be reported; do not add workflow sections unless the task becomes composite or risky.

@@ -1,0 +1,50 @@
+id: case-workflow-parallel-ownership
+case_id: case-workflow-parallel-ownership
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-parallel-ownership.md
+intent: Validate disjoint file ownership when workflow work is split across parallel roles.
+reference_basis:
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: handoff contract, delegation honesty, and role responsibility split
+  - path: workspace/docs/workflow.md
+    basis: role decomposition and handoff fields
+  - path: dddjango/skills/workflow-dddjango-subagents/SKILL.md
+    basis: explicit file ownership with May edit and Must not edit
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: no overlapping write sets and role handoff discipline
+target_behavior:
+  required:
+    - Provides role handoffs for Domain, DB, API, and Test with concrete scopes.
+    - Each role includes Files with May edit and Must not edit.
+    - May edit ownership is disjoint across roles or explicitly read-only for review-only roles.
+    - Must not edit prevents overlapping writes to the same files or modules.
+    - Includes integration owner or merge rule for reconciling outputs.
+    - States whether real subagents ran, were only planned, or would be sequential fallback.
+  forbidden:
+    - Assigning the same file or module to multiple roles for concurrent editing without a clear single owner.
+    - Omitting Must not edit boundaries.
+    - Claiming parallel execution without trace evidence or honest fallback wording.
+scoring_checks:
+  - pass if ownership is concrete, non-overlapping, and trace/fallback language is honest.
+  - partial if roles are useful but file boundaries are too broad or partially overlapping.
+  - fail if multiple roles are told to edit the same files concurrently, or if ownership fields are missing.
+failure_modes:
+  - overlapping write ownership
+  - missing must-not-edit boundaries
+  - false actual delegation claim
+  - no integration owner
+  - decorative role split
+leakage_checks:
+  - public response must not reveal evaluator-only oracle, scoring checks, hidden ownership criterion, or answer file content.
+evidence_required:
+  - final workflow response transcript
+  - handoff contract or role table
+  - subagent trace summary when actual subagents are claimed
+  - integration owner or merge rule
+coverage_tags:
+  - handoff-contract
+  - parallel-ownership
+  - delegation-honesty
+  - responsibility-split
+  - integration-closure

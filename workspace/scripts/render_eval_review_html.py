@@ -19,6 +19,15 @@ EVAL_ROOT = REPO_ROOT / "workspace/develop/eval"
 BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
 VARIANTS = ("baseline", "with-dddjango")
 SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
+VERDICT_RANK = {
+    "unscored": 0,
+    "blocked": 1,
+    "fail": 2,
+    "partial": 3,
+    "pass-limited": 3,
+    "pass-control": 3,
+    "pass": 4,
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -197,6 +206,12 @@ def format_signed_average(values: list[float]) -> str:
     return f"{sum(values) / len(values):+.1f}"
 
 
+def format_signed_int(value: int | None) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:+d}"
+
+
 def format_delta(before: float | None, after: float | None) -> str:
     if before is None or after is None:
         return "n/a"
@@ -251,7 +266,15 @@ def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, ob
 
 
 def hard_gate_from_oracle(oracle: dict[str, object]) -> str:
-    status_text = str(oracle.get("status") or "")
+    status = str(oracle.get("status") or "").strip().lower()
+    if status in {"ok", "pass"}:
+        return "ok"
+    if status in {"leakage fail", "leakage-fail"}:
+        return "leakage fail"
+    if status in {"hard fail", "hard-fail", "blocked"}:
+        return "hard fail"
+
+    status_text = status
     observations = oracle.get("observations")
     if isinstance(observations, list):
         status_text = " ".join([status_text, *[str(item) for item in observations]])
@@ -451,6 +474,211 @@ def build_summary(cases: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
+def previous_run_dir(bucket: str, run_id: str) -> Path | None:
+    runs_dir = EVAL_ROOT / bucket / "runs"
+    if not runs_dir.is_dir():
+        return None
+    previous = sorted(
+        path for path in runs_dir.iterdir() if path.is_dir() and path.name < run_id
+    )
+    return previous[-1] if previous else None
+
+
+def compact_variant_for_previous(variant: dict[str, object]) -> dict[str, object]:
+    return {
+        "score": variant.get("score", "not scored"),
+        "score_value": variant.get("score_value"),
+        "verdict": variant.get("verdict", "unscored"),
+    }
+
+
+def compact_previous_case(case: dict[str, object] | None) -> dict[str, object]:
+    if not case:
+        return {}
+    baseline = case.get("baseline") if isinstance(case.get("baseline"), dict) else {}
+    with_dddjango = (
+        case.get("with_dddjango") if isinstance(case.get("with_dddjango"), dict) else {}
+    )
+    return {
+        "id": case.get("id", ""),
+        "status": case.get("status", "unscored"),
+        "baseline": compact_variant_for_previous(baseline),
+        "with_dddjango": compact_variant_for_previous(with_dddjango),
+        "delta": case.get("delta", "n/a"),
+    }
+
+
+def verdict_change(before: object, after: object) -> str:
+    before_text = str(before or "unscored")
+    after_text = str(after or "unscored")
+    if before_text == after_text:
+        return after_text
+    return f"{before_text} -> {after_text}"
+
+
+def verdict_direction(before: object, after: object) -> str:
+    before_rank = VERDICT_RANK.get(str(before or "unscored"))
+    after_rank = VERDICT_RANK.get(str(after or "unscored"))
+    if before_rank is None or after_rank is None:
+        return "n/a"
+    if after_rank > before_rank:
+        return "improved"
+    if after_rank < before_rank:
+        return "regressed"
+    return "unchanged"
+
+
+def compare_case_to_previous(
+    case: dict[str, object],
+    previous: dict[str, object] | None,
+) -> dict[str, object]:
+    if previous is None:
+        return {
+            "available": False,
+            "direction": "new",
+            "with_dddjango_delta": "new",
+            "baseline_delta": "new",
+            "with_dddjango_verdict_change": "new",
+            "baseline_verdict_change": "new",
+        }
+
+    current_baseline = case.get("baseline") if isinstance(case.get("baseline"), dict) else {}
+    current_with = case.get("with_dddjango") if isinstance(case.get("with_dddjango"), dict) else {}
+    previous_baseline = (
+        previous.get("baseline") if isinstance(previous.get("baseline"), dict) else {}
+    )
+    previous_with = (
+        previous.get("with_dddjango")
+        if isinstance(previous.get("with_dddjango"), dict)
+        else {}
+    )
+    current_with_score = current_with.get("score_value")
+    previous_with_score = previous_with.get("score_value")
+    with_delta = format_delta(
+        previous_with_score if isinstance(previous_with_score, float) else None,
+        current_with_score if isinstance(current_with_score, float) else None,
+    )
+    baseline_delta = format_delta(
+        previous_baseline.get("score_value")
+        if isinstance(previous_baseline.get("score_value"), float)
+        else None,
+        current_baseline.get("score_value")
+        if isinstance(current_baseline.get("score_value"), float)
+        else None,
+    )
+    if isinstance(current_with_score, float) and isinstance(previous_with_score, float):
+        if current_with_score > previous_with_score:
+            direction = "improved"
+        elif current_with_score < previous_with_score:
+            direction = "regressed"
+        else:
+            direction = verdict_direction(previous_with.get("verdict"), current_with.get("verdict"))
+    else:
+        direction = verdict_direction(previous_with.get("verdict"), current_with.get("verdict"))
+
+    return {
+        "available": True,
+        "direction": direction,
+        "with_dddjango_delta": with_delta,
+        "baseline_delta": baseline_delta,
+        "with_dddjango_verdict_change": verdict_change(
+            previous_with.get("verdict"), current_with.get("verdict")
+        ),
+        "baseline_verdict_change": verdict_change(
+            previous_baseline.get("verdict"), current_baseline.get("verdict")
+        ),
+    }
+
+
+def build_previous_cases(bucket: str, run_id: str) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
+    previous_dir = previous_run_dir(bucket, run_id)
+    if previous_dir is None:
+        return {"available": False, "run_id": ""}, {}
+
+    previous_public_cases = public_cases_for_run(bucket, previous_dir)
+    previous_cases = [
+        build_case(bucket, public_case, previous_dir) for public_case in previous_public_cases
+    ]
+    return (
+        {"available": True, "run_id": previous_dir.name},
+        {str(case.get("id") or ""): case for case in previous_cases},
+    )
+
+
+def add_previous_comparison(
+    cases: list[dict[str, object]],
+    previous_cases: dict[str, dict[str, object]],
+) -> None:
+    for case in cases:
+        previous = previous_cases.get(str(case.get("id") or ""))
+        case["previous"] = compact_previous_case(previous)
+        case["run_change"] = compare_case_to_previous(case, previous)
+
+
+def build_change_summary(
+    cases: list[dict[str, object]],
+    previous_run: dict[str, object],
+) -> dict[str, object]:
+    if previous_run.get("available") is not True:
+        return {
+            "previous_run_id": "없음",
+            "with_dddjango_average_change": "n/a",
+            "pass_change": "n/a",
+            "fail_change": "n/a",
+            "improved_cases": 0,
+            "unchanged_cases": 0,
+            "regressed_cases": 0,
+            "new_cases": len(cases),
+            "comparison_cases": 0,
+        }
+
+    paired_score_deltas: list[float] = []
+    current_pass = 0
+    previous_pass = 0
+    current_fail = 0
+    previous_fail = 0
+    direction_counts = {"improved": 0, "unchanged": 0, "regressed": 0, "new": 0}
+    comparison_cases = 0
+
+    for case in cases:
+        change = case.get("run_change") if isinstance(case.get("run_change"), dict) else {}
+        direction = str(change.get("direction") or "n/a")
+        if direction in direction_counts:
+            direction_counts[direction] += 1
+        if change.get("available") is not True:
+            continue
+        comparison_cases += 1
+        current_with = case.get("with_dddjango") if isinstance(case.get("with_dddjango"), dict) else {}
+        previous = case.get("previous") if isinstance(case.get("previous"), dict) else {}
+        previous_with = (
+            previous.get("with_dddjango")
+            if isinstance(previous.get("with_dddjango"), dict)
+            else {}
+        )
+        current_score = current_with.get("score_value")
+        previous_score = previous_with.get("score_value")
+        if isinstance(current_score, float) and isinstance(previous_score, float):
+            paired_score_deltas.append(current_score - previous_score)
+        current_verdict = str(current_with.get("verdict") or "unscored")
+        previous_verdict = str(previous_with.get("verdict") or "unscored")
+        current_pass += 1 if current_verdict == "pass" else 0
+        previous_pass += 1 if previous_verdict == "pass" else 0
+        current_fail += 1 if current_verdict == "fail" else 0
+        previous_fail += 1 if previous_verdict == "fail" else 0
+
+    return {
+        "previous_run_id": str(previous_run.get("run_id") or "없음"),
+        "with_dddjango_average_change": format_signed_average(paired_score_deltas),
+        "pass_change": format_signed_int(current_pass - previous_pass),
+        "fail_change": format_signed_int(current_fail - previous_fail),
+        "improved_cases": direction_counts["improved"],
+        "unchanged_cases": direction_counts["unchanged"],
+        "regressed_cases": direction_counts["regressed"],
+        "new_cases": direction_counts["new"],
+        "comparison_cases": comparison_cases,
+    }
+
+
 def add_run_scope(
     summary: dict[str, object],
     *,
@@ -479,12 +707,15 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
     run_public_cases = public_cases_for_run(bucket, run_dir)
     run_case_ids = {path.stem for path in run_public_cases}
     cases = [build_case(bucket, public_case, run_dir) for public_case in run_public_cases]
+    previous_run, previous_cases = build_previous_cases(bucket, run_id)
+    add_previous_comparison(cases, previous_cases)
     cases.sort(key=sort_key)
     summary = add_run_scope(
         build_summary(cases),
         total_public_cases=len(public_cases),
         run_cases=len(cases),
     )
+    summary.update(build_change_summary(cases, previous_run))
     return {
         "bucket": bucket,
         "run_id": run_id,
@@ -492,6 +723,7 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
         "reportability": reportability(summary),
         "bucket_tabs": build_bucket_tabs(bucket, run_id),
         "bucket_goal": bucket_goal_paragraphs(bucket),
+        "previous_run": previous_run,
         "summary": summary,
         "unrun_case_ids": [
             public_case.stem for public_case in public_cases if public_case.stem not in run_case_ids
@@ -564,21 +796,23 @@ def bucket_tab_html(tab: dict[str, object]) -> str:
 
 def table_colgroup_html(show_trace_columns: bool) -> str:
     if show_trace_columns:
-        return """          <col style="width: 34%">
-          <col style="width: 7%">
-          <col class="baseline-score-col" style="width: 7%">
-          <col class="with-score-col" style="width: 9%">
+        return """          <col style="width: 30%">
           <col style="width: 6%">
-          <col style="width: 10%">
-          <col style="width: 8%">
-          <col style="width: 8%">
+          <col class="baseline-score-col" style="width: 6%">
+          <col class="with-score-col" style="width: 8%">
+          <col style="width: 5%">
+          <col class="change-col" style="width: 8%">
+          <col style="width: 9%">
+          <col style="width: 7%">
+          <col style="width: 7%">
           <col class="status-col" style="width: 6%">
           <col class="action-col" style="width: 5%">"""
-    return """          <col style="width: 47%">
+    return """          <col style="width: 39%">
           <col style="width: 9%">
           <col class="baseline-score-col" style="width: 8%">
           <col class="with-score-col" style="width: 10%">
-          <col style="width: 10%">
+          <col style="width: 8%">
+          <col class="change-col" style="width: 10%">
           <col class="status-col" style="width: 8%">
           <col class="action-col" style="width: 8%">"""
 
@@ -609,7 +843,7 @@ def render_html(data: dict[str, object]) -> str:
     bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
     bucket_goal = data.get("bucket_goal") if isinstance(data.get("bucket_goal"), list) else []
     show_trace_columns = str(data.get("bucket") or "") == "workflow"
-    table_column_count = 10 if show_trace_columns else 7
+    table_column_count = 11 if show_trace_columns else 8
     summary_keys = (
         ("total_public_cases", "전체 public"),
         ("run_cases", "이번 실행"),
@@ -639,6 +873,23 @@ def render_html(data: dict[str, object]) -> str:
         </div>"""
         for key, label in summary_keys
     )
+    change_keys = (
+        ("previous_run_id", "직전 run"),
+        ("with_dddjango_average_change", "with-dddjango 평균 변화"),
+        ("pass_change", "pass 변화"),
+        ("fail_change", "fail 변화"),
+        ("improved_cases", "개선"),
+        ("unchanged_cases", "유지"),
+        ("regressed_cases", "악화"),
+        ("new_cases", "신규"),
+    )
+    change_cards = "\n".join(
+        f"""        <div class="metric change-metric">
+          <div class="metric-label">{escape(label)}</div>
+          <div class="metric-value">{escape(str(summary.get(key, 'n/a')))}</div>
+        </div>"""
+        for key, label in change_keys
+    )
 
     rows: list[str] = []
     for index, case in enumerate(cases):
@@ -649,7 +900,13 @@ def render_html(data: dict[str, object]) -> str:
             if isinstance(case_data.get("with_dddjango"), dict)
             else {}
         )
+        run_change = (
+            case_data.get("run_change") if isinstance(case_data.get("run_change"), dict) else {}
+        )
         status = str(case_data.get("status") or "unscored")
+        change_direction = str(run_change.get("direction") or "n-a")
+        change_delta = str(run_change.get("with_dddjango_delta") or "n/a")
+        change_verdict = str(run_change.get("with_dddjango_verdict_change") or "n/a")
         trace_cells_html = table_trace_cells_html(case_data, show_trace_columns)
         rows.append(
             f"""          <tr class="{status_class(status)}">
@@ -661,6 +918,10 @@ def render_html(data: dict[str, object]) -> str:
             <td class="score-cell">{escape(str(baseline.get("score") or "not scored"))}</td>
             <td class="score-cell">{escape(str(with_dddjango.get("score") or "not scored"))}</td>
             <td class="delta-cell">{escape(str(case_data.get("delta") or "n/a"))}</td>
+            <td class="change-cell">
+              <span class="change-pill change-{escape(status_class(change_direction)[7:])}">{escape(change_delta)}</span>
+              <span class="change-verdict">{escape(change_verdict)}</span>
+            </td>
 {trace_cells_html.rstrip()}
             <td class="status-cell"><span class="status-pill {status_class(status)}">{escape(status)}</span></td>
             <td class="action-cell"><button type="button" class="detail-button" aria-haspopup="dialog" data-detail-index="{index}">상세</button></td>
@@ -842,6 +1103,7 @@ def render_html(data: dict[str, object]) -> str:
       -webkit-line-clamp: 3;
     }}
     .score-cell, .delta-cell, .action-cell {{ text-align: center; }}
+    .change-cell {{ text-align: center; }}
     .score-header {{ text-align: center; }}
     .score-heading {{
       display: inline-flex;
@@ -878,6 +1140,30 @@ def render_html(data: dict[str, object]) -> str:
     .status-pill.status-fail {{ background: var(--fail); }}
     .status-pill.status-blocked {{ background: var(--blocked); }}
     .status-pill.status-unscored {{ background: var(--unscored); }}
+    .change-pill {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }}
+    .change-improved {{ background: var(--pass); }}
+    .change-regressed {{ background: var(--fail); }}
+    .change-unchanged {{ background: var(--unscored); }}
+    .change-new, .change-n-a {{ background: var(--blocked); }}
+    .change-verdict {{
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      word-break: break-word;
+    }}
     .detail-button {{
       border: 1px solid var(--accent);
       border-radius: 6px;
@@ -935,6 +1221,22 @@ def render_html(data: dict[str, object]) -> str:
       border-radius: 6px;
       background: #fbfcfe;
       white-space: pre-wrap;
+    }}
+    .run-change-box {{
+      margin: 0 0 14px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      padding: 14px 16px;
+      background: #fbfcfe;
+    }}
+    .run-change-title {{ margin-bottom: 8px; font-weight: 800; }}
+    .run-change-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
     }}
     .detail-grid {{
       display: grid;
@@ -1014,6 +1316,12 @@ def render_html(data: dict[str, object]) -> str:
 {summary_cards}
       </div>
     </section>
+    <section class="panel" aria-labelledby="change-title">
+      <h2 id="change-title">이전 평가 대비</h2>
+      <div class="summary-grid">
+{change_cards}
+      </div>
+    </section>
     <section class="panel" aria-labelledby="cases-title">
       <h2 id="cases-title">평가 질문 목록</h2>
       <div class="table-wrap">
@@ -1028,6 +1336,7 @@ def render_html(data: dict[str, object]) -> str:
             <th class="score-header"><span class="score-heading"><span>baseline</span><span>점수</span></span></th>
             <th class="score-header"><span class="score-heading"><span>with-dddjango</span><span>점수</span></span></th>
             <th>delta</th>
+            <th>이전 대비</th>
 {table_trace_header_html(show_trace_columns).rstrip()}
             <th>with-dddjango 판정</th>
             <th>상세</th>
@@ -1117,6 +1426,27 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
         </details>`;
     }}
 
+    function runChangeHtml(caseData) {{
+      const change = caseData.run_change || {{}};
+      const previous = caseData.previous || {{}};
+      const previousBaseline = previous.baseline || {{}};
+      const previousWith = previous.with_dddjango || {{}};
+      const currentBaseline = caseData.baseline || {{}};
+      const currentWith = caseData.with_dddjango || {{}};
+      return `
+        <div class="run-change-box">
+          <div class="run-change-title">이전 평가 대비</div>
+          <div class="run-change-grid">
+            <div>previous with-dddjango: ${{esc(previousWith.score || "n/a")}} · ${{esc(previousWith.verdict || "n/a")}}</div>
+            <div>current with-dddjango: ${{esc(currentWith.score || "n/a")}} · ${{esc(currentWith.verdict || "n/a")}}</div>
+            <div>with-dddjango 변화: ${{esc(change.with_dddjango_delta || "n/a")}} · ${{esc(change.with_dddjango_verdict_change || "n/a")}}</div>
+            <div>baseline 변화: ${{esc(change.baseline_delta || "n/a")}} · ${{esc(change.baseline_verdict_change || "n/a")}}</div>
+            <div>previous baseline: ${{esc(previousBaseline.score || "n/a")}} · ${{esc(previousBaseline.verdict || "n/a")}}</div>
+            <div>current baseline: ${{esc(currentBaseline.score || "n/a")}} · ${{esc(currentBaseline.verdict || "n/a")}}</div>
+          </div>
+        </div>`;
+    }}
+
     const caseDialog = document.getElementById("case-dialog");
     const caseDialogBody = document.getElementById("case-dialog-body");
     const caseDialogMeta = document.getElementById("case-dialog-meta");
@@ -1131,6 +1461,7 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
       caseDialogMeta.textContent = `${{caseData.id || ""}} · ${{caseData.bucket || ""}} · delta ${{caseData.delta || "n/a"}}`;
       caseDialogBody.innerHTML = `
         <div class="detail-question"><strong>문제</strong>\\n${{esc(caseData.question || "")}}</div>
+        ${{runChangeHtml(caseData)}}
         <div class="detail-grid">
           ${{variantHtml("Baseline", caseData.baseline)}}
           ${{variantHtml("with-dddjango", caseData.with_dddjango)}}

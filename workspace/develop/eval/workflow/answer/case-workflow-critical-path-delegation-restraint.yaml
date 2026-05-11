@@ -1,0 +1,49 @@
+id: case-workflow-critical-path-delegation-restraint
+case_id: case-workflow-critical-path-delegation-restraint
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-critical-path-delegation-restraint.md
+intent: Ensure the workflow does not delegate the immediate critical-path design decision before making a local decision.
+reference_basis:
+  - path: workspace/develop/eval/workflow/eval_goal.md
+    basis: delegation honesty, responsibility split, and integration closure
+  - path: dddjango/skills/workflow-dddjango-subagents/SKILL.md
+    basis: do not delegate immediate critical-path blocker
+  - path: dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+    basis: real subagent task boundaries and sequential fallback
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: role scope, inputs, files, risks, and follow-up
+target_behavior:
+  required:
+    - Gives the immediate local decision first, before any delegation plan or role list.
+    - Identifies the highest-risk order creation decision across payment, inventory, and idempotency.
+    - Splits only non-blocking sidecar review work into concrete role tasks.
+    - States actual execution mode honestly, distinguishing real subagents from planned or sequential work.
+    - Assigns integration follow-up so sidecar findings cannot override domain and consistency decisions silently.
+  forbidden:
+    - Handing the first blocking decision to a subagent and waiting before answering the user.
+    - Claiming parallel subagent work happened without reliable trace or explicit fallback/planned-only wording.
+    - Listing decorative roles without concrete sidecar scope, risks, and integration owner.
+scoring_checks:
+  - pass if local critical-path decision appears before delegation and sidecar tasks are bounded and honest.
+  - partial if it makes a useful decision but the delegation boundary is vague.
+  - fail if the answer delegates the immediate blocker, fabricates subagent execution, or never makes the core design decision.
+failure_modes:
+  - delegated critical-path blocker
+  - false actual delegation claim
+  - vague sidecar roles
+  - missing integration owner
+  - missing risky write decision
+leakage_checks:
+  - public response must not reveal evaluator-only oracle, scoring language, trace criterion, or answer file content.
+evidence_required:
+  - final workflow response transcript
+  - subagent trace summary when actual subagents are claimed
+  - local decision ordering evidence
+  - sidecar task and integration owner content
+coverage_tags:
+  - delegation-honesty
+  - critical-path-restraint
+  - responsibility-split
+  - risky-write-consistency
+  - integration-closure
