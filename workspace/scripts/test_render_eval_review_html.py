@@ -500,6 +500,53 @@ coverage_tags:
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
 
+    def test_case_status_tracks_with_dddjango_verdict_not_baseline_failure(self) -> None:
+        run_dir = self.write_case(
+            oracle={
+                "caseId": "case-response-order-create",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "2 / 5",
+                    "verdict": "fail",
+                    "evaluation": "Baseline misses the expected behavior.",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation": "with-dddjango meets the oracle.",
+                },
+                "observations": ["baseline failed but target variant passed"],
+            },
+        )
+
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        html = self.renderer.render_html(data)
+
+        self.assertEqual(data["cases"][0]["status"], "pass")
+        self.assertIn("<th>with-dddjango 판정</th>", html)
+        self.assertIn("<span class=\"status-pill status-pass\">pass</span>", html)
+
+    def test_status_and_action_columns_have_room_for_badges(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertIn("<col class=\"status-col\" style=\"width: 8%\">", html)
+        self.assertIn("<col class=\"action-col\" style=\"width: 8%\">", html)
+        self.assertIn(".status-cell { text-align: center; white-space: nowrap; }", html)
+        self.assertIn("max-width: 100%;", html)
+
+    def test_response_table_hides_workflow_trace_columns(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        self.assertNotIn("<th>trace</th>", html)
+        self.assertNotIn("<th>claim</th>", html)
+        self.assertNotIn("<th>evidence</th>", html)
+
     def test_workflow_trace_summary_is_loaded_and_rendered(self) -> None:
         case_id = "case-workflow-live-delegation"
         run_dir = self.write_case(bucket="workflow", case_id=case_id)
@@ -513,9 +560,9 @@ coverage_tags:
         self.assertEqual(row["trace_table"]["trace"], "fallback-stated")
         self.assertEqual(row["trace_table"]["claim"], "fallback")
         self.assertEqual(row["trace_table"]["evidence"], "증거 부족")
-        self.assertIn("<th>trace</th>", html)
-        self.assertIn("<th>claim</th>", html)
-        self.assertIn("<th>evidence</th>", html)
+        self.assertIn("<th>subagent trace</th>", html)
+        self.assertIn("<th>subagent claim</th>", html)
+        self.assertIn("<th>trace evidence</th>", html)
         self.assertIn("traceStatus", html)
         self.assertIn("fallback-stated", html)
         self.assertIn("Domain Agent", html)

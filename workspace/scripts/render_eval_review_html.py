@@ -254,18 +254,17 @@ def hard_gate_from_oracle(oracle: dict[str, object]) -> str:
 def case_status(case: dict[str, object]) -> str:
     if case.get("hard_gate") != "ok":
         return "blocked"
-    verdicts = [
-        str(case[key]["verdict"])
-        for key in ("baseline", "with_dddjango")
-        if isinstance(case.get(key), dict)
-    ]
-    if any(verdict == "unscored" for verdict in verdicts):
+    with_dddjango = case.get("with_dddjango")
+    if not isinstance(with_dddjango, dict):
         return "unscored"
-    if any(verdict == "blocked" for verdict in verdicts):
+    verdict = str(with_dddjango.get("verdict") or "unscored")
+    if verdict == "unscored":
+        return "unscored"
+    if verdict == "blocked":
         return "blocked"
-    if any(verdict == "fail" for verdict in verdicts):
+    if verdict == "fail":
         return "fail"
-    if any(verdict in {"partial", "pass-limited", "pass-control"} for verdict in verdicts):
+    if verdict in {"partial", "pass-limited", "pass-control"}:
         return "partial"
     return "pass"
 
@@ -537,11 +536,53 @@ def bucket_tab_html(tab: dict[str, object]) -> str:
     return f"""          <a class="bucket-tab{current_class}" href="{href}"{current_attr}>{label}</a>"""
 
 
+def table_colgroup_html(show_trace_columns: bool) -> str:
+    if show_trace_columns:
+        return """          <col style="width: 29%">
+          <col style="width: 7%">
+          <col style="width: 9%">
+          <col style="width: 12%">
+          <col style="width: 6%">
+          <col style="width: 10%">
+          <col style="width: 8%">
+          <col style="width: 8%">
+          <col class="status-col" style="width: 6%">
+          <col class="action-col" style="width: 5%">"""
+    return """          <col style="width: 38%">
+          <col style="width: 9%">
+          <col style="width: 12%">
+          <col style="width: 15%">
+          <col style="width: 10%">
+          <col class="status-col" style="width: 8%">
+          <col class="action-col" style="width: 8%">"""
+
+
+def table_trace_header_html(show_trace_columns: bool) -> str:
+    if not show_trace_columns:
+        return ""
+    return """            <th>subagent trace</th>
+            <th>subagent claim</th>
+            <th>trace evidence</th>
+"""
+
+
+def table_trace_cells_html(case_data: dict[str, object], show_trace_columns: bool) -> str:
+    if not show_trace_columns:
+        return ""
+    trace_table = case_data.get("trace_table") if isinstance(case_data.get("trace_table"), dict) else {}
+    return f"""            <td>{escape(str(trace_table.get("trace", "n/a")))}</td>
+            <td>{escape(str(trace_table.get("claim", "none")))}</td>
+            <td>{escape(str(trace_table.get("evidence", "n/a")))}</td>
+"""
+
+
 def render_html(data: dict[str, object]) -> str:
     summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
     cases = data.get("cases") if isinstance(data.get("cases"), list) else []
     unrun_case_ids = data.get("unrun_case_ids") if isinstance(data.get("unrun_case_ids"), list) else []
     bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
+    show_trace_columns = str(data.get("bucket") or "") == "workflow"
+    table_column_count = 10 if show_trace_columns else 7
     summary_keys = (
         ("total_public_cases", "전체 public"),
         ("run_cases", "이번 실행"),
@@ -578,6 +619,7 @@ def render_html(data: dict[str, object]) -> str:
             else {}
         )
         status = str(case_data.get("status") or "unscored")
+        trace_cells_html = table_trace_cells_html(case_data, show_trace_columns)
         rows.append(
             f"""          <tr class="{status_class(status)}">
             <td class="question-cell">
@@ -588,15 +630,13 @@ def render_html(data: dict[str, object]) -> str:
             <td class="score-cell">{escape(str(baseline.get("score") or "not scored"))}</td>
             <td class="score-cell">{escape(str(with_dddjango.get("score") or "not scored"))}</td>
             <td class="delta-cell">{escape(str(case_data.get("delta") or "n/a"))}</td>
-            <td>{escape(str((case_data.get("trace_table") or {}).get("trace", "n/a") if isinstance(case_data.get("trace_table"), dict) else "n/a"))}</td>
-            <td>{escape(str((case_data.get("trace_table") or {}).get("claim", "none") if isinstance(case_data.get("trace_table"), dict) else "none"))}</td>
-            <td>{escape(str((case_data.get("trace_table") or {}).get("evidence", "n/a") if isinstance(case_data.get("trace_table"), dict) else "n/a"))}</td>
+{trace_cells_html.rstrip()}
             <td class="status-cell"><span class="status-pill {status_class(status)}">{escape(status)}</span></td>
             <td class="action-cell"><button type="button" class="detail-button" aria-haspopup="dialog" data-detail-index="{index}">상세</button></td>
           </tr>"""
         )
 
-    rows_html = "\n".join(rows) or """          <tr><td colspan="10" class="empty">No cases found.</td></tr>"""
+    rows_html = "\n".join(rows) or f"""          <tr><td colspan="{table_column_count}" class="empty">No cases found.</td></tr>"""
     run_scope_note = (
         f"""      <details class="run-scope-note">
         <summary>미실행 질문 {escape(str(summary.get('unrun_cases', 0)))}개</summary>
@@ -606,6 +646,7 @@ def render_html(data: dict[str, object]) -> str:
         else ""
     )
     report_data = js_json(data)
+    show_trace_js = "true" if show_trace_columns else "false"
     title = (
         f"dddjango eval review: {escape(str(data.get('bucket') or 'unknown'))} / "
         f"{escape(str(data.get('run_id') or 'unknown'))}"
@@ -741,15 +782,23 @@ def render_html(data: dict[str, object]) -> str:
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 3;
     }}
-    .score-cell, .delta-cell, .status-cell, .action-cell {{ text-align: center; }}
+    .score-cell, .delta-cell, .action-cell {{ text-align: center; }}
+    .status-cell {{ text-align: center; white-space: nowrap; }}
+    .action-cell {{ white-space: nowrap; }}
     .status-pill {{
-      display: inline-block;
-      min-width: 72px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      max-width: 100%;
       border-radius: 999px;
       padding: 2px 8px;
       color: #fff;
       font-size: 12px;
       text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }}
     .status-pass {{ border-left-color: var(--pass); }}
     .status-partial, .status-pass-limited, .status-pass-control {{ border-left-color: var(--partial); }}
@@ -767,6 +816,8 @@ def render_html(data: dict[str, object]) -> str:
       background: #fff;
       color: var(--accent);
       font-weight: 700;
+      min-width: 48px;
+      max-width: 100%;
       padding: 5px 10px;
       cursor: pointer;
     }}
@@ -893,16 +944,7 @@ def render_html(data: dict[str, object]) -> str:
       <div class="table-wrap">
       <table>
         <colgroup>
-          <col style="width: 28%">
-          <col style="width: 8%">
-          <col style="width: 10%">
-          <col style="width: 12%">
-          <col style="width: 7%">
-          <col style="width: 11%">
-          <col style="width: 8%">
-          <col style="width: 8%">
-          <col style="width: 5%">
-          <col style="width: 5%">
+{table_colgroup_html(show_trace_columns)}
         </colgroup>
         <thead>
           <tr>
@@ -911,10 +953,8 @@ def render_html(data: dict[str, object]) -> str:
             <th>baseline 점수</th>
             <th>with-dddjango 점수</th>
             <th>delta</th>
-            <th>trace</th>
-            <th>claim</th>
-            <th>evidence</th>
-            <th>status</th>
+{table_trace_header_html(show_trace_columns).rstrip()}
+            <th>with-dddjango 판정</th>
             <th>상세</th>
           </tr>
         </thead>
@@ -942,6 +982,7 @@ def render_html(data: dict[str, object]) -> str:
   </dialog>
   <script>
     const REPORT_DATA = {report_data};
+    const SHOW_TRACE_DETAILS = {show_trace_js};
 
     function esc(value) {{
       return String(value ?? "").replace(/[&<>"']/g, function (char) {{
@@ -958,14 +999,7 @@ def render_html(data: dict[str, object]) -> str:
     function variantHtml(label, item) {{
       item = item || {{}};
       const trace = item.trace || {{}};
-      return `
-        <article class="variant">
-          <h3>${{esc(label)}}</h3>
-          <div class="score-line">score: ${{esc(item.score || "not scored")}} · verdict: ${{esc(item.verdict || "unscored")}}</div>
-          <div class="section-label">응답</div>
-          <pre>${{esc(item.response || "")}}</pre>
-          <div class="section-label">평가</div>
-          <pre>${{esc(item.evaluation || "")}}</pre>
+      const traceHtml = SHOW_TRACE_DETAILS ? `
           <div class="section-label">trace summary</div>
           <pre>traceStatus: ${{esc(trace.traceStatus || "n/a")}}
 traceCaptureReliable: ${{esc(trace.traceCaptureReliable ?? "n/a")}}
@@ -977,7 +1011,16 @@ ${{esc((trace.explicitFallbackClaims || []).join("\\n"))}}
 rolesMentioned:
 ${{esc((trace.rolesMentioned || []).join("\\n"))}}
 evidence:
-${{esc((trace.evidence || []).join("\\n"))}}</pre>
+${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
+      return `
+        <article class="variant">
+          <h3>${{esc(label)}}</h3>
+          <div class="score-line">score: ${{esc(item.score || "not scored")}} · verdict: ${{esc(item.verdict || "unscored")}}</div>
+          <div class="section-label">응답</div>
+          <pre>${{esc(item.response || "")}}</pre>
+          <div class="section-label">평가</div>
+          <pre>${{esc(item.evaluation || "")}}</pre>
+          ${{traceHtml}}
         </article>`;
     }}
 
