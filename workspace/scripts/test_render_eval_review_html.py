@@ -51,6 +51,21 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         public_path.parent.mkdir(parents=True, exist_ok=True)
         answer_path.parent.mkdir(parents=True, exist_ok=True)
         raw_dir.mkdir(parents=True, exist_ok=True)
+        (bucket_root / "eval_goal.md").write_text(
+            f"""# {bucket.title()} Eval Goal
+
+## Goal
+
+`{bucket}` 평가는 테스트용 평가 목적 첫 문단을 보여준다.
+
+핵심 목표는 평가 리뷰 화면 상단에서 사용자가 이 bucket의 판단 범위를 바로 이해하는 것이다.
+
+## Completion Gate
+
+Test gate.
+""",
+            encoding="utf-8",
+        )
         public_path.write_text(public_text, encoding="utf-8")
         answer_path.write_text(
             f"""id: {case_id}
@@ -173,6 +188,13 @@ coverage_tags:
         self.assertEqual(row["baseline"]["evaluation"], "Baseline evaluation text")
         self.assertEqual(row["with_dddjango"]["response"], "With dddjango response text")
         self.assertEqual(row["with_dddjango"]["evaluation"], "With dddjango evaluation text")
+        self.assertEqual(
+            data["bucket_goal"],
+            [
+                "`response` 평가는 테스트용 평가 목적 첫 문단을 보여준다.",
+                "핵심 목표는 평가 리뷰 화면 상단에서 사용자가 이 bucket의 판단 범위를 바로 이해하는 것이다.",
+            ],
+        )
         self.assertNotIn("intent", row)
         self.assertNotIn("failure_modes", row)
         self.assertNotIn("leakage_checks", row)
@@ -499,6 +521,21 @@ coverage_tags:
         self.assertIn("With dddjango response text", html)
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
+
+    def test_render_html_places_bucket_goal_above_review_title(self) -> None:
+        run_dir = self.write_case(bucket="code", case_id="case-code-order-api")
+        data = self.renderer.build_report_data("code", "sample-run", run_dir)
+
+        html = self.renderer.render_html(data)
+
+        purpose_index = html.index("code 평가 목적")
+        review_index = html.index("<h1>평가 리뷰</h1>")
+        self.assertLess(purpose_index, review_index)
+        self.assertIn("<code>code</code> 평가는 테스트용 평가 목적 첫 문단을 보여준다.", html)
+        self.assertIn(
+            "핵심 목표는 평가 리뷰 화면 상단에서 사용자가 이 bucket의 판단 범위를 바로 이해하는 것이다.",
+            html,
+        )
 
     def test_case_status_tracks_with_dddjango_verdict_not_baseline_failure(self) -> None:
         run_dir = self.write_case(

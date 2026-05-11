@@ -84,6 +84,20 @@ def extract_question(public_text: str) -> str:
     return section_text
 
 
+def bucket_goal_paragraphs(bucket: str) -> list[str]:
+    goal_text = read_text(EVAL_ROOT / bucket / "eval_goal.md")
+    section = re.search(r"(?ms)^## Goal\s*(.*?)(?=^## |\Z)", goal_text)
+    if not section:
+        return ["평가 목적이 eval_goal.md에 기록되지 않았습니다."]
+
+    paragraphs = [
+        re.sub(r"\s+", " ", paragraph.strip())
+        for paragraph in re.split(r"\n\s*\n", section.group(1).strip())
+        if paragraph.strip()
+    ]
+    return paragraphs or ["평가 목적이 eval_goal.md에 기록되지 않았습니다."]
+
+
 def load_json(path: Path) -> tuple[dict[str, object], str]:
     if not path.exists():
         return {}, "missing"
@@ -477,6 +491,7 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
         "generated_at": datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds"),
         "reportability": reportability(summary),
         "bucket_tabs": build_bucket_tabs(bucket, run_id),
+        "bucket_goal": bucket_goal_paragraphs(bucket),
         "summary": summary,
         "unrun_case_ids": [
             public_case.stem for public_case in public_cases if public_case.stem not in run_case_ids
@@ -523,6 +538,17 @@ def js_json(data: object) -> str:
         .replace("&", "\\u0026")
     )
     return encoded.replace("\\u003c\\/script\\u003e", "<\\/script>")
+
+
+def inline_markdown_code_html(text: str) -> str:
+    parts = re.split(r"(`[^`\n]+`)", text)
+    html_parts: list[str] = []
+    for part in parts:
+        if len(part) >= 2 and part.startswith("`") and part.endswith("`"):
+            html_parts.append(f"<code>{escape(part[1:-1])}</code>")
+        else:
+            html_parts.append(escape(part))
+    return "".join(html_parts)
 
 
 def bucket_tab_html(tab: dict[str, object]) -> str:
@@ -581,6 +607,7 @@ def render_html(data: dict[str, object]) -> str:
     cases = data.get("cases") if isinstance(data.get("cases"), list) else []
     unrun_case_ids = data.get("unrun_case_ids") if isinstance(data.get("unrun_case_ids"), list) else []
     bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
+    bucket_goal = data.get("bucket_goal") if isinstance(data.get("bucket_goal"), list) else []
     show_trace_columns = str(data.get("bucket") or "") == "workflow"
     table_column_count = 10 if show_trace_columns else 7
     summary_keys = (
@@ -600,6 +627,10 @@ def render_html(data: dict[str, object]) -> str:
     )
     bucket_tabs_html = "\n".join(
         bucket_tab_html(tab if isinstance(tab, dict) else {}) for tab in bucket_tabs
+    )
+    bucket_goal_html = "\n".join(
+        f"""        <p class="purpose-text">{inline_markdown_code_html(str(paragraph))}</p>"""
+        for paragraph in bucket_goal
     )
     summary_cards = "\n".join(
         f"""        <div class="metric {status_class(key) if key in {'pass', 'partial', 'fail', 'blocked', 'unscored'} else ''}">
@@ -684,6 +715,34 @@ def render_html(data: dict[str, object]) -> str:
     h1 {{ margin: 0 0 6px; font-size: 24px; letter-spacing: 0; }}
     h2 {{ margin: 0 0 14px; font-size: 18px; letter-spacing: 0; }}
     .meta {{ margin: 0 0 20px; color: var(--muted); }}
+    .purpose-banner {{
+      margin: 0 0 18px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: #fff;
+    }}
+    .purpose-label {{
+      margin-bottom: 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+    }}
+    .purpose-text {{
+      max-width: 980px;
+      margin: 0;
+      color: var(--text);
+    }}
+    .purpose-text + .purpose-text {{ margin-top: 6px; color: var(--muted); }}
+    .purpose-text code {{
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 4px;
+      background: #f1f4f8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }}
     .report-shell {{
       display: grid;
       grid-template-columns: 168px minmax(0, 1fr);
@@ -929,6 +988,10 @@ def render_html(data: dict[str, object]) -> str:
         </nav>
       </aside>
       <div class="report-content">
+    <section class="purpose-banner" aria-label="평가 목적">
+      <div class="purpose-label">{escape(str(data.get('bucket') or 'unknown'))} 평가 목적</div>
+{bucket_goal_html}
+    </section>
     <header>
       <h1>평가 리뷰</h1>
       <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
