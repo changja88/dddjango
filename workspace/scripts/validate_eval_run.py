@@ -16,6 +16,8 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import eval_run_identity as run_identity
+import workflow_execution_gate as workflow_gate
 
 
 REPO_ROOT = common.REPO_ROOT
@@ -35,17 +37,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def validate_run_id(run_id: str) -> str:
-    path = Path(run_id)
-    if (
-        not run_id
-        or path.is_absolute()
-        or len(path.parts) != 1
-        or run_id in {".", ".."}
-        or ".." in run_id
-        or "/" in run_id
-        or "\\" in run_id
-    ):
-        raise SystemExit(f"unsafe run id: {run_id}")
+    run_identity.validate_production_run_id(run_id)
     return run_id
 
 
@@ -347,6 +339,49 @@ def validate_workflow_trace_artifacts(
     return findings
 
 
+def variant_oracle_key(variant: str) -> str:
+    return "with_dddjango" if variant == common.VARIANTS[1] else variant
+
+
+def validate_workflow_execution_gate(
+    *,
+    answer_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+) -> list[str]:
+    answer_text = (answer_dir / f"{case_id}.yaml").read_text(
+        encoding="utf-8",
+        errors="replace",
+    )
+    oracle, error = load_json_object(raw_dir / f"{case_id}-answer-oracle-evaluation.json")
+    if error is not None:
+        return []
+    assert oracle is not None
+
+    findings: list[str] = []
+    for variant in variants:
+        trace, trace_error = load_json_object(
+            raw_dir / f"{case_id}-{variant}-subagent-trace.json"
+        )
+        if trace_error is not None:
+            trace = {"traceStatus": "missing trace"}
+        assert trace is not None
+
+        gate = workflow_gate.gate_findings(
+            answer_text=answer_text,
+            trace=trace,
+            case_id=case_id,
+            variant=variant,
+        )
+        key = variant_oracle_key(variant)
+        variant_oracle = oracle.get(key)
+        verdict = variant_oracle.get("verdict") if isinstance(variant_oracle, dict) else None
+        if gate.findings and verdict == "pass":
+            findings.extend(gate.findings)
+    return findings
+
+
 def load_code_capture_metadata() -> tuple[dict[str, Any], list[str]]:
     metadata, error = load_json_object(CODE_CAPTURE_METADATA)
     if error is not None:
@@ -461,6 +496,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         run_id = validate_run_id(args.run_id)
+        identity = run_identity.parse_run_id(run_id)
+        if identity.bucket != args.bucket:
+            raise SystemExit(
+                f"run id bucket mismatch: run id bucket={identity.bucket}, --bucket={args.bucket}"
+            )
         bucket = common.bucket_paths(args.bucket)
         case_paths = common.selected_case_paths(args.bucket, args.case)
         variants = selected_variants(args.variant)
@@ -471,6 +511,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"FAIL: {exc.code}")
         raise SystemExit(1) from exc
     raw_dir = run_dir / "raw"
+    run_meta_errors = run_identity.validate_run_meta(run_dir)
+    if run_meta_errors:
+        raise SystemExit("\n".join(run_meta_errors))
 
     findings: list[str] = []
     if not run_dir.is_dir():
@@ -517,6 +560,15 @@ def main(argv: list[str] | None = None) -> int:
                     variants=variants,
                 )
             )
+            if not args.skip_oracle:
+                findings.extend(
+                    validate_workflow_execution_gate(
+                        answer_dir=bucket.answer_dir,
+                        raw_dir=raw_dir,
+                        case_id=case_id,
+                        variants=variants,
+                    )
+                )
 
     if findings:
         for finding in findings:

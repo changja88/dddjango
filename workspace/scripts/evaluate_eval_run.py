@@ -19,6 +19,8 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import eval_run_identity as run_identity
+import workflow_execution_gate as workflow_gate
 
 
 REPO_ROOT = common.REPO_ROOT
@@ -61,17 +63,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def validate_run_id(run_id: str) -> str:
-    path = Path(run_id)
-    if (
-        not run_id
-        or path.is_absolute()
-        or len(path.parts) != 1
-        or run_id in {".", ".."}
-        or ".." in run_id
-        or "/" in run_id
-        or "\\" in run_id
-    ):
-        raise SystemExit(f"unsafe run id: {run_id}")
+    run_identity.validate_production_run_id(run_id)
     return run_id
 
 
@@ -310,6 +302,62 @@ def parse_and_validate(stdout: str, case_id: str) -> dict[str, Any]:
     return oracle
 
 
+def load_workflow_trace(raw_dir: Path, case_id: str, variant: str) -> dict[str, Any]:
+    path = raw_dir / f"{case_id}-{variant}-subagent-trace.json"
+    try:
+        value = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"traceStatus": "missing trace"}
+    if not isinstance(value, dict):
+        return {"traceStatus": "missing trace"}
+    return value
+
+
+def variant_oracle_key(variant: str) -> str:
+    return "with_dddjango" if variant == common.VARIANTS[1] else variant
+
+
+def apply_workflow_execution_gate(
+    *,
+    oracle: dict[str, Any],
+    answer_oracle: str,
+    raw_dir: Path,
+    case_id: str,
+) -> None:
+    for variant in common.VARIANTS:
+        key = variant_oracle_key(variant)
+        variant_oracle = oracle.get(key)
+        if not isinstance(variant_oracle, dict):
+            continue
+
+        gate = workflow_gate.gate_findings(
+            answer_text=answer_oracle,
+            trace=load_workflow_trace(raw_dir, case_id, variant),
+            case_id=case_id,
+            variant=variant,
+        )
+        if not gate.findings:
+            continue
+
+        finding_text = "; ".join(gate.findings)
+        variant_oracle["score"] = "0 / 5"
+        variant_oracle["verdict"] = "fail"
+        variant_oracle["evaluation_summary"] = (
+            f"workflow 실행 모드 hard gate 위반: {finding_text}"
+        )
+        existing = str(variant_oracle.get("evaluation") or "").strip()
+        variant_oracle["evaluation"] = (
+            f"workflow 실행 모드 hard gate 위반: {finding_text}"
+            + (f"\n\n기존 평가: {existing}" if existing else "")
+        )
+
+        observations = oracle.get("observations")
+        if not isinstance(observations, list):
+            observations = []
+            oracle["observations"] = observations
+        observations.append(f"workflow 실행 모드 hard gate: {finding_text}")
+
+
 def contains_korean(text: object) -> bool:
     return bool(re.search(r"[가-힣]", str(text or "")))
 
@@ -413,6 +461,13 @@ def evaluate_case(
         exit_text=str(result.returncode) + "\n",
     )
     oracle = parse_and_validate(result.stdout, case_id)
+    if bucket.bucket == "workflow":
+        apply_workflow_execution_gate(
+            oracle=oracle,
+            answer_oracle=answer_oracle,
+            raw_dir=raw_dir,
+            case_id=case_id,
+        )
     common.write_text(
         canonical_path,
         json.dumps(oracle, ensure_ascii=False, indent=2) + "\n",
@@ -422,6 +477,11 @@ def evaluate_case(
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     run_id = validate_run_id(args.run_id)
+    identity = run_identity.parse_run_id(run_id)
+    if identity.bucket != args.bucket:
+        raise SystemExit(
+            f"run id bucket mismatch: run id bucket={identity.bucket}, --bucket={args.bucket}"
+        )
     bucket = common.bucket_paths(args.bucket)
     cases = common.selected_case_paths(args.bucket, args.case)
     run_dir = resolved_under(bucket.runs_dir, run_id, description="run path")

@@ -7,9 +7,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -17,6 +15,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import eval_run_identity as run_identity
 
 
 REPO_ROOT = common.REPO_ROOT
@@ -34,6 +33,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Eval bucket to run. Repeatable. Defaults to all buckets.",
     )
     parser.add_argument("--run-id")
+    parser.add_argument("--try-number", type=int, default=1)
+    parser.add_argument("--scope", choices=run_identity.SCOPE_CHOICES, default="full")
+    parser.add_argument("--topic", default="current-baseline")
+    parser.add_argument("--lv-up-analysis", default="")
+    parser.add_argument("--lv-up-plan", default="")
     parser.add_argument("--case", action="append", help="Case id to run. Repeatable.")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--reasoning", default=DEFAULT_REASONING)
@@ -49,23 +53,28 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def now_text() -> str:
-    return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d-%H%M")
-
-
 def validate_run_id(run_id: str) -> str:
-    path = Path(run_id)
-    if (
-        not run_id
-        or path.is_absolute()
-        or len(path.parts) != 1
-        or run_id in {".", ".."}
-        or ".." in run_id
-        or "/" in run_id
-        or "\\" in run_id
-    ):
-        raise SystemExit(f"unsafe run id: {run_id}")
+    run_identity.validate_production_run_id(run_id)
     return run_id
+
+
+def run_id_for_bucket(args: argparse.Namespace, bucket: str, bucket_count: int) -> str:
+    if args.run_id is not None:
+        if bucket_count != 1:
+            raise SystemExit("explicit --run-id can only be used with one bucket")
+        run_id = validate_run_id(args.run_id)
+        identity = run_identity.parse_run_id(run_id)
+        if identity.bucket != bucket:
+            raise SystemExit(
+                f"explicit --run-id bucket mismatch: run id bucket={identity.bucket}, selected bucket={bucket}"
+            )
+        return run_id
+    return run_identity.build_run_id(
+        bucket=bucket,
+        try_number=args.try_number,
+        scope=args.scope,
+        topic=args.topic,
+    )
 
 
 def selected_buckets(raw_buckets: list[str] | None) -> list[str]:
@@ -111,6 +120,10 @@ def runner_command(
         args.reasoning,
         "--timeout-seconds",
         str(args.timeout_seconds),
+        "--lv-up-analysis",
+        args.lv_up_analysis,
+        "--lv-up-plan",
+        args.lv_up_plan,
     ]
     append_selected_case_args(command, args, cases)
     if args.rerun:
@@ -289,11 +302,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.case_jobs < 1:
         raise SystemExit("case-jobs must be positive")
-    run_id = validate_run_id(args.run_id if args.run_id is not None else f"{now_text()}-initial-eval")
     buckets = selected_buckets(args.bucket)
 
     failed = False
     for bucket in buckets:
+        run_id = run_id_for_bucket(args, bucket, len(buckets))
         ok = run_bucket(args, bucket, run_id)
         if not ok:
             failed = True

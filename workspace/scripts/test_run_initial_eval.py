@@ -10,6 +10,8 @@ from unittest.mock import patch
 
 
 MODULE_PATH = Path(__file__).with_name("run_initial_eval.py")
+RUN_ID_RESPONSE = "20260517-101010-response-try01-full-current-baseline"
+RUN_ID_CODE = "20260517-101010-code-try01-full-current-baseline"
 
 
 def load_orchestrator():
@@ -40,7 +42,7 @@ class RunInitialEvalTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                     "--model",
@@ -69,7 +71,9 @@ class RunInitialEvalTests(unittest.TestCase):
         self.assertIn("--bucket", runner)
         self.assertIn("response", runner)
         self.assertIn("--run-id", runner)
-        self.assertIn("run-one", runner)
+        self.assertIn(RUN_ID_RESPONSE, runner)
+        self.assertIn("--lv-up-analysis", runner)
+        self.assertIn("--lv-up-plan", runner)
         self.assertIn("--case", runner)
         self.assertIn("case-response-one", runner)
         self.assertIn("--model", runner)
@@ -95,7 +99,7 @@ class RunInitialEvalTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--render-only",
                 ]
             )
@@ -115,7 +119,7 @@ class RunInitialEvalTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--render-only",
                     "--skip-oracle",
                 ]
@@ -136,7 +140,7 @@ class RunInitialEvalTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--skip-oracle",
                 ]
             )
@@ -156,7 +160,7 @@ class RunInitialEvalTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--skip-exec",
                     "--skip-oracle",
                 ]
@@ -178,7 +182,7 @@ class RunInitialEvalTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--model",
                     "gpt-runner",
                     "--evaluator-model",
@@ -207,7 +211,7 @@ class RunInitialEvalTests(unittest.TestCase):
                         "--bucket",
                         "response",
                         "--run-id",
-                        "run-one",
+                        RUN_ID_RESPONSE,
                         "--case-jobs",
                         "2",
                     ]
@@ -245,7 +249,7 @@ class RunInitialEvalTests(unittest.TestCase):
 
     def test_case_jobs_must_be_positive(self) -> None:
         with self.assertRaisesRegex(SystemExit, "case-jobs must be positive"):
-            self.orchestrator.main(["--bucket", "response", "--run-id", "run-one", "--case-jobs", "0"])
+            self.orchestrator.main(["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case-jobs", "0"])
 
     def test_keep_going_continues_later_buckets_but_returns_nonzero(self) -> None:
         def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -260,8 +264,6 @@ class RunInitialEvalTests(unittest.TestCase):
                     "response",
                     "--bucket",
                     "code",
-                    "--run-id",
-                    "run-one",
                     "--keep-going",
                 ]
             )
@@ -293,19 +295,55 @@ class RunInitialEvalTests(unittest.TestCase):
                     "response",
                     "--bucket",
                     "code",
-                    "--run-id",
-                    "run-one",
                 ]
             )
 
         self.assertEqual(result, 1)
         self.assertEqual(self.script_names(), ["run_eval_bucket.py"])
 
-    def test_unsafe_run_ids_are_rejected(self) -> None:
-        for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", ""):
+    def test_invalid_run_ids_are_rejected(self) -> None:
+        for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", "", "run-one"):
             with self.subTest(run_id=run_id):
-                with self.assertRaisesRegex(SystemExit, "unsafe run id"):
+                with self.assertRaisesRegex(SystemExit, "Invalid run id"):
                     self.orchestrator.main(["--bucket", "response", "--run-id", run_id])
+
+    def test_explicit_run_id_with_multiple_buckets_is_rejected(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "explicit --run-id can only be used with one bucket"):
+            self.orchestrator.main(
+                ["--bucket", "response", "--bucket", "code", "--run-id", RUN_ID_RESPONSE]
+            )
+
+    def test_run_id_generated_per_bucket_when_explicit_run_id_is_missing(self) -> None:
+        with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
+            result = self.orchestrator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--bucket",
+                    "code",
+                    "--try-number",
+                    "2",
+                    "--scope",
+                    "targeted",
+                    "--topic",
+                    "pilot",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        seen_run_ids = {
+            command[command.index("--bucket") + 1]: command[command.index("--run-id") + 1]
+            for command in self.commands
+            if "--run-id" in command and Path(command[1]).name == "run_eval_bucket.py"
+        }
+        self.assertEqual(set(seen_run_ids), {"response", "code"})
+        self.assertNotEqual(seen_run_ids["response"], seen_run_ids["code"])
+        self.assertIn("-response-try02-targeted-pilot", seen_run_ids["response"])
+        self.assertIn("-code-try02-targeted-pilot", seen_run_ids["code"])
+
+    def test_explicit_run_id_bucket_mismatch_is_rejected(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "run id bucket=code"):
+            self.orchestrator.main(["--bucket", "response", "--run-id", RUN_ID_CODE])
 
 
 if __name__ == "__main__":

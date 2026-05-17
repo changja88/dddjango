@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 
 MODULE_PATH = Path(__file__).with_name("evaluate_eval_run.py")
+RUN_ID_RESPONSE = "20260517-111111-response-try01-full-current-baseline"
+RUN_ID_WORKFLOW = "20260517-111111-workflow-try01-full-current-baseline"
+RUN_ID_CODE = "20260517-111111-code-try01-full-current-baseline"
 
 
 def load_evaluator():
@@ -40,7 +43,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         *,
         bucket: str = "response",
         case_id: str = "case-response-one",
-        run_id: str = "run-one",
+        run_id: str = RUN_ID_RESPONSE,
         baseline_text: str = "baseline answer\n",
         with_ddjango_text: str = "with answer\n",
     ) -> Path:
@@ -61,6 +64,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         (raw / f"{case_id}-baseline.txt").write_text(baseline_text, encoding="utf-8")
         with_variant = self.evaluator.common.VARIANTS[1]
         (raw / f"{case_id}-{with_variant}.txt").write_text(with_ddjango_text, encoding="utf-8")
+        self.evaluator.run_identity.write_run_meta(raw.parent, run_id=run_id)
         return raw
 
     def write_trace_summary(
@@ -144,14 +148,14 @@ class EvaluateEvalRunTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                 ]
             )
 
         self.assertEqual(result, 0)
-        raw = self.evaluator.EVAL_ROOT / "response/runs/run-one/raw"
+        raw = self.evaluator.EVAL_ROOT / f"response/runs/{RUN_ID_RESPONSE}/raw"
         output = raw / "case-response-one-answer-oracle-evaluation.json"
         value = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual(value["with_dddjango"]["verdict"], "pass")
@@ -171,6 +175,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         raw = self.write_case_and_run(
             bucket="workflow",
             case_id=case_id,
+            run_id=RUN_ID_WORKFLOW,
             baseline_text="baseline workflow answer\n",
             with_ddjango_text="with workflow answer\n",
         )
@@ -189,7 +194,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
 
         with patch.object(self.evaluator, "run_command", side_effect=fake_run):
             result = self.evaluator.main(
-                ["--bucket", "workflow", "--run-id", "run-one", "--case", case_id]
+                ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
             )
 
         self.assertEqual(result, 0)
@@ -211,7 +216,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                         "--bucket",
                         "response",
                         "--run-id",
-                        "run-one",
+                        RUN_ID_RESPONSE,
                         "--case",
                         "case-response-one",
                     ]
@@ -234,7 +239,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                 ]
@@ -243,7 +248,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         self.assertEqual(result, 0)
         output = (
             self.evaluator.EVAL_ROOT
-            / "response/runs/run-one/raw/case-response-one-answer-oracle-evaluation.json"
+            / f"response/runs/{RUN_ID_RESPONSE}/raw/case-response-one-answer-oracle-evaluation.json"
         )
         self.assertEqual(json.loads(output.read_text(encoding="utf-8")), payload)
 
@@ -260,7 +265,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                         "--bucket",
                         "response",
                         "--run-id",
-                        "run-one",
+                        RUN_ID_RESPONSE,
                         "--case",
                         "case-response-one",
                     ]
@@ -288,7 +293,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                         "--bucket",
                         "response",
                         "--run-id",
-                        "run-one",
+                        RUN_ID_RESPONSE,
                         "--case",
                         "case-response-one",
                         "--rerun",
@@ -308,7 +313,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                 ]
@@ -332,7 +337,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                     "--rerun",
@@ -344,7 +349,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
 
     def test_code_artifacts_are_included_and_truncated(self) -> None:
         case_id = "case-code-one"
-        run_id = "run-code"
+        run_id = RUN_ID_CODE
         self.write_case_and_run(bucket="code", case_id=case_id, run_id=run_id)
         run_dir = self.evaluator.EVAL_ROOT / "code/runs" / run_id
         long_text = "x" * (self.evaluator.MAX_ARTIFACT_CHARS + 20)
@@ -407,7 +412,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                 ]
@@ -416,7 +421,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         self.assertEqual(result, 0)
         output = (
             self.evaluator.EVAL_ROOT
-            / "response/runs/run-one/raw/case-response-one-answer-oracle-evaluation.json"
+            / f"response/runs/{RUN_ID_RESPONSE}/raw/case-response-one-answer-oracle-evaluation.json"
         )
         value = json.loads(output.read_text(encoding="utf-8"))
         for variant_key in ("baseline", "with_dddjango"):
@@ -441,7 +446,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-one",
+                    RUN_ID_RESPONSE,
                     "--case",
                     "case-response-one",
                 ]
@@ -450,7 +455,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         self.assertEqual(result, 0)
         output = (
             self.evaluator.EVAL_ROOT
-            / "response/runs/run-one/raw/case-response-one-answer-oracle-evaluation.json"
+            / f"response/runs/{RUN_ID_RESPONSE}/raw/case-response-one-answer-oracle-evaluation.json"
         )
         value = json.loads(output.read_text(encoding="utf-8"))
         for variant_key in ("baseline", "with_dddjango"):
@@ -459,11 +464,71 @@ class EvaluateEvalRunTests(unittest.TestCase):
                 value[variant_key]["evaluation_summary"],
             )
 
+    def test_workflow_mode_gate_overrides_evaluator_pass(self) -> None:
+        case_id = "case-workflow-one"
+        raw = self.write_case_and_run(
+            bucket="workflow",
+            case_id=case_id,
+            run_id=RUN_ID_WORKFLOW,
+            baseline_text="baseline workflow answer\n",
+            with_ddjango_text="with workflow answer\n",
+        )
+        answer_path = self.evaluator.EVAL_ROOT / "workflow/answer" / f"{case_id}.yaml"
+        answer_path.write_text(
+            f"id: {case_id}\ncase_id: {case_id}\nbucket: workflow\nkind: workflow\n"
+            "workflow_execution_expectation:\n"
+            "  expected_mode: sequential_fallback_required\n"
+            "  acceptable_modes:\n"
+            "    - sequential_fallback\n"
+            "  forbidden_modes:\n"
+            "    - actual_subagent\n"
+            "    - false_actual_claim\n"
+            "  decision_rule: Use fallback.\n"
+            "  responsibility_rule: Do not run actual subagents.\n"
+            "  report_label: sequential fallback required\n",
+            encoding="utf-8",
+        )
+        self.write_trace_summary(
+            raw,
+            case_id=case_id,
+            variant="baseline",
+            trace_status="fallback-stated",
+        )
+        self.write_trace_summary(
+            raw,
+            case_id=case_id,
+            variant="with-dddjango",
+            trace_status="actual-trace",
+        )
+        payload = self.valid_payload(case_id)
+
+        with patch.object(
+            self.evaluator,
+            "run_command",
+            return_value=subprocess.CompletedProcess(["codex"], 0, json.dumps(payload), ""),
+        ):
+            result = self.evaluator.main(
+                ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
+            )
+
+        self.assertEqual(result, 0)
+        output = raw / f"{case_id}-answer-oracle-evaluation.json"
+        value = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(value["with_dddjango"]["score"], "0 / 5")
+        self.assertEqual(value["with_dddjango"]["verdict"], "fail")
+        self.assertIn(
+            "workflow 실행 모드 hard gate",
+            value["with_dddjango"]["evaluation_summary"],
+        )
+        self.assertTrue(
+            any("actual_subagent" in observation for observation in value["observations"])
+        )
+
     def test_unsafe_run_ids_are_rejected(self) -> None:
         self.write_case_and_run()
-        for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", ""):
+        for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", "", "run-one"):
             with self.subTest(run_id=run_id):
-                with self.assertRaisesRegex(SystemExit, "unsafe run id"):
+                with self.assertRaisesRegex(SystemExit, "Invalid run id"):
                     self.evaluator.main(
                         [
                             "--bucket",

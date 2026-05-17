@@ -12,6 +12,9 @@ from pathlib import Path
 
 
 MODULE_PATH = Path(__file__).with_name("validate_eval_run.py")
+RUN_ID_RESPONSE = "20260517-121212-response-try01-full-current-baseline"
+RUN_ID_WORKFLOW = "20260517-121212-workflow-try01-full-current-baseline"
+RUN_ID_CODE = "20260517-121212-code-try01-full-current-baseline"
 
 
 def load_validator():
@@ -72,16 +75,19 @@ class ValidateEvalRunTests(unittest.TestCase):
         *,
         bucket: str = "response",
         case_id: str = "case-response-one",
-        run_id: str = "run-one",
+        run_id: str = RUN_ID_RESPONSE,
         variants: tuple[str, ...] = ("baseline", "with-dddjango"),
         oracle: dict[str, object] | None = None,
         include_oracle: bool = True,
+        include_run_meta: bool = True,
         baseline_text: str = "baseline answer\n",
     ) -> Path:
         self.write_case(bucket, case_id)
         run_dir = self.eval_root / bucket / "runs" / run_id
         raw = run_dir / "raw"
         raw.mkdir(parents=True, exist_ok=True)
+        if include_run_meta:
+            self.validator.run_identity.write_run_meta(run_dir, run_id=run_id)
         (raw / f"{case_id}-public-prompt.md").write_text("사용자 요청입니다.\n", encoding="utf-8")
         (raw / f"{case_id}-operator-prompt.txt").write_text("operator prompt\n", encoding="utf-8")
         (raw / f"{case_id}-with-dddjango-prompt-input.json").write_text(
@@ -218,7 +224,7 @@ class ValidateEvalRunTests(unittest.TestCase):
         self.write_valid_run()
 
         result, output = self.run_validator(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"]
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
         )
 
         self.assertEqual(result, 0)
@@ -232,15 +238,24 @@ class ValidateEvalRunTests(unittest.TestCase):
         )
 
         self.assertFailsWith(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "baseline prompt-input artifact is forbidden",
         )
+
+    def test_invalid_run_meta_json_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "RUN_META.json").write_text("{\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(SystemExit, "RUN_META.json is not valid JSON"):
+            self.validator.main(
+                ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
+            )
 
     def test_invalid_oracle_schema_fails(self) -> None:
         self.write_valid_run(oracle={"caseId": "case-response-one"})
 
         self.assertFailsWith(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "invalid answer-oracle schema",
         )
 
@@ -249,7 +264,7 @@ class ValidateEvalRunTests(unittest.TestCase):
         (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").unlink()
 
         self.assertFailsWith(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "missing with-ddjango prompt-input artifact",
         )
 
@@ -258,7 +273,7 @@ class ValidateEvalRunTests(unittest.TestCase):
         (run_dir / "raw/case-response-one-baseline-exit.txt").write_text("7\n", encoding="utf-8")
 
         self.assertFailsWith(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "baseline exit is not 0",
         )
 
@@ -271,7 +286,7 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         self.assertFailsWith(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "baseline exit is not 0",
         )
 
@@ -280,7 +295,7 @@ class ValidateEvalRunTests(unittest.TestCase):
                 "--bucket",
                 "response",
                 "--run-id",
-                "run-one",
+                RUN_ID_RESPONSE,
                 "--case",
                 "case-response-one",
                 "--allow-skipped-exits",
@@ -299,7 +314,7 @@ class ValidateEvalRunTests(unittest.TestCase):
         )
 
         result, output = self.run_validator(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"]
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
         )
 
         self.assertEqual(result, 0)
@@ -314,7 +329,7 @@ class ValidateEvalRunTests(unittest.TestCase):
         )
 
         self.assertFailsWith(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-one"],
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "baseline output contains hidden repo path",
         )
 
@@ -326,7 +341,7 @@ class ValidateEvalRunTests(unittest.TestCase):
                 "--bucket",
                 "response",
                 "--run-id",
-                "run-one",
+                RUN_ID_RESPONSE,
                 "--case",
                 "case-response-one",
                 "--skip-oracle",
@@ -338,10 +353,10 @@ class ValidateEvalRunTests(unittest.TestCase):
 
     def test_workflow_run_without_trace_marker_does_not_require_trace_artifacts(self) -> None:
         case_id = "case-workflow-one"
-        self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
 
         result, output = self.run_validator(
-            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
         )
 
         self.assertEqual(result, 0)
@@ -349,17 +364,17 @@ class ValidateEvalRunTests(unittest.TestCase):
 
     def test_workflow_trace_marker_requires_variant_trace_artifacts(self) -> None:
         case_id = "case-workflow-one"
-        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
         self.write_trace_marker(run_dir)
 
         self.assertFailsWith(
-            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id],
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id],
             "missing workflow subagent trace artifact",
         )
 
     def test_workflow_trace_hard_fails_reliable_actual_claim_without_trace_events(self) -> None:
         case_id = "case-workflow-one"
-        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
         self.write_trace_marker(run_dir)
         for variant in ("baseline", "with-dddjango"):
             self.write_trace(
@@ -372,13 +387,13 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         self.assertFailsWith(
-            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id],
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id],
             "actual subagent claim has no reliable spawn/wait trace",
         )
 
     def test_workflow_trace_unreliable_actual_claim_is_not_validator_hard_fail(self) -> None:
         case_id = "case-workflow-one"
-        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
         self.write_trace_marker(run_dir)
         for variant in ("baseline", "with-dddjango"):
             self.write_trace(
@@ -391,7 +406,7 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         result, output = self.run_validator(
-            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
         )
 
         self.assertEqual(result, 0)
@@ -399,7 +414,7 @@ class ValidateEvalRunTests(unittest.TestCase):
 
     def test_workflow_trace_parser_v2_allows_incomplete_actual_trace_for_scoring(self) -> None:
         case_id = "case-workflow-one"
-        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
         self.write_trace_marker(run_dir)
         for variant in ("baseline", "with-dddjango"):
             self.write_trace(
@@ -416,7 +431,7 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         result, output = self.run_validator(
-            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
         )
 
         self.assertEqual(result, 0)
@@ -424,7 +439,7 @@ class ValidateEvalRunTests(unittest.TestCase):
 
     def test_workflow_trace_parser_v2_accepts_close_or_wait_result_collection(self) -> None:
         case_id = "case-workflow-one"
-        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id="run-workflow")
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
         self.write_trace_marker(run_dir)
         for variant in ("baseline", "with-dddjango"):
             self.write_trace(
@@ -441,15 +456,52 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         result, output = self.run_validator(
-            ["--bucket", "workflow", "--run-id", "run-workflow", "--case", case_id]
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
         )
 
         self.assertEqual(result, 0)
         self.assertIn("PASS:", output)
 
+    def test_workflow_mode_gate_rejects_stale_passing_oracle(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(bucket="workflow", case_id=case_id, run_id=RUN_ID_WORKFLOW)
+        answer_path = self.eval_root / "workflow/answer" / f"{case_id}.yaml"
+        answer_path.write_text(
+            f"id: {case_id}\ncase_id: {case_id}\nbucket: workflow\nkind: workflow\n"
+            "workflow_execution_expectation:\n"
+            "  expected_mode: sequential_fallback_required\n"
+            "  acceptable_modes:\n"
+            "    - sequential_fallback\n"
+            "  forbidden_modes:\n"
+            "    - actual_subagent\n"
+            "    - false_actual_claim\n"
+            "  decision_rule: Use fallback.\n"
+            "  responsibility_rule: Do not run actual subagents.\n"
+            "  report_label: sequential fallback required\n",
+            encoding="utf-8",
+        )
+        self.write_trace_marker(run_dir)
+        self.write_trace(
+            run_dir,
+            case_id=case_id,
+            variant="baseline",
+            trace_status="fallback-stated",
+        )
+        self.write_trace(
+            run_dir,
+            case_id=case_id,
+            variant="with-dddjango",
+            trace_status="actual-trace",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id],
+            "workflow execution mode actual_subagent is forbidden by oracle",
+        )
+
     def test_code_manifest_missing_copied_text_file_fails(self) -> None:
         case_id = "case-code-one"
-        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id="run-code")
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
         self.write_code_capture_metadata(case_id)
         for variant in ("baseline", "with-dddjango"):
             self.write_code_variant_artifacts(
@@ -474,25 +526,25 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         self.assertFailsWith(
-            ["--bucket", "code", "--run-id", "run-code", "--case", case_id],
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
             "missing copied source file",
         )
 
     def test_code_manifest_empty_object_fails(self) -> None:
         case_id = "case-code-one"
-        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id="run-code")
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
         self.write_code_capture_metadata(case_id)
         for variant in ("baseline", "with-dddjango"):
             self.write_code_variant_artifacts(run_dir, case_id, variant, {})
 
         self.assertFailsWith(
-            ["--bucket", "code", "--run-id", "run-code", "--case", case_id],
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
             "missing keys",
         )
 
     def test_code_manifest_deleted_binary_file_without_artifact_passes(self) -> None:
         case_id = "case-code-one"
-        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id="run-code")
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
         self.write_code_capture_metadata(case_id)
         for variant in ("baseline", "with-dddjango"):
             self.write_code_variant_artifacts(
@@ -517,35 +569,35 @@ class ValidateEvalRunTests(unittest.TestCase):
             )
 
         result, output = self.run_validator(
-            ["--bucket", "code", "--run-id", "run-code", "--case", case_id]
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id]
         )
 
         self.assertEqual(result, 0)
         self.assertIn("PASS:", output)
 
-    def test_unsafe_run_id_fails(self) -> None:
-        for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", ""):
+    def test_invalid_run_id_fails(self) -> None:
+        for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", "", "run-one"):
             with self.subTest(run_id=run_id):
                 result, output = self.run_validator(
                     ["--bucket", "response", "--run-id", run_id, "--case", "case-response-one"]
                 )
 
                 self.assertEqual(result, 1)
-                self.assertIn("FAIL: unsafe run id", output)
+                self.assertIn("FAIL: Invalid run id", output)
 
-    def test_unsafe_run_id_failure_reports_fail_prefix(self) -> None:
+    def test_invalid_run_id_failure_reports_fail_prefix(self) -> None:
         result, output = self.run_validator(
             ["--bucket", "response", "--run-id", "../escape", "--case", "case-response-one"]
         )
 
         self.assertEqual(result, 1)
-        self.assertIn("FAIL: unsafe run id", output)
+        self.assertIn("FAIL: Invalid run id", output)
 
     def test_unknown_case_failure_reports_fail_prefix(self) -> None:
         self.write_case(bucket="response", case_id="case-response-one")
 
         result, output = self.run_validator(
-            ["--bucket", "response", "--run-id", "run-one", "--case", "case-response-missing"]
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-missing"]
         )
 
         self.assertEqual(result, 1)
