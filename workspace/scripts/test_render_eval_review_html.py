@@ -3,14 +3,18 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 
 MODULE_PATH = Path(__file__).with_name("render_eval_review_html.py")
+KST = ZoneInfo("Asia/Seoul")
 
 
 def load_renderer():
@@ -138,7 +142,41 @@ coverage_tags:
                 json.dumps(oracle, ensure_ascii=False),
                 encoding="utf-8",
             )
-        return bucket_root / f"runs/{run_id}"
+        run_dir = bucket_root / f"runs/{run_id}"
+        run_identity = getattr(self.renderer, "run_identity", None)
+        if run_identity is None:
+            import eval_run_identity as run_identity
+        try:
+            run_meta = run_identity.write_run_meta(run_dir, run_id=run_id)
+        except SystemExit:
+            pass
+        else:
+            run_meta["answerOracleEvaluated"] = True
+            (run_dir / run_identity.RUN_META_FILENAME).write_text(
+                json.dumps(run_meta, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        return run_dir
+
+    def canonical_run_id(
+        self,
+        *,
+        bucket: str = "response",
+        try_number: int = 1,
+        scope: str = "full",
+        topic: str = "current-baseline",
+        created_at: datetime,
+    ) -> str:
+        run_identity = getattr(self.renderer, "run_identity", None)
+        if run_identity is None:
+            import eval_run_identity as run_identity
+        return run_identity.build_run_id(
+            bucket=bucket,
+            try_number=try_number,
+            scope=scope,
+            topic=topic,
+            created_at=created_at,
+        )
 
     def write_trace_marker_and_summaries(
         self,
@@ -889,27 +927,193 @@ coverage_tags:
         self.assertIn("-webkit-line-clamp: 3", html)
         self.assertNotIn("selected", html)
 
-    def test_report_includes_left_bucket_tabs_for_same_run_id(self) -> None:
-        run_dir = self.write_case()
-        code_report = (
-            self.renderer.EVAL_ROOT
-            / "code/runs/sample-run/analysis/report.html"
+    def test_report_bucket_tabs_link_to_latest_scored_report_per_bucket(self) -> None:
+        current_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="old-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
         )
-        code_report.parent.mkdir(parents=True, exist_ok=True)
-        code_report.write_text("<!doctype html>\n", encoding="utf-8")
+        latest_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="latest-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        old_code_run_id = self.canonical_run_id(
+            bucket="code",
+            try_number=1,
+            scope="full",
+            topic="old-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        latest_code_run_id = self.canonical_run_id(
+            bucket="code",
+            try_number=2,
+            scope="full",
+            topic="latest-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        incomplete_plugin_run_id = "run-plugin-incomplete"
+        latest_runtime_run_id = self.canonical_run_id(
+            bucket="runtime",
+            try_number=1,
+            scope="full",
+            topic="latest-without-report",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        run_dir = self.write_case(run_id=current_run_id)
+        self.write_case(bucket="response", run_id=latest_response_run_id)
+        response_report = self.renderer.report_path("response", latest_response_run_id)
+        response_report.parent.mkdir(parents=True, exist_ok=True)
+        response_report.write_text("<!doctype html>\n", encoding="utf-8")
+
+        self.write_case(bucket="code", case_id="case-code-order-create", run_id=old_code_run_id)
+        old_code_report = self.renderer.report_path("code", old_code_run_id)
+        old_code_report.parent.mkdir(parents=True, exist_ok=True)
+        old_code_report.write_text("<!doctype html>\n", encoding="utf-8")
+        self.write_case(bucket="code", case_id="case-code-order-create", run_id=latest_code_run_id)
+        latest_code_report = self.renderer.report_path("code", latest_code_run_id)
+        latest_code_report.parent.mkdir(parents=True, exist_ok=True)
+        latest_code_report.write_text("<!doctype html>\n", encoding="utf-8")
+
+        incomplete_plugin_report = self.renderer.report_path("plugin", incomplete_plugin_run_id)
+        incomplete_plugin_report.parent.mkdir(parents=True, exist_ok=True)
+        incomplete_plugin_report.write_text("<!doctype html>\n", encoding="utf-8")
+        self.write_case(
+            bucket="runtime",
+            case_id="case-runtime-prompt-exposure",
+            run_id=latest_runtime_run_id,
+        )
+
+        data = self.renderer.build_report_data("response", current_run_id, run_dir)
         html = self.renderer.render_html(data)
+        tabs_by_bucket = {tab["bucket"]: tab for tab in data["bucket_tabs"]}
 
+        self.assertEqual(
+            self.renderer.latest_scored_report_path("runtime"),
+            self.renderer.report_path("runtime", latest_runtime_run_id),
+        )
+        for bucket in ("response", "code", "runtime"):
+            expected_href = self.renderer.bucket_report_href(
+                "response",
+                current_run_id,
+                self.renderer.latest_report_alias_path(bucket),
+            )
+            self.assertEqual(tabs_by_bucket[bucket]["href"], expected_href)
+            self.assertIn(f"href=\"{expected_href}\"", html)
+        self.assertFalse(tabs_by_bucket["plugin"]["exists"])
+        self.assertEqual(tabs_by_bucket["plugin"]["href"], "")
         self.assertIn("class=\"report-shell\"", html)
         self.assertIn("aria-label=\"평가 카테고리\"", html)
         self.assertIn("aria-current=\"page\">response</a>", html)
-        self.assertIn(
-            "href=\"../../../../code/runs/sample-run/analysis/report.html\"",
-            html,
-        )
+        self.assertNotIn(old_code_run_id, html)
         self.assertIn(">code</a>", html)
         self.assertIn("class=\"bucket-tab is-disabled\">plugin</span>", html)
+
+    def test_latest_scored_report_uses_run_meta_created_at_not_artifact_mtime(self) -> None:
+        older_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="older-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        newer_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="newer-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+
+        older_run = self.write_case(run_id=older_run_id)
+        newer_run = self.write_case(run_id=newer_run_id)
+        os.utime(
+            older_run / "raw/case-response-order-create-answer-oracle-evaluation.json",
+            (4_102_444_800, 4_102_444_800),
+        )
+
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), newer_run)
+        self.assertEqual(
+            self.renderer.latest_scored_report_path("response"),
+            self.renderer.report_path("response", newer_run_id),
+        )
+
+    def test_metadata_less_run_is_excluded_from_latest_selection(self) -> None:
+        legacy_run = self.write_case(run_id="zz-legacy-run-with-oracle")
+        metadata_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="current-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        metadata_run = self.write_case(run_id=metadata_run_id)
+
+        self.assertTrue((legacy_run / "raw/case-response-order-create-answer-oracle-evaluation.json").is_file())
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), metadata_run)
+
+    def test_rendered_html_includes_run_metadata_header_fields(self) -> None:
+        run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="current-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        run_dir = self.write_case(run_id=run_id)
+
+        data = self.renderer.build_report_data("response", run_id, run_dir)
+        html = self.renderer.render_html(data)
+
+        self.assertEqual(data["run_meta"]["try_number"], 1)
+        self.assertEqual(data["run_meta"]["scope"], "full")
+        self.assertEqual(data["run_meta"]["topic"], "current-baseline")
+        self.assertIn("try: 1", html)
+        self.assertIn("scope: full", html)
+        self.assertIn("topic: current-baseline", html)
+        self.assertIn("created: 2026-", html)
+
+    def test_write_latest_report_alias_points_to_latest_scored_report(self) -> None:
+        old_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="old-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        latest_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="latest-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+
+        self.write_case(run_id=old_response_run_id)
+        self.write_case(run_id=latest_response_run_id)
+        latest_report = self.renderer.report_path("response", latest_response_run_id)
+        latest_report.parent.mkdir(parents=True, exist_ok=True)
+        latest_report.write_text("<!doctype html>\n", encoding="utf-8")
+
+        aliases = self.renderer.write_latest_report_aliases()
+
+        alias_path = self.renderer.latest_report_alias_path("response")
+        expected_href = Path(os.path.relpath(latest_report, alias_path.parent)).as_posix()
+        self.assertIn(alias_path, aliases)
+        alias_html = alias_path.read_text(encoding="utf-8")
+        self.assertIn(
+            f'content="0; url={expected_href}"',
+            alias_html,
+        )
+        self.assertIn(
+            f"location.replace({json.dumps(expected_href)})",
+            alias_html,
+        )
 
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:
         run_dir = self.write_case()

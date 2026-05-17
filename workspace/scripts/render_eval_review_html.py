@@ -5,13 +5,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from datetime import datetime
 from html import escape
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import eval_run_identity as run_identity
 from eval_run_common import validate_oracle_schema
+import workflow_execution_gate as workflow_gate
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -212,24 +215,7 @@ def execution_trace_label(trace: dict[str, object]) -> str:
 
 
 def actual_workflow_mode(trace: dict[str, object]) -> str:
-    status = str(trace.get("traceStatus") or "")
-    if status == "actual-trace":
-        return "actual_subagent"
-    if status == "actual-trace-incomplete":
-        return "actual_subagent_incomplete"
-    if status == "fallback-stated":
-        return "sequential_fallback"
-    if status == "claim-without-reliable-trace":
-        return "false_actual_claim"
-    if status == "no-trace":
-        return "direct"
-    if status == "trace not captured":
-        return "trace_not_captured"
-    if status == "missing trace":
-        return "trace_missing"
-    if status == "skipped":
-        return "not_run"
-    return "unknown"
+    return workflow_gate.actual_workflow_mode(trace)
 
 
 def workflow_mode_label(mode: str) -> str:
@@ -253,13 +239,13 @@ def workflow_alignment(
     acceptable_modes: list[str],
     forbidden_modes: list[str],
 ) -> str:
-    if actual_mode in forbidden_modes:
-        return "위반"
-    if actual_mode in acceptable_modes:
-        return "정상"
-    if actual_mode in {"false_actual_claim", "actual_subagent_incomplete"}:
-        return "위반"
-    return "확인 필요"
+    expectation = workflow_gate.WorkflowExpectation(
+        expected_mode="",
+        acceptable_modes=tuple(acceptable_modes),
+        forbidden_modes=tuple(forbidden_modes),
+        report_label="",
+    )
+    return workflow_gate.workflow_alignment(actual_mode, expectation)
 
 
 def workflow_expectation(answer_text: str, trace: dict[str, object]) -> dict[str, object]:
@@ -819,6 +805,16 @@ def reportability(summary: dict[str, object]) -> str:
     return "reportable"
 
 
+def safe_run_meta(run_dir: Path) -> dict[str, object]:
+    if run_identity.validate_run_meta(run_dir):
+        return {}
+    try:
+        run_meta = run_identity.load_run_meta(run_dir)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return {}
+    return run_meta if isinstance(run_meta, dict) else {}
+
+
 def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, object]:
     public_dir = EVAL_ROOT / bucket / "cases/plugin/public"
     public_cases = sorted(public_dir.glob("case-*.md"))
@@ -841,6 +837,7 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
         "reportability": reportability(summary),
         "bucket_tabs": build_bucket_tabs(bucket, run_id),
         "bucket_goal": bucket_goal_paragraphs(bucket),
+        "run_meta": safe_run_meta(run_dir),
         "previous_run": previous_run,
         "summary": summary,
         "unrun_case_ids": [
@@ -850,24 +847,119 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
     }
 
 
-def bucket_report_href(current_bucket: str, target_bucket: str, run_id: str) -> str:
-    if target_bucket == current_bucket:
-        return "report.html"
-    return f"../../../../{target_bucket}/runs/{run_id}/analysis/report.html"
+def report_path(bucket: str, run_id: str) -> Path:
+    return EVAL_ROOT / bucket / "runs" / run_id / "analysis/report.html"
+
+
+def latest_report_alias_path(bucket: str) -> Path:
+    return EVAL_ROOT / bucket / "latest/report.html"
+
+
+def has_oracle_evaluation(run_dir: Path) -> bool:
+    raw_dir = run_dir / "raw"
+    return raw_dir.is_dir() and any(raw_dir.glob("*-answer-oracle-evaluation.json"))
+
+
+def latest_raw_artifact_mtime(run_dir: Path) -> float:
+    raw_dir = run_dir / "raw"
+    if not raw_dir.is_dir():
+        return run_dir.stat().st_mtime
+    mtimes = [path.stat().st_mtime for path in raw_dir.iterdir() if path.is_file()]
+    return max(mtimes) if mtimes else raw_dir.stat().st_mtime
+
+
+def latest_scored_run_dir(bucket: str) -> Path | None:
+    runs_dir = EVAL_ROOT / bucket / "runs"
+    if not runs_dir.is_dir():
+        return None
+
+    candidates: list[tuple[str, str, Path]] = []
+    for path in runs_dir.iterdir():
+        if not path.is_dir():
+            continue
+        if run_identity.validate_run_meta(path):
+            continue
+        if not run_identity.has_answer_oracle_evaluation(path):
+            continue
+        if not run_identity.exit_artifacts_are_clean(path):
+            continue
+        run_meta = run_identity.load_run_meta(path)
+        created_at = str(run_meta.get("created_at") or "")
+        if not created_at:
+            continue
+        candidates.append((created_at, path.name, path))
+    if not candidates:
+        return None
+    return sorted(candidates)[-1][2]
+
+
+def latest_scored_report_path(bucket: str) -> Path | None:
+    latest_run = latest_scored_run_dir(bucket)
+    if latest_run is None:
+        return None
+    return report_path(bucket, latest_run.name)
+
+
+def latest_redirect_html(bucket: str, target_report: Path) -> str:
+    alias_dir = latest_report_alias_path(bucket).parent
+    href = Path(os.path.relpath(target_report, alias_dir)).as_posix()
+    escaped_href = escape(href, quote=True)
+    js_href = json.dumps(href).replace("</", "<\\/")
+    title = f"Latest {bucket} eval report"
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url={escaped_href}">
+  <title>{escape(title)}</title>
+  <script>location.replace({js_href});</script>
+</head>
+<body>
+  <p><a href="{escaped_href}">{escape(title)}</a></p>
+</body>
+</html>
+"""
+
+
+def write_latest_report_alias(bucket: str) -> Path | None:
+    latest_report = latest_scored_report_path(bucket)
+    if latest_report is None or not latest_report.is_file():
+        return None
+    alias_path = latest_report_alias_path(bucket)
+    alias_path.parent.mkdir(parents=True, exist_ok=True)
+    alias_path.write_text(latest_redirect_html(bucket, latest_report), encoding="utf-8")
+    return alias_path
+
+
+def write_latest_report_aliases() -> list[Path]:
+    aliases: list[Path] = []
+    for bucket in BUCKETS:
+        alias_path = write_latest_report_alias(bucket)
+        if alias_path is not None:
+            aliases.append(alias_path)
+    return aliases
+
+
+def bucket_report_href(current_bucket: str, current_run_id: str, target_report: Path) -> str:
+    current_report_dir = EVAL_ROOT / current_bucket / "runs" / current_run_id / "analysis"
+    return Path(os.path.relpath(target_report, current_report_dir)).as_posix()
 
 
 def build_bucket_tabs(current_bucket: str, run_id: str) -> list[dict[str, object]]:
     tabs: list[dict[str, object]] = []
     for bucket in BUCKETS:
-        report_path = EVAL_ROOT / bucket / "runs" / run_id / "analysis/report.html"
+        latest_report = latest_scored_report_path(bucket)
+        latest_alias = latest_report_alias_path(bucket) if latest_report is not None else None
         is_current = bucket == current_bucket
         tabs.append(
             {
                 "bucket": bucket,
                 "label": bucket,
-                "href": bucket_report_href(current_bucket, bucket, run_id),
+                "href": bucket_report_href(current_bucket, run_id, latest_alias)
+                if latest_alias
+                else "",
                 "current": is_current,
-                "exists": is_current or report_path.is_file(),
+                "exists": latest_report is not None,
             }
         )
     return tabs
@@ -971,6 +1063,7 @@ def render_html(data: dict[str, object]) -> str:
     unrun_case_ids = data.get("unrun_case_ids") if isinstance(data.get("unrun_case_ids"), list) else []
     bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
     bucket_goal = data.get("bucket_goal") if isinstance(data.get("bucket_goal"), list) else []
+    run_meta = data.get("run_meta") if isinstance(data.get("run_meta"), dict) else {}
     show_trace_columns = str(data.get("bucket") or "") == "workflow"
     table_column_count = 13 if show_trace_columns else 8
     summary_keys = (
@@ -1072,6 +1165,15 @@ def render_html(data: dict[str, object]) -> str:
         f"dddjango eval review: {escape(str(data.get('bucket') or 'unknown'))} / "
         f"{escape(str(data.get('run_id') or 'unknown'))}"
     )
+    run_meta_parts = []
+    if run_meta:
+        run_meta_parts = [
+            f"try: {run_meta.get('try_number')}",
+            f"scope: {run_meta.get('scope')}",
+            f"topic: {run_meta.get('topic')}",
+            f"created: {run_meta.get('created_at')}",
+        ]
+    run_meta_text = "".join(f" · {escape(str(part))}" for part in run_meta_parts)
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -1437,7 +1539,7 @@ def render_html(data: dict[str, object]) -> str:
     </section>
     <header>
       <h1>평가 리뷰</h1>
-      <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
+      <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))}{run_meta_text} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
     </header>
     <section class="panel" aria-labelledby="summary-title">
       <h2 id="summary-title">평가 요약</h2>
@@ -1636,6 +1738,7 @@ def main() -> None:
     data = build_report_data(args.bucket, args.run_id, run_dir)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_html(data), encoding="utf-8")
+    write_latest_report_aliases()
     try:
         display_path = output.resolve().relative_to(REPO_ROOT.resolve())
     except ValueError:
