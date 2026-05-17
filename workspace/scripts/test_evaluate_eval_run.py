@@ -140,6 +140,11 @@ class EvaluateEvalRunTests(unittest.TestCase):
             self.assertIn('"evaluation_summary"', prompt)
             self.assertIn("한국어", prompt)
             self.assertIn("All human-readable", prompt)
+            self.assertIn(
+                "Allowed verdict values: pass, partial, pass-limited, pass-control, fail, blocked.",
+                prompt,
+            )
+            self.assertIn("Scores must be written as 0 / 5 through 5 / 5.", prompt)
             self.assertIn("baseline answer", prompt)
             self.assertIn("with answer", prompt)
             return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")

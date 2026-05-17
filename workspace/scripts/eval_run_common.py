@@ -14,6 +14,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 EVAL_ROOT = REPO_ROOT / "workspace/develop/eval"
 BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
 VARIANTS = ("baseline", "with-dddjango")
+ALLOWED_ORACLE_VERDICTS = {
+    "pass",
+    "partial",
+    "pass-limited",
+    "pass-control",
+    "fail",
+    "blocked",
+}
 
 
 @dataclass(frozen=True)
@@ -85,6 +93,42 @@ def has_non_empty_text(value: object) -> bool:
     return bool(str(value or "").strip())
 
 
+def parse_score_5(value: object) -> float | None:
+    text = str(value or "").strip()
+    match = re.fullmatch(
+        r"(?P<value>\d+(?:\.\d+)?)\s*(?:/\s*(?P<denominator>\d+(?:\.\d+)?))?",
+        text,
+    )
+    if not match:
+        return None
+    denominator = match.group("denominator")
+    if denominator is not None and float(denominator) != 5.0:
+        return None
+    score = float(match.group("value"))
+    if score < 0 or score > 5:
+        return None
+    return score
+
+
+def oracle_score_error(value: object, label: str) -> str | None:
+    text = str(value or "").strip()
+    if not text:
+        return f"{label}.score is required"
+    match = re.fullmatch(
+        r"(?P<value>\d+(?:\.\d+)?)\s*(?:/\s*(?P<denominator>\d+(?:\.\d+)?))?",
+        text,
+    )
+    if not match:
+        return f"{label}.score must be a number from 0 to 5"
+    denominator = match.group("denominator")
+    if denominator is not None and float(denominator) != 5.0:
+        return f"{label}.score denominator must be 5"
+    score = float(match.group("value"))
+    if score < 0 or score > 5:
+        return f"{label}.score must be between 0 and 5"
+    return None
+
+
 def validate_oracle_schema(oracle: dict[str, object], case_id: str) -> str | None:
     if oracle.get("caseId") != case_id:
         return "caseId mismatch"
@@ -94,10 +138,14 @@ def validate_oracle_schema(oracle: dict[str, object], case_id: str) -> str | Non
         variant_oracle = oracle.get(variant_key)
         if not isinstance(variant_oracle, dict):
             return f"{variant_key} must be an object"
-        if not has_non_empty_text(variant_oracle.get("score")):
-            return f"{variant_key}.score is required"
-        if not has_non_empty_text(variant_oracle.get("verdict")):
+        score_error = oracle_score_error(variant_oracle.get("score"), variant_key)
+        if score_error is not None:
+            return score_error
+        verdict_text = str(variant_oracle.get("verdict") or "").strip()
+        if not verdict_text:
             return f"{variant_key}.verdict is required"
+        if verdict_text.lower() not in ALLOWED_ORACLE_VERDICTS:
+            return f"{variant_key}.verdict is unsupported: {verdict_text}"
         if not (
             has_non_empty_text(variant_oracle.get("evaluation"))
             or has_non_empty_text(variant_oracle.get("evaluation_summary"))

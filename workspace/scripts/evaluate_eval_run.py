@@ -207,6 +207,8 @@ def build_prompt(
         "한국어로 작성해야 하는 필드: baseline.evaluation_summary, baseline.evaluation, "
         "with_dddjango.evaluation_summary, with_dddjango.evaluation, observations.",
         "Keep allowed enum-like fields in the schema language, such as verdict and status.",
+        "Allowed verdict values: pass, partial, pass-limited, pass-control, fail, blocked.",
+        "Scores must be written as 0 / 5 through 5 / 5.",
         "Return only one JSON object matching the exact output schema. Do not include prose.",
         "",
         "Exact output schema:",

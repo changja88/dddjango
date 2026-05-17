@@ -35,6 +35,23 @@ class EvalRunCommonTests(unittest.TestCase):
         path.write_text("사용자 요청입니다.\n", encoding="utf-8")
         return path
 
+    def valid_oracle(self, case_id: str = "case-example") -> dict[str, object]:
+        return {
+            "caseId": case_id,
+            "answerOracleEvaluated": True,
+            "baseline": {
+                "score": "2 / 5",
+                "verdict": "fail",
+                "evaluation_summary": "baseline weak",
+            },
+            "with_dddjango": {
+                "score": "5 / 5",
+                "verdict": "pass",
+                "evaluation_summary": "with-dddjango strong",
+            },
+            "observations": ["clear delta"],
+        }
+
     def test_bucket_paths_use_existing_namespace(self) -> None:
         paths = self.common.bucket_paths("workflow")
 
@@ -107,6 +124,22 @@ class EvalRunCommonTests(unittest.TestCase):
         )
 
         self.assertIsNone(error)
+
+    def test_validate_oracle_schema_rejects_unknown_verdict(self) -> None:
+        oracle = self.valid_oracle()
+        oracle["with_dddjango"]["verdict"] = "great"  # type: ignore[index]
+
+        error = self.common.validate_oracle_schema(oracle, "case-example")
+
+        self.assertEqual(error, "with_dddjango.verdict is unsupported: great")
+
+    def test_validate_oracle_schema_rejects_out_of_range_score(self) -> None:
+        oracle = self.valid_oracle()
+        oracle["with_dddjango"]["score"] = "6 / 5"  # type: ignore[index]
+
+        error = self.common.validate_oracle_schema(oracle, "case-example")
+
+        self.assertEqual(error, "with_dddjango.score must be between 0 and 5")
 
 
 if __name__ == "__main__":
