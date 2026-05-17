@@ -131,7 +131,7 @@ class RunEvalBucketTests(unittest.TestCase):
                 "--bucket",
                 "response",
                 "--run-id",
-                "run-one",
+                "20260517-143012-response-try01-full-current-baseline",
                 "--workspace-root",
                 str(self.workspace_root),
                 "--skip-exec",
@@ -139,7 +139,7 @@ class RunEvalBucketTests(unittest.TestCase):
         )
 
         self.assertEqual(result, 0)
-        raw = self.runner.common.EVAL_ROOT / "response/runs/run-one/raw"
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143012-response-try01-full-current-baseline/raw"
         with_variant = self.runner.common.VARIANTS[1]
         for name in (
             "case-response-one-public-prompt.md",
@@ -185,7 +185,7 @@ class RunEvalBucketTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-baseline-only",
+                    "20260517-143013-response-try01-targeted-case-response-one",
                     "--case",
                     "case-response-one",
                     "--variant",
@@ -195,8 +195,8 @@ class RunEvalBucketTests(unittest.TestCase):
                 ]
             )
 
-        self.assertEqual(result, 0)
-        raw = self.runner.common.EVAL_ROOT / "response/runs/run-baseline-only/raw"
+        self.assertEqual(result, 1)
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143013-response-try01-targeted-case-response-one/raw"
         with_variant = self.runner.common.VARIANTS[1]
         self.assertTrue((raw / f"case-response-one-{with_variant}-prompt-input.json").is_file())
         self.assertTrue(
@@ -220,7 +220,7 @@ class RunEvalBucketTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-two",
+                    "20260517-143014-response-try01-full-exec-mode",
                     "--case",
                     "case-response-one",
                     "--workspace-root",
@@ -228,8 +228,8 @@ class RunEvalBucketTests(unittest.TestCase):
                 ]
             )
 
-        self.assertEqual(result, 0)
-        raw = self.runner.common.EVAL_ROOT / "response/runs/run-two/raw"
+        self.assertEqual(result, 1)
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143014-response-try01-full-exec-mode/raw"
         with_variant = self.runner.common.VARIANTS[1]
         self.assertEqual((raw / "case-response-one-baseline-exit.txt").read_text(encoding="utf-8"), "7\n")
         self.assertEqual((raw / f"case-response-one-{with_variant}-exit.txt").read_text(encoding="utf-8"), "7\n")
@@ -263,14 +263,140 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertIn("Preserve the requested answer shape exactly.", prompt)
         self.assertIn("do not add command, check, tool, or verification notes", prompt)
 
-    def test_open_shape_answer_prompt_keeps_command_honesty_footer(self) -> None:
+    def test_brief_answer_prompt_does_not_force_command_footer(self) -> None:
         prompt = self.runner.build_prompt(
-            "주문 생성 workflow를 검토해줘.\n",
+            "migration 영향만 짧게 답해줘.\n",
             allow_workspace_edits=False,
         )
 
-        self.assertIn("include commands actually run plus checks not run", prompt)
-        self.assertIn("If a check is not actually run, state that it was not run.", prompt)
+        self.assertNotIn("include commands actually run plus checks not run", prompt)
+        self.assertNotIn("If a check is not actually run, state that it was not run.", prompt)
+        self.assertIn("Preserve the requested brevity.", prompt)
+        self.assertIn("Do not claim checks, tests, file inspection, or command execution unless actually run.", prompt)
+
+    def test_open_shape_answer_prompt_keeps_honesty_without_internal_command_footer(self) -> None:
+        prompt = self.runner.build_prompt(
+            "주문 생성 workflow를 검토해줘.\n",
+            allow_workspace_edits=False,
+            bucket="response",
+        )
+
+        self.assertNotIn("include commands actually run plus checks not run", prompt)
+        self.assertIn("If a relevant check is not actually run, state that it was not run.", prompt)
+        self.assertIn("Do not print local absolute paths", prompt)
+        self.assertIn("agent-internal skill-loading commands", prompt)
+
+    def test_runtime_prompt_requires_read_only_evidence_without_local_path_reporting(self) -> None:
+        prompt = self.runner.build_prompt(
+            "runtime cache와 bundled reference를 확인해줘.\n",
+            allow_workspace_edits=False,
+            bucket="runtime",
+        )
+
+        self.assertIn("Runtime bucket evidence policy:", prompt)
+        self.assertIn("Run feasible read-only inspections", prompt)
+        self.assertIn("runtime/cache/source comparison", prompt)
+        self.assertIn("visible prompt skill metadata", prompt)
+        self.assertIn("installed/cache metadata evidence", prompt)
+        self.assertIn("workspace/develop/eval/runtime/fixtures/current-run", prompt)
+        self.assertIn("Do not print local absolute paths", prompt)
+        self.assertIn("agent-internal skill-loading commands", prompt)
+        self.assertNotIn("include commands actually run plus checks not run", prompt)
+
+    def test_copies_current_run_runtime_evidence_only_for_with_ddjango(self) -> None:
+        raw_dir = Path(self.tmp.name) / "raw"
+        raw_dir.mkdir()
+        workspace = Path(self.tmp.name) / "workspace"
+        workspace.mkdir()
+        case_id = "case-runtime-one"
+        expected_files = [
+            f"{case_id}-with-dddjango-prompt-input.json",
+            f"{case_id}-with-dddjango-prompt-input.stderr.txt",
+            f"{case_id}-baseline-isolation.json",
+        ]
+        for filename in expected_files:
+            (raw_dir / filename).write_text(f"{filename}\n", encoding="utf-8")
+
+        self.runner.copy_runtime_current_run_evidence(
+            raw_dir=raw_dir,
+            workspace=workspace,
+            case_id=case_id,
+            bucket="runtime",
+            variant=self.runner.VARIANT_CONFIG["with-dddjango"],
+        )
+
+        evidence_dir = workspace / "workspace/develop/eval/runtime/fixtures/current-run"
+        self.assertTrue(evidence_dir.is_dir())
+        for filename in expected_files:
+            self.assertEqual(
+                (evidence_dir / filename).read_text(encoding="utf-8"),
+                f"{filename}\n",
+            )
+
+    def test_does_not_copy_current_run_runtime_evidence_for_baseline_or_other_buckets(self) -> None:
+        raw_dir = Path(self.tmp.name) / "raw"
+        raw_dir.mkdir()
+        workspace = Path(self.tmp.name) / "workspace"
+        workspace.mkdir()
+        case_id = "case-runtime-one"
+        (raw_dir / f"{case_id}-with-dddjango-prompt-input.json").write_text(
+            '{"messages":[]}\n',
+            encoding="utf-8",
+        )
+
+        self.runner.copy_runtime_current_run_evidence(
+            raw_dir=raw_dir,
+            workspace=workspace,
+            case_id=case_id,
+            bucket="runtime",
+            variant=self.runner.VARIANT_CONFIG["baseline"],
+        )
+        self.runner.copy_runtime_current_run_evidence(
+            raw_dir=raw_dir,
+            workspace=workspace,
+            case_id=case_id,
+            bucket="response",
+            variant=self.runner.VARIANT_CONFIG["with-dddjango"],
+        )
+
+        evidence_dir = workspace / "workspace/develop/eval/runtime/fixtures/current-run"
+        self.assertFalse(evidence_dir.exists())
+
+    def test_response_prompt_does_not_use_runtime_evidence_policy(self) -> None:
+        prompt = self.runner.build_prompt(
+            "runtime cache와 bundled reference를 확인해줘.\n",
+            allow_workspace_edits=False,
+            bucket="response",
+        )
+
+        self.assertNotIn("Runtime bucket evidence policy:", prompt)
+        self.assertIn("If a relevant check is not actually run, state that it was not run.", prompt)
+        self.assertNotIn("include commands actually run plus checks not run", prompt)
+
+    def test_runtime_bucket_operator_prompt_uses_runtime_evidence_policy(self) -> None:
+        self.write_case(bucket="runtime", case_id="case-runtime-one")
+
+        result = self.runner.main(
+            [
+                    "--bucket",
+                    "runtime",
+                    "--run-id",
+                    "20260517-143015-runtime-try01-full-current-baseline",
+                "--case",
+                "case-runtime-one",
+                "--workspace-root",
+                str(self.workspace_root),
+                "--skip-exec",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        operator_prompt = (
+            self.runner.common.EVAL_ROOT
+            / "runtime/runs/20260517-143015-runtime-try01-full-current-baseline/raw/case-runtime-one-operator-prompt.txt"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Runtime bucket evidence policy:", operator_prompt)
+        self.assertIn("Do not print local absolute paths", operator_prompt)
 
     def test_workflow_bucket_writes_trace_marker_and_skipped_trace_artifacts(self) -> None:
         self.write_case(bucket="workflow", case_id="case-workflow-one")
@@ -280,7 +406,7 @@ class RunEvalBucketTests(unittest.TestCase):
                 "--bucket",
                 "workflow",
                 "--run-id",
-                "run-workflow",
+                "20260517-143016-workflow-try01-full-current-baseline",
                 "--case",
                 "case-workflow-one",
                 "--workspace-root",
@@ -290,7 +416,7 @@ class RunEvalBucketTests(unittest.TestCase):
         )
 
         self.assertEqual(result, 0)
-        run_dir = self.runner.common.EVAL_ROOT / "workflow/runs/run-workflow"
+        run_dir = self.runner.common.EVAL_ROOT / "workflow/runs/20260517-143016-workflow-try01-full-current-baseline"
         marker = json.loads((run_dir / "SUBAGENT_TRACE_CAPTURE.json").read_text(encoding="utf-8"))
         self.assertEqual(marker["bucket"], "workflow")
         self.assertFalse(marker["stderrUsedForClaims"])
@@ -306,7 +432,7 @@ class RunEvalBucketTests(unittest.TestCase):
 
     def test_workflow_bucket_regenerates_missing_trace_for_skipped_existing_output(self) -> None:
         self.write_case(bucket="workflow", case_id="case-workflow-one")
-        raw = self.runner.common.EVAL_ROOT / "workflow/runs/run-workflow/raw"
+        raw = self.runner.common.EVAL_ROOT / "workflow/runs/20260517-143017-workflow-try01-targeted-case-workflow-one/raw"
         raw.mkdir(parents=True, exist_ok=True)
         for variant in self.runner.common.VARIANTS:
             (raw / f"case-workflow-one-{variant}.txt").write_text(
@@ -318,10 +444,10 @@ class RunEvalBucketTests(unittest.TestCase):
 
         result = self.runner.main(
             [
-                "--bucket",
-                "workflow",
-                "--run-id",
-                "run-workflow",
+                    "--bucket",
+                    "workflow",
+                    "--run-id",
+                    "20260517-143017-workflow-try01-targeted-case-workflow-one",
                 "--case",
                 "case-workflow-one",
                 "--workspace-root",
@@ -348,7 +474,7 @@ class RunEvalBucketTests(unittest.TestCase):
                     "--bucket",
                     "code",
                     "--run-id",
-                    "run-code",
+                    "20260517-143018-code-try01-full-current-baseline",
                     "--case",
                     "case-code-one",
                     "--workspace-root",
@@ -366,7 +492,7 @@ class RunEvalBucketTests(unittest.TestCase):
                 "--bucket",
                 "code",
                 "--run-id",
-                "run-code",
+                "20260517-143019-code-try01-targeted-case-code-one",
                 "--case",
                 "case-code-one",
                 "--variant",
@@ -378,7 +504,7 @@ class RunEvalBucketTests(unittest.TestCase):
         )
 
         self.assertEqual(result, 0)
-        run_dir = self.runner.common.EVAL_ROOT / "code/runs/run-code"
+        run_dir = self.runner.common.EVAL_ROOT / "code/runs/20260517-143019-code-try01-targeted-case-code-one"
         self.assertTrue((run_dir / "code/case-code-one/baseline/changed-files.json").is_file())
         self.assertTrue((run_dir / "code/case-code-one/baseline/diff.patch").is_file())
         command = (run_dir / "raw/case-code-one-baseline-command.txt").read_text(encoding="utf-8")
@@ -429,6 +555,21 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue(entry["binary"])
         self.assertEqual(entry["artifactPath"], "")
 
+    def test_prepare_isolated_workspace_removes_lv_up_plan_artifacts(self) -> None:
+        lv_up_file = self.root / "workspace/develop/lv_up_plan/runtime/review/note.md"
+        lv_up_file.parent.mkdir(parents=True)
+        lv_up_file.write_text("runtime improvement notes\n", encoding="utf-8")
+
+        workspace = self.runner.prepare_isolated_workspace(
+            source_repo=self.root,
+            workspace_root=self.workspace_root,
+            run_id="20260517-143020-runtime-try01-full-current-baseline",
+            case_id="case-runtime-one",
+            variant=self.runner.VARIANT_CONFIG["with-dddjango"],
+        )
+
+        self.assertFalse((workspace / "workspace/develop/lv_up_plan").exists())
+
     def test_previous_skip_exec_output_does_not_skip_later_execution(self) -> None:
         self.write_case()
         skip_result = self.runner.main(
@@ -436,7 +577,7 @@ class RunEvalBucketTests(unittest.TestCase):
                 "--bucket",
                 "response",
                 "--run-id",
-                "run-after-skip",
+                "20260517-143021-response-try01-full-after-skip",
                 "--case",
                 "case-response-one",
                 "--variant",
@@ -455,7 +596,7 @@ class RunEvalBucketTests(unittest.TestCase):
                     "--bucket",
                     "response",
                     "--run-id",
-                    "run-after-skip",
+                    "20260517-143021-response-try01-full-after-skip",
                     "--case",
                     "case-response-one",
                     "--variant",
@@ -465,17 +606,126 @@ class RunEvalBucketTests(unittest.TestCase):
                 ]
             )
 
-        self.assertEqual(result, 0)
+        self.assertEqual(result, 1)
         exec_commands = [command for command, _prompt, _cwd, _timeout in self.commands if "exec" in command]
         self.assertEqual(len(exec_commands), 1)
-        raw = self.runner.common.EVAL_ROOT / "response/runs/run-after-skip/raw"
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143021-response-try01-full-after-skip/raw"
         self.assertEqual((raw / "case-response-one-baseline-exit.txt").read_text(encoding="utf-8"), "7\n")
+
+    def test_skipped_existing_failed_output_keeps_parent_exit_nonzero(self) -> None:
+        self.write_case()
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143022-response-try01-full-existing-failed/raw"
+        raw.mkdir(parents=True)
+        (raw / "case-response-one-baseline.txt").write_text(
+            "previous failed response\n",
+            encoding="utf-8",
+        )
+        (raw / "case-response-one-baseline-exit.txt").write_text("7\n", encoding="utf-8")
+        self.commands = []
+
+        with patch.object(self.runner, "run_command", side_effect=self.fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "20260517-143022-response-try01-full-existing-failed",
+                    "--case",
+                    "case-response-one",
+                    "--variant",
+                    "baseline",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                ]
+            )
+
+        self.assertEqual(result, 1)
+        exec_commands = [command for command, _prompt, _cwd, _timeout in self.commands if "exec" in command]
+        self.assertEqual(exec_commands, [])
+
+    def test_existing_output_without_exit_artifact_is_rerun(self) -> None:
+        self.write_case()
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143023-response-try01-full-missing-exit/raw"
+        raw.mkdir(parents=True)
+        (raw / "case-response-one-baseline.txt").write_text(
+            "partial previous response\n",
+            encoding="utf-8",
+        )
+        self.commands = []
+
+        with patch.object(self.runner, "run_command", side_effect=self.fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "20260517-143023-response-try01-full-missing-exit",
+                    "--case",
+                    "case-response-one",
+                    "--variant",
+                    "baseline",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                ]
+            )
+
+        self.assertEqual(result, 1)
+        exec_commands = [command for command, _prompt, _cwd, _timeout in self.commands if "exec" in command]
+        self.assertEqual(len(exec_commands), 1)
+        self.assertEqual((raw / "case-response-one-baseline-exit.txt").read_text(encoding="utf-8"), "7\n")
+
+    def test_default_production_run_id_and_run_meta_written(self) -> None:
+        self.write_case()
+
+        result = self.runner.main(
+            [
+                "--bucket",
+                "response",
+                "--try-number",
+                "1",
+                "--scope",
+                "full",
+                "--topic",
+                "current-baseline",
+                "--workspace-root",
+                str(self.workspace_root),
+                "--skip-exec",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        runs_dir = self.runner.common.EVAL_ROOT / "response/runs"
+        run_dirs = [path for path in runs_dir.iterdir() if path.is_dir()]
+        self.assertEqual(len(run_dirs), 1)
+        run_id = run_dirs[0].name
+        self.assertRegex(run_id, r"^\d{8}-\d{6}-response-try01-full-current-baseline$")
+        meta = json.loads((run_dirs[0] / "RUN_META.json").read_text(encoding="utf-8"))
+        self.assertEqual(meta["run_id"], run_id)
+        self.assertEqual(meta["bucket"], "response")
+        self.assertEqual(meta["try_number"], 1)
+        self.assertEqual(meta["scope"], "full")
+        self.assertEqual(meta["topic"], "current-baseline")
+
+    def test_invalid_production_run_id_is_rejected(self) -> None:
+        self.write_case()
+        with self.assertRaisesRegex(SystemExit, "invalid production run id"):
+            self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "run-one",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                    "--skip-exec",
+                ]
+            )
 
     def test_unsafe_run_ids_are_rejected(self) -> None:
         self.write_case()
         for run_id in ("../escape", "nested/run", "/tmp/escape"):
             with self.subTest(run_id=run_id):
-                with self.assertRaisesRegex(SystemExit, "unsafe run id"):
+                with self.assertRaisesRegex(SystemExit, "invalid production run id"):
                     self.runner.main(
                         [
                             "--bucket",

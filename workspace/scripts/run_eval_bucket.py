@@ -12,9 +12,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -22,6 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import eval_run_identity as run_identity
 import extract_subagent_trace
 
 
@@ -64,6 +63,9 @@ def eval_rel_path(*parts: str) -> Path:
     return Path("workspace/develop/eval").joinpath(*parts)
 
 
+RUNTIME_CURRENT_RUN_EVIDENCE_DIR = eval_rel_path("runtime", "fixtures", "current-run")
+
+
 def all_bucket_excluded_paths() -> list[Path]:
     paths: list[Path] = [
         Path(".git"),
@@ -78,6 +80,7 @@ def all_bucket_excluded_paths() -> list[Path]:
         paths.append(eval_rel_path(bucket, "runs"))
         paths.append(eval_rel_path(bucket, "cases/plugin/private"))
     paths.append(eval_rel_path("source", "crosswalks"))
+    paths.append(Path("workspace/develop/lv_up_plan"))
     return paths
 
 
@@ -97,6 +100,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bucket", choices=common.BUCKETS, required=True)
     parser.add_argument("--run-id")
+    parser.add_argument("--try-number", type=int, default=1)
+    parser.add_argument("--scope", choices=run_identity.SCOPE_CHOICES, default="full")
+    parser.add_argument("--topic", default="current-baseline")
+    parser.add_argument("--lv-up-analysis", default="")
+    parser.add_argument("--lv-up-plan", default="")
     parser.add_argument("--case", action="append", help="Case id to run. Repeatable.")
     parser.add_argument("--variant", action="append", choices=common.VARIANTS)
     parser.add_argument("--model", default=DEFAULT_MODEL)
@@ -109,17 +117,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def validate_run_id(run_id: str) -> str:
-    path = Path(run_id)
-    if (
-        not run_id
-        or path.is_absolute()
-        or len(path.parts) != 1
-        or run_id in {".", ".."}
-        or ".." in run_id
-        or "/" in run_id
-        or "\\" in run_id
-    ):
-        raise SystemExit(f"unsafe run id: {run_id}")
+    try:
+        run_identity.validate_production_run_id(run_id)
+    except SystemExit as exc:
+        raise SystemExit(f"invalid production run id: {run_id}") from exc
     return run_id
 
 
@@ -134,8 +135,50 @@ def resolved_under(root: Path, *parts: str | Path, description: str) -> Path:
     return path
 
 
-def now_text() -> str:
-    return datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d-%H%M")
+def build_production_run_id(
+    *,
+    bucket: str,
+    try_number: int,
+    scope: str,
+    topic: str,
+) -> str:
+    try:
+        return run_identity.build_run_id(
+            bucket=bucket,
+            try_number=try_number,
+            scope=scope,
+            topic=topic,
+        )
+    except TypeError:
+        return run_identity.build_run_id(
+            stamp=run_identity.now_kst(),
+            bucket=bucket,
+            try_number=try_number,
+            scope=scope,
+            topic=topic,
+        )
+
+
+def write_run_meta(
+    *,
+    run_dir: Path,
+    run_id: str,
+    lv_up_analysis: str,
+    lv_up_plan: str,
+) -> None:
+    try:
+        run_identity.write_run_meta(
+            run_dir,
+            run_id=run_id,
+            lv_up_analysis=lv_up_analysis,
+            lv_up_plan=lv_up_plan,
+        )
+        return
+    except TypeError:
+        meta = run_identity.build_run_meta(run_id)
+        meta["lv_up_analysis"] = lv_up_analysis or None
+        meta["lv_up_plan"] = lv_up_plan or None
+        run_identity.write_run_meta(run_dir, meta)
 
 
 def run_command(
@@ -185,14 +228,30 @@ FIXED_ANSWER_SHAPE = re.compile(
     r"|(?:bullet|bullets|문장|항목|불릿)[^\n]{0,30}(?:끝내|끝내줘|만)"
     r")"
 )
+BRIEF_ANSWER_SHAPE = re.compile(
+    r"(?i)(?:"
+    r"짧게|간단히|간단하게|간략히|요약해서|핵심만"
+    r"|\bbrief(?:ly)?\b|\bshort answer\b|\bconcise(?:ly)?\b"
+    r")"
+)
 
 
 def requests_fixed_answer_shape(public_packet: str) -> bool:
     return bool(FIXED_ANSWER_SHAPE.search(public_packet))
 
 
-def build_prompt(public_packet: str, *, allow_workspace_edits: bool) -> str:
+def requests_brief_answer_shape(public_packet: str) -> bool:
+    return bool(BRIEF_ANSWER_SHAPE.search(public_packet))
+
+
+def build_prompt(
+    public_packet: str,
+    *,
+    allow_workspace_edits: bool,
+    bucket: str | None = None,
+) -> str:
     fixed_answer_shape = not allow_workspace_edits and requests_fixed_answer_shape(public_packet)
+    brief_answer_shape = not allow_workspace_edits and requests_brief_answer_shape(public_packet)
     if allow_workspace_edits:
         edit_policy = (
             "You may edit files in the current working directory to complete the user's request.\n"
@@ -211,12 +270,52 @@ def build_prompt(public_packet: str, *, allow_workspace_edits: bool) -> str:
             "answer the user's request and the response must stop at the final requested unit; "
             "do not add command, check, tool, or verification notes unless the user specifically asks for them.\n\n"
         )
-    else:
+    elif brief_answer_shape:
         edit_policy = (
-            "Do not modify files. If a check is not actually run, state that it was not run.\n"
+            "Do not modify files.\n"
+            "Do not claim checks, tests, file inspection, or command execution unless actually run.\n"
             "Preserve the current file-edit policy by avoiding writes in this read-only evaluation.\n"
         )
-        completion_policy = "Keep the answer concise and include commands actually run plus checks not run.\n\n"
+        completion_policy = (
+            "Keep the answer concise. Preserve the requested brevity. "
+            "Do not add command, check, tool, or verification notes unless the user specifically asks for them "
+            "or the answer would otherwise claim verification or execution.\n\n"
+        )
+    elif bucket == "runtime":
+        edit_policy = (
+            "Do not modify files.\n"
+            "Preserve the current file-edit policy by avoiding writes in this read-only evaluation.\n"
+        )
+        completion_policy = (
+            "Runtime bucket evidence policy:\n"
+            "- Run feasible read-only inspections over visible workspace files before answering when "
+            "the request asks to verify runtime, cache, prompt-input, bundled references, or baseline isolation.\n"
+            "- Ground runtime/cache/source comparison in concrete artifacts when available: generated skill source, "
+            "bundled runtime references, agents metadata, prompt-input debug output, baseline-isolation artifact, "
+            "and installed/cache snapshot; explicitly state any missing artifact category.\n"
+            "- In with-dddjango runtime runs, inspect current-run evidence under "
+            "`workspace/develop/eval/runtime/fixtures/current-run/` when present; it may contain "
+            "the current prompt-input debug output and baseline-isolation artifact for the same case.\n"
+            "- In with-dddjango runtime runs, visible prompt skill metadata is installed/cache metadata evidence. "
+            "Use relevant visible `dddjango:*` skill descriptions as the active cache metadata surface and compare "
+            "them with repo-relative canonical files, without quoting local cache paths from the prompt.\n"
+            "- Treat runtime phase validation as smoke only; do not call cache-only edits complete without "
+            "canonical source and generated skill sync evidence.\n"
+            "- Do not print local absolute paths, home-directory paths, plugin cache paths, or "
+            "agent-internal skill-loading commands in the final answer. Describe those checks by artifact "
+            "category or repo-relative paths only.\n"
+            "- If a feasible check is not run, state the omitted check without exposing local paths.\n\n"
+        )
+    else:
+        edit_policy = (
+            "Do not modify files. If a relevant check is not actually run, state that it was not run.\n"
+            "Preserve the current file-edit policy by avoiding writes in this read-only evaluation.\n"
+        )
+        completion_policy = (
+            "Keep the answer concise. Do not print local absolute paths, home-directory paths, "
+            "plugin cache paths, or agent-internal skill-loading commands in the final answer. "
+            "Describe checks by purpose or repo-relative artifact category instead.\n\n"
+        )
     return (
         "Answer the user request directly.\n"
         "Use only files in the current working directory when local files are needed.\n"
@@ -337,6 +436,7 @@ def write_baseline_isolation_artifact(
         "dddjango:architecture-db",
         "dddjango:architecture-api",
         "dddjango:workflow-dddjango-subagents",
+        "dddjango:source-reference-audit",
     ]
     artifact = {
         "caseId": case_id,
@@ -620,6 +720,28 @@ def write_skipped_prompt_input(case_id: str, raw_dir: Path) -> None:
     common.write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", "")
 
 
+def copy_runtime_current_run_evidence(
+    *,
+    raw_dir: Path,
+    workspace: Path,
+    case_id: str,
+    bucket: str,
+    variant: Variant,
+) -> None:
+    if bucket != "runtime" or variant.name != "with-dddjango":
+        return
+    evidence_dir = workspace / RUNTIME_CURRENT_RUN_EVIDENCE_DIR
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    for suffix in (
+        "with-dddjango-prompt-input.json",
+        "with-dddjango-prompt-input.stderr.txt",
+        "baseline-isolation.json",
+    ):
+        source = raw_dir / f"{case_id}-{suffix}"
+        if source.is_file():
+            shutil.copyfile(source, evidence_dir / source.name)
+
+
 def should_skip_existing_output(
     *,
     output_path: Path,
@@ -629,10 +751,16 @@ def should_skip_existing_output(
 ) -> bool:
     if rerun or not output_path.exists() or output_path.stat().st_size == 0:
         return False
+    if not exit_path.exists() or exit_path.stat().st_size == 0:
+        return False
     previous_exit = common.read_text(exit_path).strip()
     if not current_skip_exec and previous_exit == "skipped":
         return False
     return True
+
+
+def recorded_exit_failed(exit_path: Path) -> bool:
+    return common.read_text(exit_path).strip() not in {"0", "skipped"}
 
 
 def response_text(value: str | bytes | None) -> str:
@@ -683,7 +811,15 @@ def workspace_for_case_variant(
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    run_id = validate_run_id(args.run_id or f"{now_text()}-{args.bucket}-eval")
+    if args.run_id:
+        run_id = validate_run_id(args.run_id)
+    else:
+        run_id = build_production_run_id(
+            bucket=args.bucket,
+            try_number=args.try_number,
+            scope=args.scope,
+            topic=args.topic,
+        )
     bucket = common.bucket_paths(args.bucket)
     cases = common.selected_case_paths(args.bucket, args.case)
     variants = selected_variants(args.variant)
@@ -694,13 +830,24 @@ def main(argv: list[str] | None = None) -> int:
     raw_dir = run_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     common.write_text(run_dir / "RUN_ID.txt", run_id + "\n")
+    write_run_meta(
+        run_dir=run_dir,
+        run_id=run_id,
+        lv_up_analysis=args.lv_up_analysis,
+        lv_up_plan=args.lv_up_plan,
+    )
     write_subagent_trace_marker(run_dir, args.bucket)
+    failed_execution = False
 
     for case_path in cases:
         case_id = case_path.stem
         public_packet = common.read_text(case_path)
         code_config = case_capture_config(code_metadata, case_id) if args.bucket == "code" else None
-        prompt = build_prompt(public_packet, allow_workspace_edits=args.bucket == "code")
+        prompt = build_prompt(
+            public_packet,
+            allow_workspace_edits=args.bucket == "code",
+            bucket=args.bucket,
+        )
 
         shutil.copyfile(case_path, raw_dir / f"{case_id}-public-prompt.md")
         common.write_text(raw_dir / f"{case_id}-operator-prompt.txt", prompt)
@@ -724,6 +871,8 @@ def main(argv: list[str] | None = None) -> int:
                 rerun=args.rerun,
             ):
                 print(f"skip existing {case_id} {variant.name}")
+                if recorded_exit_failed(exit_path):
+                    failed_execution = True
                 if args.bucket == "workflow" and not trace_artifact_path(
                     raw_dir, case_id, variant.name
                 ).is_file():
@@ -764,6 +913,13 @@ def main(argv: list[str] | None = None) -> int:
                     command=command,
                     prompt=prompt,
                 )
+            copy_runtime_current_run_evidence(
+                raw_dir=raw_dir,
+                workspace=exec_cwd,
+                case_id=case_id,
+                bucket=args.bucket,
+                variant=variant,
+            )
 
             if args.skip_exec:
                 common.write_text(output_path, "NOT RUN: --skip-exec was used.\n")
@@ -791,6 +947,7 @@ def main(argv: list[str] | None = None) -> int:
                     timeout_seconds=args.timeout_seconds,
                 )
             except subprocess.TimeoutExpired as exc:
+                failed_execution = True
                 common.write_text(stdout_path, response_text(exc.stdout))
                 common.write_text(stderr_path, response_text(exc.stderr))
                 common.write_text(exit_path, f"timeout after {args.timeout_seconds}s\n")
@@ -809,6 +966,8 @@ def main(argv: list[str] | None = None) -> int:
             common.write_text(stdout_path, result.stdout)
             common.write_text(stderr_path, result.stderr)
             common.write_text(exit_path, str(result.returncode) + "\n")
+            if result.returncode != 0:
+                failed_execution = True
             if not output_path.exists():
                 common.write_text(output_path, "")
             if args.bucket == "code":
@@ -822,7 +981,7 @@ def main(argv: list[str] | None = None) -> int:
                 skipped=False,
             )
 
-    return 0
+    return 1 if failed_execution else 0
 
 
 if __name__ == "__main__":
