@@ -191,6 +191,63 @@ def validate_baseline_output(raw_dir: Path, case_id: str, run_dir: Path) -> list
     return findings
 
 
+def display_run_path(run_dir: Path, path: Path) -> str:
+    try:
+        return path.relative_to(run_dir).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def forbidden_local_path_markers() -> list[str]:
+    return baseline_hidden_repo_path_markers()
+
+
+def local_path_scan_artifacts(
+    *,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+) -> list[Path]:
+    paths = [
+        raw_dir / f"{case_id}-answer-oracle-evaluation.json",
+        run_dir / "analysis/report.html",
+    ]
+    for variant in variants:
+        paths.extend(
+            [
+                raw_dir / f"{case_id}-{variant}.txt",
+                raw_dir / f"{case_id}-{variant}-events.jsonl",
+                raw_dir / f"{case_id}-{variant}.stderr.txt",
+                raw_dir / f"{case_id}-{variant}-prompt-input.json",
+                raw_dir / f"{case_id}-{variant}-prompt-input.stderr.txt",
+            ]
+        )
+    return [path for path in paths if path.is_file()]
+
+
+def validate_forbidden_local_paths(
+    *,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+) -> list[str]:
+    markers = forbidden_local_path_markers()
+    findings: list[str] = []
+    for path in local_path_scan_artifacts(
+        run_dir=run_dir,
+        raw_dir=raw_dir,
+        case_id=case_id,
+        variants=variants,
+    ):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(marker in text for marker in markers):
+            display_path = display_run_path(run_dir, path)
+            findings.append(f"{display_path}: output contains forbidden local path")
+    return findings
+
+
 def baseline_forbidden_paths() -> list[Path]:
     paths = [
         Path("dddjango/skills"),
@@ -538,6 +595,14 @@ def main(argv: list[str] | None = None) -> int:
                 case_id=case_id,
                 variants=variants,
                 allow_skipped_exits=args.allow_skipped_exits,
+            )
+        )
+        findings.extend(
+            validate_forbidden_local_paths(
+                run_dir=run_dir,
+                raw_dir=raw_dir,
+                case_id=case_id,
+                variants=variants,
             )
         )
         if not args.skip_oracle:

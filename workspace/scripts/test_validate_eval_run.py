@@ -342,6 +342,44 @@ class ValidateEvalRunTests(unittest.TestCase):
             "baseline output contains hidden repo path",
         )
 
+    def test_with_ddjango_output_hidden_repo_path_contamination_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        hidden = self.root / "workspace/develop/eval/response/answer/case-response-one.yaml"
+        (run_dir / "raw/case-response-one-with-dddjango.txt").write_text(
+            f"평가 근거 파일: {hidden}\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "raw/case-response-one-with-dddjango.txt: output contains forbidden local path",
+        )
+
+    def test_with_ddjango_prompt_input_hidden_repo_path_contamination_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        hidden = self.root / "workspace/develop/eval/response/answer/case-response-one.yaml"
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            json.dumps({"messages": [{"role": "user", "content": f"read {hidden}"}]}) + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "raw/case-response-one-with-dddjango-prompt-input.json: output contains forbidden local path",
+        )
+
+    def test_report_html_hidden_repo_path_contamination_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        hidden = self.root / "workspace/develop/eval/response/answer/case-response-one.yaml"
+        report = run_dir / "analysis/report.html"
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(f"<html><body>{hidden}</body></html>\n", encoding="utf-8")
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "analysis/report.html: output contains forbidden local path",
+        )
+
     def test_skip_oracle_succeeds_without_canonical_oracle(self) -> None:
         self.write_valid_run(include_oracle=False)
 
