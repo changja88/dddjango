@@ -32,7 +32,9 @@ Each role handoff includes:
 ## Handoff Discipline
 
 - Make ownership explicit before parallel work.
+- For approval-before-execution planning, write a proposed handoff instead of waiting until after approval. Use `pending approval`, `not executed`, `read-only`, or `unknown until code inspection` where needed, but keep every required field present.
 - Do not assign overlapping write sets to multiple subagents.
+- Parallel `May edit` scopes must be disjoint by concrete file path or module owner. If two roles need the same file, assign a single write owner and make the other role read-only review or advisory.
 - If a role only reviews, state that it must not edit files.
 - If a role depends on an earlier decision, put that dependency in `Required Follow-up`.
 - Close or carry forward each risk during integration.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Source Reference Audit"
+  short_description: "Audit source provenance, gaps, traceability, and boundaries."
+  default_prompt: "Use $source-reference-audit to audit dddjango source provenance, conflict/gap/provisional status, and source/runtime boundaries; include validation coverage or eval traceability only when explicitly requested and permitted."

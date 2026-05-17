@@ -301,7 +301,7 @@ git commit -m "Tighten eval oracle scoring schema"
 In `test_validate_eval_run.py`, create a run fixture where `raw/case-example-with-dddjango.txt` contains:
 
 ```text
-/Users/hyun/Desktop/dddjango/workspace/develop/eval/code/answer/case-example.yaml
+<repo-root>/workspace/develop/eval/code/answer/case-example.yaml
 ```
 
 Expected finding:
@@ -327,7 +327,7 @@ In `validate_eval_run.py`, add:
 
 ```python
 def forbidden_local_path_markers() -> list[str]:
-    roots = [REPO_ROOT, Path("/private/tmp")]
+    roots = [REPO_ROOT, TEMP_WORKSPACE_ROOT]
     return sorted({root.resolve(strict=False).as_posix() for root in roots})
 
 def validate_no_forbidden_local_paths(run_dir: Path, case_id: str, variants: list[str]) -> list[str]:
@@ -340,7 +340,7 @@ def validate_no_forbidden_local_paths(run_dir: Path, case_id: str, variants: lis
     return findings
 ```
 
-Scan response `.txt`, prompt-input `.json`, stderr, events, answer-oracle evaluation JSON, and `analysis/report.html`. Allow run-relative paths. Reject absolute paths into the repo root, `/private/tmp`, and evaluator-only answer/private/run directories.
+Scan response `.txt`, prompt-input `.json`, stderr, events, answer-oracle evaluation JSON, and `analysis/report.html`. Allow run-relative paths. Reject absolute paths into the repo root, local temp workspace roots, and evaluator-only answer/private/run directories.
 
 - [ ] **Step 4: Preserve baseline isolation semantics**
 
@@ -369,7 +369,7 @@ Expected immediately after adding stricter scanning: current generated artifacts
 If fresh runs still leak local paths, update `run_eval_bucket.py` operator prompt wording to say:
 
 ```text
-Use repo-relative paths only. Do not print /Users, /private/tmp, or absolute local workspace paths in the final answer.
+Use repo-relative paths only. Do not print user-home paths, temp workspace roots, or absolute local workspace paths in the final answer.
 ```
 
 - [ ] **Step 8: Commit**
