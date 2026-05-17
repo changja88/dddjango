@@ -838,19 +838,6 @@ def latest_report_alias_path(bucket: str) -> Path:
     return EVAL_ROOT / bucket / "latest/report.html"
 
 
-def has_oracle_evaluation(run_dir: Path) -> bool:
-    raw_dir = run_dir / "raw"
-    return raw_dir.is_dir() and any(raw_dir.glob("*-answer-oracle-evaluation.json"))
-
-
-def latest_raw_artifact_mtime(run_dir: Path) -> float:
-    raw_dir = run_dir / "raw"
-    if not raw_dir.is_dir():
-        return run_dir.stat().st_mtime
-    mtimes = [path.stat().st_mtime for path in raw_dir.iterdir() if path.is_file()]
-    return max(mtimes) if mtimes else raw_dir.stat().st_mtime
-
-
 def latest_scored_run_dir(bucket: str) -> Path | None:
     runs_dir = EVAL_ROOT / bucket / "runs"
     if not runs_dir.is_dir():
@@ -938,18 +925,23 @@ def bucket_report_href(current_bucket: str, current_run_id: str, target_report: 
 def build_bucket_tabs(current_bucket: str, run_id: str) -> list[dict[str, object]]:
     tabs: list[dict[str, object]] = []
     for bucket in BUCKETS:
-        latest_report = latest_available_report_path(bucket)
-        latest_alias = latest_report_alias_path(bucket) if latest_report is not None else None
         is_current = bucket == current_bucket
+        if is_current:
+            target_report = report_path(current_bucket, run_id)
+            exists = True
+        else:
+            latest_report = latest_available_report_path(bucket)
+            target_report = latest_report_alias_path(bucket) if latest_report is not None else None
+            exists = latest_report is not None
         tabs.append(
             {
                 "bucket": bucket,
                 "label": bucket,
-                "href": bucket_report_href(current_bucket, run_id, latest_alias)
-                if latest_alias
+                "href": bucket_report_href(current_bucket, run_id, target_report)
+                if target_report
                 else "",
                 "current": is_current,
-                "exists": latest_report is not None,
+                "exists": exists,
             }
         )
     return tabs

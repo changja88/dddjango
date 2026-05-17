@@ -997,7 +997,9 @@ coverage_tags:
             self.renderer.latest_scored_report_path("runtime"),
             self.renderer.report_path("runtime", latest_runtime_run_id),
         )
-        for bucket in ("response", "code"):
+        self.assertEqual(tabs_by_bucket["response"]["href"], "report.html")
+        self.assertIn('href="report.html" aria-current="page">response</a>', html)
+        for bucket in ("code",):
             expected_href = self.renderer.bucket_report_href(
                 "response",
                 current_run_id,
@@ -1016,6 +1018,32 @@ coverage_tags:
         self.assertNotIn(old_code_run_id, html)
         self.assertIn(">code</a>", html)
         self.assertIn("class=\"bucket-tab is-disabled\">plugin</span>", html)
+
+    def test_current_bucket_tab_is_enabled_during_first_render_before_report_exists(self) -> None:
+        run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="first-render",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        run_dir = self.write_case(run_id=run_id)
+        report = self.renderer.report_path("response", run_id)
+        self.assertFalse(report.exists())
+
+        data = self.renderer.build_report_data("response", run_id, run_dir)
+        html = self.renderer.render_html(data)
+        tabs_by_bucket = {tab["bucket"]: tab for tab in data["bucket_tabs"]}
+
+        self.assertEqual(self.renderer.latest_scored_report_path("response"), report)
+        self.assertTrue(tabs_by_bucket["response"]["current"])
+        self.assertTrue(tabs_by_bucket["response"]["exists"])
+        self.assertEqual(tabs_by_bucket["response"]["href"], "report.html")
+        self.assertIn(
+            '<a class="bucket-tab is-current" href="report.html" aria-current="page">response</a>',
+            html,
+        )
+        self.assertNotIn("class=\"bucket-tab is-disabled\">response</span>", html)
 
     def test_latest_scored_report_uses_run_meta_created_at_not_artifact_mtime(self) -> None:
         older_run_id = self.canonical_run_id(
