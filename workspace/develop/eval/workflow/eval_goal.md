@@ -65,6 +65,9 @@ Workflow checks는 다음을 명시적으로 평가한다.
 - required delegation honesty statement
 - forbidden over-ceremony or false subagent claim
 - source refs for each expected workflow rule
+- hard gates for evaluator leakage, false subagent execution claims, unsupported command claims, and skipped result collection
+- `control_case` label when direct-answer, opt-out, restraint, honesty, or safety behavior makes baseline pass acceptable
+- `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 
 ## Evidence To Capture
 

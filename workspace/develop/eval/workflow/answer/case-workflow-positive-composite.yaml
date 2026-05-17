@@ -34,6 +34,9 @@ workflow_execution_expectation:
 scoring_checks:
   - pass if role decisions are concrete and integration closes risks.
   - fail if roles are only names with no handoff content.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - missing Role Map
   - missing risky write block
@@ -44,6 +47,12 @@ evidence_required:
   - workflow transcript
   - handoff artifact
   - integration checklist
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - positive-composite
   - handoff-contract

@@ -21,6 +21,9 @@ target_behavior:
 scoring_checks:
   - pass if coverage map has scenario, dimension, expected evidence, and gap columns.
   - fail if negative cases or validation honesty are omitted.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - negative case missing
   - workflow contract missing
@@ -28,6 +31,12 @@ leakage_checks:
   - no private answer criteria embedded in public validation docs.
 evidence_required:
   - validation coverage map
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - validation-coverage
   - negative-cases

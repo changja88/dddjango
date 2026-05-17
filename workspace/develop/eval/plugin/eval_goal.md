@@ -56,6 +56,9 @@
 - reference-routing matrix expectations
 - required validation commands
 - packaging files that must exist and files that must not be introduced
+- hard gates for evaluator leakage, source/runtime contamination, unsupported validation claims, and unsupported subagent claims
+- `control_case` label when safety, honesty, or restraint behavior makes baseline pass acceptable
+- `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 
 ## Evidence To Capture
 

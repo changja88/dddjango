@@ -104,11 +104,19 @@ class EvalRunIdentityTests(unittest.TestCase):
             run_id=run_id,
             lv_up_analysis="analysis note",
             lv_up_plan="plan note",
+            fingerprint={
+                "case_ids": ["case-runtime-one"],
+                "variants": ["baseline", "with-dddjango"],
+                "model": "gpt-5.5",
+                "reasoning": "xhigh",
+            },
         )
         loaded = self.module.load_run_meta(run_dir)
 
         self.assertEqual(meta["lv_up_analysis"], "analysis note")
         self.assertEqual(meta["lv_up_plan"], "plan note")
+        self.assertEqual(meta["schema_version"], 2)
+        self.assertEqual(meta["fingerprint"]["case_ids"], ["case-runtime-one"])
         self.assertEqual(loaded, meta)
 
     def test_validate_run_meta_bucket_mismatch(self) -> None:
@@ -157,8 +165,8 @@ class EvalRunIdentityTests(unittest.TestCase):
             ),
             (
                 "schema_version",
-                2,
-                "RUN_META.json schema_version must be 1",
+                1,
+                "RUN_META.json schema_version must be 2",
             ),
             (
                 "stamp",
@@ -176,6 +184,72 @@ class EvalRunIdentityTests(unittest.TestCase):
                 meta_path.write_text(json.dumps(meta, ensure_ascii=True) + "\n", encoding="utf-8")
                 errors = self.module.validate_run_meta(run_dir)
                 self.assertEqual(errors, [expected_error])
+
+    def test_validate_run_meta_requires_fingerprint_object(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        run_dir = self.root / run_id
+        self.module.write_run_meta(run_dir, run_id=run_id)
+        meta_path = run_dir / "RUN_META.json"
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        meta["fingerprint"] = "not-an-object"
+        meta_path.write_text(json.dumps(meta, ensure_ascii=True) + "\n", encoding="utf-8")
+
+        errors = self.module.validate_run_meta(run_dir)
+
+        self.assertEqual(errors, ["RUN_META.json fingerprint must be an object"])
+
+    def test_validation_manifest_marks_successful_validated_run(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        run_dir = self.root / run_id
+        self.module.write_run_meta(run_dir, run_id=run_id)
+
+        self.assertFalse(self.module.has_successful_validation(run_dir))
+
+        manifest = self.module.write_validation_manifest(
+            run_dir,
+            run_id=run_id,
+            bucket="runtime",
+            case_ids=["case-runtime-one"],
+            variants=["baseline", "with-dddjango"],
+            report_path=run_dir / "analysis/report.html",
+            checks=[
+                {
+                    "name": "validate_eval_run",
+                    "status": "passed",
+                    "command": "workspace/scripts/validate_eval_run.py --bucket runtime",
+                }
+            ],
+        )
+
+        self.assertEqual(manifest["status"], "passed")
+        self.assertTrue(self.module.has_successful_validation(run_dir))
+
+    def test_validation_manifest_rejects_bucket_mismatch(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        run_dir = self.root / run_id
+        self.module.write_run_meta(run_dir, run_id=run_id)
+        self.module.write_validation_manifest(
+            run_dir,
+            run_id=run_id,
+            bucket="response",
+            case_ids=["case-runtime-one"],
+            variants=["baseline", "with-dddjango"],
+            report_path=run_dir / "analysis/report.html",
+            checks=[
+                {
+                    "name": "validate_eval_run",
+                    "status": "passed",
+                    "command": "workspace/scripts/validate_eval_run.py --bucket response",
+                }
+            ],
+        )
+
+        errors = self.module.validate_validation_manifest(run_dir)
+
+        self.assertEqual(
+            errors,
+            ["VALIDATION.json bucket must match run id bucket: runtime"],
+        )
 
     def test_validate_run_meta_lv_up_types(self) -> None:
         run_id = "20260517-143012-runtime-try01-full-current-baseline"

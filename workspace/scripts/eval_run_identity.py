@@ -8,12 +8,14 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 
 BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
 SCOPE_CHOICES = ("full", "targeted", "adjacent", "rerun", "manual")
 RUN_META_FILENAME = "RUN_META.json"
+VALIDATION_FILENAME = "VALIDATION.json"
 TOPIC_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 RUN_ID_PATTERN = re.compile(
     r"^(?P<date>\d{8})-(?P<time>\d{6})-(?P<bucket>"
@@ -112,10 +114,11 @@ def build_run_meta(
     run_id: str,
     lv_up_analysis: str = "",
     lv_up_plan: str = "",
+    fingerprint: dict[str, object] | None = None,
 ) -> dict[str, object]:
     identity = parse_run_id(run_id)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "run_id": identity.run_id,
         "stamp": identity.stamp,
         "bucket": identity.bucket,
@@ -125,6 +128,7 @@ def build_run_meta(
         "created_at": identity.created_at,
         "lv_up_analysis": lv_up_analysis,
         "lv_up_plan": lv_up_plan,
+        "fingerprint": fingerprint or {"status": "not-recorded"},
     }
 
 
@@ -134,11 +138,13 @@ def write_run_meta(
     run_id: str,
     lv_up_analysis: str = "",
     lv_up_plan: str = "",
+    fingerprint: dict[str, object] | None = None,
 ) -> dict[str, object]:
     meta = build_run_meta(
         run_id=run_id,
         lv_up_analysis=lv_up_analysis,
         lv_up_plan=lv_up_plan,
+        fingerprint=fingerprint,
     )
     run_dir.mkdir(parents=True, exist_ok=True)
     meta_path = run_dir / RUN_META_FILENAME
@@ -197,13 +203,100 @@ def validate_run_meta(run_dir: Path) -> list[str]:
         problems.append(
             f"{RUN_META_FILENAME} created_at must match run id created_at: {identity.created_at}"
         )
-    if run_meta.get("schema_version") != 1:
-        problems.append(f"{RUN_META_FILENAME} schema_version must be 1")
+    if run_meta.get("schema_version") != 2:
+        problems.append(f"{RUN_META_FILENAME} schema_version must be 2")
+    if not isinstance(run_meta.get("fingerprint"), dict):
+        problems.append(f"{RUN_META_FILENAME} fingerprint must be an object")
     for key in ("lv_up_analysis", "lv_up_plan"):
         value = run_meta.get(key)
         if not isinstance(value, str):
             problems.append(f"{RUN_META_FILENAME} {key} must be a string")
     return problems
+
+
+def _validation_path(run_dir: Path) -> Path:
+    return run_dir / VALIDATION_FILENAME
+
+
+def write_validation_manifest(
+    run_dir: Path,
+    *,
+    run_id: str,
+    bucket: str,
+    case_ids: list[str],
+    variants: list[str],
+    report_path: Path,
+    checks: list[dict[str, object]],
+) -> dict[str, object]:
+    status = "passed"
+    for check in checks:
+        if check.get("status") != "passed":
+            status = "failed"
+            break
+    manifest: dict[str, object] = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "bucket": bucket,
+        "scope": parse_run_id(run_id).scope,
+        "status": status,
+        "case_ids": case_ids,
+        "variants": variants,
+        "report_path": report_path.as_posix(),
+        "checks": checks,
+        "created_at": now_kst().isoformat(timespec="seconds"),
+    }
+    run_dir.mkdir(parents=True, exist_ok=True)
+    _validation_path(run_dir).write_text(
+        json.dumps(manifest, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def load_validation_manifest(run_dir: Path) -> dict[str, Any]:
+    return json.loads(_validation_path(run_dir).read_text(encoding="utf-8"))
+
+
+def validate_validation_manifest(run_dir: Path) -> list[str]:
+    run_id = run_dir.name
+    try:
+        identity = parse_run_id(run_id)
+    except SystemExit:
+        return [f"Invalid run id: {run_id}"]
+    try:
+        payload = load_validation_manifest(run_dir)
+    except FileNotFoundError:
+        return [f"{VALIDATION_FILENAME} is missing"]
+    except json.JSONDecodeError as error:
+        return [f"{VALIDATION_FILENAME} is not valid JSON: {error.msg}"]
+    if not isinstance(payload, dict):
+        return [f"{VALIDATION_FILENAME} must be a JSON object"]
+
+    problems: list[str] = []
+    if payload.get("schema_version") != 1:
+        problems.append(f"{VALIDATION_FILENAME} schema_version must be 1")
+    if payload.get("run_id") != run_id:
+        problems.append(f"{VALIDATION_FILENAME} run_id must match directory run id: {run_id}")
+    if payload.get("bucket") != identity.bucket:
+        problems.append(f"{VALIDATION_FILENAME} bucket must match run id bucket: {identity.bucket}")
+    if payload.get("scope") != identity.scope:
+        problems.append(f"{VALIDATION_FILENAME} scope must match run id scope: {identity.scope}")
+    if payload.get("status") != "passed":
+        problems.append(f"{VALIDATION_FILENAME} status must be passed")
+    if not isinstance(payload.get("case_ids"), list) or not payload.get("case_ids"):
+        problems.append(f"{VALIDATION_FILENAME} case_ids must be a non-empty list")
+    if not isinstance(payload.get("variants"), list) or not payload.get("variants"):
+        problems.append(f"{VALIDATION_FILENAME} variants must be a non-empty list")
+    checks = payload.get("checks")
+    if not isinstance(checks, list) or not checks:
+        problems.append(f"{VALIDATION_FILENAME} checks must be a non-empty list")
+    elif any(not isinstance(check, dict) or check.get("status") != "passed" for check in checks):
+        problems.append(f"{VALIDATION_FILENAME} checks must all be passed objects")
+    return problems
+
+
+def has_successful_validation(run_dir: Path) -> bool:
+    return not validate_validation_manifest(run_dir)
 
 
 def has_answer_oracle_evaluation(run_dir: Path) -> bool:

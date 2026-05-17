@@ -23,6 +23,9 @@ target_behavior:
 scoring_checks:
   - pass if findings are concrete, severity ordered, and map each responsibility to a boundary.
   - fail if it gives generic refactoring slogans.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - no findings-first review stance
   - router retains business decision
@@ -31,6 +34,12 @@ leakage_checks:
   - no answer YAML details in response.
 evidence_required:
   - response transcript
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - specialist-positive
   - clean-code

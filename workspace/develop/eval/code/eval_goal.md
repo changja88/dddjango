@@ -59,6 +59,9 @@
 - 반드시 실행하거나 명시적으로 미실행 보고해야 하는 command
 - 도메인/API/DB/Django/Test/Python/Clean Code 관찰점과 hidden behavioral/invariant checks
 - overengineering 금지 조건과 leakage 금지 조건
+- hard gates for evaluator leakage, unsupported command claims, false external integration claims, and unsupported subagent claims
+- `control_case` label when no-code, minimal-code, negative, honesty, or restraint behavior makes baseline pass acceptable
+- `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 
 ## Evidence To Capture
 

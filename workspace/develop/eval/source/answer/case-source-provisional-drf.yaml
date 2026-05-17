@@ -22,6 +22,9 @@ target_behavior:
 scoring_checks:
   - pass if provisional and DRF decisions are explicit and separable.
   - fail if Django Ninja is sourced from DRF greenfield guidance.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - DRF guardrail failure
   - provisional overclaim
@@ -30,6 +33,12 @@ leakage_checks:
 evidence_required:
   - provisional ledger
   - DRF guardrail check
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - provisional-handling
   - drf-guardrail

@@ -22,6 +22,9 @@ target_behavior:
 scoring_checks:
   - pass if field-level checks and semantic mismatch risks are reported.
   - fail if only YAML syntax is checked.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - stale default prompt missed
   - wrong skill name missed
@@ -30,6 +33,12 @@ leakage_checks:
 evidence_required:
   - agents/openai.yaml review notes
   - SKILL.md semantic comparison
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - agents-metadata
   - field-level-checks

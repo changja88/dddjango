@@ -35,6 +35,9 @@ scoring_checks:
   - pass if the answer respects the requested five-item shape and all items are domain/design content.
   - partial if the answer has useful design decisions but adds a small meta tail or wrong item count.
   - fail if workflow ceremony, subagent planning, or command/check/Serena footer changes the requested output shape.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - meta tail after requested shape
   - wrong item count
@@ -45,6 +48,12 @@ leakage_checks:
 evidence_required:
   - final response transcript
   - item count and footer inspection
+control_case: restraint
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass
+  expected_delta: non-negative
+  baseline_pass_ok: true
 coverage_tags:
   - tiny-task-restraint
   - direct-answer-shape

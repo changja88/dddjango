@@ -29,6 +29,9 @@ forbidden_paths:
 scoring_checks:
   - pass if no code is produced and the response asks for concrete missing contract details.
   - fail if it fabricates SDK behavior or modifies production code.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - fake integration
   - false test/verification claim
@@ -38,6 +41,12 @@ evidence_required:
   - changed-files.json with noCodeProduced true
   - diff.patch
   - response text
+control_case: negative
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass
+  expected_delta: non-negative
+  baseline_pass_ok: true
 coverage_tags:
   - no-code
   - clarification

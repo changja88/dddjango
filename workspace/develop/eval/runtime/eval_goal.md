@@ -52,6 +52,9 @@ Runtime checks는 모든 installed/cached skill에 대해 다음을 확인한다
 - required cache/source sync evidence
 - expected baseline isolation fields
 - leakage patterns for `answer/`, prior runs, private evaluator text, workspace-only source paths
+- hard gates for evaluator leakage, prompt-input exposure mistakes, unsupported command claims, and unsupported subagent claims
+- `control_case` label when safety, honesty, or restraint behavior makes baseline pass acceptable
+- `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 
 ## Evidence To Capture
 

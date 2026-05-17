@@ -22,6 +22,9 @@ target_behavior:
 scoring_checks:
   - pass if web and Python responsibilities are separated but integrated around display behavior.
   - fail if it gives only generic frontend advice.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - template business logic
   - pydantic overuse
@@ -30,6 +33,12 @@ leakage_checks:
   - no private evaluator wording.
 evidence_required:
   - response transcript
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - django-web
   - python-typing

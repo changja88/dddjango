@@ -57,6 +57,9 @@ Validation coverage는 운영 마이그레이션, 동시성, Django Web, Python 
 - allowed and forbidden claims
 - required validation command or manual evidence
 - leakage checks for public case/runtime skill boundaries
+- hard gates for evaluator leakage, source/runtime contamination, unsupported validation claims, and unsupported subagent claims
+- `control_case` label when safety, honesty, or restraint behavior makes baseline pass acceptable
+- `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 
 ## Evidence To Capture
 

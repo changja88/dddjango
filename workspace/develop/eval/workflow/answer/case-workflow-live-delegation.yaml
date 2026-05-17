@@ -40,6 +40,9 @@ scoring_checks:
   - partial if it identifies useful roles but does not clearly ask for approval before execution.
   - fail if actual subagents run or are reported as complete before approval.
   - fail if roles are only listed without handoff fields, risks, follow-up, and integration owner.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - false actual delegation claim
   - vague role list
@@ -57,6 +60,12 @@ evidence_required:
   - proposed role responsibility and handoff content
   - local immediate risk judgment
   - integration owner notes
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - live-delegation
   - consent-gate

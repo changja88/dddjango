@@ -42,6 +42,9 @@ scoring_checks:
   - pass if actual subagent trace includes dispatch and result collection evidence, and each dispatched role has concrete non-overlapping ownership.
   - partial if subagent execution is blocked for an explicit runtime reason but the planned handoff is otherwise concrete.
   - fail if it only writes a plan despite available subagents, fabricates execution, overlaps write ownership, or omits Must not edit.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - overlapping write ownership
   - missing must-not-edit boundaries
@@ -55,6 +58,12 @@ evidence_required:
   - handoff contract or role table
   - subagent trace summary with actual dispatch and result collection events
   - integration owner or merge rule
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - actual-subagent-required
   - actual-subagent-trace

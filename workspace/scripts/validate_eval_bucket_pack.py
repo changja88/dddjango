@@ -34,9 +34,12 @@ REQUIRED_FIELDS = (
     "reference_basis",
     "target_behavior",
     "scoring_checks",
+    "hard_gates",
     "failure_modes",
     "leakage_checks",
     "evidence_required",
+    "control_case",
+    "expected_outcomes",
     "coverage_tags",
 )
 ANSWER_ONLY_PUBLIC_PATTERNS = {
@@ -58,10 +61,24 @@ ABSOLUTE_LOCAL_PATH = re.compile(
 )
 LIST_FIELDS = (
     "scoring_checks",
+    "hard_gates",
     "failure_modes",
     "leakage_checks",
     "evidence_required",
     "coverage_tags",
+)
+CONTROL_CASE_VALUES = {
+    "false",
+    "restraint",
+    "negative",
+    "honesty",
+    "safety",
+}
+EXPECTED_OUTCOME_FIELDS = (
+    "baseline",
+    "with_dddjango",
+    "expected_delta",
+    "baseline_pass_ok",
 )
 WORKFLOW_EXPECTATION_REQUIRED_FIELDS = (
     "expected_mode",
@@ -230,6 +247,28 @@ def validate_required_blocks(path: Path, text: str) -> list[str]:
     return findings
 
 
+def validate_expected_outcomes(path: Path, text: str) -> list[str]:
+    findings: list[str] = []
+    if not has_field(text, "expected_outcomes"):
+        return findings
+    block = "\n".join(block_lines(text, "expected_outcomes"))
+    for field in EXPECTED_OUTCOME_FIELDS:
+        if not re.search(rf"(?m)^\s+{re.escape(field)}\s*:", block):
+            findings.append(f"{path}: expected_outcomes missing {field}")
+    return findings
+
+
+def validate_control_case(path: Path, text: str) -> list[str]:
+    value = scalar_value(text, "control_case")
+    if value is None:
+        return []
+    if value.lower() in CONTROL_CASE_VALUES:
+        return []
+    return [
+        f"{path}: control_case must be one of {', '.join(sorted(CONTROL_CASE_VALUES))}"
+    ]
+
+
 def validate_workflow_execution_expectation(path: Path, text: str) -> list[str]:
     findings: list[str] = []
     if not has_field(text, "workflow_execution_expectation"):
@@ -288,6 +327,8 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
             findings.append(f"{path}: {key} mismatch, expected {value!r}, got {actual!r}")
     findings.extend(validate_reference_basis(path, text))
     findings.extend(validate_required_blocks(path, text))
+    findings.extend(validate_expected_outcomes(path, text))
+    findings.extend(validate_control_case(path, text))
     if bucket == "workflow":
         findings.extend(validate_workflow_execution_expectation(path, text))
     if bucket == "code":

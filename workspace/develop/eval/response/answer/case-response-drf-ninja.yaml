@@ -24,6 +24,9 @@ target_behavior:
 scoring_checks:
   - pass if the answer gives a migration plan with contract freeze, schema mapping, compatibility checks, and rollback risk.
   - fail if it keeps DRF as preferred new API framework.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - DRF greenfield recommendation
   - compatibility omitted
@@ -33,6 +36,12 @@ leakage_checks:
 evidence_required:
   - response transcript
   - prompt-input isolation review
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - mixed-boundary
   - django-ninja

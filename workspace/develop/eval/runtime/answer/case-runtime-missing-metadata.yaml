@@ -21,6 +21,9 @@ target_behavior:
 scoring_checks:
   - pass if missing metadata is treated as runtime quality failure with evidence.
   - fail if only SKILL.md is inspected.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - metadata missing
   - semantic mismatch ignored
@@ -29,6 +32,12 @@ leakage_checks:
 evidence_required:
   - skill tree snapshot
   - validation command output
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - missing-skill-metadata
   - agents-metadata

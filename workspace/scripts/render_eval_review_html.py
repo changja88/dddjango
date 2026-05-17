@@ -574,10 +574,34 @@ def previous_run_dir(bucket: str, run_id: str) -> Path | None:
     runs_dir = EVAL_ROOT / bucket / "runs"
     if not runs_dir.is_dir():
         return None
+    current_meta = safe_run_meta(EVAL_ROOT / bucket / "runs" / run_id)
+    current_fingerprint = comparable_fingerprint(current_meta)
     previous = sorted(
-        path for path in runs_dir.iterdir() if path.is_dir() and path.name < run_id
+        path for path in runs_dir.iterdir()
+        if path.is_dir()
+        and path.name < run_id
+        and fingerprints_are_comparable(current_fingerprint, safe_run_meta(path))
     )
     return previous[-1] if previous else None
+
+
+def comparable_fingerprint(run_meta: dict[str, object]) -> dict[str, object] | None:
+    fingerprint = run_meta.get("fingerprint")
+    if not isinstance(fingerprint, dict):
+        return None
+    if fingerprint.get("status") == "not-recorded":
+        return None
+    return fingerprint
+
+
+def fingerprints_are_comparable(
+    current_fingerprint: dict[str, object] | None,
+    previous_meta: dict[str, object],
+) -> bool:
+    if current_fingerprint is None:
+        return True
+    previous_fingerprint = comparable_fingerprint(previous_meta)
+    return previous_fingerprint == current_fingerprint
 
 
 def compact_variant_for_previous(variant: dict[str, object]) -> dict[str, object]:
@@ -689,7 +713,13 @@ def compare_case_to_previous(
 def build_previous_cases(bucket: str, run_id: str) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
     previous_dir = previous_run_dir(bucket, run_id)
     if previous_dir is None:
-        return {"available": False, "run_id": ""}, {}
+        current_meta = safe_run_meta(EVAL_ROOT / bucket / "runs" / run_id)
+        reason = (
+            "no comparable fingerprint match"
+            if comparable_fingerprint(current_meta) is not None
+            else "no previous run"
+        )
+        return {"available": False, "run_id": "", "reason": reason}, {}
 
     previous_public_cases = public_cases_for_run(bucket, previous_dir)
     previous_cases = [
@@ -852,6 +882,53 @@ def safe_run_meta(run_dir: Path) -> dict[str, object]:
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return {}
     return run_meta if isinstance(run_meta, dict) else {}
+
+
+def build_render_validation_checks(
+    *,
+    bucket: str,
+    run_id: str,
+    run_dir: Path,
+    report: Path,
+) -> list[dict[str, object]]:
+    public_cases = sorted((EVAL_ROOT / bucket / "cases/plugin/public").glob("case-*.md"))
+    run_public_cases = public_cases_for_run(bucket, run_dir)
+    meta_errors = run_identity.validate_run_meta(run_dir)
+    validation_checks: list[dict[str, object]] = [
+        {
+            "name": "run-meta",
+            "status": "failed" if meta_errors else "passed",
+            "command": "run_identity.validate_run_meta",
+            "details": "; ".join(meta_errors),
+        },
+        {
+            "name": "answer-oracle-artifacts",
+            "status": "passed" if run_identity.has_answer_oracle_evaluation(run_dir) else "failed",
+            "command": "run_identity.has_answer_oracle_evaluation",
+        },
+        {
+            "name": "clean-exit-artifacts",
+            "status": "passed" if run_identity.exit_artifacts_are_clean(run_dir) else "failed",
+            "command": "run_identity.exit_artifacts_are_clean",
+        },
+        {
+            "name": "full-scope",
+            "status": "passed" if run_identity.parse_run_id(run_id).scope == "full" else "failed",
+            "command": "run_identity.parse_run_id",
+        },
+        {
+            "name": "complete-case-manifest",
+            "status": "passed" if len(run_public_cases) == len(public_cases) and public_cases else "failed",
+            "command": "public_cases_for_run",
+            "details": f"run_cases={len(run_public_cases)} public_cases={len(public_cases)}",
+        },
+        {
+            "name": "report-rendered",
+            "status": "passed" if report.is_file() else "failed",
+            "command": "render_eval_review_html.py",
+        },
+    ]
+    return validation_checks
 
 
 def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, object]:
@@ -1029,11 +1106,15 @@ def latest_scored_run_dir(bucket: str) -> Path | None:
             continue
         if run_identity.validate_run_meta(path):
             continue
+        run_meta = run_identity.load_run_meta(path)
+        if run_meta.get("scope") != "full":
+            continue
+        if not run_identity.has_successful_validation(path):
+            continue
         if not run_identity.has_answer_oracle_evaluation(path):
             continue
         if not run_identity.exit_artifacts_are_clean(path):
             continue
-        run_meta = run_identity.load_run_meta(path)
         created_at = str(run_meta.get("created_at") or "")
         if not created_at:
             continue
@@ -1935,6 +2016,20 @@ def main() -> None:
     data = build_report_data(args.bucket, args.run_id, run_dir)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_html(data), encoding="utf-8")
+    run_identity.write_validation_manifest(
+        run_dir,
+        run_id=args.run_id,
+        bucket=args.bucket,
+        case_ids=[path.stem for path in public_cases_for_run(args.bucket, run_dir)],
+        variants=list(VARIANTS),
+        report_path=output,
+        checks=build_render_validation_checks(
+            bucket=args.bucket,
+            run_id=args.run_id,
+            run_dir=run_dir,
+            report=output,
+        ),
+    )
     write_latest_report_aliases()
     try:
         display_path = output.resolve().relative_to(REPO_ROOT.resolve())

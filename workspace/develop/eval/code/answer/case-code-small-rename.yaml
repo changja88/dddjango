@@ -35,6 +35,9 @@ forbidden_paths:
 scoring_checks:
   - pass if the diff is narrow and behavior remains covered.
   - fail if it performs broad redesign.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - over-ceremony
   - incomplete rename
@@ -44,6 +47,12 @@ evidence_required:
   - changed-files.json
   - diff.patch
   - verification output
+control_case: restraint
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass
+  expected_delta: non-negative
+  baseline_pass_ok: true
 coverage_tags:
   - negative-implementation-restraint
   - minimal-code

@@ -20,6 +20,9 @@ target_behavior:
 scoring_checks:
   - pass if packaging evidence covers manifest, marketplace, symlink/equivalent entry, and canonical source.
   - fail if only plugin.json is checked.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - symlink mismatch missed
   - marketplace stale
@@ -29,6 +32,12 @@ evidence_required:
   - plugin manifest
   - marketplace entry
   - symlink or equivalent entry check
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - packaging
   - marketplace-sync

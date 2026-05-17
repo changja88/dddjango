@@ -22,6 +22,9 @@ target_behavior:
 scoring_checks:
   - pass if the answer identifies all three sources to compare and expected web routing.
   - fail if it only says rerun validation.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - role-map shrink
   - wrong skill precedence
@@ -30,6 +33,12 @@ leakage_checks:
 evidence_required:
   - prompt-input artifact
   - role-map source/cache comparison
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - wrong-routing
   - role-map-sync

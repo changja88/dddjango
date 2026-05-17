@@ -22,6 +22,9 @@ target_behavior:
 scoring_checks:
   - pass if answer demands bidirectional evidence without making cache source of truth.
   - fail if it accepts cache-only success.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - cache-only completion
   - missing workspace source evidence
@@ -31,6 +34,12 @@ evidence_required:
   - cache snapshot
   - canonical source comparison
   - validation command output
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - cache-source-consistency
   - runtime-safety

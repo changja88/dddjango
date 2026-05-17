@@ -25,6 +25,9 @@ target_behavior:
 scoring_checks:
   - pass if the plan is operationally safe and specific to Django migrations.
   - fail if it is just a schema checklist.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - lock risk omitted
   - rollout compatibility omitted
@@ -33,6 +36,12 @@ leakage_checks:
   - no private run or answer material in response.
 evidence_required:
   - response transcript
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - operational-migration
   - db-consistency

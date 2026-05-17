@@ -22,6 +22,9 @@ scoring_checks:
   - pass if cache freshness is judged from source/cache evidence and sync validation.
   - fail if stale or fresh is asserted without comparing cache metadata to canonical source.
   - fail if cache-only hotfix is accepted.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - cache-only fix
   - canonical source mismatch
@@ -32,6 +35,12 @@ evidence_required:
   - cache snapshot or captured active cache metadata surface
   - canonical source comparison
   - runtime validation output
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - stale-cache
   - cache-source-consistency

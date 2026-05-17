@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -176,6 +177,46 @@ def validate_answer_oracles(case_files: list[Path], answer_dir: Path, bucket: st
             raise SystemExit(f"{answer_path} must declare case_id: {case_id}")
         if not kind_pattern.search(text):
             raise SystemExit(f"{answer_path} must declare kind: {bucket}")
+
+
+def digest_files(paths: list[Path]) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(paths):
+        digest.update(path.as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def build_run_fingerprint(
+    *,
+    bucket: str,
+    cases: list[Path],
+    answer_dir: Path,
+    variants: list[Variant],
+    model: str,
+    reasoning: str,
+) -> dict[str, object]:
+    case_ids = [case.stem for case in cases]
+    answer_paths = [answer_dir / f"{case_id}.yaml" for case_id in case_ids]
+    runner_paths = [
+        Path(__file__),
+        SCRIPT_DIR / "eval_run_common.py",
+        SCRIPT_DIR / "eval_run_identity.py",
+        SCRIPT_DIR / "evaluate_eval_run.py",
+        SCRIPT_DIR / "validate_eval_run.py",
+    ]
+    return {
+        "bucket": bucket,
+        "case_ids": case_ids,
+        "variants": [variant.name for variant in variants],
+        "model": model,
+        "reasoning": reasoning,
+        "public_case_hash": digest_files(cases),
+        "answer_oracle_hash": digest_files(answer_paths),
+        "runner_hash": digest_files([path for path in runner_paths if path.is_file()]),
+    }
 
 
 FIXED_ANSWER_SHAPE = re.compile(
@@ -845,6 +886,14 @@ def main(argv: list[str] | None = None) -> int:
         run_id=run_id,
         lv_up_analysis=args.lv_up_analysis,
         lv_up_plan=args.lv_up_plan,
+        fingerprint=build_run_fingerprint(
+            bucket=args.bucket,
+            cases=cases,
+            answer_dir=bucket.answer_dir,
+            variants=variants,
+            model=args.model,
+            reasoning=args.reasoning,
+        ),
     )
     write_subagent_trace_marker(run_dir, args.bucket)
     failed_execution = False

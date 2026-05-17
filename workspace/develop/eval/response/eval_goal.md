@@ -49,6 +49,9 @@
 - expected omissions when scope is intentionally small
 - verification honesty requirements
 - leakage and false-claim checks
+- hard gates that force fail/block on evaluator leakage, unsupported command claims, or unsupported subagent claims
+- `control_case` label when baseline pass is acceptable for restraint, negative, honesty, or safety controls
+- `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 - scoring or pass/fail observations for baseline and `with-dddjango`
 - `allow_adversarial_public_terms: true` plus allowed bait terms when a public prompt intentionally mentions hidden/evaluator terms without leaking the actual oracle
 

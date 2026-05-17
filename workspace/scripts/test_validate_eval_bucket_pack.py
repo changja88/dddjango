@@ -62,12 +62,20 @@ target_behavior:
     - Required behavior.
 scoring_checks:
   - pass if checked.
+hard_gates:
+  - no evaluator-only material leaks.
 failure_modes:
   - missing behavior
 leakage_checks:
   - no private material
 evidence_required:
   - evaluation notes
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
 {tag_lines}""",
             encoding="utf-8",
@@ -95,6 +103,62 @@ coverage_tags:
         findings = self.validator.validate_answer(answer_path, "source", public_path)
 
         self.assertTrue(any("coverage_tags" in finding for finding in findings))
+
+    def test_answer_requires_expected_outcomes_and_hard_gates(self) -> None:
+        self.write_case_pair("source", "case-source-quality")
+        answer_path = self.validator.EVAL_ROOT / "source/answer/case-source-quality.yaml"
+        text = answer_path.read_text(encoding="utf-8")
+        text = text.replace("hard_gates:\n  - no evaluator-only material leaks.\n", "")
+        text = text.replace(
+            "expected_outcomes:\n"
+            "  baseline: partial\n"
+            "  with_dddjango: pass\n"
+            "  expected_delta: positive\n"
+            "  baseline_pass_ok: false\n",
+            "",
+        )
+        answer_path.write_text(text, encoding="utf-8")
+        public_path = (
+            self.validator.EVAL_ROOT
+            / "source/cases/plugin/public/case-source-quality.md"
+        )
+
+        findings = self.validator.validate_answer(answer_path, "source", public_path)
+
+        self.assertTrue(any("missing hard_gates" in finding for finding in findings))
+        self.assertTrue(any("missing expected_outcomes" in finding for finding in findings))
+
+    def test_answer_requires_expected_outcome_fields(self) -> None:
+        self.write_case_pair("source", "case-source-quality")
+        answer_path = self.validator.EVAL_ROOT / "source/answer/case-source-quality.yaml"
+        text = answer_path.read_text(encoding="utf-8")
+        text = text.replace("  expected_delta: positive\n", "")
+        public_path = (
+            self.validator.EVAL_ROOT
+            / "source/cases/plugin/public/case-source-quality.md"
+        )
+        answer_path.write_text(text, encoding="utf-8")
+
+        findings = self.validator.validate_answer(answer_path, "source", public_path)
+
+        self.assertTrue(any("expected_outcomes missing expected_delta" in finding for finding in findings))
+
+    def test_answer_rejects_unknown_control_case_value(self) -> None:
+        self.write_case_pair("source", "case-source-quality")
+        answer_path = self.validator.EVAL_ROOT / "source/answer/case-source-quality.yaml"
+        text = answer_path.read_text(encoding="utf-8").replace(
+            "control_case: false",
+            "control_case: maybe",
+        )
+        public_path = (
+            self.validator.EVAL_ROOT
+            / "source/cases/plugin/public/case-source-quality.md"
+        )
+        answer_path.write_text(text, encoding="utf-8")
+
+        findings = self.validator.validate_answer(answer_path, "source", public_path)
+
+        self.assertTrue(any("control_case must be one of" in finding for finding in findings))
 
     def test_bucket_requires_minimum_coverage_tags(self) -> None:
         self.write_case_pair(

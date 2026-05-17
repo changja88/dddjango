@@ -33,6 +33,9 @@ workflow_execution_expectation:
 scoring_checks:
   - pass if findings-first stance and follow-up workflow are both respected.
   - fail if the review is buried under process.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - no severity ordering
   - process before findings
@@ -40,6 +43,12 @@ leakage_checks:
   - no answer oracle references.
 evidence_required:
   - review transcript
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - review-focused
   - findings-first

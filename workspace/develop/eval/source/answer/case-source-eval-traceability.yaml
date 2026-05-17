@@ -21,6 +21,9 @@ target_behavior:
 scoring_checks:
   - pass if each bucket has a traceability rule tied to its eval_goal.
   - fail if answer files are not connected to source references.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - orphan case
   - untraceable scoring check
@@ -28,6 +31,12 @@ leakage_checks:
   - public cases do not include hidden scoring checks.
 evidence_required:
   - eval bucket traceability map
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - eval-traceability
   - answer-oracle-boundary

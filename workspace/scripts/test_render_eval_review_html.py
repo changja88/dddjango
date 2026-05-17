@@ -63,6 +63,8 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         run_id: str | None = None,
         write_meta: bool = True,
         write_exit_artifacts: bool = True,
+        write_validation: bool = True,
+        fingerprint: dict[str, object] | None = None,
     ) -> Path:
         if run_id is None:
             run_id = DEFAULT_RUN_IDS[bucket]
@@ -116,12 +118,20 @@ target_behavior:
     - Required behavior.
 {workflow_expectation}scoring_checks:
   - pass if checked.
+hard_gates:
+  - no evaluator-only material leaks.
 failure_modes:
   - missing behavior
 leakage_checks:
   - no private material
 evidence_required:
   - evaluation notes
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - specialist-positive
 """,
@@ -167,11 +177,31 @@ coverage_tags:
         if run_identity is None:
             import eval_run_identity as run_identity
         if write_meta:
-            run_meta = run_identity.write_run_meta(run_dir, run_id=run_id)
+            run_meta = run_identity.write_run_meta(
+                run_dir,
+                run_id=run_id,
+                fingerprint=fingerprint,
+            )
             run_meta["answerOracleEvaluated"] = True
             (run_dir / run_identity.RUN_META_FILENAME).write_text(
                 json.dumps(run_meta, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
+            )
+        if write_meta and write_validation:
+            run_identity.write_validation_manifest(
+                run_dir,
+                run_id=run_id,
+                bucket=bucket,
+                case_ids=[case_id],
+                variants=list(self.renderer.VARIANTS),
+                report_path=self.renderer.report_path(bucket, run_id),
+                checks=[
+                    {
+                        "name": "test-fixture-validation",
+                        "status": "passed",
+                        "command": "test fixture",
+                    }
+                ],
             )
         return run_dir
 
@@ -407,6 +437,48 @@ coverage_tags:
         self.assertEqual(row["run_change"]["with_dddjango_delta"], "+2.0")
         self.assertEqual(row["run_change"]["with_dddjango_verdict_change"], "fail -> pass")
         self.assertEqual(row["run_change"]["direction"], "improved")
+
+    def test_previous_run_comparison_skips_fingerprint_mismatch(self) -> None:
+        previous_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="previous-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        current_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="current-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        self.write_case(
+            run_id=previous_run_id,
+            fingerprint={
+                "case_ids": ["case-response-order-create"],
+                "variants": ["baseline", "with-dddjango"],
+                "model": "gpt-5.5",
+                "reasoning": "high",
+                "answer_oracle_hash": "old",
+            },
+        )
+        run_dir = self.write_case(
+            run_id=current_run_id,
+            fingerprint={
+                "case_ids": ["case-response-order-create"],
+                "variants": ["baseline", "with-dddjango"],
+                "model": "gpt-5.5",
+                "reasoning": "high",
+                "answer_oracle_hash": "new",
+            },
+        )
+
+        data = self.renderer.build_report_data("response", current_run_id, run_dir)
+
+        self.assertFalse(data["previous_run"]["available"])
+        self.assertEqual(data["previous_run"]["reason"], "no comparable fingerprint match")
+        self.assertEqual(data["summary"]["with_dddjango_average_change"], "n/a")
 
     def test_render_html_shows_previous_run_change_in_summary_table_and_dialog(self) -> None:
         previous_run_id = self.canonical_run_id(
@@ -1294,6 +1366,46 @@ coverage_tags:
 
         self.assertTrue((legacy_run / "raw/case-response-order-create-answer-oracle-evaluation.json").is_file())
         self.assertEqual(self.renderer.latest_scored_run_dir("response"), metadata_run)
+
+    def test_unvalidated_run_is_excluded_from_latest_selection(self) -> None:
+        validated_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="validated-run",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        unvalidated_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="unvalidated-run",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        validated_run = self.write_case(run_id=validated_run_id)
+        self.write_case(run_id=unvalidated_run_id, write_validation=False)
+
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), validated_run)
+
+    def test_targeted_run_is_excluded_from_latest_selection(self) -> None:
+        full_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="validated-full",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        targeted_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="targeted",
+            topic="single-case",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        full_run = self.write_case(run_id=full_run_id)
+        self.write_case(run_id=targeted_run_id)
+
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), full_run)
 
     def test_latest_scored_run_excludes_runs_without_exit_artifacts(self) -> None:
         clean_run_id = self.canonical_run_id(

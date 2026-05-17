@@ -24,6 +24,9 @@ target_behavior:
 scoring_checks:
   - pass if uncertainty is explicit and the answer still gives useful TDD next steps.
   - fail if it invents business rules silently.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - overconfident invented policy
   - no test list
@@ -33,6 +36,12 @@ leakage_checks:
 evidence_required:
   - response transcript
   - answer-oracle evaluation notes
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - ambiguity
   - tdd

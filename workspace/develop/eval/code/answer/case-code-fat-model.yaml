@@ -34,6 +34,9 @@ forbidden_paths:
 scoring_checks:
   - pass if responsibility split improves with small diff and tests.
   - fail if refactor is broad or untested.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - side effect still coupled to invariant method
   - overengineering
@@ -43,6 +46,12 @@ evidence_required:
   - changed-files.json
   - diff.patch
   - tests or not-run reason
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - clean-code
   - responsibility-split

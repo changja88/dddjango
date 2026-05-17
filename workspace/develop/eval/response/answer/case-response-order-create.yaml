@@ -25,6 +25,9 @@ target_behavior:
 scoring_checks:
   - pass if DDD, DB, API, Django Ninja, and tests are all connected through the same order invariant.
   - fail if it only lists skills or patterns without an order-specific consistency decision.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - tactical-pattern-first answer
   - body-field idempotency without replay/conflict semantics
@@ -35,6 +38,12 @@ evidence_required:
   - baseline and with-dddjango response
   - baseline isolation artifact
   - answer-oracle evaluation notes
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - specialist-positive
   - strategic-ddd

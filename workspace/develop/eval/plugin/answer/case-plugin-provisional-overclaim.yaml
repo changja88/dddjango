@@ -22,6 +22,9 @@ target_behavior:
 scoring_checks:
   - pass if each provisional skill has explicit allowed and forbidden wording.
   - fail if any provisional skill is called complete without source basis.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
   - provisional overclaim
   - DRF greenfield leakage
@@ -29,6 +32,12 @@ leakage_checks:
   - no private evaluation text in runtime skill.
 evidence_required:
   - provisional status matrix
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
 coverage_tags:
   - provisional-handling
   - reference-gap
