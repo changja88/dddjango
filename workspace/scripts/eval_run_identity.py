@@ -207,11 +207,11 @@ def validate_run_meta(run_dir: Path) -> list[str]:
 
 
 def has_answer_oracle_evaluation(run_dir: Path) -> bool:
-    run_meta = load_run_meta(run_dir)
-    if not isinstance(run_meta, dict):
-        return False
-    return run_meta.get("answerOracleEvaluated") is True
+    return any((run_dir / "raw").glob("*-answer-oracle-evaluation.json"))
 
 
 def exit_artifacts_are_clean(run_dir: Path) -> bool:
-    return not validate_run_meta(run_dir)
+    return all(
+        exit_artifact.read_text(encoding="utf-8") == "0"
+        for exit_artifact in (run_dir / "raw").glob("*-exit.txt")
+    )

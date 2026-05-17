@@ -223,6 +223,48 @@ class EvalRunIdentityTests(unittest.TestCase):
 
         self.assertEqual(errors, ["Invalid run id: run-one"])
 
+    def test_has_answer_oracle_evaluation_detects_raw_artifact(self) -> None:
+        run_dir = self.root / "run-one"
+        raw_dir = run_dir / "raw"
+        raw_dir.mkdir(parents=True)
+        (run_dir / "RUN_META.json").write_text(
+            json.dumps({"answerOracleEvaluated": False}) + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFalse(self.module.has_answer_oracle_evaluation(run_dir))
+
+        (raw_dir / "case-one-answer-oracle-evaluation.json").write_text(
+            "{}\n",
+            encoding="utf-8",
+        )
+
+        self.assertTrue(self.module.has_answer_oracle_evaluation(run_dir))
+
+    def test_exit_artifacts_are_clean_returns_true_with_no_exit_files(self) -> None:
+        run_dir = self.root / "run-one"
+        (run_dir / "raw").mkdir(parents=True)
+
+        self.assertTrue(self.module.exit_artifacts_are_clean(run_dir))
+
+    def test_exit_artifacts_are_clean_returns_true_when_all_exit_files_are_zero(self) -> None:
+        run_dir = self.root / "run-one"
+        raw_dir = run_dir / "raw"
+        raw_dir.mkdir(parents=True)
+        (raw_dir / "case-one-exit.txt").write_text("0", encoding="utf-8")
+        (raw_dir / "case-two-exit.txt").write_text("0", encoding="utf-8")
+
+        self.assertTrue(self.module.exit_artifacts_are_clean(run_dir))
+
+    def test_exit_artifacts_are_clean_returns_false_when_any_exit_file_is_nonzero(self) -> None:
+        run_dir = self.root / "run-one"
+        raw_dir = run_dir / "raw"
+        raw_dir.mkdir(parents=True)
+        (raw_dir / "case-one-exit.txt").write_text("0", encoding="utf-8")
+        (raw_dir / "case-two-exit.txt").write_text("1", encoding="utf-8")
+
+        self.assertFalse(self.module.exit_artifacts_are_clean(run_dir))
+
 
 if __name__ == "__main__":
     unittest.main()
