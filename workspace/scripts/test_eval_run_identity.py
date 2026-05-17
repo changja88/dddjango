@@ -73,6 +73,21 @@ class EvalRunIdentityTests(unittest.TestCase):
                 with self.assertRaises(SystemExit):
                     self.module.parse_run_id(value)
 
+    def test_validate_try_number_rejects_bool(self) -> None:
+        stamp = datetime(2026, 5, 17, 14, 30, 12, tzinfo=ZoneInfo("Asia/Seoul"))
+
+        with self.assertRaises(SystemExit):
+            self.module.validate_try_number(True)
+
+        with self.assertRaises(SystemExit):
+            self.module.build_run_id(
+                stamp=stamp,
+                bucket="runtime",
+                try_number=True,
+                scope="full",
+                topic="current-baseline",
+            )
+
     def test_write_and_load_run_meta(self) -> None:
         run_id = "20260517-143012-runtime-try01-full-current-baseline"
         meta = self.module.build_run_meta(run_id)
@@ -95,6 +110,70 @@ class EvalRunIdentityTests(unittest.TestCase):
             error,
             "RUN_META.json bucket must match run id bucket: runtime",
         )
+
+    def test_validate_run_meta_identity_mismatches(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        cases = [
+            (
+                "scope",
+                "adjacent",
+                "RUN_META.json scope must match run id scope: full",
+            ),
+            (
+                "topic",
+                "other-topic",
+                "RUN_META.json topic must match run id topic: current-baseline",
+            ),
+            (
+                "try_number",
+                2,
+                "RUN_META.json try_number must match run id try_number: 1",
+            ),
+            (
+                "created_at",
+                "2026-05-17T14:30:13+09:00",
+                "RUN_META.json created_at must match run id created_at: 2026-05-17T14:30:12+09:00",
+            ),
+            (
+                "run_id",
+                "20260517-143012-runtime-try02-full-current-baseline",
+                "RUN_META.json run_id must match directory run id: 20260517-143012-runtime-try01-full-current-baseline",
+            ),
+            (
+                "schema_version",
+                2,
+                "RUN_META.json schema_version must be 1",
+            ),
+        ]
+        for key, value, expected_error in cases:
+            with self.subTest(key=key):
+                meta = self.module.build_run_meta(run_id)
+                meta[key] = value
+                error = self.module.validate_run_meta(run_id, meta)
+                self.assertEqual(error, expected_error)
+
+    def test_validate_run_meta_lv_up_types(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        for key in ("lv_up_analysis", "lv_up_plan"):
+            with self.subTest(key=key):
+                meta = self.module.build_run_meta(run_id)
+                meta[key] = []
+                error = self.module.validate_run_meta(run_id, meta)
+                self.assertEqual(
+                    error,
+                    f"RUN_META.json {key} must be a string or null",
+                )
+
+    def test_validate_run_meta_non_dict_payload(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        run_dir = self.root / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "RUN_META.json").write_text('["not-a-dict"]\n', encoding="utf-8")
+
+        loaded = self.module.load_run_meta(run_dir)
+        error = self.module.validate_run_meta(run_id, loaded)
+
+        self.assertEqual(error, "RUN_META.json must be a JSON object")
 
 
 if __name__ == "__main__":

@@ -55,7 +55,9 @@ def validate_topic(topic: str) -> str:
 
 
 def validate_try_number(try_number: int) -> int:
-    if not isinstance(try_number, int) or try_number < 1 or try_number > 99:
+    if isinstance(try_number, bool) or not isinstance(try_number, int):
+        raise SystemExit(f"Invalid try number: {try_number}")
+    if try_number < 1 or try_number > 99:
         raise SystemExit(f"Invalid try number: {try_number}")
     return try_number
 
@@ -102,6 +104,7 @@ def validate_production_run_id(run_id: str) -> RunIdentity:
 def build_run_meta(run_id: str) -> dict[str, object]:
     identity = parse_run_id(run_id)
     return {
+        "schema_version": 1,
         "run_id": identity.run_id,
         "stamp": identity.stamp,
         "bucket": identity.bucket,
@@ -109,6 +112,8 @@ def build_run_meta(run_id: str) -> dict[str, object]:
         "scope": identity.scope,
         "topic": identity.topic,
         "created_at": identity.created_at,
+        "lv_up_analysis": None,
+        "lv_up_plan": None,
     }
 
 
@@ -127,10 +132,28 @@ def load_run_meta(run_dir: Path) -> dict[str, object]:
     return json.loads(meta_path.read_text(encoding="utf-8"))
 
 
-def validate_run_meta(run_id: str, run_meta: dict[str, object]) -> str | None:
+def validate_run_meta(run_id: str, run_meta: object) -> str | None:
     identity = parse_run_id(run_id)
+    if not isinstance(run_meta, dict):
+        return f"{RUN_META_FILENAME} must be a JSON object"
+    if run_meta.get("run_id") != run_id:
+        return f"{RUN_META_FILENAME} run_id must match directory run id: {run_id}"
     if run_meta.get("bucket") != identity.bucket:
         return f"{RUN_META_FILENAME} bucket must match run id bucket: {identity.bucket}"
+    if run_meta.get("try_number") != identity.try_number:
+        return f"{RUN_META_FILENAME} try_number must match run id try_number: {identity.try_number}"
+    if run_meta.get("scope") != identity.scope:
+        return f"{RUN_META_FILENAME} scope must match run id scope: {identity.scope}"
+    if run_meta.get("topic") != identity.topic:
+        return f"{RUN_META_FILENAME} topic must match run id topic: {identity.topic}"
+    if run_meta.get("created_at") != identity.created_at:
+        return f"{RUN_META_FILENAME} created_at must match run id created_at: {identity.created_at}"
+    if run_meta.get("schema_version") != 1:
+        return f"{RUN_META_FILENAME} schema_version must be 1"
+    for key in ("lv_up_analysis", "lv_up_plan"):
+        value = run_meta.get(key)
+        if value is not None and not isinstance(value, str):
+            return f"{RUN_META_FILENAME} {key} must be a string or null"
     return None
 
 
