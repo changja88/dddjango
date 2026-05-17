@@ -233,28 +233,15 @@ def workflow_mode_label(mode: str) -> str:
     return labels.get(mode, mode or "n/a")
 
 
-def workflow_alignment(
-    *,
-    actual_mode: str,
-    acceptable_modes: list[str],
-    forbidden_modes: list[str],
-) -> str:
-    expectation = workflow_gate.WorkflowExpectation(
-        expected_mode="",
-        acceptable_modes=tuple(acceptable_modes),
-        forbidden_modes=tuple(forbidden_modes),
-        report_label="",
-    )
-    return workflow_gate.workflow_alignment(actual_mode, expectation)
-
-
 def workflow_expectation(answer_text: str, trace: dict[str, object]) -> dict[str, object]:
-    block = "\n".join(block_lines(answer_text, "workflow_execution_expectation"))
-    expected_mode = scalar_value(block, "expected_mode")
-    acceptable_modes = yaml_list_values(block, "acceptable_modes")
-    forbidden_modes = yaml_list_values(block, "forbidden_modes")
+    expectation = workflow_gate.parse_workflow_expectation(answer_text)
+    expected_mode = expectation.expected_mode if expectation is not None else ""
+    acceptable_modes = list(expectation.acceptable_modes) if expectation is not None else []
+    forbidden_modes = list(expectation.forbidden_modes) if expectation is not None else []
     actual_mode = actual_workflow_mode(trace)
-    report_label = scalar_value(block, "report_label") or expected_mode or "n/a"
+    report_label = (
+        expectation.report_label if expectation is not None and expectation.report_label else ""
+    ) or expected_mode or "n/a"
     return {
         "expected_mode": expected_mode,
         "report_label": report_label,
@@ -262,11 +249,7 @@ def workflow_expectation(answer_text: str, trace: dict[str, object]) -> dict[str
         "forbidden_modes": forbidden_modes,
         "actual_mode": actual_mode,
         "actual_label": workflow_mode_label(actual_mode),
-        "alignment": workflow_alignment(
-            actual_mode=actual_mode,
-            acceptable_modes=acceptable_modes,
-            forbidden_modes=forbidden_modes,
-        )
+        "alignment": workflow_gate.workflow_alignment(actual_mode, expectation)
         if expected_mode
         else "n/a",
     }
@@ -900,6 +883,13 @@ def latest_scored_report_path(bucket: str) -> Path | None:
     return report_path(bucket, latest_run.name)
 
 
+def latest_available_report_path(bucket: str) -> Path | None:
+    latest_report = latest_scored_report_path(bucket)
+    if latest_report is None or not latest_report.is_file():
+        return None
+    return latest_report
+
+
 def latest_redirect_html(bucket: str, target_report: Path) -> str:
     alias_dir = latest_report_alias_path(bucket).parent
     href = Path(os.path.relpath(target_report, alias_dir)).as_posix()
@@ -922,8 +912,8 @@ def latest_redirect_html(bucket: str, target_report: Path) -> str:
 
 
 def write_latest_report_alias(bucket: str) -> Path | None:
-    latest_report = latest_scored_report_path(bucket)
-    if latest_report is None or not latest_report.is_file():
+    latest_report = latest_available_report_path(bucket)
+    if latest_report is None:
         return None
     alias_path = latest_report_alias_path(bucket)
     alias_path.parent.mkdir(parents=True, exist_ok=True)
@@ -948,7 +938,7 @@ def bucket_report_href(current_bucket: str, current_run_id: str, target_report: 
 def build_bucket_tabs(current_bucket: str, run_id: str) -> list[dict[str, object]]:
     tabs: list[dict[str, object]] = []
     for bucket in BUCKETS:
-        latest_report = latest_scored_report_path(bucket)
+        latest_report = latest_available_report_path(bucket)
         latest_alias = latest_report_alias_path(bucket) if latest_report is not None else None
         is_current = bucket == current_bucket
         tabs.append(

@@ -997,7 +997,7 @@ coverage_tags:
             self.renderer.latest_scored_report_path("runtime"),
             self.renderer.report_path("runtime", latest_runtime_run_id),
         )
-        for bucket in ("response", "code", "runtime"):
+        for bucket in ("response", "code"):
             expected_href = self.renderer.bucket_report_href(
                 "response",
                 current_run_id,
@@ -1005,6 +1005,9 @@ coverage_tags:
             )
             self.assertEqual(tabs_by_bucket[bucket]["href"], expected_href)
             self.assertIn(f"href=\"{expected_href}\"", html)
+        self.assertFalse(tabs_by_bucket["runtime"]["exists"])
+        self.assertEqual(tabs_by_bucket["runtime"]["href"], "")
+        self.assertIn("class=\"bucket-tab is-disabled\">runtime</span>", html)
         self.assertFalse(tabs_by_bucket["plugin"]["exists"])
         self.assertEqual(tabs_by_bucket["plugin"]["href"], "")
         self.assertIn("class=\"report-shell\"", html)
