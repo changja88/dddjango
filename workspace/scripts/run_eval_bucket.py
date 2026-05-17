@@ -145,6 +145,8 @@ def run_command(
 ) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env.setdefault("NO_COLOR", "1")
+    python_bin = str(Path(sys.executable).parent)
+    env["PATH"] = python_bin + os.pathsep + env.get("PATH", "")
     return subprocess.run(
         command,
         cwd=cwd,

@@ -1,4 +1,4 @@
-PYTHON ?= python3
+PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 RUN_ID ?=
 TRY_NUMBER ?= 1
 SCOPE ?= full

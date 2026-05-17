@@ -1,0 +1,15 @@
+[project]
+name = "dddjango-eval-django-shop-service"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+  "Django>=4.2,<6",
+  "django-ninja>=1,<2",
+]
+
+[tool.dddjango-eval]
+fixture = "django-shop-service"
+validation = [
+  "python3 manage.py test",
+  "python3 manage.py check",
+]

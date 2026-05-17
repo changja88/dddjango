@@ -98,6 +98,20 @@ class RunEvalBucketTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 7, "event stream\n", "stderr text\n")
         return subprocess.CompletedProcess(command, 0, "", "")
 
+    def test_run_command_prefers_current_interpreter_bin_on_path(self) -> None:
+        with patch.object(self.runner.subprocess, "run") as run:
+            run.return_value = subprocess.CompletedProcess(["python3", "--version"], 0, "", "")
+
+            self.runner.run_command(
+                ["python3", "--version"],
+                prompt=None,
+                cwd=self.root,
+                timeout_seconds=10,
+            )
+
+        env = run.call_args.kwargs["env"]
+        self.assertTrue(env["PATH"].startswith(str(Path(sys.executable).parent)))
+
     def init_git_workspace(self, workspace: Path) -> None:
         workspace.mkdir(parents=True, exist_ok=True)
         subprocess.run(["git", "init"], cwd=workspace, check=True, capture_output=True, text=True)

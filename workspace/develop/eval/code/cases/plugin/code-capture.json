@@ -2,7 +2,7 @@
   "cases": {
     "case-code-order-api": {
       "captureCode": true,
-      "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"
+      "subjectRepo": "workspace/develop/eval/code/fixtures/django_shop_service"
     },
     "case-code-status-migration": {
       "captureCode": true,

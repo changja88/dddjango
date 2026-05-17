@@ -13,8 +13,12 @@ reference_basis:
     basis: DDD, DB, API, Django Ninja, Test boundaries
 code_expected: true
 deterministic_checks:
-  - id: unit-tests
-    command: python3 -m unittest
+  - id: django-tests
+    command: python3 manage.py test
+    expected_exit: 0
+    evidence: command-artifact
+  - id: django-check
+    command: python3 manage.py check
     expected_exit: 0
     evidence: command-artifact
 target_behavior:
