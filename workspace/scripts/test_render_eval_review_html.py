@@ -42,6 +42,14 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         self.renderer.REPO_ROOT = self.root
         self.renderer.EVAL_ROOT = self.root / "workspace/develop/eval"
 
+    def report_data_from_html(self, html: str) -> dict[str, object]:
+        marker = "const REPORT_DATA = "
+        start = html.index(marker) + len(marker)
+        end = html.index(";\n", start)
+        value = json.loads(html[start:end])
+        self.assertIsInstance(value, dict)
+        return value
+
     def write_case(
         self,
         *,
@@ -801,6 +809,46 @@ coverage_tags:
         self.assertIn("With dddjango response text", html)
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
+
+    def test_render_html_embeds_eval_report_v2_data_contract(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
+
+        html = self.renderer.render_html(data)
+        report_data = self.report_data_from_html(html)
+
+        self.assertEqual(report_data["schema_version"], "eval-report-v2")
+        self.assertIn("summary", report_data)
+        self.assertIsInstance(report_data["summary"]["sections"], list)
+        self.assertTrue(report_data["summary"]["sections"])
+        self.assertIn("evaluation_items", report_data)
+        self.assertTrue(report_data["evaluation_items"])
+        item = report_data["evaluation_items"][0]
+        self.assertEqual(item["id"], "case-response-order-create")
+        self.assertEqual(item["source_granularity"], "case")
+        self.assertEqual(item["score_type"], "numeric")
+        self.assertEqual(item["score_type_source"], "explicit")
+        self.assertEqual(item["baseline"]["score"], "2 / 5")
+        self.assertEqual(item["with_dddjango"]["score"], "5 / 5")
+
+    def test_render_html_contains_eval_report_v2_template_tokens(self) -> None:
+        run_dir = self.write_case()
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
+
+        html = self.renderer.render_html(data)
+
+        for token in (
+            'id="report-summary"',
+            'id="evaluation-filters"',
+            'id="evaluation-items-table"',
+            'id="comparison-modal"',
+            "renderReportSummary",
+            "renderEvaluationItems",
+            "openComparisonModal",
+            "closeComparisonModal",
+            "상세 보기",
+        ):
+            self.assertIn(token, html)
 
     def test_render_html_places_bucket_goal_above_review_title(self) -> None:
         run_dir = self.write_case(bucket="code", case_id="case-code-order-api")

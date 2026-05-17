@@ -830,6 +830,129 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
     }
 
 
+def text_summary(value: object, fallback: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return fallback
+    first_line = next((line.strip() for line in text.splitlines() if line.strip()), "")
+    if not first_line:
+        return fallback
+    return first_line if len(first_line) <= 180 else f"{first_line[:177]}..."
+
+
+def v2_change_direction(case: dict[str, object]) -> str:
+    run_change = case.get("run_change") if isinstance(case.get("run_change"), dict) else {}
+    raw_direction = str(run_change.get("direction") or "").strip()
+    if raw_direction in {"improved", "regressed", "unchanged", "mixed", "not_comparable"}:
+        return raw_direction
+
+    delta = case.get("delta_value")
+    if isinstance(delta, float):
+        if delta > 0:
+            return "improved"
+        if delta < 0:
+            return "regressed"
+        return "unchanged"
+    return "not_comparable"
+
+
+def report_v2_variant(case: dict[str, object], variant_key: str) -> dict[str, object]:
+    variant = case.get(variant_key) if isinstance(case.get(variant_key), dict) else {}
+    label = "with-dddjango" if variant_key == "with_dddjango" else "baseline"
+    response = str(variant.get("response") or "").strip()
+    evaluation = str(variant.get("evaluation") or "").strip()
+    return {
+        "score": str(variant.get("score") or "not scored"),
+        "response_summary": text_summary(response, f"{label} response is missing."),
+        "response": response or f"{label} response is missing.",
+        "evaluation_summary": text_summary(evaluation, f"{label} evaluation is missing."),
+        "evaluation": evaluation or f"{label} evaluation is missing.",
+        "evidence": variant.get("evidence") if isinstance(variant.get("evidence"), list) else [],
+    }
+
+
+def report_v2_item(case: dict[str, object]) -> dict[str, object]:
+    baseline = case.get("baseline") if isinstance(case.get("baseline"), dict) else {}
+    with_dddjango = case.get("with_dddjango") if isinstance(case.get("with_dddjango"), dict) else {}
+    has_numeric_scores = isinstance(baseline.get("score_value"), float) and isinstance(
+        with_dddjango.get("score_value"),
+        float,
+    )
+    case_id = str(case.get("id") or "unknown-case")
+    question = str(case.get("question") or "").strip()
+    return {
+        "id": case_id,
+        "title": case_id,
+        "source_granularity": "case",
+        "source_case_ids": [case_id],
+        "test_content_ko": question or "public case와 answer oracle 기준 비교",
+        "score_type": "numeric" if has_numeric_scores else "narrative",
+        "score_type_source": "explicit" if has_numeric_scores else "inferred",
+        "baseline": report_v2_variant(case, "baseline"),
+        "with_dddjango": report_v2_variant(case, "with_dddjango"),
+        "change": {"direction": v2_change_direction(case)},
+    }
+
+
+def report_v2_summary(summary: dict[str, object], cases: list[object], reportability_value: object) -> dict[str, object]:
+    risks: list[str] = []
+    if str(summary.get("previous_run_id") or "") == "없음":
+        risks.append("No previous comparable run for trend metrics.")
+    if int(summary.get("missing_or_weak_evidence") or 0) > 0:
+        risks.append("Some cases are blocked, unscored, or missing reportable evidence.")
+    if int(summary.get("hard_gate_failures") or 0) > 0:
+        risks.append("Hard gate failures are present.")
+
+    return {
+        "conclusion": (
+            f"with-dddjango: {summary.get('pass', 0)} pass, "
+            f"{summary.get('partial', 0)} partial, {summary.get('fail', 0)} fail; "
+            f"average {summary.get('with_dddjango_average', 'n/a')} / 5."
+        ),
+        "risks": risks,
+        "sections": [
+            {
+                "type": "numeric",
+                "metrics": [
+                    {"label": "total cases", "value": str(len(cases))},
+                    {"label": "baseline average", "value": str(summary.get("baseline_average", "n/a"))},
+                    {"label": "with-dddjango average", "value": str(summary.get("with_dddjango_average", "n/a"))},
+                    {"label": "delta", "value": str(summary.get("delta", "n/a"))},
+                ],
+            },
+            {
+                "type": "hard_gate",
+                "metrics": [
+                    {"label": "hard gate failures", "value": str(summary.get("hard_gate_failures", "n/a"))},
+                    {"label": "unscored", "value": str(summary.get("unscored", "n/a"))},
+                    {"label": "blocked", "value": str(summary.get("blocked", "n/a"))},
+                ],
+            },
+            {
+                "type": "narrative",
+                "metrics": [
+                    {"label": "reportability", "value": str(reportability_value or "unknown")},
+                    {"label": "previous run", "value": str(summary.get("previous_run_id", "없음"))},
+                ],
+            },
+        ],
+    }
+
+
+def report_v2_data(report: dict[str, object]) -> dict[str, object]:
+    cases = report.get("cases") if isinstance(report.get("cases"), list) else []
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    return {
+        "schema_version": "eval-report-v2",
+        "summary": report_v2_summary(summary, cases, report.get("reportability")),
+        "evaluation_items": [report_v2_item(case) for case in cases if isinstance(case, dict)],
+        "embeddedArtifacts": report.get("embeddedArtifacts")
+        if isinstance(report.get("embeddedArtifacts"), dict)
+        else {},
+        "cases": cases,
+    }
+
+
 def report_path(bucket: str, run_id: str) -> Path:
     return EVAL_ROOT / bucket / "runs" / run_id / "analysis/report.html"
 
@@ -1135,7 +1258,7 @@ def render_html(data: dict[str, object]) -> str:
             </td>
 {trace_cells_html.rstrip()}
             <td class="status-cell"><span class="status-pill {status_class(status)}">{escape(status)}</span></td>
-            <td class="action-cell"><button type="button" class="detail-button" aria-haspopup="dialog" data-detail-index="{index}">상세</button></td>
+            <td class="action-cell"><button type="button" class="detail-button" aria-haspopup="dialog" data-detail-index="{index}">상세 보기</button></td>
           </tr>"""
         )
 
@@ -1148,7 +1271,7 @@ def render_html(data: dict[str, object]) -> str:
         if int(summary.get("unrun_cases") or 0) > 0
         else ""
     )
-    report_data = js_json(data)
+    report_data = js_json(report_v2_data(data))
     show_trace_js = "true" if show_trace_columns else "false"
     title = (
         f"dddjango eval review: {escape(str(data.get('bucket') or 'unknown'))} / "
@@ -1530,7 +1653,7 @@ def render_html(data: dict[str, object]) -> str:
       <h1>평가 리뷰</h1>
       <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))}{run_meta_text} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
     </header>
-    <section class="panel" aria-labelledby="summary-title">
+    <section class="panel" id="report-summary" aria-labelledby="summary-title">
       <h2 id="summary-title">평가 요약</h2>
       <div class="summary-grid">
 {summary_cards}
@@ -1544,8 +1667,9 @@ def render_html(data: dict[str, object]) -> str:
     </section>
     <section class="panel" aria-labelledby="cases-title">
       <h2 id="cases-title">평가 질문 목록</h2>
+      <div id="evaluation-filters" hidden></div>
       <div class="table-wrap">
-      <table>
+      <table id="evaluation-items-table">
         <colgroup>
 {table_colgroup_html(show_trace_columns)}
         </colgroup>
@@ -1584,6 +1708,7 @@ def render_html(data: dict[str, object]) -> str:
       <div id="case-dialog-body" class="dialog-body"></div>
     </div>
   </dialog>
+  <div id="comparison-modal" hidden></div>
   <script>
     const REPORT_DATA = {report_data};
     const SHOW_TRACE_DETAILS = {show_trace_js};
@@ -1598,6 +1723,14 @@ def render_html(data: dict[str, object]) -> str:
           "'": "&#39;"
         }}[char];
       }});
+    }}
+
+    function renderReportSummary() {{
+      return REPORT_DATA.summary || {{}};
+    }}
+
+    function renderEvaluationItems() {{
+      return REPORT_DATA.evaluation_items || [];
     }}
 
     function variantHtml(label, item) {{
@@ -1684,13 +1817,23 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
         ${{runChangeHtml(caseData)}}
         <div class="detail-grid">
           ${{variantHtml("Baseline", caseData.baseline)}}
-          ${{variantHtml("with-dddjango", caseData.with_dddjango)}}
+          ${{variantHtml("With dddjango", caseData.with_dddjango)}}
         </div>
         ${{evaluatorHtml(caseData)}}`;
       if (typeof caseDialog.showModal === "function") {{
         caseDialog.showModal();
       }} else {{
         caseDialog.setAttribute("open", "");
+      }}
+    }}
+
+    function openComparisonModal(index) {{
+      openDialog(index);
+    }}
+
+    function closeComparisonModal() {{
+      if (caseDialog) {{
+        caseDialog.close();
       }}
     }}
 
@@ -1701,11 +1844,11 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
     }});
     if (caseDialog && caseDialogClose) {{
       caseDialogClose.addEventListener("click", function () {{
-        caseDialog.close();
+        closeComparisonModal();
       }});
       caseDialog.addEventListener("click", function (event) {{
         if (event.target === caseDialog) {{
-          caseDialog.close();
+          closeComparisonModal();
         }}
       }});
     }}
