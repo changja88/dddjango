@@ -104,11 +104,11 @@ class EvalRunIdentityTests(unittest.TestCase):
         meta = self.module.build_run_meta(run_id)
         meta["bucket"] = "response"
 
-        error = self.module.validate_run_meta(run_id, meta)
+        errors = self.module.validate_run_meta(run_id, meta)
 
         self.assertEqual(
-            error,
-            "RUN_META.json bucket must match run id bucket: runtime",
+            errors,
+            ["RUN_META.json bucket must match run id bucket: runtime"],
         )
 
     def test_validate_run_meta_identity_mismatches(self) -> None:
@@ -144,13 +144,18 @@ class EvalRunIdentityTests(unittest.TestCase):
                 2,
                 "RUN_META.json schema_version must be 1",
             ),
+            (
+                "stamp",
+                "20260517-143013",
+                "RUN_META.json stamp must match run id stamp: 20260517-143012",
+            ),
         ]
         for key, value, expected_error in cases:
             with self.subTest(key=key):
                 meta = self.module.build_run_meta(run_id)
                 meta[key] = value
-                error = self.module.validate_run_meta(run_id, meta)
-                self.assertEqual(error, expected_error)
+                errors = self.module.validate_run_meta(run_id, meta)
+                self.assertEqual(errors, [expected_error])
 
     def test_validate_run_meta_lv_up_types(self) -> None:
         run_id = "20260517-143012-runtime-try01-full-current-baseline"
@@ -158,10 +163,10 @@ class EvalRunIdentityTests(unittest.TestCase):
             with self.subTest(key=key):
                 meta = self.module.build_run_meta(run_id)
                 meta[key] = []
-                error = self.module.validate_run_meta(run_id, meta)
+                errors = self.module.validate_run_meta(run_id, meta)
                 self.assertEqual(
-                    error,
-                    f"RUN_META.json {key} must be a string or null",
+                    errors,
+                    [f"RUN_META.json {key} must be a string or null"],
                 )
 
     def test_validate_run_meta_non_dict_payload(self) -> None:
@@ -171,9 +176,22 @@ class EvalRunIdentityTests(unittest.TestCase):
         (run_dir / "RUN_META.json").write_text('["not-a-dict"]\n', encoding="utf-8")
 
         loaded = self.module.load_run_meta(run_dir)
-        error = self.module.validate_run_meta(run_id, loaded)
+        errors = self.module.validate_run_meta(run_id, loaded)
 
-        self.assertEqual(error, "RUN_META.json must be a JSON object")
+        self.assertEqual(errors, ["RUN_META.json must be a JSON object"])
+
+    def test_validate_run_meta_malformed_json_is_normalized(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        run_dir = self.root / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "RUN_META.json").write_text("{bad json\n", encoding="utf-8")
+
+        errors = self.module.validate_run_meta(run_id, run_dir)
+
+        self.assertEqual(
+            errors,
+            ["RUN_META.json is not valid JSON: Expecting property name enclosed in double quotes"],
+        )
 
 
 if __name__ == "__main__":

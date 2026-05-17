@@ -132,29 +132,53 @@ def load_run_meta(run_dir: Path) -> dict[str, object]:
     return json.loads(meta_path.read_text(encoding="utf-8"))
 
 
-def validate_run_meta(run_id: str, run_meta: object) -> str | None:
+def _load_meta_for_validation(run_meta_or_run_dir: object) -> tuple[object, list[str]]:
+    if isinstance(run_meta_or_run_dir, Path):
+        meta_path = run_meta_or_run_dir / RUN_META_FILENAME
+        try:
+            payload = json.loads(meta_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return None, [f"{RUN_META_FILENAME} is missing"]
+        except json.JSONDecodeError as error:
+            return None, [f"{RUN_META_FILENAME} is not valid JSON: {error.msg}"]
+        return payload, []
+    return run_meta_or_run_dir, []
+
+
+def validate_run_meta(run_id: str, run_meta_or_run_dir: object) -> list[str]:
     identity = parse_run_id(run_id)
+    run_meta, errors = _load_meta_for_validation(run_meta_or_run_dir)
+    if errors:
+        return errors
     if not isinstance(run_meta, dict):
-        return f"{RUN_META_FILENAME} must be a JSON object"
+        return [f"{RUN_META_FILENAME} must be a JSON object"]
+
+    problems: list[str] = []
     if run_meta.get("run_id") != run_id:
-        return f"{RUN_META_FILENAME} run_id must match directory run id: {run_id}"
+        problems.append(f"{RUN_META_FILENAME} run_id must match directory run id: {run_id}")
+    if run_meta.get("stamp") != identity.stamp:
+        problems.append(f"{RUN_META_FILENAME} stamp must match run id stamp: {identity.stamp}")
     if run_meta.get("bucket") != identity.bucket:
-        return f"{RUN_META_FILENAME} bucket must match run id bucket: {identity.bucket}"
+        problems.append(f"{RUN_META_FILENAME} bucket must match run id bucket: {identity.bucket}")
     if run_meta.get("try_number") != identity.try_number:
-        return f"{RUN_META_FILENAME} try_number must match run id try_number: {identity.try_number}"
+        problems.append(
+            f"{RUN_META_FILENAME} try_number must match run id try_number: {identity.try_number}"
+        )
     if run_meta.get("scope") != identity.scope:
-        return f"{RUN_META_FILENAME} scope must match run id scope: {identity.scope}"
+        problems.append(f"{RUN_META_FILENAME} scope must match run id scope: {identity.scope}")
     if run_meta.get("topic") != identity.topic:
-        return f"{RUN_META_FILENAME} topic must match run id topic: {identity.topic}"
+        problems.append(f"{RUN_META_FILENAME} topic must match run id topic: {identity.topic}")
     if run_meta.get("created_at") != identity.created_at:
-        return f"{RUN_META_FILENAME} created_at must match run id created_at: {identity.created_at}"
+        problems.append(
+            f"{RUN_META_FILENAME} created_at must match run id created_at: {identity.created_at}"
+        )
     if run_meta.get("schema_version") != 1:
-        return f"{RUN_META_FILENAME} schema_version must be 1"
+        problems.append(f"{RUN_META_FILENAME} schema_version must be 1")
     for key in ("lv_up_analysis", "lv_up_plan"):
         value = run_meta.get(key)
         if value is not None and not isinstance(value, str):
-            return f"{RUN_META_FILENAME} {key} must be a string or null"
-    return None
+            problems.append(f"{RUN_META_FILENAME} {key} must be a string or null")
+    return problems
 
 
 def has_answer_oracle_evaluation(run_meta: dict[str, object]) -> bool:
@@ -162,7 +186,6 @@ def has_answer_oracle_evaluation(run_meta: dict[str, object]) -> bool:
 
 
 def exit_artifacts_are_clean(run_id: str, run_dir: Path) -> None:
-    run_meta = load_run_meta(run_dir)
-    error = validate_run_meta(run_id, run_meta)
-    if error:
-        raise SystemExit(error)
+    errors = validate_run_meta(run_id, run_dir)
+    if errors:
+        raise SystemExit("\n".join(errors))
