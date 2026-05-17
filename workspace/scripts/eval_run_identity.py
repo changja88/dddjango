@@ -63,11 +63,12 @@ def validate_try_number(try_number: int) -> int:
 
 
 def build_run_id(
-    stamp: datetime,
+    *,
     bucket: str,
     try_number: int,
     scope: str,
     topic: str,
+    created_at: datetime | None = None,
 ) -> str:
     if bucket not in BUCKETS:
         raise SystemExit(f"Unknown bucket: {bucket}")
@@ -75,7 +76,8 @@ def build_run_id(
         raise SystemExit(f"Unknown scope: {scope}")
     try_value = validate_try_number(try_number)
     topic_value = validate_topic(topic)
-    return f"{timestamp_text(stamp)}-{bucket}-try{try_value:02d}-{scope}-{topic_value}"
+    stamp_value = created_at if created_at is not None else now_kst()
+    return f"{timestamp_text(stamp_value)}-{bucket}-try{try_value:02d}-{scope}-{topic_value}"
 
 
 def parse_run_id(run_id: str) -> RunIdentity:
@@ -101,7 +103,12 @@ def validate_production_run_id(run_id: str) -> RunIdentity:
     return parse_run_id(run_id)
 
 
-def build_run_meta(run_id: str) -> dict[str, object]:
+def build_run_meta(
+    *,
+    run_id: str,
+    lv_up_analysis: str = "",
+    lv_up_plan: str = "",
+) -> dict[str, object]:
     identity = parse_run_id(run_id)
     return {
         "schema_version": 1,
@@ -112,19 +119,30 @@ def build_run_meta(run_id: str) -> dict[str, object]:
         "scope": identity.scope,
         "topic": identity.topic,
         "created_at": identity.created_at,
-        "lv_up_analysis": None,
-        "lv_up_plan": None,
+        "lv_up_analysis": lv_up_analysis,
+        "lv_up_plan": lv_up_plan,
     }
 
 
-def write_run_meta(run_dir: Path, meta: dict[str, object]) -> Path:
+def write_run_meta(
+    run_dir: Path,
+    *,
+    run_id: str,
+    lv_up_analysis: str = "",
+    lv_up_plan: str = "",
+) -> dict[str, object]:
+    meta = build_run_meta(
+        run_id=run_id,
+        lv_up_analysis=lv_up_analysis,
+        lv_up_plan=lv_up_plan,
+    )
     run_dir.mkdir(parents=True, exist_ok=True)
     meta_path = run_dir / RUN_META_FILENAME
     meta_path.write_text(
         json.dumps(meta, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    return meta_path
+    return meta
 
 
 def load_run_meta(run_dir: Path) -> dict[str, object]:
@@ -132,22 +150,25 @@ def load_run_meta(run_dir: Path) -> dict[str, object]:
     return json.loads(meta_path.read_text(encoding="utf-8"))
 
 
-def _load_meta_for_validation(run_meta_or_run_dir: object) -> tuple[object, list[str]]:
-    if isinstance(run_meta_or_run_dir, Path):
-        meta_path = run_meta_or_run_dir / RUN_META_FILENAME
-        try:
-            payload = json.loads(meta_path.read_text(encoding="utf-8"))
-        except FileNotFoundError:
-            return None, [f"{RUN_META_FILENAME} is missing"]
-        except json.JSONDecodeError as error:
-            return None, [f"{RUN_META_FILENAME} is not valid JSON: {error.msg}"]
-        return payload, []
-    return run_meta_or_run_dir, []
+def _load_meta_for_validation(run_dir: Path) -> tuple[object, list[str]]:
+    meta_path = run_dir / RUN_META_FILENAME
+    try:
+        payload = json.loads(meta_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, [f"{RUN_META_FILENAME} is missing"]
+    except json.JSONDecodeError as error:
+        return None, [f"{RUN_META_FILENAME} is not valid JSON: {error.msg}"]
+    return payload, []
 
 
-def validate_run_meta(run_id: str, run_meta_or_run_dir: object) -> list[str]:
-    identity = parse_run_id(run_id)
-    run_meta, errors = _load_meta_for_validation(run_meta_or_run_dir)
+def validate_run_meta(run_dir: Path) -> list[str]:
+    run_id = run_dir.name
+    try:
+        identity = parse_run_id(run_id)
+    except SystemExit:
+        return [f"Invalid run id: {run_id}"]
+
+    run_meta, errors = _load_meta_for_validation(run_dir)
     if errors:
         return errors
     if not isinstance(run_meta, dict):
@@ -176,16 +197,17 @@ def validate_run_meta(run_id: str, run_meta_or_run_dir: object) -> list[str]:
         problems.append(f"{RUN_META_FILENAME} schema_version must be 1")
     for key in ("lv_up_analysis", "lv_up_plan"):
         value = run_meta.get(key)
-        if value is not None and not isinstance(value, str):
-            problems.append(f"{RUN_META_FILENAME} {key} must be a string or null")
+        if not isinstance(value, str):
+            problems.append(f"{RUN_META_FILENAME} {key} must be a string")
     return problems
 
 
-def has_answer_oracle_evaluation(run_meta: dict[str, object]) -> bool:
+def has_answer_oracle_evaluation(run_dir: Path) -> bool:
+    run_meta = load_run_meta(run_dir)
+    if not isinstance(run_meta, dict):
+        return False
     return run_meta.get("answerOracleEvaluated") is True
 
 
-def exit_artifacts_are_clean(run_id: str, run_dir: Path) -> None:
-    errors = validate_run_meta(run_id, run_dir)
-    if errors:
-        raise SystemExit("\n".join(errors))
+def exit_artifacts_are_clean(run_dir: Path) -> bool:
+    return not validate_run_meta(run_dir)

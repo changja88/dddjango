@@ -135,52 +135,6 @@ def resolved_under(root: Path, *parts: str | Path, description: str) -> Path:
     return path
 
 
-def build_production_run_id(
-    *,
-    bucket: str,
-    try_number: int,
-    scope: str,
-    topic: str,
-) -> str:
-    try:
-        return run_identity.build_run_id(
-            bucket=bucket,
-            try_number=try_number,
-            scope=scope,
-            topic=topic,
-        )
-    except TypeError:
-        return run_identity.build_run_id(
-            stamp=run_identity.now_kst(),
-            bucket=bucket,
-            try_number=try_number,
-            scope=scope,
-            topic=topic,
-        )
-
-
-def write_run_meta(
-    *,
-    run_dir: Path,
-    run_id: str,
-    lv_up_analysis: str,
-    lv_up_plan: str,
-) -> None:
-    try:
-        run_identity.write_run_meta(
-            run_dir,
-            run_id=run_id,
-            lv_up_analysis=lv_up_analysis,
-            lv_up_plan=lv_up_plan,
-        )
-        return
-    except TypeError:
-        meta = run_identity.build_run_meta(run_id)
-        meta["lv_up_analysis"] = lv_up_analysis or None
-        meta["lv_up_plan"] = lv_up_plan or None
-        run_identity.write_run_meta(run_dir, meta)
-
-
 def run_command(
     command: list[str],
     *,
@@ -814,7 +768,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.run_id:
         run_id = validate_run_id(args.run_id)
     else:
-        run_id = build_production_run_id(
+        run_id = run_identity.build_run_id(
             bucket=args.bucket,
             try_number=args.try_number,
             scope=args.scope,
@@ -830,8 +784,8 @@ def main(argv: list[str] | None = None) -> int:
     raw_dir = run_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     common.write_text(run_dir / "RUN_ID.txt", run_id + "\n")
-    write_run_meta(
-        run_dir=run_dir,
+    run_identity.write_run_meta(
+        run_dir,
         run_id=run_id,
         lv_up_analysis=args.lv_up_analysis,
         lv_up_plan=args.lv_up_plan,
