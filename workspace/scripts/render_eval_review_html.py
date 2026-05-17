@@ -898,9 +898,16 @@ def latest_redirect_html(bucket: str, target_report: Path) -> str:
 """
 
 
+def remove_latest_report_alias(bucket: str) -> None:
+    alias_path = latest_report_alias_path(bucket)
+    if alias_path.exists():
+        alias_path.unlink()
+
+
 def write_latest_report_alias(bucket: str) -> Path | None:
     latest_report = latest_available_report_path(bucket)
     if latest_report is None:
+        remove_latest_report_alias(bucket)
         return None
     alias_path = latest_report_alias_path(bucket)
     alias_path.parent.mkdir(parents=True, exist_ok=True)

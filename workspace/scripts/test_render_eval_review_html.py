@@ -1185,6 +1185,43 @@ coverage_tags:
             alias_html,
         )
 
+    def test_write_latest_report_alias_removes_stale_alias_when_latest_report_missing(self) -> None:
+        old_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="old-rendered",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        latest_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="latest-unrendered",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+
+        self.write_case(run_id=old_response_run_id)
+        old_report = self.renderer.report_path("response", old_response_run_id)
+        old_report.parent.mkdir(parents=True, exist_ok=True)
+        old_report.write_text("<!doctype html>\n", encoding="utf-8")
+        self.assertEqual(
+            self.renderer.write_latest_report_alias("response"),
+            self.renderer.latest_report_alias_path("response"),
+        )
+        self.assertTrue(self.renderer.latest_report_alias_path("response").is_file())
+
+        self.write_case(run_id=latest_response_run_id)
+        self.assertEqual(
+            self.renderer.latest_scored_report_path("response"),
+            self.renderer.report_path("response", latest_response_run_id),
+        )
+        self.assertFalse(self.renderer.report_path("response", latest_response_run_id).exists())
+
+        self.assertIsNone(self.renderer.write_latest_report_alias("response"))
+
+        self.assertFalse(self.renderer.latest_report_alias_path("response").exists())
+
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:
         run_dir = self.write_case()
         public_path = (
