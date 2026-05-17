@@ -215,5 +215,6 @@ def exit_artifacts_are_clean(run_dir: Path) -> bool:
     if not exit_artifacts:
         return False
     return all(
-        exit_artifact.read_text(encoding="utf-8") == "0" for exit_artifact in exit_artifacts
+        exit_artifact.read_text(encoding="utf-8").strip() == "0"
+        for exit_artifact in exit_artifacts
     )

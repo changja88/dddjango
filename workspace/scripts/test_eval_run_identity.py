@@ -252,7 +252,7 @@ class EvalRunIdentityTests(unittest.TestCase):
         raw_dir = run_dir / "raw"
         raw_dir.mkdir(parents=True)
         (raw_dir / "case-one-exit.txt").write_text("0", encoding="utf-8")
-        (raw_dir / "case-two-exit.txt").write_text("0", encoding="utf-8")
+        (raw_dir / "case-two-exit.txt").write_text("0\n", encoding="utf-8")
 
         self.assertTrue(self.module.exit_artifacts_are_clean(run_dir))
 
