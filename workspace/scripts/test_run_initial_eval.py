@@ -341,6 +341,29 @@ class RunInitialEvalTests(unittest.TestCase):
         self.assertIn("-response-try02-targeted-pilot", seen_run_ids["response"])
         self.assertIn("-code-try02-targeted-pilot", seen_run_ids["code"])
 
+    def test_multiple_successful_buckets_are_rendered_again_after_all_reports_exist(self) -> None:
+        with patch.object(self.orchestrator.subprocess, "run", side_effect=self.fake_run):
+            result = self.orchestrator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--bucket",
+                    "code",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        render_commands = [
+            command for command in self.commands if Path(command[1]).name == "render_eval_review_html.py"
+        ]
+        self.assertEqual(
+            [
+                command[command.index("--bucket") + 1]
+                for command in render_commands
+            ],
+            ["response", "code", "response", "code"],
+        )
+
     def test_explicit_run_id_bucket_mismatch_is_rejected(self) -> None:
         with self.assertRaisesRegex(SystemExit, "run id bucket=code"):
             self.orchestrator.main(["--bucket", "response", "--run-id", RUN_ID_CODE])

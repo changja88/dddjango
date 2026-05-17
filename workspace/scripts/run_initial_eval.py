@@ -298,6 +298,17 @@ def run_bucket(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
     return True
 
 
+def refresh_rendered_reports(successful_runs: list[tuple[str, str]]) -> bool:
+    if len(successful_runs) <= 1:
+        return True
+
+    ok = True
+    for bucket, run_id in successful_runs:
+        if not run_pipeline_commands(bucket, [renderer_command(bucket, run_id)]):
+            ok = False
+    return ok
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.case_jobs < 1:
@@ -305,6 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     buckets = selected_buckets(args.bucket)
 
     failed = False
+    successful_runs: list[tuple[str, str]] = []
     for bucket in buckets:
         run_id = run_id_for_bucket(args, bucket, len(buckets))
         ok = run_bucket(args, bucket, run_id)
@@ -312,6 +324,11 @@ def main(argv: list[str] | None = None) -> int:
             failed = True
             if not args.keep_going:
                 break
+        else:
+            successful_runs.append((bucket, run_id))
+
+    if not refresh_rendered_reports(successful_runs):
+        failed = True
 
     return 1 if failed else 0
 
