@@ -45,6 +45,7 @@ class RunEvalBucketTests(unittest.TestCase):
         bucket: str = "response",
         case_id: str = "case-response-one",
         public_text: str = "사용자 요청입니다.\n",
+        answer_text: str | None = None,
     ) -> None:
         case_path = (
             self.runner.common.EVAL_ROOT
@@ -56,10 +57,11 @@ class RunEvalBucketTests(unittest.TestCase):
         case_path.parent.mkdir(parents=True, exist_ok=True)
         answer_path.parent.mkdir(parents=True, exist_ok=True)
         case_path.write_text(public_text, encoding="utf-8")
-        answer_path.write_text(
-            f"id: {case_id}\ncase_id: {case_id}\nbucket: {bucket}\nkind: {bucket}\n",
-            encoding="utf-8",
-        )
+        if answer_text is None:
+            answer_text = f"id: {case_id}\ncase_id: {case_id}\nbucket: {bucket}\nkind: {bucket}\n"
+            if bucket == "code":
+                answer_text += "code_expected: true\ndeterministic_checks: []\n"
+        answer_path.write_text(answer_text, encoding="utf-8")
 
     def write_code_capture_metadata(
         self,
@@ -509,6 +511,54 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue((run_dir / "code/case-code-one/baseline/diff.patch").is_file())
         command = (run_dir / "raw/case-code-one-baseline-command.txt").read_text(encoding="utf-8")
         self.assertIn("-s workspace-write", command)
+
+    def test_code_bucket_skip_exec_records_deterministic_check_artifacts(self) -> None:
+        self.write_case(
+            bucket="code",
+            case_id="case-code-one",
+            answer_text=(
+                "id: case-code-one\n"
+                "case_id: case-code-one\n"
+                "bucket: code\n"
+                "kind: code\n"
+                "code_expected: true\n"
+                "deterministic_checks:\n"
+                "  - id: unit-tests\n"
+                "    command: python3 -m unittest\n"
+                "    expected_exit: 0\n"
+                "    evidence: command-artifact\n"
+            ),
+        )
+        self.write_code_capture_metadata()
+
+        result = self.runner.main(
+            [
+                "--bucket",
+                "code",
+                "--run-id",
+                "20260517-143022-code-try01-targeted-case-code-one",
+                "--case",
+                "case-code-one",
+                "--variant",
+                "baseline",
+                "--workspace-root",
+                str(self.workspace_root),
+                "--skip-exec",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        checks = (
+            self.runner.common.EVAL_ROOT
+            / "code/runs/20260517-143022-code-try01-targeted-case-code-one/code/case-code-one/baseline/checks"
+        )
+        self.assertEqual(
+            (checks / "unit-tests-command.txt").read_text(encoding="utf-8"),
+            "python3 -m unittest\n",
+        )
+        self.assertEqual((checks / "unit-tests-exit.txt").read_text(encoding="utf-8"), "0\n")
+        self.assertTrue((checks / "unit-tests-stdout.txt").is_file())
+        self.assertTrue((checks / "unit-tests-stderr.txt").is_file())
 
     def test_capture_code_artifacts_lists_untracked_nested_files_individually(self) -> None:
         workspace = Path(self.tmp.name) / "code-workspace"

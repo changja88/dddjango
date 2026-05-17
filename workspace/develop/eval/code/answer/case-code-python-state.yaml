@@ -12,6 +12,11 @@ reference_basis:
   - path: workspace/reference/implementation-python/reference/final.md
     basis: required reference source
 code_expected: true
+deterministic_checks:
+  - id: unit-tests
+    command: python3 -m unittest
+    expected_exit: 0
+    evidence: command-artifact
 target_behavior:
   required:
     - Converts Money toward an explicit value object, using a frozen dataclass or equivalent while respecting the fixture Python version.

@@ -309,6 +309,15 @@ def normalize_verdict(verdict: object, has_response: bool, has_evaluation: bool)
     return "unscored"
 
 
+def code_artifact_evidence(run_dir: Path, case_id: str, variant: str) -> list[str]:
+    evidence: list[str] = []
+    for filename in ("changed-files.json", "diff.patch"):
+        rel_path = Path("code") / case_id / variant / filename
+        if (run_dir / rel_path).is_file():
+            evidence.append(rel_path.as_posix())
+    return evidence
+
+
 def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, object]) -> dict[str, object]:
     raw_name = f"{case_id}-{variant}.txt"
     raw_path = run_dir / "raw" / raw_name
@@ -342,7 +351,7 @@ def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, ob
         "verdict": verdict,
         "response": response,
         "evaluation": evaluation,
-        "evidence": [f"raw/{raw_name}"],
+        "evidence": [f"raw/{raw_name}", *code_artifact_evidence(run_dir, case_id, variant)],
         "trace": trace_data(run_dir, case_id, variant),
     }
 
@@ -788,6 +797,53 @@ def reportability(summary: dict[str, object]) -> str:
     return "reportable"
 
 
+def embedded_artifact_kind(rel_path: str) -> str | None:
+    if rel_path.endswith("/changed-files.json"):
+        return "changed-files"
+    if rel_path.endswith("/diff.patch"):
+        return "diff"
+    return None
+
+
+def safe_run_relative_artifact(run_dir: Path, rel_path: str) -> Path | None:
+    path = Path(rel_path)
+    if path.is_absolute() or ".." in path.parts:
+        return None
+    resolved = (run_dir / path).resolve(strict=False)
+    try:
+        resolved.relative_to(run_dir.resolve())
+    except ValueError:
+        return None
+    return run_dir / path
+
+
+def build_embedded_artifacts(run_dir: Path, cases: list[dict[str, object]]) -> dict[str, object]:
+    artifacts: dict[str, object] = {}
+    for case in cases:
+        for variant_key in ("baseline", "with_dddjango"):
+            variant = case.get(variant_key)
+            if not isinstance(variant, dict):
+                continue
+            evidence = variant.get("evidence")
+            if not isinstance(evidence, list):
+                continue
+            for item in evidence:
+                if not isinstance(item, str):
+                    continue
+                rel_path = item.removeprefix("./")
+                kind = embedded_artifact_kind(rel_path)
+                if kind is None or rel_path in artifacts:
+                    continue
+                artifact_path = safe_run_relative_artifact(run_dir, rel_path)
+                if artifact_path is None or not artifact_path.is_file():
+                    continue
+                artifacts[rel_path] = {
+                    "kind": kind,
+                    "content": artifact_path.read_text(encoding="utf-8", errors="replace"),
+                }
+    return artifacts
+
+
 def safe_run_meta(run_dir: Path) -> dict[str, object]:
     if run_identity.validate_run_meta(run_dir):
         return {}
@@ -827,6 +883,7 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
             public_case.stem for public_case in public_cases if public_case.stem not in run_case_ids
         ],
         "cases": cases,
+        "embeddedArtifacts": build_embedded_artifacts(run_dir, cases),
     }
 
 

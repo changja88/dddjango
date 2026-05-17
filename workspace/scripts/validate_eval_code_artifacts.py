@@ -16,14 +16,14 @@ ANSWER_DIR = REPO_ROOT / "workspace/develop/eval/code/answer"
 VALID_VARIANTS = ("baseline", "with-dddjango")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--metadata", type=Path, default=METADATA_PATH)
     parser.add_argument("--answer-dir", type=Path, default=ANSWER_DIR)
     parser.add_argument("--case", action="append", dest="cases", required=True)
     parser.add_argument("--variant", action="append", choices=VALID_VARIANTS, required=True)
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -67,6 +67,104 @@ def answer_code_expected(answer_text: str, case_id: str) -> bool:
         if not reason or not reason.group(1).strip().strip("'\""):
             raise AssertionError(f"{case_id}: code_expected: false requires code_expected_reason")
     return code_expected
+
+
+def yaml_scalar(value: str) -> str:
+    value = value.strip()
+    if " #" in value:
+        value = value.split(" #", 1)[0].rstrip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1]
+    return value
+
+
+def parse_key_value(text: str) -> tuple[str, str]:
+    if ":" not in text:
+        raise ValueError(text)
+    key, value = text.split(":", 1)
+    return key.strip(), yaml_scalar(value)
+
+
+def parse_deterministic_checks(answer_text: str, case_id: str) -> list[dict[str, object]]:
+    lines = answer_text.splitlines()
+    start_index: int | None = None
+    inline_value = ""
+    for index, line in enumerate(lines):
+        match = re.match(r"^deterministic_checks\s*:\s*(.*)$", line)
+        if match:
+            start_index = index
+            inline_value = match.group(1).strip()
+            break
+    if start_index is None:
+        raise AssertionError(f"{case_id}: answer oracle must declare deterministic_checks")
+    if inline_value == "[]":
+        return []
+    if inline_value:
+        raise AssertionError(f"{case_id}: deterministic_checks must be a YAML list or []")
+
+    checks: list[dict[str, object]] = []
+    current: dict[str, object] | None = None
+    for line in lines[start_index + 1 :]:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if re.match(r"^[^\s].*:\s*", line):
+            break
+        if line.startswith("  - "):
+            if current is not None:
+                checks.append(current)
+            current = {}
+            rest = line[4:].strip()
+            if rest:
+                try:
+                    key, value = parse_key_value(rest)
+                except ValueError as exc:
+                    raise AssertionError(
+                        f"{case_id}: invalid deterministic check item: {rest}"
+                    ) from exc
+                current[key] = value
+            continue
+        if line.startswith("    ") and current is not None:
+            stripped = line.strip()
+            try:
+                key, value = parse_key_value(stripped)
+            except ValueError as exc:
+                raise AssertionError(
+                    f"{case_id}: invalid deterministic check field: {stripped}"
+                ) from exc
+            current[key] = value
+            continue
+        raise AssertionError(f"{case_id}: invalid deterministic_checks indentation: {line}")
+    if current is not None:
+        checks.append(current)
+
+    for check in checks:
+        validate_deterministic_check_config(case_id, check)
+    return checks
+
+
+def validate_deterministic_check_config(case_id: str, check: dict[str, object]) -> None:
+    required = {"id", "command", "expected_exit", "evidence"}
+    missing = sorted(required - set(check))
+    if missing:
+        raise AssertionError(
+            f"{case_id}: deterministic check missing keys: {', '.join(missing)}"
+        )
+    check_id = check["id"]
+    if not isinstance(check_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", check_id):
+        raise AssertionError(f"{case_id}: invalid deterministic check id: {check_id}")
+    command = check["command"]
+    if not isinstance(command, str) or not command.strip():
+        raise AssertionError(f"{case_id}: deterministic check {check_id} command is required")
+    try:
+        check["expected_exit"] = int(str(check["expected_exit"]).strip())
+    except ValueError as exc:
+        raise AssertionError(
+            f"{case_id}: deterministic check {check_id} expected_exit must be an integer"
+        ) from exc
+    if check["evidence"] != "command-artifact":
+        raise AssertionError(
+            f"{case_id}: deterministic check {check_id} evidence must be command-artifact"
+        )
 
 
 def run_relative_path(run_dir: Path, value: str) -> Path:
@@ -154,8 +252,36 @@ def validate_manifest(run_dir: Path, case_id: str, variant: str, *, allow_no_cod
         raise AssertionError(f"{manifest_path} must include at least one copied text source file")
 
 
-def main() -> int:
-    args = parse_args()
+def validate_deterministic_check_artifacts(
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    checks: list[dict[str, object]],
+) -> None:
+    for check in checks:
+        check_id = str(check["id"])
+        base = run_dir / "code" / case_id / variant / "checks"
+        paths = {
+            "command": base / f"{check_id}-command.txt",
+            "exit": base / f"{check_id}-exit.txt",
+            "stdout": base / f"{check_id}-stdout.txt",
+            "stderr": base / f"{check_id}-stderr.txt",
+        }
+        if not all(path.is_file() for path in paths.values()):
+            raise AssertionError(
+                f"{case_id} {variant} missing deterministic check evidence: {check_id}"
+            )
+        actual_exit = paths["exit"].read_text(encoding="utf-8", errors="replace").strip()
+        expected_exit = str(check["expected_exit"])
+        if actual_exit != expected_exit:
+            raise AssertionError(
+                f"{case_id} {variant} deterministic check {check_id} exit must be "
+                f"{expected_exit}: {actual_exit}"
+            )
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     run_dir = args.run_dir
     if not run_dir.is_absolute():
         run_dir = REPO_ROOT / run_dir
@@ -175,10 +301,17 @@ def main() -> int:
             raise AssertionError(f"{case_id}: captureCode must be true for code artifact validation")
         answer_text = load_answer_oracle(answer_dir, case_id)
         allow_no_code = answer_code_expected(answer_text, case_id) is False
+        deterministic_checks = parse_deterministic_checks(answer_text, case_id)
         if "baseline" in args.variant:
             validate_baseline_isolation(run_dir, case_id)
         for variant in args.variant:
             validate_manifest(run_dir, case_id, variant, allow_no_code=allow_no_code)
+            validate_deterministic_check_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                deterministic_checks,
+            )
             checked += 1
     if checked == 0:
         raise AssertionError("no code artifacts were checked")

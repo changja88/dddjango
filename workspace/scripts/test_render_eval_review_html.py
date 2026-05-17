@@ -831,6 +831,52 @@ coverage_tags:
         self.assertEqual(item["baseline"]["score"], "2 / 5")
         self.assertEqual(item["with_dddjango"]["score"], "5 / 5")
 
+    def test_render_html_embeds_code_backed_artifacts_in_v2_contract(self) -> None:
+        case_id = "case-code-order-api"
+        run_dir = self.write_case(bucket="code", case_id=case_id)
+        for variant in ("baseline", "with-dddjango"):
+            artifact_dir = run_dir / "code" / case_id / variant
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+            (artifact_dir / "changed-files.json").write_text(
+                json.dumps(
+                    {
+                        "caseId": case_id,
+                        "variant": variant,
+                        "evidenceMode": "code-backed",
+                        "diffPath": f"code/{case_id}/{variant}/diff.patch",
+                        "noCodeProduced": False,
+                        "files": [{"path": "tests/test_orders.py", "binary": False}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (artifact_dir / "diff.patch").write_text(
+                "diff --git a/tests/test_orders.py b/tests/test_orders.py\n",
+                encoding="utf-8",
+            )
+
+        data = self.renderer.build_report_data("code", run_dir.name, run_dir)
+        html = self.renderer.render_html(data)
+        report_data = self.report_data_from_html(html)
+
+        item = report_data["evaluation_items"][0]
+        self.assertIn(f"code/{case_id}/baseline/changed-files.json", item["baseline"]["evidence"])
+        self.assertIn(f"code/{case_id}/baseline/diff.patch", item["baseline"]["evidence"])
+        self.assertIn(
+            f"code/{case_id}/with-dddjango/changed-files.json",
+            item["with_dddjango"]["evidence"],
+        )
+        embedded = report_data["embeddedArtifacts"]
+        self.assertEqual(
+            embedded[f"code/{case_id}/baseline/changed-files.json"]["kind"],
+            "changed-files",
+        )
+        self.assertEqual(
+            embedded[f"code/{case_id}/with-dddjango/diff.patch"]["kind"],
+            "diff",
+        )
+
     def test_render_html_contains_eval_report_v2_template_tokens(self) -> None:
         run_dir = self.write_case()
         data = self.renderer.build_report_data("response", run_dir.name, run_dir)

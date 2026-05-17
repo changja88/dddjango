@@ -12,6 +12,11 @@ reference_basis:
   - path: workspace/docs/skill-contracts.md
     basis: DDD, DB, API, Django Ninja, Test boundaries
 code_expected: true
+deterministic_checks:
+  - id: unit-tests
+    command: python3 -m unittest
+    expected_exit: 0
+    evidence: command-artifact
 target_behavior:
   required:
     - Keeps API function thin and moves idempotency/order creation decisions into service or narrow helper.

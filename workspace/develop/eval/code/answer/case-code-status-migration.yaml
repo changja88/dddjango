@@ -14,6 +14,11 @@ reference_basis:
   - path: workspace/reference/implementation-django/reference/final.md
     basis: migrations
 code_expected: true
+deterministic_checks:
+  - id: unit-tests
+    command: python3 -m unittest
+    expected_exit: 0
+    evidence: command-artifact
 target_behavior:
   required:
     - Adds or edits migration-like files with expand/backfill/contract notes or steps.

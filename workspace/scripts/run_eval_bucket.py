@@ -22,6 +22,7 @@ if str(SCRIPT_DIR) not in sys.path:
 import eval_run_common as common
 import eval_run_identity as run_identity
 import extract_subagent_trace
+import validate_eval_code_artifacts as code_artifacts
 
 
 REPO_ROOT = common.REPO_ROOT
@@ -674,6 +675,54 @@ def write_skipped_prompt_input(case_id: str, raw_dir: Path) -> None:
     common.write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", "")
 
 
+def deterministic_checks_for_code_case(answer_dir: Path, case_id: str) -> list[dict[str, object]]:
+    answer_text = code_artifacts.load_answer_oracle(answer_dir, case_id)
+    code_artifacts.answer_code_expected(answer_text, case_id)
+    return code_artifacts.parse_deterministic_checks(answer_text, case_id)
+
+
+def run_deterministic_code_checks(
+    *,
+    workspace: Path,
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    checks: list[dict[str, object]],
+    timeout_seconds: int,
+) -> bool:
+    checks_dir = run_dir / "code" / case_id / variant / "checks"
+    checks_dir.mkdir(parents=True, exist_ok=True)
+    all_passed = True
+    for check in checks:
+        check_id = str(check["id"])
+        command_text = str(check["command"])
+        command = shlex.split(command_text)
+        common.write_text(checks_dir / f"{check_id}-command.txt", command_text + "\n")
+        try:
+            result = run_command(
+                command,
+                prompt=None,
+                cwd=workspace,
+                timeout_seconds=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as exc:
+            common.write_text(checks_dir / f"{check_id}-stdout.txt", response_text(exc.stdout))
+            common.write_text(checks_dir / f"{check_id}-stderr.txt", response_text(exc.stderr))
+            common.write_text(
+                checks_dir / f"{check_id}-exit.txt",
+                f"timeout after {timeout_seconds}s\n",
+            )
+            all_passed = False
+            continue
+
+        common.write_text(checks_dir / f"{check_id}-stdout.txt", result.stdout)
+        common.write_text(checks_dir / f"{check_id}-stderr.txt", result.stderr)
+        common.write_text(checks_dir / f"{check_id}-exit.txt", str(result.returncode) + "\n")
+        if result.returncode != int(check["expected_exit"]):
+            all_passed = False
+    return all_passed
+
+
 def copy_runtime_current_run_evidence(
     *,
     raw_dir: Path,
@@ -802,6 +851,11 @@ def main(argv: list[str] | None = None) -> int:
         case_id = case_path.stem
         public_packet = common.read_text(case_path)
         code_config = case_capture_config(code_metadata, case_id) if args.bucket == "code" else None
+        code_checks = (
+            deterministic_checks_for_code_case(bucket.answer_dir, case_id)
+            if args.bucket == "code"
+            else []
+        )
         prompt = build_prompt(
             public_packet,
             allow_workspace_edits=args.bucket == "code",
@@ -887,6 +941,16 @@ def main(argv: list[str] | None = None) -> int:
                 common.write_text(exit_path, "skipped\n")
                 if args.bucket == "code":
                     capture_code_artifacts(exec_cwd, run_dir, case_id, variant.name)
+                    checks_passed = run_deterministic_code_checks(
+                        workspace=exec_cwd,
+                        run_dir=run_dir,
+                        case_id=case_id,
+                        variant=variant.name,
+                        checks=code_checks,
+                        timeout_seconds=args.timeout_seconds,
+                    )
+                    if not checks_passed:
+                        failed_execution = True
                 write_workflow_trace_artifact(
                     bucket=args.bucket,
                     run_dir=run_dir,
@@ -931,6 +995,16 @@ def main(argv: list[str] | None = None) -> int:
                 common.write_text(output_path, "")
             if args.bucket == "code":
                 capture_code_artifacts(exec_cwd, run_dir, case_id, variant.name)
+                checks_passed = run_deterministic_code_checks(
+                    workspace=exec_cwd,
+                    run_dir=run_dir,
+                    case_id=case_id,
+                    variant=variant.name,
+                    checks=code_checks,
+                    timeout_seconds=args.timeout_seconds,
+                )
+                if not checks_passed:
+                    failed_execution = True
             write_workflow_trace_artifact(
                 bucket=args.bucket,
                 run_dir=run_dir,

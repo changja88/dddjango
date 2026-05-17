@@ -12,6 +12,11 @@ reference_basis:
   - path: workspace/docs/workflow.md
     basis: simple task restraint
 code_expected: true
+deterministic_checks:
+  - id: unit-tests
+    command: python3 -m unittest
+    expected_exit: 0
+    evidence: command-artifact
 target_behavior:
   required:
     - Renames memo to note consistently in fixture code, template, and tests.
