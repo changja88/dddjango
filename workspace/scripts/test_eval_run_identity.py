@@ -241,11 +241,11 @@ class EvalRunIdentityTests(unittest.TestCase):
 
         self.assertTrue(self.module.has_answer_oracle_evaluation(run_dir))
 
-    def test_exit_artifacts_are_clean_returns_true_with_no_exit_files(self) -> None:
+    def test_exit_artifacts_are_clean_returns_false_with_no_exit_files(self) -> None:
         run_dir = self.root / "run-one"
         (run_dir / "raw").mkdir(parents=True)
 
-        self.assertTrue(self.module.exit_artifacts_are_clean(run_dir))
+        self.assertFalse(self.module.exit_artifacts_are_clean(run_dir))
 
     def test_exit_artifacts_are_clean_returns_true_when_all_exit_files_are_zero(self) -> None:
         run_dir = self.root / "run-one"

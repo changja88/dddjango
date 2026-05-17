@@ -1717,10 +1717,18 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
 
 def main() -> None:
     args = parse_args()
+    identity = run_identity.validate_production_run_id(args.run_id)
+    if identity.bucket != args.bucket:
+        raise SystemExit(
+            f"run id bucket mismatch: run id bucket={identity.bucket}, --bucket={args.bucket}"
+        )
     run_dir = EVAL_ROOT / args.bucket / "runs" / args.run_id
     raw_dir = run_dir / "raw"
     if not run_dir.is_dir():
         raise SystemExit(f"run directory does not exist: {run_dir}")
+    meta_errors = run_identity.validate_run_meta(run_dir)
+    if meta_errors:
+        raise SystemExit("; ".join(meta_errors))
     if not raw_dir.is_dir():
         raise SystemExit(f"run raw directory does not exist: {raw_dir}")
     output = args.output or run_dir / "analysis/report.html"

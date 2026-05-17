@@ -211,7 +211,9 @@ def has_answer_oracle_evaluation(run_dir: Path) -> bool:
 
 
 def exit_artifacts_are_clean(run_dir: Path) -> bool:
+    exit_artifacts = list((run_dir / "raw").glob("*-exit.txt"))
+    if not exit_artifacts:
+        return False
     return all(
-        exit_artifact.read_text(encoding="utf-8") == "0"
-        for exit_artifact in (run_dir / "raw").glob("*-exit.txt")
+        exit_artifact.read_text(encoding="utf-8") == "0" for exit_artifact in exit_artifacts
     )

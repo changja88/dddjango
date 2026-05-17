@@ -46,6 +46,7 @@ class EvaluateEvalRunTests(unittest.TestCase):
         run_id: str = RUN_ID_RESPONSE,
         baseline_text: str = "baseline answer\n",
         with_ddjango_text: str = "with answer\n",
+        write_meta: bool = True,
     ) -> Path:
         bucket_root = self.evaluator.EVAL_ROOT / bucket
         public_path = bucket_root / "cases/plugin/public" / f"{case_id}.md"
@@ -64,7 +65,8 @@ class EvaluateEvalRunTests(unittest.TestCase):
         (raw / f"{case_id}-baseline.txt").write_text(baseline_text, encoding="utf-8")
         with_variant = self.evaluator.common.VARIANTS[1]
         (raw / f"{case_id}-{with_variant}.txt").write_text(with_ddjango_text, encoding="utf-8")
-        self.evaluator.run_identity.write_run_meta(raw.parent, run_id=run_id)
+        if write_meta:
+            self.evaluator.run_identity.write_run_meta(raw.parent, run_id=run_id)
         return raw
 
     def write_trace_summary(
@@ -169,6 +171,24 @@ class EvaluateEvalRunTests(unittest.TestCase):
             raw / "case-response-one-answer-oracle-evaluation-command.txt"
         ).read_text(encoding="utf-8")
         self.assertIn("codex exec --ephemeral", command_text)
+
+    def test_main_rejects_missing_run_meta_before_evaluating(self) -> None:
+        raw = self.write_case_and_run(write_meta=False)
+
+        with patch.object(self.evaluator, "run_command", side_effect=AssertionError("evaluated")):
+            with self.assertRaisesRegex(SystemExit, "RUN_META.json is missing"):
+                self.evaluator.main(
+                    [
+                        "--bucket",
+                        "response",
+                        "--run-id",
+                        RUN_ID_RESPONSE,
+                        "--case",
+                        "case-response-one",
+                    ]
+                )
+
+        self.assertFalse((raw / "case-response-one-answer-oracle-evaluation.raw.txt").exists())
 
     def test_workflow_trace_summary_is_included_as_evaluator_evidence(self) -> None:
         case_id = "case-workflow-one"

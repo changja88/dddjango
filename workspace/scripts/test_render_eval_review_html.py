@@ -15,6 +15,11 @@ from zoneinfo import ZoneInfo
 
 MODULE_PATH = Path(__file__).with_name("render_eval_review_html.py")
 KST = ZoneInfo("Asia/Seoul")
+DEFAULT_RUN_IDS = {
+    bucket: f"20260101-090000-{bucket}-try01-full-current-baseline"
+    for bucket in ("response", "code", "plugin", "runtime", "source", "workflow")
+}
+DEFAULT_RESPONSE_RUN_ID = DEFAULT_RUN_IDS["response"]
 
 
 def load_renderer():
@@ -47,8 +52,12 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         with_response: str | None = "With dddjango response text",
         oracle: dict[str, object] | None = None,
         oracle_text: str | None = None,
-        run_id: str = "sample-run",
+        run_id: str | None = None,
+        write_meta: bool = True,
+        write_exit_artifacts: bool = True,
     ) -> Path:
+        if run_id is None:
+            run_id = DEFAULT_RUN_IDS[bucket]
         bucket_root = self.renderer.EVAL_ROOT / bucket
         public_path = bucket_root / "cases/plugin/public" / f"{case_id}.md"
         answer_path = bucket_root / "answer" / f"{case_id}.yaml"
@@ -114,6 +123,9 @@ coverage_tags:
             (raw_dir / f"{case_id}-baseline.txt").write_text(baseline_response, encoding="utf-8")
         if with_response is not None:
             (raw_dir / f"{case_id}-with-dddjango.txt").write_text(with_response, encoding="utf-8")
+        if write_exit_artifacts:
+            (raw_dir / f"{case_id}-baseline-exit.txt").write_text("0", encoding="utf-8")
+            (raw_dir / f"{case_id}-with-dddjango-exit.txt").write_text("0", encoding="utf-8")
         if oracle is None and oracle_text is None:
             oracle = {
                 "caseId": case_id,
@@ -146,11 +158,8 @@ coverage_tags:
         run_identity = getattr(self.renderer, "run_identity", None)
         if run_identity is None:
             import eval_run_identity as run_identity
-        try:
+        if write_meta:
             run_meta = run_identity.write_run_meta(run_dir, run_id=run_id)
-        except SystemExit:
-            pass
-        else:
             run_meta["answerOracleEvaluated"] = True
             (run_dir / run_identity.RUN_META_FILENAME).write_text(
                 json.dumps(run_meta, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
@@ -177,6 +186,13 @@ coverage_tags:
             topic=topic,
             created_at=created_at,
         )
+
+    def test_write_case_default_uses_canonical_run_id_and_run_meta(self) -> None:
+        run_dir = self.write_case()
+
+        self.renderer.run_identity.parse_run_id(run_dir.name)
+        self.assertFalse(self.renderer.run_identity.validate_run_meta(run_dir))
+        self.assertEqual(run_dir.name, DEFAULT_RESPONSE_RUN_ID)
 
     def write_trace_marker_and_summaries(
         self,
@@ -225,7 +241,7 @@ coverage_tags:
     def test_build_report_data_includes_summary_rows_and_detail(self) -> None:
         run_dir = self.write_case()
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         self.assertEqual(data["summary"]["total_cases"], 1)
         self.assertEqual(data["summary"]["baseline_average"], "2.0")
@@ -278,7 +294,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["hard_gate"], "ok")
@@ -309,7 +325,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         self.assertEqual(data["summary"]["total_cases"], 2)
         self.assertEqual(data["summary"]["baseline_average"], "2.0")
@@ -317,8 +333,22 @@ coverage_tags:
         self.assertEqual(data["summary"]["delta"], "+3.0")
 
     def test_build_report_data_compares_current_run_to_previous_run(self) -> None:
+        previous_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="previous-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        current_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="current-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
         self.write_case(
-            run_id="run-a",
+            run_id=previous_run_id,
             oracle={
                 "caseId": "case-response-order-create",
                 "answerOracleEvaluated": True,
@@ -336,7 +366,7 @@ coverage_tags:
             },
         )
         run_dir = self.write_case(
-            run_id="run-b",
+            run_id=current_run_id,
             oracle={
                 "caseId": "case-response-order-create",
                 "answerOracleEvaluated": True,
@@ -354,9 +384,9 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "run-b", run_dir)
+        data = self.renderer.build_report_data("response", current_run_id, run_dir)
 
-        self.assertEqual(data["previous_run"]["run_id"], "run-a")
+        self.assertEqual(data["previous_run"]["run_id"], previous_run_id)
         self.assertTrue(data["previous_run"]["available"])
         self.assertEqual(data["summary"]["with_dddjango_average_change"], "+2.0")
         self.assertEqual(data["summary"]["pass_change"], "+1")
@@ -371,8 +401,22 @@ coverage_tags:
         self.assertEqual(row["run_change"]["direction"], "improved")
 
     def test_render_html_shows_previous_run_change_in_summary_table_and_dialog(self) -> None:
+        previous_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="previous-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        current_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="current-baseline",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
         self.write_case(
-            run_id="run-a",
+            run_id=previous_run_id,
             oracle={
                 "caseId": "case-response-order-create",
                 "answerOracleEvaluated": True,
@@ -389,14 +433,14 @@ coverage_tags:
                 "observations": ["previous run was weak"],
             },
         )
-        run_dir = self.write_case(run_id="run-b")
+        run_dir = self.write_case(run_id=current_run_id)
 
-        data = self.renderer.build_report_data("response", "run-b", run_dir)
+        data = self.renderer.build_report_data("response", current_run_id, run_dir)
         html = self.renderer.render_html(data)
 
         self.assertIn("이전 평가 대비", html)
         self.assertIn("직전 run", html)
-        self.assertIn("run-a", html)
+        self.assertIn(previous_run_id, html)
         self.assertIn("<th>이전 대비</th>", html)
         self.assertIn("fail -&gt; pass", html)
         self.assertIn("previous with-dddjango", html)
@@ -436,7 +480,7 @@ coverage_tags:
             encoding="utf-8",
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         self.assertEqual(data["summary"]["total_cases"], 1)
         self.assertEqual(data["summary"]["total_public_cases"], 2)
@@ -454,7 +498,7 @@ coverage_tags:
     def test_missing_artifacts_are_unscored_not_pass(self) -> None:
         run_dir = self.write_case(baseline_response=None, oracle={})
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["baseline"]["verdict"], "unscored")
@@ -465,7 +509,7 @@ coverage_tags:
     def test_invalid_oracle_json_blocks_case(self) -> None:
         run_dir = self.write_case(oracle_text='{"answerOracleEvaluated": true,')
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["detail_status"], "invalid oracle json")
@@ -493,7 +537,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["status"], "unscored")
@@ -504,7 +548,7 @@ coverage_tags:
     def test_non_object_oracle_json_is_invalid_schema(self) -> None:
         run_dir = self.write_case(oracle_text='["not", "an", "object"]')
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["detail_status"], "invalid oracle schema")
@@ -529,7 +573,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["detail_status"], "invalid oracle schema")
@@ -576,7 +620,7 @@ coverage_tags:
             with self.subTest(label=label):
                 run_dir = self.write_case(oracle=oracle)
 
-                data = self.renderer.build_report_data("response", "sample-run", run_dir)
+                data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
                 row = data["cases"][0]
                 self.assertEqual(row["detail_status"], "invalid oracle schema")
@@ -605,7 +649,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["detail_status"], "ready")
@@ -616,12 +660,19 @@ coverage_tags:
 
     def test_main_rejects_missing_run_dir_even_with_temp_output(self) -> None:
         output = self.root / "tmp-report.html"
+        missing_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="missing-run",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
         argv = [
             "render_eval_review_html.py",
             "--bucket",
             "response",
             "--run-id",
-            "missing-run",
+            missing_run_id,
             "--output",
             str(output),
         ]
@@ -631,6 +682,68 @@ coverage_tags:
                 self.renderer.main()
 
         self.assertIn("run directory does not exist", str(raised.exception))
+        self.assertFalse(output.exists())
+
+    def test_main_rejects_noncanonical_run_id_before_rendering(self) -> None:
+        output = self.root / "tmp-report.html"
+        argv = [
+            "render_eval_review_html.py",
+            "--bucket",
+            "response",
+            "--run-id",
+            "sample-run",
+            "--output",
+            str(output),
+        ]
+
+        with patch.object(sys, "argv", argv):
+            with self.assertRaisesRegex(SystemExit, "Invalid run id: sample-run"):
+                self.renderer.main()
+
+        self.assertFalse(output.exists())
+
+    def test_main_rejects_run_id_bucket_mismatch_before_rendering(self) -> None:
+        run_id = self.canonical_run_id(
+            bucket="runtime",
+            try_number=1,
+            scope="full",
+            topic="current-baseline",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        output = self.root / "tmp-report.html"
+        argv = [
+            "render_eval_review_html.py",
+            "--bucket",
+            "response",
+            "--run-id",
+            run_id,
+            "--output",
+            str(output),
+        ]
+
+        with patch.object(sys, "argv", argv):
+            with self.assertRaisesRegex(SystemExit, "run id bucket mismatch"):
+                self.renderer.main()
+
+        self.assertFalse(output.exists())
+
+    def test_main_rejects_missing_run_meta_before_rendering(self) -> None:
+        run_dir = self.write_case(write_meta=False)
+        output = self.root / "tmp-report.html"
+        argv = [
+            "render_eval_review_html.py",
+            "--bucket",
+            "response",
+            "--run-id",
+            run_dir.name,
+            "--output",
+            str(output),
+        ]
+
+        with patch.object(sys, "argv", argv):
+            with self.assertRaisesRegex(SystemExit, "RUN_META.json is missing"):
+                self.renderer.main()
+
         self.assertFalse(output.exists())
 
     def test_render_html_escapes_hostile_payloads(self) -> None:
@@ -660,7 +773,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
         html = self.renderer.render_html(data)
 
         report_start = html.index("const REPORT_DATA =")
@@ -672,7 +785,7 @@ coverage_tags:
 
     def test_render_html_contains_required_review_surfaces(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -691,7 +804,7 @@ coverage_tags:
 
     def test_render_html_places_bucket_goal_above_review_title(self) -> None:
         run_dir = self.write_case(bucket="code", case_id="case-code-order-api")
-        data = self.renderer.build_report_data("code", "sample-run", run_dir)
+        data = self.renderer.build_report_data("code", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -706,7 +819,7 @@ coverage_tags:
 
     def test_score_columns_use_stacked_headers_and_reduced_width(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -719,7 +832,7 @@ coverage_tags:
 
     def test_workflow_score_columns_stay_stacked_with_trace_columns(self) -> None:
         run_dir = self.write_case(bucket="workflow", case_id="case-workflow-live-delegation")
-        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+        data = self.renderer.build_report_data("workflow", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -751,7 +864,7 @@ coverage_tags:
             },
         )
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
         html = self.renderer.render_html(data)
 
         self.assertEqual(data["cases"][0]["status"], "pass")
@@ -760,7 +873,7 @@ coverage_tags:
 
     def test_status_and_action_columns_have_room_for_badges(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -771,7 +884,7 @@ coverage_tags:
 
     def test_response_table_hides_workflow_trace_columns(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -784,7 +897,7 @@ coverage_tags:
         run_dir = self.write_case(bucket="workflow", case_id=case_id)
         self.write_trace_marker_and_summaries(run_dir, case_id=case_id)
 
-        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+        data = self.renderer.build_report_data("workflow", run_dir.name, run_dir)
         row = data["cases"][0]
         html = self.renderer.render_html(data)
 
@@ -868,7 +981,7 @@ coverage_tags:
             encoding="utf-8",
         )
 
-        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+        data = self.renderer.build_report_data("workflow", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["workflow_expectation"]["alignment"], "위반")
@@ -880,7 +993,7 @@ coverage_tags:
     def test_existing_workflow_run_without_marker_shows_trace_not_captured(self) -> None:
         run_dir = self.write_case(bucket="workflow", case_id="case-workflow-one")
 
-        data = self.renderer.build_report_data("workflow", "sample-run", run_dir)
+        data = self.renderer.build_report_data("workflow", run_dir.name, run_dir)
 
         row = data["cases"][0]
         self.assertEqual(row["trace_table"]["mode"], "trace 미수집")
@@ -888,7 +1001,7 @@ coverage_tags:
 
     def test_detail_click_opens_dialog_instead_of_inline_panel(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -901,7 +1014,7 @@ coverage_tags:
 
     def test_detail_dialog_uses_large_readable_layout(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -916,7 +1029,7 @@ coverage_tags:
 
     def test_case_table_uses_compact_preview_and_visible_column_boundaries(self) -> None:
         run_dir = self.write_case()
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
 
         html = self.renderer.render_html(data)
 
@@ -1075,7 +1188,7 @@ coverage_tags:
         )
 
     def test_metadata_less_run_is_excluded_from_latest_selection(self) -> None:
-        legacy_run = self.write_case(run_id="zz-legacy-run-with-oracle")
+        legacy_run = self.write_case(run_id="zz-legacy-run-with-oracle", write_meta=False)
         metadata_run_id = self.canonical_run_id(
             bucket="response",
             try_number=1,
@@ -1087,6 +1200,26 @@ coverage_tags:
 
         self.assertTrue((legacy_run / "raw/case-response-order-create-answer-oracle-evaluation.json").is_file())
         self.assertEqual(self.renderer.latest_scored_run_dir("response"), metadata_run)
+
+    def test_latest_scored_run_excludes_runs_without_exit_artifacts(self) -> None:
+        clean_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="clean-exits",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        no_exit_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="missing-exits",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        clean_run = self.write_case(run_id=clean_run_id)
+        self.write_case(run_id=no_exit_run_id, write_exit_artifacts=False)
+
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), clean_run)
 
     def test_latest_scored_report_ties_on_created_at_by_run_directory_name(self) -> None:
         created_at = datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST)
@@ -1230,7 +1363,7 @@ coverage_tags:
         )
         before = public_path.read_text(encoding="utf-8")
 
-        data = self.renderer.build_report_data("response", "sample-run", run_dir)
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
         self.renderer.render_html(data)
 
         self.assertEqual(public_path.read_text(encoding="utf-8"), before)

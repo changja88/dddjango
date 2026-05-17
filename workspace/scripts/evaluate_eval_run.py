@@ -486,7 +486,13 @@ def main(argv: list[str] | None = None) -> int:
     cases = common.selected_case_paths(args.bucket, args.case)
     run_dir = resolved_under(bucket.runs_dir, run_id, description="run path")
     raw_dir = run_dir / "raw"
-    raw_dir.mkdir(parents=True, exist_ok=True)
+    if not run_dir.is_dir():
+        raise SystemExit(f"run directory does not exist: {run_dir}")
+    meta_errors = run_identity.validate_run_meta(run_dir)
+    if meta_errors:
+        raise SystemExit("; ".join(meta_errors))
+    if not raw_dir.is_dir():
+        raise SystemExit(f"run raw directory does not exist: {raw_dir}")
 
     for case_path in cases:
         evaluate_case(
