@@ -1,5 +1,8 @@
 PYTHON ?= python3
-RUN_ID ?= $(shell date +%Y%m%d-%H%M-initial-full)
+RUN_ID ?=
+TRY_NUMBER ?= 1
+SCOPE ?= full
+TOPIC ?= current-baseline
 JOBS ?= 3
 MODEL ?= gpt-5.5
 REASONING ?= xhigh
@@ -11,16 +14,19 @@ BUCKETS ?= response code plugin runtime source workflow
 BUCKET ?= workflow
 CASE ?=
 CASE_ARG = $(if $(CASE),--case "$(CASE)")
+RUN_ID_ARG = $(if $(RUN_ID),--run-id "$(RUN_ID)")
 
 # 전체 평가 항목(response/code/plugin/runtime/source/workflow)을 병렬로 실행한다.
 # 사용: make eval-all
-# 예: make eval-all RUN_ID=20260511-full EXTRA_ARGS=--rerun JOBS=3
+# 예: make eval-all TRY_NUMBER=1 SCOPE=full TOPIC=current-baseline EXTRA_ARGS=--rerun JOBS=3
 .PHONY: eval-all
 eval-all:
 	@printf "%s\n" $(BUCKETS) | xargs -P "$(JOBS)" -I{} \
 		$(PYTHON) -B workspace/scripts/run_initial_eval.py \
 			--bucket {} \
-			--run-id "$(RUN_ID)" \
+			--try-number "$(TRY_NUMBER)" \
+			--scope "$(SCOPE)" \
+			--topic "$(TOPIC)" \
 			--model "$(MODEL)" \
 			--reasoning "$(REASONING)" \
 			--evaluator-model "$(EVALUATOR_MODEL)" \
@@ -30,12 +36,16 @@ eval-all:
 
 # 특정 평가 항목(bucket) 하나를 실행한다. JOBS는 bucket 내부 case 병렬 수다.
 # 사용: make eval-one BUCKET=workflow JOBS=4
+# 기존 run을 다시 렌더/검증할 때만 canonical RUN_ID를 지정한다.
 # 단일 case만 다시 실행: make eval-one BUCKET=workflow CASE=case-workflow-tiny-restraint EXTRA_ARGS=--rerun
 .PHONY: eval-one
 eval-one:
 	$(PYTHON) -B workspace/scripts/run_initial_eval.py \
 		--bucket "$(BUCKET)" \
-		--run-id "$(RUN_ID)" \
+		$(RUN_ID_ARG) \
+		--try-number "$(TRY_NUMBER)" \
+		--scope "$(SCOPE)" \
+		--topic "$(TOPIC)" \
 		--model "$(MODEL)" \
 		--reasoning "$(REASONING)" \
 		--evaluator-model "$(EVALUATOR_MODEL)" \
