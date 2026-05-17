@@ -1221,6 +1221,33 @@ coverage_tags:
 
         self.assertEqual(self.renderer.latest_scored_run_dir("response"), clean_run)
 
+    def test_latest_scored_run_excludes_runs_with_only_evaluator_exit_artifacts(self) -> None:
+        clean_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="clean-exits",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        evaluator_exit_only_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="evaluator-exit-only",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        clean_run = self.write_case(run_id=clean_run_id)
+        evaluator_exit_only_run = self.write_case(
+            run_id=evaluator_exit_only_run_id,
+            write_exit_artifacts=False,
+        )
+        (
+            evaluator_exit_only_run
+            / "raw/case-response-order-create-answer-oracle-evaluation-exit.txt"
+        ).write_text("0\n", encoding="utf-8")
+
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), clean_run)
+
     def test_latest_scored_report_ties_on_created_at_by_run_directory_name(self) -> None:
         created_at = datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST)
         lower_run_id = self.canonical_run_id(

@@ -265,6 +265,17 @@ class EvalRunIdentityTests(unittest.TestCase):
 
         self.assertFalse(self.module.exit_artifacts_are_clean(run_dir))
 
+    def test_exit_artifacts_are_clean_ignores_evaluator_exit_artifacts(self) -> None:
+        run_dir = self.root / "run-one"
+        raw_dir = run_dir / "raw"
+        raw_dir.mkdir(parents=True)
+        (raw_dir / "case-one-answer-oracle-evaluation-exit.txt").write_text(
+            "0\n",
+            encoding="utf-8",
+        )
+
+        self.assertFalse(self.module.exit_artifacts_are_clean(run_dir))
+
 
 if __name__ == "__main__":
     unittest.main()
