@@ -1,7 +1,7 @@
 ---
 name: implementation-django-ninja
 description: >
-  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router, Schema/ModelSchema, auth, pagination, FilterSchema, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 인증/인가, 페이지네이션, 필터링/정렬, 오류 응답, API 계약 테스트 기준, Problem Details/OpenAPI, DRF ViewSet/APIView/Serializer를 Ninja로 전환. Prefer workflow-dddjango-subagents for DDD+DB/API+tests or risky duplicate-prevention work, architecture-api for undecided REST/header/content-negotiation contracts, architecture-db for idempotency storage/locking/isolation decisions, implementation-django for ORM/service/migration work, and implementation-test for pytest/fixture/test double/concurrency test details.
+  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router/라우터, Schema/스키마, endpoint/엔드포인트, auth/permission/권한, pagination, filtering/필터링/정렬, Problem Details, OpenAPI, TestClient/API 테스트 acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 엔드포인트 구현, 인증/인가, 페이지네이션, 오류 응답, DRF ViewSet/APIView/Serializer/시리얼라이저/뷰셋을 Ninja로 전환, and greenfield DRF Serializer/ViewSet/APIView/DefaultRouter/rest_framework requests that should become Django Ninja work; legacy DRF review/migration is allowed as an exception. For pure answer-only/tiny explanations, preserve the requested output shape and do not add tool/check reports. Prefer workflow-dddjango-subagents for risky DDD+DB/API+tests, architecture-api for undecided REST contracts, architecture-db for idempotency/locking decisions, implementation-django for ORM/service/migrations, and implementation-test for pytest/API contract test mechanics.
 ---
 
 # Django Ninja Implementation
@@ -37,6 +37,7 @@ This skill is provisional. Dedicated Django Ninja source reference does not exis
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current Django Ninja task.
 - Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
 - Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
 - Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.

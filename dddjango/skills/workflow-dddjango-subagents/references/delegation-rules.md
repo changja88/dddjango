@@ -39,6 +39,8 @@ Use real subagents only when they are actually available, the user has authorize
 - constraints on what not to edit;
 - validation expectations.
 
+If authorization is not yet granted, do not spawn agents or claim completed review. Ask for approval, but still propose the concrete role split first. For composite or risky work, include the canonical roles that apply, including Architecture Agent even when advisory, and name the Coordinator or explicit Integration owner. Avoid role names alone: provide bounded scope, inputs, owned files or read-only status, forbidden files, expected output, risks, required follow-up, and the integration responsibility for each proposed role.
+
 Do not claim a subagent review, implementation, or validation happened unless it actually ran.
 After spawning real subagents, collect each result with `wait_agent` or `close_agent` before integrating it or reporting it as complete. A spawned or pending subagent is not a completed review.
 Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report blocked or partial execution and do not integrate missing subagent results. Do not write `wait_agent`, `close_agent`, or role result summaries unless those calls actually completed.

@@ -66,6 +66,10 @@ API 계층은 유스케이스를 외부에 노출하는 adapter다. Django Ninja
 - `implementation-tdd`: 도메인 규칙을 테스트 목록, Red-Green-Refactor, Inside-Out/Outside-In, AI 보조 TDD 흐름으로 명세화한다.
 - `implementation-test`: 도메인 불변식과 유스케이스를 검증하는 pytest, fixture, test double, mock, factory, property-based testing, testcontainers, coverage, mutation testing, 테스트 냄새를 다룬다.
 
+### Source Governance
+
+- `source-reference-audit`: `workspace/docs`, `workspace/reference`, runtime bundled references 사이의 provenance, conflict/gap, provisional source status, validation coverage, source/runtime boundary를 점검한다.
+
 ### Workflow
 
 - `workflow-dddjango-subagents`: 복합 DDD/Django 작업의 역할 분해, subagent 조정, 순차 실행 fallback, 결과 통합을 다룬다.

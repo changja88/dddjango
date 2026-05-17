@@ -41,6 +41,7 @@ PROVISIONAL_SKILLS = [
 ]
 
 EXPECTED_SKILLS = [
+    "source-reference-audit",
     "architecture-ddd",
     "architecture-implementation-patterns",
     "architecture-db",
@@ -97,6 +98,8 @@ BANNED_SKILL_DOCS = {
     "CHANGELOG.md",
 }
 
+MAX_DESCRIPTION_CHARS = 1024
+
 
 class Check:
     def __init__(self) -> None:
@@ -134,6 +137,26 @@ def frontmatter_value(text: str, key: str) -> Optional[str]:
 def frontmatter_block(text: str) -> str:
     match = re.match(r"^---\n(?P<body>.*?)\n---\n", text, re.DOTALL)
     return match.group("body") if match else ""
+
+
+def frontmatter_description_text(text: str) -> str:
+    lines = frontmatter_block(text).splitlines()
+    for index, line in enumerate(lines):
+        match = re.match(r"^description:\s*(.*)$", line)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value not in {">", "|"}:
+            return value.strip("\"'")
+        parts: list[str] = []
+        for continuation in lines[index + 1 :]:
+            if continuation and not continuation.startswith(" "):
+                break
+            stripped = continuation.strip()
+            if stripped:
+                parts.append(stripped)
+        return " ".join(parts)
+    return ""
 
 
 def check_frontmatter_yaml_safety(check: Check, skill_md: Path, text: str) -> None:
@@ -285,6 +308,11 @@ def check_skill_folder(check: Check, skill_dir: Path, require_metadata: bool) ->
             frontmatter_value(text, "description"),
             f"missing frontmatter description: {skill_md}",
         )
+        description = frontmatter_description_text(text)
+        check.require(
+            len(description) <= MAX_DESCRIPTION_CHARS,
+            f"description exceeds {MAX_DESCRIPTION_CHARS} characters: {skill_md}",
+        )
         check_frontmatter_yaml_safety(check, skill_md, text)
 
     openai_yaml = skill_dir / "agents" / "openai.yaml"
@@ -374,7 +402,41 @@ def check_workflow_role_map(check: Check, workflow_skill: Path) -> None:
     check_reference_links(check, workflow_skill)
 
 
-def check_runtime_cache(check: Check, runtime_skills: Path, required: bool) -> None:
+def runtime_facing_files(skill_dir: Path) -> set[Path]:
+    files = {Path("SKILL.md"), Path("agents/openai.yaml")}
+    references = skill_dir / "references"
+    if references.is_dir():
+        files.update(Path("references") / path.name for path in references.glob("*.md"))
+    return files
+
+
+def check_runtime_source_parity(check: Check, source_skills: Path, runtime_skills: Path) -> None:
+    for skill_name in EXPECTED_SKILLS:
+        source_skill = source_skills / skill_name
+        runtime_skill = runtime_skills / skill_name
+        if not source_skill.is_dir() or not runtime_skill.is_dir():
+            continue
+        rel_files = runtime_facing_files(source_skill) | runtime_facing_files(runtime_skill)
+        for rel_file in sorted(rel_files):
+            source_file = source_skill / rel_file
+            runtime_file = runtime_skill / rel_file
+            display = f"{skill_name}/{rel_file.as_posix()}"
+            if not source_file.is_file():
+                check.require(False, f"runtime cache has file absent from source: {display}")
+                continue
+            if not runtime_file.is_file():
+                check.require(False, f"runtime cache missing source file: {display}")
+                continue
+            if source_file.read_bytes() != runtime_file.read_bytes():
+                check.require(False, f"runtime cache differs from source: {display}")
+
+
+def check_runtime_cache(
+    check: Check,
+    runtime_skills: Path,
+    required: bool,
+    source_skills: Path | None = None,
+) -> None:
     if not runtime_skills.exists():
         message = f"runtime skills folder not found: {runtime_skills}"
         if required:
@@ -382,13 +444,16 @@ def check_runtime_cache(check: Check, runtime_skills: Path, required: bool) -> N
         else:
             check.warnings.append(f"{message}; skipped")
         return
-    workflow_skill = runtime_skills / "workflow-dddjango-subagents"
-    check_workflow_role_map(check, workflow_skill)
-    for skill_name in PROVISIONAL_SKILLS:
+    for skill_name in EXPECTED_SKILLS:
         skill_dir = runtime_skills / skill_name
-        check.require(skill_dir.is_dir(), f"missing runtime provisional skill folder: {skill_dir}")
+        check.require(skill_dir.is_dir(), f"missing runtime skill folder: {skill_dir}")
         if skill_dir.is_dir():
             check_skill_folder(check, skill_dir, require_metadata=False)
+
+    workflow_skill = runtime_skills / "workflow-dddjango-subagents"
+    check_workflow_role_map(check, workflow_skill)
+    if source_skills is not None:
+        check_runtime_source_parity(check, source_skills, runtime_skills)
 
 
 def check_generated_skills(check: Check, skills_dir: Path, required: bool) -> None:
@@ -431,7 +496,13 @@ def main() -> int:
         if args.phase in {"generated", "all"}:
             check_generated_skills(check, args.skills_dir, required=True)
         if args.phase in {"runtime", "all"}:
-            check_runtime_cache(check, args.runtime_skills, required=True)
+            source_skills = args.skills_dir if args.phase == "all" else None
+            check_runtime_cache(
+                check,
+                args.runtime_skills,
+                required=True,
+                source_skills=source_skills,
+            )
         if args.phase == "runtime":
             check.warnings.append(
                 "runtime phase is a smoke check only; it is not a completion gate without --phase generated or --phase all"

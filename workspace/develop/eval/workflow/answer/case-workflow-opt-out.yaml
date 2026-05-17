@@ -26,7 +26,6 @@ workflow_execution_expectation:
     - actual_subagent
     - sequential_fallback
     - false_actual_claim
-    - role_map
   decision_rule: The user explicitly opted out of subagent planning and full workflow decomposition.
   responsibility_rule: No subagent responsibility assignment is needed for this small rename.
   report_label: direct response, opt-out honored

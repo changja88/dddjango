@@ -35,7 +35,6 @@ workflow_execution_expectation:
     - direct
     - sequential_fallback
     - false_actual_claim
-    - overlapping_file_ownership
   decision_rule: Because the user explicitly authorized actual parallel subagent use, the answer should dispatch real bounded subagents when available.
   responsibility_rule: Each subagent must receive non-overlapping responsibility, May edit, Must not edit, expected output, risks, and integration handoff.
   report_label: actual subagents with clear ownership

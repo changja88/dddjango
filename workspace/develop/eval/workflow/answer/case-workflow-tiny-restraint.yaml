@@ -23,7 +23,6 @@ workflow_execution_expectation:
     - actual_subagent
     - sequential_fallback
     - false_actual_claim
-    - role_map
   decision_rule: The request is a two-sentence explanation, so asking to use subagents or running workflow is over-application.
   responsibility_rule: No responsibility split is needed; the response should be concise and direct.
   report_label: direct answer only

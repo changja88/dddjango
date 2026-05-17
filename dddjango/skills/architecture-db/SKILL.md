@@ -1,7 +1,7 @@
 ---
 name: architecture-db
 description: >
-  Use for relational database architecture: ERD, conceptual/logical/physical modeling, normalization/denormalization, primary/foreign keys, unique/check/not-null constraints, cascade behavior, composite/covering/partial indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, hierarchy/inheritance modeling, rollout constraints, backfill/index-lock risk, migration safety. Use for ERD, 정규화, 인덱스, 제약조건, transaction/트랜잭션, locking, 동시성, 멱등성 저장, 중복 요청 방지, 부분 인덱스, EXPLAIN ANALYZE, 운영 마이그레이션, 상태 컬럼 backfill, NOT NULL 전환, rolling deploy, migration risk. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/hexagonal/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files.
+  Use for relational database architecture: ERD, schema modeling, normalization, keys, constraints, indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, rollout/backfill/index-lock risk, and migration safety. Use for DB 설계, 데이터베이스 설계, 스키마, ERD, 정규화, 인덱스, 제약조건, 트랜잭션, 락/잠금, 격리 수준, 동시성, 멱등성 저장, 중복 방지, 쿼리 성능, 실행 계획, 백필, 롤아웃/롤백, 마이그레이션 안전성. Prefer workflow-dddjango-subagents for coordinated work, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files. Do not use for simple field renames or local CRUD with no DB invariant, concurrency, or rollout risk.
 ---
 
 # DB Architecture
@@ -21,6 +21,7 @@ Use this skill to design relational data structures that protect domain invarian
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current database architecture task.
 - Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism.
 - Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost.
 - Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs.
@@ -35,4 +36,5 @@ Use this skill to design relational data structures that protect domain invarian
 - Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
 - For risky writes, include a `Risky Write Consistency Block` with transaction owner, locking strategy, uniqueness/idempotency storage, API idempotency handoff, side-effect timing, isolation/retry, and integration/concurrency test criteria.
 - For operational changes, separate DB design from concrete Django migration implementation; hand off migration file details to `implementation-django`.
+- For staged production data changes, state the rollback or forward-fix approach for partial backfills, failed constraint validation, failed index creation, and old/new application compatibility windows.
 - Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.

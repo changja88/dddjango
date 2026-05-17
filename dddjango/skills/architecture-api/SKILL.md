@@ -1,7 +1,7 @@
 ---
 name: architecture-api
 description: >
-  Use for REST API contract architecture: resources, endpoint and URL structure, HTTP methods, status codes, RFC 9457 Problem Details, request/response contracts, headers, content negotiation, authentication/authorization semantics, pagination, versioning, backward compatibility, deprecation, rate limiting, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, endpoint/엔드포인트, URL, HTTP method/메서드, status code/상태 코드, 오류 응답, Problem Details, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전 관리, 하위 호환, deprecation, rate limit, 멱등성, Idempotency-Key, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when use cases or invariants are unclear, architecture-db for storage/transaction/idempotency persistence, and implementation-django-ninja for Django Ninja Router/Schema/code/API tests.
+  Use for REST API contract architecture: resources, endpoint/URL shape, HTTP methods/status, RFC 9457 Problem Details, request/response contracts, headers/content negotiation, auth/authz, pagination/versioning/deprecation/rate limits, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, 엔드포인트, HTTP 메서드, 상태 코드, 오류 응답, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전, 레이트 리밋, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role work, architecture-ddd when use cases/invariants are unclear, architecture-db for idempotency persistence/transactions, implementation-django-ninja for Router/Schema implementation or greenfield DRF Serializer/ViewSet/APIView/rest_framework implementation requests, and implementation-test for pytest/API contract test mechanics.
 ---
 
 # API Architecture
@@ -21,6 +21,7 @@ Use this skill to turn use cases and client needs into REST contracts. This skil
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current API contract task.
 - Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, headers, auth/authz, content negotiation, and cache semantics.
 - Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
 - Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.

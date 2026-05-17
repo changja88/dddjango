@@ -137,6 +137,43 @@ coverage_tags:
             any("workflow_execution_expectation" in finding for finding in findings)
         )
 
+    def test_workflow_execution_expectation_rejects_mode_overlap(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+workflow_execution_expectation:
+  expected_mode: sequential_fallback_required
+  acceptable_modes:
+    - sequential_fallback
+  forbidden_modes:
+    - sequential_fallback
+  decision_rule: Use fallback.
+  responsibility_rule: Preserve role order.
+  report_label: fallback required
+"""
+
+        findings = self.validator.validate_workflow_execution_expectation(path, text)
+
+        self.assertTrue(any("overlap" in finding for finding in findings))
+
+    def test_workflow_execution_expectation_rejects_unknown_machine_modes(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+workflow_execution_expectation:
+  expected_mode: sequential_fallback_required
+  acceptable_modes:
+    - sequential_fallback
+  forbidden_modes:
+    - actual_subagent
+    - wrong_order
+  decision_rule: Use fallback.
+  responsibility_rule: Preserve role order.
+  report_label: fallback required
+"""
+
+        findings = self.validator.validate_workflow_execution_expectation(path, text)
+
+        self.assertTrue(any("unknown machine mode" in finding for finding in findings))
+
 
 if __name__ == "__main__":
     unittest.main()

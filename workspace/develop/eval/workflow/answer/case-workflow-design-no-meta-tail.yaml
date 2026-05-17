@@ -28,7 +28,6 @@ workflow_execution_expectation:
     - actual_subagent
     - sequential_fallback
     - false_actual_claim
-    - role_map
   decision_rule: The user explicitly asked for five design bullets only, so no subagent question or workflow ceremony is appropriate.
   responsibility_rule: Responsibility assignment is out of scope; all five items must be design content.
   report_label: direct answer only

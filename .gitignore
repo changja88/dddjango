@@ -26,6 +26,7 @@ workspace/**/*.codex.log
 workspace/**/*.claude.log
 workspace/**/real-repo-work/
 workspace/develop/eval/*/runs/*
+workspace/develop/eval/*/latest/
 !workspace/develop/eval/*/runs/
 !workspace/develop/eval/*/runs/README.md
 

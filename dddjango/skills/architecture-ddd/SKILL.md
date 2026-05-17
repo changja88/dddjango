@@ -1,7 +1,7 @@
 ---
 name: architecture-ddd
 description: >
-  Use for DDD/domain modeling: subdomain classification, bounded contexts, context maps, ubiquitous language, aggregates, entities, value objects, invariants, domain events, domain services, use cases, and consistency boundaries. Use for DDD 설계, 도메인 모델링, 도메인 규칙, 상태 전이, 정책, 불변식, 하위 도메인, 바운디드 컨텍스트, 유비쿼터스 언어, 애그리거트, 컨텍스트 맵, 도메인 이벤트, 일관성 경계. Prefer workflow-dddjango-subagents for composite/risky/subagent/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow requests, architecture-db for schema/transactions, architecture-api for REST contracts, architecture-implementation-patterns for ports/adapters/CQRS/outbox structure, and implementation skills for Django code.
+  Use for DDD/domain modeling: subdomains, bounded contexts, context maps, ubiquitous language, aggregates, entities, value objects, invariants, domain events/services, use cases, and consistency boundaries. Use for DDD 설계, 도메인 모델링, 서브도메인, 도메인 규칙, 도메인 정책/정책, 상태 전이, 유스케이스/사용 사례, 도메인 서비스, 엔티티, 값 객체, 불변식, 바운디드 컨텍스트, 컨텍스트 맵, 유비쿼터스 언어, 애그리거트, 도메인 이벤트, 일관성 경계. Prefer workflow-dddjango-subagents for composite/risky/subagent work, architecture-db for schema/transactions, architecture-api for REST contracts, architecture-implementation-patterns for ports/adapters/CQRS/outbox, and implementation skills for Django code. Do not use for simple CRUD, tiny wording explanations, typo-only edits, or already-scoped implementation with no meaningful domain policy.
 ---
 
 # DDD Architecture
@@ -20,6 +20,7 @@ Use this skill to turn business language and state changes into domain boundarie
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current DDD modeling task.
 - Read [strategic-design.md](references/strategic-design.md) for subdomain classification, problem vs solution space, ubiquitous language, bounded contexts, distillation, event storming, and team topology.
 - Read [context-map.md](references/context-map.md) for context relationships, upstream/downstream direction, Partnership, Shared Kernel, Customer-Supplier, Conformist, ACL, OHS, Published Language, and Separated Ways.
 - Read [tactical-patterns.md](references/tactical-patterns.md) for value objects, entities, aggregates, repositories as aggregate persistence concepts, domain services, application services, specifications, and supple design.

@@ -10,7 +10,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+import workflow_execution_gate as workflow_gate
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -227,17 +235,35 @@ def validate_workflow_execution_expectation(path: Path, text: str) -> list[str]:
     if not has_field(text, "workflow_execution_expectation"):
         return [f"{path}: missing workflow_execution_expectation"]
     block = "\n".join(block_lines(text, "workflow_execution_expectation"))
+    expectation = workflow_gate.parse_workflow_expectation(text)
     for field in WORKFLOW_EXPECTATION_REQUIRED_FIELDS:
         if not re.search(rf"(?m)^\s*{re.escape(field)}\s*:", block):
             findings.append(
                 f"{path}: workflow_execution_expectation missing {field}"
             )
-    for field in ("acceptable_modes", "forbidden_modes"):
-        values = yaml_list_values(block, field)
+    mode_values = {
+        "acceptable_modes": expectation.acceptable_modes if expectation else (),
+        "forbidden_modes": expectation.forbidden_modes if expectation else (),
+    }
+    for field, values in mode_values.items():
         if not values:
             findings.append(
                 f"{path}: workflow_execution_expectation {field} must contain at least one list item"
             )
+    acceptable = set(mode_values["acceptable_modes"])
+    forbidden = set(mode_values["forbidden_modes"])
+    overlap = sorted(acceptable & forbidden)
+    if overlap:
+        findings.append(
+            f"{path}: workflow_execution_expectation acceptable_modes and forbidden_modes overlap: {', '.join(overlap)}"
+        )
+    unknown = sorted(
+        mode for mode in acceptable | forbidden if mode not in workflow_gate.KNOWN_MODES
+    )
+    if unknown:
+        findings.append(
+            f"{path}: workflow_execution_expectation contains unknown machine mode(s): {', '.join(unknown)}"
+        )
     return findings
 
 

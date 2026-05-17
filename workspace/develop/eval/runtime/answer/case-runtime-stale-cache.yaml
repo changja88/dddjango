@@ -11,22 +11,25 @@ reference_basis:
     basis: Runtime synchronization criteria
 target_behavior:
   required:
-    - Compares installed/cache skill metadata with canonical dddjango source.
+    - Compares installed/cache skill metadata or a captured cache metadata surface with canonical dddjango source.
+    - Makes an evidence-backed freshness judgment; stale if cache/source differ, fresh if they match, and unknown/blocking if evidence is missing.
     - Requires matching workspace docs/source intent before completion.
     - Uses validate_skill_docs.py --phase runtime as smoke only, not sole completion gate.
   forbidden:
     - Declaring completion after editing cache alone.
     - Importing cache blindly into canonical source.
 scoring_checks:
-  - pass if stale cache is identified with source/cache paths and sync evidence.
+  - pass if cache freshness is judged from source/cache evidence and sync validation.
+  - fail if stale or fresh is asserted without comparing cache metadata to canonical source.
   - fail if cache-only hotfix is accepted.
 failure_modes:
   - cache-only fix
   - canonical source mismatch
+  - unsupported freshness conclusion
 leakage_checks:
   - no private eval packet copied into cache.
 evidence_required:
-  - cache snapshot
+  - cache snapshot or captured active cache metadata surface
   - canonical source comparison
   - runtime validation output
 coverage_tags:

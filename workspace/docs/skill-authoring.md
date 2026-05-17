@@ -25,6 +25,7 @@
 
 | Skill | Description Draft | Positive Signals | Negative / Prefer Instead |
 |---|---|---|---|
+| `source-reference-audit` | dddjango source/reference governance audit: workspace docs, source references, runtime bundled references, provenance, conflict/gap ledger, provisional/fallback source status, validation coverage, eval traceability, source/runtime boundary. | source audit, reference provenance, source gap, provisional, conflict/gap, 출처, 근거, traceability, validation coverage | 실제 DDD/Django 설계나 구현은 해당 architecture/implementation skill |
 | `architecture-ddd` | DDD/domain modeling: subdomain, bounded context, context map, ubiquitous language, aggregate, invariant, domain event, domain service. | 도메인 규칙, 상태 전이, 정책, 불변식, 바운디드 컨텍스트, 애그리거트 | DB schema는 `architecture-db`; HTTP API는 `architecture-api`; Django 구현은 implementation skills |
 | `architecture-implementation-patterns` | Provisional until dedicated source reference exists; implementation architecture patterns for DDD mapping: layered, hexagonal, clean architecture, ports/adapters, repository, CQRS, outbox, ACL, dependency direction. Use fallback source until finalized. | 헥사고날, 클린 아키텍처, 의존성 역전, repository, outbox, ACL, 프로젝트 구조 | 단순 CRUD는 implementation skill 직접 사용 |
 | `architecture-db` | Relational DB design supporting the domain model: schema, constraints, indexes, transactions, isolation, locking, rollout constraints. | ERD, 정규화, 인덱스, constraint, transaction, locking, migration risk | Django migration file 구현은 `implementation-django` |
@@ -59,6 +60,7 @@
 
 | Skill | display_name | short_description | default_prompt |
 |---|---|---|---|
+| `source-reference-audit` | Source Reference Audit | Audit source provenance, gaps, provisional status. | `$source-reference-audit` |
 | `architecture-ddd` | DDD Architecture | Model bounded contexts, aggregates, invariants, and domain events. | `$architecture-ddd` |
 | `architecture-implementation-patterns` | Implementation Patterns | Provisional until dedicated source reference exists; use fallback source to choose clean, hexagonal, CQRS, repository, outbox, and integration patterns. | `$architecture-implementation-patterns` |
 | `architecture-db` | DB Architecture | Design relational schemas, constraints, indexes, transactions, and rollout constraints. | `$architecture-db` |

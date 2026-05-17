@@ -1,4 +1,4 @@
 interface:
   display_name: "Django Web Implementation"
-  short_description: "Provisional until dedicated source reference exists; fallback Django templates, static files, TemplateView, HTMX, and CSRF-aware web flows."
+  short_description: "Provisional Django templates, HTMX, CSRF web flows."
   default_prompt: "Use $implementation-django-web to implement Django templates, static files, TemplateView, HTMX, CSRF-aware web flows, and render acceptance checks."

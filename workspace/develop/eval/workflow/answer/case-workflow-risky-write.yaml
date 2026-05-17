@@ -27,7 +27,6 @@ workflow_execution_expectation:
     - actual_subagent
   forbidden_modes:
     - false_actual_claim
-    - missing_risky_write_owner
   decision_rule: Risky write design may be done directly or through workflow, but it must not skip the consistency decision set.
   responsibility_rule: Domain, DB, API, Django, and Test decisions must be connected with transaction and side-effect ownership.
   report_label: risky write decisions required

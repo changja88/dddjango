@@ -36,6 +36,10 @@ dddjango/
   .codex-plugin/
     plugin.json
   skills/
+    source-reference-audit/
+      SKILL.md
+      agents/
+        openai.yaml
     architecture-ddd/
       SKILL.md
       agents/
@@ -199,6 +203,7 @@ Claude Code와 Codex에서 같은 결론을 내리도록 다음을 공통으로 
 
 | Skill | Source status | Runtime references |
 |---|---|---|
+| `source-reference-audit` | ready | none; loads existing source docs and runtime references conditionally |
 | `architecture-ddd` | ready | `strategic-design.md`, `tactical-patterns.md`, `context-map.md`, `domain-events.md` |
 | `architecture-implementation-patterns` | provisional until dedicated source reference exists | `pattern-selection.md`, `ports-adapters.md`, `repository-uow.md`, `outbox-acl.md` |
 | `architecture-db` | ready | `schema-modeling.md`, `constraints-indexes.md`, `transactions-locking.md`, `rollout-constraints.md` |

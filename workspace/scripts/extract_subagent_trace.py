@@ -31,10 +31,15 @@ ROLE_NAMES = (
 SUBAGENT_EVENT_NAMES = {
     "spawn_agent",
     "wait_agent",
+    "wait",
     "send_input",
     "close_agent",
+    "close",
     "resume_agent",
 }
+
+WAIT_EVENT_NAMES = {"wait_agent", "wait"}
+RESULT_EVENT_NAMES = {"wait_agent", "wait", "close_agent", "close"}
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -154,7 +159,8 @@ def sentence_is_negated_or_fallback(sentence: str) -> bool:
     return bool(
         re.search(
             r"사용하지|사용[^\n.!?。！？]{0,40}하지|실행하지|실행[^\n.!?。！？]{0,40}하지"
-            r"|쓰지 않고|not used|no subagents|without subagents|sequential fallback|순차|계획만|planned only",
+            r"|쓰지 않고|not used|not executed|not run|did not run|no subagents"
+            r"|without subagents|sequential fallback|순차|계획만|planned only",
             lowered,
         )
     )
@@ -212,10 +218,10 @@ def extract_structured_events(event_path: Path) -> tuple[int, int, int, list[dic
             event_id = f"line-{index}"
         if tool_name == "spawn_agent":
             spawn_ids.add(event_id)
-        if tool_name == "wait_agent":
+        if tool_name in WAIT_EVENT_NAMES:
             wait_ids.add(event_id)
             result_ids.add(event_id)
-        if tool_name == "close_agent":
+        if tool_name in RESULT_EVENT_NAMES:
             result_ids.add(event_id)
         events.append(item)
     return len(spawn_ids), len(wait_ids), len(result_ids), events

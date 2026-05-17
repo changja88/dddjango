@@ -17,6 +17,8 @@ Contract decisions:
 - concurrency/race handling handoff to `architecture-db`;
 - test criteria for replay, conflict, and simultaneous duplicate requests.
 
+Replay means returning the original operation result for an equivalent retry, not recomputing from mutable current resource state. For resources that can change after creation, store a stable first-response/result snapshot or equivalent DTO with the idempotency record, and include an acceptance test that changes the resource after the first response and then verifies the retry still returns the original result.
+
 POST needs this treatment because a client may retry after the server processed the request but the response was lost. GET, PUT, and DELETE already have idempotent method semantics, though their implementation still must preserve the contract.
 
 For browser-like POST workflows where duplicate form resubmission is the main risk, consider POST/Redirect/GET with `303 See Other` to a GET result resource. For API clients that retry unsafe POST requests, prefer `Idempotency-Key`.

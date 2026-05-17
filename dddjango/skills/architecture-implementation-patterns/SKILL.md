@@ -1,7 +1,7 @@
 ---
 name: architecture-implementation-patterns
 description: >
-  Provisional until dedicated source reference exists; use fallback sources when choosing DDD implementation architecture patterns: layered/계층, clean/클린 아키텍처, hexagonal/헥사고날, ports-adapters/포트-어댑터, dependency direction/DIP/의존성 역전, repository/UoW, CQRS, event sourcing/이벤트 소싱, saga/사가, outbox, ACL/레거시 연동, service layer, and project structure. Prefer workflow-dddjango-subagents for coordinated multi-role implementation or review, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transaction details, architecture-api for REST contracts, and implementation skills for concrete code.
+  Provisional until dedicated source reference exists; use fallback sources for DDD implementation architecture patterns: layered/계층, clean/클린 아키텍처, hexagonal/헥사고날, ports-adapters/포트-어댑터/포트/어댑터, dependency direction/DIP/의존성 방향/의존성 역전, repository/UoW/레포지토리, CQRS, event sourcing, saga/사가, outbox/아웃박스, ACL, service layer, 구현 구조, 아키텍처 패턴, and 프로젝트 구조. Prefer workflow-dddjango-subagents for coordinated work, architecture-ddd when domain boundaries are unclear, architecture-db for schema/transactions, architecture-api for REST contracts, and implementation skills for concrete code. Do not use for simple CRUD or tiny edits with no real boundary, consistency, or replaceability need.
 ---
 
 # Implementation Patterns
@@ -29,6 +29,7 @@ Use this skill after the DDD model is clear and before concrete Django/Python co
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current implementation architecture task.
 - Read [pattern-selection.md](references/pattern-selection.md) for when to choose or avoid layered, clean, hexagonal, CQRS, event sourcing, saga, transaction script, or Django-native structures.
 - Read [ports-adapters.md](references/ports-adapters.md) for dependency direction, ports, adapters, Protocol/ABC boundaries, Django adapter boundaries, and ACL placement.
 - Read [repository-uow.md](references/repository-uow.md) for repository and Unit of Work decisions, Django service/selectors, QuerySet trade-offs, and testability costs.

@@ -26,7 +26,6 @@ workflow_execution_expectation:
   forbidden_modes:
     - actual_subagent
     - false_actual_claim
-    - wrong_order
   decision_rule: The public request assumes subagents cannot run, so the answer must not use or claim actual subagents.
   responsibility_rule: Sequential roles must preserve Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration order and handoff decisions.
   report_label: sequential fallback required

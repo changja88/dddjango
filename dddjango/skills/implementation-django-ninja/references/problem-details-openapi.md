@@ -26,8 +26,10 @@ Use this reference for API error responses, status codes, idempotency behavior, 
 - Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
 - Store the first request result in durable storage such as DB or Redis according to the service transaction design.
 - Return the stored response for repeated requests with the same key when the request is equivalent.
+- If the created resource can later change state, store an immutable first-result DTO/response snapshot rather than only a resource id that will be re-read as current state.
 - Define conflict behavior for the same key with a different payload.
 - Coordinate key TTL, storage owner, transaction boundary, and concurrency behavior with `implementation-django` and `architecture-db`.
+- Test replay after a later state change when mutable current state could otherwise make the retry response differ from the original response.
 
 ## OpenAPI
 

@@ -2,6 +2,37 @@
 
 이 문서는 각 스킬의 책임 계약을 정의한다. 트리거 문서가 아니라, 스킬을 만들 때 흔들리지 않아야 하는 책임과 경계 문서다.
 
+## `source-reference-audit`
+
+책임:
+
+- `workspace/docs`, `workspace/reference`, runtime bundled references 사이의 source-of-truth 관계를 점검한다.
+- source provenance, conflict/gap decision, provisional/fallback source status, validation coverage, eval traceability, source/runtime boundary를 리뷰한다.
+- source gap이나 provisional 영역에서 주장 가능한 내용과 주장하면 안 되는 내용을 구분한다.
+
+입력:
+
+- source/reference 감사 요청
+- `workspace/docs` 문서
+- `workspace/reference/*/reference/{final,review,internal,external}.md`
+- runtime `dddjango/skills/*/SKILL.md`와 `references/*.md`
+- 허용된 경우 eval public/answer 쌍과 validation artifact
+
+출력:
+
+- source inventory 또는 provenance crosswalk
+- conflict/gap/provisional ledger with item status, source evidence, allowed claim, forbidden claim, and closure work
+- validation coverage map with scenario/dimension, source basis, `coverage_tags`, expected evidence, gap/residual risk, and negative/honesty check columns
+- eval traceability map that ties each bucket `eval_goal.md` to per-case `reference_basis` and `coverage_tags`
+- source/runtime boundary와 leakage risk
+- 실행한 검증과 실행하지 못한 검증
+
+경계:
+
+- 도메인/API/DB/Django 구현 결정을 대신 내리지 않는다.
+- private oracle, prior run output, scoring note를 runtime skill, public case, source docs로 옮기지 않는다.
+- source reference 본문을 runtime `SKILL.md`에 복사하지 않는다.
+
 ## `architecture-ddd`
 
 책임:

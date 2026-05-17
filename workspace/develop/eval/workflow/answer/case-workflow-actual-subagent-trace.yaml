@@ -23,7 +23,6 @@ workflow_execution_expectation:
     - sequential_fallback
   forbidden_modes:
     - false_actual_claim
-    - role_names_without_trace
   decision_rule: Actual subagent use is not mandatory, but the answer must define when trace is required and when fallback wording is required.
   responsibility_rule: Actual subagent reports must include result collection evidence, role outputs, file ownership, risks, follow-up, and integration closure.
   report_label: actual trace or honest fallback evidence

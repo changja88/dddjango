@@ -18,6 +18,7 @@ Use this reference for value objects, finite states, dataclass options, `Enum`/`
 - Use `field(default_factory=...)` for mutable defaults.
 - Use `__post_init__` and `InitVar` for normalization that belongs to construction, but keep durable domain invariants in the domain boundary.
 - For precision-sensitive value objects such as money, ratios, or measurements, consider `Decimal` or `Fraction` instead of `float`.
+- For value objects with behavior, test value semantics and immutability when relevant, plus one representative valid operation and one invariant rejection path.
 
 ## Alternatives
 

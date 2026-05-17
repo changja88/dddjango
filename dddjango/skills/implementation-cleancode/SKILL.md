@@ -1,7 +1,7 @@
 ---
 name: implementation-cleancode
 description: >
-  Use for clean code review/refactoring: responsibility separation, naming, functions, comments/docstrings, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍/이름, 함수 분리, 비대한 모델/긴 함수/흩어진 로직, 캡슐화, 추상화, 중복 제거, 오류 처리, 레거시, 코드 냄새/스멜, 유지보수. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-python for Python typing, implementation-django for concrete Django ORM/migrations, implementation-django-ninja for Router/Schema API implementation, and workflow-dddjango-subagents for composite/subagent work.
+  Use for clean code review/refactoring: responsibility separation, naming, function shape, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models/views/routers, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍, 함수 분리, 비대한 모델, Fat View, 뷰/라우터 비즈니스 로직, 긴 함수, 흩어진 로직, 캡슐화, 추상화, 중복 제거, 레거시, 유지보수성 리뷰. Prefer architecture-implementation-patterns for pattern selection, layered/hexagonal, repository/UoW, outbox, or dependency direction; use clean-code for maintainability review of an already chosen structure. Prefer architecture-ddd/api/db for unresolved contracts, implementation-python for typing, Django skills for concrete code, and workflow-dddjango-subagents for composite work. Do not use for typo-only edits, formatter-only changes, or simple one-line explanations.
 ---
 
 # Clean Code
@@ -22,6 +22,7 @@ Use this skill when the task is to review, refactor, or improve maintainability.
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current clean-code task.
 - Read [responsibility.md](references/responsibility.md) for change reasons, SRP, cohesion/coupling, responsibility-driven design, comments, and review output.
 - Read [naming-functions.md](references/naming-functions.md) for naming, function design, arguments, command/query separation, side effects, formatting, and docstrings.
 - Read [encapsulation-abstraction.md](references/encapsulation-abstraction.md) for information hiding, deep modules, object design, SOLID, DRY, errors, and dependency management.

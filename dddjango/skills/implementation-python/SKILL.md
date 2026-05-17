@@ -1,7 +1,7 @@
 ---
 name: implementation-python
 description: >
-  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Enum/StrEnum/열거형, Protocol/프로토콜 boundary, pydantic v2 런타임 검증, 비동기, 예외 처리, modern Python. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-django-ninja for Router/Schema/API implementation, implementation-cleancode for general refactoring, implementation-django for ORM/migrations, and implementation-test for pytest.
+  Use for Python implementation quality: type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Enum/StrEnum/열거형, Protocol/프로토콜 boundary, pydantic v2 런타임 검증, 비동기, 예외 처리, modern Python. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-django-ninja for Router/Schema/API implementation, implementation-cleancode for general refactoring, implementation-django for ORM/migrations, and implementation-test for pytest. Do not use for simple syntax explanations, typo-only edits, or API/DB/domain contract decisions that are still undecided.
 ---
 
 # Python Implementation
@@ -21,6 +21,7 @@ Use this skill for the Python-language layer of a dddjango task: expressing cont
 
 ## Reference Loading
 
+- Load only the reference file(s) relevant to the current Python implementation task.
 - Read [typing.md](references/typing.md) for type hints, `X | None`, generics, `TypedDict`, narrowing, decorators, Ruff/typecheck, and Python-version gates.
 - Read [dataclasses-enums.md](references/dataclasses-enums.md) for finite states, value objects, dataclass options, `Enum`/`StrEnum`, `NamedTuple`, and `match/case`.
 - Read [protocols-boundaries.md](references/protocols-boundaries.md) for `Protocol`, replaceable boundaries, structural subtyping, exceptions, context managers, async/concurrency, and when not to abstract.

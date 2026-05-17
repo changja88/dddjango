@@ -140,6 +140,32 @@ class ExtractSubagentTraceTests(unittest.TestCase):
         self.assertEqual(summary["explicitFallbackClaims"], ["subagent는 사용하지 않고 순차 검토했습니다."])
         self.assertEqual(summary["traceStatus"], "fallback-stated")
 
+    def test_english_not_executed_fallback_claim_is_detected(self) -> None:
+        response_path, event_path = self.write_variant(
+            response=(
+                "## Role Map\n\n"
+                "Subagents were **not executed** in this read-only planning turn.\n\n"
+                "## Sequential Fallback\n\n"
+                "1. Domain\n"
+                "2. Architecture\n"
+            )
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["explicitActualClaims"], [])
+        self.assertEqual(
+            summary["explicitFallbackClaims"],
+            ["Subagents were **not executed** in this read-only planning turn."],
+        )
+        self.assertEqual(summary["traceStatus"], "fallback-stated")
+
     def test_conditional_delegation_sentence_is_not_actual_claim(self) -> None:
         response_path, event_path = self.write_variant(
             response="사용 가능하면 역할을 나누겠습니다.\n"
@@ -250,6 +276,41 @@ class ExtractSubagentTraceTests(unittest.TestCase):
                         {
                             "type": "item.completed",
                             "item": {"id": "item_2", "type": "collab_tool_call", "tool": "wait_agent"},
+                        }
+                    ),
+                ]
+            )
+            + "\n",
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["spawnEventCount"], 1)
+        self.assertEqual(summary["waitEventCount"], 1)
+        self.assertEqual(summary["resultEventCount"], 1)
+        self.assertEqual(summary["traceStatus"], "actual-trace")
+
+    def test_codex_wait_tool_counts_as_result_collection(self) -> None:
+        response_path, event_path = self.write_variant(
+            response="Domain Agent가 검토 완료했습니다.\n",
+            events="\n".join(
+                [
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {"id": "item_1", "type": "collab_tool_call", "tool": "spawn_agent"},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {"id": "item_2", "type": "collab_tool_call", "tool": "wait"},
                         }
                     ),
                 ]

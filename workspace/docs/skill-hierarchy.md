@@ -7,6 +7,7 @@ implementation skill은 바닥 스킬이다. 단순 CRUD, 단일 파일 수정, 
 도메인 규칙, 상태 전이, 정책, 불변식, bounded context가 불명확한 작업은 implementation보다 `architecture-ddd` 판단이 먼저다.
 
 - `dddjango`
+  - `source-reference-audit`
   - `workflow-dddjango-subagents`
     - `architecture-ddd`
       - `architecture-implementation-patterns`

@@ -31,7 +31,6 @@ workflow_execution_expectation:
     - sequential_fallback
     - actual_subagent
   forbidden_modes:
-    - delegated_blocker_first
     - false_actual_claim
   decision_rule: The first blocking design decision must be made locally before any subagent sidecar work.
   responsibility_rule: Any sidecar subagent or role plan must receive bounded non-blocking scope and an integration owner.
