@@ -721,6 +721,26 @@ class RunEvalBucketTests(unittest.TestCase):
                 ]
             )
 
+    def test_explicit_run_id_bucket_must_match_selected_bucket(self) -> None:
+        self.write_case(bucket="response", case_id="case-response-one")
+        with self.assertRaisesRegex(
+            SystemExit,
+            "run id bucket mismatch: run id bucket=runtime, --bucket=response",
+        ):
+            self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "20260517-143012-runtime-try01-full-current-baseline",
+                    "--case",
+                    "case-response-one",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                    "--skip-exec",
+                ]
+            )
+
     def test_unsafe_run_ids_are_rejected(self) -> None:
         self.write_case()
         for run_id in ("../escape", "nested/run", "/tmp/escape"):

@@ -88,6 +88,10 @@ def parse_run_id(run_id: str) -> RunIdentity:
         raise SystemExit(f"Invalid run id: {run_id}")
     try_number = int(match.group("try_number"))
     stamp = f"{match.group('date')}-{match.group('time')}"
+    try:
+        created_at = parse_created_at(stamp)
+    except ValueError as exc:
+        raise SystemExit(f"Invalid run id: {run_id}") from exc
     return RunIdentity(
         run_id=run_id,
         stamp=stamp,
@@ -95,7 +99,7 @@ def parse_run_id(run_id: str) -> RunIdentity:
         try_number=try_number,
         scope=match.group("scope"),
         topic=match.group("topic"),
-        created_at=parse_created_at(stamp),
+        created_at=created_at,
     )
 
 

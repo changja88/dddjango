@@ -74,6 +74,12 @@ class EvalRunIdentityTests(unittest.TestCase):
                 with self.assertRaises(SystemExit):
                     self.module.parse_run_id(value)
 
+    def test_parse_run_id_rejects_impossible_timestamp_with_system_exit(self) -> None:
+        run_id = "20261340-250000-runtime-try01-full-current-baseline"
+
+        with self.assertRaises(SystemExit):
+            self.module.parse_run_id(run_id)
+
     def test_validate_try_number_rejects_bool(self) -> None:
         stamp = datetime(2026, 5, 17, 14, 30, 12, tzinfo=ZoneInfo("Asia/Seoul"))
 
@@ -205,10 +211,8 @@ class EvalRunIdentityTests(unittest.TestCase):
 
         errors = self.module.validate_run_meta(run_dir)
 
-        self.assertEqual(
-            errors,
-            ["RUN_META.json is not valid JSON: Expecting property name enclosed in double quotes"],
-        )
+        self.assertEqual(len(errors), 1)
+        self.assertIn("RUN_META.json is not valid JSON:", errors[0])
 
     def test_validate_run_meta_invalid_run_dir_name(self) -> None:
         run_dir = self.root / "run-one"

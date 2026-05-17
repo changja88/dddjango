@@ -774,6 +774,11 @@ def main(argv: list[str] | None = None) -> int:
             scope=args.scope,
             topic=args.topic,
         )
+    run_identity_value = run_identity.validate_production_run_id(run_id)
+    if run_identity_value.bucket != args.bucket:
+        raise SystemExit(
+            f"run id bucket mismatch: run id bucket={run_identity_value.bucket}, --bucket={args.bucket}"
+        )
     bucket = common.bucket_paths(args.bucket)
     cases = common.selected_case_paths(args.bucket, args.case)
     variants = selected_variants(args.variant)
