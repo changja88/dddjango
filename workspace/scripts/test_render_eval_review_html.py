@@ -1057,6 +1057,45 @@ coverage_tags:
         self.assertTrue((legacy_run / "raw/case-response-order-create-answer-oracle-evaluation.json").is_file())
         self.assertEqual(self.renderer.latest_scored_run_dir("response"), metadata_run)
 
+    def test_latest_scored_report_ties_on_created_at_by_run_directory_name(self) -> None:
+        created_at = datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST)
+        lower_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="current-baseline",
+            created_at=created_at,
+        )
+        higher_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="current-baseline",
+            created_at=created_at,
+        )
+
+        lower_run = self.write_case(run_id=lower_run_id)
+        higher_run = self.write_case(run_id=higher_run_id)
+
+        self.assertLess(lower_run.name, higher_run.name)
+        self.assertEqual(
+            lower_run.joinpath(self.renderer.run_identity.RUN_META_FILENAME).read_text(
+                encoding="utf-8"
+            ).count('"created_at": "2026-01-01T09:00:00+09:00"'),
+            1,
+        )
+        self.assertEqual(
+            higher_run.joinpath(self.renderer.run_identity.RUN_META_FILENAME).read_text(
+                encoding="utf-8"
+            ).count('"created_at": "2026-01-01T09:00:00+09:00"'),
+            1,
+        )
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), higher_run)
+        self.assertEqual(
+            self.renderer.latest_scored_report_path("response"),
+            self.renderer.report_path("response", higher_run_id),
+        )
+
     def test_rendered_html_includes_run_metadata_header_fields(self) -> None:
         run_id = self.canonical_run_id(
             bucket="response",
