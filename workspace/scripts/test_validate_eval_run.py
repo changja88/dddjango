@@ -251,6 +251,15 @@ class ValidateEvalRunTests(unittest.TestCase):
                 ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
             )
 
+    def test_missing_run_meta_json_fails(self) -> None:
+        run_id = "20260517-143012-response-try01-full-current-baseline"
+        self.write_valid_run(run_id=run_id, include_run_meta=False)
+
+        with self.assertRaisesRegex(SystemExit, "RUN_META.json is missing"):
+            self.validator.main(
+                ["--bucket", "response", "--run-id", run_id, "--case", "case-response-one"]
+            )
+
     def test_invalid_oracle_schema_fails(self) -> None:
         self.write_valid_run(oracle={"caseId": "case-response-one"})
 
