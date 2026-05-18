@@ -232,6 +232,47 @@ coverage_tags:
         self.assertFalse(self.renderer.run_identity.validate_run_meta(run_dir))
         self.assertEqual(run_dir.name, DEFAULT_RESPONSE_RUN_ID)
 
+    def test_bucket_nav_always_links_to_latest_aliases(self) -> None:
+        plugin_run = self.write_case(
+            bucket="plugin",
+            case_id="case-plugin-one",
+            public_text="Plugin eval case.\n",
+        )
+
+        html = self.renderer.render_html(
+            self.renderer.build_report_data("plugin", plugin_run.name, plugin_run)
+        )
+
+        self.assertNotIn("is-disabled", html)
+        for bucket in self.renderer.BUCKETS:
+            href = self.renderer.bucket_report_href(
+                "plugin",
+                plugin_run.name,
+                self.renderer.latest_report_alias_path(bucket),
+            )
+            self.assertIn(f'href="{href}"', html)
+        self.assertNotIn('href="report.html"', html)
+
+    def test_write_latest_report_aliases_creates_missing_placeholders(self) -> None:
+        self.write_case(
+            bucket="plugin",
+            case_id="case-plugin-one",
+            public_text="Plugin eval case.\n",
+        )
+
+        alias_paths = self.renderer.write_latest_report_aliases()
+
+        self.assertEqual(
+            {path.parent.parent.name for path in alias_paths},
+            set(self.renderer.BUCKETS),
+        )
+        source_alias = self.renderer.latest_report_alias_path("source")
+        self.assertTrue(source_alias.is_file())
+        self.assertIn(
+            "No validated latest source eval report",
+            source_alias.read_text(encoding="utf-8"),
+        )
+
     def write_trace_marker_and_summaries(
         self,
         run_dir: Path,
@@ -1276,9 +1317,7 @@ coverage_tags:
             self.renderer.latest_scored_report_path("runtime"),
             self.renderer.report_path("runtime", latest_runtime_run_id),
         )
-        self.assertEqual(tabs_by_bucket["response"]["href"], "report.html")
-        self.assertIn('href="report.html" aria-current="page">response</a>', html)
-        for bucket in ("code",):
+        for bucket in self.renderer.BUCKETS:
             expected_href = self.renderer.bucket_report_href(
                 "response",
                 current_run_id,
@@ -1286,17 +1325,13 @@ coverage_tags:
             )
             self.assertEqual(tabs_by_bucket[bucket]["href"], expected_href)
             self.assertIn(f"href=\"{expected_href}\"", html)
-        self.assertFalse(tabs_by_bucket["runtime"]["exists"])
-        self.assertEqual(tabs_by_bucket["runtime"]["href"], "")
-        self.assertIn("class=\"bucket-tab is-disabled\">runtime</span>", html)
-        self.assertFalse(tabs_by_bucket["plugin"]["exists"])
-        self.assertEqual(tabs_by_bucket["plugin"]["href"], "")
+            self.assertTrue(tabs_by_bucket[bucket]["exists"])
         self.assertIn("class=\"report-shell\"", html)
         self.assertIn("aria-label=\"평가 카테고리\"", html)
         self.assertIn("aria-current=\"page\">response</a>", html)
         self.assertNotIn(old_code_run_id, html)
         self.assertIn(">code</a>", html)
-        self.assertIn("class=\"bucket-tab is-disabled\">plugin</span>", html)
+        self.assertNotIn("is-disabled", html)
 
     def test_current_bucket_tab_is_enabled_during_first_render_before_report_exists(self) -> None:
         run_id = self.canonical_run_id(
@@ -1317,12 +1352,17 @@ coverage_tags:
         self.assertEqual(self.renderer.latest_scored_report_path("response"), report)
         self.assertTrue(tabs_by_bucket["response"]["current"])
         self.assertTrue(tabs_by_bucket["response"]["exists"])
-        self.assertEqual(tabs_by_bucket["response"]["href"], "report.html")
+        expected_href = self.renderer.bucket_report_href(
+            "response",
+            run_id,
+            self.renderer.latest_report_alias_path("response"),
+        )
+        self.assertEqual(tabs_by_bucket["response"]["href"], expected_href)
         self.assertIn(
-            '<a class="bucket-tab is-current" href="report.html" aria-current="page">response</a>',
+            f'<a class="bucket-tab is-current" href="{expected_href}" aria-current="page">response</a>',
             html,
         )
-        self.assertNotIn("class=\"bucket-tab is-disabled\">response</span>", html)
+        self.assertNotIn("is-disabled", html)
 
     def test_latest_scored_report_uses_run_meta_created_at_not_artifact_mtime(self) -> None:
         older_run_id = self.canonical_run_id(
@@ -1551,7 +1591,7 @@ coverage_tags:
             alias_html,
         )
 
-    def test_write_latest_report_alias_removes_stale_alias_when_latest_report_missing(self) -> None:
+    def test_write_latest_report_alias_writes_placeholder_when_latest_report_missing(self) -> None:
         old_response_run_id = self.canonical_run_id(
             bucket="response",
             try_number=1,
@@ -1584,9 +1624,15 @@ coverage_tags:
         )
         self.assertFalse(self.renderer.report_path("response", latest_response_run_id).exists())
 
-        self.assertIsNone(self.renderer.write_latest_report_alias("response"))
-
-        self.assertFalse(self.renderer.latest_report_alias_path("response").exists())
+        self.assertEqual(
+            self.renderer.write_latest_report_alias("response"),
+            self.renderer.latest_report_alias_path("response"),
+        )
+        alias_html = self.renderer.latest_report_alias_path("response").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("No validated latest response eval report", alias_html)
+        self.assertNotIn(old_response_run_id, alias_html)
 
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:
         run_dir = self.write_case()

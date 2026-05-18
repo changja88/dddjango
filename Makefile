@@ -21,7 +21,8 @@ RUN_ID_ARG = $(if $(RUN_ID),--run-id "$(RUN_ID)")
 # 예: make eval-all TRY_NUMBER=1 SCOPE=full TOPIC=current-baseline EXTRA_ARGS=--rerun JOBS=3
 .PHONY: eval-all
 eval-all:
-	@printf "%s\n" $(BUCKETS) | xargs -P "$(JOBS)" -I{} \
+	@status=0; refresh_status=0; \
+	printf "%s\n" $(BUCKETS) | xargs -P "$(JOBS)" -I{} \
 		$(PYTHON) -B workspace/scripts/run_initial_eval.py \
 			--bucket {} \
 			--try-number "$(TRY_NUMBER)" \
@@ -32,7 +33,10 @@ eval-all:
 			--evaluator-model "$(EVALUATOR_MODEL)" \
 			--evaluator-reasoning "$(EVALUATOR_REASONING)" \
 			--timeout-seconds "$(TIMEOUT_SECONDS)" \
-			$(EXTRA_ARGS)
+			$(EXTRA_ARGS) || status=$$?; \
+	$(PYTHON) -B workspace/scripts/render_eval_review_html.py --refresh-latest || refresh_status=$$?; \
+	if [ "$$status" -ne 0 ]; then exit "$$status"; fi; \
+	exit "$$refresh_status"
 
 # 특정 평가 항목(bucket) 하나를 실행한다. JOBS는 bucket 내부 case 병렬 수다.
 # 사용: make eval-one BUCKET=workflow JOBS=4

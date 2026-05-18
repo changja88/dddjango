@@ -35,9 +35,14 @@ VERDICT_RANK = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bucket", choices=BUCKETS, required=True)
-    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--bucket", choices=BUCKETS)
+    parser.add_argument("--run-id")
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--refresh-latest",
+        action="store_true",
+        help="Re-render every currently valid latest report so cross-bucket tabs are fresh.",
+    )
     return parser.parse_args()
 
 
@@ -1159,29 +1164,59 @@ def latest_redirect_html(bucket: str, target_report: Path) -> str:
 """
 
 
-def remove_latest_report_alias(bucket: str) -> None:
-    alias_path = latest_report_alias_path(bucket)
-    if alias_path.exists():
-        alias_path.unlink()
+def missing_latest_report_html(bucket: str) -> str:
+    title = f"No validated latest {bucket} eval report"
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{escape(title)}</title>
+  <style>
+    body {{
+      margin: 0;
+      padding: 32px;
+      color: #1d2433;
+      background: #f7f8fb;
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+    main {{
+      max-width: 760px;
+      margin: 0 auto;
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      padding: 24px;
+      background: #fff;
+    }}
+    h1 {{ margin: 0 0 10px; font-size: 22px; }}
+    p {{ margin: 0; color: #626d7f; }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>{escape(title)}</h1>
+    <p>이 bucket에는 아직 schema, validation, answer-oracle, clean-exit 조건을 통과한 full 최신 report가 없습니다.</p>
+  </main>
+</body>
+</html>
+"""
 
 
-def write_latest_report_alias(bucket: str) -> Path | None:
-    latest_report = latest_available_report_path(bucket)
-    if latest_report is None:
-        remove_latest_report_alias(bucket)
-        return None
+def write_latest_report_alias(bucket: str) -> Path:
     alias_path = latest_report_alias_path(bucket)
     alias_path.parent.mkdir(parents=True, exist_ok=True)
-    alias_path.write_text(latest_redirect_html(bucket, latest_report), encoding="utf-8")
+    latest_report = latest_available_report_path(bucket)
+    if latest_report is None:
+        alias_path.write_text(missing_latest_report_html(bucket), encoding="utf-8")
+    else:
+        alias_path.write_text(latest_redirect_html(bucket, latest_report), encoding="utf-8")
     return alias_path
 
 
 def write_latest_report_aliases() -> list[Path]:
     aliases: list[Path] = []
     for bucket in BUCKETS:
-        alias_path = write_latest_report_alias(bucket)
-        if alias_path is not None:
-            aliases.append(alias_path)
+        aliases.append(write_latest_report_alias(bucket))
     return aliases
 
 
@@ -1194,22 +1229,14 @@ def build_bucket_tabs(current_bucket: str, run_id: str) -> list[dict[str, object
     tabs: list[dict[str, object]] = []
     for bucket in BUCKETS:
         is_current = bucket == current_bucket
-        if is_current:
-            target_report = report_path(current_bucket, run_id)
-            exists = True
-        else:
-            latest_report = latest_available_report_path(bucket)
-            target_report = latest_report_alias_path(bucket) if latest_report is not None else None
-            exists = latest_report is not None
+        target_report = latest_report_alias_path(bucket)
         tabs.append(
             {
                 "bucket": bucket,
                 "label": bucket,
-                "href": bucket_report_href(current_bucket, run_id, target_report)
-                if target_report
-                else "",
+                "href": bucket_report_href(current_bucket, run_id, target_report),
                 "current": is_current,
-                "exists": exists,
+                "exists": True,
             }
         )
     return tabs
@@ -1245,9 +1272,6 @@ def inline_markdown_code_html(text: str) -> str:
 
 def bucket_tab_html(tab: dict[str, object]) -> str:
     label = escape(str(tab.get("label") or tab.get("bucket") or "unknown"))
-    if tab.get("exists") is not True:
-        return f"""          <span class="bucket-tab is-disabled">{label}</span>"""
-
     current_class = " is-current" if tab.get("current") is True else ""
     current_attr = ' aria-current="page"' if tab.get("current") is True else ""
     href = escape(str(tab.get("href") or "#"), quote=True)
@@ -1525,12 +1549,6 @@ def render_html(data: dict[str, object]) -> str:
       background: var(--accent-soft);
       color: var(--accent);
     }}
-    .bucket-tab.is-disabled {{
-      color: var(--muted);
-      cursor: not-allowed;
-      opacity: 0.55;
-    }}
-    .bucket-tab.is-disabled:hover {{ background: transparent; }}
     .panel {{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -1996,14 +2014,19 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
 """
 
 
-def main() -> None:
-    args = parse_args()
-    identity = run_identity.validate_production_run_id(args.run_id)
-    if identity.bucket != args.bucket:
+def render_eval_report(
+    bucket: str,
+    run_id: str,
+    output: Path | None = None,
+    *,
+    update_latest_aliases: bool = True,
+) -> Path:
+    identity = run_identity.validate_production_run_id(run_id)
+    if identity.bucket != bucket:
         raise SystemExit(
-            f"run id bucket mismatch: run id bucket={identity.bucket}, --bucket={args.bucket}"
+            f"run id bucket mismatch: run id bucket={identity.bucket}, --bucket={bucket}"
         )
-    run_dir = EVAL_ROOT / args.bucket / "runs" / args.run_id
+    run_dir = EVAL_ROOT / bucket / "runs" / run_id
     raw_dir = run_dir / "raw"
     if not run_dir.is_dir():
         raise SystemExit(f"run directory does not exist: {run_dir}")
@@ -2012,25 +2035,63 @@ def main() -> None:
         raise SystemExit("; ".join(meta_errors))
     if not raw_dir.is_dir():
         raise SystemExit(f"run raw directory does not exist: {raw_dir}")
-    output = args.output or run_dir / "analysis/report.html"
-    data = build_report_data(args.bucket, args.run_id, run_dir)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_html(data), encoding="utf-8")
+    output_path = output or run_dir / "analysis/report.html"
+    data = build_report_data(bucket, run_id, run_dir)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_html(data), encoding="utf-8")
     run_identity.write_validation_manifest(
         run_dir,
-        run_id=args.run_id,
-        bucket=args.bucket,
-        case_ids=[path.stem for path in public_cases_for_run(args.bucket, run_dir)],
+        run_id=run_id,
+        bucket=bucket,
+        case_ids=[path.stem for path in public_cases_for_run(bucket, run_dir)],
         variants=list(VARIANTS),
-        report_path=output,
+        report_path=output_path,
         checks=build_render_validation_checks(
-            bucket=args.bucket,
-            run_id=args.run_id,
+            bucket=bucket,
+            run_id=run_id,
             run_dir=run_dir,
-            report=output,
+            report=output_path,
         ),
     )
+    if update_latest_aliases:
+        write_latest_report_aliases()
+    return output_path
+
+
+def refresh_latest_reports() -> list[Path]:
+    latest_runs: list[tuple[str, str]] = []
+    for bucket in BUCKETS:
+        run_dir = latest_scored_run_dir(bucket)
+        if run_dir is not None:
+            latest_runs.append((bucket, run_dir.name))
+
+    refreshed: list[Path] = []
+    for _ in range(2):
+        refreshed = [
+            render_eval_report(bucket, run_id, update_latest_aliases=False)
+            for bucket, run_id in latest_runs
+        ]
     write_latest_report_aliases()
+    return refreshed
+
+
+def main() -> None:
+    args = parse_args()
+    if args.refresh_latest:
+        for output in refresh_latest_reports():
+            try:
+                display_path = output.resolve().relative_to(REPO_ROOT.resolve())
+            except ValueError:
+                display_path = output
+            print(f"wrote {display_path}")
+        return
+
+    if args.bucket is None:
+        raise SystemExit("--bucket is required unless --refresh-latest is used")
+    if args.run_id is None:
+        raise SystemExit("--run-id is required unless --refresh-latest is used")
+
+    output = render_eval_report(args.bucket, args.run_id, args.output)
     try:
         display_path = output.resolve().relative_to(REPO_ROOT.resolve())
     except ValueError:
