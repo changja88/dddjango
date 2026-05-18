@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import sys
 import tempfile
 import unittest
@@ -92,6 +93,28 @@ description: >
 
         self.assertTrue(
             any("architecture-db/agents/openai.yaml" in error and "differs from source" in error for error in check.errors),
+            check.errors,
+        )
+
+    def test_workflow_role_map_rejects_missing_sequential_fallback_non_execution_instruction(self) -> None:
+        repo_root = MODULE_PATH.parents[2]
+        source_skill = repo_root / "dddjango" / "skills" / "workflow-dddjango-subagents"
+        workflow_skill = self.root / "workflow-dddjango-subagents"
+        shutil.copytree(source_skill, workflow_skill)
+        skill_md = workflow_skill / "SKILL.md"
+        skill_md.write_text(
+            skill_md.read_text(encoding="utf-8").replace(
+                "When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback.",
+                "",
+            ),
+            encoding="utf-8",
+        )
+        check = self.validator.Check()
+
+        self.validator.check_workflow_role_map(check, workflow_skill)
+
+        self.assertTrue(
+            any("must explicitly require sequential fallback non-execution reporting" in error for error in check.errors),
             check.errors,
         )
 

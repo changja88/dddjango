@@ -59,6 +59,8 @@ If subagents are unavailable or not authorized, keep the role order and execute 
 8. Integration
 
 Sequential fallback is still a workflow. It is not a claim that subagents ran.
+When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback.
+Do not add this statement to direct single-skill answers, pure answer-only requests, or explicit opt-out responses.
 
 ## Review-Focused Work
 

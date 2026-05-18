@@ -83,6 +83,9 @@ ROLE_TABLE_PATTERNS = {
     "Test Agent": re.compile(r"\|\s*Test Agent\s*\|[^|\n]*\|[^|\n]*`implementation-tdd`[^|\n]*`implementation-test`", re.MULTILINE),
     "Review Agent": re.compile(r"\|\s*Review Agent\s*\|[^|\n]*\|[^|\n]*`implementation-cleancode`", re.MULTILINE),
 }
+SEQUENTIAL_FALLBACK_NON_EXECUTION_SENTENCE = (
+    "When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback."
+)
 
 WORKFLOW_REFERENCES = {
     "delegation-rules.md",
@@ -399,6 +402,17 @@ def check_workflow_role_map(check: Check, workflow_skill: Path) -> None:
         "Do not write `wait_agent`, `close_agent`, or result summaries in the final answer unless those calls actually completed." in skill_text,
         "runtime workflow SKILL.md must prohibit fabricated result-collection claims",
     )
+    check.require(
+        SEQUENTIAL_FALLBACK_NON_EXECUTION_SENTENCE in skill_text,
+        "runtime workflow SKILL.md must explicitly require sequential fallback non-execution reporting",
+    )
+    delegation_rules = workflow_skill / "references" / "delegation-rules.md"
+    if delegation_rules.is_file():
+        delegation_text = read(delegation_rules)
+        check.require(
+            SEQUENTIAL_FALLBACK_NON_EXECUTION_SENTENCE in delegation_text,
+            "runtime delegation-rules.md must explicitly require sequential fallback non-execution reporting",
+        )
     check_reference_links(check, workflow_skill)
 
 
