@@ -13,14 +13,19 @@ EXTRA_ARGS ?=
 BUCKETS ?= response code plugin runtime source workflow
 BUCKET ?= workflow
 CASE ?=
+RUNTIME_SKILLS ?= $(HOME)/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills
 CASE_ARG = $(if $(CASE),--case "$(CASE)")
 RUN_ID_ARG = $(if $(RUN_ID),--run-id "$(RUN_ID)")
+
+.PHONY: eval-prereqs
+eval-prereqs:
+	$(PYTHON) -B workspace/scripts/validate_skill_docs.py --phase all --runtime-skills "$(RUNTIME_SKILLS)"
 
 # 전체 평가 항목(response/code/plugin/runtime/source/workflow)을 병렬로 실행한다.
 # 사용: make eval-all
 # 예: make eval-all TRY_NUMBER=1 SCOPE=full TOPIC=current-baseline EXTRA_ARGS=--rerun JOBS=3
 .PHONY: eval-all
-eval-all:
+eval-all: eval-prereqs
 	@status=0; refresh_status=0; \
 	printf "%s\n" $(BUCKETS) | xargs -P "$(JOBS)" -I{} \
 		$(PYTHON) -B workspace/scripts/run_initial_eval.py \
@@ -43,7 +48,7 @@ eval-all:
 # 기존 run을 다시 렌더/검증할 때만 canonical RUN_ID를 지정한다.
 # 단일 case만 다시 실행: make eval-one BUCKET=workflow CASE=case-workflow-tiny-restraint EXTRA_ARGS=--rerun
 .PHONY: eval-one
-eval-one:
+eval-one: eval-prereqs
 	$(PYTHON) -B workspace/scripts/run_initial_eval.py \
 		--bucket "$(BUCKET)" \
 		$(RUN_ID_ARG) \

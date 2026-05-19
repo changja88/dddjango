@@ -12,14 +12,22 @@ reference_basis:
   - path: workspace/docs/skill-contracts.md
     basis: implementation-django-web
 code_expected: true
+case_role: implementation_supporting
 deterministic_checks:
   - id: unit-tests
     command: python3 -m unittest
     expected_exit: 0
     evidence: command-artifact
+behavior_checks:
+  - id: hidden-web-detail-render-boundary
+    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-web-detail
+    expected_exit: 0
 target_behavior:
   required:
     - Keeps template and context focused on presentation.
+    - Provides display-ready fallback values for optional fields such as empty memo.
+    - Renders display context values in the template instead of raw domain status or memo fields.
+    - References changed/existing static CSS from the rendered template or clearly removes unused CSS.
     - Avoids domain state changes in template/view context.
     - Adds a small test or compile-level verification.
     - Touches template/static/view files only as needed.
@@ -40,6 +48,7 @@ scoring_checks:
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
 failure_modes:
   - template business logic
   - no verification
@@ -49,6 +58,7 @@ evidence_required:
   - changed-files.json
   - diff.patch
   - compile/test output
+  - behavior check output
 control_case: false
 expected_outcomes:
   baseline: partial

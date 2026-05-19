@@ -19,6 +19,8 @@ Use this reference for TemplateView, CBV/FBV choice, context preparation, forms,
 ## Context And Query Shape
 
 - Build context explicitly and keep template variable names aligned with page language.
+- Normalize optional display fields in the view/context builder or view-model helper before rendering. Convert `None`, blank strings, and missing optional values into display-ready placeholders there, then have templates render those prepared display values instead of raw domain fields.
+- Cover empty display states in render or context tests when optional fields appear on the page, including both `None` and blank-string inputs when the project distinguishes them.
 - Put reusable read logic in selectors or QuerySet methods when it is shared or performance-sensitive.
 - Use `select_related()`/`prefetch_related()` before rendering lists that traverse relationships.
 - Do not perform hidden database work from templates by passing underprepared objects into loops.

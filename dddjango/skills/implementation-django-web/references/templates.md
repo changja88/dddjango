@@ -7,6 +7,7 @@ Use this reference for Django templates, inheritance, base templates, includes/c
 - Keep templates responsible for presentation and presentation-related branching only.
 - Do not put domain rules, state transitions, pricing, permission policy, or complex data selection in templates.
 - Prepare data in views, selectors, or services before rendering.
+- Render prepared display values for optional fields. Do not make templates decide domain fallback for `None`, blank, or missing optional data beyond simple presentation branching already encoded in context.
 - Use template filters/tags for small presentation transforms, not business decisions.
 
 ## Inheritance And Base Templates
@@ -15,6 +16,7 @@ Use this reference for Django templates, inheritance, base templates, includes/c
 - Keep `{% extends %}` as the first non-comment template line.
 - Name blocks explicitly and close them with the block name, such as `{% endblock content %}`.
 - Keep page-specific templates focused on the page’s content and local blocks.
+- When a page-specific CSS/JS file is created or changed, include it from the page template or the appropriate base-template block using the project’s static convention. Avoid orphan page assets such as a `detail.css` file that the rendered detail template never references.
 
 ## Includes And Components
 

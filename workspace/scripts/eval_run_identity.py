@@ -16,6 +16,7 @@ BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
 SCOPE_CHOICES = ("full", "targeted", "adjacent", "rerun", "manual")
 RUN_META_FILENAME = "RUN_META.json"
 VALIDATION_FILENAME = "VALIDATION.json"
+RUN_VALIDATION_FILENAME = "RUN_VALIDATION.json"
 TOPIC_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 RUN_ID_PATTERN = re.compile(
     r"^(?P<date>\d{8})-(?P<time>\d{6})-(?P<bucket>"
@@ -218,6 +219,10 @@ def _validation_path(run_dir: Path) -> Path:
     return run_dir / VALIDATION_FILENAME
 
 
+def _run_validation_path(run_dir: Path) -> Path:
+    return run_dir / RUN_VALIDATION_FILENAME
+
+
 def write_validation_manifest(
     run_dir: Path,
     *,
@@ -253,8 +258,43 @@ def write_validation_manifest(
     return manifest
 
 
+def write_run_validation_manifest(
+    run_dir: Path,
+    *,
+    run_id: str,
+    bucket: str,
+    case_ids: list[str],
+    variants: list[str],
+    status: str,
+    findings: list[str],
+) -> dict[str, object]:
+    if status not in {"passed", "failed"}:
+        raise SystemExit(f"Invalid run validation status: {status}")
+    manifest: dict[str, object] = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "bucket": bucket,
+        "scope": parse_run_id(run_id).scope,
+        "status": status,
+        "case_ids": case_ids,
+        "variants": variants,
+        "findings": findings,
+        "created_at": now_kst().isoformat(timespec="seconds"),
+    }
+    run_dir.mkdir(parents=True, exist_ok=True)
+    _run_validation_path(run_dir).write_text(
+        json.dumps(manifest, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
+
+
 def load_validation_manifest(run_dir: Path) -> dict[str, Any]:
     return json.loads(_validation_path(run_dir).read_text(encoding="utf-8"))
+
+
+def load_run_validation_manifest(run_dir: Path) -> dict[str, Any]:
+    return json.loads(_run_validation_path(run_dir).read_text(encoding="utf-8"))
 
 
 def validate_validation_manifest(run_dir: Path) -> list[str]:
@@ -295,7 +335,49 @@ def validate_validation_manifest(run_dir: Path) -> list[str]:
     return problems
 
 
+def validate_run_validation_manifest(run_dir: Path) -> list[str]:
+    run_id = run_dir.name
+    try:
+        identity = parse_run_id(run_id)
+    except SystemExit:
+        return [f"Invalid run id: {run_id}"]
+    try:
+        payload = load_run_validation_manifest(run_dir)
+    except FileNotFoundError:
+        return [f"{RUN_VALIDATION_FILENAME} is missing"]
+    except json.JSONDecodeError as error:
+        return [f"{RUN_VALIDATION_FILENAME} is not valid JSON: {error.msg}"]
+    if not isinstance(payload, dict):
+        return [f"{RUN_VALIDATION_FILENAME} must be a JSON object"]
+
+    problems: list[str] = []
+    if payload.get("schema_version") != 1:
+        problems.append(f"{RUN_VALIDATION_FILENAME} schema_version must be 1")
+    if payload.get("run_id") != run_id:
+        problems.append(f"{RUN_VALIDATION_FILENAME} run_id must match directory run id: {run_id}")
+    if payload.get("bucket") != identity.bucket:
+        problems.append(
+            f"{RUN_VALIDATION_FILENAME} bucket must match run id bucket: {identity.bucket}"
+        )
+    if payload.get("scope") != identity.scope:
+        problems.append(f"{RUN_VALIDATION_FILENAME} scope must match run id scope: {identity.scope}")
+    if payload.get("status") != "passed":
+        problems.append(f"{RUN_VALIDATION_FILENAME} status must be passed")
+    if not isinstance(payload.get("case_ids"), list) or not payload.get("case_ids"):
+        problems.append(f"{RUN_VALIDATION_FILENAME} case_ids must be a non-empty list")
+    if not isinstance(payload.get("variants"), list) or not payload.get("variants"):
+        problems.append(f"{RUN_VALIDATION_FILENAME} variants must be a non-empty list")
+    findings = payload.get("findings")
+    if not isinstance(findings, list):
+        problems.append(f"{RUN_VALIDATION_FILENAME} findings must be a list")
+    elif any(not isinstance(finding, str) for finding in findings):
+        problems.append(f"{RUN_VALIDATION_FILENAME} findings must contain only strings")
+    return problems
+
+
 def has_successful_validation(run_dir: Path) -> bool:
+    if _run_validation_path(run_dir).exists():
+        return not validate_run_validation_manifest(run_dir)
     return not validate_validation_manifest(run_dir)
 
 

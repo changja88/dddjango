@@ -50,6 +50,26 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         self.assertIsInstance(value, dict)
         return value
 
+    def test_sanitize_report_text_removes_temporary_eval_workspace_prefix(self) -> None:
+        text = (
+            "[plugin-structure.md](/private/tmp/dddjango-eval-workspaces/"
+            "20260519-180742-plugin-try01-targeted-source-boundary-hardening/"
+            "case-plugin-reference-split/baseline/workspace/docs/plugin-structure.md:132)"
+        )
+
+        sanitized = self.renderer.sanitize_report_text(text)
+
+        self.assertIn("(workspace/docs/plugin-structure.md:132)", sanitized)
+        self.assertNotIn("/private/tmp/dddjango-eval-workspaces", sanitized)
+
+    def test_sanitize_report_text_redacts_internal_eval_sentinel(self) -> None:
+        sanitized = self.renderer.sanitize_report_text(
+            "찾을 문자열: __DDDJANGO_PRIVATE_EVAL_SENTINEL__\n"
+        )
+
+        self.assertIn("[internal-eval-sentinel]", sanitized)
+        self.assertNotIn("__DDDJANGO_PRIVATE_EVAL_SENTINEL__", sanitized)
+
     def write_case(
         self,
         *,
@@ -269,8 +289,14 @@ coverage_tags:
         source_alias = self.renderer.latest_report_alias_path("source")
         self.assertTrue(source_alias.is_file())
         self.assertIn(
-            "No validated latest source eval report",
+            "No latest source eval report",
             source_alias.read_text(encoding="utf-8"),
+        )
+        source_valid_alias = self.renderer.latest_valid_report_alias_path("source")
+        self.assertTrue(source_valid_alias.is_file())
+        self.assertIn(
+            "No validated latest source eval report",
+            source_valid_alias.read_text(encoding="utf-8"),
         )
 
     def write_trace_marker_and_summaries(
@@ -428,6 +454,12 @@ coverage_tags:
         )
         self.write_case(
             run_id=previous_run_id,
+            fingerprint={
+                "case_ids": ["case-response-order-create"],
+                "variants": ["baseline", "with-dddjango"],
+                "model": "gpt-5.5",
+                "reasoning": "high",
+            },
             oracle={
                 "caseId": "case-response-order-create",
                 "answerOracleEvaluated": True,
@@ -446,6 +478,12 @@ coverage_tags:
         )
         run_dir = self.write_case(
             run_id=current_run_id,
+            fingerprint={
+                "case_ids": ["case-response-order-create"],
+                "variants": ["baseline", "with-dddjango"],
+                "model": "gpt-5.5",
+                "reasoning": "high",
+            },
             oracle={
                 "caseId": "case-response-order-create",
                 "answerOracleEvaluated": True,
@@ -467,6 +505,8 @@ coverage_tags:
 
         self.assertEqual(data["previous_run"]["run_id"], previous_run_id)
         self.assertTrue(data["previous_run"]["available"])
+        self.assertEqual(data["previous_run"]["comparison_confidence"], "fingerprint-exact")
+        self.assertEqual(data["summary"]["trend_confidence"], "fingerprint-exact")
         self.assertEqual(data["summary"]["with_dddjango_average_change"], "+2.0")
         self.assertEqual(data["summary"]["pass_change"], "+1")
         self.assertEqual(data["summary"]["fail_change"], "-1")
@@ -479,7 +519,7 @@ coverage_tags:
         self.assertEqual(row["run_change"]["with_dddjango_verdict_change"], "fail -> pass")
         self.assertEqual(row["run_change"]["direction"], "improved")
 
-    def test_previous_run_comparison_skips_fingerprint_mismatch(self) -> None:
+    def test_previous_run_comparison_falls_back_to_case_overlap_on_fingerprint_mismatch(self) -> None:
         previous_run_id = self.canonical_run_id(
             bucket="response",
             try_number=1,
@@ -517,9 +557,11 @@ coverage_tags:
 
         data = self.renderer.build_report_data("response", current_run_id, run_dir)
 
-        self.assertFalse(data["previous_run"]["available"])
-        self.assertEqual(data["previous_run"]["reason"], "no comparable fingerprint match")
-        self.assertEqual(data["summary"]["with_dddjango_average_change"], "n/a")
+        self.assertTrue(data["previous_run"]["available"])
+        self.assertEqual(data["previous_run"]["run_id"], previous_run_id)
+        self.assertEqual(data["previous_run"]["comparison_confidence"], "case-overlap-fallback")
+        self.assertEqual(data["summary"]["trend_confidence"], "case-overlap-fallback")
+        self.assertNotEqual(data["summary"]["with_dddjango_average_change"], "n/a")
 
     def test_render_html_shows_previous_run_change_in_summary_table_and_dialog(self) -> None:
         previous_run_id = self.canonical_run_id(
@@ -562,6 +604,7 @@ coverage_tags:
         self.assertIn("이전 평가 대비", html)
         self.assertIn("직전 run", html)
         self.assertIn(previous_run_id, html)
+        self.assertIn("trend confidence", html)
         self.assertIn("<th>이전 대비</th>", html)
         self.assertIn("fail -&gt; pass", html)
         self.assertIn("previous with-dddjango", html)
@@ -1554,7 +1597,66 @@ coverage_tags:
         self.assertIn("topic: current-baseline", html)
         self.assertIn("created: 2026-", html)
 
-    def test_write_latest_report_alias_points_to_latest_scored_report(self) -> None:
+    def test_rendered_html_blocks_reportability_when_run_validation_failed(self) -> None:
+        run_id = self.canonical_run_id(
+            bucket="code",
+            try_number=1,
+            scope="full",
+            topic="validation-failed",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        run_dir = self.write_case(
+            bucket="code",
+            case_id="case-code-order-create",
+            run_id=run_id,
+        )
+        finding = "case-code-order-create baseline changed path is not allowed: apps/orders/services.py"
+        self.renderer.run_identity.write_run_validation_manifest(
+            run_dir,
+            run_id=run_id,
+            bucket="code",
+            case_ids=["case-code-order-create"],
+            variants=list(self.renderer.VARIANTS),
+            status="failed",
+            findings=[finding],
+        )
+
+        data = self.renderer.build_report_data("code", run_id, run_dir)
+        html = self.renderer.render_html(data)
+
+        self.assertEqual(data["run_validation"]["status"], "failed")
+        self.assertEqual(data["summary"]["run_validation_status"], "failed")
+        self.assertEqual(data["reportability"], "blocked")
+        self.assertIn("validation: failed", html)
+        self.assertIn(finding, html)
+        self.assertIn("reportability: blocked", html)
+
+    def test_latest_attempt_run_includes_unvalidated_full_run(self) -> None:
+        validated_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="validated-run",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        unvalidated_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="unvalidated-run",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        self.write_case(run_id=validated_run_id)
+        unvalidated_run = self.write_case(
+            run_id=unvalidated_run_id,
+            write_validation=False,
+        )
+
+        self.assertEqual(self.renderer.latest_attempt_run_dir("response"), unvalidated_run)
+
+    def test_write_latest_report_alias_points_to_latest_attempt_and_valid_alias_to_scored(
+        self,
+    ) -> None:
         old_response_run_id = self.canonical_run_id(
             bucket="response",
             try_number=1,
@@ -1571,10 +1673,21 @@ coverage_tags:
         )
 
         self.write_case(run_id=old_response_run_id)
+        old_report = self.renderer.report_path("response", old_response_run_id)
+        old_report.parent.mkdir(parents=True, exist_ok=True)
+        old_report.write_text("<!doctype html>\n", encoding="utf-8")
+
         self.write_case(run_id=latest_response_run_id)
         latest_report = self.renderer.report_path("response", latest_response_run_id)
         latest_report.parent.mkdir(parents=True, exist_ok=True)
         latest_report.write_text("<!doctype html>\n", encoding="utf-8")
+        validation_path = (
+            self.renderer.EVAL_ROOT
+            / "response/runs"
+            / latest_response_run_id
+            / "VALIDATION.json"
+        )
+        validation_path.unlink()
 
         aliases = self.renderer.write_latest_report_aliases()
 
@@ -1590,6 +1703,70 @@ coverage_tags:
             f"location.replace({json.dumps(expected_href)})",
             alias_html,
         )
+
+        valid_alias_path = self.renderer.latest_valid_report_alias_path("response")
+        expected_valid_href = Path(
+            os.path.relpath(old_report, valid_alias_path.parent)
+        ).as_posix()
+        valid_alias_html = valid_alias_path.read_text(encoding="utf-8")
+        self.assertIn(valid_alias_path, aliases)
+        self.assertIn(
+            f'content="0; url={expected_valid_href}"',
+            valid_alias_html,
+        )
+        self.assertNotIn(latest_response_run_id, valid_alias_html)
+
+    def test_refresh_latest_reports_renders_unvalidated_latest_attempt_without_marking_valid(
+        self,
+    ) -> None:
+        latest_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="latest-unvalidated",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        run_dir = self.write_case(run_id=latest_response_run_id, write_validation=False)
+        latest_report = self.renderer.report_path("response", latest_response_run_id)
+        self.assertFalse(latest_report.exists())
+
+        outputs = self.renderer.refresh_latest_reports()
+
+        self.assertIn(latest_report, outputs)
+        self.assertTrue(latest_report.is_file())
+        self.assertFalse((run_dir / self.renderer.run_identity.VALIDATION_FILENAME).exists())
+        alias_path = self.renderer.latest_report_alias_path("response")
+        alias_html = alias_path.read_text(encoding="utf-8")
+        expected_href = Path(os.path.relpath(latest_report, alias_path.parent)).as_posix()
+        self.assertIn(
+            f'content="0; url={expected_href}"',
+            alias_html,
+        )
+
+    def test_refresh_latest_reports_keeps_latest_alias_when_attempt_cannot_render(
+        self,
+    ) -> None:
+        latest_response_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="missing-raw",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        run_dir = (
+            self.renderer.EVAL_ROOT
+            / "response/runs"
+            / latest_response_run_id
+        )
+        self.renderer.run_identity.write_run_meta(run_dir, run_id=latest_response_run_id)
+
+        outputs = self.renderer.refresh_latest_reports()
+
+        self.assertEqual(outputs, [])
+        alias_path = self.renderer.latest_report_alias_path("response")
+        alias_html = alias_path.read_text(encoding="utf-8")
+        self.assertIn("No latest response eval report", alias_html)
+        self.assertIn(latest_response_run_id, alias_html)
 
     def test_write_latest_report_alias_writes_placeholder_when_latest_report_missing(self) -> None:
         old_response_run_id = self.canonical_run_id(
@@ -1631,7 +1808,8 @@ coverage_tags:
         alias_html = self.renderer.latest_report_alias_path("response").read_text(
             encoding="utf-8"
         )
-        self.assertIn("No validated latest response eval report", alias_html)
+        self.assertIn("No latest response eval report", alias_html)
+        self.assertIn(latest_response_run_id, alias_html)
         self.assertNotIn(old_response_run_id, alias_html)
 
     def test_public_case_text_is_not_modified_by_report_build_or_render(self) -> None:

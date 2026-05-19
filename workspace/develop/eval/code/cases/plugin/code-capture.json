@@ -1,5 +1,13 @@
 {
   "cases": {
+    "case-code-ddd-order-placement": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/ddd_order_service"
+    },
+    "case-code-ddd-reservation-boundary": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/ddd_reservation_service"
+    },
     "case-code-order-api": {
       "captureCode": true,
       "subjectRepo": "workspace/develop/eval/code/fixtures/django_shop_service"

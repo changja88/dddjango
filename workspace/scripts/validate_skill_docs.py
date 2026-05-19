@@ -15,10 +15,13 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKSPACE = ROOT / "workspace"
 DOCS = WORKSPACE / "docs"
 DEFAULT_PLUGIN_SKILLS = ROOT / "dddjango" / "skills"
+DEFAULT_ACTIVE_RUNTIME_SKILLS = (
+    Path.home() / ".codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills"
+)
 DEFAULT_RUNTIME_SKILLS = Path(
     os.environ.get(
         "DDDJANGO_RUNTIME_SKILLS",
-        str(ROOT / "plugins/dddjango/skills"),
+        str(DEFAULT_ACTIVE_RUNTIME_SKILLS if DEFAULT_ACTIVE_RUNTIME_SKILLS.exists() else ROOT / "plugins/dddjango/skills"),
     )
 )
 
@@ -85,6 +88,9 @@ ROLE_TABLE_PATTERNS = {
 }
 SEQUENTIAL_FALLBACK_NON_EXECUTION_SENTENCE = (
     "When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback."
+)
+SEQUENTIAL_FALLBACK_STATUS_SENTENCE = (
+    "Real subagents were not executed; this is sequential fallback in the role order below."
 )
 
 WORKFLOW_REFERENCES = {
@@ -288,6 +294,10 @@ def check_reference_links(check: Check, skill_dir: Path) -> None:
             reference_files <= linked,
             f"{skill_dir.name} has unlinked workflow reference files: {sorted(reference_files - linked)}",
         )
+        check.require(
+            linked <= reference_files,
+            f"{skill_dir.name} links missing reference files: {sorted(linked - reference_files)}",
+        )
         return
 
     check.require(
@@ -297,6 +307,10 @@ def check_reference_links(check: Check, skill_dir: Path) -> None:
     check.require(
         reference_files <= linked,
         f"{skill_dir.name} has unlinked reference files: {sorted(reference_files - linked)}",
+    )
+    check.require(
+        linked <= reference_files,
+        f"{skill_dir.name} links missing reference files: {sorted(linked - reference_files)}",
     )
 
 
@@ -406,6 +420,10 @@ def check_workflow_role_map(check: Check, workflow_skill: Path) -> None:
         SEQUENTIAL_FALLBACK_NON_EXECUTION_SENTENCE in skill_text,
         "runtime workflow SKILL.md must explicitly require sequential fallback non-execution reporting",
     )
+    check.require(
+        SEQUENTIAL_FALLBACK_STATUS_SENTENCE in skill_text,
+        "runtime workflow SKILL.md must require the exact sequential fallback status sentence",
+    )
     delegation_rules = workflow_skill / "references" / "delegation-rules.md"
     if delegation_rules.is_file():
         delegation_text = read(delegation_rules)
@@ -413,7 +431,148 @@ def check_workflow_role_map(check: Check, workflow_skill: Path) -> None:
             SEQUENTIAL_FALLBACK_NON_EXECUTION_SENTENCE in delegation_text,
             "runtime delegation-rules.md must explicitly require sequential fallback non-execution reporting",
         )
+        check.require(
+            SEQUENTIAL_FALLBACK_STATUS_SENTENCE in delegation_text,
+            "runtime delegation-rules.md must require the exact sequential fallback status sentence",
+        )
     check_reference_links(check, workflow_skill)
+
+
+def check_source_reference_audit(check: Check, skill_dir: Path) -> None:
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.is_file():
+        return
+    text = read(skill_md)
+    required = [
+        "## Leakage Evidence Protocol",
+        "permitted surfaces",
+        "concrete artifacts",
+        "`not run`",
+        "`not provided`",
+        "private evaluation material",
+        "non-public validation notes",
+        "## Public Boundary Wording",
+        "public-facing by default",
+        "source evidence",
+        "review scope",
+        "validation conditions",
+        "internal eval-pack",
+        "traceability manifests",
+        "## Runtime-Facing Path Boundary",
+        "Runtime-facing guidance",
+        "runtime bundle-relative",
+        "skill-local",
+        "runtime_skill_reference.allow_refs",
+    ]
+    for phrase in required:
+        check.require(
+            phrase in text,
+            f"source-reference-audit must include leakage evidence protocol phrase: {phrase}",
+        )
+    forbidden = [
+        "hidden scoring criteria",
+        "hidden expected behavior",
+        "hidden target behavior",
+        "private scoring text",
+        "prior run findings",
+        "expected-behavior notes",
+        "internal expected behavior",
+    ]
+    for phrase in forbidden:
+        check.require(
+            phrase not in text,
+            f"source-reference-audit must avoid leakage-prone wording: {phrase}",
+        )
+    public_boundary = markdown_section(text, "Public Boundary Wording")
+    check.require(public_boundary.strip(), "source-reference-audit must include Public Boundary Wording section")
+    internal_field_names = [
+        "reference_basis",
+        "coverage_tags",
+        "target_behavior",
+        "scoring_checks",
+        "hard_gates",
+        "evidence_required",
+        "failure_modes",
+        "expected_outcomes",
+        "required_observations",
+    ]
+    for field_name in internal_field_names:
+        check.require(
+            f"`{field_name}`" not in public_boundary,
+            f"source-reference-audit Public Boundary Wording must keep internal eval-pack field names out: {field_name}",
+        )
+    check_runtime_facing_path_boundary(check, text)
+
+
+def markdown_section(text: str, heading: str) -> str:
+    pattern = re.compile(
+        rf"^## {re.escape(heading)}\s*\n(?P<body>.*?)(?=^## |\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(text)
+    return match.group("body") if match else ""
+
+
+def check_runtime_facing_path_boundary(check: Check, text: str) -> None:
+    section = markdown_section(text, "Runtime-Facing Path Boundary")
+    check.require(section.strip(), "source-reference-audit must include Runtime-Facing Path Boundary section")
+    required = [
+        "Authoring/source analysis",
+        "cache/source parity evidence",
+        "Internal eval/oracle work",
+        "Runtime-facing guidance",
+        "runtime bundle-relative",
+        "skill-local references",
+        "Do not present `workspace/docs/**` or `workspace/reference/**` as runtime-facing allowed refs",
+    ]
+    for phrase in required:
+        check.require(
+            phrase in section,
+            f"source-reference-audit Runtime-Facing Path Boundary must include phrase: {phrase}",
+        )
+    for line_number, line in runtime_source_allow_ref_violations(text):
+        check.require(
+            False,
+            f"source-reference-audit must not allow workspace source paths as runtime-facing refs at line {line_number}: {line}",
+        )
+
+
+def runtime_source_allow_ref_violations(text: str) -> list[tuple[int, str]]:
+    violations: list[tuple[int, str]] = []
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        lowered = line.lower()
+        if "workspace/docs" not in lowered and "workspace/reference" not in lowered:
+            continue
+        context = "\n".join(lines[max(0, index - 4) : index + 1]).lower()
+        if not ("runtime" in context and "allow_refs" in context):
+            continue
+        if re.search(r"\b(do not|must not|should not|not present|cannot|forbid|forbidden)\b", context):
+            continue
+        violations.append((index + 1, line.strip()))
+    return violations
+
+
+def check_implementation_tdd_boundaries(check: Check, skill_dir: Path) -> None:
+    skill_md = skill_dir / "SKILL.md"
+    test_list = skill_dir / "references" / "test-list.md"
+    if skill_md.is_file():
+        text = read(skill_md)
+        check.require(
+            "day after expiration rejected" in text
+            and "A rejection on another axis" in text,
+            "implementation-tdd SKILL.md must require validity-window rejected complements",
+        )
+    check.require(
+        test_list.is_file(),
+        "implementation-tdd must include references/test-list.md for boundary guidance",
+    )
+    if test_list.is_file():
+        text = read(test_list)
+        check.require(
+            "`expires_on` accepted" in text and "`expires_on + 1 day` rejected" in text,
+            "implementation-tdd test-list.md must include explicit expiration boundary examples",
+        )
 
 
 def runtime_facing_files(skill_dir: Path) -> set[Path]:
@@ -463,6 +622,10 @@ def check_runtime_cache(
         check.require(skill_dir.is_dir(), f"missing runtime skill folder: {skill_dir}")
         if skill_dir.is_dir():
             check_skill_folder(check, skill_dir, require_metadata=False)
+            if skill_dir.name == "source-reference-audit":
+                check_source_reference_audit(check, skill_dir)
+            if skill_dir.name == "implementation-tdd":
+                check_implementation_tdd_boundaries(check, skill_dir)
 
     workflow_skill = runtime_skills / "workflow-dddjango-subagents"
     check_workflow_role_map(check, workflow_skill)
@@ -484,6 +647,10 @@ def check_generated_skills(check: Check, skills_dir: Path, required: bool) -> No
 
     for skill_dir in sorted(path for path in skills_dir.iterdir() if path.is_dir()):
         check_skill_folder(check, skill_dir, require_metadata=True)
+        if skill_dir.name == "source-reference-audit":
+            check_source_reference_audit(check, skill_dir)
+        if skill_dir.name == "implementation-tdd":
+            check_implementation_tdd_boundaries(check, skill_dir)
         if skill_dir.name == "workflow-dddjango-subagents":
             check_workflow_role_map(check, skill_dir)
 

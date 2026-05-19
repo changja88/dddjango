@@ -13,6 +13,7 @@ Use this reference for Django static file organization, CSS/JS placement, collec
 
 - Use `{% load static %}` and `{% static 'path/to/file.css' %}` instead of hardcoded static URLs.
 - Put CSS and JS includes in base-template blocks when pages need to opt in.
+- If you create or modify page-specific CSS/JS, wire it into the rendered template through the project’s existing static asset convention in the same change. If the page does not need the asset, do not create or edit it.
 - Keep inline scripts small and local to the template only when external files would be less clear.
 - Avoid mixing domain data transformations into JavaScript embedded in templates.
 
@@ -27,5 +28,6 @@ Use this reference for Django static file organization, CSS/JS placement, collec
 
 - Check that referenced static paths exist.
 - Check that page templates load required CSS/JS without duplicate or stale references.
+- Check that any changed page-specific CSS/JS file is referenced by the rendered page; treat an unreferenced changed asset as unfinished work, not as a harmless extra file.
 - For visible UI changes, verify rendering with available tests, screenshots, or browser checks when practical.
 - If render/browser checks were not run, state that clearly.

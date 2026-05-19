@@ -17,6 +17,8 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import eval_run_common as common
 import eval_run_identity as run_identity
+import validate_eval_code_artifacts as code_artifacts
+import eval_leakage_policy
 import workflow_execution_gate as workflow_gate
 
 
@@ -226,8 +228,32 @@ def local_path_scan_artifacts(
     return [path for path in paths if path.is_file()]
 
 
+def generic_leakage_scan_artifacts(
+    *,
+    run_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+) -> list[Path]:
+    paths = [
+        raw_dir / f"{case_id}-answer-oracle-evaluation.json",
+        run_dir / "analysis/report.html",
+    ]
+    for variant in variants:
+        if variant == "baseline":
+            continue
+        paths.extend(
+            [
+                raw_dir / f"{case_id}-{variant}.txt",
+                raw_dir / f"{case_id}-{variant}.stderr.txt",
+            ]
+        )
+    return [path for path in paths if path.is_file()]
+
+
 def validate_forbidden_local_paths(
     *,
+    bucket: str,
     run_dir: Path,
     raw_dir: Path,
     case_id: str,
@@ -235,17 +261,73 @@ def validate_forbidden_local_paths(
 ) -> list[str]:
     markers = forbidden_local_path_markers()
     findings: list[str] = []
-    for path in local_path_scan_artifacts(
+    paths = local_path_scan_artifacts(
         run_dir=run_dir,
         raw_dir=raw_dir,
         case_id=case_id,
         variants=variants,
-    ):
+    )
+    for path in paths:
         text = path.read_text(encoding="utf-8", errors="replace")
         if any(marker in text for marker in markers):
             display_path = display_run_path(run_dir, path)
             findings.append(f"{display_path}: output contains forbidden local path")
+    generic_paths = generic_leakage_scan_artifacts(
+        run_dir=run_dir,
+        raw_dir=raw_dir,
+        case_id=case_id,
+        variants=variants,
+    )
+    public_prompt_categories = public_prompt_leakage_categories(raw_dir, case_id)
+    for leakage in eval_leakage_policy.scan_files_for_leakage(generic_paths):
+        if (
+            leakage.path == run_dir / "analysis/report.html"
+            and leakage.category in public_prompt_categories
+        ):
+            continue
+        if is_allowed_generic_leakage(
+            bucket=bucket,
+            raw_dir=raw_dir,
+            case_id=case_id,
+            variants=variants,
+            path=leakage.path,
+            category=leakage.category,
+            public_prompt_categories=public_prompt_categories,
+        ):
+            continue
+        display_path = display_run_path(run_dir, leakage.path)
+        findings.append(f"{display_path}: output contains {leakage.category}")
     return findings
+
+
+def public_prompt_leakage_categories(raw_dir: Path, case_id: str) -> set[str]:
+    path = raw_dir / f"{case_id}-public-prompt.md"
+    if not path.is_file():
+        return set()
+    text = path.read_text(encoding="utf-8", errors="replace")
+    return set(eval_leakage_policy.scan_text_for_leakage(text))
+
+
+def is_allowed_generic_leakage(
+    *,
+    bucket: str,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+    path: Path,
+    category: str,
+    public_prompt_categories: set[str],
+) -> bool:
+    """Allow Codex file links in code answers without weakening report leakage checks."""
+    allowed_response_paths = {
+        raw_dir / f"{case_id}-{variant}.txt"
+        for variant in variants
+    }
+    if path not in allowed_response_paths:
+        return False
+    if category in public_prompt_categories:
+        return True
+    return bucket == "code" and category == "temporary workspace path"
 
 
 def baseline_forbidden_paths() -> list[Path]:
@@ -468,6 +550,7 @@ def validate_code_artifacts(
     case_id: str,
     variants: list[str],
     metadata: dict[str, Any],
+    answer_dir: Path,
 ) -> list[str]:
     cases = metadata.get("cases")
     if not isinstance(cases, dict):
@@ -477,75 +560,37 @@ def validate_code_artifacts(
         return []
 
     findings: list[str] = []
-    for variant in variants:
-        base = run_dir / "code" / case_id / variant
-        manifest_path = base / "changed-files.json"
-        diff_path = base / "diff.patch"
-        if not require_file(findings, manifest_path, "code artifact manifest"):
-            continue
-        require_file(findings, diff_path, "code artifact diff")
-        manifest, error = load_json_object(manifest_path)
-        if error is not None:
-            findings.append(error)
-            continue
-        assert manifest is not None
+    try:
+        answer_text = code_artifacts.load_answer_oracle(answer_dir, case_id)
+        code_expected = code_artifacts.answer_code_expected(answer_text, case_id)
+        deterministic_checks = code_artifacts.parse_deterministic_checks(answer_text, case_id)
+        behavior_checks = code_artifacts.parse_behavior_checks(answer_text, case_id)
+    except AssertionError as exc:
+        return [str(exc)]
 
-        required_manifest_keys = {
-            "caseId",
-            "variant",
-            "evidenceMode",
-            "diffPath",
-            "noCodeProduced",
-            "files",
-        }
-        missing = sorted(required_manifest_keys - set(manifest))
-        if missing:
-            findings.append(f"{manifest_path}: missing keys: {', '.join(missing)}")
-            continue
-        if manifest.get("caseId") != case_id:
-            findings.append(f"{manifest_path}: caseId mismatch")
-        if manifest.get("variant") != variant:
-            findings.append(f"{manifest_path}: variant mismatch")
-        if manifest.get("evidenceMode") != "code-backed":
-            findings.append(f"{manifest_path}: evidenceMode must be code-backed")
-        diff_value = manifest.get("diffPath")
-        if not isinstance(diff_value, str):
-            findings.append(f"{manifest_path}: diffPath must be a string")
-        elif not diff_value:
-            findings.append(f"{manifest_path}: diffPath must not be empty")
-        else:
-            _, path_error = safe_run_relative_path(run_dir, diff_value)
-            if path_error is not None:
-                findings.append(f"{manifest_path}: {path_error}")
-        if not isinstance(manifest.get("noCodeProduced"), bool):
-            findings.append(f"{manifest_path}: noCodeProduced must be a boolean")
-        files = manifest.get("files")
-        if not isinstance(files, list):
-            findings.append(f"{manifest_path}: files must be a list")
-            continue
-        for entry in files:
-            if not isinstance(entry, dict):
-                findings.append(f"{manifest_path}: file entry must be an object")
-                continue
-            binary = entry.get("binary")
-            if binary is not None and not isinstance(binary, bool):
-                findings.append(f"{manifest_path}: binary must be boolean")
-                continue
-            if entry.get("binary") is True:
-                continue
-            artifact_raw = entry.get("artifactPath")
-            if not isinstance(artifact_raw, str) or not artifact_raw:
-                findings.append(f"{manifest_path}: artifactPath is required for non-binary file entries")
-                continue
-            artifact_value = artifact_raw
-            artifact_file, path_error = safe_run_relative_path(run_dir, artifact_value)
-            if path_error is not None:
-                findings.append(f"{manifest_path}: {path_error}")
-                continue
-            assert artifact_file is not None
-            if not artifact_file.is_file():
-                entry_path = entry.get("path", artifact_value)
-                findings.append(f"{manifest_path}: missing copied source file for {entry_path}: {artifact_file}")
+    for variant in variants:
+        try:
+            code_artifacts.validate_manifest(
+                run_dir,
+                case_id,
+                variant,
+                answer_text=answer_text,
+                code_expected=code_expected,
+            )
+            code_artifacts.validate_deterministic_check_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                deterministic_checks,
+            )
+            code_artifacts.validate_behavior_check_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                behavior_checks,
+            )
+        except AssertionError as exc:
+            findings.append(str(exc))
     return findings
 
 
@@ -599,6 +644,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         findings.extend(
             validate_forbidden_local_paths(
+                bucket=args.bucket,
                 run_dir=run_dir,
                 raw_dir=raw_dir,
                 case_id=case_id,
@@ -614,6 +660,7 @@ def main(argv: list[str] | None = None) -> int:
                     case_id=case_id,
                     variants=variants,
                     metadata=code_metadata,
+                    answer_dir=bucket.answer_dir,
                 )
             )
         if args.bucket == "workflow":
@@ -636,10 +683,28 @@ def main(argv: list[str] | None = None) -> int:
                 )
 
     if findings:
+        run_identity.write_run_validation_manifest(
+            run_dir,
+            run_id=run_id,
+            bucket=args.bucket,
+            case_ids=[case_path.stem for case_path in case_paths],
+            variants=variants,
+            status="failed",
+            findings=findings,
+        )
         for finding in findings:
             print(f"FAIL: {finding}")
         raise SystemExit(1)
 
+    run_identity.write_run_validation_manifest(
+        run_dir,
+        run_id=run_id,
+        bucket=args.bucket,
+        case_ids=[case_path.stem for case_path in case_paths],
+        variants=variants,
+        status="passed",
+        findings=[],
+    )
     print(
         f"PASS: validated {len(case_paths)} case(s), {len(variants)} variant(s) "
         f"for {args.bucket}/{run_id}"

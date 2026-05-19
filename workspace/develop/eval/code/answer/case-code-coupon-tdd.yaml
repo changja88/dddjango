@@ -14,6 +14,7 @@ reference_basis:
   - path: workspace/reference/implementation-test/reference/final.md
     basis: required reference source
 code_expected: true
+case_role: implementation_supporting
 deterministic_checks:
   - id: unit-tests
     command: python3 -m unittest
@@ -39,6 +40,7 @@ scoring_checks:
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
 failure_modes:
   - missing edge cases
   - overbroad refactor

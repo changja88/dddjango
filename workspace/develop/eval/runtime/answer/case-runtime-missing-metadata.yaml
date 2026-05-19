@@ -15,11 +15,12 @@ target_behavior:
   required:
     - Checks that SKILL.md and agents/openai.yaml both exist and semantically align.
     - Explains how missing metadata may reduce prompt exposure or UI/default prompt routing.
-    - Requires generated/all validation, not only file existence.
+    - Captures validation command output from generated/all validation or an equivalent metadata validator, not only file existence.
+    - Compares semantic metadata alignment across skill description, UI metadata, and default prompt.
   forbidden:
     - Ignoring metadata because SKILL.md exists.
 scoring_checks:
-  - pass if missing metadata is treated as runtime quality failure with evidence.
+  - pass if missing metadata is treated as runtime quality failure with validation output and semantic alignment evidence.
   - fail if only SKILL.md is inspected.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
@@ -32,6 +33,7 @@ leakage_checks:
 evidence_required:
   - skill tree snapshot
   - validation command output
+  - semantic metadata alignment notes
 control_case: false
 expected_outcomes:
   baseline: partial

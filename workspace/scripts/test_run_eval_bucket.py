@@ -574,6 +574,113 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue((checks / "unit-tests-stdout.txt").is_file())
         self.assertTrue((checks / "unit-tests-stderr.txt").is_file())
 
+    def test_code_bucket_records_behavior_check_with_workspace_from_repo_root(self) -> None:
+        self.write_case(
+            bucket="code",
+            case_id="case-code-one",
+            answer_text=(
+                "id: case-code-one\n"
+                "case_id: case-code-one\n"
+                "bucket: code\n"
+                "kind: code\n"
+                "code_expected: true\n"
+                "deterministic_checks: []\n"
+                "behavior_checks:\n"
+                "  - id: hidden\n"
+                "    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-one\n"
+                "    expected_exit: 0\n"
+            ),
+        )
+        self.write_code_capture_metadata()
+        self.commands = []
+
+        with patch.object(self.runner, "run_command", side_effect=self.fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "code",
+                    "--run-id",
+                    "20260517-143023-code-try01-targeted-case-code-one",
+                    "--case",
+                    "case-code-one",
+                    "--variant",
+                    "baseline",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                    "--skip-exec",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        run_dir = self.runner.common.EVAL_ROOT / "code/runs/20260517-143023-code-try01-targeted-case-code-one"
+        checks = run_dir / "code/case-code-one/baseline/behavior-checks"
+        command_text = (checks / "hidden-command.txt").read_text(encoding="utf-8")
+        self.assertIn("workspace/scripts/eval_code_behavior_checks.py", command_text)
+        self.assertIn("--workspace", command_text)
+        self.assertEqual((checks / "hidden-exit.txt").read_text(encoding="utf-8"), "0\n")
+        behavior_commands = [
+            (command, cwd)
+            for command, _prompt, cwd, _timeout_seconds in self.commands
+            if "workspace/scripts/eval_code_behavior_checks.py" in command
+        ]
+        self.assertEqual(len(behavior_commands), 1)
+        command, cwd = behavior_commands[0]
+        self.assertEqual(cwd, self.root)
+        self.assertIn("--workspace", command)
+
+    def test_code_bucket_behavior_check_failure_does_not_abort_run(self) -> None:
+        self.write_case(
+            bucket="code",
+            case_id="case-code-one",
+            answer_text=(
+                "id: case-code-one\n"
+                "case_id: case-code-one\n"
+                "bucket: code\n"
+                "kind: code\n"
+                "code_expected: true\n"
+                "deterministic_checks: []\n"
+                "behavior_checks:\n"
+                "  - id: hidden\n"
+                "    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-one\n"
+                "    expected_exit: 0\n"
+            ),
+        )
+        self.write_code_capture_metadata()
+
+        def fake_run_command(command, *, prompt, cwd, timeout_seconds):
+            if "workspace/scripts/eval_code_behavior_checks.py" in command:
+                return subprocess.CompletedProcess(command, 1, "", "quality failure\n")
+            return self.fake_run_command(command, prompt=prompt, cwd=cwd, timeout_seconds=timeout_seconds)
+
+        self.commands = []
+        with patch.object(self.runner, "run_command", side_effect=fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "code",
+                    "--run-id",
+                    "20260517-143024-code-try01-targeted-case-code-one",
+                    "--case",
+                    "case-code-one",
+                    "--variant",
+                    "baseline",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                    "--skip-exec",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        checks = (
+            self.runner.common.EVAL_ROOT
+            / "code/runs/20260517-143024-code-try01-targeted-case-code-one/code/case-code-one/baseline/behavior-checks"
+        )
+        self.assertEqual((checks / "hidden-exit.txt").read_text(encoding="utf-8"), "1\n")
+        self.assertEqual(
+            (checks / "hidden-stderr.txt").read_text(encoding="utf-8"),
+            "quality failure\n",
+        )
+
     def test_capture_code_artifacts_lists_untracked_nested_files_individually(self) -> None:
         workspace = Path(self.tmp.name) / "code-workspace"
         run_dir = Path(self.tmp.name) / "run"
@@ -591,6 +698,51 @@ class RunEvalBucketTests(unittest.TestCase):
         copied_file = run_dir / files[0]["artifactPath"]
         self.assertTrue(copied_file.is_file())
         self.assertEqual(copied_file.read_text(encoding="utf-8"), "print('created')\n")
+
+    def test_capture_code_artifacts_writes_quality_policy_findings(self) -> None:
+        workspace = Path(self.tmp.name) / "policy-workspace"
+        run_dir = Path(self.tmp.name) / "run-policy"
+        self.init_git_workspace(workspace)
+        changed_file = workspace / "app.py"
+        changed_file.write_text("print('outside allowed paths')\n", encoding="utf-8")
+        answer_text = (
+            "id: case-code-one\n"
+            "case_id: case-code-one\n"
+            "bucket: code\n"
+            "kind: code\n"
+            "code_expected: true\n"
+            "deterministic_checks: []\n"
+            "allowed_paths:\n"
+            "  - apps/orders/**\n"
+            "forbidden_paths:\n"
+            "  - workspace/develop/eval/**\n"
+        )
+
+        self.runner.capture_code_artifacts(
+            workspace,
+            run_dir,
+            "case-code-one",
+            "baseline",
+            answer_text=answer_text,
+        )
+
+        policy = json.loads(
+            (
+                run_dir / "code/case-code-one/baseline/policy-findings.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            policy["findings"],
+            [
+                {
+                    "severity": "quality",
+                    "rule": "allowed_paths",
+                    "path": "app.py",
+                    "message": "changed path is outside scoring allowed_paths: app.py",
+                    "allowedPaths": ["apps/orders/**"],
+                }
+            ],
+        )
 
     def test_deleted_file_manifest_does_not_require_copied_source_artifact(self) -> None:
         workspace = Path(self.tmp.name) / "delete-workspace"

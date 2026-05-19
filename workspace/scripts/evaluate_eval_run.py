@@ -243,6 +243,17 @@ def build_prompt(
         )
     for title, path, text in workflow_trace_artifacts:
         sections.append(artifact_section(f"Workflow trace: {title}", path, text))
+    if code_artifacts:
+        sections.extend(
+            [
+                "Code artifact evaluation guidance",
+                "Use changed-files.json, diff.patch, copied source files, deterministic check "
+                "artifacts, behavior-check artifacts, and policy-findings.json as evidence. "
+                "Treat policy-findings.json severity=quality entries as model-quality scoring "
+                "signals, not as artifact-integrity hard gates.",
+                "",
+            ]
+        )
     for title, path, text in code_artifacts:
         sections.append(artifact_section(f"Code artifact: {title}", path, text))
     return "\n".join(sections)

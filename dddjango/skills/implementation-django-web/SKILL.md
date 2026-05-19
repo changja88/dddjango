@@ -41,4 +41,5 @@ This skill is provisional. Dedicated Django Web source reference does not exist 
 - Use explicit `ModelForm.Meta.fields`; avoid `fields = "__all__"` and `exclude` unless the project explicitly accepts that exposure.
 - Keep reusable UI fragments in includes/components when it reduces meaningful duplication.
 - Treat HTMX/AJAX endpoints as web adapters; keep server-side domain behavior behind model/service boundaries and keep CSRF handling explicit.
+- Before finishing template/static work, check that view/context code provides display-ready fallback values for optional fields, templates render display values instead of raw domain fields, changed static files are referenced by the rendered page or reported as unused, and a render/template test was run when the project has one.
 - Report only verification actually run. If render tests, browser checks, `collectstatic`, `check --deploy`, or template tests were not run, say so.

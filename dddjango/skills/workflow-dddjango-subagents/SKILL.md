@@ -44,7 +44,7 @@ Use this skill to coordinate complex dddjango work across domain, architecture, 
 
 For composite or risky implementation/planning workflow answers, the first visible heading must be `## Role Map`, followed by `## Sequential Fallback`, `## Handoff Contract`, and `## Integration Checklist`. Shorten the content inside those sections if needed, but do not remove the sections.
 
-When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback. This applies to workflow-section output only; do not add this statement to Direct Answer Mode or explicit opt-out answers.
+When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback. The `## Sequential Fallback` section must start with exactly one short execution-status sentence: `Real subagents were not executed; this is sequential fallback in the role order below.` Then continue with Domain, Architecture, DB, API, Django, TDD/Test, Review, and Integration. This applies to workflow-section output only; do not add this statement to Direct Answer Mode, pure answer-only requests, or explicit opt-out answers.
 
 For review-focused work, findings must lead, ordered by severity with evidence. If the review also needs coordinated workflow output, include `## Role Map`, `## Sequential Fallback`, `## Handoff Contract`, and `## Integration Checklist` after the findings instead of before them.
 

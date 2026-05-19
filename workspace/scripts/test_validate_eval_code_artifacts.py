@@ -52,7 +52,7 @@ class ValidateEvalCodeArtifactsTests(unittest.TestCase):
         self.write_answer()
         self.write_variant_artifacts("with-dddjango")
 
-    def write_answer(self, *, checks: str | None = None) -> None:
+    def write_answer(self, *, code_expected: bool = True, checks: str | None = None) -> None:
         checks_text = checks or (
             "deterministic_checks:\n"
             "  - id: unit-tests\n"
@@ -60,12 +60,15 @@ class ValidateEvalCodeArtifactsTests(unittest.TestCase):
             "    expected_exit: 0\n"
             "    evidence: command-artifact\n"
         )
+        expected_text = "true" if code_expected else "false"
+        reason_text = "" if code_expected else "code_expected_reason: missing external integration contract\n"
         (self.answer_dir / f"{CASE_ID}.yaml").write_text(
             f"id: {CASE_ID}\n"
             f"case_id: {CASE_ID}\n"
             "bucket: code\n"
             "kind: code\n"
-            "code_expected: true\n"
+            f"code_expected: {expected_text}\n"
+            f"{reason_text}"
             f"{checks_text}",
             encoding="utf-8",
         )
@@ -111,6 +114,30 @@ class ValidateEvalCodeArtifactsTests(unittest.TestCase):
         (checks / "unit-tests-stdout.txt").write_text("OK\n", encoding="utf-8")
         (checks / "unit-tests-stderr.txt").write_text("", encoding="utf-8")
 
+    def write_behavior_check_artifacts(
+        self,
+        *,
+        variant: str = "with-dddjango",
+        exit_code: str = "0",
+    ) -> None:
+        checks = self.run_dir / "code" / CASE_ID / variant / "behavior-checks"
+        checks.mkdir(parents=True, exist_ok=True)
+        (checks / "hidden-command.txt").write_text(
+            "python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-example --workspace /tmp/ws\n",
+            encoding="utf-8",
+        )
+        (checks / "hidden-exit.txt").write_text(exit_code + "\n", encoding="utf-8")
+        (checks / "hidden-stdout.txt").write_text("OK\n", encoding="utf-8")
+        (checks / "hidden-stderr.txt").write_text("", encoding="utf-8")
+
+    def write_baseline_isolation_artifact(self) -> None:
+        raw = self.run_dir / "raw"
+        raw.mkdir(parents=True, exist_ok=True)
+        (raw / f"{CASE_ID}-baseline-isolation.json").write_text(
+            json.dumps({"pass": True}) + "\n",
+            encoding="utf-8",
+        )
+
     def validator_argv(self) -> list[str]:
         return [
             "--run-dir",
@@ -150,6 +177,223 @@ class ValidateEvalCodeArtifactsTests(unittest.TestCase):
             "case-code-example with-dddjango deterministic check unit-tests exit must be 0: 1",
         ):
             self.validator.main(self.validator_argv())
+
+    def test_forbidden_path_in_manifest_fails(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "allowed_paths:\n"
+            "  - apps/**\n"
+            "forbidden_paths:\n"
+            "  - db.sqlite3\n"
+        )
+        self.write_variant_artifacts("with-dddjango")
+        manifest_path = (
+            self.run_dir
+            / "code"
+            / CASE_ID
+            / "with-dddjango"
+            / "changed-files.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["files"][0]["path"] = "db.sqlite3"
+        manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(AssertionError, "forbidden path changed: db.sqlite3"):
+            self.validator.main(self.validator_argv())
+
+    def test_path_outside_allowed_paths_writes_quality_finding(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "allowed_paths:\n"
+            "  - apps/orders/**\n"
+            "forbidden_paths:\n"
+            "  - workspace/develop/eval/**\n"
+        )
+        stdout = io.StringIO()
+
+        with redirect_stdout(stdout):
+            result = self.validator.main(self.validator_argv())
+
+        self.assertEqual(result, 0)
+        self.assertIn("code artifact validation passed: 1 checked", stdout.getvalue())
+        policy_path = (
+            self.run_dir
+            / "code"
+            / CASE_ID
+            / "with-dddjango"
+            / "policy-findings.json"
+        )
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        self.assertEqual(policy["caseId"], CASE_ID)
+        self.assertEqual(policy["variant"], "with-dddjango")
+        self.assertEqual(
+            policy["findings"],
+            [
+                {
+                    "severity": "quality",
+                    "rule": "allowed_paths",
+                    "path": "app.py",
+                    "message": "changed path is outside scoring allowed_paths: app.py",
+                    "allowedPaths": ["apps/orders/**"],
+                }
+            ],
+        )
+
+    def test_generated_artifact_fails_even_without_forbidden_paths(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "allowed_paths:\n"
+            "  - apps/**\n"
+            "forbidden_paths: []\n"
+        )
+        manifest_path = (
+            self.run_dir
+            / "code"
+            / CASE_ID
+            / "with-dddjango"
+            / "changed-files.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["files"][0]["path"] = "db.sqlite3"
+        manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(AssertionError, "generated artifact changed: db.sqlite3"):
+            self.validator.main(self.validator_argv())
+
+    def test_code_expected_false_forbids_code_changes(self) -> None:
+        self.write_answer(
+            code_expected=False,
+            checks="deterministic_checks: []\n"
+            "allowed_paths: []\n"
+            "forbidden_paths:\n"
+            "  - apps/**\n"
+        )
+
+        with self.assertRaisesRegex(AssertionError, "code_expected=false forbids code changes"):
+            self.validator.main(self.validator_argv())
+
+    def test_no_code_produced_requires_empty_files(self) -> None:
+        self.write_answer(
+            code_expected=False,
+            checks="deterministic_checks: []\n"
+            "allowed_paths: []\n"
+            "forbidden_paths:\n"
+            "  - apps/**\n"
+        )
+        manifest_path = (
+            self.run_dir
+            / "code"
+            / CASE_ID
+            / "with-dddjango"
+            / "changed-files.json"
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["noCodeProduced"] = True
+        manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(AssertionError, "noCodeProduced=true requires empty files"):
+            self.validator.main(self.validator_argv())
+
+    def test_missing_behavior_check_evidence_fails(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "behavior_checks:\n"
+            "  - id: hidden\n"
+            "    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-example\n"
+            "    expected_exit: 0\n"
+        )
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "case-code-example with-dddjango missing behavior check evidence: hidden",
+        ):
+            self.validator.main(self.validator_argv())
+
+    def test_behavior_check_evidence_passes(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "behavior_checks:\n"
+            "  - id: hidden\n"
+            "    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-example\n"
+            "    expected_exit: 0\n"
+        )
+        self.write_behavior_check_artifacts()
+
+        stdout = io.StringIO()
+
+        with redirect_stdout(stdout):
+            result = self.validator.main(self.validator_argv())
+
+        self.assertEqual(result, 0)
+        self.assertIn("code artifact validation passed: 1 checked", stdout.getvalue())
+
+    def test_behavior_check_exit_mismatch_fails_for_with_dddjango(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "behavior_checks:\n"
+            "  - id: hidden\n"
+            "    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-example\n"
+            "    expected_exit: 0\n"
+        )
+        self.write_behavior_check_artifacts(exit_code="1")
+
+        with self.assertRaisesRegex(
+            AssertionError,
+            "case-code-example with-dddjango behavior check hidden exit must be 0: 1",
+        ):
+            self.validator.main(self.validator_argv())
+
+        policy_path = (
+            self.run_dir
+            / "code"
+            / CASE_ID
+            / "with-dddjango"
+            / "policy-findings.json"
+        )
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            policy["findings"],
+            [
+                {
+                    "severity": "quality",
+                    "rule": "behavior_check_exit",
+                    "checkId": "hidden",
+                    "expectedExit": "0",
+                    "actualExit": "1",
+                    "message": "behavior check hidden exit was 1, expected 0",
+                }
+            ],
+        )
+
+    def test_behavior_check_exit_mismatch_is_quality_finding_for_baseline(self) -> None:
+        self.write_answer(
+            checks="deterministic_checks: []\n"
+            "behavior_checks:\n"
+            "  - id: hidden\n"
+            "    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-example\n"
+            "    expected_exit: 0\n"
+        )
+        self.write_variant_artifacts("baseline")
+        self.write_baseline_isolation_artifact()
+        self.write_behavior_check_artifacts(variant="baseline", exit_code="1")
+        stdout = io.StringIO()
+
+        argv = self.validator_argv()
+        argv[-1] = "baseline"
+        with redirect_stdout(stdout):
+            result = self.validator.main(argv)
+
+        self.assertEqual(result, 0)
+        self.assertIn("code artifact validation passed: 1 checked", stdout.getvalue())
+        policy_path = (
+            self.run_dir
+            / "code"
+            / CASE_ID
+            / "baseline"
+            / "policy-findings.json"
+        )
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+        self.assertEqual(policy["findings"][0]["rule"], "behavior_check_exit")
 
 
 if __name__ == "__main__":

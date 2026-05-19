@@ -1,0 +1,108 @@
+id: case-code-ddd-reservation-boundary
+case_id: case-code-ddd-reservation-boundary
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-ddd-reservation-boundary.md
+intent: Directly verify DDD-to-code mapping for reservation aggregate boundaries and external room availability handoff.
+case_role: ddd_direct
+reference_basis:
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: DDD-to-code mapping
+  - path: workspace/docs/ddd-implementation-standard.md
+    basis: aggregate/application service boundary and implementation restraint
+  - path: workspace/reference/architecture-ddd/reference/final.md
+    basis: aggregate invariants, bounded contexts, and context boundary guidance
+code_expected: true
+deterministic_checks:
+  - id: unit-tests
+    command: python3 -m unittest discover -s tests
+    expected_exit: 0
+    evidence: command-artifact
+behavior_checks:
+  - id: hidden-ddd-reservation-boundary
+    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-ddd-reservation-boundary
+    expected_exit: 0
+target_behavior:
+  required:
+    - Keeps Reservation bounded context language explicit in aggregate, service, and tests.
+    - Moves positive-night, confirm-only-from-requested, and no-expire-after-confirmed invariants into Reservation behavior.
+    - Keeps application service as orchestration for create/load/save and availability hold handoff rather than state-rule owner.
+    - Represents room availability or inventory as a boundary outside the Reservation aggregate without real external calls.
+    - Adds behavior tests for invalid nights, request status, confirmation transition, invalid confirmation transition, expiration transition, and invalid expiration after confirmation.
+  forbidden:
+    - Modeling room availability inventory as a child entity inside the Reservation aggregate.
+    - Repository/UoW/hexagonal rewrite for this small in-memory fixture.
+    - Router/API owning reservation state transition rules.
+allowed_paths:
+  - apps/reservations/**
+  - apps/inventory/**
+  - tests/**
+forbidden_paths:
+  - workspace/develop/eval/**
+  - dddjango/**
+ddd_observations:
+  business_problem: Guests can request reservations and operators can confirm or expire them only through valid reservation state transitions.
+  subdomain_type: Reservation is treated as core/high-risk supporting because availability handoff and lifecycle correctness directly affect booking promises.
+  subdomain_type_basis: Booking lifecycle mistakes can confirm invalid reservations or expire already confirmed reservations, which harms customer-facing availability consistency.
+  bounded_context: Reservation
+  context_map_or_not_applicable: Room availability or inventory is a neighboring external boundary; this case expects an in-memory boundary or event handoff, not a merged aggregate.
+  ubiquitous_terms:
+    - Reservation
+    - request reservation
+    - requested
+    - confirm reservation
+    - expire reservation
+    - room availability hold
+  aggregate_root: Reservation
+  aggregate_behavior:
+    - Reservation.request or equivalent aggregate behavior protects positive-night reservation creation.
+    - Reservation.confirm or equivalent aggregate behavior protects confirmation state transition.
+    - Reservation.expire or equivalent aggregate behavior protects expiration state transition.
+  invariants:
+    - A reservation must be requested for at least one night.
+    - A reservation can be confirmed only from requested status.
+    - A confirmed reservation cannot be expired.
+  application_service_boundary: Service functions orchestrate lookup, persistence, and availability hold handoff; they do not assign lifecycle status directly.
+  transaction_boundary: In-memory fixture has no DB transaction; final answer must state this limitation rather than inventing database verification.
+  domain_events: If side effects are discussed, availability hold or release must be represented as a boundary/event/after-commit handoff, not a real external call.
+  django_mapping:
+    - Pure Python fixture maps aggregate and application service responsibilities before Django persistence.
+  test_evidence:
+    - invalid nights rejected
+    - request moves to requested
+    - confirmation moves to confirmed
+    - invalid confirmation raises
+    - expiration moves to expired
+    - confirmed reservation cannot expire
+scoring_checks:
+  - pass if aggregate behavior protects reservation lifecycle invariants and tests prove the behavior.
+  - partial if behavior is correct but room availability boundary is mixed into the aggregate or service owns state rules.
+  - fail if service-only procedural status mutation remains the only protection.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
+failure_modes:
+  - anemic aggregate
+  - merged reservation and inventory aggregate
+  - tactical-pattern overengineering
+  - false verification claim
+leakage_checks:
+  - no private answer references.
+evidence_required:
+  - changed-files.json
+  - diff.patch
+  - unit test output
+  - behavior check output
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - ddd-to-code
+  - bounded-context
+  - aggregate-boundary
+  - domain-policy
+  - test-implementation

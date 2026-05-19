@@ -394,6 +394,25 @@ class EvaluateEvalRunTests(unittest.TestCase):
                 f"    source = {variant!r}\n",
                 encoding="utf-8",
             )
+            if variant == with_variant:
+                (artifact_dir / "policy-findings.json").write_text(
+                    json.dumps(
+                        {
+                            "caseId": case_id,
+                            "variant": variant,
+                            "findings": [
+                                {
+                                    "severity": "quality",
+                                    "rule": "allowed_paths",
+                                    "path": "app.py",
+                                    "message": "changed path is outside scoring allowed_paths: app.py",
+                                    "allowedPaths": ["apps/orders/**"],
+                                }
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
         payload = self.valid_payload(case_id)
 
         def fake_run(command, *, prompt, cwd, timeout_seconds):
@@ -401,6 +420,9 @@ class EvaluateEvalRunTests(unittest.TestCase):
             self.assertIn(f"code/{case_id}/{with_variant}/diff.patch", prompt)
             self.assertIn(f"code/{case_id}/baseline/files/apps/orders/service.py", prompt)
             self.assertIn(f"code/{case_id}/{with_variant}/files/apps/orders/service.py", prompt)
+            self.assertIn(f"code/{case_id}/{with_variant}/policy-findings.json", prompt)
+            self.assertIn("changed path is outside scoring allowed_paths: app.py", prompt)
+            self.assertIn("severity=quality", prompt)
             self.assertIn("BaselineOrderService", prompt)
             self.assertIn("WithDddjangoOrderService", prompt)
             self.assertIn("[TRUNCATED after 80000 characters]", prompt)

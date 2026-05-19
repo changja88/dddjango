@@ -551,7 +551,14 @@ def untracked_diff(workspace: Path, path: Path) -> str:
     return result.stdout + result.stderr
 
 
-def capture_code_artifacts(workspace: Path, run_dir: Path, case_id: str, variant: str) -> None:
+def capture_code_artifacts(
+    workspace: Path,
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    *,
+    answer_text: str | None = None,
+) -> None:
     artifact_base = run_dir / "code" / case_id / variant
     files_base = artifact_base / "files"
     files_base.mkdir(parents=True, exist_ok=True)
@@ -605,6 +612,14 @@ def capture_code_artifacts(workspace: Path, run_dir: Path, case_id: str, variant
         artifact_base / "changed-files.json",
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
     )
+    if answer_text is not None:
+        changed_paths = [str(entry["path"]) for entry in manifest_files]
+        code_artifacts.write_policy_findings(
+            run_dir,
+            case_id,
+            variant,
+            code_artifacts.quality_path_findings(answer_text, changed_paths),
+        )
 
 
 def codex_exec_command(
@@ -724,6 +739,11 @@ def deterministic_checks_for_code_case(answer_dir: Path, case_id: str) -> list[d
     return code_artifacts.parse_deterministic_checks(answer_text, case_id)
 
 
+def behavior_checks_for_code_case(answer_dir: Path, case_id: str) -> list[dict[str, object]]:
+    answer_text = code_artifacts.load_answer_oracle(answer_dir, case_id)
+    return code_artifacts.parse_behavior_checks(answer_text, case_id)
+
+
 def run_deterministic_code_checks(
     *,
     workspace: Path,
@@ -746,6 +766,49 @@ def run_deterministic_code_checks(
                 command,
                 prompt=None,
                 cwd=workspace,
+                timeout_seconds=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as exc:
+            common.write_text(checks_dir / f"{check_id}-stdout.txt", response_text(exc.stdout))
+            common.write_text(checks_dir / f"{check_id}-stderr.txt", response_text(exc.stderr))
+            common.write_text(
+                checks_dir / f"{check_id}-exit.txt",
+                f"timeout after {timeout_seconds}s\n",
+            )
+            all_passed = False
+            continue
+
+        common.write_text(checks_dir / f"{check_id}-stdout.txt", result.stdout)
+        common.write_text(checks_dir / f"{check_id}-stderr.txt", result.stderr)
+        common.write_text(checks_dir / f"{check_id}-exit.txt", str(result.returncode) + "\n")
+        if result.returncode != int(check["expected_exit"]):
+            all_passed = False
+    return all_passed
+
+
+def run_behavior_code_checks(
+    *,
+    workspace: Path,
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    checks: list[dict[str, object]],
+    timeout_seconds: int,
+) -> bool:
+    checks_dir = run_dir / "code" / case_id / variant / "behavior-checks"
+    checks_dir.mkdir(parents=True, exist_ok=True)
+    all_passed = True
+    for check in checks:
+        check_id = str(check["id"])
+        command_text = str(check["command"])
+        command = shlex.split(command_text)
+        command.extend(["--workspace", str(workspace)])
+        common.write_text(checks_dir / f"{check_id}-command.txt", shlex.join(command) + "\n")
+        try:
+            result = run_command(
+                command,
+                prompt=None,
+                cwd=REPO_ROOT,
                 timeout_seconds=timeout_seconds,
             )
         except subprocess.TimeoutExpired as exc:
@@ -907,6 +970,16 @@ def main(argv: list[str] | None = None) -> int:
             if args.bucket == "code"
             else []
         )
+        behavior_checks = (
+            behavior_checks_for_code_case(bucket.answer_dir, case_id)
+            if args.bucket == "code"
+            else []
+        )
+        code_answer_text = (
+            common.read_text(bucket.answer_dir / f"{case_id}.yaml")
+            if args.bucket == "code"
+            else None
+        )
         prompt = build_prompt(
             public_packet,
             allow_workspace_edits=args.bucket == "code",
@@ -991,7 +1064,13 @@ def main(argv: list[str] | None = None) -> int:
                 common.write_text(stderr_path, "")
                 common.write_text(exit_path, "skipped\n")
                 if args.bucket == "code":
-                    capture_code_artifacts(exec_cwd, run_dir, case_id, variant.name)
+                    capture_code_artifacts(
+                        exec_cwd,
+                        run_dir,
+                        case_id,
+                        variant.name,
+                        answer_text=code_answer_text,
+                    )
                     checks_passed = run_deterministic_code_checks(
                         workspace=exec_cwd,
                         run_dir=run_dir,
@@ -1001,6 +1080,16 @@ def main(argv: list[str] | None = None) -> int:
                         timeout_seconds=args.timeout_seconds,
                     )
                     if not checks_passed:
+                        failed_execution = True
+                    behavior_passed = run_behavior_code_checks(
+                        workspace=exec_cwd,
+                        run_dir=run_dir,
+                        case_id=case_id,
+                        variant=variant.name,
+                        checks=behavior_checks,
+                        timeout_seconds=args.timeout_seconds,
+                    )
+                    if variant.name == "with-dddjango" and not behavior_passed:
                         failed_execution = True
                 write_workflow_trace_artifact(
                     bucket=args.bucket,
@@ -1045,7 +1134,13 @@ def main(argv: list[str] | None = None) -> int:
             if not output_path.exists():
                 common.write_text(output_path, "")
             if args.bucket == "code":
-                capture_code_artifacts(exec_cwd, run_dir, case_id, variant.name)
+                capture_code_artifacts(
+                    exec_cwd,
+                    run_dir,
+                    case_id,
+                    variant.name,
+                    answer_text=code_answer_text,
+                )
                 checks_passed = run_deterministic_code_checks(
                     workspace=exec_cwd,
                     run_dir=run_dir,
@@ -1055,6 +1150,16 @@ def main(argv: list[str] | None = None) -> int:
                     timeout_seconds=args.timeout_seconds,
                 )
                 if not checks_passed:
+                    failed_execution = True
+                behavior_passed = run_behavior_code_checks(
+                    workspace=exec_cwd,
+                    run_dir=run_dir,
+                    case_id=case_id,
+                    variant=variant.name,
+                    checks=behavior_checks,
+                    timeout_seconds=args.timeout_seconds,
+                )
+                if variant.name == "with-dddjango" and not behavior_passed:
                     failed_execution = True
             write_workflow_trace_artifact(
                 bucket=args.bucket,

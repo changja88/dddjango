@@ -4,15 +4,29 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import re
 from pathlib import Path
 from typing import Any
 
+try:
+    import eval_answer_yaml
+except ModuleNotFoundError:
+    from workspace.scripts import eval_answer_yaml
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 METADATA_PATH = REPO_ROOT / "workspace/develop/eval/code/cases/plugin/code-capture.json"
 ANSWER_DIR = REPO_ROOT / "workspace/develop/eval/code/answer"
+GENERATED_ARTIFACT_PATTERNS = (
+    "*.sqlite3",
+    "db.sqlite3",
+    "**/__pycache__/**",
+    "*.pyc",
+    ".pytest_cache/**",
+)
+POLICY_FINDINGS_FILENAME = "policy-findings.json"
 VALID_VARIANTS = ("baseline", "with-dddjango")
 
 
@@ -142,6 +156,61 @@ def parse_deterministic_checks(answer_text: str, case_id: str) -> list[dict[str,
     return checks
 
 
+def parse_behavior_checks(answer_text: str, case_id: str) -> list[dict[str, object]]:
+    lines = answer_text.splitlines()
+    start_index: int | None = None
+    inline_value = ""
+    for index, line in enumerate(lines):
+        match = re.match(r"^behavior_checks\s*:\s*(.*)$", line)
+        if match:
+            start_index = index
+            inline_value = match.group(1).strip()
+            break
+    if start_index is None or inline_value == "[]":
+        return []
+    if inline_value:
+        raise AssertionError(f"{case_id}: behavior_checks must be a YAML list or []")
+
+    checks: list[dict[str, object]] = []
+    current: dict[str, object] | None = None
+    for line in lines[start_index + 1 :]:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if re.match(r"^[^\s].*:\s*", line):
+            break
+        if line.startswith("  - "):
+            if current is not None:
+                checks.append(current)
+            current = {}
+            rest = line[4:].strip()
+            if rest:
+                try:
+                    key, value = parse_key_value(rest)
+                except ValueError as exc:
+                    raise AssertionError(
+                        f"{case_id}: invalid behavior check item: {rest}"
+                    ) from exc
+                current[key] = value
+            continue
+        if line.startswith("    ") and current is not None:
+            stripped = line.strip()
+            try:
+                key, value = parse_key_value(stripped)
+            except ValueError as exc:
+                raise AssertionError(
+                    f"{case_id}: invalid behavior check field: {stripped}"
+                ) from exc
+            current[key] = value
+            continue
+        raise AssertionError(f"{case_id}: invalid behavior_checks indentation: {line}")
+    if current is not None:
+        checks.append(current)
+
+    for check in checks:
+        validate_behavior_check_config(case_id, check)
+    return checks
+
+
 def validate_deterministic_check_config(case_id: str, check: dict[str, object]) -> None:
     required = {"id", "command", "expected_exit", "evidence"}
     missing = sorted(required - set(check))
@@ -167,6 +236,27 @@ def validate_deterministic_check_config(case_id: str, check: dict[str, object]) 
         )
 
 
+def validate_behavior_check_config(case_id: str, check: dict[str, object]) -> None:
+    required = {"id", "command", "expected_exit"}
+    missing = sorted(required - set(check))
+    if missing:
+        raise AssertionError(
+            f"{case_id}: behavior check missing keys: {', '.join(missing)}"
+        )
+    check_id = check["id"]
+    if not isinstance(check_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", check_id):
+        raise AssertionError(f"{case_id}: invalid behavior check id: {check_id}")
+    command = check["command"]
+    if not isinstance(command, str) or not command.strip():
+        raise AssertionError(f"{case_id}: behavior check {check_id} command is required")
+    try:
+        check["expected_exit"] = int(str(check["expected_exit"]).strip())
+    except ValueError as exc:
+        raise AssertionError(
+            f"{case_id}: behavior check {check_id} expected_exit must be an integer"
+        ) from exc
+
+
 def run_relative_path(run_dir: Path, value: str) -> Path:
     artifact_path = Path(value)
     if artifact_path.is_absolute() or ".." in artifact_path.parts:
@@ -186,7 +276,86 @@ def validate_baseline_isolation(run_dir: Path, case_id: str) -> None:
         raise AssertionError(f"{case_id}: baseline isolation artifact pass=false")
 
 
-def validate_manifest(run_dir: Path, case_id: str, variant: str, *, allow_no_code: bool) -> None:
+def path_matches(pattern: str, changed_path: str) -> bool:
+    return fnmatch.fnmatchcase(changed_path, pattern)
+
+
+def write_policy_findings(
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    findings: list[dict[str, object]],
+) -> None:
+    path = run_dir / "code" / case_id / variant / POLICY_FINDINGS_FILENAME
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "caseId": case_id,
+        "variant": variant,
+        "findings": findings,
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def load_policy_findings(run_dir: Path, case_id: str, variant: str) -> list[dict[str, object]]:
+    path = run_dir / "code" / case_id / variant / POLICY_FINDINGS_FILENAME
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+    findings = payload.get("findings")
+    if not isinstance(findings, list):
+        return []
+    return [finding for finding in findings if isinstance(finding, dict)]
+
+
+def append_policy_findings(
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    findings: list[dict[str, object]],
+) -> None:
+    if not findings:
+        return
+    write_policy_findings(
+        run_dir,
+        case_id,
+        variant,
+        [*load_policy_findings(run_dir, case_id, variant), *findings],
+    )
+
+
+def quality_path_findings(answer_text: str, changed_paths: list[str]) -> list[dict[str, object]]:
+    allowed_paths = eval_answer_yaml.list_values(answer_text, "allowed_paths")
+    forbidden_paths = eval_answer_yaml.list_values(answer_text, "forbidden_paths")
+    findings: list[dict[str, object]] = []
+    for changed_path in changed_paths:
+        if any(path_matches(pattern, changed_path) for pattern in forbidden_paths):
+            continue
+        if any(path_matches(pattern, changed_path) for pattern in GENERATED_ARTIFACT_PATTERNS):
+            continue
+        if allowed_paths and not any(path_matches(pattern, changed_path) for pattern in allowed_paths):
+            findings.append(
+                {
+                    "severity": "quality",
+                    "rule": "allowed_paths",
+                    "path": changed_path,
+                    "message": f"changed path is outside scoring allowed_paths: {changed_path}",
+                    "allowedPaths": allowed_paths,
+                }
+            )
+    return findings
+
+
+def validate_manifest(
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    *,
+    answer_text: str,
+    code_expected: bool,
+) -> None:
     base = run_dir / "code" / case_id / variant
     manifest_path = base / "changed-files.json"
     diff_path = base / "diff.patch"
@@ -219,11 +388,29 @@ def validate_manifest(run_dir: Path, case_id: str, variant: str, *, allow_no_cod
     if not isinstance(files, list):
         raise AssertionError(f"{manifest_path} files must be a list")
     if manifest["noCodeProduced"]:
-        if not allow_no_code:
+        if code_expected:
             raise AssertionError(f"{manifest_path} noCodeProduced=true is not allowed for this case")
+        if files:
+            raise AssertionError(f"{manifest_path} noCodeProduced=true requires empty files")
+        write_policy_findings(run_dir, case_id, variant, [])
         return
+    if not code_expected:
+        raise AssertionError(f"{manifest_path} code_expected=false forbids code changes")
     if not files:
         raise AssertionError(f"{manifest_path} must list at least one changed source file")
+
+    forbidden_paths = eval_answer_yaml.list_values(answer_text, "forbidden_paths")
+    changed_paths = [
+        str(entry.get("path") or "")
+        for entry in files
+        if isinstance(entry, dict)
+    ]
+    for changed_path in changed_paths:
+        if any(path_matches(pattern, changed_path) for pattern in forbidden_paths):
+            raise AssertionError(f"{case_id} {variant} forbidden path changed: {changed_path}")
+        if any(path_matches(pattern, changed_path) for pattern in GENERATED_ARTIFACT_PATTERNS):
+            raise AssertionError(f"{case_id} {variant} generated artifact changed: {changed_path}")
+    quality_findings = quality_path_findings(answer_text, changed_paths)
 
     required_file_keys = {
         "path",
@@ -250,6 +437,7 @@ def validate_manifest(run_dir: Path, case_id: str, variant: str, *, allow_no_cod
             copied_text_files += 1
     if copied_text_files == 0:
         raise AssertionError(f"{manifest_path} must include at least one copied text source file")
+    write_policy_findings(run_dir, case_id, variant, quality_findings)
 
 
 def validate_deterministic_check_artifacts(
@@ -280,6 +468,50 @@ def validate_deterministic_check_artifacts(
             )
 
 
+def validate_behavior_check_artifacts(
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+    checks: list[dict[str, object]],
+) -> None:
+    quality_findings: list[dict[str, object]] = []
+    for check in checks:
+        check_id = str(check["id"])
+        base = run_dir / "code" / case_id / variant / "behavior-checks"
+        paths = {
+            "command": base / f"{check_id}-command.txt",
+            "exit": base / f"{check_id}-exit.txt",
+            "stdout": base / f"{check_id}-stdout.txt",
+            "stderr": base / f"{check_id}-stderr.txt",
+        }
+        if not all(path.is_file() for path in paths.values()):
+            raise AssertionError(
+                f"{case_id} {variant} missing behavior check evidence: {check_id}"
+            )
+        actual_exit = paths["exit"].read_text(encoding="utf-8", errors="replace").strip()
+        expected_exit = str(check["expected_exit"])
+        if actual_exit != expected_exit:
+            finding = {
+                "severity": "quality",
+                "rule": "behavior_check_exit",
+                "checkId": check_id,
+                "expectedExit": expected_exit,
+                "actualExit": actual_exit,
+                "message": (
+                    f"behavior check {check_id} exit was {actual_exit}, "
+                    f"expected {expected_exit}"
+                ),
+            }
+            quality_findings.append(finding)
+            if variant == "with-dddjango":
+                append_policy_findings(run_dir, case_id, variant, quality_findings)
+                raise AssertionError(
+                    f"{case_id} {variant} behavior check {check_id} exit must be "
+                    f"{expected_exit}: {actual_exit}"
+                )
+    append_policy_findings(run_dir, case_id, variant, quality_findings)
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     run_dir = args.run_dir
@@ -300,17 +532,30 @@ def main(argv: list[str] | None = None) -> int:
         if not case_meta.get("captureCode"):
             raise AssertionError(f"{case_id}: captureCode must be true for code artifact validation")
         answer_text = load_answer_oracle(answer_dir, case_id)
-        allow_no_code = answer_code_expected(answer_text, case_id) is False
+        code_expected = answer_code_expected(answer_text, case_id)
         deterministic_checks = parse_deterministic_checks(answer_text, case_id)
+        behavior_checks = parse_behavior_checks(answer_text, case_id)
         if "baseline" in args.variant:
             validate_baseline_isolation(run_dir, case_id)
         for variant in args.variant:
-            validate_manifest(run_dir, case_id, variant, allow_no_code=allow_no_code)
+            validate_manifest(
+                run_dir,
+                case_id,
+                variant,
+                answer_text=answer_text,
+                code_expected=code_expected,
+            )
             validate_deterministic_check_artifacts(
                 run_dir,
                 case_id,
                 variant,
                 deterministic_checks,
+            )
+            validate_behavior_check_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                behavior_checks,
             )
             checked += 1
     if checked == 0:

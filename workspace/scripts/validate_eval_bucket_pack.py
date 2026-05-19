@@ -19,6 +19,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import workflow_execution_gate as workflow_gate
+import eval_answer_yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -169,6 +170,26 @@ MANUAL_PROTOCOL_REQUIRED_TERMS = (
     "leakage",
     "evidence",
 )
+CODE_CASE_ROLE_VALUES = {"ddd_direct", "implementation_supporting", "control"}
+DDD_OBSERVATION_FIELDS = (
+    "business_problem",
+    "subdomain_type",
+    "subdomain_type_basis",
+    "bounded_context",
+    "context_map_or_not_applicable",
+    "ubiquitous_terms",
+    "aggregate_root",
+    "aggregate_behavior",
+    "invariants",
+    "application_service_boundary",
+    "transaction_boundary",
+    "django_mapping",
+    "test_evidence",
+)
+DDD_REQUIRED_REFERENCE_PATHS = {
+    "workspace/docs/ddd-implementation-standard.md",
+    "workspace/reference/architecture-ddd/reference/final.md",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -306,6 +327,51 @@ def validate_workflow_execution_expectation(path: Path, text: str) -> list[str]:
     return findings
 
 
+def validate_runtime_metadata_answer(path: Path, text: str) -> list[str]:
+    if "missing-skill-metadata" not in set(yaml_list_values(text, "coverage_tags")):
+        return []
+    findings: list[str] = []
+    evidence = [value.lower() for value in yaml_list_values(text, "evidence_required")]
+    if not any("validation command output" in value for value in evidence):
+        findings.append(
+            f"{path}: missing-skill-metadata answer must require validation command output"
+        )
+    text_lower = text.lower()
+    if "semantic metadata alignment" not in text_lower and "semantically align" not in text_lower:
+        findings.append(
+            f"{path}: missing-skill-metadata answer must require semantic metadata alignment"
+        )
+    return findings
+
+
+def validate_code_ddd_answer(path: Path, text: str) -> list[str]:
+    role = eval_answer_yaml.scalar_value(text, "case_role")
+    findings: list[str] = []
+    if role not in CODE_CASE_ROLE_VALUES:
+        findings.append(
+            f"{path}: code answer case_role must be one of {', '.join(sorted(CODE_CASE_ROLE_VALUES))}"
+        )
+        return findings
+    if role != "ddd_direct":
+        return []
+
+    reference_paths = {
+        item.get("path", "")
+        for item in eval_answer_yaml.list_of_maps(text, "reference_basis")
+    }
+    for required_path in sorted(DDD_REQUIRED_REFERENCE_PATHS - reference_paths):
+        findings.append(f"{path}: ddd_direct answer must reference {required_path}")
+
+    observation_keys = eval_answer_yaml.nested_keys(text, "ddd_observations")
+    if not observation_keys:
+        findings.append(f"{path}: DDD code answer must declare ddd_observations")
+        return findings
+    for field in DDD_OBSERVATION_FIELDS:
+        if field not in observation_keys:
+            findings.append(f"{path}: ddd_observations missing {field}")
+    return findings
+
+
 def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
     findings: list[str] = []
     text = path.read_text(encoding="utf-8")
@@ -331,12 +397,15 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
     findings.extend(validate_control_case(path, text))
     if bucket == "workflow":
         findings.extend(validate_workflow_execution_expectation(path, text))
+    if bucket == "runtime":
+        findings.extend(validate_runtime_metadata_answer(path, text))
     if bucket == "code":
         code_expected = scalar_value(text, "code_expected")
         if code_expected not in {"true", "false"}:
             findings.append(f"{path}: code answer must declare code_expected: true|false")
         if code_expected == "false" and not scalar_value(text, "code_expected_reason"):
             findings.append(f"{path}: code_expected false requires code_expected_reason")
+        findings.extend(validate_code_ddd_answer(path, text))
     return findings
 
 

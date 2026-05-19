@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import re
+import sys
 from datetime import datetime
 from html import escape
 from pathlib import Path
@@ -22,6 +23,12 @@ EVAL_ROOT = REPO_ROOT / "workspace/develop/eval"
 BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
 VARIANTS = ("baseline", "with-dddjango")
 SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
+TEMP_EVAL_WORKSPACE_PATH_RE = re.compile(
+    r"/(?:private/)?tmp/dddjango-eval-workspaces/"
+    r"(?P<run_id>[^/\s\"'<>]+)/(?P<case_id>case-[^/\s\"'<>]+)/"
+    r"(?P<variant>baseline|with-dddjango)/(?P<rel>[^ \n\t\"'<>]+)"
+)
+INTERNAL_EVAL_SENTINEL_RE = re.compile(r"__DDDJANGO_PRIVATE_EVAL_SENTINEL__")
 VERDICT_RANK = {
     "unscored": 0,
     "blocked": 1,
@@ -50,6 +57,19 @@ def read_text(path: Path) -> str:
     if not path.exists():
         return ""
     return path.read_text(encoding="utf-8", errors="replace")
+
+
+def sanitize_report_text(text: str) -> str:
+    """Remove local eval workspace prefixes before embedding text in HTML reports."""
+
+    def replacement(match: re.Match[str]) -> str:
+        rel = match.group("rel")
+        if rel.startswith("workspace/"):
+            return rel
+        return f"[eval-workspace]/{rel}"
+
+    sanitized = TEMP_EVAL_WORKSPACE_PATH_RE.sub(replacement, text)
+    return INTERNAL_EVAL_SENTINEL_RE.sub("[internal-eval-sentinel]", sanitized)
 
 
 def block_lines(text: str, key: str) -> list[str]:
@@ -326,7 +346,7 @@ def code_artifact_evidence(run_dir: Path, case_id: str, variant: str) -> list[st
 def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, object]) -> dict[str, object]:
     raw_name = f"{case_id}-{variant}.txt"
     raw_path = run_dir / "raw" / raw_name
-    response = read_text(raw_path)
+    response = sanitize_report_text(read_text(raw_path))
     variant_key = "with_dddjango" if variant == "with-dddjango" else "baseline"
     variant_oracle = oracle.get(variant_key)
     if not isinstance(variant_oracle, dict):
@@ -575,19 +595,60 @@ def build_summary(cases: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
-def previous_run_dir(bucket: str, run_id: str) -> Path | None:
+def run_scope(run_meta: dict[str, object], run_id: str) -> str:
+    scope = run_meta.get("scope")
+    if isinstance(scope, str) and scope:
+        return scope
+    try:
+        return run_identity.parse_run_id(run_id).scope
+    except SystemExit:
+        return ""
+
+
+def case_ids_for_run(bucket: str, run_dir: Path, run_meta: dict[str, object]) -> set[str]:
+    fingerprint = comparable_fingerprint(run_meta)
+    case_ids = fingerprint.get("case_ids") if fingerprint is not None else None
+    if isinstance(case_ids, list):
+        return {str(case_id) for case_id in case_ids if str(case_id)}
+    return {path.stem for path in public_cases_for_run(bucket, run_dir)}
+
+
+def previous_run_selection(bucket: str, run_id: str) -> tuple[Path | None, str, str]:
     runs_dir = EVAL_ROOT / bucket / "runs"
     if not runs_dir.is_dir():
-        return None
-    current_meta = safe_run_meta(EVAL_ROOT / bucket / "runs" / run_id)
+        return None, "unavailable", "no previous run"
+    current_dir = EVAL_ROOT / bucket / "runs" / run_id
+    current_meta = safe_run_meta(current_dir)
     current_fingerprint = comparable_fingerprint(current_meta)
-    previous = sorted(
+    previous_dirs = sorted(
         path for path in runs_dir.iterdir()
         if path.is_dir()
         and path.name < run_id
-        and fingerprints_are_comparable(current_fingerprint, safe_run_meta(path))
     )
-    return previous[-1] if previous else None
+    exact = [
+        path for path in previous_dirs
+        if current_fingerprint is not None
+        and fingerprints_are_comparable(current_fingerprint, safe_run_meta(path))
+    ]
+    if exact:
+        return exact[-1], "fingerprint-exact", ""
+
+    current_scope = run_scope(current_meta, run_id)
+    current_case_ids = case_ids_for_run(bucket, current_dir, current_meta)
+    fallback = [
+        path for path in previous_dirs
+        if current_scope == "full"
+        and run_scope(safe_run_meta(path), path.name) == "full"
+        and bool(current_case_ids & case_ids_for_run(bucket, path, safe_run_meta(path)))
+    ]
+    if fallback:
+        return fallback[-1], "case-overlap-fallback", ""
+    return None, "unavailable", "no comparable run"
+
+
+def previous_run_dir(bucket: str, run_id: str) -> Path | None:
+    previous_dir, _confidence, _reason = previous_run_selection(bucket, run_id)
+    return previous_dir
 
 
 def comparable_fingerprint(run_meta: dict[str, object]) -> dict[str, object] | None:
@@ -716,22 +777,16 @@ def compare_case_to_previous(
 
 
 def build_previous_cases(bucket: str, run_id: str) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
-    previous_dir = previous_run_dir(bucket, run_id)
+    previous_dir, confidence, reason = previous_run_selection(bucket, run_id)
     if previous_dir is None:
-        current_meta = safe_run_meta(EVAL_ROOT / bucket / "runs" / run_id)
-        reason = (
-            "no comparable fingerprint match"
-            if comparable_fingerprint(current_meta) is not None
-            else "no previous run"
-        )
-        return {"available": False, "run_id": "", "reason": reason}, {}
+        return {"available": False, "run_id": "", "reason": reason, "comparison_confidence": confidence}, {}
 
     previous_public_cases = public_cases_for_run(bucket, previous_dir)
     previous_cases = [
         build_case(bucket, public_case, previous_dir) for public_case in previous_public_cases
     ]
     return (
-        {"available": True, "run_id": previous_dir.name},
+        {"available": True, "run_id": previous_dir.name, "comparison_confidence": confidence},
         {str(case.get("id") or ""): case for case in previous_cases},
     )
 
@@ -753,6 +808,7 @@ def build_change_summary(
     if previous_run.get("available") is not True:
         return {
             "previous_run_id": "없음",
+            "trend_confidence": "unavailable",
             "with_dddjango_average_change": "n/a",
             "pass_change": "n/a",
             "fail_change": "n/a",
@@ -799,6 +855,7 @@ def build_change_summary(
 
     return {
         "previous_run_id": str(previous_run.get("run_id") or "없음"),
+        "trend_confidence": str(previous_run.get("comparison_confidence") or "unavailable"),
         "with_dddjango_average_change": format_signed_average(paired_score_deltas),
         "pass_change": format_signed_int(current_pass - previous_pass),
         "fail_change": format_signed_int(current_fail - previous_fail),
@@ -825,6 +882,8 @@ def add_run_scope(
 
 
 def reportability(summary: dict[str, object]) -> str:
+    if str(summary.get("run_validation_status") or "missing") != "passed":
+        return "blocked"
     if int(summary.get("hard_gate_failures") or 0) > 0:
         return "blocked"
     if int(summary.get("missing_or_weak_evidence") or 0) > 0:
@@ -874,7 +933,9 @@ def build_embedded_artifacts(run_dir: Path, cases: list[dict[str, object]]) -> d
                     continue
                 artifacts[rel_path] = {
                     "kind": kind,
-                    "content": artifact_path.read_text(encoding="utf-8", errors="replace"),
+                    "content": sanitize_report_text(
+                        artifact_path.read_text(encoding="utf-8", errors="replace")
+                    ),
                 }
     return artifacts
 
@@ -887,6 +948,61 @@ def safe_run_meta(run_dir: Path) -> dict[str, object]:
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return {}
     return run_meta if isinstance(run_meta, dict) else {}
+
+
+def safe_run_validation(run_dir: Path) -> dict[str, object]:
+    run_validation_path = run_dir / run_identity.RUN_VALIDATION_FILENAME
+    if run_validation_path.exists():
+        try:
+            payload = run_identity.load_run_validation_manifest(run_dir)
+        except json.JSONDecodeError as error:
+            return {
+                "status": "invalid",
+                "source": run_identity.RUN_VALIDATION_FILENAME,
+                "findings": [f"{run_identity.RUN_VALIDATION_FILENAME} is not valid JSON: {error.msg}"],
+            }
+        if isinstance(payload, dict):
+            findings = payload.get("findings")
+            return {
+                "status": str(payload.get("status") or "invalid"),
+                "source": run_identity.RUN_VALIDATION_FILENAME,
+                "findings": findings if isinstance(findings, list) else [],
+                "created_at": str(payload.get("created_at") or ""),
+            }
+
+    legacy_validation_path = run_dir / run_identity.VALIDATION_FILENAME
+    if legacy_validation_path.exists():
+        errors = run_identity.validate_validation_manifest(run_dir)
+        if errors:
+            return {
+                "status": "failed",
+                "source": run_identity.VALIDATION_FILENAME,
+                "findings": errors,
+            }
+        return {
+            "status": "passed",
+            "source": run_identity.VALIDATION_FILENAME,
+            "findings": [],
+        }
+
+    return {
+        "status": "missing",
+        "source": "",
+        "findings": [f"{run_identity.RUN_VALIDATION_FILENAME} is missing"],
+    }
+
+
+def add_run_validation_summary(
+    summary: dict[str, object],
+    run_validation: dict[str, object],
+) -> None:
+    status = str(run_validation.get("status") or "missing")
+    findings = run_validation.get("findings")
+    finding_count = len(findings) if isinstance(findings, list) else 0
+    summary["run_validation_status"] = status
+    summary["run_validation_findings"] = finding_count
+    if status != "passed":
+        summary["hard_gate_failures"] = int(summary.get("hard_gate_failures") or 0) + 1
 
 
 def build_render_validation_checks(
@@ -951,6 +1067,8 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
         run_cases=len(cases),
     )
     summary.update(build_change_summary(cases, previous_run))
+    run_validation = safe_run_validation(run_dir)
+    add_run_validation_summary(summary, run_validation)
     return {
         "bucket": bucket,
         "run_id": run_id,
@@ -959,6 +1077,7 @@ def build_report_data(bucket: str, run_id: str, run_dir: Path) -> dict[str, obje
         "bucket_tabs": build_bucket_tabs(bucket, run_id),
         "bucket_goal": bucket_goal_paragraphs(bucket),
         "run_meta": safe_run_meta(run_dir),
+        "run_validation": run_validation,
         "previous_run": previous_run,
         "summary": summary,
         "unrun_case_ids": [
@@ -1035,8 +1154,14 @@ def report_v2_item(case: dict[str, object]) -> dict[str, object]:
 
 def report_v2_summary(summary: dict[str, object], cases: list[object], reportability_value: object) -> dict[str, object]:
     risks: list[str] = []
+    validation_status = str(summary.get("run_validation_status") or "missing")
+    if validation_status != "passed":
+        risks.append(f"Run validation is {validation_status}.")
+    trend_confidence = str(summary.get("trend_confidence") or "unavailable")
     if str(summary.get("previous_run_id") or "") == "없음":
         risks.append("No previous comparable run for trend metrics.")
+    elif trend_confidence == "case-overlap-fallback":
+        risks.append("Trend metrics use case-overlap fallback, not exact fingerprint comparison.")
     if int(summary.get("missing_or_weak_evidence") or 0) > 0:
         risks.append("Some cases are blocked, unscored, or missing reportable evidence.")
     if int(summary.get("hard_gate_failures") or 0) > 0:
@@ -1063,6 +1188,8 @@ def report_v2_summary(summary: dict[str, object], cases: list[object], reportabi
                 "type": "hard_gate",
                 "metrics": [
                     {"label": "hard gate failures", "value": str(summary.get("hard_gate_failures", "n/a"))},
+                    {"label": "validation", "value": validation_status},
+                    {"label": "validation findings", "value": str(summary.get("run_validation_findings", "n/a"))},
                     {"label": "unscored", "value": str(summary.get("unscored", "n/a"))},
                     {"label": "blocked", "value": str(summary.get("blocked", "n/a"))},
                 ],
@@ -1072,6 +1199,7 @@ def report_v2_summary(summary: dict[str, object], cases: list[object], reportabi
                 "metrics": [
                     {"label": "reportability", "value": str(reportability_value or "unknown")},
                     {"label": "previous run", "value": str(summary.get("previous_run_id", "없음"))},
+                    {"label": "trend confidence", "value": trend_confidence},
                 ],
             },
         ],
@@ -1100,10 +1228,14 @@ def latest_report_alias_path(bucket: str) -> Path:
     return EVAL_ROOT / bucket / "latest/report.html"
 
 
-def latest_scored_run_dir(bucket: str) -> Path | None:
+def latest_valid_report_alias_path(bucket: str) -> Path:
+    return EVAL_ROOT / bucket / "latest-valid/report.html"
+
+
+def latest_full_run_candidates(bucket: str) -> list[tuple[str, str, Path]]:
     runs_dir = EVAL_ROOT / bucket / "runs"
     if not runs_dir.is_dir():
-        return None
+        return []
 
     candidates: list[tuple[str, str, Path]] = []
     for path in runs_dir.iterdir():
@@ -1114,19 +1246,40 @@ def latest_scored_run_dir(bucket: str) -> Path | None:
         run_meta = run_identity.load_run_meta(path)
         if run_meta.get("scope") != "full":
             continue
+        created_at = str(run_meta.get("created_at") or "")
+        if not created_at:
+            continue
+        candidates.append((created_at, path.name, path))
+    return candidates
+
+
+def latest_attempt_run_dir(bucket: str) -> Path | None:
+    candidates = latest_full_run_candidates(bucket)
+    if not candidates:
+        return None
+    return sorted(candidates)[-1][2]
+
+
+def latest_scored_run_dir(bucket: str) -> Path | None:
+    candidates: list[tuple[str, str, Path]] = []
+    for created_at, run_id, path in latest_full_run_candidates(bucket):
         if not run_identity.has_successful_validation(path):
             continue
         if not run_identity.has_answer_oracle_evaluation(path):
             continue
         if not run_identity.exit_artifacts_are_clean(path):
             continue
-        created_at = str(run_meta.get("created_at") or "")
-        if not created_at:
-            continue
-        candidates.append((created_at, path.name, path))
+        candidates.append((created_at, run_id, path))
     if not candidates:
         return None
     return sorted(candidates)[-1][2]
+
+
+def latest_attempt_report_path(bucket: str) -> Path | None:
+    latest_run = latest_attempt_run_dir(bucket)
+    if latest_run is None:
+        return None
+    return report_path(bucket, latest_run.name)
 
 
 def latest_scored_report_path(bucket: str) -> Path | None:
@@ -1137,18 +1290,31 @@ def latest_scored_report_path(bucket: str) -> Path | None:
 
 
 def latest_available_report_path(bucket: str) -> Path | None:
+    latest_report = latest_attempt_report_path(bucket)
+    if latest_report is None or not latest_report.is_file():
+        return None
+    return latest_report
+
+
+def latest_available_valid_report_path(bucket: str) -> Path | None:
     latest_report = latest_scored_report_path(bucket)
     if latest_report is None or not latest_report.is_file():
         return None
     return latest_report
 
 
-def latest_redirect_html(bucket: str, target_report: Path) -> str:
-    alias_dir = latest_report_alias_path(bucket).parent
+def latest_redirect_html(
+    bucket: str,
+    target_report: Path,
+    *,
+    alias_path: Path | None = None,
+    title: str | None = None,
+) -> str:
+    alias_dir = (alias_path or latest_report_alias_path(bucket)).parent
     href = Path(os.path.relpath(target_report, alias_dir)).as_posix()
     escaped_href = escape(href, quote=True)
     js_href = json.dumps(href).replace("</", "<\\/")
-    title = f"Latest {bucket} eval report"
+    title = title or f"Latest {bucket} eval report"
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -1164,8 +1330,7 @@ def latest_redirect_html(bucket: str, target_report: Path) -> str:
 """
 
 
-def missing_latest_report_html(bucket: str) -> str:
-    title = f"No validated latest {bucket} eval report"
+def latest_placeholder_html(title: str, message: str) -> str:
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -1195,11 +1360,31 @@ def missing_latest_report_html(bucket: str) -> str:
 <body>
   <main>
     <h1>{escape(title)}</h1>
-    <p>이 bucket에는 아직 schema, validation, answer-oracle, clean-exit 조건을 통과한 full 최신 report가 없습니다.</p>
+    <p>{escape(message)}</p>
   </main>
 </body>
 </html>
 """
+
+
+def missing_latest_report_html(bucket: str, latest_run_id: str | None = None) -> str:
+    title = f"No latest {bucket} eval report"
+    if latest_run_id:
+        message = (
+            f"최신 full run({latest_run_id})은 찾았지만 analysis/report.html이 아직 "
+            "렌더되지 않았습니다. --refresh-latest를 실행하면 이 별칭이 최신 report로 연결됩니다."
+        )
+    else:
+        message = "이 bucket에는 아직 canonical RUN_META를 가진 full run이 없습니다."
+    return latest_placeholder_html(title, message)
+
+
+def missing_latest_valid_report_html(bucket: str) -> str:
+    title = f"No validated latest {bucket} eval report"
+    return latest_placeholder_html(
+        title,
+        "이 bucket에는 아직 schema, validation, answer-oracle, clean-exit 조건을 통과한 full 최신 report가 없습니다.",
+    )
 
 
 def write_latest_report_alias(bucket: str) -> Path:
@@ -1207,9 +1392,35 @@ def write_latest_report_alias(bucket: str) -> Path:
     alias_path.parent.mkdir(parents=True, exist_ok=True)
     latest_report = latest_available_report_path(bucket)
     if latest_report is None:
-        alias_path.write_text(missing_latest_report_html(bucket), encoding="utf-8")
+        latest_run = latest_attempt_run_dir(bucket)
+        alias_path.write_text(
+            missing_latest_report_html(bucket, latest_run.name if latest_run else None),
+            encoding="utf-8",
+        )
     else:
-        alias_path.write_text(latest_redirect_html(bucket, latest_report), encoding="utf-8")
+        alias_path.write_text(
+            latest_redirect_html(bucket, latest_report, alias_path=alias_path),
+            encoding="utf-8",
+        )
+    return alias_path
+
+
+def write_latest_valid_report_alias(bucket: str) -> Path:
+    alias_path = latest_valid_report_alias_path(bucket)
+    alias_path.parent.mkdir(parents=True, exist_ok=True)
+    latest_report = latest_available_valid_report_path(bucket)
+    if latest_report is None:
+        alias_path.write_text(missing_latest_valid_report_html(bucket), encoding="utf-8")
+    else:
+        alias_path.write_text(
+            latest_redirect_html(
+                bucket,
+                latest_report,
+                alias_path=alias_path,
+                title=f"Latest validated {bucket} eval report",
+            ),
+            encoding="utf-8",
+        )
     return alias_path
 
 
@@ -1217,6 +1428,7 @@ def write_latest_report_aliases() -> list[Path]:
     aliases: list[Path] = []
     for bucket in BUCKETS:
         aliases.append(write_latest_report_alias(bucket))
+        aliases.append(write_latest_valid_report_alias(bucket))
     return aliases
 
 
@@ -1338,6 +1550,9 @@ def render_html(data: dict[str, object]) -> str:
     bucket_tabs = data.get("bucket_tabs") if isinstance(data.get("bucket_tabs"), list) else []
     bucket_goal = data.get("bucket_goal") if isinstance(data.get("bucket_goal"), list) else []
     run_meta = data.get("run_meta") if isinstance(data.get("run_meta"), dict) else {}
+    run_validation = (
+        data.get("run_validation") if isinstance(data.get("run_validation"), dict) else {}
+    )
     show_trace_columns = str(data.get("bucket") or "") == "workflow"
     table_column_count = 13 if show_trace_columns else 8
     summary_keys = (
@@ -1352,6 +1567,8 @@ def render_html(data: dict[str, object]) -> str:
         ("baseline_average", "baseline 평균"),
         ("with_dddjango_average", "with-dddjango 평균"),
         ("delta", "delta"),
+        ("run_validation_status", "validation"),
+        ("run_validation_findings", "validation findings"),
         ("hard_gate_failures", "hard gate failures"),
         ("missing_or_weak_evidence", "평가 불충분"),
     )
@@ -1371,6 +1588,7 @@ def render_html(data: dict[str, object]) -> str:
     )
     change_keys = (
         ("previous_run_id", "직전 run"),
+        ("trend_confidence", "trend confidence"),
         ("with_dddjango_average_change", "with-dddjango 평균 변화"),
         ("pass_change", "pass 변화"),
         ("fail_change", "fail 변화"),
@@ -1448,6 +1666,23 @@ def render_html(data: dict[str, object]) -> str:
             f"created: {run_meta.get('created_at')}",
         ]
     run_meta_text = "".join(f" · {escape(str(part))}" for part in run_meta_parts)
+    validation_status = str(
+        run_validation.get("status") or summary.get("run_validation_status") or "missing"
+    )
+    validation_findings = run_validation.get("findings")
+    validation_findings_text = (
+        "\n".join(str(finding) for finding in validation_findings if isinstance(finding, str))
+        if isinstance(validation_findings, list)
+        else ""
+    )
+    validation_note = (
+        f"""    <section class="panel validation-note" aria-label="run validation">
+      <div class="section-label">run validation</div>
+      <pre>{escape(validation_findings_text or 'no validation findings')}</pre>
+    </section>"""
+        if validation_status != "passed"
+        else ""
+    )
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -1807,8 +2042,9 @@ def render_html(data: dict[str, object]) -> str:
     </section>
     <header>
       <h1>평가 리뷰</h1>
-      <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))}{run_meta_text} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
+      <p class="meta">bucket: {escape(str(data.get('bucket') or 'unknown'))} · run: {escape(str(data.get('run_id') or 'unknown'))}{run_meta_text} · validation: {escape(validation_status)} · generated: {escape(str(data.get('generated_at') or 'unknown'))} · reportability: {escape(str(data.get('reportability') or 'unknown'))}</p>
     </header>
+{validation_note}
     <section class="panel" id="report-summary" aria-labelledby="summary-title">
       <h2 id="summary-title">평가 요약</h2>
       <div class="summary-grid">
@@ -2020,7 +2256,9 @@ def render_eval_report(
     output: Path | None = None,
     *,
     update_latest_aliases: bool = True,
+    record_validation_manifest: bool = True,
 ) -> Path:
+    del record_validation_manifest
     identity = run_identity.validate_production_run_id(run_id)
     if identity.bucket != bucket:
         raise SystemExit(
@@ -2039,38 +2277,57 @@ def render_eval_report(
     data = build_report_data(bucket, run_id, run_dir)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_html(data), encoding="utf-8")
-    run_identity.write_validation_manifest(
-        run_dir,
-        run_id=run_id,
-        bucket=bucket,
-        case_ids=[path.stem for path in public_cases_for_run(bucket, run_dir)],
-        variants=list(VARIANTS),
-        report_path=output_path,
-        checks=build_render_validation_checks(
-            bucket=bucket,
-            run_id=run_id,
-            run_dir=run_dir,
-            report=output_path,
-        ),
-    )
     if update_latest_aliases:
         write_latest_report_aliases()
     return output_path
 
 
-def refresh_latest_reports() -> list[Path]:
+def latest_refresh_runs() -> list[tuple[str, str]]:
     latest_runs: list[tuple[str, str]] = []
-    for bucket in BUCKETS:
-        run_dir = latest_scored_run_dir(bucket)
-        if run_dir is not None:
-            latest_runs.append((bucket, run_dir.name))
+    seen: set[tuple[str, str]] = set()
+    for selector in (latest_attempt_run_dir, latest_scored_run_dir):
+        for bucket in BUCKETS:
+            run_dir = selector(bucket)
+            if run_dir is None:
+                continue
+            key = (bucket, run_dir.name)
+            if key in seen:
+                continue
+            seen.add(key)
+            latest_runs.append(key)
+    return latest_runs
+
+
+def render_latest_report_for_refresh(bucket: str, run_id: str) -> Path | None:
+    try:
+        return render_eval_report(
+            bucket,
+            run_id,
+            update_latest_aliases=False,
+            record_validation_manifest=False,
+        )
+    except SystemExit as exc:
+        if isinstance(exc.code, int):
+            message = f"exited {exc.code}"
+        else:
+            message = str(exc.code)
+        print(
+            f"WARN: could not render latest {bucket}/{run_id}: {message}",
+            file=sys.stderr,
+        )
+        return None
+
+
+def refresh_latest_reports() -> list[Path]:
+    latest_runs = latest_refresh_runs()
 
     refreshed: list[Path] = []
     for _ in range(2):
-        refreshed = [
-            render_eval_report(bucket, run_id, update_latest_aliases=False)
-            for bucket, run_id in latest_runs
-        ]
+        refreshed = []
+        for bucket, run_id in latest_runs:
+            output = render_latest_report_for_refresh(bucket, run_id)
+            if output is not None:
+                refreshed.append(output)
     write_latest_report_aliases()
     return refreshed
 

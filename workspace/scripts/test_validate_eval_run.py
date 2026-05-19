@@ -48,10 +48,16 @@ class ValidateEvalRunTests(unittest.TestCase):
         public.parent.mkdir(parents=True, exist_ok=True)
         answer.parent.mkdir(parents=True, exist_ok=True)
         public.write_text("사용자 요청입니다.\n", encoding="utf-8")
-        answer.write_text(
-            f"id: {case_id}\ncase_id: {case_id}\nbucket: {bucket}\nkind: {bucket}\n",
-            encoding="utf-8",
-        )
+        answer_text = f"id: {case_id}\ncase_id: {case_id}\nbucket: {bucket}\nkind: {bucket}\n"
+        if bucket == "code":
+            answer_text += (
+                "code_expected: true\n"
+                "deterministic_checks: []\n"
+                "allowed_paths:\n"
+                "  - apps/**\n"
+                "forbidden_paths: []\n"
+            )
+        answer.write_text(answer_text, encoding="utf-8")
 
     def valid_oracle(self, case_id: str = "case-response-one") -> dict[str, object]:
         return {
@@ -148,10 +154,49 @@ class ValidateEvalRunTests(unittest.TestCase):
         artifact_dir = run_dir / "code" / case_id / variant
         artifact_dir.mkdir(parents=True, exist_ok=True)
         (artifact_dir / "diff.patch").write_text("diff --git a/app.py b/app.py\n", encoding="utf-8")
+        copied = artifact_dir / "files/apps/orders/service.py"
+        copied.parent.mkdir(parents=True, exist_ok=True)
+        copied.write_text("print('ok')\n", encoding="utf-8")
         (artifact_dir / "changed-files.json").write_text(
             json.dumps(manifest) + "\n",
             encoding="utf-8",
         )
+
+    def write_code_behavior_check(
+        self,
+        run_dir: Path,
+        case_id: str,
+        variant: str,
+        *,
+        exit_code: str,
+    ) -> None:
+        checks = run_dir / "code" / case_id / variant / "behavior-checks"
+        checks.mkdir(parents=True, exist_ok=True)
+        (checks / "hidden-command.txt").write_text("python3 hidden.py\n", encoding="utf-8")
+        (checks / "hidden-exit.txt").write_text(exit_code + "\n", encoding="utf-8")
+        (checks / "hidden-stdout.txt").write_text("", encoding="utf-8")
+        (checks / "hidden-stderr.txt").write_text("", encoding="utf-8")
+
+    def valid_code_manifest(self, case_id: str, variant: str) -> dict[str, object]:
+        return {
+            "caseId": case_id,
+            "variant": variant,
+            "workspace": "/tmp/workspace",
+            "evidenceMode": "code-backed",
+            "diffPath": f"code/{case_id}/{variant}/diff.patch",
+            "noCodeProduced": False,
+            "files": [
+                {
+                    "path": "apps/orders/service.py",
+                    "status": "modified",
+                    "language": "python",
+                    "artifactPath": f"code/{case_id}/{variant}/files/apps/orders/service.py",
+                    "lineCount": 1,
+                    "byteCount": 12,
+                    "binary": False,
+                }
+            ],
+        }
 
     def write_trace_marker(self, run_dir: Path) -> None:
         (run_dir / "SUBAGENT_TRACE_CAPTURE.json").write_text(
@@ -221,7 +266,7 @@ class ValidateEvalRunTests(unittest.TestCase):
         self.assertIn(expected, output)
 
     def test_valid_run_passes(self) -> None:
-        self.write_valid_run()
+        run_dir = self.write_valid_run()
 
         result, output = self.run_validator(
             ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
@@ -229,6 +274,9 @@ class ValidateEvalRunTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         self.assertIn("PASS:", output)
+        manifest = json.loads((run_dir / "RUN_VALIDATION.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["status"], "passed")
+        self.assertEqual(manifest["findings"], [])
 
     def test_stale_baseline_prompt_input_fails(self) -> None:
         run_dir = self.write_valid_run()
@@ -240,6 +288,12 @@ class ValidateEvalRunTests(unittest.TestCase):
         self.assertFailsWith(
             ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "baseline prompt-input artifact is forbidden",
+        )
+        manifest = json.loads((run_dir / "RUN_VALIDATION.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["status"], "failed")
+        self.assertIn(
+            "baseline prompt-input artifact is forbidden",
+            "\n".join(manifest["findings"]),
         )
 
     def test_invalid_run_meta_json_fails(self) -> None:
@@ -380,6 +434,129 @@ class ValidateEvalRunTests(unittest.TestCase):
             "analysis/report.html: output contains forbidden local path",
         )
 
+    def test_report_html_generic_temporary_path_contamination_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        report = run_dir / "analysis/report.html"
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text("<html><body>/private/tmp/dddjango-eval-workspaces/case</body></html>\n", encoding="utf-8")
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "analysis/report.html: output contains temporary workspace path",
+        )
+
+    def test_baseline_response_temporary_workspace_link_does_not_block_validation(self) -> None:
+        self.write_valid_run(
+            baseline_text=(
+                "근거: "
+                "[plugin-structure.md](/private/tmp/dddjango-eval-workspaces/run/case/"
+                "baseline/workspace/docs/plugin-structure.md:132)\n"
+            )
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_generic_tmp_wording_is_not_temporary_path_contamination(self) -> None:
+        categories = self.validator.eval_leakage_policy.scan_text_for_leakage(
+            "Reject home/tmp/plugin-cache absolute paths as a category.\n"
+        )
+
+        self.assertNotIn("temporary workspace path", categories)
+
+    def test_with_ddjango_output_private_eval_sentinel_fails_without_echoing_secret(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango.txt").write_text(
+            "__DDDJANGO_PRIVATE_EVAL_SENTINEL__\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "raw/case-response-one-with-dddjango.txt: output contains internal eval sentinel",
+        )
+
+    def test_prompt_induced_sentinel_in_with_ddjango_response_is_allowed(self) -> None:
+        run_dir = self.write_valid_run()
+        prompt = run_dir / "raw/case-response-one-public-prompt.md"
+        prompt.write_text(
+            "찾을 문자열: `__DDDJANGO_PRIVATE_EVAL_SENTINEL__`\n",
+            encoding="utf-8",
+        )
+        (run_dir / "raw/case-response-one-with-dddjango.txt").write_text(
+            "찾을 문자열: `__DDDJANGO_PRIVATE_EVAL_SENTINEL__`\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_prompt_induced_sentinel_in_report_is_allowed(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-public-prompt.md").write_text(
+            "찾을 문자열: `__DDDJANGO_PRIVATE_EVAL_SENTINEL__`\n",
+            encoding="utf-8",
+        )
+        report = run_dir / "analysis/report.html"
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(
+            "<html><body>__DDDJANGO_PRIVATE_EVAL_SENTINEL__</body></html>\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_code_output_temporary_workspace_file_link_is_allowed(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(
+            bucket="code",
+            case_id=case_id,
+            run_id=RUN_ID_CODE,
+            variants=("with-dddjango",),
+        )
+        self.write_code_capture_metadata(case_id)
+        self.write_code_variant_artifacts(
+            run_dir,
+            case_id,
+            "with-dddjango",
+            self.valid_code_manifest(case_id, "with-dddjango"),
+        )
+        (run_dir / f"raw/{case_id}-with-dddjango.txt").write_text(
+            "Updated "
+            "[service.py](/private/tmp/dddjango-eval-workspaces/run/case/with-dddjango/"
+            "apps/orders/service.py).\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            [
+                "--bucket",
+                "code",
+                "--run-id",
+                RUN_ID_CODE,
+                "--case",
+                case_id,
+                "--variant",
+                "with-dddjango",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
     def test_skip_oracle_succeeds_without_canonical_oracle(self) -> None:
         self.write_valid_run(include_oracle=False)
 
@@ -397,6 +574,47 @@ class ValidateEvalRunTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         self.assertIn("PASS:", output)
+
+    def test_with_ddjango_behavior_check_failure_fails_run_validation(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(
+            bucket="code",
+            case_id=case_id,
+            run_id=RUN_ID_CODE,
+            variants=("with-dddjango",),
+        )
+        self.write_code_capture_metadata(case_id)
+        answer = self.eval_root / "code/answer" / f"{case_id}.yaml"
+        answer.write_text(
+            f"id: {case_id}\n"
+            f"case_id: {case_id}\n"
+            "bucket: code\n"
+            "kind: code\n"
+            "code_expected: true\n"
+            "deterministic_checks: []\n"
+            "behavior_checks:\n"
+            "  - id: hidden\n"
+            "    command: python3 hidden.py\n"
+            "    expected_exit: 0\n"
+            "allowed_paths:\n"
+            "  - apps/**\n"
+            "forbidden_paths: []\n",
+            encoding="utf-8",
+        )
+        self.write_code_variant_artifacts(
+            run_dir,
+            case_id,
+            "with-dddjango",
+            self.valid_code_manifest(case_id, "with-dddjango"),
+        )
+        self.write_code_behavior_check(run_dir, case_id, "with-dddjango", exit_code="1")
+
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id, "--variant", "with-dddjango"],
+            "case-code-one with-dddjango behavior check hidden exit must be 0: 1",
+        )
+        manifest = json.loads((run_dir / "RUN_VALIDATION.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["status"], "failed")
 
     def test_workflow_run_without_trace_marker_does_not_require_trace_artifacts(self) -> None:
         case_id = "case-workflow-one"
@@ -555,22 +773,15 @@ class ValidateEvalRunTests(unittest.TestCase):
                 run_dir,
                 case_id,
                 variant,
-                {
-                    "caseId": case_id,
-                    "variant": variant,
-                    "evidenceMode": "code-backed",
-                    "diffPath": f"code/{case_id}/{variant}/diff.patch",
-                    "noCodeProduced": False,
-                    "files": [
-                        {
-                            "path": "app.py",
-                            "status": "modified",
-                            "artifactPath": f"code/{case_id}/{variant}/files/app.py",
-                            "binary": False,
-                        }
-                    ],
-                },
+                self.valid_code_manifest(case_id, variant),
             )
+            (
+                run_dir
+                / "code"
+                / case_id
+                / variant
+                / "files/apps/orders/service.py"
+            ).unlink()
 
         self.assertFailsWith(
             ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
@@ -589,7 +800,7 @@ class ValidateEvalRunTests(unittest.TestCase):
             "missing keys",
         )
 
-    def test_code_manifest_deleted_binary_file_without_artifact_passes(self) -> None:
+    def test_code_manifest_deleted_binary_file_without_text_source_fails(self) -> None:
         case_id = "case-code-one"
         run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
         self.write_code_capture_metadata(case_id)
@@ -601,26 +812,52 @@ class ValidateEvalRunTests(unittest.TestCase):
                 {
                     "caseId": case_id,
                     "variant": variant,
+                    "workspace": "/tmp/workspace",
                     "evidenceMode": "code-backed",
                     "diffPath": f"code/{case_id}/{variant}/diff.patch",
                     "noCodeProduced": False,
                     "files": [
                         {
-                            "path": "old.bin",
+                            "path": "apps/orders/old.bin",
                             "status": "deleted",
+                            "language": "text",
                             "artifactPath": "",
+                            "lineCount": 0,
+                            "byteCount": 0,
                             "binary": True,
                         }
                     ],
                 },
             )
 
-        result, output = self.run_validator(
-            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id]
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
+            "must include at least one copied text source file",
         )
 
-        self.assertEqual(result, 0)
-        self.assertIn("PASS:", output)
+    def test_code_generated_artifact_fails_through_run_validator(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            manifest = self.valid_code_manifest(case_id, variant)
+            manifest["files"] = [
+                {
+                    "path": "db.sqlite3",
+                    "status": "added",
+                    "language": "text",
+                    "artifactPath": "",
+                    "lineCount": 0,
+                    "byteCount": 0,
+                    "binary": True,
+                }
+            ]
+            self.write_code_variant_artifacts(run_dir, case_id, variant, manifest)
+
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
+            "generated artifact changed: db.sqlite3",
+        )
 
     def test_invalid_run_id_fails(self) -> None:
         for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", "", "run-one"):

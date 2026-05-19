@@ -12,6 +12,7 @@ reference_basis:
   - path: workspace/docs/workflow.md
     basis: simple task restraint
 code_expected: true
+case_role: control
 deterministic_checks:
   - id: unit-tests
     command: python3 -m unittest
@@ -35,9 +36,11 @@ forbidden_paths:
 scoring_checks:
   - pass if the diff is narrow and behavior remains covered.
   - fail if it performs broad redesign.
+score_interpretation: Control/restraint score; do not count this as DDD-shaped implementation confidence.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
 failure_modes:
   - over-ceremony
   - incomplete rename

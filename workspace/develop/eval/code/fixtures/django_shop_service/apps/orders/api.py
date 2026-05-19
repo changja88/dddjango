@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from ninja import NinjaAPI, Schema
 
-from .services import IdempotencyConflict, order_create
+from .services import order_create
 
 
 api = NinjaAPI(title="dddjango Eval Shop Service")
@@ -28,24 +28,20 @@ class ErrorOut(Schema):
     detail: str
 
 
-@api.post("/orders", response={200: OrderOut, 201: OrderOut, 409: ErrorOut})
+@api.post("/orders", response={201: OrderOut, 409: ErrorOut})
 def create_order(request, payload: OrderCreateIn):
     idempotency_key = request.headers.get("Idempotency-Key")
     if not idempotency_key:
         return 409, {"detail": "Idempotency-Key header is required"}
-    try:
-        result = order_create(
-            idempotency_key=idempotency_key,
-            customer_email=payload.customer_email,
-            total_amount=payload.total_amount,
-            note=payload.note,
-        )
-    except IdempotencyConflict as exc:
-        return 409, {"detail": str(exc)}
+    result = order_create(
+        idempotency_key=idempotency_key,
+        customer_email=payload.customer_email,
+        total_amount=payload.total_amount,
+        note=payload.note,
+    )
 
     order = result.order
-    status_code = 200 if result.replayed else 201
-    return status_code, {
+    return 201, {
         "id": order.id,
         "customer_email": order.customer_email,
         "total_amount": str(order.total_amount),

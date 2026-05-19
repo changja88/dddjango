@@ -54,6 +54,7 @@
 
 - `case_id`, `kind: code`, `source_refs`
 - `code_expected: true|false` and `code_expected_reason` when no code should be produced
+- Direct DDD code cases must declare `case_role: ddd_direct` and include `ddd_observations` with business problem, subdomain type and basis, bounded context, context-map or not-applicable decision, ubiquitous terms, aggregate root, aggregate behavior, invariants, application-service boundary, transaction boundary, Django/API mapping or limitation, and test evidence. Supporting implementation and control/restraint cases must use `case_role: implementation_supporting` or `case_role: control` and must not be counted as DDD-shaped implementation confidence.
 - 허용/금지 변경 파일 또는 path pattern
 - 반드시 생성되어야 하는 artifact: `changed-files.json`, `diff.patch`, copied source files, command/exit/stderr/stdout
 - 반드시 실행하거나 명시적으로 미실행 보고해야 하는 command

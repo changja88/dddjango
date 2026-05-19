@@ -224,6 +224,47 @@ class EvalRunIdentityTests(unittest.TestCase):
         self.assertEqual(manifest["status"], "passed")
         self.assertTrue(self.module.has_successful_validation(run_dir))
 
+    def test_run_validation_manifest_overrides_legacy_report_validation(self) -> None:
+        run_id = "20260517-143012-runtime-try01-full-current-baseline"
+        run_dir = self.root / run_id
+        self.module.write_run_meta(run_dir, run_id=run_id)
+        self.module.write_validation_manifest(
+            run_dir,
+            run_id=run_id,
+            bucket="runtime",
+            case_ids=["case-runtime-one"],
+            variants=["baseline", "with-dddjango"],
+            report_path=run_dir / "analysis/report.html",
+            checks=[
+                {
+                    "name": "report-rendered",
+                    "status": "passed",
+                    "command": "render_eval_review_html.py",
+                }
+            ],
+        )
+
+        manifest = self.module.write_run_validation_manifest(
+            run_dir,
+            run_id=run_id,
+            bucket="runtime",
+            case_ids=["case-runtime-one"],
+            variants=["baseline", "with-dddjango"],
+            status="failed",
+            findings=["case-runtime-one baseline exit is not 0"],
+        )
+
+        self.assertEqual(manifest["status"], "failed")
+        self.assertEqual(
+            self.module.load_run_validation_manifest(run_dir)["findings"],
+            ["case-runtime-one baseline exit is not 0"],
+        )
+        self.assertEqual(
+            self.module.validate_run_validation_manifest(run_dir),
+            ["RUN_VALIDATION.json status must be passed"],
+        )
+        self.assertFalse(self.module.has_successful_validation(run_dir))
+
     def test_validation_manifest_rejects_bucket_mismatch(self) -> None:
         run_id = "20260517-143012-runtime-try01-full-current-baseline"
         run_dir = self.root / run_id

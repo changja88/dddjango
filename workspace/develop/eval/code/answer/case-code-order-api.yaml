@@ -12,6 +12,7 @@ reference_basis:
   - path: workspace/docs/skill-contracts.md
     basis: DDD, DB, API, Django Ninja, Test boundaries
 code_expected: true
+case_role: implementation_supporting
 deterministic_checks:
   - id: django-tests
     command: python3 manage.py test
@@ -40,11 +41,23 @@ forbidden_paths:
 scoring_checks:
   - pass if diff includes service-side idempotency and tests for same-key replay and payload conflict.
   - fail if it only adds prose or untested placeholder fields.
+score_interpretation: API/DB consistency support score; do not count this as direct DDD-shaped aggregate implementation confidence.
+consistency_observations:
+  application_service_boundary: Order creation and idempotency decisions live in the service/usecase layer; the Ninja router validates input, reads headers, calls the service, and maps errors to Problem Details.
+  transaction_boundary: The service owns the atomic section around idempotency lookup/create and unique constraint conflict handling.
+  idempotency_storage: Persistence stores idempotency key, request fingerprint, and replay snapshot.
+  problem_details: Missing key and payload conflict return Problem Details shaped responses.
+  tests:
+    - same key and same payload replays same response.
+    - same key and different payload returns conflict.
+    - API remains a thin adapter.
+    - DB race fallback does not create duplicate orders.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
 failure_modes:
-  - duplicate order still created
+  - same-key replay still surfaces a raw database error
   - conflict not distinguishable
   - false command success
 leakage_checks:

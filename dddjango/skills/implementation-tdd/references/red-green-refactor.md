@@ -8,6 +8,7 @@ Use this reference for the core TDD cycle, red/green/refactor rules, green strat
 - Green: write the minimum code needed to pass the current test.
 - Refactor: remove duplication, improve names, and clarify design while tests stay green.
 - Repeat in small steps; do not batch many unverified requirements into one large implementation.
+- If a new test passes immediately against existing production code, do not report a Red step. Treat that check as regression or characterization coverage unless you also capture a deliberate failing proof, such as an earlier failing run or mutation/revert check.
 
 ## Green Strategies
 
