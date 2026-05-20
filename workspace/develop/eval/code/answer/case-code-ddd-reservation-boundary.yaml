@@ -42,7 +42,7 @@ forbidden_paths:
   - dddjango/**
 ddd_observations:
   business_problem: Guests can request reservations and operators can confirm or expire them only through valid reservation state transitions.
-  subdomain_type: Reservation is treated as core/high-risk supporting because availability handoff and lifecycle correctness directly affect booking promises.
+  subdomain_type: Reservation is treated as a supporting context with high-risk lifecycle invariants because availability handoff and lifecycle correctness directly affect booking promises.
   subdomain_type_basis: Booking lifecycle mistakes can confirm invalid reservations or expire already confirmed reservations, which harms customer-facing availability consistency.
   bounded_context: Reservation
   context_map_or_not_applicable: Room availability or inventory is a neighboring external boundary; this case expects an in-memory boundary or event handoff, not a merged aggregate.
@@ -55,16 +55,17 @@ ddd_observations:
     - room availability hold
   aggregate_root: Reservation
   aggregate_behavior:
-    - Reservation.request or equivalent aggregate behavior protects positive-night reservation creation.
-    - Reservation.confirm or equivalent aggregate behavior protects confirmation state transition.
-    - Reservation.expire or equivalent aggregate behavior protects expiration state transition.
+    - Reservation.request protects positive-night reservation creation.
+    - Reservation.confirm protects confirmation state transition.
+    - Reservation.expire protects expiration state transition.
+    - Reservation lifecycle state is not externally mutable; outside code observes status without bypassing aggregate behavior.
   invariants:
     - A reservation must be requested for at least one night.
     - A reservation can be confirmed only from requested status.
     - A confirmed reservation cannot be expired.
-  application_service_boundary: Service functions orchestrate lookup, persistence, and availability hold handoff; they do not assign lifecycle status directly.
+  application_service_boundary: Service functions orchestrate lookup, persistence, and availability hold handoff; they do not assign lifecycle status or private status directly, including setattr-based mutation.
   transaction_boundary: In-memory fixture has no DB transaction; final answer must state this limitation rather than inventing database verification.
-  domain_events: If side effects are discussed, availability hold or release must be represented as a boundary/event/after-commit handoff, not a real external call.
+  domain_events: If side effects are discussed, availability hold or release must be represented as an in-memory boundary call or collected domain event/after-commit handoff, not a real external call, network/SDK call, or full outbox/UoW rewrite for this fixture.
   django_mapping:
     - Pure Python fixture maps aggregate and application service responsibilities before Django persistence.
   test_evidence:
@@ -74,9 +75,10 @@ ddd_observations:
     - invalid confirmation raises
     - expiration moves to expired
     - confirmed reservation cannot expire
+    - aggregate invariant tests and service use-case tests are both present
 scoring_checks:
-  - pass if aggregate behavior protects reservation lifecycle invariants and tests prove the behavior.
-  - partial if behavior is correct but room availability boundary is mixed into the aggregate or service owns state rules.
+  - pass if aggregate behavior protects reservation lifecycle invariants, lifecycle state cannot be externally mutated, and tests prove aggregate and service behavior.
+  - partial if behavior is correct but lifecycle state remains externally mutable, room availability boundary is mixed into the aggregate, or service owns state rules.
   - fail if service-only procedural status mutation remains the only protection.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.

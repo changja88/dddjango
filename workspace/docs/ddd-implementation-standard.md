@@ -54,6 +54,8 @@ DDD 작업은 다음 순서로 판단한다.
 
 하나의 트랜잭션은 기본적으로 하나의 애그리거트 불변식을 보호한다. 여러 애그리거트 간 일관성은 도메인 이벤트, eventual consistency, outbox를 검토한다.
 
+애그리거트가 소유한 lifecycle 상태가 불변식을 보호한다면 외부에서 임의 대입 가능한 public mutable field로 열어두지 않는다. 외부에는 읽기 전용 관찰 속성이나 query method를 제공하고, 상태 변경은 aggregate method를 통과하게 한다. Python dataclass에서는 private field와 read-only property, `frozen=True` 값 객체, 검증된 method 중 현재 복잡도에 맞는 가장 단순한 방식을 선택한다.
+
 값 객체는 식별자가 아니라 값과 불변식으로 정의한다. 금액, 기간, 좌표, 수량, 이메일, 정책 조건처럼 유효성 자체가 의미인 개념은 값 객체 후보로 본다.
 
 ## 5. Domain Events
@@ -83,6 +85,8 @@ Application service는 유스케이스 흐름을 조정한다.
 - 결과를 반환한다.
 
 Application service는 핵심 비즈니스 판단을 소유하지 않는다. 규칙은 가능한 한 entity, value object, aggregate method, domain service에 둔다.
+
+Application service는 외부 boundary 호출이나 event/after-commit handoff를 조정할 수 있지만, 인접 컨텍스트의 가용성, 재고, 결제, 배송 상태를 같은 애그리거트의 자식 객체나 공유 mutable collection처럼 합치지 않는다.
 
 Domain service는 특정 entity나 value object에 자연스럽게 속하지 않는 도메인 규칙이 있을 때만 만든다.
 
