@@ -19,6 +19,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import eval_leakage_policy
 import eval_run_identity as run_identity
 import workflow_execution_gate as workflow_gate
 
@@ -393,6 +394,14 @@ def validate_oracle_language(oracle: dict[str, Any]) -> str | None:
 
 
 def normalize_oracle(oracle: dict[str, Any]) -> None:
+    if "with_dddjango" not in oracle:
+        for alias in ("with_ddjango", "with_django", "with-dddjango"):
+            alias_value = oracle.get(alias)
+            if isinstance(alias_value, dict):
+                oracle["with_dddjango"] = alias_value
+                oracle.pop(alias, None)
+                break
+
     for variant_key in ("baseline", "with_dddjango"):
         variant_oracle = oracle.get(variant_key)
         if not isinstance(variant_oracle, dict):
@@ -403,6 +412,19 @@ def normalize_oracle(oracle: dict[str, Any]) -> None:
             variant_oracle["evaluation_summary"] = evaluation
         elif common.has_non_empty_text(summary) and not common.has_non_empty_text(evaluation):
             variant_oracle["evaluation"] = summary
+
+
+def sanitize_oracle_for_canonical_artifact(value: Any) -> Any:
+    if isinstance(value, str):
+        return eval_leakage_policy.sanitize_text_for_eval_artifact(value)
+    if isinstance(value, list):
+        return [sanitize_oracle_for_canonical_artifact(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            key: sanitize_oracle_for_canonical_artifact(item)
+            for key, item in value.items()
+        }
+    return value
 
 
 def evaluate_case(
@@ -481,6 +503,7 @@ def evaluate_case(
             raw_dir=raw_dir,
             case_id=case_id,
         )
+    oracle = sanitize_oracle_for_canonical_artifact(oracle)
     common.write_text(
         canonical_path,
         json.dumps(oracle, ensure_ascii=False, indent=2) + "\n",

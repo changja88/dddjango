@@ -80,13 +80,65 @@ def extract_json_object(text: str) -> dict[str, Any]:
         candidates.append(text[first_brace : last_brace + 1])
     candidates.append(text.strip())
     for candidate in candidates:
-        try:
-            value = json.loads(candidate)
-        except json.JSONDecodeError:
+        value = parse_json_object_candidate(candidate)
+        if value is None:
             continue
         if isinstance(value, dict):
             return value
     raise ValueError("no JSON object found")
+
+
+def parse_json_object_candidate(candidate: str) -> object | None:
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        pass
+
+    normalized = strip_json_trailing_commas(candidate)
+    if normalized == candidate:
+        return None
+    try:
+        return json.loads(normalized)
+    except json.JSONDecodeError:
+        return None
+
+
+def strip_json_trailing_commas(text: str) -> str:
+    result: list[str] = []
+    in_string = False
+    escape = False
+    index = 0
+    length = len(text)
+    while index < length:
+        char = text[index]
+        if in_string:
+            result.append(char)
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            index += 1
+            continue
+
+        if char == '"':
+            in_string = True
+            result.append(char)
+            index += 1
+            continue
+
+        if char == ",":
+            lookahead = index + 1
+            while lookahead < length and text[lookahead].isspace():
+                lookahead += 1
+            if lookahead < length and text[lookahead] in "}]":
+                index += 1
+                continue
+
+        result.append(char)
+        index += 1
+    return "".join(result)
 
 
 def has_non_empty_text(value: object) -> bool:

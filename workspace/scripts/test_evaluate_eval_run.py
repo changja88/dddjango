@@ -177,6 +177,75 @@ class EvaluateEvalRunTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("codex exec --ephemeral", command_text)
 
+    def test_canonical_oracle_redacts_leakage_tokens_but_preserves_raw_stdout(self) -> None:
+        self.write_case_and_run()
+        payload = self.valid_payload()
+        payload["baseline"]["evaluation"] = (
+            "기준 위반: __DDDJANGO_PRIVATE_EVAL_SENTINEL__ 값을 그대로 노출했습니다."
+        )
+        payload["observations"] = [
+            "baseline 응답은 __DDDJANGO_PRIVATE_EVAL_SENTINEL__ 값을 노출했습니다."
+        ]
+
+        with patch.object(
+            self.evaluator,
+            "run_command",
+            return_value=subprocess.CompletedProcess(["codex"], 0, json.dumps(payload), ""),
+        ):
+            result = self.evaluator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    RUN_ID_RESPONSE,
+                    "--case",
+                    "case-response-one",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        raw = self.evaluator.EVAL_ROOT / f"response/runs/{RUN_ID_RESPONSE}/raw"
+        canonical_text = (
+            raw / "case-response-one-answer-oracle-evaluation.json"
+        ).read_text(encoding="utf-8")
+        raw_text = (
+            raw / "case-response-one-answer-oracle-evaluation.raw.txt"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("__DDDJANGO_PRIVATE_EVAL_SENTINEL__", canonical_text)
+        self.assertIn("[internal-eval-sentinel]", canonical_text)
+        self.assertIn("__DDDJANGO_PRIVATE_EVAL_SENTINEL__", raw_text)
+
+    def test_accepts_with_django_key_typo_from_evaluator_output(self) -> None:
+        self.write_case_and_run()
+        payload = self.valid_payload()
+        payload["with_ddjango"] = payload.pop("with_dddjango")
+
+        with patch.object(
+            self.evaluator,
+            "run_command",
+            return_value=subprocess.CompletedProcess(["codex"], 0, json.dumps(payload), ""),
+        ):
+            result = self.evaluator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    RUN_ID_RESPONSE,
+                    "--case",
+                    "case-response-one",
+                ]
+            )
+
+        self.assertEqual(result, 0)
+        raw = self.evaluator.EVAL_ROOT / f"response/runs/{RUN_ID_RESPONSE}/raw"
+        canonical = json.loads(
+            (raw / "case-response-one-answer-oracle-evaluation.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertIn("with_dddjango", canonical)
+        self.assertNotIn("with_ddjango", canonical)
+
     def test_main_rejects_missing_run_meta_before_evaluating(self) -> None:
         raw = self.write_case_and_run(write_meta=False)
 

@@ -82,6 +82,25 @@ class EvalRunCommonTests(unittest.TestCase):
 
         self.assertEqual(value, {"caseId": "case-a"})
 
+    def test_extract_json_object_accepts_trailing_commas_from_model_json(self) -> None:
+        text = (
+            '{\n'
+            '  "caseId": "case-a",\n'
+            '  "baseline": {\n'
+            '    "evaluation": "ok",\n'
+            '  },\n'
+            '  "observations": [\n'
+            '    "noted",\n'
+            '  ],\n'
+            '  "status": "ok"\n'
+            '}\n'
+        )
+
+        value = self.common.extract_json_object(text)
+
+        self.assertEqual(value["baseline"]["evaluation"], "ok")
+        self.assertEqual(value["observations"], ["noted"])
+
     def test_extract_json_object_raises_when_no_json_object_parses(self) -> None:
         with self.assertRaisesRegex(ValueError, "no JSON object found"):
             self.common.extract_json_object("[]")

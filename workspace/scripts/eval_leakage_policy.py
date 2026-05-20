@@ -21,6 +21,16 @@ LEAKAGE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("internal eval sentinel", re.compile(r"__DDDJANGO_PRIVATE_EVAL_SENTINEL__")),
 )
 
+SANITIZE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"/Users/[^ \n\t\"'<>]+"), "[home-directory-path]"),
+    (re.compile(r"(?<![A-Za-z0-9_.-])/(?:private/)?tmp/[^ \n\t\"'<>]+"), "[temporary-workspace-path]"),
+    (
+        re.compile(r"(?:/Users/[^ \n\t\"'<>]+/)?\.codex/plugins/cache/[^ \n\t\"'<>]+"),
+        "[codex-cache-path]",
+    ),
+    (re.compile(r"__DDDJANGO_PRIVATE_EVAL_SENTINEL__"), "[internal-eval-sentinel]"),
+)
+
 
 def scan_text_for_leakage(text: str) -> list[str]:
     return [category for category, pattern in LEAKAGE_PATTERNS if pattern.search(text)]
@@ -33,3 +43,10 @@ def scan_files_for_leakage(paths: list[Path]) -> list[LeakageFinding]:
         for category in scan_text_for_leakage(text):
             findings.append(LeakageFinding(category=category, path=path))
     return findings
+
+
+def sanitize_text_for_eval_artifact(text: str) -> str:
+    sanitized = text
+    for pattern, replacement in SANITIZE_PATTERNS:
+        sanitized = pattern.sub(replacement, sanitized)
+    return sanitized
