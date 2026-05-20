@@ -98,11 +98,54 @@ def require_reservation_behavior(workspace: Path) -> None:
         raise AssertionError(
             f"Reservation aggregate behavior missing: {', '.join(sorted(missing))}"
         )
+    forbidden_child_terms = ("availability", "inventory", "hold")
+    for node in reservation_class.body:
+        targets: list[ast.AST] = []
+        if isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+        elif isinstance(node, ast.Assign):
+            targets = list(node.targets)
+        for target in targets:
+            name = target.id if isinstance(target, ast.Name) else ""
+            if any(term in name.lower() for term in forbidden_child_terms):
+                raise AssertionError(
+                    "room availability or inventory must stay outside the Reservation aggregate"
+                )
+
+
+def has_status_setattr_call(node: ast.Call) -> bool:
+    if not isinstance(node.func, ast.Name) or node.func.id != "setattr":
+        return False
+    if len(node.args) < 2:
+        return False
+    attr_arg = node.args[1]
+    return isinstance(attr_arg, ast.Constant) and attr_arg.value in {"status", "_status"}
+
+
+def assigned_status_attributes(tree: ast.AST) -> list[str]:
+    assigned: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            targets = list(node.targets)
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+        elif isinstance(node, ast.AugAssign):
+            targets = [node.target]
+        else:
+            targets = []
+        for target in targets:
+            if isinstance(target, ast.Attribute) and target.attr in {"status", "_status"}:
+                assigned.append(target.attr)
+        if isinstance(node, ast.Call) and has_status_setattr_call(node):
+            assigned.append("setattr(status)")
+    return assigned
 
 
 def require_reservation_service_does_not_mutate_status_directly(workspace: Path) -> None:
-    service_text = (workspace / "apps/reservations/services.py").read_text(encoding="utf-8")
-    if ".status =" in service_text:
+    service_path = workspace / "apps/reservations/services.py"
+    tree = ast.parse(service_path.read_text(encoding="utf-8"))
+    assigned = assigned_status_attributes(tree)
+    if assigned:
         raise AssertionError(
             "application service must call Reservation behavior instead of assigning status"
         )
@@ -132,6 +175,36 @@ def run_ddd_reservation_boundary(workspace: Path) -> None:
 
     models = importlib.import_module("apps.reservations.models")
     services = importlib.import_module("apps.reservations.services")
+
+    direct = models.Reservation.request("customer-direct", "room-direct", 1)
+    assert direct.status == models.ReservationStatus.REQUESTED
+    try:
+        direct.status = models.ReservationStatus.CONFIRMED
+    except (AttributeError, TypeError):
+        pass
+    else:
+        if direct.status == models.ReservationStatus.CONFIRMED:
+            raise AssertionError("Reservation lifecycle status must not be externally mutable")
+    direct.confirm()
+    assert direct.status == models.ReservationStatus.CONFIRMED
+    try:
+        direct.confirm()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("confirmed reservation must not be confirmed twice")
+    try:
+        direct.expire()
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("confirmed reservation must not expire")
+    try:
+        models.Reservation.request("customer-zero", "room-zero", 0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("zero-night reservation must fail")
 
     reservation = services.request_reservation("customer-1", "room-101", 2)
     assert reservation.status == models.ReservationStatus.REQUESTED
