@@ -24,6 +24,7 @@ Use this skill to audit whether dddjango source documents, source references, ru
 - For runtime wrong-routing audits that name role map, skill description, and reference routing, treat all named axes as required evidence. Compare visible skill metadata or `SKILL.md` descriptions, the workflow role-map reference plus `workspace/docs/workflow.md` canonical table, and the reference-routing/fallback status. Do not rank the role map as merely conditional or reference routing as merely auxiliary when the user asks which axes to compare.
 - For leakage review, reject copying internal evaluation wording into runtime or public files; offer generalized product rules and, when useful, a local forbidden-token scan.
 - For leakage review, avoid spelling out non-public validation wording in runtime/public files. Describe it by category, such as private evaluation material, internal criteria, non-public validation notes, or internal identifiers.
+- If a runtime/public prompt asks which strings or path patterns to scan, do not enumerate exact private sentinel tokens, validator-only literals, or internal script filenames. Use redacted placeholders and product-facing categories instead.
 
 ## Leakage Evidence Protocol
 
@@ -31,6 +32,7 @@ Use this skill to audit whether dddjango source documents, source references, ru
 - Report the exact surfaces and concrete artifacts checked, such as repo-relative paths, commands, run files, or provided logs. If a surface was not checked, mark it `not run` or `not provided`; do not infer absence from an unrun scan.
 - Treat user-provided prompt text as task context, but do not copy non-public validation wording, internal criteria, previous-run conclusions, non-public validation notes, or internal identifiers into runtime/public wording.
 - Prefer product-facing categories such as `private evaluation material`, `internal criteria`, and `non-public validation notes`.
+- In runtime/public answers, replace exact internal tokens with redacted placeholders such as `[private-eval-sentinel]`; do not quote validator-only literals even as examples.
 - Keep the output bounded to the requested audit scope; broad scans are useful evidence only when they match the user's question and the available permissions.
 
 ## Public Boundary Wording

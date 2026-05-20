@@ -220,6 +220,28 @@ description: >
             check.errors,
         )
 
+    def test_django_web_rejects_missing_blank_string_fallback_guidance(self) -> None:
+        repo_root = MODULE_PATH.parents[2]
+        source_skill = repo_root / "dddjango" / "skills" / "implementation-django-web"
+        skill = self.root / "implementation-django-web"
+        shutil.copytree(source_skill, skill)
+        skill_md = skill / "SKILL.md"
+        skill_md.write_text(
+            skill_md.read_text(encoding="utf-8").replace(
+                "`None`, blank strings, and missing optional values",
+                "`None` values",
+            ),
+            encoding="utf-8",
+        )
+        check = self.validator.Check()
+
+        self.validator.check_django_web_skill(check, skill)
+
+        self.assertTrue(
+            any("blank strings" in error for error in check.errors),
+            check.errors,
+        )
+
     def test_source_reference_audit_rejects_leakage_prone_wording(self) -> None:
         repo_root = MODULE_PATH.parents[2]
         source_skill = repo_root / "dddjango" / "skills" / "source-reference-audit"
@@ -255,6 +277,25 @@ description: >
 
         self.assertTrue(
             any("public-facing by default" in error for error in check.errors),
+            check.errors,
+        )
+
+    def test_source_reference_audit_rejects_missing_redacted_placeholder_guidance(self) -> None:
+        repo_root = MODULE_PATH.parents[2]
+        source_skill = repo_root / "dddjango" / "skills" / "source-reference-audit"
+        skill = self.root / "source-reference-audit"
+        shutil.copytree(source_skill, skill)
+        skill_md = skill / "SKILL.md"
+        skill_md.write_text(
+            skill_md.read_text(encoding="utf-8").replace("redacted placeholders", "general categories"),
+            encoding="utf-8",
+        )
+        check = self.validator.Check()
+
+        self.validator.check_source_reference_audit(check, skill)
+
+        self.assertTrue(
+            any("redacted placeholders" in error for error in check.errors),
             check.errors,
         )
 

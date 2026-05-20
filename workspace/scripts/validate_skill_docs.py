@@ -463,6 +463,7 @@ def check_source_reference_audit(check: Check, skill_dir: Path) -> None:
         "runtime bundle-relative",
         "skill-local",
         "runtime_skill_reference.allow_refs",
+        "redacted placeholders",
     ]
     for phrase in required:
         check.require(
@@ -502,6 +503,26 @@ def check_source_reference_audit(check: Check, skill_dir: Path) -> None:
             f"source-reference-audit Public Boundary Wording must keep internal eval-pack field names out: {field_name}",
         )
     check_runtime_facing_path_boundary(check, text)
+
+
+def check_django_web_skill(check: Check, skill_dir: Path) -> None:
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.is_file():
+        return
+    text = read(skill_md)
+    required = [
+        "display-ready fallback values",
+        "`None`, blank strings, and missing optional values",
+        "non-empty placeholders",
+        "Templates must render prepared display values",
+        "empty value path",
+        "Changed static files must be referenced by the rendered page",
+    ]
+    for phrase in required:
+        check.require(
+            phrase in text,
+            f"implementation-django-web must include render fallback/static phrase: {phrase}",
+        )
 
 
 def markdown_section(text: str, heading: str) -> str:
@@ -647,6 +668,8 @@ def check_generated_skills(check: Check, skills_dir: Path, required: bool) -> No
 
     for skill_dir in sorted(path for path in skills_dir.iterdir() if path.is_dir()):
         check_skill_folder(check, skill_dir, require_metadata=True)
+        if skill_dir.name == "implementation-django-web":
+            check_django_web_skill(check, skill_dir)
         if skill_dir.name == "source-reference-audit":
             check_source_reference_audit(check, skill_dir)
         if skill_dir.name == "implementation-tdd":
