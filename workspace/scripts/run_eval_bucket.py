@@ -21,6 +21,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import eval_run_common as common
+import eval_leakage_policy
 import eval_run_identity as run_identity
 import extract_subagent_trace
 import validate_eval_code_artifacts as code_artifacts
@@ -256,7 +257,13 @@ def build_prompt(
             "Do not write into evaluator-only directories, private case maps, or run-output directories.\n"
             "Preserve unrelated user changes and do not revert files you did not change.\n"
         )
-        completion_policy = "Keep the answer concise and include commands actually run plus checks not run.\n\n"
+        completion_policy = (
+            "Keep the answer concise. Summarize changed files and checks by purpose/result. "
+            "Do not print local absolute paths, home-directory paths, plugin cache paths, or "
+            "agent-internal skill-loading commands in the final answer. "
+            "Do not include a command log, transcript footer, or literal command lines. "
+            "If a relevant check is not actually run, state the omitted check without exposing local paths.\n\n"
+        )
     elif fixed_answer_shape:
         edit_policy = (
             "Do not modify files.\n"
@@ -302,6 +309,8 @@ def build_prompt(
             "- Do not print local absolute paths, home-directory paths, plugin cache paths, or "
             "agent-internal skill-loading commands in the final answer. Describe those checks by artifact "
             "category or repo-relative paths only.\n"
+            "- Do not include a command log, transcript footer, or literal command lines. If command honesty "
+            "matters, summarize the check purpose and whether it was run without path-bearing command text.\n"
             "- If a feasible check is not run, state the omitted check without exposing local paths.\n\n"
         )
     else:
@@ -312,6 +321,7 @@ def build_prompt(
         completion_policy = (
             "Keep the answer concise. Do not print local absolute paths, home-directory paths, "
             "plugin cache paths, or agent-internal skill-loading commands in the final answer. "
+            "Do not include a command log, transcript footer, or literal command lines. "
             "Describe checks by purpose or repo-relative artifact category instead.\n\n"
         )
     return (
@@ -722,7 +732,10 @@ def debug_prompt_input(case_id: str, raw_dir: Path, prompt: str, timeout_seconds
         timeout_seconds=timeout_seconds,
     )
     common.write_text(prompt_input_path, debug_result.stdout)
-    common.write_text(raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt", debug_result.stderr)
+    common.write_text(
+        raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt",
+        sanitized_execution_text(debug_result.stderr),
+    )
 
 
 def write_skipped_prompt_input(case_id: str, raw_dir: Path) -> None:
@@ -878,6 +891,10 @@ def response_text(value: str | bytes | None) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return value
+
+
+def sanitized_execution_text(value: str | bytes | None) -> str:
+    return eval_leakage_policy.sanitize_text_for_eval_artifact(response_text(value))
 
 
 def selected_variants(raw_names: list[str] | None) -> list[Variant]:
@@ -1112,7 +1129,7 @@ def main(argv: list[str] | None = None) -> int:
             except subprocess.TimeoutExpired as exc:
                 failed_execution = True
                 common.write_text(stdout_path, response_text(exc.stdout))
-                common.write_text(stderr_path, response_text(exc.stderr))
+                common.write_text(stderr_path, sanitized_execution_text(exc.stderr))
                 common.write_text(exit_path, f"timeout after {args.timeout_seconds}s\n")
                 if not output_path.exists():
                     common.write_text(output_path, "")
@@ -1127,7 +1144,7 @@ def main(argv: list[str] | None = None) -> int:
                 continue
 
             common.write_text(stdout_path, result.stdout)
-            common.write_text(stderr_path, result.stderr)
+            common.write_text(stderr_path, sanitized_execution_text(result.stderr))
             common.write_text(exit_path, str(result.returncode) + "\n")
             if result.returncode != 0:
                 failed_execution = True

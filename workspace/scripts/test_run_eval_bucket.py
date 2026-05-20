@@ -268,6 +268,44 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue((raw / f"case-response-one-{with_variant}-prompt-input.json").is_file())
         self.assertFalse((raw / "case-response-one-baseline-prompt-input.json").exists())
 
+    def test_exec_mode_sanitizes_local_paths_from_stderr_artifacts(self) -> None:
+        self.write_case()
+
+        def fake_run_command(command, *, prompt, cwd, timeout_seconds):
+            if command[:3] == ["codex", "debug", "prompt-input"]:
+                return subprocess.CompletedProcess(command, 0, '{"messages": []}\n', "")
+            if "exec" in command:
+                return subprocess.CompletedProcess(
+                    command,
+                    1,
+                    "event stream\n",
+                    "failed in /private/tmp/dddjango-eval-workspaces/run/case/file.py "
+                    "using /Users/hyun/.codex/plugins/cache/dddjango-local/skill.md\n",
+                )
+            return subprocess.CompletedProcess(command, 0, "", "")
+
+        with patch.object(self.runner, "run_command", side_effect=fake_run_command):
+            result = self.runner.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    "20260517-143016-response-try01-full-sanitized-stderr",
+                    "--case",
+                    "case-response-one",
+                    "--workspace-root",
+                    str(self.workspace_root),
+                ]
+            )
+
+        self.assertEqual(result, 1)
+        raw = self.runner.common.EVAL_ROOT / "response/runs/20260517-143016-response-try01-full-sanitized-stderr/raw"
+        stderr_text = (raw / "case-response-one-with-dddjango.stderr.txt").read_text(encoding="utf-8")
+        self.assertIn("[temporary-workspace-path]", stderr_text)
+        self.assertIn("[home-directory-path]", stderr_text)
+        self.assertNotIn("/private/tmp/dddjango-eval-workspaces", stderr_text)
+        self.assertNotIn("/Users/hyun", stderr_text)
+
     def test_fixed_shape_answer_prompt_does_not_force_command_footer(self) -> None:
         prompt = self.runner.build_prompt(
             "핵심 설계 결정만 5개 bullet로 끝내줘.\n",
@@ -301,6 +339,20 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertIn("If a relevant check is not actually run, state that it was not run.", prompt)
         self.assertIn("Do not print local absolute paths", prompt)
         self.assertIn("agent-internal skill-loading commands", prompt)
+        self.assertIn("Do not include a command log", prompt)
+
+    def test_code_prompt_reports_checks_without_literal_command_log(self) -> None:
+        prompt = self.runner.build_prompt(
+            "외부 결제사 API 호출까지 구현해줘.\n",
+            allow_workspace_edits=True,
+            bucket="code",
+        )
+
+        self.assertNotIn("include commands actually run plus checks not run", prompt)
+        self.assertIn("Summarize changed files and checks by purpose/result", prompt)
+        self.assertIn("Do not include a command log", prompt)
+        self.assertIn("literal command lines", prompt)
+        self.assertIn("agent-internal skill-loading commands", prompt)
 
     def test_runtime_prompt_requires_read_only_evidence_without_local_path_reporting(self) -> None:
         prompt = self.runner.build_prompt(
@@ -317,6 +369,7 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertIn("workspace/develop/eval/runtime/fixtures/current-run", prompt)
         self.assertIn("Do not print local absolute paths", prompt)
         self.assertIn("agent-internal skill-loading commands", prompt)
+        self.assertIn("Do not include a command log", prompt)
         self.assertNotIn("include commands actually run plus checks not run", prompt)
 
     def test_copies_current_run_runtime_evidence_only_for_with_ddjango(self) -> None:
