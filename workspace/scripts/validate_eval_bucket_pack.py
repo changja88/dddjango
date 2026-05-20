@@ -442,6 +442,28 @@ def validate_public_case(path: Path) -> list[str]:
         for label, pattern in ANSWER_ONLY_PUBLIC_PATTERNS.items()
         if pattern.search(text)
     ]
+    if path.stem == "case-code-web-detail":
+        text_lower = text.lower()
+        has_blank_memo = (
+            "blank memo" in text_lower
+            or "empty memo" in text_lower
+            or "빈 memo" in text_lower
+            or "빈 메모" in text_lower
+            or ("memo" in text_lower and "빈 문자열" in text_lower)
+            or ("메모" in text_lower and "빈 문자열" in text_lower)
+        )
+        has_fallback = "fallback" in text_lower or "대체" in text_lower or "placeholder" in text_lower
+        if not (has_blank_memo and has_fallback):
+            findings.append(f"{path}: case-code-web-detail public case must mention blank memo fallback")
+        has_detail_css = "detail.css" in text_lower
+        has_reference = (
+            "reference" in text_lower
+            or "referenced" in text_lower
+            or "참조" in text_lower
+            or "연결" in text_lower
+        )
+        if not (has_detail_css and has_reference):
+            findings.append(f"{path}: case-code-web-detail public case must mention detail.css reference")
     return findings
 
 

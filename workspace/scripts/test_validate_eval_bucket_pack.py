@@ -92,6 +92,35 @@ coverage_tags:
 
         self.assertTrue(findings)
 
+    def test_web_detail_public_case_requires_blank_memo_fallback(self) -> None:
+        public_path = self.root / "case-code-web-detail.md"
+        public_path.write_text(
+            "주문 상세 페이지 관련 코드를 정리해줘.\n",
+            encoding="utf-8",
+        )
+
+        findings = self.validator.validate_public_case(public_path)
+
+        self.assertTrue(
+            any("blank memo fallback" in finding for finding in findings),
+            findings,
+        )
+
+    def test_web_detail_public_case_requires_static_css_reference_guidance(self) -> None:
+        public_path = self.root / "case-code-web-detail.md"
+        public_path.write_text(
+            "주문 상세 페이지 관련 코드를 정리해줘.\n"
+            "- blank memo fallback을 처리해.\n",
+            encoding="utf-8",
+        )
+
+        findings = self.validator.validate_public_case(public_path)
+
+        self.assertTrue(
+            any("detail.css reference" in finding for finding in findings),
+            findings,
+        )
+
     def test_answer_rejects_empty_required_list_blocks(self) -> None:
         self.write_case_pair("source", "case-source-empty", coverage_tags=[])
         answer_path = self.validator.EVAL_ROOT / "source/answer/case-source-empty.yaml"
