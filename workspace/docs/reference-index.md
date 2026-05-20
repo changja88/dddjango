@@ -24,6 +24,12 @@
 | Test | `workspace/reference/implementation-test/reference/final.md` | 테스트 피라미드, pytest, fixture, test double, mock, factory, property-based testing, coverage, mutation testing |
 | Workflow | 생성 전 authoring source: `workspace/docs/workflow.md`; 생성 후 runtime bundled reference: `dddjango/skills/workflow-dddjango-subagents/references/` | 역할 분해, handoff contract, sequential fallback, integration priority |
 
+## Source Governance
+
+| 영역 | 주요 문서 | 기준으로 삼을 내용 |
+|---|---|---|
+| Source Reference Audit | `workspace/reference/source-reference-audit/reference/final.md` | source/runtime/public/evaluator-only/run artifact 경계, source-authoring path와 runtime bundle-relative path 구분, leakage category, boundary scan evidence, public-facing wording |
+
 ## Reference 사용 원칙
 
 `final.md`는 스킬 설계의 기본 근거로 사용한다.
@@ -71,3 +77,4 @@ DRF 관련 내용은 다음 경우에만 사용한다.
 | 신규 API 구현 표준은 Django Ninja로 둔다 | 사용자 제품 결정. 전용 Django Ninja source reference가 필요하다. |
 | Django 구현은 Django 철학을 따르되 복잡한 도메인에서는 서비스/경계 분리를 허용한다 | `implementation-django/reference/final.md`, DDD reference |
 | 테스트는 TDD와 pytest 기준을 함께 사용한다 | `implementation-tdd/reference/final.md`, `implementation-test/reference/final.md` |
+| source/reference 감사는 source, runtime, public case, evaluator-only material, run artifact 역할을 분리한다 | `source-reference-audit/reference/final.md` |

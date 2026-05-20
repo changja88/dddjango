@@ -5,22 +5,29 @@ kind: source
 public_case: workspace/develop/eval/source/cases/plugin/public/case-source-boundary-protection.md
 intent: Define boundary protection checks among source, runtime, public cases, answers, and runs.
 reference_basis:
+  - path: workspace/reference/source-reference-audit/reference/final.md
+    basis: Source/runtime/public/evaluator-only/run artifact boundary decisions
   - path: workspace/develop/eval/source/eval_goal.md
     basis: Boundary protection
   - path: workspace/docs/plugin-structure.md
-    basis: required reference source
-  - path: workspace/scripts/run_plugin_eval.py
-    basis: required reference source
+    basis: Source and runtime bundle structure
+  - path: workspace/scripts/run_eval_bucket.py
+    basis: Current eval run artifact structure
+  - path: workspace/scripts/validate_eval_bucket_pack.py
+    basis: Public/answer pack contamination validation
 target_behavior:
   required:
     - Distinguishes authoring source paths from runtime bundled reference paths.
     - Requires answer and run outputs to stay out of public cases, fixtures, runtime references, and prompt input.
-    - Defines forbidden path/pattern scan for public/runtime artifacts.
+    - Defines forbidden category scan for public/runtime artifacts and marks inspected versus not-run surfaces.
+    - Treats run output as execution evidence, not source truth or runtime reference.
   forbidden:
     - Copying source docs wholesale into runtime skills.
     - Using run output as source truth.
+    - Presenting workspace source paths as runtime-facing allowed references.
+    - Copying internal evaluation wording into public or runtime wording.
 scoring_checks:
-  - pass if boundary rules cover all five roles and include leakage checks.
+  - pass if boundary rules cover all five roles, include leakage checks, and separate inspected surfaces from not-run surfaces.
   - fail if source/runtime/public/answer roles are blurred.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
@@ -31,7 +38,11 @@ failure_modes:
 leakage_checks:
   - no answer content in public case or runtime bundle.
 evidence_required:
-  - boundary scan report
+  - boundary matrix
+  - inspected surfaces list
+  - forbidden-category scan or explicit not-run marker
+  - source/runtime path decision
+  - unsupported execution claim check
 control_case: safety
 expected_outcomes:
   baseline: pass-or-partial

@@ -17,6 +17,7 @@ Use this skill to audit whether dddjango source documents, source references, ru
 ## Source Loading
 
 - For source-gap, conflict, or provisional audits, read `workspace/docs/reference-index.md` when it exists, then inspect the requested `workspace/reference/*/reference/final.md` files.
+- For source/reference boundary, leakage, public wording, eval traceability, validation coverage, or source/runtime path-boundary reviews, use `workspace/reference/source-reference-audit/reference/final.md` as the source decision before comparing runtime/public artifacts.
 - Use `final.md` as the default decision source. Read `review.md`, `internal.md`, and `external.md` when final guidance is ambiguous, gap-related, or conflict-related.
 - For runtime provenance, compare the relevant `workspace/docs` and `workspace/reference` sources with `dddjango/skills/<skill>/SKILL.md`, `agents/openai.yaml`, and `references/*.md`.
 - For source/runtime cache sync, packaging sync, or provenance audits, list only source diffs, cache comparisons, provenance/package notes, validation output, and explicit not-run markers as evidence.
