@@ -1,12 +1,12 @@
 ---
 name: implementation-django-web
 description: >
-  Use for Django server-rendered web implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, view auth/permissions, and web render acceptance checks. Use for Django 페이지, 템플릿/정적 파일, 화면 폼, 렌더링 확인, TemplateView 주문 상세, HTMX/CSRF. Do not use for REST API/Router/Schema or ORM/마이그레이션/트랜잭션 중심 작업; prefer implementation-django-ninja or architecture-api for APIs, implementation-django or architecture-db for ORM/DB work, implementation-test for pytest/browser mechanics, and workflow-dddjango-subagents for 복합/위험 작업 or subagent work.
+  Use for Django server-rendered web implementation: TemplateView, Generic CBV/FBV, ListView/DetailView/CreateView/UpdateView/FormView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, view auth/permissions, and web render acceptance checks. Use for Django 페이지, 템플릿/정적 파일, 화면 폼, 렌더링 확인, TemplateView/CBV/FBV 주문 상세, HTMX/CSRF. Do not use for REST API/Router/Schema or ORM/마이그레이션/트랜잭션 중심 작업; prefer implementation-django-ninja or architecture-api for APIs, implementation-django or architecture-db for ORM/DB work, implementation-test for pytest/browser mechanics, and workflow-dddjango-subagents for 복합/위험 작업 or subagent work.
 ---
 
 # Django Web 구현
 
-이 skill은 Django 서버 렌더링 화면 구현을 담당한다. TemplateView, templates, base template, includes/components, static files, CSS/JS, web forms, HTMX fragment, CSRF-aware AJAX, view auth/permission, render acceptance checks를 다룬다. 정확한 frontend/static pipeline은 항상 대상 프로젝트의 설치 패키지와 기존 layout을 먼저 따른다.
+이 skill은 Django 서버 렌더링 화면 구현을 담당한다. TemplateView, Generic CBV/FBV 선택, templates, base template, includes/components, static files, CSS/JS, web forms, HTMX fragment, CSRF-aware AJAX, view auth/permission, render acceptance checks를 다룬다. 정확한 frontend/static pipeline은 항상 대상 프로젝트의 설치 패키지와 기존 layout을 먼저 따른다.
 
 ## 라우팅
 
@@ -26,7 +26,7 @@ description: >
 
 - [templates.md](references/templates.md): template inheritance, base template, includes/components, template style, presentation-only template
 - [static-assets.md](references/static-assets.md): static file organization, CSS/JS placement, collectstatic/manifest concerns, asset checks
-- [templateview-htmx.md](references/templateview-htmx.md): TemplateView, CBV/FBV choice, context preparation, forms, HTMX fragments, thin views
+- [templateview-htmx.md](references/templateview-htmx.md): TemplateView, Generic CBV/FBV choice, context preparation, forms, HTMX fragments, thin views, auth/permissions
 - [csrf-ajax.md](references/csrf-ajax.md): CSRF, AJAX/HTMX request safety, XSS, secure cookies, middleware, verification
 
 ## Runtime Rules
@@ -39,5 +39,5 @@ description: >
 - HTMX/AJAX endpoint는 web adapter로 다룬다. server-side domain behavior는 model/service boundary 뒤에 두고 CSRF 처리는 명시한다.
 - Template/static 작업을 마치기 전 view/context code가 optional field의 `display-ready fallback values`를 제공하는지 확인한다. `None`, blank strings, and missing optional values는 렌더링 전에 project-standard `non-empty placeholders`로 변환한다.
 - `Templates must render prepared display values`: Template은 raw domain field가 아니라 준비된 display value를 렌더링한다. Optional field가 보이면 empty value path를 context 또는 render test로 덮는다.
-- `Changed static files must be referenced by the rendered page`: 변경한 static file은 rendered page에서 참조되거나 unused로 보고되어야 한다. 프로젝트에 render/template test가 있으면 실행한다.
+- `Changed static files must be referenced by the rendered page`: page-specific CSS/JS를 만들거나 수정하면 rendered page에서 참조되어야 한다. 참조되지 않는 page-specific asset은 unfinished work로 보고한다. 프로젝트에 render/template test가 있으면 실행한다.
 - 실제 실행한 검증만 보고한다. render test, browser check, `collectstatic`, `check --deploy`, template test를 실행하지 않았으면 미실행으로 적는다.

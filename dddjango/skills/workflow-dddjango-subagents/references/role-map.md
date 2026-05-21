@@ -5,7 +5,7 @@ Canonical dddjango workflow roles를 확인할 때 읽는다. Workflow output에
 | Role | Responsibility | Related skills |
 |---|---|---|
 | Coordinator | Work scope, role assignment, result integration | `workflow-dddjango-subagents` |
-| Domain Agent | Subdomain, context, language, aggregate, invariant, domain event | `architecture-ddd` |
+| Domain Agent | Subdomain, bounded context, ubiquitous language, aggregate, invariant, domain event | `architecture-ddd` |
 | Architecture Agent | Implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` |
 | DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
 | API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |

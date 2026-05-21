@@ -1,6 +1,6 @@
 # Typing
 
-Source basis: `workspace/reference/implementation-python/reference/final.md`의 타입 시스템, 함수 계약, Ruff, mypy/pyright 섹션.
+근거 요약: Python 언어 특화 source reference의 타입 시스템, 함수 계약, Ruff, mypy/pyright 섹션.
 
 type hints, Python-version gate, `X | None`, built-in generics, external data shape, decorator, type narrowing, Ruff/typecheck compatibility를 판단할 때 사용한다.
 

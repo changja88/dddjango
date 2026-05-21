@@ -7,7 +7,7 @@
 다음 경우에는 role decomposition을 사용한다.
 
 - DDD, DB, API, Django, tests, TDD, review 중 둘 이상이 실제로 결합되어 있다.
-- 사용자가 subagents, role decomposition, parallel review, responsibility split, handoff, sequential fallback을 명시적으로 요청했다.
+- 사용자가 subagent/subagents, delegation, parallel agent work, role decomposition, role map, responsibility split, parallel review, handoff, sequential fallback, dddjango workflow, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프를 명시적으로 요청했다.
 - order, payment, inventory, reservation, refund, permission, ledger 같은 risky domain noun이 state transition, transaction, schema, API contract, tests와 함께 등장한다.
 
 ## When To Stay Direct

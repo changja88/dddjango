@@ -1,6 +1,6 @@
 # Transactions And Locking
 
-Load this for ACID, isolation levels, concurrency anomalies, transaction boundaries, locking strategy, risky writes, and side-effect timing.
+Load this for ACID, isolation levels, concurrency anomalies, transaction boundaries, locking strategy, risky writes, idempotency storage, and side-effect timing.
 
 ## ACID And Isolation
 
@@ -37,7 +37,7 @@ For order, payment, inventory, reservation, refund, permission, ledger, or simil
 
 - transaction owner;
 - locking strategy;
-- uniqueness or idempotency storage key, owner, location, and unique constraint;
+- uniqueness or idempotency storage key scope, owner/location, unique constraint, request fingerprint, stored result or replay reference, and retention/cleanup rule;
 - API `Idempotency-Key` replay/conflict behavior handoff to `architecture-api`;
 - external side-effect timing such as Django `transaction.on_commit()`, domain event, or outbox;
 - isolation level and retry decision;

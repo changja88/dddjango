@@ -1,6 +1,6 @@
 # Protocols And Boundaries
 
-Source basis: `workspace/reference/implementation-python/reference/final.md`의 Protocol, class API, exception, context manager, async/concurrency 섹션.
+근거 요약: Python 언어 특화 source reference의 Protocol, class API, exception, context manager, async/concurrency 섹션.
 
 `Protocol`, structural subtyping, replaceable boundary, exception, context manager, async/concurrency choice, unnecessary abstraction 회피를 판단할 때 사용한다.
 

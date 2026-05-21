@@ -1,7 +1,7 @@
 ---
 name: architecture-ddd
 description: >
-  Use for DDD/domain modeling: subdomains, bounded contexts, context maps, ubiquitous language, aggregates, entities, value objects, invariants, domain events/services, use cases, and consistency boundaries. Use for DDD 설계, 도메인 모델링, 서브도메인, 도메인 규칙, 도메인 정책, 상태 전이, 유스케이스/사용 사례, 도메인 서비스, 엔티티, 값 객체, 불변식, 바운디드 컨텍스트, 컨텍스트 맵, 유비쿼터스 언어, 애그리거트, 도메인 이벤트, 일관성 경계. Prefer workflow-dddjango-subagents for composite/risky/subagent work, architecture-db for schema/transactions, architecture-api for REST contracts, architecture-implementation-patterns for ports/adapters/CQRS/outbox, and implementation skills for Django code. Do not use for simple CRUD, tiny wording explanations, typo-only edits, or already-scoped implementation with no meaningful domain policy.
+  Use for DDD/domain modeling: subdomains, problem vs solution space, bounded contexts, context maps, ubiquitous language, event storming, team-boundary discovery, aggregates, entities, value objects, invariants, domain events/services, use cases, and consistency boundaries. Use for DDD 설계, 도메인 모델링, 서브도메인, 문제 공간/솔루션 공간, 도메인 규칙, 도메인 정책, 상태 전이, 이벤트 스토밍, 유스케이스/사용 사례, 도메인 서비스, 엔티티, 값 객체, 불변식, 바운디드 컨텍스트, 컨텍스트 맵, 유비쿼터스 언어, 애그리거트, 도메인 이벤트, 일관성 경계. Prefer workflow-dddjango-subagents for composite/risky/subagent work, architecture-db for schema/transactions, architecture-api for REST contracts, architecture-implementation-patterns for ports/adapters/CQRS/outbox, and implementation skills for Django code. Do not use for simple CRUD, tiny wording explanations, typo-only edits, or already-scoped implementation with no meaningful domain policy.
 ---
 
 # DDD Architecture

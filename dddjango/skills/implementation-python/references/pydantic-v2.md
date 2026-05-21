@@ -1,6 +1,6 @@
 # Pydantic V2
 
-Source basis: `workspace/reference/implementation-python/reference/final.md`의 pydantic v2 API, strict mode, boundary 결정 섹션.
+근거 요약: Python 언어 특화 source reference의 pydantic v2 API, strict mode, boundary 결정 섹션.
 
 pydantic v2 external DTO, config, runtime validation, strict mode, v1 API migration을 판단할 때 사용한다.
 

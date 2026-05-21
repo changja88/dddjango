@@ -1,7 +1,7 @@
 ---
 name: workflow-dddjango-subagents
 description: >
-  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagents, subagent/subagents, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, handoff/핸드오프, 통합 체크리스트, 검증 분담, 위험 작업, or dddjango workflow. Use for 주문/결제/재고/예약/환불/권한/ledger work when state transition, transaction, schema, API, or test impact is coupled. Selecting this workflow does not authorize real subagent execution; without explicit request or approval, use sequential fallback. Do not use for simple single-file changes, small field renames, pure answer-only/tiny direct answers, decorative role-map-only requests, 서브에이전트 계획 필요 없음, or when the user opts out of subagent planning.
+  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagent/subagents, delegation, parallel agent work, role decomposition, role map, responsibility split, parallel review, sequential fallback, handoff, dddjango workflow, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프, 통합 체크리스트, 검증 분담, or 위험 작업. Use for 주문/결제/재고/예약/환불/권한/ledger work when state transition, transaction, schema, API, or test impact is coupled. Selecting this workflow does not authorize real subagent execution; without explicit request or approval, use sequential fallback. Do not use for simple single-file changes, small field renames, pure answer-only/tiny direct answers, decorative role-map-only requests, 서브에이전트 계획 필요 없음, or when the user opts out of subagent planning.
 ---
 
 # dddjango Workflow
@@ -10,7 +10,7 @@ Composite 또는 risky Django/DDD 작업을 Domain, Architecture, DB, API, Djang
 
 ## Routing
 
-- 사용자가 subagents, role decomposition, parallel review, responsibility split, sequential fallback, handoff, dddjango workflow를 요청하면 이 skill을 먼저 고려한다.
+- 사용자가 subagent/subagents, delegation, parallel agent work, role decomposition, role map, responsibility split, parallel review, sequential fallback, handoff, dddjango workflow, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프를 요청하면 이 skill을 먼저 고려한다.
 - DDD, implementation patterns, DB schema/transactions, REST API contract, Django/Python implementation, tests/TDD, review 중 둘 이상이 실제로 결합된 composite Django/DDD work에 사용한다.
 - 주문, 결제, 재고, 예약, 환불, 권한, ledger 같은 risky domain에서 state transition, transaction, schema, API, test 영향이 함께 있으면 사용한다.
 - 작은 단일 파일 변경, 작은 field rename, invariant나 rollout risk 없는 local CRUD, 짧은 설명, 이미 결정된 단순 구현에는 강제하지 않는다.
@@ -29,10 +29,12 @@ Composite 또는 risky Django/DDD 작업을 Domain, Architecture, DB, API, Djang
 
 ## Canonical Roles
 
+The table below is the runtime-visible canonical summary; [role-map.md](references/role-map.md) is the bundled parity reference for exact role responsibilities and related skills. Workflow output에 복사할 때 role responsibility나 related skills를 축소하지 않는다.
+
 | Role | Responsibility | Related skills |
 |---|---|---|
 | Coordinator | Work scope, role assignment, result integration | `workflow-dddjango-subagents` |
-| Domain Agent | Subdomain, context, language, aggregate, invariant, domain event | `architecture-ddd` |
+| Domain Agent | Subdomain, bounded context, ubiquitous language, aggregate, invariant, domain event | `architecture-ddd` |
 | Architecture Agent | Implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` |
 | DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
 | API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |

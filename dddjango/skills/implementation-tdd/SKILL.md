@@ -1,7 +1,7 @@
 ---
 name: implementation-tdd
 description: >
-  Use for TDD methodology: test list, failing tests before implementation, Red-Green-Refactor, Inside-Out vs Outside-In, acceptance/unit loops, boundary cases, refactoring checkpoints, state vs behavior verification choice, mock-role guidance, and AI-assisted TDD. Use for TDD/테스트 주도 개발/테스트주도 개발, 테스트 목록, 실패 테스트/실패하는 테스트, 테스트 먼저, Red-Green-Refactor/레드-그린-리팩터, 경계값 테스트, 쿠폰 정책 TDD. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, implementation-test for pytest fixture/factory/tool mechanics, architecture-ddd when domain rules or invariants are unclear, and architecture-api or architecture-db when API/DB contracts are unclear. Do not use for simple answer-only explanations or detailed pytest fixture/mock/factory implementation without a TDD workflow request.
+  Use for TDD methodology: test list, failing tests before implementation, Red-Green-Refactor, Inside-Out vs Outside-In, acceptance/unit loops, boundary cases, refactoring checkpoints, state vs behavior verification choice, mock-role guidance, BDD/ATDD relationship, and AI-assisted TDD. Use for TDD/테스트 주도 개발/테스트주도 개발, 테스트 목록, 실패 테스트/실패하는 테스트, 테스트 먼저, Red-Green-Refactor/레드-그린-리팩터, 경계값 테스트, 쿠폰 정책 TDD. Prefer workflow-dddjango-subagents for composite/risky/subagent Django work, implementation-test for pytest fixture/mock/factory mechanics, property-based tests, coverage, mutation testing, testcontainers, and pytest-bdd/Gherkin mechanics, architecture-api or architecture-db when API/DB contracts are unclear, and Django implementation skills when ORM/services/API code is the main work. Do not use for simple answer-only explanations or detailed test-tool implementation without a TDD workflow request.
 ---
 
 # TDD Implementation
@@ -10,9 +10,8 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 
 ## Routing
 
-- If domain rules, invariants, aggregate ownership, or ubiquitous language are unclear, use `architecture-ddd` before writing domain tests.
 - If API contract, DB constraint, transaction, locking, migration rollout, or consistency decisions are unclear, use `architecture-api` or `architecture-db` before locking test expectations.
-- If the main work is pytest fixtures, mocks, factories, property-based tests, coverage, mutation testing, or testcontainers, use `implementation-test`.
+- If the main work is pytest fixtures, mocks, factories, property-based tests, coverage, mutation testing, testcontainers, or pytest-bdd/Gherkin mechanics, use `implementation-test`.
 - If the main work is Django ORM/migrations/services or Django Ninja API implementation, use the relevant implementation skill after the test target is clear.
 - If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
 - For a tiny explanation of TDD terminology, answer directly without role maps or full workflow ceremony.
@@ -29,7 +28,7 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 
 - Start with a test list for behavior, boundary cases, and known risks before implementation.
 - Treat boundary examples as prompts to expand the test list; for validity windows include the accepted boundary and the day after expiration rejected. A rejection on another axis does not cover the boundary. Use `references/test-list.md` for detailed independent-axis and nearest outside/complement cases.
-- For ambiguous domain policy tests, separate confirmed behavior tests, unresolved decisions, and a short model-candidates note when ownership is unclear: value object for attribute-defined immutable concepts, aggregate/entity behavior for lifecycle or state transitions, and domain service for stateless rules spanning concepts. Keep these as candidates until policy decisions are made.
+- For ambiguous policy tests, separate confirmed behavior tests and unresolved decisions before locking expectations.
 - Write or propose the next failing test before production code unless the user asks for explanation only or the workspace is read-only.
 - When working inside a composite workflow, state the test files or test cases the Test Agent should own.
 - Confirm Red before Green when actually running tests; if tests were not run, say they were written/planned but not executed.

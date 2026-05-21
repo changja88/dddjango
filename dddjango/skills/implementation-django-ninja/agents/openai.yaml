@@ -1,4 +1,4 @@
 interface:
   display_name: "Django Ninja 구현"
-  short_description: "Django Ninja API 어댑터 구현"
-  default_prompt: "$implementation-django-ninja를 사용해 Django Ninja Router, Schema, auth/permission, filtering/sorting, pagination, Problem Details, OpenAPI, TestClient acceptance criteria, DRF-to-Ninja migration을 구현한다."
+  short_description: "Django Ninja Router, Schema, 오류, 테스트 구현."
+  default_prompt: "Use $implementation-django-ninja to implement a Django Ninja Router/Schema endpoint with auth, errors, OpenAPI, and TestClient checks."

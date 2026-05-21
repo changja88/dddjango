@@ -1,6 +1,6 @@
 # Dataclasses And Enums
 
-Source basis: `workspace/reference/implementation-python/reference/final.md`의 dataclass, Enum/StrEnum, NamedTuple, match/case 섹션.
+근거 요약: Python 언어 특화 source reference의 dataclass, Enum/StrEnum, NamedTuple, match/case 섹션.
 
 value object, finite state, dataclass option, `Enum`/`StrEnum`, `NamedTuple`, `match/case`를 판단할 때 사용한다.
 

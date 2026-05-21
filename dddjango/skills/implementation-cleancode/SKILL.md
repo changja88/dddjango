@@ -1,12 +1,12 @@
 ---
 name: implementation-cleancode
 description: >
-  Use for clean code review/refactoring: responsibility separation, naming, function shape, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, code smells, fat models/views/routers, long functions, scattered logic, and maintainability findings. Use for 클린 코드, 코드 리뷰, 리팩터링, 책임 분리, 네이밍, 함수 분리, 비대한 모델, Fat View, 뷰/라우터 비즈니스 로직, 긴 함수, 흩어진 로직, 캡슐화, 추상화, 중복 제거, 레거시, 유지보수성 리뷰. Prefer architecture-implementation-patterns for pattern selection, layered/hexagonal, repository/UoW, outbox, or dependency direction; use clean-code for maintainability review of an already chosen structure. Prefer architecture-ddd/api/db for unresolved contracts, implementation-python for typing, Django skills for concrete code, and workflow-dddjango-subagents for composite work. Do not use for typo-only edits, formatter-only changes, or simple one-line explanations.
+  Use when reviewing or refactoring code for maintainability: clean code/클린 코드, 코드 리뷰, 리팩터링, responsibility separation, naming, function shape, encapsulation, abstraction, SOLID, duplication/DRY, error handling, legacy code, code smells, Fat Model/View/Router/Schema/Template, long functions, and scattered logic. Prefer architecture-implementation-patterns for layered/hexagonal/repository/UoW/outbox/dependency direction; architecture-ddd/api/db for unresolved domain, REST, DB, transaction, or consistency contracts; implementation-python/django/django-ninja/test/tdd for primary typing, ORM/service/migration, Router/Schema/API, fixture/coverage/TDD work; and workflow-dddjango-subagents for explicit subagent, role-decomposition, parallel review, or composite work. Do not use for tiny naming questions, typo-only edits, formatter-only changes, or simple one-line explanations.
 ---
 
 # Clean Code
 
-Use this skill when the task is to review, refactor, or improve maintainability. The goal is code that is easier to understand and change while preserving behavior and domain intent.
+Use this skill when the task is to review code quality, make a scoped maintainability refactor, or improve code that is hard to understand and change while preserving behavior and domain intent.
 
 ## Routing
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "Python Implementation"
-  short_description: "Python 타입, dataclass, Protocol, pydantic v2, async, Ruff/typecheck."
-  default_prompt: "$implementation-python을 사용해 Python type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundary, async/concurrency, exceptions, Ruff, mypy, pyright 기준을 적용한다."
+  short_description: "Python 타입, 검증, 동시성, typecheck 적용 기준."
+  default_prompt: "Use $implementation-python for Python typing, pydantic v2, async/concurrency, exceptions, mypy, and pyright."

@@ -3,7 +3,7 @@
 | 체크 | 단계 | 목표 |
 |---|---|---|
 | [x] | P1. 스킬의 reference 반영도 점검 | source reference가 충분한지 먼저 확인하고, 충분한 reference를 각 skill이 빠짐없이 반영하는지 점검한 뒤 필요한 개선 계획까지 확정한다. |
-| [ ] | P2. `SKILL.md` 목적 명확성 점검 | 각 skill의 실제 사용 예시, 목적, trigger, 제외 조건과 agents/openai.yaml metadata가 일치하는지 확인한다. |
+| [x] | P2. `SKILL.md` 목적 명확성 점검 | 각 skill의 실제 사용 예시, 목적, trigger, 제외 조건과 agents/openai.yaml metadata가 일치하는지 확인한다. |
 | [ ] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
 | [ ] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
 | [ ] | P5. skill 연계와 플러그인 평가 점검 | skill 연계와 subagent workflow를 검증하되 각 skill의 책임과 progressive disclosure를 유지하는지 확인한다. |
@@ -28,12 +28,12 @@
 
 ### P2. `SKILL.md` 목적 명확성 점검
 
-- [ ] 실제 사용 예시와 사용자 표현이 skill의 목적과 일치하는지 확인한다.
-- [ ] frontmatter `description`에 사용 조건, trigger, 제외 조건이 충분히 들어 있는지 확인한다.
-- [ ] 본문에만 있는 trigger 규칙이 없는지 확인한다.
-- [ ] `agents/openai.yaml`의 `display_name`, `short_description`, `default_prompt`가 `SKILL.md`와 어긋나지 않는지 확인한다.
-- [ ] `agents/openai.yaml`은 `references/openai_yaml.md` 기준을 반영하고, `display_name`, `short_description`, `default_prompt`를 결정적으로 생성/갱신했으며, 명시 요청 없는 optional interface field를 추가하지 않았는지 확인한다.
-- [ ] source skill과 runtime cache skill이 같은 내용을 가리키는지 확인한다.
+- [x] 실제 사용 예시와 사용자 표현이 skill의 목적과 일치하는지 확인한다.
+- [x] frontmatter `description`에 사용 조건, trigger, 제외 조건이 충분히 들어 있는지 확인한다.
+- [x] 본문에만 있는 trigger 규칙이 없는지 확인한다.
+- [x] `agents/openai.yaml`의 `display_name`, `short_description`, `default_prompt`가 `SKILL.md`와 어긋나지 않는지 확인한다.
+- [x] `agents/openai.yaml`은 `references/openai_yaml.md` 기준을 반영하고, `display_name`, `short_description`, `default_prompt`를 결정적으로 생성/갱신했으며, 명시 요청 없는 optional interface field를 추가하지 않았는지 확인한다.
+- [x] source skill과 runtime cache skill이 같은 내용을 가리키는지 확인한다.
 
 ### P3. skill 책임 경계 점검
 

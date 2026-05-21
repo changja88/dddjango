@@ -1,7 +1,7 @@
 ---
 name: architecture-api
 description: >
-  Use for REST API contract architecture: resources, endpoint/URL shape, HTTP methods/status, RFC 9457 Problem Details, request/response contracts, headers/content negotiation, auth/authz, pagination/versioning/deprecation/rate limits, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, 엔드포인트, HTTP 메서드, 상태 코드, 오류 응답, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전, 레이트 리밋, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role work, architecture-ddd when use cases/invariants are unclear, architecture-db for idempotency persistence/transactions, implementation-django-ninja for Router/Schema implementation or greenfield DRF Serializer/ViewSet/APIView/rest_framework implementation requests, and implementation-test for pytest/API contract test mechanics.
+  Use for REST API contract architecture: resources, endpoint/URL shape, HTTP methods/status, RFC 9457 Problem Details, request/response contracts, headers/content negotiation, auth/authz, pagination/versioning/deprecation/rate limits, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, 엔드포인트, HTTP 메서드, 상태 코드, 오류 응답, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전, 레이트 리밋, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role work, subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow; architecture-ddd when use cases/invariants are unclear; architecture-db for idempotency persistence/transactions; implementation-django-ninja for Router/Schema implementation or greenfield DRF Serializer/ViewSet/APIView/rest_framework implementation requests; and implementation-test for pytest/API contract test mechanics. Do not use for GraphQL, gRPC, SOAP, WebSocket, HATEOAS, or API Gateway design except to say they are outside this REST contract scope.
 ---
 
 # API Architecture
@@ -11,6 +11,7 @@ Use this skill to turn use cases and client needs into REST contracts. This skil
 ## Routing
 
 - If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
+- If the user asks for GraphQL, gRPC, SOAP, WebSocket, HATEOAS, or API Gateway design, do not force this REST contract skill; answer only the REST boundary if relevant and route or respond outside this skill's scope.
 - Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
 - If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
 - If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.

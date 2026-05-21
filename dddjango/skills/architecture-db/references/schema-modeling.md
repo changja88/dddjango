@@ -7,7 +7,7 @@ Load this for ERD, conceptual/logical/physical modeling, normalization, denormal
 1. Understand the business process, domain invariants, query patterns, and write contention.
 2. Create a conceptual model: entities, attributes, relationships.
 3. Create a logical model: keys, cardinality, optionality, normalization, data types.
-4. Create a physical model: indexes, partitioning, constraints, and performance trade-offs.
+4. Create a physical model: indexes, constraints, and performance trade-offs.
 
 Do not start from Django field convenience when the domain invariant belongs in the database.
 

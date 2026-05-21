@@ -1,7 +1,7 @@
 ---
 name: architecture-db
 description: >
-  Use for relational database architecture: ERD, schema modeling, normalization, keys, constraints, indexes, transactions, isolation, locking, concurrency, idempotency storage, duplicate prevention, query performance, EXPLAIN ANALYZE, rollout/backfill/index-lock risk, and migration safety. Use for DB 설계, 데이터베이스 설계, 스키마, ERD, 정규화, 인덱스, 제약조건, 트랜잭션, 락/잠금, 격리 수준, 동시성, 멱등성 저장, 중복 방지, 쿼리 성능, 실행 계획, 백필, 롤아웃/롤백, 마이그레이션 안전성. Prefer workflow-dddjango-subagents for coordinated work, architecture-ddd when invariants are unclear, architecture-implementation-patterns for repository/UoW/outbox/CQRS/dependency direction, architecture-api for REST contracts, and implementation-django for concrete migration files. Do not use for simple field renames or local CRUD with no DB invariant, concurrency, or rollout risk.
+  Use for relational DB architecture: ERD/schema modeling, normalization, keys, constraints/indexes, transactions/isolation/locking/concurrency, idempotency storage, duplicate prevention, query performance/EXPLAIN ANALYZE, rollout/backfill/index-lock risk, and migration safety. Use for DB 설계, 스키마, ERD, 정규화, 인덱스, 제약조건, 트랜잭션, 락, 격리 수준, 동시성, 멱등성, 중복 방지, 쿼리 성능, 실행 계획, 백필, 롤아웃/롤백. Prefer workflow-dddjango-subagents for coordinated work, subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow; architecture-ddd for unclear invariants; architecture-implementation-patterns for repository/UoW/outbox/CQRS/dependency direction; architecture-api for REST contracts; implementation-django for Django model/migration code; implementation-test for pytest/concurrency tests. Do not use for NoSQL, detailed partitioning without source/project criteria, ORM code, tool-specific migrations, connection pooling, simple field renames, or local CRUD without DB invariant/concurrency/rollout risk.
 ---
 
 # DB Architecture
@@ -30,7 +30,7 @@ Use this skill to design relational data structures that protect domain invarian
 ## Runtime Rules
 
 - Start from domain invariants, aggregates/entities, query patterns, write contention, and rollout constraints; do not let ORM convenience erase DB invariants.
-- Model conceptually first, then logical schema, then physical indexes/partitioning/performance choices.
+- Model conceptually first, then logical schema, then physical indexes, constraints, and performance choices.
 - Normalize first to remove update/insert/delete anomalies; denormalize only for measured read pressure or clear operational need.
 - Use database constraints for invariants the database can enforce: primary keys, foreign keys, unique, check, not null, and appropriate cascade rules.
 - Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.

@@ -65,4 +65,4 @@ Load this for REST resource design, URL structure, HTTP method choice, status co
 - For `401`, include `WWW-Authenticate` when the client needs to know the authentication method.
 - Choose the mechanism by client type: API keys for simple server-to-server/internal APIs, OAuth 2.0 for delegated third-party access, and bearer JWTs for stateless service or user-token contracts when expiry and revocation are addressed.
 - Put credentials in `Authorization`, not query parameters.
-- Require HTTPS for APIs that carry credentials, personal data, or sensitive business actions.
+- Require HTTPS for all API communication.

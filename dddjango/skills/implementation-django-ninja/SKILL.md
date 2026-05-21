@@ -1,7 +1,7 @@
 ---
 name: implementation-django-ninja
 description: >
-  Django Ninja API 구현에 사용한다: Router/라우터, Schema/스키마, ModelSchema, endpoint/엔드포인트, auth/permission/인증/인가, pagination/페이지네이션, filtering/필터링/정렬, Problem Details, OpenAPI, TestClient/API 테스트 acceptance criteria, DRF-to-Ninja migration. Router/Schema 구현, 엔드포인트 구현, 인증/인가, 페이지네이션, 오류 응답, DRF ViewSet/APIView/Serializer/시리얼라이저/뷰셋을 Django Ninja로 전환, greenfield DRF Serializer/ViewSet/APIView/DefaultRouter/rest_framework 요청을 Django Ninja 작업으로 전환할 때 사용한다. legacy DRF review/migration은 예외적으로 허용한다. 짧은 answer-only/tiny explanation 요청은 사용자가 요구한 출력 형태를 보존하고 tool/check report를 덧붙이지 않는다. 위험한 DDD+DB/API+test 작업은 workflow-dddjango-subagents, REST 계약 미정은 architecture-api, idempotency/locking 미정은 architecture-db, ORM/service/migration은 implementation-django, pytest/API contract test mechanics는 implementation-test를 우선한다.
+  Use for Django Ninja API implementation: Router/라우터, Schema/스키마, ModelSchema, endpoint adapter, auth/permission, filtering/sorting, pagination, Problem Details, OpenAPI, TestClient acceptance criteria, and DRF-to-Ninja migration. Use when implementing Router/Schema endpoints, making tiny Router edits, answering short Django Ninja implementation questions, or converting greenfield DRF Serializer/ViewSet/APIView/DefaultRouter/rest_framework requests to Django Ninja. Legacy DRF review/migration is allowed only for compatibility or migration work. Prefer workflow-dddjango-subagents for risky DDD+DB/API+test work or subagents/서브에이전트/역할 분해/병렬 검토/책임 분배 requests; architecture-api for undecided REST/header/content negotiation contracts; architecture-db for idempotency/locking; architecture-ddd for unclear domain rules; implementation-django for ORM/service/migration; implementation-test for pytest/API contract test mechanics.
 ---
 
 # Django Ninja 구현
@@ -25,7 +25,7 @@ REST 계약, 도메인 동작, 저장소/트랜잭션 판단이 충분히 정해
 - ORM model, service, selector, transaction, migration이 주 작업이면 `implementation-django`를 사용한다.
 - pytest fixture, mock, factory, test double, concurrency test mechanics, coverage, 상세 test 구현이 주 작업이면 `implementation-test`를 사용한다. 이 skill은 endpoint 구현도 범위에 있을 때 Django Ninja TestClient와 API contract acceptance criteria를 제시한다.
 - 새 작업에서 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework`를 요청하면, 명시적인 legacy review/migration이 아닌 한 구현 목표를 Django Ninja로 전환한다.
-- 사용자가 subagents, 역할 분해, 병렬 검토, 책임 분배를 요청하면 `workflow-dddjango-subagents`를 먼저 사용한다.
+- 사용자가 subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배를 요청하면 `workflow-dddjango-subagents`를 먼저 사용한다.
 - 짧은 Django Ninja 설명이나 작은 기존 Router 문자열 수정은 DDD/workflow 절차 없이 바로 답하거나 수정한다.
 
 ## 출력 형태
