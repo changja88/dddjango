@@ -8,13 +8,15 @@
 - `Checklist`는 각 Phase에서 참조하는 세부 점검표이며, 단독 실행 순서가 아니다.
 - `Failure Loop`는 평가나 report 실패가 있을 때만 진입한다.
 - `Validation Gate`는 변경 후 실행 범위를 정하는 검증 게이트다.
+- goal 실행용 prompt는 `workspace/plan/prompt/<phase>/` 아래에 두고, Phase별로 분리한다.
 - 분석/계획 문서 작성 위치, 파일명, 첫 줄, 언어, 평가지 구조는 여기서 반복 설명하지 않고 `constraint_rules.md`를 따른다.
+- skill 개선은 실제 skill 이름 단위로 추적하고, eval 개선은 bucket 단위로 추적한다. `skill_lv_up_plan`에는 bucket 폴더를 두지 않는다.
 
 ## A. 최상위 실행 흐름
 
 | Phase | 체크 | 목적 | 먼저 할 일 | 참조 체크리스트 | 다음 단계 |
 |---|---|---|---|---|---|
-| P1 | [ ] | 기준 확인 | 개선 대상과 reference 기준/gap을 확인한다. | C-REF | 기준이 부족하면 reference 계획, 충분하면 P2 |
+| P1 | [ ] | 기준 확인 | 개선 대상과 reference 기준/gap을 확인한다. | C-REF | 기준이 부족하면 analysis 기록 후 별도 계획 단계, 충분하면 P2 |
 | P2 | [ ] | skill 반영 확인 | skill이 reference 결정을 runtime 규칙으로 반영했는지 확인한다. | C-SKILL-SOURCE, C-SKILL-RUNTIME | 충돌하면 skill 계획, 충분하면 P3 |
 | P3 | [ ] | 책임 경계 확인 | skill 간 routing, handoff, subagent 책임을 확인한다. | C-SKILL-BOUNDARY | 겹치면 primary owner 결정, 충분하면 P4 |
 | P4 | [ ] | eval 준비 확인 | 개별 skill과 workflow 평가가 목적을 검증하는지 확인한다. | C-EVAL-SKILL, C-EVAL-WORKFLOW | eval gap이면 eval 계획, 충분하면 P5 |
@@ -37,10 +39,13 @@
 
 - [ ] 개선 대상을 한 문장으로 정한다.
 - [ ] C-REF를 실행한다.
+- [ ] 가능한 경우 독립 subagent 리뷰로 reference/source, skill boundary/routing, eval/process 관점을 나누어 재검토한다.
+- [ ] `skill-creator` 관점 리뷰로 skill 목적, trigger, progressive disclosure, reference 중복/누락, validation integrity를 확인한다.
+- [ ] subagent를 사용할 수 없으면 같은 관점을 순차 fallback으로 점검하고 사유를 기록한다.
 
 분기:
 
-- [ ] reference가 부족하면 skill이나 eval을 고치지 않고 reference 개선 계획을 만든다.
+- [ ] reference가 부족하면 skill이나 eval을 고치지 않고 reference 개선 분석을 남긴 뒤 별도 계획 단계로 넘긴다.
 - [ ] reference가 충분하면 P2로 진행한다.
 
 산출물:
@@ -48,6 +53,9 @@
 - [ ] 기준 reference 목록
 - [ ] gap, provisional, fallback 여부
 - [ ] 다음 수정 대상 후보
+- [ ] 후속 분석 문서 위치
+- [ ] subagent 리뷰 또는 순차 fallback 기록
+- [ ] skill-creator 리뷰 또는 순차 fallback 기록
 
 ### P2. Skill 반영 확인
 
@@ -75,6 +83,7 @@
 - [ ] skill 수정 필요 여부
 - [ ] runtime-sync 필요 여부
 - [ ] reference gap 재분류 여부
+- [ ] 필요 시 `workspace/plan/skill_lv_up_plan/<skill-name>/analysis/` 또는 `plan/`에 기록
 
 ### P3. 책임 경계 확인
 
@@ -127,6 +136,7 @@
 - [ ] 개별 skill 평가 gap
 - [ ] workflow 평가 gap
 - [ ] case, answer, evaluator 수정 필요 여부
+- [ ] 필요 시 `workspace/plan/eval_lv_up_plan/<bucket>/analysis/` 또는 `plan/`에 기록
 
 ### P5. Report 확인
 
@@ -280,6 +290,7 @@
 점검:
 
 - [ ] 각 skill 또는 skill group에 대응하는 eval bucket과 case가 있다.
+- [ ] skill 개선 분석/계획은 skill 이름 아래에 두고, eval case/answer/evaluator 개선 분석/계획은 bucket 이름 아래에 둔다.
 - [ ] public case가 실제 사용자가 할 법한 요청으로 작성되어 있다.
 - [ ] public case가 private answer나 oracle 내용을 누설하지 않는다.
 - [ ] answer oracle이 skill의 목적 달성 여부를 직접 평가한다.

@@ -10,16 +10,35 @@
 
 | 분류 | 의미 | 분석 위치 | 계획 위치 | 허용 `수정 대상:` |
 |---|---|---|---|---|
-| skill | runtime skill, skill routing, bundled reference, skill 간 책임 개선 | `workspace/plan/skill_lv_up_plan/<bucket>/analysis/` | `workspace/plan/skill_lv_up_plan/<bucket>/plan/` | `skill`, `runtime-sync` |
+| skill | runtime skill, skill routing, bundled reference, skill 간 책임 개선 | `workspace/plan/skill_lv_up_plan/<skill-name>/analysis/` | `workspace/plan/skill_lv_up_plan/<skill-name>/plan/` | `skill`, `runtime-sync` |
 | reference | source reference, provenance, source gap, reference conflict 개선 | `workspace/plan/reference_lv_up_plan/<reference-area>/analysis/` | `workspace/plan/reference_lv_up_plan/<reference-area>/plan/` | `reference` |
 | eval | eval case, answer oracle, evaluator, report, eval runner 개선 | `workspace/plan/eval_lv_up_plan/<bucket>/analysis/` | `workspace/plan/eval_lv_up_plan/<bucket>/plan/` | `case`, `answer`, `evaluator`, `report`, `model-variance` |
 | etc | 위 세 범주에 속하지 않는 개발 프로세스, 정리, 운영성, 기타 도구 개선 | `workspace/plan/etc_lv_up_plan/<topic>/analysis/` | `workspace/plan/etc_lv_up_plan/<topic>/plan/` | `process`, `cleanup`, `tooling`, `none` |
+
+폴더 단위:
+
+| 폴더 | 하위 그룹 기준 | 예시 |
+|---|---|---|
+| `skill_lv_up_plan` | 실제 skill 폴더명 | `architecture-api`, `implementation-django`, `workflow-dddjango-subagents` |
+| `reference_lv_up_plan` | `workspace/reference/<reference-area>/` 폴더명 | `architecture-db`, `implementation-test` |
+| `eval_lv_up_plan` | eval bucket 이름 | `code`, `plugin`, `response`, `runtime`, `source`, `workflow` |
+| `etc_lv_up_plan` | 소문자 topic 이름 | `cleanup-process`, `plan-constraint` |
 
 제약:
 
 - 분석 문서는 해당 범주의 `analysis/` 아래에만 작성한다.
 - 개선 계획 문서는 해당 범주의 `plan/` 아래에만 작성한다.
-- 분석과 계획은 같은 bucket, reference area, 또는 topic을 기준으로 작성한다.
+- P1 점검 결과는 개선 계획이 아니라 개선 필요 여부를 판정한 분석 결과이므로 `analysis/`에만 작성한다.
+- P1 이후 실제 개선 방법, 수정 순서, 검증 방법을 확정할 때만 같은 대상의 `plan/` 아래에 개선 계획 문서를 작성한다.
+- skill 분석과 계획은 반드시 대상 skill 이름을 기준으로 작성한다.
+- `skill_lv_up_plan` 하위에는 `dddjango/skills/<skill-name>/`에 실제로 존재하는 skill 이름만 둔다.
+- `code`, `plugin`, `response`, `runtime`, `source`, `workflow` 같은 eval bucket 이름은 `skill_lv_up_plan` 하위 그룹으로 쓰지 않는다.
+- reference 분석과 계획은 반드시 대상 reference area 이름을 기준으로 작성한다.
+- reference area는 `workspace/reference/<reference-area>/`의 폴더명이며, 개별 skill reference를 개선할 때는 보통 대상 skill 이름과 같은 값을 쓴다.
+- eval 분석과 계획은 반드시 대상 bucket 이름을 기준으로 작성한다.
+- `eval_lv_up_plan` 하위에는 `code`, `plugin`, `response`, `runtime`, `source`, `workflow` bucket만 둔다.
+- skill 이름은 `eval_lv_up_plan` 하위 그룹으로 쓰지 않는다.
+- etc 분석과 계획은 반드시 topic 이름을 기준으로 작성한다.
 - 분석과 계획은 같은 try 번호, run id, topic, 또는 case id를 파일명이나 본문에 남긴다.
 - 계획 문서가 있으면 같은 파일명의 분석 문서가 있어야 한다.
 - `analysis/`와 `plan/` 바로 아래에만 `.md` 파일을 둔다.
@@ -54,9 +73,34 @@ workspace/develop/eval/**/latest-valid/**
 - 사람이 작성한 개선 계획 문서는 성격에 맞는 `plan/*.md`에만 있다.
 - skill, reference, eval case, answer, fixture, generated run artifact에는 분석/계획 내용이 섞이지 않았다.
 
-## 2. 평가 실패 분석 첫 줄
+## 2. 독립 리뷰 기록
 
-모든 평가 실패 분석 문서의 첫 줄에는 실제 수정 대상을 적는다.
+P1처럼 기준을 확정하는 분석 작업은 가능한 경우 독립 관점 리뷰를 포함한다.
+
+제약:
+
+- subagent 리뷰를 실행한 경우 분석 문서 또는 최종 보고에 `Subagent 리뷰/순차 fallback:` 항목을 남긴다.
+- subagent 리뷰를 실행하지 못한 경우 `Subagent 리뷰/순차 fallback: 순차 fallback`과 사유를 남긴다.
+- `analysis/*.md` 문서에는 `리뷰 방식: real-subagent`, `리뷰 방식: sequential-fallback`, `리뷰 방식: not-run` 중 하나를 적는다.
+- `analysis/*.md` 문서에는 `리뷰 결과: Blocker N, Major N, 열린 Minor N` 형식의 요약을 적는다.
+- real subagent를 사용할 수 있으면 `skill-creator` 관점 리뷰를 별도 subagent에 맡기는 것을 우선한다.
+- subagent에게 의도한 결론, 원하는 수정 대상, 이전 판정 결과를 먼저 주입하지 않는다.
+- subagent는 P1 범위에서 파일을 수정하지 않고 Blocker, Major, Minor, Note만 보고한다.
+- P1의 skill 점검에는 `skill-creator` 관점 리뷰를 포함한다.
+- `skill-creator` 관점 리뷰는 `SKILL.md` 목적 명확성, trigger description, progressive disclosure, reference 중복/누락, validation integrity를 확인한다.
+- real subagent를 사용할 수 없으면 `/Users/hyun/.codex/skills/.system/skill-creator/SKILL.md`를 읽고 같은 기준으로 순차 fallback을 수행한다.
+- `skill-creator` 리뷰를 실행했거나 fallback으로 수행한 경우 분석 문서 또는 최종 보고에 `skill-creator 리뷰:` 항목을 남긴다.
+- 메인 에이전트는 subagent 결과를 그대로 채택하지 않고 충돌 여부를 통합 판단한다.
+- 실제로 실행하지 않은 subagent 리뷰를 실행한 것처럼 기록하지 않는다.
+
+완료 조건:
+
+- 기준 확정 분석에는 독립 리뷰 실행 여부와 사유가 남아 있다.
+- subagent 결과와 메인 판단이 충돌하면 충돌 내용과 최종 판단 근거가 남아 있다.
+
+## 3. 분석 문서 첫 줄
+
+모든 분석 문서의 첫 줄에는 실제 수정 대상을 적는다.
 
 첫 줄 형식:
 
@@ -126,7 +170,7 @@ workspace/develop/eval/**/latest-valid/**
 - 모든 분석 문서의 첫 줄이 허용 형식이다.
 - 개선 계획의 수정 범위가 분석 문서의 첫 줄과 충돌하지 않는다.
 
-## 3. 생성 문서 파일명
+## 4. 생성 문서 파일명
 
 새로 작성하는 분석, 계획 문서와 평가 결과 문서는 파일명 또는 상위 실행 식별자에 생성 시각을 포함한다.
 
@@ -140,7 +184,11 @@ workspace/develop/eval/<bucket>/runs/<run-id>/**
 제약:
 
 - `*_lv_up_plan` 아래 사람이 작성하는 분석/계획 문서는 파일명 접두어로 생성 시각을 붙인다.
-- 파일명 형식은 `YYYYMMDD-HHMMSS-topic.md`를 사용한다.
+- 파일명 형식은 `YYYYMMDD-HHMMSS-<target-name>-topic.md`를 사용한다.
+- `<target-name>`은 상위 대상 폴더명과 같아야 한다.
+- skill, reference 분석/계획 문서의 `<target-name>`은 대상 skill 또는 reference area 이름이다.
+- eval 분석/계획 문서의 `<target-name>`은 bucket 이름이다.
+- etc 분석/계획 문서의 `<target-name>`은 topic 이름이다.
 - 시간은 파일을 처음 작성한 로컬 시각 기준으로 적는다.
 - topic은 소문자 영문, 숫자, 하이픈만 사용한다.
 - 같은 작업의 분석과 계획은 같은 파일명을 사용한다.
@@ -150,8 +198,8 @@ workspace/develop/eval/<bucket>/runs/<run-id>/**
 예시:
 
 ```text
-workspace/plan/skill_lv_up_plan/code/analysis/20260521-153012-ddd-boundary.md
-workspace/plan/skill_lv_up_plan/code/plan/20260521-153012-ddd-boundary.md
+workspace/plan/skill_lv_up_plan/architecture-ddd/analysis/20260521-153012-architecture-ddd-p1-skill.md
+workspace/plan/skill_lv_up_plan/architecture-ddd/plan/20260521-153012-architecture-ddd-skill-plan.md
 workspace/develop/eval/code/runs/20260521-153012-code-try01-full-current-baseline/analysis/report.html
 ```
 
@@ -167,7 +215,7 @@ workspace/develop/eval/code/runs/20260521-153012-code-try01-full-current-baselin
 - `*_lv_up_plan` 아래 새 `.md` 파일명은 생성 시각 접두어를 가진다.
 - eval run 결과는 timestamp run id 아래에 생성된다.
 
-## 4. 문서 언어
+## 5. 문서 언어
 
 모든 개발 문서는 한글 설명문을 기본으로 작성한다.
 
@@ -203,7 +251,7 @@ dddjango/skills/**/agents/*.yaml
 - 문서의 설명 문장은 한글 중심이다.
 - 영어는 경로, 명령어, 코드, schema, 고유명사, trigger vocabulary처럼 필요한 곳에만 있다.
 
-## 5. 평가지 폴더 역할
+## 6. 평가지 폴더 역할
 
 평가지는 `workspace/develop/eval/<bucket>/` 아래의 폴더 역할을 지켜 작성한다.
 
@@ -250,7 +298,7 @@ workflow
 - public case와 answer가 1:1로 대응한다.
 - case, answer, fixture, manual protocol, generated artifact가 각자 역할을 지킨다.
 
-## 6. 자동 검증
+## 7. 자동 검증
 
 문서 제약은 자동 검증이 가능한 범위부터 검증한다. validator 통과가 모든 수동 제약의 통과를 뜻하지는 않는다.
 
@@ -271,13 +319,14 @@ workflow
 
 검증 범위:
 
-- `workspace/plan/skill_lv_up_plan/<bucket>/analysis/*.md` 첫 줄의 `수정 대상:` 형식
+- `workspace/plan/skill_lv_up_plan/<skill-name>/analysis/*.md` 첫 줄의 `수정 대상:` 형식
 - `workspace/plan/reference_lv_up_plan/<reference-area>/analysis/*.md` 첫 줄의 `수정 대상:` 형식
 - `workspace/plan/eval_lv_up_plan/<bucket>/analysis/*.md` 첫 줄의 `수정 대상:` 형식
 - `workspace/plan/etc_lv_up_plan/<topic>/analysis/*.md` 첫 줄의 `수정 대상:` 형식
 - `workspace/plan/*_lv_up_plan/**/*.md` 파일명의 생성 시각 접두어 형식
 - 각 `*_lv_up_plan` 아래 허용 section 이름
-- `skill_lv_up_plan`, `eval_lv_up_plan` 아래 허용 bucket 이름
+- `skill_lv_up_plan` 아래 허용 skill 이름
+- `eval_lv_up_plan` 아래 허용 bucket 이름
 - `reference_lv_up_plan` 아래 허용 reference area 이름
 - `etc_lv_up_plan` 아래 topic 이름 형식
 - plan 문서와 같은 파일명의 analysis 문서 존재 여부
