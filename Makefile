@@ -19,6 +19,7 @@ RUN_ID_ARG = $(if $(RUN_ID),--run-id "$(RUN_ID)")
 
 .PHONY: eval-prereqs
 eval-prereqs:
+	$(PYTHON) -B workspace/scripts/validate_plan_constraints.py
 	$(PYTHON) -B workspace/scripts/validate_skill_docs.py --phase all --runtime-skills "$(RUNTIME_SKILLS)"
 
 # 전체 평가 항목(response/code/plugin/runtime/source/workflow)을 병렬로 실행한다.
