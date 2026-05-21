@@ -310,8 +310,8 @@ workflow_execution_expectation:
             "  - path: workspace/develop/eval/code/eval_goal.md\n"
             "    basis: test basis\n",
             "reference_basis:\n"
-            "  - path: workspace/docs/ddd-implementation-standard.md\n"
-            "    basis: implementation order\n",
+            "  - path: workspace/reference/source-reference-audit/reference/final.md\n"
+            "    basis: source governance\n",
         )
         text = text.replace(
             "coverage_tags:\n",
@@ -344,51 +344,6 @@ workflow_execution_expectation:
 
         self.assertTrue(
             any("workspace/reference/architecture-ddd/reference/final.md" in finding for finding in findings)
-        )
-
-    def test_code_ddd_case_requires_implementation_standard_reference(self) -> None:
-        self.write_case_pair("code", "case-code-ddd", coverage_tags=["ddd-to-code"])
-        answer_path = self.validator.EVAL_ROOT / "code/answer/case-code-ddd.yaml"
-        text = answer_path.read_text(encoding="utf-8")
-        text = text.replace(
-            "reference_basis:\n"
-            "  - path: workspace/develop/eval/code/eval_goal.md\n"
-            "    basis: test basis\n",
-            "reference_basis:\n"
-            "  - path: workspace/reference/architecture-ddd/reference/final.md\n"
-            "    basis: aggregate and invariant reference\n",
-        )
-        text = text.replace(
-            "coverage_tags:\n",
-            "code_expected: true\n"
-            "case_role: ddd_direct\n"
-            "ddd_observations:\n"
-            "  business_problem: place orders\n"
-            "  subdomain_type: core\n"
-            "  subdomain_type_basis: order placement owns business rules\n"
-            "  bounded_context: ordering\n"
-            "  context_map_or_not_applicable: not applicable for single context\n"
-            "  ubiquitous_terms: Order, OrderLine\n"
-            "  aggregate_root: Order\n"
-            "  aggregate_behavior: place and confirm\n"
-            "  invariants:\n"
-            "    - an order cannot be placed without items\n"
-            "  application_service_boundary: service coordinates repository and transaction\n"
-            "  transaction_boundary: application service owns transaction\n"
-            "  django_mapping: pure Python fixture\n"
-            "  test_evidence: unit tests cover invariants\n"
-            "coverage_tags:\n",
-        )
-        answer_path.write_text(text, encoding="utf-8")
-        public_path = (
-            self.validator.EVAL_ROOT
-            / "code/cases/plugin/public/case-code-ddd.md"
-        )
-
-        findings = self.validator.validate_answer(answer_path, "code", public_path)
-
-        self.assertTrue(
-            any("workspace/docs/ddd-implementation-standard.md" in finding for finding in findings)
         )
 
     def test_code_supporting_domain_policy_case_does_not_require_ddd_observations(self) -> None:

@@ -47,7 +47,7 @@ class EvalAnswerYamlTests(unittest.TestCase):
     def test_list_of_maps_reads_reference_basis_items(self) -> None:
         text = (
             "reference_basis:\n"
-            "  - path: workspace/docs/ddd-implementation-standard.md\n"
+            "  - path: workspace/reference/architecture-ddd/reference/final.md\n"
             "    basis: DDD implementation order\n"
             "  - path: workspace/reference/architecture-ddd/reference/final.md\n"
             "    basis: aggregate and invariant reference\n"
@@ -57,7 +57,7 @@ class EvalAnswerYamlTests(unittest.TestCase):
             self.parser.list_of_maps(text, "reference_basis"),
             [
                 {
-                    "path": "workspace/docs/ddd-implementation-standard.md",
+                    "path": "workspace/reference/architecture-ddd/reference/final.md",
                     "basis": "DDD implementation order",
                 },
                 {

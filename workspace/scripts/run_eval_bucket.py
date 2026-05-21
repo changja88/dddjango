@@ -83,7 +83,7 @@ def all_bucket_excluded_paths() -> list[Path]:
         paths.append(eval_rel_path(bucket, "runs"))
         paths.append(eval_rel_path(bucket, "cases/plugin/private"))
     paths.append(eval_rel_path("source", "crosswalks"))
-    paths.append(Path("workspace/develop/lv_up_plan"))
+    paths.append(Path("workspace/plan/skill_lv_up_plan"))
     return paths
 
 

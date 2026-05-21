@@ -187,7 +187,6 @@ DDD_OBSERVATION_FIELDS = (
     "test_evidence",
 )
 DDD_REQUIRED_REFERENCE_PATHS = {
-    "workspace/docs/ddd-implementation-standard.md",
     "workspace/reference/architecture-ddd/reference/final.md",
 }
 

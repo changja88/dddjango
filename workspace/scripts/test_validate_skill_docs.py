@@ -362,7 +362,7 @@ description: >
         skill_md = skill / "SKILL.md"
         skill_md.write_text(
             skill_md.read_text(encoding="utf-8")
-            + "\n```yaml\nruntime_skill_reference:\n  allow_refs:\n    - workspace/docs/**\n```\n",
+            + "\n```yaml\nruntime_skill_reference:\n  allow_refs:\n    - workspace/reference/**\n```\n",
             encoding="utf-8",
         )
         check = self.validator.Check()
@@ -382,7 +382,7 @@ description: >
         skill_md = skill / "SKILL.md"
         skill_md.write_text(
             skill_md.read_text(encoding="utf-8")
-            + "\nSource evidence may compare workspace/docs/** with workspace/reference/** during provenance audits.\n",
+            + "\nSource evidence may compare workspace/reference/** during provenance audits.\n",
             encoding="utf-8",
         )
         check = self.validator.Check()

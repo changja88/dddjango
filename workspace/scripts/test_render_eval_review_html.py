@@ -54,12 +54,12 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         text = (
             "[plugin-structure.md](/private/tmp/dddjango-eval-workspaces/"
             "20260519-180742-plugin-try01-targeted-source-boundary-hardening/"
-            "case-plugin-reference-split/baseline/workspace/docs/plugin-structure.md:132)"
+            "case-plugin-reference-split/baseline/dddjango/.codex-plugin/plugin.json:132)"
         )
 
         sanitized = self.renderer.sanitize_report_text(text)
 
-        self.assertIn("(workspace/docs/plugin-structure.md:132)", sanitized)
+        self.assertIn("([eval-workspace]/dddjango/.codex-plugin/plugin.json:132)", sanitized)
         self.assertNotIn("/private/tmp/dddjango-eval-workspaces", sanitized)
 
     def test_sanitize_report_text_redacts_internal_eval_sentinel(self) -> None:

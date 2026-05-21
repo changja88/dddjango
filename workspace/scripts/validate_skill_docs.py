@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate dddjango planning docs, generated skill folders, and runtime cache."""
+"""Validate dddjango skill folders and runtime cache."""
 
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKSPACE = ROOT / "workspace"
-DOCS = WORKSPACE / "docs"
 DEFAULT_PLUGIN_SKILLS = ROOT / "dddjango" / "skills"
 DEFAULT_ACTIVE_RUNTIME_SKILLS = (
     Path.home() / ".codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills"
@@ -24,18 +23,6 @@ DEFAULT_RUNTIME_SKILLS = Path(
         str(DEFAULT_ACTIVE_RUNTIME_SKILLS if DEFAULT_ACTIVE_RUNTIME_SKILLS.exists() else ROOT / "plugins/dddjango/skills"),
     )
 )
-
-REQUIRED_DOCS = [
-    "spec.md",
-    "reference-index.md",
-    "ddd-implementation-standard.md",
-    "skill-hierarchy.md",
-    "skill-contracts.md",
-    "workflow.md",
-    "validation-plan.md",
-    "plugin-structure.md",
-    "skill-authoring.md",
-]
 
 PROVISIONAL_SKILLS = [
     "architecture-implementation-patterns",
@@ -181,61 +168,6 @@ def check_frontmatter_yaml_safety(check: Check, skill_md: Path, text: str) -> No
             ": " not in value,
             f"description with ': ' must use a quoted value or block scalar: {skill_md}",
         )
-
-
-def check_required_docs(check: Check) -> None:
-    for name in REQUIRED_DOCS:
-        check.require((DOCS / name).is_file(), f"missing docs file: workspace/docs/{name}")
-
-
-def check_workspace_docs(check: Check) -> None:
-    workflow = read(DOCS / "workflow.md")
-    plugin_structure = read(DOCS / "plugin-structure.md")
-    validation_plan = read(DOCS / "validation-plan.md")
-
-    check.require(
-        "canonical source" in workflow
-        and "implementation-django-web" in workflow
-        and "web template/static" in workflow,
-        "workflow.md must declare the role map canonical and include Django web ownership",
-    )
-    check.require(
-        "cache-only" in plugin_structure
-        and "workspace canonical source" in plugin_structure
-        and "plugin cache" in plugin_structure,
-        "plugin-structure.md must forbid cache-only runtime changes",
-    )
-    check.require(
-        "authoring source" in workflow and "runtime bundled reference" in workflow,
-        "workflow.md must distinguish source references from runtime bundled references",
-    )
-    for skill in PROVISIONAL_SKILLS:
-        check.require(
-            re.search(rf"`{re.escape(skill)}`\s*\|\s*provisional", plugin_structure),
-            f"plugin-structure.md must mark {skill} as provisional in the split plan",
-        )
-    check.require(
-        "python3 workspace/scripts/validate_skill_docs.py" in validation_plan,
-        "validation-plan.md must name the canonical validation command",
-    )
-    check.require(
-        "--phase all" in validation_plan and "완료 게이트" in validation_plan,
-        "validation-plan.md must define --phase all as the completion gate",
-    )
-    check.require(
-        "provisional skill handling" in validation_plan,
-        "validation-plan.md must evaluate provisional skill handling",
-    )
-    check.require(
-        "workspace canonical source" in validation_plan,
-        "validation-plan.md must require workspace sync after cache edits",
-    )
-    check.require(
-        "## 7. Integration Checklist" in workflow
-        and "Domain and invariants" in workflow
-        and "Cache sync report" in workflow,
-        "workflow.md must define the Integration Checklist required by validation",
-    )
 
 
 def linked_reference_names(skill_text: str) -> set[str]:
@@ -544,7 +476,7 @@ def check_runtime_facing_path_boundary(check: Check, text: str) -> None:
         "Runtime-facing guidance",
         "runtime bundle-relative",
         "skill-local references",
-        "Do not present `workspace/docs/**` or `workspace/reference/**` as runtime-facing allowed refs",
+        "Do not present `workspace/reference/**` as runtime-facing allowed refs",
     ]
     for phrase in required:
         check.require(
@@ -563,7 +495,7 @@ def runtime_source_allow_ref_violations(text: str) -> list[tuple[int, str]]:
     lines = text.splitlines()
     for index, line in enumerate(lines):
         lowered = line.lower()
-        if "workspace/docs" not in lowered and "workspace/reference" not in lowered:
+        if "workspace/reference" not in lowered:
             continue
         context = "\n".join(lines[max(0, index - 4) : index + 1]).lower()
         if not ("runtime" in context and "allow_refs" in context):
@@ -682,9 +614,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--phase",
-        choices=["docs", "generated", "runtime", "all"],
-        default="docs",
-        help="docs validates planning docs only; generated requires repo skill folders; runtime is cache smoke only; all is the completion gate.",
+        choices=["generated", "runtime", "all"],
+        default="generated",
+        help="generated validates repo skill folders; runtime is cache smoke only; all is the completion gate.",
     )
     parser.add_argument("--skills-dir", type=Path, default=DEFAULT_PLUGIN_SKILLS)
     parser.add_argument("--runtime-skills", type=Path, default=DEFAULT_RUNTIME_SKILLS)
@@ -694,23 +626,20 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main() -> int:
     args = parse_args(sys.argv[1:])
     check = Check()
-    check_required_docs(check)
-    if not check.errors:
-        check_workspace_docs(check)
-        if args.phase in {"generated", "all"}:
-            check_generated_skills(check, args.skills_dir, required=True)
-        if args.phase in {"runtime", "all"}:
-            source_skills = args.skills_dir if args.phase == "all" else None
-            check_runtime_cache(
-                check,
-                args.runtime_skills,
-                required=True,
-                source_skills=source_skills,
-            )
-        if args.phase == "runtime":
-            check.warnings.append(
-                "runtime phase is a smoke check only; it is not a completion gate without --phase generated or --phase all"
-            )
+    if args.phase in {"generated", "all"}:
+        check_generated_skills(check, args.skills_dir, required=True)
+    if args.phase in {"runtime", "all"}:
+        source_skills = args.skills_dir if args.phase == "all" else None
+        check_runtime_cache(
+            check,
+            args.runtime_skills,
+            required=True,
+            source_skills=source_skills,
+        )
+    if args.phase == "runtime":
+        check.warnings.append(
+            "runtime phase is a smoke check only; it is not a completion gate without --phase generated or --phase all"
+        )
 
     for warning in check.warnings:
         print(f"WARN: {warning}")

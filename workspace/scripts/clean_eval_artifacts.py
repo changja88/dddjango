@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clean generated eval run and lv_up_plan iteration artifacts."""
+"""Clean generated eval run artifacts."""
 
 from __future__ import annotations
 
@@ -10,9 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EVAL_ROOT = REPO_ROOT / "workspace/develop/eval"
-LV_UP_PLAN_ROOT = REPO_ROOT / "workspace/develop/lv_up_plan"
 BUCKETS = ("response", "code", "plugin", "runtime", "source", "workflow")
-ITERATION_DIRS = ("analysis", "plan", "review")
 CONFIRM_FLAG = "--confirm-delete-generated-eval-artifacts"
 
 
@@ -38,8 +36,7 @@ def collect_delete_targets() -> list[Path]:
     for bucket in BUCKETS:
         targets.extend(children(EVAL_ROOT / bucket / "runs"))
         targets.extend(children(EVAL_ROOT / bucket / "latest"))
-        for section in ITERATION_DIRS:
-            targets.extend(children(LV_UP_PLAN_ROOT / bucket / section))
+        targets.extend(children(EVAL_ROOT / bucket / "latest-valid"))
     return sorted(targets)
 
 

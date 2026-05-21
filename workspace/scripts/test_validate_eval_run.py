@@ -450,7 +450,7 @@ class ValidateEvalRunTests(unittest.TestCase):
             baseline_text=(
                 "근거: "
                 "[plugin-structure.md](/private/tmp/dddjango-eval-workspaces/run/case/"
-                "baseline/workspace/docs/plugin-structure.md:132)\n"
+                "baseline/dddjango/.codex-plugin/plugin.json:132)\n"
             )
         )
 

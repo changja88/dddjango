@@ -824,8 +824,8 @@ class RunEvalBucketTests(unittest.TestCase):
         self.assertTrue(entry["binary"])
         self.assertEqual(entry["artifactPath"], "")
 
-    def test_prepare_isolated_workspace_removes_lv_up_plan_artifacts(self) -> None:
-        lv_up_file = self.root / "workspace/develop/lv_up_plan/runtime/review/note.md"
+    def test_prepare_isolated_workspace_removes_skill_lv_up_plan_artifacts(self) -> None:
+        lv_up_file = self.root / "workspace/plan/skill_lv_up_plan/runtime/review/note.md"
         lv_up_file.parent.mkdir(parents=True)
         lv_up_file.write_text("runtime improvement notes\n", encoding="utf-8")
 
@@ -837,7 +837,7 @@ class RunEvalBucketTests(unittest.TestCase):
             variant=self.runner.VARIANT_CONFIG["with-dddjango"],
         )
 
-        self.assertFalse((workspace / "workspace/develop/lv_up_plan").exists())
+        self.assertFalse((workspace / "workspace/plan/skill_lv_up_plan").exists())
 
     def test_previous_skip_exec_output_does_not_skip_later_execution(self) -> None:
         self.write_case()
