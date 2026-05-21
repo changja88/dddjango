@@ -10,10 +10,10 @@
 
 평가 case는 다음 source를 함께 반영해야 한다.
 
-- `workspace/docs/plugin-structure.md` runtime sync 기준
-- `workspace/docs/workflow.md` canonical role map
-- `workspace/docs/validation-plan.md` runtime role-map sync, skill folder validation, provisional handling
-- `workspace/docs/skill-authoring.md` metadata/default prompt 기준
+- `dddjango/.codex-plugin/plugin.json` runtime sync 기준
+- `dddjango/skills/workflow-dddjango-subagents/references/role-map.md` canonical role map
+- `workspace/develop/eval` runtime role-map sync, skill folder validation, provisional handling
+- `dddjango/skills/source-reference-audit/SKILL.md` metadata/default prompt 기준
 - `workspace/reference/*/reference/{final,internal,external,review}.md`
 - runtime `dddjango/skills/*/SKILL.md`, `agents/openai.yaml`, `references/*.md`
 - installed plugin cache path under `plugins/cache/dddjango` or equivalent runtime cache
@@ -22,9 +22,9 @@
 
 - Prompt-input exposure: `with-dddjango` prompt-input에 요청과 관련된 `dddjango:*` skill metadata, description, reference hints가 최신 상태로 노출되는가.
 - Baseline isolation: baseline은 `--ignore-user-config`, `--ignore-rules`, sanitized workspace로 plugin metadata, cache path, canonical source path, answer oracle을 보지 못하는가.
-- Role-map sync: runtime `workflow-dddjango-subagents` `SKILL.md`와 `references/role-map.md`가 `workspace/docs/workflow.md`의 roles, responsibilities, related skills를 축소하지 않는가.
+- Role-map sync: runtime `workflow-dddjango-subagents` `SKILL.md`와 `references/role-map.md`가 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`의 roles, responsibilities, related skills를 축소하지 않는가.
 - Reference loading boundary: runtime references are one-level, directly linked from `SKILL.md`, and do not point to workspace-only source paths as final instructions.
-- Cache/source consistency: cache 보정이 있었다면 같은 의도가 canonical `dddjango/` source와 `workspace/docs`에 반영되어 있는가.
+- Cache/source consistency: cache 보정이 있었다면 같은 의도가 canonical `dddjango/` source와 `workspace/reference`에 반영되어 있는가.
 - Provisional visibility: provisional skills expose fallback status and do not claim dedicated source references exist.
 - Evaluation contamination: public case, `answer/` oracle, prior run artifacts, private scoring notes do not appear in runtime prompt-input or bundled references.
 
@@ -34,7 +34,7 @@
 
 Runtime checks는 모든 installed/cached skill에 대해 다음을 확인한다.
 
-- bundled reference files match the split plan in `plugin-structure.md`
+- bundled reference files are one-level, linked from `SKILL.md`, and match the runtime skill ownership
 - positive triggers, negative routing, and cross-skill precedence are exposed consistently
 - provisional skills do not imply dedicated source references exist
 - DRF content is legacy/migration/comparison only, not greenfield standard
@@ -79,4 +79,4 @@ Runtime eval은 `workspace/develop/eval/runtime/cases/plugin/public/`에 하나 
 
 동시에 baseline output/operator prompt에는 skill metadata, cache path, canonical plugin source path, `answer/` oracle이 없어야 한다. 현재 runner가 runtime bucket을 first-class로 실행하지 못하면 dedicated runtime validator/runner를 추가하거나 `cases`, `answer`, `fixtures`, `runs`를 실제로 소비하는 manual run protocol을 남겨야 한다.
 
-`baseline-isolation.json`의 `pass`가 `true`이고, protocol validation과 workspace source/generated plugin 검증이 runtime/baseline 요구사항을 덮으며, `answer/` oracle 판정 결과가 남아야 통과다. Runtime validator는 prompt-input artifact를 파싱해 exposed skill ids/descriptions/reference hints/role-map을 canonical `dddjango/skills`와 `workspace/docs/workflow.md`에 대조해야 한다.
+`baseline-isolation.json`의 `pass`가 `true`이고, protocol validation과 workspace source/generated plugin 검증이 runtime/baseline 요구사항을 덮으며, `answer/` oracle 판정 결과가 남아야 통과다. Runtime validator는 prompt-input artifact를 파싱해 exposed skill ids/descriptions/reference hints/role-map을 canonical `dddjango/skills`와 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`에 대조해야 한다.

@@ -7,9 +7,9 @@ intent: Evaluate missing agents metadata impact in runtime exposure.
 reference_basis:
   - path: workspace/develop/eval/runtime/eval_goal.md
     basis: missing skill metadata
-  - path: workspace/docs/skill-authoring.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: metadata/default prompt criteria
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: skill folder validation
 target_behavior:
   required:

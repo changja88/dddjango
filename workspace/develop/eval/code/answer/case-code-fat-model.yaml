@@ -7,9 +7,9 @@ intent: Check minimal clean-code refactor around model/service responsibilities 
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: Python and clean code, negative implementation restraint
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: Fat Model and View Logic review
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: integration priority and side-effect timing
 code_expected: true
 case_role: implementation_supporting

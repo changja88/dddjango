@@ -1,3 +1,3 @@
-workspace/docs의 dddjango 문서들이 서로 같은 제품 결정을 가리키는지 감사해줘.
+workspace/reference와 runtime skill reference가 서로 같은 제품 결정을 가리키는지 감사해줘.
 
 특히 API 구현 표준, 역할 분해, 검증 기준, plugin 구조가 서로 충돌하지 않는지 보고, 빠진 연결이 있으면 근거와 함께 정리해줘.

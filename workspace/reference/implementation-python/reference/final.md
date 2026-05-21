@@ -2191,7 +2191,7 @@ config = Config.from_env()
 
 ## 21. Repository / Unit of Work
 
-Repository/Unit of Work 등 아키텍처 패턴은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/docs/reference-index.md`의 implementation patterns fallback 기준을 따른다.
+Repository/Unit of Work 등 아키텍처 패턴은 향후 `workspace/reference/architecture-implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/reference/source-reference-audit/reference/final.md`의 implementation patterns fallback 기준을 따른다.
 
 ---
 

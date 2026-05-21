@@ -7,9 +7,9 @@ intent: Ensure a simple field rename does not trigger DDD workflow or subagent c
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: simple-negative
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: Negative Case simple field rename
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: simple task restraint
 target_behavior:
   required:

@@ -7,9 +7,9 @@ intent: Verify code-backed DDD/API/DB mapping for idempotent order creation.
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: DDD-to-code, Django Ninja API, DB consistency
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: order creation API
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: DDD, DB, API, Django Ninja, Test boundaries
 code_expected: true
 case_role: implementation_supporting

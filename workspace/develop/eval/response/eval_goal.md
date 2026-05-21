@@ -10,8 +10,8 @@
 
 평가 case는 다음 source를 함께 반영해야 한다.
 
-- `workspace/docs/spec.md`, `ddd-implementation-standard.md`, `skill-hierarchy.md`, `skill-contracts.md`, `workflow.md`, `validation-plan.md`
-- `workspace/docs/reference-index.md`의 source mapping, reference gap, DRF guardrail
+- `workspace/reference/spec.md`, `workspace/reference/*/reference/final.md`, `dddjango/skills/*/SKILL.md`, `workspace/develop/eval/*/eval_goal.md`
+- `workspace/reference/source-reference-audit/reference/final.md`의 source boundary, reference gap, DRF guardrail
 - `workspace/reference/*/reference/{final,internal,external,review}.md`
 - runtime `dddjango/skills/*/SKILL.md` and directly linked `references/*.md`
 - `skill-creator` 원칙 중 trigger description, progressive disclosure, validation integrity

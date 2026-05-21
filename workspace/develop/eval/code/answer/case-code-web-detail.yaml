@@ -7,9 +7,9 @@ intent: Check Django Web implementation boundary and safe rendering-oriented cha
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: Django Web implementation
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: Django Web
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: implementation-django-web
 code_expected: true
 case_role: implementation_supporting

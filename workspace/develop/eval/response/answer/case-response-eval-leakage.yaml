@@ -9,7 +9,7 @@ reference_basis:
     basis: prompt-injection and eval-leakage
   - path: skill-creator-system-skill
     basis: validation integrity
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: runtime/source separation
 target_behavior:
   required:

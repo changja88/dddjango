@@ -9,9 +9,9 @@ reference_basis:
     basis: Progressive disclosure and runtime reference split
   - path: skill-creator-system-skill
     basis: progressive disclosure
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: reference file criteria
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: DRF guardrail
 target_behavior:
   required:

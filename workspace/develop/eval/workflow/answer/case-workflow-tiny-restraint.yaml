@@ -7,7 +7,7 @@ intent: Check that tiny explanatory requests do not trigger workflow output.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: tiny-task restraint
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: simple task restraint
 target_behavior:
   required:

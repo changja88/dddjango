@@ -8,7 +8,7 @@ case_role: ddd_direct
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: DDD-to-code mapping
-  - path: workspace/docs/ddd-implementation-standard.md
+  - path: workspace/reference/architecture-ddd/reference/final.md
     basis: aggregate/application service boundary and implementation restraint
   - path: workspace/reference/architecture-ddd/reference/final.md
     basis: aggregate invariants, bounded contexts, and context boundary guidance

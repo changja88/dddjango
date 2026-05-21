@@ -7,9 +7,9 @@ intent: Check routing correctness when metadata exists but a specialized web ski
 reference_basis:
   - path: workspace/develop/eval/runtime/eval_goal.md
     basis: wrong routing despite metadata
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: Django Agent includes implementation-django-web
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: implementation-django-web boundary
 target_behavior:
   required:

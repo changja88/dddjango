@@ -7,9 +7,9 @@ intent: Evaluate cache/source mismatch handling and completion honesty.
 reference_basis:
   - path: workspace/develop/eval/plugin/eval_goal.md
     basis: cache/source mismatch
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: Runtime synchronization criteria
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: skill folder validation
 target_behavior:
   required:

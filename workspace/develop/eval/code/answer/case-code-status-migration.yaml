@@ -7,7 +7,7 @@ intent: Check operational migration code planning and safe rollout representatio
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: Django implementation and migration/DB safety
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: operational migration
   - path: workspace/reference/architecture-db/reference/final.md
     basis: constraints, indexes, rollout risk

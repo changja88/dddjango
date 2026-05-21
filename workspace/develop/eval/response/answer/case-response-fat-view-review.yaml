@@ -7,9 +7,9 @@ intent: Check severity-first review for fat model and view/router logic boundari
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: TDD/Test/Clean Code and review scenarios
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: Fat Model review and View Logic review
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: implementation-cleancode and implementation-django-ninja boundaries
 target_behavior:
   required:

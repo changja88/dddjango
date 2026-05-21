@@ -9,7 +9,7 @@ reference_basis:
     basis: Eval traceability
   - path: workspace/develop/eval/*/eval_goal.md
     basis: required reference source
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: required reference source
 target_behavior:
   required:

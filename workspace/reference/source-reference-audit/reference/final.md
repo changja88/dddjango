@@ -6,7 +6,7 @@
 
 | 역할 | 예시 위치 | 허용되는 용도 | 금지되는 용도 |
 |---|---|---|---|
-| Source authoring | `workspace/docs/**`, `workspace/reference/**` | 제품 결정, 설계 기준, source evidence, reference basis | runtime-facing allowed path로 제시, run 결과를 근거 없이 source truth로 승격 |
+| Source authoring | `workspace/reference/**` | 제품 결정, 설계 기준, source evidence, reference basis | runtime-facing allowed path로 제시, run 결과를 근거 없이 source truth로 승격 |
 | Runtime skill | `dddjango/skills/**/SKILL.md`, `dddjango/skills/**/references/**`, `agents/openai.yaml` | 에이전트 실행 절차, runtime bundle-relative reference, skill-local guidance | source authoring 경로를 최종 runtime instruction으로 노출, private evaluation material 복사 |
 | Public case/prompt | `workspace/develop/eval/*/cases/plugin/public/**`, public prompt input | 사용자에게 공개 가능한 task context, scenario label, validation conditions | evaluator-only material, non-public validation notes, prior run output, scoring notes |
 | Evaluator-only material | `workspace/develop/eval/*/answer/**`, private checks, scoring notes | scoring decision, internal checks, traceability from public case to source basis | runtime/public/source wording으로 역류, public prompt에 field/schema 용어 노출 |
@@ -22,7 +22,7 @@
 | Evaluator-only material | source basis로 허용 | 비교 대상으로 허용 | 허용 | 현재 평가 증거로만 허용 |
 | Report/run analysis | 증거로 허용 | 증거로 허용 | evaluator-only report 안에서 허용 | 현재 run 내부 증거로 허용 |
 
-Runtime-facing guidance는 skill-local 또는 runtime bundle-relative 형태를 사용한다. `workspace/docs/**`와 `workspace/reference/**`는 source evidence, source-authoring, cache/source parity, internal eval work에만 둔다.
+Runtime-facing guidance는 skill-local 또는 runtime bundle-relative 형태를 사용한다. `workspace/reference/**`는 source evidence, source-authoring, cache/source parity, internal eval work에만 둔다.
 
 ## 3. Leakage Categories
 

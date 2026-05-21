@@ -7,9 +7,9 @@ intent: Verify provisional skill handling and fallback source honesty.
 reference_basis:
   - path: workspace/develop/eval/plugin/eval_goal.md
     basis: Provisional handling
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: Reference Gap
-  - path: workspace/docs/skill-authoring.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: provisional skill criteria
 target_behavior:
   required:

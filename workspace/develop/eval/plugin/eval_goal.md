@@ -11,7 +11,7 @@
 평가 case는 다음 source를 함께 반영해야 한다.
 
 - `skill-creator` system skill guidance
-- `workspace/docs/plugin-structure.md`, `skill-authoring.md`, `skill-contracts.md`, `skill-hierarchy.md`, `reference-index.md`, `validation-plan.md`
+- `dddjango/.codex-plugin/plugin.json`, `dddjango/skills/*/SKILL.md`, `workspace/reference/*/reference/final.md`, `workspace/develop/eval/*/eval_goal.md`
 - `workspace/reference/*/reference/{final,internal,external,review}.md`
 - `dddjango/skills/*/SKILL.md`, `dddjango/skills/*/agents/openai.yaml`, `dddjango/skills/*/references/*.md`
 - `dddjango/.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json`, `plugins/dddjango`
@@ -19,7 +19,7 @@
 ## Case Families
 
 - Skill trigger quality: each `description` contains positive triggers, negative routing, Korean trigger vocabulary, and precedence without hiding trigger rules only in the body.
-- Skill boundary fidelity: each skill follows `skill-contracts.md`; DDD, DB, API, Django, Ninja, Web, Python, TDD, Test, Clean Code, Workflow responsibilities do not bleed into each other.
+- Skill boundary fidelity: each skill's runtime routing and references keep DDD, DB, API, Django, Ninja, Web, Python, TDD, Test, Clean Code, and Workflow responsibilities from bleeding into each other.
 - Progressive disclosure: `SKILL.md` stays concise, links directly to one-level `references/`, and does not copy source reference chapters into runtime instructions.
 - Provisional handling: `architecture-implementation-patterns`, `implementation-django-ninja`, and `implementation-django-web` clearly state provisional/fallback source status and do not imply dedicated source references exist.
 - Agents metadata: `agents/openai.yaml` `display_name`, `short_description`, and `default_prompt` semantically match the corresponding `SKILL.md`.
@@ -38,7 +38,7 @@
 - Skill body quality: actionable runtime rules, concise body, clear boundaries, conditional reference loading, no duplicated source material, honest verification reporting.
 - Reference-routing matrix: every `references/*.md` maps to at least one prompt condition and at least one negative condition where it should not be loaded or used.
 - Provisional per-field metadata: provisional/fallback status is visible in `SKILL.md` and user-facing metadata without implying complete dedicated source coverage.
-- Runtime reference split content: each skill has the expected reference files from `plugin-structure.md`, not only one-level folder shape.
+- Runtime reference split content: each skill has expected one-level bundled reference files linked from `SKILL.md`, not only a correct folder shape.
 - DRF guardrail: any DRF-derived runtime reference is marked legacy/migration/comparison and never greenfield standard.
 - Auxiliary docs ban: no README/install/changelog-style files inside skill folders.
 
@@ -73,7 +73,7 @@
 ## Non-Goals
 
 - README, installation guide, changelog 같은 보조 문서를 skill 안에 추가해 평가를 통과시키지 않는다.
-- runtime cache만 고치고 canonical `dddjango/` source와 `workspace/docs` 근거를 비워 두지 않는다.
+- runtime cache만 고치고 canonical `dddjango/` source와 `workspace/reference` 근거를 비워 두지 않는다.
 - `answer/` oracle이나 prior run finding을 skill 또는 plugin runtime 문서로 복사하지 않는다.
 
 ## Completion Gate

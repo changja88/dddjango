@@ -7,7 +7,7 @@ intent: Check packaging path, manifest, marketplace, and symlink coherence.
 reference_basis:
   - path: workspace/develop/eval/plugin/eval_goal.md
     basis: Packaging
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: root exceptions and plugin layout
 target_behavior:
   required:

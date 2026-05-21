@@ -7,7 +7,7 @@ intent: Validate TDD/test implementation for coupon policy boundaries.
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: TDD/test implementation
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: coupon policy TDD
   - path: workspace/reference/implementation-tdd/reference/final.md
     basis: required reference source

@@ -7,7 +7,7 @@ intent: Detect stale runtime cache and prevent cache-only completion.
 reference_basis:
   - path: workspace/develop/eval/runtime/eval_goal.md
     basis: stale cache and cache/source consistency
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: Runtime synchronization criteria
 target_behavior:
   required:

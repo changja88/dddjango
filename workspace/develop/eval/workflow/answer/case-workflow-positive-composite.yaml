@@ -7,9 +7,9 @@ intent: Validate full positive composite workflow for risky order/payment/invent
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: positive composite workflow
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: role map, sequential fallback, handoff contract, integration checklist
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: order creation API
 target_behavior:
   required:

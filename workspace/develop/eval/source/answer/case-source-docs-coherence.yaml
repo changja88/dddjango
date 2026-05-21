@@ -7,19 +7,19 @@ intent: Audit canonical docs coherence across product, skill, workflow, validati
 reference_basis:
   - path: workspace/develop/eval/source/eval_goal.md
     basis: Canonical docs coherence
-  - path: workspace/docs/spec.md
+  - path: workspace/reference/spec.md
     basis: required reference source
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: required reference source
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: required reference source
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: required reference source
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: required reference source
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: required reference source
-  - path: workspace/docs/skill-authoring.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: required reference source
 target_behavior:
   required:

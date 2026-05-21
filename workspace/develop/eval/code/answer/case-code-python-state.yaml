@@ -7,7 +7,7 @@ intent: Validate Python typing/value-object improvement without framework overre
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: Python and clean code
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: Python Typing
   - path: workspace/reference/implementation-python/reference/final.md
     basis: required reference source

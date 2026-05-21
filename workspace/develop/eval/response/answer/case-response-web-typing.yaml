@@ -7,9 +7,9 @@ intent: Verify routing between Django Web and Python typing guidance.
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: Django/Web/Python routing
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: Django Web and Python Typing
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: implementation-django-web and implementation-python
 target_behavior:
   required:

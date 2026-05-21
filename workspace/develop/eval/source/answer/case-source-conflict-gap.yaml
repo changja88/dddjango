@@ -11,7 +11,7 @@ reference_basis:
     basis: required reference source
   - path: workspace/reference/*/reference/final.md
     basis: required reference source
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: required reference source
 target_behavior:
   required:

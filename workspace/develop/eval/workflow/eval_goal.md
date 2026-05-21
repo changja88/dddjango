@@ -10,10 +10,10 @@
 
 평가 case는 다음 source를 함께 반영해야 한다.
 
-- `workspace/docs/workflow.md`
-- `workspace/docs/skill-contracts.md`
-- `workspace/docs/validation-plan.md`
-- `workspace/docs/ddd-implementation-standard.md`
+- `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`
+- `dddjango/skills/source-reference-audit/SKILL.md`
+- `workspace/develop/eval`
+- `workspace/reference/architecture-ddd/reference/final.md`
 - `dddjango/skills/workflow-dddjango-subagents/SKILL.md`
 - `dddjango/skills/workflow-dddjango-subagents/references/{delegation-rules,role-map,handoff-contract,integration-checklist}.md`
 - 관련 role의 runtime `SKILL.md` and references for DDD, implementation patterns, DB, API, Django, Ninja, Web, TDD/Test, Clean Code, Python
@@ -91,4 +91,4 @@ Workflow eval은 `workspace/develop/eval/workflow/cases/plugin/public/`에 하�
 
 현재 runner에 workflow 전용 run path가 없으면 workflow case를 response eval runner로 실행할 수 있게 mirror하거나 runner를 확장해야 한다. mirror 방식을 쓰더라도 canonical case와 `answer` oracle, fixture, raw transcript, parsed section score, analysis result는 `workspace/develop/eval/workflow/` 아래에 남아야 한다. mirrored response artifacts는 workflow case id와 `answer` file로 되돌아가는 machine-checkable mapping을 가져야 한다. 어떤 방식을 쓰든 selected workflow case count가 0이면 통과가 아니다.
 
-완료 판정은 runtime `workflow-dddjango-subagents` skill과 `workspace/docs/workflow.md`의 canonical role map이 같은 책임을 유지하고, response/run artifact가 answer oracle의 workflow 질문을 실제로 덮으며, positive/review/negative/false-claim/opt-out case가 모두 평가될 때만 가능하다.
+완료 판정은 runtime `workflow-dddjango-subagents` skill과 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`의 canonical role map이 같은 책임을 유지하고, response/run artifact가 answer oracle의 workflow 질문을 실제로 덮으며, positive/review/negative/false-claim/opt-out case가 모두 평가될 때만 가능하다.

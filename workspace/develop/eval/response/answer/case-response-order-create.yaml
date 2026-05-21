@@ -7,11 +7,11 @@ intent: Validate specialist-positive reasoning for a risky order creation API wi
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: specialist-positive, risky DB/API, DDD dimensions
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: order creation API
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: risky workflow and consistency ordering
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: DDD, DB, API, Django Ninja, Test boundaries
 target_behavior:
   required:

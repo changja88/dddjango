@@ -7,9 +7,9 @@ intent: Check provisional source handling and DRF guardrail together.
 reference_basis:
   - path: workspace/develop/eval/source/eval_goal.md
     basis: Provisional source handling and DRF guardrail
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: Reference Gap and DRF Guardrail
-  - path: workspace/docs/skill-authoring.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: required reference source
 target_behavior:
   required:

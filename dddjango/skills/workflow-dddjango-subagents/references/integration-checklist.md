@@ -23,7 +23,7 @@ Resolve conflicts in this order:
 - Tests and verification: domain rules, API contract, and migration risks have tests or explicit not-run verification notes.
 - Integration owner: the Coordinator or another named owner is responsible for collecting role results, resolving conflicts, and closing or carrying follow-up.
 - Role handoff closure: each role's `Risks` and `Required Follow-up` are either closed or carried as unresolved by the integration owner.
-- Cache sync report: if plugin cache outside the workspace was edited, report the cache path, matching workspace canonical source, and validation status. For `workflow-dddjango-subagents` role-map changes, use `workspace/docs/workflow.md` as the responsibility parity source and confirm runtime/cache role names, responsibility scope, and related skills did not shrink.
+- Cache sync report: if plugin cache outside the workspace was edited, report the cache path, matching workspace canonical source, and validation status. For `workflow-dddjango-subagents` role-map changes, use `dddjango/skills/workflow-dddjango-subagents/references/role-map.md` as the responsibility parity source and confirm runtime/cache role names, responsibility scope, and related skills did not shrink.
 
 ## Risky Write Consistency Block
 

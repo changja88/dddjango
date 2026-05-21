@@ -9,7 +9,7 @@ reference_basis:
     basis: Runtime safety and leaked answer text
   - path: skill-creator-system-skill
     basis: validation integrity
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: source/runtime boundary
 target_behavior:
   required:

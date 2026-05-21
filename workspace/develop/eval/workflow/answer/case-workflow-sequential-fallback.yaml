@@ -7,7 +7,7 @@ intent: Check sequential fallback order and handoff decisions when subagents can
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: sequential fallback
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: Sequential Fallback
   - path: dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
     basis: required reference source

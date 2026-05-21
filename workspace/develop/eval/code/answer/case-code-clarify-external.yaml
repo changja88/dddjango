@@ -7,9 +7,9 @@ intent: Confirm that unsafe external integration is not fabricated when prerequi
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: negative implementation restraint and command honesty
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: risky work and validation honesty
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: API/Django/Test boundaries
 code_expected: false
 case_role: control

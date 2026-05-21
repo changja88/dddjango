@@ -7,15 +7,15 @@ intent: Validate with-dddjango prompt-input exposure for relevant runtime metada
 reference_basis:
   - path: workspace/develop/eval/runtime/eval_goal.md
     basis: Prompt-input exposure
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: runtime synchronization
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: role map
 target_behavior:
   required:
     - Requires prompt-input or equivalent artifact for with-ddjango.
     - Checks exposed dddjango skill ids, descriptions, reference hints, and workflow role-map responsibilities.
-    - Compares exposure against canonical dddjango/skills and workspace/docs/workflow.md.
+    - Compares exposure against canonical dddjango/skills and dddjango/skills/workflow-dddjango-subagents/references/role-map.md.
   forbidden:
     - Treating a raw model answer as enough runtime evidence.
     - Exposing private answer material.

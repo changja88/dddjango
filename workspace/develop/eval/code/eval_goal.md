@@ -10,7 +10,7 @@
 
 평가 case는 다음 source를 함께 반영해야 한다.
 
-- `workspace/docs/spec.md`, `ddd-implementation-standard.md`, `skill-contracts.md`, `validation-plan.md`
+- `workspace/reference/spec.md`, `workspace/reference/*/reference/final.md`, `dddjango/skills/*/SKILL.md`, `workspace/develop/eval/code/eval_goal.md`
 - `workspace/reference/architecture-ddd/reference/{final,internal,external,review}.md`
 - `workspace/reference/architecture-db/reference/{final,internal,external,review}.md`
 - `workspace/reference/architecture-api/reference/{final,internal,external,review}.md`

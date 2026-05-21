@@ -7,9 +7,9 @@ intent: Require source-to-runtime provenance mapping for every first-class dimen
 reference_basis:
   - path: workspace/develop/eval/source/eval_goal.md
     basis: Reference provenance and crosswalk
-  - path: workspace/docs/reference-index.md
+  - path: workspace/reference/source-reference-audit/reference/final.md
     basis: required reference source
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: required reference source
   - path: dddjango/skills/*/references/*.md
     basis: required reference source

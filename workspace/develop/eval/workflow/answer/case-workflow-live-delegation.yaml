@@ -7,7 +7,7 @@ intent: Validate live delegation honesty and concrete responsibility split on ri
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: actual-subagent trace, delegation honesty, and role responsibility split
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: canonical role map, sequential fallback, handoff contract, and integration checklist
   - path: dddjango/skills/workflow-dddjango-subagents/SKILL.md
     basis: actual subagent reporting, fallback honesty, and risky write consistency

@@ -9,7 +9,7 @@ score_interpretation: DDD smoke/regression score; use this to prove hidden behav
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: DDD-to-code mapping
-  - path: workspace/docs/ddd-implementation-standard.md
+  - path: workspace/reference/architecture-ddd/reference/final.md
     basis: DDD implementation order and aggregate/application service boundaries
   - path: workspace/reference/architecture-ddd/reference/final.md
     basis: strategic before tactical and aggregate/invariant guidance

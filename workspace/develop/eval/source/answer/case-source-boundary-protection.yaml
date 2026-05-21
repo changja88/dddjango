@@ -9,7 +9,7 @@ reference_basis:
     basis: Source/runtime/public/evaluator-only/run artifact boundary decisions
   - path: workspace/develop/eval/source/eval_goal.md
     basis: Boundary protection
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: Source and runtime bundle structure
   - path: workspace/scripts/run_eval_bucket.py
     basis: Current eval run artifact structure

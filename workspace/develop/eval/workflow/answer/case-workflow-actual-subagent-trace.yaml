@@ -7,7 +7,7 @@ intent: Define evidence required when actual subagents were used versus sequenti
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: actual-subagent trace
-  - path: workspace/docs/workflow.md
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: handoff contract and integration checklist
 target_behavior:
   required:

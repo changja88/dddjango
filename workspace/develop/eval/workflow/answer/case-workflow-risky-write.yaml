@@ -7,9 +7,9 @@ intent: Validate Risky Write Consistency Block for concurrency-heavy design.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: risky write consistency
-  - path: workspace/docs/skill-contracts.md
+  - path: dddjango/skills/source-reference-audit/SKILL.md
     basis: Risky Write Consistency Block
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: transaction and concurrency
 target_behavior:
   required:

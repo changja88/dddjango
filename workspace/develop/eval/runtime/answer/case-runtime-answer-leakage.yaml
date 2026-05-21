@@ -7,7 +7,7 @@ intent: Check answer leakage sentinel handling in bundled runtime references.
 reference_basis:
   - path: workspace/develop/eval/runtime/eval_goal.md
     basis: answer leakage sentinel
-  - path: workspace/docs/plugin-structure.md
+  - path: dddjango/.codex-plugin/plugin.json
     basis: runtime reference boundary
 target_behavior:
   required:

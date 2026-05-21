@@ -13,7 +13,7 @@ Source policy decision: `allow-provisional-with-fallback`. Use the fallback scop
 - `workspace/reference/architecture-ddd/reference/final.md` for layered architecture, DIP, ports/adapters, CQRS, package structure, repository/UoW, event sourcing, saga, ACL, and integration events.
 - `workspace/reference/implementation-django/reference/final.md` for Django project/app structure, Fat Model/Thin View, service/selectors, and pragmatic Django vs DDD trade-offs.
 - `workspace/reference/implementation-python/reference/final.md` for Protocol boundaries and repository/UoW placeholder guidance.
-- `workspace/docs/ddd-implementation-standard.md` and product docs for Django-specific boundary and transaction decisions.
+- `workspace/reference/architecture-ddd/reference/final.md` and product docs for Django-specific boundary and transaction decisions.
 
 Use this skill after the DDD model is clear and before concrete Django/Python code when architecture pattern choice will affect dependency direction, adapters, persistence boundaries, or integration reliability.
 

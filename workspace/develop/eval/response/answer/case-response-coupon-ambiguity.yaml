@@ -7,7 +7,7 @@ intent: Verify ambiguity handling for TDD policy design before implementation.
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: ambiguity, TDD/Test/Clean Code
-  - path: workspace/docs/validation-plan.md
+  - path: workspace/develop/eval
     basis: coupon policy TDD
   - path: workspace/reference/implementation-tdd/reference/final.md
     basis: Red-Green-Refactor
