@@ -1,7 +1,7 @@
 ---
 name: implementation-test
 description: >
-  Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, doubles (fake/mock/stub/spy/dummy), factory_boy/Faker, Hypothesis, time/HTTP mocking, testcontainers, coverage, mutation, BDD, flaky tests, Django Ninja TestClient/API contracts, and idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 속성 기반 테스트, 중복/동시성 테스트. Prefer production-code skills for Django ORM/service/API implementation; use this skill for tests/**, conftest.py, factories, and doubles. Prefer workflow-dddjango-subagents for composite/subagent work, implementation-tdd for Red-Green-Refactor, and architecture skills when invariants, data constraints, or REST contracts are unclear. Do not use for simple explanations, answer-only requests, pure TDD planning, or tiny assertion/fixture/import-ordering/typo/pytest command questions.
+  Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, doubles (fake/mock/stub/spy/dummy), factory_boy/Faker, Hypothesis, time/HTTP mocking, testcontainers, coverage, mutation, BDD, flaky tests, Django Ninja TestClient contract tests, and idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 속성 기반 테스트, 중복/동시성 테스트. Prefer production-code skills for Django ORM/service/API implementation; use this skill for tests/**, conftest.py, factories, and doubles. Prefer workflow-dddjango-subagents for composite/subagent work, implementation-tdd for Red-Green-Refactor, architecture skills when invariants, data constraints, or REST contracts are unclear, and source-reference-audit for source/reference/cache governance. Do not use for simple explanations, answer-only requests, pure TDD planning, or tiny assertion/fixture/import-ordering/typo/pytest command questions.
 ---
 
 # Test Implementation
@@ -16,6 +16,7 @@ Use this skill to write or review concrete pytest tests, fixtures, factories, do
 - If REST resources, status codes, Problem Details, pagination, idempotency, or OpenAPI contract behavior is unresolved, use `architecture-api` before writing API contract assertions.
 - If the work is Django ORM, migration, service, selector, or Django Ninja implementation, use the relevant implementation skill for production code and this skill for `tests/**`, `conftest.py`, factories, and doubles.
 - If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
+- If the main question is source/reference governance, bundled reference parity, runtime cache sync, leakage, validation coverage, or eval traceability for skills or references, use `source-reference-audit`.
 - For a small assertion, fixture, import ordering, typo, or pytest command explanation, answer directly without DDD or workflow ceremony.
 
 ## Reference Loading
@@ -37,6 +38,6 @@ Use this skill to write or review concrete pytest tests, fixtures, factories, do
 - Use property-based tests for invariants over broad input spaces and example tests for named boundary cases.
 - Treat coverage and mutation scores as signals to inspect, not proof that behavior is fully tested.
 - For Django Ninja APIs, assert public request/response contracts with `TestClient`; do not mock routers or verify private service calls unless the collaboration itself is the contract.
-- For risky write behavior, cover replay/idempotency, uniqueness, transaction/locking, and concurrency at the lowest level that can prove the invariant.
+- For risky write behavior, test the already-decided invariant and API/DB criteria: replay/idempotency, uniqueness, transaction/locking, and concurrency at the lowest level that can prove the rule.
 - In composite workflows, own `tests/**`, `conftest.py`, and factory files; coordinate with implementation skills without changing production code unless assigned.
 - Report only tests, coverage, mutation checks, or subagent reviews that were actually run. If a command was not run, state that directly.

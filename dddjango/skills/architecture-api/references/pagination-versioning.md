@@ -33,7 +33,7 @@ Use stable ordering. For cursor/keyset pagination, prefer an immutable timestamp
 
 ## Rate Limiting
 
-- Apply rate limits before expensive authentication, database, or external calls when possible.
 - Return `429 Too Many Requests` with `Retry-After`.
 - Document limit, remaining quota, and reset semantics when exposing rate-limit headers.
 - Choose algorithm by product need: token bucket for controlled bursts, sliding window for smoother precision, fixed window for simple internal APIs, leaky bucket for traffic shaping.
+- Keep this reference focused on the API-visible policy and headers; adapter placement and middleware implementation belong to `implementation-django-ninja` or the relevant implementation skill.

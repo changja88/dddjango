@@ -10,7 +10,7 @@ REST 계약, 도메인 동작, 저장소/트랜잭션 판단이 충분히 정해
 
 ## Source 경계
 
-- Django Ninja source는 Router, Schema/ModelSchema, endpoint adapter 경계, auth/permission wiring, filtering/sorting, pagination hook, Problem Details exception mapping, OpenAPI 영향, TestClient 확인, DRF-to-Ninja migration 기준을 제공한다.
+- Django Ninja source는 이미 정해진 REST/DB/domain 계약을 Django Ninja adapter로 연결하는 Router, Schema/ModelSchema, endpoint adapter 경계, auth/permission wiring, filtering/sorting, pagination hook, Problem Details exception mapping, OpenAPI 영향, TestClient 확인, DRF-to-Ninja migration 기준을 제공한다.
 - `architecture-api`는 resource, HTTP method, status code, RFC 9457 Problem Details 계약, header/content negotiation, pagination strategy, versioning, rate limiting, idempotency, OpenAPI 계약 결정을 맡는다.
 - `implementation-django`는 HTTP adapter 밖의 ORM, selector, service, transaction, migration, caching, security 구현을 맡는다.
 - Django/DRF 자료는 legacy review, DRF-to-Ninja migration, compatibility, comparison에만 사용한다.
@@ -24,6 +24,7 @@ REST 계약, 도메인 동작, 저장소/트랜잭션 판단이 충분히 정해
 - domain rule, state transition, invariant, bounded context가 불명확하면 `architecture-ddd`를 먼저 사용한다.
 - ORM model, service, selector, transaction, migration이 주 작업이면 `implementation-django`를 사용한다.
 - pytest fixture, mock, factory, test double, concurrency test mechanics, coverage, 상세 test 구현이 주 작업이면 `implementation-test`를 사용한다. 이 skill은 endpoint 구현도 범위에 있을 때 Django Ninja TestClient와 API contract acceptance criteria를 제시한다.
+- source reference governance, provenance, bundled reference parity, runtime cache sync audit, leakage/boundary review가 주 작업이면 `source-reference-audit`를 사용한다.
 - 새 작업에서 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework`를 요청하면, 명시적인 legacy review/migration이 아닌 한 구현 목표를 Django Ninja로 전환한다.
 - 사용자가 subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배를 요청하면 `workflow-dddjango-subagents`를 먼저 사용한다.
 - 짧은 Django Ninja 설명이나 작은 기존 Router 문자열 수정은 DDD/workflow 절차 없이 바로 답하거나 수정한다.
@@ -39,8 +40,8 @@ REST 계약, 도메인 동작, 저장소/트랜잭션 판단이 충분히 정해
 
 - 현재 Django Ninja 작업에 관련된 reference 파일만 읽는다.
 - Router, Schema/ModelSchema, endpoint adapter 경계, request/response mapping, DRF-to-Ninja conversion은 [router-schema.md](references/router-schema.md)를 읽는다.
-- auth/permission, `FilterSchema`/query filtering, sorting, pagination hook, rate limiting, versioning 구현 관심사는 [auth-pagination-filtering.md](references/auth-pagination-filtering.md)를 읽는다.
-- RFC 9457 Problem Details, exception handler, validation error mapping, idempotency, status code, compatibility, OpenAPI 영향은 [problem-details-openapi.md](references/problem-details-openapi.md)를 읽는다.
+- auth/permission, `FilterSchema`/query filtering, sorting, pagination hook, 이미 정해진 rate limiting/versioning strategy의 Django Ninja 연결은 [auth-pagination-filtering.md](references/auth-pagination-filtering.md)를 읽는다.
+- RFC 9457 Problem Details, exception handler, validation error mapping, `Idempotency-Key` adapter wiring, status code, compatibility, OpenAPI 영향은 [problem-details-openapi.md](references/problem-details-openapi.md)를 읽는다.
 - Django Ninja API test acceptance criteria와 honest verification reporting은 [testclient.md](references/testclient.md)를 읽는다.
 
 ## Runtime 규칙
@@ -50,6 +51,6 @@ REST 계약, 도메인 동작, 저장소/트랜잭션 판단이 충분히 정해
 - business behavior와 transaction ownership은 `implementation-django`의 service/usecase 경계를 따른다.
 - request schema, response schema, public filtering/sorting parameter는 API contract에 맞게 의도적으로 좁힌다. model field를 우연히 노출하지 않는다.
 - 기존 API contract가 legacy shape를 명시적으로 요구하지 않는 한 API error는 RFC 9457 Problem Details를 사용한다.
-- duplicate-prone POST endpoint는 `Idempotency-Key` 동작을 service transaction과 storage owner와 함께 맞춘다.
+- duplicate-prone POST endpoint의 `Idempotency-Key` contract, storage, transaction이 미정이면 `architecture-api`, `architecture-db`, `implementation-django`로 넘긴다. 결정된 뒤에는 header binding, service handoff, Problem Details mapping, OpenAPI 표시만 이 skill에서 구현한다.
 - DRF에서 migration할 때는 status code, field, pagination, auth behavior, error shape, OpenAPI 변경을 비교해 client compatibility를 보존한다.
 - 구현 작업에서는 실제 실행한 검증만 보고한다. TestClient, pytest, OpenAPI generation, compatibility check, schema check를 실행하지 않았으면 실행했다고 말하지 않는다. 순수 answer-only 요청에서는 verification-not-run 보고를 생략한다.

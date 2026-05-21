@@ -17,7 +17,8 @@ This skill owns pattern-level decisions: Django-native structure, service layer,
 - If subdomains, bounded contexts, ubiquitous language, aggregates, or invariants are unclear, use `architecture-ddd` before choosing implementation patterns.
 - If the main question is table design, constraints, indexes, locking, isolation, idempotency storage, rollout constraints, or operational migration safety, use `architecture-db`.
 - If the main question is REST resource design, status codes, Problem Details, `Idempotency-Key`, pagination, versioning, or OpenAPI, use `architecture-api`.
-- If the user asks to edit Django model, service, selector, migration, Router, template, or Python code after the pattern is already decided, use the relevant implementation skill.
+- If the user asks to edit Django model, service, selector, migration, Router, template, Python code, or tests after the pattern is already decided, use `implementation-django`, `implementation-django-ninja`, `implementation-django-web`, `implementation-python`, or `implementation-test` as appropriate.
+- If the main question is source/reference governance, runtime cache sync, metadata alignment, leakage, validation coverage, or eval traceability for skills or references, use `source-reference-audit`.
 - For simple CRUD, a small field rename, or a short explanation, do not introduce repository/UoW, hexagonal layers, CQRS, outbox, saga, event sourcing, or ACL unless the scenario has a real boundary, consistency, or replaceability need.
 
 ## Reference Loading

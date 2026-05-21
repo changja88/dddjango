@@ -34,7 +34,7 @@ Use this skill to design relational data structures that protect domain invarian
 - Normalize first to remove update/insert/delete anomalies; denormalize only for measured read pressure or clear operational need.
 - Use database constraints for invariants the database can enforce: primary keys, foreign keys, unique, check, not null, and appropriate cascade rules.
 - Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
-- For risky writes, include a `Risky Write Consistency Block` with transaction owner, locking strategy, uniqueness/idempotency storage, API idempotency handoff, side-effect timing, isolation/retry, and integration/concurrency test criteria.
+- For risky writes, include a `Risky Write Consistency Block` focused on DB-owned decisions: transaction boundary when already scoped, locking strategy, uniqueness/idempotency storage, constraints/indexes, isolation/retry impact, and rollout risk. Mark pattern-level transaction ownership, outbox/saga/ACL or side-effect reliability, API `Idempotency-Key` behavior, concrete Django code, and test mechanics as handoffs to the owning skills when they are not already decided.
 - For operational changes, separate DB design from concrete Django migration implementation; hand off migration file details to `implementation-django`.
 - For staged production data changes, state the rollback or forward-fix approach for partial backfills, failed constraint validation, failed index creation, and old/new application compatibility windows.
 - Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.

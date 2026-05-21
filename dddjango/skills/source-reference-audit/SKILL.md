@@ -1,7 +1,7 @@
 ---
 name: source-reference-audit
 description: >
-  Use for dddjango source/reference governance audits: workspace/reference final/review/internal/external material, runtime bundled references, skill metadata/frontmatter description/openai.yaml trigger routing, runtime metadata alignment, source provenance, source gap, conflict/gap ledger, provisional/fallback source status, DRF guardrail source decisions, wrong-routing/role-map/reference-routing audits, source/runtime cache or package sync, validation coverage, eval traceability, and source/runtime boundary or leakage review. Use for source audit, 출처/근거 점검, provenance, traceability, source gap, provisional, validation coverage, skill 목록, 사용 시점, 경계, 트리거, 본문에 숨은 규칙, DRF 가드레일, 역할 맵, 라우팅 오류, 캐시 동기화. Prefer domain, DB, API, Django, Python, test, or workflow skills when the user is asking to design or implement application behavior rather than audit source/reference integrity.
+  Use for dddjango source/reference governance audits: workspace/reference final/review/internal/external evidence, runtime bundled references, skill metadata/frontmatter description/openai.yaml trigger routing, runtime metadata alignment, source provenance, source gap, conflict/gap ledger, provisional/fallback source status, DRF guardrail source decisions, wrong-routing/role-map/reference-routing audits, source/runtime cache or package sync, source/runtime boundary or leakage review, and validation coverage or eval traceability only when the question is about source evidence, review scope, or explicit internal eval-pack traceability. Use for source audit, 출처/근거 점검, provenance, source gap, provisional, skill 목록, 사용 시점, 경계, 트리거, 본문에 숨은 규칙, DRF 가드레일, 역할 맵, 라우팅 오류, 캐시 동기화. Prefer domain, DB, API, Django, Python, test, or workflow skills when the user is asking to design, implement, test, or run application behavior rather than audit source/reference integrity.
 ---
 
 # Source Reference Audit
@@ -10,13 +10,14 @@ Use this skill to audit whether dddjango source documents, source references, ru
 
 ## Routing
 
-- Use this for audits of `workspace/reference`, `dddjango/skills/*/references`, source provenance, source gaps, provisional/fallback status, conflict decisions, DRF guardrails, eval traceability, validation coverage, and source/runtime boundary risks.
+- Use this for audits of `workspace/reference`, `dddjango/skills/*/references`, source provenance, source gaps, provisional/fallback status, conflict decisions, DRF guardrails, source-governance validation coverage, explicit eval traceability, and source/runtime boundary risks.
 - If the request asks for actual DDD modeling, DB design, REST API design, Django implementation, Python typing, TDD, tests, clean-code review, or coordinated implementation, route to the corresponding dddjango skill.
+- If the request asks for test coverage mechanics, eval execution, evaluator implementation, or application validation rather than source basis or traceability, route to the owning test, workflow, implementation, or process task instead.
 - If the user provides a fixed answer shape or read-only policy, preserve it exactly.
 
 ## Source Loading
 
-- Read [source-governance.md](references/source-governance.md) for the runtime-local summary of source/reference role, path-boundary, provenance, metadata, cache-sync, leakage, validation, and eval-traceability decisions.
+- Read [source-governance.md](references/source-governance.md) when the audit needs the runtime-local summary of source/reference role, path-boundary, provenance, metadata, cache-sync, leakage, validation, or eval-traceability decisions.
 - For source-gap, conflict, or provisional audits, inspect the requested source-authoring evidence such as source reference `final.md`, `review.md`, `internal.md`, and `external.md` materials. Report those paths only as source evidence, source-authoring evidence, or cache/source parity evidence; never present them as runtime-facing allowed references.
 - For source/reference boundary, leakage, public wording, eval traceability, validation coverage, or source/runtime path-boundary reviews, use the source-reference-audit source decision summarized in the bundled reference before comparing runtime/public artifacts.
 - Use `final.md` as the default decision source. Read `review.md`, `internal.md`, and `external.md` when final guidance is ambiguous, gap-related, or conflict-related.

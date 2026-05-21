@@ -1,4 +1,4 @@
 interface:
   display_name: "API Architecture"
-  short_description: "REST resources, errors, auth, pagination, limits, OpenAPI."
-  default_prompt: "Use $architecture-api to design REST resources, URLs, status codes, request/response contracts, Problem Details, auth, content negotiation, pagination, versioning, deprecation, rate limits, idempotency, and OpenAPI."
+  short_description: "REST 계약, 오류, 인증, versioning, idempotency, OpenAPI."
+  default_prompt: "Use $architecture-api to design REST resources, URLs, HTTP methods/status codes, request/response/header contracts, Problem Details, auth, content negotiation, pagination, versioning, deprecation, rate limits, Idempotency-Key behavior, and OpenAPI impact."

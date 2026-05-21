@@ -4,7 +4,7 @@
 |---|---|---|
 | [x] | P1. 스킬의 reference 반영도 점검 | source reference가 충분한지 먼저 확인하고, 충분한 reference를 각 skill이 빠짐없이 반영하는지 점검한 뒤 필요한 개선 계획까지 확정한다. |
 | [x] | P2. `SKILL.md` 목적 명확성 점검 | 각 skill의 실제 사용 예시, 목적, trigger, 제외 조건과 agents/openai.yaml metadata가 일치하는지 확인한다. |
-| [ ] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
+| [x] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
 | [ ] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
 | [ ] | P5. skill 연계와 플러그인 평가 점검 | skill 연계와 subagent workflow를 검증하되 각 skill의 책임과 progressive disclosure를 유지하는지 확인한다. |
 | [ ] | P6. 평가 실행 | 준비된 validator, 개별 skill 평가, 플러그인 연계 평가, eval-all/bucket 평가를 분리 실행해 실제 결과를 생성한다. |
@@ -37,13 +37,13 @@
 
 ### P3. skill 책임 경계 점검
 
-- [ ] 각 skill의 책임과 다른 skill로 넘겨야 하는 handoff 기준을 확인한다.
-- [ ] 두 skill 이상이 같은 문제를 서로 다른 기준으로 해결하도록 겹치지 않는지 확인한다.
-- [ ] architecture, implementation, test, source audit, workflow 역할이 서로 침범하지 않는지 확인한다.
-- [ ] `SKILL.md`는 핵심 절차만 담고 세부 reference는 필요한 때만 로딩되도록 구성되어 있는지 확인한다.
-- [ ] `SKILL.md`가 500줄 미만의 핵심 절차 중심인지, 세부 자료는 1단계 reference로 직접 연결되는지, 긴 reference에는 목차나 검색 힌트가 있는지 확인한다.
-- [ ] 같은 정보가 `SKILL.md`와 bundled reference에 중복 저장되어 컨텍스트 낭비나 불일치 위험을 만들지 않는지 확인한다.
-- [ ] reference 연결이 너무 깊거나 숨겨져 있어 에이전트가 필요한 자료를 찾지 못하는 구조가 아닌지 확인한다.
+- [x] 각 skill의 책임과 다른 skill로 넘겨야 하는 handoff 기준을 확인한다.
+- [x] 두 skill 이상이 같은 문제를 서로 다른 기준으로 해결하도록 겹치지 않는지 확인한다.
+- [x] architecture, implementation, test, source audit, workflow 역할이 서로 침범하지 않는지 확인한다.
+- [x] `SKILL.md`는 핵심 절차만 담고 세부 reference는 필요한 때만 로딩되도록 구성되어 있는지 확인한다.
+- [x] `SKILL.md`가 500줄 미만의 핵심 절차 중심인지, 세부 자료는 1단계 reference로 직접 연결되는지, 긴 reference에는 목차나 검색 힌트가 있는지 확인한다.
+- [x] 같은 정보가 `SKILL.md`와 bundled reference에 중복 저장되어 컨텍스트 낭비나 불일치 위험을 만들지 않는지 확인한다.
+- [x] reference 연결이 너무 깊거나 숨겨져 있어 에이전트가 필요한 자료를 찾지 못하는 구조가 아닌지 확인한다.
 
 ### P4. 개별 skill 평가 점검
 

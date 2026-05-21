@@ -17,15 +17,15 @@ Composite dddjango work를 마무리하기 전에 읽는다.
 ## Checklist
 
 - Domain and invariants: domain invariant, state transition, ubiquitous language가 implementation, tests, API와 충돌하지 않는다.
-- Data and transaction: DB constraints, transaction boundary, locking/idempotency, migration rollout risk가 처리됐거나 owning role에 배정됐다.
+- Data and transaction: DB constraints, transaction boundary, locking/idempotency, migration rollout risk가 처리됐거나 owning role에 배정됐다. DB Agent owns schema/constraint/locking/isolation/transaction policy; Django Agent owns concrete migration files and transaction implementation after those decisions are set.
 - API contract: Django Ninja Router/Schema mapping, status codes, Problem Details, OpenAPI impact, no greenfield DRF implementation 여부를 확인했다.
 - Implementation mapping: domain logic이 Router, view, schema, template에 소유되지 않고 Django service/selector/model boundary가 명확하다.
 - Tests and verification: domain rules, API contract, migration risk에 test 또는 explicit not-run verification note가 연결된다.
 - Integration owner: Coordinator 또는 named owner가 role results 수집, conflict resolution, follow-up closure를 책임진다.
 - Role handoff closure: 각 role의 `Risks`와 `Required Follow-up`이 closed 또는 unresolved로 명시됐다.
-- Source/runtime boundary: Runtime-facing guidance는 skill-local `references/*.md`를 사용하고 source authoring path를 allowed runtime reference처럼 제시하지 않는다.
-- Eval follow-up: eval case, answer oracle, evaluator, report, model variance 문제가 발견되면 P1에서 직접 수정하지 않는다. `workspace/plan/eval_lv_up_plan/<bucket>/analysis/`에 후속 분석으로 분류하고 첫 줄은 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다.
-- Cache sync report: plugin cache outside workspace를 수정했다면 cache path, matching workspace canonical source, validation status를 보고한다. `workflow-dddjango-subagents` role-map 변경 시 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`를 parity source로 사용해 runtime/cache role names, responsibility scope, related skills가 축소되지 않았는지 확인한다.
+- Source/runtime boundary: Runtime-facing guidance는 skill-local `references/*.md`를 사용하고 source authoring path를 allowed runtime reference처럼 제시하지 않는다. Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 handoff한다.
+- Eval follow-up: eval case, answer oracle, evaluator, report, model variance 문제가 발견되면 이 workflow에서 직접 수정하지 않는다. Owning eval follow-up으로 분류하고 첫 줄은 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다.
+- Cache sync report: plugin cache outside workspace를 수정했다면 workflow-local cache path, matching workspace canonical source, validation status를 보고한다. `workflow-dddjango-subagents` role-map 변경 시 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`를 parity source로 사용해 runtime/cache role names, responsibility scope, related skills가 축소되지 않았는지 확인한다. Broader provenance/cache audit는 `source-reference-audit` 책임이다.
 
 ## Risky Write Consistency Block
 

@@ -13,7 +13,7 @@ description: >
 - If the request is an undecided REST contract, HTTP status, API auth, content negotiation, pagination, Problem Details, or OpenAPI design task, use `architecture-api`.
 - If the request is REST API implementation with Router, Schema, Problem Details API error, or OpenAPI wiring, use `implementation-django-ninja`.
 - If DB schema, transaction, locking, rollout constraint, or migration design drives the work, use `architecture-db`; if ORM models, services, selectors, transactions, or migration files are the main implementation work, use `implementation-django`.
-- If the request is primarily pytest, Django test client, fixture, factory, test double, browser automation, coverage, or detailed test implementation, use `implementation-test`; this skill states web render/form/HTMX/CSRF acceptance criteria when web implementation is also in scope.
+- If the request is primarily pytest, Django test client, fixture, factory, test double, browser automation mechanics, coverage, or detailed test implementation, use `implementation-test`. This skill owns web implementation acceptance criteria and states when render/browser evidence is needed for templates, forms, HTMX, CSRF, and static assets.
 - If domain rules, state transitions, policies, invariants, or bounded context are unclear, use `architecture-ddd` before web implementation.
 - If the user explicitly asks for subagents, role decomposition, parallel review, or responsibility splitting, use `workflow-dddjango-subagents` first.
 - If the work combines DDD, DB/API, Django implementation, templates/static, and tests in a risky feature, use `workflow-dddjango-subagents` first.
@@ -31,13 +31,10 @@ description: >
 
 ## Runtime Rules
 
-- Template은 presentation-only로 유지한다. domain rule, state transition, pricing, permission policy, complex query decision을 template에 두지 않는다.
-- View는 thin adapter로 유지한다. request handling, auth/permission, form/context orchestration, service/usecase call, response rendering을 조합한다.
-- boilerplate를 줄이면 Generic CBV/TemplateView를 선호한다. custom flow가 함수로 더 명확하면 FBV를 사용한다.
-- `ModelForm.Meta.fields`는 명시적으로 나열한다. 프로젝트가 명시적으로 허용하지 않으면 `fields = "__all__"`와 `exclude`를 피한다.
-- 반복 UI fragment가 같은 의미로 함께 바뀔 때 includes/components로 분리한다.
-- HTMX/AJAX endpoint는 web adapter로 다룬다. server-side domain behavior는 model/service boundary 뒤에 두고 CSRF 처리는 명시한다.
-- Template/static 작업을 마치기 전 view/context code가 optional field의 `display-ready fallback values`를 제공하는지 확인한다. `None`, blank strings, and missing optional values는 렌더링 전에 project-standard `non-empty placeholders`로 변환한다.
-- `Templates must render prepared display values`: Template은 raw domain field가 아니라 준비된 display value를 렌더링한다. Optional field가 보이면 empty value path를 context 또는 render test로 덮는다.
-- `Changed static files must be referenced by the rendered page`: page-specific CSS/JS를 만들거나 수정하면 rendered page에서 참조되어야 한다. 참조되지 않는 page-specific asset은 unfinished work로 보고한다. 프로젝트에 render/template test가 있으면 실행한다.
+- Template은 presentation-only로 유지하고, View는 request/auth/form/context/service call/response rendering을 조합하는 thin web adapter로 유지한다. 세부 template 기준은 [templates.md](references/templates.md)를 따른다.
+- TemplateView/Generic CBV/FBV, web form, context preparation, HTMX fragment 선택은 프로젝트 관례와 흐름의 명확성을 기준으로 한다. 세부 기준은 [templateview-htmx.md](references/templateview-htmx.md)를 따른다.
+- Static asset은 프로젝트 pipeline과 rendered page 연결을 함께 확인한다. 세부 기준은 [static-assets.md](references/static-assets.md)를 따른다.
+- CSRF/AJAX/HTMX 안전성, XSS, security setting, middleware 관련 변경은 [csrf-ajax.md](references/csrf-ajax.md)를 따른다.
+- Render/static acceptance signal은 validator-visible label로 유지한다: `display-ready fallback values`, `None`, blank strings, and missing optional values, `non-empty placeholders`, `Templates must render prepared display values`, `empty value path`, `Changed static files must be referenced by the rendered page`. 세부 적용 기준은 bundled reference를 따른다.
+- Web 구현 완료 시 render/form/HTMX/static/security acceptance evidence가 필요한지 판단하고, detailed pytest fixture, browser automation harness, coverage, test double mechanics는 `implementation-test`로 넘긴다.
 - 실제 실행한 검증만 보고한다. render test, browser check, `collectstatic`, `check --deploy`, template test를 실행하지 않았으면 미실행으로 적는다.

@@ -1,45 +1,40 @@
 ---
 name: architecture-api
 description: >
-  Use for REST API contract architecture: resources, endpoint/URL shape, HTTP methods/status, RFC 9457 Problem Details, request/response contracts, headers/content negotiation, auth/authz, pagination/versioning/deprecation/rate limits, Idempotency-Key, and OpenAPI. Use for REST 설계, API 계약, 엔드포인트, HTTP 메서드, 상태 코드, 오류 응답, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전, 레이트 리밋, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role work, subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow; architecture-ddd when use cases/invariants are unclear; architecture-db for idempotency persistence/transactions; implementation-django-ninja for Router/Schema implementation or greenfield DRF Serializer/ViewSet/APIView/rest_framework implementation requests; and implementation-test for pytest/API contract test mechanics. Do not use for GraphQL, gRPC, SOAP, WebSocket, HATEOAS, or API Gateway design except to say they are outside this REST contract scope.
+  Use for REST API contract architecture: resource/URL shape, HTTP method/status behavior, RFC 9457 Problem Details, request/response/header contracts, auth/authz, content negotiation, pagination, versioning, deprecation, rate limits, Idempotency-Key behavior, and OpenAPI impact. Use for REST 설계, API 계약, endpoint/URL, HTTP 메서드와 상태 코드, 오류 응답, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전, 레이트 리밋, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role or subagent work; architecture-ddd when use cases/invariants are unclear; architecture-db for idempotency persistence, uniqueness, locking, transactions, or rollout risk; implementation-django-ninja for Router/Schema/API adapter or greenfield DRF implementation requests; and implementation-test for pytest/API contract mechanics. Do not use for GraphQL, gRPC, SOAP, WebSocket, HATEOAS, or API Gateway design except to state the REST boundary if relevant.
 ---
 
 # API Architecture
 
-Use this skill to turn use cases and client needs into REST contracts. This skill designs external API behavior; it does not implement framework code.
+사용 사례와 client workflow를 REST API 계약으로 바꿀 때 사용한다. 이 skill은 외부 API 동작과 계약을 설계하며, framework adapter, ORM, migration, pytest 구현은 직접 소유하지 않는다.
 
 ## Routing
 
-- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
-- If the user asks for GraphQL, gRPC, SOAP, WebSocket, HATEOAS, or API Gateway design, do not force this REST contract skill; answer only the REST boundary if relevant and route or respond outside this skill's scope.
-- Keep direct API contract questions here, including risky or duplicate-sensitive endpoints, status/error/idempotency behavior, pagination, versioning, deprecation, auth semantics, and OpenAPI impact, when the user is asking for API architecture rather than multi-role implementation.
-- If the use case, aggregate boundary, invariant, state transition, or ubiquitous language is unclear, use `architecture-ddd` before finalizing endpoints.
-- If idempotency persistence, uniqueness, transaction boundaries, constraints, indexes, or rollout migration risk are central, use `architecture-db`; keep user-visible API behavior here.
-- If the main work is Django Ninja `Router`, `Schema`, `ModelSchema`, auth implementation, OpenAPI generation, or API tests, use `implementation-django-ninja` after the contract is clear.
-- If the user asks for greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` implementation, use `implementation-django-ninja` to convert the implementation target to Django Ninja; keep framework-neutral REST contract decisions here.
-- If the user asks for pytest/API contract tests, use `implementation-test` after contract criteria are known.
-- For a simple status-code, URL naming, or error-format question, answer directly without forcing a full DDD workflow.
+- 사용자가 coordinated implementation/review, subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 `workflow-dddjango-subagents`를 먼저 사용한다.
+- REST resource, URL, HTTP method/status, request/response/header contract, Problem Details, auth semantics, pagination, versioning, deprecation, rate limit, `Idempotency-Key`, OpenAPI 계약이 주 질문이면 이 skill이 직접 맡는다.
+- use case, aggregate boundary, invariant, state transition, ubiquitous language가 불명확하면 endpoint를 확정하기 전에 `architecture-ddd`로 넘긴다.
+- idempotency storage, uniqueness, constraint, index, locking, transaction isolation, rollout migration risk가 중심이면 `architecture-db`로 넘기고, user-visible API behavior만 이 skill에 남긴다.
+- Django Ninja `Router`, `Schema`, `ModelSchema`, auth 구현, exception handler, OpenAPI generation, API adapter code가 주 작업이면 계약 확정 뒤 `implementation-django-ninja`로 넘긴다.
+- greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework` 구현 요청은 `implementation-django-ninja`에서 Django Ninja 목표로 전환하게 하고, framework-neutral REST 계약만 여기서 다룬다.
+- pytest, Django Ninja `TestClient`, fixture, mock, concurrency test mechanics가 주 작업이면 계약 기준을 정한 뒤 `implementation-test`로 넘긴다.
+- GraphQL, gRPC, SOAP, WebSocket, HATEOAS, API Gateway design은 이 REST 계약 skill의 범위가 아니다. 필요한 경우 REST boundary만 짧게 말한다.
+- 단순 status code, URL naming, error-format 질문은 전체 workflow를 강제하지 말고 바로 답한다.
 
 ## Reference Loading
 
-- Load only the reference file(s) relevant to the current API contract task.
-- Read [rest-contracts.md](references/rest-contracts.md) for REST resources, URL shape, HTTP methods, status codes, request/response contracts, headers, auth/authz, content negotiation, and cache semantics.
-- Read [problem-details.md](references/problem-details.md) for RFC 9457 error contracts and status/error consistency.
-- Read [pagination-versioning.md](references/pagination-versioning.md) for pagination, versioning, backward compatibility, deprecation, and rate limiting.
-- Read [idempotency-openapi.md](references/idempotency-openapi.md) for `Idempotency-Key`, duplicate POST behavior, and OpenAPI contract impact.
+- 현재 API 계약 판단에 필요한 reference만 읽는다.
+- REST resource, URL shape, HTTP methods/status, request/response/header contract, auth/authz, content negotiation, cache semantics는 [rest-contracts.md](references/rest-contracts.md)를 읽는다.
+- RFC 9457 error contract, Problem Details field semantics, status/error consistency는 [problem-details.md](references/problem-details.md)를 읽는다.
+- pagination 선택, versioning, backward compatibility, deprecation, rate limiting은 [pagination-versioning.md](references/pagination-versioning.md)를 읽는다.
+- `Idempotency-Key`, duplicate POST retry/replay/conflict behavior, OpenAPI contract impact는 [idempotency-openapi.md](references/idempotency-openapi.md)를 읽는다.
 
 ## Runtime Rules
 
-- Start from the external use case, resource identity, client workflow, authorization needs, error conditions, compatibility constraints, and expected query patterns.
-- Choose resources and URLs as stable nouns; avoid leaking database table names or imperative action names into URLs.
-- Choose HTTP methods by safety and idempotency. Use POST for creation/actions, PUT for full replacement, PATCH for partial update, DELETE for deletion, and GET only for safe reads.
-- Specify status codes with response body expectations, especially 201 with `Location`, 202 for accepted async work, 204 for no-content delete, 409 for conflicts, 422 for semantic validation, 429 for rate limits, and 503 with retry guidance.
-- Define request and response contracts as a status/body/header combination: required and optional inputs, validation, response schemas by status, `Location`, retry/deprecation/rate-limit headers, and no-body responses.
-- Use RFC 9457 Problem Details consistently for API errors; keep `status` aligned with the HTTP response and keep `title` reusable while `detail` describes the occurrence.
-- Keep API adapters thin. Do not place domain decisions in Router/view/schema logic; route unclear rules to `architecture-ddd` and implementation to `implementation-django-ninja`.
-- For duplicate-sensitive POSTs, define `Idempotency-Key` acceptance, replay response, conflict behavior, and storage handoff to `architecture-db`.
-- Choose pagination from scenario facts: offset for small/admin use, cursor or keyset for large or changing datasets, and include next-page metadata.
-- Treat response field removal, type changes, required request additions, URL changes, status changes, and error shape changes as breaking unless versioned or migrated.
-- Record OpenAPI impact whenever endpoints, schemas, status responses, auth, pagination, rate limits, or idempotency behavior change.
-- State API contract acceptance criteria for status codes, Problem Details, idempotency replay/conflict, pagination, and compatibility when relevant; hand pytest/TestClient mechanics to `implementation-test` or `implementation-django-ninja`.
-- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+- 먼저 외부 use case, client workflow, resource identity, authorization need, error condition, compatibility constraint, query pattern을 확인한다.
+- 계약 산출물은 endpoint 단위로 `resource/URL`, `method`, `request`, `response by status`, `headers`, `Problem Details`, `auth/authz`, `pagination/versioning/rate limit`, `idempotency`, `OpenAPI impact`를 필요한 만큼 명시한다.
+- domain rule이나 invariant가 API shape를 좌우하면 결정을 만들지 말고 `architecture-ddd` handoff를 남긴다.
+- DB durability, uniqueness, locking, transaction, rollout이 계약 성패를 좌우하면 API-visible behavior만 정하고 storage/transaction decision은 `architecture-db` handoff로 남긴다.
+- adapter 구현, schema mapping, exception handler, generated OpenAPI wiring은 `implementation-django-ninja` 책임으로 넘긴다.
+- test code, fixtures, mocks, concurrency harness, detailed pytest mechanics는 `implementation-test` 책임으로 넘기고, 이 skill은 acceptance criteria만 적는다.
+- duplicate-sensitive POST처럼 여러 책임이 결합된 경우 API contract, DB storage, implementation, test acceptance를 분리해 handoff한다. 사용자가 role decomposition을 요청했으면 `workflow-dddjango-subagents`를 먼저 적용한다.
+- 실행하지 않은 tests, validation, review, browser check, subagent work, Serena 사용을 실행한 것처럼 보고하지 않는다.

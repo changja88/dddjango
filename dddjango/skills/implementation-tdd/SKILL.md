@@ -11,6 +11,9 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 ## Routing
 
 - If API contract, DB constraint, transaction, locking, migration rollout, or consistency decisions are unclear, use `architecture-api` or `architecture-db` before locking test expectations.
+- If domain policy, invariant, use case, or behavior ownership is unclear, use `architecture-ddd` before fixing expected outcomes in tests.
+- If security or performance risk is the main concern, use the relevant architecture, implementation, or workflow skill for that analysis; this skill only keeps the TDD loop honest around agreed behavior.
+- If legacy refactoring strategy, characterization scope, or code smell cleanup is the main work, use `implementation-cleancode` with this skill only for the TDD/characterization sequence.
 - If the main work is pytest fixtures, mocks, factories, property-based tests, coverage, mutation testing, testcontainers, or pytest-bdd/Gherkin mechanics, use `implementation-test`.
 - If the main work is Django ORM/migrations/services or Django Ninja API implementation, use the relevant implementation skill after the test target is clear.
 - If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
@@ -22,13 +25,14 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 - Read [red-green-refactor.md](references/red-green-refactor.md) for the core cycle, red/green/refactor rules, green strategies, and honest execution reporting.
 - Read [inside-out-outside-in.md](references/inside-out-outside-in.md) for classic vs London school, state vs behavior verification, double-loop TDD, and approach selection.
 - Read [test-list.md](references/test-list.md) for test lists, starting tests, boundary cases, AAA, test quality, and test smell prevention.
+- Read [bdd-atdd.md](references/bdd-atdd.md) for the TDD, ATDD, and BDD relationship and pytest-bdd/Gherkin handoff boundary.
 - Read [ai-assisted-tdd.md](references/ai-assisted-tdd.md) for AI-assisted TDD workflow, prompt-as-test thinking, validation, and false claim prevention.
 
 ## Runtime Rules
 
 - Start with a test list for behavior, boundary cases, and known risks before implementation.
 - Treat boundary examples as prompts to expand the test list; for validity windows include the accepted boundary and the day after expiration rejected. A rejection on another axis does not cover the boundary. Use `references/test-list.md` for detailed independent-axis and nearest outside/complement cases.
-- For ambiguous policy tests, separate confirmed behavior tests and unresolved decisions before locking expectations.
+- For ambiguous policy tests, separate confirmed behavior tests and unresolved domain decisions before locking expectations; route unresolved policy or invariant ownership to `architecture-ddd`.
 - Write or propose the next failing test before production code unless the user asks for explanation only or the workspace is read-only.
 - When working inside a composite workflow, state the test files or test cases the Test Agent should own.
 - Confirm Red before Green when actually running tests; if tests were not run, say they were written/planned but not executed.

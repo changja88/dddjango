@@ -1,6 +1,6 @@
 # Models And ORM
 
-Use this reference for Django app layout, settings access, models, fields, validation, QuerySets, managers, forms, views, and signals. For API Router/Schema work use `implementation-django-ninja`; for templates/static/frontend work use `implementation-django-web`.
+Use this reference for Django app layout, settings access, models, fields, validation, QuerySets, managers, and ORM-adjacent form, view, and signal boundaries. For API Router/Schema work use `implementation-django-ninja`; for server-rendered page composition, templates/static/frontend work, HTMX, and web form implementation use `implementation-django-web`.
 
 Source basis: Django official docs/design philosophies, Two Scoops of Django, Django for Professionals.
 

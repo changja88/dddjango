@@ -1,6 +1,6 @@
 # Auth, Pagination, Filtering, Versioning
 
-Django Ninja authentication/authorization wiring, list endpoint, filtering, sorting, pagination, rate limiting, versioning을 구현할 때 이 reference를 읽는다.
+Django Ninja authentication/authorization wiring, list endpoint, filtering, sorting, pagination, 이미 정해진 rate limiting/versioning strategy의 adapter 연결을 구현할 때 이 reference를 읽는다.
 
 ## Authentication과 Authorization
 
@@ -55,6 +55,7 @@ def list_orders(request, filters: Query[OrderFilter]):
 - 프로젝트에 rate-limit mechanism이 있으면 비싼 authentication, database, external work 전에 rate limit을 적용한다.
 - 프로젝트가 공개하는 경우 `429`와 `Retry-After`, limit/remaining/reset 같은 rate-limit header를 반환한다.
 - public client가 의존하는 rate-limit policy는 API documentation/OpenAPI note에 드러나게 한다.
+- rate-limit policy, quota unit, response header contract가 미정이면 `architecture-api`로 넘긴 뒤 Django Ninja wiring만 구현한다.
 
 ## Versioning과 Compatibility
 
@@ -62,3 +63,4 @@ def list_orders(request, filters: Query[OrderFilter]):
 - 기존 client에는 additive change를 우선한다.
 - breaking change에는 deprecation과 migration window를 둔다.
 - DRF에서 전환할 때는 version behavior를 비교하고 client에 영향을 줄 수 있는 변경을 문서화한다.
+- URL/header/query versioning strategy나 deprecation policy가 미정이면 `architecture-api`로 넘긴다.

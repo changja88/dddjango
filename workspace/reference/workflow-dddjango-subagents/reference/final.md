@@ -235,7 +235,7 @@ P1 중 eval case, answer oracle, evaluator, report 문제가 발견되면 이 so
 
 - `workspace/plan/eval_lv_up_plan/<bucket>/analysis/`
 
-분석 첫 줄은 해당 문제 성격에 따라 `수정 대상: case`, `answer`, `evaluator`, `report`, `model-variance` 중 하나를 사용한다. Eval run artifact는 source decision이나 runtime reference를 대체하지 않는다.
+분석 첫 줄은 해당 문제 성격에 따라 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다. Eval run artifact는 source decision이나 runtime reference를 대체하지 않는다.
 
 ---
 

@@ -29,20 +29,18 @@ Composite 또는 risky Django/DDD 작업을 Domain, Architecture, DB, API, Djang
 
 ## Canonical Roles
 
-The table below is the runtime-visible canonical summary; [role-map.md](references/role-map.md) is the bundled parity reference for exact role responsibilities and related skills. Workflow output에 복사할 때 role responsibility나 related skills를 축소하지 않는다.
+Use [role-map.md](references/role-map.md) for exact role responsibilities and related skills; do not shrink that role map in workflow output. Runtime-visible role routing summary:
 
-| Role | Responsibility | Related skills |
-|---|---|---|
-| Coordinator | Work scope, role assignment, result integration | `workflow-dddjango-subagents` |
-| Domain Agent | Subdomain, bounded context, ubiquitous language, aggregate, invariant, domain event | `architecture-ddd` |
-| Architecture Agent | Implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` |
-| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
-| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
-| Django Agent | ORM, service, selector, concrete migration files, transaction, settings/security/performance, template/static/web, templates/static files | `implementation-django`, `implementation-django-web`, `implementation-python` |
-| Test Agent | TDD flow, pytest, fixtures, test doubles, API/integration tests, ownership of `tests/**` files | `implementation-tdd`, `implementation-test` |
-| Review Agent | Code quality, design risk, missing verification, regressions | `implementation-cleancode` |
+- Coordinator: `workflow-dddjango-subagents`
+- Domain Agent: `architecture-ddd`
+- Architecture Agent: `architecture-implementation-patterns`
+- DB Agent: `architecture-db`, `implementation-django`
+- API Agent: `architecture-api`, `implementation-django-ninja`
+- Django Agent: `implementation-django`, `implementation-django-web`, `implementation-python`; includes template/static/web and templates/static files ownership when in scope.
+- Test Agent: `implementation-tdd`, `implementation-test`
+- Review Agent: `implementation-cleancode`
 
-Domain Agent 결정은 DB, API, Django, Test 결정에 선행한다. Architecture Agent가 advisory여도 composite/risky workflow에서는 역할을 유지하고, Coordinator 또는 명시된 Integration owner가 결과를 통합한다.
+Domain Agent 결정은 DB, API, Django, Test 결정에 선행한다. Architecture Agent가 advisory여도 composite/risky workflow에서는 역할을 유지하고, Coordinator 또는 명시된 Integration owner가 결과를 통합한다. DB Agent는 schema, constraint, locking, isolation, transaction policy를 소유하고, Django Agent는 결정된 DB/API/pattern boundary 안에서 ORM, migration file, service transaction implementation을 소유한다. Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit가 주된 작업이면 `source-reference-audit`로 넘기고, 이 workflow는 coordination 중 발견한 follow-up과 workflow-local parity evidence만 기록한다.
 
 ## Output Shape
 
@@ -76,7 +74,7 @@ Runtime wrong-routing audit에서는 skill description metadata만으로 충분�
 - Risky writes에는 `Risky Write Consistency Block` 결정을 포함하거나 responsible role에 배정한다.
 - Final integration은 각 role의 risks와 required follow-up을 닫거나 unresolved로 명시한다.
 - Runtime-facing guidance에서는 source authoring path를 allowed reference처럼 제시하지 않는다. Runtime references는 skill-local bundled reference로 안내한다.
-- P1 중 eval case, answer oracle, evaluator, report, model variance 문제가 발견되면 이 skill P1에서 직접 고치지 않는다. `workspace/plan/eval_lv_up_plan/<bucket>/analysis/` 후속 분석으로 분류하고 첫 줄은 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다.
-- Plugin cache outside workspace를 수정했다면 Cache sync report에 workspace canonical source mapping을 적는다. `workflow-dddjango-subagents`에서는 role-map parity, runtime skill/reference paths, validation run 또는 not-run status를 포함한다.
+- Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 넘긴다. Workflow 중 eval case, answer oracle, evaluator, report, model variance 문제가 발견되면 이 skill에서 직접 고치지 말고 owning eval follow-up으로 분류하며 첫 줄은 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다.
+- Plugin cache outside workspace를 수정했다면 Cache sync report에 workspace canonical source mapping을 적는다. `workflow-dddjango-subagents`에서는 role-map parity, runtime skill/reference paths, validation run 또는 not-run status를 포함한다. Broader provenance/cache audit는 `source-reference-audit` 책임이다.
 - 실행한 tests, validation, review, browser checks, subagent work, eval, Serena만 실행했다고 보고한다. 실행하지 않았으면 not run이라고 말한다.
 - Direct implementation work의 final report는 concrete changed files와 필요한 verification만 간결히 보고하고, 작업이 composite/risky로 바뀌지 않는 한 workflow sections를 추가하지 않는다.

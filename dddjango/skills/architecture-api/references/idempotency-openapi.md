@@ -17,7 +17,7 @@ Contract decisions:
 - concurrency/race handling handoff to `architecture-db`;
 - test criteria for replay, conflict, and simultaneous duplicate requests.
 
-Replay means returning the original operation result for an equivalent retry, not recomputing from mutable current resource state. For resources that can change after creation, store a stable first-response/result snapshot or equivalent DTO with the idempotency record, and include an acceptance test that changes the resource after the first response and then verifies the retry still returns the original result.
+Replay means the API returns the original operation result for an equivalent retry, not a newly computed representation from mutable current resource state. If that guarantee needs stored snapshots, fingerprints, locks, or durable records, hand the persistence shape to `architecture-db` and the detailed replay/conflict test mechanics to `implementation-test`.
 
 POST needs this treatment because a client may retry after the server processed the request but the response was lost. GET, PUT, and DELETE already have idempotent method semantics, though their implementation still must preserve the contract.
 

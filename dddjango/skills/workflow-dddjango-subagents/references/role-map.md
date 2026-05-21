@@ -15,6 +15,8 @@ Canonical dddjango workflow roles를 확인할 때 읽는다. Workflow output에
 
 Domain Agent decisions feed DB Agent, API Agent, Django Agent, and Test Agent. Coordinator integrates the outputs and resolves conflicts using integration priority.
 
+DB Agent owns schema, constraints, indexes, locking, isolation, and transaction policy. Django Agent owns concrete model/query/service implementation, migration files, and transaction implementation inside the already-decided DB/API/pattern boundary. If those decisions are still missing, Django Agent records the dependency as required follow-up instead of deciding DB architecture locally.
+
 ## Output Guidance
 
 Composite 또는 risky workflow output에는 모든 role을 포함한다. Active work가 없으면 advisory 또는 read-only로 표시하되 role을 생략하거나 responsibility, related skill list를 줄이지 않는다. Django web template/static work가 범위에 있으면 Django Agent는 `implementation-django-web`, `templates/**`, `static/**`, templates/static files ownership을 포함해야 한다.

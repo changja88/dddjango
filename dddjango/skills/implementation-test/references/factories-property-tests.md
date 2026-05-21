@@ -30,7 +30,6 @@ Avoid property tests whose assertions only restate the implementation. The prope
 
 - Use Given-When-Then when product language and stakeholder-readable scenarios matter.
 - Put stakeholder-readable behavior in `.feature` files and connect each scenario with `@scenario("path/to.feature", "Scenario name")`.
-- Implement Given steps as setup, When as the single behavior, and Then as observable outcomes with ordinary assertions.
 - Use `parsers.parse(...)` for parameterized step text and `target_fixture` when a step should provide data to later steps.
 - Keep Given steps as setup, When as the single behavior, and Then as observable outcomes.
 - Do not hide complex assertions behind vague step names.

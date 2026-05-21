@@ -33,16 +33,17 @@ Choose the lowest isolation level that protects the invariant, then add explicit
 
 ## Risky Write Consistency
 
-For order, payment, inventory, reservation, refund, permission, ledger, or similar risky writes, include a `Risky Write Consistency Block` and record:
+For order, payment, inventory, reservation, refund, permission, ledger, or similar risky writes, include a `Risky Write Consistency Block` and keep this skill focused on DB-owned decisions. Record:
 
-- transaction owner;
+- DB transaction boundary or already-decided transaction owner;
 - locking strategy;
 - uniqueness or idempotency storage key scope, owner/location, unique constraint, request fingerprint, stored result or replay reference, and retention/cleanup rule;
 - API `Idempotency-Key` replay/conflict behavior handoff to `architecture-api`;
-- external side-effect timing such as Django `transaction.on_commit()`, domain event, or outbox;
+- pattern-level transaction ownership, outbox/saga/ACL, or external side-effect reliability handoff to `architecture-implementation-patterns` when not already decided;
+- concrete Django transaction or migration implementation handoff to `implementation-django`;
 - isolation level and retry decision;
-- integration or concurrency test criteria.
+- integration or concurrency test criteria handoff to `implementation-test`.
 
 ## Side Effects
 
-Do not run external payment, notification, SDK, or message publishing inside a DB transaction without a clear consistency reason. In Django, prefer `transaction.on_commit()` for local post-commit handoff, or use a domain event/outbox-style handoff when the side effect needs reliable cross-process delivery.
+Do not run external payment, notification, SDK, or message publishing inside a DB transaction without a clear consistency reason. This skill should flag lock duration, rollback mismatch, and durability risks. Hand off the pattern choice, such as `transaction.on_commit()`, domain event, outbox, saga, or ACL, to `architecture-implementation-patterns` unless that choice is already part of the provided design.

@@ -1,6 +1,6 @@
 # Problem Details, Idempotency, OpenAPI
 
-API error response, status code, idempotency behavior, compatibility, OpenAPI 영향을 구현할 때 이 reference를 읽는다.
+API error response, status code, 이미 정해진 `Idempotency-Key` adapter wiring, compatibility, OpenAPI 영향을 구현할 때 이 reference를 읽는다.
 
 ## Status Code
 
@@ -43,11 +43,11 @@ def order_conflict(request, exc):
 
 ## Idempotency-Key
 
-- 주문 또는 결제 생성처럼 duplicate-prone POST operation에는 `Idempotency-Key`를 요구하거나 지원한다.
-- service transaction design에 따라 첫 request result를 DB 또는 Redis 같은 durable storage에 저장한다.
-- 같은 key와 equivalent request가 반복되면 저장된 response를 반환한다.
-- 생성된 resource가 나중에 상태 변경될 수 있으면 현재 resource id만 저장해 재조회하지 말고 immutable first-result DTO/response snapshot을 저장한다.
-- 같은 key와 다른 payload의 conflict behavior를 정의한다.
+- 주문 또는 결제 생성처럼 duplicate-prone POST operation의 `Idempotency-Key` 요구 여부와 replay/conflict behavior는 API contract가 먼저 결정한다.
+- service transaction design에 따라 첫 request result를 DB 또는 Redis 같은 durable storage에 저장하는 결정은 `architecture-db`와 `implementation-django`가 소유한다.
+- 같은 key와 equivalent request가 반복될 때 저장된 response를 반환하는 adapter path는 결정된 service contract에 맞춘다.
+- 생성된 resource가 나중에 상태 변경될 수 있으면 현재 resource id만 저장해 재조회하지 말고 immutable first-result DTO/response snapshot을 저장하는 결정은 service/storage owner와 맞춘다.
+- 같은 key와 다른 payload의 conflict behavior가 미정이면 `architecture-api`로 넘긴다.
 - key TTL, storage owner, transaction boundary, concurrency behavior는 `implementation-django`, `architecture-db`와 맞춘다.
 - mutable current state 때문에 retry response가 original response와 달라질 수 있으면 later state change 이후 replay를 테스트한다.
 

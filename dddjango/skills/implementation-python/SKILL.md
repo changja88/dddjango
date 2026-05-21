@@ -1,7 +1,7 @@
 ---
 name: implementation-python
 description: >
-  Use for Python implementation quality: type hints, X | None, built-in generics, TypedDict, type narrowing, decorators, dataclass, NamedTuple, Enum/StrEnum, match/case, Protocol, context managers, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, and pyright. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Enum/StrEnum/열거형, Protocol/프로토콜 boundary, pydantic v2 런타임 검증, 비동기, 예외 처리, modern Python and Python-version gates. Prefer architecture-ddd for unclear domain modeling, architecture-api or architecture-db for unresolved API/DB contracts, implementation-django-ninja for Router/Schema/API implementation, implementation-cleancode for general refactoring, implementation-django for ORM/migrations, implementation-test for pytest, and workflow-dddjango-subagents for explicit subagent, role decomposition, parallel review, or responsibility splitting requests. Do not use for simple syntax explanations, typo-only edits, or API/DB/domain contract decisions that are still undecided.
+  Use for Python implementation quality: type hints, X | None, built-in generics, TypedDict, type narrowing, decorators, dataclass, NamedTuple, Enum/StrEnum, match/case, Protocol, context managers, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, pyright, modern Python, and Python-version gates. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Protocol/프로토콜, pydantic v2 런타임 검증, 비동기, 예외 처리. Prefer source-reference-audit for skill/reference governance; architecture-ddd/api/db for unresolved domain/API/DB contracts; architecture-implementation-patterns for repository/UoW/ports/outbox decisions; implementation-cleancode for function-shape refactors; implementation-django, implementation-django-ninja, or implementation-test for Django/API/test mechanics; and workflow-dddjango-subagents for explicit role decomposition.
 ---
 
 # Python Implementation
@@ -10,12 +10,15 @@ dddjango 작업에서 Python 언어 계층의 계약과 구현 선택을 다룰 
 
 ## Routing
 
+- source/reference governance, provenance, bundled reference parity, runtime cache sync audit, leakage/boundary review가 주 작업이면 `source-reference-audit`를 사용한다.
 - 도메인 용어, invariant, aggregate boundary, state transition rule이 불명확하면 Python construct를 고르기 전에 `architecture-ddd`를 사용한다.
-- REST resource, status code, Problem Details, OpenAPI, DB schema, transaction, locking, migration rollout 결정이 unresolved이면 Python type으로 인코딩하기 전에 `architecture-api` 또는 `architecture-db`를 사용한다.
+- REST resource, status code, Problem Details, OpenAPI 같은 API contract가 unresolved이면 Python type이나 DTO로 인코딩하기 전에 `architecture-api`를 사용한다.
+- DB schema, transaction, locking, migration rollout 결정이 unresolved이면 Python 구현 선택 전에 `architecture-db`를 사용한다.
+- repository, Unit of Work, ports/adapters, outbox, service-layer pattern 선택이 unresolved이면 `architecture-implementation-patterns`를 사용한다. 이 skill은 선택된 boundary를 `Protocol`, type contract, exception, context manager로 표현하는 범위만 맡는다.
 - 주된 작업이 Django ORM, migration, transaction, QuerySet, settings이면 `implementation-django`를 사용한다.
 - 주된 작업이 Django Ninja Router/Schema/API test이면 `implementation-django-ninja`를 사용한다.
 - 주된 작업이 pytest fixture, mock, factory, coverage이면 `implementation-test`를 사용한다. Red-Green-Refactor 방법 자체가 핵심이면 `implementation-tdd`를 사용한다.
-- 일반 refactor/review에 Python-specific typing 또는 language choice가 함께 있으면 `implementation-cleancode`와 이 skill을 함께 사용한다.
+- naming, function split, flag-argument 제거, responsibility separation, abstraction, duplication 같은 refactor/review 판단이 중심이면 `implementation-cleancode`를 사용한다. 이 skill은 mutable defaults, positional-only/keyword-only syntax, annotations, type narrowing 같은 Python call-signature mechanics만 맡는다.
 - 사용자가 dddjango subagent, role decomposition, parallel review, responsibility splitting을 명시적으로 요구하면 먼저 `workflow-dddjango-subagents`를 사용한다.
 - 아주 작은 syntax 질문이나 한 줄 type hint 설명은 DDD/workflow 절차 없이 직접 답한다.
 
