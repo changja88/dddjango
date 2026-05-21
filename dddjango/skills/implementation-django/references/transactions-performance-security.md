@@ -2,6 +2,8 @@
 
 Use this reference for transaction boundaries, consistency, query performance, caching, security settings, raw SQL, middleware, and Django-specific test acceptance criteria.
 
+Source basis: Django official docs, Architecture Patterns with Python, OWASP Django Security Cheat Sheet.
+
 ## Transactions And Consistency
 
 - Treat the use case as the transaction boundary. Use `transaction.atomic()` around the smallest block that must commit or roll back together.

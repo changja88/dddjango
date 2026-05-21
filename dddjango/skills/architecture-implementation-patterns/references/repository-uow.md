@@ -1,7 +1,5 @@
 # Repository And Unit Of Work
 
-This reference is provisional and uses fallback sources until a dedicated implementation-patterns reference exists.
-
 Load this when deciding whether to introduce repository, Unit of Work, data mapper, service/selectors, or Django ORM direct access.
 
 ## Repository Decision
@@ -11,7 +9,8 @@ Use repository when:
 - persistence should be expressed as aggregate collection operations;
 - tests benefit from fake repositories around application services;
 - domain/application code should not know ORM or QuerySet details;
-- persistence mapping is complex enough that a translation boundary helps.
+- persistence mapping is complex enough that a translation boundary helps;
+- ORM model and domain model are intentionally separated.
 
 Avoid repository when:
 
@@ -28,14 +27,15 @@ Use Unit of Work when the use case needs an explicit transaction boundary across
 
 In Django, `transaction.atomic()` is often the practical unit-of-work tool. A custom UoW abstraction is only worth the cost when it clarifies use case boundaries, improves testing, or decouples persistence implementation.
 
-External side effects should not run inside the DB transaction unless the system can tolerate rollback mismatch. Prefer post-commit hooks or outbox-style handoff when reliability matters.
+External side effects should not run inside the DB transaction unless the system can tolerate rollback mismatch. Prefer `transaction.on_commit()` for simple in-process follow-up, or outbox-style handoff when cross-service delivery reliability matters.
 
 ## Django Service And Selector Path
 
 - Use services for write/use-case operations that coordinate multiple models, external services, or transactions.
 - Use selectors for read/query logic and QuerySet optimization.
-- Keep naming searchable and role-based.
+- Keep naming searchable and role-based, such as `<entity>_<action>`.
 - Keep business policies in model/domain behavior or domain services; services coordinate rather than own the policy.
+- Do not move a clear single-model invariant out of the model just to create a service layer.
 
 ## Data Mapper Split
 

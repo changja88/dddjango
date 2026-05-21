@@ -87,6 +87,28 @@ WORKFLOW_REFERENCES = {
     "integration-checklist.md",
 }
 
+IMPLEMENTATION_PYTHON_REQUIRED_FILES = {
+    "references/typing.md",
+    "references/dataclasses-enums.md",
+    "references/protocols-boundaries.md",
+    "references/pydantic-v2.md",
+}
+
+IMPLEMENTATION_PYTHON_REQUIRED_PHRASES = [
+    "type hints",
+    "X | None",
+    "built-in generics",
+    "dataclass",
+    "Enum/StrEnum",
+    "Protocol",
+    "pydantic v2",
+    "async/concurrency",
+    "exceptions",
+    "Ruff",
+    "mypy",
+    "pyright",
+]
+
 BANNED_SKILL_DOCS = {
     "README.md",
     "INSTALLATION_GUIDE.md",
@@ -457,6 +479,45 @@ def check_django_web_skill(check: Check, skill_dir: Path) -> None:
         )
 
 
+def check_implementation_python_skill(check: Check, skill_dir: Path) -> None:
+    skill_md = skill_dir / "SKILL.md"
+    openai_yaml = skill_dir / "agents" / "openai.yaml"
+    if not skill_md.is_file():
+        return
+
+    missing_files = [
+        relative for relative in sorted(IMPLEMENTATION_PYTHON_REQUIRED_FILES)
+        if not (skill_dir / relative).is_file()
+    ]
+    check.require(
+        not missing_files,
+        f"implementation-python must include required reference files: {missing_files}",
+    )
+
+    combined_parts = [read(skill_md)]
+    if openai_yaml.is_file():
+        combined_parts.append(read(openai_yaml))
+    for relative in sorted(IMPLEMENTATION_PYTHON_REQUIRED_FILES):
+        path = skill_dir / relative
+        if path.is_file():
+            combined_parts.append(read(path))
+    combined = "\n".join(combined_parts)
+
+    for phrase in IMPLEMENTATION_PYTHON_REQUIRED_PHRASES:
+        check.require(
+            phrase in combined,
+            f"implementation-python must include required topic phrase: {phrase}",
+        )
+
+    if openai_yaml.is_file():
+        metadata = read(openai_yaml)
+        for phrase in ["pydantic v2", "async/concurrency", "exceptions", "mypy", "pyright"]:
+            check.require(
+                phrase in metadata,
+                f"implementation-python agents/openai.yaml must surface topic phrase: {phrase}",
+            )
+
+
 def markdown_section(text: str, heading: str) -> str:
     pattern = re.compile(
         rf"^## {re.escape(heading)}\s*\n(?P<body>.*?)(?=^## |\Z)",
@@ -577,6 +638,8 @@ def check_runtime_cache(
             check_skill_folder(check, skill_dir, require_metadata=False)
             if skill_dir.name == "source-reference-audit":
                 check_source_reference_audit(check, skill_dir)
+            if skill_dir.name == "implementation-python":
+                check_implementation_python_skill(check, skill_dir)
             if skill_dir.name == "implementation-tdd":
                 check_implementation_tdd_boundaries(check, skill_dir)
 
@@ -602,6 +665,8 @@ def check_generated_skills(check: Check, skills_dir: Path, required: bool) -> No
         check_skill_folder(check, skill_dir, require_metadata=True)
         if skill_dir.name == "implementation-django-web":
             check_django_web_skill(check, skill_dir)
+        if skill_dir.name == "implementation-python":
+            check_implementation_python_skill(check, skill_dir)
         if skill_dir.name == "source-reference-audit":
             check_source_reference_audit(check, skill_dir)
         if skill_dir.name == "implementation-tdd":

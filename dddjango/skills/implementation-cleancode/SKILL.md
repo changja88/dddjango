@@ -23,7 +23,7 @@ Use this skill when the task is to review, refactor, or improve maintainability.
 ## Reference Loading
 
 - Load only the reference file(s) relevant to the current clean-code task.
-- Read [responsibility.md](references/responsibility.md) for change reasons, SRP, cohesion/coupling, responsibility-driven design, comments, and review output.
+- Read [responsibility.md](references/responsibility.md) for change reasons, SRP, cohesion/coupling, responsibility-driven design, Django/dddjango boundary smells, comments, and review output.
 - Read [naming-functions.md](references/naming-functions.md) for naming, function design, arguments, command/query separation, side effects, formatting, and docstrings.
 - Read [encapsulation-abstraction.md](references/encapsulation-abstraction.md) for information hiding, deep modules, object design, SOLID, DRY, errors, and dependency management.
 - Read [legacy-review.md](references/legacy-review.md) for code smells, behavior-preserving refactoring, characterization tests, seams, sprout/wrap methods, and legacy risk handling.
@@ -38,6 +38,9 @@ Use this skill when the task is to review, refactor, or improve maintainability.
 - Avoid speculative generality: add abstractions only when they remove real complexity, meaningful duplication, or a proven change axis.
 - For major interface or architecture changes, compare at least two materially different options before choosing.
 - Prefer clear names and simple functions, but keep public modules/classes deep enough that callers are not forced through implementation steps.
+- In Django/dddjango code, treat Fat Model/View/Router/Schema/Template as responsibility smells when domain policy, orchestration, persistence, rendering, and external I/O change for different reasons in one place.
+- Do not "fix" Fat View or Fat Model by moving everything into a generic service module; name the use case, domain behavior, query/read model, or integration responsibility that should own the change.
+- If the smell depends on aggregate ownership, transaction/locking/idempotency, REST contract, or concrete ORM/API implementation, route to the relevant DDD/DB/API/Django skill before prescribing a clean-code refactor.
 - Treat DRY as single-source business knowledge, not mechanical removal of every similar-looking line.
 - Fix obvious nearby quality problems in the touched scope when doing so preserves behavior; if time or risk prevents cleanup, note the residual risk rather than silently leaving it.
 - Report only verification actually run. If tests, linters, typechecks, or review subagents were not run, say so.

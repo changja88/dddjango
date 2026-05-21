@@ -1,4 +1,4 @@
 interface:
   display_name: "Implementation Patterns"
-  short_description: "Provisional clean-architecture, hexagonal, CQRS, outbox patterns."
-  default_prompt: "Use $architecture-implementation-patterns with fallback sources to choose DDD implementation patterns, dependency direction, ports/adapters, repository, outbox, and ACL trade-offs."
+  short_description: "DDD architecture pattern selection and boundaries."
+  default_prompt: "Use $architecture-implementation-patterns to choose layered/clean/hexagonal architecture, ports/adapters, repository/UoW, CQRS/event sourcing/outbox/saga/ACL, service-layer, and risky-write transaction/side-effect/idempotency handoffs."

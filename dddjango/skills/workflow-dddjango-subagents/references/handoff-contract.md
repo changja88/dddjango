@@ -1,8 +1,8 @@
 # Handoff Contract
 
-Load this when assigning role work or integrating role outputs.
+Role work를 배정하거나 role output을 통합할 때 읽는다.
 
-Each role handoff includes:
+각 role handoff는 다음 field를 포함한다.
 
 - `Scope`
 - `Inputs Used`
@@ -13,28 +13,29 @@ Each role handoff includes:
 - `Required Follow-up`
 - `dddjango Checks`
 
-`Files` must include:
+`Files`에는 반드시 다음을 포함한다.
 
 - `May edit`
 - `Must not edit`
 
 ## Field Meanings
 
-- `Scope`: the role's responsibility for this task.
-- `Inputs Used`: docs, source files, user constraints, existing code, or prior role outputs used by the role.
-- `Decisions`: both decisions made and decisions intentionally deferred.
-- `Files`: ownership and edit limits.
-- `Output`: expected artifact, patch, plan, review findings, or test criteria.
-- `Risks`: unresolved correctness, migration, compatibility, or verification risks.
-- `Required Follow-up`: questions or checks the next role or integrator must close.
-- `dddjango Checks`: relevant domain, DB, API, Django, test, and review standards the role must satisfy.
+- `Scope`: 이 role이 이번 task에서 책임지는 범위.
+- `Inputs Used`: role이 읽은 docs, source files, user constraints, existing code, prior role outputs.
+- `Decisions`: 내린 결정과 의도적으로 미룬 결정.
+- `Files`: ownership과 edit limits.
+- `Output`: expected artifact, patch, plan, review findings, test criteria.
+- `Risks`: unresolved correctness, migration, compatibility, verification risks.
+- `Required Follow-up`: 다음 role 또는 integrator가 닫아야 할 질문이나 check.
+- `dddjango Checks`: 적용해야 할 domain, DB, API, Django, test, review standards.
 
 ## Handoff Discipline
 
-- Make ownership explicit before parallel work.
-- For approval-before-execution planning, write a proposed handoff instead of waiting until after approval. Use `pending approval`, `not executed`, `read-only`, or `unknown until code inspection` where needed, but keep every required field present.
-- Do not assign overlapping write sets to multiple subagents.
-- Parallel `May edit` scopes must be disjoint by concrete file path or module owner. If two roles need the same file, assign a single write owner and make the other role read-only review or advisory.
-- If a role only reviews, state that it must not edit files.
-- If a role depends on an earlier decision, put that dependency in `Required Follow-up`.
-- Close or carry forward each risk during integration.
+- Parallel work 전에 ownership을 명시한다.
+- Approval-before-execution planning에서도 proposed handoff를 작성한다. `pending approval`, `not executed`, `read-only`, `unknown until code inspection`을 사용할 수 있지만 required field는 생략하지 않는다.
+- 같은 file 또는 module을 여러 subagent에게 write scope로 주지 않는다.
+- Parallel `May edit` scopes는 concrete file path 또는 module owner 기준으로 disjoint해야 한다.
+- 두 role이 같은 파일을 필요로 하면 한 role만 write owner로 지정하고 다른 role은 read-only review 또는 advisory로 둔다.
+- Review-only role은 file을 수정하지 않는다고 적는다.
+- Earlier decision에 의존하는 role은 그 의존성을 `Required Follow-up`에 적는다.
+- Integration 단계에서 각 risk를 close하거나 unresolved로 carry forward한다.

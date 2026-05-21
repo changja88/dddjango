@@ -22,17 +22,22 @@ Load this when choosing test levels, integration tools, coverage, mutation testi
 
 - Use branch coverage when branch behavior matters.
 - Exclude migrations, tests, `conftest.py`, abstract methods, and type-check-only branches only with a clear reason.
+- Put coverage config in `pyproject.toml` when the project already centralizes tool config: `source`, `branch`, `omit`, `fail_under`, `show_missing`, and justified `exclude_lines`.
 - Use `coverage run -m pytest`, `coverage report`, `coverage html`, `coverage xml`, and `coverage combine` as appropriate.
 - Use `pytest --cov=src`, `--cov-report`, `--cov-fail-under`, and `--cov-branch` when the project uses `pytest-cov` rather than direct coverage.py commands.
 - Treat `fail_under` as a floor, not as proof that critical behavior is tested.
-- Use tox for straightforward multi-version matrices and nox when Python code is needed for more flexible sessions.
+- Use tox for straightforward multi-version or dependency matrices. Use nox when Python code is useful for dynamic session setup, Django-version parametrization, or reusable local workflows.
+- Include lint/typecheck sessions in tox/nox only when the project actually runs those gates; do not imply they passed unless executed.
 
 ## Mutation Testing
 
 - Use mutation testing to find assertions that miss boundary conditions or equivalent behavior.
 - Start with high-value modules; full-suite mutation can be expensive.
+- For mutmut, use targeted runs such as `mutmut run --paths-to-mutate "src/" --tests-dir "tests/"`, then inspect with `mutmut results` and `mutmut show <id>`.
+- Interpret result states before editing tests: killed is useful signal, survived means the tests missed a meaningful behavior or the mutant is equivalent, timeout/suspicious needs manual inspection.
 - Inspect survived mutants and add meaningful tests only when they represent a real missed behavior.
 - Boundary cases such as `>`, `>=`, `==`, and off-by-one transitions are common mutation targets.
+- Add tests for the missing behavior, not assertions that merely pin the current implementation.
 - Do not chase 100% mutation score blindly; analyze whether the surviving mutant is meaningful.
 
 ## Test Quality Review

@@ -2,6 +2,8 @@
 
 Use this reference for Django migration files, historical models, data migrations, rollout sequencing, backfills, indexes, and operational migration risk.
 
+Source basis: Django official docs, Two Scoops of Django, Django for Professionals.
+
 ## Basic Rules
 
 - Keep migration files in version control.

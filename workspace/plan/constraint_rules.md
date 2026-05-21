@@ -28,13 +28,17 @@
 
 - 분석 문서는 해당 범주의 `analysis/` 아래에만 작성한다.
 - 개선 계획 문서는 해당 범주의 `plan/` 아래에만 작성한다.
-- P1 점검 결과는 개선 계획이 아니라 개선 필요 여부를 판정한 분석 결과이므로 `analysis/`에만 작성한다.
-- P1 이후 실제 개선 방법, 수정 순서, 검증 방법을 확정할 때만 같은 대상의 `plan/` 아래에 개선 계획 문서를 작성한다.
+- P1 점검은 source reference 충분성과 skill 반영도를 함께 확인한다.
+- P1에서 reference 자체가 부족하다고 판정하면 `reference_lv_up_plan/<reference-area>/analysis/`에 분석을 작성하고, `reference_lv_up_plan/<reference-area>/plan/`에 reference 개선 계획을 작성한다.
+- P1에서 reference는 충분하지만 skill 반영이 부족하다고 판정하면 `skill_lv_up_plan/<skill-name>/analysis/`에 분석을 작성하고, `skill_lv_up_plan/<skill-name>/plan/`에 skill 개선 계획을 작성한다.
+- P1에서 runtime cache 동기화 문제가 있으면 `skill_lv_up_plan/<skill-name>/analysis/`에 분석을 작성하고, `skill_lv_up_plan/<skill-name>/plan/`에 runtime sync 계획을 작성한다.
+- P1에서 수정 대상이 없으면 해당 점검 대상의 `analysis/`에만 근거를 남기고 `plan/` 문서는 만들지 않는다.
+- P1에서 `plan/` 문서를 작성한 경우, 개선 방법, 수정 순서, 검증 방법, 완료 조건을 포함하고 독립 리뷰를 반복해 Blocker 0, Major 0, 열린 Minor 0 상태로 닫는다.
 - skill 분석과 계획은 반드시 대상 skill 이름을 기준으로 작성한다.
 - `skill_lv_up_plan` 하위에는 `dddjango/skills/<skill-name>/`에 실제로 존재하는 skill 이름만 둔다.
 - `code`, `plugin`, `response`, `runtime`, `source`, `workflow` 같은 eval bucket 이름은 `skill_lv_up_plan` 하위 그룹으로 쓰지 않는다.
 - reference 분석과 계획은 반드시 대상 reference area 이름을 기준으로 작성한다.
-- reference area는 `workspace/reference/<reference-area>/`의 폴더명이며, 개별 skill reference를 개선할 때는 보통 대상 skill 이름과 같은 값을 쓴다.
+- reference area는 `workspace/reference/<reference-area>/`의 폴더명이며, reference 자체의 부족, provenance gap, source conflict, fallback/provisional 보강은 `reference_lv_up_plan/<reference-area>/`에 작성한다.
 - eval 분석과 계획은 반드시 대상 bucket 이름을 기준으로 작성한다.
 - `eval_lv_up_plan` 하위에는 `code`, `plugin`, `response`, `runtime`, `source`, `workflow` bucket만 둔다.
 - skill 이름은 `eval_lv_up_plan` 하위 그룹으로 쓰지 않는다.

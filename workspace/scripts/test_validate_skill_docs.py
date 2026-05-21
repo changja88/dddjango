@@ -242,6 +242,54 @@ description: >
             check.errors,
         )
 
+    def test_implementation_python_rejects_missing_required_topic_phrase(self) -> None:
+        repo_root = MODULE_PATH.parents[2]
+        source_skill = repo_root / "dddjango" / "skills" / "implementation-python"
+        skill = self.root / "implementation-python"
+        shutil.copytree(source_skill, skill)
+        skill_md = skill / "SKILL.md"
+        skill_md.write_text(
+            skill_md.read_text(encoding="utf-8").replace("Enum/StrEnum", "Enum only"),
+            encoding="utf-8",
+        )
+        openai_yaml = skill / "agents" / "openai.yaml"
+        openai_yaml.write_text(
+            openai_yaml.read_text(encoding="utf-8").replace("Enum/StrEnum", "Enum only"),
+            encoding="utf-8",
+        )
+        reference = skill / "references" / "dataclasses-enums.md"
+        reference.write_text(
+            reference.read_text(encoding="utf-8").replace("Enum/StrEnum", "Enum only"),
+            encoding="utf-8",
+        )
+        check = self.validator.Check()
+
+        self.validator.check_implementation_python_skill(check, skill)
+
+        self.assertTrue(
+            any("required topic phrase: Enum/StrEnum" in error for error in check.errors),
+            check.errors,
+        )
+
+    def test_implementation_python_rejects_metadata_underclaim(self) -> None:
+        repo_root = MODULE_PATH.parents[2]
+        source_skill = repo_root / "dddjango" / "skills" / "implementation-python"
+        skill = self.root / "implementation-python"
+        shutil.copytree(source_skill, skill)
+        openai_yaml = skill / "agents" / "openai.yaml"
+        openai_yaml.write_text(
+            openai_yaml.read_text(encoding="utf-8").replace("pyright", "typechecker"),
+            encoding="utf-8",
+        )
+        check = self.validator.Check()
+
+        self.validator.check_implementation_python_skill(check, skill)
+
+        self.assertTrue(
+            any("agents/openai.yaml must surface topic phrase: pyright" in error for error in check.errors),
+            check.errors,
+        )
+
     def test_source_reference_audit_rejects_leakage_prone_wording(self) -> None:
         repo_root = MODULE_PATH.parents[2]
         source_skill = repo_root / "dddjango" / "skills" / "source-reference-audit"

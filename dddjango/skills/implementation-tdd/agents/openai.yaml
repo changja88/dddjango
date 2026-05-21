@@ -1,4 +1,4 @@
 interface:
   display_name: "TDD Implementation"
-  short_description: "Test lists, failing tests, and Red-Green-Refactor."
-  default_prompt: "Use $implementation-tdd to drive work through test lists, failing tests, Red-Green-Refactor, and TDD choices."
+  short_description: "TDD cycles, edge cases, and test strategy."
+  default_prompt: "Use $implementation-tdd to turn requirements into a test list, Red-Green-Refactor loop, and approach, edge-case, and verification choices."

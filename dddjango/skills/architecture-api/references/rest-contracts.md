@@ -42,10 +42,19 @@ Load this for REST resource design, URL structure, HTTP method choice, status co
 - `500 Internal Server Error`: unexpected server failure.
 - `503 Service Unavailable`: temporary overload or maintenance; include retry guidance when possible.
 
+## Request And Response Contracts
+
+- Treat the contract as the combination of URL, method, request fields, response status, response body, and response headers.
+- For requests, distinguish path, query, header, and body fields. Mark required versus optional fields, validation rules, defaults, units, and allowed ranges.
+- For responses, define body schema and headers per status code. `201` should include `Location` when possible, `202` should include how to observe the accepted work, and `204` must not include a body.
+- Include client-behavior headers in the contract when relevant: retry, rate-limit, cache, deprecation/sunset, and idempotency replay headers.
+- Keep Problem Details error responses part of the response contract, not a separate undocumented exception path.
+
 ## Headers And Representation
 
 - Use `Content-Type` to state representation format.
 - Use `Accept`, `Accept-Language`, and `Accept-Encoding` for content negotiation when the API supports multiple representations.
+- When using content negotiation, honor quality values and choose the most specific acceptable representation before falling back to less specific matches.
 - Use `Cache-Control`, `ETag`/`If-None-Match`, or `Last-Modified`/`If-Modified-Since` when caching is part of the contract.
 - Return `304 Not Modified` only when validators show the representation has not changed.
 

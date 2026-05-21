@@ -22,10 +22,10 @@ Use this skill to design relational data structures that protect domain invarian
 ## Reference Loading
 
 - Load only the reference file(s) relevant to the current database architecture task.
-- Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism.
-- Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost.
-- Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs.
-- Read [rollout-constraints.md](references/rollout-constraints.md) for EXPLAIN ANALYZE, query optimization, N+1, backfill/index-lock risk, expand/backfill/contract rollout, and rollback considerations.
+- Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism; skip it when the question is only about an existing query plan, lock, or rollout risk.
+- Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost; skip it when the question is only transaction boundary, retry, or side-effect timing.
+- Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs; skip it for pure ERD, normalization, or read-only index tuning questions with no write race.
+- Read [rollout-constraints.md](references/rollout-constraints.md) for EXPLAIN ANALYZE, query optimization, N+1, backfill/index-lock risk, expand/backfill/contract rollout, and rollback considerations; skip it when no production data change, query performance issue, or operational rollout risk is involved.
 
 ## Runtime Rules
 

@@ -1,53 +1,64 @@
 # Delegation Rules
 
-Load this to decide whether to use real subagents, sequential fallback, or a direct single-skill answer.
+실제 subagent 실행, sequential fallback, direct answer 중 무엇을 선택할지 판단할 때 읽는다.
 
 ## When To Role-Decompose
 
-Use role decomposition when:
+다음 경우에는 role decomposition을 사용한다.
 
-- two or more of DDD, DB, API, Django, tests, TDD, or review are genuinely coupled;
-- the user explicitly asks for subagents, role decomposition, parallel review, responsibility split, handoff, or sequential fallback;
-- risky domain nouns such as order, payment, inventory, reservation, refund, permission, or ledger appear together with state transitions, transactions, schema, API contracts, or tests.
+- DDD, DB, API, Django, tests, TDD, review 중 둘 이상이 실제로 결합되어 있다.
+- 사용자가 subagents, role decomposition, parallel review, responsibility split, handoff, sequential fallback을 명시적으로 요청했다.
+- order, payment, inventory, reservation, refund, permission, ledger 같은 risky domain noun이 state transition, transaction, schema, API contract, tests와 함께 등장한다.
 
 ## When To Stay Direct
 
-Do not force the workflow for:
+다음 경우에는 workflow를 강제하지 않는다.
 
-- small single-file edits;
-- simple model field renames;
-- local CRUD changes with no invariant or rollout risk;
-- short conceptual explanations;
-- decorative requests to put a simple task into workflow or Role Map format when no real multi-role responsibility exists;
-- tasks where the user explicitly says no subagent plan is needed.
+- small single-file edit
+- simple model field rename
+- invariant 또는 rollout risk가 없는 local CRUD change
+- short conceptual explanation
+- 실제 multi-role 책임이 없는 장식적 workflow 또는 Role Map 요청
+- 사용자가 subagent plan이 필요 없다고 명시한 작업
 
-Use the relevant implementation, architecture, test, or clean-code skill directly in these cases.
+Pure answer-only 요청에는 사용자가 요구한 내용만 답한다. 문장 수, bullet 수 같은 고정 형식이 있으면 모든 단위가 질문에 답해야 하며 마지막 요청 단위에서 멈춘다. 사용자가 묻지 않은 meta note를 앞뒤에 붙이지 않는다. 예: tests not run, commands not run, no subagents used, skill/reference loading, `Commands run`, `commands run`, `Checks not run`, `checks not run`, `실행한 명령`, `명령 실행`, `체크`, `체크: 미실행`, `검증 미실행`, `Serena`.
 
-For pure answer-only requests, answer with the requested content only. If the user asks for a fixed shape such as a sentence count or bullet count, treat that shape as the user's explicit instruction: every requested unit should answer the user's question and the response should stop at the final requested unit. Do not prepend, append, or embed meta notes such as tests not run, commands not run, no subagents used, skill/reference loading, `Commands run`, `commands run`, `Checks not run`, `checks not run`, `실행한 명령`, `명령 실행`, `체크`, `체크: 미실행`, `검증 미실행`, or `Serena` unless that is the user's question.
+Direct implementation work에서는 changed files와 verification은 정직하게 보고하되 compact하게 유지한다. 작업이 composite 또는 risky로 바뀌지 않는 한 workflow sections를 추가하지 않는다.
 
-For direct implementation work, still report changed files and verification honestly, but keep it compact and do not add workflow sections unless the work becomes composite or risky.
+## Critical Path And Sidecar Work
+
+Coordinator는 delegation 전에 다음을 구분한다.
+
+| 구분 | 기준 | 처리 |
+|---|---|---|
+| Critical path | 다음 local action이 이 결과 없이는 진행 불가 | 메인 에이전트가 직접 수행하는 것이 기본 |
+| Sidecar task | 메인 작업과 병렬로 진행 가능하고 나중 통합에 도움 | real subagent 후보 |
+| Advisory review | 파일 수정 없이 위험, 누락, 설계 판단을 독립 검토 | subagent 또는 sequential fallback review 후보 |
+| Shared write task | 같은 파일을 여러 role이 수정해야 함 | 단일 write owner 지정, 나머지는 read-only/advisory |
+
+Urgent blocking work를 subagent에게 넘긴 뒤 기다리기만 하지 않는다. Subagent는 critical path를 멈추지 않는 bounded sidecar work에 가장 적합하다.
 
 ## Real Subagents
 
-Use real subagents only when they are actually available, the user has authorized subagent/delegation/parallel work, and the task can be split into concrete independent work. Give each subagent:
+Real subagents는 실제로 사용 가능하고, 사용자가 subagent/delegation/parallel work를 명시적으로 요청하거나 승인했으며, task가 concrete independent work로 나뉠 때만 사용한다. 각 subagent에는 다음을 준다.
 
-- a role;
-- scope;
-- inputs;
-- owned files or responsibility;
-- expected output;
-- constraints on what not to edit;
-- validation expectations.
+- role
+- scope
+- inputs
+- owned files 또는 responsibility
+- expected output
+- constraints on what not to edit
+- validation expectations
 
-If authorization is not yet granted, do not spawn agents or claim completed review. Ask for approval, but still propose the concrete role split first. For composite or risky work, include the canonical roles that apply, including Architecture Agent even when advisory, and name the Coordinator or explicit Integration owner. Avoid role names alone: provide bounded scope, inputs, owned files or read-only status, forbidden files, expected output, risks, required follow-up, and the integration responsibility for each proposed role.
+승인이 아직 없으면 spawn하지 않고 completed review를 주장하지 않는다. 대신 concrete role split과 proposed handoff를 먼저 제시한다. Composite 또는 risky work에서는 Architecture Agent를 advisory로라도 포함하고 Coordinator 또는 explicit Integration owner를 지정한다.
 
-Do not claim a subagent review, implementation, or validation happened unless it actually ran.
-After spawning real subagents, collect each result with `wait_agent` or `close_agent` before integrating it or reporting it as complete. A spawned or pending subagent is not a completed review.
-Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report blocked or partial execution and do not integrate missing subagent results. Do not write `wait_agent`, `close_agent`, or role result summaries unless those calls actually completed.
+Subagent review, implementation, validation은 실제로 실행됐을 때만 완료로 보고한다.
+After spawning real subagents, collect each result with `wait_agent` or `close_agent` before integrating it or reporting it as complete. Spawned 또는 pending subagent는 completed review가 아니다.
+Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report blocked or partial execution and do not integrate missing subagent results. Do not write `wait_agent`, `close_agent`, or result summaries unless those calls actually completed.
 
 ## Sequential Fallback
 
-If subagents are unavailable or not authorized, keep the role order and execute the reasoning sequentially:
+Subagent가 없거나 승인되지 않았거나 병렬화에 맞지 않으면 role order를 유지한 채 순차로 수행한다.
 
 1. Domain
 2. Architecture
@@ -58,11 +69,11 @@ If subagents are unavailable or not authorized, keep the role order and execute 
 7. Review
 8. Integration
 
-Sequential fallback is still a workflow. It is not a claim that subagents ran.
+Sequential fallback은 subagent가 실행됐다는 주장이 아니다.
 When using sequential fallback, explicitly state that real subagents were not executed and that the workflow is being handled as sequential fallback.
-In workflow-section output, start `## Sequential Fallback` with: `Real subagents were not executed; this is sequential fallback in the role order below.`
-Do not add this statement to direct single-skill answers, pure answer-only requests, or explicit opt-out responses.
+Workflow-section output에서 `## Sequential Fallback`은 다음 문장으로 시작한다: `Real subagents were not executed; this is sequential fallback in the role order below.`
+Direct single-skill answer, pure answer-only request, explicit opt-out response에는 이 문장을 추가하지 않는다.
 
 ## Review-Focused Work
 
-For review requests, lead with findings ordered by severity and grounded in evidence. If the review spans multiple role areas, use the role map and handoff/integration checks after the findings to show coordination and follow-up ownership.
+Review request는 severity 순 findings를 evidence와 함께 먼저 제시한다. Review가 여러 role area에 걸치면 findings 이후 role map, handoff, integration check로 coordination과 follow-up ownership을 보여준다.

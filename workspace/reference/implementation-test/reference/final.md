@@ -24,8 +24,10 @@
 16. [테스트 안티패턴](#16-테스트-안티패턴)
 17. [Mutation Testing](#17-mutation-testing-mutmut)
 18. [BDD pytest-bdd 구현](#18-bdd-pytest-bdd-구현)
-19. [테스트 디버깅 기법](#19-테스트-디버깅-기법)
-20. [참고 문헌](#20-참고-문헌)
+19. [Django Ninja TestClient API 계약 테스트](#19-django-ninja-testclient-api-계약-테스트)
+20. [Idempotency와 동시성 테스트](#20-idempotency와-동시성-테스트)
+21. [테스트 디버깅 기법](#21-테스트-디버깅-기법)
+22. [참고 문헌](#22-참고-문헌)
 
 ---
 
@@ -2338,11 +2340,242 @@ def error_occurred(order_result, message):
 
 ---
 
-## 19. 테스트 디버깅 기법
+## 19. Django Ninja TestClient API 계약 테스트
+
+Django Ninja API는 Django 표준 test client로도 테스트할 수 있지만, router/API 단위 계약을 빠르게 확인할 때는 `ninja.testing.TestClient`를 사용한다. 이 client는 middleware와 URL resolver 계층을 통과하지 않고 API surface를 직접 호출하므로, endpoint의 요청/응답 계약을 좁게 검증하기 좋다.
+
+### 19.1 Router 단위 응답 계약
+
+```python
+from ninja.testing import TestClient
+
+from orders.api import router
+
+
+client = TestClient(router)
+
+
+def test_order_detail_contract(order_factory):
+    order = order_factory(status="paid", total_amount="120.00")
+
+    response = client.get(f"/orders/{order.id}")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": order.id,
+        "status": "paid",
+        "total_amount": "120.00",
+    }
+```
+
+검증 대상은 public API contract다. 내부 service 호출 여부, private helper, ORM query 문자열처럼 구현 세부사항은 직접 검증하지 않는다.
+
+### 19.2 요청 검증과 오류 응답
+
+```python
+def test_create_order_validation_problem():
+    response = client.post(
+        "/orders",
+        json={"items": []},
+    )
+
+    assert response.status_code in {400, 422}
+    body = response.json()
+    assert "type" in body or "detail" in body
+    assert "items" in str(body)
+```
+
+프로젝트가 RFC 9457 Problem Details를 표준 오류 형식으로 채택했다면 `type`, `title`, `status`, `detail`, `instance`, field error 확장 키를 계약으로 고정한다. 아직 오류 계약이 정해지지 않았다면 `architecture-api`에서 먼저 결정한 뒤 테스트에 반영한다.
+
+### 19.3 인증, 페이지네이션, 필터링
+
+```python
+def test_order_list_requires_auth():
+    response = client.get("/orders")
+
+    assert response.status_code in {401, 403}
+
+
+def test_order_list_pagination_contract(auth_headers, order_factory):
+    order_factory.create_batch(3)
+
+    response = client.get(
+        "/orders",
+        headers=auth_headers,
+        query={"limit": 2, "offset": 0},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) >= {"items", "count"}
+    assert len(body["items"]) == 2
+```
+
+인증 우회, user fixture, header 이름은 프로젝트의 auth contract에 맞춘다. 권한/페이지네이션/필터링 계약이 불명확하면 API 설계를 먼저 확정한다.
+
+### 19.4 pytest-django DB 접근 선택
+
+Django ORM을 사용하는 API 테스트는 pytest-django의 DB access 규칙을 따른다. 기본적으로 DB 접근은 차단되며, DB가 필요한 테스트는 `pytest.mark.django_db`, `db`, `transactional_db` 중 하나로 의도를 명시한다.
+
+```python
+import pytest
+from ninja.testing import TestClient
+
+from orders.api import router
+
+
+client = TestClient(router)
+
+
+@pytest.mark.django_db
+def test_order_detail_reads_database(order_factory):
+    order = order_factory()
+
+    response = client.get(f"/orders/{order.id}")
+
+    assert response.status_code == 200
+```
+
+일반 ORM read/write 검증은 `pytest.mark.django_db`로 충분하다. commit/rollback 효과, `transaction.on_commit`, row lock, 별도 connection 관찰처럼 실제 transaction 경계가 테스트 대상이면 `pytest.mark.django_db(transaction=True)` 또는 `transactional_db` fixture를 사용한다.
+
+> 출처: [Django Ninja Testing](https://django-ninja.dev/guides/testing/), [pytest-django Database access](https://pytest-django.readthedocs.io/en/latest/database.html), [pytest-django helpers](https://pytest-django.readthedocs.io/en/latest/helpers.html)
+
+---
+
+## 20. Idempotency와 동시성 테스트
+
+중복 요청, 재시도, race condition, row lock은 일반 unit test만으로 충분히 보호되지 않는 경우가 많다. 도메인 규칙은 빠른 unit test로 먼저 고정하고, DB unique constraint, transaction, lock, idempotency storage가 관여하는 부분은 integration/API contract test로 검증한다.
+
+### 20.1 Idempotency replay 계약
+
+Idempotency-Key를 지원하는 write API는 같은 key와 같은 payload의 재전송이 같은 결과를 반환하거나 기존 처리 결과를 재사용해야 한다. 서로 다른 payload가 같은 key를 재사용하면 충돌로 실패해야 한다.
+
+```python
+import pytest
+from ninja.testing import TestClient
+
+from orders.api import router
+
+
+client = TestClient(router)
+
+
+@pytest.mark.django_db
+def test_create_order_idempotency_replays_same_result(auth_headers):
+    headers = {**auth_headers, "Idempotency-Key": "order-create-001"}
+    payload = {"sku": "BOOK-1", "quantity": 1}
+
+    first = client.post("/orders", json=payload, headers=headers)
+    second = client.post("/orders", json=payload, headers=headers)
+
+    assert first.status_code == 201
+    assert second.status_code in {200, 201}
+    assert second.json()["id"] == first.json()["id"]
+    assert Order.objects.count() == 1
+```
+
+```python
+@pytest.mark.django_db
+def test_create_order_idempotency_rejects_payload_mismatch(auth_headers):
+    headers = {**auth_headers, "Idempotency-Key": "order-create-002"}
+
+    first = client.post(
+        "/orders",
+        json={"sku": "BOOK-1", "quantity": 1},
+        headers=headers,
+    )
+    second = client.post(
+        "/orders",
+        json={"sku": "BOOK-1", "quantity": 2},
+        headers=headers,
+    )
+
+    assert first.status_code == 201
+    assert second.status_code in {400, 409, 422}
+    assert Order.objects.count() == 1
+```
+
+정확한 status code와 response body는 `architecture-api`에서 정한 idempotency contract를 따른다. 저장소 스키마, uniqueness, transaction boundary가 불명확하면 `architecture-db`를 먼저 사용한다.
+
+### 20.2 중복 생성 방지와 DB 제약
+
+```python
+import pytest
+from django.db import IntegrityError
+
+
+@pytest.mark.django_db
+def test_idempotency_key_is_unique_per_actor(idempotency_record_factory, user):
+    idempotency_record_factory(user=user, key="same-key")
+
+    with pytest.raises(IntegrityError):
+        idempotency_record_factory(user=user, key="same-key")
+```
+
+서비스 계층 test가 "중복이면 기존 결과 반환"을 검증하더라도, DB unique constraint test는 데이터 불변식을 별도로 보호한다. DB 제약이 동작의 일부라면 mock repository만으로 끝내지 않는다.
+
+### 20.3 Transaction과 row lock 테스트
+
+Django `TestCase` 계열은 각 테스트를 transaction으로 감싸므로 `select_for_update()`의 transaction 요구를 정확히 드러내지 못할 수 있다. row lock, commit/rollback, 별도 connection 관찰을 테스트할 때는 `TransactionTestCase` 또는 pytest-django의 `transaction=True`를 사용한다.
+
+```python
+import pytest
+from django.db import transaction
+
+
+@pytest.mark.django_db(transaction=True)
+def test_inventory_reservation_uses_transactional_lock(product_factory):
+    product = product_factory(stock=1)
+
+    with transaction.atomic():
+        locked = (
+            Product.objects
+            .select_for_update()
+            .get(id=product.id)
+        )
+        locked.stock -= 1
+        locked.save(update_fields=["stock"])
+
+    product.refresh_from_db()
+    assert product.stock == 0
+```
+
+이 예시는 transaction-capable test 선택을 보여주는 최소 형태다. 실제 동시성 보장은 두 connection, thread/process, lock timeout, `nowait=True`/`skip_locked=True`, 또는 DB별 격리 수준까지 포함해 검증해야 할 수 있다.
+
+### 20.4 Race condition 재현 테스트
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+import pytest
+
+
+@pytest.mark.django_db(transaction=True)
+def test_only_one_concurrent_reservation_succeeds(product_factory):
+    product = product_factory(stock=1)
+
+    def reserve_once():
+        return reserve_product(product.id, quantity=1)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(lambda _: reserve_once(), range(2)))
+
+    assert sorted(result.success for result in results) == [False, True]
+    product.refresh_from_db()
+    assert product.stock == 0
+```
+
+동시성 테스트는 DB backend와 connection 관리에 민감하다. SQLite처럼 row-lock 의미가 다른 backend에서는 이 검증이 충분하지 않을 수 있으므로 PostgreSQL 등 운영 DB와 같은 backend를 testcontainers로 띄우는 것을 고려한다. flaky test가 되면 skip으로 숨기기 전에 lock timeout, barrier, transaction boundary, cleanup fixture, random seed, DB isolation을 먼저 분석한다.
+
+> 출처: [Django testing tools](https://docs.djangoproject.com/en/dev/topics/testing/tools/), [Django QuerySet select_for_update](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#select-for-update), [pytest-django Database access](https://pytest-django.readthedocs.io/en/latest/database.html)
+
+---
+
+## 21. 테스트 디버깅 기법
 
 범용 Python 디버깅(repr, pdb, breakpoint)은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
 
-### 19.1 pytest에서 디버거 진입
+### 21.1 pytest에서 디버거 진입
 
 ```bash
 # 테스트 실패 시 자동으로 pdb 진입
@@ -2360,7 +2593,7 @@ pytest --pdb -k "test_specific_case"
 
 ---
 
-## 20. 참고 문헌
+## 22. 참고 문헌
 
 | 출처 | 다룬 내용 |
 |------|---------|
@@ -2373,6 +2606,9 @@ pytest --pdb -k "test_specific_case"
 | Martin Fowler / Ham Vocke | 테스트 피라미드, Practical Test Pyramid |
 | Google Testing Blog | SMURF 프레임워크, 테스트 크기 분류 |
 | Codepipes Blog | 테스트 안티패턴, 전략 수준 안티패턴 |
+| Django Ninja 공식 문서 | `TestClient`, API/router 단위 테스트 |
+| pytest-django 공식 문서 | `django_db`, `db`, `transactional_db`, transaction test 선택 |
+| Django 공식 문서 | `TransactionTestCase`, `TestCase`, `select_for_update` 테스트 주의 |
 
 ---
 
@@ -2383,7 +2619,7 @@ pytest --pdb -k "test_specific_case"
 pip install pytest
 
 # pytest 플러그인
-pip install pytest-cov pytest-xdist pytest-asyncio pytest-timeout pytest-randomly pytest-mock pytest-bdd
+pip install pytest-cov pytest-xdist pytest-asyncio pytest-timeout pytest-randomly pytest-mock pytest-bdd pytest-django
 
 # Property-Based Testing
 pip install hypothesis

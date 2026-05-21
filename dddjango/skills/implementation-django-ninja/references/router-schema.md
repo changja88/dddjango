@@ -1,36 +1,61 @@
-# Router And Schema
+# Router와 Schema
 
-Use this reference for Django Ninja Router, Schema/ModelSchema, endpoint adapter boundaries, and DRF-to-Ninja conversion. This skill is provisional: exact framework syntax must be verified against the project’s installed Django Ninja version and existing code.
+Django Ninja Router, Schema/ModelSchema, endpoint adapter 경계, request/response mapping, DRF-to-Ninja conversion을 구현할 때 이 reference를 읽는다.
 
-## Router Boundary
+## Router 경계
 
-- Treat a Router operation as an HTTP adapter, not a business-rule owner.
-- Keep Router code limited to request parsing, auth/permission wiring, schema validation, service/usecase invocation, response mapping, and error translation.
-- Keep URL registration explicit and consistent with the project’s existing Ninja API layout.
-- Move state transitions, invariants, transactional writes, complex ORM query construction, and external SDK calls to model/service/usecase code owned by `implementation-django`.
-- If a route needs a domain decision that has not been made, stop and route to `architecture-ddd` or `architecture-api` as appropriate.
+- Router operation은 business-rule owner가 아니라 HTTP adapter로 다룬다.
+- Router code는 request parsing, auth/permission wiring, schema validation, service/usecase invocation, response mapping, error translation으로 제한한다.
+- URL registration은 프로젝트의 기존 Ninja API layout과 일관되게 명시한다.
+- REST contract와 맞는 method, path, response schema, status code를 operation decorator에 드러낸다.
+- 여러 status response가 가능하면 문서화되지 않은 shape를 반환하지 말고 status-specific response schema를 선언한다.
+- state transition, invariant, transactional write, 복잡한 ORM query construction, 외부 SDK 호출은 `implementation-django`가 소유하는 model/service/usecase code로 옮긴다.
+- route에 아직 결정되지 않은 domain decision이 필요하면 멈추고 `architecture-ddd` 또는 `architecture-api`로 라우팅한다.
 
-## Schema And ModelSchema
+간단한 operation 선언 예:
 
-- Use request schemas for input shape and response schemas for output shape; do not expose every model field by default.
-- Separate create/update/list/detail schemas when fields, permissions, or performance needs differ.
-- Keep schema validation focused on transport/input shape. Put reusable domain invariants in model/service/DB boundaries.
-- Avoid leaking internal model names or DB structure when the API contract uses a different public language.
-- Treat field additions as generally compatible and field removals, renames, type changes, new required fields, status-code changes, and error-shape changes as breaking unless versioned.
+```python
+router = Router(tags=["orders"])
 
-## DRF-To-Ninja Conversion
 
-- Convert DRF `ViewSet`/`APIView` routing to explicit Django Ninja Router operations.
-- Convert DRF `Serializer`/`ModelSerializer` responsibilities into Django Ninja request/response schemas plus service-layer validation where appropriate.
-- Replace DRF-specific pagination, permissions, and exception behavior with the project’s Django Ninja equivalents while preserving the public API contract.
-- Compare old and new endpoint URLs, methods, status codes, response fields, error shapes, auth behavior, pagination, and OpenAPI schema.
-- Use DRF references only to understand the legacy source; do not keep DRF as the greenfield standard.
+@router.post("/", response={201: OrderDetailSchema, 409: ProblemDetailSchema})
+def create_order(request, payload: OrderCreateSchema):
+    result = create_order_usecase(payload.to_command(), actor=request.auth)
+    return 201, OrderDetailSchema.from_domain(result)
+```
 
-## Endpoint Review Questions
+## Schema와 ModelSchema
 
-- Is the HTTP contract already decided by `architecture-api`?
-- Is the Router registered in the expected API namespace/version?
-- Is the Router thin enough that business behavior can be tested without HTTP?
-- Are request and response schemas intentionally scoped to public API fields?
-- Are domain/application errors mapped consistently to Problem Details?
-- Are OpenAPI and compatibility impacts visible in the implementation notes?
+- input shape에는 request schema, output shape에는 response schema를 사용한다. 모든 model field를 기본 노출하지 않는다.
+- field, permission, performance 요구가 다르면 create/update/list/detail schema를 분리한다.
+- schema validation은 transport/input shape에 집중한다. 재사용 domain invariant는 model/service/DB boundary에 둔다.
+- API contract가 다른 public language를 쓰면 내부 model name이나 DB 구조가 새지 않게 한다.
+- `ModelSchema`는 내부 필드, 관리 필드, 보안 민감 필드가 노출되지 않는지 확인한 뒤 사용한다.
+- computed field와 schema resolver는 response mapping으로 제한한다. DB access, permission check, domain decision은 selector/service에 둔다.
+- field 추가는 대체로 compatible로 볼 수 있지만 field 제거, rename, type change, 새 required field, status-code change, error-shape change는 versioning 없이는 breaking change로 본다.
+
+`ModelSchema` 사용 예는 반드시 `fields`를 명시해 검토 가능한 API surface를 만든다.
+
+```python
+class OrderListSchema(ModelSchema):
+    class Meta:
+        model = Order
+        fields = ["id", "status", "total_amount", "created_at"]
+```
+
+## DRF-to-Ninja conversion
+
+- DRF `ViewSet`/`APIView` routing은 명시적인 Django Ninja Router operation으로 바꾼다.
+- DRF `Serializer`/`ModelSerializer` 책임은 Django Ninja request/response schema와 필요한 service-layer validation으로 나눈다.
+- public API contract를 보존하면서 DRF-specific pagination, permission, exception behavior를 프로젝트의 Django Ninja equivalent로 교체한다.
+- 기존/신규 endpoint URL, method, status code, response field, error shape, auth behavior, pagination, OpenAPI schema를 비교한다.
+- DRF reference는 legacy source 이해에만 사용한다. DRF를 greenfield 표준으로 유지하지 않는다.
+
+## Endpoint review 질문
+
+- HTTP contract가 `architecture-api`에서 이미 결정되었는가?
+- Router가 기대한 API namespace/version에 등록되었는가?
+- HTTP 없이 business behavior를 테스트할 수 있을 만큼 Router가 얇은가?
+- request/response schema가 public API field로 의도적으로 제한되었는가?
+- domain/application error가 Problem Details로 일관되게 mapping되는가?
+- OpenAPI와 compatibility 영향이 구현 메모나 검증에 드러나는가?

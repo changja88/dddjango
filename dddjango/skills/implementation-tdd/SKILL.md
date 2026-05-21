@@ -28,9 +28,7 @@ Use this skill to turn behavior into tests before implementation. TDD here means
 ## Runtime Rules
 
 - Start with a test list for behavior, boundary cases, and known risks before implementation.
-- For boundary policies with independent decision axes, give each axis its own accepted edge and nearest rejected/complement case; a rejection on another axis does not cover this axis.
-- Do not treat user-named boundary examples as exhaustive; exact thresholds, limits, and effective or expiration dates usually need the named edge plus the nearest value or date outside it unless the user explicitly forbids extra cases.
-- For validity windows, test the inclusive boundary and the first invalid value after it; for expiring coupons, include both the expiration day accepted case and the day after expiration rejected case. A rejection on another axis, such as already-used, inactive, or minimum-order failure, does not cover expiration.
+- Treat boundary examples as prompts to expand the test list; for validity windows include the accepted boundary and the day after expiration rejected. A rejection on another axis does not cover the boundary. Use `references/test-list.md` for detailed independent-axis and nearest outside/complement cases.
 - For ambiguous domain policy tests, separate confirmed behavior tests, unresolved decisions, and a short model-candidates note when ownership is unclear: value object for attribute-defined immutable concepts, aggregate/entity behavior for lifecycle or state transitions, and domain service for stateless rules spanning concepts. Keep these as candidates until policy decisions are made.
 - Write or propose the next failing test before production code unless the user asks for explanation only or the workspace is read-only.
 - When working inside a composite workflow, state the test files or test cases the Test Agent should own.

@@ -2,6 +2,8 @@
 
 Use this reference for Django app layout, settings access, models, fields, validation, QuerySets, managers, forms, views, and signals. For API Router/Schema work use `implementation-django-ninja`; for templates/static/frontend work use `implementation-django-web`.
 
+Source basis: Django official docs/design philosophies, Two Scoops of Django, Django for Professionals.
+
 ## Project And Settings
 
 - Prefer a conventional split such as `config/settings/base.py`, `local.py`, `production.py`, and `test.py` when a project already follows or needs that layout.

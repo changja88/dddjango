@@ -27,7 +27,7 @@
 5. [QuerySet과 Manager 패턴](#5-queryset과-manager-패턴)
 6. [뷰 패턴: CBV vs FBV](#6-뷰-패턴-cbv-vs-fbv)
 7. [폼과 유효성 검증](#7-폼과-유효성-검증)
-8. [Django REST Framework 패턴](#8-django-rest-framework-패턴)
+8. [REST API 경계와 기존 DRF 유지보수](#8-rest-api-경계와-기존-drf-유지보수)
 9. [시그널 사용 가이드라인](#9-시그널-사용-가이드라인)
 10. [마이그레이션 베스트 프랙티스](#10-마이그레이션-베스트-프랙티스)
 11. [성능 최적화](#11-성능-최적화)
@@ -860,9 +860,13 @@ class ContactForm(forms.Form):
 
 ---
 
-## 8. Django REST Framework 패턴
+## 8. REST API 경계와 기존 DRF 유지보수
 
-### 8.1 Serializer 설계 [DRF]
+신규 REST API의 리소스 계약, HTTP 상태 코드, 오류 응답, pagination, versioning, idempotency는 Django 모델/ORM 구현 문제가 아니라 API 계약 문제로 먼저 다룬다. dddjango runtime에서는 greenfield endpoint 구현의 기본 경로를 Django Ninja Router/Schema로 두며, 이 문서의 DRF 내용은 기존 DRF 코드 유지보수, 레거시 migration review, 또는 이미 DRF를 표준으로 채택한 프로젝트 안에서만 적용한다.
+
+신규 코드에서 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`를 기본 권장안처럼 제시하지 않는다. 기존 DRF surface를 다룰 때도 도메인 규칙은 serializer/viewset에 흩뿌리지 말고 모델 메서드, service, selector, database constraint 같은 Django-side boundary에 둔다.
+
+### 8.1 기존 DRF Serializer 설계 [DRF]
 
 ```python
 # 좋은 예: 읽기/쓰기 Serializer 분리
@@ -895,11 +899,12 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         return value
 ```
 
-- 목록/상세/생성/수정 시나리오마다 Serializer를 분리하면 보안과 성능 모두 개선된다.
+- 기존 DRF 코드에서는 목록/상세/생성/수정 시나리오마다 Serializer를 분리하면 보안과 성능 모두 개선된다.
 - `fields = "__all__"` 을 피한다 -- ModelForm과 같은 이유.
 - `source` 파라미터로 모델 필드명과 API 필드명을 분리할 수 있다.
+- 검증이 serializer에만 갇히면 다른 entry point에서 불변식이 깨질 수 있다. 여러 entry point가 공유하는 규칙은 모델, service, DB constraint로 올린다.
 
-### 8.2 ViewSet과 Router [DRF]
+### 8.2 기존 DRF ViewSet과 Router [DRF]
 
 ```python
 from rest_framework import viewsets, permissions
@@ -934,9 +939,10 @@ router.register("articles", ArticleViewSet)
 urlpatterns = router.urls
 ```
 
-- `get_serializer_class()`를 오버라이드하여 액션별 Serializer를 분리한다.
+- 기존 DRF 코드에서는 `get_serializer_class()`를 오버라이드하여 액션별 Serializer를 분리한다.
 - `@action`에 `permission_classes`를 별도 지정할 수 있다.
 - `DefaultRouter`를 사용하면 URL 패턴이 자동 생성된다.
+- viewset은 HTTP adapter다. transaction owner, external side effect timing, domain state transition은 명시적인 model/service boundary로 빼서 재사용 가능하게 둔다.
 
 ### 8.3 Permission 패턴 [DRF]
 
@@ -974,7 +980,7 @@ class LargeResultsSetPagination(PageNumberPagination):
 - Generic views/ViewSet에서는 자동 적용된다.
 - `APIView`를 직접 사용하면 수동으로 페이지네이션을 호출해야 한다.
 
-### 8.5 API 버전 관리 [DRF]
+### 8.5 기존 DRF API 버전 관리 [DRF]
 
 ```python
 # settings.py -- Accept Header 방식 (DRF 공식 권장)
@@ -1003,7 +1009,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
         return ArticleV1Serializer
 ```
 
-- **AcceptHeaderVersioning**은 URL을 깔끔하게 유지하며 일반적으로 best practice로 간주된다 (DRF 공식 문서). 단, 프로젝트 요구에 따라 URLPathVersioning 등 다른 방식도 적합할 수 있다. **[DRF]**
+- 기존 DRF 프로젝트에서 **AcceptHeaderVersioning**은 URL을 깔끔하게 유지하며 일반적으로 best practice로 간주된다 (DRF 공식 문서). 단, 프로젝트 요구에 따라 URLPathVersioning 등 다른 방식도 적합할 수 있다. **[DRF]**
 - **URLPathVersioning**은 가장 직관적이고 널리 사용된다.
 - 버전 간 호환성 유지를 위해 필드 추가는 허용하되, 기존 필드 삭제/변경은 새 버전에서만 수행한다.
 
@@ -1548,12 +1554,15 @@ class RequestTimingMiddleware:
 
 ### 16.1 서비스 레이어가 필요한 시점 [TSD] [HS] [CP]
 
-Fat Model이 비대해지면 서비스 레이어를 도입한다. 기준점:
+Fat Model이 비대해졌다는 판단은 파일 길이보다 변경 이유와 orchestration 복잡도로 한다. 단순한 한 모델의 행위는 모델 메서드나 custom QuerySet으로 충분하며, service layer는 다음 기준 중 하나 이상이 실제로 있을 때 도입한다.
 
-- 모델 파일이 500줄을 넘길 때
-- 하나의 비즈니스 동작이 여러 모델에 걸칠 때
-- 동일한 로직이 여러 뷰에서 중복될 때
-- 외부 서비스(이메일, 결제 등) 호출이 모델에 섞일 때
+- 하나의 use case가 여러 모델, 여러 aggregate, 또는 여러 adapter를 조율한다.
+- 같은 비즈니스 흐름이 view, API, management command, task, signal 등 여러 entry point에 중복된다.
+- use case가 명시적인 transaction boundary를 소유한다.
+- 이메일, 결제, 파일, 메시지 publish 같은 외부 side effect가 DB write와 함께 정렬되어야 한다.
+- 모델이 domain behavior보다 persistence/orchestration 세부사항 때문에 이해하기 어려워진다.
+
+파일 크기 자체는 보조 신호일 뿐이다. 실제로 함께 이해되고 함께 바뀌는 짧은 절차는 service로 억지 분리하지 않는다.
 
 ### 16.2 HackSoft 서비스/셀렉터 패턴 [HS]
 
@@ -1623,6 +1632,48 @@ class ArticleRepository:
 - 도메인이 정말 복잡해질 때만 Repository 패턴을 점진적으로 도입한다.
 - DDD의 모든 패턴을 Django에 강제하면 Django의 장점(admin, migrations, forms)을 재구현하게 된다. **[CP]**
 - 서비스 레이어는 좋은 출발점 -- 뷰와 모델 사이에 얇은 계층을 두어 비즈니스 로직을 격리한다.
+
+### 16.4 트랜잭션과 일관성 경계 [DDoc] [CP]
+
+Django write flow는 use case 단위로 commit/rollback 경계를 정한다. 모든 코드를 큰 transaction으로 감싸는 것이 아니라, 함께 성공하거나 함께 실패해야 하는 최소 블록에 `transaction.atomic()`을 둔다.
+
+```python
+from django.db import transaction
+
+def order_confirm(*, order: Order) -> Order:
+    with transaction.atomic():
+        order = (
+            Order.objects
+            .select_for_update()
+            .get(pk=order.pk)
+        )
+        order.confirm()
+        order.save(update_fields=["status", "confirmed_at"])
+
+        transaction.on_commit(lambda: notify_warehouse(order_id=order.id))
+
+    return order
+```
+
+- `transaction.atomic()`의 owner는 model method보다 application service가 되는 경우가 많다. 여러 모델 write, 여러 invariant, 외부 side effect가 하나의 use case에 묶일 때 특히 그렇다.
+- `select_for_update()`는 pessimistic lock이 필요한 경우에만 사용한다. 잠금 범위, DB backend 지원, 테스트 환경에서 실제 lock 동작을 검증할 수 있는지 함께 확인한다.
+- 중복 write 방지는 application-level check만 믿지 않는다. 반드시 지켜야 하는 invariant는 `UniqueConstraint`, `CheckConstraint`, partial unique index, idempotency storage 같은 DB boundary와 함께 설계한다.
+- 외부 side effect는 commit 전에 실행하지 않는다. DB write가 rollback될 수 있으면 `transaction.on_commit()`으로 email, message publish, payment follow-up, cache invalidation 시점을 정렬한다.
+- isolation level, retry, optimistic/pessimistic locking 선택은 DB 특성과 실패 모드에 따라 달라진다. 결정이 불명확하면 DB architecture 검토가 먼저다.
+- HTTP로 노출된 risky write는 API layer의 `Idempotency-Key` 계약과 DB idempotency storage가 서로 맞아야 한다.
+
+Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
+
+| 항목 | 확인 내용 |
+|------|-----------|
+| transaction owner | 어떤 service/use case가 atomic boundary를 소유하는가 |
+| lock/idempotency | `select_for_update`, optimistic check, unique constraint, idempotency table 중 무엇으로 중복과 race를 막는가 |
+| DB constraint | application bug나 다른 writer가 있어도 DB가 지켜야 하는 invariant는 무엇인가 |
+| side effect timing | email/payment/message/cache invalidation이 commit 전후 어디에서 실행되는가 |
+| isolation/retry | serialization failure, deadlock, duplicate key 같은 실패를 retry할지 forward-fix할지 |
+| verification | `TransactionTestCase`, concurrency test, integration test, migration SQL review, query-count check 중 무엇으로 확인하는가 |
+
+테스트에서는 일반 DB-backed behavior는 `TestCase`로 충분하지만, commit hook, lock, DB trigger, transaction isolation을 검증해야 하면 `TransactionTestCase`나 실제 DB 기반 integration test가 필요하다.
 
 ---
 

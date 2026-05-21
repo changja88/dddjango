@@ -1,54 +1,55 @@
 ---
 name: implementation-django-ninja
 description: >
-  Provisional until dedicated source reference exists; use with fallback source for Django Ninja API implementation: Router/라우터, Schema/스키마, endpoint/엔드포인트, auth/permission/권한, pagination, filtering/필터링/정렬, Problem Details, OpenAPI, TestClient/API 테스트 acceptance criteria, and DRF-to-Ninja migration. Use for Router/Schema 구현, 엔드포인트 구현, 인증/인가, 페이지네이션, 오류 응답, DRF ViewSet/APIView/Serializer/시리얼라이저/뷰셋을 Ninja로 전환, and greenfield DRF Serializer/ViewSet/APIView/DefaultRouter/rest_framework requests that should become Django Ninja work; legacy DRF review/migration is allowed as an exception. For pure answer-only/tiny explanations, preserve the requested output shape and do not add tool/check reports. Prefer workflow-dddjango-subagents for risky DDD+DB/API+tests, architecture-api for undecided REST contracts, architecture-db for idempotency/locking decisions, implementation-django for ORM/service/migrations, and implementation-test for pytest/API contract test mechanics.
+  Django Ninja API 구현에 사용한다: Router/라우터, Schema/스키마, ModelSchema, endpoint/엔드포인트, auth/permission/인증/인가, pagination/페이지네이션, filtering/필터링/정렬, Problem Details, OpenAPI, TestClient/API 테스트 acceptance criteria, DRF-to-Ninja migration. Router/Schema 구현, 엔드포인트 구현, 인증/인가, 페이지네이션, 오류 응답, DRF ViewSet/APIView/Serializer/시리얼라이저/뷰셋을 Django Ninja로 전환, greenfield DRF Serializer/ViewSet/APIView/DefaultRouter/rest_framework 요청을 Django Ninja 작업으로 전환할 때 사용한다. legacy DRF review/migration은 예외적으로 허용한다. 짧은 answer-only/tiny explanation 요청은 사용자가 요구한 출력 형태를 보존하고 tool/check report를 덧붙이지 않는다. 위험한 DDD+DB/API+test 작업은 workflow-dddjango-subagents, REST 계약 미정은 architecture-api, idempotency/locking 미정은 architecture-db, ORM/service/migration은 implementation-django, pytest/API contract test mechanics는 implementation-test를 우선한다.
 ---
 
-# Django Ninja Implementation
+# Django Ninja 구현
 
-This skill is provisional. Dedicated Django Ninja source reference does not exist yet; use the fallback source named below and verify exact framework syntax against the project’s installed Django Ninja version and existing code conventions.
+REST 계약, 도메인 동작, 저장소/트랜잭션 판단이 충분히 정해진 뒤 Django Ninja HTTP adapter를 구현할 때 사용한다. 이 skill의 runtime 지침은 Router, Schema, auth/permission wiring, API error mapping, OpenAPI 영향, TestClient acceptance criteria에 집중한다.
 
-## Fallback Source
+## Source 경계
 
-- Use the dddjango REST API architecture source for resources, HTTP methods, status codes, RFC 9457 Problem Details, auth/permission concepts, pagination, versioning, rate limiting, idempotency, and OpenAPI.
-- Use the dddjango product decision that new API implementation uses Django Ninja, not DRF.
-- Use the Django/DRF fallback material only for legacy review, DRF-to-Ninja migration, compatibility, or comparison.
+- Django Ninja source는 Router, Schema/ModelSchema, endpoint adapter 경계, auth/permission wiring, filtering/sorting, pagination hook, Problem Details exception mapping, OpenAPI 영향, TestClient 확인, DRF-to-Ninja migration 기준을 제공한다.
+- `architecture-api`는 resource, HTTP method, status code, RFC 9457 Problem Details 계약, header/content negotiation, pagination strategy, versioning, rate limiting, idempotency, OpenAPI 계약 결정을 맡는다.
+- `implementation-django`는 HTTP adapter 밖의 ORM, selector, service, transaction, migration, caching, security 구현을 맡는다.
+- Django/DRF 자료는 legacy review, DRF-to-Ninja migration, compatibility, comparison에만 사용한다.
 
 ## Routing
 
-- If the request combines DDD, DB/API contract, Django implementation, tests, transactions, or duplicate prevention for risky domains such as orders/payments/inventory, use `workflow-dddjango-subagents` first.
-- If REST resources, URL shape, status codes, error contract, pagination strategy, versioning, rate limiting, or idempotency behavior are not decided, use `architecture-api` first.
-- If HTTP headers, `Content-Type`, `Accept`, language negotiation, cache semantics, or other content negotiation behavior is undecided, use `architecture-api` first.
-- If idempotency storage, unique constraints, locking, transaction isolation, retry behavior, or DB consistency decisions are undecided, use `architecture-db` before API implementation.
-- If domain rules, state transitions, invariants, or bounded context are unclear, use `architecture-ddd` first.
-- If ORM models, services, selectors, transactions, or migrations are the main work, use `implementation-django`.
-- If the work is pytest fixtures, mocks, factories, test doubles, concurrency test mechanics, coverage, or detailed test implementation, use `implementation-test`; this skill states Django Ninja TestClient and API contract acceptance criteria unless endpoint implementation is also in scope.
-- If the user asks for DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` for new work, convert the implementation target to Django Ninja unless the task is explicitly legacy review or migration.
-- If the user asks for subagents, 역할 분해, 병렬 검토, or 책임 분배, use `workflow-dddjango-subagents` first.
-- For a short Django Ninja explanation or a tiny existing Router string edit, answer or edit directly without DDD/workflow ceremony.
+- 주문/결제/재고처럼 위험한 도메인에서 DDD, DB/API contract, Django 구현, test, transaction, duplicate prevention이 함께 얽히면 `workflow-dddjango-subagents`를 먼저 사용한다.
+- REST resource, URL shape, status code, error contract, pagination strategy, versioning, rate limiting, idempotency behavior가 미정이면 `architecture-api`를 먼저 사용한다.
+- HTTP header, `Content-Type`, `Accept`, language negotiation, cache semantics, content negotiation behavior가 미정이면 `architecture-api`를 먼저 사용한다.
+- idempotency storage, unique constraint, locking, transaction isolation, retry behavior, DB consistency 결정이 미정이면 API 구현 전에 `architecture-db`를 사용한다.
+- domain rule, state transition, invariant, bounded context가 불명확하면 `architecture-ddd`를 먼저 사용한다.
+- ORM model, service, selector, transaction, migration이 주 작업이면 `implementation-django`를 사용한다.
+- pytest fixture, mock, factory, test double, concurrency test mechanics, coverage, 상세 test 구현이 주 작업이면 `implementation-test`를 사용한다. 이 skill은 endpoint 구현도 범위에 있을 때 Django Ninja TestClient와 API contract acceptance criteria를 제시한다.
+- 새 작업에서 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework`를 요청하면, 명시적인 legacy review/migration이 아닌 한 구현 목표를 Django Ninja로 전환한다.
+- 사용자가 subagents, 역할 분해, 병렬 검토, 책임 분배를 요청하면 `workflow-dddjango-subagents`를 먼저 사용한다.
+- 짧은 Django Ninja 설명이나 작은 기존 Router 문자열 수정은 DDD/workflow 절차 없이 바로 답하거나 수정한다.
 
-## Output Shape
+## 출력 형태
 
-- For pure answer-only requests, output only the requested answer. If the user asks for a fixed number of sentences or bullets, return exactly that many units and stop at the final requested unit. Do not append or embed extra paragraphs, headings, command lists, checks, tool reports, Serena notes, or skill/reference loading reports.
-- Treat a requested answer shape as the user's explicit instruction; it overrides generic completion-report habits for commands, checks, tools, or skill loading.
-- Forbidden answer-only phrases include `Commands run`, `commands run`, `Commands actually run`, `Checks not run`, `checks not run`, `실행한 명령`, `명령 실행`, `체크`, `체크: 미실행`, `검증 미실행`, and `Serena`, even when placed before or compressed into the final requested unit.
-- For definition questions, define the requested Django Ninja concept and its ordinary use; do not add implementation guidance, testing notes, or service-layer advice unless the user asks for those details.
-- Skill/reference loading commands are not user-task work and must not be reported as commands run.
+- 순수 answer-only 요청은 사용자가 요구한 답만 출력한다. 문장 수나 bullet 수가 고정되어 있으면 정확히 그 수만 반환하고 멈춘다.
+- 사용자가 지정한 출력 형태는 명시 지시다. command, check, tool, skill/reference loading 보고 습관보다 우선한다.
+- 정의 질문은 요청한 Django Ninja 개념과 일반적 사용만 정의한다. 사용자가 요구하지 않은 구현 조언, 테스트 메모, service-layer 조언을 덧붙이지 않는다.
+- Skill/reference loading command는 사용자 작업 검증이 아니므로 실행 명령으로 보고하지 않는다.
 
 ## Reference Loading
 
-- Load only the reference file(s) relevant to the current Django Ninja task.
-- Read [router-schema.md](references/router-schema.md) for Router, Schema/ModelSchema, endpoint adapter boundaries, request/response mapping, and DRF-to-Ninja conversion.
-- Read [auth-pagination-filtering.md](references/auth-pagination-filtering.md) for auth/permission, filtering, sorting, pagination, rate limiting, and versioning implementation concerns.
-- Read [problem-details-openapi.md](references/problem-details-openapi.md) for RFC 9457 Problem Details, idempotency, status codes, compatibility, and OpenAPI effects.
-- Read [testclient.md](references/testclient.md) for Django Ninja API test acceptance criteria and honest verification reporting.
+- 현재 Django Ninja 작업에 관련된 reference 파일만 읽는다.
+- Router, Schema/ModelSchema, endpoint adapter 경계, request/response mapping, DRF-to-Ninja conversion은 [router-schema.md](references/router-schema.md)를 읽는다.
+- auth/permission, `FilterSchema`/query filtering, sorting, pagination hook, rate limiting, versioning 구현 관심사는 [auth-pagination-filtering.md](references/auth-pagination-filtering.md)를 읽는다.
+- RFC 9457 Problem Details, exception handler, validation error mapping, idempotency, status code, compatibility, OpenAPI 영향은 [problem-details-openapi.md](references/problem-details-openapi.md)를 읽는다.
+- Django Ninja API test acceptance criteria와 honest verification reporting은 [testclient.md](references/testclient.md)를 읽는다.
 
-## Runtime Rules
+## Runtime 규칙
 
-- Keep Router functions thin: request schema validation, auth/permission connection, usecase/service call, domain/application error translation, response schema mapping, and OpenAPI impact.
-- Do not put core business rules, state transitions, complex ORM queries, or external SDK calls in Router, Schema, or filter code.
-- Use service/usecase boundaries from `implementation-django` for business behavior and transaction ownership.
-- Use RFC 9457 Problem Details for API errors unless the existing API contract explicitly requires a compatible legacy shape.
-- For duplicate-prone POST endpoints, coordinate `Idempotency-Key` behavior with the service transaction and storage owner.
-- Preserve client compatibility when migrating from DRF; compare status codes, fields, pagination, auth behavior, error shape, and OpenAPI changes.
-- For implementation work, report only verification actually run. If TestClient, pytest, OpenAPI generation, compatibility checks, or schema checks were not run, say so. For pure answer-only requests, omit verification-not-run reporting.
+- Router 함수는 request schema validation, auth/permission 연결, usecase/service 호출, domain/application error 변환, response schema mapping, OpenAPI 영향으로 얇게 유지한다.
+- 핵심 business rule, state transition, 복잡한 ORM query, 외부 SDK 호출은 Router, Schema, filter code에 두지 않는다.
+- business behavior와 transaction ownership은 `implementation-django`의 service/usecase 경계를 따른다.
+- request schema, response schema, public filtering/sorting parameter는 API contract에 맞게 의도적으로 좁힌다. model field를 우연히 노출하지 않는다.
+- 기존 API contract가 legacy shape를 명시적으로 요구하지 않는 한 API error는 RFC 9457 Problem Details를 사용한다.
+- duplicate-prone POST endpoint는 `Idempotency-Key` 동작을 service transaction과 storage owner와 함께 맞춘다.
+- DRF에서 migration할 때는 status code, field, pagination, auth behavior, error shape, OpenAPI 변경을 비교해 client compatibility를 보존한다.
+- 구현 작업에서는 실제 실행한 검증만 보고한다. TestClient, pytest, OpenAPI generation, compatibility check, schema check를 실행하지 않았으면 실행했다고 말하지 않는다. 순수 answer-only 요청에서는 verification-not-run 보고를 생략한다.

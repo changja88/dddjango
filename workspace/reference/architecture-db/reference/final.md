@@ -1,7 +1,8 @@
 # 데이터베이스 설계 종합 가이드
 
 > 이 문서는 관계형 데이터베이스(RDB) 설계에 집중한다.
-> NoSQL, ORM 코드, 마이그레이션 도구, 커넥션 풀링은 다루지 않는다.
+> NoSQL, ORM 코드, 도구별 마이그레이션 구현, 커넥션 풀링은 다루지 않는다.
+> 다만 제약조건, 락, 멱등성 저장소, staged rollout/backfill 같은 DB architecture 결정은 다룬다.
 
 ---
 
@@ -14,11 +15,13 @@
 5. [성능 최적화 순서](#5-성능-최적화-순서)
 6. [인덱스 아키텍처: B+Tree](#6-인덱스-아키텍처-btree)
 7. [인덱스 설계 베스트 프랙티스](#7-인덱스-설계-베스트-프랙티스)
-8. [트랜잭션과 격리 수준](#8-트랜잭션과-격리-수준)
-9. [쿼리 최적화](#9-쿼리-최적화)
-10. [데이터 모델링 패턴: 계층 구조](#10-데이터-모델링-패턴-계층-구조)
-11. [데이터 모델링 패턴: 상속과 다형성](#11-데이터-모델링-패턴-상속과-다형성)
-12. [참고 문헌](#12-참고-문헌)
+8. [제약조건과 중복 방지](#8-제약조건과-중복-방지)
+9. [트랜잭션, 격리 수준, 락](#9-트랜잭션-격리-수준-락)
+10. [쿼리 최적화](#10-쿼리-최적화)
+11. [운영 rollout, backfill, migration safety](#11-운영-rollout-backfill-migration-safety)
+12. [데이터 모델링 패턴: 계층 구조](#12-데이터-모델링-패턴-계층-구조)
+13. [데이터 모델링 패턴: 상속과 다형성](#13-데이터-모델링-패턴-상속과-다형성)
+14. [참고 문헌](#14-참고-문헌)
 
 ---
 
@@ -276,9 +279,65 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 
 ---
 
-## 8. 트랜잭션과 격리 수준
+## 8. 제약조건과 중복 방지
 
-### 8.1 ACID
+DB가 강제할 수 있는 불변식은 애플리케이션 validation만으로 남기지 않고 제약조건으로 보호한다. 제약조건은 도메인 규칙, 데이터 정합성, 중복 방지, 동시 요청 방어를 함께 담당한다.
+
+### 8.1 제약조건 선택 기준
+
+| 제약조건 | 사용 기준 | 주의 |
+|----------|----------|------|
+| Primary Key | 행의 안정적 식별자 | 자연키가 불안정하면 surrogate key 사용 |
+| Foreign Key | 참조 무결성을 DB가 강제할 수 있는 관계 | 삭제 정책과 함께 결정 |
+| Unique | 자연 유일성, duplicate prevention, idempotency key 저장 | NULL 처리와 partial unique 여부 확인 |
+| Check | 단일 행 안에서 검증 가능한 값 범위와 상태 규칙 | 다른 행이나 외부 상태가 필요한 규칙에는 부적합 |
+| Not Null | 필수 속성 또는 필수 관계 | 기존 데이터 backfill 후 적용 |
+
+### 8.2 FK 삭제 정책
+
+| 정책 | 적합한 경우 | 위험 |
+|------|------------|------|
+| Restrict/Protect | 참조 중인 데이터 삭제를 금지해야 함 | 삭제 작업이 실패할 수 있음 |
+| Cascade | 부모 생명주기가 자식 생명주기를 완전히 소유 | 감사/복구 요구와 충돌 가능 |
+| Set Null | 관계는 끊어도 자식 데이터는 보존 | nullable 의미가 도메인에 맞아야 함 |
+| Soft Delete | 삭제 이력과 복구가 중요 | 모든 조회와 unique constraint에 삭제 상태 반영 필요 |
+
+Cascade는 편의 기능이 아니라 소유권 결정이다. 감사, 결제, ledger, 권한처럼 이력 보존이 중요한 데이터에는 무심코 cascade를 쓰지 않는다.
+
+### 8.3 중복 방지와 멱등성 저장소
+
+중복 방지는 같은 비즈니스 사건이 두 번 저장되거나 처리되는 것을 막는 설계다.
+
+| 상황 | 권장 DB 장치 |
+|------|--------------|
+| 사용자 이메일, 주문 번호처럼 자연 유일성이 있음 | unique constraint 또는 partial unique index |
+| soft-delete 후 활성 행만 유일해야 함 | `WHERE deleted_at IS NULL` partial unique index |
+| 동일 요청 retry를 같은 결과로 재생해야 함 | idempotency key table + unique constraint |
+| 같은 key로 다른 요청 본문이 들어오면 충돌이어야 함 | key scope + request fingerprint/hash 저장 |
+
+Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소한 다음을 정한다.
+
+- key scope: caller, tenant, operation, resource owner 등 어떤 범위에서 unique한지
+- storage owner/location: 어떤 테이블이 key와 처리 상태를 소유하는지
+- unique constraint: 동시 요청 race를 DB가 막을 수 있는지
+- request fingerprint: 같은 key의 다른 payload를 구분하는지
+- response snapshot 또는 stable result reference: replay가 현재 상태 재조회가 아니라 최초 결과 재현인지
+- retention/cleanup: 보관 기간과 cleanup이 unique constraint 의미를 깨지 않는지
+
+### 8.4 제약조건 rollout 원칙
+
+기존 데이터가 있는 테이블에 새 제약조건을 추가할 때는 데이터 정리와 rollout 순서를 먼저 설계한다.
+
+1. 현재 데이터가 제약조건을 만족하는지 점검한다.
+2. 필요한 경우 batch backfill 또는 cleanup을 먼저 수행한다.
+3. 새 코드와 구 코드가 동시에 동작하는 compatibility window를 고려한다.
+4. NOT NULL, unique, check constraint는 검증 실패와 rollback/forward-fix 방법을 정한 뒤 적용한다.
+
+---
+
+## 9. 트랜잭션, 격리 수준, 락
+
+### 9.1 ACID
 
 | 속성 | 의미 |
 |------|------|
@@ -287,7 +346,7 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 | **Isolation** | 동시 트랜잭션이 서로 간섭하지 않음 |
 | **Durability** | 커밋된 데이터는 시스템 장애 후에도 유지 |
 
-### 8.2 이상 현상 (Phenomena)
+### 9.2 이상 현상 (Phenomena)
 
 | 현상 | 설명 |
 |------|------|
@@ -296,7 +355,7 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 | **Phantom Read** | 같은 조건으로 두 번 조회했을 때 행의 집합이 다름 |
 | **Serialization Anomaly** | 동시 트랜잭션의 결과가 어떤 직렬 실행 순서와도 일치하지 않음 |
 
-### 8.3 4단계 격리 수준
+### 9.3 4단계 격리 수준
 
 | 격리 수준 | Dirty Read | Non-Repeatable Read | Phantom Read | 직렬화 이상 |
 |-----------|:----------:|:-------------------:|:------------:|:-----------:|
@@ -305,7 +364,7 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 | Repeatable Read | 불가 | 불가 | 가능 | 가능 |
 | Serializable | 불가 | 불가 | 불가 | 불가 |
 
-### 8.4 실전 선택 가이드
+### 9.4 실전 선택 가이드
 
 | 격리 수준 | 적합한 경우 | 주의 |
 |-----------|-----------|------|
@@ -315,13 +374,43 @@ CREATE UNIQUE INDEX uq_email_active ON users (email) WHERE deleted_at IS NULL;
 
 **핵심**: 격리 수준이 높을수록 안전하지만, 동시성이 낮아지고 직렬화 실패가 발생할 수 있다. 필요 이상으로 높은 격리 수준은 불필요한 성능 저하를 초래한다.
 
+### 9.5 락과 동시성 제어
+
+격리 수준만으로 비즈니스 불변식이 보호되지 않으면 제약조건이나 명시적 락을 함께 설계한다.
+
+| 전략 | 적합한 경우 | 주의 |
+|------|------------|------|
+| Unique constraint 기반 방어 | 중복 생성, 동일 key race, natural uniqueness | 충돌 시 예외/재시도/기존 결과 조회 정책 필요 |
+| Optimistic locking | 충돌이 드물고 retry가 허용됨 | version 컬럼 또는 compare-and-swap 조건 필요 |
+| Pessimistic row lock | 재고, 예약, 잔액처럼 동시 writer가 같은 행을 수정 | lock 순서, timeout, deadlock 대응 필요 |
+| Advisory lock | 여러 행이나 외부 key 단위로 임계 구역 필요 | lock key 설계와 해제 실패 대응 필요 |
+| Serializable + retry | 정확성이 최우선이고 predicate race를 막아야 함 | serialization failure retry가 필수 |
+
+락은 범위를 작게 유지한다. 트랜잭션 안에서 사용자 입력 대기, 외부 API 호출, 긴 배치 작업을 수행하면 lock hold time이 길어져 throughput과 장애 반경이 커진다.
+
+### 9.6 Risky Write Consistency Block
+
+주문, 결제, 재고, 예약, 환불, 권한, ledger처럼 중복이나 race가 치명적인 쓰기에는 다음 항목을 명시한다.
+
+| 항목 | 결정 내용 |
+|------|-----------|
+| Transaction owner | 어떤 use case/service가 transaction boundary를 소유하는지 |
+| Locking strategy | unique constraint, optimistic, pessimistic, advisory, serializable 중 무엇을 쓰는지 |
+| Idempotency storage | key scope, table, unique constraint, request fingerprint, stored result |
+| API handoff | `Idempotency-Key` replay/conflict 계약은 `architecture-api`와 맞추는지 |
+| Side-effect timing | 외부 결제, 알림, message publish를 commit 전/후 어디서 실행하는지 |
+| Isolation/retry | isolation level, deadlock/timeout/serialization failure retry 기준 |
+| Test criteria | duplicate request, concurrent request, retry, rollback 상황을 검증할 기준 |
+
+외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다.
+
 > 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 
 ---
 
-## 9. 쿼리 최적화
+## 10. 쿼리 최적화
 
-### 9.1 EXPLAIN ANALYZE 읽기
+### 10.1 EXPLAIN ANALYZE 읽기
 
 ```sql
 EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
@@ -344,7 +433,7 @@ EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
 
 **핵심**: 예상 행(rows)과 실제 행(actual rows)이 크게 다르면 `ANALYZE` 실행하여 테이블 통계를 갱신한다.
 
-### 9.2 스캔 유형
+### 10.2 스캔 유형
 
 | 유형 | 설명 | 주의 |
 |------|------|------|
@@ -353,7 +442,7 @@ EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
 | **Bitmap Heap Scan** | 2단계: 인덱스로 위치 파악 → 물리 순서로 접근 | Index Scan과 Seq Scan 사이 |
 | **Index-Only Scan** | 인덱스만으로 데이터 반환 (커버링 인덱스) | 가장 빠른 읽기 |
 
-### 9.3 조인 유형
+### 10.3 조인 유형
 
 | 유형 | 적합한 경우 | 특징 |
 |------|-----------|------|
@@ -361,7 +450,7 @@ EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';
 | **Hash Join** | 중·대형 비정렬 데이터 | 작은 테이블로 해시 테이블 생성 |
 | **Merge Join** | 조인 키로 사전 정렬된 데이터 | 대규모 정렬 데이터에 효율적 |
 
-### 9.4 N+1 문제
+### 10.4 N+1 문제
 
 1개 쿼리로 N개 부모를 가져온 후, N개 추가 쿼리로 각 부모의 자식을 개별 조회하는 문제. ORM의 lazy loading이 주 원인.
 
@@ -379,7 +468,7 @@ SELECT * FROM authors;
 SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
 ```
 
-### 9.5 쿼리 최적화 일반 원칙
+### 10.5 쿼리 최적화 일반 원칙
 
 | 원칙 | 설명 |
 |------|------|
@@ -392,11 +481,77 @@ SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
 
 ---
 
-## 10. 데이터 모델링 패턴: 계층 구조
+## 11. 운영 rollout, backfill, migration safety
+
+Architecture-db는 migration file 구현법이 아니라 운영 중 데이터 구조를 바꾸는 안전한 순서와 DB 위험을 결정한다. Django `RunPython`, `apps.get_model()`, `sqlmigrate`, migration class 작성은 `implementation-django`로 넘긴다.
+
+### 11.1 Expand / Backfill / Contract
+
+운영 DB 변경은 기존 코드와 새 코드가 동시에 동작하는 시간을 고려한다.
+
+| 단계 | 목적 | 예시 |
+|------|------|------|
+| Expand | 구 코드가 깨지지 않는 새 구조 추가 | nullable column, 새 table, 새 index 추가 |
+| Backfill | 기존 데이터를 새 구조에 맞게 채움 | batch update, dual write, dark read 비교 |
+| Contract | 호환성이 확인된 뒤 이전 구조 제거 또는 제약 강화 | NOT NULL, unique/check 검증, old column 제거 |
+
+컬럼 rename이나 type 변경처럼 기존 코드와 충돌하기 쉬운 변경은 한 번에 바꾸지 않고 add/copy/switch/drop으로 쪼갠다.
+
+### 11.2 Backfill 위험
+
+대형 backfill은 데이터 정합성 문제뿐 아니라 운영 부하를 만든다.
+
+- batch 크기와 pause 정책을 정한다.
+- row lock, replication lag, long transaction, vacuum/autovacuum 영향 여부를 확인한다.
+- 실패한 batch를 재실행해도 안전하도록 idempotent하게 만든다.
+- 진행률, 오류율, lag, query latency를 모니터링한다.
+- 부분 완료 상태에서 rollback할지 forward-fix할지 미리 정한다.
+
+### 11.3 Index와 constraint lock risk
+
+Index와 constraint 추가는 DB 종류와 옵션에 따라 쓰기를 막거나 지연시킬 수 있다.
+
+| 변경 | 주요 위험 | 설계 기준 |
+|------|----------|-----------|
+| 새 index | write slowdown, index build lock, storage 증가 | online/concurrent 생성 필요 여부 확인 |
+| unique constraint | 기존 중복 데이터 때문에 실패 | 사전 중복 탐지와 cleanup 필요 |
+| NOT NULL | 기존 NULL 데이터 때문에 실패 | nullable 추가 -> backfill -> NOT NULL 순서 |
+| check constraint | 기존 위반 데이터 때문에 실패 | 사전 검증과 점진적 validation 고려 |
+| FK 추가 | orphan row 때문에 실패, 쓰기 비용 증가 | orphan cleanup과 cascade/delete 정책 결정 |
+
+### 11.4 실패 대응
+
+운영 변경 계획은 rollback만 적지 말고 forward-fix도 함께 검토한다.
+
+| 실패 상황 | 대응 기준 |
+|----------|-----------|
+| backfill 일부 실패 | 안전한 재실행 key와 실패 row 격리 |
+| constraint validation 실패 | 위반 데이터 report, cleanup, 재검증 |
+| index creation 실패 | 기존 query plan 유지 여부, 재시도 시간대, cleanup |
+| 새/구 코드 compatibility 문제 | feature flag, dual write/read switch, 빠른 disable 경로 |
+| 성능 저하 | index 제거/재작성, batch 중단, query fallback |
+
+### 11.5 Rollout 산출물
+
+DB architecture 답변에서 운영 변경을 다루면 다음을 남긴다.
+
+- 현재 데이터 위험
+- expand/backfill/contract 순서
+- lock/index/constraint 위험
+- batch와 monitoring 기준
+- rollback 또는 forward-fix 방식
+- 구/신 애플리케이션 compatibility window
+- 실제 실행한 검증 명령 또는 실행하지 않았다는 표시
+
+> 출처: Stripe Engineering Blog - Online Migrations at Scale, PostgreSQL Documentation, Django migration best practices
+
+---
+
+## 12. 데이터 모델링 패턴: 계층 구조
 
 조직도, 카테고리 트리, 댓글 스레드 등 계층 구조를 RDB에 표현하는 4가지 패턴.
 
-### 10.1 패턴 비교
+### 12.1 패턴 비교
 
 | 패턴 | INSERT | 이동 | 하위 트리 조회 | 조상 조회 | 저장 공간 |
 |------|--------|------|--------------|---------|----------|
@@ -405,7 +560,7 @@ SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
 | **Materialized Path** | 쉬움 | 보통 (경로 갱신) | LIKE 'path%' | 경로 분할 | 보통 |
 | **Closure Table** | 보통 (모든 경로 삽입) | 보통 | 단일 쿼리 | 단일 쿼리 | 높음 |
 
-### 10.2 Adjacency List (인접 리스트)
+### 12.2 Adjacency List (인접 리스트)
 
 가장 단순한 패턴. 각 행에 parent_id를 저장한다.
 
@@ -426,7 +581,7 @@ WITH RECURSIVE subtree AS (
 SELECT * FROM subtree;
 ```
 
-### 10.3 Closure Table (폐쇄 테이블)
+### 12.3 Closure Table (폐쇄 테이블)
 
 모든 조상-자손 쌍을 별도 테이블에 저장한다. 가장 유연하며 복잡한 계층 쿼리에 적합.
 
@@ -448,7 +603,7 @@ SELECT descendant_id FROM node_closure WHERE ancestor_id = 'A';
 SELECT ancestor_id FROM node_closure WHERE descendant_id = 'C' AND depth > 0;
 ```
 
-### 10.4 선택 가이드
+### 12.4 선택 가이드
 
 | 상황 | 권장 패턴 |
 |------|----------|
@@ -461,11 +616,11 @@ SELECT ancestor_id FROM node_closure WHERE descendant_id = 'C' AND depth > 0;
 
 ---
 
-## 11. 데이터 모델링 패턴: 상속과 다형성
+## 13. 데이터 모델링 패턴: 상속과 다형성
 
 객체지향의 상속 관계를 RDB에 매핑하는 3가지 패턴과 다형적 연관.
 
-### 11.1 상속 패턴 비교
+### 13.1 상속 패턴 비교
 
 | 패턴 | 설명 | 적합 | 트레이드오프 |
 |------|------|------|------------|
@@ -473,7 +628,7 @@ SELECT ancestor_id FROM node_closure WHERE descendant_id = 'C' AND depth > 0;
 | **Class Table (CTI)** | 계층별 테이블, 공유 PK로 조인 | 속성이 크게 다름, 무결성 중요 | JOIN 필요 |
 | **Concrete Table (TPC)** | 구체 타입별 독립 테이블 | 타입이 완전 독립 | FK 제약 불가, 스키마 중복 |
 
-### 11.2 Single Table Inheritance (STI)
+### 13.2 Single Table Inheritance (STI)
 
 ```sql
 CREATE TABLE vehicles (
@@ -491,7 +646,7 @@ CREATE TABLE vehicles (
 );
 ```
 
-### 11.3 Class Table Inheritance (CTI)
+### 13.3 Class Table Inheritance (CTI)
 
 ```sql
 CREATE TABLE vehicles (
@@ -512,7 +667,7 @@ CREATE TABLE trucks (
 );
 ```
 
-### 11.4 다형적 연관 (Polymorphic Associations)
+### 13.4 다형적 연관 (Polymorphic Associations)
 
 하나의 자식 엔티티가 여러 부모 타입과 관계를 맺는 패턴.
 
@@ -527,7 +682,7 @@ CREATE TABLE comments (
 
 **한계**: DB 레벨에서 FK 제약을 강제할 수 없다. 참조 무결성은 애플리케이션 레벨에서 보장해야 한다.
 
-### 11.5 선택 가이드
+### 13.5 선택 가이드
 
 | 상황 | 권장 패턴 |
 |------|----------|
@@ -540,7 +695,7 @@ CREATE TABLE comments (
 
 ---
 
-## 12. 참고 문헌
+## 14. 참고 문헌
 
 | 출처 | 다룬 내용 |
 |------|---------|
@@ -550,5 +705,8 @@ CREATE TABLE comments (
 | Use The Index, Luke | 복합 인덱스 순서, 커버링 인덱스, "가장 선택적 먼저" 신화 |
 | PostgreSQL Documentation: Transaction Isolation | ACID, 격리 수준, 이상 현상 |
 | PostgreSQL Documentation: Using EXPLAIN | EXPLAIN ANALYZE 읽기, 스캔/조인 유형 |
+| Stripe Engineering Blog - Online Migrations at Scale | expand/backfill/contract, dual write/read, cleanup rollout |
+| Django migration best practices | migration 구현 세부사항은 implementation-django 책임이라는 경계 |
+| Stripe API / IETF Idempotency-Key 자료 | API 멱등성 계약과 DB 저장소 handoff |
 | Martin Fowler - PoEAA | STI, CTI, TPC 상속 패턴 |
 | Software Patterns Lexicon | Closure Table, Adjacency List 계층 패턴 |

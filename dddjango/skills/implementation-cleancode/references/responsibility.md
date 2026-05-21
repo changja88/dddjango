@@ -16,6 +16,15 @@ Use this reference for responsibility separation, change reasons, cohesion/coupl
 - High cohesion and low coupling matter more than an even distribution of methods across files.
 - In Django/dddjango work, do not bury business rules in views, routers, schemas, or templates.
 
+## Django/dddjango Boundary Smells
+
+- Fat Model: model methods may own local invariants and state questions, but not unrelated external I/O, notification, reporting, permission, or use-case orchestration.
+- Fat View/Router: Django views, DRF views, and Django Ninja routers should translate framework input/output and delegate policy or workflow to intention-revealing application/domain code.
+- Fat Schema/Serializer: schema and serializer code should not become a hidden place for DB reads, state transitions, price calculations, or external calls.
+- Template business logic: templates, template tags, includes, and HTMX partials should render decisions already made elsewhere instead of calculating domain policy.
+- Service dumping ground: moving all code into `services.py` is not enough. Split by use case, domain behavior, query/read model, or integration responsibility when those change for different reasons.
+- Escalate out of this skill when the right owner depends on aggregate boundaries, transaction/locking/idempotency, REST contract shape, or concrete ORM/API implementation.
+
 ## Comments And Documentation
 
 - Prefer code that expresses what it does; use comments sparingly to explain why a non-obvious decision exists.

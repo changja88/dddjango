@@ -24,6 +24,7 @@ Use this skill to implement already-scoped Django work. Keep simple CRUD simple;
 - Read [services-selectors.md](references/services-selectors.md) for service layer, selector, application service, repository trade-off, and Django/DDD mapping choices.
 - Read [migrations.md](references/migrations.md) for migration files, `RunPython`, `apps.get_model()`, `sqlmigrate`, backfill, expand/backfill/contract, and index rollout.
 - Read [transactions-performance-security.md](references/transactions-performance-security.md) for `transaction.atomic()`, `on_commit()`, locking, query performance, caching, security, middleware, and Django test acceptance criteria.
+- Read [coding-style-drf-maintenance.md](references/coding-style-drf-maintenance.md) for Django-specific coding style or existing DRF maintenance/review. Do not use it to choose DRF for new APIs.
 
 ## Runtime Rules
 
@@ -35,4 +36,5 @@ Use this skill to implement already-scoped Django work. Keep simple CRUD simple;
 - For staged production migrations, state what can be rolled back safely, what should be forward-fixed after data writes or contract enforcement, and how idempotent/resumable backfills affect recovery.
 - Prefer Django and Python conventions already present in the project; do not introduce a repository, UoW, or clean architecture layer unless complexity and testability justify it.
 - Do not recommend DRF `Serializer`, `ViewSet`, `APIView`, or `DefaultRouter` as the standard for new APIs.
+- When maintaining existing DRF code, treat serializers and viewsets as adapters: keep durable business rules, transaction ownership, side-effect timing, and DB invariants in model, service, selector, or database boundaries.
 - Report only verification actually run. If tests, `sqlmigrate`, `check --deploy`, query-count checks, or migration checks were not run, say so.

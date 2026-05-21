@@ -2,7 +2,7 @@
 
 | 체크 | 단계 | 목표 |
 |---|---|---|
-| [ ] | P1. 스킬의 reference 반영도 점검 | 각 skill이 source reference와 필요한 bundled resources를 빠짐없이 반영하는지 확인한다. |
+| [x] | P1. 스킬의 reference 반영도 점검 | source reference가 충분한지 먼저 확인하고, 충분한 reference를 각 skill이 빠짐없이 반영하는지 점검한 뒤 필요한 개선 계획까지 확정한다. |
 | [ ] | P2. `SKILL.md` 목적 명확성 점검 | 각 skill의 실제 사용 예시, 목적, trigger, 제외 조건과 agents/openai.yaml metadata가 일치하는지 확인한다. |
 | [ ] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
 | [ ] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
@@ -15,12 +15,16 @@
 
 ### P1. 스킬의 reference 반영도 점검
 
-- [ ] 대상 skill이 참조해야 하는 source reference의 기준 파일과 범위를 확인한다.
-- [ ] `SKILL.md` 본문과 bundled references가 source reference의 핵심 규칙을 누락하지 않았는지 확인한다.
-- [ ] source reference와 skill 내용 사이에 충돌하거나 과장된 규칙이 없는지 확인한다.
-- [ ] `scripts/`, `references/`, `assets/`가 필요한 작업인지 확인하고, 필요한 bundled resources가 skill에서 발견 가능하게 연결되어 있는지 확인한다.
-- [ ] 실제 사용자 예시나 생성/검증된 예시별로 필요한 `scripts/`, `references/`, `assets/`가 도출됐고, 필요 없는 resource directory나 placeholder가 남지 않았는지 확인한다.
-- [ ] fallback 또는 provisional source를 사용하는 경우 상태와 한계를 명확히 기록했는지 확인한다.
+- [x] 대상 skill이 참조해야 하는 source reference의 기준 파일과 범위를 확인한다.
+- [x] source reference 자체가 대상 skill의 목적, 사용 조건, 제외 조건, 핵심 규칙을 판단하기에 충분한지 확인한다.
+- [x] `SKILL.md` 본문과 bundled references가 source reference의 핵심 규칙을 누락하지 않았는지 확인한다.
+- [x] source reference와 skill 내용 사이에 충돌하거나 과장된 규칙이 없는지 확인한다.
+- [x] `scripts/`, `references/`, `assets/`가 필요한 작업인지 확인하고, 필요한 bundled resources가 skill에서 발견 가능하게 연결되어 있는지 확인한다.
+- [x] 실제 사용자 예시나 생성/검증된 예시별로 필요한 `scripts/`, `references/`, `assets/`가 도출됐고, 필요 없는 resource directory나 placeholder가 남지 않았는지 확인한다.
+- [x] fallback 또는 provisional source를 사용하는 경우 상태와 한계를 명확히 기록했는지 확인한다.
+- [x] reference가 부족하면 `reference_lv_up_plan/<reference-area>/analysis/`에 원인을 기록하고, `reference_lv_up_plan/<reference-area>/plan/`에 reference 개선 계획을 작성한다.
+- [x] reference는 충분하지만 skill 반영이 부족하면 `skill_lv_up_plan/<skill-name>/analysis/`에 원인을 기록하고, `skill_lv_up_plan/<skill-name>/plan/`에 skill 개선 계획을 작성한다.
+- [x] 개선 계획은 `skill-creator` 관점을 포함해 Blocker 0, Major 0, 열린 Minor 0이 될 때까지 반복 점검한다.
 
 ### P2. `SKILL.md` 목적 명확성 점검
 

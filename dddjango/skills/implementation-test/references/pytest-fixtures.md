@@ -28,12 +28,21 @@ Load this when writing pytest tests, fixtures, shared `conftest.py`, parametrize
 
 ## Configuration And Markers
 
-- Register custom markers in pytest config and enable strict marker checking when possible.
+- Put shared pytest settings in `pyproject.toml` or pytest config: `testpaths`, discovery patterns, `addopts`, registered markers, warning filters, and `xfail_strict = true`.
+- Enable `--strict-markers` and `--strict-config` when possible so marker typos and config drift fail early.
 - Use markers such as `slow`, `integration`, `database`, and `e2e` to make test cost explicit.
 - Use `skip` and `skipif` for unavailable environments.
 - Use `xfail(strict=True)` only for a known, tracked bug or unsupported behavior; do not hide unexpected failures.
 - Use marker selection commands such as `pytest -m "not slow"` or `pytest -m "database and not slow"` when reporting how to run subsets.
 - For rare marker-driven setup, read marker arguments through `request.node.get_closest_marker(...)` inside a fixture. Prefer explicit fixture parameters when that is clearer.
+
+## conftest.py Hooks
+
+- Use root `tests/conftest.py` for broadly shared fixtures and nested `conftest.py` files for unit/integration/e2e-specific setup.
+- Use `pytest_configure` for global marker registration only when config-file registration is not enough.
+- Use `pytest_collection_modifyitems` sparingly for mechanical marker assignment, such as marking tests under `tests/integration/`.
+- Use autouse fixtures for hard safety guards such as disabling network in unit tests, but keep them local to the directory where the guard applies.
+- Avoid hidden global setup that changes database, environment, time, or network state without an explicit fixture name.
 
 ## Plugins And Commands
 

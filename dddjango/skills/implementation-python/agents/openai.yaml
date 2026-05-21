@@ -1,4 +1,4 @@
 interface:
   display_name: "Python Implementation"
-  short_description: "Modern Python typing, dataclasses, Protocols, Ruff."
-  default_prompt: "Use $implementation-python to apply modern Python typing, dataclasses, Protocols, enums, pydantic v2 boundaries, and Ruff."
+  short_description: "Python 타입, dataclass, Protocol, pydantic v2, async, Ruff/typecheck."
+  default_prompt: "$implementation-python을 사용해 Python type hints, X | None, built-in generics, dataclass, Enum/StrEnum, Protocol, pydantic v2 boundary, async/concurrency, exceptions, Ruff, mypy, pyright 기준을 적용한다."

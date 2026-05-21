@@ -1,19 +1,14 @@
 ---
 name: implementation-django-web
 description: >
-  Provisional until dedicated source reference exists; use with fallback source for Django web/template/static implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, view auth/permissions, and web render acceptance checks. Use for Django 페이지, 템플릿/정적 파일, 화면 폼, 렌더링 확인, TemplateView 주문 상세, HTMX/CSRF. Do not use for REST API/Router/Schema or ORM/마이그레이션/트랜잭션 중심 작업; prefer implementation-django-ninja or architecture-api for APIs, implementation-django or architecture-db for ORM/DB work, implementation-test for pytest/browser mechanics, and workflow-dddjango-subagents for 복합/위험 작업 or subagent work.
+  Use for Django server-rendered web implementation: TemplateView, templates, base template, component includes, static files, CSS/JS, HTMX, CSRF for AJAX, web forms, view auth/permissions, and web render acceptance checks. Use for Django 페이지, 템플릿/정적 파일, 화면 폼, 렌더링 확인, TemplateView 주문 상세, HTMX/CSRF. Do not use for REST API/Router/Schema or ORM/마이그레이션/트랜잭션 중심 작업; prefer implementation-django-ninja or architecture-api for APIs, implementation-django or architecture-db for ORM/DB work, implementation-test for pytest/browser mechanics, and workflow-dddjango-subagents for 복합/위험 작업 or subagent work.
 ---
 
-# Django Web Implementation
+# Django Web 구현
 
-This skill is provisional. Dedicated Django Web source reference does not exist yet; use the fallback source named below and verify exact frontend/static tooling against the project’s installed packages and existing layout.
+이 skill은 Django 서버 렌더링 화면 구현을 담당한다. TemplateView, templates, base template, includes/components, static files, CSS/JS, web forms, HTMX fragment, CSRF-aware AJAX, view auth/permission, render acceptance checks를 다룬다. 정확한 frontend/static pipeline은 항상 대상 프로젝트의 설치 패키지와 기존 layout을 먼저 따른다.
 
-## Fallback Source
-
-- Treat the dedicated Django Web reference as absent. The fallback source scope is the dddjango `implementation-django/reference/final.md` sections for URL design, template philosophy/style, view philosophy/style, thin views, CBV/FBV, forms, CSRF/XSS security, raw SQL safety in view/query contexts, view auth/permissions, secure settings, and middleware.
-- Use dddjango product decisions for this skill’s first-class ownership of static files, CSS/JS, HTMX, and CSRF-aware AJAX; those areas do not yet have a dedicated source reference. The bundled runtime summaries below are the working references for agents using this skill.
-
-## Routing
+## 라우팅
 
 - If the request is an undecided REST contract, HTTP status, API auth, content negotiation, pagination, Problem Details, or OpenAPI design task, use `architecture-api`.
 - If the request is REST API implementation with Router, Schema, Problem Details API error, or OpenAPI wiring, use `implementation-django-ninja`.
@@ -27,21 +22,22 @@ This skill is provisional. Dedicated Django Web source reference does not exist 
 
 ## Reference Loading
 
-- Load only the reference file(s) relevant to the current web task.
-- Read [templates.md](references/templates.md) for template inheritance, base templates, includes, template style, and keeping templates presentation-only.
-- Read [static-assets.md](references/static-assets.md) for static file organization, CSS/JS placement, collectstatic/manifest concerns, and asset checks.
-- Read [templateview-htmx.md](references/templateview-htmx.md) for TemplateView, FBV/CBV choice, context preparation, forms, HTMX fragments, and thin views.
-- Read [csrf-ajax.md](references/csrf-ajax.md) for CSRF, AJAX/HTMX request safety, XSS, secure cookies, middleware, and verification.
+현재 작업에 필요한 bundled reference만 읽는다.
+
+- [templates.md](references/templates.md): template inheritance, base template, includes/components, template style, presentation-only template
+- [static-assets.md](references/static-assets.md): static file organization, CSS/JS placement, collectstatic/manifest concerns, asset checks
+- [templateview-htmx.md](references/templateview-htmx.md): TemplateView, CBV/FBV choice, context preparation, forms, HTMX fragments, thin views
+- [csrf-ajax.md](references/csrf-ajax.md): CSRF, AJAX/HTMX request safety, XSS, secure cookies, middleware, verification
 
 ## Runtime Rules
 
-- Keep templates presentation-only. Do not put domain rules, state transitions, pricing, permission policy, or complex query decisions in templates.
-- Keep views thin: request handling, permission checks, form/context orchestration, service/usecase call, and response rendering.
-- Prefer Generic CBV/TemplateView when it removes boilerplate; use FBV when the flow is custom and clearer as a function.
-- Use explicit `ModelForm.Meta.fields`; avoid `fields = "__all__"` and `exclude` unless the project explicitly accepts that exposure.
-- Keep reusable UI fragments in includes/components when it reduces meaningful duplication.
-- Treat HTMX/AJAX endpoints as web adapters; keep server-side domain behavior behind model/service boundaries and keep CSRF handling explicit.
-- Before finishing template/static work, check that view/context code provides display-ready fallback values for optional fields, including converting `None`, blank strings, and missing optional values into non-empty placeholders such as `No memo` or the project-standard equivalent before rendering.
-- Templates must render prepared display values instead of raw domain fields. If a page shows optional fields such as memo/notes/description, add a context or render test that covers the empty value path.
-- Changed static files must be referenced by the rendered page or reported as unused, and a render/template test must be run when the project has one.
-- Report only verification actually run. If render tests, browser checks, `collectstatic`, `check --deploy`, or template tests were not run, say so.
+- Template은 presentation-only로 유지한다. domain rule, state transition, pricing, permission policy, complex query decision을 template에 두지 않는다.
+- View는 thin adapter로 유지한다. request handling, auth/permission, form/context orchestration, service/usecase call, response rendering을 조합한다.
+- boilerplate를 줄이면 Generic CBV/TemplateView를 선호한다. custom flow가 함수로 더 명확하면 FBV를 사용한다.
+- `ModelForm.Meta.fields`는 명시적으로 나열한다. 프로젝트가 명시적으로 허용하지 않으면 `fields = "__all__"`와 `exclude`를 피한다.
+- 반복 UI fragment가 같은 의미로 함께 바뀔 때 includes/components로 분리한다.
+- HTMX/AJAX endpoint는 web adapter로 다룬다. server-side domain behavior는 model/service boundary 뒤에 두고 CSRF 처리는 명시한다.
+- Template/static 작업을 마치기 전 view/context code가 optional field의 `display-ready fallback values`를 제공하는지 확인한다. `None`, blank strings, and missing optional values는 렌더링 전에 project-standard `non-empty placeholders`로 변환한다.
+- `Templates must render prepared display values`: Template은 raw domain field가 아니라 준비된 display value를 렌더링한다. Optional field가 보이면 empty value path를 context 또는 render test로 덮는다.
+- `Changed static files must be referenced by the rendered page`: 변경한 static file은 rendered page에서 참조되거나 unused로 보고되어야 한다. 프로젝트에 render/template test가 있으면 실행한다.
+- 실제 실행한 검증만 보고한다. render test, browser check, `collectstatic`, `check --deploy`, template test를 실행하지 않았으면 미실행으로 적는다.

@@ -2,6 +2,8 @@
 
 Use this reference when a Django change needs a service layer, selector, application service, repository trade-off, or Django/DDD mapping decision.
 
+Source basis: Two Scoops of Django, HackSoft Django Styleguide, Architecture Patterns with Python.
+
 ## When To Add A Service
 
 Start with Django model methods and QuerySets for simple work. Add a service when one or more of these are true:

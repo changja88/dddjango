@@ -1,28 +1,44 @@
-# TestClient And API Verification
+# TestClient와 API 검증
 
-Use this reference for Django Ninja API test acceptance criteria and verification reporting. Detailed pytest fixture and test-double mechanics belong to `implementation-test`; TDD workflow belongs to `implementation-tdd`.
+Django Ninja `TestClient` API test acceptance criteria와 verification reporting을 다룰 때 이 reference를 읽는다. 상세 pytest fixture와 test-double mechanics는 `implementation-test`, TDD workflow는 `implementation-tdd`가 맡는다.
 
-## What To Test
+## 테스트할 항목
 
-- Request schema validation for valid and invalid payloads.
-- Response schema fields and types for list/detail/create/update/delete operations.
-- Status codes and headers for success, validation errors, auth errors, conflicts, rate limits, and async acceptance.
-- Problem Details shape for errors.
-- Authentication and authorization behavior, including 401 vs 403.
-- Pagination and filtering behavior, including maximum page size and stable ordering.
-- Idempotency replay, conflict behavior, and concurrent duplicate request handling for risky POST endpoints.
-- DRF-to-Ninja compatibility: URL, method, field, status, auth, pagination, error, and OpenAPI differences.
+- valid/invalid payload의 request schema validation
+- list/detail/create/update/delete operation의 response schema field와 type
+- success, validation error, auth error, conflict, rate limit, async acceptance의 status code와 header
+- error의 Problem Details shape
+- `401`과 `403`을 포함한 authentication/authorization behavior
+- maximum page size와 stable ordering을 포함한 pagination/filtering behavior
+- risky POST endpoint의 idempotency replay, conflict behavior, concurrent duplicate request handling
+- DRF-to-Ninja compatibility: URL, method, field, status, auth, pagination, error, OpenAPI difference
+- endpoint shape 변경이 client에 중요할 때 OpenAPI generation 또는 schema diff artifact
 
-## Test Boundaries
+Django Ninja `TestClient` 사용 예:
 
-- Test business rules at the domain/service layer where possible.
-- Use API tests for HTTP contract, auth/permission wiring, serialization, error mapping, and compatibility.
-- Do not hide domain behavior only inside API tests when faster domain/service tests would express the rule more clearly.
-- Coordinate model, transaction, and migration behavior tests with `implementation-django`.
+```python
+from ninja.testing import TestClient
 
-## Verification Reporting
+client = TestClient(orders_router)
 
-- Report the exact command run, such as a focused pytest path, TestClient test run, OpenAPI generation command, or schema comparison command.
-- If tests were not run, say `Not run` and state why.
-- Do not claim endpoints, schemas, OpenAPI, or compatibility checks passed without command output or reviewed artifacts.
-- When source is provisional, mention any framework syntax that still needs verification against the installed Django Ninja version.
+
+def test_create_order_returns_created():
+    response = client.post("/", json={"sku": "A-1", "quantity": 1})
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "pending"
+```
+
+## Test 경계
+
+- business rule은 가능한 domain/service layer에서 테스트한다.
+- API test는 HTTP contract, auth/permission wiring, serialization, error mapping, compatibility에 사용한다.
+- 더 빠른 domain/service test가 rule을 더 명확히 표현할 수 있는데 domain behavior를 API test 안에만 숨기지 않는다.
+- model, transaction, migration behavior test는 `implementation-django`와 맞춘다.
+
+## Verification reporting
+
+- focused pytest path, TestClient test run, OpenAPI generation command, schema comparison command처럼 실제 실행한 command를 정확히 보고한다.
+- test를 실행하지 않았으면 `Not run`과 이유를 말한다.
+- command output 또는 검토한 artifact 없이 endpoint, schema, OpenAPI, compatibility check가 통과했다고 주장하지 않는다.
+- Skill/reference loading command는 implementation verification이 아니므로 user-facing check로 보고하지 않는다.

@@ -1,39 +1,60 @@
-# Problem Details, Idempotency, And OpenAPI
+# Problem Details, Idempotency, OpenAPI
 
-Use this reference for API error responses, status codes, idempotency behavior, compatibility, and OpenAPI effects.
+API error response, status code, idempotency behavior, compatibility, OpenAPI 영향을 구현할 때 이 reference를 읽는다.
 
-## Status Codes
+## Status Code
 
-- Use 200 for successful reads and updates that return a body.
-- Use 201 for created resources and include the new resource location when the contract requires it.
-- Use 202 for accepted asynchronous work.
-- Use 204 for successful deletes or updates with no body.
-- Use 400 for malformed requests, 401 for authentication failure, 403 for authorization failure, 404 for missing or intentionally hidden resources, 409 for conflicts, 422 for semantically invalid input when the contract uses it, and 429 for rate limits.
-- Keep status-code changes compatible with existing clients or version them.
+- body를 반환하는 read/update 성공에는 `200`을 사용한다.
+- resource 생성에는 `201`을 사용하고 contract가 요구하면 새 resource location을 포함한다.
+- asynchronous work 접수에는 `202`를 사용한다.
+- body 없는 delete/update 성공에는 `204`를 사용한다.
+- malformed request는 `400`, authentication failure는 `401`, authorization failure는 `403`, missing 또는 intentionally hidden resource는 `404`, conflict는 `409`, contract가 쓰는 semantically invalid input은 `422`, rate limit은 `429`를 사용한다.
+- status-code change는 기존 client와 compatible하게 유지하거나 versioning한다.
 
 ## Problem Details
 
-- Use `application/problem+json` as the response media type for Problem Details errors.
-- Use RFC 9457 Problem Details for API errors unless a legacy compatibility contract explicitly says otherwise.
-- Keep `status` aligned with the HTTP response status.
-- Use `title` for reusable problem type summaries and `detail` for the specific occurrence.
-- Use a stable `type` URI or `about:blank` when no stable type exists.
-- Include `instance` when the specific occurrence has a useful request or problem identifier URI.
-- Add extension fields only when they are documented and safe for clients to ignore.
+- Problem Details error의 response media type은 `application/problem+json`을 사용한다.
+- legacy compatibility contract가 명시적으로 다르게 요구하지 않는 한 API error에는 RFC 9457 Problem Details를 사용한다.
+- `status`는 HTTP response status와 맞춘다.
+- `title`은 reusable problem type summary, `detail`은 specific occurrence 설명으로 쓴다.
+- stable `type` URI를 사용하고 안정된 type이 없으면 `about:blank`를 사용한다.
+- specific occurrence에 유용한 request/problem identifier URI가 있으면 `instance`를 포함한다.
+- extension field는 문서화되어 있고 client가 무시해도 안전할 때만 추가한다.
+- Django Ninja exception handler 또는 `NinjaAPI` subclass를 사용해 validation, application, domain error를 프로젝트의 Problem Details contract로 mapping한다.
+- Django Ninja default validation error status나 body shape가 API contract와 다르면 framework-default error를 public client에 노출하지 말고 customize한다.
+
+Exception handler 예:
+
+```python
+@api.exception_handler(OrderConflict)
+def order_conflict(request, exc):
+    return api.create_response(
+        request,
+        {
+            "type": "https://api.example.test/problems/order-conflict",
+            "title": "Order conflict",
+            "status": 409,
+            "detail": str(exc),
+        },
+        status=409,
+        content_type="application/problem+json",
+    )
+```
 
 ## Idempotency-Key
 
-- Require or support `Idempotency-Key` for duplicate-prone POST operations such as order or payment creation.
-- Store the first request result in durable storage such as DB or Redis according to the service transaction design.
-- Return the stored response for repeated requests with the same key when the request is equivalent.
-- If the created resource can later change state, store an immutable first-result DTO/response snapshot rather than only a resource id that will be re-read as current state.
-- Define conflict behavior for the same key with a different payload.
-- Coordinate key TTL, storage owner, transaction boundary, and concurrency behavior with `implementation-django` and `architecture-db`.
-- Test replay after a later state change when mutable current state could otherwise make the retry response differ from the original response.
+- 주문 또는 결제 생성처럼 duplicate-prone POST operation에는 `Idempotency-Key`를 요구하거나 지원한다.
+- service transaction design에 따라 첫 request result를 DB 또는 Redis 같은 durable storage에 저장한다.
+- 같은 key와 equivalent request가 반복되면 저장된 response를 반환한다.
+- 생성된 resource가 나중에 상태 변경될 수 있으면 현재 resource id만 저장해 재조회하지 말고 immutable first-result DTO/response snapshot을 저장한다.
+- 같은 key와 다른 payload의 conflict behavior를 정의한다.
+- key TTL, storage owner, transaction boundary, concurrency behavior는 `implementation-django`, `architecture-db`와 맞춘다.
+- mutable current state 때문에 retry response가 original response와 달라질 수 있으면 later state change 이후 replay를 테스트한다.
 
 ## OpenAPI
 
-- Ensure Router and Schema changes produce the intended OpenAPI request/response shape.
-- Check names, required fields, nullable fields, enum values, status responses, error schema, auth requirements, pagination shape, and tags.
-- For migrations from DRF, compare old and new generated schema when possible and document client-visible differences.
-- Do not claim OpenAPI generation or schema diff was run unless it was actually executed.
+- Router와 Schema 변경이 의도한 OpenAPI request/response shape를 만드는지 확인한다.
+- name, required field, nullable field, enum value, status response, error schema, auth requirement, pagination shape, tag를 확인한다.
+- 프로젝트가 공개하는 경우 documented error response에 Problem Details schema와 security requirement를 포함한다.
+- DRF migration에서는 가능하면 old/new generated schema를 비교하고 client-visible difference를 문서화한다.
+- OpenAPI generation 또는 schema diff를 실제 실행하지 않았으면 실행했다고 주장하지 않는다.

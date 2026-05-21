@@ -29,6 +29,8 @@ Use communication checks mainly for external systems, adapters, or side-effect b
 - Use `side_effect` for errors, retries, and input-dependent behavior.
 - Use `PropertyMock` sparingly; if property mocking is hard, check whether the production interface is too implicit.
 - Use `AsyncMock` for async functions and assert awaited calls with `assert_awaited_once_with`.
+- Use `pytest-mock`'s `mocker` fixture when the project standardizes on it; prefer `mocker.patch`, `mocker.spy`, and `mocker.Mock` over mixing several patching styles in one test file.
+- Use spies only when call observation is the behavior. Do not spy on private helpers to prove an algorithm was used.
 
 Do not replace all collaborators with mocks just because it is possible. For domain objects and value objects, real objects usually produce more durable tests.
 
@@ -44,6 +46,6 @@ Do not replace all collaborators with mocks just because it is possible. For dom
 
 - Use `responses` for code built on `requests`.
 - Use `aioresponses` for `aiohttp` clients.
-- Use a socket-level interceptor only when the HTTP client cannot be targeted more narrowly.
+- Use HTTPretty or another socket-level interceptor only when the HTTP client cannot be targeted more narrowly.
 - Register exact methods, URLs, response bodies, status codes, and exceptions that matter to the contract.
-- For Django Ninja APIs inside the project, prefer `TestClient` tests from the Django Ninja skill instead of mocking the router.
+- For Django Ninja APIs inside the project, prefer this skill's `TestClient` contract tests instead of mocking the router.

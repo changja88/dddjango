@@ -1086,6 +1086,20 @@ class EventStreamer: ...
 
 > "만약 객체의 속성이나 메서드의 특성이 다른 클래스에서 발견되면 이들을 다른 곳으로 옮겨야 한다." **[PC]**
 
+#### Django/dddjango 경계에서의 책임 분리
+
+웹 프레임워크 코드는 도메인 규칙, 입출력 변환, 저장소 접근, 렌더링, 권한/인증, 트랜잭션 경계가 한 함수나 클래스에 모이기 쉽다. 이때 파일 이름이나 계층 이름보다 **변경 이유**가 우선 판단 기준이다.
+
+| 스멜 | 증상 | 클린 코드 관점의 판단 |
+|------|------|-----------------------|
+| **Fat Model** | Django model이 ORM 매핑, 도메인 상태 전이, 외부 알림, 결제/재고/권한 정책, 조회 포맷까지 모두 처리한다 | 데이터와 불변식을 가까이 두는 것은 좋지만, 외부 I/O나 유스케이스 흐름까지 model에 넣으면 변경 이유가 섞인다. |
+| **Fat View / Fat Router** | view, Django Ninja router, DRF view가 요청 파싱 뒤 권한, 상태 전이, 계산, 저장, 알림, 응답 포맷을 긴 절차로 모두 수행한다 | framework entrypoint는 얇게 유지하고, 의도 있는 application/service 함수나 도메인 객체에 정책을 맡긴다. |
+| **Fat Schema / Serializer** | schema나 serializer가 validation을 넘어 주문 상태 변경, 가격 계산, DB 조회, 외부 호출을 수행한다 | 입출력 계약과 도메인 정책이 섞여 테스트와 재사용이 어려워진다. |
+| **Template business logic** | template tag, include, HTMX partial에서 권한/상태/가격 정책을 직접 계산한다 | 렌더링 관심사가 도메인 규칙을 숨기면 변경 누락과 중복이 커진다. |
+| **Service dumping ground** | 모든 로직을 `services.py`로 옮겼지만 함수들이 서로 다른 정책과 I/O를 공유 전역처럼 사용한다 | 이름만 service인 얕은 모듈은 책임 분리가 아니다. 유스케이스, 도메인 규칙, 조회, 외부 연동의 변경 이유를 다시 나눠야 한다. |
+
+다만 모든 Django model method가 Fat Model인 것은 아니다. 단일 엔티티의 불변식, 상태 질의, 표현 독립적인 작은 행위는 model이나 값 객체에 두는 편이 더 응집도 높을 수 있다. 반대로 transaction, locking, idempotency, aggregate 경계, REST contract, API error shape처럼 설계 결정이 먼저 필요한 문제는 클린 코드 스멜로만 처리하지 않고 DB/API/DDD 관련 기준으로 라우팅해야 한다.
+
 ### 9.2 개방/폐쇄 원칙 (OCP) [PC] [CC]
 
 확장에는 개방되고 수정에는 폐쇄되어야 한다. 새로운 요구사항이 생기면 새로운 것을 추가만 할 뿐 기존 코드는 그대로 유지해야 한다.

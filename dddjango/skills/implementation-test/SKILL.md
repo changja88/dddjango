@@ -25,6 +25,7 @@ Use this skill to write or review concrete pytest tests, fixtures, factories, do
 - Read [test-doubles.md](references/test-doubles.md) for dummy/stub/spy/mock/fake selection, output/state/communication verification, `Mock`, `AsyncMock`, `seal`, monkeypatch, time mocking, and HTTP mocking.
 - Read [factories-property-tests.md](references/factories-property-tests.md) for factory_boy, Faker, traits, Django factories, Hypothesis, stateful property tests, and pytest-bdd.
 - Read [coverage-mutation.md](references/coverage-mutation.md) for test pyramid strategy, testcontainers, coverage.py, tox/nox, FIRST, AAA, anti-patterns, mutation testing, and debugging.
+- Read [django-api-concurrency.md](references/django-api-concurrency.md) for Django Ninja `TestClient`, pytest-django DB/transaction selection, idempotency replay, duplicate prevention, row-lock, and concurrency/race tests.
 
 ## Runtime Rules
 
@@ -35,5 +36,7 @@ Use this skill to write or review concrete pytest tests, fixtures, factories, do
 - Put shared setup in fixtures or factories only when it makes the test clearer; avoid hidden fixture chains that obscure the behavior under test.
 - Use property-based tests for invariants over broad input spaces and example tests for named boundary cases.
 - Treat coverage and mutation scores as signals to inspect, not proof that behavior is fully tested.
+- For Django Ninja APIs, assert public request/response contracts with `TestClient`; do not mock routers or verify private service calls unless the collaboration itself is the contract.
+- For risky write behavior, cover replay/idempotency, uniqueness, transaction/locking, and concurrency at the lowest level that can prove the invariant.
 - In composite workflows, own `tests/**`, `conftest.py`, and factory files; coordinate with implementation skills without changing production code unless assigned.
 - Report only tests, coverage, mutation checks, or subagent reviews that were actually run. If a command was not run, state that directly.

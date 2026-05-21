@@ -13,7 +13,7 @@ Load this after strategic boundaries are clear and the task needs aggregate, ent
 
 - Use entities for concepts with identity and lifecycle.
 - Compare entities by identity, not by every field.
-- Keep entities as part of an aggregate boundary unless there is a clear independent consistency boundary.
+- Keep entities inside an aggregate boundary. If a concept needs an independent consistency boundary, model it as a separate aggregate root rather than a free-floating entity.
 - Avoid anemic models where entities are only data and all business behavior lives in procedural services.
 
 ## Aggregates
@@ -31,7 +31,7 @@ Load this after strategic boundaries are clear and the task needs aggregate, ent
 - Application service: orchestrates a use case, loads aggregates, starts transactions, calls domain behavior, and persists results.
 - Do not put business rules in application services just because they coordinate several calls.
 - Do not make aggregates depend on domain services or infrastructure services.
-- In Django projects, a Django model can act as the domain object when invariants are simple and behavior is explicit. Split pure domain objects from ORM models when ORM lifecycle, lazy loading, HTTP, external SDKs, or schema concerns start shaping the rule.
+- In Django projects, keep the DDD modeling default as domain/application behavior that does not depend on ORM, HTTP, SDK, or schema details. A simplified Django package layout can be a later implementation tradeoff, but do not make Active Record mechanics the default aggregate boundary in this skill.
 - Treat Routers, views, templates, and schemas as adapters. They may validate input and call use cases, but should not own core state transitions or policies.
 
 ## Repository And Specification Concepts

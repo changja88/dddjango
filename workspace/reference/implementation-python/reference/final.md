@@ -1176,10 +1176,10 @@ assert isinstance(FakeCloser(), HasClose)  # True! 시그니처 불일치인데�
 
 ## 10. Enum, dataclass, NamedTuple
 
-### 10.1 Enum: 상수 그룹화 [단단한 파이썬]
+### 10.1 Enum/StrEnum: 상수 그룹화 [단단한 파이썬] [Python 공식 문서]
 
 ```python
-from enum import Enum, auto
+from enum import Enum, StrEnum, auto
 
 class Position(Enum):
     CHEF = auto()
@@ -1190,11 +1190,21 @@ class Position(Enum):
 position = Position.CHEF
 if position == Position.CHEF: ...
 
-# 문자열 Enum
-class Color(str, Enum):
+# 문자열 Enum (Python 3.11+)
+class Color(StrEnum):
+    RED = 'red'
+    BLUE = 'blue'
+
+# Python 3.10 이하 또는 target 제약이 있으면 str, Enum 조합 사용
+class LegacyColor(str, Enum):
     RED = 'red'
     BLUE = 'blue'
 ```
+
+- 의미 있는 유한 상태는 임의 문자열보다 `Enum` 또는 `StrEnum`으로 표현한다.
+- 직렬화 값이 문자열이어야 하고 프로젝트 target이 Python 3.11+이면 `StrEnum`을 우선 고려한다.
+- Python target이나 의존성 제약 때문에 `StrEnum`을 사용할 수 없으면 `str, Enum` 조합을 사용한다.
+- 값 집합이 작고 지역적인 분기 표현이면 `Literal`도 가능하지만, 상태에 의미나 동작이 붙으면 `Enum`/`StrEnum`이 더 안정적이다.
 
 ### 10.2 dataclass 기본 [단단한 파이썬]
 
@@ -1412,6 +1422,18 @@ print(v1 @ v2)       # 8                -- __matmul__ (내적)
 > 출처: [pydantic v2 공식 문서](https://docs.pydantic.dev/latest/), [Migration Guide](https://docs.pydantic.dev/latest/migration/)
 >
 > **의사결정 #1**: External 채택. pydantic v2 API를 사용한다. v1 API는 공식 지원 중단되었다.
+
+### 12.0 pydantic v2 boundary 결정
+
+pydantic v2는 외부 입력과 런타임 검증 경계에서 사용한다. API payload, 외부 JSON, config, settings-like data, message payload처럼 시스템 밖에서 들어오거나 시스템 밖으로 나가는 데이터의 shape와 coercion을 명시하는 데 적합하다.
+
+도메인 모델의 기본 표현을 pydantic으로 고정하지 않는다. durable domain invariant는 value object, entity, aggregate, domain service, application service처럼 해당 규칙을 소유한 경계에 둔다. pydantic validator는 boundary validation과 parsing을 담당하고, 상태 전이, 금액 계산, 권한 정책, 주문/결제 같은 도메인 규칙을 대신 소유하지 않는다.
+
+- `BaseModel`은 외부 DTO, config, 런타임 boundary 검증에 우선 사용한다.
+- 내부 domain object가 dataclass, 일반 class, Django model, aggregate로 이미 표현되어 있으면 pydantic 모델을 중복 domain model로 만들지 않는다.
+- validation error는 adapter/API/config loading layer에서 domain/application error로 변환한다. raw pydantic error shape가 도메인 규칙의 일부가 되지 않게 한다.
+- coercion이 잘못된 입력을 숨기면 strict mode를 켠다. 단, 외부 계약상 문자열 숫자처럼 의도한 coercion을 받는 필드는 field-level로 허용한다.
+- Django Ninja Schema가 API serialization boundary를 이미 소유하면 별도 pydantic DTO를 추가하기 전에 `implementation-django-ninja` 기준과 충돌하지 않는지 확인한다.
 
 ### 12.1 v1 vs v2 주요 API 변경
 

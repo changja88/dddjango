@@ -1,33 +1,33 @@
 # Static Assets
 
-Use this reference for Django static file organization, CSS/JS placement, collectstatic/manifest concerns, and asset verification. This skill is provisional; follow the project’s existing asset pipeline when present.
+이 reference는 Django static file organization, CSS/JS placement, collectstatic/manifest concern, asset verification을 다룬다. 기존 asset pipeline이 있으면 그 convention을 따른다.
 
 ## Organization
 
-- Keep app-specific assets near the app when the project uses `app/static/app_name/...`.
-- Keep shared design-system or global assets in the project’s established shared static location.
-- Use clear names for CSS and JS files that reflect the page or component they support.
-- Do not place generated build artifacts in source directories unless the project’s pipeline expects it.
+- 프로젝트가 `app/static/app_name/...` 구조를 쓰면 app-specific asset을 app 가까이에 둔다.
+- Shared design-system 또는 global asset은 프로젝트의 established shared static location에 둔다.
+- CSS/JS file name은 지원하는 page 또는 component가 드러나게 짓는다.
+- 프로젝트 pipeline이 기대하지 않는 generated build artifact를 source directory에 두지 않는다.
 
 ## Loading Assets
 
-- Use `{% load static %}` and `{% static 'path/to/file.css' %}` instead of hardcoded static URLs.
-- Put CSS and JS includes in base-template blocks when pages need to opt in.
-- If you create or modify page-specific CSS/JS, wire it into the rendered template through the project’s existing static asset convention in the same change. If the page does not need the asset, do not create or edit it.
-- Keep inline scripts small and local to the template only when external files would be less clear.
-- Avoid mixing domain data transformations into JavaScript embedded in templates.
+- Hardcoded static URL 대신 `{% load static %}`와 `{% static 'path/to/file.css' %}`를 사용한다.
+- Page가 opt in해야 하는 CSS/JS include는 base-template block에 둔다.
+- Page-specific CSS/JS를 생성하거나 수정하면 같은 변경에서 rendered template에 연결한다. Page가 asset을 필요로 하지 않으면 만들거나 수정하지 않는다.
+- Inline script는 external file보다 더 명확할 정도로 작고 template-local일 때만 사용한다.
+- Template에 embedded JavaScript를 넣더라도 domain data transformation을 섞지 않는다.
 
 ## Production Concerns
 
-- Respect the project’s `STATIC_URL`, `STATIC_ROOT`, `STATICFILES_DIRS`, storage backend, and deployment pipeline.
-- If the project uses manifest/static hashing, make sure asset references go through Django static resolution.
-- If the project uses WhiteNoise, a bundler, or another asset pipeline, follow the existing convention rather than inventing a new one.
-- Run or recommend `collectstatic` only when relevant to deployment or asset resolution, and report whether it was actually run.
+- `STATIC_URL`, `STATIC_ROOT`, `STATICFILES_DIRS`, storage backend, deployment pipeline을 존중한다.
+- 프로젝트가 manifest/static hashing을 사용하면 asset reference가 Django static resolution을 거치게 한다.
+- WhiteNoise, bundler, 다른 asset pipeline이 있으면 새 convention을 만들지 말고 기존 convention을 따른다.
+- `collectstatic`은 deployment 또는 asset resolution과 관련 있을 때만 실행하거나 권장한다. 실행 여부는 완료 보고에 명시한다.
 
 ## Verification
 
-- Check that referenced static paths exist.
-- Check that page templates load required CSS/JS without duplicate or stale references.
-- Check that any changed page-specific CSS/JS file is referenced by the rendered page; treat an unreferenced changed asset as unfinished work, not as a harmless extra file.
-- For visible UI changes, verify rendering with available tests, screenshots, or browser checks when practical.
-- If render/browser checks were not run, state that clearly.
+- 참조한 static path가 존재하는지 확인한다.
+- Page template이 필요한 CSS/JS를 duplicate 또는 stale reference 없이 load하는지 확인한다.
+- 변경한 page-specific CSS/JS가 rendered page에서 참조되는지 확인한다. 참조되지 않는 변경 asset은 harmless extra가 아니라 unfinished work로 본다.
+- Visible UI 변경은 가능한 경우 render test, screenshot, browser check 중 사용할 수 있는 증거로 확인한다.
+- Render/browser check를 실행하지 않았으면 미실행으로 적는다.

@@ -11,16 +11,17 @@
 2. [HTTP 메서드와 멱등성](#2-http-메서드와-멱등성)
 3. [URL/리소스 설계 규칙](#3-url리소스-설계-규칙)
 4. [HTTP 상태 코드](#4-http-상태-코드)
-5. [에러 응답 형식 (RFC 9457)](#5-에러-응답-형식-rfc-9457)
-6. [HTTP 헤더와 콘텐츠 협상](#6-http-헤더와-콘텐츠-협상)
-7. [인증과 인가](#7-인증과-인가)
-8. [페이지네이션](#8-페이지네이션)
-9. [버전 관리](#9-버전-관리)
-10. [하위 호환성과 Deprecation](#10-하위-호환성과-deprecation)
-11. [Rate Limiting](#11-rate-limiting)
-12. [멱등성 키 (Idempotency-Key)](#12-멱등성-키-idempotency-key)
-13. [OpenAPI](#13-openapi)
-14. [참고 문헌](#14-참고-문헌)
+5. [요청/응답 계약](#5-요청응답-계약)
+6. [에러 응답 형식 (RFC 9457)](#6-에러-응답-형식-rfc-9457)
+7. [HTTP 헤더와 콘텐츠 협상](#7-http-헤더와-콘텐츠-협상)
+8. [인증과 인가](#8-인증과-인가)
+9. [페이지네이션](#9-페이지네이션)
+10. [버전 관리](#10-버전-관리)
+11. [하위 호환성과 Deprecation](#11-하위-호환성과-deprecation)
+12. [Rate Limiting](#12-rate-limiting)
+13. [멱등성 키 (Idempotency-Key)](#13-멱등성-키-idempotency-key)
+14. [OpenAPI](#14-openapi)
+15. [참고 문헌](#15-참고-문헌)
 
 ---
 
@@ -67,6 +68,8 @@ REST(REpresentational State Transfer)는 네트워크로 연결된 시스템 설
 | **PUT** | X | O | 자원 **전체 교체**. 반복해도 같은 결과 |
 | **PATCH** | X | X | 자원 **부분 수정**. 반복 시 결과 달라질 수 있음 |
 | **DELETE** | X | O | 자원 삭제. 반복해도 같은 효과 |
+
+PATCH는 메서드 자체가 멱등하다고 보장되지 않는다. 다만 patch document가 절대값 설정처럼 반복 적용해도 같은 결과를 만드는 형식이면 특정 PATCH 요청은 멱등하게 설계될 수 있다. 상대 변경(`{"views": "+1"}`)처럼 반복 적용 결과가 달라지는 형식은 멱등하지 않다.
 
 ### 2.2 PUT vs PATCH
 
@@ -175,9 +178,51 @@ POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로�
 
 ---
 
-## 5. 에러 응답 형식 (RFC 9457)
+## 5. 요청/응답 계약
 
-### 5.1 Problem Details for HTTP APIs
+API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상태 코드, 헤더, 에러 형식의 조합이다. 클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다.
+
+### 5.1 요청 계약
+
+- 필수 필드와 선택 필드를 구분한다
+- 필드 타입, 형식, 단위, 허용 범위, 기본값을 명시한다
+- query parameter는 필터링, 정렬, 검색, sparse fieldset, pagination처럼 조회 표현을 조정하는 데 사용한다
+- 비밀 값이나 인증 정보는 query parameter에 넣지 않는다
+- `POST`는 생성 또는 non-idempotent action 요청 본문을 명확히 정의하고, duplicate-sensitive 요청은 `Idempotency-Key` 정책을 함께 정한다
+- `PUT`은 전체 교체 계약이므로 누락 필드가 어떻게 처리되는지 명시한다
+- `PATCH`는 patch document 형식과 idempotent 여부를 별도로 판단한다
+
+### 5.2 응답 계약
+
+- 상태 코드별 응답 본문 존재 여부와 schema를 분리해 정의한다
+- `201 Created`는 가능한 경우 `Location` 헤더로 새 자원 URI를 제공한다
+- `202 Accepted`는 작업 접수 응답과 결과 확인 방법을 함께 제공한다
+- `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다
+- 오류 응답은 RFC 9457 Problem Details를 사용하고 상태 코드별 problem type을 문서화한다
+- 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
+
+### 5.3 계약 체크리스트
+
+엔드포인트를 설계하거나 변경할 때 다음을 함께 검토한다.
+
+| 항목 | 확인 내용 |
+|------|-----------|
+| Resource | 클라이언트가 식별하는 자원과 URI |
+| Method | 안전성, 멱등성, 생성/교체/부분 수정/삭제 의미 |
+| Request | body/query/path/header 필드와 validation |
+| Response | 상태 코드별 body/header/schema |
+| Error | Problem Details type/title/status/detail/extension |
+| Auth | authentication/authorization 요구사항 |
+| Compatibility | breaking change 여부와 version/deprecation 필요성 |
+| OpenAPI | path/method/schema/response/security/header 반영 |
+
+> 출처: Microsoft REST API Design, Google API Design Guide, RFC 9110, OpenAPI Initiative
+
+---
+
+## 6. 에러 응답 형식 (RFC 9457)
+
+### 6.1 Problem Details for HTTP APIs
 
 **Content-Type**: `application/problem+json`
 
@@ -189,7 +234,7 @@ POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로�
 | `detail` | string | 이 **특정 발생**에 대한 설명 |
 | `instance` | URI | 이 특정 발생의 식별자 |
 
-### 5.2 예시
+### 6.2 예시
 
 ```json
 HTTP/1.1 403 Forbidden
@@ -208,7 +253,7 @@ Content-Type: application/problem+json
 
 `balance`와 `accounts`는 **확장 필드**. 문제 유형 정의에서 추가 가능. 클라이언트는 인식하지 못하는 확장 필드를 무시해야 한다.
 
-### 5.3 핵심 규칙
+### 6.3 핵심 규칙
 
 - `type`은 문서화 역할을 하는 안정적 URI
 - `title`은 **유형**(재사용), `detail`은 **특정 발생**
@@ -218,9 +263,9 @@ Content-Type: application/problem+json
 
 ---
 
-## 6. HTTP 헤더와 콘텐츠 협상
+## 7. HTTP 헤더와 콘텐츠 협상
 
-### 6.1 표현 관련 헤더
+### 7.1 표현 관련 헤더
 
 | 헤더 | 용도 | 예시 |
 |------|------|------|
@@ -229,7 +274,7 @@ Content-Type: application/problem+json
 | Content-Language | 자연 언어 | `ko` |
 | Content-Length | 바이트 단위 길이 | `1024` |
 
-### 6.2 콘텐츠 협상 (Content Negotiation)
+### 7.2 콘텐츠 협상 (Content Negotiation)
 
 클라이언트가 선호하는 표현을 요청하는 방식.
 
@@ -247,7 +292,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 구체적인 것이 우선한다.
 
-### 6.3 캐시 관련 헤더
+### 7.3 캐시 관련 헤더
 
 | 헤더 | 용도 |
 |------|------|
@@ -261,9 +306,9 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ---
 
-## 7. 인증과 인가
+## 8. 인증과 인가
 
-### 7.1 인증 vs 인가
+### 8.1 인증 vs 인가
 
 | 구분 | 인증 (Authentication) | 인가 (Authorization) |
 |------|---------------------|---------------------|
@@ -275,7 +320,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 - 인증이 있어야 인가가 있다
 - 401은 이름이 Unauthorized지만 실제로는 **인증(Authentication)** 오류다
 
-### 7.2 인증 메커니즘 선택 기준
+### 8.2 인증 메커니즘 선택 기준
 
 | 방식 | 적합 | 특징 |
 |------|------|------|
@@ -283,7 +328,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | **OAuth 2.0** | 서드파티 접근 권한 위임 | 표준화, 복잡하지만 유연 |
 | **JWT (Bearer Token)** | 무상태 인증, 마이크로서비스 | 자체 포함(self-contained), 만료 관리 필요 |
 
-### 7.3 API 요청의 보안 원칙
+### 8.3 API 요청의 보안 원칙
 
 - **비밀 정보를 쿼리 파라미터에 담지 않는다** — URL은 서버/프록시 로그에 기록됨
 - 인증 정보는 `Authorization` 헤더에 전달
@@ -293,9 +338,9 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ---
 
-## 8. 페이지네이션
+## 9. 페이지네이션
 
-### 8.1 세 가지 접근법
+### 9.1 세 가지 접근법
 
 | 방식 | 요청 | 성능 | 데이터 일관성 | 랜덤 접근 |
 |------|------|------|-------------|----------|
@@ -305,7 +350,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 **성능 차이**: PostgreSQL 100만 건에서 cursor 기반이 offset 기반보다 **17배 빠름**.
 
-### 8.2 선택 기준
+### 9.2 선택 기준
 
 | 상황 | 권장 |
 |------|------|
@@ -313,7 +358,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | 실시간 피드, 무한 스크롤, 대용량 | Cursor (일관성 + 성능) |
 | 고성능 읽기 중심 API | Keyset (인덱스 활용) |
 
-### 8.3 실전 원칙
+### 9.3 실전 원칙
 
 - 인덱싱된, 불변, 유니크한 필드(타임스탬프 + ID 조합)를 커서로 사용
 - 커서를 불투명하게 인코딩(base64)하여 클라이언트가 토큰으로 취급하도록
@@ -324,9 +369,9 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ---
 
-## 9. 버전 관리
+## 10. 버전 관리
 
-### 9.1 세 가지 전략
+### 10.1 세 가지 전략
 
 | 전략 | 예시 | 장점 | 단점 |
 |------|------|------|------|
@@ -334,14 +379,14 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | **Header** | `Accept-Version: v1` | 깨끗한 URL, REST 부합 | 브라우저에서 안 보임, 디버깅 어려움 |
 | **Query Param** | `?version=1` | 중간 지점, 가시적 | 캐싱 복잡, 필터와 혼동 |
 
-### 9.2 Stripe의 날짜 기반 버전 관리
+### 10.2 Stripe의 날짜 기반 버전 관리
 
 - URL path: 메이저 버전 (`/v1/charges`)
 - 헤더: 실제 버전 (`Stripe-Version: 2024-10-01`)
 - 신규 계정은 최신 버전에 자동 고정
 - 요청별 오버라이드 가능
 
-### 9.3 실전 원칙
+### 10.3 실전 원칙
 
 - 하나의 전략을 선택하고 **일관되게** 적용
 - 일반 패턴: URL path로 메이저 버전, 헤더로 마이너 조정
@@ -351,9 +396,9 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ---
 
-## 10. 하위 호환성과 Deprecation
+## 11. 하위 호환성과 Deprecation
 
-### 10.1 Breaking vs Non-Breaking Change
+### 11.1 Breaking vs Non-Breaking Change
 
 | 변경 유형 | Breaking? | 예시 |
 |----------|:---------:|------|
@@ -367,7 +412,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | 상태 코드 변경 | **O** | 200 → 201 |
 | 에러 형식 변경 | **O** | 에러 응답 구조 변경 |
 
-### 10.2 Deprecation 프로세스
+### 11.2 Deprecation 프로세스
 
 1. **Deprecation 공지**: API 문서에 명시, 변경 이력에 기록
 2. **Sunset 헤더**: 응답에 만료 날짜 포함
@@ -379,7 +424,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 4. **대체 API 안내**: 새 엔드포인트 또는 버전으로의 마이그레이션 가이드 제공
 5. **제거**: 마이그레이션 기간 종료 후 제거
 
-### 10.3 실전 원칙
+### 11.3 실전 원칙
 
 - **추가는 자유, 제거는 금지** (Additive changes only)
 - Breaking change가 필요하면 새 버전을 만든다
@@ -387,9 +432,9 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ---
 
-## 11. Rate Limiting
+## 12. Rate Limiting
 
-### 11.1 Rate Limit 헤더
+### 12.1 Rate Limit 헤더
 
 ```
 HTTP/2 200 OK
@@ -398,7 +443,7 @@ X-RateLimit-Remaining: 56      # 남은 요청 수
 X-RateLimit-Reset: 1372700873  # 리셋 시각 (UTC epoch)
 ```
 
-### 11.2 429 Too Many Requests
+### 12.2 429 Too Many Requests
 
 ```
 HTTP/2 429 Too Many Requests
@@ -406,7 +451,7 @@ Retry-After: 30
 X-RateLimit-Remaining: 0
 ```
 
-### 11.3 알고리즘 선택 기준
+### 12.3 알고리즘 선택 기준
 
 | 알고리즘 | 특징 | 적합 |
 |---------|------|------|
@@ -415,7 +460,7 @@ X-RateLimit-Remaining: 0
 | **Fixed Window** | 단순, 저오버헤드 | 간단한 내부 API |
 | **Leaky Bucket** | 일정 출력, 버스트 없음 | 트래픽 셰이핑 |
 
-### 11.4 실전 원칙
+### 12.4 실전 원칙
 
 - 비용 큰 작업(인증, DB) **전에** rate limit 검사
 - 429 응답에 항상 `Retry-After` 헤더 포함
@@ -425,13 +470,13 @@ X-RateLimit-Remaining: 0
 
 ---
 
-## 12. 멱등성 키 (Idempotency-Key)
+## 13. 멱등성 키 (Idempotency-Key)
 
-### 12.1 문제
+### 13.1 문제
 
 POST는 멱등하지 않다. 네트워크 장애로 서버는 처리했지만 클라이언트가 응답을 못 받으면, 재시도 시 중복 생성 위험.
 
-### 12.2 Idempotency-Key 패턴
+### 13.2 Idempotency-Key 패턴
 
 ```
 POST /v1/charges
@@ -448,23 +493,41 @@ Content-Type: application/json
 4. 키는 24시간 후 만료 (일반적 정책)
 5. POST에만 적용 — GET, PUT, DELETE는 이미 멱등
 
-### 12.3 실전 원칙
+### 13.3 계약 결정 사항
+
+`Idempotency-Key`를 받는 엔드포인트는 다음을 API 계약으로 정한다.
+
+| 항목 | 기준 |
+|------|------|
+| 적용 여부 | endpoint가 key를 허용하는지, 필수로 요구하는지 |
+| Key scope | caller, operation, tenant, resource owner 등 어떤 범위에서 unique한지 |
+| Replay | 동일 key와 동일 request는 최초 operation의 원래 결과를 반환 |
+| Conflict | 동일 key와 다른 request content는 새 작업으로 처리하지 않고 충돌로 응답 |
+| Retention | key와 최초 결과를 얼마 동안 보관하는지 |
+| Concurrency | 같은 key의 동시 요청 race를 어떻게 직렬화하거나 거절하는지 |
+| Storage | 내구성 있는 저장소와 transaction/lock 정책은 DB 설계로 연결 |
+
+Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다.
+
+### 13.4 실전 원칙
 
 - 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수
 - 멱등성 키를 내구성 있는 저장소(DB, Redis)에 보관
 - 동일 키의 동시 요청에 대한 레이스 컨디션 처리 필요
+- 동일 key와 다른 request content는 `409 Conflict` 또는 계약상 정의한 Problem Details로 처리한다
+- browser form resubmission이 주된 문제이면 PRG를 고려하고, API client retry가 주된 문제이면 `Idempotency-Key`를 우선한다
 
 > 출처: Stripe API - Idempotent Requests, Stripe Blog - Idempotency, IETF Draft - Idempotency-Key
 
 ---
 
-## 13. OpenAPI
+## 14. OpenAPI
 
-### 13.1 OpenAPI란
+### 14.1 OpenAPI란
 
 OpenAPI(구 Swagger)는 REST API를 기술하는 표준 명세 형식이다. 2015년 스마트베어에서 리눅스 파운데이션으로 이관되면서 OpenAPI로 이름이 바뀌었다.
 
-### 13.2 용도
+### 14.2 용도
 
 - API 테스트 일부 자동화
 - API 설계 조기 피드백
@@ -472,16 +535,31 @@ OpenAPI(구 Swagger)는 REST API를 기술하는 표준 명세 형식이다. 201
 - 버전별 API 변경사항 비교
 - 클라이언트 SDK 자동 생성
 
-### 13.3 실전 원칙
+### 14.3 반영해야 할 계약 표면
+
+API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
+
+- path, HTTP method, operationId, tag
+- path/query/header parameter와 request body schema
+- 상태 코드별 response body schema와 header
+- RFC 9457 Problem Details error response
+- authentication/authorization security requirement
+- pagination parameter와 response metadata
+- rate limit, retry, deprecation, sunset header
+- `Idempotency-Key` header와 replay/conflict behavior 설명
+- versioning metadata와 compatibility note
+
+### 14.4 실전 원칙
 
 - API 설계 시 OpenAPI 명세를 함께 유지하여 문서와 구현의 불일치 방지
 - 명세 작성 도구(Swagger Editor, Stoplight 등) 활용
+- 테스트, client SDK, 문서, compatibility review가 같은 계약을 보도록 OpenAPI를 최신 상태로 유지
 
 > 출처: Go_Deeper/Book/Architecture/DesigningAPIS
 
 ---
 
-## 14. 참고 문헌
+## 15. 참고 문헌
 
 | 출처 | 다룬 내용 |
 |------|---------|
@@ -493,6 +571,7 @@ OpenAPI(구 Swagger)는 REST API를 기술하는 표준 명세 형식이다. 201
 | Google API Design Guide | 리소스 명명, 필터링/정렬 패턴 |
 | IETF RFC 9457 | Problem Details (에러 응답 형식) |
 | IETF RFC 9110 | HTTP 메서드 안전성/멱등성 |
+| IETF RFC 5789 | PATCH 메서드와 idempotent PATCH nuance |
 | Stripe Blog / Docs | 버전 관리, 페이지네이션, 멱등성 키 |
 | GitHub Docs | Rate Limiting 헤더 |
 | Slack API Docs | 커서 기반 페이지네이션 |

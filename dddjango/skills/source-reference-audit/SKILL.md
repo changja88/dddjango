@@ -19,9 +19,10 @@ Use this skill to audit whether dddjango source documents, source references, ru
 - For source-gap, conflict, or provisional audits, read `workspace/reference/source-reference-audit/reference/final.md` when it exists, then inspect the requested `workspace/reference/*/reference/final.md` files.
 - For source/reference boundary, leakage, public wording, eval traceability, validation coverage, or source/runtime path-boundary reviews, use `workspace/reference/source-reference-audit/reference/final.md` as the source decision before comparing runtime/public artifacts.
 - Use `final.md` as the default decision source. Read `review.md`, `internal.md`, and `external.md` when final guidance is ambiguous, gap-related, or conflict-related.
-- For runtime provenance, compare the relevant `workspace/reference` sources with `dddjango/skills/<skill>/SKILL.md`, `agents/openai.yaml`, and `references/*.md`.
-- For source/runtime cache sync, packaging sync, or provenance audits, list only source diffs, cache comparisons, provenance/package notes, validation output, and explicit not-run markers as evidence.
-- For runtime metadata audits, treat SKILL.md and `agents/openai.yaml` file existence as insufficient by itself. Capture validation command output and compare semantic alignment between skill description, UI metadata, and default prompt before marking metadata quality complete.
+- If `review.md`, `internal.md`, or `external.md` is absent, report it as `not present` or `not provided`; do not imply it was inspected, and do not treat absence as proof that every conflict or gap is resolved.
+- For runtime provenance, compare the relevant `workspace/reference` sources with `dddjango/skills/<skill>/SKILL.md`, `agents/openai.yaml`, and `references/*.md`. Name the source decision each runtime surface reflects, not only the file path.
+- For source/runtime cache sync, packaging sync, or provenance audits, list only source diffs, cache comparisons, provenance/package notes, validation output, and explicit not-run markers as evidence. Treat physical runtime cache paths as parity evidence, not as runtime-facing allowed references.
+- For runtime metadata audits, treat SKILL.md and `agents/openai.yaml` file existence as insufficient by itself. Capture validation command output and compare semantic alignment between skill description, UI metadata, and default prompt before marking metadata quality complete. Check that default prompts do not expose private evaluation material, internal criteria, or non-public validation notes.
 - For runtime wrong-routing audits that name role map, skill description, and reference routing, treat all named axes as required evidence. Compare visible skill metadata or `SKILL.md` descriptions, the workflow role-map reference plus `dddjango/skills/workflow-dddjango-subagents/references/role-map.md` canonical table, and the reference-routing/fallback status. Do not rank the role map as merely conditional or reference routing as merely auxiliary when the user asks which axes to compare.
 - For leakage review, reject copying internal evaluation wording into runtime or public files; offer generalized product rules and, when useful, a local forbidden-token scan.
 - For leakage review, avoid spelling out non-public validation wording in runtime/public files. Describe it by category, such as private evaluation material, internal criteria, non-public validation notes, or internal identifiers.
@@ -47,6 +48,14 @@ Use this skill to audit whether dddjango source documents, source references, ru
 - Separate path rules by context. Authoring/source analysis and cache/source parity evidence may cite `workspace/reference/**` as source evidence. Internal eval/oracle work may cite permitted private eval paths when explicitly requested.
 - Runtime-facing guidance includes `SKILL.md`, bundled `references/*.md`, `agents/openai.yaml`, prompt-input/runtime-exposed guidance, public runtime instructions, and runtime policy examples. For those surfaces, use only runtime bundle-relative or skill-local references such as `references/*.md`, `dddjango/skills/<skill>/...`, dddjango skill ids, and sanitized package metadata.
 - Do not present `workspace/reference/**` as runtime-facing allowed refs, final runtime instructions, bundled runtime source paths, or `runtime_skill_reference.allow_refs` entries. If a boundary matrix or YAML-like policy is needed, put workspace paths only under source-authoring, source-evidence, internal-eval, or cache/source parity surfaces.
+
+## Dedicated Source And DRF Guardrail
+
+- Treat a reference area as dedicated only when its `reference/final.md` exists and actually covers the skill's main decisions. File existence alone is not enough.
+- Mark missing `final.md`, unresolved `review/internal/external` conflicts, source decisions weaker than runtime claims, or eval/run-only evidence as `open gap`, `provisional/fallback`, or `needs source decision`.
+- For DRF guardrail audits, keep three source axes separate: framework-neutral REST contract decisions from `architecture-api`, greenfield Django Ninja implementation from `implementation-django-ninja`, and existing DRF maintenance or migration from `implementation-django`.
+- Do not treat DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, or `rest_framework` material as the greenfield API implementation standard unless the source evidence explicitly says the project is in a legacy/migration or DRF-standardized maintenance context.
+- When DRF guardrail and provisional source status are both in scope, produce separate ledger rows so the source basis and forbidden claim for each can be checked independently.
 
 ## Conflict And Gap Ledger
 
