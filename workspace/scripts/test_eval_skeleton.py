@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 
@@ -93,6 +95,20 @@ class EvalSkeletonTests(unittest.TestCase):
             validation = eval_skeleton.validate_run(paths.output_dir)
 
         self.assertIn("stale-report", {failure["kind"] for failure in validation["failures"]})
+
+    def test_render_report_cli_prints_generated_report_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = eval_skeleton.Paths(fixture_root=FIXTURE_ROOT, output_dir=Path(tmp))
+            eval_skeleton.run_bucket(paths, "mini-bucket", "unit-mini-bucket")
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                exit_code = eval_skeleton.main(["--output-dir", tmp, "render-report"])
+
+        output = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(output["report"].endswith("report/report.json"))
+        self.assertTrue(output["report_html"].endswith("report/report.html"))
+        self.assertTrue(output["source_raw"].endswith("raw/run.json"))
 
 
 if __name__ == "__main__":

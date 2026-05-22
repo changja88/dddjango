@@ -1,0 +1,35 @@
+{
+  "schema_version": "p5-individual-targeted-suite/v1",
+  "run_id": "p5-individual-skills-fixture",
+  "bucket": "individual-skills",
+  "iterations": 2,
+  "status": "pass",
+  "runs": [
+    {
+      "iteration": 1,
+      "run_id": "p5-individual-skills-fixture-targeted-1",
+      "artifact": "workspace/develop/eval/runs/p5-individual-skills-fixture/raw/targeted-run-1.json",
+      "status": "pass",
+      "status_counts": {
+        "pass": 52,
+        "partial": 0,
+        "fail": 0,
+        "not-scored": 0
+      },
+      "metadata_digest": "9d4ba93b0946ef38278e85489d303d4fdf222365dc542528aff0ee0d81a4cc02"
+    },
+    {
+      "iteration": 2,
+      "run_id": "p5-individual-skills-fixture-targeted-2",
+      "artifact": "workspace/develop/eval/runs/p5-individual-skills-fixture/raw/targeted-run-2.json",
+      "status": "pass",
+      "status_counts": {
+        "pass": 52,
+        "partial": 0,
+        "fail": 0,
+        "not-scored": 0
+      },
+      "metadata_digest": "9d4ba93b0946ef38278e85489d303d4fdf222365dc542528aff0ee0d81a4cc02"
+    }
+  ]
+}

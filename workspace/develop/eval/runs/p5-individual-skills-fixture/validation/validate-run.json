@@ -1,0 +1,19 @@
+{
+  "schema_version": "p5-individual-eval-validation/v1",
+  "status": "pass",
+  "raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p5-individual-skills-fixture/raw/run.json",
+  "report_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p5-individual-skills-fixture/report/report.json",
+  "raw_digest": "7dba58d87804a50ce249ecaa5ea47b0b3ad5e0eef0ba5d1ebda87b479597bb88",
+  "metadata_digest": "9d4ba93b0946ef38278e85489d303d4fdf222365dc542528aff0ee0d81a4cc02",
+  "status_counts": {
+    "pass": 52,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "case_count": 26,
+  "result_count": 52,
+  "model_backed": false,
+  "runtime_parity_precondition": "not-complete-in-current-phase-status",
+  "failures": []
+}

@@ -3,7 +3,7 @@
   "status": "fail",
   "raw_path": "workspace/develop/eval/runs/p4-mini-bucket-fixture/raw/run.json",
   "report_path": "workspace/develop/eval/runs/p4-mini-bucket-fixture/report/report.json",
-  "raw_digest": "27092839412f2a7bd9f42860543f9f38a233ffb26f24e025d2f1d8f8a7650e64",
+  "raw_digest": "505cc3a708a3a99f9b462756f416956737993f3ae012377c2d241b6fd2d16720",
   "status_counts": {
     "pass": 6,
     "partial": 2,

@@ -3,7 +3,7 @@
   "run_id": "p4-mini-bucket-fixture",
   "bucket": "mini-bucket",
   "fixture_root": "workspace/develop/eval/fixtures/mini-bucket",
-  "created_at_utc": "2026-05-22T15:30:34.519119+00:00",
+  "created_at_utc": "2026-05-22T15:59:55.597328+00:00",
   "variants": [
     "baseline",
     "with-plugin"
@@ -750,5 +750,5 @@
       "fixture_match": true
     }
   ],
-  "raw_digest": "27092839412f2a7bd9f42860543f9f38a233ffb26f24e025d2f1d8f8a7650e64"
+  "raw_digest": "505cc3a708a3a99f9b462756f416956737993f3ae012377c2d241b6fd2d16720"
 }
