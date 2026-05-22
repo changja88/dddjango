@@ -22,6 +22,7 @@
 
 - `workspace/plan/**`, `workspace/reference/**`, `workspace/develop/eval/**`, `dddjango/skills/**` 문서를 작성하거나 수정할 때는 `workspace/plan/constraint_rules.md`를 기준 제약으로 따른다.
 - 작업 순서와 체크리스트는 `workspace/plan/plugin_build_plan.md`를 따르되, 위치, 첫 줄 `수정 대상:`, 파일명, 언어, 평가지 폴더 역할 제약은 `constraint_rules.md`를 우선한다.
+- 위 계획/제약/상태/인덱스 문서를 추가하거나 수정하면 `python3 -B workspace/scripts/validate_plan_governance.py`를 실행해 추적 체계가 깨지지 않았는지 확인한다.
 - 위 제약을 바꾸는 변경에는 관련 validator와 테스트 갱신 필요 여부를 함께 확인한다.
 - eval pack을 바꾸면 `validate_eval_bucket_pack.py` 실행 필요 여부를 함께 확인한다.
 
