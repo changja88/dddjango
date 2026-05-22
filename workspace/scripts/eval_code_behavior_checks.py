@@ -6,7 +6,11 @@ from __future__ import annotations
 import argparse
 import ast
 import importlib
+import shutil
+import subprocess
 import sys
+import tempfile
+from enum import Enum
 from pathlib import Path
 
 
@@ -44,9 +48,82 @@ def require_order_behavior(workspace: Path) -> None:
 
 
 def require_service_does_not_mutate_status_directly(workspace: Path) -> None:
-    service_text = (workspace / "apps/orders/services.py").read_text(encoding="utf-8")
-    if ".status =" in service_text:
-        raise AssertionError("application service must call aggregate behavior instead of assigning status")
+    service_path = workspace / "apps/orders/services.py"
+    tree = ast.parse(service_path.read_text(encoding="utf-8"))
+    assigned = assigned_status_attributes(tree)
+    if assigned:
+        raise AssertionError(
+            "application service must call aggregate behavior instead of assigning status"
+        )
+
+
+LIFECYCLE_FIELD_TERMS = ("status", "state", "lifecycle")
+
+
+def is_name_mangled_private(name: str, instance: object) -> bool:
+    return any(name.startswith(f"_{cls.__name__}__") for cls in type(instance).mro())
+
+
+def lifecycle_attribute_names(instance: object) -> list[str]:
+    names = {"status", "lifecycle_state"}
+    instance_dict = getattr(instance, "__dict__", {})
+    if isinstance(instance_dict, dict):
+        names.update(
+            name
+            for name in instance_dict
+            if any(term in name.lower() for term in LIFECYCLE_FIELD_TERMS)
+            and "changing" not in name.lower()
+            and not is_name_mangled_private(name, instance)
+        )
+    for cls in type(instance).mro():
+        slots = getattr(cls, "__slots__", ())
+        if isinstance(slots, str):
+            slot_names = (slots,)
+        else:
+            slot_names = tuple(slots)
+        names.update(
+            name
+            for name in slot_names
+            if isinstance(name, str)
+            and any(term in name.lower() for term in LIFECYCLE_FIELD_TERMS)
+            and "changing" not in name.lower()
+        )
+    return sorted(name for name in names if hasattr(instance, name))
+
+
+def confirmed_lifecycle_values(models: object, current_value: object) -> list[object]:
+    values: list[object] = []
+    if isinstance(current_value, Enum) and hasattr(type(current_value), "CONFIRMED"):
+        values.append(getattr(type(current_value), "CONFIRMED"))
+    for name in dir(models):
+        candidate = getattr(models, name)
+        if isinstance(candidate, type) and issubclass(candidate, Enum) and hasattr(candidate, "CONFIRMED"):
+            values.append(getattr(candidate, "CONFIRMED"))
+    unique: list[object] = []
+    for value in values:
+        if value not in unique:
+            unique.append(value)
+    return unique
+
+
+def require_lifecycle_status_not_externally_mutable(
+    aggregate: object,
+    *,
+    models: object,
+    label: str,
+) -> None:
+    observed_status = getattr(aggregate, "status")
+    values = confirmed_lifecycle_values(models, observed_status)
+    if not values:
+        raise AssertionError(f"{label} lifecycle confirmed state is not discoverable")
+    for attr_name in lifecycle_attribute_names(aggregate):
+        for value in values:
+            try:
+                setattr(aggregate, attr_name, value)
+            except (AttributeError, TypeError):
+                continue
+            if getattr(aggregate, "status") == value:
+                raise AssertionError(f"{label} lifecycle status must not be externally mutable")
 
 
 def run_ddd_order_placement(workspace: Path) -> None:
@@ -59,6 +136,11 @@ def run_ddd_order_placement(workspace: Path) -> None:
 
     order = services.place_order("customer-1", ["sku-1"])
     assert order.status == models.OrderStatus.PENDING_PAYMENT
+    require_lifecycle_status_not_externally_mutable(
+        order,
+        models=models,
+        label="Order",
+    )
     confirmed = services.confirm_order(order.id)
     assert confirmed.status == models.OrderStatus.CONFIRMED
     try:
@@ -119,7 +201,11 @@ def has_status_setattr_call(node: ast.Call) -> bool:
     if len(node.args) < 2:
         return False
     attr_arg = node.args[1]
-    return isinstance(attr_arg, ast.Constant) and attr_arg.value in {"status", "_status"}
+    return (
+        isinstance(attr_arg, ast.Constant)
+        and isinstance(attr_arg.value, str)
+        and any(term in attr_arg.value.lower() for term in LIFECYCLE_FIELD_TERMS)
+    )
 
 
 def assigned_status_attributes(tree: ast.AST) -> list[str]:
@@ -134,7 +220,10 @@ def assigned_status_attributes(tree: ast.AST) -> list[str]:
         else:
             targets = []
         for target in targets:
-            if isinstance(target, ast.Attribute) and target.attr in {"status", "_status"}:
+            if (
+                isinstance(target, ast.Attribute)
+                and any(term in target.attr.lower() for term in LIFECYCLE_FIELD_TERMS)
+            ):
                 assigned.append(target.attr)
         if isinstance(node, ast.Call) and has_status_setattr_call(node):
             assigned.append("setattr(status)")
@@ -274,6 +363,107 @@ def run_web_detail_render_boundary(workspace: Path) -> None:
         raise AssertionError("detail.css exists but is not referenced by detail template")
 
 
+def run_coupon_tdd_policy_boundaries(workspace: Path) -> None:
+    use_workspace_modules(workspace)
+    policy = importlib.import_module("apps.coupons.policy")
+    coupon = policy.Coupon(
+        code="SAVE",
+        discount_amount=1000,
+        minimum_order_amount=5000,
+        expires_on=policy.date(2026, 1, 31),
+    )
+    assert policy.apply_coupon(coupon, 5000, policy.date(2026, 1, 31)) == 4000
+    try:
+        policy.apply_coupon(coupon, 4999, policy.date(2026, 1, 31))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("amount below minimum must be rejected")
+
+    try:
+        policy.apply_coupon(coupon, 5000, policy.date(2026, 2, 1))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("day after expiration must be rejected")
+
+    used_coupon = policy.Coupon(
+        code="USED",
+        discount_amount=1000,
+        minimum_order_amount=5000,
+        expires_on=policy.date(2026, 1, 31),
+        used=True,
+    )
+    try:
+        policy.apply_coupon(used_coupon, 5000, policy.date(2026, 1, 31))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("used coupon must be rejected")
+
+
+def expression_references_coupon_used(node: ast.AST) -> bool:
+    for child in ast.walk(node):
+        if (
+            isinstance(child, ast.Attribute)
+            and child.attr == "used"
+            and isinstance(child.value, ast.Name)
+            and child.value.id == "coupon"
+        ):
+            return True
+    return False
+
+
+class CouponUsedGuardRemover(ast.NodeTransformer):
+    def __init__(self) -> None:
+        self.removed = False
+
+    def visit_If(self, node: ast.If) -> ast.AST | list[ast.AST] | None:
+        node = self.generic_visit(node)
+        if isinstance(node, ast.If) and expression_references_coupon_used(node.test):
+            self.removed = True
+            return []
+        return node
+
+
+def remove_coupon_used_guard(policy_path: Path) -> bool:
+    tree = ast.parse(policy_path.read_text(encoding="utf-8"))
+    remover = CouponUsedGuardRemover()
+    updated = remover.visit(tree)
+    if not remover.removed:
+        return False
+    ast.fix_missing_locations(updated)
+    policy_path.write_text(ast.unparse(updated) + "\n", encoding="utf-8")
+    return True
+
+
+def run_coupon_tdd_red_proof(workspace: Path) -> int:
+    with tempfile.TemporaryDirectory() as tmp:
+        temp_workspace = Path(tmp) / "workspace"
+        shutil.copytree(workspace, temp_workspace)
+        policy_path = temp_workspace / "apps/coupons/policy.py"
+        if not remove_coupon_used_guard(policy_path):
+            print("coupon TDD red proof could not remove a coupon.used guard", file=sys.stderr)
+            return 2
+        result = subprocess.run(
+            [sys.executable, "-m", "unittest"],
+            cwd=temp_workspace,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        sys.stdout.write(result.stdout)
+        sys.stderr.write(result.stderr)
+        if result.returncode == 0:
+            print(
+                "coupon TDD red proof did not fail after removing the used-coupon guard",
+                file=sys.stderr,
+            )
+            return 2
+        return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--case", required=True)
@@ -285,6 +475,10 @@ def main(argv: list[str] | None = None) -> int:
         run_ddd_reservation_boundary(args.workspace.resolve())
     elif args.case == "case-code-web-detail":
         run_web_detail_render_boundary(args.workspace.resolve())
+    elif args.case == "case-code-coupon-tdd":
+        run_coupon_tdd_policy_boundaries(args.workspace.resolve())
+    elif args.case == "case-code-coupon-tdd-red-proof":
+        return run_coupon_tdd_red_proof(args.workspace.resolve())
     else:
         raise SystemExit(f"unknown behavior check case: {args.case}")
     print(f"behavior checks passed: {args.case}")

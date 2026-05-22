@@ -96,6 +96,92 @@ def require_file(findings: list[str], path: Path, description: str) -> bool:
     return True
 
 
+def require_json_prompt_input_file(findings: list[str], path: Path, description: str) -> bool:
+    if not require_file(findings, path, description):
+        return False
+    try:
+        raw_text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        findings.append(f"{description} is unreadable: {path}: {exc}")
+        return False
+    if not raw_text.strip():
+        findings.append(f"{description} must contain a JSON object or array: {path}")
+        return False
+    try:
+        value = json.loads(raw_text)
+    except json.JSONDecodeError as exc:
+        findings.append(f"{description} must contain a JSON object or array: {path}: {exc}")
+        return False
+    if not isinstance(value, (dict, list)):
+        findings.append(f"{description} must contain a JSON object or array: {path}")
+        return False
+    return True
+
+
+def validate_prompt_input_private_material(raw_dir: Path, case_id: str) -> list[str]:
+    path = raw_dir / f"{case_id}-with-dddjango-prompt-input.json"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="replace")
+    private_keys = {
+        "case_id",
+        "reference_basis",
+        "target_behavior",
+        "scoring_checks",
+        "failure_modes",
+        "leakage_checks",
+        "evidence_required",
+        "coverage_tags",
+    }
+    private_markers = (
+        "__DDDJANGO_PRIVATE_EVAL_SENTINEL__",
+        "EVALUATOR-ONLY ANSWER ORACLE",
+        "workspace/develop/eval/response/answer/",
+        "workspace/develop/eval/code/answer/",
+        "workspace/develop/eval/plugin/answer/",
+        "workspace/develop/eval/runtime/answer/",
+        "workspace/develop/eval/source/answer/",
+        "workspace/develop/eval/workflow/answer/",
+        "workspace/develop/eval/response/cases/plugin/private/",
+        "workspace/develop/eval/code/cases/plugin/private/",
+        "workspace/develop/eval/plugin/cases/plugin/private/",
+        "workspace/develop/eval/runtime/cases/plugin/private/",
+        "workspace/develop/eval/source/cases/plugin/private/",
+        "workspace/develop/eval/workflow/cases/plugin/private/",
+        "target_behavior:",
+        "reference_basis:",
+        "case_id:",
+        "scoring_checks:",
+        "failure_modes:",
+        "leakage_checks:",
+        "evidence_required:",
+        "coverage_tags:",
+    )
+    if any(marker in text for marker in private_markers):
+        return [
+            f"with-ddjango prompt-input artifact contains private evaluation material: {path}"
+        ]
+    try:
+        artifact = json.loads(text)
+    except json.JSONDecodeError:
+        return []
+    if json_has_private_key(artifact, private_keys):
+        return [
+            f"with-ddjango prompt-input artifact contains private evaluation material: {path}"
+        ]
+    return []
+
+
+def json_has_private_key(value: Any, private_keys: set[str]) -> bool:
+    if isinstance(value, dict):
+        if any(key in private_keys for key in value):
+            return True
+        return any(json_has_private_key(child, private_keys) for child in value.values())
+    if isinstance(value, list):
+        return any(json_has_private_key(child, private_keys) for child in value)
+    return False
+
+
 def validate_common_run_artifacts(
     *,
     run_dir: Path,
@@ -118,12 +204,17 @@ def validate_common_run_artifacts(
             findings.append(f"baseline prompt-input artifact is forbidden: {path}")
 
     if "with-dddjango" in variants:
-        for suffix in ("prompt-input.json", "prompt-input.stderr.txt"):
-            require_file(
-                findings,
-                raw_dir / f"{case_id}-with-dddjango-{suffix}",
-                "with-ddjango prompt-input artifact",
-            )
+        require_json_prompt_input_file(
+            findings,
+            raw_dir / f"{case_id}-with-dddjango-prompt-input.json",
+            "with-ddjango prompt-input artifact",
+        )
+        require_file(
+            findings,
+            raw_dir / f"{case_id}-with-dddjango-prompt-input.stderr.txt",
+            "with-ddjango prompt-input stderr artifact",
+        )
+        findings.extend(validate_prompt_input_private_material(raw_dir, case_id))
 
     for variant in variants:
         for suffix, description in (
@@ -370,6 +461,104 @@ def validate_oracle(raw_dir: Path, case_id: str) -> list[str]:
     return []
 
 
+def answer_section_scalar(text: str, section: str, key: str) -> str | None:
+    lines = text.splitlines()
+    in_section = False
+    for line in lines:
+        if not in_section:
+            if re.match(rf"^{re.escape(section)}\s*:\s*$", line):
+                in_section = True
+            continue
+        if line and not line.startswith(" "):
+            break
+        match = re.match(rf"^\s+{re.escape(key)}\s*:\s*(.*?)\s*(?:#.*)?$", line)
+        if match:
+            value = match.group(1).strip().strip("'\"")
+            return value
+    return None
+
+
+def score_value(score: object) -> int | None:
+    if not isinstance(score, str):
+        return None
+    match = re.match(r"^\s*(\d+)\s*/\s*5\s*$", score)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def validate_expected_outcomes(
+    *,
+    answer_dir: Path,
+    raw_dir: Path,
+    case_id: str,
+) -> list[str]:
+    answer_path = answer_dir / f"{case_id}.yaml"
+    answer_text = answer_path.read_text(encoding="utf-8", errors="replace")
+    baseline_expected = answer_section_scalar(answer_text, "expected_outcomes", "baseline")
+    with_expected = answer_section_scalar(answer_text, "expected_outcomes", "with_dddjango")
+    expected_delta = answer_section_scalar(answer_text, "expected_outcomes", "expected_delta")
+    baseline_pass_ok = answer_section_scalar(answer_text, "expected_outcomes", "baseline_pass_ok")
+    if (
+        baseline_expected is None
+        and with_expected is None
+        and expected_delta is None
+        and baseline_pass_ok is None
+    ):
+        return []
+
+    oracle, error = load_json_object(raw_dir / f"{case_id}-answer-oracle-evaluation.json")
+    if error is not None:
+        return []
+    assert oracle is not None
+    baseline = oracle.get("baseline")
+    with_dddjango = oracle.get("with_dddjango")
+    findings: list[str] = []
+    baseline_verdict = baseline.get("verdict") if isinstance(baseline, dict) else None
+    with_verdict = with_dddjango.get("verdict") if isinstance(with_dddjango, dict) else None
+    if baseline_pass_ok == "false" and baseline_verdict == "pass":
+        findings.append(
+            f"{case_id}: expected_outcomes baseline_pass_ok=false conflicts with baseline verdict pass"
+        )
+    if baseline_expected in {"fail", "partial"} and baseline_verdict == "pass":
+        findings.append(
+            f"{case_id}: expected_outcomes baseline={baseline_expected} conflicts with baseline verdict pass"
+        )
+    if with_expected == "pass" and with_verdict != "pass":
+        findings.append(
+            f"{case_id}: expected_outcomes with_dddjango=pass conflicts with with-ddjango verdict {with_verdict}"
+        )
+    if (
+        with_expected == "pass-or-pass-limited"
+        and with_verdict not in {"pass", "pass-limited"}
+    ):
+        findings.append(
+            f"{case_id}: expected_outcomes with_dddjango=pass-or-pass-limited conflicts with with-ddjango verdict {with_verdict}"
+        )
+    if expected_delta in {"positive", "non-negative"}:
+        baseline_score = score_value(baseline.get("score") if isinstance(baseline, dict) else None)
+        with_score = score_value(with_dddjango.get("score") if isinstance(with_dddjango, dict) else None)
+        if (
+            expected_delta == "non-negative"
+            and baseline_score is not None
+            and with_score is not None
+            and with_score < baseline_score
+        ):
+            findings.append(
+                f"{case_id}: expected_outcomes expected_delta=non-negative requires with-dddjango score at least baseline"
+            )
+    if expected_delta == "positive":
+        if baseline_score is not None and with_score is not None and with_score <= baseline_score:
+            findings.append(
+                f"{case_id}: expected_outcomes expected_delta=positive requires with-dddjango score above baseline"
+            )
+        if with_verdict == baseline_verdict == "pass":
+            findings.append(
+                f"{case_id}: expected_outcomes expected_delta=positive conflicts with both variants passing"
+            )
+    return findings
+
+
 def workflow_trace_marker_exists(run_dir: Path) -> bool:
     return (run_dir / SUBAGENT_TRACE_MARKER).is_file()
 
@@ -516,7 +705,7 @@ def validate_workflow_execution_gate(
         key = variant_oracle_key(variant)
         variant_oracle = oracle.get(key)
         verdict = variant_oracle.get("verdict") if isinstance(variant_oracle, dict) else None
-        if gate.findings and verdict == "pass":
+        if gate.findings and verdict not in {"fail", "blocked"}:
             findings.extend(gate.findings)
     return findings
 
@@ -589,8 +778,122 @@ def validate_code_artifacts(
                 variant,
                 behavior_checks,
             )
+            findings.extend(
+                validate_code_verification_claims(
+                    run_dir=run_dir,
+                    case_id=case_id,
+                    variant=variant,
+                )
+            )
         except AssertionError as exc:
             findings.append(str(exc))
+    return findings
+
+
+CLAIM_TOOL_PATTERNS = {
+    "pytest": re.compile(r"\bpytest\b", re.I),
+    "unittest": re.compile(r"\bunittest\b", re.I),
+    "compileall": re.compile(r"\bcompileall\b|컴파일", re.I),
+    "ruff": re.compile(r"\bruff\b", re.I),
+    "mypy": re.compile(r"\bmypy\b", re.I),
+    "pyright": re.compile(r"\bpyright\b", re.I),
+}
+PYTHON_UNITTEST_COMMAND_PATTERN = re.compile(r"\bpython3?\s+-m\s+unittest(?:\s+[A-Za-z0-9_./:-]+)*")
+PRE_FAILURE_CLAIM_PATTERN = re.compile(
+    r"(구현\s*전|먼저|before implementation|red[- ]green|failing test|실패하는 테스트|실패 확인|실패하는 것 확인)",
+    re.I,
+)
+CLAIM_POSITIVE_PATTERN = re.compile(
+    r"\b(pass(?:ed|es)?|ok|success(?:ful)?|green|실행|통과|완료)\b",
+    re.I,
+)
+CLAIM_NEGATIVE_PATTERN = re.compile(
+    r"\b(not run|not executed|did not run|was not run|unrun|미실행|실행하지|하지 않았|안 했|안함)\b",
+    re.I,
+)
+
+
+def code_check_commands(run_dir: Path, case_id: str, variant: str) -> list[str]:
+    artifact_dir = run_dir / "code" / case_id / variant
+    commands: list[str] = []
+    for path in sorted(artifact_dir.rglob("*-command.txt")):
+        try:
+            commands.append(path.read_text(encoding="utf-8", errors="replace").lower())
+        except OSError:
+            continue
+    return commands
+
+
+def code_check_has_failing_exit(run_dir: Path, case_id: str, variant: str) -> bool:
+    artifact_dir = run_dir / "code" / case_id / variant
+    for path in sorted(artifact_dir.rglob("*-exit.txt")):
+        try:
+            exit_code = path.read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            continue
+        if exit_code and exit_code != "0":
+            return True
+    return False
+
+
+def normalized_command(value: str) -> str:
+    return " ".join(value.strip().split()).lower()
+
+
+def line_claims_tool_execution(line: str, tool: str, pattern: re.Pattern[str]) -> bool:
+    if not pattern.search(line):
+        return False
+    lowered = line.lower()
+    if CLAIM_NEGATIVE_PATTERN.search(lowered):
+        return False
+    if CLAIM_POSITIVE_PATTERN.search(lowered):
+        return True
+    return tool in {"pytest", "ruff", "mypy", "pyright"} and any(
+        word in lowered for word in ("test", "check", "검증", "테스트")
+    )
+
+
+def validate_code_verification_claims(
+    *,
+    run_dir: Path,
+    case_id: str,
+    variant: str,
+) -> list[str]:
+    output_path = run_dir / "raw" / f"{case_id}-{variant}.txt"
+    try:
+        output = output_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    commands = code_check_commands(run_dir, case_id, variant)
+    normalized_commands = [normalized_command(command) for command in commands]
+    has_failing_exit = code_check_has_failing_exit(run_dir, case_id, variant)
+    findings: list[str] = []
+    for line_number, line in enumerate(output.splitlines(), start=1):
+        lowered = line.lower()
+        if (
+            PRE_FAILURE_CLAIM_PATTERN.search(line)
+            and not CLAIM_NEGATIVE_PATTERN.search(lowered)
+            and not has_failing_exit
+        ):
+            findings.append(
+                f"{case_id} {variant}: output claims pre-implementation failing/red-green verification without separate failing check artifact at raw/{case_id}-{variant}.txt:{line_number}"
+            )
+        for match in PYTHON_UNITTEST_COMMAND_PATTERN.finditer(line):
+            if CLAIM_NEGATIVE_PATTERN.search(lowered):
+                continue
+            claimed_command = normalized_command(match.group(0))
+            if claimed_command not in normalized_commands:
+                findings.append(
+                    f"{case_id} {variant}: output claims command `{claimed_command}` without exact matching check command artifact at raw/{case_id}-{variant}.txt:{line_number}"
+                )
+        for tool, pattern in CLAIM_TOOL_PATTERNS.items():
+            if not line_claims_tool_execution(line, tool, pattern):
+                continue
+            if any(tool in command for command in commands):
+                continue
+            findings.append(
+                f"{case_id} {variant}: output claims {tool} execution without matching check command artifact at raw/{case_id}-{variant}.txt:{line_number}"
+            )
     return findings
 
 
@@ -653,6 +956,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         if not args.skip_oracle:
             findings.extend(validate_oracle(raw_dir, case_id))
+            findings.extend(
+                validate_expected_outcomes(
+                    answer_dir=bucket.answer_dir,
+                    raw_dir=raw_dir,
+                    case_id=case_id,
+                )
+            )
         if args.bucket == "code":
             findings.extend(
                 validate_code_artifacts(

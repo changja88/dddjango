@@ -228,8 +228,8 @@ description: >
         skill_md = skill / "SKILL.md"
         skill_md.write_text(
             skill_md.read_text(encoding="utf-8").replace(
-                "`None`, blank strings, and missing optional values",
-                "`None` values",
+                "`None`, blank string, missing optional value",
+                "`None` value",
             ),
             encoding="utf-8",
         )
@@ -238,7 +238,27 @@ description: >
         self.validator.check_django_web_skill(check, skill)
 
         self.assertTrue(
-            any("blank strings" in error for error in check.errors),
+            any("blank" in error for error in check.errors),
+            check.errors,
+        )
+
+    def test_django_web_rejects_validator_visible_runtime_wording(self) -> None:
+        repo_root = MODULE_PATH.parents[2]
+        source_skill = repo_root / "dddjango" / "skills" / "implementation-django-web"
+        skill = self.root / "implementation-django-web"
+        shutil.copytree(source_skill, skill)
+        skill_md = skill / "SKILL.md"
+        skill_md.write_text(
+            skill_md.read_text(encoding="utf-8")
+            + "\nvalidator-visible label must stay here.\n",
+            encoding="utf-8",
+        )
+        check = self.validator.Check()
+
+        self.validator.check_django_web_skill(check, skill)
+
+        self.assertTrue(
+            any("validator-facing wording" in error for error in check.errors),
             check.errors,
         )
 

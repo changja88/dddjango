@@ -47,11 +47,15 @@ ANSWER_ONLY_PUBLIC_PATTERNS = {
     "answer field: reference_basis": re.compile(r"(?<![A-Za-z0-9_])reference_basis(?![A-Za-z0-9_])"),
     "answer field: target_behavior": re.compile(r"(?<![A-Za-z0-9_])target_behavior(?![A-Za-z0-9_])"),
     "answer field: scoring_checks": re.compile(r"(?<![A-Za-z0-9_])scoring_checks(?![A-Za-z0-9_])"),
+    "answer field: hard_gates": re.compile(r"(?<![A-Za-z0-9_])hard_gates(?![A-Za-z0-9_])"),
     "answer field: failure_modes": re.compile(r"(?<![A-Za-z0-9_])failure_modes(?![A-Za-z0-9_])"),
     "answer field: leakage_checks": re.compile(r"(?<![A-Za-z0-9_])leakage_checks(?![A-Za-z0-9_])"),
     "answer field: evidence_required": re.compile(r"(?<![A-Za-z0-9_])evidence_required(?![A-Za-z0-9_])"),
+    "answer field: control_case": re.compile(r"(?<![A-Za-z0-9_])control_case(?![A-Za-z0-9_])"),
+    "answer field: expected_outcomes": re.compile(r"(?<![A-Za-z0-9_])expected_outcomes(?![A-Za-z0-9_])"),
     "answer field: coverage_tags": re.compile(r"(?<![A-Za-z0-9_])coverage_tags(?![A-Za-z0-9_])"),
     "answer field: case_id": re.compile(r"\bcase_id\s*:"),
+    "answer field: with_dddjango": re.compile(r"(?<![A-Za-z0-9_])with_dddjango(?![A-Za-z0-9_])"),
     "answer oracle wording": re.compile(r"\banswer oracle\b", re.I),
     "Korean private answer wording": re.compile(r"비공개\s*정답|정답\s*파일"),
     "absolute repo path": re.compile(re.escape(str(REPO_ROOT))),
@@ -91,6 +95,7 @@ WORKFLOW_EXPECTATION_REQUIRED_FIELDS = (
 )
 REQUIRED_COVERAGE_TAGS = {
     "response": {
+        "architecture-ddd-direct",
         "specialist-positive",
         "mixed-boundary",
         "ambiguity",
@@ -146,6 +151,8 @@ REQUIRED_COVERAGE_TAGS = {
         "validation-coverage",
         "eval-traceability",
         "boundary-protection",
+        "runtime-metadata-cache-sync",
+        "source-audit-exclusion",
     },
     "workflow": {
         "positive-composite",
@@ -154,12 +161,264 @@ REQUIRED_COVERAGE_TAGS = {
         "risky-write-consistency",
         "role-map-sync",
         "delegation-honesty",
+        "consent-gate",
+        "actual-subagent-trace",
+        "actual-subagent-required",
         "sequential-fallback",
         "subagent-opt-out",
         "tiny-task-restraint",
+        "direct-answer-shape",
+        "meta-tail-restraint",
+        "critical-path-restraint",
+        "parallel-ownership",
+        "responsibility-split",
         "false-claim",
+        "cache-sync-report",
+        "validation-sharing",
         "integration-closure",
     },
+}
+RESPONSE_ARCHITECTURE_DB_P4_COVERAGE_TAGS = {
+    "schema-modeling",
+    "keys-cardinality-optionality",
+    "constraints-indexes",
+    "transaction-locking",
+    "isolation-retry",
+    "idempotency-storage",
+    "duplicate-prevention",
+    "query-performance",
+    "operational-rollout",
+    "migration-safety",
+    "db-local-crud-restraint",
+}
+RESPONSE_ARCHITECTURE_DB_P4_MIXED_TAGS = {
+    "mixed-boundary",
+    "db-api-architecture",
+    "strategic-ddd",
+    "architecture-api",
+    "django-ninja",
+    "workflow",
+    "risky-write-consistency",
+}
+RESPONSE_ARCHITECTURE_API_P4_COVERAGE_TAGS = {
+    "architecture-api",
+    "rest-contract",
+    "resource-url",
+    "method-status",
+    "problem-details",
+    "auth-authz",
+    "content-negotiation",
+    "pagination",
+    "versioning-deprecation",
+    "rate-limit",
+    "idempotency",
+    "openapi-impact",
+    "negative-architecture-api-boundary",
+    "grpc-soap-boundary",
+    "routing-boundary",
+}
+RESPONSE_ARCHITECTURE_IMPLEMENTATION_PATTERNS_P4_COVERAGE_TAGS = {
+    "architecture-pattern-selection",
+    "architecture-pattern-restraint",
+    "implementation-patterns",
+    "dependency-direction",
+    "ports-adapters",
+    "repository-uow",
+    "cqrs-event-sourcing",
+    "saga-outbox-acl",
+    "service-layer",
+    "risky-write-consistency",
+    "overapplication-restraint",
+    "routing-boundary",
+}
+RESPONSE_IMPLEMENTATION_CLEANCODE_P4_COVERAGE_TAGS = {
+    "implementation-cleancode",
+    "clean-code",
+    "clean-code-exclusion",
+    "maintainability",
+    "review-refactor",
+    "responsibility-separation",
+    "naming",
+    "function-shape",
+    "encapsulation",
+    "abstraction",
+    "solid",
+    "duplication-dry",
+    "error-handling",
+    "fat-model-review",
+    "view-router-boundary",
+    "fat-schema-boundary",
+    "legacy-refactoring",
+    "overapplication-restraint",
+    "routing-boundary",
+    "tiny-task-restraint",
+}
+RESPONSE_IMPLEMENTATION_DJANGO_P4_COVERAGE_TAGS = {
+    "implementation-django",
+    "django-model-orm",
+    "queryset-manager",
+    "service-selector",
+    "django-transaction",
+    "query-performance",
+    "django-caching",
+    "settings-security",
+    "existing-drf-maintenance",
+    "drf-adapter-boundary",
+    "django-migration",
+    "migration-safety",
+    "django-implementation-restraint",
+    "routing-boundary",
+    "validation-honesty",
+}
+RESPONSE_IMPLEMENTATION_DJANGO_NINJA_P4_COVERAGE_TAGS = {
+    "implementation-django-ninja",
+    "django-ninja-router",
+    "schema-modelschema",
+    "endpoint-adapter",
+    "auth-permission",
+    "filtering-sorting",
+    "pagination",
+    "problem-details",
+    "openapi-impact",
+    "testclient",
+    "drf-to-ninja",
+    "routing-boundary",
+    "validation-honesty",
+}
+RESPONSE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS = {
+    "implementation-django-web",
+    "django-web",
+    "templateview-cbv-fbv",
+    "templates-base-includes",
+    "static-assets",
+    "display-ready-fallback",
+    "web-forms",
+    "htmx-csrf",
+    "auth-permission",
+    "render-acceptance",
+    "routing-boundary",
+    "validation-honesty",
+}
+RESPONSE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS = {
+    "implementation-python",
+    "python-type-contracts",
+    "none-union",
+    "built-in-generics",
+    "typeddict",
+    "type-narrowing",
+    "dataclass-value-object",
+    "enum-strenum",
+    "protocol-boundary",
+    "context-manager",
+    "pydantic-v2-boundary",
+    "async-concurrency",
+    "exceptions",
+    "ruff-typecheck",
+    "python-version-gate",
+    "routing-boundary",
+    "validation-honesty",
+}
+RESPONSE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS = {
+    "implementation-tdd",
+    "tdd",
+    "test-list",
+    "failing-test-first",
+    "red-green-refactor",
+    "inside-out",
+    "outside-in",
+    "acceptance-unit-loop",
+    "boundary-cases",
+    "refactor-checkpoint",
+    "state-verification",
+    "behavior-verification",
+    "mock-role",
+    "bdd-atdd",
+    "ai-assisted-tdd",
+    "routing-boundary",
+    "validation-honesty",
+}
+RESPONSE_IMPLEMENTATION_TEST_P4_COVERAGE_TAGS = {
+    "implementation-test",
+    "pytest",
+    "fixtures-conftest",
+    "parametrization",
+    "assertions",
+    "test-doubles",
+    "factory-boy-faker",
+    "hypothesis-property",
+    "time-http-mocking",
+    "testcontainers",
+    "coverage-mutation",
+    "bdd",
+    "flaky-tests",
+    "django-ninja-testclient",
+    "idempotency-concurrency",
+    "routing-boundary",
+    "validation-honesty",
+}
+IMPLEMENTATION_PYTHON_DIRECT_EXCLUDED_TAGS = {
+    "mixed-boundary",
+    "workflow",
+    "subagent",
+    "role-map",
+    "role-map-sync",
+    "delegation-honesty",
+    "sequential-fallback",
+    "subagent-opt-out",
+    "handoff-contract",
+    "integration-closure",
+    "positive-composite",
+    "risky-write-consistency",
+}
+IMPLEMENTATION_DJANGO_NINJA_DIRECT_EXCLUDED_TAGS = IMPLEMENTATION_PYTHON_DIRECT_EXCLUDED_TAGS
+IMPLEMENTATION_TEST_DIRECT_EXCLUDED_TAGS = IMPLEMENTATION_PYTHON_DIRECT_EXCLUDED_TAGS
+CODE_IMPLEMENTATION_DJANGO_P4_COVERAGE_TAGS = {
+    "code-implementation-django",
+    "implementation-django",
+    "django-model-orm",
+    "queryset-manager",
+    "service-selector",
+    "django-transaction",
+    "query-performance",
+    "django-caching",
+    "command-honesty",
+    "validation-honesty",
+}
+CODE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS = {
+    "code-implementation-python",
+    "implementation-python",
+    "python-type-contracts",
+    "dataclass-value-object",
+    "enum-strenum",
+    "protocol-boundary",
+    "pydantic-v2-boundary",
+    "ruff-typecheck",
+    "python-version-gate",
+    "command-honesty",
+    "validation-honesty",
+}
+CODE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS = {
+    "code-implementation-django-web",
+    "implementation-django-web",
+    "django-web",
+    "template-context",
+    "template-static",
+    "safe-rendering",
+    "static-reference",
+    "render-acceptance",
+    "validation-honesty",
+}
+CODE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS = {
+    "code-implementation-tdd",
+    "implementation-tdd",
+    "tdd",
+    "test-implementation",
+    "failing-test-first",
+    "red-green-refactor",
+    "boundary-cases",
+    "state-verification",
+    "domain-policy",
+    "validation-honesty",
 }
 MANUAL_PROTOCOL_BUCKETS = {"plugin", "runtime", "source", "workflow"}
 MANUAL_PROTOCOL_REQUIRED_TERMS = (
@@ -189,6 +448,22 @@ DDD_OBSERVATION_FIELDS = (
 DDD_REQUIRED_REFERENCE_PATHS = {
     "workspace/reference/architecture-ddd/reference/final.md",
 }
+RESPONSE_DDD_DIRECT_TAG = "architecture-ddd-direct"
+RESPONSE_DDD_OBSERVATION_FIELDS = (
+    "business_problem",
+    "subdomain_type",
+    "subdomain_type_basis",
+    "bounded_context",
+    "context_map_or_not_applicable",
+    "ubiquitous_terms",
+    "aggregate_candidates",
+    "entity_or_value_object",
+    "invariants",
+    "domain_event_or_service",
+    "use_cases",
+    "consistency_boundary",
+    "implementation_restraint",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -231,6 +506,41 @@ def block_lines(text: str, key: str) -> list[str]:
     return result
 
 
+def nested_block_lines(text: str, parent: str, child: str) -> list[str]:
+    lines = text.splitlines()
+    parent_index: int | None = None
+    for index, line in enumerate(lines):
+        if re.match(rf"^\s*{re.escape(parent)}\s*:", line):
+            parent_index = index
+            break
+    if parent_index is None:
+        return []
+
+    child_index: int | None = None
+    child_indent = ""
+    for index in range(parent_index + 1, len(lines)):
+        line = lines[index]
+        if line and not line.startswith(" "):
+            break
+        match = re.match(rf"^(\s+){re.escape(child)}\s*:", line)
+        if match:
+            child_index = index
+            child_indent = match.group(1)
+            break
+    if child_index is None:
+        return []
+
+    result: list[str] = []
+    for line in lines[child_index + 1 :]:
+        if line and not line.startswith(" "):
+            break
+        if re.match(rf"^\s{{0,{len(child_indent)}}}\S", line):
+            break
+        if line.strip():
+            result.append(line)
+    return result
+
+
 def validate_reference_basis(path: Path, text: str) -> list[str]:
     findings: list[str] = []
     lines = block_lines(text, "reference_basis")
@@ -257,6 +567,231 @@ def yaml_list_values(text: str, key: str) -> list[str]:
     return values
 
 
+def reference_paths(text: str) -> set[str]:
+    return {
+        item.get("path", "")
+        for item in eval_answer_yaml.list_of_maps(text, "reference_basis")
+    }
+
+
+def target_text_contains(text: str, term: str) -> bool:
+    if re.fullmatch(r"[a-z0-9_. -]+", term):
+        return re.search(
+            rf"(?<![a-z0-9_.-]){re.escape(term)}(?![a-z0-9_.-])",
+            text,
+        ) is not None
+    return term in text
+
+
+def architecture_db_direct_tags(text: str) -> set[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    paths = reference_paths(text)
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-db-"):
+        return set()
+    if "db-architecture" not in tags:
+        return set()
+    if tags & RESPONSE_ARCHITECTURE_DB_P4_MIXED_TAGS:
+        return set()
+    if "workspace/reference/architecture-db/reference/final.md" not in paths:
+        return set()
+    if not any(path.startswith("dddjango/skills/architecture-db/") for path in paths):
+        return set()
+    return tags & RESPONSE_ARCHITECTURE_DB_P4_COVERAGE_TAGS
+
+
+def has_implementation_django_ninja_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if tags & IMPLEMENTATION_DJANGO_NINJA_DIRECT_EXCLUDED_TAGS:
+        return False
+    if not RESPONSE_IMPLEMENTATION_DJANGO_NINJA_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-django-ninja-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-django-ninja/reference/final.md",
+        "dddjango/skills/implementation-django-ninja/SKILL.md",
+    }
+    if not required_paths <= paths:
+        return False
+    return any(
+        path.startswith("dddjango/skills/implementation-django-ninja/references/")
+        for path in paths
+    )
+
+
+def has_implementation_django_web_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not RESPONSE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-django-web-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-django-web/reference/final.md",
+        "dddjango/skills/implementation-django-web/SKILL.md",
+    }
+    if not required_paths <= paths:
+        return False
+    return any(
+        path.startswith("dddjango/skills/implementation-django-web/references/")
+        for path in paths
+    )
+
+
+def has_code_implementation_django_web_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not CODE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-code-web-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-django-web/reference/final.md",
+        "dddjango/skills/implementation-django-web/SKILL.md",
+    }
+    if not required_paths <= paths:
+        return False
+    return any(
+        path.startswith("dddjango/skills/implementation-django-web/references/")
+        for path in paths
+    )
+
+
+def has_implementation_python_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if tags & IMPLEMENTATION_PYTHON_DIRECT_EXCLUDED_TAGS:
+        return False
+    if not RESPONSE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-python-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-python/reference/final.md",
+        "dddjango/skills/implementation-python/SKILL.md",
+        "dddjango/skills/implementation-python/references/typing.md",
+        "dddjango/skills/implementation-python/references/dataclasses-enums.md",
+        "dddjango/skills/implementation-python/references/protocols-boundaries.md",
+        "dddjango/skills/implementation-python/references/pydantic-v2.md",
+    }
+    return required_paths <= paths
+
+
+def has_implementation_tdd_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not RESPONSE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-tdd-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-tdd/reference/final.md",
+        "dddjango/skills/implementation-tdd/SKILL.md",
+        "dddjango/skills/implementation-tdd/references/test-list.md",
+        "dddjango/skills/implementation-tdd/references/red-green-refactor.md",
+        "dddjango/skills/implementation-tdd/references/inside-out-outside-in.md",
+        "dddjango/skills/implementation-tdd/references/bdd-atdd.md",
+        "dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md",
+    }
+    return required_paths <= paths
+
+
+def has_implementation_test_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if tags & IMPLEMENTATION_TEST_DIRECT_EXCLUDED_TAGS:
+        return False
+    if not RESPONSE_IMPLEMENTATION_TEST_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-test-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-test/reference/final.md",
+        "dddjango/skills/implementation-test/SKILL.md",
+        "dddjango/skills/implementation-test/references/pytest-fixtures.md",
+        "dddjango/skills/implementation-test/references/test-doubles.md",
+        "dddjango/skills/implementation-test/references/factories-property-tests.md",
+        "dddjango/skills/implementation-test/references/coverage-mutation.md",
+        "dddjango/skills/implementation-test/references/django-api-concurrency.md",
+    }
+    return required_paths <= paths
+
+
+def has_implementation_test_exclusion_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    required_tags = {
+        "implementation-test-exclusion",
+        "pytest-assertion",
+        "tiny-task-restraint",
+        "routing-boundary",
+        "validation-honesty",
+    }
+    if not required_tags <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-response-test-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "dddjango/skills/implementation-test/SKILL.md",
+        "dddjango/skills/implementation-test/references/pytest-fixtures.md",
+    }
+    return required_paths <= paths
+
+
+def has_code_implementation_python_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if tags & IMPLEMENTATION_PYTHON_DIRECT_EXCLUDED_TAGS:
+        return False
+    if not CODE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if not case_id.startswith("case-code-python-"):
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-python/reference/final.md",
+        "dddjango/skills/implementation-python/SKILL.md",
+        "dddjango/skills/implementation-python/references/typing.md",
+        "dddjango/skills/implementation-python/references/dataclasses-enums.md",
+        "dddjango/skills/implementation-python/references/protocols-boundaries.md",
+        "dddjango/skills/implementation-python/references/pydantic-v2.md",
+    }
+    return required_paths <= paths
+
+
+def has_code_implementation_tdd_direct_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not CODE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS <= tags:
+        return False
+    case_id = scalar_value(text, "case_id") or ""
+    if case_id != "case-code-coupon-tdd":
+        return False
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-tdd/reference/final.md",
+        "dddjango/skills/implementation-tdd/SKILL.md",
+        "dddjango/skills/implementation-tdd/references/test-list.md",
+        "dddjango/skills/implementation-tdd/references/red-green-refactor.md",
+        "dddjango/skills/implementation-tdd/references/inside-out-outside-in.md",
+        "workspace/reference/implementation-test/reference/final.md",
+    }
+    if not required_paths <= paths:
+        return False
+    return (
+        "behavior_checks:" in text
+        and "eval_code_behavior_checks.py --case case-code-coupon-tdd" in text
+    )
+
+
 def validate_required_blocks(path: Path, text: str) -> list[str]:
     findings: list[str] = []
     for field in LIST_FIELDS:
@@ -275,6 +810,39 @@ def validate_expected_outcomes(path: Path, text: str) -> list[str]:
     for field in EXPECTED_OUTCOME_FIELDS:
         if not re.search(rf"(?m)^\s+{re.escape(field)}\s*:", block):
             findings.append(f"{path}: expected_outcomes missing {field}")
+    baseline_pass = re.search(r"(?m)^\s+baseline_pass_ok\s*:\s*true\s*$", block)
+    control_case = (scalar_value(text, "control_case") or "").lower()
+    if baseline_pass and control_case == "false":
+        tags = set(yaml_list_values(text, "coverage_tags"))
+        case_role = (scalar_value(text, "case_role") or "").lower()
+        expected_delta_match = re.search(
+            r"(?m)^\s+expected_delta\s*:\s*(\S+)\s*$",
+            block,
+        )
+        expected_delta = expected_delta_match.group(1) if expected_delta_match else ""
+        is_neutral_cleancode_supporting_case = (
+            "implementation-cleancode" in tags
+            and case_role == "implementation_supporting"
+            and expected_delta == "neutral"
+        )
+        positive_tags = {
+            "implementation-django",
+            "django-implementation",
+            "code-implementation-django",
+            "implementation-django-ninja",
+            "code-implementation-django-ninja",
+            "implementation-django-web",
+            "code-implementation-django-web",
+            "implementation-cleancode",
+        }
+        if (
+            tags & positive_tags
+            and not is_neutral_cleancode_supporting_case
+            and not scalar_value(text, "baseline_pass_ok_reason")
+        ):
+            findings.append(
+                f"{path}: positive implementation answer with control_case false and baseline_pass_ok true must declare baseline_pass_ok_reason"
+            )
     return findings
 
 
@@ -354,11 +922,8 @@ def validate_code_ddd_answer(path: Path, text: str) -> list[str]:
     if role != "ddd_direct":
         return []
 
-    reference_paths = {
-        item.get("path", "")
-        for item in eval_answer_yaml.list_of_maps(text, "reference_basis")
-    }
-    for required_path in sorted(DDD_REQUIRED_REFERENCE_PATHS - reference_paths):
+    paths = reference_paths(text)
+    for required_path in sorted(DDD_REQUIRED_REFERENCE_PATHS - paths):
         findings.append(f"{path}: ddd_direct answer must reference {required_path}")
 
     observation_keys = eval_answer_yaml.nested_keys(text, "ddd_observations")
@@ -368,6 +933,681 @@ def validate_code_ddd_answer(path: Path, text: str) -> list[str]:
     for field in DDD_OBSERVATION_FIELDS:
         if field not in observation_keys:
             findings.append(f"{path}: ddd_observations missing {field}")
+    return findings
+
+
+def validate_response_ddd_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if RESPONSE_DDD_DIRECT_TAG not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    for required_path in sorted(DDD_REQUIRED_REFERENCE_PATHS - paths):
+        findings.append(
+            f"{path}: architecture-ddd direct response answer must reference {required_path}"
+        )
+
+    observation_keys = eval_answer_yaml.nested_keys(text, "ddd_observations")
+    if not observation_keys:
+        findings.append(
+            f"{path}: architecture-ddd direct response answer must declare ddd_observations"
+        )
+        return findings
+    for field in RESPONSE_DDD_OBSERVATION_FIELDS:
+        if field not in observation_keys:
+            findings.append(f"{path}: ddd_observations missing {field}")
+    return findings
+
+
+def validate_response_cleancode_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not ({"implementation-cleancode", "clean-code-exclusion"} & tags):
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    if "clean-code-exclusion" in tags:
+        required_paths = {"dddjango/skills/implementation-cleancode/SKILL.md"}
+    else:
+        required_paths = {
+            "workspace/reference/implementation-cleancode/reference/final.md",
+            "dddjango/skills/implementation-cleancode/SKILL.md",
+        }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-cleancode answer must reference {required_path}"
+        )
+
+    target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+    if "clean-code-exclusion" in tags:
+        if not (("brief" in target_text or "short" in target_text) and "direct" in target_text):
+            findings.append(
+                f"{path}: clean-code exclusion answer must require brief direct handling"
+            )
+        if not any(term in target_text for term in ("review", "refactor", "workflow", "subagent")):
+            findings.append(
+                f"{path}: clean-code exclusion answer must forbid clean-code/workflow ceremony"
+            )
+        return findings
+
+    if not ({"function-shape", "fat-schema-boundary", "legacy-refactoring"} & tags):
+        return findings
+
+    positive_terms = (
+        ("finding", "review"),
+        ("responsib", "boundary", "fat"),
+        ("naming", "name"),
+        ("function", "argument", "side effect"),
+        ("encapsulation",),
+        ("abstraction", "solid"),
+        ("dry", "duplication", "duplicated"),
+        ("error", "exception"),
+        ("schema", "router"),
+        ("legacy", "test", "regression"),
+    )
+    for alternatives in positive_terms:
+        if not any(term in target_text for term in alternatives):
+            findings.append(
+                f"{path}: implementation-cleancode answer target_behavior missing one of {', '.join(alternatives)}"
+            )
+    return findings
+
+
+def validate_code_cleancode_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-cleancode" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-cleancode/reference/final.md",
+        "dddjango/skills/implementation-cleancode/SKILL.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: code implementation-cleancode answer must reference {required_path}"
+        )
+    if not any(
+        path.startswith("dddjango/skills/implementation-cleancode/references/")
+        for path in paths
+    ):
+        findings.append(
+            f"{path}: code implementation-cleancode answer must reference at least one bundled implementation-cleancode reference"
+        )
+
+    target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+    required_terms = {
+        "responsibility": ("responsibility", "status invariant", "invariant"),
+        "side-effect boundary": ("side-effect", "after-commit", "on_commit", "commit"),
+        "regression tests": ("regression", "test"),
+        "overengineering restraint": ("repository", "uow", "hexagonal", "outbox"),
+    }
+    for label, alternatives in required_terms.items():
+        if not any(term in target_text for term in alternatives):
+            findings.append(
+                f"{path}: code implementation-cleancode answer target_behavior missing {label}"
+            )
+    return findings
+
+
+def validate_implementation_django_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-django" not in tags and "django-implementation" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-django/reference/final.md",
+        "dddjango/skills/implementation-django/SKILL.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-django answer must reference {required_path}"
+        )
+    if not any(
+        path.startswith("dddjango/skills/implementation-django/references/")
+        for path in paths
+    ):
+        findings.append(
+            f"{path}: implementation-django answer must reference at least one bundled implementation-django reference"
+        )
+
+    target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+    if {"django-model-orm", "queryset-manager"} & tags:
+        for term in ("queryset", "selector", "service", "transaction", "cache"):
+            if term not in target_text:
+                findings.append(
+                    f"{path}: implementation-django ORM/service answer target_behavior missing {term}"
+                )
+    if "existing-drf-maintenance" in tags:
+        for term in ("adapter", "serializer", "viewset", "business rule"):
+            if term not in target_text:
+                findings.append(
+                    f"{path}: implementation-django DRF maintenance answer target_behavior missing {term}"
+                )
+    if "django-implementation-restraint" in tags:
+        if not any(term in target_text for term in ("brief", "short", "minimal", "small")):
+            findings.append(
+                f"{path}: implementation-django restraint answer must require small scoped handling"
+            )
+    return findings
+
+
+def validate_implementation_django_ninja_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-django-ninja" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-django-ninja/reference/final.md",
+        "dddjango/skills/implementation-django-ninja/SKILL.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-django-ninja answer must reference {required_path}"
+        )
+    if not any(
+        path.startswith("dddjango/skills/implementation-django-ninja/references/")
+        for path in paths
+    ):
+        findings.append(
+            f"{path}: implementation-django-ninja answer must reference at least one bundled implementation-django-ninja reference"
+        )
+
+    target_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    required_term_groups = {
+        "router": (("router",),),
+        "schema-modelschema": (("schema",), ("modelschema",)),
+        "auth-permission": (("auth", "authentication"), ("permission", "authorization")),
+        "filtering-sorting": (("filter", "filtering"), ("sort", "sorting")),
+        "pagination": (("pagination", "page"),),
+        "problem-details": (("problem details", "rfc 9457"),),
+        "openapi": (("openapi", "schema diff"),),
+        "testclient": (("testclient", "test client"),),
+        "drf-to-ninja": (("drf",), ("compatibility",), ("drf-to-ninja", "migration", "migrate")),
+    }
+    for label, term_groups in required_term_groups.items():
+        if not all(any(term in target_text for term in alternatives) for alternatives in term_groups):
+            findings.append(
+                f"{path}: implementation-django-ninja answer target_behavior missing {label}"
+            )
+    return findings
+
+
+def validate_implementation_django_web_answer(path: Path, text: str, bucket: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-django-web" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-django-web/reference/final.md",
+        "dddjango/skills/implementation-django-web/SKILL.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-django-web answer must reference {required_path}"
+        )
+    if not any(
+        path.startswith("dddjango/skills/implementation-django-web/references/")
+        for path in paths
+    ):
+        findings.append(
+            f"{path}: implementation-django-web answer must reference at least one bundled implementation-django-web reference"
+        )
+
+    target_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    if not target_text:
+        target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+
+    if bucket == "response":
+        required_groups = {
+            "templateview-cbv-fbv": (("templateview",), ("generic cbv", "generic class"), ("fbv",)),
+            "templates-base-includes": (("template",), ("base",), ("include", "component")),
+            "static-assets": (("static",), ("css",), ("js", "javascript")),
+            "display-ready-fallback": (
+                ("none",),
+                ("blank", "빈 문자열"),
+                ("missing optional", "missing value"),
+                ("fallback", "display-ready", "prepared display"),
+            ),
+            "web-forms": (
+                ("form",),
+                ("get",),
+                ("valid post",),
+                ("invalid post",),
+                ("error rendering", "error"),
+                ("user-recoverable", "recoverable", "사용자 회복", "회복 가능한"),
+                ("modelform.meta.fields", "meta.fields"),
+            ),
+            "htmx-csrf": (("htmx",), ("csrf",)),
+            "auth-permission": (("auth",), ("permission",)),
+            "render-acceptance": (
+                ("render",),
+                ("browser",),
+                ("collectstatic",),
+                ("check --deploy", "security check"),
+            ),
+            "routing-boundary": (("rest",), ("router", "schema"), ("orm", "migration", "transaction"), ("handoff", "넘긴")),
+        }
+    else:
+        required_groups = {
+            "template-context": (("template",), ("context",)),
+            "display-ready-fallback": (("fallback",), ("optional",), ("empty", "blank")),
+            "static-reference": (("static",), ("css",), ("rendered",)),
+            "render-acceptance": (("render",), ("compile", "compile-level"), ("test",)),
+        }
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(target_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: implementation-django-web answer target_behavior missing {label}: {', '.join(missing)}"
+            )
+    return findings
+
+
+def validate_implementation_python_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-python" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-python/reference/final.md",
+        "dddjango/skills/implementation-python/SKILL.md",
+    }
+    if "python-tiny-restraint" not in tags:
+        required_paths.update(
+            {
+                "dddjango/skills/implementation-python/references/typing.md",
+                "dddjango/skills/implementation-python/references/dataclasses-enums.md",
+                "dddjango/skills/implementation-python/references/protocols-boundaries.md",
+                "dddjango/skills/implementation-python/references/pydantic-v2.md",
+            }
+        )
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-python answer must reference {required_path}"
+        )
+
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    if not required_text:
+        required_text = "\n".join(block_lines(text, "target_behavior")).lower()
+
+    if "python-tiny-restraint" in tags:
+        if not (("brief" in required_text or "short" in required_text) and "direct" in required_text):
+            findings.append(
+                f"{path}: implementation-python tiny restraint answer must require brief direct handling"
+            )
+        if not ("str | none" in required_text and "optional" in required_text):
+            findings.append(
+                f"{path}: implementation-python tiny restraint answer must mention str | None and Optional equivalence"
+            )
+        return findings
+
+    if "code-implementation-python" in tags:
+        required_terms = {
+            "type contracts": ("type contract", "type contracts"),
+            "dataclass value object": ("dataclass", "value object", "frozen"),
+            "Enum/StrEnum": ("enum", "strenum", "finite-state", "finite state"),
+            "Protocol boundary": ("protocol", "replaceable boundary"),
+            "pydantic v2": ("pydantic", "domain default", "domain model"),
+            "Ruff/mypy/pyright": ("ruff", "mypy", "pyright", "typecheck"),
+        }
+        for label, alternatives in required_terms.items():
+            if not any(term in required_text for term in alternatives):
+                findings.append(
+                    f"{path}: code implementation-python answer target_behavior missing {label}"
+                )
+        return findings
+
+    required_terms = {
+        "type contracts": ("type hints", "input", "return", "none", "x | none", "built-in generics"),
+        "TypedDict": ("typeddict",),
+        "type narrowing": ("typeis", "typeguard", "none checks", "none check"),
+        "dataclass value object": ("dataclass", "value object", "frozen", "slots", "decimal"),
+        "Enum/StrEnum": ("enum", "strenum", "literal", "match/case"),
+        "Protocol boundary": ("protocol", "replaceable", "boundary"),
+        "context manager": ("context manager", "cleanup"),
+        "pydantic v2": ("pydantic", "model_validate", "model_dump", "configdict", "field_validator", "model_validator"),
+        "async concurrency": ("async", "taskgroup", "except*", "thread", "async-safe"),
+        "exceptions": ("exception", "none"),
+        "Ruff/mypy/pyright": ("ruff", "mypy", "pyright", "python target"),
+        "routing boundary": ("ddd", "db", "rest", "django", "workflow", "handoff"),
+    }
+    for label, alternatives in required_terms.items():
+        if not all(term in required_text for term in alternatives):
+            findings.append(
+                f"{path}: implementation-python answer target_behavior missing {label}"
+            )
+    return findings
+
+
+def validate_implementation_tdd_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-tdd" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-tdd/reference/final.md",
+        "dddjango/skills/implementation-tdd/SKILL.md",
+        "dddjango/skills/implementation-tdd/references/test-list.md",
+        "dddjango/skills/implementation-tdd/references/red-green-refactor.md",
+        "dddjango/skills/implementation-tdd/references/inside-out-outside-in.md",
+        "dddjango/skills/implementation-tdd/references/bdd-atdd.md",
+        "dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-tdd answer must reference {required_path}"
+        )
+
+    target_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    if not target_text:
+        target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+
+    required_groups = {
+        "test-list": (("test list", "테스트 목록"), ("behavior", "policy", "risk")),
+        "failing-test-first": (("failing test", "실패 테스트"), ("red",)),
+        "red-green-refactor": (("red",), ("green",), ("refactor",)),
+        "inside-out/outside-in": (("inside-out",), ("outside-in",)),
+        "acceptance-unit-loop": (("acceptance", "atdd", "bdd"), ("unit",), ("outer loop",), ("inner loop", "inner")),
+        "boundary-cases": (("boundary", "threshold"), ("accepted",), ("rejected",)),
+        "refactor-checkpoint": (("refactor",), ("green",)),
+        "state-verification": (("state verification", "state", "output verification", "output"),),
+        "behavior-verification": (("behavior verification", "communication"),),
+        "mock-role": (("mock", "mocks"), ("role", "gateway", "notifier")),
+        "bdd-atdd": (("bdd",), ("atdd",), ("implementation-test", "pytest-bdd", "gherkin")),
+        "validation-honesty": (("not run", "no files", "no commands", "no claim", "without evidence"),),
+    }
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(target_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: implementation-tdd answer target_behavior missing {label}: {', '.join(missing)}"
+            )
+    return findings
+
+
+def validate_code_implementation_tdd_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "code-implementation-tdd" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/implementation-tdd/reference/final.md",
+        "dddjango/skills/implementation-tdd/SKILL.md",
+        "dddjango/skills/implementation-tdd/references/test-list.md",
+        "dddjango/skills/implementation-tdd/references/red-green-refactor.md",
+        "dddjango/skills/implementation-tdd/references/inside-out-outside-in.md",
+        "workspace/reference/implementation-test/reference/final.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: code implementation-tdd answer must reference {required_path}"
+        )
+    if "behavior_checks:" not in text or "eval_code_behavior_checks.py --case case-code-coupon-tdd" not in text:
+        findings.append(
+            f"{path}: code implementation-tdd answer must declare hidden coupon behavior_checks"
+        )
+
+    target_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    if not target_text:
+        target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+    required_groups = {
+        "failing-test-first": (("failing test", "실패 테스트"), ("red",)),
+        "minimal-green": (("minimal", "최소"), ("green",)),
+        "boundary-cases": (("minimum", "boundary"), ("accepted",), ("rejected",), ("expiration",), ("used coupon",)),
+        "state-verification": (("state", "output"), ("policy", "outcome")),
+        "validation-honesty": (("no claim", "without evidence"), ("characterization", "regression")),
+    }
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(target_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: code implementation-tdd answer target_behavior missing {label}: {', '.join(missing)}"
+            )
+    return findings
+
+
+def validate_implementation_test_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "implementation-test" not in tags and "implementation-test-exclusion" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    if "implementation-test-exclusion" in tags:
+        required_paths = {
+            "dddjango/skills/implementation-test/SKILL.md",
+            "dddjango/skills/implementation-test/references/pytest-fixtures.md",
+        }
+    else:
+        required_paths = {
+            "workspace/reference/implementation-test/reference/final.md",
+            "dddjango/skills/implementation-test/SKILL.md",
+            "dddjango/skills/implementation-test/references/pytest-fixtures.md",
+            "dddjango/skills/implementation-test/references/test-doubles.md",
+            "dddjango/skills/implementation-test/references/factories-property-tests.md",
+            "dddjango/skills/implementation-test/references/coverage-mutation.md",
+            "dddjango/skills/implementation-test/references/django-api-concurrency.md",
+        }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: implementation-test answer must reference {required_path}"
+        )
+
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    forbidden_text = "\n".join(nested_block_lines(text, "target_behavior", "forbidden")).lower()
+    combined_text = required_text + "\n" + forbidden_text
+
+    if "implementation-test-exclusion" in tags:
+        if not (("brief" in required_text or "short" in required_text) and "direct" in required_text):
+            findings.append(
+                f"{path}: implementation-test exclusion answer must require brief direct handling"
+            )
+        if "pytest.approx" not in required_text and "approximate" not in required_text:
+            findings.append(
+                f"{path}: implementation-test exclusion answer must mention pytest.approx or approximate assertion"
+            )
+        if not any(term in forbidden_text for term in ("fixture", "factory", "tdd", "workflow", "subagent")):
+            findings.append(
+                f"{path}: implementation-test exclusion answer must forbid test/workflow ceremony"
+            )
+        return findings
+
+    required_groups = {
+        "pytest placement": (("pytest",), ("file", "placement"), ("conftest",)),
+        "fixtures": (("fixture",), ("conftest",), ("shared", "nested")),
+        "parametrization": (("parametrization", "parametrize"), ("boundary",)),
+        "assertions": (("assertion",), ("pytest.raises", "pytest.approx", "raises", "approx")),
+        "test doubles": (("double",), ("fake",), ("mock",), ("external", "adapter")),
+        "factory/faker": (("factory",), ("faker",)),
+        "property tests": (("hypothesis", "property"), ("invariant",)),
+        "time/http mocking": (("time",), ("http",), ("mock", "adapter")),
+        "testcontainers": (("testcontainers",), ("postgresql", "lock", "isolation", "constraint")),
+        "coverage/mutation": (("coverage",), ("mutation",), ("proof", "signal")),
+        "bdd": (("bdd", "pytest-bdd"), ("stakeholder",)),
+        "flaky concurrency": (("flaky",), ("barrier", "lock timeout", "arbitrary sleeps")),
+        "testclient": (("testclient", "test client"), ("contract",)),
+        "idempotency/concurrency": (("idempotency",), ("concurrency",), ("replay", "conflict")),
+        "validation honesty": (("claim", "reports", "reporting"), ("run", "executed", "evidence")),
+    }
+    direct_routing_required = (("direct",), ("implementation-test",))
+    direct_routing_forbidden = ("workflow", "subagent", "ddd", "db", "api")
+    missing_direct_required = [
+        "/".join(alternatives)
+        for alternatives in direct_routing_required
+        if not any(target_text_contains(required_text, term) for term in alternatives)
+    ]
+    if missing_direct_required:
+        findings.append(
+            f"{path}: implementation-test answer target_behavior missing direct routing: {', '.join(missing_direct_required)}"
+        )
+    boundary_text = forbidden_text or combined_text
+    if not any(term in boundary_text for term in direct_routing_forbidden):
+        findings.append(
+            f"{path}: implementation-test answer target_behavior missing direct routing forbidden boundary: {', '.join(direct_routing_forbidden)}"
+        )
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(required_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: implementation-test answer target_behavior missing {label}: {', '.join(missing)}"
+            )
+    return findings
+
+
+def validate_source_provisional_drf_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not {"provisional-handling", "drf-guardrail"} <= tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/source-reference-audit/reference/final.md",
+        "workspace/reference/architecture-api/reference/final.md",
+        "workspace/reference/architecture-implementation-patterns/reference/final.md",
+        "workspace/reference/implementation-django-ninja/reference/final.md",
+        "workspace/reference/implementation-django/reference/final.md",
+        "workspace/reference/implementation-django-web/reference/final.md",
+        "dddjango/skills/architecture-api/SKILL.md",
+        "dddjango/skills/implementation-django-ninja/SKILL.md",
+        "dddjango/skills/implementation-django/SKILL.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: source provisional/DRF answer must reference {required_path}"
+        )
+
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    required_groups = {
+        "dedicated source coverage": (("final.md",), ("substantive", "covers the skill's main decisions")),
+        "implementation patterns source status": (("implementation patterns", "architecture-implementation-patterns"),),
+        "django web source status": (("django web", "implementation-django-web"),),
+        "framework-neutral API contract": (("architecture-api",), ("framework-neutral",), ("api contract", "rest")),
+        "greenfield Django Ninja": (("django ninja",), ("greenfield",)),
+        "existing DRF maintenance": (("implementation-django",), ("existing drf", "legacy", "maintenance", "migration")),
+        "runtime routing": (("runtime",), ("routing",), ("skill", "skill.md")),
+        "separate DRF guardrail row": (("drf guardrail",), ("separate", "separable")),
+    }
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(required_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: source provisional/DRF answer target_behavior missing {label}: {', '.join(missing)}"
+            )
+    return findings
+
+
+def validate_source_metadata_cache_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "runtime-metadata-cache-sync" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/source-reference-audit/reference/final.md",
+        "dddjango/skills/source-reference-audit/SKILL.md",
+        "dddjango/skills/source-reference-audit/agents/openai.yaml",
+        "dddjango/skills/source-reference-audit/references/source-governance.md",
+        "workspace/scripts/validate_skill_docs.py",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: source metadata/cache answer must reference {required_path}"
+        )
+
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    required_groups = {
+        "semantic metadata alignment": (("skill.md",), ("agents/openai.yaml",), ("semantic", "align")),
+        "default prompt leakage": (("default prompt",), ("private evaluation material", "internal criteria", "non-public validation")),
+        "cache/source parity": (("cache",), ("source",), ("diff", "cmp", "parity", "sync")),
+        "validation output": (("validation",), ("command",), ("output", "evidence")),
+    }
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(required_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: source metadata/cache answer target_behavior missing {label}: {', '.join(missing)}"
+            )
+    return findings
+
+
+def validate_source_routing_exclusion_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "source-audit-exclusion" not in tags:
+        return []
+
+    findings: list[str] = []
+    paths = reference_paths(text)
+    required_paths = {
+        "workspace/reference/source-reference-audit/reference/final.md",
+        "dddjango/skills/source-reference-audit/SKILL.md",
+        "dddjango/skills/source-reference-audit/references/source-governance.md",
+    }
+    for required_path in sorted(required_paths - paths):
+        findings.append(
+            f"{path}: source routing exclusion answer must reference {required_path}"
+        )
+
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    forbidden_text = "\n".join(nested_block_lines(text, "target_behavior", "forbidden")).lower()
+    combined_text = required_text + "\n" + forbidden_text
+    required_groups = {
+        "positive source audit routing": (("source",), ("provenance", "cache sync", "metadata", "boundary")),
+        "application implementation exclusion": (("django implementation", "model", "orm", "api implementation"), ("owning skill", "route", "handoff")),
+        "test mechanics exclusion": (("test mechanics", "pytest", "fixture", "assertion"), ("owning skill", "route", "handoff")),
+        "no governance ceremony for exclusions": (("ledger", "crosswalk", "provenance"), ("not", "avoid", "forbid")),
+    }
+    for label, groups in required_groups.items():
+        target_text = combined_text if "exclusion" in label or "ceremony" in label else required_text
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(target_text_contains(target_text, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: source routing exclusion answer target_behavior missing {label}: {', '.join(missing)}"
+            )
     return findings
 
 
@@ -398,6 +1638,19 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
         findings.extend(validate_workflow_execution_expectation(path, text))
     if bucket == "runtime":
         findings.extend(validate_runtime_metadata_answer(path, text))
+    if bucket == "source":
+        findings.extend(validate_source_provisional_drf_answer(path, text))
+        findings.extend(validate_source_metadata_cache_answer(path, text))
+        findings.extend(validate_source_routing_exclusion_answer(path, text))
+    if bucket == "response":
+        findings.extend(validate_response_ddd_answer(path, text))
+        findings.extend(validate_response_cleancode_answer(path, text))
+        findings.extend(validate_implementation_django_answer(path, text))
+        findings.extend(validate_implementation_django_ninja_answer(path, text))
+        findings.extend(validate_implementation_django_web_answer(path, text, bucket))
+        findings.extend(validate_implementation_python_answer(path, text))
+        findings.extend(validate_implementation_tdd_answer(path, text))
+        findings.extend(validate_implementation_test_answer(path, text))
     if bucket == "code":
         code_expected = scalar_value(text, "code_expected")
         if code_expected not in {"true", "false"}:
@@ -405,18 +1658,263 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
         if code_expected == "false" and not scalar_value(text, "code_expected_reason"):
             findings.append(f"{path}: code_expected false requires code_expected_reason")
         findings.extend(validate_code_ddd_answer(path, text))
+        findings.extend(validate_code_cleancode_answer(path, text))
+        findings.extend(validate_implementation_django_answer(path, text))
+        findings.extend(validate_implementation_django_ninja_answer(path, text))
+        findings.extend(validate_implementation_django_web_answer(path, text, bucket))
+        findings.extend(validate_implementation_python_answer(path, text))
+        findings.extend(validate_code_implementation_tdd_answer(path, text))
     return findings
 
 
 def validate_coverage(bucket: str, answers: list[Path]) -> list[str]:
     required = REQUIRED_COVERAGE_TAGS[bucket]
     observed: set[str] = set()
+    architecture_db_observed: set[str] = set()
+    has_django_ninja_direct = False
+    has_django_web_direct = False
+    has_code_django_web_direct = False
+    has_python_direct = False
+    has_tdd_direct = False
+    has_test_direct = False
+    has_test_exclusion = False
+    has_code_python_direct = False
+    has_code_tdd_direct = False
     for answer in answers:
-        observed.update(yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags"))
+        text = answer.read_text(encoding="utf-8")
+        observed.update(yaml_list_values(text, "coverage_tags"))
+        if bucket == "response":
+            architecture_db_observed.update(architecture_db_direct_tags(text))
+            if has_implementation_django_ninja_direct_coverage(text):
+                has_django_ninja_direct = True
+            if has_implementation_django_web_direct_coverage(text):
+                has_django_web_direct = True
+            if has_implementation_python_direct_coverage(text):
+                has_python_direct = True
+            if has_implementation_tdd_direct_coverage(text):
+                has_tdd_direct = True
+            if has_implementation_test_direct_coverage(text):
+                has_test_direct = True
+            if has_implementation_test_exclusion_coverage(text):
+                has_test_exclusion = True
+        if bucket == "code" and has_code_implementation_django_web_direct_coverage(text):
+            has_code_django_web_direct = True
+        if bucket == "code" and has_code_implementation_python_direct_coverage(text):
+            has_code_python_direct = True
+        if bucket == "code" and has_code_implementation_tdd_direct_coverage(text):
+            has_code_tdd_direct = True
+    findings: list[str] = []
     missing = sorted(required - observed)
-    if not missing:
-        return []
-    return [f"{bucket}: coverage_tags missing required eval_goal coverage: {', '.join(missing)}"]
+    if missing:
+        findings.append(
+            f"{bucket}: coverage_tags missing required eval_goal coverage: {', '.join(missing)}"
+        )
+    if bucket == "response":
+        db_missing = sorted(RESPONSE_ARCHITECTURE_DB_P4_COVERAGE_TAGS - architecture_db_observed)
+        if db_missing:
+            findings.append(
+                "response: architecture-db P4 direct coverage_tags missing: "
+                + ", ".join(db_missing)
+            )
+        api_missing = sorted(RESPONSE_ARCHITECTURE_API_P4_COVERAGE_TAGS - observed)
+        if api_missing:
+            findings.append(
+                "response: architecture-api P4 coverage_tags missing: "
+                + ", ".join(api_missing)
+            )
+        implementation_patterns_missing = sorted(
+            RESPONSE_ARCHITECTURE_IMPLEMENTATION_PATTERNS_P4_COVERAGE_TAGS - observed
+        )
+        if implementation_patterns_missing:
+            findings.append(
+                "response: architecture-implementation-patterns P4 coverage_tags missing: "
+                + ", ".join(implementation_patterns_missing)
+            )
+        cleancode_missing = sorted(
+            RESPONSE_IMPLEMENTATION_CLEANCODE_P4_COVERAGE_TAGS - observed
+        )
+        if cleancode_missing:
+            findings.append(
+                "response: implementation-cleancode P4 coverage_tags missing: "
+                + ", ".join(cleancode_missing)
+            )
+        django_missing = sorted(
+            RESPONSE_IMPLEMENTATION_DJANGO_P4_COVERAGE_TAGS - observed
+        )
+        if django_missing:
+            findings.append(
+                "response: implementation-django P4 coverage_tags missing: "
+                + ", ".join(django_missing)
+            )
+        if not has_django_ninja_direct:
+            django_ninja_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in RESPONSE_IMPLEMENTATION_DJANGO_NINJA_P4_COVERAGE_TAGS
+            }
+            django_ninja_missing = sorted(
+                RESPONSE_IMPLEMENTATION_DJANGO_NINJA_P4_COVERAGE_TAGS
+                - django_ninja_observed
+            )
+            details = (
+                ": " + ", ".join(django_ninja_missing)
+                if django_ninja_missing
+                else " in one direct implementation-django-ninja answer"
+            )
+            findings.append(
+                "response: implementation-django-ninja P4 coverage_tags missing"
+                + details
+            )
+        if not has_django_web_direct:
+            django_web_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in RESPONSE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS
+            }
+            django_web_missing = sorted(
+                RESPONSE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS
+                - django_web_observed
+            )
+            details = (
+                ": " + ", ".join(django_web_missing)
+                if django_web_missing
+                else " in one direct implementation-django-web answer"
+            )
+            findings.append(
+                "response: implementation-django-web P4 coverage_tags missing"
+                + details
+            )
+        if not has_python_direct:
+            python_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in RESPONSE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS
+            }
+            python_missing = sorted(
+                RESPONSE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS - python_observed
+            )
+            details = (
+                ": " + ", ".join(python_missing)
+                if python_missing
+                else " in one direct implementation-python answer"
+            )
+            findings.append(
+                "response: implementation-python P4 coverage_tags missing"
+                + details
+            )
+        if not has_tdd_direct:
+            tdd_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in RESPONSE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS
+            }
+            tdd_missing = sorted(
+                RESPONSE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS - tdd_observed
+            )
+            details = (
+                ": " + ", ".join(tdd_missing)
+                if tdd_missing
+                else " in one direct implementation-tdd answer"
+            )
+            findings.append(
+                "response: implementation-tdd P4 coverage_tags missing"
+                + details
+            )
+        if not has_test_direct:
+            test_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in RESPONSE_IMPLEMENTATION_TEST_P4_COVERAGE_TAGS
+            }
+            test_missing = sorted(
+                RESPONSE_IMPLEMENTATION_TEST_P4_COVERAGE_TAGS - test_observed
+            )
+            details = (
+                ": " + ", ".join(test_missing)
+                if test_missing
+                else " in one direct implementation-test answer"
+            )
+            findings.append(
+                "response: implementation-test P4 coverage_tags missing"
+                + details
+            )
+        if not has_test_exclusion:
+            findings.append(
+                "response: implementation-test exclusion coverage missing: "
+                "implementation-test-exclusion, pytest-assertion, tiny-task-restraint"
+            )
+    if bucket == "code":
+        code_django_missing = sorted(
+            CODE_IMPLEMENTATION_DJANGO_P4_COVERAGE_TAGS - observed
+        )
+        if code_django_missing:
+            findings.append(
+                "code: implementation-django P4 coverage_tags missing: "
+                + ", ".join(code_django_missing)
+            )
+        if not has_code_django_web_direct:
+            code_django_web_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in CODE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS
+            }
+            code_django_web_missing = sorted(
+                CODE_IMPLEMENTATION_DJANGO_WEB_P4_COVERAGE_TAGS - code_django_web_observed
+            )
+            details = (
+                ": " + ", ".join(code_django_web_missing)
+                if code_django_web_missing
+                else " in one direct implementation-django-web code answer"
+            )
+            findings.append(
+                "code: implementation-django-web P4 coverage_tags missing"
+                + details
+            )
+        if not has_code_python_direct:
+            code_python_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in CODE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS
+            }
+            code_python_missing = sorted(
+                CODE_IMPLEMENTATION_PYTHON_P4_COVERAGE_TAGS - code_python_observed
+            )
+            details = (
+                ": " + ", ".join(code_python_missing)
+                if code_python_missing
+                else " in one direct implementation-python code answer"
+            )
+            findings.append(
+                "code: implementation-python P4 coverage_tags missing"
+                + details
+            )
+        if not has_code_tdd_direct:
+            code_tdd_observed = {
+                tag
+                for answer in answers
+                for tag in yaml_list_values(answer.read_text(encoding="utf-8"), "coverage_tags")
+                if tag in CODE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS
+            }
+            code_tdd_missing = sorted(
+                CODE_IMPLEMENTATION_TDD_P4_COVERAGE_TAGS - code_tdd_observed
+            )
+            details = (
+                ": " + ", ".join(code_tdd_missing)
+                if code_tdd_missing
+                else " in one direct implementation-tdd code answer"
+            )
+            findings.append(
+                "code: implementation-tdd P4 coverage_tags missing"
+                + details
+            )
+    return findings
 
 
 def validate_manual_protocol(bucket: str) -> list[str]:

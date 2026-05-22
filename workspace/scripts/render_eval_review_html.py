@@ -26,7 +26,7 @@ SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
 TEMP_EVAL_WORKSPACE_PATH_RE = re.compile(
     r"/(?:private/)?tmp/dddjango-eval-workspaces/"
     r"(?P<run_id>[^/\s\"'<>]+)/(?P<case_id>case-[^/\s\"'<>]+)/"
-    r"(?P<variant>baseline|with-dddjango)/(?P<rel>[^ \n\t\"'<>]+)"
+    r"(?P<variant>baseline|with-dddjango)(?:/(?P<rel>[^ \n\t\"'<>]+))?"
 )
 INTERNAL_EVAL_SENTINEL_RE = re.compile(r"__DDDJANGO_PRIVATE_EVAL_SENTINEL__")
 VERDICT_RANK = {
@@ -63,9 +63,11 @@ def sanitize_report_text(text: str) -> str:
     """Remove local eval workspace prefixes before embedding text in HTML reports."""
 
     def replacement(match: re.Match[str]) -> str:
-        rel = match.group("rel")
+        rel = match.group("rel") or ""
         if rel.startswith("workspace/"):
             return rel
+        if not rel:
+            return "[eval-workspace]"
         return f"[eval-workspace]/{rel}"
 
     sanitized = TEMP_EVAL_WORKSPACE_PATH_RE.sub(replacement, text)

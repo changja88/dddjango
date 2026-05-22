@@ -177,6 +177,22 @@ class ValidateEvalRunTests(unittest.TestCase):
         (checks / "hidden-stdout.txt").write_text("", encoding="utf-8")
         (checks / "hidden-stderr.txt").write_text("", encoding="utf-8")
 
+    def write_code_deterministic_check(
+        self,
+        run_dir: Path,
+        case_id: str,
+        variant: str,
+        *,
+        command: str,
+        exit_code: str = "0",
+    ) -> None:
+        checks = run_dir / "code" / case_id / variant / "checks"
+        checks.mkdir(parents=True, exist_ok=True)
+        (checks / "unit-tests-command.txt").write_text(command + "\n", encoding="utf-8")
+        (checks / "unit-tests-exit.txt").write_text(exit_code + "\n", encoding="utf-8")
+        (checks / "unit-tests-stdout.txt").write_text("", encoding="utf-8")
+        (checks / "unit-tests-stderr.txt").write_text("OK\n", encoding="utf-8")
+
     def valid_code_manifest(self, case_id: str, variant: str) -> dict[str, object]:
         return {
             "caseId": case_id,
@@ -322,6 +338,146 @@ class ValidateEvalRunTests(unittest.TestCase):
             "invalid answer-oracle schema",
         )
 
+    def test_expected_outcomes_reject_baseline_pass_when_not_allowed(self) -> None:
+        self.write_valid_run(
+            oracle={
+                "caseId": "case-response-one",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation_summary": "strong",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation_summary": "also strong",
+                },
+                "observations": ["no delta"],
+            }
+        )
+        answer = self.eval_root / "response/answer/case-response-one.yaml"
+        answer.write_text(
+            answer.read_text(encoding="utf-8")
+            + """expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+""",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "expected_outcomes baseline_pass_ok=false conflicts with baseline verdict pass",
+        )
+
+    def test_expected_outcomes_reject_positive_delta_without_score_improvement(self) -> None:
+        self.write_valid_run(
+            oracle={
+                "caseId": "case-response-one",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation_summary": "strong",
+                },
+                "with_dddjango": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation_summary": "also strong",
+                },
+                "observations": ["no delta"],
+            }
+        )
+        answer = self.eval_root / "response/answer/case-response-one.yaml"
+        answer.write_text(
+            answer.read_text(encoding="utf-8")
+            + """expected_outcomes:
+  baseline: pass
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: true
+""",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "expected_delta=positive requires",
+        )
+
+    def test_expected_outcomes_reject_non_negative_delta_with_lower_score(self) -> None:
+        self.write_valid_run(
+            oracle={
+                "caseId": "case-response-one",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "5 / 5",
+                    "verdict": "pass",
+                    "evaluation_summary": "strong",
+                },
+                "with_dddjango": {
+                    "score": "4 / 5",
+                    "verdict": "pass-limited",
+                    "evaluation_summary": "weaker",
+                },
+                "observations": ["negative delta"],
+            }
+        )
+        answer = self.eval_root / "response/answer/case-response-one.yaml"
+        answer.write_text(
+            answer.read_text(encoding="utf-8")
+            + """expected_outcomes:
+  baseline: pass
+  with_dddjango: pass-or-pass-limited
+  expected_delta: non-negative
+  baseline_pass_ok: true
+""",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "expected_delta=non-negative requires",
+        )
+
+    def test_expected_outcomes_reject_with_dddjango_non_pass_when_pass_expected(self) -> None:
+        self.write_valid_run(
+            oracle={
+                "caseId": "case-response-one",
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "1 / 5",
+                    "verdict": "fail",
+                    "evaluation_summary": "weak",
+                },
+                "with_dddjango": {
+                    "score": "3 / 5",
+                    "verdict": "partial",
+                    "evaluation_summary": "incomplete",
+                },
+                "observations": ["not complete"],
+            }
+        )
+        answer = self.eval_root / "response/answer/case-response-one.yaml"
+        answer.write_text(
+            answer.read_text(encoding="utf-8")
+            + """expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: true
+""",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "expected_outcomes with_dddjango=pass conflicts",
+        )
+
     def test_missing_with_ddjango_prompt_input_fails(self) -> None:
         run_dir = self.write_valid_run()
         (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").unlink()
@@ -329,6 +485,134 @@ class ValidateEvalRunTests(unittest.TestCase):
         self.assertFailsWith(
             ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
             "missing with-ddjango prompt-input artifact",
+        )
+
+    def test_empty_with_ddjango_prompt_input_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            "",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "with-ddjango prompt-input artifact must contain a JSON object or array",
+        )
+
+    def test_with_ddjango_prompt_input_allows_message_array(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "사용자 요청입니다."}],
+                    }
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_with_ddjango_prompt_input_private_eval_sentinel_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": "__DDDJANGO_PRIVATE_EVAL_SENTINEL__",
+                            }
+                        ],
+                    }
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "with-ddjango prompt-input artifact contains private evaluation material",
+        )
+
+    def test_with_dddjango_prompt_input_answer_schema_field_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            json.dumps(
+                {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "target_behavior:\n  required:\n    - leaked answer field\n",
+                        }
+                    ]
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "with-ddjango prompt-input artifact contains private evaluation material",
+        )
+
+    def test_with_ddjango_prompt_input_answer_path_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            json.dumps(
+                {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "workspace/develop/eval/response/answer/case-response-one.yaml",
+                        }
+                    ]
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "with-ddjango prompt-input artifact contains private evaluation material",
+        )
+
+    def test_with_ddjango_prompt_input_answer_schema_json_key_fails(self) -> None:
+        run_dir = self.write_valid_run()
+        (run_dir / "raw/case-response-one-with-dddjango-prompt-input.json").write_text(
+            json.dumps(
+                {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": "사용자 요청입니다.",
+                            "target_behavior": {"required": ["leaked answer field"]},
+                        }
+                    ]
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "response", "--run-id", RUN_ID_RESPONSE, "--case", "case-response-one"],
+            "with-ddjango prompt-input artifact contains private evaluation material",
         )
 
     def test_nonzero_exit_fails(self) -> None:
@@ -764,6 +1048,62 @@ class ValidateEvalRunTests(unittest.TestCase):
             "workflow execution mode actual_subagent is forbidden by oracle",
         )
 
+    def test_workflow_mode_gate_rejects_stale_partial_oracle(self) -> None:
+        case_id = "case-workflow-one"
+        run_dir = self.write_valid_run(
+            bucket="workflow",
+            case_id=case_id,
+            run_id=RUN_ID_WORKFLOW,
+            oracle={
+                "caseId": case_id,
+                "answerOracleEvaluated": True,
+                "baseline": {
+                    "score": "2 / 5",
+                    "verdict": "partial",
+                    "evaluation_summary": "stale partial",
+                },
+                "with_dddjango": {
+                    "score": "3 / 5",
+                    "verdict": "partial",
+                    "evaluation_summary": "stale partial",
+                },
+                "observations": ["gate should still fail"],
+            },
+        )
+        answer_path = self.eval_root / "workflow/answer" / f"{case_id}.yaml"
+        answer_path.write_text(
+            f"id: {case_id}\ncase_id: {case_id}\nbucket: workflow\nkind: workflow\n"
+            "workflow_execution_expectation:\n"
+            "  expected_mode: sequential_fallback_required\n"
+            "  acceptable_modes:\n"
+            "    - sequential_fallback\n"
+            "  forbidden_modes:\n"
+            "    - actual_subagent\n"
+            "    - false_actual_claim\n"
+            "  decision_rule: Use fallback.\n"
+            "  responsibility_rule: Do not run actual subagents.\n"
+            "  report_label: sequential fallback required\n",
+            encoding="utf-8",
+        )
+        self.write_trace_marker(run_dir)
+        self.write_trace(
+            run_dir,
+            case_id=case_id,
+            variant="baseline",
+            trace_status="actual-trace",
+        )
+        self.write_trace(
+            run_dir,
+            case_id=case_id,
+            variant="with-dddjango",
+            trace_status="actual-trace",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id],
+            "workflow execution mode actual_subagent is forbidden by oracle",
+        )
+
     def test_code_manifest_missing_copied_text_file_fails(self) -> None:
         case_id = "case-code-one"
         run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
@@ -858,6 +1198,151 @@ class ValidateEvalRunTests(unittest.TestCase):
             ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
             "generated artifact changed: db.sqlite3",
         )
+
+    def test_code_output_claiming_pytest_requires_pytest_command_artifact(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "검증: tests/ 전체 pytest 실행: 8 passed\n",
+            encoding="utf-8",
+        )
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                self.valid_code_manifest(case_id, variant),
+            )
+            self.write_code_deterministic_check(
+                run_dir,
+                case_id,
+                variant,
+                command="python3 -m unittest",
+            )
+
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
+            "output claims pytest execution without matching check command artifact",
+        )
+
+    def test_code_output_can_report_unrun_pytest_without_pytest_artifact(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "검증: pytest는 실행하지 않았고 python3 -m unittest만 실행했습니다.\n",
+            encoding="utf-8",
+        )
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                self.valid_code_manifest(case_id, variant),
+            )
+            self.write_code_deterministic_check(
+                run_dir,
+                case_id,
+                variant,
+                command="python3 -m unittest",
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_code_output_claiming_exact_unittest_command_requires_exact_command_artifact(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "검증: python3 -m unittest tests.test_payments tests.test_orders 실행 통과\n",
+            encoding="utf-8",
+        )
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                self.valid_code_manifest(case_id, variant),
+            )
+            self.write_code_deterministic_check(
+                run_dir,
+                case_id,
+                variant,
+                command="python3 -m unittest",
+            )
+
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
+            "without exact matching check command artifact",
+        )
+
+    def test_code_output_claiming_pre_implementation_failure_requires_failure_artifact(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "구현 전: 새 테스트가 실패하는 것을 확인했습니다.\n",
+            encoding="utf-8",
+        )
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                self.valid_code_manifest(case_id, variant),
+            )
+            self.write_code_deterministic_check(
+                run_dir,
+                case_id,
+                variant,
+                command="python3 -m unittest",
+            )
+
+        self.assertFailsWith(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id],
+            "pre-implementation failing/red-green verification",
+        )
+
+    def test_code_output_claiming_pre_implementation_failure_accepts_failure_artifact(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "구현 전: 새 테스트가 실패하는 것을 확인했습니다.\n",
+            encoding="utf-8",
+        )
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                self.valid_code_manifest(case_id, variant),
+            )
+            self.write_code_deterministic_check(
+                run_dir,
+                case_id,
+                variant,
+                command="python3 -m unittest",
+                exit_code="1",
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
 
     def test_invalid_run_id_fails(self) -> None:
         for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", "", "run-one"):

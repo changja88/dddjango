@@ -81,6 +81,38 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def validate_json_object_artifact(path: Path, description: str) -> str | None:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return f"missing {description}: {path}"
+    if not text.strip():
+        return f"{description} must contain a JSON object: {path}"
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return f"{description} must contain a JSON object: {path}: {exc}"
+    if not isinstance(value, dict):
+        return f"{description} must contain a JSON object: {path}"
+    return None
+
+
+def validate_json_prompt_input_artifact(path: Path, description: str) -> str | None:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return f"missing {description}: {path}"
+    if not text.strip():
+        return f"{description} must contain a JSON object or array: {path}"
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return f"{description} must contain a JSON object or array: {path}: {exc}"
+    if not isinstance(value, (dict, list)):
+        return f"{description} must contain a JSON object or array: {path}"
+    return None
+
+
 def validate_answer_oracles(answer_dir: Path, case_ids: list[str], *, kind: str) -> list[str]:
     findings: list[str] = []
     for case_id in case_ids:
@@ -168,13 +200,20 @@ def validate_run_completeness(run_dir: Path, case_ids: list[str], variants: list
             if path.exists():
                 findings.append(f"baseline prompt-input artifact is forbidden: {path}")
         if "with-dddjango" in variants:
-            with_prompt_inputs = [
-                run_dir / "raw" / f"{case_id}-with-dddjango-prompt-input.json",
-                run_dir / "raw" / f"{case_id}-with-dddjango-prompt-input.stderr.txt",
-            ]
-            for path in with_prompt_inputs:
-                if not path.is_file():
-                    findings.append(f"missing with-dddjango prompt-input artifact: {path}")
+            prompt_input_path = run_dir / "raw" / f"{case_id}-with-dddjango-prompt-input.json"
+            prompt_input_error = validate_json_prompt_input_artifact(
+                prompt_input_path,
+                "with-ddjango prompt-input artifact",
+            )
+            if prompt_input_error is not None:
+                findings.append(prompt_input_error)
+            prompt_input_stderr_path = (
+                run_dir / "raw" / f"{case_id}-with-dddjango-prompt-input.stderr.txt"
+            )
+            if not prompt_input_stderr_path.is_file():
+                findings.append(
+                    f"missing with-dddjango prompt-input stderr artifact: {prompt_input_stderr_path}"
+                )
         for variant in variants:
             for name_template in required_names:
                 path = run_dir / "raw" / name_template.format(case_id=case_id, variant=variant)

@@ -464,18 +464,40 @@ def check_django_web_skill(check: Check, skill_dir: Path) -> None:
     if not skill_md.is_file():
         return
     text = read(skill_md)
-    required = [
-        "display-ready fallback values",
-        "`None`, blank strings, and missing optional values",
-        "non-empty placeholders",
-        "Templates must render prepared display values",
-        "empty value path",
-        "Changed static files must be referenced by the rendered page",
-    ]
-    for phrase in required:
+    text_lower = text.lower()
+    check.require(
+        "validator-visible" not in text_lower,
+        "implementation-django-web runtime guidance must not expose validator-facing wording",
+    )
+    required_groups = {
+        "optional display fallback": (
+            ("optional display", "optional value", "선택 표시"),
+            ("none",),
+            ("blank", "빈 문자열"),
+            ("missing optional", "missing value", "누락"),
+        ),
+        "prepared template rendering": (
+            ("template", "템플릿"),
+            ("prepared", "준비된"),
+            ("display", "표시"),
+            ("render", "렌더"),
+        ),
+        "rendered static reference": (
+            ("static", "정적"),
+            ("changed", "변경"),
+            ("rendered", "렌더링"),
+            ("reference", "referenced", "참조", "연결"),
+        ),
+    }
+    for label, groups in required_groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in groups
+            if not any(term in text_lower for term in alternatives)
+        ]
         check.require(
-            phrase in text,
-            f"implementation-django-web must include render fallback/static phrase: {phrase}",
+            not missing,
+            f"implementation-django-web must include {label} guidance: missing {', '.join(missing)}",
         )
 
 

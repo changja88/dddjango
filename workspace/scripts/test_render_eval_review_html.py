@@ -62,6 +62,18 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         self.assertIn("([eval-workspace]/dddjango/.codex-plugin/plugin.json:132)", sanitized)
         self.assertNotIn("/private/tmp/dddjango-eval-workspaces", sanitized)
 
+    def test_sanitize_report_text_removes_temporary_eval_workspace_directory(self) -> None:
+        text = (
+            '"workspace": "/private/tmp/dddjango-eval-workspaces/'
+            "20260522-011120-code-try01-targeted-architecture-ddd-order-lifecycle/"
+            'case-code-ddd-order-placement/with-dddjango"'
+        )
+
+        sanitized = self.renderer.sanitize_report_text(text)
+
+        self.assertIn('"workspace": "[eval-workspace]"', sanitized)
+        self.assertNotIn("/private/tmp/dddjango-eval-workspaces", sanitized)
+
     def test_sanitize_report_text_redacts_internal_eval_sentinel(self) -> None:
         sanitized = self.renderer.sanitize_report_text(
             "찾을 문자열: __DDDJANGO_PRIVATE_EVAL_SENTINEL__\n"
