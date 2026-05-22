@@ -1,5 +1,16 @@
 # Django Ninja API 구현 종합 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | Django Ninja API adapter implementation: Router, Schema, auth, filtering/sorting, pagination, Problem Details mapping, OpenAPI generation impact, TestClient checks, and DRF-to-Ninja migration. |
+| use when | Router/Schema/API adapter implementation is the main work and REST contract decisions are already stable or handed to `architecture-api`. |
+| exclude/handoff | Do not use for domain rules, DB locking/idempotency storage, Django ORM/service internals, or pytest fixture mechanics beyond API adapter tests. |
+| core criteria | Keep Router thin; use explicit request/response schemas; protect public fields; map errors to contract; check generated OpenAPI when contract changes; keep greenfield DRF requests on a Django Ninja target unless legacy/migration context is explicit. |
+| source priority | 1 Django Ninja official docs and OpenAPI contract boundary inherited from `architecture-api`; 2 primary dddjango Django/API/test references; 3 reputable migration/comparison guidance only as secondary; 4 unsupported DRF habit is not source. |
+| P1 classification | sufficient |
+
 > 이 문서는 Django Ninja로 REST API adapter를 구현할 때의 기준을 정리한다.
 > REST 계약 자체는 `workspace/reference/architecture-api/reference/final.md`,
 > Django ORM, service, transaction, migration은

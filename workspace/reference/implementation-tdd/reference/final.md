@@ -1,5 +1,16 @@
 # TDD 개발 방법론 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | TDD methodology decisions: test list, Red-Green-Refactor, inside-out/outside-in choice, acceptance/unit loop, state vs behavior verification, refactoring checkpoints, and AI-assisted TDD guardrails. |
+| use when | The work asks how to drive implementation through failing tests, choose TDD loop shape, or manage AI-assisted implementation with tests as executable specification. |
+| exclude/handoff | Do not use for detailed pytest fixture/mock/factory mechanics, Django API TestClient mechanics, DB concurrency tests, or source governance; hand those to owning references. |
+| core criteria | Write the smallest meaningful failing test first; make it pass with minimal code; refactor only on green; prefer tests resilient to refactoring; treat AI-generated code as untrusted until tests and human review validate it. |
+| source priority | 2 primary TDD/testing books and Fowler/Meszaros material; 1 official tool docs only where tool behavior is discussed; 3 reputable engineering articles; 4 recent AI-assisted TDD articles are provisional and cannot prove eval completion. |
+| P1 classification | provisional: AI-assisted TDD guidance is usable for cautious skill wording, but not as P5/P6/P8 completion evidence. |
+
 ---
 
 ## 1. TDD 핵심 철학

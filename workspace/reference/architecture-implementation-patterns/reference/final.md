@@ -1,5 +1,16 @@
 # 구현 아키텍처 패턴 source reference
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | Implementation architecture pattern decisions: layering, dependency direction, ports/adapters, repository, UoW, service layer, CQRS, event sourcing, saga, outbox, and ACL. |
+| use when | A Django/DDD implementation needs structure or pattern selection after domain boundaries and use cases are at least partly known. |
+| exclude/handoff | Do not replace DDD modeling, DB locking/isolation, REST contract, Django ORM implementation, or pytest mechanics; hand off those details to owning references. |
+| core criteria | Choose the lightest pattern that addresses real pressure; keep dependency direction toward policy; avoid repository/UoW/CQRS/outbox/saga for simple CRUD without boundary or reliability pressure. |
+| source priority | 2 primary dddjango references: `architecture-ddd`, `implementation-django`, `implementation-python`; 3 reputable architecture sources already synthesized inside those references; 4 unsupported pattern memory is not accepted as standalone source. |
+| P1 classification | sufficient |
+
 > 이 문서는 `architecture-implementation-patterns` skill의 전용 source reference다. DDD 모델이 어느 정도 확인된 뒤 구현 구조, 의존성 방향, 포트/어댑터, repository, Unit of Work, CQRS, event sourcing, saga, outbox, ACL, service layer 선택을 판단하는 기준을 제공한다.
 >
 > 근거 역할:

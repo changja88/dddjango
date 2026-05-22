@@ -1,5 +1,16 @@
 # workflow-dddjango-subagents source reference
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | dddjango workflow coordination decisions: role decomposition, real subagent execution boundary, sequential fallback, handoff contract, ownership, integration order, risky-write consistency, and execution honesty. |
+| use when | A Django/DDD task is composite or risky across domain, DB, API, implementation, tests, and review, or the user explicitly asks for subagents/role decomposition. |
+| exclude/handoff | Do not force workflow boilerplate on simple single-file changes, answer-only requests, or explicit opt-out; do not treat this reference as proof that subagents actually ran. |
+| core criteria | Canonical roles are preserved for composite work; actual subagents require explicit approval and bounded tasks; sequential fallback must be reported honestly; integration resolves domain/data/transaction/API/test risks before style. |
+| source priority | 2 primary dddjango workflow/governance decisions and related dddjango source references; 1 official tool docs only when a tool capability claim is introduced; 3 reviewer reports only when indexed; 4 decorative role-map habit is not source. |
+| P1 classification | provisional: sufficient for planning and routing, but real subagent execution, runtime cache sync, and eval/regression completion claims need later phase evidence and cannot be P5/P6/P8 completion evidence. |
+
 이 문서는 `workflow-dddjango-subagents` skill의 전용 source reference다. 목적은 composite 또는 risky Django/DDD 작업에서 역할 분해, 실제 subagent 실행 경계, sequential fallback, handoff, ownership, integration, runtime sync를 판단하는 기준을 고정하는 것이다.
 
 ---

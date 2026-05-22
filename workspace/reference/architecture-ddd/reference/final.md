@@ -1,5 +1,16 @@
 # DDD(도메인 주도 설계) 종합 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | DDD/domain modeling decisions: subdomain discovery, bounded context, ubiquitous language, aggregates, invariants, domain events/services, and consistency boundaries. |
+| use when | Domain language, business policy, state transition, aggregate boundary, or context boundary is unclear. |
+| exclude/handoff | Do not use for schema tuning, REST status codes, Django code mechanics, or pytest fixture mechanics except as domain input to owning references. |
+| core criteria | Strategic design before tactical patterns; model with domain experts and ubiquitous language; aggregate boundaries protect invariants; cross-aggregate consistency and events require explicit tradeoffs. |
+| source priority | 1 primary DDD books/reference material by Evans and Vernon; 2 primary/reputable DDD and architecture books; 3 reputable engineering articles by Fowler, Bogard, Microsoft, and DDD community sources; 4 internal Korean summaries only as synthesis. |
+| P1 classification | sufficient |
+
 > **Internal 출처:** [A] 도메인 주도 개발 시작하기, [B] 도메인 주도 설계 첫걸음, [C] 도메인 주도 설계 구현(빨간책)
 > **External 출처:** Eric Evans 파란책, Vaughn Vernon "Effective Aggregate Design" / "DDD Distilled", Scott Millett, Harry Percival & Bob Gregory "Cosmic Python", Greg Young, Martin Fowler, Alberto Brandolini
 

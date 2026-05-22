@@ -1,5 +1,16 @@
 # Source Reference Audit Reference
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | Source/reference governance decisions: artifact roles, path boundaries, provenance, source gaps, provisional status, DRF guardrail traceability, leakage categories, validation coverage, eval traceability, and runtime metadata/cache sync evidence. |
+| use when | The task audits source evidence, runtime/source separation, source gap/provisional status, reference routing, cache/source parity, or validation coverage. |
+| exclude/handoff | Do not use for application design, Django implementation, API/DB design, pytest mechanics, or actual eval runner implementation except as source-governance boundary input. |
+| core criteria | Treat `final.md` as the decision source; do not promote run artifacts or eval oracles into source truth; keep source-authoring paths out of runtime-facing guidance; mark absent supplemental material as not present. |
+| source priority | 2 primary dddjango governance documents and existing source-reference decisions; 1 official docs only when OpenAI/Codex or tool-specific claims are introduced; 3 reviewer reports only when indexed; 4 memory-based governance is not accepted. |
+| P1 classification | provisional: sufficient for current source-governance audit wording, but cache-sync, review-closure, and later eval-completion claims need later phase evidence and cannot be P5/P6/P8 completion evidence. |
+
 이 문서는 dddjango의 source/reference governance 감사 기준을 고정한다. 목적은 source 문서, runtime skill, public validation case, evaluator-only material, run artifact가 서로의 역할을 침범하지 않게 하는 것이다.
 
 ## 1. Artifact Roles

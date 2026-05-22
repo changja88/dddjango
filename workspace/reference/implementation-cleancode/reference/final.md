@@ -1,5 +1,16 @@
 # 범용 클린 코드 원칙 종합 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | Maintainability decisions: naming, function shape, responsibility, encapsulation, abstraction, SOLID, duplication, error handling, legacy code, smells, and refactoring. |
+| use when | Code review or refactoring asks whether code is understandable, cohesive, explicit, testable, and easy to change without changing behavior. |
+| exclude/handoff | Do not use as the source for domain modeling, REST contract, DB consistency, Django ORM mechanics, or pytest mechanics; use owning references for those axes. |
+| core criteria | Separate by reason to change; keep behavior and invariants inside the right owner; prefer explicit, simple code; avoid premature abstraction; preserve behavior with small verified steps. |
+| source priority | 2 primary/reputable books and guides listed in source abbreviations; 1 official PEP/Google style material only for Python style claims; 3 recognized engineering books/articles; 4 unsupported taste or memory is not accepted as source. |
+| P1 classification | sufficient |
+
 > 이 문서는 다음 자료들의 핵심 원칙을 언어 비종속적으로 종합한 것이다.
 > 코드 예시는 Python으로 작성되었으나, 원칙 자체는 모든 프로그래밍 언어에 적용된다.
 >

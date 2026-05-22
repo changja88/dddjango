@@ -1,5 +1,16 @@
 # Python 테스트 코드 작성 종합 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | Python/Django test implementation decisions: pytest, fixtures, parametrization, assertions, doubles, factories, Hypothesis, time/HTTP mocking, testcontainers, coverage, mutation, BDD, Django Ninja TestClient, idempotency, and concurrency tests. |
+| use when | The task is test code implementation/review, fixture/double mechanics, contract test mechanics, or concrete verification technique. |
+| exclude/handoff | Do not use as TDD workflow source, domain/API/DB design authority, or production Django implementation source except for test mechanics around those areas. |
+| core criteria | Use the smallest test scope that proves the behavior; keep fixtures explicit and isolated; choose doubles by role and risk; verify concurrency/idempotency with DB-backed tests when behavior depends on DB semantics; report only commands actually run. |
+| source priority | 1 official pytest, pytest-django, Django, Django Ninja, Hypothesis, coverage, and tool docs; 2 primary project docs; 3 reputable testing books/articles and Google/Fowler material; 4 unsupported plugin habit is not source. |
+| P1 classification | sufficient |
+
 > 이 문서는 테스트 코드 **작성법**에 집중한다. TDD 방법론(Red-Green-Refactor 등)은 `workspace/reference/implementation-tdd/reference/final.md`에서 다룬다.
 
 ---

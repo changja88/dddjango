@@ -1,5 +1,16 @@
 # REST API 설계 종합 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | REST/HTTP API contract decisions: resource shape, method/status semantics, request/response/header contract, Problem Details, pagination, versioning, rate limits, idempotency, and OpenAPI impact. |
+| use when | API contract, endpoint behavior, client-visible compatibility, or OpenAPI contract surface is the primary question. |
+| exclude/handoff | Do not use as DDD, DB transaction, Django ORM, pytest, or TDD source. Handoff implementation to Django/Django Ninja/test references. |
+| core criteria | HTTP semantics from RFCs first; API compatibility and error contracts second; framework implementation only after contract decisions are stable. |
+| source priority | 1 official standards: RFC 9110, RFC 5789, RFC 9457, OpenAPI Specification; 2 primary docs: Microsoft/Google/GitHub/Slack/Stripe docs where product API behavior is cited; 3 reputable engineering material; 4 internal notes only as synthesis. |
+| P1 classification | sufficient |
+
 > 이 문서는 REST API 설계 원칙에 집중한다. 프레임워크 구현(DRF 등)은 다루지 않는다.
 > GraphQL, gRPC, SOAP, WebSocket, HATEOAS, API Gateway는 범위 밖이다.
 
@@ -572,6 +583,7 @@ API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
 | IETF RFC 9457 | Problem Details (에러 응답 형식) |
 | IETF RFC 9110 | HTTP 메서드 안전성/멱등성 |
 | IETF RFC 5789 | PATCH 메서드와 idempotent PATCH nuance |
+| OpenAPI Specification | OpenAPI contract description source |
 | Stripe Blog / Docs | 버전 관리, 페이지네이션, 멱등성 키 |
 | GitHub Docs | Rate Limiting 헤더 |
 | Slack API Docs | 커서 기반 페이지네이션 |

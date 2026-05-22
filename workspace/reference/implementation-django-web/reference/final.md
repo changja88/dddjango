@@ -1,5 +1,16 @@
 # Django Web 구현 가이드
 
+## P1 Source Sufficiency
+
+| field | value |
+|---|---|
+| purpose | Django server-rendered web decisions: TemplateView/Generic CBV/FBV, templates, includes, static assets, web forms, HTMX/AJAX, CSRF, auth, and render acceptance checks. |
+| use when | The task is a Django-rendered page, template, form, static asset, or HTMX/web interaction rather than a JSON API. |
+| exclude/handoff | Do not use for REST API contracts, Django Ninja Router/Schema work, ORM/migration/transaction design, DB rollout, domain policy, or pytest mechanics beyond render acceptance criteria. |
+| core criteria | Keep views as adapters; keep domain behavior out of templates; use Django static/template/security primitives; preserve CSRF/auth; report only render/browser/static/security checks actually run. |
+| source priority | 1 official Django, HTMX, and OWASP docs; 2 primary dddjango Django/API references for handoff; 3 reputable Django books/styleguides; 4 unsupported UI habit is not source. |
+| P1 classification | sufficient |
+
 > Django template, TemplateView/Generic CBV, web form, static asset, HTMX fragment, CSRF-aware AJAX, render acceptance check를 위한 전용 source reference다.
 > Django 모델, ORM, 마이그레이션, 트랜잭션, 서비스/셀렉터 일반 구현은 `workspace/reference/implementation-django/reference/final.md`가 소유한다.
 > REST API 계약과 Django Ninja 구현은 각각 `workspace/reference/architecture-api/reference/final.md`, `workspace/reference/implementation-django-ninja/reference/final.md` 기준을 따른다.

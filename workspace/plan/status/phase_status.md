@@ -7,7 +7,7 @@ files.
 | phase | status | owner mode | allowed edits | current gate | last evidence | open blocker | provisional items | next action |
 |---|---|---|---|---|---|---|---|---|
 | p0-inventory | complete | manual | inventory only | `workspace/plan/phases/p0-inventory/evidence/<work-item>-inventory.md` exists and is indexed | `workspace/plan/phases/p0-inventory/evidence/20260522-223642-p0-plugin-inventory-freeze-inventory.md` | - | 6 provisional source relationships; component absences recorded as missing; `plugin.json` explicit local/private flag unknown | proceed to P1 reference sufficiency |
-| p1-reference-sufficiency | not-started | manual/goal | reference analysis and source-only fixes | all references classified | - | - | - | wait for P0 |
+| p1-reference-sufficiency | complete | manual/goal | reference analysis and source-only fixes | all references classified | `workspace/plan/phases/p1-reference-sufficiency/evidence/20260522-225558-p1-reference-sufficiency-audit-evidence.md` | - | 3 provisional references: `implementation-tdd`, `source-reference-audit`, `workflow-dddjango-subagents`; not P5/P6/P8 completion evidence | proceed to P1.5 usage cards |
 | p1-5-usage-cards | not-started | manual | usage cards only | high-risk trigger cards exist | - | - | - | wait for P1 |
 | p2-skill-structure | not-started | goal | skill structure/trigger only | skill validators and trigger boundaries pass | - | - | - | wait for P1.5 |
 | p3-forward-tests | not-started | goal | forward-test prompts/evidence and narrow fixes | isolated user-like tests pass | - | - | - | wait for P2 |
