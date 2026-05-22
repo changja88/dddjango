@@ -1,0 +1,112 @@
+[
+  {
+    "id": "p4-pass",
+    "bucket": "mini-bucket",
+    "prompt": "REST 오류 응답 계약을 점검하고 근거를 짧게 정리해줘.",
+    "expected_outcomes": [
+      {"id": "scored", "value": "pass"}
+    ],
+    "fixture_expected": {"baseline": "pass", "with-plugin": "pass"}
+  },
+  {
+    "id": "p4-partial",
+    "bucket": "mini-bucket",
+    "prompt": "DB 중복 방지 설계를 검토하고 빠진 항목을 표시해줘.",
+    "expected_outcomes": [
+      {"id": "scored", "value": "partial"}
+    ],
+    "fixture_expected": {"baseline": "partial", "with-plugin": "partial"}
+  },
+  {
+    "id": "p4-fail",
+    "bucket": "mini-bucket",
+    "prompt": "Django 서비스 레이어 구현 답변이 필수 근거를 충족하는지 봐줘.",
+    "expected_outcomes": [
+      {"id": "scored", "value": "fail"}
+    ],
+    "fixture_expected": {"baseline": "fail", "with-plugin": "fail"}
+  },
+  {
+    "id": "p4-missing-oracle",
+    "bucket": "mini-bucket",
+    "prompt": "oracle 누락 시 not-scored가 성공으로 처리되지 않는지 확인해줘.",
+    "expected_outcomes": [
+      {"id": "oracle", "value": "missing-with-plugin"}
+    ],
+    "fixture_expected": {"baseline": "pass", "with-plugin": "not-scored"}
+  },
+  {
+    "id": "p4-malformed-oracle",
+    "bucket": "mini-bucket",
+    "prompt": "oracle JSON 파싱 실패 시 run 실패가 되는지 확인해줘.",
+    "expected_outcomes": [
+      {"id": "oracle", "value": "malformed-baseline"}
+    ],
+    "fixture_expected": {"baseline": "not-scored", "with-plugin": "pass"}
+  },
+  {
+    "id": "p4-stale-report",
+    "bucket": "mini-bucket",
+    "prompt": "report가 raw digest와 어긋나는 상태를 실패로 표시해줘.",
+    "expected_outcomes": [
+      {"id": "report", "value": "stale"}
+    ],
+    "injected_failures": ["stale-report"],
+    "fixture_expected": {"baseline": "fail", "with-plugin": "fail"}
+  },
+  {
+    "id": "p4-local-path-leak",
+    "bucket": "mini-bucket",
+    "prompt": "로컬 경로가 raw나 report에 남으면 실패해야 한다.",
+    "expected_outcomes": [
+      {"id": "leakage", "value": "local-path"}
+    ],
+    "fixture_expected": {"baseline": "fail", "with-plugin": "fail"}
+  },
+  {
+    "id": "p4-sanitizer-only-leak",
+    "bucket": "mini-bucket",
+    "prompt": "redaction 전 누출이 있었고 저장 artifact는 깨끗한 경우도 실패해야 한다.",
+    "expected_outcomes": [
+      {"id": "leakage", "value": "pre-redaction-only"}
+    ],
+    "fixture_expected": {"baseline": "fail", "with-plugin": "fail"}
+  },
+  {
+    "id": "p4-private-field-leak",
+    "bucket": "mini-bucket",
+    "prompt": "비공개 eval 필드가 노출되면 실패해야 한다.",
+    "expected_outcomes": [
+      {"id": "leakage", "value": "private-field"}
+    ],
+    "fixture_expected": {"baseline": "fail", "with-plugin": "fail"}
+  },
+  {
+    "id": "p4-expected-outcomes-conflict",
+    "bucket": "mini-bucket",
+    "prompt": "expected_outcomes가 서로 충돌하면 scoring 전에 실패해야 한다.",
+    "expected_outcomes": [
+      {"id": "route", "value": "architecture-api"},
+      {"id": "route", "value": "implementation-django"}
+    ],
+    "fixture_expected": {"baseline": "not-scored", "with-plugin": "not-scored"}
+  },
+  {
+    "id": "p4-korean-negation-false-positive",
+    "bucket": "mini-bucket",
+    "prompt": "한국어 부정문에 나온 skill 이름을 실제 로딩 증거로 오판하지 않는지 봐줘.",
+    "expected_outcomes": [
+      {"id": "negation", "value": "ignore-prose"}
+    ],
+    "fixture_expected": {"baseline": "pass", "with-plugin": "pass"}
+  },
+  {
+    "id": "p4-prompt-only-command-claim",
+    "bucket": "mini-bucket",
+    "prompt": "프롬프트와 답변 텍스트에는 명령 실행 주장이 있지만 structured event는 없다.",
+    "expected_outcomes": [
+      {"id": "command-evidence", "value": "structured-event-required"}
+    ],
+    "fixture_expected": {"baseline": "fail", "with-plugin": "fail"}
+  }
+]

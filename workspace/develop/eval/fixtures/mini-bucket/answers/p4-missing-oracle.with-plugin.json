@@ -1,0 +1,10 @@
+{
+  "schema_version": "eval-answer/v1",
+  "case_id": "p4-missing-oracle",
+  "variant": "with-plugin",
+  "loaded_skill": "dddjango:implementation-test",
+  "claims": ["oracle-present"],
+  "answer_text": "The with-plugin answer exists but its oracle is intentionally absent.",
+  "pre_redaction_text": "The with-plugin answer exists but its oracle is intentionally absent.",
+  "structured_events": []
+}

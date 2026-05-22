@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>dddjango P4 mini-bucket report</title></head>
+<body>
+<h1>p4-mini-bucket-fixture</h1>
+<p>Runtime routing evidence: deferred-by-ADR-0004</p>
+<p>Raw digest: 27092839412f2a7bd9f42860543f9f38a233ffb26f24e025d2f1d8f8a7650e64</p>
+<table>
+<thead><tr><th>case</th><th>variant</th><th>status</th><th>expected</th><th>failure semantics</th></tr></thead>
+<tbody>
+<tr><td>p4-pass</td><td>baseline</td><td>pass</td><td>pass</td><td>-</td></tr>
+<tr><td>p4-pass</td><td>with-plugin</td><td>pass</td><td>pass</td><td>-</td></tr>
+<tr><td>p4-partial</td><td>baseline</td><td>partial</td><td>partial</td><td>oracle-partial</td></tr>
+<tr><td>p4-partial</td><td>with-plugin</td><td>partial</td><td>partial</td><td>oracle-partial</td></tr>
+<tr><td>p4-fail</td><td>baseline</td><td>fail</td><td>fail</td><td>oracle-mismatch</td></tr>
+<tr><td>p4-fail</td><td>with-plugin</td><td>fail</td><td>fail</td><td>oracle-mismatch</td></tr>
+<tr><td>p4-missing-oracle</td><td>baseline</td><td>pass</td><td>pass</td><td>-</td></tr>
+<tr><td>p4-missing-oracle</td><td>with-plugin</td><td>not-scored</td><td>not-scored</td><td>missing-oracle</td></tr>
+<tr><td>p4-malformed-oracle</td><td>baseline</td><td>not-scored</td><td>not-scored</td><td>malformed-oracle</td></tr>
+<tr><td>p4-malformed-oracle</td><td>with-plugin</td><td>pass</td><td>pass</td><td>-</td></tr>
+<tr><td>p4-stale-report</td><td>baseline</td><td>fail</td><td>fail</td><td>stale-report</td></tr>
+<tr><td>p4-stale-report</td><td>with-plugin</td><td>fail</td><td>fail</td><td>stale-report</td></tr>
+<tr><td>p4-local-path-leak</td><td>baseline</td><td>fail</td><td>fail</td><td>raw-leakage, persisted-leakage</td></tr>
+<tr><td>p4-local-path-leak</td><td>with-plugin</td><td>fail</td><td>fail</td><td>raw-leakage, persisted-leakage</td></tr>
+<tr><td>p4-sanitizer-only-leak</td><td>baseline</td><td>fail</td><td>fail</td><td>raw-leakage</td></tr>
+<tr><td>p4-sanitizer-only-leak</td><td>with-plugin</td><td>fail</td><td>fail</td><td>raw-leakage</td></tr>
+<tr><td>p4-private-field-leak</td><td>baseline</td><td>fail</td><td>fail</td><td>raw-leakage, persisted-leakage</td></tr>
+<tr><td>p4-private-field-leak</td><td>with-plugin</td><td>fail</td><td>fail</td><td>raw-leakage, persisted-leakage</td></tr>
+<tr><td>p4-expected-outcomes-conflict</td><td>baseline</td><td>not-scored</td><td>not-scored</td><td>expected-outcomes-conflict</td></tr>
+<tr><td>p4-expected-outcomes-conflict</td><td>with-plugin</td><td>not-scored</td><td>not-scored</td><td>expected-outcomes-conflict</td></tr>
+<tr><td>p4-korean-negation-false-positive</td><td>baseline</td><td>pass</td><td>pass</td><td>-</td></tr>
+<tr><td>p4-korean-negation-false-positive</td><td>with-plugin</td><td>pass</td><td>pass</td><td>-</td></tr>
+<tr><td>p4-prompt-only-command-claim</td><td>baseline</td><td>fail</td><td>fail</td><td>missing-structured-command-evidence</td></tr>
+<tr><td>p4-prompt-only-command-claim</td><td>with-plugin</td><td>fail</td><td>fail</td><td>missing-structured-command-evidence</td></tr>
+</tbody></table>
+</body></html>

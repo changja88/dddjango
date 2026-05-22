@@ -1,0 +1,224 @@
+{
+  "schema_version": "eval-report/v1",
+  "run_id": "p4-mini-bucket-fixture",
+  "source_raw_path": "workspace/develop/eval/runs/p4-mini-bucket-fixture/raw/run.json",
+  "source_raw_digest": "27092839412f2a7bd9f42860543f9f38a233ffb26f24e025d2f1d8f8a7650e64",
+  "status_counts": {
+    "pass": 6,
+    "partial": 2,
+    "fail": 12,
+    "not-scored": 4
+  },
+  "runtime_routing_evidence": "deferred-by-ADR-0004",
+  "results": [
+    {
+      "case_id": "p4-pass",
+      "variant": "baseline",
+      "status": "pass",
+      "expected_fixture_status": "pass",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p4-pass",
+      "variant": "with-plugin",
+      "status": "pass",
+      "expected_fixture_status": "pass",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p4-partial",
+      "variant": "baseline",
+      "status": "partial",
+      "expected_fixture_status": "partial",
+      "failure_semantics": [
+        "oracle-partial"
+      ]
+    },
+    {
+      "case_id": "p4-partial",
+      "variant": "with-plugin",
+      "status": "partial",
+      "expected_fixture_status": "partial",
+      "failure_semantics": [
+        "oracle-partial"
+      ]
+    },
+    {
+      "case_id": "p4-fail",
+      "variant": "baseline",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "oracle-mismatch"
+      ]
+    },
+    {
+      "case_id": "p4-fail",
+      "variant": "with-plugin",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "oracle-mismatch"
+      ]
+    },
+    {
+      "case_id": "p4-missing-oracle",
+      "variant": "baseline",
+      "status": "pass",
+      "expected_fixture_status": "pass",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p4-missing-oracle",
+      "variant": "with-plugin",
+      "status": "not-scored",
+      "expected_fixture_status": "not-scored",
+      "failure_semantics": [
+        "missing-oracle"
+      ]
+    },
+    {
+      "case_id": "p4-malformed-oracle",
+      "variant": "baseline",
+      "status": "not-scored",
+      "expected_fixture_status": "not-scored",
+      "failure_semantics": [
+        "malformed-oracle"
+      ]
+    },
+    {
+      "case_id": "p4-malformed-oracle",
+      "variant": "with-plugin",
+      "status": "pass",
+      "expected_fixture_status": "pass",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p4-stale-report",
+      "variant": "baseline",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "stale-report"
+      ]
+    },
+    {
+      "case_id": "p4-stale-report",
+      "variant": "with-plugin",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "stale-report"
+      ]
+    },
+    {
+      "case_id": "p4-local-path-leak",
+      "variant": "baseline",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "raw-leakage",
+        "persisted-leakage"
+      ]
+    },
+    {
+      "case_id": "p4-local-path-leak",
+      "variant": "with-plugin",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "raw-leakage",
+        "persisted-leakage"
+      ]
+    },
+    {
+      "case_id": "p4-sanitizer-only-leak",
+      "variant": "baseline",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "raw-leakage"
+      ]
+    },
+    {
+      "case_id": "p4-sanitizer-only-leak",
+      "variant": "with-plugin",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "raw-leakage"
+      ]
+    },
+    {
+      "case_id": "p4-private-field-leak",
+      "variant": "baseline",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "raw-leakage",
+        "persisted-leakage"
+      ]
+    },
+    {
+      "case_id": "p4-private-field-leak",
+      "variant": "with-plugin",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "raw-leakage",
+        "persisted-leakage"
+      ]
+    },
+    {
+      "case_id": "p4-expected-outcomes-conflict",
+      "variant": "baseline",
+      "status": "not-scored",
+      "expected_fixture_status": "not-scored",
+      "failure_semantics": [
+        "expected-outcomes-conflict"
+      ]
+    },
+    {
+      "case_id": "p4-expected-outcomes-conflict",
+      "variant": "with-plugin",
+      "status": "not-scored",
+      "expected_fixture_status": "not-scored",
+      "failure_semantics": [
+        "expected-outcomes-conflict"
+      ]
+    },
+    {
+      "case_id": "p4-korean-negation-false-positive",
+      "variant": "baseline",
+      "status": "pass",
+      "expected_fixture_status": "pass",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p4-korean-negation-false-positive",
+      "variant": "with-plugin",
+      "status": "pass",
+      "expected_fixture_status": "pass",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p4-prompt-only-command-claim",
+      "variant": "baseline",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "missing-structured-command-evidence"
+      ]
+    },
+    {
+      "case_id": "p4-prompt-only-command-claim",
+      "variant": "with-plugin",
+      "status": "fail",
+      "expected_fixture_status": "fail",
+      "failure_semantics": [
+        "missing-structured-command-evidence"
+      ]
+    }
+  ],
+  "report_html_digest": "a887caacdbf3ff0cd8748a974f79f8c0d78334edb5520360f49c985b7fe790f1"
+}

@@ -1,0 +1,8 @@
+{
+  "schema_version": "eval-oracle/v1",
+  "case_id": "p4-prompt-only-command-claim",
+  "variant": "baseline",
+  "loaded_skill": "dddjango:implementation-test",
+  "required_claims": ["mentions-command-contract"],
+  "required_command": "python3 -B workspace/scripts/validate_plan_governance.py"
+}

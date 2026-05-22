@@ -1,0 +1,10 @@
+{
+  "schema_version": "eval-answer/v1",
+  "case_id": "p4-stale-report",
+  "variant": "with-plugin",
+  "loaded_skill": "dddjango:source-reference-audit",
+  "claims": ["report-digest-current"],
+  "answer_text": "The plugin answer would otherwise pass, but the fixture injects stale-report.",
+  "pre_redaction_text": "The plugin answer would otherwise pass, but the fixture injects stale-report.",
+  "structured_events": []
+}

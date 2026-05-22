@@ -1,0 +1,7 @@
+{
+  "schema_version": "eval-oracle/v1",
+  "case_id": "p4-sanitizer-only-leak",
+  "variant": "with-plugin",
+  "loaded_skill": "dddjango:source-reference-audit",
+  "required_claims": ["leakage-scan-ran"]
+}

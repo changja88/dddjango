@@ -1,0 +1,31 @@
+{
+  "schema_version": "eval-validation/v1",
+  "status": "fail",
+  "raw_path": "workspace/develop/eval/runs/p4-mini-bucket-fixture/raw/run.json",
+  "report_path": "workspace/develop/eval/runs/p4-mini-bucket-fixture/report/report.json",
+  "raw_digest": "27092839412f2a7bd9f42860543f9f38a233ffb26f24e025d2f1d8f8a7650e64",
+  "status_counts": {
+    "pass": 6,
+    "partial": 2,
+    "fail": 12,
+    "not-scored": 4
+  },
+  "fixture_mismatch_count": 0,
+  "observed_failure_semantics": [
+    "expected-outcomes-conflict",
+    "malformed-oracle",
+    "missing-oracle",
+    "missing-structured-command-evidence",
+    "oracle-mismatch",
+    "oracle-partial",
+    "persisted-leakage",
+    "raw-leakage",
+    "stale-report"
+  ],
+  "failures": [
+    {
+      "kind": "not-scored-present",
+      "count": 4
+    }
+  ]
+}

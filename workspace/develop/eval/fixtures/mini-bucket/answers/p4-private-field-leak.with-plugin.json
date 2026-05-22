@@ -1,0 +1,10 @@
+{
+  "schema_version": "eval-answer/v1",
+  "case_id": "p4-private-field-leak",
+  "variant": "with-plugin",
+  "loaded_skill": "dddjango:source-reference-audit",
+  "claims": ["leakage-scan-ran"],
+  "answer_text": "Plugin private marker remains: __PRIVATE_FIELD_SENTINEL__",
+  "pre_redaction_text": "Plugin pre-redaction private marker: __PRIVATE_FIELD_SENTINEL__",
+  "structured_events": []
+}

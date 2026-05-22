@@ -1,0 +1,10 @@
+{
+  "schema_version": "eval-answer/v1",
+  "case_id": "p4-fail",
+  "variant": "with-plugin",
+  "loaded_skill": "dddjango:implementation-django",
+  "claims": [],
+  "answer_text": "A plugin answer without the required service-layer evidence.",
+  "pre_redaction_text": "A plugin answer without the required service-layer evidence.",
+  "structured_events": []
+}

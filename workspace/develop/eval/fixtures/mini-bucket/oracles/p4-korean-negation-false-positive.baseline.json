@@ -1,0 +1,7 @@
+{
+  "schema_version": "eval-oracle/v1",
+  "case_id": "p4-korean-negation-false-positive",
+  "variant": "baseline",
+  "loaded_skill": "dddjango:architecture-api",
+  "required_claims": ["negation-not-treated-as-routing"]
+}

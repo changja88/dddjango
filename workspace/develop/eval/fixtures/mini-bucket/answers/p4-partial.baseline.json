@@ -1,0 +1,10 @@
+{
+  "schema_version": "eval-answer/v1",
+  "case_id": "p4-partial",
+  "variant": "baseline",
+  "loaded_skill": "dddjango:architecture-db",
+  "claims": ["db-constraint-mentioned"],
+  "answer_text": "The DB constraint is mentioned, but rollout verification is missing.",
+  "pre_redaction_text": "The DB constraint is mentioned, but rollout verification is missing.",
+  "structured_events": []
+}

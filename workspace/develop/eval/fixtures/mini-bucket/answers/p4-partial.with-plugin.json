@@ -1,0 +1,10 @@
+{
+  "schema_version": "eval-answer/v1",
+  "case_id": "p4-partial",
+  "variant": "with-plugin",
+  "loaded_skill": "dddjango:architecture-db",
+  "claims": ["db-constraint-mentioned"],
+  "answer_text": "The plugin answer mentions the constraint but omits rollout verification.",
+  "pre_redaction_text": "The plugin answer mentions the constraint but omits rollout verification.",
+  "structured_events": []
+}
