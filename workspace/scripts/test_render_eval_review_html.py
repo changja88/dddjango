@@ -82,6 +82,14 @@ class EvalReviewHtmlRendererTests(unittest.TestCase):
         self.assertIn("[internal-eval-sentinel]", sanitized)
         self.assertNotIn("__DDDJANGO_PRIVATE_EVAL_SENTINEL__", sanitized)
 
+    def test_sanitize_report_text_redacts_home_directory_paths(self) -> None:
+        sanitized = self.renderer.sanitize_report_text(
+            "FAIL: /Users/hyun/Desktop/dddjango/workspace/develop/eval/response/runs/run/raw/file.txt"
+        )
+
+        self.assertIn("[home-directory-path]", sanitized)
+        self.assertNotIn("/Users/hyun", sanitized)
+
     def write_case(
         self,
         *,
@@ -383,10 +391,11 @@ coverage_tags:
         self.assertNotIn("failure_modes", row)
         self.assertNotIn("leakage_checks", row)
         self.assertNotIn("evidence_required", row)
-        self.assertEqual(row["evaluator_only"]["intent"], "Validate specialist-positive reasoning.")
-        self.assertEqual(row["evaluator_only"]["failed_checks"], ["missing behavior"])
-        self.assertEqual(row["evaluator_only"]["leakage_notes"], ["no private material"])
-        self.assertEqual(row["evaluator_only"]["evidence_required"], ["evaluation notes"])
+        self.assertEqual(row["evaluator_only"]["label"], "internal evaluator artifacts")
+        self.assertNotIn("intent", row["evaluator_only"])
+        self.assertNotIn("failed_checks", row["evaluator_only"])
+        self.assertNotIn("leakage_notes", row["evaluator_only"])
+        self.assertNotIn("evidence_required", row["evaluator_only"])
 
     def test_ok_oracle_observations_with_leakage_and_fail_words_do_not_block(self) -> None:
         run_dir = self.write_case(
@@ -978,6 +987,56 @@ coverage_tags:
         self.assertIn("With dddjango evaluation text", html)
         self.assertIn("const REPORT_DATA =", html)
 
+    def test_render_html_links_raw_stderr_and_evaluator_artifacts(self) -> None:
+        case_id = "case-response-order-create"
+        run_dir = self.write_case(case_id=case_id)
+        raw_dir = run_dir / "raw"
+        (raw_dir / f"{case_id}-baseline.stderr.txt").write_text(
+            "baseline stderr\n",
+            encoding="utf-8",
+        )
+        (raw_dir / f"{case_id}-baseline-command.txt").write_text(
+            "codex exec baseline\n",
+            encoding="utf-8",
+        )
+        (raw_dir / f"{case_id}-answer-oracle-evaluation.stderr.txt").write_text(
+            "oracle stderr\n",
+            encoding="utf-8",
+        )
+        (raw_dir / f"{case_id}-answer-oracle-evaluation-command.txt").write_text(
+            "evaluate oracle\n",
+            encoding="utf-8",
+        )
+
+        data = self.renderer.build_report_data("response", run_dir.name, run_dir)
+        html = self.renderer.render_html(data)
+
+        baseline_links = data["cases"][0]["baseline"]["artifact_links"]
+        evaluator_links = data["cases"][0]["evaluator_only"]["artifact_links"]
+        self.assertIn(
+            {
+                "label": f"raw/{case_id}-baseline.stderr.txt",
+                "href": f"../raw/{case_id}-baseline.stderr.txt",
+            },
+            baseline_links,
+        )
+        self.assertIn(
+            {
+                "label": f"raw/{case_id}-answer-oracle-evaluation.stderr.txt",
+                "href": f"../raw/{case_id}-answer-oracle-evaluation.stderr.txt",
+            },
+            evaluator_links,
+        )
+        self.assertIn("근거 링크", html)
+        self.assertIn('target="_blank" rel="noopener noreferrer"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-baseline.txt"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-baseline.stderr.txt"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-baseline-command.txt"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-baseline-exit.txt"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-answer-oracle-evaluation.json"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-answer-oracle-evaluation.stderr.txt"', html)
+        self.assertIn(f'"href": "../raw/{case_id}-answer-oracle-evaluation-command.txt"', html)
+
     def test_render_html_embeds_eval_report_v2_data_contract(self) -> None:
         run_dir = self.write_case()
         data = self.renderer.build_report_data("response", run_dir.name, run_dir)
@@ -1512,6 +1571,63 @@ coverage_tags:
 
         self.assertEqual(self.renderer.latest_scored_run_dir("response"), validated_run)
 
+    def test_failed_run_validation_manifest_is_excluded_from_latest_valid_selection(self) -> None:
+        passed_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=1,
+            scope="full",
+            topic="passed-run",
+            created_at=datetime(2026, 1, 1, 9, 0, 0, tzinfo=KST),
+        )
+        failed_run_id = self.canonical_run_id(
+            bucket="response",
+            try_number=2,
+            scope="full",
+            topic="failed-run",
+            created_at=datetime(2026, 1, 2, 9, 0, 0, tzinfo=KST),
+        )
+        passed_run = self.write_case(run_id=passed_run_id)
+        failed_run = self.write_case(run_id=failed_run_id)
+        (passed_run / self.renderer.run_identity.VALIDATION_FILENAME).unlink()
+        (failed_run / self.renderer.run_identity.VALIDATION_FILENAME).unlink()
+        self.renderer.run_identity.write_run_validation_manifest(
+            passed_run,
+            run_id=passed_run_id,
+            bucket="response",
+            case_ids=["case-response-order-create"],
+            variants=list(self.renderer.VARIANTS),
+            status="passed",
+            findings=[],
+        )
+        self.renderer.run_identity.write_run_validation_manifest(
+            failed_run,
+            run_id=failed_run_id,
+            bucket="response",
+            case_ids=["case-response-order-create"],
+            variants=list(self.renderer.VARIANTS),
+            status="failed",
+            findings=["latest run failed validation"],
+        )
+        for run_id in (passed_run_id, failed_run_id):
+            report = self.renderer.report_path("response", run_id)
+            report.parent.mkdir(parents=True, exist_ok=True)
+            report.write_text("<!doctype html>\n", encoding="utf-8")
+
+        self.renderer.write_latest_report_alias("response")
+        self.renderer.write_latest_valid_report_alias("response")
+
+        self.assertEqual(self.renderer.latest_attempt_run_dir("response"), failed_run)
+        self.assertEqual(self.renderer.latest_scored_run_dir("response"), passed_run)
+        latest_html = self.renderer.latest_report_alias_path("response").read_text(
+            encoding="utf-8"
+        )
+        valid_html = self.renderer.latest_valid_report_alias_path("response").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(failed_run_id, latest_html)
+        self.assertIn(passed_run_id, valid_html)
+        self.assertNotIn(failed_run_id, valid_html)
+
     def test_targeted_run_is_excluded_from_latest_selection(self) -> None:
         full_run_id = self.canonical_run_id(
             bucket="response",
@@ -1652,7 +1768,10 @@ coverage_tags:
             case_id="case-code-order-create",
             run_id=run_id,
         )
-        finding = "case-code-order-create baseline changed path is not allowed: apps/orders/services.py"
+        finding = (
+            "case-code-order-create baseline changed path is not allowed: "
+            "/Users/hyun/Desktop/dddjango/apps/orders/services.py"
+        )
         self.renderer.run_identity.write_run_validation_manifest(
             run_dir,
             run_id=run_id,
@@ -1667,10 +1786,13 @@ coverage_tags:
         html = self.renderer.render_html(data)
 
         self.assertEqual(data["run_validation"]["status"], "failed")
+        self.assertNotIn("/Users/hyun", data["run_validation"]["findings"][0])
+        self.assertIn("[home-directory-path]", data["run_validation"]["findings"][0])
         self.assertEqual(data["summary"]["run_validation_status"], "failed")
         self.assertEqual(data["reportability"], "blocked")
         self.assertIn("validation: failed", html)
-        self.assertIn(finding, html)
+        self.assertNotIn("/Users/hyun", html)
+        self.assertIn("[home-directory-path]", html)
         self.assertIn("reportability: blocked", html)
 
     def test_latest_attempt_run_includes_unvalidated_full_run(self) -> None:

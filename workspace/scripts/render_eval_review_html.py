@@ -14,6 +14,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import eval_run_identity as run_identity
+import eval_leakage_policy
 from eval_run_common import validate_oracle_schema
 import workflow_execution_gate as workflow_gate
 
@@ -71,7 +72,8 @@ def sanitize_report_text(text: str) -> str:
         return f"[eval-workspace]/{rel}"
 
     sanitized = TEMP_EVAL_WORKSPACE_PATH_RE.sub(replacement, text)
-    return INTERNAL_EVAL_SENTINEL_RE.sub("[internal-eval-sentinel]", sanitized)
+    sanitized = INTERNAL_EVAL_SENTINEL_RE.sub("[internal-eval-sentinel]", sanitized)
+    return eval_leakage_policy.sanitize_text_for_eval_artifact(sanitized)
 
 
 def sanitize_report_value(value: object) -> object:
@@ -356,6 +358,48 @@ def code_artifact_evidence(run_dir: Path, case_id: str, variant: str) -> list[st
     return evidence
 
 
+def artifact_link(rel_path: str) -> dict[str, str]:
+    normalized = rel_path.removeprefix("./")
+    return {
+        "label": normalized,
+        "href": Path("..").joinpath(normalized).as_posix(),
+    }
+
+
+def existing_artifact_links(run_dir: Path, rel_paths: list[str]) -> list[dict[str, str]]:
+    links: list[dict[str, str]] = []
+    for rel_path in rel_paths:
+        artifact_path = safe_run_relative_artifact(run_dir, rel_path)
+        if artifact_path is None or not artifact_path.is_file():
+            continue
+        links.append(artifact_link(rel_path))
+    return links
+
+
+def variant_artifact_rel_paths(case_id: str, variant: str) -> list[str]:
+    return [
+        f"raw/{case_id}-{variant}.txt",
+        f"raw/{case_id}-{variant}.stderr.txt",
+        f"raw/{case_id}-{variant}-events.jsonl",
+        f"raw/{case_id}-{variant}-command.txt",
+        f"raw/{case_id}-{variant}-exit.txt",
+        f"raw/{case_id}-{variant}-isolation.json",
+        f"raw/{case_id}-{variant}-prompt-input.json",
+        f"raw/{case_id}-{variant}-prompt-input.stderr.txt",
+        f"raw/{case_id}-{variant}-subagent-trace.json",
+    ]
+
+
+def evaluator_artifact_rel_paths(case_id: str) -> list[str]:
+    return [
+        f"raw/{case_id}-answer-oracle-evaluation.json",
+        f"raw/{case_id}-answer-oracle-evaluation.raw.txt",
+        f"raw/{case_id}-answer-oracle-evaluation.stderr.txt",
+        f"raw/{case_id}-answer-oracle-evaluation-command.txt",
+        f"raw/{case_id}-answer-oracle-evaluation-exit.txt",
+    ]
+
+
 def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, object]) -> dict[str, object]:
     raw_name = f"{case_id}-{variant}.txt"
     raw_path = run_dir / "raw" / raw_name
@@ -390,6 +434,11 @@ def variant_data(run_dir: Path, case_id: str, variant: str, oracle: dict[str, ob
         "response": response,
         "evaluation": evaluation,
         "evidence": [f"raw/{raw_name}", *code_artifact_evidence(run_dir, case_id, variant)],
+        "artifact_links": existing_artifact_links(
+            run_dir,
+            variant_artifact_rel_paths(case_id, variant)
+            + code_artifact_evidence(run_dir, case_id, variant),
+        ),
         "trace": trace_data(run_dir, case_id, variant),
     }
 
@@ -448,16 +497,10 @@ def build_case(bucket: str, public_case: Path, run_dir: Path) -> dict[str, objec
     baseline_score = baseline["score_value"]
     with_score = with_dddjango["score_value"]
     hard_gate = hard_gate_from_oracle(reportable_oracle)
-    intent = scalar_value(answer_text, "intent") or "Not recorded."
-    failed_checks = yaml_list_values(answer_text, "failure_modes")
-    leakage_notes = yaml_list_values(answer_text, "leakage_checks")
-    evidence_required = yaml_list_values(answer_text, "evidence_required")
     evaluator_only = {
-        "intent": intent,
-        "failed_checks": failed_checks,
-        "leakage_notes": leakage_notes,
         "evidence": [f"raw/{case_id}-answer-oracle-evaluation.json"],
-        "evidence_required": evidence_required,
+        "artifact_links": existing_artifact_links(run_dir, evaluator_artifact_rel_paths(case_id)),
+        "label": "internal evaluator artifacts",
     }
     workflow_expectation_value = (
         workflow_expectation(answer_text, with_trace) if bucket == "workflow" else {}
@@ -964,6 +1007,15 @@ def safe_run_meta(run_dir: Path) -> dict[str, object]:
 
 
 def safe_run_validation(run_dir: Path) -> dict[str, object]:
+    def sanitized_findings(value: object) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [
+            sanitize_report_text(str(finding))
+            for finding in value
+            if isinstance(finding, str)
+        ]
+
     run_validation_path = run_dir / run_identity.RUN_VALIDATION_FILENAME
     if run_validation_path.exists():
         try:
@@ -975,11 +1027,10 @@ def safe_run_validation(run_dir: Path) -> dict[str, object]:
                 "findings": [f"{run_identity.RUN_VALIDATION_FILENAME} is not valid JSON: {error.msg}"],
             }
         if isinstance(payload, dict):
-            findings = payload.get("findings")
             return {
                 "status": str(payload.get("status") or "invalid"),
                 "source": run_identity.RUN_VALIDATION_FILENAME,
-                "findings": findings if isinstance(findings, list) else [],
+                "findings": sanitized_findings(payload.get("findings")),
                 "created_at": str(payload.get("created_at") or ""),
             }
 
@@ -1139,6 +1190,9 @@ def report_v2_variant(case: dict[str, object], variant_key: str) -> dict[str, ob
         "evaluation_summary": text_summary(evaluation, f"{label} evaluation is missing."),
         "evaluation": evaluation or f"{label} evaluation is missing.",
         "evidence": variant.get("evidence") if isinstance(variant.get("evidence"), list) else [],
+        "artifact_links": variant.get("artifact_links")
+        if isinstance(variant.get("artifact_links"), list)
+        else [],
     }
 
 
@@ -2015,6 +2069,18 @@ def render_html(data: dict[str, object]) -> str:
     }}
     details {{ margin-top: 14px; }}
     summary {{ cursor: pointer; font-weight: 700; }}
+    .evidence-links {{
+      margin: 0;
+      padding: 12px 14px 12px 28px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfcfe;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }}
+    .evidence-links a {{ color: var(--accent); }}
     .empty {{ color: var(--muted); text-align: center; }}
     @media (max-width: 900px) {{
       main {{ padding: 14px; }}
@@ -2138,6 +2204,22 @@ def render_html(data: dict[str, object]) -> str:
       return REPORT_DATA.evaluation_items || [];
     }}
 
+    function evidenceLinksHtml(links) {{
+      links = Array.isArray(links) ? links : [];
+      if (!links.length) {{
+        return "";
+      }}
+      return `
+          <div class="section-label">근거 링크</div>
+          <ul class="evidence-links">
+            ${{links.map(function (link) {{
+              const href = link && link.href ? String(link.href) : "#";
+              const label = link && link.label ? String(link.label) : href;
+              return `<li><a href="${{esc(href)}}" target="_blank" rel="noopener noreferrer">${{esc(label)}}</a></li>`;
+            }}).join("")}}
+          </ul>`;
+    }}
+
     function variantHtml(label, item) {{
       item = item || {{}};
       const trace = item.trace || {{}};
@@ -2162,6 +2244,7 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
           <pre>${{esc(item.response || "")}}</pre>
           <div class="section-label">평가</div>
           <pre>${{esc(item.evaluation || "")}}</pre>
+          ${{evidenceLinksHtml(item.artifact_links)}}
           ${{traceHtml}}
         </article>`;
     }}
@@ -2170,17 +2253,10 @@ ${{esc((trace.evidence || []).join("\\n"))}}</pre>` : "";
       const evaluator = caseData.evaluator_only || {{}};
       return `
         <details>
-          <summary>evaluator-only details</summary>
-          <div class="section-label">intent</div>
-          <pre>${{esc(evaluator.intent || "")}}</pre>
-          <div class="section-label">failed checks</div>
-          <pre>${{esc((evaluator.failed_checks || []).join("\\n"))}}</pre>
-          <div class="section-label">leakage notes</div>
-          <pre>${{esc((evaluator.leakage_notes || []).join("\\n"))}}</pre>
-          <div class="section-label">evidence required</div>
-          <pre>${{esc((evaluator.evidence_required || []).join("\\n"))}}</pre>
-          <div class="section-label">evidence</div>
-          <pre>${{esc((evaluator.evidence || []).join("\\n"))}}</pre>
+          <summary>내부 evaluator 근거</summary>
+          <div class="section-label">artifact group</div>
+          <pre>${{esc(evaluator.label || "internal evaluator artifacts")}}</pre>
+          ${{evidenceLinksHtml(evaluator.artifact_links)}}
         </details>`;
     }}
 
@@ -2269,9 +2345,7 @@ def render_eval_report(
     output: Path | None = None,
     *,
     update_latest_aliases: bool = True,
-    record_validation_manifest: bool = True,
 ) -> Path:
-    del record_validation_manifest
     identity = run_identity.validate_production_run_id(run_id)
     if identity.bucket != bucket:
         raise SystemExit(
@@ -2317,7 +2391,6 @@ def render_latest_report_for_refresh(bucket: str, run_id: str) -> Path | None:
             bucket,
             run_id,
             update_latest_aliases=False,
-            record_validation_manifest=False,
         )
     except SystemExit as exc:
         if isinstance(exc.code, int):

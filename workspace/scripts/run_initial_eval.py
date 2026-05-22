@@ -207,6 +207,13 @@ def run_pipeline_commands(bucket: str, commands: list[list[str]], *, case_id: st
     return True
 
 
+def run_best_effort_renderer(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
+    validator = validator_command(args, bucket, run_id)
+    render = renderer_command(bucket, run_id)
+    run_pipeline_commands(bucket, [validator])
+    return run_pipeline_commands(bucket, [render])
+
+
 def report_path(bucket: str, run_id: str) -> Path:
     return Path("workspace/develop/eval") / bucket / "runs" / run_id / "analysis/report.html"
 
@@ -277,8 +284,13 @@ def run_bucket(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
         case_ids = selected_case_ids(bucket, args.case)
         if len(case_ids) > 1:
             if not run_cases_parallel(args, bucket, run_id, case_ids):
+                run_best_effort_renderer(args, bucket, run_id)
                 return False
-            if not run_pipeline_commands(bucket, final_bucket_commands(args, bucket, run_id)):
+            for command in final_bucket_commands(args, bucket, run_id):
+                if run_pipeline_commands(bucket, [command]):
+                    continue
+                if Path(command[1]).name != "render_eval_review_html.py":
+                    run_best_effort_renderer(args, bucket, run_id)
                 return False
             print(report_path(bucket, run_id))
             return True
@@ -291,7 +303,11 @@ def run_bucket(args: argparse.Namespace, bucket: str, run_id: str) -> bool:
     commands.append(validator_command(args, bucket, run_id))
     commands.append(renderer_command(bucket, run_id))
 
-    if not run_pipeline_commands(bucket, commands):
+    for command in commands:
+        if run_pipeline_commands(bucket, [command]):
+            continue
+        if Path(command[1]).name != "render_eval_review_html.py":
+            run_best_effort_renderer(args, bucket, run_id)
         return False
 
     print(report_path(bucket, run_id))

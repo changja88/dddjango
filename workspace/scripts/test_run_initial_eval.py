@@ -276,11 +276,36 @@ class RunInitialEvalTests(unittest.TestCase):
             ],
             [
                 ("run_eval_bucket.py", "response"),
+                ("validate_eval_run.py", "response"),
+                ("render_eval_review_html.py", "response"),
                 ("run_eval_bucket.py", "code"),
                 ("evaluate_eval_run.py", "code"),
                 ("validate_eval_run.py", "code"),
                 ("render_eval_review_html.py", "code"),
             ],
+        )
+
+    def test_bucket_failure_still_attempts_report_render_and_returns_nonzero(self) -> None:
+        def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            self.commands.append(command)
+            script = Path(command[1]).name
+            returncode = 9 if script == "run_eval_bucket.py" else 0
+            return subprocess.CompletedProcess(command, returncode, "", "")
+
+        with patch.object(self.orchestrator.subprocess, "run", side_effect=fake_run):
+            result = self.orchestrator.main(
+                [
+                    "--bucket",
+                    "response",
+                    "--run-id",
+                    RUN_ID_RESPONSE,
+                ]
+            )
+
+        self.assertEqual(result, 1)
+        self.assertEqual(
+            self.script_names(),
+            ["run_eval_bucket.py", "validate_eval_run.py", "render_eval_review_html.py"],
         )
 
     def test_without_keep_going_stops_on_first_failure(self) -> None:
@@ -299,7 +324,10 @@ class RunInitialEvalTests(unittest.TestCase):
             )
 
         self.assertEqual(result, 1)
-        self.assertEqual(self.script_names(), ["run_eval_bucket.py"])
+        self.assertEqual(
+            self.script_names(),
+            ["run_eval_bucket.py", "validate_eval_run.py", "render_eval_review_html.py"],
+        )
 
     def test_invalid_run_ids_are_rejected(self) -> None:
         for run_id in ("../escape", "nested/run", "/tmp/escape", "two\\parts", "", "run-one"):

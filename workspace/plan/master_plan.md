@@ -7,7 +7,7 @@
 | [x] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
 | [x] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
 | [x] | P5. skill 연계와 플러그인 평가 점검 | skill 연계와 subagent workflow를 검증하되 각 skill의 책임과 progressive disclosure를 유지하는지 확인한다. |
-| [ ] | P6. HTML report 최신성 점검 | 전체 평가 전에 run id, bucket report, latest/latest-valid, 실패 근거 링크가 항상 최신 평가 결과를 정확히 보여주는지 확정한다. |
+| [x] | P6. HTML report 최신성 점검 | 전체 평가 전에 run id, bucket report, latest/latest-valid, 실패 근거 링크가 항상 최신 평가 결과를 정확히 보여주는지 확정한다. |
 | [ ] | P7. 최종 평가 실행과 반복 수정 | eval-all을 실행하고 실패를 정해진 수정 대상 기준으로 분류한 뒤 analysis, plan, 수정, targeted/bucket 검증, 최종 eval-all을 반복해 완료한다. |
 
 ## 프로세스별 체크리스트
@@ -64,13 +64,13 @@
 
 ### P6. HTML report 최신성 점검
 
-- [ ] 최신 run id와 HTML report에 표시된 run id가 일치하는지 확인한다.
-- [ ] `latest`와 `latest-valid`가 의도한 최신 실행을 가리키는지 확인한다.
-- [ ] report가 bucket별 pass/fail, case별 결과, variant별 차이를 확인할 수 있게 출력되는지 확인한다.
-- [ ] 실패한 case의 raw output, stderr, evaluator 근거로 이동할 수 있는지 확인한다.
-- [ ] eval-all이 중간 실패해도 생성된 bucket report와 실패 근거가 유실되지 않는지 확인한다.
-- [ ] 이전 run의 report를 최신 결과로 오인할 수 있는 stale pointer가 없는지 확인한다.
-- [ ] report 생성과 최신성 검증을 테스트 또는 작은 fixture/run artifact로 반복 가능하게 확인한다.
+- [x] 최신 run id와 HTML report에 표시된 run id가 일치하는지 확인한다.
+- [x] `latest`와 `latest-valid`가 의도한 최신 실행을 가리키는지 확인한다.
+- [x] report가 bucket별 pass/fail, case별 결과, variant별 차이를 확인할 수 있게 출력되는지 확인한다.
+- [x] 실패한 case의 raw output, stderr, evaluator 근거로 이동할 수 있는지 확인한다.
+- [x] eval-all이 중간 실패해도 생성된 bucket report와 실패 근거가 유실되지 않는지 확인한다.
+- [x] 이전 run의 report를 최신 결과로 오인할 수 있는 stale pointer가 없는지 확인한다.
+- [x] report 생성과 최신성 검증을 테스트 또는 작은 fixture/run artifact로 반복 가능하게 확인한다.
 
 ### P7. 최종 평가 실행과 반복 수정
 
