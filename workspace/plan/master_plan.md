@@ -5,7 +5,7 @@
 | [x] | P1. 스킬의 reference 반영도 점검 | source reference가 충분한지 먼저 확인하고, 충분한 reference를 각 skill이 빠짐없이 반영하는지 점검한 뒤 필요한 개선 계획까지 확정한다. |
 | [x] | P2. `SKILL.md` 목적 명확성 점검 | 각 skill의 실제 사용 예시, 목적, trigger, 제외 조건과 agents/openai.yaml metadata가 일치하는지 확인한다. |
 | [x] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
-| [ ] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
+| [x] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
 | [ ] | P5. skill 연계와 플러그인 평가 점검 | skill 연계와 subagent workflow를 검증하되 각 skill의 책임과 progressive disclosure를 유지하는지 확인한다. |
 | [ ] | P6. 평가 실행 | 준비된 validator, 개별 skill 평가, 플러그인 연계 평가, eval-all/bucket 평가를 분리 실행해 실제 결과를 생성한다. |
 | [ ] | P7. HTML report 최신성 점검 | 실행 run id와 latest/latest-valid HTML report가 일치하는지 확인한다. |
@@ -47,11 +47,11 @@
 
 ### P4. 개별 skill 평가 점검
 
-- [ ] 각 skill의 목적과 reference 기준을 검증하는 평가 case가 준비되어 있는지 확인한다.
-- [ ] positive case와 negative case가 skill의 사용 조건과 제외 조건을 모두 검증하는지 확인한다.
-- [ ] public case가 answer oracle이나 의도한 정답을 누설하지 않는지 확인한다.
-- [ ] answer oracle이 reference 기준보다 과도하거나 부족한 판정을 요구하지 않는지 확인한다.
-- [ ] case, answer, evaluator가 같은 skill 목적을 검증하도록 서로 일치하는지 확인한다.
+- [x] 각 skill의 목적과 reference 기준을 검증하는 평가 case가 준비되어 있는지 확인한다.
+- [x] positive case와 negative case가 skill의 사용 조건과 제외 조건을 모두 검증하는지 확인한다.
+- [x] public case가 answer oracle이나 의도한 정답을 누설하지 않는지 확인한다.
+- [x] answer oracle이 reference 기준보다 과도하거나 부족한 판정을 요구하지 않는지 확인한다.
+- [x] case, answer, evaluator가 같은 skill 목적을 검증하도록 서로 일치하는지 확인한다.
 
 ### P5. skill 연계와 플러그인 평가 점검
 
