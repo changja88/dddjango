@@ -74,6 +74,16 @@ def sanitize_report_text(text: str) -> str:
     return INTERNAL_EVAL_SENTINEL_RE.sub("[internal-eval-sentinel]", sanitized)
 
 
+def sanitize_report_value(value: object) -> object:
+    if isinstance(value, str):
+        return sanitize_report_text(value)
+    if isinstance(value, list):
+        return [sanitize_report_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: sanitize_report_value(item) for key, item in value.items()}
+    return value
+
+
 def block_lines(text: str, key: str) -> list[str]:
     match = re.search(rf"(?m)^(?P<indent>\s*){re.escape(key)}\s*:\s*(?:#.*)?\n", text)
     if not match:
@@ -184,7 +194,8 @@ def trace_data(run_dir: Path, case_id: str, variant: str) -> dict[str, object]:
         }
     trace["state"] = "ready"
     trace["evidence"] = [rel_path.as_posix()]
-    return trace
+    sanitized_trace = sanitize_report_value(trace)
+    return sanitized_trace if isinstance(sanitized_trace, dict) else {}
 
 
 def execution_claim_label(trace: dict[str, object]) -> str:

@@ -375,6 +375,70 @@ class ExtractSubagentTraceTests(unittest.TestCase):
         self.assertEqual(summary["resultEventCount"], 0)
         self.assertEqual(summary["traceStatus"], "actual-trace-incomplete")
 
+    def test_partial_agent_collection_is_incomplete_even_with_result_events(self) -> None:
+        response_path, event_path = self.write_variant(
+            response="Domain Agent와 DB Agent가 검토 완료했습니다.\n",
+            events="\n".join(
+                [
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {
+                                "id": "item_1",
+                                "type": "collab_tool_call",
+                                "tool": "spawn_agent",
+                                "receiver_thread_ids": ["agent-domain"],
+                                "status": "completed",
+                            },
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {
+                                "id": "item_2",
+                                "type": "collab_tool_call",
+                                "tool": "spawn_agent",
+                                "receiver_thread_ids": ["agent-db"],
+                                "status": "completed",
+                            },
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "item.completed",
+                            "item": {
+                                "id": "item_3",
+                                "type": "collab_tool_call",
+                                "tool": "wait",
+                                "receiver_thread_ids": ["agent-domain"],
+                                "agents_states": {
+                                    "agent-domain": {"status": "completed", "message": "done"}
+                                },
+                                "status": "completed",
+                            },
+                        }
+                    ),
+                ]
+            )
+            + "\n",
+        )
+
+        summary = self.extractor.build_trace_summary(
+            case_id="case-workflow-one",
+            variant="with-dddjango",
+            run_dir=self.run_dir,
+            response_path=response_path,
+            event_path=event_path,
+        )
+
+        self.assertEqual(summary["spawnEventCount"], 2)
+        self.assertEqual(summary["resultEventCount"], 1)
+        self.assertEqual(summary["spawnedAgentIds"], ["agent-db", "agent-domain"])
+        self.assertEqual(summary["collectedAgentIds"], ["agent-domain"])
+        self.assertEqual(summary["uncollectedAgentIds"], ["agent-db"])
+        self.assertEqual(summary["traceStatus"], "actual-trace-incomplete")
+
     def test_skipped_trace_status(self) -> None:
         response_path, event_path = self.write_variant(response="NOT RUN: --skip-exec was used.\n")
 

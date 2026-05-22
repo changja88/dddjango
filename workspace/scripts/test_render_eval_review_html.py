@@ -1181,6 +1181,36 @@ coverage_tags:
         self.assertIn("fallback-stated", html)
         self.assertIn("Domain Agent", html)
 
+    def test_workflow_trace_event_messages_are_sanitized_in_report(self) -> None:
+        case_id = "case-workflow-live-delegation"
+        run_dir = self.write_case(bucket="workflow", case_id=case_id)
+        self.write_trace_marker_and_summaries(run_dir, case_id=case_id)
+        trace_path = run_dir / "raw" / f"{case_id}-with-dddjango-subagent-trace.json"
+        trace = json.loads(trace_path.read_text(encoding="utf-8"))
+        trace["subagentToolEvents"] = [
+            {
+                "item": {
+                    "agents_states": {
+                        "agent-1": {
+                            "status": "completed",
+                            "message": (
+                                "[models.py](/private/tmp/dddjango-eval-workspaces/"
+                                f"{run_dir.name}/{case_id}/with-dddjango/"
+                                "workspace/develop/eval/code/fixtures/apps/orders/models.py:13)"
+                            ),
+                        }
+                    }
+                }
+            }
+        ]
+        trace_path.write_text(json.dumps(trace, ensure_ascii=False) + "\n", encoding="utf-8")
+
+        data = self.renderer.build_report_data("workflow", run_dir.name, run_dir)
+        html = self.renderer.render_html(data)
+
+        self.assertNotIn("/private/tmp/dddjango-eval-workspaces", html)
+        self.assertIn("workspace/develop/eval/code/fixtures/apps/orders/models.py:13", html)
+
     def test_trace_table_distinguishes_unverified_actual_claims_from_fallback(self) -> None:
         self.assertEqual(
             self.renderer.trace_mode_label(

@@ -89,6 +89,7 @@ def all_bucket_excluded_paths() -> list[Path]:
 
 ALWAYS_EXCLUDED_FROM_EVAL_WORKSPACE = all_bucket_excluded_paths()
 SUBAGENT_TRACE_MARKER = "SUBAGENT_TRACE_CAPTURE.json"
+SUBAGENT_TRACE_BUCKETS = {"workflow", "plugin"}
 BASELINE_ONLY_EXCLUDED_FROM_EVAL_WORKSPACE = [
     Path(".agents"),
     Path(".codex/plugins/cache"),
@@ -672,7 +673,7 @@ def write_command_artifact(path: Path, command: list[str]) -> None:
 
 
 def write_subagent_trace_marker(run_dir: Path, bucket: str) -> None:
-    if bucket != "workflow":
+    if bucket not in SUBAGENT_TRACE_BUCKETS:
         return
     marker = {
         "version": 1,
@@ -700,7 +701,7 @@ def write_workflow_trace_artifact(
     variant: str,
     skipped: bool,
 ) -> None:
-    if bucket != "workflow":
+    if bucket not in SUBAGENT_TRACE_BUCKETS:
         return
     extract_subagent_trace.write_trace_summary(
         output_path=trace_artifact_path(raw_dir, case_id, variant),
@@ -1027,7 +1028,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"skip existing {case_id} {variant.name}")
                 if recorded_exit_failed(exit_path):
                     failed_execution = True
-                if args.bucket == "workflow" and not trace_artifact_path(
+                if args.bucket in SUBAGENT_TRACE_BUCKETS and not trace_artifact_path(
                     raw_dir, case_id, variant.name
                 ).is_file():
                     skipped = common.read_text(exit_path).strip() == "skipped"

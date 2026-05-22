@@ -14,6 +14,7 @@ from pathlib import Path
 MODULE_PATH = Path(__file__).with_name("validate_eval_run.py")
 RUN_ID_RESPONSE = "20260517-121212-response-try01-full-current-baseline"
 RUN_ID_WORKFLOW = "20260517-121212-workflow-try01-full-current-baseline"
+RUN_ID_PLUGIN = "20260517-121212-plugin-try01-targeted-case-plugin-one"
 RUN_ID_CODE = "20260517-121212-code-try01-full-current-baseline"
 
 
@@ -214,12 +215,12 @@ class ValidateEvalRunTests(unittest.TestCase):
             ],
         }
 
-    def write_trace_marker(self, run_dir: Path) -> None:
+    def write_trace_marker(self, run_dir: Path, bucket: str = "workflow") -> None:
         (run_dir / "SUBAGENT_TRACE_CAPTURE.json").write_text(
             json.dumps(
                 {
                     "version": 1,
-                    "bucket": "workflow",
+                    "bucket": bucket,
                     "createdBy": "run_eval_bucket.py",
                     "tracePolicy": "response-text-claims-plus-structured-events-when-available",
                     "stderrUsedForClaims": False,
@@ -261,6 +262,9 @@ class ValidateEvalRunTests(unittest.TestCase):
         }
         if parser_version >= 2:
             trace["resultEventCount"] = result_count
+            trace["spawnedAgentIds"] = ["agent-one"] if spawn_count else []
+            trace["collectedAgentIds"] = ["agent-one"] if result_count else []
+            trace["uncollectedAgentIds"] = [] if not spawn_count or result_count else ["agent-one"]
         path = run_dir / "raw" / f"{case_id}-{variant}-subagent-trace.json"
         path.write_text(json.dumps(trace) + "\n", encoding="utf-8")
 
@@ -1048,6 +1052,43 @@ class ValidateEvalRunTests(unittest.TestCase):
             "workflow execution mode actual_subagent is forbidden by oracle",
         )
 
+    def test_plugin_workflow_expectation_uses_trace_gate(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(bucket="plugin", case_id=case_id, run_id=RUN_ID_PLUGIN)
+        answer_path = self.eval_root / "plugin/answer" / f"{case_id}.yaml"
+        answer_path.write_text(
+            f"id: {case_id}\ncase_id: {case_id}\nbucket: plugin\nkind: plugin\n"
+            "workflow_execution_expectation:\n"
+            "  expected_mode: sequential_fallback_required\n"
+            "  acceptable_modes:\n"
+            "    - sequential_fallback\n"
+            "  forbidden_modes:\n"
+            "    - actual_subagent\n"
+            "    - false_actual_claim\n"
+            "  decision_rule: Use fallback.\n"
+            "  responsibility_rule: Do not run actual subagents.\n"
+            "  report_label: sequential fallback required\n",
+            encoding="utf-8",
+        )
+        self.write_trace_marker(run_dir, bucket="plugin")
+        self.write_trace(
+            run_dir,
+            case_id=case_id,
+            variant="baseline",
+            trace_status="fallback-stated",
+        )
+        self.write_trace(
+            run_dir,
+            case_id=case_id,
+            variant="with-dddjango",
+            trace_status="actual-trace",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id],
+            "workflow execution mode actual_subagent is forbidden by oracle",
+        )
+
     def test_workflow_mode_gate_rejects_stale_partial_oracle(self) -> None:
         case_id = "case-workflow-one"
         run_dir = self.write_valid_run(
@@ -1103,6 +1144,222 @@ class ValidateEvalRunTests(unittest.TestCase):
             ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id],
             "workflow execution mode actual_subagent is forbidden by oracle",
         )
+
+    def test_generic_execution_claim_without_event_evidence_fails(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "Serena 검증 완료했습니다.\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id],
+            "output claims Serena execution without matching event evidence",
+        )
+
+    def test_generic_execution_claim_ignores_prompt_event_text(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "Serena 검증 완료했습니다.\n",
+            encoding="utf-8",
+        )
+        (raw / f"{case_id}-with-dddjango-events.jsonl").write_text(
+            json.dumps(
+                {
+                    "type": "item.started",
+                    "item": {
+                        "type": "collab_tool_call",
+                        "tool": "spawn_agent",
+                        "prompt": "Do not use Serena. Do not run validators.",
+                    },
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        self.assertFailsWith(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id],
+            "output claims Serena execution without matching event evidence",
+        )
+
+    def test_generic_execution_claim_with_command_event_evidence_passes(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "validator 실행 완료했습니다.\n",
+            encoding="utf-8",
+        )
+        (raw / f"{case_id}-with-dddjango-events.jsonl").write_text(
+            json.dumps(
+                {
+                    "type": "item.completed",
+                    "item": {
+                        "type": "command_execution",
+                        "command": ".venv/bin/python -B workspace/scripts/validate_eval_run.py",
+                        "exit_code": 0,
+                        "status": "completed",
+                    },
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_generic_execution_not_run_honesty_passes(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "validators, eval, browser checks, Serena는 실행하지 않았습니다.\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_generic_execution_claim_ignores_korean_negative_routing_statement(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "수정 방향: description에 `평가 실행, evaluator/validator 구현, 애플리케이션 검증은 이 skill이 아님`을 명시하세요.\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_korean_not_executed_validation_honesty_passes(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "검증: 실제 코드/테스트 실행은 하지 않았습니다.\n",
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_generic_execution_claim_ignores_reference_routing_terms(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            (
+                "`implementation-tdd`: `red-green-refactor.md`는 TDD cycle 수행 때 읽고, "
+                "`ai-assisted-tdd.md`는 AI-assisted TDD honesty/validation 때 읽고 non-TDD answer면 생략.\n"
+            ),
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_generic_execution_claim_ignores_korean_completion_negation(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            (
+                "`agents/openai.yaml` 누락의 직접 리스크는 plugin UI/discovery/default prompt "
+                "metadata 쪽입니다. runtime validator나 plugin metadata sync 검증에서 "
+                "실패해야 합니다. 또한 cache-only 보정만으로는 완료라고 볼 수 없고, "
+                "canonical source와 generated/runtime bundle이 함께 맞아야 합니다.\n"
+            ),
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_generic_execution_claim_ignores_korean_unrun_expected_evidence(self) -> None:
+        case_id = "case-plugin-one"
+        run_dir = self.write_valid_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+        )
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            (
+                "| Django 구현 | ORM service | model/service/migration rollout, "
+                "실행했거나 못 한 검증 보고 | 충분 |\n"
+            ),
+            encoding="utf-8",
+        )
+
+        result, output = self.run_validator(
+            ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
 
     def test_code_manifest_missing_copied_text_file_fails(self) -> None:
         case_id = "case-code-one"
@@ -1248,6 +1505,62 @@ class ValidateEvalRunTests(unittest.TestCase):
                 case_id,
                 variant,
                 command="python3 -m unittest",
+            )
+            (raw / f"{case_id}-{variant}-events.jsonl").write_text(
+                json.dumps(
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": "python3 -m unittest",
+                        },
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+        result, output = self.run_validator(
+            ["--bucket", "code", "--run-id", RUN_ID_CODE, "--case", case_id]
+        )
+
+        self.assertEqual(result, 0)
+        self.assertIn("PASS:", output)
+
+    def test_code_output_can_report_unittest_verification_when_event_and_artifact_exist(self) -> None:
+        case_id = "case-code-one"
+        run_dir = self.write_valid_run(bucket="code", case_id=case_id, run_id=RUN_ID_CODE)
+        raw = run_dir / "raw"
+        (raw / f"{case_id}-with-dddjango.txt").write_text(
+            "검증: `python3 -m unittest` 통과, 2개 테스트 OK.\n",
+            encoding="utf-8",
+        )
+        self.write_code_capture_metadata(case_id)
+        for variant in ("baseline", "with-dddjango"):
+            self.write_code_variant_artifacts(
+                run_dir,
+                case_id,
+                variant,
+                self.valid_code_manifest(case_id, variant),
+            )
+            self.write_code_deterministic_check(
+                run_dir,
+                case_id,
+                variant,
+                command="python3 -m unittest",
+            )
+            (raw / f"{case_id}-{variant}-events.jsonl").write_text(
+                json.dumps(
+                    {
+                        "type": "item.completed",
+                        "item": {
+                            "type": "command_execution",
+                            "command": "python3 -m unittest",
+                        },
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
             )
 
         result, output = self.run_validator(

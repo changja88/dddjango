@@ -499,6 +499,36 @@ class RunEvalBucketTests(unittest.TestCase):
             self.assertEqual(trace["traceStatus"], "skipped")
             self.assertEqual(trace["responseSource"], f"raw/case-workflow-one-{variant}.txt")
 
+    def test_plugin_bucket_writes_trace_marker_and_skipped_trace_artifacts(self) -> None:
+        self.write_case(bucket="plugin", case_id="case-plugin-one")
+
+        result = self.runner.main(
+            [
+                "--bucket",
+                "plugin",
+                "--run-id",
+                "20260517-143018-plugin-try01-targeted-case-plugin-one",
+                "--case",
+                "case-plugin-one",
+                "--workspace-root",
+                str(self.workspace_root),
+                "--skip-exec",
+            ]
+        )
+
+        self.assertEqual(result, 0)
+        run_dir = self.runner.common.EVAL_ROOT / "plugin/runs/20260517-143018-plugin-try01-targeted-case-plugin-one"
+        marker = json.loads((run_dir / "SUBAGENT_TRACE_CAPTURE.json").read_text(encoding="utf-8"))
+        self.assertEqual(marker["bucket"], "plugin")
+        raw = run_dir / "raw"
+        for variant in self.runner.common.VARIANTS:
+            trace_path = raw / f"case-plugin-one-{variant}-subagent-trace.json"
+            self.assertTrue(trace_path.is_file(), trace_path)
+            trace = json.loads(trace_path.read_text(encoding="utf-8"))
+            self.assertEqual(trace["caseId"], "case-plugin-one")
+            self.assertEqual(trace["variant"], variant)
+            self.assertEqual(trace["traceStatus"], "skipped")
+
     def test_workflow_bucket_regenerates_missing_trace_for_skipped_existing_output(self) -> None:
         self.write_case(bucket="workflow", case_id="case-workflow-one")
         raw = self.runner.common.EVAL_ROOT / "workflow/runs/20260517-143017-workflow-try01-targeted-case-workflow-one/raw"

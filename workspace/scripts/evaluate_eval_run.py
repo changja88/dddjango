@@ -186,6 +186,10 @@ def optional_workflow_trace_artifacts(run_dir: Path, case_id: str) -> list[tuple
     return artifacts
 
 
+def answer_has_workflow_execution_expectation(answer_oracle: str) -> bool:
+    return workflow_gate.parse_workflow_expectation(answer_oracle) is not None
+
+
 def build_prompt(
     *,
     bucket: str,
@@ -454,8 +458,11 @@ def evaluate_case(
         "with-ddjango output",
     )
     code_artifacts = optional_code_artifacts(run_dir, case_id) if bucket.bucket == "code" else []
+    has_workflow_expectation = answer_has_workflow_execution_expectation(answer_oracle)
     workflow_trace_artifacts = (
-        optional_workflow_trace_artifacts(run_dir, case_id) if bucket.bucket == "workflow" else []
+        optional_workflow_trace_artifacts(run_dir, case_id)
+        if bucket.bucket == "workflow" or has_workflow_expectation
+        else []
     )
     prompt = build_prompt(
         bucket=bucket.bucket,
@@ -496,7 +503,7 @@ def evaluate_case(
         exit_text=str(result.returncode) + "\n",
     )
     oracle = parse_and_validate(result.stdout, case_id)
-    if bucket.bucket == "workflow":
+    if has_workflow_expectation:
         apply_workflow_execution_gate(
             oracle=oracle,
             answer_oracle=answer_oracle,

@@ -596,6 +596,13 @@ def validate_workflow_trace_schema(
     parser_version = trace.get("parserVersion")
     if isinstance(parser_version, int) and parser_version >= 2:
         required_keys.add("resultEventCount")
+        required_keys.update(
+            {
+                "spawnedAgentIds",
+                "collectedAgentIds",
+                "uncollectedAgentIds",
+            }
+        )
     missing = sorted(required_keys - set(trace))
     if missing:
         findings.append(f"{path}: missing keys: {', '.join(missing)}")
@@ -611,12 +618,21 @@ def validate_workflow_trace_schema(
             findings.append(f"{path}: {key} must be integer")
     if "resultEventCount" in trace and not isinstance(trace.get("resultEventCount"), int):
         findings.append(f"{path}: resultEventCount must be integer")
-    for key in (
+    list_keys = [
         "subagentToolEvents",
         "explicitActualClaims",
         "explicitFallbackClaims",
         "rolesMentioned",
-    ):
+    ]
+    if isinstance(parser_version, int) and parser_version >= 2:
+        list_keys.extend(
+            [
+                "spawnedAgentIds",
+                "collectedAgentIds",
+                "uncollectedAgentIds",
+            ]
+        )
+    for key in list_keys:
         if not isinstance(trace.get(key), list):
             findings.append(f"{path}: {key} must be a list")
 
@@ -708,6 +724,15 @@ def validate_workflow_execution_gate(
         if gate.findings and verdict not in {"fail", "blocked"}:
             findings.extend(gate.findings)
     return findings
+
+
+def answer_has_workflow_execution_expectation(answer_dir: Path, case_id: str) -> bool:
+    answer_path = answer_dir / f"{case_id}.yaml"
+    if not answer_path.is_file():
+        return False
+    return workflow_gate.parse_workflow_expectation(
+        answer_path.read_text(encoding="utf-8", errors="replace")
+    ) is not None
 
 
 def load_code_capture_metadata() -> tuple[dict[str, Any], list[str]]:
@@ -804,13 +829,25 @@ PRE_FAILURE_CLAIM_PATTERN = re.compile(
     re.I,
 )
 CLAIM_POSITIVE_PATTERN = re.compile(
-    r"\b(pass(?:ed|es)?|ok|success(?:ful)?|green|실행|통과|완료)\b",
+    r"\b(pass(?:ed|es)?|ok|success(?:ful)?|green)\b|실행|통과|완료",
     re.I,
 )
 CLAIM_NEGATIVE_PATTERN = re.compile(
-    r"\b(not run|not executed|did not run|was not run|unrun|미실행|실행하지|하지 않았|안 했|안함)\b",
+    r"\b(?:not run|not executed|did not run|was not run|unrun)\b|미실행|실행하지|하지 않았|안 했|안함|아님|아닌",
     re.I,
 )
+GENERIC_EXECUTION_CLAIM_PATTERNS = {
+    "validator": re.compile(r"\bvalidator(?:s)?\b|\bvalidation\b|검증", re.I),
+    "eval": re.compile(r"\beval(?:uator|uation|s)?\b", re.I),
+    "browser": re.compile(r"\bbrowser\b|브라우저", re.I),
+    "Serena": re.compile(r"\bserena\b", re.I),
+}
+GENERIC_EXECUTION_EVIDENCE_PATTERNS = {
+    "validator": re.compile(r"validate_|validator|pytest|unittest|ruff|mypy|pyright|test_validate", re.I),
+    "eval": re.compile(r"run_eval|evaluate_eval|eval_run|eval_bucket|answer-oracle-evaluation", re.I),
+    "browser": re.compile(r"browser_|playwright|screenshot", re.I),
+    "Serena": re.compile(r"serena", re.I),
+}
 
 
 def code_check_commands(run_dir: Path, case_id: str, variant: str) -> list[str]:
@@ -897,6 +934,128 @@ def validate_code_verification_claims(
     return findings
 
 
+def line_claims_generic_execution(line: str, pattern: re.Pattern[str]) -> bool:
+    if not pattern.search(line):
+        return False
+    lowered = line.lower()
+    if CLAIM_NEGATIVE_PATTERN.search(lowered):
+        return False
+    if any(
+        marker in lowered
+        for marker in (
+            "not-run",
+            "not run",
+            "not executed",
+            "not used",
+            "skipped",
+            "unavailable",
+            "missing",
+            "blocked",
+            "미실행",
+            "실행하지",
+            "사용하지",
+            "못했",
+            "못했다",
+            "못 한",
+            "못한",
+            "볼 수 없",
+        )
+    ):
+        return False
+    if any(
+        marker in lowered
+        for marker in (
+            "gate",
+            "claim",
+            "detector",
+            "evidence",
+            "responsibility",
+            "criteria",
+            "required",
+            "requires",
+            "needed",
+            "필요",
+            "기준",
+            "책임",
+            "증거",
+            "요구",
+            "검토",
+            "인정",
+            "허위",
+            "읽고",
+            "생략",
+            "reference",
+            "routing",
+            "red-green-refactor",
+            "result as evidence",
+            "결과",
+            "전용",
+        )
+    ):
+        return False
+    return bool(CLAIM_POSITIVE_PATTERN.search(lowered))
+
+
+def event_item_execution_text(item: Any) -> str:
+    if not isinstance(item, dict):
+        return ""
+    item_type = item.get("type")
+    values: list[str] = []
+    if item_type == "command_execution":
+        command = item.get("command")
+        if isinstance(command, str):
+            values.append(command)
+    tool = item.get("tool")
+    if isinstance(tool, str):
+        values.append(tool)
+    return "\n".join(values)
+
+
+def variant_event_evidence(raw_dir: Path, case_id: str, variant: str) -> str:
+    path = raw_dir / f"{case_id}-{variant}-events.jsonl"
+    if not path.is_file():
+        return ""
+    evidence: list[str] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        item = event.get("item")
+        evidence_text = event_item_execution_text(item)
+        if evidence_text:
+            evidence.append(evidence_text)
+    return "\n".join(evidence)
+
+
+def validate_generic_execution_claims(
+    *,
+    raw_dir: Path,
+    case_id: str,
+    variants: list[str],
+) -> list[str]:
+    findings: list[str] = []
+    for variant in variants:
+        output_path = raw_dir / f"{case_id}-{variant}.txt"
+        if not output_path.is_file():
+            continue
+        output = output_path.read_text(encoding="utf-8", errors="replace")
+        event_text = variant_event_evidence(raw_dir, case_id, variant)
+        for line_number, line in enumerate(output.splitlines(), start=1):
+            for label, claim_pattern in GENERIC_EXECUTION_CLAIM_PATTERNS.items():
+                if not line_claims_generic_execution(line, claim_pattern):
+                    continue
+                evidence_pattern = GENERIC_EXECUTION_EVIDENCE_PATTERNS[label]
+                if evidence_pattern.search(event_text):
+                    continue
+                findings.append(
+                    f"{case_id} {variant}: output claims {label} execution without matching event evidence at raw/{case_id}-{variant}.txt:{line_number}"
+                )
+    return findings
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
@@ -954,6 +1113,13 @@ def main(argv: list[str] | None = None) -> int:
                 variants=variants,
             )
         )
+        findings.extend(
+            validate_generic_execution_claims(
+                raw_dir=raw_dir,
+                case_id=case_id,
+                variants=variants,
+            )
+        )
         if not args.skip_oracle:
             findings.extend(validate_oracle(raw_dir, case_id))
             findings.extend(
@@ -973,7 +1139,11 @@ def main(argv: list[str] | None = None) -> int:
                     answer_dir=bucket.answer_dir,
                 )
             )
-        if args.bucket == "workflow":
+        has_workflow_expectation = answer_has_workflow_execution_expectation(
+            bucket.answer_dir,
+            case_id,
+        )
+        if args.bucket == "workflow" or has_workflow_expectation:
             findings.extend(
                 validate_workflow_trace_artifacts(
                     run_dir=run_dir,
@@ -982,7 +1152,7 @@ def main(argv: list[str] | None = None) -> int:
                     variants=variants,
                 )
             )
-            if not args.skip_oracle:
+            if has_workflow_expectation and not args.skip_oracle:
                 findings.extend(
                     validate_workflow_execution_gate(
                         answer_dir=bucket.answer_dir,

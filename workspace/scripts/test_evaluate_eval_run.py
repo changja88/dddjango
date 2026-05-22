@@ -14,6 +14,7 @@ from unittest.mock import patch
 MODULE_PATH = Path(__file__).with_name("evaluate_eval_run.py")
 RUN_ID_RESPONSE = "20260517-111111-response-try01-full-current-baseline"
 RUN_ID_WORKFLOW = "20260517-111111-workflow-try01-full-current-baseline"
+RUN_ID_PLUGIN = "20260517-111111-plugin-try01-targeted-case-plugin-one"
 RUN_ID_CODE = "20260517-111111-code-try01-full-current-baseline"
 
 
@@ -289,6 +290,46 @@ class EvaluateEvalRunTests(unittest.TestCase):
         with patch.object(self.evaluator, "run_command", side_effect=fake_run):
             result = self.evaluator.main(
                 ["--bucket", "workflow", "--run-id", RUN_ID_WORKFLOW, "--case", case_id]
+            )
+
+        self.assertEqual(result, 0)
+
+    def test_plugin_workflow_expectation_includes_trace_evidence(self) -> None:
+        case_id = "case-plugin-one"
+        raw = self.write_case_and_run(
+            bucket="plugin",
+            case_id=case_id,
+            run_id=RUN_ID_PLUGIN,
+            baseline_text="baseline plugin answer\n",
+            with_ddjango_text="with plugin answer\n",
+        )
+        answer_path = self.evaluator.EVAL_ROOT / "plugin/answer" / f"{case_id}.yaml"
+        answer_path.write_text(
+            f"id: {case_id}\ncase_id: {case_id}\nbucket: plugin\nkind: plugin\n"
+            "workflow_execution_expectation:\n"
+            "  expected_mode: actual_subagent_required\n"
+            "  acceptable_modes:\n"
+            "    - actual_subagent\n"
+            "  forbidden_modes:\n"
+            "    - false_actual_claim\n"
+            "  decision_rule: Use actual subagents when authorized.\n"
+            "  responsibility_rule: Collect results before integration.\n"
+            "  report_label: plugin workflow integrity\n",
+            encoding="utf-8",
+        )
+        for variant in self.evaluator.common.VARIANTS:
+            self.write_trace_summary(raw, case_id=case_id, variant=variant)
+        payload = self.valid_payload(case_id)
+
+        def fake_run(command, *, prompt, cwd, timeout_seconds):
+            self.assertIn("Workflow subagent trace summary", prompt)
+            self.assertIn(f"raw/{case_id}-baseline-subagent-trace.json", prompt)
+            self.assertIn(f"raw/{case_id}-with-dddjango-subagent-trace.json", prompt)
+            return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+        with patch.object(self.evaluator, "run_command", side_effect=fake_run):
+            result = self.evaluator.main(
+                ["--bucket", "plugin", "--run-id", RUN_ID_PLUGIN, "--case", case_id]
             )
 
         self.assertEqual(result, 0)

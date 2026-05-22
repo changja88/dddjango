@@ -202,10 +202,34 @@ def roles_mentioned(response_text: str) -> list[str]:
     return mentioned
 
 
-def extract_structured_events(event_path: Path) -> tuple[int, int, int, list[dict[str, Any]]]:
+def completed_receiver_ids(event_item: dict[str, Any]) -> set[str]:
+    if event_item.get("status") != "completed":
+        return set()
+    receiver_ids = {
+        str(agent_id)
+        for agent_id in event_item.get("receiver_thread_ids", [])
+        if isinstance(agent_id, str)
+    }
+    states = event_item.get("agents_states")
+    if isinstance(states, dict):
+        completed = {
+            str(agent_id)
+            for agent_id, state in states.items()
+            if isinstance(state, dict) and state.get("status") == "completed"
+        }
+        if completed:
+            return completed
+    return receiver_ids
+
+
+def extract_structured_events(
+    event_path: Path,
+) -> tuple[int, int, int, list[dict[str, Any]], list[str], list[str], list[str]]:
     spawn_ids: set[str] = set()
     wait_ids: set[str] = set()
     result_ids: set[str] = set()
+    spawned_agent_ids: set[str] = set()
+    collected_agent_ids: set[str] = set()
     events: list[dict[str, Any]] = []
     for index, item in enumerate(iter_json_objects(event_path)):
         tool_name = subagent_tool_name(item)
@@ -218,13 +242,26 @@ def extract_structured_events(event_path: Path) -> tuple[int, int, int, list[dic
             event_id = f"line-{index}"
         if tool_name == "spawn_agent":
             spawn_ids.add(event_id)
+            if isinstance(event_item, dict):
+                spawned_agent_ids.update(completed_receiver_ids(event_item))
         if tool_name in WAIT_EVENT_NAMES:
             wait_ids.add(event_id)
             result_ids.add(event_id)
         if tool_name in RESULT_EVENT_NAMES:
             result_ids.add(event_id)
+            if isinstance(event_item, dict):
+                collected_agent_ids.update(completed_receiver_ids(event_item))
         events.append(item)
-    return len(spawn_ids), len(wait_ids), len(result_ids), events
+    uncollected_agent_ids = spawned_agent_ids - collected_agent_ids
+    return (
+        len(spawn_ids),
+        len(wait_ids),
+        len(result_ids),
+        events,
+        sorted(spawned_agent_ids),
+        sorted(collected_agent_ids),
+        sorted(uncollected_agent_ids),
+    )
 
 
 def trace_status(
@@ -234,11 +271,17 @@ def trace_status(
     spawn_event_count: int,
     wait_event_count: int,
     result_event_count: int,
+    spawned_agent_ids: list[str],
+    uncollected_agent_ids: list[str],
     explicit_actual_claims: list[str],
     explicit_fallback_claims: list[str],
 ) -> str:
     if skipped:
         return "skipped"
+    if trace_capture_reliable and spawned_agent_ids and uncollected_agent_ids:
+        return "actual-trace-incomplete"
+    if trace_capture_reliable and spawned_agent_ids:
+        return "actual-trace"
     if trace_capture_reliable and spawn_event_count > 0 and result_event_count > 0:
         return "actual-trace"
     if trace_capture_reliable and spawn_event_count > 0:
@@ -268,12 +311,18 @@ def build_trace_summary(
     wait_event_count = 0
     result_event_count = 0
     subagent_tool_events: list[dict[str, Any]] = []
+    spawned_agent_ids: list[str] = []
+    collected_agent_ids: list[str] = []
+    uncollected_agent_ids: list[str] = []
     if trace_capture_reliable:
         (
             spawn_event_count,
             wait_event_count,
             result_event_count,
             subagent_tool_events,
+            spawned_agent_ids,
+            collected_agent_ids,
+            uncollected_agent_ids,
         ) = extract_structured_events(event_path)
     actual_claims, fallback_claims = extract_response_claims(response)
 
@@ -283,6 +332,8 @@ def build_trace_summary(
         spawn_event_count=spawn_event_count,
         wait_event_count=wait_event_count,
         result_event_count=result_event_count,
+        spawned_agent_ids=spawned_agent_ids,
+        uncollected_agent_ids=uncollected_agent_ids,
         explicit_actual_claims=actual_claims,
         explicit_fallback_claims=fallback_claims,
     )
@@ -297,6 +348,9 @@ def build_trace_summary(
         "spawnEventCount": spawn_event_count,
         "waitEventCount": wait_event_count,
         "resultEventCount": result_event_count,
+        "spawnedAgentIds": spawned_agent_ids,
+        "collectedAgentIds": collected_agent_ids,
+        "uncollectedAgentIds": uncollected_agent_ids,
         "subagentToolEvents": subagent_tool_events,
         "explicitActualClaims": actual_claims,
         "explicitFallbackClaims": fallback_claims,

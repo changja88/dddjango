@@ -120,6 +120,7 @@ REQUIRED_COVERAGE_TAGS = {
         "command-honesty",
     },
     "plugin": {
+        "p5-plugin-restraint",
         "trigger-quality",
         "routing-boundary",
         "progressive-disclosure",
@@ -155,6 +156,7 @@ REQUIRED_COVERAGE_TAGS = {
         "source-audit-exclusion",
     },
     "workflow": {
+        "p5-plugin-restraint",
         "positive-composite",
         "review-focused",
         "handoff-contract",
@@ -177,6 +179,28 @@ REQUIRED_COVERAGE_TAGS = {
         "validation-sharing",
         "integration-closure",
     },
+}
+RESTRAINT_SCOPE_VALUES = {
+    "plugin-level",
+    "individual-skill",
+    "supporting-control",
+}
+RESTRAINT_SCOPE_EXPECTATIONS = {
+    "case-workflow-opt-out": "plugin-level",
+    "case-workflow-tiny-restraint": "plugin-level",
+    "case-workflow-design-no-meta-tail": "plugin-level",
+    "case-workflow-critical-path-delegation-restraint": "plugin-level",
+    "case-workflow-false-claim": "plugin-level",
+    "case-plugin-trigger-routing": "plugin-level",
+    "case-response-false-claim": "plugin-level",
+    "case-response-simple-rename": "individual-skill",
+    "case-response-architecture-pattern-restraint": "individual-skill",
+    "case-response-db-local-crud-restraint": "individual-skill",
+    "case-response-clean-code-tiny-naming": "individual-skill",
+    "case-response-python-tiny-type-hint": "individual-skill",
+    "case-response-test-tiny-assertion": "individual-skill",
+    "case-response-django-web-one-line-edit": "individual-skill",
+    "case-code-small-rename": "supporting-control",
 }
 RESPONSE_ARCHITECTURE_DB_P4_COVERAGE_TAGS = {
     "schema-modeling",
@@ -857,6 +881,40 @@ def validate_control_case(path: Path, text: str) -> list[str]:
     ]
 
 
+def validate_restraint_scope(path: Path, text: str) -> list[str]:
+    case_id = scalar_value(text, "case_id") or path.stem
+    scope = scalar_value(text, "restraint_scope")
+    expected = RESTRAINT_SCOPE_EXPECTATIONS.get(case_id)
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    findings: list[str] = []
+    if expected and not scope:
+        findings.append(
+            f"{path}: known P5/P4 restraint case must declare restraint_scope: {expected}"
+        )
+        return findings
+    if scope and scope not in RESTRAINT_SCOPE_VALUES:
+        findings.append(
+            f"{path}: restraint_scope must be one of {', '.join(sorted(RESTRAINT_SCOPE_VALUES))}"
+        )
+    if expected and scope != expected:
+        findings.append(
+            f"{path}: restraint_scope mismatch, expected {expected!r}, got {scope!r}"
+        )
+    if "p5-plugin-restraint" in tags and scope != "plugin-level":
+        findings.append(
+            f"{path}: p5-plugin-restraint coverage requires restraint_scope: plugin-level"
+        )
+    if scope == "plugin-level" and "p5-plugin-restraint" not in tags:
+        findings.append(
+            f"{path}: plugin-level restraint_scope requires p5-plugin-restraint coverage tag"
+        )
+    if scope in {"individual-skill", "supporting-control"} and "p5-plugin-restraint" in tags:
+        findings.append(
+            f"{path}: {scope} restraint_scope must not be counted with p5-plugin-restraint"
+        )
+    return findings
+
+
 def validate_workflow_execution_expectation(path: Path, text: str) -> list[str]:
     findings: list[str] = []
     if not has_field(text, "workflow_execution_expectation"):
@@ -891,7 +949,215 @@ def validate_workflow_execution_expectation(path: Path, text: str) -> list[str]:
         findings.append(
             f"{path}: workflow_execution_expectation contains unknown machine mode(s): {', '.join(unknown)}"
         )
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    strict_trace_tags = {
+        "actual-subagent-required",
+        "actual-subagent-trace",
+        "p5-workflow-integrity",
+    }
+    if (
+        expectation is not None
+        and (
+            expectation.expected_mode == "actual_subagent_required"
+            or strict_trace_tags & tags
+        )
+    ):
+        weak_modes = sorted(acceptable & {"trace_not_captured", "trace_missing", "not_run"})
+        if weak_modes:
+            findings.append(
+                f"{path}: P5 subagent trace expectation must not accept missing/not-run trace modes: {', '.join(weak_modes)}"
+            )
     return findings
+
+
+WORKFLOW_P5_COMBINED_REQUIRED_TAGS = {
+    "risky-write-consistency",
+    "handoff-contract",
+    "responsibility-split",
+    "integration-closure",
+}
+WORKFLOW_P5_COMBINED_CASE_IDS = {
+    "case-workflow-positive-composite",
+    "case-workflow-risky-write",
+}
+WORKFLOW_P5_COMBINED_REQUIRED_PATHS = {
+    "dddjango/skills/workflow-dddjango-subagents/references/role-map.md",
+    "dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md",
+    "dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md",
+}
+WORKFLOW_P5_COMBINED_REQUIRED_ROLE_GROUPS = {
+    "Domain role": (("Domain", "Domain Agent"),),
+    "Architecture role": (("Architecture", "Architecture Agent"),),
+    "DB role": (("DB", "DB Agent"),),
+    "API role": (("API", "API Agent"),),
+    "Django role": (("Django", "Django Agent"),),
+    "Test role": (("TDD/Test", "Test", "Test Agent"),),
+    "Review role": (("Review", "Review Agent"),),
+    "Integration role": (("Integration", "integration owner"),),
+}
+WORKFLOW_P5_COMBINED_REQUIRED_HANDOFF_GROUPS = {
+    "Scope": (("Scope", "scope"),),
+    "Inputs Used": (("Inputs Used", "inputs"),),
+    "Decisions": (("Decisions", "decisions"),),
+    "Files": (("Files", "files"),),
+    "May edit": (("May edit", "may edit"),),
+    "Must not edit": (("Must not edit", "must not edit"),),
+    "Output": (("Output", "output"),),
+    "Risks": (("Risks", "risks"),),
+    "Required Follow-up": (("Required Follow-up", "required follow-up"),),
+    "dddjango Checks": (("dddjango Checks", "dddjango checks"),),
+}
+WORKFLOW_P5_COMBINED_REQUIRED_TEXT_GROUPS = {
+    "aggregate invariant": (("aggregate invariant", "invariant", "불변식"),),
+    "transaction owner": (("transaction owner", "트랜잭션 owner", "transaction boundary"),),
+    "locking/isolation": (("locking", "lock", "락"), ("isolation", "격리")),
+    "idempotency storage": (("idempotency storage", "멱등성 저장소"), ("uniqueness", "unique", "유일")),
+    "Idempotency-Key replay/conflict": (("Idempotency-Key",), ("replay", "재사용"), ("conflict", "충돌")),
+    "side-effect timing": (("side effect", "side-effect", "부작용"), ("timing", "on_commit", "commit 이후")),
+    "retry/isolation": (("retry", "재시도"), ("isolation", "격리")),
+    "concurrency/integration tests": (("concurrency", "동시성"), ("integration", "통합")),
+    "integration owner or handoff closure": (("integration owner", "통합 owner", "handoff closure", "인계"),),
+}
+
+
+def has_workflow_p5_combined_coverage(text: str) -> bool:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not WORKFLOW_P5_COMBINED_REQUIRED_TAGS <= tags:
+        return False
+    paths = reference_paths(text)
+    if not WORKFLOW_P5_COMBINED_REQUIRED_PATHS <= paths:
+        return False
+    expectation = workflow_gate.parse_workflow_expectation(text)
+    if expectation is None or "direct" in expectation.acceptable_modes:
+        return False
+
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required"))
+    required_groups = (
+        list(WORKFLOW_P5_COMBINED_REQUIRED_ROLE_GROUPS.values())
+        + list(WORKFLOW_P5_COMBINED_REQUIRED_HANDOFF_GROUPS.values())
+        + list(WORKFLOW_P5_COMBINED_REQUIRED_TEXT_GROUPS.values())
+    )
+    for groups in required_groups:
+        if not all(
+            any(target_text_contains(required_text, term) for term in alternatives)
+            for alternatives in groups
+        ):
+            return False
+    return True
+
+
+RESPONSE_P5_DJANGO_INTEGRATION_REQUIRED_TAGS = {
+    "p5-django-implementation-integration",
+    "mixed-boundary",
+    "handoff-contract",
+    "integration-closure",
+    "django-implementation-handoff",
+    "api-ninja-boundary",
+    "db-django-boundary",
+    "web-python-boundary",
+    "tdd-test-boundary",
+    "clean-code-review-boundary",
+    "workflow-honesty",
+}
+RESPONSE_P5_DJANGO_INTEGRATION_CASE_ID = "case-response-django-implementation-handoff"
+RESPONSE_P5_DJANGO_INTEGRATION_REQUIRED_PATHS = {
+    "workspace/reference/architecture-api/reference/final.md",
+    "workspace/reference/architecture-db/reference/final.md",
+    "workspace/reference/implementation-django/reference/final.md",
+    "workspace/reference/implementation-django-ninja/reference/final.md",
+    "workspace/reference/implementation-django-web/reference/final.md",
+    "workspace/reference/implementation-python/reference/final.md",
+    "workspace/reference/implementation-cleancode/reference/final.md",
+    "workspace/reference/implementation-tdd/reference/final.md",
+    "workspace/reference/implementation-test/reference/final.md",
+    "dddjango/skills/architecture-api/references/rest-contracts.md",
+    "dddjango/skills/architecture-db/references/transactions-locking.md",
+    "dddjango/skills/implementation-django/references/services-selectors.md",
+    "dddjango/skills/implementation-django-ninja/references/router-schema.md",
+    "dddjango/skills/implementation-django-web/references/templateview-htmx.md",
+    "dddjango/skills/implementation-python/references/typing.md",
+    "dddjango/skills/implementation-cleancode/references/responsibility.md",
+    "dddjango/skills/implementation-tdd/references/red-green-refactor.md",
+    "dddjango/skills/implementation-test/references/django-api-concurrency.md",
+    "dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md",
+}
+RESPONSE_P5_DJANGO_INTEGRATION_REQUIRED_TEXT_GROUPS = {
+    "API contract vs Ninja adapter": (
+        ("architecture-api", "api contract", "resource"),
+        ("problem details", "status code", "openapi"),
+        ("implementation-django-ninja", "router", "schema", "adapter"),
+    ),
+    "DB policy vs Django implementation": (
+        ("architecture-db", "transaction policy", "uniqueness", "locking"),
+        ("idempotency", "duplicate prevention", "migration rollout"),
+        ("implementation-django", "orm", "service", "migration"),
+    ),
+    "production boundary": (
+        ("orderservice.confirm", "production implementation", "domain rule"),
+        ("transaction.on_commit", "on_commit"),
+        ("router", "template", "test fixture", "review"),
+    ),
+    "web boundary": (
+        ("server-rendered", "status badge", "view context"),
+        ("template", "static", "auth"),
+        ("implementation-django-web", "implementation-django-web.", "render/browser"),
+    ),
+    "python typing boundary": (
+        ("orderstatus", "money", "typing"),
+        ("dataclass", "strenum", "typecheck"),
+        ("implementation-python", "implementation-python."),
+    ),
+    "TDD vs pytest": (
+        ("implementation-tdd", "test list", "first failing test", "red-green-refactor"),
+        ("implementation-test", "pytest", "fixtures", "factory"),
+        ("testclient", "concurrency", "assertion"),
+    ),
+    "Clean Code review": (
+        ("implementation-cleancode", "review", "fat service"),
+        ("template business logic", "naming", "encapsulation"),
+        ("responsibility split",),
+    ),
+    "handoff honesty": (
+        ("handoff", "ownership", "skill boundary"),
+        ("unresolved follow-up", "follow-up"),
+        ("without claiming", "not claim", "subagent execution"),
+    ),
+}
+
+
+def has_response_p5_django_integration_coverage(text: str) -> bool:
+    case_id = scalar_value(text, "case_id") or ""
+    if case_id != RESPONSE_P5_DJANGO_INTEGRATION_CASE_ID:
+        return False
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not RESPONSE_P5_DJANGO_INTEGRATION_REQUIRED_TAGS <= tags:
+        return False
+    paths = reference_paths(text)
+    if not RESPONSE_P5_DJANGO_INTEGRATION_REQUIRED_PATHS <= paths:
+        return False
+    required_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    for groups in RESPONSE_P5_DJANGO_INTEGRATION_REQUIRED_TEXT_GROUPS.values():
+        if not all(
+            any(target_text_contains(required_text, term) for term in alternatives)
+            for alternatives in groups
+        ):
+            return False
+    return True
+
+
+def validate_response_p5_django_integration_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    case_id = scalar_value(text, "case_id") or path.stem
+    if (
+        "p5-django-implementation-integration" not in tags
+        and case_id != RESPONSE_P5_DJANGO_INTEGRATION_CASE_ID
+    ):
+        return []
+    if has_response_p5_django_integration_coverage(text):
+        return []
+    return [
+        f"{path}: response P5 Django implementation integration answer must keep the full API/Ninja, DB/Django, Web/Python, TDD/Test, Clean Code, and handoff boundary matrix"
+    ]
 
 
 def validate_runtime_metadata_answer(path: Path, text: str) -> list[str]:
@@ -908,6 +1174,246 @@ def validate_runtime_metadata_answer(path: Path, text: str) -> list[str]:
         findings.append(
             f"{path}: missing-skill-metadata answer must require semantic metadata alignment"
         )
+    return findings
+
+
+def require_answer_paths(
+    findings: list[str],
+    *,
+    path: Path,
+    text: str,
+    required_paths: set[str],
+    label: str,
+) -> None:
+    paths = reference_paths(text)
+    for required_path in sorted(required_paths - paths):
+        findings.append(f"{path}: {label} answer must reference {required_path}")
+
+
+def require_text_groups(
+    findings: list[str],
+    *,
+    path: Path,
+    text: str,
+    groups: dict[str, tuple[tuple[str, ...], ...]],
+    label: str,
+) -> None:
+    target_text = "\n".join(nested_block_lines(text, "target_behavior", "required")).lower()
+    if not target_text:
+        target_text = "\n".join(block_lines(text, "target_behavior")).lower()
+    evidence_text = "\n".join(block_lines(text, "evidence_required")).lower()
+    combined = "\n".join(
+        [
+            target_text,
+            evidence_text,
+            "\n".join(nested_block_lines(text, "target_behavior", "forbidden")).lower(),
+            "\n".join(block_lines(text, "scoring_checks")).lower(),
+            "\n".join(block_lines(text, "failure_modes")).lower(),
+            "\n".join(block_lines(text, "leakage_checks")).lower(),
+            "\n".join(block_lines(text, "hard_gates")).lower(),
+        ]
+    )
+    for group_label, term_groups in groups.items():
+        missing = [
+            "/".join(alternatives)
+            for alternatives in term_groups
+            if not any(target_text_contains(combined, term) for term in alternatives)
+        ]
+        if missing:
+            findings.append(
+                f"{path}: {label} answer missing {group_label}: {', '.join(missing)}"
+            )
+
+
+def validate_runtime_wrong_routing_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if not {"wrong-routing", "django-web"} <= tags:
+        return []
+
+    findings: list[str] = []
+    require_answer_paths(
+        findings,
+        path=path,
+        text=text,
+        label="runtime wrong-routing",
+        required_paths={
+            "dddjango/skills/workflow-dddjango-subagents/references/role-map.md",
+            "dddjango/skills/implementation-django-web/SKILL.md",
+            "dddjango/skills/implementation-django-web/agents/openai.yaml",
+            "dddjango/skills/implementation-django-web/references/templates.md",
+            "dddjango/skills/implementation-django-web/references/static-assets.md",
+        },
+    )
+    require_text_groups(
+        findings,
+        path=path,
+        text=text,
+        label="runtime wrong-routing",
+        groups={
+            "web skill metadata": (("implementation-django-web",), ("metadata", "skill description")),
+            "role-map comparison": (("role-map", "role map"), ("canonical workflow table", "canonical")),
+            "template/static/web routing": (("template",), ("static",), ("web",)),
+            "prompt input evidence": (("prompt-input", "prompt input"),),
+        },
+    )
+    return findings
+
+
+def validate_runtime_stale_cache_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "stale-cache" not in tags:
+        return []
+
+    findings: list[str] = []
+    require_text_groups(
+        findings,
+        path=path,
+        text=text,
+        label="runtime stale-cache",
+        groups={
+            "cache snapshot": (("cache",), ("snapshot", "captured")),
+            "canonical source comparison": (("canonical",), ("source",), ("compare", "comparison", "differ", "match")),
+            "runtime validation": (("runtime validation", "validate_skill_docs.py --phase runtime", "validation output"),),
+            "cache-only rejection": (("cache-only",), ("not complete", "accepted", "completion")),
+        },
+    )
+    return findings
+
+
+def validate_plugin_governance_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    findings: list[str] = []
+    if "p5-workflow-integrity" in tags and not has_field(text, "workflow_execution_expectation"):
+        findings.append(
+            f"{path}: p5-workflow-integrity answer must declare workflow_execution_expectation"
+        )
+    if "packaging" in tags:
+        require_answer_paths(
+            findings,
+            path=path,
+            text=text,
+            label="plugin packaging",
+            required_paths={
+                "dddjango/.codex-plugin/plugin.json",
+                ".agents/plugins/marketplace.json",
+                "plugins/dddjango",
+            },
+        )
+        require_text_groups(
+            findings,
+            path=path,
+            text=text,
+            label="plugin packaging",
+            groups={
+                "manifest/marketplace/symlink": (
+                    ("plugin.json", "manifest"),
+                    ("marketplace",),
+                    ("plugins/dddjango", "symlink", "equivalent entry"),
+                ),
+                "canonical source": (("canonical",), ("source",)),
+            },
+        )
+    if "agents-metadata" in tags:
+        require_text_groups(
+            findings,
+            path=path,
+            text=text,
+            label="plugin agents-metadata",
+            groups={
+                "field-level metadata": (("display_name",), ("short_description",), ("default_prompt",)),
+                "semantic alignment": (("skill.md",), ("semantic", "semantics")),
+                "file-existence rejection": (("file existence", "existence only"),),
+            },
+        )
+    if "trigger-quality" in tags:
+        require_text_groups(
+            findings,
+            path=path,
+            text=text,
+            label="plugin trigger-quality",
+            groups={
+                "frontmatter trigger": (("frontmatter",), ("description",)),
+                "positive/negative routing": (("positive",), ("negative",), ("routing",)),
+                "Korean trigger": (("korean", "한국어"),),
+                "body-only trigger rejection": (("body-only",), ("trigger",)),
+            },
+        )
+        if "p5-plugin-restraint" in tags:
+            require_text_groups(
+                findings,
+                path=path,
+                text=text,
+                label="plugin P5 restraint trigger-routing",
+                groups={
+                    "opt-out restraint": (("opt-out", "opt out"),),
+                    "tiny edit restraint": (("tiny edit",),),
+                    "Direct Answer Mode": (("direct answer mode",),),
+                    "false-claim refusal": (("false-claim", "false claim"), ("refusal", "refuse")),
+                    "no meta-tail restraint": (("meta-tail", "meta tail"), ("restraint",)),
+                    "trigger/routing surface": (("trigger",), ("routing",)),
+                },
+            )
+    if "runtime-reference-split" in tags:
+        require_text_groups(
+            findings,
+            path=path,
+            text=text,
+            label="plugin reference-split",
+            groups={
+                "one-level references": (("one-level",), ("reference",)),
+                "load/negative conditions": (("load condition", "load conditions"), ("negative condition", "negative conditions")),
+                "source-copy bloat": (("source",), ("copied", "copy", "wholesale")),
+            },
+        )
+    if "cache-source-consistency" in tags:
+        require_text_groups(
+            findings,
+            path=path,
+            text=text,
+            label="plugin cache-source-consistency",
+            groups={
+                "cache/source evidence": (("cache",), ("source",), ("evidence", "comparison")),
+                "canonical source": (("canonical",), ("source",)),
+                "validation output": (("validation",), ("output", "command")),
+                "cache-only rejection": (("cache-only",), ("not complete", "completion")),
+            },
+        )
+    if "leaked-answer-text" in tags:
+        require_text_groups(
+            findings,
+            path=path,
+            text=text,
+            label="plugin leakage",
+            groups={
+                "private material rejection": (("private",), ("runtime",)),
+                "prior run rejection": (("prior",), ("run",)),
+                "runtime scan evidence": (("runtime file scan", "runtime file", "scan"),),
+            },
+        )
+    return findings
+
+
+def validate_source_eval_traceability_answer(path: Path, text: str) -> list[str]:
+    tags = set(yaml_list_values(text, "coverage_tags"))
+    if "eval-traceability" not in tags:
+        return []
+
+    findings: list[str] = []
+    require_text_groups(
+        findings,
+        path=path,
+        text=text,
+        label="source eval-traceability",
+        groups={
+            "per-case row": (("per-case", "case-specific"),),
+            "public and answer paths": (("public case path",), ("answer path",)),
+            "case id": (("case id",),),
+            "source basis": (("source basis", "source reference"),),
+            "coverage labels": (("coverage",), ("label", "labels")),
+            "leakage boundary": (("leakage",), ("boundary",)),
+            "run artifact status": (("run artifact",), ("status",)),
+        },
+    )
     return findings
 
 
@@ -1634,14 +2140,20 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
     findings.extend(validate_required_blocks(path, text))
     findings.extend(validate_expected_outcomes(path, text))
     findings.extend(validate_control_case(path, text))
-    if bucket == "workflow":
+    findings.extend(validate_restraint_scope(path, text))
+    if bucket == "workflow" or (bucket == "plugin" and has_field(text, "workflow_execution_expectation")):
         findings.extend(validate_workflow_execution_expectation(path, text))
     if bucket == "runtime":
         findings.extend(validate_runtime_metadata_answer(path, text))
+        findings.extend(validate_runtime_wrong_routing_answer(path, text))
+        findings.extend(validate_runtime_stale_cache_answer(path, text))
     if bucket == "source":
         findings.extend(validate_source_provisional_drf_answer(path, text))
         findings.extend(validate_source_metadata_cache_answer(path, text))
         findings.extend(validate_source_routing_exclusion_answer(path, text))
+        findings.extend(validate_source_eval_traceability_answer(path, text))
+    if bucket == "plugin":
+        findings.extend(validate_plugin_governance_answer(path, text))
     if bucket == "response":
         findings.extend(validate_response_ddd_answer(path, text))
         findings.extend(validate_response_cleancode_answer(path, text))
@@ -1651,6 +2163,7 @@ def validate_answer(path: Path, bucket: str, public_case: Path) -> list[str]:
         findings.extend(validate_implementation_python_answer(path, text))
         findings.extend(validate_implementation_tdd_answer(path, text))
         findings.extend(validate_implementation_test_answer(path, text))
+        findings.extend(validate_response_p5_django_integration_answer(path, text))
     if bucket == "code":
         code_expected = scalar_value(text, "code_expected")
         if code_expected not in {"true", "false"}:
@@ -1678,12 +2191,23 @@ def validate_coverage(bucket: str, answers: list[Path]) -> list[str]:
     has_tdd_direct = False
     has_test_direct = False
     has_test_exclusion = False
+    has_response_p5_django_integration = False
     has_code_python_direct = False
     has_code_tdd_direct = False
+    has_workflow_p5_combined = False
+    workflow_p5_combined_by_case: dict[str, bool] = {}
     for answer in answers:
         text = answer.read_text(encoding="utf-8")
         observed.update(yaml_list_values(text, "coverage_tags"))
+        if bucket == "workflow":
+            case_id = scalar_value(text, "case_id") or answer.stem
+            case_has_workflow_p5 = has_workflow_p5_combined_coverage(text)
+            workflow_p5_combined_by_case[case_id] = case_has_workflow_p5
+            if case_has_workflow_p5:
+                has_workflow_p5_combined = True
         if bucket == "response":
+            if has_response_p5_django_integration_coverage(text):
+                has_response_p5_django_integration = True
             architecture_db_observed.update(architecture_db_direct_tags(text))
             if has_implementation_django_ninja_direct_coverage(text):
                 has_django_ninja_direct = True
@@ -1848,6 +2372,10 @@ def validate_coverage(bucket: str, answers: list[Path]) -> list[str]:
                 "response: implementation-test exclusion coverage missing: "
                 "implementation-test-exclusion, pytest-assertion, tiny-task-restraint"
             )
+        if not has_response_p5_django_integration:
+            findings.append(
+                "response: P5 Django implementation integration coverage missing in case-response-django-implementation-handoff"
+            )
     if bucket == "code":
         code_django_missing = sorted(
             CODE_IMPLEMENTATION_DJANGO_P4_COVERAGE_TAGS - observed
@@ -1914,6 +2442,16 @@ def validate_coverage(bucket: str, answers: list[Path]) -> list[str]:
                 "code: implementation-tdd P4 coverage_tags missing"
                 + details
             )
+    if bucket == "workflow" and not has_workflow_p5_combined:
+        findings.append(
+            "workflow: P5 combined risky-write integration coverage missing in one case"
+        )
+    if bucket == "workflow":
+        for case_id in sorted(WORKFLOW_P5_COMBINED_CASE_IDS):
+            if not workflow_p5_combined_by_case.get(case_id):
+                findings.append(
+                    f"workflow: {case_id} must keep P5 combined risky-write integration coverage"
+                )
     return findings
 
 

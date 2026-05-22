@@ -34,6 +34,7 @@ class EvalBucketPackValidatorTests(unittest.TestCase):
         *,
         public_text: str = "사용자 요청처럼 작성된 공개 문제입니다.\n",
         coverage_tags: list[str] | None = None,
+        extra_answer: str = "",
     ) -> None:
         public_path = (
             self.validator.EVAL_ROOT
@@ -77,7 +78,7 @@ expected_outcomes:
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:
-{tag_lines}""",
+{tag_lines}{extra_answer}""",
             encoding="utf-8",
         )
 
@@ -105,6 +106,245 @@ coverage_tags:
         self.assertTrue(any("expected_outcomes" in finding for finding in findings), findings)
         self.assertTrue(any("control_case" in finding for finding in findings), findings)
         self.assertTrue(any("with_dddjango" in finding for finding in findings), findings)
+
+    def test_workflow_p5_combined_coverage_rejects_direct_risky_write_fragment(self) -> None:
+        text = """id: case-workflow-risky-write
+case_id: case-workflow-risky-write
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
+intent: Validate risky write.
+reference_basis:
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+    basis: role map
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: handoff
+  - path: dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+    basis: integration
+target_behavior:
+  required:
+    - Includes aggregate invariant, transaction owner, locking/isolation, uniqueness, idempotency storage, Idempotency-Key replay/conflict, side effect timing, retry and isolation decisions, concurrency/integration tests, integration owner, and handoff closure.
+  forbidden:
+    - Missing Domain, Architecture, DB, API, Django, TDD/Test, Review, Integration role split.
+    - Missing Scope, Inputs Used, Decisions, Files, May edit, Must not edit, Output, Risks, Required Follow-up, and dddjango Checks.
+workflow_execution_expectation:
+  expected_mode: direct_risky_write
+  acceptable_modes:
+    - direct
+  forbidden_modes:
+    - false_actual_claim
+  decision_rule: direct advice is allowed.
+  responsibility_rule: risky write fields are present.
+  report_label: direct
+coverage_tags:
+  - risky-write-consistency
+  - handoff-contract
+  - responsibility-split
+  - integration-closure
+"""
+
+        self.assertFalse(self.validator.has_workflow_p5_combined_coverage(text))
+
+    def test_workflow_p5_combined_coverage_rejects_forbidden_only_terms(self) -> None:
+        text = """id: case-workflow-risky-write
+case_id: case-workflow-risky-write
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
+intent: Validate P5 risky write.
+reference_basis:
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+    basis: role map
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: handoff
+  - path: dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+    basis: integration
+target_behavior:
+  required:
+    - Uses Domain, Architecture, DB, API, Django, TDD/Test, Review, and Integration roles.
+    - Includes Scope, Inputs Used, Decisions, Files, May edit, Must not edit, Output, Risks, Required Follow-up, and dddjango Checks.
+  forbidden:
+    - Missing aggregate invariant, transaction owner, locking/isolation, uniqueness, idempotency storage, Idempotency-Key replay/conflict, side effect timing, retry and isolation decisions, concurrency/integration tests, integration owner, and handoff closure.
+workflow_execution_expectation:
+  expected_mode: p5_workflow
+  acceptable_modes:
+    - sequential_fallback
+  forbidden_modes:
+    - direct
+    - false_actual_claim
+  decision_rule: workflow handoff is required.
+  responsibility_rule: risky write fields are owned by roles.
+  report_label: P5
+coverage_tags:
+  - risky-write-consistency
+  - handoff-contract
+  - responsibility-split
+  - integration-closure
+"""
+
+        self.assertFalse(self.validator.has_workflow_p5_combined_coverage(text))
+
+    def test_workflow_p5_combined_coverage_accepts_handoff_risky_write_case(self) -> None:
+        text = """id: case-workflow-risky-write
+case_id: case-workflow-risky-write
+bucket: workflow
+kind: workflow
+public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
+intent: Validate P5 risky write.
+reference_basis:
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+    basis: role map
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: handoff
+  - path: dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+    basis: integration
+target_behavior:
+  required:
+    - Uses Domain, Architecture, DB, API, Django, TDD/Test, Review, and Integration roles.
+    - Includes Scope, Inputs Used, Decisions, Files, May edit, Must not edit, Output, Risks, Required Follow-up, and dddjango Checks.
+    - Includes aggregate invariant, transaction owner, locking/isolation, uniqueness/idempotency storage, Idempotency-Key replay/conflict, side effect timing, retry and isolation decisions, concurrency/integration tests, integration owner, and handoff closure.
+workflow_execution_expectation:
+  expected_mode: p5_workflow
+  acceptable_modes:
+    - sequential_fallback
+  forbidden_modes:
+    - direct
+    - false_actual_claim
+  decision_rule: workflow handoff is required.
+  responsibility_rule: risky write fields are owned by roles.
+  report_label: P5
+coverage_tags:
+  - risky-write-consistency
+  - handoff-contract
+  - responsibility-split
+  - integration-closure
+"""
+
+        self.assertTrue(self.validator.has_workflow_p5_combined_coverage(text))
+
+    def test_response_p5_django_integration_rejects_fragmented_boundary_tags(self) -> None:
+        text = """id: case-response-django-implementation-handoff
+case_id: case-response-django-implementation-handoff
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-django-implementation-handoff.md
+intent: Validate P5 handoff.
+reference_basis:
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: Django service
+target_behavior:
+  required:
+    - Mentions Django service, API adapter, pytest, and handoff.
+scoring_checks:
+  - pass if generic.
+hard_gates:
+  - no leakage.
+failure_modes:
+  - generic list only
+leakage_checks:
+  - no private material
+evidence_required:
+  - transcript
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - p5-django-implementation-integration
+  - mixed-boundary
+"""
+
+        self.assertFalse(self.validator.has_response_p5_django_integration_coverage(text))
+
+    def test_response_p5_django_integration_accepts_full_boundary_matrix(self) -> None:
+        text = """id: case-response-django-implementation-handoff
+case_id: case-response-django-implementation-handoff
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-django-implementation-handoff.md
+intent: Validate P5 Django implementation handoff.
+reference_basis:
+  - path: workspace/reference/architecture-api/reference/final.md
+    basis: API contract
+  - path: workspace/reference/architecture-db/reference/final.md
+    basis: DB policy
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: Django implementation
+  - path: workspace/reference/implementation-django-ninja/reference/final.md
+    basis: Ninja adapter
+  - path: workspace/reference/implementation-django-web/reference/final.md
+    basis: Django Web
+  - path: workspace/reference/implementation-python/reference/final.md
+    basis: Python typing
+  - path: workspace/reference/implementation-cleancode/reference/final.md
+    basis: Clean Code review
+  - path: workspace/reference/implementation-tdd/reference/final.md
+    basis: TDD procedure
+  - path: workspace/reference/implementation-test/reference/final.md
+    basis: pytest mechanics
+  - path: dddjango/skills/architecture-api/references/rest-contracts.md
+    basis: API contract
+  - path: dddjango/skills/architecture-db/references/transactions-locking.md
+    basis: transaction policy
+  - path: dddjango/skills/implementation-django/references/services-selectors.md
+    basis: service boundary
+  - path: dddjango/skills/implementation-django-ninja/references/router-schema.md
+    basis: Router Schema adapter
+  - path: dddjango/skills/implementation-django-web/references/templateview-htmx.md
+    basis: web boundary
+  - path: dddjango/skills/implementation-python/references/typing.md
+    basis: typing boundary
+  - path: dddjango/skills/implementation-cleancode/references/responsibility.md
+    basis: review boundary
+  - path: dddjango/skills/implementation-tdd/references/red-green-refactor.md
+    basis: TDD procedure
+  - path: dddjango/skills/implementation-test/references/django-api-concurrency.md
+    basis: pytest mechanics
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: handoff
+target_behavior:
+  required:
+    - Separates architecture-api ownership of resource method status code Problem Details OpenAPI API contract from implementation-django-ninja ownership of thin Router Schema adapter mapping.
+    - Separates architecture-db transaction policy uniqueness locking retry idempotency duplicate prevention migration rollout risk from implementation-django concrete ORM service migration transaction implementation.
+    - Keeps OrderService.confirm production implementation boundary and transaction.on_commit timing; Router template test fixture and review notes must not own the domain rule.
+    - Routes server-rendered status badge view context template static auth and render honesty to implementation-django-web.
+    - Routes OrderStatus money display typing dataclass StrEnum typecheck honesty to implementation-python.
+    - Separates implementation-tdd test list first failing test red-green-refactor boundary cases from implementation-test pytest fixtures factory TestClient concurrency assertions.
+    - Uses implementation-cleancode review responsibility for fat service template business logic naming encapsulation responsibility split without replacing production implementation or tests.
+    - Gives a handoff ownership table naming each skill boundary and unresolved follow-up without claiming file edits tests browser migrations type checks or subagent execution.
+scoring_checks:
+  - pass if full matrix is present.
+hard_gates:
+  - no leakage.
+failure_modes:
+  - boundary missing
+leakage_checks:
+  - no private material
+evidence_required:
+  - transcript
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - p5-django-implementation-integration
+  - mixed-boundary
+  - handoff-contract
+  - integration-closure
+  - django-implementation-handoff
+  - api-ninja-boundary
+  - db-django-boundary
+  - web-python-boundary
+  - tdd-test-boundary
+  - clean-code-review-boundary
+  - workflow-honesty
+"""
+
+        self.assertTrue(self.validator.has_response_p5_django_integration_coverage(text))
 
     def test_web_detail_public_case_requires_blank_memo_fallback(self) -> None:
         public_path = self.root / "case-code-web-detail.md"
@@ -2608,6 +2848,163 @@ workflow_execution_expectation:
         findings = self.validator.validate_workflow_execution_expectation(path, text)
 
         self.assertTrue(any("unknown machine mode" in finding for finding in findings))
+
+    def test_p5_subagent_trace_expectation_rejects_missing_or_not_run_modes(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+workflow_execution_expectation:
+  expected_mode: actual_subagent_required
+  acceptable_modes:
+    - actual_subagent
+    - trace_missing
+    - not_run
+  forbidden_modes:
+    - false_actual_claim
+  decision_rule: Use real subagents.
+  responsibility_rule: Preserve result collection evidence.
+  report_label: actual subagents
+coverage_tags:
+  - actual-subagent-required
+  - actual-subagent-trace
+"""
+
+        findings = self.validator.validate_workflow_execution_expectation(path, text)
+
+        self.assertTrue(
+            any("must not accept missing/not-run trace modes" in finding for finding in findings),
+            findings,
+        )
+
+    def test_known_p5_restraint_case_requires_scope(self) -> None:
+        self.write_case_pair(
+            "workflow",
+            "case-workflow-tiny-restraint",
+            coverage_tags=["p5-plugin-restraint", "tiny-task-restraint"],
+        )
+        answer_path = (
+            self.validator.EVAL_ROOT
+            / "workflow/answer/case-workflow-tiny-restraint.yaml"
+        )
+
+        findings = self.validator.validate_restraint_scope(
+            answer_path,
+            answer_path.read_text(encoding="utf-8"),
+        )
+
+        self.assertTrue(any("restraint_scope" in finding for finding in findings), findings)
+
+    def test_p5_restraint_tag_requires_plugin_level_scope(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+case_id: case-response-simple-rename
+restraint_scope: individual-skill
+coverage_tags:
+  - p5-plugin-restraint
+  - simple-negative
+"""
+
+        findings = self.validator.validate_restraint_scope(path, text)
+
+        self.assertTrue(
+            any("p5-plugin-restraint coverage requires" in finding for finding in findings),
+            findings,
+        )
+
+    def test_individual_skill_restraint_scope_accepts_p4_case(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+case_id: case-response-simple-rename
+restraint_scope: individual-skill
+coverage_tags:
+  - simple-negative
+  - overapplication-restraint
+"""
+
+        findings = self.validator.validate_restraint_scope(path, text)
+
+        self.assertEqual([], findings)
+
+    def test_plugin_answer_validates_optional_workflow_execution_expectation(self) -> None:
+        self.write_case_pair(
+            "plugin",
+            "case-plugin-one",
+            coverage_tags=["trigger-quality"],
+            extra_answer=(
+                "workflow_execution_expectation:\n"
+                "  expected_mode: sequential_fallback_required\n"
+                "  acceptable_modes:\n"
+                "    - sequential_fallback\n"
+                "  forbidden_modes:\n"
+                "    - sequential_fallback\n"
+                "  decision_rule: Use fallback.\n"
+                "  responsibility_rule: Preserve result honesty.\n"
+                "  report_label: fallback required\n"
+            ),
+        )
+        answer_path = self.validator.EVAL_ROOT / "plugin/answer/case-plugin-one.yaml"
+        public_path = (
+            self.validator.EVAL_ROOT
+            / "plugin/cases/plugin/public/case-plugin-one.md"
+        )
+
+        findings = self.validator.validate_answer(answer_path, "plugin", public_path)
+
+        self.assertTrue(any("overlap" in finding for finding in findings))
+
+    def test_plugin_p5_workflow_integrity_requires_execution_expectation(self) -> None:
+        self.write_case_pair(
+            "plugin",
+            "case-plugin-p5-workflow",
+            coverage_tags=["p5-workflow-integrity"],
+        )
+        answer_path = self.validator.EVAL_ROOT / "plugin/answer/case-plugin-p5-workflow.yaml"
+        public_path = (
+            self.validator.EVAL_ROOT
+            / "plugin/cases/plugin/public/case-plugin-p5-workflow.md"
+        )
+
+        findings = self.validator.validate_answer(answer_path, "plugin", public_path)
+
+        self.assertTrue(
+            any("must declare workflow_execution_expectation" in finding for finding in findings)
+        )
+
+    def test_plugin_p5_restraint_trigger_routing_requires_specific_dimensions(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+case_id: case-plugin-trigger-routing
+restraint_scope: plugin-level
+target_behavior:
+  required:
+    - Reviews frontmatter description and positive/negative routing.
+coverage_tags:
+  - p5-plugin-restraint
+  - trigger-quality
+"""
+
+        findings = self.validator.validate_plugin_governance_answer(path, text)
+
+        self.assertTrue(any("opt-out restraint" in finding for finding in findings), findings)
+        self.assertTrue(any("Direct Answer Mode" in finding for finding in findings), findings)
+        self.assertTrue(any("no meta-tail restraint" in finding for finding in findings), findings)
+
+    def test_plugin_p5_restraint_trigger_routing_accepts_specific_dimensions(self) -> None:
+        path = self.root / "answer.yaml"
+        text = """\
+case_id: case-plugin-trigger-routing
+restraint_scope: plugin-level
+target_behavior:
+  required:
+    - Reviews frontmatter description, positive and negative routing, Korean trigger terms, and body-only trigger rules.
+    - Checks opt-out restraint, tiny edit restraint, Direct Answer Mode, false-claim refusal, no meta-tail restraint, and trigger/routing surface visibility.
+coverage_tags:
+  - p5-plugin-restraint
+  - trigger-quality
+"""
+
+        findings = self.validator.validate_plugin_governance_answer(path, text)
+
+        self.assertEqual([], findings)
 
     def test_runtime_missing_metadata_requires_validation_output_evidence(self) -> None:
         self.write_case_pair(
