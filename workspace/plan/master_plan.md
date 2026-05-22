@@ -6,7 +6,7 @@
 | [x] | P2. `SKILL.md` 목적 명확성 점검 | 각 skill의 실제 사용 예시, 목적, trigger, 제외 조건과 agents/openai.yaml metadata가 일치하는지 확인한다. |
 | [x] | P3. skill 책임 경계 점검 | skill 간 책임과 handoff가 겹치지 않고 progressive disclosure가 유지되는지 확인한다. |
 | [x] | P4. 개별 skill 평가 점검 | 각 skill이 reference 기준을 반영해 동작하는지 validation integrity를 지키는 평가 항목, case, answer가 준비되어 있는지 확인한다. |
-| [ ] | P5. skill 연계와 플러그인 평가 점검 | skill 연계와 subagent workflow를 검증하되 각 skill의 책임과 progressive disclosure를 유지하는지 확인한다. |
+| [x] | P5. skill 연계와 플러그인 평가 점검 | skill 연계와 subagent workflow를 검증하되 각 skill의 책임과 progressive disclosure를 유지하는지 확인한다. |
 | [ ] | P6. 평가 실행 | 준비된 validator, 개별 skill 평가, 플러그인 연계 평가, eval-all/bucket 평가를 분리 실행해 실제 결과를 생성한다. |
 | [ ] | P7. HTML report 최신성 점검 | 실행 run id와 latest/latest-valid HTML report가 일치하는지 확인한다. |
 | [ ] | P8. 평가 실패 원인 분류와 반복 수정 | 평가 실패와 eval-all/bucket 차이를 정해진 수정 대상 기준으로 먼저 분류하고 해당 대상만 좁게 수정한다. |
@@ -55,13 +55,13 @@
 
 ### P5. skill 연계와 플러그인 평가 점검
 
-- [ ] 여러 skill이 함께 필요한 시나리오에서 역할 분해와 handoff가 자연스럽게 동작하는지 확인한다.
-- [ ] subagent workflow가 각 skill의 책임을 보존하고 불필요한 병렬화나 역할 중복을 만들지 않는지 확인한다.
-- [ ] critical path 작업과 sidecar 작업이 구분되는지 확인한다.
-- [ ] 실제 실행하지 않은 subagent, 검증, 도구 사용을 실행한 것처럼 주장하지 않도록 평가가 잡아내는지 확인한다.
-- [ ] forward-testing/subagent 검증은 fresh thread에서 사용자 요청과 유사한 prompt로 실행하고, raw artifact만 전달하며 기대 답, 의도한 수정, 이전 결론을 노출하지 않는지 확인한다.
-- [ ] 반복 검증 사이에 subagent 산출물이 다음 실행의 힌트로 남지 않도록 정리했는지 확인한다.
-- [ ] 플러그인 단위 평가가 개별 skill 품질 문제와 연계 문제를 구분해 드러내는지 확인한다.
+- [x] 여러 skill이 함께 필요한 시나리오에서 역할 분해와 handoff가 자연스럽게 동작하는지 확인한다.
+- [x] subagent workflow가 각 skill의 책임을 보존하고 불필요한 병렬화나 역할 중복을 만들지 않는지 확인한다.
+- [x] critical path 작업과 sidecar 작업이 구분되는지 확인한다.
+- [x] 실제 실행하지 않은 subagent, 검증, 도구 사용을 실행한 것처럼 주장하지 않도록 평가가 잡아내는지 확인한다.
+- [x] forward-testing/subagent 검증은 fresh thread에서 사용자 요청과 유사한 prompt로 실행하고, raw artifact만 전달하며 기대 답, 의도한 수정, 이전 결론을 노출하지 않는지 확인한다.
+- [x] 반복 검증 사이에 subagent 산출물이 다음 실행의 힌트로 남지 않도록 정리했는지 확인한다.
+- [x] 플러그인 단위 평가가 개별 skill 품질 문제와 연계 문제를 구분해 드러내는지 확인한다.
 
 ### P6. 평가 실행
 
