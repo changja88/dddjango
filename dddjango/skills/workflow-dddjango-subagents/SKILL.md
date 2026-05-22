@@ -1,7 +1,7 @@
 ---
 name: workflow-dddjango-subagents
 description: >
-  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagent/subagents, delegation, parallel agent work, role decomposition, role map, responsibility split, parallel review, sequential fallback, handoff, dddjango workflow, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프, 통합 체크리스트, 검증 분담, or 위험 작업. Use for 주문/결제/재고/예약/환불/권한/ledger work when state transition, transaction, schema, API, or test impact is coupled. Selecting this workflow does not authorize real subagent execution; without explicit request or approval, use sequential fallback. Do not use for simple single-file changes, small field renames, pure answer-only/tiny direct answers, decorative role-map-only requests, 서브에이전트 계획 필요 없음, or when the user opts out of subagent planning.
+  Use for role-decomposed dddjango workflows in composite or risky Django/DDD work spanning domain rules, DB, API, implementation, tests, or review; also use when the user asks for subagent/subagents, delegation, parallel agent work, role decomposition, role map, responsibility split, parallel review, sequential fallback, handoff, dddjango workflow, 서브에이전트, 역할 분해, 역할 맵, 병렬 검토, 책임 분배, 순차 실행, 핸드오프, 통합 체크리스트, 검증 분담, or 위험 작업. Use for 주문/결제/재고/예약/환불/권한/ledger work when state transition, transaction, schema, API, or test impact is coupled. Selecting this workflow does not authorize real subagent execution; without explicit request or approval, use sequential fallback. Do not use for simple single-file changes, small field renames, answer-only/tiny direct answers, decorative role-map-only requests, or opt-outs.
 ---
 
 # dddjango Workflow

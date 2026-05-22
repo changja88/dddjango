@@ -1,4 +1,4 @@
 interface:
   display_name: "Python Implementation"
   short_description: "Python 타입, 검증, 동시성, typecheck 적용 기준."
-  default_prompt: "Use $implementation-python for pydantic v2, async/concurrency, exceptions, mypy, and pyright after domain/API/DB boundaries are decided."
+  default_prompt: "Use $implementation-python to apply modern Python typing, Protocol/dataclass/Enum boundaries, pydantic v2 DTOs, async choices, and type-checker-safe behavior."

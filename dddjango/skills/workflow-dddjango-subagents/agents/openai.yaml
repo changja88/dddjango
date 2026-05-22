@@ -1,4 +1,4 @@
 interface:
   display_name: "dddjango Workflow"
   short_description: "역할 분해와 handoff로 composite/risky DDD/Django 작업을 조율합니다."
-  default_prompt: "Use $workflow-dddjango-subagents for composite/risky DDD/Django work needing role map, approved bounded subagent sidecars or honest fallback, wait/close result collection, disjoint handoff ownership, and integration checks; keep simple, tiny, or opt-out requests direct."
+  default_prompt: "Use $workflow-dddjango-subagents to split risky Django/DDD work into domain, DB, API, implementation, test, review, and integration handoffs."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Implementation Patterns"
   short_description: "DDD architecture pattern selection and boundaries."
-  default_prompt: "Use $architecture-implementation-patterns to choose layered/clean/hexagonal architecture, ports/adapters, repository/UoW, CQRS/event sourcing/outbox/saga/ACL, service-layer, and risky-write transaction/side-effect/idempotency handoffs."
+  default_prompt: "Use $architecture-implementation-patterns to choose service-layer, ports/adapters, repository/UoW, outbox, saga, ACL, and transaction-owner boundaries."

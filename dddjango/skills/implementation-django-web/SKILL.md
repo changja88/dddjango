@@ -17,7 +17,7 @@ description: >
 - If domain rules, state transitions, policies, invariants, or bounded context are unclear, use `architecture-ddd` before web implementation.
 - If the user explicitly asks for subagents, role decomposition, parallel review, or responsibility splitting, use `workflow-dddjango-subagents` first.
 - If the work combines DDD, DB/API, Django implementation, templates/static, and tests in a risky feature, use `workflow-dddjango-subagents` first.
-- For a tiny template text change or a short Django template explanation, answer or edit directly without DDD/workflow ceremony. If naming a file from a copied or temporary workspace, use a repo-relative plain path and do not expose temporary absolute paths such as `/tmp`, `/private/tmp`, or eval workspace roots.
+- For a tiny template text change or a short Django template explanation, answer or edit directly without DDD/workflow ceremony. If naming a file from a copied or temporary workspace, use a repo-relative plain path and do not expose temporary workspace roots.
 - Korean trigger boundary: `템플릿`, `정적 파일`, `화면`, `폼`, `렌더링`, `HTMX`, `CSRF` belong here; `REST API/Router/Schema`는 `implementation-django-ninja` 또는 `architecture-api`, `ORM/마이그레이션/트랜잭션`은 `implementation-django` 또는 `architecture-db`, `복합/위험 작업`은 `workflow-dddjango-subagents`로 보낸다.
 
 ## Reference Loading

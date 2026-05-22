@@ -1,4 +1,4 @@
 interface:
   display_name: "Django Web Implementation"
   short_description: "Django CBV/FBV, 템플릿, 정적 파일, 폼, HTMX/CSRF."
-  default_prompt: "$implementation-django-web을 사용해 Django TemplateView, Generic CBV/FBV, templates, base templates, component includes, static files, web forms, view auth/permissions, HTMX, CSRF-aware web flow, render acceptance check를 구현한다."
+  default_prompt: "Use $implementation-django-web to implement Django TemplateView/CBV/FBV pages, templates, forms, static files, HTMX, CSRF, and render checks."

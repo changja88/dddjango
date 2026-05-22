@@ -1,4 +1,4 @@
 interface:
   display_name: "Clean Code"
   short_description: "Review or refactor clean-code risks."
-  default_prompt: "Use $implementation-cleancode to review or refactor maintainability, function shape, SOLID, error handling, Fat Model/View/Router, duplication, and legacy risks."
+  default_prompt: "Use $implementation-cleancode to review or refactor maintainability, responsibility split, naming, function shape, duplication, and legacy risks."

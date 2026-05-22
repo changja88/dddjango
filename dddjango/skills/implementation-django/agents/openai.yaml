@@ -1,4 +1,4 @@
 interface:
   display_name: "Django Implementation"
   short_description: "Django ORM, services, migrations, DRF maintenance, ops."
-  default_prompt: "Use $implementation-django to implement Django models, ORM, services, selectors, migrations, transactions, settings, caching, security, performance, existing DRF maintenance/review, and Django integration acceptance criteria."
+  default_prompt: "Use $implementation-django to implement Django models, ORM queries, services/selectors, migrations, transactions, settings, security, and DRF maintenance."

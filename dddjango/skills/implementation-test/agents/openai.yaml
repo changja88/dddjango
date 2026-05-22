@@ -1,4 +1,4 @@
 interface:
   display_name: "Test Implementation"
   short_description: "Pytest reviews, doubles, Ninja TestClient, coverage."
-  default_prompt: "Use $implementation-test to write or review pytest, Django Ninja TestClient, fixture, idempotency, concurrency, and coverage tests."
+  default_prompt: "Use $implementation-test to write or review pytest fixtures, doubles, factories, Django Ninja TestClient checks, concurrency tests, and coverage."
