@@ -1,0 +1,57 @@
+id: case-response-db-local-crud-restraint
+case_id: case-response-db-local-crud-restraint
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-db-local-crud-restraint.md
+intent: architecture-db 제외 조건과 overapplication restraint를 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: simple-negative와 validation honesty coverage
+  - path: workspace/reference/architecture-db/reference/final.md
+    basis: 제약조건과 migration safety의 범위 제한
+  - path: dddjango/skills/architecture-db/SKILL.md
+    basis: simple field rename 또는 local CRUD without invariant/concurrency/rollout risk 제외 조건
+target_behavior:
+  required:
+    - 짧게 답하고 작은 local CRUD 범위임을 인정한다.
+    - 최소한의 PK, `name` unique 여부, not-null, `sort_order` index 필요성 같은 제약조건만 검토한다.
+    - hot table, backfill, lock, idempotency, isolation 같은 고위험 항목은 이번 상황에서는 불필요하거나 간단 확인 대상으로 제한한다.
+    - 실행하지 않은 migration/test/check 결과는 계획 또는 not-run으로만 말한다.
+    - 필요하면 Django migration 구현 세부는 `implementation-django` 책임이라고 경계만 둔다.
+  forbidden:
+    - 전체 ERD, bounded context, workflow role map, subagent plan을 출력한다.
+    - transaction isolation, pessimistic locking, idempotency table을 필수처럼 요구한다.
+    - 대형 운영 rollout 절차를 필수 단계처럼 과장한다.
+    - 실행하지 않은 검증 명령 성공을 주장한다.
+scoring_checks:
+  - pass if the answer is short, scoped, and limited to minimal DB constraints and migration checks.
+  - fail if the answer over-applies architecture-db ceremony despite the no-risk local CRUD context.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, migration, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - architecture ceremony overreach
+  - unnecessary locking or idempotency design
+  - false command success
+leakage_checks:
+  - public response must not mention answer path, private scoring text, or prior run notes.
+evidence_required:
+  - public prompt packet
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
+control_case: restraint
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass
+  expected_delta: non-negative
+  baseline_pass_ok: true
+coverage_tags:
+  - simple-negative
+  - overapplication-restraint
+  - db-architecture
+  - db-local-crud-restraint
+  - validation-honesty

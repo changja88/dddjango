@@ -7,9 +7,9 @@ intent: Ensure explicit user opt-out prevents full workflow ceremony for small r
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: subagent opt-out
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: simple task and opt-out restraint
-  - path: workspace/develop/eval
+  - path: dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+    basis: direct mode and explicit opt-out restraint
+  - path: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-opt-out.md
     basis: simple field rename
 target_behavior:
   required:

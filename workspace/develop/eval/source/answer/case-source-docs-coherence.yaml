@@ -19,8 +19,6 @@ reference_basis:
     basis: required reference source
   - path: dddjango/.codex-plugin/plugin.json
     basis: required reference source
-  - path: dddjango/skills/source-reference-audit/SKILL.md
-    basis: required reference source
 target_behavior:
   required:
     - Checks the docs as a connected decision set, not isolated files.

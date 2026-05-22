@@ -9,6 +9,26 @@ reference_basis:
     basis: specialist-positive, risky DB/API, DDD dimensions
   - path: workspace/develop/eval
     basis: order creation API
+  - path: workspace/reference/architecture-ddd/reference/final.md
+    basis: bounded context, aggregate, invariants, state transitions
+  - path: workspace/reference/architecture-api/reference/final.md
+    basis: REST contract, Problem Details, idempotency key semantics, OpenAPI impact
+  - path: workspace/reference/architecture-db/reference/final.md
+    basis: 제약조건, 중복 방지, 멱등성 저장소, 트랜잭션/락
+  - path: workspace/reference/implementation-django-ninja/reference/final.md
+    basis: Django Ninja Router/Schema boundary and API adapter expectations
+  - path: workspace/reference/implementation-test/reference/final.md
+    basis: API contract and concurrency test strategy
+  - path: dddjango/skills/architecture-db/references/transactions-locking.md
+    basis: risky write consistency, idempotency storage, isolation/retry, side-effect timing handoff
+  - path: dddjango/skills/architecture-db/references/constraints-indexes.md
+    basis: unique constraint와 duplicate prevention
+  - path: dddjango/skills/architecture-api/references/idempotency-openapi.md
+    basis: Idempotency-Key replay/conflict handoff and OpenAPI impact
+  - path: dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
+    basis: Problem Details and OpenAPI response mapping
+  - path: dddjango/skills/implementation-test/references/django-api-concurrency.md
+    basis: API and concurrency verification criteria
   - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: risky workflow and consistency ordering
   - path: dddjango/skills/source-reference-audit/SKILL.md
@@ -35,9 +55,13 @@ failure_modes:
 leakage_checks:
   - public response must not mention answer path, private scoring text, or prior run notes.
 evidence_required:
+  - public prompt packet
   - baseline and with-dddjango response
   - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
   - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
 control_case: false
 expected_outcomes:
   baseline: partial

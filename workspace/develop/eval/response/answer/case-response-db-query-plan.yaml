@@ -1,0 +1,69 @@
+id: case-response-db-query-plan
+case_id: case-response-db-query-plan
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-db-query-plan.md
+intent: architecture-db 단독 EXPLAIN ANALYZE 해석, index 설계, rollout risk 판단을 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: DB/API architecture와 validation-plan representative scenarios
+  - path: workspace/reference/architecture-db/reference/final.md
+    basis: 인덱스 설계, EXPLAIN ANALYZE, query optimization, rollout/backfill safety
+  - path: dddjango/skills/architecture-db/SKILL.md
+    basis: query performance/EXPLAIN ANALYZE와 rollout/backfill safety routing
+  - path: dddjango/skills/architecture-db/references/constraints-indexes.md
+    basis: composite index order, covering/partial index, write/storage cost
+  - path: dddjango/skills/architecture-db/references/rollout-constraints.md
+    basis: EXPLAIN ANALYZE interpretation, performance order, online index risk, rollback/forward-fix
+target_behavior:
+  required:
+    - `EXPLAIN ANALYZE`의 estimated rows와 actual rows 차이, Seq Scan, removed rows, execution time을 근거로 원인을 해석한다.
+    - 통계 갱신 또는 predicate/cardinality 점검 같은 query-plan 검증 순서를 먼저 제안한다.
+    - query shape 기준으로 equality columns를 range/order column보다 앞에 두는 composite index 후보를 설명한다.
+    - `tenant_id`, `status`, `created_at DESC` 같은 column order와 LIMIT/ORDER BY 대응을 구체적으로 다룬다.
+    - 필요한 경우 covering index 또는 partial index의 조건과 한계를 설명한다.
+    - index 추가가 write/storage cost를 만든다는 점과 운영 중 concurrent/online index 생성 필요 여부를 다룬다.
+    - 새 index rollout, 실패 시 rollback 또는 forward-fix, 사후 `EXPLAIN ANALYZE` 비교 검증을 제시한다.
+    - 캐시와 denormalization은 query optimization과 index 검증 이후의 후순위 선택으로 둔다.
+  forbidden:
+    - slow query evidence를 무시하고 캐시나 denormalization을 첫 해결책으로 제시한다.
+    - `most selective first`만 반복하고 equality/range/order query shape를 고려하지 않는다.
+    - index write/storage cost와 운영 생성 lock risk를 생략한다.
+    - EXPLAIN 수치를 읽지 않고 generic index checklist만 제시한다.
+    - 실행하지 않은 `EXPLAIN ANALYZE`, migration, benchmark 결과를 실행했다고 말한다.
+scoring_checks:
+  - pass if the answer reads the given plan evidence and proposes a query-shaped index plus operational rollout verification.
+  - fail if the answer recommends broad denormalization or cache before validating the slow query and index path.
+  - fail if the answer does not distinguish equality, range, ordering, and covering/partial index trade-offs.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, EXPLAIN reruns, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - generic performance checklist
+  - missing EXPLAIN evidence reading
+  - index rollout risk omitted
+  - false command result
+leakage_checks:
+  - public response must not mention answer path, private scoring text, or prior run notes.
+evidence_required:
+  - public prompt packet
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - specialist-positive
+  - db-architecture
+  - query-performance
+  - constraints-indexes
+  - operational-rollout
+  - migration-safety
+  - validation-honesty

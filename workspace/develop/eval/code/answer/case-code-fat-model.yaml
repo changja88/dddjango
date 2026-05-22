@@ -7,10 +7,14 @@ intent: Check minimal clean-code refactor around model/service responsibilities 
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: Python and clean code, negative implementation restraint
-  - path: workspace/develop/eval
-    basis: Fat Model and View Logic review
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: integration priority and side-effect timing
+  - path: workspace/reference/implementation-cleancode/reference/final.md
+    basis: clean-code source reference for Fat Model, responsibility, side effects, and behavior-preserving refactoring
+  - path: dddjango/skills/implementation-cleancode/SKILL.md
+    basis: implementation-cleancode routing and scoped behavior-preserving refactor rules
+  - path: dddjango/skills/implementation-cleancode/references/responsibility.md
+    basis: Fat Model boundary, responsibility split, and Django/dddjango boundary smells
+  - path: dddjango/skills/implementation-cleancode/references/legacy-review.md
+    basis: regression tests and small-step legacy refactoring
 code_expected: true
 case_role: implementation_supporting
 deterministic_checks:
@@ -50,11 +54,12 @@ evidence_required:
   - tests or not-run reason
 control_case: false
 expected_outcomes:
-  baseline: partial
+  baseline: pass
   with_dddjango: pass
-  expected_delta: positive
-  baseline_pass_ok: false
+  expected_delta: neutral
+  baseline_pass_ok: true
 coverage_tags:
+  - implementation-cleancode
   - clean-code
   - responsibility-split
   - side-effect-timing

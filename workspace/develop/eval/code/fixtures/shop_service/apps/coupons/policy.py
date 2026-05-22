@@ -14,8 +14,6 @@ class Coupon:
 
 
 def apply_coupon(coupon: Coupon, order_amount: int, today: date) -> int:
-    if coupon.used:
-        raise ValueError("coupon already used")
     if today > coupon.expires_on:
         raise ValueError("coupon expired")
     if order_amount < coupon.minimum_order_amount:

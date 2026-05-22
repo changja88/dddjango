@@ -1,0 +1,58 @@
+id: case-source-metadata-cache-sync
+case_id: case-source-metadata-cache-sync
+bucket: source
+kind: source
+public_case: workspace/develop/eval/source/cases/plugin/public/case-source-metadata-cache-sync.md
+intent: Verify source-reference-audit runtime metadata and cache/source sync evidence.
+reference_basis:
+  - path: workspace/develop/eval/source/eval_goal.md
+    basis: Runtime metadata/cache sync case family
+  - path: workspace/reference/source-reference-audit/reference/final.md
+    basis: Runtime metadata, cache sync, leakage, and completion-gate decisions
+  - path: dddjango/skills/source-reference-audit/SKILL.md
+    basis: Runtime skill trigger, routing, source loading, and boundary behavior
+  - path: dddjango/skills/source-reference-audit/agents/openai.yaml
+    basis: UI metadata and default prompt surface
+  - path: dddjango/skills/source-reference-audit/references/source-governance.md
+    basis: Runtime-local source governance summary
+  - path: workspace/scripts/validate_skill_docs.py
+    basis: Validation command that checks runtime metadata and cache/source parity
+target_behavior:
+  required:
+    - Compares `SKILL.md` trigger/routing text, `agents/openai.yaml` display/short/default prompt, and bundled `source-governance.md` for semantic metadata alignment.
+    - Checks the default prompt for private evaluation material, internal criteria, and non-public validation notes.
+    - Requires cache and source parity evidence from diff, cmp, parity, or sync validation output rather than file existence alone.
+    - Records validation command output as expected evidence and distinguishes executed validation from not-run checks.
+    - Treats physical runtime cache paths as parity evidence only, not runtime-facing allowed references.
+  forbidden:
+    - Passing metadata quality from `SKILL.md` and `agents/openai.yaml` existence alone.
+    - Copying private evaluator criteria or answer-only schema wording into runtime/public wording.
+    - Presenting cache paths as final runtime instructions.
+scoring_checks:
+  - pass if metadata, default prompt leakage, bundled reference alignment, validation command output, and cache/source parity evidence are all distinct.
+  - fail if runtime metadata sync is reduced to file existence or a generic validator pass with no artifact scope.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, cache diff, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - file-existence-only metadata claim
+  - unsupported cache/source sync claim
+  - private evaluation material leakage
+leakage_checks:
+  - public output must use product-facing categories, not answer-only schema fields or private scoring notes.
+evidence_required:
+  - metadata semantic alignment notes
+  - default prompt leakage check
+  - validation command output
+  - cache/source diff, cmp, parity report, or explicit not-run marker
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - runtime-metadata-cache-sync
+  - boundary-protection
+  - leakage-scan
+  - source-runtime-split

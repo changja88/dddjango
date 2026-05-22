@@ -27,8 +27,9 @@ target_behavior:
   required:
     - Names Ordering bounded context or keeps ordering language explicit in code and tests.
     - Moves empty-order and confirm-only-from-pending-payment invariants into Order behavior.
+    - Prevents external direct mutation of Order lifecycle status while exposing a read-only observation; read-only public properties are insufficient if a backing field such as _status, _state, or _lifecycle_status can still be assigned externally.
     - Keeps application service as orchestration rather than rule owner.
-    - Adds behavior tests for empty order rejection, placement status, confirmation transition, and invalid confirmation transition.
+    - Adds behavior tests for empty order rejection, placement status, confirmation transition, invalid confirmation transition, and direct lifecycle status mutation prevention.
   forbidden:
     - Repository/UoW/hexagonal rewrite for this small in-memory fixture.
     - Router/API owning state transition rules.
@@ -53,9 +54,11 @@ ddd_observations:
   aggregate_behavior:
     - Order.place or equivalent aggregate behavior protects empty-order placement.
     - Order.confirm or equivalent aggregate behavior protects confirmation state transition.
+    - Order lifecycle state is not externally mutable; outside code observes status without bypassing aggregate behavior.
   invariants:
     - An order cannot be placed without items.
     - An order can be confirmed only from pending payment.
+    - Outside code cannot directly move an order to confirmed by assigning lifecycle status.
   application_service_boundary: Service functions orchestrate creation/loading and call aggregate behavior; they do not own the invariant checks.
   transaction_boundary: In-memory fixture has no DB transaction; final answer must state this limitation rather than inventing database verification.
   domain_events: If side effects are discussed, they must be modeled as post-transition event/after-commit boundary, not direct external calls.
@@ -66,8 +69,10 @@ ddd_observations:
     - placement moves to pending payment
     - confirmation moves to confirmed
     - invalid confirmation raises
+    - direct lifecycle status mutation is rejected or has no effect, including likely backing fields such as _status, _state, or _lifecycle_status when present
 scoring_checks:
-  - pass if aggregate behavior protects invariants and tests prove the behavior.
+  - pass if aggregate behavior protects invariants, lifecycle status cannot be externally mutated, and tests prove the behavior.
+  - partial if aggregate behavior exists but lifecycle status remains externally mutable.
   - fail if service-only procedural rules remain the only protection.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
@@ -80,15 +85,22 @@ failure_modes:
 leakage_checks:
   - no private answer references.
 evidence_required:
+  - public prompt artifact
+  - operator prompt artifact
+  - baseline and with-dddjango raw responses
+  - command, exit, stderr, and event stream artifacts
   - changed-files.json
   - diff.patch
+  - copied source files
   - unit test output
+  - behavior check output
+  - machine-readable answer-oracle evaluation artifact
 control_case: false
 expected_outcomes:
-  baseline: partial
+  baseline: pass
   with_dddjango: pass
-  expected_delta: positive
-  baseline_pass_ok: false
+  expected_delta: neutral
+  baseline_pass_ok: true
 coverage_tags:
   - ddd-to-code
   - domain-policy

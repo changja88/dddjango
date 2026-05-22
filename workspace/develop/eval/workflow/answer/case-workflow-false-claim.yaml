@@ -7,7 +7,7 @@ intent: Ensure false execution claims are refused.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: false-execution claim
-  - path: workspace/develop/eval
+  - path: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-false-claim.md
     basis: false subagent claim
   - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: delegation honesty

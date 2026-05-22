@@ -12,6 +12,10 @@
       "captureCode": true,
       "subjectRepo": "workspace/develop/eval/code/fixtures/django_shop_service"
     },
+    "case-code-django-orm-service": {
+      "captureCode": true,
+      "subjectRepo": "workspace/develop/eval/code/fixtures/django_shop_service"
+    },
     "case-code-status-migration": {
       "captureCode": true,
       "subjectRepo": "workspace/develop/eval/code/fixtures/shop_service"

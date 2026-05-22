@@ -1,0 +1,82 @@
+id: case-response-tdd-loop-selection
+case_id: case-response-tdd-loop-selection
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-tdd-loop-selection.md
+intent: implementation-tdd 단일 skill의 TDD loop, approach selection, verification style, BDD/ATDD handoff, exclusion boundary를 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: TDD/Test response scenario and validation honesty
+  - path: workspace/reference/implementation-tdd/reference/final.md
+    basis: TDD source reference for Red-Green-Refactor, test list, boundary cases, schools, verification style, BDD/ATDD, AI-assisted honesty
+  - path: dddjango/skills/implementation-tdd/SKILL.md
+    basis: runtime routing and TDD method ownership
+  - path: dddjango/skills/implementation-tdd/references/test-list.md
+    basis: test list, boundaries, independent axes, AAA, test smells
+  - path: dddjango/skills/implementation-tdd/references/red-green-refactor.md
+    basis: Red-Green-Refactor, green strategies, refactor checkpoint, honest reporting
+  - path: dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+    basis: Inside-Out vs Outside-In, acceptance/unit double loop, state vs behavior, mock roles
+  - path: dddjango/skills/implementation-tdd/references/bdd-atdd.md
+    basis: BDD/ATDD relationship and implementation-test handoff
+  - path: dddjango/skills/implementation-tdd/references/ai-assisted-tdd.md
+    basis: AI-assisted TDD workflow and false claim prevention
+target_behavior:
+  required:
+    - Starts with a test list covering behavior, risks, and boundary cases before prescribing implementation.
+    - Includes boundary pairs for free-shipping threshold accepted/rejected and coupon expiration day accepted/day-after rejected, plus used-coupon rejection as a separate decision axis.
+    - Proposes the next failing test first and separates planned Red from actually executed Red; no Red claim unless a failing run exists.
+    - Describes Red-Green-Refactor with minimal Green implementation and a refactor checkpoint only after tests are green.
+    - Chooses Inside-Out for pure discount/coupon domain rules and Outside-In or an outer acceptance/API/integration slice for the user-visible checkout flow.
+    - Uses an acceptance test or BDD/ATDD scenario as the outer loop and unit tests as the inner loop for policy rules.
+    - Prefers state verification or output verification for policy outcomes such as discount, shipping fee, eligibility, and coupon state.
+    - Uses behavior verification only for the external notification gateway role and mocks the role rather than arbitrary implementation objects.
+    - Treats BDD/ATDD as scenario and acceptance clarification, while handing pytest-bdd, Gherkin step definitions, fixtures, factories, and concrete test mechanics to implementation-test.
+    - Reports that no files, commands, tests, or subagents were run unless the response has actual evidence.
+  forbidden:
+    - Implementing code, migrations, Django API/DB architecture, or pytest-bdd step definitions when the user asked for answer-only TDD design.
+    - Treating coupon stacking, refund reuse, or other unstated policy as decided.
+    - Claiming failing tests, passing tests, file inspection, command execution, or subagent review happened without evidence.
+    - Over-mocking domain calculations or testing private implementation details instead of observable behavior and state.
+scoring_checks:
+  - pass if the answer covers test list, boundary pairs, failing-test-first, Red-Green-Refactor, approach selection, double loop, state/behavior verification, mock role, BDD/ATDD handoff, and validation honesty.
+  - fail if the answer skips approach/verification choices or claims Red/Green execution without evidence.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - no test list
+  - no boundary accepted/rejected pairs
+  - false Red/Green execution claim
+  - over-mocked domain policy
+  - pytest-bdd mechanics overreach
+leakage_checks:
+  - no private evaluator hints in public response.
+evidence_required:
+  - response transcript
+  - answer-oracle evaluation notes
+  - prompt-input artifact without answer oracle content
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - implementation-tdd
+  - tdd
+  - test-list
+  - failing-test-first
+  - red-green-refactor
+  - inside-out
+  - outside-in
+  - acceptance-unit-loop
+  - boundary-cases
+  - refactor-checkpoint
+  - state-verification
+  - behavior-verification
+  - mock-role
+  - bdd-atdd
+  - ai-assisted-tdd
+  - routing-boundary
+  - validation-honesty

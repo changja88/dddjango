@@ -7,10 +7,12 @@ intent: Ensure a small rename stays minimal while still producing code.
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: negative implementation restraint
-  - path: workspace/develop/eval
-    basis: Negative Case simple field rename
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: simple task restraint
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: simple Django model field rename and migration restraint
+  - path: dddjango/skills/implementation-django/SKILL.md
+    basis: simple Django implementation without workflow/repository overreach
+  - path: dddjango/skills/implementation-django/references/migrations.md
+    basis: migration impact and verification expectations for small field rename
 code_expected: true
 case_role: control
 deterministic_checks:
@@ -21,6 +23,7 @@ deterministic_checks:
 target_behavior:
   required:
     - Renames memo to note consistently in fixture code, template, and tests.
+    - Keeps the implementation small and scoped to the requested Django rename.
     - Avoids full role map, new architecture layers, or unrelated cleanup.
     - Runs compile/unit tests or reports exact failure.
   forbidden:
@@ -40,6 +43,7 @@ score_interpretation: Control/restraint score; do not count this as DDD-shaped i
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - compile, check, search, or static-analysis success claims fail unless matching command artifacts exist.
   - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
 failure_modes:
   - over-ceremony
@@ -47,16 +51,28 @@ failure_modes:
 leakage_checks:
   - no answer material in diff.
 evidence_required:
+  - public prompt packet
+  - operator prompt
+  - baseline and with-dddjango raw responses
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
   - changed-files.json
   - diff.patch
-  - verification output
+  - copied source files
+  - command text, exit code, stdout, stderr, and event stream
+  - python3 -m unittest output or exact not-run reason
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial
-  with_dddjango: pass
-  expected_delta: non-negative
+  with_dddjango: pass-or-partial
+  expected_delta: variable
   baseline_pass_ok: true
 coverage_tags:
+  - implementation-django
+  - django-implementation-restraint
+  - django-migration
   - negative-implementation-restraint
   - minimal-code
   - simple-rename

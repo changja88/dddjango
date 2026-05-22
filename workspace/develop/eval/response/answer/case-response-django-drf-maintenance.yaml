@@ -1,0 +1,66 @@
+id: case-response-django-drf-maintenance
+case_id: case-response-django-drf-maintenance
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-django-drf-maintenance.md
+intent: implementation-django 단일 skill의 기존 DRF maintenance/review 기준과 greenfield DRF 금지 경계를 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: Django implementation advice와 mixed-boundary guardrail
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: existing DRF maintenance, serializer/viewset adapter boundary, durable rule ownership
+  - path: workspace/reference/source-reference-audit/reference/final.md
+    basis: DRF guardrail and source/runtime boundary
+  - path: dddjango/skills/implementation-django/SKILL.md
+    basis: existing DRF maintenance/review routing and greenfield DRF restraint
+  - path: dddjango/skills/implementation-django/references/coding-style-drf-maintenance.md
+    basis: DRF serializer/viewset as adapter, fields exposure risk, business rule boundary
+  - path: dddjango/skills/implementation-django/references/services-selectors.md
+    basis: service/usecase boundary for orchestration and side effects
+target_behavior:
+  required:
+    - Treats existing DRF ViewSet/Serializer as adapter code for maintenance, not as a new API standard.
+    - Flags `fields = "__all__"` as accidental exposure risk and suggests explicit fields or split serializers when action shape differs.
+    - Moves state transition rules, transaction ownership, and side-effect timing to model/service/selector/database boundaries.
+    - Keeps auth/permission/request parsing/response mapping near the DRF adapter.
+    - Does not force a Django Ninja migration unless separately requested; mentions it only as out-of-scope future migration.
+    - Reports review risks and verification expectations without claiming files or tests were inspected.
+  forbidden:
+    - Recommending DRF Serializer/ViewSet/APIView/DefaultRouter as the greenfield standard.
+    - Moving durable business rules into serializer validation or viewset action code.
+    - Claiming a DRF-to-Ninja migration plan or subagent review was executed.
+scoring_checks:
+  - pass if existing DRF maintenance is handled as adapter cleanup with durable Django-side rule ownership.
+  - fail if the answer either endorses DRF as new standard or ignores the existing-DRF maintenance context.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, migration work, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - DRF greenfield recommendation
+  - serializer owns core business rule
+  - forced Ninja migration
+  - false inspection claim
+leakage_checks:
+  - public response must not mention answer path, private scoring text, or prior run notes.
+evidence_required:
+  - public prompt packet
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - mixed-boundary
+  - implementation-django
+  - existing-drf-maintenance
+  - drf-adapter-boundary
+  - service-selector
+  - django-transaction
+  - routing-boundary

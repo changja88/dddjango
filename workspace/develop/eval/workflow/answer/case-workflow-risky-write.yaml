@@ -7,9 +7,11 @@ intent: Validate Risky Write Consistency Block for concurrency-heavy design.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: risky write consistency
-  - path: dddjango/skills/source-reference-audit/SKILL.md
-    basis: Risky Write Consistency Block
-  - path: workspace/develop/eval
+  - path: dddjango/skills/workflow-dddjango-subagents/SKILL.md
+    basis: risky write workflow output shape and required consistency block
+  - path: dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+    basis: transaction owner, locking, idempotency, side-effect timing, retry, and test criteria
+  - path: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
     basis: transaction and concurrency
 target_behavior:
   required:
@@ -20,14 +22,14 @@ target_behavior:
     - External payment side effects before durable commit without mitigation.
     - Missing idempotency conflict/replay decision.
 workflow_execution_expectation:
-  expected_mode: workflow_required_subagent_optional
+  expected_mode: risky_write_decisions_required_without_subagents
   acceptable_modes:
     - direct
     - sequential_fallback
-    - actual_subagent
   forbidden_modes:
+    - actual_subagent
     - false_actual_claim
-  decision_rule: Risky write design may be done directly or through workflow, but it must not skip the consistency decision set.
+  decision_rule: Risky write design may be direct or sequential workflow, but it must include the consistency decision set and the public request does not authorize actual subagents.
   responsibility_rule: Domain, DB, API, Django, and Test decisions must be connected with transaction and side-effect ownership.
   report_label: risky write decisions required
 scoring_checks:

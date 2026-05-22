@@ -1,0 +1,89 @@
+id: case-response-python-boundaries
+case_id: case-response-python-boundaries
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-python-boundaries.md
+intent: implementation-python 단일 skill의 Python typing, boundary, validation, async, exception, tooling 판단을 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: Python implementation advice와 validation honesty
+  - path: workspace/reference/implementation-python/reference/final.md
+    basis: Python type hints, TypedDict, dataclass, Enum/StrEnum, Protocol, pydantic v2, context manager, async, exceptions, Ruff/mypy/pyright
+  - path: dddjango/skills/implementation-python/SKILL.md
+    basis: implementation-python routing, 제외 조건, runtime rules
+  - path: dddjango/skills/implementation-python/references/typing.md
+    basis: type contracts, X | None, built-in generics, TypedDict, type narrowing, Python version gate, Ruff/typecheck
+  - path: dddjango/skills/implementation-python/references/dataclasses-enums.md
+    basis: dataclass value object, Enum/StrEnum, NamedTuple, match/case
+  - path: dddjango/skills/implementation-python/references/protocols-boundaries.md
+    basis: Protocol boundary, context manager, exceptions, async/concurrency
+  - path: dddjango/skills/implementation-python/references/pydantic-v2.md
+    basis: pydantic v2 external boundary and API
+target_behavior:
+  required:
+    - Public function and method type hints show input, return, and None behavior using X | None and built-in generics such as list[str] or dict[str, int] when the Python target supports them.
+    - External provider JSON shape is represented with TypedDict when a light typed dictionary is enough, rather than an untyped dict or premature domain class.
+    - Type narrowing chooses TypeIs or TypeGuard only after checking the Python version and compatibility, and uses ordinary None checks for simple optional flow.
+    - Money is treated as a dataclass value object candidate with frozen or slots when useful, Decimal or equivalent precision choice, invariant rejection, and tests for currency mismatch.
+    - Order status uses Enum or StrEnum for meaningful finite state, with Literal reserved for small local value sets and match/case only when it clarifies audited state transitions.
+    - Protocol is recommended only for replaceable boundaries such as storage, clock, HTTP client, or strategy roles, and not for every one-off class.
+    - Resource cleanup uses a context manager around provider sessions and keeps acquisition/release behavior visible.
+    - pydantic v2 is kept at external DTO, config, payload, or runtime validation boundaries with model_validate, model_dump, ConfigDict, field_validator or model_validator as appropriate.
+    - Domain invariants are not moved into pydantic as the default domain model, and raw validation errors are mapped at the adapter/application boundary.
+    - Async guidance checks Django ORM, SDK, file I/O, side-effect safety, async-safe behavior, and Python target before choosing TaskGroup, except*, thread fallback, or staying synchronous.
+    - Exceptions are used for exceptional failures where None is not a valid business result, with related module exceptions grouped under a top-level exception when useful.
+    - Ruff, mypy, pyright, Python target, and actual verification commands are reported honestly without claiming checks that were not run.
+    - DDD, DB, REST API, Django ORM, Django Ninja, and broad workflow decisions are left out or treated as a handoff only when the user actually asks for them.
+  forbidden:
+    - Turning the answer into DDD, DB, REST, Django, or subagent workflow advice.
+    - Making pydantic the default domain model or moving state transition and money rules into pydantic validators.
+    - Creating Protocols for every class without a replaceable boundary.
+    - Recommending TaskGroup or async refactor without checking Python target and async-safety.
+    - Claiming Ruff, mypy, pyright, tests, file inspection, or subagent execution without evidence.
+scoring_checks:
+  - pass if Python implementation choices are specific, source-backed, scoped, and include both positive choices and restraint.
+  - fail if the answer only lists generic Python features without boundary or version criteria.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, Ruff, mypy, pyright, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - untyped dict accepted for external payload shape
+  - pydantic domain-model overuse
+  - protocol overuse
+  - unsafe async recommendation
+  - false verification claim
+leakage_checks:
+  - public response must not mention answer path, private scoring text, or prior run notes.
+evidence_required:
+  - public prompt packet
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - specialist-positive
+  - implementation-python
+  - python-type-contracts
+  - none-union
+  - built-in-generics
+  - typeddict
+  - type-narrowing
+  - dataclass-value-object
+  - enum-strenum
+  - protocol-boundary
+  - context-manager
+  - pydantic-v2-boundary
+  - async-concurrency
+  - exceptions
+  - ruff-typecheck
+  - python-version-gate
+  - routing-boundary
+  - validation-honesty

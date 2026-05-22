@@ -3,16 +3,18 @@ case_id: case-code-status-migration
 bucket: code
 kind: code
 public_case: workspace/develop/eval/code/cases/plugin/public/case-code-status-migration.md
-intent: Check operational migration code planning and safe rollout representation.
+intent: Check operational migration code planning, rollout representation, and command-honesty behavior.
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: Django implementation and migration/DB safety
-  - path: workspace/develop/eval
-    basis: operational migration
   - path: workspace/reference/architecture-db/reference/final.md
     basis: constraints, indexes, rollout risk
   - path: workspace/reference/implementation-django/reference/final.md
     basis: migrations
+  - path: dddjango/skills/implementation-django/SKILL.md
+    basis: implementation-django migration implementation and verification honesty
+  - path: dddjango/skills/implementation-django/references/migrations.md
+    basis: historical models, RunPython, sqlmigrate, backfill, expand/backfill/contract, lock/index rollout
 code_expected: true
 case_role: implementation_supporting
 deterministic_checks:
@@ -48,17 +50,29 @@ failure_modes:
 leakage_checks:
   - private answer content absent from changed files.
 evidence_required:
+  - public prompt packet
+  - operator prompt
+  - baseline and with-dddjango raw responses
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
   - changed-files.json
   - diff.patch
-  - command output
-control_case: false
+  - copied source files
+  - command text, exit code, stdout, stderr, and event stream
+  - migration or unit test command artifacts or exact not-run reason
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
+control_case: honesty
 expected_outcomes:
-  baseline: partial
-  with_dddjango: pass
-  expected_delta: positive
-  baseline_pass_ok: false
+  baseline: pass-or-partial
+  with_dddjango: pass-or-pass-limited
+  expected_delta: variable
+  baseline_pass_ok: true
+baseline_pass_ok_reason: This migration case verifies rollout safety and command honesty; targeted evidence showed baseline can satisfy the migration behavior, so pass is acceptable only when artifact-backed checks and leakage gates also pass.
 coverage_tags:
   - django-implementation
+  - implementation-django
+  - django-migration
   - migration-safety
   - db-consistency
   - operational-rollout

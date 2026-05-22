@@ -9,6 +9,10 @@ reference_basis:
     basis: Conflict and gap handling
   - path: workspace/reference/*/reference/review.md
     basis: required reference source
+  - path: workspace/reference/*/reference/internal.md
+    basis: consulted source evidence for ambiguous or gap-related internal decisions
+  - path: workspace/reference/*/reference/external.md
+    basis: consulted source evidence for external/product evidence in conflicts or gaps
   - path: workspace/reference/*/reference/final.md
     basis: required reference source
   - path: workspace/reference/source-reference-audit/reference/final.md

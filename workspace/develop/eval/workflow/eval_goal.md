@@ -33,6 +33,7 @@
 - Critical-path delegation restraint: subagent를 허용하더라도 즉시 필요한 핵심 판단은 main agent가 먼저 내리고, sidecar 검토만 병렬 위임하는가.
 - Parallel ownership: 병렬 역할 분해에서 `May edit`/`Must not edit`가 겹치지 않고 integration owner가 명확한가.
 - Responsibility assignment quality: subagent handoff가 role name만 넘기지 않고 scope, inputs, owned files, forbidden files, output, risks, required follow-up, integration owner를 구체적으로 넘기는가.
+- Validation sharing: 각 role이 담당할 검증, 실행하지 못한 검증의 not-run 보고, 통합 owner에게 넘길 validation follow-up이 구체적인가.
 - Integration closure: 각 role의 risk와 required follow-up이 최종 통합 판단에서 닫히거나 명시적으로 남는가.
 
 ## Minimum Coverage
@@ -48,6 +49,7 @@ Workflow checks는 다음을 명시적으로 평가한다.
 - Direct answer and meta-tail restraint: pure answer-only/design-only 요청에서 사용자가 요구한 형식 뒤에 실행 명령, 미실행 체크, tool/Serena 보고를 추가하지 않는가.
 - Critical-path delegation boundary: 즉시 필요한 blocking decision을 위임해 대기하지 않고, 병렬화 가능한 sidecar 검토만 구체적으로 나누는가.
 - Parallel file ownership: 병렬 역할의 `May edit` 범위가 겹치지 않고, 겹칠 수 있는 파일은 단일 owner나 read-only review로 제한되는가.
+- Validation sharing: 역할별 검증 책임이 `dddjango Checks`, test criteria, not-run verification handoff로 나뉘고 최종 integration owner가 닫거나 unresolved로 남기는가.
 - Consent before execution: 사용자가 실제 subagent 실행을 승인하지 않은 경우 실제 실행하지 않고, 필요한 이유와 role split을 제시하며 승인 질문을 남기는가.
 - Actual execution when authorized: 사용자가 실제 subagent/parallel delegation을 명시적으로 요청한 경우, 단순 계획으로 대체하지 않고 실행 trace, result collection evidence, role output, integration summary를 남기는가.
 

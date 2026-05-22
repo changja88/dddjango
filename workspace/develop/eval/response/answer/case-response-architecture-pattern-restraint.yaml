@@ -1,0 +1,59 @@
+id: case-response-architecture-pattern-restraint
+case_id: case-response-architecture-pattern-restraint
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-architecture-pattern-restraint.md
+intent: architecture-implementation-patterns의 negative/routing restraint를 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: simple-negative, implementation pattern overapplication restraint
+  - path: workspace/reference/architecture-implementation-patterns/reference/final.md
+    basis: simple CRUD, 작은 필드 변경, supporting workflow에서는 heavy pattern을 기본 도입하지 않는 기준
+  - path: dddjango/skills/architecture-implementation-patterns/SKILL.md
+    basis: simple CRUD/tiny edit 제외 조건과 implementation skill handoff
+  - path: dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+    basis: 가장 가벼운 충분 패턴과 heavy pattern 회피 기준
+target_behavior:
+  required:
+    - 파일 수정 없이 짧게 답한다.
+    - 이 요청에는 layered/clean/hexagonal, repository/UoW, CQRS, event sourcing, saga, outbox, ACL을 도입하지 않는다고 판단한다.
+    - 도메인 상태 전이, 외부 side effect, persistence mapping 차이, transaction boundary, replaceability 압력이 없다는 이유를 든다.
+    - 필요한 확인은 Django model/admin/form/query/migration 영향 정도로 제한하고, 구체 구현이 필요하면 `implementation-django` 또는 Django web/admin 관련 구현 skill로 넘긴다.
+    - 실행하지 않은 파일 검사, command, 테스트, subagent 사용은 실행했다고 말하지 않는다.
+  forbidden:
+    - repository/UoW, ports/adapters, outbox, saga, CQRS, event sourcing, ACL을 예방적으로 도입한다.
+    - workflow/subagent role map이나 장문의 DDD 설계를 출력한다.
+    - DB locking/isolation, REST Idempotency-Key, Problem Details, concurrency test를 이 단순 작업의 필수 산출물로 만든다.
+    - public/runtime 출력에 evaluator-only answer material, private scoring note, prior run finding을 노출한다.
+scoring_checks:
+  - pass if the answer rejects heavy implementation patterns and keeps the scope to Django-native rename/search impact.
+  - pass if it gives a concise handoff to implementation-django only if actual code work is requested.
+  - fail if the answer introduces architecture ceremony to a simple admin/query change.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - heavy pattern overapplication
+  - workflow overreach
+  - false verification or subagent claim
+  - wrong skill route
+leakage_checks:
+  - public response must not mention answer path, private scoring text, coverage_tags, target_behavior, or previous run conclusions.
+evidence_required:
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - answer-oracle evaluation notes
+  - run artifact showing no answer oracle exposure
+control_case: restraint
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass
+  expected_delta: non-negative
+  baseline_pass_ok: true
+coverage_tags:
+  - simple-negative
+  - architecture-pattern-restraint
+  - implementation-patterns
+  - overapplication-restraint
+  - routing-boundary
+  - validation-honesty

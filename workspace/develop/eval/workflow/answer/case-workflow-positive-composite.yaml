@@ -9,7 +9,7 @@ reference_basis:
     basis: positive composite workflow
   - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: role map, sequential fallback, handoff contract, integration checklist
-  - path: workspace/develop/eval
+  - path: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-positive-composite.md
     basis: order creation API
 target_behavior:
   required:

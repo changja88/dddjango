@@ -1,0 +1,48 @@
+id: case-response-test-tiny-assertion
+case_id: case-response-test-tiny-assertion
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-test-tiny-assertion.md
+intent: implementation-test 제외 조건에서 tiny pytest assertion 질문을 direct answer로 처리하는지 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: negative cases and TDD/Test direct-answer restraint
+  - path: dddjango/skills/implementation-test/SKILL.md
+    basis: small assertion direct-answer exclusion
+  - path: dddjango/skills/implementation-test/references/pytest-fixtures.md
+    basis: pytest.approx assertion guidance
+target_behavior:
+  required:
+    - Answers briefly and directly with pytest.approx or equivalent approximate assertion guidance.
+    - Keeps the answer scoped to a tiny assertion question.
+    - Does not claim any tests or commands were run.
+  forbidden:
+    - Introducing fixture, factory, property-test, TDD plan, DDD design, workflow, role map, or subagent ceremony.
+    - Giving a broad test strategy instead of the requested short answer.
+scoring_checks:
+  - pass if the answer is concise and gives an approximate assertion example.
+  - fail if the answer expands into planning, routing, or ceremony the user explicitly excluded.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, test execution, file inspection, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - overapplied test strategy
+  - workflow or subagent ceremony
+  - false command claim
+leakage_checks:
+  - public response must not mention answer path, private scoring text, coverage_tags, reference_basis, or prior run notes.
+evidence_required:
+  - response transcript
+  - answer-oracle evaluation notes
+control_case: negative
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass
+  expected_delta: non-negative
+  baseline_pass_ok: true
+coverage_tags:
+  - implementation-test-exclusion
+  - pytest-assertion
+  - tiny-task-restraint
+  - routing-boundary
+  - validation-honesty

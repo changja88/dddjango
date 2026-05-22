@@ -14,11 +14,9 @@
 - `workspace/reference/source-reference-audit/reference/final.md`
 - `workspace/reference/architecture-ddd/reference/final.md`
 - `dddjango/skills/source-reference-audit/SKILL.md`
-- `dddjango/skills/source-reference-audit/SKILL.md`
 - `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`
 - `workspace/develop/eval`
 - `dddjango/.codex-plugin/plugin.json`
-- `dddjango/skills/source-reference-audit/SKILL.md`
 - `workspace/reference/*/reference/final.md`
 - `workspace/reference/*/reference/internal.md`
 - `workspace/reference/*/reference/external.md`
@@ -30,15 +28,17 @@
 - Source coherence: product goal, skill list, skill contracts, workflow, validation rules, plugin manifest, and authoring inputs point to the same decisions.
 - Reference provenance: every runtime bundled reference traces to the appropriate `workspace/reference/<area>/reference/final.md` or explicitly documented fallback source.
 - Conflict and gap handling: `review.md` conflicts, decisions, gaps are either resolved in docs or explicitly marked as out of scope/provisional.
-- Provisional source handling: implementation patterns, Django Ninja, Django Web are not treated as dedicated-source-complete unless their source reference exists.
+- Provisional source handling: implementation patterns, Django Ninja, Django Web are not treated as dedicated-source-complete unless `final.md` exists and substantively covers the skill's main decisions.
 - DRF guardrail: DRF content is not used as greenfield API implementation standard; Django Ninja remains the default new API implementation target.
+- Runtime metadata/cache sync: `SKILL.md`, `agents/openai.yaml`, bundled references, validation output, and source/runtime cache parity are checked as semantic evidence, not file-existence smoke.
 - Validation coverage: validation scenarios cover DDD, DB, API, Django, Ninja, Web, Python, TDD, Test, Clean Code, workflow, negative cases, validation honesty.
 - Eval traceability: each eval bucket's `cases/plugin/public` and `answer` can trace required observations back to source references.
 - Boundary protection: public case, answer oracle, runtime skill source, prior run artifact, and workspace source reference stay in separate roles.
+- Source-audit routing restraint: application design, Django implementation, test mechanics, or workflow execution requests are routed to owning skills instead of being forced through source-reference-audit ceremony.
 
 ## Minimum Coverage
 
-완성된 source eval pack은 source coherence, source provenance, conflict/gap decision, provisional handling, DRF guardrail, validation coverage, eval traceability, boundary protection을 각각 최소 하나 이상의 case로 덮어야 한다. seeded conflict나 missing provenance fixture를 포함해 사람이 대충 읽고 통과시키는 audit을 방지한다.
+완성된 source eval pack은 source coherence, source provenance, conflict/gap decision, provisional handling, DRF guardrail, runtime metadata/cache sync, validation coverage, eval traceability, boundary protection, source-audit exclusion/routing restraint를 각각 최소 하나 이상의 case로 덮어야 한다. seeded conflict나 missing provenance fixture를 포함해 사람이 대충 읽고 통과시키는 audit을 방지한다.
 
 Crosswalk는 모든 first-class dimensions를 per-skill로 확인한다: DDD, implementation patterns, DB, API, Django, Django Ninja, Django Web, Python, Clean Code, TDD, Test, Workflow. `final.md`가 모호하거나 source gap/review conflict가 걸린 경우 `internal.md`, `external.md`, `review.md`를 consulted evidence로 남긴다.
 

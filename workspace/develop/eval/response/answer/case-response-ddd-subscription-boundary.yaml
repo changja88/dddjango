@@ -1,0 +1,89 @@
+id: case-response-ddd-subscription-boundary
+case_id: case-response-ddd-subscription-boundary
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-ddd-subscription-boundary.md
+intent: architecture-ddd 단일 skill이 구독/사용권 도메인을 전략 설계에서 전술 모델 후보까지 과하지 않게 모델링하는지 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: Strategic DDD 세부 기준
+  - path: workspace/reference/architecture-ddd/reference/final.md
+    basis: subdomain, bounded context, ubiquitous language, aggregate, value object/entity, invariant, domain event/service, consistency boundary
+  - path: dddjango/skills/architecture-ddd/SKILL.md
+    basis: architecture-ddd routing, runtime rules, implementation handoff boundary
+target_behavior:
+  required:
+    - 문제 공간의 하위 도메인과 솔루션 공간의 bounded context를 먼저 구분한다.
+    - Subscription, Entitlement, Billing 용어를 context별 유비쿼터스 언어로 분리한다.
+    - aggregate 후보와 entity/value object 후보를 불변식 기준으로 판단한다.
+    - 결제 성공, 해지 예약, 사용권 만료를 domain event, domain service, application handoff 중 어디에 둘지 설명한다.
+    - 구현, DB, REST API, subagent workflow 결정을 architecture-ddd 범위 밖 handoff로 남긴다.
+  forbidden:
+    - Django model, migration, Router, API contract, repository/UoW, outbox 구현 구조를 본문 결정으로 강제한다.
+    - Subscription aggregate 안에 Billing과 Entitlement의 모든 상태를 공유 mutable child collection처럼 합친다.
+    - source reference 경로나 answer 전용 판정 기준을 public response에 노출한다.
+ddd_observations:
+  business_problem: 무료 체험, 유료 전환, 해지 예약, 사용권 부여가 서로 다른 사업 규칙과 상태 전이를 가지므로 용어와 일관성 경계를 먼저 분리해야 한다.
+  subdomain_type: Subscription lifecycle은 상품 가치와 이탈/수익에 직접 연결되는 core 또는 high-value supporting 후보이고, Billing 정산/결제 연동은 외부 결제 시스템과 맞물린 supporting/generic 후보로 분리한다.
+  subdomain_type_basis: 구독 상태와 사용권 결정은 제품 차별성과 사용자 접근 권한에 직접 영향을 주지만 결제 처리 세부는 외부 시스템이나 표준 회계 흐름에 위임될 수 있다.
+  bounded_context: Subscription Management, Entitlement, Billing 또는 Payment context를 분리하고 각 context 안에서만 용어 의미를 고정한다.
+  context_map_or_not_applicable: Subscription Management는 Billing/Payment의 결제 성공 사실을 upstream event나 published language로 받아 Entitlement에 사용권 부여/회수 사실을 전달하는 downstream handoff를 가진다.
+  ubiquitous_terms:
+    - Subscription
+    - trial
+    - paid conversion
+    - cancellation scheduled
+    - Entitlement
+    - Billing payment succeeded
+  aggregate_candidates:
+    - Subscription aggregate는 trial 시작, 유료 전환 가능 상태, 해지 예약 가능 상태 같은 lifecycle invariant를 보호한다.
+    - Entitlement aggregate 또는 별도 context 모델은 접근 권한의 활성/만료 상태를 보호한다.
+    - Billing payment는 같은 aggregate 내부 객체가 아니라 외부 context 사실 또는 식별자로 참조한다.
+  entity_or_value_object:
+    - Subscription은 식별자와 lifecycle을 가진 entity/aggregate root 후보이다.
+    - TrialPeriod, BillingCycle, CancellationEffectiveDate는 값으로 동등성과 유효성을 판단하는 value object 후보이다.
+    - Entitlement는 독립 lifecycle과 일관성 요구가 있으면 별도 aggregate root 후보이다.
+  invariants:
+    - 무료 체험은 이미 유료 전환된 구독에 다시 시작될 수 없다.
+    - 유료 전환은 결제 성공 사실 이후에만 가능하다.
+    - 해지 예약된 구독은 유효 종료일 전까지 사용권 정책을 명확히 유지해야 한다.
+    - 만료된 사용권은 접근 허용 상태로 남으면 안 된다.
+  domain_event_or_service: SubscriptionConvertedToPaid, CancellationScheduled 같은 같은 bounded context 내부 사실은 domain event 후보로 제시하고, Billing/Payment의 PaymentSucceeded나 Entitlement context의 grant/expire 반응은 published language, integration event, 또는 application handoff 후보로 분리한다. 여러 aggregate나 context를 잇는 규칙은 domain service 또는 application handoff 후보로 구분한다.
+  use_cases:
+    - Start trial subscription
+    - Convert subscription to paid after payment success
+    - Schedule cancellation
+    - Grant or expire entitlement after subscription lifecycle change
+  consistency_boundary: 한 transaction 안에서 Subscription lifecycle invariant를 우선 보호하고 Entitlement/Billing 반응은 같은 aggregate로 묶기보다 domain event나 after-commit handoff로 분리한다.
+  implementation_restraint: Django model, migration, REST API status, repository/UoW/outbox 구현은 현재 답변에서 결정하지 않고 architecture-implementation-patterns, architecture-db, architecture-api, Django implementation skill로 넘긴다.
+scoring_checks:
+  - pass if 전략 설계가 전술 패턴보다 먼저 나오고, 모든 DDD 관찰점이 구독 도메인 규칙에 연결된다.
+  - partial if aggregate와 invariant는 다루지만 context별 언어, subdomain 분류, event/handoff, consistency boundary가 일부 빠진다.
+  - fail if Django/DB/API 구현부터 시작하거나 모든 상태를 하나의 거대한 aggregate로 합친다.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - answer must not claim actual code, DB migration, API contract, or subagent review was executed.
+failure_modes:
+  - tactical-pattern-first answer
+  - anemic glossary without domain decisions
+  - merged subscription billing entitlement aggregate
+  - false verification or subagent claim
+leakage_checks:
+  - public response must not mention answer path, private scoring text, coverage tags, or prior run notes.
+evidence_required:
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-ddjango prompt-input artifact
+  - machine-readable answer-oracle evaluation artifact
+  - answer-oracle evaluation notes
+control_case: false
+expected_outcomes:
+  baseline: pass
+  with_dddjango: pass
+  expected_delta: neutral
+  baseline_pass_ok: true
+coverage_tags:
+  - architecture-ddd-direct
+  - strategic-ddd
+  - specialist-positive

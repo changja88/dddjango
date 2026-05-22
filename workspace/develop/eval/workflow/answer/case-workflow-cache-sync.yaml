@@ -7,8 +7,8 @@ intent: Confirm workflow cache sync reporting after role-map changes.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: cache sync report
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: Cache sync report
+  - path: dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
+    basis: runtime cache sync report, workspace source mapping, and validation status
   - path: dddjango/.codex-plugin/plugin.json
     basis: Runtime synchronization criteria
 target_behavior:

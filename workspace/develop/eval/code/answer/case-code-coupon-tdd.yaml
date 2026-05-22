@@ -7,10 +7,16 @@ intent: Validate TDD/test implementation for coupon policy boundaries.
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
     basis: TDD/test implementation
-  - path: workspace/develop/eval
-    basis: coupon policy TDD
   - path: workspace/reference/implementation-tdd/reference/final.md
     basis: required reference source
+  - path: dddjango/skills/implementation-tdd/SKILL.md
+    basis: runtime TDD method ownership and execution honesty
+  - path: dddjango/skills/implementation-tdd/references/test-list.md
+    basis: boundary pairs and independent decision axes
+  - path: dddjango/skills/implementation-tdd/references/red-green-refactor.md
+    basis: Red-Green-Refactor and immediate-pass characterization rule
+  - path: dddjango/skills/implementation-tdd/references/inside-out-outside-in.md
+    basis: state/output verification for domain policy
   - path: workspace/reference/implementation-test/reference/final.md
     basis: required reference source
 code_expected: true
@@ -20,11 +26,25 @@ deterministic_checks:
     command: python3 -m unittest
     expected_exit: 0
     evidence: command-artifact
+  - id: compileall
+    command: python3 -m compileall -q apps tests
+    expected_exit: 0
+    evidence: command-artifact
+behavior_checks:
+  - id: hidden-coupon-red-proof
+    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-coupon-tdd-red-proof
+    expected_exit: 1
+  - id: hidden-coupon-policy-boundaries
+    command: python3 workspace/scripts/eval_code_behavior_checks.py --case case-code-coupon-tdd
+    expected_exit: 0
 target_behavior:
   required:
-    - Adds behavior tests for minimum amount boundary, expiration day, expired coupon, and used coupon.
-    - Makes minimal implementation changes only if tests expose a gap.
-    - Reports Red-Green-Refactor intent honestly; no claim of seeing failing tests unless actually run.
+    - Adds or identifies the first failing test for a currently missing coupon rule before implementing the fix; if a new test already passes, reports it as characterization/regression coverage rather than a red test.
+    - Adds behavior tests for minimum amount accepted boundary and nearest rejected/complement amount below the minimum.
+    - Adds behavior tests for expiration day accepted, day after expiration rejected, and used coupon rejected as separate policy axes.
+    - Makes the minimal Green implementation needed for the used-coupon gap and avoids unrelated policy or architecture changes.
+    - Reports Red-Green-Refactor intent honestly; no claim of seeing failing tests unless actually run, and refactors only after tests are green.
+    - Prefers output or state verification of coupon policy outcomes over private implementation details.
   forbidden:
     - Testing private implementation details instead of policy behavior.
     - Adding broad DB/API architecture.
@@ -57,6 +77,13 @@ expected_outcomes:
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:
+  - code-implementation-tdd
+  - implementation-tdd
   - tdd
+  - failing-test-first
+  - boundary-cases
+  - red-green-refactor
+  - state-verification
   - test-implementation
   - domain-policy
+  - validation-honesty

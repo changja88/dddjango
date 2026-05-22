@@ -7,12 +7,20 @@ intent: Evaluate operational migration advice with DB and Django migration respo
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: risky DB/API and validation-plan representative scenarios
-  - path: workspace/develop/eval
-    basis: operational migration
   - path: workspace/reference/architecture-db/reference/final.md
     basis: rollout constraints and indexes
+  - path: dddjango/skills/architecture-db/SKILL.md
+    basis: DB rollout risk와 Django migration implementation handoff boundary
+  - path: dddjango/skills/architecture-db/references/rollout-constraints.md
+    basis: expand/backfill/contract, lock/index risk, rollback or forward-fix
+  - path: dddjango/skills/architecture-db/references/constraints-indexes.md
+    basis: not-null, unique/check, index write cost and validation risk
   - path: workspace/reference/implementation-django/reference/final.md
     basis: migrations
+  - path: dddjango/skills/implementation-django/SKILL.md
+    basis: implementation-django migration routing, rollout verification honesty, and runtime rules
+  - path: dddjango/skills/implementation-django/references/migrations.md
+    basis: RunPython, historical models, sqlmigrate, backfill, expand/backfill/contract, rollback or forward-fix
 target_behavior:
   required:
     - Uses expand/backfill/contract or equivalent rolling sequence.
@@ -35,7 +43,13 @@ failure_modes:
 leakage_checks:
   - no private run or answer material in response.
 evidence_required:
-  - response transcript
+  - public prompt packet
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
 control_case: false
 expected_outcomes:
   baseline: partial
@@ -43,6 +57,9 @@ expected_outcomes:
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:
+  - implementation-django
+  - django-migration
   - operational-migration
+  - migration-safety
   - db-consistency
   - validation-honesty

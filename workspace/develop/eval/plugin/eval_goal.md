@@ -21,7 +21,7 @@
 - Skill trigger quality: each `description` contains positive triggers, negative routing, Korean trigger vocabulary, and precedence without hiding trigger rules only in the body.
 - Skill boundary fidelity: each skill's runtime routing and references keep DDD, DB, API, Django, Ninja, Web, Python, TDD, Test, Clean Code, and Workflow responsibilities from bleeding into each other.
 - Progressive disclosure: `SKILL.md` stays concise, links directly to one-level `references/`, and does not copy source reference chapters into runtime instructions.
-- Provisional handling: `architecture-implementation-patterns`, `implementation-django-ninja`, and `implementation-django-web` clearly state provisional/fallback source status and do not imply dedicated source references exist.
+- Source status honesty: skills whose dedicated source reference is missing or insufficient clearly state fallback/provisional limits, while skills with dedicated source coverage are not mislabeled as provisional.
 - Agents metadata: `agents/openai.yaml` `display_name`, `short_description`, and `default_prompt` semantically match the corresponding `SKILL.md`.
 - Packaging: `dddjango/.codex-plugin/plugin.json`, marketplace entry, `plugins/dddjango` symlink/equivalent entry, and canonical `dddjango/` source are coherent.
 - Runtime safety: no skill, reference, or metadata contains public eval packet text, `answer/` oracle content, prior run findings, or workspace-only source paths as final runtime references.
@@ -37,7 +37,7 @@
 - Agents metadata: `display_name`, 25-64 character `short_description` target or justified exception, one-sentence prompt shape, exact `$skill-name` in `default_prompt`, quoting/format validity, stale UI copy check.
 - Skill body quality: actionable runtime rules, concise body, clear boundaries, conditional reference loading, no duplicated source material, honest verification reporting.
 - Reference-routing matrix: every `references/*.md` maps to at least one prompt condition and at least one negative condition where it should not be loaded or used.
-- Provisional per-field metadata: provisional/fallback status is visible in `SKILL.md` and user-facing metadata without implying complete dedicated source coverage.
+- Source-status metadata: fallback/provisional status is visible in `SKILL.md` and user-facing metadata only when source coverage is missing or insufficient; dedicated-source skills are checked for semantic alignment instead of stale provisional labeling.
 - Runtime reference split content: each skill has expected one-level bundled reference files linked from `SKILL.md`, not only a correct folder shape.
 - DRF guardrail: any DRF-derived runtime reference is marked legacy/migration/comparison and never greenfield standard.
 - Auxiliary docs ban: no README/install/changelog-style files inside skill folders.
@@ -52,7 +52,7 @@
 - required source references and expected responsibility boundaries
 - required metadata fields and semantic match checks
 - field-level `agents/openai.yaml` checks for display/short/default prompt values
-- allowed provisional wording and forbidden overclaim wording
+- allowed dedicated-source wording, allowed provisional wording, and forbidden source-status overclaim wording
 - reference-routing matrix expectations
 - required validation commands
 - packaging files that must exist and files that must not be introduced
@@ -66,7 +66,7 @@
 - `SKILL.md` frontmatter/body review notes
 - `agents/openai.yaml` semantic review notes
 - reference link inventory and one-level reference check
-- provisional skill status matrix
+- dedicated/provisional skill status matrix
 - plugin manifest, marketplace entry, symlink/equivalent entry
 - validation command output
 

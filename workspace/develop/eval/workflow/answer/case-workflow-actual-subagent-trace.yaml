@@ -19,6 +19,7 @@ target_behavior:
 workflow_execution_expectation:
   expected_mode: evidence_protocol_required
   acceptable_modes:
+    - direct
     - actual_subagent
     - sequential_fallback
   forbidden_modes:

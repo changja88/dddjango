@@ -1,0 +1,97 @@
+id: case-code-django-orm-service
+case_id: case-code-django-orm-service
+bucket: code
+kind: code
+public_case: workspace/develop/eval/code/cases/plugin/public/case-code-django-orm-service.md
+intent: implementation-django code-backed positive case for model/QuerySet/Manager, selector/service, transaction, on_commit, query performance, and caching restraint.
+reference_basis:
+  - path: workspace/develop/eval/code/eval_goal.md
+    basis: Django implementation code coverage and performance/security artifact expectations
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: Django model, ORM, QuerySet/Manager, service/selector, transaction, caching, performance
+  - path: dddjango/skills/implementation-django/SKILL.md
+    basis: implementation-django scoped implementation and routing boundaries
+  - path: dddjango/skills/implementation-django/references/models-orm.md
+    basis: model method, custom QuerySet/Manager, selector, ORM performance boundaries
+  - path: dddjango/skills/implementation-django/references/services-selectors.md
+    basis: service/selector use case ownership and repository restraint
+  - path: dddjango/skills/implementation-django/references/transactions-performance-security.md
+    basis: transaction.atomic, on_commit, query-count tests, caching invalidation ownership
+code_expected: true
+case_role: implementation_supporting
+deterministic_checks:
+  - id: django-tests
+    command: python3 manage.py test
+    expected_exit: 0
+    evidence: command-artifact
+  - id: django-check
+    command: python3 manage.py check
+    expected_exit: 0
+    evidence: command-artifact
+target_behavior:
+  required:
+    - Adds custom QuerySet and Manager or equivalent Django-native read boundary for reusable order predicates.
+    - Adds selector or read helper for recent active orders with explicit eager-loading/query-shape decision.
+    - Adds model method for order confirmation state transition and keeps service as orchestration boundary.
+    - Uses transaction.atomic in the service for confirmation persistence and transaction.on_commit for post-commit side-effect boundary.
+    - Adds tests for selector/query count and confirmation/on_commit behavior.
+    - Handles cache invalidation ownership explicitly, either with a small cache key/invalidation hook or a documented no-cache decision.
+    - Keeps API Router/Schema and repository/UoW/hexagonal changes out of scope.
+  forbidden:
+    - Business rules owned by Router, serializer, template, or signal.
+    - Broad repository/UoW/hexagonal rewrite for this Django fixture.
+    - Fake manage.py check, test, query-count, or external notification results.
+allowed_paths:
+  - apps/orders/**
+  - tests/**
+forbidden_paths:
+  - workspace/develop/eval/**
+  - dddjango/**
+scoring_checks:
+  - pass if code diff contains Django-native QuerySet/Manager or selector, service transaction boundary, on_commit side-effect boundary, query-count tests, and honest verification.
+  - fail if it only adds prose, leaves state transition in the service, or changes API contract as the main solution.
+score_interpretation: Positive implementation-django code score for ORM/service/transaction/performance/caching; should not be counted as workflow or API-contract coverage.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, query-count checks, cache behavior, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - generated runtime artifacts such as db.sqlite3, __pycache__, .pyc, or .pytest_cache must not appear in changed-files.json.
+failure_modes:
+  - QuerySet/Manager omitted
+  - selector/query-count test omitted
+  - service owns state transition rule
+  - on_commit boundary omitted
+  - cache ownership omitted
+  - false verification claim
+leakage_checks:
+  - answer oracle and private paths must not be read or copied.
+evidence_required:
+  - public prompt packet
+  - operator prompt
+  - baseline and with-dddjango raw responses
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - changed-files.json
+  - diff.patch
+  - copied source files
+  - command text, exit code, stdout, stderr, and event stream
+  - manage.py check and manage.py test command artifacts or exact not-run reason
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
+control_case: false
+expected_outcomes:
+  baseline: pass-or-partial
+  with_dddjango: pass-or-pass-limited
+  expected_delta: non-negative
+  baseline_pass_ok: true
+baseline_pass_ok_reason: This is a reference-backed positive implementation-django case, but repeated targeted runs showed baseline can also satisfy the scoped Django ORM/service behavior; the oracle still evaluates artifacts, command honesty, leakage, and non-negative quality rather than requiring a brittle score delta.
+coverage_tags:
+  - code-implementation-django
+  - implementation-django
+  - django-model-orm
+  - queryset-manager
+  - service-selector
+  - django-transaction
+  - query-performance
+  - django-caching
+  - command-honesty
+  - validation-honesty

@@ -7,10 +7,12 @@ intent: Ensure a simple field rename does not trigger DDD workflow or subagent c
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: simple-negative
-  - path: workspace/develop/eval
-    basis: Negative Case simple field rename
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: simple task restraint
+  - path: workspace/reference/implementation-django/reference/final.md
+    basis: Django model field rename and small migration impact
+  - path: dddjango/skills/implementation-django/SKILL.md
+    basis: simple Django implementation restraint and migration handoff
+  - path: dddjango/skills/implementation-django/references/migrations.md
+    basis: small migration review and RenameField compatibility
 target_behavior:
   required:
     - Answers briefly.
@@ -31,7 +33,13 @@ failure_modes:
 leakage_checks:
   - no answer content exposed.
 evidence_required:
-  - response transcript
+  - public prompt packet
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - with-dddjango prompt-input artifact
+  - command, exit code, event stream, and stderr
+  - answer-oracle evaluation notes
+  - machine-readable answer-oracle evaluation artifact
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial
@@ -40,4 +48,7 @@ expected_outcomes:
   baseline_pass_ok: true
 coverage_tags:
   - simple-negative
+  - implementation-django
+  - django-implementation-restraint
+  - django-migration
   - overapplication-restraint

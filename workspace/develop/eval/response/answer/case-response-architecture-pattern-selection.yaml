@@ -1,0 +1,77 @@
+id: case-response-architecture-pattern-selection
+case_id: case-response-architecture-pattern-selection
+bucket: response
+kind: response
+public_case: workspace/develop/eval/response/cases/plugin/public/case-response-architecture-pattern-selection.md
+intent: architecture-implementation-patterns 단독 positive case로 구현 아키텍처 패턴 선택 기준을 검증한다.
+reference_basis:
+  - path: workspace/develop/eval/response/eval_goal.md
+    basis: Architecture Pattern Selection 대표 시나리오와 implementation pattern choice coverage
+  - path: workspace/reference/architecture-implementation-patterns/reference/final.md
+    basis: layered/clean/hexagonal, ports/adapters, repository/UoW, CQRS, event sourcing, saga, outbox, ACL, service layer, risky write handoff 기준
+  - path: dddjango/skills/architecture-implementation-patterns/SKILL.md
+    basis: skill routing, runtime rules, Risky Write Consistency Block, owning skill handoff
+  - path: dddjango/skills/architecture-implementation-patterns/references/pattern-selection.md
+    basis: 가장 가벼운 충분 패턴과 heavy pattern 회피 기준
+  - path: dddjango/skills/architecture-implementation-patterns/references/ports-adapters.md
+    basis: dependency direction, port, adapter, ACL placement
+  - path: dddjango/skills/architecture-implementation-patterns/references/repository-uow.md
+    basis: repository, Unit of Work, Django service/selectors trade-off
+  - path: dddjango/skills/architecture-implementation-patterns/references/outbox-acl.md
+    basis: outbox, saga, event sourcing, ACL, external side-effect timing
+target_behavior:
+  required:
+    - `architecture-implementation-patterns`를 주 skill로 사용하거나 그 기준을 적용한다.
+    - 도메인 모델이 이미 정리된 전제에서 pattern-level 판단에 집중하고, 추가 DDD event storming이나 DB/API 상세 설계로 범위를 옮기지 않는다.
+    - 가장 가벼운 충분 패턴을 먼저 선택하고, service layer와 ports/adapters 또는 hexagonal boundary가 필요한 이유를 주문 확정 use case와 연결한다.
+    - dependency direction을 domain/application 쪽으로 두고, Django router/view, ORM, gateway SDK, broker publisher를 adapter 또는 infrastructure 세부사항으로 둔다.
+    - repository/UoW는 aggregate persistence와 transaction boundary, fake repository 가치, ORM leakage 필요성 기준으로 조건부 판단한다.
+    - 외부 결제 승인 메시지나 알림 발송은 DB transaction 내부 직접 호출을 피하고 after-commit 또는 durable outbox handoff 중 신뢰성 요구에 맞게 선택한다.
+    - CQRS, event sourcing, saga, ACL은 선택 조건과 회피 조건을 함께 말하고, 이 case에서 필요한 것과 보류할 것을 구분한다.
+    - `Risky Write Consistency Block` 또는 동등한 명시 섹션으로 transaction owner, pattern decision, side-effect timing, uniqueness/idempotency storage 필요 여부, DB/API/test handoff를 다룬다.
+    - 실행하지 않은 파일 검사, 테스트, command, subagent 사용은 실행했다고 말하지 않는다.
+  forbidden:
+    - 단순히 모든 패턴을 도입하라고 권한다.
+    - repository/UoW, CQRS, event sourcing, saga, ACL을 기본값이나 필수로 취급한다.
+    - Router/view가 business rule, transaction, 외부 SDK 호출을 직접 소유하게 한다.
+    - DB locking/isolation, Idempotency-Key status code, pytest concurrency 세부 구현을 이 skill의 완료 산출물처럼 확정한다.
+    - public/runtime 출력에 evaluator-only answer material, private scoring note, prior run finding을 노출한다.
+scoring_checks:
+  - pass if the answer gives a concrete pattern recommendation and explicitly rejects unnecessary heavy patterns with reference-based reasons.
+  - pass if dependency direction, ports/adapters, outbox or after-commit side-effect timing, and repository/UoW trade-off are tied to the order confirmation use case.
+  - fail if the answer is only a generic architecture pattern catalog.
+  - fail if it requires CQRS/event sourcing/saga/ACL without a case-specific trigger.
+hard_gates:
+  - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
+  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+failure_modes:
+  - pattern catalog without selection
+  - heavy pattern overclaim
+  - missing side-effect reliability boundary
+  - wrong dependency direction
+  - false verification or subagent claim
+leakage_checks:
+  - public response must not mention answer path, private scoring text, coverage_tags, target_behavior, or previous run conclusions.
+evidence_required:
+  - baseline and with-dddjango response
+  - baseline isolation artifact
+  - answer-oracle evaluation notes
+  - run artifact showing no answer oracle exposure
+control_case: false
+expected_outcomes:
+  baseline: partial
+  with_dddjango: pass
+  expected_delta: positive
+  baseline_pass_ok: false
+coverage_tags:
+  - specialist-positive
+  - architecture-pattern-selection
+  - implementation-patterns
+  - dependency-direction
+  - ports-adapters
+  - repository-uow
+  - cqrs-event-sourcing
+  - saga-outbox-acl
+  - service-layer
+  - risky-write-consistency
+  - validation-honesty

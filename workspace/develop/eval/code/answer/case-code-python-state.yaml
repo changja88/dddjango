@@ -6,11 +6,19 @@ public_case: workspace/develop/eval/code/cases/plugin/public/case-code-python-st
 intent: Validate Python typing/value-object improvement without framework overreach.
 reference_basis:
   - path: workspace/develop/eval/code/eval_goal.md
-    basis: Python and clean code
-  - path: workspace/develop/eval
-    basis: Python Typing
+    basis: Python quality and code-backed validation honesty
   - path: workspace/reference/implementation-python/reference/final.md
-    basis: required reference source
+    basis: Python type hints, Enum/StrEnum, dataclass value object, Protocol restraint, pydantic v2 boundary, Ruff/typecheck reporting
+  - path: dddjango/skills/implementation-python/SKILL.md
+    basis: implementation-python routing, runtime rules, and verification honesty
+  - path: dddjango/skills/implementation-python/references/typing.md
+    basis: public type contracts, X | None, built-in generics, Python version gate, Ruff/typecheck compatibility
+  - path: dddjango/skills/implementation-python/references/dataclasses-enums.md
+    basis: dataclass value object, Enum/StrEnum, and finite state guidance
+  - path: dddjango/skills/implementation-python/references/protocols-boundaries.md
+    basis: Protocol restraint and exception boundary guidance
+  - path: dddjango/skills/implementation-python/references/pydantic-v2.md
+    basis: pydantic v2 external boundary restraint
 code_expected: true
 case_role: implementation_supporting
 deterministic_checks:
@@ -20,15 +28,21 @@ deterministic_checks:
     evidence: command-artifact
 target_behavior:
   required:
+    - Preserves or improves public type contracts with project-compatible annotations and does not weaken None or collection element semantics.
     - Converts Money toward an explicit value object, using a frozen dataclass or equivalent while respecting the fixture Python version.
     - Preserves currency mismatch invariant and tests it.
-    - Avoids pydantic as domain default and avoids unnecessary Protocol.
+    - Keeps order status as a meaningful explicit type, using Enum, StrEnum, or an equivalent project-compatible finite-state representation when appropriate.
+    - Avoids pydantic as domain default and avoids unnecessary Protocol when there is no replaceable boundary.
+    - Reports unit tests and any Ruff, mypy, or pyright checks that were run, or explicitly states when those checks were not run.
   forbidden:
     - Large architecture pattern introduction.
     - Weakening type contracts.
+    - Moving Money or order state domain rules into pydantic validators as the default domain model.
+    - Adding Protocols for one-off local classes without a replaceable boundary.
 allowed_paths:
   - apps/payments/**
   - apps/orders/models.py
+  - apps/orders/services.py
   - tests/**
 forbidden_paths:
   - workspace/develop/eval/**
@@ -42,6 +56,8 @@ hard_gates:
 failure_modes:
   - mutable value object remains unsafe
   - pydantic overuse
+  - protocol overuse
+  - false verification claim
 leakage_checks:
   - no private answer references.
 evidence_required:
@@ -50,12 +66,22 @@ evidence_required:
   - test output
 control_case: false
 expected_outcomes:
-  baseline: partial
+  baseline: pass
   with_dddjango: pass
-  expected_delta: positive
-  baseline_pass_ok: false
+  expected_delta: neutral
+  baseline_pass_ok: true
+baseline_pass_ok_reason: Repeated targeted runs showed the scoped Python typing/value-object case can be satisfied by baseline as well as with-dddjango; this case now gates artifact-backed behavior, command honesty, Python-boundary restraint, and leakage rather than requiring a brittle score delta.
 coverage_tags:
+  - code-implementation-python
+  - implementation-python
   - python-typing
-  - dataclass
-  - value-object
+  - python-type-contracts
+  - dataclass-value-object
+  - enum-strenum
+  - protocol-boundary
+  - pydantic-v2-boundary
+  - ruff-typecheck
+  - python-version-gate
+  - command-honesty
+  - validation-honesty
   - clean-code
