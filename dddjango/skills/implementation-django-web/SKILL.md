@@ -35,6 +35,6 @@ description: >
 - TemplateView/Generic CBV/FBV, web form, context preparation, HTMX fragment 선택은 프로젝트 관례와 흐름의 명확성을 기준으로 한다. 세부 기준은 [templateview-htmx.md](references/templateview-htmx.md)를 따른다.
 - Static asset은 프로젝트 pipeline과 rendered page 연결을 함께 확인한다. 세부 기준은 [static-assets.md](references/static-assets.md)를 따른다.
 - CSRF/AJAX/HTMX 안전성, XSS, security setting, middleware 관련 변경은 [csrf-ajax.md](references/csrf-ajax.md)를 따른다.
-- Render/static acceptance signal은 validator-visible label로 유지한다: `display-ready fallback values`, `None`, blank strings, and missing optional values, `non-empty placeholders`, `Templates must render prepared display values`, `empty value path`, `Changed static files must be referenced by the rendered page`. 세부 적용 기준은 bundled reference를 따른다.
+- Render/static acceptance는 bundled reference 기준에 따라 확인한다. Optional display value는 `None`, blank string, missing optional value를 template 전에 표시용 값으로 준비하고, template은 준비된 표시 값을 렌더링하며, 변경한 page-specific static file은 rendered page에서 참조되는지 확인한다.
 - Web 구현 완료 시 render/form/HTMX/static/security acceptance evidence가 필요한지 판단하고, detailed pytest fixture, browser automation harness, coverage, test double mechanics는 `implementation-test`로 넘긴다.
 - 실제 실행한 검증만 보고한다. render test, browser check, `collectstatic`, `check --deploy`, template test를 실행하지 않았으면 미실행으로 적는다.

@@ -74,7 +74,7 @@ Runtime wrong-routing audit에서는 skill description metadata만으로 충분�
 - Risky writes에는 `Risky Write Consistency Block` 결정을 포함하거나 responsible role에 배정한다.
 - Final integration은 각 role의 risks와 required follow-up을 닫거나 unresolved로 명시한다.
 - Runtime-facing guidance에서는 source authoring path를 allowed reference처럼 제시하지 않는다. Runtime references는 skill-local bundled reference로 안내한다.
-- Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 넘긴다. Workflow 중 eval case, answer oracle, evaluator, report, model variance 문제가 발견되면 이 skill에서 직접 고치지 말고 owning eval follow-up으로 분류하며 첫 줄은 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다.
+- Source/reference governance, metadata, leakage, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 넘긴다. Workflow 중 validation-pack, scoring, report, or run-variance 문제가 발견되면 이 skill에서 직접 고치지 말고 owning follow-up으로 분류하며 project planning constraints를 따른다.
 - Plugin cache outside workspace를 수정했다면 Cache sync report에 workspace canonical source mapping을 적는다. `workflow-dddjango-subagents`에서는 role-map parity, runtime skill/reference paths, validation run 또는 not-run status를 포함한다. Broader provenance/cache audit는 `source-reference-audit` 책임이다.
 - 실행한 tests, validation, review, browser checks, subagent work, eval, Serena만 실행했다고 보고한다. 실행하지 않았으면 not run이라고 말한다.
 - Direct implementation work의 final report는 concrete changed files와 필요한 verification만 간결히 보고하고, 작업이 composite/risky로 바뀌지 않는 한 workflow sections를 추가하지 않는다.

@@ -23,8 +23,8 @@ Composite dddjango work를 마무리하기 전에 읽는다.
 - Tests and verification: domain rules, API contract, migration risk에 test 또는 explicit not-run verification note가 연결된다.
 - Integration owner: Coordinator 또는 named owner가 role results 수집, conflict resolution, follow-up closure를 책임진다.
 - Role handoff closure: 각 role의 `Risks`와 `Required Follow-up`이 closed 또는 unresolved로 명시됐다.
-- Source/runtime boundary: Runtime-facing guidance는 skill-local `references/*.md`를 사용하고 source authoring path를 allowed runtime reference처럼 제시하지 않는다. Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 handoff한다.
-- Eval follow-up: eval case, answer oracle, evaluator, report, model variance 문제가 발견되면 이 workflow에서 직접 수정하지 않는다. Owning eval follow-up으로 분류하고 첫 줄은 `수정 대상: case`, `수정 대상: answer`, `수정 대상: evaluator`, `수정 대상: report`, `수정 대상: model-variance` 중 하나를 사용한다.
+- Source/runtime boundary: Runtime-facing guidance는 skill-local `references/*.md`를 사용하고 source authoring path를 allowed runtime reference처럼 제시하지 않는다. Source/reference governance, metadata, leakage, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 handoff한다.
+- Validation-pack follow-up: validation scenario, scoring, report, or run-variance 문제가 발견되면 이 workflow에서 직접 수정하지 않는다. Owning follow-up으로 분류하고 project planning constraints를 따른다.
 - Cache sync report: plugin cache outside workspace를 수정했다면 workflow-local cache path, matching workspace canonical source, validation status를 보고한다. `workflow-dddjango-subagents` role-map 변경 시 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`를 parity source로 사용해 runtime/cache role names, responsibility scope, related skills가 축소되지 않았는지 확인한다. Broader provenance/cache audit는 `source-reference-audit` 책임이다.
 
 ## Risky Write Consistency Block
@@ -43,7 +43,7 @@ Order, payment, inventory, reservation, refund, permission, ledger 같은 risky 
 
 ## Runtime Cache Sync
 
-Source skill과 runtime cache가 다르면 `workspace/plan/skill_lv_up_plan/workflow-dddjango-subagents/analysis/`에 첫 줄 `수정 대상: runtime-sync` 분석을 작성하고, 같은 timestamp 파일명으로 `workspace/plan/skill_lv_up_plan/workflow-dddjango-subagents/plan/`에 matching plan을 작성한 뒤 sync한다. Sync 후에는 `SKILL.md`, `references/*.md`, `agents/openai.yaml` parity를 실제 diff 또는 validator로 확인한다.
+Source skill과 runtime cache가 다르면 project planning constraints에 맞춰 runtime-sync 분석과 matching plan을 작성한 뒤 sync한다. Sync 후에는 `SKILL.md`, `references/*.md`, `agents/openai.yaml` parity를 실제 diff 또는 validator로 확인한다.
 
 ## Validation Honesty
 

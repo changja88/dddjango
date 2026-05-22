@@ -24,7 +24,7 @@
   "interface": {
     "displayName": "dddjango",
     "shortDescription": "Django DDD, Ninja API, DB, testing, and clean code skills",
-    "longDescription": "Use dddjango to guide Python and Django work with DDD, clean architecture, database modeling, Django Ninja API design, pytest/TDD, and Korean-first review or implementation workflows. DRF is intentionally disallowed; API guidance uses Django Ninja.",
+    "longDescription": "Use dddjango to guide Python and Django work with DDD, clean architecture, database modeling, Django Ninja API design, pytest/TDD, and Korean-first review or implementation workflows. New API guidance uses Django Ninja; DRF is limited to legacy maintenance, migration, compatibility, or comparison work.",
     "developerName": "Hyun",
     "category": "Coding",
     "capabilities": [
