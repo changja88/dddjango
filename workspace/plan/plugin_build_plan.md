@@ -37,6 +37,7 @@
 - 공통 runner, scorer, oracle schema, validator, report renderer, sanitizer, digest logic을 수정하면 모든 bucket을 affected로 본다.
 - 다른 에디터나 다른 에이전트 런타임 검증은 이번 Codex 플러그인 완료 조건이 아니다. 필요하면 P9 이후 별도 compatibility plan으로 분리한다.
 - 구조 검증, source-path prompt assembly, HTML report, skill list visibility만으로는 완료할 수 없다. 설치된 Codex runtime에서 실제 user-like prompt가 의도한 skill을 로드한 증거가 필요하다.
+- P3는 P3a static/user-prompt matrix와 P3b runtime forward-test로 분리한다. P3a가 완료되고 `ADR-0004`가 accepted이면 P4를 시작할 수 있지만, P3b runtime evidence 없이는 P7/P8을 완료할 수 없다.
 
 ## 산출물 정책
 
@@ -220,6 +221,19 @@ Source 우선순위:
 
 목표: 평가 시스템 없이도 각 skill이 실제 요청에서 쓸 수 있는지 확인한다.
 
+P3 split:
+
+- P3a static/user-prompt matrix: usage card 기반 prompt set, expected routing,
+  common non-goal, blocked runtime evidence, index/status 기록을 고정한다.
+- P3b runtime forward-test: approved external Codex/OpenAI runtime 또는 실행
+  가능한 local/offline provider에서 actual skill loaded, routing observation,
+  final answer, overclaim, leakage를 관찰한다.
+
+P3a가 완료되고 `ADR-0004-p3-runtime-forward-test-deferral.md`가 accepted이면
+P4를 시작할 수 있다. 단, P3 전체가 complete인 것은 아니며 P4/P5/P6 결과는
+runtime-routing evidence가 없다는 제한을 가진다. P7/P8 완료 전에는 P3b 또는
+그와 동등한 installed-runtime user-like evidence가 반드시 필요하다.
+
 검증 matrix:
 
 - Codex trigger smoke
@@ -250,16 +264,25 @@ Forward-test 규칙:
 
 완료 게이트:
 
-- [ ] 모든 skill에 happy/exclusion 결과가 있다.
-- [ ] 각 trigger family 또는 high-risk skill마다 fresh isolated subagent/user-like forward-test가 최소 1개 있다.
+- [ ] P3a: 모든 high-risk trigger family의 happy/exclusion prompt matrix가 있다.
+- [ ] P3a: runtime 실행이 막힌 경우 blocked evidence와 승인/로컬 provider 시도 결과가 기록되어 있다.
+- [ ] P3b: 모든 skill에 happy/exclusion runtime 결과가 있다.
+- [ ] P3b: 각 trigger family 또는 high-risk skill마다 fresh isolated subagent/user-like forward-test가 최소 1개 있다.
 - [ ] 실패가 있으면 해당 skill/reference/trigger만 수정한다.
-- [ ] Codex trigger smoke가 실행 불가하면 `infrastructure-blocked`로 기록하고 완료하지 않는다.
-- [ ] fresh forward-test를 실행할 수 없으면 `infrastructure-blocked`로 기록하고 다음 단계로 가지 않는다.
+- [ ] Codex trigger smoke가 실행 불가하면 P3b를 `infrastructure-blocked`로 기록하고 P3 전체를 complete로 표시하지 않는다.
+- [ ] fresh forward-test를 실행할 수 없으면 P3b를 `infrastructure-blocked`로 기록한다. P4 진입은 P3a 완료와 accepted ADR이 있을 때만 허용한다.
 - [ ] 평가 runner나 HTML report는 아직 만들지 않는다.
 
 ### P4. 평가 시스템 골격 검증
 
 목표: case를 늘리기 전에 runner, scoring, report가 최소 suite에서 신뢰 가능한지 확인한다.
+
+P4 entry condition:
+
+- P3a static/user-prompt matrix가 complete여야 한다.
+- P3b runtime forward-test가 blocked인 경우 `ADR-0004`가 accepted되어 있어야
+  한다.
+- P4 산출물에는 runtime-routing evidence가 deferred 상태임을 기록한다.
 
 P4 선행 산출물:
 
@@ -381,6 +404,12 @@ Mini-bucket fixture:
 
 목표: source plugin과 Codex install/cache가 일치하는지 최종 확인한다.
 
+P7 entry condition:
+
+- P3b runtime forward-test 또는 동등한 installed-runtime user-like evidence를
+  실행할 수 있는 runtime channel이 있어야 한다. 실행할 수 없으면 P7은
+  `infrastructure-blocked`이고 complete가 아니다.
+
 체크리스트:
 
 - [ ] Codex `.codex-plugin/plugin.json`의 `skills: "./skills/"`를 확인한다.
@@ -421,6 +450,7 @@ Command evidence contract:
 - [ ] local path leakage가 raw/report 전체에서 0인지 확인한다.
 - [ ] HTML latest가 최종 run을 가리키는지 확인한다.
 - [ ] P7 installed-runtime user-like task evidence가 현재 skill/manifest/cache 기준인지 확인한다. P7 이후 skill, manifest, metadata, cache가 바뀌었으면 P7 installed-runtime task를 다시 실행한다.
+- [ ] P3b runtime forward-test deferral이 해소되었는지 확인한다. 해소되지 않았으면 full regression이 통과해도 P8 complete 금지.
 - [ ] unresolved flaky history가 0인지 확인한다.
 
 완료 게이트:
@@ -433,6 +463,7 @@ Command evidence contract:
 - [ ] current-file fingerprint mismatch 0이다.
 - [ ] unresolved flaky history 0이다.
 - [ ] installed-runtime user-like task evidence가 현재 파일 기준이고 high-risk trigger family coverage를 만족한다.
+- [ ] P3b runtime forward-test 또는 accepted equivalent installed-runtime evidence가 current다.
 - [ ] 마지막 독립 리뷰의 Blocker 0, Major 0, 열린 Minor 0 증거가 `workspace/plan/reviews/`에 있다.
 
 ### P9. 선택: 다른 런타임 호환성

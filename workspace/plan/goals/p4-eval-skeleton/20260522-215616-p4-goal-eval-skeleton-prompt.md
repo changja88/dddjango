@@ -7,7 +7,9 @@
 case를 늘리기 전에 runner, oracle schema, scoring, validator, report가 mini-bucket fixture에서 신뢰 가능하게 pass/fail/not-scored/leakage를 구분하는지 검증한다.
 
 선행 조건:
-- P3 forward tests가 complete다.
+- P3a static/user-prompt matrix가 current다.
+- P3b runtime forward-test가 blocked이면 `workspace/plan/decisions/ADR-0004-p3-runtime-forward-test-deferral.md`가 accepted다.
+- P4 evidence는 runtime-routing evidence가 deferred 상태임을 명시한다.
 
 대상:
 - workspace/plan/governance/eval_protocol.md
@@ -36,6 +38,7 @@ case를 늘리기 전에 runner, oracle schema, scoring, validator, report가 mi
 4. raw artifact, validator result, report 표시가 일치하는지 검증한다.
 5. run-one, run-bucket, render-report, validate-run command contract를 확정한다.
 6. analysis/plan/evidence와 indexes를 갱신한다.
+7. P3b runtime evidence가 아직 없으면 P4 closure와 phase_status에 runtime-routing evidence deferred 한계를 기록한다.
 
 필수 검증:
 - python3 -B workspace/scripts/validate_plan_governance.py
@@ -51,6 +54,7 @@ case를 늘리기 전에 runner, oracle schema, scoring, validator, report가 mi
 - missing/malformed oracle은 실패한다.
 - stale report와 raw leakage는 실패한다.
 - command claim은 structured event command/tool evidence만 인정한다.
+- P3b가 unresolved이면 P4 완료 문구에 P7/P8 전 P3b 또는 equivalent installed-runtime evidence가 필요하다고 명시한다.
 
 권한/승인:
 - model-backed run은 P4 완료에 필요하지 않다. 필요하다고 판단하면 먼저 사용자 승인을 요청한다.

@@ -6,6 +6,11 @@
 목표:
 평가 시스템을 만들기 전에 실제 사용자 요청에 대해 각 skill이 의도대로 로드되고, 엉뚱한 trigger/overclaim이 없는지 최소 사용 시나리오로 검증한다.
 
+P3 split:
+- P3a static/user-prompt matrix: usage card 기반 prompt set과 expected routing/non-goal을 고정한다.
+- P3b runtime forward-test: approved external Codex/OpenAI runtime 또는 실행 가능한 local/offline provider에서 actual skill loaded, final answer, routing, overclaim, leakage를 관찰한다.
+- P3a만으로 P3 전체 complete 금지. P3b가 infrastructure-blocked이면 ADR을 남기고 P4 진입 여부를 별도 결정한다.
+
 선행 조건:
 - P2 skill structure가 complete다.
 
@@ -33,7 +38,9 @@
 3. raw output, loaded skill/routing observation, final answer, overclaim 여부를 evidence에 저장한다.
 4. 실패가 있으면 수정 대상 none/reference/skill/trigger/runtime-sync 중 하나로 분류한다.
 5. skill 수정이 필요하면 analysis/plan을 먼저 작성하고 좁게 수정한 뒤 동일 forward-test를 재실행한다.
-6. indexes와 phase_status.md를 갱신한다.
+6. runtime forward-test가 infrastructure-blocked이면 P3b blocked evidence를 기록하고, P3 전체를 complete로 표시하지 않는다.
+7. P4 진입을 허용하려면 accepted ADR이 있어야 하며, P7/P8 전 P3b 또는 동등한 installed-runtime evidence가 필요하다고 기록한다.
+8. indexes와 phase_status.md를 갱신한다.
 
 필수 검증:
 - python3 -B workspace/scripts/validate_plan_governance.py
@@ -41,10 +48,10 @@
 - forward-test raw artifact 경로와 결과가 evidence에 기록됐는지 확인
 
 완료 조건:
-- 모든 high-risk skill 또는 trigger family에 happy/exclusion 결과가 있다.
-- fresh isolated forward-test가 최소 1개 이상 있다.
+- P3a: 모든 high-risk skill 또는 trigger family에 happy/exclusion prompt matrix가 있다.
+- P3b: fresh isolated forward-test가 최소 1개 이상 있고 actual skill loaded/final answer/routing/overclaim/leakage가 관찰됐다.
 - wrong routing, overclaim, leakage가 열린 상태로 남아 있지 않다.
-- 실행 불가한 forward-test가 있으면 complete 금지. infrastructure-blocked로 기록한다.
+- 실행 불가한 forward-test가 있으면 P3 전체 complete 금지. P3b infrastructure-blocked로 기록한다.
 - validate_plan_governance.py가 통과한다.
 
 권한/승인:

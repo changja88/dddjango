@@ -8,6 +8,7 @@ source plugin과 Codex install/cache가 일치하고, 설치된 runtime에서 hi
 
 선행 조건:
 - P6 integration eval이 complete다.
+- P3b runtime forward-test 또는 동등한 installed-runtime user-like evidence를 실행할 수 있는 runtime channel이 있다. 없으면 P7은 infrastructure-blocked다.
 
 대상:
 - dddjango/.codex-plugin/plugin.json
@@ -50,6 +51,7 @@ source plugin과 Codex install/cache가 일치하고, 설치된 runtime에서 hi
 - plugin root 밖 runtime dependency가 없다.
 - installed-runtime user-like task가 high-risk trigger family마다 의도한 skill을 로드했다.
 - false-trigger/exclusion behavior가 usage card와 일치한다.
+- P3b deferral이 해소되었거나, accepted ADR에 따른 equivalent installed-runtime evidence가 current다.
 
 권한/승인:
 - Codex plugin install/update/cache command, app-server, GUI/browser 접근이 필요하면 사용자 승인 요청 후 진행한다.
