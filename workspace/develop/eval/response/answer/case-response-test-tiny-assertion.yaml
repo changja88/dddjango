@@ -34,6 +34,7 @@ leakage_checks:
 evidence_required:
   - response transcript
   - answer-oracle evaluation notes
+restraint_scope: individual-skill
 control_case: negative
 expected_outcomes:
   baseline: pass-or-partial

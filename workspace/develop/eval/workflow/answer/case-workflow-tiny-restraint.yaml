@@ -7,8 +7,10 @@ intent: Check that tiny explanatory requests do not trigger workflow output.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
     basis: tiny-task restraint
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: simple task restraint
+  - path: dddjango/skills/workflow-dddjango-subagents/SKILL.md
+    basis: Direct Answer Mode and explicit tiny-answer restraint
+  - path: dddjango/skills/workflow-dddjango-subagents/references/delegation-rules.md
+    basis: direct mode and no workflow/subagent ceremony for tiny requests
 target_behavior:
   required:
     - Answers in two concise sentences.
@@ -39,6 +41,7 @@ leakage_checks:
   - no private answer content.
 evidence_required:
   - response transcript
+restraint_scope: plugin-level
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial
@@ -46,5 +49,7 @@ expected_outcomes:
   expected_delta: non-negative
   baseline_pass_ok: true
 coverage_tags:
+  - p5-plugin-restraint
   - tiny-task-restraint
+  - direct-answer-mode
   - simple-negative

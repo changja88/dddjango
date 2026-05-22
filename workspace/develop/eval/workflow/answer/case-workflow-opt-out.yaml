@@ -15,6 +15,7 @@ target_behavior:
   required:
     - Acknowledges no full role decomposition is needed.
     - Provides only minimal migration/rename considerations.
+    - If routing is mentioned, keeps it to the light implementation-django rename/migration boundary without expanding into a workflow.
     - Does not output Role Map, Handoff Contract, or Integration Checklist.
   forbidden:
     - Ignoring opt-out and producing workflow sections.
@@ -42,6 +43,7 @@ leakage_checks:
   - no private answer text.
 evidence_required:
   - response transcript
+restraint_scope: plugin-level
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial
@@ -49,5 +51,6 @@ expected_outcomes:
   expected_delta: non-negative
   baseline_pass_ok: true
 coverage_tags:
+  - p5-plugin-restraint
   - subagent-opt-out
   - tiny-task-restraint

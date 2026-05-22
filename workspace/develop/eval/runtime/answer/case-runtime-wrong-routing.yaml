@@ -9,11 +9,17 @@ reference_basis:
     basis: wrong routing despite metadata
   - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
     basis: Django Agent includes implementation-django-web
-  - path: dddjango/skills/source-reference-audit/SKILL.md
-    basis: implementation-django-web boundary
+  - path: dddjango/skills/implementation-django-web/SKILL.md
+    basis: implementation-django-web routing and template/static/web ownership
+  - path: dddjango/skills/implementation-django-web/agents/openai.yaml
+    basis: runtime metadata exposure for Django web work
+  - path: dddjango/skills/implementation-django-web/references/templates.md
+    basis: template responsibility evidence
+  - path: dddjango/skills/implementation-django-web/references/static-assets.md
+    basis: static asset responsibility evidence
 target_behavior:
   required:
-    - Compares runtime skill description, role-map reference, and canonical workflow table.
+    - Compares runtime skill description, implementation-django-web metadata, role-map reference, and canonical workflow table.
     - Requires implementation-django-web responsibility for template/static/web requests.
     - Separates generic Django ORM/service work from web/template/static work.
   forbidden:
@@ -33,6 +39,7 @@ leakage_checks:
 evidence_required:
   - prompt-input artifact
   - role-map source/cache comparison
+  - implementation-django-web metadata and reference comparison
 control_case: false
 expected_outcomes:
   baseline: partial

@@ -7,8 +7,6 @@ intent: Validate specialist-positive reasoning for a risky order creation API wi
 reference_basis:
   - path: workspace/develop/eval/response/eval_goal.md
     basis: specialist-positive, risky DB/API, DDD dimensions
-  - path: workspace/develop/eval
-    basis: order creation API
   - path: workspace/reference/architecture-ddd/reference/final.md
     basis: bounded context, aggregate, invariants, state transitions
   - path: workspace/reference/architecture-api/reference/final.md
@@ -25,14 +23,12 @@ reference_basis:
     basis: unique constraint와 duplicate prevention
   - path: dddjango/skills/architecture-api/references/idempotency-openapi.md
     basis: Idempotency-Key replay/conflict handoff and OpenAPI impact
+  - path: dddjango/skills/implementation-django/references/transactions-performance-security.md
+    basis: transaction.atomic, on_commit side-effect timing, and Django verification honesty
   - path: dddjango/skills/implementation-django-ninja/references/problem-details-openapi.md
     basis: Problem Details and OpenAPI response mapping
   - path: dddjango/skills/implementation-test/references/django-api-concurrency.md
     basis: API and concurrency verification criteria
-  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
-    basis: risky workflow and consistency ordering
-  - path: dddjango/skills/source-reference-audit/SKILL.md
-    basis: DDD, DB, API, Django Ninja, Test boundaries
 target_behavior:
   required:
     - Starts from DDD terms, bounded context, aggregate, invariants, and state transitions before tactical code patterns.

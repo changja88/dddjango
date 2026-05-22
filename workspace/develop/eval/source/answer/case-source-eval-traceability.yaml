@@ -14,13 +14,15 @@ reference_basis:
 target_behavior:
   required:
     - Specifies reference_basis and coverage_tags expectations for each bucket.
+    - Requires a per-case traceability row with public case path, answer path, case id, source basis, stable coverage labels, leakage boundary, and run artifact/status mapping.
     - Ensures answer oracles carry source references while public cases avoid private criteria.
-    - Supports manual or machine-readable evaluation notes.
+    - Supports manual or machine-readable evaluation notes tied to the concrete case and run artifacts.
   forbidden:
     - Creating a separate rubrics directory detached from per-case answer files.
 scoring_checks:
-  - pass if each bucket has a traceability rule tied to its eval_goal.
+  - pass if each bucket has a traceability rule tied to its eval_goal and each sampled case keeps public path, answer path, source basis, coverage labels, leakage boundary, and run status connected.
   - fail if answer files are not connected to source references.
+  - fail if traceability is only bucket-level and cannot identify the case-specific public/answer/source/run link.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
@@ -31,6 +33,7 @@ leakage_checks:
   - public cases do not include hidden scoring checks.
 evidence_required:
   - eval bucket traceability map
+  - per-case public case path, answer path, case id, source basis, coverage labels, leakage boundary, and run artifact/status mapping
 control_case: false
 expected_outcomes:
   baseline: partial

@@ -25,10 +25,11 @@
 - Agents metadata: `agents/openai.yaml` `display_name`, `short_description`, and `default_prompt` semantically match the corresponding `SKILL.md`.
 - Packaging: `dddjango/.codex-plugin/plugin.json`, marketplace entry, `plugins/dddjango` symlink/equivalent entry, and canonical `dddjango/` source are coherent.
 - Runtime safety: no skill, reference, or metadata contains public eval packet text, `answer/` oracle content, prior run findings, or workspace-only source paths as final runtime references.
+- P5 workflow integrity: plugin-level 평가에서 `workflow-dddjango-subagents`의 실제 subagent 승인, bounded sidecar, result collection, sequential fallback honesty, disjoint ownership, validation honesty, cache/source completion evidence가 함께 검증된다.
 
 ## Minimum Coverage
 
-완성된 plugin eval pack은 위 Case Families마다 최소 하나 이상의 case를 가져야 한다. 특히 stale `agents/openai.yaml`, missing reference link, provisional overclaim, marketplace/symlink mismatch, leaked `answer` text, cache/source mismatch를 각각 독립 case로 덮는다. 단순 command audit 하나로 이 bucket을 완료 처리하지 않는다.
+완성된 plugin eval pack은 위 Case Families마다 최소 하나 이상의 case를 가져야 한다. 특히 stale `agents/openai.yaml`, missing reference link, provisional overclaim, marketplace/symlink mismatch, leaked `answer` text, cache/source mismatch, P5 workflow integrity를 각각 독립 case로 덮는다. 단순 command audit 하나로 이 bucket을 완료 처리하지 않는다.
 
 `skill-creator` 관점의 case는 다음을 구조화해 평가한다.
 
@@ -57,6 +58,7 @@
 - required validation commands
 - packaging files that must exist and files that must not be introduced
 - hard gates for evaluator leakage, source/runtime contamination, unsupported validation claims, and unsupported subagent claims
+- P5 workflow case에서는 actual subagent trace/result collection, sequential fallback honesty, critical path restraint, parallel ownership, validation honesty, cache/source completion evidence
 - `control_case` label when safety, honesty, or restraint behavior makes baseline pass acceptable
 - `expected_outcomes` for baseline, `with_dddjango`, expected delta, and whether baseline pass is acceptable
 
@@ -69,6 +71,7 @@
 - dedicated/provisional skill status matrix
 - plugin manifest, marketplace entry, symlink/equivalent entry
 - validation command output
+- P5 workflow case에서는 subagent trace summary, fallback/not-run statement, handoff ownership table, role-level validation handoff, plugin/cache/source parity evidence
 
 ## Non-Goals
 

@@ -34,6 +34,7 @@ leakage_checks:
   - no answer YAML details in response.
 evidence_required:
   - response transcript
+restraint_scope: individual-skill
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial

@@ -63,6 +63,7 @@ evidence_required:
   - python3 -m unittest output or exact not-run reason
   - answer-oracle evaluation notes
   - machine-readable answer-oracle evaluation artifact
+restraint_scope: supporting-control
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial

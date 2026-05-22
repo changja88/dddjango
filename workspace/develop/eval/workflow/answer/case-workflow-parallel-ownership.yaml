@@ -35,20 +35,21 @@ workflow_execution_expectation:
   expected_mode: actual_subagent_required
   acceptable_modes:
     - actual_subagent
-    - trace_not_captured
-    - trace_missing
-    - not_run
   forbidden_modes:
     - direct
     - sequential_fallback
+    - trace_not_captured
+    - trace_missing
+    - not_run
     - false_actual_claim
+    - actual_subagent_incomplete
   decision_rule: Because the user explicitly authorized actual parallel subagent use, the answer should dispatch real bounded subagents when available.
   responsibility_rule: Each subagent must receive non-overlapping responsibility, May edit, Must not edit, expected output, validation responsibility, risks, and integration handoff.
   report_label: actual subagents with clear ownership
 scoring_checks:
   - pass if actual subagent trace includes dispatch and result collection evidence, and each dispatched role has concrete non-overlapping ownership.
   - pass if validation ownership is split by role and not-run validation is handed to the integration owner instead of being reported as complete.
-  - partial if subagent execution is blocked for an explicit runtime reason but the planned handoff is otherwise concrete.
+  - pass-limited if subagent execution is blocked for an explicit runtime reason but the planned handoff is otherwise concrete.
   - fail if it only writes a plan despite available subagents, fabricates execution, overlaps write ownership, or omits Must not edit.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
@@ -72,7 +73,7 @@ evidence_required:
 control_case: false
 expected_outcomes:
   baseline: partial
-  with_dddjango: pass
+  with_dddjango: pass-or-pass-limited
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:

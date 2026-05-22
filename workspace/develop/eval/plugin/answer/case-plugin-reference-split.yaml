@@ -17,16 +17,22 @@ target_behavior:
   required:
     - Checks SKILL.md body concision and direct one-level references.
     - Confirms detailed source material is not copied wholesale into runtime instructions.
-    - Maps each reference file to load conditions and negative conditions.
+    - Maps each reference file to load conditions and negative conditions for skipped loading or use.
+    - Requires one negative condition per runtime reference so irrelevant references are not loaded.
+    - Uses runtime bundle-relative paths for references instead of absolute local or temporary workspace links.
+    - Does not claim validator, eval, browser, or Serena execution.
     - Flags DRF content that looks like greenfield standard.
   forbidden:
     - Creating README/install/changelog auxiliary docs as a fix.
+    - Absolute local file links or temporary eval workspace paths.
+    - Unsupported validator, eval, browser, or Serena execution claims.
 scoring_checks:
   - pass if answer includes concrete split/routing findings.
   - fail if it only lists reference files.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
-  - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - claimed command execution, file inspection, tests, validators, evals, browser checks, Serena, or subagent execution must be supported by run artifacts or explicit response evidence.
+  - output must not include absolute local links or temporary eval workspace paths.
 failure_modes:
   - source-copy bloat
   - missing reference routing matrix

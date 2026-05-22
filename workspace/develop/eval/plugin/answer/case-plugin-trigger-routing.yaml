@@ -15,6 +15,7 @@ target_behavior:
   required:
     - Reviews frontmatter description, not just skill body.
     - Checks positive trigger, negative routing, Korean terms, and cross-skill precedence.
+    - Checks whether opt-out, tiny edit, Direct Answer Mode, false-claim refusal, and no meta-tail restraint are visible enough in trigger/routing surfaces instead of hidden only in body text.
     - Flags body-only trigger rules and responsibility bleed.
   forbidden:
     - Treating long descriptions as automatically better.
@@ -33,6 +34,7 @@ leakage_checks:
 evidence_required:
   - SKILL.md inventory
   - frontmatter review notes
+restraint_scope: plugin-level
 control_case: false
 expected_outcomes:
   baseline: partial
@@ -40,6 +42,7 @@ expected_outcomes:
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:
+  - p5-plugin-restraint
   - trigger-quality
   - skill-creator
   - routing-boundary

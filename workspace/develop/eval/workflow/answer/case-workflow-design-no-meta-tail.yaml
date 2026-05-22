@@ -48,6 +48,7 @@ leakage_checks:
 evidence_required:
   - final response transcript
   - item count and footer inspection
+restraint_scope: plugin-level
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial
@@ -55,6 +56,7 @@ expected_outcomes:
   expected_delta: non-negative
   baseline_pass_ok: true
 coverage_tags:
+  - p5-plugin-restraint
   - tiny-task-restraint
   - direct-answer-shape
   - meta-tail-restraint

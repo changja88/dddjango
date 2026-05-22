@@ -43,6 +43,7 @@ evidence_required:
   - command, exit code, event stream, and stderr
   - answer-oracle evaluation notes
   - machine-readable answer-oracle evaluation artifact
+restraint_scope: individual-skill
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial

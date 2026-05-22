@@ -3,48 +3,61 @@ case_id: case-workflow-risky-write
 bucket: workflow
 kind: workflow
 public_case: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
-intent: Validate Risky Write Consistency Block for concurrency-heavy design.
+intent: Validate combined P5 workflow handoff and Risky Write Consistency Block for concurrency-heavy design.
 reference_basis:
   - path: workspace/develop/eval/workflow/eval_goal.md
-    basis: risky write consistency
+    basis: P5 risky write integration, handoff, and role closure
   - path: dddjango/skills/workflow-dddjango-subagents/SKILL.md
-    basis: risky write workflow output shape and required consistency block
+    basis: risky write workflow output shape, role map, and required consistency block
+  - path: dddjango/skills/workflow-dddjango-subagents/references/role-map.md
+    basis: Domain, Architecture, DB, API, Django, Test, Review, Integration responsibilities
+  - path: dddjango/skills/workflow-dddjango-subagents/references/handoff-contract.md
+    basis: role scope, inputs, files, decisions, risks, required follow-up, and dddjango checks
   - path: dddjango/skills/workflow-dddjango-subagents/references/integration-checklist.md
-    basis: transaction owner, locking, idempotency, side-effect timing, retry, and test criteria
+    basis: aggregate invariant priority, transaction owner, locking, idempotency, side-effect timing, retry, and test criteria
   - path: workspace/develop/eval/workflow/cases/plugin/public/case-workflow-risky-write.md
-    basis: transaction and concurrency
+    basis: reservation, inventory, payment, idempotency, handoff, and integration owner
 target_behavior:
   required:
-    - Includes transaction owner, locking/isolation, uniqueness/idempotency storage, external side effect timing, retry, and concurrency test criteria.
-    - Connects Domain/DB/API/Django/Test decisions in integration order.
+    - Uses workflow decomposition or sequential fallback with Domain, Architecture, DB, API, Django, TDD/Test, Review, and Integration responsibilities.
+    - Includes Handoff Contract fields or equivalent role-level Scope, Inputs Used, Decisions, Files with May edit and Must not edit, Output, Risks, Required Follow-up, dddjango Checks, integration owner, and handoff closure.
+    - Names the aggregate invariant that protects reservation confirmation, inventory deduction, payment approval, and duplicate request handling.
+    - Includes transaction owner, locking/isolation, uniqueness/idempotency storage, `Idempotency-Key` replay/conflict behavior, external side effect timing, retry/isolation decision, and concurrency/integration test criteria.
+    - Connects Domain/DB/API/Django/Test decisions in integration order and closes or carries role-level risks through the integration owner.
     - Does not treat transaction.atomic alone as sufficient.
   forbidden:
     - External payment side effects before durable commit without mitigation.
     - Missing idempotency conflict/replay decision.
+    - Direct risky-write advice with no role decomposition, handoff, or integration owner.
 workflow_execution_expectation:
-  expected_mode: risky_write_decisions_required_without_subagents
+  expected_mode: p5_risky_write_workflow_required
   acceptable_modes:
-    - direct
     - sequential_fallback
   forbidden_modes:
+    - direct
     - actual_subagent
     - false_actual_claim
-  decision_rule: Risky write design may be direct or sequential workflow, but it must include the consistency decision set and the public request does not authorize actual subagents.
-  responsibility_rule: Domain, DB, API, Django, and Test decisions must be connected with transaction and side-effect ownership.
-  report_label: risky write decisions required
+  decision_rule: The public request requires role decomposition and handoff but does not authorize actual subagents, so sequential fallback is the expected execution mode.
+  responsibility_rule: Domain, Architecture, DB, API, Django, TDD/Test, Review, and Integration responsibilities must connect aggregate invariant, transaction and side-effect ownership, API idempotency behavior, and verification criteria.
+  report_label: P5 risky write workflow required
 scoring_checks:
-  - pass if all risky write fields are present and mutually consistent.
-  - fail if concurrency is generic.
+  - pass if role handoffs, integration owner, and all risky write fields are present and mutually consistent.
+  - fail if concurrency is generic or if risky-write decisions are not tied to role ownership and integration closure.
 hard_gates:
   - no evaluator-only answer material, private scoring notes, or prior run findings leak into public/runtime output.
   - claimed command execution, file inspection, tests, or subagent execution must be supported by run artifacts or explicit response evidence.
 failure_modes:
+  - missing role handoff
+  - no integration owner
+  - aggregate invariant omitted
+  - Idempotency-Key replay/conflict omitted
   - side-effect timing omitted
   - no concurrency tests
 leakage_checks:
   - no private oracle wording.
 evidence_required:
   - risky write block
+  - role handoff or sequential fallback artifact
   - integration checklist
 control_case: false
 expected_outcomes:
@@ -53,6 +66,10 @@ expected_outcomes:
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:
+  - positive-composite
+  - handoff-contract
+  - responsibility-split
   - risky-write-consistency
   - transaction-concurrency
+  - delegation-honesty
   - integration-closure

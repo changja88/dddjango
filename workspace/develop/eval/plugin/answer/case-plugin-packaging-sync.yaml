@@ -9,6 +9,10 @@ reference_basis:
     basis: Packaging
   - path: dddjango/.codex-plugin/plugin.json
     basis: root exceptions and plugin layout
+  - path: .agents/plugins/marketplace.json
+    basis: marketplace entry and plugin availability metadata
+  - path: plugins/dddjango
+    basis: symlink or equivalent plugin entry coherence
 target_behavior:
   required:
     - Verifies plugin.json, marketplace entry, plugins/dddjango, and canonical dddjango source point to the same plugin identity.

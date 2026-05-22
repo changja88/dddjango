@@ -55,6 +55,7 @@ evidence_required:
   - subagent trace summary when actual subagents are claimed
   - local decision ordering evidence
   - sidecar task and integration owner content
+restraint_scope: plugin-level
 control_case: false
 expected_outcomes:
   baseline: partial
@@ -62,6 +63,7 @@ expected_outcomes:
   expected_delta: positive
   baseline_pass_ok: false
 coverage_tags:
+  - p5-plugin-restraint
   - delegation-honesty
   - critical-path-restraint
   - responsibility-split

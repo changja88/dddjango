@@ -44,6 +44,7 @@ evidence_required:
   - baseline isolation artifact
   - answer-oracle evaluation notes
   - run artifact showing no answer oracle exposure
+restraint_scope: individual-skill
 control_case: restraint
 expected_outcomes:
   baseline: pass-or-partial

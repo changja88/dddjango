@@ -2,7 +2,7 @@ Fixture repo에서 주문 생성 API의 멱등성과 충돌 처리를 개선해�
 
 요구사항:
 - 주문 생성 결정은 service/usecase 책임으로 두고, Ninja Router는 얇은 adapter로 남겨줘.
-- 같은 `Idempotency-Key`와 같은 payload는 새 주문을 만들지 않고 같은 응답 snapshot을 replay해야 해.
+- 같은 `Idempotency-Key`와 같은 payload는 새 주문을 만들지 않고 같은 주문 응답 payload를 replay해야 해. 기존 응답 스키마의 `replayed` 같은 명시적 replay 표시자는 허용해.
 - 같은 `Idempotency-Key`와 다른 payload는 Problem Details conflict로 구분해야 해.
 - 중복 방지는 DB unique constraint와 service transaction boundary에서 보장해야 해.
 - 관련 서비스/API 테스트를 추가해.
