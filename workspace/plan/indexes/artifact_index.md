@@ -16,4 +16,4 @@
 | 20260522-215616-p7-goal-install-packaging | p7 | goal | install packaging | - | - | `workspace/plan/goals/p7-install-packaging/20260522-215616-p7-goal-install-packaging-prompt.md` | - | ready |
 | 20260522-215616-p8-goal-full-regression | p8 | goal | full regression | - | - | `workspace/plan/goals/p8-full-regression/20260522-215616-p8-goal-full-regression-prompt.md` | - | ready |
 | 20260522-215616-p0-review-phase-goal-prompts | p0 | review | phase goal prompts | - | - | `workspace/plan/reviews/raw/20260522-215616-p0-review-phase-goal-prompts-raw.md` | `workspace/plan/reviews/summaries/20260522-215616-p0-review-phase-goal-prompts-review.md` | closed |
-| 20260522-223642-p0-plugin-inventory-freeze | p0 | plugin | inventory freeze | - | - | `workspace/plan/phases/p0-inventory/evidence/20260522-223642-p0-plugin-inventory-freeze-inventory.md` | - | blocked-by-pre-existing-diff |
+| 20260522-223642-p0-plugin-inventory-freeze | p0 | plugin | inventory freeze | - | - | `workspace/plan/phases/p0-inventory/evidence/20260522-223642-p0-plugin-inventory-freeze-inventory.md` | - | closed |

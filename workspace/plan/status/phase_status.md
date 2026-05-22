@@ -6,7 +6,7 @@ files.
 
 | phase | status | owner mode | allowed edits | current gate | last evidence | open blocker | provisional items | next action |
 |---|---|---|---|---|---|---|---|---|
-| p0-inventory | blocked | manual | inventory only | `workspace/plan/phases/p0-inventory/evidence/<work-item>-inventory.md` exists and is indexed | `workspace/plan/phases/p0-inventory/evidence/20260522-223642-p0-plugin-inventory-freeze-inventory.md` | `git diff --name-only` includes pre-existing tracked diffs in `workspace/plan/indexes/goal_index.md` and `workspace/plan/indexes/review_index.md`, outside P0 inventory edit scope | 6 provisional source relationships; component absences recorded as missing | resolve or explicitly accept the pre-existing out-of-scope plan index diffs, then rerun P0 diff-scope check |
+| p0-inventory | complete | manual | inventory only | `workspace/plan/phases/p0-inventory/evidence/<work-item>-inventory.md` exists and is indexed | `workspace/plan/phases/p0-inventory/evidence/20260522-223642-p0-plugin-inventory-freeze-inventory.md` | - | 6 provisional source relationships; component absences recorded as missing; `plugin.json` explicit local/private flag unknown | proceed to P1 reference sufficiency |
 | p1-reference-sufficiency | not-started | manual/goal | reference analysis and source-only fixes | all references classified | - | - | - | wait for P0 |
 | p1-5-usage-cards | not-started | manual | usage cards only | high-risk trigger cards exist | - | - | - | wait for P1 |
 | p2-skill-structure | not-started | goal | skill structure/trigger only | skill validators and trigger boundaries pass | - | - | - | wait for P1.5 |

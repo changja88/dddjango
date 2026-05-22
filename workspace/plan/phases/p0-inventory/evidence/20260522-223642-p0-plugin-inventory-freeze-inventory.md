@@ -11,7 +11,7 @@
 | command/run | `pwd -P`; `git rev-parse --show-toplevel`; `git status --short`; `rg --files`; `find dddjango ...`; `find workspace/reference ...`; `shasum -a 256 ...`; `python3 -B workspace/scripts/validate_plan_governance.py`; `git diff --name-only` |
 | raw artifact path | `workspace/plan/phases/p0-inventory/evidence/20260522-223642-p0-plugin-inventory-freeze-inventory.md` |
 | digest | self-digest not embedded because editing this file changes its own digest; inspected source digests are listed below and the final inventory artifact digest is recorded in `workspace/plan/indexes/evidence_index.md` |
-| result | inventory recorded; `validate_plan_governance.py` passed; final P0 completion scope gate blocked by pre-existing out-of-scope tracked diffs |
+| result | inventory recorded; `validate_plan_governance.py` passed; final P0 completion scope gate passed after rerun |
 | current-file match status | current for inspected runtime/source files; `git diff -- dddjango workspace/reference` returned no diff |
 
 ## Scope Boundary
@@ -28,14 +28,14 @@ Allowed write targets for this inventory are:
 - `workspace/plan/status/phase_status.md`
 - `workspace/plan/indexes/evidence_index.md`
 
-Pre-existing tracked diffs were observed before inventory edits:
+Historical note: pre-existing tracked diffs were observed during an earlier inventory attempt:
 
 - `workspace/plan/indexes/artifact_index.md`
 - `workspace/plan/indexes/evidence_index.md`
 - `workspace/plan/indexes/goal_index.md`
 - `workspace/plan/indexes/review_index.md`
 
-The `goal_index.md` and `review_index.md` diffs are outside this P0 inventory edit scope and were not changed by this inventory.
+The `goal_index.md` and `review_index.md` diffs were outside this P0 inventory edit scope and were not changed by this inventory. Current rerun evidence shows those out-of-scope diffs are no longer present.
 
 ## Manifest Inventory
 
@@ -215,12 +215,12 @@ P0 does not upgrade any `provisional` row to complete source sufficiency. P1 mus
 | absent `.mcp.json` | missing | no file found | record only |
 | absent `.app.json` | missing | no file found | record only |
 | source sufficiency for 6 exact-match source relationships | provisional | primary `final.md` exists but supplemental materials are not all present | defer to P1 |
-| pre-existing tracked out-of-scope diffs | issue | `git diff --name-only` before edits included `goal_index.md` and `review_index.md` | preserve; report scope gate honestly |
+| earlier out-of-scope diffs | resolved issue | earlier `git diff --name-only` included `goal_index.md` and `review_index.md`; current rerun does not | no runtime/source changes made |
 
 ## Verification Results
 
 | command | result |
 |---|---|
 | `python3 -B workspace/scripts/validate_plan_governance.py` | pass: `OK: plan governance validation passed` |
-| `git diff --name-only` | blocked for P0 completion scope: output includes allowed P0 edits plus pre-existing out-of-scope tracked diffs in `workspace/plan/indexes/goal_index.md` and `workspace/plan/indexes/review_index.md` |
+| `git diff --name-only` | pass for P0 completion scope on rerun: no P0-forbidden paths present |
 | `git diff -- dddjango workspace/reference` | pass: no output; runtime plugin body and source reference body are unmodified |
