@@ -24,7 +24,7 @@ Composite dddjango work를 마무리하기 전에 읽는다.
 - Integration owner: Coordinator 또는 named owner가 role results 수집, conflict resolution, follow-up closure를 책임진다.
 - Role handoff closure: 각 role의 `Risks`와 `Required Follow-up`이 closed 또는 unresolved로 명시됐다.
 - Source/runtime boundary: Runtime-facing guidance는 skill-local `references/*.md`를 사용하고 source authoring path를 allowed runtime reference처럼 제시하지 않는다. Source/reference governance, metadata, leakage, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 handoff한다.
-- Validation-pack follow-up: validation scenario, scoring, report, or run-variance 문제가 발견되면 이 workflow에서 직접 수정하지 않는다. Owning follow-up으로 분류하고 project planning constraints를 따른다.
+- Validation follow-up: validation evidence, review coverage, completion proof, or run evidence 문제가 발견되면 이 workflow에서 직접 수정하지 않는다. Owning follow-up으로 분류한다.
 - Cache sync report: plugin cache outside workspace를 수정했다면 workflow-local cache path, matching workspace canonical source, validation status를 보고한다. `workflow-dddjango-subagents` role-map 변경 시 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`를 parity source로 사용해 runtime/cache role names, responsibility scope, related skills가 축소되지 않았는지 확인한다. Broader provenance/cache audit는 `source-reference-audit` 책임이다.
 
 ## Risky Write Consistency Block

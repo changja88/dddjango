@@ -8,7 +8,7 @@ Canonical dddjango workflow roles를 확인할 때 읽는다. Workflow output에
 | Domain Agent | Subdomain, bounded context, ubiquitous language, aggregate, invariant, domain event | `architecture-ddd` |
 | Architecture Agent | Implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` |
 | DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
-| API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
+| API Agent | REST contract, status code, Problem Details, `Idempotency-Key` API behavior, OpenAPI | `architecture-api`, `implementation-django-ninja` |
 | Django Agent | ORM, service, selector, concrete migration files, transaction, settings/security/performance, template/static/web, templates/static files | `implementation-django`, `implementation-django-web`, `implementation-python` |
 | Test Agent | TDD flow, pytest, fixtures, test doubles, API/integration tests, ownership of `tests/**` files | `implementation-tdd`, `implementation-test` |
 | Review Agent | Code quality, design risk, missing verification, regressions | `implementation-cleancode` |

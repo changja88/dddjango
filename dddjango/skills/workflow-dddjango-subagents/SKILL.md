@@ -29,7 +29,9 @@ Composite 또는 risky Django/DDD 작업을 Domain, Architecture, DB, API, Djang
 
 ## Canonical Roles
 
-Use [role-map.md](references/role-map.md) for exact role responsibilities and related skills; do not shrink that role map in workflow output. Runtime-visible role routing summary:
+Use [role-map.md](references/role-map.md) for exact role responsibilities and related skills; do not shrink that role map in workflow output. Keep all canonical roles present even when some are advisory or read-only.
+
+Runtime-visible role routing summary, not the authoritative role map:
 
 - Coordinator: `workflow-dddjango-subagents`
 - Domain Agent: `architecture-ddd`
@@ -40,7 +42,9 @@ Use [role-map.md](references/role-map.md) for exact role responsibilities and re
 - Test Agent: `implementation-tdd`, `implementation-test`
 - Review Agent: `implementation-cleancode`
 
-Domain Agent 결정은 DB, API, Django, Test 결정에 선행한다. Architecture Agent가 advisory여도 composite/risky workflow에서는 역할을 유지하고, Coordinator 또는 명시된 Integration owner가 결과를 통합한다. DB Agent는 schema, constraint, locking, isolation, transaction policy를 소유하고, Django Agent는 결정된 DB/API/pattern boundary 안에서 ORM, migration file, service transaction implementation을 소유한다. Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit가 주된 작업이면 `source-reference-audit`로 넘기고, 이 workflow는 coordination 중 발견한 follow-up과 workflow-local parity evidence만 기록한다.
+Domain Agent 결정은 DB, API, Django, Test 결정에 선행한다. Composite/risky workflow에서는 Architecture Agent를 advisory로라도 유지하고, Coordinator 또는 명시된 Integration owner가 결과를 통합한다. Django web template/static work가 범위에 있으면 Django Agent는 `implementation-django-web`, `templates/**`, `static/**`, templates/static files ownership을 포함해야 한다.
+
+Source/reference governance, metadata, leakage, eval traceability, validation coverage, broader provenance/cache audit가 주된 작업이면 `source-reference-audit`로 넘기고, 이 workflow는 coordination 중 발견한 follow-up과 workflow-local parity evidence만 기록한다.
 
 ## Output Shape
 
@@ -56,7 +60,7 @@ Subagent 실행 승인 전에도 proposed workflow contract를 제공한다. Com
 
 Risky write가 있으면 `## Integration Checklist` 안에 visible `Risky Write Consistency Block` section 또는 table을 포함한다. transaction owner, locking strategy, uniqueness or idempotency storage, `Idempotency-Key` API behavior, external side-effect timing, isolation/retry decision, integration or concurrency test criteria를 생략하지 말고, 현재 role에서 결정할 수 없으면 owning role에 배정한다.
 
-Actual subagents를 사용했다면 role, task, result, result collection method를 적는다. Result collection requires `wait_agent` or `close_agent`; pending 또는 in-progress subagent를 completed result로 보고하지 않는다. Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report that as blocked and do not integrate or summarize missing subagent results. Do not write `wait_agent`, `close_agent`, or result summaries in the final answer unless those calls actually completed.
+Actual subagents를 사용했다면 role, task, result, result collection method를 적는다. Result collection requires `wait_agent` or `close_agent`; pending 또는 in-progress subagent를 completed result로 보고하지 않는다. Before writing the final answer, confirm every spawned subagent has a completed result collection event. Use a compact status ledger when any subagent was spawned: `Role / Spawned task / Collection method / Final status / Integrated?`. If result collection is unavailable or times out, report that as blocked and do not integrate or summarize missing subagent results. Do not write `wait_agent`, `close_agent`, or result summaries in the final answer unless those calls actually completed.
 
 Subagent를 쓰지 않았으면 sequential fallback 또는 planned only였다고 말한다. Plugin cache outside workspace를 수정했다면 Cache sync report에 cache path, workspace canonical source, validation status를 적는다. `workflow-dddjango-subagents` role-map 변경 시 `dddjango/skills/workflow-dddjango-subagents/references/role-map.md`와 runtime/cache를 비교해 role responsibilities와 related skills가 축소되지 않았는지 확인한다.
 
@@ -74,7 +78,7 @@ Runtime wrong-routing audit에서는 skill description metadata만으로 충분�
 - Risky writes에는 `Risky Write Consistency Block` 결정을 포함하거나 responsible role에 배정한다.
 - Final integration은 각 role의 risks와 required follow-up을 닫거나 unresolved로 명시한다.
 - Runtime-facing guidance에서는 source authoring path를 allowed reference처럼 제시하지 않는다. Runtime references는 skill-local bundled reference로 안내한다.
-- Source/reference governance, metadata, leakage, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 넘긴다. Workflow 중 validation-pack, scoring, report, or run-variance 문제가 발견되면 이 skill에서 직접 고치지 말고 owning follow-up으로 분류하며 project planning constraints를 따른다.
+- Source/reference governance, metadata, leakage, validation coverage, broader provenance/cache audit는 `source-reference-audit`로 넘긴다. Workflow 중 validation evidence, review coverage, completion proof, or run evidence 문제가 발견되면 이 skill에서 직접 고치지 말고 owning follow-up으로 분류한다.
 - Plugin cache outside workspace를 수정했다면 Cache sync report에 workspace canonical source mapping을 적는다. `workflow-dddjango-subagents`에서는 role-map parity, runtime skill/reference paths, validation run 또는 not-run status를 포함한다. Broader provenance/cache audit는 `source-reference-audit` 책임이다.
 - 실행한 tests, validation, review, browser checks, subagent work, eval, Serena만 실행했다고 보고한다. 실행하지 않았으면 not run이라고 말한다.
 - Direct implementation work의 final report는 concrete changed files와 필요한 verification만 간결히 보고하고, 작업이 composite/risky로 바뀌지 않는 한 workflow sections를 추가하지 않는다.

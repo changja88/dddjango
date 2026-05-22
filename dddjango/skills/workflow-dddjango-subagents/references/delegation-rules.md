@@ -54,7 +54,9 @@ Real subagents는 실제로 사용 가능하고, 사용자가 subagent/delegatio
 
 Subagent review, implementation, validation은 실제로 실행됐을 때만 완료로 보고한다.
 After spawning real subagents, collect each result with `wait_agent` or `close_agent` before integrating it or reporting it as complete. Spawned 또는 pending subagent는 completed review가 아니다.
-Before writing the final answer, confirm every spawned subagent has a completed result collection event. If result collection is unavailable or times out, report blocked or partial execution and do not integrate missing subagent results. Do not write `wait_agent`, `close_agent`, or result summaries unless those calls actually completed.
+Before writing the final answer, confirm every spawned subagent has a completed result collection event. Use a compact status ledger when any subagent was spawned: `Role / Spawned task / Collection method / Final status / Integrated?`. If result collection is unavailable or times out, report blocked or partial execution and do not integrate missing subagent results. Do not write `wait_agent`, `close_agent`, or result summaries unless those calls actually completed.
+
+실행한 tests, validators, evals, browser checks, Serena, subagent review만 완료로 보고한다. 실행하지 못했거나 실행하지 않은 검증은 not-run, blocked, 또는 follow-up handoff로 분리하고 완료 claim으로 바꾸지 않는다.
 
 ## Sequential Fallback
 
