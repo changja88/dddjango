@@ -10,6 +10,24 @@
 - P8까지는 local/private Codex plugin을 기준으로 한다. 공개 배포, 원격 marketplace, 다른 런타임 지원은 별도 계획 없이는 완료 조건으로 삼지 않는다.
 - 기존 평가 시스템은 신뢰하지 않는다. 새 평가 시스템은 P4에서 mini-bucket fixture로 먼저 검증한다.
 
+## 현재 진행 스냅샷
+
+상태의 유일한 source of truth는
+`workspace/plan/status/phase_status.md`다. 이 섹션은 2026-05-23 현재 실행
+흐름을 빠르게 확인하기 위한 요약이다.
+
+| 단계 | 현재 상태 | 근거 | 다음 의미 |
+|---|---|---|---|
+| P0 | complete | inventory evidence indexed | P1 이후 단계의 기준 자산으로 사용 |
+| P1 | complete | reference sufficiency evidence indexed | `needs-source` 0, provisional 제한은 유지 |
+| P1.5 | complete | usage cards evidence indexed | P2 trigger/P3 prompt/P5 case 입력으로 사용 |
+| P2 | complete | skill structure evidence indexed | skill/runtime 구조 기준으로 사용 |
+| P3 | infrastructure-blocked | P3a matrix fixed, P3b runtime evidence unavailable | P4/P5/P6는 `ADR-0004` 한계 아래 진행 가능, P7/P8 전에는 P3b 또는 equivalent evidence 필요 |
+| P4 | complete | fixture-only eval skeleton evidence indexed | 평가 skeleton은 검증됨; installed runtime routing proof는 아님 |
+| P4.5 | complete | runtime parity precheck evidence indexed | source/cache/install/discovery parity proof로 P5 model-backed 재개 가능 |
+| P5 | infrastructure-blocked | fixture preflight clean/scored, `model_backed=false` | 다음 작업은 P5 model-backed installed-runtime eval |
+| P6-P8 | not-started | - | P5 완료 후 순차 진행 |
+
 ## 출처 Ledger
 
 | 출처 | URL | 조회일 | 이 계획에서 쓰는 범위 | 금지된 확대 해석 |
