@@ -5,24 +5,23 @@
 ## Scope
 
 This work item prepares the P5 individual skill eval matrix and a deterministic
-fixture-scored runner. It does not claim P5 completion because the current
-source of truth still records P4.5 runtime parity as `not-started`.
+fixture-scored runner. It does not claim P5 completion because the run is not
+model-backed installed-runtime evidence.
 
 Current precondition check:
 
 | source | observed status |
 |---|---|
-| `workspace/plan/status/phase_status.md` | `p4-5-runtime-parity` is `not-started` |
-| `workspace/plan/phases/p4-5-runtime-parity/index.md` | no evidence row |
-| `workspace/plan/phases/p4-5-runtime-parity/evidence/` | only `.gitkeep` |
+| `workspace/plan/status/phase_status.md` | `p4-5-runtime-parity` is `complete` |
+| `workspace/plan/phases/p4-5-runtime-parity/index.md` | parity precheck evidence row exists |
+| `workspace/plan/phases/p4-5-runtime-parity/evidence/` | parity precheck evidence exists |
 
 ## Decision
 
-P5 model-backed completion is blocked until P4.5 is complete. To make concrete
-progress without redefining the completion gate, this work item creates a
-fixture-scored preflight bucket that proves the intended individual eval matrix,
-scoring cleanliness, report/raw consistency, and current-file metadata digest
-checks.
+To make concrete progress without redefining the completion gate, this work
+item creates a fixture-scored preflight bucket that proves the intended
+individual eval matrix, scoring cleanliness, report/raw consistency, and
+current-file metadata digest checks.
 
 The fixture preflight is not installed-runtime evidence and is not integration
 eval evidence.
@@ -56,7 +55,7 @@ surface. Each case scores only these answer dimensions:
 
 | item | classification |
 |---|---|
-| P4.5 runtime parity | missing precondition; P5 completion blocked |
+| P4.5 runtime parity | complete after later P4.5 parity precheck |
 | model-backed individual runs | not run; completion blocked |
 | fixture-scored individual matrix | implemented as preflight |
 | affected bucket clean/scored | verified for fixture bucket only |

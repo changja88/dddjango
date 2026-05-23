@@ -3,14 +3,14 @@
   "run_id": "p5-individual-skills-fixture-targeted-2",
   "bucket": "individual-skills",
   "fixture_root": "workspace/develop/eval/fixtures/individual-skills",
-  "created_at_utc": "2026-05-22T15:41:00.169071+00:00",
+  "created_at_utc": "2026-05-23T07:04:53.062071+00:00",
   "variants": [
     "baseline",
     "with-plugin"
   ],
   "run_mode": "fixture-scored-p5-preflight",
   "model_backed": false,
-  "runtime_parity_precondition": "not-complete-in-current-phase-status",
+  "runtime_parity_precondition": "complete",
   "status": "pass",
   "status_counts": {
     "pass": 52,
@@ -22,10 +22,12 @@
   "case_count": 26,
   "result_count": 52,
   "metadata_digests": {
-    "workspace/develop/eval/fixtures/individual-skills/cases.json": "2dafba64cc23479eb0b4f8d9d04f33c5886f3a9f84bb5b31b6a94af329287e4e",
+    "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
     "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
     "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
-    "workspace/scripts/p5_individual_eval.py": "88cec02563faa5f83b3228c3d3c6c357b2c586a58d97710e4df4fcb54955cb07",
+    "workspace/scripts/p5_individual_eval.py": "7db3628e4a243f84c9de8963288eef5dd86933773ca37f520e44fb0c90945b6b",
+    "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+    "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
     "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
     "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
     "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
@@ -67,6 +69,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -98,6 +103,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -129,6 +137,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
           "actual": "dddjango:implementation-django-ninja",
           "ok": true
         }
@@ -160,6 +171,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
           "actual": "dddjango:implementation-django-ninja",
           "ok": true
         }
@@ -191,6 +205,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-db",
+          "accepted": [
+            "dddjango:architecture-db"
+          ],
           "actual": "dddjango:architecture-db",
           "ok": true
         }
@@ -222,6 +239,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-db",
+          "accepted": [
+            "dddjango:architecture-db"
+          ],
           "actual": "dddjango:architecture-db",
           "ok": true
         }
@@ -253,6 +273,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
           "actual": "dddjango:architecture-ddd",
           "ok": true
         }
@@ -284,6 +307,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
           "actual": "dddjango:architecture-ddd",
           "ok": true
         }
@@ -315,6 +341,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
           "actual": "dddjango:architecture-ddd",
           "ok": true
         }
@@ -346,6 +375,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
           "actual": "dddjango:architecture-ddd",
           "ok": true
         }
@@ -377,6 +409,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-db",
+          "accepted": [
+            "dddjango:architecture-db"
+          ],
           "actual": "dddjango:architecture-db",
           "ok": true
         }
@@ -408,6 +443,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-db",
+          "accepted": [
+            "dddjango:architecture-db"
+          ],
           "actual": "dddjango:architecture-db",
           "ok": true
         }
@@ -439,6 +477,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-implementation-patterns",
+          "accepted": [
+            "dddjango:architecture-implementation-patterns"
+          ],
           "actual": "dddjango:architecture-implementation-patterns",
           "ok": true
         }
@@ -470,6 +511,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-implementation-patterns",
+          "accepted": [
+            "dddjango:architecture-implementation-patterns"
+          ],
           "actual": "dddjango:architecture-implementation-patterns",
           "ok": true
         }
@@ -501,6 +545,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
           "actual": "dddjango:architecture-ddd",
           "ok": true
         }
@@ -532,6 +579,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
           "actual": "dddjango:architecture-ddd",
           "ok": true
         }
@@ -563,6 +613,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-cleancode",
+          "accepted": [
+            "dddjango:implementation-cleancode"
+          ],
           "actual": "dddjango:implementation-cleancode",
           "ok": true
         }
@@ -594,6 +647,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-cleancode",
+          "accepted": [
+            "dddjango:implementation-cleancode"
+          ],
           "actual": "dddjango:implementation-cleancode",
           "ok": true
         }
@@ -625,6 +681,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-implementation-patterns",
+          "accepted": [
+            "dddjango:architecture-implementation-patterns"
+          ],
           "actual": "dddjango:architecture-implementation-patterns",
           "ok": true
         }
@@ -656,6 +715,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-implementation-patterns",
+          "accepted": [
+            "dddjango:architecture-implementation-patterns"
+          ],
           "actual": "dddjango:architecture-implementation-patterns",
           "ok": true
         }
@@ -687,6 +749,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django",
+          "accepted": [
+            "dddjango:implementation-django"
+          ],
           "actual": "dddjango:implementation-django",
           "ok": true
         }
@@ -718,6 +783,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django",
+          "accepted": [
+            "dddjango:implementation-django"
+          ],
           "actual": "dddjango:implementation-django",
           "ok": true
         }
@@ -749,6 +817,10 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -780,6 +852,10 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -811,6 +887,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
           "actual": "dddjango:implementation-django-ninja",
           "ok": true
         }
@@ -842,6 +921,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
           "actual": "dddjango:implementation-django-ninja",
           "ok": true
         }
@@ -873,6 +955,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -904,6 +989,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -935,6 +1023,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-web",
+          "accepted": [
+            "dddjango:implementation-django-web"
+          ],
           "actual": "dddjango:implementation-django-web",
           "ok": true
         }
@@ -966,6 +1057,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-web",
+          "accepted": [
+            "dddjango:implementation-django-web"
+          ],
           "actual": "dddjango:implementation-django-web",
           "ok": true
         }
@@ -997,6 +1091,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
           "actual": "dddjango:implementation-django-ninja",
           "ok": true
         }
@@ -1028,6 +1125,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
           "actual": "dddjango:implementation-django-ninja",
           "ok": true
         }
@@ -1059,6 +1159,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-python",
+          "accepted": [
+            "dddjango:implementation-python"
+          ],
           "actual": "dddjango:implementation-python",
           "ok": true
         }
@@ -1090,6 +1193,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-python",
+          "accepted": [
+            "dddjango:implementation-python"
+          ],
           "actual": "dddjango:implementation-python",
           "ok": true
         }
@@ -1121,6 +1227,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django",
+          "accepted": [
+            "dddjango:implementation-django"
+          ],
           "actual": "dddjango:implementation-django",
           "ok": true
         }
@@ -1152,6 +1261,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-django",
+          "accepted": [
+            "dddjango:implementation-django"
+          ],
           "actual": "dddjango:implementation-django",
           "ok": true
         }
@@ -1183,6 +1295,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-tdd",
+          "accepted": [
+            "dddjango:implementation-tdd"
+          ],
           "actual": "dddjango:implementation-tdd",
           "ok": true
         }
@@ -1214,6 +1329,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-tdd",
+          "accepted": [
+            "dddjango:implementation-tdd"
+          ],
           "actual": "dddjango:implementation-tdd",
           "ok": true
         }
@@ -1245,6 +1363,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-test",
+          "accepted": [
+            "dddjango:implementation-test"
+          ],
           "actual": "dddjango:implementation-test",
           "ok": true
         }
@@ -1276,6 +1397,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-test",
+          "accepted": [
+            "dddjango:implementation-test"
+          ],
           "actual": "dddjango:implementation-test",
           "ok": true
         }
@@ -1307,6 +1431,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-test",
+          "accepted": [
+            "dddjango:implementation-test"
+          ],
           "actual": "dddjango:implementation-test",
           "ok": true
         }
@@ -1338,6 +1465,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-test",
+          "accepted": [
+            "dddjango:implementation-test"
+          ],
           "actual": "dddjango:implementation-test",
           "ok": true
         }
@@ -1369,6 +1499,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-tdd",
+          "accepted": [
+            "dddjango:implementation-tdd"
+          ],
           "actual": "dddjango:implementation-tdd",
           "ok": true
         }
@@ -1400,6 +1533,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:implementation-tdd",
+          "accepted": [
+            "dddjango:implementation-tdd"
+          ],
           "actual": "dddjango:implementation-tdd",
           "ok": true
         }
@@ -1431,6 +1567,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:source-reference-audit",
+          "accepted": [
+            "dddjango:source-reference-audit"
+          ],
           "actual": "dddjango:source-reference-audit",
           "ok": true
         }
@@ -1462,6 +1601,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:source-reference-audit",
+          "accepted": [
+            "dddjango:source-reference-audit"
+          ],
           "actual": "dddjango:source-reference-audit",
           "ok": true
         }
@@ -1493,6 +1635,10 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -1524,6 +1670,10 @@
         },
         "loaded_skill": {
           "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
           "actual": "dddjango:architecture-api",
           "ok": true
         }
@@ -1555,6 +1705,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:workflow-dddjango-subagents",
+          "accepted": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
           "actual": "dddjango:workflow-dddjango-subagents",
           "ok": true
         }
@@ -1586,6 +1739,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:workflow-dddjango-subagents",
+          "accepted": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
           "actual": "dddjango:workflow-dddjango-subagents",
           "ok": true
         }
@@ -1617,6 +1773,9 @@
         },
         "loaded_skill": {
           "expected": "dddjango:source-reference-audit",
+          "accepted": [
+            "dddjango:source-reference-audit"
+          ],
           "actual": "dddjango:source-reference-audit",
           "ok": true
         }
@@ -1648,12 +1807,15 @@
         },
         "loaded_skill": {
           "expected": "dddjango:source-reference-audit",
+          "accepted": [
+            "dddjango:source-reference-audit"
+          ],
           "actual": "dddjango:source-reference-audit",
           "ok": true
         }
       }
     }
   ],
-  "metadata_digest": "9d4ba93b0946ef38278e85489d303d4fdf222365dc542528aff0ee0d81a4cc02",
-  "raw_digest": "7dba58d87804a50ce249ecaa5ea47b0b3ad5e0eef0ba5d1ebda87b479597bb88"
+  "metadata_digest": "502cb2b7fc183d42a9e88e5606a808cff7e73bc70a504bb58db985b93ae44bfd",
+  "raw_digest": "b3610dc2bb4a297c919b78cf68bd1926074ac0dfecfafc65ef9a40a3c97e8bee"
 }

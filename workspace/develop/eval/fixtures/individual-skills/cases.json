@@ -176,7 +176,7 @@
       {"id": "required-observations", "value": "does not start ORM/service implementation before API behavior is decided"},
       {"id": "forbidden-overclaim", "value": "does not route contract-only work to implementation-django"}
     ],
-    "oracle": {"loaded_skill": "dddjango:architecture-api", "required_claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"]},
+    "oracle": {"loaded_skill": "dddjango:architecture-api", "acceptable_loaded_skills": ["dddjango:architecture-api", "dddjango:workflow-dddjango-subagents"], "required_claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"]},
     "answers": {"baseline": {"loaded_skill": "dddjango:architecture-api", "claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"], "overclaims": false}, "with-plugin": {"loaded_skill": "dddjango:architecture-api", "claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"], "overclaims": false}}
   },
   {
@@ -356,7 +356,7 @@
       {"id": "required-observations", "value": "routes behavior work to API and Django implementation skills rather than provenance audit"},
       {"id": "forbidden-overclaim", "value": "does not claim source evidence review satisfies application implementation"}
     ],
-    "oracle": {"loaded_skill": "dddjango:architecture-api", "required_claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"]},
+    "oracle": {"loaded_skill": "dddjango:architecture-api", "acceptable_loaded_skills": ["dddjango:architecture-api", "dddjango:workflow-dddjango-subagents"], "required_claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"]},
     "answers": {"baseline": {"loaded_skill": "dddjango:architecture-api", "claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"], "overclaims": false}, "with-plugin": {"loaded_skill": "dddjango:architecture-api", "claims": ["reference-criterion-coverage", "required-observations", "forbidden-overclaim"], "overclaims": false}}
   },
   {

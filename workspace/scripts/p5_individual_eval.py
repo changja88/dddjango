@@ -13,16 +13,32 @@ import argparse
 import hashlib
 import html
 import json
+import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 VARIANTS = ("baseline", "with-plugin")
 PASS_STATUSES = {"pass"}
 FAIL_STATUSES = {"partial", "fail", "not-scored"}
+MODEL_RUN_MODE = "model-backed-installed-runtime"
+MODEL_ANSWER_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["loaded_skill", "claims", "overclaims", "answer_text"],
+    "properties": {
+        "loaded_skill": {"type": "string"},
+        "claims": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "overclaims": {"type": "boolean"},
+        "answer_text": {"type": "string"},
+    },
+}
 
 
 class EvalError(Exception):
@@ -83,10 +99,14 @@ def metadata_digest_manifest(paths: Paths) -> dict[str, str]:
         paths.repo_root / "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md",
         paths.repo_root / "workspace/plan/governance/eval_protocol.md",
         paths.repo_root / "workspace/scripts/p5_individual_eval.py",
+        paths.repo_root / "dddjango/.codex-plugin/plugin.json",
+        Path("/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/.codex-plugin/plugin.json"),
     ]
     manifest: dict[str, str] = {}
     for path in roots:
-        manifest[path.relative_to(paths.repo_root).as_posix()] = sha256_file(path)
+        if not path.is_file():
+            continue
+        manifest[display_path(path, paths.repo_root)] = sha256_file(path)
     for path in sorted((paths.repo_root / "dddjango/skills").glob("*/SKILL.md")):
         manifest[path.relative_to(paths.repo_root).as_posix()] = sha256_file(path)
     return manifest
@@ -112,6 +132,25 @@ def expected_outcome_conflict(case: dict[str, Any]) -> str | None:
             return "expected-outcomes-conflict"
         seen[str(key)] = value
     return None
+
+
+def loaded_skill_matches(actual: Any, expected: Any) -> bool:
+    if expected is None:
+        return True
+    if actual == expected:
+        return True
+    if not isinstance(actual, str) or not isinstance(expected, str):
+        return False
+    observed = [part.strip() for part in actual.replace(",", ";").replace("+", ";").split(";")]
+    return any(part == expected or part.startswith(f"{expected} ") for part in observed)
+
+
+def expected_loaded_skills(oracle: dict[str, Any]) -> list[str]:
+    acceptable = oracle.get("acceptable_loaded_skills")
+    if isinstance(acceptable, list) and all(isinstance(item, str) for item in acceptable):
+        return acceptable
+    loaded_skill = oracle.get("loaded_skill")
+    return [loaded_skill] if isinstance(loaded_skill, str) else []
 
 
 def score_variant(*, case: dict[str, Any], variant: str) -> dict[str, Any]:
@@ -162,14 +201,16 @@ def score_variant(*, case: dict[str, Any], variant: str) -> dict[str, Any]:
         "score": claim_score,
     }
 
-    expected_loaded_skill = oracle.get("loaded_skill")
+    accepted_loaded_skills = expected_loaded_skills(oracle)
+    expected_loaded_skill = accepted_loaded_skills[0] if accepted_loaded_skills else oracle.get("loaded_skill")
     actual_loaded_skill = answer.get("loaded_skill")
     result["expected_loaded_skill"] = expected_loaded_skill
     result["actual_loaded_skill"] = actual_loaded_skill
-    if expected_loaded_skill is not None:
-        loaded_skill_ok = actual_loaded_skill == expected_loaded_skill
+    if accepted_loaded_skills:
+        loaded_skill_ok = any(loaded_skill_matches(actual_loaded_skill, expected) for expected in accepted_loaded_skills)
         result["checks"]["loaded_skill"] = {
             "expected": expected_loaded_skill,
+            "accepted": accepted_loaded_skills,
             "actual": actual_loaded_skill,
             "ok": loaded_skill_ok,
         }
@@ -194,6 +235,408 @@ def score_variant(*, case: dict[str, Any], variant: str) -> dict[str, Any]:
         result["status"] = "partial"
         result["failure_semantics"].append("oracle-partial")
     return result
+
+
+def parse_model_answer(text: str) -> dict[str, Any]:
+    try:
+        answer = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise EvalError(f"malformed model answer JSON: {exc}") from exc
+    if not isinstance(answer, dict):
+        raise EvalError("model answer must be a JSON object")
+    claims = answer.get("claims")
+    if not isinstance(answer.get("loaded_skill"), str):
+        raise EvalError("model answer loaded_skill must be a string")
+    if not isinstance(claims, list) or not all(isinstance(item, str) for item in claims):
+        raise EvalError("model answer claims must be a list of strings")
+    if not isinstance(answer.get("overclaims"), bool):
+        raise EvalError("model answer overclaims must be a boolean")
+    if not isinstance(answer.get("answer_text"), str):
+        raise EvalError("model answer answer_text must be a string")
+    return answer
+
+
+def parse_variants(value: str) -> tuple[str, ...]:
+    variants = tuple(part.strip() for part in value.split(",") if part.strip())
+    if not variants:
+        raise EvalError("variants must not be empty")
+    unknown = [variant for variant in variants if variant not in VARIANTS]
+    if unknown:
+        raise EvalError(f"unknown variants: {', '.join(unknown)}")
+    return variants
+
+
+def score_model_answer(*, case: dict[str, Any], variant: str, answer: dict[str, Any]) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "case_id": str(case.get("id")),
+        "variant": variant,
+        "surface": case.get("surface"),
+        "skill_under_test": case.get("skill_under_test"),
+        "expected_loaded_skill": None,
+        "actual_loaded_skill": answer.get("loaded_skill"),
+        "status": "not-scored",
+        "score": None,
+        "failure_semantics": [],
+        "checks": {},
+        "model_backed": True,
+        "answer_text_digest": sha256_text(str(answer.get("answer_text", ""))),
+    }
+
+    conflict = expected_outcome_conflict(case)
+    if conflict:
+        result["failure_semantics"].append(conflict)
+        return result
+
+    oracle = case.get("oracle")
+    if not isinstance(oracle, dict):
+        result["failure_semantics"].append("malformed-oracle")
+        return result
+
+    required_claims = oracle.get("required_claims")
+    if not isinstance(required_claims, list) or not all(isinstance(item, str) for item in required_claims):
+        result["failure_semantics"].append("malformed-oracle")
+        return result
+
+    answer_claims = set(answer.get("claims", []))
+    matched_claims = [claim for claim in required_claims if claim in answer_claims]
+    claim_total = len(required_claims)
+    claim_score = len(matched_claims) / claim_total if claim_total else 1.0
+    result["checks"]["claims"] = {
+        "required": required_claims,
+        "matched": matched_claims,
+        "score": claim_score,
+    }
+
+    accepted_loaded_skills = expected_loaded_skills(oracle)
+    expected_loaded_skill = accepted_loaded_skills[0] if accepted_loaded_skills else oracle.get("loaded_skill")
+    result["expected_loaded_skill"] = expected_loaded_skill
+    if accepted_loaded_skills:
+        loaded_skill_ok = any(loaded_skill_matches(answer.get("loaded_skill"), expected) for expected in accepted_loaded_skills)
+        result["checks"]["loaded_skill"] = {
+            "expected": expected_loaded_skill,
+            "accepted": accepted_loaded_skills,
+            "actual": answer.get("loaded_skill"),
+            "ok": loaded_skill_ok,
+        }
+        if not loaded_skill_ok:
+            result["failure_semantics"].append("wrong-routing")
+
+    if answer.get("overclaims"):
+        result["failure_semantics"].append("forbidden-overclaim")
+
+    result["score"] = claim_score
+    if result["failure_semantics"]:
+        result["status"] = "partial" if 0 < claim_score < 1 else "fail"
+        return result
+    if claim_score == 1.0:
+        result["status"] = "pass"
+    elif claim_score == 0:
+        result["status"] = "fail"
+        result["failure_semantics"].append("oracle-mismatch")
+    else:
+        result["status"] = "partial"
+        result["failure_semantics"].append("oracle-partial")
+    return result
+
+
+def model_answer_schema_path(output_dir: Path) -> Path:
+    path = output_dir / "raw" / "model-answer.schema.json"
+    write_json(path, MODEL_ANSWER_SCHEMA)
+    return path
+
+
+def model_case_prompt(case: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.",
+            "Return only JSON matching the provided output schema.",
+            "For claims, include only these stable identifiers when your answer satisfies the criterion:",
+            "- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.",
+            "- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.",
+            "- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.",
+            "A complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.",
+            "",
+            f"User prompt: {case.get('prompt', '')}",
+        ]
+    )
+
+
+def build_model_command(
+    *,
+    runtime_channel: str,
+    variant: str,
+    case_workdir: Path,
+    final_path: Path,
+    schema_path: Path,
+    prompt: str,
+    model: str | None = None,
+) -> list[str]:
+    if runtime_channel == "external":
+        command = ["codex"]
+    elif runtime_channel in {"ollama", "lmstudio"}:
+        command = ["codex", "--oss", "--local-provider", runtime_channel]
+    else:
+        raise EvalError("runtime_channel must be external, ollama, or lmstudio")
+    if model:
+        command.extend(["--model", model])
+    command.extend(
+        [
+            "-a",
+            "never",
+            "exec",
+            "--json",
+            "--ephemeral",
+            "--skip-git-repo-check",
+            "-C",
+            case_workdir.as_posix(),
+            "-s",
+            "read-only",
+            "--output-schema",
+            schema_path.as_posix(),
+            "-o",
+            final_path.as_posix(),
+        ]
+    )
+    if variant == "baseline":
+        command.append("--ignore-user-config")
+    command.append(prompt)
+    return command
+
+
+def default_model_runner(command: list[str], *, cwd: Path, final_path: Path) -> subprocess.CompletedProcess[str]:
+    del final_path
+    cwd.mkdir(parents=True, exist_ok=True)
+    return subprocess.run(command, cwd=cwd, check=False, capture_output=True, text=True)
+
+
+def model_run_one(
+    paths: Paths,
+    *,
+    case_id: str,
+    variant: str,
+    run_id: str,
+    runtime_channel: str,
+    work_root: Path,
+    runner: Callable[..., Any] | None = None,
+    model: str | None = None,
+) -> dict[str, Any]:
+    if variant not in VARIANTS:
+        raise EvalError(f"variant must be one of {', '.join(VARIANTS)}")
+    case = case_by_id(paths.fixture_root, case_id)
+    schema_path = model_answer_schema_path(paths.output_dir)
+    case_workdir = work_root / run_id / f"{case_id}-{variant}"
+    final_path = case_workdir / "final.json"
+    stdout_path = paths.output_dir / "raw" / "model-executions" / f"{case_id}.{variant}.stdout.jsonl"
+    stderr_path = paths.output_dir / "raw" / "model-executions" / f"{case_id}.{variant}.stderr.txt"
+    prompt = model_case_prompt(case)
+    command = build_model_command(
+        runtime_channel=runtime_channel,
+        variant=variant,
+        case_workdir=case_workdir,
+        final_path=final_path,
+        schema_path=schema_path,
+        prompt=prompt,
+        model=model,
+    )
+
+    executor = runner or default_model_runner
+    completed = executor(command, cwd=case_workdir, final_path=final_path)
+    stdout_path.parent.mkdir(parents=True, exist_ok=True)
+    stdout_path.write_text(getattr(completed, "stdout", ""), encoding="utf-8")
+    stderr_path.write_text(getattr(completed, "stderr", ""), encoding="utf-8")
+
+    execution = {
+        "command": command,
+        "cwd": case_workdir.as_posix(),
+        "returncode": getattr(completed, "returncode", 1),
+        "stdout_path": display_path(stdout_path, paths.repo_root),
+        "stderr_path": display_path(stderr_path, paths.repo_root),
+        "final_path": final_path.as_posix(),
+        "runtime_channel": runtime_channel,
+        "variant_runtime": "installed-plugin" if variant == "with-plugin" else "baseline-ignore-user-config",
+    }
+
+    if execution["returncode"] != 0:
+        result = {
+            "case_id": case_id,
+            "variant": variant,
+            "surface": case.get("surface"),
+            "skill_under_test": case.get("skill_under_test"),
+            "expected_loaded_skill": case.get("oracle", {}).get("loaded_skill") if isinstance(case.get("oracle"), dict) else None,
+            "actual_loaded_skill": None,
+            "status": "not-scored",
+            "score": None,
+            "failure_semantics": ["model-runner-error"],
+            "checks": {},
+            "model_backed": True,
+        }
+    elif not final_path.is_file():
+        result = {
+            "case_id": case_id,
+            "variant": variant,
+            "surface": case.get("surface"),
+            "skill_under_test": case.get("skill_under_test"),
+            "expected_loaded_skill": case.get("oracle", {}).get("loaded_skill") if isinstance(case.get("oracle"), dict) else None,
+            "actual_loaded_skill": None,
+            "status": "not-scored",
+            "score": None,
+            "failure_semantics": ["missing-answer"],
+            "checks": {},
+            "model_backed": True,
+        }
+    else:
+        try:
+            answer = parse_model_answer(final_path.read_text(encoding="utf-8"))
+        except EvalError:
+            result = {
+                "case_id": case_id,
+                "variant": variant,
+                "surface": case.get("surface"),
+                "skill_under_test": case.get("skill_under_test"),
+                "expected_loaded_skill": case.get("oracle", {}).get("loaded_skill") if isinstance(case.get("oracle"), dict) else None,
+                "actual_loaded_skill": None,
+                "status": "not-scored",
+                "score": None,
+                "failure_semantics": ["malformed-answer"],
+                "checks": {},
+                "model_backed": True,
+            }
+        else:
+            result = score_model_answer(case=case, variant=variant, answer=answer)
+
+    result["run_id"] = run_id
+    result["run_mode"] = MODEL_RUN_MODE
+    result["execution"] = execution
+    result["metadata_digests"] = metadata_digest_manifest(paths)
+    result["metadata_digest"] = digest_for_data(result["metadata_digests"])
+    write_json(paths.output_dir / "raw" / "one.json", result)
+    return result
+
+
+def model_run_bucket(
+    paths: Paths,
+    *,
+    bucket: str,
+    run_id: str,
+    runtime_channel: str,
+    work_root: Path,
+    variants: tuple[str, ...] = VARIANTS,
+    runner: Callable[..., Any] | None = None,
+    model: str | None = None,
+    flake_history: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    cases = [case for case in load_cases(paths.fixture_root) if case.get("bucket") == bucket]
+    if not cases:
+        raise EvalError(f"bucket not found or empty: {bucket}")
+
+    results: list[dict[str, Any]] = []
+    for case in cases:
+        for variant in variants:
+            results.append(
+                model_run_one(
+                    paths,
+                    case_id=str(case["id"]),
+                    variant=variant,
+                    run_id=run_id,
+                    runtime_channel=runtime_channel,
+                    work_root=work_root,
+                    runner=runner,
+                    model=model,
+                )
+            )
+
+    status_counts: dict[str, int] = {"pass": 0, "partial": 0, "fail": 0, "not-scored": 0}
+    for result in results:
+        status_counts[result["status"]] += 1
+    hard_failures = [result for result in results if result["status"] in FAIL_STATUSES]
+    raw = {
+        "schema_version": "p5-individual-eval-run/v1",
+        "run_id": run_id,
+        "bucket": bucket,
+        "fixture_root": paths.fixture_root.relative_to(paths.repo_root).as_posix(),
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "variants": list(variants),
+        "run_mode": MODEL_RUN_MODE,
+        "model_backed": True,
+        "runtime_parity_precondition": "complete",
+        "runtime_channel": runtime_channel,
+        "runner_destination": "codex-exec",
+        "prompt_assembly_source": "workspace/scripts/p5_individual_eval.py:model_case_prompt",
+        "system_developer_prompt_template": "installed Codex runtime plus installed dddjango plugin for with-plugin variant",
+        "tool_sandbox_policy": {"codex_approval_policy": "never", "sandbox": "read-only"},
+        "oracle_model_config": "deterministic local oracle from cases.json",
+        "scoring_prompt_config": "deterministic scorer over structured model answer JSON",
+        "flake_history": flake_history or {"iterations": 1, "variance_status": "single-pass provisional"},
+        "status": "fail" if hard_failures else "pass",
+        "status_counts": status_counts,
+        "hard_failure_count": len(hard_failures),
+        "case_count": len(cases),
+        "result_count": len(results),
+        "metadata_digests": metadata_digest_manifest(paths),
+        "results": results,
+    }
+    raw["metadata_digest"] = digest_for_data(raw["metadata_digests"])
+    raw["raw_digest"] = digest_for_data({key: value for key, value in raw.items() if key != "raw_digest"})
+    write_json(paths.output_dir / "raw" / "run.json", raw)
+    return raw
+
+
+def model_run_targeted_suite(
+    paths: Paths,
+    *,
+    bucket: str,
+    run_id: str,
+    iterations: int,
+    runtime_channel: str,
+    work_root: Path,
+    variants: tuple[str, ...] = VARIANTS,
+    runner: Callable[..., Any] | None = None,
+    model: str | None = None,
+) -> dict[str, Any]:
+    if iterations < 1:
+        raise EvalError("iterations must be >= 1")
+    runs = []
+    for iteration in range(1, iterations + 1):
+        iteration_run_id = f"{run_id}-targeted-{iteration}"
+        raw = model_run_bucket(
+            paths,
+            bucket=bucket,
+            run_id=iteration_run_id,
+            runtime_channel=runtime_channel,
+            work_root=work_root,
+            variants=variants,
+            runner=runner,
+            model=model,
+            flake_history={"iterations": iterations, "current_iteration": iteration, "variance_status": "pending"},
+        )
+        iteration_path = paths.output_dir / "raw" / f"targeted-run-{iteration}.json"
+        write_json(iteration_path, raw)
+        runs.append(
+            {
+                "iteration": iteration,
+                "run_id": iteration_run_id,
+                "artifact": display_path(iteration_path, paths.repo_root),
+                "status": raw["status"],
+                "status_counts": raw["status_counts"],
+                "metadata_digest": raw["metadata_digest"],
+            }
+        )
+    statuses = [run["status"] for run in runs]
+    variance_status = "stable-pass" if statuses and all(status == "pass" for status in statuses) else "needs-classification"
+    summary = {
+        "schema_version": "p5-individual-model-targeted-suite/v1",
+        "run_id": run_id,
+        "bucket": bucket,
+        "iterations": iterations,
+        "variants": list(variants),
+        "status": "pass" if variance_status == "stable-pass" else "fail",
+        "model_backed": True,
+        "runtime_channel": runtime_channel,
+        "variance_status": variance_status,
+        "runs": runs,
+    }
+    write_json(paths.output_dir / "raw" / "targeted-suite.json", summary)
+    return summary
 
 
 def run_one(paths: Paths, case_id: str, variant: str, run_id: str) -> dict[str, Any]:
@@ -232,7 +675,7 @@ def run_bucket(paths: Paths, bucket: str, run_id: str) -> dict[str, Any]:
         "variants": list(VARIANTS),
         "run_mode": "fixture-scored-p5-preflight",
         "model_backed": False,
-        "runtime_parity_precondition": "not-complete-in-current-phase-status",
+        "runtime_parity_precondition": "complete",
         "status": "fail" if hard_failures else "pass",
         "status_counts": status_counts,
         "hard_failure_count": len(hard_failures),
@@ -410,6 +853,39 @@ def validate_run(output_dir: Path, repo_root: Path) -> dict[str, Any]:
     if missing_or_malformed:
         failures.append({"kind": "missing-or-malformed-oracle-or-answer", "count": len(missing_or_malformed)})
 
+    if raw.get("model_backed") is True:
+        flake_history = raw.get("flake_history")
+        if not isinstance(flake_history, dict):
+            failures.append({"kind": "model-backed-flake-history-missing"})
+        else:
+            iterations = flake_history.get("iterations")
+            variance_status = flake_history.get("variance_status")
+            if iterations == 1 and variance_status == "single-pass provisional":
+                targeted_suite_path = output_dir / "raw" / "targeted-suite.json"
+                if targeted_suite_path.is_file():
+                    targeted_suite = read_json(targeted_suite_path)
+                    targeted_iterations = targeted_suite.get("iterations")
+                    targeted_variance_status = targeted_suite.get("variance_status")
+                    targeted_variants = targeted_suite.get("variants")
+                    if (
+                        targeted_suite.get("model_backed") is True
+                        and targeted_suite.get("status") == "pass"
+                        and isinstance(targeted_iterations, int)
+                        and targeted_iterations >= 2
+                        and targeted_variance_status == "stable-pass"
+                        and targeted_variants == raw.get("variants")
+                    ):
+                        flake_history["targeted_suite_artifact"] = display_path(targeted_suite_path, repo_root)
+                        flake_history["targeted_suite_digest"] = sha256_file(targeted_suite_path)
+                    else:
+                        failures.append({"kind": "model-backed-single-pass-provisional"})
+                else:
+                    failures.append({"kind": "model-backed-single-pass-provisional"})
+            elif not isinstance(iterations, int) or iterations < 2:
+                failures.append({"kind": "model-backed-targeted-iterations-missing"})
+            elif variance_status not in {"stable-pass", "pending"}:
+                failures.append({"kind": "model-backed-variance-status-invalid", "actual": variance_status})
+
     current_metadata: dict[str, str] = {}
     missing_metadata_files = []
     for rel_path in sorted(raw.get("metadata_digests", {})):
@@ -464,6 +940,31 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     targeted_parser.add_argument("--run-id", default="p5-individual-skills-fixture")
     targeted_parser.add_argument("--iterations", type=int, default=2)
 
+    model_one_parser = subparsers.add_parser("model-run-one")
+    model_one_parser.add_argument("--case-id", required=True)
+    model_one_parser.add_argument("--variant", choices=VARIANTS, required=True)
+    model_one_parser.add_argument("--run-id", default="p5-individual-skills-model")
+    model_one_parser.add_argument("--runtime-channel", choices=("external", "ollama", "lmstudio"), default="external")
+    model_one_parser.add_argument("--work-root", default="/private/tmp/dddjango-p5-model")
+    model_one_parser.add_argument("--model")
+
+    model_bucket_parser = subparsers.add_parser("model-run-bucket")
+    model_bucket_parser.add_argument("--bucket", default="individual-skills")
+    model_bucket_parser.add_argument("--run-id", default="p5-individual-skills-model")
+    model_bucket_parser.add_argument("--runtime-channel", choices=("external", "ollama", "lmstudio"), default="external")
+    model_bucket_parser.add_argument("--work-root", default="/private/tmp/dddjango-p5-model")
+    model_bucket_parser.add_argument("--model")
+    model_bucket_parser.add_argument("--variants", default="baseline,with-plugin")
+
+    model_targeted_parser = subparsers.add_parser("model-run-targeted-suite")
+    model_targeted_parser.add_argument("--bucket", default="individual-skills")
+    model_targeted_parser.add_argument("--run-id", default="p5-individual-skills-model")
+    model_targeted_parser.add_argument("--iterations", type=int, default=2)
+    model_targeted_parser.add_argument("--runtime-channel", choices=("external", "ollama", "lmstudio"), default="external")
+    model_targeted_parser.add_argument("--work-root", default="/private/tmp/dddjango-p5-model")
+    model_targeted_parser.add_argument("--model")
+    model_targeted_parser.add_argument("--variants", default="baseline,with-plugin")
+
     subparsers.add_parser("render-report")
     subparsers.add_parser("validate-run")
     return parser.parse_args(argv)
@@ -489,6 +990,52 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "run-targeted-suite":
             summary = run_targeted_suite(paths, args.bucket, args.run_id, args.iterations)
             print(json.dumps({"status": summary["status"], "iterations": summary["iterations"]}, ensure_ascii=False))
+            return 0 if summary["status"] == "pass" else 1
+        if args.command == "model-run-one":
+            result = model_run_one(
+                paths,
+                case_id=args.case_id,
+                variant=args.variant,
+                run_id=args.run_id,
+                runtime_channel=args.runtime_channel,
+                work_root=Path(args.work_root),
+                model=args.model,
+            )
+            print(json.dumps({"status": result["status"], "failure_semantics": result["failure_semantics"]}, ensure_ascii=False))
+            return 0 if result["status"] in PASS_STATUSES else 1
+        if args.command == "model-run-bucket":
+            raw = model_run_bucket(
+                paths,
+                bucket=args.bucket,
+                run_id=args.run_id,
+                runtime_channel=args.runtime_channel,
+                work_root=Path(args.work_root),
+                variants=parse_variants(args.variants),
+                model=args.model,
+            )
+            print(json.dumps({"status": raw["status"], "status_counts": raw["status_counts"]}, ensure_ascii=False))
+            return 0 if raw["status"] == "pass" else 1
+        if args.command == "model-run-targeted-suite":
+            summary = model_run_targeted_suite(
+                paths,
+                bucket=args.bucket,
+                run_id=args.run_id,
+                iterations=args.iterations,
+                runtime_channel=args.runtime_channel,
+                work_root=Path(args.work_root),
+                variants=parse_variants(args.variants),
+                model=args.model,
+            )
+            print(
+                json.dumps(
+                    {
+                        "status": summary["status"],
+                        "iterations": summary["iterations"],
+                        "variance_status": summary["variance_status"],
+                    },
+                    ensure_ascii=False,
+                )
+            )
             return 0 if summary["status"] == "pass" else 1
         if args.command == "render-report":
             report = render_report(paths.output_dir)

@@ -1,0 +1,41 @@
+{
+  "schema_version": "p5-individual-model-targeted-suite/v1",
+  "run_id": "p5-individual-skills-model-approved-targeted-with-plugin-v4",
+  "bucket": "individual-skills",
+  "iterations": 2,
+  "variants": [
+    "with-plugin"
+  ],
+  "status": "pass",
+  "model_backed": true,
+  "runtime_channel": "external",
+  "variance_status": "stable-pass",
+  "runs": [
+    {
+      "iteration": 1,
+      "run_id": "p5-individual-skills-model-approved-targeted-with-plugin-v4-targeted-1",
+      "artifact": "workspace/develop/eval/runs/p5-individual-skills-model-approved-targeted-with-plugin-v4/raw/targeted-run-1.json",
+      "status": "pass",
+      "status_counts": {
+        "pass": 26,
+        "partial": 0,
+        "fail": 0,
+        "not-scored": 0
+      },
+      "metadata_digest": "502cb2b7fc183d42a9e88e5606a808cff7e73bc70a504bb58db985b93ae44bfd"
+    },
+    {
+      "iteration": 2,
+      "run_id": "p5-individual-skills-model-approved-targeted-with-plugin-v4-targeted-2",
+      "artifact": "workspace/develop/eval/runs/p5-individual-skills-model-approved-targeted-with-plugin-v4/raw/targeted-run-2.json",
+      "status": "pass",
+      "status_counts": {
+        "pass": 26,
+        "partial": 0,
+        "fail": 0,
+        "not-scored": 0
+      },
+      "metadata_digest": "502cb2b7fc183d42a9e88e5606a808cff7e73bc70a504bb58db985b93ae44bfd"
+    }
+  ]
+}

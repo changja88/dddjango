@@ -1,8 +1,8 @@
 {
   "schema_version": "p5-individual-eval-report/v1",
-  "run_id": "p5-individual-skills-fixture-targeted-2",
+  "run_id": "p5-individual-skills-fixture",
   "source_raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p5-individual-skills-fixture/raw/run.json",
-  "source_raw_digest": "7dba58d87804a50ce249ecaa5ea47b0b3ad5e0eef0ba5d1ebda87b479597bb88",
+  "source_raw_digest": "f692b0cc9bbb67f257381524ab9f42f2998dbeebabd15d424c326c9a0012be83",
   "status_counts": {
     "pass": 52,
     "partial": 0,
@@ -10,8 +10,8 @@
     "not-scored": 0
   },
   "model_backed": false,
-  "runtime_parity_precondition": "not-complete-in-current-phase-status",
-  "metadata_digest": "9d4ba93b0946ef38278e85489d303d4fdf222365dc542528aff0ee0d81a4cc02",
+  "runtime_parity_precondition": "complete",
+  "metadata_digest": "502cb2b7fc183d42a9e88e5606a808cff7e73bc70a504bb58db985b93ae44bfd",
   "results": [
     {
       "case_id": "p5-architecture-api-positive",
@@ -482,5 +482,5 @@
       "failure_semantics": []
     }
   ],
-  "report_html_digest": "c13d8d9b89e759ea46f945e515644245983d0c68c50ed348860cdc005cab2226"
+  "report_html_digest": "1d82c0b49788074f83ead6e02b076ca5650096f8267357a30ba24d6c4d3dfa54"
 }
