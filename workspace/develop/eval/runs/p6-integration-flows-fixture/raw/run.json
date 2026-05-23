@@ -1,9 +1,9 @@
 {
   "schema_version": "p6-integration-eval-run/v1",
-  "run_id": "p6-integration-flows-fixture-targeted-2",
+  "run_id": "p6-integration-flows-fixture",
   "bucket": "integration-flows",
   "fixture_root": "workspace/develop/eval/fixtures/integration-flows",
-  "created_at_utc": "2026-05-23T16:00:37.333642+00:00",
+  "created_at_utc": "2026-05-23T16:21:57.136583+00:00",
   "variants": [
     "baseline",
     "with-plugin"
@@ -30,7 +30,7 @@
   "metadata_digests": {
     "workspace/develop/eval/fixtures/integration-flows/cases.json": "3957fee5a65bc032cb9dbce1bb6557ca913ec00e5ea7f0a512f97deb45c6f2c7",
     "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
-    "workspace/scripts/p6_integration_eval.py": "33f9d2dd125d534cbfe009e604e48f37d5360a8be509c4ffaa3d95b3a37bbb98",
+    "workspace/scripts/p6_integration_eval.py": "7b5a4104e6ceec65df86b9f8f2b9ef0f9e09a4e50bd00f5f81f0ea1671ddf403",
     "workspace/scripts/p5_individual_eval.py": "7db3628e4a243f84c9de8963288eef5dd86933773ca37f520e44fb0c90945b6b",
     "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
     "dddjango/skills/source-reference-audit/references/source-governance.md": "de87e4e108dd44ed454254ee1cdca1b9820ed76926771eadd7fa4dadfdbd821e",
@@ -554,6 +554,6 @@
       "run_mode": "model-backed-installed-runtime-p6-integration"
     }
   ],
-  "metadata_digest": "b11d43617d71a38a3ffd6d0429d7b490580c3ffbd05244644a1b52fa2c03368f",
-  "raw_digest": "c36475ffaeade47172b92ce92898b77cdb3142fe6f6da23e5a153780d597d188"
+  "metadata_digest": "c46855b7e0b0bd1cb1d2a98b288ad622194eeeb5639fb2e0f2898792f3238ac7",
+  "raw_digest": "272ea54690d9e4a589c44706d6327b3f8abf82e70bebee1887235cd29e5e755a"
 }

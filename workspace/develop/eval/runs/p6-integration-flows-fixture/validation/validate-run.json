@@ -3,8 +3,8 @@
   "status": "pass",
   "raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p6-integration-flows-fixture/raw/run.json",
   "report_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p6-integration-flows-fixture/report/report.json",
-  "raw_digest": "c36475ffaeade47172b92ce92898b77cdb3142fe6f6da23e5a153780d597d188",
-  "metadata_digest": "b11d43617d71a38a3ffd6d0429d7b490580c3ffbd05244644a1b52fa2c03368f",
+  "raw_digest": "272ea54690d9e4a589c44706d6327b3f8abf82e70bebee1887235cd29e5e755a",
+  "metadata_digest": "c46855b7e0b0bd1cb1d2a98b288ad622194eeeb5639fb2e0f2898792f3238ac7",
   "status_counts": {
     "pass": 8,
     "partial": 0,

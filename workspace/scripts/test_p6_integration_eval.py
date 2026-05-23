@@ -71,6 +71,21 @@ class P6IntegrationEvalTests(unittest.TestCase):
         self.assertEqual(result["status"], "fail")
         self.assertIn("skill-responsibility-intrusion", result["failure_semantics"])
 
+    def test_tiny_edit_accepts_empty_loaded_skill_when_none_is_allowed(self) -> None:
+        case = p6_integration_eval.base.case_by_id(FIXTURE_ROOT, "p6-tiny-edit-opt-out-restraint")
+        answer = {
+            "loaded_skill": "",
+            "claims": ["restraint-boundary-coverage", "no-workflow-overreach", "forbidden-overclaim"],
+            "overclaims": False,
+            "answer_text": "def calc_total(price): return price",
+        }
+
+        result = p6_integration_eval.score_p6_answer(case=case, variant="with-plugin", answer=answer)
+
+        self.assertEqual(result["status"], "pass")
+        self.assertNotIn("wrong-routing", result["failure_semantics"])
+        self.assertTrue(result["checks"]["loaded_skill"]["ok"])
+
     def test_model_targeted_suite_records_two_model_backed_iterations(self) -> None:
         @dataclass
         class FakeCompletedProcess:

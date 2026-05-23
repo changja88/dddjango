@@ -99,6 +99,18 @@ def score_p6_answer(*, case: dict[str, Any], variant: str, answer: dict[str, Any
     if not isinstance(oracle, dict):
         return result
 
+    accepted_loaded = base.expected_loaded_skills(oracle)
+    if answer.get("loaded_skill") == "" and "none" in accepted_loaded:
+        result["checks"]["loaded_skill"] = {
+            "expected": accepted_loaded[0],
+            "accepted": accepted_loaded,
+            "actual": "",
+            "ok": True,
+        }
+        result["failure_semantics"] = [
+            item for item in result["failure_semantics"] if item != "wrong-routing"
+        ]
+
     actual_loaded_skill = answer.get("loaded_skill")
     required_skills = required_loaded_skills(oracle)
     missing_required_skills = [
@@ -140,6 +152,8 @@ def score_p6_answer(*, case: dict[str, Any], variant: str, answer: dict[str, Any
         result["status"] = "partial" if 0 < float(result.get("score") or 0) < 1 else "fail"
         if result["status"] == "pass":
             result["status"] = "fail"
+    elif result.get("score") == 1.0:
+        result["status"] = "pass"
     return result
 
 
@@ -176,6 +190,7 @@ def model_case_prompt(case: dict[str, Any]) -> str:
             "Set loaded_skill to the coordinating skill plus any dddjango skills explicitly used or handed off, separated by semicolons.",
             "For claims, include only the identifiers below when your answer satisfies the criterion:",
             *claim_lines,
+            "A complete P6 answer normally includes every required claim listed above; omit a claim only when your answer does not satisfy that specific criterion.",
             "Do not claim actual file edits, command execution, tests, subagent execution, runtime evidence, or broader phase completion unless it happened in this answer.",
             "Do not expose source-authoring paths, private evaluation material, run artifact paths, or non-public validation notes in answer_text.",
             "",

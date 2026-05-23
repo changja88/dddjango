@@ -1,0 +1,54 @@
+{
+  "schema_version": "p6-integration-eval-report/v1",
+  "run_id": "p6-integration-flows-model-approved-bucket-with-plugin-v2",
+  "source_raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p6-integration-flows-model-approved-bucket-with-plugin-v2/raw/run.json",
+  "source_raw_digest": "1a21d81efced72178b85a9e745b4b1a2d9b00da53264a38c351843d140661def",
+  "status_counts": {
+    "pass": 4,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "model_backed": true,
+  "runtime_parity_precondition": "complete",
+  "metadata_digest": "c46855b7e0b0bd1cb1d2a98b288ad622194eeeb5639fb2e0f2898792f3238ac7",
+  "results": [
+    {
+      "case_id": "p6-composite-order-ddd-db-api-django-test",
+      "variant": "with-plugin",
+      "surface": "composite-risky-write",
+      "skill_under_test": "dddjango:workflow-dddjango-subagents",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:workflow-dddjango-subagents; dddjango:architecture-ddd; dddjango:architecture-db; dddjango:architecture-api; dddjango:implementation-django; dddjango:implementation-test",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p6-tiny-edit-opt-out-restraint",
+      "variant": "with-plugin",
+      "surface": "restraint",
+      "skill_under_test": "dddjango:implementation-python",
+      "status": "pass",
+      "actual_loaded_skill": "none",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p6-source-runtime-governance-boundary",
+      "variant": "with-plugin",
+      "surface": "governance",
+      "skill_under_test": "dddjango:source-reference-audit",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:source-reference-audit",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p6-subagent-workflow-honesty",
+      "variant": "with-plugin",
+      "surface": "honesty",
+      "skill_under_test": "dddjango:workflow-dddjango-subagents",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:workflow-dddjango-subagents; dddjango:architecture-ddd; dddjango:architecture-db; dddjango:architecture-api; dddjango:implementation-django; dddjango:implementation-test; dddjango:implementation-cleancode",
+      "failure_semantics": []
+    }
+  ],
+  "report_html_digest": "27a9e8b93b16369dc586ce224f145d2f45eca097f74038fb2a52b4e7a85024f5"
+}

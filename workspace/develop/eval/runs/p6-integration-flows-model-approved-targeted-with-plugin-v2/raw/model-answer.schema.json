@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "loaded_skill",
+    "claims",
+    "overclaims",
+    "answer_text"
+  ],
+  "properties": {
+    "loaded_skill": {
+      "type": "string"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "overclaims": {
+      "type": "boolean"
+    },
+    "answer_text": {
+      "type": "string"
+    }
+  }
+}

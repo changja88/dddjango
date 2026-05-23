@@ -1,0 +1,19 @@
+{
+  "schema_version": "p6-integration-eval-validation/v1",
+  "status": "pass",
+  "raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p6-integration-flows-model-approved-bucket-with-plugin-v2/raw/run.json",
+  "report_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p6-integration-flows-model-approved-bucket-with-plugin-v2/report/report.json",
+  "raw_digest": "1a21d81efced72178b85a9e745b4b1a2d9b00da53264a38c351843d140661def",
+  "metadata_digest": "c46855b7e0b0bd1cb1d2a98b288ad622194eeeb5639fb2e0f2898792f3238ac7",
+  "status_counts": {
+    "pass": 4,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "case_count": 4,
+  "result_count": 4,
+  "model_backed": true,
+  "runtime_parity_precondition": "complete",
+  "failures": []
+}
