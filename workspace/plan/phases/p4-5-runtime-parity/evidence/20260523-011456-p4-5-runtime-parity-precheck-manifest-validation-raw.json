@@ -1,0 +1,54 @@
+{
+  "dddjango": {
+    "manifest_path": "dddjango/.codex-plugin/plugin.json",
+    "name": "dddjango",
+    "version": "0.1.10",
+    "skills_field": "./skills/",
+    "skills_path": "/Users/hyun/Desktop/dddjango/dddjango/skills",
+    "skills_inside_plugin_root": true,
+    "skill_count": 13,
+    "skill_names": [
+      "architecture-api",
+      "architecture-db",
+      "architecture-ddd",
+      "architecture-implementation-patterns",
+      "implementation-cleancode",
+      "implementation-django",
+      "implementation-django-ninja",
+      "implementation-django-web",
+      "implementation-python",
+      "implementation-tdd",
+      "implementation-test",
+      "source-reference-audit",
+      "workflow-dddjango-subagents"
+    ],
+    "file_count": 80,
+    "outside_manifest_targets": []
+  },
+  "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10": {
+    "manifest_path": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/.codex-plugin/plugin.json",
+    "name": "dddjango",
+    "version": "0.1.10",
+    "skills_field": "./skills/",
+    "skills_path": "/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills",
+    "skills_inside_plugin_root": true,
+    "skill_count": 13,
+    "skill_names": [
+      "architecture-api",
+      "architecture-db",
+      "architecture-ddd",
+      "architecture-implementation-patterns",
+      "implementation-cleancode",
+      "implementation-django",
+      "implementation-django-ninja",
+      "implementation-django-web",
+      "implementation-python",
+      "implementation-tdd",
+      "implementation-test",
+      "source-reference-audit",
+      "workflow-dddjango-subagents"
+    ],
+    "file_count": 80,
+    "outside_manifest_targets": []
+  }
+}
