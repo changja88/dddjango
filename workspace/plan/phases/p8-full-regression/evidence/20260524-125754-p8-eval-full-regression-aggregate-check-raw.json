@@ -1,0 +1,69 @@
+{
+  "schema_version": "p8-full-regression-check/v1",
+  "status": "pass",
+  "p5": {
+    "label": "p5-individual-skills",
+    "status": "pass",
+    "run_id": "p8-full-regression-p5-model-installed-runtime",
+    "raw_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/run.json",
+    "report_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/report/report.json",
+    "validation_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/validation/validate-run.json",
+    "raw_digest": "a0b7f5b1adb53f7f9acacd4e49b23c7f53f8d64642f85c772e852de8c0b5d84b",
+    "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703",
+    "status_counts": {
+      "pass": 26,
+      "partial": 0,
+      "fail": 0,
+      "not-scored": 0
+    },
+    "case_count": 26,
+    "result_count": 26,
+    "model_backed": true,
+    "leakage_findings": [],
+    "failures": []
+  },
+  "p6": {
+    "label": "p6-integration-flows",
+    "status": "pass",
+    "run_id": "p8-full-regression-p6-model-installed-runtime",
+    "raw_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p6-model-installed-runtime/raw/run.json",
+    "report_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p6-model-installed-runtime/report/report.json",
+    "validation_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p6-model-installed-runtime/validation/validate-run.json",
+    "raw_digest": "67a3cd5e907f9f1000d4d0364115cd7677c06917d99474c3f25db12ab476ad9d",
+    "metadata_digest": "5877c95ce08e1394894192d703e16077411caf2623c0daa207cecbd94848f078",
+    "status_counts": {
+      "pass": 4,
+      "partial": 0,
+      "fail": 0,
+      "not-scored": 0
+    },
+    "case_count": 4,
+    "result_count": 4,
+    "model_backed": true,
+    "leakage_findings": [],
+    "failures": []
+  },
+  "p7": {
+    "status": "pass",
+    "source_plugin_root": "dddjango",
+    "installed_cache_root": "installed-cache:.",
+    "source_cache_file_count": 80,
+    "runtime_analysis_path": "workspace/plan/phases/p7-install-packaging/evidence/20260524-015346-p7-install-packaging-runtime-verification-runtime-analysis-raw.json",
+    "manifest_validation_path": "workspace/plan/phases/p7-install-packaging/evidence/20260524-015346-p7-install-packaging-runtime-verification-manifest-validation-raw.json",
+    "failures": []
+  },
+  "review": {
+    "status": "pass",
+    "raw_path": "workspace/plan/reviews/raw/20260524-125754-p8-review-full-regression-final-raw.md",
+    "summary_path": "workspace/plan/reviews/summaries/20260524-125754-p8-review-full-regression-final-review.md",
+    "raw_digest": "5d21f892e613471028835a15dacd5091e4c25be49a10e937a203f093213802d9",
+    "summary_digest": "2300b6d82a1bf4ec4e22aca41c1b2fdc8ab89ae24aa6ecc4d3a589beb4244cab",
+    "finding_counts": {
+      "Blocker": 0,
+      "Major": 0,
+      "Open Minor": 0
+    },
+    "failures": []
+  },
+  "failures": []
+}

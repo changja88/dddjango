@@ -113,7 +113,11 @@ class P6IntegrationEvalTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            return FakeCompletedProcess(returncode=0, stdout='{"event":"done"}\n', stderr="")
+            return FakeCompletedProcess(
+                returncode=0,
+                stdout='{"command":"/bin/zsh -lc \\"sed /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/SKILL.md\\""}\n',
+                stderr="trace cwd=/private/tmp/dddjango-p8-model/case",
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = self.paths(Path(tmp) / "run")
@@ -129,6 +133,14 @@ class P6IntegrationEvalTests(unittest.TestCase):
                 runner=fake_runner,
             )
             raw = json.loads((paths.output_dir / "raw" / "targeted-run-1.json").read_text(encoding="utf-8"))
+            stdout_text = (
+                paths.output_dir
+                / "raw/model-executions/p6-composite-order-ddd-db-api-django-test.with-plugin.stdout.jsonl"
+            ).read_text(encoding="utf-8")
+            stderr_text = (
+                paths.output_dir
+                / "raw/model-executions/p6-composite-order-ddd-db-api-django-test.with-plugin.stderr.txt"
+            ).read_text(encoding="utf-8")
 
         self.assertEqual(summary["status"], "pass")
         self.assertTrue(summary["model_backed"])
@@ -136,6 +148,10 @@ class P6IntegrationEvalTests(unittest.TestCase):
         self.assertEqual(summary["variants"], ["with-plugin"])
         self.assertEqual(raw["status_counts"]["not-scored"], 0)
         self.assertEqual(raw["result_count"], 4)
+        self.assertNotIn("/Users/hyun", stdout_text + stderr_text)
+        self.assertNotIn("/private/tmp", stdout_text + stderr_text)
+        self.assertIn("<installed-cache-root>", stdout_text)
+        self.assertIn("<tmp>", stderr_text)
 
     def test_validate_run_accepts_model_bucket_with_stable_targeted_suite_proof(self) -> None:
         @dataclass

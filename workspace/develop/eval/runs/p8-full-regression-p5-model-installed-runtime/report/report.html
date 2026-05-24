@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>dddjango P5 individual eval report</title></head>
+<body>
+<h1>p8-full-regression-p5-model-installed-runtime</h1>
+<p>Model backed: True</p>
+<p>Runtime parity precondition: complete</p>
+<p>Raw digest: a0b7f5b1adb53f7f9acacd4e49b23c7f53f8d64642f85c772e852de8c0b5d84b</p>
+<table>
+<thead><tr><th>case</th><th>variant</th><th>surface</th><th>skill under test</th><th>status</th><th>actual loaded skill</th><th>failure semantics</th></tr></thead>
+<tbody>
+<tr><td>p5-architecture-api-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:architecture-api</td><td>pass</td><td>superpowers:using-superpowers; dddjango:architecture-api</td><td>-</td></tr>
+<tr><td>p5-architecture-api-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:architecture-api</td><td>pass</td><td>dddjango:implementation-django-ninja</td><td>-</td></tr>
+<tr><td>p5-architecture-db-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:architecture-db</td><td>pass</td><td>superpowers:using-superpowers, dddjango:architecture-db</td><td>-</td></tr>
+<tr><td>p5-architecture-db-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:architecture-db</td><td>pass</td><td>dddjango:architecture-ddd</td><td>-</td></tr>
+<tr><td>p5-architecture-ddd-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:architecture-ddd</td><td>pass</td><td>superpowers:using-superpowers, dddjango:architecture-ddd</td><td>-</td></tr>
+<tr><td>p5-architecture-ddd-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:architecture-ddd</td><td>pass</td><td>dddjango:architecture-db</td><td>-</td></tr>
+<tr><td>p5-architecture-implementation-patterns-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:architecture-implementation-patterns</td><td>pass</td><td>superpowers:using-superpowers, dddjango:architecture-implementation-patterns</td><td>-</td></tr>
+<tr><td>p5-architecture-implementation-patterns-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:architecture-implementation-patterns</td><td>pass</td><td>superpowers:using-superpowers + dddjango:architecture-ddd</td><td>-</td></tr>
+<tr><td>p5-implementation-cleancode-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-cleancode</td><td>pass</td><td>dddjango:implementation-cleancode; superpowers:using-superpowers; superpowers:test-driven-development; superpowers:verification-before-completion</td><td>-</td></tr>
+<tr><td>p5-implementation-cleancode-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-cleancode</td><td>pass</td><td>workflow-dddjango-subagents + architecture-implementation-patterns</td><td>-</td></tr>
+<tr><td>p5-implementation-django-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-django</td><td>pass</td><td>superpowers:using-superpowers, superpowers:test-driven-development, dddjango:architecture-db, dddjango:implementation-django</td><td>-</td></tr>
+<tr><td>p5-implementation-django-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-django</td><td>pass</td><td>superpowers:using-superpowers; dddjango:architecture-api</td><td>-</td></tr>
+<tr><td>p5-implementation-django-ninja-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-django-ninja</td><td>pass</td><td>superpowers:using-superpowers, superpowers:brainstorming, superpowers:test-driven-development, dddjango:implementation-django-ninja, dddjango:implementation-test</td><td>-</td></tr>
+<tr><td>p5-implementation-django-ninja-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-django-ninja</td><td>pass</td><td>superpowers:using-superpowers, dddjango:architecture-api</td><td>-</td></tr>
+<tr><td>p5-implementation-django-web-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-django-web</td><td>pass</td><td>dddjango:implementation-django-web</td><td>-</td></tr>
+<tr><td>p5-implementation-django-web-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-django-web</td><td>pass</td><td>superpowers:using-superpowers; superpowers:brainstorming; superpowers:test-driven-development; dddjango:architecture-api; dddjango:implementation-django-ninja</td><td>-</td></tr>
+<tr><td>p5-implementation-python-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-python</td><td>pass</td><td>superpowers:using-superpowers; dddjango:implementation-python</td><td>-</td></tr>
+<tr><td>p5-implementation-python-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-python</td><td>pass</td><td>dddjango:implementation-django; superpowers:using-superpowers; superpowers:systematic-debugging; superpowers:test-driven-development</td><td>-</td></tr>
+<tr><td>p5-implementation-tdd-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-tdd</td><td>pass</td><td>superpowers:using-superpowers, dddjango:implementation-tdd</td><td>-</td></tr>
+<tr><td>p5-implementation-tdd-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-tdd</td><td>pass</td><td>superpowers:using-superpowers; dddjango:implementation-test</td><td>-</td></tr>
+<tr><td>p5-implementation-test-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:implementation-test</td><td>pass</td><td>superpowers:using-superpowers, dddjango:implementation-test</td><td>-</td></tr>
+<tr><td>p5-implementation-test-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:implementation-test</td><td>pass</td><td>superpowers:using-superpowers; dddjango:implementation-tdd</td><td>-</td></tr>
+<tr><td>p5-source-reference-audit-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:source-reference-audit</td><td>pass</td><td>superpowers:using-superpowers, dddjango:source-reference-audit</td><td>-</td></tr>
+<tr><td>p5-source-reference-audit-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:source-reference-audit</td><td>pass</td><td>superpowers:using-superpowers, superpowers:brainstorming, dddjango:workflow-dddjango-subagents, superpowers:test-driven-development</td><td>-</td></tr>
+<tr><td>p5-workflow-dddjango-subagents-positive</td><td>with-plugin</td><td>positive</td><td>dddjango:workflow-dddjango-subagents</td><td>pass</td><td>superpowers:using-superpowers, dddjango:workflow-dddjango-subagents</td><td>-</td></tr>
+<tr><td>p5-workflow-dddjango-subagents-negative</td><td>with-plugin</td><td>negative</td><td>dddjango:workflow-dddjango-subagents</td><td>pass</td><td>superpowers:using-superpowers; dddjango:source-reference-audit</td><td>-</td></tr>
+</tbody></table>
+</body></html>

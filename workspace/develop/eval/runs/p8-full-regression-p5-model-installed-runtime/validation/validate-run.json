@@ -1,0 +1,20 @@
+{
+  "schema_version": "p5-individual-eval-validation/v1",
+  "status": "pass",
+  "raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/run.json",
+  "report_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/report/report.json",
+  "raw_digest": "a0b7f5b1adb53f7f9acacd4e49b23c7f53f8d64642f85c772e852de8c0b5d84b",
+  "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703",
+  "status_counts": {
+    "pass": 26,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "case_count": 26,
+  "result_count": 26,
+  "model_backed": true,
+  "runtime_parity_precondition": "complete",
+  "failures": [],
+  "leakage_findings": []
+}

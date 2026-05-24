@@ -1,0 +1,2727 @@
+{
+  "schema_version": "p5-individual-eval-run/v1",
+  "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+  "bucket": "individual-skills",
+  "fixture_root": "workspace/develop/eval/fixtures/individual-skills",
+  "created_at_utc": "2026-05-24T06:13:45.100914+00:00",
+  "variants": [
+    "with-plugin"
+  ],
+  "run_mode": "model-backed-installed-runtime",
+  "model_backed": true,
+  "runtime_parity_precondition": "complete",
+  "runtime_channel": "external",
+  "runner_destination": "codex-exec",
+  "prompt_assembly_source": "workspace/scripts/p5_individual_eval.py:model_case_prompt",
+  "system_developer_prompt_template": "installed Codex runtime plus installed dddjango plugin for with-plugin variant",
+  "tool_sandbox_policy": {
+    "codex_approval_policy": "never",
+    "sandbox": "read-only"
+  },
+  "oracle_model_config": "deterministic local oracle from cases.json",
+  "scoring_prompt_config": "deterministic scorer over structured model answer JSON",
+  "flake_history": {
+    "iterations": 2,
+    "current_iteration": 2,
+    "variance_status": "pending"
+  },
+  "status": "pass",
+  "status_counts": {
+    "pass": 26,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "hard_failure_count": 0,
+  "case_count": 26,
+  "result_count": 26,
+  "metadata_digests": {
+    "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+    "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+    "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+    "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+    "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+    "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+    "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+    "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+    "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+    "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+    "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+    "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+    "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+    "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+    "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+    "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+    "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+    "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+    "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+  },
+  "results": [
+    {
+      "case_id": "p5-architecture-api-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-api",
+      "expected_loaded_skill": "dddjango:architecture-api",
+      "actual_loaded_skill": "dddjango:architecture-api",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api"
+          ],
+          "actual": "dddjango:architecture-api",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-api"
+          ],
+          "observed": [
+            "dddjango:architecture-api"
+          ],
+          "matched": [
+            "dddjango:architecture-api"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "b6d9c7767187597baea45917dd71f74c8ee5b146e93c3d13f9a19063b0f6effd",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 주문 생성 API URL, status code, 에러 응답, Idempotency-Key 계약을 정리해줘."
+        ],
+        "command_digest": "4e03689772217fa4aae779f10996b972f43a5da5fea5f10a78eaf2e7ad8c3f35",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-positive-with-plugin",
+        "cwd_digest": "0defb33cfbf889c53170552ac43d5f3dc0bf91ea1bc79bc60cfca6fae13d0a24",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-api-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-api-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-positive-with-plugin/final.json",
+        "final_path_digest": "2b6c0c3f9203de8687aa2800248fa8eb4d5fb0dae19f58da278ec752dcdd7958",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-api-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-api",
+      "expected_loaded_skill": "dddjango:implementation-django-ninja",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:implementation-django-ninja",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "actual": "superpowers:using-superpowers; dddjango:implementation-django-ninja",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "observed": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "matched": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "8e1b711216704fa1e5af8c654d0ba3c8e13719833896bb46f1da3a7fd033c509",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: Django Ninja Router랑 Schema 코드를 바로 만들어줘."
+        ],
+        "command_digest": "4b882c3040a133ae4c2e393c186e42f74bc983e3993a38dddd949494569a85b7",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-negative-with-plugin",
+        "cwd_digest": "7de87f5c8e5bd5750a98583545f41424f7d68415039a5b31ba3713a92f189e00",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-api-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-api-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-api-negative-with-plugin/final.json",
+        "final_path_digest": "3e95a155b2a72d59c2fd424790b896b9ff3eb08a78e1ca4fb4a59cf0b885009b",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-db-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-db",
+      "expected_loaded_skill": "dddjango:architecture-db",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:architecture-db",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-db",
+          "accepted": [
+            "dddjango:architecture-db"
+          ],
+          "actual": "superpowers:using-superpowers; dddjango:architecture-db",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-db"
+          ],
+          "observed": [
+            "dddjango:architecture-db"
+          ],
+          "matched": [
+            "dddjango:architecture-db"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "623ca2ab6d2a3a65dd81de2960f58424921dca80cc5cfe8fa0a6d71c7c8b44d6",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 쿠폰 중복 사용을 DB에서 막으려면 unique constraint랑 transaction을 어떻게 잡아야 해?"
+        ],
+        "command_digest": "f0147ce7758fdd3e20f9a25a940cc6144af1195ee8e86cc700d8278502bfb48a",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-positive-with-plugin",
+        "cwd_digest": "bd92199698dce27f825aeb874629b21ff3c048a79cb8249c67a17623302e9646",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-db-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-db-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-positive-with-plugin/final.json",
+        "final_path_digest": "c92369b2347cf4560051a433dff7943d8c9e82f8150c849cca531dd9eda140fd",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-db-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-db",
+      "expected_loaded_skill": "dddjango:architecture-ddd",
+      "actual_loaded_skill": "dddjango:architecture-ddd",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
+          "actual": "dddjango:architecture-ddd",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-ddd"
+          ],
+          "observed": [
+            "dddjango:architecture-ddd"
+          ],
+          "matched": [
+            "dddjango:architecture-ddd"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "525650a3560a5ad7a5fcb6b8d05a4d143926ec23bdd3ad5d233a492d8c3279a2",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: Order aggregate가 어떤 불변식을 가져야 하는지 모델링해줘."
+        ],
+        "command_digest": "040123e726f6b2614c4028392906db6945286d596a505afb7b8f143d74b39c70",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-negative-with-plugin",
+        "cwd_digest": "96dd817fffc82542a918a651f4b4b5269591fc64880bfaf41aa3b02fdd049d28",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-db-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-db-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-db-negative-with-plugin/final.json",
+        "final_path_digest": "9f8508803a82e01821492285b90bbc2fd6b63fb5b702819292f80fec774e8b25",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-ddd-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-ddd",
+      "expected_loaded_skill": "dddjango:architecture-ddd",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:architecture-ddd",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:architecture-ddd",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-ddd"
+          ],
+          "observed": [
+            "dddjango:architecture-ddd"
+          ],
+          "matched": [
+            "dddjango:architecture-ddd"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "651f2fca5bbda5a350bbedec7d205dde461e48a9f5eaa774a2ded224b72cdc20",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 환불 도메인에서 어떤 상태 전이와 불변식을 aggregate로 묶어야 할지 잡아줘."
+        ],
+        "command_digest": "1d05644dbefc4500ff6bc580612ec05446d2b84e44c4fc425c4a25fb681ca213",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-positive-with-plugin",
+        "cwd_digest": "ff5b2ae2ddaf08ca9cd88cad1fd104de2f50aec4f062e850bf8bbcd693fcc702",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-ddd-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-ddd-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-positive-with-plugin/final.json",
+        "final_path_digest": "57e38e5462962736aff7e8d21cae3501092901fb6d0ff50e5e14b1d256730399",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-ddd-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-ddd",
+      "expected_loaded_skill": "dddjango:architecture-db",
+      "actual_loaded_skill": "dddjango:architecture-db",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-db",
+          "accepted": [
+            "dddjango:architecture-db"
+          ],
+          "actual": "dddjango:architecture-db",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-db"
+          ],
+          "observed": [
+            "dddjango:architecture-db"
+          ],
+          "matched": [
+            "dddjango:architecture-db"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "0df1c8db18ec4446903c43de34b354244638d4af27a46bfe012c07fdcb48d7c1",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: orders 테이블 정규화와 foreign key를 설계해줘."
+        ],
+        "command_digest": "34f06047f8a47448e54e7c987f72a807ff1c5699af378f925fc5833d867f2956",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-negative-with-plugin",
+        "cwd_digest": "291d5ab30f2036c3ce125208d373b0c49739c40f72c17632af36d3fc6c30b1ab",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-ddd-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-ddd-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-ddd-negative-with-plugin/final.json",
+        "final_path_digest": "2f9dafb549ec6f5250dc310e5fdb6bd1e65c7abc8cc3253d6818a33b02944950",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-implementation-patterns-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-implementation-patterns",
+      "expected_loaded_skill": "dddjango:architecture-implementation-patterns",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:architecture-implementation-patterns",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-implementation-patterns",
+          "accepted": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "actual": "superpowers:using-superpowers; dddjango:architecture-implementation-patterns",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "observed": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "matched": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "54a2843836d1c430c1fc85a69bba4ef89ab9fe9e9ad3e7aa865152ba38caae20",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 결제 승인 후 재고 차감과 알림 발송을 outbox로 분리할지 서비스에서 바로 호출할지 판단해줘."
+        ],
+        "command_digest": "e9eb991d66188ed9f7d22c079a1b7b3d49b37674862293d9215a3f0c039d7e70",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-positive-with-plugin",
+        "cwd_digest": "18de4c1d5f79923e30cdb477c084a2e0d7df65ffd594350b3379210402448025",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-implementation-patterns-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-implementation-patterns-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-positive-with-plugin/final.json",
+        "final_path_digest": "5fdb4d7a4c2c830e8b60db1482d68dadf0639882623ec222ffc4ec78aa248720",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-architecture-implementation-patterns-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-implementation-patterns",
+      "expected_loaded_skill": "dddjango:architecture-ddd",
+      "actual_loaded_skill": "superpowers:using-superpowers + dddjango:architecture-ddd",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-ddd",
+          "accepted": [
+            "dddjango:architecture-ddd"
+          ],
+          "actual": "superpowers:using-superpowers + dddjango:architecture-ddd",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-ddd"
+          ],
+          "observed": [
+            "dddjango:architecture-ddd"
+          ],
+          "matched": [
+            "dddjango:architecture-ddd"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "571d62251c0f3d80184a77403c80ddbcb6bf990d56b76af5a00fffb0236dbc75",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 쿠폰 정책의 ubiquitous language와 aggregate를 먼저 찾아줘."
+        ],
+        "command_digest": "717f2b30c5d69f16ebfd8a54b0f2c7f039191ae59df125fb00cbdf2b9c782277",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-negative-with-plugin",
+        "cwd_digest": "193211921a05a0e845e572ac34d1d974d9003c5d6dc521f23f30c26daa5f2f92",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-implementation-patterns-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-architecture-implementation-patterns-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-architecture-implementation-patterns-negative-with-plugin/final.json",
+        "final_path_digest": "e9405b425fda2e0ab5cedcbe2e4161651a96fb8d835d1f934fc4cdc752f02a84",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-cleancode-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-cleancode",
+      "expected_loaded_skill": "dddjango:implementation-cleancode",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:implementation-cleancode",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-cleancode",
+          "accepted": [
+            "dddjango:implementation-cleancode"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:implementation-cleancode",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-cleancode"
+          ],
+          "observed": [
+            "dddjango:implementation-cleancode"
+          ],
+          "matched": [
+            "dddjango:implementation-cleancode"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "5bf50e177a46391ad868c10bd5aa58802c8726e5837eff608efc11e952902cc8",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 이 fat model을 더 읽기 쉽게 리팩터링해줘. 동작은 바꾸면 안 돼."
+        ],
+        "command_digest": "83d4d7df86c01c469c0b8800da54003c4dc75da956bd6f788c36a1bc953a3e5c",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-positive-with-plugin",
+        "cwd_digest": "fc3229e1c5a598dc61a0985b1e37023680c499a854e9aeb6a86d0efa5b32404a",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-cleancode-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-cleancode-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-positive-with-plugin/final.json",
+        "final_path_digest": "40d48a77e417462f43ce69ecc60a0bd808688a10c6953ab1a2a7ee52cb2250dc",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-cleancode-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-cleancode",
+      "expected_loaded_skill": "dddjango:architecture-implementation-patterns",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:workflow-dddjango-subagents, dddjango:architecture-implementation-patterns, dddjango:architecture-db",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-implementation-patterns",
+          "accepted": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:workflow-dddjango-subagents, dddjango:architecture-implementation-patterns, dddjango:architecture-db",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "observed": [
+            "dddjango:architecture-implementation-patterns",
+            "dddjango:workflow-dddjango-subagents",
+            "dddjango:architecture-db"
+          ],
+          "matched": [
+            "dddjango:architecture-implementation-patterns"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "7aaa87c0644e23f9e8ea96bbcd25d6df543df7967aba1e42921bc6feb41c5424",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 결제와 재고를 outbox로 분리하는 아키텍처 결정을 내려줘."
+        ],
+        "command_digest": "2d773b05239cdde5ac11c7b20d79b3a18e15ed1f47844d0533af718e1b4cb3d5",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-negative-with-plugin",
+        "cwd_digest": "f64ad704065f4eacf1b8f49f30be6e0cf220fafa7f14669117905dc7d5324211",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-cleancode-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-cleancode-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-cleancode-negative-with-plugin/final.json",
+        "final_path_digest": "74ca53cb6e4cde4f74abf5e282f652365e24ff4b777aa445091948288f0c31fe",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-django-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-django",
+      "expected_loaded_skill": "dddjango:implementation-django",
+      "actual_loaded_skill": "superpowers:using-superpowers, superpowers:brainstorming, superpowers:test-driven-development, superpowers:verification-before-completion, dddjango:architecture-db, dddjango:implementation-django",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-django",
+          "accepted": [
+            "dddjango:implementation-django"
+          ],
+          "actual": "superpowers:using-superpowers, superpowers:brainstorming, superpowers:test-driven-development, superpowers:verification-before-completion, dddjango:architecture-db, dddjango:implementation-django",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-django"
+          ],
+          "observed": [
+            "dddjango:architecture-db",
+            "dddjango:implementation-django"
+          ],
+          "matched": [
+            "dddjango:implementation-django"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "b62eb26f68f6686732546771d1df1f2fe049d98b355aec59e09a767f70b15b05",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: Django 모델에 주문 상태를 추가하고 안전한 migration 순서까지 반영해줘."
+        ],
+        "command_digest": "3442016bb5da3db9c0c0a62d061ef740e6e867be25c443f5d272cbf29fd99165",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-positive-with-plugin",
+        "cwd_digest": "835b94fcd97270ccf618b3a3b282c2a269567f0c81c73c95ad3fb121156e9cc7",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-positive-with-plugin/final.json",
+        "final_path_digest": "d926c40fc58518a7b0a85c24f9030c2070bbe60b6e2d64d1263dd0211da5d573",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-django-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-django",
+      "expected_loaded_skill": "dddjango:architecture-api",
+      "actual_loaded_skill": "dddjango:architecture-api",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "actual": "dddjango:architecture-api",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "observed": [
+            "dddjango:architecture-api"
+          ],
+          "matched": [
+            "dddjango:architecture-api"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "6e6d8316819a3eaf7b14cf2a193c70a86a213dfb896debef7f77ea9074946020",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: POST /orders API 응답 status code와 에러 포맷을 설계해줘."
+        ],
+        "command_digest": "3ce698b6eeaf431fa0ce3df732275d70ce50912b5bd7c48faca03a1c230a9343",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-negative-with-plugin",
+        "cwd_digest": "9b76e68536f404a9a5298b14edcbc43f5ab1a9f7774508d57d2a0f9af49adeed",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-negative-with-plugin/final.json",
+        "final_path_digest": "952cf3c85e542b24c4c0a2cf508a07a3f7d810746d50bcdc4f74704259b58783",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-django-ninja-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-django-ninja",
+      "expected_loaded_skill": "dddjango:implementation-django-ninja",
+      "actual_loaded_skill": "superpowers:using-superpowers; superpowers:brainstorming; superpowers:test-driven-development; dddjango:implementation-django-ninja; dddjango:implementation-test; superpowers:verification-before-completion",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "actual": "superpowers:using-superpowers; superpowers:brainstorming; superpowers:test-driven-development; dddjango:implementation-django-ninja; dddjango:implementation-test; superpowers:verification-before-completion",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "observed": [
+            "dddjango:implementation-django-ninja",
+            "dddjango:implementation-test"
+          ],
+          "matched": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "e0927c8a2e7c7c182775c1e7592e1779041e49398f8077c4aaadbee0d409d8ed",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: Django Ninja로 주문 생성 Router, request/response Schema, TestClient 테스트를 만들어줘."
+        ],
+        "command_digest": "acff049491fd76d592318895282281b2db1d725627113cbb798c17befb418176",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-positive-with-plugin",
+        "cwd_digest": "e21b773625662c8cce38ff44f01d4948988e3111e93f798a158aac176125e45b",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-ninja-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-ninja-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-positive-with-plugin/final.json",
+        "final_path_digest": "dbea8acefadc68b2699000d6d379fc8813f2652ca2375065decd8a2acf86152d",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-django-ninja-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-django-ninja",
+      "expected_loaded_skill": "dddjango:architecture-api",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:architecture-api",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:architecture-api",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-api"
+          ],
+          "observed": [
+            "dddjango:architecture-api"
+          ],
+          "matched": [
+            "dddjango:architecture-api"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "dc8c6704169f5a0f4ccf1354a719237b839c5c5e5ebc97d1bc82b108ebcd5e5f",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: API URL, status code, header 정책만 먼저 정리해줘."
+        ],
+        "command_digest": "f25a50b633a92897a63ee68988114121c1a41683f3ae33ba7d76f92b18167b23",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-negative-with-plugin",
+        "cwd_digest": "9ea9248a7b2dee42e250264cff718cf6a982e31adfe90d794266db8debcebebe",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-ninja-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-ninja-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-ninja-negative-with-plugin/final.json",
+        "final_path_digest": "80863ea6631aeafdda3ba52e06dac6c94c98118a39a303fe9197ac30cdbedfb5",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-django-web-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-django-web",
+      "expected_loaded_skill": "dddjango:implementation-django-web",
+      "actual_loaded_skill": "superpowers:using-superpowers, superpowers:brainstorming, dddjango:implementation-django-web",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-django-web",
+          "accepted": [
+            "dddjango:implementation-django-web"
+          ],
+          "actual": "superpowers:using-superpowers, superpowers:brainstorming, dddjango:implementation-django-web",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-django-web"
+          ],
+          "observed": [
+            "dddjango:implementation-django-web"
+          ],
+          "matched": [
+            "dddjango:implementation-django-web"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "974c2326484bccbe436aa46c088d9eacd2a1faec00cf4ffd7ae4d4c3f98e8c99",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 주문 상세 Django 템플릿 페이지를 만들고 권한 체크까지 넣어줘."
+        ],
+        "command_digest": "9d587104f6da348f6f8ad43f59893143cf322f4a6b4b4c45b3615545042fd20d",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-positive-with-plugin",
+        "cwd_digest": "ca33bad7229d785e3c79c2503fab65eb0cf2276abcd32ab1449d3ad60d829805",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-web-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-web-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-positive-with-plugin/final.json",
+        "final_path_digest": "e454b8642cfe052e67eaaa780e376fd4fbd48f832132d38fbc5dce29fd29ed20",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-django-web-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-django-web",
+      "expected_loaded_skill": "dddjango:implementation-django-ninja",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:architecture-api; dddjango:implementation-django-ninja",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-django-ninja",
+          "accepted": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "actual": "superpowers:using-superpowers; dddjango:architecture-api; dddjango:implementation-django-ninja",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "observed": [
+            "dddjango:architecture-api",
+            "dddjango:implementation-django-ninja"
+          ],
+          "matched": [
+            "dddjango:implementation-django-ninja"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "fc134133e441aabb7a366987e0ce7637d73d34b4a1acf478e47aea64aa0c236c",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 주문 목록 JSON API에 pagination을 넣어줘."
+        ],
+        "command_digest": "a97e7e7757226ae70490d2de2a224c9301d76d73cc5379f713fa019c94452a78",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-negative-with-plugin",
+        "cwd_digest": "b1d82621dff2fe3995f0dcaa6871c8358041025e58b64f458b817a5c1e67a4b1",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-web-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-django-web-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-django-web-negative-with-plugin/final.json",
+        "final_path_digest": "716aeaee7017413d648ce07918d7b34d214dd5febb3a63b8f21c318ff7385e8d",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-python-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-python",
+      "expected_loaded_skill": "dddjango:implementation-python",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:implementation-python",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-python",
+          "accepted": [
+            "dddjango:implementation-python"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:implementation-python",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-python"
+          ],
+          "observed": [
+            "dddjango:implementation-python"
+          ],
+          "matched": [
+            "dddjango:implementation-python"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "4fddb22e956dda44365b81ddbdef76e13d0c3fc87737f6bfbda43d0aef6f5c40",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 이 함수에 Python 3.12 타입 힌트를 제대로 넣고 None 처리도 좁혀줘."
+        ],
+        "command_digest": "8f03a0ee38edb602b88e4c9d302634883fbd8678e9e2f2ba6f61cc9be7642b83",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-positive-with-plugin",
+        "cwd_digest": "ab481a39062ac81453618626def5945d8c094ba2128192cc43bf045b87c178fb",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-python-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-python-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-positive-with-plugin/final.json",
+        "final_path_digest": "58f6f5441f10777237af9742de4e239c5eab44588142b0562ec84f58b1d5ae46",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-python-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-python",
+      "expected_loaded_skill": "dddjango:implementation-django",
+      "actual_loaded_skill": "dddjango:implementation-django",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-django",
+          "accepted": [
+            "dddjango:implementation-django"
+          ],
+          "actual": "dddjango:implementation-django",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-django"
+          ],
+          "observed": [
+            "dddjango:implementation-django"
+          ],
+          "matched": [
+            "dddjango:implementation-django"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "06201bc9011fb6b235bf9b69211628f269282af01fb4daafb4db4a2ab610bbbe",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: Django QuerySet 성능을 select_related로 고쳐줘."
+        ],
+        "command_digest": "8997fc27da45d6c04292a5c2ad05b51a140dc2e5ede679c823cb0f050c8ae4f8",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-negative-with-plugin",
+        "cwd_digest": "a21d404a908e5493ae3dca2163da3ff1e5cd767b596327c28b35c827f007d2c0",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-python-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-python-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-python-negative-with-plugin/final.json",
+        "final_path_digest": "e554387795a3447ec35355194ca9dfc220f6d692eede6dc4d439860ce82ce992",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-tdd-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-tdd",
+      "expected_loaded_skill": "dddjango:implementation-tdd",
+      "actual_loaded_skill": "superpowers:using-superpowers; superpowers:test-driven-development; dddjango:implementation-tdd with references/test-list.md",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-tdd",
+          "accepted": [
+            "dddjango:implementation-tdd"
+          ],
+          "actual": "superpowers:using-superpowers; superpowers:test-driven-development; dddjango:implementation-tdd with references/test-list.md",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-tdd"
+          ],
+          "observed": [
+            "dddjango:implementation-tdd"
+          ],
+          "matched": [
+            "dddjango:implementation-tdd"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "cb95e4cd4e792777a97910b9da62643ed8ebcd6bf17d5983cf2cfdd1c5fc8c3d",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 쿠폰 할인 정책을 TDD로 진행할 테스트 목록부터 잡아줘."
+        ],
+        "command_digest": "446e614d88b45e856f30ffec3935509719bb64d0f01dc68d236980c87f67ed22",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-positive-with-plugin",
+        "cwd_digest": "a7ab11edfec3b6aace2fad2e5f3d4dd50dd869e12a6cf2a58302aa36b309afa9",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-tdd-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-tdd-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-positive-with-plugin/final.json",
+        "final_path_digest": "0f1fbd433a33f3e92594215dc12ac123c38b416303a11f32a5d35a60903df20f",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-tdd-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-tdd",
+      "expected_loaded_skill": "dddjango:implementation-test",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:implementation-test",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-test",
+          "accepted": [
+            "dddjango:implementation-test"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:implementation-test",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-test"
+          ],
+          "observed": [
+            "dddjango:implementation-test"
+          ],
+          "matched": [
+            "dddjango:implementation-test"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "748a375ca6f57d8f90a2af4855b2324d9ec70c8697f266070f51a0b359c00e08",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: factory_boy fixture와 pytest mock 구조만 만들어줘."
+        ],
+        "command_digest": "53b18f623c48044034642d6aa8f0f9a5620addb48ae3d5db96667f2c042528e1",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-negative-with-plugin",
+        "cwd_digest": "2961ff2d51d51db9cbf38e05e6793bcc7a284ffcafc07a0eb02fa19c854ab9a0",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-tdd-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-tdd-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-tdd-negative-with-plugin/final.json",
+        "final_path_digest": "166c9c78614a7e2cf53573e3dd0e766d152d018b90870396c29dd714a7816d55",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-test-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-test",
+      "expected_loaded_skill": "dddjango:implementation-test",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:implementation-test",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-test",
+          "accepted": [
+            "dddjango:implementation-test"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:implementation-test",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-test"
+          ],
+          "observed": [
+            "dddjango:implementation-test"
+          ],
+          "matched": [
+            "dddjango:implementation-test"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "0596b0ec20788d341aefbf3737121e0833ceee83770abdb4b3df93f1440d00e5",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: pytest fixture랑 factory_boy로 주문 테스트 데이터를 정리해줘."
+        ],
+        "command_digest": "53464576d17f29f737cb1028bc4de4feea95a5e3c9558b770c0f1153c2484855",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-positive-with-plugin",
+        "cwd_digest": "9278edbe6f4cb8d399ec0cccb3bdc0804789d0db1592425f7441d34a5b311022",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-test-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-test-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-positive-with-plugin/final.json",
+        "final_path_digest": "0c3b375ec5516f6115c2cb190cdb8ee9d619ebbde0bc7b4399f1d174b1f3dc76",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-implementation-test-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-test",
+      "expected_loaded_skill": "dddjango:implementation-tdd",
+      "actual_loaded_skill": "superpowers:using-superpowers, superpowers:test-driven-development, dddjango:implementation-tdd",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:implementation-tdd",
+          "accepted": [
+            "dddjango:implementation-tdd"
+          ],
+          "actual": "superpowers:using-superpowers, superpowers:test-driven-development, dddjango:implementation-tdd",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:implementation-tdd"
+          ],
+          "observed": [
+            "dddjango:implementation-tdd"
+          ],
+          "matched": [
+            "dddjango:implementation-tdd"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "ff9a131db38e8a6789c2b632374232a13e13b28a4122ac8d5cce974d9ae37016",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 이 기능을 TDD로 어떤 순서로 개발할지 테스트 목록을 짜줘."
+        ],
+        "command_digest": "af1784cbbcd46106183b2fc58ae5700a7ad5df5881bdbcae4d53fda7d81d2e21",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-negative-with-plugin",
+        "cwd_digest": "9356192dc651da4684ca58517b66009bd6e02a9d913fa328953ebe1266916ff2",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-test-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-implementation-test-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-implementation-test-negative-with-plugin/final.json",
+        "final_path_digest": "11848bd4f6beaeca1228521546c44c286e85a7f7f3752e4cd031a7b5c8d3cabf",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-source-reference-audit-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:source-reference-audit",
+      "expected_loaded_skill": "dddjango:source-reference-audit",
+      "actual_loaded_skill": "dddjango:source-reference-audit",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:source-reference-audit",
+          "accepted": [
+            "dddjango:source-reference-audit"
+          ],
+          "actual": "dddjango:source-reference-audit",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:source-reference-audit"
+          ],
+          "observed": [
+            "dddjango:source-reference-audit",
+            "dddjango:.gitkeep\\n<installed-cache-root>",
+            "dddjango:*"
+          ],
+          "matched": [
+            "dddjango:source-reference-audit"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "7c3f79667af38f4f24cfe0d0c2eba8d8fd849fd9861a3cb3a5a111b037aa2607",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 각 skill이 어떤 reference를 근거로 삼는지 provenance gap을 점검해줘."
+        ],
+        "command_digest": "1b5b4f4191bd933d19986246ed0608a169b194b35a108d93f0c5548f5cc7ad12",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-positive-with-plugin",
+        "cwd_digest": "96e898ad48d8ea0b2bdace42bca5a1821a64e3e2c46f37e7f73e923585617b6f",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-source-reference-audit-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-source-reference-audit-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-positive-with-plugin/final.json",
+        "final_path_digest": "1d2f323c21275733b2700ae0993fc786d3c3835db534947bb77527913dd90416",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-source-reference-audit-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:source-reference-audit",
+      "expected_loaded_skill": "dddjango:architecture-api",
+      "actual_loaded_skill": "superpowers:using-superpowers; superpowers:brainstorming; dddjango:workflow-dddjango-subagents; dddjango:architecture-ddd; dddjango:architecture-db; dddjango:architecture-api; dddjango:implementation-django-ninja; dddjango:implementation-test. dddjango:source-reference-audit was checked only for routing and intentionally not used because this request is order/API/domain/DB/implementation work, not source/reference governance.",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:architecture-api",
+          "accepted": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "actual": "superpowers:using-superpowers; superpowers:brainstorming; dddjango:workflow-dddjango-subagents; dddjango:architecture-ddd; dddjango:architecture-db; dddjango:architecture-api; dddjango:implementation-django-ninja; dddjango:implementation-test. dddjango:source-reference-audit was checked only for routing and intentionally not used because this request is order/API/domain/DB/implementation work, not source/reference governance.",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:architecture-api",
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "observed": [
+            "dddjango:workflow-dddjango-subagents",
+            "dddjango:architecture-ddd"
+          ],
+          "matched": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "8c0db9bd062a889bc2e46fdcd065bf3e8e1b62cfd5bb5b3b57e01088fd8aac0c",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 주문 생성 API를 설계하고 구현해줘."
+        ],
+        "command_digest": "18f83f676b5c2a993bc909a5da2b05dec0b8d2abc5d0ed5b7ae30841b124b316",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-negative-with-plugin",
+        "cwd_digest": "f57b50bc46817f59df39686cb1110afe51bdb6fd86754f781b460c7416893804",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-source-reference-audit-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-source-reference-audit-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-source-reference-audit-negative-with-plugin/final.json",
+        "final_path_digest": "c2fc57982b935a875290abb16bbd722983b63008d5126c1cee2b00428e468073",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-workflow-dddjango-subagents-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:workflow-dddjango-subagents",
+      "expected_loaded_skill": "dddjango:workflow-dddjango-subagents",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:workflow-dddjango-subagents",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:workflow-dddjango-subagents",
+          "accepted": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "actual": "superpowers:using-superpowers, dddjango:workflow-dddjango-subagents",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "observed": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "matched": [
+            "dddjango:workflow-dddjango-subagents"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "055f3d910fdf6aeef8db8aaa38bb6db10a33c122eeb72b3739845dd2e97d62dd",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-positive-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-positive-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: 주문 결제 기능을 DDD, DB, API, 테스트 역할로 나눠서 진행 계획을 세워줘."
+        ],
+        "command_digest": "08703f4144d081743f05516bb83947e44ba596ce755817e9724db1e21bda317d",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-positive-with-plugin",
+        "cwd_digest": "ba54f9bbb9296fb7da3ba51dedddb989ab10568770b27d4bd9ebfa61e4e42956",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-workflow-dddjango-subagents-positive.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-workflow-dddjango-subagents-positive.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-positive-with-plugin/final.json",
+        "final_path_digest": "9a5838934b9175045e1166a52aa010c337798b5e0c24fa6cfe4031a4198d5dd6",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    },
+    {
+      "case_id": "p5-workflow-dddjango-subagents-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:workflow-dddjango-subagents",
+      "expected_loaded_skill": "dddjango:source-reference-audit",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:source-reference-audit",
+      "status": "pass",
+      "score": 1.0,
+      "failure_semantics": [],
+      "checks": {
+        "claims": {
+          "required": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "matched": [
+            "reference-criterion-coverage",
+            "required-observations",
+            "forbidden-overclaim"
+          ],
+          "score": 1.0
+        },
+        "loaded_skill": {
+          "expected": "dddjango:source-reference-audit",
+          "accepted": [
+            "dddjango:source-reference-audit"
+          ],
+          "actual": "superpowers:using-superpowers; dddjango:source-reference-audit",
+          "ok": true
+        },
+        "runtime_loaded_skill": {
+          "expected": [
+            "dddjango:source-reference-audit"
+          ],
+          "observed": [
+            "dddjango:source-reference-audit"
+          ],
+          "matched": [
+            "dddjango:source-reference-audit"
+          ],
+          "ok": true
+        }
+      },
+      "model_backed": true,
+      "answer_text_digest": "9c2f75361d49db15ae18a496d7e24ace7070d7137074b4e5fbfe29fbbe39c362",
+      "run_id": "p8-full-regression-p5-model-installed-runtime-targeted-2",
+      "run_mode": "model-backed-installed-runtime",
+      "execution": {
+        "command": [
+          "codex",
+          "-a",
+          "never",
+          "exec",
+          "--json",
+          "--ephemeral",
+          "--skip-git-repo-check",
+          "-C",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-negative-with-plugin",
+          "-s",
+          "read-only",
+          "--output-schema",
+          "<repo-root>/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-answer.schema.json",
+          "-o",
+          "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-negative-with-plugin/final.json",
+          "P5 individual skill eval. Answer the user's request using the installed runtime instructions that apply.\nReturn only JSON matching the provided output schema.\nFor claims, include only these stable identifiers when your answer satisfies the criterion:\n- reference-criterion-coverage: the answer covers the reference criterion for this request's appropriate skill boundary.\n- required-observations: the answer states the key observations, handoffs, assumptions, or limits needed for this request.\n- forbidden-overclaim: the answer avoids claiming file changes, runtime evidence, implementation, tests, or broader completion that it did not actually perform.\nA complete P5 answer normally includes all three claims; omit a claim only when your answer does not satisfy that criterion.\n\nUser prompt: reference final.md 출처와 provisional 상태를 감사해줘."
+        ],
+        "command_digest": "e7c132e005be3014245a8139556c2ed67b8e586daa2349daee5ced8d8a002526",
+        "cwd": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-negative-with-plugin",
+        "cwd_digest": "2fd78daeb81cf6493826157b82358f9461a8225ee3ea891620901106cfb4e909",
+        "returncode": 0,
+        "stdout_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-workflow-dddjango-subagents-negative.with-plugin.stdout.jsonl",
+        "stderr_path": "workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/model-executions/p5-workflow-dddjango-subagents-negative.with-plugin.stderr.txt",
+        "final_path": "<tmp>/dddjango-p8-model/p8-full-regression-p5-model-installed-runtime-targeted-2/p5-workflow-dddjango-subagents-negative-with-plugin/final.json",
+        "final_path_digest": "1596a45b319567a9f5261aabdeb3e5affea914f8bc316f36c6c43d49bd735650",
+        "runtime_channel": "external",
+        "variant_runtime": "installed-plugin"
+      },
+      "metadata_digests": {
+        "workspace/develop/eval/fixtures/individual-skills/cases.json": "b5a53b96a15d887d13c74b232d31de8d59fa7de989b1b31369513b988c47376a",
+        "workspace/plan/phases/p1-5-usage-cards/cards/20260522-230605-p1-5-skill-usage-cards-evidence.md": "d8e67852f88b69c8c96a71a4c7ba7e95efc518111c0d37bb2a02b4ee45935a0f",
+        "workspace/plan/governance/eval_protocol.md": "e6b2195bed0423a331f53b2a9793e6726bb2ed3ec3abb84d993a933711a6333f",
+        "workspace/scripts/p5_individual_eval.py": "c5162b0fb520fe460e6ef01c47c7c70bab5b01f6442ce7221f25853154f87417",
+        "dddjango/.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "installed-cache:.codex-plugin/plugin.json": "38b40eb1b7cd1020c8f6ca8bbca4ea286bd0a02cc90a49ce784b30181451743a",
+        "dddjango/skills/architecture-api/SKILL.md": "50ac87ab37197bd8190bf30a05627b8ce72085b5bb03930af779bd490370e7b6",
+        "dddjango/skills/architecture-db/SKILL.md": "531f93587437a4ce430fe3d96565f1349ffebc4611e95987ee2a121d6c97d579",
+        "dddjango/skills/architecture-ddd/SKILL.md": "a1c235f263549efdf78dc6d815367653b5220df97d92c08159be3b2d57e1428a",
+        "dddjango/skills/architecture-implementation-patterns/SKILL.md": "5a20832fa4039434ea098a3b296ac21cc63d496d6d4fa9dd700a4cb0b034787c",
+        "dddjango/skills/implementation-cleancode/SKILL.md": "ac72f0f5092227ac19d07ee4e7b97795c51fcc352336b11e78f01b71b07958a0",
+        "dddjango/skills/implementation-django/SKILL.md": "8803c152a3eaa6fdef0f0de248a47f9e50c0b1b46580881520d4f5915f8d7bcf",
+        "dddjango/skills/implementation-django-ninja/SKILL.md": "f0a45bd8fcfb9d3e4074586f73128c1fafba26e9308aae96eaf512f44f5af54e",
+        "dddjango/skills/implementation-django-web/SKILL.md": "20ff3ddf2b6b8ebcd76d3aa0dc68471907fca2dde98121d39806695dfde788bc",
+        "dddjango/skills/implementation-python/SKILL.md": "a9e6cd500d4ba4412229eb099652d8d3c0b34bca42606dac53ae115ce97ffb6d",
+        "dddjango/skills/implementation-tdd/SKILL.md": "5ae3be3892e217d6f4792f4f88d8b3305cd4fe230290d1ee2d54dfc3229d6706",
+        "dddjango/skills/implementation-test/SKILL.md": "a947b8acfdedb07e3fdf8680bb5bd346623d9ea0bf6b5cfa48517d1cb85aa5b3",
+        "dddjango/skills/source-reference-audit/SKILL.md": "85c4a4ad84279ccbfc6b91a27709c852ec0cb870c9940a7ca32469ef68a47367",
+        "dddjango/skills/workflow-dddjango-subagents/SKILL.md": "21794c97017a84385cd792fa07065add00f42327596e14f6f005df7b9481200f"
+      },
+      "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703"
+    }
+  ],
+  "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703",
+  "raw_digest": "7df47d979e6a9887638201e02b5050c9eea966b675096061e86d91cc933faebb"
+}

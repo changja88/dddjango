@@ -1,0 +1,20 @@
+{
+  "schema_version": "p6-integration-eval-validation/v1",
+  "status": "pass",
+  "raw_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p6-model-installed-runtime/raw/run.json",
+  "report_path": "/Users/hyun/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p6-model-installed-runtime/report/report.json",
+  "raw_digest": "67a3cd5e907f9f1000d4d0364115cd7677c06917d99474c3f25db12ab476ad9d",
+  "metadata_digest": "5877c95ce08e1394894192d703e16077411caf2623c0daa207cecbd94848f078",
+  "status_counts": {
+    "pass": 4,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "case_count": 4,
+  "result_count": 4,
+  "model_backed": true,
+  "runtime_parity_precondition": "complete",
+  "failures": [],
+  "leakage_findings": []
+}

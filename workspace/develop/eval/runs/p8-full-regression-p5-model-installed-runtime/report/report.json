@@ -1,0 +1,252 @@
+{
+  "schema_version": "p5-individual-eval-report/v1",
+  "run_id": "p8-full-regression-p5-model-installed-runtime",
+  "source_raw_path": "<home>/Desktop/dddjango/workspace/develop/eval/runs/p8-full-regression-p5-model-installed-runtime/raw/run.json",
+  "source_raw_digest": "a0b7f5b1adb53f7f9acacd4e49b23c7f53f8d64642f85c772e852de8c0b5d84b",
+  "status_counts": {
+    "pass": 26,
+    "partial": 0,
+    "fail": 0,
+    "not-scored": 0
+  },
+  "model_backed": true,
+  "runtime_parity_precondition": "complete",
+  "metadata_digest": "d4ae063b07ee71de88de0245c3d45cf71ba7f3ebe503edefaa15e1c1d86a8703",
+  "results": [
+    {
+      "case_id": "p5-architecture-api-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-api",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:architecture-api",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-api-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-api",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:implementation-django-ninja",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-db-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-db",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:architecture-db",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-db-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-db",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:architecture-ddd",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-ddd-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-ddd",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:architecture-ddd",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-ddd-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-ddd",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:architecture-db",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-implementation-patterns-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:architecture-implementation-patterns",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:architecture-implementation-patterns",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-architecture-implementation-patterns-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:architecture-implementation-patterns",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers + dddjango:architecture-ddd",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-cleancode-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-cleancode",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:implementation-cleancode; superpowers:using-superpowers; superpowers:test-driven-development; superpowers:verification-before-completion",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-cleancode-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-cleancode",
+      "status": "pass",
+      "actual_loaded_skill": "workflow-dddjango-subagents + architecture-implementation-patterns",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-django-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-django",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, superpowers:test-driven-development, dddjango:architecture-db, dddjango:implementation-django",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-django-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-django",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:architecture-api",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-django-ninja-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-django-ninja",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, superpowers:brainstorming, superpowers:test-driven-development, dddjango:implementation-django-ninja, dddjango:implementation-test",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-django-ninja-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-django-ninja",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:architecture-api",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-django-web-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-django-web",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:implementation-django-web",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-django-web-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-django-web",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; superpowers:brainstorming; superpowers:test-driven-development; dddjango:architecture-api; dddjango:implementation-django-ninja",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-python-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-python",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:implementation-python",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-python-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-python",
+      "status": "pass",
+      "actual_loaded_skill": "dddjango:implementation-django; superpowers:using-superpowers; superpowers:systematic-debugging; superpowers:test-driven-development",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-tdd-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-tdd",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:implementation-tdd",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-tdd-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-tdd",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:implementation-test",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-test-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:implementation-test",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:implementation-test",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-implementation-test-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:implementation-test",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:implementation-tdd",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-source-reference-audit-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:source-reference-audit",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:source-reference-audit",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-source-reference-audit-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:source-reference-audit",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, superpowers:brainstorming, dddjango:workflow-dddjango-subagents, superpowers:test-driven-development",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-workflow-dddjango-subagents-positive",
+      "variant": "with-plugin",
+      "surface": "positive",
+      "skill_under_test": "dddjango:workflow-dddjango-subagents",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers, dddjango:workflow-dddjango-subagents",
+      "failure_semantics": []
+    },
+    {
+      "case_id": "p5-workflow-dddjango-subagents-negative",
+      "variant": "with-plugin",
+      "surface": "negative",
+      "skill_under_test": "dddjango:workflow-dddjango-subagents",
+      "status": "pass",
+      "actual_loaded_skill": "superpowers:using-superpowers; dddjango:source-reference-audit",
+      "failure_semantics": []
+    }
+  ],
+  "report_html_digest": "5264bb28b1ba3da2a0ef9a5bfdbb7fea393e367b84ccb1f26a01578e3d7a2663"
+}

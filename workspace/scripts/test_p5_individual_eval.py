@@ -229,6 +229,114 @@ class P5IndividualEvalTests(unittest.TestCase):
         self.assertIn("--output-schema", command)
         self.assertEqual(result["execution"]["returncode"], 0)
 
+    def test_model_run_one_redacts_local_paths_from_persisted_artifacts(self) -> None:
+        @dataclass
+        class FakeCompletedProcess:
+            returncode: int
+            stdout: str
+            stderr: str
+
+        def fake_runner(command: list[str], *, cwd: Path, final_path: Path) -> FakeCompletedProcess:
+            del command, cwd
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            final_path.write_text(
+                json.dumps(
+                    {
+                        "loaded_skill": "dddjango:architecture-api",
+                        "claims": [
+                            "reference-criterion-coverage",
+                            "required-observations",
+                            "forbidden-overclaim",
+                        ],
+                        "overclaims": False,
+                        "answer_text": "API contract answer",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return FakeCompletedProcess(
+                returncode=0,
+                stdout='{"command":"/bin/zsh -lc \\"sed /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/architecture-api/SKILL.md\\""}\n',
+                stderr="trace cwd=/private/tmp/dddjango-p8-model/case",
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = self.paths(Path(tmp) / "run")
+            result = p5_individual_eval.model_run_one(
+                paths,
+                case_id="p5-architecture-api-positive",
+                variant="with-plugin",
+                run_id="unit-model-redaction",
+                runtime_channel="external",
+                work_root=Path(tmp) / "work",
+                runner=fake_runner,
+            )
+            stdout_text = (paths.output_dir / "raw/model-executions/p5-architecture-api-positive.with-plugin.stdout.jsonl").read_text(
+                encoding="utf-8"
+            )
+            stderr_text = (paths.output_dir / "raw/model-executions/p5-architecture-api-positive.with-plugin.stderr.txt").read_text(
+                encoding="utf-8"
+            )
+
+        persisted = json.dumps(result, ensure_ascii=False) + stdout_text + stderr_text
+        self.assertEqual(result["status"], "pass")
+        self.assertNotIn("/Users/hyun", persisted)
+        self.assertNotIn("/private/tmp", persisted)
+        self.assertIn("<installed-cache-root>", persisted)
+        self.assertIn("<tmp>", persisted)
+
+    def test_model_run_one_uses_runtime_loaded_skill_evidence_for_self_report_typo(self) -> None:
+        @dataclass
+        class FakeCompletedProcess:
+            returncode: int
+            stdout: str
+            stderr: str
+
+        def fake_runner(command: list[str], *, cwd: Path, final_path: Path) -> FakeCompletedProcess:
+            del command, cwd
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            final_path.write_text(
+                json.dumps(
+                    {
+                        "loaded_skill": "dddjango:workflow-ddjango-subagents",
+                        "claims": [
+                            "reference-criterion-coverage",
+                            "required-observations",
+                            "forbidden-overclaim",
+                        ],
+                        "overclaims": False,
+                        "answer_text": "Workflow answer",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return FakeCompletedProcess(
+                returncode=0,
+                stdout='{"command":"/bin/zsh -lc \\"sed -n 1,260p /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills/workflow-dddjango-subagents/SKILL.md\\""}\n',
+                stderr="",
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = self.paths(Path(tmp) / "run")
+            result = p5_individual_eval.model_run_one(
+                paths,
+                case_id="p5-workflow-dddjango-subagents-positive",
+                variant="with-plugin",
+                run_id="unit-model-runtime-evidence",
+                runtime_channel="external",
+                work_root=Path(tmp) / "work",
+                runner=fake_runner,
+            )
+
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["failure_semantics"], [])
+        self.assertFalse(result["checks"]["loaded_skill"]["self_report_ok"])
+        self.assertTrue(result["checks"]["loaded_skill"]["resolved_by_runtime_evidence"])
+        self.assertEqual(
+            result["checks"]["runtime_loaded_skill"]["matched"],
+            ["dddjango:workflow-dddjango-subagents"],
+        )
+
     def test_model_targeted_suite_records_two_model_backed_iterations(self) -> None:
         @dataclass
         class FakeCompletedProcess:

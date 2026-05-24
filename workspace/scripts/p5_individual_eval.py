@@ -39,6 +39,9 @@ MODEL_ANSWER_SCHEMA = {
         "answer_text": {"type": "string"},
     },
 }
+INSTALLED_CACHE_ROOT = Path("/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10")
+REDACTED_PATH_MARKERS = ("<repo-root>", "<installed-cache-root>", "<home>", "<tmp>")
+LOCAL_LEAK_PATTERNS = ("/Users/hyun", "/private/tmp", "__FORBIDDEN_LOCAL_PATH_SENTINEL__", "__PRIVATE_FIELD_SENTINEL__")
 
 
 class EvalError(Exception):
@@ -78,6 +81,132 @@ def digest_for_data(data: Any) -> str:
     return sha256_text(canonical_json(data))
 
 
+def redact_local_paths(text: str, repo_root: Path | None = None) -> str:
+    redacted = text
+    if repo_root is not None:
+        redacted = redacted.replace(repo_root.as_posix(), "<repo-root>")
+    redacted = redacted.replace(INSTALLED_CACHE_ROOT.as_posix(), "<installed-cache-root>")
+    redacted = redacted.replace(Path.home().as_posix(), "<home>")
+    redacted = redacted.replace("/private/tmp", "<tmp>")
+    redacted = redacted.replace("/tmp", "<tmp>")
+    return redacted
+
+
+def redact_nested_paths(value: Any, repo_root: Path | None = None) -> Any:
+    if isinstance(value, str):
+        return redact_local_paths(value, repo_root)
+    if isinstance(value, list):
+        return [redact_nested_paths(item, repo_root) for item in value]
+    if isinstance(value, dict):
+        return {key: redact_nested_paths(item, repo_root) for key, item in value.items()}
+    return value
+
+
+def contains_unredacted_local_path(text: str) -> bool:
+    return any(marker in text for marker in LOCAL_LEAK_PATTERNS)
+
+
+def safe_artifact_path(path: Path, repo_root: Path | None = None) -> str:
+    resolved = path.resolve()
+    if repo_root is not None:
+        try:
+            return resolved.relative_to(repo_root).as_posix()
+        except ValueError:
+            pass
+    return redact_local_paths(resolved.as_posix(), repo_root)
+
+
+def metadata_display_key(path: Path, repo_root: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return f"installed-cache:{resolved.relative_to(INSTALLED_CACHE_ROOT).as_posix()}"
+    except ValueError:
+        pass
+    return display_path(resolved, repo_root)
+
+
+def metadata_path_for_key(key: str, repo_root: Path) -> Path:
+    if key.startswith("installed-cache:"):
+        return INSTALLED_CACHE_ROOT / key.removeprefix("installed-cache:")
+    return Path(key) if Path(key).is_absolute() else repo_root / key
+
+
+def redacted_model_stream(text: str, repo_root: Path) -> str:
+    return redact_local_paths(text, repo_root)
+
+
+def observed_runtime_skill_slugs(stream_text: str) -> list[str]:
+    marker = "<installed-cache-root>/skills/"
+    slugs: list[str] = []
+    for line in stream_text.splitlines():
+        start = line.find(marker)
+        if start == -1:
+            continue
+        rest = line[start + len(marker) :]
+        slug = rest.split("/", 1)[0].strip()
+        if slug and slug not in slugs:
+            slugs.append(slug)
+    return slugs
+
+
+def skill_id_to_slug(skill_id: str) -> str:
+    return skill_id.removeprefix("dddjango:")
+
+
+def apply_runtime_loaded_skill_evidence(
+    result: dict[str, Any],
+    *,
+    expected_skills: list[str],
+    stdout_path: Path,
+) -> dict[str, Any]:
+    stream_text = stdout_path.read_text(encoding="utf-8", errors="replace") if stdout_path.is_file() else ""
+    observed_slugs = observed_runtime_skill_slugs(stream_text)
+    observed_skill_ids = [f"dddjango:{slug}" for slug in observed_slugs]
+    matched_expected = [
+        expected
+        for expected in expected_skills
+        if skill_id_to_slug(expected) in observed_slugs
+    ]
+    result["checks"]["runtime_loaded_skill"] = {
+        "expected": expected_skills,
+        "observed": observed_skill_ids,
+        "matched": matched_expected,
+        "ok": bool(matched_expected),
+    }
+    if (
+        result.get("status") == "fail"
+        and result.get("score") == 1.0
+        and result.get("failure_semantics") == ["wrong-routing"]
+        and matched_expected
+    ):
+        result["failure_semantics"] = []
+        result["status"] = "pass"
+        result["checks"]["loaded_skill"]["self_report_ok"] = False
+        result["checks"]["loaded_skill"]["ok"] = True
+        result["checks"]["loaded_skill"]["resolved_by_runtime_evidence"] = True
+    return result
+
+
+def scan_persisted_artifacts_for_local_leakage(output_dir: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    scanned_roots = [output_dir / "raw", output_dir / "report"]
+    for root in scanned_roots:
+        if not root.exists():
+            continue
+        for path in sorted(item for item in root.rglob("*") if item.is_file()):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            hits = [pattern for pattern in LOCAL_LEAK_PATTERNS if pattern in text]
+            if hits:
+                findings.append(
+                    {
+                        "path": safe_artifact_path(path),
+                        "hit_count": len(hits),
+                        "hit_digests": [sha256_text(pattern) for pattern in hits],
+                    }
+                )
+    return findings
+
+
 def load_cases(fixture_root: Path) -> list[dict[str, Any]]:
     path = fixture_root / "cases.json"
     cases = read_json(path)
@@ -106,7 +235,7 @@ def metadata_digest_manifest(paths: Paths) -> dict[str, str]:
     for path in roots:
         if not path.is_file():
             continue
-        manifest[display_path(path, paths.repo_root)] = sha256_file(path)
+        manifest[metadata_display_key(path, paths.repo_root)] = sha256_file(path)
     for path in sorted((paths.repo_root / "dddjango/skills").glob("*/SKILL.md")):
         manifest[path.relative_to(paths.repo_root).as_posix()] = sha256_file(path)
     return manifest
@@ -442,16 +571,19 @@ def model_run_one(
     executor = runner or default_model_runner
     completed = executor(command, cwd=case_workdir, final_path=final_path)
     stdout_path.parent.mkdir(parents=True, exist_ok=True)
-    stdout_path.write_text(getattr(completed, "stdout", ""), encoding="utf-8")
-    stderr_path.write_text(getattr(completed, "stderr", ""), encoding="utf-8")
+    stdout_path.write_text(redacted_model_stream(getattr(completed, "stdout", ""), paths.repo_root), encoding="utf-8")
+    stderr_path.write_text(redacted_model_stream(getattr(completed, "stderr", ""), paths.repo_root), encoding="utf-8")
 
     execution = {
-        "command": command,
-        "cwd": case_workdir.as_posix(),
+        "command": redact_nested_paths(command, paths.repo_root),
+        "command_digest": digest_for_data(command),
+        "cwd": safe_artifact_path(case_workdir, paths.repo_root),
+        "cwd_digest": sha256_text(case_workdir.as_posix()),
         "returncode": getattr(completed, "returncode", 1),
         "stdout_path": display_path(stdout_path, paths.repo_root),
         "stderr_path": display_path(stderr_path, paths.repo_root),
-        "final_path": final_path.as_posix(),
+        "final_path": safe_artifact_path(final_path, paths.repo_root),
+        "final_path_digest": sha256_text(final_path.as_posix()),
         "runtime_channel": runtime_channel,
         "variant_runtime": "installed-plugin" if variant == "with-plugin" else "baseline-ignore-user-config",
     }
@@ -503,6 +635,13 @@ def model_run_one(
             }
         else:
             result = score_model_answer(case=case, variant=variant, answer=answer)
+            oracle = case.get("oracle")
+            expected_skills = expected_loaded_skills(oracle) if isinstance(oracle, dict) else []
+            result = apply_runtime_loaded_skill_evidence(
+                result,
+                expected_skills=expected_skills,
+                stdout_path=stdout_path,
+            )
 
     result["run_id"] = run_id
     result["run_mode"] = MODEL_RUN_MODE
@@ -757,7 +896,7 @@ def render_report(output_dir: Path) -> dict[str, Any]:
     report_json = {
         "schema_version": "p5-individual-eval-report/v1",
         "run_id": raw["run_id"],
-        "source_raw_path": raw_path.as_posix(),
+        "source_raw_path": safe_artifact_path(raw_path),
         "source_raw_digest": source_digest,
         "status_counts": raw["status_counts"],
         "model_backed": raw.get("model_backed"),
@@ -813,6 +952,9 @@ def validate_run(output_dir: Path, repo_root: Path) -> dict[str, Any]:
         failures.append({"kind": "stale-report", "expected": raw_digest, "actual": report.get("source_raw_digest")})
     if report.get("status_counts") != raw.get("status_counts"):
         failures.append({"kind": "report-status-count-mismatch"})
+    leakage_findings = scan_persisted_artifacts_for_local_leakage(output_dir)
+    if leakage_findings:
+        failures.append({"kind": "local-path-or-private-leakage-present", "count": len(leakage_findings)})
 
     raw_result_keys = {
         (item["case_id"], item["variant"]): (
@@ -889,7 +1031,7 @@ def validate_run(output_dir: Path, repo_root: Path) -> dict[str, Any]:
     current_metadata: dict[str, str] = {}
     missing_metadata_files = []
     for rel_path in sorted(raw.get("metadata_digests", {})):
-        path = repo_root / rel_path
+        path = metadata_path_for_key(rel_path, repo_root)
         if not path.is_file():
             missing_metadata_files.append(rel_path)
             continue
@@ -914,6 +1056,7 @@ def validate_run(output_dir: Path, repo_root: Path) -> dict[str, Any]:
         "model_backed": raw.get("model_backed"),
         "runtime_parity_precondition": raw.get("runtime_parity_precondition"),
         "failures": failures,
+        "leakage_findings": leakage_findings,
     }
     write_json(output_dir / "validation" / "validate-run.json", result)
     return result

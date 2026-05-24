@@ -52,7 +52,7 @@ def metadata_digest_manifest(paths: base.Paths) -> dict[str, str]:
     manifest: dict[str, str] = {}
     for path in roots:
         if path.is_file():
-            manifest[base.display_path(path, paths.repo_root)] = base.sha256_file(path)
+            manifest[base.metadata_display_key(path, paths.repo_root)] = base.sha256_file(path)
     for path in sorted((paths.repo_root / "dddjango/skills").glob("*/SKILL.md")):
         manifest[path.relative_to(paths.repo_root).as_posix()] = base.sha256_file(path)
     return manifest
@@ -259,16 +259,19 @@ def model_run_one(
     executor = runner or default_model_runner
     completed = executor(command, cwd=case_workdir, final_path=final_path)
     stdout_path.parent.mkdir(parents=True, exist_ok=True)
-    stdout_path.write_text(getattr(completed, "stdout", ""), encoding="utf-8")
-    stderr_path.write_text(getattr(completed, "stderr", ""), encoding="utf-8")
+    stdout_path.write_text(base.redacted_model_stream(getattr(completed, "stdout", ""), paths.repo_root), encoding="utf-8")
+    stderr_path.write_text(base.redacted_model_stream(getattr(completed, "stderr", ""), paths.repo_root), encoding="utf-8")
 
     execution = {
-        "command": command,
-        "cwd": case_workdir.as_posix(),
+        "command": base.redact_nested_paths(command, paths.repo_root),
+        "command_digest": base.digest_for_data(command),
+        "cwd": base.safe_artifact_path(case_workdir, paths.repo_root),
+        "cwd_digest": base.sha256_text(case_workdir.as_posix()),
         "returncode": getattr(completed, "returncode", 1),
         "stdout_path": base.display_path(stdout_path, paths.repo_root),
         "stderr_path": base.display_path(stderr_path, paths.repo_root),
-        "final_path": final_path.as_posix(),
+        "final_path": base.safe_artifact_path(final_path, paths.repo_root),
+        "final_path_digest": base.sha256_text(final_path.as_posix()),
         "runtime_channel": runtime_channel,
         "variant_runtime": "installed-plugin" if variant == "with-plugin" else "baseline-ignore-user-config",
     }
@@ -465,7 +468,7 @@ def render_report(output_dir: Path) -> dict[str, Any]:
     report_json = {
         "schema_version": "p6-integration-eval-report/v1",
         "run_id": raw["run_id"],
-        "source_raw_path": raw_path.as_posix(),
+        "source_raw_path": base.safe_artifact_path(raw_path),
         "source_raw_digest": source_digest,
         "status_counts": raw["status_counts"],
         "model_backed": raw.get("model_backed"),
