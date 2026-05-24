@@ -1,0 +1,13 @@
+진행을 막는 상태입니다.
+
+현재 작업 디렉터리 `/private/tmp/dddjango-p7-runtime/p3-ft-05-happy-cleancode-fat-model`가 비어 있습니다. 확인한 내용:
+
+- `pwd -P`: 요청된 경로와 일치
+- `ls -la`: 디렉터리 항목 없음
+- `find . -maxdepth 4 -type f`: 파일 없음
+- `/private/tmp/dddjango-p7-runtime` 하위에도 소스 파일, `models.py`, `manage.py`, `pyproject.toml`, `AGENTS.md`가 없음
+- `git rev-parse --show-toplevel`: `.git` 저장소가 아니라고 실패
+
+또한 현재 세션은 `read-only` sandbox라 파일이 있어도 직접 수정은 불가능합니다. 프로젝트 파일이 있는 올바른 경로를 알려주거나 이 디렉터리에 소스가 보이게 마운트해 주세요. 그러면 fat model을 읽고, 동작 보존 기준으로 작은 리팩터링 단위와 테스트 확인까지 이어서 진행하겠습니다.
+
+Serena: 사용할 수 있는 Serena MCP 도구가 없고 현재 디렉터리도 저장소가 아니어서 생략했습니다; 기본 `find`/`ls`로 파일 존재 여부를 확인했습니다.

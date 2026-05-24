@@ -41,7 +41,7 @@
 5. HTML latest가 최종 run을 가리키는지 확인하되, raw artifact를 primary truth로 둔다.
 6. P7 installed-runtime evidence가 현재 skill/manifest/cache 기준인지 확인한다.
 7. unresolved flaky history가 0인지 확인한다.
-8. P3b runtime forward-test deferral이 해소됐는지 확인한다. 해소되지 않았으면 P8 complete 금지.
+8. P3b runtime forward-test 또는 accepted equivalent installed-runtime evidence가 current인지 확인한다. 둘 다 없으면 P8 complete 금지.
 9. 독립 리뷰를 수행하고 raw/summary를 workspace/plan/reviews/에 저장한다.
 10. analysis/plan/evidence/closure와 indexes를 갱신한다.
 
@@ -63,7 +63,7 @@
 - current-file fingerprint mismatch 0이다.
 - unresolved flaky history 0이다.
 - installed-runtime user-like task evidence가 현재 파일 기준이고 high-risk trigger family coverage를 만족한다.
-- P3b runtime forward-test 또는 accepted equivalent installed-runtime evidence가 current다.
+- P3b runtime forward-test 또는 accepted equivalent installed-runtime evidence가 current다. 현재 P7 evidence가 equivalent로 쓰이면 P7 이후 skill/manifest/cache 변경이 없어야 한다.
 - 마지막 독립 리뷰 evidence가 Blocker 0, Major 0, 열린 Minor 0이다.
 
 권한/승인:

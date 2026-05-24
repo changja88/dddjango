@@ -1,0 +1,5 @@
+Marketplace `dddjango-local`
+/Users/hyun/Desktop/dddjango/.agents/plugins/marketplace.json
+
+PLUGIN                   STATUS              VERSION  PATH
+dddjango@dddjango-local  installed, enabled  0.1.10   /Users/hyun/Desktop/dddjango/dddjango

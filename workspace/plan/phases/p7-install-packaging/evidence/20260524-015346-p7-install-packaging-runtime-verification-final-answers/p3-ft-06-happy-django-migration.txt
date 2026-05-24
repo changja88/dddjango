@@ -1,0 +1,16 @@
+작업을 적용할 수 없었습니다. 현재 작업 디렉터리 [p3-ft-06-happy-django-migration](/private/tmp/dddjango-p7-runtime/p3-ft-06-happy-django-migration)는 비어 있고, Git 저장소도 아니며, `/private/tmp/dddjango-p7-runtime` 아래에서 `manage.py`도 발견되지 않았습니다.
+
+확인한 내용:
+- `pwd -P`: `/private/tmp/dddjango-p7-runtime/p3-ft-06-happy-django-migration`
+- `ls -la`: 파일 없음
+- `git rev-parse --show-toplevel`: `fatal: not a git repository`
+- `find /private/tmp -maxdepth 4 -name manage.py`: 결과 없음
+- 현재 세션은 `read-only` sandbox라 새 Django 파일/마이그레이션을 생성할 수도 없습니다.
+
+의도한 변경은 프로젝트가 있으면 보통 이렇게 반영합니다:
+1. Expand: `Order.status`를 nullable 또는 안전한 default 포함 형태로 먼저 추가
+2. Backfill: 기존 주문 rows를 배치/세트 기반으로 기본 상태로 채움
+3. Contract: `status`를 `null=False`로 강화하고 필요하면 `choices`, `CheckConstraint`, 인덱스 반영
+
+Serena: 사용 가능한 Serena MCP 도구가 없고 현재 디렉터리도 빈 비저장소라 생략했습니다; 기본 `find`/`git` 확인으로 검증했습니다.
+Tests/migrations: 실행할 Django 프로젝트가 없어 `makemigrations`, `migrate`, `sqlmigrate`, 테스트를 실행하지 못했습니다.

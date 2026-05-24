@@ -1,0 +1,96 @@
+작업 경로 `/private/tmp/dddjango-p7-runtime/p3-ft-01-exclusion-api-to-ninja`에는 현재 파일이 없고, git/Django 프로젝트도 아닙니다. 이 세션은 `read-only`라서 Router/Schema 파일을 실제로 생성할 수는 없습니다.
+
+대신 바로 넣을 수 있는 Django Ninja 코드 형태로 만들면 아래 구조가 가장 얇고 안전합니다. 모델/서비스 이름은 실제 프로젝트에 맞춰 연결하면 됩니다.
+
+```python
+# exclusions/schemas.py
+from datetime import datetime
+
+from ninja import Schema
+
+
+class ExclusionCreateSchema(Schema):
+    target: str
+    reason: str | None = None
+
+
+class ExclusionUpdateSchema(Schema):
+    target: str | None = None
+    reason: str | None = None
+    is_active: bool | None = None
+
+
+class ExclusionOutSchema(Schema):
+    id: int
+    target: str
+    reason: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+```
+
+```python
+# exclusions/api.py
+from django.shortcuts import get_object_or_404
+from ninja import Router
+
+from .models import Exclusion
+from .schemas import (
+    ExclusionCreateSchema,
+    ExclusionOutSchema,
+    ExclusionUpdateSchema,
+)
+
+router = Router(tags=["exclusions"])
+
+
+@router.get("/", response=list[ExclusionOutSchema])
+def list_exclusions(request):
+    return Exclusion.objects.order_by("-created_at")
+
+
+@router.get("/{exclusion_id}", response=ExclusionOutSchema)
+def get_exclusion(request, exclusion_id: int):
+    return get_object_or_404(Exclusion, id=exclusion_id)
+
+
+@router.post("/", response={201: ExclusionOutSchema})
+def create_exclusion(request, payload: ExclusionCreateSchema):
+    exclusion = Exclusion.objects.create(
+        target=payload.target,
+        reason=payload.reason,
+    )
+    return 201, exclusion
+
+
+@router.patch("/{exclusion_id}", response=ExclusionOutSchema)
+def update_exclusion(request, exclusion_id: int, payload: ExclusionUpdateSchema):
+    exclusion = get_object_or_404(Exclusion, id=exclusion_id)
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(exclusion, field, value)
+
+    exclusion.save(update_fields=[*payload.dict(exclude_unset=True).keys(), "updated_at"])
+    return exclusion
+
+
+@router.delete("/{exclusion_id}", response={204: None})
+def delete_exclusion(request, exclusion_id: int):
+    exclusion = get_object_or_404(Exclusion, id=exclusion_id)
+    exclusion.delete()
+    return 204, None
+```
+
+```python
+# config/api.py 또는 project/api.py
+from ninja import NinjaAPI
+
+from exclusions.api import router as exclusions_router
+
+api = NinjaAPI()
+api.add_router("/exclusions", exclusions_router)
+```
+
+검증은 실행하지 못했습니다. 이유는 현재 workspace가 비어 있고 read-only라 테스트 파일 작성, 앱 등록, pytest 실행이 불가능했기 때문입니다.
+
+Serena: skipped because no Serena tools are available in this session and the active workspace is empty; verified with shell file listing.

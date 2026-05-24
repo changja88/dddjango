@@ -1,0 +1,13 @@
+현재는 구현을 진행할 수 없습니다.
+
+확인 결과 현재 작업 경로인 `/private/tmp/dddjango-p7-runtime/p3-ft-08-exclusion-web-to-ninja`가 비어 있습니다. `ls -la`에는 `.`/`..`만 있고, `git rev-parse --show-toplevel`도 `not a git repository`로 실패했습니다. `/private/tmp/dddjango-p7-runtime` 아래 다른 `p3-ft-*` 디렉터리도 `find` 기준 파일이 없습니다.
+
+또한 세션 권한이 `read-only`라서, 설령 파일이 있더라도 현재 상태에서는 테스트 추가나 코드 패치를 실제로 쓸 수 없습니다.
+
+필요한 것:
+1. 주문 목록 JSON API 코드가 있는 실제 저장소/작업 디렉터리를 제공해 주세요.
+2. 가능하면 쓰기 가능한 세션으로 다시 열어 주세요.
+
+그 상태가 되면 TDD 순서로 먼저 pagination 계약 테스트를 추가하고, 기존 Django Ninja 라우터/스키마 패턴에 맞춰 `limit/offset` 또는 프로젝트 기존 방식의 pagination을 구현하겠습니다.
+
+Serena: 현재 도구 목록에 Serena MCP가 없고 작업 경로도 저장소가 아니라서 사용하지 못했습니다. `rg`/`find`/`git rev-parse`로 파일과 저장소 상태를 확인했습니다.

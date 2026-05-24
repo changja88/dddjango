@@ -1,0 +1,5 @@
+MARKETPLACE             ROOT
+openai-primary-runtime  /Users/hyun/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime
+openai-bundled          /Users/hyun/.codex/.tmp/bundled-marketplaces/openai-bundled
+openai-curated          /Users/hyun/.codex/.tmp/plugins
+dddjango-local          /Users/hyun/Desktop/dddjango

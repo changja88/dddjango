@@ -1,0 +1,8 @@
+현재 `/private/tmp/dddjango-p7-runtime/p3-ft-08-happy-web-template`는 비어 있고 Django 프로젝트나 git 저장소가 아닙니다. `manage.py`, 앱 디렉터리, `templates/`, `urls.py`, 테스트 파일이 전혀 없어 기존 패턴을 따라 주문 상세 페이지를 추가할 수 없습니다. 또한 현재 세션은 `read-only` sandbox라 파일 생성/수정도 막혀 있습니다.
+
+진행하려면 둘 중 하나가 필요합니다.
+
+1. 올바른 Django 프로젝트가 있는 경로로 다시 지정
+2. 이 빈 디렉터리에 새 Django 예제 구조를 만들 수 있도록 쓰기 가능한 세션으로 전환
+
+Serena: 사용할 수 있는 Serena 도구가 없고 현재 경로도 git/Django 프로젝트가 아니라 기본 파일 검사로 확인했습니다.

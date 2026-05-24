@@ -1,0 +1,173 @@
+환불 도메인은 **`Refund` aggregate root**를 중심으로 잡는 게 가장 무난합니다. 핵심은 “환불이 가능한 금액/수량을 초과하지 않는다”, “환불 요청은 정해진 승인/실행 흐름만 탄다”, “외부 결제 취소 결과가 도메인 상태를 깨지 않는다”를 한 일관성 경계 안에서 지키는 것입니다.
+
+**권장 Aggregate**
+`Refund`를 aggregate root로 두고, 내부에 필요하면 `RefundLine`, `RefundAmount`, `RefundReason`, `RefundExecutionAttempt` 정도를 둡니다.
+
+```text
+Refund
+- refund_id
+- order_id
+- payment_id
+- requester_id
+- status
+- reason
+- total_amount
+- lines[]
+- approved_by
+- requested_at / approved_at / completed_at
+- execution_attempts[]
+```
+
+`Order`, `Payment`, `Shipment`, `Ledger`, `Settlement`는 `Refund` aggregate 안에 넣지 않는 게 좋습니다. 이들은 각각 다른 변경 이유와 일관성 경계를 가집니다. `Refund`에서는 `order_id`, `payment_id`, 필요한 금액/수량 스냅샷, 정책 판단 결과만 참조합니다.
+
+**Refund가 직접 보호해야 할 불변식**
+다음은 aggregate 안에서 반드시 막아야 합니다.
+
+1. 환불 총액은 0보다 커야 한다.
+2. 환불 총액은 환불 가능 잔액을 초과할 수 없다.
+3. 품목별 환불이면 각 `RefundLine.quantity`는 환불 가능 수량을 초과할 수 없다.
+4. `sum(refund_lines.amount) == total_amount`가 항상 성립해야 한다.
+5. 이미 `APPROVED`, `EXECUTING`, `SUCCEEDED` 상태로 간 환불은 요청 금액/품목/사유를 임의 수정할 수 없다.
+6. `REJECTED`, `CANCELLED`, `SUCCEEDED` 같은 종료 상태에서는 다시 승인하거나 실행할 수 없다.
+7. 결제 취소 실행은 승인된 환불에서만 시작할 수 있다.
+8. 같은 환불에 대해 동시에 여러 개의 활성 결제 취소 시도를 만들 수 없다.
+9. 외부 PG 응답이 와도 현재 상태와 맞지 않는 결과는 적용할 수 없다. 예를 들어 이미 `SUCCEEDED`인 환불에 실패 webhook이 늦게 와도 실패로 되돌리지 않는다.
+10. 부분 환불을 허용한다면, 기존 완료 환불들과 합산해 주문/결제의 환불 가능 금액을 넘지 않아야 한다.
+
+마지막 10번은 DB 락/유니크 제약/트랜잭션과도 연결됩니다. 도메인 규칙은 `Refund`가 표현하되, 동시성까지 완전히 막으려면 저장소 계층에서 `payment_id` 또는 `order_id` 기준의 잠금/잔액 검증이 필요합니다.
+
+**상태 전이**
+기본 상태는 이 정도로 시작하는 게 좋습니다.
+
+```text
+REQUESTED
+  -> APPROVED
+  -> REJECTED
+  -> CANCELLED
+
+APPROVED
+  -> EXECUTING
+  -> CANCELLED
+
+EXECUTING
+  -> SUCCEEDED
+  -> FAILED
+  -> REQUIRES_MANUAL_REVIEW
+
+FAILED
+  -> EXECUTING
+  -> REQUIRES_MANUAL_REVIEW
+  -> CANCELLED
+
+REQUIRES_MANUAL_REVIEW
+  -> EXECUTING
+  -> CANCELLED
+  -> SUCCEEDED
+
+SUCCEEDED
+  -> terminal
+
+REJECTED
+  -> terminal
+
+CANCELLED
+  -> terminal
+```
+
+상태 전이 메서드는 필드 setter가 아니라 의도가 드러나는 행위로 두는 게 좋습니다.
+
+```python
+refund.approve(approver)
+refund.reject(reason)
+refund.cancel(actor)
+refund.start_execution(pg_request_id)
+refund.mark_succeeded(pg_refund_id, refunded_at)
+refund.mark_failed(failure_reason)
+refund.require_manual_review(reason)
+```
+
+이 메서드들이 상태 전이 가능 여부와 불변식을 함께 검사해야 합니다.
+
+**Aggregate 안에 넣을 것과 빼야 할 것**
+`Refund` 안에 넣을 것:
+
+```text
+RefundLine
+- order_line_id
+- quantity
+- amount
+- reason
+
+RefundExecutionAttempt
+- attempt_id
+- provider
+- provider_request_id
+- status
+- requested_amount
+- failure_reason
+```
+
+단, `RefundExecutionAttempt`가 별도 재시도, webhook 수신, 운영자 보정, PG별 상태 추적 때문에 독립적으로 복잡해진다면 `PaymentRefundAttempt`를 별도 aggregate로 분리해도 됩니다. 처음에는 `Refund` 내부 entity로 시작하고, 실행 시도의 생명주기가 커질 때 분리하는 편이 낫습니다.
+
+`Refund` 밖에 둘 것:
+
+```text
+Order
+Payment
+PG Client
+Inventory
+Coupon/Point recovery
+Ledger/Accounting
+Settlement
+Notification
+```
+
+이들은 `RefundSucceeded`, `RefundRejected`, `RefundExecutionFailed` 같은 이벤트를 받아 반응하게 두는 게 좋습니다.
+
+**도메인 이벤트**
+`Refund` aggregate에서는 상태가 바뀐 사실을 이벤트로 남깁니다.
+
+```text
+RefundRequested
+RefundApproved
+RefundRejected
+RefundCancelled
+RefundExecutionStarted
+RefundSucceeded
+RefundFailed
+RefundManualReviewRequired
+```
+
+외부 결제 취소, 알림, 정산, 포인트 복구 같은 side effect는 aggregate 메서드 안에서 직접 호출하지 않습니다. `RefundApproved`나 `RefundExecutionStarted` 이후 application service 또는 outbox consumer가 처리하는 구조가 안전합니다.
+
+**추천 경계**
+최종적으로는 이렇게 잡겠습니다.
+
+```text
+Refund aggregate
+- 소유 책임:
+  - 환불 요청의 생명주기
+  - 승인/거절/취소/실행/성공/실패 상태 전이
+  - 환불 금액과 품목 구성의 내부 일관성
+  - 결제 취소 실행 시도의 도메인적 정합성
+
+Order / Payment context
+- 소유 책임:
+  - 주문 상태
+  - 결제 승인/캡처 상태
+  - 환불 가능 잔액 또는 환불 가능 수량 계산의 원천 데이터
+
+Accounting / Settlement context
+- 소유 책임:
+  - 회계 전표
+  - 정산 차감
+  - 매출/수수료 조정
+
+Notification context
+- 소유 책임:
+  - 고객/운영자 알림
+```
+
+따라서 aggregate로 묶어야 할 핵심은 **“하나의 환불 요청이 어떤 금액/품목으로, 어떤 승인 상태를 거쳐, 어떤 결제 취소 결과로 종료되는가”**입니다. 주문 전체, 결제 전체, 정산 전체를 환불 aggregate에 넣으면 너무 커집니다.
+
+Serena: skipped because this was a DDD design question, not codebase symbol/reference work.

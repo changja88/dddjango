@@ -1,0 +1,10 @@
+현재 경로 `/private/tmp/dddjango-p7-runtime/p3-ft-11-happy-test-fixture`에는 파일이 없습니다. `rg --files`와 `find . -maxdepth 3 -type f` 모두 테스트, 모델, 설정 파일을 찾지 못했습니다. 그래서 `pytest fixture`나 `factory_boy`로 정리할 주문 테스트 데이터가 없는 상태입니다.
+
+또한 현재 세션은 파일시스템이 `read-only`라 새 파일 생성이나 수정도 할 수 없습니다. 올바른 프로젝트 경로나 관련 파일이 있는 작업 디렉터리를 제공해주면, 보통은 다음 형태로 정리하겠습니다:
+
+- `tests/factories.py` 또는 `tests/orders/factories.py`에 `OrderFactory`, `OrderItemFactory`, `UserFactory` 등 추가
+- `tests/conftest.py`에 의미 있는 pytest fixture 추가
+- 기존 테스트의 반복적인 주문 생성 코드를 factory/fixture 호출로 교체
+- `pytest`로 회귀 확인
+
+Serena: skipped because no Serena tools are available and the current directory is not a git repository; verified with `rg`/`find`. Tests not run because no project files were present.

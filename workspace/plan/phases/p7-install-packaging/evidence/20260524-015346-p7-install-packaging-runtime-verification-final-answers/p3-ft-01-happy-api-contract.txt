@@ -1,0 +1,137 @@
+아래처럼 잡는 것을 권장합니다. 현재 디렉터리는 파일이 없는 상태라 기존 구현 기준이 아니라 REST 계약 기준으로 정리했습니다.
+
+**주문 생성 API**
+
+`POST /api/orders`
+
+필수 헤더:
+
+```http
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <token>
+Idempotency-Key: <opaque-key>
+```
+
+요청 본문 예시:
+
+```json
+{
+  "items": [
+    {
+      "product_id": "prod_123",
+      "quantity": 2
+    }
+  ],
+  "shipping_address_id": "addr_123"
+}
+```
+
+성공 응답:
+
+```http
+HTTP/1.1 201 Created
+Location: /api/orders/{order_id}
+Content-Type: application/json
+Idempotency-Key: <same-key>
+Idempotency-Replayed: false
+```
+
+```json
+{
+  "id": "ord_123",
+  "status": "created",
+  "items": [
+    {
+      "product_id": "prod_123",
+      "quantity": 2
+    }
+  ],
+  "total_amount": "32000.00",
+  "currency": "KRW",
+  "created_at": "2026-05-24T02:46:00Z"
+}
+```
+
+**Status Code**
+
+| 상황 | Status | 계약 |
+|---|---:|---|
+| 주문 생성 성공 | `201 Created` | `Location: /api/orders/{order_id}` 포함 |
+| 같은 `Idempotency-Key` + 같은 요청 재시도 | `201 Created` | 최초 생성 결과를 그대로 재전송, `Idempotency-Replayed: true` |
+| JSON 문법 오류, 필수 헤더 누락, 잘못된 헤더 형식 | `400 Bad Request` | `application/problem+json` |
+| 인증 없음/토큰 invalid | `401 Unauthorized` | 필요하면 `WWW-Authenticate` 포함 |
+| 주문 생성 권한 없음 | `403 Forbidden` | 인증은 됐지만 권한 없음 |
+| 상품/주소 등 참조 리소스가 존재하지 않거나 접근 불가 | `404 Not Found` | 존재 여부를 숨겨야 하면 404 유지 |
+| 같은 `Idempotency-Key`로 다른 요청 본문 제출 | `409 Conflict` | idempotency key 충돌 |
+| 같은 `Idempotency-Key` 요청이 아직 처리 중 | `409 Conflict` | `Retry-After` 포함 권장 |
+| 재고 부족, 주문 불가 상태, 수량 범위 위반 등 의미 검증 실패 | `422 Unprocessable Entity` | 필드 오류 포함 |
+| 레이트 리밋 초과 | `429 Too Many Requests` | `Retry-After` 포함 |
+| 서버 내부 오류 | `500 Internal Server Error` | 내부 정보 노출 금지 |
+| 일시적 과부하/점검 | `503 Service Unavailable` | `Retry-After` 포함 권장 |
+
+**에러 응답 형식**
+
+모든 에러는 RFC 9457 Problem Details 형식으로 통일합니다.
+
+```http
+Content-Type: application/problem+json
+```
+
+기본 형태:
+
+```json
+{
+  "type": "https://api.example.com/problems/validation-error",
+  "title": "Validation error",
+  "status": 422,
+  "detail": "One or more fields are invalid.",
+  "instance": "/api/orders",
+  "errors": [
+    {
+      "field": "items[0].quantity",
+      "code": "min_value",
+      "message": "Quantity must be greater than 0."
+    }
+  ]
+}
+```
+
+대표 Problem Types:
+
+| Type | Status | Title | Retry |
+|---|---:|---|---|
+| `/problems/bad-request` | `400` | Bad request | 아니오 |
+| `/problems/authentication-required` | `401` | Authentication required | 토큰 갱신 후 가능 |
+| `/problems/forbidden` | `403` | Forbidden | 아니오 |
+| `/problems/not-found` | `404` | Resource not found | 아니오 |
+| `/problems/idempotency-key-conflict` | `409` | Idempotency key conflict | 새 key로 가능 |
+| `/problems/idempotency-key-in-progress` | `409` | Request is already in progress | `Retry-After` 이후 가능 |
+| `/problems/validation-error` | `422` | Validation error | 요청 수정 후 가능 |
+| `/problems/rate-limit-exceeded` | `429` | Rate limit exceeded | `Retry-After` 이후 가능 |
+| `/problems/internal-server-error` | `500` | Internal server error | 가능하지만 보장 없음 |
+| `/problems/service-unavailable` | `503` | Service unavailable | `Retry-After` 이후 가능 |
+
+**Idempotency-Key 계약**
+
+`POST /api/orders`는 중복 생성 위험이 있으므로 `Idempotency-Key`를 필수로 둡니다.
+
+| 항목 | 계약 |
+|---|---|
+| 필수 여부 | 필수 |
+| 헤더명 | `Idempotency-Key` |
+| 값 | 클라이언트가 생성한 opaque string |
+| 권장 형식 | UUID v4 |
+| 길이 | 1-255자 |
+| 유니크 범위 | `authenticated principal + POST /api/orders + Idempotency-Key` |
+| 요청 동일성 기준 | method, path, normalized request body fingerprint |
+| 보관 기간 | 최소 24시간 권장 |
+| 같은 key + 같은 요청 | 최초 응답의 status/body/주요 header를 재전송 |
+| 같은 key + 다른 요청 | `409 Conflict` |
+| 동시 중복 요청 | 하나만 처리, 나머지는 `409 Conflict` 또는 최초 결과 replay |
+| replay 응답 헤더 | `Idempotency-Replayed: true` |
+| 최초 처리 응답 헤더 | `Idempotency-Replayed: false` |
+
+동일 key replay는 “현재 주문 상태를 다시 조회해서 반환”이 아니라 “최초 주문 생성 결과를 반환”하는 계약으로 잡는 것이 좋습니다. 그래야 네트워크 타임아웃 후 클라이언트가 안전하게 재시도할 수 있습니다.
+
+Serena: 생략했습니다. 현재 작업은 구현 변경이 아닌 API 계약 정리이고, 워크스페이스에 소스 파일/깃 저장소가 없어 `rg`, `ls`로만 확인했습니다.

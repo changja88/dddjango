@@ -1,0 +1,144 @@
+## Role Map
+
+실제 서브에이전트는 실행하지 않았고, 결제 기능 작업을 위한 역할 분담 계획만 세웠습니다. 현재 작업 디렉터리는 비어 있고 git 저장소가 아니라서 특정 파일 경로 기반 계획은 확정하지 못했습니다.
+
+| Role | Responsibility | Related skills | 이번 결제 작업 책임 |
+|---|---|---|---|
+| Coordinator | Work scope, role assignment, result integration | `workflow-dddjango-subagents` | 전체 범위 고정, 역할 결과 통합, 충돌 해결 |
+| Domain Agent | Subdomain, bounded context, ubiquitous language, aggregate, invariant, domain event | `architecture-ddd` | 결제 상태 모델, 상태 전이, 실패/중복 처리 규칙 정의 |
+| Architecture Agent | Implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` | PSP 연동을 port/adapter로 분리, transaction과 외부 호출 경계 결정 |
+| DB Agent | Schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` | `Payment`, `PaymentAttempt`, idempotency 저장소, unique constraint, lock 정책 |
+| API Agent | REST contract, status code, Problem Details, `Idempotency-Key` API behavior, OpenAPI | `architecture-api`, `implementation-django-ninja` | 결제 생성/조회/웹훅 API 계약, 상태 코드, 오류 응답 |
+| Django Agent | ORM, service, selector, concrete migration files, transaction, settings/security/performance, template/static/web, templates/static files | `implementation-django`, `implementation-django-web`, `implementation-python` | Django model, service, selector, PSP adapter, migration 구현 |
+| Test Agent | TDD flow, pytest, fixtures, test doubles, API/integration tests, ownership of `tests/**` files | `implementation-tdd`, `implementation-test` | 도메인/DB/API/웹훅/동시성 테스트 작성 |
+| Review Agent | Code quality, design risk, missing verification, regressions | `implementation-cleancode` | 중복 결제, transaction 누락, API 후방호환성, 테스트 구멍 리뷰 |
+
+## Sequential Fallback
+
+Real subagents were not executed; this is sequential fallback in the role order below.
+
+1. **Domain Agent**
+   - 기본 범위: 주문에 대한 결제 요청 생성, PSP 승인 요청, PSP 웹훅 반영, 결제 상태 조회.
+   - 제외 범위: 환불, 부분 취소, 정산, 쿠폰/포인트, 다중 결제수단. 필요하면 별도 계획으로 분리.
+   - 상태 초안: `PENDING -> AUTHORIZING -> AUTHORIZED -> CAPTURED`, 실패는 `FAILED`, 취소 가능 상태는 `CANCELED`.
+   - 핵심 불변식:
+     - 한 주문의 성공 결제는 최대 1개.
+     - 같은 `Idempotency-Key` 요청은 같은 결과를 반환한다.
+     - PSP 웹훅은 중복 수신되어도 상태를 한 번만 전이한다.
+     - 실패한 attempt는 보존하고 새 attempt를 만들 수 있다.
+
+2. **Architecture Agent**
+   - 핵심 서비스 경계:
+     - `PaymentService.create_payment(order_id, amount, idempotency_key)`
+     - `PaymentService.handle_webhook(provider, event_id, payload)`
+     - `PaymentProviderPort.authorize(...)`
+   - 외부 PSP 호출은 도메인/ORM 내부에서 직접 하지 않는다.
+   - DB transaction 안에서는 내부 상태와 outbox 또는 pending action만 기록하고, 외부 호출은 `transaction.on_commit()` 또는 명시적 application service 단계에서 실행한다.
+   - 웹훅 처리는 provider adapter에서 검증 후 내부 command로 변환한다.
+
+3. **DB Agent**
+   - 권장 테이블:
+     - `payments`: 주문별 결제 aggregate 상태.
+     - `payment_attempts`: PSP 요청 단위, provider transaction id, 실패 사유.
+     - `payment_idempotency_keys`: API idempotency key와 response snapshot.
+     - `payment_webhook_events`: provider event id 중복 방지.
+   - 제약:
+     - `payments.order_id` unique 또는 성공 상태 partial unique constraint.
+     - `(user_id, idempotency_key)` unique.
+     - `(provider, provider_event_id)` unique.
+   - 동시성:
+     - 결제 생성 시 주문 또는 결제 row에 `select_for_update()`.
+     - 웹훅 처리 시 event insert unique constraint로 중복 처리 차단.
+     - 성공 결제 확정은 DB constraint와 transaction으로 보호.
+
+4. **API Agent**
+   - API 초안:
+     - `POST /api/payments`
+       - Headers: `Idempotency-Key` required.
+       - Body: `order_id`, `payment_method_id` 또는 provider token.
+       - Success: `201 Created` 또는 idempotent replay 시 `200 OK`.
+       - Conflict: 이미 결제 완료된 주문이면 `409 Conflict`.
+     - `GET /api/payments/{payment_id}`
+       - 결제 상태 조회.
+     - `POST /api/payments/webhooks/{provider}`
+       - provider signature 검증 실패 시 `401` 또는 `400`.
+       - 중복 event는 `200 OK`.
+   - 오류 응답은 RFC 9457 Problem Details 형태로 통일한다.
+
+5. **Django Agent**
+   - 예상 모듈 배치:
+     - `payments/models.py`: `Payment`, `PaymentAttempt`, `PaymentIdempotencyKey`, `PaymentWebhookEvent`
+     - `payments/services.py`: transaction owner인 application service
+     - `payments/selectors.py`: 조회 전용 query
+     - `payments/providers/base.py`: provider port
+     - `payments/providers/<provider>.py`: PSP adapter
+     - `payments/api.py`: Django Ninja router
+     - `payments/migrations/*.py`: schema 변경
+   - greenfield면 Django Ninja를 우선하고, 기존 프로젝트가 DRF를 쓰고 있으면 기존 API 스타일과 호환 여부를 먼저 확인한다.
+   - PSP secret, webhook secret은 settings/env에서 주입한다.
+
+6. **TDD/Test Agent**
+   - 테스트 순서:
+     - 도메인 상태 전이 단위 테스트.
+     - idempotency key replay 테스트.
+     - 동일 주문 동시 결제 요청 concurrency 테스트.
+     - 웹훅 중복 수신 테스트.
+     - PSP 실패/timeout 시 attempt 기록 테스트.
+     - API contract 테스트: status code, Problem Details, OpenAPI schema.
+   - PSP는 fake adapter로 대체하고, 실제 provider sandbox 테스트는 별도 integration stage로 둔다.
+
+7. **Review Agent**
+   - 리뷰 기준:
+     - 외부 PSP 호출이 DB transaction과 잘못 묶여 있지 않은지.
+     - 중복 결제 방지가 application check에만 의존하지 않는지.
+     - 웹훅 검증과 replay 방지가 빠지지 않았는지.
+     - idempotency response가 성공/실패 양쪽에서 일관적인지.
+     - 결제 상태 변경이 router/view에 흩어지지 않았는지.
+
+8. **Integration**
+   - Coordinator가 Domain invariant를 기준으로 DB/API/Django/Test 결과를 통합한다.
+   - 충돌 해결 우선순위는 도메인 불변식, 데이터 일관성, transaction/security, API 호환성, 테스트 가능성 순서로 둔다.
+
+## Handoff Contract
+
+**Scope:** 주문 결제 생성, PSP 승인 요청, 웹훅 반영, 결제 상태 조회까지를 1차 범위로 한다.
+
+**Inputs Used:** 사용자 요청, dddjango workflow role map, 현재 workspace 확인 결과. 실제 Django 소스는 현재 디렉터리에 없어 읽지 못했다.
+
+**Decisions:** 결제는 risky write로 보고 DDD/DB/API/Django/Test/Review 역할을 모두 둔다. 환불/정산/부분취소는 이번 계획에서 제외하고 별도 기능으로 분리한다.
+
+**Files:**
+- May edit: 실제 프로젝트 확인 후 `payments/**`, 관련 `orders/**` service boundary, `tests/payments/**`, API router 등록 파일.
+- Must not edit: PSP SDK 내부, unrelated app, settings secret 값, 기존 주문 상태 전이 로직의 관찰 가능한 동작. 주문 결제 연동이 필요하면 명시적 service boundary로만 수정한다.
+
+**Output:** 역할별 설계 결정, 구현 task list, DB/API 계약, 테스트 기준, 리뷰 체크리스트.
+
+**Risks:** 실제 코드 구조 미확인, 기존 주문 aggregate 존재 여부 미확인, 사용하는 API framework 미확인, PSP provider 미정.
+
+**Required Follow-up:** 실제 저장소에서 앱 구조 확인 후 파일 경로와 테스트 명령을 확정해야 한다.
+
+**dddjango Checks:** Domain decision first, DB constraint for consistency, API idempotency contract, Django service boundary, pytest contract/concurrency tests, review for missing verification.
+
+## Integration Checklist
+
+**Risky Write Consistency Block**
+
+| 항목 | 결정 |
+|---|---|
+| Transaction owner | `PaymentService` 같은 application service가 소유 |
+| Locking strategy | 주문 또는 결제 row `select_for_update()`, webhook event unique insert |
+| Uniqueness/idempotency storage | `(user_id, idempotency_key)` unique 저장소와 `(provider, event_id)` unique 저장소 |
+| `Idempotency-Key` API behavior | 필수 header, 같은 key는 같은 결과 replay, 다른 payload면 `409 Conflict` |
+| External side-effect timing | DB 상태 기록 후 `transaction.on_commit()` 또는 outbox 기반 실행 |
+| Isolation/retry decision | DB unique violation과 lock timeout은 명시적으로 retry 또는 conflict 처리 |
+| Integration/concurrency test criteria | 동일 주문 동시 요청 2개 중 하나만 성공, 중복 웹훅은 상태 1회만 변경 |
+
+**검증 계획**
+- `pytest tests/payments/ -v`
+- `pytest tests/payments/test_payment_concurrency.py -v`
+- `pytest tests/payments/test_payment_api.py -v`
+- migration 생성 후 `python manage.py makemigrations --check --dry-run`
+- OpenAPI schema diff 또는 snapshot 확인
+
+Plan note: workspace가 비어 있고 read-only라 `docs/superpowers/plans/...` 파일로 저장하지 못했습니다.
+Serena: skipped because this directory is not a git repository and no Serena MCP tool is available here; structure was checked with shell commands only.

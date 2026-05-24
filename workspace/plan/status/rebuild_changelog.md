@@ -24,6 +24,11 @@ skill folder.
 - P5 individual-skill fixture preflight artifacts and runner.
 - Local Codex marketplace manifest at `.agents/plugins/marketplace.json` so the
   configured repository marketplace can discover `dddjango`.
+- P5 model-backed installed-runtime individual eval artifacts.
+- P6 fixture preflight and model-backed installed-runtime integration eval
+  artifacts.
+- P7 install/package verification evidence, including 26 installed-runtime
+  user-like routing executions and final answers.
 
 ### Changed
 
@@ -33,6 +38,8 @@ skill folder.
   equivalent installed-runtime evidence.
 - Current focus now points to P5 model-backed individual eval after P4.5
   runtime parity completion.
+- Current focus now points to P8 full regression after P7 supplies equivalent
+  installed-runtime user-like evidence.
 
 ### Fixed
 
@@ -41,14 +48,17 @@ skill folder.
   P0 completion check, then marked P0 complete with current-file evidence.
 - Fixed P4 report CLI output paths and private marker evidence wording.
 - Normalized P4.5 raw evidence formatting and refreshed digest records.
+- Closed the P7/P8 runtime-routing evidence gap with P7 equivalent
+  installed-runtime user-like evidence while leaving original P3b deferred under
+  ADR-0004.
 
 ### Blocked
 
 - P3b runtime forward-tests remain infrastructure-blocked because the external
   Codex/OpenAI runtime path is policy-blocked and local providers are
   unavailable.
-- P5 remains incomplete until model-backed installed-runtime individual eval
-  runs after the completed P4.5 parity proof.
+- Original P3b remains deferred under ADR-0004, but P7 equivalent evidence is
+  current for the P8 completion path.
 
 ### Superseded
 

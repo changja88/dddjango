@@ -1,0 +1,44 @@
+**감사 범위**
+검사한 런타임 번들: `/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/skills`.
+
+현재 작업 디렉터리 `/private/tmp/dddjango-p7-runtime/p3-ft-12-happy-source-audit`는 비어 있고 Git 저장소가 아니었습니다. 따라서 `workspace/reference/**`, `final.md`, `review.md`, `internal.md`, `external.md` 같은 canonical authoring evidence는 확인할 수 없었습니다.
+
+`source-governance.md` 기준으로는 `final.md`가 기본 decision source이고, 런타임 reference 파일 존재만으로 dedicated source provenance가 닫히지 않습니다.
+
+**Skill별 Reference Ledger**
+
+| Skill | 근거로 삼는 runtime reference | Provenance 상태 |
+|---|---|---|
+| `architecture-api` | `rest-contracts.md`, `problem-details.md`, `pagination-versioning.md`, `idempotency-openapi.md` | **Open gap**. REST/RFC 9457/Idempotency/OpenAPI 주장을 담지만 `Source basis`나 source decision 연결 없음. |
+| `architecture-db` | `schema-modeling.md`, `constraints-indexes.md`, `transactions-locking.md`, `rollout-constraints.md` | **Open gap**. DB 설계/트랜잭션/인덱스/롤아웃 원칙의 authoring source 없음. |
+| `architecture-ddd` | `strategic-design.md`, `context-map.md`, `tactical-patterns.md`, `domain-events.md` | **Open gap**. DDD 개념은 명확하지만 Evans/Vernon/Fowler 등 출처나 source decision 매핑 없음. |
+| `architecture-implementation-patterns` | `repository-uow.md`, `pattern-selection.md`, `ports-adapters.md`, `outbox-acl.md` | **Open gap**. Clean/Hexagonal/UoW/Outbox/ACL 판단 근거가 런타임 요약뿐임. |
+| `implementation-cleancode` | `responsibility.md`, `naming-functions.md`, `encapsulation-abstraction.md`, `legacy-review.md` | **Open gap**. Clean Code/legacy refactoring 원칙의 source basis 없음. |
+| `implementation-django` | `models-orm.md`, `services-selectors.md`, `migrations.md`, `transactions-performance-security.md`, `coding-style-drf-maintenance.md` | **Partial**. 모든 reference가 `Source basis`를 가짐. 다만 책/공식문서 이름 수준이고, 버전/섹션/URL/source decision 파일 매핑은 없음. |
+| `implementation-django-ninja` | `router-schema.md`, `auth-pagination-filtering.md`, `problem-details-openapi.md`, `testclient.md` | **Open gap**. Django Ninja 구현 표준과 DRF-to-Ninja guardrail을 주장하지만 source basis 없음. |
+| `implementation-django-web` | `templates.md`, `templateview-htmx.md`, `static-assets.md`, `csrf-ajax.md` | **Open gap**. Django templates/HTMX/CSRF/static 기준의 source basis 없음. |
+| `implementation-python` | `typing.md`, `dataclasses-enums.md`, `protocols-boundaries.md`, `pydantic-v2.md` | **Partial but weak**. 각 파일에 “Python 언어 특화 source reference”라는 근거 요약은 있으나, 그 source reference 자체가 번들/작업공간에 없어 추적성이 끊김. |
+| `implementation-tdd` | `test-list.md`, `red-green-refactor.md`, `inside-out-outside-in.md`, `bdd-atdd.md`, `ai-assisted-tdd.md` | **Open gap**. TDD/BDD/ATDD 원칙의 authoring source 또는 외부 source basis 없음. |
+| `implementation-test` | `pytest-fixtures.md`, `test-doubles.md`, `factories-property-tests.md`, `coverage-mutation.md`, `django-api-concurrency.md` | **Open gap**. pytest/mock/factory/Hypothesis/coverage/concurrency 기준의 source basis 없음. |
+| `source-reference-audit` | `source-governance.md` | **Open gap for provenance, usable as runtime rule**. source-governance 자체가 source decision 요약이라고 말하지만 이를 뒷받침하는 `final.md`가 없음. |
+| `workflow-dddjango-subagents` | `delegation-rules.md`, `role-map.md`, `handoff-contract.md`, `integration-checklist.md` | **Open gap**. 역할 분해/순차 fallback/통합 체크리스트의 source decision 근거 없음. |
+
+**핵심 Gap**
+
+1. **Canonical source evidence 부재**
+   `workspace/reference/**` 또는 이에 대응하는 `final.md` 계열 파일이 현재 감사 범위에 없습니다. 따라서 대부분 skill은 “런타임 reference가 존재한다”까지만 말할 수 있고, “검증된 source decision에 근거한다”고는 말할 수 없습니다.
+
+2. **명시적 source basis 편차**
+   `implementation-django`는 5/5 reference에 source basis가 있습니다. `implementation-python`은 4/4 reference에 근거 요약은 있지만 실제 source reference 경로가 없습니다. 나머지 11개 skill은 reference 파일 안에 명시적 provenance가 없습니다.
+
+3. **DRF guardrail provenance 미완**
+   `implementation-django/references/coding-style-drf-maintenance.md`는 DRF 유지보수 근거를 갖지만, `implementation-django-ninja`의 greenfield Django Ninja 및 DRF-to-Ninja 전환 규칙은 별도 source basis가 없습니다. source-governance 기준으로 REST contract, greenfield Django Ninja, existing DRF maintenance 축은 분리해서 닫아야 합니다.
+
+4. **검증/캐시 동기화 증거 없음**
+   `SKILL.md`, `references/*.md`, `agents/openai.yaml`의 semantic parity를 canonical source와 비교할 수 없었습니다. 현재는 runtime cache 내부 구조 확인만 가능했습니다.
+
+**닫는 작업**
+
+각 skill별로 `final.md` 수준의 source decision을 만들거나 제공해야 합니다. 최소한 각 reference 파일에 다음을 연결하는 provenance 블록이 필요합니다: source decision path, 외부 근거 이름과 버전/섹션, allowed claim, forbidden claim, unresolved conflict, validation evidence.
+
+Serena: skipped because no Serena tool is available in this session and the workspace is empty/non-code; verified references with filesystem reads and `rg`.

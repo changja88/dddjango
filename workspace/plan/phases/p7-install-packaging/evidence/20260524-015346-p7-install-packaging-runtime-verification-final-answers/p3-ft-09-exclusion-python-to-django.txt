@@ -1,0 +1,33 @@
+수정할 수 있는 Django 코드가 현재 작업공간에 없습니다.
+
+확인 결과:
+
+- 현재 경로: `/private/tmp/dddjango-p7-runtime/p3-ft-09-exclusion-python-to-django`
+- 디렉터리 내용: 비어 있음
+- Git 저장소 아님: `fatal: not a git repository`
+- `/private/tmp/dddjango-p7-runtime` 아래 관련 런타임 디렉터리들도 파일이 보이지 않음
+- 현재 샌드박스가 `read-only`라 파일이 있어도 직접 수정은 불가능한 상태입니다.
+
+`select_related`로 고쳐야 하는 전형적인 위치는 FK/OneToOne 관계를 루프나 serializer/template에서 반복 접근하는 QuerySet입니다. 예시는 이런 형태입니다:
+
+```python
+# before
+orders = Order.objects.filter(status="paid")
+
+# after
+orders = Order.objects.select_related("customer", "shipping_address").filter(
+    status="paid"
+)
+```
+
+테스트는 보통 쿼리 수 회귀를 막기 위해 이렇게 잡습니다:
+
+```python
+with self.assertNumQueries(1):
+    list(Order.objects.select_related("customer"))
+```
+
+코드가 있는 저장소/파일을 이 작업공간에 제공하거나 writable 환경으로 다시 열어주면, 실제 N+1 위치를 찾아서 `select_related()` 적용과 쿼리 수 테스트까지 이어서 수정하겠습니다.
+
+Serena: skipped because no Serena MCP tools are available in this session and the current directory is not a populated repository; attempted verification with shell search instead.
+Tests: not run because no project files are present.
