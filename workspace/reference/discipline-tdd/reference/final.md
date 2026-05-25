@@ -1034,7 +1034,7 @@ def test_calculate_shipping_fee_for_domestic_order():
 
 ## 13. 레거시 코드 다루기
 
-레거시 코드 다루기는 `workspace/reference/implementation-cleancode/reference/final.md`를 참조한다.
+레거시 코드 다루기는 `workspace/reference/discipline-cleancode/reference/final.md`를 참조한다.
 
 ---
 

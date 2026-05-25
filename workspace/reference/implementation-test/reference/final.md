@@ -11,7 +11,7 @@
 | source priority | 1 official pytest, pytest-django, Django, Django Ninja, Hypothesis, coverage, and tool docs; 2 primary project docs; 3 reputable testing books/articles and Google/Fowler material; 4 unsupported plugin habit is not source. |
 | P1 classification | sufficient |
 
-> 이 문서는 테스트 코드 **작성법**에 집중한다. TDD 방법론(Red-Green-Refactor 등)은 `workspace/reference/implementation-tdd/reference/final.md`에서 다룬다.
+> 이 문서는 테스트 코드 **작성법**에 집중한다. TDD 방법론(Red-Green-Refactor 등)은 `workspace/reference/discipline-tdd/reference/final.md`에서 다룬다.
 
 ---
 
