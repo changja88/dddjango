@@ -61,8 +61,8 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
 - REST resource, URL, HTTP method, status code, header, content negotiation,
   pagination strategy, versioning, rate limit, idempotency contract는
   `architecture-api`가 결정한다.
-- aggregate, state transition, invariant, policy, usecase boundary는
-  `architecture-ddd`와 `implementation-patterns`가 결정한다.
+- aggregate, state transition, invariant, policy, usecase boundary, 구조 패턴
+  (repository/UoW/핵사고날/CQRS/outbox/ACL) 선택은 `architecture-ddd`가 결정한다.
 - ORM query, selector, service, transaction, migration, cache, security
   implementation은 `implementation-django`가 담당한다.
 - pytest fixture, factory, mock/test-double, concurrency test mechanics는
@@ -366,8 +366,9 @@ Django Ninja Router/Schema, service validation, exception handler, TestClient �
   `implementation-django-ninja`를 사용한다.
 - pytest fixture, factory, mock/test-double 세부 구현이 주 작업이면
   `implementation-test`를 사용한다.
-- risky domain work가 DDD, DB, API, Django, tests를 함께 건드리면
-  `workflow-dddjango-subagents`를 먼저 사용한다.
+- risky domain work가 DDD, DB, API, Django, tests를 함께 건드리면 각 영역의
+  owning reference(`architecture-ddd`, `architecture-db`, `architecture-api`,
+  `implementation-django`)를 함께 확인한다.
 
 ---
 

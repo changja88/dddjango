@@ -2224,7 +2224,7 @@ config = Config.from_env()
 
 ## 21. Repository / Unit of Work
 
-Repository/Unit of Work 등 아키텍처 패턴은 향후 `workspace/reference/implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/reference/source-reference-audit/reference/final.md`의 implementation patterns fallback 기준을 따른다.
+Repository, Unit of Work, 핵사고날(포트/어댑터), CQRS, outbox, ACL 등 구조 패턴의 선택 기준은 `architecture-ddd`(§5 아키텍처, §6 구현 패턴)가 소유하고, Django ORM 환경에서의 적용은 `implementation-django`(§16 서비스 레이어)가 담당한다. 이 문서는 그 패턴들을 표현할 때 쓰는 Python 경계 도구(`Protocol`/ABC, 타입 기반 협력)만 다룬다.
 
 ---
 

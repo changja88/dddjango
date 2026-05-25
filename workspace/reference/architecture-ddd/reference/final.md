@@ -363,6 +363,17 @@ class ERPAnticorruptionLayer:
         )
 ```
 
+**ACL을 선택하는 조건:**
+- 외부/레거시 용어가 애그리거트, 값 객체, 유비쿼터스 언어로 누수될 위험이 있다.
+- 업스트림 lifecycle과 다운스트림 lifecycle이 다르다.
+- 공개 통합 계약과 내부 모델의 의미가 다르다.
+
+**회피하는 조건:**
+- 외부 모델이 이미 바운디드 컨텍스트 언어와 일치한다.
+- 단순 field rename 수준이며 별도 의미 번역이 없다.
+
+ACL은 경계 근처에 둔다. 여러 도메인 객체 내부에 번역 로직을 산발적으로 넣지 않는다. 데이터 형태뿐 아니라 status, 단위, 식별자, lifecycle 의미를 번역한다. 공개 API의 published language와 versioning이 관련되면 `architecture-api`로 넘긴다.
+
 ### 2.6 증류 (Distillation)
 
 > 출처: Evans 파란책 Chapter 15
@@ -1202,6 +1213,18 @@ class OutboxProcessor:
             self._repo.update(msg)
 ```
 
+**Outbox를 선택하는 조건:**
+- DB 커밋 이후 외부 메시지 전달이 유실되면 안 된다.
+- at-least-once 전달과 consumer 멱등성을 설계할 수 있다.
+- retry, dead-letter, dispatch ownership이 필요하다.
+
+**회피하는 조건:**
+- 외부 부수효과가 없다.
+- 단순 in-process 후속 작업이며 `transaction.on_commit()`으로 충분하다.
+- 유실 가능성을 제품이 수용하거나 별도 운영 부담이 과하다.
+
+**Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 신뢰성/재시도 운영 세부는 `architecture-db`·`implementation-test`로 넘긴다.
+
 ### 3.8 Specification 패턴
 
 > 출처: Eric Evans & Martin Fowler, "Specifications" (1997)
@@ -1487,7 +1510,28 @@ class CalculateDiscountService:
 
 > 출처: [C]
 
-[C]는 헥사고날 아키텍처를 DDD 구현의 주요 아키텍처 스타일로 권장한다. 포트와 어댑터의 상세한 설명과 구현은 향후 `workspace/reference/implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/reference/source-reference-audit/reference/final.md`의 implementation patterns fallback 기준을 따른다.
+[C]는 헥사고날 아키텍처를 DDD 구현의 주요 아키텍처 스타일로 권장한다. 의존성은 항상 정책(도메인/응용) 쪽으로 향하고, 포트는 응용/도메인이 필요로 하는 역할이며 어댑터는 프레임워크나 외부 세부사항을 번역한다.
+
+**핵사고날을 선택하는 조건:**
+- 외부 서비스, 브로커, 결제/재고/권한 provider, 레거시 시스템이 도메인 모델을 오염시킬 위험이 있다.
+- 영속성 형태(persistence shape)와 도메인 언어가 다르다.
+- 프레임워크 없이 유스케이스를 테스트하는 가치가 크다.
+- 교체 가능성이 실제 요구이거나 장애 격리, 계약 안정성이 중요하다.
+
+**회피하는 조건:**
+- Django 관례가 흐름을 더 명확하게 만든다.
+- 포트가 기술명만 감춘 얇은 wrapper다.
+- 구현이 하나뿐이고 바뀔 가능성도 낮으며 테스트 seam도 필요 없다.
+
+**포트 작성 기준:**
+- 포트 이름은 기술이 아니라 역할을 표현한다(예: `PaymentGateway`, `InventoryReservationPort`).
+- 포트 메서드는 좁고 유스케이스 언어를 따른다. 입출력은 도메인/응용 DTO, 값 객체, 식별자를 사용한다.
+- Python에서는 구조적 협력이면 `Protocol`을 우선 고려하고, 명시적 상속이나 런타임 등록이 필요할 때 ABC를 고려한다. 모든 클래스에 인터페이스를 만들지 않는다.
+
+**어댑터 배치 기준:**
+- Django view, Ninja router, DRF view/serializer, template view, form, management command, Celery task, message handler는 **인터페이스 어댑터**다.
+- ORM 리포지토리, 외부 SDK 클라이언트, 브로커 publisher, cache/filesystem 구현은 **인프라 어댑터**다.
+- 어댑터는 입력 검증, 인증 연결, DTO 변환, 유스케이스 호출, 응답 매핑을 담당할 수 있지만 핵심 정책을 소유하지 않는다.
 
 ### 5.4 CQRS (커맨드-쿼리 책임 분리)
 
@@ -1498,7 +1542,15 @@ class CalculateDiscountService:
 
 커맨드(상태 변경)와 쿼리(데이터 조회)의 모델을 분리한다. 핵심 원칙: "질문하는 행동이 대답을 바꿔서는 안 된다." 시스템 전체가 아닌 필요한 컨텍스트에만 선택 적용하는 것이 안전하다.
 
-CQRS의 상세 구현과 아키텍처 패턴은 향후 `workspace/reference/implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/reference/source-reference-audit/reference/final.md`의 implementation patterns fallback 기준을 따른다.
+**CQRS를 선택하는 조건:**
+- 쓰기 불변식(write invariant)과 읽기 projection/집계가 서로 다른 모델을 요구한다.
+- 읽기 측 성능, 비정규화 projection, reporting 모델이 커맨드 모델을 왜곡한다.
+- 커맨드 처리와 쿼리 최적화의 변경 이유가 분리되어 있다.
+
+**회피하는 조건:**
+- selector 또는 QuerySet 최적화로 충분하다.
+- 읽기/쓰기 분리가 단순 CRUD를 더 어렵게만 만든다.
+- eventual consistency를 감당할 제품/운영 기준이 없다.
 
 ### 5.5 대규모 구조 (Large-Scale Structure)
 
@@ -1635,7 +1687,7 @@ my_project/
 
 > 출처: Cosmic Python
 
-ORM은 도메인 모델을 임포트해야 하며, 도메인 모델이 ORM에 의존해서는 안 된다. Data Mapper 패턴의 상세 구현은 향후 `workspace/reference/implementation-patterns/reference/final.md` source reference로 분리한다. 그 전까지는 `workspace/reference/source-reference-audit/reference/final.md`의 implementation patterns fallback 기준을 따른다.
+ORM은 도메인 모델을 임포트해야 하며, 도메인 모델이 ORM에 의존해서는 안 된다. Data Mapper 스타일의 구체 구현은 아래 §6.3 Repository + Unit of Work 코드를 따르고, Django ORM 환경에서의 적용(모델 분리 비용, 서비스/셀렉터 경계)은 `implementation-django`(§16)가 소유한다.
 
 ### 6.3 Repository + Unit of Work 패턴
 
@@ -1981,6 +2033,27 @@ class InventoryACL:
             })
         return commands
 ```
+
+### 6.8 패턴 선택 절차와 Risky Write 라우팅
+
+> 전술/구현 패턴은 도메인 전략을 대신하지 않는다. 도메인 모델이 어느 정도 확인된 뒤, 다음 순서로 가장 가벼운 패턴을 고른다.
+
+1. 바운디드 컨텍스트, 애그리거트, 불변식, 유스케이스, 외부 통합 경계를 확인한다.
+2. 실제 압력을 분류한다: 프레임워크 누수, 영속성 매핑, 트랜잭션 경계, 읽기/쓰기 모델 분기, 외부 부수효과 신뢰성, 레거시/업스트림 언어 충돌, 테스트 seam, 교체 필요.
+3. 현재 압력을 해결하는 가장 가벼운 패턴을 선택한다.
+4. 선택하지 않은 무거운 패턴과 그 이유를 함께 기록한다.
+
+단순 CRUD, 작은 필드 변경, 지원 하위 도메인의 직선적 흐름에는 리포지토리, 커스텀 Unit of Work, CQRS, 이벤트 소싱, saga, outbox, ACL을 기본으로 도입하지 않는다.
+
+**Risky Write(결제, 재고, 예약, 환불, 권한, ledger 등) 라우팅:** 패턴 선택은 여기서 정하고, 세부 구현/검증은 소유 영역으로 넘긴다.
+
+| 항목 | 소유 |
+|---|---|
+| 패턴 결정 (Django-native 트랜잭션 / 서비스 레이어 / 포트·어댑터 / outbox / saga / ACL / 추가 패턴 없음) | 이 문서(§5~§6) |
+| 트랜잭션 owner, 부수효과 타이밍 | `implementation-django`(§16) |
+| 락, 격리 수준, 인덱스, rollout | `architecture-db` |
+| 멱등성 저장, `Idempotency-Key`, status code | `architecture-api` |
+| 통합/동시성/멱등성 테스트 | `implementation-test` |
 
 ---
 
