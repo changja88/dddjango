@@ -413,9 +413,26 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 | Isolation/retry | isolation level, deadlock/timeout/serialization failure retry 기준 |
 | Test criteria | duplicate request, concurrent request, retry, rollback 상황을 검증할 기준 |
 
-외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다.
+외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7).
 
 > 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
+
+### 9.7 Commit 후 메시지 전달과 Outbox
+
+DB 상태 변경과 외부 메시지 발행을 함께 해야 할 때, 둘은 서로 다른 시스템이라 원자적으로 묶이지 않는다. "DB 커밋 -> 브로커 발행" 순서는 커밋 후 발행 직전 장애 시 메시지가 유실되고, "브로커 발행 -> DB 커밋" 순서는 롤백 시 존재하지 않는 사실에 대한 메시지가 나간다. 이 **이중 쓰기(dual write)** 문제는 유실이 치명적일 때 Outbox로 해결한다.
+
+**트랜잭셔널 Outbox**: 브로커에 직접 발행하는 대신, 발행할 메시지를 비즈니스 데이터와 **같은 트랜잭션**으로 outbox 테이블에 기록한다. 커밋되면 상태 변경과 보낼 메시지가 원자적으로 함께 남는다. 별도 **디스패처**가 미발행 행을 읽어 브로커에 발행하고 발행 표시한다.
+
+| 항목 | 결정 내용 |
+|------|-----------|
+| Outbox 테이블 | `id`, aggregate 식별, `event_type`, `payload`, `created_at`, `published_at`(nullable), `retry_count`. 비즈니스 write와 동일 트랜잭션에서 기록 |
+| 전달 보장 | 디스패처가 발행 후 표시 전에 죽으면 재시도 시 중복 발행 가능 -> **at-least-once**. exactly-once는 일반적으로 보장하지 않는다 |
+| Consumer 멱등성 | at-least-once의 필연적 요구. 소비자는 event id 등으로 **중복 수신을 무시**할 수 있어야 한다(처리 기록 또는 unique 제약) |
+| 재시도와 dead-letter | 발행 실패는 `retry_count` 증가 후 재시도. 한계 초과 메시지는 dead-letter로 격리해 무한 재시도와 head-of-line 정체를 막는다 |
+| 디스패처 동시성 | 여러 디스패처가 같은 행을 집지 않도록 행 잠금(`FOR UPDATE SKIP LOCKED`)이나 단일 워커로 직렬화 |
+| 순서 보장 | 전역 순서가 필요하면 aggregate 단위로 직렬화하거나 정렬 키를 둔다. 필요 없으면 명시적으로 포기한다 |
+
+**Outbox를 피하는 경우**: 외부 부수효과가 없거나, 단순 in-process 후속 작업이라 `transaction.on_commit()`으로 충분하거나, 유실을 제품이 수용할 수 있을 때. 채택 여부의 도메인 측면은 `architecture-ddd` §3.7, Django 구체 구현은 `implementation-django` §16.5를 따른다.
 
 ---
 

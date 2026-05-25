@@ -1686,6 +1686,62 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 
 테스트에서는 일반 DB-backed behavior는 `TestCase`로 충분하지만, commit hook, lock, DB trigger, transaction isolation을 검증해야 하면 `TransactionTestCase`나 실제 DB 기반 integration test가 필요하다.
 
+### 16.5 트랜잭셔널 Outbox 구현 [DDoc]
+
+메시지 유실이 허용되지 않는 외부 발행은 Outbox로 구현한다(채택 기준은 `architecture-ddd` §3.7, 전달 보장·dead-letter 정책은 `architecture-db` §9.7). Django에서는 outbox 행을 비즈니스 write와 **같은 `transaction.atomic()` 블록**에서 저장하고, 별도 디스패처가 발행한다.
+
+```python
+# models.py
+class OutboxMessage(models.Model):
+    event_type = models.CharField(max_length=200)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        indexes = [models.Index(fields=["published_at", "id"])]
+
+
+# services.py -- 비즈니스 write와 같은 트랜잭션에 outbox 기록
+def confirm_order(*, order: Order) -> Order:
+    with transaction.atomic():
+        order.confirm()
+        order.save(update_fields=["status", "confirmed_at"])
+        OutboxMessage.objects.create(
+            event_type="order.confirmed",
+            payload={"order_id": order.id},
+        )
+    return order
+```
+
+디스패처는 management command(또는 Celery beat/cron)로 주기 실행한다. 여러 워커가 같은 행을 집지 않도록 `select_for_update(skip_locked=True)`로 미발행 행을 잠그고, 발행에 성공하면 `published_at`을 찍는다.
+
+```python
+# management/commands/dispatch_outbox.py
+class Command(BaseCommand):
+    def handle(self, *args, **options):
+        with transaction.atomic():
+            rows = (
+                OutboxMessage.objects
+                .select_for_update(skip_locked=True)
+                .filter(published_at__isnull=True)
+                .order_by("id")[:100]
+            )
+            for msg in rows:
+                try:
+                    broker.publish(msg.event_type, msg.payload)
+                    msg.published_at = timezone.now()
+                    msg.save(update_fields=["published_at"])
+                except BrokerError:
+                    msg.retry_count += 1
+                    msg.save(update_fields=["retry_count"])
+                    # retry_count가 한계를 넘으면 dead-letter로 이동(별도 플래그/테이블)
+```
+
+- 디스패처가 발행 후 `published_at` 기록 전에 죽으면 재실행 시 같은 메시지를 다시 발행한다 -> **at-least-once**. 소비자는 멱등해야 한다(`architecture-db` §9.7).
+- 단순 in-process 후속 작업(유실 허용)은 outbox 없이 `transaction.on_commit()`으로 충분하다(§16.4).
+
 ---
 
 ## 17. Django 5.x 새 기능
