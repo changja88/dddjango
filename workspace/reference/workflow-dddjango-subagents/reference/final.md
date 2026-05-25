@@ -66,7 +66,7 @@ Composite 또는 risky workflow에서 canonical role map은 축소하지 않는�
 |---|---|---|
 | Coordinator | 작업 범위, role assignment, result integration | `workflow-dddjango-subagents` |
 | Domain Agent | subdomain, bounded context, ubiquitous language, aggregate, invariant, domain event | `architecture-ddd` |
-| Architecture Agent | implementation pattern, dependency direction, port/adapter, transaction boundary | `architecture-implementation-patterns` |
+| Architecture Agent | implementation pattern, dependency direction, port/adapter, transaction boundary | `implementation-patterns` |
 | DB Agent | schema, constraints, indexes, transactions, rollout constraints, backfill/index-lock risk | `architecture-db`, `implementation-django` |
 | API Agent | REST contract, status code, Problem Details, OpenAPI | `architecture-api`, `implementation-django-ninja` |
 | Django Agent | ORM, service, selector, concrete migration files, transaction, settings/security/performance, template/static/web, static files | `implementation-django`, `implementation-django-web`, `implementation-python` |

@@ -1,4 +1,0 @@
-interface:
-  display_name: "DB Architecture"
-  short_description: "Schemas, idempotency, queries, transactions, rollout."
-  default_prompt: "Use $architecture-db to design relational schemas, constraints, indexes, transactions, locks, idempotency storage, and rollout/backfill safety."

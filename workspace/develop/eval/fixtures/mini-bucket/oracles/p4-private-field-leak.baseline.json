@@ -1,7 +1,0 @@
-{
-  "schema_version": "eval-oracle/v1",
-  "case_id": "p4-private-field-leak",
-  "variant": "baseline",
-  "loaded_skill": "dddjango:source-reference-audit",
-  "required_claims": ["leakage-scan-ran"]
-}

@@ -1,2 +1,0 @@
-^DAdded plugin `dddjango` from marketplace `dddjango-local`.
-Installed plugin root: /Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10

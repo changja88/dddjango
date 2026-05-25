@@ -62,7 +62,7 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
   pagination strategy, versioning, rate limit, idempotency contract는
   `architecture-api`가 결정한다.
 - aggregate, state transition, invariant, policy, usecase boundary는
-  `architecture-ddd`와 `architecture-implementation-patterns`가 결정한다.
+  `architecture-ddd`와 `implementation-patterns`가 결정한다.
 - ORM query, selector, service, transaction, migration, cache, security
   implementation은 `implementation-django`가 담당한다.
 - pytest fixture, factory, mock/test-double, concurrency test mechanics는

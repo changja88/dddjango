@@ -1,4 +1,0 @@
-interface:
-  display_name: "Source Reference Audit"
-  short_description: "Audit source provenance, gaps, leakage, and boundaries."
-  default_prompt: "Use $source-reference-audit to audit source provenance, source gaps, trigger routing, DRF guardrails, cache sync, and runtime boundary or leakage risks."
