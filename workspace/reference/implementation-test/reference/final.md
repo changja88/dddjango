@@ -983,6 +983,32 @@ def test_retry_logic():
 
 > 출처: [Python unittest.mock 공식 문서](https://docs.python.org/3/library/unittest.mock.html), [unittest.mock - getting started](https://docs.python.org/3/library/unittest.mock-examples.html)
 
+### 7.8 호출 순서 검증
+
+여러 호출의 **순서**가 중요하면 `assert_has_calls` 또는 `mock_calls`로 순서를 검증한다. (개별 호출 여부만 보는 `assert_called_once_with`로는 순서를 보장하지 못한다.)
+
+```python
+from unittest.mock import call, Mock
+
+def test_lifecycle_order():
+    mock = Mock()
+    run_lifecycle(mock)  # setup -> run -> teardown 순으로 호출되어야 한다
+
+    # 지정한 호출들이 이 순서대로 일어났는지 검증
+    mock.assert_has_calls([
+        call.setup(),
+        call.run("test_method"),
+        call.teardown(),
+    ])
+
+    # 전체 호출 시퀀스를 정확히 비교하려면 mock_calls를 직접 확인한다
+    assert mock.mock_calls == [
+        call.setup(),
+        call.run("test_method"),
+        call.teardown(),
+    ]
+```
+
 ---
 
 ## 8. Property-Based Testing (Hypothesis)
@@ -1974,7 +2000,7 @@ def test_calculation():
 ```
 
 **T - Timely (적시에)**
-프로덕션 코드를 작성하기 직전 또는 직후에 테스트를 작성한다.
+테스트는 적절한 시점에 작성한다. 다만 **언제·어떤 순서로** 테스트를 작성하는지(test-first, Red-Green 리듬 등 작성 시점의 실천)는 작성법이 아니라 방법론이므로 `workspace/reference/discipline-tdd/reference/final.md`가 다룬다.
 
 > 출처: Robert C. Martin, "Clean Code" (2008), [FIRST Principles - DZone](https://dzone.com/articles/first-principles-solid-rules-for-tests)
 
