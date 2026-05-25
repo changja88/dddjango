@@ -303,6 +303,15 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 구체적인 것이 우선한다.
 
+**협상 실패 시 상태 코드**:
+
+| 상황 | 상태 코드 | 의미 |
+|------|----------|------|
+| 서버가 Accept/Accept-* 를 만족하는 표현을 만들 수 없음 (응답 측) | `406 Not Acceptable` | 가용 표현 특성 목록을 본문에 제공하거나, 정책상 기본 표현으로 대체 응답할 수 있다 |
+| 요청 본문의 Content-Type/Content-Encoding을 이 메서드·리소스가 지원하지 않음 (요청 측) | `415 Unsupported Media Type` | 서버가 요청 페이로드 형식을 처리할 수 없어 거절한다 |
+
+406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)
+
 ### 7.3 캐시 관련 헤더
 
 | 헤더 | 용도 |
@@ -346,6 +355,21 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 - 모든 API 통신에 HTTPS 사용
 
 > 출처: Go_Deeper/Wiki/Http/StatusCode, Go_Deeper/Wiki/OAuth, Go_Deeper/Book/Architecture/DesigningAPIS
+
+### 8.4 토큰 수명과 스코프
+
+Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다.
+
+| 상황 | 상태 코드 | WWW-Authenticate | 의미 |
+|------|----------|------------------|------|
+| 토큰 만료·폐기·변조 (`invalid_token`) | `401 Unauthorized` | `Bearer error="invalid_token"` | 재인증하거나 refresh로 새 토큰을 발급받는다 |
+| 토큰은 유효하나 권한 범위 부족 (`insufficient_scope`) | `403 Forbidden` | `Bearer error="insufficient_scope", scope="..."` | 필요한 scope를 응답에 안내할 수 있다 |
+
+- 토큰 만료는 401이며 인증(§8.1) 실패다. 401에는 `WWW-Authenticate` 헤더로 인증 방법과 오류 원인을 안내한다.
+- scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고 필요한 scope를 알린다.
+- 토큰 수명, refresh 흐름, scope 집합은 API 계약으로 고정한다. 토큰 검증·발급의 구체 구현은 인증 라이브러리/프레임워크가 담당한다.
+
+> 출처: IETF RFC 6750 (OAuth 2.0 Bearer Token Usage §3 WWW-Authenticate Response Header, §3.1 Error Codes)
 
 ---
 
@@ -520,12 +544,14 @@ Content-Type: application/json
 
 Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다.
 
+**요청 fingerprint로 충돌 판정**: "동일 key, 다른 request content"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 사용하는 코드와 Problem Details를 계약에 명시한다.
+
 ### 13.4 실전 원칙
 
 - 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수
 - 멱등성 키를 내구성 있는 저장소(DB, Redis)에 보관
 - 동일 키의 동시 요청에 대한 레이스 컨디션 처리 필요
-- 동일 key와 다른 request content는 `409 Conflict` 또는 계약상 정의한 Problem Details로 처리한다
+- 동일 key와 다른 request content(fingerprint 불일치)는 충돌로 처리한다 — 코드(`422`/`409` 등)와 Problem Details를 계약에서 고른다(§13.3)
 - browser form resubmission이 주된 문제이면 PRG를 고려하고, API client retry가 주된 문제이면 `Idempotency-Key`를 우선한다
 
 > 출처: Stripe API - Idempotent Requests, Stripe Blog - Idempotency, IETF Draft - Idempotency-Key
@@ -581,8 +607,10 @@ API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
 | Microsoft REST API Design Best Practices | URL 설계, 메서드-리소스 매트릭스 |
 | Google API Design Guide | 리소스 명명, 필터링/정렬 패턴 |
 | IETF RFC 9457 | Problem Details (에러 응답 형식) |
-| IETF RFC 9110 | HTTP 메서드 안전성/멱등성 |
+| IETF RFC 9110 | HTTP 메서드 안전성/멱등성, 상태 코드(406/415 등) |
 | IETF RFC 5789 | PATCH 메서드와 idempotent PATCH nuance |
+| IETF RFC 6750 | OAuth 2.0 Bearer Token — invalid_token(401)/insufficient_scope(403) |
+| IETF Idempotency-Key 초안 (draft-ietf-httpapi-idempotency-key-header) | Idempotency-Key 헤더, 요청 fingerprint, 충돌 시 422 |
 | OpenAPI Specification | OpenAPI contract description source |
 | Stripe Blog / Docs | 버전 관리, 페이지네이션, 멱등성 키 |
 | GitHub Docs | Rate Limiting 헤더 |

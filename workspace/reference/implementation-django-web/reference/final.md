@@ -256,7 +256,7 @@ def toggle_like(request, pk):
 - `CSRF_COOKIE_HTTPONLY`는 AJAX token access를 어렵게 만들 수 있으므로 프로젝트 요구와 Django 문서의 caveat를 함께 고려한다.
 - security middleware, session, CSRF, auth, message, frame option middleware ordering을 보존한다.
 - security setting을 바꾸면 `python manage.py check --deploy` 실행 또는 미실행 사유를 보고한다.
-- raw SQL이 web context 준비에 필요하면 user input을 SQL string에 보간하지 말고 parameterized query를 사용한다. QuerySet/Manager나 DB 성능 설계는 owning skill로 넘긴다.
+- raw SQL이 web context 준비에 필요하면 user input을 SQL string에 보간하지 말고 parameterized query를 사용한다. QuerySet/Manager는 `implementation-django`, DB 성능 설계는 `architecture-db`로 넘긴다.
 
 ## 9. View auth와 permission
 
@@ -281,7 +281,7 @@ Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/col
 | optional display value | `None`, blank string, missing optional path의 context/render assertion | raw field fallback을 template에 둔 경우 unfinished |
 | static CSS/JS 변경 | rendered HTML의 static reference, referenced path existence | changed asset이 rendered page에서 참조되지 않으면 unfinished |
 | form 변경 | GET, valid POST, invalid POST, redirect, form error assertion | CSRF/auth/permission path 미확인 시 residual risk |
-| HTMX 변경 | fragment response, method/auth/permission/CSRF, redirect/header behavior | API-like contract가 필요하면 owning skill로 handoff |
+| HTMX 변경 | fragment response, method/auth/permission/CSRF, redirect/header behavior | API-like contract가 필요하면 `implementation-django-ninja`/`architecture-api`로 handoff |
 | security setting 변경 | `check --deploy` 또는 project-specific security check | 실행하지 않으면 미실행 사유 |
 | visible UI 변경 | browser check, screenshot, template/render test 중 가능한 증거 | browser 미실행을 실행한 것처럼 보고하지 않음 |
 

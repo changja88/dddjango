@@ -233,8 +233,8 @@ Filtering, sorting, search parameter는 public API contract다. Django Ninja
 - 허용 filter와 sort key를 명시한다.
 - user-controlled ORM field name을 그대로 받지 않는다.
 - DB table/model 내부 구조가 public parameter에 새지 않게 한다.
-- reusable read logic, query optimization, N+1 방지는 selector/QuerySet method로
-  위임한다.
+- reusable read logic, query optimization, N+1 방지는 `implementation-django`의
+  selector/QuerySet method로 위임한다.
 - 검색, sparse fieldset, 복합 filter는 `architecture-api`의 계약이 먼저 있어야 한다.
 
 ```python
