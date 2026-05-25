@@ -231,30 +231,7 @@ class Shirt(models.Model):
 
 ### 2.6 템플릿 코딩 스타일 [DCS]
 
-```html
-{# 좋은 예 #}
-{% extends "base.html" %}
-
-{% load i18n l10n static %}
-
-{% block header %}
-  <h1>{{ page_title }}</h1>
-{% endblock header %}
-
-{% if user.is_authenticated %}
-  <p>{{ user.name|lower }}</p>
-{% endif %}
-
-{# 나쁜 예 #}
-{%load i18n static l10n%}     {# 공백 없음, 알파벳순 아님 #}
-{{user}}                       {# 중괄호 안에 공백 없음 #}
-{% endblock %}                 {# 블록 이름 생략 #}
-```
-
-- `{% extends %}` 는 첫 번째 비주석 줄에 위치한다.
-- `{% load %}` 라이브러리는 알파벳순으로 나열한다.
-- `{{ variable }}`, `{% tag %}` 안에 정확히 **한 칸** 공백을 둔다.
-- `{% endblock header %}` 처럼 블록 이름을 명시한다.
+템플릿 코딩 스타일과 표현 계층 규칙은 `implementation-django-web`(§4)가 소유한다.
 
 ### 2.7 뷰 코딩 스타일 [DCS]
 
@@ -706,168 +683,13 @@ Product.objects.filter(category="books").update(
 
 ## 6. 뷰 패턴: CBV vs FBV
 
-### 6.1 선택 기준 [TSD] [DDoc]
-
-| 상황 | 권장 | 이유 |
-|------|------|------|
-| 표준 CRUD | Generic CBV | ListView, DetailView 등이 보일러플레이트를 제거 |
-| 폼 처리 | CBV (FormView, CreateView) | 폼 유효성 검증 흐름이 내장 |
-| 복잡한 커스텀 로직 | FBV | 흐름이 명시적이고 디버깅이 쉬움 |
-| 간단한 유틸리티 뷰 | FBV | 함수로 충분할 때 클래스화 불필요 |
-| 코드 재사용 필요 | CBV + Mixin | 상속/합성으로 중복 제거 |
-
-**원칙: 가능하면 Generic CBV로 시작, 필요하면 CBV로 내려가고, 정말 세밀한 제어가 필요할 때 FBV를 사용한다.** **[TSD]**
-
-### 6.2 CBV 올바른 사용 [DDoc]
-
-```python
-# 좋은 예: Generic CBV 활용
-from django.views.generic import ListView, DetailView, CreateView
-
-class ArticleListView(ListView):
-    model = Article
-    queryset = Article.objects.published().select_related("author")
-    paginate_by = 20
-    context_object_name = "articles"
-
-class ArticleCreateView(LoginRequiredMixin, CreateView):
-    model = Article
-    form_class = ArticleForm
-    success_url = reverse_lazy("article-list")
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-```
-
-### 6.3 Mixin 활용 패턴 [TSD]
-
-```python
-# 좋은 예: 단일 책임 Mixin 조합
-class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_staff
-
-class AuditMixin:
-    """생성/수정 시 감사 로그를 기록하는 Mixin."""
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        AuditLog.objects.create(
-            user=self.request.user,
-            action=f"{self.model.__name__} saved",
-            object_id=self.object.pk,
-        )
-        return response
-
-class ArticleUpdateView(StaffRequiredMixin, AuditMixin, UpdateView):
-    model = Article
-    form_class = ArticleForm
-```
-
-- Mixin은 **왼쪽에서 오른쪽으로** MRO(Method Resolution Order)가 적용된다.
-- 하나의 Mixin은 하나의 관심사만 담당한다.
-- Mixin 체인이 3개 이상이면 복잡성을 재검토한다.
-
-### 6.4 FBV 올바른 사용 [DDoc]
-
-```python
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-
-@login_required
-@require_http_methods(["GET", "POST"])
-def article_create(request):
-    if request.method == "POST":
-        form = ArticleForm(request.POST)
-        if form.is_valid():
-            article = form.save(commit=False)
-            article.author = request.user
-            article.save()
-            return redirect("article-detail", pk=article.pk)
-    else:
-        form = ArticleForm()
-    return render(request, "articles/create.html", {"form": form})
-```
+서버 렌더링 화면의 뷰(CBV/FBV 선택, Generic CBV, Mixin, FBV 작성)는 표현 계층이므로 `implementation-django-web`(§2)가 소유한다. JSON API endpoint의 라우팅/스키마는 `implementation-django-ninja`, REST 계약은 `architecture-api`가 소유한다. 이 문서(코어)는 뷰가 호출하는 service/selector 경계(§16)만 다룬다.
 
 ---
 
 ## 7. 폼과 유효성 검증
 
-### 7.1 폼 유효성 검증 순서 [DDoc]
-
-Django 폼 유효성 검증은 다음 순서로 실행된다:
-
-1. **Field.clean()** -- 각 필드의 내장 검증 + 커스텀 validators (Field.clean() 내부에서 to_python() → validate() → run_validators() 순으로 실행)
-2. **Form.clean_\<fieldname\>()** -- 필드별 커스텀 검증
-3. **Form.clean()** -- 교차 필드 검증
-
-```python
-class RegistrationForm(forms.Form):
-    email = forms.EmailField()
-    password = forms.CharField(widget=forms.PasswordInput)
-    password_confirm = forms.CharField(widget=forms.PasswordInput)
-
-    def clean_email(self):
-        """필드별 커스텀 검증."""
-        email = self.cleaned_data["email"].lower()
-        if User.objects.filter(email=email).exists():
-            raise ValidationError("이미 등록된 이메일입니다.")
-        return email
-
-    def clean(self):
-        """교차 필드 검증."""
-        cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password_confirm = cleaned_data.get("password_confirm")
-        if password and password_confirm and password != password_confirm:
-            raise ValidationError("비밀번호가 일치하지 않습니다.")
-        return cleaned_data
-```
-
-### 7.2 ModelForm 활용 [DDoc]
-
-```python
-# 좋은 예: ModelForm으로 중복 제거
-class ArticleForm(forms.ModelForm):
-    class Meta:
-        model = Article
-        fields = ["title", "body", "category"]
-        # exclude 대신 fields를 명시 -- 새 필드 추가 시 실수 방지
-
-    def clean_title(self):
-        title = self.cleaned_data["title"]
-        if "spam" in title.lower():
-            raise ValidationError("제목에 금지어가 포함되어 있습니다.")
-        return title
-
-# 나쁜 예: fields = "__all__" 또는 exclude 사용
-class ArticleForm(forms.ModelForm):
-    class Meta:
-        model = Article
-        fields = "__all__"  # 의도치 않은 필드 노출 위험
-```
-
-- `fields`를 **명시적으로** 나열한다 -- `"__all__"`이나 `exclude`는 새 필드 추가 시 의도치 않은 노출 위험이 있다. **[TSD]**
-
-### 7.3 커스텀 Validator 재사용 [DDoc]
-
-```python
-# validators.py
-from django.core.validators import RegexValidator
-
-phone_validator = RegexValidator(
-    regex=r"^\+?1?\d{9,15}$",
-    message="올바른 전화번호 형식이 아닙니다.",
-)
-
-# models.py
-class Contact(models.Model):
-    phone = models.CharField(max_length=17, validators=[phone_validator])
-
-# forms.py -- 같은 validator 재사용
-class ContactForm(forms.Form):
-    phone = forms.CharField(validators=[phone_validator])
-```
+웹 폼(Form/ModelForm 작성, 검증 순서, 커스텀 validator)은 표현 계층이므로 `implementation-django-web`(§6)가 소유한다. 다만 form과 model이 공유하는 durable invariant·validator는 model/DB 경계에서도 보장한다(§4 모델 설계). 도메인 규칙 자체는 `architecture-ddd`가 소유한다.
 
 ---
 
@@ -1685,6 +1507,62 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 | verification | `TransactionTestCase`, concurrency test, integration test, migration SQL review, query-count check 중 무엇으로 확인하는가 |
 
 테스트에서는 일반 DB-backed behavior는 `TestCase`로 충분하지만, commit hook, lock, DB trigger, transaction isolation을 검증해야 하면 `TransactionTestCase`나 실제 DB 기반 integration test가 필요하다.
+
+### 16.5 트랜잭셔널 Outbox 구현 [DDoc]
+
+메시지 유실이 허용되지 않는 외부 발행은 Outbox로 구현한다(채택 기준은 `architecture-ddd` §3.7, 전달 보장·dead-letter 정책은 `architecture-db` §9.7). Django에서는 outbox 행을 비즈니스 write와 **같은 `transaction.atomic()` 블록**에서 저장하고, 별도 디스패처가 발행한다.
+
+```python
+# models.py
+class OutboxMessage(models.Model):
+    event_type = models.CharField(max_length=200)
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        indexes = [models.Index(fields=["published_at", "id"])]
+
+
+# services.py -- 비즈니스 write와 같은 트랜잭션에 outbox 기록
+def confirm_order(*, order: Order) -> Order:
+    with transaction.atomic():
+        order.confirm()
+        order.save(update_fields=["status", "confirmed_at"])
+        OutboxMessage.objects.create(
+            event_type="order.confirmed",
+            payload={"order_id": order.id},
+        )
+    return order
+```
+
+디스패처는 management command(또는 Celery beat/cron)로 주기 실행한다. 여러 워커가 같은 행을 집지 않도록 `select_for_update(skip_locked=True)`로 미발행 행을 잠그고, 발행에 성공하면 `published_at`을 찍는다.
+
+```python
+# management/commands/dispatch_outbox.py
+class Command(BaseCommand):
+    def handle(self, *args, **options):
+        with transaction.atomic():
+            rows = (
+                OutboxMessage.objects
+                .select_for_update(skip_locked=True)
+                .filter(published_at__isnull=True)
+                .order_by("id")[:100]
+            )
+            for msg in rows:
+                try:
+                    broker.publish(msg.event_type, msg.payload)
+                    msg.published_at = timezone.now()
+                    msg.save(update_fields=["published_at"])
+                except BrokerError:
+                    msg.retry_count += 1
+                    msg.save(update_fields=["retry_count"])
+                    # retry_count가 한계를 넘으면 dead-letter로 이동(별도 플래그/테이블)
+```
+
+- 디스패처가 발행 후 `published_at` 기록 전에 죽으면 재실행 시 같은 메시지를 다시 발행한다 -> **at-least-once**. 소비자는 멱등해야 한다(`architecture-db` §9.7).
+- 단순 in-process 후속 작업(유실 허용)은 outbox 없이 `transaction.on_commit()`으로 충분하다(§16.4).
 
 ---
 

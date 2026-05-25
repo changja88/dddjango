@@ -533,80 +533,11 @@ def test_withdraw__amount_exceeds_balance__returns_insufficient_funds():
     assert result.error == "잔액 부족"
 ```
 
-### 7.6 Mock 객체의 올바른 사용 [Khorikov, 테스트주도 개발]
+### 7.6 Mock보다 출력·상태 검증을 우선한다 [Khorikov]
 
-통신 기반 테스트(Mock 중심)는 세 가지 테스트 스타일 중 **가장 낮은 우선순위**다. Mock은 외부 의존성 격리에 한정하고, 핵심 로직은 출력/상태 기반 테스트를 우선한다.
+TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 > 통신 기반(Mock)** 순으로 선호한다. Mock은 외부 의존성(DB, API, 파일시스템, 결제, 알림 등) 격리에만 쓰고, 핵심 로직은 실제 객체의 출력/상태로 검증한다. 이는 무엇을 어떻게 검증할지에 대한 실천 원칙이며, Mock 우선순위표와 구체적 사용법(`Mock(spec=)`, `side_effect`, 호출/순서 검증)은 작성법이므로 `workspace/reference/implementation-test/reference/final.md` §7을 따른다.
 
-Mock이 유효한 경우:
-
-- 외부 시스템(DB, API, 파일시스템)과의 통신 격리
-- 비용이 많이 들거나 복잡한 리소스에 의존하는 경우
-- 발생하기 힘든 에러 상황의 시뮬레이션 (크래시 테스트 더미)
-
-```python
-from unittest.mock import Mock, ANY
-
-# Mock 생성 및 반환값 설정
-mock_db = Mock(spec=DatabaseConnection)
-mock_db.query.return_value = [
-    {"name": "점박이", "species": "미어캣"},
-]
-
-# 테스트 실행
-result = get_animals(mock_db, "미어캣")
-
-# 호출 검증
-mock_db.query.assert_called_once_with(ANY, "미어캣")
-assert result[0]["name"] == "점박이"
-```
-
-### 7.7 크래시 테스트 더미 [테스트주도 개발]
-
-발생하기 힘든 에러 상황을 테스트할 때, 실제 작업을 수행하는 대신 **예외를 발생시키기만 하는 특수 객체**를 만들어서 호출한다.
-
-```python
-from unittest.mock import Mock
-
-def test_file_system_error():
-    mock_file = Mock()
-    mock_file.write.side_effect = IOError("디스크 가득 참")
-
-    with pytest.raises(IOError):
-        save_data(mock_file, "some data")
-```
-
-### 7.8 셀프 션트 (Self Shunt) [테스트주도 개발]
-
-한 객체가 다른 객체와 올바르게 대화하는지 테스트하려면, 테스트 대상이 되는 객체가 원래 대화 상대가 아니라 **테스트 케이스 자체와 대화하도록** 만든다.
-
-```python
-class TestNotification:
-    def setup_method(self):
-        self.count = 0
-
-    def on_event(self):
-        self.count += 1
-
-    def test_listener_called(self):
-        result = TestResult()
-        result.add_listener(self)  # 테스트 자체가 리스너 역할
-        run_test(result)
-        assert self.count == 1
-```
-
-### 7.9 로그 문자열 [테스트주도 개발]
-
-메시지의 호출 순서가 올바른지 검사하기 위해 로그 문자열에 메시지가 호출될 때마다 추가한다.
-
-```python
-def test_lifecycle_order():
-    test = WasRun("test_method")
-    result = TestResult()
-    test.run(result)
-    assert test.log == "setUp test_method tearDown"
-```
-
-### 7.10 깨진 테스트 / 깨끗한 체크인 [테스트주도 개발]
+### 7.7 깨진 테스트 / 깨끗한 체크인 [테스트주도 개발]
 
 - **혼자 프로그래밍**: 테스트가 깨진 상태로 끝마치면 다음에 어디서부터 시작할지 좋은 단서가 된다
 - **팀 프로그래밍**: 테스트가 성공한 상태로 끝마친다
@@ -698,47 +629,7 @@ def test_walking_skeleton_health_check(client):
 
 ### 9.3 Mock Roles, Not Objects [Freeman, Pryce, Mackinnon, Walnes -- OOPSLA 2004]
 
-Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다.
-
-```python
-from typing import Protocol
-
-
-# 역할(Role)을 Protocol로 정의
-class PaymentGateway(Protocol):
-    def charge(self, amount: int, currency: str) -> str: ...
-
-
-class ReceiptSender(Protocol):
-    def send_receipt(self, order_id: str, email: str) -> None: ...
-
-
-# 프로덕션 코드는 역할(인터페이스)에 의존
-class CheckoutService:
-    def __init__(self, gateway: PaymentGateway, receipt: ReceiptSender):
-        self.gateway = gateway
-        self.receipt = receipt
-
-    def checkout(self, order_id: str, amount: int, email: str) -> str:
-        transaction_id = self.gateway.charge(amount, "KRW")
-        self.receipt.send_receipt(order_id, email)
-        return transaction_id
-
-
-def test_checkout_charges_and_sends_receipt(mocker):
-    """역할(PaymentGateway, ReceiptSender)을 Mock한다.
-    구체적 구현 클래스(StripeGateway, SmtpSender)가 아닌 역할을 대체."""
-    mock_gateway = mocker.Mock(spec=PaymentGateway)
-    mock_gateway.charge.return_value = "txn-001"
-    mock_receipt = mocker.Mock(spec=ReceiptSender)
-
-    service = CheckoutService(mock_gateway, mock_receipt)
-    txn_id = service.checkout("order-1", 50000, "buyer@test.com")
-
-    assert txn_id == "txn-001"
-    mock_gateway.charge.assert_called_once_with(50000, "KRW")
-    mock_receipt.send_receipt.assert_called_once_with("order-1", "buyer@test.com")
-```
+Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다. 프로덕션 코드는 구체 구현 클래스(예: `StripeGateway`, `SmtpSender`)가 아니라 역할(인터페이스)에 의존하고, 테스트는 그 역할을 Mock한다. 역할을 `Protocol`로 정의하고 `mocker.Mock(spec=...)`로 대체하는 구체 구현은 작성법이므로 `workspace/reference/implementation-test/reference/final.md` §7을 따른다.
 
 ### 9.4 Tell, Don't Ask 원칙 [Freeman & Pryce - GOOS]
 

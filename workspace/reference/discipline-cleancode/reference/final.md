@@ -260,7 +260,9 @@ revenue_max = ...
 # 핵심 개념(revenue)이 항상 앞에 있으므로 그룹으로 인식 가능
 ```
 
-### 2.11 불리언 변수 명명 [CodeC]
+### 2.11 불리언 변수 명명과 사용 [CodeC]
+
+불리언은 이름이 참/거짓을 드러내게 하고, 사용할 때도 `if flag == True`처럼 불리언 리터럴과 비교하지 말고 값 자체를 조건으로 쓴다.
 
 ```python
 # --- 나쁜 예: True/False가 불명확 ---
@@ -591,38 +593,9 @@ count += 1  # 재시도 횟수를 추적하여 최대 3회 초과 시 중단하�
 - **주석(comment)**: 가능한 한 적게. 코드 자체가 문서화되어야 한다.
 - **문서(docstring)**: 컴포넌트의 동작 방식, 입출력 정보를 설명. "이유가 아니라 설명"이다.
 
-### 4.7 독스트링 작성법 [PEP] [Google]
+### 4.7 독스트링 작성법
 
-**항상 `"""삼중 쌍따옴표"""`를 사용한다.** (PEP 257)
-
-```python
-def fetch_user(user_id: int) -> User:
-    """Fetch a user by their unique identifier.
-
-    Queries the database for the user matching the given ID.
-    Raises UserNotFoundError if no matching user exists.
-
-    Args:
-        user_id: The unique identifier of the user to fetch.
-
-    Returns:
-        The User object corresponding to the given ID.
-
-    Raises:
-        UserNotFoundError: If no user with the given ID exists.
-        DatabaseConnectionError: If the database is unreachable.
-    """
-    ...
-```
-
-**독스트링 유형별 작성 대상:**
-
-| 대상 | 내용 |
-|------|------|
-| 모듈 | 내보내는 클래스, 예외, 함수의 한 줄 요약 |
-| 클래스 | 동작 요약, 공개 메서드, 인스턴스 변수 |
-| 함수/메서드 | 동작, 인자, 반환값, 부작용, 예외, 호출 제약 |
-| 스크립트 | "사용법" 메시지 (명령행 구문, 환경 변수, 파일) |
+독스트링은 **무엇을** 문서화할지가 원칙이다 — 모듈/클래스/함수/스크립트의 동작·입출력·예외·호출 제약을 설명한다(§4.6). PEP 257 양식(삼중 따옴표, Args/Returns/Raises 구조)과 Python 작성 규칙은 `workspace/reference/implementation-python/reference/final.md` §26을 따른다.
 
 ---
 
@@ -632,11 +605,11 @@ def fetch_user(user_id: int) -> User:
 
 코드 형식은 의사소통의 일환이다. 구현 스타일과 가독성 수준은 유지보수 용이성과 확장성에 계속 영향을 미친다.
 
-### 5.2 적절한 행 길이를 유지하라 [CC] [PEP]
+### 5.2 적절한 행 길이를 유지하라 [CC]
 
 500줄이 넘지 않고 대부분 200줄 정도인 파일로도 커다란 시스템을 구축할 수 있다. **[CC]**
 
-PEP 8 기준: 코드 79자, 주석/독스트링 72자. **[PEP]**
+코드/주석의 구체적 줄 길이(line length) 수치는 Ruff 설정으로 강제하며 `workspace/reference/implementation-python/reference/final.md` §22를 따른다.
 
 ### 5.3 일관성이 핵심이다 [PC]
 
@@ -645,112 +618,6 @@ PEP 8 기준: 코드 79자, 주석/독스트링 72자. **[PEP]**
 ### 5.4 자동화 도구를 활용하라 [PC]
 
 포매팅, 린팅, 타입 검사를 자동화해야 한다. 이 모든 검사는 CI(지속적 통합)의 일부가 되어야 한다.
-
-### 5.5 PEP 8 핵심 규칙 [PEP]
-
-#### 들여쓰기와 줄 바꿈
-
-```python
-# 좋은 예: 여는 구분자에 맞춘 정렬
-foo = long_function_name(var_one, var_two,
-                         var_three, var_four)
-
-# 좋은 예: 행잉 인덴트 (4칸 추가 들여쓰기)
-def long_function_name(
-        var_one, var_two,
-        var_three, var_four):
-    print(var_one)
-```
-
-#### 임포트 규칙
-
-```python
-# --- 나쁜 예 ---
-import os, sys
-from math import *  # 와일드카드 임포트 금지
-
-# --- 좋은 예: 한 줄에 하나, 그룹별 빈 줄 구분 ---
-import os
-import sys
-
-from third_party_lib import some_module
-
-from my_project.utils import helper
-```
-
-**임포트 그룹 순서** (각 그룹 사이에 빈 줄):
-1. 표준 라이브러리 (`os`, `sys`, `pathlib`)
-2. 서드파티 라이브러리 (`requests`, `numpy`)
-3. 로컬 프로젝트 모듈
-
-#### 공백 규칙
-
-```python
-# --- 나쁜 예 ---
-spam( ham[ 1 ], { eggs: 2 } )
-x             = 1
-long_variable = 2
-
-# --- 좋은 예 ---
-spam(ham[1], {eggs: 2})
-x = 1
-long_variable = 2
-```
-
-```python
-# --- 나쁜 예: 키워드 인자와 기본값에 공백 ---
-def complex(real, imag = 0.0):
-    return magic(r = real, i = imag)
-
-# --- 좋은 예 ---
-def complex(real, imag=0.0):
-    return magic(r=real, i=imag)
-
-# 단, 어노테이션이 있는 기본값에는 공백을 넣는다
-def munge(sep: str = None): ...
-```
-
-#### 명명 규칙
-
-| 대상 | 스타일 | 예시 |
-|------|--------|------|
-| 모듈 | snake_case | `my_module.py` |
-| 패키지 | lowercase | `mypackage` |
-| 클래스 | PascalCase | `MyClass` |
-| 예외 | PascalCase + Error 접미사 | `ValueError` |
-| 함수/메서드 | snake_case | `calculate_total()` |
-| 변수 | snake_case | `user_count` |
-| 상수 | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
-| 내부 사용 | `_` 접두사 | `_internal_helper()` |
-| 이름 충돌 회피 | `_` 접미사 | `class_` |
-
-#### 프로그래밍 권장사항
-
-```python
-# 싱글톤 비교는 is/is not 사용
-if result is None: ...
-
-# 불리언 비교를 == 로 하지 않는다
-if greeting: ...
-
-# not ... is 대신 is not 사용
-if foo is not None: ...
-
-# bare except 금지 -- 구체적인 예외를 명시하라
-try:
-    do_something()
-except ValueError as e:
-    logger.warning("Invalid value: %s", e)
-
-# 타입 비교에는 isinstance() 사용
-if isinstance(obj, int): ...
-
-# 시퀀스의 비어있음 검사 -- 암묵적 falsiness 활용
-if not my_list: ...
-
-# 문자열 접두사/접미사 검사
-if foo.startswith('bar'): ...
-```
 
 ---
 
@@ -1764,7 +1631,7 @@ def add_positive_numbers(a: float, b: float) -> float:
 
 ### 12.7 방어적 프로그래밍 [CodeC]
 
-잘못된 입력으로부터 프로그램을 보호하라. "외부"를 어디로 정할지 결정하고, 그 경계에서 데이터를 검증하라.
+잘못된 입력으로부터 프로그램을 보호하라. "외부"를 어디로 정할지 결정하고, 그 경계에서 데이터를 검증하라. 예외는 구체적으로 잡는다 — 모든 예외를 무차별로 삼키면(bare/광범위 catch) 버그가 가려지므로, 실제로 처리할 수 있는 구체적 예외 유형만 명시한다.
 
 #### 단언(Assertion) vs 오류 처리
 

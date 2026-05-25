@@ -2143,7 +2143,19 @@ def to_str(bytes_or_str):
 
 루프 뒤 else 블록은 루프가 완료되면 실행된다. 직관에 반하므로 사용하지 마라.
 
-### 19.6 밑줄 관례 [슬기로운 파이썬 트릭]
+### 19.6 명명 규칙 [PEP 8] [슬기로운 파이썬 트릭]
+
+| 대상 | 스타일 | 예시 |
+|------|--------|------|
+| 모듈 | snake_case | `my_module.py` |
+| 패키지 | lowercase | `mypackage` |
+| 클래스 | PascalCase | `MyClass` |
+| 예외 | PascalCase + Error 접미사 | `ValueError` |
+| 함수/메서드 | snake_case | `calculate_total()` |
+| 변수 | snake_case | `user_count` |
+| 상수 | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+
+밑줄 관례:
 
 | 패턴 | 의미 |
 |------|------|
@@ -2479,6 +2491,7 @@ def find_anagrams(word: str) -> list[str]:
 - 모듈: 첫 줄에 목적, 이후 공개 함수/클래스 목록
 - 클래스: 목적 + 중요 공개 애트리뷰트/메서드
 - 함수: 목적 + Args + Returns + Raises
+- 스크립트: 사용법(usage) 메시지 — 명령행 구문, 환경 변수, 입출력 파일
 - 타입 어노테이션과 중복되면 둘 중 하나만 유지
 
 ---

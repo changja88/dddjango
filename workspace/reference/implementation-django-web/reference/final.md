@@ -60,6 +60,52 @@ TemplateView는 읽기 전용 페이지에서 context 준비가 주요 작업일
 
 view는 thin adapter로 유지한다. 반복되는 read logic이나 성능에 민감한 query shape은 selector, QuerySet, Manager로 옮긴다. 쓰기 유스케이스나 여러 모델에 걸친 동작은 service/usecase boundary로 옮긴다. **[HS] [dddjango-django]**
 
+```python
+from django.views.generic import ListView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+
+
+# Generic CBV: 보일러플레이트 최소화. queryset은 selector/Manager로 준비
+class ArticleListView(ListView):
+    queryset = Article.objects.published().select_related("author")
+    paginate_by = 20
+    context_object_name = "articles"
+
+
+class ArticleCreateView(LoginRequiredMixin, CreateView):
+    model = Article
+    form_class = ArticleForm
+    success_url = reverse_lazy("article-list")
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)  # durable invariant는 여기 몰지 않는다
+
+
+# Mixin: 한 관심사만 담당, MRO는 왼쪽 -> 오른쪽
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+# FBV: GET/POST 흐름이 명시적이어야 할 때
+@login_required
+@require_http_methods(["GET", "POST"])
+def article_create(request):
+    if request.method == "POST":
+        form = ArticleForm(request.POST)
+        if form.is_valid():
+            article = create_article(author=request.user, **form.cleaned_data)  # service 호출
+            return redirect("article-detail", pk=article.pk)
+    else:
+        form = ArticleForm()
+    return render(request, "articles/create.html", {"form": form})
+```
+
 ## 3. Context 준비와 표시 값
 
 Template에 raw domain object를 그대로 넘겨 template이 fallback, 권한, query shape, domain rule을 결정하게 만들지 않는다. view, context builder, selector, view-model helper에서 화면 언어에 맞는 이름과 표시 값을 준비한다.
@@ -97,6 +143,20 @@ Template style 기준:
 - `{% load static %}`과 `{% static 'path/to/file.css' %}`를 사용한다.
 - `|safe`, `mark_safe()`는 trusted/sanitized content에 한해 의도와 근거가 있을 때만 사용한다.
 
+```html
+{# 좋은 예: extends는 첫 비주석 줄, load는 알파벳순, 태그 안 한 칸 공백, block 이름 명시 #}
+{% extends "base.html" %}
+
+{% load i18n l10n static %}
+
+{% block content %}
+  <h1>{{ page_title }}</h1>
+  {% if user.is_authenticated %}
+    <p>{{ user.name }}</p>
+  {% endif %}
+{% endblock content %}
+```
+
 ## 5. Static files, CSS, JavaScript
 
 Static asset은 프로젝트의 기존 pipeline을 따른다. app-specific asset은 프로젝트가 `app/static/app_name/...` 구조를 쓰는 경우 앱 가까이에 둔다. shared design-system 또는 global asset은 기존 shared static 위치를 따른다. **[DDoc] [dddjango-django]**
@@ -123,6 +183,37 @@ Form은 input shape, presentation error, user-facing validation message를 담�
 - 일반 web form은 중복 제출을 줄이기 위해 POST/Redirect/GET을 기본 선택지로 둔다.
 - invalid POST는 form error와 입력 값을 사용자가 회복할 수 있게 렌더링한다.
 
+```python
+from django import forms
+from django.core.exceptions import ValidationError
+
+
+# 검증 순서: Field.clean() -> clean_<field>() -> 교차 필드 clean()
+class RegistrationForm(forms.Form):
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput)
+    password_confirm = forms.CharField(widget=forms.PasswordInput)
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("이미 등록된 이메일입니다.")
+        return email
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("password") != cleaned.get("password_confirm"):
+            raise ValidationError("비밀번호가 일치하지 않습니다.")
+        return cleaned
+
+
+# ModelForm: fields를 명시적으로 나열한다 ("__all__"/exclude는 의도치 않은 노출 위험)
+class ArticleForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = ["title", "body", "category"]
+```
+
 ## 7. HTMX fragment와 AJAX
 
 HTMX view는 web adapter다. 서버의 domain behavior는 model/service/usecase boundary에 두고, view는 request method, auth, permission, form/context orchestration, fragment 또는 redirect response를 조합한다. **[HTMX] [DDoc]**
@@ -135,6 +226,25 @@ HTMX view는 web adapter다. 서버의 domain behavior는 model/service/usecase 
 - JSON API처럼 resource contract, status matrix, schema, Problem Details가 필요해지면 `implementation-django-ninja` 또는 `architecture-api`로 넘긴다.
 - HTMX-specific header나 response behavior는 view adapter의 UI contract로 취급하고 domain logic과 섞지 않는다.
 
+```python
+# 뷰: state-changing HTMX 요청도 일반 POST와 같은 auth/permission/CSRF를 적용한다
+@login_required
+@require_http_methods(["POST"])
+def toggle_like(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    like_article(article=article, user=request.user)  # domain behavior는 service로
+    return render(request, "articles/_like_button.html", {"article": article})
+```
+
+```html
+{# 템플릿: CSRF 토큰을 hx-headers로 전달, fragment를 교체 #}
+<button hx-post="{% url 'toggle-like' article.pk %}"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+        hx-swap="outerHTML">
+  좋아요 {{ article.like_count }}
+</button>
+```
+
 ## 8. CSRF, XSS, security setting
 
 `CsrfViewMiddleware`는 좁고 문서화된 예외가 없으면 유지한다. POST form에는 `{% csrf_token %}`을 사용한다. State-changing AJAX/HTMX 요청은 프로젝트의 header 또는 form pattern으로 CSRF token을 보낸다. `@csrf_exempt`는 대체 보호가 명확한 작은 경계에서만 사용한다. **[DDoc] [OWASP]**
@@ -146,7 +256,7 @@ HTMX view는 web adapter다. 서버의 domain behavior는 model/service/usecase 
 - `CSRF_COOKIE_HTTPONLY`는 AJAX token access를 어렵게 만들 수 있으므로 프로젝트 요구와 Django 문서의 caveat를 함께 고려한다.
 - security middleware, session, CSRF, auth, message, frame option middleware ordering을 보존한다.
 - security setting을 바꾸면 `python manage.py check --deploy` 실행 또는 미실행 사유를 보고한다.
-- raw SQL이 web context 준비에 필요하면 user input을 SQL string에 보간하지 말고 parameterized query를 사용한다. QuerySet/Manager나 DB 성능 설계는 owning skill로 넘긴다.
+- raw SQL이 web context 준비에 필요하면 user input을 SQL string에 보간하지 말고 parameterized query를 사용한다. QuerySet/Manager는 `implementation-django`, DB 성능 설계는 `architecture-db`로 넘긴다.
 
 ## 9. View auth와 permission
 
@@ -171,7 +281,7 @@ Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/col
 | optional display value | `None`, blank string, missing optional path의 context/render assertion | raw field fallback을 template에 둔 경우 unfinished |
 | static CSS/JS 변경 | rendered HTML의 static reference, referenced path existence | changed asset이 rendered page에서 참조되지 않으면 unfinished |
 | form 변경 | GET, valid POST, invalid POST, redirect, form error assertion | CSRF/auth/permission path 미확인 시 residual risk |
-| HTMX 변경 | fragment response, method/auth/permission/CSRF, redirect/header behavior | API-like contract가 필요하면 owning skill로 handoff |
+| HTMX 변경 | fragment response, method/auth/permission/CSRF, redirect/header behavior | API-like contract가 필요하면 `implementation-django-ninja`/`architecture-api`로 handoff |
 | security setting 변경 | `check --deploy` 또는 project-specific security check | 실행하지 않으면 미실행 사유 |
 | visible UI 변경 | browser check, screenshot, template/render test 중 가능한 증거 | browser 미실행을 실행한 것처럼 보고하지 않음 |
 

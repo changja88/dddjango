@@ -116,6 +116,33 @@ Operation 구현 기준:
 - delete 또는 no-body update는 `204`를 사용하고 body를 반환하지 않는다.
 - async operation에서 ORM을 직접 호출하지 않도록 Django async ORM 제약을 확인한다.
 
+```python
+from ninja import Router, Schema
+
+router = Router()
+
+
+class OrderIn(Schema):        # request body
+    product_id: int
+    quantity: int
+
+
+class OrderOut(Schema):       # response body -- public field만 노출
+    id: int
+    status: str
+
+
+class ErrorOut(Schema):
+    detail: str
+
+
+# 성공/오류 schema를 status code별로 분리한다
+@router.post("/orders", response={201: OrderOut, 422: ErrorOut})
+def create_order(request, payload: OrderIn):
+    order = place_order(product_id=payload.product_id, quantity=payload.quantity)  # service 호출
+    return 201, OrderOut(id=order.id, status=order.status)
+```
+
 ---
 
 ## 3. Schema와 ModelSchema
@@ -142,6 +169,18 @@ schema를 분리한다.
 - list/detail/create/update의 field set이 실제로 같은가
 - permission에 따라 field visibility가 달라지는 경우 별도 response mapping이
   필요한가
+
+```python
+from ninja import ModelSchema
+from myapp.models import Article
+
+
+# 노출할 필드를 명시한다 -- 내부/관리/보안 민감 필드는 넣지 않는다
+class ArticleOut(ModelSchema):
+    class Meta:
+        model = Article
+        fields = ["id", "title", "published_at"]
+```
 
 ### 3.3 Resolver와 computed field
 
@@ -194,9 +233,23 @@ Filtering, sorting, search parameter는 public API contract다. Django Ninja
 - 허용 filter와 sort key를 명시한다.
 - user-controlled ORM field name을 그대로 받지 않는다.
 - DB table/model 내부 구조가 public parameter에 새지 않게 한다.
-- reusable read logic, query optimization, N+1 방지는 selector/QuerySet method로
-  위임한다.
+- reusable read logic, query optimization, N+1 방지는 `implementation-django`의
+  selector/QuerySet method로 위임한다.
 - 검색, sparse fieldset, 복합 filter는 `architecture-api`의 계약이 먼저 있어야 한다.
+
+```python
+from typing import Optional
+from ninja import FilterSchema, Query
+
+
+class OrderFilter(FilterSchema):
+    status: Optional[str] = None       # 허용 filter key만 명시한다
+
+
+@router.get("/orders", response=list[OrderOut])
+def list_orders(request, filters: Query[OrderFilter]):
+    return select_orders(filters=filters)   # 실제 query는 selector/QuerySet로 위임
+```
 
 ### 5.2 Pagination
 
@@ -212,6 +265,16 @@ Pagination strategy는 API contract가 결정한다.
 
 Django Ninja의 pagination decorator나 `RouterPaginated` 같은 framework 기능을
 사용할 수 있지만, strategy와 response shape는 프로젝트 계약과 맞아야 한다.
+
+```python
+from ninja.pagination import paginate, PageNumberPagination
+
+
+@router.get("/orders", response=list[OrderOut])
+@paginate(PageNumberPagination)        # page size 상한 등은 NINJA_PAGINATION_* 설정으로
+def list_orders(request):
+    return select_orders()             # paginate가 queryset을 잘라 페이지를 만든다
+```
 
 ---
 
@@ -253,6 +316,28 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
 
 Django Ninja에서는 `api.exception_handler(...)` 또는 `NinjaAPI` subclass로
 application/domain exception과 validation error를 Problem Details로 변환한다.
+
+```python
+from ninja import NinjaAPI
+from django.http import JsonResponse
+
+api = NinjaAPI()
+
+
+# application/domain 예외를 RFC 9457 형식으로 변환한다
+@api.exception_handler(OrderConflict)
+def on_order_conflict(request, exc):
+    return JsonResponse(
+        {
+            "type": "about:blank",
+            "title": "Order conflict",
+            "status": 409,
+            "detail": str(exc),
+        },
+        status=409,
+        content_type="application/problem+json",
+    )
+```
 
 ---
 
@@ -314,6 +399,23 @@ Django Ninja `TestClient`는 Router/API operation을 HTTP adapter 수준에서 �
 - pagination/filtering/sorting parameter
 - idempotency replay와 conflict
 - DRF-to-Ninja compatibility
+
+```python
+from ninja.testing import TestClient
+
+
+def test_create_order_returns_201():
+    client = TestClient(router)
+    res = client.post("/orders", json={"product_id": 7, "quantity": 2})
+    assert res.status_code == 201
+    assert res.json()["status"] == "created"
+
+
+def test_invalid_quantity_returns_422():
+    client = TestClient(router)
+    res = client.post("/orders", json={"product_id": 7, "quantity": 0})
+    assert res.status_code == 422
+```
 
 ### 9.2 검증 보고 기준
 

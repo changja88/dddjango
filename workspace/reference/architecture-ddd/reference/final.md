@@ -1185,33 +1185,7 @@ class UnitOfWork:
 
 이벤트의 신뢰성 있는 발행을 보장하기 위해, 이벤트를 애그리거트와 같은 트랜잭션에서 Outbox 테이블에 저장하고, 별도 프로세스가 Outbox에서 이벤트를 읽어 메시지 브로커에 발행한다.
 
-```python
-@dataclass
-class OutboxMessage:
-    """Outbox 테이블에 저장되는 메시지"""
-    id: str
-    aggregate_type: str
-    aggregate_id: str
-    event_type: str
-    payload: str         # JSON 직렬화된 이벤트 데이터
-    created_at: datetime
-    published: bool = False
-
-
-class OutboxProcessor:
-    """별도 프로세스/스케줄러: Outbox에서 미발행 메시지를 읽어 브로커에 발행"""
-
-    def __init__(self, outbox_repo: "OutboxRepository", broker: "MessageBroker"):
-        self._repo = outbox_repo
-        self._broker = broker
-
-    def process(self) -> None:
-        messages = self._repo.find_unpublished()
-        for msg in messages:
-            self._broker.publish(topic=msg.event_type, message=msg.payload)
-            msg.published = True
-            self._repo.update(msg)
-```
+발행 메시지의 스키마, 디스패처 구현, 전달 보장(at-least-once)·재시도·dead-letter는 **전달 메커니즘**이므로 이 문서가 다루지 않는다(아래 handoff). 이 문서는 "이벤트를 같은 트랜잭션에 적재한다"는 결정과 채택 여부만 소유한다.
 
 **Outbox를 선택하는 조건:**
 - DB 커밋 이후 외부 메시지 전달이 유실되면 안 된다.
@@ -1223,7 +1197,7 @@ class OutboxProcessor:
 - 단순 in-process 후속 작업이며 `transaction.on_commit()`으로 충분하다.
 - 유실 가능성을 제품이 수용하거나 별도 운영 부담이 과하다.
 
-**Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 신뢰성/재시도 운영 세부는 `architecture-db`·`implementation-test`로 넘긴다.
+**Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 전달 메커니즘(at-least-once, consumer 멱등성, retry/dead-letter, 디스패처 운영)은 `architecture-db`(§9.7)가 소유하고, Django 트랜잭셔널 outbox 구체 구현은 `implementation-django`(§16.5)가, 신뢰성 검증은 `implementation-test`가 담당한다.
 
 ### 3.8 Specification 패턴
 
@@ -1646,14 +1620,14 @@ my_project/
 │   │   │
 │   │   ├── infrastructure/          # 인프라 계층
 │   │   │   ├── __init__.py
-│   │   │   ├── orm.py               # SQLAlchemy 매핑
+│   │   │   ├── orm.py               # ORM 매핑 (Django ORM 등)
 │   │   │   ├── repository.py        # 리포지토리 구현체
 │   │   │   ├── unit_of_work.py      # UoW 구현체
 │   │   │   └── event_publisher.py   # 이벤트 발행 구현
 │   │   │
 │   │   └── interface/               # 표현 계층 (입력 어댑터)
 │   │       ├── __init__.py
-│   │       ├── api.py               # REST API (FastAPI/Flask)
+│   │       ├── api.py               # 입력 어댑터 (REST/Web)
 │   │       └── schemas.py           # 요청/응답 스키마
 │   │
 │   ├── inventory/                   # 바운디드 컨텍스트: 재고
@@ -1683,7 +1657,7 @@ my_project/
 
 > Django 등 프레임워크 제약 시 [A]의 간소화된 구조(`views/`, `services/`, `domain/`, `infrastructure/`)를 차선으로 허용한다.
 
-### 6.2 SQLAlchemy Data Mapper 패턴
+### 6.2 Data Mapper 패턴
 
 > 출처: Cosmic Python
 
@@ -1693,13 +1667,14 @@ ORM은 도메인 모델을 임포트해야 하며, 도메인 모델이 ORM에 �
 
 > 출처: Cosmic Python
 
+Repository는 애그리거트 영속성을 컬렉션처럼 추상화하고, Unit of Work는 트랜잭션 경계를 한 단위로 묶는다. 도메인/응용 계층은 **추상 인터페이스**에만 의존하고, 구체 구현(ORM)은 인프라 계층에 둔다.
+
 ```python
 from abc import ABC, abstractmethod
 from typing import Optional
-from sqlalchemy.orm import Session
 
 
-# 도메인 계층: 추상 리포지토리
+# 도메인 계층: 추상 리포지토리 (영속성 기술에 의존하지 않음)
 class AbstractBatchRepository(ABC):
     @abstractmethod
     def add(self, batch: Batch) -> None: ...
@@ -1708,23 +1683,7 @@ class AbstractBatchRepository(ABC):
     def get(self, reference: str) -> Optional[Batch]: ...
 
 
-# 인프라 계층: SQLAlchemy 구현
-class SqlAlchemyBatchRepository(AbstractBatchRepository):
-    def __init__(self, session: Session):
-        self._session = session
-
-    def add(self, batch: Batch) -> None:
-        self._session.add(batch)
-
-    def get(self, reference: str) -> Optional[Batch]:
-        return (
-            self._session.query(Batch)
-            .filter_by(reference=reference)
-            .first()
-        )
-
-
-# Unit of Work: 트랜잭션 경계 관리
+# 응용 계층: 트랜잭션 경계를 묶는 Unit of Work
 class AbstractUnitOfWork(ABC):
     batches: AbstractBatchRepository
 
@@ -1741,27 +1700,7 @@ class AbstractUnitOfWork(ABC):
     def rollback(self) -> None: ...
 
 
-class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
-    def __init__(self, session_factory):
-        self._session_factory = session_factory
-
-    def __enter__(self):
-        self._session: Session = self._session_factory()
-        self.batches = SqlAlchemyBatchRepository(self._session)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        super().__exit__(exc_type, exc_val, exc_tb)
-        self._session.close()
-
-    def commit(self) -> None:
-        self._session.commit()
-
-    def rollback(self) -> None:
-        self._session.rollback()
-
-
-# 사용 예시: 응용 서비스에서 UoW 사용
+# 응용 서비스는 추상 UoW에만 의존한다 (구체 ORM을 모른다)
 class AllocationService:
     def allocate(self, line: OrderLine, uow: AbstractUnitOfWork) -> str:
         with uow:
@@ -1772,6 +1711,8 @@ class AllocationService:
             uow.commit()
             return batch.reference
 ```
+
+구체 구현은 영속성 기술이 결정한다. 이 코퍼스의 대상인 Django에서는 Repository를 `implementation-django` §16.3(QuerySet/Manager 기반)으로, Unit of Work를 `transaction.atomic()`(§16.4)으로 실현한다. ORM별 매핑 비용과 서비스/셀렉터 경계도 `implementation-django`(§16)가 소유한다.
 
 ### 6.4 Event Sourcing
 
