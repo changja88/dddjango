@@ -294,6 +294,8 @@ repository_root/
 
 > 테스트 디렉터리 조직(`unit`/`integration`/`e2e` 의미군 분리, 디렉터리별 conftest)은 `implementation-test` §4.2가 소유한다. 위 `tests/`는 앱별 배치 시의 형태 예시이며, 테스트 파일을 한 디렉터리에 평면으로 나열하지 않는다.
 
+> dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `reference/final.md`) — §3.1의 설정 분할·앱 단위 조직을 토대로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §3.1은 그 표준의 배경이다.
+
 ### 3.2 앱 분리 기준 [TSD]
 
 ```python

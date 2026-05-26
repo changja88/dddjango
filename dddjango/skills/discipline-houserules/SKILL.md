@@ -1,6 +1,6 @@
 ---
 name: discipline-houserules
-description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①파일트리·디렉터리 구조(소스 레이아웃·테스트 의미군 분리·기존 규약 우선·평면 나열 방지) ②타입 어노테이션 강제 수위(시그니처 필수·지역변수 권장) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python, 구체 레이아웃은 architecture-ddd(§6.1)·implementation-django(§3.1)·implementation-test(§4.2)로 위임.
+description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①파일트리·디렉터리 구조(소스 레이아웃·테스트 의미군 분리·기존 규약 우선·평면 나열 방지) ②타입 어노테이션 강제 수위(시그니처 필수·지역변수 권장) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python. 표준 파일트리는 references/final.md가 단일 출처이고, 그 배경 이론은 architecture-ddd(§6.1)·implementation-django(§3.1), 테스트 타입 조직은 implementation-test(§4.2)로 위임.
 user-invocable: false
 ---
 
@@ -8,42 +8,40 @@ user-invocable: false
 
 ## 무엇이고 왜
 
-이 스킬은 **dddjango 플러그인이 만드는 코드에 한정된 집안 규칙(house rules)**이다. `discipline-cleancode`·`discipline-tdd`가 책에서 온 *보편* 규율인 것과 달리, 여기 담긴 것은 "우리는 이렇게 한다"는 **플러그인 고유의 권장·강제**다. 그래서 코퍼스(`references/final.md`) 출처가 없고 이 본문이 곧 규칙이다.
+이 스킬은 **dddjango 플러그인이 만드는 코드에 한정된 집안 규칙(house rules)**이다. `discipline-cleancode`·`discipline-tdd`가 책에서 온 *보편* 규율인 것과 달리, 여기 담긴 것은 "우리는 이렇게 한다"는 **플러그인 고유의 권장·강제**다. 그래서 다른 스킬과 달리 책에서 온 외부 코퍼스가 없다 — 규칙은 이 SKILL.md 본문(§1~§6)이 곧이다. 그 토대인 **표준 파일트리는 `references/final.md`가 단일 출처로 소유**하며, 소스 코퍼스 `workspace/reference/discipline-houserules/reference/final.md`에서 재생성된다. (다른 스킬과 달리 이 SKILL.md는 `final.md`의 요약이 아니라, 규칙이 트리를 인용하는 형태다.)
 
-첫 항목이자 토대는 **파일트리 구조**(§1~§3)다 — 프로젝트를 롱텀으로 유지하고 사람이 관리하기 쉽게 만드는 데 가장 중요하고, 규율로 강제하지 않으면 생성기가 "기존 평면 상태를 답습"하기 쉽다. 여기에 **타입 어노테이션**(§4)과 **주석·docstring 언어**(§5) 규율이 더해진다. 모두 결정(설계)·집행(구현)·점검(감수) 세 지점에서 공유된다.
+첫 항목이자 토대는 **파일트리 구조**(§1~§3, 구체 트리는 `references/final.md`)다 — 프로젝트를 롱텀으로 유지하고 사람이 관리하기 쉽게 만드는 데 가장 중요하고, 규율로 강제하지 않으면 생성기가 "기존 평면 상태를 답습"하기 쉽다. 여기에 **타입 어노테이션**(§4)과 **주석·docstring 언어**(§5) 규율이 더해진다. 모두 결정(설계)·집행(구현)·점검(감수) 세 지점에서 공유된다.
 
 경계:
 
 - 코드 *내부* 구조(네이밍·함수 크기·SOLID) → `discipline-cleancode`
-- DDD 계층·바운디드 컨텍스트 *이론* → `architecture-ddd` (§6.1 패키지 구조)
-- Django 프로젝트 *레이아웃 표준* → `implementation-django` (§3.1)
-- 테스트 디렉터리·conftest *메커니즘* → `implementation-test` (§4.2)
+- DDD 계층·바운디드 컨텍스트 *이론* → `architecture-ddd` (§6.1 패키지 구조) — 표준 트리가 파생된 배경
+- Django 프로젝트 *레이아웃 관용*·설정 분할 → `implementation-django` (§3.1)
+- 테스트 *타입 조직*(unit/integration/e2e)·conftest 메커니즘 → `implementation-test` (§4.2)
 
-이 스킬은 위 코퍼스의 레이아웃을 **다시 정의하지 않는다.** 그것들이 서로 충돌할 때 *어느 것을 택할지 결정하는 알고리즘*만 제공한다. 구체 레이아웃은 절 번호로 인용해 위임한다.
+이 스킬은 dddjango **표준 파일트리의 단일 출처**다(`references/final.md`). 그 트리는 위 코퍼스 레이아웃의 구체화·변종이고, 코퍼스는 *이론적 배경*으로만 인용한다(레이아웃 권위는 표준 문서). 프레임워크 구체(ORM·HTTP·conftest 등)는 위 구현 스킬로 위임한다.
 
 ## §1 파일트리 결정 순서
 
 새 코드·테스트를 배치할 때 아래 순서를 따른다. 위에서 결론이 나면 멈춘다.
 
 1. **기존 프로젝트 규약을 우선한다(일관성 최우선).** 대상 프로젝트에 이미 확립된 소스/테스트 배치가 있으면 그것을 따른다. 단, "존중"은 *확립된 규약을 따르는 것*이지 `startproject`/`startapp` 직후의 미조직 평면 상태를 답습하는 게 아니다. 기존이 `apps/<app>/` 규약이면 그 규약을, `src/<context>/` 계층이면 그 계층을 이어간다.
-2. **확립된 규약이 없거나 미조직이면 활성 lens 기준으로 정한다.**
-   - `ddd` lens가 활성이고 설계 명세에 계층/바운디드 컨텍스트 분리가 있으면 → `architecture-ddd` §6.1의 `src/<context>/{domain,application,infrastructure,interface}/`. Django 프레임워크 제약이 지배적이면 같은 §6.1의 **차선**(앱 내부를 `domain/`·`services/`·`views/`·`infrastructure/`로 분리)을 택한다.
-   - 표준 Django 기능 중심이면 → `implementation-django` §3.1의 `config/settings/` 분리 + `apps/<app>/`.
-3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 소스가 앱별 규약이면 `apps/<app>/tests/` *안에서* 의미군 하위 분리를 둔다.
+2. **확립된 규약이 없거나 미조직이면 dddjango 표준 파일트리를 적용한다(고정 기본값).** `references/final.md`가 단일 출처다 — `application/<app>/`의 4계층(`domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`) 물리 분리, 개념(애그리거트/feature) 1차·종류 2차 조직, `infra_layer` 3분할(`django_<app>`/`repository`/`service`), 컨텍스트 간 통신은 각 앱의 OHS(`published_service/`)를 따른다. 이 표준은 `architecture-ddd` §6.1(4계층)과 `implementation-django` §3.1(설정 분할·앱 단위)을 구체화한 변종이며, 그 둘은 *이론적 배경*으로만 인용한다(레이아웃 권위는 표준 문서). 더 이상 lens로 §6.1 vs §3.1을 런타임에 택일하지 않는다.
+3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 표준 트리에서는 앱별 `application/<app>/test/{unit,integration,e2e}/`에 둔다(`references/final.md` §2; HTTP 엔드포인트 테스트는 `integration/`). 기존 규약이 앱별 `tests/`면 그 *안에서* 의미군 하위 분리를 둔다.
 4. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 한 번 택한 소스/테스트 레이아웃을 기능 전체에 일관 적용한다.
 
 ## §2 충돌 중재 (코퍼스가 어긋날 때)
 
-코퍼스의 구조 규칙은 서로 충돌한다. §1의 순서가 곧 중재 규칙이다.
+코퍼스의 구조 규칙(`architecture-ddd` §6.1의 `src/<context>/` 4계층 ↔ `implementation-django` §3.1의 `apps/<app>/`)은 서로 다른 트리를 제시하지만, dddjango는 이 둘을 **런타임에 택일하지 않는다** — `references/final.md`가 단일 출처이고 §6.1/§3.1은 그 표준이 파생된 배경이다. 남는 변수는 §1.1(기존 프로젝트에 이미 확립된 규약)뿐이고, 그 경우 일관성을 위해 기존 규약을 따른다(표준을 그 위에 강제하지 않음).
 
-- **소스 레이아웃**: `architecture-ddd` §6.1(`src/<context>/` 4계층) ↔ `implementation-django` §3.1(`apps/<app>/`). → §1.2로 중재: 설계에 계층 분리가 명시되면 §6.1(또는 §6.1 Django 차선), 표준 Django 관용이 지배적이면 §3.1.
-- **테스트 위치**: 테스트 *타입 조직*(unit/integration/e2e 의미군)은 `implementation-test` §4.2가 단독 소유한다(§3.1도 §4.2에 위임하도록 정비됨 — 더 이상 충돌하지 않는다). 남는 변수는 `tests/` 루트의 *위치*뿐 → §1.1(기존 규약) → 없으면 §1.2가 택한 소스 레이아웃과 짝을 맞춘다: `src/`면 최상위 `tests/`, `apps/`면 앱별 `apps/<app>/tests/` — 어느 쪽이든 내부는 의미군 분리.
+- **테스트 타입 조직**(unit/integration/e2e 의미군)은 `implementation-test` §4.2가 단독 소유한다(§3.1도 §4.2에 위임). 표준 트리는 이를 앱별 `application/<app>/test/`에 적용한다(§1.3). 기존 규약이 있으면 그 `tests/` 위치를 따르되 내부는 의미군 분리.
 
 ## §3 평면 금지 레드 플래그
 
 다음이 보이면 구조 결정이 빠졌거나 평면을 답습한 신호다.
 
 - 새 모듈이 전부 한 디렉터리(예: 앱 루트)에 모여 도메인·인프라·인터페이스 구분이 없다.
+- 종류 폴더(`entity`/`value_object`/`command`/`query`…)에 여러 애그리거트·feature의 파일이 개념 구분 없이 평면 누적된다(개념 1차 조직 누락 — `references/final.md` §2 "개념 1차·종류 2차"의 2차 레벨 위반).
 - `test_*.py`가 의미군(unit/integration/…) 없이 한 디렉터리에 평면으로 나열돼 있다.
 - 인수 테스트와 단위 테스트가 같은 평면에 섞여 있다.
 - `startproject`/`startapp` 직후의 미조직 구조를 그대로 이어 쓴다.

@@ -1657,6 +1657,8 @@ my_project/
 
 > Django 등 프레임워크 제약 시 [A]의 간소화된 구조(`views/`, `services/`, `domain/`, `infrastructure/`)를 차선으로 허용한다.
 
+> dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `reference/final.md`) — §6.1의 4계층을 `application/<app>/{domain_layer, application_layer, infra_layer, presentation_layer}/`로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §6.1은 그 표준이 파생된 이론적 배경이다.
+
 ### 6.2 Data Mapper 패턴
 
 > 출처: Cosmic Python

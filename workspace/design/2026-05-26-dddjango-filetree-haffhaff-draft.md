@@ -225,3 +225,14 @@ HaffHaff의 중앙 `application/bridge/{read,write}/`(모든 앱의 OHS를 한 �
 1. 이 초안을 함께 검토 → 표준으로 **확정·정제**(구조 명명 유지/정제, 테스트 조직 정합 등).
 2. **적용 방식 결정**: 고정 강제 vs 적응형 유지 + 표준 권장(+ 향후 `init`이 신규 프로젝트에 표준 부트스트랩).
 3. 확정 표준을 **단일 출처 + 위임** 방식으로 스킬에 반영(복붙 아님, "한 주제 한 소유자" 유지).
+
+---
+
+## 확정·반영 (2026-05-27) — 위 3개 미결 종료
+
+이 초안은 아래 결정으로 **확정**되어 플러그인에 반영됐다. 이 문서는 설계 이력으로 보존하고, **생성 코드의 권위 있는 표준은 이제 `discipline-houserules` 스킬의 `references/final.md`**(소스 단일 출처 `workspace/reference/discipline-houserules/reference/final.md`)가 갖는다.
+
+- **구조 명명**(미결 i): HaffHaff 원본 유지 — `application/<app>/{domain_layer, application_layer, infra_layer, presentation_layer}/`. `_layer` 접미사가 컨테이너 `application/`과 응용계층 이름 충돌을 해소한다.
+- **테스트 조직**(미결 ii): `implementation-test` §4.2 의미군 정렬 — 앱별 `<app>/test/{unit,integration,e2e}/`. HTTP 엔드포인트 테스트는 `integration/`. (현 `test/api/` 엔드포인트 평면은 houserules §1.3/§3와 충돌해 폐기.)
+- **적용 방식**(다음단계 2): **고정 기본값**. 신규·무규약 프로젝트엔 표준 트리를 권위 있는 기본값으로 생성, 기존 확립 규약은 존중(houserules §1.1). lens로 §6.1 vs §3.1 런타임 택일은 폐지.
+- **스킬 반영**(다음단계 3): 단일 출처 + 위임. `discipline-houserules`가 표준 트리 소유, §1~§3 재작성, 소비 에이전트(architect·coder·reviewer) 문구 갱신, 코퍼스 §6.1/§3.1은 배경 소프트 포인터.
