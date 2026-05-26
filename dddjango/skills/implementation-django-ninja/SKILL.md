@@ -20,7 +20,7 @@ Django Ninja Router/Schema/Operation·인증·필터링·페이지네이션·Pro
 - Router는 HTTP 어댑터로 얇게: 요청 바인딩·auth hook·서비스 호출·응답 매핑만 (§1.3)
 - Request/Response schema는 명시적으로 분리, ModelSchema는 내부 구현 보호가 확실할 때만 (§3.1–§3.2)
 - 에러는 알려진 도메인/애플리케이션 예외를 Problem Details RFC 9457로 변환 (§6.2)
-- Idempotency-Key는 계약에 정의된 endpoint에만, 저장·만료 전략은 `architecture-api`가 결정 (§7)
+- Idempotency-Key는 계약에 정의된 endpoint에만; 키 정책(scope·replay·conflict)은 `architecture-api`, 저장소·retention(테이블·unique constraint·fingerprint)은 `architecture-db`가 결정 (§7)
 - 계약이 바뀌면 OpenAPI 생성 결과를 확인 (§8)
 - 신규 API는 Django Ninja 목표, DRF는 legacy·migration 맥락에서만 보조 (§10)
 - 라우팅 결정 전 계약·DB·도메인이 미결이면 각 소유 스킬 먼저 (§11)
