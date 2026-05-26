@@ -1,6 +1,6 @@
 ---
 name: implementation-django
-description: Django 코어 구현 지식 — 모델·ORM·QuerySet/Manager, 마이그레이션, 서비스·셀렉터 레이어, 트랜잭션 경계, 설정·미들웨어·캐싱·보안·시그널, 트랜잭셔널 outbox 구현. dddjango 파이프라인의 코더·설계 역할이 Django 코어 코드를 설계·작성할 때 로드한다. 표현계층(템플릿/폼/HTMX)은 implementation-django-web, JSON API는 implementation-django-ninja로 위임.
+description: Django 코어 구현 지식 — 모델·ORM·QuerySet/Manager, 마이그레이션, 서비스·셀렉터 레이어, 트랜잭션 경계, 설정·미들웨어·캐싱·보안·시그널, 트랜잭셔널 outbox 구현. Django 모델·ORM·서비스 레이어·트랜잭션 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 표현계층(템플릿/폼/HTMX)은 implementation-django-web, JSON API는 implementation-django-ninja, 신규 REST 계약은 architecture-api로 위임.
 user-invocable: false
 ---
 
@@ -19,7 +19,7 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 
 ## 핵심 운영 원칙
 
-- 비즈니스 로직은 fat model + service/selector에, 뷰·시리얼라이저는 얇게 (§4.1)
+- 비즈니스 로직은 fat model에 두고 뷰·시리얼라이저는 얇게 (§4.1)
 - 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)
 - 트랜잭션·일관성 경계는 `transaction.atomic()`, 외부 부수효과는 `transaction.on_commit()` (§16.4)
 - 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)
@@ -38,7 +38,6 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 | 프로젝트/앱/설정 분리 | §3 |
 | 모델 설계 (fat model·상속·필드·검증) | §4 |
 | QuerySet과 Manager | §5 |
-| 뷰·폼 (→ `implementation-django-web` 위임) | §6–§7 |
 | REST API 경계와 기존 DRF 유지보수 | §8 |
 | 시그널 가이드라인 | §9 |
 | 마이그레이션 베스트 프랙티스 | §10 |
@@ -50,4 +49,4 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 | 서비스 레이어·트랜잭션·outbox | §16 |
 | Django 5.x 새 기능 | §17 |
 
-전체 깊이는 [`references/final.md`](references/final.md)를 직접 참조한다.
+각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).
