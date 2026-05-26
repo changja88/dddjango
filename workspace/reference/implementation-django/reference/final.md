@@ -280,11 +280,10 @@ repository_root/
             forms.py
             services.py      # 서비스 레이어 (HS 패턴)
             selectors.py     # 셀렉터 (HS 패턴)
-            tests/
+            tests/                       # 의미군으로 분리(평면 나열 금지); 조직 규칙은 implementation-test §4.2 소유
                 __init__.py
-                test_models.py
-                test_views.py
-                test_services.py
+                unit/
+                integration/
             admin.py
         orders/
             ...
@@ -292,6 +291,8 @@ repository_root/
     docker-compose.yml
     Dockerfile
 ```
+
+> 테스트 디렉터리 조직(`unit`/`integration`/`e2e` 의미군 분리, 디렉터리별 conftest)은 `implementation-test` §4.2가 소유한다. 위 `tests/`는 앱별 배치 시의 형태 예시이며, 테스트 파일을 한 디렉터리에 평면으로 나열하지 않는다.
 
 ### 3.2 앱 분리 기준 [TSD]
 
