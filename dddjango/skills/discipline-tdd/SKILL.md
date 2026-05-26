@@ -43,6 +43,7 @@ TDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스�
 | Outside-In TDD와 이중 루프 (Double Loop·Walking Skeleton·Mock Roles) | §9 |
 | 디자인 패턴과 TDD (값 객체·널 객체·팩토리 메서드) | §10 |
 | 리팩토링 패턴 (차이점 일치·변화 격리·메서드 추출·인터페이스 추출) | §11 |
+| 테스트 냄새 카탈로그 (행위 냄새·코드 냄새) | §12 |
 | BDD와 TDD의 관계 (TDD→ATDD→BDD 진화 경로) | §16 |
 | TDD와 AI 코딩의 관계 (TDD as Prompt Engineering·TDAID 5단계) | §17 |
 
