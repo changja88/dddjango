@@ -138,7 +138,7 @@ application/<app>/published_service/   # 이 앱이 외부 컨텍스트에 노�
 
 OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트의 공개 계약이 밖에 흩어지면 응집이 깨지고, 허브가 모든 컨텍스트를 아는 결합점으로 비대해진다(§2.5 "진흙공" 방어). OHS 반환도 도메인 엔티티 대신 **Published Language(DTO)**를 권장한다(presentation `schema_out`과 동일한 모델 누수 방어).
 
-**소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(architecture-ddd 컨텍스트 맵: ACL→OHS 진화).
+**소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(이 표준의 통합 진화 지침 — architecture-ddd 컨텍스트 맵의 ACL·OHS 패턴을 토대로 한 합성이며, 코퍼스가 "ACL→OHS 진화"를 명시하는 것은 아니다).
 
 (앱별 변종: WebSocket 앱은 `<app>_asgi_router.py`·`presentation_layer/socket/`을 더 가진다. 단순 지원 앱이라도 컨테이너·4계층은 유지하며, `domain_layer` 생략은 명시적 승인이 있을 때만 — 명세에 사유를 남긴다.)
 
