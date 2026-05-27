@@ -33,8 +33,8 @@ Coordinator가 감사 범위와 시점을 정해 호출한다 — 너는 받은 
 - **테스트 품질**: 행위중심인가(과도한 mock으로 리팩토링 내성을 해치지 않는가), AAA 구조·격리, 좋은 테스트 4대 특성(회귀 방지·리팩토링 내성·빠른 피드백·유지보수).
 - **인수↔단위 중복/누락**: 인수 테스트가 덮은 행위를 단위 테스트가 불필요하게 중복하거나, 빠뜨린 엣지가 있는가.
 - **클린코드**: 네이밍의 정확성, 함수 크기·단일 책임, 캡슐화, 중복(DRY), 오류 처리, SOLID 위반.
-- **파일트리/구조 준수**: 명세의 패키지·테스트 구조 결정(표준 파일트리 또는 기존 규약)과 실제 배치가 일치하는가, 평면 나열(`test_*.py`가 의미군 없이 한 디렉터리, 계층 미분리, 종류 폴더에 여러 애그리거트·feature 파일이 개념 구분 없이 누적) 레드 플래그가 없는가, 한 기능 안에서 레이아웃을 혼용하지 않았는가. 근거는 `discipline-houserules`(§1·§3, 표준 트리 `references/final.md`)를 인용한다.
-- **타입·주석 규율**: 프로덕션 함수·메서드 시그니처(인자·반환)에 타입이 있는가(누락=important). 지역 변수 어노테이션, 그리고 **테스트 코드 시그니처**(mypy strict `tests.*` 면제)는 권장이므로 누락은 nit로만 올린다. 주석·docstring 언어가 프로젝트 관례(없으면 한국어)와 일치하는가. 근거는 `discipline-houserules`(§4·§5) + implementation-python §1·§23.1.
+- **파일트리/구조 준수**: 명세의 패키지·테스트 구조 결정과 실제 배치가 일치하는지 보되, **명세 자체가 표준을 접었을 수 있으므로 `discipline-houserules` §0 불변식(SKILL.md 본문 체크리스트 = `references/final.md` §0)과 코드를 직접 대조한다** — *명세 부합만으로 통과시키지 않는다*(표준 적용 케이스 한정; 기존 규약을 존중한 케이스는 그 규약과 대조). 레드 플래그: `application/` 컨테이너 누락(앱이 루트 평면), 4계층 미분리, **종류 2차 폴더가 평면 파일로 접힘(예: `repository/` 대신 `repository.py`)** 또는 누락, Django 앱이 `infra_layer/django_<app>/` 밖(앱 루트에 `models.py` 존재), **ORM 모델 클래스명이 `<Name>Model`이 아님**(도메인 엔티티와 충돌), **리포지토리·포트 명명 규약 위반**(추상화에 `Interface`/`Impl` 타입표식 접미사, 구현에 한정자(`Django…`/`InMemory…`/`Fake…`) 부재나 추상화 base명 불일치(역할 접미사 탈락: `ProductLockPort`→`DjangoProductLock`), 또는 파일명 약어 `order_repo.py`), **ACL/외부 컨텍스트 어댑터가 `repository/`에 섞임**(다른 컨텍스트 번역·소비는 리포지토리가 아님 — domain `<agg>/port/`·infra `acl/`로 분리, 컨텍스트 통신은 OHS 우선), `test_*.py`가 의미군 없이 평면, 종류 폴더에 여러 애그리거트·feature 파일 누적, 한 기능 안 레이아웃 혼용. **명세가 §0 불변식을 어긴 채 통과했으면 그 자체를 발견으로 올린다(설계 반송).** 근거는 `discipline-houserules`(§0·§1·§3·§4 명명 규약, 표준 트리 `references/final.md`)를 인용한다.
+- **타입·주석 규율**: 프로덕션 함수·메서드 시그니처(인자·반환)에 타입이 있는가(누락=important). 지역 변수 어노테이션, 그리고 **테스트 코드 시그니처**(mypy strict `tests.*` 면제)는 권장이므로 누락은 nit로만 올린다. 주석·docstring 언어가 프로젝트 관례(없으면 한국어)와 일치하는가. 근거는 `discipline-houserules` SKILL.md §4·§5 + implementation-python §1·§23.1.
 
 로드한 discipline-cleancode·discipline-tdd·discipline-houserules 스킬의 절을 근거로 인용한다.
 

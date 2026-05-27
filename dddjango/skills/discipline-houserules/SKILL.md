@@ -1,6 +1,6 @@
 ---
 name: discipline-houserules
-description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①파일트리·디렉터리 구조(소스 레이아웃·테스트 의미군 분리·기존 규약 우선·평면 나열 방지) ②타입 어노테이션 강제 수위(시그니처 필수·지역변수 권장) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python. 표준 파일트리는 references/final.md가 단일 출처이고, 그 배경 이론은 architecture-ddd(§6.1)·implementation-django(§3.1), 테스트 타입 조직은 implementation-test(§4.2)로 위임.
+description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①파일트리·디렉터리 구조·명명 규약(소스 레이아웃·테스트 의미군 분리·기존 규약 우선·평면 나열 방지·ORM/포트 클래스·파일 명명) ②타입 어노테이션 강제 수위(시그니처 필수·지역변수 권장) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python. 표준 파일트리는 references/final.md가 단일 출처이고, 그 배경 이론은 architecture-ddd(§6.1)·implementation-django(§3.1), 테스트 타입 조직은 implementation-test(§4.2)로 위임.
 user-invocable: false
 ---
 
@@ -26,7 +26,13 @@ user-invocable: false
 새 코드·테스트를 배치할 때 아래 순서를 따른다. 위에서 결론이 나면 멈춘다.
 
 1. **기존 프로젝트 규약을 우선한다(일관성 최우선).** 대상 프로젝트에 이미 확립된 소스/테스트 배치가 있으면 그것을 따른다. 단, "존중"은 *확립된 규약을 따르는 것*이지 `startproject`/`startapp` 직후의 미조직 평면 상태를 답습하는 게 아니다. 기존이 `apps/<app>/` 규약이면 그 규약을, `src/<context>/` 계층이면 그 계층을 이어간다.
-2. **확립된 규약이 없거나 미조직이면 dddjango 표준 파일트리를 적용한다(고정 기본값).** `references/final.md`가 단일 출처다 — `application/<app>/`의 4계층(`domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`) 물리 분리, 개념(애그리거트/feature) 1차·종류 2차 조직, `infra_layer` 3분할(`django_<app>`/`repository`/`service`), 컨텍스트 간 통신은 각 앱의 OHS(`published_service/`)를 따른다. 이 표준은 `architecture-ddd` §6.1(4계층)과 `implementation-django` §3.1(설정 분할·앱 단위)을 구체화한 변종이며, 그 둘은 *이론적 배경*으로만 인용한다(레이아웃 권위는 표준 문서). 더 이상 lens로 §6.1 vs §3.1을 런타임에 택일하지 않는다.
+2. **확립된 규약이 없거나 미조직이면 dddjango 표준 파일트리를 적용한다(고정 기본값).** `references/final.md`가 단일 출처다 — `application/<app>/`의 4계층(`domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`) 물리 분리, 개념(애그리거트/feature) 1차·종류 2차 조직, `infra_layer` 분할(`django_<app>`/`repository`/`service`; 외부 컨텍스트 직접 통합 시 `acl/`), 컨텍스트 간 통신은 각 앱의 OHS(`published_service/`) 우선·직접 통합은 ACL(domain `port/`+infra `acl/`, 리포지토리와 분리)을 따른다. 이 표준은 `architecture-ddd` §6.1(4계층)과 `implementation-django` §3.1(설정 분할·앱 단위)을 구체화한 변종이며, 그 둘은 *이론적 배경*으로만 인용한다(레이아웃 권위는 표준 문서). 더 이상 lens로 §6.1 vs §3.1을 런타임에 택일하지 않는다. **표준을 적용할 때는 `references/final.md`를 반드시 읽고 그 §0 불변식을 따른다** — 아래는 YAGNI·단순성·"단일 앱이라 불필요"로 **생략·축소할 수 없는 골격**이다(트리를 읽지 않고 임의 축약 금지):
+   - **`application/` 컨테이너** — 단일 앱이어도 `application/<app>/` 아래에 둔다.
+   - **4계층 `_layer` 물리 분리** — `domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`.
+   - **개념 1차 폴더**(`<aggregate>/`·`<feature>/`) + **종류 2차 폴더 전체**(`entity`/`value_object`/`repository`/`command`/`dto`… — 비어도 폴더로 생성, 평면 파일 `repository.py`로 접지 않음).
+   - **Django 앱은 `infra_layer/django_<app>/`에서 `startapp`** — `AppConfig.name`=점경로(`application.<app>.infra_layer.django_<app>`), `label='<app>'`; 앱 루트에 `models.py` 금지.
+   - **ORM 모델 클래스명 `<Name>Model`**(도메인 엔티티/애그리거트는 bare `Order`).
+   - **리포지토리·포트 명명** — 추상화는 개념명+역할 접미사(`OrderRepository`·`ProductLockPort`; `Interface`/`Impl` 금지), 구현은 기술 한정자 접두로 base 일치(`DjangoOrderRepository`·`DjangoProductLockPort`). 파일명은 약어 없이(`order_repository.py`). 상세 `references/final.md` §4.
 3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 표준 트리에서는 앱별 `application/<app>/test/{unit,integration,e2e}/`에 둔다(`references/final.md` §2; HTTP 엔드포인트 테스트는 `integration/`). 기존 규약이 앱별 `tests/`면 그 *안에서* 의미군 하위 분리를 둔다.
 4. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 한 번 택한 소스/테스트 레이아웃을 기능 전체에 일관 적용한다.
 
@@ -42,6 +48,12 @@ user-invocable: false
 
 - 새 모듈이 전부 한 디렉터리(예: 앱 루트)에 모여 도메인·인프라·인터페이스 구분이 없다.
 - 종류 폴더(`entity`/`value_object`/`command`/`query`…)에 여러 애그리거트·feature의 파일이 개념 구분 없이 평면 누적된다(개념 1차 조직 누락 — `references/final.md` §2 "개념 1차·종류 2차"의 2차 레벨 위반).
+- **`application/` 컨테이너 없이** 앱이 루트에 평면으로 놓인다(§0 불변식 1 위반).
+- **종류 2차 폴더가 평면 파일로 접힘**(예: `repository/` 폴더 대신 `repository.py`) 또는 4계층 중 일부가 누락된다(§0 불변식 2·4 위반).
+- **Django 앱이 `infra_layer/django_<app>/` 밖**에 있다(앱 루트에 `models.py`가 있거나 `startapp`을 루트에서 함 — §0 불변식 5 위반).
+- **ORM 모델 클래스명이 `<Name>Model`이 아니다**(도메인 엔티티와 이름이 충돌 — §0 불변식 6 위반).
+- **리포지토리·포트 명명 규약 위반** — 추상화(ABC)에 `Interface`/`Impl` 타입표식 접미사가 붙거나, 구현이 한정자(`Django…`/`InMemory…`/`Fake…`) 없이·추상화 base명과 어긋나게(역할 접미사 탈락: `ProductLockPort`→`DjangoProductLock`) 지어지거나, 파일명을 약어로 줄인다(`order_repo.py`)(추상=개념명+역할 접미사·구현=한정자 접두로 base 일치 — `references/final.md` §4 명명 규약).
+- **ACL/외부 컨텍스트 어댑터를 `repository/`에 섞음** — 다른 바운디드 컨텍스트를 번역·소비하는 ACL은 리포지토리가 아니다. domain은 `<aggregate>/port/`(협력 포트), infra는 `acl/`(어댑터)로 분리한다(컨텍스트 간 통신은 OHS `published_service` 우선 — `references/final.md` §2).
 - `test_*.py`가 의미군(unit/integration/…) 없이 한 디렉터리에 평면으로 나열돼 있다.
 - 인수 테스트와 단위 테스트가 같은 평면에 섞여 있다.
 - `startproject`/`startapp` 직후의 미조직 구조를 그대로 이어 쓴다.
