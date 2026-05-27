@@ -382,6 +382,8 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 
 락은 범위를 작게 유지한다. 트랜잭션 안에서 사용자 입력 대기, 외부 API 호출, 긴 배치 작업을 수행하면 lock hold time이 길어져 throughput과 장애 반경이 커진다.
 
+**엔진 의존성 — 개발과 운영 DB가 다르면 명세에서 분기한다.** 위 표의 락 전략(특히 pessimistic row lock)은 **행 잠금을 지원하는 엔진**(PostgreSQL 등)을 전제한다. 개발에서 흔한 **SQLite는 `select_for_update`를 no-op으로 무시**하고(행 잠금 미지원), Django 기본 **DEFERRED begin**은 `atomic()` 안 SELECT→UPDATE 락 승격이 스레드 경합 시 데드락(`database is locked`)을 낸다. 따라서 락만으로 환경 무관 정확성이 성립하지 않는다 — 환경 무관 방어선은 **제약(CHECK)+조건부 원자 UPDATE(`WHERE` 가드)**이고, 락은 운영 엔진용으로 유지하되 SQLite 직렬화가 필요하면 begin 모드(IMMEDIATE)·`busy_timeout` 같은 **연결 설정을 명세가 명시**한다. Risky Write의 락·동시성은 *대상 엔진별 동작 차이까지* 설계에서 확정한다(§9.6).
+
 ### 9.6 Risky Write Consistency Block
 
 주문, 결제, 재고, 예약, 환불, 권한, ledger처럼 중복이나 race가 치명적인 쓰기에는 다음 항목을 명시한다.
