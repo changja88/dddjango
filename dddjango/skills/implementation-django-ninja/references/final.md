@@ -105,8 +105,13 @@ Operation 구현 기준:
 - create operation은 성공 시 `201`과 필요하면 `Location` header 계약을 맞춘다.
 - delete 또는 no-body update는 `204`를 사용하고 body를 반환하지 않는다.
 - async operation에서 ORM을 직접 호출하지 않도록 Django async ORM 제약을 확인한다.
+- 성공뿐 아니라 **가능한 모든 status를 `response={...}`에 선언한다** — 알려진 도메인/검증 오류(404·409·422 등)까지 포함한다. 선언하지 않은 status는 OpenAPI/Swagger에 드러나지 않아 client가 계약으로 알 수 없다.
+- **오류 응답도 ninja schema로 반환한다** — operation 안에서 `return status, ErrorSchema(...)` 튜플로 돌려주면 ninja가 그 status의 schema로 직렬화·문서화한다. 수제 `HttpResponse`/`JsonResponse`로 직접 만들면 response 매핑을 우회해 OpenAPI에 드러나지 않는다(§6.2).
+- **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
+- **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다(예: `tuple[int, OrderOut | ErrorOut]`).
 
 ```python
+from django.http import HttpRequest
 from ninja import Router, Schema
 
 router = Router()
@@ -122,14 +127,25 @@ class OrderOut(Schema):       # response body -- public field만 노출
     status: str
 
 
-class ErrorOut(Schema):
+class ErrorOut(Schema):       # 오류도 명시적 schema로 계약화 (본문 형식은 §6.2 Problem Details)
     detail: str
 
 
-# 성공/오류 schema를 status code별로 분리한다
-@router.post("/orders", response={201: OrderOut, 422: ErrorOut})
-def create_order(request, payload: OrderIn):
-    order = place_order(product_id=payload.product_id, quantity=payload.quantity)  # service 호출
+# 성공·오류 status를 모두 response에 선언하고(OpenAPI 계약), summary/tags로 문서화한다
+@router.post(
+    "/orders",
+    response={201: OrderOut, 404: ErrorOut, 409: ErrorOut},
+    summary="주문 생성",
+    description="재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.",
+    tags=["orders"],
+)
+def create_order(request: HttpRequest, payload: OrderIn) -> tuple[int, OrderOut | ErrorOut]:
+    try:
+        order = place_order(product_id=payload.product_id, quantity=payload.quantity)  # service 호출
+    except ProductNotFound as exc:
+        return 404, ErrorOut(detail=str(exc))      # 수제 HttpResponse가 아니라 (status, schema) 튜플
+    except InsufficientStock as exc:
+        return 409, ErrorOut(detail=str(exc))
     return 201, OrderOut(id=order.id, status=order.status)
 ```
 
@@ -304,8 +320,18 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
 - `instance`는 request/problem id 같은 식별자가 있을 때 포함한다.
 - extension field는 문서화되어 있고 client가 무시해도 안전해야 한다.
 
-Django Ninja에서는 `api.exception_handler(...)` 또는 `NinjaAPI` subclass로
-application/domain exception과 validation error를 Problem Details로 변환한다.
+Django Ninja에서 도메인/애플리케이션 예외를 Problem Details로 변환하는 위치는 두 가지이며,
+둘 다 **response schema 매핑을 우회하지 않는 것**이 핵심이다.
+
+- **Operation-local 변환**: 특정 operation에서만 의미 있는 알려진 예외는 그 operation 안에서
+  잡아 `return status, ErrorSchema(...)` 튜플로 돌려준다. 해당 status가 `response={...}`에
+  선언돼 있어야 ninja가 그 schema로 직렬화하고 OpenAPI에 드러난다(§2.2).
+- **중앙 exception_handler**: 여러 operation을 가로지르는 공통 예외나 framework validation
+  error는 `api.exception_handler(...)` 또는 `NinjaAPI` subclass로 한 곳에서 변환한다.
+
+operation 함수 본문에서 수제 `HttpResponse`/`JsonResponse`로 body를 직접 만들면 그 응답은
+`response=` 계약 밖이라 OpenAPI/Swagger에 드러나지 않는다 — client가 계약으로 알 수 없는 오류
+형식이 된다. Problem Details body도 가능한 한 schema로 표현해 문서화 가능하게 둔다.
 
 ```python
 from ninja import NinjaAPI
