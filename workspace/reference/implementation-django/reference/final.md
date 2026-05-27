@@ -1494,6 +1494,7 @@ def order_confirm(*, order: Order) -> Order:
 - `transaction.atomic()`의 owner는 model method보다 application service가 되는 경우가 많다. 여러 모델 write, 여러 invariant, 외부 side effect가 하나의 use case에 묶일 때 특히 그렇다.
 - `select_for_update()`는 pessimistic lock이 필요한 경우에만 사용한다. 잠금 범위, DB backend 지원, 테스트 환경에서 실제 lock 동작을 검증할 수 있는지 함께 확인한다.
 - 중복 write 방지는 application-level check만 믿지 않는다. 반드시 지켜야 하는 invariant는 `UniqueConstraint`, `CheckConstraint`, partial unique index, idempotency storage 같은 DB boundary와 함께 설계한다.
+- 개발용 **sqlite에서 `select_for_update()`는 no-op**이다(락 SQL 미발행). 이 한계를 커스텀 DB 백엔드(`BEGIN IMMEDIATE` 등)로 우회하지 말 것 — 운영(Postgres) 정합을 위해 잠금 코드는 두되, 불변식은 `CheckConstraint`(위 항목)가 최종 방어선이고 race 패자의 `IntegrityError`는 표현 계층에서 상태 코드(예: 409)로 변환한다. 잠금이 부족해 보여도 백엔드를 만들지 말고 DB architecture 검토(`architecture-db` §9.5 락·동시성 제어)로 돌린다.
 - 외부 side effect는 commit 전에 실행하지 않는다. DB write가 rollback될 수 있으면 `transaction.on_commit()`으로 email, message publish, payment follow-up, cache invalidation 시점을 정렬한다.
 - isolation level, retry, optimistic/pessimistic locking 선택은 DB 특성과 실패 모드에 따라 달라진다. 결정이 불명확하면 DB architecture 검토가 먼저다.
 - HTTP로 노출된 risky write는 API layer의 `Idempotency-Key` 계약과 DB idempotency storage가 서로 맞아야 한다.
