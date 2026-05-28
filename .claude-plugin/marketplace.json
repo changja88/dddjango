@@ -1,11 +1,11 @@
 {
-  "name": "dddjango-local",
+  "name": "changja88",
   "owner": { "name": "changja88", "email": "dev@numchida.com" },
   "metadata": {
-    "description": "dddjango 플러그인 로컬 개발용 마켓플레이스"
+    "description": "changja88's Claude Code plugins"
   },
   "interface": {
-    "displayName": "dddjango Local"
+    "displayName": "changja88 Plugins"
   },
   "plugins": [
     {
