@@ -22,7 +22,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
   - ⚠️ **thinking OFF는 코드가 아니라 사용자 세션 설정**(`Option+T` / `alwaysThinkingEnabled:false`). 플러그인에 못 박는다. 안 끄면 비용 ≈ 2.6M.
 - **속도/비용 현실(닫힌 결론)**: 기계시간 ~41~60분은 "강한 모델 + 다단계 게이트 + TDD + 독립 리뷰" 품질우선 설계에 **내재**. 품질 손실 없이 큰 wall 단축하는 공짜 레버 없음. 통제 가능한 비용 레버는 이미 적용. 큰 비용 레버(컨텍스트 편집/compaction)는 업스트림 차단(§2 DR-11).
 - **최적화 사이클: ✅ 종료** (2026-05-28, smoke8 합격). 다음 작업은 코드를 *실제로 바꿀 때*만 재개.
-- **미커밋 잔여**: `workspace/tools/`(telemetry 파서·리포트 생성기·HTML), 이 `DEVLOG.md`.
+- **배포 상태**: Claude판 **v1.0.0 main 병합·릴리스** 완료(마켓플레이스 `changja88`). 그 후 **Codex 이식 착수** → **PoC 성공(§2 DR-12)**: `codex-dddjango/`(스킬 19, Claude `dddjango/` 무변경). **메커니즘 검증 완료, 코드품질 평가는 미실시**(다음 단계 = 반복 smoke·Claude 대비 비교).
 
 ---
 
@@ -81,6 +81,15 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 - **통제 가능 비용 레버는 이미 적용**(오케스트레이션 경량화 = DR-10).
 - **compaction/tool-result clearing은 Claude Code가 자동 수행**(막힌 게 아님)이나 **세밀 설정 미노출** — GitHub anthropics/claude-code **#26215**는 메인테이너 거부가 아니라 봇 stale 자동종료. Opus 4.7 **[1M] 창**이라 ~95% 트리거에 한참 못 미쳐 91턴 누적이 통째 실림(cache_read 9.64M의 정체).
 - **`/compact`는 모델·훅으로 자동화 불가**(Skill 도구 invokable 내장명령에서 명시 제외, PreCompact/PostCompact 훅은 관찰용). 수동만 가능, 실익 제한(cache_read 0.1x·wall 무영향).
+
+### DR-12 ✅ Codex 이식 PoC 성공 (메커니즘 검증; 품질평가 미실시)
+2026-05-28. DR-01에서 P9로 이월했던 **Codex 호환을 PoC로 재개·검증**. 조사 정본 = `workspace/design/2026-05-28-codex-port-research.md`.
+- **사전조사 반전**: 현행 **Codex CLI 0.134.0**은 네이티브 서브에이전트(`spawn_agent`/`wait_agent`/`close_agent`, 피처 `multi_agent`=**stable·기본 true**)·Skills(SKILL.md)·Plugins(`.codex-plugin/plugin.json`)·`codex exec`·MCP를 **GA**로 제공. 과거 Codex 폐기(`911cd22`)는 *메커니즘 부재*(당시 `workflow-dddjango-subagents`가 "real subagent 미실행→sequential fallback" 자백) 탓이었고 **그 원인이 해소됨**. obra/**superpowers**가 동일한 멀티런타임 문제를 이미 풀어 패턴 차용(런타임별 매니페스트 공존·`Task→spawn_agent` 어댑터·Codex 플러그인은 skills/assets만 적재·스킬이 spawn으로 디스패치).
+- **빌드**: `codex-dddjango/`(별도 디렉터리, **Claude `dddjango/` 무변경**). 코디네이터=`/dddjango` 진입 스킬, 7역할=스킬(코디가 `spawn_agent`로 띄우며 `dddjango-<role>` 역할스킬 인라인 로드 — 플러그인은 named agent 번들 불가), 지식11=스킬(코퍼스 Claude 배포본에서 복사·본문 일치). 매니페스트 `.codex-plugin/plugin.json`(v1.0.0) + 루트 `.agents/plugins/marketplace.json`(로컬 소스). **스킬 19개**.
+- **어댑터**(superpowers `codex-tools.md` 근거): `Agent`→`spawn_agent`/`wait_agent`/`close_agent`, `AskUserQuestion`→**평문 게이트**(Codex 승인은 binary뿐), `TodoWrite`→`update_plan`, `Skill`→네이티브 로드. Codex 플러그인은 `commands/`·`hooks/` 미적재 → 커맨드는 스킬로.
+- **설치(검증된 명령)**: `codex plugin marketplace add <레포루트>` + `codex plugin add dddjango@dddjango-local`. ⚠️ **캐시 함정**: 옛 0.1.10 스냅샷이 `~/.codex/plugins/cache/dddjango-local`에 잔존→`codex plugin remove dddjango@dddjango-local` + `rm -rf` 캐시 + marketplace 재등록 + 재설치. **`codex-dddjango/` 수정 때마다 재설치+Codex 세션 재시작** 필요.
+- **PoC 검증**(`/Users/hyun/Desktop/dddjango-smoke` 재현 = Django 4.2.30 + `config` + `catalog.Product`; "재고 있을 때만 주문 생성·차감"): **3가정 전부 통과** — ⓐ `spawn_agent` 역할분리(규율감수가 테스트 오배치 지적→coder 반영 왕복 관측 = sequential 아님) ⓑ 평문 G0/G1/G2 ⓒ 설치·`multi_agent`. end-to-end **16 tests OK**·check OK·migrations 정합. **메커니즘만 검증 — 코드품질·결정성·Claude대비 평가는 다음 단계(반복 smoke).**
+- **품질단계로 넘길 개선 과제 2**: (1) **평면 catalog**(`catalog/{models,services,exceptions}.py`, `application/` 4계층 아님) — §1 기존관례 vs §0 불변식 충돌, **§3-7 catalog 미정합과 동일·Claude·Codex 공통**(포트 버그 아님). (2) **coder 메커니즘-대체 가드레일이 Codex에서 약하게 작동** — sqlite 락 우회를 자작(반송했어야 = DR-06과 동일 실패축). 규율감수가 잔여권고로 표면화는 함.
 
 ---
 
@@ -143,5 +152,6 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 - **설계·로그 문서**: `workspace/design/` (파이프라인 설계·커맨드 설계·필트리 초안·스모크 피드백 로그들).
 - **도구·리포트**: `workspace/tools/{session_telemetry.py, smoke_report.py, smoke_timeline.html}`.
 - **AGENTS.md**: Claude 전용 파이프라인 구조 설명.
-- **향후(범위 밖)**: `/dddjango init`(uv + ruff·mypy strict·django-stubs·pydantic·pytest 부트스트랩, django-stubs만 코퍼스 공백) · OHS→Published Language DTO 전환 · Codex 호환(P9).
+- **Codex 이식**(§2 DR-12): 조사 `workspace/design/2026-05-28-codex-port-research.md` · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님). 다음 = 품질 평가(반복 smoke).
+- **향후(범위 밖)**: `/dddjango init`(uv + ruff·mypy strict·django-stubs·pydantic·pytest 부트스트랩, django-stubs만 코퍼스 공백) · OHS→Published Language DTO 전환 · Codex 품질평가·전체 smoke 루프.
 - **개인 메모리 슬러그**(세션 회상용, 정본 아님): dddjango-rebuild-direction · dddjango-work-style · dddjango-audit-ledger · dddjango-standard-hardening-verification · dddjango-bc-boundary-nondeterminism · dddjango-cost-token-optimization. → **내용은 이 DEVLOG에 흡수됨**.

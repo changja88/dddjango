@@ -1,0 +1,41 @@
+{
+  "name": "dddjango",
+  "version": "1.0.0",
+  "description": "기존 Django 프로젝트에 한 기능을 DDD 방식으로 요구→설계→구현(TDD)까지 단계 게이트로 빌드하는 오케스트레이터. 코디네이터가 전문 역할 서브에이전트를 디스패치한다.",
+  "author": {
+    "name": "changja88",
+    "email": "dev@numchida.com"
+  },
+  "homepage": "https://github.com/changja88/dddjango",
+  "repository": "https://github.com/changja88/dddjango",
+  "license": "MIT",
+  "keywords": [
+    "django",
+    "ddd",
+    "tdd",
+    "orchestrator",
+    "subagents",
+    "clean-code",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "dddjango",
+    "shortDescription": "Django DDD 기능을 요구→설계→구현(TDD)까지 게이트로 빌드",
+    "longDescription": "dddjango는 기존 Django 프로젝트에 한 기능을 DDD 4계층(domain/application/infra/presentation)으로 추가한다. /dddjango 코디네이터가 design-architect·리뷰어·acceptance-tester·coder·discipline-reviewer 역할을 서브에이전트로 디스패치하고, G0(요구)·G1(설계)·G2(구현) 게이트마다 사용자 승인을 받는다. multi_agent 기능 필요.",
+    "developerName": "changja88",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/changja88/dddjango",
+    "defaultPrompt": [
+      "재고가 있을 때만 주문을 생성하고 재고를 차감하는 기능을 DDD로 빌드해줘.",
+      "이 Django 프로젝트에 한 기능을 DDD 4계층으로 추가해줘.",
+      "주문 도메인을 DDD/TDD로 설계하고 구현해줘."
+    ],
+    "brandColor": "#0C4A6E"
+  }
+}
