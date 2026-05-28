@@ -22,7 +22,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
   - ⚠️ **thinking OFF는 코드가 아니라 사용자 세션 설정**(`Option+T` / `alwaysThinkingEnabled:false`). 플러그인에 못 박는다. 안 끄면 비용 ≈ 2.6M.
 - **속도/비용 현실(닫힌 결론)**: 기계시간 ~41~60분은 "강한 모델 + 다단계 게이트 + TDD + 독립 리뷰" 품질우선 설계에 **내재**. 품질 손실 없이 큰 wall 단축하는 공짜 레버 없음. 통제 가능한 비용 레버는 이미 적용. 큰 비용 레버(컨텍스트 편집/compaction)는 업스트림 차단(§2 DR-11).
 - **최적화 사이클: ✅ 종료** (2026-05-28, smoke8 합격). 다음 작업은 코드를 *실제로 바꿀 때*만 재개.
-- **배포 상태**: Claude판 **v1.0.0 main 병합·릴리스** 완료(마켓플레이스 `changja88`). 그 후 **Codex 이식 착수** → **PoC 성공(§2 DR-12)**: `codex-dddjango/`(스킬 19, Claude `dddjango/` 무변경). **메커니즘 검증 완료, 코드품질 평가는 미실시**(다음 단계 = 반복 smoke·Claude 대비 비교).
+- **배포 상태**: Claude판 **v1.0.0 main 병합·릴리스** 완료(마켓플레이스 `changja88`). 그 후 **Codex 이식 착수** → **PoC 성공(§2 DR-12)**: `codex-dddjango/`(스킬 19, Claude `dddjango/` 무변경). 이어 **코드품질 1:1 평가(§2 DR-13)** → **결정성 2차 검증으로 결론 수정(§2 DR-14)**: N=2 결과 **1차 "claude>codex 13:2:5"는 상당 부분 N=1 분산**이었음. 핵심 신호(B1 도메인소유·stock≥0)가 양 런타임 모두 **비결정**. 2차 프레임워크 무관 코드 대등(codex가 일부 우위). **재현되는 진짜 차이 = 코드 우열이 아니라 게이트 노출 철학·스택 취향**. 표준준수 점수 추정 codex~70·claude~84(신뢰낮음, claude 분산>평균차). 평가 정본 `workspace/eval/`(`comparison-2.html`·`RUBRIC-conformance.md`).
 
 ---
 
@@ -91,6 +91,26 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 - **PoC 검증**(`/Users/hyun/Desktop/dddjango-smoke` 재현 = Django 4.2.30 + `config` + `catalog.Product`; "재고 있을 때만 주문 생성·차감"): **3가정 전부 통과** — ⓐ `spawn_agent` 역할분리(규율감수가 테스트 오배치 지적→coder 반영 왕복 관측 = sequential 아님) ⓑ 평문 G0/G1/G2 ⓒ 설치·`multi_agent`. end-to-end **16 tests OK**·check OK·migrations 정합. **메커니즘만 검증 — 코드품질·결정성·Claude대비 평가는 다음 단계(반복 smoke).**
 - **품질단계로 넘길 개선 과제 2**: (1) **평면 catalog**(`catalog/{models,services,exceptions}.py`, `application/` 4계층 아님) — §1 기존관례 vs §0 불변식 충돌, **§3-7 catalog 미정합과 동일·Claude·Codex 공통**(포트 버그 아님). (2) **coder 메커니즘-대체 가드레일이 Codex에서 약하게 작동** — sqlite 락 우회를 자작(반송했어야 = DR-06과 동일 실패축). 규율감수가 잔여권고로 표면화는 함.
 
+### DR-13 ⏳ Codex 포트 코드품질 1:1 평가 (claude-1 > codex-2; N=1, 결정성 미확정)
+2026-05-28. DR-12가 미룬 **코드품질 평가**를 통제 1:1로 실행. 산출 정본 = `workspace/eval/`(`comparison.html` 시각 보고 · `RESULTS.md` · `codex-2-analysis.md` · `claude-1-analysis.md` · `runs/{codex-2,claude-1}/` 산출물 보존 · `baseline/`+`reset.sh`+`PROTOCOL.md`+`RUBRIC.md`).
+- **방법(통제)**: 같은 baseline(`Product(name,price,stock)`, Django 4.2.30) + 같은 프롬프트("재고 부족 409·충분 시 차감·주문 생성 **API**") + **같은 게이트 결정**(G0=기존 catalog / **순수 Django JsonResponse** / **Django 기본 test**). 프레임워크·러너 변수를 제거해 *같은 최소 스택 위 코드품질만* 비교. **Claude 비교군은 별 프로젝트**(`/Users/hyun/Desktop/dddjango-smoke-claude`, 별 venv)로 만들어 Codex 산출(`dddjango-smoke`)과 나란히 보존(리셋 아님). **산출물 정적 평가** + **서브에이전트 2종 독립 리뷰**(표준준수 감사 / 코드품질·DDD).
+- **프롬프트 정정**: 정확한 Claude smoke 원문은 PoC가 쓴 "…기능"(도메인 전용, api off)이 아니라 **"…API"**(api lens 켜짐). 이 차이로 PoC(codex-1, 평면 catalog)와 달리 **codex-2는 완전한 §0 4계층을 생성** — 즉 DR-12의 개선과제(1) "평면 catalog"는 *프롬프트가 API였으면* 재현 안 됨. 단 PoC codex-1은 중간 재설치 이력 있어 참고용, 클린 비교는 codex-2.
+- **결과(서브에이전트 합산 20항목)**: **claude-1 13 · codex-2 2 · 동등 5**. 표준준수 감사 6:1:3, 코드품질 7:1:2 — 두 에이전트 독립 실행이 같은 결론 수렴.
+- **핵심 격차 = 구조 생성력 아님, 리뷰·감사 깊이**: ① **빈혈 도메인** — codex `Product.reserve()`가 프로덕션 미호출(죽은 코드), 규칙이 인프라 SQL에만 존재(자체 명세와 모순). claude는 DDD 리뷰가 [blocker]로 잡아 `Product.deduct()`를 흐름에 배선. ② **stock≥0 CHECK** — codex 누락(명세엔 있으나 미구현), claude 집행. ③ **race available_stock** — codex 처음부터 정확(DB 재조회), claude 1차 버그였으나 discipline-reviewer가 [important]로 잡아 수정. → **감사 방향 일관(claude가 더 깊음)**.
+- **서브에이전트 신규 발견(codex)**: 포트가 `ABC` 아닌 **`Protocol`**, impl 파일명이 포트와 **충돌**(`product_repository.py` 양쪽), **`domain_service/event/specification` §0 종류폴더 누락**, 포트 **tuple 누수**, `_is_database_busy` **문자열매칭+복붙**, quantity 검증 **이중화**. claude 결함: 정상경로 2쿼리(경미).
+- **codex 우위 2항목**: API Problem Details(`type` 안정 URI·415/422/503 분기), 예외 계층화(단 DB 문자열매칭 취약 동반).
+- **결론**: 포트 메커니즘 충실도(DR-12)는 별개로 입증됨. **코드품질은 같은 스택에서 claude-1 > codex-2이며 원인은 감사/리뷰 깊이**(codex 감사가 빈혈·CHECK누락을 통과시킴). 단 **N=1** — 결정성 미확정.
+- **미해소·다음**: codex 2~3회 반복으로 감사 격차 재현성 확인(빈혈·stock≥0을 매번 놓치는지). 재현 시 개선 과제 = **codex `discipline-reviewer`/`design-review-ddd` 스킬 본문 보강**(도메인 죽은 코드·설계-코드 제약 누락 포착) — **공통 코퍼스라 Claude·Codex 양쪽 반영**. 평가 하니스(`reset.sh`·`baseline/`·`PROTOCOL.md`)는 재사용 가능. → **DR-14에서 실행·결론 수정됨.**
+
+### DR-14 🔁 결정성 2차 검증 — DR-13 결론 대폭 수정 (N=2; 격차는 대부분 분산)
+2026-05-29. DR-13의 다음 과제(codex 반복)를 실행하되 **claude도 1회 더** 돌려 각 N=2. 산출 `workspace/eval/`(`comparison-2.html` · `codex-3-analysis.md` · `claude-2-analysis.md` · `gate-questions.md`(게이트 질문 1:1 원문) · `RESULTS.md` 결정성 섹션 · `RUBRIC-conformance.md` · `runs/{codex-3,claude-2}`). 깨끗한 새 프로젝트 `dddjango-codex`·`dddjango-claude`(Py3.9.6·Django4.2.30, baseline+venv+git).
+- **⚠️ 2차 통제 이탈**: claude-2가 프레임워크/러너 게이트 미노출로 **Ninja+pytest**, 구조는 G1에서 옵션 B(최소변경) 선택으로 **평면**. codex-3=plain Django+Django test+완전 §0 4계층. → 구조·프레임워크·테스트수 **비교 불가**, 프레임워크 무관 신호만 유효. (옵션 B는 내 프로토콜 "최소 변경" 답이 유도 + houserules §0/§1.1 "기존 규약 존중" 예외가 명문 허용 — **claude 규칙 위반 아님, 선택 문제**. design-spec §5.1~5.2가 예외 인용. 단 claude-1은 §1.2 읽고 full tree 기본권장 ↔ claude-2는 §1.1 읽고 옵션B 권장 = 같은 표준 텍스트 정반대 해석=진짜 분산.)
+- **세 신호 결정성**: B1 도메인 소유 = **비결정**(claude-1 `deduct()` 배선✓ ↔ claude-2 `deduct_stock()` 미배선·죽은코드✗·docstring "권위는 인프라"; codex 양차 미흡). stock≥0 = **비결정**(codex-2 누락 ↔ codex-3 명시 CHECK+마이그 음수행 가드+state-safe 리네임). race = 대등.
+- **결론(DR-13 수정)**: **1차 "claude>codex 13:2:5"는 상당 부분 N=1 분산**이었음(비결정 신호가 우연히 모두 claude 정렬). 2차 프레임워크 무관 코드 **대등**(codex-3가 DB제약·`<Name>Model` 네이밍·오류처리폭 우위; claude-2가 포트 도메인타입 반환·409 available 우위; claude-2에 죽은 도메인코드 1건). **"런타임 결정적 감사 깊이 격차" 가설 약화** — codex-3 DB감사가 claude-2보다 날카로웠음. **재현되는 진짜 차이 = 코드 우열이 아니라 게이트 노출 철학(claude가 결정 ~3배 노출·근거/추천 동반)·기본 스택 취향(claude→Ninja/pytest, codex→plain)**(1·2차 모두 재현).
+- **표준준수 점수(추정·신뢰낮음)**: 가중 루브릭 100점(`RUBRIC-conformance.md`) — codex-2/3=**64/76**(평균70·폭12), claude-1/2=**97/70**(평균84·폭27). claude 분산(27)>평균차(14)라 순위 단정 불가. 점수 변동의 거의 전부가 C2 도메인소유(20점) 한 축.
+- **서브에이전트 검증 주의**: 코드품질 서브에이전트가 "claude-2 stock CHECK 거짓 테스트"라 단언 → **오판**(PositiveIntegerField가 SQLite에 `CHECK(stock>=0)` 자동생성; 스키마·테스트 4/4 PASS로 메인이 반증). **서브에이전트 강한 주장도 경험적 검증 후 채택**.
+- **미해소·다음(측정 방법론)**: 진짜 성능차 측정엔 (a) 모든 게이트 답 고정(구조 옵션A·동일 프레임워크/러너로 교란 제거) (b) 런타임당 **N≥5~10**(분포 비교) (c) 기계검증 객관 루브릭 **블라인드 채점**(단 정적 grep만으론 오판—스키마/테스트 실행 필요) (d) 태스크 1개론 부족=형태 다른 여러 기능. **자동 채점 스크립트 단독은 병목(런 생성)을 못 풀어 효과 제한** — 루브릭 *정의*가 가치 80%. **DR-13의 "codex 스킬 보강" 과제는 재고**(결정적 격차 아님; 보강 시 양 런타임 ddd 리뷰가 'infra 집행=도메인 소유' 합리화를 일관 반려하도록, 공통 코퍼스라 Claude도 영향).
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
@@ -152,6 +172,8 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 - **설계·로그 문서**: `workspace/design/` (파이프라인 설계·커맨드 설계·필트리 초안·스모크 피드백 로그들).
 - **도구·리포트**: `workspace/tools/{session_telemetry.py, smoke_report.py, smoke_timeline.html}`.
 - **AGENTS.md**: Claude 전용 파이프라인 구조 설명.
-- **Codex 이식**(§2 DR-12): 조사 `workspace/design/2026-05-28-codex-port-research.md` · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님). 다음 = 품질 평가(반복 smoke).
+- **Codex 이식**(§2 DR-12): 조사 `workspace/design/2026-05-28-codex-port-research.md` · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님, =codex-2 런).
+- **코드품질 1:1 평가**(§2 DR-13): 정본 `workspace/eval/` — `comparison.html`(1차 시각 보고) · `RESULTS.md` · `codex-2-analysis.md` · `claude-1-analysis.md` · `runs/{codex-1,codex-2,claude-1}/`(산출물 보존) · 하니스 `baseline/`+`reset.sh`+`PROTOCOL.md`+`RUBRIC.md`. Claude 비교군 `/Users/hyun/Desktop/dddjango-smoke-claude`(git 아님). 1차 결과 claude-1>codex-2(13:2:5), N=1.
+- **결정성 2차 검증**(§2 DR-14, 결론 수정): `workspace/eval/` — `comparison-2.html`(2차 시각 보고) · `codex-3-analysis.md` · `claude-2-analysis.md` · `gate-questions.md`(게이트 질문 1:1) · `RUBRIC-conformance.md`(100점 루브릭+점수) · `RESULTS.md`(결정성 N=2 섹션) · `runs/{codex-3,claude-2}/`. 2차 깨끗한 프로젝트 `/Users/hyun/Desktop/dddjango-{codex,claude}`(Py3.9.6·Django4.2.30). 결과: 1차 우위는 대부분 분산, 코드 대등, 진짜 차이=게이트 철학·스택. 점수 codex~70/claude~84(신뢰낮음). **2차 통제 이탈**(claude-2=Ninja+pytest+옵션B평면, codex-3=plain+§0).
 - **향후(범위 밖)**: `/dddjango init`(uv + ruff·mypy strict·django-stubs·pydantic·pytest 부트스트랩, django-stubs만 코퍼스 공백) · OHS→Published Language DTO 전환 · Codex 품질평가·전체 smoke 루프.
 - **개인 메모리 슬러그**(세션 회상용, 정본 아님): dddjango-rebuild-direction · dddjango-work-style · dddjango-audit-ledger · dddjango-standard-hardening-verification · dddjango-bc-boundary-nondeterminism · dddjango-cost-token-optimization. → **내용은 이 DEVLOG에 흡수됨**.
