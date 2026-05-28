@@ -1,15 +1,5 @@
 # Python 언어 특화 가이드
 
-## P1 Source Sufficiency
-
-| field | value |
-|---|---|
-| purpose | Python implementation quality decisions: typing, protocols, dataclasses, enums, context managers, exceptions, decorators, async/concurrency choices, pydantic boundaries, and Python-version gates. |
-| use when | Python language semantics, type hints, runtime validation boundary, or idiomatic implementation details are the main concern. |
-| exclude/handoff | Do not use as the source for domain modeling, REST contracts, DB consistency, Django framework behavior, or pytest/TDD methodology except for Python mechanics. |
-| core criteria | Prefer official Python docs and PEPs for language behavior; make types and side effects explicit; use modern features only within project version gates; use pydantic/runtime validation at boundaries rather than as domain truth. |
-| source priority | 1 Python official docs, PEPs, typing spec, and tool official docs; 2 primary project docs for pydantic/Ruff/mypy/pyright; 3 reputable Python books and articles; 4 unsupported memory is not accepted. |
-| P1 classification | sufficient |
 
 > Python에서만 적용되는 관례, 패턴, 기법을 정리한 문서.
 > 클린코드 범용 원칙(네이밍, 함수 설계, SOLID 등)은 `workspace/reference/discipline-cleancode/reference/final.md`에서 다룬다.

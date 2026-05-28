@@ -1,22 +1,5 @@
 # 데이터베이스 설계 종합 가이드
 
-## P1 Source Sufficiency
-
-| field | value |
-|---|---|
-| purpose | Relational DB architecture decisions: modeling, keys, constraints, indexes, transaction/isolation/locking, idempotency storage, query plans, and rollout/backfill safety. |
-| use when | Data integrity, concurrency, schema design, migration rollout, duplicate prevention, or performance plan is the primary risk. |
-| exclude/handoff | Do not use for NoSQL design, Django ORM code mechanics, REST contracts, or pytest mechanics; hand off those decisions to owning references. |
-| core criteria | Preserve invariants at the DB boundary when correctness requires it; choose indexes and rollout steps from measured access patterns and lock risk; separate DB storage decisions from API/client contracts. |
-| source priority | 1 official DB documentation, especially PostgreSQL transaction/isolation and EXPLAIN docs; 2 primary project docs for Django migration handoff; 3 reputable engineering material such as Stripe migration writing and Use The Index, Luke; 4 internal notes only as synthesis. |
-| P1 classification | sufficient |
-
-> 이 문서는 관계형 데이터베이스(RDB) 설계에 집중한다.
-> NoSQL, ORM 코드, 도구별 마이그레이션 구현, 커넥션 풀링은 다루지 않는다.
-> 다만 제약조건, 락, 멱등성 저장소, staged rollout/backfill 같은 DB architecture 결정은 다룬다.
-
----
-
 ## 목차
 
 1. [데이터베이스 모델링 프로세스](#1-데이터베이스-모델링-프로세스)

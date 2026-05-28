@@ -1,7 +1,0 @@
-{
-  "schema_version": "eval-oracle/v1",
-  "case_id": "p4-partial",
-  "variant": "baseline",
-  "loaded_skill": "dddjango:architecture-db",
-  "required_claims": ["db-constraint-mentioned", "rollout-verification-mentioned"]
-}

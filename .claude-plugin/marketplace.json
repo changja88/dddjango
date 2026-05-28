@@ -1,0 +1,17 @@
+{
+  "name": "dddjango-local",
+  "owner": { "name": "changja88", "email": "dev@numchida.com" },
+  "metadata": {
+    "description": "dddjango 플러그인 로컬 개발용 마켓플레이스"
+  },
+  "interface": {
+    "displayName": "dddjango Local"
+  },
+  "plugins": [
+    {
+      "name": "dddjango",
+      "source": "./dddjango",
+      "category": "Coding"
+    }
+  ]
+}

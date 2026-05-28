@@ -1,0 +1,11 @@
+{
+  "name": "dddjango",
+  "displayName": "dddjango",
+  "version": "0.1.0",
+  "description": "DDD 방식으로 Django 기능을 설계·구현하는 오케스트레이터. /dddjango로 요구→설계→구현(TDD)을 단계별 게이트로 빌드한다.",
+  "author": { "name": "changja88", "email": "dev@numchida.com" },
+  "license": "MIT",
+  "homepage": "https://github.com/changja88/dddjango",
+  "repository": "https://github.com/changja88/dddjango",
+  "keywords": ["django", "ddd", "tdd", "orchestrator", "subagents", "clean-code", "claude-code"]
+}

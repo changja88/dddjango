@@ -1,40 +1,47 @@
 ---
 name: architecture-db
-description: >
-  Use for relational DB architecture: ERD/schema modeling, normalization, keys, constraints/indexes, transactions/isolation/locking/concurrency, idempotency storage, duplicate prevention, query performance/EXPLAIN ANALYZE, rollout/backfill/index-lock risk, and migration safety. Use for DB 설계, 스키마, ERD, 정규화, 인덱스, 제약조건, 트랜잭션, 락, 격리 수준, 동시성, 멱등성, 중복 방지, 쿼리 성능, 실행 계획, 백필, 롤아웃/롤백. Prefer workflow-dddjango-subagents for coordinated work, subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow; architecture-ddd for unclear invariants; architecture-implementation-patterns for repository/UoW/outbox/CQRS/dependency direction; architecture-api for REST contracts; implementation-django for Django model/migration code; implementation-test for pytest/concurrency tests. Do not use for NoSQL, detailed partitioning without source/project criteria, ORM code, tool-specific migrations, connection pooling, simple field renames, or local CRUD without DB invariant/concurrency/rollout risk.
+description: 관계형 데이터베이스 설계 지식 — ERD·정규화·역정규화, 인덱스 아키텍처(B+Tree·복합·커버링·부분), 제약조건·중복 방지·멱등성 저장소, 트랜잭션·격리 수준·락·Risky Write, outbox 전달 보장, 쿼리 최적화(EXPLAIN ANALYZE·N+1), 운영 rollout/backfill/migration safety, 계층·상속 모델링 패턴. 데이터 신뢰성·인덱스 전략·트랜잭션 경계·outbox 전달 보장·스키마 rollout을 결정할 때 먼저 로드한다. Django ORM·마이그레이션 코드 구현은 implementation-django, 도메인 이벤트 채택 여부는 architecture-ddd로 위임.
+user-invocable: false
 ---
 
-# DB Architecture
+# 데이터베이스 설계
 
-Use this skill to design relational data structures that protect domain invariants and support query/write patterns. This skill decides the database shape and operational constraints; it does not write concrete Django migration files.
+## 언제 쓰나
 
-## Routing
+관계형 DB 아키텍처 결정(데이터 모델링·인덱스 설계·제약조건·트랜잭션 격리·락 전략·멱등성 저장소·outbox 전달·rollout 안전성)이 필요할 때 로드한다. 경계:
 
-- If the user asks for coordinated implementation or review across multiple role areas, or asks for subagents, 서브에이전트, 역할 분해, 병렬 검토, 책임 분배, or dddjango workflow, use `workflow-dddjango-subagents` first.
-- Keep direct DB design questions here, including risky transaction, locking, isolation, uniqueness, idempotency storage, backfill, and index-lock examples, when the user is asking for database architecture rather than multi-role implementation.
-- If aggregate boundaries, domain invariants, ubiquitous language, or state transitions are unclear, use `architecture-ddd` before designing the schema.
-- If the main work is repository/UoW, outbox architecture, CQRS, hexagonal/ports-adapters, ACL, or dependency direction, use `architecture-implementation-patterns`; keep concrete storage, constraints, and transaction choices here.
-- If the main work is REST resources, status codes, Problem Details, pagination, versioning, `Idempotency-Key` contract, or OpenAPI, use `architecture-api`; keep DB storage implications here.
-- If the user asks to implement Django `models.py`, `RunPython`, `apps.get_model()`, `sqlmigrate`, or migration files, use `implementation-django` after DB design is clear.
-- If the user asks for pytest integration/concurrency tests, use `implementation-test` after DB invariants and transaction criteria are known.
-- For a simple field rename or local CRUD model with no invariant/rollout risk, do not force full ERD, locking, or migration strategy ceremony.
+- Django ORM·마이그레이션 코드 작성 → `implementation-django`
+- 도메인 이벤트 채택 여부·애그리거트 경계 → `architecture-ddd`
+- REST 계약·API 멱등성 키 정책 → `architecture-api`
 
-## Reference Loading
+## 핵심 운영 원칙
 
-- Load only the reference file(s) relevant to the current database architecture task.
-- Read [schema-modeling.md](references/schema-modeling.md) for modeling process, ERD, keys, cardinality, optionality, normalization, denormalization, hierarchy, and inheritance/polymorphism; skip it when the question is only about an existing query plan, lock, or rollout risk.
-- Read [constraints-indexes.md](references/constraints-indexes.md) for PK/FK/unique/check/not-null decisions, cascade implications, B+Tree trade-offs, composite/covering/partial indexes, and index write cost; skip it when the question is only transaction boundary, retry, or side-effect timing.
-- Read [transactions-locking.md](references/transactions-locking.md) for ACID, isolation levels, concurrency phenomena, locking strategy, risky write consistency, and side-effect timing handoffs; skip it for pure ERD, normalization, or read-only index tuning questions with no write race.
-- Read [rollout-constraints.md](references/rollout-constraints.md) for EXPLAIN ANALYZE, query optimization, N+1, backfill/index-lock risk, expand/backfill/contract rollout, and rollback considerations; skip it when no production data change, query performance issue, or operational rollout risk is involved.
+- 성능 최적화 순서를 지킨다: 슬로우 쿼리 최적화 → 인덱스 적용 → 캐시 → 역정규화. 역정규화는 최후 수단이며, 정규화 먼저 한 뒤 필요한 경우에만 적용한다 (§4, §5)
+- 복합 인덱스는 선택도 높은 컬럼을 앞에, 커버링 인덱스로 Index-Only Scan을 목표로, 부분 인덱스로 쓰기 비용을 최소화한다 — 인덱스 설계는 실제 액세스 패턴 기반으로 결정한다 (§7)
+- 비즈니스 불변식이 DB 경계에서 지켜져야 하면 unique constraint·FK·check constraint를 사용하고, 제약조건 rollout은 lock risk를 고려한 단계적 순서를 따른다 (§8)
+- 격리 수준은 필요 이상으로 높이지 않는다: 대부분의 OLTP는 Read Committed, 일관된 읽기가 필요하면 Repeatable Read, 정확성이 최우선인 금융·결제는 Serializable + retry (§9.4)
+- Risky Write(주문·결제·재고·예약·권한·ledger)에는 Transaction owner·Locking strategy·Idempotency storage·Side-effect timing·Isolation/retry·Test criteria를 명시한다 (§9.6)
+- 외부 결제·알림·메시지 발행은 DB 트랜잭션 내부에서 실행하지 않는다. 메시지 유실이 허용되지 않으면 트랜잭셔널 Outbox로 at-least-once 전달을 보장하고, consumer는 중복 수신을 무시할 수 있어야 한다 (§9.7)
+- 운영 컬럼·인덱스·constraint 변경은 Expand / Backfill / Contract 단계를 따르고, 대용량 backfill은 슬롯·lock risk를 고려한 배치 처리를 계획한다 (§11)
 
-## Runtime Rules
+## 상세 레퍼런스
 
-- Start from domain invariants, aggregates/entities, query patterns, write contention, and rollout constraints; do not let ORM convenience erase DB invariants.
-- Model conceptually first, then logical schema, then physical indexes, constraints, and performance choices.
-- Normalize first to remove update/insert/delete anomalies; denormalize only for measured read pressure or clear operational need.
-- Use database constraints for invariants the database can enforce: primary keys, foreign keys, unique, check, not null, and appropriate cascade rules.
-- Design indexes from actual query shapes and write cost. Explain composite index order and when covering or partial indexes apply.
-- For risky writes, include a `Risky Write Consistency Block` focused on DB-owned decisions: transaction boundary when already scoped, locking strategy, uniqueness/idempotency storage, constraints/indexes, isolation/retry impact, and rollout risk. Mark pattern-level transaction ownership, outbox/saga/ACL or side-effect reliability, API `Idempotency-Key` behavior, concrete Django code, and test mechanics as handoffs to the owning skills when they are not already decided.
-- For operational changes, separate DB design from concrete Django migration implementation; hand off migration file details to `implementation-django`.
-- For staged production data changes, state the rollback or forward-fix approach for partial backfills, failed constraint validation, failed index creation, and old/new application compatibility windows.
-- Report only tests, validation, review, browser checks, or subagent work that was actually executed. If not executed, say so.
+주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
+
+| 주제 | 절 |
+|---|---|
+| 데이터베이스 모델링 프로세스 | §1 |
+| 개념적 데이터 모델링 (ERD) | §2 |
+| 정규화 (1NF — BCNF) | §3 |
+| 역정규화 (Denormalization) | §4 |
+| 성능 최적화 순서 | §5 |
+| 인덱스 아키텍처: B+Tree | §6 |
+| 인덱스 설계 베스트 프랙티스 | §7 |
+| 제약조건과 중복 방지 | §8 |
+| 트랜잭션, 격리 수준, 락 | §9 |
+| 쿼리 최적화 | §10 |
+| 운영 rollout, backfill, migration safety | §11 |
+| 데이터 모델링 패턴: 계층 구조 | §12 |
+| 데이터 모델링 패턴: 상속과 다형성 | §13 |
+
+각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).

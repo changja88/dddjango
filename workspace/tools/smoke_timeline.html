@@ -1,0 +1,728 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<title>dddjango smoke1~7 비교 분석</title>
+<style>
+body{font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;margin:24px;color:#1a1a1a;background:#fafafa}
+h1{font-size:20px} .note{color:#666;font-size:12px;margin-bottom:14px;line-height:1.6}
+table{border-collapse:collapse;width:100%;font-size:12.5px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+th,td{border:1px solid #e3e3e3;padding:7px 9px;vertical-align:top;text-align:left}
+th{background:#2d3748;color:#fff;font-size:12px;position:sticky;top:0}
+.lbl{font-weight:700;white-space:nowrap} .sid{font-weight:400;color:#999;font-size:10px}
+.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.muted{color:#999;font-size:10.5px} .ag{color:#3182ce;font-size:10px}
+.imp{font-weight:600;color:#2b6cb0} .feat{color:#444;font-size:11.5px}
+.ev{color:#555;font-size:11px;line-height:1.5} .res{font-size:11px;line-height:1.5}
+tr.slow{background:#fff5f5} tr.bad{background:#fff0f0} tr.good{background:#f0fff4}
+tr.slow .lbl,tr.bad .lbl{color:#c53030} tr.good .lbl{color:#276749}
+.legend{margin-top:12px;font-size:11px;color:#666;line-height:1.7}
+.lbl a{color:inherit;text-decoration:none;border-bottom:1px dotted #aaa}
+h2{font-size:15px;margin:26px 0 8px}
+details.tl{margin:6px 0;border:1px solid #e0e0e0;border-radius:5px;background:#fff;padding:4px 10px}
+details.tl summary{cursor:pointer;font-size:12.5px;padding:4px 0}
+details.tl.slow summary,details.tl.bad summary{color:#c53030} details.tl.good summary{color:#276749}
+table.tlt{margin:8px 0 4px;font-size:11.5px;box-shadow:none}
+table.tlt th{background:#edf2f7;color:#2d3748;position:static}
+table.tlt td{padding:3px 8px;border:1px solid #eee}
+.agc{color:#3182ce;white-space:nowrap;font-size:11px}
+.bar{height:11px;background:#90cdf4;border-radius:2px} .bar.hot{background:#fc8181}
+td.hot{color:#c53030}
+table.tlt tfoot td{background:#fafafa;font-size:10.5px;color:#666}
+</style></head><body>
+<h1>dddjango /dddjango 파이프라인 — smoke1~7 비교 분석</h1>
+<div class="note">
+폴더 번호는 <b>smoke3부터</b> 붙었고, smoke1·smoke2는 공유 <code>-smoke</code> 폴더에 실행 4개가 섞여 있어 a/b/c로 세분(smoke2=d3eb9734=164분 느린 런만 메모리로 확정).
+<b>기계시간</b>=사람 대기(게이트 승인) 제외 활성 시간 / <span class="muted">회색=wall(대기 포함)</span>.
+<b>토큰</b>=코디네이터 raw(M) / <span class="muted">회색=cost 가중단위(M): cache_read×0.1·cache_creation×1.25·output×5</span>.
+</div>
+<table>
+<thead><tr>
+<th>smoke</th><th>만든 기능(G0 질문)</th><th>개선·검증한 가설</th><th>주요 이벤트</th>
+<th>기계분<br><span style="font-weight:400">/wall</span></th><th>서브콜<br><span style="font-weight:400">/턴</span></th>
+<th>raw M<br><span style="font-weight:400">/cost</span></th><th>결과</th>
+</tr></thead>
+<tbody>
+<tr class="">
+<td class="lbl"><a href="#tl-smoke1a">smoke1a</a><br><span class="sid">a4ef25ae<br>05-26</span></td>
+<td class="feat">JSON API 어댑터를 무엇으로 구현할까요? 현재 프로젝트엔 JSON API 프레임워크가 설치돼 있지 않습</td>
+<td class="imp">최초 풀 파이프라인 + ninja(JSON·415) 어댑터 도입</td>
+<td class="ev">discipline-reviewer가 저위험 415 어댑터 슬라이스에서 important 구조개선 적발(미들웨어 승격)</td>
+<td class="num"><b>47</b><br><span class="muted">78</span></td>
+<td class="num">12<br><span class="muted">121턴</span><br><span class="ag">design2 design1 design1 design1 acceptance2 coder4 discipline1</span></td>
+<td class="num">12.1<br><span class="muted">2.7</span></td>
+<td class="res">베이스라인 확보 — 파이프라인 첫 완주</td>
+</tr><tr class="">
+<td class="lbl"><a href="#tl-smoke1b">smoke1b</a><br><span class="sid">655f2453<br>05-26</span></td>
+<td class="feat">주문 1건의 구조를 어떻게 할까요? (요청 본문·도메인 모델·재고 차감 범위가 달라집니다)</td>
+<td class="imp">베이스라인 반복(주문 1건 구조)</td>
+<td class="ev">정상 흐름(architect 2·coder 4·감사 2)</td>
+<td class="num"><b>50</b><br><span class="muted">82</span></td>
+<td class="num">12<br><span class="muted">136턴</span><br><span class="ag">design2 design1 design1 design1 acceptance1 coder4 discipline2</span></td>
+<td class="num">16.0<br><span class="muted">3.5</span></td>
+<td class="res">베이스라인 ~안정(기계 27m)</td>
+</tr><tr class="">
+<td class="lbl"><a href="#tl-smoke1c">smoke1c</a><br><span class="sid">7e71310d<br>05-27</span></td>
+<td class="feat">주문 1건의 구성 범위를 어떻게 잡을까요?</td>
+<td class="imp">베이스라인(주문) — G2 명세 정정 패턴 첫 관측</td>
+<td class="ev">architect 3회(명세 §3.4 정정 재디스패치 = 후일 진단된 'over-annotated 정합 정정' 낭비)</td>
+<td class="num"><b>50</b><br><span class="muted">82</span></td>
+<td class="num">12<br><span class="muted">94턴</span><br><span class="ag">design3 design1 design1 design1 acceptance1 coder3 discipline2</span></td>
+<td class="num">9.1<br><span class="muted">2.8</span></td>
+<td class="res">베이스라인 82m wall, 정정 왕복 씨앗</td>
+</tr><tr class="slow">
+<td class="lbl"><a href="#tl-smoke2">smoke2</a><br><span class="sid">d3eb9734<br>05-27</span></td>
+<td class="feat">주문 API의 입력 형태를 어떻게 할까요? (Order 모델 설계와 계약을 가릅니다)</td>
+<td class="imp">동시성 기능 — coder 메커니즘 대체 토끼굴 노출(문제 발견)</td>
+<td class="ev">coder가 명세에 없는 커스텀 BEGIN IMMEDIATE 백엔드 자작(33분) → 홀리스틱 감사 적발 → 다음 coder가 도로 제거. coder 6회·architect 4회</td>
+<td class="num"><b>114</b><br><span class="muted">164</span></td>
+<td class="num">17<br><span class="muted">148턴</span><br><span class="ag">design4 design1 design1 design1 acceptance2 coder6 discipline2</span></td>
+<td class="num">18.9<br><span class="muted">5.6</span></td>
+<td class="res">느린 런(164m wall). 토끼굴 = 가드레일 도입 동기</td>
+</tr><tr class="good">
+<td class="lbl"><a href="#tl-smoke3">smoke3</a><br><span class="sid">a0d03aed<br>05-27</span></td>
+<td class="feat">주문 데이터 모델을 어떤 형태로 할까요? (재고 차감 단위와 직결됩니다)</td>
+<td class="imp">coder 메커니즘 가드레일 + 표준강화(§0/§4/ACL/ninja) 검증</td>
+<td class="ev">sqlite 데드락 마주치자 coder가 우회 안 만들고 설계로 반송. 최장 슬라이스 5.7분(33분 토끼굴 소멸). §4 명명·ACL 분리 PASS</td>
+<td class="num"><b>85</b><br><span class="muted">88</span></td>
+<td class="num">19<br><span class="muted">91턴</span><br><span class="ag">design5 design1 design1 design1 discipline4 acceptance1 coder6</span></td>
+<td class="num">10.7<br><span class="muted">3.4</span></td>
+<td class="res">가드레일 정적·동적 검증 통과</td>
+</tr><tr class="">
+<td class="lbl"><a href="#tl-smoke4">smoke4</a><br><span class="sid">4cc77948<br>05-27</span></td>
+<td class="feat">주문 한 건의 구조를 어떻게 할까요? (toy baseline은 단일 Product만 존재)</td>
+<td class="imp">BC 배치 비결정성 노출(같은 프롬프트, 다른 경계)</td>
+<td class="ev">smoke3은 주문을 별도 order 앱에, smoke4는 catalog 앱 내부에 배치 — 경계가 런마다 달라지는 재현불가 드러남(가볍지만 비결정)</td>
+<td class="num"><b>50</b><br><span class="muted">50</span></td>
+<td class="num">10<br><span class="muted">98턴</span><br><span class="ag">design2 design1 design1 design1 acceptance1 coder3 discipline1</span></td>
+<td class="num">8.1<br><span class="muted">2.4</span></td>
+<td class="res">BC 고정 레버 도입 동기</td>
+</tr><tr class="good">
+<td class="lbl"><a href="#tl-smoke5">smoke5</a><br><span class="sid">5494f4d0<br>05-27</span></td>
+<td class="feat">G0 스코프 메모(.dddjango/order-stock-deduction/scope.md)를 이대로 승인할</td>
+<td class="imp">BC 배치 비결정성 수정 검증(G0 배치 고정 + 규칙4 가드)</td>
+<td class="ev">G0에서 '이 기능 둘 자리' 사용자 확정 → 새 독립 BC orders + catalog ACL 연결. 규칙4 오용 가드 준수</td>
+<td class="num"><b>60</b><br><span class="muted">60</span></td>
+<td class="num">11<br><span class="muted">79턴</span><br><span class="ag">design3 design1 design1 design1 acceptance1 coder3 discipline1</span></td>
+<td class="num">8.1<br><span class="muted">2.6</span></td>
+<td class="res">동적검증 PASS · 커밋 15ff62d</td>
+</tr><tr class="good">
+<td class="lbl"><a href="#tl-smoke6">smoke6</a><br><span class="sid">17a0b9b6<br>05-27</span></td>
+<td class="feat">주문 생성 시 한 번에 주문할 상품 수를 어떻게 할까요? (재고 차감·트랜잭션 설계의 핵심 경계)</td>
+<td class="imp">extended thinking OFF A/B (vs smoke5)</td>
+<td class="ev">thinking 21→0 블록. 코디 output cost −50%·총 cost −24%. 테스트 35개 통과(품질 무손실). thinking은 플러그인이 아닌 사용자 세션 설정</td>
+<td class="num"><b>52</b><br><span class="muted">79</span></td>
+<td class="num">11<br><span class="muted">89턴</span><br><span class="ag">design4 design1 design1 design1 acceptance1 coder2 discipline1</span></td>
+<td class="num">8.0<br><span class="muted">2.0</span></td>
+<td class="res">✅ 검증된 비용 레버(−24%)</td>
+</tr><tr class="bad">
+<td class="lbl"><a href="#tl-smoke7">smoke7</a><br><span class="sid">1a5c44a8<br>05-28</span></td>
+<td class="feat">주문 요청의 형태는 어느 범위로 정할까요? (계약·재고 차감 로직의 복잡도를 좌우합니다)</td>
+<td class="imp">서브에이전트 모델 다운그레이드 A/B (vs smoke6)</td>
+<td class="ev">architect만 Opus, 나머지 Sonnet. 약한 coder가 게이트 첫 통과 실패로 반송 폭증(coder 2→6·discipline 1→3)</td>
+<td class="num"><b>60</b><br><span class="muted">629</span></td>
+<td class="num">15<br><span class="muted">95턴</span><br><span class="ag">design2 design1 design1 design1 acceptance1 coder6 discipline3</span></td>
+<td class="num">9.0<br><span class="muted">2.9</span></td>
+<td class="res">❌ 역효과(시간+14%·비용+47%) — 원복·금지</td>
+</tr><tr class="good">
+<td class="lbl"><a href="#tl-smoke8">smoke8</a><br><span class="sid">25fd3ae4<br>05-28</span></td>
+<td class="feat">G0 스코프와 활성 lens(ddd·api·db)를 승인하시겠습니까? 그리고 주문(재고 차감 포함)을 어디에</td>
+<td class="imp">커밋된 HEAD(15ff62d) 최종 확인 (thinking off)</td>
+<td class="ev">역대 가장 깨끗: architect 2회(정정 재디스패치 0)·coder 최장 6.5분(토끼굴 0)·테스트 20/20·§0/§4/ACL 전부 충족·OrderModel·BC orders 결정론</td>
+<td class="num"><b>41</b><br><span class="muted">41</span></td>
+<td class="num">12<br><span class="muted">80턴</span><br><span class="ag">design2 design1 design1 design1 acceptance1 coder4 discipline2</span></td>
+<td class="num">7.2<br><span class="muted">1.6</span></td>
+<td class="res">🟢 합격 — 회귀 없음. cost 1.58M(최저)·기계 41m</td>
+</tr>
+</tbody></table>
+<div class="legend">
+<b>읽는 법</b> — 만든 기능은 대부분 "주문+재고 차감"으로 유사하므로, 분석축은 <b>'개선·검증한 가설'</b> 열이다.
+빨강=문제/역효과 런(smoke2 토끼굴·smoke7 모델 다운그레이드), 초록=검증·이득 런(smoke3 가드레일·smoke5 BC고정·smoke6 thinking off).
+기계시간(사람 대기 제외)은 ~47~60분에 수렴(smoke2만 114분=33분 토끼굴) → 품질우선 다단계·게이트·TDD 설계에 내재. smoke 라벨을 누르면 단계별 타임라인으로 이동.
+</div>
+
+<h2>smoke별 단계 타임라인 — 어디서 시간·토큰이 들었나 (펼치기)</h2>
+<div class="note">각 디스패치의 소요분(빨강 막대=15분↑ 병목)과 토큰. 설계 리뷰어 3종은 병렬이라 직렬 합보다 병합시간이 짧다. 코디네이터 오케스트레이션 = 기계시간 − 서브병합.</div>
+<details id="tl-smoke1a" class="tl ">
+<summary><b>smoke1a</b> · JSON API 어댑터를 무엇으로 구현할까요? 현재 프로젝트엔 JSON API 프 · 기계 47m (서브병합 30m + 코디 17m) · 디스패치 12회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>3.2</b></td>
+<td><div class="bar " style="width:84px"></div></td>
+<td class="num">42,374</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.6</b></td>
+<td><div class="bar " style="width:41px"></div></td>
+<td class="num">37,922</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-api</td><td class="feat">API 관점 설계 리뷰</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:38px"></div></td>
+<td class="num">40,897</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>2.4</b></td>
+<td><div class="bar " style="width:64px"></div></td>
+<td class="num">49,267</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">설계 명세 리뷰 반영·중재</td>
+<td class="num "><b>4.3</b></td>
+<td><div class="bar " style="width:114px"></div></td>
+<td class="num">48,939</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성·Red 확인</td>
+<td class="num "><b>2.6</b></td>
+<td><div class="bar " style="width:69px"></div></td>
+<td class="num">55,211</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현</td>
+<td class="num "><b>4.6</b></td>
+<td><div class="bar " style="width:122px"></div></td>
+<td class="num">73,880</td></tr><tr>
+<td class="num muted">8</td><td class="agc">coder</td><td class="feat">슬라이스 2 구현</td>
+<td class="num "><b>6.0</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">99,009</td></tr><tr>
+<td class="num muted">9</td><td class="agc">discipline-reviewer</td><td class="feat">규율 감사 (홀리스틱)</td>
+<td class="num "><b>2.0</b></td>
+<td><div class="bar " style="width:52px"></div></td>
+<td class="num">61,447</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">화이트박스 결합 주석 명시</td>
+<td class="num "><b>0.7</b></td>
+<td><div class="bar " style="width:17px"></div></td>
+<td class="num">29,717</td></tr><tr>
+<td class="num muted">11</td><td class="agc">acceptance-tester</td><td class="feat">S8 인수 테스트 계약 강화</td>
+<td class="num "><b>1.2</b></td>
+<td><div class="bar " style="width:31px"></div></td>
+<td class="num">49,089</td></tr><tr>
+<td class="num muted">12</td><td class="agc">coder</td><td class="feat">권고 #3 구조 개선·#1 주석</td>
+<td class="num "><b>3.9</b></td>
+<td><div class="bar " style="width:103px"></div></td>
+<td class="num">81,382</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 34m, 병렬 리뷰어 겹침 제거 시 30m)</td>
+<td class="num"><b>34</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke1b" class="tl ">
+<summary><b>smoke1b</b> · 주문 1건의 구조를 어떻게 할까요? (요청 본문·도메인 모델·재고 차감 범위가 달 · 기계 50m (서브병합 33m + 코디 18m) · 디스패치 12회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>3.9</b></td>
+<td><div class="bar " style="width:102px"></div></td>
+<td class="num">43,199</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:35px"></div></td>
+<td class="num">55,168</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.3</b></td>
+<td><div class="bar " style="width:33px"></div></td>
+<td class="num">44,307</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>1.6</b></td>
+<td><div class="bar " style="width:42px"></div></td>
+<td class="num">50,086</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재 최종 명세</td>
+<td class="num "><b>5.4</b></td>
+<td><div class="bar " style="width:141px"></div></td>
+<td class="num">66,379</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">실패하는 인수 테스트 작성</td>
+<td class="num "><b>2.4</b></td>
+<td><div class="bar " style="width:62px"></div></td>
+<td class="num">59,508</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현 (AC-1, AC-3)</td>
+<td class="num "><b>6.1</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">74,474</td></tr><tr>
+<td class="num muted">8</td><td class="agc">discipline-reviewer</td><td class="feat">슬라이스 1 경량 규율 감사</td>
+<td class="num "><b>1.3</b></td>
+<td><div class="bar " style="width:35px"></div></td>
+<td class="num">62,605</td></tr><tr>
+<td class="num muted">9</td><td class="agc">coder</td><td class="feat">슬라이스 2 구현 (AC-2, AC-4, AC-6)</td>
+<td class="num "><b>5.5</b></td>
+<td><div class="bar " style="width:144px"></div></td>
+<td class="num">93,777</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">슬라이스 3 구현 (AC-5 422)</td>
+<td class="num "><b>3.2</b></td>
+<td><div class="bar " style="width:85px"></div></td>
+<td class="num">80,833</td></tr><tr>
+<td class="num muted">11</td><td class="agc">discipline-reviewer</td><td class="feat">홀리스틱 규율 감사</td>
+<td class="num "><b>2.1</b></td>
+<td><div class="bar " style="width:55px"></div></td>
+<td class="num">71,630</td></tr><tr>
+<td class="num muted">12</td><td class="agc">coder</td><td class="feat">잔재 주석 정리 (권고1)</td>
+<td class="num "><b>0.7</b></td>
+<td><div class="bar " style="width:18px"></div></td>
+<td class="num">29,980</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 35m, 병렬 리뷰어 겹침 제거 시 33m)</td>
+<td class="num"><b>35</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke1c" class="tl ">
+<summary><b>smoke1c</b> · 주문 1건의 구성 범위를 어떻게 잡을까요? · 기계 50m (서브병합 27m + 코디 22m) · 디스패치 12회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">통합 설계 명세 초안 작성</td>
+<td class="num "><b>3.9</b></td>
+<td><div class="bar " style="width:96px"></div></td>
+<td class="num">65,085</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.2</b></td>
+<td><div class="bar " style="width:30px"></div></td>
+<td class="num">41,327</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:35px"></div></td>
+<td class="num">32,004</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 데이터 관점 설계 리뷰</td>
+<td class="num "><b>1.3</b></td>
+<td><div class="bar " style="width:32px"></div></td>
+<td class="num">46,169</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재로 최종 명세 확정</td>
+<td class="num "><b>4.1</b></td>
+<td><div class="bar " style="width:102px"></div></td>
+<td class="num">56,622</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">실패하는 인수 테스트 작성</td>
+<td class="num "><b>1.9</b></td>
+<td><div class="bar " style="width:46px"></div></td>
+<td class="num">53,993</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현 (성공 경로)</td>
+<td class="num "><b>6.4</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">82,253</td></tr><tr>
+<td class="num muted">8</td><td class="agc">coder</td><td class="feat">슬라이스 2 잔여 - stock CHECK 제약</td>
+<td class="num "><b>1.1</b></td>
+<td><div class="bar " style="width:26px"></div></td>
+<td class="num">46,682</td></tr><tr>
+<td class="num muted">9</td><td class="agc">discipline-reviewer</td><td class="feat">규율 감사 홀리스틱</td>
+<td class="num "><b>2.4</b></td>
+<td><div class="bar " style="width:59px"></div></td>
+<td class="num">64,086</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">B1/I1/I2/N3 코드 정리</td>
+<td class="num "><b>2.3</b></td>
+<td><div class="bar " style="width:56px"></div></td>
+<td class="num">52,126</td></tr><tr>
+<td class="num muted">11</td><td class="agc">design-architect</td><td class="feat">명세 §3.4 정정</td>
+<td class="num "><b>4.4</b></td>
+<td><div class="bar " style="width:109px"></div></td>
+<td class="num">61,175</td></tr><tr>
+<td class="num muted">12</td><td class="agc">discipline-reviewer</td><td class="feat">정리 반영 재감사</td>
+<td class="num "><b>1.3</b></td>
+<td><div class="bar " style="width:31px"></div></td>
+<td class="num">60,359</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 32m, 병렬 리뷰어 겹침 제거 시 27m)</td>
+<td class="num"><b>32</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke2" class="tl slow">
+<summary><b>smoke2</b> · 주문 API의 입력 형태를 어떻게 할까요? (Order 모델 설계와 계약을 가릅니 · 기계 114m (서브병합 85m + 코디 29m) · 디스패치 17회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>4.3</b></td>
+<td><div class="bar " style="width:20px"></div></td>
+<td class="num">69,931</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.5</b></td>
+<td><div class="bar " style="width:7px"></div></td>
+<td class="num">45,609</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.8</b></td>
+<td><div class="bar " style="width:8px"></div></td>
+<td class="num">39,825</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 데이터 관점 설계 리뷰</td>
+<td class="num "><b>2.0</b></td>
+<td><div class="bar " style="width:9px"></div></td>
+<td class="num">44,178</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">설계 명세 리뷰 반영·중재</td>
+<td class="num "><b>5.1</b></td>
+<td><div class="bar " style="width:24px"></div></td>
+<td class="num">66,575</td></tr><tr>
+<td class="num muted">6</td><td class="agc">design-architect</td><td class="feat">G1 OD 결정 확정 반영</td>
+<td class="num "><b>4.5</b></td>
+<td><div class="bar " style="width:21px"></div></td>
+<td class="num">67,506</td></tr><tr>
+<td class="num muted">7</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성(Red)</td>
+<td class="num "><b>4.0</b></td>
+<td><div class="bar " style="width:18px"></div></td>
+<td class="num">71,625</td></tr><tr>
+<td class="num muted">8</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현</td>
+<td class="num hot"><b>33.7</b></td>
+<td><div class="bar hot" style="width:160px"></div></td>
+<td class="num">104,302</td></tr><tr>
+<td class="num muted">9</td><td class="agc">discipline-reviewer</td><td class="feat">슬라이스 1 경량 규율 감사</td>
+<td class="num "><b>2.8</b></td>
+<td><div class="bar " style="width:13px"></div></td>
+<td class="num">87,341</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">슬라이스 1 감사 반영</td>
+<td class="num "><b>2.9</b></td>
+<td><div class="bar " style="width:14px"></div></td>
+<td class="num">78,879</td></tr><tr>
+<td class="num muted">11</td><td class="agc">coder</td><td class="feat">슬라이스 2 구현</td>
+<td class="num "><b>3.5</b></td>
+<td><div class="bar " style="width:16px"></div></td>
+<td class="num">90,454</td></tr><tr>
+<td class="num muted">12</td><td class="agc">coder</td><td class="feat">슬라이스 3 구현</td>
+<td class="num "><b>2.1</b></td>
+<td><div class="bar " style="width:9px"></div></td>
+<td class="num">67,066</td></tr><tr>
+<td class="num muted">13</td><td class="agc">coder</td><td class="feat">슬라이스 4 구현</td>
+<td class="num "><b>7.0</b></td>
+<td><div class="bar " style="width:33px"></div></td>
+<td class="num">103,789</td></tr><tr>
+<td class="num muted">14</td><td class="agc">discipline-reviewer</td><td class="feat">홀리스틱 규율 감사</td>
+<td class="num "><b>3.5</b></td>
+<td><div class="bar " style="width:16px"></div></td>
+<td class="num">104,293</td></tr><tr>
+<td class="num muted">15</td><td class="agc">acceptance-tester</td><td class="feat">동시성 인수 테스트 재작성</td>
+<td class="num "><b>2.7</b></td>
+<td><div class="bar " style="width:12px"></div></td>
+<td class="num">64,588</td></tr><tr>
+<td class="num muted">16</td><td class="agc">design-architect</td><td class="feat">명세 예외 소유권 정합화</td>
+<td class="num "><b>5.1</b></td>
+<td><div class="bar " style="width:24px"></div></td>
+<td class="num">70,178</td></tr><tr>
+<td class="num muted">17</td><td class="agc">coder</td><td class="feat">백엔드 제거 + MAJOR-1 정리</td>
+<td class="num "><b>3.8</b></td>
+<td><div class="bar " style="width:18px"></div></td>
+<td class="num">94,120</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 90m, 병렬 리뷰어 겹침 제거 시 85m)</td>
+<td class="num"><b>90</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke3" class="tl good">
+<summary><b>smoke3</b> · 주문 데이터 모델을 어떤 형태로 할까요? (재고 차감 단위와 직결됩니다) · 기계 85m (서브병합 61m + 코디 23m) · 디스패치 19회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>4.4</b></td>
+<td><div class="bar " style="width:99px"></div></td>
+<td class="num">71,557</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.3</b></td>
+<td><div class="bar " style="width:29px"></div></td>
+<td class="num">45,271</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.7</b></td>
+<td><div class="bar " style="width:39px"></div></td>
+<td class="num">69,531</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>1.6</b></td>
+<td><div class="bar " style="width:36px"></div></td>
+<td class="num">51,299</td></tr><tr>
+<td class="num muted">5</td><td class="agc">discipline-reviewer</td><td class="feat">단순성·testability 경량 점검</td>
+<td class="num "><b>1.5</b></td>
+<td><div class="bar " style="width:33px"></div></td>
+<td class="num">54,379</td></tr><tr>
+<td class="num muted">6</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재 후 명세 확정</td>
+<td class="num "><b>5.5</b></td>
+<td><div class="bar " style="width:125px"></div></td>
+<td class="num">72,044</td></tr><tr>
+<td class="num muted">7</td><td class="agc">design-architect</td><td class="feat">G1 결정 명세 확정 반영</td>
+<td class="num "><b>4.9</b></td>
+<td><div class="bar " style="width:110px"></div></td>
+<td class="num">72,165</td></tr><tr>
+<td class="num muted">8</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성 및 Red 확인</td>
+<td class="num "><b>3.9</b></td>
+<td><div class="bar " style="width:88px"></div></td>
+<td class="num">70,719</td></tr><tr>
+<td class="num muted">9</td><td class="agc">coder</td><td class="feat">S1 종단 배선 + 201 구현</td>
+<td class="num "><b>4.5</b></td>
+<td><div class="bar " style="width:103px"></div></td>
+<td class="num">85,502</td></tr><tr>
+<td class="num muted">10</td><td class="agc">discipline-reviewer</td><td class="feat">S1 경량 규율 감사</td>
+<td class="num "><b>1.8</b></td>
+<td><div class="bar " style="width:41px"></div></td>
+<td class="num">78,975</td></tr><tr>
+<td class="num muted">11</td><td class="agc">coder</td><td class="feat">S2~S4 에러 분기 구현</td>
+<td class="num "><b>2.9</b></td>
+<td><div class="bar " style="width:66px"></div></td>
+<td class="num">84,392</td></tr><tr>
+<td class="num muted">12</td><td class="agc">discipline-reviewer</td><td class="feat">S2~S4 경량 규율 감사</td>
+<td class="num "><b>1.5</b></td>
+<td><div class="bar " style="width:34px"></div></td>
+<td class="num">64,454</td></tr><tr>
+<td class="num muted">13</td><td class="agc">coder</td><td class="feat">S5 동시성 오버셀 방지 구현</td>
+<td class="num "><b>4.3</b></td>
+<td><div class="bar " style="width:96px"></div></td>
+<td class="num">80,141</td></tr><tr>
+<td class="num muted">14</td><td class="agc">design-architect</td><td class="feat">db lens 명세 보강 (SQLite begin)</td>
+<td class="num "><b>6.9</b></td>
+<td><div class="bar " style="width:156px"></div></td>
+<td class="num">88,759</td></tr><tr>
+<td class="num muted">15</td><td class="agc">coder</td><td class="feat">S5 SQLite begin-immediate 구현</td>
+<td class="num "><b>5.7</b></td>
+<td><div class="bar " style="width:130px"></div></td>
+<td class="num">96,183</td></tr><tr>
+<td class="num muted">16</td><td class="agc">coder</td><td class="feat">S6 415 미지원 미디어타입 구현</td>
+<td class="num "><b>3.3</b></td>
+<td><div class="bar " style="width:75px"></div></td>
+<td class="num">88,159</td></tr><tr>
+<td class="num muted">17</td><td class="agc">discipline-reviewer</td><td class="feat">G2 직전 홀리스틱 규율 감사</td>
+<td class="num "><b>2.6</b></td>
+<td><div class="bar " style="width:59px"></div></td>
+<td class="num">106,145</td></tr><tr>
+<td class="num muted">18</td><td class="agc">coder</td><td class="feat">ACL 주석 + CHECK 위반 테스트 추가</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:30px"></div></td>
+<td class="num">40,476</td></tr><tr>
+<td class="num muted">19</td><td class="agc">design-architect</td><td class="feat">명세 정합 정정</td>
+<td class="num "><b>7.0</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">91,896</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 67m, 병렬 리뷰어 겹침 제거 시 61m)</td>
+<td class="num"><b>67</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke4" class="tl ">
+<summary><b>smoke4</b> · 주문 한 건의 구조를 어떻게 할까요? (toy baseline은 단일 Produc · 기계 50m (서브병합 35m + 코디 15m) · 디스패치 10회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>3.5</b></td>
+<td><div class="bar " style="width:40px"></div></td>
+<td class="num">68,077</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.1</b></td>
+<td><div class="bar " style="width:12px"></div></td>
+<td class="num">40,049</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.2</b></td>
+<td><div class="bar " style="width:14px"></div></td>
+<td class="num">51,568</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>1.9</b></td>
+<td><div class="bar " style="width:21px"></div></td>
+<td class="num">37,732</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재 후 명세 확정</td>
+<td class="num "><b>3.8</b></td>
+<td><div class="bar " style="width:43px"></div></td>
+<td class="num">54,329</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성 및 Red 확인</td>
+<td class="num "><b>3.1</b></td>
+<td><div class="bar " style="width:36px"></div></td>
+<td class="num">62,314</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현 (핵심 수직 + 오버셀 안전)</td>
+<td class="num "><b>13.8</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">132,016</td></tr><tr>
+<td class="num muted">8</td><td class="agc">coder</td><td class="feat">슬라이스 2 구현 (422 에러 계약)</td>
+<td class="num "><b>3.3</b></td>
+<td><div class="bar " style="width:38px"></div></td>
+<td class="num">78,825</td></tr><tr>
+<td class="num muted">9</td><td class="agc">discipline-reviewer</td><td class="feat">규율 감사 (클린코드·TDD·하우스룰)</td>
+<td class="num "><b>2.6</b></td>
+<td><div class="bar " style="width:30px"></div></td>
+<td class="num">90,932</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">수정 A·B 반영 (동시성 경로·OpenAPI 노출)</td>
+<td class="num "><b>2.9</b></td>
+<td><div class="bar " style="width:33px"></div></td>
+<td class="num">70,451</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 37m, 병렬 리뷰어 겹침 제거 시 35m)</td>
+<td class="num"><b>37</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke5" class="tl good">
+<summary><b>smoke5</b> · G0 스코프 메모(.dddjango/order-stock-deduction/sco · 기계 60m (서브병합 43m + 코디 17m) · 디스패치 11회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>3.9</b></td>
+<td><div class="bar " style="width:65px"></div></td>
+<td class="num">66,353</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.5</b></td>
+<td><div class="bar " style="width:24px"></div></td>
+<td class="num">71,219</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-api</td><td class="feat">API 관점 설계 리뷰</td>
+<td class="num "><b>1.7</b></td>
+<td><div class="bar " style="width:27px"></div></td>
+<td class="num">44,045</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>2.0</b></td>
+<td><div class="bar " style="width:32px"></div></td>
+<td class="num">51,782</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재 후 최종 명세</td>
+<td class="num "><b>5.3</b></td>
+<td><div class="bar " style="width:88px"></div></td>
+<td class="num">88,687</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">실패하는 인수 테스트 작성</td>
+<td class="num "><b>2.2</b></td>
+<td><div class="bar " style="width:36px"></div></td>
+<td class="num">56,129</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스1 orders 수직 구현</td>
+<td class="num "><b>9.7</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">117,707</td></tr><tr>
+<td class="num muted">8</td><td class="agc">coder</td><td class="feat">슬라이스2 동시성·DB경화 구현</td>
+<td class="num "><b>7.4</b></td>
+<td><div class="bar " style="width:121px"></div></td>
+<td class="num">95,436</td></tr><tr>
+<td class="num muted">9</td><td class="agc">design-architect</td><td class="feat">명세 SELECT 배치 충돌 정정</td>
+<td class="num "><b>5.0</b></td>
+<td><div class="bar " style="width:82px"></div></td>
+<td class="num">71,212</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">ACL UPDATE-first 재구현</td>
+<td class="num "><b>4.7</b></td>
+<td><div class="bar " style="width:77px"></div></td>
+<td class="num">91,075</td></tr><tr>
+<td class="num muted">11</td><td class="agc">discipline-reviewer</td><td class="feat">규율 감사 홀리스틱</td>
+<td class="num "><b>2.3</b></td>
+<td><div class="bar " style="width:37px"></div></td>
+<td class="num">80,478</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 46m, 병렬 리뷰어 겹침 제거 시 43m)</td>
+<td class="num"><b>46</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke6" class="tl good">
+<summary><b>smoke6</b> · 주문 생성 시 한 번에 주문할 상품 수를 어떻게 할까요? (재고 차감·트랜잭션 설 · 기계 52m (서브병합 38m + 코디 14m) · 디스패치 11회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 초안 작성</td>
+<td class="num "><b>5.6</b></td>
+<td><div class="bar " style="width:120px"></div></td>
+<td class="num">114,111</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.6</b></td>
+<td><div class="bar " style="width:35px"></div></td>
+<td class="num">65,239</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.8</b></td>
+<td><div class="bar " style="width:37px"></div></td>
+<td class="num">48,154</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>1.8</b></td>
+<td><div class="bar " style="width:39px"></div></td>
+<td class="num">53,802</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재</td>
+<td class="num "><b>1.5</b></td>
+<td><div class="bar " style="width:31px"></div></td>
+<td class="num">61,010</td></tr><tr>
+<td class="num muted">6</td><td class="agc">design-architect</td><td class="feat">리뷰 반영 실제 적용</td>
+<td class="num "><b>4.6</b></td>
+<td><div class="bar " style="width:98px"></div></td>
+<td class="num">63,666</td></tr><tr>
+<td class="num muted">7</td><td class="agc">design-architect</td><td class="feat">G1 권장값 명세 확정</td>
+<td class="num "><b>4.5</b></td>
+<td><div class="bar " style="width:97px"></div></td>
+<td class="num">69,111</td></tr><tr>
+<td class="num muted">8</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성 (Red)</td>
+<td class="num "><b>4.2</b></td>
+<td><div class="bar " style="width:89px"></div></td>
+<td class="num">72,474</td></tr><tr>
+<td class="num muted">9</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현</td>
+<td class="num "><b>7.4</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">97,837</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">슬라이스 2 구현</td>
+<td class="num "><b>5.9</b></td>
+<td><div class="bar " style="width:126px"></div></td>
+<td class="num">101,367</td></tr><tr>
+<td class="num muted">11</td><td class="agc">discipline-reviewer</td><td class="feat">규율 감사 (홀리스틱)</td>
+<td class="num "><b>2.1</b></td>
+<td><div class="bar " style="width:44px"></div></td>
+<td class="num">77,147</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 41m, 병렬 리뷰어 겹침 제거 시 38m)</td>
+<td class="num"><b>41</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke7" class="tl bad">
+<summary><b>smoke7</b> · 주문 요청의 형태는 어느 범위로 정할까요? (계약·재고 차감 로직의 복잡도를 좌우 · 기계 60m (서브병합 43m + 코디 16m) · 디스패치 15회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">주문 생성 API 설계 명세 초안</td>
+<td class="num "><b>4.3</b></td>
+<td><div class="bar " style="width:97px"></div></td>
+<td class="num">72,463</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-api</td><td class="feat">설계 명세 계약 관점 리뷰</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:31px"></div></td>
+<td class="num">30,956</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-db</td><td class="feat">설계 명세 데이터 관점 리뷰</td>
+<td class="num "><b>1.5</b></td>
+<td><div class="bar " style="width:33px"></div></td>
+<td class="num">41,708</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-ddd</td><td class="feat">설계 명세 도메인 관점 리뷰</td>
+<td class="num "><b>2.0</b></td>
+<td><div class="bar " style="width:45px"></div></td>
+<td class="num">47,487</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 노트 반영·중재</td>
+<td class="num "><b>5.4</b></td>
+<td><div class="bar " style="width:122px"></div></td>
+<td class="num">82,038</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성(Red 확인)</td>
+<td class="num "><b>2.9</b></td>
+<td><div class="bar " style="width:66px"></div></td>
+<td class="num">57,144</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스 1 구현(201 성공 경로)</td>
+<td class="num "><b>7.1</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">102,446</td></tr><tr>
+<td class="num muted">8</td><td class="agc">discipline-reviewer</td><td class="feat">슬라이스 1 경량 규율 감사</td>
+<td class="num "><b>2.1</b></td>
+<td><div class="bar " style="width:47px"></div></td>
+<td class="num">80,356</td></tr><tr>
+<td class="num muted">9</td><td class="agc">coder</td><td class="feat">슬라이스 1 감사 지적 반영</td>
+<td class="num "><b>2.4</b></td>
+<td><div class="bar " style="width:54px"></div></td>
+<td class="num">57,876</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">슬라이스 2 구현(에러 계약)</td>
+<td class="num "><b>5.3</b></td>
+<td><div class="bar " style="width:119px"></div></td>
+<td class="num">89,664</td></tr><tr>
+<td class="num muted">11</td><td class="agc">discipline-reviewer</td><td class="feat">슬라이스 2 경량 규율 감사</td>
+<td class="num "><b>2.1</b></td>
+<td><div class="bar " style="width:46px"></div></td>
+<td class="num">69,953</td></tr><tr>
+<td class="num muted">12</td><td class="agc">coder</td><td class="feat">슬라이스 2 감사 지적 반영</td>
+<td class="num "><b>2.9</b></td>
+<td><div class="bar " style="width:65px"></div></td>
+<td class="num">57,288</td></tr><tr>
+<td class="num muted">13</td><td class="agc">coder</td><td class="feat">슬라이스 3 동시성 가드 검증·보강</td>
+<td class="num "><b>1.8</b></td>
+<td><div class="bar " style="width:41px"></div></td>
+<td class="num">77,377</td></tr><tr>
+<td class="num muted">14</td><td class="agc">discipline-reviewer</td><td class="feat">홀리스틱 최종 규율 감사</td>
+<td class="num "><b>3.0</b></td>
+<td><div class="bar " style="width:67px"></div></td>
+<td class="num">78,078</td></tr><tr>
+<td class="num muted">15</td><td class="agc">coder</td><td class="feat">홀리스틱 감사 important 반영</td>
+<td class="num "><b>2.1</b></td>
+<td><div class="bar " style="width:48px"></div></td>
+<td class="num">46,301</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 46m, 병렬 리뷰어 겹침 제거 시 43m)</td>
+<td class="num"><b>46</b></td><td></td><td></td></tr></tfoot></table>
+</details><details id="tl-smoke8" class="tl good">
+<summary><b>smoke8</b> · G0 스코프와 활성 lens(ddd·api·db)를 승인하시겠습니까? 그리고 주문 · 기계 41m (서브병합 31m + 코디 10m) · 디스패치 12회</summary>
+<table class="tlt"><thead><tr><th>#</th><th>에이전트</th><th>작업</th><th>소요분</th><th>　</th><th>토큰</th></tr></thead>
+<tbody><tr>
+<td class="num muted">1</td><td class="agc">design-architect</td><td class="feat">설계 명세 작성</td>
+<td class="num "><b>3.3</b></td>
+<td><div class="bar " style="width:82px"></div></td>
+<td class="num">64,263</td></tr><tr>
+<td class="num muted">2</td><td class="agc">design-review-api</td><td class="feat">API 계약 관점 설계 리뷰</td>
+<td class="num "><b>1.2</b></td>
+<td><div class="bar " style="width:28px"></div></td>
+<td class="num">41,361</td></tr><tr>
+<td class="num muted">3</td><td class="agc">design-review-ddd</td><td class="feat">DDD 관점 설계 리뷰</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:34px"></div></td>
+<td class="num">62,384</td></tr><tr>
+<td class="num muted">4</td><td class="agc">design-review-db</td><td class="feat">DB 관점 설계 리뷰</td>
+<td class="num "><b>1.4</b></td>
+<td><div class="bar " style="width:35px"></div></td>
+<td class="num">48,376</td></tr><tr>
+<td class="num muted">5</td><td class="agc">design-architect</td><td class="feat">리뷰 반영·중재</td>
+<td class="num "><b>4.0</b></td>
+<td><div class="bar " style="width:99px"></div></td>
+<td class="num">70,601</td></tr><tr>
+<td class="num muted">6</td><td class="agc">acceptance-tester</td><td class="feat">인수 테스트 작성</td>
+<td class="num "><b>3.8</b></td>
+<td><div class="bar " style="width:94px"></div></td>
+<td class="num">61,057</td></tr><tr>
+<td class="num muted">7</td><td class="agc">coder</td><td class="feat">슬라이스 A 구현</td>
+<td class="num "><b>6.5</b></td>
+<td><div class="bar " style="width:160px"></div></td>
+<td class="num">91,216</td></tr><tr>
+<td class="num muted">8</td><td class="agc">discipline-reviewer</td><td class="feat">슬라이스 A 규율 감사</td>
+<td class="num "><b>1.8</b></td>
+<td><div class="bar " style="width:43px"></div></td>
+<td class="num">70,857</td></tr><tr>
+<td class="num muted">9</td><td class="agc">coder</td><td class="feat">슬라이스 B 구현</td>
+<td class="num "><b>1.9</b></td>
+<td><div class="bar " style="width:47px"></div></td>
+<td class="num">63,300</td></tr><tr>
+<td class="num muted">10</td><td class="agc">coder</td><td class="feat">슬라이스 C 구현</td>
+<td class="num "><b>4.4</b></td>
+<td><div class="bar " style="width:108px"></div></td>
+<td class="num">74,390</td></tr><tr>
+<td class="num muted">11</td><td class="agc">discipline-reviewer</td><td class="feat">홀리스틱 규율 감사</td>
+<td class="num "><b>2.3</b></td>
+<td><div class="bar " style="width:55px"></div></td>
+<td class="num">83,209</td></tr><tr>
+<td class="num muted">12</td><td class="agc">coder</td><td class="feat">I1 수렴</td>
+<td class="num "><b>1.1</b></td>
+<td><div class="bar " style="width:28px"></div></td>
+<td class="num">48,776</td></tr></tbody>
+<tfoot><tr><td colspan="3">디스패치 소요 합(직렬 기준 33m, 병렬 리뷰어 겹침 제거 시 31m)</td>
+<td class="num"><b>33</b></td><td></td><td></td></tr></tfoot></table>
+</details>
+</body></html>

@@ -1,2 +1,0 @@
-/Users/hyun/.codex/plugins/cache/dddjango-local/dddjango/0.1.10/.codex-plugin/plugin.json
-dddjango/.codex-plugin/plugin.json

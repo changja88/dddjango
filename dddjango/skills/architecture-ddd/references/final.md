@@ -1,21 +1,5 @@
 # DDD(도메인 주도 설계) 종합 가이드
 
-## P1 Source Sufficiency
-
-| field | value |
-|---|---|
-| purpose | DDD/domain modeling decisions: subdomain discovery, bounded context, ubiquitous language, aggregates, invariants, domain events/services, and consistency boundaries. |
-| use when | Domain language, business policy, state transition, aggregate boundary, or context boundary is unclear. |
-| exclude/handoff | Do not use for schema tuning, REST status codes, Django code mechanics, or pytest fixture mechanics except as domain input to owning references. |
-| core criteria | Strategic design before tactical patterns; model with domain experts and ubiquitous language; aggregate boundaries protect invariants; cross-aggregate consistency and events require explicit tradeoffs. |
-| source priority | 1 primary DDD books/reference material by Evans and Vernon; 2 primary/reputable DDD and architecture books; 3 reputable engineering articles by Fowler, Bogard, Microsoft, and DDD community sources; 4 internal Korean summaries only as synthesis. |
-| P1 classification | sufficient |
-
-> **Internal 출처:** [A] 도메인 주도 개발 시작하기, [B] 도메인 주도 설계 첫걸음, [C] 도메인 주도 설계 구현(빨간책)
-> **External 출처:** Eric Evans 파란책, Vaughn Vernon "Effective Aggregate Design" / "DDD Distilled", Scott Millett, Harry Percival & Bob Gregory "Cosmic Python", Greg Young, Martin Fowler, Alberto Brandolini
-
----
-
 ## 1. DDD란 무엇인가
 
 DDD(Domain-Driven Design)는 복잡한 소프트웨어를 비즈니스 도메인 중심으로 설계하는 방법론이다. 소프트웨어의 핵심은 비즈니스 도메인이며, 도메인 전문가와 개발자가 공통 언어를 사용하여 모델을 구축하고 이를 코드로 구현한다.

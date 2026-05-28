@@ -1,7 +1,0 @@
-{
-  "schema_version": "eval-oracle/v1",
-  "case_id": "p4-fail",
-  "variant": "baseline",
-  "loaded_skill": "dddjango:implementation-django",
-  "required_claims": ["service-layer-evidence"]
-}

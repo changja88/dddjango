@@ -1,43 +1,59 @@
 ---
 name: implementation-test
-description: >
-  Use for Python/Django test implementation and review: pytest, fixtures/conftest.py, parametrization, assertions, doubles (fake/mock/stub/spy/dummy), factory_boy/Faker, Hypothesis, time/HTTP mocking, testcontainers, coverage, mutation, BDD, flaky tests, Django Ninja TestClient contract tests, and idempotency/concurrency tests. Use for 테스트 코드 작성/리뷰, pytest 픽스처, mock/모킹, 테스트 더블, 팩토리, 커버리지, 속성 기반 테스트, 중복/동시성 테스트. Prefer production-code skills for Django ORM/service/API implementation; use this skill for tests/**, conftest.py, factories, and doubles. Prefer workflow-dddjango-subagents for composite/subagent work, implementation-tdd for Red-Green-Refactor, architecture skills when invariants, data constraints, or REST contracts are unclear, and source-reference-audit for source/reference/cache governance. Do not use for simple explanations, answer-only requests, pure TDD planning, or tiny assertion/fixture/import-ordering/typo/pytest command questions.
+description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, 테스트 더블 분류, pytest 구조·픽스처·심화 설정·마커·플러그인, Mock·테스트더블 실전, Property-Based Testing(Hypothesis), 팩토리(factory_boy+Faker), 시간 모킹, HTTP 모킹, Docker 통합 테스트, 커버리지, 멀티환경 테스트, 테스트 코드 품질 원칙·안티패턴, Mutation Testing, BDD pytest-bdd, Django Ninja TestClient API 계약 테스트, Idempotency·동시성 테스트, 테스트 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. TDD 실천(Red-Green-Refactor 등 방법론)은 discipline-tdd, Django 코어 특화 구현은 implementation-django, JSON API 어댑터 특화는 implementation-django-ninja, 서버렌더 특화는 implementation-django-web으로 위임.
+user-invocable: false
 ---
 
-# Test Implementation
+# 테스트 코드 작성법 종합
 
-Use this skill to write or review concrete pytest tests, fixtures, factories, doubles, property tests, and test quality checks. The test should verify behavior, invariants, and contracts rather than implementation details.
+## 언제 쓰나
 
-## Routing
+테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 설계·작성할 때 로드한다. 경계:
 
-- If the user asks for Red-Green-Refactor, failing-test-first sequencing, or TDD coaching, use `implementation-tdd`; use this skill for the pytest mechanics behind that flow.
-- If domain invariants, policy ownership, aggregates, or bounded context language are unclear, use `architecture-ddd` before locking in assertions.
-- If DB schema, constraints, transactions, locking, query performance, or rollout behavior is unresolved, use `architecture-db` before encoding those assumptions in tests.
-- If REST resources, status codes, Problem Details, pagination, idempotency, or OpenAPI contract behavior is unresolved, use `architecture-api` before writing API contract assertions.
-- If the work is Django ORM, migration, service, selector, or Django Ninja implementation, use the relevant implementation skill for production code and this skill for `tests/**`, `conftest.py`, factories, and doubles.
-- If the work is composite or risky across domain, DB, API, Django implementation, and tests, or the user explicitly asks for subagents, role decomposition, parallel review, or agent responsibility distribution in a Django task, use `workflow-dddjango-subagents` first.
-- If the main question is source/reference governance, bundled reference parity, runtime cache sync, leakage, validation coverage, or eval traceability for skills or references, use `source-reference-audit`.
-- For a small assertion, fixture, import ordering, typo, or pytest command explanation, answer directly without DDD or workflow ceremony.
+- TDD 방법론(언제·왜 테스트를 먼저 쓰는가, Red-Green-Refactor) → `discipline-tdd`
+- Django 모델·ORM·서비스 레이어 구현 → `implementation-django`
+- Django Ninja Router/Schema·TestClient 계약 어댑터 구현 → `implementation-django-ninja`
+- Django 뷰·템플릿·폼·HTMX 구현 → `implementation-django-web`
 
-## Reference Loading
+## 핵심 운영 원칙
 
-- Load only the reference file(s) relevant to the current test implementation task.
-- Read [pytest-fixtures.md](references/pytest-fixtures.md) for pytest structure, assertions, fixtures, `conftest.py`, parametrization, markers, plugins, async tests, and execution commands.
-- Read [test-doubles.md](references/test-doubles.md) for dummy/stub/spy/mock/fake selection, output/state/communication verification, `Mock`, `AsyncMock`, `seal`, monkeypatch, time mocking, and HTTP mocking.
-- Read [factories-property-tests.md](references/factories-property-tests.md) for factory_boy, Faker, traits, Django factories, Hypothesis, stateful property tests, and pytest-bdd.
-- Read [coverage-mutation.md](references/coverage-mutation.md) for test pyramid strategy, testcontainers, coverage.py, tox/nox, FIRST, AAA, anti-patterns, mutation testing, and debugging.
-- Read [django-api-concurrency.md](references/django-api-concurrency.md) for Django Ninja `TestClient`, pytest-django DB/transaction selection, idempotency replay, duplicate prevention, row-lock, and concurrency/race tests.
+- 행동을 증명하는 가장 작은 테스트 범위를 선택; 피라미드 하단일수록 빠르고 안정 (§1)
+- 테스트 더블은 역할과 리스크 기준으로 선택: Stub→상태 검증, Mock→상호작용 검증, Fake→가벼운 협력자 (§2, §7.1)
+- 픽스처는 명시적·격리적으로 작성, conftest 계층을 활용해 공유 범위 최소화 (§3.7, §4.2)
+- 검증은 상태·결과 우선, 화이트박스(내부 구현) 검증 회피 (§7.1, §15.3)
+- Hypothesis로 경계값·속성 기반 테스트, @example로 재현 케이스 고정 (§8)
+- factory_boy로 최소 필요 상태만 지정한 객체 생성, DB fixture 최소화 (§9)
+- 동시성·idempotency 테스트는 DB 의미론이 필요하면 DB-backed 테스트로 (§20)
+- 커버리지 수치보다 의미 있는 assertion이 중요; mutmut로 테스트 유효성 검증 (§13, §17)
+- AAA(Arrange-Act-Assert) 패턴으로 테스트 구조 일관화 (§15.2)
+- 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16)
 
-## Runtime Rules
+## 상세 레퍼런스
 
-- Choose the smallest test level that protects the behavior: fast domain unit tests first, integration tests for ORM/transactions/constraints/query performance, and Django Ninja `TestClient` tests for request/response contracts.
-- Prefer output and state verification for domain logic. Use communication verification and mocks mainly for external systems, adapters, or collaboration that must be observed.
-- Do not mock every collaborator by default. Use fakes for useful in-memory behavior and mocks for external roles such as payment, email, HTTP, or SDK boundaries.
-- Keep tests independent, repeatable, self-validating, and readable. Isolate time, randomness, filesystem, environment, network, and database state.
-- Put shared setup in fixtures or factories only when it makes the test clearer; avoid hidden fixture chains that obscure the behavior under test.
-- Use property-based tests for invariants over broad input spaces and example tests for named boundary cases.
-- Treat coverage and mutation scores as signals to inspect, not proof that behavior is fully tested.
-- For Django Ninja APIs, assert public request/response contracts with `TestClient`; do not mock routers or verify private service calls unless the collaboration itself is the contract.
-- For risky write behavior, test the already-decided invariant and API/DB criteria: replay/idempotency, uniqueness, transaction/locking, and concurrency at the lowest level that can prove the rule.
-- In composite workflows, own `tests/**`, `conftest.py`, and factory files; coordinate with implementation skills without changing production code unless assigned.
-- Report only tests, coverage, mutation checks, or subagent reviews that were actually run. If a command was not run, state that directly.
+주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
+
+| 주제 | 절 |
+|---|---|
+| 테스트 전략과 피라미드 | §1 |
+| 테스트 더블 분류 체계 | §2 |
+| pytest 기본 구조와 Fixture | §3 |
+| pytest 심화 설정 | §4 |
+| pytest 마커 시스템 | §5 |
+| pytest 플러그인 생태계 | §6 |
+| Mock과 테스트 더블 실전 | §7 |
+| Property-Based Testing (Hypothesis) | §8 |
+| 테스트 데이터 팩토리 (factory_boy + Faker) | §9 |
+| 시간 모킹 (freezegun / time-machine) | §10 |
+| HTTP 모킹 (responses / aioresponses) | §11 |
+| Docker 기반 통합 테스트 (testcontainers) | §12 |
+| 커버리지 설정 (coverage.py) | §13 |
+| 멀티환경 테스트 (tox / nox) | §14 |
+| 테스트 코드 품질 원칙 | §15 |
+| 테스트 안티패턴 | §16 |
+| Mutation Testing | §17 |
+| BDD pytest-bdd 구현 | §18 |
+| Django Ninja TestClient API 계약 테스트 | §19 |
+| Idempotency와 동시성 테스트 | §20 |
+| 테스트 디버깅 기법 | §21 |
+
+각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).

@@ -1,34 +1,5 @@
 # Django 프레임워크 특화 가이드
 
-## P1 Source Sufficiency
-
-| field | value |
-|---|---|
-| purpose | Django implementation decisions: models, ORM/QuerySet/Manager, service/selector shape, migrations, transactions, settings, caching, security, performance, and legacy DRF maintenance. |
-| use when | Concrete Django 5.x implementation, ORM behavior, migration safety, service/selector placement, or existing DRF maintenance is the main concern. |
-| exclude/handoff | Do not use as REST contract authority, greenfield API implementation standard, DB isolation authority, TDD methodology source, or pytest mechanics source. |
-| core criteria | Follow Django official philosophy and current LTS behavior first; keep model/service/selector responsibilities explicit; use DB constraints and transactions for durable invariants; keep DRF limited to legacy/maintenance/migration contexts. |
-| source priority | 1 official Django/DRF/OWASP docs; 2 primary project docs and Django release notes; 3 reputable Django books/styleguides; 4 community anti-pattern material only as secondary guidance. |
-| P1 classification | sufficient |
-
-> Django에서만 적용되는 관례, 설계 철학, 코딩 패턴을 정리한 문서.
-> 범용 클린코드 원칙(네이밍, SOLID 등)은 `workspace/reference/discipline-cleancode/reference/final.md`, Python 관용구는 `workspace/reference/implementation-python/reference/final.md`에서 다룬다.
-> Django 5.x(LTS 5.2) 기준으로 최신 패턴을 기본으로 제시한다.
->
-> **출처 약어:**
-> - **[DDoc]** Django 공식 문서 (https://docs.djangoproject.com/)
-> - **[DDP]** Django Design Philosophies (https://docs.djangoproject.com/en/5.2/misc/design-philosophies/)
-> - **[DCS]** Django Coding Style (https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/)
-> - **[TSD]** Two Scoops of Django 3.x (Daniel & Audrey Feldroy)
-> - **[DfP]** Django for Professionals (William Vincent)
-> - **[TDD]** Test-Driven Development with Python (Harry Percival)
-> - **[HS]** HackSoft Django Styleguide (https://github.com/HackSoftware/Django-Styleguide)
-> - **[DRF]** Django REST Framework 공식 문서 (https://www.django-rest-framework.org/)
-> - **[CP]** Architecture Patterns with Python / Cosmic Python (Harry Percival & Bob Gregory)
-> - **[OWASP]** Django Security Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Django_Security_Cheat_Sheet.html)
-
----
-
 ## 목차
 
 1. [Django 설계 철학](#1-django-설계-철학)

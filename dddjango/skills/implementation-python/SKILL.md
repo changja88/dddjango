@@ -1,42 +1,68 @@
 ---
 name: implementation-python
-description: >
-  Use for Python implementation quality: type hints, X | None, built-in generics, TypedDict, type narrowing, decorators, dataclass, NamedTuple, Enum/StrEnum, match/case, Protocol, context managers, pydantic v2 boundaries, async/concurrency choices, exceptions, Ruff, mypy, pyright, modern Python, and Python-version gates. Use for Python typing/타입 힌트/타이핑, dataclass/데이터클래스, Protocol/프로토콜, pydantic v2 런타임 검증, 비동기, 예외 처리. Prefer source-reference-audit for skill/reference governance; architecture-ddd/api/db for unresolved domain/API/DB contracts; architecture-implementation-patterns for repository/UoW/ports/outbox decisions; implementation-cleancode for function-shape refactors; implementation-django, implementation-django-ninja, or implementation-test for Django/API/test mechanics; and workflow-dddjango-subagents for explicit role decomposition.
+description: Python 언어 특화 구현 지식 — 타입 힌트·타입 시스템, 구조적 패턴 매칭, 컬렉션·데이터 구조, 함수 설계, 데코레이터, 디스크립터, @property, 클래스 설계, Protocol 심화, Enum/dataclass/NamedTuple, 연산자 오버로딩, pydantic v2, 이터레이터·제너레이터, 컨텍스트 매니저, 예외 처리, 동시성·병렬성, 성능 프로파일링, f-문자열, Python 관용 표현, 디자인 패턴, Ruff, mypy/pyright, 디버깅, 독스트링, 정밀 연산, Python 3.14 변경사항. Python 관용구·타입·Protocol/ABC·경계 도구 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 기술무관 클린코드 원칙은 discipline-cleancode, Django 프레임워크는 implementation-django, 구조 패턴 선택은 architecture-ddd, 테스트 코드 작성은 implementation-test로 위임.
+user-invocable: false
 ---
 
-# Python Implementation
+# Python 언어 특화 구현
 
-dddjango 작업에서 Python 언어 계층의 계약과 구현 선택을 다룰 때 사용한다. 타입으로 입출력 계약을 드러내고, 현대 Python 구문을 프로젝트 target에 맞게 선택하며, runtime validation은 올바른 boundary에 둔다.
+## 언제 쓰나
 
-## Routing
+Python 언어 관용구·타입 시스템·Protocol/ABC·dataclass·제너레이터·동시성·Ruff·mypy 등 Python 특화 구현 결정이 주 작업일 때 로드한다. 경계:
 
-- source/reference governance, provenance, bundled reference parity, runtime cache sync audit, leakage/boundary review가 주 작업이면 `source-reference-audit`를 사용한다.
-- 도메인 용어, invariant, aggregate boundary, state transition rule이 불명확하면 Python construct를 고르기 전에 `architecture-ddd`를 사용한다.
-- REST resource, status code, Problem Details, OpenAPI 같은 API contract가 unresolved이면 Python type이나 DTO로 인코딩하기 전에 `architecture-api`를 사용한다.
-- DB schema, transaction, locking, migration rollout 결정이 unresolved이면 Python 구현 선택 전에 `architecture-db`를 사용한다.
-- repository, Unit of Work, ports/adapters, outbox, service-layer pattern 선택이 unresolved이면 `architecture-implementation-patterns`를 사용한다. 이 skill은 선택된 boundary를 `Protocol`, type contract, exception, context manager로 표현하는 범위만 맡는다.
-- 주된 작업이 Django ORM, migration, transaction, QuerySet, settings이면 `implementation-django`를 사용한다.
-- 주된 작업이 Django Ninja Router/Schema/API test이면 `implementation-django-ninja`를 사용한다.
-- 주된 작업이 pytest fixture, mock, factory, coverage이면 `implementation-test`를 사용한다. Red-Green-Refactor 방법 자체가 핵심이면 `implementation-tdd`를 사용한다.
-- naming, function split, flag-argument 제거, responsibility separation, abstraction, duplication 같은 refactor/review 판단이 중심이면 `implementation-cleancode`를 사용한다. 이 skill은 mutable defaults, positional-only/keyword-only syntax, annotations, type narrowing 같은 Python call-signature mechanics만 맡는다.
-- 사용자가 dddjango subagent, role decomposition, parallel review, responsibility splitting을 명시적으로 요구하면 먼저 `workflow-dddjango-subagents`를 사용한다.
-- 아주 작은 syntax 질문이나 한 줄 type hint 설명은 DDD/workflow 절차 없이 직접 답한다.
+- 네이밍·함수 설계·SOLID 등 기술무관 클린코드 원칙 → `discipline-cleancode`
+- Django 모델·ORM·서비스·트랜잭션·설정 구현 → `implementation-django`
+- repository/UoW/핵사고날/CQRS/outbox 구조 패턴 선택 → `architecture-ddd`
+- 테스트 코드 작성(pytest·픽스처·mock·더블) → `implementation-test`
 
-## Reference Loading
+## 핵심 운영 원칙
 
-- 현재 Python implementation task에 필요한 reference file만 읽는다.
-- type hints, `X | None`, built-in generics, `TypedDict`, narrowing, decorator, Ruff/typecheck, Python-version gate는 [typing.md](references/typing.md)를 읽는다.
-- finite state, value object, dataclass option, `Enum`/`StrEnum`, `NamedTuple`, `match/case`는 [dataclasses-enums.md](references/dataclasses-enums.md)를 읽는다.
-- `Protocol`, replaceable boundary, structural subtyping, exception, context manager, async/concurrency, 불필요한 abstraction 회피는 [protocols-boundaries.md](references/protocols-boundaries.md)를 읽는다.
-- external DTO/config/runtime validation, pydantic v2 API, strict mode, validation과 domain invariant의 boundary는 [pydantic-v2.md](references/pydantic-v2.md)를 읽는다.
+- 타입 어노테이션은 전 코드베이스에 일관 적용, Optional→X | None, 최신 PEP 695 문법 우선 (§1)
+- Union/Literal/NewType으로 상태 공간을 좁혀 잘못된 상태를 타입 레벨에서 차단 (§1.3–§1.4)
+- Protocol로 구조적 서브타이핑, ABC는 런타임 등록이 필요할 때만 (§9)
+- dataclass(slots, frozen, kw_only)로 불변 값 객체를 표현, NamedTuple은 불변 레코드에 (§10)
+- 디스크립터·@property는 검증과 지연 계산에만; 단순 필드는 평범한 애트리뷰트로 (§6–§7)
+- 제너레이터로 지연 평가, send/throw 금지 (§13.2, §13.5)
+- 커스텀 컨텍스트 매니저로 리소스 해제를 with문으로 명확히 (§14)
+- 예외는 도메인 최상위 클래스 정의 후 계층화; None 반환 대신 예외 발생 (§15)
+- I/O 병목엔 asyncio.TaskGroup(3.11+), CPU 병목엔 멀티프로세싱 (§16)
+- pydantic v2는 경계(입력 검증) 전용, 도메인 진리값으로 사용 금지 (§12.0)
+- Ruff로 린트·포맷 통합, mypy/pyright strict 모드로 타입 보장 (§22–§23)
 
-## Runtime Rules
+## 상세 레퍼런스
 
-- public function/method contract는 input과 return type으로 명시한다. 단, 프로젝트 style이나 Python version과 싸우는 noisy annotation은 추가하지 않는다.
-- 프로젝트 target이 지원하면 `T | None`, `A | B`, `list[Order]` 같은 built-in generics를 우선한다.
-- finite state에는 `Enum` 또는 `StrEnum`을 사용한다. 값이 지역적이고 behavior가 붙지 않을 때만 `Literal`을 사용한다.
-- immutability와 attribute shape가 도움이 되는 value object에는 `@dataclass(frozen=True, slots=True)`를 고려한다. behavior-heavy service를 dataclass로 만들지 않는다.
-- `Protocol`은 replaceable boundary나 caller가 실제로 이득을 보는 structural contract에만 사용한다.
-- pydantic v2는 external input/output DTO, config, runtime validation에 사용한다. pydantic을 default domain model로 만들지 않는다.
-- 3.12+, 3.13+, 3.14+ syntax를 쓰기 전에 프로젝트의 Python version, Ruff, mypy, pyright 설정과 맞춘다.
-- 실제로 실행한 verification만 보고한다. Ruff, typecheck, test, runtime check를 실행하지 않았으면 실행하지 않았다고 말한다.
+주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
+
+| 주제 | 절 |
+|---|---|
+| 타입 힌트와 타입 시스템 | §1 |
+| 구조적 패턴 매칭 (match/case) | §2 |
+| 컬렉션 선택과 데이터 구조 | §3 |
+| 함수 설계: Python 특화 기법 | §4 |
+| 데코레이터 | §5 |
+| 디스크립터 | §6 |
+| @property와 애트리뷰트 접근 | §7 |
+| 클래스 설계: Python 특화 패턴 | §8 |
+| Protocol 심화 | §9 |
+| Enum, dataclass, NamedTuple | §10 |
+| 연산자 오버로딩과 Python 데이터 모델 심화 | §11 |
+| pydantic v2 | §12 |
+| 이터레이터, 제너레이터, 컴프리헨션 | §13 |
+| 컨텍스트 매니저와 with문 | §14 |
+| 예외 처리 | §15 |
+| 동시성과 병렬성 | §16 |
+| 성능 프로파일링과 최적화 | §17 |
+| f-문자열 개선과 PEG 파서 | §18 |
+| 파이썬다운 관용 표현 | §19 |
+| 디자인 패턴 (Python 고유 구현) | §20 |
+| Ruff — 통합 린터/포매터 | §22 |
+| mypy/pyright 최신 기능 | §23 |
+| 디버깅 기법 | §25 |
+| 독스트링과 문서화 | §26 |
+| 정밀 연산 | §27 |
+| Python 3.14 주요 변경사항 | §28 |
+| Python 3.10–3.14 변경사항 요약 (치트시트) | 부록 A |
+| 타입 시스템 진화 요약 (치트시트) | 부록 B |
+| 주요 매직 메서드 요약 (치트시트) | 부록 C |
+
+각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).

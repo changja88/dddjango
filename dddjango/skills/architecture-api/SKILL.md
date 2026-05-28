@@ -1,40 +1,51 @@
 ---
 name: architecture-api
-description: >
-  Use for REST API contract architecture: resource/URL shape, HTTP method/status behavior, RFC 9457 Problem Details, request/response/header contracts, auth/authz, content negotiation, pagination, versioning, deprecation, rate limits, Idempotency-Key behavior, and OpenAPI impact. Use for REST 설계, API 계약, endpoint/URL, HTTP 메서드와 상태 코드, 오류 응답, 인증/인가, 헤더, 콘텐츠 협상, 페이지네이션, 버전, 레이트 리밋, 멱등성, OpenAPI. Prefer workflow-dddjango-subagents for coordinated multi-role or subagent work; architecture-ddd when use cases/invariants are unclear; architecture-db for idempotency persistence, uniqueness, locking, transactions, or rollout risk; implementation-django-ninja for Router/Schema/API adapter or greenfield DRF implementation requests; and implementation-test for pytest/API contract mechanics. Do not use for GraphQL, gRPC, SOAP, WebSocket, HATEOAS, or API Gateway design except to state the REST boundary if relevant.
+description: REST/HTTP API 계약 설계 지식 — 리소스·메서드 의미론, 요청/응답 계약, 상태 코드, RFC 9457 에러 형식, 페이지네이션·버전관리·하위 호환성·Rate Limiting·멱등성 키·OpenAPI. REST/HTTP 계약(엔드포인트 설계, 상태 코드 선택, 에러 형식, 버전·하위 호환성 결정, OpenAPI 반영)을 새로 정의하거나 변경할 때 먼저 로드한다. JSON 직렬화·라우터 구현은 implementation-django-ninja, 서버렌더 표현계층은 implementation-django-web, 도메인 모델·애그리거트는 architecture-ddd, 데이터 신뢰성·트랜잭션은 architecture-db로 위임.
+user-invocable: false
 ---
 
-# API Architecture
+# REST API 계약 설계
 
-사용 사례와 client workflow를 REST API 계약으로 바꿀 때 사용한다. 이 skill은 외부 API 동작과 계약을 설계하며, framework adapter, ORM, migration, pytest 구현은 직접 소유하지 않는다.
+## 언제 쓰나
 
-## Routing
+REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요청/응답 본문·헤더, 에러 형식, 페이지네이션, 버전 관리, 하위 호환성, Rate Limiting, 멱등성 키, OpenAPI)을 결정하거나 변경할 때 로드한다. 경계:
 
-- 사용자가 coordinated implementation/review, subagents/서브에이전트, 역할 분해, 병렬 검토, 책임 분배, dddjango workflow를 요청하면 `workflow-dddjango-subagents`를 먼저 사용한다.
-- REST resource, URL, HTTP method/status, request/response/header contract, Problem Details, auth semantics, pagination, versioning, deprecation, rate limit, `Idempotency-Key`, OpenAPI 계약이 주 질문이면 이 skill이 직접 맡는다.
-- use case, aggregate boundary, invariant, state transition, ubiquitous language가 불명확하면 endpoint를 확정하기 전에 `architecture-ddd`로 넘긴다.
-- idempotency storage, uniqueness, constraint, index, locking, transaction isolation, rollout migration risk가 중심이면 `architecture-db`로 넘기고, user-visible API behavior만 이 skill에 남긴다.
-- Django Ninja `Router`, `Schema`, `ModelSchema`, auth 구현, exception handler, OpenAPI generation, API adapter code가 주 작업이면 계약 확정 뒤 `implementation-django-ninja`로 넘긴다.
-- greenfield DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`, `rest_framework` 구현 요청은 `implementation-django-ninja`에서 Django Ninja 목표로 전환하게 하고, framework-neutral REST 계약만 여기서 다룬다.
-- pytest, Django Ninja `TestClient`, fixture, mock, concurrency test mechanics가 주 작업이면 계약 기준을 정한 뒤 `implementation-test`로 넘긴다.
-- GraphQL, gRPC, SOAP, WebSocket, HATEOAS, API Gateway design은 이 REST 계약 skill의 범위가 아니다. 필요한 경우 REST boundary만 짧게 말한다.
-- 단순 status code, URL naming, error-format 질문은 전체 workflow를 강제하지 말고 바로 답한다.
+- JSON 직렬화·Router·Schema 구현 → `implementation-django-ninja`
+- 서버렌더 표현계층(템플릿·폼·HTMX) → `implementation-django-web`
+- 도메인 전략·애그리거트·경계 설계 → `architecture-ddd`
+- 데이터 신뢰성·트랜잭션·outbox 전달 → `architecture-db`
+- Django ORM·서비스 레이어 구현 → `implementation-django`
 
-## Reference Loading
+## 핵심 운영 원칙
 
-- 현재 API 계약 판단에 필요한 reference만 읽는다.
-- REST resource, URL shape, HTTP methods/status, request/response/header contract, auth/authz, content negotiation, cache semantics는 [rest-contracts.md](references/rest-contracts.md)를 읽는다.
-- RFC 9457 error contract, Problem Details field semantics, status/error consistency는 [problem-details.md](references/problem-details.md)를 읽는다.
-- pagination 선택, versioning, backward compatibility, deprecation, rate limiting은 [pagination-versioning.md](references/pagination-versioning.md)를 읽는다.
-- `Idempotency-Key`, duplicate POST retry/replay/conflict behavior, OpenAPI contract impact는 [idempotency-openapi.md](references/idempotency-openapi.md)를 읽는다.
+- RFC 9110 HTTP 의미론 우선: 메서드 안전성·멱등성을 정확히 지키고, PUT은 전체 교체, PATCH는 부분 수정, POST는 non-idempotent 생성으로 구분 (§2)
+- URL은 명사·복수형·케밥케이스 리소스로 설계하고 동사 행위를 URL에 포함하지 않는다 (§3)
+- 에러 응답은 RFC 9457 Problem Details(`application/problem+json`) 형식을 사용하고 상태 코드별 `type`을 문서화한다 (§6)
+- 요청/응답 계약은 상태 코드별 body·header·schema까지 포함해 명시적으로 기록하고, 계약 체크리스트(Resource·Method·Request·Response·Error·Auth·Compatibility·OpenAPI)를 엔드포인트 변경마다 검토한다 (§5)
+- 페이지네이션은 데이터 특성(정렬 안정성, 실시간성, 딥 페이지 여부)에 따라 오프셋·커서·페이지 방식 중 선택하고 선택 기준을 명시한다 (§9)
+- 버전 전략(URL·헤더·쿼리파라미터)과 하위 호환성·Deprecation 프로세스를 API 변경 전에 결정한다 (§10, §11)
+- duplicate-sensitive 요청(결제·생성)에는 `Idempotency-Key` 정책(scope·replay·conflict 계약)을 함께 정한다 (§13)
+- 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술한다 (§14)
 
-## Runtime Rules
+## 상세 레퍼런스
 
-- 먼저 외부 use case, client workflow, resource identity, authorization need, error condition, compatibility constraint, query pattern을 확인한다.
-- 계약 산출물은 endpoint 단위로 `resource/URL`, `method`, `request`, `response by status`, `headers`, `Problem Details`, `auth/authz`, `pagination/versioning/rate limit`, `idempotency`, `OpenAPI impact`를 필요한 만큼 명시한다.
-- domain rule이나 invariant가 API shape를 좌우하면 결정을 만들지 말고 `architecture-ddd` handoff를 남긴다.
-- DB durability, uniqueness, locking, transaction, rollout이 계약 성패를 좌우하면 API-visible behavior만 정하고 storage/transaction decision은 `architecture-db` handoff로 남긴다.
-- adapter 구현, schema mapping, exception handler, generated OpenAPI wiring은 `implementation-django-ninja` 책임으로 넘긴다.
-- test code, fixtures, mocks, concurrency harness, detailed pytest mechanics는 `implementation-test` 책임으로 넘기고, 이 skill은 acceptance criteria만 적는다.
-- duplicate-sensitive POST처럼 여러 책임이 결합된 경우 API contract, DB storage, implementation, test acceptance를 분리해 handoff한다. 사용자가 role decomposition을 요청했으면 `workflow-dddjango-subagents`를 먼저 적용한다.
-- 실행하지 않은 tests, validation, review, browser check, subagent work, Serena 사용을 실행한 것처럼 보고하지 않는다.
+주제별로 [`references/final.md`](references/final.md)의 해당 절을 따른다:
+
+| 주제 | 절 |
+|---|---|
+| REST 아키텍처 원칙 | §1 |
+| HTTP 메서드와 멱등성 | §2 |
+| URL/리소스 설계 규칙 | §3 |
+| HTTP 상태 코드 | §4 |
+| 요청/응답 계약 | §5 |
+| 에러 응답 형식 (RFC 9457) | §6 |
+| HTTP 헤더와 콘텐츠 협상 | §7 |
+| 인증과 인가 | §8 |
+| 페이지네이션 | §9 |
+| 버전 관리 | §10 |
+| 하위 호환성과 Deprecation | §11 |
+| Rate Limiting | §12 |
+| 멱등성 키 (Idempotency-Key) | §13 |
+| OpenAPI | §14 |
+
+각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).

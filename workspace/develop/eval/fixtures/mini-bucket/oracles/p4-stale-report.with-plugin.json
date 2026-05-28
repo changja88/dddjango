@@ -1,7 +1,0 @@
-{
-  "schema_version": "eval-oracle/v1",
-  "case_id": "p4-stale-report",
-  "variant": "with-plugin",
-  "loaded_skill": "dddjango:source-reference-audit",
-  "required_claims": ["report-digest-current"]
-}

@@ -2,32 +2,40 @@
 
 ## 프로젝트 목적
 
-이 저장소는 Claude Code와 Codex에서 모두 사용할 수 있는 `dddjango` 플러그인을 개발하기 위한 워크스페이스다.
+이 저장소는 Claude Code용 `dddjango` 플러그인을 개발하는 워크스페이스다. 플러그인은
+`/dddjango` 커맨드(Coordinator)가 기존 Django 프로젝트의 한 기능을 DDD 방식으로
+요구→설계→구현(TDD)까지 단계별 게이트로 빌드하도록 오케스트레이션한다.
+(Codex 런타임 지원은 보류 — 현재는 Claude 전용.)
+
+## 저장소 구조
+
+- `dddjango/` — 실제 플러그인. `.claude-plugin/plugin.json`(매니페스트) +
+  `commands/dddjango.md`(Coordinator) + `agents/*.md`(7개 subagent) +
+  `skills/*/SKILL.md`(10개 스킬).
+- `workspace/reference/**` — 소스 코퍼스(아키텍처·구현 레퍼런스의 `final.md`).
+  스킬 재생성의 1차 근거.
+- `workspace/design/`, `workspace/plan/` — 빌드 설계 메모와 계획서.
+  파이프라인의 권위 있는 명세는 `workspace/design/2026-05-26-dddjango-plugin-pipeline-design.md`.
 
 ## 작업 위치 원칙
 
-- 개발 산출물은 기본적으로 `workspace/` 아래에 둔다.
-- 새 디렉터리를 만들 때도 기본 위치는 `workspace/` 아래다.
-- 플랫폼이나 도구 규격상 저장소 루트 아래에 있어야 동작하는 파일 또는 디렉터리만 예외적으로 루트에 둔다.
-- 루트에 예외 파일이나 디렉터리를 추가할 때는 왜 루트에 있어야 하는지 변경 내용에 명확히 남긴다.
+- 플러그인 산출물(커맨드·subagent·스킬·매니페스트)은 `dddjango/` 아래에 둔다.
+- 빌드 과정의 설계·계획·레퍼런스 등 개발 산출물은 `workspace/` 아래에 둔다.
+- 플랫폼·도구 규격상 루트에 있어야 동작하는 파일만 예외적으로 루트에 두고,
+  이유를 변경 내용에 남긴다.
 
-## 플러그인 개발 원칙
+## 플러그인 작성 원칙
 
-- Claude Code와 Codex가 함께 사용할 수 있는 공통 구조를 우선한다.
-- 특정 런타임에만 필요한 파일은 공통 코드와 분리해 위치와 목적을 명확히 한다.
-- 플러그인 이름은 `dddjango`를 기준으로 일관되게 사용한다.
-- 스캐폴딩이나 생성 스크립트를 실행하기 전에, 생성 위치가 `workspace/` 아래인지 먼저 확인한다.
-
-## 계획/평가지 문서 제약
-
-- `workspace/plan/**`, `workspace/reference/**`, `workspace/develop/eval/**`, `dddjango/skills/**` 문서를 작성하거나 수정할 때는 `workspace/plan/constraint_rules.md`를 기준 제약으로 따른다.
-- 작업 순서와 체크리스트는 `workspace/plan/plugin_build_plan.md`를 따르되, 위치, 첫 줄 `수정 대상:`, 파일명, 언어, 평가지 폴더 역할 제약은 `constraint_rules.md`를 우선한다.
-- 위 계획/제약/상태/인덱스 문서를 추가하거나 수정하면 `python3 -B workspace/scripts/validate_plan_governance.py`를 실행해 추적 체계가 깨지지 않았는지 확인한다.
-- 위 제약을 바꾸는 변경에는 관련 validator와 테스트 갱신 필요 여부를 함께 확인한다.
-- eval pack을 바꾸면 `validate_eval_bucket_pack.py` 실행 필요 여부를 함께 확인한다.
+- 커맨드·subagent 파일 본문은 곧 런타임 시스템 프롬프트다. 설계 근거 같은
+  메타코멘트로 본문을 오염시키지 않는다.
+- 한 주제는 한 소유자가 — 역할 경계를 넘기지 않는다(설계 명세=architect,
+  인수 테스트=acceptance-tester, 코드=coder).
+- 스킬은 소스 코퍼스(`workspace/reference/**`)를 근거로 작성하며, 플러그인
+  이름은 `dddjango`로 일관되게 쓴다.
+- 플러그인 매니페스트나 구조를 바꾸면 `claude plugin validate dddjango --strict`로 검증한다.
 
 ## 변경 방식
 
 - 기존 파일과 사용자 변경을 보존한다.
 - 불필요한 추상화나 미리 만든 확장 지점을 추가하지 않는다.
-- 초기화 단계에서는 필요한 최소 파일과 지침만 추가한다.
+- 구조 변경·대규모 재작성은 작은 단위로 나누고, 논의 후 진행한다.
