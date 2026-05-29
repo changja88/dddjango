@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dddjango 최종 스모크 — Claude vs Codex 인사이트</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#171b22; --panel2:#1e242d; --line:#2b323c;
+    --tx:#e6edf3; --mut:#9aa7b4; --dim:#6b7785;
+    --claude:#d97757; --claudeBg:#2a1d18;
+    --codex:#10a3a3; --codexBg:#10282a;
+    --green:#3fb950; --amber:#d29922; --red:#f85149; --blue:#58a6ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    padding:0 0 80px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  header{padding:40px 0 14px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  h1{font-size:27px;margin:0 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--mut);font-size:14px}
+  h2{font-size:20px;margin:38px 0 14px;padding-top:8px;letter-spacing:-.2px}
+  h3{font-size:16px;margin:0 0 10px}
+  p{margin:0 0 12px}
+  code{background:#222a33;padding:1px 6px;border-radius:5px;font-size:12.5px;
+    font-family:"SF Mono",ui-monospace,Menlo,monospace;color:#cdd9e5}
+  .caveat{background:linear-gradient(90deg,#3a1d12,#2a1810);border:1px solid #6b3a22;
+    border-radius:12px;padding:16px 18px;margin-bottom:26px}
+  .caveat b{color:#ffb38a}
+  .caveat .t{font-size:13.5px;color:#f0d6c8}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card.claude{border-top:3px solid var(--claude)}
+  .card.codex{border-top:3px solid var(--codex)}
+  .rt{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:2px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .dot.cl{background:var(--claude)} .dot.cx{background:var(--codex)}
+  .task{font-size:12.5px;color:var(--dim);margin-bottom:14px}
+  .tendency{font-size:14px;background:var(--panel2);border-radius:9px;padding:12px 14px;margin-bottom:14px}
+  .tendency.cl{border-left:3px solid var(--claude)}
+  .tendency.cx{border-left:3px solid var(--codex)}
+  .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+    padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:8px}
+  .tag.cl{background:var(--claudeBg);color:var(--claude)}
+  .tag.cx{background:var(--codexBg);color:var(--codex)}
+  ul{margin:6px 0 0;padding-left:18px}
+  li{margin:5px 0}
+  .pro::marker{content:"+ ";color:var(--green);font-weight:700}
+  .con::marker{content:"− ";color:var(--red);font-weight:700}
+  table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  td.ax{color:var(--mut);white-space:nowrap;font-size:12.5px}
+  .b{font-weight:700;font-size:11px;padding:2px 7px;border-radius:6px;white-space:nowrap}
+  .b.g{background:#10331a;color:var(--green)}
+  .b.a{background:#332a10;color:var(--amber)}
+  .b.r{background:#3a1414;color:var(--red)}
+  .b.n{background:#22272e;color:var(--dim)}
+  .note{font-size:12px;color:var(--mut)}
+  .conv{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
+  .box h3{display:flex;align-items:center;gap:8px}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .pill.win{background:#10331a;color:var(--green)}
+  .pill.div{background:#1c2533;color:var(--blue)}
+  .act{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:10px;padding:15px 18px;margin-bottom:12px}
+  .act b{color:#ffd479}
+  .foot{color:var(--dim);font-size:12px;margin-top:34px;border-top:1px solid var(--line);padding-top:16px}
+  @media(max-width:760px){.grid2,.conv{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>dddjango 최종 스모크 — Claude vs Codex 인사이트</h1>
+  <div class="sub">2026-05-30 · 표준이 라이브 <code>/dddjango</code> 런에서 실제로 발화하는지 검증 (12축) · clean fixture (ninja 미설치)</div>
+</header>
+
+<div class="caveat">
+  <b>⚠️ 읽기 전 경계 — 이건 "우열 판정"이 아니다</b>
+  <div class="t">
+    각 런타임 <b>N=1</b>이고 <b>서로 다른 태스크</b>를 돌렸다 (Claude=단일 컨텍스트 재고예약 · Codex=cross-context 주문생성).
+    통제 비교가 아니므로 차이가 <b>런타임 차이인지 태스크 차이인지 분리되지 않는다.</b>
+    목적은 "표준 12축이 살아 발화하나"(sanity)지 "누가 더 낫나"가 아니다.
+    진짜 우열 결론은 <b>같은 태스크 N≥5 블라인드 + 루브릭</b>이 따로 필요하다.
+  </div>
+</div>
+
+<!-- ───────── 런타임별 성향 ───────── -->
+<h2>① 런타임별 성향 (이번 런에서 드러난 것)</h2>
+<div class="grid2">
+
+  <div class="card claude">
+    <div class="rt"><span class="dot cl"></span>Claude — 태스크 A</div>
+    <div class="task">재고 예약 API (단일 컨텍스트, 기존 catalog.Product)</div>
+    <span class="tag cl">성향: 깊이·DDD 순수성 최대화</span>
+    <div class="tendency cl">
+      표준을 <b>끝까지</b> 적용한다. 평면 catalog를 통째로 4계층 트리로 <b>완전 이주</b>하고
+      Product를 도메인 애그리거트로 승격(빈혈 차단), 동시성도 race 10/10까지 <b>집요하게</b> 검증.
+      <b>그 깊이가 과잉으로 번질 때가 있다</b> — 테스트 관찰성 때문에 프로덕션에 커스텀 DB 백엔드까지 손댐.
+    </div>
+    <ul>
+      <li class="pro">③ 완전 이주 + <code>Product.reserve()</code> 단일 판정 소유 (DDD 모범)</li>
+      <li class="pro">동시성 race 10/10 행위 검증 (oversell 0 실증), e2e 테스트까지</li>
+      <li class="pro">ninja 에러를 <b>중앙 exception_handler</b>로 — operation은 얇게 유지</li>
+      <li class="con">테스트 관찰성 위해 <b>프로덕션 BEGIN IMMEDIATE 커스텀 백엔드</b> 배선 (가드레일 미차단)</li>
+      <li class="con">에러 바디 raw <code>JsonResponse</code> + OpenAPI content-type 미패치(spec/런타임 불일치)</li>
+    </ul>
+  </div>
+
+  <div class="card codex">
+    <div class="rt"><span class="dot cx"></span>Codex — 태스크 B</div>
+    <div class="task">주문 생성 API (cross-context, 주문→catalog 재고 차감)</div>
+    <span class="tag cx">성향: 실용·스코프 보수성 (최소 침습)</span>
+    <div class="tendency cx">
+      기존 코드에 <b>최소한으로만 손댄다</b>. 신규 orders는 풀 DDD로 짓되,
+      기존 catalog는 평면 유지 + <code>published_service</code> 공개계약만 추가(전면 재배치는 "스코프 밖").
+      동시성 원시도구도 깔끔(커스텀 백엔드 없이 select_for_update+CAS+CHECK).
+      <b>대신 깊이가 얕아 빈틈이 남는다</b> — 동시성 테스트 부재, 에러 처리 우회.
+    </div>
+    <ul>
+      <li class="pro">⑥ cross-context 교과서적 — Port/ACL/published_service, 동기 OHS, 직접 import 0</li>
+      <li class="pro">동시성: <code>select_for_update</code>+CAS+CHECK, <b>커스텀 백엔드 없음</b> (가드레일 준수)</li>
+      <li class="pro">스코프 규율 — 기존 catalog 전면 재작성 회피, 근거 명세 기록</li>
+      <li class="con">③ catalog 미이주 — 판정이 도메인 애그리거트 아닌 트랜잭션 스크립트(published_service 함수)</li>
+      <li class="con">동시 oversell <b>행위 테스트 부재</b>(구조 가드만), 에러 바디 operation 내 수제 + OpenAPI 몽키패치</li>
+    </ul>
+  </div>
+</div>
+
+<p class="note" style="margin-top:14px">
+  한 줄 요약: <b style="color:var(--claude)">Claude는 과잉건축</b>(깊이·순수성, 때로 너무 멀리) ·
+  <b style="color:var(--codex)">Codex는 절제건축</b>(실용·최소, 때로 너무 얕게).
+  ※ 태스크가 달라 성향이 태스크 탓일 가능성 배제 못 함.
+</p>
+
+<!-- ───────── 12축 나란히 ───────── -->
+<h2>② 12축 나란히</h2>
+<table>
+  <thead><tr><th style="width:30%">축</th><th style="width:35%">Claude / A</th><th style="width:35%">Codex / B</th></tr></thead>
+  <tbody>
+    <tr><td class="ax">1 · ③ 판정-소유 이주</td>
+        <td><span class="b g">STRONG</span> 완전 이주 + 애그리거트 승격</td>
+        <td><span class="b a">PARTIAL</span> 평면 유지 + published_service (스코프한정)</td></tr>
+    <tr><td class="ax">2 · ④ API 스택</td>
+        <td><span class="b g">PASS</span> Ninja 1급 + boost</td>
+        <td><span class="b g">PASS</span> Ninja + boost 문구 인용</td></tr>
+    <tr><td class="ax">3 · ④f requirements 핀</td>
+        <td><span class="b g">PASS</span> <code>django-ninja==1.6.2</code></td>
+        <td><span class="b g">PASS</span> <code>django-ninja==1.4.5</code></td></tr>
+    <tr><td class="ax">4 · ninja operation 품질</td>
+        <td><span class="b g">GOOD</span> 중앙 핸들러·얇은 op <span class="note">(OpenAPI content-type 미패치)</span></td>
+        <td><span class="b a">PARTIAL</span> op내 수제+OpenAPI 몽키패치</td></tr>
+    <tr><td class="ax">5 · 코더 메커니즘 가드레일</td>
+        <td><span class="b r">미차단</span> 프로덕션 커스텀 백엔드 <span class="note">(단 정당화·최소)</span></td>
+        <td><span class="b g">PASS</span> 커스텀 백엔드 없음</td></tr>
+    <tr><td class="ax">6 · ACL 분리 + 통합 스타일</td>
+        <td><span class="b n">N/A</span> 단일 컨텍스트</td>
+        <td><span class="b g">STRONG</span> Port/ACL/OHS 교과서적</td></tr>
+    <tr><td class="ax">7 · §4 명명</td>
+        <td><span class="b g">PASS</span></td>
+        <td><span class="b g">STRONG</span> 추상/구현 base 일치, Interface/Impl 0</td></tr>
+    <tr><td class="ax">8 · B1 도메인 소유</td>
+        <td><span class="b g">STRONG</span> 애그리거트 메서드, SQL엔 version 가드만</td>
+        <td><span class="b a">PARTIAL</span> 트랜잭션 스크립트(함수)</td></tr>
+    <tr><td class="ax">9 · 인터랙티브 ④ 확인사살</td>
+        <td><span class="b n">N/A</span> Claude 비대상</td>
+        <td><span class="b g">PASS</span> 인터랙티브에서도 Ninja+핀 수렴</td></tr>
+    <tr><td class="ax">10 · 동작 (test/check/migrate)</td>
+        <td><span class="b g">PASS</span> 25 test, race 10/10</td>
+        <td><span class="b g">PASS</span> 23 test <span class="note">(동시성 테스트 없음)</span></td></tr>
+    <tr><td class="ax">11 · §0 구조 불변식</td>
+        <td><span class="b g">STRONG</span> 4계층+개념폴더</td>
+        <td><span class="b g">STRONG</span> 4계층+개념폴더</td></tr>
+    <tr><td class="ax">12 · 테스트 의미군</td>
+        <td><span class="b g">STRONG</span> unit/integration/e2e</td>
+        <td><span class="b g">STRONG</span> unit/integration</td></tr>
+  </tbody>
+</table>
+
+<!-- ───────── 수렴 vs 분기 ───────── -->
+<h2>③ 표준이 수렴시킨 곳 vs 판단을 남긴 곳</h2>
+<div class="conv">
+  <div class="box">
+    <h3><span class="pill win">수렴 WIN</span> 양 런타임이 같은 곳</h3>
+    <ul>
+      <li><b>④ Ninja + 버전 핀</b> — plain 편향(Codex)·미설치 fixture에도 둘 다 Ninja 채택+핀. DR-16/17 boost가 양 런타임·인터랙티브까지 작동.</li>
+      <li><b>§0 구조 · §4 명명 · 테스트 의미군</b> — 둘 다 STRONG. 구조/명명 표준은 런타임 무관하게 안정 발화.</li>
+      <li><b>게이트·TDD·규율 감사</b> — 둘 다 전 게이트 통과, 테스트 green, blocker 0.</li>
+    </ul>
+  </div>
+  <div class="box">
+    <h3><span class="pill div">분기 DIVERGE</span> 표준이 판단 여지를 남긴 곳</h3>
+    <ul>
+      <li><b>③ 판정-소유 이주</b> — Claude=완전 이주, Codex=스코프 한정. <b>둘 다 DR-16 허용 범위 안</b>. ③는 런타임/태스크 간 비결정.</li>
+      <li><b>동시성 깊이</b> — Claude=race 테스트→커스텀 백엔드, Codex=테스트 없음→백엔드 없음. 깊이 선택이 정반대.</li>
+      <li><b>ninja 에러 경로</b> — 둘 다 수제 <code>JsonResponse</code>지만 Claude=중앙화(얇은 op)/Codex=op내+몽키패치.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ───────── 후속 ───────── -->
+<h2>④ 스모크가 끄집어낸 실행가능 후속</h2>
+<div class="act">
+  <b>A. §6.2 boost 후보 (양 런타임 공통)</b><br>
+  <span class="note">두 런 모두 RFC 9457 problem+json을 <b>수제 <code>JsonResponse</code></b>로 만들었다 — 표준이 ninja 네이티브 problem+json 경로(커스텀 renderer/response class)를 안 보여줘서다.
+  → §6.2에 네이티브 problem+json 방법 + "중앙 exception_handler·얇은 operation"(Claude 패턴)을 명시 보강.</span>
+</div>
+<div class="act">
+  <b>B. 코더 가드레일 재보강 후보 (Claude 성향)</b><br>
+  <span class="note">f9ea088 가드레일("커스텀 백엔드 우회 금지")이 <b>프로덕션 커스텀 백엔드를 또 막지 못했다</b>.
+  이번엔 정당화·투명(코더가 env 갭 보고+§3.2 개정 제안)했으나 설계 반송 대신 자가결정.
+  → "테스트 관찰성 위한 DB 백엔드는 <b>테스트 전용 설정에 격리</b>(프로덕션 ENGINE 변경 금지), 아니면 설계 반송" 규칙 추가.</span>
+</div>
+<div class="act">
+  <b>C. 동시성 행위 테스트 (Codex 성향)</b><br>
+  <span class="note">Codex/B는 구조 가드(CAS+CHECK)는 있으나 동시 oversell <b>행위 테스트가 없다</b>.
+  → acceptance/coordinator 단계에서 동시성 기능이면 race 테스트를 요구하는지 점검(또는 표준에 명시).</span>
+</div>
+
+<div class="foot">
+  근거: <code>~/Desktop/dddjango-final-claudeA</code> · <code>~/Desktop/dddjango-final-codexB</code> 산출물 직접 감사(grep/find/openapi/manage.py test).
+  정직 경계: N=1·태스크 상이 → sanity 스모크. 우열 결론·③ 비결정 정량화는 N≥5 블라인드 별도.
+  정본 기록처: 레포 <code>workspace/DEVLOG.md</code> (요청 시 DR-18로 기록).
+</div>
+
+</div>
+</body>
+</html>
