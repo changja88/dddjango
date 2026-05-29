@@ -94,6 +94,9 @@ Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 
 Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다.
+
+프로젝트에 Django Ninja가 아직 의존성으로 없는 신규 도입이면, 글로벌로 임의 설치하지 말고 의존성 매니페스트(`requirements/*.txt` 등, `implementation-django` §3.1)에 **버전을 핀해 추가**한다 — 핀 표기는 프로젝트의 기존 관례를 따른다(기존 항목이 `Django==4.2.30`처럼 정확 핀이면 `django-ninja==<버전>`으로 맞춘다). `INSTALLED_APPS`·`NinjaAPI` 인스턴스·URL 등록 같은 런타임 배선도 함께 둔다.
+
 새로운 Router를 추가할 때는 다음을 확인한다.
 
 - API root와 version prefix가 기존 convention과 일치하는가

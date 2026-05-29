@@ -23,6 +23,7 @@ Django Ninja Router/Schema/Operation·인증·필터링·페이지네이션·Pro
 - Idempotency-Key는 계약에 정의된 endpoint에만; 키 정책(scope·replay·conflict)은 `architecture-api`, 저장소·retention(테이블·unique constraint·fingerprint)은 `architecture-db`가 결정 (§7)
 - 계약이 바뀌면 OpenAPI 생성 결과를 확인 (§8)
 - 신규 API는 Django Ninja 목표, DRF는 legacy·migration 맥락에서만 보조 (§10)
+- 신규 도입 시 Django Ninja를 의존성 매니페스트에 버전 핀으로 추가(글로벌 임의 설치 금지) — 핀 표기는 프로젝트 기존 관례 (§2.1)
 - 라우팅 결정 전 계약·DB·도메인이 미결이면 각 소유 스킬 먼저 (§11)
 
 ## 상세 레퍼런스
