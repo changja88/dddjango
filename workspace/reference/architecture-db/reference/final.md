@@ -393,13 +393,15 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 |------|------------|------|
 | Unique constraint 기반 방어 | 중복 생성, 동일 key race, natural uniqueness | 충돌 시 예외/재시도/기존 결과 조회 정책 필요 |
 | Optimistic locking | 충돌이 드물고 retry가 허용됨 | version 컬럼 또는 compare-and-swap 조건 필요 |
-| Pessimistic row lock | 재고, 예약, 잔액처럼 동시 writer가 같은 행을 수정 | lock 순서, timeout, deadlock 대응 필요 |
+| Pessimistic row lock | 행 잠금 지원 엔진에서 경합이 잦은 핫 로우(동시 writer 다수) | SQLite no-op → 포터블/저경합은 위 Optimistic locking 우선; lock 순서·timeout·deadlock 대응 |
 | Advisory lock | 여러 행이나 외부 key 단위로 임계 구역 필요 | lock key 설계와 해제 실패 대응 필요 |
 | Serializable + retry | 정확성이 최우선이고 predicate race를 막아야 함 | serialization failure retry가 필수 |
 
 락은 범위를 작게 유지한다. 트랜잭션 안에서 사용자 입력 대기, 외부 API 호출, 긴 배치 작업을 수행하면 lock hold time이 길어져 throughput과 장애 반경이 커진다.
 
-**엔진 의존성 — 개발과 운영 DB가 다르면 명세에서 분기한다.** 위 표의 락 전략(특히 pessimistic row lock)은 **행 잠금을 지원하는 엔진**(PostgreSQL 등)을 전제한다. 개발에서 흔한 **SQLite는 `select_for_update`를 no-op으로 무시**하고(행 잠금 미지원), Django 기본 **DEFERRED begin**은 `atomic()` 안 SELECT→UPDATE 락 승격이 스레드 경합 시 데드락(`database is locked`)을 낸다. 따라서 락만으로 환경 무관 정확성이 성립하지 않는다 — 환경 무관 방어선은 **제약(CHECK)+조건부 원자 UPDATE(`WHERE` 가드)**이고, 락은 운영 엔진용으로 유지하되 SQLite 직렬화가 필요하면 begin 모드(IMMEDIATE)·`busy_timeout` 같은 **연결 설정을 명세가 명시**한다. Risky Write의 락·동시성은 *대상 엔진별 동작 차이까지* 설계에서 확정한다(§9.6).
+**엔진 의존성 — 개발과 운영 DB가 다르면 명세에서 분기한다.** 위 표의 락 전략(특히 pessimistic row lock)은 **행 잠금을 지원하는 엔진**(PostgreSQL 등)을 전제한다. 개발에서 흔한 **SQLite는 `select_for_update`를 no-op으로 무시**하고(행 잠금 미지원), Django 기본 **DEFERRED begin**은 `atomic()` 안 SELECT→UPDATE 락 승격이 스레드 경합 시 데드락(`database is locked`)을 낸다. 따라서 락만으로 환경 무관 정확성이 성립하지 않는다 — 환경 무관 방어선은 **불변식 CHECK 백스톱(예: `stock>=0`) + 낙관적 `version`/CAS 조건부 원자 UPDATE**(`WHERE`엔 `version` 경합 가드만 담고 비즈니스 판정(예: `stock>=qty`)은 제외 — 아래 낙관적 동시성 메커니즘·`architecture-ddd` §3.2)이고, 락은 운영 엔진용으로 유지하되 SQLite 직렬화가 필요하면 begin 모드(IMMEDIATE)·`busy_timeout` 같은 **연결 설정을 명세가 명시**한다. Risky Write의 락·동시성은 *대상 엔진별 동작 차이까지* 설계에서 확정한다(§9.6).
+
+**낙관적 동시성 메커니즘(판정은 도메인이 소유).** 판정·불변식 소유는 도메인 책임이다 — 비즈니스 판정(예: `stock>=qty`, `balance>=amount`)을 SQL `WHERE`나 ORM 호출로 옮기면 같은 판정의 도메인 메서드가 프로덕션에서 호출되지 않는 죽은 코드가 되어 빈혈이 된다(원칙 `architecture-ddd` §3.2 빈혈 차단). 따라서 동시성 안전이 필요해도 판정을 SQL로 옮기지 않고, **리포지토리·영속화 계층은 도메인 메서드 결과만 저장하고 판정을 재수행하지 않는다**: 인프라엔 경합 가드만 둔다 — 낙관적 `version`/CAS 조건부 원자 UPDATE(`WHERE`엔 `version`만, 비즈니스 판정은 제외). 선언적 불변식 백스톱(`stock>=0` CHECK, 위 엔진 의존성 단락)은 최후 안전망으로 병행하되 이는 *불변식*이지 트랜잭션 입력 *판정*(`stock>=qty`)이 아니다. `QuerySet.update()`가 0행이면(`Model.save()`로 저장하면 이 경합 가드가 사라진다) 경합이므로 응용 서비스가 재조회 후 *도메인 메서드부터* 재실행한다(재시도 상한·격리 수준별 재시도는 §9.6 Isolation/retry, `version` 컬럼 추가는 §11 rollout backfill 안전을 따른다). `version`은 애그리거트 루트가 소유·증가시킨다. 낙관적 전제는 *충돌 희소*이므로, 고경합 핫 로우는 운영 엔진에서 비관적 락도 고려한다(처리량 트레이드오프는 위 락 범위 원칙).
 
 ### 9.6 Risky Write Consistency Block
 
@@ -409,6 +411,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 |------|-----------|
 | Transaction owner | 어떤 use case/service가 transaction boundary를 소유하는지 |
 | Locking strategy | unique constraint, optimistic, pessimistic, advisory, serializable 중 무엇을 쓰는지 |
+| Rule ownership | 판정·불변식을 도메인 애그리거트(또는 도메인 서비스)가 소유하고 리포지토리는 결과만 저장하는지 — 경합 가드(`version`) 외 비즈니스 판정을 SQL(예: `WHERE stock>=qty`)·ORM `update()`에 복제해 도메인 메서드를 죽이지 않는지(원칙 `architecture-ddd` §3.2, 메커니즘 위 §9.5) |
 | Idempotency storage | key scope, table, unique constraint, request fingerprint, stored result |
 | API handoff | `Idempotency-Key` replay/conflict 계약은 `architecture-api`와 맞추는지 |
 | Side-effect timing | 외부 결제, 알림, message publish를 commit 전/후 어디서 실행하는지 |
