@@ -25,6 +25,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **배포 상태**: Claude판 **v1.0.0 main 병합·릴리스** 완료(마켓플레이스 `changja88`). 그 후 **Codex 이식 착수** → **PoC 성공(§2 DR-12)**: `codex-dddjango/`(스킬 19, Claude `dddjango/` 무변경). 이어 **코드품질 1:1 평가(§2 DR-13)** → **결정성 2차 검증으로 결론 수정(§2 DR-14)**: N=2 결과 **1차 "claude>codex 13:2:5"는 상당 부분 N=1 분산**이었음. 핵심 신호(B1 도메인소유·stock≥0)가 양 런타임 모두 **비결정**. 2차 프레임워크 무관 코드 대등(codex가 일부 우위). **재현되는 진짜 차이 = 코드 우열이 아니라 게이트 노출 철학·스택 취향**. 표준준수 점수 추정 codex~70·claude~84(신뢰낮음, claude 분산>평균차). 평가 정본 `workspace/eval/`(`comparison-2.html`·`RUBRIC-conformance.md`).
 - **B1-fix 표준 검증(§2 DR-15, 2026-05-29)**: DR-14가 남긴 B1 비결정 과제에 **일반화 표준 편집(architecture-ddd §3.2 단일출처 + design-review-ddd/discipline-reviewer 2층 탐지, 12파일 미커밋)**으로 대응 → 새 스모크(sample→clone)로 codex-4·claude-3 동시검증 = **양쪽 설계·코드 끝까지 B1 CLEAN(각 N=1)**. DR-13 빈혈·DR-14 죽은코드 부재. **표준 12파일 커밋(`98ebfd3`).** (claude-3 ninja 통제이탈은 수락; 프레임워크축 비교 무효.)
 - **표준 빈칸 ③·④ 메움(§2 DR-16, 2026-05-29)**: DR-15 통제 비교가 드러낸 표준 두 빈칸(코드 버그 아님)을 메움 — ③ 기존 평면 코드에 도메인 판정 얹을 때 이주 기준을 **"판정·불변식 소유냐"**(레거시 아님)로 명문화(소유→`domain_layer` 이주/데이터 소스→평면 OK/컨텍스트 간 ACL·published만), ④ **API 스택을 design-architect 명세 1급 결정으로 승격**(기본 ninja·기존 존중)+ninja 버전핀 설치 규칙. **14파일 편집·미러 byte-identical·`plugin validate` PASS·서브에이전트 3렌즈 리뷰(정확성 2픽스 반영).** 정적까지 — 동적 검증 ⑥ 이연.
+- **동적 검증 Tier 2·3 + ④ 보강(§2 DR-17, 2026-05-29)**: Claude(Tier 2) ③ **STRONG PASS**·④ inconclusive(ninja 편향). Codex 전체 스모크 ×3(Tier 3): ③ 완전이주 가능·Claude 수렴이나 **비결정**(t3 평면 유지). ④ 결과 = pre-boost plain(headless 무설치 보수성) → **`design-architect` 보강 후 Ninja+requirements 핀 수렴(t3c, 결정적)**. ④(e) 스택 설계승격 전파 **확정**. 산출 `workspace/eval/runs/{codex-5,6,7}`. 각 N=1(sanity).
 - **스모크 방식 통일(§4)**: 마스터 `~/Desktop/dddjango-smoke-sample` + `git clone`으로 런타임별 타깃(`dddjango-{claude,codex}-index`). 구 reset.sh·E2E-SMOKE-METHOD.md 폐기.
 
 ---
@@ -133,7 +134,24 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 - **서브에이전트 리뷰 3렌즈**: plugin-creator=**양호**(미러·매니페스트·런타임 대칭 PASS) / 의도충실성=④충실·③ IMPORTANT 2건 **수정**(`discipline-houserules §2`→`references/final.md §2` 한정자 + 빈혈 적발 괄호를 앱루트 bare 모델까지 확장) / skill-creator=조건부(verbosity 지적 — dddjango "명시=결정성" 가치와 충돌, **현행 유지** 결정; ④ ref위임은 architect 미로드라 거부).
 - **검증(정적)**: 미러 byte-identity·`claude plugin validate` PASS·인용 정합.
 - **동적 검증 Tier 1 — 리뷰어 발화(2026-05-29)**: 편집된 `discipline-reviewer`(워킹트리 — 캐시는 ③ 미반영 stale 확인)를 중립 픽스처·실측 캡처 4건에 "rubric대로 감사"만 시켜(③ 미언급, 편향 방지) 발화 여부 관찰. **③ 판별 정확**: ⓥ `placement-firetest`(판정이 ORM `ProductModel`에 — 표준트리 존재)→**blocker 발화**(§3.2 "ORM≠도메인"→`domain_layer` 이주), ⓧ `crosscontext-firetest`(ordering이 catalog `domain_layer` 직접 import)→**blocker 발화**(`references/final.md` §2), codex-4(catalog 순수 데이터)→**무발화**("§3.2 case2 정상", 오탐0·보너스로 실측 FK cross-import는 important로 잡음), claude-3(실측)→§3.2↔§1.1 긴장을 **important로 표면화·설계결정 반송**(brownfield 과발화 방지; deduct_stock 프로덕션 호출돼 빈혈/죽은코드 아님 정확 구분). → **발화·무발화·모호처리 3모드 의도대로 작동.** 픽스처 `workspace/design/{placement,crosscontext}-firetest/`(중립·메타0). 각 N=1.
-- **이연**: Tier 2(캐시 재설치 + design-architect가 명세에 ③ 이주·④ ninja 박는지) · Tier 3(양 런타임 수렴) · N≥5 빈도통계.
+- **이연**: Tier 2(캐시 재설치 + design-architect가 명세에 ③ 이주·④ ninja 박는지) · Tier 3(양 런타임 수렴) · N≥5 빈도통계. → **Tier 2·3 + ④ 보강은 DR-17에서 실행·해소.**
+
+### DR-17 ✅ 동적 검증 Tier 2·3 + ④ 보강 (Codex 스모크 ×3 — ④ 결과 수렴 달성)
+2026-05-29. DR-16 ③·④ 편집의 동적 검증(Tier 2·3)을 실행하고, Tier 3가 드러낸 **④ 결과-수렴 실패**를 표준 보강으로 해소. 산출 `workspace/eval/runs/{codex-5,codex-6,codex-7}/`.
+- **Tier 2 (Claude `design-architect` spec, 캐시 재설치본)**: ③ **STRONG PASS** — 평면 catalog를 `application/catalog/` 표준트리로 이주 + §1.1 vs §1.2 구분 명시("§1.1 존중=확립 규약이지 미조직 평면 답습 아님 → §1.2 적용") + 판정 도메인 `Product` 소유. ④ **inconclusive** — ninja 쓰나 Claude가 원래 ninja 편향이라 ④ 편집 효과 분리 불가 → 결정적 ④ 테스트는 Codex(원래 plain).
+- **Tier 3 (Codex 전체 `/dddjango` headless `codex exec` · framework 미강제 · reserve-stock 스코프 · 평면 catalog fixture · 각 N=1)**:
+
+  | 런 | 조건 | ④ 스택 | ④f requirements | ③ 구조 | tests |
+  |---|---|---|---|---|---|
+  | codex-5(t3) | pre-boost·no-net | plain | — | 평면(판정 ORM `catalog.models.Product.reserve`) ✗ | 12 OK |
+  | codex-6(t3b) | pre-boost·ninja설치 | plain | — | `application/catalog/` 이주·판정 도메인 ✓ | 24 OK |
+  | **codex-7(t3c)** | **POST-boost·ninja설치** | **Ninja ✓** | **`django-ninja==1.6.2` ✓** | **완전이주(판정 bare 도메인 + ORM→`infra_layer/django_catalog/ProductModel` db_table 보존 + `catalog/models.py` shim) ✓** | 22 OK |
+
+  - **④ 실패 진단(t3·t3b)**: Codex가 *"adding Django Ninja requires installation not guaranteed in this environment"*로 plain 다운그레이드 — **headless 무설치 보수성**. 단 **④(e) 전파는 확정**: 양 런 모두 "API Stack Decision"을 1급 기록 + *"overrides the dddjango default of Django Ninja"* 명시(codex-4 무자각 plain과 대비). ninja 사전설치해도 architect가 `requirements.txt`만 보고 venv 미확인 → 핑계 유지.
+  - **③**: codex가 표준대로 **완전 이주 가능**(t3b·t3c) + Tier 2(Claude)와 수렴. 단 **비결정**(t3 평면 "승인된 설계 예외") — BC경계 런변동 [[dddjango-bc-boundary-nondeterminism]]. t3c는 `db_table="catalog_product"` 보존 + 마이그레이션 이주로 t3가 핑계삼은 *"테이블 연속성 ≠ 코드 이주 불가"*를 정면 입증.
+- **④ 보강 (`design-architect` 2미러 byte-identical)**: t3·t3b 실패 추론("requirements에 없음 → 설치 불가 → plain")을 직격 — "신규라 의존성 없다는 사실만으로 plain 안 낮춤 / 채택=매니페스트 버전핀(`implementation-django-ninja` §2.1)이지 라이브 설치 아님 / 확보 불가가 *구체 근거로 확인*된 때만 명세 기록 후 예외". **서브에이전트 리뷰 3건 반영**(출처 §2.1-only 정확화[houserules §6는 "(보류)"라 인용 회피] · escape hatch "막연한 우려 아닌 구체근거+명세기록"으로 루프홀 차단 · 2문장 분리). **효과=결정적**: pre-boost 2런 plain → **post-boost(t3c) Ninja+핀+Ninja Router**, 22 tests green.
+- **결론**: ③ = 표준 작동(Codex 완전이주 가능·Claude 수렴) **단 비결정**. ④(e) 전파 = **확정**. **④ 결과 수렴 = 보강으로 달성**(headless에서도 Ninja+핀; (f/g) 설치규칙 t3c 발동). 인터랙티브 ④ 런은 보강이 *더 어려운* headless를 통과해 **선택사항(미실행)**.
+- **정직 경계**: 각 N=1(sanity, 빈도 아님). ③ 비결정 미해소(N≥5 별도). 보강은 `design-architect`에만(coder는 §2.1 기보유).
 
 ---
 
@@ -236,5 +254,6 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 - **결정성 2차 검증**(§2 DR-14, 결론 수정): `workspace/eval/` — `comparison-2.html`(2차 시각 보고) · `codex-3-analysis.md` · `claude-2-analysis.md` · `gate-questions.md`(게이트 질문 1:1) · `RUBRIC-conformance.md`(100점 루브릭+점수) · `RESULTS.md`(결정성 N=2 섹션) · `runs/{codex-3,claude-2}/`. 2차 깨끗한 프로젝트 `/Users/hyun/Desktop/dddjango-{codex,claude}`(Py3.9.6·Django4.2.30). 결과: 1차 우위는 대부분 분산, 코드 대등, 진짜 차이=게이트 철학·스택. 점수 codex~70/claude~84(신뢰낮음). **2차 통제 이탈**(claude-2=Ninja+pytest+옵션B평면, codex-3=plain+§0).
 - **B1-fix 검증 3차**(§2 DR-15): `workspace/eval/` — `comparison-3.html`(3차 시각보고) · `gate-questions-3.md`(게이트 1:1 + B1 판정) · `runs/{codex-4,claude-3}/`. 타깃 `~/Desktop/dddjango-{codex,claude}-index`(`dddjango-smoke-sample`에서 git clone·바이트 동일). 결과: **양쪽 B1 CLEAN(설계·코드, 각 N=1)**, 게이트 노출 9:3, claude-3 ninja 통제이탈(수락). 표준 12파일 커밋(`98ebfd3`).
 - **표준 빈칸 ③·④ 메움**(§2 DR-16): 14파일 편집 — `architecture-ddd §3.2` 확장(3벌)·`design-review-ddd`/`discipline-reviewer` 2층 탐지(각 2벌)·`design-architect` ③배치+④API스택(2벌)·`implementation-django-ninja` final.md 설치규칙(3벌)+SKILL(2벌). 정적 검증·`plugin validate` 통과, 동적 ⑥ 이연.
+- **동적 검증 Tier 2·3 + ④ 보강**(§2 DR-17): Tier 2 = Claude `design-architect` spec(③ migrate + §1.1/§1.2 명시·④ inconclusive). Tier 3 = Codex 전체 스모크 ×3 `workspace/eval/runs/{codex-5(t3·평면·plain), codex-6(t3b·이주·plain), codex-7(t3c·POST-boost·Ninja+핀)}`. 보강 = `design-architect` 2미러(headless의 "설치 불확실→plain" 직격 → t3c Ninja 수렴). fixture `~/Desktop/dddjango-codex-{t3,t3b,t3c}`(git 아님)·인터랙티브 미실행 fixture `~/Desktop/dddjango-codex-interactive`. 각 N=1.
 - **향후(범위 밖)**: `/dddjango init`(uv + ruff·mypy strict·django-stubs·pydantic·pytest 부트스트랩, django-stubs만 코퍼스 공백) · OHS→Published Language DTO 전환 · Codex 품질평가·전체 smoke 루프.
 - **개인 메모리 슬러그**(세션 회상용, 정본 아님): dddjango-rebuild-direction · dddjango-work-style · dddjango-audit-ledger · dddjango-standard-hardening-verification · dddjango-bc-boundary-nondeterminism · dddjango-cost-token-optimization. → **내용은 이 DEVLOG에 흡수됨**.

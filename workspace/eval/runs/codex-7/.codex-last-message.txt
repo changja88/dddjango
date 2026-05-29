@@ -1,0 +1,13 @@
+dddjango 파이프라인으로 `Product` 재고 예약 API를 구현했고, 최종 검증도 현재 워크트리에서 다시 실행해 확인했습니다.
+
+검증 결과:
+- `.venv/bin/python manage.py check` → `System check identified no issues`
+- `.venv/bin/python manage.py makemigrations` → `No changes detected`
+- `.venv/bin/python manage.py migrate` → `No migrations to apply`
+- `.venv/bin/python manage.py test` → `22 tests OK`
+
+핵심 결정은 `Product`가 재고 불변식을 소유하므로 별도 Reservation BC/aggregate를 만들지 않고 기존 `catalog` BC를 확장한 것입니다. API 스택은 명세 기본값에 따라 Django Ninja를 채택했고, `POST /api/catalog/products/{product_id}/stock-reservations`가 충분한 재고면 차감 후 `200`, 부족하면 Problem Details `409`, 잘못된 요청은 `400`, 없는 상품은 `404`, non-JSON body는 `415`를 반환합니다. 동시성은 `version` 기반 optimistic CAS로 처리하고, `version`은 도메인 상태가 아니라 repository/application 경계의 persistence token으로 두었습니다.
+
+주요 생성·이주 파일은 `application/catalog/**` 아래의 DDD 계층입니다: 도메인 `Product.reserve()`, application service, Django repository, Ninja API/router, schema, unit/integration tests가 추가됐습니다. 기존 `catalog/migrations/0001_initial.py`는 [application/catalog/infra_layer/django_catalog/migrations/0001_initial.py](/Users/hyun/Desktop/dddjango-codex-t3c/application/catalog/infra_layer/django_catalog/migrations/0001_initial.py)로 이주했고, [0002_productmodel_state.py](/Users/hyun/Desktop/dddjango-codex-t3c/application/catalog/infra_layer/django_catalog/migrations/0002_productmodel_state.py)와 [0003_product_version_constraints.py](/Users/hyun/Desktop/dddjango-codex-t3c/application/catalog/infra_layer/django_catalog/migrations/0003_product_version_constraints.py)를 추가했습니다. [catalog/models.py](/Users/hyun/Desktop/dddjango-codex-t3c/catalog/models.py)는 기존 import 호환 shim으로 남겼고, [config/settings.py](/Users/hyun/Desktop/dddjango-codex-t3c/config/settings.py), [config/urls.py](/Users/hyun/Desktop/dddjango-codex-t3c/config/urls.py), [requirements.txt](/Users/hyun/Desktop/dddjango-codex-t3c/requirements.txt)도 갱신했습니다.
+
+규율 감사에서 한 번 OpenAPI request body 누락이 잡혔고, `quantity >= 1` request schema가 실제 OpenAPI에 노출되도록 회귀 테스트와 함께 보강했습니다. 기존 untracked `.codex-run.log`, `.t3-prompt.txt`는 건드리지 않았습니다. Serena: MCP 도구가 이 세션에 노출되어 있지 않아 사용하지 못했고, `rg`/파일 읽기/서브에이전트 감사/Django 명령으로 검증했습니다.

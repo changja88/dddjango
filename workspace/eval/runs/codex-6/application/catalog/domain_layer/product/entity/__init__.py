@@ -1,0 +1,1 @@
+"""Product subordinate entities."""
