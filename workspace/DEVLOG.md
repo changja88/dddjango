@@ -131,7 +131,9 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 - **④ 스택 전파 빈칸**: "greenfield 신규 API=Django Ninja 기본"이 coder 구현스킬에만 묻혀(design-architect 미로드) 설계 전파 안 됨 → codex-4 plain Django 이탈(DR-14·15 재현). **결정**: design-architect가 명세에 **"API 스택"을 1급 결정**으로 기록(기본 ninja, 기존 스택 존중) → 양 런타임 결정론적 수렴 + ninja 신규도입 시 requirements **버전 핀** 설치 규칙. architecture-api(계약 전용)·coordinator 불가침.
 - **편집 14파일(미러 byte-identical)**: `architecture-ddd §3.2` 확장(소스+Claude+Codex 3벌) + `design-review-ddd`·`discipline-reviewer` 2층 탐지 보강(각 Claude .md+Codex SKILL 2벌) + `design-architect` ③배치·④API스택 불릿(2벌) + `implementation-django-ninja` final.md 설치규칙(3벌)+SKILL.md(2벌).
 - **서브에이전트 리뷰 3렌즈**: plugin-creator=**양호**(미러·매니페스트·런타임 대칭 PASS) / 의도충실성=④충실·③ IMPORTANT 2건 **수정**(`discipline-houserules §2`→`references/final.md §2` 한정자 + 빈혈 적발 괄호를 앱루트 bare 모델까지 확장) / skill-creator=조건부(verbosity 지적 — dddjango "명시=결정성" 가치와 충돌, **현행 유지** 결정; ④ ref위임은 architect 미로드라 거부).
-- **검증**: 미러 byte-identity·`claude plugin validate` PASS·인용 정합. **정적까지** — 동적 검증(런타임이 실제 ③ 이주 지시·리뷰어 발화·④ ninja 수렴)은 **⑥**(negative 픽스처 발화 + 재현, 캐시 재설치 필요)로 이연.
+- **검증(정적)**: 미러 byte-identity·`claude plugin validate` PASS·인용 정합.
+- **동적 검증 Tier 1 — 리뷰어 발화(2026-05-29)**: 편집된 `discipline-reviewer`(워킹트리 — 캐시는 ③ 미반영 stale 확인)를 중립 픽스처·실측 캡처 4건에 "rubric대로 감사"만 시켜(③ 미언급, 편향 방지) 발화 여부 관찰. **③ 판별 정확**: ⓥ `placement-firetest`(판정이 ORM `ProductModel`에 — 표준트리 존재)→**blocker 발화**(§3.2 "ORM≠도메인"→`domain_layer` 이주), ⓧ `crosscontext-firetest`(ordering이 catalog `domain_layer` 직접 import)→**blocker 발화**(`references/final.md` §2), codex-4(catalog 순수 데이터)→**무발화**("§3.2 case2 정상", 오탐0·보너스로 실측 FK cross-import는 important로 잡음), claude-3(실측)→§3.2↔§1.1 긴장을 **important로 표면화·설계결정 반송**(brownfield 과발화 방지; deduct_stock 프로덕션 호출돼 빈혈/죽은코드 아님 정확 구분). → **발화·무발화·모호처리 3모드 의도대로 작동.** 픽스처 `workspace/design/{placement,crosscontext}-firetest/`(중립·메타0). 각 N=1.
+- **이연**: Tier 2(캐시 재설치 + design-architect가 명세에 ③ 이주·④ ninja 박는지) · Tier 3(양 런타임 수렴) · N≥5 빈도통계.
 
 ---
 
