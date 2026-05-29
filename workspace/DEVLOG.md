@@ -5,7 +5,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
   2) 결정은 §2 Decision Records에서 상태태그(✅adopted/❌rejected/⏸blocked/✔verified)로 찾아라.
   3) 모든 수치·주장엔 증거 앵커(세션ID·커밋SHA·파일:라인)가 붙는다 — 추천 전 실재 확인하라.
   4) 개인 메모리(~/.claude)는 초기화될 수 있어 신뢰 못 함. 이 문서가 정본이다.
-마지막 갱신: 2026-05-28
+마지막 갱신: 2026-05-29
 -->
 
 # dddjango DEVLOG
@@ -23,6 +23,8 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **속도/비용 현실(닫힌 결론)**: 기계시간 ~41~60분은 "강한 모델 + 다단계 게이트 + TDD + 독립 리뷰" 품질우선 설계에 **내재**. 품질 손실 없이 큰 wall 단축하는 공짜 레버 없음. 통제 가능한 비용 레버는 이미 적용. 큰 비용 레버(컨텍스트 편집/compaction)는 업스트림 차단(§2 DR-11).
 - **최적화 사이클: ✅ 종료** (2026-05-28, smoke8 합격). 다음 작업은 코드를 *실제로 바꿀 때*만 재개.
 - **배포 상태**: Claude판 **v1.0.0 main 병합·릴리스** 완료(마켓플레이스 `changja88`). 그 후 **Codex 이식 착수** → **PoC 성공(§2 DR-12)**: `codex-dddjango/`(스킬 19, Claude `dddjango/` 무변경). 이어 **코드품질 1:1 평가(§2 DR-13)** → **결정성 2차 검증으로 결론 수정(§2 DR-14)**: N=2 결과 **1차 "claude>codex 13:2:5"는 상당 부분 N=1 분산**이었음. 핵심 신호(B1 도메인소유·stock≥0)가 양 런타임 모두 **비결정**. 2차 프레임워크 무관 코드 대등(codex가 일부 우위). **재현되는 진짜 차이 = 코드 우열이 아니라 게이트 노출 철학·스택 취향**. 표준준수 점수 추정 codex~70·claude~84(신뢰낮음, claude 분산>평균차). 평가 정본 `workspace/eval/`(`comparison-2.html`·`RUBRIC-conformance.md`).
+- **B1-fix 표준 검증(§2 DR-15, 2026-05-29)**: DR-14가 남긴 B1 비결정 과제에 **일반화 표준 편집(architecture-ddd §3.2 단일출처 + design-review-ddd/discipline-reviewer 2층 탐지, 12파일 미커밋)**으로 대응 → 새 스모크(sample→clone)로 codex-4·claude-3 동시검증 = **양쪽 설계·코드 끝까지 B1 CLEAN(각 N=1)**. DR-13 빈혈·DR-14 죽은코드 부재. **표준 12파일 검증 통과·커밋 대기.** (claude-3 ninja 통제이탈은 수락; 프레임워크축 비교 무효.)
+- **스모크 방식 통일(§4)**: 마스터 `~/Desktop/dddjango-smoke-sample` + `git clone`으로 런타임별 타깃(`dddjango-{claude,codex}-index`). 구 reset.sh·E2E-SMOKE-METHOD.md 폐기.
 
 ---
 
@@ -111,6 +113,17 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 - **서브에이전트 검증 주의**: 코드품질 서브에이전트가 "claude-2 stock CHECK 거짓 테스트"라 단언 → **오판**(PositiveIntegerField가 SQLite에 `CHECK(stock>=0)` 자동생성; 스키마·테스트 4/4 PASS로 메인이 반증). **서브에이전트 강한 주장도 경험적 검증 후 채택**.
 - **미해소·다음(측정 방법론)**: 진짜 성능차 측정엔 (a) 모든 게이트 답 고정(구조 옵션A·동일 프레임워크/러너로 교란 제거) (b) 런타임당 **N≥5~10**(분포 비교) (c) 기계검증 객관 루브릭 **블라인드 채점**(단 정적 grep만으론 오판—스키마/테스트 실행 필요) (d) 태스크 1개론 부족=형태 다른 여러 기능. **자동 채점 스크립트 단독은 병목(런 생성)을 못 풀어 효과 제한** — 루브릭 *정의*가 가치 80%. **DR-13의 "codex 스킬 보강" 과제는 재고**(결정적 격차 아님; 보강 시 양 런타임 ddd 리뷰가 'infra 집행=도메인 소유' 합리화를 일관 반려하도록, 공통 코퍼스라 Claude도 영향).
 
+### DR-15 ✔ B1-fix 표준 검증 (codex-4 + claude-3 · 각 N=1 · 양쪽 B1 CLEAN)
+2026-05-29. DR-14가 남긴 "B1 도메인소유가 양 런타임 비결정" 과제에 대응해, **B1을 일반 원칙 + 리뷰어 탐지로 구조화한 표준 편집(12파일, 미커밋)**을 새 통일 스모크 방식(§4 sample→clone)으로 동시 검증. 산출 `workspace/eval/`(`comparison-3.html` 시각보고 · `gate-questions-3.md` 게이트 1:1 원문+B1 판정 · `runs/{codex-4,claude-3}/` 산출물 보존).
+- **편집 요지**: 판정·불변식 소유 원칙을 `architecture-ddd §3.2` **단일출처**로 승격(db §9.5는 동시성 *메커니즘*만 소유·ddd 인용) + **리뷰어 2층 탐지**(`design-review-ddd` 설계단계·`discipline-reviewer` 코드단계). `stock>=qty`는 "예:"로 강등해 일반화(잔액·좌석 등 모든 판정에 적용). 1·2차 과적합 지적 반영.
+- **검증 전제**: 양 런타임 플러그인 캐시를 워킹트리와 **전체 트리 바이트 동일 동기화**(diff 0) + 라이브 프로브로 로드 확인 후 실행.
+- **결과(각 N=1)**: **양 런타임 설계·코드 끝까지 B1 CLEAN.** codex-4 = 판정 `Order.create`(orders 도메인)·프로덕션 호출(`create_order_app.py:51`)·SQL 누수 0·version CAS·`stock>=0` 백스톱. claude-3 = 판정 `Product.deduct_stock`(catalog 소유자)·프로덕션 호출(`catalog_acl.py:30`→`place_order_app`, retry3)·누수 0. 둘 다 `§3.2`·`§9.5`·`§9.6` 인용. **DR-13 codex-2 빈혈(`reserve()` 죽은코드)·DR-14 claude-2 죽은코드(`deduct_stock` 미배선) 둘 다 부재.** 독립 검증(메인 직접): 16 OK / 43 OK(skip1)·check clean·oversell 0.
+- **통제 이탈**: claude-3가 plain Django 아닌 **django-ninja** 사용(프레임워크 게이트 미노출 → 고정답 강제 불가, **DR-14 재현**). 사용자 "이대로 수락" 결정 → 프레임워크-의존 코드·테스트수(16 vs 43) 비교 무효, B1·판정소유·동시성철학·노출철학만 유효.
+- **재현되는 차이**: 게이트 노출 **≈ 9:3**(클로드 G0 4분할+G1 4분할 / 코덱스 각 단일), 스택 취향(클로드 ninja / 코덱스 plain), 오류분류(클로드 503 분리). 1·2·3차 일관 = **코드 우열 아니라 제품철학·기본값**.
+- **정직 경계**: 각 N=1 → "표준 발화·작동" sanity이지 B1 빈도 감소 통계 아님(N≥5 블라인드 필요). **표준 12파일 미커밋 — 검증 통과, 커밋 대기.**
+- **방법론 교훈 2**: ① Claude 프레임워크 통제는 게이트 답이 아니라 **프롬프트 본문**에 박아야(Claude 미게이팅). ② 스모크 방식 **통일 = 마스터 `dddjango-smoke-sample` + git clone**(§4 정본; 구 reset.sh·E2E-SMOKE-METHOD.md 폐기).
+- **발화 테스트(B2 메커니즘 검증, 추가)**: 편집된 `discipline-reviewer` 3회 독립 실행 = **2 clear + 1 fire**. 중립 B1-양성 픽스처 `workspace/design/b1-firetest/`(도메인 `Product.deduct` 죽은코드 + repo `filter(stock__gte=qty).update`)에 **[blocker] 판정 인프라 누수+죽은 도메인 메서드** 정확 발화(인용 `architecture-ddd §3.2`·`discipline-cleancode §15.1·§8.1/§8.5·§9.1`, 레인 준수="쿼리 정확성 아님"). codex-4·claude-3은 blocker 0·B1 명시 클린(별건 important만: codex quantity DRY 죽은분기, claude 테스트결합) = **B1 오탐 0이면서 다른 진짜 결함은 잡음(판별력)**. → **탐지 메커니즘이 설계(DR-15 본문)·코드 양 층에서 작동 확정.** 정직: 여전히 생성 N=1, 빈도통계 아님.
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
@@ -135,13 +148,48 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
   - cost 가중(입력1 기준): cache_read 0.1 · cache_creation 1.25 · input 1.0 · output 5.0.
   - **machine-time 정의**(사람 대기 제외): `wall − Σ(서브에이전트 실행구간에 안 걸치는 >120s 갭)`. 항상 machine ≤ wall.
   - 서브에이전트 내부 턴은 별도 파일 `<session>/subagents/agent-<id>.jsonl`(`message.model` 포함).
-- **smoke A/B 재현 레시피**:
-  1. baseline 클론: `git clone <기존토이> <새토이>` (커밋 `0a9c2f5` = pristine Django 4.2.30 + ninja 1.6.2 + flat catalog Product; 생성물은 untracked라 안 따라옴).
-  2. venv + `pip install django==4.2.30 django-ninja==1.6.2`, `manage.py migrate`, 시드(위젯 stock 10·가젯 stock 3).
-  3. 프롬프트 = 현재 `dddjango/commands/dddjango.md`(frontmatter 제거, `$ARGUMENTS`→기능)로 `SMOKE_PROMPT.txt` 생성. 붙여넣기 방식(코디) + 서브에이전트는 플러그인 캐시 로드.
-  4. **플러그인 캐시 최신 확인**: `~/.claude/plugins/installed_plugins.json`의 `gitCommitSha`가 현재 HEAD인지. 다르면 marketplace update→uninstall→install(버전 불변이라 update는 no-op).
-  5. **thinking OFF**, G0 답변 고정(비교용: ①새 독립 영역 / 단일 상품+수량 / lens ddd·api·db).
-  6. 끝나면 telemetry 파서로 분석.
+### 스모크 테스트 방식 (정본 — 2026-05-29 통일, 이전 방식 전부 폐기)
+
+표준(스킬/에이전트)을 바꾼 뒤 "**실제 파이프라인이 결함 없는 동작 코드를 만드는가**"를 end-to-end 검증하거나 런타임을 1:1 비교하는 **단일 절차**. (과거 `git clone 토이` 레시피·`reset.sh 인플레이스 리셋`·`E2E-SMOKE-METHOD.md`는 이걸로 대체됨.)
+
+**핵심: 마스터 1개 + 복제 N개.** 데스크탑에 마스터 템플릿 `~/Desktop/dddjango-smoke-sample` 하나만 두고(여기서 직접 런 안 함), `git clone` 으로 런타임별 타깃을 뜬다 → 추적 코드 **바이트 동일**(검증: 세 폴더 `git ls-files | xargs shasum` 동일 해시), venv·DB·시드는 핀(`requirements.txt`)+`setup.sh`로 **결정적 동일** ⇒ 두 런이 같은 시작점에서 출발.
+
+- `~/Desktop/dddjango-claude-index` = Claude `/dddjango` 타깃 · `~/Desktop/dddjango-codex-index` = Codex `dddjango` 스킬 타깃. (회차 구분 필요하면 접미사만 바꿈.)
+
+**마스터 구성**(= baseline + 고정입력 + 셋업):
+```
+config/ catalog/(Product만) manage.py     # = workspace/eval/baseline/
+requirements.txt   # Django==4.2.30
+PROMPT.md          # 고정 기능 프롬프트 + 고정 게이트 답 + 시드 정의(아래)
+setup.sh           # venv 생성 + 의존성 + migrate + 시드 + check (멱등)
+.gitignore         # .venv/ db.sqlite3 __pycache__/ .dddjango/
+```
+**생성·복제(분실 시 재현)**:
+```bash
+S=~/Desktop/dddjango-smoke-sample
+cp -R workspace/eval/baseline/{config,catalog} workspace/eval/baseline/manage.py "$S"/   # + PROMPT/setup/requirements/.gitignore
+(cd "$S" && git init -q && git add -A && git commit -qm baseline && bash setup.sh)        # 마스터 = 실행가능
+git clone "$S" ~/Desktop/dddjango-claude-index && bash ~/Desktop/dddjango-claude-index/setup.sh
+git clone "$S" ~/Desktop/dddjango-codex-index  && bash ~/Desktop/dddjango-codex-index/setup.sh
+# 리셋 = 폴더 삭제 후 재클론(인플레이스 reset.sh 아님).
+```
+
+**고정 입력**(마스터 `PROMPT.md` — 양 런타임 동일하게 답해야 차이가 "런타임 차이"로 읽힘; DR-14 교훈: 프레임워크·러너·구조옵션 미고정 시 비교 불가):
+- 프롬프트(토씨 그대로): `재고가 부족하면 409로 거절하고, 충분하면 재고를 차감하며 주문을 생성하는 API.`
+- 고정 게이트: BC=**① 새 독립 영역**(완전 §0 4계층·평면 교란 제거) · lens=**ddd+db+api** · 스코프=제안대로 · **plain Django** · **Django 기본 test** · G1/G2 무수정 승인 · **thinking OFF**(DR-08).
+- 시드(테스트 DB 비오염 위해 마이그레이션 아닌 런타임 데이터로 db.sqlite3에만): Widget stock=10·price=1000, Gadget stock=3·price=2000.
+
+**⚠️ 플러그인 캐시 신선도(표준 편집 시 필수)**: 서브에이전트는 **설치된 플러그인 캐시**에서 스킬/에이전트를 로드(워킹트리 아님). `/reload-plugins`는 캐시를 **재복사하지 않음**(기존 캐시 재독). 반영 = 편집 파일을 캐시에 직접 `cp`(Claude `~/.claude/plugins/cache/changja88/dddjango/<ver>/` · Codex `~/.codex/plugins/cache/dddjango-local/dddjango/<ver>/`) 또는 uninstall→install. 풀런 전 `grep -c "<신문구>" <캐시>/…/final.md`(=1) + 프로브 서브에이전트 1개로 검증. 보조: `~/.claude/plugins/installed_plugins.json` `gitCommitSha`가 의도 HEAD인지.
+
+**합격 기준**:
+- (A) `manage.py check` clean · migrate 정합 · `test` 전부 green(201·409·404·**동시성 oversell 없음** 커버).
+- (B) 역사적 결함 부재(grep+리뷰): **B1(빈혈/판정 인프라 누수)** — `grep -rn "stock__gte\|balance__gte" application --include=*.py | grep -v test | grep -v "stock__gte=0"` =0, 도메인 판정 메서드(`.deduct(` 등)가 **프로덕션 호출처** 보유, repo CAS의 `WHERE`엔 version 경합가드만(판정 SQL 없음; `stock>=0`은 CHECK 불변식 백스톱이라 OK). **§0 파일트리·§4 명명**. (권장) `discipline-reviewer` 서브에이전트 홀리스틱 감사 blocker/important 0.
+
+**캡처·기록**: 산출물 → `workspace/eval/runs/<run>/`(rsync, `.venv/.git/db.sqlite3/__pycache__` 제외) · 한 줄 → §5 Ledger · 분석 `workspace/tools/session_telemetry.py --smoke N` → `smoke_report.py`. 게이트 질문 1:1 원문은 비교 시 `workspace/eval/gate-questions*.md`에 양쪽 기록.
+
+**정직 경계**: 1회 = 통합 sanity("만들 수 있다"+"게이트 작동"). 확률적 결함(B1·BC비결정)의 *빈도 감소* 증명은 같은 입력 **N≥5 블라인드** + 루브릭(`workspace/eval/RUBRIC*.md`) 필요(별도 작업). 커밋 타임스탬프로 "그 런이 쓴 코드" 추론 금지(DR-10).
+
+> 레거시: `workspace/eval/reset.sh`·구 `~/Desktop/dddjango-smoke*` 타깃은 §5의 **과거 런(smoke1~8·codex/claude 1~4)** 재현용 흔적이다. **새 런은 위 sample→clone 절차만 사용**한다.
 
 ---
 
@@ -175,5 +223,6 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 - **Codex 이식**(§2 DR-12): 조사 `workspace/design/2026-05-28-codex-port-research.md` · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님, =codex-2 런).
 - **코드품질 1:1 평가**(§2 DR-13): 정본 `workspace/eval/` — `comparison.html`(1차 시각 보고) · `RESULTS.md` · `codex-2-analysis.md` · `claude-1-analysis.md` · `runs/{codex-1,codex-2,claude-1}/`(산출물 보존) · 하니스 `baseline/`+`reset.sh`+`PROTOCOL.md`+`RUBRIC.md`. Claude 비교군 `/Users/hyun/Desktop/dddjango-smoke-claude`(git 아님). 1차 결과 claude-1>codex-2(13:2:5), N=1.
 - **결정성 2차 검증**(§2 DR-14, 결론 수정): `workspace/eval/` — `comparison-2.html`(2차 시각 보고) · `codex-3-analysis.md` · `claude-2-analysis.md` · `gate-questions.md`(게이트 질문 1:1) · `RUBRIC-conformance.md`(100점 루브릭+점수) · `RESULTS.md`(결정성 N=2 섹션) · `runs/{codex-3,claude-2}/`. 2차 깨끗한 프로젝트 `/Users/hyun/Desktop/dddjango-{codex,claude}`(Py3.9.6·Django4.2.30). 결과: 1차 우위는 대부분 분산, 코드 대등, 진짜 차이=게이트 철학·스택. 점수 codex~70/claude~84(신뢰낮음). **2차 통제 이탈**(claude-2=Ninja+pytest+옵션B평면, codex-3=plain+§0).
+- **B1-fix 검증 3차**(§2 DR-15): `workspace/eval/` — `comparison-3.html`(3차 시각보고) · `gate-questions-3.md`(게이트 1:1 + B1 판정) · `runs/{codex-4,claude-3}/`. 타깃 `~/Desktop/dddjango-{codex,claude}-index`(`dddjango-smoke-sample`에서 git clone·바이트 동일). 결과: **양쪽 B1 CLEAN(설계·코드, 각 N=1)**, 게이트 노출 9:3, claude-3 ninja 통제이탈(수락). 표준 12파일 미커밋·커밋 대기.
 - **향후(범위 밖)**: `/dddjango init`(uv + ruff·mypy strict·django-stubs·pydantic·pytest 부트스트랩, django-stubs만 코퍼스 공백) · OHS→Published Language DTO 전환 · Codex 품질평가·전체 smoke 루프.
 - **개인 메모리 슬러그**(세션 회상용, 정본 아님): dddjango-rebuild-direction · dddjango-work-style · dddjango-audit-ledger · dddjango-standard-hardening-verification · dddjango-bc-boundary-nondeterminism · dddjango-cost-token-optimization. → **내용은 이 DEVLOG에 흡수됨**.
