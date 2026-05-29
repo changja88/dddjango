@@ -109,13 +109,13 @@ Operation 구현 기준:
 - delete 또는 no-body update는 `204`를 사용하고 body를 반환하지 않는다.
 - async operation에서 ORM을 직접 호출하지 않도록 Django async ORM 제약을 확인한다.
 - 성공뿐 아니라 **가능한 모든 status를 `response={...}`에 선언한다** — 알려진 도메인/검증 오류(404·409·422 등)까지 포함한다. 선언하지 않은 status는 OpenAPI/Swagger에 드러나지 않아 client가 계약으로 알 수 없다.
-- **오류 응답도 ninja schema로 반환한다** — operation 안에서 `return status, ErrorSchema(...)` 튜플로 돌려주면 ninja가 그 status의 schema로 직렬화·문서화한다. 수제 `HttpResponse`/`JsonResponse`로 직접 만들면 response 매핑을 우회해 OpenAPI에 드러나지 않는다(§6.2).
+- **오류는 operation에서 `raise`하고 성공 schema만 `return`한다** — 도메인/애플리케이션 예외를 그대로 raise하면 중앙에서 problem+json으로 변환한다(§6.2). operation 본문에서 `(status, ErrorSchema)` 튜플이나 수제 `HttpResponse`/`JsonResponse`로 오류 응답을 직접 만들지 않는다 — 변환이 흩어지고 problem+json content-type을 일관되게 못 맞춘다.
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
-- **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다(예: `tuple[int, OrderOut | ErrorOut]`).
+- **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 오류를 raise로 처리하면 성공 타입만 남는다(단일 성공 schema면 그 타입, 다중 성공 status면 `Status[...]`).
 
 ```python
 from django.http import HttpRequest
-from ninja import Router, Schema
+from ninja import Router, Schema, Status
 
 router = Router()
 
@@ -130,26 +130,26 @@ class OrderOut(Schema):       # response body -- public field만 노출
     status: str
 
 
-class ErrorOut(Schema):       # 오류도 명시적 schema로 계약화 (본문 형식은 §6.2 Problem Details)
+class ProblemOut(Schema):     # 오류 본문도 schema로 계약화 (형식은 §6.2 RFC 9457)
+    type: str
+    title: str
+    status: int
     detail: str
 
 
-# 성공·오류 status를 모두 response에 선언하고(OpenAPI 계약), summary/tags로 문서화한다
+# 성공·오류 status를 모두 response에 선언하고(OpenAPI 계약), summary/tags로 문서화한다.
+# 오류는 raise만 하고, problem+json 변환은 중앙 한 곳이 한다(§6.2).
 @router.post(
     "/orders",
-    response={201: OrderOut, 404: ErrorOut, 409: ErrorOut},
+    response={201: OrderOut, 404: ProblemOut, 409: ProblemOut},
     summary="주문 생성",
     description="재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.",
     tags=["orders"],
 )
-def create_order(request: HttpRequest, payload: OrderIn) -> tuple[int, OrderOut | ErrorOut]:
-    try:
-        order = place_order(product_id=payload.product_id, quantity=payload.quantity)  # service 호출
-    except ProductNotFound as exc:
-        return 404, ErrorOut(detail=str(exc))      # 수제 HttpResponse가 아니라 (status, schema) 튜플
-    except InsufficientStock as exc:
-        return 409, ErrorOut(detail=str(exc))
-    return 201, OrderOut(id=order.id, status=order.status)
+def create_order(request: HttpRequest, payload: OrderIn) -> Status[OrderOut]:
+    order = place_order(product_id=payload.product_id, quantity=payload.quantity)  # service 호출
+    # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
+    return Status(201, OrderOut(id=order.id, status=order.status))
 ```
 
 ---
@@ -305,58 +305,99 @@ def list_orders(request):
 - `422`: semantically invalid input 또는 framework validation error 계약
 - `429`: rate limit
 
-Django Ninja validation error의 default status가 프로젝트 error contract와 다르면
-exception handler 또는 API subclass로 contract를 맞춘다.
+Django Ninja validation error의 default status·형식이 프로젝트 error contract와 다르면
+`ValidationError` exception handler(또는 validation 전용 `NinjaAPI` subclass)로 맞춘다 —
+problem+json 변환은 §6.2의 중앙 변환에서 422도 함께 처리한다.
 
 ### 6.2 RFC 9457 Problem Details
 
 API error는 legacy compatibility contract가 명시적으로 다른 형식을 요구하지 않는
 한 RFC 9457 Problem Details를 사용한다.
 
-필수 기준:
+본문(body) 기준:
 
-- response media type은 `application/problem+json`을 사용한다.
 - `status` field는 HTTP status와 일치한다.
 - `type`은 stable URI를 쓰고, 없으면 `about:blank`를 사용한다.
 - `title`은 problem type 요약이며 같은 type이면 안정적으로 유지한다.
 - `detail`은 특정 발생에 대한 설명이다.
 - `instance`는 request/problem id 같은 식별자가 있을 때 포함한다.
-- extension field는 문서화되어 있고 client가 무시해도 안전해야 한다.
+- extension field는 문서화되어 있고 client가 무시해도 안전해야 한다. framework
+  validation(422) 오류를 실을 때는 pydantic 내부 구조를 그대로 노출하지 말고
+  `invalid-params` 같은 안정된 형태로 매핑한다.
 
-Django Ninja에서 도메인/애플리케이션 예외를 Problem Details로 변환하는 위치는 두 가지이며,
-둘 다 **response schema 매핑을 우회하지 않는 것**이 핵심이다.
+런타임 응답의 media type은 `application/problem+json`이며, 아래 중앙 변환이 설정한다.
 
-- **Operation-local 변환**: 특정 operation에서만 의미 있는 알려진 예외는 그 operation 안에서
-  잡아 `return status, ErrorSchema(...)` 튜플로 돌려준다. 해당 status가 `response={...}`에
-  선언돼 있어야 ninja가 그 schema로 직렬화하고 OpenAPI에 드러난다(§2.2).
-- **중앙 exception_handler**: 여러 operation을 가로지르는 공통 예외나 framework validation
-  error는 `api.exception_handler(...)` 또는 `NinjaAPI` subclass로 한 곳에서 변환한다.
+**오류는 operation에서 `raise`하고, problem+json 변환은 중앙 `@api.exception_handler`와
+헬퍼 한 곳이 한다.** 이게 처방된 기본이다 — operation 본문은 성공 schema만 만들고(§2.2)
+변환 형식·content-type을 한 출처로 모은다. 그래야 operation이 raw 응답을 만들 일이 없어
+"본문 우회"가 구조적으로 불가능하고 형식이 흩어지지 않는다. 변환 대상:
 
-operation 함수 본문에서 수제 `HttpResponse`/`JsonResponse`로 body를 직접 만들면 그 응답은
-`response=` 계약 밖이라 OpenAPI/Swagger에 드러나지 않는다 — client가 계약으로 알 수 없는 오류
-형식이 된다. Problem Details body도 가능한 한 schema로 표현해 문서화 가능하게 둔다.
+- **도메인/애플리케이션 예외**: presentation이 예외→HTTP status를 매핑한다(도메인은 HTTP를
+  모른다). 예외가 많으면 공통 도메인 베이스를 잡아 매핑 테이블로 status를 정하고, 예외
+  *종류마다* 핸들러를 무한 증식시키지 않는다.
+- **framework 기본 예외**: ninja는 `AuthenticationError`(401)·`AuthorizationError`(403)·
+  `Http404`(404)·`ValidationError`(422)·`Throttled`(429)에 기본 핸들러를 자동 등록하는데
+  기본 응답은 plain `application/json`이다. RFC 9457을 일관 적용하려면 이들도 같은 헬퍼로
+  오버라이드한다(아래 대안 B는 이걸 한 번에 처리한다).
+- `type` URI·`title` 문구·extension 설계는 프로젝트 problem 카탈로그 재량이다.
 
 ```python
 from ninja import NinjaAPI
-from django.http import JsonResponse
+from ninja.errors import ValidationError       # ninja validation 오류(≠ pydantic.ValidationError)
+from ninja.responses import Response           # JsonResponse 서브클래스 + ninja JSON 인코더
 
 api = NinjaAPI()
 
 
-# application/domain 예외를 RFC 9457 형식으로 변환한다
-@api.exception_handler(OrderConflict)
-def on_order_conflict(request, exc):
-    return JsonResponse(
-        {
-            "type": "about:blank",
-            "title": "Order conflict",
-            "status": 409,
-            "detail": str(exc),
-        },
-        status=409,
-        content_type="application/problem+json",
-    )
+def problem(status: int, *, title: str, detail: str,
+            type: str = "about:blank", **ext) -> Response:
+    # RFC 9457 본문을 한 곳에서 만든다 — 모든 오류 변환이 이 헬퍼만 거친다.
+    body = {"type": type, "title": title, "status": status, "detail": detail, **ext}
+    return Response(body, status=status, content_type="application/problem+json")
+
+
+@api.exception_handler(ProductNotFound)        # 도메인 예외 → status 매핑은 presentation 소유
+def on_product_not_found(request, exc):
+    return problem(404, title="Product not found", detail=str(exc))
+
+
+@api.exception_handler(InsufficientStock)
+def on_insufficient_stock(request, exc):
+    return problem(409, title="Insufficient stock", detail=str(exc))
+
+
+@api.exception_handler(ValidationError)        # framework 기본 422를 problem+json으로 오버라이드
+def on_validation_error(request, exc):
+    return problem(422, title="Validation failed", detail="Request did not pass validation.",
+                   **{"invalid-params": exc.errors})
 ```
+
+핸들러·헬퍼는 `NinjaAPI` 인스턴스 단위다 — API가 여럿이면 공통 베이스로 일관 적용한다.
+async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
+
+**대안 B(더 DRY) — `create_response` 오버라이드.** 핸들러마다 content-type을 반복하기 번거롭거나
+framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 상속해 런타임 메서드
+`create_response`만 오버라이드해 `status >= 400`이면 media type을 `application/problem+json`으로
+바꾼다(2xx 성공은 건드리지 않는다). 그러면 도메인 예외·`Http404`·422·401/403/429가 한 곳에서
+일괄 변환되고 핸들러는 problem *본문*만 만들면 된다. 이는 ninja가 공개한 정식 런타임 확장점이며
+**생성된 OpenAPI를 건드리지 않는다**(아래 금지 대상과 혼동하지 말 것).
+
+**OpenAPI는 error 응답을 `application/json`으로 표기한다 — 수용된 한계다.** ninja는 선언한
+`response={...}` schema를 전역 `renderer.media_type`(기본 `application/json`)으로 문서화하므로,
+런타임이 `application/problem+json`을 보내도 생성 OpenAPI의 error 응답 media-type은
+`application/json`으로 찍힌다. ninja 1.6.x에 per-status media type이 없어 생기는 것이고
+**계약 위반이 아니다** — 런타임 응답도, error 응답 *schema 형태*도 정확하다(§8은 schema
+형태를 확인하지 media-type 라벨을 강제하지 않는다). 따라서:
+
+- **생성된 OpenAPI를 사후 변형하지 않는다.** `get_openapi_schema`를 오버라이드해 만들어진
+  schema의 media-type을 바꿔치기하는 것은 ninja 내부 dict 구조·경로에 의존해 조용히 깨지고,
+  문서를 런타임과 다르게 위조한다(런타임을 바꾸는 위 대안 B와 다르다 — B는 정당, 이건 금지).
+- OpenAPI 문서 자체에 `application/problem+json` 표기가 계약상 꼭 필요하면, 개별 응답을
+  후가공하지 말고 **설계 단계에서 API 전역 렌더러(`NinjaAPI(renderer=...)`)로 결정**한다
+  (전역 렌더러는 성공 응답 media type까지 바꾸므로 trade-off를 따진다).
+
+> 위 사실은 django-ninja 1.6.x 기준이다. operation 본문은 `Status`/도메인 예외 `raise`만
+> 쓴다 — `(status, schema)` 튜플 반환은 1.6.x에서 deprecated다.
 
 ---
 
@@ -391,7 +432,7 @@ runtime behavior뿐 아니라 generated schema의 client-visible contract를 바
 - required/optional/nullable field
 - enum, format, default
 - status별 response schema
-- Problem Details error schema
+- Problem Details error schema 형태 (생성 OpenAPI상 error 응답 media-type이 `application/json`으로 표기되는 것은 §6.2의 수용된 한계 — 사후 변형하지 않는다)
 - auth/security requirement
 - pagination/filtering parameter와 response metadata
 - deprecation/versioning note

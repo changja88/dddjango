@@ -57,8 +57,8 @@ baseline: 동일 clean sample (catalog 평면).
 - **근거**: `implementation-django-ninja` §2.1.
 
 ### 축 4 — ninja operation 품질 [openapi 확인 필수]
-- **PASS**: ① 모든 status를 `response=`에 선언(200/201·404·409·422) ② **에러를 `(status, schema)` 튜플 반환** — 수제 `JsonResponse(status=...)`/`HttpResponse`로 OpenAPI 우회 **✗**(⚠️ codex-7이 여기서 위반=FAIL) ③ `summary`/`description`/`tags` ④ 명시 반환 타입 ⑤ 에러 본문 **RFC 9457 problem+json**(`type`/`title`/`status`/`detail`).
-- **확인(필수)**: 서버 띄워 `/api/.../openapi.json`에 **404·409가 노출되는지**; presentation api에 `JsonResponse(status=` 수제 반환 grep=0.
+- **PASS**: ① 모든 status를 `response=`에 선언(200/201·404·409·422) ② **오류는 operation에서 `raise`하고 problem+json 변환은 중앙 `@api.exception_handler`·헬퍼 한 곳** — operation 본문에서 `(status, schema)` 튜플·수제 `JsonResponse`/`HttpResponse` 반환 **✗**(⚠️ codex-7이 operation 본문 우회=FAIL; 중앙 핸들러의 problem+json 응답은 허용) ③ `summary`/`description`/`tags` ④ 명시 반환 타입(`Status[...]`/성공 schema) ⑤ 에러 본문 **RFC 9457 problem+json**(`type`/`title`/`status`/`detail`).
+- **확인(필수)**: 서버 띄워 `/api/.../openapi.json`에 **404·409가 노출되는지**; **operation 함수 본문**에 수제 응답·튜플 반환 grep=0(중앙 `@api.exception_handler`·헬퍼는 제외). 생성 OpenAPI의 error media-type이 `application/json`인 건 §6.2 수용된 한계(`get_openapi_schema` 사후변형 grep=0).
 - **근거**: `implementation-django-ninja` §2.2·§6.2(RFC 9457).
 
 ### 축 5 — 코더 메커니즘-대체 가드레일 [grep 1차]
