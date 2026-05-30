@@ -5,7 +5,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
   2) 결정은 §2 Decision Records에서 상태태그(✅adopted/❌rejected/⏸blocked/✔verified)로 찾아라.
   3) 모든 수치·주장엔 증거 앵커(세션ID·커밋SHA·파일:라인)가 붙는다 — 추천 전 실재 확인하라.
   4) 개인 메모리(~/.claude)는 초기화될 수 있어 신뢰 못 함. 이 문서가 정본이다.
-마지막 갱신: 2026-05-29
+마지막 갱신: 2026-05-30
 -->
 
 # dddjango DEVLOG
@@ -17,7 +17,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 ## §0 Current State (READ FIRST)
 
 - **무엇**: 기존 Django 프로젝트에 한 기능을 DDD로 추가하는 Claude 전용 플러그인. 단일 진입 `/dddjango`. 코디네이터(메인 세션) + 서브에이전트 7 + 스킬 10, 게이트 G0/G1/G2.
-- **브랜치**: `feat/dddjango-build` (main 미병합). **HEAD: `15ff62d`**.
+- **브랜치**: `eval/codex-determinism-n2` (DR-14~20 작업분, main 미병합·main 직계 후손=**ff 가능**). **HEAD = P1a 백스톱(`990efb9`) + docs**. ⚠️ **eval 브랜치 전체가 로컬·미push**(origin엔 P2 `58660a0`까지; P3 `246ccfc`·P1a 백스톱 `990efb9` 모두 로컬) — 릴리스(eval→main 머지/PR + push)는 **사용자 명시 push 승인 대기**(가드레일이 push 차단). (이전 `feat/dddjango-build` HEAD `15ff62d`=DR-13까지.)
 - **현재 베스트 구성(검증됨)** = **커밋된 HEAD(`15ff62d`) + extended thinking OFF**. **smoke8(2026-05-28)이 최종 확인**: 코디 과금비용 **1.58M cost-unit(전 런 최저)**, 기계시간 **41분**, 테스트 **20/20**, §0/§4/ACL 전부 충족, 코더 토끼굴 0, architect 정정 재디스패치 0 — 역대 가장 깨끗, 회귀 없음. (smoke6도 동일 구성으로 1.98M·52분이었고, smoke8이 더 낮은 건 슬라이스 granularity 확률 변동.)
   - ⚠️ **thinking OFF는 코드가 아니라 사용자 세션 설정**(`Option+T` / `alwaysThinkingEnabled:false`). 플러그인에 못 박는다. 안 끄면 비용 ≈ 2.6M.
 - **속도/비용 현실(닫힌 결론)**: 기계시간 ~41~60분은 "강한 모델 + 다단계 게이트 + TDD + 독립 리뷰" 품질우선 설계에 **내재**. 품질 손실 없이 큰 wall 단축하는 공짜 레버 없음. 통제 가능한 비용 레버는 이미 적용. 큰 비용 레버(컨텍스트 편집/compaction)는 업스트림 차단(§2 DR-11).
@@ -27,6 +27,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **표준 빈칸 ③·④ 메움(§2 DR-16, 2026-05-29)**: DR-15 통제 비교가 드러낸 표준 두 빈칸(코드 버그 아님)을 메움 — ③ 기존 평면 코드에 도메인 판정 얹을 때 이주 기준을 **"판정·불변식 소유냐"**(레거시 아님)로 명문화(소유→`domain_layer` 이주/데이터 소스→평면 OK/컨텍스트 간 ACL·published만), ④ **API 스택을 design-architect 명세 1급 결정으로 승격**(기본 ninja·기존 존중)+ninja 버전핀 설치 규칙. **14파일 편집·미러 byte-identical·`plugin validate` PASS·서브에이전트 3렌즈 리뷰(정확성 2픽스 반영).** 정적까지 — 동적 검증 ⑥ 이연.
 - **동적 검증 Tier 2·3 + ④ 보강(§2 DR-17, 2026-05-29)**: Claude(Tier 2) ③ **STRONG PASS**·④ inconclusive(ninja 편향). Codex 전체 스모크 ×3(Tier 3): ③ 완전이주 가능·Claude 수렴이나 **비결정**(t3 평면 유지). ④ 결과 = pre-boost plain(headless 무설치 보수성) → **`design-architect` 보강 후 Ninja+requirements 핀 수렴(t3c, 결정적)**. ④(e) 스택 설계승격 전파 **확정**. 산출 `workspace/eval/runs/{codex-5,6,7}`. 각 N=1(sanity).
 - **스모크 방식 통일(§4)**: 마스터 `~/Desktop/dddjango-smoke-sample` + `git clone`으로 런타임별 타깃(`dddjango-{claude,codex}-index`). 구 reset.sh·E2E-SMOKE-METHOD.md 폐기.
+- **최종 수동 스모크 → 실행가능 갭 4건 + 라이브 재테스트(§2 DR-18·19, 2026-05-30)**: 커밋된 표준의 라이브 sanity 스모크가 **P1a~P4** 발견 → P1a(positive 레시피·`2795824`)·P1b(houserules §6.2)·P2(메커니즘-소유권 4수·`58660a0`·origin)·P3(§9.6 4스테이지·`246ccfc` 로컬) 구현. **라이브 재테스트(smoke2 fixtures, 캐시 신선화 후 실제 `/dddjango`): P1b·P2·P3 집행 라이브 확정**(P3=Codex서 discipline-reviewer "Risky Write 테스트 부족" blocker 발화→교정, 최강 증거)**·P1a Codex 재발**(또 operation 수제 응답·중앙핸들러 0 — 긍정 레시피-only로 미차단; Claude는 준수). P4 ③ 비결정=N≥5 보류. **P1a 집행 백스톱 구현·검증(§2 DR-20, 2026-05-31)**: discipline-reviewer "API 오류 응답 중앙화 규율" blocker(적대 리뷰 3렌즈 + 텍스트-판별 N=9/9) → DR-19 잔여 ① 해소. 정본=`workspace/eval/REMAINING-ISSUES.md`. **남은 것: 릴리스(eval→main ff 머지/PR + origin push — eval 로컬 전용) · (선택)캐시 신선화 후 P1a 백스톱 라이브-파이어.**
 
 ---
 
@@ -153,6 +154,40 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 - **결론**: ③ = 표준 작동(Codex 완전이주 가능·Claude 수렴) **단 비결정**. ④(e) 전파 = **확정**. **④ 결과 수렴 = 보강으로 달성**(headless에서도 Ninja+핀; (f/g) 설치규칙 t3c 발동). 인터랙티브 ④ 런은 보강이 *더 어려운* headless를 통과해 **선택사항(미실행)**.
 - **정직 경계**: 각 N=1(sanity, 빈도 아님). ③ 비결정 미해소(N≥5 별도). 보강은 `design-architect`에만(coder는 §2.1 기보유).
 
+### DR-18 ✅ 최종 수동 스모크 → 실행가능 갭 4건(P1a~P4) 발견·구현
+2026-05-30. DR-17까지로 ③·④ 닫은 뒤, **최종 수동 스모크**(Claude 태스크A 재고예약·단일 컨텍스트 + Codex 인터랙티브 태스크B 주문생성·cross-context, clean fixture)로 "커밋된 표준 전부가 라이브에서 발화하는가" sanity 확인. **판정=성공(N=1)**: 정합성 버그 0, 양 런 전 게이트 통과·test green(Claude 25/Codex 23), **축9 인터랙티브 ④ 결판**(ninja 미설치 fixture에서도 Ninja+핀 수렴 — DR-17 boost가 인터랙티브까지). 단 **실행가능 갭 4건 확정**(상세·증거 정본=`workspace/eval/REMAINING-ISSUES.md` + [[dddjango-final-smoke-findings]]):
+- **P1a** ninja problem+json operation 품질 — Claude 준수(중앙 `@api.exception_handler`+얇은 operation)/Codex 위반(operation 본문 수제 `problem_response`+`OrdersNinjaAPI` 상속 OpenAPI 몽키패치). 근본=§6.2가 problem+json 미디어타입 필수↔schema 우회금지를 동시 요구하나 **ninja에선 에러에 양립불가**(실증 1.6.2). **해법=prohibition→positive 레시피 재작성**(중앙 핸들러+단일 헬퍼 기본A·`create_response` 오버라이드 DRY대안B·프레임워크 기본 5종·OpenAPI application/json **수용한계**·`get_openapi_schema` 사후변형만 금지[상속 허용]·1.6.x핀; 6파일 byte-identical). 실증 probe×3 + 서브에이전트 3리뷰. 커밋 `2795824`. **집행 백스톱(Stage4)은 레시피가 실패모델 뿌리를 쳐서 N≥5까지 보류.**
+- **P1b** 의존성 버전 stale(④f) — Codex가 `django-ninja==1.4.5`(최신 1.6.2)를 *기억 속 옛버전*으로 핀(핀=설치 일치→무핀 resolve 안 함). **해법=`discipline-houserules §6.2` 신설**(새 런타임 의존성=무핀 resolve→실제 설치값 핀, '최신'은 기존 프레임워크 핀 호환·안정만·막힌환경 보고; ⚠️ ninja §6.2와 이름만 같음) + ninja §2.1 교차참조 + coder.md 집행. 7파일 byte-identical. 커밋됨.
+- **P2** 코더 메커니즘-소유권 — Claude 코더가 커스텀 `BEGIN IMMEDIATE` 백엔드(`DatabaseWrapper` 상속)를 프로덕션 DATABASES ENGINE 배선(=**DR-06 가드레일이 *발화하나 차단 못 함***; 픽스처 오프타깃 4.2.30이 stock `transaction_mode` 부재로 발생조건). 적대검증 2번 뒤집힘: 본질=명시 금지를 코더가 무시+집행 부재(코드 보는 유일 게이트 discipline-reviewer가 Django 기술정확성 명시 제외). **해법=4수**(①픽스처 5.2.14 ②표준 **출처-불문** 정합 `architecture-db §9.5`["stock OPTIONS만, ENGINE교체 아님"]·`implementation-django §16.4`·`coder.md`[상속·몽키패치·시그널·init_command·미들웨어·테스트패치 어떤 형태든 동일위반]+안전PRAGMA 화이트리스트 ③`discipline-reviewer` 메커니즘-소유권 blocker[소유권이지 정확성 아님] ④`scripts/check-mechanism-ownership.py` AND-합성 결정적 백스톱+coordinator G2 Bash 배선[exit2→설계반송]). Ultraplan 원격 4커밋 `af306a4..58660a0`·origin·스크립트 실증 5/5.
+- **P3** §9.6 Risky Write 준수 집행 — Codex 동시성 테스트 0(구조 가드만). **사용자 reframe: 본질은 "테스트 누락"이 아니라 "§9.6 Consistency Block 준수 집행" — P2·P3 = 한 집행 공백의 양면**(같은 재고 Risky Write: Claude/A §9.6·테스트 준수하나 §16.4 위반=P2 / Codex/B §16.4 준수하나 §9.6·테스트 위반=P3, 둘 다 게이트 통과). **해법=4스테이지 prevent→catch**(①`implementation-test §20.5` 결정적 CAS-충돌 스파이 레시피[stale-version 주입→재시도, 스레드·커스텀백엔드 없이]+§9.6 포인터 → §9.6↔§16.4 인과 차단 ②`design-architect` 8행 표 산출 ③`design-review-db` 블록 8행 점검 ④`discipline-reviewer` 테스트 *실현* 점검[가드만=blocker]). 적대 리뷰 4회·동적검증 저장산출물 G1 5/5·G2 codexB recall 3/3. 커밋 `246ccfc`(로컬).
+- **P4** ③ 판정-소유 이주 비결정 — Claude=catalog 완전이주+Product 애그리거트 / Codex=catalog 평면+published_service 함수(트랜잭션 스크립트). 정반대지만 둘 다 DR-16 허용. **N≥5 블라인드 보류**.
+- **정직 경계**: 각 런타임 N=1 + 서로 다른 태스크 → 차이가 런타임차/태스크차 분리 불가. 우열결론·③ 비결정 정량화는 N≥5 별도. 표준 보강 대상이지 "Claude>Codex 입증" 아님.
+
+### DR-19 ✅ 라이브 재테스트(smoke2) — P1b·P2·P3 집행 라이브 확정 · P1a Codex 재발
+2026-05-30. DR-18의 P1a~P3 수정을 **실제 `/dddjango` 라이브 런**으로 재검증(저장 산출물·텍스트 검증을 넘어). 방식=`workspace/eval/FINAL-SMOKE-PLAN.md` rev3(축13 신설=P3) + `RETEST-HANDOFF.md`.
+- **프리컨디션(make-or-break)**: 양 캐시(`~/.claude/plugins/cache/changja88/...`·`~/.codex/plugins/cache/dddjango-local/...`)가 **14커밋 stale**였음(별도 사본·심링크 아님) → 레포 HEAD `246ccfc`와 **byte-identical rsync 신선화**(P2 백스톱 `scripts/check-mechanism-ownership.py` 포함, diff 0 검증). ⚠️ DEVLOG 교훈: `/reload-plugins`는 캐시 재복사 안 함 → 직접 rsync 또는 재설치 필요. **라이브 런은 새 세션에서**(기존 세션은 구 텍스트 메모리 로드).
+- **fixture 2개**: `~/Desktop/dddjango-smoke2-{claudeA,codexB}` — smoke-sample 클론, **Django 5.2.14·Python 3.12**(P2 발생조건=stock `transaction_mode` 경로 부여)·**ninja 미설치**(축3 거짓PASS 차단)·**PROMPT.md 제거**(옛 plain-Django 게이트답 누설 차단)·baseline 커밋. 태스크A=Claude·태스크B=Codex 인터랙티브, 게이트 미강제(설계자 결정)·무수정 승인. 13축 직접 채점 + 테스트 독립 재실행 green(Claude 18·Codex 25).
+
+  | P | Claude/A(재고예약) | Codex/B(주문생성) | 판정 |
+  |---|---|---|---|
+  | **P1b** | `django-ninja==1.6.2` 신선 핀 | `1.6.2`(원래 stale 1.4.5 교정) | ✅ 양쪽 해결 |
+  | **P2** | 순수 version CAS·커스텀백엔드 0·백스톱 exit0 | 동일·exit0 | ✅(준수 확인; 위반 미주입=*차단* 미stress) |
+  | **P3** | §9.6 8행 + CAS-스파이 4테스트 green | §9.6 8행 + catalog CAS-mock 2테스트; **1차 감사서 "Risky Write 테스트 부족" blocker→coder 교정** | ✅(**Codex서 catch 라이브 발화=최강 증거**) |
+  | **P1a** | operation `raise`·중앙 `@api.exception_handler` 5개·수제 0 | ❌ `create_order(request)→JsonResponse` 직접·예외 operation try/except 수제 변환·**`exception_handler` 0** | 🟡 갈림 |
+
+- **P1a 재발 상세**(`smoke2-codexB/.../api_orders.py:108,150-201`): Codex가 raw `HttpRequest`를 받아 `json.loads`·수동검증·`JsonResponse` 직접 반환, 도메인 예외를 operation try/except로 수제 `_problem()→JsonResponse` 변환, 중앙 핸들러 0개. **OpenAPI 몽키패치만 사라짐**(정식 `openapi_extra` 사용)=**(b) 하류 해킹 교정·(a) 핵심 안티패턴 잔존**. Claude/A는 `inventory_api_router.py`에 `@api.exception_handler` 5개로 준수.
+- **핵심 교훈**: 긍정 레시피 + *집행 게이트*(P2 결정적 백스톱·P3 discipline-reviewer blocker)가 있는 항목은 **라이브에서 차단됨**. **P1a는 긍정 레시피만 깔고 집행 백스톱(Stage4)을 N≥5까지 보류 → Codex 재발 못 막음(라이브 반례)**. 단 Codex 태스크의 멱등성·content-negotiation(406/415)·커스텀 헤더 복잡도가 raw-request로 기운 교락 큼(N=1).
+- **P4 ③ 1점**: 둘 다 *새 BC*(inventory/orders) 신설했으나 판정의 집 갈림 — Claude=리치 도메인 애그리거트(`Product.reserve()`)/Codex=`catalog/published_service/stock.py` 함수(트랜잭션 스크립트), 둘 다 평면 ORM엔 판정 0(안티패턴 회피). N≥5 정량화 대상.
+- **정직 경계**: N=1·태스크 상이 → 우열결론 아님. "이번 라이브 런에서 집행 작동/실패"까지(영구 보장 아님).
+- **잔여(열린 결정)**: ① P1a 집행 백스톱(Stage4: discipline-reviewer가 ninja operation 본문 수제 응답·중앙핸들러 부재 검사 또는 acceptance-tester content-type 검증) 설계 — *이제 라이브 근거 있음* ② 릴리스(eval 브랜치 머지/PR, **P3 `246ccfc` 로컬·미push**) ③ doc 편집(REMAINING-ISSUES·FINAL-SMOKE-PLAN·RETEST-HANDOFF) 미커밋.
+
+### DR-20 ✅ P1a 집행 백스톱 — discipline-reviewer "API 오류 응답 중앙화 규율" (Stage 4)
+2026-05-31. DR-19가 노출한 P1a 라이브 재발(긍정 레시피-only로 Codex 못 막음)에 P3와 **동형의 독립 catch 게이트**를 추가. 생산자 보강(coder §6.2)은 이미 최대치라 무용(Codex가 로드하고도 무시) → 유일 레버 = 독립 catch. 단일 스테이지(P3와 달리 design-architect emit 불요 — §6.2는 coder 처방).
+- **변경(2미러 byte-identical)**: `discipline-reviewer`(plugin `dddjango/agents/…` + codex `…/dddjango-discipline-reviewer/SKILL.md`)에 "**API 오류 응답 중앙화 규율(책임 배치·DRY)**" 점검 항목 신설 + §경계 한 절. 명세 채택 스택이 Ninja면 operation 본문이 예외를 try/except로 잡아 status를 고르거나 수제 `JsonResponse`/`HttpResponse`로 오류 응답을 만들면 **blocker**(중앙 `@api.exception_handler`/`create_response`가 예외→status 매핑 소유).
+- **적대 리뷰 3렌즈(구현 전, 섬세한 코어 규율)**: 표준정합·작문 / 거짓양성 / 거짓음성+경계. 핵심 결함 1개로 수렴 → 판정 본질을 "operation이 `JsonResponse`를 직접 만드나"에서 "**예외→status 매핑이 operation 밖 단일 소유자로 모였나**"로 재정의(Codex식 `_problem()` 헬퍼-위임 거짓음성 + 같은-모듈 헬퍼 거짓양성 *동시* 차단). 거짓양성 carve-out (a)중앙변환점 하나라도 충족(대안 B 핸들러 0개 OK)·(b)성공응답/`(status,Schema)` 튜플 무관·(c)같은파일 헬퍼 정상. 경계: P2 메커니즘-소유권과 **진짜 동형**(책임배치·DRY이지 ninja 관용구 정확성 판정 아님 — Reviewer 3 "fig leaf 아님" 확인, 특정 데코레이터 존재가 아니라 *배치* 판정).
+- **검증**: 정적 `claude plugin validate` ✔ · 미러 byte-동일(bullet·§경계) ✔ · **동적 N=9 텍스트-판별 9/9 정확** — known-bad(Codex/B `api_orders.py`) 3/3 **BLOCKER**(3명 모두 "헬퍼 위임이지만 예외→status 매핑이 operation try/except에 잔존" 포착)·known-good(Claude/A) 3/3 **PASS**(carve-out a/c)·음성트리거(합성 같은모듈 Ninja 2/2·plain Django 1/1 적용안함). 정직 경계: *저장 산출물 텍스트-판별*이지 캐시 신선화 라이브 발화는 아님(P3가 받은 확인사살은 D 트랙 라이브-파이어로).
+- **커밋/릴리스**: 백스톱 2미러 + doc 커밋 후 eval→main 머지/PR(ff). DR-19 잔여 ①②③ 모두 해소. 정본=`workspace/eval/REMAINING-ISSUES.md` ✅ P1a 절.
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
@@ -164,6 +199,8 @@ Codex로 먼저 만들었으나 품질 낮아 Claude Code 전용 재구축. `/dd
 5. **machine-time = wall − (user행으로 끝나는 큰 갭)** = 버그. 서브에이전트 반환은 `attachment` 행으로 끝나 오분류됨. **올바른 정의**: `machine = wall − Σ(서브에이전트 실행구간에 안 걸치는 >120s 갭)`(§4).
 6. **BC 배치를 사람 선택 제거로 "결정론화"** — 아님. G0에서 선택지를 *표면화*하는 게 정답(DR-07).
 7. **catalog 같은 기존 startapp 앱을 표준 트리로 강제 이주** — 스코프 초과·기존 소비자 위협. 결정 = 조치 없음(A), 표준 변경 없음(2026-05-27).
+8. **긍정 레시피만으로 LLM 의미적 안티패턴 차단 기대** — P1a는 §6.2를 positive 레시피로 재작성했으나 *집행 게이트 없이* N≥5까지 보류 → 라이브 재테스트(smoke2)서 Codex가 또 operation 본문 수제 응답(DR-19). 집행 게이트(reviewer blocker·결정적 백스톱) 있는 P2·P3는 라이브 차단됨. **교훈: 의미적 안티패턴은 긍정 레시피 + 집행 게이트 둘 다 있어야 라이브에서 막힌다.** (→ P1a도 2026-05-31 discipline-reviewer 집행 게이트 추가, DR-20.)
+9. **편집한 표준을 캐시 신선화 없이 라이브 검증** — 플러그인 캐시(`~/.claude/plugins/cache`·`~/.codex/plugins/cache`)는 워킹트리와 **별도 사본**이라 편집이 안 실림(smoke2 직전 양 캐시 14커밋 stale). `/reload-plugins`는 캐시 재복사 안 함. **라이브 런 전 rsync(또는 재설치) + md5/diff 검증 + 새 세션 필수**(DR-19).
 
 ---
 
