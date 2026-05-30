@@ -403,6 +403,8 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 | Isolation/retry | isolation level, deadlock/timeout/serialization failure retry 기준 |
 | Test criteria | duplicate request, concurrent request, retry, rollback 상황을 검증할 기준 |
 
+**Test criteria의 동시성 검증은 결정적으로.** 위 `Test criteria`의 concurrent request·CAS 경합 기준은 **결정적 CAS-충돌 주입(스파이)** 으로 증명하는 것을 기본으로 한다 — 실제 스레드·커스텀 DB 백엔드 없이 `version` 경합을 1회 주입해 재시도 수렴을 검증한다(`implementation-test` §20.5). 스레드 기반 race 재현(`implementation-test` §20.4)은 보조이며, 그것을 위해 연결 *메커니즘*을 커스텀 백엔드로 바꾸지 않는다(stock `OPTIONS`만 — §9.5 연결 설정 경계·`implementation-django` §16.4).
+
 외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7).
 
 > 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)

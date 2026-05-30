@@ -2596,6 +2596,44 @@ def test_only_one_concurrent_reservation_succeeds(product_factory):
 
 > 출처: [Django testing tools](https://docs.djangoproject.com/en/dev/topics/testing/tools/), [Django QuerySet select_for_update](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#select-for-update), [pytest-django Database access](https://pytest-django.readthedocs.io/en/latest/database.html)
 
+### 20.5 결정적 CAS-충돌 재시도 테스트 (스파이)
+
+§20.4의 스레드 race 테스트는 가드가 실제 경합에서 무너지지 않는지 *관찰*하기 위한 것이지만, SQLite에서 비결정적이고 flaky하기 쉽다. 낙관적 동시성 가드(`version` CAS + 재시도 루프, `architecture-db` §9.5)의 **정확성은 결정론적으로 먼저 증명**한다 — 실제 스레드 없이, *다른 트랜잭션이 먼저 `version`을 올린 상황*을 흉내 내 CAS 0행을 1회 강제하고, 응용 서비스가 재조회→도메인 메서드 재실행으로 일관되게 수렴하는지 검증한다.
+
+스파이는 실제 리포지토리를 상속해 version-guarded save만 가로채고, 첫 저장 직전 DB의 `version`을 한 번 올린다(다른 트랜잭션이 먼저 커밋한 상황의 시뮬레이션). 이후 시도는 개입하지 않으므로 정상 저장된다.
+
+```python
+class ConflictOnceRepository(DjangoProductRepository):
+    """첫 CAS 저장 직전에 version을 한 번 올려 CAS 0행을 결정론적으로 유발하는 스파이."""
+
+    def __init__(self) -> None:
+        self.save_attempts = 0
+
+    def save_with_version_guard(self, product, expected_version: int) -> bool:
+        self.save_attempts += 1
+        if self.save_attempts == 1:
+            # 첫 시도 직전 외부 갱신 — 캡처한 version을 무효화(다른 트랜잭션 흉내).
+            ProductModel.objects.filter(pk=product.id).update(version=expected_version + 1)
+        return super().save_with_version_guard(product, expected_version)
+
+
+@pytest.mark.django_db
+def test_cas_conflict_once_then_retry_converges():
+    product = ProductModel.objects.create(stock=5, version=0)
+    app = ReserveStockApp(ConflictOnceRepository())
+
+    result = app.execute(ReserveStockCommand(product_id=product.id, quantity=2))
+
+    product.refresh_from_db()
+    assert product.stock == 3  # 첫 CAS 0행 → 재시도 성공, 정확히 한 번만 차감
+```
+
+이 테스트는 단일 connection·단일 스레드이므로 `transaction=True`가 필요 없다 — 스파이의 `.update()`와 응용 서비스의 재조회가 같은 connection에서 일어나 갱신된 `version`을 그대로 본다. 실제 별도 connection·스레드 경합 관찰은 §20.4의 영역이다.
+
+이 테스트는 빠르고 결정적이어서 동시성 가드 회귀를 막는 1차 방어다. 단, 스파이가 구체 리포지토리의 `save_with_version_guard` 시그니처에 결합하므로 그 메서드명·시그니처가 바뀌면 함께 갱신한다(가드의 *내부 CAS 구현* 변경에는 영향받지 않는다). 스레드 기반 §20.4는 통합 신뢰를 위한 보조이며, 운영과 같은 backend(PostgreSQL 등)를 testcontainers로 띄워 돌리는 편이 SQLite보다 안정적이다.
+
+**연결 의미를 바꿔 테스트를 성립시키지 않는다.** SQLite에서 race를 *관찰*하려고 `BEGIN IMMEDIATE`·격리 수준·begin 모드가 필요해 보여도, 그것을 **커스텀 `DatabaseWrapper`/DB 백엔드로 구현하지 않는다** — 트랜잭션·락·격리 *메커니즘*은 architect가 소유하며(`architecture-db` §9.5 연결 설정 경계), 코더가 환경 한계를 이유로 임의 대체하는 것은 *출처-불문* 금지다(`implementation-django` §16.4). 필요한 연결 튜닝은 **stock `OPTIONS`만**으로 한다(IMMEDIATE는 `transaction_mode`[Django 5.1+], busy 대기는 `timeout`, 안전 PRAGMA 화이트리스트). 위 결정적 CAS-충돌 스파이는 애초에 이런 연결 조작이 필요 없다 — 그래서 §16.4 위반 압력 없이 동시성 기준을 검증한다.
+
 ---
 
 ## 21. 테스트 디버깅 기법
