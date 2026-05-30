@@ -31,7 +31,7 @@ baseline: 동일 clean sample (catalog 평면).
 - **테스트 러너**: 제안대로. **G1·G2**: 리뷰 깨끗하면 승인.
 
 ## 3. 런타임 & fixture (교란 차단 — 최우선)
-- **fixture는 CLEAN**: `~/Desktop/dddjango-smoke-sample` 클론, **requirements = `Django==4.2.30`만, venv에 ninja 미설치**. ⚠️ 기존 `~/Desktop/dddjango-codex-interactive`(ninja 사전설치됨)는 **그대로 재사용 금지** — 새로 clean 클론.
+- **fixture는 CLEAN**: `~/Desktop/dddjango-smoke-sample` 클론, **requirements = `Django==5.2.*`만, venv에 ninja 미설치**. ⚠️ 기존 `~/Desktop/dddjango-codex-interactive`(ninja 사전설치됨)는 **그대로 재사용 금지** — 새로 clean 클론.
   - 이유: ninja 사전설치는 (a) Tier3 교란 재현(architect가 requirements만 보고 "설치 불가→plain") (b) **축3 거짓 PASS**(핀 누락이어도 venv에 있어 test green)를 만든다. → 설치는 **런 중에** 일어나게(coder가 requirements 추가 후 설치 / 인터랙티브는 사용자가 승인). **축3은 requirements.txt grep만으로 판정**(test-green을 핀 증거로 쓰지 말 것).
 - **런타임**: Claude(릴리스 제품 — 축 전부) + **Codex 인터랙티브**(축9 인터랙티브 ④ + 교차). 인터랙티브 런 첫머리에 "venv에 깔린 패키지 확인하라" 힌트 **주지 말 것**(보강 표준이 스스로 Ninja로 가는지가 진짜 테스트).
 

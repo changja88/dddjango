@@ -32,4 +32,4 @@ Codex 포트(`codex-dddjango/`)의 **산출 코드 품질**을 평가하는 하�
 
 ## 대상 프로젝트
 
-`/Users/hyun/Desktop/dddjango-smoke` (Django 4.2.30, py3.9, config+catalog.Product). git 아님. `.venv` 보존.
+`/Users/hyun/Desktop/dddjango-smoke` (Django 5.2, py3.12, config+catalog.Product). git 아님. `.venv` 보존.

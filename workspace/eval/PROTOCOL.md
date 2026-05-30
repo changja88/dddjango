@@ -12,7 +12,7 @@ bash workspace/eval/reset.sh /Users/hyun/Desktop/dddjango-codex
 bash workspace/eval/reset.sh /Users/hyun/Desktop/dddjango-claude
 # → 각 타깃을 Product-only baseline 으로 초기화 (.venv 보존)
 ```
-> 2차 검증용 깨끗한 프로젝트는 `dddjango-codex`/`dddjango-claude`(Python 3.9.6·Django 4.2.30, baseline+venv+git init). 구 `dddjango-smoke*`는 1차 잔재 — 사용 안 함.
+> 2차 검증용 깨끗한 프로젝트는 `dddjango-codex`/`dddjango-claude`(Python 3.12·Django 5.2, baseline+venv+git init). 구 `dddjango-smoke*`는 1차 잔재 — 사용 안 함.
 `✓ 리셋 완료` 와 baseline 트리(catalog: __init__/admin/apps/migrations/0001/models/tests/views)가 보이면 OK.
 
 ## 1. 고정 기능 프롬프트 (토씨 동일)
