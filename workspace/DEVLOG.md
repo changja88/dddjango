@@ -220,7 +220,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 
 **마스터 구성**(= baseline + 고정입력 + 셋업):
 ```
-config/ catalog/(Product만) manage.py     # = workspace/eval/baseline/
+config/ catalog/(Product만) manage.py     # baseline 시드 (구 eval/baseline/ = §2 DR-25 정리·git 히스토리)
 requirements.txt   # Django==4.2.30
 PROMPT.md          # 고정 기능 프롬프트 + 고정 게이트 답 + 시드 정의(아래)
 setup.sh           # venv 생성 + 의존성 + migrate + 시드 + check (멱등)
@@ -228,12 +228,12 @@ setup.sh           # venv 생성 + 의존성 + migrate + 시드 + check (멱등)
 ```
 **생성·복제(분실 시 재현)**:
 ```bash
-S=~/Desktop/dddjango-smoke-sample
-cp -R workspace/eval/baseline/{config,catalog} workspace/eval/baseline/manage.py "$S"/   # + PROMPT/setup/requirements/.gitignore
+S=~/Desktop/dddjango-smoke-sample   # 데스크탑 마스터가 정본 — 분실 시에만 아래로 재현
+# baseline 시드(config/catalog/manage.py)는 DR-25 전 git 히스토리: git show <pre-DR25>:workspace/eval/baseline/<경로>
 (cd "$S" && git init -q && git add -A && git commit -qm baseline && bash setup.sh)        # 마스터 = 실행가능
 git clone "$S" ~/Desktop/dddjango-claude-index && bash ~/Desktop/dddjango-claude-index/setup.sh
 git clone "$S" ~/Desktop/dddjango-codex-index  && bash ~/Desktop/dddjango-codex-index/setup.sh
-# 리셋 = 폴더 삭제 후 재클론(인플레이스 reset.sh 아님).
+# 리셋 = 폴더 삭제 후 재클론.
 ```
 
 **고정 입력**(마스터 `PROMPT.md` — 양 런타임 동일하게 답해야 차이가 "런타임 차이"로 읽힘; DR-14 교훈: 프레임워크·러너·구조옵션 미고정 시 비교 불가):
@@ -247,11 +247,11 @@ git clone "$S" ~/Desktop/dddjango-codex-index  && bash ~/Desktop/dddjango-codex-
 - (A) `manage.py check` clean · migrate 정합 · `test` 전부 green(201·409·404·**동시성 oversell 없음** 커버).
 - (B) 역사적 결함 부재(grep+리뷰): **B1(빈혈/판정 인프라 누수)** — `grep -rn "stock__gte\|balance__gte" application --include=*.py | grep -v test | grep -v "stock__gte=0"` =0, 도메인 판정 메서드(`.deduct(` 등)가 **프로덕션 호출처** 보유, repo CAS의 `WHERE`엔 version 경합가드만(판정 SQL 없음; `stock>=0`은 CHECK 불변식 백스톱이라 OK). **§0 파일트리·§4 명명**. (권장) `discipline-reviewer` 서브에이전트 홀리스틱 감사 blocker/important 0.
 
-**캡처·기록**: 산출물 → `workspace/eval/runs/<run>/`(rsync, `.venv/.git/db.sqlite3/__pycache__` 제외) · 한 줄 → §5 Ledger · 분석 `workspace/tools/session_telemetry.py --smoke N` → `smoke_report.py`. 게이트 질문 1:1 원문은 비교 시 `workspace/eval/gate-questions*.md`에 양쪽 기록.
+**캡처·채점(현행 — §2 DR-25 규약)**: fixture는 **데스크탑(`~/Desktop/dddjango-*`)에 두고 레포로 복사 안 함**(코드트리 대량복사 회피 = 구 `eval/runs/` 폐기 이유). 채점 = `eval/rubric/`(RUBRIC 항목 + EVAL-METHOD 방법)으로 산출물 채점 → **`eval/results/EVAL-<라운드>-<런타임>.md`**(런타임별 별도 기록, 게이트 Q&A·런 메타 포함). 한 줄 → §5 Ledger · telemetry `workspace/tools/session_telemetry.py --smoke N` → `smoke_report.py`.
 
 **정직 경계**: 1회 = 통합 sanity("만들 수 있다"+"게이트 작동"). 확률적 결함(B1·BC비결정)의 *빈도 감소* 증명은 같은 입력 **N≥5 블라인드** + 루브릭(`workspace/eval/rubric/`) 필요(별도 작업). 커밋 타임스탬프로 "그 런이 쓴 코드" 추론 금지(DR-10).
 
-> **레거시·정리(§2 DR-25, 2026-05-31)**: 이 절이 참조하는 결정성-조사 하니스(`eval/baseline/`·`reset.sh`·`runs/`·`gate-questions*`)는 정리됨. 마스터 재현 시 `baseline/{config,catalog,manage.py}`는 **정리 전 git 히스토리**에서 복구(또는 현행 마스터 `~/Desktop/dddjango-smoke-sample`이 정본). **채점은 더 이상 `runs/` 캡처가 아니라 데스크탑 fixture(`~/Desktop/dddjango-*`)를 `eval/rubric/`로 채점·`eval/results/`에 기록**(README 관리 규약). 구 `reset.sh` 인플레이스 리셋·`~/Desktop/dddjango-smoke*` 타깃은 폐기 — **새 런은 sample→clone 절차만 사용**.
+> **폐기(§2 DR-25)**: 구 결정성-조사 하니스(`eval/{baseline,reset.sh,runs/,gate-questions*}`)·인플레이스 `reset.sh` 리셋·`~/Desktop/dddjango-smoke*` 타깃은 정리됨(git 히스토리). 새 런은 sample→clone, 채점은 `eval/rubric`→`eval/results`.
 
 ---
 
@@ -283,11 +283,8 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 - **도구·리포트**: `workspace/tools/{session_telemetry.py, smoke_report.py, smoke_timeline.html}`.
 - **AGENTS.md**: Claude 전용 파이프라인 구조 설명.
 - **Codex 이식**(§2 DR-12): 조사 `workspace/design/2026-05-28-codex-port-research.md` · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님, =codex-2 런).
-- **⚠️ 평가 폴더 정리**(§2 DR-25, 2026-05-31): **현행 평가 시스템** = `eval/rubric/{RUBRIC,EVAL-METHOD}.md`(기준 정본) + `eval/results/`(결과 누적) + `eval/README.md`(인덱스·관리 규약). 아래 DR-13/14/15/17 포인터가 가리키는 결정성-조사 산출물(`comparison*.html`·`RESULTS.md`·`RUBRIC*.md`·`gate-questions*`·`*-N-analysis.md`·`runs/`·`baseline/`·`reset.sh`·`PROTOCOL.md`)은 **삭제됨 → 정리 전 git 히스토리에서만 복구**.
-- **코드품질 1:1 평가**(§2 DR-13): 정본 `workspace/eval/` — `comparison.html`(1차 시각 보고) · `RESULTS.md` · `codex-2-analysis.md` · `claude-1-analysis.md` · `runs/{codex-1,codex-2,claude-1}/`(산출물 보존) · 하니스 `baseline/`+`reset.sh`+`PROTOCOL.md`+`RUBRIC.md`. Claude 비교군 `/Users/hyun/Desktop/dddjango-smoke-claude`(git 아님). 1차 결과 claude-1>codex-2(13:2:5), N=1.
-- **결정성 2차 검증**(§2 DR-14, 결론 수정): `workspace/eval/` — `comparison-2.html`(2차 시각 보고) · `codex-3-analysis.md` · `claude-2-analysis.md` · `gate-questions.md`(게이트 질문 1:1) · `RUBRIC-conformance.md`(100점 루브릭+점수) · `RESULTS.md`(결정성 N=2 섹션) · `runs/{codex-3,claude-2}/`. 2차 깨끗한 프로젝트 `/Users/hyun/Desktop/dddjango-{codex,claude}`(Py3.9.6·Django4.2.30). 결과: 1차 우위는 대부분 분산, 코드 대등, 진짜 차이=게이트 철학·스택. 점수 codex~70/claude~84(신뢰낮음). **2차 통제 이탈**(claude-2=Ninja+pytest+옵션B평면, codex-3=plain+§0).
-- **B1-fix 검증 3차**(§2 DR-15): `workspace/eval/` — `comparison-3.html`(3차 시각보고) · `gate-questions-3.md`(게이트 1:1 + B1 판정) · `runs/{codex-4,claude-3}/`. 타깃 `~/Desktop/dddjango-{codex,claude}-index`(`dddjango-smoke-sample`에서 git clone·바이트 동일). 결과: **양쪽 B1 CLEAN(설계·코드, 각 N=1)**, 게이트 노출 9:3, claude-3 ninja 통제이탈(수락). 표준 12파일 커밋(`98ebfd3`).
+- **평가 시스템 + 결정성-조사 정리**(§2 DR-25): **현행** = `eval/rubric/{RUBRIC,EVAL-METHOD}.md`(기준 정본) + `eval/results/`(결과·채점 기록, 예 `EVAL-p1a-v3-{codex,claude}.md`) + `eval/README.md`(관리 규약). DR-13/14/15 결정성-조사 산출물(`comparison*.html`·`RESULTS.md`·`RUBRIC-conformance.md`·`gate-questions*`·`*-N-analysis.md`·`runs/`·`baseline/`·`reset.sh`·`PROTOCOL.md`)은 정리됨 → **git 히스토리**(결론·커밋앵커는 §2 시대2에 압축).
 - **표준 빈칸 ③·④ 메움**(§2 DR-16): 14파일 편집 — `architecture-ddd §3.2` 확장(3벌)·`design-review-ddd`/`discipline-reviewer` 2층 탐지(각 2벌)·`design-architect` ③배치+④API스택(2벌)·`implementation-django-ninja` final.md 설치규칙(3벌)+SKILL(2벌). 정적 검증·`plugin validate` 통과, 동적 ⑥ 이연.
-- **동적 검증 Tier 2·3 + ④ 보강**(§2 DR-17): Tier 2 = Claude `design-architect` spec(③ migrate + §1.1/§1.2 명시·④ inconclusive). Tier 3 = Codex 전체 스모크 ×3 `workspace/eval/runs/{codex-5(t3·평면·plain), codex-6(t3b·이주·plain), codex-7(t3c·POST-boost·Ninja+핀)}`. 보강 = `design-architect` 2미러(headless의 "설치 불확실→plain" 직격 → t3c Ninja 수렴). fixture `~/Desktop/dddjango-codex-{t3,t3b,t3c}`(git 아님)·인터랙티브 미실행 fixture `~/Desktop/dddjango-codex-interactive`. 각 N=1.
+- **동적 검증 Tier 2·3 + ④ 보강**(§2 DR-17): Tier 2 = Claude `design-architect` spec(③ migrate + §1.1/§1.2 명시·④ inconclusive). Tier 3 = Codex 전체 스모크 ×3(t3 평면·plain / t3b 이주·plain / t3c POST-boost·Ninja+핀; 산출물 구 `eval/runs/{codex-5,6,7}`은 DR-25 정리·git 히스토리). 보강 = `design-architect` 2미러(headless의 "설치 불확실→plain" 직격 → t3c Ninja 수렴). fixture `~/Desktop/dddjango-codex-{t3,t3b,t3c}`(git 아님)·인터랙티브 미실행 fixture `~/Desktop/dddjango-codex-interactive`. 각 N=1.
 - **향후(범위 밖)**: `/dddjango init`(uv + ruff·mypy strict·django-stubs·pydantic·pytest 부트스트랩, django-stubs만 코퍼스 공백) · OHS→Published Language DTO 전환 · Codex 품질평가·전체 smoke 루프.
 - **개인 메모리 슬러그**(세션 회상용, 정본 아님): dddjango-rebuild-direction · dddjango-work-style · dddjango-audit-ledger · dddjango-standard-hardening-verification · dddjango-bc-boundary-nondeterminism · dddjango-cost-token-optimization. → **내용은 이 DEVLOG에 흡수됨**.
