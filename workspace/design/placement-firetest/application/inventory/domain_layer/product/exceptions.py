@@ -1,2 +1,0 @@
-class InsufficientStock(Exception):
-    pass

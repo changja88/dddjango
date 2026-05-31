@@ -1,35 +1,40 @@
-# workspace/eval — dddjango Codex 포트 코드 품질 평가
+# workspace/eval — dddjango 평가 시스템
 
-Codex 포트(`codex-dddjango/`)의 **산출 코드 품질**을 평가하는 하니스. PoC는 메커니즘(spawn_agent·평문 게이트·설치)만 검증했고, 여기서는 *생성된 코드*를 본다.
+`/dddjango` 플러그인이 낸 산출물을 **규칙 준수(DDD·houserules·django-ninja) + 기능 정확성** 기준으로 채점하는 평가 홈. 매 스모크/라이브 평가의 *기준(rubric)* 과 *결과(results)* 를 한곳에서 관리한다.
 
-## 평가 설계 (확정)
+> 결정성-조사(N=1/2/3) 시절 하니스(PROTOCOL·baseline·reset.sh·runs/·comparison*.html·RESULTS.md 등)는 2026-05-31 정리됨(결론은 DEVLOG DR-13/14 흡수, 필요 시 git 히스토리에서 복구).
 
-- **비교 기준**: 동일 입력에 대한 **Claude 신규 런 1회**(`claude-1`) ↔ Codex 산출 1:1 비교.
-- **결정성**: Codex **2~3회** 반복(`codex-2`,`codex-3`[,`codex-4`])으로 런 간 변동 관찰.
-- **도구**: **산출물 정적 평가만**(세션 로그 파서 없음). 토큰·시간은 런타임 요약값 수기 기록.
-- **질문 분리**: Q1 포트 충실도(Claude 대비 동등성, 주) / Q2 dddjango 표준 부합(런타임 무관, 부).
+## 구조
 
-## 파일
+```
+eval/
+├── README.md            # 이 인덱스
+├── rubric/              # 평가 기준 (정본 — 앞으로 모든 채점의 단일 출처)
+│   ├── RUBRIC.md            # 평가 *항목* (무엇을 보나): S-DDD·S-HR·S-NINJA·FC·TIER-Q
+│   └── EVAL-METHOD.md       # 평가 *방법* (어떻게 채점·집계·bisect·완료 판정하나)
+└── results/             # 평가 결과 (현행 + 앞으로 누적)
+    ├── EVAL-p1a-v3-codex.md    # 루브릭 채점 기록 — Codex · p1a-v3 (가장 마지막 스모크)
+    ├── EVAL-p1a-v3-claude.md   # 루브릭 채점 기록 — Claude · p1a-v3 (가장 마지막 스모크)
+    ├── REMAINING-ISSUES.md     # 라이브 이슈 트래커 (P1a 등 미해결 + C 트랙 인벤토리) — 정본
+    ├── LIVEFIRE-RESULTS.md     # 라이브파이어(위반-주입) 채점 결과
+    ├── FINAL-SMOKE-PLAN.md     # 최종 수동 스모크 채점 계획(rev3)
+    ├── FINAL-SMOKE-INSIGHTS.html
+    └── RETEST-HANDOFF.md       # 라이브 재테스트 실행 핸드오프 + §1 고정 게이트 답(규율 정본)
 
-| 경로 | 내용 |
-|---|---|
-| `PROTOCOL.md` | 매 런 고정 입력(프롬프트·게이트 답)·리셋·캡처·메타 기록 절차. |
-| `RUBRIC.md` | 정적 평가 루브릭 — Q1 동등성 10차원 / Q1′ 결정성 / Q2 표준. |
-| `reset.sh` | 타깃 프로젝트를 baseline으로 초기화(.venv 보존). 매 런 사이 필수. |
-| `baseline/` | 표준 시작 상태(Product-only). 모든 런의 단일 출발점. |
-| `runs/codex-1/` | PoC 보존본(참고용 — 빌드 중 스킬 재설치 이력 있음). |
-| `runs/<run>/` | 각 런 산출물 캡처 + `meta.md`. |
-| `RESULTS.md` | (런 완료 후 생성) 최종 비교·결정성·결론. |
+> **채점 기록 명명 규약**: `EVAL-<라운드>-<런타임>.md` (예: `EVAL-p1a-v3-codex.md`). 한 회차의 Claude·Codex는 별도 파일로 기록(직접 비교 시 부록에서 교차참조).
+```
 
-## 진행 상태
+## 관리 규약 (앞으로)
 
-- [x] baseline 정본 + reset.sh (검증 완료, dddjango-smoke 초기화됨)
-- [x] PoC 산출물 `codex-1` 보존
-- [x] 루브릭·프로토콜
-- [ ] `claude-1` 런 (비교 기준)
-- [ ] `codex-2`,`codex-3` 런
-- [ ] `RESULTS.md` 작성
+1. **채점 기준은 `rubric/`이 단일 출처.** 새 평가는 항상 `rubric/RUBRIC.md`(항목)로 보고 `rubric/EVAL-METHOD.md`(방법)로 채점·집계한다. 기준 변경은 *채점 전*에만(사후 합리화 금지, EVAL-METHOD §5 사전등록).
+2. **고정 입력 규율은 `results/RETEST-HANDOFF.md` §1**(런 리셋·게이트 답)을 따른다 — 런 간 입력이 흔들리면 비교가 오염된다.
+3. **평가 결과는 `results/`에 누적.** 한 회차 = 무엇을·어떤 fixture로·어떤 판정인지. 라이브(위반-주입) 채점은 `LIVEFIRE-RESULTS.md`, 미해결/추적은 `REMAINING-ISSUES.md`에 갱신.
+4. **정직 경계**: 저장 fixture 정적 채점은 "구조적 준수 + 기능 정확성"까지. "게이트 라이브 발화"는 fresh 위반-주입 런으로만 확인(정적 통과 ≠ 라이브 발화 — DR-21). baseline 대비 차별가치는 *안 잰다*(규칙 준수가 핵심).
 
-## 대상 프로젝트
+## 평가 대상 fixture (레포 밖)
 
-`/Users/hyun/Desktop/dddjango-smoke` (Django 5.2, py3.12, config+catalog.Product). git 아님. `.venv` 보존.
+저장 산출물은 `~/Desktop/dddjango-*` (git 미포함, 레포에 복사하지 않음). 태스크B(주문생성)·Codex 4점 timeline = `dddjango-final-codexB` → `dddjango-smoke2-codexB` → `dddjango-p1a-livefire-codex` → `dddjango-p1a-v3-codex`. 태스크A(재고예약)·Claude 2점 = `dddjango-final-claudeA` → `dddjango-smoke2-claudeA`. dual = `{p1a-livefire,p1a-v3}-{codex,claude}`.
+
+## 전체 여정·결정 정본
+
+플러그인 전체 작업 이력·DR 원장은 레포 `workspace/DEVLOG.md`. 이 폴더는 *평가 축*만 담는다.

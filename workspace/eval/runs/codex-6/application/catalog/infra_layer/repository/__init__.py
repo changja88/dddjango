@@ -1,1 +1,0 @@
-"""Catalog repository implementations."""

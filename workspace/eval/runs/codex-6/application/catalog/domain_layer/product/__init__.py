@@ -1,1 +1,0 @@
-"""Product aggregate package."""

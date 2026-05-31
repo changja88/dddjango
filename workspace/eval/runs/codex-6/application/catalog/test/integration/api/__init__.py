@@ -1,1 +1,0 @@
-"""Catalog API integration tests."""
