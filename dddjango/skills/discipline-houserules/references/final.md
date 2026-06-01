@@ -19,9 +19,9 @@
 대상 프로젝트에 **확립된 규약이 없어 이 표준을 적용할 때**, 아래는 YAGNI·단순성·"단일 기능이라 불필요" 같은 판단으로 **생략하거나 평면으로 접을 수 없다 — 항상 생성한다**. (이미 다른 레이아웃 규약이 확립된 기존 프로젝트는 §1.1대로 그 규약을 존중한다 — 이 불변식은 *표준을 새로 까는* 경우의 규칙이다.)
 
 1. **`application/` 컨테이너** — 앱은 루트 평면이 아니라 `application/<app>/` 아래에 둔다. 단일 앱이어도 컨테이너를 만든다.
-2. **4계층 디렉터리** — `domain_layer/`·`application_layer/`·`infra_layer/`·`presentation_layer/`를 모두 물리 분리한다(`_layer` 접미사 포함).
+2. **4계층 디렉터리** — `domain_layer/`·`application_layer/`·`infra_layer/`·`presentation_layer/`를 모두 물리 분리한다(`_layer` 접미사 포함). **계층에 들어갈 내용물이 없어도 그 계층 폴더는 빈 패키지(`__init__.py`만)로라도 항상 생성한다** — 예: HTTP/CLI 표현 없이 ACL·`published_service`로만 소비되는 내부 전용 BC의 `presentation_layer`도 빈 폴더로 둔다. "이 BC엔 표현(또는 도메인) 관심사가 없다"는 판단으로 **계층 폴더 자체를 생략하지 않는다**(종류 2차 폴더의 빈 패키지 규칙(4항)과 같은 원칙 — §6.8 YAGNI는 계층·종류 골격에 적용하지 않는다).
 3. **개념 1차 폴더** — `domain_layer/<aggregate>/`, `application_layer/<feature>/`.
-4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 패키지(`__init__.py`만)로 둔다 — 평면 파일(`repository.py`)로 접지 않는다. 빈 폴더의 `__init__.py`는 **유지한다(regular package)** — git은 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시키고, Django `migrations/`·앱 패키지도 `__init__.py`를 요구한다. PEP 420(namespace package)을 이유로 `__init__.py`를 지우지 않는다. (`[선택]` 마커는 "비어 있을 수 있음"이지 *생략 가능*이 아니다.)
+4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 패키지(`__init__.py`만)로 둔다 — 평면 파일(`repository.py`)로 접지 않는다. 빈 폴더의 `__init__.py`는 **유지한다(regular package)** — git은 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시키고, Django `migrations/`·앱 패키지도 `__init__.py`를 요구한다. PEP 420(namespace package)을 이유로 `__init__.py`를 지우지 않는다. (`[선택]` 마커는 "비어 있을 수 있음"이지 *생략 가능*이 아니다.) 단 이 종류-폴더 항상-생성은 위에 열거한 domain·application 종류(`entity`/`value_object`/`repository`·`command`/`query`/`dto` 등)에 한정한다 — `presentation_layer`의 종류 2차 폴더(`api/`·`schema/`)는 *표현 내용이 생길 때* 만든다. 표현이 없는 내부 전용 BC의 빈 `presentation_layer`는 계층 패키지(`__init__.py`)만 두고 `api/`·`schema/`까지 미리 만들지 않는다(항상-생성 골격은 §0-2 계층 수준 + 이 종류 폴더에 한정; 깊이 적정성은 discipline-reviewer 의미 체크 몫).
 5. **Django 앱은 `infra_layer/django_<app>/`** — `startapp`을 그 안에서 수행한다. ORM 모델·`migrations/`·`apps.py`가 거기 산다. 앱 루트나 도메인 패키지에 `models.py`를 두지 않는다(§2 "Django 앱 성립" 참조).
 6. **ORM 모델 명명** — 도메인 엔티티/애그리거트는 bare 이름(`Order`), Django ORM 모델 클래스는 `<Name>Model`(`OrderModel`)로 구분한다(상세 §4 명명 규약).
 
@@ -112,7 +112,7 @@ application/<app>/
 의존 방향(단방향): `presentation_layer → application_layer → (domain_layer + infra_layer)`, `domain_layer`는 아무것도 의존하지 않는다.
 
 설계 선택:
-- **조직 1차 축 = 개념(애그리거트/feature), 2차 = 종류**: 각 계층을 개념 단위로 먼저 묶고(`domain_layer/<aggregate>/`, `application_layer/<feature>/`) 그 안에서 종류(`entity`/`value_object`/`command`/`query`…)로 나눈다. **종류 2차 폴더는 항상 생성한다**(§0 불변식) — 내용이 없으면 빈 패키지로 두되 평면 파일로 접지 않는다. **§6.8 YAGNI는 골격에 적용하지 않는다**(YAGNI = 아직 없는 새 애그리거트/feature를 미리 만들지 마라; 컨테이너·계층·종류 폴더 골격은 항상 실현). 종류 폴더에 여러 개념 파일이 구분 없이 누적되는 것을 막는 규칙이다(houserules §3 평면 금지의 2차 레벨). `infra_layer`는 기술 어댑터라 1차를 기술 묶음으로 두고, 누적 시 애그리거트별 하위 그룹핑.
+- **조직 1차 축 = 개념(애그리거트/feature), 2차 = 종류**: 각 계층을 개념 단위로 먼저 묶고(`domain_layer/<aggregate>/`, `application_layer/<feature>/`) 그 안에서 종류(`entity`/`value_object`/`command`/`query`…)로 나눈다. **종류 2차 폴더는 항상 생성한다**(§0 불변식) — 내용이 없으면 빈 패키지로 두되 평면 파일로 접지 않는다(단 이 항상-생성은 domain·application 종류 폴더에 한정 — `presentation_layer`의 `api/`·`schema/`는 표현 내용이 생길 때 만든다, §0-4). **§6.8 YAGNI는 골격에 적용하지 않는다**(YAGNI = 아직 없는 새 애그리거트/feature를 미리 만들지 마라; 컨테이너·계층·종류 폴더 골격은 항상 실현). 종류 폴더에 여러 개념 파일이 구분 없이 누적되는 것을 막는 규칙이다(houserules §3 평면 금지의 2차 레벨). `infra_layer`는 기술 어댑터라 1차를 기술 묶음으로 두고, 누적 시 애그리거트별 하위 그룹핑.
 - **도메인 계층은 DDD 전술 패턴으로 완전 구성**(§3·§6.1): 코어는 애그리거트 루트·`entity`·`value_object`·`repository`(인터페이스), 나머지(`domain_service`/`event`/`specification`)는 폴더를 항상 두되 트리거 미충족 시 비어 있을 수 있다(`[선택]`=비어 있을 수 있음, 생략 아님 §0).
 - **리포지토리 DIP**: 인터페이스(ABC)는 `domain_layer/<aggregate>/repository/`, 구현은 `infra_layer/repository/`. 추상화·구현 명명은 §4 명명 규약(추상=개념 bare명 `OrderRepository`, 구현=`Django…` 한정자 접두).
 - **ORM 모델 ≠ 도메인 엔티티**: 도메인은 `domain_layer/<aggregate>/`, Django 모델은 `infra_layer/django_<app>/models/`로 분리한다(Data Mapper, §6.2 — ORM이 도메인을 import, 도메인은 ORM을 모름). 이름으로도 구분하며(`Order` vs `OrderModel`) 명명 상세는 §4. 변환은 `infra_layer/repository/`(ORM↔도메인 Data Mapper)와 표현 `schema_out`(도메인→응답 DTO)이 담당한다.
@@ -140,7 +140,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 **소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(이 표준의 통합 진화 지침 — architecture-ddd 컨텍스트 맵의 ACL·OHS 패턴을 토대로 한 합성이며, 코퍼스가 "ACL→OHS 진화"를 명시하는 것은 아니다).
 
-(앱별 변종: WebSocket 앱은 `<app>_asgi_router.py`·`presentation_layer/socket/`을 더 가진다. 단순 지원 앱이라도 컨테이너·4계층은 유지하며, `domain_layer` 생략은 명시적 승인이 있을 때만 — 명세에 사유를 남긴다.)
+(앱별 변종: WebSocket 앱은 `<app>_asgi_router.py`·`presentation_layer/socket/`을 더 가진다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer`를 포함해 어느 계층 폴더도 생략하지 않고, 내용이 없으면 빈 패키지로 둔다(§0-2). 도메인 모델이 없는 앱이라도 빈 `domain_layer`는 존속시키고, 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.)
 
 ---
 
@@ -209,7 +209,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`. 엔드포인트별 평면 나열 금지 |
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → 루트 `urls.py`가 포함 |
 
-**앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층은 유지하며 `domain_layer` 생략은 명시적 승인 시에만(명세에 사유).
+**앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer` 포함 어느 계층도 폴더를 생략하지 않고 내용이 없으면 빈 패키지로 둔다(§0-2); 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.
 
 ---
 

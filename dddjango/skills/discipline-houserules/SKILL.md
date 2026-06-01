@@ -28,7 +28,7 @@ user-invocable: false
 1. **기존 프로젝트 규약을 우선한다(일관성 최우선).** 대상 프로젝트에 이미 확립된 소스/테스트 배치가 있으면 그것을 따른다. 단, "존중"은 *확립된 규약을 따르는 것*이지 `startproject`/`startapp` 직후의 미조직 평면 상태를 답습하는 게 아니다. 기존이 `apps/<app>/` 규약이면 그 규약을, `src/<context>/` 계층이면 그 계층을 이어간다.
 2. **확립된 규약이 없거나 미조직이면 dddjango 표준 파일트리를 적용한다(고정 기본값).** `references/final.md`가 단일 출처다 — `application/<app>/`의 4계층(`domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`) 물리 분리, 개념(애그리거트/feature) 1차·종류 2차 조직, `infra_layer` 분할(`django_<app>`/`repository`/`service`; 외부 컨텍스트 직접 통합 시 `acl/`), 컨텍스트 간 통신은 각 앱의 OHS(`published_service/`) 우선·직접 통합은 ACL(domain `port/`+infra `acl/`, 리포지토리와 분리)을 따른다. 이 표준은 `architecture-ddd` §6.1(4계층)과 `implementation-django` §3.1(설정 분할·앱 단위)을 구체화한 변종이며, 그 둘은 *이론적 배경*으로만 인용한다(레이아웃 권위는 표준 문서). 더 이상 lens로 §6.1 vs §3.1을 런타임에 택일하지 않는다. **표준을 적용할 때는 `references/final.md`를 반드시 읽고 그 §0 불변식을 따른다** — 아래는 YAGNI·단순성·"단일 앱이라 불필요"로 **생략·축소할 수 없는 골격**이다(트리를 읽지 않고 임의 축약 금지):
    - **`application/` 컨테이너** — 단일 앱이어도 `application/<app>/` 아래에 둔다.
-   - **4계층 `_layer` 물리 분리** — `domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`.
+   - **4계층 `_layer` 물리 분리** — `domain_layer`/`application_layer`/`infra_layer`/`presentation_layer`. 계층에 내용이 없어도(예: HTTP 표현 없는 내부 전용 BC의 `presentation_layer`) 폴더는 빈 패키지로라도 항상 생성하고 계층 자체를 생략하지 않는다(§0-2).
    - **개념 1차 폴더**(`<aggregate>/`·`<feature>/`) + **종류 2차 폴더 전체**(`entity`/`value_object`/`repository`/`command`/`dto`… — 비어도 폴더로 생성, 평면 파일 `repository.py`로 접지 않음).
    - **Django 앱은 `infra_layer/django_<app>/`에서 `startapp`** — `AppConfig.name`=점경로(`application.<app>.infra_layer.django_<app>`), `label='<app>'`; 앱 루트에 `models.py` 금지.
    - **ORM 모델 클래스명 `<Name>Model`**(도메인 엔티티/애그리거트는 bare `Order`).
