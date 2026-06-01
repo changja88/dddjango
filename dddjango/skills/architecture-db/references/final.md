@@ -397,7 +397,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 | Transaction owner | 어떤 use case/service가 transaction boundary를 소유하는지 |
 | Locking strategy | unique constraint, optimistic, pessimistic, advisory, serializable 중 무엇을 쓰는지 |
 | Rule ownership | 판정·불변식을 도메인 애그리거트(또는 도메인 서비스)가 소유하고 리포지토리는 결과만 저장하는지 — 경합 가드(`version`) 외 비즈니스 판정을 SQL(예: `WHERE stock>=qty`)·ORM `update()`에 복제해 도메인 메서드를 죽이지 않는지(원칙 `architecture-ddd` §3.2, 메커니즘 위 §9.5) |
-| Idempotency storage | key scope, table, unique constraint, request fingerprint, stored result |
+| Idempotency storage | key scope, table, unique constraint, request fingerprint, stored result(= 도메인/응용 outcome; HTTP status·응답 표현은 presentation이 소유·replay 매핑 — `architecture-api` §13.3·P1a) |
 | API handoff | `Idempotency-Key` replay/conflict 계약은 `architecture-api`와 맞추는지 |
 | Side-effect timing | 외부 결제, 알림, message publish를 commit 전/후 어디서 실행하는지 |
 | Isolation/retry | isolation level, deadlock/timeout/serialization failure retry 기준 |

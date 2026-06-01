@@ -944,6 +944,61 @@ class Migration(migrations.Migration):
 - PostgreSQL에서는 `django-pg-zero-downtime-migrations` 같은 도구를 고려한다.
 - `AddIndex`는 PostgreSQL에서 `CREATE INDEX CONCURRENTLY`를 사용하도록 설정할 수 있다.
 
+### 10.4 이미 이주가 결정된 뒤의 마이그레이션 이력 보존 [TSD] [DfP]
+
+기존 Django 앱(이미 `0001_initial`·`db_table`·`label`을 가진 앱)이 판정·불변식을
+새로 소유해 표준 4계층 구조로 **이주가 이미 결정된 뒤**, 그 *마이그레이션 이력*을
+파괴 없이 보존하는 메커니즘이다. *언제* 이주하느냐(판정 소유 기준)는 여기 범위가
+아니라 `architecture-ddd` §3.2가 정한다 — 여기서는 결정된 이주를 *어떻게* 이력
+파괴 없이 수행하느냐(HOW)만 다룬다. 핵심 함정: 앱을 `infra_layer/django_<app>/`로
+옮기며 ORM 클래스를 `<Name>Model`로 바꾸면 기본 테이블명(`<label>_<modelname>`)이
+달라져, 코더가 기존 `0001`을 *재작성*(fresh `initial`)하기 쉽다. 그러면 이미
+`0001_initial`을 적용한 기존 DB에서 그 마이그레이션이 skip되어 테이블이 안 생기거나
+후속 마이그레이션과 어긋난다(이력 불변 위반).
+
+```python
+# 1) 앱을 infra_layer/django_<app>/로 옮긴다 — AppConfig.name 은 새 점경로지만
+#    label 은 기존 값을 유지한다(이력은 (label, migration) 키로 추적되므로 label 이
+#    바뀌면 기존 0001 적용 기록과 끊긴다. import 점경로만 바뀌는 것은 무해).
+# infra_layer/django_catalog/apps.py
+class CatalogConfig(AppConfig):
+    name = "application.catalog.infra_layer.django_catalog"  # 새 점경로
+    label = "catalog"                                        # 기존 label 유지
+
+# 2) ORM 클래스명은 표준상 <Name>Model 이 되지만 테이블명은 기존 것을 명시 보존한다.
+# infra_layer/django_catalog/models/product_model.py
+class ProductModel(models.Model):          # 기존 class Product 에서 rename
+    class Meta:
+        db_table = "catalog_product"       # 기존 테이블명 — 클래스 rename 이 바꾸지 못하게
+
+# 3) 기존 0001_initial 은 불변(재작성·삭제 금지). 클래스 rename 은 새 0002 에서
+#    state-only 로 반영한다 — database_operations=[] 라 실제 DDL 이 없어 "0001 불변"과
+#    양립한다. 단 0001 의 CreateModel 에는 db_table 이 없어 state 의 기본 테이블명이
+#    클래스 rename 으로 catalog_productmodel 로 재계산되므로, AlterModelTable 을 state 에
+#    함께 넣어 실제 db_table(catalog_product)과 맞춘다 — 아니면 makemigrations --check 가
+#    드리프트(AlterModelTable)를 보고한다.
+# migrations/0002_rename_product_to_productmodel.py
+class Migration(migrations.Migration):
+    dependencies = [("catalog", "0001_initial")]
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RenameModel("Product", "ProductModel"),
+                migrations.AlterModelTable(name="productmodel", table="catalog_product"),
+            ],
+            database_operations=[],        # db_table 불변 → 실제 DDL 없음
+        ),
+    ]
+```
+
+- `--fake-initial`은 이 경로의 기본 도구가 아니다 — 이미 `0001_initial`이 *적용된*
+  기존 앱(label 재사용)에서는 no-op이다(skip할 0001이 없다). 마이그레이션 기록이
+  *전무한* legacy 앱을 처음 편입할 때(테이블은 있으나 `django_migrations`에 행이 없을
+  때)에만 조건부로 쓴다.
+- 검증: `python manage.py makemigrations --check`로 드리프트가 0인지(미생성
+  마이그레이션 없음) 확인하고, `python manage.py sqlmigrate <app> 0002`로 0002가 **DDL을
+  발행하지 않는지**(state-only) 확인한다 — DDL이 찍히면 db_table 보존이 빠진 것이다.
+
 ---
 
 ## 11. 성능 최적화

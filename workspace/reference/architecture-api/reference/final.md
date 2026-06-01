@@ -523,7 +523,7 @@ Content-Type: application/json
 
 **동작 방식**:
 1. 클라이언트가 고유 키 생성 (V4 UUID 권장)
-2. 서버가 첫 요청의 상태 코드 + 응답 본문을 저장
+2. 서버가 첫 요청의 결과를 저장 — 도메인 outcome은 응용 계층(트랜잭션)이 저장하고, HTTP status·응답 표현은 presentation이 소유한다(application·domain은 status를 만들지 않는다; §13.3·P1a)
 3. 동일 키의 후속 요청은 저장된 결과를 반환
 4. 키는 24시간 후 만료 (일반적 정책)
 5. POST에만 적용 — GET, PUT, DELETE는 이미 멱등
@@ -542,7 +542,7 @@ Content-Type: application/json
 | Concurrency | 같은 key의 동시 요청 race를 어떻게 직렬화하거나 거절하는지 |
 | Storage | 내구성 있는 저장소와 transaction/lock 정책은 DB 설계로 연결 |
 
-Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다.
+Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다. 이때 보관·재현의 계층 책임을 지킨다 — 멱등성 저장은 도메인/응용 outcome을 트랜잭션에 기록하고, 그 outcome→HTTP status·응답 표현 매핑은 최초·replay 모두 presentation의 단일 변환 소유자(`@api.exception_handler`+problem 헬퍼)가 수행한다(application·domain이 status를 catch·생성·저장하지 않는다; 책임배치 정본 `implementation-django-ninja` §6.2·`design-architect`, P1a). byte 단위로 동일한 replay가 계약상 필요하면 presentation이 렌더한 응답을 보관하되, status 결정 소유는 여전히 presentation이다.
 
 **요청 fingerprint로 충돌 판정**: "동일 key, 다른 request content"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 사용하는 코드와 Problem Details를 계약에 명시한다.
 

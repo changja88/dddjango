@@ -397,7 +397,11 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
   (전역 렌더러는 성공 응답 media type까지 바꾸므로 trade-off를 따진다).
 
 > 위 사실은 django-ninja 1.6.x 기준이다. operation 본문은 `Status`/도메인 예외 `raise`만
-> 쓴다 — `(status, schema)` 튜플 반환은 1.6.x에서 deprecated다.
+> 쓴다 — `(status, schema)` 튜플 반환은 1.6.x에서 deprecated다. 성공 응답도 같은
+> 원칙이다 — 선언한 2xx `response` schema를 수제 `HttpResponse`/`JsonResponse`로
+> 우회하지 말고 `Status`/schema 객체로 return한다(직접 조립하면 ninja 직렬화·검증·필드
+> 제한이 건너뛰어져 OpenAPI 광고 schema와 실본문이 어긋난다). download·stream·redirect
+> 등 선언 schema 없는 성공 경로는 예외다.
 
 ---
 
