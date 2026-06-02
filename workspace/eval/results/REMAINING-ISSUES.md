@@ -102,7 +102,7 @@
 | C1 | **Critical** | 명세 §7.369 약속한 `test_stock_concurrency.py` **부재** + 재시도 소진→`StockConflict`(409) 경로 **미테스트**(§9.6 Test criteria 부분 집행) | 명세 §7.369 vs 트리 / `create_order_app.py:103` | §9.6 Test criteria |
 | C2 | **Major** | **P1a 의미적 변종** — status-bearing snapshot이 app 흐름 + 중앙 핸들러 죽은 코드(백스톱 미포착) | `create_order_app.py:70-79`·`idempotency_store.py:17-22`·`api_orders.py:69` | ninja §2.2·§6.2 |
 | C3 | **Major** | 멱등성 스코프 크립 — `Idempotency-Key` **필수(400)**·전용 테이블·replay, task/scope 미지시·G0=확장금지 위반(**P1a 뿌리**) | scope.md(무언급)·명세 §4·§5 | 설계원칙 05/스코프 |
-| C4 | **Major** | SQL 판정 복제 `stock__gte=quantity`(design-architect.md:36이 동일 예시로 금지; 단 `can_decrement_stock` 살아있어 빈혈 해악 부분적) | `published_service/stock.py:42` | ddd §3.2 |
+| C4 | **Major** | SQL 판정 복제 `stock__gte=quantity`(design-architect.md:36이 동일 예시로 금지; 단 `can_decrement_stock` 살아있어 빈혈 해악 부분적) | `published_service/stock.py:42` | ddd §3.2 → **✅ C형 집행 DR-32**(백스톱 ⑪ `check-anemic-sql-guard`: 도메인 메서드 부재 빈혈만; B형 atomic 관용구=나-3 보류) |
 | C5 | **Major** | 고-blast catalog 트레이드오프 **G1 미상정**(§9 Open Questions 사후기록만) | 명세 §9.404 | design-architect.md:38/51 |
 | C6 | **Major** | ACL 협력 포트가 `application_layer/`(표준=`domain_layer/order/port/`) | `application_layer/create_order/port/` | houserules §2·§3 |
 | C7 | **Major** | 죽은 예외 핸들러 5/12(비즈니스+Invalid* 도메인 예외) | `orders_api_router.py:87-124` | cleancode 죽은코드 |
