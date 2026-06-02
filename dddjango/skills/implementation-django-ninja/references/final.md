@@ -302,9 +302,13 @@ def list_orders(request):
 - `401`: authentication 실패 또는 필요
 - `403`: authorization 부족
 - `404`: resource 없음 또는 존재 숨김
+- `406`: 응답 표현 협상 실패 — `Accept`를 만족하는 표현 없음 (`architecture-api` §7.2)
 - `409`: conflict
+- `415`: 요청 페이로드 형식 미지원 — `Content-Type`을 이 리소스가 처리 못 함 (`architecture-api` §7.2)
 - `422`: semantically invalid input 또는 framework validation error 계약
 - `429`: rate limit
+
+> `406`/`415`의 *처리 메커니즘*은 §6.3(콘텐츠 협상 실패) 참조 — ninja 경계 안에서 내고 전역 미들웨어로 가로채지 않는다.
 
 Django Ninja validation error의 default status·형식이 프로젝트 error contract와 다르면
 `ValidationError` exception handler(또는 validation 전용 `NinjaAPI` subclass)로 맞춘다 —
@@ -376,6 +380,12 @@ def on_validation_error(request, exc):
 핸들러·헬퍼는 `NinjaAPI` 인스턴스 단위다 — API가 여럿이면 공통 베이스로 일관 적용한다.
 async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
 
+**헬퍼·중앙 핸들러의 *위치*** — 단일 BC면 그 BC `application/<app>/presentation_layer/`에 둔다.
+2개 이상 BC가 *실제로* 공유할 때만 루트 `common/ninja/`(전체경로 `<project_root>/common/ninja/`
+— `application/` *아래*가 아니다)로 *승격*한다. 횡단이 생기기 전 조기 승격(`application/common/`
+생성)은 YAGNI 위반이다 — 단일 BC에서는 problem 헬퍼도 그 BC의 presentation에 머문다. 위치 규약은
+`discipline-houserules` §1.
+
 **대안 B(더 DRY) — `create_response` 오버라이드.** 핸들러마다 content-type을 반복하기 번거롭거나
 framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 상속해 런타임 메서드
 `create_response`만 오버라이드해 `status >= 400`이면 media type을 `application/problem+json`으로
@@ -403,6 +413,29 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
 > 우회하지 말고 `Status`/schema 객체로 return한다(직접 조립하면 ninja 직렬화·검증·필드
 > 제한이 건너뛰어져 OpenAPI 광고 schema와 실본문이 어긋난다). download·stream·redirect
 > 등 선언 schema 없는 성공 경로는 예외다.
+
+### 6.3 콘텐츠 협상 실패 (406/415)
+
+`406`(응답 표현 협상 실패)·`415`(요청 페이로드 형식 미지원)의 **계약은 `architecture-api` §7.2**가
+정의한다. *처리 메커니즘은 ninja 경계 안*에서 낸다 — 별도 메커니즘을 발명하지 않는다:
+
+- **415(요청 미디어 미지원)**: ninja는 단일 `Parser`만 쓰고 Content-Type별 디스패치가 없다.
+  `Parser`(`ninja.parser.Parser`)의 `parse_body`를 오버라이드해 **그 안에서 `request.content_type`을
+  명시 검사**하고 지원하지 않으면 `raise HttpError(415, ...)`(`NinjaAPI(parser=...)`로 등록). 바디
+  없는 메서드(GET 등)는 `parse_body`가 안 불리므로 415 대상이 아니다.
+- **406(응답 협상 실패)**: ninja `Renderer`는 응답 *형식을 고정*할 뿐 `Accept`를 읽어 표현을 고르는
+  협상 훅이 없다. 협상이 필요하면 **operation/경계 코드에서 `request`의 `Accept`를 직접 검사**해
+  만족하는 표현이 없으면 `raise HttpError(406, ...)`. (대안 표현을 *실제로* 제공할 때만 협상이 의미
+  있고, 단일 표현이면 보통 406이 불필요하다.)
+- **임의 status**: `raise HttpError(status, detail)`(`ninja.errors.HttpError`) — operation·Parser
+  어디서든 ninja가 응답으로 변환한다. problem+json 본문이 필요하면 위 §6.2의 중앙 변환을 탄다 —
+  §6.2 대안 B(`create_response` 오버라이드)를 쓰면 `status >= 400`이 일괄 problem+json화되어 별도
+  `HttpError` 핸들러가 불요하고, 안 쓰면 `@api.exception_handler(HttpError)`로 본문을 통일한다(둘 중 하나).
+
+**귀결 — ninja 라우팅 *밖*에 협상을 두지 않는다.** ninja가 협상·임의 status를 경계 안에서 직접
+주므로, 협상을 Django 전역 `MIDDLEWARE`·루트 `urls.py` 래퍼·별도 디스패처 등 ninja 라우팅 *밖*
+어디에도 두지 않는다(라우팅 중복·BC 격리 침범·`request.path` 하드코딩 시 경로 변경에 silent 깨짐).
+협상은 `application/<app>/presentation_layer/`의 ninja 경계(operation·Parser)가 소유한다.
 
 ---
 

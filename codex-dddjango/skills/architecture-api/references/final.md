@@ -296,6 +296,8 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)
 
+> 이 계약의 *구현 메커니즘*(Django Ninja)은 `implementation-django-ninja` §6.3 — `Parser`(415)·`Renderer`/`HttpError`(406)로 **ninja 경계 안**에서 낸다. 전역 미들웨어로 협상을 가로채지 않는다.
+
 ### 7.3 캐시 관련 헤더
 
 | 헤더 | 용도 |
