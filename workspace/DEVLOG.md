@@ -184,6 +184,20 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 
 ---
 
+### DR-26 ✅ catalog 컨테이너 §0-1 회귀 — 근본원인(3-leg 부재·architect 코인플립) + 3-leg 수정
+2026-06-02. 트리거: 사용자가 smoke6 채점지 의문("catalog를 `application` 밖에 뒀는데 왜 거의 통과") + "이전에도 있던 회귀, 원인 파악·수정계획". 정본=`workspace/design/2026-06-02-catalog-container-regression-fix.md`.
+- **회귀 실증(타임라인, 전부 06-02·같은 태스크군)**: smoke4-codex ❌ / smoke4-claude 🟡(§632-2 오독 PASS→정정) / **poc-codex ✅ 이주 이행**(`application/catalog/`) / smoke6-claude ❌ / smoke6-codex ❌. **FAIL→PASS→FAIL 펄럭 = 비결정**(현 코퍼스로 정답 가능한데 architect가 코인플립).
+- **3-leg 전부 뚫림(근본원인)**: ① 결정적 백스톱 0/6 위치 미검사(`check-layer-skeleton`은 `application/` *안*만 봄) ② §632-(2) "평면 유지" *위치* 침묵 → architect/coder "루트 OK" 합리화 + §1.1(상위 우선) 탈출구 ③ 평가(나)가 §632-(2)를 위치 면제로 오독 → smoke6-claude SH PASS 오판(eval-측 버그).
+- **적대 리뷰 3렌즈(회피·거짓양성·진단)가 진단 절반 정정**: 1차 동인 = *architect 설계단계 코인플립*(coder-출력 백스톱은 사후 청소; 회귀 전부 명세 일치=coder 일탈 아님) / 진짜 축 = *판정-소유 형태*(poc=리치 도메인메서드→§632-1 이주, smoke6=평면 `published_service` 함수→§632-2 데이터소스→평면; 위치는 그 하류) / §1.1이 상위-우선 미닫힌 탈출구(baseline catalog는 `Product`+`0001` 보유라 "startapp stub"보다 확립).
+- **수정 = 3-leg(예방 1차·백스톱 2차·감사 3차)**:
+  - **Leg-2 예방**: `design-architect` "평면 유지로 결정" 탈출구 폐기(위치는 항상 `application/<app>/`·4계층만 면제·루트는 G1 옵션) ×2 + houserules §1.1 carve-out(touched 데이터소스 루트=확립규약 아님) ×2 + §0-1 위치 명문·§632-(2) "위치 비면제" ×3. **3미러 정합·옛 문구 잔존 0**.
+  - **Leg-1 백스톱**: 신규 `check-app-container.py`(루트직속 컨테이너 ∧ git-touched 신규마이그레이션 ∧ 실질 이주증거 G3 ∧ 설정패키지/비-git 면제) → 게이트 **7종**(①~⑦)·`plugin.json 1.0.3`·codex 미러 byte-identical. **적대 검증 거짓양성0**: 실 4픽스처(smoke4/6 차단·poc 면제) + 합성 6종(빈껍데기·src중첩 차단 / 무관앱·설정패키지·비-git·rename 면제).
+  - **Leg-3 감사**: RUBRIC 마스크 C **위치/깊이 분리**(MQ1=N는 4계층만 면제·위치는 touched면 FAIL — smoke6 오판 교정) + `discipline-reviewer` 레드플래그를 catalog-touched·빈껍데기·`published_service`-빈혈 변종으로 ×2미러.
+- **잔존(정직)**: **leg-1.5(판정-소유 형태 결정적 신호) 미작성** — 결정적 빈혈 탐지 FP 위험으로 보류. 잔존경로 B-1(`application/catalog/`로 옮겼으나 판정은 평면 함수=빈혈)은 reviewer(leg-3)만 덮어 **런타임 의존 리스크**(리뷰어3 경고·DR-21·22 선례). B-1 실재발 시 P-C형 착수.
+- **부수**: §3 #7(catalog 미이주 결정) DR-26로 정정. smoke6 채점지 2개(`EVAL-smoke6-{claude,codex}.md`)를 SH-1/4 FAIL(양 런 공유·Codex 판정-소유 가중)로 정정. **N=1·라이브 예방효과 미검증**(별도 `/dddjango` 런 필요).
+
+---
+
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
 
 1. **서브에이전트 모델 다운그레이드**(특히 coder→Sonnet) — 게이트 반송 폭증으로 net 느리고 비쌈(DR-09).
@@ -192,7 +206,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 4. **커밋 타임스탬프로 "그 smoke가 쓴 코드" 추론** — 워킹트리/캐시는 커밋보다 앞설 수 있음. 세션 로그·design-spec·서브에이전트 시스템프롬프트로 검증하라(DR-10).
 5. **machine-time = wall − (user행으로 끝나는 큰 갭)** = 버그. 서브에이전트 반환은 `attachment` 행으로 끝나 오분류됨. **올바른 정의**: `machine = wall − Σ(서브에이전트 실행구간에 안 걸치는 >120s 갭)`(§4).
 6. **BC 배치를 사람 선택 제거로 "결정론화"** — 아님. G0에서 선택지를 *표면화*하는 게 정답(DR-07).
-7. **catalog 같은 기존 startapp 앱을 표준 트리로 강제 이주** — 스코프 초과·기존 소비자 위협. 결정 = 조치 없음(A), 표준 변경 없음(2026-05-27).
+7. **catalog 같은 기존 startapp 앱을 표준 트리로 강제 이주** — 스코프 초과·기존 소비자 위협. 결정 = 조치 없음(A), 표준 변경 없음(2026-05-27). **(DR-26 정정 2026-06-02: 이 규칙은 *런이 안 건드린 무관* 앱에만 유효하다. *이번 작업이 touched(새 마이그레이션·판정·쓰기경로)한* 데이터소스 앱은 위치를 `application/<app>/`로 이주한다 — 4계층 전개는 §632-(2) 면제, *위치*는 §0-1 비면제. "조치 없음"을 touched catalog까지 확장한 것이 위치 회귀(smoke4·smoke6)의 표준-측 뿌리였음 → DR-26 3-leg 수정.)**
 8. **긍정 레시피만으로 LLM 의미적 안티패턴 차단 기대** — P1a는 §6.2를 positive 레시피로 재작성했으나 *집행 게이트 없이* N≥5까지 보류 → 라이브 재테스트(smoke2)서 Codex가 또 operation 본문 수제 응답(DR-19). 집행 게이트(reviewer blocker·결정적 백스톱) 있는 P2·P3는 라이브 차단됨. **교훈: 의미적 안티패턴은 긍정 레시피 + 집행 게이트 둘 다 있어야 라이브에서 막힌다.** (→ P1a도 2026-05-31 discipline-reviewer 집행 게이트 추가, DR-20.)
 9. **편집한 표준을 캐시 신선화 없이 라이브 검증** — 플러그인 캐시(`~/.claude/plugins/cache`·`~/.codex/plugins/cache`)는 워킹트리와 **별도 사본**이라 편집이 안 실림(smoke2 직전 양 캐시 14커밋 stale). `/reload-plugins`는 캐시 재복사 안 함. **라이브 런 전 rsync(또는 재설치) + md5/diff 검증 + 새 세션 필수**(DR-19).
 10. **N=9 텍스트-판별 통과를 "라이브 발화"로 간주** — P1a 백스톱은 *고립된 체크를 에이전트에 "적용하라"고 준* 조건에서 9/9 blocker(DR-20)였으나, **라이브 discipline-reviewer**(전체 에이전트 + carve-out + 홀리스틱 심각도 + 경쟁 blocker 맥락)는 같은 실위반을 **권고로 강등**(DR-21). **교훈: 의미적 게이트 문구 검증은 텍스트-판별로 끝내지 말고 *라이브 파이프라인 발화*까지 확인**한다(강등시킬 carve-out·경쟁 blocker가 있으면 특히). 다운그레이드를 막는 강한 표현 필요. **(DR-22 갱신: bullet 문구 강화 v2도 사전 시뮬 0/3 실패 — *문구 강화 자체가 부족*. silent downgrade/누락은 bullet이 아니라 주의 배분·산출 형식에서 일어남. 명시 판정 강제·생산자 예방·결정적 백스톱 등 구조적 개입 필요.)**
