@@ -63,7 +63,7 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 | **SD-7** 컨텍스트 통신 | 타 BC `domain_layer`/`infra_layer` 직접 import 있나(grep import 경로) | (의미) OHS/ACL 포트만 소비 | (결정) 타 BC 구체구현 직접 import | **비대칭**: FAIL 방향(구체 infra/domain 경로 import)은 grep로 *완전히 닫힘*; PASS 방향("그게 OHS 표면인가 concrete impl인가")은 catalog 공개표면 정의 의존 = **의미 레인 필수**. published_service 빈 패키지=OHS 부재도 FAIL |
 | **SH-9** 단일 레이아웃 | 한 앱에 `test`+`tests`·`src`+`apps` 공존하나(`find`) | 단일 레이아웃 | 공존 | — |
 | **NJ-1** 스택 | 신규 JSON API가 `NinjaAPI`+`Router`인가 vs `JsonResponse`/DRF(grep) | ninja Router operation | plain view·DRF(greenfield) | 기존 확립 스택 존중은 houserules §1 |
-| **NJ-4** status 선언 | operation 데코레이터 `response={...}`에 다중 status schema | 201/4xx 다중 선언 | `response=Out`만 | handler-only status(503 등)는 OpenAPI 누락=Q-2 |
+| **NJ-4** status 선언 | operation `response={...}` dict에 다중 status schema(grep `response=`) — **`openapi_extra`/`get_openapi_schema` 선언은 불충족**(§2.2 line111) | 오류 status가 `response={...}`에 | `response=`에 201(성공)만, 오류는 `openapi_extra`/핸들러에만 | **`openapi_extra`로 오류를 OpenAPI에 넣어도 NJ-4 FAIL**(가시성≠`response=` 선언); 진짜 미선언(핸들러-only·OpenAPI 부재)만 Q-2 |
 | **Q-4** 메커니즘(치명) | `check-mechanism-ownership.py` + grep `DatabaseWrapper`/PRAGMA/monkeypatch | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 명세 승인된 메커니즘은 면제(의미 확인) |
 | **Q-5** 마이그레이션 | (순서) ①이주 여부 판정(마스크 C가 그 앱을 '신규 앱'으로 봤나) → ②이주 시: 기존 `0001` 불변·`db_table`/`label` 보존·state-only rename ops grep | 신규앱이 자기 0001 보유(정당) / 이주 시 0001 불변·state-only | **기존 앱**의 0001 재작성·테이블 rename DDL | **앵커 양매핑 주의**: 동일물리(baseline 0001 `D`+새앱 0001 생성)가 '신규앱 정당'↔'재작성 위반' 양쪽 — 마스크 C의 신규/기존 라벨이 *먼저* 갈라야 PASS/FAIL 결정. 이주 미시도(평면 유지)면 state-only ops 술어 **N/A**. brownfield 실적용은 .venv 실행 |
 
@@ -80,6 +80,7 @@ RUBRIC §C는 SH-1·SH-4 판정을 뒤집으므로 그 입력이 결정론적이
 
 ### 1.2 의미 레인 (결정 결과에 **blind**)
 - **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "오류→status를 *고르거나 만드는* 줄이 operation·application·domain에 있나? (Y/N)+줄".
+- **🔴 에러 경로 정독 의무(NJ-1·3·4·SD-6 — `poc-codex` miss 반영)**: operation 본문·backstop exit0만으로 NJ/SD-6 판정 **금지**. 모든 `@api.exception_handler`·problem 헬퍼·content-negotiation 데코레이터를 읽어 §6.2 대조한다. 이진질문: (Q-a) 에러 응답이 `ninja.responses.Response` 아닌 `django.http.JsonResponse`로 나가나?(Y=🟡 NJ-1 경미) (Q-b) 오류 status가 `response={}` 아닌 `openapi_extra`/핸들러에만 있나?(Y=NJ-4 FAIL). **양방향 보정**: §6.2가 *중앙 핸들러의 dict 빌드+`ninja.responses.Response` 반환*을 처방하므로 그 형태는 **준수**(SD-6 'raw 응답'·NJ-1 'plain leak'으로 over-call 금지·죽은 schema 아님).
 - **필수 줄 인용** — 인용 없는 PASS 무효.
 - **판정 바=표준 §근거 조항**; 앵커=예시로만 대조(임계값 아님).
 - **grader 배포본 = 익명 스니펫 + 표준 §근거만**. fixture명·줄번호·런타임은 조정자 보유(grader 미수령) — 앵커 줄번호 노출과 마스킹의 모순(C-F4)을 *출처 비공개*로 해소.
@@ -195,11 +196,52 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 
 ---
 
+## 6. 채점 결과지 표준 형식 (산출 템플릿 — 형식 동결)
+
+> 모든 신규 채점 결과지(`results/<YYYYMMDD-HHMM>-<라운드>-<런타임>.md`)는 아래 골격·순서·칼럼을 그대로 유지한다. **형식 표류 차단**: 기존 결과지가 두 형식(`smoke4`=per-tier 표 / `p1a-v3`=치명군 grouping)으로 갈려 있던 것을 단일 템플릿으로 동결한다. *기존 파일 소급 개편은 별건*(요청 시).
+
+### 6.1 섹션 순서 (RUBRIC 레터링 그대로 — 어기면 형식 위반)
+1. **헤더 블록**(§6.2)
+2. **종합 판정 (사전식 집계)**(§6.3) — verdict-first
+3. **A. TIER-S 척추 — S-DDD**(SD-1~7)
+4. **B. TIER-S 척추 — S-HR**(SH-1~10)
+5. **TIER-S(조건부) — S-NINJA**(NJ-1~6; HTTP operation 없으면 차원 전체 N/A 명시)
+6. **TIER-S(핵심) — FC**(FC-1~3)
+7. **C. 기존규약 마스크 (적용 메모)** — §1.1.M MQ0/MQ1/MQ2 명시(SH-1·4 입력이라 종합 한 줄로 압축·생략 금지). *기존규약 없는 순수 greenfield면 "N/A — 신규 앱뿐, §0 전부 강제" 한 줄이라도 섹션 유지*(레터링 무결성).
+8. **D. TIER-Q 품질**(Q-1~7)
+9. **의미적 변종 / backstop-blind 메타** — §1.3 *측정의 주 산출물*이므로 조정자 노트보다 **앞**
+10. **조정자 노트**
+11. **부록**(선택) — 런 고유 맥락(PoC 가설·C트랙 재현 등)은 여기로 격리, 본 채점 골격 침범 금지
+
+> 차원 표(3~8)는 `RUBRIC`의 **A→B→NINJA→FC→C→D** 레터링을 그대로 따른다. *C 누락 = 레터링 끊김 = 형식 위반*. E(앵커)는 루브릭 전용(결과지 미포함).
+
+### 6.2 헤더 블록 (인용블록 `>`, 필수 필드)
+방법(v3) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설(8벌 밖=라벨 비구속) · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**(코디네이터 보고 대신 조정자 직접 검증).
+
+### 6.3 종합 판정 표 (사전식 — §2 의사코드 그대로)
+`| 단계 | 결과 |`: ① 마스크 C → ② 치명 게이트(FAIL n건) → ②.5 실질성 관문 → ③ 비치명·의미변종(WEAK 상한) → ④ TIER-Q 등급. 뒤에 **한 줄 요지** + **2차원 라벨**(§4.4: (정적: 준수/WEAK/FAIL)×(라이브: 발화/미발화/미검증); "완료"는 §4.4 충족 시만).
+
+### 6.4 차원 표 칼럼 스키마 (TIER-S 공통)
+`| ID | 항목 | §근거 | Result(조정자 검증) | 결정 | 의미 | 종합 | 치명 |`
+- **Result** = **줄 인용 필수**(`file:line`) — 인용 없는 PASS 무효(§1.2). **자기보고 아닌 조정자 직접 검증**.
+- 결정/의미 = 레인별(➖=해당 레인 없음), 종합 = 두 레인 종합 글리프, 치명 = 게이트 여부(✅통과/❌/⏸️).
+- **전 차원 전수 채점**(결정 PASS여도 의미 생략 금지 §1.3).
+- D.TIER-Q는 '치명' 칼럼 생략(Q-4만 인라인 **[🔴치명]**).
+
+### 6.5 형식 금지 (표류 방지)
+- ❌ per-tier 차원 표를 "타 런 델타" 또는 "치명/비치명 2군"으로 **대체** 금지(보조 표는 가능, per-tier 표 제거 불가).
+- ❌ 채점 *과정 서사*(v1→v2 수정 이력 등) 본문 박제 금지 — 최종 판정만. 방법 판단(severity 보정 근거 등)은 조정자 노트의 *결론*으로.
+- ❌ 마스크 C 섹션 생략·종합 한 줄 대체 금지.
+- ❌ 런 고유 연구물로 채점 골격 대체 금지(부록 격리).
+
+---
+
 ## v3 변경 요약 (적대 3렌즈 재감사 반영)
 - **§0 동결 게이트 + 동결-전-결정 9개 확정**(미동결 채점 = §5 자기위반 차단; C-F5).
 - **판정 레인 집행**: 항목별 결정-판정 표(A-F3)·마스크 C 이진질문(A-F4)·조정자/grader 역할 분리(A-F7)·FC-1 등록 주체·시점(A-F6).
 - **집계 폐합**: 치명 항목 의미변종 일반 라우팅(A-F5·B-F4)·Q-4 치명 승격(B-F3)·NJ 조건부/강 편입(B-F2)·Q 카운트 기반(B-F7)·실질성 측정화(B-F6)·N_grader/N_run 분리(B-F8).
 - **완료 폐합**: P1a/P2/P3 정의(B-F9)·라이브 위반주입 프로토콜·2차원 라벨 격자(B-F10)·정적/라이브 분리·bisect 비영향 명시(B-F11).
 - **과적합 인프라**: 관찰집합 열거 동결+누수차단(C-F2)·criteria 내용/가중 분리(C-F3)·앵커 재좌표+마스킹 해소(C-F1·F4)·표제 인과함의 제거(C-F8).
+- **산출 형식 동결(§6 신설, 2026-06-02)**: 채점 결과지 표준 템플릿(섹션 순서 A→B→NINJA→FC→C→D·칼럼 스키마·필수 단서·형식 금지)으로 기존 결과지 형식 혼재(per-tier vs 치명군) 단일화. `poc-codex-3b` 형식 정합 작업 산물.
 
 (평가 항목 = `RUBRIC.md`)

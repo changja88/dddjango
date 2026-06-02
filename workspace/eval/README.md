@@ -21,7 +21,8 @@ eval/
     ├── FINAL-SMOKE-INSIGHTS.html
     └── RETEST-HANDOFF.md       # 라이브 재테스트 실행 핸드오프 + §1 고정 게이트 답(규율 정본)
 
-> **채점 기록 명명 규약**: `EVAL-<라운드>-<런타임>.md` (예: `EVAL-p1a-v3-codex.md`). 한 회차의 Claude·Codex는 별도 파일로 기록(직접 비교 시 부록에서 교차참조).
+> **채점 기록 명명 규약**: `<YYYYMMDD-HHMM>-<라운드>-<런타임>.md` (예: `20260602-0506-poc-codex-3b.md`). 구 `EVAL-<라운드>-<런타임>.md`(예: `EVAL-p1a-v3-codex.md`)는 그 이전 기록 — 신규는 timestamp형. 한 회차의 Claude·Codex는 별도 파일로 기록(직접 비교 시 부록에서 교차참조).
+> **채점 결과지 형식**: 섹션 순서·칼럼·필수 단서는 `rubric/EVAL-METHOD.md §6` 표준 템플릿 고정(종합→A→B→NINJA→FC→C→D→의미변종→조정자 노트→부록).
 ```
 
 ## 관리 규약 (앞으로)
@@ -30,6 +31,7 @@ eval/
 2. **고정 입력 규율은 `results/RETEST-HANDOFF.md` §1**(런 리셋·게이트 답)을 따른다 — 런 간 입력이 흔들리면 비교가 오염된다.
 3. **평가 결과는 `results/`에 누적.** 한 회차 = 무엇을·어떤 fixture로·어떤 판정인지. 라이브(위반-주입) 채점은 `LIVEFIRE-RESULTS.md`, 미해결/추적은 `REMAINING-ISSUES.md`에 갱신.
 4. **정직 경계**: 저장 fixture 정적 채점은 "구조적 준수 + 기능 정확성"까지. "게이트 라이브 발화"는 fresh 위반-주입 런으로만 확인(정적 통과 ≠ 라이브 발화 — DR-21). baseline 대비 차별가치는 *안 잰다*(규칙 준수가 핵심).
+5. **채점 결과지 형식은 `EVAL-METHOD §6` 표준 템플릿**(섹션 순서 A→B→NINJA→FC→C→D·차원 표 칼럼 스키마·필수 ⚠️ 단서·형식 금지)을 따른다 — 형식 표류 차단. per-tier 차원 표를 델타·치명군으로 대체 금지, 마스크 C 섹션 생략 금지, 채점 과정 서사 본문 박제 금지.
 
 ## 평가 대상 fixture (레포 밖)
 
