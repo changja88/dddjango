@@ -165,8 +165,16 @@ def check_sh9(target: Path, apps: list[Path]) -> None:
 
 
 def check_sd7(target: Path) -> None:
-    """SD-7(FAIL방향): 타 BC domain_layer/infra_layer 직접 import. PASS(OHS여부)는 의미레인."""
+    """SD-7(FAIL방향): ACL/OHS 경로 *밖*에서 타 BC domain_layer/infra_layer 직접 import.
+
+    미스캘리브 교정(2026-06-02): `infra_layer/acl/` 의 미이주 ACL 이 업스트림(타 BC) 모델·리포를
+    import·번역하는 건 표준 §2(houserules `final.md:128`/`:141`: "OHS 미이주·행잠금 불가피 시 ACL로
+    명시 — 구현(업스트림 모델·예외 번역)은 infra_layer/acl/ 에 가둔다") **명시 허용**이라 FAIL-신호가
+    아니다 — '주의'로만 분리한다(도메인누수=포트 ABC 미준수·OHS 존재 시 미경유 점검은 의미레인).
+    FAIL-신호는 ACL *밖*(도메인/응용/presentation)의 직접 import 만. PASS(OHS '정당성')도 의미레인.
+    [근거: smoke4-claude·p1a-v3-claude 의 ACL 을 결정신호가 거짓양성 FAIL 로 잡던 미스캘리브 교정.]"""
     findings = []
+    acl_notes = []
     imp_re = re.compile(r"^\s*(?:from|import)\s+application\.([A-Za-z_]\w*)\.(domain_layer|infra_layer)")
     for f in _py_files(target):
         parts = f.parts
@@ -177,6 +185,7 @@ def check_sd7(target: Path) -> None:
             i = parts.index("application")
             if i + 1 < len(parts):
                 own_bc = parts[i + 1]
+        is_acl = "infra_layer" in parts and "acl" in parts  # 미이주 ACL 어댑터(표준 §2 허용)
         try:
             lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
@@ -184,11 +193,16 @@ def check_sd7(target: Path) -> None:
         for n, ln in enumerate(lines, 1):
             m = imp_re.match(ln)
             if m and m.group(1) != own_bc:  # 타 BC 의 내부 계층 직접 import
-                findings.append(f"{_rel(target, f)}:{n}  {ln.strip()}")
+                if is_acl:
+                    acl_notes.append(f"{_rel(target, f)}:{n}  {ln.strip()}")
+                else:
+                    findings.append(f"{_rel(target, f)}:{n}  {ln.strip()}")
     if findings:
-        _emit("SD-7 컨텍스트통신", "FAIL-신호", "타 BC domain_layer/infra_layer 직접 import (PASS여부=OHS는 의미레인)", findings)
+        _emit("SD-7 컨텍스트통신", "FAIL-신호", "ACL 밖(도메인/응용/presentation)에서 타 BC domain_layer/infra_layer 직접 import", findings)
     else:
-        _emit("SD-7 컨텍스트통신", "PASS-신호(결정)", "타 BC 내부계층 직접 import 0 (단 OHS '정당성'은 의미레인)", [])
+        _emit("SD-7 컨텍스트통신", "PASS-신호(결정)", "ACL 밖 타 BC 내부계층 직접 import 0 (OHS '정당성'은 의미레인)", [])
+    if acl_notes:
+        _emit("SD-7 ACL직접통합", "주의(표준§2 허용)", "infra_layer/acl/ 미이주 ACL의 업스트림 import — houserules final.md:128 허용. 의미레인이 도메인누수(포트 ABC)·OHS존재 점검", acl_notes)
 
 
 def check_sd3(target: Path) -> None:

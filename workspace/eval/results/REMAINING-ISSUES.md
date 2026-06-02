@@ -13,6 +13,8 @@
 | P2 | 코더 메커니즘-소유권(프로덕션 커스텀 백엔드) 미차단 | Claude | ✅ **라이브 해결** (2026-05-30: 양 런타임 순수 version CAS·백스톱 exit0 발화) | 머지/PR |
 | P3 | §9.6 Risky Write 준수 집행(동시성 테스트 실현) | Codex | ✅ **라이브 해결** (2026-05-30: Codex에서 discipline-reviewer catch 라이브 발화·교정) | 머지/PR |
 | P4 | ③ 판정-소유 이주 비결정 | 양 런타임 | ⚪ 데이터 부족 | N≥5 블라인드 정량화 후 판단 |
+| **NJ-4** | 오류 status를 `openapi_extra`로만 선언(response= 누락) | Codex(poc-codex) | 🔧 **정적 집행(2026-06-02)** — 백스톱 `check-openapi-error-declaration.py` 신설·poc-codex exit2·거짓양성0 검증 | 라이브 발화 N≥1 |
+| **SD-7** | ACL *밖*(presentation·application)이 catalog 도메인 예외 직접 import = 번역 ACL 미격리 | Claude(p1a-v3) | 🔧 **정적 집행(2026-06-02)** — 백스톱 `check-context-isolation.py`(ACL 면제) + 루브릭 미스캘리브 교정(바·§E 앵커·`check-structure.py`) | 라이브 발화 N≥1 |
 
 ---
 

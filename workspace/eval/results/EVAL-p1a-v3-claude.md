@@ -22,6 +22,8 @@
 
 **한 줄**: P1a·§9.6·메커니즘소유권·기능정확성·구조 **거의 전면 준수**. 유일 척추 치명 = **SD-7**(order의 ACL이 catalog 구체 infra `DjangoProductRepository` 직접 import + catalog OHS 부재) — *design-spec이 명시 수용한 underdetermined 흠*. 추가 품질 흠 = **Q-5 L1**(catalog 0001 재정의 — 신규DB 무해, §11 이력불변 관점 흠).
 
+> **🔧 SD-7 근거 정정(2026-06-02 미스캘리브 교정)**: SD-7 **FAIL 결론은 유지**, 단 *근거가 바뀜* — "ACL이 catalog 구체 infra `DjangoProductRepository` 직접 import"(`product_stock_acl.py:17`)는 표준 §2(houserules `final.md:128`/`:141`)가 **명시 허용 = 거짓양성**(smoke4-claude는 동일 형태로 SD-7 PASS). **진짜 위반 = ACL *밖* 누수**: `order_api_router.py:26`(presentation)·`create_order_app.py:17`(application)이 catalog 도메인 **예외**를 직접 import(번역이 ACL에 안 갇힘). RUBRIC SD-7 바·§E 앵커·`tools/check-structure.py` 교정 + 플러그인 백스톱 `check-context-isolation.py` 신설로 집행(처방 `workspace/design/2026-06-02-nj4-sd7-enforcement.md`).
+
 ---
 
 ## 치명 게이트 표 (SD 전부·FC 전부·SH-1·2·4·7·NJ-1·2)

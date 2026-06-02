@@ -109,6 +109,7 @@ Operation 구현 기준:
 - delete 또는 no-body update는 `204`를 사용하고 body를 반환하지 않는다.
 - async operation에서 ORM을 직접 호출하지 않도록 Django async ORM 제약을 확인한다.
 - 성공뿐 아니라 **가능한 모든 status를 `response={...}`에 선언한다** — 알려진 도메인/검증 오류(404·409·422 등)까지 포함한다. 선언하지 않은 status는 OpenAPI/Swagger에 드러나지 않아 client가 계약으로 알 수 없다.
+- **`openapi_extra`·`get_openapi_schema`로 status를 수동 선언하는 것은 이 요구를 충족하지 않는다** — 그렇게 하면 Swagger 문서엔 드러나지만 ninja는 그 status를 응답 타입으로 인지하지 못해 검증·직렬화 계약 밖이다. 오류 status는 `response={...}`에 넣는다(문서 가시성과 타입 인지는 다른 것이다).
 - **오류는 operation에서 `raise`하고 성공 schema만 `return`한다** — 도메인/애플리케이션 예외를 그대로 raise하면 중앙에서 problem+json으로 변환한다(§6.2). operation 본문에서 `(status, ErrorSchema)` 튜플이나 수제 `HttpResponse`/`JsonResponse`로 오류 응답을 직접 만들지 않는다 — 변환이 흩어지고 problem+json content-type을 일관되게 못 맞춘다.
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
 - **반환 타입을 명시한다** — `-> object`처럼 정보 없는 타입을 쓰지 않는다. 직렬화 자체는 `response=`가 결정하지만, 반환 타입 annotation은 사람·mypy를 위한 계약 표현이다. 오류를 raise로 처리하면 성공 타입만 남는다(단일 성공 schema면 그 타입, 다중 성공 status면 `Status[...]`).
