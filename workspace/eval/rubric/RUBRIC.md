@@ -122,7 +122,7 @@
 | SH-7 협력포트 위치 | Codex `application_layer/create_order/port/` | Claude `domain_layer/order/port/` |
 | SH-9 단일 레이아웃 | Codex `catalog/test/`+`catalog/tests/` 공존 | (단일 test 디렉터리) |
 | SH-6 명명 | (8벌 위반 0) | 전 픽스처 `Interface`/`Impl`/`_repo.py` 0건 |
-| Q-1 스코프 | Codex 멱등성 `Idempotency-Key` 필수(task 미요구) / Claude 합산 정규화 | 요청 범위 내 모델 |
+| Q-1 스코프 | Codex 멱등성 `Idempotency-Key` 필수(task 미요구) / **Codex 협상 레이어 발명**: **406** Accept 협상(`fklive-codex api_orders.py:43-86` `_parse_media_range` q파싱; §6.3:443-444 'single repr이면 406 불필요' escape-valve **직격**) + **415** Content-Type(발명 범위이나 본문검증이라 *literal 위반 아님*·§7.2 계약·Codex 구현은 §6.3 레시피 아닌 post-hoc=**underdetermined**); 뿌리=`design-spec.md:123-126` architect 협상 레이어 전체 / Claude 합산 정규화 | 요청 범위 내 모델 / **Claude 406/415 의도적 공백**(`fklive-claude design-spec.md:81` 명시 배제 — 406은 단일표현이라 escape-valve 정합·415는 표준상 선택적 미구현) |
 | Q-4 메커니즘 | final-claudeA `config/db_backends/sqlite3_immediate/base.py` | p1a-v3 양쪽 순수 version CAS |
 | Q-5 마이그레이션 | Claude `django_catalog/migrations/0001_initial.py:14-25`(기존 0001 재작성) | 신규 앱 0001 + 별도 0002 expand |
 | NJ-2 operation 얇음 | Codex `smoke2-codexB/.../create_order/api_orders.py:108-213`(operation이 `json.loads(request.body)` 수동파싱+수동검증+7 except status 분기) | Claude `p1a-v3-claude/.../api_order.py:61-63`(schema 바인딩→service→`Status(201,…)` 매핑만) |
