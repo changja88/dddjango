@@ -419,14 +419,31 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
 `406`(응답 표현 협상 실패)·`415`(요청 페이로드 형식 미지원)의 **계약은 `architecture-api` §7.2**가
 정의한다. *처리 메커니즘은 ninja 경계 안*에서 낸다 — 별도 메커니즘을 발명하지 않는다:
 
-- **415(요청 미디어 미지원)**: ninja는 단일 `Parser`만 쓰고 Content-Type별 디스패치가 없다.
-  `Parser`(`ninja.parser.Parser`)의 `parse_body`를 오버라이드해 **그 안에서 `request.content_type`을
-  명시 검사**하고 지원하지 않으면 `raise HttpError(415, ...)`(`NinjaAPI(parser=...)`로 등록). 바디
-  없는 메서드(GET 등)는 `parse_body`가 안 불리므로 415 대상이 아니다.
+- **415(요청 미디어 미지원)**: ninja 1.6.x는 `BodyModel`이 `Parser.parse_body`의 예외를 일괄 `HttpError(400)`으로 재포장하므로(`ninja/params/models.py`), `parse_body` 안에서 `raise HttpError(415)`해도 400으로 먹혀 작동하지 않는다. 415는 `parse_body` *전*에 내야 하는데 operation 본문은 이미 ninja가 body resolution을 시작한 뒤라 늦다 — **`operation.run` 이전에 도는 view 데코레이터**(`router.add_decorator(fn, mode="view")`)에서 `request.content_type`을 검사한다. 본문 있는 메서드만 대상이다(데코레이터는 GET에도 불리므로, 바디 없는 메서드를 검사에서 빼는 가드를 코드에 둔다 — Parser 경로의 자동 면제가 없다). problem 본문은 데코레이터에서 직접 조립하지 말고 §6.2의 중앙 problem 헬퍼를 호출한다(헬퍼가 아직 없으면 먼저 세운다 — 데코레이터에 수제 `JsonResponse` 인라인 금지). §6.2 대안 B(`create_response` 일괄 problem화)를 쓰면 415만 그 일괄 변환 밖이라 problem 헬퍼를 직접 거치지만 본문 형식은 중앙과 일관한다.
+
+  ```python
+  # presentation_layer/api/<feature>/content_negotiation.py — operation은 선언적 payload만 유지
+  from functools import wraps
+
+  def enforce_json_content_type(run_op):
+      @wraps(run_op)  # 누락 시 ninja가 functools.wraps 미사용 TypeError 경고
+      def wrapper(request, *args, **kwargs):
+          if request.method in ("POST", "PUT", "PATCH"):
+              media = (request.content_type or "").split(";", 1)[0].strip()
+              if media != "application/json":
+                  return problem_response(415, ...)  # §6.2 중앙 헬퍼 재사용(수제 JsonResponse 금지)
+          return run_op(request, *args, **kwargs)     # 통과 → ninja가 payload: Schema 파싱
+      return wrapper
+
+  router.add_decorator(enforce_json_content_type, mode="view")
+  # operation: def create_order(request, payload: CreateOrderIn) -> Status[CreateOrderOut]  ← 얇음 유지
+  ```
 - **406(응답 협상 실패)**: ninja `Renderer`는 응답 *형식을 고정*할 뿐 `Accept`를 읽어 표현을 고르는
   협상 훅이 없다. 협상이 필요하면 **operation/경계 코드에서 `request`의 `Accept`를 직접 검사**해
   만족하는 표현이 없으면 `raise HttpError(406, ...)`. (대안 표현을 *실제로* 제공할 때만 협상이 의미
-  있고, 단일 표현이면 보통 406이 불필요하다.)
+  있고, 단일 표현이면 보통 406이 불필요하다.) 이 검사는 `Accept`·`Content-Type` 같은 **헤더만** 읽으며,
+  어느 status에서도 operation·helper가 `request.body`/`json.loads`로 본문을 수동 파싱하지 않는다 — 본문은
+  선언적 `payload: Schema`가 받는다(operation을 얇게 유지하는 핵심 신호).
 - **임의 status**: `raise HttpError(status, detail)`(`ninja.errors.HttpError`) — operation·Parser
   어디서든 ninja가 응답으로 변환한다. problem+json 본문이 필요하면 위 §6.2의 중앙 변환을 탄다 —
   §6.2 대안 B(`create_response` 오버라이드)를 쓰면 `status >= 400`이 일괄 problem+json화되어 별도
@@ -435,7 +452,7 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
 **귀결 — ninja 라우팅 *밖*에 협상을 두지 않는다.** ninja가 협상·임의 status를 경계 안에서 직접
 주므로, 협상을 Django 전역 `MIDDLEWARE`·루트 `urls.py` 래퍼·별도 디스패처 등 ninja 라우팅 *밖*
 어디에도 두지 않는다(라우팅 중복·BC 격리 침범·`request.path` 하드코딩 시 경로 변경에 silent 깨짐).
-협상은 `application/<app>/presentation_layer/`의 ninja 경계(operation·Parser)가 소유한다.
+협상은 `application/<app>/presentation_layer/`의 ninja 경계(operation·Parser·view 데코레이터 `add_decorator(mode="view")`)가 소유한다.
 
 ---
 
