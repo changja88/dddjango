@@ -1673,6 +1673,7 @@ class OrderItem(models.Model):
 ```
 
 - `pk` 속성은 구성 필드 값의 **튜플**이다.
+- ⚠ 위 `OrderItem`은 복합 PK 기능 데모이며 `order`·`product` FK는 *같은 BC 내* 가정이다. `product`가 **다른 BC**의 애그리거트면 `ForeignKey(Product)` 대신 `product_id` 값 참조로 둔다(BC 경계 ORM FK 금지 — `architecture-ddd` §3.3 규칙3 영속성 확장).
 - **제약사항**: 기존 모델에서 복합 PK로 마이그레이션 불가, ForeignKey가 복합 PK 모델을 가리킬 수 없음, admin 미지원.
 
 #### 자동 모델 임포트 in shell
