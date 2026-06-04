@@ -95,9 +95,9 @@ self-report가 아니라 명세 + 코드 5(models·services·api·middleware·ex
   - **#1** 게이트 수정요청 선택지화 — ✅ `commands/dddjango.md`(배너-승인 + 엣지 게이트거부): 권고·수정후보 있으면 AskUserQuestion 선택지+기타 자유입력, 없으면 자유피드백.
   - **#2** 패키지/파일/테스트 구조 무결정 — ✅ 신규 `discipline-houserules` §1~§3(결정순서·충돌중재·평면금지) + design-architect(명세에 구조 결정)·coder(집행)·discipline-reviewer(점검)·commands(유령입력 교정). 근본원인 6층위(RC1~6) 규명. proactive 1차+게이트 backstop.
   - **#3** 코드 주석 언어 — ✅ `discipline-houserules` §5(기존 관례 우선, 없으면 한국어).
-  - **#4** 패키지 매니저 uv — ⏸️ **보류 → 향후 `init`**(부트스트랩은 /dddjango 범위 밖). houserules §6 명시.
+  - **#4** 패키지 매니저 uv — ✅ **해소(DR-42)**: §6.1 보류 해지 — 기능 추가 흐름이 도구셋을 직접 다룬다(기존 존중·없으면 §6.2). houserules §6.1.
   - **#5** 타입힌트 — ✅ `discipline-houserules` §4(시그니처 강제=mypy strict / 지역변수 권장) + discipline-reviewer 점검 + Phase3 mypy(구성 시).
-  - **#6** 표준 도구셋 — ⏸️ **보류 → 향후 `init`**(코퍼스엔 ruff/mypy/pydantic/pytest 다 있고 django-stubs만 공백 → init 때 채움).
+  - **#6** 표준 도구셋 — ✅ **해소(DR-42)**: §6.1 보류 해지. 테스트 스택(pytest) 구체 셋업 레시피 정의; 나머지 도구는 동일 원칙(§6.1·§6.2).
 - 미확인 1건: G1 리뷰어 병렬 디스패치 육안(기능적 우려는 db blocker 독립 발견으로 해소).
 
-**→ 파이프라인 동작·코드 품질 자체는 합격. 개선점 6건 중 #1·#2·#3·#5 편집 완료(미커밋), #4·#6은 향후 `/dddjango init`으로 이월. 다음: 동적검증(플러그인 재설치+/dddjango 재현) 일괄 → 통과 시 커밋.**
+**→ 파이프라인 동작·코드 품질 자체는 합격. 개선점 6건 중 #1·#2·#3·#5 편집 완료(미커밋), #4·#6은 DR-42에서 §6.1 보류 해지로 해소. 다음: 동적검증(플러그인 재설치+/dddjango 재현) 일괄 → 통과 시 커밋.**

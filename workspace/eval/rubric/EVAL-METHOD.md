@@ -93,7 +93,8 @@ RUBRIC §C는 SH-1·SH-4 판정을 뒤집으므로 그 입력이 결정론적이
 
 ### 1.4 기능 정확성 측정 (FC)
 - **FC-1 골든 오라클**: **(주체)** 적대 grader가 **(시점)** 프롬프트 수령 직후·코드 *열람 전*에 **(형식)** *태스크-독립 행위표*(입력상태,요청)→(기대 status,부작용) + 타임스탬프 + "코드 미열람" 선언을 freeze 산출물에 커밋(열람 후 수정 금지·git diff 검증). **행위표 ⊥ 실행 어댑터**(실측 교정): 행위표는 코드 미열람으로 8벌 공통 작성 가능하나 *실제 두드릴 route+요청 schema*는 픽스처마다 달라(동일 태스크라도 BC 분해 분기) **조정자가 코드 열람 후 어댑터를 짠다** — "미열람"은 행위표에만. **작성자 ⊥ 채점자**(골든표 작성한 적대 grader는 그 fixture 의미 grader 제외 → 그 픽스처 N_grader를 1 늘려 유효 3 유지). 실행=인수 테스트와 독립한 호출 스크립트로 `.venv` 실측. **명세·기존 테스트는 오라클 불인정**.
-- **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`.
+  - **러너(runner) = `pytest`(pytest-django)**: FC-1 골든 행위 검증·Q-6 스위트 실행은 **프로젝트 루트에서 `.venv/bin/pytest`**로 돌린다(픽스처의 pytest 설정 `pytest.ini`/`pyproject.toml`·`DJANGO_SETTINGS_MODULE`이 적용되는 루트). 픽스처에 pytest 설정이 없으면 `.venv/bin/pytest -p pytest_django --ds=<settings>`로 명시하거나 픽스처 venv에 `pytest-django` 설치를 선행한다. **`manage.py test`(unittest 디스커버리)는 함수형 `def test_*()` pytest 테스트를 0개로 수집해 FC-2를 거짓 PASS시키므로 금지.** `pytest`는 Django `TestCase` **와** 함수형 pytest 테스트를 **둘 다** 수집하므로 표준이 pytest 관용구로 전환된 신규 산출물과 구 fixture(`TestCase`)를 한 러너로 안전히 채점한다. **러너만 바뀌고 골든 green→red 오라클 로직은 불변.**
+- **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`. **러너 = `.venv/bin/pytest`(FC-1과 동일)**: mutation 주입 후 `pytest`로 스위트를 돌려 red를 확인한다(`manage.py test`는 함수형 pytest 테스트를 수집 못 해 mutation 주입에도 green→**FC-2 거짓 PASS** 위험이라 금지). **러너만 바뀌고 mutation 주입→red 기대 로직은 불변**(주입 사이트·red율 100% 판정 동일).
 - **FC-3 도메인 정합**: 의미 grader가 골든 결과+코드 정독으로 명백한 도메인 오류(음수 재고·차감 역전·인과 역전) 판정.
 
 ---

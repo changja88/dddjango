@@ -18,11 +18,14 @@ user-invocable: false
 ## 핵심 운영 원칙
 
 - 행동을 증명하는 가장 작은 테스트 범위를 선택; 피라미드 하단일수록 빠르고 안정 (§1)
+- 테스트 러너·작성은 **pytest(pytest-django)** 기본 — 함수형 + `assert` + `@pytest.mark.django_db`(DB 접근 명시) + 픽스처 (§3, §4, §19.4)
 - 테스트 더블은 역할과 리스크 기준으로 선택: Stub→상태 검증, Mock→상호작용 검증, Fake→가벼운 협력자 (§2, §7.1)
+- mock이 필요할 때(외부 경계 한정 — 기존 §7.1 교리 불변)의 **도구는 pytest-mock `mocker` 픽스처**(자동 teardown); raw `unittest.mock` 폴백 금지 (§7)
+- **적극적 = 경계에서 수제 대신 전용 도구로 *업그레이드*하는 것이지, 더 많이 *mock·도구 추가*하는 것이 아니다.**
 - 픽스처는 명시적·격리적으로 작성, conftest 계층을 활용해 공유 범위 최소화 (§3.7, §4.2)
 - 검증은 상태·결과 우선, 화이트박스(내부 구현) 검증 회피 (§7.1, §15.3)
 - Hypothesis로 경계값·속성 기반 테스트, @example로 재현 케이스 고정 (§8)
-- factory_boy로 최소 필요 상태만 지정한 객체 생성, DB fixture 최소화 (§9)
+- ORM 영속 픽스처의 기본은 **factory_boy**(만능 아님 — 정확 필드 행·VO/dataclass 직접 생성은 정당); 최소 필요 상태만 지정, DB fixture 최소화 (§9)
 - 동시성·idempotency 테스트는 DB 의미론이 필요하면 DB-backed 테스트로 (§20)
 - 커버리지 수치보다 의미 있는 assertion이 중요; mutmut로 테스트 유효성 검증 (§13, §17)
 - AAA(Arrange-Act-Assert) 패턴으로 테스트 구조 일관화 (§15.2)

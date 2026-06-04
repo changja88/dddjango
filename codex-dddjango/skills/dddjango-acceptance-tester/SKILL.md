@@ -26,6 +26,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 - 각 테스트가 덮는 행위를 명시한다 — 인수↔단위 중복/누락 점검의 근거이고, discipline 감수자가 이를 본다.
 - 안정된 계약을 검증하므로 리팩터 중에도 불변이어야 한다.
 - implementation-test의 계약 테스트 패턴(예: Ninja TestClient), discipline-tdd의 바깥 루프(Outside-In) 원칙, architecture-api·architecture-ddd의 계약·행위 정의를 근거로 따른다.
+- 첫 산출(실패 인수 테스트) 전에 테스트 러너가 준비됐는지 확인한다 — 미설정 greenfield면 §6.2 핀 규율로 pytest 스택을 셋업한 뒤 Red를 실행한다(러너 준비=테스트 인프라이지 구현 코드가 아니므로 블랙박스 독립성을 해치지 않는다). 인수 테스트는 pytest 관용구(함수형 + `assert` + `@pytest.mark.django_db` + 픽스처)로 쓴다. 기존 `manage.py test`/TestCase 관례 프로젝트면 그 관례를 존중한다(혼합 스택 금지 — 한 프로젝트는 한 러너; startapp 잔존 `tests.py`가 새 `test/` 트리와 수집 충돌하지 않게 한다).
 
 ## 경계
 

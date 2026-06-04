@@ -35,7 +35,7 @@ claude                       # 새 세션
 # 끝나면 테스트:
 .venv/bin/python manage.py check
 .venv/bin/python manage.py makemigrations && .venv/bin/python manage.py migrate
-.venv/bin/python manage.py test
+.venv/bin/pytest    # 러너=pytest(pytest-django): TestCase·함수형 pytest 둘 다 수집(EVAL-METHOD §1.4). 설정 없으면 -p pytest_django --ds=<settings>
 ```
 
 ## 3. 태스크 B — 주문생성 (Codex 인터랙티브, fixture `dddjango-smoke2-codexB`)

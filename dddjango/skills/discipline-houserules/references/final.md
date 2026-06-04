@@ -107,7 +107,8 @@ application/<app>/
 └── test/                               # 앱별 테스트 — 의미군 분리 (implementation-test §4.2)
     ├── unit/                           #   순수 단위: 도메인·응용 (mock/stub)
     ├── integration/                    #   DB·리포지토리·API 어댑터 (실제 DB) — HTTP 엔드포인트 테스트는 여기
-    └── e2e/                            #   엔드투엔드 흐름                               [선택]
+    ├── e2e/                            #   엔드투엔드 흐름                               [선택]
+    └── factories/                      #   factory_boy 팩토리 (ORM 영속 픽스처)            [선택]
 ```
 
 의존 방향(단방향): `presentation_layer → application_layer → (domain_layer + infra_layer)`, `domain_layer`는 아무것도 의존하지 않는다.
@@ -209,7 +210,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `api_<resource>.py` (Ninja Router) |
 | `schema/` | 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`·`error_out.py`(feature가 많으면 `<feature>/`로 분할) — **응답은 `schema_out`**, 도메인 직접 노출 금지 |
 | `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `read.py`·`write.py`(앱이 크면 `read/`·`write/` 디렉터리). 다른 앱은 **이것만** import |
-| `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`. 엔드포인트별 평면 나열 금지 |
+| `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → 루트 `urls.py`가 포함 |
 
 **앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer` 포함 어느 계층도 폴더를 생략하지 않고 내용이 없으면 빈 패키지로 둔다(§0-2); 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.

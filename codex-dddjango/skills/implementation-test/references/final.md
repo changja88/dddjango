@@ -333,16 +333,20 @@ pytest --lf
 
 ### 4.1 pyproject.toml 종합 설정
 
+pytest-django는 `DJANGO_SETTINGS_MODULE`로 settings를 잡고 DB 라이프사이클을 관리한다. 값은 **프로젝트의 `manage.py`/환경에서 감지한 실제 settings 경로**(흔히 평면 `config.settings`)를 쓴다 — `<project>.settings.test`처럼 settings 분할이 **실제로 존재할 때만** test 모듈을 가리키고, 분할이 없으면 평면 모듈을 그대로 쓴다(`settings.test`를 임의로 하드코딩하지 않는다).
+
 ```toml
 [tool.pytest.ini_options]
 # 최소 pytest 버전 요구
 minversion = "8.0"
 
-# 테스트 검색 경로
-testpaths = ["tests"]
+# pytest-django: settings 모듈 — 값은 프로젝트 manage.py/env에서 감지한 실제 경로.
+# 분할이 있으면 그 test 모듈(예: config.settings.test), 없으면 평면 모듈을 쓴다.
+DJANGO_SETTINGS_MODULE = "config.settings"
 
-# Python path에 추가할 디렉토리
-pythonpath = ["src"]
+# 테스트 검색 경로 — 앱별 test 루트(application/<app>/test/{unit,integration}/).
+# 생략하고 rootdir 자동 수집에 맡겨도 되며, 명시하려면 앱 test 루트를 나열한다.
+testpaths = ["application"]
 
 # 기본 명령줄 옵션
 addopts = [
@@ -355,7 +359,7 @@ addopts = [
     "--no-header",          # 헤더 생략
 ]
 
-# 테스트 파일/클래스/함수 패턴
+# 테스트 파일/클래스/함수 패턴 (pytest 기본 함수형 테스트)
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -368,12 +372,6 @@ markers = [
     "e2e: 엔드투엔드 테스트",
 ]
 
-# 경고 필터
-filterwarnings = [
-    "error",                           # 모든 경고를 에러로
-    "ignore::DeprecationWarning",      # DeprecationWarning 무시
-]
-
 # xfail 마크된 테스트가 통과하면 실패 처리
 xfail_strict = true
 
@@ -382,28 +380,29 @@ log_cli = true
 log_cli_level = "INFO"
 ```
 
+> **Django에서 `filterwarnings = ["error", ...]` 같은 전역 경고-에러는 두지 않는다** — Django·서드파티가 흘리는 Deprecation 경고가 그린 테스트 스위트를 레드바로 만들어 의미 없는 실패를 낳는다. 경고는 pytest 기본값으로 두거나, 잡으려면 **명시적으로 범위가 좁은 `error::...` 한두 줄**(자기 코드가 내는 특정 경고 카테고리·모듈)로만 한정한다.
+
 ### 4.2 conftest.py 계층 구조
 
-conftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다.
+conftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 이 표준의 테스트는 **앱별 의미군 트리**에 산다(트리 단일 출처는 `discipline-houserules` §2 — 의미군 조직은 본 절 §4.2 소유). 루트 `conftest.py` 하나가 settings·공유 픽스처를 이고, 각 앱은 `application/<app>/test/{unit,integration}/`(필요 시 `e2e/`)로 의미군을 나눈다.
 
 ```
-tests/
-  conftest.py              # 전역 fixture (DB 연결, 앱 인스턴스)
-  unit/
-    conftest.py            # 단위 테스트 전용 fixture (mock, stub)
-    test_models.py
-    test_services.py
-  integration/
-    conftest.py            # 통합 테스트 전용 fixture (실제 DB)
-    test_api.py
-    test_repository.py
-  e2e/
-    conftest.py            # E2E 전용 fixture (브라우저, 서버)
-    test_workflows.py
+conftest.py                            # 루트 — DJANGO_SETTINGS_MODULE·공유 fixture·transactional_db
+application/
+  <app>/
+    test/
+      unit/
+        conftest.py                    # 단위 전용 fixture (mock, stub) — 도메인·응용
+        test_models.py
+        test_services.py
+      integration/
+        conftest.py                    # 통합 전용 fixture (실제 DB) — 리포지토리·HTTP 엔드포인트
+        test_repository.py
+        test_api.py
 ```
 
 ```python
-# tests/conftest.py - 전역 설정
+# conftest.py (루트) - 전역 설정
 import pytest
 
 def pytest_configure(config):
@@ -416,7 +415,7 @@ def pytest_collection_modifyitems(config, items):
         if "integration" in item.nodeid:
             item.add_marker(pytest.mark.integration)
 
-# tests/unit/conftest.py - 단위 테스트 전용
+# application/<app>/test/unit/conftest.py - 단위 테스트 전용
 @pytest.fixture(autouse=True)
 def _disable_network(monkeypatch):
     """단위 테스트에서 실수로 네트워크 호출하는 것을 방지"""
@@ -425,6 +424,8 @@ def _disable_network(monkeypatch):
         raise RuntimeError("단위 테스트에서 네트워크 호출 금지!")
     monkeypatch.setattr(socket, "socket", guard)
 ```
+
+> **루트 `conftest.py`는 `DJANGO_SETTINGS_MODULE`·픽스처·`transactional_db`만 이고, 연결/트랜잭션 의미(PRAGMA·`BEGIN`·`isolation_level`)를 conftest로 주입하지 않는다** — connection/transaction/lock/isolation을 conftest에서 조작하는 것은 기존 메커니즘-소유권 blocker에 해당한다(`implementation-django` §16.4: 트랜잭션·락·격리 메커니즘은 architect 소유, *출처-불문* 금지 — 테스트 conftest 패치 포함). 필요한 연결 튜닝은 stock `OPTIONS`로만 한다(§20.5 참조).
 
 > 출처: [pytest Configuration Reference](https://docs.pytest.org/en/stable/reference/customize.html), [Good Integration Practices - pytest](https://docs.pytest.org/en/stable/explanation/goodpractices.html)
 
@@ -549,6 +550,8 @@ def test_analytics_query(db_connection):
 ---
 
 ## 6. pytest 플러그인 생태계
+
+테스트 스택 동반 패키지(pytest-django, factory_boy, freezegun, responses 등)를 새로 들일 때는 훈련 기억의 버전을 적지 말고 **`discipline-houserules` §6.2 버전-핀 규율**(무핀으로 resolve → *실제 설치 버전*을 매니페스트에 핀)을 따른다 — resolve가 기존 Django/핵심 의존성 핀을 올리려 들면 호환 한계 신호이니 기존 핀 안에서 핀하거나 보고한다(설계 반송). 핀 *표기*·매니페스트 위치는 `implementation-django` §3.1·`implementation-django-ninja` §2.1 소유.
 
 ### 6.1 pytest-xdist: 병렬 테스트 실행
 
@@ -711,6 +714,8 @@ timeout = 30
 
 ## 7. Mock과 테스트 더블 실전
 
+기본 mock 도구는 pytest-mock `mocker` 픽스처다(자동 teardown). 패치는 `mocker.patch`/`mocker.patch.object`, 유틸은 `mocker.Mock`/`MagicMock`/`AsyncMock`/`ANY`/`call`/`sentinel`/`PropertyMock`/`seal`/`mock_open`, autospec은 `mocker.patch(..., autospec=True)`. **유일한 예외는 standalone `create_autospec`** — 패치 밖에서 쓸 때만 `from unittest.mock import create_autospec`. raw `unittest.mock`로 패치하지 않는다. (이 절은 mock의 *도구*만 정한다 — *무엇을·얼마나* mock하는지의 교리는 §7.1이 불변으로 소유한다.)
+
 ### 7.1 검증 방식 우선순위 [Unit Testing - Khorikov + 파이썬코딩의기술]
 
 Mock 사용 범위에 대한 올바른 접근: 의존성 주입으로 테스트 용이성을 확보하되, **과도한 Mock은 안티패턴**("Mockery")이다. 검증 방식은 다음 우선순위를 따른다.
@@ -726,36 +731,35 @@ Mock 사용 범위에 대한 올바른 접근: 의존성 주입으로 테스트 
 ### 7.2 Mock 기본 사용법 [파이썬코딩의기술]
 
 ```python
-from unittest.mock import Mock, patch, ANY
+def test_weather_report(mocker):
+    # 1. Mock 객체 생성 (spec으로 인터페이스 강제)
+    mock_api = mocker.Mock(spec=WeatherAPI)
+    mock_api.get_temperature.return_value = 25.0
 
+    result = get_weather_report(mock_api, "서울")
 
-# 1. Mock 객체 생성 (spec으로 인터페이스 강제)
-mock_api = Mock(spec=WeatherAPI)
-mock_api.get_temperature.return_value = 25.0
+    mock_api.get_temperature.assert_called_once_with("서울")
+    assert "25.0" in result
 
-result = get_weather_report(mock_api, "서울")
-
-mock_api.get_temperature.assert_called_once_with("서울")
-assert "25.0" in result
+    # 4. ANY를 사용한 유연한 검증
+    mock_api.get_temperature.assert_called_with(mocker.ANY, "서울")
 
 
 # 2. 예외 발생 모킹 (side_effect)
-mock_api.get_temperature.side_effect = ConnectionError("타임아웃")
+def test_weather_report_timeout(mocker):
+    mock_api = mocker.Mock(spec=WeatherAPI)
+    mock_api.get_temperature.side_effect = ConnectionError("타임아웃")
 
-with pytest.raises(ConnectionError):
-    get_weather_report(mock_api, "서울")
+    with pytest.raises(ConnectionError):
+        get_weather_report(mock_api, "서울")
 
 
-# 3. patch 데코레이터로 모듈 레벨 모킹
-@patch("myapp.weather.requests.get")
-def test_fetch_weather(mock_get):
+# 3. mocker.patch로 모듈 레벨 모킹 (데코레이터 대신 본문에서 패치 — 자동 teardown)
+def test_fetch_weather(mocker):
+    mock_get = mocker.patch("myapp.weather.requests.get")
     mock_get.return_value.json.return_value = {"temp": 25.0}
     result = fetch_weather("서울")
     assert result["temp"] == 25.0
-
-
-# 4. ANY를 사용한 유연한 검증
-mock_api.get_temperature.assert_called_with(ANY, "서울")
 ```
 
 ### 7.3 의존 관계 캡슐화로 모킹을 쉽게 만들기 [파이썬코딩의기술]
@@ -782,10 +786,10 @@ class OrderProcessor:
         self.email_service.send(order.customer_email, "주문 완료")
 
 
-def test_process_order():
-    mock_db = Mock()
+def test_process_order(mocker):
+    mock_db = mocker.Mock()
     mock_db.get_order.return_value = Order(email="test@test.com")
-    mock_email = Mock()
+    mock_email = mocker.Mock()
 
     processor = OrderProcessor(mock_db, mock_email)
     processor.process(1)
@@ -798,8 +802,6 @@ def test_process_order():
 ### 7.4 PropertyMock: 프로퍼티 모킹
 
 ```python
-from unittest.mock import patch, PropertyMock
-
 class DatabaseConnection:
     @property
     def is_connected(self):
@@ -810,28 +812,28 @@ class DatabaseConnection:
         return self._measure_latency()
 
 # 프로퍼티를 모킹
-def test_connection_status():
-    with patch.object(
+def test_connection_status(mocker):
+    mocker.patch.object(
         DatabaseConnection,
         "is_connected",
-        new_callable=PropertyMock,
-        return_value=True
-    ):
-        conn = DatabaseConnection()
-        assert conn.is_connected is True
+        new_callable=mocker.PropertyMock,
+        return_value=True,
+    )
+    conn = DatabaseConnection()
+    assert conn.is_connected is True
 
 # 프로퍼티가 호출될 때마다 다른 값 반환
-def test_latency_fluctuation():
-    with patch.object(
+def test_latency_fluctuation(mocker):
+    mocker.patch.object(
         DatabaseConnection,
         "latency_ms",
-        new_callable=PropertyMock,
-        side_effect=[10, 50, 200]  # 순서대로 반환
-    ):
-        conn = DatabaseConnection()
-        assert conn.latency_ms == 10
-        assert conn.latency_ms == 50
-        assert conn.latency_ms == 200
+        new_callable=mocker.PropertyMock,
+        side_effect=[10, 50, 200],  # 순서대로 반환
+    )
+    conn = DatabaseConnection()
+    assert conn.latency_ms == 10
+    assert conn.latency_ms == 50
+    assert conn.latency_ms == 200
 ```
 
 ### 7.5 AsyncMock: 비동기 함수 모킹
@@ -839,9 +841,6 @@ def test_latency_fluctuation():
 Python 3.8+에서 제공되며, 비동기 함수를 모킹할 때 사용한다.
 
 ```python
-from unittest.mock import AsyncMock, patch, MagicMock
-import asyncio
-
 class AsyncService:
     async def fetch_data(self, url: str) -> dict:
         ...
@@ -852,9 +851,9 @@ class AsyncService:
 
 # AsyncMock 기본 사용
 @pytest.mark.asyncio
-async def test_async_service():
+async def test_async_service(mocker):
     service = AsyncService()
-    service.fetch_data = AsyncMock(
+    service.fetch_data = mocker.AsyncMock(
         return_value={"result": "success"}
     )
     result = await service.process()
@@ -865,8 +864,8 @@ async def test_async_service():
 
 # async 컨텍스트 매니저 모킹
 @pytest.mark.asyncio
-async def test_async_context_manager():
-    mock_session = MagicMock()
+async def test_async_context_manager(mocker):
+    mock_session = mocker.MagicMock()
     mock_session.__aenter__.return_value = mock_session
     mock_session.__aexit__.return_value = False
 
@@ -875,8 +874,8 @@ async def test_async_context_manager():
 
 # async 이터레이터 모킹
 @pytest.mark.asyncio
-async def test_async_iterator():
-    mock_stream = MagicMock()
+async def test_async_iterator(mocker):
+    mock_stream = mocker.MagicMock()
     mock_stream.__aiter__.return_value = iter([
         {"id": 1}, {"id": 2}, {"id": 3}
     ])
@@ -892,14 +891,12 @@ async def test_async_iterator():
 `seal()`은 Mock 객체를 봉인하여, 미리 설정하지 않은 속성/메서드에 접근하면 에러를 발생시킨다. 오타나 잘못된 속성 접근을 방지한다.
 
 ```python
-from unittest.mock import MagicMock, seal
-
-def test_sealed_mock():
-    user = MagicMock()
+def test_sealed_mock(mocker):
+    user = mocker.MagicMock()
     user.name = "Alice"
     user.email = "alice@example.com"
 
-    seal(user)
+    mocker.seal(user)
 
     # 설정된 속성은 정상 접근
     assert user.name == "Alice"
@@ -908,8 +905,9 @@ def test_sealed_mock():
     with pytest.raises(AttributeError):
         _ = user.phone  # seal 되었으므로 에러
 
-def test_sealed_with_spec():
+def test_sealed_with_spec(mocker):
     """create_autospec + seal = 가장 안전한 mock"""
+    # 패치 없이 클래스를 직접 오토스펙할 때만 standalone create_autospec을 쓴다(유일한 예외).
     from unittest.mock import create_autospec
 
     class UserService:
@@ -918,7 +916,7 @@ def test_sealed_with_spec():
 
     mock_service = create_autospec(UserService)
     mock_service.get_user.return_value = {"id": 1, "name": "Alice"}
-    seal(mock_service)
+    mocker.seal(mock_service)
 
     # 스펙에 있는 메서드는 정상 호출
     assert mock_service.get_user(1) == {"id": 1, "name": "Alice"}
@@ -931,10 +929,8 @@ def test_sealed_with_spec():
 ### 7.7 side_effect 고급 활용
 
 ```python
-from unittest.mock import MagicMock
-
 # 호출 인자에 따라 다른 값 반환
-def test_dynamic_side_effect():
+def test_dynamic_side_effect(mocker):
     def route_response(url):
         responses = {
             "/users": [{"id": 1}],
@@ -944,7 +940,7 @@ def test_dynamic_side_effect():
             return responses[url]
         raise ValueError(f"Unknown URL: {url}")
 
-    mock_api = MagicMock(side_effect=route_response)
+    mock_api = mocker.MagicMock(side_effect=route_response)
 
     assert mock_api("/users") == [{"id": 1}]
     assert mock_api("/products") == [{"id": 100}]
@@ -953,8 +949,8 @@ def test_dynamic_side_effect():
         mock_api("/unknown")
 
 # 순차적 결과 + 예외 혼합
-def test_retry_logic():
-    mock_call = MagicMock(side_effect=[
+def test_retry_logic(mocker):
+    mock_call = mocker.MagicMock(side_effect=[
         ConnectionError("1차 실패"),
         ConnectionError("2차 실패"),
         {"status": "success"},  # 3차에 성공
@@ -978,24 +974,22 @@ def test_retry_logic():
 여러 호출의 **순서**가 중요하면 `assert_has_calls` 또는 `mock_calls`로 순서를 검증한다. (개별 호출 여부만 보는 `assert_called_once_with`로는 순서를 보장하지 못한다.)
 
 ```python
-from unittest.mock import call, Mock
-
-def test_lifecycle_order():
-    mock = Mock()
+def test_lifecycle_order(mocker):
+    mock = mocker.Mock()
     run_lifecycle(mock)  # setup -> run -> teardown 순으로 호출되어야 한다
 
     # 지정한 호출들이 이 순서대로 일어났는지 검증
     mock.assert_has_calls([
-        call.setup(),
-        call.run("test_method"),
-        call.teardown(),
+        mocker.call.setup(),
+        mocker.call.run("test_method"),
+        mocker.call.teardown(),
     ])
 
     # 전체 호출 시퀀스를 정확히 비교하려면 mock_calls를 직접 확인한다
     assert mock.mock_calls == [
-        call.setup(),
-        call.run("test_method"),
-        call.teardown(),
+        mocker.call.setup(),
+        mocker.call.run("test_method"),
+        mocker.call.teardown(),
     ]
 ```
 
@@ -1171,6 +1165,8 @@ factory_boy는 테스트 객체 생성을 위한 "청사진" 역할을 한다. J
 ```bash
 pip install factory_boy faker
 ```
+
+factory_boy는 **ORM 애그리거트/엔티티 영속 픽스처의 기본**이다 — 모든 객체에 강제하지 않는다. *정확한 필드 값*이 검증의 핵심인 행(동시성·경계 테스트; 예: §20.5의 CAS-충돌 스파이는 `ProductModel.objects.create(stock=5, version=0)`으로 일부러 정확한 행을 만든다)과 VO/dataclass 구성은 직접 생성이 더 명확하므로 그대로 둔다. 팩토리는 **`application/<app>/test/factories/`**(패키지)에 둔다 — 이 폴더는 테스트 트리 단일 출처(`discipline-houserules` §2)에 별도로 추가되므로 여기서는 위치만 가리킨다.
 
 ### 9.2 기본 팩토리 정의
 
@@ -2543,7 +2539,7 @@ def test_idempotency_key_is_unique_per_actor(idempotency_record_factory, user):
 
 ### 20.3 Transaction과 row lock 테스트
 
-Django `TestCase` 계열은 각 테스트를 transaction으로 감싸므로 `select_for_update()`의 transaction 요구를 정확히 드러내지 못할 수 있다. row lock, commit/rollback, 별도 connection 관찰을 테스트할 때는 `TransactionTestCase` 또는 pytest-django의 `transaction=True`를 사용한다.
+Django `TestCase` 계열은 각 테스트를 transaction으로 감싸므로 `select_for_update()`의 transaction 요구를 정확히 드러내지 못할 수 있다. row lock, commit/rollback, 별도 connection 관찰을 테스트할 때는 `TransactionTestCase` 또는 pytest-django의 `transaction=True`를 사용한다. **이 `TransactionTestCase → @pytest.mark.django_db(transaction=True)/transactional_db` 매핑은 실제 transaction 경계·스레드 race 테스트(§20.3·§20.4)에만 적용한다** — 단일 connection·단일 스레드로 충분한 결정적 테스트(§20.5 CAS-충돌 스파이)에까지 `transaction=True`를 다는 것은 연결 의미를 바꾸는 과(過)번역이다(거기선 plain `@pytest.mark.django_db`).
 
 ```python
 import pytest

@@ -96,12 +96,12 @@
 
 | ID | 항목 | §근거 | PASS | FAIL/WEAK | 레인 |
 |---|---|---|---|---|---|
-| **Q-1** 스코프/과설계·G1 | 요청 외 기능 발명 0(멱등성·멀티라인·합산이 task 요구였나); 양방향(과소=빈혈은 SD / 과잉=무거운 패턴 미도입 §6.8); 고-blast 트레이드오프를 G1 상정(사후기록≠상정) | ddd §6.8·houserules §6.1 | 요청 범위 내·미선택 패턴 근거 기록 | 요청 외 발명 / 무거운 패턴 남용 / 고-blast를 §Open Questions에만 | 의미(spec) |
+| **Q-1** 스코프/과설계·G1 | 요청 외 기능 발명 0(멱등성·멀티라인·합산이 task 요구였나); 양방향(과소=빈혈은 SD / 과잉=무거운 패턴 미도입 §6.8); 고-blast 트레이드오프를 G1 상정(사후기록≠상정) | ddd §6.8·houserules §1.1 | 요청 범위 내·미선택 패턴 근거 기록 | 요청 외 발명 / 무거운 패턴 남용 / 고-blast를 §Open Questions에만 | 의미(spec) |
 | **Q-2** API 계약 | status/problem(RFC 9457) 일관·버전 정책 일관·콘텐츠협상 근거 | architecture-api §4~14 | 일관·근거 있음 | 비일관/근거 없음 | 의미 |
 | **Q-3** §9.6 형식+테스트 실현 | Risky Write 8행 다뤄짐(N/A 근거); 선언 동시성 기준이 **실제 테스트로 실현**·소진→409 경로·결정적 CAS 스파이 | architecture-db §9.6·implementation-test §20.5 | 8행 + 동시성 전 분기 결정적 테스트 | 8행 누락 / 약속 테스트 부재 / 소진 경로 미테스트 | grep+의미 |
 | **Q-4** 메커니즘 소유권 **[🔴 치명 — v3 승격]** | 커스텀 DB 백엔드/`DatabaseWrapper`/PRAGMA/몽키패치 0 | architecture-db §9.5·§16.4 | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 결정 |
 | **Q-5** 마이그레이션 안전 | 기존 0001 불변·`db_table`/`label` 보존·expand 단계·backfill | architecture-db §11 | 이력 불변·호환 변경 | 기존 0001 재작성 / 테이블 rename 위험 | 결정+의미 |
-| **Q-6** 테스트/TDD | `check`+`test` 그린바·인수가 명세 행위 덮음·의미군 분리 | implementation-test·discipline-tdd | 그린바+커버리지 | 실패/에러 / 행위 누락 | 결정(실행)+의미 |
+| **Q-6** 테스트/TDD | `check`+`pytest` 그린바·인수가 명세 행위 덮음·의미군 분리·**pytest 관용구**(함수형·`@pytest.mark.django_db`)·mock 도구 `mocker`·ORM 영속 factory_boy(만능 아님) | implementation-test·discipline-tdd | pytest 그린바+커버리지+생태계 준수 | 실패/에러 / 행위 누락 / raw `unittest.mock`·Django `TestCase` 폴백(greenfield) | 결정(실행)+의미 |
 | **Q-7** 경미 | 빈 종류폴더 누락·**공개 표면 변수 어노테이션**(§4 — 모듈/클래스 변수 리터럴 상수 첫 대입 필수·함수 지역변수 권장·면제는 §4 참조)·주석 언어 일관(§5)·의존성 핀(§6.2) | houserules §4·§4.1·§5·§6.2 | 준수 | 경미 흠(WEAK) | 결정(check-public-surface-annotation)+의미 |
 
 > **Q-4 치명 처리(v3)**: Q-4는 TIER-Q에 배치돼 있으나 **치명 게이트**다 — `EVAL-METHOD.md §2 step2`에서 처리(FAIL→픽스처 전체 FAIL)하고 §2.4 Q 등급(카운트)에는 **불산입**. 나머지 Q-1·2·3·5·6·7만 품질 등급에 들어간다.

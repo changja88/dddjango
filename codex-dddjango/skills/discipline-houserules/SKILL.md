@@ -32,7 +32,7 @@ description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①�
    - **Django 앱은 `infra_layer/django_<app>/`에서 `startapp`** — `AppConfig.name`=점경로(`application.<app>.infra_layer.django_<app>`), `label='<app>'`; 앱 루트에 `models.py` 금지.
    - **ORM 모델 클래스명 `<Name>Model`**(도메인 엔티티/애그리거트는 bare `Order`).
    - **리포지토리·포트 명명** — 추상화는 개념명+역할 접미사(`OrderRepository`·`ProductLockPort`·`PaymentGateway`; `Interface`/`Impl` 금지), 구현은 **확립 패턴명(`Repository`/`Gateway`)이면 패턴명 유지+기술 접두(`DjangoOrderRepository`·`StripePaymentGateway`), 일반 포트면 `…Port`→`…Adapter`로(`DjangoProductLockAdapter`)**. 파일명 약어 없이(`order_repository.py`). 상세 `references/final.md` §4. ⚠️ **`Django`+`ProductLockPort`(`Port`를 떼지 않고 붙여쓴 한 토큰)를 정답으로 쓰지 마라** — 개정 후 일반 포트 구현 정답은 `DjangoProductLockAdapter`다.
-3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 표준 트리에서는 앱별 `application/<app>/test/{unit,integration,e2e}/`에 둔다(`references/final.md` §2; HTTP 엔드포인트 테스트는 `integration/`). 기존 규약이 앱별 `tests/`면 그 *안에서* 의미군 하위 분리를 둔다.
+3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 표준 트리에서는 앱별 `application/<app>/test/{unit,integration,e2e}/`에 둔다(`references/final.md` §2; HTTP 엔드포인트 테스트는 `integration/`). factory_boy 팩토리는 그 앱의 `test/factories/`에 둔다(§2 — 의미군과 같은 레벨의 적법한 테스트 하위폴더). 기존 규약이 앱별 `tests/`면 그 *안에서* 의미군 하위 분리를 둔다.
 4. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 한 번 택한 소스/테스트 레이아웃을 기능 전체에 일관 적용한다.
 
 ## §2 충돌 중재 (코퍼스가 어긋날 때)
@@ -87,9 +87,9 @@ description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①�
 
 ## §6 패키지·의존성
 
-### §6.1 (보류) 부트스트랩·표준 도구셋 — 향후 `init`
+### §6.1 부트스트랩·표준 도구셋
 
-패키지 매니저(uv 기본)와 표준 도구셋(ruff·mypy strict·django-stubs·pydantic·pytest)을 프로젝트에 *까는* 부트스트랩은 **이 스킬 범위 밖**이다. `/dddjango`는 기능 추가이지 프로젝트 셋업이 아니므로, 도구 설정 자동 작성은 향후 별도 `init` 기능으로 분리한다. 기능 추가 흐름에서는 coder가(필요 시 architect가) 기존 프로젝트의 도구·패키지 매니저를 감지해 존중한다(기존 존중).
+표준 도구셋(패키지 매니저 uv·ruff·mypy strict·django-stubs·pydantic·pytest)은 기능 추가 흐름이 **직접 다룬다** — 기존 프로젝트의 도구·패키지 매니저를 감지해 존중하고(§1.1 기존 존중), 기능에 필요한 표준 도구가 없으면 §6.2 버전-핀 규율로 셋업한다(임의 글로벌 설치 금지). 현재 구체 셋업 레시피가 정의된 것은 **테스트 스택**이다(파이프라인이 acceptance 테스트 실행 전 러너를 준비한다 — `commands/dddjango.md` Phase 2·`implementation-test` §4); 나머지 도구도 같은 원칙(감지·존중·없으면 §6.2 셋업)을 따르며 레시피는 필요 시 추가한다.
 
 ### §6.2 새 런타임 의존성의 버전 선택
 
