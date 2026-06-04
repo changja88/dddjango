@@ -5,7 +5,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
   2) 결정은 §2 Decision Records에서 상태태그(✅adopted/❌rejected/⏸blocked/✔verified)로 찾아라.
   3) 모든 수치·주장엔 증거 앵커(세션ID·커밋SHA·파일:라인)가 붙는다 — 추천 전 실재 확인하라.
   4) 개인 메모리(~/.claude)는 초기화될 수 있어 신뢰 못 함. 이 문서가 정본이다.
-마지막 갱신: 2026-05-30
+마지막 갱신: 2026-06-04
 -->
 
 # dddjango DEVLOG
@@ -306,6 +306,15 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **백스톱 정밀(사용자 A 결정)**: `router=Router()`·`api=NinjaAPI()` 관용 인스턴스는 **RHS 호출식이라 면제**(타입 자명), **리터럴 상수만 검출**(계약 명시 효용). 3라운드 정제(AppConfig/ModelAdmin 면제→Call 면제→리터럴-only): 픽스처 288→**59 전수 정당**.
 - **검증**: 합성 위양성 다수(async·중첩·match·PEP695 `type X`·global·property·언패킹·walrus·TYPE_CHECKING) 통과 / 통합 적대(py3.9·3.12·3.14 교차·**1843파일 62 전수 진성·거짓양성 0 실증**) / 미러 byte-identical·카운트 12종 정합·exit 0/2 계약. **known-limitation**(2단 상속 로컬 base·별칭 import·Exception 리터럴 클래스 상수는 검출 가능·코퍼스 0·막다른길 아님[어노테이트로 통과]·reviewer 보완) docstring 명시.
 - 🔴 **라이브 미검증**(사용자 구동 dual `/dddjango` — coder 공개표면 어노테이트·reviewer/⑫ 발화·신규파일 반송빈도)·N=1·**미커밋**. 정본=이 DR + plan `shiny-petting-lovelace.md` + 적대 리뷰 5리포트.
+
+### DR-40 ✅ 산출물 폴더 규약 — `.dddjango/<생성일>-<slug>/`·재빌드 사용자선택·커밋 명문화 (1.1.0·미커밋)
+2026-06-04. 사용자 "플러그인이 만든 문서를 어떤 폴더·네이밍으로 관리할지" 브레인스토밍 발단. 적대 4렌즈 리뷰.
+- **조사 반전**: spec-kit `.specify/`·Kiro `.kiro/specs/`·OpenSpec — 설계문서 *커밋*이 주류, gitignore는 override·local 전용 → 사용자 첫 직감(gitignore 자동등록)을 *커밋 추적*으로 반전.
+- **결정**: ① `.dddjango/` 유지(커밋 대상·민감 레포 ignore 탈출구) ② `scope.md`/`design-spec.md` 유지 ③ 폴더 `<YYYYMMDD-HHMM>-<slug>`·날짜=생성일 고정(신규만 `date` 1회·로컬) ④ 한 기능 한 폴더·최종본만(architect in-place §43/49라 *이미 동작*·단 폴더 재사용 성립할 때만). 면책 boilerplate 미도입. minor 1.1.0.
+- **적대 4렌즈 반영**: **B1 slug 비결정**(재빌드 시 코디가 slug 재계산→glob 매칭 키 비결정→폴더 분열; skill-creator·devil 수렴) = **Phase 0에서 기존 `.dddjango/` 폴더 목록을 사용자에게 제시·선택**(glob 자동매칭 폐기)으로 닫음 — B1·구버전 마이그레이션·동일slug 다중매치 동시 해소. **M4 date 결정성 = 검증 후 기각**(eval은 fixture 디렉토리+소스경로로 채점·`.dddjango` 폴더명 짝짓기 안 함 `EVAL-METHOD.md:191` → date 로컬 무해). 보강: 백스톱 ⑩ **실제 스크립트 실행** 회귀검증(glob.glob 재구현 폐기·날짜폴더 exit2/구폴더 동일/혼재 무크래시/codex 사본/음성 exit0)·marketplace version 핀 부재·design-architect 무변경 근거 교정(경로 *주입*, *면책 boilerplate 아님*)·미러 게이트 동적범위.
+- **변경**: claude `commands/dddjango.md`(산출물 위치 절+Phase 0 G0 배너 폴더결정 절차)+codex `SKILL.md` 미러(byte-id 변경분)+spawn 경로+plugin.json×2(1.1.0). **백스톱 ⑩ 무변경**(`.dddjango/*/scope.md` glob `*`가 날짜 폴더 매치·실측·명세 본문 서술도 임의폴더 매치 의도라 정확)·**design-architect 무변경**(경로 주입). 부수발견: **Phase 0 step 3이 이미 미러 비대칭**(claude 괄호 1개 더)—이번 범위 밖이라 보존, 변경분만 byte-id 추가.
+- **구현 적대 재검증(3렌즈) → B1 부분완화 정정**: (A)계획대로·(B)미러 PASS·(C)skill-creator가 **MAJOR 2건** — ① Phase 0 폴더조회가 *조건부*("재빌드이거나 관련폴더 있으면")라 코디 신규오판 시 우회→slug 발명 재발(비결정이라 라이브 N=1 clean런이면 미포착) ② 수정 모드가 폴더 절차 미참조 — 을 발견. → **무조건화**("G0 전 항상 `ls .dddjango/`·폴더 있으면 무조건 ⓐ/ⓑ·코디 재빌드판정 제거")+**수정모드 step1 cross-ref**(claude·codex 미러·재검증 byte-id·validate). 원인=1차 리뷰 "무조건 선행" 처방을 구현 시 "조건부"로 약화→복원.
+- 🔴 **라이브 미검증**(코디가 신규 date 폴더 생성·재빌드 시 폴더 목록 제시·사용자 선택·재사용하는지 dual `/dddjango` — 릴리스 게이트)·N=1·**미커밋**. 정본=`workspace/design/2026-06-04-dddjango-output-folder-convention{,-plan}.md` + 적대 4리포트(설계)+3리포트(구현검증).
 
 ---
 
