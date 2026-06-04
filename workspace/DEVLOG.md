@@ -317,6 +317,18 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **라이브 채점 항목 추가(별도 관측 트랙)**: DR-40 폴더 규약을 라이브에서 채점하려면 — P1a/P2/P3 위반주입 모델이 *안 맞음*(백스톱 없음) → `EVAL-METHOD §4.3`에 **동작 관측 트랙** 신설(정상 재빌드 시나리오 관측: 신규 date 폴더·재빌드 목록 제시·ⓐ 재사용; 별도 라벨 `폴더 동작: 관측/미관측/미검증`·**§4.4 완료 정의 비산입**). RUBRIC 차원 동결(L151) 유지·정적 미채점(폴더 동작은 단발 fixture로 불가). 채점 *전* 추가라 §5.4 사전등록 정합.
 - 🔴 **라이브 미검증**(코디가 신규 date 폴더 생성·재빌드 시 폴더 목록 제시·사용자 선택·재사용하는지 dual `/dddjango` — 릴리스 게이트)·N=1. 커밋 `012cb5f`(표준)·`5c5e41e`(devlog). 정본=`workspace/design/2026-06-04-dddjango-output-folder-convention{,-plan}.md` + 적대 4리포트(설계)+3리포트(구현검증).
 
+### DR-41 ✅ 폴더·파일·클래스 네이밍 규약 + §4 포트/어댑터 헥사고날 개정 (DR-05/37 번복·1.2.0·미커밋)
+2026-06-04. 사용자 점검 "파일트리(위치) 규칙은 촘촘한데 폴더/파일/클래스 *명명*은 §3 임베드 패턴+§4 약어금지 1줄뿐"(DR-39 후속) 발단. 브레인스토밍→적대 4렌즈.
+- **명명 결정(필수·집행)**: 도메인 3종(값객체·엔티티·애그리거트) bare(유비쿼터스 언어)·역할 객체는 역할 접미사·**파일명=주 클래스 snake_case**(폴더는 종류 그룹). `_app` 폐기(근거 없는 군더더기·`application_layer`와 중복). 이벤트 과거형 `OrderPlacedEvent`·명세 풀네임 `OrderActiveSpecification`(약어금지 §4 준수)·스키마 `OrderIn`/`OrderOut`(ninja 공식)·조회 selector 함수(CQRS 읽기 정상형, command 클래스와 비대칭 정당).
+- **§4 포트/어댑터 ⓑ (DR-05/37 번복)**: 기존 "구현=base명 유지(`Django…Port`)"를 헥사고날 정석으로 — **확립 패턴명(PoEAA/GoF: `Repository`·`Gateway`)은 추상·구현 동일**(`OrderRepository`/`DjangoOrderRepository`·`PaymentGateway`/`StripePaymentGateway`), **일반 협력 포트는 `…Port`↔`…Adapter` 쌍**(`ProductLockPort`/`DjangoProductLockAdapter`). 판정: 외부 시스템 관문=`Gateway`·BC협력(ACL)=`Port`. `infra/service/`→`infra/adapter/`(외부서비스 어댑터만; `service` 3겹침[domain_service·app service·infra] 중 infra 1겹 해소). 근본: §4가 `Repository`/`Port`/`Gateway`를 "역할 접미사" 한 묶음으로 봤으나 — `Repository`/`Gateway`=역할명(구현 유지), `Port`=헥사고날 위치 표식(구현은 `Adapter`).
+- **외부 자료 근거(자기보고 불신·context7/web 직접)**: ACL 구현을 `Port`라 부르는 사례 0 — `Adapter`/`Translator`/`Facade` 표준(MS Azure·AWS·Java Design Patterns·헥사고날 IG). 내부 이론 코퍼스(architecture-ddd `:1493` 포트=역할·`:1499` 어댑터=구현·`:335` `ERPAnticorruptionLayer`)도 port↔adapter 구분 — houserules §4만 이탈했던 것. ninja 스키마 `XxxIn`/`XxxOut`은 context7 공식 문서 확인.
+- **폴더명(권장 수위·백스톱 없음)**: 앱=핵심 애그리거트명 동일(단일 BC)/여러면 대표명·애그리거트 단수·feature 유스케이스 단위. **유사 변형 금지**(`ordering` vs `order` — 같게 하거나 명확히 다른 컨텍스트명; 사용자 발견 "두 비슷한 단어가 헷갈림").
+- **적대 4렌즈(houserules 정합·미러 무결·헥사고날 정합·devil) 전원 조건부 GO**: 핵심 결함=`PaymentPort` 통일이 코퍼스 §5.3 `PaymentGateway`와 충돌+자기모순(`Gateway`도 역할명인데 폐기) → **ⓑ 채택으로 해소**. 에이전트 갱신 "검토 필요"→**필수 승격**(미루면 표준-에이전트 분기·라이브서 옛 명명 생성/통과). SKILL.md 미러 **1줄 오프셋**(`user-invocable: false`) 인지(claude 5/codex 4 스킵 diff). 백스톱 영향 0·fixture 레포 내 부재·§0 구조 위반 0 실측.
+- **변경**: houserules `references/final.md`+`SKILL.md`(claude+codex byte-id 미러) + agents 4종(`design-architect`·`discipline-reviewer` claude `agents/`+codex `skills/dddjango-*/`) + RUBRIC `SH-6` 채점기준 + plugin.json×2(1.1.0→1.2.0). **백스톱 12종 무변경**(네이밍 미검사·git status 확인). 종료 게이트: `DjangoProductLockPort`(붙여쓴 토큰) grep **0건**(반례는 `Django`+`ProductLockPort` 분리표기로 의미 유지+grep 회피)·미러 final.md/SKILL.md byte-id·`_app` 0건.
+- **subagent-driven 실행**: implementer per task + 적대 리뷰(Task1 final.md 통합 적대 리뷰 ✅·작은 task[SKILL·에이전트] 컨트롤러 직접 grep/diff 검증). 커밋 보류(사용자 미승인).
+- **백로그**: command/dto 폴더 구조 정렬(`command/`=서비스 거주·`dto/`=Command 거주로 폴더↔객체 어긋남; CQRS 해석 결정 필요한 §0 불변식 변경이라 분리. 이번엔 "파일=거주 객체 반영" 네이밍으로 우회).
+- 🔴 **라이브 미검증·N=1**. 정본=`workspace/design/2026-06-04-dddjango-naming-convention{,-plan}.md`+적대 4렌즈 리포트. nj2 cross-BC FK(DR-37)는 별개 미해결.
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)

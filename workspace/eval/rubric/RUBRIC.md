@@ -37,7 +37,7 @@
 | **SH-3** 종류 폴더 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님 | §0-3·§0-4 | 종류 폴더 구조 | ORM/포트/리포가 평면 `.py` (WEAK: 일부 빈폴더 누락) | 결정 | — |
 | **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 | 모델/마이그가 `infra_layer/django_` | 루트/앱루트/도메인에 `models.py`(마스크 C 적용) | 결정 | ✅ |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 | 명명 분리 | 혼동(도메인에 Model접미사·ORM이 bare) | 결정 | — |
-| **SH-6** 포트/구현 명명 | 추상=개념+역할접미사; 구현=기술접두+base명 일치; `Interface`/`Impl`·파일명 약어 0 | §4 | 규약 준수 | `Interface`/`Impl` / `*_repo.py` / base명 불일치 | 결정 | — |
+| **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 | 규약 준수 | `Interface`/`Impl` / `*_repo.py` / 일반 포트 구현이 `Port` 유지(Adapter 아님)·개념 base 불일치 | 결정 | — |
 | **SH-7** 협력 포트 위치 | 협력 포트가 `domain_layer/<agg>/port/` | §2 | `domain_layer/.../port/` | `application_layer`/`infra_layer`에 위치 | 결정 | ✅ |
 | **SH-8** ACL 분리 | ACL이 `infra_layer/acl/`(+domain `port/`), `repository/`에 안 섞임 | §2·§3 | acl 분리 | repository에 번역 어댑터 혼합 | 결정+의미 | — |
 | **SH-9** 단일 레이아웃 | 한 앱이 두 레이아웃 안 가짐 | §1.4 | 단일 레이아웃 | `test`+`tests` 공존·`src`+`apps` 혼용 | 결정 | — |
