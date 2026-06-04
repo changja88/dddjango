@@ -42,7 +42,7 @@
 | **SH-3** 종류 폴더 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님 | §0-3·§0-4 |  |  |  |  | — |
 | **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 |  |  |  |  | 치명 |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 |  |  |  |  | — |
-| **SH-6** 포트/구현 명명 | 추상=개념+역할접미사; 구현=기술접두+base명 일치; `Interface`/`Impl`·파일명 약어 0 | §4 |  |  |  |  | — |
+| **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 |  |  |  |  | — |
 | **SH-7** 협력 포트 위치 | 협력 포트가 `domain_layer/<agg>/port/` | §2 |  |  |  |  | 치명 |
 | **SH-8** ACL 분리 | ACL이 `infra_layer/acl/`(+domain `port/`), `repository/`에 안 섞임 | §2·§3 |  |  |  |  | — |
 | **SH-9** 단일 레이아웃 | 한 앱이 두 레이아웃 안 가짐 | §1.4 |  |  |  |  | — |
@@ -71,10 +71,10 @@
 
 | ID | 항목 | §근거 | Result | 결정 | 의미 | 종합 |
 |---|---|---|---|---|---|---|
-| **Q-1** 스코프/과설계·G1 | 요청 외 기능 발명 0(멱등성·멀티라인·합산이 task 요구였나); 양방향(과소=빈혈은 SD / 과잉=무거운 패턴 미도입 §6.8); 고-blast 트레이드오프를 G1 상정(사후기록≠상정) | ddd §6.8·houserules §6.1 |  |  |  |  |
+| **Q-1** 스코프/과설계·G1 | 요청 외 기능 발명 0(멱등성·멀티라인·합산이 task 요구였나); 양방향(과소=빈혈은 SD / 과잉=무거운 패턴 미도입 §6.8); 고-blast 트레이드오프를 G1 상정(사후기록≠상정) | ddd §6.8·houserules §1.1 |  |  |  |  |
 | **Q-2** API 계약 | status/problem(RFC 9457) 일관·버전 정책 일관·콘텐츠협상 근거 | architecture-api §4~14 |  |  |  |  |
 | **Q-3** §9.6 형식+테스트 실현 | Risky Write 8행 다뤄짐(N/A 근거); 선언 동시성 기준이 **실제 테스트로 실현**·소진→409 경로·결정적 CAS 스파이 | architecture-db §9.6·implementation-test §20.5 |  |  |  |  |
 | **Q-4** 메커니즘 소유권 **[🔴 치명 — v3 승격]** | 커스텀 DB 백엔드/`DatabaseWrapper`/PRAGMA/몽키패치 0 | architecture-db §9.5·§16.4 |  |  |  |  |
 | **Q-5** 마이그레이션 안전 | 기존 0001 불변·`db_table`/`label` 보존·expand 단계·backfill | architecture-db §11 |  |  |  |  |
-| **Q-6** 테스트/TDD | `check`+`test` 그린바·인수가 명세 행위 덮음·의미군 분리 | implementation-test·discipline-tdd |  |  |  |  |
-| **Q-7** 경미 | 빈 종류폴더 누락·타입힌트·주석 언어 일관(§5)·의존성 핀(§6.2) | houserules §5·§6.2 |  |  |  |  |
+| **Q-6** 테스트/TDD | `check`+`pytest` 그린바·인수가 명세 행위 덮음·의미군 분리·**pytest 관용구**(함수형·`@pytest.mark.django_db`)·mock 도구 `mocker`·ORM 영속 factory_boy(만능 아님) | implementation-test·discipline-tdd |  |  |  |  |
+| **Q-7** 경미 | 빈 종류폴더 누락·**공개 표면 변수 어노테이션**(§4)·주석 언어 일관(§5)·의존성 핀(§6.2) | houserules §4·§5·§6.2 |  |  |  |  |

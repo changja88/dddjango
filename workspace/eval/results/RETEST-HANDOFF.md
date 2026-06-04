@@ -46,7 +46,7 @@ claude                       # 새 세션
 ```bash
 cd ~/Desktop/dddjango-smoke2-codexB
 codex                        # 새 세션 — dddjango 스킬(코디네이터)이 트리거되게 위 프롬프트
-# 게이트는 §1 표대로. 끝나면 위와 동일한 manage.py check/migrate/test
+# 게이트는 §1 표대로. 끝나면 위와 동일한 manage.py check/migrate + `.venv/bin/pytest`(러너=pytest, EVAL-METHOD §1.4)
 ```
 
 ## 4. 끝나면 나에게
