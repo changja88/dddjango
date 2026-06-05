@@ -2594,7 +2594,7 @@ def test_only_one_concurrent_reservation_succeeds(product_factory):
 
 ### 20.5 결정적 CAS-충돌 재시도 테스트 (스파이)
 
-§20.4의 스레드 race 테스트는 가드가 실제 경합에서 무너지지 않는지 *관찰*하기 위한 것이지만, SQLite에서 비결정적이고 flaky하기 쉽다. 낙관적 동시성 가드(`version` CAS + 재시도 루프, `architecture-db` §9.5)의 **정확성은 결정론적으로 먼저 증명**한다 — 실제 스레드 없이, *다른 트랜잭션이 먼저 `version`을 올린 상황*을 흉내 내 CAS 0행을 1회 강제하고, 응용 서비스가 재조회→도메인 메서드 재실행으로 일관되게 수렴하는지 검증한다.
+§20.4의 스레드 race 테스트는 가드가 실제 경합에서 무너지지 않는지 *관찰*하기 위한 것이지만, SQLite에서 비결정적이고 flaky하기 쉽다. 낙관적 동시성 가드(`version` CAS + 재시도 루프, `architecture-db` §9.5)의 **정확성은 결정론적으로 먼저 증명**한다 — 실제 스레드 없이, *다른 트랜잭션이 먼저 `version`을 올린 상황*을 흉내 내 CAS 0행을 1회 강제하고, 쓰기 연산이 재조회→도메인 메서드 재실행으로 일관되게 수렴하는지 검증한다.
 
 스파이는 실제 리포지토리를 상속해 version-guarded save만 가로채고, 첫 저장 직전 DB의 `version`을 한 번 올린다(다른 트랜잭션이 먼저 커밋한 상황의 시뮬레이션). 이후 시도는 개입하지 않으므로 정상 저장된다.
 
@@ -2616,15 +2616,15 @@ class ConflictOnceRepository(DjangoProductRepository):
 @pytest.mark.django_db
 def test_cas_conflict_once_then_retry_converges():
     product = ProductModel.objects.create(stock=5, version=0)
-    app = ReserveStockApp(ConflictOnceRepository())
+    reserve_stock = ReserveStockCommand(ConflictOnceRepository())
 
-    result = app.execute(ReserveStockCommand(product_id=product.id, quantity=2))
+    result = reserve_stock.execute(ReserveStockRequest(product_id=product.id, quantity=2))
 
     product.refresh_from_db()
     assert product.stock == 3  # 첫 CAS 0행 → 재시도 성공, 정확히 한 번만 차감
 ```
 
-이 테스트는 단일 connection·단일 스레드이므로 `transaction=True`가 필요 없다 — 스파이의 `.update()`와 응용 서비스의 재조회가 같은 connection에서 일어나 갱신된 `version`을 그대로 본다. 실제 별도 connection·스레드 경합 관찰은 §20.4의 영역이다.
+이 테스트는 단일 connection·단일 스레드이므로 `transaction=True`가 필요 없다 — 스파이의 `.update()`와 쓰기 연산의 재조회가 같은 connection에서 일어나 갱신된 `version`을 그대로 본다. 실제 별도 connection·스레드 경합 관찰은 §20.4의 영역이다.
 
 이 테스트는 빠르고 결정적이어서 동시성 가드 회귀를 막는 1차 방어다. 단, 스파이가 구체 리포지토리의 `save_with_version_guard` 시그니처에 결합하므로 그 메서드명·시그니처가 바뀌면 함께 갱신한다(가드의 *내부 CAS 구현* 변경에는 영향받지 않는다). 스레드 기반 §20.4는 통합 신뢰를 위한 보조이며, 운영과 같은 backend(PostgreSQL 등)를 testcontainers로 띄워 돌리는 편이 SQLite보다 안정적이다.
 

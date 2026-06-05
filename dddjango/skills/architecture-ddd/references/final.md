@@ -1007,6 +1007,7 @@ class OrderBad:
 @dataclass
 class PlaceOrderCommand:
     """응용 서비스 입력 DTO"""
+    # ※ 이 메시지-어휘(…Command=입력 DTO)는 CQRS 이론 *교육*이다. 이 플러그인 *생성 코드*는 입력을 …Request로, 쓰기 *실행*을 …Command 인터랙터로 명명한다(houserules 권위). 두 어휘를 섞지 말 것.
     orderer_id: str
     items: List[dict]
     shipping_address: dict

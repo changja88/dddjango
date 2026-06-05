@@ -82,9 +82,9 @@ application/<app>/
 │
 ├── application_layer/                  # ② 응용 — 유스케이스 (§3.6). domain에만 의존, 로직은 도메인 위임
 │   ├── <feature>/
-│   │   ├── command/                    #   쓰기 유스케이스(응용 서비스): <usecase>_service.py — domain repository 인터페이스 의존
-│   │   ├── query/                      #   조회: <usecase>_query.py — selector 함수/QuerySet (CQRS는 필요 컨텍스트만, §5.4)
-│   │   ├── dto/                        #   입력 DTO(command 객체): <usecase>_command.py
+│   │   ├── command/                    #   쓰기 유스케이스 연산: <usecase>_command.py → class …Command.execute(request) — domain repository/port 의존
+│   │   ├── query/                      #   조회 유스케이스 연산: <usecase>_query.py → class …Query.execute(request) — repository 의존 (별도 읽기모델 CQRS는 §5.4 선택)
+│   │   ├── dto/                        #   유스케이스 입력 DTO: <usecase>_request.py → @dataclass class …Request
 │   │   ├── handler/                    #   도메인 이벤트 핸들러 (§6.1)                    [선택]
 │   │   └── service/                    #   다중 유스케이스 오케스트레이션: <flow>_service.py  [선택]
 │   └── unit_of_work.py                 #   UoW 인터페이스 — 트랜잭션 경계 (§6.3)          [선택]
@@ -118,8 +118,8 @@ application/<app>/
 - **도메인 계층은 DDD 전술 패턴으로 완전 구성**(§3·§6.1): 코어는 애그리거트 루트·`entity`·`value_object`·`repository`(인터페이스), 나머지(`domain_service`/`event`/`specification`)는 폴더를 항상 두되 트리거 미충족 시 비어 있을 수 있다(`[선택]`=비어 있을 수 있음, 생략 아님 §0).
 - **리포지토리 DIP**: 인터페이스(ABC)는 `domain_layer/<aggregate>/repository/`, 구현은 `infra_layer/repository/`. 추상화·구현 명명은 §4 명명 규약(추상=개념 bare명 `OrderRepository`, 구현=`Django…` 한정자 접두).
 - **ORM 모델 ≠ 도메인 엔티티**: 도메인은 `domain_layer/<aggregate>/`, Django 모델은 `infra_layer/django_<app>/models/`로 분리한다(Data Mapper, §6.2 — ORM이 도메인을 import, 도메인은 ORM을 모름). 이름으로도 구분하며(`Order` vs `OrderModel`) 명명 상세는 §4. 변환은 `infra_layer/repository/`(ORM↔도메인 Data Mapper)와 표현 `schema_out`(도메인→응답 DTO)이 담당한다.
-- **응용 계층은 도메인에 위임하는 파사드**(§3.6): 비즈니스 로직을 직접 구현하지 않고 도메인에 위임한다. 입력은 **DTO(command 객체)**로 받는다. command/query는 구체 리포지토리를 직접 생성하지 말고 **domain repository 인터페이스에 의존**하고 구현을 주입받는다(DIP).
-- **CQRS는 선택적**(§5.4 [의사결정#2]): 모든 컨텍스트에 강제하지 않는다. selector/QuerySet로 충분하면 단순 흐름을 유지하고, 읽기/쓰기 모델이 실제로 갈릴 때만 적용한다.
+- **응용 계층은 도메인에 위임하는 파사드**(§3.6): 비즈니스 로직을 직접 구현하지 않고 도메인에 위임한다. 유스케이스는 연산 객체(쓰기 `…Command`·읽기 `…Query`)로 표현하고 입력은 **`…Request` DTO**로 받아 `execute(request)`로 실행한다. command/query 연산은 구체 리포지토리를 직접 생성하지 말고 **domain repository/port 인터페이스에 의존**하고 구현을 주입받는다(DIP).
+- **읽기는 `…Query` 연산으로 통일하되, *별도 읽기 모델*(CQRS)은 선택적**(§5.4 [의사결정#2]): 모든 읽기는 `…Query` 인터랙터(통일성·런간 결정성)지만, 읽기 전용 *모델/프로젝션* 분리는 강제하지 않는다 — 공유 모델을 repository로 읽으면 충분하고, 읽기/쓰기 모델이 실제로 갈릴 때만 분리한다. (trivial 단건 조회도 `…Query`인 보일러플레이트 비용은 통일성·결정성을 위해 수용한다 — 실익은 버그 예방이 아니라 일관성이다.)
 - **infra_layer 분할**: `django_<app>/`(영속성) + `repository/`(자기 애그리거트 접근·구현) + `acl/`(외부 컨텍스트 ACL 어댑터, [통합 시]) + `adapter/`(외부 I/O 서비스 어댑터). 구체 매핑·QuerySet/Manager·`transaction.atomic()`은 `implementation-django` §16 소유.
 - **컨텍스트 간 통신 = OHS 우선, 직접 통합은 ACL로 분리**: 다른 바운디드 컨텍스트는 그 앱의 `published_service/`(OHS)로 소비하는 게 기본이다(아래 "컨텍스트 간 통신"). OHS가 없거나(미이주) 단일 트랜잭션·행 잠금이 불가피하면 ACL로 명시 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로 의존하고 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다**(architecture-ddd 컨텍스트 맵 ACL 패턴 — 업스트림 모델을 하류 모델로 번역).
 - **통합 스타일 선택(동기 ACL/OHS vs 비동기 이벤트)**: BC 간 통합에서 **즉시 일관성**이 필요하면(예: 재고 차감 — 오버셀 차단) 동기로 OHS/ACL을, **결과적 일관성**으로 충분하면(예: 주문 후 포인트 적립·알림) 비동기로 **도메인 이벤트**를 쓴다. 도메인 이벤트는 *애그리거트 간* 결과적 일관성에도 쓰여 ACL보다 범위가 넓다(ACL은 BC 간 동기 번역 전용). **선택 기준은 `architecture-ddd` 규칙4(일관성 경계 밖=결과적 일관성)·§6.8 패턴 선택 절차에 위임**한다 — 이 표준은 *어디 두는지*만 정하고 *언제 무엇*의 패턴 선택 이론은 코퍼스가 권위다.
@@ -182,11 +182,13 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 **응용 계층 `application_layer/` — 유스케이스 파사드, domain에만 의존 (§3.6)**
 
+> **어휘(인터랙터 채택)** — 이 표준의 *생성 코드*는 유스케이스를 연산 객체로 표현한다: 입력 `…Request`, 쓰기 `…Command`, 읽기 `…Query`, 모두 `execute(request)`. ⚠️ 코퍼스는 `…Command`/`…Query`를 **다른 의미로 쓰며 이는 이론/모델링 어휘라 보존**한다: `architecture-ddd §3.6`의 `…Command`=응용 서비스 *입력 DTO*, Event Storming 색상표의 `Command`=*의도적 행동*, CQRS/ES 패키지 구조의 domain `commands.py`=*도메인 커맨드 정의*, 애그리거트의 *커맨드 메서드*, `services.py`=*유스케이스 파사드*. 경계: **생성 코드 어휘 권위는 이 문서**(§6.1 위임)이고, 도메인·Event Storming *모델링* 어휘는 코퍼스가 권위다. 이 표준 `service/`는 여러 유스케이스 *오케스트레이션*(코퍼스 `services.py`=단일 유스케이스 파사드와 구분)이고, HackSoft `selectors.py`/`services.py`(`implementation-django §16`)의 평면 함수 관용은 이 표준이 `application_layer/{command,query}` 인터랙터로 구체화한다.
+
 | 폴더 | 존재 이유 | 위치 파일 · 명명 | 코어/[선택] 트리거 |
 |---|---|---|---|
-| `<feature>/command/` | 쓰기 유스케이스 — 도메인에 위임, domain `repository/` 인터페이스 의존(DIP) | `<usecase>_service.py` → `class PlaceOrderService` | 코어 |
-| `<feature>/query/` | 조회 — selector/QuerySet | `<usecase>_query.py` → `def list_orders(...)` selector 함수 | CQRS 적용 시(§5.4); 아니면 command와 합쳐도 됨 |
-| `<feature>/dto/` | 유스케이스 **입력** command 객체(DTO) | `<usecase>_command.py` → `class PlaceOrderCommand` ※응답 DTO 아님(응답=presentation `schema_out`) | 입력 검증이 있으면 코어 |
+| `<feature>/command/` | 쓰기 유스케이스 **연산** — 도메인에 위임, domain `repository/`·`port/` 인터페이스 의존(DIP) | `<usecase>_command.py` → `class PlaceOrderCommand`(`execute(request)`) | 코어 |
+| `<feature>/query/` | 조회 유스케이스 **연산** — repository 의존 | `<usecase>_query.py` → `class ListOrdersQuery`(`execute(request)`) | 코어 (별도 읽기모델 CQRS는 §5.4 선택) |
+| `<feature>/dto/` | 유스케이스 **입력** 요청 객체(DTO) | `<usecase>_request.py` → `@dataclass class PlaceOrderRequest` ※응답 DTO 아님(응답=presentation `schema_out`) | 코어 |
 | `<feature>/handler/` | 도메인 이벤트/커맨드 핸들러(§6.1) | `<event>_handler.py` → `class OrderPlacedHandler` | domain `event/` 도입 시 |
 | `<feature>/service/` | 다중 유스케이스 오케스트레이션 | `<flow>_service.py` → `class CheckoutService` | 여러 command/query를 한 흐름으로 묶을 때 |
 | `unit_of_work.py` | UoW **인터페이스** — 트랜잭션 경계(§6.3) | 앱당 1개 | 구현은 `transaction.atomic()`(django §16.4)으로 충분; 커스텀 UoW 필요할 때만 |
@@ -235,11 +237,11 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 - 금지: `Interface`/`Impl`처럼 추상/구현 *구분만을 위한 타입 표식* 접미사(`OrderRepositoryInterface`·`OrderRepositoryImpl` ✕). 추상/구현은 한정자 유무로 이미 구분된다(PEP 8). 역할 접미사(`Port`)와 타입 표식(`Interface`)의 차이: 전자는 객체의 *역할*, 후자는 추상/구현 *구분*용이라 금지한다. 같은 이유로 **`Port`도 *구현*에선 위치 표식이라 쓰지 않는다 — 일반 포트 구현은 `Adapter`다**(확립 패턴명 `Repository`/`Gateway`는 예외).
 
 **파일명** — 파일명은 **그 안 주 클래스명의 snake_case**이며 그 클래스·개념을 **약어 없이** 반영한다: `order_repository.py`(○) / `order_repo.py`(✕). grep·예측 가능성을 위해 클래스명을 줄이지 않듯 파일명도 줄이지 않는다. 폴더는 종류 그룹일 뿐 파일 접미사를 좌우하지 않는다. 종류별 규칙:
-- **`_app` 접미사 폐기** — 응용 서비스 파일에 `_app`을 붙이지 않는다(`application_layer`와 중복인 군더더기). 쓰기 응용 서비스 = `<usecase>_service.py` → `class PlaceOrderService`.
+- **유스케이스 연산 명명** — 쓰기 `<usecase>_command.py` → `class …Command`, 읽기 `<usecase>_query.py` → `class …Query`, 입력 `<usecase>_request.py` → `@dataclass class …Request`. 모두 `execute(request)`·repository/port 의존. (`_app`·`_service` 접미사 안 씀 — 위치 폴더가 종류를 표시; `_service.py`는 오케스트레이션 `service/`에만.)
 - **도메인 이벤트**: 파일·클래스 모두 **과거형** — `order_placed_event.py` → `class OrderPlacedEvent`.
 - **명세(Specification)**: 약어 없이 **풀네임** — `order_active_specification.py` → `class OrderActiveSpecification`(`_spec` ✕).
 - **스키마**: 입력 `schema_in.py` → `OrderIn`, 출력 `schema_out.py` → `OrderOut`, 에러 `error_out.py` → `ErrorOut`(In/Out 접미사).
-- **조회(읽기)**: selector 함수 — `list_orders_query.py` → `def list_orders(...)`(클래스가 아니라 함수; CQRS 읽기 모델의 정상 형태, `architecture-ddd` §5.4).
+- **조회(읽기)**: `<usecase>_query.py` → `class …Query`(인터랙터 연산 — `execute(request)`, repository 의존). 별도 읽기 *모델*(CQRS §5.4)은 선택이고, 공유 모델 repository 읽기로 충분하면 그대로 둔다.
 
 **폴더명(앱·애그리거트·feature)** — 위 파일·클래스 명명과 달리 폴더 도메인명은 **의미 판정이 필요해 권장 수위**다(백스톱 없음, discipline-reviewer 점검 — 클래스/파일 명명처럼 결정적으로 집행하지 않는다).
 - **앱 `<app>`** = 핵심 애그리거트명과 **동일**하게 둔다(단일 BC·단일 애그리거트). 여러 애그리거트를 담으면 대표/컨텍스트명. snake_case. (placeholder `<app>`·`<aggregate>`는 §0-1 범례상 별개 슬롯이고, "동일 권장"은 단일 BC에 한정한다.)

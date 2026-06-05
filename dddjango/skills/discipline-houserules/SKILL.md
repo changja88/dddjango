@@ -33,6 +33,7 @@ user-invocable: false
    - **Django 앱은 `infra_layer/django_<app>/`에서 `startapp`** — `AppConfig.name`=점경로(`application.<app>.infra_layer.django_<app>`), `label='<app>'`; 앱 루트에 `models.py` 금지.
    - **ORM 모델 클래스명 `<Name>Model`**(도메인 엔티티/애그리거트는 bare `Order`).
    - **리포지토리·포트 명명** — 추상화는 개념명+역할 접미사(`OrderRepository`·`ProductLockPort`·`PaymentGateway`; `Interface`/`Impl` 금지), 구현은 **확립 패턴명(`Repository`/`Gateway`)이면 패턴명 유지+기술 접두(`DjangoOrderRepository`·`StripePaymentGateway`), 일반 포트면 `…Port`→`…Adapter`로(`DjangoProductLockAdapter`)**. 파일명 약어 없이(`order_repository.py`). 상세 `references/final.md` §4. ⚠️ **`Django`+`ProductLockPort`(`Port`를 떼지 않고 붙여쓴 한 토큰)를 정답으로 쓰지 마라** — 개정 후 일반 포트 구현 정답은 `DjangoProductLockAdapter`다.
+   - **응용 유스케이스 R/C/Q 명명** — `command/`=`…Command`(쓰기)·`query/`=`…Query`(읽기)·`dto/`=`@dataclass …Request`(입력), 모두 `execute(request)`·repository/port 의존. `…Command`=입력 DTO 아님(입력=`…Request`). 상세 `references/final.md` §4·어휘 노트.
 3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 표준 트리에서는 앱별 `application/<app>/test/{unit,integration,e2e}/`에 둔다(`references/final.md` §2; HTTP 엔드포인트 테스트는 `integration/`). factory_boy 팩토리는 그 앱의 `test/factories/`에 둔다(§2 — 의미군과 같은 레벨의 적법한 테스트 하위폴더). 기존 규약이 앱별 `tests/`면 그 *안에서* 의미군 하위 분리를 둔다.
 4. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 한 번 택한 소스/테스트 레이아웃을 기능 전체에 일관 적용한다.
 
