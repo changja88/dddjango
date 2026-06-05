@@ -39,7 +39,7 @@
 |---|---|---|---|---|---|---|---|
 | **SH-1** 컨테이너 | 신규 앱이 `application/<app>/` 하위 | §0-1 |  |  |  |  | 치명 |
 | **SH-2** 4계층 | `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 |  |  |  |  | 치명 |
-| **SH-3** 종류 폴더 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님 | §0-3·§0-4 |  |  |  |  | — |
+| **SH-3** 종류 폴더+거주 명명 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님; **거주 객체 명명(≥1.4.0): command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`** | §0-3·§0-4·§4 |  |  |  |  | — |
 | **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 |  |  |  |  | 치명 |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 |  |  |  |  | — |
 | **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 |  |  |  |  | — |

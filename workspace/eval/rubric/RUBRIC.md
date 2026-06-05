@@ -34,7 +34,7 @@
 |---|---|---|---|---|---|---|
 | **SH-1** 컨테이너 | 신규 앱이 `application/<app>/` 하위 | §0-1 | 신규 앱이 `application/` 하위 | 신규 앱이 루트(마스크 C 적용) | 결정 | ✅ |
 | **SH-2** 4계층 | `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 | 4계층 존재 | 누락/평면 | 결정 | ✅ |
-| **SH-3** 종류 폴더 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님 | §0-3·§0-4 | 종류 폴더 구조 | ORM/포트/리포가 평면 `.py` (WEAK: 일부 빈폴더 누락) | 결정 | — |
+| **SH-3** 종류 폴더+거주 명명 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님; **거주 객체 명명(시점: ≥1.4.0 산출분): command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, 모두 `execute(request)`·repository/port 의존** | §0-3·§0-4·§4 | 종류 폴더 구조 + R/C/Q 명명 일치 | ORM/포트/리포가 평면 `.py` (WEAK: 일부 빈폴더 누락) / **command/에 `…Service`·자유함수·query/ selector 함수·dto/ 비-`@dataclass`(≥1.4.0 산출분만 — 시점 규칙·구산출분 N/A)** | 결정(폴더)+의미(명명) | — |
 | **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 | 모델/마이그가 `infra_layer/django_` | 루트/앱루트/도메인에 `models.py`(마스크 C 적용) | 결정 | ✅ |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 | 명명 분리 | 혼동(도메인에 Model접미사·ORM이 bare) | 결정 | — |
 | **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 | 규약 준수 | `Interface`/`Impl` / `*_repo.py` / 일반 포트 구현이 `Port` 유지(Adapter 아님)·개념 base 불일치 | 결정 | — |

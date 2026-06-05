@@ -125,8 +125,8 @@ DR-41이 헥사고날 포트/어댑터는 정합했으나 `command/dto/query` �
 ### 6. `discipline-houserules/SKILL.md` [양본, `user-invocable` 줄차 유의] — 명명 요약 1줄
 "응용 유스케이스 R/C/Q: command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, `execute(request)`."
 
-### 7. `RUBRIC.md` [단일] — **SH-3 주입 금지**
-RUBRIC은 응용명명 참조 0건(검증)·차원 동결(`:3`,`:151`). SH-3(종류 폴더)는 *폴더 차원*이라 클래스 접미사를 끼우면 차원 오염 + 기존 fixture 소급 위반. → **SH-3 본문 불변**, 응용 클래스 접미사 검사는 **discipline-reviewer 레드플래그(§5)에 위임**. 정 표기하려면 SH-3에 "command/·query/·dto/ 폴더가 R/C/Q 클래스를 담음" *폴더 차원* 1줄만(비치명).
+### 7. `RUBRIC.md` + `rubric-metrix.md` [단일] — **SH-3 확장 반영 (2026-06-05 후속 보정)**
+~~원안: SH-3 주입 금지~~ — RUBRIC 응용명명 참조 0건·차원 동결(`:3`,`:151`)이라 SH-3 본문 불변·reviewer 위임이었음. **번복 사유**: 평가지에 채점 앵커가 없으면 다음 라이브런에서 R/C/Q 검증 불가(grader가 적을 칸 없음)·백스톱 보류 로직의 드리프트 증거도 수집 불가. **소급 위반 우려는 §7b 시점 규칙이 이미 해소** → '불변'은 과보수. **반영**: `SH-3`을 "종류 폴더+거주 명명"으로 확장(RUBRIC.md:37 + rubric-metrix.md:42) — command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, FAIL=command/`…Service`·selector 함수·비-`@dataclass`, §근거 `§0-3·§0-4·§4`, 레인 `결정(폴더)+의미(명명)`, 비치명, 시점 `≥1.4.0`. 새 SH 코드 0=차원 동결 유지. discipline-reviewer 레드플래그(§5)는 생성측 예방으로 병존.
 
 ### 7b. 평가 연속성 [단일] — `EVAL-METHOD.md`
 "fixture 채점은 **그 산출 시점 표준 버전 기준**; 1.4.0 이전 산출분에 R/C/Q 소급 FAIL 금지" 1줄(현재 방법론에 시점 고정 규칙 부재 — `EVAL-METHOD.md:74` 런 diff 정의뿐). 소급 위험 fixture 예: `nj2live-codex`·`fklive-codex`(`…App`+`…Command`=입력 DTO)·`pytestlive-codex`(`PlaceOrderService`=도메인 서비스).
