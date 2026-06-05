@@ -341,6 +341,17 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 
 ---
 
+### DR-43 ✅ R/C/Q 응용 계층 명명 — Request/Command/Query 인터랙터 (DR-41 백로그 해소·1.4.0·미커밋)
+2026-06-05. 사용자 발단: `PlaceOrderService`가 `command/` 폴더에 사는 게 명명 규칙과 어긋남(DR-41이 '거주객체 어긋남'으로 남긴 백로그). 긴 설계 논의→D1~D5 결정→스펙 v2→적대 4렌즈→직접 구현(byte-id 미러 통제, subagent 아님).
+- **현상태 진단**: '쓰기 응용 유스케이스'가 3곳에서 갈림 — houserules `:187` `class PlaceOrderService`(클래스) / implementation-test `:2619` `ReserveStockApp`(`App`=`:238` `_app` 폐기 위반) / ninja `:151` `place_order(...)`(자유함수). R/C/Q가 인터랙터 연산객체로 통일.
+- **결정(D1~D5)**: D1=Way2 인터랙터(읽기도 `…Query` 클래스+repository+`execute(request)`, selector 함수 폐기·application_layer 유스케이스 한정·trivial 보일러플레이트 비용은 통일성·런간 결정성으로 수용) / D2=(c) 코퍼스 Command=메시지 어휘(§3.6 입력DTO·Event Storming·domain commands.py·애그리거트 메서드·services.py=유스케이스)는 이론이라 보존+houserules 어휘노트로 봉합·우리 예제만 재작성·§3.6 포인터 채택 / D3=service/ 유지(오케스트레이션) / D4=컴포지션 루트(인프라 주입)는 배선 축이라 defer(단 예제 함정 금지문+reviewer 레드플래그) / D5=Request 의무(@dataclass).
+- **적대 4렌즈=FIX-THEN-SHIP(NO-GO 0)**, 직접검증으로 확인된 결함 반영: B1 **에이전트 미러는 byte-id 아님**(frontmatter·Coordinator/코디네이터·헤더; 단 편집한 본문 불릿은 byte-id) → 미러 모델 정정·body-diff 게이트 삭제. B2 놓친 selector 사이트(ninja `:260/:285`·impl-django HackSoft `:1432/:1450`) → ninja read 예제 Query화·HackSoft는 참조관용 경계노트. B3 Command-메시지 blast radius>§3.6 → 어휘노트 열거+경계. B4 ninja 예제 미정의 `order_repository`/`stock_port` → 금지문(operation서 `Django…()` 직접생성 금지)+reviewer 레드플래그. B5 ⑫가 평문 `…Command`/`…Query` 클래스상수에 발화(`@dataclass …Request`는 면제) → 어노테이트=§4 정합 노트. + RUBRIC SH-3 주입금지(차원동결)·EVAL-METHOD 소급FAIL금지 시점규칙.
+- **변경(claude↔codex 미러)**: houserules final.md(트리·표·어휘노트·프로즈·파일명)·SKILL.md(명명요약) / implementation-test §20.5(`ReserveStockApp`→`ReserveStockCommand`·입력→`ReserveStockRequest`·산문 2곳) / ninja(create_order·list_orders read ×2) / architecture-ddd §3.6 포인터 / agents design-architect·discipline-reviewer(R/C/Q 불릿) / plugin.json 1.4.0. 단일=RUBRIC(SH-3 불변·reviewer 위임)·EVAL-METHOD 시점규칙·이 backlog.
+- **백스톱 보류**(N=0 live·프로젝트 일관 DR-32/37/39 '관측된 실패만 결정적집행'; 라이브 N≥2 드리프트 시 AST 재검토). 자체발견 정정: 어휘노트 `§428` 등은 코퍼스 *줄번호*인데 §(절)로 오기→개념기반 정정.
+- 🔴 **라이브 미검증·N=1·미커밋**. 정본=`workspace/design/2026-06-05-dddjango-rcq-application-naming.md`(스펙 v2) + 적대 4렌즈 리포트(a9e6b1·adcdeb·a522f3·a71ee2).
+
+---
+
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
 
 1. **서브에이전트 모델 다운그레이드**(특히 coder→Sonnet) — 게이트 반송 폭증으로 net 느리고 비쌈(DR-09).

@@ -128,12 +128,12 @@ ACL 구현 명명을 외부 권위 자료로 검증: **`Port`를 구현에 쓰�
 
 ## 백로그 (이번 범위 밖)
 
-- **command/dto 폴더 구조 정렬:** 거주 객체와 어긋난 구조. CQRS 해석 결정이 필요한 §0 불변식 변경이라 분리. 이번엔 "파일=거주 객체 반영" 네이밍으로 우회.
+- **command/dto 폴더 구조 정렬:** 거주 객체와 어긋난 구조. CQRS 해석 결정이 필요한 §0 불변식 변경이라 분리. 이번엔 "파일=거주 객체 반영" 네이밍으로 우회. ✅ **DR-43에서 해소** — R/C/Q 인터랙터(command/=`…Command`·query/=`…Query`·dto/=`…Request`)로 거주객체 정합(`workspace/design/2026-06-05-dddjango-rcq-application-naming.md`).
 
 ## 범위 밖 (명시)
 
 - 함수 지역 변수·내부 구현 명명(implementation-python PEP8 위임).
-- command/dto 폴더 재배치(백로그).
+- command/dto 폴더 재배치(백로그) → ✅ DR-43 해소(R/C/Q 인터랙터).
 - 폴더명(A) 결정적 백스톱(의미 판정 — reviewer 권고).
 - 커밋·push — 사용자 명시 승인 시에만.
 
