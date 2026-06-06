@@ -364,7 +364,25 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **적대 검증 3라운드**: 원인 4렌즈 → 설계 4렌즈(D1 '503권장'→대칭중립·C1/C2 carve-out·C1↔line40 우선순위·E 신설·B 보류·D2 신규성과장 제거) → 계획 3렌즈(Task4 OLD 비유일·grep regex크래시·lookahead미지원·negative-guard 5건 수정).
 - **검증**: [byte] 미러 diff IDENTICAL(houserules·api)·[semantic] append 양본 동일·한정구 잔존0·변경 8파일만(negative-guard: acceptance-tester·scripts·tdd·coder·RUBRIC 무수정). **DR-22 사전시뮬 강력 통과**(2 독립 sim: Claude픽스처 C2 blocker+C1 important 발화·Codex픽스처 비발화·carve-out FP0 — P1a 0/3 실패와 달리 포트앵커 결정적판정이라 발화).
 - **보류(비-목표)**: B(acceptance-tester 종단 인수테스트 의무화)=유일 신규machinery·D2 게이트·N=1 LOW → 라이브 N≥2 재현 시 재개. 결정적 백스톱=전파 도달성 정적분석 FP불가+'예외 정의-집합 vs ACL catch 차집합' 변종도 내부번역 FP → 보류·재검토 후보. status 특정코드 강제 안함(underdetermined). 층배치(domain vs app) 비처방(A가 무의미화).
-- 🔴 **라이브 미검증·N=1·미커밋**. 정본=`workspace/design/2026-06-06-acl-exception-exhaustiveness.md`(v2)+`-plan.md` + 적대 리포트(원인4·설계4·계획3렌즈).
+- 🔴 라이브 미검증·N=1 → **커밋 `b7cf255`(1.5.0·미푸시)·DR-45서 라이브 검증=생산자측 작동·BUT 부분 미완 발견**. 정본=`workspace/design/2026-06-06-acl-exception-exhaustiveness.md`(v2)+`-plan.md` + 적대 리포트(원인4·설계4·계획3렌즈).
+
+### DR-45 🔴 aclex 듀얼 라이브 + 심층 적대 감사 — DR-44 fix 부분 미완(인프라 예외 500 누수)·위장 green 테스트·pytest N=2 (커밋 b7cf255·결과지 미커밋)
+2026-06-06. DR-44(1.5.0) 라이브 검증: greenfield fixture `~/Desktop/dddjango-aclex-{claude,codex}`(baseline claude `6e48b68`·codex `32d1cf5`·rcqlive 동일 입력·고정 게이트)에서 dual `/dddjango`(사용자 드라이브) → 조정자 채점(코드 직접 정독 + 백스톱 13종 실행 + pytest 실행).
+- **커밋**: DR-44 6편집 = `b7cf255`(1.4.0→1.5.0·**미푸시**·origin baseline=`58660a0`). 양 캐시 1.5.0 신선화 IDENTICAL.
+- **1차 채점(단일-패스+백스톱)**:
+  - **Codex**(`results/20260606-1427-aclex-codex.md`): DR-44 축 PASS(**원래부터 준수** — rcqlive서 이미 409·DR-44는 Codex 대상 아니었음). 포트앵커 얇음·**Q-6 pytest MISS**(manage.py test+unittest=DR-42 C3 **N=2 재현**). 13 tests. `command_factory`=컴포지션루트(ninja:151 *요구*사항이지 위반 아님 — 사용자 오해 정정).
+  - **Claude**(`results/20260606-1448-aclex-claude.md`): **rcqlive 흠 직접 수복** — catalog `StockWriteConflict`(CAS 소진)→ACL `StockReservationConflict` 번역(`catalog_product_stock_adapter.py:50-51`)→중앙핸들러 409 retryable, 500 누수 0(조정자 probe 대조=409 problem+json). D2 status표 소진 열거 교과서적(design-spec §2.4:138·§5:190 "미매핑 500" 위험 인용)·포트앵커 3예외 전수·**Q-6 pytest STRONG**(풀스택·함수형 62·mocker 15·TestCase 0). 61 passed. **P4③ 반전: Claude Q-6 강·Codex 약.**
+- **🔴 심층 적대 감사(DR-24식·5 서브에이전트 — 사용자 "A" 선택)**: 백스톱 13종+단일정독이 못 본 **major 4 적출**, 조정자 2건 **직접 재현**:
+  1. **[VERIFIED] ACL 전수성 인프라-예외 누수 = DR-44 부분 미완**: ACL이 catalog *도메인* 예외 3종(`CatalogError`)만 catch. raw `OperationalError("database is locked")`·`IntegrityError`는 비-CatalogError라 통과→**HTTP 500(text/plain)**(probe B/C 재현). §5.1이 동시성 락을 *인정*하나 §6.7 동시성 테스트가 sequential이라 영구 green. **DR-44가 막으려던 500 누수를 형제 예외 패밀리로 재현.** 대조 probe: StockWriteConflict는 409(처방 작동).
+  2. **[VERIFIED] 깨진 JSON 400 plain**: 올바른 CT+깨진 본문→ninja `HttpError(400)`→기본핸들러→400 `application/json`(problem+json 아님·선언 status 밖)(probe A 재현). §2.5.3 위반·**DR-35 변종**(415 데코는 CT만 봄).
+  3. **[mutation] 위장 oversell 테스트**: `test_sequential_requests_do_not_oversell` 순차(스레드 0)→CAS 충돌 0회→lost-update 차단 미증명. CAS 무력화(`save_with_cas`→항상 True)해도 통과. + `assert (n-remaining)<=n` 항진(죽은 단언).
+  4. **[mutation] 오귀속 check-constraint 테스트**: `IntegrityError`를 내는 건 명명 제약 아니라 `PositiveIntegerField` 암묵 CHECK. 명명 제약 `stock>=-999999` 약화해도 green→산출물 삭제해도 false green.
+  - minor: product_id 거대정수→sqlite OverflowError 500(underdetermined·sqlite 아티팩트) · `InvalidOrderQuantity` 핸들러 부재(스키마 `Field(ge=1)`가 가려 latent) · §6.8 write-conflict 종단 미검증(조각 mock 3개만).
+  - **CLEAN 확인(거짓양성 차단)**: 계층순수성/DIP/컨텍스트격리(Agent3 CLEAN)·빈혈SQL 0·BC FK 0·스코프크립 0(멱등성 흔적 0)·도메인예외 ACL 번역 진짜 전수·boundary `<` 정확.
+- **조정자 자기-정정**: Claude 1차 채점서 "비재시도 OperationalError만 500=C1 carve-out 정당"이라 한 것은 **오판**(동시성 락은 retryable transient지 서버버그 아님). 단일-패스 합리화를 심층감사가 적출. 결과지 PASS→**결함발견 4** 정정(addendum 기록).
+- **표준-수준 함의(중요·미해결)**: DR-44 "ACL 전수성"이 *포트 선언(도메인) 예외*에 앵커링→인프라 transient 범위 밖→**표준 완벽 준수 ACL도 OperationalError 누수**. fixture 결함 아니라 **DR-44 표준(`b7cf255`) 자체 빈틈**. Codex는 catalog command가 락마커를 retry 흡수해 우연 회피(구현 특수성·표준 보장 아님). → **소유권 결정 필요**: "ACL이 인프라 예외도 번역" vs "catalog가 락을 retry 흡수"(어느 계층) — 원인 적대리뷰 선행.
+- **미해결 백로그(우선순위)**: ① **DR-44 인프라-예외 누수**(방금 작업의 직접 미완·원인리뷰 필요) ② #2 깨진JSON problem+json 중앙화(DR-35 후속) ③ #3·#4 위장 green 테스트(acceptance-tester 동시성 진정성) ④ **pytest 강제**(DR-42·Codex N=2·백스톱 ⑬ 맹점=pytest *무설정*은 못 봄, 깨진설정만) ⑤ DR-44 C1/C2 차단측 라이브 미검증(양런 누수 0이라 발화 안 됨).
+- 🔴 **N=1·우열 결론 아님**(DR-44 축은 양 런타임 정상: Codex 기존부터·Claude 수정 후). 정본=결과지 2개(addendum 포함)·이 엔트리.
 
 ---
 
@@ -383,6 +401,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 11. **결정적 백스톱 exit0을 "구조적 준수"로 해석** — DR-23 B 트랙서 `check-error-centralization.py` dual exit0을 "dual P1a 완전 준수"로 기록했으나, C 트랙 심층 감사(DR-24)서 Codex가 백스톱이 *원리상 못 보는* 의미적 변종(status-bearing snapshot이 application 흐름+중앙 핸들러 죽은 코드, 멱등성 크립이 뿌리)을 가진 게 드러남. **교훈: 백스톱 침묵(exit0)은 "그 백스톱의 좁은 텍스트 계약 통과"일 뿐 "구조적/의미적 준수"가 아니다.** 고정밀·저-recall 게이트의 통과를 전면 준수로 일반화 금지 — 의미적 준수는 코드 정독/심층 리뷰로 별도 확인(특히 멱등성처럼 status-bearing 객체가 계층을 흐를 수 있는 설계).
 12. **operation 콘텐츠 협상(406)에 결정적 백스톱 시도** — §6.3:441-442가 operation `Accept`검사→`HttpError(406)`을 *허용/명령*하므로 백스톱 신호가 정당 코드와 **동형**(잡으면 FP·안 잡으면 operation 인라인 회피·양립불가). 멱등성 ⑩ 승격도 표면유비(scope 흔적·§9.6 8행 강제·중복-치명 무게 전무·scope-코드 모순 없음). c4live 채점이 협상을 "범위내 수락"(Q-1🟡·NJ-2/NJ-4 PASS). **협상=§6.3 허용 영역 Q-1 경미지 막을 위반 아님** — ⑧(미들웨어 차단)+§6.3(operation 형태)+reviewer(Q-1)로 충분. 라이브 *미들웨어 아닌 동일신호* N≥2 시만 재검토(DR-38).
 13. **변수 어노테이션 "전부(함수 지역변수 포함) 의무화"** — 정상 모범코드 85~100%가 bare 매치라 거짓양성≈0 백스톱 구조적 불가·reviewer-only 집행은 DR-22 문구강화처럼 라이브 실패 위험. **공개 표면(모듈/클래스 변수 *리터럴 상수* 첫 대입)만** 좁혀야 백스톱 성립(좁은 고정밀=11종 안전망 성격 유지). RHS 호출식(`router=Router()`)·타입별칭·이름참조는 면제(타입 자명)·리터럴만 검출. 면제는 직계 base-name 매칭이라 2단 상속 로컬 base 못 미침(known-limitation·reviewer 보완)(DR-39).
+14. **ACL "전수 번역"을 포트 *도메인* 예외 집합으로만 앵커링** — DR-44가 ACL 전수성을 포트 선언(도메인) 예외에 묶었으나, OHS 경로는 raw 인프라 예외(`OperationalError "database is locked"`·`IntegrityError`)도 던진다. 비-도메인 예외라 ACL 3-catch를 통과→**500 누수**(aclex Claude 라이브 재현·probe B/C). 동시성 락은 `architecture-db §5.1`상 retryable transient지 서버버그 아님 → 번역/흡수 대상. **교훈: 경계 누수 "전수성"은 포트 도메인 예외뿐 아니라 *그 경로가 실제 던지는 인프라 transient*까지 봐야 한다.** sequential 테스트는 이 경로를 영영 안 태워 green 위장(DR-45 #3). + 단일-패스 채점이 "OperationalError→500=carve-out 정당"으로 합리화한 것을 5-서브에이전트 심층감사가 적출 — **백스톱 13종 exit0 + 단일정독 "clean"을 전면 준수로 일반화 금지**(#11 강화·DR-45).
 
 ---
 
