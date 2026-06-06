@@ -158,7 +158,8 @@ class ProblemOut(Schema):     # 오류 본문도 schema로 계약화 (형식은 
     tags=["orders"],
 )
 def create_order(request: HttpRequest, payload: OrderIn) -> Status[OrderOut]:
-    order = place_order(product_id=payload.product_id, quantity=payload.quantity)  # service 호출
+    # place_order_command 는 컴포지션 루트가 주입한다(배선=D4 별도). ⚠️ operation 본문에서 Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
+    order = place_order_command.execute(PlaceOrderRequest(product_id=payload.product_id, quantity=payload.quantity))
     # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
     return Status(201, OrderOut(id=order.id, status=order.status))
 ```
@@ -268,7 +269,7 @@ class OrderFilter(FilterSchema):
 
 @router.get("/orders", response=list[OrderOut])
 def list_orders(request, filters: Query[OrderFilter]):
-    return select_orders(filters=filters)   # 실제 query는 selector/QuerySet로 위임
+    return list_orders_query.execute(ListOrdersRequest(filters=filters))   # 읽기 연산 객체(주입=컴포지션 루트, D4)
 ```
 
 ### 5.2 Pagination
@@ -293,7 +294,7 @@ from ninja.pagination import paginate, PageNumberPagination
 @router.get("/orders", response=list[OrderOut])
 @paginate(PageNumberPagination)        # page size 상한 등은 NINJA_PAGINATION_* 설정으로
 def list_orders(request):
-    return select_orders()             # paginate가 queryset을 잘라 페이지를 만든다
+    return list_orders_query.execute(ListOrdersRequest())   # Query가 QuerySet 반환 → paginate가 페이지로 자른다
 ```
 
 ---

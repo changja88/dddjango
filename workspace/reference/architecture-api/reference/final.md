@@ -181,6 +181,8 @@ GET /products?q=keyboard                     # 검색
 | 500 | Internal Server Error | 서버 문제. 애매하면 500 |
 | 503 | Service Unavailable | 일시 과부하/정비. Retry-After 헤더 가능 |
 
+**낙관적 동시성/CAS 재시도 루프의 *소진*도 경계 실패 모드다**: 유한 재시도 루프를 설계하면 '재시도 상한 초과(쓰기 경합 미해소)'는 happy-path 밖이지만 *경계로 관찰되는* 결과다 — status 표에서 누락하지 말고 **재시도 가능(retryable) status를 배정**한다(503+`Retry-After` 또는 409+`retryable` 확장 — 둘 다 정당, 선택은 멱등성·재시도 UX 트레이드오프로 §5/G1). *어느 쪽이든 표에서 누락 금지*가 의무이고 둘 중 선택은 설계자가 임의 확정하지 않는다(미매핑 시 기본 500 누수).
+
 ### 4.3 PRG (POST/Redirect/GET) 패턴
 
 POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로고침 시 중복 주문 방지.

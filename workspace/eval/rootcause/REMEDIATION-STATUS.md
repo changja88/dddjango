@@ -14,20 +14,24 @@
 **"기반 먼저"**: ① 기반(R5 빌드배선+A1/M2 규율) → ② 측정(R2 N≥5) → ③ 프론티어(R1 열린발견·*백스톱 아닌* 예방레버/테스트진정성) → ④ 수용/우회(R3·메타제약).
 *근거*: R5(소스-미러 drift)가 *회귀 메커니즘 그 자체* — 안 닫으면 텍스트 수정이 다음 빌드에 되돌려짐("새는 바구니"). 결정적·LLM무관이라 가장 싸고 확실.
 
-## 현재 위치 = R5 첫 조각 (소스-미러 동기)
-**완료한 스코핑(내용 확인):** `workspace/reference/<skill>/reference/final.md`(재생성 출처)가 배포본 `dddjango/skills/<skill>/references/final.md` 대비 **stale**.
-- **내용 직접 확인**: architecture-ddd(DR-37 BC-FK 문단 누락)·discipline-houserules(DR-41/43 옛 명명).
-- **키워드 강확신**: implementation-test(~200줄 DR-42)·ninja(DR-35/41)·db·django(DR-37)·tdd(DR-42).
-- **방향 확정**: 소스 stale / 배포본 current. cleancode·django-web·python은 인트로 blockquote 구조차이(DR drift 아닐 가능성).
-- ⚠️ **측정 주의**: hand-rolled awk(P1 블록 처리)가 두 번 깨짐(과대/과소) — 정확한 per-skill 줄수는 *결정적 스크립트*로 내야 함(아래 처방이 그것).
+## 현재 위치 = R5 첫 조각 ✅ 완료 (소스-미러 동기) — 2026-06-06
+**설계·리뷰·검증·재동기 전부 끝남.** 상세 = `R5-mirror-sync-design.md`(§6 리뷰결정·§7 검증·§8 완료).
 
-## ▶ 다음 액션 (사용자 go 대기였음)
-**R5 처방 = "결정적 백스톱 + 생산자 예방"을 R5에 적용**(R5는 백스톱이 *구조적으로 가능*한 영역):
-1. `dddjango/scripts/check-corpus-mirror-sync.py` **설계**(P1 Source Sufficiency 블록만 정확 제외하고 소스↔배포 본문 byte 비교; codex 미러도) — 이게 *권위 있는 drift 목록*을 한 번에 주고 동시에 **영구 가드(게이트 14종)**.
-2. 그 목록대로 **소스 미러 ← 배포본 본문 재동기**(소스 P1 블록 보존).
-3. 검증: 동기 후 exit0.
-- ⚠️ **작업 방식**: 2부 코퍼스 + 게이트 신설 = 섬세 변경 → **구현 전 skill-creator·plugin-creator 서브에이전트 리뷰** 필수.
+**한 일:**
+1. **검사/동기 도구 `workspace/tools/corpus_mirror_sync.py`** — fail-CLOSED·`--check`/`--write`·불변식1(소스본문≡배포본문)+불변식2(배포≡codex final.md)·앵커 fail-fast. (리뷰 반영: `dddjango/scripts/` 거부→`workspace/tools/`, `check-` 접두사 제거.)
+2. **검증**(사용자가 배선 전제로 요구): 현실 8 drift 정확탐지 + 합성 13/13 PASS(거짓양성0·fail-closed·멱등·P1보존). 실버그(`--check` 미구현) 적발·수정.
+3. **재동기 실행**: 소스 미러 **8스킬** ← 배포 본문(api/db/ddd/houserules/tdd/django/ninja/test). 변경 8개에만 국한·P1 보존·본문 byte-exact 8/8·사후 exit0. DR-37/41/42/43/44 소스 복원.
+
+**확정 사실(리뷰가 굳힘):**
+- 동기 대상 = **references/final.md 11개**(houserules 포함 — 미러 *보유*, P1만 없음). **SKILL.md·agents·commands는 plugin-native(미러 없음·재생성 경로 없음 → R5 밖)**.
+- **자동 빌드 파이프라인 부재**(빌드스크립트0·CI0·pre-commit0) → 회귀는 "자동 되돌림"이 아닌 "byte-identical 계약 잠복 위반". severity 하향.
+- 불변식2(codex)는 현재 11/11 byte-identical(액션 불필요, 앞으로 가드).
+
+## ▶ 다음 액션 (R5 잔여 + 그 다음)
+- **배선 보류 중**(사용자 결정): pre-commit/CI로 `corpus_mirror_sync.py`를 자동 차단에 묶는 것 — **전제**: 검사 방법 검증(✅완료) **+ 라이브 발화 검증**(아직). 이게 충족되면 밸브 닫음.
+- **R5 백로그**: attribution 영역(P1·출처 blockquote) drift는 본 도구 스코프 밖 — 별도 검사 필요 시 후속.
+- **그 다음 처방 단계**: ②측정 R2(N≥5 블라인드) → ③프론티어 R1(ACL-EX 등, *백스톱 아닌* 예방레버/테스트진정성) → ④수용 R3·메타.
 
 ## 정직 경계
-- 진단 전체 N=1·단일조정자(M2). 처방은 독립증거(R5는 코드-diff라 결정적·M2 영향 적음).
-- R5 외 나머지(R2 측정·R1 프론티어)는 아직 미착수.
+- 진단 전체 N=1·단일조정자(M2). **R5는 코드-diff라 결정적·M2 영향 적음**(독립증거: 합성테스트·git diff·md5).
+- R5 첫 조각 외 나머지(배선 라이브검증·R2 측정·R1 프론티어)는 미착수.

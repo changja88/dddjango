@@ -82,11 +82,11 @@ application/<app>/
 │
 ├── application_layer/                  # ② 응용 — 유스케이스 (§3.6). domain에만 의존, 로직은 도메인 위임
 │   ├── <feature>/
-│   │   ├── command/                    #   쓰기 유스케이스(응용 서비스): <usecase>_app.py — domain repository 인터페이스 의존
-│   │   ├── query/                      #   조회: <usecase>_query_app.py — selector/QuerySet (CQRS는 필요 컨텍스트만, §5.4)
-│   │   ├── dto/                        #   입력 DTO(command 객체): <usecase>_command.py
+│   │   ├── command/                    #   쓰기 유스케이스 연산: <usecase>_command.py → class …Command.execute(request) — domain repository/port 의존
+│   │   ├── query/                      #   조회 유스케이스 연산: <usecase>_query.py → class …Query.execute(request) — repository 의존 (별도 읽기모델 CQRS는 §5.4 선택)
+│   │   ├── dto/                        #   유스케이스 입력 DTO: <usecase>_request.py → @dataclass class …Request
 │   │   ├── handler/                    #   도메인 이벤트 핸들러 (§6.1)                    [선택]
-│   │   └── service/                    #   다중 유스케이스 오케스트레이션: <usecase>_service_app.py  [선택]
+│   │   └── service/                    #   다중 유스케이스 오케스트레이션: <flow>_service.py  [선택]
 │   └── unit_of_work.py                 #   UoW 인터페이스 — 트랜잭션 경계 (§6.3)          [선택]
 │
 ├── infra_layer/                        # ③ 인프라 — ORM·외부 I/O·컨텍스트 어댑터
@@ -97,7 +97,7 @@ application/<app>/
 │   │   └── admin/                      #     <entity>_admin.py (+ templates/)
 │   ├── repository/                     #   domain repository 인터페이스(ABC) 구현 — ORM↔도메인 변환 (DIP). 자기 애그리거트 전용
 │   ├── acl/                            #   외부 컨텍스트 ACL 어댑터(domain port/ 구현) — 업스트림 모델·예외 번역  [통합 시]
-│   └── service/                        #   외부 서비스 어댑터: <external>_service.py (인증·푸시 등)
+│   └── adapter/                        #   외부 서비스 어댑터: stripe_payment_gateway.py (인증·푸시·결제 등)
 │
 ├── presentation_layer/                 # ④ 표현 — 입력 어댑터 (§6.1 interface)
 │   ├── api/
@@ -107,7 +107,8 @@ application/<app>/
 └── test/                               # 앱별 테스트 — 의미군 분리 (implementation-test §4.2)
     ├── unit/                           #   순수 단위: 도메인·응용 (mock/stub)
     ├── integration/                    #   DB·리포지토리·API 어댑터 (실제 DB) — HTTP 엔드포인트 테스트는 여기
-    └── e2e/                            #   엔드투엔드 흐름                               [선택]
+    ├── e2e/                            #   엔드투엔드 흐름                               [선택]
+    └── factories/                      #   factory_boy 팩토리 (ORM 영속 픽스처)            [선택]
 ```
 
 의존 방향(단방향): `presentation_layer → application_layer → (domain_layer + infra_layer)`, `domain_layer`는 아무것도 의존하지 않는다.
@@ -117,9 +118,9 @@ application/<app>/
 - **도메인 계층은 DDD 전술 패턴으로 완전 구성**(§3·§6.1): 코어는 애그리거트 루트·`entity`·`value_object`·`repository`(인터페이스), 나머지(`domain_service`/`event`/`specification`)는 폴더를 항상 두되 트리거 미충족 시 비어 있을 수 있다(`[선택]`=비어 있을 수 있음, 생략 아님 §0).
 - **리포지토리 DIP**: 인터페이스(ABC)는 `domain_layer/<aggregate>/repository/`, 구현은 `infra_layer/repository/`. 추상화·구현 명명은 §4 명명 규약(추상=개념 bare명 `OrderRepository`, 구현=`Django…` 한정자 접두).
 - **ORM 모델 ≠ 도메인 엔티티**: 도메인은 `domain_layer/<aggregate>/`, Django 모델은 `infra_layer/django_<app>/models/`로 분리한다(Data Mapper, §6.2 — ORM이 도메인을 import, 도메인은 ORM을 모름). 이름으로도 구분하며(`Order` vs `OrderModel`) 명명 상세는 §4. 변환은 `infra_layer/repository/`(ORM↔도메인 Data Mapper)와 표현 `schema_out`(도메인→응답 DTO)이 담당한다.
-- **응용 계층은 도메인에 위임하는 파사드**(§3.6): 비즈니스 로직을 직접 구현하지 않고 도메인에 위임한다. 입력은 **DTO(command 객체)**로 받는다. command/query는 구체 리포지토리를 직접 생성하지 말고 **domain repository 인터페이스에 의존**하고 구현을 주입받는다(DIP).
-- **CQRS는 선택적**(§5.4 [의사결정#2]): 모든 컨텍스트에 강제하지 않는다. selector/QuerySet로 충분하면 단순 흐름을 유지하고, 읽기/쓰기 모델이 실제로 갈릴 때만 적용한다.
-- **infra_layer 분할**: `django_<app>/`(영속성) + `repository/`(자기 애그리거트 접근·구현) + `acl/`(외부 컨텍스트 ACL 어댑터, [통합 시]) + `service/`(외부 I/O). 구체 매핑·QuerySet/Manager·`transaction.atomic()`은 `implementation-django` §16 소유.
+- **응용 계층은 도메인에 위임하는 파사드**(§3.6): 비즈니스 로직을 직접 구현하지 않고 도메인에 위임한다. 유스케이스는 연산 객체(쓰기 `…Command`·읽기 `…Query`)로 표현하고 입력은 **`…Request` DTO**로 받아 `execute(request)`로 실행한다. command/query 연산은 구체 리포지토리를 직접 생성하지 말고 **domain repository/port 인터페이스에 의존**하고 구현을 주입받는다(DIP).
+- **읽기는 `…Query` 연산으로 통일하되, *별도 읽기 모델*(CQRS)은 선택적**(§5.4 [의사결정#2]): 모든 읽기는 `…Query` 인터랙터(통일성·런간 결정성)지만, 읽기 전용 *모델/프로젝션* 분리는 강제하지 않는다 — 공유 모델을 repository로 읽으면 충분하고, 읽기/쓰기 모델이 실제로 갈릴 때만 분리한다. (trivial 단건 조회도 `…Query`인 보일러플레이트 비용은 통일성·결정성을 위해 수용한다 — 실익은 버그 예방이 아니라 일관성이다.)
+- **infra_layer 분할**: `django_<app>/`(영속성) + `repository/`(자기 애그리거트 접근·구현) + `acl/`(외부 컨텍스트 ACL 어댑터, [통합 시]) + `adapter/`(외부 I/O 서비스 어댑터). 구체 매핑·QuerySet/Manager·`transaction.atomic()`은 `implementation-django` §16 소유.
 - **컨텍스트 간 통신 = OHS 우선, 직접 통합은 ACL로 분리**: 다른 바운디드 컨텍스트는 그 앱의 `published_service/`(OHS)로 소비하는 게 기본이다(아래 "컨텍스트 간 통신"). OHS가 없거나(미이주) 단일 트랜잭션·행 잠금이 불가피하면 ACL로 명시 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로 의존하고 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다**(architecture-ddd 컨텍스트 맵 ACL 패턴 — 업스트림 모델을 하류 모델로 번역).
 - **통합 스타일 선택(동기 ACL/OHS vs 비동기 이벤트)**: BC 간 통합에서 **즉시 일관성**이 필요하면(예: 재고 차감 — 오버셀 차단) 동기로 OHS/ACL을, **결과적 일관성**으로 충분하면(예: 주문 후 포인트 적립·알림) 비동기로 **도메인 이벤트**를 쓴다. 도메인 이벤트는 *애그리거트 간* 결과적 일관성에도 쓰여 ACL보다 범위가 넓다(ACL은 BC 간 동기 번역 전용). **선택 기준은 `architecture-ddd` 규칙4(일관성 경계 밖=결과적 일관성)·§6.8 패턴 선택 절차에 위임**한다 — 이 표준은 *어디 두는지*만 정하고 *언제 무엇*의 패턴 선택 이론은 코퍼스가 권위다.
 - **Django 앱 성립 (infra_layer 안)**: Django `startapp`은 `infra_layer/django_<app>/`에서 수행한다 — `apps.py`의 `AppConfig.name`을 그 전체 점경로(`application.<app>.infra_layer.django_<app>`)로, `label='<app>'`로 둔다. 그러면 `models/`·`migrations/`가 그 앱 아래에서 native하게 발견된다(단일 앱 라벨에 모델·마이그레이션을 귀속시키려 우회할 필요가 없다). 설정의 `INSTALLED_APPS`에 그 점경로를 등록한다. **앱 루트(`application/<app>/`)나 도메인 패키지에 `models.py`를 두지 않는다** — 도메인 컨텍스트 `<app>`와 Django 영속성 앱 `django_<app>`는 별개이고, 도메인 `<app>/`는 Django 앱이 아니라 순수 패키지다.
@@ -129,7 +130,7 @@ application/<app>/
 
 ### 컨텍스트 간 통신 — OHS (제공 컨텍스트 소유)
 
-서로 다른 컨텍스트(앱) 간 통신은 **각 앱이 자기 공개 진입점(OHS, 오픈 호스트 서비스)을 소유**한다(§2.5/§6.7). 다른 컨텍스트는 이 `published_service/`만 import하고, 대상 앱의 `domain_layer`/`application_layer`/`infra_layer`는 **직접 import하지 않는다**.
+서로 다른 컨텍스트(앱) 간 통신은 **각 앱이 자기 공개 진입점(OHS, 오픈 호스트 서비스)을 소유**한다(§2.5/§6.7). 다른 컨텍스트는 이 `published_service/`만 import하고, 대상 앱의 `domain_layer`/`application_layer`/`infra_layer`는 **직접 import하지 않는다**. **DB FK도 cross-context 결합이다 — 타 BC 모델을 ORM `ForeignKey`/`OneToOneField`/`ManyToManyField`로 참조하지 않는다(BC 경계 ORM FK 금지). 타 BC는 ID 값으로 참조하고 존재 검증은 OHS/ACL 포트로 하며, 같은 BC 내 FK는 허용한다(`architecture-ddd` §3.3 규칙3 영속성 확장).**
 
 ```
 application/<app>/published_service/   # 이 앱이 외부 컨텍스트에 노출하는 OHS
@@ -139,7 +140,7 @@ application/<app>/published_service/   # 이 앱이 외부 컨텍스트에 노�
 
 OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트의 공개 계약이 밖에 흩어지면 응집이 깨지고, 허브가 모든 컨텍스트를 아는 결합점으로 비대해진다(§2.5 "진흙공" 방어). OHS 반환도 도메인 엔티티 대신 **Published Language(DTO)**를 권장한다(presentation `schema_out`과 동일한 모델 누수 방어).
 
-**소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** **업스트림의 모델·예외 번역은 ACL 안에 격리한다 — presentation·application이 타 BC의 예외(`domain_layer` 하위)를 직접 `import`해 잡으면 컨텍스트 결합이 ACL 밖으로 새므로, ACL이 협력 포트가 던지는 우리 쪽 예외로 번역(동일 의미면 명시적 재노출)해 넘긴다.** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(이 표준의 통합 진화 지침 — architecture-ddd 컨텍스트 맵의 ACL·OHS 패턴을 토대로 한 합성이며, 코퍼스가 "ACL→OHS 진화"를 명시하는 것은 아니다).
+**소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** **업스트림의 모델·예외 번역은 ACL 안에 격리한다 — presentation·application이 타 BC의 예외(`domain_layer`/`application_layer` 하위)를 직접 `import`해 잡으면 컨텍스트 결합이 ACL 밖으로 새므로, ACL이 협력 포트가 던지는 우리 쪽 예외로 번역(동일 의미면 명시적 재노출)해 넘긴다. 이 번역은 *전수*다 — ACL이 구동하는 업스트림 동작이 그 포트 경로에서 던질 수 있는 예외를 (`domain_layer`·`application_layer` 층 무관) 빠짐없이 잡아 협력 포트가 선언한 우리 쪽 예외로 번역한다. catch되지 않은 업스트림 예외가 ACL을 그대로 통과해 우리 쪽 application·presentation으로 raw 전파되면 포트 계약 위반이다. 협력 포트(`domain_layer/<aggregate>/port/`)의 ABC·docstring이 *이 통합이 노출하는 우리 쪽 예외 전수 목록*의 단일 출처(앵커)이며 ACL은 그 목록을 채운다 — 업스트림에 새 예외가 생기면 포트 선언과 ACL 번역을 함께 갱신한다. 단 '전수'는 *알려진 구체 예외 집합을 빠짐없이 덮으라*는 것이지 `except Exception` 광범위 포괄 catch가 아니다 — 각 구체 예외를 명시 번역한다(`discipline-cleancode` 구체적 예외 처리).** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(이 표준의 통합 진화 지침 — architecture-ddd 컨텍스트 맵의 ACL·OHS 패턴을 토대로 한 합성이며, 코퍼스가 "ACL→OHS 진화"를 명시하는 것은 아니다).
 
 (앱별 변종: WebSocket 앱은 `<app>_asgi_router.py`·`presentation_layer/socket/`을 더 가진다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer`를 포함해 어느 계층 폴더도 생략하지 않고, 내용이 없으면 빈 패키지로 둔다(§0-2). 도메인 모델이 없는 앱이라도 빈 `domain_layer`는 존속시키고, 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.)
 
@@ -173,21 +174,23 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `<aggregate>/entity/` | 식별자를 갖는 종속 엔티티(§3.2) | `<entity>.py` | 코어(폴더 항상 생성) |
 | `<aggregate>/value_object/` | 불변 값 객체, 자기검증(§3.1) | `<value_object>.py` | 코어(폴더 항상 생성) |
 | `<aggregate>/repository/` | 리포지토리 **인터페이스(ABC)** — DIP 포트(§3.4), 구현은 infra | `<aggregate>_repository.py` → `class OrderRepository`(bare 개념명) | 코어 |
-| `<aggregate>/port/` | 외부 컨텍스트 **협력 포트(ACL 포트, ABC)** — 다른 컨텍스트를 소비할 때 도메인이 의존하는 역할 포트 | `<collaborator>_port.py` → `class ProductLockPort` | [통합 시] 다른 컨텍스트 소비할 때만 |
-| `<aggregate>/domain_service/` | 그 애그리거트 중심의 stateless 도메인 로직(§3.5) | `<name>_service.py` | [선택]; 여러 애그리거트에 걸치면 `domain_layer/` 공용 위치로 |
-| `<aggregate>/event/` | 도메인 이벤트 **정의**(§3.7) | `<event>.py` | [선택] 결과적 일관성·외부 통지 필요 시 |
-| `<aggregate>/specification/` | 재사용 가능한 규칙/조회 명세(§3.8) | `<name>_spec.py` | [선택] 복합 규칙을 조합·재사용할 때 |
+| `<aggregate>/port/` | 외부 컨텍스트 **협력 포트(ABC)** — 다른 컨텍스트를 소비할 때 도메인이 의존하는 역할 포트 | 일반: `<collaborator>_port.py` → `class ProductLockPort` · 외부서비스(Gateway 패턴): `payment_gateway.py` → `class PaymentGateway` | [통합 시] 다른 컨텍스트 소비할 때만 |
+| `<aggregate>/domain_service/` | 그 애그리거트 중심의 stateless 도메인 로직(§3.5) | `<name>_service.py` → `class PricingService` | [선택]; 여러 애그리거트에 걸치면 `domain_layer/` 공용 위치로 |
+| `<aggregate>/event/` | 도메인 이벤트 **정의**(§3.7) | `<event>_event.py` → `class OrderPlacedEvent`(과거형) | [선택] 결과적 일관성·외부 통지 필요 시 |
+| `<aggregate>/specification/` | 재사용 가능한 규칙/조회 명세(§3.8) | `<name>_specification.py` → `class OrderActiveSpecification`(풀네임) | [선택] 복합 규칙을 조합·재사용할 때 |
 | `<aggregate>/exception.py` | 도메인 예외 | 단일 파일(커지면 `exception/` 패키지) | 코어 |
 
 **응용 계층 `application_layer/` — 유스케이스 파사드, domain에만 의존 (§3.6)**
 
+> **어휘(인터랙터 채택)** — 이 표준의 *생성 코드*는 유스케이스를 연산 객체로 표현한다: 입력 `…Request`, 쓰기 `…Command`, 읽기 `…Query`, 모두 `execute(request)`. ⚠️ 코퍼스는 `…Command`/`…Query`를 **다른 의미로 쓰며 이는 이론/모델링 어휘라 보존**한다: `architecture-ddd §3.6`의 `…Command`=응용 서비스 *입력 DTO*, Event Storming 색상표의 `Command`=*의도적 행동*, CQRS/ES 패키지 구조의 domain `commands.py`=*도메인 커맨드 정의*, 애그리거트의 *커맨드 메서드*, `services.py`=*유스케이스 파사드*. 경계: **생성 코드 어휘 권위는 이 문서**(§6.1 위임)이고, 도메인·Event Storming *모델링* 어휘는 코퍼스가 권위다. 이 표준 `service/`는 여러 유스케이스 *오케스트레이션*(코퍼스 `services.py`=단일 유스케이스 파사드와 구분)이고, HackSoft `selectors.py`/`services.py`(`implementation-django §16`)의 평면 함수 관용은 이 표준이 `application_layer/{command,query}` 인터랙터로 구체화한다.
+
 | 폴더 | 존재 이유 | 위치 파일 · 명명 | 코어/[선택] 트리거 |
 |---|---|---|---|
-| `<feature>/command/` | 쓰기 유스케이스 — 도메인에 위임, domain `repository/` 인터페이스 의존(DIP) | `<usecase>_app.py` | 코어 |
-| `<feature>/query/` | 조회 — selector/QuerySet | `<usecase>_query_app.py` | CQRS 적용 시(§5.4); 아니면 command와 합쳐도 됨 |
-| `<feature>/dto/` | 유스케이스 **입력** command 객체(DTO) | `<usecase>_command.py` ※응답 DTO 아님(응답=presentation `schema_out`) | 입력 검증이 있으면 코어 |
-| `<feature>/handler/` | 도메인 이벤트/커맨드 핸들러(§6.1) | `<event>_handler.py` | domain `event/` 도입 시 |
-| `<feature>/service/` | 다중 유스케이스 오케스트레이션 | `<usecase>_service_app.py` | 여러 command/query를 한 흐름으로 묶을 때 |
+| `<feature>/command/` | 쓰기 유스케이스 **연산** — 도메인에 위임, domain `repository/`·`port/` 인터페이스 의존(DIP) | `<usecase>_command.py` → `class PlaceOrderCommand`(`execute(request)`) | 코어 |
+| `<feature>/query/` | 조회 유스케이스 **연산** — repository 의존 | `<usecase>_query.py` → `class ListOrdersQuery`(`execute(request)`) | 코어 (별도 읽기모델 CQRS는 §5.4 선택) |
+| `<feature>/dto/` | 유스케이스 **입력** 요청 객체(DTO) | `<usecase>_request.py` → `@dataclass class PlaceOrderRequest` ※응답 DTO 아님(응답=presentation `schema_out`) | 코어 |
+| `<feature>/handler/` | 도메인 이벤트/커맨드 핸들러(§6.1) | `<event>_handler.py` → `class OrderPlacedHandler` | domain `event/` 도입 시 |
+| `<feature>/service/` | 다중 유스케이스 오케스트레이션 | `<flow>_service.py` → `class CheckoutService` | 여러 command/query를 한 흐름으로 묶을 때 |
 | `unit_of_work.py` | UoW **인터페이스** — 트랜잭션 경계(§6.3) | 앱당 1개 | 구현은 `transaction.atomic()`(django §16.4)으로 충분; 커스텀 UoW 필요할 때만 |
 
 **인프라 계층 `infra_layer/` — ORM·외부 I/O (Django 구체는 `implementation-django` §16 소유)**
@@ -199,8 +202,8 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `django_<app>/admin/` | Django admin 등록·커스텀 | `<entity>_admin.py`(+`templates/` admin 전용) |
 | `django_<app>/apps.py` | AppConfig — `name='application.<app>.infra_layer.django_<app>'`, `label='<app>'` (이 점경로를 INSTALLED_APPS에 등록; 앱 루트에 `models.py` 금지) | `apps.py` |
 | `repository/` | domain `repository/` ABC **구현** + ORM↔도메인 변환(Data Mapper §6.2). **자기 애그리거트 전용** | `<aggregate>_repository.py` → `class DjangoOrderRepository`(구현=기술 한정자 접두) |
-| `acl/` | 외부 컨텍스트 **ACL 어댑터** — domain `port/` ABC 구현, 업스트림 모델·예외를 우리 모델로 번역. 리포지토리와 분리([통합 시]) | `<context>_acl.py` → `class DjangoProductLockPort` |
-| `service/` | **외부 서비스** 어댑터(인증·푸시·결제 등) | `<external>_service.py` ※`domain_service`와 구분(외부 I/O 전용) |
+| `acl/` | 외부 컨텍스트 **ACL 어댑터** — domain `port/` ABC 구현, 업스트림 모델·예외를 우리 모델로 번역(*전수* — 포트 경로의 모든 업스트림 예외를 포트-선언 예외로 빠짐없이). 리포지토리와 분리([통합 시]) | `product_lock_adapter.py` → `class DjangoProductLockAdapter`(일반 포트 구현=`Adapter`) |
+| `adapter/` | **외부 서비스** 어댑터(인증·푸시·결제 등) | Gateway 패턴이면 `stripe_payment_gateway.py` → `class StripePaymentGateway`, 일반이면 `<external>_adapter.py` → `class …Adapter` ※`domain_service`·app `service/`와 구분(외부 I/O 전용) |
 
 **표현 계층 `presentation_layer/` · 컨텍스트 통신 · 테스트**
 
@@ -209,7 +212,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `api_<resource>.py` (Ninja Router) |
 | `schema/` | 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`·`error_out.py`(feature가 많으면 `<feature>/`로 분할) — **응답은 `schema_out`**, 도메인 직접 노출 금지 |
 | `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `read.py`·`write.py`(앱이 크면 `read/`·`write/` 디렉터리). 다른 앱은 **이것만** import |
-| `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`. 엔드포인트별 평면 나열 금지 |
+| `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → 루트 `urls.py`가 포함 |
 
 **앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer` 포함 어느 계층도 폴더를 생략하지 않고 내용이 없으면 빈 패키지로 둔다(§0-2); 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.
@@ -225,12 +228,26 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 - Django ORM 모델 클래스 = **`<Name>Model`**(`OrderModel`; 파일 `<entity>_model.py`, `infra_layer/django_<app>/models/`).
 - 왜: ORM ≠ 도메인(Data Mapper §6.2). 이름이 갈려야 호출부가 어느 표현을 다루는지 분명하다(§0 불변식 6). 변환은 `infra_layer/repository/`·표현 `schema_out`이 담당한다.
 
-**추상화(포트) ↔ 구현(어댑터)** — 추상화가 개념의 "진짜 이름"을 갖는다(DDD·헥사고날 관용).
+**추상화(포트) ↔ 구현(어댑터)** — 추상화가 개념의 "진짜 이름"을 갖고, 구현 접미사는 그 포트가 *확립 패턴명*인지로 갈린다(헥사고날 정석 — DR-05/37 번복: 옛 규약은 모든 포트 구현에 `Port`를 보존했으나 이는 위치 표식을 구현에 남기는 오류였다).
 - 추상화(리포지토리 인터페이스·기타 포트 ABC) = 도메인 개념 + **역할 접미사**(`OrderRepository`·`ProductLockPort`·`PaymentGateway`). `Repository`/`Port`/`Gateway`처럼 그 객체의 *역할*을 나타내는 접미사는 이름의 일부라 허용한다.
-- 구현 = 추상화 **전체 이름에 기술·출처 한정자를 접두**(`DjangoOrderRepository`·`DjangoProductLockPort`·`InMemoryOrderRepository`·`FakeOrderRepository`). 추상화와 **base명을 일치**시킨다(역할 접미사를 떼지 않는다) — 그래야 어느 추상화의 구현인지 이름만으로 드러나고 감수가 위반을 적발할 수 있다(`ProductLockPort`의 구현은 `DjangoProductLockPort`이지 `DjangoProductLock`이 아니다).
-- 금지: `Interface`/`Impl`처럼 추상/구현 *구분만을 위한 타입 표식* 접미사(`OrderRepositoryInterface`·`OrderRepositoryImpl` ✕). 추상/구현은 한정자 유무로 이미 구분된다(PEP 8). 역할 접미사(`Port`)와 타입 표식(`Interface`)의 차이: 전자는 객체의 *역할*, 후자는 추상/구현 *구분*용이라 금지한다.
+- 구현 접미사 = **ⓑ 기준**(확립 패턴명 예외)으로 정한다:
+  - **확립 패턴명(PoEAA/GoF 등재명 — `Repository`·`Gateway`·`Mapper` 등)**: 추상·구현 **동일 접미사 유지**. 구현은 base 전체 이름에 기술·출처 한정자를 접두한다(`OrderRepository`→`DjangoOrderRepository`·`InMemoryOrderRepository`·`FakeOrderRepository`, `PaymentGateway`→`StripePaymentGateway`). 이들은 *패턴명*이라 구현에서도 떼지 않는다.
+  - **일반 협력 포트(위 패턴명에 없는 헥사고날 포트 — 다른 BC 협력/ACL 등)**: 추상 `...Port` ↔ 구현 **`...Adapter`** 쌍. `Port`는 헥사고날 *위치 표식*이라 구현에 남기지 않는다(`ProductLockPort`의 구현은 `DjangoProductLockAdapter`이지 `Django`+`ProductLockPort`가 아니다 — 구현에서 `Port` 접미사를 떼고 `Adapter`로 바꾼다). base 개념명(`ProductLock`)은 공유해 쌍 추적을 유지한다.
+  - 판정: 외부 시스템·인프라 자원 관문(결제·푸시·SMS·인증)은 PoEAA `Gateway` 패턴이고, 다른 BC 협력(ACL)·도메인 역할 추상은 일반 `Port`다. `Repository`/`Gateway`는 *확립 패턴명*(구현 유지)이고 `Port`는 *헥사고날 위치 표식*(구현은 `Adapter`)이라, 셋을 "역할 접미사" 한 묶음으로 보지 않는다.
+- 금지: `Interface`/`Impl`처럼 추상/구현 *구분만을 위한 타입 표식* 접미사(`OrderRepositoryInterface`·`OrderRepositoryImpl` ✕). 추상/구현은 한정자 유무로 이미 구분된다(PEP 8). 역할 접미사(`Port`)와 타입 표식(`Interface`)의 차이: 전자는 객체의 *역할*, 후자는 추상/구현 *구분*용이라 금지한다. 같은 이유로 **`Port`도 *구현*에선 위치 표식이라 쓰지 않는다 — 일반 포트 구현은 `Adapter`다**(확립 패턴명 `Repository`/`Gateway`는 예외).
 
-**파일명** — 파일명은 그 안의 주 클래스·개념을 **약어 없이** 반영한다: `order_repository.py`(○) / `order_repo.py`(✕). grep·예측 가능성을 위해 클래스명을 줄이지 않듯 파일명도 줄이지 않는다.
+**파일명** — 파일명은 **그 안 주 클래스명의 snake_case**이며 그 클래스·개념을 **약어 없이** 반영한다: `order_repository.py`(○) / `order_repo.py`(✕). grep·예측 가능성을 위해 클래스명을 줄이지 않듯 파일명도 줄이지 않는다. 폴더는 종류 그룹일 뿐 파일 접미사를 좌우하지 않는다. 종류별 규칙:
+- **유스케이스 연산 명명** — 쓰기 `<usecase>_command.py` → `class …Command`, 읽기 `<usecase>_query.py` → `class …Query`, 입력 `<usecase>_request.py` → `@dataclass class …Request`. 모두 `execute(request)`·repository/port 의존. (`_app`·`_service` 접미사 안 씀 — 위치 폴더가 종류를 표시; `_service.py`는 오케스트레이션 `service/`에만.)
+- **도메인 이벤트**: 파일·클래스 모두 **과거형** — `order_placed_event.py` → `class OrderPlacedEvent`.
+- **명세(Specification)**: 약어 없이 **풀네임** — `order_active_specification.py` → `class OrderActiveSpecification`(`_spec` ✕).
+- **스키마**: 입력 `schema_in.py` → `OrderIn`, 출력 `schema_out.py` → `OrderOut`, 에러 `error_out.py` → `ErrorOut`(In/Out 접미사).
+- **조회(읽기)**: `<usecase>_query.py` → `class …Query`(인터랙터 연산 — `execute(request)`, repository 의존). 별도 읽기 *모델*(CQRS §5.4)은 선택이고, 공유 모델 repository 읽기로 충분하면 그대로 둔다.
+
+**폴더명(앱·애그리거트·feature)** — 위 파일·클래스 명명과 달리 폴더 도메인명은 **의미 판정이 필요해 권장 수위**다(백스톱 없음, discipline-reviewer 점검 — 클래스/파일 명명처럼 결정적으로 집행하지 않는다).
+- **앱 `<app>`** = 핵심 애그리거트명과 **동일**하게 둔다(단일 BC·단일 애그리거트). 여러 애그리거트를 담으면 대표/컨텍스트명. snake_case. (placeholder `<app>`·`<aggregate>`는 §0-1 범례상 별개 슬롯이고, "동일 권장"은 단일 BC에 한정한다.)
+- **애그리거트 `<aggregate>`** = **단수** 개념명. snake_case(`order/`·`member/`, `orders/` ✕).
+- **feature `<feature>`** = 유스케이스 단위. 보통 앱당 1개(앱·애그리거트명과 같아도 됨)이고, 여러 유스케이스 그룹이면 분리한다.
+- **금지: 앱명과 애그리거트명의 유사 변형**(`ordering` vs `order`) — 같게 하거나 명확히 다른 컨텍스트명으로 한다. 한 글자·복수형 차이로 헷갈리게 두지 않는다.
 
 ---
 
