@@ -15,6 +15,7 @@
 | P4 | ③ 판정-소유 이주 비결정 | 양 런타임 | ⚪ 데이터 부족 | N≥5 블라인드 정량화 후 판단 |
 | **NJ-4** | 오류 status를 `openapi_extra`로만 선언(response= 누락) | Codex(poc-codex) | 🔧 **정적 집행(2026-06-02)** — 백스톱 `check-openapi-error-declaration.py` 신설·poc-codex exit2·거짓양성0 검증 | 라이브 발화 N≥1 |
 | **SD-7** | ACL *밖*(presentation·application)이 catalog 도메인 예외 직접 import = 번역 ACL 미격리 | Claude(p1a-v3) | 🔧 **정적 집행(2026-06-02)** — 백스톱 `check-context-isolation.py`(ACL 면제) + 루브릭 미스캘리브 교정(바·§E 앵커·`check-structure.py`) | 라이브 발화 N≥1 |
+| **ACL-EX** | ACL 예외 **비-전수** 번역 → 경계 미매핑 500(`StockConflictError`[CAS 소진] raw 누수) | Claude(rcqlive) | 🔧 **정적 처방(2026-06-06·DR-44)** — houserules 전수성+**포트 계약 앵커(E)**·reviewer **C1**(중앙완전성 important)/**C2**(ACL전수성 blocker)·api/architect 실패모드 열거(비강제). 미러 IDENTICAL·**사전시뮬 발화(Claude)/비발화(Codex)/FP0**. **B(acceptance-tester 종단테스트)·백스톱('정의-집합 차집합') 보류** | 라이브 N≥1 발화 확인 → N≥2서 B/백스톱 재검토 |
 
 ---
 
