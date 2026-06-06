@@ -308,6 +308,7 @@ def list_orders(request):
 - `415`: 요청 페이로드 형식 미지원 — `Content-Type`을 이 리소스가 처리 못 함 (`architecture-api` §7.2)
 - `422`: semantically invalid input 또는 framework validation error 계약
 - `429`: rate limit
+- `503`: 일시적 서비스 불가(과부하·정비·일시 경합) — retryable, `Retry-After` 헤더 동반. transient 인프라 경합의 retryable 매핑은 §6.2이며, 409+`retryable` 확장도 정당한 대안이다 — 503/409 선택은 명세 §5/G1이 정한다(`architecture-api` §13.4 "둘 다 정당·임의 확정 금지").
 
 > `406`/`415`의 *처리 메커니즘*은 §6.3(콘텐츠 협상 실패) 참조 — ninja 경계 안에서 내고 전역 미들웨어로 가로채지 않는다.
 
@@ -340,18 +341,36 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
 
 - **도메인/애플리케이션 예외**: presentation이 예외→HTTP status를 매핑한다(도메인은 HTTP를
   모른다). 예외가 많으면 공통 도메인 베이스를 잡아 매핑 테이블로 status를 정하고, 예외
-  *종류마다* 핸들러를 무한 증식시키지 않는다.
+  *종류마다* 핸들러를 무한 증식시키지 않는다. **스키마가 도메인 불변식을 중복 가드해(입력
+  검증이 먼저 422를 내) 도메인 raise가 평소 latent여도, 그 예외를 공통 베이스 매핑에서
+  *빠뜨리지 않는다* — 스키마는 1차 방어지 유일 방어가 아니라, 리팩터링으로 스키마 가드가
+  빠지면 즉시 미식별 500으로 샌다(매핑 누락을 스키마 의존으로 정당화 금지).**
 - **framework 기본 예외**: ninja는 `AuthenticationError`(401)·`AuthorizationError`(403)·
   `Http404`(404)·`ValidationError`(422)·`Throttled`(429)에 기본 핸들러를 자동 등록하는데
   기본 응답은 plain `application/json`이다. RFC 9457을 일관 적용하려면 이들도 같은 헬퍼로
   오버라이드한다(아래 대안 B는 이걸 한 번에 처리한다).
+- **transient 인프라 예외**: DB 락·deadlock·serialization 같은 *재시도로 해소되는* 경합은
+  retryable(503+`Retry-After` 또는 409+`retryable` — 명세 §5/G1)로 매핑한다. 단 `OperationalError`
+  *클래스 전체*를 retryable로 보지 말고 핸들러 안에서 락/경합 *시그니처*만 가린다(disk I/O·
+  `no such table`·malformed 등 영구장애는 500). `IntegrityError`는 transient가 아니다
+  (`OperationalError` 형제 클래스) — 동시성 UNIQUE 경합의 retryable·409 *의미*는 도메인·ACL이
+  1차로 번역하고, 경계까지 샌 raw는 형식만 problem화한다(아래 레시피).
+- **최후방 미식별 예외**: 위 어느 핸들러에도 안 잡힌 예외는 `@api.exception_handler(Exception)`가
+  500 problem+json으로 변환하고 **스택은 `logger.exception`으로만** 남긴다(본문 노출·DEBUG
+  traceback 차단). 이는 *미식별* 예외의 안전망이지, 도메인·포트 예외 핸들러의 부재를 가리는
+  용도가 아니다 — 핸들러 누락을 catch-all로 때우면 중앙화 완전성 위반이다(`discipline-houserules` §2).
 - `type` URI·`title` 문구·extension 설계는 프로젝트 problem 카탈로그 재량이다.
 
 ```python
+import logging
+from http import HTTPStatus
+
+from django.db import IntegrityError, OperationalError
 from ninja import NinjaAPI
-from ninja.errors import ValidationError       # ninja validation 오류(≠ pydantic.ValidationError)
+from ninja.errors import HttpError, ValidationError   # ninja HttpError·validation 오류(≠ pydantic.ValidationError)
 from ninja.responses import Response           # JsonResponse 서브클래스 + ninja JSON 인코더
 
+logger = logging.getLogger(__name__)
 api = NinjaAPI()
 
 
@@ -376,7 +395,74 @@ def on_insufficient_stock(request, exc):
 def on_validation_error(request, exc):
     return problem(422, title="Validation failed", detail="Request did not pass validation.",
                    **{"invalid-params": exc.errors})
+
+
+@api.exception_handler(HttpError)              # 깨진 본문·파싱 실패·임의 HttpError → RFC9457 body
+def on_http_error(request, exc):
+    # ninja 기본 HttpError 핸들러는 application/json {"detail"}라 RFC9457 미달 — problem 헬퍼로 통일.
+    # type·title은 problem 카탈로그 재량(§6.2) — 여기선 about:blank + 표준 phrase fallback.
+    try:
+        title = HTTPStatus(exc.status_code).phrase
+    except ValueError:                         # 비표준 status code 가드(HTTPStatus ValueError 방지)
+        title = "Request error"
+    return problem(exc.status_code, type="about:blank", title=title, detail=str(exc))
+
+
+def _server_error(request, exc) -> Response:
+    # 미식별·미매핑·비-transient 예외의 최후방 500 — 스택은 로그로만(본문 노출·DEBUG traceback 차단).
+    logger.exception("Unhandled exception at API boundary")
+    return problem(500, type="about:blank", title="Internal server error",
+                   detail="An unexpected error occurred.")
+
+
+def _is_retryable_db_error(exc: OperationalError) -> bool:
+    # 락·deadlock·serialization만 retryable — 영구장애(disk I/O·malformed)는 제외.
+    # 거짓음성이 가용성을 깎고 503은 재시도라 과대탐지 비용이 낮으니 넓게 잡는다.
+    msg = str(exc).lower()
+    if "locked" in msg or "deadlock detected" in msg or "could not serialize access" in msg:
+        return True
+    # Postgres SQLSTATE 40001 serialization_failure / 40P01 deadlock_detected.
+    # psycopg3=.sqlstate, psycopg2=.pgcode (드라이버별 폴백; MySQL 채택 시 1213/1205 추가).
+    cause = exc.__cause__
+    code = getattr(cause, "sqlstate", None) or getattr(cause, "pgcode", None)
+    return code in {"40001", "40P01"}
+
+
+@api.exception_handler(OperationalError)       # 인프라 transient — 시그니처로 분기(클래스 통째 아님)
+def on_db_operational_error(request, exc):
+    if not _is_retryable_db_error(exc):
+        return _server_error(request, exc)     # disk I/O·malformed 등 영구장애 → 500
+    # retryable status는 명세(§5/G1)가 정한다 — 503(+Retry-After) 또는 409(+retryable 확장).
+    resp = problem(503, type="about:blank", title="Service temporarily unavailable",
+                   detail="Transient database contention; please retry.")
+    resp["Retry-After"] = "1"
+    return resp
+
+
+@api.exception_handler(IntegrityError)         # 경계까지 샌 raw 제약위반 — 형식만 problem화
+def on_integrity_error(request, exc):
+    # 동시성 UNIQUE 경합 등 retryable·409 *의미*는 도메인·ACL이 1차 번역(여기 도달 = 그 부재).
+    # 형식 안전망으로 500 problem만 — 의미 분기를 위해 메시지를 파싱하지 않는다.
+    return _server_error(request, exc)
+
+
+@api.exception_handler(Exception)              # 최후방 — 미식별 예외만(구체 핸들러가 MRO상 먼저)
+def on_unhandled(request, exc):
+    return _server_error(request, exc)
 ```
+
+**최후방·transient 핸들러 동작(django-ninja 1.6.x 실측).** 구체 핸들러는 MRO most-specific-first라
+`@api.exception_handler(Exception)` catch-all이 도메인·`HttpError`·`OperationalError`·`IntegrityError`
+핸들러를 가로채지 않는다(미식별 예외만 catch-all로). `HttpError`(ninja 깨진본문·임의 status)도 `Exception`보다
+구체라 catch-all 전에 자기 핸들러가 잡는다. `OperationalError` 핸들러는 비-retryable일 때 `raise exc`로
+되던지지 말고 직접 500 problem을 반환한다 — ninja는 핸들러 안의 raise를 catch-all로 보내지 않고 Django로
+전파해 DEBUG=True면 text/plain traceback이 샌다. 거꾸로 `@api.exception_handler(Exception)`를 등록하면
+ninja 기본 traceback 핸들러를 대체해 그 누출을 막는다. retryable status(503/409) 선택은 코더가 임의
+확정하지 않고 명세(§5/G1·`architecture-api` §13.4)를 따른다 — 503이면 `Retry-After` 헤더, 409면
+`retryable` 확장. 대안 B(`create_response`)를 함께 쓰면 *형식*(status≥400 problem화)은 자동이고 status
+*선택*만 위 핸들러가 정한다(병행). 이 catch-all 정당성은 "API 경계 변환점은 operation 본문이 아니다"
+(§2.2·`discipline-reviewer` 중앙화 렌즈)에서 오지, 예외를 삼키는 게 아니다 — 스택은 `logger.exception`으로
+남기고 problem으로 변환한다.
 
 핸들러·헬퍼는 `NinjaAPI` 인스턴스 단위다 — API가 여럿이면 공통 베이스로 일관 적용한다.
 async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
@@ -391,8 +477,10 @@ async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
 framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 상속해 런타임 메서드
 `create_response`만 오버라이드해 `status >= 400`이면 media type을 `application/problem+json`으로
 바꾼다(2xx 성공은 건드리지 않는다). 그러면 도메인 예외·`Http404`·422·401/403/429가 한 곳에서
-일괄 변환되고 핸들러는 problem *본문*만 만들면 된다. 이는 ninja가 공개한 정식 런타임 확장점이며
-**생성된 OpenAPI를 건드리지 않는다**(아래 금지 대상과 혼동하지 말 것).
+일괄 변환되고 핸들러는 problem *본문*만 만들면 된다. **단 대안 B는 *CT만* 통일하고 problem *body*는 각
+핸들러가 만든다** — 깨진 본문·파싱 실패처럼 body를 만드는 핸들러가 없는 `HttpError`는 B만으론 ninja 기본
+body(`{"detail"}`)라 RFC9457 미달이므로 위 `@api.exception_handler(HttpError)`를 함께 둔다(B로 대체 불가).
+이는 ninja가 공개한 정식 런타임 확장점이며 **생성된 OpenAPI를 건드리지 않는다**(아래 금지 대상과 혼동하지 말 것).
 
 **OpenAPI는 error 응답을 `application/json`으로 표기한다 — 수용된 한계다.** ninja는 선언한
 `response={...}` schema를 전역 `renderer.media_type`(기본 `application/json`)으로 문서화하므로,
@@ -432,7 +520,7 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
           if request.method in ("POST", "PUT", "PATCH"):
               media = (request.content_type or "").split(";", 1)[0].strip()
               if media != "application/json":
-                  return problem_response(415, ...)  # §6.2 중앙 헬퍼 재사용(수제 JsonResponse 금지)
+                  return problem(415, ...)  # §6.2 중앙 헬퍼(problem) 재사용(수제 JsonResponse 금지)
           return run_op(request, *args, **kwargs)     # 통과 → ninja가 payload: Schema 파싱
       return wrapper
 
@@ -446,9 +534,10 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
   어느 status에서도 operation·helper가 `request.body`/`json.loads`로 본문을 수동 파싱하지 않는다 — 본문은
   선언적 `payload: Schema`가 받는다(operation을 얇게 유지하는 핵심 신호).
 - **임의 status**: `raise HttpError(status, detail)`(`ninja.errors.HttpError`) — operation·Parser
-  어디서든 ninja가 응답으로 변환한다. problem+json 본문이 필요하면 위 §6.2의 중앙 변환을 탄다 —
-  §6.2 대안 B(`create_response` 오버라이드)를 쓰면 `status >= 400`이 일괄 problem+json화되어 별도
-  `HttpError` 핸들러가 불요하고, 안 쓰면 `@api.exception_handler(HttpError)`로 본문을 통일한다(둘 중 하나).
+  어디서든 ninja가 응답으로 변환한다. **모든 오류 응답은 problem+json *body*여야 하므로**(위 §6.2 중앙
+  변환·`architecture-api` §6.3), 임의 status·`HttpError`도 §6.2의 `@api.exception_handler(HttpError)`가
+  body를 problem화한다(앵커 = §6.2 레시피). 대안 B(`create_response`)는 *CT만* 통일하고 body는 각 핸들러가
+  만들므로 `HttpError` body를 **대체하지 못한다** — 대안 B 사용 여부와 무관하게 HttpError 핸들러가 필요하다.
 
 **귀결 — ninja 라우팅 *밖*에 협상을 두지 않는다.** ninja가 협상·임의 status를 경계 안에서 직접
 주므로, 협상을 Django 전역 `MIDDLEWARE`·루트 `urls.py` 래퍼·별도 디스패처 등 ninja 라우팅 *밖*

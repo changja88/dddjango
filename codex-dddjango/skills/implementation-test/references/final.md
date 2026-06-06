@@ -2092,6 +2092,8 @@ def test_user_creation():
     assert user.created_at is not None
 ```
 
+**The Liar 변종 — 산출물 오귀속.** 테스트가 *겨냥한* 새 산출물(명시 제약·새 가드)을 검증하는데, 술어가 *동치인 기존 암묵 가드*(필드 타입의 암묵 CHECK — 예 `PositiveIntegerField`의 `>=0`)가 먼저 통과시키면, 그 테스트는 산출물을 *구별 증명*하지 못한다 — 그 산출물만 약화·제거해도 다른 가드가 green이라 false green이다(예: 명명 `CheckConstraint(stock>=0)`를 약화해도 `PositiveIntegerField`가 `IntegrityError`를 내 통과). 다층 방어로 제약을 병행하는 것 자체는 정상이다(`architecture-db` §9.5 불변식 CHECK 백스톱 병행 권장 — *제거하지 않는다*). 고칠 것은 *테스트 귀속*이다: 명시 제약이 필드 가드와 술어 동치면 그 사실을 docstring에 밝히고(이 테스트는 다층 백스톱을 검증), 제약이 *strictly stronger*(상한·복합·`>=N`)일 때만 그 추가분을 구별하는 단언을 둔다.
+
 **Excessive Setup (과도한 설정)**
 수백 줄의 설정 코드로 테스트 대상이 무엇인지 파악하기 어렵다.
 
