@@ -355,6 +355,16 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
   `no such table`·malformed 등 영구장애는 500). `IntegrityError`는 transient가 아니다
   (`OperationalError` 형제 클래스) — 동시성 UNIQUE 경합의 retryable·409 *의미*는 도메인·ACL이
   1차로 번역하고, 경계까지 샌 raw는 형식만 problem화한다(아래 레시피).
+- **계산된 transient는 합성이 아니라 도메인 타입으로**: 위 락/경합 *시그니처* 인식(`_is_retryable_db_error`)은
+  드라이버가 *실제로 던진* `OperationalError`에만 적용된다(recognizer는 실 메시지·`__cause__` SQLSTATE를 읽는다).
+  ACL·앱이 낙관락·CAS 재시도 루프를 *스스로 소진 판정*한 경우(드라이버 예외 부재)는 인프라 예외
+  (`OperationalError`/`DatabaseError`)를 *합성*해 transient를 신호하지 않는다 — 합성 인프라 예외는 실 메시지·
+  `__cause__`가 없어 recognizer 사각이 되어 영구장애로 오분류·500으로 샌다(과소매핑). 이 *계산된* 경합은 협력
+  포트가 선언한 **도메인 transient-마커 예외 *타입***(`StockContention` 등 retryable 의미)으로 raise하고
+  presentation이 *타입*으로 retryable 매핑한다(`discipline-houserules` §2 ACL 절). 실 드라이버 락 예외를 잡아
+  재시도하다 소진했다면 원본을 `raise … from driver_exc`로 보존해도 recognizer가 `__cause__`로 인식한다(`from`
+  없는 합성만 금지). 결정적 백스톱 `check-synthetic-infra-exc`가 `infra_layer`의 `from` 없는 인프라 예외 합성을
+  차단하고 `discipline-reviewer`가 헬퍼·변수 우회 합성을 본다.
 - **최후방 미식별 예외**: 위 어느 핸들러에도 안 잡힌 예외는 `@api.exception_handler(Exception)`가
   500 problem+json으로 변환하고 **스택은 `logger.exception`으로만** 남긴다(본문 노출·DEBUG
   traceback 차단). 이는 *미식별* 예외의 안전망이지, 도메인·포트 예외 핸들러의 부재를 가리는
