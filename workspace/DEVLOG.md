@@ -385,6 +385,15 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **미해결 백로그(우선순위)**: ① **DR-44 인프라-예외 누수**(방금 작업의 직접 미완·원인리뷰 필요) ② #2 깨진JSON problem+json 중앙화(DR-35 후속) ③ #3·#4 위장 green 테스트(acceptance-tester 동시성 진정성) ④ **pytest 강제**(DR-42·Codex N=2·백스톱 ⑬ 맹점=pytest *무설정*은 못 봄, 깨진설정만) ⑤ DR-44 C1/C2 차단측 라이브 미검증(양런 누수 0이라 발화 안 됨).
 - 🔴 **N=1·우열 결론 아님**(DR-44 축은 양 런타임 정상: Codex 기존부터·Claude 수정 후). 정본=결과지 2개(addendum 포함)·이 엔트리.
 
+### DR-47 ✅ NJ-7 오류 변환 완전성(catch-all) — 평가지 차원 신설 + §4.3.1 RUBRIC 등재 + 표준 집행 백스톱⑯ (양판·1.8.0·미푸시·🔴라이브배선미검증)
+2026-06-08. 발단: aclex2live B트랙(§4.3.1·ACL-EX2·결과지+메모리 정본) 후속. 사용자 "Claude 평가 거의 만점인데 catch-all 흠이 안 잡힌다 → 추가→채점방법→재채점→수정". (DEVLOG 갭: DR-46=rootcause 소스미러 별도 트랙·aclex 본류 maj1~maj4·min1·min2·§4.3.1·B트랙⑮는 결과지/메모리 `[[dddjango-aclex-r2]]` 정본·DEVLOG 미소급.)
+- **흠(NJ-7)**: ninja 최후방 `@api.exception_handler(Exception)` 부재 또는 핸들러 `raise exc` 되던지기 → 미식별(`KeyError`·`ValueError`)·비-retryable 예외가 problem+json 단일변환점 우회→Django 기본 500(DEBUG traceback 누출). §6.2:368-371·477-479 *선재*(집행 갭·텍스트 갭 아님)인데 33항목에 측정 차원 없어 라벨 미포착("Claude 100점인데 흠").
+- **① 평가지 NJ-7 신설**(동결 1회 해제·RUBRIC §5.2 정직표기): NINJA 차원 추가(catch-all 등록 grep + bare `raise exc`·비치명 '강'·SD-6[중앙화 *위치*]와 직교[NJ-7=*완전성*]). 재채점: Claude 품질 상→중·Codex 중→하(양 catch-all 부재 grep 확정). **교훈(곁길·내 실수)**: 처음 §4.3.1 EP-5(관측트랙·freeze 라벨무변)로 넣으려다 적대3렌즈 NO-GO→폐기. 정답=RUBRIC 33항목(라벨 반영). 관측 트랙(§4.3.1)↔RUBRIC 차원 구분.
+- **② §4.3.1 RUBRIC 등재**(사용자 "회귀 보게 정식 등재"): maj1live엔 EP 표 有·aclex2live 누락(내 §6 재작성 누락) 발견 → RUBRIC **TIER-OBS** 포인터 스텁(status 미복제·SSOT=EVAL-METHOD §4.3.1·라벨 무영향·freeze 밖·NJ-7과 배타) + EVAL-METHOD **§6.1 #9.5** 필수 섹션화(maj1live 이후 cutoff·소급 미적용) + 채점지 2 EP 표 복원. 적대 1렌즈 MODIFY 반영(freeze 자기충돌·소급위반·SSOT 3결함 교정).
+- **③ 표준 집행(수정·2.5층)**: 백스톱 **⑯ `check-catch-all-handler.py`**(NinjaAPI 인스턴스별 합산·조건1 catch-all 부재 OR 조건2 핸들러 `raise` 되던지기[Codex `:117 raise exc` 포착]·`raise X from exc`/alt-B+catch-all/분산-파일 면제·alt-B 단독은 면제 아님 §6.2:479) + reviewer "catch-all 안전망" important(blocker 금지·완전성 렌즈와 배타) + 게이트 배선 ①-⑯·1.8.0. **생략**(렌즈C): final.md salience·SKILL.md·coder.md(표준 3중 완비·DR-22 텍스트 효용0).
+- **적대 검증**: 등재 1렌즈+집행 3렌즈(정밀도·충분성[백스톱 유일강제·DR-22/21]·범위[새백스톱 vs ⑨확장·N=1 규율 maj1⑭선례]) 전부 MODIFY·NO-GO 0. 백스톱 정밀도: **known-bad 4/4 exit2**(aclex2live claude·codex[조건1+2]·maj1live-codex·합성)·**known-good 5/5 exit0**(maj1live-claude·분산·alt-B+catch-all·plain·번역)·거짓양성0. 미러 byte-id·배선 정합(15→16·잔여0)·문법 OK.
+- **커밋**: 평가지=`676c583`·집행=이 커밋(1.8.0·**미푸시**). 🔴 **라이브 배선 미검증**(DR-30식 dual 후속·⑮도 미검증)·N=1(양 런타임 2표본·§6.2 선재·grep 결정적·우열 금지). 정본=결과지 2·RUBRIC TIER-OBS·EVAL-METHOD §4.3.1/§6.1·`[[dddjango-nj7-catchall]]`.
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
