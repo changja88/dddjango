@@ -11,12 +11,12 @@
 | ① 마스크 C | order=신규앱(§0 전부 강제) · catalog=기존앱·런 touched·판정 적재(MQ0=Y·MQ1=Y·MQ2=N)→§1.2·이주로 위치 PASS |
 | ② 치명 게이트 | **FAIL 0건** (SD-1~7·FC-1~3·SH-1·2·4·7·NJ-1·2·Q-4 전부 ✅) |
 | ②.5 실질성 관문 | 빈 골격 0 — 통과 |
-| ③ 비치명·의미변종 | 의미적 변종 0건 · 비치명 **Q-6 FAIL**(품질 등급 강등·"준수" 라벨엔 비영향) |
-| ④ TIER-Q 등급 | WEAK 2(Q-1·Q-7)·**FAIL 1(Q-6)** → **품질 중** |
+| ③ 비치명·의미변종 | 의미적 변종 0건 · 비치명 **FAIL 2(Q-6 pytest·NJ-7 catch-all)**(품질 강등·"준수" 라벨엔 비영향) |
+| ④ TIER-Q 등급 | WEAK 2(Q-1·Q-7)·**FAIL 2(Q-6·NJ-7)** → **품질 하**(§2.4: 중=FAIL≤1 위반) |
 
-**한 줄 요지**: 치명 0 → **정적 준수** / 품질 **중**(Q-6 pytest 미채택 FAIL). ACL-EX2 대조군대로 부재(대안 B).
+**한 줄 요지**: 치명 0 → **정적 준수** / 품질 **하**(Q-6 pytest 미채택 + NJ-7 catch-all 부재 FAIL 2). ACL-EX2 대조군대로 부재(대안 B).
 
-**2차원 라벨**: **(정적: 준수·품질 중)** × **(라이브: 발화)** — N=1·단일태스크라 "완료" 금지.
+**2차원 라벨**: **(정적: 준수·품질 하)** × **(라이브: 발화)** — N=1·단일태스크라 "완료" 금지.
 - `폴더 동작`: **관측** (`.dddjango/20260607-1903-order-create-api/`)
 - `에러경로 계약`(§4.3.1): **관측**(전부 충족) — EP-1/1b/2/4 problem+json·**EP-3=503**·정상 201. (Claude와 달리 **EP-1 깨진본문도 400 problem+json** — `HttpError` 핸들러 경유)
 
@@ -56,6 +56,7 @@
 | **NJ-4** status별 response 선언 | `response={}`에 다중 status | §2.2·§8 | `api_orders.py:33-41` `response={201,404,406,409,415,422,503}` 전부 schema 선언·`openapi_extra` 0 | ✅ | ➖ | ✅ | —(강) |
 | **NJ-5** operation 문서화 | summary/tags·유의미 반환 | §2.2 | `api_orders.py:42 summary`·`:28 tags`·`-> tuple[int, OrderOut]` | ✅ | ➖ | ✅ | —(경미) |
 | **NJ-6** ninja 버전 핀 | 매니페스트 핀 | §2.1 | `requirements.txt` `django-ninja==1.6.2` | ✅ | ➖ | ✅ | —(경미) |
+| **NJ-7** 오류 변환 완전성(catch-all) | 미식별·비-retryable 단일변환점 완전성 | §6.2(368·469·477) | **catch-all `@api.exception_handler(Exception)` 부재**(grep 0) + **`order_api_router.py:117 raise exc`**(permanent 되던지기) → 미식별·permanent가 problem+json 단일변환점 우회·Django 전파(DEBUG traceback) | ❌(catch-all 0·raise exc) | ❌ | ❌ | —(강) |
 
 > **NJ-1 🟡 노트**: `problem.py:29` `JsonResponse(body, content_type=PROBLEM_JSON)` 직접 생성 — RUBRIC NJ-1 주의 "(a) `ninja.responses.Response` 아닌 `JsonResponse` = 경미 🟡". 중앙핸들러 problem 반환 형태라 NJ-1 스택 채택 자체는 치명 통과 ✅·경미 노트만.
 
@@ -83,7 +84,7 @@
 | **Q-6** 테스트/TDD | **pytest 미채택**: `manage.py test`·`TestCase`(`test_api_orders.py:20`)·`SimpleTestCase`(×3)·`from unittest.mock import patch` — greenfield인데 Django TestCase 폴백(RUBRIC Q-6 FAIL 조건). 단 17 green·mutation red·행위 커버 | ❌(러너) | ❌ | ❌ |
 | **Q-7** 경미 | 공개표면 어노테이션(⑫ exit0) · **영어 docstring**(`product_stock_port.py:7` Protocol `"""Deducts catalog-owned stock…"""`·§5 한국어 기본 deviation) · `django-ninja==1.6.2` 핀 | ✅(public-surface exit0) | 🟡 | 🟡 |
 
-**TIER-Q 카운트**(Q-1·2·3·5·6·7 + NJ-3·4): WEAK 2(Q-1·Q-7)·**FAIL 1(Q-6)** → **품질 중**(§2.4: WEAK≤4∧FAIL≤1).
+**TIER-Q 카운트**(Q-1·2·3·5·6·7 + NJ-3·4·7): WEAK 2(Q-1·Q-7)·**FAIL 2(Q-6·NJ-7)** → **품질 하**(§2.4: 중=FAIL≤1 위반).
 
 ---
 
@@ -93,6 +94,19 @@
   - **⑮ check-synthetic-infra-exc**: 클린 exit0(catalog repository가 raw `OperationalError`를 받아 `raise CatalogRetryableStockContention from error`로 *번역*·합성 0). proxy 주입 시 차단(이전 DR-30식 확인). ACL-EX2 대조군대로 부재.
   - **check-error-centralization**: app층만 — **presentation catch-all 완전성 못 봄**. ⇒ `order_api_router.py:115-118` `handle_operational_error`가 permanent 시 `raise exc`(되던지기) + catch-all `@api.exception_handler(Exception)` 부재 → permanent/미식별 예외가 problem+json 우회(§6.2:467 위반·prod 500 non-problem·DEBUG traceback). **어느 백스톱도 미포착**·§4.3.1 관측 트랙 밖(EP-1~4는 problem+json). **Claude와 공통 catch-all 갭=표준 빈틈**(후속 후보). 단 status(500)는 정당·KNOWN 계약 정확이라 치명 아닌 품질 흠.
   - 전 백스톱 15종 fixture 일괄 exit0(⑪⑫⑬⑭⑮ 포함).
+
+## 에러 경로 라이브 관측 (§4.3.1 — 별도 트랙·완료 비산입·치명 아님)
+> 조정자 직접 probe(자기보고 불신)·어댑터 ⓑ = `POST /api/orders` + 본문. EP-3 = CAS 소진 유도(type ii: catalog 도메인 `CatalogRetryableStockContention` 번역 경로·대안 B). 계약 속성표(ⓐ)·status 화이트리스트 정본 = `EVAL-METHOD.md §4.3.1`.
+
+| 키 | 관측 status | content-type | 화이트리스트 | 판정 |
+|---|---|---|---|---|
+| EP-1 깨진 본문(1b 변종) | **400** | application/problem+json (`HttpError` 핸들러) | {400} | ✅ 관측 |
+| EP-2 무효 입력(qty=0) | **422** | application/problem+json | {422,400} | ✅ 관측 |
+| EP-4 재고 부족 | **409** | application/problem+json | {409} | ✅ 관측 |
+| EP-3 transient 소진(type ii) | **503** | application/problem+json | {503,409} | ✅ 관측(대조군·대안 B 도메인 타입 번역) |
+
+- **EP-3=503 = 대조군 대안 B**: catalog `try_deduct`가 raw `OperationalError`를 받아 `raise CatalogRetryableStockContention from error`(도메인 타입·`from` 보존)·ACL→order 번역·presentation 503. 합성 인프라 예외 0(ACL-EX2 구조적 부재).
+- **EP-1~4·content-type 전부 충족** — Claude와 달리 EP-1 깨진본문도 400 problem+json(`HttpError` 핸들러 경유). 단 catch-all 완전성(미식별·permanent `raise exc` 되던지기)은 **EP-1~4 밖** 후속 후보(NJ-7 라벨이 전담·§ backstop-blind 카드).
 
 ## 조정자 노트 (결론만)
 - **ACL-EX2 = 대조군대로 부재**(대안 B): catalog `try_deduct`가 raw `OperationalError`를 *받아* `_is_retryable`→`raise CatalogRetryableStockContention from error`(도메인 타입·`from` 보존)·operation 소진→`raise CatalogRetryableStockContention`·ACL→order `RetryableStockContention`·presentation 타입매핑 503. **합성 인프라 예외 0**. EP-3=503 실측. (렌즈 A "Codex recognizer 상류" 실증 — message-match는 repository에 있으나 도메인 타입 raise.)
