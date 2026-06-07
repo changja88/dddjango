@@ -110,3 +110,16 @@ v1은 maj1·min1·maj4를 "동형 집행 갭(텍스트 충분+미적용+집행 �
 - **N=1·P4③**. salience 효과는 텍스트 판별 불가(DR-22)→**라이브로만**. ⑭이 라이브 배선 강제(DR-30식)라 coder 무판정 503은 게이트서 반송된다 — 렌즈 A가 짚은 "reviewer important는 게이트 미차단"을 ⑭이 메움.
 - **known-limitation**: 헬퍼 무조건-True 위장·register-only+무어노테이션은 ⑭ 못 봄 → reviewer (ii) 보조.
 - **다음(D3)**: maj1 **라이브 dual 재검증**(정석 clone·캐시 신선화·dual `/dddjango`·위반 주입으로 ⑭ 차단 DR-30식 확인) → 효과 보고 → **min1**(§5.1 외부식별자 정의 + `int`+하한有+상한無 비대칭 백스톱; known-good 재합성=Codex 제외). maj4 보류(PG N≥2 후).
+
+---
+
+## 9. ✅ maj1 라이브 dual 재검증 완료 (2026-06-07·maj1live)
+
+정석 clone fixture `~/Desktop/dddjango-maj1live-{claude,codex}`·캐시 1.6.0 신선화·dual 사용자 `/dddjango`. 채점지 `results/20260607-1449-maj1live-claude.md`·`-1448-maj1live-codex.md`(33항목 v3).
+
+- **✅ maj1 효과 입증(핵심)**: 직전 *위반*(무분기 전부-503)했던 **Claude가 이번엔 준수** — `error_handlers.py:96-108` 분기(`_is_retryable_db_error` 메시지 시그니처+Postgres SQLSTATE 40001/40P01)+**영구장애→500 회귀테스트**(`test_permanent_db_error_maps_to_500_not_503`). **Codex도 준수**(대안 B: application 계층 분기·영구→bare raise 500). → §2.1 처방(salience+reviewer:41 교정+⑭)이 *위반→준수* 뒤집은 라이브 신호. **N=1·P4③** — 증명 아닌 비결정 폭 축소.
+- **✅ ⑭ 라이브 배선(DR-30식 양 런타임)**: Claude=실제 maj1 핸들러 분기 2줄 제거 주입→`check-transient-overmapping` **exit2 BLOCKER**(`_on_operational_error:97`)→복원 exit0 / Codex=무판정 통째 503 핸들러 합성 주입→**exit2**(`_injected_bad_handler:137`). ⑭ clean 양 exit0(분기 정확 인식). 정밀도 시제품(§3)이 라이브로 확인됨.
+- **정식 33항목**: 양 PASS(치명0)·둘 다 품질 중(Codex=Q-1 406+Q-6 pytest미채택 / Claude=Q-3). min1·maj4는 이 라운드 미처방(텍스트만·라이브 미검증 — D3 순서대로 다음).
+
+### 🔴 잔여 — ACL-EX2(과소매핑·maj1 인접·미처방)
+maj1 처방이 *과잉매핑* 축을 닫은 **바로 그 런**에서 Claude가 *과소매핑* 축 노출: ACL이 CAS 소진 시 raise하는 **합성 `OperationalError`(한국어 메시지·`__cause__` 없음)**가 핸들러 시그니처 recognizer와 어휘 불일치 → 소진 503 의도가 **실제 500**·end-to-end 미테스트. ⑭은 "핸들러 분기 有"만 봐서 사각(maj1=과잉↔ACL-EX2=과소). **정본 추적 = `ACLEX-CLAUDE-FIX-PLAN.md` A6**(처방 옵션 3개·결정 2 라이브 빈틈). DR-44/45 #1 미해결 빈틈([[dddjango-acl-exhaustiveness]])과 동형. N=1(Codex 대안 B는 도메인 예외 타입 매핑이라 부재). **N≥2 후 처방 논의.**
