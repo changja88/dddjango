@@ -361,6 +361,16 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
   용도가 아니다 — 핸들러 누락을 catch-all로 때우면 중앙화 완전성 위반이다(`discipline-houserules` §2).
 - `type` URI·`title` 문구·extension 설계는 프로젝트 problem 카탈로그 재량이다.
 
+> **⚠️ 필수 불변식 — `OperationalError`/`DatabaseError` 핸들러는 본문에 영구장애 구별 분기를
+> 반드시 둔다(코더가 가장 흘리기 쉬운 지점).** 핸들러 본문이 *몇 줄이든* `OperationalError`(또는
+> 상위 `DatabaseError`) 클래스 전체를 분기 없이 503/409로 매핑하면 영구장애(disk I/O·`no such table`·
+> `database is malformed`·디스크 풀)를 retryable로 **오분류**해 클라이언트·재시도 루프가 영원히 못
+> 고치는 장애를 두드린다. **반드시** 핸들러 첫 분기에서 `if not _is_retryable_db_error(exc): return
+> _server_error(...)`로 영구장애를 500으로 가른 *뒤* 락/경합 시그니처만 503/409로 올린다 — 시그니처
+> 분기를 `_is_retryable_db_error`로 위임하든 인라인하든 무관하되 *분기 자체는 생략 불가*다. 분기 없는
+> 통째 503/409는 결정적 백스톱 `check-transient-overmapping`이 차단하고 `discipline-reviewer`가
+> 과잉매핑 important로 본다.
+
 ```python
 import logging
 from http import HTTPStatus
@@ -428,7 +438,7 @@ def _is_retryable_db_error(exc: OperationalError) -> bool:
     return code in {"40001", "40P01"}
 
 
-@api.exception_handler(OperationalError)       # 인프라 transient — 시그니처로 분기(클래스 통째 아님)
+@api.exception_handler(OperationalError)       # 필수: 시그니처로 분기 — 클래스 통째 503 금지(분기 빼면 maj1·check-transient-overmapping 차단)
 def on_db_operational_error(request, exc):
     if not _is_retryable_db_error(exc):
         return _server_error(request, exc)     # disk I/O·malformed 등 영구장애 → 500
