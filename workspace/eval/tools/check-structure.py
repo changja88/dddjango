@@ -248,7 +248,7 @@ def check_nj(target: Path) -> None:
             continue
         lines = text.splitlines()
         for n, ln in enumerate(lines, 1):
-            if re.search(r"\bNinjaAPI\b|\bRouter\(|from ninja", ln):
+            if re.search(r"\bNinjaAPI\b|\bNinjaExtraAPI\b|\bRouter\(|@?api_controller\b|register_controllers\b|from ninja", ln):
                 ninja_hits.append(f"{_rel(target, f)}:{n}")
             if re.search(r"\bJsonResponse\(", ln):
                 jsonresp_hits.append(f"{_rel(target, f)}:{n}  {ln.strip()}")
