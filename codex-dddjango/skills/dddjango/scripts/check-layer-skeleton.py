@@ -5,11 +5,16 @@
 *행위/계약*을 보는 데 비해, 이건 **구조**를 본다. 표준 레이아웃(`application/<bc>/`)을
 적용한 프로젝트에서 각 바운디드 컨텍스트(BC)는 4계층 폴더(`domain_layer`·
 `application_layer`·`infra_layer`·`presentation_layer`)를 **내용이 없어도 빈
-패키지(`__init__.py`)로라도 모두** 가져야 한다(houserules §0-2). 두 위반 형태를 차단한다:
+패키지(`__init__.py`)로라도 모두** 가져야 한다(houserules §0-2). 세 위반 형태를 차단한다:
   - **부분 평면**: 일부 계층만 있고 하나를 생략(스모크 SH-2 — HTTP 없이 ACL·
     published_service 로만 소비되는 내부 전용 BC 가 `presentation_layer` 를 생략).
   - **완전 평면**: Django 앱 산출물은 있는데 4계층으로 전혀 분리 안 함(`application/<bc>/`
     루트에 `models.py`·`views.py` 등을 직접 둔 startapp 직후 평면 상태).
+  - **종류 폴더 누락**: 4계층은 있으나 고정명 종류 폴더(`presentation_layer/api`·
+    `presentation_layer/schema`·`infra_layer/acl`)를 빈 패키지로라도 만들지 않음(§0-4 개정
+    2026-06-08: 이들은 표현/통합 내용이 없어도 무조건 생성). 더해 *이미 존재하는*
+    `domain_layer/<aggregate>/` 의 코어 종류(`entity`·`value_object`·`repository` + `exception.py`)
+    누락도 잡는다(coder 가 `domain_layer/product/` 만들고 `value_object/` 를 빠뜨린 경우).
 
 *왜 결정적 백스톱인가* — 빈 계층 폴더엔 테스트가 걸리지 않아 TDD Red 로 안 잡힌다(coder 가
 누락해도 `manage.py test` 는 Green). discipline-reviewer 의미 게이트 한 점에만 의존하면
@@ -27,11 +32,25 @@ LLM 이 프로즈 규칙을 회피하는 표면이 된다 — 이 스크립트�
      건너뛴다 → 거짓 양성 0.
   3) (git 레포면) 그 BC 하위에 이번 변경에서 새로 추가/수정/미추적된 파일이 있다 = 이번
      작업이 건드린 BC. 기존에 커밋된 채 안 건드린 BC 는 존중(brownfield) → 건너뜀.
-  위 셋이 참인 BC 에서: (b)면 4계층 전부 미분리 = blocker, (a)면 4계층 중 하나라도 (폴더가
-  없거나 / 폴더는 있으나 `__init__.py` 가 없어 git 에 존속 안 되면) blocker. 계층 폴더가
-  빈 패키지로라도 4개 다 있으면 통과 — 계층 *내부* 깊이(presentation 의 `api/`·`schema/`
-  등 종류 2차 폴더)는 검사하지 않는다(§0-4상 표현 종류 폴더는 표현 내용이 생길 때 생성 —
-  깊이·내용 적정성은 discipline-reviewer 의미 체크 몫).
+  위 셋이 참인 BC 에서:
+    - (b)면 4계층 전부 미분리 = blocker.
+    - (a)면 4계층 중 하나라도 (폴더가 없거나 / 폴더는 있으나 `__init__.py` 가 없어 git 에
+      존속 안 되면) blocker.
+    - 4계층이 다 있어도 고정명 종류 폴더(`presentation_layer/api`·`presentation_layer/schema`·
+      `infra_layer/acl`)가 빈 패키지로 없으면 blocker — 고정명이라 거짓 양성 없다(§0-4 무조건).
+    - *이미 존재하는* `domain_layer/<aggregate>/` 가 *애그리거트로 보이면*(루트 파일
+      `<X>/<X>.py` 또는 `entity/`·`value_object/` 하나라도 보유) 그 안의 코어 종류
+      (`entity`·`value_object`·`repository` 폴더 + `exception.py`)가 빠지면 blocker. **ORM 에서
+      애그리거트 이름을 추론하지 않는다** — 디스크에 실재하는 `domain_layer/<X>/` 만 검사한다.
+      `domain_layer/` 직하에 cross-aggregate 공용 `domain_service/`(final.md §3) 가 와도
+      애그리거트 신호(루트 파일/entity/value_object)가 없으면 애그리거트로 보지 않고 스킵한다.
+      `[선택]` 종류 폴더(`port`·`domain_service`·`event`·`specification`)는 *존재만* 확인하고
+      누락은 잡지 않는다(저-recall — reviewer 의미 레인 몫; 거짓 양성 회피 우선).
+  통과 조건: 4계층 + 고정명 종류 폴더(api/schema/acl)가 빈 패키지로 있고, 존재하는
+  애그리거트의 코어 종류가 채워져 있으면 통과. `domain_layer/` 에 애그리거트가 *0개* 면(예:
+  데이터소스 골격 미생성) 이 스크립트는 **안 잡고 reviewer 의미 레인에 맡긴다**(저-recall
+  수용). `application_layer` 는 feature(`<feature>/`) 0개면 빈 계층 정당이라 검사하지 않는다.
+  내용 적정성(채운 게 옳은지)은 항상 discipline-reviewer 의미 체크 몫이다.
 
 사용법: check-layer-skeleton.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
@@ -51,6 +70,22 @@ LAYER_DIRS = ("domain_layer", "application_layer", "infra_layer", "presentation_
 # 정상 4계층 앱은 이들을 `infra_layer/django_<app>/`에 두므로 루트엔 없다 — 루트에 있으면
 # startapp 직후 평면 상태(완전 평면)다. 잡동사니 util 패키지엔 이들이 없어 거짓 양성 0.
 DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+
+# 고정명 종류 폴더 — §0-4 개정(2026-06-08)으로 표현/통합 내용이 없어도 무조건 빈 패키지.
+# 고정명이라 거짓 양성 없음(BC 마다 동일 골격). (계층, 종류폴더 상대경로) 쌍.
+REQUIRED_KIND_DIRS = (
+    ("presentation_layer", "api"),
+    ("presentation_layer", "schema"),
+    ("infra_layer", "acl"),
+)
+
+# 애그리거트 *코어* 종류 — `domain_layer/<aggregate>/` 가 애그리거트로 보일 때 빠지면 잡는다.
+# `[선택]`(port/domain_service/event/specification)은 의도적으로 제외(저-recall·거짓 양성 회피).
+AGG_CORE_KIND_DIRS = ("entity", "value_object", "repository")
+AGG_CORE_FILE = "exception.py"
+# 애그리거트 신호 — 이 중 하나라도 있으면 `<X>/` 를 애그리거트로 보고 코어 완비를 검사한다.
+# 없으면(예: cross-aggregate 공용 `domain_service/`) 애그리거트가 아니므로 스킵(거짓 양성 회피).
+AGG_SIGNAL_KIND_DIRS = ("entity", "value_object")
 
 
 def _find_application_containers(root: Path) -> list[Path]:
@@ -91,13 +126,65 @@ def _has_django_app_marker(bc_dir: Path) -> bool:
     return (bc_dir / "migrations").is_dir()
 
 
+def _is_empty_package_dir(d: Path) -> bool:
+    """디렉터리이고 `__init__.py` 를 가진 regular package인가(빈 골격 허용 판정)."""
+    return d.is_dir() and (d / "__init__.py").exists()
+
+
+def _kind_dir_issues(bc_dir: Path) -> list[str]:
+    """고정명 종류 폴더(api/schema/acl) 누락/비-패키지를 설명 리스트로. 고정명=거짓 양성 0."""
+    issues: list[str] = []
+    for layer, kind in REQUIRED_KIND_DIRS:
+        d = bc_dir / layer / kind
+        if not d.is_dir():
+            issues.append(f"{layer}/{kind}/ 폴더 없음")
+        elif not (d / "__init__.py").exists():
+            issues.append(f"{layer}/{kind}/ 에 __init__.py 없음(git 미추적·골격 소실)")
+    return issues
+
+
+def _looks_like_aggregate(agg_dir: Path) -> bool:
+    """`domain_layer/<X>/` 가 애그리거트인가 — 루트 파일 `<X>/<X>.py` 또는 entity/value_object
+    하나라도 보유. 신호가 없으면(예: cross-aggregate 공용 `domain_service/`) 애그리거트가
+    아니므로 코어 완비 검사에서 제외(거짓 양성 회피)."""
+    if (agg_dir / f"{agg_dir.name}.py").is_file():
+        return True
+    return any((agg_dir / kind).is_dir() for kind in AGG_SIGNAL_KIND_DIRS)
+
+
+def _aggregate_issues(bc_dir: Path) -> list[str]:
+    """*이미 존재하는* `domain_layer/<X>/`(애그리거트로 보이는) 의 코어 종류 누락을 설명
+    리스트로. ORM 에서 이름 추론 안 함 — 디스크 실재 애그리거트만. 코어=entity/value_object/
+    repository 폴더 + exception.py. `[선택]` 종류는 잡지 않는다(저-recall)."""
+    domain_layer = bc_dir / "domain_layer"
+    if not domain_layer.is_dir():
+        return []
+    issues: list[str] = []
+    for agg_dir in sorted(domain_layer.iterdir()):
+        if not agg_dir.is_dir() or agg_dir.name in SKIP_DIRS:
+            continue
+        if not _looks_like_aggregate(agg_dir):
+            continue  # 애그리거트 신호 없음(공용 domain_service 등) → 스킵.
+        for kind in AGG_CORE_KIND_DIRS:
+            d = agg_dir / kind
+            if not d.is_dir():
+                issues.append(f"domain_layer/{agg_dir.name}/{kind}/ 폴더 없음")
+            elif not (d / "__init__.py").exists():
+                issues.append(
+                    f"domain_layer/{agg_dir.name}/{kind}/ 에 __init__.py 없음(골격 소실)"
+                )
+        if not (agg_dir / AGG_CORE_FILE).is_file():
+            issues.append(f"domain_layer/{agg_dir.name}/{AGG_CORE_FILE} 없음")
+    return issues
+
+
 def _is_bc_to_check(bc_dir: Path) -> bool:
     """4계층을 따라야 할 앱: 계층을 하나라도 가졌거나(부분), Django 산출물 평면(완전)."""
     return _has_any_layer(bc_dir) or _has_django_app_marker(bc_dir)
 
 
 def _layer_issues(bc_dir: Path) -> list[str]:
-    """누락/비-패키지 계층을 사람이 읽을 설명 리스트로."""
+    """누락/비-패키지 계층 + 고정명 종류 폴더 + 존재 애그리거트 코어 종류를 설명 리스트로."""
     if not _has_any_layer(bc_dir):
         # 완전 평면 — 계층이 0개인데 Django 앱 산출물 보유.
         return ["4계층 전부 없음(완전 평면 앱 — `_layer` 분리 안 됨)"]
@@ -108,6 +195,10 @@ def _layer_issues(bc_dir: Path) -> list[str]:
             issues.append(f"{layer}/ 폴더 없음")
         elif not (d / "__init__.py").exists():
             issues.append(f"{layer}/ 에 __init__.py 없음(git 미추적·골격 소실)")
+    # 고정명 종류 폴더(api/schema/acl) — §0-4 개정 무조건(데이터소스 BC 포함). 고정명=거짓 양성 0.
+    issues.extend(_kind_dir_issues(bc_dir))
+    # 존재하는 애그리거트의 코어 종류 완비 — ORM 추론 없이 디스크 실재만. 부재(0개)는 reviewer 몫.
+    issues.extend(_aggregate_issues(bc_dir))
     return issues
 
 
@@ -153,17 +244,21 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(
-            "[check-layer-skeleton] BLOCKER — 4계층 BC 가 계층 폴더를 생략했다"
-            "(houserules §0-2: 내용이 없어도 빈 패키지로라도 4계층 전부 생성):"
+            "[check-layer-skeleton] BLOCKER — 4계층 BC 가 계층/종류 골격을 생략했다"
+            "(houserules §0-2·§0-4: 내용이 없어도 빈 패키지로라도 4계층 + 종류 폴더 생성):"
         )
         for f in findings:
             print(f)
         print(
-            "  근거: discipline-houserules §0-2. 표현/도메인 관심사가 없다는 판단으로 "
-            "계층 폴더 자체를 생략하지 않는다 — 빈 `presentation_layer` 라도 `__init__.py` 만 "
+            "  근거: discipline-houserules §0-2·§0-4. 표현/도메인 관심사가 없다는 판단으로 "
+            "계층·종류 폴더 자체를 생략하지 않는다 — 빈 `presentation_layer` 라도 `__init__.py` 만 "
             "둔 빈 패키지로 만든다(예: ACL·published_service 로만 소비되는 내부 전용 BC). "
-            "완전 평면 앱은 4계층으로 분리하라. 접을 실질 사유가 있으면 코드에서 생략하지 말고 "
-            "설계(G1 트레이드오프)로 반송하라."
+            "고정명 종류 폴더(`presentation_layer/api`·`presentation_layer/schema`·`infra_layer/acl`)는 "
+            "§0-4 개정(2026-06-08)으로 표현/통합이 없어도 무조건 빈 패키지로 둔다 — 데이터소스 BC 도 "
+            "예외 없다(`architecture-ddd` §632-(2) 면제는 *판정 실내용(.py)*에 한정). 이미 만든 "
+            "`domain_layer/<aggregate>/` 는 코어 종류(`entity`·`value_object`·`repository` + "
+            "`exception.py`)를 빠짐없이 갖춘다. 완전 평면 앱은 4계층으로 분리하라. 접을 실질 사유가 "
+            "있으면 코드에서 생략하지 말고 설계(G1 트레이드오프)로 반송하라."
         )
         return 2
 

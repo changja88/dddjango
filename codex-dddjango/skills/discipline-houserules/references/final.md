@@ -18,10 +18,10 @@
 
 대상 프로젝트에 **확립된 규약이 없어 이 표준을 적용할 때**, 아래는 YAGNI·단순성·"단일 기능이라 불필요" 같은 판단으로 **생략하거나 평면으로 접을 수 없다 — 항상 생성한다**. (이미 다른 레이아웃 규약이 확립된 기존 프로젝트는 §1.1대로 그 규약을 존중한다 — 이 불변식은 *표준을 새로 까는* 경우의 규칙이다.)
 
-1. **`application/` 컨테이너** — 앱은 루트 평면이 아니라 `application/<app>/` 아래에 둔다. 단일 앱이어도 컨테이너를 만든다. **데이터소스 앱(판정 없이 필드·DB 제약만)도 위치는 예외 없이 `application/<app>/`다** — `architecture-ddd` §632-(2)의 "평면 유지"는 *4계층(애그리거트) 전개 면제*이지 *위치(루트 허용) 면제가 아니다*. 이번 작업이 touched한 앱이 루트 평면(`<app>/`)에 있으면 §0-1 위반이고, 이번 작업이 안 건드린 무관 기존 앱은 §1.1로 존중한다.
+1. **`application/` 컨테이너** — 앱은 루트 평면이 아니라 `application/<app>/` 아래에 둔다. 단일 앱이어도 컨테이너를 만든다. **데이터소스 앱(판정 없이 필드·DB 제약만)도 위치·골격 모두 예외 없이 표준대로다** — `architecture-ddd` §632-(2) 개정(2026-06-08)으로 *데이터소스의 4계층/애그리거트 전개 면제는 폐지*됐다: 면제는 *판정 실내용*(`.py` 코드)에만 남고, 위치(`application/<app>/`)·4계층·개념 1차(`domain_layer/<aggregate>/`, 애그리거트명은 ORM 모델명 도출)·종류 2차 폴더는 데이터소스도 빈 패키지로 무조건 실현한다(유스케이스 없는 데이터소스의 `application_layer`만 빈 계층 — 개념 1차는 개념 식별 시, §0-3). 이번 작업이 touched한 앱이 루트 평면(`<app>/`)이거나 골격을 접으면 §0 위반이고, 이번 작업이 안 건드린 무관 기존 앱은 §1.1로 존중한다.
 2. **4계층 디렉터리** — `domain_layer/`·`application_layer/`·`infra_layer/`·`presentation_layer/`를 모두 물리 분리한다(`_layer` 접미사 포함). **계층에 들어갈 내용물이 없어도 그 계층 폴더는 빈 패키지(`__init__.py`만)로라도 항상 생성한다** — 예: HTTP/CLI 표현 없이 ACL·`published_service`로만 소비되는 내부 전용 BC의 `presentation_layer`도 빈 폴더로 둔다. "이 BC엔 표현(또는 도메인) 관심사가 없다"는 판단으로 **계층 폴더 자체를 생략하지 않는다**(종류 2차 폴더의 빈 패키지 규칙(4항)과 같은 원칙 — §6.8 YAGNI는 계층·종류 골격에 적용하지 않는다).
 3. **개념 1차 폴더** — `domain_layer/<aggregate>/`, `application_layer/<feature>/`.
-4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 패키지(`__init__.py`만)로 둔다 — 평면 파일(`repository.py`)로 접지 않는다. 빈 폴더의 `__init__.py`는 **유지한다(regular package)** — git은 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시키고, Django `migrations/`·앱 패키지도 `__init__.py`를 요구한다. PEP 420(namespace package)을 이유로 `__init__.py`를 지우지 않는다. (`[선택]` 마커는 "비어 있을 수 있음"이지 *생략 가능*이 아니다.) 단 이 종류-폴더 항상-생성은 위에 열거한 domain·application 종류(`entity`/`value_object`/`repository`·`command`/`query`/`dto` 등)에 한정한다 — `presentation_layer`의 종류 2차 폴더(`api/`·`schema/`)는 *표현 내용이 생길 때* 만든다. 표현이 없는 내부 전용 BC의 빈 `presentation_layer`는 계층 패키지(`__init__.py`)만 두고 `api/`·`schema/`까지 미리 만들지 않는다(항상-생성 골격은 §0-2 계층 수준 + 이 종류 폴더에 한정; 깊이 적정성은 discipline-reviewer 의미 체크 몫).
+4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 패키지(`__init__.py`만)로 둔다 — 평면 파일(`repository.py`)로 접지 않는다. 빈 폴더의 `__init__.py`는 **유지한다(regular package)** — git은 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시키고, Django `migrations/`·앱 패키지도 `__init__.py`를 요구한다. PEP 420(namespace package)을 이유로 `__init__.py`를 지우지 않는다. (`[선택]` 마커는 "비어 있을 수 있음"이지 *생략 가능*이 아니다.) 이 종류-폴더 항상-생성은 domain·application 종류(`entity`/`value_object`/`repository`·`command`/`query`/`dto` 등)에 더해 **`presentation_layer`의 `api/`·`schema/`도 포함한다 — 표현이 없는 BC도 빈 패키지로 항상 생성한다**(2026-06-08 개정: 이전의 '`api/`·`schema/`는 표현 생길 때' 조건 폐지). 골격 폴더 자체는 모든 BC가 무조건 실현하고, 빈 골격에 무엇을 채울지(깊이 적정성)는 discipline-reviewer 의미 체크 몫이다.
 5. **Django 앱은 `infra_layer/django_<app>/`** — `startapp`을 그 안에서 수행한다. ORM 모델·`migrations/`·`apps.py`가 거기 산다. 앱 루트나 도메인 패키지에 `models.py`를 두지 않는다(§2 "Django 앱 성립" 참조).
 6. **ORM 모델 명명** — 도메인 엔티티/애그리거트는 bare 이름(`Order`), Django ORM 모델 클래스는 `<Name>Model`(`OrderModel`)로 구분한다(상세 §4 명명 규약).
 
@@ -74,7 +74,7 @@ application/<app>/
 │       ├── entity/                     #     종속 엔티티 (§3.2): <entity>.py
 │       ├── value_object/               #     값 객체 (§3.1): <value_object>.py
 │       ├── repository/                 #     리포지토리 인터페이스(ABC) — DIP 포트 (§3.4). 구현은 infra
-│       ├── port/                       #     외부 컨텍스트 협력 포트(ACL 포트) — 다른 컨텍스트 소비 시  [통합 시]
+│       ├── port/                       #     외부 컨텍스트 협력 포트(ACL 포트) — 폴더 항상·코드는 소비 시  [선택]
 │       ├── domain_service/             #     stateless 도메인 로직 (§3.5)   [선택]
 │       ├── event/                      #     도메인 이벤트 정의 (§3.7)       [선택]
 │       ├── specification/              #     Specification (§3.8)          [선택]
@@ -96,7 +96,7 @@ application/<app>/
 │   │   ├── migrations/
 │   │   └── admin/                      #     <entity>_admin.py (+ templates/)
 │   ├── repository/                     #   domain repository 인터페이스(ABC) 구현 — ORM↔도메인 변환 (DIP). 자기 애그리거트 전용
-│   ├── acl/                            #   외부 컨텍스트 ACL 어댑터(domain port/ 구현) — 업스트림 모델·예외 번역  [통합 시]
+│   ├── acl/                            #   외부 컨텍스트 ACL 어댑터(domain port/ 구현) — 폴더 항상·코드는 통합 시  [선택]
 │   └── adapter/                        #   외부 서비스 어댑터: stripe_payment_gateway.py (인증·푸시·결제 등)
 │
 ├── presentation_layer/                 # ④ 표현 — 입력 어댑터 (§6.1 interface)
@@ -114,13 +114,13 @@ application/<app>/
 의존 방향(단방향): `presentation_layer → application_layer → (domain_layer + infra_layer)`, `domain_layer`는 아무것도 의존하지 않는다.
 
 설계 선택:
-- **조직 1차 축 = 개념(애그리거트/feature), 2차 = 종류**: 각 계층을 개념 단위로 먼저 묶고(`domain_layer/<aggregate>/`, `application_layer/<feature>/`) 그 안에서 종류(`entity`/`value_object`/`command`/`query`…)로 나눈다. **종류 2차 폴더는 항상 생성한다**(§0 불변식) — 내용이 없으면 빈 패키지로 두되 평면 파일로 접지 않는다(단 이 항상-생성은 domain·application 종류 폴더에 한정 — `presentation_layer`의 `api/`·`schema/`는 표현 내용이 생길 때 만든다, §0-4). **§6.8 YAGNI는 골격에 적용하지 않는다**(YAGNI = 아직 없는 새 애그리거트/feature를 미리 만들지 마라; 컨테이너·계층·종류 폴더 골격은 항상 실현). 종류 폴더에 여러 개념 파일이 구분 없이 누적되는 것을 막는 규칙이다(houserules §3 평면 금지의 2차 레벨). `infra_layer`는 기술 어댑터라 1차를 기술 묶음으로 두고, 누적 시 애그리거트별 하위 그룹핑.
+- **조직 1차 축 = 개념(애그리거트/feature), 2차 = 종류**: 각 계층을 개념 단위로 먼저 묶고(`domain_layer/<aggregate>/`, `application_layer/<feature>/`) 그 안에서 종류(`entity`/`value_object`/`command`/`query`…)로 나눈다. **종류 2차 폴더는 항상 생성한다**(§0 불변식) — 내용이 없으면 빈 패키지로 두되 평면 파일로 접지 않는다(이 항상-생성은 domain·application 종류 폴더에 더해 `presentation_layer`의 `api/`·`schema/`도 포함한다 — 표현이 없어도 빈 패키지로 항상, §0-4 개정). **§6.8 YAGNI는 골격에 적용하지 않는다**(YAGNI = 아직 없는 새 애그리거트/feature를 미리 만들지 마라; 컨테이너·계층·종류 폴더 골격은 항상 실현). 종류 폴더에 여러 개념 파일이 구분 없이 누적되는 것을 막는 규칙이다(houserules §3 평면 금지의 2차 레벨). `infra_layer`는 기술 어댑터라 1차를 기술 묶음으로 두고, 누적 시 애그리거트별 하위 그룹핑.
 - **도메인 계층은 DDD 전술 패턴으로 완전 구성**(§3·§6.1): 코어는 애그리거트 루트·`entity`·`value_object`·`repository`(인터페이스), 나머지(`domain_service`/`event`/`specification`)는 폴더를 항상 두되 트리거 미충족 시 비어 있을 수 있다(`[선택]`=비어 있을 수 있음, 생략 아님 §0).
 - **리포지토리 DIP**: 인터페이스(ABC)는 `domain_layer/<aggregate>/repository/`, 구현은 `infra_layer/repository/`. 추상화·구현 명명은 §4 명명 규약(추상=개념 bare명 `OrderRepository`, 구현=`Django…` 한정자 접두).
 - **ORM 모델 ≠ 도메인 엔티티**: 도메인은 `domain_layer/<aggregate>/`, Django 모델은 `infra_layer/django_<app>/models/`로 분리한다(Data Mapper, §6.2 — ORM이 도메인을 import, 도메인은 ORM을 모름). 이름으로도 구분하며(`Order` vs `OrderModel`) 명명 상세는 §4. 변환은 `infra_layer/repository/`(ORM↔도메인 Data Mapper)와 표현 `schema_out`(도메인→응답 DTO)이 담당한다.
 - **응용 계층은 도메인에 위임하는 파사드**(§3.6): 비즈니스 로직을 직접 구현하지 않고 도메인에 위임한다. 유스케이스는 연산 객체(쓰기 `…Command`·읽기 `…Query`)로 표현하고 입력은 **`…Request` DTO**로 받아 `execute(request)`로 실행한다. command/query 연산은 구체 리포지토리를 직접 생성하지 말고 **domain repository/port 인터페이스에 의존**하고 구현을 주입받는다(DIP).
 - **읽기는 `…Query` 연산으로 통일하되, *별도 읽기 모델*(CQRS)은 선택적**(§5.4 [의사결정#2]): 모든 읽기는 `…Query` 인터랙터(통일성·런간 결정성)지만, 읽기 전용 *모델/프로젝션* 분리는 강제하지 않는다 — 공유 모델을 repository로 읽으면 충분하고, 읽기/쓰기 모델이 실제로 갈릴 때만 분리한다. (trivial 단건 조회도 `…Query`인 보일러플레이트 비용은 통일성·결정성을 위해 수용한다 — 실익은 버그 예방이 아니라 일관성이다.)
-- **infra_layer 분할**: `django_<app>/`(영속성) + `repository/`(자기 애그리거트 접근·구현) + `acl/`(외부 컨텍스트 ACL 어댑터, [통합 시]) + `adapter/`(외부 I/O 서비스 어댑터). 구체 매핑·QuerySet/Manager·`transaction.atomic()`은 `implementation-django` §16 소유.
+- **infra_layer 분할**: `django_<app>/`(영속성) + `repository/`(자기 애그리거트 접근·구현) + `acl/`(외부 컨텍스트 ACL 어댑터, [선택] 폴더 항상·코드는 통합 시) + `adapter/`(외부 I/O 서비스 어댑터). 구체 매핑·QuerySet/Manager·`transaction.atomic()`은 `implementation-django` §16 소유.
 - **컨텍스트 간 통신 = OHS 우선, 직접 통합은 ACL로 분리**: 다른 바운디드 컨텍스트는 그 앱의 `published_service/`(OHS)로 소비하는 게 기본이다(아래 "컨텍스트 간 통신"). OHS가 없거나(미이주) 단일 트랜잭션·행 잠금이 불가피하면 ACL로 명시 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로 의존하고 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다**(architecture-ddd 컨텍스트 맵 ACL 패턴 — 업스트림 모델을 하류 모델로 번역).
 - **통합 스타일 선택(동기 ACL/OHS vs 비동기 이벤트)**: BC 간 통합에서 **즉시 일관성**이 필요하면(예: 재고 차감 — 오버셀 차단) 동기로 OHS/ACL을, **결과적 일관성**으로 충분하면(예: 주문 후 포인트 적립·알림) 비동기로 **도메인 이벤트**를 쓴다. 도메인 이벤트는 *애그리거트 간* 결과적 일관성에도 쓰여 ACL보다 범위가 넓다(ACL은 BC 간 동기 번역 전용). **선택 기준은 `architecture-ddd` 규칙4(일관성 경계 밖=결과적 일관성)·§6.8 패턴 선택 절차에 위임**한다 — 이 표준은 *어디 두는지*만 정하고 *언제 무엇*의 패턴 선택 이론은 코퍼스가 권위다.
 - **Django 앱 성립 (infra_layer 안)**: Django `startapp`은 `infra_layer/django_<app>/`에서 수행한다 — `apps.py`의 `AppConfig.name`을 그 전체 점경로(`application.<app>.infra_layer.django_<app>`)로, `label='<app>'`로 둔다. 그러면 `models/`·`migrations/`가 그 앱 아래에서 native하게 발견된다(단일 앱 라벨에 모델·마이그레이션을 귀속시키려 우회할 필요가 없다). 설정의 `INSTALLED_APPS`에 그 점경로를 등록한다. **앱 루트(`application/<app>/`)나 도메인 패키지에 `models.py`를 두지 않는다** — 도메인 컨텍스트 `<app>`와 Django 영속성 앱 `django_<app>`는 별개이고, 도메인 `<app>/`는 Django 앱이 아니라 순수 패키지다.
@@ -148,7 +148,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 ## §3 폴더별 레퍼런스 (존재 이유 · 위치 파일)
 
-`(코어)`는 항상 두고, `[선택]`(코드 골격)은 폴더를 항상 생성하되 트리거 조건 미충족 시 비어 있을 수 있다(생략 아님 — §0 불변식). 단 **테스트 의미군**(`e2e/` 등)은 `implementation-test` §4.2 소관이라 거기선 `e2e`가 진짜 선택이다(코드 골격 불변식과 별개). 마찬가지로 **`[통합 시]` ACL 폴더**(`domain_layer/<aggregate>/port/`·`infra_layer/acl/`)는 *통합 패턴*이라(architecture-ddd: ACL을 기본 도입하지 않음) 다른 컨텍스트를 직접 소비할 때만 생성한다 — 없으면 폴더를 두지 않는다(빈 폴더를 항상 두는 `[선택]`과 다르고, 골격 불변식과 별개).
+`(코어)`는 항상 두고, `[선택]`(코드 골격)은 폴더를 항상 생성하되 트리거 조건 미충족 시 비어 있을 수 있다(생략 아님 — §0 불변식). 단 **테스트 의미군**(`e2e/` 등)은 `implementation-test` §4.2 소관이라 거기선 `e2e`가 진짜 선택이다(코드 골격 불변식과 별개). **`[통합 시]` 폴더**(`domain_layer/<aggregate>/port/`·`infra_layer/acl/`)도 2026-06-08 개정으로 **`[선택]`과 동일하게 폴더를 항상 빈 패키지로 생성한다** — 이전엔 '소비할 때만 생성·없으면 폴더 미생성'이었으나, 모든 BC가 동일 트리 골격을 갖도록 *폴더는 무조건 두고 ACL 어댑터·협력 포트 코드는 다른 컨텍스트를 실제 소비할 때만 채운다*(폴더=골격 불변식, 코드=통합 트리거).
 
 **최상위 · 공용**
 
@@ -174,7 +174,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `<aggregate>/entity/` | 식별자를 갖는 종속 엔티티(§3.2) | `<entity>.py` | 코어(폴더 항상 생성) |
 | `<aggregate>/value_object/` | 불변 값 객체, 자기검증(§3.1) | `<value_object>.py` | 코어(폴더 항상 생성) |
 | `<aggregate>/repository/` | 리포지토리 **인터페이스(ABC)** — DIP 포트(§3.4), 구현은 infra | `<aggregate>_repository.py` → `class OrderRepository`(bare 개념명) | 코어 |
-| `<aggregate>/port/` | 외부 컨텍스트 **협력 포트(ABC)** — 다른 컨텍스트를 소비할 때 도메인이 의존하는 역할 포트 | 일반: `<collaborator>_port.py` → `class ProductLockPort` · 외부서비스(Gateway 패턴): `payment_gateway.py` → `class PaymentGateway` | [통합 시] 다른 컨텍스트 소비할 때만 |
+| `<aggregate>/port/` | 외부 컨텍스트 **협력 포트(ABC)** — 다른 컨텍스트를 소비할 때 도메인이 의존하는 역할 포트 | 일반: `<collaborator>_port.py` → `class ProductLockPort` · 외부서비스(Gateway 패턴): `payment_gateway.py` → `class PaymentGateway` | [선택] 폴더 항상·코드는 소비할 때만 |
 | `<aggregate>/domain_service/` | 그 애그리거트 중심의 stateless 도메인 로직(§3.5) | `<name>_service.py` → `class PricingService` | [선택]; 여러 애그리거트에 걸치면 `domain_layer/` 공용 위치로 |
 | `<aggregate>/event/` | 도메인 이벤트 **정의**(§3.7) | `<event>_event.py` → `class OrderPlacedEvent`(과거형) | [선택] 결과적 일관성·외부 통지 필요 시 |
 | `<aggregate>/specification/` | 재사용 가능한 규칙/조회 명세(§3.8) | `<name>_specification.py` → `class OrderActiveSpecification`(풀네임) | [선택] 복합 규칙을 조합·재사용할 때 |
@@ -202,7 +202,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `django_<app>/admin/` | Django admin 등록·커스텀 | `<entity>_admin.py`(+`templates/` admin 전용) |
 | `django_<app>/apps.py` | AppConfig — `name='application.<app>.infra_layer.django_<app>'`, `label='<app>'` (이 점경로를 INSTALLED_APPS에 등록; 앱 루트에 `models.py` 금지) | `apps.py` |
 | `repository/` | domain `repository/` ABC **구현** + ORM↔도메인 변환(Data Mapper §6.2). **자기 애그리거트 전용** | `<aggregate>_repository.py` → `class DjangoOrderRepository`(구현=기술 한정자 접두) |
-| `acl/` | 외부 컨텍스트 **ACL 어댑터** — domain `port/` ABC 구현, 업스트림 모델·예외를 우리 모델로 번역(*전수* — 포트 경로의 모든 업스트림 예외를 포트-선언 예외로 빠짐없이). 리포지토리와 분리([통합 시]) | `product_lock_adapter.py` → `class DjangoProductLockAdapter`(일반 포트 구현=`Adapter`) |
+| `acl/` | 외부 컨텍스트 **ACL 어댑터** — domain `port/` ABC 구현, 업스트림 모델·예외를 우리 모델로 번역(*전수* — 포트 경로의 모든 업스트림 예외를 포트-선언 예외로 빠짐없이). 리포지토리와 분리([선택] 폴더 항상·코드는 통합 시) | `product_lock_adapter.py` → `class DjangoProductLockAdapter`(일반 포트 구현=`Adapter`) |
 | `adapter/` | **외부 서비스** 어댑터(인증·푸시·결제 등) | Gateway 패턴이면 `stripe_payment_gateway.py` → `class StripePaymentGateway`, 일반이면 `<external>_adapter.py` → `class …Adapter` ※`domain_service`·app `service/`와 구분(외부 I/O 전용) |
 
 **표현 계층 `presentation_layer/` · 컨텍스트 통신 · 테스트**

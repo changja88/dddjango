@@ -405,6 +405,16 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **백로그**: 2차 라이브 dual·3차 백스톱·정본↔skill 드리프트·`houserules §6.2` 섹션 본체·reviewer `§6.1/§6.2` test-stack·test §20. **토끼굴 2회 회피**(정본드리프트 전면정렬·버전핀 §6.2 섹션 — 둘 다 백로그).
 - 🔴 **미푸시**(이전 `9c6d148`·`8f6922c`·DR-47 포함)·**라이브 미검증**(N=0·2차 전)·생성물 미관측이라 우열·효과 결론 없음. 정본=spec/plan `workspace/specs/2026-06-08-ninja-class-based-views-{design,plan}.md`·`[[dddjango-ninja-cbv]]`.
 
+### DR-49 ✅ 데이터소스 골격 의무화 — §632-(2) 면제 폐지·application 이하 모든 BC 골격 무조건·SH-3 치명 (양판·🔴미커밋·🔴라이브미검증)
+2026-06-08. 발단: cbvlive dual 채점 라이브 피드백(사용자: codex catalog 두 군데·`application/catalog` 골격 불완전·pytest 미도입 → "평가지에 있나·어떤 항목"). 발견1(두 군데)·발견2(골격 미비)·발견3(pytest=Q-6 기존 FAIL).
+- **사용자 결정**: "application 이하에 생기는 폴더는 무조건 표준 파일트리 규칙 준수"(catalog 데이터소스도 order처럼 5개 직하+종류 폴더). 경로=(나)트리 전부 무조건→(다)ACL/port도→(A)데이터소스 `application_layer` 빈 계층.
+- **§632-(2) 데이터소스 면제 폐지**: 면제는 *판정 실내용(`.py`)*에만. 데이터소스도 위치+4계층+`domain_layer/<aggregate>/` 빈 애그리거트 골격(**애그리거트명=ORM 모델명 도출** `ProductModel`→`product`)+종류 폴더+`api`/`schema`+`acl`/`port` 빈 패키지 무조건. 유스케이스 없으면 `application_layer`만 빈 계층(개념 1차는 *개념 식별 시*). `[통합 시]` port/acl carve-out 폐지(`[선택]`처럼 폴더 항상·코드는 통합 시).
+- **발견1**(catalog 두 군데): **SH-9 신설 헛다리**(결정 레인 `test`/`tests` 공존만 봄·codex 루트 catalog는 죽은 startapp 잔재+0001 보존 migrations 핀). 실제는 `check-structure.py:89`가 루트 `apps.py`를 줄곧 **SH-1 FAIL-신호**로 냈는데 채점지 *산문*이 마스크 C에서 "모델 이주로 위치 충족"으로 PASS 뒤집은 것 → **기존 SH-1/SH-4 복원**(소급 아님·기준 변경 아님=§5.4 비위반). cbvlive-codex SH-1 ❌·종합 **(정적 준수→FAIL)** 재판정. migrations-only 핀(apps.py 이주)은 SH-4 🟡·Q-5 경계.
+- **발견2**(catalog 골격): **SH-3 치명 격상**(동결 해제 3건째·개정 신규=**소급 금지**·신규 산출분부터·cbvlive 면제). 백스톱 `check-layer-skeleton` 로직 확장.
+- **변경(전부 양 미러 byte-id·md5 동일)**: 표준(ddd §632·houserules §0-1/§0-4/§117/§151/트리/표/§123·SKILL)·에이전트(`design-architect:40` "4계층 전개 지시 안 함"→골격 무조건·`discipline-reviewer:46`·**`design-review-ddd:28`**·coordinator ⑦④)·평가지(RUBRIC·rubric-metrix·EVAL-METHOD **17곳**: SH-3 치명 정본 6곳·마스크 C §1.1.M "위치·골격 ⊥ 판정 실내용"·§2.3③ SH-3 WEAK 폐기·freeze 해제 3건째·소급 두 갈래)·백스톱(check-app-container 텍스트만·check-layer-skeleton 로직: api/schema/acl 고정명+*존재* 애그리거트 코어 완비·**ORM 이름 추론 안 함**·`[선택]` 폴더 보수적 미검사·합성5 PASS·거짓양성0)·채점지(cbvlive-codex).
+- **적대 검증 7포인트**: FIX-THEN-SHIP → 유일 결함 `design-review-ddd`(lens 리뷰어 매핑 누락·"평면 OK" stale·**G1 설계 감수자**라 백스톱 사각 prose 레인 의존도 큼) 수정 → **SHIP**. 모순·미러·연쇄·평가지정합·백스톱거짓양성·freeze소급·YAGNI 전부 OK.
+- 🔴 **미커밋**(이전 `9c6d148`·`8f6922c`·DR-47·DR-48 포함 미푸시)·**라이브 미검증**(post-revision 픽스처 부재·N=1·우열 금지). **후속(비차단)**: ① 발견1 잔재 *생산시점* `check-app-container` G3(`_has_migrated_counterpart`) 면제로 미차단(모델 이주 시 루트 `apps.py` 놓침·eval-time `check-structure:89`만 잡음)·향후 백스톱 보강 ② check-layer-skeleton 정상 BC 거짓양성·architect/reviewer 골격 생성 dual 관측. 정본=`[[dddjango-datasource-skeleton-mandate]]`·`results/20260608-1734-cbvlive-codex.md`(정정).
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)

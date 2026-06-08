@@ -33,8 +33,8 @@
 | ID | 항목 | §근거 | PASS | FAIL | 레인 | 치명 |
 |---|---|---|---|---|---|---|
 | **SH-1** 컨테이너 | 신규 앱이 `application/<app>/` 하위 | §0-1 | 신규 앱이 `application/` 하위 | 신규 앱이 루트(마스크 C 적용) | 결정 | ✅ |
-| **SH-2** 4계층 | `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 | 4계층 존재 | 누락/평면 | 결정 | ✅ |
-| **SH-3** 종류 폴더+거주 명명 | 종류 2차 폴더(빈 패키지 허용), ORM/포트/리포가 평면 `.py` 아님; **거주 객체 명명(시점: ≥1.4.0 산출분): command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, 모두 `execute(request)`·repository/port 의존** | §0-3·§0-4·§4 | 종류 폴더 구조 + R/C/Q 명명 일치 | ORM/포트/리포가 평면 `.py` (WEAK: 일부 빈폴더 누락) / **command/에 `…Service`·자유함수·query/ selector 함수·dto/ 비-`@dataclass`(≥1.4.0 산출분만 — 시점 규칙·구산출분 N/A)** | 결정(폴더)+의미(명명) | — |
+| **SH-2** 4계층 | `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 | 4계층 존재 + **touched 데이터소스도 4계층 빈 패키지 실현**(유스케이스 없으면 `application_layer`만 빈 계층) | 누락/평면 / **데이터소스라며 계층 폴더 생략**(§0-2·§632-(2) 개정) | 결정 | ✅ |
+| **SH-3** 종류 폴더+거주 명명 | 종류 2차 폴더 전체(빈 패키지로 항상·`api`/`schema`/`acl`/`port` 포함), ORM/포트/리포가 평면 `.py` 아님; **거주 객체 명명(시점: ≥1.4.0 산출분): command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, 모두 `execute(request)`·repository/port 의존** | §0-3·§0-4·§4 | 종류 폴더 구조 + R/C/Q 명명 일치 + **데이터소스 BC도 종류 폴더·애그리거트 골격(`domain_layer/<aggregate>/` ORM 모델명 도출) 빈 패키지 실현** | 종류 2차 폴더(`entity`·`value_object`·`repository`·`command`·`query`·`dto`·`api`·`schema`)가 빈 패키지로라도 부재(평면 `.py`로 접음·골격 미생성) / **touched 데이터소스가 `domain_layer/<aggregate>/` 애그리거트 빈 골격 미생성**(§632-(2) 2026-06-08 개정·골격 무조건은 그 이후 산출분) / **command/에 `…Service`·자유함수·query/ selector 함수·dto/ 비-`@dataclass`(≥1.4.0 산출분)** | 결정(폴더·골격)+의미(명명) | ✅ |
 | **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 | 모델/마이그가 `infra_layer/django_` | 루트/앱루트/도메인에 `models.py`(마스크 C 적용) | 결정 | ✅ |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 | 명명 분리 | 혼동(도메인에 Model접미사·ORM이 bare) | 결정 | — |
 | **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 | 규약 준수 | `Interface`/`Impl` / `*_repo.py` / 일반 포트 구현이 `Port` 유지(Adapter 아님)·개념 base 불일치 | 결정 | — |
@@ -85,12 +85,12 @@
 - **신규 앱**(baseline에 없던, 런이 생성) → **§0 전부 강제**(존중 면제 없음).
 - **기존 앱**(baseline에 있던) →
   - 런이 그 앱에 **새 판정·불변식을 얹었으면**(예: 재고 차감 판정) → §1.2 + ddd §3.2 "판정 소유→구조 이주" 발동. *그 판정 코드*는 표준 트리 대상(평면 유지 시 SH FAIL) + SD-1~3와 교차.
-  - **판정은 안 얹었으나 *런이 건드렸으면*(diff에 새 마이그레이션·필드·제약)** → §632-(2)로 *4계층 전개*는 면제(데이터소스라 애그리거트 골격 불요)지만 **위치는 면제 안 됨**: `application/<app>/`(`infra_layer/django_<app>/`)여야 하고 루트 평면이면 **SH-1·4 FAIL**(houserules §0-1).
+  - **판정은 안 얹었으나 *런이 건드렸으면*(diff에 새 마이그레이션·필드·제약)** → **§632-(2) 2026-06-08 개정으로 *깊이 면제는 폐지***: 데이터소스도 위치(`application/<app>/`)·4계층·`domain_layer/<aggregate>/`(ORM 모델명 도출) 애그리거트 빈 골격·종류 2차 폴더를 **빈 패키지로 무조건 실현**. 면제는 *판정 실내용(`.py`)*에만(빈혈 회귀 방지). 따라서 ① 루트 평면(`<app>/`)이면 **SH-1·4 FAIL** ② `application/<app>/`로 옮겼어도 4계층·애그리거트 골격·종류 폴더를 접으면 **SH-2·3 FAIL**. **루트 잔재 정정(발견1·cbvlive-codex)**: 모델을 셰임 이주(`Product=ProductModel`)·`MIGRATION_MODULES`로 옮겼어도 **루트에 앱 디렉터리(`apps.py`·`views.py`·`tests.py` 잔재)를 남기면 SH-1·4 FAIL**(`check-structure.py:89` 루트 `apps.py`→FAIL-신호가 정답; "모델 이주로 위치 충족" PASS 뒤집기 폐기 — 위치 충족 = 앱 패키지가 루트에서 완전 제거). **경계(migrations-only 핀 ⊥ 앱 잔재)**: 0001 히스토리 보존 목적 `MIGRATION_MODULES` 핀으로 **`migrations/`만** 루트에 남고 `apps.py`·`models.py`가 전부 이주했으면 **SH-1·4 PASS·Q-5 트레이드오프**(SH-4 의미 🟡); `apps.py`가 루트에 남으면 **SH-1 FAIL**(판별: 루트에 `apps.py` 유무).
   - **판정도 안 얹고 *런이 안 건드린* 무관 기존 앱** → §1.1 존중 → 평면 유지 = **위반 아님**(SH 면제).
 
 > **조작화(v3)**: 이 "판정 적재" 판단은 `EVAL-METHOD.md §1.1.M`의 이진 하위질문(MQ1=런 diff에 핵심규칙 분기 추가? / MQ2=단순 상류 데이터소스?)으로 집행한다 — `MQ1=Y ∧ MQ2=N`이면 §1.2 발동. N_grader 경합 시 **보수적으로 *적재됨*(엄격)** + 인간 큐(치명 게이트 입력이므로).
 >
-> **위치 vs 깊이 분리(정정 2026-06-02 — smoke6 채점 오류 교정)**: MQ1/MQ2는 *4계층 전개 의무*(애그리거트 골격)만 가른다 — **위치(`application/<app>/` vs 루트)는 별도 축이고 면제가 없다**. *런이 건드린(diff 포함)* 기존 앱은 MQ1=N(순수 데이터소스)이어도 위치는 `application/<app>/`여야 하며 루트 평면이면 **SH-1·4 FAIL**. SH 위치 면제 = 그 앱이 **런 diff에 없음(untouched)**일 때만. 결정 레인 백스톱 `check-app-container.py`(7번째)가 동일 판정을 결정적으로 낸다(touched 루트 앱→exit 2; 빈 껍데기 `application/<app>/` 토큰엔 안 속음). **smoke6-claude(catalog touched·MQ1=N·루트 평면)를 이전에 SH PASS로 오판했으나 SH-1·4 FAIL이 맞다** — §632-(2) "평면 유지=깊이 면제, 위치 비면제"를 위치 면제로 오독한 채점 오류.
+> **위치·깊이 통합(개정 2026-06-08 — §632-(2) 면제 폐지)**: 이전엔 MQ1/MQ2가 *4계층 전개 의무*(애그리거트 골격)를 갈랐으나(MQ1=N이면 4계층 면제), **개정으로 touched 데이터소스는 위치·4계층·애그리거트 골격·종류 폴더가 모두 무조건**이다. MQ1/MQ2가 이제 가르는 것은 **판정 *실내용*(`.py` 코드)을 어디 두느냐**뿐: `MQ1=Y∧MQ2=N`이면 그 BC가 판정을 소유해 도메인 *실코드*가 채워지고(SD-1~3 교차), `MQ1=N`이면 도메인 골격은 *빈 패키지*로 남는다(빈혈 회귀 방지) — **그러나 골격·위치 자체는 양쪽 다 의무**. *런이 건드린(diff 포함)* 기존 앱은 MQ1=N이어도 루트 평면이면 **SH-1·4 FAIL**, `application/<app>/`로 옮겼어도 골격을 접으면 **SH-2·3 FAIL**. SH 면제 = 그 앱이 **런 diff에 없음(untouched)**일 때만(구 "MQ1=N이면 §1.2 면제가 깊이까지" 해석은 개정으로 폐기). 결정 레인: `check-app-container.py`(7번째·touched 루트 앱→exit 2)는 위치만, 골격 부재는 `check-layer-skeleton`(종류 폴더 확장)·SH-2/SH-3로 본다. **smoke6-claude(catalog touched·MQ1=N·루트 평면)·cbvlive-codex(루트 apps.py 잔재)는 SH-1·4 FAIL이 맞다.**
 
 ---
 
@@ -138,7 +138,7 @@
 | SD-3 빈혈 무복제 | Codex `catalog/published_service/stock.py:42` `stock__gte=quantity` | Claude `catalog/.../product.py:35-46` `Product.deduct_stock()` |
 | SD-6 계층순수성/P1a | Codex `create_order_app.py:70-79`(app이 비즈예외 catch→status snapshot) + `orders_api_router.py:87-124`(죽은 핸들러) | Claude `api_order.py:61-63` `Status(201, OrderOut)` 성공만 + 중앙핸들러 발화 |
 | SD-7 컨텍스트 통신 | Claude `p1a-v3 order_api_router.py:26`·`create_order_app.py:17`(ACL 밖 presentation·application이 catalog 도메인 **예외** 직접 import = 번역 ACL 미격리) | Codex `catalog_acl.py`(OHS만) · Claude `smoke4 product_stock_acl.py`(catalog 결합이 ACL에만 격리 — 미이주 직접통합은 표준 §2 허용) |
-| SH-4 Django앱 위치 | Codex `catalog/models.py`·`catalog/migrations/` 루트(마스크 C: 기존앱·판정적재면 위반) | Claude `application/catalog/infra_layer/django_catalog/models/` |
+| SH-4 Django앱 위치 | Codex `catalog/models.py`·`catalog/migrations/` 루트(touched 데이터소스라 위반·개정 2026-06-08) / **cbvlive-codex 루트 `catalog/apps.py`·`views.py`·`tests.py` 잔재**(셰임 이주해도 앱 패키지 루트 존속→SH-1·4 FAIL) | Claude `application/catalog/infra_layer/django_catalog/models/` + **루트 catalog 완전 삭제**(cbvlive-claude); migrations-only 핀(apps.py 이주)은 SH-4 🟡·Q-5 |
 | SH-7 협력포트 위치 | Codex `application_layer/create_order/port/` | Claude `domain_layer/order/port/` |
 | SH-9 단일 레이아웃 | Codex `catalog/test/`+`catalog/tests/` 공존 | (단일 test 디렉터리) |
 | SH-6 명명 | (8벌 위반 0) | 전 픽스처 `Interface`/`Impl`/`_repo.py` 0건 |
@@ -166,11 +166,12 @@
 
 ## 동결 전 결정 (항목 차원) — **v3 해소(2026-06-02)**
 > 전부 `EVAL-METHOD.md §0.1` 해소표로 확정. 아래는 항목-차원 5개의 결과.
-1. **치명 게이트 목록** — SD 전부 + FC 전부 + SH-1·2·4·7 + (조건부)NJ-1·2 + **Q-4(치명 승격 확정)**.
+1. **치명 게이트 목록** — SD 전부 + FC 전부 + SH-1·2·**3**·4·7 + (조건부)NJ-1·2 + **Q-4(치명 승격 확정)** + **SH-3(종류 폴더·골격 치명 격상 2026-06-08)**.
 2. **마스크 C "판정 적재"** — `EVAL-METHOD §1.1.M` 이진 하위질문으로 조작화 + 경합 보수=*적재됨*.
 3. **FC-1 골든 오라클** — **적대 grader가 프롬프트 직후·코드 열람 전** 작성, 작성자⊥채점자(§1.4).
 4. **S-NINJA 배치** — NJ-1·2 조건부 치명, NJ-3·4=비치명 '강'(Q 카운트 정규 편입, 강-FAIL 시 상한 '중'), NJ-5·6 경미(§2.1·§2.4).
 5. **빠지거나 과한 항목** — 현 차원 집합 동결(추가/삭제 없음). **개정(2026-06-07·DR-47): NJ-7(오류 변환 완전성·catch-all) 1회 추가** — 규칙 *내용*은 §6.2:368/469/477에 *선재*(텍스트 갭 아님·§5.2 정합)하나 33항목에 측정 차원이 없어 catch-all 부재가 라벨에 안 잡히던 빈틈을 메운다. **정직 표기(§5.2)**: 차원 *신설 동기*는 fixture 동기(aclex2live dual서 양 런타임 catch-all 공통 부재 관찰)이지 표준 동기 아님. NJ-3·4와 같은 비치명 '강'(치명 게이트 아님).
    - **동결 해제 2건째(2026-06-08): NJ-1 판정기준을 클래스 컨트롤러(`NinjaExtraAPI`/`@api_controller`) 허용으로 개정** — *차원 수 불변*(NJ-1 신설 아님)·*판정기준* 변경만(함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers`도 PASS로 확장). 판정기준은 §5 사전등록 동결 대상이므로 명시 해제로 기록한다. 근거: ninja-extra 클래스 컨트롤러 도입(2026-06-08). 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 ninja 스택 PASS).
+   - **동결 해제 3건째(2026-06-08): SH-3 치명 격상 + §632-(2) 면제 폐지 반영** — *차원 수 불변*(SH-3 신설 아님)·**치명 배정 변경**(비치명 `—`→치명) + **판정기준 변경**(데이터소스 골격을 빈 패키지로 무조건 실현·종류 폴더 부재 시 FAIL). 치명 배정·판정기준은 §5 사전등록 동결 대상이라 명시 해제로 기록. **근거 = 표준 동기**(fixture 동기 아님): `architecture-ddd/references/final.md:632` §632-(2) 개정(데이터소스 깊이 면제 폐지) + `discipline-houserules` §0-1 — 평가지가 *개정된 표준*을 따라가는 것(§5.2 "criteria는 표준 §근거에 선재"와 정합·NJ-7과 달리 fixture 관찰 산물 아님). **발견1(SH-1/4 마스크 C 정정)은 별개 성격** — 차원·치명·판정기준 변경이 아니라 *기존 SH-1/4 규칙의 올바른 적용*(루트 `apps.py` 잔재=위반)을 마스크 C 산문이 잘못 PASS로 뒤집던 것을 바로잡음 → **freeze 해제 불요**(기준 불변·적용만 교정).
 
 (채점 절차·집계·bisect·결승선·과적합 방지·**산출 형식(§6)** = `EVAL-METHOD.md`)
