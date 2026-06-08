@@ -394,6 +394,17 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **적대 검증**: 등재 1렌즈+집행 3렌즈(정밀도·충분성[백스톱 유일강제·DR-22/21]·범위[새백스톱 vs ⑨확장·N=1 규율 maj1⑭선례]) 전부 MODIFY·NO-GO 0. 백스톱 정밀도: **known-bad 4/4 exit2**(aclex2live claude·codex[조건1+2]·maj1live-codex·합성)·**known-good 5/5 exit0**(maj1live-claude·분산·alt-B+catch-all·plain·번역)·거짓양성0. 미러 byte-id·배선 정합(15→16·잔여0)·문법 OK.
 - **커밋**: 평가지=`676c583`·집행=이 커밋(1.8.0·**미푸시**). 🔴 **라이브 배선 미검증**(DR-30식 dual 후속·⑮도 미검증)·N=1(양 런타임 2표본·§6.2 선재·grep 결정적·우열 금지). 정본=결과지 2·RUBRIC TIER-OBS·EVAL-METHOD §4.3.1/§6.1·`[[dddjango-nj7-catchall]]`.
 
+### DR-48 ✅ ninja 함수형→ninja-extra 클래스 컨트롤러 강제 — 표준·에이전트·평가지·백스톱봉합 (9커밋+nit·1.9.0·미푸시·🔴라이브미검증)
+2026-06-08. 발단: 사용자 "ninja view 함수형→클래스형 *무조건* 강제·추후 api는 뷰클래스 탐색→포함/생성". 브레인스토밍→spec v1~v3(적대 7리뷰)→subagent-driven 구현.
+- **사실확정(브레인스토밍)**: 순수 django-ninja엔 CBV **없음**(`@router.path`=proposal·`ninja/router.py`에 `path` 부재→`AttributeError`·context7+WebFetch raw 확인). 클래스 컨트롤러=**django-ninja-extra**(`@api_controller`+`route`+`register_controllers`). 신뢰성 실사: 활발(★587·MIT)하나 **1인·0.31.x·`django-ninja>=1.6`**. 인증 호환(same API)·예외 중앙화/NJ-7 **보존**(`NinjaExtraAPI(NinjaAPI)` 상속)·415만 재설계.
+- **핵심 결정**: ninja-extra **최소**(클래스 라우팅만·permission/throttling/pagination/APIException 제외)·진입점 `NinjaExtraAPI`·컨트롤러=애그리거트·**ControllerBase 미상속**(자동주입·헬퍼 미사용)·`route.*`·파일명 **`<aggregate>_controller.py`**(houserules 파일명=클래스명)·**415 C정책**(기본 내부전용 비적용·외부공개 *명시* 시 함수형 `Router` 격리[클래스엔 `add_decorator` 부재])·등록 **단일 인스턴스 BC로컬**(config 소유·`<app>_api_router.py` import)·grandfather(**touched** 술어=신규/수정만 강제).
+- **집행 (a)단계적**: **0차** 백스톱 회귀봉합(`check-{response-schema-bypass,openapi-error-declaration,error-centralization}` `NINJA_IMPORT_RE`에 `ninja_extra` + `check-structure` NJ-1 토큰 — *변경이 유발한* 거짓음성 실측)·**1차** 표준+reviewer("무조건 클래스" 렌즈 **important** 별도 top-level 불릿·DR-21 강등방지·결정적 차단은 3차)·**2차** 라이브(미)·**3차** 무조건클래스 백스톱(미·"컨트롤러부재+신규함수형" *부재신호*·DR-38 동형신호 함정회피·라이브 N≥2 후).
+- **적대 7리뷰**(spec): v1 4렌즈 **BLOCKER2**(415 외부공개 모순·기존 백스톱 import 거짓음성회귀)+MAJOR(architecture-api 415"계약"·NinjaExtraAPI스택 **오귀속**[건드리면 안됨·P1 프레임워크비종속]·implementation-test/INSTALLED_APPS/NJ-1/reviewer열거/coder 누락)→v2→v2 재3리뷰 MAJOR(부재신호 거짓음성[미끼컨트롤러]·거짓양성[grandfather편집] **실측**·등록 공유인스턴스·NJ-1=*판정기준*변경→DR-47식 동결해제·grandfather경계 touched·미러 SKILL.md 2벌누락)→v3.
+- **9커밋+nit**(832f195·0a92659[Phase0]·f82f9d7·a1af4c8·3301242·0ed3cea·74ad682·88b6434·b1ef7d9·ce87a86[nit]). 미러 **16/16 백스톱+3/3 final.md byte-id**·plugin 1.9.0·spec §7 전수커버·415 C정책 5doc 일관. 최종통합리뷰 Ship-ready.
+- **부수발견**: ① **정본↔skill 드리프트 전11스킬**(Claude↔Codex는 IDENTICAL이나 `workspace/reference`↔`skills` 어긋남·ninja만 skill +99줄). **옵션A**=우리변경만 3사본동일·기존드리프트 보존(라이브=skill사본 핵심·정본 백로그). ② **버전핀 정본 `houserules §6.2`(DR-18 신설됐다 해소)→`ninja §2.1` 이동** + bare `§6.2 핀` 댕글링 8곳 청소(RFC9457 `ninja §6.2`와 *맥락구분*). ③ **`user-invocable: false`** frontmatter Claude 11/11·Codex 0/19 선재(→SKILL.md **body** byte-id 기준).
+- **백로그**: 2차 라이브 dual·3차 백스톱·정본↔skill 드리프트·`houserules §6.2` 섹션 본체·reviewer `§6.1/§6.2` test-stack·test §20. **토끼굴 2회 회피**(정본드리프트 전면정렬·버전핀 §6.2 섹션 — 둘 다 백로그).
+- 🔴 **미푸시**(이전 `9c6d148`·`8f6922c`·DR-47 포함)·**라이브 미검증**(N=0·2차 전)·생성물 미관측이라 우열·효과 결론 없음. 정본=spec/plan `workspace/specs/2026-06-08-ninja-class-based-views-{design,plan}.md`·`[[dddjango-ninja-cbv]]`.
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)
