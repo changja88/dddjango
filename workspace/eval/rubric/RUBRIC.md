@@ -48,11 +48,12 @@
 ## TIER-S(조건부) — django-ninja 충실도 (S-NINJA)
 표준: `dddjango/skills/implementation-django-ninja/references/final.md` + `SKILL.md`
 > **조건부**: 기능에 HTTP/JSON API operation이 하나라도 있을 때만 채점. 없으면(서버렌더·CLI·배치·순수도메인) 차원 **N/A**(점수 산입 0, FAIL 아님).
+> **"operation" 어휘 정의(NJ-2·SD-6·NJ-7·1회)**: 이 평가지 전반에서 **operation = 함수형 ninja operation(`@router.post def …`) *또는* ninja-extra 컨트롤러 메서드(`@http_post def …(self, …)`)**를 가리킨다. "operation 본문"은 두 형태 모두의 *메서드/함수 본문*이다 — 컨트롤러 클래스로 전환해도 **메서드 내부의 비즈로직·상태전이·ORM·수동 본문파싱·수동 필드검증·raw 응답 생성**은 함수형 operation과 *동일 기준*으로 잡힌다(클래스 래핑이 면죄부 아님). 이 정의는 어휘 명확화일 뿐 NJ-2/SD-6/NJ-7 판정기준을 바꾸지 않는다(동결 무관).
 > **비중복 보증**: 오류→status 중앙화=**SD-6 소유** / problem 형식·status 의미·버전 *정책*=**Q-2 소유** / 일반 의존성 핀=**Q-7 소유** → S-NINJA는 재채점 안 함(교차참조만). NJ-2는 SD-6과 **직교**(SD-6="오류를 operation이 만드나" / NJ-2="비즈로직·ORM·수동파싱을 operation이 하나"). **NJ-7도 SD-6과 직교**(SD-6="중앙화 *위치*: operation/app이 status를 만드나" / NJ-7="중앙화 *완전성*: 미식별·비-retryable 예외가 단일변환점을 우회하나 — catch-all 안전망 유무"). NJ-7은 §4.3.1 EP 관측(라이브)이 아니라 *정적 결정 레인*(catch-all 등록 grep)이라 라벨에 반영된다.
 
 | ID | 항목 | §근거 | PASS | FAIL | 레인 | 치명(조건부) |
 |---|---|---|---|---|---|---|
-| **NJ-1** 스택 채택 | 신규 HTTP/JSON API를 Ninja(`NinjaAPI`+`Router`)로; plain view·`JsonResponse`·DRF로 안 샘; 기존 스택 존중 | §1.1·§10 | 신규 JSON API가 ninja Router operation으로 등록 | 신규 JSON API가 plain `django.views`/`JsonResponse`·DRF로 구현(greenfield인데) | 결정 | ✅ |
+| **NJ-1** 스택 채택 | 신규 HTTP/JSON API를 Ninja(`NinjaAPI`/`NinjaExtraAPI`)로 — (`Router` ∨ `@api_controller`/`register_controllers`) operation/컨트롤러; plain view·`JsonResponse`·DRF로 안 샘; 기존 스택 존중 (신규 표준=클래스 컨트롤러, 함수형 `Router`=레거시/415 격리 예외 — 둘 다 PASS) | §1.1·§10 | 신규 JSON API가 ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러로 등록 | 신규 JSON API가 plain `django.views`/`JsonResponse`·DRF로 구현(greenfield인데) | 결정 | ✅ |
 | **NJ-2** operation 얇음(비-오류) | operation 본문에 비즈로직·상태전이·ORM·수동 본문파싱·수동 필드검증 0; service 호출 + schema 매핑만 | §1.3·§2.2 | schema 바인딩→service 호출→응답 매핑만 | operation에 `json.loads`/수동검증/ORM/비즈 분기 | 의미(+grep) | ✅ |
 | **NJ-3** Schema 입출력 분리 | 요청·응답을 `Schema`/`ModelSchema`로 분리, 도메인 엔티티 직접 직렬화 0 | §2.2·§3.1 | 입·출력 별도 Schema, 도메인→DTO 매핑 | 도메인 객체 직접 `response=` / 내부필드 누출 | 결정+의미 | — (강) |
 | **NJ-4** status별 response 선언 | 가능한 모든 status를 **`response={...}`에** schema 선언(§2.2 line111) — `openapi_extra`/`get_openapi_schema` 수동 선언은 **불충족**(ninja 미인지) | §2.2·§8 | 오류 status가 `response={...}`에 선언(201/404/409/422…) | `response=`엔 성공(201)만·오류는 `openapi_extra`/핸들러에만 | 결정 | — (강) |
@@ -122,6 +123,7 @@
 | **EP-3** transient 소진 | 인프라 경합(락·CAS 재시도 소진) — *과소매핑*(진짜 transient→500) 회귀 감시 | 종단별 어댑터(raw/도메인번역)=§4.3.1 ⓑ |
 | **EP-4** 재고 부족 | 재고<주문 충돌 | FC-1 골든과 교차확인 |
 
+> **C 정책 무충돌(415 EP 항목 부재 → 무변경)**: 이 EP-1~4 관측 항목엔 **415/406 협상 항목이 없으므로** Q-1 415/406 C 정책(§E 앵커)과 **무충돌** — EP 표는 **바꾸지 않는다**(정본 `EVAL-METHOD.md §4.3.1`).
 > **앵커 면제**: 라이브 probe라 §E 정적 앵커가 부적합 — 어댑터 예시는 `EVAL-METHOD.md §4.3.1 ⓑ`가 대신한다. **EP-1~4는 기본 4종**이며 변종(EP-1b·2b 등)은 §4.3.1 ⓑ 어댑터 재량(RUBRIC은 4기본만 고정). **소급 금지**: §4.3.1이 채점지에 처음 적용된 maj1live(2026-06-07) 이전 산출 fixture엔 EP를 적용하지 않는다.
 
 ---
@@ -140,7 +142,7 @@
 | SH-7 협력포트 위치 | Codex `application_layer/create_order/port/` | Claude `domain_layer/order/port/` |
 | SH-9 단일 레이아웃 | Codex `catalog/test/`+`catalog/tests/` 공존 | (단일 test 디렉터리) |
 | SH-6 명명 | (8벌 위반 0) | 전 픽스처 `Interface`/`Impl`/`_repo.py` 0건 |
-| Q-1 스코프 | Codex 멱등성 `Idempotency-Key` 필수(task 미요구) / **Codex 협상 레이어 발명**: **406** Accept 협상(`fklive-codex api_orders.py:43-86` `_parse_media_range` q파싱; §6.3:443-444 'single repr이면 406 불필요' escape-valve **직격**) + **415** Content-Type(발명 범위이나 본문검증이라 *literal 위반 아님*·§7.2 계약·Codex 구현은 §6.3 레시피 아닌 post-hoc=**underdetermined**); 뿌리=`design-spec.md:123-126` architect 협상 레이어 전체 / Claude 합산 정규화 | 요청 범위 내 모델 / **Claude 406/415 의도적 공백**(`fklive-claude design-spec.md:81` 명시 배제 — 406은 단일표현이라 escape-valve 정합·415는 표준상 선택적 미구현) |
+| Q-1 스코프 | Codex 멱등성 `Idempotency-Key` 필수(task 미요구) / **Codex 협상 레이어 발명**: **406** Accept 협상(`fklive-codex api_orders.py:43-86` `_parse_media_range` q파싱; §6.3:443-444 'single repr이면 406 불필요' escape-valve **직격**) + **415** Content-Type(발명 범위·본문검증이라 *literal 위반 아님*·§7.2 계약); 뿌리=`design-spec.md:123-126` architect 협상 레이어 전체 / Claude 합산 정규화 | 요청 범위 내 모델 / **Claude 406/415 의도적 공백**(`fklive-claude design-spec.md:81` 명시 배제) |
 | Q-4 메커니즘 | final-claudeA `config/db_backends/sqlite3_immediate/base.py` | p1a-v3 양쪽 순수 version CAS |
 | Q-5 마이그레이션 | Claude `django_catalog/migrations/0001_initial.py:14-25`(기존 0001 재작성) | 신규 앱 0001 + 별도 0002 expand |
 | NJ-2 operation 얇음 | Codex `smoke2-codexB/.../create_order/api_orders.py:108-213`(operation이 `json.loads(request.body)` 수동파싱+수동검증+7 except status 분기) | Claude `p1a-v3-claude/.../api_order.py:61-63`(schema 바인딩→service→`Status(201,…)` 매핑만) |
@@ -150,6 +152,8 @@
 | Q-3 동시성 결정성 | Codex `test_..._api.py` `Barrier(2)`+ThreadPool 실스레드 레이스(스케줄러 의존=비결정·flaky) | 결정적 CAS-스파이(stale `version` 1회 주입→수렴) |
 
 > NJ-1·3·6·FC-1은 8벌 known-bad 부재(전부 준수/미관측) — FAIL은 *표준 위반 정의*로 채점(앵커 없이도). 외부 baseline·합성 반례는 선택적 보강.
+> **NJ-1/2/5 앵커 좌표 — 클래스 컨트롤러 병기(단서)**: 위 NJ 앵커는 함수형 operation 좌표(`def create_order(request, payload)` 형태의 `api_order(s).py:줄`)를 가리키나, ninja-extra 전환 후엔 **동일 위반이 컨트롤러 메서드 형태**로 나타난다 — `def create_order(self, request, payload)`(첫 인자 `self`). 즉 NJ-2의 `json.loads`/수동검증/ORM/비즈 분기는 *컨트롤러 메서드 본문*에서, NJ-5의 무정보 반환타입·summary 누락은 *`@http_post`/`@route` 메서드*에서, NJ-1의 plain-view/`JsonResponse` 누수는 *컨트롤러 미등록(`register_controllers` 부재)*에서 동형으로 잡는다. 기존 함수형 좌표는 레거시/415 격리 예외 픽스처용으로 **유지**(삭제 아님)하고, 클래스 형태를 병기 단서로 더한 것이다.
+> **Q-1 415/406 C 정책(위 Q-1 앵커 — 이전 'underdetermined' 단서를 결정화)**: 415/406은 **내부전용 API에선 기본 비적용이 정상**(과소 아님) — 스코프에 **'외부 공개 API'가 명시될 때만** 적용 대상. (a) 명시 *없이* 415/406 협상 레이어를 **발명**하면 **Q-1 과설계**(위 Q-1 Codex 좌표 = 이 케이스); (b) 명시 *있는데* 415/406을 **누락**하면 **Q-2 계약 흠**. Codex 415 구현이 §6.3 레시피 아닌 post-hoc이라 'underdetermined'였던 단서는 이 C 정책으로 **결정화**된다(내부전용 스코프라 발명=과설계). 앵커는 §5 freeze 밖이라 재서술 정당.
 
 ---
 
@@ -166,6 +170,7 @@
 2. **마스크 C "판정 적재"** — `EVAL-METHOD §1.1.M` 이진 하위질문으로 조작화 + 경합 보수=*적재됨*.
 3. **FC-1 골든 오라클** — **적대 grader가 프롬프트 직후·코드 열람 전** 작성, 작성자⊥채점자(§1.4).
 4. **S-NINJA 배치** — NJ-1·2 조건부 치명, NJ-3·4=비치명 '강'(Q 카운트 정규 편입, 강-FAIL 시 상한 '중'), NJ-5·6 경미(§2.1·§2.4).
-5. **빠지거나 과한 항목** — 현 차원 집합 동결(추가/삭제 없음). **개정(2026-06-07·DR-47): NJ-7(오류 변환 완전성·catch-all) 1회 추가** — 규칙 *내용*은 §6.2:368/469/477에 *선재*(텍스트 갭 아님·§5.2 정합)하나 33항목에 측정 차원이 없어 catch-all 부재가 라벨에 안 잡히던 빈틈을 메운다. **정직 표기(§5.2)**: 차원 *신설 동기*는 fixture 동기(aclex2live dual서 양 런타임 catch-all 공통 부재 관찰)이지 표준 동기 아님. NJ-3·4와 같은 비치명 '강'(치명 게이트 아님). 동결 해제는 이 1건뿐.
+5. **빠지거나 과한 항목** — 현 차원 집합 동결(추가/삭제 없음). **개정(2026-06-07·DR-47): NJ-7(오류 변환 완전성·catch-all) 1회 추가** — 규칙 *내용*은 §6.2:368/469/477에 *선재*(텍스트 갭 아님·§5.2 정합)하나 33항목에 측정 차원이 없어 catch-all 부재가 라벨에 안 잡히던 빈틈을 메운다. **정직 표기(§5.2)**: 차원 *신설 동기*는 fixture 동기(aclex2live dual서 양 런타임 catch-all 공통 부재 관찰)이지 표준 동기 아님. NJ-3·4와 같은 비치명 '강'(치명 게이트 아님).
+   - **동결 해제 2건째(2026-06-08): NJ-1 판정기준을 클래스 컨트롤러(`NinjaExtraAPI`/`@api_controller`) 허용으로 개정** — *차원 수 불변*(NJ-1 신설 아님)·*판정기준* 변경만(함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers`도 PASS로 확장). 판정기준은 §5 사전등록 동결 대상이므로 명시 해제로 기록한다. 근거: ninja-extra 클래스 컨트롤러 도입(2026-06-08). 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 ninja 스택 PASS).
 
 (채점 절차·집계·bisect·결승선·과적합 방지·**산출 형식(§6)** = `EVAL-METHOD.md`)

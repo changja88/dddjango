@@ -24,7 +24,7 @@
 | 마스크 C "판정 적재" 조임 | **이진 하위질문으로 조작화**(§1.1.M) + 경합 시 보수=*적재됨* |
 | FC-1 등록 주체·시점 | **§1.4 확정**(적대 grader·프롬프트 직후·코드 열람 전) |
 | S-NINJA 치명 배치 | **NJ-1·2 조건부 치명, NJ-3·4=비치명 '강'(§2.4 Q-편입), NJ-5·6=경미** |
-| 빠지거나 과한 항목 | **현 차원 집합 동결**(추가/삭제 없음). **개정 2026-06-07·DR-47: NJ-7(오류 변환 완전성·catch-all) 1회 추가**(§6.2 선재·33항목 측정 차원 부재 빈틈·비치명 '강'·동기 정직표기 §5.2) |
+| 빠지거나 과한 항목 | **현 차원 집합 동결**(추가/삭제 없음). **개정 2026-06-07·DR-47: NJ-7(오류 변환 완전성·catch-all) 1회 추가**(§6.2 선재·33항목 측정 차원 부재 빈틈·비치명 '강'·동기 정직표기 §5.2). **동결 해제 2건째 2026-06-08: NJ-1 *판정기준* 개정**(차원 수 불변·신설 아님 — 함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers` 허용으로 확장; 판정기준은 사전등록 동결 대상이라 명시 해제. 근거: ninja-extra 클래스 컨트롤러 도입) |
 
 ### 0.2 고정 입력 규율
 런 리셋·고정 게이트 답(BC배치·렌즈·API스택·G1/G2 승인 기준·thinking)은 **각 태스크 CRIB**(fixture *밖*)에 둔다. *(구 `RETEST-HANDOFF.md`는 폴더 재구조화로 제거됨 — 고정 게이트 답의 정본은 태스크별 CRIB이며, 본 문서 §1.4 골든표 동결과 함께 freeze 산출물에 포함한다.)*
@@ -63,7 +63,7 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 | **SD-6** 계층순수성 | `check-error-centralization.py`(application_layer **한정**) + grep `from ninja`/`JsonResponse(` in domain | application HTTP변환 0 | application이 status 변환 | **스크립트는 application_layer만 봄** — presentation 수제응답·domain HTTP import·status:int 객체 흐름은 **못 봄**(의미 레인 필수) |
 | **SD-7** 컨텍스트 통신 | 타 BC `domain_layer`/`infra_layer` 직접 import 있나(grep import 경로) | (의미) OHS/ACL 포트만 소비 | (결정) 타 BC 구체구현 직접 import | **비대칭**: FAIL 방향(구체 infra/domain 경로 import)은 grep로 *완전히 닫힘*; PASS 방향("그게 OHS 표면인가 concrete impl인가")은 catalog 공개표면 정의 의존 = **의미 레인 필수**. published_service 빈 패키지=OHS 부재도 FAIL |
 | **SH-9** 단일 레이아웃 | 한 앱에 `test`+`tests`·`src`+`apps` 공존하나(`find`) | 단일 레이아웃 | 공존 | — |
-| **NJ-1** 스택 | 신규 JSON API가 `NinjaAPI`+`Router`인가 vs `JsonResponse`/DRF(grep) | ninja Router operation | plain view·DRF(greenfield) | 기존 확립 스택 존중은 houserules §1 |
+| **NJ-1** 스택 | 신규 JSON API가 `NinjaAPI`/`NinjaExtraAPI` + (`Router` ∨ `@api_controller`/`register_controllers`)인가 vs `JsonResponse`/DRF(grep) | ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러 | plain view·DRF(greenfield) | 기존 확립 스택 존중은 houserules §1; 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 PASS) |
 | **NJ-4** status 선언 | operation `response={...}` dict에 다중 status schema(grep `response=`) — **`openapi_extra`/`get_openapi_schema` 선언은 불충족**(§2.2 line111) | 오류 status가 `response={...}`에 | `response=`에 201(성공)만, 오류는 `openapi_extra`/핸들러에만 | **`openapi_extra`로 오류를 OpenAPI에 넣어도 NJ-4 FAIL**(가시성≠`response=` 선언); 진짜 미선언(핸들러-only·OpenAPI 부재)만 Q-2 |
 | **Q-4** 메커니즘(치명) | `check-mechanism-ownership.py` + grep `DatabaseWrapper`/PRAGMA/monkeypatch | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 명세 승인된 메커니즘은 면제(의미 확인) |
 | **Q-5** 마이그레이션 | (순서) ①이주 여부 판정(마스크 C가 그 앱을 '신규 앱'으로 봤나) → ②이주 시: 기존 `0001` 불변·`db_table`/`label` 보존·state-only rename ops grep | 신규앱이 자기 0001 보유(정당) / 이주 시 0001 불변·state-only | **기존 앱**의 0001 재작성·테이블 rename DDL | **앵커 양매핑 주의**: 동일물리(baseline 0001 `D`+새앱 0001 생성)가 '신규앱 정당'↔'재작성 위반' 양쪽 — 마스크 C의 신규/기존 라벨이 *먼저* 갈라야 PASS/FAIL 결정. 이주 미시도(평면 유지)면 state-only ops 술어 **N/A**. brownfield 실적용은 .venv 실행 |
@@ -179,6 +179,8 @@ P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의
 | **EP-2 무효 입력** | 도메인/스키마 위반(수량 0·음수) → problem+json 클라이언트 오류 | **{422, 400}** | 수량 필드 없으면 픽스처의 다른 필수검증 필드로 대체 |
 | **EP-3 transient 소진** | transient 인프라 경합(락 경합·CAS 재시도 소진) → **retryable, 절대 500 아님** | **{503, 409}** | **종단 유형별 어댑터**: (i) ACL이 raw transient를 경계 핸들러로 전파→경계 직접 주입(락/소진); (ii) ACL이 *도메인 예외로 번역*(raw 종단 없음·Codex 대안 B)→raw probe **N/A**, 도메인경로(소진→도메인예외→핸들러)로 *동일 계약* 검증 |
 | **EP-4 재고 부족** | 재고<주문 → 충돌 | **{409}** | FC-1 골든과 중복 — 골든이 1차, 여기선 라이브 축 교차확인만 |
+
+> **C 정책 무충돌(415 EP 항목 부재 → 무변경)**: 이 EP-1~4 매트릭스에는 **415/406 협상 항목이 없으므로** Q-1 415/406 C 정책(RUBRIC E 앵커)과 **무충돌** — EP 표는 **바꾸지 않는다**.
 
 - **정적 대응물(거대 식별자 — 라이브서 제외)**: 외부 식별자에 거대값을 라이브로 던지는 probe는 422\|500이 **둘 다 방어 가능**(vacuous·underdetermined)이라 라이브 매트릭스에서 **뺀다**. 대신 *정적 스키마 검사*로 관측: 외부 식별자 수치 필드가 상한(`le=`/`lt=`/범위 validator)을 **선언**하나(min1/architecture-api §5.1). 라이브 발화가 아닌 **정적 관측**이며 RUBRIC min 차원 판정을 바꾸지 않는다.
 - **EP-3 균일불가 해소(N/A 규칙의 핵심 사례)**: 순진안은 "raw OperationalError 종단" probe를 모든 런에 강제하려다 **균일 불가**였다(Claude=ACL raw raise 1종단·Codex=ACL 도메인번역·OperationalError 종단 없음·app 2곳 분산). EP-3은 *계약*("소진→retryable, 500 아님")만 균일 고정하고 *probe 종단*은 어댑터가 픽스처별로 고른다 → 균일 적용 가능. **maj1과 반대축**(maj1=과잉매핑[transient를 과하게 retryable]·EP-3=과소매핑[진짜 transient를 500으로]·ACL-EX2가 그 인스턴스).
