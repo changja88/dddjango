@@ -48,7 +48,7 @@
 ## TIER-S(조건부) — django-ninja 충실도 (S-NINJA)
 표준: `dddjango/skills/implementation-django-ninja/references/final.md` + `SKILL.md`
 > **조건부**: 기능에 HTTP/JSON API operation이 하나라도 있을 때만 채점. 없으면(서버렌더·CLI·배치·순수도메인) 차원 **N/A**(점수 산입 0, FAIL 아님).
-> **"operation" 어휘 정의(NJ-2·SD-6·NJ-7·1회)**: 이 평가지 전반에서 **operation = 함수형 ninja operation(`@router.post def …`) *또는* ninja-extra 컨트롤러 메서드(`@http_post def …(self, …)`)**를 가리킨다. "operation 본문"은 두 형태 모두의 *메서드/함수 본문*이다 — 컨트롤러 클래스로 전환해도 **메서드 내부의 비즈로직·상태전이·ORM·수동 본문파싱·수동 필드검증·raw 응답 생성**은 함수형 operation과 *동일 기준*으로 잡힌다(클래스 래핑이 면죄부 아님). 이 정의는 어휘 명확화일 뿐 NJ-2/SD-6/NJ-7 판정기준을 바꾸지 않는다(동결 무관).
+> **"operation" 어휘 정의(NJ-2·SD-6·NJ-7·1회)**: 이 평가지 전반에서 **operation = 함수형 ninja operation(`@router.post def …`) *또는* ninja-extra 컨트롤러 메서드(`@route.post def …(self, …)`)**를 가리킨다. "operation 본문"은 두 형태 모두의 *메서드/함수 본문*이다 — 컨트롤러 클래스로 전환해도 **메서드 내부의 비즈로직·상태전이·ORM·수동 본문파싱·수동 필드검증·raw 응답 생성**은 함수형 operation과 *동일 기준*으로 잡힌다(클래스 래핑이 면죄부 아님). 이 정의는 어휘 명확화일 뿐 NJ-2/SD-6/NJ-7 판정기준을 바꾸지 않는다(동결 무관).
 > **비중복 보증**: 오류→status 중앙화=**SD-6 소유** / problem 형식·status 의미·버전 *정책*=**Q-2 소유** / 일반 의존성 핀=**Q-7 소유** → S-NINJA는 재채점 안 함(교차참조만). NJ-2는 SD-6과 **직교**(SD-6="오류를 operation이 만드나" / NJ-2="비즈로직·ORM·수동파싱을 operation이 하나"). **NJ-7도 SD-6과 직교**(SD-6="중앙화 *위치*: operation/app이 status를 만드나" / NJ-7="중앙화 *완전성*: 미식별·비-retryable 예외가 단일변환점을 우회하나 — catch-all 안전망 유무"). NJ-7은 §4.3.1 EP 관측(라이브)이 아니라 *정적 결정 레인*(catch-all 등록 grep)이라 라벨에 반영된다.
 
 | ID | 항목 | §근거 | PASS | FAIL | 레인 | 치명(조건부) |
@@ -152,7 +152,7 @@
 | Q-3 동시성 결정성 | Codex `test_..._api.py` `Barrier(2)`+ThreadPool 실스레드 레이스(스케줄러 의존=비결정·flaky) | 결정적 CAS-스파이(stale `version` 1회 주입→수렴) |
 
 > NJ-1·3·6·FC-1은 8벌 known-bad 부재(전부 준수/미관측) — FAIL은 *표준 위반 정의*로 채점(앵커 없이도). 외부 baseline·합성 반례는 선택적 보강.
-> **NJ-1/2/5 앵커 좌표 — 클래스 컨트롤러 병기(단서)**: 위 NJ 앵커는 함수형 operation 좌표(`def create_order(request, payload)` 형태의 `api_order(s).py:줄`)를 가리키나, ninja-extra 전환 후엔 **동일 위반이 컨트롤러 메서드 형태**로 나타난다 — `def create_order(self, request, payload)`(첫 인자 `self`). 즉 NJ-2의 `json.loads`/수동검증/ORM/비즈 분기는 *컨트롤러 메서드 본문*에서, NJ-5의 무정보 반환타입·summary 누락은 *`@http_post`/`@route` 메서드*에서, NJ-1의 plain-view/`JsonResponse` 누수는 *컨트롤러 미등록(`register_controllers` 부재)*에서 동형으로 잡는다. 기존 함수형 좌표는 레거시/415 격리 예외 픽스처용으로 **유지**(삭제 아님)하고, 클래스 형태를 병기 단서로 더한 것이다.
+> **NJ-1/2/5 앵커 좌표 — 클래스 컨트롤러 병기(단서)**: 위 NJ 앵커는 함수형 operation 좌표(`def create_order(request, payload)` 형태의 `api_order(s).py:줄`)를 가리키나, ninja-extra 전환 후엔 **동일 위반이 컨트롤러 메서드 형태**로 나타난다 — `def create_order(self, request, payload)`(첫 인자 `self`). 즉 NJ-2의 `json.loads`/수동검증/ORM/비즈 분기는 *컨트롤러 메서드 본문*에서, NJ-5의 무정보 반환타입·summary 누락은 *`@route.*` 메서드*에서, NJ-1의 plain-view/`JsonResponse` 누수는 *컨트롤러 미등록(`register_controllers` 부재)*에서 동형으로 잡는다. 기존 함수형 좌표는 레거시/415 격리 예외 픽스처용으로 **유지**(삭제 아님)하고, 클래스 형태를 병기 단서로 더한 것이다.
 > **Q-1 415/406 C 정책(위 Q-1 앵커 — 이전 'underdetermined' 단서를 결정화)**: 415/406은 **내부전용 API에선 기본 비적용이 정상**(과소 아님) — 스코프에 **'외부 공개 API'가 명시될 때만** 적용 대상. (a) 명시 *없이* 415/406 협상 레이어를 **발명**하면 **Q-1 과설계**(위 Q-1 Codex 좌표 = 이 케이스); (b) 명시 *있는데* 415/406을 **누락**하면 **Q-2 계약 흠**. Codex 415 구현이 §6.3 레시피 아닌 post-hoc이라 'underdetermined'였던 단서는 이 C 정책으로 **결정화**된다(내부전용 스코프라 발명=과설계). 앵커는 §5 freeze 밖이라 재서술 정당.
 
 ---
