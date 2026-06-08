@@ -85,7 +85,7 @@ Router operation은 HTTP adapter다. 다음은 Router 안에 둘 수 있다.
 Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 프로젝트의 API namespace와 versioning 방식이 이미 있으면 그 방식을 따른다.
 
-프로젝트에 Django Ninja가 아직 의존성으로 없는 신규 도입이면, 글로벌로 임의 설치하지 말고 의존성 매니페스트(`requirements/*.txt` 등, `implementation-django` §3.1)에 **버전을 핀해 추가**한다 — 핀 표기는 프로젝트의 기존 관례를 따른다(기존 항목이 `Django==4.2.30`처럼 정확 핀이면 `django-ninja==<버전>`으로 맞춘다). 버전 *값*(`<버전>`에 무엇을 핀할지)은 `discipline-houserules` §6.2를 따른다 — 기억 속 버전 금지, 설치 시점에 resolve한 실제 값을 핀하되 기존 프레임워크 핀과 호환되는 최신으로 한다. `INSTALLED_APPS`·`NinjaAPI` 인스턴스·URL 등록 같은 런타임 배선도 함께 둔다.
+프로젝트에 Django Ninja가 아직 의존성으로 없는 신규 도입이면, 글로벌로 임의 설치하지 말고 의존성 매니페스트(`requirements/*.txt` 등, `implementation-django` §3.1)에 **버전을 핀해 추가**한다 — 핀 표기는 프로젝트의 기존 관례를 따른다(기존 항목이 `Django==4.2.30`처럼 정확 핀이면 `django-ninja==<버전>`으로 맞춘다). 버전 *값*(`<버전>`에 무엇을 핀할지)은 다음 버전-핀 규율을 따른다 — 기억 속/추정 버전을 쓰지 않는다. 설치 시점에 resolve한 실제 버전을 매니페스트(`requirements`/`pyproject`)에 핀으로 기록하되 기존 프레임워크 핀과 호환되는 최신으로 한다. `django-ninja`·`django-ninja-extra` 모두 동일하다. `INSTALLED_APPS`·`NinjaAPI` 인스턴스·URL 등록 같은 런타임 배선도 함께 둔다.
 
 신규 표준 presentation 표면은 클래스 컨트롤러(§2.3)이므로 **`django-ninja-extra`를 설치하고 `INSTALLED_APPS`에 `'ninja_extra'`를 등록한다**(`NinjaExtraAPI`·`register_controllers` 동작에 필요). 핀 표기·버전 값 규율은 위 `django-ninja`와 동일하다.
 
@@ -233,7 +233,7 @@ api.register_controllers(OrderController)
   `add_router`도 *같은* 인스턴스에 단다.
 
 **설치.** ninja-extra는 별도 앱이다 — `INSTALLED_APPS += ['ninja_extra']`가 필요하다(의존성
-매니페스트 핀은 §2.1과 동일하게 `discipline-houserules` §6.2를 따른다).
+매니페스트 핀은 §2.1과 동일하다).
 
 **탐색 → 포함/생성 규칙 (새 operation 추가 시).** 새 operation을 둘 곳은 다음 순서로 정한다.
 

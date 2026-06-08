@@ -561,7 +561,7 @@ def test_analytics_query(db_connection):
 
 ## 6. pytest 플러그인 생태계
 
-테스트 스택 동반 패키지(pytest-django, factory_boy, freezegun, responses 등)를 새로 들일 때는 훈련 기억의 버전을 적지 말고 **`discipline-houserules` §6.2 버전-핀 규율**(무핀으로 resolve → *실제 설치 버전*을 매니페스트에 핀)을 따른다 — resolve가 기존 Django/핵심 의존성 핀을 올리려 들면 호환 한계 신호이니 기존 핀 안에서 핀하거나 보고한다(설계 반송). 핀 *표기*·매니페스트 위치는 `implementation-django` §3.1·`implementation-django-ninja` §2.1 소유.
+테스트 스택 동반 패키지(pytest-django, factory_boy, freezegun, responses 등)를 새로 들일 때는 훈련 기억의 버전을 적지 말고 **`implementation-django-ninja` §2.1 버전-핀 규율**(무핀으로 resolve → *실제 설치 버전*을 매니페스트에 핀)을 따른다 — resolve가 기존 Django/핵심 의존성 핀을 올리려 들면 호환 한계 신호이니 기존 핀 안에서 핀하거나 보고한다(설계 반송). 핀 *표기*·매니페스트 위치는 `implementation-django` §3.1·`implementation-django-ninja` §2.1 소유.
 
 ### 6.1 pytest-xdist: 병렬 테스트 실행
 
@@ -2375,17 +2375,20 @@ def error_occurred(order_result, message):
 
 ## 19. Django Ninja TestClient API 계약 테스트
 
-Django Ninja API는 Django 표준 test client로도 테스트할 수 있지만, router/API 단위 계약을 빠르게 확인할 때는 `ninja.testing.TestClient`를 사용한다. 이 client는 middleware와 URL resolver 계층을 통과하지 않고 API surface를 직접 호출하므로, endpoint의 요청/응답 계약을 좁게 검증하기 좋다.
+Django Ninja API는 Django 표준 test client로도 테스트할 수 있지만, controller/router 단위 계약을 빠르게 확인할 때는 in-memory `TestClient`를 사용한다. 이 client는 middleware와 URL resolver 계층을 통과하지 않고 API surface를 직접 호출하므로, endpoint의 요청/응답 계약을 좁게 검증하기 좋다.
+
+테스트 대상에 따라 client가 갈린다 — **신규 표준인 클래스 컨트롤러(`implementation-django-ninja` §2.3)는 `from ninja_extra.testing import TestClient; client = TestClient(OrderController)`로 컨트롤러를 직접 감싼다.** 함수형 격리 `Router` 경로(레거시·외부공개 415 격리 등)는 기존 `from ninja.testing import TestClient; client = TestClient(router)`를 그대로 쓴다(`ninja.testing.TestClient`는 함수형 `Router`를 감싸므로 컨트롤러엔 맞지 않는다). 검증 중점·assert 형태는 양쪽 동일하다.
 
 ### 19.1 Router 단위 응답 계약
 
 ```python
-from ninja.testing import TestClient
+# 신규 표준 — 클래스 컨트롤러(ninja-extra). 컨트롤러를 직접 감싼다.
+from ninja_extra.testing import TestClient
 
-from orders.api import router
+from orders.presentation_layer.api.order.order_controller import OrderController
 
 
-client = TestClient(router)
+client = TestClient(OrderController)
 
 
 def test_order_detail_contract(order_factory):
@@ -2399,6 +2402,18 @@ def test_order_detail_contract(order_factory):
         "status": "paid",
         "total_amount": "120.00",
     }
+```
+
+함수형 격리 `Router`(레거시·외부공개 415 격리 등)를 테스트할 때는 `ninja.testing.TestClient`로 Router를 감싼다(나머지 assert는 동일).
+
+```python
+# 레거시·격리 Router 경로 — 함수형 Router를 감싼다.
+from ninja.testing import TestClient
+
+from orders.presentation_layer.api.order.router import router
+
+
+client = TestClient(router)
 ```
 
 검증 대상은 public API contract다. 내부 service 호출 여부, private helper, ORM query 문자열처럼 구현 세부사항은 직접 검증하지 않는다.
@@ -2452,12 +2467,12 @@ Django ORM을 사용하는 API 테스트는 pytest-django의 DB access 규칙을
 
 ```python
 import pytest
-from ninja.testing import TestClient
+from ninja_extra.testing import TestClient
 
-from orders.api import router
+from orders.presentation_layer.api.order.order_controller import OrderController
 
 
-client = TestClient(router)
+client = TestClient(OrderController)
 
 
 @pytest.mark.django_db
