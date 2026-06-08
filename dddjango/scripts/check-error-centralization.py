@@ -45,7 +45,10 @@ RESPONSE_CALL_RE = re.compile(
 )
 ERROR_STATUS_RE = re.compile(r"\bstatus(?:_code)?\s*=\s*[45]\d\d\b")
 HTTP_ERROR_RE = re.compile(r"\bHttpError\s*\(\s*[45]\d\d\b")
-NINJA_IMPORT_RE = re.compile(r"^\s*from\s+ninja(?:\.\w+)*\s+import\b", re.MULTILINE)
+NINJA_IMPORT_RE = re.compile(
+    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
+    re.MULTILINE,
+)
 
 SIGNAL_CHECKS = (
     (RESPONSE_CALL_RE, "수제 HTTP 응답 객체 생성(JsonResponse/HttpResponse)"),

@@ -44,7 +44,10 @@ from pathlib import Path
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 
-NINJA_IMPORT_RE = re.compile(r"^\s*from\s+ninja(?:\.\w+)*\s+import\b", re.MULTILINE)
+NINJA_IMPORT_RE = re.compile(
+    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
+    re.MULTILINE,
+)
 
 # 선언 schema 를 우회하는 *본문 있는* 성공 응답 클래스. FileResponse·
 # StreamingHttpResponse·HttpResponseRedirect 등은 이름이 달라 자연히 제외된다.

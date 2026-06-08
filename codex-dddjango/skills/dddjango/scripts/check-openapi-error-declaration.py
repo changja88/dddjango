@@ -40,7 +40,10 @@ from pathlib import Path
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
-NINJA_IMPORT_RE = re.compile(r"^\s*from\s+ninja(?:\.\w+)*\s+import\b", re.MULTILINE)
+NINJA_IMPORT_RE = re.compile(
+    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
+    re.MULTILINE,
+)
 
 
 def _find_presentation_layer_files(root: Path) -> list[Path]:
