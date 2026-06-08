@@ -92,7 +92,7 @@ user-invocable: false
 
 ### §6.1 부트스트랩·표준 도구셋
 
-표준 도구셋(패키지 매니저 uv·ruff·mypy strict·django-stubs·pydantic·pytest)은 기능 추가 흐름이 **직접 다룬다** — 기존 프로젝트의 도구·패키지 매니저를 감지해 존중하고(§1.1 기존 존중), 기능에 필요한 표준 도구가 없으면 §6.2 버전-핀 규율로 셋업한다(임의 글로벌 설치 금지). 현재 구체 셋업 레시피가 정의된 것은 **테스트 스택**이다(파이프라인이 acceptance 테스트 실행 전 러너를 준비한다 — `commands/dddjango.md` Phase 2·`implementation-test` §4); 나머지 도구도 같은 원칙(감지·존중·없으면 §6.2 셋업)을 따르며 레시피는 필요 시 추가한다.
+표준 도구셋(패키지 매니저 uv·ruff·mypy strict·django-stubs·pydantic·pytest)은 기능 추가 흐름이 **직접 다룬다** — 기존 프로젝트의 도구·패키지 매니저를 감지해 존중하고(§1.1 기존 존중), 기능에 필요한 표준 도구가 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 셋업한다(임의 글로벌 설치 금지). 현재 구체 셋업 레시피가 정의된 것은 **테스트 스택**이다(파이프라인이 acceptance 테스트 실행 전 러너를 준비한다 — `commands/dddjango.md` Phase 2·`implementation-test` §4); 나머지 도구도 같은 원칙(감지·존중·없으면 `implementation-django-ninja` §2.1 셋업)을 따르며 레시피는 필요 시 추가한다.
 
 ### §6.2 새 런타임 의존성의 버전 선택
 

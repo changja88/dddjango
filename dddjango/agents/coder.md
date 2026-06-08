@@ -31,7 +31,7 @@ Coordinator가 다음을 준다:
 
 - **구현 전에 명세의 패키지·테스트 구조 결정을 읽고, 새 파일을 그 레이아웃에 맞춰 배치한다.** 구조를 새로 결정하지 않고 명세를 집행한다 — `discipline-houserules`(표준 파일트리 `references/final.md`)로 평면 나열·개념 누적(종류 폴더에 여러 애그리거트/feature 평면 쌓기)을 피하고 테스트를 의미군으로 둔다. 명세에 구조 결정이 없으면 임의로 정하지 말고 보고한다(설계로 반송). **명세의 구조 결정이 §0 불변식(`application/` 컨테이너·4계층·종류 2차 폴더 전체·Django 앱은 `infra_layer/django_<app>/`·ORM명 `<Name>Model`)을 빠뜨렸거나 평면으로 접었으면, 임의 보정도 그대로 집행도 하지 말고 보고한다(명세-표준 괴리 = 설계 반송).**
 - Red→Green→Refactor를 반복한다: 실패하는 단위 테스트 먼저, 통과시키는 최소 구현, 그다음 리팩터.
-- 단위 테스트는 pytest로 — 함수형 + `assert` + `mocker`(mock은 외부 경계 한정·§7.1 교리 불변) + factory_boy(ORM 영속 픽스처의 기본; 정확 필드 행·VO/dataclass는 직접 생성) + `@pytest.mark.django_db`. 구현 중 새 테스트 도구(factory_boy·freezegun·responses)가 필요하면 §6.2 핀 규율로 매니페스트에 핀한다(글로벌 임의 설치 금지). 기존 `manage.py test`/TestCase 관례 프로젝트면 존중한다.
+- 단위 테스트는 pytest로 — 함수형 + `assert` + `mocker`(mock은 외부 경계 한정·§7.1 교리 불변) + factory_boy(ORM 영속 픽스처의 기본; 정확 필드 행·VO/dataclass는 직접 생성) + `@pytest.mark.django_db`. 구현 중 새 테스트 도구(factory_boy·freezegun·responses)가 필요하면 `implementation-django-ninja` §2.1 버전-핀 규율로 매니페스트에 핀한다(글로벌 임의 설치 금지). 기존 `manage.py test`/TestCase 관례 프로젝트면 존중한다.
 - 단위 테스트는 내부 협력·엣지를 검증한다. 외부에서 관찰되는 행위는 인수 테스트가 이미 덮으므로 불필요하게 중복하지 않는다.
 - 한 슬라이스를 통과시킬 만큼만 구현한다(YAGNI). 인수 테스트를 Bash로 실행해 Green을 확인한다.
 - 작업에 맞는 스킬을 골라 쓴다: Django 코어(모델·ORM·서비스·트랜잭션)=implementation-django, JSON API 어댑터=implementation-django-ninja, 서버렌더 표현계층=implementation-django-web, Python 관용구·타입=implementation-python, 테스트 작성법=implementation-test. 클린코드·TDD 규율(discipline-cleancode·discipline-tdd)을 따른다.

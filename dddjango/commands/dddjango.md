@@ -77,7 +77,7 @@ Read/Grep/Glob로 대상 영역의 존재·규모를 빠르게 확인한다. 신
 
 ## Phase 2 — 구현 (G2, 이중 루프 TDD)
 
-1. **테스트 러너 준비** — 프로젝트 테스트 스택을 감지한다. 기존 pytest 설정/관례가 있으면 사용; 기존이 `manage.py test`/Django TestCase 관례면 존중한다. 없으면(greenfield) pytest 기본: §6.2 핀 규율로 Tier-1(pytest·pytest-django·pytest-mock·factory_boy) 설치 + 루트 `[tool.pytest.ini_options]`에 프로젝트의 실제 `DJANGO_SETTINGS_MODULE`(manage.py/env에서 감지)로 작성. *왜* — acceptance-tester의 첫 Red 실행에 러너가 준비돼 있어야 한다(미설정 greenfield면 import에서 죽어 깨끗한 Red가 안 됨). 전체 프로젝트 테스트 스택 이주(기존 TestCase→pytest)는 G1 트레이드오프로 architect가 표면화하고 침묵 override하지 않는다.
+1. **테스트 러너 준비** — 프로젝트 테스트 스택을 감지한다. 기존 pytest 설정/관례가 있으면 사용; 기존이 `manage.py test`/Django TestCase 관례면 존중한다. 없으면(greenfield) pytest 기본: `implementation-django-ninja` §2.1 버전-핀 규율로 Tier-1(pytest·pytest-django·pytest-mock·factory_boy) 설치 + 루트 `[tool.pytest.ini_options]`에 프로젝트의 실제 `DJANGO_SETTINGS_MODULE`(manage.py/env에서 감지)로 작성. *왜* — acceptance-tester의 첫 Red 실행에 러너가 준비돼 있어야 한다(미설정 greenfield면 import에서 죽어 깨끗한 Red가 안 됨). 전체 프로젝트 테스트 스택 이주(기존 TestCase→pytest)는 G1 트레이드오프로 architect가 표면화하고 침묵 override하지 않는다.
 2. `acceptance-tester`를 호출한다 — 입력: 승인된 설계 명세(테스트 배치는 명세의 구조 결정 절을 따른다). 산출: 실패하는 인수 테스트(블랙박스, Bash로 Red 확인) + 덮은 행위 목록.
 3. 인수 테스트에서 **슬라이스 목록을 도출**한다(1테스트 ≈ 1슬라이스가 기본이되, **같은 파일군을 만지는 슬라이스는 한 묶음으로 합쳐 coder에 한 번에 넘긴다** — 같은 파일을 여러 번 다시 열고 닫는 왕복·컨텍스트 재로딩을 줄이려는 것; 단 TDD 단위[1 Red→Green]가 무너질 만큼 과하게 묶지 않는다). task 리스트에 슬라이스(묶음)를 하위 task로 추가한다.
 4. 슬라이스마다 `coder`를 호출한다 — 입력: 설계 명세(패키지·테스트 구조 결정 절 포함) · 인수 테스트 · 이번에 통과시킬 슬라이스. coder는 명세의 구조 결정에 맞춰 파일을 배치하고, 내부 단위 TDD(Red→Green→Refactor)로 구현하며 인수 테스트 Green을 Bash로 확인한다.
