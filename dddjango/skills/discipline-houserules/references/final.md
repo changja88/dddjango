@@ -65,7 +65,7 @@
 
 ```
 application/<app>/
-├── <app>_api_router.py                 # 외부 HTTP 진입점: URL/라우터 등록 (루트 urls.py가 포함)
+├── <app>_api_router.py                 # 외부 HTTP 진입점: config의 NinjaExtraAPI를 import해 register_controllers로 BC 로컬 등록 (루트 urls.py 포함은 함수형 Router 경로)
 ├── published_service/                  # 컨텍스트 간 OHS — 다른 앱에 노출 (아래 "컨텍스트 간 통신")
 │
 ├── domain_layer/                       # ① 도메인 — 의존 없음, 순수 비즈니스 (§3 전술 패턴 / §6.1)
@@ -101,7 +101,7 @@ application/<app>/
 │
 ├── presentation_layer/                 # ④ 표현 — 입력 어댑터 (§6.1 interface)
 │   ├── api/
-│   │   └── <feature>/                  #   api_<resource>.py — 얇은 어댑터(요청 파싱 → 응용 호출 → 응답·예외 변환)
+│   │   └── <feature>/                  #   <aggregate>_controller.py(@api_controller 클래스, 함수형 레거시 api_<resource>.py) — 얇은 어댑터(요청 파싱 → 응용 호출 → 응답·예외 변환)
 │   └── schema/                         #   입출력 계약(DTO): schema_in.py / schema_out.py / error_out.py
 │
 └── test/                               # 앱별 테스트 — 의미군 분리 (implementation-test §4.2)
@@ -209,11 +209,11 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 | 폴더 | 존재 이유 | 위치 파일 · 명명 |
 |---|---|---|
-| `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `api_<resource>.py` (Ninja Router) |
+| `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `<aggregate>_controller.py` → `class OrderController`(`@api_controller`); 함수형 레거시는 `api_<resource>.py` (Ninja Router 또는 `@api_controller` 클래스) |
 | `schema/` | 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`·`error_out.py`(feature가 많으면 `<feature>/`로 분할) — **응답은 `schema_out`**, 도메인 직접 노출 금지 |
 | `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `read.py`·`write.py`(앱이 크면 `read/`·`write/` 디렉터리). 다른 앱은 **이것만** import |
 | `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
-| 라우팅 | 앱 진입점 | `<app>_api_router.py` → 루트 `urls.py`가 포함 |
+| 라우팅 | 앱 진입점 | `<app>_api_router.py` → config의 `NinjaExtraAPI`를 import해 `register_controllers`로 BC 로컬 등록(루트 `urls.py` 포함은 함수형 Router 경로) |
 
 **앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer` 포함 어느 계층도 폴더를 생략하지 않고 내용이 없으면 빈 패키지로 둔다(§0-2); 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.
 
@@ -236,10 +236,13 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
   - 판정: 외부 시스템·인프라 자원 관문(결제·푸시·SMS·인증)은 PoEAA `Gateway` 패턴이고, 다른 BC 협력(ACL)·도메인 역할 추상은 일반 `Port`다. `Repository`/`Gateway`는 *확립 패턴명*(구현 유지)이고 `Port`는 *헥사고날 위치 표식*(구현은 `Adapter`)이라, 셋을 "역할 접미사" 한 묶음으로 보지 않는다.
 - 금지: `Interface`/`Impl`처럼 추상/구현 *구분만을 위한 타입 표식* 접미사(`OrderRepositoryInterface`·`OrderRepositoryImpl` ✕). 추상/구현은 한정자 유무로 이미 구분된다(PEP 8). 역할 접미사(`Port`)와 타입 표식(`Interface`)의 차이: 전자는 객체의 *역할*, 후자는 추상/구현 *구분*용이라 금지한다. 같은 이유로 **`Port`도 *구현*에선 위치 표식이라 쓰지 않는다 — 일반 포트 구현은 `Adapter`다**(확립 패턴명 `Repository`/`Gateway`는 예외).
 
+**표현(presentation) 컨트롤러** — HTTP 입력 어댑터는 ninja-extra 클래스 컨트롤러로 두고 **`<Aggregate>Controller`**(`OrderController`; `presentation_layer/api/`)로 명명한다. 애그리거트 개념명 + **역할 접미사 `Controller`**(`Repository`/`Gateway`처럼 객체의 *역할*을 나타내는 접미사)다. 함수형 Ninja `Router`는 레거시로 병기 가능하나, 신규 표현 어댑터는 컨트롤러를 기본으로 한다.
+
 **파일명** — 파일명은 **그 안 주 클래스명의 snake_case**이며 그 클래스·개념을 **약어 없이** 반영한다: `order_repository.py`(○) / `order_repo.py`(✕). grep·예측 가능성을 위해 클래스명을 줄이지 않듯 파일명도 줄이지 않는다. 폴더는 종류 그룹일 뿐 파일 접미사를 좌우하지 않는다. 종류별 규칙:
 - **유스케이스 연산 명명** — 쓰기 `<usecase>_command.py` → `class …Command`, 읽기 `<usecase>_query.py` → `class …Query`, 입력 `<usecase>_request.py` → `@dataclass class …Request`. 모두 `execute(request)`·repository/port 의존. (`_app`·`_service` 접미사 안 씀 — 위치 폴더가 종류를 표시; `_service.py`는 오케스트레이션 `service/`에만.)
 - **도메인 이벤트**: 파일·클래스 모두 **과거형** — `order_placed_event.py` → `class OrderPlacedEvent`.
 - **명세(Specification)**: 약어 없이 **풀네임** — `order_active_specification.py` → `class OrderActiveSpecification`(`_spec` ✕).
+- **표현 컨트롤러**: `<aggregate>_controller.py` → `class <Aggregate>Controller`(`@api_controller`) — 주 클래스명 snake_case 규약 정합(예 `order_controller.py` → `class OrderController`). 함수형 Ninja `Router` 레거시는 `api_<resource>.py`로 병기 가능.
 - **스키마**: 입력 `schema_in.py` → `OrderIn`, 출력 `schema_out.py` → `OrderOut`, 에러 `error_out.py` → `ErrorOut`(In/Out 접미사).
 - **조회(읽기)**: `<usecase>_query.py` → `class …Query`(인터랙터 연산 — `execute(request)`, repository 의존). 별도 읽기 *모델*(CQRS §5.4)은 선택이고, 공유 모델 repository 읽기로 충분하면 그대로 둔다.
 
