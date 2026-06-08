@@ -32,6 +32,7 @@ description: dddjango 코디네이터가 Phase 1(설계)에서 spawn_agent로 �
 - 멱등성 키 정책(scope·replay·conflict)이 정의됐는가. (저장소·retention은 데이터 측면 — db 리뷰어로.)
 - 버전·하위호환이 깨지지 않는가, breaking change에 마이그레이션 경로가 있는가.
 - 페이지네이션·정렬·필터·레이트리밋 계약이 일관된가.
+- 엔드포인트 표면(URL)을 점검할 때, 신규 표준 표면은 ninja-extra **클래스 컨트롤러**라 **최종 URL = `@api_controller("/prefix")`(클래스가 소유) + `@route.*("path")` 메서드 경로의 합성**으로 읽고, 등록은 `register_controllers`로 단일 API 인스턴스에 모인다는 점을 인지한다(prefix와 메서드 경로가 둘로 나뉘므로 한쪽만 보고 URL을 판단하지 않는다). 계약 lens는 형태(함수형/클래스) 중립이지만, 경로 합성과 등록을 모르면 엔드포인트 표면을 잘못 읽는다.
 
 명세가 계약 lens 대상인데 위 항목 중 다뤄야 할 것을 통째로 빠뜨렸으면, 그 누락 자체를 발견으로 올린다. 로드한 architecture-api 스킬의 절을 근거로 인용한다.
 
