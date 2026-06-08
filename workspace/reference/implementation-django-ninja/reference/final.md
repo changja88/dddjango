@@ -97,6 +97,8 @@ Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 
 프로젝트에 Django Ninja가 아직 의존성으로 없는 신규 도입이면, 글로벌로 임의 설치하지 말고 의존성 매니페스트(`requirements/*.txt` 등, `implementation-django` §3.1)에 **버전을 핀해 추가**한다 — 핀 표기는 프로젝트의 기존 관례를 따른다(기존 항목이 `Django==4.2.30`처럼 정확 핀이면 `django-ninja==<버전>`으로 맞춘다). 버전 *값*(`<버전>`에 무엇을 핀할지)은 `discipline-houserules` §6.2를 따른다 — 기억 속 버전 금지, 설치 시점에 resolve한 실제 값을 핀하되 기존 프레임워크 핀과 호환되는 최신으로 한다. `INSTALLED_APPS`·`NinjaAPI` 인스턴스·URL 등록 같은 런타임 배선도 함께 둔다.
 
+신규 표준 presentation 표면은 클래스 컨트롤러(§2.3)이므로 **`django-ninja-extra`를 설치하고 `INSTALLED_APPS`에 `'ninja_extra'`를 등록한다**(`NinjaExtraAPI`·`register_controllers` 동작에 필요). 핀 표기·버전 값 규율은 위 `django-ninja`와 동일하다.
+
 새로운 Router를 추가할 때는 다음을 확인한다.
 
 - API root와 version prefix가 기존 convention과 일치하는가
@@ -110,6 +112,11 @@ Django Ninja는 `NinjaAPI`와 `Router`를 통해 path operation을 등록한다.
 Django Ninja operation은 decorator의 HTTP method, path, response 선언,
 operation 함수의 typed parameters로 API contract를 만든다. 여러 status code가
 가능한 경우 `response={status: Schema}` 형태로 성공/오류 schema를 분리한다.
+
+> **⚠️ 위계 — 함수형 `@router.post` operation은 레거시 경로다.** 신규 표준 presentation
+> 표면은 §2.3 클래스 컨트롤러(ninja-extra `@api_controller`)로 만든다. 아래 함수형 레시피는
+> 기존 코드와 외부공개 415 격리(§6.3) 같은 예외 경로의 *읽기·유지보수*를 위해 둔다 —
+> touched(신규·수정) presentation 표면은 §2.3을 따른다.
 
 Operation 구현 기준:
 
@@ -163,6 +170,88 @@ def create_order(request: HttpRequest, payload: OrderIn) -> Status[OrderOut]:
     # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
     return Status(201, OrderOut(id=order.id, status=order.status))
 ```
+
+### 2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준
+
+신규 표준 presentation 표면은 함수형 `@router.post` operation이 아니라 **ninja-extra
+`@api_controller` 클래스 컨트롤러**로 만든다. 함수형 Router operation(§2.2)은 레거시
+경로이며, 기존 코드와 외부공개 415 격리(§6.3) 같은 예외 경로에만 남긴다. **touched(신규·
+수정) presentation 표면은 무조건 클래스 컨트롤러로 만든다.**
+
+클래스 컨트롤러는 함수형 operation의 계약을 그대로 보존한다 — `response={status: Schema}`
+선언, `Status`/단일 schema 반환, "오류는 raise하고 성공만 return"(§2.2·§6.2)은 메서드에서도
+동일하다. 바뀌는 것은 *형태*뿐이다: Router prefix가 클래스 데코레이터로, operation 함수가
+`self` 첫 인자를 받는 메서드로 올라간다.
+
+```python
+# presentation_layer/api/order/order_controller.py
+from ninja import Status
+from ninja_extra import api_controller, route
+
+
+@api_controller("/orders", tags=["orders"])   # 클래스가 resource prefix·tag를 소유
+class OrderController:                          # ControllerBase 미상속(@api_controller가 자동 주입)
+    @route.post("", response={201: OrderOut, 409: ErrorOut})   # 메서드 경로는 prefix 기준 상대
+    def create_order(self, request, payload: OrderIn) -> Status[OrderOut]:
+        # place_order_command 는 컴포지션 루트가 주입한다(배선=D4 별도). ⚠️ 메서드 본문에서
+        # Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
+        order = place_order_command.execute(...)
+        # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
+        return Status(201, OrderOut(...))
+```
+
+요점:
+
+- 클래스 데코레이터 `@api_controller("/orders", tags=[...])`가 resource prefix·tag를 소유하고,
+  메서드 데코레이터 `@route.post("")`가 그 prefix 기준 *상대* 경로를 잡는다(함수형의
+  `@router.post("/orders")` 한 줄이 둘로 나뉜 것).
+- operation 함수가 `self`를 첫 인자로 받는 메서드가 된다. 메서드명은 함수형과 같이 동사구를
+  유지한다(`create_order`).
+- `response=`/`Status` 반환, raise-only 오류 처리, 반환 타입 명시는 §2.2와 **동일하게 보존**한다.
+- **`ControllerBase`를 직접 상속하지 않는다** — `@api_controller` 데코레이터가 컨트롤러 기반을
+  자동 주입한다(명시 상속은 중복이다).
+
+**등록 — 단일 NinjaExtraAPI 인스턴스, BC 로컬.** config가 단일 `NinjaExtraAPI`를 소유하고,
+catch-all·예외 핸들러(§6.2)를 그 한 인스턴스에 단다. 각 BC는 그 인스턴스를 import해 자기
+컨트롤러만 로컬 등록한다.
+
+```python
+# config/api.py — config가 단일 NinjaExtraAPI 소유 (catch-all·예외 핸들러가 이 한 인스턴스에)
+from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+
+
+@api.exception_handler(ProductNotFound)        # 순수 ninja와 동일하게 동작(§6.2 레시피 그대로)
+def on_product_not_found(request, exc):
+    return problem(404, ...)
+
+
+# <app>_api_router.py — config.api를 import해 BC 로컬 등록
+from config.api import api
+
+api.register_controllers(OrderController)
+# (외부공개 415 격리 시) api.add_router(public_router)   ← 같은 api 인스턴스, 별도 NinjaAPI() 금지
+```
+
+요점:
+
+- presentation/wiring 계층이 config의 `api`를 참조하는 것이라 BC 격리 불변이다 — 컨트롤러
+  *정의*는 각 BC의 `presentation_layer/api/`에 살고, *등록*만 단일 인스턴스에 모은다.
+- **BC별로 `NinjaExtraAPI()`/`NinjaAPI()` 인스턴스를 새로 만들지 않는다** — 인스턴스가 쪼개지면
+  catch-all·중앙 예외 핸들러(§6.2)도 쪼개져 problem+json 변환이 흩어진다. 415 격리용
+  `add_router`도 *같은* 인스턴스에 단다.
+
+**설치.** ninja-extra는 별도 앱이다 — `INSTALLED_APPS += ['ninja_extra']`가 필요하다(의존성
+매니페스트 핀은 §2.1과 동일하게 `discipline-houserules` §6.2를 따른다).
+
+**탐색 → 포함/생성 규칙 (새 operation 추가 시).** 새 operation을 둘 곳은 다음 순서로 정한다.
+
+1. 해당 앱 `presentation_layer/api/`에서 `@api_controller` 데코 클래스를 grep한다.
+2. 단일 컨트롤러가 있으면 → 그 컨트롤러의 메서드로 포함한다.
+3. 분할되어 여럿이면 → 리소스(URL prefix)가 일치하는 컨트롤러에 포함하고, 없으면 새 리소스
+   컨트롤러를 만든다.
+4. 컨트롤러가 없으면 → 새 `<Aggregate>Controller`를 생성한다.
 
 ---
 
@@ -343,6 +432,13 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
 
 런타임 응답의 media type은 `application/problem+json`이며, 아래 중앙 변환이 설정한다.
 
+**예외 핸들러는 `NinjaExtraAPI` 인스턴스(`api`)에 `@api.exception_handler`로 등록한다.**
+`NinjaExtraAPI`는 `NinjaAPI`를 상속하므로 핸들러·problem+json 변환이 동일하게 동작한다 —
+아래 레시피의 `@api.exception_handler`·`create_response` 오버라이드(대안 B)가 그대로 적용된다.
+클래스 컨트롤러(§2.3) 메서드가 raise한 도메인 예외도 함수형 operation과 같은 중앙 핸들러에
+도달하므로(단일 변환점), §2.3은 BC별 인스턴스를 새로 만들지 않고 config의 단일 `NinjaExtraAPI`에
+컨트롤러·핸들러를 모은다.
+
 **오류는 operation에서 `raise`하고, problem+json 변환은 중앙 `@api.exception_handler`와
 헬퍼 한 곳이 한다.** 이게 처방된 기본이다 — operation 본문은 성공 schema만 만들고(§2.2)
 변환 형식·content-type을 한 출처로 모은다. 그래야 operation이 raw 응답을 만들 일이 없어
@@ -430,7 +526,7 @@ framework 기본 예외까지 한 번에 통일하고 싶으면, `NinjaAPI`를 �
 `406`(응답 표현 협상 실패)·`415`(요청 페이로드 형식 미지원)의 **계약은 `architecture-api` §7.2**가
 정의한다. *처리 메커니즘은 ninja 경계 안*에서 낸다 — 별도 메커니즘을 발명하지 않는다:
 
-- **415(요청 미디어 미지원)**: ninja 1.6.x는 `BodyModel`이 `Parser.parse_body`의 예외를 일괄 `HttpError(400)`으로 재포장하므로(`ninja/params/models.py`), `parse_body` 안에서 `raise HttpError(415)`해도 400으로 먹혀 작동하지 않는다. 415는 `parse_body` *전*에 내야 하는데 operation 본문은 이미 ninja가 body resolution을 시작한 뒤라 늦다 — **`operation.run` 이전에 도는 view 데코레이터**(`router.add_decorator(fn, mode="view")`)에서 `request.content_type`을 검사한다. 본문 있는 메서드만 대상이다(데코레이터는 GET에도 불리므로, 바디 없는 메서드를 검사에서 빼는 가드를 코드에 둔다 — Parser 경로의 자동 면제가 없다). problem 본문은 데코레이터에서 직접 조립하지 말고 §6.2의 중앙 problem 헬퍼를 호출한다(헬퍼가 아직 없으면 먼저 세운다 — 데코레이터에 수제 `JsonResponse` 인라인 금지). §6.2 대안 B(`create_response` 일괄 problem화)를 쓰면 415만 그 일괄 변환 밖이라 problem 헬퍼를 직접 거치지만 본문 형식은 중앙과 일관한다.
+- **415(요청 미디어 미지원)**: ninja 1.6.x는 `BodyModel`이 `Parser.parse_body`의 예외를 일괄 `HttpError(400)`으로 재포장하므로(`ninja/params/models.py`), `parse_body` 안에서 `raise HttpError(415)`해도 400으로 먹혀 작동하지 않는다. 415는 `parse_body` *전*에 내야 하는데 operation 본문은 이미 ninja가 body resolution을 시작한 뒤라 늦다 — **`operation.run` 이전에 도는 view 데코레이터**(`router.add_decorator(fn, mode="view")`)에서 `request.content_type`을 검사한다. 본문 있는 메서드만 대상이다(데코레이터는 GET에도 불리므로, 바디 없는 메서드를 검사에서 빼는 가드를 코드에 둔다 — Parser 경로의 자동 면제가 없다). problem 본문은 데코레이터에서 직접 조립하지 말고 §6.2의 중앙 problem 헬퍼를 호출한다(헬퍼가 아직 없으면 먼저 세운다 — 데코레이터에 수제 `JsonResponse` 인라인 금지). §6.2 대안 B(`create_response` 일괄 problem화)를 쓰면 415만 그 일괄 변환 밖이라 problem 헬퍼를 직접 거치지만 본문 형식은 중앙과 일관한다. **함수형 `Router`/클래스 컨트롤러 분기**: 함수형 `Router`는 위처럼 `add_decorator(enforce_json_content_type, mode="view")`로 415를 검사한다. **클래스 컨트롤러(§2.3)는 `add_decorator`가 없으므로** 415는 (a) 기본은 내부전용이라 비적용(C 정책 — 내부 클라이언트만 호출하면 content-type 강제가 불요), (b) 외부 공개로 415가 정말 필요한 endpoint만 함수형 `Router`로 격리해(같은 `NinjaExtraAPI`에 `add_router` — §2.3, 별도 `NinjaAPI()` 금지) 그 `Router`에 `add_decorator`를 단다. 단 `payload: Schema` 선언 바인딩은 컨트롤러 메서드에서도 강제이며, raw `json.loads`/`request.body` 수동 파싱은 함수형이든 클래스든 여전히 금지(NJ-2) — 본문은 선언적 schema가 받는다.
 
   ```python
   # presentation_layer/api/<feature>/content_negotiation.py — operation은 선언적 payload만 유지
@@ -542,6 +638,12 @@ def test_invalid_quantity_returns_422():
     res = client.post("/orders", json={"product_id": 7, "quantity": 0})
     assert res.status_code == 422
 ```
+
+**클래스 컨트롤러(§2.3)는 `ninja_extra.testing.TestClient`로 테스트한다** — `from ninja_extra.testing
+import TestClient; client = TestClient(OrderController)`로 컨트롤러를 직접 감싼다(`ninja.testing.TestClient`는
+함수형 `Router`를 감싸므로 컨트롤러엔 맞지 않는다). 함수형 격리 `Router` 경로(외부공개 415 격리 등)는 기존
+`from ninja.testing import TestClient; TestClient(router)`를 그대로 쓴다 — 둘은 테스트 대상(컨트롤러 vs Router)에
+따라 병기한다. 검증 중점·assert 형태는 양쪽 동일하다.
 
 ### 9.2 검증 보고 기준
 
