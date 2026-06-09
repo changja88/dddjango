@@ -148,7 +148,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **9커밋+nit**(832f195·0a92659[Phase0]·f82f9d7·a1af4c8·3301242·0ed3cea·74ad682·88b6434·b1ef7d9·ce87a86[nit]). 미러 **16/16 백스톱+3/3 final.md byte-id**·plugin 1.9.0·spec §7 전수커버·415 C정책 5doc 일관. 최종통합리뷰 Ship-ready.
 - **부수발견**: ① **정본↔skill 드리프트 전11스킬**(Claude↔Codex는 IDENTICAL이나 `workspace/reference`↔`skills` 어긋남·ninja만 skill +99줄). **옵션A**=우리변경만 3사본동일·기존드리프트 보존(라이브=skill사본 핵심·정본 백로그). ② **버전핀 정본 `houserules §6.2`(DR-18 신설됐다 해소)→`ninja §2.1` 이동** + bare `§6.2 핀` 댕글링 8곳 청소(RFC9457 `ninja §6.2`와 *맥락구분*). ③ **`user-invocable: false`** frontmatter Claude 11/11·Codex 0/19 선재(→SKILL.md **body** byte-id 기준).
 - **백로그**: 2차 라이브 dual·3차 백스톱·정본↔skill 드리프트·`houserules §6.2` 섹션 본체·reviewer `§6.1/§6.2` test-stack·test §20. **토끼굴 2회 회피**(정본드리프트 전면정렬·버전핀 §6.2 섹션 — 둘 다 백로그).
-- 🔴 **미푸시**(이전 `9c6d148`·`8f6922c`·DR-47 포함)·**라이브 미검증**(N=0·2차 전)·생성물 미관측이라 우열·효과 결론 없음. 정본=spec/plan `workspace/specs/2026-06-08-ninja-class-based-views-{design,plan}.md`·`[[dddjango-ninja-cbv]]`.
+- 🔴 **미푸시**(이전 `9c6d148`·`8f6922c`·DR-47 포함)·**라이브 미검증**(N=0·2차 전)·생성물 미관측이라 우열·효과 결론 없음. 정본=`[[dddjango-ninja-cbv]]`(spec/plan=git 히스토리).
 
 ### DR-49 ✅ 데이터소스 골격 의무화 — §632-(2) 면제 폐지·application 이하 모든 BC 골격 무조건·SH-3 치명 (양판·커밋 d2a5536·✅라이브검증=DR-50)
 2026-06-08. 발단: cbvlive dual 채점 라이브 피드백(사용자: codex catalog 두 군데·`application/catalog` 골격 불완전·pytest 미도입 → "평가지에 있나·어떤 항목"). 발견1(두 군데)·발견2(골격 미비)·발견3(pytest=Q-6 기존 FAIL).
