@@ -824,11 +824,11 @@ class Store:
     name: str
     _is_blocked: bool = False
 
-    def create_product(self, product_id: str, name: str, price: Money) -> "Product":
+    def create_product(self, product_id: str, name: str, description: str, price: int) -> "Product":
         """팩토리 메서드 - 도메인 로직(신고 차단 여부)을 애그리거트 안에 유지"""
         if self._is_blocked:
             raise PermissionError("차단된 상점은 상품을 등록할 수 없습니다")
-        return Product(id=product_id, store_id=self.id, name=name, price=price)
+        return Product(id=product_id, name=name, description=description, price=price)
 ```
 
 ### 3.4 리포지토리 (Repository)

@@ -124,6 +124,7 @@ Operation 구현 기준:
 ```python
 from django.http import HttpRequest
 from ninja import Router, Schema, Status
+from ninja_extra import status        # status.HTTP_201_CREATED 등 — plain int HTTP 상수(매직넘버 회피)
 
 router = Router()
 
@@ -158,7 +159,7 @@ def create_order(request: HttpRequest, payload: OrderIn) -> Status[OrderOut]:
     # place_order_command 는 컴포지션 루트가 주입한다(배선=D4 별도). ⚠️ operation 본문에서 Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
     order = place_order_command.execute(PlaceOrderRequest(product_id=payload.product_id, quantity=payload.quantity))
     # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
-    return Status(201, OrderOut(id=order.id, status=order.status))
+    return Status(status.HTTP_201_CREATED, OrderOut(id=order.id, status=order.status))
 ```
 
 ### 2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준
@@ -176,7 +177,7 @@ def create_order(request: HttpRequest, payload: OrderIn) -> Status[OrderOut]:
 ```python
 # presentation_layer/api/order/order_controller.py
 from ninja import Status
-from ninja_extra import api_controller, route
+from ninja_extra import api_controller, route, status
 
 
 @api_controller("/orders", tags=["orders"])   # 클래스가 resource prefix·tag를 소유
@@ -187,7 +188,7 @@ class OrderController:                          # ControllerBase 미상속(@api_
         # Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
         order = place_order_command.execute(...)
         # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
-        return Status(201, OrderOut(...))
+        return Status(status.HTTP_201_CREATED, OrderOut(...))
 ```
 
 요점:
@@ -482,12 +483,12 @@ import logging
 from http import HTTPStatus
 
 from django.db import IntegrityError, OperationalError
-from ninja import NinjaAPI
+from ninja_extra import NinjaExtraAPI
 from ninja.errors import HttpError, ValidationError   # ninja HttpError·validation 오류(≠ pydantic.ValidationError)
 from ninja.responses import Response           # JsonResponse 서브클래스 + ninja JSON 인코더
 
 logger = logging.getLogger(__name__)
-api = NinjaAPI()
+api = NinjaExtraAPI()
 
 
 def problem(status: int, *, title: str, detail: str,

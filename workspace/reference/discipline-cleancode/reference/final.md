@@ -457,7 +457,9 @@ def check_password(username: str, password: str) -> bool:
 # --- 좋은 예 ---
 def check_password(username: str, password: str) -> bool:
     user = find_user(username)
-    return user and verify(user.encoded_phrase, password)
+    if user is None:
+        return False
+    return verify(user.encoded_phrase, password)
 
 def login(username: str, password: str) -> bool:
     if check_password(username, password):

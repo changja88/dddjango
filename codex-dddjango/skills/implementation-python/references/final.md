@@ -2546,7 +2546,7 @@ t_result = t"Hello, {name}!"  # Template 객체
 # -> 보간(interpolation) 전에 검증/이스케이프 가능
 
 # SQL 인젝션 방지 예시
-def safe_sql(template: Template) -> str:
+def safe_sql(template: Template) -> tuple[str, list[object]]:
     parts = []
     params = []
     for item in template:
