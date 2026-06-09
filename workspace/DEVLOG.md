@@ -28,9 +28,9 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **동적 검증 Tier 2·3 + ④ 보강(§2 DR-17, 2026-05-29)**: Claude(Tier 2) ③ **STRONG PASS**·④ inconclusive(ninja 편향). Codex 전체 스모크 ×3(Tier 3): ③ 완전이주 가능·Claude 수렴이나 **비결정**(t3 평면 유지). ④ 결과 = pre-boost plain(headless 무설치 보수성) → **`design-architect` 보강 후 Ninja+requirements 핀 수렴(t3c, 결정적)**. ④(e) 스택 설계승격 전파 **확정**. (산출물 `eval/runs/{codex-5,6,7}`은 §2 DR-25서 정리·git 히스토리.) 각 N=1(sanity).
 - **스모크 방식 통일(§4)**: 마스터 `~/Desktop/dddjango-smoke-sample` + `git clone`으로 런타임별 타깃(`dddjango-{claude,codex}-index`). 구 reset.sh·E2E-SMOKE-METHOD.md 폐기.
 - **하드닝 이력(상세는 §2 각 DR)**: 빌드·릴리스 후 DR-16~50으로 표준 강화 — BC 판정-소유·API 스택 승격·P1a 오류중앙화·C3 멱등성·C4 빈혈SQL·NJ-2 §6.3 협상·BC FK금지·네이밍/R-C-Q·pytest·ACL 예외전수성·NJ-7 catch-all·ninja 클래스 컨트롤러·데이터소스 골격. 결정적 백스톱 16종.
-- **🔬 근본원인 분석→처방 트랙(2026-06-06, `workspace/eval/rootcause/`)**: "왜 수정이 여러 번 고쳐도 회귀하나" — 에피소드 전수→6렌즈→합성→적대검증→**DIAGNOSIS v2**(근본5 R1스코프갭·R2비결정·R3런타임prior·R4릴리스미완결·R5빌드배선무결성 + 증폭2 + 메타3)→plugin-전문 3렌즈 검증. 처방 전략 **"기반 먼저"**. **R5 첫 조각 완료(DR-46)**: 소스-미러 drift 8스킬 **재동기**(byte-exact 복구, 무손실) + **검증된** 동기도구 `corpus_mirror_sync.py`(현실 8 drift 탐지 + 합성 13/13 PASS·fail-closed·멱등). **배선(pre-commit/CI)은 사용자 결정으로 보류**(검사 방법 검증됐으나, 자동 차단 도입은 라이브 발화 검증 후). 정본 트레일 = rootcause 폴더·`REMEDIATION-STATUS.md`.
+- **🔬 근본원인 분석→처방(2026-06-06)**: "왜 수정이 회귀하나" 진단(DIAGNOSIS v2·근본5[스코프갭·비결정·런타임prior·릴리스미완결·빌드배선무결성]) → **R5(소스-미러 동기·`corpus_mirror_sync.py`) 완료**, 나머지 처방(R2 측정·R1 프론티어·R3 수용)은 **일단락으로 접음**. 분석 상세=git 히스토리.
 - **🔎 진행 상태(2026-06-09)**: DR-44~50으로 ACL 예외전수성·NJ-7 catch-all·ninja 클래스 컨트롤러·데이터소스 골격 강화(대부분 **미푸시**·라이브 일부 검증). plugin 전면감사(ultracode)로 rank2(소스미러 재동기)·rank3(수정모드 백스톱 앵커) 완료·rank1(⑰) 보류. **현재 = DEVLOG 정리(시대별 압축)·완료 산출물 파일 정리.**
-- **열린 잔무**: ① **ACL-EX2**(ACL이 raw 인프라 예외[`OperationalError`/`IntegrityError`] 미번역→HTTP 500 누수·**#1 미해결**·DR-44/45) ② **누적 라이브 미검증**(DR-37·39·40·41·42·43·47·48 — 전부 N=1·우열 금지) ③ **미푸시 다수**(DR-44~50)·DR-50 등 일부 미커밋 ④ plugin 감사 **rank1(⑰ duplicate-app)** 보류(처방 B 이후 Codex 이중잔존 dual 라이브 재확인 선행) ⑤ rootcause 처방 **R2 측정·R1 프론티어·R3 수용 미착수**.
+- **열린 잔무**: **미푸시**(DR-44~50 + 정리 커밋 — 릴리스는 eval→main 머지/PR+push·사용자 승인 게이트). 평가·라이브 검증·ACL-EX2·근본원인 처방·plugin 감사 트랙은 dddjango 일단락으로 **접음**(상세·산출물 git 히스토리 보존, 재개 시 발굴).
 - **런타임 비교 경계**: 모든 dual 채점 **N=1·우열 결론 금지** — 치명 FAIL 레인이 런마다 갈림(P4③ run-variance), Claude/Codex 둘 다 비결정 관측.
 
 ---
@@ -51,39 +51,13 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 
 ## §2 Decision Records (status-tagged, evidence-anchored)
 
-### 시대 1 — 빌드·표준확정·최적화·Codex PoC (DR-01~12) ✅ 종료·압축
+### 시대 1·2 — 빌드·표준확정·최적화·Codex 포트·결정성 검증 (DR-01~15) ✅ git 히스토리
 
-> 닫힌 시대. 각 결정은 한 줄 + 커밋 앵커로 보존, 서사 디테일은 git 히스토리(해당 커밋). 운영 교훈은 §3 DO-NOT-RETRY에 별도 박제.
-
-- **DR-01** Claude 전용 재구축 + `/dddjango` 단일 진입. 진짜 자산 = `workspace/reference/<skill>/reference/final.md`(소스 코퍼스). Codex 호환은 P9 이월(→DR-12 재개). 2026-05-25.
-- **DR-02** 소스 코퍼스 전수 감사·정화 6클러스터 A~F(원칙=**한 주제 한 소유자**, dangling 0). 커밋 `fc1d9ce`·`bb5b751`·`50559c3`·`c57e2da`(django→web 표현계층 이관)·`defc54d`·`76aa30a`.
-- **DR-03** 빌드: 스킬 10 + 에이전트 7 + 커맨드, `plugin validate --strict` 통과. 커밋 `08ad561`·`910aab4`·`64ccad7`(설계 `329748e`).
-- **DR-04** 파일트리 표준 확정(HaffHaff): 적응형 알고리즘→**단일 표준 트리**, houserules를 코퍼스 1급(단일 출처)으로 승격, 테스트=의미군(`test/{unit,integration,e2e}/`). 커밋 `27dfacd`→`e2cb989`→`5925ce1`.
-- **DR-05** 표준 강화: §0 불변식(`application/` 컨테이너·4계층·종류2차폴더 전체·`infra_layer/django_<app>/`·`<Name>Model`/도메인 bare) · §4 명명(추상=개념+역할접미사·구현=기술접두+base일치·`Interface`/`Impl` 금지) · ACL 분리(domain `port/`+infra `acl/`) · ninja. 커밋 `6d7720d`·`ad86443`·`1f1ea7e`.
-
-- **DR-06** 코더 메커니즘-대체 가드레일(smoke2 33분 토끼굴→smoke3 소멸): `coder.md`(명세가 정한 기술 메커니즘=architect 결정, 임의대체 금지·부족하면 반송) + `implementation-django §16.4`(sqlite no-op·커스텀 백엔드 금지·`CheckConstraint` 방어). 커밋 `f9ea088`. → §3 #2. **한계**: LLM 확률적이라 완화책이지 결정론 차단 아님.
-- **DR-07** BC 경계 비결정성 수정(smoke4 관측→smoke5): 같은 프롬프트에 architect가 BC 배치를 런마다 다르게 정함 → G0에서 배치를 사람에게 묻고 고정(①새 독립/②기존 포함/③architect) + architect 규칙4 가드(ddd §3.3 애그리거트 완화 ≠ BC 합병·ACL 생략 허가). 커밋 `15ff62d`. → §3 #6·[[dddjango-bc-boundary-nondeterminism]].
-- **DR-08** extended thinking OFF = 비용 **−24%**(2.62M→1.98M·smoke5 vs 6), 품질 무손실. 사용자 세션 설정(`Option+T`)이라 못 박음(안 끄면 ≈2.6M).
-- **DR-09** ❌ 서브에이전트(특히 coder) 모델 다운그레이드 = 기계시간 +14%·비용 **+47%**(1.98M→2.91M·smoke6 vs 7) 역효과(약한 coder 반송 폭증). 원복·금지. → §3 #1.
-- **DR-10** 5 실행시간 레버(명세 다이어트·architect 자기리뷰·db엔진 분기지식·호출 병합·오케스트레이션 경량화). 커밋 `fac248b`. 교훈: 커밋 타임스탬프로 실행시점 코드 추론 금지 → §3 #4.
-- **DR-11** ⏸ 공식문서 조사 = 새 저위험 레버 없음. wall은 output 토큰 지배(입력절감 지연 1~5%만), 우리 토큰 88%(cache_read)는 비용 문제지 wall 문제 아님. compaction 세밀설정 업스트림 미노출([1M] 창이라 ~95% 트리거 미달, `#26215`), `/compact` 자동화 불가·실익 제한.
-- **DR-12** Codex 이식 PoC 성공(**메커니즘만** 검증): 현행 Codex CLI 0.134.0은 `spawn_agent`·Skills·Plugins GA라 과거 폐기(`911cd22`) 원인 해소(superpowers 패턴 차용). `codex-dddjango/`(스킬 19, **Claude `dddjango/` 무변경**). 설치=`codex plugin marketplace add`+`plugin add`(⚠️캐시 함정·수정 때마다 재설치+세션 재시작). PoC=3가정 통과·end-to-end 16 OK. 상세=git 히스토리·[[dddjango-codex-port]]. 미해소(품질단계로): 평면 catalog(§1 vs §0)·coder 가드레일 Codex 약발.
-
-> **시대 1 닫힘**: 최적화 사이클 종료(§0). 베스트 구성 = 커밋 HEAD(`15ff62d`) + thinking OFF(smoke8 합격, §5).
-
-### 시대 2 — Codex 포트 코드품질·결정성·B1-fix 검증 (DR-13~15) ✅ 종료·압축
-
-> 닫힌 시대. 평가 산출물(`runs/`·`comparison*.html`·`*-analysis.md`·하니스)은 DR-25에서 정리됨 — 상세는 정리 전 git 히스토리. 현행 평가 시스템 = `eval/rubric/`+`eval/results/`.
-
-- **DR-13** ⏳ Codex 포트 코드품질 1:1(통제: 같은 baseline·프롬프트·게이트, 같은 최소 스택). 서브에이전트 2종 합산 **claude-1 13 : codex-2 2 : 동등 5**, 격차=구조 생성력 아닌 **감사/리뷰 깊이**(codex 빈혈 도메인 `reserve()` 죽은코드·stock≥0 누락을 감사가 통과). **단 N=1**. 2026-05-28. → DR-14가 결론 수정.
-- **DR-14** 🔁 결정성 2차(각 N=2) — **DR-13 결론 대폭 수정**: 1차 격차는 **상당 부분 N=1 분산**(비결정 신호가 우연히 claude 정렬; B1 도메인소유·stock≥0 둘 다 양 런타임 비결정). 프레임워크 무관 코드 **대등**(codex-3 DB감사가 오히려 날카로움). **재현되는 진짜 차이 = 코드 우열 아니라 게이트 노출 철학(claude ~3배 노출·근거 동반)·기본 스택 취향(claude→ninja/pytest, codex→plain)**. 표준준수 점수 추정 codex~70/claude~84(신뢰낮음, claude 분산>평균차). 교훈: 서브에이전트 강한 주장도 경험검증 후 채택(stock CHECK "거짓테스트" 오판). 2026-05-29.
-- **DR-15** ✔ B1-fix 표준 검증(codex-4+claude-3, §4 sample→clone): DR-14의 "B1 도메인소유 비결정"에 **`architecture-ddd §3.2` 단일출처(판정·불변식 소유 원칙, db §9.5는 동시성 *메커니즘*만) + 리뷰어 2층 탐지(`design-review-ddd`·`discipline-reviewer`)** 편집으로 대응 → **양 런타임 설계·코드 끝까지 B1 CLEAN**(각 N=1, DR-13/14 빈혈·죽은코드 둘 다 부재). 표준 12파일 커밋 **`98ebfd3`**. 발화 테스트=2 clear+1 fire(B1 오탐0·판별력). 통제 이탈: claude-3 ninja(프레임워크 게이트 미노출, DR-14 재현). 2026-05-29.
-
-> **시대 2 닫힘**: 결정성 결론 = 차이는 대부분 분산·제품철학(코드 우열 아님). B1 표준 `98ebfd3` 커밋. 측정 방법론 교훈(N≥5 블라인드·게이트 고정·형태 다른 태스크·루브릭 정의가 가치 80%)은 현행 `eval/rubric/EVAL-METHOD.md`로 승계.
+> 플러그인 빌드(스킬 10·에이전트 7·커맨드·`plugin validate`)·파일트리 표준(HaffHaff)·**§0 불변식·§4 명명·ACL 분리**·코더 메커니즘 가드레일·BC 경계 G0 고정·**thinking OFF(−24%)**·Codex 포트 PoC(`codex-dddjango/`)·결정성 2차 검증(재현되는 차이=대부분 N=1 분산·제품철학이지 코드 우열 아님). **현행 규칙은 §0·§1·houserules·§3 DO-NOT-RETRY에 보존**, 측정 방법론은 `eval/rubric/EVAL-METHOD.md`로 승계. 상세·커밋 앵커(`fc1d9ce`~`98ebfd3`·HEAD `15ff62d`)·평가 산출물 = **git 히스토리(2026-05-25~29)**.
 
 ### 시대 3 — 표준 빈칸 ③·④ + 최종 스모크 + P1a 오류중앙화 집행 사가 (DR-16~24) ✅ 종료·압축
 
-> P1a(ninja problem+json 오류 중앙화)가 핵심 교훈원: **긍정 레시피·LLM 리뷰어 문구만으론 textbook 위반을 못 막고 → 결정적 백스톱이 필요**(DR-21·22 실패가 §3 DO-NOT-RETRY 근거). 라이브 테스트 방법론은 §4 정본. 서사·증거는 git 히스토리·[[dddjango-final-smoke-findings]]·`results/REMAINING-ISSUES.md`(C 트랙).
+> P1a(ninja problem+json 오류 중앙화)가 핵심 교훈원: **긍정 레시피·LLM 리뷰어 문구만으론 textbook 위반을 못 막고 → 결정적 백스톱이 필요**(DR-21·22 실패가 §3 DO-NOT-RETRY 근거). 라이브 테스트 방법론은 §4 정본. 서사·증거는 git 히스토리·[[dddjango-final-smoke-findings]](C 트랙 등 상세=git 히스토리).
 
 - **DR-16** ✅ 표준 빈칸 ③·④ 메움: ③ 판정-소유 이주 기준(*"레거시냐"가 아니라 "판정·불변식 소유냐"* — 소유→`domain_layer`/순수 데이터→평면 OK/컨텍스트 간 ACL만) + ④ API 스택을 `design-architect` 1급 결정 승격(기본 ninja·기존 존중·버전핀). 14파일 미러. [[dddjango-bc-boundary-nondeterminism]]
 - **DR-17** ✅ 동적검증 Tier 2·3 (`b89c59a`): ③ Codex 완전이주 가능(`db_table` 보존+마이그레이션)이나 **비결정** / ④ `design-architect` 보강("의존성 없음→plain 금지·채택=매니페스트 버전핀")으로 **Ninja+핀 수렴 달성**.
@@ -91,7 +65,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **DR-19** ✅ 라이브 재테스트(smoke2·방식=§4 스모크 절차): **P1b·P2·P3 라이브 집행 확정**(P3=Codex서 discipline-reviewer blocker 발화=최강 증거) · **P1a Codex 재발**(긍정 레시피-only라 미차단 → *집행 게이트 있는 항목만 라이브 차단됨*).
 - **DR-20~22** 🔴 P1a 백스톱 진화 실패: discipline-reviewer "오류 중앙화 규율" blocker(DR-20·`990efb9`·텍스트판별 9/9)→**라이브-파이어서 재현율 약함**(DR-21·Codex 위반을 권고로 강등)→문구 강화 v2도 사전시뮬 0/3(DR-22). **교훈=텍스트판별 통과 ≠ 라이브 발화·LLM 문구 집행이 약함**.
 - **DR-23** ✅ P1a v3 = 결정적 백스톱 `check-error-centralization.py`(`b1d8db6`·2미러·`application_layer` HTTP 누수 AND-탐지·0.21s) + 생산자 예방(design-architect 명세) + reviewer 보조. **LLM 불안정을 우회**(P2 이중구조 선례). 라이브 dual 준수.
-- **DR-24** 🔴 C 트랙 심층 감사(5 서브에이전트)가 DR-23 "dual 완전 준수" 정정: Codex에 P1a **의미 변종** 잔존(멱등성 스코프크립→`IdempotencySnapshot status:int`가 app 흐름·중앙 핸들러 죽은코드=뿌리 C3). 인벤토리 C1~C9·L1~L4·메타 4갭(①의미변종 백스톱 미포착 ②스코프 규율 ③G1 비결정 ④§9.6 테스트 집행). **P1a 릴리스 보류 재개**. 정본=`results/REMAINING-ISSUES.md`.
+- **DR-24** 🔴 C 트랙 심층 감사(5 서브에이전트)가 DR-23 "dual 완전 준수" 정정: Codex에 P1a **의미 변종** 잔존(멱등성 스코프크립→`IdempotencySnapshot status:int`가 app 흐름·중앙 핸들러 죽은코드=뿌리 C3). 인벤토리 C1~C9·L1~L4·메타 4갭(①의미변종 백스톱 미포착 ②스코프 규율 ③G1 비결정 ④§9.6 테스트 집행). **P1a 릴리스 보류 재개**(일단락). 정본=git 히스토리.
 
 ---
 
@@ -136,14 +110,14 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **적대 검증 3라운드**: 원인 4렌즈 → 설계 4렌즈(D1 '503권장'→대칭중립·C1/C2 carve-out·C1↔line40 우선순위·E 신설·B 보류·D2 신규성과장 제거) → 계획 3렌즈(Task4 OLD 비유일·grep regex크래시·lookahead미지원·negative-guard 5건 수정).
 - **검증**: [byte] 미러 diff IDENTICAL(houserules·api)·[semantic] append 양본 동일·한정구 잔존0·변경 8파일만(negative-guard: acceptance-tester·scripts·tdd·coder·RUBRIC 무수정). **DR-22 사전시뮬 강력 통과**(2 독립 sim: Claude픽스처 C2 blocker+C1 important 발화·Codex픽스처 비발화·carve-out FP0 — P1a 0/3 실패와 달리 포트앵커 결정적판정이라 발화).
 - **보류(비-목표)**: B(acceptance-tester 종단 인수테스트 의무화)=유일 신규machinery·D2 게이트·N=1 LOW → 라이브 N≥2 재현 시 재개. 결정적 백스톱=전파 도달성 정적분석 FP불가+'예외 정의-집합 vs ACL catch 차집합' 변종도 내부번역 FP → 보류·재검토 후보. status 특정코드 강제 안함(underdetermined). 층배치(domain vs app) 비처방(A가 무의미화).
-- 🔴 라이브 미검증·N=1 → **커밋 `b7cf255`(1.5.0·미푸시)·DR-45서 라이브 검증=생산자측 작동·BUT 부분 미완 발견**. 정본=`workspace/design/2026-06-06-acl-exception-exhaustiveness.md`(v2)+`-plan.md` + 적대 리포트(원인4·설계4·계획3렌즈).
+- 🔴 라이브 미검증·N=1 → **커밋 `b7cf255`(1.5.0·미푸시)·DR-45서 라이브 검증=생산자측 작동·BUT 부분 미완 발견**. 정본=git 히스토리(설계 v2·적대 리포트).
 
 ### DR-45 🔴 aclex 듀얼 라이브 + 심층 적대 감사 — DR-44 fix 부분 미완(인프라 예외 500 누수)·위장 green 테스트·pytest N=2 (커밋 b7cf255·결과지 미커밋)
 2026-06-06. DR-44(1.5.0) 라이브 검증: greenfield fixture `~/Desktop/dddjango-aclex-{claude,codex}`(baseline claude `6e48b68`·codex `32d1cf5`·rcqlive 동일 입력·고정 게이트)에서 dual `/dddjango`(사용자 드라이브) → 조정자 채점(코드 직접 정독 + 백스톱 13종 실행 + pytest 실행).
 - **커밋**: DR-44 6편집 = `b7cf255`(1.4.0→1.5.0·**미푸시**·origin baseline=`58660a0`). 양 캐시 1.5.0 신선화 IDENTICAL.
 - **1차 채점(단일-패스+백스톱)**:
-  - **Codex**(`results/20260606-1427-aclex-codex.md`): DR-44 축 PASS(**원래부터 준수** — rcqlive서 이미 409·DR-44는 Codex 대상 아니었음). 포트앵커 얇음·**Q-6 pytest MISS**(manage.py test+unittest=DR-42 C3 **N=2 재현**). 13 tests. `command_factory`=컴포지션루트(ninja:151 *요구*사항이지 위반 아님 — 사용자 오해 정정).
-  - **Claude**(`results/20260606-1448-aclex-claude.md`): **rcqlive 흠 직접 수복** — catalog `StockWriteConflict`(CAS 소진)→ACL `StockReservationConflict` 번역(`catalog_product_stock_adapter.py:50-51`)→중앙핸들러 409 retryable, 500 누수 0(조정자 probe 대조=409 problem+json). D2 status표 소진 열거 교과서적(design-spec §2.4:138·§5:190 "미매핑 500" 위험 인용)·포트앵커 3예외 전수·**Q-6 pytest STRONG**(풀스택·함수형 62·mocker 15·TestCase 0). 61 passed. **P4③ 반전: Claude Q-6 강·Codex 약.**
+  - **Codex**(결과지 git 히스토리): DR-44 축 PASS(**원래부터 준수** — rcqlive서 이미 409·DR-44는 Codex 대상 아니었음). 포트앵커 얇음·**Q-6 pytest MISS**(manage.py test+unittest=DR-42 C3 **N=2 재현**). 13 tests. `command_factory`=컴포지션루트(ninja:151 *요구*사항이지 위반 아님 — 사용자 오해 정정).
+  - **Claude**(결과지 git 히스토리): **rcqlive 흠 직접 수복** — catalog `StockWriteConflict`(CAS 소진)→ACL `StockReservationConflict` 번역(`catalog_product_stock_adapter.py:50-51`)→중앙핸들러 409 retryable, 500 누수 0(조정자 probe 대조=409 problem+json). D2 status표 소진 열거 교과서적(design-spec §2.4:138·§5:190 "미매핑 500" 위험 인용)·포트앵커 3예외 전수·**Q-6 pytest STRONG**(풀스택·함수형 62·mocker 15·TestCase 0). 61 passed. **P4③ 반전: Claude Q-6 강·Codex 약.**
 - **🔴 심층 적대 감사(DR-24식·5 서브에이전트 — 사용자 "A" 선택)**: 백스톱 13종+단일정독이 못 본 **major 4 적출**, 조정자 2건 **직접 재현**:
   1. **[VERIFIED] ACL 전수성 인프라-예외 누수 = DR-44 부분 미완**: ACL이 catalog *도메인* 예외 3종(`CatalogError`)만 catch. raw `OperationalError("database is locked")`·`IntegrityError`는 비-CatalogError라 통과→**HTTP 500(text/plain)**(probe B/C 재현). §5.1이 동시성 락을 *인정*하나 §6.7 동시성 테스트가 sequential이라 영구 green. **DR-44가 막으려던 500 누수를 형제 예외 패밀리로 재현.** 대조 probe: StockWriteConflict는 409(처방 작동).
   2. **[VERIFIED] 깨진 JSON 400 plain**: 올바른 CT+깨진 본문→ninja `HttpError(400)`→기본핸들러→400 `application/json`(problem+json 아님·선언 status 밖)(probe A 재현). §2.5.3 위반·**DR-35 변종**(415 데코는 CT만 봄).
@@ -184,14 +158,14 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **발견2**(catalog 골격): **SH-3 치명 격상**(동결 해제 3건째·개정 신규=**소급 금지**·신규 산출분부터·cbvlive 면제). 백스톱 `check-layer-skeleton` 로직 확장.
 - **변경(전부 양 미러 byte-id·md5 동일)**: 표준(ddd §632·houserules §0-1/§0-4/§117/§151/트리/표/§123·SKILL)·에이전트(`design-architect:40` "4계층 전개 지시 안 함"→골격 무조건·`discipline-reviewer:46`·**`design-review-ddd:28`**·coordinator ⑦④)·평가지(RUBRIC·rubric-metrix·EVAL-METHOD **17곳**: SH-3 치명 정본 6곳·마스크 C §1.1.M "위치·골격 ⊥ 판정 실내용"·§2.3③ SH-3 WEAK 폐기·freeze 해제 3건째·소급 두 갈래)·백스톱(check-app-container 텍스트만·check-layer-skeleton 로직: api/schema/acl 고정명+*존재* 애그리거트 코어 완비·**ORM 이름 추론 안 함**·`[선택]` 폴더 보수적 미검사·합성5 PASS·거짓양성0)·채점지(cbvlive-codex).
 - **적대 검증 7포인트**: FIX-THEN-SHIP → 유일 결함 `design-review-ddd`(lens 리뷰어 매핑 누락·"평면 OK" stale·**G1 설계 감수자**라 백스톱 사각 prose 레인 의존도 큼) 수정 → **SHIP**. 모순·미러·연쇄·평가지정합·백스톱거짓양성·freeze소급·YAGNI 전부 OK.
-- 🔴 **미커밋**(이전 `9c6d148`·`8f6922c`·DR-47·DR-48 포함 미푸시)·**라이브 미검증**(post-revision 픽스처 부재·N=1·우열 금지). **후속(비차단)**: ① 발견1 잔재 *생산시점* `check-app-container` G3(`_has_migrated_counterpart`) 면제로 미차단(모델 이주 시 루트 `apps.py` 놓침·eval-time `check-structure:89`만 잡음)·향후 백스톱 보강 ② check-layer-skeleton 정상 BC 거짓양성·architect/reviewer 골격 생성 dual 관측. 정본=`[[dddjango-datasource-skeleton-mandate]]`·`results/20260608-1734-cbvlive-codex.md`(정정).
+- 🔴 **미커밋**(이전 `9c6d148`·`8f6922c`·DR-47·DR-48 포함 미푸시)·**라이브 미검증**(post-revision 픽스처 부재·N=1·우열 금지). **후속(비차단)**: ① 발견1 잔재 *생산시점* `check-app-container` G3(`_has_migrated_counterpart`) 면제로 미차단(모델 이주 시 루트 `apps.py` 놓침·eval-time `check-structure:89`만 잡음)·향후 백스톱 보강 ② check-layer-skeleton 정상 BC 거짓양성·architect/reviewer 골격 생성 dual 관측. 정본=`[[dddjango-datasource-skeleton-mandate]]`(결과지 git 히스토리).
 
 ### DR-50 ✅ DR-49 데이터소스 골격 라이브 dual 검증 — 개정 메커니즘 작동·Codex 정적FAIL(발견1·FC-2)·Claude 정적준수 (🔴미커밋·N=1·우열금지)
 2026-06-08. DR-49(`d2a5536`) 캐시 신선화(1.9.0 양판 rsync+md5·check-layer-skeleton 3자 byte-id) 후 dual `/dddjango` 라이브. fixture `dslive-{claude,codex}` = baseline `17d25a3` + ninja-extra 0.31.4 + 평면 `catalog.Product` 선재(touched 데이터소스 트리거) + eval-meta(PROMPT/README/setup.sh) 제거. 프롬프트="재고 부족 409·충분 시 차감 주문 생성". 게이트=① 새 BC·Ninja·내부전용·thinking OFF. **백스톱 16종 양 런 전부 exit0.**
-- **Codex = 정적 FAIL(치명 3)**: SH-1·4(**발견1 재현**=루트 `catalog/apps.py·models.py` 잔재·`settings`는 `application.catalog...django_catalog` 등록·루트는 죽은 잔재)·FC-2(경계 `>`→`>=` mutation green=stock==qty 테스트 부재·DR-35 재현). **단 데이터소스 골격은 완벽** → **DR-49 검증 ①②③④ 직접 입증**: `application/catalog/` 4계층+`domain_layer/product/`(ORM `ProductModel`→`product` 도출) 빈 골격+종류폴더+OHS 완전 실현 · **check-layer-skeleton exit0 거짓양성0** · design-spec §6 골격 명세 · SH-3 PASS. 부수 Q-1(415/406 협상 발명=내부전용인데 design-spec "external" 자체판단)·Q-6(Django TestCase). 결과지 `results/20260608-2143-dslive-codex.md`.
-- **Claude = 정적 준수·품질 상**: 완전이주(루트 catalog `D`삭제·0001 `R`rename → SH-1·4 PASS)·**DR-48 클래스 컨트롤러**(`@api_controller`+`register_controllers`+`@inject`)·**Q-1 협상 미발명**(내부전용 준수)·**Q-6 pytest**(pyproject `[tool.pytest]`+`mocker`+`@pytest.mark.django_db`·36 passed)·**FC-2 경계 보유**(`test_deduct_stock_to_exactly_zero` stock5→0)·NJ-7 catch-all·EP-3 분기(transient503/영구500). **catalog를 판정소유 BC로 해석**(`Product.deduct_stock`)→데이터소스 시나리오 우회=검증① N/A. 결과지 `results/20260608-2156-dslive-claude.md`.
+- **Codex = 정적 FAIL(치명 3)**: SH-1·4(**발견1 재현**=루트 `catalog/apps.py·models.py` 잔재·`settings`는 `application.catalog...django_catalog` 등록·루트는 죽은 잔재)·FC-2(경계 `>`→`>=` mutation green=stock==qty 테스트 부재·DR-35 재현). **단 데이터소스 골격은 완벽** → **DR-49 검증 ①②③④ 직접 입증**: `application/catalog/` 4계층+`domain_layer/product/`(ORM `ProductModel`→`product` 도출) 빈 골격+종류폴더+OHS 완전 실현 · **check-layer-skeleton exit0 거짓양성0** · design-spec §6 골격 명세 · SH-3 PASS. 부수 Q-1(415/406 협상 발명=내부전용인데 design-spec "external" 자체판단)·Q-6(Django TestCase). 결과지=git 히스토리.
+- **Claude = 정적 준수·품질 상**: 완전이주(루트 catalog `D`삭제·0001 `R`rename → SH-1·4 PASS)·**DR-48 클래스 컨트롤러**(`@api_controller`+`register_controllers`+`@inject`)·**Q-1 협상 미발명**(내부전용 준수)·**Q-6 pytest**(pyproject `[tool.pytest]`+`mocker`+`@pytest.mark.django_db`·36 passed)·**FC-2 경계 보유**(`test_deduct_stock_to_exactly_zero` stock5→0)·NJ-7 catch-all·EP-3 분기(transient503/영구500). **catalog를 판정소유 BC로 해석**(`Product.deduct_stock`)→데이터소스 시나리오 우회=검증① N/A. 결과지=git 히스토리.
 - **DR-49 효과**: 데이터소스 골격 의무화는 **Codex 런(catalog=데이터소스 해석)이 ①②③④로 직접 입증**·백스톱 거짓양성0·SH-3 치명 작동. catalog 역할(판정소유 vs 데이터소스)은 designer-decides 게이트 하 **둘 다 방어가능 설계 분기(P4③)**.
-- 🔴 **후속(비차단)**: ① **발견1 생산시점 백스톱 보강 우선순위↑** — `check-app-container` G3(`_has_migrated_counterpart`) 면제로 루트 잔재 exit0 **라이브 확정**(검증⑤ "못 잡음"·reviewer prose도 미포착·SH-1 채점은 grep FAIL이나 게이트는 통과) → 루트 앱 패키지 잔재 직격 백스톱 ② **DR-48 415 우회**(Codex 내부전용인데 external 자체판단→함수 Router로 클래스 강제 무력화) ③ **FC-2 경계**(Codex DR-35 재현) ④ **EP-1 problem+json 형식 갭**(사후 실측·대칭 확인 → **비대칭**: Claude 깨진본문→**400 problem+json**[`@api.exception_handler(HttpError)` 有·채점지 🟡→✅ 정정], Codex→**400 `application/json` `{detail}`**[HttpError 핸들러 부재·problem+json 중앙화 우회·🟡 유지·aclex2live-codex 형식갭 후속후보 재확인·NJ-7 catch-all이 HttpError 경로 못 봄]) · EVAL-METHOD §4.3.1 **probe override 보강**(미실측 시 status 추론 금지·추론은 ninja 파싱/검증 2단계 혼동). **N=1·런간 비결정(DR-24/c4live/nj2live 역방향)·우열 금지.** 정본=`[[dddjango-datasource-skeleton-mandate]]`·결과지 2개.
+- 🔴 **후속(비차단)**: ① **발견1 생산시점 백스톱 보강 우선순위↑** — `check-app-container` G3(`_has_migrated_counterpart`) 면제로 루트 잔재 exit0 **라이브 확정**(검증⑤ "못 잡음"·reviewer prose도 미포착·SH-1 채점은 grep FAIL이나 게이트는 통과) → 루트 앱 패키지 잔재 직격 백스톱 ② **DR-48 415 우회**(Codex 내부전용인데 external 자체판단→함수 Router로 클래스 강제 무력화) ③ **FC-2 경계**(Codex DR-35 재현) ④ **EP-1 problem+json 형식 갭**(사후 실측·대칭 확인 → **비대칭**: Claude 깨진본문→**400 problem+json**[`@api.exception_handler(HttpError)` 有·채점지 🟡→✅ 정정], Codex→**400 `application/json` `{detail}`**[HttpError 핸들러 부재·problem+json 중앙화 우회·🟡 유지·aclex2live-codex 형식갭 후속후보 재확인·NJ-7 catch-all이 HttpError 경로 못 봄]) · EVAL-METHOD §4.3.1 **probe override 보강**(미실측 시 status 추론 금지·추론은 ninja 파싱/검증 2단계 혼동). **N=1·런간 비결정(DR-24/c4live/nj2live 역방향)·우열 금지.** 정본=`[[dddjango-datasource-skeleton-mandate]]`(결과지 git 히스토리).
 
 ---
 
@@ -293,7 +267,7 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 ## §6 Pointers
 
 - **핵심 커밋**(feat/dddjango-build): `5925ce1`(파일트리 표준) · `6d7720d`/`ad86443`/`1f1ea7e`(표준 강화) · `f9ea088`(coder 가드레일) · `fac248b`(5 레버) · `15ff62d`(BC 수정, HEAD).
-- **설계·로그 문서**: `workspace/design/`은 **진행중 설계만 보존**(`acl-exception-exhaustiveness`·`fix-regression-rootcause-analysis`). 완료분(빌드·codex포트·catalog·네이밍·폴더·R/C/Q 등)은 git 히스토리·메모리 슬러그(§2 각 DR이 가리킴).
+- **설계·로그 문서**: `workspace/design/`은 dddjango 일단락으로 비움 — 모든 설계 산출물(빌드·codex포트·catalog·네이밍·폴더·R/C/Q·acl-exception·rootcause 등)은 git 히스토리·메모리 슬러그(§2 각 DR이 가리킴).
 - **도구·리포트**: `workspace/tools/{session_telemetry.py, smoke_report.py, smoke_timeline.html}`.
 - **AGENTS.md**: Claude 전용 파이프라인 구조 설명.
 - **Codex 이식**(§2 DR-12): 조사=git 히스토리(`2026-05-28-codex-port-research.md`) · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님, =codex-2 런).
