@@ -82,6 +82,19 @@ RUBRIC §C는 SH-1·SH-4 판정을 뒤집으므로 그 입력이 결정론적이
   - **untouched 무관 앱**만 §1.1 존중(평면 유지 = 위반 아님).
 - **경합 규칙**: N_grader에서 MQ 판정이 갈리면 **보수적으로 *적재됨*(엄격)** 채택 + 인간 큐(치명 입력이므로 §1.2 보수 판정과 동일 강도).
 
+#### §1.1.T Q-6 테스트 도구 관측 (env≠produced≠used — 픽스처 오염·오기 차단)
+ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코디가 테스트 도구를 설치+핀했나"가 무효화되고, 채점지가 venv에 *없는* `mocker`/`factory_boy`를 "썼다"고 오기(used 미측정)한다. **세 축을 분리 측정**한다(한 라벨로 뭉뚱그리면 오기·over-charity).
+- **env (환경에 있던 것)**: 채점 *착수 전* fixture venv 도구 스냅샷(`pip freeze` 또는 site-packages 목록) + `requirements.txt`/`pyproject.toml` 테스트도구 핀 유무. **조정자가 채점 위해 추가한 도구는 `(조정자 추가)` 태그**로 명시해 produced에서 배제한다(§1.4 러너 설치-선행이 이 축을 오염시키므로 스냅샷은 설치 *전*에 뜬다). 헤더(§6.2)에 박제.
+- **produced (코디가 만든 것)**: 코디가 `requirements.txt`/`pyproject.toml`에 **추가+핀**한 테스트 스택 = `git diff baseline`. *산출물 책무*다(조정자 오염과 무관).
+- **used (실제 쓴 것)**: fixture 코드 grep — `mocker`·`monkeypatch`·`factory_boy`/`DjangoModelFactory`·`unittest.mock`·`TestCase` 출현 **줄 인용**(결정 레인; 인용 없는 판정 무효 §1.2). 채점지가 "썼다"고 적는 도구는 이 grep으로 닫는다(ptcat Q-6 오기 = used 미측정의 산물).
+- **판정 매트릭스 (설치 Y/N)×(핀 Y/N) — 단일 라벨 금지**:
+  - 설치(env∨produced에 도구 존재) ∧ 핀(매니페스트 핀) = §2.1 완전 준수.
+  - 설치 ∧ **무핀** = **핀 미이행**(코디 산출물 흠 → Q-7 "의존성 핀" WEAK; *오염 아님*).
+  - env에만 有 ∧ produced=0 ∧ 미사용 = **검증 불가**(조정자 오염 — env 도구가 코디 행동을 대체했을 수 있음).
+  - 도구 부재(env·produced 0) ∧ 미사용 = 도구 *이름* 부재는 흠 아님(§9.1 non-blanket·§20.5 상속스파이·`monkeypatch` 1급); 단 **러너가 pytest 아닌 `manage.py test`/`TestCase` 폴백이면 Q-6 FAIL**(RUBRIC :106 불변).
+- **정당 미사용 ≠ 환경부재 미사용**: env에 도구가 있는데 안 쓰면 "정당 선택"(§9.1)일 수 있으나, env에 *없어서* 못 쓴 것을 "정당 선택"으로 적으면 오기(ptcat). used grep으로만 구분한다.
+- **소급 미적용**: 본 절(2026-06-09 신설)은 *신설 이후* 라이브/재채점분만 구속. 기존 8벌·duplive·ptcat 등 산출분은 면제(§4.3.1 EP·§6.1 #9.5 소급금지 패턴 정합) — 단 ptcat-codex는 본 사건 당사자라 그 채점지에 한해 오기 정정.
+
 ### 1.2 의미 레인 (결정 결과에 **blind**)
 - **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "오류→status를 *고르거나 만드는* 줄이 operation·application·domain에 있나? (Y/N)+줄".
 - **🔴 에러 경로 정독 의무(NJ-1·3·4·SD-6 — `poc-codex` miss 반영)**: operation 본문·backstop exit0만으로 NJ/SD-6 판정 **금지**. 모든 `@api.exception_handler`·problem 헬퍼·content-negotiation 데코레이터를 읽어 §6.2 대조한다. 이진질문: (Q-a) 에러 응답이 `ninja.responses.Response` 아닌 `django.http.JsonResponse`로 나가나?(Y=🟡 NJ-1 경미) (Q-b) 오류 status가 `response={}` 아닌 `openapi_extra`/핸들러에만 있나?(Y=NJ-4 FAIL). **양방향 보정**: §6.2가 *중앙 핸들러의 dict 빌드+`ninja.responses.Response` 반환*을 처방하므로 그 형태는 **준수**(SD-6 'raw 응답'·NJ-1 'plain leak'으로 over-call 금지·죽은 schema 아님).
@@ -97,7 +110,7 @@ RUBRIC §C는 SH-1·SH-4 판정을 뒤집으므로 그 입력이 결정론적이
 
 ### 1.4 기능 정확성 측정 (FC)
 - **FC-1 골든 오라클**: **(주체)** 적대 grader가 **(시점)** 프롬프트 수령 직후·코드 *열람 전*에 **(형식)** *태스크-독립 행위표*(입력상태,요청)→(기대 status,부작용) + 타임스탬프 + "코드 미열람" 선언을 freeze 산출물에 커밋(열람 후 수정 금지·git diff 검증). **행위표 ⊥ 실행 어댑터**(실측 교정): 행위표는 코드 미열람으로 8벌 공통 작성 가능하나 *실제 두드릴 route+요청 schema*는 픽스처마다 달라(동일 태스크라도 BC 분해 분기) **조정자가 코드 열람 후 어댑터를 짠다** — "미열람"은 행위표에만. **작성자 ⊥ 채점자**(골든표 작성한 적대 grader는 그 fixture 의미 grader 제외 → 그 픽스처 N_grader를 1 늘려 유효 3 유지). 실행=인수 테스트와 독립한 호출 스크립트로 `.venv` 실측. **명세·기존 테스트는 오라클 불인정**.
-  - **러너(runner) = `pytest`(pytest-django)**: FC-1 골든 행위 검증·Q-6 스위트 실행은 **프로젝트 루트에서 `.venv/bin/pytest`**로 돌린다(픽스처의 pytest 설정 `pytest.ini`/`pyproject.toml`·`DJANGO_SETTINGS_MODULE`이 적용되는 루트). 픽스처에 pytest 설정이 없으면 `.venv/bin/pytest -p pytest_django --ds=<settings>`로 명시하거나 픽스처 venv에 `pytest-django` 설치를 선행한다. **`manage.py test`(unittest 디스커버리)는 함수형 `def test_*()` pytest 테스트를 0개로 수집해 FC-2를 거짓 PASS시키므로 금지.** `pytest`는 Django `TestCase` **와** 함수형 pytest 테스트를 **둘 다** 수집하므로 표준이 pytest 관용구로 전환된 신규 산출물과 구 fixture(`TestCase`)를 한 러너로 안전히 채점한다. **러너만 바뀌고 골든 green→red 오라클 로직은 불변.**
+  - **러너(runner) = `pytest`(pytest-django)**: FC-1 골든 행위 검증·Q-6 스위트 실행은 **프로젝트 루트에서 `.venv/bin/pytest`**로 돌린다(픽스처의 pytest 설정 `pytest.ini`/`pyproject.toml`·`DJANGO_SETTINGS_MODULE`이 적용되는 루트). 픽스처에 pytest 설정이 없으면 `.venv/bin/pytest -p pytest_django --ds=<settings>`로 명시하거나 픽스처 venv에 `pytest-django` 설치를 선행한다. **`manage.py test`(unittest 디스커버리)는 함수형 `def test_*()` pytest 테스트를 0개로 수집해 FC-2를 거짓 PASS시키므로 금지.** **🔴 오염 차단(2026-06-09 ptcat 교훈)**: 조정자가 픽스처 venv에 `pytest-django` 등을 설치-선행하면 §1.1.T의 `env`/`used` 축이 오염된다(env 도구가 코디 행동을 대체·관측 무효). 따라서 ① 도구 스냅샷(§1.1.T `env`)은 설치-선행 **전**에 뜨고, ② 조정자 설치분은 `(조정자 추가)` 태그로 `produced`(코디 핀 책무)에서 배제하며, ③ 가능하면 **채점용 러너 venv를 라이브 baseline과 별도 복제**해 라이브 산출 환경(코디가 설치·핀한 그 상태)을 변형하지 않는다. `pytest`는 Django `TestCase` **와** 함수형 pytest 테스트를 **둘 다** 수집하므로 표준이 pytest 관용구로 전환된 신규 산출물과 구 fixture(`TestCase`)를 한 러너로 안전히 채점한다. **러너만 바뀌고 골든 green→red 오라클 로직은 불변.**
 - **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`. **러너 = `.venv/bin/pytest`(FC-1과 동일)**: mutation 주입 후 `pytest`로 스위트를 돌려 red를 확인한다(`manage.py test`는 함수형 pytest 테스트를 수집 못 해 mutation 주입에도 green→**FC-2 거짓 PASS** 위험이라 금지). **러너만 바뀌고 mutation 주입→red 기대 로직은 불변**(주입 사이트·red율 100% 판정 동일).
 - **FC-3 도메인 정합**: 의미 grader가 골든 결과+코드 정독으로 명백한 도메인 오류(음수 재고·차감 역전·인과 역전) 판정.
 
@@ -247,6 +260,7 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 
 ### 6.2 헤더 블록 (인용블록 `>`, 필수 필드)
 방법(v3) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설(8벌 밖=라벨 비구속) · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**(코디네이터 보고 대신 조정자 직접 검증).
+- **fixture 도구 환경**(필수 필드 — 2026-06-09 신설·**라이브/재채점분 한정·기존 산출분 면제**, §4.3.1 소급금지 패턴 정합): 채점 *착수 전* venv 도구 스냅샷(`pip freeze`/site-packages 테스트도구 목록) + `requirements.txt`·`pyproject.toml` 테스트도구 핀 유무를 박제(§1.1.T `env`). **조정자가 채점 위해 추가한 도구는 `(조정자 추가)` 태그**로 표기해 코디 산출물(`produced`)과 분리. 이 필드 부재로 신설 *이전* 채점지를 형식 위반/재작성 대상으로 삼지 않는다.
 
 ### 6.3 종합 판정 표 (사전식 — §2 의사코드 그대로)
 `| 단계 | 결과 |`: ① 마스크 C → ② 치명 게이트(FAIL n건) → ②.5 실질성 관문 → ③ 비치명·의미변종(WEAK 상한) → ④ TIER-Q 등급. 뒤에 **한 줄 요지** + **2차원 라벨**(§4.4: (정적: 준수/WEAK/FAIL)×(라이브: 발화/미발화/미검증); "완료"는 §4.4 충족 시만). **라이브 런 채점 시** 라이브 축 줄에 `폴더 동작`·`에러경로 계약`(§4.3.1: 관측/부분/미검증) 관측 라벨을 병기한다(둘 다 완료 비산입·치명 게이트 아님) — `에러경로 계약`의 **상세 EP-1~4 표는 별도 섹션(§6.1 #9.5)**에 둔다(한 줄 병기와 별개·maj1live 이후 라이브 런 필수).
