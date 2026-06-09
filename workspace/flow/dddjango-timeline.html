@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dddjango 파이프라인 플로우차트</title>
+<style>
+  body{margin:0;background:#f4f6f8;color:#1f2328;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    padding:26px 16px 70px}
+  .wrap{max-width:1000px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 4px}
+  .sub{color:#6b7280;font-size:13px;margin:0 0 14px}
+  .legend{display:flex;flex-wrap:wrap;gap:13px;margin:0 0 14px;font-size:12.5px;color:#374151;align-items:center}
+  .legend b{color:#1f2328}
+  .legend .sw{display:inline-block;width:15px;height:13px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1.5px solid}
+  .sw.cap{background:#a4cc4a;border-color:#7fa336;border-radius:7px}
+  .sw.io{background:#57bd8f;border-color:#3f9b71;transform:skewX(-18deg)}
+  .sw.proc{background:#bcdcef;border-color:#6aa6cc}
+  .sw.dec{background:#f8cd8a;border-color:#d99b3e;transform:rotate(45deg);width:11px;height:11px}
+  .sk{font-weight:700}
+  .sk.a{color:#1d4ed8}.sk.i{color:#15803d}.sk.d{color:#7c3aed}
+  svg{width:100%;height:auto;display:block;background:#fff;border:1px solid #e2e6ea;border-radius:12px}
+  .note{margin-top:14px;font-size:12px;color:#6b7280;border-top:1px solid #d6dae0;padding-top:12px;line-height:1.6}
+  .note code{font-family:ui-monospace,Menlo,monospace;background:#e3e6eb;padding:1px 5px;border-radius:5px}
+  .note .sk{font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>dddjango 파이프라인 플로우차트</h1>
+  <p class="sub">왼쪽 = 흐름(도형) · 오른쪽 = 각 단계가 하는 일 + 쓰는 스킬. 스킬 색: <span class="sk a">architecture-*</span> · <span class="sk i">implementation-*</span> · <span class="sk d">discipline-*</span></p>
+  <div class="legend">
+    <span><span class="sw cap"></span><b>시작/끝</b></span>
+    <span><span class="sw io"></span><b>입출력</b></span>
+    <span><span class="sw proc"></span><b>처리(역할)</b></span>
+    <span><span class="sw dec"></span><b>판단(게이트·루프)</b></span>
+    <span style="color:#6b7280">호출: Claude <b>Agent</b> · Codex <b>spawn_agent→wait_agent</b></span>
+  </div>
+
+  <svg viewBox="0 0 980 1700" role="img" aria-label="dddjango 파이프라인 플로우차트">
+    <defs>
+      <marker id="ar" markerWidth="10" markerHeight="10" refX="8.5" refY="3" orient="auto"><path d="M0,0 L8.5,3 L0,6 Z" fill="#5b6472"/></marker>
+      <marker id="arl" markerWidth="10" markerHeight="10" refX="8.5" refY="3" orient="auto"><path d="M0,0 L8.5,3 L0,6 Z" fill="#c2410c"/></marker>
+    </defs>
+
+    <!-- 메인 세로 연결선 -->
+    <g stroke="#5b6472" stroke-width="2" fill="none">
+      <line x1="280" y1="58"  x2="280" y2="82"  marker-end="url(#ar)"/>
+      <line x1="280" y1="142" x2="280" y2="166" marker-end="url(#ar)"/>
+      <line x1="280" y1="240" x2="280" y2="264" marker-end="url(#ar)"/>
+      <line x1="280" y1="358" x2="280" y2="382" marker-end="url(#ar)"/>
+      <line x1="280" y1="456" x2="280" y2="480" marker-end="url(#ar)"/>
+      <line x1="280" y1="554" x2="280" y2="578" marker-end="url(#ar)"/>
+      <line x1="280" y1="652" x2="280" y2="676" marker-end="url(#ar)"/>
+      <line x1="280" y1="770" x2="280" y2="794" marker-end="url(#ar)"/>
+      <line x1="280" y1="868" x2="280" y2="892" marker-end="url(#ar)"/>
+      <line x1="280" y1="966" x2="280" y2="990" marker-end="url(#ar)"/>
+      <line x1="280" y1="1084" x2="280" y2="1108" marker-end="url(#ar)"/>
+      <line x1="280" y1="1182" x2="280" y2="1206" marker-end="url(#ar)"/>
+      <line x1="280" y1="1280" x2="280" y2="1304" marker-end="url(#ar)"/>
+      <line x1="280" y1="1398" x2="280" y2="1422" marker-end="url(#ar)"/>
+      <line x1="280" y1="1516" x2="280" y2="1540" marker-end="url(#ar)"/>
+      <line x1="280" y1="1600" x2="280" y2="1624" marker-end="url(#ar)"/>
+    </g>
+
+    <!-- 루프백 -->
+    <polyline points="195,1038 120,1038 120,915 180,915" fill="none" stroke="#15803d" stroke-width="2.5" marker-end="url(#ar)"/>
+    <text x="92" y="980" font-size="11" fill="#15803d" font-weight="700" transform="rotate(-90 92 980)">Yes 다음 슬라이스</text>
+    <text x="290" y="1106" font-size="11" fill="#5b6472" font-weight="700">No</text>
+    <polyline points="195,312 150,312 150,204 180,204" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arl)"/>
+    <polyline points="195,724 138,724 138,616 180,616" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arl)"/>
+    <polyline points="195,1352 58,1352 58,628 180,628" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arl)"/>
+    <polyline points="195,1470 88,1470 88,940 180,940" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arl)"/>
+    <text x="44" y="1000" font-size="10.5" fill="#c2410c" font-weight="700" transform="rotate(-90 44 1000)">exit2 되돌림</text>
+    <text x="74" y="1230" font-size="10.5" fill="#c2410c" font-weight="700" transform="rotate(-90 74 1230)">수정→coder</text>
+
+    <!-- 게이트 Yes/분기 라벨 -->
+    <text x="290" y="376" font-size="11" fill="#5b6472" font-weight="700">승인</text>
+    <text x="290" y="788" font-size="11" fill="#5b6472" font-weight="700">승인</text>
+    <text x="290" y="1534" font-size="11" fill="#5b6472" font-weight="700">승인</text>
+    <text x="290" y="1416" font-size="11" fill="#5b6472" font-weight="700">통과</text>
+
+    <!-- 노드↔설명 연결 점선 -->
+    <g stroke="#c8cfd6" stroke-width="1.3" stroke-dasharray="3 3">
+      <line x1="380" y1="204" x2="430" y2="204"/>
+      <line x1="365" y1="312" x2="430" y2="312"/>
+      <line x1="380" y1="420" x2="430" y2="420"/>
+      <line x1="380" y1="518" x2="430" y2="518"/>
+      <line x1="380" y1="616" x2="430" y2="616"/>
+      <line x1="365" y1="724" x2="430" y2="724"/>
+      <line x1="380" y1="832" x2="430" y2="832"/>
+      <line x1="380" y1="930" x2="430" y2="930"/>
+      <line x1="365" y1="1038" x2="430" y2="1038"/>
+      <line x1="380" y1="1146" x2="430" y2="1146"/>
+      <line x1="380" y1="1244" x2="430" y2="1244"/>
+      <line x1="365" y1="1352" x2="430" y2="1352"/>
+      <line x1="365" y1="1470" x2="430" y2="1470"/>
+      <line x1="360" y1="1571" x2="430" y2="1571"/>
+    </g>
+
+    <!-- ===== 도형 (왼쪽) ===== -->
+    <rect x="210" y="14" width="140" height="44" rx="22" fill="#a4cc4a" stroke="#7fa336" stroke-width="1.5"/>
+    <text x="280" y="42" text-anchor="middle" font-size="14" font-weight="800" fill="#1f3d00">START</text>
+
+    <polygon points="200,82 380,82 360,140 180,140" fill="#57bd8f" stroke="#3f9b71" stroke-width="1.5"/>
+    <text x="280" y="116" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">기능 요청 입력</text>
+
+    <rect x="180" y="166" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="208" text-anchor="middle" font-size="13.5" font-weight="800" fill="#173a52">coordinator</text>
+
+    <polygon points="280,264 365,312 280,360 195,312" fill="#f8cd8a" stroke="#d99b3e" stroke-width="1.6"/>
+    <text x="280" y="309" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">G0 스코프</text>
+    <text x="280" y="325" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">승인?</text>
+
+    <rect x="180" y="382" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="417" text-anchor="middle" font-size="13" font-weight="800" fill="#173a52">design-architect</text>
+    <text x="280" y="434" text-anchor="middle" font-size="11.5" fill="#3d5e74">(초안)</text>
+
+    <rect x="180" y="480" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="515" text-anchor="middle" font-size="13" font-weight="800" fill="#173a52">design-review</text>
+    <text x="280" y="532" text-anchor="middle" font-size="11.5" fill="#3d5e74">ddd · api · db (병렬)</text>
+
+    <rect x="180" y="578" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="613" text-anchor="middle" font-size="13" font-weight="800" fill="#173a52">design-architect</text>
+    <text x="280" y="630" text-anchor="middle" font-size="11.5" fill="#3d5e74">(반영·중재)</text>
+
+    <polygon points="280,676 365,724 280,772 195,724" fill="#f8cd8a" stroke="#d99b3e" stroke-width="1.6"/>
+    <text x="280" y="721" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">G1 설계</text>
+    <text x="280" y="737" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">승인?</text>
+
+    <rect x="180" y="794" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="836" text-anchor="middle" font-size="12.5" font-weight="800" fill="#173a52">acceptance-tester</text>
+
+    <rect x="180" y="892" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="928" text-anchor="middle" font-size="13" font-weight="800" fill="#173a52">coder</text>
+    <text x="280" y="945" text-anchor="middle" font-size="11.5" fill="#3d5e74">슬라이스 k</text>
+
+    <polygon points="280,990 365,1038 280,1086 195,1038" fill="#f8cd8a" stroke="#d99b3e" stroke-width="1.6"/>
+    <text x="280" y="1035" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">슬라이스 더</text>
+    <text x="280" y="1051" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">남았나?</text>
+
+    <rect x="180" y="1108" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="1150" text-anchor="middle" font-size="12.5" font-weight="800" fill="#173a52">discipline-reviewer</text>
+
+    <rect x="180" y="1206" width="200" height="74" rx="9" fill="#bcdcef" stroke="#6aa6cc" stroke-width="1.5"/>
+    <text x="280" y="1248" text-anchor="middle" font-size="13" font-weight="800" fill="#173a52">백스톱 16종</text>
+
+    <polygon points="280,1304 365,1352 280,1400 195,1352" fill="#f8cd8a" stroke="#d99b3e" stroke-width="1.6"/>
+    <text x="280" y="1349" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">16종 전부</text>
+    <text x="280" y="1365" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">통과?</text>
+
+    <polygon points="280,1422 365,1470 280,1518 195,1470" fill="#f8cd8a" stroke="#d99b3e" stroke-width="1.6"/>
+    <text x="280" y="1467" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">G2 구현</text>
+    <text x="280" y="1483" text-anchor="middle" font-size="12" font-weight="800" fill="#6b3e00">승인?</text>
+
+    <polygon points="200,1542 380,1542 360,1600 180,1600" fill="#57bd8f" stroke="#3f9b71" stroke-width="1.5"/>
+    <text x="280" y="1576" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">검증 보고</text>
+
+    <rect x="210" y="1624" width="140" height="44" rx="22" fill="#a4cc4a" stroke="#7fa336" stroke-width="1.5"/>
+    <text x="280" y="1652" text-anchor="middle" font-size="13.5" font-weight="800" fill="#1f3d00">STOP (완료)</text>
+
+    <!-- ===== 설명 (오른쪽) ===== -->
+    <g font-family="inherit">
+      <!-- coordinator -->
+      <text x="432" y="192" font-size="13" font-weight="800" fill="#173a52">① 요구·스코프 정리 <tspan font-size="11" font-weight="600" fill="#8a94a0">· 코디네이터 단독</tspan></text>
+      <text x="432" y="210" font-size="11.5" fill="#45586a">모드 판별(신규/수정) → 무엇을·경계·제약 정리 → 활성 lens(ddd 항상 / api·db 조건) 추론 → 산출물 폴더 확정</text>
+      <text x="432" y="227" font-size="11.5" fill="#9aa3ad">스킬 없음 — 오케스트레이션만</text>
+
+      <!-- G0 -->
+      <text x="432" y="316" font-size="12.5" font-weight="800" fill="#6b3e00">💬 G0 게이트 — 사용자에게 질문</text>
+      <text x="432" y="333" font-size="11.5" fill="#45586a">스코프 + 제안 lens 승인? (영역 배치·산출물 폴더도) · 수정이면 ↺ Phase 0 재실행</text>
+
+      <!-- architect 초안 -->
+      <text x="432" y="406" font-size="13" font-weight="800" fill="#173a52">② 통합 설계 초안</text>
+      <text x="432" y="424" font-size="11.5" fill="#45586a">기존 구조 조사 → 도메인·API·DB를 한 명세로 + 패키지·테스트 구조 결정 → design-spec 초안</text>
+      <text x="432" y="441" font-size="11.5"><tspan class="sk a" fill="#1d4ed8" font-weight="700">architecture-ddd · api · db</tspan>  <tspan class="sk d" fill="#7c3aed" font-weight="700">discipline-houserules</tspan></text>
+
+      <!-- review -->
+      <text x="432" y="504" font-size="13" font-weight="800" fill="#173a52">③ 독립 리뷰 (병렬)</text>
+      <text x="432" y="522" font-size="11.5" fill="#45586a">ddd·api·db 세 관점이 명세 초안만 보고 독립 비평(서로 안 봄=편향 방지) → 리뷰 노트</text>
+      <text x="432" y="539" font-size="11.5"><tspan class="sk a" fill="#1d4ed8" font-weight="700">각자 architecture-ddd / api / db 하나씩</tspan></text>
+
+      <!-- architect 반영 -->
+      <text x="432" y="602" font-size="13" font-weight="800" fill="#173a52">④ 리뷰 반영·중재</text>
+      <text x="432" y="620" font-size="11.5" fill="#45586a">리뷰 노트 반영 + 리뷰어 충돌 중재 → design-spec 최종 (이후 인수·코드의 단일 근거)</text>
+      <text x="432" y="637" font-size="11.5"><tspan class="sk a" fill="#1d4ed8" font-weight="700">architecture-ddd · api · db</tspan>  <tspan class="sk d" fill="#7c3aed" font-weight="700">discipline-houserules</tspan></text>
+
+      <!-- G1 -->
+      <text x="432" y="728" font-size="12.5" font-weight="800" fill="#6b3e00">💬 G1 게이트 — 사용자에게 질문</text>
+      <text x="432" y="745" font-size="11.5" fill="#45586a">design-spec 최종 승인? (미해결 트레이드오프는 옵션 선택) · 수정이면 ↺ 해당 lens 재설계</text>
+
+      <!-- acceptance -->
+      <text x="432" y="818" font-size="13" font-weight="800" fill="#173a52">⑤ 인수 테스트 작성 <tspan font-size="11" font-weight="600" fill="#8a94a0">· 여기부터 구현</tspan></text>
+      <text x="432" y="836" font-size="11.5" fill="#45586a">명세의 외부 행위를 실패하는 인수 테스트 N개(전부 🔴 Red=합격선)로 + 슬라이스 도출</text>
+      <text x="432" y="853" font-size="11.5"><tspan class="sk i" fill="#15803d" font-weight="700">implementation-test</tspan>  <tspan class="sk a" fill="#1d4ed8" font-weight="700">architecture-api · ddd</tspan>  <tspan class="sk d" fill="#7c3aed" font-weight="700">discipline-tdd</tspan></text>
+
+      <!-- coder -->
+      <text x="432" y="908" font-size="13" font-weight="800" fill="#173a52">⑥ 슬라이스 구현 (안쪽 TDD)</text>
+      <text x="432" y="926" font-size="11.5" fill="#45586a">슬라이스 k를 단위 TDD(Red→Green→Refactor)로 구현 → 이 슬라이스의 인수 테스트 🔴→🟢 확인</text>
+      <text x="432" y="943" font-size="11.5"><tspan class="sk i" fill="#15803d" font-weight="700">implementation-django · ninja · web · python · test</tspan></text>
+      <text x="432" y="960" font-size="11.5"><tspan class="sk d" fill="#7c3aed" font-weight="700">discipline-tdd · cleancode · houserules</tspan></text>
+
+      <!-- 슬라이스 판단 -->
+      <text x="432" y="1034" font-size="12.5" font-weight="800" fill="#6b3e00">🔁 슬라이스 루프 판단</text>
+      <text x="432" y="1051" font-size="11.5" fill="#45586a">더 남았으면 → coder로 되돌아가 다음 슬라이스 · 없으면 → 인수 전부 🟢 = 기능 완성</text>
+
+      <!-- disc-reviewer -->
+      <text x="432" y="1134" font-size="13" font-weight="800" fill="#173a52">⑦ 규율 감수 (홀리스틱)</text>
+      <text x="432" y="1152" font-size="11.5" fill="#45586a">코드·테스트를 규율 관점으로 독립 감사 → 감수 리포트(blocker / important / nit)</text>
+      <text x="432" y="1169" font-size="11.5"><tspan class="sk d" fill="#7c3aed" font-weight="700">discipline-cleancode · tdd · houserules</tspan></text>
+
+      <!-- 백스톱 -->
+      <text x="432" y="1232" font-size="13" font-weight="800" fill="#173a52">⑧ 백스톱 16종 (결정적 스크립트)</text>
+      <text x="432" y="1250" font-size="11.5" fill="#45586a">coordinator가 셸로 16개 스크립트 실행 — 설계군 8(→architect) · 구현군 8(→coder)</text>
+      <text x="432" y="1267" font-size="11.5" fill="#9aa3ad">스킬 아님 — 고정밀·저-recall 안전망(거짓양성≈0)</text>
+
+      <!-- 백스톱 판단 -->
+      <text x="432" y="1356" font-size="12.5" font-weight="800" fill="#6b3e00">백스톱 판단</text>
+      <text x="432" y="1373" font-size="11.5" fill="#45586a">전부 통과 → G2로 · 하나라도 exit 2 → 발견 성격대로 architect 재설계 / coder 재구현 되돌림</text>
+
+      <!-- G2 -->
+      <text x="432" y="1462" font-size="12.5" font-weight="800" fill="#6b3e00">💬 G2 게이트 — 사용자에게 질문</text>
+      <text x="432" y="1479" font-size="11.5" fill="#45586a">구현·테스트·감수 결과 승인? (권고 반영 선택) · 수정이면 ↺ coder 재구현 / 재감사</text>
+
+      <!-- 검증 보고 -->
+      <text x="432" y="1567" font-size="13" font-weight="800" fill="#173a52">⑨ 검증 보고</text>
+      <text x="432" y="1585" font-size="11.5" fill="#45586a">실행한 검증만 보고 — pytest · makemigrations --check · migrate --plan · manage.py check · mypy</text>
+    </g>
+  </svg>
+
+  <div class="note">
+    판단(◇)에서 <b>승인/통과</b>는 아래로, <b>수정/exit2</b>는 위 단계로 되돌아간다(주황 점선 = 되돌림 순환).
+    같은 지식 스킬이 여러 역할에서 재사용된다 — <span class="sk d">discipline-*</span>·<span class="sk i">implementation-*</span>는 감수자 전용이 아니라 작성자(tester·coder)도 로드한다.
+    골격은 Claude·Codex 동일 — 호출만 <code>Agent</code> ↔ <code>spawn_agent→wait_agent</code>(<code>multi_agent=true</code>).
+  </div>
+</div>
+</body>
+</html>
