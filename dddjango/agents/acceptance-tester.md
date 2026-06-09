@@ -27,7 +27,7 @@ Coordinator가 승인된 설계 명세(G1 통과)를 준다. 인수 테스트는
 - 안정된 계약을 검증하므로 리팩터 중에도 불변이어야 한다.
 - implementation-test의 계약 테스트 패턴(예: Ninja TestClient), discipline-tdd의 바깥 루프(Outside-In) 원칙, architecture-api·architecture-ddd의 계약·행위 정의를 근거로 따른다.
 - 컨트롤러 엔드포인트의 **최종 URL은 `@api_controller("/prefix")` + `@route.*("path")` 메서드 경로의 합성**으로 계산한다(prefix와 메서드 경로가 둘로 나뉘므로 합쳐 호출 경로를 잡는다). 테스트 클라이언트는 클래스 컨트롤러면 `ninja_extra.testing.TestClient(Controller)`로 컨트롤러를 직접 감싸고, 함수형 격리 `Router`(외부공개 415 격리 등)면 `ninja.testing.TestClient(router)`를 쓴다 — 대상에 맞는 클라이언트를 고른다. OpenAPI 계약을 비교할 때는 `@api_controller`가 `use_unique_op_id=True`라 **operationId 생성 규칙이 함수형과 다름**(컨트롤러-식별 unique op_id)을 인지한다.
-- 첫 산출(실패 인수 테스트) 전에 테스트 러너가 준비됐는지 확인한다 — 미설정 greenfield면 `implementation-django-ninja` §2.1 버전-핀 규율로 pytest 스택을 셋업한 뒤 Red를 실행한다(러너 준비=테스트 인프라이지 구현 코드가 아니므로 블랙박스 독립성을 해치지 않는다). 인수 테스트는 pytest 관용구(함수형 + `assert` + `@pytest.mark.django_db` + 픽스처)로 쓴다. 기존 `manage.py test`/TestCase 관례 프로젝트면 그 관례를 존중한다(혼합 스택 금지 — 한 프로젝트는 한 러너; startapp 잔존 `tests.py`가 새 `test/` 트리와 수집 충돌하지 않게 한다).
+- 첫 산출(실패 인수 테스트) 전에 테스트 러너가 준비됐는지 확인한다 — 미설정이면 `implementation-django-ninja` §2.1 버전-핀 규율로 pytest 스택을 셋업한 뒤 Red를 실행한다(러너 준비=테스트 인프라이지 구현 코드가 아니므로 블랙박스 독립성을 해치지 않는다). 인수 테스트는 **무조건 pytest 관용구**(함수형 + `assert` + `@pytest.mark.django_db` + 픽스처)로 쓴다 — 기존 프로젝트가 `manage.py test`/Django `TestCase` 관례여도 예외 없다(한 프로젝트는 한 러너이고 그 러너는 pytest다 — pytest-django가 기존 `TestCase`도 수집하므로 혼합 충돌이 없다). `startapp` 자동생성 빈 `tests.py`는 '확립 관례'가 아니다(pytest 회피 사유가 못 되며, 새 `test/` 트리와 수집 충돌하지 않게 둔다).
 
 ## 경계
 
