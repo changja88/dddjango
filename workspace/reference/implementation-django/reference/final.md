@@ -1027,6 +1027,12 @@ class Migration(migrations.Migration):
 - 검증: `python manage.py makemigrations --check`로 드리프트가 0인지(미생성
   마이그레이션 없음) 확인하고, `python manage.py sqlmigrate <app> 0002`로 0002가 **DDL을
   발행하지 않는지**(state-only) 확인한다 — DDL이 찍히면 db_table 보존이 빠진 것이다.
+- **이주 완료 = 옛 루트 `<app>/` 통째 삭제**(`git rm -r <app>/`): 새 경로가 `0001`을
+  보존하므로 옛 루트 앱 패키지·`migrations/`를 남기지 않는다. `MIGRATION_MODULES`로 옛 루트
+  `<app>.migrations`를 가리키는 잔존 핀도 두지 않는다(새 경로 단일 소유) — 옛 루트가 남으면
+  앱이 두 곳에 존재하는 미완 이주(`discipline-houserules` §0 배타성)다. *왜* — step 1의
+  "옮긴다(move)"가 옛 루트 소멸을 함의하나, 명시 안 하면 코더가 move를 copy로 떨어뜨려(새 트리만
+  만들고 옛 루트 git 방치) 앱이 두 곳에 남는다.
 
 ---
 
