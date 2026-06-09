@@ -49,9 +49,9 @@
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
 
-  .conn{width:2px;height:22px;background:var(--bd2);position:relative}
-  .conn::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
-    border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--bd2)}
+  .conn{width:3px;height:22px;background:#ffffff;position:relative;border-radius:2px;margin:0 auto}
+  .conn::after{content:"";position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+    border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #ffffff}
   .conn.sm{height:16px}
 
   .gate{width:auto;min-width:200px;text-align:center;padding:12px 18px;border-radius:30px;
@@ -103,7 +103,7 @@
   .pstep.dashed{border-style:dashed;background:var(--card2)}
   .pstep .t{font-size:12px;font-weight:700;color:var(--tx)}
   .pstep .s{font-size:10.5px;color:var(--tx3);margin-top:3px;line-height:1.4}
-  .parrow{display:flex;align-items:center;color:var(--bd2);font-size:16px}
+  .parrow{display:flex;align-items:center;color:#ffffff;font-size:16px;font-weight:800}
 
   /* ===== 전체 크기 확대 ===== */
   .wrap{max-width:1480px}
@@ -124,8 +124,10 @@
   .grouptitle{font-size:17px;gap:10px}
   .node{padding:22px 26px;border-radius:18px}
   .group{padding:24px;border-radius:22px}
-  .conn{height:36px}
-  .conn.sm{height:26px}
+  .conn{height:40px;width:4px}
+  .conn::after{border-left-width:8px;border-right-width:8px;border-top-width:12px}
+  .conn.sm{height:28px}
+  .parrow{font-weight:800}
   .dot{width:13px;height:13px}
   .cap{font-size:19px;padding:16px 44px}
   .io{padding:21px 26px}
@@ -303,12 +305,12 @@
           <div class="conn sm"></div>
           <div class="node">
             <div class="role"><span class="dot" style="background:var(--tx2)"></span>백스톱 16종</div>
-            <div class="desc">결정적 스크립트를 셸로 각 1회 · git touched-gate(이번 변경분만)</div>
+            <div class="desc"><b style="color:var(--tx)">coordinator</b>가 결정적 스크립트를 셸로 각 1회 실행 · git touched-gate(이번 변경분만)</div>
             <div class="chips"><span class="chip n">스킬 아님 · 고정밀 저-recall 안전망</span></div>
           </div>
           <div class="conn sm"></div>
           <div class="gate" style="min-width:0;width:auto">16종 전부 통과?</div>
-          <div class="backs"><span class="back o">↩ exit2 → 발견 성격대로 설계 / coder 반송</span></div>
+          <div class="backs"><span class="back o">↩ exit2 → <b style="color:var(--tx)">coordinator</b>가 발견 합쳐 성격 판단 → 설계(architect) <i>또는</i> coder 반송</span></div>
         </div>
       </div>
 
@@ -349,7 +351,7 @@
   <div class="note">
     <b>읽는 법</b> — 위에서 아래로 정상 진행. 점선 배지는 되돌림 3종류:
     <span style="color:var(--red);font-weight:700">사용자 게이트 거부</span>(G0/G1/G2 → 해당 Phase 재실행) ·
-    <span style="color:var(--amber);font-weight:700">백스톱 exit2</span>(결정적 차단 → 설계/coder 반송) ·
+    <span style="color:var(--amber);font-weight:700">백스톱 exit2</span>(결정적 차단 → <b>coordinator</b>가 발견 성격대로 설계/coder 반송) ·
     <span style="color:var(--teal);font-weight:700">서브에이전트 보고</span>(인수 Red·잘못된 명세 → 설계/사용자).<br>
     <b>조건부·선택 단계</b>(점선 노드) — <span class="k">＊설계 경량 점검</span>은 명세 복잡 시 coordinator 재량(생략 가능), <span class="k">＊슬라이스별 감사</span>는 <b>슬라이스가 3개 이상일 때만</b> 돈다(1~2개면 끝의 홀리스틱 감사 1회로 충분).<br>
     <b>홀리스틱 감사와 백스톱은 끝에 1회만</b> 돈다(슬라이스마다 아님 — <span class="k">✅ 전체 1회</span> 박스). 백스톱은 결정적 스크립트라 코드가 완성된 상태에서 봐야 거짓양성이 없다.<br>
