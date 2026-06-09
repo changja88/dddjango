@@ -67,7 +67,7 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **DR-09** ❌ 서브에이전트(특히 coder) 모델 다운그레이드 = 기계시간 +14%·비용 **+47%**(1.98M→2.91M·smoke6 vs 7) 역효과(약한 coder 반송 폭증). 원복·금지. → §3 #1.
 - **DR-10** 5 실행시간 레버(명세 다이어트·architect 자기리뷰·db엔진 분기지식·호출 병합·오케스트레이션 경량화). 커밋 `fac248b`. 교훈: 커밋 타임스탬프로 실행시점 코드 추론 금지 → §3 #4.
 - **DR-11** ⏸ 공식문서 조사 = 새 저위험 레버 없음. wall은 output 토큰 지배(입력절감 지연 1~5%만), 우리 토큰 88%(cache_read)는 비용 문제지 wall 문제 아님. compaction 세밀설정 업스트림 미노출([1M] 창이라 ~95% 트리거 미달, `#26215`), `/compact` 자동화 불가·실익 제한.
-- **DR-12** Codex 이식 PoC 성공(**메커니즘만** 검증): 현행 Codex CLI 0.134.0은 `spawn_agent`·Skills·Plugins GA라 과거 폐기(`911cd22`) 원인 해소(superpowers 패턴 차용). `codex-dddjango/`(스킬 19, **Claude `dddjango/` 무변경**). 설치=`codex plugin marketplace add`+`plugin add`(⚠️캐시 함정·수정 때마다 재설치+세션 재시작). PoC=3가정 통과·end-to-end 16 OK. 상세=`workspace/design/2026-05-28-codex-port-research.md`·[[dddjango-codex-port]]. 미해소(품질단계로): 평면 catalog(§1 vs §0)·coder 가드레일 Codex 약발.
+- **DR-12** Codex 이식 PoC 성공(**메커니즘만** 검증): 현행 Codex CLI 0.134.0은 `spawn_agent`·Skills·Plugins GA라 과거 폐기(`911cd22`) 원인 해소(superpowers 패턴 차용). `codex-dddjango/`(스킬 19, **Claude `dddjango/` 무변경**). 설치=`codex plugin marketplace add`+`plugin add`(⚠️캐시 함정·수정 때마다 재설치+세션 재시작). PoC=3가정 통과·end-to-end 16 OK. 상세=git 히스토리·[[dddjango-codex-port]]. 미해소(품질단계로): 평면 catalog(§1 vs §0)·coder 가드레일 Codex 약발.
 
 > **시대 1 닫힘**: 최적화 사이클 종료(§0). 베스트 구성 = 커밋 HEAD(`15ff62d`) + thinking OFF(smoke8 합격, §5).
 
@@ -293,10 +293,10 @@ machine = 사람 대기 제외 기계시간(§4 정의). cost = 코디 과금 �
 ## §6 Pointers
 
 - **핵심 커밋**(feat/dddjango-build): `5925ce1`(파일트리 표준) · `6d7720d`/`ad86443`/`1f1ea7e`(표준 강화) · `f9ea088`(coder 가드레일) · `fac248b`(5 레버) · `15ff62d`(BC 수정, HEAD).
-- **설계·로그 문서**: `workspace/design/` (파이프라인 설계·커맨드 설계·필트리 초안·스모크 피드백 로그들).
+- **설계·로그 문서**: `workspace/design/`은 **진행중 설계만 보존**(`acl-exception-exhaustiveness`·`fix-regression-rootcause-analysis`). 완료분(빌드·codex포트·catalog·네이밍·폴더·R/C/Q 등)은 git 히스토리·메모리 슬러그(§2 각 DR이 가리킴).
 - **도구·리포트**: `workspace/tools/{session_telemetry.py, smoke_report.py, smoke_timeline.html}`.
 - **AGENTS.md**: Claude 전용 파이프라인 구조 설명.
-- **Codex 이식**(§2 DR-12): 조사 `workspace/design/2026-05-28-codex-port-research.md` · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님, =codex-2 런).
+- **Codex 이식**(§2 DR-12): 조사=git 히스토리(`2026-05-28-codex-port-research.md`) · 빌드 `codex-dddjango/`(스킬 19) · 로컬 마켓플레이스 `.agents/plugins/marketplace.json` · 테스트 픽스처 `/Users/hyun/Desktop/dddjango-smoke`(git 아님, =codex-2 런).
 - **평가 시스템 + 결정성-조사 정리**(§2 DR-25): **현행** = `eval/rubric/{RUBRIC,EVAL-METHOD,rubric-metrix}.md`(기준 정본 — RUBRIC=항목·EVAL-METHOD=방법·**rubric-metrix=채점지 템플릿**[33항목 표+작성법, 복사해 채움]) + `eval/results/`(결과·채점 기록, **현행 명명 `<날짜시간>-smoke{N}-{claude|codex}.md`**, 클로드·코덱스 개별) + `eval/README.md`(관리 규약). 채점지 칸=`Result·결정·의미·종합`(§4). DR-13/14/15 결정성-조사 산출물(`comparison*.html`·`RESULTS.md`·`RUBRIC-conformance.md`·`gate-questions*`·`*-N-analysis.md`·`runs/`·`baseline/`·`reset.sh`·`PROTOCOL.md`)은 정리됨 → **git 히스토리**(결론·커밋앵커는 §2 시대2에 압축).
 - **표준 빈칸 ③·④ 메움**(§2 DR-16): 14파일 편집 — `architecture-ddd §3.2` 확장(3벌)·`design-review-ddd`/`discipline-reviewer` 2층 탐지(각 2벌)·`design-architect` ③배치+④API스택(2벌)·`implementation-django-ninja` final.md 설치규칙(3벌)+SKILL(2벌). 정적 검증·`plugin validate` 통과, 동적 ⑥ 이연.
 - **동적 검증 Tier 2·3 + ④ 보강**(§2 DR-17): Tier 2 = Claude `design-architect` spec(③ migrate + §1.1/§1.2 명시·④ inconclusive). Tier 3 = Codex 전체 스모크 ×3(t3 평면·plain / t3b 이주·plain / t3c POST-boost·Ninja+핀; 산출물 구 `eval/runs/{codex-5,6,7}`은 DR-25 정리·git 히스토리). 보강 = `design-architect` 2미러(headless의 "설치 불확실→plain" 직격 → t3c Ninja 수렴). fixture `~/Desktop/dddjango-codex-{t3,t3b,t3c}`(git 아님)·인터랙티브 미실행 fixture `~/Desktop/dddjango-codex-interactive`. 각 N=1.
