@@ -9,7 +9,7 @@
 - **✅ 후속 동시성 검증 (2026-06-10) — FC-1 비결함 확정**: 사용자 "간헐도 용납 불가"로 봉인 착수 → 봉인 전 재현 사냥. 순차 240+(해시시드 0~19 · `.pyc` 정리 · fixture 통합 12 · Literal `status` 충돌 MRE 75) + **동시 1200+**(진짜 멀티스레드 WSGI[`wsgiref`+`ThreadingMixIn`] · 워밍업 없는 첫요청 다발 · **`Status` vs 튜플 대조 무차별**=둘 다 100% 201) **전부 음성 · 500 = 0회**. 동시성은 "첫 몇 런만 실패"의 가장 그럴듯한 메커니즘 후보였으나 그것도 닫힘. → FC-1 **1(간헐 비결정) → 사실상 비결함(유령)**; 초반 A/B는 stale `.pyc` 환경 아티팩트로 판단. **`Status` 표준 무변경 확정** — 봉인 강행 시 공식 비-deprecated형을 추측 교체(회귀 위험)·대안 전무(튜플=deprecated · 단일 schema=200+NJ-4 파괴). 415 carve-out(C 정책·DR-48)도 사용자 재확인=무변경.
 - 따라서 **관측 2b: 1 → 0**, **reference 결함: 8 → 7**(2a 2 + 2b 5 = ddd-factory·check_password·safe_sql·test-router·ninja-api). "관측 문제 대부분 비결정"이 *FC-1 자신으로* 재확증됨.
 
-**적용된 정정 (2026-06-10·배포→정본→codex 3미러 전파·`corpus_mirror_sync` 11/11 in-sync)**: ddd-factory·check_password·safe_sql·ninja-api(`§6.2 NinjaAPI()`→`NinjaExtraAPI()`) + FC-1 상수. **test-router 보류**(DR-48 §20 얽힘). **🔴 미커밋.**
+**적용된 정정 (2026-06-10·배포→정본→codex 3미러 전파·`corpus_mirror_sync` 11/11 in-sync)**: ddd-factory·check_password·safe_sql·ninja-api(`§6.2 NinjaAPI()`→`NinjaExtraAPI()`) + FC-1 상수. **test-router 보류**(DR-48 §20 얽힘). **커밋 `187439c`(2b 정정 4건+FC-1 상수·CLASSIFICATION 생성)·`1c8a859`(동시성 검증→비결함 확정)·🔴 미푸시.**
 
 ## 메타
 - **방법**: ultracode Workflow — Inventory → Classify(결정트리) → Latent sweep(미발화 코퍼스) → Synthesize, 각 분류에 **적대검증(adversarial verify)** stage. 관측 문제는 라이브 채점지에서, 잠재 결함은 코드 미발화 영역 스윕에서 수집.
