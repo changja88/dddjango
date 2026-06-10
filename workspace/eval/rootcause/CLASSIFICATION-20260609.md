@@ -11,6 +11,10 @@
 
 **적용된 정정 (2026-06-10·배포→정본→codex 3미러 전파·`corpus_mirror_sync` 11/11 in-sync)**: ddd-factory·check_password·safe_sql·ninja-api(`§6.2 NinjaAPI()`→`NinjaExtraAPI()`) + FC-1 상수. **test-router 보류**(DR-48 §20 얽힘). **커밋 `187439c`(2b 정정 4건+FC-1 상수·CLASSIFICATION 생성)·`1c8a859`(동시성 검증→비결함 확정)·🔴 미푸시.**
 
+**2a #7 저술 (2026-06-10·배포→정본→codex 3미러·`corpus_mirror_sync` 11/11 in-sync)**: `implementation-django-web` §11 「서버렌더 에러 처리」 신규 저술 — 예외 *출처* 1차 분류 + 2층(시스템→`handler500`/`process_exception` 503·사용자→view-local 폼 재렌더)·HTMX fragment 분기·`_is_retryable_db_error` ninja §6.2 import 공유·`handler500` 빈 Context/request-only 함정. `discipline-reviewer` 서버렌더 의미 렌즈(탈중앙·과잉매핑 important)·`design-architect` 트리거 동반. 백스톱은 **라이브 N≥2 후 연기**(도메인/시스템 예외 AST 구분 원리적 불가·적대 2렌즈 NO-GO — 지금은 reviewer 의미 렌즈 + 기존 `check-error-centralization`이 커버). 적대 3렌즈(설계)+1렌즈(플랜) 검증. **커밋 `764fb64`·🔴 미푸시·라이브 미검증.** → 미해소 2a 잔여: #8 test-error-contract(아래 비결함 재판정)·#5 test-router(보류).
+
+**2a #8 비결함 재판정 (2026-06-10·정정만·표준 무변경)**: `test-error-contract`(에러변환 계약테스트 침묵)는 **책임 경계 오인에 따른 거짓양성**으로 확정. ultracode 잠재 스윕이 `implementation-test §19`에 "에러 경로 테스트 예시 없음"이라는 *표면*만 보고 silent-gap으로 잡았으나 — "*무엇을* 테스트하느냐"(에러 변환 계약)는 §19(테스트 *기법*)의 책임이 아니라 **설계 명세가 정하고 `acceptance-tester`가 인수 테스트로 옮긴다**: `design-architect`가 외부 관찰 가능 행위 목록에 "재고 부족 시 409"를 명시(`agents/design-architect.md:38`)하고 transient 인프라 예외→retryable·미매핑 500 누수 금지까지 박으며(`:35`), `acceptance-tester`가 그 계약을 "재고 부족→409" Red 인수 테스트로 옮긴다(`agents/acceptance-tester.md:16·25`). #8 세 항목 모두 기존 사슬이 커버 — 도메인→비2xx(명세+인수)·인프라→503 누수금지(명세+EP-3 매트릭스+백스톱⑭⑮)·catch-all→problem+json[NJ-7](명세+백스톱⑯+reviewer). `implementation-test` 신규 저술 **폐기**(진단이 *기법↔항목*·*오너* 두 겹으로 빗나감). 따라서 **2a: 2 → 1**, **reference 결함: 7 → 6**(2a 1=#7 / 2b 5). → 미해소 2a 잔여 = **없음**(#7 저술 완료·라이브 대기 / #8 비결함 / #5는 2b 보류). 책임 사슬 추적(implementation-test→reviewer→discipline-tdd→명세/acceptance-tester)으로 도달.
+
 ## 메타
 - **방법**: ultracode Workflow — Inventory → Classify(결정트리) → Latent sweep(미발화 코퍼스) → Synthesize, 각 분류에 **적대검증(adversarial verify)** stage. 관측 문제는 라이브 채점지에서, 잠재 결함은 코드 미발화 영역 스윕에서 수집.
 - **규모**: 분류 항목 **37** · 대상 스킬 **11** · 에이전트 **99**
@@ -51,8 +55,8 @@
 | 4 | safe_sql | implementation-python:2559 | 2b·잠재·**실행증명** | `-> str`인데 스킬 자기-강제(§23.1 mypy strict)서 깨짐 | `-> tuple[str, list]` | ✅ 완료 (`187439c`) |
 | 5 | test-router | implementation-test:2507 §20.1 | 2b·잠재·경미 | router import가 flat `orders.api` → verbatim 복사 시 import 불가 | 4-layer `presentation_layer.api…` 경로 | 🔲 보류 (DR-48 §20 얽힘) |
 | 6 | ninja-api | django-ninja:500 | 2b·잠재·경미·**조정자 보강** | `api = NinjaAPI()` ↔ 표준 강제 `NinjaExtraAPI()`(DR-48) 모순 | `NinjaExtraAPI()`로 정정 | ✅ 완료 (`187439c`) |
-| 7 | django-web 에러페이지 | implementation-django-web (신규) | 2a·잠재·**진짜 고아** | 서버렌더 service→예외→500.html/handler500/재렌더 침묵(ninja JSON-only라 위임 불가) | 신규 저술 | 🔲 미착수 |
-| 8 | test-error-contract | implementation-test (신규) | 2a·잠재 | 에러변환 *계약테스트 기법* 침묵(값은 houserules §2:144가 정의·기법 오너 부재) | 신규 저술 | 🔲 미착수 |
+| 7 | django-web 에러페이지 | implementation-django-web §11 (신규) | 2a·잠재·**진짜 고아** | 서버렌더 service→예외→500.html/handler500/재렌더 침묵(ninja JSON-only라 위임 불가) | 신규 저술(§11) | ✅ 저술 완료·라이브 대기 (`764fb64`) |
+| 8 | test-error-contract | (오인) implementation-test → 명세+acceptance-tester | 2a·잠재 | "에러변환 계약테스트 기법 침묵" 주장 → **책임 경계 오인 거짓양성**: 무엇을 테스트하나=명세(design-architect:35·38)가 정하고 acceptance-tester(:25)가 인수 테스트로 옮김; §19는 *기법*만 소유 | 신규 저술 **폐기**·표준 무변경 | ❌ 비결함 재판정 (2026-06-10) |
 
 ## 조정자 수동 ninja 보강 (워크플로 latent 누락분)
 워크플로 `ninja` 잠재 에이전트가 API 500으로 죽어 latent 스윕에서 ninja가 비었다(5스킬만 완료). 조정자가 `implementation-django-ninja` 정본을 직접 재스윕:
