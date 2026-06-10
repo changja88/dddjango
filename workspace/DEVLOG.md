@@ -221,6 +221,15 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
 - **부수 발견(기록만·처방 없음)**: ① **산출물 커밋 단계 부재** — coordinator :22 "코드와 함께 커밋해" *선언*은 있으나 실행 *단계*가 없음·**4픽스처 전수 baseline-only 커밋**(finallive 2 + lastlive 2 = 회귀 아닌 일관 동작) → 처방은 별도 결정 대기. ② 재고 판정 소유 underdetermined 재관측(Codex=catalog `deduct_stock` / Claude=order `StockDeductionService`·ddd §648-(2) 허용 분기·P4③). ③ 테스트 파일명 접두/접미 관례가 런타임 간 갈림(비처방 관찰·pyproject `python_files`로 수집은 결정적).
 - 🔴 미커밋·N=1·우열 금지(게이트 조건·설계 분기·완성도 축 모두 상이).
 
+### DR-58 ✅ relive G1 31분 포렌식 — **초기 진단(effort) 적대 기각·진범=Edit 부재 증폭기** → design-architect Edit 허용 (1.12.0·🔴미커밋·라이브 미검증)
+2026-06-11. 발단: relive 라이브 런(`~/Desktop/dddjango-relive-claude`·6/10 23:36 구동) G1 ~34분 체감 — 사용자 "문제 있는 듯, 전체로그 원인→적대→계획→적대→구현→완성도 확인으로 진행 + **처방이 성능·품질 저하 없는지 확인**(비저하 하드 게이트)".
+- **측정(transcript 정밀 분해)**: G0응답→G1배너 기계구간 finallive **17.3m** / lastlive **18.6m** / relive **31.0m**. 둔화는 **architect 2호출에 국한**(초안 4.3→11.8m·반영 5.2→11.8m — 같은 세션 리뷰3·tester·coder는 전부 정상/더 빠름). **처리율 불변**(60 tok/s·Write 106~145 c/s — 심야 relive가 최고): 모델이 느려진 게 아니라 **출력량 2.1~2.6배**. lastlive "31분" 체감의 본체=L1 ② Y-override 호출(5.4m·설계상)+휴먼 대기 — 결함 아님.
+- **반전(적대 2렌즈+claude-code-guide가 초기 진단 기각)**: 조정자 초기 가설 "effort=xhigh 교락"은 **사실관계 오류** — `/effort max`는 "this session only"(stdout 실측·공식 문서)·`effortLevel: xhigh`는 **5/5 백업부터 전역=3런 공통**·finallive(최속)가 직접 반례·architect thinking 블록 0. 기각 가설 일괄: DR-55/56 텍스트(reflect 5.2↔5.1m 동일이 반박)·측정 비대칭(±0.7m 각주)·스킬 비대 누적·심야 API 지연(동세션 통제군 정상)·CC 버전/모델(3런 동일 2.1.170·opus-4-8).
+- **진범(relive +844s 분해)**: ① **~430s(51%) 전량 재작성 2회** — 자기일관성 스캔이 실결함 적발(환영 §5.6 참조·이중 `InsufficientStock` 번역 모호) → **Edit 시도 → `No such tool available`**(frontmatter `tools: Read, Grep, Glob, Write`) → 2~3줄 고치려고 26.8/34.2KB 전량 재Write. ② ~330s(39%) 코디 프롬프트 변이(relive에만 "스킬 로드" 지시·Y후보 3 vs 1)發 정독 확대. ③ ~80s(10%) 스펙 비대. 상류=런간 비결정 × **Edit 부재 증폭기**.
+- **처방 C-1(채택·적대 2렌즈 양 GO)**: `design-architect.md:4`에 **Edit 추가**. 품질 렌즈 격상 발견 — 이건 시간 최적화가 아니라 **본문↔도구 모순 해소**(:23 "해당 절만 제자리 갱신·전체 재작성 금지"·:52·coordinator :20이 이미 제자리-수정 명령) + **Write-only가 발견 결함의 수정 포기 유도 실측**(14:46:27 "two cosmetic pointer fixes"로 강등) + 환영·오참조 ~10건의 *생산* 모달리티가 전량 Write임을 transcript 확정(Edit는 미접촉 절 바이트 불변). 집행 렌즈: 미러 면제(`corpus_mirror_sync.py:17` agents/*.md 스코프 밖·Codex 대응물 frontmatter tools 메커니즘 없음·body 도구명 일반화)·백스톱 16종 frontmatter 비참조·validate PASS. body 지침 추가 비권고(DR-22 문구강화 계보 — 힘은 도구 가용성). **비저하 게이트**: 검사·스캔·리뷰 절단 0·새 호출/읽기 0.
+- **보류(정직)**: C-2 코디 프롬프트 변이 축소(기여 비결정 추정·L2 인접)·C-3 tester Edit(미관측 3.0~3.7m 정상·DR-35 "반복 관측만"). **기대 효과 정직**: G1 중앙값(15~20m)은 분산 그대로 — C-1은 **상한**(재작성 발화 시 31→~24m)을 깎는 처방.
+- 검증: validate ✔·미러 11/11·백스톱 무변경·캐시 신선화(relive 종료 확인 후 byte-id·1.12.0). 측정 방법론 노트(out_tok 스트리밍 usage 회계 함정 등)는 정본 §4. 정본=`workspace/flow/g1-latency-forensics.md`. 🔴 미커밋·라이브 미검증(다음 런 백로그: architect Edit 실사용·명세 내부 참조 정합 grep·L60형 표적 검증 오판 관측)·N=1.
+
 ---
 
 ## §3 DO-NOT-RETRY (검증된 실패·헛다리 — 미래 에이전트는 반복 금지)

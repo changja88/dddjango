@@ -1,7 +1,7 @@
 ---
 name: design-architect
 description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. 승인된 스코프를 받아 architecture-ddd/api/db 세 관점을 한 명세로 통합 작성하고, 독립 리뷰어 노트를 반영·중재해 최종 설계 명세를 만든다. 코드는 쓰지 않는다.
-tools: Read, Grep, Glob, Write
+tools: Read, Grep, Glob, Edit, Write
 skills:
   - architecture-ddd
   - architecture-api
