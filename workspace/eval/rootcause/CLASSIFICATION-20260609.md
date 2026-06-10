@@ -5,7 +5,8 @@
 ## ⚠️ 사후 정정 (2026-06-10) — FC-1 재분류 + 정정 구현
 아래 분류는 *분류 시점* 기준이다. 직후 2b 구현 단계의 실측이 **FC-1을 뒤집었다**:
 - **FC-1: 2b → 1 (간헐 비결정).** 구현 전 검증에서 초반 A/B는 `Status(201,…)`→500 / 튜플→통과로 발화했으나, **이후 어떤 통제 구성에서도 재현 불가**(fresh venv · PYTHONHASHSEED 0~7 · pydantic 2.11~2.13 · pristine fixture). "첫 몇 런만 실패" 패턴 = 결정적 표준결함이 아니라 **ninja-extra의 간헐 미스바인딩**. 표준 `Status(201,…)`는 django-ninja **공식 권장형**이고 대부분 작동한다.
-- **③ 튜플 폐기**: deprecated 형을 표준에 박는 손해라 사용자 결정으로 기각. 적용된 건 **매직넘버 `201` → `status.HTTP_201_CREATED`(ninja_extra plain int) 상수화**뿐(클린코드·동작 동일·`HTTPStatus.CREATED`는 IntEnum이라 역으로 500 유발 확인→회피). FC-1의 500 비결정은 **미해결·수용**(상류 ninja-extra 이슈).
+- **③ 튜플 폐기**: deprecated 형을 표준에 박는 손해라 사용자 결정으로 기각. 적용된 건 **매직넘버 `201` → `status.HTTP_201_CREATED`(ninja_extra plain int) 상수화**뿐(클린코드·동작 동일·`HTTPStatus.CREATED`는 IntEnum이라 역으로 500 유발 확인→회피). FC-1의 500 비결정은 **후속 동시성 검증서 비결함 확정**(아래).
+- **✅ 후속 동시성 검증 (2026-06-10) — FC-1 비결함 확정**: 사용자 "간헐도 용납 불가"로 봉인 착수 → 봉인 전 재현 사냥. 순차 240+(해시시드 0~19 · `.pyc` 정리 · fixture 통합 12 · Literal `status` 충돌 MRE 75) + **동시 1200+**(진짜 멀티스레드 WSGI[`wsgiref`+`ThreadingMixIn`] · 워밍업 없는 첫요청 다발 · **`Status` vs 튜플 대조 무차별**=둘 다 100% 201) **전부 음성 · 500 = 0회**. 동시성은 "첫 몇 런만 실패"의 가장 그럴듯한 메커니즘 후보였으나 그것도 닫힘. → FC-1 **1(간헐 비결정) → 사실상 비결함(유령)**; 초반 A/B는 stale `.pyc` 환경 아티팩트로 판단. **`Status` 표준 무변경 확정** — 봉인 강행 시 공식 비-deprecated형을 추측 교체(회귀 위험)·대안 전무(튜플=deprecated · 단일 schema=200+NJ-4 파괴). 415 carve-out(C 정책·DR-48)도 사용자 재확인=무변경.
 - 따라서 **관측 2b: 1 → 0**, **reference 결함: 8 → 7**(2a 2 + 2b 5 = ddd-factory·check_password·safe_sql·test-router·ninja-api). "관측 문제 대부분 비결정"이 *FC-1 자신으로* 재확증됨.
 
 **적용된 정정 (2026-06-10·배포→정본→codex 3미러 전파·`corpus_mirror_sync` 11/11 in-sync)**: ddd-factory·check_password·safe_sql·ninja-api(`§6.2 NinjaAPI()`→`NinjaExtraAPI()`) + FC-1 상수. **test-router 보류**(DR-48 §20 얽힘). **🔴 미커밋.**
