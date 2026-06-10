@@ -114,6 +114,16 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 - **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`. **러너 = `.venv/bin/pytest`(FC-1과 동일)**: mutation 주입 후 `pytest`로 스위트를 돌려 red를 확인한다(`manage.py test`는 함수형 pytest 테스트를 수집 못 해 mutation 주입에도 green→**FC-2 거짓 PASS** 위험이라 금지). **러너만 바뀌고 mutation 주입→red 기대 로직은 불변**(주입 사이트·red율 100% 판정 동일).
 - **FC-3 도메인 정합**: 의미 grader가 골든 결과+코드 정독으로 명백한 도메인 오류(음수 재고·차감 역전·인과 역전) 판정.
 
+### 1.5 채점 결정성 가드 — 부정 단정·수집 오라클·런-정지 (2026-06-10 신설 · lastlive-claude 오채점 박제)
+
+lastlive-claude 사건 교훈: 채점이 "테스트 0·테스트도구 0·pytest 미설치"로 **보류(미완성)** 판정했으나 실제로는 테스트 33개·Tier-1 4종이 채점 1시간 전부터 존재했다(런-정지 상태). 부재 단정을 뒷받침하는 측정 명령이 transcript에 없었다 — **"자기보고 불신"은 채점자 자신의 부정 단정에도 적용해야 한다.** 유력 혼동 = 직전 픽스처의 `test_*.py` 접두 관례를 다음 픽스처(`*_test.py` 접미)에 가정 + `requirements.txt`(불변)만 보고 `requirements-dev.txt` 누락. 세 가드는 결정 레인의 측정 무결성 절(freeze 밖·RUBRIC 라벨 무변).
+
+1. **수집 오라클 의무**: 테스트 존재·개수 판정은 **`pytest --collect-only -q` 출력 인용**으로만 한다(픽스처 자체 설정 `python_files`가 적용되는 프로젝트 루트 — 채점자 파일명 관례 가정 금지). pytest 부재 픽스처면 `find` **양 관례 병기**(`test_*.py`·`*_test.py`·`tests.py`) 출력 인용.
+2. **부정 단정 = 출력 인용 의무**: "0건·부재·미설치·미작성" 류 단정은 그것을 산출한 **명령+출력 첨부 없이는 기재 금지**(§1.2 "인용 없는 PASS 무효"의 대칭 — 인용 없는 *부재 단정*도 무효). 도구 부재 단정은 `pip list`(또는 site-packages 목록)와 **매니페스트 전수**(`requirements*.txt`·`pyproject.toml`) 둘 다 인용.
+3. **런-정지 확인**: 채점 착수 전 픽스처 최신 mtime(`.git`/`.venv`/캐시 제외)을 기록하고 채점 시작 시각과 대조해 헤더(§6.2)에 박제. 미래 mtime·채점 중 변화 감지 = 진행 중 런(움직이는 표적) → **채점 보류**.
+
+**소급 미적용**: 신설 이후 채점분만 구속(§1.1.T 패턴 정합). 당사자인 lastlive-claude 채점지는 in-place 사후정정 완료.
+
 ---
 
 ## 2. 집계 (사전식 lexicographic — 가중 평균 금지)
