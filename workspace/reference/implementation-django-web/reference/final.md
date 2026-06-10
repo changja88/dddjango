@@ -282,7 +282,84 @@ Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/col
 | static CSS/JS 변경 | rendered HTML의 static reference, referenced path existence | changed asset이 rendered page에서 참조되지 않으면 unfinished |
 | form 변경 | GET, valid POST, invalid POST, redirect, form error assertion | CSRF/auth/permission path 미확인 시 residual risk |
 | HTMX 변경 | fragment response, method/auth/permission/CSRF, redirect/header behavior | API-like contract가 필요하면 `implementation-django-ninja`/`architecture-api`로 handoff |
+| service 예외 처리(§11) | 도메인 예외→폼 재렌더(200), 미식별/영구→`handler500` 500.html, transient→503+`Retry-After`, HTMX→에러 fragment | 시스템 예외를 view가 자체 렌더하거나 사용자 예외를 500으로 보내면 §11 위반 |
 | security setting 변경 | `check --deploy` 또는 project-specific security check | 실행하지 않으면 미실행 사유 |
 | visible UI 변경 | browser check, screenshot, template/render test 중 가능한 증거 | browser 미실행을 실행한 것처럼 보고하지 않음 |
 
 완료 보고에는 실제 실행한 명령, 테스트 대상, 실패/미실행 항목을 분리해 적는다. Validator나 test가 해당 requirement를 직접 덮는지 확인하지 않고 넓은 완료를 주장하지 않는다.
+
+## 11. 서버렌더 에러 처리
+
+Service/usecase가 던진 예외는 **출처로 분류**해 처리 자리를 가른다 — service가 raise한 도메인/애플리케이션 예외는 view가 잡아 사용자 언어로 변환하고(view-local), 인프라·프레임워크·미식별 예외(`OperationalError`·`IntegrityError`·미식별 `Exception`)는 view가 잡지 않고 전파해 중앙이 처리한다. "사용자가 행동을 바꿔 풀 수 있나"는 1차 분류 기준이 아니라(결제 거절·권한·동시성 충돌에서 흔들린다) 도메인 예외를 잡은 *뒤* 폼 재렌더냐 거부 안내냐를 정하는 2차 신호다. JSON API의 problem+json 중앙 변환은 `implementation-django-ninja` §6.2가 소유하고, 이 절은 서버렌더 HTML 경로를 소유한다. **[DDoc] [dddjango-django]**
+
+기준:
+
+- **사용자 에러(도메인 예외)는 view-local 재렌더**: 비즈니스 규칙 위반(재고 부족·중복 등 service가 raise한 우리 타입)은 그 view에서 narrow `except <DomainError>`로 잡아 폼을 재렌더한다 — 입력 값을 보존하고 `messages.error`로 사유를 싣는다(status 200, POST 성공은 PRG redirect). `except Exception` 같은 광범위 catch는 금지다 — 인프라 예외가 사용자 메시지로 둔갑해 중앙 경로를 우회한다(`discipline-cleancode` 구체적 예외 처리).
+- **사용자 에러를 `handler500`로 보내지 않는다**: `django.views.defaults.server_error(request, template_name="500.html")`는 **빈 Context**로 렌더하므로(시그니처가 `request`만 받는다) 도메인 메시지·폼 입력·필드 오류를 실을 수 없다. 사용자 에러를 `raise`해 500으로 보내면 "재고가 부족합니다" 같은 사유가 사용자에게 영영 안 보인다.
+- **시스템 에러(미식별·영구장애)는 중앙 `handler500`**: view가 잡지 않고 전파하면 Django가 500으로 변환해 `handler500`(프로젝트 URLconf에 등록)이 `500.html`을 렌더한다. custom handler view는 **`request` 인자만** 받고 `HttpResponseServerError`를 반환한다 — `handler404`와 달리 `exception` 인자를 받지 않으므로 `def server_error(request, exception)`로 쓰면 호출 시 TypeError로 500 핸들러 자체가 깨진다. `500.html`은 프로젝트에 하나만 둔다(view마다 에러 페이지를 만들지 않는다).
+- **transient 인프라 예외는 중앙에서 retryable**: DB 락·deadlock·serialization 같은 *재시도로 해소되는* 경합은 `process_exception(request, exception)` 미들웨어가 retryable(503+`Retry-After`)로 매핑한다 — `handler500`은 500 고정이라 503·헤더를 못 실으므로 미들웨어가 유일한 중앙 자리다. **retryable 판정은 `implementation-django-ninja` §6.2의 `_is_retryable_db_error`를 import해 공유**한다(재구현하면 두 경계가 드리프트). 영구장애(disk I/O·`no such table`·malformed)는 `None`을 반환해 `handler500`로 전파한다 — `OperationalError` 클래스 전체를 분기 없이 통째 503으로 올리면 영구장애를 retryable로 오분류해 재시도 루프가 영원히 못 고치는 장애를 두드린다(ninja §6.2 필수 불변식과 대칭). 미들웨어는 503 응답을 *반환*만 하고 도메인 폼을 `render`하지 않는다(폼 재렌더는 view-local 몫).
+- **계산된 transient는 도메인 마커 타입으로**: ACL·앱이 낙관락·CAS 재시도를 스스로 소진 판정한 경우(드라이버 예외 부재)는 인프라 예외를 합성하지 말고 협력 포트가 선언한 도메인 transient-마커(`StockContention` 등 retryable 의미)로 raise하며, 미들웨어가 *타입*으로 retryable 매핑한다(`discipline-houserules` §2).
+- **houserules §2의 transient 위임은 JSON 경계를 가리킨다**: §2가 transient를 "presentation 단일 변환점이 retryable problem으로 매핑(`implementation-django-ninja` §6.2)"으로 위임하는 것은 *JSON 어댑터*의 problem+json 형식이다. retryable *판정*은 경계 무관이지만 *응답 표현*은 경계마다 다르다 — 서버렌더 transient는 이 절이 소유하고 HTML 503으로 낸다. ninja `problem()` 헬퍼를 HTML 경로에 import하지 않는다.
+- **HTMX 경로는 fragment로 응답한다**: HTMX 요청(`HX-Request` 헤더)에서 도메인 에러는 전체 `500.html`이 아니라 **에러 fragment를 swap**한다 — 전체 문서를 `hx-target` 자리에 주입하면 UI가 깨진다. view는 `request.headers.get("HX-Request")`로 분기해 에러 fragment(200/422)를 내고, 시스템 에러·503도 HTMX 맥락이면 명세된 에러 표면(`HX-Reswap` 또는 에러 fragment)으로 처리한다.
+- **반복되는 처리 형태는 표준화**: 같은 `try → except <DomainError> → render(form, messages.error)`가 view마다 반복되면 단일 패턴(FBV) 또는 CBV `form_invalid()` 오버라이드로 묶는다. 도메인 예외가 많으면 공통 도메인 베이스를 한 except로 잡고 메시지 매핑 테이블을 쓴다(예외 종류마다 except 난립 금지 — ninja §6.2 대칭).
+
+```python
+# myproject/errors.py — 시스템 에러 중앙 처리 (프로젝트 urls.py: handler500 = "myproject.errors.server_error")
+from django.shortcuts import render
+
+
+def server_error(request):                       # request만 — handler404와 달리 exception 인자 없음
+    return render(request, "500.html", status=500)   # 빈 Context — 도메인 데이터에 의존하지 않는다
+```
+
+```python
+# myproject/middleware.py — transient만 중앙에서 retryable 503 (영구장애·미식별은 handler500로 전파)
+from django.db import OperationalError
+from django.shortcuts import render
+
+from myproject.errors import _is_retryable_db_error   # ninja §6.2와 같은 판정 — 재구현 금지
+from application.order.domain_layer.order.exception import StockContention  # 도메인 transient 마커
+
+
+class TransientErrorMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        if isinstance(exception, OperationalError) and not _is_retryable_db_error(exception):
+            return None                          # 영구장애 → 전파해 handler500 (분기 필수)
+        if isinstance(exception, (OperationalError, StockContention)):
+            resp = render(request, "503.html", status=503)
+            resp["Retry-After"] = "1"
+            return resp                          # 503 반환만 — 폼 재렌더는 view-local 몫
+        return None                              # 도메인·미식별 → view-local 또는 handler500
+```
+
+```python
+# 뷰: 사용자 에러(도메인)는 view-local 재렌더, 시스템·transient는 안 잡고 전파
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_http_methods
+
+from application.order.application_layer.place_order.command.place_order_command import place_order
+from application.order.domain_layer.order.exception import InsufficientStock
+
+
+@require_http_methods(["GET", "POST"])
+def order_create(request):
+    form = OrderForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            order = place_order(**form.cleaned_data)     # service bare 호출 — 인프라 예외는 전파
+        except InsufficientStock as exc:                 # narrow — 도메인 예외만
+            messages.error(request, str(exc))
+            if request.headers.get("HX-Request"):
+                return render(request, "orders/_form.html", {"form": form}, status=422)
+            # full-page: 폼 인스턴스·입력 보존해 재렌더(200, 아래 공통 render)
+        else:
+            return redirect("order-detail", pk=order.id)  # PRG
+    return render(request, "orders/create.html", {"form": form})
+```
