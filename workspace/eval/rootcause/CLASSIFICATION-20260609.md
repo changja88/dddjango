@@ -43,16 +43,16 @@
 - **핵심 결론**: *관측* 한정 **87%(20/23)가 비결정** — 표준·미러 byte-identical로 올바른데 LLM(특히 Codex coder/architect)이 런간 흔들림. *잠재* 스윕은 **정반대**(7건 전부 스킬측). 즉 "비결정 우세"는 이미 하드닝된 관측 모집단의 **선택편향**이고, 미발화 코퍼스 결함은 별개로 존재.
 
 ## ② reference 결함 8건 (정정 대상 — 스캔용 인덱스)
-| # | 코드 | 위치(정본) | 분류 | 결함 | 정정 방향 |
-|---|---|---|---|---|---|
-| 1 | **FC-1** | django-ninja §2.2:160-171·§2.3:194-200 | 2b·**치명·관측** | `Status(201,Out)` × ninja-extra 다중응답 → 201→OrderOut 바인딩 실패 → **happy path 500** | 검증통과형 — ①성공 단일 schema / ③튜플 `return 201,X`+:625 노트 정정 (설계선택·② status키 비충돌은 기각) |
-| 2 | ddd-factory | architecture-ddd:847 | 2b·잠재·**실행증명** | factory가 Product(@dataclass)에 없는 `store_id` 전달+`description` 누락 → `TypeError` | 문서 내 단일 Product 정의와 정합 |
-| 3 | check_password | discipline-cleancode:458-460 | 2b·잠재·**실행증명** | "좋은 예"가 `-> bool`인데 no-user서 `None` 누수(나쁜 예보다 퇴행) | `bool(user and verify(...))` 또는 분기 |
-| 4 | safe_sql | implementation-python:2559 | 2b·잠재·**실행증명** | `-> str`인데 스킬 자기-강제(§23.1 mypy strict)서 깨짐 | `-> tuple[str, list]` |
-| 5 | test-router | implementation-test:2507 §20.1 | 2b·잠재·경미 | router import가 flat `orders.api` → verbatim 복사 시 import 불가 | 4-layer `presentation_layer.api…` 경로 |
-| 6 | ninja-api | django-ninja:500 | 2b·잠재·경미·**조정자 보강** | `api = NinjaAPI()` ↔ 표준 강제 `NinjaExtraAPI()`(DR-48) 모순 | `NinjaExtraAPI()`로 정정 |
-| 7 | django-web 에러페이지 | implementation-django-web (신규) | 2a·잠재·**진짜 고아** | 서버렌더 service→예외→500.html/handler500/재렌더 침묵(ninja JSON-only라 위임 불가) | 신규 저술 |
-| 8 | test-error-contract | implementation-test (신규) | 2a·잠재 | 에러변환 *계약테스트 기법* 침묵(값은 houserules §2:144가 정의·기법 오너 부재) | 신규 저술 |
+| # | 코드 | 위치(정본) | 분류 | 결함 | 정정 방향 | 상태 (2026-06-10) |
+|---|---|---|---|---|---|---|
+| 1 | **FC-1** | django-ninja §2.2:160-171·§2.3:194-200 | 2b·**치명·관측** | `Status(201,Out)` × ninja-extra 다중응답 → 201→OrderOut 바인딩 실패 → **happy path 500** | 검증통과형 — ①성공 단일 schema / ③튜플 `return 201,X`+:625 노트 정정 (설계선택·② status키 비충돌은 기각) | ✅ 완료 — 비결함 확정·상수화만 (`187439c`) |
+| 2 | ddd-factory | architecture-ddd:847 | 2b·잠재·**실행증명** | factory가 Product(@dataclass)에 없는 `store_id` 전달+`description` 누락 → `TypeError` | 문서 내 단일 Product 정의와 정합 | ✅ 완료 (`187439c`) |
+| 3 | check_password | discipline-cleancode:458-460 | 2b·잠재·**실행증명** | "좋은 예"가 `-> bool`인데 no-user서 `None` 누수(나쁜 예보다 퇴행) | `bool(user and verify(...))` 또는 분기 | ✅ 완료 (`187439c`) |
+| 4 | safe_sql | implementation-python:2559 | 2b·잠재·**실행증명** | `-> str`인데 스킬 자기-강제(§23.1 mypy strict)서 깨짐 | `-> tuple[str, list]` | ✅ 완료 (`187439c`) |
+| 5 | test-router | implementation-test:2507 §20.1 | 2b·잠재·경미 | router import가 flat `orders.api` → verbatim 복사 시 import 불가 | 4-layer `presentation_layer.api…` 경로 | 🔲 보류 (DR-48 §20 얽힘) |
+| 6 | ninja-api | django-ninja:500 | 2b·잠재·경미·**조정자 보강** | `api = NinjaAPI()` ↔ 표준 강제 `NinjaExtraAPI()`(DR-48) 모순 | `NinjaExtraAPI()`로 정정 | ✅ 완료 (`187439c`) |
+| 7 | django-web 에러페이지 | implementation-django-web (신규) | 2a·잠재·**진짜 고아** | 서버렌더 service→예외→500.html/handler500/재렌더 침묵(ninja JSON-only라 위임 불가) | 신규 저술 | 🔲 미착수 |
+| 8 | test-error-contract | implementation-test (신규) | 2a·잠재 | 에러변환 *계약테스트 기법* 침묵(값은 houserules §2:144가 정의·기법 오너 부재) | 신규 저술 | 🔲 미착수 |
 
 ## 조정자 수동 ninja 보강 (워크플로 latent 누락분)
 워크플로 `ninja` 잠재 에이전트가 API 500으로 죽어 latent 스윕에서 ninja가 비었다(5스킬만 완료). 조정자가 `implementation-django-ninja` 정본을 직접 재스윕:
