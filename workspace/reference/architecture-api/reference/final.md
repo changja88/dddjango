@@ -181,6 +181,8 @@ GET /products?q=keyboard                     # 검색
 | 500 | Internal Server Error | 서버 문제. 애매하면 500 |
 | 503 | Service Unavailable | 일시 과부하/정비. Retry-After 헤더 가능 |
 
+**낙관적 동시성/CAS 재시도 루프의 *소진*도 경계 실패 모드다**: 유한 재시도 루프를 설계하면 '재시도 상한 초과(쓰기 경합 미해소)'는 happy-path 밖이지만 *경계로 관찰되는* 결과다 — status 표에서 누락하지 말고 **재시도 가능(retryable) status를 배정**한다(503+`Retry-After` 또는 409+`retryable` 확장 — 둘 다 정당, 선택은 멱등성·재시도 UX 트레이드오프로 §5/G1). *어느 쪽이든 표에서 누락 금지*가 의무이고 둘 중 선택은 설계자가 임의 확정하지 않는다(미매핑 시 기본 500 누수).
+
 ### 4.3 PRG (POST/Redirect/GET) 패턴
 
 POST 주문 후 303으로 GET 결과 페이지로 리다이렉트하여 새로고침 시 중복 주문 방지.
@@ -197,6 +199,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 - 필수 필드와 선택 필드를 구분한다
 - 필드 타입, 형식, 단위, 허용 범위, 기본값을 명시한다
+- 외부 식별자·수치 입력의 허용 범위에는 도메인/스토리지 *상한*도 포함한다(하한만 두지 말 것) — 미설정 시 거대 입력이 스토리지 오버플로로 500이 되어 클라이언트 입력 오류(400/422 클래스)가 5xx로 오분류된다. 상한 *값*은 필드·DB 타입에 맞춰 정하고 구체 경계값(매직넘버)은 이 계약 계층에 박지 않는다(implementation에 위임)
 - query parameter는 필터링, 정렬, 검색, sparse fieldset, pagination처럼 조회 표현을 조정하는 데 사용한다
 - 비밀 값이나 인증 정보는 query parameter에 넣지 않는다
 - `POST`는 생성 또는 non-idempotent action 요청 본문을 명확히 정의하고, duplicate-sensitive 요청은 `Idempotency-Key` 정책을 함께 정한다
@@ -311,6 +314,8 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | 요청 본문의 Content-Type/Content-Encoding을 이 메서드·리소스가 지원하지 않음 (요청 측) | `415 Unsupported Media Type` | 서버가 요청 페이로드 형식을 처리할 수 없어 거절한다 |
 
 406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)
+
+> 이 계약의 *구현 메커니즘*(Django Ninja)은 `implementation-django-ninja` §6.3 — `Parser`(415)·`Renderer`/`HttpError`(406)로 **ninja 경계 안**에서 낸다. 전역 미들웨어로 협상을 가로채지 않는다.
 
 ### 7.3 캐시 관련 헤더
 
@@ -523,7 +528,7 @@ Content-Type: application/json
 
 **동작 방식**:
 1. 클라이언트가 고유 키 생성 (V4 UUID 권장)
-2. 서버가 첫 요청의 상태 코드 + 응답 본문을 저장
+2. 서버가 첫 요청의 결과를 저장 — 도메인 outcome은 응용 계층(트랜잭션)이 저장하고, HTTP status·응답 표현은 presentation이 소유한다(application·domain은 status를 만들지 않는다; §13.3·P1a)
 3. 동일 키의 후속 요청은 저장된 결과를 반환
 4. 키는 24시간 후 만료 (일반적 정책)
 5. POST에만 적용 — GET, PUT, DELETE는 이미 멱등
@@ -542,7 +547,7 @@ Content-Type: application/json
 | Concurrency | 같은 key의 동시 요청 race를 어떻게 직렬화하거나 거절하는지 |
 | Storage | 내구성 있는 저장소와 transaction/lock 정책은 DB 설계로 연결 |
 
-Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다.
+Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다. 이때 보관·재현의 계층 책임을 지킨다 — 멱등성 저장은 도메인/응용 outcome을 트랜잭션에 기록하고, 그 outcome→HTTP status·응답 표현 매핑은 최초·replay 모두 presentation의 단일 변환 소유자(`@api.exception_handler`+problem 헬퍼)가 수행한다(application·domain이 status를 catch·생성·저장하지 않는다; 책임배치 정본 `implementation-django-ninja` §6.2·`design-architect`, P1a). byte 단위로 동일한 replay가 계약상 필요하면 presentation이 렌더한 응답을 보관하되, status 결정 소유는 여전히 presentation이다.
 
 **요청 fingerprint로 충돌 판정**: "동일 key, 다른 request content"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 사용하는 코드와 Problem Details를 계약에 명시한다.
 

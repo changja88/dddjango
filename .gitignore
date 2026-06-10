@@ -10,6 +10,7 @@
 # Local agent/browser tooling state
 .playwright-mcp/
 .serena/
+.superpowers/
 
 # Python
 __pycache__/

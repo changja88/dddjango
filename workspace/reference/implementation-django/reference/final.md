@@ -973,6 +973,67 @@ class Migration(migrations.Migration):
 - PostgreSQL에서는 `django-pg-zero-downtime-migrations` 같은 도구를 고려한다.
 - `AddIndex`는 PostgreSQL에서 `CREATE INDEX CONCURRENTLY`를 사용하도록 설정할 수 있다.
 
+### 10.4 이미 이주가 결정된 뒤의 마이그레이션 이력 보존 [TSD] [DfP]
+
+기존 Django 앱(이미 `0001_initial`·`db_table`·`label`을 가진 앱)이 판정·불변식을
+새로 소유해 표준 4계층 구조로 **이주가 이미 결정된 뒤**, 그 *마이그레이션 이력*을
+파괴 없이 보존하는 메커니즘이다. *언제* 이주하느냐(판정 소유 기준)는 여기 범위가
+아니라 `architecture-ddd` §3.2가 정한다 — 여기서는 결정된 이주를 *어떻게* 이력
+파괴 없이 수행하느냐(HOW)만 다룬다. 핵심 함정: 앱을 `infra_layer/django_<app>/`로
+옮기며 ORM 클래스를 `<Name>Model`로 바꾸면 기본 테이블명(`<label>_<modelname>`)이
+달라져, 코더가 기존 `0001`을 *재작성*(fresh `initial`)하기 쉽다. 그러면 이미
+`0001_initial`을 적용한 기존 DB에서 그 마이그레이션이 skip되어 테이블이 안 생기거나
+후속 마이그레이션과 어긋난다(이력 불변 위반).
+
+```python
+# 1) 앱을 infra_layer/django_<app>/로 옮긴다 — AppConfig.name 은 새 점경로지만
+#    label 은 기존 값을 유지한다(이력은 (label, migration) 키로 추적되므로 label 이
+#    바뀌면 기존 0001 적용 기록과 끊긴다. import 점경로만 바뀌는 것은 무해).
+# infra_layer/django_catalog/apps.py
+class CatalogConfig(AppConfig):
+    name = "application.catalog.infra_layer.django_catalog"  # 새 점경로
+    label = "catalog"                                        # 기존 label 유지
+
+# 2) ORM 클래스명은 표준상 <Name>Model 이 되지만 테이블명은 기존 것을 명시 보존한다.
+# infra_layer/django_catalog/models/product_model.py
+class ProductModel(models.Model):          # 기존 class Product 에서 rename
+    class Meta:
+        db_table = "catalog_product"       # 기존 테이블명 — 클래스 rename 이 바꾸지 못하게
+
+# 3) 기존 0001_initial 은 불변(재작성·삭제 금지). 클래스 rename 은 새 0002 에서
+#    state-only 로 반영한다 — database_operations=[] 라 실제 DDL 이 없어 "0001 불변"과
+#    양립한다. 단 0001 의 CreateModel 에는 db_table 이 없어 state 의 기본 테이블명이
+#    클래스 rename 으로 catalog_productmodel 로 재계산되므로, AlterModelTable 을 state 에
+#    함께 넣어 실제 db_table(catalog_product)과 맞춘다 — 아니면 makemigrations --check 가
+#    드리프트(AlterModelTable)를 보고한다.
+# migrations/0002_rename_product_to_productmodel.py
+class Migration(migrations.Migration):
+    dependencies = [("catalog", "0001_initial")]
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RenameModel("Product", "ProductModel"),
+                migrations.AlterModelTable(name="productmodel", table="catalog_product"),
+            ],
+            database_operations=[],        # db_table 불변 → 실제 DDL 없음
+        ),
+    ]
+```
+
+- `--fake-initial`은 이 경로의 기본 도구가 아니다 — 이미 `0001_initial`이 *적용된*
+  기존 앱(label 재사용)에서는 no-op이다(skip할 0001이 없다). 마이그레이션 기록이
+  *전무한* legacy 앱을 처음 편입할 때(테이블은 있으나 `django_migrations`에 행이 없을
+  때)에만 조건부로 쓴다.
+- 검증: `python manage.py makemigrations --check`로 드리프트가 0인지(미생성
+  마이그레이션 없음) 확인하고, `python manage.py sqlmigrate <app> 0002`로 0002가 **DDL을
+  발행하지 않는지**(state-only) 확인한다 — DDL이 찍히면 db_table 보존이 빠진 것이다.
+- **이주 완료 = 옛 루트 `<app>/` 통째 삭제**(`git rm -r <app>/`): 새 경로가 `0001`을
+  보존하므로 옛 루트 앱 패키지·`migrations/`를 남기지 않는다. `MIGRATION_MODULES`로 옛 루트
+  `<app>.migrations`를 가리키는 잔존 핀도 두지 않는다(새 경로 단일 소유) — 옛 루트가 남으면
+  앱이 두 곳에 존재하는 미완 이주(`discipline-houserules` §0 배타성)다. *왜* — step 1의
+  "옮긴다(move)"가 옛 루트 소멸을 함의하나, 명시 안 하면 코더가 move를 copy로 떨어뜨려(새 트리만
+  만들고 옛 루트 git 방치) 앱이 두 곳에 남는다.
+
 ---
 
 ## 11. 성능 최적화
@@ -1494,7 +1555,7 @@ def order_confirm(*, order: Order) -> Order:
 - `transaction.atomic()`의 owner는 model method보다 application service가 되는 경우가 많다. 여러 모델 write, 여러 invariant, 외부 side effect가 하나의 use case에 묶일 때 특히 그렇다.
 - `select_for_update()`는 pessimistic lock이 필요한 경우에만 사용한다. 잠금 범위, DB backend 지원, 테스트 환경에서 실제 lock 동작을 검증할 수 있는지 함께 확인한다.
 - 중복 write 방지는 application-level check만 믿지 않는다. 반드시 지켜야 하는 invariant는 `UniqueConstraint`, `CheckConstraint`, partial unique index, idempotency storage 같은 DB boundary와 함께 설계한다.
-- 개발용 **sqlite에서 `select_for_update()`는 no-op**이다(락 SQL 미발행). 이 한계를 커스텀 DB 백엔드(`BEGIN IMMEDIATE` 등)로 우회하지 말 것 — 운영(Postgres) 정합을 위해 잠금 코드는 두되, 불변식은 `CheckConstraint`(위 항목)가 최종 방어선이고 race 패자의 `IntegrityError`는 표현 계층에서 상태 코드(예: 409)로 변환한다. 잠금이 부족해 보여도 백엔드를 만들지 말고 DB architecture 검토(`architecture-db` §9.5 락·동시성 제어)로 돌린다.
+- 개발용 **sqlite에서 `select_for_update()`는 no-op**이다(락 SQL 미발행). 이 한계를 커스텀 DB 백엔드(`BEGIN IMMEDIATE` 등)로 우회하지 말 것 — 운영(Postgres) 정합을 위해 잠금 코드는 두되, 불변식은 `CheckConstraint`(위 항목)가 최종 방어선이고 race 패자의 `IntegrityError`는 표현 계층에서 상태 코드(예: 409)로 변환한다. 잠금이 부족해 보여도 백엔드를 만들지 말고 DB architecture 검토(`architecture-db` §9.5 락·동시성 제어)로 돌린다. **이 금지는 출처-불문이다** — `DatabaseWrapper` 상속뿐 아니라 런타임 몽키패치, `connection_created` 시그널, `OPTIONS`의 `init_command`로 `BEGIN`/PRAGMA 주입, `isolation_level` 조작, DB 미들웨어, 테스트 conftest 패치 등 *어떤 형태로든* 엔진/연결의 트랜잭션·락·격리 의미를 바꾸면 동일한 위반이다(테스트 격리 전용이라도 프로덕션 경로에 새면 안 된다). **필요한 연결 튜닝은 stock `OPTIONS`로만** 한다 — `transaction_mode`(5.1+)로 begin 모드, `timeout`으로 busy 대기, 안전 PRAGMA(`foreign_keys`·`busy_timeout`·`synchronous`·`cache_size`)까지가 허용 범위이고, 격리·락 의미를 바꾸는 변경(`journal_mode`=WAL·`isolation_level`·`locking_mode`·`read_uncommitted`·커스텀 begin 모드)은 설계가 명시 승인할 때만 한다(`architecture-db` §9.5).
 - 외부 side effect는 commit 전에 실행하지 않는다. DB write가 rollback될 수 있으면 `transaction.on_commit()`으로 email, message publish, payment follow-up, cache invalidation 시점을 정렬한다.
 - isolation level, retry, optimistic/pessimistic locking 선택은 DB 특성과 실패 모드에 따라 달라진다. 결정이 불명확하면 DB architecture 검토가 먼저다.
 - HTTP로 노출된 risky write는 API layer의 `Idempotency-Key` 계약과 DB idempotency storage가 서로 맞아야 한다.
@@ -1647,6 +1708,7 @@ class OrderItem(models.Model):
 ```
 
 - `pk` 속성은 구성 필드 값의 **튜플**이다.
+- ⚠ 위 `OrderItem`은 복합 PK 기능 데모이며 `order`·`product` FK는 *같은 BC 내* 가정이다. `product`가 **다른 BC**의 애그리거트면 `ForeignKey(Product)` 대신 `product_id` 값 참조로 둔다(BC 경계 ORM FK 금지 — `architecture-ddd` §3.3 규칙3 영속성 확장).
 - **제약사항**: 기존 모델에서 복합 PK로 마이그레이션 불가, ForeignKey가 복합 PK 모델을 가리킬 수 없음, admin 미지원.
 
 #### 자동 모델 임포트 in shell

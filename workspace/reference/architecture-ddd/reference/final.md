@@ -643,6 +643,10 @@ class OrderRich:
         self._total = sum(i["price"] * i["qty"] for i in self._items)
 ```
 
+**판정·불변식은 도메인이 소유하고 프로덕션 경로에서 실행된다(빈혈 차단).** 비즈니스 판정과 불변식은 도메인 애그리거트(단일 애그리거트에 담기지 않으면 도메인 서비스)가 소유하고(불변식 보호는 §3.3 규칙1), 응용 서비스는 *조회 → 도메인 기능 실행(판정·상태 변경; 위반 시 도메인 예외) → 영속화* 순서로 그것을 프로덕션 쓰기 경로에서 **실제로 호출**한다(§3.6). 응용 서비스·리포지토리·인프라(SQL/ORM)는 그 판정을 대신 내리거나 복제하지 않는다 — 판정을 인프라로 옮기면 같은 판정의 도메인 메서드가 호출되지 않는 죽은 코드가 되어 위 빈혈 모델로 회귀한다. 동시성 안전이 필요해도 판정을 SQL로 옮기지 말고, 인프라엔 경합 가드(낙관적 `version`/CAS)만 두고 충돌 시 응용 서비스가 재조회 후 도메인 메서드부터 재실행한다(메커니즘 `architecture-db` §9.5).
+
+**판정을 소유하면 그 코드는 도메인 컨텍스트가 되어 표준 구조로 이주한다 — 소유는 구조까지 정한다.** 스코프가 기존 평면 코드(판정 없는 Django 모델 등)에 새 판정·불변식을 얹게 되면, 그 코드는 판정을 소유하는 도메인 컨텍스트가 된 것이므로 `domain_layer`의 애그리거트로 존재해야 한다 — 평면 모델에 판정 메서드를 직접 얹지 않는다(ORM≠도메인, 빈혈 회귀). 이주 기준은 *"레거시냐"가 아니라 "판정·불변식을 소유하느냐"*다: (1) 판정·불변식을 소유하면 도메인 컨텍스트 → 표준 구조로 이주한다. (2) 판정을 다른 컨텍스트가 소유하고 이 코드는 단순 상류 데이터 소스(필드·DB 제약만, 판정 없음)면 **도메인 판정 *실내용*(애그리거트 루트·도메인서비스의 판정 `.py` 코드)만 비운다** — 빈혈 회귀 방지로 평면 모델에 판정 메서드를 얹지 않는다. **표준 트리 *골격*은 데이터소스도 예외 없이 빈 패키지(`__init__.py`)로 실현한다 — `discipline-houserules` §0(위치·4계층·개념 1차·종류 2차) 불변식에 *깊이 면제는 없다*(이전의 '4계층/애그리거트 전개 면제'는 2026-06-08 폐지; 면제는 판정 실내용에 한정).** 데이터소스 BC: 위치 `application/<app>/`; `infra_layer/django_<app>/`에 ORM 실체; `domain_layer/<aggregate>/`에 *빈* 애그리거트 골격(종류 폴더 전부) — **애그리거트 1차 폴더명은 ORM 모델명에서 도출**(`ProductModel`→`domain_layer/product/`); 유스케이스(application feature)를 다른 BC가 소유해 이 BC엔 feature가 없으면 `application_layer`는 빈 계층 폴더로 둔다(§0-3 개념 1차는 *개념 식별 시*). `infra_layer`의 `repository`/`acl`/`adapter`·`presentation_layer`의 `api`/`schema`·`test` 의미군도 빈 패키지로 존속한다. 루트 평면 `<app>/`은 `discipline-houserules` §0-1 위반이다. 이 골격 실현은 *이번 작업이 touched한* 그 코드에 한정하며, 무관·미관여 기존 앱은 §1.1로 존중한다. (3) 컨텍스트 간 접근은 ACL 또는 published_service(OHS)로만 한다 — 다른 컨텍스트의 `domain_layer`/`infra_layer`를 직접 import하지 않는다(패턴 §2.5, 배치 `discipline-houserules` `references/final.md` §2 컨텍스트 간 통신). 단 대상 프로젝트에 이미 확립된 레이아웃 규약이 있으면 그 일관성을 존중하고(`discipline-houserules` §1.1), 이 이주는 *판정이 새로 얹히는 그 코드*에 한정한다 — 무관한 기존 코드를 표준으로 일괄 강제하지 않는다.
+
 ### 3.3 애그리거트 (Aggregate)
 
 > 출처: [A][B][C], Vernon "Effective Aggregate Design"
@@ -663,11 +667,15 @@ class OrderRich:
 
 직접 객체 참조(object reference) 대신 식별자(identity)로 참조하면 결합도가 낮아지고, 로딩 시간과 메모리 사용이 줄어든다.
 
+**이 규칙은 도메인 객체 레벨에 그치지 않고 영속성/ORM 레벨까지 적용된다 — BC(바운디드 컨텍스트) 경계를 넘는 ORM 관계(`ForeignKey`·`OneToOneField`·`ManyToManyField`)를 두지 않는다.** 타 BC의 애그리거트는 ID 값(`PositiveIntegerField` 등)으로만 저장·참조하고, 무결성은 ① 생성 시점 존재 검증 = ACL/OHS 포트 조회 ② 삭제·변경 생애주기 = 상류 BC의 도메인 이벤트·published 계약으로 보장한다(하류가 상류를 역참조하지 않는다 — 상류 BC는 하류를 모른다). 하류가 상류 모델을 FK로 결합하면 상류의 테이블 형상·삭제 정책이 하류로 누수되고 마이그레이션이 상류에 묶인다(모듈 간 DB 결합). 경계는 셋이다 — **같은 애그리거트 내부** = ORM FK 자유(루트가 일관성 경계), **같은 BC의 다른 애그리거트** = ORM FK 허용(도메인 모델은 위 결합도 근거로 ID 참조 권장), **다른 BC** = ORM FK 금지(ID 값 참조). *왜* — Vernon의 Reference-by-Identity 원문은 도메인 객체 레벨이고, ORM 자동 관계 매핑 배제와 BC 경계 FK 금지는 Fowler(Bounded Context)·모듈러 모놀리스(모듈 간 DB 결합 회피) 합의를 더한 것이다. 플랫폼 횡단 공유(`settings.AUTH_USER_MODEL`·공유 커널 값객체)는 예외다.
+
 **규칙 4: 일관성 경계 밖에서는 결과적 일관성을 사용하라**
 
 > **[의사결정 #4] External 채택**: 서로 다른 애그리거트 간의 일관성은 도메인 이벤트를 통한 결과적 일관성(eventual consistency)으로 달성한다.
 
 > 실무 참고: 동일 데이터베이스 내 단순 케이스에서는 같은 트랜잭션에서 복수 애그리거트를 수정하는 것도 용인할 수 있다. 단, 이는 원칙의 예외이며 시스템이 분산되면 즉시 결과적 일관성으로 전환해야 한다.
+>
+> ⚠ 이 '복수 애그리거트 수정 용인'은 **런타임 트랜잭션 원자성**에 관한 것이지 **영속성 FK 결합을 허가하지 않는다**(규칙3의 ORM 확장과 직교한다). FK 없이도 같은 atomic 트랜잭션이 성립한다 — 응용 서비스/ACL이 같은 connection에서 두 애그리거트를 원자적으로 쓰면 된다. "한 트랜잭션에 묶인다"를 BC 경계 ORM FK의 근거로 끌어쓰지 마라.
 
 ```python
 from __future__ import annotations
@@ -832,11 +840,11 @@ class Store:
     name: str
     _is_blocked: bool = False
 
-    def create_product(self, product_id: str, name: str, price: Money) -> "Product":
+    def create_product(self, product_id: str, name: str, description: str, price: int) -> "Product":
         """팩토리 메서드 - 도메인 로직(신고 차단 여부)을 애그리거트 안에 유지"""
         if self._is_blocked:
             raise PermissionError("차단된 상점은 상품을 등록할 수 없습니다")
-        return Product(id=product_id, store_id=self.id, name=name, price=price)
+        return Product(id=product_id, name=name, description=description, price=price)
 ```
 
 ### 3.4 리포지토리 (Repository)
@@ -1015,6 +1023,7 @@ class OrderBad:
 @dataclass
 class PlaceOrderCommand:
     """응용 서비스 입력 DTO"""
+    # ※ 이 메시지-어휘(…Command=입력 DTO)는 CQRS 이론 *교육*이다. 이 플러그인 *생성 코드*는 입력을 …Request로, 쓰기 *실행*을 …Command 인터랙터로 명명한다(houserules 권위). 두 어휘를 섞지 말 것.
     orderer_id: str
     items: List[dict]
     shipping_address: dict

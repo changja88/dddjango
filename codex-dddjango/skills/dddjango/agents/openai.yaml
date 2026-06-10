@@ -1,0 +1,4 @@
+interface:
+  display_name: "dddjango"
+  short_description: "Django 기능을 DDD로 요구→설계→구현(TDD)까지 게이트로 빌드"
+  default_prompt: "Use dddjango to build one feature into an existing Django project with DDD: scope (G0) → design (G1) → TDD implementation (G2), dispatching design-architect, reviewers, acceptance-tester, coder, and discipline-reviewer as subagents. Requires multi_agent."

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dddjango 파이프라인</title>
+<style>
+  :root{
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --bg:#0e0f16; --panel:#15161f; --card:#181a24; --card2:#1b1d28;
+    --bd:#262936; --bd2:#2e3140;
+    --tx:#f0f1f6; --tx2:#9aa1b2; --tx3:#6b7280;
+    --blue:#6fa8e0; --green:#4ade9f; --purple:#b690f5; --amber:#e3b766; --red:#e08888; --teal:#5ed5d0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--tx);
+    padding:34px 20px 90px;
+    background-image:radial-gradient(80% 50% at 50% -8%,rgba(60,80,160,.10),transparent 70%);}
+  .wrap{max-width:1040px;margin:0 auto}
+  h1{font-size:23px;margin:0 0 6px;letter-spacing:-.4px}
+  .sub{color:var(--tx2);font-size:13.5px;margin:0 0 20px;line-height:1.6}
+  .sub code{font-family:var(--mono);background:#1e202b;padding:1px 6px;border-radius:5px;font-size:12px;color:#c3c9d6}
+
+  /* 범례 */
+  .legends{display:flex;flex-wrap:wrap;gap:22px;background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:14px 18px;margin-bottom:30px}
+  .legcol{display:flex;flex-direction:column;gap:8px}
+  .legcol .h{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--tx3);text-transform:uppercase}
+  .legrow{display:flex;flex-wrap:wrap;gap:13px;font-size:12px;color:var(--tx2);align-items:center}
+  .legrow .it{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:4px;border:1px solid}
+  .ln{width:22px;height:0;border-top-width:2px;vertical-align:middle}
+  .chip{font-size:10px;font-weight:600;padding:2.5px 8px;border-radius:6px;letter-spacing:.1px;white-space:nowrap}
+  .chip.a{background:#1c2440;color:#8ba2ff} .chip.i{background:#142e26;color:#4ade9f} .chip.d{background:#271d3d;color:#b690f5} .chip.n{background:#23262f;color:#9aa1b2}
+
+  /* 흐름 */
+  .flow{display:flex;flex-direction:column;align-items:center}
+  .phase{width:100%;max-width:520px;margin:0 auto}
+  .phaselabel{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+  .phaselabel .pl{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--tx3);text-transform:uppercase}
+  .phaselabel .line{flex:1;height:1px;background:linear-gradient(90deg,var(--bd2),transparent)}
+
+  .node{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.35);position:relative}
+  .node.dashed{border-style:dashed;background:var(--card2)}
+  .role{font-size:14px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;gap:9px;color:var(--tx)}
+  .role .opt{font-weight:600;font-size:10.5px;color:var(--tx3)}
+  .desc{font-size:11.5px;margin-top:4px;line-height:1.5;color:var(--tx2)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+
+  .conn{width:3px;height:22px;background:#ffffff;position:relative;border-radius:2px;margin:0 auto}
+  .conn::after{content:"";position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+    border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid #ffffff}
+  .conn.sm{height:16px}
+
+  .gate{width:auto;min-width:200px;text-align:center;padding:12px 18px;border-radius:30px;
+    background:#231d12;border:1px solid #4a3a1c;color:var(--amber);font-size:13px;font-weight:700}
+  .gate .g2t{font-size:10.5px;font-weight:600;color:#b89048;margin-top:2px}
+  .cap{padding:10px 26px;border-radius:30px;font-size:13.5px;font-weight:800;letter-spacing:.3px}
+  .cap.start{background:linear-gradient(135deg,#2d6a4f,#1b9c6e);color:#eafff5;box-shadow:0 0 20px rgba(27,156,110,.3)}
+  .cap.stop{background:linear-gradient(135deg,#3a2d6a,#5b3aa0);color:#f3eaff;box-shadow:0 0 20px rgba(91,58,160,.3)}
+  .io{width:100%;background:linear-gradient(135deg,#173a52,#1d5070);border:1px solid #2a6a8a;border-radius:12px;padding:13px 16px;color:#dff1fb}
+  .io .role{color:#eaf6fd}
+
+  /* design-review 병렬 */
+  .parallel{width:100%;display:flex;gap:10px}
+  .parallel .node{flex:1;padding:12px}
+  .parallel .role{font-size:12px}
+  .ptag{font-size:10.5px;color:var(--tx3);font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+
+  /* 그룹 존 */
+  .group{width:100%;border-radius:18px;padding:15px;margin:2px 0;position:relative}
+  .group.loop{background:linear-gradient(180deg,#0f1722,#0d141d);border:1px solid #1d3450}
+  .group.once{background:linear-gradient(180deg,#1a160e,#16130b);border:1px solid #3d3016}
+  .grouphead{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+  .grouptitle{font-size:12px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:7px}
+  .group.loop .grouptitle{color:var(--blue)} .group.once .grouptitle{color:var(--amber)}
+  .badge{font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px}
+  .group.loop .badge{background:#16263a;color:var(--blue)} .group.once .badge{background:#2c2412;color:var(--amber)}
+  .grpflow{display:flex;flex-direction:column;align-items:center}
+  .grpflow .node{background:#1a1d28}
+
+  .transition{font-size:11.5px;font-weight:700;color:var(--amber);margin:11px 0 3px;display:flex;align-items:center;gap:6px}
+  .loopback{font-size:10.5px;font-weight:700;color:var(--blue);background:#13202e;border:1px solid #1d3450;padding:4px 11px;border-radius:20px;margin-top:9px;display:inline-flex;gap:6px}
+
+  /* 되돌림 배지 */
+  .backs{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:9px;align-items:center}
+  .back{font-size:11px;font-weight:600;padding:6px 13px;border-radius:9px;border:1.5px dashed;display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.015)}
+  .back.r{border-color:#6b3838;color:var(--red)}
+  .back.o{border-color:#6b5320;color:var(--amber)}
+  .back.t{border-color:#266060;color:var(--teal)}
+
+  .note{margin-top:34px;background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:18px 20px;font-size:12.5px;color:var(--tx2);line-height:1.75}
+  .note b{color:var(--tx)} .note .k{color:var(--amber);font-weight:700} .note code{font-family:var(--mono);background:#1e202b;padding:1px 6px;border-radius:5px;font-size:11.5px;color:#c3c9d6}
+
+  /* 수정 모드 */
+  .patchwrap{margin-top:34px;background:linear-gradient(180deg,#13141c,#101119);border:1px solid var(--bd);border-radius:16px;padding:20px 22px}
+  .patchwrap h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .patchwrap .ps{font-size:12px;color:var(--tx2);margin:0 0 16px;line-height:1.6}
+  .patchrow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+  .pstep{flex:1;min-width:130px;background:var(--card);border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
+  .pstep.dashed{border-style:dashed;background:var(--card2)}
+  .pstep .t{font-size:12px;font-weight:700;color:var(--tx)}
+  .pstep .s{font-size:10.5px;color:var(--tx3);margin-top:3px;line-height:1.4}
+  .parrow{display:flex;align-items:center;color:#ffffff;font-size:16px;font-weight:800}
+
+  /* ===== 전체 크기 확대 ===== */
+  .wrap{max-width:1480px}
+  .phase{max-width:820px}
+  h1{font-size:34px}
+  .sub{font-size:18px;margin-bottom:28px}
+  .legcol .h{font-size:12.5px}
+  .legrow{font-size:15px}
+  .legrow .chip{font-size:13px}
+  .role{font-size:20.5px;gap:13px}
+  .role .opt{font-size:14px}
+  .desc{font-size:16px;margin-top:6px}
+  .chips{gap:7px;margin-top:14px}
+  .chip{font-size:13.5px;padding:5px 12px;border-radius:8px}
+  .gate{font-size:20px;padding:19px 34px;min-width:300px}
+  .gate .g2t{font-size:14px}
+  .badge{font-size:13.5px;padding:6px 15px}
+  .grouptitle{font-size:17px;gap:10px}
+  .node{padding:22px 26px;border-radius:18px}
+  .group{padding:24px;border-radius:22px}
+  .conn{height:40px;width:4px}
+  .conn::after{border-left-width:8px;border-right-width:8px;border-top-width:12px}
+  .conn.sm{height:28px}
+  .parrow{font-weight:800}
+  .dot{width:13px;height:13px}
+  .cap{font-size:19px;padding:16px 44px}
+  .io{padding:21px 26px}
+  .ptag{font-size:14px;margin-bottom:11px}
+  .parallel .role{font-size:16px}
+  .parallel{gap:14px}
+  .transition{font-size:16.5px;margin:16px 0 5px}
+  .loopback{font-size:14px;padding:7px 17px;margin-top:13px}
+  .back{font-size:15px;padding:9px 18px}
+  .backs{margin-top:13px;gap:9px}
+  .phaselabel{margin:38px 0 16px}
+  .phaselabel .pl{font-size:15px}
+  .note{font-size:16.5px;padding:26px 30px;margin-top:46px}
+  .patchwrap{padding:28px 30px;margin-top:46px}
+  .patchwrap h2{font-size:21px}
+  .patchwrap .ps{font-size:15px}
+  .pstep .t{font-size:16px}
+  .pstep .s{font-size:13.5px}
+  .parrow{font-size:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>dddjango 파이프라인</h1>
+  <p class="sub">한 기능을 DDD/TDD로 <b>요구 → 설계 → 구현</b>까지 끌고 가는 오케스트레이터. 각 노드가 쓰는 스킬을 칩으로 표기. 호출은 Claude <code>Agent</code> · Codex <code>spawn_agent→wait_agent</code> — 골격은 동일.</p>
+
+  <div class="legends">
+    <div class="legcol">
+      <span class="h">노드</span>
+      <div class="legrow">
+        <span class="it"><span class="sw" style="background:#181a24;border-color:#262936"></span>역할(서브에이전트)</span>
+        <span class="it"><span class="sw" style="background:#231d12;border-color:#4a3a1c"></span>게이트·판단</span>
+        <span class="it"><span class="sw" style="background:#1b1d28;border-color:#2e3140;border-style:dashed"></span>조건부·선택</span>
+      </div>
+    </div>
+    <div class="legcol">
+      <span class="h">스킬 분류</span>
+      <div class="legrow">
+        <span class="chip a">architecture-*</span><span class="chip i">implementation-*</span><span class="chip d">discipline-*</span>
+      </div>
+    </div>
+    <div class="legcol">
+      <span class="h">되돌림(실패) 경로</span>
+      <div class="legrow">
+        <span class="it"><span class="ln" style="border-top:2px dashed #e08888"></span>사용자 게이트 거부</span>
+        <span class="it"><span class="ln" style="border-top:2px dashed #e3b766"></span>백스톱 exit2</span>
+        <span class="it"><span class="ln" style="border-top:2px dashed #5ed5d0"></span>서브에이전트 보고</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <!-- START -->
+    <div class="cap start">START</div>
+    <div class="conn"></div>
+    <div class="phase">
+      <div class="io">
+        <div class="role">기능 요청 입력 · 모드 판별</div>
+        <div class="desc">신규 = 풀 파이프라인 / 기존 파일 국소 변경 = 수정 모드(하단)</div>
+      </div>
+    </div>
+
+    <!-- ===== PHASE 0 ===== -->
+    <div class="phase">
+      <div class="phaselabel"><span class="pl">Phase 0 · 요구·스코프</span><span class="line"></span></div>
+      <div class="node">
+        <div class="role"><span class="dot" style="background:var(--tx2)"></span>coordinator</div>
+        <div class="desc">요구·경계·제약 정리 → 활성 lens 추론(ddd 항상 / api·db 조건) → <code style="font-family:var(--mono);font-size:10.5px">ls .dddjango/</code> 산출물 폴더</div>
+        <div class="chips"><span class="chip n">스킬 없음 · 오케스트레이션</span></div>
+      </div>
+      <div class="conn"></div>
+      <div class="gate">💬 G0 스코프 승인?</div>
+      <div class="backs"><span class="back r">↩ 거부 → Phase 0 재실행 (스코프·lens 다시)</span></div>
+    </div>
+
+    <!-- ===== PHASE 1 ===== -->
+    <div class="phase">
+      <div class="phaselabel"><span class="pl">Phase 1 · 설계</span><span class="line"></span></div>
+      <div class="node">
+        <div class="role"><span class="dot" style="background:var(--blue)"></span>design-architect <span class="opt">· 초안</span></div>
+        <div class="desc">기존 구조 조사 → 도메인·API·DB를 한 명세로 + 패키지·테스트 구조 결정</div>
+        <div class="chips"><span class="chip a">architecture-ddd</span><span class="chip a">architecture-api</span><span class="chip a">architecture-db</span><span class="chip d">discipline-houserules</span></div>
+      </div>
+      <div class="conn"></div>
+      <div class="ptag">⇄ 병렬 독립 리뷰 · 서로 안 봄(편향 방지) · 활성 lens만</div>
+      <div class="parallel">
+        <div class="node">
+          <div class="role"><span class="dot" style="background:var(--blue)"></span>design-review-ddd</div>
+          <div class="desc">애그리거트 경계·불변식·도메인 이벤트 · <b>판정 소유 → 구조 이주(§0 컨테이너/4계층/골격·평면 모델 금지)</b> · 컨텍스트 경계(ACL/OHS)</div>
+          <div class="chips"><span class="chip a">architecture-ddd</span></div>
+        </div>
+        <div class="node">
+          <div class="role"><span class="dot" style="background:var(--blue)"></span>design-review-api</div>
+          <div class="desc">엔드포인트·상태 코드·요청/응답 계약(RFC 9457)·실패 코드(401/403·406/415·409/422)·멱등성 키 정책·버전/하위호환</div>
+          <div class="chips"><span class="chip a">architecture-api</span></div>
+        </div>
+        <div class="node">
+          <div class="role"><span class="dot" style="background:var(--blue)"></span>design-review-db</div>
+          <div class="desc">스키마·인덱스·제약/유니크 · 트랜잭션·격리·락(Risky Write §9.6 8행) · 멱등성 저장소 · 마이그레이션 안전(db_table 보존)</div>
+          <div class="chips"><span class="chip a">architecture-db</span></div>
+        </div>
+      </div>
+      <div class="conn sm"></div>
+      <div class="node dashed">
+        <div class="role"><span class="dot" style="background:var(--purple)"></span>discipline-reviewer <span class="opt">＊선택 · 명세 복잡 시만</span></div>
+        <div class="desc">testability·단순성 경량 점검 (coordinator 재량 · 생략 가능)</div>
+        <div class="chips"><span class="chip d">discipline-cleancode</span><span class="chip d">discipline-tdd</span><span class="chip d">discipline-houserules</span></div>
+      </div>
+      <div class="conn sm"></div>
+      <div class="node">
+        <div class="role"><span class="dot" style="background:var(--blue)"></span>design-architect <span class="opt">· 반영·중재</span></div>
+        <div class="desc">리뷰 노트 반영 + 리뷰어 충돌 중재 → design-spec 최종 (이후 인수·코드의 단일 근거)</div>
+        <div class="chips"><span class="chip a">architecture-ddd</span><span class="chip a">architecture-api</span><span class="chip a">architecture-db</span><span class="chip d">discipline-houserules</span></div>
+      </div>
+      <div class="conn"></div>
+      <div class="gate">💬 G1 설계 승인?</div>
+      <div class="backs"><span class="back r">↩ 거부 → 해당 lens 재설계 (design-architect)</span></div>
+    </div>
+
+    <!-- ===== PHASE 2 ===== -->
+    <div class="phase">
+      <div class="phaselabel"><span class="pl">Phase 2 · 구현 (이중 루프 TDD)</span><span class="line"></span></div>
+      <div class="node">
+        <div class="role"><span class="dot" style="background:var(--tx2)"></span>테스트 러너 준비</div>
+        <div class="desc">러너는 항상 pytest · 설정 없으면 Tier-1 설치 + <code style="font-family:var(--mono);font-size:10.5px">DJANGO_SETTINGS_MODULE</code> 바인딩</div>
+        <div class="chips"><span class="chip n">스킬 없음 · coordinator</span></div>
+      </div>
+      <div class="conn"></div>
+      <div class="node">
+        <div class="role"><span class="dot" style="background:var(--green)"></span>acceptance-tester</div>
+        <div class="desc">명세의 외부 행위를 실패하는 인수 테스트(전부 🔴 Red)로 + 슬라이스 도출 (블랙박스)</div>
+        <div class="chips"><span class="chip i">implementation-test</span><span class="chip a">architecture-api</span><span class="chip a">architecture-ddd</span><span class="chip d">discipline-tdd</span></div>
+      </div>
+      <div class="backs"><span class="back t">↩ 인수 계속 Red·잘못된 명세 → 설계 / 사용자 보고</span></div>
+      <div class="conn"></div>
+
+      <!-- 슬라이스 루프 -->
+      <div class="group loop">
+        <div class="grouphead">
+          <div class="grouptitle">🔁 슬라이스 루프</div>
+          <span class="badge">슬라이스마다 · N개면 N번</span>
+        </div>
+        <div class="grpflow">
+          <div class="node">
+            <div class="role"><span class="dot" style="background:var(--green)"></span>coder · 슬라이스 k</div>
+            <div class="desc">단위 TDD(Red → Green → Refactor) → 인수 테스트 🟢 Bash 확인</div>
+            <div class="chips">
+              <span class="chip i">implementation-django</span><span class="chip i">implementation-django-ninja</span><span class="chip i">implementation-django-web</span><span class="chip i">implementation-python</span><span class="chip i">implementation-test</span>
+              <span class="chip d">discipline-tdd</span><span class="chip d">discipline-cleancode</span><span class="chip d">discipline-houserules</span>
+            </div>
+          </div>
+          <div class="conn sm"></div>
+          <div class="node dashed">
+            <div class="role"><span class="dot" style="background:var(--purple)"></span>discipline-reviewer <span class="opt">＊슬라이스 ≥3일 때만</span></div>
+            <div class="desc">슬라이스별 경량 감사 → coder 반영 (조건부)</div>
+            <div class="chips"><span class="chip d">discipline-cleancode</span><span class="chip d">discipline-tdd</span><span class="chip d">discipline-houserules</span></div>
+          </div>
+          <div class="conn sm"></div>
+          <div class="gate" style="min-width:0;width:auto">슬라이스 더 남았나?</div>
+          <div class="loopback">↺ Yes · 다음 슬라이스 → coder</div>
+        </div>
+      </div>
+
+      <div class="transition">↓ No · 모든 슬라이스 완료</div>
+
+      <!-- 전체 1회 -->
+      <div class="group once">
+        <div class="grouphead">
+          <div class="grouptitle">✅ 전체 1회</div>
+          <span class="badge">끝에 딱 한 번 · 슬라이스마다 아님</span>
+        </div>
+        <div class="grpflow">
+          <div class="node">
+            <div class="role"><span class="dot" style="background:var(--purple)"></span>discipline-reviewer</div>
+            <div class="desc">코드·테스트 전체를 1회 독립 감사 (홀리스틱) → blocker/important/nit → coder 반영·재감사 수렴</div>
+            <div class="chips"><span class="chip d">discipline-cleancode</span><span class="chip d">discipline-tdd</span><span class="chip d">discipline-houserules</span></div>
+          </div>
+          <div class="conn sm"></div>
+          <div class="node">
+            <div class="role"><span class="dot" style="background:var(--tx2)"></span>백스톱 16종</div>
+            <div class="desc"><b style="color:var(--tx)">coordinator</b>가 결정적 스크립트를 셸로 각 1회 실행 · git touched-gate(이번 변경분만)</div>
+            <div class="chips"><span class="chip n">스킬 아님 · 고정밀 저-recall 안전망</span></div>
+          </div>
+          <div class="conn sm"></div>
+          <div class="gate" style="min-width:0;width:auto">16종 전부 통과?</div>
+          <div class="backs"><span class="back o">↩ exit2 → <b style="color:var(--tx)">coordinator</b>가 발견 합쳐 성격 판단 → 설계(design-architect) <i>또는</i> coder 반송</span></div>
+        </div>
+      </div>
+
+      <div class="transition" style="color:var(--green)">↓ 통과</div>
+      <div class="gate">💬 G2 구현 승인?</div>
+      <div class="backs"><span class="back r">↩ 거부 → coder 재구현 / 재감사</span></div>
+    </div>
+
+    <!-- ===== PHASE 3 ===== -->
+    <div class="phase">
+      <div class="phaselabel"><span class="pl">Phase 3 · 마무리</span><span class="line"></span></div>
+      <div class="io">
+        <div class="role">검증 보고</div>
+        <div class="desc">실행한 검증만 보고 — pytest · makemigrations --check · migrate --plan · manage.py check · mypy</div>
+      </div>
+      <div class="conn"></div>
+      <div class="cap stop" style="align-self:center">STOP · 완료</div>
+    </div>
+  </div>
+
+  <!-- ===== 수정 모드 ===== -->
+  <div class="patchwrap">
+    <h2>🔧 수정 모드 <span style="font-size:11px;font-weight:600;color:var(--tx3)">— 국소 변경은 풀 파이프라인을 다시 돌지 않는다</span></h2>
+    <p class="ps">기존 파일의 작은 변경이면 영향받는 부분만 짧게. 설계 변경이 없으면 G1′도 건너뛴다. 두 경로 모두 G2 직전 <b>백스톱 16종을 동일하게</b> 돌린다.</p>
+    <div class="patchrow">
+      <div class="pstep"><div class="t">G0 · 영향 범위</div><div class="s">+ 산출물 폴더 확정</div></div>
+      <div class="parrow">→</div>
+      <div class="pstep dashed"><div class="t">G1′ · 영향 lens 재설계</div><div class="s">＊순수 구현 수정이면 생략</div></div>
+      <div class="parrow">→</div>
+      <div class="pstep"><div class="t">영향 테스트·구현</div><div class="s">acceptance-tester · coder</div></div>
+      <div class="parrow">→</div>
+      <div class="pstep"><div class="t">백스톱 16종</div><div class="s">동일 실행 (touched만)</div></div>
+      <div class="parrow">→</div>
+      <div class="pstep" style="background:#231d12;border-color:#4a3a1c"><div class="t" style="color:var(--amber)">💬 G2 승인</div><div class="s">discipline-reviewer 미앵커</div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>읽는 법</b> — 위에서 아래로 정상 진행. 점선 배지는 되돌림 3종류:
+    <span style="color:var(--red);font-weight:700">사용자 게이트 거부</span>(G0/G1/G2 → 해당 Phase 재실행) ·
+    <span style="color:var(--amber);font-weight:700">백스톱 exit2</span>(결정적 차단 → <b>coordinator</b>가 발견 성격대로 설계/coder 반송) ·
+    <span style="color:var(--teal);font-weight:700">서브에이전트 보고</span>(인수 Red·잘못된 명세 → 설계/사용자).<br>
+    <b>조건부·선택 단계</b>(점선 노드) — <span class="k">＊설계 경량 점검</span>은 명세 복잡 시 coordinator 재량(생략 가능), <span class="k">＊슬라이스별 감사</span>는 <b>슬라이스가 3개 이상일 때만</b> 돈다(1~2개면 끝의 홀리스틱 감사 1회로 충분).<br>
+    <b>홀리스틱 감사와 백스톱은 끝에 1회만</b> 돈다(슬라이스마다 아님 — <span class="k">✅ 전체 1회</span> 박스). 백스톱은 결정적 스크립트라 코드가 완성된 상태에서 봐야 거짓양성이 없다.<br>
+    같은 지식 스킬이 여러 역할에서 재사용된다 — <span class="chip d" style="display:inline">discipline-*</span>·<span class="chip i" style="display:inline">implementation-*</span>는 감수자 전용이 아니라 작성자(acceptance-tester·coder)도 로드한다.
+  </div>
+</div>
+</body>
+</html>
