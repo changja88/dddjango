@@ -5,7 +5,7 @@
 *행위/계약*을 보는 데 비해, 이건 **구조**를 본다. 표준 레이아웃(`application/<bc>/`)을
 적용한 프로젝트에서 각 바운디드 컨텍스트(BC)는 4계층 폴더(`domain_layer`·
 `application_layer`·`infra_layer`·`presentation_layer`)를 **내용이 없어도 빈
-패키지(`__init__.py`)로라도 모두** 가져야 한다(houserules §0-2). 세 위반 형태를 차단한다:
+패키지(`__init__.py`)로라도 모두** 가져야 한다(houserules §0-2). 네 위반 형태를 차단한다:
   - **부분 평면**: 일부 계층만 있고 하나를 생략(스모크 SH-2 — HTTP 없이 ACL·
     published_service 로만 소비되는 내부 전용 BC 가 `presentation_layer` 를 생략).
   - **완전 평면**: Django 앱 산출물은 있는데 4계층으로 전혀 분리 안 함(`application/<bc>/`
@@ -15,6 +15,17 @@
     2026-06-08: 이들은 표현/통합 내용이 없어도 무조건 생성). 더해 *이미 존재하는*
     `domain_layer/<aggregate>/` 의 코어 종류(`entity`·`value_object`·`repository` + `exception.py`)
     누락도 잡는다(coder 가 `domain_layer/product/` 만들고 `value_object/` 를 빠뜨린 경우).
+  - **외래 port/(협력 포트 오배치 — SH-7)**: `application_layer`/`infra_layer` 하위의 `port/`
+    디렉터리가 비-`__init__` `.py` 를 담음. 협력 포트(타 BC 소비용 역할 추상 ABC)는
+    `domain_layer/<aggregate>/port/` 소유다(houserules §2 — "도메인은 협력 포트로만 의존"·
+    §3 표·"command 는 domain port 의존" DIP). application_layer 의 종류 폴더는
+    command/query/dto 뿐이고 ACL *구현*은 `infra_layer/acl/` 직속이라, 그 계층들 밑 `port/` 는
+    표준 트리에 존재하지 않는 외래 구조다(라이브 형태 N=2·둘 다 Codex: design-spec 이
+    포트를 "use-case dependency" 로 재분류해 `application_layer/place_order/port/` 에 배치 —
+    reviewer 가 명세-부합을 이유로 권고로 강등해 게이트를 통과했다). **빈 `port/` 패키지는
+    면제**(위반의 전조일 뿐·골격 잔재). 경로에 test/tests 가 끼면 스킵. 폴더 개명 변종
+    (`contract/`·`ports/` 복수형·평면 `port.py`)과 `presentation_layer` 배치는 안 잡는다
+    (저-recall — 채점 결정 레인(`find -type d -name port`)과 동일 사각·reviewer 의미 레인 몫).
 
 *왜 결정적 백스톱인가* — 빈 계층 폴더엔 테스트가 걸리지 않아 TDD Red 로 안 잡힌다(coder 가
 누락해도 `manage.py test` 는 Green). discipline-reviewer 의미 게이트 한 점에만 의존하면
@@ -46,6 +57,8 @@ LLM 이 프로즈 규칙을 회피하는 표면이 된다 — 이 스크립트�
       애그리거트 신호(루트 파일/entity/value_object)가 없으면 애그리거트로 보지 않고 스킵한다.
       `[선택]` 종류 폴더(`port`·`domain_service`·`event`·`specification`)는 *존재만* 확인하고
       누락은 잡지 않는다(저-recall — reviewer 의미 레인 몫; 거짓 양성 회피 우선).
+    - `application_layer`/`infra_layer` 하위 `port/` 가 비-`__init__` `.py` 를 담으면 blocker
+      (외래 port — 위 네 번째 위반 형태. 빈 패키지·test 경로는 면제).
   통과 조건: 4계층 + 고정명 종류 폴더(api/schema/acl)가 빈 패키지로 있고, 존재하는
   애그리거트의 코어 종류가 채워져 있으면 통과. `domain_layer/` 에 애그리거트가 *0개* 면(예:
   데이터소스 골격 미생성) 이 스크립트는 **안 잡고 reviewer 의미 레인에 맡긴다**(저-recall
@@ -86,6 +99,12 @@ AGG_CORE_FILE = "exception.py"
 # 애그리거트 신호 — 이 중 하나라도 있으면 `<X>/` 를 애그리거트로 보고 코어 완비를 검사한다.
 # 없으면(예: cross-aggregate 공용 `domain_service/`) 애그리거트가 아니므로 스킵(거짓 양성 회피).
 AGG_SIGNAL_KIND_DIRS = ("entity", "value_object")
+
+# 외래 port 검사 대상 계층 — 협력 포트는 domain_layer 소유라 이 계층들 밑 port/ 는 표준 트리에
+# 없는 외래 구조다(SH-7·houserules §2·§3 표). presentation_layer 는 채점 결정 레인(SH-7 FAIL =
+# application_layer/infra_layer)과 정합하게 제외(관측 0·reviewer 의미 레인 몫).
+FOREIGN_PORT_LAYERS = ("application_layer", "infra_layer")
+TEST_DIR_NAMES = {"test", "tests"}
 
 
 def _find_application_containers(root: Path) -> list[Path]:
@@ -178,6 +197,36 @@ def _aggregate_issues(bc_dir: Path) -> list[str]:
     return issues
 
 
+def _foreign_port_issues(bc_dir: Path) -> list[str]:
+    """`application_layer`/`infra_layer` 하위 `port/` 의 협력 포트 오배치(SH-7)를 설명 리스트로.
+
+    협력 포트(ABC)는 `domain_layer/<aggregate>/port/` 소유(houserules §2·§3 표) — 호출자가
+    application 유스케이스(command)여도 'use-case dependency' 재분류로 위치가 바뀌지 않는다.
+    빈 `port/` 패키지(비-`__init__` .py 0개)·test 경로는 면제. 폴더 개명 변종은 안 잡는다(저-recall)."""
+    issues: list[str] = []
+    for layer in FOREIGN_PORT_LAYERS:
+        layer_dir = bc_dir / layer
+        if not layer_dir.is_dir():
+            continue
+        for port_dir in sorted(layer_dir.rglob("port")):
+            if not port_dir.is_dir():
+                continue
+            rel_parts = set(port_dir.relative_to(bc_dir).parts)
+            if rel_parts & SKIP_DIRS or rel_parts & TEST_DIR_NAMES:
+                continue
+            payload = sorted(
+                p.name for p in port_dir.rglob("*.py") if p.name != "__init__.py"
+            )
+            if payload:
+                rel = port_dir.relative_to(bc_dir)
+                issues.append(
+                    f"{rel}/ 에 협력 포트 추정 코드({', '.join(payload[:3])}) — "
+                    f"협력 포트(ABC)는 domain_layer/<aggregate>/port/ 소유(§2), "
+                    f"{layer} 하위 port/ 는 표준 트리에 없는 외래 구조(SH-7)"
+                )
+    return issues
+
+
 def _is_bc_to_check(bc_dir: Path) -> bool:
     """4계층을 따라야 할 앱: 계층을 하나라도 가졌거나(부분), Django 산출물 평면(완전)."""
     return _has_any_layer(bc_dir) or _has_django_app_marker(bc_dir)
@@ -199,6 +248,8 @@ def _layer_issues(bc_dir: Path) -> list[str]:
     issues.extend(_kind_dir_issues(bc_dir))
     # 존재하는 애그리거트의 코어 종류 완비 — ORM 추론 없이 디스크 실재만. 부재(0개)는 reviewer 몫.
     issues.extend(_aggregate_issues(bc_dir))
+    # 외래 port/ — 협력 포트 오배치(SH-7). application_layer/infra_layer 밑 port/ 에 실코드.
+    issues.extend(_foreign_port_issues(bc_dir))
     return issues
 
 
@@ -244,21 +295,29 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(
-            "[check-layer-skeleton] BLOCKER — 4계층 BC 가 계층/종류 골격을 생략했다"
-            "(houserules §0-2·§0-4: 내용이 없어도 빈 패키지로라도 4계층 + 종류 폴더 생성):"
+            "[check-layer-skeleton] BLOCKER — 4계층 BC 가 계층/종류 골격을 생략했거나 "
+            "협력 포트를 도메인 밖 계층(`application_layer`/`infra_layer` 하위 `port/`)에 두었다"
+            "(houserules §0-2·§0-4·§2):"
         )
         for f in findings:
             print(f)
         print(
-            "  근거: discipline-houserules §0-2·§0-4. 표현/도메인 관심사가 없다는 판단으로 "
+            "  근거: discipline-houserules §0-2·§0-4·§2. 표현/도메인 관심사가 없다는 판단으로 "
             "계층·종류 폴더 자체를 생략하지 않는다 — 빈 `presentation_layer` 라도 `__init__.py` 만 "
             "둔 빈 패키지로 만든다(예: ACL·published_service 로만 소비되는 내부 전용 BC). "
             "고정명 종류 폴더(`presentation_layer/api`·`presentation_layer/schema`·`infra_layer/acl`)는 "
             "§0-4 개정(2026-06-08)으로 표현/통합이 없어도 무조건 빈 패키지로 둔다 — 데이터소스 BC 도 "
             "예외 없다(`architecture-ddd` §632-(2) 면제는 *판정 실내용(.py)*에 한정). 이미 만든 "
             "`domain_layer/<aggregate>/` 는 코어 종류(`entity`·`value_object`·`repository` + "
-            "`exception.py`)를 빠짐없이 갖춘다. 완전 평면 앱은 4계층으로 분리하라. 접을 실질 사유가 "
-            "있으면 코드에서 생략하지 말고 설계(G1 트레이드오프)로 반송하라."
+            "`exception.py`)를 빠짐없이 갖춘다. 완전 평면 앱은 4계층으로 분리하라. "
+            "외래 port 발견이면: 협력 포트(타 BC 소비용 역할 추상 ABC)는 "
+            "`domain_layer/<aggregate>/port/` 로 옮긴다 — 포트를 호출하는 것이 application "
+            "유스케이스(command)이고 애그리거트가 직접 import 하지 않아도, 'use-case dependency' "
+            "재분류로 `application_layer/<feature>/port/` 에 두지 않는다(§2 — command 가 "
+            "*domain-owned* port 에 의존하는 것이 DIP 다). ACL *구현*(어댑터)은 `infra_layer/acl/` "
+            "직속이다(port/ 하위 아님). 네트워크/시리얼 '포트' 같은 기술 유틸이면 `port/` 는 이 "
+            "표준에서 협력 포트 전용 명칭이니 의미에 맞는 다른 폴더명을 쓴다. 접을/옮길 수 없는 "
+            "실질 사유가 있으면 코드로 박지 말고 설계(G1 트레이드오프)로 반송하라."
         )
         return 2
 
