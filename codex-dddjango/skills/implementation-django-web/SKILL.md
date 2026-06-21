@@ -26,6 +26,7 @@ Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·vi
 - HTMX fragment는 method·auth·permission·CSRF를 function/class view와 동일하게 보호 (§7)
 - CSRF·XSS 설정과 보안 헤더는 Django 보안 프리미티브로 유지 (§8)
 - render acceptance 보고는 실제 실행한 검증만 기재, 미실행은 미실행으로 명시 (§10)
+- 에러는 출처로 분류 — 도메인 예외는 view-local 재렌더, 시스템·미식별은 `handler500`, transient는 미들웨어 503 (§11)
 
 ## 상세 레퍼런스
 
@@ -43,5 +44,6 @@ Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·vi
 | CSRF, XSS, security setting | §8 |
 | View auth와 permission | §9 |
 | Render acceptance checks | §10 |
+| 서버렌더 에러 처리 (view-local 재렌더·handler500·transient 503·HTMX 에러) | §11 |
 
 각 절은 [`references/final.md`](references/final.md)에서 필요한 항목만 읽는다(전체 로드 불필요).

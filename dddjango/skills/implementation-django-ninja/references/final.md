@@ -586,7 +586,7 @@ async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
 
 **헬퍼·중앙 핸들러의 *위치*** — 단일 BC면 그 BC `application/<app>/presentation_layer/`에 둔다.
 2개 이상 BC가 *실제로* 공유할 때만 루트 `common/ninja/`(전체경로 `<project_root>/common/ninja/`
-— `application/` *아래*가 아니다)로 *승격*한다. 횡단이 생기기 전 조기 승격(`application/common/`
+— `application/` *아래*가 아니다)로 *승격*한다(공유 오류 헬퍼 `_is_retryable_db_error`·`problem` 등은 `common/ninja/errors.py`에 모은다 — 서버렌더 미들웨어도 이 경로로 import: `implementation-django-web` §11). 횡단이 생기기 전 조기 승격(`application/common/`
 생성)은 YAGNI 위반이다 — 단일 BC에서는 problem 헬퍼도 그 BC의 presentation에 머문다. 위치 규약은
 `discipline-houserules` §1.
 
