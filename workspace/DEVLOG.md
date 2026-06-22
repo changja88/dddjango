@@ -5,33 +5,28 @@ AI-OPTIMIZED DEVLOG. 이 문서는 dddjango 작업의 자기완결 정본이다.
   2) 결정은 §2 Decision Records에서 상태태그(✅adopted/❌rejected/⏸blocked/✔verified)로 찾아라.
   3) 모든 수치·주장엔 증거 앵커(세션ID·커밋SHA·파일:라인)가 붙는다 — 추천 전 실재 확인하라.
   4) 개인 메모리(~/.claude)는 초기화될 수 있어 신뢰 못 함. 이 문서가 정본이다.
-마지막 갱신: 2026-06-09
+마지막 갱신: 2026-06-22
 -->
 
 # dddjango DEVLOG
 
-`/dddjango` Claude Code 플러그인 파이프라인의 설계·구현·최적화 전체 여정 기록. AI가 읽는 자기완결 정본.
+`/dddjango` Claude Code·Codex 플러그인 파이프라인의 설계·구현·최적화·배포 전체 여정 기록. AI가 읽는 자기완결 정본.
 
 ---
 
 ## §0 Current State (READ FIRST)
 
-- **무엇**: 기존 Django 프로젝트에 한 기능을 DDD로 추가하는 Claude 전용 플러그인. 단일 진입 `/dddjango`. 코디네이터(메인 세션) + 서브에이전트 7 + 스킬 11, 게이트 G0/G1/G2.
-- **코드 상태**: 브랜치 `eval/codex-determinism-n2`, plugin **1.9.0**, 결정적 백스톱(게이트) **16종**(⑭transient-overmapping·⑮synthetic-infra·⑯catch-all 추가·⑰duplicate-app은 롤백). ⚠️ **eval 브랜치 전체 로컬·미push**(origin엔 P2 `58660a0`까지) — 릴리스(eval→main 머지/PR+push)는 **사용자 명시 push 승인 대기**(가드레일이 push 차단).
-- **현재 베스트 구성(검증됨)** = **커밋된 표준 + extended thinking OFF**. smoke8(2026-05-28) 최종 확인: 코디 **1.58M(전 런 최저)**·기계 **41분**·테스트 **20/20**·§0/§4/ACL 충족·코더 토끼굴 0·architect 재디스패치 0 — 역대 최청결·회귀 0.
-  - ⚠️ **thinking OFF는 코드가 아니라 사용자 세션 설정**(`Option+T` / `alwaysThinkingEnabled:false`). 플러그인에 못 박는다. 안 끄면 비용 ≈ 2.6M.
-- **속도/비용 현실(닫힌 결론)**: 기계시간 ~41~60분은 "강한 모델 + 다단계 게이트 + TDD + 독립 리뷰" 품질우선 설계에 **내재**. 품질 손실 없이 큰 wall 단축하는 공짜 레버 없음. 통제 가능한 비용 레버는 이미 적용. 큰 비용 레버(컨텍스트 편집/compaction)는 업스트림 차단(§2 DR-11).
-- **최적화 사이클: ✅ 종료** (2026-05-28, smoke8 합격). 다음 작업은 코드를 *실제로 바꿀 때*만 재개.
-- **배포 상태**: Claude판 **v1.0.0 main 병합·릴리스** 완료(마켓플레이스 `changja88`). 그 후 **Codex 이식 착수** → **PoC 성공(§2 DR-12)**: `codex-dddjango/`(스킬 19, Claude `dddjango/` 무변경). 이어 **코드품질 1:1 평가(§2 DR-13)** → **결정성 2차 검증으로 결론 수정(§2 DR-14)**: N=2 결과 **1차 "claude>codex 13:2:5"는 상당 부분 N=1 분산**이었음. 핵심 신호(B1 도메인소유·stock≥0)가 양 런타임 모두 **비결정**. 2차 프레임워크 무관 코드 대등(codex가 일부 우위). **재현되는 진짜 차이 = 코드 우열이 아니라 게이트 노출 철학·스택 취향**. 표준준수 점수 추정 codex~70·claude~84(신뢰낮음, claude 분산>평균차). (상세=§2 DR-13/14·[[dddjango-codex-port]]; 평가 산출물은 §2 DR-25서 정리·git 히스토리.)
-- **B1-fix 표준 검증(§2 DR-15, 2026-05-29)**: DR-14가 남긴 B1 비결정 과제에 **일반화 표준 편집(architecture-ddd §3.2 단일출처 + design-review-ddd/discipline-reviewer 2층 탐지, 12파일 미커밋)**으로 대응 → 새 스모크(sample→clone)로 codex-4·claude-3 동시검증 = **양쪽 설계·코드 끝까지 B1 CLEAN(각 N=1)**. DR-13 빈혈·DR-14 죽은코드 부재. **표준 12파일 커밋(`98ebfd3`).** (claude-3 ninja 통제이탈은 수락; 프레임워크축 비교 무효.)
-- **표준 빈칸 ③·④ 메움(§2 DR-16, 2026-05-29)**: DR-15 통제 비교가 드러낸 표준 두 빈칸(코드 버그 아님)을 메움 — ③ 기존 평면 코드에 도메인 판정 얹을 때 이주 기준을 **"판정·불변식 소유냐"**(레거시 아님)로 명문화(소유→`domain_layer` 이주/데이터 소스→평면 OK/컨텍스트 간 ACL·published만), ④ **API 스택을 design-architect 명세 1급 결정으로 승격**(기본 ninja·기존 존중)+ninja 버전핀 설치 규칙. **14파일 편집·미러 byte-identical·`plugin validate` PASS·서브에이전트 3렌즈 리뷰(정확성 2픽스 반영).** 정적까지 — 동적 검증 ⑥ 이연.
-- **동적 검증 Tier 2·3 + ④ 보강(§2 DR-17, 2026-05-29)**: Claude(Tier 2) ③ **STRONG PASS**·④ inconclusive(ninja 편향). Codex 전체 스모크 ×3(Tier 3): ③ 완전이주 가능·Claude 수렴이나 **비결정**(t3 평면 유지). ④ 결과 = pre-boost plain(headless 무설치 보수성) → **`design-architect` 보강 후 Ninja+requirements 핀 수렴(t3c, 결정적)**. ④(e) 스택 설계승격 전파 **확정**. (산출물 `eval/runs/{codex-5,6,7}`은 §2 DR-25서 정리·git 히스토리.) 각 N=1(sanity).
-- **스모크 방식 통일(§4)**: 마스터 `~/Desktop/dddjango-smoke-sample` + `git clone`으로 런타임별 타깃(`dddjango-{claude,codex}-index`). 구 reset.sh·E2E-SMOKE-METHOD.md 폐기.
-- **하드닝 이력(상세는 §2 각 DR)**: 빌드·릴리스 후 DR-16~50으로 표준 강화 — BC 판정-소유·API 스택 승격·P1a 오류중앙화·C3 멱등성·C4 빈혈SQL·NJ-2 §6.3 협상·BC FK금지·네이밍/R-C-Q·pytest·ACL 예외전수성·NJ-7 catch-all·ninja 클래스 컨트롤러·데이터소스 골격. 결정적 백스톱 16종.
-- **🔬 근본원인 분석→처방(2026-06-06)**: "왜 수정이 회귀하나" 진단(DIAGNOSIS v2·근본5[스코프갭·비결정·런타임prior·릴리스미완결·빌드배선무결성]) → **R5(소스-미러 동기·`corpus_mirror_sync.py`) 완료**, 나머지 처방(R2 측정·R1 프론티어·R3 수용)은 **일단락으로 접음**. 분석 상세=git 히스토리.
-- **🔎 진행 상태(2026-06-09)**: DR-44~50으로 ACL 예외전수성·NJ-7 catch-all·ninja 클래스 컨트롤러·데이터소스 골격 강화(대부분 **미푸시**·라이브 일부 검증). plugin 전면감사(ultracode)로 rank2(소스미러 재동기)·rank3(수정모드 백스톱 앵커) 완료·rank1(⑰) 보류. **현재 = DEVLOG 정리(시대별 압축)·완료 산출물 파일 정리.**
-- **열린 잔무**: **미푸시**(DR-44~50 + 정리 커밋 — 릴리스는 eval→main 머지/PR+push·사용자 승인 게이트). 평가·라이브 검증·ACL-EX2·근본원인 처방·plugin 감사 트랙은 dddjango 일단락으로 **접음**(상세·산출물 git 히스토리 보존, 재개 시 발굴).
-- **런타임 비교 경계**: 모든 dual 채점 **N=1·우열 결론 금지** — 치명 FAIL 레인이 런마다 갈림(P4③ run-variance), Claude/Codex 둘 다 비결정 관측.
+- **무엇**: 기존 Django 프로젝트에 한 기능을 DDD 4계층으로 추가하는 플러그인. 단일 진입 `/dddjango`. 코디네이터(메인 세션) + 서브에이전트 7 + 스킬 11 + 결정적 백스톱 16종, 게이트 G0/G1/G2. **Claude Code(`dddjango/`)와 Codex(`codex-dddjango/`) 양 런타임 지원** — 정본은 `dddjango/`, codex는 byte-identical 미러(`corpus_mirror_sync` 11/11 동기).
+- **배포 상태(2026-06-22)**: **v1.15.0 릴리스 완료**. main `9bbc93b` = origin·작업트리 clean·브랜치 `main`만. 릴리스 태그 `dddjango--v1.15.0`(Latest). 양 마켓 다 GitHub 레포 `changja88/dddjango`에서 배포(Claude `.claude-plugin/marketplace.json` · Codex `.agents/plugins/marketplace.json`), 설치 ID **`dddjango@changja88`**(양 런타임 공통). **버전 통일**: 양 plugin.json + 태그 전부 **1.15.0**(과거 Claude/Codex 독립 라인 잔재 해소·이후 단일 라인).
+  - 설치: Claude `/plugin marketplace add changja88/dddjango` → `/plugin install dddjango@changja88` · Codex `codex plugin marketplace add changja88/dddjango --ref main` → `codex plugin add dddjango@changja88`(설치 후 세션 재시작).
+- **최근 작업**: **DR-59 컴포지션 루트 V3**(백스톱 ⑯ `check-composition-root` 신설 — DI 배선 `composition_root.py` 위치·존재 결정적 강제·데이터소스 BC 면제·2라운드 적대검증 수렴)·**DR-58.5 백스톱 정밀도**(brownfield 거짓양성 3건·빈혈 백스톱 제거; anemic out·composition-root in으로 순계 16종 불변)·**comproot 라이브 dual 검증 GO**(V3 양방향 발화: codex 면제/Claude 발화). 상세 §2 DR-58.5·59.
+- **repo 위생(2026-06-22)**: 전역 git 신원을 `t<t@t.com>`(→GitHub vsajan 오귀속)에서 `changja88<changja00@gmail.com>`로 정정 + 머지된 8커밋 author 재작성·force-push(SHA 변경: 옛 `a97a58b`→현 `9bbc93b`·릴리스 태그 이동). main author=changja88·claude만(contributors API 검증). ⚠️ **과거 SHA를 참조하는 오래된 메모는 재작성 후 무효일 수 있음.**
+- **현재 베스트 구성(검증됨)** = 커밋된 표준 + **extended thinking OFF**. ⚠️ thinking OFF는 코드가 아니라 **사용자 세션 설정**(`Option+T` / `alwaysThinkingEnabled:false`) — 플러그인에 못 박는다(안 끄면 비용 ≈2.6M).
+- **속도/비용 현실(닫힌 결론)**: 기계시간 ~41~60분은 "강한 모델 + 다단계 게이트 + TDD + 독립 리뷰" 품질우선 설계에 **내재**. 품질 손실 없이 큰 wall 단축하는 공짜 레버 없음(컨텍스트 편집/compaction은 업스트림 차단·§2 DR-11).
+- **런타임 비교 경계**: 모든 dual 채점 **N=1·우열 결론 금지** — 치명 FAIL 레인이 런마다 갈림(run-variance), Claude/Codex 둘 다 비결정 관측.
+- **스모크/평가 방식(§4)**: 마스터 sample + `git clone`으로 런타임별 타깃. dual 채점 = EVAL-METHOD(결정 레인 empirical + 의미 레인 blind)·FC-GOLDEN 골든 오라클.
+- **하드닝 이력(상세는 §2 각 DR)**: 빌드·v1.0.0 릴리스 후 DR-16~59로 표준 강화 — BC 판정-소유·API 스택 승격·P1a 오류중앙화·멱등성·빈혈SQL·NJ-2 협상·BC FK금지·네이밍/R-C-Q·pytest·ACL 예외전수성·NJ-7 catch-all·ninja 클래스 컨트롤러·데이터소스 골격·SH-7 협력포트 위치·컴포지션 루트 V3.
+- **열린 항목**: ① DR-59 V3 **자연 발화**(off-tree/정본 부재 차단)·service-fold 차단 라이브 관측 — 합성 매트릭스로만 확인·실런 미관측 ② 의미 레인 **blind grader 패널(N≥3)** 라이브(comproot 검증은 N_grader=1 한계). 평가·근본원인 처방·plugin 감사 트랙은 일단락으로 접음(git 히스토리 보존).
 
 ---
 
