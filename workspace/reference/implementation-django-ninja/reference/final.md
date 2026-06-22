@@ -166,8 +166,9 @@ class ProblemOut(Schema):     # 오류 본문도 schema로 계약화 (형식은 
     tags=["orders"],
 )
 def create_order(request: HttpRequest, payload: OrderIn) -> Status[OrderOut]:
-    # place_order_command 는 컴포지션 루트가 주입한다(배선=D4 별도). ⚠️ operation 본문에서 Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
-    order = place_order_command.execute(PlaceOrderRequest(product_id=payload.product_id, quantity=payload.quantity))
+    # 의존성은 composition_root.py 의 build_place_order_command() 로 매요청 조립한다(아래 "컴포지션 루트"). ⚠️ operation 본문에서 Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
+    command = build_place_order_command()
+    order = command.execute(PlaceOrderRequest(product_id=payload.product_id, quantity=payload.quantity))
     # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
     return Status(status.HTTP_201_CREATED, OrderOut(id=order.id, status=order.status))
 ```
@@ -194,9 +195,10 @@ from ninja_extra import api_controller, route, status
 class OrderController:                          # ControllerBase 미상속(@api_controller가 자동 주입)
     @route.post("", response={201: OrderOut, 409: ErrorOut})   # 메서드 경로는 prefix 기준 상대
     def create_order(self, request, payload: OrderIn) -> Status[OrderOut]:
-        # place_order_command 는 컴포지션 루트가 주입한다(배선=D4 별도). ⚠️ 메서드 본문에서
-        # Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
-        order = place_order_command.execute(...)
+        # 의존성은 composition_root.py 의 build_place_order_command() 로 매요청 조립한다(아래 "컴포지션 루트"). ⚠️ 메서드
+        # 본문에서 Django…Repository()/…Adapter() 를 직접 생성하지 말 것 — presentation→infra 직접 결합(Q-7) 금지.
+        command = build_place_order_command()
+        order = command.execute(...)
         # ProductNotFound(404)·InsufficientStock(409)은 raise되어 중앙 핸들러가 변환한다(§6.2)
         return Status(status.HTTP_201_CREATED, OrderOut(...))
 ```
@@ -242,6 +244,27 @@ api.register_controllers(OrderController)
 - **BC별로 `NinjaExtraAPI()`/`NinjaAPI()` 인스턴스를 새로 만들지 않는다** — 인스턴스가 쪼개지면
   catch-all·중앙 예외 핸들러(§6.2)도 쪼개져 problem+json 변환이 흩어진다. 415 격리용
   `add_router`도 *같은* 인스턴스에 단다.
+
+**컴포지션 루트(배선) — `composition_root.py`.** operation/메서드 본문에서 `Django…Repository()`·`…Adapter()`를 직접 생성하면 presentation→infra 직접 결합(Q-7)이다. DI 조립은 BC 루트 `application/<app>/composition_root.py` **한 파일**에 모은다 — use-case마다 `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리를 두고, presentation은 컨트롤러 메서드에서 그 팩토리를 **호출만** 한다(매요청 조립). use-case 없는 순수 데이터소스 BC는 둘 게 없으니 생략한다.
+
+```python
+# application/order/composition_root.py — BC 루트의 DI 조립. 구체 infra를 use-case에 주입.
+from application.order.application_layer.place_order.command.place_order_command import PlaceOrderCommand
+from application.order.infra_layer.acl.product_stock_adapter import DjangoProductStockAdapter
+from application.order.infra_layer.repository.order_repository import DjangoOrderRepository
+
+
+def build_place_order_command() -> PlaceOrderCommand:
+    # 구체 infra를 고르는 유일한 곳 — 안쪽 계층은 domain repository/port 추상에만 의존(DIP).
+    return PlaceOrderCommand(
+        order_repository=DjangoOrderRepository(),
+        product_stock_port=DjangoProductStockAdapter(),
+    )
+```
+
+- **단일 파일·BC당 1개**: 컴포지션 루트는 "구체를 아는 유일한 곳"이라 한 파일에 모은다 — feature별 `composition/` 폴더로 쪼개면 루트가 분열돼 패턴 위반이다. `config/api.py`(등록)나 `<app>_api_router.py`(라우팅)에 섞지도 않는다.
+- **매요청 호출**: 컨트롤러 메서드에서 `command = build_place_order_command()` 후 `command.execute(request)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).
+- **BC 격리**: order의 루트는 *자기 BC*의 infra/ACL만 import한다(`DjangoProductStockAdapter`는 order `infra_layer/acl/`; catalog는 직접 import 안 하고 OHS/ACL 경유). *등록*(`register_controllers`)은 `config`의 단일 API에 중앙집중이지만 *배선*은 각 BC가 자기 의존만 알면 되므로 BC별로 둔다 — 모듈러 모놀리스의 모듈별 컴포지션 루트.
 
 **설치.** ninja-extra는 별도 앱이다 — `INSTALLED_APPS += ['ninja_extra']`가 필요하다(의존성
 매니페스트 핀은 §2.1과 동일하다).
@@ -359,7 +382,8 @@ class OrderFilter(FilterSchema):
 
 @router.get("/orders", response=list[OrderOut])
 def list_orders(request, filters: Query[OrderFilter]):
-    return list_orders_query.execute(ListOrdersRequest(filters=filters))   # 읽기 연산 객체(주입=컴포지션 루트, D4)
+    query = build_list_orders_query()   # composition_root.py 팩토리 — 매요청 조립(아래 "컴포지션 루트")
+    return query.execute(ListOrdersRequest(filters=filters))
 ```
 
 ### 5.2 Pagination
@@ -384,7 +408,8 @@ from ninja.pagination import paginate, PageNumberPagination
 @router.get("/orders", response=list[OrderOut])
 @paginate(PageNumberPagination)        # page size 상한 등은 NINJA_PAGINATION_* 설정으로
 def list_orders(request):
-    return list_orders_query.execute(ListOrdersRequest())   # Query가 QuerySet 반환 → paginate가 페이지로 자른다
+    query = build_list_orders_query()   # composition_root.py 팩토리 — 매요청 조립
+    return query.execute(ListOrdersRequest())   # Query가 QuerySet 반환 → paginate가 페이지로 자른다
 ```
 
 ---
@@ -596,7 +621,7 @@ async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
 
 **헬퍼·중앙 핸들러의 *위치*** — 단일 BC면 그 BC `application/<app>/presentation_layer/`에 둔다.
 2개 이상 BC가 *실제로* 공유할 때만 루트 `common/ninja/`(전체경로 `<project_root>/common/ninja/`
-— `application/` *아래*가 아니다)로 *승격*한다. 횡단이 생기기 전 조기 승격(`application/common/`
+— `application/` *아래*가 아니다)로 *승격*한다(공유 오류 헬퍼 `_is_retryable_db_error`·`problem` 등은 `common/ninja/errors.py`에 모은다 — 서버렌더 미들웨어도 이 경로로 import: `implementation-django-web` §11). 횡단이 생기기 전 조기 승격(`application/common/`
 생성)은 YAGNI 위반이다 — 단일 BC에서는 problem 헬퍼도 그 BC의 presentation에 머문다. 위치 규약은
 `discipline-houserules` §1.
 

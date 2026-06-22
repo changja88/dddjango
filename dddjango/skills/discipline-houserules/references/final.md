@@ -67,6 +67,7 @@
 ```
 application/<app>/
 ├── <app>_api_router.py                 # 외부 HTTP 진입점: config의 NinjaExtraAPI를 import해 register_controllers로 BC 로컬 등록 (루트 urls.py 포함은 함수형 Router 경로)
+├── composition_root.py                 # DI 조립 배선: build_<usecase>_command() 팩토리로 구체 infra를 use-case에 매요청 주입(presentation은 호출만=Q-7 짝). application 로직(command/query/service) 가진 BC는 반드시 둔다·데이터소스 BC 생략
 ├── published_service/                  # 컨텍스트 간 OHS — 다른 앱에 노출 (아래 "컨텍스트 간 통신")
 │
 ├── domain_layer/                       # ① 도메인 — 의존 없음, 순수 비즈니스 (§3 전술 패턴 / §6.1)
@@ -215,6 +216,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `read.py`·`write.py`(앱이 크면 `read/`·`write/` 디렉터리). 다른 앱은 **이것만** import |
 | `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → config의 `NinjaExtraAPI`를 import해 `register_controllers`로 BC 로컬 등록(루트 `urls.py` 포함은 함수형 Router 경로) |
+| 조립(배선) | DI 컴포지션 루트 — use-case·application 로직(command/query/service 등) 가진 BC는 **반드시 둔다**(데이터소스 BC=빈 `application_layer`는 생략) | `composition_root.py`를 **만들어** `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리로 구체 infra를 use-case에 매요청 주입하고, presentation은 그 팩토리를 **매요청 호출만** 한다(operation·application service 본문에서 `Django…Repository()`/`…Adapter()` 직접 생성 금지=Q-7의 짝). 결정적 백스톱 `check-composition-root`이 정본 부재·off-tree·오배치를 집행 |
 
 **앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer` 포함 어느 계층도 폴더를 생략하지 않고 내용이 없으면 빈 패키지로 둔다(§0-2); 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.
 

@@ -317,7 +317,7 @@ def server_error(request):                       # request만 — handler404와 
 from django.db import OperationalError
 from django.shortcuts import render
 
-from myproject.errors import _is_retryable_db_error   # ninja §6.2와 같은 판정 — 재구현 금지
+from common.ninja.errors import _is_retryable_db_error   # ninja §6.2가 정의·공유(ninja·web 2경계가 공유할 때 루트 common/ninja/로 승격) — 재구현 금지
 from application.order.domain_layer.order.exception import StockContention  # 도메인 transient 마커
 
 
