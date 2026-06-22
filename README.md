@@ -75,7 +75,9 @@ Claude Code에서:
 
 - **G0 · 요구·경계** — 무엇을 만들지, 어디에 둘지(새 영역 vs 기존 영역 확장), 어떤 리뷰 관점을 켤지 확정한다.
 - **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
-- **G2 · 구현** — 구현 코드 + 테스트 통과 결과 + 감수 리포트를 승인한다.
+- **G2 · 구현** — 구현 코드 + 테스트 통과 결과 + 감수 리포트 + **16종 결정적 백스톱** 통과를 승인한다.
+
+> G2 직전에는 **16종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 선언/중앙화 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
 
 ### 워크스루: "재고 있을 때만 주문 생성" 기능
 
@@ -90,7 +92,7 @@ Coordinator가 스코프를 정리해 보여준다: "주문 생성 시 재고를
 design-architect가 설계 명세를 쓴다 — `Order` 애그리거트, 재고는 다른 컨텍스트라 `ProductStockPort`로 협력, 동시성 안전한 차감 방식, 4계층 파일 배치까지. 동시에 ddd·api·db 리뷰어가 **병렬로** 독립 비평하고, architect가 이를 반영·중재한다. → 최종 설계 명세를 당신이 승인.
 
 **3) 구현(TDD) → G2**
-acceptance-tester가 먼저 **실패하는** 인수 테스트를 쓴다(예: "재고 3개일 때 5개 주문 → 422, 재고 그대로"). coder가 슬라이스 단위로 Red→Green→Refactor를 돌려 테스트를 통과시키고, discipline-reviewer가 구조·타입을 감수한다. → 코드·테스트·감수 결과를 당신이 승인.
+acceptance-tester가 먼저 **실패하는** 인수 테스트를 쓴다(예: "재고 3개일 때 5개 주문 → 409, 재고 그대로"). coder가 슬라이스 단위로 Red→Green→Refactor를 돌려 테스트를 통과시키고, discipline-reviewer가 구조·타입을 감수한다. → 코드·테스트·감수 결과를 당신이 승인.
 
 **4) 마무리**
 실제로 돌린 검증만 보고한다 — 테스트 결과, 마이그레이션, `manage.py check`, (구성돼 있으면) mypy strict.
@@ -103,37 +105,40 @@ acceptance-tester가 먼저 **실패하는** 인수 테스트를 쓴다(예: "�
 
 ```
 your_project/
-└── application/
+└── application/                # 모든 feature 앱의 컨테이너 (루트 평면 금지)
     └── orders/
-        ├── domain_layer/            # 순수 비즈니스 규칙 (프레임워크 무관)
+        ├── composition_root.py             # DI 배선 — build_place_order_command() 매요청 팩토리
+        ├── orders_api_router.py            # HTTP 진입점 등록
+        ├── domain_layer/                   # 순수 비즈니스 규칙 (프레임워크 무관)
         │   └── order/                       # 애그리거트(개념) 1차
-        │       ├── entity/order.py          # class Order
-        │       ├── value_object/quantity.py
-        │       ├── repository/order_repository.py     # OrderRepository (추상)
-        │       └── port/product_stock_port.py         # 다른 컨텍스트 협력 포트
-        ├── application_layer/        # 유스케이스 흐름
-        │   └── order/
-        │       └── command/place_order.py
-        ├── infra_layer/             # ORM·외부 연동 등 세부 구현
+        │       ├── order.py                 # 애그리거트 루트 — class Order
+        │       ├── entity/  value_object/   # 종속 엔티티·값 객체 (종류 2차 폴더)
+        │       ├── repository/order_repository.py   # OrderRepository (추상 인터페이스)
+        │       ├── port/product_stock_port.py       # 다른 컨텍스트 협력 포트
+        │       └── exception.py
+        ├── application_layer/              # 유스케이스 흐름 (무엇을 언제)
+        │   └── place_order/
+        │       ├── command/place_order_command.py   # PlaceOrderCommand.execute(request)
+        │       └── dto/place_order_request.py
+        ├── infra_layer/                    # ORM·외부 연동 등 세부 구현
         │   ├── django_orders/               # 여기서 startapp
         │   │   ├── apps.py
         │   │   ├── models.py                 # class OrderModel(models.Model)
         │   │   └── migrations/
-        │   ├── repository/django_order_repository.py  # DjangoOrderRepository
-        │   └── acl/django_product_stock_acl.py        # 다른 BC 번역
-        ├── presentation_layer/      # 바깥 계약
-        │   └── order/api.py                  # django-ninja 엔드포인트
-        └── test/                    # 의미군 분리
-            ├── unit/
-            ├── integration/
-            └── e2e/
+        │   ├── repository/django_order_repository.py  # DjangoOrderRepository (구현)
+        │   └── acl/product_stock_adapter.py           # 다른 BC를 번역해 소비
+        ├── presentation_layer/             # 바깥 계약 (종류 1차: api/ · schema/)
+        │   ├── api/order_controller.py       # django-ninja 컨트롤러 (얇은 어댑터)
+        │   └── schema/                       # 입출력 계약 schema_in·schema_out·error_out
+        └── test/                           # 의미군 분리
+            └── unit/  integration/  e2e/
 ```
 
-핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더, ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), 테스트 unit/integration/e2e 분리.
+핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`, 테스트 unit/integration/e2e 분리. **이 규약들은 16종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
 
-진행 메모와 설계 명세는 `.dddjango/<기능-slug>/`(`scope.md`, `design-spec.md`)에 남는다.
+진행 메모와 설계 명세는 `.dddjango/<날짜>-<기능-slug>/`(`scope.md`, `design-spec.md`)에 남는다 — 한 기능 = 한 폴더이고, 코드와 함께 커밋해 설계 결정 기록으로 남긴다.
 
 ---
 
@@ -150,7 +155,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 
 - **Claude Code**
 - **기존 Django 프로젝트** — 이 플러그인은 한 기능을 빌드하는 도구이지, 프로젝트를 새로 부트스트랩하지 않는다.
-- 권장 스택: django-ninja(API), pytest, mypy strict — 프로젝트에 이미 설정돼 있으면 존중하고 활용한다.
+- **스택**: 테스트는 항상 **pytest**(pytest-django)로 돌린다 — 설정이 없으면 파이프라인이 갖춰 준다. API는 **django-ninja**가 기본이며, 프로젝트에 DRF·plain Django 관례가 확립돼 있으면 설계자가 그것을 존중한다. mypy strict는 구성돼 있으면 함께 검증한다.
 
 ---
 
@@ -159,6 +164,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **커맨드 1개**: `/dddjango`
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
+- **결정적 백스톱 16종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
 
 ---
 

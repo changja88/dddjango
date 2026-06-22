@@ -51,7 +51,7 @@ status 가 부여된 응답의 content-type 만 통일하고, 핸들러 없는 �
 catch-all 공존을 막으므로, **데코 핸들러 ≥1 + (catch-all 부재 OR HttpError 핸들러 부재
 OR 핸들러 되던지기) + 비테스트 + git-touched 의 AND** 로만 차단한다.
 
-차단 조건(셋 중 하나라도, git-touched 그룹 한정):
+차단 조건(셋 중 하나라도; git-touched 한정 — (1)·(3)은 인스턴스 그룹, (2)는 파일별):
   (1) catch-all 부재 — 한 인스턴스(`<var>`)에 `@<var>.exception_handler(...)` 핸들러가
       1개 이상인데 `@<var>.exception_handler(Exception|BaseException)` 최후방이 없음.
   (2) 핸들러 되던지기 — 임의 핸들러 본문이 bare `raise` 또는 `raise <name>`(cause 없음·
@@ -245,9 +245,11 @@ def main(argv: list[str]) -> int:
                 "HttpError 핸들러가 MRO 상 먼저 잡아 `{\"detail\"}`(application/json) 로 응답 — "
                 "problem+json 단일변환점 우회(EP-1 형태)"
             )
-        # 조건 (2) 핸들러 되던지기.
+        # 조건 (2) 핸들러 되던지기 — 파일-로컬 위반이라 *그 파일*이 이번에 touched 일 때만 본다
+        # (catch-all·HttpError 부재는 인스턴스 속성이라 그룹 게이트를 쓰지만, 되던지기는 미변경
+        # 커밋된 형제까지 차단하면 brownfield 존중 위반이므로 파일별로 좁힌다).
         for prod_file, _, name, reraise_ln in g["handlers"]:
-            if reraise_ln is not None:
+            if reraise_ln is not None and _is_new_or_modified(root, prod_file):
                 findings.append(
                     f"  - {prod_file.relative_to(root)}:{reraise_ln} {name}(): "
                     "핸들러가 예외를 `raise` 로 되던짐 — problem+json 단일변환점을 우회해 "

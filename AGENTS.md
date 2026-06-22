@@ -11,7 +11,7 @@
 
 - `dddjango/` — 실제 플러그인. `.claude-plugin/plugin.json`(매니페스트) +
   `commands/dddjango.md`(Coordinator) + `agents/*.md`(7개 subagent) +
-  `skills/*/SKILL.md`(10개 스킬).
+  `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 16종).
 - `workspace/reference/**` — 소스 코퍼스(아키텍처·구현 레퍼런스의 `final.md`).
   스킬 재생성의 1차 근거.
 - `workspace/design/`, `workspace/plan/` — 빌드 설계 메모와 계획서.
