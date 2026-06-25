@@ -35,14 +35,14 @@
 
 ```
 /plugin marketplace add changja88/dddjango
-/plugin install dddjango@changja88
+/plugin install dddjango@changja88-dddjango
 ```
 
 **Codex** — CLI로:
 
 ```
 codex plugin marketplace add changja88/dddjango --ref main
-codex plugin add dddjango@changja88
+codex plugin add dddjango@changja88-dddjango
 ```
 
 > 두 마켓 모두 같은 GitHub 레포(`changja88/dddjango`)에서 받습니다. 설치 후 세션을 재시작하세요.

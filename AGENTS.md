@@ -6,7 +6,7 @@
 `/dddjango` 커맨드(Coordinator)가 기존 Django 프로젝트의 한 기능을 DDD 방식으로
 요구→설계→구현(TDD)까지 단계별 게이트로 빌드하도록 오케스트레이션한다.
 **Claude Code(`dddjango/`)와 Codex(`codex-dddjango/`) 양 런타임을 지원**하며, 둘 다
-같은 GitHub 레포에서 마켓으로 배포한다(Claude `dddjango@changja88` · Codex `dddjango@changja88`).
+같은 GitHub 레포에서 마켓으로 배포한다(Claude `dddjango@changja88-dddjango` · Codex `dddjango@changja88-dddjango`).
 정본은 `dddjango/`이고 `codex-dddjango/`는 byte-identical 미러(`corpus_mirror_sync`로 동기 검증).
 
 ## 저장소 구조
