@@ -23,7 +23,7 @@
 3. **개념 1차 폴더** — `domain_layer/<aggregate>/`, `application_layer/<feature>/`.
 4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 패키지(`__init__.py`만)로 둔다 — 평면 파일(`repository.py`)로 접지 않는다. 빈 폴더의 `__init__.py`는 **유지한다(regular package)** — git은 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시키고, Django `migrations/`·앱 패키지도 `__init__.py`를 요구한다. PEP 420(namespace package)을 이유로 `__init__.py`를 지우지 않는다. (`[선택]` 마커는 "비어 있을 수 있음"이지 *생략 가능*이 아니다.) 이 종류-폴더 항상-생성은 domain·application 종류(`entity`/`value_object`/`repository`·`command`/`query`/`dto` 등)에 더해 **`presentation_layer`의 `api/`·`schema/`도 포함한다 — 표현이 없는 BC도 빈 패키지로 항상 생성한다**(2026-06-08 개정: 이전의 '`api/`·`schema/`는 표현 생길 때' 조건 폐지). 골격 폴더 자체는 모든 BC가 무조건 실현하고, 빈 골격에 무엇을 채울지(깊이 적정성)는 discipline-reviewer 의미 체크 몫이다.
 5. **Django 앱은 `infra_layer/django_<app>/`** — `startapp`을 그 안에서 수행한다. ORM 모델·`migrations/`·`apps.py`가 거기 산다. 앱 루트나 도메인 패키지에 `models.py`를 두지 않는다(§2 "Django 앱 성립" 참조).
-6. **ORM 모델 명명** — 도메인 엔티티/애그리거트는 bare 이름(`Order`), Django ORM 모델 클래스는 `<Name>Model`(`OrderModel`)로 구분한다(상세 §4 명명 규약).
+6. **ORM 모델 명명·테이블명** — 도메인 엔티티/애그리거트는 bare 이름(`Order`), Django ORM 모델 클래스는 `<Name>Model`(`OrderModel`)로 구분하고, **신규 모델은 `Meta.db_table`을 `<app_label>_<entity_snake>`**(`Model` 접미 제거·snake; `abstract`/`proxy`/`managed=False` 면제)로 명시한다(상세 §4 명명 규약).
 7. **이주 배타성** — 기존 Django 앱을 `infra_layer/django_<app>/`로 이주하면 옛 루트 `<app>/`는 `migrations/`까지 통째 제거하고 `INSTALLED_APPS`에서 옛 루트 등록을 뺀다. 이력은 `implementation-django` §10.4의 새 경로가 보존하므로, counterpart가 새 경로에 자기 마이그레이션을 갖췄는데도 같은 앱이 옛 루트와 `application/`에 동시 존재하면(앱 파일이든 `migrations/`-only든·`MIGRATION_MODULES`로 옛 루트를 가리키든) 미완 이주다.
 
 이 불변식은 `discipline-houserules` SKILL.md 본문에도 체크리스트로 요약되어, 스킬을 로드하는 모든 행위자(design-architect·coder·discipline-reviewer)에게 전달된다. design-architect는 명세에서 이를 생략·축소할 수 없고, discipline-reviewer는 *명세가 아니라 이 불변식*과 코드를 대조한다.
@@ -230,6 +230,13 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 - 도메인 엔티티/애그리거트 = **bare 이름**(`Order`; `domain_layer/<aggregate>/`).
 - Django ORM 모델 클래스 = **`<Name>Model`**(`OrderModel`; 파일 `<entity>_model.py`, `infra_layer/django_<app>/models/`).
 - 왜: ORM ≠ 도메인(Data Mapper §6.2). 이름이 갈려야 호출부가 어느 표현을 다루는지 분명하다(§0 불변식 6). 변환은 `infra_layer/repository/`·표현 `schema_out`이 담당한다.
+
+**테이블명(`db_table`)** — 신규 ORM 모델은 `Meta.db_table = "<app_label>_<entity_snake>"`를 명시한다. `<entity_snake>`는 클래스명 `<Name>Model`에서 **`Model` 접미를 떼고** snake_case로 바꾼 도메인 개념명이다(`ProductModel`→`catalog_product`, `ProductImageModel`→`catalog_product_image`).
+- 왜: `Model` 접미는 *코드측* ORM↔도메인 구분 표식(위 항)이지 DB 개념이 아니다 — 테이블은 도메인 개념을 반영한다. Django 기본값 `<app_label>_<modelname>`(= `<app_label>_<name>model`)을 그대로 두면 `model` 군더더기가 테이블명에 새고(`catalog_productmodel`) 다단어는 언더스코어 없이 붙는다(`catalog_productimagemodel`). 명시로 둘 다 해소한다.
+- `app_label` 접두는 **유지**한다(교차 앱 테이블 충돌 방지·DB 소유 식별). 앱명과 애그리거트명이 같아 `order_order`처럼 반복돼 보여도 줄이지 않는다(규칙의 결정성·백스톱).
+- 면제: `abstract = True`·`proxy = True`(자체 테이블 없음)·`managed = False`(외부 소유 테이블 매핑)는 `db_table`을 두지 않는다.
+- 적용 범위는 **신규 모델만**이다. 이미 생성·적용된 모델의 테이블명은 소급 변경하지 않으며(applied 테이블 rename = brownfield DDL 위험), 기존 앱을 표준 구조로 이주할 때의 테이블명은 `implementation-django` §10.4가 *기존명 보존*으로 따로 정한다(그 결과가 이 규칙과 달라도 정상).
+- 집행(2층): 결정적 백스톱 `check-db-table.py`는 신규 추가 모델의 `db_table` **존재(작성)** 만 잡는다(값 형태 미검사 → 거짓 양성 ≈0 유지). **값 형태**(`<app_label>_<entity_snake>` 일치)는 `python manage.py makemigrations --check` 드리프트 0 + discipline-reviewer 의미 점검(형태 일치·수정 파일 내 신규 모델·비표준 위치 등)이 본다. 백스톱이 *형태*까지 보지 않는 이유: 기대 테이블명을 클래스명·`app_label`에서 도출해 대조하면 약어 snake·`AppConfig.label`≠디렉터리명·이주 보존명에서 거짓 양성이 나기 때문(모호성 0인 *누락*만 결정적으로 집행).
 
 **추상화(포트) ↔ 구현(어댑터)** — 추상화가 개념의 "진짜 이름"을 갖고, 구현 접미사는 그 포트가 *확립 패턴명*인지로 갈린다(헥사고날 정석 — DR-05/37 번복: 옛 규약은 모든 포트 구현에 `Port`를 보존했으나 이는 위치 표식을 구현에 남기는 오류였다).
 - 추상화(리포지토리 인터페이스·기타 포트 ABC) = 도메인 개념 + **역할 접미사**(`OrderRepository`·`ProductLockPort`·`PaymentGateway`). `Repository`/`Port`/`Gateway`처럼 그 객체의 *역할*을 나타내는 접미사는 이름의 일부라 허용한다.

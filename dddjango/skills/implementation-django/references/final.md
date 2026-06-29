@@ -1004,6 +1004,13 @@ class Migration(migrations.Migration):
   앱이 두 곳에 존재하는 미완 이주(`discipline-houserules` §0 배타성)다. *왜* — step 1의
   "옮긴다(move)"가 옛 루트 소멸을 함의하나, 명시 안 하면 코더가 move를 copy로 떨어뜨려(새 트리만
   만들고 옛 루트 git 방치) 앱이 두 곳에 남는다.
+- 신규 모델의 db_table 규약(`<app_label>_<entity_snake>`·`Model` 제거·snake)은
+  `discipline-houserules` §4가 정한다(결정적 백스톱 `check-db-table.py`). §10.4는 그와
+  별개로 **이미 적용된** 기존 테이블명을 *보존*하는 경로다 — 이주 결과 테이블명이 신규
+  규약과 우연히 같든(`catalog_product`) legacy 그대로든(`tbl_product`) 이력 보존이
+  우선이다. 백스톱 `check-db-table.py`는 db_table **존재**만 보고 값 형태는 보지 않으므로,
+  이주가 신규 파일로 떨어져도 보존 db_table을 *명시*했으면(§10.4가 요구하는 그대로) 통과한다
+  — 보존명이 규약(`<app_label>_<entity_snake>`)과 달라도 무방.
 
 ---
 

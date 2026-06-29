@@ -32,6 +32,7 @@ user-invocable: false
    - **개념 1차 폴더**(`<aggregate>/`·`<feature>/`) + **종류 2차 폴더 전체**(`entity`/`value_object`/`repository`/`command`/`dto`… — 비어도 폴더로 생성, 평면 파일 `repository.py`로 접지 않음).
    - **Django 앱은 `infra_layer/django_<app>/`에서 `startapp`** — `AppConfig.name`=점경로(`application.<app>.infra_layer.django_<app>`), `label='<app>'`; 앱 루트에 `models.py` 금지.
    - **ORM 모델 클래스명 `<Name>Model`**(도메인 엔티티/애그리거트는 bare `Order`).
+   - **신규 ORM 모델 `db_table` 명시** — `<app_label>_<entity_snake>`(클래스 `<Name>Model`에서 `Model` 떼고 snake; `ProductModel`→`catalog_product`). app_label 접두 유지·신규만·`abstract`/`proxy`/`managed=False` 면제. 백스톱 `check-db-table.py`는 `db_table` *존재*만 강제(값 형태는 reviewer·`makemigrations --check`). 상세 `references/final.md` §4.
    - **리포지토리·포트 명명** — 추상화는 개념명+역할 접미사(`OrderRepository`·`ProductLockPort`·`PaymentGateway`; `Interface`/`Impl` 금지), 구현은 **확립 패턴명(`Repository`/`Gateway`)이면 패턴명 유지+기술 접두(`DjangoOrderRepository`·`StripePaymentGateway`), 일반 포트면 `…Port`→`…Adapter`로(`DjangoProductLockAdapter`)**. 파일명 약어 없이(`order_repository.py`). 상세 `references/final.md` §4. ⚠️ **`Django`+`ProductLockPort`(`Port`를 떼지 않고 붙여쓴 한 토큰)를 정답으로 쓰지 마라** — 개정 후 일반 포트 구현 정답은 `DjangoProductLockAdapter`다.
    - **응용 유스케이스 R/C/Q 명명** — `command/`=`…Command`(쓰기)·`query/`=`…Query`(읽기)·`dto/`=`@dataclass …Request`(입력), 모두 `execute(request)`·repository/port 의존. `…Command`=입력 DTO 아님(입력=`…Request`). 상세 `references/final.md` §4·어휘 노트.
    - **표현(presentation) 컨트롤러 명명** — ninja-extra 클래스 컨트롤러는 `<Aggregate>Controller`(예 `OrderController`)·파일 `<aggregate>_controller.py`(예 `order_controller.py`). 상세 `references/final.md` §4(함수형 Ninja `Router`는 레거시 병기).
@@ -55,6 +56,7 @@ user-invocable: false
 - **종류 2차 폴더가 평면 파일로 접힘**(예: `repository/` 폴더 대신 `repository.py`) 또는 4계층 중 일부가 누락된다(§0 불변식 2·4 위반).
 - **Django 앱이 `infra_layer/django_<app>/` 밖**에 있다(앱 루트에 `models.py`가 있거나 `startapp`을 루트에서 함 — §0 불변식 5 위반).
 - **ORM 모델 클래스명이 `<Name>Model`이 아니다**(도메인 엔티티와 이름이 충돌 — §0 불변식 6 위반).
+- **신규 ORM 모델에 `db_table` 누락 또는 `<app_label>_<entity_snake>` 불일치** — Django 기본값 `<app>_<name>model`의 `model` 군더더기를 방치(§4·§0 불변식 6 위반). `abstract`/`proxy`/`managed=False`·기존 적용 모델은 제외.
 - **리포지토리·포트 명명 규약 위반** — 일반 포트 구현이 `…Adapter`가 아니거나(개정 후엔 일반 포트 구현이 `Port`를 유지하면 위반: `ProductLockPort`의 구현은 `DjangoProductLockAdapter`이지 `Django`+`ProductLockPort`가 아니다 — 구현에서 `Port`를 떼고 `Adapter`로 바꾼다) 개념 base명이 불일치하거나(`ProductLockPort`→`DjangoProductLock`처럼 개념 base 어긋남), 확립 패턴명(`Repository`/`Gateway`) 구현이 패턴명을 잃거나 기술 한정자(`Django…`/`Stripe…`/`InMemory…`/`Fake…`)가 누락되거나, 추상화(ABC)에 `Interface`/`Impl` 타입표식 접미사가 붙거나, 파일명을 약어로 줄인다(`order_repo.py`)(추상=개념명+역할 접미사·일반 포트 구현=`Adapter`·확립 패턴명 구현=패턴명 유지+한정자 접두 — `references/final.md` §4 명명 규약).
 - **ACL/외부 컨텍스트 어댑터를 `repository/`에 섞음** — 다른 바운디드 컨텍스트를 번역·소비하는 ACL은 리포지토리가 아니다. domain은 `<aggregate>/port/`(협력 포트), infra는 `acl/`(어댑터)로 분리한다(컨텍스트 간 통신은 OHS `published_service` 우선 — `references/final.md` §2).
 - `test_*.py`가 의미군(unit/integration/…) 없이 한 디렉터리에 평면으로 나열돼 있다.
