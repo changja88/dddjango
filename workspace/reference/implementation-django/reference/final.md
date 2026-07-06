@@ -1625,9 +1625,15 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 메시지 유실이 허용되지 않는 외부 발행은 Outbox로 구현한다(채택 기준은 `architecture-ddd` §3.7, 전달 보장·dead-letter 정책은 `architecture-db` §9.7). Django에서는 outbox 행을 비즈니스 write와 **같은 `transaction.atomic()` 블록**에서 저장하고, 별도 디스패처가 발행한다.
 
 ```python
+# domain_layer/order/event/event_type.py -- 발행 이벤트 종류의 단일 출처
+# (1종째부터 enum·append-only: birth-enum, architecture-ddd §3.7)
+class OrderEventType(StrEnum):
+    ORDER_CONFIRMED = "order.confirmed"
+
+
 # models.py
 class OutboxMessage(models.Model):
-    event_type = models.CharField(max_length=200)
+    event_type = models.CharField(max_length=200)  # 값은 OrderEventType에서만 -- 대입·filter 소비도 심볼로(§2.5 소비 규율)
     payload = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -1643,7 +1649,7 @@ def confirm_order(*, order: Order) -> Order:
         order.confirm()
         order.save(update_fields=["status", "confirmed_at"])
         OutboxMessage.objects.create(
-            event_type="order.confirmed",
+            event_type=OrderEventType.ORDER_CONFIRMED,
             payload={"order_id": order.id},
         )
     return order

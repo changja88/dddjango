@@ -19,6 +19,7 @@ Django Ninja Router/Schema/Operation·인증·필터링·페이지네이션·Pro
 
 - Router는 HTTP 어댑터로 얇게: 요청 바인딩·auth hook·서비스 호출·응답 매핑만 (§1.3)
 - Request/Response schema는 명시적으로 분리, ModelSchema는 내부 구현 보호가 확실할 때만 (§3.1–§3.2)
+- 발행 이벤트 봉투의 discriminator는 1종째부터 domain StrEnum + `Literal[EventType.X]` 파생(birth-enum), 버전 태그는 리터럴 동결, union-enum 동기 테스트 세트 (§3.1)
 - 에러 status를 `response={...}`에 schema로 선언하되(`openapi_extra`·`get_openapi_schema` 수동 선언은 ninja 미인지라 불충족), 오류는 operation에서 `raise`하고 problem+json 변환은 중앙 `@api.exception_handler`·헬퍼 한 곳이 한다 — operation 본문에서 `(status, schema)` 튜플·수제 응답 금지. 생성 OpenAPI의 error media-type이 `application/json`인 것은 수용된 한계(사후변형 금지). Problem Details RFC 9457 변환 (§2.2·§6.2)
 - operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) (§2.2)
 - Idempotency-Key는 계약에 정의된 endpoint에만; 키 정책(scope·replay·conflict)은 `architecture-api`, 저장소·retention(테이블·unique constraint·fingerprint)은 `architecture-db`가 결정 (§7)

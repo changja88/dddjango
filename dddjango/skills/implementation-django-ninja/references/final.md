@@ -286,6 +286,17 @@ schema를 분리한다.
   enum으로 노출한다. 도메인 enum에서 파생하되, 계약 안정성을 도메인 리팩터링과 분리해야
   하면 경계-로컬 `Literal`로 고정한다(published language — `architecture-ddd` §2.5).
   응답 조립·비교에 원시 리터럴을 흩지 않는다(`discipline-cleancode` §2.14 소비 규율).
+- **발행 이벤트 봉투(태그드 유니온)의 discriminator는 1종째부터 domain `StrEnum` 파생으로
+  선언한다**(birth-enum — `architecture-ddd` §3.7). 각 이벤트 Schema의 태그는
+  `event_type: Literal[EventType.PARENT_SAFE_ALERT] = EventType.PARENT_SAFE_ALERT`,
+  봉투는 `Event = Annotated[Union[...], Field(discriminator="event_type")]` — 평
+  (non-Literal) Enum 필드는 discriminator로 쓸 수 없으므로(Pydantic) Literal 파생이
+  유일 경로다. enum 파생과 문자열 Literal은 JSON schema가 동일하게 `const`로 렌더되므로
+  OpenAPI 계약은 불변 — "계약 안정성 때문에 맨 Literal"은 이 위치에서 성립하지 않는다.
+  `payload_schema_version` 등 버전 태그는 형태가 같아도 리터럴 동결 유지(발행 순간
+  동결되는 계약 표식 — §3.7 짝 조항). union-enum 동기 계약 테스트가 세트다
+  (`implementation-test` §15.5). 봉투 union을 페이지네이션 응답에 직접 조합하지 않는다
+  (ninja discriminated union+pagination의 OpenAPI 렌더 미해결 버그 — vitalik/django-ninja#1308).
 
 ### 3.2 ModelSchema 사용 기준
 

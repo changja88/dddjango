@@ -2093,6 +2093,27 @@ assert response.json()["status"] == "delivered"
 
 경계 셋: ① **도메인 내부 단위 테스트**의 심볼 단언(`assert order.status == OrderStatus.DELIVERED`)은 허용 — 거기서의 계약은 전이 행위이지 철자가 아니고, 철자 회귀는 위 계약 테스트가 잡는다. ② 리터럴 동결 대상은 **철자가 곧 계약인 값**(enum 코드·상태 문자열·필드명)이다 — 계산 결과값의 기댓값 표현은 `discipline-tdd` '명백한 데이터'가 소유한다(SUT를 호출하지 않는 독립 산식으로 관계를 드러내는 것 허용). ③ 테스트의 **arrange/act**(픽스처 생성·`.filter()` 준비)는 심볼 사용을 권장한다 — 리터럴 강제는 외부 계약을 관찰하는 assert에만 적용되므로 프로덕션 소비 규율(`discipline-cleancode` §2.14)과 같은 테스트 안에서 충돌하지 않는다.
 
+### 15.5 발행 이벤트 봉투의 union-enum 동기 계약 테스트 (birth-enum 세트)
+
+발행 이벤트 봉투를 태그드 유니온 + domain `StrEnum` 파생으로 선언했으면(`architecture-ddd` §3.7 birth-enum), **"봉투 union 멤버들의 태그 집합 == EventType 멤버 집합" 단언 테스트 1개를 발행 BC의 계약 테스트에 반드시 포함한다** — 선택이 아니라 세트다. birth-enum의 유일한 실패 모드(이벤트 추가 시 enum·union 한쪽만 갱신되는 드리프트)를 결정적 검출로 바꾸는 장치다 — union 누락은 디스패치 불능으로 런타임이 잡지만, enum 누락은 이 테스트 없이는 조용히 지나간다.
+
+```python
+from typing import get_args
+
+
+def test_event_union_covers_all_event_types():
+    # Event = Annotated[Union[...], Field(discriminator="event_type")] — 봉투 union alias
+    union_type, _field = get_args(Event)
+    union_tags = {
+        str(tag)
+        for member in get_args(union_type)
+        for tag in get_args(member.model_fields["event_type"].annotation)
+    }
+    assert union_tags == {str(m) for m in EventType}
+```
+
+경계: 이 테스트는 **구조 동기 검증**이지 외부 계약 검증이 아니므로 §15.4(프로덕션 상수 역수입 금지)와 충돌하지 않는다 — 발행 payload의 실제 문자열을 검증하는 외부 계약 테스트의 assert 기댓값은 여전히 리터럴로 고정한다(`assert body["event_type"] == "parent_safe_alert"`).
+
 ---
 
 ## 16. 테스트 안티패턴

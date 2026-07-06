@@ -358,7 +358,7 @@ class ERPAnticorruptionLayer:
 
 ACL은 경계 근처에 둔다. 여러 도메인 객체 내부에 번역 로직을 산발적으로 넣지 않는다. 데이터 형태뿐 아니라 status, 단위, 식별자, lifecycle 의미를 번역한다. 공개 API의 published language와 versioning이 관련되면 `architecture-api`로 넘긴다.
 
-**BC 간 enum·상수 공유 경계.** 상수·Enum은 기본적으로 그것을 소유한 바운디드 컨텍스트 내부 자산이다 — 다른 BC가 내부 Enum을 직접 import하지 않는다(유비쿼터스 언어는 BC 경계 안에서만 보편 §2.3; 같은 철자라도 컨텍스트마다 다른 개념). BC 간 연결은 published service 계약 타입 또는 wire value로 하고, 같은 wire 값을 BC마다 각자 선언하는 것은 지식의 중복이 아니라 **published language 수용**이다 — 상대 모델의 의미가 어긋나면 그때 ACL로 번역한다. 공용 승격은 **공유 커널 결정**이다: 같은 철자를 넘어 같은 지식임이 확인되고, 결정 가능한 대리 기준으로 **두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만** — 공유 범위 최소화 필수(위 표). 승격된 enum은 `common/enum/`에 두며, 공유 커널은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다(배치·의존 예외는 `discipline-houserules`).
+**BC 간 enum·상수 공유 경계.** 상수·Enum은 기본적으로 그것을 소유한 바운디드 컨텍스트 내부 자산이다 — 다른 BC가 내부 Enum을 직접 import하지 않는다(유비쿼터스 언어는 BC 경계 안에서만 보편 §2.3; 같은 철자라도 컨텍스트마다 다른 개념). BC 간 연결은 published service 계약 타입 또는 wire value로 하고, 같은 wire 값을 BC마다 각자 선언하는 것은 지식의 중복이 아니라 **published language 수용**이다 — 상대 모델의 의미가 어긋나면 그때 ACL로 번역한다. 공용 승격은 **공유 커널 결정**이다: 같은 철자를 넘어 같은 지식임이 확인되고, 결정 가능한 대리 기준으로 **두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만** — 공유 범위 최소화 필수(위 표). 승격된 enum은 `common/enum/`에 두며, 공유 커널은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다(배치·의존 예외는 `discipline-houserules`). 발행 이벤트 봉투의 discriminator enum(§3.7 birth-enum)도 같은 원리다 — 발행 BC 내부 자산이고, 소비 BC는 wire 값을 각자 수용하며 발행 enum을 import하지 않는다.
 
 ### 2.6 증류 (Distillation)
 
@@ -1196,6 +1196,16 @@ class UnitOfWork:
 
 **Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 전달 메커니즘(at-least-once, consumer 멱등성, retry/dead-letter, 디스패처 운영)은 `architecture-db`(§9.7)가 소유하고, Django 트랜잭셔널 outbox 구체 구현은 `implementation-django`(§16.5)가, 신뢰성 검증은 `implementation-test`가 담당한다.
 
+#### 발행 이벤트 타입 — 1종째부터 enum (birth-enum)
+
+**우리 BC가 발행하는 이벤트 봉투의 타입 판별자(discriminator — `event_type` 류)는 이벤트 종류가 1종일 때부터 domain_layer의 `StrEnum` 하나로 선언한다.** 트리거는 위치다: 발행 봉투의 판별자라는 구조 자체가 종류 확장의 증거이고, 이 값은 outbox 저장(위 Outbox·`implementation-django` §16.5)과 wire 노출로 §3.2 계층 소유의 승격 앵커(저장·계약 노출)에 기본 도달한다 — "분기가 생기면 승격"의 판정을 확장 시점의 코더에게 미루지 않고 탄생 시점에 확정한다(판단형 규칙은 준수율이 낮고, 승격 누락은 신호 없이 표류하며 이벤트가 늘수록 비쌈). 이름 기반 트리거는 여전히 금지다 — 이름이 type/kind라는 이유의 승격 금지, pass-through 상류 type 필드·데이터소스 BC 면제는 `discipline-cleancode` §2.14 그대로.
+
+- **배치·소유**: 발행 BC domain_layer의 이벤트 슬롯 `domain_layer/<aggregate>/event/event_type.py`(`discipline-houserules` §2). BC 내부 소유 — 다른 BC가 직접 import하지 않는다(§2.5 published language: 소비 BC는 wire 값을 각자 수용). 경계-로컬(presentation 봉투 모듈) 배치를 쓰지 않는 이유: outbox 리포지토리(infra)가 enum을 소비하므로 infra→presentation 역방향 import를 강제하게 된다 — domain 배치면 infra/presentation→domain 허용 방향으로 전원 접근 가능.
+- **파생 표기**: 봉투 계약 Schema의 태그 필드는 `Literal[EventType.X] = EventType.X`로 파생한다 — 평(non-Literal) Enum 필드는 discriminator로 쓸 수 없으므로(Pydantic) Literal 파생이 유일 경로다(wire 표기·봉투 union은 `implementation-django-ninja` §3.1, union-enum 동기 계약 테스트는 `implementation-test` §15.5 — 세트). ORM `default=`·마이그레이션 경계는 `.value` 평탄화(`implementation-django` §2.5).
+- **수명 — append-only**: 멤버는 추가만 한다. **값 변경·삭제 금지** — 발행된 메시지·outbox 행·소비자 계약에 옛 값이 살아 있다(protobuf enum 진화 규칙·마이그레이션 historical value와 동형). 이벤트 폐기는 멤버 삭제가 아니라 발행 중단+주석 표기. 스키마 비호환 변경은 기존 값 수정이 아니라 새 버전 태그(필요시 새 멤버) 추가+upcasting이다(Greg Young — "old version에서 convertible하지 않으면 새 버전이 아니라 새 이벤트다"; CloudEvents 동방향).
+- **제외(짝 조항)**: `payload_schema_version` 등 스키마 버전 태그는 판별자와 형태가 같지만(단일 멤버 Literal+같은 기본값) **리터럴 동결 유지** — 발행 순간 동결되는 계약 표식이라 enum화는 "수정 가능한 중앙 등록부"라는 잘못된 어포던스를 만든다. 상류 이벤트를 중계만 하는 **소비 측** 스키마의 태그도 비대상(published language 수용).
+- **소비자 측 짝 규칙**: 소비 BC는 미지 event_type 처리 방침(UNKNOWN 폴백 또는 명시적 거부)을 함께 정한다 — 발행자의 멤버 추가는 소비자의 완전(match) 분기를 깨므로, 무방침 정규화는 신규 이벤트 도착 시 수집 경로를 죽인다(`discipline-cleancode` §2.14 열린 집합 조항 준용).
+
 ### 3.8 Specification 패턴
 
 > 출처: Eric Evans & Martin Fowler, "Specifications" (1997)
@@ -1944,6 +1954,12 @@ class FileConversionScript:
 ```python
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
+
+
+class OrderEventType(StrEnum):
+    """발행 BC(주문 컨텍스트)가 소유하는 발행 이벤트 종류 — 1종째부터 enum·append-only (§3.7 birth-enum)"""
+    ORDER_COMPLETED = "order.completed"
 
 
 @dataclass(frozen=True)
@@ -1951,7 +1967,7 @@ class IntegrationEvent:
     """바운디드 컨텍스트 간 통신을 위한 통합 이벤트
     도메인 이벤트(내부용)와 달리, Published Language로 직렬화된다."""
     event_id: str
-    event_type: str
+    event_type: str  # wire 형은 str — 발행 시점 값의 단일 출처는 발행 BC의 OrderEventType, 소비 BC는 wire 값으로 수용(§2.5)
     occurred_at: datetime
     source_context: str
     payload: dict

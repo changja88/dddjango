@@ -79,7 +79,7 @@ application/<app>/
 │       ├── repository/                 #     리포지토리 인터페이스(ABC) — DIP 포트 (§3.4). 구현은 infra
 │       ├── port/                       #     외부 컨텍스트 협력 포트(ACL 포트) — 폴더 항상·코드는 소비 시  [선택]
 │       ├── domain_service/             #     stateless 도메인 로직 (§3.5)   [선택]
-│       ├── event/                      #     도메인 이벤트 정의 (§3.7)       [선택]
+│       ├── event/                      #     도메인 이벤트 정의 (§3.7); 발행 discriminator enum = event_type.py (birth-enum, `architecture-ddd` §3.7) [선택]
 │       ├── specification/              #     Specification (§3.8)          [선택]
 │       └── exception.py                #     도메인 예외
 │
