@@ -64,6 +64,14 @@ codex plugin add dddjango@changja88-dddjango
 codex plugin marketplace upgrade changja88-dddjango
 ```
 
+설치된 버전 확인은 `codex plugin list` — 마켓플레이스별로 플러그인 상태·버전·경로가 표로 나온다:
+
+```
+$ codex plugin list
+PLUGIN                       STATUS              VERSION  PATH
+dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketplaces/changja88-dddjango/codex-dddjango
+```
+
 > 업데이트 후 세션을 재시작하세요. `upgrade`에서 마켓 이름을 생략하면 설정된 모든 Git 마켓플레이스를 한 번에 갱신합니다.
 
 ---
