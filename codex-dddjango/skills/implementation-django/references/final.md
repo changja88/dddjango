@@ -179,7 +179,7 @@ class Person(models.Model):
 ### 2.5 선택지(Choices) 정의 [DCS]
 
 ```python
-# 좋은 예: Enumeration 타입 (Django 3.0+, 권장)
+# 순수 인프라 필드(도메인 판정 없음) 또는 기존 관례 프로젝트: TextChoices 자체 선언
 class Order(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -199,6 +199,27 @@ class Shirt(models.Model):
         choices={"S": "Small", "M": "Medium", "L": "Large"},
     )
 ```
+
+**계층 소유 — 도메인 판정에 쓰이는 값 집합의 단일 출처는 domain_layer의 `StrEnum`이다.** 위 TextChoices 자체 선언은 도메인 판정에 쓰이지 않는 **순수 인프라 필드에 한정**한다 — 도메인 상태를 TextChoices로 선언하면 domain이 판정 시 ORM 타입을 역참조하게 된다(`architecture-ddd` §3.2). 도메인 상태 필드는 domain Enum에서 파생시킨다. 순수 인프라 필드였던 값에 도메인 판정이 처음 생기는 슬라이스에서 파생형으로 전환한다(값 불변이면 `choices` 변경은 DB 무영향). 기존 TextChoices 관례가 확립된 프로젝트는 `discipline-houserules` §1.1(기존 규약 존중)로 그 관례를 따른다.
+
+```python
+# domain_layer/order/value_object/order_status.py — 단일 출처
+class OrderStatus(StrEnum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+
+# infra_layer/django_order/models/order_model.py — 파생 (사람용 라벨(i18n) 필요 시 명시 매핑 병기)
+class OrderModel(models.Model):
+    status = models.CharField(
+        max_length=20,
+        choices=[(s.value, s.name.title()) for s in OrderStatus],
+        default=OrderStatus.PENDING.value,  # .value 평탄화 — 아래 참조
+    )
+```
+
+**`.value` 평탄화**: `default=` 등 마이그레이션이 직렬화하는 자리에 순수 StrEnum **멤버를 직접 두면** Django `EnumSerializer`가 마이그레이션 파일에 **살아있는 enum 참조**(`OrderStatus["PENDING"]` + domain import)를 박는다 — 값 동결 직렬화(`ChoicesSerializer`)는 `models.Choices` 전용이다. domain Enum 파생 시에는 `.value`로 평탄화한다(단일 출처에서의 파생이므로 심볼 소비로 인정). `CheckConstraint`(`check=`)·부분 인덱스의 `Q()` 조건 값도 같은 파생으로 쓴다.
+
+**소비 규율**: `choices`/Enum이 선언된 필드 값의 비교·분기·`.filter()`·대입·`default`는 반드시 심볼로 참조한다 — `.filter(status="pending")` 금지 → `.filter(status=OrderStatus.PENDING)`. 비교는 `==`(`is` 금지 — 필드 값은 plain str로 흐른다). 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2) — 심볼 치환이 판정 소유를 면책하지 않는다. 승격 판정·리터럴 허용 목록은 `discipline-cleancode` §2.14.
 
 ### 2.6 템플릿 코딩 스타일 [DCS]
 
@@ -470,6 +491,7 @@ class Task(models.Model):
 ```
 
 - `CharField` + `TextChoices`는 DB에서 직접 읽을 때 가독성이 좋다.
+- 단 이 `Status`가 도메인 판정(전이·terminal)에 쓰이면 §2.5 계층 소유대로 domain Enum 파생으로 선언한다.
 - `IntegerChoices`는 저장 공간이 약간 효율적이나, 쿼리 성능 차이는 거의 없다. **[DDoc]**
 - `JSONField`는 스키마 없는 데이터에만 사용하고, 구조화된 데이터에는 정규 필드를 사용한다.
 - `DecimalField`를 금액에 사용하고, `FloatField`는 피한다.
@@ -508,9 +530,14 @@ class Event(models.Model):
 ### 5.1 Custom Manager와 QuerySet [DDoc] [TSD]
 
 ```python
+class ArticleStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    PUBLISHED = "published", "Published"
+
+
 class PublishedQuerySet(models.QuerySet):
     def published(self):
-        return self.filter(status="published")
+        return self.filter(status=ArticleStatus.PUBLISHED)  # 소비 규율(§2.5): 리터럴 아닌 심볼
 
     def by_author(self, user):
         return self.filter(author=user)
@@ -529,7 +556,7 @@ class ArticleManager(models.Manager):
 
 class Article(models.Model):
     title = models.CharField(max_length=200)
-    status = models.CharField(max_length=20)
+    status = models.CharField(max_length=20, choices=ArticleStatus)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     published_at = models.DateTimeField(null=True)
 
@@ -1011,6 +1038,12 @@ class Migration(migrations.Migration):
   우선이다. 백스톱 `check-db-table.py`는 db_table **존재**만 보고 값 형태는 보지 않으므로,
   이주가 신규 파일로 떨어져도 보존 db_table을 *명시*했으면(§10.4가 요구하는 그대로) 통과한다
   — 보존명이 규약(`<app_label>_<entity_snake>`)과 달라도 무방.
+- **historical value 리터럴 동결**: 마이그레이션 파일 안의 choices·상태·default 값은
+  살아있는 도메인 Enum을 참조하지 않는다 — Enum 변경이 과거 이력의 의미를 소급 변경하면
+  안 된다(위 "이력 보존"과 동형 원리). 모델 `default=`를 `.value`로 평탄화하면(§2.5)
+  makemigrations가 리터럴로 동결한다; StrEnum 멤버를 직접 두면 `EnumSerializer`가 산 참조
+  (`OrderStatus["PENDING"]` + domain import)를 직렬화하므로 금지. 수기 데이터
+  마이그레이션에서도 Enum import 대신 리터럴을 쓴다.
 
 ---
 
@@ -1039,10 +1072,15 @@ class ArticleTestCase(TestCase):
 ### 11.2 데이터베이스 인덱스 전략 [DDoc]
 
 ```python
+class ArticleStatus(models.TextChoices):  # module-level — Meta 스코프에서도 참조 가능(§2.5 소비 규율)
+    DRAFT = "draft", "Draft"
+    PUBLISHED = "published", "Published"
+
+
 class Article(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)       # unique=True가 인덱스 생성
-    status = models.CharField(max_length=20, db_index=True)  # 단일 인덱스
+    status = models.CharField(max_length=20, choices=ArticleStatus, db_index=True)  # 단일 인덱스
     author = models.ForeignKey(User, on_delete=models.CASCADE)  # FK에 자동 인덱스
     published_at = models.DateTimeField(null=True)
     category = models.CharField(max_length=50)
@@ -1055,7 +1093,7 @@ class Article(models.Model):
             models.Index(
                 fields=["published_at"],
                 name="idx_published_only",
-                condition=models.Q(status="published"),
+                condition=models.Q(status=ArticleStatus.PUBLISHED),
             ),
         ]
 ```
@@ -1084,11 +1122,11 @@ article.save(update_fields=["title"])  # title만 UPDATE
 
 ```python
 # 나쁜 예: 전체 쿼리셋을 평가하여 존재 여부 확인
-if Article.objects.filter(status="published"):  # 모든 행을 로드
+if Article.objects.filter(status=ArticleStatus.PUBLISHED):  # 모든 행을 로드
     ...
 
 # 좋은 예: exists()로 존재 여부만 확인
-if Article.objects.filter(status="published").exists():  # LIMIT 1
+if Article.objects.filter(status=ArticleStatus.PUBLISHED).exists():  # LIMIT 1
     ...
 
 # 나쁜 예: len()으로 개수 확인
@@ -1470,6 +1508,8 @@ def article_list(*, author: User | None = None, status: str | None = None):
         qs = qs.filter(status=status)
     return qs.order_by("-published_at")
 ```
+
+위 `order_confirm`의 `Order.Status` 참조는 평면 Django(기존 관례) 예시다 — 표준 4계층 트리에서는 상태 판정·전이가 도메인 애그리거트 소유이고 값 집합은 domain Enum에서 파생한다(§2.5 계층 소유·`architecture-ddd` §3.2). 어느 경우든 상태 값은 심볼로만 소비한다(리터럴 비교 금지).
 
 **네이밍 규칙: `<entity>_<action>`** -- `user_create`, `order_confirm`, `article_list`
 

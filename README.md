@@ -84,9 +84,9 @@ codex plugin add dddjango@changja88-dddjango
 
 - **G0 · 요구·경계** — 무엇을 만들지, 어디에 둘지(새 영역 vs 기존 영역 확장), 어떤 리뷰 관점을 켤지 확정한다.
 - **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
-- **G2 · 구현** — 구현 코드 + 테스트 통과 결과 + 감수 리포트 + **17종 결정적 백스톱** 통과를 승인한다.
+- **G2 · 구현** — 구현 코드 + 테스트 통과 결과 + 감수 리포트 + **18종 결정적 백스톱** 통과를 승인한다.
 
-> G2 직전에는 **17종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 선언/중앙화 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
+> G2 직전에는 **18종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 선언/중앙화 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
 
 ### 워크스루: "재고 있을 때만 주문 생성" 기능
 
@@ -143,7 +143,7 @@ your_project/
             └── unit/  integration/  e2e/
 ```
 
-핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`, 테스트 unit/integration/e2e 분리. **이 규약들은 17종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
+핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`, 테스트 unit/integration/e2e 분리. **이 규약들은 18종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
 
@@ -173,7 +173,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **커맨드 1개**: `/dddjango`
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
-- **결정적 백스톱 17종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
+- **결정적 백스톱 18종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
 
 ---
 

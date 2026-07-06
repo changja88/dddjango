@@ -57,6 +57,7 @@
 - 설정 패키지(`<project>/`)는 **환경별로 분할**(`env`/`dev`/`local`/`prod`/`test`).
 - 횡단 관심사는 `common/`에 모으고, 그 안을 기술축(enum·django·ninja)으로 다시 나눈다. 프레임워크에 의존하면 `common/django`·`common/ninja`로, 비종속이면 `common/<project>`로 둔다.
 - **`common/`은 *프로젝트 루트*에 둔다(= `application/`의 형제) — `application/common/`처럼 `application/`(feature 앱 컨테이너) *안*에 넣지 않는다.** 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 2개 이상 BC가 *실제로* 공유할 때만 루트 `common/`으로 승격한다(YAGNI — 횡단이 생기기 전 조기 승격 금지; `implementation-django-ninja` §6.2·§6.3).
+- **`common/enum/` 승격은 공유 커널 결정이다** — 같은 철자를 넘어 같은 *지식*이고, 두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만(`architecture-ddd` §2.5 공유 커널 — 공유 범위 최소화 필수). BC 내부 enum은 그 BC `domain_layer` 소유이고 다른 BC가 직접 import하지 않는다 — 같은 wire 값의 BC별 각자 선언은 중복이 아니라 published language 수용이다. **승격된 공유 커널(`common/enum/`·`common/<project>/`)은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다**(§2 "domain은 아무것도 의존하지 않는다"의 명시 예외 — 프레임워크 비종속이 조건).
 
 ---
 
@@ -160,12 +161,12 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `<project>/views/` | 어느 앱에도 속하지 않는 루트/관리 뷰(헬스체크·랜딩) | 루트 뷰 모듈 |
 | `<project>/{static,templates}/` | 프로젝트 레벨 정적·서버렌더 자원 | 정적 파일·템플릿 |
 | `application/` | 모든 feature 앱의 컨테이너 | 앱 디렉터리 `<app>/` |
-| `common/enum/` | 앱 횡단 enum 집중화 | `<domain>_enum.py` |
+| `common/enum/` | 공유 커널로 승격된 enum(승격 기준: 같은 지식 + 같은 변경 사유 근거 — §1; BC 내부 enum은 그 BC `domain_layer` 소유) | `<domain>_enum.py` |
 | `common/django/` | **Django 의존** 공용 유틸 | `task.py`·`timezone.py`·`model_util.py` |
 | `common/ninja/` | **Django Ninja 의존** 공용 확장 | `authentication.py`·`custom_type.py`·`response/` |
 | `common/<project>/` | **프레임워크 비종속** 공용 = shared kernel(공유 값객체·커스텀 타입) | 공유 VO·타입. ※Django/Ninja 의존 시 위 두 폴더로 |
 
-> 위 `common/*`은 모두 *프로젝트 루트* `common/`(= `application/`의 형제) 아래다 — `application/common/`이 아니다. **그리고 횡단 배치는 *2개 이상 BC가 실제로 공유할 때*만 한다**: 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 공유가 생긴 뒤 루트 `common/`으로 승격한다(YAGNI; `implementation-django-ninja` §6.2).
+> 위 `common/*`은 모두 *프로젝트 루트* `common/`(= `application/`의 형제) 아래다 — `application/common/`이 아니다. **그리고 횡단 배치는 *2개 이상 BC가 실제로 공유할 때*만 한다**: 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 공유가 생긴 뒤 루트 `common/`으로 승격한다(YAGNI; `implementation-django-ninja` §6.2). enum은 추가로 공유 커널 기준을 통과해야 한다(같은 지식 + 같은 변경 사유 근거 — §1) — 같은 wire 값을 BC마다 각자 선언하는 것은 정상(published language 수용)이지 승격 사유가 아니다.
 
 **도메인 계층 `domain_layer/<aggregate>/` — 애그리거트(개념) 1차, 종류 2차 (§3 전술 패턴)**
 

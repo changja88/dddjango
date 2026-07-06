@@ -282,6 +282,10 @@ schema를 분리한다.
 - domain invariant는 service/model/DB boundary에서 보장한다.
 - field 제거, rename, type change, 새 required field, status-code/error-shape
   change는 breaking change로 보고 version/deprecation을 검토한다.
+- enum성 필드(상태·종류)는 `Literal[...]` 또는 `StrEnum`으로 선언해 OpenAPI 계약에
+  enum으로 노출한다. 도메인 enum에서 파생하되, 계약 안정성을 도메인 리팩터링과 분리해야
+  하면 경계-로컬 `Literal`로 고정한다(published language — `architecture-ddd` §2.5).
+  응답 조립·비교에 원시 리터럴을 흩지 않는다(`discipline-cleancode` §2.14 소비 규율).
 
 ### 3.2 ModelSchema 사용 기준
 

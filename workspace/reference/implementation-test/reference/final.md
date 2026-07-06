@@ -2079,6 +2079,20 @@ def test_sort_returns_sorted_list():
     assert sort_module.sort([3, 1, 2]) == [1, 2, 3]
 ```
 
+### 15.4 외부 계약 기댓값은 리터럴로 — 프로덕션 상수 역수입 금지 [Google Testing Blog] [Khorikov]
+
+외부 관찰 계약(HTTP 응답 본문·DB 저장값·발행 이벤트 payload)을 검증하는 테스트의 **assert 기댓값**은 완성형 리터럴로 하드코딩한다. 프로덕션 Enum·상수를 import해 기댓값으로 재사용하면 상수 값이 잘못 바뀌어도 테스트가 함께 통과하는 자기참조 오라클(동어반복)이 된다 — wire·DB에 노출된 `.value`는 published/영속 계약이라 그 변경은 내부 리팩터링이 아니라 계약 파괴이고, 리터럴 기댓값의 시끄러운 실패가 의도된 보호다. BC 사유 DB라도 기존 행과의 호환 자체가 계약이다.
+
+```python
+# 나쁜 예 — 자기참조 오라클: DeliveryStatus.DELIVERED 값이 "deliverd"로 오타 나도 통과
+assert response.json()["status"] == DeliveryStatus.DELIVERED.value
+
+# 좋은 예 — 계약을 리터럴로 고정: 값 회귀 시 시끄럽게 실패
+assert response.json()["status"] == "delivered"
+```
+
+경계 셋: ① **도메인 내부 단위 테스트**의 심볼 단언(`assert order.status == OrderStatus.DELIVERED`)은 허용 — 거기서의 계약은 전이 행위이지 철자가 아니고, 철자 회귀는 위 계약 테스트가 잡는다. ② 리터럴 동결 대상은 **철자가 곧 계약인 값**(enum 코드·상태 문자열·필드명)이다 — 계산 결과값의 기댓값 표현은 `discipline-tdd` '명백한 데이터'가 소유한다(SUT를 호출하지 않는 독립 산식으로 관계를 드러내는 것 허용). ③ 테스트의 **arrange/act**(픽스처 생성·`.filter()` 준비)는 심볼 사용을 권장한다 — 리터럴 강제는 외부 계약을 관찰하는 assert에만 적용되므로 프로덕션 소비 규율(`discipline-cleancode` §2.14)과 같은 테스트 안에서 충돌하지 않는다.
+
 ---
 
 ## 16. 테스트 안티패턴

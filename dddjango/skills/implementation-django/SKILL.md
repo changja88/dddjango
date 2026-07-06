@@ -23,6 +23,7 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 - 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)
 - 트랜잭션·일관성 경계는 `transaction.atomic()`, 외부 부수효과는 `transaction.on_commit()` (§16.4)
 - 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)
+- Choices 계층 소유: 도메인 상태 값 집합은 domain Enum 파생(TextChoices 자체 선언은 순수 인프라 필드 한정), `default=`는 `.value` 평탄화, 비교·`.filter()`는 심볼로만 (§2.5, 마이그레이션 동결 §10.4)
 - QuerySet 최적화·N+1 방지는 selector/QuerySet 메서드로 (§5, §11.1)
 - 마이그레이션은 안전·무중단 순서 준수 (§10)
 - 설정은 환경별 분리, 직접 접근 주의 (§3.3–§3.4)
@@ -34,7 +35,7 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 | 주제 | 절 |
 |---|---|
 | 설계 철학 | §1 |
-| 코딩 스타일·임포트 순서 | §2 |
+| 코딩 스타일·임포트 순서·Choices 정의(계층 소유·`.value` 평탄화·소비 규율 §2.5) | §2 |
 | 프로젝트/앱/설정 분리 | §3 |
 | 모델 설계 (fat model·상속·필드·검증) | §4 |
 | QuerySet과 Manager | §5 |
