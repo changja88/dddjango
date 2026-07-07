@@ -168,7 +168,7 @@ def check_sd7(target: Path) -> None:
     """SD-7(FAIL방향): ACL/OHS 경로 *밖*에서 타 BC domain_layer/infra_layer 직접 import.
 
     미스캘리브 교정(2026-06-02): `infra_layer/acl/` 의 미이주 ACL 이 업스트림(타 BC) 모델·리포를
-    import·번역하는 건 표준 §2(houserules `final.md:128`/`:141`: "OHS 미이주·행잠금 불가피 시 ACL로
+    import·번역하는 건 표준 §2(houserules `final.md` §2 컨텍스트 간 통신: "OHS 미이주·행잠금 불가피 시 ACL로
     명시 — 구현(업스트림 모델·예외 번역)은 infra_layer/acl/ 에 가둔다") **명시 허용**이라 FAIL-신호가
     아니다 — '주의'로만 분리한다(도메인누수=포트 ABC 미준수·OHS 존재 시 미경유 점검은 의미레인).
     FAIL-신호는 ACL *밖*(도메인/응용/presentation)의 직접 import 만. PASS(OHS '정당성')도 의미레인.
@@ -202,7 +202,7 @@ def check_sd7(target: Path) -> None:
     else:
         _emit("SD-7 컨텍스트통신", "PASS-신호(결정)", "ACL 밖 타 BC 내부계층 직접 import 0 (OHS '정당성'은 의미레인)", [])
     if acl_notes:
-        _emit("SD-7 ACL직접통합", "주의(표준§2 허용)", "infra_layer/acl/ 미이주 ACL의 업스트림 import — houserules final.md:128 허용. 의미레인이 도메인누수(포트 ABC)·OHS존재 점검", acl_notes)
+        _emit("SD-7 ACL직접통합", "주의(표준§2 허용)", "infra_layer/acl/ 미이주 ACL의 업스트림 import — houserules final.md §2 컨텍스트 간 통신 허용. 의미레인이 도메인누수(포트 ABC)·OHS존재 점검", acl_notes)
 
 
 def check_sd3(target: Path) -> None:

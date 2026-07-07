@@ -69,7 +69,7 @@
 application/<app>/
 ├── <app>_api_router.py                 # 외부 HTTP 진입점: config의 NinjaExtraAPI를 import해 register_controllers로 BC 로컬 등록 (루트 urls.py 포함은 함수형 Router 경로)
 ├── composition_root.py                 # DI 조립 배선: build_<usecase>_command() 팩토리로 구체 infra를 use-case에 매요청 주입(presentation은 호출만=Q-7 짝). application 로직(command/query/service) 가진 BC는 반드시 둔다·데이터소스 BC 생략
-├── published_service/                  # 컨텍스트 간 OHS — 다른 앱에 노출 (아래 "컨텍스트 간 통신")
+├── published_service/                  # 컨텍스트 간 OHS — 서비스(개념) 1차·contract 계약 패키지 (아래 "컨텍스트 간 통신")
 │
 ├── domain_layer/                       # ① 도메인 — 의존 없음, 순수 비즈니스 (§3 전술 패턴 / §6.1)
 │   └── <aggregate>/                    #   애그리거트(개념) 1차 — 예: member/  (종류 폴더는 항상 생성, 비어도 둠 §0)
@@ -136,12 +136,26 @@ application/<app>/
 서로 다른 컨텍스트(앱) 간 통신은 **각 앱이 자기 공개 진입점(OHS, 오픈 호스트 서비스)을 소유**한다(§2.5/§6.7). 다른 컨텍스트는 이 `published_service/`만 import하고, 대상 앱의 `domain_layer`/`application_layer`/`infra_layer`는 **직접 import하지 않는다**. **DB FK도 cross-context 결합이다 — 타 BC 모델을 ORM `ForeignKey`/`OneToOneField`/`ManyToManyField`로 참조하지 않는다(BC 경계 ORM FK 금지). 타 BC는 ID 값으로 참조하고 존재 검증은 OHS/ACL 포트로 하며, 같은 BC 내 FK는 허용한다(`architecture-ddd` §3.3 규칙3 영속성 확장).**
 
 ```
-application/<app>/published_service/   # 이 앱이 외부 컨텍스트에 노출하는 OHS
-├── read.py       # 조회 OHS — application_layer/query에 위임 (앱이 크면 read/ 디렉터리)
-└── write.py      # 커맨드 OHS — application_layer/command에 위임
+application/<app>/published_service/     # 이 앱이 외부 컨텍스트에 노출하는 OHS
+└── <service>_service/                   # 서비스(개념) 1차 — 무조건 폴더 (예: sms_service/)
+    ├── <service>_service.py             # 행위 — 공개 모듈 함수만 (application_layer command/query에 위임)
+    └── contract/                        # 계약 — 소비자가 타입으로 결합하는 전부
+        ├── request_contract.py          # 입력 DTO
+        ├── response_contract.py         # 결과 DTO
+        └── exception_contract.py        # published 예외 — 서비스 base + 도메인 예외 번역 타깃
 ```
 
-OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트의 공개 계약이 밖에 흩어지면 응집이 깨지고, 허브가 모든 컨텍스트를 아는 결합점으로 비대해진다(§2.5 "진흙공" 방어). OHS 반환도 도메인 엔티티 대신 **Published Language(DTO)**를 권장한다(presentation `schema_out`과 동일한 모델 누수 방어).
+OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트의 공개 계약이 밖에 흩어지면 응집이 깨지고, 허브가 모든 컨텍스트를 아는 결합점으로 비대해진다(§2.5 "진흙공" 방어). OHS 반환도 도메인 엔티티 대신 **Published Language(DTO)**로 한다 — 반환 계약은 아래 OHS 시그니처 계약(3연조)이 규정한다(presentation `schema_out`과 동일한 모델 누수 방어).
+
+**OHS 내부 구조 — 서비스(개념) 1차·계약 3파일 (2026-07-07 개정: 구 `read.py`/`write.py` 종류 1차 폐지).** `published_service/` 바로 아래에는 서비스 폴더(`<service>_service/`)만 온다 — 평면 `.py` 모듈을 두지 않는다(`__init__.py`와 아래 이주 조문의 deprecation 호환 심은 예외). 각 서비스는 행위 모듈(`<service>_service.py`)과 계약 패키지(`contract/`)로 구성하고, contract 안은 `request_contract.py`·`response_contract.py`·`exception_contract.py` 3파일로 고정한다. 이 3파일 고정은 §0 골격 불변식(폴더·`__init__.py` 규율)의 연장이 아니라 **OHS 고유 규칙**이다 — 계약 표면을 결정적 형태로 고정해 presence 점검과 소비자의 예측 가능한 import를 성립시키고, 빈 `exception_contract.py`는 "선언된 예외만 던진다"(아래 3연조)와 결합해 도메인 예외 무번역 전파를 형태로 막는다. 서비스 폴더를 만들 때 3파일을 함께 생성하며 내용 없는 request/response는 빈 모듈로 둔다(published 예외를 노출하는 서비스의 exception_contract는 base 포함 최소 구성 — 아래 예외 번역). 구 read/write 축은 위임 대상(application_layer의 command/query)이 이미 표현하므로 표면에서 중복하지 않는다. 서비스 폴더 자체는 개념이므로 실제 노출할 서비스가 있을 때만 만들고(§0-3 '개념 1차는 개념 식별 시'와 동형), 계약 모듈이 비대해지면 같은 이름의 디렉터리로 승격한다. `__init__.py`는 전부 빈 패키지로 유지하고 재노출 큐레이션을 하지 않는다 — 공개 표면의 단일 출처는 각 모듈 자신이다(소비자는 `…published_service.<service>_service.<service>_service`의 함수와 `…contract.<kind>_contract`의 타입을 모듈 경로로 직접 import). 비동기 통합(이벤트 구독·outbox)은 이 규약 밖이다 — 통합 스타일 선택(§2 설계 선택)대로 도메인 이벤트 채널로 라우팅한다.
+
+**OHS 시그니처 계약(3연조).** `<service>_service.py`의 공개 표면은 모듈 수준 함수만이다(공개 클래스 금지 — 조립은 composition_root 위임이라 상태가 없다). 각 공개 함수는 ① 인자로 그 연산의 request contract **1개**만 받고(0개는 위임 대상이 입력 없는 Query 인터랙터일 때만 — 커맨드 위임은 항상 1개; 맨 스칼라·다중 인자 금지, 앞선 호출의 response contract가 후속 입력에 필요하면 request contract의 필드로 품는다) ② response contract(또는 `None`)만 반환하며 ③ exception_contract에 선언된 예외만 던진다(transient 인프라 예외·프로그래밍 오류의 raw 전파는 예외 — 아래 번역 조문). 단일-요청-객체 형태는 인터랙터 `execute(request)` 규약(§2 설계 선택·§3 표)의 OHS 판이다 — published 경계는 진화 압력이 가장 큰 표면이라 필드 추가로 흡수 가능한 계약 객체를 1개째부터 강제한다(확장-시점 승격은 판단형 규칙이라 표류 — birth-enum과 동형 논리). 함수 본문은 composition_root 팩토리를 호출해 application_layer 인터랙터에 위임하고 계약↔응용 DTO 변환(경계 언랩)만 한다 — 판정·비즈니스 로직·ORM 직접 질의 금지. **published 계약 타입을 application_layer 안으로 관통시키지 않는다**(응용 계층은 domain에만 의존 — §3 표 응용 계층 헤더·`architecture-ddd` §6.1). OHS가 필드 단위로 언랩·재조립하며, 응용의 반환 DTO는 `<feature>/dto/<usecase>_result.py`에 둔다(§3 표 dto/ 항목 참조). 데이터소스 BC가 OHS를 노출하면 그 연산은 이 BC가 소유하는 조회 유스케이스가 된 것이다 — 그 시점에 Query 인터랙터와 composition_root를 만든다(§0-3 '개념 1차는 개념 식별 시'·조립 규칙 'application 로직 가진 BC는 반드시'의 적용이지 면제 신설이 아니다). 공개 함수 docstring은 그 함수가 던질 수 있는 exception_contract 예외 전수 목록의 앵커다(`discipline-cleancode` §4.2 공개 API 독스트링 필수의 OHS 적용 — ACL 협력 포트 앵커(아래 소비 측)와 대칭).
+
+**제공 측 예외 번역 — exception_contract가 단일 출처.** OHS 함수는 도메인·응용 예외를 exception_contract에 선언된 published 예외로 번역해 던진다 — 도메인 예외의 raw 전파·재노출(`__all__` 포함) 금지. 재노출하면 소비 BC가 우리 `domain_layer` 타입 정체성에 결합해 §2.5 published language 경계가 무력화된다(소비 측 ACL 조문의 "동일 의미면 명시적 재노출"은 소비 측 ACL이 *업스트림 예외*를 포트 선언에 명시하고 그대로 통과시키는 허용이지, 제공 측이 자기 도메인 타입을 공개 계약에 올리는 면허가 아니다). exception_contract의 모든 예외는 서비스당 1개의 published base 예외를 상속한다(base 자신 제외·중간층 경유 전이 상속 허용 — `implementation-python` §15.2 최상위 예외, 소비자의 가족 단위 catch). 번역은 알려진 구체 예외의 전수 명시 매핑으로 하고, 폴백을 둘 경우 도메인·응용 예외 base 단위 catch에 한정하며(`except Exception` 광범위 포괄 금지 — 프로그래밍 오류는 published로 위장하지 않고 raw 전파가 정상) 폴백 published 타입은 retryable 의미로 위장하지 않는 중립 타입으로 정한다(`implementation-django-ninja` §6.2 동방향). **transient 짝 조항**: transient 인프라 예외(`OperationalError` 등 재시도성 변종)는 published 예외로 감싸지 않는다 — raw 통과시켜 소비 측 경계의 단일 변환점(recognizer)이 처리하게 한다(위 소비 측 ACL의 transient 위장 금지와 동형; published로 감싸면 실 메시지·`__cause__` recognizer 사각 → 영구장애 오분류·500 누수). 재시도 소진을 스스로 판정한 경우의 규율(도메인 transient-마커 타입·`raise … from` 보존)은 소비 측 조문을 따른다.
+
+**contract 무의존 — import 방향.** contract 모듈은 domain·application·infra 어느 계층도 import하지 않는다(표준 라이브러리·같은 서비스 contract만) — 소비 BC의 계약 import가 무거운 그래프(Django 앱 로딩)를 끌고 오지 않게 하는 격리이고, 도메인 enum을 계약 필드 타입으로 노출하면 소비 BC가 우리 내부 enum에 결합한다(`architecture-ddd` §2.5 — BC 간 연결은 계약 타입 또는 wire value). **birth-enum 짝**: 우리 BC가 발행하는 이벤트 봉투를 OHS 계약으로도 노출할 때의 discriminator 자리는 이 격리가 우선한다 — domain enum 파생(`Literal[EventType.X]`) 대신 wire `Literal["…"]`을 유지하고 union-enum 동기 테스트(`implementation-test` §15.5)로 드리프트를 방어한다(`discipline-cleancode` §2.14 허용 목록 짝 조항의 명시 예외 — cleancode 쪽 카브아웃과 세트). contract 내부는 `request_contract → response_contract` 단방향만 허용(영수증류 response를 후속 request가 필드로 품는 경우), `exception_contract`는 계약 내 어느 모듈도 import하지 않는다 — 멱등 재생이 기존 결과를 알려야 하면 예외에 결과 객체를 싣지 말고 response contract의 재생 표기(`replayed` 류)로 반환한다. 같은 격리 이유로 `<service>_service.py`의 composition_root import는 함수 내부 지연 import를 허용한다(사유 주석 1줄).
+
+**이주 — 구 read/write·평면 OHS.** 구 구조는 '확립된 규약'으로서 신 규약 적용을 영구 면제하지 않는다: **새 서비스·새 공개 함수는 신 구조로만 추가한다**(구 `read.py`/`write.py`에 표면을 늘리지 않는다). 기존 함수의 국소 수정은 미이주로 허용한다 — OHS 이주는 타 BC 소비자의 import 경로를 깨는 파괴적 변경이므로 전면 이주는 별도 스코프(G1 트레이드오프)로 올리고, 이주 시 구 모듈은 신 구조를 재노출하는 호환 심(deprecation 주석 명기)으로 1단계 유지한 뒤 소비자 갱신과 함께 제거한다(재노출 금지 조문의 유일한 한시 예외).
 
 **소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** **업스트림의 모델·예외 번역은 ACL 안에 격리한다 — presentation·application이 타 BC의 예외(`domain_layer`/`application_layer` 하위)를 직접 `import`해 잡으면 컨텍스트 결합이 ACL 밖으로 새므로, ACL이 협력 포트가 던지는 우리 쪽 예외로 번역(동일 의미면 명시적 재노출)해 넘긴다. 이 번역은 *전수*다 — ACL이 구동하는 업스트림 동작이 그 포트 경로에서 던질 수 있는 예외를 (`domain_layer`·`application_layer` 층 무관) 빠짐없이 잡아 협력 포트가 선언한 우리 쪽 예외로 번역한다. catch되지 않은 업스트림 예외가 ACL을 그대로 통과해 우리 쪽 application·presentation으로 raw 전파되면 포트 계약 위반이다. 협력 포트(`domain_layer/<aggregate>/port/`)의 ABC·docstring이 *이 통합이 노출하는 우리 쪽 예외 전수 목록*의 단일 출처(앵커)이며 ACL은 그 목록을 채운다 — 업스트림에 새 예외가 생기면 포트 선언과 ACL 번역을 함께 갱신한다. 단 '전수'는 *알려진 구체 예외 집합을 빠짐없이 덮으라*는 것이지 `except Exception` 광범위 포괄 catch가 아니다 — 각 구체 예외를 명시 번역한다(`discipline-cleancode` 구체적 예외 처리). **또한 transient 인프라 예외(`OperationalError` 중 DB 락·deadlock·serialization failure 같은 재시도성 변종)는 협력 포트가 선언하는 우리 쪽 *도메인* 예외 집합이 아니다 — ACL은 이를 도메인 예외로 위장 번역하지 않고(포트에 인프라 누수 금지), presentation 경계의 단일 변환점이 retryable(503/409) problem으로 매핑한다(`implementation-django-ninja` §6.2). 단 이 '위장 번역 금지'는 드라이버가 *실제로 던진* transient(`OperationalError`)에 한정한다 — ACL·앱이 낙관락·CAS 재시도 루프를 *스스로 소진 판정*한 경우(드라이버 예외 부재)는 인프라 예외를 *합성*해 신호하지 말고(합성 예외는 실 메시지·`__cause__`가 없어 presentation recognizer 사각→영구장애 오분류·500 누수=과소매핑), 협력 포트가 선언한 도메인 transient-마커 예외 *타입*(`StockContention` 등 retryable 의미)으로 raise해 핸들러가 *타입*으로 매핑하게 한다. 실 드라이버 락 예외를 잡아 재시도하다 소진했다면 원본을 `raise … from driver_exc`로 보존하면 recognizer가 `__cause__`로 인식한다(결정적 백스톱 `check-synthetic-infra-exc`가 `infra_layer`의 `from` 없는 인프라 예외 합성을 차단).**** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(이 표준의 통합 진화 지침 — architecture-ddd 컨텍스트 맵의 ACL·OHS 패턴을 토대로 한 합성이며, 코퍼스가 "ACL→OHS 진화"를 명시하는 것은 아니다).
 
@@ -191,7 +205,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 |---|---|---|---|
 | `<feature>/command/` | 쓰기 유스케이스 **연산** — 도메인에 위임, domain `repository/`·`port/` 인터페이스 의존(DIP) | `<usecase>_command.py` → `class PlaceOrderCommand`(`execute(request)`) | 코어 |
 | `<feature>/query/` | 조회 유스케이스 **연산** — repository 의존 | `<usecase>_query.py` → `class ListOrdersQuery`(`execute(request)`) | 코어 (별도 읽기모델 CQRS는 §5.4 선택) |
-| `<feature>/dto/` | 유스케이스 **입력** 요청 객체(DTO) | `<usecase>_request.py` → `@dataclass class PlaceOrderRequest` ※응답 DTO 아님(응답=presentation `schema_out`) | 코어 |
+| `<feature>/dto/` | 유스케이스 **입력** 요청 객체(DTO) | `<usecase>_request.py` → `@dataclass class PlaceOrderRequest` ※HTTP 응답 DTO 아님(응답=presentation `schema_out`); OHS 등 presentation 밖 반환이 필요한 유스케이스의 반환 DTO는 `<usecase>_result.py`로 여기 둔다(§2 OHS 시그니처 계약) | 코어 |
 | `<feature>/handler/` | 도메인 이벤트/커맨드 핸들러(§6.1) | `<event>_handler.py` → `class OrderPlacedHandler` | domain `event/` 도입 시 |
 | `<feature>/service/` | 다중 유스케이스 오케스트레이션 | `<flow>_service.py` → `class CheckoutService` | 여러 command/query를 한 흐름으로 묶을 때 |
 | `unit_of_work.py` | UoW **인터페이스** — 트랜잭션 경계(§6.3) | 앱당 1개 | 구현은 `transaction.atomic()`(django §16.4)으로 충분; 커스텀 UoW 필요할 때만 |
@@ -214,7 +228,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 |---|---|---|
 | `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `<aggregate>_controller.py` → `class OrderController`(`@api_controller`); 함수형 레거시는 `api_<resource>.py` (Ninja Router 또는 `@api_controller` 클래스) |
 | `schema/` | 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`·`error_out.py`(feature가 많으면 `<feature>/`로 분할) — **응답은 `schema_out`**, 도메인 직접 노출 금지 |
-| `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `read.py`·`write.py`(앱이 크면 `read/`·`write/` 디렉터리). 다른 앱은 **이것만** import |
+| `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `<service>_service/`(서비스 1차) → `<service>_service.py`(공개 함수)·`contract/{request,response,exception}_contract.py`(§2 OHS 내부 구조). 다른 앱은 **이것만** import(모듈 경로 직접 — `__init__` 재노출 없음) |
 | `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → config의 `NinjaExtraAPI`를 import해 `register_controllers`로 BC 로컬 등록(루트 `urls.py` 포함은 함수형 Router 경로) |
 | 조립(배선) | DI 컴포지션 루트 — use-case·application 로직(command/query/service 등) 가진 BC는 **반드시 둔다**(데이터소스 BC=빈 `application_layer`는 생략) | `composition_root.py`를 **만들어** `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리로 구체 infra를 use-case에 매요청 주입하고, presentation은 그 팩토리를 **매요청 호출만** 한다(operation·application service 본문에서 `Django…Repository()`/`…Adapter()` 직접 생성 금지=Q-7의 짝). 결정적 백스톱 `check-composition-root`이 정본 부재·off-tree·오배치를 집행 |
@@ -250,12 +264,13 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 **표현(presentation) 컨트롤러** — HTTP 입력 어댑터는 ninja-extra 클래스 컨트롤러로 두고 **`<Aggregate>Controller`**(`OrderController`; `presentation_layer/api/`)로 명명한다. 애그리거트 개념명 + **역할 접미사 `Controller`**(`Repository`/`Gateway`처럼 객체의 *역할*을 나타내는 접미사)다. 함수형 Ninja `Router`는 레거시로 병기 가능하나, 신규 표현 어댑터는 컨트롤러를 기본으로 한다.
 
 **파일명** — 파일명은 **그 안 주 클래스명의 snake_case**이며 그 클래스·개념을 **약어 없이** 반영한다: `order_repository.py`(○) / `order_repo.py`(✕). grep·예측 가능성을 위해 클래스명을 줄이지 않듯 파일명도 줄이지 않는다. 폴더는 종류 그룹일 뿐 파일 접미사를 좌우하지 않는다. 종류별 규칙:
-- **유스케이스 연산 명명** — 쓰기 `<usecase>_command.py` → `class …Command`, 읽기 `<usecase>_query.py` → `class …Query`, 입력 `<usecase>_request.py` → `@dataclass class …Request`. 모두 `execute(request)`·repository/port 의존. (`_app`·`_service` 접미사 안 씀 — 위치 폴더가 종류를 표시; `_service.py`는 오케스트레이션 `service/`에만.)
+- **유스케이스 연산 명명** — 쓰기 `<usecase>_command.py` → `class …Command`, 읽기 `<usecase>_query.py` → `class …Query`, 입력 `<usecase>_request.py` → `@dataclass class …Request`. 모두 `execute(request)`·repository/port 의존. (`_app`·`_service` 접미사 안 씀 — 위치 폴더가 종류를 표시; `_service.py`는 오케스트레이션 `service/`와 published_service의 서비스 모듈(`<service>_service.py`)에만.)
 - **도메인 이벤트**: 파일·클래스 모두 **과거형** — `order_placed_event.py` → `class OrderPlacedEvent`.
 - **명세(Specification)**: 약어 없이 **풀네임** — `order_active_specification.py` → `class OrderActiveSpecification`(`_spec` ✕).
 - **표현 컨트롤러**: `<aggregate>_controller.py` → `class <Aggregate>Controller`(`@api_controller`) — 주 클래스명 snake_case 규약 정합(예 `order_controller.py` → `class OrderController`). 함수형 Ninja `Router` 레거시는 `api_<resource>.py`로 병기 가능.
 - **스키마**: 입력 `schema_in.py` → `OrderIn`, 출력 `schema_out.py` → `OrderOut`, 에러 `error_out.py` → `ErrorOut`(In/Out 접미사).
 - **조회(읽기)**: `<usecase>_query.py` → `class …Query`(인터랙터 연산 — `execute(request)`, repository 의존). 별도 읽기 *모델*(CQRS §5.4)은 선택이고, 공유 모델 repository 읽기로 충분하면 그대로 둔다.
+- **OHS(published_service)**: 서비스 폴더 `<service>_service/` → 행위 모듈 `<service>_service.py`(공개 모듈 함수), 계약 3파일 고정명 `request_contract.py`·`response_contract.py`·`exception_contract.py`, published base 예외 `<Service>PublishedError`(§2 OHS 내부 구조). 계약 클래스의 버전 접미(`V1` 등)는 프로젝트 재량이다(표준 비강제).
 
 **폴더명(앱·애그리거트·feature)** — 위 파일·클래스 명명과 달리 폴더 도메인명은 **의미 판정이 필요해 권장 수위**다(백스톱 없음, discipline-reviewer 점검 — 클래스/파일 명명처럼 결정적으로 집행하지 않는다).
 - **앱 `<app>`** = 핵심 애그리거트명과 **동일**하게 둔다(단일 BC·단일 애그리거트). 여러 애그리거트를 담으면 대표/컨텍스트명. snake_case. (placeholder `<app>`·`<aggregate>`는 §0-1 범례상 별개 슬롯이고, "동일 권장"은 단일 BC에 한정한다.)

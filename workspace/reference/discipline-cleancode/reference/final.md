@@ -325,7 +325,7 @@ for team_index, team in enumerate(teams):
 
 - 사람 대상 서술 — 로그·예외 메시지·이메일 제목(열거가 아니라 문장, 비교 대상 아님)
 - Enum·상수 **정의부 자체**의 우변(리터럴의 유일한 서식지)
-- `Literal[...]`로 타입이 잠긴 인자 자리(`open(path, "r")` — 타입 체커가 오타를 잡는다). 단 **발행 이벤트 봉투의 discriminator 자리는 이 항목의 예외** — 거기는 domain enum 파생(`Literal[EventType.X]`)이 규율이고 맨 문자열 `Literal["…"]`이면 위반(birth-enum — `architecture-ddd` §3.7). 버전 태그(`payload_schema_version`)는 같은 형태라도 리터럴 동결이 정답(짝 조항)
+- `Literal[...]`로 타입이 잠긴 인자 자리(`open(path, "r")` — 타입 체커가 오타를 잡는다). 단 **발행 이벤트 봉투의 discriminator 자리는 이 항목의 예외** — 거기는 domain enum 파생(`Literal[EventType.X]`)이 규율이고 맨 문자열 `Literal["…"]`이면 위반(birth-enum — `architecture-ddd` §3.7). 버전 태그(`payload_schema_version`)는 같은 형태라도 리터럴 동결이 정답(짝 조항). **OHS published contract(`published_service/*/contract/`)의 discriminator 자리는 재예외** — contract 무의존(`discipline-houserules` §2 OHS 내부 구조)이 우선해 wire `Literal["…"]`을 유지하고 union-enum 동기 테스트(`implementation-test` §15.5)가 드리프트를 방어한다
 - 외부 프로토콜이 소유한 문자열(content type·vendor 코드·프로토콜 에러 코드) — 단 분기 조건이 되는 순간 경계(adapter)에서 내부 타입으로 정규화하고 원시 리터럴이 경계 밖으로 새지 않게 한다
 - 식별자형·구조 문자열(dict 키·kwargs·separator·설정 키·환경변수명)
 - 테스트에서 외부 관찰 계약을 검증하는 **assert 기댓값** — 오히려 리터럴을 강제한다(프로덕션 상수 역수입은 자기참조 오라클; `implementation-test` §15.4). 테스트의 arrange/act(픽스처·필터 준비)는 심볼 권장 — 두 규율은 위치로 갈린다.
