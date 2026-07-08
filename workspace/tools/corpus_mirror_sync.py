@@ -18,7 +18,7 @@ stale 소스를 신뢰원으로 삼아 과거 수정(DR)을 조용히 되돌린�
   → 이들은 소스 미러가 없고 재생성 경로도 없어 R5 회귀 메커니즘에 해당하지 않는다.
   (houserules는 references/final.md 미러를 *보유*하므로 불변식1 대상이다.)
 
-배치: workspace/tools/ (배포 경계 밖). 18개 런타임 게이트(dddjango/scripts/check-*.py)는
+배치: workspace/tools/ (배포 경계 밖). 19개 런타임 게이트(dddjango/scripts/check-*.py)는
   *사용자 생성 코드*를 검사하지만 이 도구는 *플러그인 자체 코퍼스*를 검사한다 — 다른 부류다.
   그래서 dddjango/scripts/에 두지 않고 check- 접두사도 쓰지 않는다.
 

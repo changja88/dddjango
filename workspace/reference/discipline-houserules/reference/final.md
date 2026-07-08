@@ -209,7 +209,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 |---|---|---|---|
 | `<feature>/command/` | 쓰기 유스케이스 **연산** — 도메인에 위임, domain `repository/`·`port/` 인터페이스 의존(DIP) | `<usecase>_command.py` → `class PlaceOrderCommand`(`execute(request)`) | 코어 |
 | `<feature>/query/` | 조회 유스케이스 **연산** — repository 의존 | `<usecase>_query.py` → `class ListOrdersQuery`(`execute(request)`) | 코어 (별도 읽기모델 CQRS는 §5.4 선택) |
-| `<feature>/dto/` | 유스케이스 **입력** 요청 객체(DTO) | `<usecase>_request.py` → `@dataclass class PlaceOrderRequest` ※HTTP 응답 DTO 아님(응답=presentation `schema_out`); OHS 등 presentation 밖 반환이 필요한 유스케이스의 반환 DTO는 `<usecase>_result.py`로 여기 둔다(§2 OHS 시그니처 계약) | 코어 |
+| `<feature>/dto/` | 유스케이스 **입력·반환** 데이터 계약(DTO) | 입력 `<usecase>_request.py` → `@dataclass class PlaceOrderRequest` · 반환 `<usecase>_result.py` → `@dataclass class …Result` — **소비처 불문**(HTTP-소비든 OHS 등 presentation 밖 소비든) 유스케이스 반환 DTO는 여기 둔다(§2 OHS 시그니처 계약이 이 슬롯을 참조). ※HTTP 응답 노출은 여전히 presentation `schema_out` 경유(도메인·DTO 직접 직렬화 금지). **연산 모듈(`command/`·`query/`)에 공개 dataclass를 인라인 정의하지 않는다 — 연산 모듈의 공개 표면은 연산 클래스뿐이다**(`_` 사설 dataclass의 내부 스테이징(비반환·비수출) 인라인은 정당 — `execute`가 반환하면 공개 계약이라 동일 위반; 결정적 백스톱 `check-usecase-dto-placement`가 인라인 직접형을 집행) | 코어 |
 | `<feature>/handler/` | 도메인 이벤트/커맨드 핸들러(§6.1) | `<event>_handler.py` → `class OrderPlacedHandler` | domain `event/` 도입 시 |
 | `<feature>/service/` | 다중 유스케이스 오케스트레이션 | `<flow>_service.py` → `class CheckoutService` | 여러 command/query를 한 흐름으로 묶을 때 |
 | `unit_of_work.py` | UoW **인터페이스** — 트랜잭션 경계(§6.3) | 앱당 1개 | 구현은 `transaction.atomic()`(django §16.4)으로 충분; 커스텀 UoW 필요할 때만 |
