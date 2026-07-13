@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>dddjango — 하나의 요청이 지나가는 길</title>
+</head>
+<body>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --ground: #eef1f4;
+    --paper: #f6f8fa;
+    --card: #ffffff;
+    --ink: #20272e;
+    --muted: #5a6672;
+    --faint: #8b96a1;
+    --hair: #dbe1e7;
+    --grey-node: #aab3bc;
+
+    --pres: #b26b1e;    /* presentation — 앰버 */
+    --app:  #2c6db0;    /* application — 블루 */
+    --dom:  #2f855a;    /* domain — 에메랄드 */
+    --infra:#6d4bb8;    /* infra — 바이올렛 */
+    --wire: #4a5560;    /* composition — 슬레이트 */
+    --ohs:  #c0338c;    /* OHS 계약 / BC 경계 — 로즈 */
+    --http: #5a6672;    /* HTTP 진입/반환 */
+    --err:  #ce3e36;    /* 에러 분기 */
+
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+
+    --shadow: 0 1px 2px rgba(28,40,54,.05), 0 8px 24px rgba(28,40,54,.06);
+  }
+
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--ground);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 22px clamp(14px, 3vw, 30px) 60px; }
+
+  /* ---------- header ---------- */
+  header.top { margin-bottom: 18px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--faint); margin: 0 0 8px;
+  }
+  h1 {
+    font-size: clamp(21px, 3.2vw, 30px); line-height: 1.15; margin: 0;
+    font-weight: 760; letter-spacing: -.015em; text-wrap: balance;
+  }
+  h1 .path { font-family: var(--mono); font-weight: 600; color: var(--app); font-size: .74em; }
+  .lede { margin: 10px 0 0; color: var(--muted); max-width: 68ch; font-size: 14.5px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 16px; }
+  .legend .item { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .legend .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+  /* ---------- transit rail ---------- */
+  .rail-shell { margin: 20px 0 4px; }
+  .rail-band { position: relative; height: 15px; margin: 0 2px 3px; }
+  .rail-band .cat {
+    position: absolute; top: 3px; height: 9px; border-radius: 5px;
+    background: color-mix(in srgb, var(--ohs) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ohs) 45%, transparent);
+  }
+  .rail-band .cat-label {
+    position: absolute; top: -14px; font-family: var(--mono); font-size: 10px;
+    letter-spacing: .08em; color: var(--ohs); white-space: nowrap; transform: translateX(-2px);
+  }
+  .rail {
+    position: relative; display: flex; gap: 0; align-items: center;
+    padding: 8px 2px; overflow-x: auto; scrollbar-width: thin;
+  }
+  .rail::before {
+    content: ""; position: absolute; left: 6px; right: 6px; top: 50%; height: 2px;
+    background: var(--hair); transform: translateY(-50%); z-index: 0;
+  }
+  .tick {
+    position: relative; z-index: 1; flex: 1 0 auto; min-width: 20px;
+    display: flex; justify-content: center; background: none; border: none;
+    padding: 6px 0; cursor: pointer;
+  }
+  .tick .dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--tc, var(--faint)); border: 2px solid var(--ground);
+    box-shadow: 0 0 0 1px var(--hair);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .tick:hover .dot { transform: scale(1.25); }
+  .tick.done .dot { opacity: .85; }
+  .tick.current .dot {
+    transform: scale(1.7);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc) 28%, transparent), 0 0 0 4px var(--card);
+  }
+  .tick:focus-visible { outline: 2px solid var(--app); outline-offset: 2px; border-radius: 6px; }
+
+  /* ---------- console grid ---------- */
+  .console {
+    display: grid; grid-template-columns: minmax(268px, 360px) 1fr; gap: 18px;
+    align-items: start; margin-top: 14px;
+  }
+
+  /* ---------- map ---------- */
+  .map {
+    background: var(--card); border: 1px solid var(--hair); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 14px 12px; position: sticky; top: 14px;
+    max-height: calc(100vh - 32px); overflow-x: hidden; overflow-y: auto; scrollbar-width: thin;
+  }
+  .map h2 {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); margin: 2px 4px 10px; font-weight: 600;
+  }
+  .bc {
+    border: 1px solid var(--hair); border-radius: 11px; padding: 9px 9px 5px;
+    margin-bottom: 11px; transition: border-color .25s ease, background .25s ease, opacity .25s ease;
+    background: color-mix(in srgb, var(--paper) 55%, transparent);
+  }
+  .bc.dim { opacity: .5; }
+  .bc.active { border-color: color-mix(in srgb, var(--ohs) 55%, var(--hair)); background: var(--card); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ohs) 12%, transparent); }
+  .bc-name {
+    display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 13px;
+    font-weight: 650; color: var(--ink); margin: 1px 2px 8px; letter-spacing: .02em;
+  }
+  .bc-name .badge {
+    font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ohs);
+    border: 1px solid color-mix(in srgb, var(--ohs) 40%, transparent); border-radius: 20px;
+    padding: 1px 7px; margin-left: auto;
+  }
+  .grp { margin: 0 0 5px; }
+  .grp-h {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; color: var(--gc, var(--muted));
+    padding: 3px 4px 2px; display: flex; align-items: center; gap: 6px;
+  }
+  .grp-h::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--gc, var(--muted)); flex: none; }
+  .node {
+    display: block; width: 100%; text-align: left; border: none; background: none;
+    font-family: var(--mono); font-size: 12px; color: var(--muted); cursor: pointer;
+    padding: 3px 6px 3px 18px; border-radius: 7px; line-height: 1.45; position: relative;
+    overflow-wrap: anywhere; word-break: break-word;
+  }
+  .node::before {
+    content: ""; position: absolute; left: 7px; top: 9px; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--nc, var(--faint)); opacity: .5;
+  }
+  .node:hover { background: var(--paper); color: var(--ink); }
+  .node.grey { color: var(--grey-node); font-style: italic; }
+  .node.grey::before { background: var(--grey-node); }
+  .node.active {
+    background: color-mix(in srgb, var(--nc) 13%, transparent); color: var(--ink); font-weight: 640;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nc) 40%, transparent);
+  }
+  .node.active::before { opacity: 1; transform: scale(1.35); }
+  .node:focus-visible { outline: 2px solid var(--app); outline-offset: 1px; }
+
+  /* ---------- step card ---------- */
+  .card {
+    background: var(--card); border: 1px solid var(--hair); border-radius: 14px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-head { padding: 16px 20px 14px; border-bottom: 1px solid var(--hair); position: relative; }
+  .card-head::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--lc, var(--faint));
+  }
+  .step-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .stepno { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 2px 9px; border-radius: 20px; font-weight: 600;
+    color: var(--lc); background: color-mix(in srgb, var(--lc) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lc) 30%, transparent);
+  }
+  .chip.bc { color: var(--ink); background: var(--paper); border-color: var(--hair); }
+  .chip.flag { color: var(--err); background: color-mix(in srgb, var(--err) 10%, transparent); border-color: color-mix(in srgb, var(--err) 32%, transparent); }
+  .chip.cross { color: var(--ohs); background: color-mix(in srgb, var(--ohs) 10%, transparent); border-color: color-mix(in srgb, var(--ohs) 34%, transparent); }
+  .filepath { font-family: var(--mono); font-size: 13px; color: var(--ink); margin: 11px 0 3px; font-weight: 620; word-break: break-all; }
+  .card-title { font-size: 17px; font-weight: 680; margin: 4px 0 0; letter-spacing: -.01em; text-wrap: balance; }
+
+  .card-body { padding: 16px 20px 20px; }
+  .facts { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: 11px; overflow: hidden; margin-bottom: 16px; }
+  .fact { background: var(--card); padding: 10px 13px; display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: start; }
+  .fact dt { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: .04em; padding-top: 1px; }
+  .fact dd { margin: 0; font-size: 13.5px; color: var(--ink); }
+  .fact dd b { color: var(--dom); font-weight: 640; }
+  .fact.dep dd { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  .codewrap { border: 1px solid var(--hair); border-radius: 11px; overflow: hidden; background: #fbfcfe; }
+  .codebar {
+    display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-bottom: 1px solid var(--hair);
+    background: var(--paper); font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .codebar .lang { margin-left: auto; }
+  pre.code { margin: 0; padding: 13px 15px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.62; tab-size: 4; scrollbar-width: thin; }
+  pre.code code { white-space: pre; }
+  .code .k { color: #0f62b0; font-weight: 600; }
+  .code .s { color: #1e7a4b; }
+  .code .c { color: #8592a0; font-style: italic; }
+  .code .d { color: #b26b1e; }
+  .code .n { color: #b5482e; }
+  .code .key { color: #7c3aed; }   /* JSON 키 — 바이올렛 */
+  .code .fn  { color: #2c6db0; }   /* 경로 · URL — 블루 */
+  .code .p   { color: #93a0ac; }   /* 구두점 */
+
+  .note {
+    margin-top: 15px; padding: 11px 14px; border-radius: 10px; font-size: 13px; line-height: 1.55;
+    background: color-mix(in srgb, var(--ohs) 7%, var(--card)); border: 1px solid color-mix(in srgb, var(--ohs) 26%, transparent);
+    color: var(--ink);
+  }
+  .note.err { background: color-mix(in srgb, var(--err) 7%, var(--card)); border-color: color-mix(in srgb, var(--err) 26%, transparent); }
+  .note b { color: var(--ohs); }
+  .note.err b { color: var(--err); }
+  .note .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; display: block; margin-bottom: 3px; opacity: .85; }
+
+  /* ---------- nav ---------- */
+  .nav { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .btn {
+    font-family: var(--sans); font-size: 13.5px; font-weight: 600; cursor: pointer;
+    padding: 9px 16px; border-radius: 9px; border: 1px solid var(--hair); background: var(--card); color: var(--ink);
+    display: inline-flex; align-items: center; gap: 7px; transition: background .15s, border-color .15s, transform .1s;
+  }
+  .btn:hover:not(:disabled) { background: var(--paper); border-color: var(--faint); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); margin-left: auto; }
+  .btn.primary:hover:not(:disabled) { background: #2c3742; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--app); outline-offset: 2px; }
+  .counter { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .kbd-hint { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 9px; }
+  .kbd { border: 1px solid var(--hair); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--paper); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 940px) {
+    .console { grid-template-columns: 1fr; }
+    .map { position: static; max-height: 340px; order: 2; }
+    .card { order: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">dddjango · DDD 4계층 온보딩</p>
+    <h1>하나의 요청이 지나가는 길 &nbsp;<span class="path">POST /orders</span></h1>
+    <p class="lede">주문 한 건을 만드는 요청이 <b>어떤 파일을 어떤 순서로</b> 지나가는지 33단계로 따라갑니다. 재고 확인·차감, 가격 계산, 결제, 그리고 <b>다른 바운디드 컨텍스트(catalog)를 넘나드는 왕복</b>까지 — DDD가 왜 이렇게 잘게 나누는지 각 정거장에서 설명합니다.</p>
+    <div class="legend" id="legend"></div>
+  </header>
+
+  <div class="rail-shell">
+    <div class="rail-band"><div class="cat" id="catBand"></div><span class="cat-label" id="catLabel">↳ catalog BC 왕복</span></div>
+    <div class="rail" id="rail" role="tablist" aria-label="33단계 여정"></div>
+  </div>
+
+  <div class="console">
+    <aside class="map" id="map" aria-label="파일트리 맵"></aside>
+
+    <main class="card">
+      <div class="card-head">
+        <div class="step-meta" id="meta"></div>
+        <div class="filepath" id="filepath"></div>
+        <h2 class="card-title" id="title"></h2>
+      </div>
+      <div class="card-body">
+        <dl class="facts" id="facts"></dl>
+        <div class="codewrap">
+          <div class="codebar"><span id="codefile">code</span><span class="lang" id="codelang">python</span></div>
+          <pre class="code"><code id="code"></code></pre>
+        </div>
+        <div id="note"></div>
+        <div class="nav">
+          <button class="btn" id="prev">◀ 이전</button>
+          <span class="counter" id="counter"></span>
+          <button class="btn primary" id="next">다음 ▶</button>
+        </div>
+        <p class="kbd-hint">키보드 <span class="kbd">←</span> <span class="kbd">→</span> 로 이동 · 위 레일의 점을 눌러 바로 점프</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- layer meta ---------- */
+const LAYERS = {
+  http:  { label: "HTTP",          v: "--http" },
+  pres:  { label: "presentation",  v: "--pres" },
+  app:   { label: "application",   v: "--app"  },
+  dom:   { label: "domain",        v: "--dom"  },
+  infra: { label: "infra",         v: "--infra"},
+  wire:  { label: "composition",   v: "--wire" },
+  ohs:   { label: "OHS 계약",       v: "--ohs"  },
+};
+const cssv = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/* ---------- file-tree map ---------- */
+const MAP = [
+  { key: "orders", name: "orders BC", groups: [
+    { layer: "pres", nodes: [
+      { id: "o-router",     t: "orders_api_router.py" },
+      { id: "o-controller", t: "presentation_layer/api/…/order_controller.py" },
+      { id: "o-schema-in",  t: "presentation_layer/schema/schema_in.py" },
+      { id: "o-schema-out", t: "presentation_layer/schema/schema_out.py" },
+      { id: "o-error-out",  t: "presentation_layer/schema/error_out.py" },
+    ]},
+    { layer: "wire", nodes: [ { id: "o-comp", t: "composition_root.py" } ]},
+    { layer: "app", nodes: [
+      { id: "o-req",    t: "application_layer/place_order/dto/…_request.py" },
+      { id: "o-cmd",    t: "application_layer/place_order/command/…_command.py" },
+      { id: "o-result", t: "application_layer/place_order/dto/…_result.py" },
+      { id: "o-query",  t: "application_layer/…/query/", grey: true },
+      { id: "o-svc",    t: "application_layer/…/service/", grey: true },
+      { id: "o-handler",t: "application_layer/…/handler/", grey: true },
+    ]},
+    { layer: "dom", nodes: [
+      { id: "o-port-catalog", t: "domain_layer/order/port/product_catalog_port.py" },
+      { id: "o-port-stock",   t: "domain_layer/order/port/product_stock_port.py" },
+      { id: "o-port-pay",     t: "domain_layer/order/port/payment_gateway.py" },
+      { id: "o-vo",           t: "domain_layer/order/value_object/quantity.py · money.py" },
+      { id: "o-entity",       t: "domain_layer/order/entity/order_line.py" },
+      { id: "o-spec",         t: "domain_layer/order/specification/…_specification.py" },
+      { id: "o-dsvc",         t: "domain_layer/order/domain_service/pricing_service.py" },
+      { id: "o-root",         t: "domain_layer/order/order.py  (애그리거트 루트)" },
+      { id: "o-repo-if",      t: "domain_layer/order/repository/order_repository.py" },
+      { id: "o-exc",          t: "domain_layer/order/exception.py" },
+      { id: "o-event",        t: "domain_layer/order/event/", grey: true },
+    ]},
+    { layer: "infra", nodes: [
+      { id: "o-acl-catalog", t: "infra_layer/acl/product_catalog_adapter.py" },
+      { id: "o-acl-stock",   t: "infra_layer/acl/product_stock_adapter.py" },
+      { id: "o-adapter-pay", t: "infra_layer/adapter/stripe_payment_gateway.py" },
+      { id: "o-repo-impl",   t: "infra_layer/repository/django_order_repository.py" },
+      { id: "o-orm",         t: "infra_layer/django_orders/models/order_model.py · order_line_model.py" },
+      { id: "o-migrations",  t: "infra_layer/django_orders/migrations/", grey: true },
+      { id: "o-admin",       t: "infra_layer/django_orders/admin/", grey: true },
+    ]},
+    { layer: "app", label: "test", nodes: [ { id: "o-test", t: "test/{unit,integration,e2e}/", grey: true } ]},
+  ]},
+  { key: "catalog", name: "catalog BC", badge: "다른 컨텍스트", groups: [
+    { layer: "ohs", nodes: [
+      { id: "c-ohs",       t: "published_service/catalog_service/catalog_service.py" },
+      { id: "c-req-ct",    t: "…/contract/request_contract/get_products_request_contract.py" },
+      { id: "c-resp-ct",   t: "…/contract/response_contract/get_products_response_contract.py" },
+      { id: "c-exc-ct",    t: "…/contract/exception_contract/catalog_published_error.py" },
+    ]},
+    { layer: "wire", nodes: [ { id: "c-comp", t: "composition_root.py" } ]},
+    { layer: "app", nodes: [ { id: "c-query", t: "application_layer/product_catalog/query/get_products_query.py" } ]},
+    { layer: "dom", nodes: [
+      { id: "c-root",    t: "domain_layer/product/product.py" },
+      { id: "c-repo-if", t: "domain_layer/product/repository/product_repository.py" },
+    ]},
+    { layer: "infra", nodes: [
+      { id: "c-repo-impl", t: "infra_layer/repository/django_product_repository.py" },
+      { id: "c-orm",       t: "infra_layer/django_catalog/models/product_model.py" },
+    ]},
+  ]},
+];
+
+/* ---------- steps ---------- */
+const S = (o) => o;
+const STEPS = [
+S({ n:1, bc:"orders", layer:"http", node:null, flags:["진입"],
+  file:"HTTP 요청", title:"클라이언트가 주문을 요청한다",
+  where:"앱 바깥 — 아직 어떤 파일도 아니다.",
+  why:"고객이 상품 2종을 담아 주문을 보낸다. 이 JSON이 앞으로 <b>모든 계층을 통과</b>하며 도메인 객체로 바뀌고, 다시 JSON으로 돌아 나온다.",
+  ddd:"바깥 세계는 HTTP·JSON만 안다. 우리 도메인 언어는 아직 등장하지 않았다.",
+  dep:"—",
+  lang:"http", codefile:"request",
+  code:`POST /orders HTTP/1.1
+Content-Type: application/json
+
+{
+  "customer_id": 42,
+  "lines": [
+    { "product_id": 1, "quantity": 2 },
+    { "product_id": 7, "quantity": 1 }
+  ]
+}` }),
+
+S({ n:2, bc:"orders", layer:"pres", node:"o-router", flags:[],
+  file:"application/orders/orders_api_router.py", title:"BC의 HTTP 진입점을 등록한다",
+  where:"presentation 계층의 라우팅 파일. 앱마다 하나.",
+  why:"프로젝트 전역 <code>NinjaExtraAPI</code>에 이 BC의 컨트롤러를 <b>로컬로</b> 등록한다. 라우팅 배선이 앱 안에 사는 이유는, 앱을 통째로 옮겨도 진입점이 따라오게 하기 위해서다.",
+  ddd:"각 BC가 자기 진입점을 소유한다 — 중앙 urls.py가 모든 앱을 아는 결합점이 되지 않는다.",
+  dep:"→ OrderController",
+  lang:"python", codefile:"orders_api_router.py",
+  code:`from ninja_extra import NinjaExtraAPI
+from application.orders.presentation_layer.api.place_order.order_controller import OrderController
+
+def register(api: NinjaExtraAPI) -> None:
+    # 프로젝트 config의 API 인스턴스에 이 BC 컨트롤러를 등록
+    api.register_controllers(OrderController)` }),
+
+S({ n:3, bc:"orders", layer:"pres", node:"o-controller", flags:[],
+  file:"presentation_layer/api/place_order/order_controller.py", title:"얇은 입력 어댑터 — 로직은 없다",
+  where:"presentation 계층. HTTP를 아는 유일한 곳.",
+  why:"컨트롤러는 <b>파싱 → 응용 호출 → 응답·예외 변환</b>만 한다. 여기에 비즈니스 규칙(재고 확인, 가격 계산)을 절대 두지 않는다. 그게 새면 로직이 프레임워크에 붙잡힌다.",
+  ddd:"헥사고날의 <b>입력 어댑터</b>. 컨트롤러를 지워도 도메인은 멀쩡해야 한다.",
+  dep:"→ composition_root · OrderIn · OrderOut",
+  lang:"python", codefile:"order_controller.py",
+  code:`@api_controller("/orders", tags=["orders"])
+class OrderController:
+    @route.post("", response={201: OrderOut, 409: ErrorOut})
+    def place_order(self, payload: OrderIn):
+        request = payload.to_request()             # 입력 계약 → 응용 DTO
+        command = build_place_order_command()      # composition_root 팩토리
+        result = command.execute(request)          # 유스케이스에 위임
+        return 201, OrderOut.from_result(result)   # 도메인 직접 노출 금지` }),
+
+S({ n:4, bc:"orders", layer:"pres", node:"o-schema-in", flags:[],
+  file:"presentation_layer/schema/schema_in.py", title:"입력 계약을 검증한다",
+  where:"presentation 계층. HTTP 요청 바디의 형태 계약.",
+  why:"Ninja <code>Schema</code>가 타입·필수값을 검증한다. 그리고 <code>to_request()</code>로 <b>응용 계층 DTO</b>로 바꾼다 — HTTP 모양과 유스케이스 입력을 분리하는 첫 경계.",
+  ddd:"presentation 계약 ≠ application 계약. 바깥 JSON 필드명이 바뀌어도 내부는 안 흔들린다.",
+  dep:"→ PlaceOrderRequest",
+  lang:"python", codefile:"schema_in.py",
+  code:`class OrderLineIn(Schema):
+    product_id: int
+    quantity: int
+
+class OrderIn(Schema):
+    customer_id: int
+    lines: list[OrderLineIn]
+
+    def to_request(self) -> PlaceOrderRequest:      # 경계 변환
+        return PlaceOrderRequest(
+            customer_id=self.customer_id,
+            lines=[(l.product_id, l.quantity) for l in self.lines],
+        )` }),
+
+S({ n:5, bc:"orders", layer:"wire", node:"o-comp", flags:[],
+  file:"application/orders/composition_root.py", title:"의존성을 조립한다 (DI 배선)",
+  where:"BC 루트의 조립 파일. presentation과 도메인 사이의 '배선반'.",
+  why:"유스케이스는 <b>추상(포트)</b>에만 의존하고, 여기서 <b>구체(어댑터·리포지토리)</b>를 주입한다. 컨트롤러는 이 팩토리를 <b>호출만</b> 한다 — 어디서도 <code>DjangoOrderRepository()</code>를 직접 만들지 않는다.",
+  ddd:"의존성 역전(DIP)의 실현 지점. 이 파일 하나만 구체 타입을 안다.",
+  dep:"→ PlaceOrderCommand (+ 모든 어댑터)",
+  lang:"python", codefile:"composition_root.py",
+  code:`def build_place_order_command() -> PlaceOrderCommand:
+    return PlaceOrderCommand(
+        catalog=ProductCatalogAdapter(),       # infra/acl → catalog OHS
+        stock=DjangoProductStockAdapter(),     # infra/acl → 재고 BC(ACL)
+        payment=StripePaymentGateway(),        # infra/adapter → 외부 결제
+        orders=DjangoOrderRepository(),        # infra/repository
+        pricing=PricingService(),              # domain_service
+    )` }),
+
+S({ n:6, bc:"orders", layer:"app", node:"o-req", flags:[],
+  file:"application_layer/place_order/dto/place_order_request.py", title:"유스케이스 입력 DTO",
+  where:"application 계층. 유스케이스가 받는 입력 계약.",
+  why:"프레임워크를 모르는 <b>순수 데이터</b>. Ninja Schema(웹 계약)와 분리돼 있어서, 이 유스케이스를 CLI·배치·테스트에서 그대로 부를 수 있다.",
+  ddd:"응용 서비스의 입력은 원시 스칼라 더미가 아니라 <b>의도를 담은 DTO</b>다.",
+  dep:"의존 없음 (dataclass)",
+  lang:"python", codefile:"place_order_request.py",
+  code:`from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class PlaceOrderRequest:
+    customer_id: int
+    lines: list[tuple[int, int]]      # (product_id, quantity)
+
+    def product_ids(self) -> list[int]:
+        return [pid for pid, _ in self.lines]` }),
+
+S({ n:7, bc:"orders", layer:"app", node:"o-cmd", flags:[],
+  file:"application_layer/place_order/command/place_order_command.py", title:"유스케이스 파사드 — 흐름을 조율한다",
+  where:"application 계층. '무엇을 언제' 하는지의 대본.",
+  why:"직접 계산하지 않고 <b>도메인에 위임</b>한다. 트랜잭션을 열고, 협력자들(catalog·stock·payment·repository)을 순서대로 호출한다. 모든 협력자는 <b>추상 타입</b>이다.",
+  ddd:"응용 서비스 = 파사드. 비즈니스 규칙은 여기가 아니라 <b>Order</b> 안에 있다.",
+  dep:"→ ProductCatalogPort · Order · ProductStockPort · PaymentGateway · OrderRepository",
+  lang:"python", codefile:"place_order_command.py",
+  code:`class PlaceOrderCommand:
+    def __init__(self, catalog: ProductCatalogPort, stock: ProductStockPort,
+                 payment: PaymentGateway, orders: OrderRepository, pricing: PricingService):
+        self._catalog, self._stock = catalog, stock
+        self._payment, self._orders, self._pricing = payment, orders, pricing
+
+    def execute(self, request: PlaceOrderRequest) -> PlaceOrderResult:
+        with transaction.atomic():                                  # 트랜잭션 경계
+            products = self._catalog.fetch(request.product_ids())   # ① 다른 BC 조회
+            order = Order.place(request, products, self._pricing)   # ② 도메인 규칙
+            self._stock.decrease(order.stock_demands())             # ③ 재고 차감
+            self._payment.charge(order.total())                     # ④ 결제
+            self._orders.save(order)                                # ⑤ 저장
+            return PlaceOrderResult.of(order)` }),
+
+S({ n:8, bc:"orders", layer:"dom", node:"o-port-catalog", flags:["협력 ①: OHS"],
+  file:"domain_layer/order/port/product_catalog_port.py", title:"협력 포트 — 도메인이 역할을 소유한다",
+  where:"domain 계층. 다른 컨텍스트를 부를 '역할'의 정의(ABC).",
+  why:"주문 도메인은 '상품 정보를 가져오는 누군가'가 필요하다. 그 <b>역할(인터페이스)</b>을 도메인이 소유하고, 실제 구현이 누구든(catalog OHS든 목이든) 상관하지 않는다.",
+  ddd:"포트를 <b>도메인</b>에 두는 게 DIP의 핵심. 호출자가 application이어도 소유·위치는 domain이다.",
+  dep:"의존 없음 (추상)",
+  lang:"python", codefile:"product_catalog_port.py",
+  code:`from abc import ABC, abstractmethod
+
+class ProductCatalogPort(ABC):
+    """상품 정보 협력 포트 — 구현은 infra, 소유는 domain(DIP).
+    반환은 우리 도메인 값 CatalogProduct 로만 받는다."""
+
+    @abstractmethod
+    def fetch(self, product_ids: list[int]) -> list["CatalogProduct"]:
+        ...` }),
+
+S({ n:9, bc:"orders", layer:"infra", node:"o-acl-catalog", flags:["협력 ①: OHS", "경계 →"],
+  file:"infra_layer/acl/product_catalog_adapter.py", title:"OHS를 소비한다 — 상대의 창구만 부른다",
+  where:"infra 계층의 ACL. 포트의 실제 구현.",
+  why:"catalog BC가 <b>published_service(OHS)</b>를 열어뒀으니, 우리는 그 <b>공개 함수와 계약(contract)만</b> 부른다. catalog의 domain·infra는 절대 직접 import하지 않는다.",
+  ddd:"이제 곧 <b>BC 경계를 넘는다.</b> 상대의 내부가 아니라 상대가 공개한 계약에만 결합한다.",
+  dep:"→ catalog_service.get_products() (OHS)",
+  lang:"python", codefile:"product_catalog_adapter.py",
+  code:`class ProductCatalogAdapter(ProductCatalogPort):
+    def fetch(self, product_ids: list[int]) -> list[CatalogProduct]:
+        # 다른 BC의 published_service(OHS)만 호출한다 — 내부는 모른다
+        from application.catalog.published_service.catalog_service \\
+            import catalog_service
+        from ...request_contract.get_products_request_contract \\
+            import GetProductsRequestContract
+
+        response = catalog_service.get_products(
+            GetProductsRequestContract(product_ids))      # ↓ 경계를 넘는다
+        return [CatalogProduct(v.id, Money(v.price)) for v in response.products]` }),
+
+S({ n:10, bc:"catalog", layer:"ohs", node:"c-ohs", flags:["catalog BC", "경계 안"],
+  file:"application/catalog/published_service/catalog_service/catalog_service.py", title:"← 경계를 넘어 catalog BC의 창구(OHS)로",
+  where:"catalog BC의 published_service. 공개 표면 = 모듈 함수뿐.",
+  why:"OHS 공개 함수는 <b>request contract 1개를 받아 response contract를 반환</b>한다. 조립은 자기 composition_root에 위임하고 여기선 상태를 갖지 않는다. 이 엄격한 형태 덕분에 소비자가 예측 가능하게 결합한다.",
+  ddd:"오픈 호스트 서비스(OHS). 제공 BC가 자기 공개 계약을 소유한다 — 중앙 bridge로 흩어지지 않는다.",
+  dep:"→ catalog composition_root · GetProductsResponseContract",
+  lang:"python", codefile:"catalog_service.py",
+  code:`def get_products(request: GetProductsRequestContract) -> GetProductsResponseContract:
+    """공개 표면 = 모듈 함수(공개 클래스 금지, 상태 없음).
+    raises: CatalogPublishedError"""
+    query = build_get_products_query()               # catalog 자기 composition_root
+    products = query.execute(GetProductsInput(request.product_ids))
+    return GetProductsResponseContract(              # 도메인 → Published Language
+        products=[ProductView(p.id, p.price.amount) for p in products],
+    )` }),
+
+S({ n:11, bc:"catalog", layer:"ohs", node:"c-req-ct", flags:["catalog BC"],
+  file:"…/contract/request_contract/get_products_request_contract.py", title:"입력 계약 — 소비자가 타입으로 결합하는 것",
+  where:"catalog OHS의 contract 3패키지 중 request_contract. 연산당 1파일.",
+  why:"소비 BC(orders)가 <b>결합해도 되는 유일한 타입</b>. 이 계약은 표준 라이브러리 말고 <b>아무 계층도 import하지 않는다</b> — 그래야 orders가 catalog 계약을 쓰면서 무거운 Django 그래프를 끌고 오지 않는다.",
+  ddd:"Published Language의 입력면. 계약은 격리돼야 소비자와 제공자가 독립적으로 진화한다.",
+  dep:"의존 없음 (순수 dataclass)",
+  lang:"python", codefile:"get_products_request_contract.py",
+  code:`from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class GetProductsRequestContract:
+    product_ids: list[int]      # 소비 BC가 '타입으로' 결합하는 입력 계약` }),
+
+S({ n:12, bc:"catalog", layer:"app", node:"c-query", flags:["catalog BC"],
+  file:"application/catalog/application_layer/…/query/get_products_query.py", title:"상대 BC의 조회 유스케이스",
+  where:"catalog의 application 계층. 읽기 유스케이스(Query 인터랙터).",
+  why:"OHS 함수가 자기 <code>composition_root</code>로 조립한 <b>Query</b>에 위임한다. 읽기도 쓰기처럼 <code>execute(request)</code> 연산으로 통일 — 런간 결정성과 일관성을 위해.",
+  ddd:"catalog도 <b>똑같은 4계층</b>을 갖는다. BC가 다르다고 규약이 다른 게 아니다.",
+  dep:"→ ProductRepository (추상)",
+  lang:"python", codefile:"get_products_query.py",
+  code:`class GetProductsQuery:
+    def __init__(self, products: ProductRepository):
+        self._products = products
+
+    def execute(self, request: GetProductsInput) -> list[Product]:
+        return self._products.find_by_ids(request.product_ids)` }),
+
+S({ n:13, bc:"catalog", layer:"dom", node:"c-root", flags:["catalog BC"],
+  file:"application/catalog/domain_layer/product/product.py", title:"상대 BC의 애그리거트",
+  where:"catalog의 domain 계층. Product 애그리거트 루트.",
+  why:"catalog 안에서 <b>Product는 풍부한 도메인 객체</b>다. 하지만 이 타입은 catalog 밖으로 절대 나가지 않는다 — 경계에서 <code>ProductView</code> 계약으로 번역돼 나간다.",
+  ddd:"같은 '상품'이라도 BC마다 모델이 다르다. catalog의 Product ≠ orders가 보는 상품.",
+  dep:"→ Money (catalog 자기 값 객체)",
+  lang:"python", codefile:"product.py",
+  code:`@dataclass(frozen=True)
+class Product:                       # catalog BC의 애그리거트 루트
+    id: int
+    name: str
+    price: Money
+
+    def is_sellable(self) -> bool:
+        return self.price.amount > 0` }),
+
+S({ n:14, bc:"catalog", layer:"infra", node:"c-repo-impl", flags:["catalog BC"],
+  file:"infra_layer/repository/django_product_repository.py", title:"상대 BC의 저장소·ORM에서 읽는다",
+  where:"catalog의 infra 계층. 리포지토리 구현 + Django ORM.",
+  why:"ORM row를 읽어 <b>도메인 Product로 매핑</b>한다(Data Mapper). <code>ProductModel</code>(ORM)과 <code>Product</code>(도메인)는 이름부터 다른 별개의 표현이다.",
+  ddd:"도메인 ≠ ORM. DB 스키마가 바뀌어도 매핑만 고치면 도메인은 그대로.",
+  dep:"→ ProductModel (ORM)",
+  lang:"python", codefile:"django_product_repository.py",
+  code:`class DjangoProductRepository(ProductRepository):
+    def find_by_ids(self, ids: list[int]) -> list[Product]:
+        rows = ProductModel.objects.filter(id__in=ids)          # ORM 조회
+        return [Product(r.id, r.name, Money(r.price)) for r in rows]  # ORM→도메인
+
+# infra_layer/django_catalog/models/product_model.py
+class ProductModel(models.Model):
+    name = models.CharField(max_length=200)
+    price = models.PositiveIntegerField()
+    class Meta:
+        db_table = "catalog_product"        # <app_label>_<entity_snake>` }),
+
+S({ n:15, bc:"catalog", layer:"ohs", node:"c-resp-ct", flags:["catalog BC", "→ 경계"],
+  file:"…/contract/response_contract/get_products_response_contract.py", title:"결과를 Published Language로 포장해 돌려준다",
+  where:"catalog OHS contract의 response_contract. 반환 있는 연산당 1파일.",
+  why:"도메인 <code>Product</code>가 아니라 <b>단순 wire 값 <code>ProductView</code></b>로 포장한다. catalog의 내부 타입(Product·Money·enum)이 orders 안으로 새면, 두 BC가 강하게 묶여버린다.",
+  ddd:"이 포장이 <b>모델 누수 방어</b>다. 소비자는 이 계약 필드에만 의존한다.",
+  dep:"의존 없음 (순수 dataclass)",
+  lang:"python", codefile:"get_products_response_contract.py",
+  code:`@dataclass(frozen=True)
+class ProductView:
+    id: int
+    price: int          # 도메인 Money가 아니라 wire 정수 — 내부 타입 누수 금지
+
+@dataclass(frozen=True)
+class GetProductsResponseContract:
+    products: list[ProductView]` }),
+
+S({ n:16, bc:"orders", layer:"infra", node:"o-acl-catalog", flags:["경계 ←", "번역"],
+  file:"infra_layer/acl/product_catalog_adapter.py", title:"경계를 되넘어와 우리 언어로 번역한다",
+  where:"다시 orders의 infra ACL. 응답 계약이 도착한 지점.",
+  why:"상대의 <code>ProductView</code>(계약)를 <b>우리 도메인 값 <code>CatalogProduct</code></b>로 번역한다. catalog의 <code>Product</code>/<code>ProductModel</code>은 이 선을 절대 못 넘는다.",
+  ddd:"부패 방지 계층(ACL)의 본질 — 업스트림 개념을 하류 개념으로 번역해 우리 도메인을 오염에서 지킨다.",
+  dep:"→ CatalogProduct (우리 도메인 값)",
+  lang:"python", codefile:"product_catalog_adapter.py",
+  code:`        response = catalog_service.get_products(
+            GetProductsRequestContract(product_ids))
+
+        # 상대 BC의 ProductView(계약) → 우리 도메인 값 CatalogProduct 로 번역
+        return [CatalogProduct(v.id, Money(v.price)) for v in response.products]
+        # catalog 의 Product / ProductModel 은 우리 안으로 절대 넘어오지 않는다` }),
+
+S({ n:17, bc:"orders", layer:"dom", node:"o-vo", flags:[],
+  file:"domain_layer/order/value_object/quantity.py · money.py", title:"값 객체가 스스로를 검증한다",
+  where:"orders의 domain 계층. 불변·자기검증 값 객체.",
+  why:"<code>Quantity(0)</code>은 생성 자체가 불가능하다 — 잘못된 값이 도메인에 <b>존재조차 못 한다</b>. '수량이 양수인지' 같은 검사를 여기저기 흩뿌릴 필요가 없어진다.",
+  ddd:"값 객체(VO). 불변식을 타입에 새겨, 유효하지 않은 상태를 표현 불가능하게 만든다.",
+  dep:"의존 없음",
+  lang:"python", codefile:"quantity.py · money.py",
+  code:`@dataclass(frozen=True)
+class Quantity:
+    value: int
+    def __post_init__(self):
+        if self.value <= 0:
+            raise ValueError("수량은 1 이상이어야 한다")    # 자기검증
+
+@dataclass(frozen=True)
+class Money:
+    amount: int
+    def __add__(self, other: "Money") -> "Money":
+        return Money(self.amount + other.amount)` }),
+
+S({ n:18, bc:"orders", layer:"dom", node:"o-entity", flags:[],
+  file:"domain_layer/order/entity/order_line.py", title:"종속 엔티티 — 주문 항목",
+  where:"orders의 domain 계층. 애그리거트에 속한 엔티티.",
+  why:"주문 라인은 값 객체와 달리 <b>식별성</b>을 갖는다(어떤 상품 몇 개). 여러 상품을 담는 시나리오라 라인이 필요해지고, 그래서 <code>entity/</code> 폴더가 흐름에 등장한다.",
+  ddd:"엔티티 vs 값 객체 — 라인은 '무엇을 얼마나'라는 정체성이 있어 엔티티, 금액·수량은 값 객체.",
+  dep:"→ Quantity · Money",
+  lang:"python", codefile:"order_line.py",
+  code:`@dataclass
+class OrderLine:                        # 식별성을 갖는 종속 엔티티
+    product_id: int
+    quantity: Quantity
+    unit_price: Money
+
+    def subtotal(self) -> Money:
+        return Money(self.unit_price.amount * self.quantity.value)` }),
+
+S({ n:19, bc:"orders", layer:"dom", node:"o-spec", flags:[],
+  file:"domain_layer/order/specification/purchase_limit_specification.py", title:"재사용 가능한 규칙 (Specification)",
+  where:"orders의 domain 계층. 명세 객체.",
+  why:"'1회 주문 총 수량 상한' 같은 규칙을 <b>이름 붙은 객체</b>로 뽑아낸다. 여러 곳에서 재사용·조합할 수 있고, 규칙 자체가 테스트 대상이 된다.",
+  ddd:"Specification 패턴. 도메인 규칙을 if문에 파묻지 않고 <b>일급 개념</b>으로 만든다.",
+  dep:"→ OrderLine",
+  lang:"python", codefile:"purchase_limit_specification.py",
+  code:`class PurchaseLimitSpecification:
+    """재사용 규칙: 1회 주문 총 수량 상한."""
+    def __init__(self, max_total: int = 100):
+        self._max = max_total
+
+    def is_satisfied_by(self, lines: list[OrderLine]) -> bool:
+        return sum(l.quantity.value for l in lines) <= self._max` }),
+
+S({ n:20, bc:"orders", layer:"dom", node:"o-dsvc", flags:[],
+  file:"domain_layer/order/domain_service/pricing_service.py", title:"도메인 서비스 — 어디에도 안 속하는 로직",
+  where:"orders의 domain 계층. stateless 도메인 서비스.",
+  why:"총액·할인 계산은 <b>여러 라인에 걸치는</b> 로직이라 특정 엔티티 하나의 메서드로 두기 어색하다. 그래서 도메인 서비스로 뽑는다 — 여전히 순수 도메인 규칙이다.",
+  ddd:"도메인 서비스는 '명사가 아니라 동사'인 로직의 집. 단, 응용 서비스(오케스트레이션)와는 다르다.",
+  dep:"→ OrderLine · Money",
+  lang:"python", codefile:"pricing_service.py",
+  code:`class PricingService:
+    """여러 라인에 걸친 stateless 계산 — 특정 엔티티에 속하지 않는 도메인 로직."""
+    def total(self, lines: list[OrderLine]) -> Money:
+        gross = sum((l.subtotal() for l in lines), Money(0))
+        if gross.amount >= 50_000:                       # 5만원 이상 10% 할인
+            return Money(int(gross.amount * 0.9))
+        return gross` }),
+
+S({ n:21, bc:"orders", layer:"dom", node:"o-root", flags:["규칙의 심장"],
+  file:"domain_layer/order/order.py", title:"애그리거트 루트 — 규칙의 심장",
+  where:"orders의 domain 계층. 일관성 경계의 주인.",
+  why:"라인·값 객체·명세·도메인 서비스가 <b>여기서 하나로 조립</b>된다. <code>Order.place()</code>가 불변식을 강제한다 — 유효하지 않은 주문은 <b>만들어질 수 없다</b>. 바깥은 항상 루트를 통해서만 접근한다.",
+  ddd:"애그리거트 루트가 일관성 경계를 지킨다. 이 파일이 이 BC에서 가장 중요한 코드다.",
+  dep:"→ OrderLine · Quantity · PurchaseLimitSpecification · PricingService",
+  lang:"python", codefile:"order.py",
+  code:`class Order:                                     # 애그리거트 루트 — 일관성 경계
+    def __init__(self, customer_id, lines: list[OrderLine], total: Money):
+        self._customer_id, self._lines, self._total = customer_id, lines, total
+
+    @classmethod
+    def place(cls, request, products, pricing: PricingService) -> "Order":
+        lines = [OrderLine(p.id, Quantity(q), p.price)
+                 for (pid, q), p in _match(request.lines, products)]
+        if not PurchaseLimitSpecification().is_satisfied_by(lines):
+            raise PurchaseLimitExceededError()          # 불변식 강제
+        return cls(request.customer_id, lines, pricing.total(lines))` }),
+
+S({ n:22, bc:"orders", layer:"dom", node:"o-port-stock", flags:["협력 ②: ACL"],
+  file:"domain_layer/order/port/product_stock_port.py", title:"재고 차감 협력 포트",
+  where:"orders의 domain 계층. 두 번째 협력 포트.",
+  why:"재고 차감이라는 <b>역할</b>을 도메인이 정의한다. 재고 부족 시 던질 예외(<code>OutOfStockError</code>)의 <b>전수 목록을 이 포트가 문서로 고정</b>한다 — 구현이 그 목록을 채운다.",
+  ddd:"포트의 docstring이 '이 협력이 노출하는 예외'의 단일 출처(앵커)다.",
+  dep:"의존 없음 (추상)",
+  lang:"python", codefile:"product_stock_port.py",
+  code:`class ProductStockPort(ABC):
+    """재고 차감 협력 포트.
+    raises:
+        OutOfStockError — 재고 부족 시 (예외 전수 목록의 앵커)."""
+
+    @abstractmethod
+    def decrease(self, demands: list[tuple[int, int]]) -> None:
+        ...` }),
+
+S({ n:23, bc:"orders", layer:"infra", node:"o-acl-stock", flags:["협력 ②: ACL", "에러 분기"],
+  file:"infra_layer/acl/product_stock_adapter.py", title:"ACL — 창구가 없어 직접 번역한다",
+  where:"orders의 infra 계층. 재고 BC용 ACL 어댑터.",
+  why:"재고 BC는 OHS를 안 열었고 <b>행 잠금 차감</b>이 필요하다. 그래서 우리가 <b>직접 접근</b>하되, 업스트림 상태를 <b>우리 도메인 예외로 번역</b>해 가둔다. 이게 협력 ①(OHS)과의 결정적 차이다.",
+  ddd:"OHS가 없을 때의 대안 = ACL. 업스트림 모델·예외를 우리 경계 안에 격리한다.",
+  dep:"→ OutOfStockError (우리 도메인 예외)",
+  lang:"python", codefile:"product_stock_adapter.py",
+  code:`class DjangoProductStockAdapter(ProductStockPort):
+    def decrease(self, demands: list[tuple[int, int]]) -> None:
+        for product_id, qty in demands:
+            row = (StockModel.objects
+                   .select_for_update()               # 행 잠금 — 오버셀 차단
+                   .get(product_id=product_id))
+            if row.available < qty:
+                raise OutOfStockError(product_id)      # 업스트림 상태 → 우리 예외
+            row.available -= qty
+            row.save(update_fields=["available"])` }),
+
+S({ n:24, bc:"orders", layer:"dom", node:"o-port-pay", flags:["협력 ③: Gateway"],
+  file:"domain_layer/order/port/payment_gateway.py", title:"결제 게이트웨이 포트 (외부 시스템)",
+  where:"orders의 domain 계층. 세 번째 협력 — 외부 시스템 관문.",
+  why:"결제(Stripe)는 <b>BC가 아니라 외부 시스템</b>이다. 그래서 협력 ①②와 이름 규칙이 갈린다: 확립 패턴명 <code>Gateway</code>를 쓰고, 구현에서도 접미사를 유지한다.",
+  ddd:"PoEAA <b>Gateway 패턴</b>. 외부 자원(결제·푸시·SMS) 관문은 Port가 아니라 Gateway로 명명한다.",
+  dep:"의존 없음 (추상)",
+  lang:"python", codefile:"payment_gateway.py",
+  code:`class PaymentGateway(ABC):               # PoEAA Gateway — 외부 시스템 관문
+    @abstractmethod
+    def charge(self, amount: Money) -> "PaymentReceipt":
+        ...` }),
+
+S({ n:25, bc:"orders", layer:"infra", node:"o-adapter-pay", flags:["협력 ③: Gateway"],
+  file:"infra_layer/adapter/stripe_payment_gateway.py", title:"외부 서비스 어댑터",
+  where:"orders의 infra 계층. adapter/ (ACL과 구분되는 외부 I/O 전용).",
+  why:"Stripe SDK 호출을 여기 <b>가둔다</b>. 외부 응답을 도메인 값(<code>PaymentReceipt</code>)으로 감싸, 도메인이 Stripe를 전혀 모르게 한다.",
+  ddd:"확립 패턴명 <code>Gateway</code>는 구현에서도 유지 — 추상 <code>PaymentGateway</code> ↔ 구현 <code>StripePaymentGateway</code>.",
+  dep:"→ PaymentReceipt (도메인 값)",
+  lang:"python", codefile:"stripe_payment_gateway.py",
+  code:`class StripePaymentGateway(PaymentGateway):
+    def charge(self, amount: Money) -> PaymentReceipt:
+        resp = stripe.PaymentIntent.create(
+            amount=amount.amount, currency="krw")
+        return PaymentReceipt(resp.id)      # 외부 응답 → 도메인 값으로 감쌈` }),
+
+S({ n:26, bc:"orders", layer:"dom", node:"o-repo-if", flags:[],
+  file:"domain_layer/order/repository/order_repository.py", title:"리포지토리 인터페이스 (DIP 포트)",
+  where:"orders의 domain 계층. 저장 역할의 추상.",
+  why:"도메인은 '주문을 저장한다'는 역할만 안다. <b>어떻게(Django·인메모리·목)</b>는 모른다. 그래서 테스트에서 가짜 리포지토리로 갈아끼울 수 있다.",
+  ddd:"리포지토리 = 애그리거트의 컬렉션인 척하는 추상. 인터페이스는 domain, 구현은 infra.",
+  dep:"→ Order (자기 애그리거트)",
+  lang:"python", codefile:"order_repository.py",
+  code:`class OrderRepository(ABC):              # DIP 포트 — 구현은 infra
+    @abstractmethod
+    def save(self, order: Order) -> None:
+        ...` }),
+
+S({ n:27, bc:"orders", layer:"infra", node:"o-repo-impl", flags:[],
+  file:"infra_layer/repository/django_order_repository.py", title:"구현 — 도메인을 ORM으로 매핑한다",
+  where:"orders의 infra 계층. 리포지토리 구현(Data Mapper).",
+  why:"도메인 <code>Order</code>를 <code>OrderModel</code>·<code>OrderLineModel</code>로 <b>변환</b>해 저장한다. 추상 <code>OrderRepository</code> ↔ 구현 <code>DjangoOrderRepository</code> — 이름의 한정자로 구분된다.",
+  ddd:"Data Mapper. 도메인은 ORM을 import하지만 ORM은 도메인을 모른다(단방향).",
+  dep:"→ OrderModel · OrderLineModel",
+  lang:"python", codefile:"django_order_repository.py",
+  code:`class DjangoOrderRepository(OrderRepository):
+    def save(self, order: Order) -> None:          # Data Mapper: 도메인 → ORM
+        row = OrderModel.objects.create(
+            customer_id=order.customer_id, total=order.total().amount)
+        OrderLineModel.objects.bulk_create(
+            OrderLineModel(order=row, product_id=l.product_id,
+                           quantity=l.quantity.value)
+            for l in order.lines)` }),
+
+S({ n:28, bc:"orders", layer:"infra", node:"o-orm", flags:[],
+  file:"infra_layer/django_orders/models/order_model.py · order_line_model.py", title:"ORM 모델 — 도메인과 별개의 표현",
+  where:"orders의 infra 계층. Django ORM 모델. 여기서 INSERT.",
+  why:"<code>OrderModel</code>은 <b>DB 테이블의 모양</b>이지 도메인이 아니다. 타 BC의 상품은 <b>FK가 아니라 ID 값</b>으로 참조한다 — BC 경계를 가로지르는 FK는 금지다.",
+  ddd:"도메인 <code>Order</code> ≠ ORM <code>OrderModel</code>. 신규 모델은 <code>db_table</code>을 명시한다.",
+  dep:"의존 없음 (models.Model)",
+  lang:"python", codefile:"order_model.py · order_line_model.py",
+  code:`class OrderModel(models.Model):
+    customer_id = models.PositiveIntegerField()
+    total = models.PositiveIntegerField()
+    class Meta:
+        db_table = "orders_order"                 # <app_label>_<entity_snake>
+
+class OrderLineModel(models.Model):
+    order = models.ForeignKey(OrderModel, on_delete=models.CASCADE,
+                              related_name="lines")   # 같은 BC 내부 FK는 허용
+    product_id = models.PositiveIntegerField()        # 타 BC는 ID 값 참조 (FK 금지)
+    quantity = models.PositiveIntegerField()
+    class Meta:
+        db_table = "orders_order_line"` }),
+
+S({ n:29, bc:"orders", layer:"infra", node:"o-cmd", flags:["원자성"],
+  file:"application_layer/…/place_order_command.py  (transaction.atomic)", title:"트랜잭션 커밋 — 전부 아니면 전무",
+  where:"application 계층 command의 <code>with</code> 블록이 감싼 범위.",
+  why:"재고 차감 + 결제 + 주문 저장이 <b>하나의 원자 단위</b>다. 저장 중 예외가 나면 <b>재고 차감까지 롤백</b>된다 — 재고만 줄고 주문은 없는 유령 상태를 막는다.",
+  ddd:"애그리거트 하나 = 트랜잭션 하나가 원칙. 이 경계가 일관성을 보장한다.",
+  dep:"transaction.atomic()",
+  lang:"python", codefile:"place_order_command.py",
+  code:`        with transaction.atomic():          # 이 블록 전체가 원자성 경계
+            products = self._catalog.fetch(...)
+            order = Order.place(...)
+            self._stock.decrease(...)          # ③
+            self._payment.charge(...)          # ④
+            self._orders.save(order)           # ⑤
+        # 블록을 정상으로 벗어나며 COMMIT
+        # ③④⑤ 중 하나라도 예외 → 전부 ROLLBACK` }),
+
+S({ n:30, bc:"orders", layer:"app", node:"o-result", flags:[],
+  file:"application_layer/place_order/dto/place_order_result.py", title:"유스케이스 반환 DTO",
+  where:"application 계층. 유스케이스가 돌려주는 데이터 계약.",
+  why:"유스케이스는 도메인 <code>Order</code>를 그대로 반환하지 않고 <b>납작한 결과 DTO</b>로 준다. 소비처가 HTTP든 OHS든, 반환 DTO는 여기 <code>dto/</code>에 둔다.",
+  ddd:"응용 계층의 출력 경계. 도메인 객체를 계층 밖으로 흘리지 않는다.",
+  dep:"→ Order (읽기만)",
+  lang:"python", codefile:"place_order_result.py",
+  code:`@dataclass(frozen=True)
+class PlaceOrderResult:
+    order_id: int
+    total: int
+
+    @classmethod
+    def of(cls, order: Order) -> "PlaceOrderResult":
+        return cls(order.id, order.total().amount)` }),
+
+S({ n:31, bc:"orders", layer:"pres", node:"o-schema-out", flags:["반환"],
+  file:"presentation_layer/schema/schema_out.py", title:"응답 계약 — Published Language 경계",
+  where:"presentation 계층. HTTP 응답의 형태 계약.",
+  why:"결과 DTO를 <b>HTTP 응답 스키마</b>로 바꿔 201로 내보낸다. 도메인 <code>Order</code>를 직접 직렬화하지 않는다 — 내부 모델과 외부 API 계약을 분리한다.",
+  ddd:"Published Language의 출력면. 도메인이 리팩터링돼도 API 응답 형태는 이 파일이 지킨다.",
+  dep:"→ PlaceOrderResult",
+  lang:"python", codefile:"schema_out.py",
+  code:`class OrderOut(Schema):
+    order_id: int
+    total: int
+
+    @classmethod
+    def from_result(cls, result: PlaceOrderResult) -> "OrderOut":
+        return cls(order_id=result.order_id, total=result.total)
+    # 도메인 Order 를 직접 직렬화하지 않는다 — Published Language 경계` }),
+
+S({ n:32, bc:"orders", layer:"pres", node:"o-error-out", flags:["에러 분기"],
+  file:"presentation_layer/schema/error_out.py  (+ common/ninja/problem)", title:"만약 재고가 부족했다면 — 에러 계약",
+  where:"presentation 계층. 에러 응답 계약(RFC 9457 Problem Details).",
+  why:"스텝 23에서 <code>OutOfStockError</code>가 났다면, 트랜잭션은 롤백되고 컨트롤러가 그 <b>도메인 예외를 409 상태코드</b>로 번역한다. 도메인 예외가 그대로 500으로 새지 않게 하는 마지막 경계.",
+  ddd:"도메인 예외 → HTTP 상태의 매핑은 presentation의 책임. 에러도 계약이다.",
+  dep:"→ OutOfStockError",
+  lang:"python", codefile:"error_out.py · order_controller.py",
+  code:`class ErrorOut(Schema):                 # RFC 9457 Problem Details
+    type: str
+    title: str
+    status: int
+
+# order_controller.py — 도메인 예외를 상태코드로 번역
+    def place_order(self, payload: OrderIn):
+        try:
+            result = build_place_order_command().execute(payload.to_request())
+            return 201, OrderOut.from_result(result)
+        except OutOfStockError as e:
+            return 409, ErrorOut(type="out-of-stock", title=str(e), status=409)` }),
+
+S({ n:33, bc:"orders", layer:"http", node:null, flags:["반환"],
+  file:"HTTP 응답", title:"클라이언트가 결과를 받는다",
+  where:"다시 앱 바깥. 여정의 끝.",
+  why:"성공하면 <b>201 Created</b>, 재고가 부족했다면 <b>409 Conflict</b>. 요청이 통과한 그 많은 파일들은 밖에서 보이지 않는다 — 하지만 그 분리 덕분에 <b>한 줄 고칠 때 어디가 깨지는지</b> 알 수 있다.",
+  ddd:"바깥은 다시 HTTP·JSON만 본다. 우리 도메인 언어는 경계 안에 온전히 남았다.",
+  dep:"—",
+  lang:"http", codefile:"response",
+  code:`HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "order_id": 1001,
+  "total": 27000
+}
+
+# 만약 재고가 부족했다면 (스텝 23 → 32):
+HTTP/1.1 409 Conflict
+{
+  "type": "out-of-stock",
+  "title": "상품 7 재고 부족",
+  "status": 409
+}` }),
+];
+
+/* ---------- python syntax highlight ---------- */
+const KW = new Set(["def","class","return","if","else","elif","for","in","not","and","or",
+  "with","raise","from","import","None","True","False","self","pass","async","await","try",
+  "except","finally","lambda","yield","as","abstractmethod","ABC","dataclass","frozen"]);
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function highlight(src){
+  let out = "", i = 0, n = src.length;
+  while(i < n){
+    const c = src[i];
+    if(c === "#"){ let j = src.indexOf("\n", i); if(j < 0) j = n;
+      out += `<span class="c">${esc(src.slice(i,j))}</span>`; i = j; continue; }
+    if(c === '"' || c === "'"){
+      const triple = src.substr(i,3) === c+c+c; const len = triple ? 3 : 1; let j = i + len;
+      while(j < n){
+        if(!triple && src[j] === "\n") break;
+        if(src[j] === "\\"){ j += 2; continue; }
+        if(triple ? src.substr(j,3) === c+c+c : src[j] === c){ j += triple ? 3 : 1; break; }
+        j++;
+      }
+      out += `<span class="s">${esc(src.slice(i,j))}</span>`; i = j; continue; }
+    if(c === "@"){ let j = i + 1; while(j < n && /[\w.]/.test(src[j])) j++;
+      out += `<span class="d">${esc(src.slice(i,j))}</span>`; i = j; continue; }
+    if(/[A-Za-z_]/.test(c)){ let j = i + 1; while(j < n && /\w/.test(src[j])) j++;
+      const w = src.slice(i,j);
+      out += KW.has(w) ? `<span class="k">${esc(w)}</span>` : esc(w); i = j; continue; }
+    if(/[0-9]/.test(c)){ let j = i + 1; while(j < n && /[\w._]/.test(src[j])) j++;
+      out += `<span class="n">${esc(src.slice(i,j))}</span>`; i = j; continue; }
+    out += esc(c); i++;
+  }
+  return out;
+}
+
+/* ---------- render: legend ---------- */
+(function renderLegend(){
+  const el = document.getElementById("legend");
+  const order = ["pres","app","dom","infra","wire","ohs"];
+  el.innerHTML = order.map(k => {
+    const L = LAYERS[k];
+    return `<span class="item"><span class="swatch" style="background:var(${L.v})"></span>${L.label}</span>`;
+  }).join("");
+})();
+
+/* ---------- render: map ---------- */
+(function renderMap(){
+  const el = document.getElementById("map");
+  let html = `<h2>파일트리 맵 · 2 BC</h2>`;
+  for(const bc of MAP){
+    html += `<div class="bc" data-bc="${bc.key}"><div class="bc-name">${bc.name}` +
+            (bc.badge ? `<span class="badge">${bc.badge}</span>` : ``) + `</div>`;
+    for(const g of bc.groups){
+      const L = LAYERS[g.layer];
+      const gname = g.label || L.label;
+      html += `<div class="grp"><div class="grp-h" style="--gc:var(${L.v})">${gname}</div>`;
+      for(const nd of g.nodes){
+        const label = nd.t.replace(/([_/])/g, "$1<wbr>");   // 경로를 /·_ 에서 줄바꿈 허용
+        html += `<button class="node${nd.grey ? " grey" : ""}" data-node="${nd.id}" ` +
+                `style="--nc:var(${L.v})" ${nd.grey ? "tabindex=\"-1\"" : ""}>${label}</button>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+  // clicking a live node jumps to its (first) step
+  el.querySelectorAll(".node:not(.grey)").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-node");
+      const idx = STEPS.findIndex(s => s.node === id);
+      if(idx >= 0) go(idx);
+    });
+  });
+})();
+
+/* ---------- render: rail ---------- */
+(function renderRail(){
+  const rail = document.getElementById("rail");
+  rail.innerHTML = STEPS.map((s,i) => {
+    const L = LAYERS[s.layer];
+    return `<button class="tick" data-i="${i}" role="tab" aria-label="스텝 ${s.n}: ${s.title}" ` +
+           `style="--tc:var(${L.v})"><span class="dot"></span></button>`;
+  }).join("");
+  rail.querySelectorAll(".tick").forEach(t =>
+    t.addEventListener("click", () => go(parseInt(t.getAttribute("data-i"),10))));
+  // catalog band over steps 10..15 (indices 9..14)
+  const band = document.getElementById("catBand");
+  const first = 9, last = 14, total = STEPS.length;
+  const leftPct = (first / total) * 100, widthPct = ((last - first + 1) / total) * 100;
+  band.style.left = leftPct + "%";
+  band.style.width = widthPct + "%";
+  document.getElementById("catLabel").style.left = leftPct + "%";
+})();
+
+/* ---------- state + render ---------- */
+let cur = 0;
+const $ = (id) => document.getElementById(id);
+
+function render(){
+  const s = STEPS[cur];
+  const L = LAYERS[s.layer];
+  const lc = `var(${L.v})`;
+
+  // head
+  document.querySelector(".card-head").style.setProperty("--lc", lc);
+  let chips = `<span class="stepno">STEP ${String(s.n).padStart(2,"0")} / ${STEPS.length}</span>` +
+              `<span class="chip" style="--lc:${lc}">${L.label}</span>` +
+              `<span class="chip bc">${s.bc} BC</span>`;
+  for(const f of (s.flags||[])){
+    const cls = /에러/.test(f) ? "flag" : (/경계|OHS|catalog|번역/.test(f) ? "cross" : "chip");
+    chips += `<span class="chip ${cls==="chip"?"":cls}">${f}</span>`;
+  }
+  $("meta").innerHTML = chips;
+  $("filepath").textContent = s.file;
+  $("title").textContent = s.title;
+
+  // facts
+  $("facts").innerHTML =
+    `<div class="fact"><dt>어디에</dt><dd>${s.where}</dd></div>` +
+    `<div class="fact"><dt>왜 여기</dt><dd>${s.why}</dd></div>` +
+    `<div class="fact"><dt>DDD 원칙</dt><dd>${s.ddd}</dd></div>` +
+    `<div class="fact dep"><dt>무엇에만</dt><dd>${s.dep}</dd></div>`;
+
+  // code
+  $("codefile").textContent = s.codefile || "code";
+  $("codelang").textContent = s.lang || "python";
+  $("code").innerHTML = s.lang === "python" ? highlight(s.code) : highlightHttp(s.code);
+
+  // note (boundary / error)
+  let note = "";
+  const crossing = (s.flags||[]).some(f => /경계/.test(f));
+  const err = (s.flags||[]).some(f => /에러/.test(f));
+  if(s.n === 9)  note = `<div class="note"><span class="lbl">BC 경계</span>지금부터 <b>orders → catalog</b> 컨텍스트로 넘어갑니다. 좌측 맵에서 활성 BC가 바뀝니다. 우리는 상대의 내부가 아니라 <b>공개 계약(OHS)</b>만 붙잡습니다.</div>`;
+  else if(s.n === 16) note = `<div class="note"><span class="lbl">BC 경계</span><b>catalog → orders</b>로 돌아왔습니다. 상대의 계약 DTO를 우리 도메인 값으로 <b>번역</b>하는 이 한 줄이 두 BC를 느슨하게 유지합니다.</div>`;
+  else if(err) note = `<div class="note err"><span class="lbl">에러 분기</span>재고가 부족하면 여기서 <b>OutOfStockError</b>가 발생 → 트랜잭션 전체 롤백 → 스텝 32에서 <b>409</b>로 번역됩니다. 성공 경로는 그대로 이어집니다.</div>`;
+  $("note").innerHTML = note;
+
+  // nav
+  $("prev").disabled = cur === 0;
+  $("next").disabled = cur === STEPS.length - 1;
+  $("counter").textContent = `${s.n} / ${STEPS.length}`;
+
+  // rail
+  document.querySelectorAll(".tick").forEach((t,i) => {
+    t.classList.toggle("current", i === cur);
+    t.classList.toggle("done", i < cur);
+    if(i === cur) t.scrollIntoView({block:"nearest", inline:"center", behavior:"smooth"});
+  });
+
+  // map: active BC + active node
+  document.querySelectorAll(".bc").forEach(b =>
+    b.classList.toggle("active", b.getAttribute("data-bc") === s.bc));
+  document.querySelectorAll(".bc").forEach(b => {
+    if(b.getAttribute("data-bc") !== s.bc) b.classList.add("dim");
+    else b.classList.remove("dim");
+  });
+  document.querySelectorAll(".node").forEach(nd => nd.classList.remove("active"));
+  if(s.node){
+    const nd = document.querySelector(`.node[data-node="${s.node}"]`);
+    if(nd){ nd.classList.add("active"); nd.scrollIntoView({block:"nearest", behavior:"smooth"}); }
+  }
+}
+
+function highlightJsonLine(line){
+  let out = "", i = 0, n = line.length;
+  while(i < n){
+    const c = line[i];
+    if(c === '"'){                                   // 문자열 (키 또는 값)
+      let j = i + 1;
+      while(j < n && line[j] !== '"'){ if(line[j] === "\\") j++; j++; }
+      j++;                                           // 닫는 따옴표 포함
+      const str = line.slice(i, j);
+      let k = j; while(k < n && line[k] === " ") k++;
+      const isKey = line[k] === ":";                 // 다음이 ':' 이면 키
+      out += `<span class="${isKey ? "key" : "s"}">${esc(str)}</span>`;
+      i = j; continue;
+    }
+    if(/[0-9]/.test(c)){                             // 숫자
+      let j = i + 1; while(j < n && /[0-9.]/.test(line[j])) j++;
+      out += `<span class="n">${esc(line.slice(i,j))}</span>`; i = j; continue;
+    }
+    if("{}[]:,".includes(c)){ out += `<span class="p">${c}</span>`; i++; continue; }
+    out += esc(c); i++;
+  }
+  return out;
+}
+function highlightHttp(src){
+  return src.split("\n").map(line => {
+    if(line.trimStart().startsWith("#"))            // 주석
+      return `<span class="c">${esc(line)}</span>`;
+    let m = line.match(/^(POST|GET|PUT|PATCH|DELETE)\s+(\S+)\s+(HTTP\/1\.1)$/);
+    if(m)                                            // 요청 라인
+      return `<span class="k">${m[1]}</span> <span class="fn">${esc(m[2])}</span> <span class="d">${m[3]}</span>`;
+    m = line.match(/^(HTTP\/1\.1)\s+(\d{3})\s+(.+)$/);
+    if(m)                                            // 상태 라인
+      return `<span class="d">${m[1]}</span> <span class="k">${m[2]} ${esc(m[3])}</span>`;
+    if(line.indexOf('"') === -1){
+      m = line.match(/^([A-Za-z][A-Za-z-]*):\s*(.+)$/);
+      if(m)                                          // 헤더
+        return `<span class="key">${m[1]}</span><span class="p">:</span> ${esc(m[2])}`;
+    }
+    return highlightJsonLine(line);                  // JSON 바디
+  }).join("\n");
+}
+
+function go(i){ cur = Math.max(0, Math.min(STEPS.length - 1, i)); render(); }
+
+$("prev").addEventListener("click", () => go(cur - 1));
+$("next").addEventListener("click", () => go(cur + 1));
+document.addEventListener("keydown", (e) => {
+  if(e.key === "ArrowLeft"){ go(cur - 1); }
+  else if(e.key === "ArrowRight"){ go(cur + 1); }
+});
+
+render();
+</script>
+</body>
+</html>
