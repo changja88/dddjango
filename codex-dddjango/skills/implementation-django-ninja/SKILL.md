@@ -11,7 +11,8 @@ Django Ninja Router/Schema/Operation·인증·필터링·페이지네이션·Pro
 
 - REST 리소스·URL·HTTP 메서드·상태 코드·헤더·콘텐츠 협상·버전·레이트리밋·idempotency 계약(키 정책) → `architecture-api` (idempotency 저장소·retention은 `architecture-db`)
 - 애그리거트·상태 전이·불변식·유스케이스 경계·구조 패턴(repository/UoW/핵사고날/CQRS/outbox/ACL) → `architecture-ddd`
-- ORM 쿼리·셀렉터·서비스·트랜잭션·마이그레이션·캐시·보안 구현 → `implementation-django`
+- ORM 쿼리·셀렉터·서비스·트랜잭션·캐시·보안 구현 → `implementation-django`
+- DB migration lifecycle → dddjango 범위 밖. 이 스킬의 DRF-to-Ninja migration은 애플리케이션/API 전환을 뜻한다.
 - pytest 픽스처·팩토리·mock·테스트더블·동시성 테스트 구현 → `implementation-test`
 
 ## 핵심 운영 원칙

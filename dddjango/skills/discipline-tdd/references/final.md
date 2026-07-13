@@ -956,7 +956,7 @@ pytest-bdd 구현 상세는 `workspace/reference/implementation-test/reference/f
 
 ### 17.1 TDD as Prompt Engineering
 
-> "TDD는 프롬프트 엔지니어링이다. 테스트가 AI에게 '무엇을' 만들고 '언제 완료인지'를 알려준다."
+> "TDD는 프롬프트 엔지니어링이다. 현재 승인된 의무를 표현하는 테스트가 AI에게 '무엇을' 만들고 '언제 완료인지'를 알려준다."
 
 TDD의 Red-Green-Refactor 사이클은 AI 코딩 도구와 자연스럽게 결합된다.
 
@@ -969,7 +969,7 @@ TDAID:        Plan -> Red -> Green(AI) -> Refactor(AI+개발자) -> Validate
 ### 17.2 AI 보조 TDD 워크플로우
 
 ```python
-# 1단계: 개발자가 명세로서의 테스트를 작성한다 (Red)
+# 1단계: 개발자가 현재 승인된 명세의 테스트를 작성한다 (Red)
 def test_parse_korean_date():
     """한국어 날짜 문자열을 파싱한다."""
     assert parse_date("2026년 4월 4일") == date(2026, 4, 4)
@@ -1011,6 +1011,39 @@ def test_parse_korean_date_edge_cases():
 4. Refactor : 코드 품질 개선 (AI + 개발자 협업)
 5. Validate : AI 생성 코드의 정확성, 보안, 성능 최종 검증
 ```
+
+### 17.5 현재 명세만 영구 테스트의 오라클이다
+
+영구 테스트의 권위는 **현재 승인된 요구·설계·지원 계약**이다. 테스트와 기존 구현은 그 권위를 실행하거나 관찰하는 증거이지, 과거 동작을 영구 보존하라는 독립 명세가 아니다. 승인된 동작이 바뀌면 영향받는 기존 테스트를 같은 변경에서 분류한다.
+
+| 분류 | 기준 |
+|------|------|
+| retain | 검증하는 현재 의무와 기대가 그대로다 |
+| update | 의무는 남지만 승인된 입력·결과·지원 범위가 바뀌었다 |
+| delete | 유일한 근거였던 의무가 명시적으로 종료됐고 다른 현재 의무가 남지 않았다 |
+| add | 새 의무 또는 기존에 검증되지 않던 현재 의무가 생겼다 |
+
+새 명세가 어떤 동작을 언급하지 않는다는 사실만으로 지원 종료를 추론하지 않는다. 제거·비지원·sunset이 명시되지 않았거나 현재 지원 범위가 모호하면 G1에서 확정한다. 다음은 과거에 시작됐더라도 아직 유효하면 **현재 계약**이다.
+
+- 지원 중인 API·consumer 호환성과 종료되지 않은 deprecation window
+- 현재 읽거나 처리해야 하는 영속 데이터·발행 이벤트·outbox payload
+- 현재 적용되는 보안·개인정보·규제 의무
+- 현재 명시된 금지·부재·무부작용 계약
+
+테스트 목록을 만들기 전에 `current-obligation inventory`를 작성한다. 최소 열은
+`surface/version`, `consumer/support`, `persisted data/event`, `deprecation window`,
+`security/privacy/regulatory`, `negative/absence`, `근거 경로`, `retain/end/unknown`이다.
+`unknown`은 G1 blocker이며, 지원 의무가 끝났다는 결정과 wire/API/도메인에서 이전 요소의
+부재를 보장한다는 결정은 별개다. inventory와 근거를 설계·인수·구현·감수 역할이 공유한다.
+
+회귀 테스트는 과거 버그 때문에 남기는 것이 아니라 현재 불변식을 검증하는 동안만 유지한다. Hypothesis `@example` 같은 property witness도 현재 property가 남는 동안만 유지한다. 옛 성공 동작이 제거됐다는 이유만으로 특정 오류·필드 부재 같은 negative test를 발명하지 않는다. 그런 결과가 현재 명시적 의무일 때만 작성한다. stale test가 현행 계약과 충돌하면 구현을 과거 동작으로 되돌리지 말고 테스트를 update/delete한다.
+
+레거시 조사 중 특성화 테스트는 임시 안전망으로만 허용한다. G2 전에 현재 의무에 추적되는 테스트로 승격하거나 제거하고, 과거 동작 포착만을 근거로 영구 스위트에 남기지 않는다. DB migration lifecycle 테스트는 dddjango가 작성·수정·삭제하지 않는다(`implementation-django` §10).
+
+G2 전에는 조정표의 모든 `retain`·`update`·`add` 테스트와 프로젝트가 선언한 전체 suite를
+실제로 실행하고 각 항목에 command/result와 러너가 입증한 collected/executed/pass/fail/skipped count를 연결한다. collection과 execution을 별도로 보고하지 않는 러너는 입증 가능한 count만 기록하고 추정하지 않는다. 실행할 수 없는 현재 의무는 Green이나
+완료로 주장하지 않는다. 외부 소유 migration lifecycle test는 실패를 보고하되 수정·삭제하거나
+`--no-migrations`로 우회하지 않는다.
 
 ---
 

@@ -30,9 +30,10 @@
     추상 base 2단 상속(`class X(BaseSchema)`)·별칭 import base(`Model as M`)·`Exception` 서브클래스의
     리터럴 클래스 상수는 면제가 못 미쳐 검출될 수 있다 — 막다른길은 아니고(어노테이트로 통과)
     discipline-reviewer 의미 점검이 '선언적 클래스 손자/별칭'을 면제로 보완한다.
-  - production 만(`test`/`tests`/`migrations`/`settings` 디렉터리·`settings.py`/`urls.py`/`manage.py`/
-    `asgi.py`/`wsgi.py`/`conftest.py` 제외), 이번 작업 신규/수정분만(git untracked/modified, 판정
-    불가면 스킵 — brownfield 레거시 거짓양성 회피).
+  - production 만(`test`/`tests`/`settings` 디렉터리·`settings.py`/`urls.py`/`manage.py`/
+    `asgi.py`/`wsgi.py`/`conftest.py` 제외). G0 manifest의 정확한 migration root는 진입 전에
+    제외하며 이름만으로 추론하지 않는다. 이번 작업 신규/수정분만 본다(git untracked/modified,
+    판정 불가면 스킵 — brownfield 레거시 거짓양성 회피).
 
 사용법: check-public-surface-annotation.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 판정불가), 2=blocker(발견 출력), 1=사용 오류.
@@ -44,12 +45,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+from migration_scope import iter_non_migration_files, validate_migration_scope
+
 SKIP_DIRS = {
     ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__",
     "build", "dist", ".tox", ".mypy_cache", ".pytest_cache", ".eggs",
 }
-# 검사 제외 디렉터리(테스트·자동생성·설정 관용 — 대량 bare 대입이 정상).
-SKIP_PATH_DIRS = {"test", "tests", "migrations", "settings"}
+# 검사 제외 디렉터리(테스트·설정 관용). migration은 exact G0 scope walker가 소유한다.
+SKIP_PATH_DIRS = {"test", "tests", "settings"}
 # 검사 제외 파일(Django 진입·설정 파일 — `urlpatterns = [...]`·`DEBUG = True` 류 관용).
 SKIP_FILE_NAMES = {
     "settings.py", "urls.py", "manage.py", "asgi.py", "wsgi.py", "conftest.py",
@@ -219,9 +222,11 @@ def main(argv: list[str]) -> int:
     if not root.is_dir():
         print(f"[check-public-surface-annotation] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
+    if not validate_migration_scope(root, "check-public-surface-annotation"):
+        return 1
 
     findings: list[str] = []
-    for path in root.rglob("*.py"):
+    for path in iter_non_migration_files(root, name_pattern="*.py"):
         if set(path.parts) & SKIP_DIRS:
             continue
         if set(path.parts) & SKIP_PATH_DIRS:

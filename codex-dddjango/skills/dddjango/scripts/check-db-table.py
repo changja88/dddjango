@@ -4,7 +4,7 @@
 표준 레이아웃(`infra_layer/django_<app>/models/`)에서 *이번 작업이 새로 추가한* concrete·
 managed ORM 모델이 `Meta.db_table` 을 **명시했는지(존재)** 만 검사한다. **값의 형태**
 (`<app_label>_<entity_snake>` 일치 — `Model` 접미 제거·snake·app 접두)는 이 백스톱이 보지
-않는다 — 그건 §4 규약 본문 + `makemigrations --check` + discipline-reviewer 의미 점검 몫이다.
+않는다 — 그건 §4 규약 본문과 discipline-reviewer 의미 점검 몫이다.
 
 *왜 존재만 보나(presence-only)* — 값 형태 검증은 클래스명·app_label 에서 '기대 테이블명'을
 도출해 대조해야 하는데, 그 도출에 실패 모드(약어 snake, `AppConfig.label`≠디렉터리명, 이주
@@ -21,9 +21,7 @@ managed ORM 모델이 `Meta.db_table` 을 **명시했는지(존재)** 만 검사
      규약이라 적용 대상이 아니다 → exit 0.
   2) git 레포다. 신규 한정 규약이라 git 없이는 '신규'를 식별할 수 없다 → exit 0(보수적).
   3) 그 모델 파일이 이번 변경에서 *새로 추가*(untracked `??`/staged `A`)됐다. 기존 파일
-     *수정*(`M`)은 제외(수정 파일 내 신규 모델은 reviewer 사각). 이주(§10.4)는 파일이
-     신규로 떨어져도 보존 db_table 을 *명시*하므로 존재 검사를 통과한다(값은 안 보므로
-     보존명이 규약과 달라도 무방).
+     *수정*(`M`)은 제외한다(수정 파일 안의 신규 모델은 discipline-reviewer 의미 점검 몫).
   4) 모델이 concrete·managed 이고 옵션이 정적으로 확정된다 — `abstract=True`·`proxy=True`
      (자체 테이블 없음)·`managed=False`(외부 소유 테이블) 면제. Meta 가 다른 Meta 를
      상속하거나 abstract/proxy/managed 가 비-리터럴(정적 미확정)이면 통째 스킵(보수적).
@@ -40,6 +38,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+from migration_scope import (
+    is_migration_owned_path,
+    iter_non_migration_directories,
+    iter_non_migration_files,
+    validate_migration_scope,
+)
+
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 DJANGO_PREFIX = "django_"
@@ -51,8 +56,8 @@ NON_MODEL_BASES = {"BaseModel"}  # pydantic 등.
 def _find_django_app_dirs(root: Path) -> list[Path]:
     """`infra_layer/django_<app>/` 디렉터리들(모델 파일 탐색 스코프)."""
     out: list[Path] = []
-    for p in root.rglob(f"{DJANGO_PREFIX}*"):
-        if not p.is_dir():
+    for p in iter_non_migration_directories(root):
+        if not p.name.startswith(DJANGO_PREFIX):
             continue
         if set(p.parts) & SKIP_DIRS:
             continue
@@ -62,18 +67,18 @@ def _find_django_app_dirs(root: Path) -> list[Path]:
     return out
 
 
-def _model_files_for(app_dir: Path) -> list[Path]:
+def _model_files_for(root: Path, app_dir: Path) -> list[Path]:
     """`django_<app>/models/**/*.py` + `django_<app>/models.py`. test 경로 제외."""
     files: list[Path] = []
     models_pkg = app_dir / "models"
-    if models_pkg.is_dir():
-        for f in sorted(models_pkg.rglob("*.py")):
+    if not is_migration_owned_path(root, models_pkg) and models_pkg.is_dir():
+        for f in iter_non_migration_files(root, models_pkg, "*.py"):
             rel_parts = set(f.relative_to(app_dir).parts)
             if rel_parts & SKIP_DIRS or rel_parts & TEST_DIR_NAMES:
                 continue
             files.append(f)
     models_mod = app_dir / "models.py"
-    if models_mod.is_file():
+    if not is_migration_owned_path(root, models_mod) and models_mod.is_file():
         files.append(models_mod)
     return files
 
@@ -190,6 +195,8 @@ def main(argv: list[str]) -> int:
     if not root.is_dir():
         print(f"[check-db-table] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
+    if not validate_migration_scope(root, "check-db-table"):
+        return 1
 
     app_dirs = _find_django_app_dirs(root)
     if not app_dirs:
@@ -199,7 +206,7 @@ def main(argv: list[str]) -> int:
 
     findings: list[str] = []
     for app_dir in app_dirs:
-        for f in _model_files_for(app_dir):
+        for f in _model_files_for(root, app_dir):
             if not _is_new_file(root, f):
                 continue
             findings.extend(_file_issues(f, root))
@@ -216,9 +223,8 @@ def main(argv: list[str]) -> int:
             "(미선언 시 Django 기본값 `<app>_<name>model` 이 돼 코드측 `Model` 접미가 "
             "테이블명에 샌다). 값은 `<app_label>_<entity_snake>`(클래스 `<Name>Model` 에서 "
             "`Model` 제거·snake; `ProductModel`→`<app>_product`)로 쓴다 — 단 이 백스톱은 "
-            "*존재*만 보고 값 형태는 `makemigrations --check`·discipline-reviewer 가 본다. "
-            "`abstract`/`proxy`/`managed=False` 모델은 db_table 을 두지 않는다. 기존 적용 "
-            "모델의 이주는 보존 db_table 을 명시하면 통과한다(`implementation-django` §10.4)."
+            "*존재*만 보고 값의 의미와 형태는 discipline-reviewer 가 본다. "
+            "`abstract`/`proxy`/`managed=False` 모델은 db_table 을 두지 않는다."
         )
         return 2
 

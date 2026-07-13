@@ -2373,9 +2373,9 @@ class Employee:
         ...
 ```
 
-### 16.5 특성화 테스트 (Characterization Tests) [WELC]
+### 16.5 임시 특성화 테스트 (Characterization Tests) [WELC]
 
-"올바른 동작"을 검증하는 것이 아니라, **현재 동작을 포착**하는 테스트. 리팩토링 전에 안전망으로 작성한다.
+"올바른 동작"을 검증하는 것이 아니라 현재 레거시 동작을 포착하는 **조사용 임시 안전망**이다. 리팩토링 중 예상하지 못한 변화를 감지할 수 있지만, 포착한 과거 동작 자체가 제품 요구라는 뜻은 아니다.
 
 ```python
 def test_legacy_calculate_tax():
@@ -2384,8 +2384,10 @@ def test_legacy_calculate_tax():
     assert legacy_calculate_tax(0) == 0
     assert legacy_calculate_tax(-500) == -51.75  # 음수 입력에 대한 현재 동작
 
-    # 이 테스트가 있으면, 리팩토링 중 동작 변경을 즉시 감지할 수 있다
+    # 조사·리팩토링 중 동작 변경을 감지하는 임시 안전망
 ```
+
+G2 전에는 각 특성화 테스트를 현재 승인된 요구·지원 계약과 대조한다. 현재 의무를 검증하면 그 의무를 명시한 영구 테스트로 승격하고, 과거 동작 포착만 남으면 제거한다. 명세가 침묵할 때 지원 종료를 추론하지 않으며, 활성 호환성·영속 데이터/이벤트·보안·규제 의무는 현재 계약으로 취급한다(`discipline-tdd` §17.5, `implementation-test` §15.6).
 
 ### 16.6 Sensing과 Separation [WELC]
 
@@ -2530,4 +2532,4 @@ Python 언어 특화 관례와 패턴은 `workspace/reference/implementation-pyt
 | 프로세스 | YAGNI: 현재에 집중하라 | [PC] |
 | 프로세스 | 깨진 창문 즉시 수리 | [PP] |
 | 리팩토링 | 코드 스멜 감지 및 기법 적용 | [Ref] |
-| 레거시 | Seam, Sprout, Wrap, 특성화 테스트 | [WELC] |
+| 레거시 | Seam, Sprout, Wrap, 임시 특성화 테스트 | [WELC] |

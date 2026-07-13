@@ -63,6 +63,12 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+from migration_scope import (
+    is_migration_owned_path,
+    iter_non_migration_files,
+    validate_migration_scope,
+)
 from typing import Iterator
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
@@ -81,13 +87,10 @@ PUBLISHED_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.published_service(?:\.
 
 def _has_application_container(root: Path) -> bool:
     """표준 앱 컨테이너(`application/`)가 있나 — 없으면 기존 규약이라 적용 대상 아님."""
-    for path in root.rglob("application"):
-        if not path.is_dir():
-            continue
-        if set(path.relative_to(root).parts) & SKIP_DIRS:
-            continue
-        return True
-    return False
+    return any(
+        not is_migration_owned_path(root, path) and path.is_dir()
+        for path in (root / "application", root / "src" / "application")
+    )
 
 
 def _own_bc(rel_parts: tuple[str, ...]) -> str | None:
@@ -102,7 +105,7 @@ def _own_bc(rel_parts: tuple[str, ...]) -> str | None:
 def _prod_py_files(root: Path) -> list[tuple[Path, tuple[str, ...]]]:
     """application/ 하위 프로덕션 .py 와 그 상대 parts — test 제외. ACL 면제는 S1 판정에서만."""
     out: list[tuple[Path, tuple[str, ...]]] = []
-    for path in root.rglob("*.py"):
+    for path in iter_non_migration_files(root, name_pattern="*.py"):
         rel_parts = path.relative_to(root).parts
         if set(rel_parts) & SKIP_DIRS:
             continue
@@ -175,6 +178,8 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-context-isolation] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+        return 1
+    if not validate_migration_scope(root, "check-context-isolation"):
         return 1
     if not _has_application_container(root):
         return 0  # 표준 레이아웃(`application/`) 미적용 → 해당 없음.

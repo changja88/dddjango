@@ -23,7 +23,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 - 에러 응답은 RFC 9457 Problem Details(`application/problem+json`) 형식을 사용하고 상태 코드별 `type`을 문서화한다 (§6)
 - 요청/응답 계약은 상태 코드별 body·header·schema까지 포함해 명시적으로 기록하고, 계약 체크리스트(Resource·Method·Request·Response·Error·Auth·Compatibility·OpenAPI)를 엔드포인트 변경마다 검토한다 (§5)
 - 페이지네이션은 데이터 특성(정렬 안정성, 실시간성, 딥 페이지 여부)에 따라 오프셋·커서·페이지 방식 중 선택하고 선택 기준을 명시한다 (§9)
-- 버전 전략(URL·헤더·쿼리파라미터)과 하위 호환성·Deprecation 프로세스를 API 변경 전에 결정한다 (§10, §11)
+- 버전 전략(URL·헤더·쿼리파라미터)과 하위 호환성·Deprecation 프로세스를 API 변경 전에 결정한다. 지원 중인 consumer가 있으면 breaking change에 새 버전·전환 기간을 적용한다. 다만 G1에서 지원 consumer·호환·deprecation 의무가 모두 종료됐음을 근거와 함께 승인한 same-surface break에는 존재하지 않는 버전이나 전환 기간을 발명하지 않는다 (§10, §11)
 - duplicate-sensitive 요청(결제·생성)에는 `Idempotency-Key` 정책(scope·replay·conflict 계약)을 함께 정한다 (§13)
 - 모든 계약 결정은 OpenAPI에 반영한다 — path·method·schema·response·security·header를 빠짐없이 기술한다 (§14)
 

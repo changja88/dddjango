@@ -12,7 +12,7 @@
 8. [제약조건과 중복 방지](#8-제약조건과-중복-방지)
 9. [트랜잭션, 격리 수준, 락](#9-트랜잭션-격리-수준-락)
 10. [쿼리 최적화](#10-쿼리-최적화)
-11. [운영 rollout, backfill, migration safety](#11-운영-rollout-backfill-migration-safety)
+11. [최종 목표 스키마와 DB migration 비소유 경계](#11-최종-목표-스키마와-db-migration-비소유-경계)
 12. [데이터 모델링 패턴: 계층 구조](#12-데이터-모델링-패턴-계층-구조)
 13. [데이터 모델링 패턴: 상속과 다형성](#13-데이터-모델링-패턴-상속과-다형성)
 14. [참고 문헌](#14-참고-문헌)
@@ -285,7 +285,7 @@ DB가 강제할 수 있는 불변식은 애플리케이션 validation만으로 �
 | Foreign Key | 참조 무결성을 DB가 강제할 수 있는 관계 | 삭제 정책과 함께 결정 |
 | Unique | 자연 유일성, duplicate prevention, idempotency key 저장 | NULL 처리와 partial unique 여부 확인 |
 | Check | 단일 행 안에서 검증 가능한 값 범위와 상태 규칙 | 다른 행이나 외부 상태가 필요한 규칙에는 부적합 |
-| Not Null | 필수 속성 또는 필수 관계 | 기존 데이터 backfill 후 적용 |
+| Not Null | 필수 속성 또는 필수 관계 | 현재 저장·생성 계약이 NULL을 허용하지 않는지 확인 |
 
 ### 8.2 FK 삭제 정책
 
@@ -298,7 +298,7 @@ DB가 강제할 수 있는 불변식은 애플리케이션 validation만으로 �
 
 Cascade는 편의 기능이 아니라 소유권 결정이다. 감사, 결제, ledger, 권한처럼 이력 보존이 중요한 데이터에는 무심코 cascade를 쓰지 않는다.
 
-**BC 경계 FK 금지**: FK는 *같은 바운디드 컨텍스트(앱) 안*에서만 쓴다 — 타 BC 모델을 `ForeignKey`로 참조하면 모듈 간 DB 결합(상류 테이블 형상·삭제정책이 하류로 누수, 마이그레이션이 상류에 묶임)이 생긴다. 타 BC는 ID 값 참조 + 앱 레벨/ACL 무결성으로 한다(`architecture-ddd` §3.3 규칙3 영속성 확장).
+**BC 경계 FK 금지**: FK는 *같은 바운디드 컨텍스트(앱) 안*에서만 쓴다 — 타 BC 모델을 `ForeignKey`로 참조하면 상류 테이블 형상·삭제 정책이 하류로 누수되는 모듈 간 DB 결합이 생긴다. 타 BC는 ID 값 참조 + 앱 레벨/ACL 무결성으로 한다(`architecture-ddd` §3.3 규칙3 영속성 확장).
 
 ### 8.3 중복 방지와 멱등성 저장소
 
@@ -320,14 +320,9 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 - response snapshot 또는 stable result reference: replay가 현재 상태 재조회가 아니라 최초 결과 재현인지
 - retention/cleanup: 보관 기간과 cleanup이 unique constraint 의미를 깨지 않는지
 
-### 8.4 제약조건 rollout 원칙
+### 8.4 제약조건 설계 경계
 
-기존 데이터가 있는 테이블에 새 제약조건을 추가할 때는 데이터 정리와 rollout 순서를 먼저 설계한다.
-
-1. 현재 데이터가 제약조건을 만족하는지 점검한다.
-2. 필요한 경우 batch backfill 또는 cleanup을 먼저 수행한다.
-3. 새 코드와 구 코드가 동시에 동작하는 compatibility window를 고려한다.
-4. NOT NULL, unique, check constraint는 검증 실패와 rollback/forward-fix 방법을 정한 뒤 적용한다.
+현행 불변식에서 필요한 NOT NULL·unique·check·FK와 예상 위반 의미를 최종 목표 스키마에 명시한다. 기존 행의 정리, DB에 제약을 적용하는 순서, lock·rollback·forward-fix는 외부 DB transition 소유자의 결정이므로 이 플러그인이 설계하지 않는다(§11).
 
 ---
 
@@ -388,7 +383,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 
 **연결 설정의 경계 — stock `OPTIONS`만, 엔진 교체는 아니다.** 바로 위 '연결 설정 명시'는 Django가 공식 지원하는 **stock `OPTIONS`**에 한정된다 — SQLite `transaction_mode`(5.1+)로 begin 모드 지정, `timeout`으로 busy 대기, 그리고 안전 PRAGMA 화이트리스트(연결 튜닝으로 허용: `foreign_keys`·`busy_timeout`·`synchronous`·`cache_size`). **프로덕션 `ENGINE` 교체·커스텀 DB 백엔드(`DatabaseWrapper` 상속 등)는 '연결 설정 명시'에 포함되지 않는다** — 그것은 엔진의 트랜잭션·락·격리 *메커니즘*을 바꾸는 설계 결정이라 설계가 명시적으로 승인할 때만 허용되고, 구현이 환경 한계(sqlite 락)를 이유로 자기 판단으로 만들지 않는다(상속·런타임 몽키패치·`connection_created`·`init_command`·미들웨어·테스트 패치 등 *출처-불문* — `implementation-django` §16.4). 격리·락·동시성 의미를 바꾸는 PRAGMA(`read_uncommitted`·커스텀 begin 모드·`isolation_level`·`locking_mode`·`journal_mode`(WAL))도 화이트리스트 밖이라 같은 설계 승인을 받는다.
 
-**낙관적 동시성 메커니즘(판정은 도메인이 소유).** 판정·불변식 소유는 도메인 책임이다 — 비즈니스 판정(예: `stock>=qty`, `balance>=amount`)을 SQL `WHERE`나 ORM 호출로 옮기면 같은 판정의 도메인 메서드가 프로덕션에서 호출되지 않는 죽은 코드가 되어 빈혈이 된다(원칙 `architecture-ddd` §3.2 빈혈 차단). 따라서 동시성 안전이 필요해도 판정을 SQL로 옮기지 않고, **리포지토리·영속화 계층은 도메인 메서드 결과만 저장하고 판정을 재수행하지 않는다**: 인프라엔 경합 가드만 둔다 — 낙관적 `version`/CAS 조건부 원자 UPDATE(`WHERE`엔 `version`만, 비즈니스 판정은 제외). 선언적 불변식 백스톱(`stock>=0` CHECK, 위 엔진 의존성 단락)은 최후 안전망으로 병행하되 이는 *불변식*이지 트랜잭션 입력 *판정*(`stock>=qty`)이 아니다. `QuerySet.update()`가 0행이면(`Model.save()`로 저장하면 이 경합 가드가 사라진다) 경합이므로 응용 서비스가 재조회 후 *도메인 메서드부터* 재실행한다(재시도 상한·격리 수준별 재시도는 §9.6 Isolation/retry, `version` 컬럼 추가는 §11 rollout backfill 안전을 따른다). `version`은 애그리거트 루트가 소유·증가시킨다. 낙관적 전제는 *충돌 희소*이므로, 고경합 핫 로우는 운영 엔진에서 비관적 락도 고려한다(처리량 트레이드오프는 위 락 범위 원칙).
+**낙관적 동시성 메커니즘(판정은 도메인이 소유).** 판정·불변식 소유는 도메인 책임이다 — 비즈니스 판정(예: `stock>=qty`, `balance>=amount`)을 SQL `WHERE`나 ORM 호출로 옮기면 같은 판정의 도메인 메서드가 프로덕션에서 호출되지 않는 죽은 코드가 되어 빈혈이 된다(원칙 `architecture-ddd` §3.2 빈혈 차단). 따라서 동시성 안전이 필요해도 판정을 SQL로 옮기지 않고, **리포지토리·영속화 계층은 도메인 메서드 결과만 저장하고 판정을 재수행하지 않는다**: 인프라엔 경합 가드만 둔다 — 낙관적 `version`/CAS 조건부 원자 UPDATE(`WHERE`엔 `version`만, 비즈니스 판정은 제외). 선언적 불변식 백스톱(`stock>=0` CHECK, 위 엔진 의존성 단락)은 최후 안전망으로 병행하되 이는 *불변식*이지 트랜잭션 입력 *판정*(`stock>=qty`)이 아니다. `QuerySet.update()`가 0행이면(`Model.save()`로 저장하면 이 경합 가드가 사라진다) 경합이므로 응용 서비스가 재조회 후 *도메인 메서드부터* 재실행한다(재시도 상한·격리 수준별 재시도는 §9.6 Isolation/retry). `version` 컬럼이 새로 필요하면 최종 목표 스키마에 포함하고 외부 DB transition 절차 대기로 보고한다(§11). `version`은 애그리거트 루트가 소유·증가시킨다. 낙관적 전제는 *충돌 희소*이므로, 고경합 핫 로우는 운영 엔진에서 비관적 락도 고려한다(처리량 트레이드오프는 위 락 범위 원칙).
 
 ### 9.6 Risky Write Consistency Block
 
@@ -503,69 +498,25 @@ SELECT * FROM books WHERE author_id IN (1, 2, 3, ...);
 
 ---
 
-## 11. 운영 rollout, backfill, migration safety
+## 11. 최종 목표 스키마와 DB migration 비소유 경계
 
-Architecture-db는 migration file 구현법이 아니라 운영 중 데이터 구조를 바꾸는 안전한 순서와 DB 위험을 결정한다. Django `RunPython`, `apps.get_model()`, `sqlmigrate`, migration class 작성은 `implementation-django`로 넘긴다.
+### 11.1 DB architecture의 소유
 
-### 11.1 Expand / Backfill / Contract
+dddjango의 DB 설계는 현재 요구를 만족하는 **최종 목표 상태**에 한정한다.
 
-운영 DB 변경은 기존 코드와 새 코드가 동시에 동작하는 시간을 고려한다.
+- 테이블·컬럼·관계의 논리적 의미와 현행 nullability
+- unique·check·FK 등 DB가 보호할 불변식
+- 현행 access pattern에 필요한 인덱스와 query 형태
+- transaction owner, isolation, locking, idempotency storage, side-effect timing
+- outbox 저장·전달 보장과 소비자 중복 방어
 
-| 단계 | 목적 | 예시 |
-|------|------|------|
-| Expand | 구 코드가 깨지지 않는 새 구조 추가 | nullable column, 새 table, 새 index 추가 |
-| Backfill | 기존 데이터를 새 구조에 맞게 채움 | batch update, dual write, dark read 비교 |
-| Contract | 호환성이 확인된 뒤 이전 구조 제거 또는 제약 강화 | NOT NULL, unique/check 검증, old column 제거 |
+모델·제약·인덱스 변경이 스키마에 영향을 주면 그 사실과 **외부 DB transition·release 절차 대기**만 보고한다.
 
-컬럼 rename이나 type 변경처럼 기존 코드와 충돌하기 쉬운 변경은 한 번에 바꾸지 않고 add/copy/switch/drop으로 쪼갠다.
+### 11.2 플러그인 범위 밖
 
-### 11.2 Backfill 위험
+dddjango는 migration 파일·graph·history·operation·DDL을 작성·수정·이동·검토·테스트하지 않는다. 데이터 backfill·cleanup, expand/contract, **스키마 전환용** dual write/read, lock-aware apply, rollback·forward-fix, monitoring, 배포 순서도 외부 소유자가 결정한다. 외부 소유자가 전환기 애플리케이션 동작을 현재 계약으로 이미 확정해 입력한 경우에는 그 동작을 구현할 수 있지만, dddjango가 migration 전략으로 새로 선택하거나 상세화하지 않는다. `implementation-django` §10의 구체 비소유 목록을 같이 적용한다.
 
-대형 backfill은 데이터 정합성 문제뿐 아니라 운영 부하를 만든다.
-
-- batch 크기와 pause 정책을 정한다.
-- row lock, replication lag, long transaction, vacuum/autovacuum 영향 여부를 확인한다.
-- 실패한 batch를 재실행해도 안전하도록 idempotent하게 만든다.
-- 진행률, 오류율, lag, query latency를 모니터링한다.
-- 부분 완료 상태에서 rollback할지 forward-fix할지 미리 정한다.
-
-### 11.3 Index와 constraint lock risk
-
-Index와 constraint 추가는 DB 종류와 옵션에 따라 쓰기를 막거나 지연시킬 수 있다.
-
-| 변경 | 주요 위험 | 설계 기준 |
-|------|----------|-----------|
-| 새 index | write slowdown, index build lock, storage 증가 | online/concurrent 생성 필요 여부 확인 |
-| unique constraint | 기존 중복 데이터 때문에 실패 | 사전 중복 탐지와 cleanup 필요 |
-| NOT NULL | 기존 NULL 데이터 때문에 실패 | nullable 추가 -> backfill -> NOT NULL 순서 |
-| check constraint | 기존 위반 데이터 때문에 실패 | 사전 검증과 점진적 validation 고려 |
-| FK 추가 | orphan row 때문에 실패, 쓰기 비용 증가 | orphan cleanup과 cascade/delete 정책 결정 |
-
-### 11.4 실패 대응
-
-운영 변경 계획은 rollback만 적지 말고 forward-fix도 함께 검토한다.
-
-| 실패 상황 | 대응 기준 |
-|----------|-----------|
-| backfill 일부 실패 | 안전한 재실행 key와 실패 row 격리 |
-| constraint validation 실패 | 위반 데이터 report, cleanup, 재검증 |
-| index creation 실패 | 기존 query plan 유지 여부, 재시도 시간대, cleanup |
-| 새/구 코드 compatibility 문제 | feature flag, dual write/read switch, 빠른 disable 경로 |
-| 성능 저하 | index 제거/재작성, batch 중단, query fallback |
-
-### 11.5 Rollout 산출물
-
-DB architecture 답변에서 운영 변경을 다루면 다음을 남긴다.
-
-- 현재 데이터 위험
-- expand/backfill/contract 순서
-- lock/index/constraint 위험
-- batch와 monitoring 기준
-- rollback 또는 forward-fix 방식
-- 구/신 애플리케이션 compatibility window
-- 실제 실행한 검증 명령 또는 실행하지 않았다는 표시
-
-> 출처: Stripe Engineering Blog - Online Migrations at Scale, PostgreSQL Documentation, Django migration best practices
+Django는 스키마 변경 메커니즘을 제공하지만 기존 데이터의 의미, lock risk, 온라인 적용 순서를 자동 보장하지 않는다. 스키마 영향이 있는 상태에서 dddjango의 구현 완료를 곧 배포 준비 완료로 표현하지 않는다.
 
 ---
 
@@ -727,8 +678,8 @@ CREATE TABLE comments (
 | Use The Index, Luke | 복합 인덱스 순서, 커버링 인덱스, "가장 선택적 먼저" 신화 |
 | PostgreSQL Documentation: Transaction Isolation | ACID, 격리 수준, 이상 현상 |
 | PostgreSQL Documentation: Using EXPLAIN | EXPLAIN ANALYZE 읽기, 스캔/조인 유형 |
-| Stripe Engineering Blog - Online Migrations at Scale | expand/backfill/contract, dual write/read, cleanup rollout |
-| Django migration best practices | migration 구현 세부사항은 implementation-django 책임이라는 경계 |
+| Stripe Engineering Blog - Online Migrations at Scale | 스키마 전환에 별도 운영 소유자가 필요하다는 배경 |
+| Django migration best practices | Django가 메커니즘을 제공해도 전환 안전성이 외부 책임으로 남는다는 경계 |
 | Stripe API / IETF Idempotency-Key 자료 | API 멱등성 계약과 DB 저장소 handoff |
 | Martin Fowler - PoEAA | STI, CTI, TPC 상속 패턴 |
 | Software Patterns Lexicon | Closure Table, Adjacency List 계층 패턴 |

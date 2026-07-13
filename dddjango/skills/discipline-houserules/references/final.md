@@ -18,13 +18,13 @@
 
 대상 프로젝트에 **확립된 규약이 없어 이 표준을 적용할 때**, 아래는 YAGNI·단순성·"단일 기능이라 불필요" 같은 판단으로 **생략하거나 평면으로 접을 수 없다 — 항상 생성한다**. (이미 다른 레이아웃 규약이 확립된 기존 프로젝트는 §1.1대로 그 규약을 존중한다 — 이 불변식은 *표준을 새로 까는* 경우의 규칙이다.)
 
-1. **`application/` 컨테이너** — 앱은 루트 평면이 아니라 `application/<app>/` 아래에 둔다. 단일 앱이어도 컨테이너를 만든다. **데이터소스 앱(판정 없이 필드·DB 제약만)도 위치·골격 모두 예외 없이 표준대로다** — `architecture-ddd` §632-(2) 개정(2026-06-08)으로 *데이터소스의 4계층/애그리거트 전개 면제는 폐지*됐다: 면제는 *판정 실내용*(`.py` 코드)에만 남고, 위치(`application/<app>/`)·4계층·개념 1차(`domain_layer/<aggregate>/`, 애그리거트명은 ORM 모델명 도출)·종류 2차 폴더는 데이터소스도 빈 패키지로 무조건 실현한다(유스케이스 없는 데이터소스의 `application_layer`만 빈 계층 — 개념 1차는 개념 식별 시, §0-3). 이번 작업이 touched한 앱이 루트 평면(`<app>/`)이거나 골격을 접으면 §0 위반이고, 이번 작업이 안 건드린 무관 기존 앱은 §1.1로 존중한다.
+1. **`application/` 컨테이너** — 새로 만드는 앱·바운디드 컨텍스트는 루트 평면이 아니라 `application/<app>/` 아래에 둔다. 단일 앱이어도 컨테이너를 만든다. **기존 Django persistence 앱은 touched 여부와 무관하게 grandfather**하므로 루트 평면이어도 옮기지 않는다. 새 domain/application 코드는 repository/adapter를 통해 그 ORM을 감싼다.
 2. **4계층 디렉터리** — `domain_layer/`·`application_layer/`·`infra_layer/`·`presentation_layer/`를 모두 물리 분리한다(`_layer` 접미사 포함). **계층에 들어갈 내용물이 없어도 그 계층 폴더는 빈 패키지(`__init__.py`만)로라도 항상 생성한다** — 예: HTTP/CLI 표현 없이 ACL·`published_service`로만 소비되는 내부 전용 BC의 `presentation_layer`도 빈 폴더로 둔다. "이 BC엔 표현(또는 도메인) 관심사가 없다"는 판단으로 **계층 폴더 자체를 생략하지 않는다**(종류 2차 폴더의 빈 패키지 규칙(4항)과 같은 원칙 — §6.8 YAGNI는 계층·종류 골격에 적용하지 않는다).
 3. **개념 1차 폴더** — `domain_layer/<aggregate>/`, `application_layer/<feature>/`.
-4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 패키지(`__init__.py`만)로 둔다 — 평면 파일(`repository.py`)로 접지 않는다. 빈 폴더의 `__init__.py`는 **유지한다(regular package)** — git은 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시키고, Django `migrations/`·앱 패키지도 `__init__.py`를 요구한다. PEP 420(namespace package)을 이유로 `__init__.py`를 지우지 않는다. (`[선택]` 마커는 "비어 있을 수 있음"이지 *생략 가능*이 아니다.) 이 종류-폴더 항상-생성은 domain·application 종류(`entity`/`value_object`/`repository`·`command`/`query`/`dto` 등)에 더해 **`presentation_layer`의 `api/`·`schema/`도 포함한다 — 표현이 없는 BC도 빈 패키지로 항상 생성한다**(2026-06-08 개정: 이전의 '`api/`·`schema/`는 표현 생길 때' 조건 폐지). 골격 폴더 자체는 모든 BC가 무조건 실현하고, 빈 골격에 무엇을 채울지(깊이 적정성)는 discipline-reviewer 의미 체크 몫이다.
-5. **Django 앱은 `infra_layer/django_<app>/`** — `startapp`을 그 안에서 수행한다. ORM 모델·`migrations/`·`apps.py`가 거기 산다. 앱 루트나 도메인 패키지에 `models.py`를 두지 않는다(§2 "Django 앱 성립" 참조).
+4. **종류 2차 폴더 전체** — `entity/`·`value_object/`·`repository/` 등(domain), `command/`·`query/`·`dto/` 등(application)을 **항상 폴더로 생성**한다. 내용이 없으면 빈 regular package(`__init__.py`만)로 두고 평면 파일(`repository.py`)로 접지 않는다. git이 빈 디렉터리를 추적하지 않으므로 이 파일이 골격을 버전관리에 존속시킨다. PEP 420을 이유로 `__init__.py`를 지우지 않는다. (`[선택]`은 "비어 있을 수 있음"이지 *생략 가능*이 아니다.) 이 규칙은 domain·application 종류와 `presentation_layer`의 `api/`·`schema/`에 적용한다. migration 경로는 이 골격 생성 규칙의 대상이 아니다(5항).
+5. **확립된 기존 규약이 없어 이 표준을 적용하는 신규 Django 앱은 `infra_layer/django_<app>/`** — ORM 모델·`apps.py`를 그 안에 두고 신규 앱 루트나 도메인 패키지에 `models.py`를 두지 않는다(§2 "Django 앱 성립" 참조). dddjango는 `startapp`이 생성하는 `migrations/__init__.py`를 포함해 migration 경로를 스캐폴딩하지 않는다. G0 전에 framework/external owner가 만든 `migrations/`가 이미 있을 수는 있으나, dddjango는 그 경로를 추가·수정·삭제·이동하지 않는다.
 6. **ORM 모델 명명·테이블명** — 도메인 엔티티/애그리거트는 bare 이름(`Order`), Django ORM 모델 클래스는 `<Name>Model`(`OrderModel`)로 구분하고, **신규 모델은 `Meta.db_table`을 `<app_label>_<entity_snake>`**(`Model` 접미 제거·snake; `abstract`/`proxy`/`managed=False` 면제)로 명시한다(상세 §4 명명 규약).
-7. **이주 배타성** — 기존 Django 앱을 `infra_layer/django_<app>/`로 이주하면 옛 루트 `<app>/`는 `migrations/`까지 통째 제거하고 `INSTALLED_APPS`에서 옛 루트 등록을 뺀다. 이력은 `implementation-django` §10.4의 새 경로가 보존하므로, counterpart가 새 경로에 자기 마이그레이션을 갖췄는데도 같은 앱이 옛 루트와 `application/`에 동시 존재하면(앱 파일이든 `migrations/`-only든·`MIGRATION_MODULES`로 옛 루트를 가리키든) 미완 이주다.
+7. **Brownfield 보존** — 기존 Django persistence 앱을 `infra_layer/django_<app>/`로 물리적으로 이주하지 않는다. 옛 루트·`INSTALLED_APPS`·`AppConfig`·`migrations/`·`MIGRATION_MODULES`를 현위치에 보존한다. 새 domain/application 패키지가 따로 존재하는 것은 repository/adapter 경계를 갖춘 합법적 공존이지 미완 이주가 아니다.
 
 이 불변식은 `discipline-houserules` SKILL.md 본문에도 체크리스트로 요약되어, 스킬을 로드하는 모든 행위자(design-architect·coder·discipline-reviewer)에게 전달된다. design-architect는 명세에서 이를 생략·축소할 수 없고, discipline-reviewer는 *명세가 아니라 이 불변식*과 코드를 대조한다.
 
@@ -43,7 +43,7 @@
 │   ├── views/                  # 프로젝트 레벨 뷰(헬스체크·랜딩 등)
 │   └── static/  templates/
 │
-├── application/                # 모든 feature 앱의 컨테이너
+├── application/                # 새 feature 앱·domain/application 코드의 컨테이너
 │   └── <app>/  <app>/  ...     # 컨텍스트 간 통신은 각 앱의 published_service/ OHS로 (§2)
 │
 └── common/                     # 앱 횡단 공용
@@ -53,7 +53,7 @@
     └── <project>/              # 프레임워크 비종속 공용 = shared kernel 대응
 ```
 
-- 앱들은 루트 평면이 아니라 **`application/` 한 디렉터리 아래**로 묶인다.
+- 이 표준으로 새로 만드는 앱들은 루트 평면이 아니라 **`application/` 한 디렉터리 아래**로 묶는다. 기존 persistence 앱은 §0-1의 grandfather 예외다.
 - 설정 패키지(`<project>/`)는 **환경별로 분할**(`env`/`dev`/`local`/`prod`/`test`).
 - 횡단 관심사는 `common/`에 모으고, 그 안을 기술축(enum·django·ninja)으로 다시 나눈다. 프레임워크에 의존하면 `common/django`·`common/ninja`로, 비종속이면 `common/<project>`로 둔다.
 - **`common/`은 *프로젝트 루트*에 둔다(= `application/`의 형제) — `application/common/`처럼 `application/`(feature 앱 컨테이너) *안*에 넣지 않는다.** 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 2개 이상 BC가 *실제로* 공유할 때만 루트 `common/`으로 승격한다(YAGNI — 횡단이 생기기 전 조기 승격 금지; `implementation-django-ninja` §6.2·§6.3).
@@ -63,7 +63,7 @@
 
 ## §2 앱 4계층 전개 — `application/<app>/`
 
-각 앱은 **4계층을 디렉터리로 물리 분리**하고, 계층 이름에 `_layer` 접미사를 쓴다. 접미사는 앱 컨테이너 `application/`과 응용 계층 `application_layer`의 이름 충돌을 해소한다.
+이 표준으로 새로 만드는 각 앱은 **4계층을 디렉터리로 물리 분리**하고, 계층 이름에 `_layer` 접미사를 쓴다. 기존 persistence 앱은 물리 분리 대상이 아니다. 접미사는 앱 컨테이너 `application/`과 응용 계층 `application_layer`의 이름 충돌을 해소한다.
 
 ```
 application/<app>/
@@ -96,7 +96,7 @@ application/<app>/
 │   ├── django_<app>/                   #   Django 영속성 (도메인 엔티티와 별개의 ORM 모델)
 │   │   ├── apps.py
 │   │   ├── models/                     #     <entity>_model.py
-│   │   ├── migrations/
+│   │   ├── migrations/                      # G0 전에 외부가 만든 경우만 존재; framework/external-owned
 │   │   └── admin/                      #     <entity>_admin.py (+ templates/)
 │   ├── repository/                     #   domain repository 인터페이스(ABC) 구현 — ORM↔도메인 변환 (DIP). 자기 애그리거트 전용
 │   ├── acl/                            #   외부 컨텍스트 ACL 어댑터(domain port/ 구현) — 폴더 항상·코드는 통합 시  [선택]
@@ -126,7 +126,7 @@ application/<app>/
 - **infra_layer 분할**: `django_<app>/`(영속성) + `repository/`(자기 애그리거트 접근·구현) + `acl/`(외부 컨텍스트 ACL 어댑터, [선택] 폴더 항상·코드는 통합 시) + `adapter/`(외부 I/O 서비스 어댑터). 구체 매핑·QuerySet/Manager·`transaction.atomic()`은 `implementation-django` §16 소유.
 - **컨텍스트 간 통신 = OHS 우선, 직접 통합은 ACL로 분리**: 다른 바운디드 컨텍스트는 그 앱의 `published_service/`(OHS)로 소비하는 게 기본이다(아래 "컨텍스트 간 통신"). OHS가 없거나(미이주) 단일 트랜잭션·행 잠금이 불가피하면 ACL로 명시 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로 의존하고 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다**(architecture-ddd 컨텍스트 맵 ACL 패턴 — 업스트림 모델을 하류 모델로 번역).
 - **통합 스타일 선택(동기 ACL/OHS vs 비동기 이벤트)**: BC 간 통합에서 **즉시 일관성**이 필요하면(예: 재고 차감 — 오버셀 차단) 동기로 OHS/ACL을, **결과적 일관성**으로 충분하면(예: 주문 후 포인트 적립·알림) 비동기로 **도메인 이벤트**를 쓴다. 도메인 이벤트는 *애그리거트 간* 결과적 일관성에도 쓰여 ACL보다 범위가 넓다(ACL은 BC 간 동기 번역 전용). **선택 기준은 `architecture-ddd` 규칙4(일관성 경계 밖=결과적 일관성)·§6.8 패턴 선택 절차에 위임**한다 — 이 표준은 *어디 두는지*만 정하고 *언제 무엇*의 패턴 선택 이론은 코퍼스가 권위다.
-- **Django 앱 성립 (infra_layer 안)**: Django `startapp`은 `infra_layer/django_<app>/`에서 수행한다 — `apps.py`의 `AppConfig.name`을 그 전체 점경로(`application.<app>.infra_layer.django_<app>`)로, `label='<app>'`로 둔다. 그러면 `models/`·`migrations/`가 그 앱 아래에서 native하게 발견된다(단일 앱 라벨에 모델·마이그레이션을 귀속시키려 우회할 필요가 없다). 설정의 `INSTALLED_APPS`에 그 점경로를 등록한다. **앱 루트(`application/<app>/`)나 도메인 패키지에 `models.py`를 두지 않는다** — 도메인 컨텍스트 `<app>`와 Django 영속성 앱 `django_<app>`는 별개이고, 도메인 `<app>/`는 Django 앱이 아니라 순수 패키지다.
+- **표준 신규 Django 앱 성립 (infra_layer 안)**: 확립된 기존 규약이 없어 이 표준을 적용할 때 `apps.py`의 `AppConfig.name`을 전체 점경로(`application.<app>.infra_layer.django_<app>`)로, `label='<app>'`로 두고 설정의 `INSTALLED_APPS`에 그 점경로를 등록한다. **앱 루트(`application/<app>/`)나 도메인 패키지에 `models.py`를 두지 않는다.** dddjango는 `startapp`으로 `migrations/__init__.py`를 만들지 않는다. G0 전에 외부 소유자가 만든 migration 경로가 이미 있으면 그대로 보존할 뿐이다.
 - **도메인 이벤트 흐름**: 발생(raise)은 `domain_layer` 애그리거트, 디스패치 타이밍은 UoW(§3.7 [의사결정#7]), 발행은 기본 **`transaction.on_commit()`**(§6.3), 외부 부수효과 유실이 치명적인 Risky Write만 **outbox**. 발행/전달 구체는 `implementation-django` §16.5·`architecture-db` §9.7 소유라 별도 `event_publisher/` 디렉터리를 두지 않는다.
 - **표현 계층은 얇은 입력 어댑터**(§6.1 interface, §3.6): api는 요청 파싱 → 응용 호출 → 응답·예외 변환만 하고 비즈니스 로직을 두지 않는다. **응답은 `schema_out`(DTO)로 노출하고 도메인 엔티티를 직접 직렬화하지 않는다**(Published Language 경계). HTTP 계약·status·Ninja `Router`/`Schema`/auth 구체는 `architecture-api`·`implementation-django-ninja` 소유.
 - **테스트는 의미군으로**(implementation-test §4.2): 앱별 `<app>/test/{unit,integration,e2e}/`. 도메인·응용 단위 테스트는 `unit/`, DB·리포지토리·HTTP 엔드포인트 테스트는 `integration/`. 엔드포인트별 평면 나열(`test/api/...`)은 두지 않는다.
@@ -163,7 +163,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 **소비 측(다른 컨텍스트를 부를 때)**: 기본은 대상 앱의 `published_service/`(OHS)만 import한다. 대상 컨텍스트가 아직 OHS를 노출하지 않거나(미이주) 단일 트랜잭션·행 잠금이 필요해 직접 접근이 불가피하면, 그 통합을 **ACL(부패 방지 계층)로 명시**한다 — 도메인은 협력 포트(`domain_layer/<aggregate>/port/`)로만 의존하고, 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/`에 가둔다. **ACL은 리포지토리가 아니므로 `repository/`에 섞지 않는다.** **업스트림의 모델·예외 번역은 ACL 안에 격리한다 — presentation·application이 타 BC의 예외(`domain_layer`/`application_layer` 하위)를 직접 `import`해 잡으면 컨텍스트 결합이 ACL 밖으로 새므로, ACL이 협력 포트가 던지는 우리 쪽 예외로 번역(동일 의미면 명시적 재노출)해 넘긴다. 이 번역은 *전수*다 — ACL이 구동하는 업스트림 동작이 그 포트 경로에서 던질 수 있는 예외를 (`domain_layer`·`application_layer` 층 무관) 빠짐없이 잡아 협력 포트가 선언한 우리 쪽 예외로 번역한다. catch되지 않은 업스트림 예외가 ACL을 그대로 통과해 우리 쪽 application·presentation으로 raw 전파되면 포트 계약 위반이다. 협력 포트(`domain_layer/<aggregate>/port/`)의 ABC·docstring이 *이 통합이 노출하는 우리 쪽 예외 전수 목록*의 단일 출처(앵커)이며 ACL은 그 목록을 채운다 — 업스트림에 새 예외가 생기면 포트 선언과 ACL 번역을 함께 갱신한다. 단 '전수'는 *알려진 구체 예외 집합을 빠짐없이 덮으라*는 것이지 `except Exception` 광범위 포괄 catch가 아니다 — 각 구체 예외를 명시 번역한다(`discipline-cleancode` 구체적 예외 처리). **또한 transient 인프라 예외(`OperationalError` 중 DB 락·deadlock·serialization failure 같은 재시도성 변종)는 협력 포트가 선언하는 우리 쪽 *도메인* 예외 집합이 아니다 — ACL은 이를 도메인 예외로 위장 번역하지 않고(포트에 인프라 누수 금지), presentation 경계의 단일 변환점이 retryable(503/409) problem으로 매핑한다(`implementation-django-ninja` §6.2). 단 이 '위장 번역 금지'는 드라이버가 *실제로 던진* transient(`OperationalError`)에 한정한다 — ACL·앱이 낙관락·CAS 재시도 루프를 *스스로 소진 판정*한 경우(드라이버 예외 부재)는 인프라 예외를 *합성*해 신호하지 말고(합성 예외는 실 메시지·`__cause__`가 없어 presentation recognizer 사각→영구장애 오분류·500 누수=과소매핑), 협력 포트가 선언한 도메인 transient-마커 예외 *타입*(`StockContention` 등 retryable 의미)으로 raise해 핸들러가 *타입*으로 매핑하게 한다. 실 드라이버 락 예외를 잡아 재시도하다 소진했다면 원본을 `raise … from driver_exc`로 보존하면 recognizer가 `__cause__`로 인식한다(결정적 백스톱 `check-synthetic-infra-exc`가 `infra_layer`의 `from` 없는 인프라 예외 합성을 차단).**** 대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다(이 표준의 통합 진화 지침 — architecture-ddd 컨텍스트 맵의 ACL·OHS 패턴을 토대로 한 합성이며, 코퍼스가 "ACL→OHS 진화"를 명시하는 것은 아니다).
 
-(앱별 변종: WebSocket 앱은 `<app>_asgi_router.py`·`presentation_layer/socket/`을 더 가진다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer`를 포함해 어느 계층 폴더도 생략하지 않고, 내용이 없으면 빈 패키지로 둔다(§0-2). 도메인 모델이 없는 앱이라도 빈 `domain_layer`는 존속시키고, 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.)
+(신규 앱별 변종: WebSocket 앱은 `<app>_asgi_router.py`·`presentation_layer/socket/`을 더 가진다. 이 표준으로 새로 만드는 단순 지원 앱도 컨테이너·4계층 폴더를 유지한다. 기존 persistence 앱에는 소급 적용하지 않는다.)
 
 ---
 
@@ -178,7 +178,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `<project>/` | 프로젝트 설정 패키지(앱 아님) | `settings/{env,dev,local,prod,test}.py`, `urls.py`·`asgi.py`·`wsgi.py`·`celery.py`(비동기 큐 쓸 때) |
 | `<project>/views/` | 어느 앱에도 속하지 않는 루트/관리 뷰(헬스체크·랜딩) | 루트 뷰 모듈 |
 | `<project>/{static,templates}/` | 프로젝트 레벨 정적·서버렌더 자원 | 정적 파일·템플릿 |
-| `application/` | 모든 feature 앱의 컨테이너 | 앱 디렉터리 `<app>/` |
+| `application/` | 새 feature 앱·domain/application 코드의 컨테이너 | 앱 디렉터리 `<app>/` |
 | `common/enum/` | 공유 커널로 승격된 enum(승격 기준: 같은 지식 + 같은 변경 사유 근거 — §1; BC 내부 enum은 그 BC `domain_layer` 소유) | `<domain>_enum.py` |
 | `common/django/` | **Django 의존** 공용 유틸 | `task.py`·`timezone.py`·`model_util.py` |
 | `common/ninja/` | **Django Ninja 의존** 공용 확장 | `authentication.py`·`custom_type.py`·`response/` |
@@ -219,7 +219,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | 폴더 | 존재 이유 | 위치 파일 · 명명 |
 |---|---|---|
 | `django_<app>/models/` | Django ORM 모델(**도메인 엔티티와 별개**; 클래스명 `<Name>Model`) | `<entity>_model.py` (예: `order_model.py` → `class OrderModel`) |
-| `django_<app>/migrations/` | DB 마이그레이션 | (Django 자동 생성) |
+| `django_<app>/migrations/` | DB migration lifecycle — dddjango 비소유 | G0 전에 framework/external owner가 만든 경우만 보존; 생성·수정·삭제·이동 금지 |
 | `django_<app>/admin/` | Django admin 등록·커스텀 | `<entity>_admin.py`(+`templates/` admin 전용) |
 | `django_<app>/apps.py` | AppConfig — `name='application.<app>.infra_layer.django_<app>'`, `label='<app>'` (이 점경로를 INSTALLED_APPS에 등록; 앱 루트에 `models.py` 금지) | `apps.py` |
 | `repository/` | domain `repository/` ABC **구현** + ORM↔도메인 변환(Data Mapper §6.2). **자기 애그리거트 전용** | `<aggregate>_repository.py` → `class DjangoOrderRepository`(구현=기술 한정자 접두) |
@@ -237,7 +237,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → config의 `NinjaExtraAPI`를 import해 `register_controllers`로 BC 로컬 등록(루트 `urls.py` 포함은 함수형 Router 경로) |
 | 조립(배선) | DI 컴포지션 루트 — use-case·application 로직(command/query/service 등) 가진 BC는 **반드시 둔다**(데이터소스 BC=빈 `application_layer`는 생략) | `composition_root.py`를 **만들어** `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리로 구체 infra를 use-case에 매요청 주입하고, presentation은 그 팩토리를 **매요청 호출만** 한다(operation·application service 본문에서 `Django…Repository()`/`…Adapter()` 직접 생성 금지=Q-7의 짝). 결정적 백스톱 `check-composition-root`이 정본 부재·off-tree·오배치를 집행 |
 
-**앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 단순 지원 앱이라도 컨테이너·4계층 폴더는 모두 유지한다 — `domain_layer` 포함 어느 계층도 폴더를 생략하지 않고 내용이 없으면 빈 패키지로 둔다(§0-2); 계층을 접을 실질 사유가 있으면 명세에 silent하게 박지 말고 G1 트레이드오프로 올린다.
+**신규 앱별 변종**: WebSocket 앱은 `presentation_layer/socket/` + `<app>_asgi_router.py`를 추가한다. 이 표준으로 새로 만드는 단순 지원 앱도 컨테이너·4계층 폴더를 유지한다. 기존 persistence 앱에는 소급 적용하지 않는다.
 
 ---
 
@@ -254,8 +254,8 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 - 왜: `Model` 접미는 *코드측* ORM↔도메인 구분 표식(위 항)이지 DB 개념이 아니다 — 테이블은 도메인 개념을 반영한다. Django 기본값 `<app_label>_<modelname>`(= `<app_label>_<name>model`)을 그대로 두면 `model` 군더더기가 테이블명에 새고(`catalog_productmodel`) 다단어는 언더스코어 없이 붙는다(`catalog_productimagemodel`). 명시로 둘 다 해소한다.
 - `app_label` 접두는 **유지**한다(교차 앱 테이블 충돌 방지·DB 소유 식별). 앱명과 애그리거트명이 같아 `order_order`처럼 반복돼 보여도 줄이지 않는다(규칙의 결정성·백스톱).
 - 면제: `abstract = True`·`proxy = True`(자체 테이블 없음)·`managed = False`(외부 소유 테이블 매핑)는 `db_table`을 두지 않는다.
-- 적용 범위는 **신규 모델만**이다. 이미 생성·적용된 모델의 테이블명은 소급 변경하지 않으며(applied 테이블 rename = brownfield DDL 위험), 기존 앱을 표준 구조로 이주할 때의 테이블명은 `implementation-django` §10.4가 *기존명 보존*으로 따로 정한다(그 결과가 이 규칙과 달라도 정상).
-- 집행(2층): 결정적 백스톱 `check-db-table.py`는 신규 추가 모델의 `db_table` **존재(작성)** 만 잡는다(값 형태 미검사 → 거짓 양성 ≈0 유지). **값 형태**(`<app_label>_<entity_snake>` 일치)는 `python manage.py makemigrations --check` 드리프트 0 + discipline-reviewer 의미 점검(형태 일치·수정 파일 내 신규 모델·비표준 위치 등)이 본다. 백스톱이 *형태*까지 보지 않는 이유: 기대 테이블명을 클래스명·`app_label`에서 도출해 대조하면 약어 snake·`AppConfig.label`≠디렉터리명·이주 보존명에서 거짓 양성이 나기 때문(모호성 0인 *누락*만 결정적으로 집행).
+- 적용 범위는 **신규 모델만**이다. 이미 생성·적용된 모델의 테이블명은 소급 변경하지 않는다. 기존 persistence 앱은 물리 이주하지 않으며 기존 테이블명을 보존한다.
+- 집행(2층): 결정적 백스톱 `check-db-table.py`는 신규 추가 모델의 `db_table` **존재(작성)** 만 잡는다(값 형태 미검사 → 거짓 양성 ≈0 유지). **값 형태**(`<app_label>_<entity_snake>` 일치)는 discipline-reviewer가 현행 명세와 대조한다. migration 명령이나 DDL 검토를 이 확인에 사용하지 않는다.
 
 **추상화(포트) ↔ 구현(어댑터)** — 추상화가 개념의 "진짜 이름"을 갖고, 구현 접미사는 그 포트가 *확립 패턴명*인지로 갈린다(헥사고날 정석 — DR-05/37 번복: 옛 규약은 모든 포트 구현에 `Port`를 보존했으나 이는 위치 표식을 구현에 남기는 오류였다).
 - 추상화(리포지토리 인터페이스·기타 포트 ABC) = 도메인 개념 + **역할 접미사**(`OrderRepository`·`ProductLockPort`·`PaymentGateway`). `Repository`/`Port`/`Gateway`처럼 그 객체의 *역할*을 나타내는 접미사는 이름의 일부라 허용한다.

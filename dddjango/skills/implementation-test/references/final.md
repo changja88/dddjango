@@ -382,6 +382,8 @@ log_cli_level = "INFO"
 
 > **Django에서 `filterwarnings = ["error", ...]` 같은 전역 경고-에러는 두지 않는다** — Django·서드파티가 흘리는 Deprecation 경고가 그린 테스트 스위트를 레드바로 만들어 의미 없는 실패를 낳는다. 경고는 pytest 기본값으로 두거나, 잡으려면 **명시적으로 범위가 좁은 `error::...` 한두 줄**(자기 코드가 내는 특정 경고 카테고리·모듈)로만 한정한다.
 
+**기존 pytest 설정과 명령을 우선한다.** dddjango는 migration lifecycle을 우회하거나 검증하기 위해 `--no-migrations`·`--nomigrations`를 강제하거나 설정에 추가하지 않는다. pytest-django가 기존 설정에 따라 테스트 DB를 준비하는 과정은 framework test infrastructure의 부수 효과일 뿐 migration 검증 증거가 아니다. 외부 소유 migration 테스트가 기존 스위트에 있으면 작성·수정·삭제하지 않고, 실패 시 외부 의존성으로 보고한다.
+
 ### 4.2 conftest.py 계층 구조
 
 conftest.py는 디렉토리별로 배치할 수 있으며, pytest가 테스트 수집 시 각 디렉토리의 conftest.py를 자동으로 로드한다. 이 표준의 테스트는 **앱별 의미군 트리**에 산다(트리 단일 출처는 `discipline-houserules` §2 — 의미군 조직은 본 절 §4.2 소유). 루트 `conftest.py` 하나가 settings·공유 픽스처를 이고, 각 앱은 `application/<app>/test/{unit,integration}/`(필요 시 `e2e/`)로 의미군을 나눈다.
@@ -501,8 +503,8 @@ def test_user_creation():
 # 여러 마커 중첩
 @pytest.mark.slow
 @pytest.mark.database
-def test_full_migration():
-    run_migration()
+def test_full_search_rebuild():
+    rebuild_search_index()
 ```
 
 **마커 기반 실행**:
@@ -1719,7 +1721,7 @@ branch = true
 
 # 측정 제외 패턴 (정규식)
 omit = [
-    "*/migrations/*",
+    "*/migrations/*",  # framework/external-owned artifact — dddjango의 coverage oracle이 아님
     "*/tests/*",
     "*/__init__.py",
     "*/conftest.py",
@@ -2103,6 +2105,31 @@ def test_event_union_covers_all_event_types():
 ```
 
 경계: 이 테스트는 **구조 동기 검증**이지 외부 계약 검증이 아니므로 §15.4(프로덕션 상수 역수입 금지)와 충돌하지 않는다 — 발행 payload의 실제 문자열을 검증하는 외부 계약 테스트의 assert 기댓값은 여전히 리터럴로 고정한다(`assert body["event_type"] == "parent_safe_alert"`).
+
+### 15.6 현재 계약과 테스트 수명
+
+영구 테스트는 현재 승인된 요구·설계·지원 계약에 추적되어야 한다. 기존 테스트와 구현, 과거 장애·동작은 현재 의무를 찾는 증거일 수는 있지만 독립 오라클이 아니다. 명세가 바뀌면 영향 테스트를 같은 변경에서 다음처럼 조정한다.
+
+- **retain**: 현재 의무와 기대가 그대로다.
+- **update**: 의무는 남지만 승인된 입력·결과·지원 범위가 바뀌었다.
+- **delete**: 근거였던 의무가 명시적으로 끝났고 다른 현재 의무가 남지 않았다.
+- **add**: 새 의무 또는 아직 검증되지 않은 현재 의무가 생겼다.
+
+명세의 침묵은 제거 결정이 아니다. 지원 중인 호환성·deprecation window, 현재 읽어야 하는 영속 데이터·이벤트, 보안·개인정보·규제 의무, 명시적인 금지·부재·무부작용은 모두 현재 계약이다. 지원 종료가 모호하면 G1에서 확정하고 임의로 테스트를 지우거나 과거 동작을 복원하지 않는다.
+
+변경 전에 `current-obligation inventory`를 작성한다. 최소 열은 `surface/version`,
+`consumer/support`, `persisted data/event`, `deprecation window`,
+`security/privacy/regulatory`, `negative/absence`, `근거 경로`, `retain/end/unknown`이다.
+`unknown`은 G1 blocker이며 지원 종료와 관찰 가능한 부재 보장은 서로 대신할 수 없다.
+inventory와 근거는 설계 reviewer와 Phase 2 역할에 동일하게 전달한다.
+
+회귀 테스트는 현재 불변식을 보호하는 동안만 유지한다. Hypothesis가 축소한 `@example`·재현 witness도 현재 property가 남는 동안만 유지한다. 옛 성공 동작이 제거됐다는 이유로 정확한 오류·필드 부재를 새 negative test로 발명하지 않는다. 해당 negative 결과가 현재 계약일 때만 작성한다. 여러 의무가 섞인 snapshot/E2E 테스트는 retain/delete를 결정하기 전에 의무별로 분리한다.
+
+레거시 조사 중 특성화 테스트는 임시 안전망이다. G2 전에 현재 의무에 추적되는 테스트로 승격하거나 제거한다. DB migration lifecycle 테스트는 dddjango가 작성·수정·삭제하지 않으며, framework의 test DB setup도 migration verification으로 해석하지 않는다(`implementation-django` §10).
+
+G2 전 조정표의 `retain`·`update`·`add` 테스트와 프로젝트 전체 suite를 실제로 실행하고
+command/result와 러너가 입증한 collected/executed/pass/fail/skipped count를 의무별로 기록한다. collection과 execution을 별도로 보고하지 않는 러너는 입증 가능한 count만 기록하고 추정하지 않는다. 실행할 수 없는 현재 의무는 완료로 주장하지 않는다.
+외부 소유 migration lifecycle test 실패는 그대로 보고하되 테스트나 runner 설정을 바꾸지 않는다.
 
 ---
 

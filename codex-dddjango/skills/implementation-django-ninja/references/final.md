@@ -3,8 +3,9 @@
 
 > 이 문서는 Django Ninja로 REST API adapter를 구현할 때의 기준을 정리한다.
 > REST 계약 자체는 `workspace/reference/architecture-api/reference/final.md`,
-> Django ORM, service, transaction, migration은
-> `workspace/reference/implementation-django/reference/final.md`,
+> Django ORM, service, transaction은
+> `workspace/reference/implementation-django/reference/final.md`, DB migration lifecycle은
+> dddjango 범위 밖이다. 이 문서의 DRF-to-Ninja migration은 애플리케이션/API 전환을 뜻한다.
 > pytest fixture와 test-double 세부 구현은
 > `workspace/reference/implementation-test/reference/final.md`를 기준으로 한다.
 >
@@ -53,8 +54,8 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
   `architecture-api`가 결정한다.
 - aggregate, state transition, invariant, policy, usecase boundary, 구조 패턴
   (repository/UoW/핵사고날/CQRS/outbox/ACL) 선택은 `architecture-ddd`가 결정한다.
-- ORM query, selector, service, transaction, migration, cache, security
-  implementation은 `implementation-django`가 담당한다.
+- ORM query, selector, service, transaction, cache, security implementation은
+  `implementation-django`가 담당한다. DB migration lifecycle은 dddjango 범위 밖이다.
 - pytest fixture, factory, mock/test-double, concurrency test mechanics는
   `implementation-test`가 담당한다.
 
@@ -848,7 +849,7 @@ Django Ninja Router/Schema, service validation, exception handler, TestClient �
   Problem Details, header/content negotiation, pagination, versioning,
   rate limiting, idempotency, OpenAPI.
 - dddjango `implementation-django` final reference: Django service, selector,
-  ORM, transaction, migration, security, performance.
+  ORM, transaction, security, performance. DB migration lifecycle은 dddjango 범위 밖이다.
 - dddjango `implementation-test` final reference: pytest, fixture, test-double,
   factory, concurrency and contract test mechanics.
 - Django Ninja official documentation:

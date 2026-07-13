@@ -42,6 +42,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from migration_scope import (
+    is_migration_owned_path,
+    iter_non_migration_files,
+    validate_migration_scope,
+)
+
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 
@@ -67,10 +73,10 @@ _REJECT_TOKENS = ("미적용", "미도입", "범위 밖", "범위밖", "안 함"
 
 def _has_application_container(root: Path) -> bool:
     """표준 앱 컨테이너(`application/`)가 있나 — 없으면 기존 규약(§1.1)이라 적용 대상 아님."""
-    for path in root.rglob("application"):
-        if path.is_dir() and not (set(path.parts) & SKIP_DIRS):
-            return True
-    return False
+    return any(
+        not is_migration_owned_path(root, path) and path.is_dir()
+        for path in (root / "application", root / "src" / "application")
+    )
 
 
 def _is_test_path(path: Path) -> bool:
@@ -81,7 +87,7 @@ def _is_test_path(path: Path) -> bool:
 def _prod_py_under_application(root: Path) -> list[Path]:
     """application/ 하위 프로덕션 .py — test 제외(venv 제외)."""
     out: list[Path] = []
-    for path in root.rglob("*.py"):
+    for path in iter_non_migration_files(root, name_pattern="*.py"):
         parts = path.parts
         if set(parts) & SKIP_DIRS:
             continue
@@ -134,9 +140,11 @@ def _idempotency_artifacts(root: Path) -> list[Path]:
 
 def _dddjango_docs(root: Path, name: str) -> list[Path]:
     base = root / ".dddjango"
-    if not base.is_dir():
-        return []
-    return sorted(base.glob(f"*/{name}"))
+    return [
+        path
+        for path in iter_non_migration_files(root, base, name)
+        if len(path.relative_to(base).parts) == 2
+    ]
 
 
 def _scope_says_not_requested(root: Path) -> bool:
@@ -169,6 +177,8 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-idempotency-scope-creep] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+        return 1
+    if not validate_migration_scope(root, "check-idempotency-scope-creep"):
         return 1
     if not _has_application_container(root):
         return 0  # 표준 레이아웃(`application/`) 미적용 → §1.1 존중, 해당 없음.

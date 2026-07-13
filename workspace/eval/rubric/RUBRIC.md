@@ -1,9 +1,9 @@
-# dddjango 평가지 v3 — 규칙 준수 + 기능 정확성 (평가 항목)
+# dddjango 평가지 v4 — 규칙 준수 + 기능 정확성 (평가 항목)
 
-> **상태**: v3 (2026-06-02) — **동결-전-결정 5개 해소 완료**(아래 §동결 전 결정 + `EVAL-METHOD.md §0.1`). *사용자 "동결됨" 최종 확인 후 채점 착수*(미동결 채점 = §과적합 위반). `EVAL-METHOD.md` v3과 정합.
+> **상태**: v4 (2026-07-13) — **동결됨**. DB migration lifecycle 비소유와 현재 계약 기반 테스트 수명을 반영한다. v3 결과·앵커는 당시 기준의 역사 기록으로 보존하며 v4로 소급 재채점하지 않는다. `EVAL-METHOD.md` v4와 정합.
 > **목적(사용자 확정)**: 산출물이 ① **우리 플러그인의 규칙(DDD·houserules·django-ninja)을 얼마나 잘 지키는가** + ② **요청 기능을 올바르게 구현했는가**를 측정한다. *baseline 대비 차별가치는 안 잰다 — 규칙 준수가 핵심.* 기능 정확성은 잰다(형태만 보면 "재고 늘어나는 주문 API"도 통과하므로).
 > **PASS 바 = 표준 규칙(앵커 아님)**: 판정 기준은 각 항목 §근거의 *표준 조항*이다. §E 앵커는 *규칙 충족/위반의 예시*일 뿐 임계값이 아니다 — "플러그인이 실제로 낸 수준"을 바로 두지 않는다(순환 방지). 새 산출물은 표준 조항으로 채점하고 앵커는 참고.
-> **명시적 비측정(과대주장 제거)**: baseline 대비 가치(절대 준수만 봄) · 미시 가독성·복잡도(유지보수성은 구조 대리까지만) · 보안(단 *에러 응답에 스택트레이스·내부경로·SQL 누출 0*은 항상 치명) · 명세 내적 품질(후순위). 이들은 평가지 밖/위임/후속.
+> **명시적 비측정(과대주장 제거)**: baseline 대비 가치(절대 준수만 봄) · 미시 가독성·복잡도(유지보수성은 구조 대리까지만) · 새 보안 설계의 품질(단 *에러 응답에 스택트레이스·내부경로·SQL 누출 0*은 항상 치명) · 명세 내적 품질(후순위). 이들은 평가지 밖/위임/후속이다. 다만 사용자/G1이 현재 의무로 확정한 보안·개인정보·규제 계약을 테스트 변경에서 보존했는지는 Q-6에서 측정한다.
 > **범위**: 이 문서=평가 *항목*. 채점/집계/bisect/완료=`EVAL-METHOD.md`.
 > **산출 형식**: 채점 결과지(`results/*.md`)의 섹션 순서·칼럼·필수 단서는 `EVAL-METHOD.md §6` 표준 템플릿을 따른다. 결과지 차원-섹션 순서 = 이 문서 **A→B→NINJA→FC→C→D**(E 앵커는 루브릭 전용·결과지 미포함). **TIER-OBS(에러 경로 라이브 관측)는 이 차원 순서 *밖* 별도 트랙**(라이브 런 한정·결과지에선 의미변종 메타 뒤 배치·아래 §TIER-OBS).
 > **레인 표기**: 결정=구조-인지 스크립트/grep, 의미=서브에이전트 grader. 치명=치명 게이트(이진 PASS/FAIL, WEAK 금지).
@@ -32,10 +32,10 @@
 
 | ID | 항목 | §근거 | PASS | FAIL | 레인 | 치명 |
 |---|---|---|---|---|---|---|
-| **SH-1** 컨테이너 | 신규 앱이 `application/<app>/` 하위 | §0-1 | 신규 앱이 `application/` 하위 | 신규 앱이 루트(마스크 C 적용) | 결정 | ✅ |
-| **SH-2** 4계층 | `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 | 4계층 존재 + **touched 데이터소스도 4계층 빈 패키지 실현**(유스케이스 없으면 `application_layer`만 빈 계층) | 누락/평면 / **데이터소스라며 계층 폴더 생략**(§0-2·§632-(2) 개정) | 결정 | ✅ |
-| **SH-3** 종류 폴더+거주 명명 | 종류 2차 폴더 전체(빈 패키지로 항상·`api`/`schema`/`acl`/`port` 포함), ORM/포트/리포가 평면 `.py` 아님; **거주 객체 명명(시점: ≥1.4.0 산출분): command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, 모두 `execute(request)`·repository/port 의존** | §0-3·§0-4·§4 | 종류 폴더 구조 + R/C/Q 명명 일치 + **데이터소스 BC도 종류 폴더·애그리거트 골격(`domain_layer/<aggregate>/` ORM 모델명 도출) 빈 패키지 실현** | 종류 2차 폴더(`entity`·`value_object`·`repository`·`command`·`query`·`dto`·`api`·`schema`)가 빈 패키지로라도 부재(평면 `.py`로 접음·골격 미생성) / **touched 데이터소스가 `domain_layer/<aggregate>/` 애그리거트 빈 골격 미생성**(§632-(2) 2026-06-08 개정·골격 무조건은 그 이후 산출분) / **command/에 `…Service`·자유함수·query/ selector 함수·dto/ 비-`@dataclass`(≥1.4.0 산출분)** | 결정(폴더·골격)+의미(명명) | ✅ |
-| **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 | 모델/마이그가 `infra_layer/django_` | 루트/앱루트/도메인에 `models.py`(마스크 C 적용) | 결정 | ✅ |
+| **SH-1** 컨테이너 | 신규 앱은 확립된 기존 위치 규약, 없으면 `application/<app>/` 하위 | §0-1·§1.1 | 확립 규약 준수 또는 기본 위치 | 확립 규약과 기본 위치 모두 위반 | 결정 | ✅ |
+| **SH-2** 4계층 | 새로 만드는 BC의 `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 | 신규 BC에 4계층 존재 | 신규 BC의 계층 누락/평면 | 결정 | ✅ |
+| **SH-3** 종류 폴더+거주 명명 | 신규 표준 BC의 종류 2차 폴더와 거주 객체 명명: command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, 모두 `execute(request)`·repository/port 의존 | §0-3·§0-4·§4 | 신규 코드의 종류 폴더 구조 + R/C/Q 명명 일치 | 신규 코드를 평면으로 접음 / 거주 종류·명명 불일치 | 결정(폴더)+의미(명명) | ✅ |
+| **SH-4** Django앱 위치 | 신규 Django 앱은 확립된 기존 규약, 없으면 `infra_layer/django_<app>/`; 기존 brownfield persistence app은 baseline 위치 보존 | §0-5·§1.1·migration 비소유 경계 | 확립 규약 또는 표준 위치, 기존 앱은 원위치 불변 | 둘 다 위반 / 기존 앱을 물리 이주 | 결정+의미 | ✅ |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 | 명명 분리 | 혼동(도메인에 Model접미사·ORM이 bare) | 결정 | — |
 | **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 | 규약 준수 | `Interface`/`Impl` / `*_repo.py` / 일반 포트 구현이 `Port` 유지(Adapter 아님)·개념 base 불일치 | 결정 | — |
 | **SH-7** 협력 포트 위치 | 협력 포트가 `domain_layer/<agg>/port/` | §2 | `domain_layer/.../port/` | `application_layer`/`infra_layer`에 위치 | 결정 | ✅ |
@@ -79,18 +79,14 @@
 
 ---
 
-## C. 기존규약 마스크 (S-HR 항목 판정 조건 — §1.1↔§1.2)
-> 8벌 전부 `catalog/`가 평면 `startapp`으로 **시드**돼 있어, 평면 유지가 §1.1 존중인지 §1.2 위반인지로 SH 판정이 뒤집힌다. SH 항목(특히 SH-1·SH-4) 채점 시 다음을 **곱한다**:
+## C. 기존규약 마스크 (v4 brownfield grandfather)
 
-- **신규 앱**(baseline에 없던, 런이 생성) → **§0 전부 강제**(존중 면제 없음).
-- **기존 앱**(baseline에 있던) →
-  - 런이 그 앱에 **새 판정·불변식을 얹었으면**(예: 재고 차감 판정) → §1.2 + ddd §3.2 "판정 소유→구조 이주" 발동. *그 판정 코드*는 표준 트리 대상(평면 유지 시 SH FAIL) + SD-1~3와 교차.
-  - **판정은 안 얹었으나 *런이 건드렸으면*(diff에 새 마이그레이션·필드·제약)** → **§632-(2) 2026-06-08 개정으로 *깊이 면제는 폐지***: 데이터소스도 위치(`application/<app>/`)·4계층·`domain_layer/<aggregate>/`(ORM 모델명 도출) 애그리거트 빈 골격·종류 2차 폴더를 **빈 패키지로 무조건 실현**. 면제는 *판정 실내용(`.py`)*에만(빈혈 회귀 방지). 따라서 ① 루트 평면(`<app>/`)이면 **SH-1·4 FAIL** ② `application/<app>/`로 옮겼어도 4계층·애그리거트 골격·종류 폴더를 접으면 **SH-2·3 FAIL**. **루트 잔재 정정(발견1·cbvlive-codex)**: 모델을 셰임 이주(`Product=ProductModel`)·`MIGRATION_MODULES`로 옮겼어도 **루트에 앱 디렉터리(`apps.py`·`views.py`·`tests.py` 잔재)를 남기면 SH-1·4 FAIL**(`check-structure.py:89` 루트 `apps.py`→FAIL-신호가 정답; "모델 이주로 위치 충족" PASS 뒤집기 폐기 — 위치 충족 = 앱 패키지가 루트에서 완전 제거). **경계(migrations-only 핀 ⊥ 앱 잔재)**: 0001 히스토리 보존 목적 `MIGRATION_MODULES` 핀으로 **`migrations/`만** 루트에 남고 `apps.py`·`models.py`가 전부 이주했으면 **SH-1·4 PASS·Q-5 트레이드오프**(SH-4 의미 🟡); `apps.py`가 루트에 남으면 **SH-1 FAIL**(판별: 루트에 `apps.py` 유무).
-  - **판정도 안 얹고 *런이 안 건드린* 무관 기존 앱** → §1.1 존중 → 평면 유지 = **위반 아님**(SH 면제).
+- **신규 앱/BC**(baseline에 없고 런이 생성)는 확립된 기존 레이아웃 규약을 따르고, 규약이 없을 때 §0 표준 구조를 적용한다. baseline root app이 있고 표준 컨테이너가 없으면 root 관례를 보존하며, 둘이 공존하면 `application/` 표준 컨테이너가 우선한다.
+- **baseline에 이미 존재한 Django persistence app**은 touched 여부와 무관하게 위치·AppConfig·ORM 패키지·`migrations/`를 보존한다. 이를 표준 트리로 물리 이주하면 SH-4와 Q-5 FAIL이다.
+- 기존 ORM에 새 판정·불변식이 필요하면 판정 실코드는 새 domain/application 계층에 두고, 기존 ORM은 repository/adapter로 연결한다. 기존 모델에 판정을 직접 넣어 빈혈·계층 누수를 만들었는지는 SD-1~3가 판정한다.
+- baseline 분류를 할 수 없는 비-git 산출물은 기존 앱 위치만으로 FAIL을 만들지 않고 보류 후 의미 레인으로 보낸다.
 
-> **조작화(v3)**: 이 "판정 적재" 판단은 `EVAL-METHOD.md §1.1.M`의 이진 하위질문(MQ1=런 diff에 핵심규칙 분기 추가? / MQ2=단순 상류 데이터소스?)으로 집행한다 — `MQ1=Y ∧ MQ2=N`이면 §1.2 발동. N_grader 경합 시 **보수적으로 *적재됨*(엄격)** + 인간 큐(치명 게이트 입력이므로).
->
-> **위치·깊이 통합(개정 2026-06-08 — §632-(2) 면제 폐지)**: 이전엔 MQ1/MQ2가 *4계층 전개 의무*(애그리거트 골격)를 갈랐으나(MQ1=N이면 4계층 면제), **개정으로 touched 데이터소스는 위치·4계층·애그리거트 골격·종류 폴더가 모두 무조건**이다. MQ1/MQ2가 이제 가르는 것은 **판정 *실내용*(`.py` 코드)을 어디 두느냐**뿐: `MQ1=Y∧MQ2=N`이면 그 BC가 판정을 소유해 도메인 *실코드*가 채워지고(SD-1~3 교차), `MQ1=N`이면 도메인 골격은 *빈 패키지*로 남는다(빈혈 회귀 방지) — **그러나 골격·위치 자체는 양쪽 다 의무**. *런이 건드린(diff 포함)* 기존 앱은 MQ1=N이어도 루트 평면이면 **SH-1·4 FAIL**, `application/<app>/`로 옮겼어도 골격을 접으면 **SH-2·3 FAIL**. SH 면제 = 그 앱이 **런 diff에 없음(untouched)**일 때만(구 "MQ1=N이면 §1.2 면제가 깊이까지" 해석은 개정으로 폐기). 결정 레인: `check-app-container.py`(7번째·touched 루트 앱→exit 2)는 위치만, 골격 부재는 `check-layer-skeleton`(종류 폴더 확장)·SH-2/SH-3로 본다. **smoke6-claude(catalog touched·MQ1=N·루트 평면)·cbvlive-codex(루트 apps.py 잔재)는 SH-1·4 FAIL이 맞다.**
+> v3의 touched-app 강제 이주와 state-only 보정 기준은 v4에서 폐기됐다. v3 결과는 당시 평가 기록으로만 보존하며 v4 PASS/FAIL 앵커로 재사용하지 않는다.
 
 ---
 
@@ -102,11 +98,11 @@
 | **Q-2** API 계약 | status/problem(RFC 9457) 일관·버전 정책 일관·콘텐츠협상 근거 | architecture-api §4~14 | 일관·근거 있음 | 비일관/근거 없음 | 의미 |
 | **Q-3** §9.6 형식+테스트 실현 | Risky Write 8행 다뤄짐(N/A 근거); 선언 동시성 기준이 **실제 테스트로 실현**·소진→409 경로·결정적 CAS 스파이 | architecture-db §9.6·implementation-test §20.5 | 8행 + 동시성 전 분기 결정적 테스트 | 8행 누락 / 약속 테스트 부재 / 소진 경로 미테스트 | grep+의미 |
 | **Q-4** 메커니즘 소유권 **[🔴 치명 — v3 승격]** | 커스텀 DB 백엔드/`DatabaseWrapper`/PRAGMA/몽키패치 0 | architecture-db §9.5·§16.4 | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 결정 |
-| **Q-5** 마이그레이션 안전 | 기존 0001 불변·`db_table`/`label` 보존·expand 단계·backfill | architecture-db §11 | 이력 불변·호환 변경 | 기존 0001 재작성 / 테이블 rename 위험 | 결정+의미 |
-| **Q-6** 테스트/TDD | `check`+`pytest` 그린바·인수가 명세 행위 덮음·의미군 분리·**pytest 관용구**(함수형·`@pytest.mark.django_db`)·mock 도구 `mocker`·ORM 영속 factory_boy(만능 아님) | implementation-test·discipline-tdd | pytest 그린바+커버리지+생태계 준수 | 실패/에러 / 행위 누락 / raw `unittest.mock`·Django `TestCase` 폴백(greenfield) | 결정(실행)+의미 |
+| **Q-5** migration 비소유 **[🔴 치명 — v4]** | 작업 epoch별 migration opaque fingerprint 불변·전체 test path/hash delta/변경 원장 감사·migration 전용 명령/테스트 개입 0·schema 영향 보고 정직성 | 제품 명세·architecture-db §11·implementation-django §10 | 모든 plugin 작업 epoch clean + dirty/untracked test delta 대조 + `범위 밖·미검증` 보고 | plugin 귀속 migration add/edit/delete/move, 전용 명령/테스트 개입, 원장과 test delta 불일치, 인프라 오류 무시, schema 영향인데 배포 완료 주장 | 결정+의미 |
+| **Q-6** 현재 계약 테스트/TDD **[🔴 치명 — v4]** | current-obligation inventory + 영향 테스트 `retain/update/delete/add` + 관련/전체 suite 실제 결과 + 의미군 분리 | implementation-test·discipline-tdd·`tools/Q6-CURRENT-CONTRACT.md` | 현재 의무 전부 근거화·종료 의무 테스트 정리·retain/update/add와 전체 suite 실행 | history-only 테스트 유지/추가, stale 테스트에 맞춘 옛 동작 복원, 침묵을 제거 승인으로 간주, 현재 호환·보안 계약 삭제, unknown 방치, 임시 characterization 잔존, retained test 미실행 | 결정(실행)+의미 |
 | **Q-7** 경미 | 빈 종류폴더 누락·**공개 표면 변수 어노테이션**(§4 — 모듈/클래스 변수 리터럴 상수 첫 대입 필수·함수 지역변수 권장·면제는 §4 참조)·주석 언어 일관(§5)·의존성 핀(§6.2) | houserules §4·§4.1·§5·§6.2 | 준수 | 경미 흠(WEAK) | 결정(check-public-surface-annotation)+의미 |
 
-> **Q-4 치명 처리(v3)**: Q-4는 TIER-Q에 배치돼 있으나 **치명 게이트**다 — `EVAL-METHOD.md §2 step2`에서 처리(FAIL→픽스처 전체 FAIL)하고 §2.4 Q 등급(카운트)에는 **불산입**. 나머지 Q-1·2·3·5·6·7만 품질 등급에 들어간다.
+> **Q-4·Q-5·Q-6 치명 처리(v4)**: 세 항목은 TIER-Q에 배치돼 있으나 **치명 게이트**다. `EVAL-METHOD.md §2 step2`에서 처리하고 Q 등급 카운트에는 불산입한다.
 
 ---
 
@@ -138,13 +134,14 @@
 | SD-3 빈혈 무복제 | Codex `catalog/published_service/stock.py:42` `stock__gte=quantity` | Claude `catalog/.../product.py:35-46` `Product.deduct_stock()` |
 | SD-6 계층순수성/P1a | Codex `create_order_app.py:70-79`(app이 비즈예외 catch→status snapshot) + `orders_api_router.py:87-124`(죽은 핸들러) | Claude `api_order.py:61-63` `Status(201, OrderOut)` 성공만 + 중앙핸들러 발화 |
 | SD-7 컨텍스트 통신 | Claude `p1a-v3 order_api_router.py:26`·`create_order_app.py:17`(ACL 밖 presentation·application이 catalog 도메인 **예외** 직접 import = 번역 ACL 미격리) | Codex `catalog_acl.py`(OHS만) · Claude `smoke4 product_stock_acl.py`(catalog 결합이 ACL에만 격리 — 미이주 직접통합은 표준 §2 허용) |
-| SH-4 Django앱 위치 | Codex `catalog/models.py`·`catalog/migrations/` 루트(touched 데이터소스라 위반·개정 2026-06-08) / **cbvlive-codex 루트 `catalog/apps.py`·`views.py`·`tests.py` 잔재**(셰임 이주해도 앱 패키지 루트 존속→SH-1·4 FAIL) | Claude `application/catalog/infra_layer/django_catalog/models/` + **루트 catalog 완전 삭제**(cbvlive-claude); migrations-only 핀(apps.py 이주)은 SH-4 🟡·Q-5 |
+| SH-4 Django앱 위치 | 신규 앱이 확립 규약과 표준 기본 위치를 모두 위반 / baseline 기존 앱을 물리 이주 | 신규 앱은 확립 규약 또는 규약 부재 시 표준 위치, 기존 앱은 baseline 위치 불변 |
 | SH-7 협력포트 위치 | Codex `application_layer/create_order/port/` | Claude `domain_layer/order/port/` |
 | SH-9 단일 레이아웃 | Codex `catalog/test/`+`catalog/tests/` 공존 | (단일 test 디렉터리) |
 | SH-6 명명 | (8벌 위반 0) | 전 픽스처 `Interface`/`Impl`/`_repo.py` 0건 |
 | Q-1 스코프 | Codex 멱등성 `Idempotency-Key` 필수(task 미요구) / **Codex 협상 레이어 발명**: **406** Accept 협상(`fklive-codex api_orders.py:43-86` `_parse_media_range` q파싱; §6.3:443-444 'single repr이면 406 불필요' escape-valve **직격**) + **415** Content-Type(발명 범위·본문검증이라 *literal 위반 아님*·§7.2 계약); 뿌리=`design-spec.md:123-126` architect 협상 레이어 전체 / Claude 합산 정규화 | 요청 범위 내 모델 / **Claude 406/415 의도적 공백**(`fklive-claude design-spec.md:81` 명시 배제) |
 | Q-4 메커니즘 | final-claudeA `config/db_backends/sqlite3_immediate/base.py` | p1a-v3 양쪽 순수 version CAS |
-| Q-5 마이그레이션 | Claude `django_catalog/migrations/0001_initial.py:14-25`(기존 0001 재작성) | 신규 앱 0001 + 별도 0002 expand |
+| Q-5 migration 비소유 | migration tree 변경·전용 명령 실행·배포 완료 과대보고 | tree 불변·schema 영향 시 외부 절차 대기 보고 |
+| Q-6 현재 계약 테스트 | 지원 중 consumer·영속 계약 테스트 삭제 / history-only·임시 characterization 영구화 / retained test 미실행 | 근거 inventory + retain/update/delete/add 조정 + retain/update/add·전체 suite 실제 실행 |
 | NJ-2 operation 얇음 | Codex `smoke2-codexB/.../create_order/api_orders.py:108-213`(operation이 `json.loads(request.body)` 수동파싱+수동검증+7 except status 분기) | Claude `p1a-v3-claude/.../api_order.py:61-63`(schema 바인딩→service→`Status(201,…)` 매핑만) |
 | NJ-4 status 선언 | `poc-codex/.../api_orders.py:209,211`(`response={201}`만·오류 6종은 `openapi_extra`로 → 가시성O·`response=` 위반) | Codex `p1a-v3-codex/.../api_orders.py:41-49`(`201/400/404/406/409/415/422` 전부 `response={}` 선언) |
 | NJ-5 문서화 | Codex `final-codexB/.../api_orders.py:31` 반환타입 `Union[...,HttpResponse]`(어댑터 누수) | p1a-v3 양쪽 `operation_id`+`summary`(+Claude `tags`) |

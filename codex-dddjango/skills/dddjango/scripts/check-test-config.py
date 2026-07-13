@@ -46,6 +46,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from migration_scope import iter_non_migration_files, validate_migration_scope
+
 try:
     import tomllib  # Python 3.11+
 except ModuleNotFoundError:  # pragma: no cover - 3.10 이하 fallback
@@ -228,7 +230,7 @@ def _ini_has_binding(path: Path, section_header: str) -> bool | None:
 
 def _conftest_configures_django(root: Path) -> bool:
     """레포 어디든 conftest.py 가 Django 를 셋업하면 True(설정 파일 밖 바인딩)."""
-    for path in root.rglob("conftest.py"):
+    for path in iter_non_migration_files(root, name_pattern="conftest.py"):
         if set(path.parts) & SKIP_DIRS:
             continue
         text = _read_text(path)
@@ -243,9 +245,7 @@ def _find_pytest_configs(root: Path) -> list[tuple[Path, bool | None]]:
     """이번 작업이 건드린 pytest 설정 파일과 각자의 바인딩 보유 여부.
     (path, has_binding) — has_binding 가 None 이면 그 파일은 pytest 설정이 아니거나 판정 불가."""
     out: list[tuple[Path, bool | None]] = []
-    for path in root.rglob("*"):
-        if not path.is_file():
-            continue
+    for path in iter_non_migration_files(root):
         if set(path.parts) & SKIP_DIRS:
             continue
         name = path.name
@@ -267,6 +267,8 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-test-config] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+        return 1
+    if not validate_migration_scope(root, "check-test-config"):
         return 1
 
     try:

@@ -1,40 +1,38 @@
-# dddjango 평가 방법론 v3 — 채점·집계·완료·과적합 (집행 사양)
+# dddjango 평가 방법론 v4 — 채점·집계·완료·과적합 (집행 사양)
 
-> **상태**: v3 (2026-06-02). v2(2026-05-31, DR-24+적대3렌즈) → **적대 3렌즈 재감사**(판정레인·집계/완료·과적합/현실성) 반영해 *집행 레이어*를 채움. 평가 *항목*은 `RUBRIC.md`. 이 문서는 *어떻게 결정론적으로 라벨을 산출하는가*.
+> **상태**: v4 동결(2026-07-13). 평가 *항목*은 `RUBRIC.md`, 제품 정책 정본은 `workspace/reference/spec.md`다. v3 이하 결과는 당시 기준의 역사적 기록이며 v4로 소급 재판정하지 않는다.
 > **측정 대상(사용자 확정)**: 산출물의 *규칙 준수 수준(절대값)* + *기능 정확성*. **baseline 통제 arm 없음.** 판정 바=표준 규칙(§근거 조항), 앵커(RUBRIC §E)=예시.
 > **인과 한계(과대주장 차단)**: 이 평가는 산출물이 규칙을 *지킨 수준인가*를 측정한다 — *플러그인이 규칙을 지키게 야기했는가*(baseline 대비 인과 기여)는 측정 범위 밖이고 본 방법으론 주장 불가(§3 N=1·차별가치 비측정과 정합).
-> **표준 버전 시점(소급 FAIL 금지)**: fixture는 *그 산출 시점의 플러그인 표준 버전*으로 채점한다. 표준이 이후 개정돼도(예: 1.4.0 R/C/Q 응용 명명 — `…Command`/`…Query` 인터랙터) 그 이전 산출분을 새 규칙으로 소급 위반 처리하지 않는다 — 채점 근거 조항은 산출 당시 버전 기준으로 인용한다. **2026-06-08 개정의 소급 구분**: ① §632-(2) 면제 폐지·SH-3 치명 격상 = *표준 개정(신규 규칙)* → **소급 FAIL 금지**(이전 산출 fixture는 구 규칙으로 채점·신규 산출분부터 적용); ② 발견1 SH-1/4 마스크 C 정정 = *기존 규칙의 올바른 적용* → **소급 아님이되 기준 변경도 아님**(SH-1/4는 v3부터 불변·`check-structure.py`가 줄곧 루트 `apps.py`를 FAIL-신호로 방출·마스크 C 산문이 잘못 PASS로 뒤집던 것 교정이라 §5.4 "결과 본 뒤 기준 변경 금지" 위반 아님 → cbvlive-codex 재판정 가능).
+> **표준 버전 시점(소급 FAIL 금지)**: fixture는 *그 산출 시점의 플러그인 표준 버전*으로 채점한다. 특히 v3의 touched-app 물리 이주·state-only migration 보정 규칙은 v4에서 폐기됐으며, v4의 migration 비소유·현재 계약 테스트 원칙을 과거 fixture에 소급하지 않는다.
 
 ---
 
-## 0. 동결 상태 게이트 (채점 착수 전 필수)
+## 0. v4 동결 상태 게이트 (채점 착수 전 필수)
 
-**미동결 상태로 채점하면 §5 사전등록을 자동 위반한다(채점 중 기준 확정 = 사후 합리화).** 따라서:
+**v4 기준은 채점 전에 동결한다.** 채점 도중 발견한 결과로 판정 기준을 바꾸지 않으며, 변경이 필요하면 다음 버전으로 올리고 소급하지 않는다.
 
-> ⛔ **아래 '동결-전-결정'이 전부 해소되고 이 문서·RUBRIC 헤더가 "동결됨"으로 바뀌기 전에는 어떤 fixture도 채점하지 않는다.**
-
-### 0.1 동결-전-결정 해소표 (v3 확정)
-| # | 결정 | 확정값(2026-06-02) |
+### 0.1 동결 결정표 (v4 확정)
+| # | 결정 | 확정값(2026-07-13) |
 |---|---|---|
-| 치명 게이트 목록 | **SD 전부 · FC 전부 · SH-1·2·3·4·7 · (조건부)NJ-1·2 · Q-4** (Q-4 치명 승격·SH-3 종류폴더·골격 치명 격상 2026-06-08) |
+| 치명 게이트 목록 | **SD 전부 · FC 전부 · SH-1·2·3·4·7 · (조건부)NJ-1·2 · Q-4·Q-5·Q-6** |
 | Q-4 메커니즘 치명? | **치명** (커스텀 DB백엔드·`DatabaseWrapper`·PRAGMA·몽키패치 = SD-6 계층순수·메커니즘소유권과 직결) |
 | N 정책 | **전 항목 N_grader≥3 blind + 적대 1명**(정본 full). 비용 인지는 §4.4·부록 |
 | FC 측정 범위 | **FC-1 골든오라클 8벌 전수 · FC-2 mutation 8벌 전수**(full) |
 | 라이브 발화(§4 #4) | **완료 필수 아님 — 정적/라이브 분리 보고**(§4.3). P1a·P2·P3 게이트 정의는 §4.1 |
-| 마스크 C "판정 적재" 조임 | **이진 하위질문으로 조작화**(§1.1.M) + 경합 시 보수=*적재됨* |
+| brownfield 분류 | **baseline에 존재한 persistence app은 touched 여부와 무관하게 위치·migration tree를 보존**. baseline 불명은 자동 FAIL 대신 보류·의미 레인으로 보냄(§1.1.M) |
 | FC-1 등록 주체·시점 | **§1.4 확정**(적대 grader·프롬프트 직후·코드 열람 전) |
 | S-NINJA 치명 배치 | **NJ-1·2 조건부 치명, NJ-3·4=비치명 '강'(§2.4 Q-편입), NJ-5·6=경미** |
-| 빠지거나 과한 항목 | **현 차원 집합 동결**(추가/삭제 없음). **개정 2026-06-07·DR-47: NJ-7(오류 변환 완전성·catch-all) 1회 추가**(§6.2 선재·33항목 측정 차원 부재 빈틈·비치명 '강'·동기 정직표기 §5.2). **동결 해제 2건째 2026-06-08: NJ-1 *판정기준* 개정**(차원 수 불변·신설 아님 — 함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers` 허용으로 확장; 판정기준은 사전등록 동결 대상이라 명시 해제. 근거: ninja-extra 클래스 컨트롤러 도입). **동결 해제 3건째 2026-06-08: SH-3 치명 격상 + §632-(2) 면제 폐지**(차원 수 불변·치명 배정+판정기준 변경 — 데이터소스 골격 무조건·종류 폴더 부재 FAIL. 근거: 표준 개정 `architecture-ddd:632`·`houserules:21`, fixture 동기 아님. 발견1 SH-1/4 마스크 C 정정은 기준 불변·적용 교정이라 해제 불요) |
+| 빠지거나 과한 항목 | **현 차원 집합 동결**(추가/삭제 없음). **개정 2026-06-07·DR-47: NJ-7(오류 변환 완전성·catch-all) 1회 추가**(§6.2 선재·33항목 측정 차원 부재 빈틈·비치명 '강'·동기 정직표기 §5.2). **동결 해제 2건째 2026-06-08: NJ-1 *판정기준* 개정**(차원 수 불변·신설 아님 — 함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers` 허용으로 확장; 판정기준은 사전등록 동결 대상이라 명시 해제. 근거: ninja-extra 클래스 컨트롤러 도입). **동결 해제 3건째 2026-06-08: SH-3 치명 격상 + §632-(2) 면제 폐지**(차원 수 불변·치명 배정+판정기준 변경 — 데이터소스 골격 무조건·종류 폴더 부재 FAIL. 근거: 표준 개정 `architecture-ddd:632`·`houserules:21`, fixture 동기 아님). **동결 해제 4건째 2026-07-13: 기존 Q-6을 치명으로 격상**(차원 수 불변; 제품의 현재 계약 테스트 완료 전제를 집계에 실제 연결하고 고정 oracle을 추가). 발견1 SH-1/4 마스크 C 정정은 기준 불변·적용 교정이라 해제 불요. |
 
 ### 0.2 고정 입력 규율
-런 리셋·고정 게이트 답(BC배치·렌즈·API스택·G1/G2 승인 기준·thinking)은 **각 태스크 CRIB**(fixture *밖*)에 둔다. **표준 태스크 프롬프트(라이브 `/dddjango` 입력 정본·verbatim)는 `tools/FC-GOLDEN.md` 헤더에 박제** — coordinator 정리본 `scope.md`(Phase 0 "무엇/경계" 확장)가 아니라 *사용자 입력 원문* 한 줄이 정본(혼동 주의). *(구 `RETEST-HANDOFF.md`는 폴더 재구조화로 제거됨 — 고정 게이트 답의 정본은 태스크별 CRIB이며, 본 문서 §1.4 골든표 동결과 함께 freeze 산출물에 포함한다.)*
+런 리셋·고정 게이트 답(BC배치·렌즈·API스택·G1/G2 승인 기준·thinking)은 **각 태스크 CRIB**(fixture *밖*)에 둔다. CRIB에는 사용자 입력·게이트 답·runner/environment만 두고 기대 inventory·조정표·판정은 별도 evaluator-only oracle로 분리한다. runtime에는 선택 fixture를 control tree 밖의 fresh workspace로 복사한 뒤 CRIB 값만 전달하며, CRIB 파일·oracle·builder/doc source 자체는 노출하지 않는다. **표준 기능 태스크 프롬프트(라이브 `/dddjango` 입력 정본·verbatim)는 `tools/FC-GOLDEN.md`, 현재 계약 테스트 수명 시나리오와 판정 oracle은 `tools/Q6-CURRENT-CONTRACT.md`에 박제**한다. coordinator 정리본 `scope.md`(Phase 0 "무엇/경계" 확장)가 아니라 사용자 입력 원문과 사전등록 oracle이 정본이다. *(구 `RETEST-HANDOFF.md`는 폴더 재구조화로 제거됨 — 고정 게이트 답의 정본은 태스크별 CRIB이며, 본 문서 §1.4 골든표 동결과 함께 freeze 산출물에 포함한다.)*
 
-### 0.3 동결 선결 작업 (미완 — "동결됨" 전 필수, 적대 재감사 E5 실측)
-> 아래가 끝나기 전엔 §0 게이트상 채점 착수 금지. doc이 아니라 *산출물* 작업.
+### 0.3 v3 역사적 선결 작업 (보존 기록; v4 blocker 아님)
+> 아래 항목은 v3 평가 프로그램의 미완 기록이다. v4 기준의 동결·채점 자격에는 영향을 주지 않는다.
 1. **8벌 실경로 박제** — ✅ §5.1에 실재 디렉터리명으로 교정 완료(livefire·p1a-v3=`-codex/-claude`).
 2. **6벌 CRIB 정본** — `smoke2-{codexB,claudeA}`·`p1a-livefire-{codex,claude}`·`p1a-v3-{codex,claude}` CRIB 부재(현재 `final-*`만 존재). 고정 게이트 답 동결에 필요. ⚠️ p1a 계열은 이미 런이 돌아 *사후 재구성*이라 "채점 기준이 아닌 *런 당시 입력 기록*"으로 한정 명시(§5.4 "결과 본 뒤 기준 변경 금지"와 긴장 회피).
 3. **FC 사전등록 산출물** — 태스크-독립 골든 행위표(재고10·주문3→201∧잔7 / 재고2·주문5→409∧불변) + mutation 3종 논리 정의 + 픽스처별 실행 어댑터(조정자 작성). 코드 열람 전 타임스탬프·미열람 선언 동봉(§1.4).
-4. **결정 스크립트(선택)** — SH·NJ·Q-4·SD-7(FAIL방향)은 수작업 grep로 갈음 가능(동결 blocker 아님). 결정론·재현 위해 `check-*.py`로 승격 권장. SD-7 PASS방향·Q-5 신규/재작성 분기는 술어가 §1.1 표서 폐합됨(의미 레인 위임 명시).
+4. **결정 스크립트(선택)** — SH·NJ·Q-4·SD-7(FAIL방향)은 수작업 grep로 갈음 가능했다. v4 Q-5는 migration 내용을 해석하지 않고 baseline↔head 경로·바이트 fingerprint 불변만 판정한다.
 
 ---
 
@@ -50,14 +48,14 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 ### 1.1 결정 레인
 - **구조-인지 grep/스크립트** (경로 고정 금지 — `orders`vs`order`·포트 위치 이동에 강건).
 - 산출 = `{신호 有/無}` + 줄 인용. **각 항목에 "원리상 못 보는 것" blind-spot 카드** 동봉.
-- **실재 스크립트는 2개뿐**(`check-error-centralization.py`=SD-6 부분, `check-mechanism-ownership.py`=Q-4 부분). 나머지 결정 항목은 아래 **항목별 결정-판정 표**의 grep 절차로 집행한다. 절차가 grep로 닫히지 않는 부분은 의미 레인이 1차 판정(레인 칸을 정직 표기).
+- 플러그인 runtime backstop과 평가 도구는 역할이 다르다. runtime backstop은 저자유도 금지선을 막고, 평가는 아래 결정 레인과 의미 레인을 함께 집행한다. grep로 닫히지 않는 부분은 의미 레인이 1차 판정한다.
 
 #### 항목별 결정-판정 표 (치명 결정 항목 우선; 구조-인지 명령)
 | 항목 | 명령(개념) | PASS 신호 | FAIL 신호 | blind-spot 카드 |
 |---|---|---|---|---|
-| **SH-1** 컨테이너 | 신규 앱 디렉터리의 부모가 `application/`인가(`find -type d`) | 신규 앱이 `application/<app>/` | 루트/기타(마스크 C 곱) | "신규" 판정은 baseline diff 필요(§1.1.M) — **touched 데이터소스(MQ1=N)도 위치 의무라 루트 `apps.py` 잔재 시 SH-1 FAIL**(개정 2026-06-08·`check-structure.py:89`가 FAIL-신호 방출·마스크 C가 더는 PASS로 안 뒤집음) |
-| **SH-2** 4계층 | 앱 하위에 `{domain,application,infra,presentation}_layer/` 존재 | 4계층 물리분리 | 누락/평면 | 빈 골격만이면 §2.3③이 따로 본다 — **데이터소스 BC의 빈 4계층 `_layer`는 §632-(2)로 정당**(내용 없는 계층 폴더는 FAIL 아님); 단 종류 폴더 자체 부재(평면 접음)는 SH-3 |
-| **SH-4** Django앱 위치 | `models.py`·`migrations/`의 부모가 `infra_layer/django_<app>/`인가 + AppConfig `label` | infra_layer/django_ 하위 | 루트/앱루트/도메인 `models.py`(마스크 C 곱) | label 보존은 텍스트, 이력 동작은 Q-5 |
+| **SH-1** 컨테이너 | baseline에 확립된 앱 위치 규약이 있는가; 없으면 신규 앱의 부모가 `application/`인가 | 확립 규약을 따름, 없으면 `application/<app>/` | 확립 규약과도 다르고 기본 위치도 아님 | baseline 기존 app은 grandfather 대상. baseline root app이 있고 표준 컨테이너가 없으면 root 관례를 보존하며, 혼합 프로젝트의 기존 `application/`이 우선(§1.1.M) |
+| **SH-2** 4계층 | baseline에 없던 신규 BC 아래 `{domain,application,infra,presentation}_layer/` 존재 | 신규 BC 4계층 물리분리 | 신규 BC의 누락/평면 | 기존 app을 맞추기 위해 물리 이주하지 않는다. 새 domain/application 계층이 기존 ORM을 adapter/repository로 감쌀 수 있다 |
+| **SH-4** Django앱 위치 | 확립 규약이 없을 때 신규 Django app owner가 `infra_layer/django_<app>/`인가 | 확립 규약을 따름, 없으면 표준 위치 | 확립 규약과도 다르고 표준 위치도 아님 | `models.py`와 `models/*.py` package형을 함께 본다. baseline 기존 persistence app의 위치·AppConfig·ORM·`migrations/`는 보존하며, 이주하면 FAIL |
 | **SH-7** 포트 위치 | `find -type d -name port`의 부모가 `domain_layer`인가 | `domain_layer/<agg>/port/` | `application_layer`/`infra_layer` | — |
 | **SD-3** 무복제 | infra 리포의 CAS `update/filter`에 비즈조건(`stock__gte=`·`F()` 판정)이 있나(grep) | version/CAS 가드만 | `stock__gte=` 등 판정 SQL 복제 | helper 경유·동적 조건문은 의미 레인 |
 | **SD-6** 계층순수성 | `check-error-centralization.py`(application_layer **한정**) + grep `from ninja`/`JsonResponse(` in domain | application HTTP변환 0 | application이 status 변환 | **스크립트는 application_layer만 봄** — presentation 수제응답·domain HTTP import·status:int 객체 흐름은 **못 봄**(의미 레인 필수) |
@@ -66,34 +64,31 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 | **NJ-1** 스택 | 신규 JSON API가 `NinjaAPI`/`NinjaExtraAPI` + (`Router` ∨ `@api_controller`/`register_controllers`)인가 vs `JsonResponse`/DRF(grep) | ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러 | plain view·DRF(greenfield) | 기존 확립 스택 존중은 houserules §1; 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 PASS) |
 | **NJ-4** status 선언 | operation `response={...}` dict에 다중 status schema(grep `response=`) — **`openapi_extra`/`get_openapi_schema` 선언은 불충족**(§2.2 line111) | 오류 status가 `response={...}`에 | `response=`에 201(성공)만, 오류는 `openapi_extra`/핸들러에만 | **`openapi_extra`로 오류를 OpenAPI에 넣어도 NJ-4 FAIL**(가시성≠`response=` 선언); 진짜 미선언(핸들러-only·OpenAPI 부재)만 Q-2 |
 | **Q-4** 메커니즘(치명) | `check-mechanism-ownership.py` + grep `DatabaseWrapper`/PRAGMA/monkeypatch | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 명세 승인된 메커니즘은 면제(의미 확인) |
-| **Q-5** 마이그레이션 | (순서) ①이주 여부 판정(마스크 C가 그 앱을 '신규 앱'으로 봤나) → ②이주 시: 기존 `0001` 불변·`db_table`/`label` 보존·state-only rename ops grep | 신규앱이 자기 0001 보유(정당) / 이주 시 0001 불변·state-only | **기존 앱**의 0001 재작성·테이블 rename DDL | **앵커 양매핑 주의**: 동일물리(baseline 0001 `D`+새앱 0001 생성)가 '신규앱 정당'↔'재작성 위반' 양쪽 — 마스크 C의 신규/기존 라벨이 *먼저* 갈라야 PASS/FAIL 결정. 이주 미시도(평면 유지)면 state-only ops 술어 **N/A**. brownfield 실적용은 .venv 실행 |
+| **Q-5** migration 비소유 | 작업 epoch별 migration opaque fingerprint, 전체 command transcript, 파일 변경 원장, G0→최종 전체 test path/hash delta와 변경 test diff를 의미 검토 | 모든 plugin 작업 epoch clean·전용 명령/테스트 개입 0·schema 영향 정직 보고 | plugin 귀속 migration add/edit/delete/move·전용 명령/테스트 개입·검증 인프라 오류 무시·schema 영향인데 배포 완료 주장 | user가 외부 owner의 귀속·완료·정지를 명시 확인한 epoch 간 delta는 중립 pause/rebaseline 증거다. fingerprint는 endpoint만 보며 명령 실행·중간 원복·DB side effect를 증명하지 못하므로 transcript·원장 부재나 dirty/untracked test delta 불일치를 PASS로 추정하지 않는다 |
 
-> 나머지 항목(SD-1·2·4·5, SH-3·5·6·8·10, NJ-2·3·5·6, FC-1·2·3, Q-1·2·3·6·7)은 RUBRIC '레인' 칸대로 의미 레인(+해당 grep)으로 판정. 결정-판정 표는 *치명+grep로 닫히는* 항목을 우선 명문화한 것이고, 미수록 항목은 의미 레인이 1차다.
+> 나머지 항목(SD-1·2·4·5, SH-3·5·6·8·10, NJ-2·3·5·6, FC-1·2·3, Q-1·2·3·7)은 RUBRIC '레인' 칸대로 의미 레인(+해당 grep)으로 판정. Q-6은 아래 §1.1.T의 결정+의미 치명 판정을 적용한다. 결정-판정 표는 *치명+grep로 닫히는* 항목을 우선 명문화한 것이고, 미수록 항목은 의미 레인이 1차다.
 
-#### §1.1.M 마스크 C 판정 (이진 하위질문 — 치명 게이트 입력)
-RUBRIC §C는 SH-1·SH-4 판정을 뒤집으므로 그 입력이 결정론적이어야 한다. 다음 이진질문으로 조작화(ddd `final.md:632` 3분기를 이진화):
-- **런 변경 집합 정의(필수·E2 교정)**: "이번 런 diff" = baseline 커밋(HEAD) 대비 working-tree 전체 = `git diff HEAD`(tracked 변경) **∪ `git ls-files --others --exclude-standard`(untracked 신규)**. /dddjango 산출은 대개 untracked라 `git diff HEAD`만 보면 0건으로 누락된다(실측 함정 — 마스크 C가 *항상 미발동*으로 죽어 SH-1·4 치명게이트 무력화). `check-error-centralization.py:_is_new_or_modified`와 동일하게 untracked=신규로 포함하고, 신규 파일은 *전체가 추가*이므로 `파일경로:전체`로 인용.
-- **MQ0**: 기존 앱이 이번 런에서 *삭제·대체*됐나(baseline `app/` git `D` + 새 트리 재생성)? Y면 그 대체 코드를 "기존 앱에 얹은 것"으로 보고 MQ1로 진행(삭제-후-재생성도 판정 적재 후보로 취급).
-- **MQ1**: 그 (기존 또는 대체) 앱 코드에 spec 핵심 규칙 분기/불변식 메서드가 **런 변경 집합**에 있나? (Y/N + 줄 인용)
-- **MQ2**: 그 코드가 단순 *상류 데이터 소스*(필드·DB 제약만, 판정 없음)인가? (Y/N + 줄)
-- **판정(개정 2026-06-08 — 위치·골격 ⊥ 판정 실내용)**:
-  - **위치·골격 의무**(SH-1·2·3·4 입력): *런이 touched한* 모든 앱은 MQ1/MQ2와 무관하게 `application/<app>/` 위치 + 4계층 + `domain_layer/<aggregate>/`(ORM 모델명 도출) 빈 애그리거트 골격 + 종류 2차 폴더를 무조건 실현. 루트 평면 → **SH-1·4 치명 FAIL**; 골격 접음 → **SH-2·3 FAIL**(§632-(2) 깊이 면제 폐지).
-  - **판정 실내용 의무**(SD-1~3 입력): `MQ1=Y ∧ MQ2=N`이면 그 BC가 판정을 소유 → 도메인 애그리거트에 판정 *실코드*가 채워져야 함(빈 골격이면 빈혈 SD FAIL 교차). `MQ1=N`이면 도메인 골격은 *빈 패키지 정당*(판정 실내용 면제 = 빈혈 회귀 방지).
-  - **untouched 무관 앱**만 §1.1 존중(평면 유지 = 위반 아님).
-- **경합 규칙**: N_grader에서 MQ 판정이 갈리면 **보수적으로 *적재됨*(엄격)** 채택 + 인간 큐(치명 입력이므로 §1.2 보수 판정과 동일 강도).
+#### §1.1.M brownfield grandfather 판정 (치명 게이트 입력)
+RUBRIC §C의 적용은 baseline 존재 여부로 결정한다.
+- **런 변경 집합** = baseline commit 대비 tracked 변경과 untracked 신규 파일의 합집합이다.
+- **baseline existing**: baseline에 실제 `AppConfig`/Django ORM 모델 identity 또는 정적 등록이 지목한 로컬 app이 있으면 기존 persistence app으로 분류한다. migration package 존재만으로 app identity나 규약을 추정하지 않으며 migration 내용을 읽지 않는다. touched 여부와 무관하게 기존 위치·identity·migration tree를 보존한다. 표준 구조로 물리 이주·복제하면 SH-4/Q-5 FAIL이다.
+- **결정 리포터의 저-recall 경계**: `check-structure.py`는 직접 `AppConfig`/Django ORM `Model` 상속만 기계 식별한다. 정적 `INSTALLED_APPS` 등록만 있는 app, 프로젝트 custom base를 통한 간접 상속은 여기서 existing/new를 확정하지 않고 의미 레인이 baseline 증거로 보정한다. 그런 근거가 있으면 리포터의 FAIL 신호만으로 최종 FAIL을 확정하지 않는다.
+- **new app/BC**: baseline에 존재하지 않고 런이 새로 만든 app/BC에는 먼저 baseline의 확립 레이아웃 규약을 적용하고, 그런 규약이 없을 때만 SH-1·2·3·4 표준 구조를 적용한다. baseline root app이 하나 이상이고 `application/`/`src/application/` 표준 컨테이너가 없으면 root app 관례를 확립 규약으로 본다. 둘이 공존하면 표준 컨테이너를 우선한다. framework/external owner가 G0 전에 만든 빈 `migrations/__init__.py` scaffold는 존재할 수 있지만 dddjango가 scaffold나 numbered migration을 추가하면 Q-5 FAIL이다.
+- **baseline unavailable**: 비-git·불완전 fixture처럼 baseline 분류가 불가능하면 기존 위치만으로 FAIL을 만들지 않는다. `보류`로 표시하고 의미 레인에서 증거를 보강한다.
+- **도메인 책임**: 기존 persistence app을 보존하는 것은 도메인 판정을 ORM에 넣으라는 뜻이 아니다. 새 domain/application 코드가 repository/adapter를 통해 기존 ORM을 사용하며 SD-1~3으로 책임을 판정한다.
+- **경합 규칙**: baseline 증거가 충돌하면 치명 FAIL을 추정하지 말고 인간 큐로 보낸다. migration fingerprint의 `exit 2`는 변경 주체를 단정하지 않고 즉시 pause한다. plugin 작업 epoch 안의 미해소 delta는 Q-5 FAIL이고, user가 외부 owner의 귀속·완료·정지를 명시 확인한 epoch 전환은 중립이다. baseline/I/O `exit 1`을 무시하면 Q-5 FAIL이다.
 
-#### §1.1.T Q-6 테스트 도구 관측 (env≠produced≠used — 픽스처 오염·오기 차단)
-ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코디가 테스트 도구를 설치+핀했나"가 무효화되고, 채점지가 venv에 *없는* `mocker`/`factory_boy`를 "썼다"고 오기(used 미측정)한다. **세 축을 분리 측정**한다(한 라벨로 뭉뚱그리면 오기·over-charity).
-- **env (환경에 있던 것)**: 채점 *착수 전* fixture venv 도구 스냅샷(`pip freeze` 또는 site-packages 목록) + `requirements.txt`/`pyproject.toml` 테스트도구 핀 유무. **조정자가 채점 위해 추가한 도구는 `(조정자 추가)` 태그**로 명시해 produced에서 배제한다(§1.4 러너 설치-선행이 이 축을 오염시키므로 스냅샷은 설치 *전*에 뜬다). 헤더(§6.2)에 박제.
-- **produced (코디가 만든 것)**: 코디가 `requirements.txt`/`pyproject.toml`에 **추가+핀**한 테스트 스택 = `git diff baseline`. *산출물 책무*다(조정자 오염과 무관).
-- **used (실제 쓴 것)**: fixture 코드 grep — `mocker`·`monkeypatch`·`factory_boy`/`DjangoModelFactory`·`unittest.mock`·`TestCase` 출현 **줄 인용**(결정 레인; 인용 없는 판정 무효 §1.2). 채점지가 "썼다"고 적는 도구는 이 grep으로 닫는다(ptcat Q-6 오기 = used 미측정의 산물).
-- **판정 매트릭스 (설치 Y/N)×(핀 Y/N) — 단일 라벨 금지**:
-  - 설치(env∨produced에 도구 존재) ∧ 핀(매니페스트 핀) = §2.1 완전 준수.
-  - 설치 ∧ **무핀** = **핀 미이행**(코디 산출물 흠 → Q-7 "의존성 핀" WEAK; *오염 아님*).
-  - env에만 有 ∧ produced=0 ∧ 미사용 = **검증 불가**(조정자 오염 — env 도구가 코디 행동을 대체했을 수 있음).
-  - 도구 부재(env·produced 0) ∧ 미사용 = 도구 *이름* 부재는 흠 아님(§9.1 non-blanket·§20.5 상속스파이·`monkeypatch` 1급); 단 **러너가 pytest 아닌 `manage.py test`/`TestCase` 폴백이면 Q-6 FAIL**(RUBRIC :106 불변).
-- **정당 미사용 ≠ 환경부재 미사용**: env에 도구가 있는데 안 쓰면 "정당 선택"(§9.1)일 수 있으나, env에 *없어서* 못 쓴 것을 "정당 선택"으로 적으면 오기(ptcat). used grep으로만 구분한다.
-- **소급 미적용**: 본 절(2026-06-09 신설)은 *신설 이후* 라이브/재채점분만 구속. 기존 8벌·duplive·ptcat 등 산출분은 면제(§4.3.1 EP·§6.1 #9.5 소급금지 패턴 정합) — 단 ptcat-codex는 본 사건 당사자라 그 채점지에 한해 오기 정정.
+#### §1.1.T Q-6 현재 계약 테스트 판정
+- **권위 순서**: 사용자 승인 요구와 G1 설계, 현재 공개·도메인·영속·지원·보안·규제 의무가 오라클이다. 기존 테스트·구현·변경 이력은 증거이지 권위가 아니다.
+- **필수 inventory**: `surface/version`, `consumer/support`, `persisted data/event`, `deprecation window`, `security/privacy/regulatory`, `negative/absence`, `근거 경로`, `retain/end/unknown`을 조사한다. `unknown`을 G1 전에 해소하지 않으면 FAIL이다. 지원 종료와 관찰 가능한 부재 보장은 별도 칸이다.
+- **변경 집합 대조**: 요구 변경마다 영향 테스트를 `retain/update/delete/add`로 분류하고 같은 변경에서 반영한다. 명시적 제거 승인 없는 침묵은 제거 근거가 아니다.
+- **현재 의무 예외**: 구 API 버전·지원 소비자·deprecation 기간·기존 저장 데이터/이벤트·보안/규제·명시적 부재 계약은 현재 의무일 수 있으므로 “옛것”이라는 이유로 삭제하지 않는다.
+- **history-only 금지**: 종료된 과거 스펙만 증명하는 영구 테스트를 추가·유지하거나, 그 테스트를 통과시키려고 옛 동작을 복원하면 FAIL이다. 회귀 witness는 현재 의무/속성을 계속 증명할 때만 유지한다.
+- **characterization**: 조사·안전 리팩터링 중 임시 characterization test는 허용하지만 G2 전에 현재 계약 테스트로 승격하거나 제거한다.
+- **runner**: 프로젝트가 선언한 테스트 명령·설정을 그대로 사용한다. `pytest`, `manage.py test` 등 특정 러너를 강제하거나 `--no-migrations`를 주입하지 않는다. 테스트 DB 구성 중 framework가 migration을 우연히 적용하는 것은 migration 검증으로 세지 않는다.
+- **migration tests**: 외부 owner가 migration lifecycle 전용으로 식별한 테스트는 외부 소유다. 플러그인은 그 의미를 검토하거나 작성·수정·삭제하지 않으며 평가도 내용을 요구하지 않는다. 조정자는 G0→최종 전체 test path/hash delta·변경 원장·변경 test diff로 plugin 개입 여부만 확인한다.
+- **실행 폐합**: 두 조정표의 모든 `retain`·`update`·`add` 경로와 프로젝트 전체 suite를 실제 실행해 command/result/count를 1:1로 연결한다. 현재 의무 누락·미실행·실패를 두고 완료를 주장하면 FAIL이다.
+- **고정 추적**: `tools/Q6-CURRENT-CONTRACT.md`의 일곱 시나리오를 Claude/Codex 양 runtime에 같은 입력으로 적용한다. 하나라도 oracle과 다르면 Q-6 치명 FAIL이며 WEAK로 낮출 수 없다.
 
 ### 1.2 의미 레인 (결정 결과에 **blind**)
 - **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "오류→status를 *고르거나 만드는* 줄이 operation·application·domain에 있나? (Y/N)+줄".
@@ -110,15 +105,15 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 
 ### 1.4 기능 정확성 측정 (FC)
 - **FC-1 골든 오라클**: **(주체)** 적대 grader가 **(시점)** 프롬프트 수령 직후·코드 *열람 전*에 **(형식)** *태스크-독립 행위표*(입력상태,요청)→(기대 status,부작용) + 타임스탬프 + "코드 미열람" 선언을 freeze 산출물에 커밋(열람 후 수정 금지·git diff 검증). **행위표 ⊥ 실행 어댑터**(실측 교정): 행위표는 코드 미열람으로 8벌 공통 작성 가능하나 *실제 두드릴 route+요청 schema*는 픽스처마다 달라(동일 태스크라도 BC 분해 분기) **조정자가 코드 열람 후 어댑터를 짠다** — "미열람"은 행위표에만. **작성자 ⊥ 채점자**(골든표 작성한 적대 grader는 그 fixture 의미 grader 제외 → 그 픽스처 N_grader를 1 늘려 유효 3 유지). 실행=인수 테스트와 독립한 호출 스크립트로 `.venv` 실측. **명세·기존 테스트는 오라클 불인정**.
-  - **러너(runner) = `pytest`(pytest-django)**: FC-1 골든 행위 검증·Q-6 스위트 실행은 **프로젝트 루트에서 `.venv/bin/pytest`**로 돌린다(픽스처의 pytest 설정 `pytest.ini`/`pyproject.toml`·`DJANGO_SETTINGS_MODULE`이 적용되는 루트). 픽스처에 pytest 설정이 없으면 `.venv/bin/pytest -p pytest_django --ds=<settings>`로 명시하거나 픽스처 venv에 `pytest-django` 설치를 선행한다. **`manage.py test`(unittest 디스커버리)는 함수형 `def test_*()` pytest 테스트를 0개로 수집해 FC-2를 거짓 PASS시키므로 금지.** **🔴 오염 차단(2026-06-09 ptcat 교훈)**: 조정자가 픽스처 venv에 `pytest-django` 등을 설치-선행하면 §1.1.T의 `env`/`used` 축이 오염된다(env 도구가 코디 행동을 대체·관측 무효). 따라서 ① 도구 스냅샷(§1.1.T `env`)은 설치-선행 **전**에 뜨고, ② 조정자 설치분은 `(조정자 추가)` 태그로 `produced`(코디 핀 책무)에서 배제하며, ③ 가능하면 **채점용 러너 venv를 라이브 baseline과 별도 복제**해 라이브 산출 환경(코디가 설치·핀한 그 상태)을 변형하지 않는다. `pytest`는 Django `TestCase` **와** 함수형 pytest 테스트를 **둘 다** 수집하므로 표준이 pytest 관용구로 전환된 신규 산출물과 구 fixture(`TestCase`)를 한 러너로 안전히 채점한다. **러너만 바뀌고 골든 green→red 오라클 로직은 불변.**
-- **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`. **러너 = `.venv/bin/pytest`(FC-1과 동일)**: mutation 주입 후 `pytest`로 스위트를 돌려 red를 확인한다(`manage.py test`는 함수형 pytest 테스트를 수집 못 해 mutation 주입에도 green→**FC-2 거짓 PASS** 위험이라 금지). **러너만 바뀌고 mutation 주입→red 기대 로직은 불변**(주입 사이트·red율 100% 판정 동일).
+  - **러너**: FC-1 골든 행위 검증과 Q-6 스위트는 프로젝트가 선언한 명령·설정으로 실행한다. pytest 프로젝트면 pytest, Django test runner 프로젝트면 `manage.py test`를 사용한다. 수집 누락 위험은 러너 교체가 아니라 수집 목록·실행 개수와 대상 테스트의 실제 발화로 확인한다. 채점 편의를 위해 의존성을 설치하거나 `--no-migrations`를 주입해 fixture 환경을 바꾸지 않는다.
+- **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 현재 계약 테스트가 프로젝트 선언 러너에서 red면 PASS, green이면 FAIL(vacuous). 수동 또는 프로젝트에 이미 채택된 mutation 도구를 사용한다.
 - **FC-3 도메인 정합**: 의미 grader가 골든 결과+코드 정독으로 명백한 도메인 오류(음수 재고·차감 역전·인과 역전) 판정.
 
 ### 1.5 채점 결정성 가드 — 부정 단정·수집 오라클·런-정지 (2026-06-10 신설 · lastlive-claude 오채점 박제)
 
 lastlive-claude 사건 교훈: 채점이 "테스트 0·테스트도구 0·pytest 미설치"로 **보류(미완성)** 판정했으나 실제로는 테스트 33개·Tier-1 4종이 채점 1시간 전부터 존재했다(런-정지 상태). 부재 단정을 뒷받침하는 측정 명령이 transcript에 없었다 — **"자기보고 불신"은 채점자 자신의 부정 단정에도 적용해야 한다.** 유력 혼동 = 직전 픽스처의 `test_*.py` 접두 관례를 다음 픽스처(`*_test.py` 접미)에 가정 + `requirements.txt`(불변)만 보고 `requirements-dev.txt` 누락. 세 가드는 결정 레인의 측정 무결성 절(freeze 밖·RUBRIC 라벨 무변).
 
-1. **수집 오라클 의무**: 테스트 존재·개수 판정은 **`pytest --collect-only -q` 출력 인용**으로만 한다(픽스처 자체 설정 `python_files`가 적용되는 프로젝트 루트 — 채점자 파일명 관례 가정 금지). pytest 부재 픽스처면 `find` **양 관례 병기**(`test_*.py`·`*_test.py`·`tests.py`) 출력 인용.
+1. **수집 오라클 의무**: 테스트 존재·개수 판정은 프로젝트 선언 러너의 수집/목록 기능 또는 실제 실행 출력으로 확인한다. pytest 프로젝트는 `pytest --collect-only -q`를 쓸 수 있고, 다른 러너는 해당 러너의 발견 결과를 사용한다. 파일명 관례만 보고 0건을 단정하지 않는다.
 2. **부정 단정 = 출력 인용 의무**: "0건·부재·미설치·미작성" 류 단정은 그것을 산출한 **명령+출력 첨부 없이는 기재 금지**(§1.2 "인용 없는 PASS 무효"의 대칭 — 인용 없는 *부재 단정*도 무효). 도구 부재 단정은 `pip list`(또는 site-packages 목록)와 **매니페스트 전수**(`requirements*.txt`·`pyproject.toml`) 둘 다 인용.
 3. **런-정지 확인**: 채점 착수 전 픽스처 최신 mtime(`.git`/`.venv`/캐시 제외)을 기록하고 채점 시작 시각과 대조해 헤더(§6.2)에 박제. 미래 mtime·채점 중 변화 감지 = 진행 중 런(움직이는 표적) → **채점 보류**.
 
@@ -130,7 +125,7 @@ lastlive-claude 사건 교훈: 채점이 "테스트 0·테스트도구 0·pytest
 
 ```
 1) 마스크 C(§1.1.M) 적용.
-2) 치명 게이트(치명=SD 전부·FC 전부·SH-1·2·3·4·7·(HTTP operation 존재 시)NJ-1·2·Q-4):
+2) 치명 게이트(치명=SD 전부·FC 전부·SH-1·2·3·4·7·(HTTP operation 존재 시)NJ-1·2·Q-4·Q-5·Q-6):
    하나라도 FAIL → 픽스처 전체 FAIL, 종료.
    ※ 치명 항목의 [결정PASS∧의미FAIL]도 여기서 FAIL(§2.2).
 2.5) 실질성 관문(§2.3): degenerate면 치명 FAIL.
@@ -139,7 +134,7 @@ lastlive-claude 사건 교훈: 채점이 "테스트 0·테스트도구 0·pytest
 ```
 
 ### 2.1 치명 집합·조건부·강 (정본 = §0.1; 세 곳이 한 목록)
-- **치명 정본 목록**(§0.1·§2 step2 의사코드와 *동일 집합*): SD-1~7 · FC-1~3 · SH-1·2·3·4·7 · **(조건부)NJ-1·2** · Q-4. ← 이 한 목록만 정본이며 §0.1/§2 step2/RUBRIC '치명' 칸이 모두 이를 가리킨다(N1 불일치 차단). **SH-3 치명 격상 2026-06-08(§632-(2) 면제 폐지·동결 해제 3건째).**
+- **치명 정본 목록**(§0.1·§2 step2 의사코드와 *동일 집합*): SD-1~7 · FC-1~3 · SH-1·2·3·4·7 · **(조건부)NJ-1·2** · Q-4 · Q-5 · Q-6. Q-5는 migration lifecycle 비소유 경계, Q-6은 현재 의무의 거짓 삭제·history-only 영구화·임시 characterization 잔존을 막는 완료 전제이므로 v4에서 치명이다.
 - **NJ 조건부**: HTTP/JSON operation이 **하나라도 있을 때만** NJ-1·2가 치명. 순수 도메인/CLI/배치/서버렌더 픽스처 → S-NINJA 차원 전체 **N/A**(FAIL 아님, 게이트 미적용).
 - **NJ-3·4·7 ('강')**: 비-치명이나 §2.4 Q 카운트에 *정규 항목으로 편입*(현재 사문화 해소) — '강' 항목 FAIL은 품질 상한을 '중'으로 강등. NJ-5·6=경미(정규 카운트, 강등 없음). **NJ-7**(오류 변환 완전성·catch-all, DR-47 추가)=강 — catch-all 부재/되던지기로 미식별·비-retryable이 problem+json 단일변환점 우회 시 FAIL(결정 레인 grep `@api.exception_handler(Exception)`+bare `raise exc`; §6.2:368/469/477). status는 정당(500)이라 치명 아님.
 
@@ -155,7 +150,7 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 
 ### 2.4 TIER-Q 등급 (카운트 기반 — '가중평균 금지'와 정합)
 "가중치 수치"는 정의된 바 없으므로 **카운트 기반 순위**로 산출(용어 모순 해소):
-- Q-1·2·3·5·6·7 + NJ-3·4·7(강) 각각 PASS/WEAK/FAIL(Q-4 제외 — 치명이라 §2 step2 처리).
+- Q-1·2·3·7 + NJ-3·4·7(강) 각각 PASS/WEAK/FAIL(Q-4·Q-5·Q-6 제외 — 치명이라 §2 step2 처리).
 - **품질 상** = WEAK ≤2 ∧ FAIL 0; **중** = WEAK ≤4 ∧ FAIL ≤1; **하** = 그 외. **단 '강'(NJ-3·4) 항목 FAIL 시 상한 '중'**(사문화 해소).
 - *완료(§4) 판정엔 Q 등급 불산입* — Q는 치명 통과 후 "품질" 보고용.
 
@@ -166,7 +161,7 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 - **인과 1차 증거 = 같은 태스크·같은 런타임 timeline만**. dual=런타임 효과 분리. **태스크A↔B 직접 차분 금지**.
 - **3분류**: (a)패치前 이미 있던 행위=성향(패치 책임 아님) (b)패치前 없고 後 신규=사이드이펙트 후보 (c)위치만 이동=변위.
 - **N=1 한계 박제**: 각 시점 N=1 → "이 timeline에서 관측됨"까지만, "패치가 야기" 단정 금지. 강한 인과는 same-task A/B(N≥3) 별도.
-- 가설 H1(§9.6 8행 압력→멱등성 발명)·H2(누적게이트→속도회귀)·H3(이관압박→0001재작성)·H4(게이트↑→비결정↑)는 진단 대상.
+- 가설 H1(§9.6 8행 압력→멱등성 발명)·H2(누적게이트→속도회귀)·H3(migration lifecycle 비소유 경계 위반)·H4(게이트↑→비결정↑)는 진단 대상.
 
 ---
 
@@ -181,7 +176,7 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 
 ### 4.2 정적 준수 조건 (저장 fixture로 측정 가능 — '완료' 어휘는 §4.4 플러그인 축 전용)
 다음 **모두**(픽스처가 정적 "준수" 라벨을 받는 조건; 플러그인 "완료"는 §4.4):
-1. **척추 치명 FAIL 0건** — SD·FC·SH·Q-4 치명 전부 통과(의미적 변종 포함).
+1. **척추 치명 FAIL 0건** — SD·FC·SH·Q-4·Q-5·Q-6 치명 전부 통과(의미적 변종 포함).
 2. **의미적 변종 0건** — `[결정PASS∧의미FAIL]` 칸이 빔.
 3. **FC** — 골든 오라클 전 케이스 통과 + mutation red율 100%.
 
@@ -259,7 +254,7 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 4. **B. TIER-S 척추 — S-HR**(SH-1~10)
 5. **TIER-S(조건부) — S-NINJA**(NJ-1~6; HTTP operation 없으면 차원 전체 N/A 명시)
 6. **TIER-S(핵심) — FC**(FC-1~3)
-7. **C. 기존규약 마스크 (적용 메모)** — §1.1.M MQ0/MQ1/MQ2 명시(SH-1·4 입력이라 종합 한 줄로 압축·생략 금지). *기존규약 없는 순수 greenfield면 "N/A — 신규 앱뿐, §0 전부 강제" 한 줄이라도 섹션 유지*(레터링 무결성).
+7. **C. 기존규약 마스크 (적용 메모)** — §1.1.M의 baseline existing/new/unavailable 분류와 근거를 명시한다. *순수 greenfield면 "N/A — 신규 앱뿐, §0 표준 적용" 한 줄이라도 섹션 유지*한다.
 8. **D. TIER-Q 품질**(Q-1~7)
 9. **의미적 변종 / backstop-blind 메타** — §1.3 *측정의 주 산출물*이므로 조정자 노트보다 **앞**
 9.5. **에러 경로 라이브 관측 (§4.3.1)** — *라이브 런 한정*(의미변종 메타 뒤·조정자 노트 앞 배치·RUBRIC TIER-OBS 대응). EP-1~4 관측 표(칼럼: 키·관측 status·content-type·화이트리스트·판정 — maj1live 템플릿). **§4.3.1이 채점지에 처음 적용된 maj1live(2026-06-07) 이후** 라이브 채점지에 **표 섹션 필수**(§6.3 한 줄 라벨 병기로 갈음 불가). **소급 미적용**: 그 이전 산출 채점지(nj2live·fklive·rcqlive·aclex·aclexab·c4live 등)는 면제(§4.3.1 소급금지 정합). 정적 채점(라이브 미수행) 결과지는 차원 N/A.
@@ -269,7 +264,7 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 > 차원 표(3~8)는 `RUBRIC`의 **A→B→NINJA→FC→C→D** 레터링을 그대로 따른다. *C 누락 = 레터링 끊김 = 형식 위반*. E(앵커)는 루브릭 전용(결과지 미포함).
 
 ### 6.2 헤더 블록 (인용블록 `>`, 필수 필드)
-방법(v3) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설(8벌 밖=라벨 비구속) · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**(코디네이터 보고 대신 조정자 직접 검증).
+방법(v4) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설(관찰집합 밖=라벨 비구속) · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**(코디네이터 보고 대신 조정자 직접 검증) · schema 영향과 외부 배포 준비 상태.
 - **fixture 도구 환경**(필수 필드 — 2026-06-09 신설·**라이브/재채점분 한정·기존 산출분 면제**, §4.3.1 소급금지 패턴 정합): 채점 *착수 전* venv 도구 스냅샷(`pip freeze`/site-packages 테스트도구 목록) + `requirements.txt`·`pyproject.toml` 테스트도구 핀 유무를 박제(§1.1.T `env`). **조정자가 채점 위해 추가한 도구는 `(조정자 추가)` 태그**로 표기해 코디 산출물(`produced`)과 분리. 이 필드 부재로 신설 *이전* 채점지를 형식 위반/재작성 대상으로 삼지 않는다.
 
 ### 6.3 종합 판정 표 (사전식 — §2 의사코드 그대로)
@@ -280,7 +275,7 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 - **Result** = **줄 인용 필수**(`file:line`) — 인용 없는 PASS 무효(§1.2). **자기보고 아닌 조정자 직접 검증**.
 - 결정/의미 = 레인별(➖=해당 레인 없음), 종합 = 두 레인 종합 글리프, 치명 = 게이트 여부(✅통과/❌/⏸️).
 - **전 차원 전수 채점**(결정 PASS여도 의미 생략 금지 §1.3).
-- D.TIER-Q는 '치명' 칼럼 생략(Q-4만 인라인 **[🔴치명]**).
+- D.TIER-Q는 '치명' 칼럼 생략(Q-4·Q-5·Q-6를 인라인 **[🔴치명]**으로 표시).
 
 ### 6.5 형식 금지 (표류 방지)
 - ❌ per-tier 차원 표를 "타 런 델타" 또는 "치명/비치명 2군"으로 **대체** 금지(보조 표는 가능, per-tier 표 제거 불가).
@@ -290,7 +285,15 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 
 ---
 
-## v3 변경 요약 (적대 3렌즈 재감사 반영)
+## v4 변경 요약 (2026-07-13)
+- **migration lifecycle 비소유**: migration 파일·명령·전용 테스트·운영 절차를 제품 범위 밖으로 두고, G0↔G2 opaque fingerprint 불변과 보고 정직성만 Q-5 치명 게이트로 확인한다.
+- **brownfield grandfather**: baseline 기존 persistence app은 touched 여부와 무관하게 물리 위치·identity·migration tree를 보존하고, 새 domain/application 코드가 adapter/repository로 감싼다.
+- **현재 계약 테스트**: 승인된 현재 의무를 오라클로 삼아 spec 변경과 같은 변경에서 테스트를 retain/update/delete/add하며, history-only 영구 테스트를 금지한다. 현재 호환·보안·규제 의무와 임시 characterization은 별도로 판정한다.
+- **Q-6 집행 보완**: 현재 의무 inventory·retain/update/add 실제 실행·고정 7시나리오 oracle을 추가하고 Q-6을 치명 게이트로 닫았다. v4 이전 결과에는 소급하지 않는다.
+- **러너 중립성**: 프로젝트가 선언한 테스트 명령·설정을 존중하며 특정 러너나 `--no-migrations`를 강제하지 않는다.
+- **소급 금지**: v3 이하 fixture·채점 결과는 당시 기준의 역사적 기록으로 보존한다.
+
+## v3 변경 요약 (역사적 기록)
 - **§0 동결 게이트 + 동결-전-결정 9개 확정**(미동결 채점 = §5 자기위반 차단; C-F5).
 - **판정 레인 집행**: 항목별 결정-판정 표(A-F3)·마스크 C 이진질문(A-F4)·조정자/grader 역할 분리(A-F7)·FC-1 등록 주체·시점(A-F6).
 - **집계 폐합**: 치명 항목 의미변종 일반 라우팅(A-F5·B-F4)·Q-4 치명 승격(B-F3)·NJ 조건부/강 편입(B-F2)·Q 카운트 기반(B-F7)·실질성 측정화(B-F6)·N_grader/N_run 분리(B-F8).

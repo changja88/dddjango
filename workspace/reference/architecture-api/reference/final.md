@@ -430,7 +430,12 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
 
 - 하나의 전략을 선택하고 **일관되게** 적용
 - 일반 패턴: URL path로 메이저 버전, 헤더로 마이너 조정
-- 버전 관리 방식을 문서화하고 마이그레이션 경로 제공
+- 버전 관리 방식을 문서화하고 지원 중인 consumer의 전환 경로를 제공
+- G1 current-obligation inventory에서 지원 consumer·호환·deprecation 의무가 하나라도
+  남거나 `unknown`이면 breaking change를 같은 표면에 적용하지 않는다.
+- 반대로 사용자가 근거와 함께 그 의무들이 모두 종료됐음을 승인한 API 표면은
+  same-surface break를 선택할 수 있다. 이때 존재하지 않는 새 버전이나 전환 기간을
+  형식적으로 만들지 않는다. 단, "지원 종료"와 새 계약의 "명시적 부재/금지"는 별개다.
 
 > 출처: Stripe Blog - API Versioning
 
@@ -460,14 +465,18 @@ Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 �
    Sunset: Sat, 01 Mar 2025 00:00:00 GMT
    Deprecation: true
    ```
-3. **마이그레이션 기간**: 최소 6개월~1년 유지
-4. **대체 API 안내**: 새 엔드포인트 또는 버전으로의 마이그레이션 가이드 제공
-5. **제거**: 마이그레이션 기간 종료 후 제거
+3. **소비자 전환 기간**: 프로젝트가 승인한 지원 기간 유지
+4. **대체 API 안내**: 새 엔드포인트 또는 버전으로의 소비자 전환 가이드 제공
+5. **제거**: 전환 기간 종료 후 제거
 
 ### 11.3 실전 원칙
 
-- **추가는 자유, 제거는 금지** (Additive changes only)
-- Breaking change가 필요하면 새 버전을 만든다
+- 지원 중인 공개 버전·consumer에는 **추가는 자유, 제거는 금지**를 기본으로 한다
+  (Additive changes only). Breaking change가 필요하면 새 버전과 consumer 전환 경로를 만든다.
+- 예외는 G1에서 지원 consumer·호환·deprecation 의무가 모두 종료됐다고 명시 승인된
+  표면뿐이다. 그 경우 same-surface break를 허용할 수 있으나, 새 계약이 제거된 요소의
+  wire 부재를 보장하는지는 별도 current obligation으로 명시한다. 명세의 침묵은
+  지원 종료나 부재 보장으로 간주하지 않는다.
 - 클라이언트가 인식하지 못하는 필드를 무시하도록 설계 (Robustness Principle: "보내는 것은 엄격하게, 받는 것은 관대하게")
 
 ---

@@ -24,7 +24,9 @@ TDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스�
 - 테스트는 격리하고, AAA 패턴으로 구조화하라: Arrange-Act-Assert (§7.1–§7.2)
 - Mock보다 출력·상태 검증을 우선한다: Mock 과다 사용은 리팩토링 내성을 약화시킨다 (§7.6)
 - Outside-In TDD는 인수 테스트(바깥 루프)와 단위 테스트(안쪽 루프)를 동시에 운용한다 (§9.1–§9.2)
-- AI 보조 TDD에서 테스트는 명세다: 개발자가 테스트를 작성하고, AI 구현은 테스트를 통과한 후 검증한다 (§17.1–§17.4)
+- AI 보조 TDD에서 테스트는 **현재 승인된 의무의 실행 가능한 표현**이다. 기존 테스트·구현·과거 장애 자체는 권위가 아니며, 명세 변경 시 영향 테스트를 retain/update/delete/add로 조정한 뒤 구현한다 (§17.1–§17.5)
+- 새 명세의 침묵은 지원 종료가 아니다. 활성 호환성·deprecation·영속 데이터/이벤트·보안·규제·명시적 금지는 현재 계약이고, 회귀·property witness도 그 의무가 남는 동안 유지한다 (§17.5)
+- 테스트 변경 전에 surface/version·consumer/support·persisted data/event·deprecation·security/privacy/regulatory·negative/absence·근거 경로·retain/end/unknown을 current-obligation inventory로 확정한다. unknown은 G1 blocker이고 지원 종료와 관찰 가능한 부재는 별도 결정이다. G2 전 조정표의 retain/update/add와 프로젝트 전체 suite를 실제 실행해 명령·결과·collected/executed/pass/fail/skipped count를 기록한다 (§17.5)
 
 ## 상세 레퍼런스
 
