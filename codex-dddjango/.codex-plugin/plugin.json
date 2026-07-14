@@ -1,6 +1,6 @@
 {
   "name": "dddjango",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "기존 Django 프로젝트에 한 기능을 DDD 방식으로 요구→설계→구현(TDD)까지 단계 게이트로 빌드하는 오케스트레이터. DB migration lifecycle은 외부 절차에 맡긴다.",
   "author": {
     "name": "changja88",
