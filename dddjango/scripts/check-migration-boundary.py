@@ -25,11 +25,13 @@ STATE_FILE은 run별 write-once baseline이며 동명 ``.write-once`` receipt가
   check-migration-boundary.py preflight TARGET_DIR STATE_PATH
   check-migration-boundary.py snapshot TARGET_DIR STATE_FILE
   check-migration-boundary.py verify TARGET_DIR STATE_FILE
+  check-migration-boundary.py cleanup TARGET_DIR STATE_FILE RUN_ID
   check-migration-boundary.py recover TARGET_DIR STATE_DIR
 
-``recover``는 중단된 이전 실행이 남긴 ``migration-boundary-epoch-*.json``을 새
-snapshot보다 먼저 모두 같은 현재 endpoint와 비교한다. 종료코드: 0=snapshot/clean,
-2=추가·수정·삭제 발견, 1=사용·baseline·I/O 오류.
+``recover``는 다른 coordinator가 실행 중이지 않은 정지 상태에서만 쓰는 호환성·유지보수
+진단이다. 정상 run은 고유 STATE_FILE을 직접 snapshot/verify/cleanup하며 다른 run의 pair를
+순회하지 않는다. 종료코드: 0=snapshot/clean/cleanup, 2=추가·수정·삭제 발견,
+1=사용·baseline·I/O 오류.
 """
 from __future__ import annotations
 
@@ -73,6 +75,7 @@ SETTINGS_ENTRYPOINT_NAMES = {"asgi.py", "manage.py", "wsgi.py"}
 PYTHON_CACHE_DIRECTORIES = {"__pycache__"}
 EXTERNAL_OWNED_PATHS_ENV = "DDDJANGO_EXTERNAL_OWNED_OPAQUE_PATHS_JSON"
 SAFE_EXTERNAL_OWNED_PATH = re.compile(r"^[A-Za-z0-9_./@+\-]+$")
+SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$")
 _SEMANTIC_EXCLUSIONS: dict[Path, tuple[PurePosixPath, ...]] = {}
 
 
@@ -2574,7 +2577,6 @@ def _snapshot(
     external_owned_opaque_paths: list[str],
 ) -> int:
     receipt = _receipt_file(state_file)
-    coordinator_lock = root / ".dddjango" / "migration-boundary-coordinator.lock"
     if (
         state_file.exists()
         or state_file.is_symlink()
@@ -2588,14 +2590,14 @@ def _snapshot(
     manifest = _manifest(
         root,
         external_owned_opaque_paths,
-        boundary_paths=(state_file, receipt, coordinator_lock),
+        boundary_paths=(state_file, receipt),
     )
     owned_paths = [
         *manifest["migration_roots"],
         *manifest["migration_alias_targets"],
         *manifest["external_owned_opaque_paths"],
     ]
-    for boundary_path in (state_file, receipt, coordinator_lock):
+    for boundary_path in (state_file, receipt):
         if _state_path_is_in_exact_migration_root(
             root,
             boundary_path,
@@ -2659,7 +2661,6 @@ def _verify(root: Path, state_file: Path) -> int:
     for boundary_path in (
         state_file,
         _receipt_file(state_file),
-        root / ".dddjango" / "migration-boundary-coordinator.lock",
     ):
         if _state_path_is_in_exact_migration_root(
             root,
@@ -2688,6 +2689,69 @@ def _verify(root: Path, state_file: Path) -> int:
         "중단한 뒤 변경 귀속과 다음 진행을 확인하라."
     )
     return 2
+
+
+def _cleanup(root: Path, state_file: Path, run_id: str) -> int:
+    """Expected run-id에 결박된 exact write-once pair만 검증하고 삭제한다."""
+    if SAFE_RUN_ID.fullmatch(run_id) is None:
+        raise ManifestError(
+            "RUN_ID에는 8~128자의 portable 문자([A-Za-z0-9_-])만 허용한다"
+        )
+    expected_suffix = f"-{run_id}.json"
+    if (
+        EPOCH_STATE_FILE.fullmatch(state_file.name) is None
+        or not state_file.name.endswith(expected_suffix)
+    ):
+        raise ManifestError(
+            "STATE_FILE 이름이 expected RUN_ID와 결박되지 않았다: "
+            f"state={state_file.name!r}, run_id={run_id!r}"
+        )
+    try:
+        state_relative = state_file.resolve(strict=False).relative_to(root)
+    except ValueError as error:
+        raise ManifestError("cleanup STATE_FILE은 TARGET_DIR 내부여야 한다") from error
+    if (
+        len(state_relative.parts) != 5
+        or state_relative.parts[0] != ".dddjango"
+        or state_relative.parts[2] != ".runs"
+        or state_relative.parts[3] != run_id
+    ):
+        raise ManifestError(
+            "cleanup STATE_FILE은 exact .dddjango/<feature>/.runs/<RUN_ID>/의 "
+            "직접 자식이어야 한다"
+        )
+    receipt = _receipt_file(state_file)
+    if state_file.is_symlink() or receipt.is_symlink():
+        raise ManifestError("cleanup 대상 baseline/receipt symlink는 허용하지 않는다")
+    manifest_root = _load_manifest(state_file)[0]
+    if manifest_root != str(root):
+        raise ManifestError(
+            f"baseline root 불일치: recorded={manifest_root!r}, target={str(root)!r}"
+        )
+
+    receipt_bytes = receipt.read_bytes()
+    receipt.unlink()
+    try:
+        state_file.unlink()
+    except OSError as unlink_error:
+        try:
+            with receipt.open("xb") as stream:
+                stream.write(receipt_bytes)
+                stream.flush()
+                os.fsync(stream.fileno())
+        except OSError as rollback_error:
+            raise ManifestError(
+                "cleanup 중 baseline 삭제가 실패했고 receipt rollback도 실패했다: "
+                f"unlink={unlink_error}, rollback={rollback_error}"
+            ) from rollback_error
+        raise ManifestError(
+            f"cleanup 중 baseline 삭제가 실패해 receipt를 복원했다: {unlink_error}"
+        ) from unlink_error
+    for path in (state_file, receipt):
+        if path.exists() or path.is_symlink():
+            raise ManifestError(f"cleanup 뒤 exact pair가 남아 있다: {path}")
+    print(f"[check-migration-boundary] cleanup: exact run pair removed -> {state_file}")
+    return 0
 
 
 def _findings_for_state(
@@ -2934,18 +2998,23 @@ def _usage() -> None:
     print(
         "사용법: check-migration-boundary.py "
         "preflight TARGET_DIR STATE_PATH | {snapshot|verify} TARGET_DIR STATE_FILE | "
-        "recover TARGET_DIR STATE_DIR",
+        "cleanup TARGET_DIR STATE_FILE RUN_ID | recover TARGET_DIR STATE_DIR",
         file=sys.stderr,
     )
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 4 or argv[1] not in {
+    if (
+        len(argv) not in {4, 5}
+        or argv[1] not in {
         "preflight",
         "snapshot",
         "verify",
+        "cleanup",
         "recover",
-    }:
+        }
+        or (argv[1] == "cleanup") != (len(argv) == 5)
+    ):
         _usage()
         return 1
 
@@ -2991,6 +3060,8 @@ def main(argv: list[str]) -> int:
             )
         if action == "verify":
             return _verify(root, boundary_path)
+        if action == "cleanup":
+            return _cleanup(root, boundary_path, argv[4])
         external_owned_opaque_paths = _external_owned_paths_from_environment(root)
         return _recover(
             root,

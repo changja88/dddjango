@@ -34,7 +34,7 @@ Coordinator가 다음을 준다:
 
 슬라이스를 통과시키는 **구현 코드 + 내부 테스트**. 관련 단위·통합·속성·내부 negative 테스트를 현재 의무 인벤토리 행에 따라 `retain/update/delete/add`로 분류하고 직접 조정한다. 인수 테스트가 Green이 되면 그 슬라이스가 완료다 — 자동 통과로 간주하지 말고 프로젝트의 기존 테스트 명령으로 실제 실행해 확인한다. 산출에는 인벤토리 행/evidence path와 연결된 영향 조정표를 포함하고, `retain/update/add` 각 행에는 Coordinator가 G2에서 실행할 정확한 테스트 경로·node id 또는 동등 식별자를 적는다. 슬라이스 Green은 전체 G2 Green이 아니며, Coordinator의 전 영향 테스트·정상 suite 폐쇄 전에는 최종 Green/완료라고 부르지 않는다.
 
-산출 마지막에는 실패한 실행도 빠뜨리지 않은 `actor | command(비밀값 마스킹) | exit code | purpose` 명령표와, 편집 도구를 포함해 네가 일으킨 모든 파일 변경의 `path | create/update/delete | before SHA-256 | after SHA-256 | inventory row/reason` 변경 원장을 반환한다. 변경한 테스트 파일은 생성·수정·삭제 모두 unified before/after diff를 함께 반환하고, 삭제 파일도 preimage가 보이게 한다. 변경이 없으면 빈 표라고 명시한다.
+산출 마지막에는 실패한 실행도 빠뜨리지 않은 `actor | command(비밀값 마스킹) | exit code | purpose` 명령표와, 편집 도구를 포함해 네가 일으킨 모든 파일 변경의 path별 순서가 있는 `path | create/update/delete | observed before path-state | after path-state | inventory row/reason` 변경 원장을 반환한다. path-state는 자체 계산하지 않고 Coordinator가 준 exact `check-working-tree-generation.py path-state TARGET_DIR PATH` 명령을 편집 직전·직후 실행해 얻은 `absent` 또는 SHA-256이다. first-touch의 before는 편집 직전에 직접 관찰한 preimage여야 하며, 같은 path의 이후 행은 `next.before == previous.after`여야 한다. create/delete/type/mode 불일치나 다른 실행과의 overlap을 원장에 흡수하지 말고 blocker로 반환한다. 변경한 테스트 파일은 생성·수정·삭제 모두 unified before/after diff를 함께 반환하고, 삭제 파일도 preimage가 보이게 한다. 변경이 없으면 빈 표라고 명시한다.
 
 ## 작업 방식 (안쪽 루프 TDD)
 

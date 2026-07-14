@@ -212,6 +212,7 @@ class MigrationScopeTest(unittest.TestCase):
             if path.name not in {
                 "check-layer-skeleton.py",
                 "check-migration-boundary.py",
+                "check-working-tree-generation.py",
             }
         )
         self.assertEqual(17, len(general_checks))
@@ -386,7 +387,11 @@ class MigrationScopeTest(unittest.TestCase):
         scripts = sorted(
             path
             for path in SCRIPTS.glob("check-*.py")
-            if path.name != "check-migration-boundary.py"
+            if path.name
+            not in {
+                "check-migration-boundary.py",
+                "check-working-tree-generation.py",
+            }
         )
         self.assertEqual(18, len(scripts))
 

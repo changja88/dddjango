@@ -61,7 +61,7 @@ class Q6FixtureBuilderTest(unittest.TestCase):
                 (control_root / "EVALUATION-MANIFEST.json").read_text()
             )
             self.assertEqual("dddjango-q6-v6", evaluation_manifest["format"])
-            self.assertEqual("1.1.0", evaluation_manifest["plugin_version"])
+            self.assertEqual("1.1.1", evaluation_manifest["plugin_version"])
             self.assertEqual(
                 "not executed by this builder",
                 evaluation_manifest["live_run_status"],

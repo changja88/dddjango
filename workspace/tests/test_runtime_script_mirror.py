@@ -16,11 +16,13 @@ class RuntimeScriptMirrorTest(unittest.TestCase):
         claude = {path.name: path for path in CLAUDE_SCRIPTS.glob("*.py")}
         codex = {path.name: path for path in CODEX_SCRIPTS.glob("*.py")}
 
-        self.assertEqual(20, len(claude))
+        self.assertEqual(22, len(claude))
         self.assertEqual(set(claude), set(codex))
-        self.assertEqual(19, len(tuple(CLAUDE_SCRIPTS.glob("check-*.py"))))
+        self.assertEqual(20, len(tuple(CLAUDE_SCRIPTS.glob("check-*.py"))))
         self.assertNotIn("check-app-container.py", claude)
         self.assertIn("check-migration-boundary.py", claude)
+        self.assertIn("check-working-tree-generation.py", claude)
+        self.assertIn("promote-run-artifacts.py", claude)
         self.assertIn("migration_scope.py", claude)
         for name in sorted(claude):
             with self.subTest(script=name):

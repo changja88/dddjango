@@ -89,50 +89,73 @@ fail-closed한다. 다만 bind mount처럼 symlink도 hardlink도 아닌 filesys
 식별하지 못한다.
 
 Phase 0은 artifact write/delete 전에 같은 external JSON으로 `.dddjango` artifact root를
-preflight한다. 기존 non-owned lock이 있으면 orphan recovery·snapshot 전에 즉시 중단하고,
-stale lock은 사용자가 다른 실행이 없음을 확인한 뒤에만 정확한 빈 directory를 제거한다. lock이
-없는 안전한 실제 디렉터리에서 orphan pair를 recovery 비교한 뒤 새 write-once G0
-baseline+동명 `.write-once` receipt pair 하나를 만든다. receipt는 baseline의 절대 경로와
-SHA-256을 고정한다. 그 뒤 atomic lock 획득까지 성공해야 현재 작업 사이클이 시작된다. snapshot
-뒤 lock 경쟁으로 획득이 실패하면 같은 baseline을 verify해 clean일 때만 방금 만든 exact pair를
-지우고 중단한다.
+preflight한다. 성공하면 timestamp+고엔트로피 suffix의 portable run-id를 만들고
+`<feature>/.runs/<run-id>/`에 scope/design 작업본과 고유 write-once G0 baseline+receipt pair를
+둔다. run-id는 충돌 방지 식별자이지 작성자·소유권 증명이 아니다. 정상 실행은 다른 run의 pair를
+나열·열기·복구·삭제하지 않고 전역 coordinator lock을 사용하지 않는다. recursive `recover`는 다른
+coordinator가 없다는 별도 확인 아래 정지 상태 유지보수 진단에만 사용한다.
 
 한 내부 작업 사이클은 이 **단일 write-once G0 baseline**을 일반 감사 직전과 모든 read-only
 백스톱·독립 감수 직후에 다시 비교한다. 내부 Red/Green·리뷰 반송·수정 때문에 새 snapshot을
 만들어 변경을 흡수하지 않는다. 사전 verify 0은 `pre-audit-clean(pending final verify)`, 같은
 baseline의 최종 verify 0만 `verified-clean`이다. exit 1은 baseline·receipt·I/O 검증 인프라
-오류라 새 기준선으로 우회할 수 없고, exit 2는 주체를 단정하지 않는 중립 pause다.
+오류라 exact pair를 보존하고 새 기준선으로 우회할 수 없다. exit 2는 주체를 단정하지 않는
+`invalidated` 상태다. 현재 generation을 폐기하고 중립적으로 보고한 뒤 exact-own pair와 current-run
+임시 문서를 cleanup한다. 외부 작업 완료 확인 뒤 새 run-id로만 재개한다.
 
-정상적인 관련 조사 중 아직 세 집합에 없던 migration lifecycle test를 처음 발견하면 추가 의미
-검토와 편집 전에 중단하고 exact path만 Coordinator에 반환한다. 현재 manifest를 제자리
-확장하지 않는다. 같은 G0 baseline을 verify한 뒤 그 작업 사이클의 설계·테스트·구현·감사 증거를
-전부 stale 처리하고 lock을 해제한다. 새 lifecycle file 발견이나 exit 2 뒤에는 사용자가 외부
-소유·변경 완료·quiescence를 명시 확인한 경우에만 expanded canonical list로 Phase 0
-preflight→recover→snapshot→lock부터 새 작업 사이클을 시작하며, 영향 조사와 검증을 모두 다시
-수행한다. schema-affecting model change 때문에 외부 migration lifecycle 없이는 현재 테스트
-환경을 준비할 수 없는 경우도 Green을 조작하지 않고 같은 중단 절차를 따른다. 외부 변경을
-plugin 산출로 검토·수정·되돌리지 않으며 새 baseline도 migration의 정확성 승인이 아니다.
+정상 조사 중 새 lifecycle test를 처음 발견하면 편집 전에 exact path만 반환하고 현재 manifest를
+확장하지 않는다. 같은 baseline verify 뒤 현재 증거를 전부 stale 처리한다. exit 0/2이면 expected
+run-id cleanup helper로 exact-own pair만 지우고, exit 1이면 pair를 보존한다. 외부 작업 완료 뒤
+expanded list와 새 run-id의 preflight→snapshot부터 다시 시작한다. 외부 변경을 plugin 산출로
+검토·수정·되돌리지 않으며 새 baseline도 migration의 정확성 승인이 아니다.
 
-G0 test source inventory는 프로젝트 runner/config가 선언한 수집 root를 우선하고, 없으면
-`test/`·`tests/` tree와 `test_*.py`·`*_test.py`·`tests.py`를 fallback으로 사용한다. opaque
-경로에서도 이 단계의 file byte hash만 허용하고 decode·parse·요약·의미 분류·LLM 입력은
-금지한다. 최종 path/hash delta는 테스트 영향 조정표, 전체 command/exit transcript, 모든 파일
-변경 원장과 변경 test before/after diff(삭제 preimage 포함)에 대조한다. 최종 non-migration
-diff는 변경 원장의 explicit file path에서 세 opaque 집합과 alias를 먼저 제외한 allowlist로만
-`git diff -- <allowlisted paths>`를 호출해 만든다. 전역/directory diff를 만든 뒤 opaque 내용을
-사후 필터링하지 않는다.
+G0 test/config inventory는 runner 수집 root 또는 `test/`·`tests/`와
+`test_*.py`·`*_test.py`·`tests.py` fallback을 사용한다. 원장 밖 최종 delta는 소유자를 추정하지
+않고 `concurrent/unknown`으로 분류한다. 현재 의무 test/fixture/config와 겹치면 pass여도 final
+generation을 stale 처리하고, 그 밖의 안정된 변경은 shared-generation dependency로 보고한다.
+파일 변경 원장은 first-touch 직전 `check-working-tree-generation.py path-state TARGET_DIR PATH`가 반환한
+`absent` 또는 SHA-256을 기록하고 자체 직렬화하지 않는다. 같은 path의 이후 행은
+`next.before == previous.after`여야 한다. final generation 시작 직전 touched 각 path의 현재 path-state도
+같은 helper로 다시 계산해 원장의 마지막 `after`와 같아야 하며, 다르면 create/delete/type/mode를
+포함한 overlap blocker다. 이 원장은 독립 provenance 증명이 아니다.
 
-성공 종료에서는 run state가 정확히 추적한 baseline+receipt pair만 함께 삭제하고 각 경로에
-`! -e && ! -L`을 확인한 뒤, 자신이 소유한 빈 lock만 `rmdir`하고 같은 부재를 확인한다. 어느
-cleanup 후조건이라도 실패하면 완료를 주장하지 않는다.
+G0에는 `promote-run-artifacts.py seed`가 짧은 feature-local lock 안에서 canonical scope/design
+pair를 함께 읽어 current-run 작업본에 exact bytes로 seed하고 각 `absent|SHA-256` anchor를 반환한다.
+각 run은 작업본만 수정한다. G1 승인 뒤 같은 helper의 `commit`이 같은 짧은 lock 안에서 두 anchor와
+current-run source를 확인하고, 교체 뒤 source/canonical bytes를 재확인해 둘 다 같을 때만 성공한다.
+교체 전 transaction marker와 교체 후 receipt를 fsync해 process crash의 torn pair는 다음 명령에서
+fail-closed한다. marker가 없을 때 receipt는 canonical 소유권을 갖지 않으므로 branch checkout·외부
+canonical 변경을 막지 않고, marker의 previous pair가 그대로면 교체 전 crash로 안전 회수한다.
+달라졌으면 아무 canonical도 쓰지 않고 `rebase`가 current 작업본을 보존한 별도 exact
+base pair로 최신 canonical을 받아 architect rebase·영향 lens review·G1 승인을 반복한다. Phase 2
+진입·final generation 시작·G2 승인 후에는 `check`와 fingerprint의 byte-equality 전제를 다시 검사하고,
+불일치는 같은 rebase/G1/Phase 2 재실행 경로로 보낸다. 이 lock은 canonical pair의 read/commit/check
+순간에만 있고 G0·설계·구현·테스트 실행 전체를 소유하거나 직렬화하지 않는다. 종료 cleanup은
+`cleanup TARGET_DIR STATE_FILE RUN_ID` helper가 filename/receipt/root를 검증한 exact-own pair에만
+허용하며 foreign pair와 glob 삭제는 금지한다. terminal run은 current-run의 exact scope/design과 존재하는 exact rebase base pair만 더
+삭제하고 directory가 비었을 때만 제거한다. `waiting-concurrent`와 승인 대기는 pair·작업본을 보존하고,
+run 종료나 exit 0/2 invalidation은 cleanup하며 exit 1은 pair·작업본을 보존한다.
 
-이 검사는 관찰한 endpoint의 동일성만 보장한다. 지원 문법 밖의 직접 구성은 exit 1로 막지만,
+G2는 독립 patch Green이 아니라 한 shared working-tree generation의 증거다.
+`check-working-tree-generation.py TARGET_DIR BOUNDARY_STATE CURRENT_RUN_DIR`가 boundary state/current run의
+exact run-id 결박과 current-run/canonical scope/design byte equality를 먼저 확인한 뒤, 검증된 boundary
+receipt, HEAD·exclusion-filtered index와 non-opaque dirty/untracked path의 path·lstat kind·mode·regular
+bytes·symlink payload·submodule state를 길이 태그 canonical hash로 계산한다. current-run과 canonical
+scope/design은 포함하고 staged 상태까지 foreign `.runs/*`, exact epoch pair, `.git`, cache, 세 opaque 집합은 제외한다. 이 fingerprint를
+현재 의무 테스트·전체 suite·17종·layer·독립 reviewer·final boundary verify 전후에 비교한다.
+다르면 전 증거를 버리고 한 번 재실행하며 다시 변하면 `waiting-concurrent`다. G2 승인 대기 뒤에도
+cleanup 전에 same-baseline verify와 같은 fingerprint를 다시 확인하고, 달라졌으면 승인과 증거를
+stale 처리해 새 generation과 G2 승인을 거친다.
+별도 patch의 독립 적용 가능성은 Git worktree에서 검증해야 한다.
+
+이 검사와 final generation fingerprint는 관찰한 endpoint의 동일성만 보장한다. 지원 문법 밖의 직접 구성은 exit 1로 막지만,
 import side effect·별도 모듈·함수 내부 global mutation처럼 선택된 source의 정적 assignment에
 드러나지 않는 Python 실행 의미까지 완전하게 증명하지는 않는다. AppConfig field가 참조한 별도 symbol의 runtime 값,
 외부 환경에서만 선택되는 settings, 정적 신호가 없는 앱, bind mount alias,
 `MIGRATION_MODULES` 대입 원문 범위 밖 settings 편집, migration 전용 명령 실행, 중간 생성 후
 원복, permission·owner·xattr, baseline과 receipt의 동시 제거·변조, DB-only side effect,
-마지막 scan 직후 race까지 증명하지 못한다. 특히 최초 preflight와 Phase 0 snapshot 사이의 의미
+마지막 scan 직후 race, fingerprint 중간 변경 후 원복(ABA), ignored file, 공유 DB/cache/port와
+외부 프로세스 상태까지 증명하지 못한다. 특히 최초 preflight와 Phase 0 snapshot 사이의 의미
 조사 동안 외부 owner가 새 migration root나 lifecycle test를 동시에 만들면 최초 prune 집합에
 없어 의미 읽기가 먼저 일어날 수 있다. 그러므로 이 구간의 외부 동시 변경·quiescence는 경계가
 보장하지 않는다. 동적 custom test collection도 runner/config와

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import concurrent.futures
 import importlib.util
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -31,20 +33,24 @@ class MigrationBoundaryTest(unittest.TestCase):
         boundary_path: Path | None = None,
         external_owned_opaque_paths: list[str] | None = None,
         timeout: float | None = None,
+        run_id: str | None = None,
     ) -> subprocess.CompletedProcess[str]:
         environment = os.environ.copy()
         environment["DDDJANGO_EXTERNAL_OWNED_OPAQUE_PATHS_JSON"] = json.dumps(
             external_owned_opaque_paths or [],
             separators=(",", ":"),
         )
-        return subprocess.run(
-            [
+        command = [
                 sys.executable,
                 str(MIGRATION_CHECK),
                 action,
                 str(self.project),
                 str(boundary_path or self.state),
-            ],
+            ]
+        if run_id is not None:
+            command.append(run_id)
+        return subprocess.run(
+            command,
             capture_output=True,
             text=True,
             check=False,
@@ -2747,8 +2753,8 @@ class MigrationBoundaryTest(unittest.TestCase):
         app = self.make_app("orders")
         target = self.project / ".dddjango"
         target.mkdir()
-        lock = target / "migration-boundary-coordinator.lock"
-        lock.mkdir()
+        foreign_marker = target / "foreign-run-marker"
+        foreign_marker.mkdir()
         try:
             (app / "migrations").symlink_to(target, target_is_directory=True)
         except OSError as error:
@@ -2759,7 +2765,7 @@ class MigrationBoundaryTest(unittest.TestCase):
 
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertIn("opaque-owned path 밖", result.stderr)
-        self.assertTrue(lock.is_dir())
+        self.assertTrue(foreign_marker.is_dir())
         self.assertFalse(state.exists())
         self.assertFalse(state.with_name(f"{state.name}.write-once").exists())
 
@@ -2821,49 +2827,161 @@ class MigrationBoundaryTest(unittest.TestCase):
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
         self.assertIn("current opaque-owned path 밖", result.stderr)
 
-    def test_lock_path_requires_its_own_preflight(self) -> None:
-        app = self.make_app("orders")
-        migrations = app / "migrations"
-        migrations.mkdir()
-        lock = self.project / ".dddjango" / "migration-boundary-coordinator.lock"
-        planned_state = (
+    def test_unique_run_pairs_verify_and_cleanup_independently(self) -> None:
+        self.make_migrations()
+        runs = self.project / ".dddjango" / "feature" / ".runs"
+        run_ids = ("run-alpha-1234", "run-beta-5678")
+        states = tuple(
+            runs / run_id / f"migration-boundary-epoch-20260714-{run_id}.json"
+            for run_id in run_ids
+        )
+        barrier = threading.Barrier(2)
+
+        def snapshot_at_once(state: Path) -> subprocess.CompletedProcess[str]:
+            barrier.wait(timeout=5)
+            return self.run_boundary("snapshot", state, timeout=10)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            results = tuple(executor.map(snapshot_at_once, states))
+        for result in results:
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        for state in states:
+            result = self.run_boundary("verify", state)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+        foreign_before = (
+            states[1].read_bytes(),
+            states[1].with_name(f"{states[1].name}.write-once").read_bytes(),
+        )
+        cleanup_verify_barrier = threading.Barrier(2)
+
+        def cleanup_a() -> subprocess.CompletedProcess[str]:
+            cleanup_verify_barrier.wait(timeout=5)
+            return self.run_boundary("cleanup", states[0], run_id=run_ids[0])
+
+        def verify_b() -> subprocess.CompletedProcess[str]:
+            cleanup_verify_barrier.wait(timeout=5)
+            return self.run_boundary("verify", states[1])
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            cleanup, concurrent_foreign_verify = tuple(
+                executor.map(lambda action: action(), (cleanup_a, verify_b))
+            )
+        self.assertEqual(0, cleanup.returncode, cleanup.stdout + cleanup.stderr)
+        self.assertEqual(
+            0,
+            concurrent_foreign_verify.returncode,
+            concurrent_foreign_verify.stdout + concurrent_foreign_verify.stderr,
+        )
+        self.assertFalse(states[0].exists())
+        self.assertEqual(foreign_before[0], states[1].read_bytes())
+        self.assertEqual(
+            foreign_before[1],
+            states[1].with_name(f"{states[1].name}.write-once").read_bytes(),
+        )
+        foreign_verify = self.run_boundary("verify", states[1])
+        self.assertEqual(
+            0,
+            foreign_verify.returncode,
+            foreign_verify.stdout + foreign_verify.stderr,
+        )
+
+    def test_cleanup_rejects_wrong_run_id_and_preserves_pair(self) -> None:
+        run_id = "run-owner-1234"
+        state = (
             self.project
             / ".dddjango"
             / "feature"
-            / "migration-boundary-epoch-planned.json"
+            / ".runs"
+            / run_id
+            / f"migration-boundary-epoch-20260714-{run_id}.json"
         )
-        try:
-            (migrations / "lock-alias").symlink_to(
-                lock,
-                target_is_directory=True,
-            )
-        except OSError as error:
-            self.skipTest(f"symlink unavailable: {error}")
+        snapshot = self.run_boundary("snapshot", state)
+        self.assertEqual(0, snapshot.returncode, snapshot.stdout + snapshot.stderr)
 
-        state_preflight = self.run_boundary("preflight", planned_state)
-        lock_preflight = self.run_boundary("preflight", lock)
-        root_preflight = self.run_boundary("preflight", self.project / ".dddjango")
-        snapshot = self.run_boundary("snapshot", planned_state)
+        cleanup = self.run_boundary("cleanup", state, run_id="run-foreign-99")
 
-        self.assertEqual(
-            0,
-            state_preflight.returncode,
-            state_preflight.stdout + state_preflight.stderr,
+        self.assertEqual(1, cleanup.returncode, cleanup.stdout + cleanup.stderr)
+        self.assertIn("expected RUN_ID", cleanup.stderr)
+        self.assertTrue(state.is_file())
+        self.assertTrue(state.with_name(f"{state.name}.write-once").is_file())
+
+    def test_cleanup_rejects_corrupt_receipt_and_preserves_pair(self) -> None:
+        run_id = "run-corrupt-1234"
+        state = (
+            self.project
+            / ".dddjango"
+            / "feature"
+            / ".runs"
+            / run_id
+            / f"migration-boundary-epoch-20260714-{run_id}.json"
         )
-        self.assertEqual(
-            1,
-            lock_preflight.returncode,
-            lock_preflight.stdout + lock_preflight.stderr,
+        snapshot = self.run_boundary("snapshot", state)
+        self.assertEqual(0, snapshot.returncode, snapshot.stdout + snapshot.stderr)
+        receipt = state.with_name(f"{state.name}.write-once")
+        receipt.write_text("{}", encoding="utf-8")
+
+        cleanup = self.run_boundary("cleanup", state, run_id=run_id)
+
+        self.assertEqual(1, cleanup.returncode, cleanup.stdout + cleanup.stderr)
+        self.assertTrue(state.is_file())
+        self.assertEqual("{}", receipt.read_text(encoding="utf-8"))
+
+    def test_malformed_foreign_pair_does_not_affect_exact_run_lifecycle(self) -> None:
+        foreign = (
+            self.project
+            / ".dddjango"
+            / "other"
+            / ".runs"
+            / "run-foreign-1234"
+            / "migration-boundary-epoch-broken-run-foreign-1234.json"
         )
-        self.assertEqual(
-            1,
-            root_preflight.returncode,
-            root_preflight.stdout + root_preflight.stderr,
+        foreign.parent.mkdir(parents=True)
+        foreign.write_text("{malformed", encoding="utf-8")
+        run_id = "run-local-1234"
+        state = (
+            self.project
+            / ".dddjango"
+            / "feature"
+            / ".runs"
+            / run_id
+            / f"migration-boundary-epoch-20260714-{run_id}.json"
         )
-        self.assertEqual(1, snapshot.returncode, snapshot.stdout + snapshot.stderr)
-        self.assertIn("opaque-owned path 밖", lock_preflight.stderr)
-        self.assertIn("opaque-owned path 밖", root_preflight.stderr)
-        self.assertIn("opaque-owned path 밖", snapshot.stderr)
+
+        snapshot = self.run_boundary("snapshot", state)
+        verify = self.run_boundary("verify", state)
+        cleanup = self.run_boundary("cleanup", state, run_id=run_id)
+
+        self.assertEqual(0, snapshot.returncode, snapshot.stdout + snapshot.stderr)
+        self.assertEqual(0, verify.returncode, verify.stdout + verify.stderr)
+        self.assertEqual(0, cleanup.returncode, cleanup.stdout + cleanup.stderr)
+        self.assertEqual("{malformed", foreign.read_text(encoding="utf-8"))
+
+    def test_cleanup_accepts_exact_pair_after_boundary_invalidation(self) -> None:
+        migrations = self.make_migrations()
+        run_id = "run-invalidated-1234"
+        state = (
+            self.project
+            / ".dddjango"
+            / "feature"
+            / ".runs"
+            / run_id
+            / f"migration-boundary-epoch-20260714-{run_id}.json"
+        )
+        snapshot = self.run_boundary("snapshot", state)
+        self.assertEqual(0, snapshot.returncode, snapshot.stdout + snapshot.stderr)
+        (migrations / "0001_initial.py").write_text(
+            "operations = ['changed']\n",
+            encoding="utf-8",
+        )
+        verify = self.run_boundary("verify", state)
+        self.assertEqual(2, verify.returncode, verify.stdout + verify.stderr)
+
+        cleanup = self.run_boundary("cleanup", state, run_id=run_id)
+
+        self.assertEqual(0, cleanup.returncode, cleanup.stdout + cleanup.stderr)
+        self.assertFalse(state.exists())
+        self.assertFalse(state.with_name(f"{state.name}.write-once").exists())
 
     def test_hardlinked_migration_file_is_rejected(self) -> None:
         migrations = self.make_migrations()
