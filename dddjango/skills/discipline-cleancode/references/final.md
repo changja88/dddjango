@@ -2375,16 +2375,18 @@ class Employee:
 
 ### 16.5 특성화 테스트 (Characterization Tests) [WELC]
 
-"올바른 동작"을 검증하는 것이 아니라, **현재 동작을 포착**하는 테스트. 리팩토링 전에 안전망으로 작성한다.
+레거시 구현을 이해하기 위해 “올바른 동작”이 아니라 **현재 동작을 포착**하는 임시 probe다. 현재 구현은 계약의 증거일 뿐 오라클이 아니므로, 특성화 결과를 영구 회귀 테스트나 구현 완료 증거로 곧바로 고정하지 않는다.
+
+특성화 probe는 **non-migration 레거시 코드**에만 쓴다. migration 파일·과거 model state·forward/reverse를 관찰하는 임시 테스트는 “조사용”이라는 이름으로 migration 전용 테스트 금지를 우회하므로 작성하지 않는다. 현재 승인 계약을 확인한 뒤 probe를 계약 테스트로 다시 쓰거나 제거한다. 유지·갱신·분리·삭제 판정은 `discipline-tdd` §5.5가 소유한다.
 
 ```python
 def test_legacy_calculate_tax():
-    """현재 동작을 포착한다. '올바른' 결과가 아닌 '현재' 결과를 기대한다."""
+    """계약 확인 전 레거시 동작을 조사하는 임시 probe."""
     assert legacy_calculate_tax(1000) == 103.5
     assert legacy_calculate_tax(0) == 0
     assert legacy_calculate_tax(-500) == -51.75  # 음수 입력에 대한 현재 동작
 
-    # 이 테스트가 있으면, 리팩토링 중 동작 변경을 즉시 감지할 수 있다
+    # 계약 확인 뒤 현행 계약 테스트로 재작성하거나 제거한다
 ```
 
 ### 16.6 Sensing과 Separation [WELC]

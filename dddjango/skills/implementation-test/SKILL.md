@@ -1,6 +1,6 @@
 ---
 name: implementation-test
-description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, 테스트 더블 분류, pytest 구조·픽스처·심화 설정·마커·플러그인, Mock·테스트더블 실전, Property-Based Testing(Hypothesis), 팩토리(factory_boy+Faker), 시간 모킹, HTTP 모킹, Docker 통합 테스트, 커버리지, 멀티환경 테스트, 테스트 코드 품질 원칙·안티패턴, Mutation Testing, BDD pytest-bdd, Django Ninja TestClient API 계약 테스트, Idempotency·동시성 테스트, 테스트 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. TDD 실천(Red-Green-Refactor 등 방법론)은 discipline-tdd, Django 코어 특화 구현은 implementation-django, JSON API 어댑터 특화는 implementation-django-ninja, 서버렌더 특화는 implementation-django-web으로 위임.
+description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 구분, pytest 구조·픽스처·마커·플러그인, Mock·테스트더블, Property-Based Testing, 팩토리, 시간·HTTP 모킹, 통합 테스트, 커버리지, 테스트 품질·안티패턴, Mutation Testing, BDD, Django Ninja TestClient, Idempotency·동시성 테스트, 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 무엇을 테스트하고 기존 테스트를 유지·갱신·분리·삭제할지는 discipline-tdd, Django 구현은 implementation-django 계열로 위임.
 user-invocable: false
 ---
 
@@ -10,7 +10,7 @@ user-invocable: false
 
 테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 설계·작성할 때 로드한다. 경계:
 
-- TDD 방법론(언제·왜 테스트를 먼저 쓰는가, Red-Green-Refactor) → `discipline-tdd`
+- TDD 방법론과 테스트 수명 주기(무엇을 검증하고 유지·갱신·분리·삭제하는가) → `discipline-tdd`
 - Django 모델·ORM·서비스 레이어 구현 → `implementation-django`
 - Django Ninja Router/Schema·TestClient 계약 어댑터 구현 → `implementation-django-ninja`
 - Django 뷰·템플릿·폼·HTMX 구현 → `implementation-django-web`
@@ -18,6 +18,7 @@ user-invocable: false
 ## 핵심 운영 원칙
 
 - 행동을 증명하는 가장 작은 테스트 범위를 선택; 피라미드 하단일수록 빠르고 안정 (§1)
+- migration 파일·번호·과거 state·forward/reverse가 오라클이면 migration 전용 테스트이고, 현재 model·ORM·service·API·DB constraint가 오라클이면 DB-backed 현행 동작 테스트다. 이 절은 기술적으로 식별만 하고 수명 주기는 `discipline-tdd`에 넘긴다 (§1.4)
 - 테스트 러너·작성은 **pytest(pytest-django)** 기본 — 함수형 + `assert` + `@pytest.mark.django_db`(DB 접근 명시) + 픽스처 (§3, §4, §19.4)
 - 테스트 더블은 역할과 리스크 기준으로 선택: Stub→상태 검증, Mock→상호작용 검증, Fake→가벼운 협력자 (§2, §7.1)
 - mock이 필요할 때(외부 경계 한정 — 기존 §7.1 교리 불변)의 **도구는 pytest-mock `mocker` 픽스처**(자동 teardown); raw `unittest.mock` 폴백 금지 (§7)
@@ -39,7 +40,7 @@ user-invocable: false
 
 | 주제 | 절 |
 |---|---|
-| 테스트 전략과 피라미드 | §1 |
+| 테스트 전략과 피라미드, migration 전용 테스트 기술 식별 | §1 |
 | 테스트 더블 분류 체계 | §2 |
 | pytest 기본 구조와 Fixture | §3 |
 | pytest 심화 설정 | §4 |

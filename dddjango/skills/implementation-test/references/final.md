@@ -95,6 +95,17 @@ Google은 테스트를 유형(unit/integration/e2e)보다 **크기(size)**로 �
 
 > 출처: [Software Engineering at Google - Chapter 11](https://abseil.io/resources/swe-book/html/ch11.html), [Google Testing Blog: Just Say No to More End-to-End Tests](https://testing.googleblog.com/2015/04/just-say-no-to-more-end-to-end-tests.html)
 
+### 1.4 Migration 전용 테스트와 DB-backed 현행 동작 테스트 식별
+
+이 절은 테스트의 **기술적 오라클**만 식별한다. 무엇을 만들고 기존 테스트를 유지·갱신·분리·삭제할지는 `discipline-tdd` §5.5가 소유한다.
+
+| 구분 | 테스트가 성공·실패를 판정하는 근거 | 예 |
+|---|---|---|
+| migration 전용 | migration 파일·번호·dependency graph·operation·적용 순서·과거 model state·forward/reverse·DDL 자체 | `MigrationExecutor`로 두 migration state를 오가며 데이터 변환을 단언 |
+| DB-backed 현행 동작 | 현재 model·ORM·service·API 응답·현재 DB constraint | 현재 모델 저장이 유니크 제약을 지키는지, 서비스 호출 뒤 현재 row가 올바른지 단언 |
+
+Django 테스트 DB 준비 과정에서 migration이 내부 실행된다는 사실만으로 migration 전용 테스트가 되지는 않는다. 반대로 파일명이 일반 통합 테스트처럼 보여도 과거 state나 forward/reverse 결과가 오라클이면 migration 전용이다. 현재 model 테스트는 migration rollout·backfill·reverse 안전의 대체 증거가 아니다.
+
 ---
 
 ## 2. 테스트 더블 분류 체계
@@ -501,8 +512,9 @@ def test_user_creation():
 # 여러 마커 중첩
 @pytest.mark.slow
 @pytest.mark.database
-def test_full_migration():
-    run_migration()
+def test_database_backed_order_creation():
+    order = create_order()
+    assert order.pk is not None
 ```
 
 **마커 기반 실행**:
