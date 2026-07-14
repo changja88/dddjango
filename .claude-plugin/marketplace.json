@@ -4,13 +4,15 @@
   "metadata": {
     "description": "changja88's Claude Code plugins"
   },
-  "interface": {
-    "displayName": "changja88 Plugins"
-  },
   "plugins": [
     {
       "name": "dddjango",
-      "source": "./dddjango",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/changja88/dddjango.git",
+        "path": "dddjango",
+        "ref": "main"
+      },
       "category": "Coding"
     }
   ]

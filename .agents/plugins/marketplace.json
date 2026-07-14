@@ -7,8 +7,10 @@
     {
       "name": "dddjango",
       "source": {
-        "source": "local",
-        "path": "./codex-dddjango"
+        "source": "git-subdir",
+        "url": "https://github.com/changja88/dddjango.git",
+        "path": "./codex-dddjango",
+        "ref": "main"
       },
       "policy": {
         "installation": "AVAILABLE",
