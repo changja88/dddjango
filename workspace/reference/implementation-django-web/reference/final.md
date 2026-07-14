@@ -6,13 +6,13 @@
 |---|---|
 | purpose | Django server-rendered web decisions: TemplateView/Generic CBV/FBV, templates, includes, static assets, web forms, HTMX/AJAX, CSRF, auth, and render acceptance checks. |
 | use when | The task is a Django-rendered page, template, form, static asset, or HTMX/web interaction rather than a JSON API. |
-| exclude/handoff | Do not use for REST API contracts, Django Ninja Router/Schema work, ORM/transaction design, domain policy, or pytest mechanics beyond render acceptance criteria. DB migration/backfill/rollout is outside dddjango rather than handed to another skill. |
+| exclude/handoff | Do not use for REST API contracts, Django Ninja Router/Schema work, ORM/migration/transaction design, DB rollout, domain policy, or pytest mechanics beyond render acceptance criteria. |
 | core criteria | Keep views as adapters; keep domain behavior out of templates; use Django static/template/security primitives; preserve CSRF/auth; report only render/browser/static/security checks actually run. |
 | source priority | 1 official Django, HTMX, and OWASP docs; 2 primary dddjango Django/API references for handoff; 3 reputable Django books/styleguides; 4 unsupported UI habit is not source. |
 | P1 classification | sufficient |
 
 > Django template, TemplateView/Generic CBV, web form, static asset, HTMX fragment, CSRF-aware AJAX, render acceptance check를 위한 전용 source reference다.
-> Django 모델, ORM, 트랜잭션, 서비스/셀렉터 일반 구현은 `workspace/reference/implementation-django/reference/final.md`가 소유한다. DB migration lifecycle은 dddjango 범위 밖이다.
+> Django 모델, ORM, 마이그레이션, 트랜잭션, 서비스/셀렉터 일반 구현은 `workspace/reference/implementation-django/reference/final.md`가 소유한다.
 > REST API 계약과 Django Ninja 구현은 각각 `workspace/reference/architecture-api/reference/final.md`, `workspace/reference/implementation-django-ninja/reference/final.md` 기준을 따른다.
 >
 > **출처 약어:**
@@ -37,9 +37,8 @@
 |---|---|---|
 | REST resource, HTTP status, Problem Details, OpenAPI 계약 | architecture-api | 화면 fragment가 아니라 API 계약이 중심일 때 |
 | Django Ninja Router/Schema/API 구현 | implementation-django-ninja | JSON API endpoint 구현이 중심일 때 |
-| 모델, QuerySet, Manager, transaction | implementation-django | 데이터 구조와 ORM 동작이 중심일 때 |
-| DB locking, isolation, index, 최종 목표 스키마 | architecture-db | 저장소 일관성이나 현행 DB 불변식이 중심일 때 |
-| DB migration, backfill, rollout lifecycle | dddjango 범위 밖 | 프로젝트 외부 release/deployment 절차가 소유 |
+| 모델, QuerySet, Manager, migration, transaction | implementation-django | 데이터 구조와 ORM 동작이 중심일 때 |
+| DB locking, isolation, index, rollout/backfill | architecture-db | 저장소 일관성이나 운영 DB 리스크가 중심일 때 |
 | pytest fixture, test double, detailed test mechanics | implementation-test | 테스트 도구 구현 자체가 중심일 때 |
 | 도메인 상태 전이, 정책, 불변식 | architecture-ddd | 화면 전에 도메인 규칙 결정이 필요할 때 |
 

@@ -11,9 +11,8 @@ Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·vi
 
 - REST 리소스·HTTP 상태·Problem Details·OpenAPI 계약 → `architecture-api`
 - Django Ninja Router/Schema/API 어댑터 구현 → `implementation-django-ninja`
-- 모델·QuerySet·Manager·트랜잭션 → `implementation-django`
-- DB locking·isolation·index·최종 목표 스키마 → `architecture-db`
-- DB migration·backfill·rollout lifecycle → dddjango 범위 밖
+- 모델·QuerySet·Manager·마이그레이션·트랜잭션 → `implementation-django`
+- DB locking·isolation·index·rollout/backfill → `architecture-db`
 - pytest 픽스처·테스트더블·상세 테스트 구현 → `implementation-test`
 - 도메인 상태 전이·정책·불변식 → `architecture-ddd`
 

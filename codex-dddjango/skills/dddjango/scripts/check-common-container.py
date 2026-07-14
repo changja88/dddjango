@@ -8,7 +8,7 @@ problem+json 헬퍼를 `application/common/ninja/problem.py` 에 둠 = 단일 BC
 조기 승격 + 레벨 오류)를 막는다.
 
 *왜 결정적 백스톱인가* — 헬퍼 위치는 코더 구현 결정이고(설계 명세가 "presentation 경계"라
-해도 코더가 common/ 으로 승격), `check-migration-boundary`(migration tree 무변경)나
+해도 코더가 common/ 으로 승격), `check-app-container`(§0-1, 앱이 `application/` *밖*)나
 `check-layer-skeleton`(§0-2, BC 4계층 깊이)에 안 걸린다(common 은 앱이 아니라 잡히지 않음).
 이 좁은 그물이 "common 레벨" 한 축을 모델 무관하게 집행한다 — 단일 BC 면 헬퍼를 그 BC
 `presentation_layer/` 에 두라는 *예방* 은 ninja §6.2 가이드 몫이고, 이건 그 보조 백스톱이다.
@@ -30,22 +30,18 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from migration_scope import is_migration_owned_path, validate_migration_scope
-
 # 4계층 앱 마커 — 이게 있으면 'common' 이라는 *feature 앱* 이라 횡단 버킷 오배치 아님.
 LAYER_DIRS = ("domain_layer", "application_layer", "infra_layer", "presentation_layer")
 
 
 def _root_application(root: Path) -> Path | None:
     cand = root / "application"
-    return cand if not is_migration_owned_path(root, cand) and cand.is_dir() else None
+    return cand if cand.is_dir() else None
 
 
-def _has_content(root: Path, d: Path) -> bool:
+def _has_content(d: Path) -> bool:
     """빈 stray 디렉터리(예: `__init__.py` 만) 제외 — 서브디렉터리 또는 실질 `.py` 보유."""
     for p in d.iterdir():
-        if is_migration_owned_path(root, p):
-            continue
         if p.is_dir() and p.name != "__pycache__":
             return True
         if p.suffix == ".py" and p.name != "__init__.py":
@@ -53,17 +49,13 @@ def _has_content(root: Path, d: Path) -> bool:
     return False
 
 
-def _is_misplaced_common(root: Path, common_dir: Path) -> bool:
+def _is_misplaced_common(common_dir: Path) -> bool:
     """`application/common/` 이 (feature 앱이 아닌) 오배치 횡단 버킷인가."""
-    if is_migration_owned_path(root, common_dir) or not common_dir.is_dir():
+    if not common_dir.is_dir():
         return False
-    if any(
-        not is_migration_owned_path(root, common_dir / layer)
-        and (common_dir / layer).is_dir()
-        for layer in LAYER_DIRS
-    ):
+    if any((common_dir / layer).is_dir() for layer in LAYER_DIRS):
         return False  # 4계층 'common' feature 앱 → 이 백스톱 대상 아님(§0-2 영역).
-    return _has_content(root, common_dir)
+    return _has_content(common_dir)
 
 
 def main(argv: list[str]) -> int:
@@ -71,19 +63,17 @@ def main(argv: list[str]) -> int:
     if not root.is_dir():
         print(f"[check-common-container] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
-    if not validate_migration_scope(root, "check-common-container"):
-        return 1
 
     app_container = _root_application(root)
     if app_container is None:
         return 0  # 표준 레이아웃 미적용 → §1.1 존중, 해당 없음.
 
     common_under_app = app_container / "common"
-    if _is_misplaced_common(root, common_under_app):
+    if _is_misplaced_common(common_under_app):
         inside = sorted(
             p.name + ("/" if p.is_dir() else "")
             for p in common_under_app.iterdir()
-            if p.name != "__pycache__" and not is_migration_owned_path(root, p)
+            if p.name != "__pycache__"
         )
         print(
             "[check-common-container] BLOCKER — 횡단 `common/` 버킷이 `application/` 안에 있다"

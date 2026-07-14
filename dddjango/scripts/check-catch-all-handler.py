@@ -71,8 +71,6 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from migration_scope import iter_non_migration_files, validate_migration_scope
-
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 
@@ -151,7 +149,7 @@ def _reraise_lineno(func: ast.FunctionDef | ast.AsyncFunctionDef) -> int | None:
 
 def _find_production_files(root: Path) -> list[Path]:
     out: list[Path] = []
-    for path in iter_non_migration_files(root, name_pattern="*.py"):
+    for path in root.rglob("*.py"):
         parts = set(path.parts)
         if parts & SKIP_DIRS:
             continue
@@ -188,8 +186,6 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-catch-all-handler] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
-        return 1
-    if not validate_migration_scope(root, "check-catch-all-handler"):
         return 1
 
     # NinjaAPI 인스턴스(변수)별로 핸들러를 합산 — 분산-파일 거짓양성 차단.

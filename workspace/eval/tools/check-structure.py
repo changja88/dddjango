@@ -7,15 +7,12 @@
 이 출력을 *보지 않은 채* 채점하고 조정자가 사후 대조한다(§1.0·§1.3).
 
 구현 행(grep-closable, §1.1 표):
-  SH-1 신규 컨테이너 / SH-2 신규 BC 4계층 / SH-4 신규 Django앱 위치 / SH-7 포트 위치 /
+  SH-1 컨테이너 / SH-2 4계층 / SH-4 Django앱 위치 / SH-7 포트 위치 /
   SH-9 단일 레이아웃 / SD-7 컨텍스트 통신(FAIL방향) / SD-3 무복제(constraint 캐럿) /
   NJ-1 스택 / NJ-4 status 선언.
-비대칭/의미 행(SD-7 PASS='OHS인가', Q-5 명령·보고 정직성)은 의미 레인 위임 — 여기서 안 봄.
+비대칭/술어미정의 행(SD-7 PASS='OHS인가', Q-5 신규/재작성)은 의미 레인 위임 — 여기서 안 봄.
 
-v4 brownfield 헬퍼(§1.1.M): HEAD가 있으면 실제 AppConfig/Model identity로 app별 baseline
-existing/new를 분류한다. 기존 persistence app은 touched 여부와 무관하게 위치를 grandfather하고,
-표준 `application/` 컨테이너가 없는 프로젝트에 baseline root app 관례가 있으면 그 관례를
-보존한다. HEAD가 없으면 기존 위치만으로 FAIL을 만들지 않는다. --run-change-set 으로 baseline(HEAD) 대비
+마스크 C 헬퍼(§1.1.M, [E2] 교정): --run-change-set 으로 baseline(HEAD) 대비
 working-tree 변경 = `git diff HEAD`(tracked) ∪ `git ls-files --others`(untracked 신규)를
 출력한다 — /dddjango 산출은 대개 untracked라 `git diff HEAD`만으론 0건 누락되는 함정 차단.
 
@@ -26,7 +23,6 @@ working-tree 변경 = `git diff HEAD`(tracked) ∪ `git ls-files --others`(untra
 """
 from __future__ import annotations
 
-import ast
 import re
 import subprocess
 import sys
@@ -48,189 +44,6 @@ def _git(target: Path, *args: str) -> list[str]:
         return []
 
 
-def _git_root(target: Path) -> Path | None:
-    """Return the repository root when TARGET has a readable HEAD."""
-    try:
-        root = subprocess.run(
-            ["git", "-C", str(target), "rev-parse", "--show-toplevel"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        head = subprocess.run(
-            ["git", "-C", str(target), "rev-parse", "--verify", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError:
-        return None
-    if root.returncode != 0 or head.returncode != 0:
-        return None
-    return Path(root.stdout.strip()).resolve()
-
-
-def _git_show(root: Path, relative: Path) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(root), "show", f"HEAD:{relative.as_posix()}"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError:
-        return None
-    return result.stdout if result.returncode == 0 else None
-
-
-def _expression_path(expression: ast.expr) -> str | None:
-    if isinstance(expression, ast.Name):
-        return expression.id
-    if isinstance(expression, ast.Attribute):
-        owner = _expression_path(expression.value)
-        if owner is not None:
-            return f"{owner}.{expression.attr}"
-    return None
-
-
-class _ModuleDjangoSignalCollector(ast.NodeVisitor):
-    """모듈 import/class만 수집하고 지역 scope의 예시 코드는 제외한다."""
-
-    def __init__(self) -> None:
-        self.imports: list[ast.Import | ast.ImportFrom] = []
-        self.classes: list[ast.ClassDef] = []
-
-    def visit_Import(self, node: ast.Import) -> None:
-        self.imports.append(node)
-
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        self.imports.append(node)
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        self.classes.append(node)
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        return
-
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        return
-
-    def visit_Lambda(self, node: ast.Lambda) -> None:
-        return
-
-
-def _django_signal_collector(text: str) -> _ModuleDjangoSignalCollector | None:
-    try:
-        tree = ast.parse(text)
-    except SyntaxError:
-        return None
-    collector = _ModuleDjangoSignalCollector()
-    collector.visit(tree)
-    return collector
-
-
-def _has_app_config_signal(text: str) -> bool:
-    collector = _django_signal_collector(text)
-    if collector is None:
-        return False
-    direct_aliases: set[str] = set()
-    module_aliases: set[str] = set()
-    for node in collector.imports:
-        if isinstance(node, ast.ImportFrom) and node.module == "django.apps":
-            direct_aliases.update(
-                imported.asname or imported.name
-                for imported in node.names
-                if imported.name == "AppConfig"
-            )
-        elif isinstance(node, ast.ImportFrom) and node.module == "django":
-            module_aliases.update(
-                imported.asname or imported.name
-                for imported in node.names
-                if imported.name == "apps"
-            )
-        elif isinstance(node, ast.Import):
-            for imported in node.names:
-                if imported.name == "django.apps":
-                    module_aliases.add(imported.asname or imported.name)
-                elif imported.name == "django":
-                    module_aliases.add(f"{imported.asname or imported.name}.apps")
-    bases = {f"{module}.AppConfig" for module in module_aliases}
-    return any(
-        any(
-            (isinstance(base, ast.Name) and base.id in direct_aliases)
-            or _expression_path(base) in bases
-            for base in class_node.bases
-        )
-        for class_node in collector.classes
-    )
-
-
-def _has_django_model_signal(text: str) -> bool:
-    collector = _django_signal_collector(text)
-    if collector is None:
-        return False
-    direct_aliases: set[str] = set()
-    module_aliases: set[str] = set()
-    for node in collector.imports:
-        if isinstance(node, ast.ImportFrom) and node.module == "django.db.models":
-            direct_aliases.update(
-                imported.asname or imported.name
-                for imported in node.names
-                if imported.name == "Model"
-            )
-        elif isinstance(node, ast.ImportFrom) and node.module == "django.db":
-            module_aliases.update(
-                imported.asname or imported.name
-                for imported in node.names
-                if imported.name == "models"
-            )
-        elif isinstance(node, ast.Import):
-            for imported in node.names:
-                if imported.name == "django.db.models":
-                    module_aliases.add(imported.asname or imported.name)
-                elif imported.name == "django":
-                    module_aliases.add(
-                        f"{imported.asname or imported.name}.db.models"
-                    )
-    bases = {f"{module}.Model" for module in module_aliases}
-    return any(
-        any(
-            (isinstance(base, ast.Name) and base.id in direct_aliases)
-            or _expression_path(base) in bases
-            for base in class_node.bases
-        )
-        for class_node in collector.classes
-    )
-
-
-def _head_has_django_app(root: Path, app_relative: Path) -> bool:
-    app_config = _git_show(root, app_relative / "apps.py")
-    if app_config is not None and _has_app_config_signal(app_config):
-        return True
-    model = _git_show(root, app_relative / "models.py")
-    if model is not None and _has_django_model_signal(model):
-        return True
-    model_sources = _git(root, "ls-tree", "-r", "--name-only", "HEAD", "--", str(app_relative / "models"))
-    return any(
-        source.endswith(".py")
-        and (text := _git_show(root, Path(source))) is not None
-        and _has_django_model_signal(text)
-        for source in model_sources
-    )
-
-
-def _baseline_state(target: Path, path: Path) -> str:
-    """Django app identity를 HEAD와 비교해 existing/new/unavailable로 분류한다."""
-    root = _git_root(target)
-    if root is None:
-        return "unavailable"
-    try:
-        rel = path.resolve().relative_to(root)
-    except ValueError:
-        return "unavailable"
-    return "existing" if _head_has_django_app(root, rel) else "new"
-
-
 def run_change_set(target: Path) -> list[str]:
     """baseline(HEAD) 대비 변경 파일 = tracked diff ∪ untracked 신규 ([E2])."""
     tracked = _git(target, "diff", "HEAD", "--name-only")
@@ -241,10 +54,8 @@ def run_change_set(target: Path) -> list[str]:
 def _py_files(target: Path) -> list[Path]:
     return [
         p for p in target.rglob("*.py")
-        if ".venv" not in p.relative_to(target).parts
-        and "__pycache__" not in p.relative_to(target).parts
-        and "site-packages" not in p.relative_to(target).parts
-        and "migrations" not in p.relative_to(target).parts
+        if ".venv" not in p.parts and "__pycache__" not in p.parts
+        and "site-packages" not in p.parts and "migrations" not in p.parts
     ]
 
 
@@ -256,84 +67,13 @@ def _rel(target: Path, p: Path) -> str:
 
 
 def _find_apps(target: Path) -> list[Path]:
-    """실제 AppConfig 또는 Django Model 상속이 있는 로컬 app 디렉터리."""
-    apps: set[Path] = set()
+    """Django 앱 = apps.py 를 가진 디렉터리(테스트/venv 제외)."""
+    apps = []
     for ap in target.rglob("apps.py"):
-        relative_parts = ap.relative_to(target).parts
-        if {".venv", "venv", "__pycache__", "site-packages", "migrations"} & set(relative_parts):
+        if ".venv" in ap.parts or "__pycache__" in ap.parts:
             continue
-        try:
-            text = ap.read_text(encoding="utf-8")
-        except (OSError, UnicodeError):
-            continue
-        if _has_app_config_signal(text):
-            apps.add(ap.parent)
-    for model in target.rglob("*.py"):
-        relative = model.relative_to(target)
-        if {".venv", "venv", "__pycache__", "site-packages", "migrations"} & set(relative.parts):
-            continue
-        if model.name != "models.py" and model.parent.name != "models":
-            continue
-        try:
-            text = model.read_text(encoding="utf-8")
-        except (OSError, UnicodeError):
-            continue
-        if _has_django_model_signal(text):
-            apps.add(model.parent if model.name == "models.py" else model.parent.parent)
-    return sorted(apps)
-
-
-def _standard_application_index(target: Path, path: Path) -> int | None:
-    try:
-        parts = path.relative_to(target).parts
-    except ValueError:
-        return None
-    if parts and parts[0] == "application":
-        return 0
-    if len(parts) >= 2 and parts[:2] == ("src", "application"):
-        return 1
-    return None
-
-
-def _is_root_app(target: Path, app: Path) -> bool:
-    try:
-        return len(app.relative_to(target).parts) == 1
-    except ValueError:
-        return False
-
-
-def _head_has_standard_application_container(target: Path) -> bool:
-    root = _git_root(target)
-    if root is None:
-        return False
-    candidates = (target / "application", target / "src" / "application")
-    for candidate in candidates:
-        try:
-            relative = candidate.resolve(strict=False).relative_to(root)
-        except ValueError:
-            continue
-        try:
-            result = subprocess.run(
-                ["git", "-C", str(root), "cat-file", "-e", f"HEAD:{relative.as_posix()}"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        except FileNotFoundError:
-            continue
-        if result.returncode == 0:
-            return True
-    return False
-
-
-def _has_established_root_app_convention(target: Path, apps: list[Path]) -> bool:
-    uses_standard_layout = (target / "application").is_dir() or (
-        target / "src" / "application"
-    ).is_dir() or _head_has_standard_application_container(target)
-    return not uses_standard_layout and any(
-        _is_root_app(target, app) and _baseline_state(target, app) == "existing"
-        for app in apps
-    )
+        apps.append(ap.parent)
+    return apps
 
 
 def _emit(item: str, signal: str, note: str, evidence: list[str]) -> None:
@@ -345,118 +85,52 @@ def _emit(item: str, signal: str, note: str, evidence: list[str]) -> None:
 
 
 def check_sh1(target: Path, apps: list[Path]) -> None:
-    """SH-1: 확립 관례가 없을 때 신규 app은 application/ 기본 위치를 쓴다."""
-    states = [(a, _baseline_state(target, a)) for a in apps]
-    root_convention = _has_established_root_app_convention(target, apps)
-    bad = [
-        _rel(target, app)
-        for app, state in states
-        if state == "new"
-        and _standard_application_index(target, app) is None
-        and not (root_convention and _is_root_app(target, app))
-    ]
-    unknown = [
-        _rel(target, app)
-        for app, state in states
-        if state == "unavailable" and _standard_application_index(target, app) is None
-    ]
-    grandfathered = [
-        _rel(target, app)
-        for app, state in states
-        if state == "existing" and _standard_application_index(target, app) is None
-    ]
+    """SH-1: 신규 앱이 application/<app>/ 하위인가."""
+    bad = [_rel(target, a) for a in apps if "application" not in a.parts]
     if bad:
-        _emit("SH-1 컨테이너", "FAIL-신호", "baseline에 없던 신규 앱이 application/ 밖", bad)
-    elif unknown:
-        _emit("SH-1 컨테이너", "NA/주의", "baseline 불명: 기존 위치만으로 FAIL 금지", unknown)
+        _emit("SH-1 컨테이너", "FAIL-신호", "application/ 밖 앱(마스크 C 곱 필요)", bad)
     else:
-        new_count = sum(state == "new" for _, state in states)
-        _emit(
-            "SH-1 컨테이너",
-            "PASS-신호",
-            f"신규 앱 {new_count}개가 표준 위치 또는 확립된 root 관례; baseline 기존 app은 grandfather",
-            [f"grandfather: {path}" for path in grandfathered],
-        )
+        _emit("SH-1 컨테이너", "PASS-신호", f"{len(apps)} 앱 전부 application/ 하위", [])
 
 
 def check_sh2(target: Path, apps: list[Path]) -> None:
-    """SH-2: only newly created BCs are required to have four layers."""
+    """SH-2: 각 앱에 4계층 물리 분리."""
     findings = []
-    unknown = []
-    checked = 0
     for a in apps:
-        state = _baseline_state(target, a)
-        if state == "existing":
+        if "application" not in a.parts:
             continue
-        if state == "unavailable":
-            unknown.append(_rel(target, a))
-            continue
-        application_index = _standard_application_index(target, a)
-        if application_index is None:
-            continue
-        checked += 1
         # 앱 컨텍스트 루트 = application/<bc>/
-        relative_parts = a.relative_to(target).parts
-        bc_root = target.joinpath(*relative_parts[: application_index + 2])
+        idx = a.parts.index("application")
+        bc_root = Path(*a.parts[: idx + 2])
         missing = [L for L in LAYERS if not (bc_root / L).is_dir()]
         if missing:
             findings.append(f"{_rel(target, bc_root)}: 누락 {missing}")
     if findings:
-        _emit("SH-2 4계층", "FAIL-신호", "신규 BC의 4계층 미완", findings)
-    elif unknown:
-        _emit("SH-2 4계층", "NA/주의", "baseline 불명: 신규 여부를 의미 레인에서 확인", unknown)
+        _emit("SH-2 4계층", "FAIL-신호", "4계층 미완(빈 골격은 §2.3③ 별도)", findings)
     else:
-        _emit("SH-2 4계층", "PASS-신호", f"신규 BC 후보 {checked}개의 4계층 존재", [])
+        _emit("SH-2 4계층", "PASS-신호", "BC 루트 4계층 존재", [])
 
 
-def check_sh4(target: Path, apps: list[Path]) -> None:
-    """SH-4: 확립 관례가 없을 때 신규 Django app은 infra_layer/django_*를 쓴다."""
-    bad: list[str] = []
-    unknown: list[str] = []
-    grandfathered: list[str] = []
-    root_convention = _has_established_root_app_convention(target, apps)
-    for owner in apps:
-        state = _baseline_state(target, owner)
-        if state == "existing":
-            grandfathered.append(_rel(target, owner))
+def check_sh4(target: Path) -> None:
+    """SH-4: models.py·migrations/ 가 infra_layer/django_*/ 하위인가."""
+    bad = []
+    for mp in target.rglob("models.py"):
+        if ".venv" in mp.parts or "__pycache__" in mp.parts:
             continue
-        if state == "unavailable":
-            unknown.append(_rel(target, owner))
-            continue
-        ok = (
-            root_convention and _is_root_app(target, owner)
-        ) or (
-            owner.parent.name == "infra_layer"
-            and owner.name.startswith("django_")
-        )
+        parts = mp.parts
+        ok = "infra_layer" in parts and any(s.startswith("django_") for s in parts)
         if not ok:
-            bad.append(f"{_rel(target, owner)} (신규 app, infra_layer/django_* 밖)")
+            bad.append(f"{_rel(target, mp)} (infra_layer/django_* 밖)")
     if bad:
-        _emit("SH-4 Django앱위치", "FAIL-신호", "신규 Django app owner가 표준 위치 밖", bad)
-    elif unknown:
-        _emit("SH-4 Django앱위치", "NA/주의", "baseline/app 소유 불명: 위치만으로 FAIL 금지", unknown)
+        _emit("SH-4 Django앱위치", "FAIL-신호", "models.py가 표준 위치 밖(마스크 C 곱)", bad)
     else:
-        _emit(
-            "SH-4 Django앱위치",
-            "PASS-신호",
-            "신규 app은 표준 위치; baseline 기존 persistence app은 원위치 보존",
-            [f"grandfather: {path}" for path in sorted(set(grandfathered))],
-        )
+        _emit("SH-4 Django앱위치", "PASS-신호", "models.py 전부 infra_layer/django_*", [])
 
 
 def check_sh7(target: Path) -> None:
     """SH-7: port/ 디렉터리 부모가 domain_layer 인가."""
-    ports = [
-        directory
-        for directory in target.rglob("port")
-        if directory.is_dir()
-        and ".venv" not in directory.relative_to(target).parts
-    ]
-    bad = [
-        _rel(target, directory)
-        for directory in ports
-        if "domain_layer" not in directory.relative_to(target).parts
-    ]
+    ports = [d for d in target.rglob("port") if d.is_dir() and ".venv" not in d.parts]
+    bad = [_rel(target, d) for d in ports if "domain_layer" not in d.parts]
     if not ports:
         _emit("SH-7 포트위치", "NA", "port/ 디렉터리 없음", [])
     elif bad:
@@ -472,8 +146,7 @@ def check_sh9(target: Path, apps: list[Path]) -> None:
     seen = set()
     for a in search_roots:
         for parent in {a, *[p for p in a.rglob("*") if p.is_dir()]}:
-            relative_parts = parent.relative_to(target).parts
-            if ".venv" in relative_parts or "__pycache__" in relative_parts:
+            if ".venv" in parent.parts or "__pycache__" in parent.parts:
                 continue
             key = str(parent)
             if key in seen:
@@ -504,7 +177,7 @@ def check_sd7(target: Path) -> None:
     acl_notes = []
     imp_re = re.compile(r"^\s*(?:from|import)\s+application\.([A-Za-z_]\w*)\.(domain_layer|infra_layer)")
     for f in _py_files(target):
-        parts = f.relative_to(target).parts
+        parts = f.parts
         if any(p in ("test", "tests") or p.startswith("test") for p in parts):
             continue  # 통합테스트의 타 BC import는 정당 — 프로덕션 코드만 본다
         own_bc = None
@@ -543,7 +216,7 @@ def check_sd3(target: Path) -> None:
     for f in _py_files(target):
         # 평면 services/ 도 포함(코덱스 CAS는 catalog/services/ 에 있음) — repository·service·infra 전부
         low = str(f).lower()
-        if not ("infra_layer" in f.relative_to(target).parts or "repository" in low or "service" in low or "published_service" in low):
+        if not ("infra_layer" in f.parts or "repository" in low or "service" in low or "published_service" in low):
             continue
         try:
             lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -626,16 +299,16 @@ def main() -> int:
     print(f"# EVAL-METHOD §1.1 결정 레인 리포트 — {target}")
     print(f"# (리포터: 신호+줄인용만. 집계·치명게이트=§2. 의미 레인은 이 출력에 blind.)")
     apps = _find_apps(target)
-    print(f"# 검출 앱(actual AppConfig/Model): {[_rel(target, a) for a in apps]}")
+    print(f"# 검출 앱(apps.py): {[_rel(target, a) for a in apps]}")
     check_sh1(target, apps)
     check_sh2(target, apps)
-    check_sh4(target, apps)
+    check_sh4(target)
     check_sh7(target)
     check_sh9(target, apps)
     check_sd7(target)
     check_sd3(target)
     check_nj(target)
-    print("\n# (SD-7 PASS방향 'OHS인가'·Q-5 명령/보고·SD-6 presentation = 의미 레인 §1.1.M/§1.2)")
+    print("\n# (SD-7 PASS방향 'OHS인가'·Q-5 신규/재작성·SD-6 presentation·마스크C 판정 = 의미 레인 §1.1.M/§1.2)")
     return 0
 
 

@@ -29,12 +29,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from migration_scope import (
-    is_migration_owned_path,
-    iter_non_migration_files,
-    validate_migration_scope,
-)
-
 STOCK_ENGINE_PREFIXES = (
     "django.db.backends.",
     "django.contrib.gis.db.backends.",
@@ -56,7 +50,7 @@ SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycach
 def _find_settings_files(root: Path) -> list[Path]:
     """프로덕션 settings 후보를 찾는다(test 전용 모듈·venv 제외)."""
     out: list[Path] = []
-    for path in iter_non_migration_files(root, name_pattern="*.py"):
+    for path in root.rglob("*.py"):
         parts = set(path.parts)
         if parts & SKIP_DIRS:
             continue
@@ -111,8 +105,6 @@ def main(argv: list[str]) -> int:
     if not root.is_dir():
         print(f"[check-mechanism-ownership] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
-    if not validate_migration_scope(root, "check-mechanism-ownership"):
-        return 1
 
     findings: list[str] = []
     for settings_file in _find_settings_files(root):
@@ -127,11 +119,7 @@ def main(argv: list[str]) -> int:
             if "." not in engine:
                 continue
             # 조건 2: 레포-로컬 백엔드 모듈 실재.
-            backend_files = [
-                p
-                for p in _candidate_backend_files(root, engine)
-                if not is_migration_owned_path(root, p) and p.is_file()
-            ]
+            backend_files = [p for p in _candidate_backend_files(root, engine) if p.is_file()]
             if not backend_files:
                 continue  # third-party/미실재 → 통과.
             # 조건 3: DatabaseWrapper 서브클래스 + 트랜잭션/락 의미 마커.

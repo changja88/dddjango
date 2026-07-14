@@ -16,9 +16,9 @@ magic-string 검사는 오탐으로 생태계에서 기각된 부류라 시도�
   1) git 레포다. touched 한정 규약이라 git 없이는 식별 불가 → exit 0(보수적).
   2) 그 파일이 이번 변경에서 touched(신규 `??`/`A` 또는 수정 `M`)다. 수정 파일은 **추가된
      라인**(git diff -U0)에 위반 라인이 있을 때만 잡는다 — 기존 리터럴은 grandfather.
-  3) G0 manifest의 정확한 migration root는 진입 전 제외한다(폴더 이름 추론 안 함). 테스트
-     경로(`test`/`tests` 디렉터리·`test_*.py`·`conftest.py`)도 면제 — 테스트 기댓값 리터럴은
-     `implementation-test` §15.4 가 허용·강제한다.
+  3) `migrations/`·테스트 경로(`test`/`tests` 디렉터리·`test_*.py`·`conftest.py`)는 면제 —
+     마이그레이션은 historical value 동결(`implementation-django` §10.4)이 오히려 규율이고,
+     테스트 기댓값 리터럴은 `implementation-test` §15.4 가 허용·강제한다.
   4) `choices=` 가 리터럴 목록(인라인 List/Tuple/Dict)이면 참조할 심볼이 없으므로 비대상.
   5) `default=OrderStatus.PENDING.value`(Attribute) 등 비-Constant 는 정상(.value 평탄화 —
      `implementation-django` §2.5)이라 잡지 않는다.
@@ -34,14 +34,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from migration_scope import (
-    is_migration_owned_path,
-    iter_non_migration_files,
-    validate_migration_scope,
-)
-
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
-EXEMPT_DIR_NAMES = {"test", "tests"}
+EXEMPT_DIR_NAMES = {"test", "tests", "migrations"}
 MODEL_SUFFIX = "Model"
 NON_MODEL_BASES = {"BaseModel"}  # pydantic 등 — ORM 모델로 오인 금지.
 HUNK_RE = re.compile(r"^@@ [^+]*\+(\d+)(?:,(\d+))? @@")
@@ -208,19 +202,12 @@ def main(argv: list[str]) -> int:
     if not root.is_dir():
         print(f"[check-choices-literal-consumption] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
-    if not validate_migration_scope(root, "check-choices-literal-consumption"):
-        return 1
 
     touched = _git_touched(root)
     if touched is None:
         return 0  # non-git — touched 식별 불가, 보수적 스킵.
 
-    candidates = {
-        rel: code
-        for rel, code in touched.items()
-        if not _is_exempt_path(rel)
-        and not is_migration_owned_path(root, root / rel)
-    }
+    candidates = {rel: code for rel, code in touched.items() if not _is_exempt_path(rel)}
     if not candidates:
         return 0
 
@@ -228,7 +215,7 @@ def main(argv: list[str]) -> int:
     # 모델 선언은 기존(untouched) 파일에 있을 수 있다.
     registry: dict[str, set[str]] = {}
     trees: dict[Path, ast.Module] = {}
-    for f in iter_non_migration_files(root, name_pattern="*.py"):
+    for f in sorted(root.rglob("*.py")):
         rel = f.relative_to(root)
         if _is_exempt_path(rel):
             continue
@@ -272,8 +259,8 @@ def main(argv: list[str]) -> int:
             "참조한다 — 리터럴 오타는 조용한 항상-False 로 잠복하고 심볼 오타는 즉사한다. "
             "`default=` 는 `.value` 평탄화(`default=OrderStatus.PENDING.value` — "
             "`implementation-django` §2.5), 필터는 `.filter(status=OrderStatus.PENDING)`. "
-            "G0 manifest의 정확한 migration root는 진입 전 제외하며 이름만으로 추론하지 않는다. "
-            "테스트 assert 기댓값의 리터럴도 면제한다(implementation-test §15.4)."
+            "마이그레이션 historical value·테스트 assert 기댓값의 리터럴은 면제 경로라 이 "
+            "게이트가 보지 않는다(§10.4·implementation-test §15.4)."
         )
         return 2
 

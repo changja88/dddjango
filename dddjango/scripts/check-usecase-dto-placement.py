@@ -56,12 +56,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from migration_scope import (
-    is_migration_owned_path,
-    iter_non_migration_files,
-    validate_migration_scope,
-)
-
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 OPERATION_SUFFIXES = ("Command", "Query")
@@ -117,10 +111,10 @@ def _added_lines(root: Path, rel: Path) -> set[int]:
 def _candidate_files(root: Path) -> list[Path]:
     """`application/**/application_layer/**/{command,query}/*_{command,query}.py` 프로덕션 파일."""
     app = root / "application"
-    if is_migration_owned_path(root, app) or not app.is_dir():
+    if not app.is_dir():
         return []
     files: list[Path] = []
-    for f in iter_non_migration_files(root, app, "*.py"):
+    for f in sorted(app.rglob("*.py")):
         rel_parts = f.relative_to(root).parts
         parts = set(rel_parts)
         if parts & SKIP_DIRS or parts & TEST_DIR_NAMES:
@@ -218,8 +212,6 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-usecase-dto-placement] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
-        return 1
-    if not validate_migration_scope(root, "check-usecase-dto-placement"):
         return 1
 
     candidates = _candidate_files(root)

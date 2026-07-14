@@ -11,7 +11,7 @@
 7. [폼과 유효성 검증](#7-폼과-유효성-검증)
 8. [REST API 경계와 기존 DRF 유지보수](#8-rest-api-경계와-기존-drf-유지보수)
 9. [시그널 사용 가이드라인](#9-시그널-사용-가이드라인)
-10. [DB migration 비소유 경계](#10-db-migration-비소유-경계)
+10. [마이그레이션 베스트 프랙티스](#10-마이그레이션-베스트-프랙티스)
 11. [성능 최적화](#11-성능-최적화)
 12. [캐싱 전략](#12-캐싱-전략)
 13. [보안](#13-보안)
@@ -217,7 +217,7 @@ class OrderModel(models.Model):
     )
 ```
 
-**`.value` 평탄화**: ORM `default=`·`CheckConstraint`·부분 인덱스의 `Q()` 조건은 DB에 저장되는 스칼라 값으로 표현한다. 순수 StrEnum 멤버 객체를 인프라 선언에 직접 박지 말고 `.value`로 평탄화한다(단일 출처에서의 파생이므로 심볼 소비로 인정). 이 규칙은 모델 선언 경계를 정하는 것이지 migration artifact를 작성·검사하라는 지시가 아니다(§10).
+**`.value` 평탄화**: `default=` 등 마이그레이션이 직렬화하는 자리에 순수 StrEnum **멤버를 직접 두면** Django `EnumSerializer`가 마이그레이션 파일에 **살아있는 enum 참조**(`OrderStatus["PENDING"]` + domain import)를 박는다 — 값 동결 직렬화(`ChoicesSerializer`)는 `models.Choices` 전용이다. domain Enum 파생 시에는 `.value`로 평탄화한다(단일 출처에서의 파생이므로 심볼 소비로 인정). `CheckConstraint`(`check=`)·부분 인덱스의 `Q()` 조건 값도 같은 파생으로 쓴다.
 
 **소비 규율**: `choices`/Enum이 선언된 필드 값의 비교·분기·`.filter()`·대입·`default`는 반드시 심볼로 참조한다 — `.filter(status="pending")` 금지 → `.filter(status=OrderStatus.PENDING)`. 비교는 `==`(`is` 금지 — 필드 값은 plain str로 흐른다). 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티다(`architecture-ddd` §3.2) — 심볼 치환이 판정 소유를 면책하지 않는다. 승격 판정·리터럴 허용 목록은 `discipline-cleancode` §2.14.
 
@@ -365,8 +365,6 @@ def get_default_view():
 ### 4.1 Fat Model, Thin View 원칙 [TSD]
 
 비즈니스 로직은 뷰가 아닌 모델(또는 서비스 레이어)에 둔다. Two Scoops of Django는 이를 **"Fat Models, Utility Modules, Thin Views, Stupid Templates"**로 정리한다.
-
-> **dddjango 적용 우선순위**: 이 절은 일반 Django의 Active Record 지침이다. dddjango DDD 기능 파이프라인에서는 `architecture-ddd`의 순수 domain ownership이 우선하므로 비즈니스 판정·불변식은 `domain_layer`가 소유하고, Django ORM 모델은 영속성 매핑·DB 제약·조회 편의만 맡는다. "Thin View"는 두 프로필 모두 유지한다.
 
 ```python
 # 나쁜 예: 뷰에 비즈니스 로직 집중
@@ -698,7 +696,7 @@ Product.objects.filter(category="books").update(
 
 ## 8. REST API 경계와 기존 DRF 유지보수
 
-신규 REST API의 리소스 계약, HTTP 상태 코드, 오류 응답, pagination, versioning, idempotency는 Django 모델/ORM 구현 문제가 아니라 API 계약 문제로 먼저 다룬다. dddjango runtime에서는 greenfield endpoint 구현의 기본 경로를 Django Ninja Router/Schema로 두며, 이 문서의 DRF 내용은 기존 DRF 코드 유지보수·전환 또는 이미 DRF를 표준으로 채택한 프로젝트 안에서만 적용한다.
+신규 REST API의 리소스 계약, HTTP 상태 코드, 오류 응답, pagination, versioning, idempotency는 Django 모델/ORM 구현 문제가 아니라 API 계약 문제로 먼저 다룬다. dddjango runtime에서는 greenfield endpoint 구현의 기본 경로를 Django Ninja Router/Schema로 두며, 이 문서의 DRF 내용은 기존 DRF 코드 유지보수, 레거시 migration review, 또는 이미 DRF를 표준으로 채택한 프로젝트 안에서만 적용한다.
 
 신규 코드에서 DRF `Serializer`, `ViewSet`, `APIView`, `DefaultRouter`를 기본 권장안처럼 제시하지 않는다. 기존 DRF surface를 다룰 때도 도메인 규칙은 serializer/viewset에 흩뿌리지 말고 모델 메서드, service, selector, database constraint 같은 Django-side boundary에 둔다.
 
@@ -911,38 +909,141 @@ def order_create(*, user, items):
 
 ---
 
-## 10. DB migration 비소유 경계
+## 10. 마이그레이션 베스트 프랙티스
 
-### 10.1 플러그인이 소유하는 것
+### 10.1 기본 원칙 [DDoc] [TSD]
 
-dddjango는 현재 요구에 맞는 **최종 Django 모델·ORM 선언**과 애플리케이션 동작만 구현한다. 필드, `db_table`, `Meta.constraints`, 인덱스, 관계, 트랜잭션 경계를 현행 설계에 맞추는 것은 범위 안이다.
+```python
+# 마이그레이션을 작게 유지한다
+# sqlmigrate로 실제 SQL을 확인한다
+python manage.py sqlmigrate myapp 0002
 
-이러한 선언을 바꾸면 최종 보고에 다음만 명시한다.
+# 마이그레이션 파일은 반드시 버전 관리에 포함한다
+# .gitignore에 migrations/를 추가하지 않는다
+```
 
-- 스키마 영향: 있음/없음
-- 있음이면: **외부 DB transition·release 절차 대기**
-- migration·배포 준비 상태: dddjango 미검증
+### 10.2 데이터 마이그레이션 [DDoc]
 
-### 10.2 플러그인이 소유하지 않는 것
+```python
+from django.db import migrations
 
-DB migration lifecycle은 외부 릴리스 파이프라인·개발자의 소유다. dddjango는 다음을 지시하거나 수행하지 않는다.
+def forward_func(apps, schema_editor):
+    User = apps.get_model("users", "User")
+    for user in User.objects.filter(display_name=""):
+        user.display_name = user.username
+        user.save(update_fields=["display_name"])
 
-- numbered migration 파일의 생성·수정·삭제·이동·rename·squash·merge
-- migration graph·history·operation·DDL의 설계·검토·검증
-- `makemigrations`·`migrate`·`sqlmigrate`·`showmigrations` 등 migration 명령 실행
-- `RunPython`·`RunSQL`·state-only operation·data backfill·cleanup 작성
-- expand/contract·스키마 전환용 dual write/read·rollout·rollback·배포 순서 선택(외부 소유자가 현재 애플리케이션 계약으로 확정해 준 동작의 구현은 가능하지만, dddjango가 전환 전략으로 선택하지 않는다)
-- migration lifecycle 자체를 오라클로 삼는 테스트의 작성·수정·삭제
+def reverse_func(apps, schema_editor):
+    pass  # 롤백 시 데이터 원복이 불가능하면 pass
 
-위 명령은 dddjango가 직접 호출하거나 사용자에게 실행 절차로 지시하지 않는다. 다만 프로젝트가 이미 선언한 전체 테스트 runner를 변경 없이 실행했을 때 test DB 준비나 외부 소유 테스트·test infrastructure가 migration 동작을 간접 수행할 수 있다. 이는 외부 소유 부수 실행으로만 보고하며, dddjango는 그 내용을 해석하거나 migration 성공·안전 증거로 주장하지 않는다.
+class Migration(migrations.Migration):
+    dependencies = [("users", "0005_add_display_name")]
+    operations = [
+        migrations.RunPython(forward_func, reverse_func),
+    ]
+```
 
-Django는 이 생명주기의 메커니즘을 제공하지만 semantic safety, 기존 데이터 보존, lock risk, 운영 적용 순서를 자동으로 책임지지 않는다. 그 의사결정과 검증은 외부 소유자가 담당한다.
+- `apps.get_model()`로 히스토리 시점의 모델을 가져온다 -- 직접 임포트하지 않는다.
+- 데이터 마이그레이션은 `squashmigrations`에서 보존되지 않으므로 별도 관리한다.
 
-### 10.3 Brownfield 앱 보존
+### 10.3 무중단(Zero-Downtime) 마이그레이션 [DfP]
 
-작업 시작 전부터 존재하던 Django persistence 앱은 touched 여부와 무관하게 grandfather한다. `AppConfig.name`·`label`·모델 점경로·기존 테이블명·`migrations/`·`MIGRATION_MODULES`를 표준 트리에 맞추기 위해 옮기거나 바꾸지 않는다. 새 도메인·응용 코드는 repository/adapter로 기존 ORM을 감싸고, 필요한 현행 모델 선언만 기존 앱 안에서 수정한다.
+```python
+# 나쁜 예: NOT NULL 컬럼 추가와 동시에 배포
+# -> 구버전 코드가 INSERT할 때 새 컬럼을 모르므로 제약 위반
 
-새로 만든 Django 앱은 `discipline-houserules` 표준 트리를 따를 수 있다. dddjango는 `startapp`이 만드는 `migrations/__init__.py`를 포함해 migration 경로를 스캐폴딩하지 않는다. G0 전에 framework/external owner가 만든 `migrations/`가 이미 있으면 불변 보존할 뿐이다.
+# 좋은 예: 3단계 배포
+# 1단계: NULL 허용 컬럼 추가 + 배포
+class Migration(migrations.Migration):
+    operations = [
+        migrations.AddField(
+            model_name="order",
+            name="tracking_number",
+            field=models.CharField(max_length=50, null=True, blank=True),
+        ),
+    ]
+
+# 2단계: 데이터 채우기 + NOT NULL로 변경
+# 3단계: 구버전 코드 제거
+```
+
+- 대형 테이블에서는 락 시간을 최소화하기 위해 마이그레이션을 작은 단위로 분할한다.
+- PostgreSQL에서는 `django-pg-zero-downtime-migrations` 같은 도구를 고려한다.
+- `AddIndex`는 PostgreSQL에서 `CREATE INDEX CONCURRENTLY`를 사용하도록 설정할 수 있다.
+
+### 10.4 이미 이주가 결정된 뒤의 마이그레이션 이력 보존 [TSD] [DfP]
+
+기존 Django 앱(이미 `0001_initial`·`db_table`·`label`을 가진 앱)이 판정·불변식을
+새로 소유해 표준 4계층 구조로 **이주가 이미 결정된 뒤**, 그 *마이그레이션 이력*을
+파괴 없이 보존하는 메커니즘이다. *언제* 이주하느냐(판정 소유 기준)는 여기 범위가
+아니라 `architecture-ddd` §3.2가 정한다 — 여기서는 결정된 이주를 *어떻게* 이력
+파괴 없이 수행하느냐(HOW)만 다룬다. 핵심 함정: 앱을 `infra_layer/django_<app>/`로
+옮기며 ORM 클래스를 `<Name>Model`로 바꾸면 기본 테이블명(`<label>_<modelname>`)이
+달라져, 코더가 기존 `0001`을 *재작성*(fresh `initial`)하기 쉽다. 그러면 이미
+`0001_initial`을 적용한 기존 DB에서 그 마이그레이션이 skip되어 테이블이 안 생기거나
+후속 마이그레이션과 어긋난다(이력 불변 위반).
+
+```python
+# 1) 앱을 infra_layer/django_<app>/로 옮긴다 — AppConfig.name 은 새 점경로지만
+#    label 은 기존 값을 유지한다(이력은 (label, migration) 키로 추적되므로 label 이
+#    바뀌면 기존 0001 적용 기록과 끊긴다. import 점경로만 바뀌는 것은 무해).
+# infra_layer/django_catalog/apps.py
+class CatalogConfig(AppConfig):
+    name = "application.catalog.infra_layer.django_catalog"  # 새 점경로
+    label = "catalog"                                        # 기존 label 유지
+
+# 2) ORM 클래스명은 표준상 <Name>Model 이 되지만 테이블명은 기존 것을 명시 보존한다.
+# infra_layer/django_catalog/models/product_model.py
+class ProductModel(models.Model):          # 기존 class Product 에서 rename
+    class Meta:
+        db_table = "catalog_product"       # 기존 테이블명 — 클래스 rename 이 바꾸지 못하게
+
+# 3) 기존 0001_initial 은 불변(재작성·삭제 금지). 클래스 rename 은 새 0002 에서
+#    state-only 로 반영한다 — database_operations=[] 라 실제 DDL 이 없어 "0001 불변"과
+#    양립한다. 단 0001 의 CreateModel 에는 db_table 이 없어 state 의 기본 테이블명이
+#    클래스 rename 으로 catalog_productmodel 로 재계산되므로, AlterModelTable 을 state 에
+#    함께 넣어 실제 db_table(catalog_product)과 맞춘다 — 아니면 makemigrations --check 가
+#    드리프트(AlterModelTable)를 보고한다.
+# migrations/0002_rename_product_to_productmodel.py
+class Migration(migrations.Migration):
+    dependencies = [("catalog", "0001_initial")]
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RenameModel("Product", "ProductModel"),
+                migrations.AlterModelTable(name="productmodel", table="catalog_product"),
+            ],
+            database_operations=[],        # db_table 불변 → 실제 DDL 없음
+        ),
+    ]
+```
+
+- `--fake-initial`은 이 경로의 기본 도구가 아니다 — 이미 `0001_initial`이 *적용된*
+  기존 앱(label 재사용)에서는 no-op이다(skip할 0001이 없다). 마이그레이션 기록이
+  *전무한* legacy 앱을 처음 편입할 때(테이블은 있으나 `django_migrations`에 행이 없을
+  때)에만 조건부로 쓴다.
+- 검증: `python manage.py makemigrations --check`로 드리프트가 0인지(미생성
+  마이그레이션 없음) 확인하고, `python manage.py sqlmigrate <app> 0002`로 0002가 **DDL을
+  발행하지 않는지**(state-only) 확인한다 — DDL이 찍히면 db_table 보존이 빠진 것이다.
+- **이주 완료 = 옛 루트 `<app>/` 통째 삭제**(`git rm -r <app>/`): 새 경로가 `0001`을
+  보존하므로 옛 루트 앱 패키지·`migrations/`를 남기지 않는다. `MIGRATION_MODULES`로 옛 루트
+  `<app>.migrations`를 가리키는 잔존 핀도 두지 않는다(새 경로 단일 소유) — 옛 루트가 남으면
+  앱이 두 곳에 존재하는 미완 이주(`discipline-houserules` §0 배타성)다. *왜* — step 1의
+  "옮긴다(move)"가 옛 루트 소멸을 함의하나, 명시 안 하면 코더가 move를 copy로 떨어뜨려(새 트리만
+  만들고 옛 루트 git 방치) 앱이 두 곳에 남는다.
+- 신규 모델의 db_table 규약(`<app_label>_<entity_snake>`·`Model` 제거·snake)은
+  `discipline-houserules` §4가 정한다(결정적 백스톱 `check-db-table.py`). §10.4는 그와
+  별개로 **이미 적용된** 기존 테이블명을 *보존*하는 경로다 — 이주 결과 테이블명이 신규
+  규약과 우연히 같든(`catalog_product`) legacy 그대로든(`tbl_product`) 이력 보존이
+  우선이다. 백스톱 `check-db-table.py`는 db_table **존재**만 보고 값 형태는 보지 않으므로,
+  이주가 신규 파일로 떨어져도 보존 db_table을 *명시*했으면(§10.4가 요구하는 그대로) 통과한다
+  — 보존명이 규약(`<app_label>_<entity_snake>`)과 달라도 무방.
+- **historical value 리터럴 동결**: 마이그레이션 파일 안의 choices·상태·default 값은
+  살아있는 도메인 Enum을 참조하지 않는다 — Enum 변경이 과거 이력의 의미를 소급 변경하면
+  안 된다(위 "이력 보존"과 동형 원리). 모델 `default=`를 `.value`로 평탄화하면(§2.5)
+  makemigrations가 리터럴로 동결한다; StrEnum 멤버를 직접 두면 `EnumSerializer`가 산 참조
+  (`OrderStatus["PENDING"]` + domain import)를 직렬화하므로 금지. 수기 데이터
+  마이그레이션에서도 Enum import 대신 리터럴을 쓴다.
 
 ---
 
@@ -1417,14 +1518,12 @@ def article_list(*, author: User | None = None, status: str | None = None):
 
 ### 16.3 DDD와 Django의 트레이드오프 [CP]
 
-dddjango 플러그인은 아래 선택지 중 **순수 도메인 모델+repository/data mapper 분리 프로필을 이미 채택**한다. 따라서 이 파이프라인 안에서는 Active Record에 비즈니스 판정을 두는 단순화보다 `architecture-ddd`의 경계가 우선하며, 아래 내용은 일반 Django 프로젝트가 선택할 때의 트레이드오프 설명으로 읽는다.
-
 ```python
 # Django ORM은 Active Record 패턴 -- 도메인 모델과 영속성 모델이 같은 객체
 # DDD의 Repository 패턴을 적용하려면 수동 변환 레이어가 필요
 
 # 방법 A: Django ORM 직접 사용 (대부분의 프로젝트에 적합)
-# - Django의 배터리(admin, forms, ORM)를 그대로 활용
+# - Django의 배터리(admin, forms, migrations)를 그대로 활용
 # - 도메인 로직은 모델 메서드 + 서비스 레이어에 배치
 
 # 방법 B: Repository 패턴 도입 (복잡한 도메인에 적합)
@@ -1446,7 +1545,7 @@ class ArticleRepository:
 **실용적 권고:**
 - 대부분의 Django 프로젝트에서는 **모델 메서드 + 서비스 함수**로 충분하다.
 - 도메인이 정말 복잡해질 때만 Repository 패턴을 점진적으로 도입한다.
-- DDD의 모든 패턴을 Django에 강제하면 Django의 장점(admin, ORM, forms)을 재구현하게 된다. **[CP]**
+- DDD의 모든 패턴을 Django에 강제하면 Django의 장점(admin, migrations, forms)을 재구현하게 된다. **[CP]**
 - 서비스 레이어는 좋은 출발점 -- 뷰와 모델 사이에 얇은 계층을 두어 비즈니스 로직을 격리한다.
 
 ### 16.4 트랜잭션과 일관성 경계 [DDoc] [CP]
@@ -1488,7 +1587,7 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 | DB constraint | application bug나 다른 writer가 있어도 DB가 지켜야 하는 invariant는 무엇인가 |
 | side effect timing | email/payment/message/cache invalidation이 commit 전후 어디에서 실행되는가 |
 | isolation/retry | serialization failure, deadlock, duplicate key 같은 실패를 retry할지 forward-fix할지 |
-| verification | `TransactionTestCase`, concurrency test, integration test, query-count check 중 무엇으로 현행 동작을 확인하는가 |
+| verification | `TransactionTestCase`, concurrency test, integration test, migration SQL review, query-count check 중 무엇으로 확인하는가 |
 
 테스트에서는 일반 DB-backed behavior는 `TestCase`로 충분하지만, commit hook, lock, DB trigger, transaction isolation을 검증해야 하면 `TransactionTestCase`나 실제 DB 기반 integration test가 필요하다.
 
@@ -1498,7 +1597,7 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 
 ```python
 # domain_layer/order/event/event_type.py -- 발행 이벤트 종류의 단일 출처
-# (1종째부터 enum; 현재 소비·재생 의무가 남는 동안 append-only: architecture-ddd §3.7)
+# (1종째부터 enum·append-only: birth-enum, architecture-ddd §3.7)
 class OrderEventType(StrEnum):
     ORDER_CONFIRMED = "order.confirmed"
 
@@ -1634,7 +1733,7 @@ class OrderItem(models.Model):
 
 - `pk` 속성은 구성 필드 값의 **튜플**이다.
 - ⚠ 위 `OrderItem`은 복합 PK 기능 데모이며 `order`·`product` FK는 *같은 BC 내* 가정이다. `product`가 **다른 BC**의 애그리거트면 `ForeignKey(Product)` 대신 `product_id` 값 참조로 둔다(BC 경계 ORM FK 금지 — `architecture-ddd` §3.3 규칙3 영속성 확장).
-- **제약사항**: 기존 모델을 복합 PK로 소급 전환할 수 없음, ForeignKey가 복합 PK 모델을 가리킬 수 없음, admin 미지원.
+- **제약사항**: 기존 모델에서 복합 PK로 마이그레이션 불가, ForeignKey가 복합 PK 모델을 가리킬 수 없음, admin 미지원.
 
 #### 자동 모델 임포트 in shell
 

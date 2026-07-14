@@ -5,7 +5,7 @@
 stale 소스를 신뢰원으로 삼아 과거 수정(DR)을 조용히 되돌린다(회귀 메커니즘, DIAGNOSIS R5).
 이 도구는 그 drift를 결정적으로 *탐지*(--check)하고 *해소*(--write)한다.
 
-세 불변식 (검사 스코프 = reference와 SKILL.md를 함께 가진 11개 스킬):
+두 불변식 (검사 스코프 = final.md 11개):
   불변식1  소스 본문 ≡ 배포 본문
     소스   workspace/reference/<skill>/reference/final.md   (P1 Source Sufficiency 블록 보유 가능)
     배포   dddjango/skills/<skill>/references/final.md
@@ -13,10 +13,10 @@ stale 소스를 신뢰원으로 삼아 과거 수정(DR)을 조용히 되돌린�
            attribution 영역은 비교 대상 아님(소스/배포 구조가 의도적으로 다름).
   불변식2  배포(Claude) ≡ 배포(Codex)  전체 파일 byte-exact
     codex  codex-dddjango/skills/<skill>/references/final.md
-  불변식3  Claude SKILL ≡ Codex SKILL  플랫폼 frontmatter 정규화 뒤 byte-exact
-    Claude 전용 `user-invocable: false` 한 줄만 비교에서 제거한다.
 
-스코프 밖(플랫폼별 역할 프롬프트): agents/*.md · commands/*.md · dddjango-* 역할 SKILL.md.
+스코프 밖(설계상 미러 면제, plugin-native 단일 파일): SKILL.md · agents/*.md · commands/*.md.
+  → 이들은 소스 미러가 없고 재생성 경로도 없어 R5 회귀 메커니즘에 해당하지 않는다.
+  (houserules는 references/final.md 미러를 *보유*하므로 불변식1 대상이다.)
 
 배치: workspace/tools/ (배포 경계 밖). 19개 런타임 게이트(dddjango/scripts/check-*.py)는
   *사용자 생성 코드*를 검사하지만 이 도구는 *플러그인 자체 코퍼스*를 검사한다 — 다른 부류다.
@@ -26,7 +26,7 @@ fail-CLOSED: 파일 부재·앵커 실패·파싱 실패는 비-0 종료(exit 3)
   베끼지 않는다 — 메인테이너 무결성 검사에서 fail-open은 drift를 은폐하기 때문.
 
 exit:  0 = in-sync
-       2 = drift (불변식1·2·3 위반 — `--write`로 해소 가능)
+       2 = drift (불변식1 또는 2 위반 — `--write`로 해소 가능)
        3 = 구조 전제 깨짐 (파일 부재·앵커 실패 등 — 사람 개입 필요)
        1 = usage error
 
@@ -109,40 +109,13 @@ def paths_for(root: Path, skill: str) -> dict[str, Path]:
         "src": root / "workspace" / "reference" / skill / "reference" / "final.md",
         "dep": root / "dddjango" / "skills" / skill / "references" / "final.md",
         "codex": root / "codex-dddjango" / "skills" / skill / "references" / "final.md",
-        "dep_skill": root / "dddjango" / "skills" / skill / "SKILL.md",
-        "codex_skill": root / "codex-dddjango" / "skills" / skill / "SKILL.md",
     }
-
-
-def normalized_skill_text(path: Path) -> str:
-    """YAML frontmatter 안의 Claude 전용 한 줄만 제거한 SKILL 본문."""
-    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
-    if not lines or lines[0].strip() != "---":
-        raise StructureError(f"{path}: SKILL.md YAML frontmatter 시작 구분자 없음")
-    try:
-        end = next(index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---")
-    except StopIteration as error:
-        raise StructureError(f"{path}: SKILL.md YAML frontmatter 종료 구분자 없음") from error
-    return "".join(
-        line
-        for index, line in enumerate(lines)
-        if not (
-            index < end
-            and line.rstrip("\r\n") == "user-invocable: false"
-        )
-    )
 
 
 def check_skill(root: Path, skill: str) -> dict:
-    """한 스킬의 세 불변식 검사. 반환 dict: status in {in_sync, drift, structure}."""
+    """한 스킬의 두 불변식 검사. 반환 dict: status in {in_sync, drift, structure}."""
     p = paths_for(root, skill)
-    result = {
-        "skill": skill,
-        "inv1": "in_sync",
-        "inv2": "in_sync",
-        "inv3": "in_sync",
-        "notes": [],
-    }
+    result = {"skill": skill, "inv1": "in_sync", "inv2": "in_sync", "notes": []}
 
     # 불변식1: 소스 본문 ≡ 배포 본문
     if not p["src"].is_file():
@@ -169,28 +142,9 @@ def check_skill(root: Path, skill: str) -> dict:
             result["inv2"] = "drift"
             result["notes"].append("배포(Claude) ≠ 배포(Codex)")
 
-    # 불변식3: SKILL.md 플랫폼 frontmatter 정규화 뒤 semantic byte parity
-    if not p["dep_skill"].is_file() or not p["codex_skill"].is_file():
-        result["inv3"] = "structure"
-        result["notes"].append("Claude/Codex SKILL.md 중 하나가 없다")
-    else:
-        try:
-            dep_skill = normalized_skill_text(p["dep_skill"])
-            codex_skill = normalized_skill_text(p["codex_skill"])
-        except StructureError as error:
-            result["inv3"] = "structure"
-            result["notes"].append(str(error))
-        else:
-            if dep_skill != codex_skill:
-                result["inv3"] = "drift"
-                result["notes"].append(
-                    "Claude SKILL ≠ Codex SKILL (frontmatter 정규화 후)"
-                )
-
-    invariant_states = (result["inv1"], result["inv2"], result["inv3"])
-    if "structure" in invariant_states:
+    if "structure" in (result["inv1"], result["inv2"]):
         result["status"] = "structure"
-    elif "drift" in invariant_states:
+    elif "drift" in (result["inv1"], result["inv2"]):
         result["status"] = "drift"
     else:
         result["status"] = "in_sync"
@@ -214,13 +168,6 @@ def write_skill(root: Path, skill: str, result: dict) -> list[str]:
     if result["inv2"] == "drift":
         p["codex"].write_text(p["dep"].read_text(encoding="utf-8"), encoding="utf-8")
         actions.append(f"{skill}: 불변식2 codex ← 배포 (전체 복사)")
-
-    if result["inv3"] == "drift":
-        p["codex_skill"].write_text(
-            normalized_skill_text(p["dep_skill"]),
-            encoding="utf-8",
-        )
-        actions.append(f"{skill}: 불변식3 Codex SKILL ← Claude SKILL (frontmatter 정규화)")
 
     return actions
 
@@ -271,10 +218,7 @@ def main(argv: list[str]) -> int:
     else:
         for r in results:
             mark = {"in_sync": "✓", "drift": "✗ DRIFT", "structure": "‼ STRUCTURE"}[r["status"]]
-            print(
-                f"  {mark:<12} {r['skill']:<28} inv1={r['inv1']} "
-                f"inv2={r['inv2']} inv3={r['inv3']}"
-            )
+            print(f"  {mark:<12} {r['skill']:<28} inv1={r['inv1']} inv2={r['inv2']}")
             for n in r["notes"]:
                 print(f"               · {n}")
         if written:

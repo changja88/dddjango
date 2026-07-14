@@ -41,8 +41,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from migration_scope import iter_non_migration_files, validate_migration_scope
-
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 
@@ -61,7 +59,7 @@ SUCCESS_BODY_STATUSES = {200, 201, 202, 203}
 def _find_presentation_layer_files(root: Path) -> list[Path]:
     """4계층 presentation 계층의 프로덕션 .py 후보(venv·테스트 제외)."""
     out: list[Path] = []
-    for path in iter_non_migration_files(root, name_pattern="*.py"):
+    for path in root.rglob("*.py"):
         parts = set(path.parts)
         if parts & SKIP_DIRS:
             continue
@@ -163,8 +161,6 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-response-schema-bypass] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
-        return 1
-    if not validate_migration_scope(root, "check-response-schema-bypass"):
         return 1
 
     findings: list[str] = []

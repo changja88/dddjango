@@ -29,10 +29,6 @@ user-invocable: false
 - 동시성·idempotency 테스트는 DB 의미론이 필요하면 DB-backed 테스트로 (§20)
 - 커버리지 수치보다 의미 있는 assertion이 중요; mutmut로 테스트 유효성 검증 (§13, §17)
 - AAA(Arrange-Act-Assert) 패턴으로 테스트 구조 일관화 (§15.2)
-- 영구 테스트의 오라클은 현재 승인된 요구·설계·지원 계약뿐이다. 명세 변경 시 영향 테스트를 retain/update/delete/add로 분류하고, 새 명세의 침묵만으로 기존 지원을 종료하지 않는다 (§15.6)
-- 활성 호환성·deprecation·영속 데이터/이벤트·보안·규제·명시적 negative는 현재 계약이다. 회귀·property witness는 현재 의무가 남는 동안만 유지하며, history·old behavior만으로 영구 테스트를 남기지 않는다 (§15.6)
-- 테스트 변경 전 current-obligation inventory(surface/version, consumer/support, persisted data/event, deprecation, security/privacy/regulatory, negative/absence, 근거 경로, retain/end/unknown)를 확정한다. unknown은 G1 blocker이고 지원 종료와 관찰 가능한 부재는 별도 결정이다. G2 전 retain/update/add 및 프로젝트 전체 suite의 실제 command/result/collected/executed/pass/fail/skipped count를 기록한다 (§15.6)
-- 기존 pytest 설정·명령을 존중하고 `--no-migrations`를 강제하지 않는다. framework의 test DB setup을 migration 검증으로 해석하지 않으며 migration lifecycle 테스트는 작성·수정·삭제하지 않는다 (§4.1, §15.6)
 - 외부 계약(HTTP 응답·DB 저장값·이벤트) 검증의 assert 기댓값은 리터럴로 — 프로덕션 상수 역수입은 자기참조 오라클; 도메인 내부 단위 테스트의 심볼 단언과 arrange의 심볼 사용은 허용 (§15.4)
 - 발행 이벤트 봉투(태그드 유니온 + StrEnum 파생·birth-enum)에는 union-enum 동기 계약 테스트가 세트다 — union 멤버 태그 집합 == enum 멤버 집합; OHS published contract의 wire Literal 태그 union도 동일 세트(houserules §2 contract 무의존) (§15.5)
 - 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16 — 상수 역수입 오라클은 §15.4)
@@ -57,7 +53,7 @@ user-invocable: false
 | Docker 기반 통합 테스트 (testcontainers) | §12 |
 | 커버리지 설정 (coverage.py) | §13 |
 | 멀티환경 테스트 (tox / nox) | §14 |
-| 테스트 코드 품질 원칙 (외부 계약 기댓값 리터럴 §15.4·현재 계약 수명 §15.6 포함) | §15 |
+| 테스트 코드 품질 원칙 (외부 계약 기댓값 리터럴 §15.4 포함) | §15 |
 | 테스트 안티패턴 | §16 |
 | Mutation Testing | §17 |
 | BDD pytest-bdd 구현 | §18 |

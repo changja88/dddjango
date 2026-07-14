@@ -35,12 +35,6 @@ import re
 import sys
 from pathlib import Path
 
-from migration_scope import (
-    is_migration_owned_path,
-    iter_non_migration_files,
-    validate_migration_scope,
-)
-
 SKIP_DIRS = {
     ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__",
     "build", "dist", ".tox", ".mypy_cache", ".pytest_cache", ".eggs",
@@ -57,12 +51,12 @@ _BC_PRESENTATION_PATH = re.compile(
 def _root_application(root: Path) -> Path | None:
     """레포 루트 *직속* `application/` 컨테이너(있으면). rglob 금지 — 중첩 오인 차단."""
     cand = root / "application"
-    return cand if not is_migration_owned_path(root, cand) and cand.is_dir() else None
+    return cand if cand.is_dir() else None
 
 
 def _iter_settings_files(root: Path):
     """프로젝트 설정 파일(`settings.py` 또는 `settings/` 패키지의 `*.py`)을 yield."""
-    for path in iter_non_migration_files(root, name_pattern="*.py"):
+    for path in root.rglob("*.py"):
         if set(path.parts) & SKIP_DIRS:
             continue
         if path.name == "settings.py" or path.parent.name == "settings":
@@ -126,8 +120,6 @@ def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
     if not root.is_dir():
         print(f"[check-ninja-boundary-middleware] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
-        return 1
-    if not validate_migration_scope(root, "check-ninja-boundary-middleware"):
         return 1
 
     if _root_application(root) is None:

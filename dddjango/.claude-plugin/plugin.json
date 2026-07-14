@@ -1,8 +1,8 @@
 {
   "name": "dddjango",
   "displayName": "dddjango",
-  "version": "1.1.2",
-  "description": "DDD 방식으로 Django 기능을 설계·구현하는 오케스트레이터. /dddjango로 요구→설계→구현(TDD)을 단계별 게이트로 빌드하며 DB migration lifecycle은 외부 절차에 맡긴다.",
+  "version": "1.0.8",
+  "description": "DDD 방식으로 Django 기능을 설계·구현하는 오케스트레이터. /dddjango로 요구→설계→구현(TDD)을 단계별 게이트로 빌드한다.",
   "author": { "name": "changja88", "email": "dev@numchida.com" },
   "license": "MIT",
   "homepage": "https://github.com/changja88/dddjango",
