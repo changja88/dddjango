@@ -49,7 +49,9 @@
 └── common/                     # 앱 횡단 공용
     ├── enum/                   # 도메인별 enum 집중화 (<domain>_enum.py)
     ├── django/                 # Django 의존 유틸 (task, timezone, model_util …)
-    ├── ninja/                  # Django Ninja 의존 확장 (authentication, custom_type, response …)
+    ├── ninja/                  # Django Ninja 의존 확장
+    │   └── response/
+    │       └── error_out.py    # 단일 API/problem profile의 공통 ErrorOut
     └── <project>/              # 프레임워크 비종속 공용 = shared kernel 대응
 ```
 
@@ -57,6 +59,8 @@
 - 설정 패키지(`<project>/`)는 **환경별로 분할**(`env`/`dev`/`local`/`prod`/`test`).
 - 횡단 관심사는 `common/`에 모으고, 그 안을 기술축(enum·django·ninja)으로 다시 나눈다. 프레임워크에 의존하면 `common/django`·`common/ninja`로, 비종속이면 `common/<project>`로 둔다.
 - **`common/`은 *프로젝트 루트*에 둔다(= `application/`의 형제) — `application/common/`처럼 `application/`(feature 앱 컨테이너) *안*에 넣지 않는다.** 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 2개 이상 BC가 *실제로* 공유할 때만 루트 `common/`으로 승격한다(YAGNI — 횡단이 생기기 전 조기 승격 금지; `implementation-django-ninja` §6.2·§6.3).
+- **Django Ninja 공통 `ErrorOut` Schema는 위 2-consumer 승격 규칙의 좁은 예외다.** 신규 dddjango 표준 표면이 단일 canonical API/namespace/version과 단일 Problem Details core profile을 채택하고 확립된 오류 Schema가 없다면 첫 HTTP BC부터 `common/ninja/response/error_out.py::ErrorOut`을 만든다. 이는 미래 helper가 아니라 그 API가 클라이언트에 공개하는 wire contract다. 기존 프로젝트의 공용 HTTP package·version 경로·명명을 먼저 재사용하고, 별도 scope가 실제로 필요하면 기존 API package/namespace를 우선한다. 새 fallback은 `common/ninja/response/<api_namespace>/<version?>/<profile_slug?>/error_out.py`다. 같은 API/namespace/version/core profile은 같은 scope로 추정하며 BC별 extension 차이만으로 profile을 나누지 않는다.
+- 이 첫-BC 예외는 **공통 core Schema에만** 적용한다. generic serializer·framework handler·recognizer는 실제 BC 공유가 생길 때 승격하고, exception→status/type/title/detail/extension 값 매핑은 항상 해당 BC presentation이 소유한다. DRF serializer, plain Django JSON view, 서버 렌더 오류 계약에는 Ninja `ErrorOut`을 강제하지 않는다.
 - **`common/enum/` 승격은 공유 커널 결정이다** — 같은 철자를 넘어 같은 *지식*이고, 두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만(`architecture-ddd` §2.5 공유 커널 — 공유 범위 최소화 필수). BC 내부 enum은 그 BC `domain_layer` 소유이고 다른 BC가 직접 import하지 않는다 — 같은 wire 값의 BC별 각자 선언은 중복이 아니라 published language 수용이다. **승격된 공유 커널(`common/enum/`·`common/<project>/`)은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다**(§2 "domain은 아무것도 의존하지 않는다"의 명시 예외 — 프레임워크 비종속이 조건).
 
 ---
@@ -105,7 +109,7 @@ application/<app>/
 ├── presentation_layer/                 # ④ 표현 — 입력 어댑터 (§6.1 interface)
 │   ├── api/
 │   │   └── <feature>/                  #   <aggregate>_controller.py(@api_controller 클래스, 함수형 레거시 api_<resource>.py) — 얇은 어댑터(요청 파싱 → 응용 호출 → 응답·예외 변환)
-│   └── schema/                         #   입출력 계약(DTO): schema_in.py / schema_out.py / error_out.py
+│   └── schema/                         #   입출력 계약: schema_in.py / schema_out.py; 실제 problem extension만 <problem>_error_out.py
 │
 └── test/                               # 앱별 테스트 — 의미군 분리 (implementation-test §4.2)
     ├── unit/                           #   순수 단위: 도메인·응용 (mock/stub)
@@ -184,7 +188,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `common/ninja/` | **Django Ninja 의존** 공용 확장 | `authentication.py`·`custom_type.py`·`response/` |
 | `common/<project>/` | **프레임워크 비종속** 공용 = shared kernel(공유 값객체·커스텀 타입) | 공유 VO·타입. ※Django/Ninja 의존 시 위 두 폴더로 |
 
-> 위 `common/*`은 모두 *프로젝트 루트* `common/`(= `application/`의 형제) 아래다 — `application/common/`이 아니다. **그리고 횡단 배치는 *2개 이상 BC가 실제로 공유할 때*만 한다**: 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 공유가 생긴 뒤 루트 `common/`으로 승격한다(YAGNI; `implementation-django-ninja` §6.2). enum은 추가로 공유 커널 기준을 통과해야 한다(같은 지식 + 같은 변경 사유 근거 — §1) — 같은 wire 값을 BC마다 각자 선언하는 것은 정상(published language 수용)이지 승격 사유가 아니다.
+> 위 `common/*`은 모두 *프로젝트 루트* `common/`(= `application/`의 형제) 아래다 — `application/common/`이 아니다. **일반적인 횡단 배치는 *2개 이상 BC가 실제로 공유할 때*만 한다**: 단일 BC 전용 헬퍼(problem 등)는 그 BC `application/<app>/presentation_layer/`에 두고, 공유가 생긴 뒤 루트 `common/`으로 승격한다(YAGNI; `implementation-django-ninja` §6.2). 단, §1의 contract-scope 공통 core `ErrorOut`은 첫 HTTP BC부터 root `common/ninja/response/`에 두는 좁은 예외다. enum은 추가로 공유 커널 기준을 통과해야 한다(같은 지식 + 같은 변경 사유 근거 — §1) — 같은 wire 값을 BC마다 각자 선언하는 것은 정상(published language 수용)이지 승격 사유가 아니다.
 
 **도메인 계층 `domain_layer/<aggregate>/` — 애그리거트(개념) 1차, 종류 2차 (§3 전술 패턴)**
 
@@ -231,7 +235,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | 폴더 | 존재 이유 | 위치 파일 · 명명 |
 |---|---|---|
 | `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `<aggregate>_controller.py` → `class OrderController`(`@api_controller`); 함수형 레거시는 `api_<resource>.py` (Ninja Router 또는 `@api_controller` 클래스) |
-| `schema/` | 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`·`error_out.py`(feature가 많으면 `<feature>/`로 분할) — **응답은 `schema_out`**, 도메인 직접 노출 금지 |
+| `schema/` | BC 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`; problem-specific extension이 실제로 있을 때만 `<problem>_error_out.py` — core 오류 계약은 contract scope의 canonical `ErrorOut`을 재사용하고, **응답은 `schema_out`**, 도메인 직접 노출 금지 |
 | `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `<service>_service/`(서비스 1차) → `<service>_service.py`(공개 함수)·`contract/{request,response,exception}_contract/`(3패키지 — request/response는 연산당 1파일 `<operation>_<kind>_contract.py`, exception은 base `<service>_published_error.py`+예외 클래스당 1모듈; §2 OHS 내부 구조). 다른 앱은 **이것만** import(모듈 경로 직접 — `__init__` 재노출 없음) |
 | `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
 | 라우팅 | 앱 진입점 | `<app>_api_router.py` → config의 `NinjaExtraAPI`를 import해 `register_controllers`로 BC 로컬 등록(루트 `urls.py` 포함은 함수형 Router 경로) |
@@ -272,7 +276,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 - **도메인 이벤트**: 파일·클래스 모두 **과거형** — `order_placed_event.py` → `class OrderPlacedEvent`.
 - **명세(Specification)**: 약어 없이 **풀네임** — `order_active_specification.py` → `class OrderActiveSpecification`(`_spec` ✕).
 - **표현 컨트롤러**: `<aggregate>_controller.py` → `class <Aggregate>Controller`(`@api_controller`) — 주 클래스명 snake_case 규약 정합(예 `order_controller.py` → `class OrderController`). 함수형 Ninja `Router` 레거시는 `api_<resource>.py`로 병기 가능.
-- **스키마**: 입력 `schema_in.py` → `OrderIn`, 출력 `schema_out.py` → `OrderOut`, 에러 `error_out.py` → `ErrorOut`(In/Out 접미사).
+- **스키마**: 입력 `schema_in.py` → `OrderIn`, 출력 `schema_out.py` → `OrderOut`. 공통 core 오류는 canonical `error_out.py` → `ErrorOut`; BC 확장은 `<problem>_error_out.py` → `<Problem>ErrorOut`(In/Out 접미사).
 - **조회(읽기)**: `<usecase>_query.py` → `class …Query`(인터랙터 연산 — `execute(request)`, repository 의존). 별도 읽기 *모델*(CQRS §5.4)은 선택이고, 공유 모델 repository 읽기로 충분하면 그대로 둔다.
 - **OHS(published_service)**: 서비스 폴더 `<service>_service/` → 행위 모듈 `<service>_service.py`(공개 모듈 함수), 계약 3패키지 고정명 `request_contract/`·`response_contract/`·`exception_contract/` — request/response는 연산당 1파일 `<operation>_request_contract.py`/`<operation>_response_contract.py`(`<operation>`=공개 함수명), exception은 published base 모듈 `<service>_published_error.py`(파일명=주 클래스명 snake_case 규칙의 귀결)+예외 클래스당 1모듈, 공유 값 타입 모듈은 `_contract` 접미 없이 주 클래스명 snake_case. published base 예외 `<Service>PublishedError`(§2 OHS 내부 구조). 계약 클래스의 버전 접미(`V1` 등)는 프로젝트 재량이다(표준 비강제).
 

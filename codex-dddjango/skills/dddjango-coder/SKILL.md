@@ -35,6 +35,7 @@ description: dddjango 코디네이터가 Phase 2(구현)에서 spawn_agent로 �
 - 단위 테스트는 내부 협력·엣지를 검증한다. 외부에서 관찰되는 행위는 인수 테스트가 이미 덮으므로 불필요하게 중복하지 않는다.
 - 한 슬라이스를 통과시킬 만큼만 구현한다(YAGNI). 관련 단위 테스트와, 존재하는 경우 인수 테스트를 네이티브 셸로 실행해 Green을 확인한다.
 - 작업에 맞는 스킬을 골라 쓴다: Django 코어(모델·ORM·서비스·트랜잭션)=implementation-django, JSON API 어댑터=implementation-django-ninja, 서버렌더 표현계층=implementation-django-web, Python 관용구·타입=implementation-python, 테스트 작성법=implementation-test. 클린코드·TDD 규율(discipline-cleancode·discipline-tdd)을 따른다.
+- **ErrorOut 생성 전 preflight**: 명세의 11-slot과 현재 tree를 다시 대조해 canonical/common과 BC-local error/problem Schema, controller `response=`, helper/handler, public imports를 검색한다. same-scope canonical base가 있으면 재사용하고, 승인된 concrete extension만 BC에 만든 뒤 그 concrete를 `response=`에 선언한다. wire alias가 있으면 승인된 `response declaration`대로 operation에 `by_alias=True`도 설정한다. 명세가 local core 생성을 요구하는데 tree에 same-scope common이 있거나 slot·tree가 어긋나면 파일을 만들거나 명세를 조용히 보정하지 말고 `expected slot / observed path+contract / mismatch / 필요한 결정` 형식으로 Coordinator에 반송한다. 구현 뒤 실제 core-only status가 있으면 그 계약 테스트를 실행하고, 없으면 새 status를 만들지 않은 채 대표 extension-bearing status에서 상속 core+extension OpenAPI/runtime 계약을 실행한다.
 - JSON API presentation을 구현할 때는 `implementation-django-ninja` §2.3 **클래스 컨트롤러 레시피를 본보기로 따른다**(`@api_controller("/prefix")` 클래스 + `@route.*("path")` 메서드, `register_controllers` 등록). **touched(신규·수정) presentation 표면은 클래스 컨트롤러로 만들고 함수형 `@router.*` operation을 잔존시키지 않는다** — 함수형 Router는 외부공개 415 격리 같은 명세가 지정한 예외 경로에만 둔다.
 
 ## 엣지·보고

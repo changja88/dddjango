@@ -136,6 +136,8 @@ from django.http import HttpRequest
 from ninja import Router, Schema, Status
 from ninja_extra import status        # status.HTTP_201_CREATED 등 — plain int HTTP 상수(매직넘버 회피)
 
+from common.ninja.response.error_out import ErrorOut
+
 router = Router()
 
 
@@ -149,18 +151,11 @@ class OrderOut(Schema):       # response body -- public field만 노출
     status: str
 
 
-class ProblemOut(Schema):     # 오류 본문도 schema로 계약화 (형식은 §6.2 RFC 9457)
-    type: str
-    title: str
-    status: int
-    detail: str
-
-
 # 성공·오류 status를 모두 response에 선언하고(OpenAPI 계약), summary/tags로 문서화한다.
 # 오류는 raise만 하고, problem+json 변환은 중앙 한 곳이 한다(§6.2).
 @router.post(
     "/orders",
-    response={201: OrderOut, 404: ProblemOut, 409: ProblemOut},
+    response={201: OrderOut, 404: ErrorOut, 409: ErrorOut},
     summary="주문 생성",
     description="재고가 충분하면 주문을 만들고 201, 부족하면 409로 거절한다.",
     tags=["orders"],
@@ -214,9 +209,11 @@ class OrderController:                          # ControllerBase 미상속(@api_
 - **`ControllerBase`를 직접 상속하지 않는다** — `@api_controller` 데코레이터가 컨트롤러 기반을
   자동 주입한다(명시 상속은 중복이다).
 
-**등록 — 단일 NinjaExtraAPI 인스턴스, BC 로컬.** config가 단일 `NinjaExtraAPI`를 소유하고,
-catch-all·예외 핸들러(§6.2)를 그 한 인스턴스에 단다. 각 BC는 그 인스턴스를 import해 자기
-컨트롤러만 로컬 등록한다.
+**등록 — contract scope 안에서는 단일 NinjaExtraAPI 인스턴스, BC 로컬.** 신규 표준은 config가
+한 `NinjaExtraAPI`를 소유하고 catch-all·예외 핸들러(§6.2)를 그 인스턴스에 단다. 각 BC는 그
+인스턴스를 import해 자기 컨트롤러만 로컬 등록한다. public/internal 또는 version별 API 인스턴스가
+이미 독립 계약 surface로 확립된 brownfield는 11-slot의 별도 scope 근거가 있고 각 인스턴스가
+완전한 오류 변환점을 가지면 보존한다. BC마다 새 API 인스턴스를 만드는 것은 scope 분리가 아니다.
 
 ```python
 # config/api.py — config가 단일 NinjaExtraAPI 소유 (catch-all·예외 핸들러가 이 한 인스턴스에)
@@ -472,6 +469,80 @@ API error는 legacy compatibility contract가 명시적으로 다른 형식을 �
   validation(422) 오류를 실을 때는 pydantic 내부 구조를 그대로 노출하지 말고
   `invalid-params` 같은 안정된 형태로 매핑한다.
 
+**dddjango 신규 output profile과 소유권.** RFC 9457의 최소 요구와 별개로, 신규 dddjango
+Django Ninja 표면은 contract scope마다 다음 공통 Schema를 하나 둔다.
+
+```python
+# common/ninja/response/error_out.py
+from ninja import Schema
+
+
+class ErrorOut(Schema):
+    type: str = "about:blank"
+    title: str
+    status: int
+    detail: str
+    instance: str | None = None
+```
+
+contract scope는 canonical API instance/namespace, public/internal surface, version, core
+Problem Details profile의 조합이다. 같은 API/namespace/version/core profile은 같은 scope로
+추정하고, BC별 extension 차이만으로 profile을 분리하지 않는다. 신규 표준 레이아웃의 단일
+scope이고 확립된 오류 Schema가 없다면 첫 HTTP BC부터
+`common/ninja/response/error_out.py::ErrorOut`을 만든다. 신규로 독립 scope를 둘 이상 도입하면서
+확립 경로가 없으면 `common/ninja/response/<api_namespace>/<version?>/<profile_slug?>/error_out.py`
+fallback으로 충돌을 피하고, profile slug는 관찰 가능한 wire 차이가 있을 때만 쓴다. 기존 공용
+HTTP package나 version 경로가 있으면 그 등가 Schema를 재사용한다. DRF/plain Django/server-render
+계약은 이 규칙의 대상이 아니다.
+
+이 profile에서 runtime core는 `type`, `title`, `status`, `detail` 네 필드를 항상 내보내고
+`instance`는 값이 있을 때만 내보낸다. OpenAPI는 `title/status/detail` required,
+`type` default=`about:blank`, `instance` optional+nullable이어야 한다. 직렬화는
+`model_dump(by_alias=True, exclude_none=True)`를 사용한다.
+
+problem-specific extension은 BC presentation에 구체 Schema로 선언한다. core를 다시 쓰거나
+arbitrary extension bag을 열지 않는다.
+
+```python
+from ninja import Schema
+from pydantic import ConfigDict, Field
+
+from common.ninja.response.error_out import ErrorOut
+
+
+class InventoryConflictErrorOut(ErrorOut):
+    available_quantity: int
+
+
+class InvalidParamOut(Schema):
+    name: str
+    reason: str
+
+
+class ValidationErrorOut(ErrorOut):
+    model_config = ConfigDict(populate_by_name=True)
+
+    invalid_params: list[InvalidParamOut] = Field(alias="invalid-params")
+```
+
+alias가 있는 response Schema를 operation/controller의 `response={...}`에 선언할 때는 해당
+`@route.*(..., by_alias=True)`도 함께 설정한다. runtime helper의
+`model_dump(by_alias=True, exclude_none=True)`와 operation의 `by_alias=True`가 모두 있어야
+runtime body와 generated OpenAPI가 같은 `invalid-params` wire key를 광고한다. 이 설정은 11-slot의
+`response declaration`에 concrete Schema와 함께 기록한다.
+
+11-slot의 `common core profile`에는 core 필드별 type·required/default/nullable과 전역
+alias/config를, `local justification`에는 extension key·type·required/default/alias/validator/config·
+meaning을 빠짐없이 기록한다. slot 이름만 채우고 이 계약 속성을 생략하면 완결된 명세가 아니다.
+
+BC 전용 extension은 승인 명세가 있을 때만 BC의
+`presentation_layer/schema/<problem>_error_out.py`에 두고 공통 `ErrorOut`을 상속한다.
+같은 concrete extension 계약을 여러 BC가 실제 공유하면 그 concrete Schema도 scope의 common으로
+승격한다. API-wide validation처럼 처음부터 scope 전체가 소비하는 concrete contract는 첫 사용부터
+common에 둔다. extension-bearing status의 `response={...}`에는 base가 아니라 실제 concrete
+Schema를 선언한다. `extensions: dict`, `extra="allow"`, 임의 `**extensions`, base-only 선언 뒤
+런타임 key 추가는 OpenAPI/runtime drift를 만들므로 금지한다.
+
 런타임 응답의 media type은 `application/problem+json`이며, 아래 중앙 변환이 설정한다.
 
 **예외 핸들러는 `NinjaExtraAPI` 인스턴스(`api`)에 `@api.exception_handler`로 등록한다.**
@@ -537,31 +608,49 @@ from ninja_extra import NinjaExtraAPI
 from ninja.errors import HttpError, ValidationError   # ninja HttpError·validation 오류(≠ pydantic.ValidationError)
 from ninja.responses import Response           # JsonResponse 서브클래스 + ninja JSON 인코더
 
+from common.ninja.response.error_out import ErrorOut
+from common.ninja.response.validation_error_out import InvalidParamOut, ValidationErrorOut
+
 logger = logging.getLogger(__name__)
 api = NinjaExtraAPI()
 
 
-def problem(status: int, *, title: str, detail: str,
-            type: str = "about:blank", **ext) -> Response:
-    # RFC 9457 본문을 한 곳에서 만든다 — 모든 오류 변환이 이 헬퍼만 거친다.
-    body = {"type": type, "title": title, "status": status, "detail": detail, **ext}
-    return Response(body, status=status, content_type="application/problem+json")
+def problem_response(body: ErrorOut) -> Response:
+    # Schema가 OpenAPI와 runtime body를 함께 소유한다. 선언 밖 key를 섞지 않는다.
+    return Response(
+        body.model_dump(by_alias=True, exclude_none=True),
+        status=body.status,
+        content_type="application/problem+json",
+    )
 
 
 @api.exception_handler(ProductNotFound)        # 도메인 예외 → status 매핑은 presentation 소유
 def on_product_not_found(request, exc):
-    return problem(404, title="Product not found", detail=str(exc))
+    return problem_response(
+        ErrorOut(status=404, title="Product not found", detail=str(exc))
+    )
 
 
 @api.exception_handler(InsufficientStock)
 def on_insufficient_stock(request, exc):
-    return problem(409, title="Insufficient stock", detail=str(exc))
+    return problem_response(
+        ErrorOut(status=409, title="Insufficient stock", detail=str(exc))
+    )
 
 
 @api.exception_handler(ValidationError)        # framework 기본 422를 problem+json으로 오버라이드
 def on_validation_error(request, exc):
-    return problem(422, title="Validation failed", detail="Request did not pass validation.",
-                   **{"invalid-params": exc.errors})
+    return problem_response(
+        ValidationErrorOut(
+            status=422,
+            title="Validation failed",
+            detail="Request did not pass validation.",
+            invalid_params=[
+                InvalidParamOut(name=str(error["loc"][-1]), reason=error["msg"])
+                for error in exc.errors
+            ],
+        )
+    )
 
 
 @api.exception_handler(HttpError)              # 깨진 본문·파싱 실패·임의 HttpError → RFC9457 body
@@ -572,14 +661,21 @@ def on_http_error(request, exc):
         title = HTTPStatus(exc.status_code).phrase
     except ValueError:                         # 비표준 status code 가드(HTTPStatus ValueError 방지)
         title = "Request error"
-    return problem(exc.status_code, type="about:blank", title=title, detail=str(exc))
+    return problem_response(
+        ErrorOut(status=exc.status_code, title=title, detail=str(exc))
+    )
 
 
 def _server_error(request, exc) -> Response:
     # 미식별·미매핑·비-transient 예외의 최후방 500 — 스택은 로그로만(본문 노출·DEBUG traceback 차단).
     logger.exception("Unhandled exception at API boundary")
-    return problem(500, type="about:blank", title="Internal server error",
-                   detail="An unexpected error occurred.")
+    return problem_response(
+        ErrorOut(
+            status=500,
+            title="Internal server error",
+            detail="An unexpected error occurred.",
+        )
+    )
 
 
 def _is_retryable_db_error(exc: OperationalError) -> bool:
@@ -600,8 +696,13 @@ def on_db_operational_error(request, exc):
     if not _is_retryable_db_error(exc):
         return _server_error(request, exc)     # disk I/O·malformed 등 영구장애 → 500
     # retryable status는 명세(§5/G1)가 정한다 — 503(+Retry-After) 또는 409(+retryable 확장).
-    resp = problem(503, type="about:blank", title="Service temporarily unavailable",
-                   detail="Transient database contention; please retry.")
+    resp = problem_response(
+        ErrorOut(
+            status=503,
+            title="Service temporarily unavailable",
+            detail="Transient database contention; please retry.",
+        )
+    )
     resp["Retry-After"] = "1"
     return resp
 
@@ -634,7 +735,8 @@ ninja 기본 traceback 핸들러를 대체해 그 누출을 막는다. retryable
 핸들러·헬퍼는 `NinjaAPI` 인스턴스 단위다 — API가 여럿이면 공통 베이스로 일관 적용한다.
 async operation도 같은 핸들러 경로를 타므로 별도 처방이 없다.
 
-**헬퍼·중앙 핸들러의 *위치*** — 단일 BC면 그 BC `application/<app>/presentation_layer/`에 둔다.
+**헬퍼·중앙 핸들러의 *위치*** — 공통 core `ErrorOut`의 birth-common 규칙과 별개다. 단일 BC면 generic
+helper/handler는 그 BC `application/<app>/presentation_layer/`에 둔다.
 2개 이상 BC가 *실제로* 공유할 때만 루트 `common/ninja/`(전체경로 `<project_root>/common/ninja/`
 — `application/` *아래*가 아니다)로 *승격*한다(공유 오류 헬퍼 `_is_retryable_db_error`·`problem` 등은 `common/ninja/errors.py`에 모은다 — 서버렌더 미들웨어도 이 경로로 import: `implementation-django-web` §11). 횡단이 생기기 전 조기 승격(`application/common/`
 생성)은 YAGNI 위반이다 — 단일 BC에서는 problem 헬퍼도 그 BC의 presentation에 머문다. 위치 규약은

@@ -31,6 +31,7 @@ user-invocable: false
 - 커버리지 수치보다 의미 있는 assertion이 중요; mutmut로 테스트 유효성 검증 (§13, §17)
 - AAA(Arrange-Act-Assert) 패턴으로 테스트 구조 일관화 (§15.2)
 - 외부 계약(HTTP 응답·DB 저장값·이벤트) 검증의 assert 기댓값은 리터럴로 — 프로덕션 상수 역수입은 자기참조 오라클; 도메인 내부 단위 테스트의 심볼 단언과 arrange의 심볼 사용은 허용 (§15.4)
+- Django Ninja `ErrorOut` 변경은 11-slot의 승인된 core profile을 기대값으로 검증한다. 실제 core-only status가 있으면 대표 하나를 outside-in으로 고정하고, 없으면 새 status를 만들지 않고 대표 extension-bearing status에서 상속 core+extension을 함께 검증한다. `create-common`이고 신규 dddjango profile인 경우만 runtime exact core key·`instance` 생략·problem+json과 생성 OpenAPI required/default/nullable 표준값을 적용하고, 그 밖의 base action은 승인된 profile을 보존한다. extension-bearing status는 concrete Schema의 property/required/alias와 runtime exact key를 함께 Red→Green으로 검증하고 내부 helper를 직접 테스트하지 않는다 (§19.2)
 - 발행 이벤트 봉투(태그드 유니온 + StrEnum 파생·birth-enum)에는 union-enum 동기 계약 테스트가 세트다 — union 멤버 태그 집합 == enum 멤버 집합; OHS published contract의 wire Literal 태그 union도 동일 세트(houserules §2 contract 무의존) (§15.5)
 - 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16 — 상수 역수입 오라클은 §15.4)
 

@@ -2469,20 +2469,115 @@ client = TestClient(router)
 
 ### 19.2 요청 검증과 오류 응답
 
-```python
-def test_create_order_validation_problem():
-    response = client.post(
-        "/orders",
-        json={"items": []},
-    )
+공통 `ErrorOut` 계약을 새로 만들거나 바꾸면 내부 helper를 직접 테스트하지 말고, 11-slot의
+`common core profile`과 `compatibility`를 기대값의 단일 근거로 삼는다. 실제 core-only
+status가 있으면 대표 하나를 endpoint와 생성 OpenAPI에서 고정하고, 없으면 새 status를 발명하지
+않고 대표 extension-bearing status에서 상속 core profile과 extension을 함께 검증한다. 아래 고정
+profile은 `base action=create-common`이고 신규 dddjango output profile을 채택한 scope에 적용한다:
+runtime에서 core 네 필드가 항상 있고 `instance`는 값이 없으면 생략되며, OpenAPI에서
+`title/status/detail` required, `type` default, `instance` optional nullable다. 그 밖의 base
+action은 승인된 profile의 required/default/nullable/runtime shape를 그대로 assert하며 아래 신규
+default를 강제하지 않는다.
 
-    assert response.status_code in {400, 422}
+```python
+def _resolve_response_schema(document, path, method, status):
+    responses = document["paths"][path][method]["responses"]
+    status_keys = [status, str(status)]
+    if isinstance(status, str) and status.isdigit():
+        status_keys.append(int(status))
+    status_key = next(key for key in status_keys if key in responses)
+    content = responses[status_key]["content"]
+    media_schema = next(iter(content.values()))["schema"]
+    if "$ref" not in media_schema:
+        return media_schema
+    name = media_schema["$ref"].rsplit("/", 1)[-1]
+    return document["components"]["schemas"][name]
+
+
+def test_missing_inventory_item_uses_core_error_contract(client):
+    response = client.get("/api/inventory/items/missing")
+
+    assert response.status_code == 404
+    assert response.headers["content-type"].startswith("application/problem+json")
     body = response.json()
-    assert "type" in body or "detail" in body
-    assert "items" in str(body)
+    assert set(body) == {"type", "title", "status", "detail"}
+    assert body["type"] == "about:blank"
+    assert body["status"] == 404
+    assert "instance" not in body
+
+
+def test_core_error_openapi_profile(api):
+    document = api.get_openapi_schema()
+    schema = _resolve_response_schema(
+        document,
+        "/api/inventory/items/{item_id}",
+        "get",
+        "404",
+    )
+    assert set(schema["required"]) == {"title", "status", "detail"}
+    assert schema["properties"]["type"]["default"] == "about:blank"
+    assert "instance" not in schema["required"]
+    assert {"type": "null"} in schema["properties"]["instance"]["anyOf"]
 ```
 
-프로젝트가 RFC 9457 Problem Details를 표준 오류 형식으로 채택했다면 `type`, `title`, `status`, `detail`, `instance`, field error 확장 키를 계약으로 고정한다. 아직 오류 계약이 정해지지 않았다면 `architecture-api`에서 먼저 결정한 뒤 테스트에 반영한다.
+problem-specific extension이 있으면 status별 concrete Schema와 wire key를 별도로 고정한다.
+base `ErrorOut`만 선언하고 runtime에서 extension을 임의 추가하는 구현은 통과시키지 않는다.
+
+```python
+def test_inventory_conflict_problem_contract(client):
+    response = client.post(
+        "/api/inventory/reservations",
+        json={"sku": "SKU-001", "quantity": 2},
+    )
+
+    assert response.status_code == 409
+    assert response.headers["content-type"].startswith("application/problem+json")
+    body = response.json()
+    assert body["status"] == 409
+    assert isinstance(body["available_quantity"], int)
+    assert set(body) == {
+        "type", "title", "status", "detail", "available_quantity"
+    }
+
+
+def test_inventory_conflict_openapi_uses_concrete_schema(api):
+    document = api.get_openapi_schema()
+    schema = _resolve_response_schema(
+        document,
+        "/api/inventory/reservations",
+        "post",
+        "409",
+    )
+    assert "available_quantity" in schema["properties"]
+    assert "available_quantity" in schema["required"]
+```
+
+validation extension의 alias는 Python 필드명이 아니라 실제 wire key를 리터럴로 단언한다.
+
+```python
+def test_create_order_validation_problem(client):
+    response = client.post("/orders", json={"items": []})
+
+    assert response.status_code == 422
+    body = response.json()
+    assert "invalid-params" in body
+    assert "invalid_params" not in body
+
+
+def test_create_order_validation_openapi_uses_wire_alias(api):
+    document = api.get_openapi_schema()
+    schema = _resolve_response_schema(document, "/orders", "post", 422)
+    assert "invalid-params" in schema["properties"]
+    assert "invalid_params" not in schema["properties"]
+```
+
+프로젝트가 `api.get_openapi_schema()`를 직접 노출하지 않으면 실제 URL resolver에 mount된 full
+Django client로 OpenAPI endpoint를 호출한다. controller-only `TestClient`에 임의
+`/api/openapi.json`을 호출하지 않는다. Ninja의 현재 한계로 생성 OpenAPI의 오류 media type이
+`application/json`일 수 있으므로 OpenAPI에서는 Schema ref/shape를 검사하고 runtime에서만
+`application/problem+json`을 단언한다. 아직 오류 계약이 정해지지 않았다면
+`architecture-api`에서 먼저 결정한 뒤 테스트를 Red로 만든다. 테스트 파일의 존재가 아니라
+agent가 추가한 assertion에서 실제로 실패하는 exact pytest command와 최종 Green을 모두 확인한다.
 
 ### 19.3 인증, 페이지네이션, 필터링
 

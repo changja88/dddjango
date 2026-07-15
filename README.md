@@ -145,6 +145,8 @@ acceptance-tester가 먼저 **실패하는** 인수 테스트를 쓴다(예: "�
 
 ```
 your_project/
+├── common/
+│   └── ninja/response/error_out.py       # contract scope의 공통 ErrorOut
 └── application/                # 모든 feature 앱의 컨테이너 (루트 평면 금지)
     └── orders/
         ├── composition_root.py             # DI 배선 — build_place_order_command() 매요청 팩토리
@@ -169,7 +171,7 @@ your_project/
         │   └── acl/product_stock_adapter.py           # 다른 BC를 번역해 소비
         ├── presentation_layer/             # 바깥 계약 (종류 1차: api/ · schema/)
         │   ├── api/order_controller.py       # django-ninja 컨트롤러 (얇은 어댑터)
-        │   └── schema/                       # 입출력 계약 schema_in·schema_out·error_out
+        │   └── schema/                       # schema_in·schema_out; 실제 확장만 <problem>_error_out
         └── test/                           # 의미군 분리
             └── unit/  integration/  e2e/
 ```
@@ -177,6 +179,16 @@ your_project/
 핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`, 테스트 unit/integration/e2e 분리. **이 규약들은 19종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
+
+Django Ninja 오류 응답은 같은 API/namespace/version/core profile 안에서 BC마다 `ErrorOut`을
+다시 만들지 않는다. 신규 단일-scope 표준 표면은 첫 BC부터
+`common/ninja/response/error_out.py`를 canonical contract로 사용한다. 독립 public/internal·version·
+core profile scope를 둘 이상 새로 도입하면 namespace/version/profile 하위 경로로 분리하고,
+기존 공용 HTTP/version 경로가 있으면 그 경로를 우선한다.
+BC 로컬 Schema는 `InventoryConflictErrorOut`처럼 실제 problem extension이 있을 때만 공통
+base를 상속해 두며, controller의 `response=`도 그 concrete Schema를 가리킨다. generic
+handler/helper는 실제 공유 시에만 common으로 승격하고, exception mapping은 계속 BC
+presentation이 소유한다.
 
 진행 메모와 설계 명세는 `.dddjango/<날짜>-<기능-slug>/`(`scope.md`, `design-spec.md`)에 남는다 — 한 기능 = 한 폴더이고, 코드와 함께 커밋해 설계 결정 기록으로 남긴다.
 

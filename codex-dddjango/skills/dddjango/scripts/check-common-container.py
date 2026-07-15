@@ -10,8 +10,10 @@ problem+json 헬퍼를 `application/common/ninja/problem.py` 에 둠 = 단일 BC
 *왜 결정적 백스톱인가* — 헬퍼 위치는 코더 구현 결정이고(설계 명세가 "presentation 경계"라
 해도 코더가 common/ 으로 승격), `check-app-container`(§0-1, 앱이 `application/` *밖*)나
 `check-layer-skeleton`(§0-2, BC 4계층 깊이)에 안 걸린다(common 은 앱이 아니라 잡히지 않음).
-이 좁은 그물이 "common 레벨" 한 축을 모델 무관하게 집행한다 — 단일 BC 면 헬퍼를 그 BC
+이 좁은 그물이 "common 레벨" 한 축을 모델 무관하게 집행한다 — 단일 BC 면 일반 헬퍼를 그 BC
 `presentation_layer/` 에 두라는 *예방* 은 ninja §6.2 가이드 몫이고, 이건 그 보조 백스톱이다.
+contract-scope 공통 core `ErrorOut`은 첫 HTTP BC부터 root `common/ninja/response/`에 두는
+좁은 예외지만, `application/common/`이 아니라는 이 검사의 위치 판정은 그대로 적용된다.
 
 거짓양성 ≈ 0 — *feature 앱이 아닌* `application/common/` 만 차단:
   G1) 레포 루트 직속 `application/` 존재 = 표준 채택. 없으면 exit 0(§1.1 존중).
@@ -82,10 +84,11 @@ def main(argv: list[str]) -> int:
         print(f"  - {common_under_app.relative_to(root).as_posix()}/  (내용: {', '.join(inside)})")
         print(
             "  근거: `common/`(앱 횡단 공용)은 *프로젝트 루트* 에 두고 `application/` 안에 넣지 "
-            "않는다 — `application/` 은 feature 앱 컨테이너다. 또한 단일 BC 면 헬퍼(problem 등)를 "
+            "않는다 — `application/` 은 feature 앱 컨테이너다. 단일 BC 일반 헬퍼(problem 등)는 "
             "그 BC `application/<app>/presentation_layer/` 에 두고, 2개 이상 BC 가 실제 공유할 때만 "
-            "루트 `common/ninja/` 로 승격한다(YAGNI; ninja §6.2·§6.3·houserules §1). `common/` 을 "
-            "루트로 옮기거나, 단일 BC 면 그 BC presentation_layer 로 내려라."
+            "루트 `common/ninja/` 로 승격한다(YAGNI). 단, contract-scope 공통 core `ErrorOut`은 첫 "
+            "HTTP BC부터 root `common/ninja/response/`에 두는 예외다(ninja §6.2·houserules §1). "
+            "내용의 소유 규칙에 따라 root common 또는 BC presentation으로 옮겨라."
         )
         return 2
 

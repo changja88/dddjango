@@ -21,6 +21,7 @@ Django Ninja Router/Schema/Operation·인증·필터링·페이지네이션·Pro
 - Request/Response schema는 명시적으로 분리, ModelSchema는 내부 구현 보호가 확실할 때만 (§3.1–§3.2)
 - 발행 이벤트 봉투의 discriminator는 1종째부터 domain StrEnum + `Literal[EventType.X]` 파생(birth-enum), 버전 태그는 리터럴 동결, union-enum 동기 테스트 세트 (§3.1)
 - 에러 status를 `response={...}`에 schema로 선언하되(`openapi_extra`·`get_openapi_schema` 수동 선언은 ninja 미인지라 불충족), 오류는 operation에서 `raise`하고 problem+json 변환은 중앙 `@api.exception_handler`·헬퍼 한 곳이 한다 — operation 본문에서 `(status, schema)` 튜플·수제 응답 금지. 생성 OpenAPI의 error media-type이 `application/json`인 것은 수용된 한계(사후변형 금지). Problem Details RFC 9457 변환 (§2.2·§6.2)
+- 신규 표준의 공통 core는 contract scope별 canonical `ErrorOut` 하나를 재사용한다(단일 scope fallback=`common/ninja/response/error_out.py`; 독립 scope가 여럿이면 namespace/version/profile 하위; 기존 공용 경로 우선). core-only status는 base, extension-bearing status는 승인된 concrete subclass를 `response=`에 선언하고 `model_dump(by_alias=True, exclude_none=True)`로 직렬화한다. alias가 있으면 operation도 `by_alias=True`로 선언해 runtime/OpenAPI wire key를 맞춘다. arbitrary extension bag·base-only extension 응답은 금지하며 helper/handler 승격과 BC exception mapping 소유는 Schema 배치와 분리한다 (§6.2)
 - operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) (§2.2)
 - Idempotency-Key는 계약에 정의된 endpoint에만; 키 정책(scope·replay·conflict)은 `architecture-api`, 저장소·retention(테이블·unique constraint·fingerprint)은 `architecture-db`가 결정 (§7)
 - 계약이 바뀌면 OpenAPI 생성 결과를 확인 (§8)

@@ -1,13 +1,13 @@
 # ErrorOut 중앙 계약 설계
 
 - 작성: 2026-07-16
-- 상태: 적대 리뷰 3종 PASS v4 · 사용자 승인 · 구현 대기
+- 상태: 설계 적대 리뷰 3종 PASS v4 · 사용자 승인 · 구현 완료 · 최종 구현 적대 리뷰 3종 PASS
 - 범위: Django Ninja Problem Details 응답 Schema의 소유·배치·재사용 규율과 파이프라인 역할 책임
 - 비범위: 도메인 예외 계층, 예외→HTTP status 매핑 내용, problem type URI 카탈로그의 전역 통합, DRF/plain Django 계약의 강제 이주
 
 ## 1. 문제
 
-현재 플러그인은 각 BC의 `presentation_layer/schema/error_out.py`에 `ErrorOut`을 만들도록 안내한다. 반면 런타임 problem body와 exception handler는 presentation 단일 변환점으로 모으도록 안내한다. 이 때문에 다음 상태가 동시에 가능하다.
+기준 커밋 `9d86cf7` 당시 플러그인은 각 BC의 `presentation_layer/schema/error_out.py`에 `ErrorOut`을 만들도록 안내했다. 반면 런타임 problem body와 exception handler는 presentation 단일 변환점으로 모으도록 안내했다. 이 때문에 다음 상태가 동시에 가능했다.
 
 1. 클라이언트가 받는 동일한 Problem Details envelope가 BC마다 복제된다.
 2. 어떤 예시는 `ProblemOut`, 다른 예시는 `ErrorOut`을 사용한다.
@@ -96,8 +96,8 @@ class InventoryConflictErrorOut(ErrorOut):
 
 1. 승인된 설계 명세가 extension의 wire key, 타입, 의미를 명시한다.
 2. 로컬 클래스가 공통 `ErrorOut`을 상속한다.
-3. controller의 `response={...}`가 base가 아니라 concrete Schema를 선언한다.
-4. extension이 같은 contract scope의 다른 problem/operation과 공유되지 않는다는 현재 근거가 있다.
+3. controller의 `response={...}`가 base가 아니라 concrete Schema를 선언하고, wire alias가 있으면 operation에 `by_alias=True`도 설정한다.
+4. extension이 같은 contract scope의 다른 BC와 공유되지 않는다는 현재 근거가 있다. 같은 BC의 여러 operation이 같은 problem을 반환하는 것은 BC-local 소유를 바꾸지 않는다.
 
 금지한다.
 
@@ -107,12 +107,13 @@ class InventoryConflictErrorOut(ErrorOut):
 - 모든 BC의 problem type과 extension을 공통 거대 union/registry로 통합
 - domain/application 계층이 `ErrorOut`을 import
 
-동일 contract scope에서 key/type/required/default/alias/validator/config/meaning이 같은 concrete extension 계약을 둘 이상의 problem/operation이 실제로 공유하면 concrete Schema 전체를 `common/ninja/response/`로 승격한다. 동등성이 불명확하면 자동 통합하지 않고 architect로 반송한다.
+동일 contract scope에서 key/type/required/default/alias/validator/config/meaning이 같은 concrete extension 계약을 둘 이상의 BC가 실제로 공유하면 concrete Schema 전체를 `common/ninja/response/`로 승격한다. 동등성이 불명확하면 자동 통합하지 않고 architect로 반송한다.
 
 framework validation의 `invalid-params`처럼 API scope 전체에 적용되는 extension은 첫 사용부터 scope-common concrete Schema로 둔다.
 
 ```python
-from ninja import Field, Schema
+from ninja import Schema
+from pydantic import ConfigDict, Field
 
 
 class InvalidParamOut(Schema):
@@ -121,6 +122,8 @@ class InvalidParamOut(Schema):
 
 
 class ValidationErrorOut(ErrorOut):
+    model_config = ConfigDict(populate_by_name=True)
+
     invalid_params: list[InvalidParamOut] = Field(alias="invalid-params")
 ```
 
@@ -189,11 +192,11 @@ Error response schema
 - existing canonical path: <경로 또는 없음>
 - base action: reuse | create-common | promote-to-common | preserve-brownfield
 - canonical base: <import path와 class>
-- common core profile: <필드의 타입·required/default 정책>
+- common core profile: <core 필드별 타입·required/default/nullable + 전역 alias/config>
 - local concrete action: none | reuse | create | promote
 - local concrete schema: <없음 또는 경로·class>
-- local justification: <extension key·type·meaning 또는 없음>
-- response declaration: <status → concrete schema>
+- local justification: <extension key·type·required/default/alias/validator/config·meaning 또는 없음>
+- response declaration: <status → concrete schema + alias가 있으면 operation by_alias=True>
 - compatibility: <기존 import/body/OpenAPI 영향 또는 없음>
 ```
 
@@ -209,17 +212,17 @@ coder는 설계를 다시 결정하지 않지만 새 오류 Schema를 만들기 
 4. 로컬 Schema는 명세가 extension을 명시했을 때만 concrete subclass로 만든다.
 5. 명세가 로컬 복제를 요구하거나 현재 트리와 어긋나면 임의 보정하지 않고 Coordinator에 구조화된 mismatch를 보고한다. Coordinator가 G1/G1′에서 design-architect로 반송한다.
 6. `response={...}`가 실제 concrete Schema를 가리키는지 확인한다.
-7. acceptance가 만든 core-only 및 extension OpenAPI/runtime 계약 테스트를 실제 실행한다.
+7. 실제 core-only status가 있으면 해당 계약을, 없으면 대표 extension-bearing status의 상속 core+extension OpenAPI/runtime 계약을 실행한다. 테스트 때문에 새 status를 만들지 않는다.
 
 ### 3.3 design-review-api와 acceptance-tester — 외부 계약 책임
 
 `design-review-api`는 물리 파일 경로를 감사하지 않는다. 대신 contract scope와 scope evidence, core profile의 required/default/전역 alias/config, extension wire key/type/meaning, version compatibility, status별 concrete response 계약이 완결됐는지 검토한다. BC 이름만 바꾼 profile 분리와 extension-bearing status의 base-only response 선언은 반송한다.
 
-`acceptance-tester`는 contract scope마다 대표 core-only status의 generated OpenAPI required/default/nullable과 runtime core 4필드·`instance` omission·예상 밖 key 부재를 검증한다. extension-bearing status마다 concrete Schema ref/shape와 TestClient runtime body/content-type/정확한 key 집합을 추가 검증하는 바깥 Red를 소유한다. 내부 helper 자체를 직접 테스트하지 않는다.
+`acceptance-tester`는 11-slot의 `common core profile`과 `compatibility`를 기대값으로 삼는다. 실제 core-only status가 있으면 대표 하나를 검증하고, 없으면 새 status를 발명하지 않고 대표 extension-bearing status에서 상속 core profile과 extension을 함께 검증한다. `base action=create-common`이고 신규 dddjango profile을 채택한 경우에만 generated OpenAPI required/default/nullable과 runtime core 4필드·`instance` omission·예상 밖 key 부재를 고정하며, 그 밖의 action은 승인된 profile을 보존한다. extension-bearing status마다 concrete Schema ref/shape와 TestClient runtime body/content-type/정확한 key 집합을 추가 검증하는 바깥 Red를 소유한다. 내부 helper 자체를 직접 테스트하지 않는다.
 
 ### 3.4 discipline-reviewer — 독립 감사 책임
 
-discipline-reviewer는 DRY·배치·import·승인 명세 집행만 감사한다. 다음은 Phase 2 blocker다.
+discipline-reviewer는 DRY·배치·import·승인 명세 집행만 감사한다. Error response schema scope에서는 Phase 1 lightweight 감사가 필수이며, 신규 표준+established canonical 부재인데 `base action`이 `create-common`이 아니거나 canonical base가 BC-local이면 G1 전 blocker다. 다음은 Phase 2 blocker다.
 
 - 공통 base가 있는데 BC가 core shape를 다시 선언
 - 이름만 바꾼 동일 Schema 복제
@@ -235,9 +238,10 @@ required/default, alias, validator, config, problem 의미, generated OpenAPI와
 Coordinator는 직접 배치를 결정하지 않는다.
 
 - 승인 스코프가 Ninja endpoint/error contract 또는 오류 response Schema를 새로 만들거나 변경할 때, G1 제시 시점과 승인 후 Phase 2 dispatch 직전에 현재 명세의 11항목 `Error response schema` 슬롯 완결성을 확인한다. 프로젝트에 기존 Ninja API가 있다는 사실만으로 순수 내부 버그 수정에 이 슬롯을 새로 요구하지 않는다.
-- Phase 1에서는 API reviewer, Phase 2에서는 acceptance-tester·coder·discipline-reviewer에게 해당 슬롯 중 각 책임에 필요한 부분을 전달한다.
+- Error response schema scope에서는 Phase 1 discipline lightweight를 필수로 호출한다. Phase 1 API reviewer와 discipline-reviewer, Phase 2 acceptance-tester·coder·discipline-reviewer 모두에게 11-slot 전체를 전달하되 각 역할은 자기 판정 범위에만 집중한다.
 - coder/reviewer가 발견한 명세·트리 불일치는 G1/G1′로 반송한다.
-- G2에서 공통 import, 허용된 로컬 concrete Schema, generated OpenAPI와 runtime 계약 테스트 결과를 함께 보고한다.
+- G1′에서 `contract scope`, `scope evidence`, `common core profile`, `local justification`, `response declaration`, `compatibility`가 바뀌면 API reviewer를 다시 호출하고 새 G1을 제시한다.
+- G2에서 공통 import, 허용된 로컬 concrete Schema, generated OpenAPI와 runtime 계약 테스트 결과를 함께 보고한다. 실제 core-only status가 없으면 `none`과 대표 extension-bearing status의 상속 core+extension 결과를 표시한다.
 
 ## 4. 검증 전략
 
@@ -250,11 +254,11 @@ Coordinator는 직접 배치를 결정하지 않는다.
 5. 현재 design-review-api가 근거 없는 profile 분리와 base-only extension response를 반송하는지 확인한다.
 6. 현재 Coordinator가 slot 누락과 stale-spec handoff에서 다음 phase를 차단하는지 확인한다.
 
-수정 뒤 같은 압력 시나리오를 fresh context로 반복한다. 역할 격리 시험은 simulation으로 표시하고, committed bootable fixture와 고정된 role+skill/reference bundle을 새 임시 git copy에서 실행한다. agent에게 oracle을 노출하지 않고 실제 search trace, pytest Red/Green, design-spec diff, 생성/비생성 파일, import target, reviewer `file:line` finding으로 판정한다. 자기보고와 키워드 복창은 PASS 증거가 아니다.
+사용자 범위 변경에 따라 외부 runtime/live 실행, 로그인, 임시 Python 환경, 대규모 fixture·matrix는 만들지 않는다. 변경 전에는 canonical path·11-slot·coder preflight·reviewer blocker·Coordinator gate anchor의 부재를 정적으로 확인한다. 변경 후에는 corpus byte mirror, Claude/Codex 의미 anchor, 금지 문구, plugin 구조와 전체 diff를 검증한다.
 
-Coordinator 실제 배선은 별도 fresh `/dddjango` 위반 주입으로 확인한다. missing-slot, stale-spec handoff, extension OpenAPI/runtime Red 전달, exact duplicate reviewer blocker를 양 runtime에서 각각 3회 실행하여 architect→coder→acceptance/reviewer 반송과 G1/G2 차단이 실제로 발화하는지 본다.
+최종 검증은 구현에 참여하지 않은 fresh-context reviewer 세 명이 contract/ownership, corpus/self-consistency, effectiveness/overfit 축을 각각 독립 감사한다. 각 reviewer는 design/plan과 실제 diff만 읽고 `path:line` 근거로 PASS/FAIL을 낸다. 하나라도 중요한 실패가 있으면 해당 소유 파일을 보완하고 세 축을 다시 확인한다. 외부 runtime 동작을 검증했다고 주장하지 않는다.
 
-결정적 checker는 선결정하지 않는다. 역할 prompt 보강과 Coordinator live injection 뒤에도 동일 scope의 direct exact core 복제가 반복되면 고정밀 subset의 checker 필요성을 별도 decision gate로 올린다. version/required/default/alias/validator/config/meaning 비교가 필요한 형태는 계속 의미 레인에 둔다. 광범위 이름·필드 집합 검사는 채택하지 않는다.
+결정적 checker는 선결정하지 않는다. 최종 리뷰에서 같은 scope direct exact core 복제나 base-only extension response가 기존 역할 경계를 반복적으로 탈출할 구체 증거가 나오면 고정밀 subset의 checker 필요성을 별도 decision gate로 올린다. version/required/default/alias/validator/config/meaning 비교가 필요한 형태는 계속 의미 레인에 둔다. 광범위 이름·필드 집합 검사는 채택하지 않는다.
 
 ## 5. 비목표와 안전 경계
 

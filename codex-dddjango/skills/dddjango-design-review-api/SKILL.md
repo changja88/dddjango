@@ -31,6 +31,7 @@ description: dddjango 코디네이터가 Phase 1(설계)에서 spawn_agent로 �
 - 실패 상태 코드가 정확한가(401/403 인증·인가, 406/415 협상, 409/422 충돌·검증).
 - 멱등성 키 정책(scope·replay·conflict)이 정의됐는가. (저장소·retention은 데이터 측면 — db 리뷰어로.)
 - 버전·하위호환이 깨지지 않는가, breaking change에 마이그레이션 경로가 있는가.
+- Ninja 오류 계약을 만들거나 바꾸면 architect의 Error response schema 11-slot 중 계약 의미를 검토한다: `contract scope/scope evidence`, core required/default/nullable, 전역 alias/config, extension wire key·type·meaning, status별 concrete `response=`와 compatibility. wire alias가 있는 response는 operation의 `by_alias=True`까지 `response declaration`에 있어 generated OpenAPI와 runtime key가 같은지 본다. 같은 API/namespace/version/core인데 BC 이름만으로 profile을 분리하거나 extension-bearing status에 base만 선언하면 blocker다. 물리 경로·import DRY는 discipline-reviewer 소유이므로 여기서 새로 판정하지 않는다.
 - 명세의 “테스트 계약 변화”에서 API 기대를 종료했다면 해당 표면에 적용 가능한 지원 소비자·버전·deprecation/Sunset 의무가 끝났다는 근거가 있는가. 명세의 침묵이나 새 성공 응답 부재만으로 종료를 승인하지 않고 `미확정`으로 반송한다.
 - 페이지네이션·정렬·필터·레이트리밋 계약이 일관된가.
 - 엔드포인트 표면(URL)을 점검할 때, 신규 표준 표면은 ninja-extra **클래스 컨트롤러**라 **최종 URL = `@api_controller("/prefix")`(클래스가 소유) + `@route.*("path")` 메서드 경로의 합성**으로 읽고, 등록은 `register_controllers`로 단일 API 인스턴스에 모인다는 점을 인지한다(prefix와 메서드 경로가 둘로 나뉘므로 한쪽만 보고 URL을 판단하지 않는다). 계약 lens는 형태(함수형/클래스) 중립이지만, 경로 합성과 등록을 모르면 엔드포인트 표면을 잘못 읽는다.

@@ -7,15 +7,18 @@
 요구→설계→구현(TDD)까지 단계별 게이트로 빌드하도록 오케스트레이션한다.
 **Claude Code(`dddjango/`)와 Codex(`codex-dddjango/`) 양 런타임을 지원**하며, 둘 다
 같은 GitHub 레포에서 마켓으로 배포한다(Claude `dddjango@changja88-dddjango` · Codex `dddjango@changja88-dddjango`).
-정본은 `dddjango/`이고 `codex-dddjango/`는 byte-identical 미러(`corpus_mirror_sync`로 동기 검증).
+플러그인 정본은 `dddjango/`다. `references/final.md`는 `corpus_mirror_sync`가 Codex에
+byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다. 역할·Coordinator·
+`SKILL.md` 본문은 각 플랫폼 형식을 유지하는 의미 미러다.
 
 ## 저장소 구조
 
 - `dddjango/` — 실제 플러그인. `.claude-plugin/plugin.json`(매니페스트) +
   `commands/dddjango.md`(Coordinator) + `agents/*.md`(7개 subagent) +
   `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 19종).
-- `workspace/reference/**` — 소스 코퍼스(아키텍처·구현 레퍼런스의 `final.md`).
-  스킬 재생성의 1차 근거.
+- `workspace/reference/**` — 배포 reference의 출처·P1 메타데이터를 보존하는 소스 미러.
+  배포 본문 정본은 `dddjango/skills/*/references/final.md`이며,
+  `corpus_mirror_sync.py --write`가 workspace 소스 본문과 Codex reference를 갱신한다.
 - `workspace/design/`, `workspace/plan/` — 빌드 설계 메모와 계획서.
   파이프라인의 권위 있는 명세는 `workspace/design/2026-05-26-dddjango-plugin-pipeline-design.md`.
 
@@ -32,8 +35,9 @@
   메타코멘트로 본문을 오염시키지 않는다.
 - 한 주제는 한 소유자가 — 역할 경계를 넘기지 않는다(설계 명세=architect,
   인수 테스트=acceptance-tester, 코드=coder).
-- 스킬은 소스 코퍼스(`workspace/reference/**`)를 근거로 작성하며, 플러그인
-  이름은 `dddjango`로 일관되게 쓴다.
+- 스킬 reference는 `dddjango/skills/*/references/final.md`를 먼저 편집한 뒤
+  `corpus_mirror_sync.py --write`로 workspace/Codex 미러를 갱신한다. 플러그인 이름은
+  `dddjango`로 일관되게 쓴다.
 - 플러그인 매니페스트나 구조를 바꾸면 `claude plugin validate dddjango --strict`로 검증한다.
 
 ## 변경 방식
