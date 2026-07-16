@@ -504,14 +504,23 @@ problem-specific extension은 BC presentation에 구체 Schema로 선언한다. 
 arbitrary extension bag을 열지 않는다.
 
 ```python
-from ninja import Schema
-from pydantic import ConfigDict, Field
-
+# application/inventory/presentation_layer/schema/inventory_conflict_error_out.py — BC 전용 extension
 from common.ninja.response.error_out import ErrorOut
 
 
 class InventoryConflictErrorOut(ErrorOut):
     available_quantity: int
+```
+
+단, framework validation의 `invalid-params`처럼 API scope 전체가 소비하는 extension은 BC가
+아니라 첫 사용부터 scope-common concrete Schema로 둔다(배치 규칙은 아래 문단).
+
+```python
+# common/ninja/response/validation_error_out.py — API-wide extension은 첫 사용부터 scope-common
+from ninja import Schema
+from pydantic import ConfigDict, Field
+
+from common.ninja.response.error_out import ErrorOut
 
 
 class InvalidParamOut(Schema):
@@ -565,8 +574,11 @@ config의 단일 `NinjaExtraAPI`에 컨트롤러·핸들러를 모은다.
   빠지면 즉시 미식별 500으로 샌다(매핑 누락을 스키마 의존으로 정당화 금지).**
 - **framework 기본 예외**: ninja는 `AuthenticationError`(401)·`AuthorizationError`(403)·
   `Http404`(404)·`ValidationError`(422)·`Throttled`(429)에 기본 핸들러를 자동 등록하는데
-  기본 응답은 plain `application/json`이다. RFC 9457을 일관 적용하려면 이들도 같은 헬퍼로
-  오버라이드한다(아래 대안 B는 이걸 한 번에 처리한다).
+  기본 응답은 plain `application/json`의 `{"detail"}` body다. RFC 9457을 일관 적용하려면
+  다섯 종 *모두* 같은 헬퍼로 오버라이드한다 — 아래 레시피는 422와 `HttpError`만 예시하지만
+  401/403/404/429도 같은 형태로 등록한다. 대안 B(`create_response`)는 content-type만 일괄
+  통일하고 problem *body*는 만들지 않으므로(기본 `{"detail"}` body가 그대로 남는다) 이
+  오버라이드를 대체하지 못한다.
 - **transient 인프라 예외**: DB 락·deadlock·serialization 같은 *재시도로 해소되는* 경합은
   retryable(503+`Retry-After` 또는 409+`retryable` — 명세 §5/G1)로 매핑한다. 단 `OperationalError`
   *클래스 전체*를 retryable로 보지 말고 핸들러 안에서 락/경합 *시그니처*만 가린다(disk I/O·
@@ -624,18 +636,30 @@ def problem_response(body: ErrorOut) -> Response:
     )
 
 
+def problem(
+    status: int,
+    *,
+    title: str,
+    detail: str,
+    type: str = "about:blank",
+    instance: str | None = None,
+) -> Response:
+    # core-only shortcut — 확장 필드 없는 매핑용. ErrorOut을 실제로 생성해 같은 변환점을
+    # 통과시키므로 임의 **extensions로 Schema를 우회할 수 없다. extension-bearing 매핑은
+    # 이 헬퍼 대신 concrete Schema 인스턴스를 problem_response()에 직접 넘긴다.
+    return problem_response(
+        ErrorOut(type=type, title=title, status=status, detail=detail, instance=instance)
+    )
+
+
 @api.exception_handler(ProductNotFound)        # 도메인 예외 → status 매핑은 presentation 소유
 def on_product_not_found(request, exc):
-    return problem_response(
-        ErrorOut(status=404, title="Product not found", detail=str(exc))
-    )
+    return problem(404, title="Product not found", detail=str(exc))
 
 
 @api.exception_handler(InsufficientStock)
 def on_insufficient_stock(request, exc):
-    return problem_response(
-        ErrorOut(status=409, title="Insufficient stock", detail=str(exc))
-    )
+    return problem(409, title="Insufficient stock", detail=str(exc))
 
 
 @api.exception_handler(ValidationError)        # framework 기본 422를 problem+json으로 오버라이드
@@ -661,20 +685,16 @@ def on_http_error(request, exc):
         title = HTTPStatus(exc.status_code).phrase
     except ValueError:                         # 비표준 status code 가드(HTTPStatus ValueError 방지)
         title = "Request error"
-    return problem_response(
-        ErrorOut(status=exc.status_code, title=title, detail=str(exc))
-    )
+    return problem(exc.status_code, title=title, detail=str(exc))
 
 
 def _server_error(request, exc) -> Response:
     # 미식별·미매핑·비-transient 예외의 최후방 500 — 스택은 로그로만(본문 노출·DEBUG traceback 차단).
     logger.exception("Unhandled exception at API boundary")
-    return problem_response(
-        ErrorOut(
-            status=500,
-            title="Internal server error",
-            detail="An unexpected error occurred.",
-        )
+    return problem(
+        500,
+        title="Internal server error",
+        detail="An unexpected error occurred.",
     )
 
 
@@ -696,12 +716,10 @@ def on_db_operational_error(request, exc):
     if not _is_retryable_db_error(exc):
         return _server_error(request, exc)     # disk I/O·malformed 등 영구장애 → 500
     # retryable status는 명세(§5/G1)가 정한다 — 503(+Retry-After) 또는 409(+retryable 확장).
-    resp = problem_response(
-        ErrorOut(
-            status=503,
-            title="Service temporarily unavailable",
-            detail="Transient database contention; please retry.",
-        )
+    resp = problem(
+        503,
+        title="Service temporarily unavailable",
+        detail="Transient database contention; please retry.",
     )
     resp["Retry-After"] = "1"
     return resp
