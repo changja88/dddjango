@@ -2459,115 +2459,423 @@ client = TestClient(router)
 
 ### 19.2 요청 검증과 오류 응답
 
-공통 `ErrorOut` 계약을 새로 만들거나 바꾸면 내부 helper를 직접 테스트하지 말고, 11-slot의
-`common core profile`과 `compatibility`를 기대값의 단일 근거로 삼는다. 실제 core-only
-status가 있으면 대표 하나를 endpoint와 생성 OpenAPI에서 고정하고, 없으면 새 status를 발명하지
-않고 대표 extension-bearing status에서 상속 core profile과 extension을 함께 검증한다. 아래 고정
-profile은 `base action=create-common`이고 신규 dddjango output profile을 채택한 scope에 적용한다:
-runtime에서 core 네 필드가 항상 있고 `instance`는 값이 없으면 생략되며, OpenAPI에서
-`title/status/detail` required, `type` default, `instance` optional nullable다. 그 밖의 base
-action은 승인된 profile의 required/default/nullable/runtime shape를 그대로 assert하며 아래 신규
-default를 강제하지 않는다.
+오류 테스트의 단일 근거는 승인된 **Error response contract 12-slot**이다. 오류가 있는 API
+scope마다 다음 carrier를 명세에서 그대로 읽고, 테스트가 profile이나 status를 새로 결정하지 않는다.
+
+| # | slot | 테스트가 읽는 내용 |
+|---|---|---|
+| 1 | `contract scope` | API instance·namespace/version·public/internal·API/controller/URLconf/registrar·`scope-bc`/`error-bc` |
+| 2 | `scope evidence` | 모든 API surface의 `code-profile \| preserve` inventory와 기존 wire/OpenAPI/consumer 증거 |
+| 3 | `error profile` | `dddjango-code-json` 또는 `preserve-established` |
+| 4 | `compatibility/rollout` | 보존·breaking·version 분리·동시 배포 결정 |
+| 5 | `common ErrorOut action` | `reuse \| create \| approved-change \| none`과 canonical import |
+| 6 | `common ErrorOut shape/approval` | 필드·타입·required와 변경 승인 |
+| 7 | `BC error module` | 정확한 `<bc>/presentation_layer/schema/error_out.py` 또는 근거 있는 `none` |
+| 8 | `BC ErrorCode` | `<Bc>ErrorCode` 멤버와 public wire 문자열 |
+| 9 | `BC ErrorOut` | 공통 base 상속과 `code: <Bc>ErrorCode` narrowing |
+| 10 | `prepared error mapping` | 내부 실패 → concrete/base → `code/title/status/detail/header` |
+| 11 | `controller mapping` | application 호출·좁은 `try`·catch 타입·직접 `Status` 반환 |
+| 12 | `response/OpenAPI/tests` | endpoint별 status/schema, framework-default 제외, runtime/OpenAPI/no-arg 기준 |
+
+새로 만들거나 touched한 `dddjango-code-json` scope는 아래 code profile 테스트를 적용한다. 이미
+배포된 `preserve-established` scope는 2·3·4번 slot에 기록된 **관찰·승인된** status/body/header/
+media type/OpenAPI를 그대로 검증한다. 그 scope가 RFC 9457이면 그때만 `type`, `instance`,
+`application/problem+json` 같은 RFC 필드를 기대한다. 새 scope 전체에 이를 보편 규칙으로
+강제하거나 두 profile을 한 wire shape에 섞지 않는다.
+
+#### 19.2.1 Schema 계약: 공통 shape, BC narrowing, concrete 무인자 생성
+
+code profile의 첫 경계는 실제 Ninja/Pydantic Schema다. 공통 `ErrorOut`은 현재 승인된
+`code: str`, `title: str`, `status: int`, `detail: str` 네 required 필드만 가진다. 이 집합을
+변경하는 테스트와 코드는 사용자 승인과 G1의 6번 slot 갱신이 함께 있을 때만 바꾼다.
 
 ```python
-def _resolve_response_schema(document, path, method, status):
-    responses = document["paths"][path][method]["responses"]
-    status_keys = [status, str(status)]
-    if isinstance(status, str) and status.isdigit():
-        status_keys.append(int(status))
-    status_key = next(key for key in status_keys if key in responses)
-    content = responses[status_key]["content"]
-    media_schema = next(iter(content.values()))["schema"]
-    if "$ref" not in media_schema:
-        return media_schema
-    name = media_schema["$ref"].rsplit("/", 1)[-1]
-    return document["components"]["schemas"][name]
+import pytest
+from pydantic import ValidationError
+
+from common.ninja.response.error_out import ErrorOut
+from application.inventory.presentation_layer.schema import error_out as inventory_errors
+from application.inventory.presentation_layer.schema.error_out import (
+    InventoryErrorCode,
+    InventoryErrorOut,
+)
 
 
-def test_missing_inventory_item_uses_core_error_contract(client):
-    response = client.get("/api/inventory/items/missing")
+def test_common_error_out_has_exact_approved_shape():
+    assert set(ErrorOut.model_fields) == {"code", "title", "status", "detail"}
+    assert {
+        name: field.annotation for name, field in ErrorOut.model_fields.items()
+    } == {
+        "code": str,
+        "title": str,
+        "status": int,
+        "detail": str,
+    }
+    assert {
+        name for name, field in ErrorOut.model_fields.items() if field.is_required()
+    } == {"code", "title", "status", "detail"}
 
-    assert response.status_code == 404
-    assert response.headers["content-type"].startswith("application/problem+json")
-    body = response.json()
-    assert set(body) == {"type", "title", "status", "detail"}
-    assert body["type"] == "about:blank"
-    assert body["status"] == 404
-    assert "instance" not in body
 
-
-def test_core_error_openapi_profile(api):
-    document = api.get_openapi_schema()
-    schema = _resolve_response_schema(
-        document,
-        "/api/inventory/items/{item_id}",
-        "get",
-        "404",
+def test_inventory_error_code_accepts_only_its_approved_enum():
+    valid = InventoryErrorOut(
+        code="inventory_item_not_found",
+        title="Inventory item not found",
+        status=404,
+        detail="The requested inventory item does not exist.",
     )
-    assert set(schema["required"]) == {"title", "status", "detail"}
-    assert schema["properties"]["type"]["default"] == "about:blank"
-    assert "instance" not in schema["required"]
-    assert {"type": "null"} in schema["properties"]["instance"]["anyOf"]
-```
+    assert valid.code is InventoryErrorCode.ITEM_NOT_FOUND
 
-problem-specific extension이 있으면 status별 concrete Schema와 wire key를 별도로 고정한다.
-base `ErrorOut`만 선언하고 runtime에서 extension을 임의 추가하는 구현은 통과시키지 않는다.
+    with pytest.raises(ValidationError):
+        InventoryErrorOut(
+            code="inventory_undefined_code",
+            title="Undefined",
+            status=400,
+            detail="This public code was never approved.",
+        )
 
-```python
-def test_inventory_conflict_problem_contract(client):
-    response = client.post(
-        "/api/inventory/reservations",
-        json={"sku": "SKU-001", "quantity": 2},
-    )
 
-    assert response.status_code == 409
-    assert response.headers["content-type"].startswith("application/problem+json")
-    body = response.json()
-    assert body["status"] == 409
-    assert isinstance(body["available_quantity"], int)
-    assert set(body) == {
-        "type", "title", "status", "detail", "available_quantity"
+def _all_subclasses(base):
+    for child in base.__subclasses__():
+        yield child
+        yield from _all_subclasses(child)
+
+
+def _managed_concrete_error_types():
+    return {
+        error_type
+        for error_type in _all_subclasses(InventoryErrorOut)
+        if error_type.__module__ == inventory_errors.__name__
     }
 
 
-def test_inventory_conflict_openapi_uses_concrete_schema(api):
-    document = api.get_openapi_schema()
-    schema = _resolve_response_schema(
-        document,
-        "/api/inventory/reservations",
-        "post",
-        "409",
-    )
-    assert "available_quantity" in schema["properties"]
-    assert "available_quantity" in schema["required"]
+def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
+    error_types = _managed_concrete_error_types()
+    assert error_types  # 비어 있는 discovery는 아무것도 증명하지 않는다.
+
+    assert set(InventoryErrorOut.model_fields) == set(ErrorOut.model_fields)
+    assert InventoryErrorOut.model_fields["code"].annotation is InventoryErrorCode
+    for name in {"title", "status", "detail"}:
+        assert (
+            InventoryErrorOut.model_fields[name].annotation
+            is ErrorOut.model_fields[name].annotation
+        )
+
+    for error_type in error_types:
+        error = error_type()  # required 생성자 인자가 생기면 여기서 실패한다.
+        assert set(error_type.model_fields) == set(ErrorOut.model_fields)
+        assert all(not field.is_required() for field in error_type.model_fields.values())
+        assert all(
+            field.alias is None
+            and field.validation_alias is None
+            and field.serialization_alias is None
+            for field in error_type.model_fields.values()
+        )
+        decorators = error_type.__pydantic_decorators__
+        base_decorators = InventoryErrorOut.__pydantic_decorators__
+        assert set(decorators.validators) == set(base_decorators.validators)
+        assert set(decorators.field_validators) == set(
+            base_decorators.field_validators
+        )
+        assert set(decorators.model_validators) == set(
+            base_decorators.model_validators
+        )
+        assert set(error.model_dump()) == {"code", "title", "status", "detail"}
 ```
 
-validation extension의 alias는 Python 필드명이 아니라 실제 wire key를 리터럴로 단언한다.
+프로젝트 전체 code inventory는 12-slot의 `scope evidence`에 열거된 모든 code-profile 오류
+모듈을 넣는다. 독립 version도 같은 Enum을 재사용하면 class identity로 한 번만 세고, 별도
+Enum이 같은 wire 문자열을 복제하면 실패시킨다. concrete가 여러 surface에서 재사용되거나 같은
+public code로 수렴하더라도 title은 하나여야 한다.
 
 ```python
-def test_create_order_validation_problem(client):
-    response = client.post("/orders", json={"items": []})
+from collections import defaultdict
+import inspect
 
-    assert response.status_code == 422
-    body = response.json()
-    assert "invalid-params" in body
-    assert "invalid_params" not in body
+from application.inventory.presentation_layer.schema import error_out as inventory_errors
+from application.orders.presentation_layer.schema import error_out as order_errors
 
 
-def test_create_order_validation_openapi_uses_wire_alias(api):
-    document = api.get_openapi_schema()
-    schema = _resolve_response_schema(document, "/orders", "post", 422)
-    assert "invalid-params" in schema["properties"]
-    assert "invalid_params" not in schema["properties"]
+CODE_PROFILE_ERROR_MODULES = (inventory_errors, order_errors)  # 12-slot 전역 inventory
+APPROVED_PUBLIC_ERROR_TITLES = {
+    "inventory_item_not_found": "Inventory item not found",
+    "inventory_temporarily_unavailable": "Inventory temporarily unavailable",
+    "order_product_not_found": "Product not found",
+    "order_insufficient_stock": "Insufficient stock",
+    "order_temporarily_unavailable": "Order temporarily unavailable",
+    "order_version_mismatch": "Order version mismatch",
+}
+
+
+def test_public_wire_codes_are_project_wide_unique_and_titles_are_stable():
+    enum_types = {
+        error_type.model_fields["code"].annotation
+        for module in CODE_PROFILE_ERROR_MODULES
+        for _name, error_type in inspect.getmembers(module, inspect.isclass)
+        if error_type.__module__ == module.__name__
+        and error_type.__name__.endswith("ErrorOut")
+        and error_type.__name__ != "ErrorOut"
+    }
+    wire_codes = [member.value for enum_type in enum_types for member in enum_type]
+    assert len(wire_codes) == len(set(wire_codes))
+    assert set(wire_codes) == set(APPROVED_PUBLIC_ERROR_TITLES)
+
+    titles_by_code = defaultdict(set)
+    concrete_types = {
+        error_type
+        for module in CODE_PROFILE_ERROR_MODULES
+        for _name, error_type in inspect.getmembers(module, inspect.isclass)
+        if error_type.__module__ == module.__name__
+        and error_type.__name__.endswith("Error")
+    }
+    assert concrete_types
+    for error_type in concrete_types:
+        error = error_type()
+        titles_by_code[error.code.value].add(error.title)
+
+    assert all(len(titles) == 1 for titles in titles_by_code.values())
+    assert all(
+        titles == {APPROVED_PUBLIC_ERROR_TITLES[code]}
+        for code, titles in titles_by_code.items()
+    )
 ```
 
-프로젝트가 `api.get_openapi_schema()`를 직접 노출하지 않으면 실제 URL resolver에 mount된 full
-Django client로 OpenAPI endpoint를 호출한다. controller-only `TestClient`에 임의
-`/api/openapi.json`을 호출하지 않는다. Ninja의 현재 한계로 생성 OpenAPI의 오류 media type이
-`application/json`일 수 있으므로 OpenAPI에서는 Schema ref/shape를 검사하고 runtime에서만
-`application/problem+json`을 단언한다. 아직 오류 계약이 정해지지 않았다면
-`architecture-api`에서 먼저 결정한 뒤 테스트를 Red로 만든다. 테스트 파일의 존재가 아니라
-agent가 추가한 assertion에서 실제로 실패하는 exact pytest command와 최종 Green을 모두 확인한다.
+실제 프로젝트의 명명 접미사가 다르면 class 이름 대신 승인된 module inventory와 base class를
+기준으로 discovery한다. 핵심은 concrete 목록을 손으로 일부만 나열하지 않고, 새 concrete가
+자동으로 무인자·shape·title 검증에 들어오게 하는 것이다.
+
+#### 19.2.2 HTTP 계약: 알려진 예외를 실제 요청으로 관찰
+
+HTTP 테스트는 실제 Django client 요청을 보낸다. application collaborator만 구체 예외를 내도록
+대체하고 serializer, `Status`, ErrorOut factory 같은 표현 내부는 mock하지 않는다. 기댓값은
+프로덕션 Enum/default에서 역수입하지 않고 독립적인 리터럴로 쓴다.
+
+```python
+import pytest
+
+from application.inventory.application_layer.query.get_item import (
+    ArchivedInventoryItemNotFound,
+    InventoryItemNotFound,
+)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "failure",
+    [
+        InventoryItemNotFound("private row id=731"),
+        ArchivedInventoryItemNotFound("private archive bucket=cold-9"),
+    ],
+)
+def test_known_missing_failures_converge_on_one_public_error(
+    client,
+    mocker,
+    failure,
+):
+    query = mocker.patch(
+        "application.inventory.presentation_layer.controller."
+        "build_get_inventory_item_query"
+    ).return_value
+    query.execute.side_effect = failure
+
+    response = client.get("/api/inventory/items/731")
+
+    assert response.status_code == 404
+    body = response.json()
+    assert body == {
+        "code": "inventory_item_not_found",
+        "title": "Inventory item not found",
+        "status": 404,
+        "detail": "The requested inventory item does not exist.",
+    }
+    assert body["status"] == response.status_code
+    assert response.headers["Content-Type"].partition(";")[0] == "application/json"
+    assert "private row id=731" not in body["detail"]
+    assert "private archive bucket=cold-9" not in body["detail"]
+```
+
+header는 모든 Django 기본 header를 snapshot하지 않고 10·12번 slot이 공개 계약으로 승인한
+header만 리터럴로 검증한다. 예를 들어 retryable 503에 `Retry-After: 1`만 승인됐다면 다음처럼
+error-sensitive header 집합을 한정한다.
+
+```python
+from application.inventory.application_layer.command.reserve_inventory import (
+    InventoryTemporarilyUnavailable,
+)
+
+
+def test_retryable_inventory_failure_has_only_approved_error_headers(
+    client,
+    mocker,
+):
+    command = mocker.patch(
+        "application.inventory.presentation_layer.controller."
+        "build_reserve_inventory_command"
+    ).return_value
+    command.execute.side_effect = InventoryTemporarilyUnavailable("db host=private")
+
+    response = client.post(
+        "/api/inventory/reservations",
+        data={"sku": "SKU-001", "quantity": 2},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "code": "inventory_temporarily_unavailable",
+        "title": "Inventory temporarily unavailable",
+        "status": 503,
+        "detail": "Please retry the inventory request later.",
+    }
+    contract_headers = {
+        name.lower(): value
+        for name, value in response.headers.items()
+        if name.lower() in {"retry-after", "www-authenticate", "x-inventory-error"}
+    }
+    assert contract_headers == {"retry-after": "1"}
+```
+
+여러 내부 예외가 같은 public 오류로 합쳐지는 tuple catch는 위 parameterization처럼 각 구체
+예외로 실제 endpoint를 통과시킨다. broad `Exception`이나 raw DB/SDK exception을 BC 오류로
+바꾸는 테스트를 만들지 않는다. 공개하기로 승인된 infra 실패는 infra/ACL에서 자기 BC의 구체
+application/domain exception으로 정규화한 뒤 이 동일한 HTTP 테스트에 들어온다.
+
+#### 19.2.3 framework 기본 오류와 미식별 500 smoke
+
+401/403, route 404, request validation 422, throttling 429, 일반 `HttpError`, 미식별 500은
+code-profile BC body가 아니다. full body를 snapshot하지 말고 status와 **BC ErrorOut이 아님**을
+확인한다. JSON 또는 `+json` body라면 네 core key와 해당 BC code prefix의 결합을 거부하는
+test-only assertion을 쓸 수 있다.
+
+```python
+from django.test import Client, override_settings
+
+
+def assert_not_inventory_error(response):
+    media_type = response.headers.get("Content-Type", "").partition(";")[0].lower()
+    if not response.streaming and response.content and (
+        media_type == "application/json" or media_type.endswith("+json")
+    ):
+        body = response.json()
+        assert not (
+            isinstance(body, dict)
+            and {"code", "title", "status", "detail"} <= set(body)
+            and str(body.get("code", "")).startswith("inventory_")
+        )
+
+
+@pytest.mark.parametrize(
+    "url, expected_status",
+    [
+        ("/api/forbidden", 403),
+        ("/api/no-such-route", 404),
+        ("/api/inventory?limit=not-an-integer", 422),
+        ("/api/throttled", 429),
+        ("/api/framework-http-error", 418),
+    ],
+)
+def test_framework_failures_are_not_bc_errors(client, url, expected_status):
+    response = client.get(url)
+
+    assert response.status_code == expected_status
+    assert_not_inventory_error(response)
+
+
+@override_settings(DEBUG=False)
+def test_unidentified_exception_uses_safe_framework_500(mocker):
+    client = Client(raise_request_exception=False)
+    query = mocker.patch(
+        "application.inventory.presentation_layer.controller."
+        "build_get_inventory_item_query"
+    ).return_value
+    query.execute.side_effect = RuntimeError("private-database-dsn-sentinel")
+
+    response = client.get("/api/inventory/items/731")
+
+    assert response.status_code == 500
+    assert b"Traceback" not in response.content
+    assert b"private-database-dsn-sentinel" not in response.content
+    assert_not_inventory_error(response)
+```
+
+500 body 문자열 자체는 Django/version/settings에 따라 달라질 수 있으므로 exact snapshot하지
+않는다. `DEBUG=False`와 `Client(raise_request_exception=False)`를 둘 다 명시해 실제 framework
+500 경로를 관찰한다.
+
+authentication backend는 성공 시 identity/principal을 반환하고 실패 시 `None` 또는 framework
+`AuthenticationError`를 사용한다. 아래 smoke는 두 실제 auth 경로가 401로 끝나고
+`request.auth`에 ErrorOut이 저장되지 않았음을 확인한다.
+
+```python
+@pytest.mark.parametrize(
+    "url",
+    ["/api/auth/rejected-token", "/api/auth/disabled-principal"],
+)
+def test_auth_failures_remain_framework_owned(client, url):
+    response = client.get(url, HTTP_AUTHORIZATION="Bearer rejected-token")
+
+    assert response.status_code == 401
+    auth = getattr(response.wsgi_request, "auth", None)
+    assert auth is None
+    assert not isinstance(auth, ErrorOut)
+    assert_not_inventory_error(response)
+```
+
+HTTP 의미론상 401 challenge가 필요한 일반 지침과 특정 Ninja/auth backend의 default capability는
+구분한다. 신규 default smoke가 실제로 `WWW-Authenticate`를 내지 않는다면 그 header를 발명하기
+위해 handler/helper를 만들지 않는다. 12-slot의 `preserve-established` compatibility가 해당
+header를 공개 계약으로 기록한 scope에서만 그 literal 값을 단언하고 보존 설계로 다룬다.
+429의 `Retry-After`와 406/415도 마찬가지다. 별도 승인된 406/415는 실제 `HttpError` 경로의
+status와 BC ErrorOut 부재만 검증하며 framework body exact snapshot이나 problem helper 테스트를
+만들지 않는다.
+
+#### 19.2.4 생성 OpenAPI와 native 성공 응답
+
+OpenAPI는 실제 URLconf에 mount된 API의 문서 endpoint를 full Django client로 호출한다.
+controller-only `TestClient`에 임의 OpenAPI URL을 호출하지 않는다. 직접 반환하는 BC status는
+`application/json` 아래 같은 BC base `<Bc>ErrorOut`을 참조하고, framework-owned status는 BC
+Schema로 광고되지 않아야 한다.
+
+```python
+def test_openapi_advertises_only_direct_inventory_errors(client):
+    response = client.get("/api/openapi.json")
+
+    assert response.status_code == 200
+    document = response.json()
+    operation = document["paths"]["/api/inventory/items/{item_id}"]["get"]
+    for status in ("404", "409"):
+        schema = operation["responses"][status]["content"]["application/json"][
+            "schema"
+        ]
+        assert schema == {
+            "$ref": "#/components/schemas/InventoryErrorOut",
+        }
+
+    framework_paths = {
+        path: item
+        for path, item in document["paths"].items()
+        if path.startswith("/api/auth/")
+        or path.startswith("/api/framework-")
+        or path == "/api/throttled"
+    }
+    assert framework_paths
+    serialized = str(framework_paths)
+    assert "InventoryErrorOut" not in serialized
+    assert "InventoryItemNotFoundError" not in serialized
+```
+
+`openapi_extra`, `get_openapi_schema` override/monkeypatch/postprocessor 같은 수동 증강의 부재는
+source checker/reviewer가 판정한다. 테스트는 production hook의 호출 여부를 spy하지 않고 생성된
+문서라는 외부 결과만 검증한다.
+
+`FileResponse`, `StreamingHttpResponse`, redirect, schema-less 204도 별도 success contract
+test를 유지한다. 이들은 오류 계약 우회가 아니라 native 성공 동작이다. status·stream bytes·
+`Location`·빈 body처럼 해당 성공 계약을 검증하고 BC ErrorOut으로 coercion되지 않았음을 smoke한다.
+
+아직 12-slot이 정해지지 않았거나 profile/compatibility가 충돌하면 `architecture-api` 설계로
+반송한다. 테스트 파일의 존재가 아니라 새 assertion에서 실제로 실패하는 exact pytest command와
+traceback, 그리고 같은 command의 최종 Green을 모두 확인한다. error helper/factory/serializer/
+mapping/handler의 내부 unit test는 만들지 않는다. Schema/HTTP/framework/OpenAPI 외부 계약 테스트가
+그 구현의 존재 여부와 무관하게 관찰 가능한 동작을 소유한다.
 
 ### 19.3 인증, 페이지네이션, 필터링
 
