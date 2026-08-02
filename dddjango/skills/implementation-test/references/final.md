@@ -2802,62 +2802,138 @@ def test_known_missing_failures_converge_on_one_public_error(
     assert "private archive bucket=cold-9" not in body["detail"]
 
 
-APPROVED_MAPPING_CASE_TITLES = {
+KNOWN_ERROR_SENSITIVE_HEADERS = {
+    "Retry-After",
+    "WWW-Authenticate",
+    "X-Inventory-Error",
+    "X-Order-Error",
+    "X-Legacy-Problem-Type",
+}
+BC_SPECIFIC_ERROR_HEADERS = {
+    "X-Inventory-Error",
+    "X-Order-Error",
+    "X-Legacy-Problem-Type",
+}
+APPROVED_MAPPING_CASES = {
     (
         "/api/v1/inventory/items/731",
         "get",
         404,
         "InventoryItemNotFound",
-    ): ("inventory_item_not_found", "Inventory item not found"),
+    ): {
+        "body": {
+            "code": "inventory_item_not_found",
+            "title": "Inventory item not found",
+            "status": 404,
+            "detail": "The requested inventory item does not exist.",
+        },
+        "known_headers": {},
+    },
     (
         "/api/v2/inventory/items/731",
         "get",
         404,
         "ArchivedInventoryItemNotFound",
-    ): ("inventory_item_not_found", "Inventory item not found"),
+    ): {
+        "body": {
+            "code": "inventory_item_not_found",
+            "title": "Inventory item not found",
+            "status": 404,
+            "detail": "The requested inventory item does not exist.",
+        },
+        "known_headers": {},
+    },
     (
         "/api/v1/inventory/reservations/731",
         "patch",
         409,
         "InventoryVersionMismatch",
-    ): ("inventory_version_mismatch", "Inventory version mismatch"),
+    ): {
+        "body": {
+            "code": "inventory_version_mismatch",
+            "title": "Inventory version mismatch",
+            "status": 409,
+            "detail": "Reload the inventory item and try again.",
+        },
+        "known_headers": {},
+    },
     (
         "/api/v1/inventory/reservations",
         "post",
         503,
         "InventoryTemporarilyUnavailable",
-    ): (
-        "inventory_temporarily_unavailable",
-        "Inventory temporarily unavailable",
-    ),
+    ): {
+        "body": {
+            "code": "inventory_temporarily_unavailable",
+            "title": "Inventory temporarily unavailable",
+            "status": 503,
+            "detail": "Please retry the inventory request later.",
+        },
+        "known_headers": {"Retry-After": "1"},
+    },
     (
         "/api/v1/orders/991",
         "get",
         404,
         "OrderProductNotFound",
-    ): ("order_product_not_found", "Product not found"),
+    ): {
+        "body": {
+            "code": "order_product_not_found",
+            "title": "Product not found",
+            "status": 404,
+            "detail": "The requested product does not exist.",
+        },
+        "known_headers": {},
+    },
     (
         "/api/v1/orders",
         "post",
         409,
         "OrderInsufficientStock",
-    ): ("order_insufficient_stock", "Insufficient stock"),
+    ): {
+        "body": {
+            "code": "order_insufficient_stock",
+            "title": "Insufficient stock",
+            "status": 409,
+            "detail": "The order quantity is unavailable.",
+        },
+        "known_headers": {},
+    },
     (
         "/api/v1/orders/retry",
         "post",
         503,
         "OrderTemporarilyUnavailable",
-    ): ("order_temporarily_unavailable", "Order temporarily unavailable"),
+    ): {
+        "body": {
+            "code": "order_temporarily_unavailable",
+            "title": "Order temporarily unavailable",
+            "status": 503,
+            "detail": "Please retry the order later.",
+        },
+        "known_headers": {"Retry-After": "1"},
+    },
     (
         "/api/v1/orders/991",
         "patch",
         409,
         "OrderVersionMismatch",
-    ): ("order_version_mismatch", "Order version mismatch"),
+    ): {
+        "body": {
+            "code": "order_version_mismatch",
+            "title": "Order version mismatch",
+            "status": 409,
+            "detail": "Reload the order and try again.",
+        },
+        "known_headers": {},
+    },
 }
 
 
-def test_every_prepared_mapping_case_keeps_its_literal_code_and_title(client, mocker):
+def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
+    client,
+    mocker,
+):
     v1_query = mocker.patch(
         "application.inventory.presentation_layer.v1.controller."
         "build_get_inventory_item_query"
@@ -2966,18 +3042,24 @@ def test_every_prepared_mapping_case_keeps_its_literal_code_and_title(client, mo
         ),
     }
 
-    assert responses_by_case.keys() == APPROVED_MAPPING_CASE_TITLES.keys()
+    assert responses_by_case.keys() == APPROVED_MAPPING_CASES.keys()
     observed_titles_by_code = {}
     for case, response in responses_by_case.items():
         _path, _method, expected_status, _failure_name = case
-        expected_code, expected_title = APPROVED_MAPPING_CASE_TITLES[case]
+        expected_contract = APPROVED_MAPPING_CASES[case]
+        expected_body = expected_contract["body"]
+        expected_headers = expected_contract["known_headers"]
         body = response.json()
         assert response.status_code == expected_status
-        assert (body["code"], body["title"]) == (expected_code, expected_title)
+        assert body == expected_body
+        assert body["status"] == response.status_code
+        assert set(expected_headers) <= KNOWN_ERROR_SENSITIVE_HEADERS
+        for name in KNOWN_ERROR_SENSITIVE_HEADERS:
+            assert response.headers.get(name) == expected_headers.get(name)
         observed_titles_by_code.setdefault(body["code"], set()).add(body["title"])
 
     expected_mapping_codes = {
-        code for code, _title in APPROVED_MAPPING_CASE_TITLES.values()
+        contract["body"]["code"] for contract in APPROVED_MAPPING_CASES.values()
     }
     assert expected_mapping_codes == APPROVED_PUBLIC_ERROR_CODES
     assert observed_titles_by_code.keys() == expected_mapping_codes
@@ -2988,25 +3070,18 @@ def test_every_prepared_mapping_case_keeps_its_literal_code_and_title(client, mo
     )
 ```
 
+`APPROVED_MAPPING_CASES`는 10~12번 slot의 mapping case를 하나도 생략하지 않은 literal
+inventory다. 각 value가 exact `code/title/status/detail` body와 그 case에 승인된 known header
+기댓값을 함께 소유한다. case key coverage를 먼저 맞춘 뒤 실제 응답 body 전체, HTTP/body status,
+모든 known header의 승인값 또는 부재를 case별로 검증한다.
+
 header는 모든 Django 기본 header를 snapshot하지 않는다. 대신 10·12번 slot에서 조사한
 **완전한 known error-sensitive/legacy header inventory**와 mapping별 승인값을 각각 리터럴로
 쓴다. 예를 들어 이 프로젝트가 알고 있는 후보 전체가 아래 다섯 개이고 retryable inventory
 503에는 `Retry-After: 1`만 승인됐다면, 승인값과 나머지 known 후보의 부재를 모두 검증한다.
 
 ```python
-KNOWN_ERROR_SENSITIVE_HEADERS = {
-    "Retry-After",
-    "WWW-Authenticate",
-    "X-Inventory-Error",
-    "X-Order-Error",
-    "X-Legacy-Problem-Type",
-}
 APPROVED_RETRYABLE_INVENTORY_HEADERS = {"Retry-After": "1"}
-BC_SPECIFIC_ERROR_HEADERS = {
-    "X-Inventory-Error",
-    "X-Order-Error",
-    "X-Legacy-Problem-Type",
-}
 
 
 def test_retryable_inventory_failure_matches_known_header_inventory(
@@ -3191,7 +3266,12 @@ APPROVED_MANAGED_ERROR_REFS = {
 COMPLETE_MANAGED_ERROR_SCHEMA_REFS = {
     "#/components/schemas/ErrorOut",
     "#/components/schemas/InventoryErrorOut",
+    "#/components/schemas/InventoryItemNotFoundError",
+    "#/components/schemas/InventoryTemporarilyUnavailableError",
     "#/components/schemas/OrderErrorOut",
+    "#/components/schemas/OrderProductNotFoundError",
+    "#/components/schemas/OrderInsufficientStockError",
+    "#/components/schemas/OrderTemporarilyUnavailableError",
 }
 
 
@@ -3272,10 +3352,10 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
         assert schema == {"$ref": approved_ref}
 ```
 
-두 literal은 12번 slot의 **완전한** `(path, method, status) -> BC base ref`와 managed/common
-ErrorOut ref inventory다. collector는 선택한 framework path 문자열만 훑지 않고 모든 operation과
+두 literal은 12번 slot의 **완전한** `(path, method, status) -> BC base ref`와
+managed common/base/concrete ErrorOut ref inventory다. collector는 선택한 framework path 문자열만 훑지 않고 모든 operation과
 모든 response status의 실제 schema를 재귀 순회하며 response/component `$ref`도 따라간다. 따라서
-framework status나 다른 operation에 common/BC ErrorOut이 한 번이라도 나타나면 exact occurrence
+framework status나 다른 operation에 common/base/concrete ErrorOut이 한 번이라도 나타나면 exact occurrence
 동등성이 실패하고, 승인 tuple이 base가 아닌 concrete/합성 schema를 가리켜도 마지막 direct
 mapping 단언이 실패한다.
 
