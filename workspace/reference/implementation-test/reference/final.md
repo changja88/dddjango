@@ -2469,115 +2469,926 @@ client = TestClient(router)
 
 ### 19.2 요청 검증과 오류 응답
 
-공통 `ErrorOut` 계약을 새로 만들거나 바꾸면 내부 helper를 직접 테스트하지 말고, 11-slot의
-`common core profile`과 `compatibility`를 기대값의 단일 근거로 삼는다. 실제 core-only
-status가 있으면 대표 하나를 endpoint와 생성 OpenAPI에서 고정하고, 없으면 새 status를 발명하지
-않고 대표 extension-bearing status에서 상속 core profile과 extension을 함께 검증한다. 아래 고정
-profile은 `base action=create-common`이고 신규 dddjango output profile을 채택한 scope에 적용한다:
-runtime에서 core 네 필드가 항상 있고 `instance`는 값이 없으면 생략되며, OpenAPI에서
-`title/status/detail` required, `type` default, `instance` optional nullable다. 그 밖의 base
-action은 승인된 profile의 required/default/nullable/runtime shape를 그대로 assert하며 아래 신규
-default를 강제하지 않는다.
+오류 테스트의 단일 근거는 승인된 **Error response contract 12-slot**이다. 오류가 있는 API
+scope마다 다음 carrier를 명세에서 그대로 읽고, 테스트가 profile이나 status를 새로 결정하지 않는다.
+
+| # | slot | 테스트가 읽는 내용 |
+|---|---|---|
+| 1 | `contract scope` | API instance·namespace/version·public/internal·API/controller/URLconf/registrar·`scope-bc`/`error-bc` |
+| 2 | `scope evidence` | 모든 API surface의 `code-profile \| preserve` inventory와 기존 wire/OpenAPI/consumer 증거 |
+| 3 | `error profile` | `dddjango-code-json` 또는 `preserve-established` |
+| 4 | `compatibility/rollout` | 보존·breaking·version 분리·동시 배포 결정 |
+| 5 | `common ErrorOut action` | `reuse \| create \| approved-change \| none`과 canonical import |
+| 6 | `common ErrorOut shape/approval` | 필드·타입·required와 변경 승인 |
+| 7 | `BC error module` | 정확한 `<bc>/presentation_layer/schema/error_out.py` 또는 근거 있는 `none` |
+| 8 | `BC ErrorCode` | `<Bc>ErrorCode` 멤버와 public wire 문자열 |
+| 9 | `BC ErrorOut` | 공통 base 상속과 `code: <Bc>ErrorCode` narrowing |
+| 10 | `prepared error mapping` | 내부 실패 → concrete/base → `code/title/status/detail/header` |
+| 11 | `controller mapping` | application 호출·좁은 `try`·catch 타입·직접 `Status` 반환 |
+| 12 | `response/OpenAPI/tests` | endpoint별 status/schema, framework-default 제외, runtime/OpenAPI/no-arg 기준 |
+
+새로 만들거나 touched한 `dddjango-code-json` scope는 아래 code profile 테스트를 적용한다. 이미
+배포된 `preserve-established` scope는 2·3·4번 slot에 기록된 **관찰·승인된** status/body/header/
+media type/OpenAPI를 그대로 검증한다. 그 scope가 RFC 9457이면 그때만 `type`, `instance`,
+`application/problem+json` 같은 RFC 필드를 기대한다. 새 scope 전체에 이를 보편 규칙으로
+강제하거나 두 profile을 한 wire shape에 섞지 않는다.
+
+#### 19.2.1 Schema 계약: 공통 shape, BC narrowing, concrete 무인자 생성
+
+code profile의 첫 경계는 실제 Ninja/Pydantic Schema다. 공통 `ErrorOut`은 현재 승인된
+`code: str`, `title: str`, `status: int`, `detail: str` 네 required 필드만 가진다. 이 집합을
+변경하는 테스트와 코드는 사용자 승인과 G1의 6번 slot 갱신이 함께 있을 때만 바꾼다.
 
 ```python
-def _resolve_response_schema(document, path, method, status):
-    responses = document["paths"][path][method]["responses"]
-    status_keys = [status, str(status)]
-    if isinstance(status, str) and status.isdigit():
-        status_keys.append(int(status))
-    status_key = next(key for key in status_keys if key in responses)
-    content = responses[status_key]["content"]
-    media_schema = next(iter(content.values()))["schema"]
-    if "$ref" not in media_schema:
-        return media_schema
-    name = media_schema["$ref"].rsplit("/", 1)[-1]
-    return document["components"]["schemas"][name]
+import pytest
+from pydantic import ValidationError
+
+from common.ninja.response.error_out import ErrorOut
+from application.inventory.presentation_layer.schema.error_out import (
+    InventoryErrorCode,
+    InventoryErrorOut,
+)
+from application.orders.presentation_layer.schema.error_out import (
+    OrderErrorCode,
+    OrderErrorOut,
+)
 
 
-def test_missing_inventory_item_uses_core_error_contract(client):
-    response = client.get("/api/inventory/items/missing")
-
-    assert response.status_code == 404
-    assert response.headers["content-type"].startswith("application/problem+json")
-    body = response.json()
-    assert set(body) == {"type", "title", "status", "detail"}
-    assert body["type"] == "about:blank"
-    assert body["status"] == 404
-    assert "instance" not in body
+APPROVED_BC_BASES_WITH_CODES = (
+    (InventoryErrorOut, InventoryErrorCode),
+    (OrderErrorOut, OrderErrorCode),
+)
 
 
-def test_core_error_openapi_profile(api):
-    document = api.get_openapi_schema()
-    schema = _resolve_response_schema(
-        document,
-        "/api/inventory/items/{item_id}",
-        "get",
-        "404",
+def test_common_error_out_has_exact_approved_shape():
+    assert set(ErrorOut.model_fields) == {"code", "title", "status", "detail"}
+    assert {
+        name: field.annotation for name, field in ErrorOut.model_fields.items()
+    } == {
+        "code": str,
+        "title": str,
+        "status": int,
+        "detail": str,
+    }
+    assert {
+        name for name, field in ErrorOut.model_fields.items() if field.is_required()
+    } == {"code", "title", "status", "detail"}
+
+
+def test_inventory_error_code_accepts_only_its_approved_enum():
+    valid = InventoryErrorOut(
+        code="inventory_item_not_found",
+        title="Inventory item not found",
+        status=404,
+        detail="The requested inventory item does not exist.",
     )
-    assert set(schema["required"]) == {"title", "status", "detail"}
-    assert schema["properties"]["type"]["default"] == "about:blank"
-    assert "instance" not in schema["required"]
-    assert {"type": "null"} in schema["properties"]["instance"]["anyOf"]
-```
+    assert valid.code is InventoryErrorCode.ITEM_NOT_FOUND
 
-problem-specific extension이 있으면 status별 concrete Schema와 wire key를 별도로 고정한다.
-base `ErrorOut`만 선언하고 runtime에서 extension을 임의 추가하는 구현은 통과시키지 않는다.
+    with pytest.raises(ValidationError):
+        InventoryErrorOut(
+            code="inventory_undefined_code",
+            title="Undefined",
+            status=400,
+            detail="This public code was never approved.",
+        )
 
-```python
-def test_inventory_conflict_problem_contract(client):
-    response = client.post(
-        "/api/inventory/reservations",
-        json={"sku": "SKU-001", "quantity": 2},
-    )
 
-    assert response.status_code == 409
-    assert response.headers["content-type"].startswith("application/problem+json")
-    body = response.json()
-    assert body["status"] == 409
-    assert isinstance(body["available_quantity"], int)
-    assert set(body) == {
-        "type", "title", "status", "detail", "available_quantity"
+def _all_subclasses(base):
+    for child in base.__subclasses__():
+        yield child
+        yield from _all_subclasses(child)
+
+
+DECORATOR_COLLECTIONS = (
+    "validators",
+    "field_validators",
+    "root_validators",
+    "field_serializers",
+    "model_serializers",
+    "model_validators",
+    "computed_fields",
+)
+
+
+def _assert_same_decorator_entries(actual_model, expected_model):
+    actual = actual_model.__pydantic_decorators__
+    expected = expected_model.__pydantic_decorators__
+    for collection_name in DECORATOR_COLLECTIONS:
+        actual_entries = getattr(actual, collection_name)
+        expected_entries = getattr(expected, collection_name)
+        assert actual_entries.keys() == expected_entries.keys()
+        for name, actual_entry in actual_entries.items():
+            expected_entry = expected_entries[name]
+            actual_function = getattr(actual_entry.func, "__func__", actual_entry.func)
+            expected_function = getattr(
+                expected_entry.func,
+                "__func__",
+                expected_entry.func,
+            )
+            assert actual_entry.cls_var_name == expected_entry.cls_var_name
+            assert actual_function is expected_function
+            assert actual_entry.shim is expected_entry.shim
+            assert actual_entry.info == expected_entry.info
+
+
+def _assert_same_field_metadata(actual, expected):
+    assert actual.is_required() is expected.is_required()
+    assert actual.default == expected.default
+    assert actual.default_factory is expected.default_factory
+    assert actual.alias == expected.alias
+    assert actual.validation_alias == expected.validation_alias
+    assert actual.serialization_alias == expected.serialization_alias
+
+
+def _managed_concrete_error_types():
+    return {
+        error_type
+        for bc_base, _code_enum in APPROVED_BC_BASES_WITH_CODES
+        for error_type in _all_subclasses(bc_base)
+        if error_type.__module__ == bc_base.__module__
     }
 
 
-def test_inventory_conflict_openapi_uses_concrete_schema(api):
-    document = api.get_openapi_schema()
-    schema = _resolve_response_schema(
-        document,
-        "/api/inventory/reservations",
-        "post",
-        "409",
-    )
-    assert "available_quantity" in schema["properties"]
-    assert "available_quantity" in schema["required"]
+def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
+    error_types = _managed_concrete_error_types()
+    assert error_types  # 비어 있는 discovery는 아무것도 증명하지 않는다.
+
+    for bc_base, code_enum in APPROVED_BC_BASES_WITH_CODES:
+        assert set(bc_base.model_fields) == set(ErrorOut.model_fields)
+        for name, common_field in ErrorOut.model_fields.items():
+            bc_field = bc_base.model_fields[name]
+            expected_annotation = code_enum if name == "code" else common_field.annotation
+            assert bc_field.annotation is expected_annotation
+            _assert_same_field_metadata(bc_field, common_field)
+        _assert_same_decorator_entries(bc_base, ErrorOut)
+
+    for error_type in error_types:
+        bc_base = next(
+            base
+            for base, _code_enum in APPROVED_BC_BASES_WITH_CODES
+            if issubclass(error_type, base)
+        )
+        error = error_type()  # required 생성자 인자가 생기면 여기서 실패한다.
+        assert set(error_type.model_fields) == set(ErrorOut.model_fields)
+        assert all(not field.is_required() for field in error_type.model_fields.values())
+        for name, field in error_type.model_fields.items():
+            bc_field = bc_base.model_fields[name]
+            assert field.annotation is bc_field.annotation
+            assert field.alias == bc_field.alias
+            assert field.validation_alias == bc_field.validation_alias
+            assert field.serialization_alias == bc_field.serialization_alias
+        _assert_same_decorator_entries(error_type, bc_base)
+        assert set(error.model_dump()) == {"code", "title", "status", "detail"}
 ```
 
-validation extension의 alias는 Python 필드명이 아니라 실제 wire key를 리터럴로 단언한다.
+BC base 자체는 공통 required/default 계약을 그대로 보존하므로 무인자 생성을 요구하지 않는다.
+무인자 생성과 모든 필드 default는 사건별 concrete에만 적용한다. 위
+`__pydantic_decorators__` 검사는 private Pydantic API에 의존하는 **지원 pin 한정 runtime
+backstop**이다. validator 추가 금지의 결정적 소스 판정은 schema checker가 소유하며, pin이
+바뀌면 decorator representation을 먼저 실측하고 이 runtime 비교를 갱신한다.
+
+프로젝트 전체 code inventory는 12-slot의 `scope evidence`에 열거된 모든 code-profile 오류
+모듈을 넣는다. 독립 version도 같은 Enum을 재사용하면 class identity로 한 번만 세고, 별도
+Enum이 같은 wire 문자열을 복제하면 실패시킨다. concrete가 여러 surface에서 재사용되거나 같은
+public code로 수렴하더라도 title은 하나여야 한다.
 
 ```python
-def test_create_order_validation_problem(client):
-    response = client.post("/orders", json={"items": []})
+from application.inventory.presentation_layer.schema.error_out import (
+    InventoryErrorOut,
+    InventoryItemNotFoundError,
+    InventoryTemporarilyUnavailableError,
+)
+from application.orders.presentation_layer.schema.error_out import (
+    OrderErrorOut,
+    OrderInsufficientStockError,
+    OrderProductNotFoundError,
+    OrderTemporarilyUnavailableError,
+)
 
-    assert response.status_code == 422
-    body = response.json()
-    assert "invalid-params" in body
-    assert "invalid_params" not in body
+
+APPROVED_BC_BASES = (InventoryErrorOut, OrderErrorOut)
+APPROVED_CONCRETE_ERROR_CONTRACTS = {
+    InventoryItemNotFoundError: (
+        "inventory_item_not_found",
+        "Inventory item not found",
+    ),
+    InventoryTemporarilyUnavailableError: (
+        "inventory_temporarily_unavailable",
+        "Inventory temporarily unavailable",
+    ),
+    OrderProductNotFoundError: (
+        "order_product_not_found",
+        "Product not found",
+    ),
+    OrderInsufficientStockError: (
+        "order_insufficient_stock",
+        "Insufficient stock",
+    ),
+    OrderTemporarilyUnavailableError: (
+        "order_temporarily_unavailable",
+        "Order temporarily unavailable",
+    ),
+}
+APPROVED_PUBLIC_ERROR_TITLES = {
+    "inventory_item_not_found": "Inventory item not found",
+    "inventory_temporarily_unavailable": "Inventory temporarily unavailable",
+    "inventory_version_mismatch": "Inventory version mismatch",
+    "order_product_not_found": "Product not found",
+    "order_insufficient_stock": "Insufficient stock",
+    "order_temporarily_unavailable": "Order temporarily unavailable",
+    "order_version_mismatch": "Order version mismatch",
+}
+APPROVED_PUBLIC_ERROR_CODES = {
+    "inventory_item_not_found",
+    "inventory_temporarily_unavailable",
+    "inventory_version_mismatch",
+    "order_product_not_found",
+    "order_insufficient_stock",
+    "order_temporarily_unavailable",
+    "order_version_mismatch",
+}
 
 
-def test_create_order_validation_openapi_uses_wire_alias(api):
-    document = api.get_openapi_schema()
-    schema = _resolve_response_schema(document, "/orders", "post", 422)
-    assert "invalid-params" in schema["properties"]
-    assert "invalid_params" not in schema["properties"]
+def test_public_wire_codes_are_project_wide_unique_and_titles_are_stable():
+    enum_types = {
+        bc_base.model_fields["code"].annotation for bc_base in APPROVED_BC_BASES
+    }
+    wire_codes = [member.value for enum_type in enum_types for member in enum_type]
+    assert len(wire_codes) == len(set(wire_codes))
+    assert set(wire_codes) == APPROVED_PUBLIC_ERROR_CODES
+    assert APPROVED_PUBLIC_ERROR_CODES == APPROVED_PUBLIC_ERROR_TITLES.keys()
+
+    concrete_types = {
+        error_type
+        for bc_base in APPROVED_BC_BASES
+        for error_type in _all_subclasses(bc_base)
+        if error_type.__module__ == bc_base.__module__
+    }
+    assert concrete_types == set(APPROVED_CONCRETE_ERROR_CONTRACTS)
+
+    observed_concrete_contracts = {}
+    for error_type in concrete_types:
+        error = error_type()
+        observed_concrete_contracts[error_type] = (error.code.value, error.title)
+
+    assert observed_concrete_contracts.keys() == APPROVED_CONCRETE_ERROR_CONTRACTS.keys()
+    assert observed_concrete_contracts == APPROVED_CONCRETE_ERROR_CONTRACTS
+    observed_concrete_codes = {
+        code for code, _title in observed_concrete_contracts.values()
+    }
+    expected_concrete_codes = {
+        code for code, _title in APPROVED_CONCRETE_ERROR_CONTRACTS.values()
+    }
+    assert observed_concrete_codes == expected_concrete_codes
+    assert all(
+        title == APPROVED_PUBLIC_ERROR_TITLES[code]
+        for code, title in observed_concrete_contracts.values()
+    )
 ```
 
-프로젝트가 `api.get_openapi_schema()`를 직접 노출하지 않으면 실제 URL resolver에 mount된 full
-Django client로 OpenAPI endpoint를 호출한다. controller-only `TestClient`에 임의
-`/api/openapi.json`을 호출하지 않는다. Ninja의 현재 한계로 생성 OpenAPI의 오류 media type이
-`application/json`일 수 있으므로 OpenAPI에서는 Schema ref/shape를 검사하고 runtime에서만
-`application/problem+json`을 단언한다. 아직 오류 계약이 정해지지 않았다면
-`architecture-api`에서 먼저 결정한 뒤 테스트를 Red로 만든다. 테스트 파일의 존재가 아니라
-agent가 추가한 assertion에서 실제로 실패하는 exact pytest command와 최종 Green을 모두 확인한다.
+`APPROVED_BC_BASES`, concrete 계약, public title catalog는 8~12번 slot의 완전한 리터럴
+inventory다. class 이름 접미사에 의존하지 않고 각 승인 BC base에서 재귀 discovery하므로 새
+concrete가 생기면 exact class/code key coverage가 먼저 실패한다. `all()`은 그 exact coverage
+단언 뒤에만 둔다. 사건별 concrete가 없는 direct-base code와 여러 surface가 재사용하는 mapping의
+title은 아래 별도 mapping-case inventory와 실제 HTTP 응답으로 고정한다.
+
+#### 19.2.2 HTTP 계약: 알려진 예외를 실제 요청으로 관찰
+
+HTTP 테스트는 실제 Django client 요청을 보낸다. application collaborator만 구체 예외를 내도록
+대체하고 serializer, `Status`, ErrorOut factory 같은 표현 내부는 mock하지 않는다. 기댓값은
+프로덕션 Enum/default에서 역수입하지 않고 독립적인 리터럴로 쓴다.
+
+```python
+import pytest
+
+from application.inventory.application_layer.query.get_item import (
+    ArchivedInventoryItemNotFound,
+    InventoryItemNotFound,
+)
+from application.inventory.application_layer.command.reserve_inventory import (
+    InventoryTemporarilyUnavailable,
+    InventoryVersionMismatch,
+)
+from application.orders.application_layer.command.place_order import (
+    OrderInsufficientStock,
+    OrderTemporarilyUnavailable,
+    OrderVersionMismatch,
+)
+from application.orders.application_layer.query.get_order import OrderProductNotFound
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "failure",
+    [
+        InventoryItemNotFound("private row id=731"),
+        ArchivedInventoryItemNotFound("private archive bucket=cold-9"),
+    ],
+)
+def test_known_missing_failures_converge_on_one_public_error(
+    client,
+    mocker,
+    failure,
+):
+    query = mocker.patch(
+        "application.inventory.presentation_layer.controller."
+        "build_get_inventory_item_query"
+    ).return_value
+    query.execute.side_effect = failure
+
+    response = client.get("/api/inventory/items/731")
+
+    assert response.status_code == 404
+    body = response.json()
+    assert body == {
+        "code": "inventory_item_not_found",
+        "title": "Inventory item not found",
+        "status": 404,
+        "detail": "The requested inventory item does not exist.",
+    }
+    assert body["status"] == response.status_code
+    assert response.headers["Content-Type"].partition(";")[0] == "application/json"
+    assert "private row id=731" not in body["detail"]
+    assert "private archive bucket=cold-9" not in body["detail"]
+
+
+KNOWN_ERROR_SENSITIVE_HEADERS = {
+    "Retry-After",
+    "WWW-Authenticate",
+    "X-Inventory-Error",
+    "X-Order-Error",
+    "X-Legacy-Problem-Type",
+}
+BC_SPECIFIC_ERROR_HEADERS = {
+    "X-Inventory-Error",
+    "X-Order-Error",
+    "X-Legacy-Problem-Type",
+}
+APPROVED_MAPPING_CASES = {
+    (
+        "/api/v1/inventory/items/{item_id}",
+        "get",
+        404,
+        "InventoryItemNotFound",
+    ): {
+        "body": {
+            "code": "inventory_item_not_found",
+            "title": "Inventory item not found",
+            "status": 404,
+            "detail": "The requested inventory item does not exist.",
+        },
+        "known_headers": {},
+    },
+    (
+        "/api/v2/inventory/items/{item_id}",
+        "get",
+        404,
+        "ArchivedInventoryItemNotFound",
+    ): {
+        "body": {
+            "code": "inventory_item_not_found",
+            "title": "Inventory item not found",
+            "status": 404,
+            "detail": "The requested inventory item does not exist.",
+        },
+        "known_headers": {},
+    },
+    (
+        "/api/v1/inventory/reservations/{reservation_id}",
+        "patch",
+        409,
+        "InventoryVersionMismatch",
+    ): {
+        "body": {
+            "code": "inventory_version_mismatch",
+            "title": "Inventory version mismatch",
+            "status": 409,
+            "detail": "Reload the inventory item and try again.",
+        },
+        "known_headers": {},
+    },
+    (
+        "/api/v1/inventory/reservations",
+        "post",
+        503,
+        "InventoryTemporarilyUnavailable",
+    ): {
+        "body": {
+            "code": "inventory_temporarily_unavailable",
+            "title": "Inventory temporarily unavailable",
+            "status": 503,
+            "detail": "Please retry the inventory request later.",
+        },
+        "known_headers": {"Retry-After": "1"},
+    },
+    (
+        "/api/v1/orders/{order_id}",
+        "get",
+        404,
+        "OrderProductNotFound",
+    ): {
+        "body": {
+            "code": "order_product_not_found",
+            "title": "Product not found",
+            "status": 404,
+            "detail": "The requested product does not exist.",
+        },
+        "known_headers": {},
+    },
+    (
+        "/api/v1/orders",
+        "post",
+        409,
+        "OrderInsufficientStock",
+    ): {
+        "body": {
+            "code": "order_insufficient_stock",
+            "title": "Insufficient stock",
+            "status": 409,
+            "detail": "The order quantity is unavailable.",
+        },
+        "known_headers": {},
+    },
+    (
+        "/api/v1/orders/retry",
+        "post",
+        503,
+        "OrderTemporarilyUnavailable",
+    ): {
+        "body": {
+            "code": "order_temporarily_unavailable",
+            "title": "Order temporarily unavailable",
+            "status": 503,
+            "detail": "Please retry the order later.",
+        },
+        "known_headers": {"Retry-After": "1"},
+    },
+    (
+        "/api/v1/orders/{order_id}",
+        "patch",
+        409,
+        "OrderVersionMismatch",
+    ): {
+        "body": {
+            "code": "order_version_mismatch",
+            "title": "Order version mismatch",
+            "status": 409,
+            "detail": "Reload the order and try again.",
+        },
+        "known_headers": {},
+    },
+}
+
+
+def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
+    client,
+    mocker,
+):
+    v1_query = mocker.patch(
+        "application.inventory.presentation_layer.v1.controller."
+        "build_get_inventory_item_query"
+    ).return_value
+    v1_query.execute.side_effect = InventoryItemNotFound("private v1 row")
+    v2_query = mocker.patch(
+        "application.inventory.presentation_layer.v2.controller."
+        "build_get_inventory_item_query"
+    ).return_value
+    v2_query.execute.side_effect = ArchivedInventoryItemNotFound("private v2 archive")
+    update_command = mocker.patch(
+        "application.inventory.presentation_layer.v1.controller."
+        "build_update_inventory_command"
+    ).return_value
+    update_command.execute.side_effect = InventoryVersionMismatch("private etag")
+    reserve_command = mocker.patch(
+        "application.inventory.presentation_layer.v1.controller."
+        "build_reserve_inventory_command"
+    ).return_value
+    reserve_command.execute.side_effect = InventoryTemporarilyUnavailable("private db")
+    order_query = mocker.patch(
+        "application.orders.presentation_layer.v1.controller.build_get_order_query"
+    ).return_value
+    order_query.execute.side_effect = OrderProductNotFound("private product row")
+    place_order = mocker.patch(
+        "application.orders.presentation_layer.v1.controller.build_place_order_command"
+    ).return_value
+    place_order.execute.side_effect = OrderInsufficientStock("private stock row")
+    retry_order = mocker.patch(
+        "application.orders.presentation_layer.v1.controller.build_retry_order_command"
+    ).return_value
+    retry_order.execute.side_effect = OrderTemporarilyUnavailable("private db host")
+    update_order = mocker.patch(
+        "application.orders.presentation_layer.v1.controller.build_update_order_command"
+    ).return_value
+    update_order.execute.side_effect = OrderVersionMismatch("private order etag")
+
+    responses_by_case = {
+        (
+            "/api/v1/inventory/items/{item_id}",
+            "get",
+            404,
+            "InventoryItemNotFound",
+        ): client.get("/api/v1/inventory/items/731"),
+        (
+            "/api/v2/inventory/items/{item_id}",
+            "get",
+            404,
+            "ArchivedInventoryItemNotFound",
+        ): client.get("/api/v2/inventory/items/731"),
+        (
+            "/api/v1/inventory/reservations/{reservation_id}",
+            "patch",
+            409,
+            "InventoryVersionMismatch",
+        ): client.patch(
+            "/api/v1/inventory/reservations/731",
+            data={"quantity": 2},
+            content_type="application/json",
+        ),
+        (
+            "/api/v1/inventory/reservations",
+            "post",
+            503,
+            "InventoryTemporarilyUnavailable",
+        ): client.post(
+            "/api/v1/inventory/reservations",
+            data={"sku": "SKU-001", "quantity": 2},
+            content_type="application/json",
+        ),
+        (
+            "/api/v1/orders/{order_id}",
+            "get",
+            404,
+            "OrderProductNotFound",
+        ): client.get("/api/v1/orders/991"),
+        (
+            "/api/v1/orders",
+            "post",
+            409,
+            "OrderInsufficientStock",
+        ): client.post(
+            "/api/v1/orders",
+            data={"sku": "SKU-001", "quantity": 2},
+            content_type="application/json",
+        ),
+        (
+            "/api/v1/orders/retry",
+            "post",
+            503,
+            "OrderTemporarilyUnavailable",
+        ): client.post(
+            "/api/v1/orders/retry",
+            data={"order_id": 991},
+            content_type="application/json",
+        ),
+        (
+            "/api/v1/orders/{order_id}",
+            "patch",
+            409,
+            "OrderVersionMismatch",
+        ): client.patch(
+            "/api/v1/orders/991",
+            data={"quantity": 3},
+            content_type="application/json",
+        ),
+    }
+
+    assert responses_by_case.keys() == APPROVED_MAPPING_CASES.keys()
+    observed_titles_by_code = {}
+    for case, response in responses_by_case.items():
+        _path, _method, expected_status, _failure_name = case
+        expected_contract = APPROVED_MAPPING_CASES[case]
+        expected_body = expected_contract["body"]
+        expected_headers = expected_contract["known_headers"]
+        body = response.json()
+        assert response.status_code == expected_status
+        assert body == expected_body
+        assert body["status"] == response.status_code
+        assert set(expected_headers) <= KNOWN_ERROR_SENSITIVE_HEADERS
+        for name in KNOWN_ERROR_SENSITIVE_HEADERS:
+            assert response.headers.get(name) == expected_headers.get(name)
+        observed_titles_by_code.setdefault(body["code"], set()).add(body["title"])
+
+    expected_mapping_codes = {
+        contract["body"]["code"] for contract in APPROVED_MAPPING_CASES.values()
+    }
+    assert expected_mapping_codes == APPROVED_PUBLIC_ERROR_CODES
+    assert observed_titles_by_code.keys() == expected_mapping_codes
+    assert all(len(titles) == 1 for titles in observed_titles_by_code.values())
+    assert all(
+        titles == {APPROVED_PUBLIC_ERROR_TITLES[code]}
+        for code, titles in observed_titles_by_code.items()
+    )
+```
+
+`APPROVED_MAPPING_CASES`는 10~12번 slot의 mapping case를 하나도 생략하지 않은 literal
+inventory다. 각 value가 exact `code/title/status/detail` body와 그 case에 승인된 known header
+기댓값을 함께 소유한다. case key coverage를 먼저 맞춘 뒤 실제 응답 body 전체, HTTP/body status,
+모든 known header의 승인값 또는 부재를 case별로 검증한다.
+
+header는 모든 Django 기본 header를 snapshot하지 않는다. 대신 10·12번 slot에서 조사한
+**완전한 known error-sensitive/legacy header inventory**와 mapping별 승인값을 각각 리터럴로
+쓴다. 예를 들어 이 프로젝트가 알고 있는 후보 전체가 아래 다섯 개이고 retryable inventory
+503에는 `Retry-After: 1`만 승인됐다면, 승인값과 나머지 known 후보의 부재를 모두 검증한다.
+
+```python
+APPROVED_RETRYABLE_INVENTORY_HEADERS = {"Retry-After": "1"}
+
+
+def test_retryable_inventory_failure_matches_known_header_inventory(
+    client,
+    mocker,
+):
+    command = mocker.patch(
+        "application.inventory.presentation_layer.controller."
+        "build_reserve_inventory_command"
+    ).return_value
+    command.execute.side_effect = InventoryTemporarilyUnavailable("db host=private")
+
+    response = client.post(
+        "/api/inventory/reservations",
+        data={"sku": "SKU-001", "quantity": 2},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "code": "inventory_temporarily_unavailable",
+        "title": "Inventory temporarily unavailable",
+        "status": 503,
+        "detail": "Please retry the inventory request later.",
+    }
+    for name, expected in APPROVED_RETRYABLE_INVENTORY_HEADERS.items():
+        assert response.headers.get(name) == expected
+    assert APPROVED_RETRYABLE_INVENTORY_HEADERS.keys() == {"Retry-After"}
+    disallowed_known_headers = (
+        KNOWN_ERROR_SENSITIVE_HEADERS - APPROVED_RETRYABLE_INVENTORY_HEADERS.keys()
+    )
+    assert disallowed_known_headers == {
+        "WWW-Authenticate",
+        "X-Inventory-Error",
+        "X-Order-Error",
+        "X-Legacy-Problem-Type",
+    }
+    assert all(response.headers.get(name) is None for name in disallowed_known_headers)
+```
+
+`Content-Type`, `Content-Length`, `Vary` 같은 ordinary framework transport header는 이 오류
+header inventory 밖이다. 위 단언은 **알려진 전체 후보 중 승인된 것만**을 증명하며 임의의 새
+header 이름까지 탐지한다고 과장하지 않는다. inventory에 없는 error header write는 source
+checker/reviewer가 판정하고, 발견하면 10·12번 slot과 이 literal inventory를 함께 갱신한다.
+
+여러 내부 예외가 같은 public 오류로 합쳐지는 tuple catch는 위 parameterization처럼 각 구체
+예외로 실제 endpoint를 통과시킨다. broad `Exception`이나 raw DB/SDK exception을 BC 오류로
+바꾸는 테스트를 만들지 않는다. 공개하기로 승인된 infra 실패는 infra/ACL에서 자기 BC의 구체
+application/domain exception으로 정규화한 뒤 이 동일한 HTTP 테스트에 들어온다.
+
+#### 19.2.3 framework 기본 오류와 미식별 500 smoke
+
+401/403, route 404, request validation 422, throttling 429, 일반 `HttpError`, 미식별 500은
+code-profile BC body가 아니다. full body를 snapshot하지 말고 status와 **BC ErrorOut이 아님**을
+확인한다. JSON 또는 `+json` body라면 prefix와 무관하게 네 core key의 완전한 결합을 거부하고,
+별도로 project-wide literal public code 중 어느 것도 쓰지 않았음을 단언한다. 모든 media type에서
+BC-specific error header도 없어야 한다. non-JSON은 body를 해석하거나 snapshot하지 않고 status와
+header smoke까지만 한다.
+
+```python
+from django.test import Client, override_settings
+
+
+ERROR_CORE_FIELDS = {"code", "title", "status", "detail"}
+
+
+def assert_not_managed_error(response):
+    assert all(
+        response.headers.get(name) is None for name in BC_SPECIFIC_ERROR_HEADERS
+    )
+    media_type = response.headers.get("Content-Type", "").partition(";")[0].lower()
+    if not response.streaming and response.content and (
+        media_type == "application/json" or media_type.endswith("+json")
+    ):
+        body = response.json()
+        if isinstance(body, dict):
+            assert not ERROR_CORE_FIELDS <= set(body)
+            assert body.get("code") not in APPROVED_PUBLIC_ERROR_CODES
+
+
+@pytest.mark.parametrize(
+    "url, expected_status",
+    [
+        ("/api/forbidden", 403),
+        ("/api/no-such-route", 404),
+        ("/api/inventory?limit=not-an-integer", 422),
+        ("/api/throttled", 429),
+        ("/api/framework-http-error", 418),
+    ],
+)
+def test_framework_failures_are_not_bc_errors(client, url, expected_status):
+    response = client.get(url)
+
+    assert response.status_code == expected_status
+    assert_not_managed_error(response)
+
+
+@override_settings(DEBUG=False)
+def test_unidentified_exception_uses_safe_framework_500(mocker):
+    client = Client(raise_request_exception=False)
+    query = mocker.patch(
+        "application.inventory.presentation_layer.controller."
+        "build_get_inventory_item_query"
+    ).return_value
+    query.execute.side_effect = RuntimeError("private-database-dsn-sentinel")
+
+    response = client.get("/api/inventory/items/731")
+
+    assert response.status_code == 500
+    assert b"Traceback" not in response.content
+    assert b"private-database-dsn-sentinel" not in response.content
+    assert_not_managed_error(response)
+```
+
+500 body 문자열 자체는 Django/version/settings에 따라 달라질 수 있으므로 exact snapshot하지
+않는다. `DEBUG=False`와 `Client(raise_request_exception=False)`를 둘 다 명시해 실제 framework
+500 경로를 관찰한다.
+
+authentication backend는 성공 시 identity/principal을 반환하고 실패 시 `None` 또는 framework
+`AuthenticationError`를 사용한다. 아래 smoke는 두 실제 auth 경로가 401로 끝나고
+`request.auth`에 ErrorOut이 저장되지 않았음을 확인한다.
+
+```python
+@pytest.mark.parametrize(
+    "url",
+    ["/api/auth/rejected-token", "/api/auth/disabled-principal"],
+)
+def test_auth_failures_remain_framework_owned(client, url):
+    response = client.get(url, HTTP_AUTHORIZATION="Bearer rejected-token")
+
+    assert response.status_code == 401
+    auth = getattr(response.wsgi_request, "auth", None)
+    assert auth is None
+    assert not isinstance(auth, ErrorOut)
+    assert_not_managed_error(response)
+```
+
+HTTP 의미론상 401 challenge가 필요한 일반 지침과 특정 Ninja/auth backend의 default capability는
+구분한다. 신규 default smoke가 실제로 `WWW-Authenticate`를 내지 않는다면 그 header를 발명하기
+위해 handler/helper를 만들지 않는다. 12-slot의 `preserve-established` compatibility가 해당
+header를 공개 계약으로 기록한 scope에서만 그 literal 값을 단언하고 보존 설계로 다룬다.
+429의 `Retry-After`와 406/415도 마찬가지다. 별도 승인된 406/415는 실제 `HttpError` 경로의
+status와 BC ErrorOut 부재만 검증하며 framework body exact snapshot이나 problem helper 테스트를
+만들지 않는다.
+
+#### 19.2.4 생성 OpenAPI와 native 성공 응답
+
+OpenAPI는 실제 URLconf에 mount된 API의 문서 endpoint를 full Django client로 호출한다.
+controller-only `TestClient`에 임의 OpenAPI URL을 호출하지 않는다. 직접 반환하는 BC status는
+`application/json` 아래 같은 BC base `<Bc>ErrorOut`을 참조하고, framework-owned status는 BC
+Schema로 광고되지 않아야 한다.
+
+```python
+HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+APPROVED_MANAGED_ERROR_REFS = {
+    ("/api/v1/inventory/items/{item_id}", "get", "404"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v2/inventory/items/{item_id}", "get", "404"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v1/inventory/reservations/{reservation_id}", "patch", "409"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v1/inventory/reservations", "post", "503"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v1/orders/{order_id}", "get", "404"): (
+        "#/components/schemas/OrderErrorOut"
+    ),
+    ("/api/v1/orders", "post", "409"): "#/components/schemas/OrderErrorOut",
+    ("/api/v1/orders/retry", "post", "503"): (
+        "#/components/schemas/OrderErrorOut"
+    ),
+    ("/api/v1/orders/{order_id}", "patch", "409"): (
+        "#/components/schemas/OrderErrorOut"
+    ),
+}
+COMPLETE_MANAGED_ERROR_SCHEMA_REFS = {
+    "#/components/schemas/ErrorOut",
+    "#/components/schemas/InventoryErrorOut",
+    "#/components/schemas/InventoryItemNotFoundError",
+    "#/components/schemas/InventoryTemporarilyUnavailableError",
+    "#/components/schemas/OrderErrorOut",
+    "#/components/schemas/OrderProductNotFoundError",
+    "#/components/schemas/OrderInsufficientStockError",
+    "#/components/schemas/OrderTemporarilyUnavailableError",
+}
+
+
+def _resolve_local_ref(document, ref):
+    assert ref.startswith("#/")
+    value = document
+    for token in ref[2:].split("/"):
+        value = value[token.replace("~1", "/").replace("~0", "~")]
+    return value
+
+
+def _iter_response_content(document, response, seen_refs=frozenset()):
+    ref = response.get("$ref")
+    if ref is not None and ref not in seen_refs:
+        resolved = _resolve_local_ref(document, ref)
+        yield from _iter_response_content(document, resolved, seen_refs | {ref})
+    for media_type, media in response.get("content", {}).items():
+        if "schema" in media:
+            yield media_type, media["schema"]
+
+
+def _iter_schema_refs(document, node, seen_refs=frozenset()):
+    if isinstance(node, dict):
+        ref = node.get("$ref")
+        if ref is not None:
+            yield ref
+            if ref.startswith("#/") and ref not in seen_refs:
+                resolved = _resolve_local_ref(document, ref)
+                yield from _iter_schema_refs(document, resolved, seen_refs | {ref})
+        for key, value in node.items():
+            if key != "$ref":
+                yield from _iter_schema_refs(document, value, seen_refs)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _iter_schema_refs(document, value, seen_refs)
+
+
+def _managed_response_ref_occurrences(document):
+    occurrences = []
+    for path, path_item in document["paths"].items():
+        for method, operation in path_item.items():
+            if method not in HTTP_METHODS or not isinstance(operation, dict):
+                continue
+            for status, response in operation.get("responses", {}).items():
+                for media_type, schema in _iter_response_content(document, response):
+                    refs = set(_iter_schema_refs(document, schema))
+                    for ref in refs & COMPLETE_MANAGED_ERROR_SCHEMA_REFS:
+                        occurrences.append(
+                            (path, method, str(status), media_type, ref)
+                        )
+    return occurrences
+
+
+def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
+    response = client.get("/api/openapi.json")
+
+    assert response.status_code == 200
+    document = response.json()
+    prepared_mapping_tuples = {
+        (path, method, str(status))
+        for path, method, status, _failure_name in APPROVED_MAPPING_CASES
+    }
+    assert len(APPROVED_MAPPING_CASES) == 8
+    assert len(prepared_mapping_tuples) == 8
+    assert set(APPROVED_MANAGED_ERROR_REFS) == prepared_mapping_tuples
+
+    expected_occurrences = {
+        (path, method, status, "application/json", ref)
+        for (path, method, status), ref in APPROVED_MANAGED_ERROR_REFS.items()
+    }
+    actual_occurrences = set(_managed_response_ref_occurrences(document))
+
+    assert expected_occurrences
+    assert actual_occurrences == expected_occurrences
+    assert set(APPROVED_MANAGED_ERROR_REFS.values()) == {
+        "#/components/schemas/InventoryErrorOut",
+        "#/components/schemas/OrderErrorOut",
+    }
+    assert set(APPROVED_MANAGED_ERROR_REFS.values()) < (
+        COMPLETE_MANAGED_ERROR_SCHEMA_REFS
+    )
+    for (path, method, status), approved_ref in APPROVED_MANAGED_ERROR_REFS.items():
+        schema = document["paths"][path][method]["responses"][status]["content"][
+            "application/json"
+        ]["schema"]
+        assert schema == {"$ref": approved_ref}
+```
+
+`APPROVED_MAPPING_CASES`의 8개 prepared mapping tuple과
+`APPROVED_MANAGED_ERROR_REFS`의 8개 OpenAPI tuple은 exact set으로 같아야 한다. 두 OpenAPI
+literal은 12번 slot의 **완전한** `(path, method, status) -> BC base ref`와
+managed common/base/concrete ErrorOut ref inventory다. collector는 선택한 framework path 문자열만 훑지 않고 모든 operation과
+모든 response status의 실제 schema를 재귀 순회하며 response/component `$ref`도 따라간다. 따라서
+framework status나 다른 operation에 common/base/concrete ErrorOut이 한 번이라도 나타나면 exact occurrence
+동등성이 실패하고, 승인 tuple이 base가 아닌 concrete/합성 schema를 가리켜도 마지막 direct
+mapping 단언이 실패한다.
+
+`openapi_extra`, `get_openapi_schema` override/monkeypatch/postprocessor 같은 수동 증강의 부재는
+source checker/reviewer가 판정한다. 테스트는 production hook의 호출 여부를 spy하지 않고 생성된
+문서라는 외부 결과만 검증한다.
+
+`FileResponse`, `StreamingHttpResponse`, redirect, schema-less 204도 별도 success contract
+test를 유지한다. 이들은 오류 계약 우회가 아니라 native 성공 동작이다. status·stream bytes·
+`Location`·빈 body처럼 해당 성공 계약을 검증하고 BC ErrorOut으로 coercion되지 않았음을 smoke한다.
+
+아직 12-slot이 정해지지 않았거나 profile/compatibility가 충돌하면 `architecture-api` 설계로
+반송한다. 테스트 파일의 존재가 아니라 새 assertion에서 실제로 실패하는 exact pytest command와
+traceback, 그리고 같은 command의 최종 Green을 모두 확인한다. error helper/factory/serializer/
+mapping/handler의 내부 unit test는 만들지 않는다. Schema/HTTP/framework/OpenAPI 외부 계약 테스트가
+그 구현의 존재 여부와 무관하게 관찰 가능한 동작을 소유한다.
 
 ### 19.3 인증, 페이지네이션, 필터링
 

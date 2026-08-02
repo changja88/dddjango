@@ -1573,30 +1573,41 @@ if result == E_OK:
 
 # --- 좋은 예 ---
 try:
-    delete_page(page)
-    registry.delete_reference(page.name)
-    config_keys.delete_key(page.name.make_key())
-except Exception as e:
-    logger.error(e)
+    delete_page_and_all_references(page)
+except PageDeletionError as error:
+    logger.error(error)
 ```
 
-### 12.3 Try/Catch 블록은 분리하라 [CC]
+### 12.3 Try/Catch 분리는 의도와 인지 경계를 따른다 [CC]
 
-정상 동작과 오류 처리 동작을 분리하면 이해하고 수정하기 쉬워진다.
+정상 동작과 오류 처리 동작을 분리하면 이해하고 수정하기 쉬워진다. 이는 모든
+`catch`를 별도 함수로 추출하라는 절대 명령이 아니라, 정상 흐름과 오류 흐름의
+의도가 한 눈에 구분되게 하는 인지 경계 원칙이다. `try`에는 처리 대상의 최외곽
+호출만 두고, 실제로 처리할 수 있는 구체 예외만 잡는다(§12.7).
 
 ```python
 # --- 좋은 예 ---
 def delete(page):
     try:
         delete_page_and_all_references(page)
-    except Exception as e:
-        log_error(e)
+    except PageDeletionError as error:
+        log_error(error)
 
 def delete_page_and_all_references(page):
     delete_page(page)
     registry.delete_reference(page.name)
     config_keys.delete_key(page.name.make_key())
 ```
+
+선택한 framework/profile이 adapter entrypoint에 예외→전송 응답 매핑의 소유권을
+명시적으로 부여한 경우에는, 그 entrypoint 안에 작은 구체 `catch`와 준비된 오류
+응답의 직접 반환을 유지할 수 있다. 예를 들어 Django Ninja controller operation이
+known application/domain exception을 잡아 준비된 concrete `ErrorOut`을
+`Status(error.status, error)`로 직접 반환하는 규율은
+`implementation-django-ninja` §6.2를 따른다. 이때 분리 원칙을 맞추기 위해서만
+mapping helper/factory/handler를 추출하지 않는다. 단, 이 자격은 광범위 catch를
+허용하지 않으며, `try` 범위를 넓히거나 정상/오류 흐름을 뒤섞는 근거가 되지 않는다.
+resource cleanup, transaction, retry, 예외 추상화의 소유와 규율도 각각 그대로 따른다.
 
 ### 12.4 올바른 추상화 수준에서 예외를 처리하라 [PC]
 

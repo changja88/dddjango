@@ -7,7 +7,7 @@
 3. [URL/리소스 설계 규칙](#3-url리소스-설계-규칙)
 4. [HTTP 상태 코드](#4-http-상태-코드)
 5. [요청/응답 계약](#5-요청응답-계약)
-6. [에러 응답 형식 (RFC 9457)](#6-에러-응답-형식-rfc-9457)
+6. [RFC 9457 에러 응답 형식](#6-rfc-9457-에러-응답-형식)
 7. [HTTP 헤더와 콘텐츠 협상](#7-http-헤더와-콘텐츠-협상)
 8. [인증과 인가](#8-인증과-인가)
 9. [페이지네이션](#9-페이지네이션)
@@ -165,7 +165,7 @@ GET /products?q=keyboard                     # 검색
 | 500 | Internal Server Error | 서버 문제. 애매하면 500 |
 | 503 | Service Unavailable | 일시 과부하/정비. Retry-After 헤더 가능 |
 
-**낙관적 동시성/CAS 재시도 루프의 *소진*도 경계 실패 모드다**: 유한 재시도 루프를 설계하면 '재시도 상한 초과(쓰기 경합 미해소)'는 happy-path 밖이지만 *경계로 관찰되는* 결과다 — status 표에서 누락하지 말고 **재시도 가능(retryable) status를 배정**한다(503+`Retry-After` 또는 409+`retryable` 확장 — 둘 다 정당, 선택은 멱등성·재시도 UX 트레이드오프로 §5/G1). *어느 쪽이든 표에서 누락 금지*가 의무이고 둘 중 선택은 설계자가 임의 확정하지 않는다(미매핑 시 기본 500 누수).
+**낙관적 동시성/CAS 재시도 루프의 *소진*도 경계 실패 모드다**: 유한 재시도 루프를 설계하면 '재시도 상한 초과(쓰기 경합 미해소)'는 happy-path 밖이지만 *경계로 관찰되는* 결과다 — status 표에서 누락하지 말고 **재시도 가능(retryable) status를 배정**한다(승인된 `Retry-After`를 가진 503 또는 409 — 둘 다 정당, 선택은 멱등성·재시도 UX 트레이드오프로 §5/G1). `Retry-After`를 공개하는 경우 §5.4의 경계에 따라 controller가 그 헤더를 소유한다. *어느 쪽이든 표에서 누락 금지*가 의무이고 둘 중 선택은 설계자가 임의 확정하지 않는다(미매핑 시 기본 500 누수).
 
 ### 4.3 PRG (POST/Redirect/GET) 패턴
 
@@ -196,7 +196,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 - `201 Created`는 가능한 경우 `Location` 헤더로 새 자원 URI를 제공한다
 - `202 Accepted`는 작업 접수 응답과 결과 확인 방법을 함께 제공한다
 - `204 No Content`는 응답 본문이 없다는 점을 계약으로 둔다
-- 오류 응답은 RFC 9457 Problem Details를 사용하고 상태 코드별 problem type을 문서화한다
+- 오류 응답은 선택한 에러 프로필의 media type·필드·상태 코드별 schema를 문서화한다
 - 캐시, rate limit, retry, deprecation, idempotency replay처럼 클라이언트 동작을 바꾸는 헤더는 응답 계약에 포함한다
 
 ### 5.3 계약 체크리스트
@@ -209,7 +209,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 | Method | 안전성, 멱등성, 생성/교체/부분 수정/삭제 의미 |
 | Request | body/query/path/header 필드와 validation |
 | Response | 상태 코드별 body/header/schema |
-| Error | Problem Details type/title/status/detail/extension |
+| Error | 선택한 에러 프로필, status별 body/header/schema, public code 또는 RFC type |
 | Auth | authentication/authorization 요구사항 |
 | Compatibility | breaking change 여부와 version/deprecation 필요성 |
 | OpenAPI | path/method/schema/response/security/header 반영 |
@@ -218,7 +218,32 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 ---
 
-## 6. 에러 응답 형식 (RFC 9457)
+### 5.4 에러 프로필 선택
+
+에러 wire contract는 다음 우선순위로 하나를 선택한다.
+
+1. 이미 배포된 API의 에러 계약이 있으면 그 계약을 보존한다. `WWW-Authenticate`나 `Retry-After`처럼 이미 공개된 헤더도 이 계약의 일부이며, 프레임워크 기본 응답과의 차이는 별도 설계로 다룬다.
+2. 새 dddjango Django Ninja 범위는 기본으로 `dddjango-code-json`을 선택한다.
+3. RFC 9457은 외부 표준, 기존 소비자, 또는 별도 요구가 있을 때만 선택한다.
+
+한 API 범위 안에서는 RFC 프로필과 code 프로필의 wire 필드를 섞지 않는다. 특히 code 프로필에 `type`, `about:blank`, URI 요구사항이나 `application/problem+json`을 끼워 넣지 않는다.
+
+#### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)
+
+- media type은 `application/json`이다.
+- 공개 body는 `code`, `title`, `status`, `detail`을 가진다.
+- `code`는 안정적인 공개 식별자다. public하게 구별되거나 관찰 가능한 실패에만 부여하며, 여러 내부 예외는 하나의 public code로 합쳐질 수 있다.
+- body `status`는 실제 HTTP status와 일치한다. `title`은 code마다 안정적으로 유지하고, `detail`은 자동으로 `str(exc)`를 사용하거나 민감한 내부 정보를 누설하지 않는다.
+- 배포된 public code의 변경은 breaking change다. 한 클라이언트 Enum은 하나의 계약을 소비한다. 실제 클라이언트 migration은 별도 작업이지만, 12-slot rollout에는 동시 전환인지 version split인지 기록한다.
+- framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다.
+
+#### framework 기본 응답과 공개 헤더의 경계
+
+프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 code body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 retryable BC 오류는 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
+
+## 6. RFC 9457 에러 응답 형식
+
+이 절은 §5.4에서 RFC 9457 프로필을 선택한 API 범위에만 적용한다. `dddjango-code-json` 범위에는 적용하지 않는다.
 
 ### 6.1 Problem Details for HTTP APIs
 
@@ -255,7 +280,7 @@ Content-Type: application/problem+json
 
 - `type`은 문서화 역할을 하는 안정적 URI
 - `title`은 **유형**(재사용), `detail`은 **특정 발생**
-- 모든 API 에러 응답에 이 형식을 일관되게 적용
+- RFC 프로필을 선택한 API 범위의 공개 에러 응답에 이 형식을 일관되게 적용
 
 > 출처: IETF RFC 9457
 
@@ -299,7 +324,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)
 
-> 이 계약의 *구현 메커니즘*(Django Ninja)은 `implementation-django-ninja` §6.3 — `Parser`(415)·`Renderer`/`HttpError`(406)로 **ninja 경계 안**에서 낸다. 전역 미들웨어로 협상을 가로채지 않는다.
+> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다.
 
 ### 7.3 캐시 관련 헤더
 
@@ -324,10 +349,12 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | 질문 | "너는 누구인가?" | "너는 이걸 할 수 있는가?" |
 | 시점 | 인가보다 먼저 | 인증 후에 수행 |
 | HTTP 코드 | 401 Unauthorized | 403 Forbidden |
-| 실패 시 | WWW-Authenticate 헤더로 인증 방법 안내 | 권한 부족 메시지 |
+| 실패 시 | 서버가 401을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 보냄 | 권한 부족 메시지 |
 
 - 인증이 있어야 인가가 있다
 - 401은 이름이 Unauthorized지만 실제로는 **인증(Authentication)** 오류다
+- **RFC 9110 규칙**: 서버가 401 응답을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 반드시 보낸다. 이것은 에러 body 프로필과 별개의 HTTP 의미론이다.
+- **구현/프로필 경계**: 테스트한 Django Ninja 기본 401은 이 challenge를 제공하지 않을 수 있다. 이미 배포되었거나 공개적으로 요구된 계약은 challenge를 보존하고, 기본 동작과 맞지 않으면 G1에서 별도 설계로 되돌린다. code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.
 
 ### 8.2 인증 메커니즘 선택 기준
 
@@ -347,15 +374,15 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ### 8.4 토큰 수명과 스코프
 
-Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다.
+Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 401을 생성하는 Bearer 서버는 §8.1의 RFC 9110 challenge 규칙을 지키며, 다음은 그 challenge가 포함하는 Bearer 계약의 표면이다.
 
 | 상황 | 상태 코드 | WWW-Authenticate | 의미 |
 |------|----------|------------------|------|
 | 토큰 만료·폐기·변조 (`invalid_token`) | `401 Unauthorized` | `Bearer error="invalid_token"` | 재인증하거나 refresh로 새 토큰을 발급받는다 |
 | 토큰은 유효하나 권한 범위 부족 (`insufficient_scope`) | `403 Forbidden` | `Bearer error="insufficient_scope", scope="..."` | 필요한 scope를 응답에 안내할 수 있다 |
 
-- 토큰 만료는 401이며 인증(§8.1) 실패다. 401에는 `WWW-Authenticate` 헤더로 인증 방법과 오류 원인을 안내한다.
-- scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고 필요한 scope를 알린다.
+- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다.
+- scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고, 확립된 Bearer 계약이 정하면 필요한 scope를 헤더로 알린다.
 - 토큰 수명, refresh 흐름, scope 집합은 API 계약으로 고정한다. 토큰 검증·발급의 구체 구현은 인증 라이브러리/프레임워크가 담당한다.
 
 > 출처: IETF RFC 6750 (OAuth 2.0 Bearer Token Usage §3 WWW-Authenticate Response Header, §3.1 Error Codes)
@@ -469,6 +496,8 @@ X-RateLimit-Reset: 1372700873  # 리셋 시각 (UTC epoch)
 
 ### 12.2 429 Too Many Requests
 
+`Retry-After`를 공개하기로 한 계약의 예시는 다음과 같다.
+
 ```
 HTTP/2 429 Too Many Requests
 Retry-After: 30
@@ -487,7 +516,7 @@ X-RateLimit-Remaining: 0
 ### 12.4 실전 원칙
 
 - 비용 큰 작업(인증, DB) **전에** rate limit 검사
-- 429 응답에 항상 `Retry-After` 헤더 포함
+- 확립된 429 계약의 `Retry-After` 헤더는 보존한다. 프레임워크 기본 429에 전역적으로 헤더를 합성하지 않으며, presentation controller가 직접 공개하는 retryable BC 오류만 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
 - Rate limit 정책을 API 문서에 명확히 기재
 
 > 출처: GitHub Docs - Rate Limits, IETF Draft - RateLimit Headers
@@ -525,22 +554,22 @@ Content-Type: application/json
 |------|------|
 | 적용 여부 | endpoint가 key를 허용하는지, 필수로 요구하는지 |
 | Key scope | caller, operation, tenant, resource owner 등 어떤 범위에서 unique한지 |
-| Replay | 동일 key와 동일 request는 최초 operation의 원래 결과를 반환 |
+| Replay | 동일 key와 동일 request는 최초 operation outcome을 재현하고, 선택한 에러 프로필에 맞는 HTTP 응답으로 매핑 |
 | Conflict | 동일 key와 다른 request content는 새 작업으로 처리하지 않고 충돌로 응답 |
 | Retention | key와 최초 결과를 얼마 동안 보관하는지 |
 | Concurrency | 같은 key의 동시 요청 race를 어떻게 직렬화하거나 거절하는지 |
 | Storage | 내구성 있는 저장소와 transaction/lock 정책은 DB 설계로 연결 |
 
-Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 결과를 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다. 이때 보관·재현의 계층 책임을 지킨다 — 멱등성 저장은 도메인/응용 outcome을 트랜잭션에 기록하고, 그 outcome→HTTP status·응답 표현 매핑은 최초·replay 모두 presentation의 단일 변환 소유자(`@api.exception_handler`+problem 헬퍼)가 수행한다(application·domain이 status를 catch·생성·저장하지 않는다; 책임배치 정본 `implementation-django-ninja` §6.2·`design-architect`, P1a). byte 단위로 동일한 replay가 계약상 필요하면 presentation이 렌더한 응답을 보관하되, status 결정 소유는 여전히 presentation이다.
+Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것이 아니라, 최초 처리 outcome을 재현하는 것이다. 생성된 자원이 이후 바뀔 수 있다면 최초 응답 snapshot 또는 이에 준하는 안정적인 결과를 보관한다. 멱등성 저장은 도메인/응용 outcome을 트랜잭션에 기록하고, owning presentation controller가 최초·replay outcome을 HTTP status와 선택한 프로필의 응답 표현으로 매핑한다. 그 매핑을 중앙 error handler가 소유하지 않으며, application·domain은 status를 catch·생성·저장하지 않는다. byte 단위로 동일한 replay가 계약상 필요하면 presentation이 렌더한 응답을 보관하되, status 결정 소유는 여전히 presentation이다.
 
-**요청 fingerprint로 충돌 판정**: "동일 key, 다른 request content"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 사용하는 코드와 Problem Details를 계약에 명시한다.
+**요청 fingerprint로 충돌 판정**: "동일 key, 다른 request content"를 판정하려면, 최초 요청 페이로드에서 생성한 fingerprint(예: 본문 hash)를 key와 함께 저장하고 후속 요청의 fingerprint와 비교한다. 일치하면 replay, 불일치하면 충돌이다. IETF Idempotency-Key 초안은 fingerprint 불일치(다른 페이로드)에는 `422 Unprocessable Content` + 문서 링크(`Link` 헤더)를, 처리 중인 최초 요청과 겹친 동시 재시도(아래 Concurrency)에는 `409 Conflict`를 권고한다. 일부 구현(Stripe 등)은 불일치에 `409`/`400`을 쓰기도 한다. 선택한 프로필의 public code 또는 RFC Problem Details를 계약에 명시한다.
 
 ### 13.4 실전 원칙
 
 - 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수
 - 멱등성 키를 내구성 있는 저장소(DB, Redis)에 보관
 - 동일 키의 동시 요청에 대한 레이스 컨디션 처리 필요
-- 동일 key와 다른 request content(fingerprint 불일치)는 충돌로 처리한다 — 코드(`422`/`409` 등)와 Problem Details를 계약에서 고른다(§13.3)
+- 동일 key와 다른 request content(fingerprint 불일치)는 충돌로 처리한다 — status(`422`/`409` 등)와 선택한 에러 프로필을 계약에서 고른다(§13.3)
 - browser form resubmission이 주된 문제이면 PRG를 고려하고, API client retry가 주된 문제이면 `Idempotency-Key`를 우선한다
 
 > 출처: Stripe API - Idempotent Requests, Stripe Blog - Idempotency, IETF Draft - Idempotency-Key
@@ -568,7 +597,7 @@ API 계약이 바뀌면 OpenAPI에 다음 표면을 함께 반영한다.
 - path, HTTP method, operationId, tag
 - path/query/header parameter와 request body schema
 - 상태 코드별 response body schema와 header
-- RFC 9457 Problem Details error response
+- 선택한 에러 프로필의 error response (RFC 9457을 선택한 경우 Problem Details)
 - authentication/authorization security requirement
 - pagination parameter와 response metadata
 - rate limit, retry, deprecation, sunset header
