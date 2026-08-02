@@ -349,10 +349,12 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 | 질문 | "너는 누구인가?" | "너는 이걸 할 수 있는가?" |
 | 시점 | 인가보다 먼저 | 인증 후에 수행 |
 | HTTP 코드 | 401 Unauthorized | 403 Forbidden |
-| 실패 시 | 확립된 인증 계약이면 `WWW-Authenticate` 헤더로 인증 방법 안내 | 권한 부족 메시지 |
+| 실패 시 | 서버가 401을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 보냄 | 권한 부족 메시지 |
 
 - 인증이 있어야 인가가 있다
 - 401은 이름이 Unauthorized지만 실제로는 **인증(Authentication)** 오류다
+- **RFC 9110 규칙**: 서버가 401 응답을 생성하면 적용 가능한 `WWW-Authenticate` challenge를 반드시 보낸다. 이것은 에러 body 프로필과 별개의 HTTP 의미론이다.
+- **구현/프로필 경계**: 테스트한 Django Ninja 기본 401은 이 challenge를 제공하지 않을 수 있다. 이미 배포되었거나 공개적으로 요구된 계약은 challenge를 보존하고, 기본 동작과 맞지 않으면 G1에서 별도 설계로 되돌린다. code-profile body를 강제하려고 전역 handler나 helper로 challenge를 합성하지 않는다.
 
 ### 8.2 인증 메커니즘 선택 기준
 
@@ -372,14 +374,14 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 ### 8.4 토큰 수명과 스코프
 
-Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 다음 `WWW-Authenticate` 값은 그 헤더를 공개하기로 한 확립된 Bearer 계약의 표면이다.
+Bearer 토큰(OAuth 2.0/JWT)을 쓰면 만료와 권한 범위를 계약으로 명시한다. 401을 생성하는 Bearer 서버는 §8.1의 RFC 9110 challenge 규칙을 지키며, 다음은 그 challenge가 포함하는 Bearer 계약의 표면이다.
 
 | 상황 | 상태 코드 | WWW-Authenticate | 의미 |
 |------|----------|------------------|------|
 | 토큰 만료·폐기·변조 (`invalid_token`) | `401 Unauthorized` | `Bearer error="invalid_token"` | 재인증하거나 refresh로 새 토큰을 발급받는다 |
 | 토큰은 유효하나 권한 범위 부족 (`insufficient_scope`) | `403 Forbidden` | `Bearer error="insufficient_scope", scope="..."` | 필요한 scope를 응답에 안내할 수 있다 |
 
-- 토큰 만료는 401이며 인증(§8.1) 실패다. 확립된 Bearer 계약이 `WWW-Authenticate` 헤더로 인증 방법과 오류 원인을 안내하면 그 헤더를 보존한다. 프레임워크 기본 401에 이 헤더를 전역적으로 합성하여 code-profile body를 강제하지 않으며, 필요한 차이는 별도 설계한다.
+- 토큰 만료는 401이며 인증(§8.1) 실패다. 서버가 이 401을 생성하면 `WWW-Authenticate` challenge로 인증 방법과 오류 원인을 안내한다. 이미 배포되었거나 공개적으로 요구된 Bearer 계약의 challenge는 보존하고, 테스트한 Django Ninja 기본 401이 제공하지 못하는 차이는 G1에서 별도 설계한다. 프레임워크 기본 401에 전역 handler나 helper로 이 헤더를 합성하여 code-profile body를 강제하지 않는다.
 - scope는 토큰이 허용하는 작업 범위다. 엔드포인트가 요구하는 scope와 토큰의 scope를 비교해 부족하면 403 + `insufficient_scope`로 응답하고, 확립된 Bearer 계약이 정하면 필요한 scope를 헤더로 알린다.
 - 토큰 수명, refresh 흐름, scope 집합은 API 계약으로 고정한다. 토큰 검증·발급의 구체 구현은 인증 라이브러리/프레임워크가 담당한다.
 
