@@ -1,10 +1,10 @@
 # API 에러 관리 최종 설계
 
 - 작성일: 2026-08-03
-- 상태: 사용자 리뷰 대기
+- 상태: 사용자 승인 완료
 - 적용 대상: dddjango가 새로 만드는 단일 Django Ninja JSON API 표면
 - 기준 사례: `/Users/hyun/Desktop/broccoli-server`
-- 승인 후 대체 대상: `workspace/design/2026-07-16-error-out-centralization-design.md`
+- 대체 대상: `workspace/design/2026-07-16-error-out-centralization-design.md`
 
 ## 1. 목적
 
@@ -680,7 +680,7 @@ Broccoli의 현재 RFC 9457 형태에서 새 계약으로 바꾸는 것은 의�
 
 ### 15.3 dddjango 플러그인 정본 변경 범위
 
-이 명세 승인 후 구현 계획은 최소한 다음 정본을 다룬다.
+이 명세를 구현하는 계획은 최소한 다음 정본을 다룬다.
 
 - `dddjango/skills/architecture-api/references/final.md`
 - `dddjango/skills/implementation-django-ninja/references/final.md`
@@ -735,7 +735,7 @@ URI Problem Details 대신 code 기반 JSON 계약을 선택한다는 우선순�
 
 ## 18. 대체 관계
 
-이 문서가 사용자 승인을 받으면 2026-07-16 `ErrorOut` 중앙 계약 설계의 다음 결정을
+이 문서는 사용자 승인에 따라 2026-07-16 `ErrorOut` 중앙 계약 설계의 다음 결정을
 대체한다.
 
 - RFC 9457 `type`/`about:blank` core profile

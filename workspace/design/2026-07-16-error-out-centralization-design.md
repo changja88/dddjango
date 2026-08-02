@@ -1,7 +1,8 @@
 # ErrorOut 중앙 계약 설계
 
 - 작성: 2026-07-16
-- 상태: 설계 적대 리뷰 3종 PASS v4 · 사용자 승인 · 구현 완료 · 최종 구현 적대 리뷰 3종 PASS
+- 상태: 역사 기록 — 당시 설계 적대 리뷰 3종 PASS v4 · 사용자 승인 · 구현 완료 · 최종 구현 적대 리뷰 3종 PASS. API 에러 프로필 결정은 2026-08-03 후속 설계로 대체됨
+- 후속 정본: `workspace/design/2026-08-03-api-error-management-design.md` §18
 - 범위: Django Ninja Problem Details 응답 Schema의 소유·배치·재사용 규율과 파이프라인 역할 책임
 - 비범위: 도메인 예외 계층, 예외→HTTP status 매핑 내용, problem type URI 카탈로그의 전역 통합, DRF/plain Django 계약의 강제 이주
 
