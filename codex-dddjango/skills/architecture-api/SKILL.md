@@ -1,6 +1,6 @@
 ---
 name: architecture-api
-description: REST/HTTP API 계약 설계 지식 — 리소스·메서드 의미론, 요청/응답 계약, 상태 코드, RFC 9457 에러 형식, 페이지네이션·버전관리·하위 호환성·Rate Limiting·멱등성 키·OpenAPI. REST/HTTP 계약(엔드포인트 설계, 상태 코드 선택, 에러 형식, 버전·하위 호환성 결정, OpenAPI 반영)을 새로 정의하거나 변경할 때 먼저 로드한다. JSON 직렬화·라우터 구현은 implementation-django-ninja, 서버렌더 표현계층은 implementation-django-web, 도메인 모델·애그리거트는 architecture-ddd, 데이터 신뢰성·트랜잭션은 architecture-db로 위임.
+description: REST/HTTP API 계약 설계 지식 — 리소스·메서드 의미론, 요청/응답 계약, 상태 코드, dddjango-code-json 기본과 선택형 RFC 9457 에러 프로필, 페이지네이션·버전관리·하위 호환성·Rate Limiting·멱등성 키·OpenAPI. REST/HTTP 계약(엔드포인트 설계, 상태 코드 선택, 에러 프로필, 버전·하위 호환성 결정, OpenAPI 반영)을 새로 정의하거나 변경할 때 먼저 로드한다. JSON 직렬화·라우터 구현은 implementation-django-ninja, 서버렌더 표현계층은 implementation-django-web, 도메인 모델·애그리거트는 architecture-ddd, 데이터 신뢰성·트랜잭션은 architecture-db로 위임.
 ---
 
 # REST API 계약 설계
@@ -19,7 +19,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 
 - RFC 9110 HTTP 의미론 우선: 메서드 안전성·멱등성을 정확히 지키고, PUT은 전체 교체, PATCH는 부분 수정, POST는 non-idempotent 생성으로 구분 (§2)
 - URL은 명사·복수형·케밥케이스 리소스로 설계하고 동사 행위를 URL에 포함하지 않는다 (§3)
-- 에러 응답은 RFC 9457 Problem Details(`application/problem+json`) 형식을 사용하고 상태 코드별 `type`을 문서화한다 (§6)
+- 에러 프로필은 기존 배포 계약을 먼저 보존하고, 새 dddjango Ninja 범위에는 `dddjango-code-json`(`application/json`, stable `code`/`title`/`status`/`detail`)을 선택한다. RFC 9457 Problem Details는 별도 요구가 있을 때만 선택하며, 두 프로필의 wire 필드는 한 범위에서 섞지 않는다 (§5.4, §6)
 - 요청/응답 계약은 상태 코드별 body·header·schema까지 포함해 명시적으로 기록하고, 계약 체크리스트(Resource·Method·Request·Response·Error·Auth·Compatibility·OpenAPI)를 엔드포인트 변경마다 검토한다 (§5)
 - 페이지네이션은 데이터 특성(정렬 안정성, 실시간성, 딥 페이지 여부)에 따라 오프셋·커서·페이지 방식 중 선택하고 선택 기준을 명시한다 (§9)
 - 버전 전략(URL·헤더·쿼리파라미터)과 하위 호환성·Deprecation 프로세스를 API 변경 전에 결정한다 (§10, §11)
@@ -37,7 +37,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 | URL/리소스 설계 규칙 | §3 |
 | HTTP 상태 코드 | §4 |
 | 요청/응답 계약 | §5 |
-| 에러 응답 형식 (RFC 9457) | §6 |
+| 에러 프로필 선택 / RFC 9457 프로필 | §5.4 / §6 |
 | HTTP 헤더와 콘텐츠 협상 | §7 |
 | 인증과 인가 | §8 |
 | 페이지네이션 | §9 |
