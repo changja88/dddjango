@@ -11,6 +11,7 @@ from django.http import (
     FileResponse,
     HttpResponse,
     HttpResponseRedirect,
+    JsonResponse,
     StreamingHttpResponse,
 )
 from django.test import Client
@@ -191,9 +192,26 @@ def register_inventory_boundary(api: NinjaExtraAPI) -> None:
     )
 
 
+def problem_json_audit_view(request):
+    return JsonResponse(
+        {
+            "status": 418,
+            "code": "inventory.audit_leak",
+            "title": "Leaked inventory error",
+            "detail": "The audit helper must detect this managed shape.",
+            "trace_id": "audit-extension",
+        },
+        status=418,
+        content_type="application/problem+json; charset=utf-8",
+    )
+
+
 api = NinjaExtraAPI(urls_namespace="api_error_contract")
 register_inventory_boundary(api)
-urlpatterns = [path("api/", api.urls)]
+urlpatterns = [
+    path("api/", api.urls),
+    path("audit/problem", problem_json_audit_view),
+]
 
 
 @pytest.fixture
@@ -216,8 +234,14 @@ def _managed_error_types() -> set[type[ManagedInventoryErrorOut]]:
 
 def _assert_not_bc_error(response) -> None:
     assert response.headers.get("X-Inventory-Error") is None
+    media_type = (
+        response.headers.get("Content-Type", "").partition(";")[0].strip().lower()
+    )
+    is_json_media_type = media_type == "application/json" or media_type.endswith(
+        "+json"
+    )
     has_json_body = (
-        response.headers.get("Content-Type", "").startswith("application/json")
+        is_json_media_type
         and not response.streaming
         and bool(response.content)
     )
@@ -225,7 +249,7 @@ def _assert_not_bc_error(response) -> None:
         body = response.json()
         assert not (
             isinstance(body, dict)
-            and set(body) == {"status", "code", "title", "detail"}
+            and {"status", "code", "title", "detail"} <= set(body)
             and str(body.get("code", "")).startswith("inventory.")
         )
 
@@ -306,11 +330,17 @@ def test_auth_failure_never_stores_error_schema_in_request_auth(client) -> None:
     _assert_not_bc_error(response)
 
 
-def test_general_http_error_stays_framework_shaped(client) -> None:
+def test_general_http_error_stays_framework_shaped_and_problem_json_audit_detects_bc_shape(
+    client,
+) -> None:
     response = client.get("/api/framework/http-error")
 
     assert response.status_code == 418
     _assert_not_bc_error(response)
+
+    bc_shaped_problem = client.get("/audit/problem")
+    with pytest.raises(AssertionError):
+        _assert_not_bc_error(bc_shaped_problem)
 
 
 def test_default_401_and_403_stay_framework_shaped(client) -> None:
