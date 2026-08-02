@@ -23,7 +23,7 @@ Django Ninja Router/Schema/Operation·controller-owned ErrorOut·API registrar·
 - 각 오류 BC는 `schema/error_out.py` 하나에 `<Bc>ErrorCode(StrEnum)`·`<Bc>ErrorOut`·no-arg concrete 오류를 둔다. 추가 필드·validator·alias·URI/instance·다중 오류 schema 파일은 만들지 않는다 (§6.2)
 - controller는 입력 준비 뒤 정확히 한 application call만 좁은 `try`에 두고 구체 known exception을 catch한다. concrete 오류를 준비해 `Status(error.status, error)`로 직접 반환하고 성공 변환은 `try` 뒤에서 한다. 오류 tuple/raw Response·dict·helper/factory/serializer/mapper·handler/decorator·generic response builder는 금지한다 (§2.2·§6.2)
 - 직접 반환하는 모든 BC 오류 status는 `response={...}`에 같은 BC base로 선언한다. framework-owned 401/403/route 404/422/429/일반 `HttpError`/미식별 500은 BC 오류로 변환·광고하지 않으며 body를 정확한 code-profile 계약이라 주장하지 않는다. 오류 선언의 `openapi_extra` 보충과 OpenAPI override·monkeypatch·postprocessor도 금지한다 (§6.2·§8)
-- 프로젝트 `api.py`가 `NinjaExtraAPI` 하나를 소유하고, BC는 side-effect-free `register_<bc>_api(api)`를 노출하며, 프로젝트 `urls.py`가 registrar를 명시 호출하고 mount한다. BC `composition_root.py`는 use-case DI만 소유한다 (§2.3)
+- 프로젝트 `api.py`가 `NinjaExtraAPI` 하나를 소유하고, 명시 registrar가 소유하는 controller는 `@api_controller(..., auto_import=False)`로 auto-import/global registry side effect를 끈다. BC는 side-effect-free `register_<bc>_api(api)`를 노출하고 프로젝트 `urls.py`가 registrar를 명시 호출·mount하며, BC `composition_root.py`는 use-case DI만 소유한다 (§2.3)
 - auth 실패는 `None` 또는 framework `AuthenticationError`이며 `request.auth`에 `ErrorOut`을 넣지 않는다. raw infra 실패는 기본 500이고, 승인된 안정 의미만 infra/ACL이 자기 BC exception으로 정규화한다 (§4·§6.2)
 - 선언된 JSON 성공은 Schema/`Status`로 반환한다. `FileResponse`·`StreamingHttpResponse`·redirect·schema-less 204는 성공 native carveout이며 오류 응답 우회를 허용하지 않는다 (§2.2·§6.2)
 - operation은 `summary`·`description`·`tags`로 문서화하고 반환 타입을 명시한다(`object` 금지) (§2.2)

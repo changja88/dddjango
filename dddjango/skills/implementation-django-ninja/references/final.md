@@ -157,7 +157,7 @@ from application.order.presentation_layer.schema.order_in import OrderIn
 from application.order.presentation_layer.schema.order_out import OrderOut
 
 
-@api_controller("/orders", tags=["orders"])
+@api_controller("/orders", tags=["orders"], auto_import=False)
 class OrderController:
     @route.post(
         "",
@@ -204,7 +204,8 @@ operation 함수가 `self` 첫 인자를 받는 메서드로 올라간다.
 
 요점:
 
-- 클래스 데코레이터 `@api_controller("/orders", tags=[...])`가 resource prefix·tag를 소유하고,
+- 클래스 데코레이터 `@api_controller("/orders", tags=[...], auto_import=False)`가 resource
+  prefix·tag를 소유하고,
   메서드 데코레이터 `@route.post("")`가 그 prefix 기준 *상대* 경로를 잡는다(함수형의
   `@router.post("/orders")` 한 줄이 둘로 나뉜 것).
 - operation 함수가 `self`를 첫 인자로 받는 메서드가 된다. 메서드명은 함수형과 같이 동사구를
@@ -219,6 +220,11 @@ operation 함수가 `self` 첫 인자를 받는 메서드로 올라간다.
 않는 side-effect-free `register_<bc>_api(api)`만 노출한다. 프로젝트 `urls.py`가 API와 registrar를
 import하고, 각 registrar를 명시적으로 한 번 호출한 뒤 API를 mount한다. BC 모듈 import만으로
 registration이 일어나면 안 된다.
+
+명시 registrar 합성을 선택한 controller는 `@api_controller(..., auto_import=False)`로
+Ninja Extra auto-import를 끈다. 그래야 controller import가 global registry를 채우는
+side effect를 만들지 않고, 등록 집합과 시점은 `register_<bc>_api(api)`와 프로젝트
+`urls.py` 호출만으로 결정된다.
 
 ```python
 # config/api.py — 프로젝트가 contract scope의 API 인스턴스 하나를 소유한다.
@@ -470,8 +476,9 @@ def list_orders(request):
 - `422`: semantically invalid input 또는 framework validation error 계약
 - `429`: rate limit
 - `503`: 일시적 서비스 불가(과부하·정비·승인된 일시 경합). 직접 공개하는 retryable BC
-  오류라면 controller가 승인된 `Retry-After`를 `Status`에 담는다. 503/409 선택은 명세
-  §5/G1이 정하고 raw 인프라 예외를 controller가 임의 분류하지 않는다(§6.2,
+  오류라면 controller가 주입받은 Django temporal `HttpResponse`에 승인된 `Retry-After`를
+  설정한 뒤 두 인자 `Status`를 반환한다. 503/409 선택은 명세 §5/G1이 정하고 raw 인프라
+  예외를 controller가 임의 분류하지 않는다(§6.2,
   `architecture-api` §13.4).
 
 > `406`/`415`의 *처리 메커니즘*은 §6.3(콘텐츠 협상 실패) 참조 — ninja 경계 안에서 내고 전역 미들웨어로 가로채지 않는다.
@@ -634,15 +641,37 @@ if result is None:
 return result
 ```
 
-승인된 BC 오류 헤더도 같은 controller의 직접 `Status`가 소유한다. 예를 들어 명세가
-retryable BC 503과 `Retry-After`를 승인했다면 다음처럼 반환한다.
+승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않는다.
+명세가 retryable BC 503과 `Retry-After`를 승인했다면 controller method가 Django temporal
+`HttpResponse`를 받아 catch 안에서 header를 설정한 뒤 두 인자 `Status`를 반환한다.
 
 ```python
-try:
-    order = command.execute(request_value)
-except OrderContention:
-    error = OrderTemporarilyUnavailableError()
-    return Status(error.status, error, headers={"Retry-After": "1"})
+from django.http import HttpResponse
+
+
+@route.post(
+    "/retry",
+    response={200: OrderOut, 503: OrderErrorOut},
+    summary="주문 재시도",
+    description="일시 경합이면 재시도 시점을 안내한다.",
+)
+def retry_order(
+    self,
+    request,
+    response: HttpResponse,
+    payload: RetryOrderIn,
+) -> OrderOut | Status[OrderErrorOut]:
+    request_value = RetryOrderRequest(order_id=payload.order_id)
+    command = build_retry_order_command()
+
+    try:
+        order = command.execute(request_value)
+    except OrderContention:
+        response["Retry-After"] = "1"
+        error = OrderTemporarilyUnavailableError()
+        return Status(error.status, error)
+
+    return OrderOut.from_result(order)
 ```
 
 **추출 금지.** 오류 응답 helper/factory/serializer/mapping, exception handler,
