@@ -1573,11 +1573,9 @@ if result == E_OK:
 
 # --- 좋은 예 ---
 try:
-    delete_page(page)
-    registry.delete_reference(page.name)
-    config_keys.delete_key(page.name.make_key())
-except Exception as e:
-    logger.error(e)
+    delete_page_and_all_references(page)
+except PageDeletionError as error:
+    logger.error(error)
 ```
 
 ### 12.3 Try/Catch 분리는 의도와 인지 경계를 따른다 [CC]
