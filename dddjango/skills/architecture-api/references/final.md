@@ -324,7 +324,7 @@ Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8
 
 406은 **응답** 표현을 협상하지 못한 경우, 415는 **요청** 페이로드 형식을 받아들이지 못한 경우다. 둘을 혼동하지 않는다. (RFC 9110 §15.5.7, §15.5.16)
 
-> 이 계약의 *구현 메커니즘*(Django Ninja)은 `implementation-django-ninja` §6.3 — `Parser`(415)·`Renderer`/`HttpError`(406)로 **ninja 경계 안**에서 낸다. 전역 미들웨어로 협상을 가로채지 않는다.
+> `406`/`415` 계약이 별도 승인된 범위에서만 `implementation-django-ninja` §6.3을 따른다. 사용 중인 Django Ninja 버전과 presentation 스타일에 맞는, 검증된 Ninja-owned pre-body 경계에서 framework `HttpError` 흐름을 사용한다. 특히 parser 예외는 버전에 따라 다른 status로 정규화될 수 있으므로 실제 응답이 415인지 확인한다. 전역 middleware/helper/handler로 status나 body를 합성하지 않는다.
 
 ### 7.3 캐시 관련 헤더
 
