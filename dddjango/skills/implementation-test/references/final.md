@@ -2816,7 +2816,7 @@ BC_SPECIFIC_ERROR_HEADERS = {
 }
 APPROVED_MAPPING_CASES = {
     (
-        "/api/v1/inventory/items/731",
+        "/api/v1/inventory/items/{item_id}",
         "get",
         404,
         "InventoryItemNotFound",
@@ -2830,7 +2830,7 @@ APPROVED_MAPPING_CASES = {
         "known_headers": {},
     },
     (
-        "/api/v2/inventory/items/731",
+        "/api/v2/inventory/items/{item_id}",
         "get",
         404,
         "ArchivedInventoryItemNotFound",
@@ -2844,7 +2844,7 @@ APPROVED_MAPPING_CASES = {
         "known_headers": {},
     },
     (
-        "/api/v1/inventory/reservations/731",
+        "/api/v1/inventory/reservations/{reservation_id}",
         "patch",
         409,
         "InventoryVersionMismatch",
@@ -2872,7 +2872,7 @@ APPROVED_MAPPING_CASES = {
         "known_headers": {"Retry-After": "1"},
     },
     (
-        "/api/v1/orders/991",
+        "/api/v1/orders/{order_id}",
         "get",
         404,
         "OrderProductNotFound",
@@ -2914,7 +2914,7 @@ APPROVED_MAPPING_CASES = {
         "known_headers": {"Retry-After": "1"},
     },
     (
-        "/api/v1/orders/991",
+        "/api/v1/orders/{order_id}",
         "patch",
         409,
         "OrderVersionMismatch",
@@ -2973,19 +2973,19 @@ def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
 
     responses_by_case = {
         (
-            "/api/v1/inventory/items/731",
+            "/api/v1/inventory/items/{item_id}",
             "get",
             404,
             "InventoryItemNotFound",
         ): client.get("/api/v1/inventory/items/731"),
         (
-            "/api/v2/inventory/items/731",
+            "/api/v2/inventory/items/{item_id}",
             "get",
             404,
             "ArchivedInventoryItemNotFound",
         ): client.get("/api/v2/inventory/items/731"),
         (
-            "/api/v1/inventory/reservations/731",
+            "/api/v1/inventory/reservations/{reservation_id}",
             "patch",
             409,
             "InventoryVersionMismatch",
@@ -3005,7 +3005,7 @@ def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
             content_type="application/json",
         ),
         (
-            "/api/v1/orders/991",
+            "/api/v1/orders/{order_id}",
             "get",
             404,
             "OrderProductNotFound",
@@ -3031,7 +3031,7 @@ def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
             content_type="application/json",
         ),
         (
-            "/api/v1/orders/991",
+            "/api/v1/orders/{order_id}",
             "patch",
             409,
             "OrderVersionMismatch",
@@ -3240,9 +3240,6 @@ APPROVED_MANAGED_ERROR_REFS = {
     ("/api/v1/inventory/items/{item_id}", "get", "404"): (
         "#/components/schemas/InventoryErrorOut"
     ),
-    ("/api/v1/inventory/items/{item_id}", "get", "409"): (
-        "#/components/schemas/InventoryErrorOut"
-    ),
     ("/api/v2/inventory/items/{item_id}", "get", "404"): (
         "#/components/schemas/InventoryErrorOut"
     ),
@@ -3330,6 +3327,14 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
 
     assert response.status_code == 200
     document = response.json()
+    prepared_mapping_tuples = {
+        (path, method, str(status))
+        for path, method, status, _failure_name in APPROVED_MAPPING_CASES
+    }
+    assert len(APPROVED_MAPPING_CASES) == 8
+    assert len(prepared_mapping_tuples) == 8
+    assert set(APPROVED_MANAGED_ERROR_REFS) == prepared_mapping_tuples
+
     expected_occurrences = {
         (path, method, status, "application/json", ref)
         for (path, method, status), ref in APPROVED_MANAGED_ERROR_REFS.items()
@@ -3352,7 +3357,9 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
         assert schema == {"$ref": approved_ref}
 ```
 
-두 literal은 12번 slot의 **완전한** `(path, method, status) -> BC base ref`와
+`APPROVED_MAPPING_CASES`의 8개 prepared mapping tuple과
+`APPROVED_MANAGED_ERROR_REFS`의 8개 OpenAPI tuple은 exact set으로 같아야 한다. 두 OpenAPI
+literal은 12번 slot의 **완전한** `(path, method, status) -> BC base ref`와
 managed common/base/concrete ErrorOut ref inventory다. collector는 선택한 framework path 문자열만 훑지 않고 모든 operation과
 모든 response status의 실제 schema를 재귀 순회하며 response/component `$ref`도 따라간다. 따라서
 framework status나 다른 operation에 common/base/concrete ErrorOut이 한 번이라도 나타나면 exact occurrence
