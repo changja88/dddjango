@@ -668,7 +668,9 @@ def _target_names(target: ast.AST) -> set[str]:
     return set()
 
 
-def _direct_statement_bound_names(node: ast.stmt) -> set[str]:
+def _direct_statement_bound_names(
+    node: ast.stmt, *, annotations_evaluated: bool
+) -> set[str]:
     if isinstance(node, ast.Import):
         return {alias.asname or alias.name.split(".", 1)[0] for alias in node.names}
     if isinstance(node, ast.ImportFrom):
@@ -687,7 +689,9 @@ def _direct_statement_bound_names(node: ast.stmt) -> set[str]:
         return _target_names(node.target) | {
             name
             for statement in (*node.body, *node.orelse)
-            for name in _statement_bound_names(statement)
+            for name in _statement_bound_names(
+                statement, annotations_evaluated=annotations_evaluated
+            )
         }
     if isinstance(node, (ast.With, ast.AsyncWith)):
         return {
@@ -696,31 +700,47 @@ def _direct_statement_bound_names(node: ast.stmt) -> set[str]:
             if item.optional_vars is not None
             for name in _target_names(item.optional_vars)
         } | {
-            name for statement in node.body for name in _statement_bound_names(statement)
+            name
+            for statement in node.body
+            for name in _statement_bound_names(
+                statement, annotations_evaluated=annotations_evaluated
+            )
         }
     if isinstance(node, (ast.If, ast.While)):
         return {
             name
             for statement in (*node.body, *node.orelse)
-            for name in _statement_bound_names(statement)
+            for name in _statement_bound_names(
+                statement, annotations_evaluated=annotations_evaluated
+            )
         }
     if isinstance(node, ast.Try):
         statements = [*node.body, *node.orelse, *node.finalbody]
         names = {
-            name for statement in statements for name in _statement_bound_names(statement)
+            name
+            for statement in statements
+            for name in _statement_bound_names(
+                statement, annotations_evaluated=annotations_evaluated
+            )
         }
         for handler in node.handlers:
             if handler.name:
                 names.add(handler.name)
             for statement in handler.body:
-                names.update(_statement_bound_names(statement))
+                names.update(
+                    _statement_bound_names(
+                        statement, annotations_evaluated=annotations_evaluated
+                    )
+                )
         return names
     if isinstance(node, ast.Delete):
         return {name for target in node.targets for name in _target_names(target)}
     return set()
 
 
-def _named_expression_bound_names(node: ast.stmt) -> set[str]:
+def _named_expression_bound_names(
+    node: ast.stmt, *, annotations_evaluated: bool
+) -> set[str]:
     """현재 module statement에서 실제 평가되는 `:=` 이름(중첩 lexical body 제외)."""
     names: set[str] = set()
 
@@ -731,6 +751,21 @@ def _named_expression_bound_names(node: ast.stmt) -> set[str]:
             for default in (*current.args.defaults, *current.args.kw_defaults):
                 if default is not None:
                     visit(default)
+            if annotations_evaluated:
+                arguments = [
+                    *current.args.posonlyargs,
+                    *current.args.args,
+                    *current.args.kwonlyargs,
+                ]
+                if current.args.vararg is not None:
+                    arguments.append(current.args.vararg)
+                if current.args.kwarg is not None:
+                    arguments.append(current.args.kwarg)
+                for argument in arguments:
+                    if argument.annotation is not None:
+                        visit(argument.annotation)
+                if current.returns is not None:
+                    visit(current.returns)
             return
         if isinstance(current, ast.ClassDef):
             for expression in (*current.decorator_list, *current.bases):
@@ -743,6 +778,13 @@ def _named_expression_bound_names(node: ast.stmt) -> set[str]:
                 if default is not None:
                     visit(default)
             return
+        if isinstance(current, ast.AnnAssign):
+            visit(current.target)
+            if annotations_evaluated:
+                visit(current.annotation)
+            if current.value is not None:
+                visit(current.value)
+            return
         if isinstance(current, ast.NamedExpr):
             names.update(_target_names(current.target))
         for child in ast.iter_child_nodes(current):
@@ -752,27 +794,125 @@ def _named_expression_bound_names(node: ast.stmt) -> set[str]:
     return names
 
 
-def _statement_bound_names(node: ast.stmt) -> set[str]:
-    return _direct_statement_bound_names(node) | _named_expression_bound_names(node)
+def _statement_bound_names(
+    node: ast.stmt, *, annotations_evaluated: bool
+) -> set[str]:
+    return _direct_statement_bound_names(
+        node, annotations_evaluated=annotations_evaluated
+    ) | _named_expression_bound_names(
+        node, annotations_evaluated=annotations_evaluated
+    )
 
 
 def _stored_attribute_targets(node: ast.stmt) -> list[ast.Attribute]:
-    """현재 module statement가 덮어쓰는 dotted target(중첩 lexical body 제외)."""
+    """현재 module statement 실행이 덮어쓰는 provable dotted target."""
     targets: list[ast.Attribute] = []
 
-    def visit(current: ast.AST) -> None:
-        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+    def definitely_bound_names(statement: ast.stmt) -> set[str]:
+        if isinstance(statement, ast.Import):
+            return {
+                alias.asname or alias.name.split(".", 1)[0]
+                for alias in statement.names
+            }
+        if isinstance(statement, ast.ImportFrom):
+            return {
+                alias.asname or alias.name
+                for alias in statement.names
+                if alias.name != "*"
+            }
+        if isinstance(
+            statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+        ):
+            return {statement.name}
+        if isinstance(statement, ast.Assign):
+            return {
+                name
+                for target in statement.targets
+                for name in _target_names(target)
+            }
+        if isinstance(statement, ast.AnnAssign) and statement.value is not None:
+            return _target_names(statement.target)
+        if isinstance(statement, ast.AugAssign):
+            return _target_names(statement.target)
+        if isinstance(statement, (ast.With, ast.AsyncWith)):
+            return {
+                name
+                for item in statement.items
+                if item.optional_vars is not None
+                for name in _target_names(item.optional_vars)
+            }
+        return set()
+
+    def visit_block(statements: list[ast.stmt], bound_names: set[str]) -> None:
+        for statement in statements:
+            visit(statement, frozenset(bound_names))
+            if isinstance(statement, ast.Delete):
+                bound_names.difference_update(
+                    name
+                    for target in statement.targets
+                    for name in _target_names(target)
+                )
+            else:
+                bound_names.update(definitely_bound_names(statement))
+
+    def visit(current: ast.AST, bound_names: frozenset[str]) -> None:
+        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            return
+        if isinstance(current, ast.ClassDef):
+            visit_block(current.body, set())
+            return
+        if isinstance(current, (ast.If, ast.While)):
+            visit(current.test, bound_names)
+            visit_block(current.body, set(bound_names))
+            visit_block(current.orelse, set(bound_names))
+            return
+        if isinstance(current, (ast.For, ast.AsyncFor)):
+            visit(current.iter, bound_names)
+            visit(current.target, bound_names)
+            body_bound_names = set(bound_names) | _target_names(current.target)
+            visit_block(current.body, body_bound_names)
+            visit_block(current.orelse, set(bound_names))
+            return
+        if isinstance(current, (ast.With, ast.AsyncWith)):
+            body_bound_names = set(bound_names)
+            for item in current.items:
+                visit(item.context_expr, bound_names)
+                if item.optional_vars is not None:
+                    visit(item.optional_vars, bound_names)
+                    body_bound_names.update(_target_names(item.optional_vars))
+            visit_block(current.body, body_bound_names)
+            return
+        if isinstance(current, ast.Try):
+            visit_block(current.body, set(bound_names))
+            visit_block(current.orelse, set(bound_names))
+            visit_block(current.finalbody, set(bound_names))
+            for handler in current.handlers:
+                handler_bound_names = set(bound_names)
+                if handler.name:
+                    handler_bound_names.add(handler.name)
+                visit_block(handler.body, handler_bound_names)
             return
         if isinstance(current, ast.AnnAssign) and current.value is None:
             return
         if isinstance(current, ast.Attribute) and isinstance(current.ctx, (ast.Store, ast.Del)):
-            targets.append(current)
+            dotted = _expression_dotted_name(current)
+            if dotted is not None and dotted.split(".", 1)[0] not in bound_names:
+                targets.append(current)
             return
         for child in ast.iter_child_nodes(current):
-            visit(child)
+            visit(child, bound_names)
 
-    visit(node)
+    visit(node, frozenset())
     return targets
+
+
+def _annotations_are_evaluated(tree: ast.Module) -> bool:
+    return not any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == "__future__"
+        and any(alias.name == "annotations" for alias in node.names)
+        for node in tree.body
+    )
 
 
 def _absolute_from_module(relative_path: Path, node: ast.ImportFrom) -> str | None:
@@ -797,6 +937,7 @@ def _import_state(
     invalidated_before: dict[int, frozenset[str]] = {}
     invalidated: set[str] = set()
     facts: list[ImportFact] = []
+    annotations_evaluated = _annotations_are_evaluated(parsed.tree)
     for node in parsed.tree.body:
         before[id(node)] = dict(bindings)
         invalidated_before[id(node)] = frozenset(invalidated)
@@ -805,11 +946,6 @@ def _import_state(
                 local = alias.asname or alias.name.split(".", 1)[0]
                 binding = alias.name if alias.asname else local
                 bindings[local] = binding
-                invalidated = {
-                    path
-                    for path in invalidated
-                    if path != binding and not path.startswith(f"{binding}.")
-                }
                 facts.append(
                     ImportFact(alias.name, alias.name, local, binding, node.lineno)
                 )
@@ -823,11 +959,6 @@ def _import_state(
                     local = alias.asname or alias.name
                     full_path = f"{module}.{alias.name}"
                     bindings[local] = full_path
-                    invalidated = {
-                        path
-                        for path in invalidated
-                        if path != full_path and not path.startswith(f"{full_path}.")
-                    }
                     facts.append(
                         ImportFact(module, full_path, local, full_path, node.lineno)
                     )
@@ -836,7 +967,9 @@ def _import_state(
             resolved = _resolve_imported_expression(target, bindings, frozenset(invalidated))
             if resolved is not None:
                 invalidated.add(resolved)
-        for name in _statement_bound_names(node):
+        for name in _statement_bound_names(
+            node, annotations_evaluated=annotations_evaluated
+        ):
             bindings.pop(name, None)
     return before, invalidated_before, facts
 
@@ -895,6 +1028,7 @@ def _assignment_target_names(target: ast.AST) -> list[str | None]:
 
 def _required_root_api_object(parsed: ParsedSource) -> str:
     bindings_before, invalidated_before, _ = _import_state(parsed)
+    annotations_evaluated = _annotations_are_evaluated(parsed.tree)
     assigned_objects: set[str] = set()
     constructor_events = 0
     for node in parsed.tree.body:
@@ -912,7 +1046,11 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
             for name in _assignment_target_names(target)
             if name is not None
         ]
-        assigned_objects.difference_update(_statement_bound_names(node))
+        assigned_objects.difference_update(
+            _statement_bound_names(
+                node, annotations_evaluated=annotations_evaluated
+            )
+        )
         assigned_objects.difference_update(target_names)
         if not isinstance(value, ast.Call):
             continue
