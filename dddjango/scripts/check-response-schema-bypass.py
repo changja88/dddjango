@@ -380,6 +380,7 @@ def _load_source(root: Path, relative: Path) -> ParsedSource:
         if not resolved.is_file():
             raise UsageError(f"production source 없음: {relative}")
         source = resolved.read_text(encoding="utf-8")
+        compile(source, relative.as_posix(), "exec", dont_inherit=True)
         tree = ast.parse(source, filename=relative.as_posix())
     except UsageError:
         raise
@@ -548,29 +549,81 @@ def _assignment_binding(
     return Binding(constructor.origin, "framework_instance")
 
 
-def _binding_timeline(parsed: ParsedSource) -> BindingTimeline:
-    bindings: dict[str, Binding] = {}
-    before: dict[int, dict[str, Binding]] = {}
+def _join_conditional_bindings(
+    alternatives: tuple[dict[str, Binding], ...],
+) -> dict[str, Binding]:
+    joined: dict[str, Binding] = {}
+    names = {name for bindings in alternatives for name in bindings}
+    for name in names:
+        possible = {bindings.get(name) for bindings in alternatives}
+        if len(possible) == 1:
+            binding = possible.pop()
+            if binding is not None:
+                joined[name] = binding
+            continue
+        proven = [
+            binding
+            for binding in possible
+            if binding is not None
+            and (
+                binding.kind == "ambiguous"
+                or binding.origin in RAW_RESPONSE_ORIGINS
+                or (
+                    binding.kind == "framework_instance"
+                    and binding.origin in OPERATION_CONSTRUCTORS
+                )
+                or (
+                    binding.kind == "symbol_import"
+                    and binding.origin == "ninja_extra.route"
+                )
+            )
+        ]
+        if proven:
+            joined[name] = Binding(proven[0].origin, "ambiguous")
+    return joined
+
+
+def _advance_module_bindings(
+    parsed: ParsedSource,
+    statements: list[ast.stmt],
+    initial: dict[str, Binding],
+) -> dict[str, Binding]:
+    bindings = dict(initial)
     module = _module_name(parsed.path)
-    for node in parsed.tree.body:
-        before[id(node)] = dict(bindings)
-        imported = _import_bindings(parsed.path, node)
+    for statement in statements:
+        if isinstance(statement, ast.If):
+            body = _advance_module_bindings(parsed, statement.body, bindings)
+            orelse = _advance_module_bindings(parsed, statement.orelse, bindings)
+            bindings = _join_conditional_bindings((body, orelse))
+            continue
+        imported = _import_bindings(parsed.path, statement)
         if imported:
             bindings.update(imported)
             continue
         assigned = (
-            _assignment_binding(node, bindings)
-            if isinstance(node, (ast.Assign, ast.AnnAssign))
+            _assignment_binding(statement, bindings)
+            if isinstance(statement, (ast.Assign, ast.AnnAssign))
             else None
         )
-        names = _statement_bound_names(node)
+        names = _statement_bound_names(statement)
         for name in names:
             bindings.pop(name, None)
         if assigned is not None:
             for name in names:
                 bindings[name] = assigned
-        elif isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            bindings[node.name] = Binding(f"{module}.{node.name}", "local_definition")
+        elif isinstance(statement, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            bindings[statement.name] = Binding(
+                f"{module}.{statement.name}", "local_definition"
+            )
+    return bindings
+
+
+def _binding_timeline(parsed: ParsedSource) -> BindingTimeline:
+    bindings: dict[str, Binding] = {}
+    before: dict[int, dict[str, Binding]] = {}
+    for node in parsed.tree.body:
+        before[id(node)] = dict(bindings)
+        bindings = _advance_module_bindings(parsed, [node], bindings)
     return BindingTimeline(before, dict(bindings))
 
 
@@ -645,6 +698,18 @@ def _function_local_names(
             names.add(candidate.name)
         if isinstance(candidate, ast.NamedExpr):
             names.update(_target_names(candidate.target))
+        match_as_type = getattr(ast, "MatchAs", None)
+        if match_as_type is not None and isinstance(candidate, match_as_type):
+            if candidate.name:
+                names.add(candidate.name)
+        match_star_type = getattr(ast, "MatchStar", None)
+        if match_star_type is not None and isinstance(candidate, match_star_type):
+            if candidate.name:
+                names.add(candidate.name)
+        match_mapping_type = getattr(ast, "MatchMapping", None)
+        if match_mapping_type is not None and isinstance(candidate, match_mapping_type):
+            if candidate.rest:
+                names.add(candidate.rest)
         if isinstance(candidate, ast.stmt):
             names.update(_statement_bound_names(candidate))
     return frozenset(names - globals_ - nonlocals)
@@ -653,6 +718,8 @@ def _function_local_names(
 def _operation_decorator(
     decorator: ast.AST,
     bindings: dict[str, Binding],
+    *,
+    fail_on_ambiguity: bool,
 ) -> bool:
     if not isinstance(decorator, ast.Call) or not isinstance(decorator.func, ast.Attribute):
         return False
@@ -662,6 +729,13 @@ def _operation_decorator(
         return False
     receiver = bindings.get(decorator.func.value.id)
     if receiver is None:
+        return False
+    if receiver.kind == "ambiguous":
+        if fail_on_ambiguity:
+            raise UsageError(
+                "selected operation receiver provenance ambiguous: "
+                f"{decorator.func.value.id}"
+            )
         return False
     return (
         receiver.kind == "framework_instance"
@@ -719,7 +793,11 @@ def _decorator_activates(
     )
 
 
-def _discover_operations(parsed: ParsedSource) -> list[Operation]:
+def _discover_operations(
+    parsed: ParsedSource,
+    *,
+    fail_on_ambiguity: bool,
+) -> list[Operation]:
     timeline = _binding_timeline(parsed)
     operations: list[Operation] = []
 
@@ -731,7 +809,11 @@ def _discover_operations(parsed: ParsedSource) -> list[Operation]:
         decorators = [
             decorator
             for decorator in node.decorator_list
-            if _operation_decorator(decorator, definition_bindings)
+            if _operation_decorator(
+                decorator,
+                definition_bindings,
+                fail_on_ambiguity=fail_on_ambiguity,
+            )
         ]
         activating = [
             decorator
@@ -772,13 +854,24 @@ def _discover_operations(parsed: ParsedSource) -> list[Operation]:
     return operations
 
 
-def _raw_success_call(operation: Operation, node: ast.AST) -> ast.Call | None:
+def _raw_success_call(
+    operation: Operation,
+    node: ast.AST,
+    *,
+    fail_on_ambiguity: bool,
+) -> ast.Call | None:
     if not isinstance(node, ast.Return) or not isinstance(node.value, ast.Call):
         return None
     call = node.value
     if not isinstance(call.func, ast.Name) or call.func.id in operation.local_names:
         return None
     binding = operation.body_bindings.get(call.func.id)
+    if binding is not None and binding.kind == "ambiguous":
+        if fail_on_ambiguity:
+            raise UsageError(
+                "selected raw response provenance ambiguous: " f"{call.func.id}"
+            )
+        return None
     if (
         binding is None
         or binding.kind != "symbol_import"
@@ -803,12 +896,23 @@ def _raw_success_call(operation: Operation, node: ast.AST) -> ast.Call | None:
     return None
 
 
-def _findings(parsed_sources: list[ParsedSource]) -> list[Finding]:
+def _findings(
+    parsed_sources: list[ParsedSource],
+    *,
+    fail_on_ambiguity: bool,
+) -> list[Finding]:
     findings: list[Finding] = []
     for parsed in sorted(parsed_sources, key=lambda source: source.path.as_posix()):
-        for operation in _discover_operations(parsed):
+        for operation in _discover_operations(
+            parsed,
+            fail_on_ambiguity=fail_on_ambiguity,
+        ):
             for node in _iter_lexical_nodes(operation.node.body):
-                call = _raw_success_call(operation, node)
+                call = _raw_success_call(
+                    operation,
+                    node,
+                    fail_on_ambiguity=fail_on_ambiguity,
+                )
                 if call is not None:
                     findings.append(
                         Finding(
@@ -834,7 +938,7 @@ def _run(config: Config) -> list[Finding]:
         if config.selected
         else _positional_sources(config, inventory)
     )
-    return _findings(parsed)
+    return _findings(parsed, fail_on_ambiguity=config.selected)
 
 
 def main(argv: list[str]) -> int:

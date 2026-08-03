@@ -2731,6 +2731,94 @@ router = Router()
 def proxy_lesson(request):
     return RawResponse('{"id": 1}', status=203, content_type="application/json")
 """
+    compile_invalid = """from ninja import Router
+from .schema import LessonOut
+router = Router()
+@router.get("/", response={200: LessonOut})
+def endpoint(request):
+    continue
+"""
+    conditional_response_rebind = """import os
+from ninja import Router
+from django.http import JsonResponse
+from .schema import LessonOut
+router = Router()
+if os.getenv("CUSTOM_RESPONSE"):
+    def JsonResponse(*args, **kwargs):
+        return object()
+@router.get("/", response={200: LessonOut})
+def endpoint(request):
+    return JsonResponse({"id": 1})
+"""
+    conditional_router_rebind = """import os
+from ninja import Router
+from django.http import JsonResponse
+from .schema import LessonOut
+router = Router()
+if os.getenv("CUSTOM_ROUTER"):
+    router = object()
+@router.get("/", response={200: LessonOut})
+def endpoint(request):
+    return JsonResponse({"id": 1})
+"""
+    deterministic_response_rebind = conditional_response_rebind.replace(
+        'if os.getenv("CUSTOM_RESPONSE"):\n    def JsonResponse(*args, **kwargs):\n        return object()\n',
+        "def JsonResponse(*args, **kwargs):\n    return object()\n",
+    )
+    deterministic_router_rebind = conditional_router_rebind.replace(
+        'if os.getenv("CUSTOM_ROUTER"):\n    router = object()\n',
+        "router = object()\n",
+    )
+    match_capture_shadows = """from ninja import Router
+from django.http import JsonResponse as MatchAsResponse
+from django.http import JsonResponse as MatchStarResponse
+from django.http import JsonResponse as MappingRestResponse
+from django.http import JsonResponse as NestedResponse
+from .schema import LessonOut
+router = Router()
+@router.get("/match-as", response={200: LessonOut})
+def match_as_endpoint(request, payload):
+    match payload:
+        case MatchAsResponse:
+            pass
+    return MatchAsResponse({"id": 1})
+@router.get("/match-star", response={200: LessonOut})
+def match_star_endpoint(request, payload):
+    match payload:
+        case [*MatchStarResponse]:
+            pass
+    return MatchStarResponse({"id": 1})
+@router.get("/mapping-rest", response={200: LessonOut})
+def mapping_rest_endpoint(request, payload):
+    match payload:
+        case {"factory": _, **MappingRestResponse}:
+            pass
+    return MappingRestResponse({"id": 1})
+@router.get("/nested", response={200: LessonOut})
+def nested_endpoint(request, payload):
+    match payload:
+        case {"factory": [NestedResponse]}:
+            pass
+    return NestedResponse({"id": 1})
+"""
+    lexical_shadow_controls = """from ninja import Router
+from django.http import JsonResponse as ParameterResponse
+from django.http import JsonResponse as AssignedResponse
+from django.http import JsonResponse as ImportedResponse
+from .schema import LessonOut
+router = Router()
+@router.get("/parameter", response={200: LessonOut})
+def parameter_endpoint(request, ParameterResponse):
+    return ParameterResponse({"id": 1})
+@router.get("/assignment", response={200: LessonOut})
+def assignment_endpoint(request):
+    AssignedResponse = lambda value: value
+    return AssignedResponse({"id": 1})
+@router.get("/local-import", response={200: LessonOut})
+def import_endpoint(request):
+    from application.responses import ImportedResponse
+    return ImportedResponse({"id": 1})
+"""
     return [
         Case("success-clean-declared-schema-object", success_files(schema_object), "check-response-schema-bypass.py", success_args(), 0, ""),
         Case("success-clean-declared-status-wrapper", success_files(success_status), "check-response-schema-bypass.py", success_args(), 0, ""),
@@ -2747,6 +2835,14 @@ def proxy_lesson(request):
         Case("success-raw-http-response-alias-203", success_files(raw_203_alias), "check-response-schema-bypass.py", success_args(), 2, "BLOCKER"),
         Case("success-analysis-selected-syntax", success_files("def broken(:\n"), "check-response-schema-bypass.py", success_args(), 1, "사용 오류"),
         Case("success-analysis-selected-read", success_files(schema_object), "check-response-schema-bypass.py", success_args("--controller-module", "application/lesson/presentation_layer/missing.py"), 1, "사용 오류"),
+        Case("success-fresh-analysis-selected-compile-invalid", success_files(compile_invalid), "check-response-schema-bypass.py", success_args(), 1, "사용 오류"),
+        Case("success-fresh-analysis-compile-invalid-precedes-blocker", {**success_files(compile_invalid), "application/catalog/presentation_layer/controller.py": raw_200_decoy}, "check-response-schema-bypass.py", success_args("--controller-module", "application/catalog/presentation_layer/controller.py"), 1, "사용 오류"),
+        Case("success-fresh-clean-unselected-compile-invalid", {**success_files(schema_object), "application/catalog/presentation_layer/controller.py": compile_invalid}, "check-response-schema-bypass.py", success_args(), 0, ""),
+        Case("success-fresh-analysis-conditional-response-rebind", success_files(conditional_response_rebind), "check-response-schema-bypass.py", success_args(), 1, "사용 오류"),
+        Case("success-fresh-analysis-conditional-router-rebind", success_files(conditional_router_rebind), "check-response-schema-bypass.py", success_args(), 1, "사용 오류"),
+        Case("success-fresh-clean-deterministic-rebind-away", {**success_files(deterministic_response_rebind), "application/catalog/presentation_layer/controller.py": deterministic_router_rebind}, "check-response-schema-bypass.py", success_args("--controller-module", "application/catalog/presentation_layer/controller.py"), 0, ""),
+        Case("success-fresh-clean-match-capture-shadows", success_files(match_capture_shadows), "check-response-schema-bypass.py", success_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("success-fresh-clean-lexical-shadow-controls", success_files(lexical_shadow_controls), "check-response-schema-bypass.py", success_args(), 0, ""),
         Case("success-fp-tests-migrations-cache-venv", {**success_files(schema_object), "application/lesson/presentation_layer/tests/test_bypass.py": raw_200_decoy, "application/lesson/presentation_layer/migrations/0001_bypass.py": raw_200_decoy, "application/lesson/presentation_layer/.cache/bypass.py": raw_200_decoy, "application/lesson/presentation_layer/.venv/bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, ""),
         Case("success-fp-unignored-generated-path", {**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n", "application/lesson/presentation_layer/generated/bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, "", baseline_files={**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n"}),
         Case("success-fp-git-ignored-selected-path", {**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n", "application/lesson/presentation_layer/ignored_bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, "", baseline_files={**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n"}),
