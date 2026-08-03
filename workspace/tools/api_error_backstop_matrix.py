@@ -1565,6 +1565,12 @@ def maybe_emit(value: LessonNotFoundError, success, use_success: bool):
         "    if use_success:\n        value = success\n",
         "    if use_success:\n        value = success\n    else:\n        value = success\n",
     )
+    literal_true_success_serializer = conditional_error_serializer.replace(
+        "if use_success:", "if True:"
+    )
+    literal_false_error_serializer = conditional_error_serializer.replace(
+        "if use_success:", "if False:"
+    )
     selected_serializer_controller = CONTROLLER_FILES[
         "application/lesson/presentation_layer/controller.py"
     ].replace(
@@ -1687,6 +1693,8 @@ def assemble():
         Case("controller-fresh-clean-nonforwarding-lambda-default", with_files(("application/lesson/presentation_layer/controller.py", lambda_nonforwarding_default_control), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-fresh-conditional-errorout-raw-serializer", with_files(("application/lesson/presentation_layer/controller.py", selected_serializer_controller), ("application/lesson/presentation_layer/transport.py", conditional_error_serializer), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "ErrorOut raw HTTP serializer helper forbidden"),
         Case("controller-fresh-clean-all-paths-success-serializer", with_files(("application/lesson/presentation_layer/controller.py", selected_serializer_controller), ("application/lesson/presentation_layer/transport.py", proven_success_serializer), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-literal-true-success-serializer", with_files(("application/lesson/presentation_layer/controller.py", selected_serializer_controller), ("application/lesson/presentation_layer/transport.py", literal_true_success_serializer), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-literal-false-errorout-serializer", with_files(("application/lesson/presentation_layer/controller.py", selected_serializer_controller), ("application/lesson/presentation_layer/transport.py", literal_false_error_serializer), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "ErrorOut raw HTTP serializer helper forbidden"),
         Case("controller-fresh-operation-nested-prepared-factory", with_files(("application/lesson/presentation_layer/controller.py", operation_nested_factory), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "prepared ErrorOut factory/helper forbidden"),
         Case("controller-fresh-clean-operation-nested-benign-helper", with_files(("application/lesson/presentation_layer/controller.py", operation_nested_benign), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-fresh-local-class-method-prepared-factory", with_files(("application/lesson/presentation_layer/controller.py", selected_nested_helper_controller), ("application/lesson/presentation_layer/assembler.py", local_class_factory), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "prepared ErrorOut factory/helper forbidden"),

@@ -2207,12 +2207,18 @@ def _one_step_error_parameters(
                         continue
                     if isinstance(statement, ast.If):
                         inspect_expression(statement.test, error_names)
-                        error_names = merge_error_names(
-                            [
-                                scan_suite(statement.body, error_names),
-                                scan_suite(statement.orelse, error_names),
-                            ]
-                        )
+                        truth = _literal_truth(statement.test)
+                        if truth is True:
+                            error_names = scan_suite(statement.body, error_names)
+                        elif truth is False:
+                            error_names = scan_suite(statement.orelse, error_names)
+                        else:
+                            error_names = merge_error_names(
+                                [
+                                    scan_suite(statement.body, error_names),
+                                    scan_suite(statement.orelse, error_names),
+                                ]
+                            )
                         continue
                     if isinstance(statement, ast.While):
                         inspect_expression(statement.test, error_names)
@@ -2497,12 +2503,18 @@ def _helper_function_facts(
                 continue
             if isinstance(statement, ast.If):
                 inspect_expression(statement.test, error_names)
-                error_names = merge_error_names(
-                    [
-                        scan_suite(statement.body, error_names),
-                        scan_suite(statement.orelse, error_names),
-                    ]
-                )
+                truth = _literal_truth(statement.test)
+                if truth is True:
+                    error_names = scan_suite(statement.body, error_names)
+                elif truth is False:
+                    error_names = scan_suite(statement.orelse, error_names)
+                else:
+                    error_names = merge_error_names(
+                        [
+                            scan_suite(statement.body, error_names),
+                            scan_suite(statement.orelse, error_names),
+                        ]
+                    )
                 continue
             if isinstance(statement, ast.While):
                 inspect_expression(statement.test, error_names)
