@@ -804,25 +804,21 @@ def controller_cases() -> list[Case]:
         "\n\ndef get_lesson",
         "\n\nclass LessonUnavailable(Exception):\n    pass\n\n\ndef get_lesson",
     )
-    clean_result_none = (
-        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
-        .replace(
-            "LessonMissing, get_lesson",
-            "LessonID, LessonMissing, get_lesson",
-        )
-        .replace("lesson = get_lesson(lesson_id)", "result = get_lesson(lesson_id)")
-        .replace(
-            "result = get_lesson(lesson_id)",
-            "result = get_lesson(LessonID(lesson_id))",
-        )
-        .replace(
-            "    return lesson\n",
-            "    if result is None:\n"
-            "        error = LessonNotFoundError()\n"
-            "        return Status(error.status, error)\n"
-            "    return result\n",
-        )
-    )
+    clean_result_none = """from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonID, get_lesson
+from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict, 404: LessonNotFoundError})
+def get_lesson_controller(request, lesson_id: int):
+    result = get_lesson(LessonID(lesson_id))
+    if result is None:
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    return result
+"""
     clean_result_none_use_cases = CONTROLLER_FILES[
         "application/lesson/application_layer/use_cases.py"
     ].replace(
@@ -911,9 +907,10 @@ def preserve_handler(request, exc):
         "from ninja import Router, Status\nfrom .transport import emit",
     )
     serializer_helper = """from django.http import JsonResponse
+from .schema.error_out import LessonErrorOut
 
 
-def emit(value):
+def emit(value: LessonErrorOut):
     return JsonResponse(value.model_dump(), status=value.status)
 """
     mapping_controller = CONTROLLER_FILES[
