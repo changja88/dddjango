@@ -51,6 +51,14 @@ FIELD_FACTORIES = {
     "pydantic.Field",
     "pydantic.fields.Field",
 }
+ENUM_BASES = {
+    "enum.Enum",
+    "enum.IntEnum",
+    "enum.StrEnum",
+    "enum.Flag",
+    "enum.IntFlag",
+    "enum.ReprEnum",
+}
 VALIDATOR_DECORATORS = {
     "pydantic.field_validator",
     "pydantic.model_validator",
@@ -622,6 +630,16 @@ def _classvar(annotation: ast.AST, bindings: dict[str, str]) -> bool:
     return dotted in {"ClassVar", "typing.ClassVar"} or resolved == "typing.ClassVar"
 
 
+def _contains_field_factory_call(
+    node: ast.AST, bindings: dict[str, str]
+) -> bool:
+    return any(
+        isinstance(candidate, ast.Call)
+        and _resolve(candidate.func, bindings) in FIELD_FACTORIES
+        for candidate in ast.walk(node)
+    )
+
+
 def _append_finding(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
@@ -699,9 +717,11 @@ def _class_member_findings(
             field_names.add(name)
             if name not in allowed_fields:
                 _append_finding(findings, seen, parsed, statement, "additional public field")
-            if isinstance(statement.value, ast.Call):
-                if _resolve(statement.value.func, bindings) in FIELD_FACTORIES:
-                    _append_finding(findings, seen, parsed, statement, "field alias/default factory")
+            if (
+                isinstance(statement.value, ast.Call)
+                and _resolve(statement.value.func, bindings) in FIELD_FACTORIES
+            ) or _contains_field_factory_call(statement.annotation, bindings):
+                _append_finding(findings, seen, parsed, statement, "field alias/default factory")
         elif isinstance(statement, ast.Assign):
             names = {name for target in statement.targets for name in _target_names(target)}
             for name in names:
@@ -772,8 +792,17 @@ def _analyze_common(
                 or (_expression_name(base) or "") == "ErrorOut"
                 for base in node.bases
             )
-            if inherits_error or not node.name.startswith("_"):
-                _append_finding(findings, seen, parsed, node, "common module public/derived class forbidden")
+            inherits_enum = any(
+                _resolve(base, bindings) in ENUM_BASES for base in node.bases
+            )
+            if inherits_enum or inherits_error or not node.name.startswith("_"):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    node,
+                    "common module Enum/public/derived class forbidden",
+                )
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             _append_finding(findings, seen, parsed, node, "common module helper/function forbidden")
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
@@ -1101,6 +1130,38 @@ def _update_bindings(
         bindings[statement.name] = f"{_module_name(parsed.relative_path)}.{statement.name}"
 
 
+def _merge_object_bindings(
+    *states: dict[str, str],
+) -> dict[str, str]:
+    merged: dict[str, str] = {}
+    for state in states:
+        for name, constructor in state.items():
+            merged.setdefault(name, constructor)
+    return merged
+
+
+def _suite_may_break_current_loop(statements: list[ast.stmt]) -> bool:
+    def may_break(node: ast.AST) -> bool:
+        if isinstance(node, ast.Break):
+            return True
+        if isinstance(
+            node,
+            (
+                ast.For,
+                ast.AsyncFor,
+                ast.While,
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+                ast.ClassDef,
+                ast.Lambda,
+            ),
+        ):
+            return False
+        return any(may_break(child) for child in ast.iter_child_nodes(node))
+
+    return any(may_break(statement) for statement in statements)
+
+
 def _raw_code_suite(
     parsed: ParsedSource,
     statements: list[ast.stmt],
@@ -1111,7 +1172,7 @@ def _raw_code_suite(
     seen: set[tuple[Path, int, str]],
     *,
     module_scope: bool,
-) -> None:
+) -> dict[str, str]:
     bindings = dict(initial_bindings)
     local_objects = dict(initial_objects)
     for statement in statements:
@@ -1189,11 +1250,21 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
             )
-        elif isinstance(statement, (ast.If, ast.While)):
-            for branch in (statement.body, statement.orelse):
-                _raw_code_suite(
+        elif isinstance(statement, ast.If):
+            body_objects = _raw_code_suite(
+                parsed,
+                statement.body,
+                bindings,
+                local_objects,
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+            if statement.orelse:
+                else_objects = _raw_code_suite(
                     parsed,
-                    branch,
+                    statement.orelse,
                     bindings,
                     local_objects,
                     known_classes,
@@ -1201,22 +1272,46 @@ def _raw_code_suite(
                     seen,
                     module_scope=False,
                 )
-        elif isinstance(statement, (ast.For, ast.AsyncFor)):
+            else:
+                else_objects = dict(local_objects)
+            local_objects = _merge_object_bindings(body_objects, else_objects)
+        elif isinstance(statement, (ast.For, ast.AsyncFor, ast.While)):
             child_bindings = dict(bindings)
             child_objects = dict(local_objects)
             for name in shadow_names:
                 child_bindings.pop(name, None)
                 child_objects.pop(name, None)
-            for branch in (statement.body, statement.orelse):
-                _raw_code_suite(
+            body_objects = _raw_code_suite(
+                parsed,
+                statement.body,
+                child_bindings,
+                child_objects,
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+            loop_objects = _merge_object_bindings(child_objects, body_objects)
+            if statement.orelse:
+                else_objects = _raw_code_suite(
                     parsed,
-                    branch,
+                    statement.orelse,
                     child_bindings,
-                    child_objects,
+                    loop_objects,
                     known_classes,
                     findings,
                     seen,
                     module_scope=False,
+                )
+            else:
+                else_objects = loop_objects
+            if statement.orelse and not _suite_may_break_current_loop(
+                statement.body
+            ):
+                local_objects = else_objects
+            else:
+                local_objects = _merge_object_bindings(
+                    loop_objects, else_objects
                 )
         elif isinstance(statement, (ast.With, ast.AsyncWith)):
             child_bindings = dict(bindings)
@@ -1224,7 +1319,7 @@ def _raw_code_suite(
             for name in shadow_names:
                 child_bindings.pop(name, None)
                 child_objects.pop(name, None)
-            _raw_code_suite(
+            local_objects = _raw_code_suite(
                 parsed,
                 statement.body,
                 child_bindings,
@@ -1235,37 +1330,60 @@ def _raw_code_suite(
                 module_scope=False,
             )
         elif isinstance(statement, ast.Try):
-            for branch in (statement.body, statement.orelse, statement.finalbody):
-                _raw_code_suite(
-                    parsed,
-                    branch,
-                    bindings,
-                    local_objects,
-                    known_classes,
-                    findings,
-                    seen,
-                    module_scope=False,
-                )
+            body_objects = _raw_code_suite(
+                parsed,
+                statement.body,
+                bindings,
+                local_objects,
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+            normal_objects = _raw_code_suite(
+                parsed,
+                statement.orelse,
+                bindings,
+                body_objects,
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+            path_objects = [normal_objects]
             for handler in statement.handlers:
                 handler_bindings = dict(bindings)
                 handler_objects = dict(local_objects)
                 if handler.name is not None:
                     handler_bindings.pop(handler.name, None)
                     handler_objects.pop(handler.name, None)
-                _raw_code_suite(
-                    parsed,
-                    handler.body,
-                    handler_bindings,
-                    handler_objects,
-                    known_classes,
-                    findings,
-                    seen,
-                    module_scope=False,
+                path_objects.append(
+                    _raw_code_suite(
+                        parsed,
+                        handler.body,
+                        handler_bindings,
+                        handler_objects,
+                        known_classes,
+                        findings,
+                        seen,
+                        module_scope=False,
+                    )
                 )
+            local_objects = _raw_code_suite(
+                parsed,
+                statement.finalbody,
+                bindings,
+                _merge_object_bindings(*path_objects),
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
 
         _update_bindings(
             parsed, statement, bindings, module_scope=module_scope
         )
+    return local_objects
 
 
 def _raw_code_findings(
