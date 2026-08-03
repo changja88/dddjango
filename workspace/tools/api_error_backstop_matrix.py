@@ -121,7 +121,7 @@ PROFILE_REQUIRED_ARGUMENTS: Final = {
         "check-openapi-error-declaration.py": frozenset(
             {"--scope", "--api-module", "--controller-module", "--scope-bc"}
         ),
-        "check-composition-root.py": frozenset(),
+        "check-composition-root.py": frozenset({"--scope", "--api-module"}),
     },
 }
 
@@ -404,13 +404,12 @@ def controller_cases() -> list[Case]:
     )
     preserve_controller_files = {
         "legacy/api.py": "api = object()\n",
-        "legacy/controller.py": """from ninja.errors import HttpError
+        "legacy/controller.py": """from django.http import JsonResponse
 
 
 def legacy_controller(request):
-    raise HttpError(404, "legacy missing")
+    return JsonResponse({"error": "legacy missing"}, status=404)
 """,
-        "legacy/handler.py": "def legacy_handler(request, exc): return {'error': 'legacy'}\n",
     }
     preserve_controller_args = (
         TARGET_DIR,
@@ -678,6 +677,15 @@ def composition_cases() -> list[Case]:
         "--registrar-module",
         "legacy/registrar.py",
     )
+    preserve_common_args = (
+        TARGET_DIR,
+        "--error-profile",
+        "preserve-established",
+        "--scope",
+        "legacy-v1",
+        "--api-module",
+        "legacy/api.py",
+    )
     auto_selector_args = AUTO_PROFILE_ARGS
     inactive_registrar_files = {
         "legacy/api.py": "api = object()\n",
@@ -700,6 +708,7 @@ def composition_cases() -> list[Case]:
         Case("composition-code-v1-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/composition/provider.py": "def provide(): return object()\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-code-v2-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/infra_layer/composition_root.py": "def build(): return object()\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
         Case("composition-code-v3-di-still-blocked", {**REGISTRAR_FILES, "application/lesson/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", composition_args(), 2, "BLOCKER"),
+        Case("composition-preserve-common-selectors-registrar-na", inactive_registrar_files, "check-composition-root.py", preserve_common_args, 0, ""),
         Case("composition-preserve-registrar-rules-na", inactive_registrar_files, "check-composition-root.py", preserve_selector_args, 0, ""),
         Case("composition-auto-registrar-rules-na", inactive_registrar_files, "check-composition-root.py", auto_selector_args, 0, ""),
         Case("composition-preserve-existing-di-v3-still-runs", {**inactive_registrar_files, "application/legacy/application_layer/use_case.py": "def run(): return None\n"}, "check-composition-root.py", preserve_selector_args, 2, "BLOCKER"),
@@ -1114,10 +1123,10 @@ def validate_checker_args(case: Case) -> None:
         if (
             profile_values == ["preserve-established"]
             and case.checker == "check-composition-root.py"
-            and set(values_by_argument) - {"--error-profile"}
+            and set(values_by_argument) & {"--urlconf-module", "--registrar-module"}
         ):
             required_arguments.update(
-                {"--scope", "--api-module", "--urlconf-module", "--registrar-module"}
+                {"--urlconf-module", "--registrar-module"}
             )
     else:
         required_arguments = set()
