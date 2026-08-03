@@ -661,9 +661,6 @@ def _expression_dotted_name(node: ast.AST) -> str | None:
 def _target_names(target: ast.AST) -> set[str]:
     if isinstance(target, ast.Name):
         return {target.id}
-    if isinstance(target, ast.Attribute):
-        dotted = _expression_dotted_name(target)
-        return {dotted.split(".", 1)[0]} if dotted is not None else set()
     if isinstance(target, ast.Starred):
         return _target_names(target.value)
     if isinstance(target, (ast.Tuple, ast.List)):
@@ -671,7 +668,7 @@ def _target_names(target: ast.AST) -> set[str]:
     return set()
 
 
-def _statement_bound_names(node: ast.stmt) -> set[str]:
+def _direct_statement_bound_names(node: ast.stmt) -> set[str]:
     if isinstance(node, ast.Import):
         return {alias.asname or alias.name.split(".", 1)[0] for alias in node.names}
     if isinstance(node, ast.ImportFrom):
@@ -682,7 +679,9 @@ def _statement_bound_names(node: ast.stmt) -> set[str]:
         return {node.name}
     if isinstance(node, ast.Assign):
         return {name for target in node.targets for name in _target_names(target)}
-    if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+    if isinstance(node, ast.AnnAssign):
+        return _target_names(node.target) if node.value is not None else set()
+    if isinstance(node, ast.AugAssign):
         return _target_names(node.target)
     if isinstance(node, (ast.For, ast.AsyncFor)):
         return _target_names(node.target) | {
@@ -721,6 +720,61 @@ def _statement_bound_names(node: ast.stmt) -> set[str]:
     return set()
 
 
+def _named_expression_bound_names(node: ast.stmt) -> set[str]:
+    """현재 module statement에서 실제 평가되는 `:=` 이름(중첩 lexical body 제외)."""
+    names: set[str] = set()
+
+    def visit(current: ast.AST) -> None:
+        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for decorator in current.decorator_list:
+                visit(decorator)
+            for default in (*current.args.defaults, *current.args.kw_defaults):
+                if default is not None:
+                    visit(default)
+            return
+        if isinstance(current, ast.ClassDef):
+            for expression in (*current.decorator_list, *current.bases):
+                visit(expression)
+            for keyword in current.keywords:
+                visit(keyword.value)
+            return
+        if isinstance(current, ast.Lambda):
+            for default in (*current.args.defaults, *current.args.kw_defaults):
+                if default is not None:
+                    visit(default)
+            return
+        if isinstance(current, ast.NamedExpr):
+            names.update(_target_names(current.target))
+        for child in ast.iter_child_nodes(current):
+            visit(child)
+
+    visit(node)
+    return names
+
+
+def _statement_bound_names(node: ast.stmt) -> set[str]:
+    return _direct_statement_bound_names(node) | _named_expression_bound_names(node)
+
+
+def _stored_attribute_targets(node: ast.stmt) -> list[ast.Attribute]:
+    """현재 module statement가 덮어쓰는 dotted target(중첩 lexical body 제외)."""
+    targets: list[ast.Attribute] = []
+
+    def visit(current: ast.AST) -> None:
+        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            return
+        if isinstance(current, ast.AnnAssign) and current.value is None:
+            return
+        if isinstance(current, ast.Attribute) and isinstance(current.ctx, (ast.Store, ast.Del)):
+            targets.append(current)
+            return
+        for child in ast.iter_child_nodes(current):
+            visit(child)
+
+    visit(node)
+    return targets
+
+
 def _absolute_from_module(relative_path: Path, node: ast.ImportFrom) -> str | None:
     if node.level == 0:
         return node.module
@@ -737,19 +791,25 @@ def _absolute_from_module(relative_path: Path, node: ast.ImportFrom) -> str | No
 
 def _import_state(
     parsed: ParsedSource,
-) -> tuple[dict[int, dict[str, str]], list[ImportFact], dict[str, set[str]]]:
+) -> tuple[dict[int, dict[str, str]], dict[int, frozenset[str]], list[ImportFact]]:
     bindings: dict[str, str] = {}
     before: dict[int, dict[str, str]] = {}
+    invalidated_before: dict[int, frozenset[str]] = {}
+    invalidated: set[str] = set()
     facts: list[ImportFact] = []
-    historical: dict[str, set[str]] = {}
     for node in parsed.tree.body:
         before[id(node)] = dict(bindings)
+        invalidated_before[id(node)] = frozenset(invalidated)
         if isinstance(node, ast.Import):
             for alias in node.names:
                 local = alias.asname or alias.name.split(".", 1)[0]
                 binding = alias.name if alias.asname else local
                 bindings[local] = binding
-                historical.setdefault(local, set()).add(binding)
+                invalidated = {
+                    path
+                    for path in invalidated
+                    if path != binding and not path.startswith(f"{binding}.")
+                }
                 facts.append(
                     ImportFact(alias.name, alias.name, local, binding, node.lineno)
                 )
@@ -763,14 +823,22 @@ def _import_state(
                     local = alias.asname or alias.name
                     full_path = f"{module}.{alias.name}"
                     bindings[local] = full_path
-                    historical.setdefault(local, set()).add(full_path)
+                    invalidated = {
+                        path
+                        for path in invalidated
+                        if path != full_path and not path.startswith(f"{full_path}.")
+                    }
                     facts.append(
                         ImportFact(module, full_path, local, full_path, node.lineno)
                     )
                 continue
+        for target in _stored_attribute_targets(node):
+            resolved = _resolve_imported_expression(target, bindings, frozenset(invalidated))
+            if resolved is not None:
+                invalidated.add(resolved)
         for name in _statement_bound_names(node):
             bindings.pop(name, None)
-    return before, facts, historical
+    return before, invalidated_before, facts
 
 
 def _all_import_facts(parsed: ParsedSource) -> list[ImportFact]:
@@ -795,7 +863,9 @@ def _all_import_facts(parsed: ParsedSource) -> list[ImportFact]:
 
 
 def _resolve_imported_expression(
-    node: ast.AST, bindings: dict[str, str]
+    node: ast.AST,
+    bindings: dict[str, str],
+    invalidated: frozenset[str] = frozenset(),
 ) -> str | None:
     dotted = _expression_dotted_name(node)
     if dotted is None:
@@ -804,7 +874,10 @@ def _resolve_imported_expression(
     imported = bindings.get(first)
     if imported is None:
         return None
-    return ".".join((imported, *rest))
+    resolved = ".".join((imported, *rest))
+    if any(resolved == path or resolved.startswith(f"{path}.") for path in invalidated):
+        return None
+    return resolved
 
 
 def _fact_covers(fact: ImportFact, target: str) -> bool:
@@ -821,7 +894,7 @@ def _assignment_target_names(target: ast.AST) -> list[str | None]:
 
 
 def _required_root_api_object(parsed: ParsedSource) -> str:
-    bindings_before, _, _ = _import_state(parsed)
+    bindings_before, invalidated_before, _ = _import_state(parsed)
     assigned_objects: set[str] = set()
     constructor_events = 0
     for node in parsed.tree.body:
@@ -844,7 +917,9 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
         if not isinstance(value, ast.Call):
             continue
         constructor = _resolve_imported_expression(
-            value.func, bindings_before.get(id(node), {})
+            value.func,
+            bindings_before.get(id(node), {}),
+            invalidated_before.get(id(node), frozenset()),
         )
         if constructor not in ROOT_API_CONSTRUCTORS:
             continue
@@ -1087,7 +1162,7 @@ def _analyze_urlconf(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
-    before, facts, _ = _import_state(parsed)
+    before, invalidated_before, facts = _import_state(parsed)
     required = [selected_api_object, *(spec.full_path for spec in specs)]
     for target in required:
         if not any(_fact_covers(fact, target) for fact in facts):
@@ -1099,7 +1174,10 @@ def _analyze_urlconf(
     for call in (node for node in ast.walk(parsed.tree) if isinstance(node, ast.Call)):
         top = _top_statement(call, parsed.tree, parents)
         bindings = before.get(id(top), {}) if top is not None else {}
-        resolved = _resolve_imported_expression(call.func, bindings)
+        invalidated = (
+            invalidated_before.get(id(top), frozenset()) if top is not None else frozenset()
+        )
+        resolved = _resolve_imported_expression(call.func, bindings, invalidated)
         if resolved not in expected_paths:
             for expected in expected_paths:
                 if _previous_import_resolves(call.func, facts, expected, call.lineno):
@@ -1118,7 +1196,7 @@ def _analyze_urlconf(
                 findings, seen, parsed, call, "registrar URLconf call has wrong arity"
             )
             continue
-        resolved_argument = _resolve_imported_expression(call.args[0], bindings)
+        resolved_argument = _resolve_imported_expression(call.args[0], bindings, invalidated)
         if resolved_argument != selected_api_object:
             analysis.append(
                 "URLconf registrar-call API object identity 분석 불능: "
@@ -1214,25 +1292,25 @@ def main(argv: list[str]) -> int:
     except SystemExit as exc:  # argparse --help
         return int(exc.code)
 
-    if composition_findings or di_findings:
-        print(
-            "[check-composition-root] BLOCKER — DI/API 조립 소유권 또는 registrar/URLconf "
-            "composition 계약 위반:"
-        )
+    if composition_findings:
+        print("[check-composition-root] BLOCKER — API registrar/URLconf 조립 계약 위반:")
         for finding in composition_findings:
             print(finding.render())
+        print(
+            "  API 근거: implementation-django-ninja §2.2·discipline-houserules §1. "
+            "각 BC의 canonical `presentation_layer/registrar.py`가 "
+            "`register_<bc>_api(api)` 안에서만 controller를 등록하고, 선택 URLconf가 "
+            "선택 API object를 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
+            "signature/provenance/owner/count를 그 직접 계약에 맞춰라."
+        )
+    if di_findings:
+        print(
+            "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 BC 루트 단일 파일 "
+            "`composition_root.py`를 벗어났거나 부재다(off-tree `composition/` 폴더·오배치·부재):"
+        )
         for finding in di_findings:
             print(finding)
-        if composition_findings:
-            print(
-                "  API 근거: implementation-django-ninja §2.2·discipline-houserules §1. "
-                "각 BC의 canonical `presentation_layer/registrar.py`가 "
-                "`register_<bc>_api(api)` 안에서만 controller를 등록하고, 선택 URLconf가 "
-                "선택 API object를 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
-                "signature/provenance/owner/count를 그 직접 계약에 맞춰라."
-            )
-        if di_findings:
-            print(
+        print(
             "  근거: discipline-houserules §0(트리·파일표). DI 조립은 BC 루트 "
             "`application/<app>/composition_root.py` 단일 파일이 소유하고, presentation은 "
             "`build_<usecase>_command()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` "
@@ -1242,7 +1320,8 @@ def main(argv: list[str]) -> int:
             "`composition_root.py`를 BC 루트로 올려라. application 로직(command/query/service 등)을 "
             "가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root.py`를 만들어 "
             "`build_<usecase>_command()` 팩토리를 둬라(데이터소스 BC는 해당 없음)."
-            )
+        )
+    if composition_findings or di_findings:
         return 2
 
     return 0
