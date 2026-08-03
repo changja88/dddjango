@@ -1311,9 +1311,10 @@ def _print_root_api_findings(findings: list[BoundaryFinding]) -> None:
     for finding in findings:
         print(finding.render())
     print(
-        "  근거: root API는 Ninja API 인스턴스와 registrar 조립만 소유한다. "
-        "BC 내부 import, 오류 schema/code/catalog/mapping, path별 오류 분기, "
-        "전역 exception handler는 각 BC presentation 경계로 내린다."
+        "  근거: root API는 Ninja API 인스턴스와 API 자체 설정만 소유한다. "
+        "registrar 조립은 selected URLconf가 소유한다. BC 내부 import, 오류 "
+        "schema/code/catalog/mapping, path별 오류 분기, 전역 exception handler는 "
+        "각 BC presentation 경계로 내린다."
     )
 
 
