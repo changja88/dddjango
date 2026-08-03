@@ -106,6 +106,10 @@ class Binding:
     kind: str
 
 
+VALUE_BINDING = Binding("<value>", "value")
+AMBIGUOUS_BINDING = Binding("<ambiguous-framework>", "ambiguous")
+
+
 @dataclass(frozen=True)
 class BindingTimeline:
     before: dict[int, dict[str, Binding]]
@@ -576,25 +580,148 @@ def _assignment_binding(
     return Binding(constructor.origin, "framework_instance")
 
 
+def _assignment_state(
+    statement: ast.Assign | ast.AnnAssign,
+    bindings: dict[str, Binding],
+) -> Binding:
+    framework = _assignment_binding(statement, bindings)
+    if framework is not None:
+        return framework
+    value = statement.value
+    if isinstance(value, ast.Name):
+        return bindings.get(value.id, VALUE_BINDING)
+    return VALUE_BINDING
+
+
+def _join_binding_states(states: list[dict[str, Binding]]) -> dict[str, Binding]:
+    """Join the small absent/known/ambiguous binding lattice."""
+    if not states:
+        return {}
+    joined: dict[str, Binding] = {}
+    names = {name for state in states for name in state}
+    for name in names:
+        values = [state.get(name) for state in states]
+        if all(value == values[0] for value in values):
+            if values[0] is not None:
+                joined[name] = values[0]
+            continue
+        present = [value for value in values if value is not None]
+        if present and all(
+            value.kind == "framework_instance"
+            and value.origin in HANDLER_CONSTRUCTORS
+            for value in present
+        ) and len(present) == len(values):
+            joined[name] = Binding("<framework-handler>", "framework_instance")
+        elif any(
+            value.kind in {"framework_instance", "ambiguous"}
+            for value in present
+        ):
+            joined[name] = AMBIGUOUS_BINDING
+        else:
+            joined[name] = VALUE_BINDING
+    return joined
+
+
+def _advance_binding_state(
+    parsed: ParsedSource,
+    statement: ast.stmt,
+    bindings: dict[str, Binding],
+    *,
+    definition_prefix: str,
+) -> None:
+    imported = _import_bindings(parsed.relative_path, statement)
+    if imported:
+        bindings.update(imported)
+        return
+    assigned = (
+        _assignment_state(statement, bindings)
+        if isinstance(statement, (ast.Assign, ast.AnnAssign))
+        else None
+    )
+    names = _statement_bound_names(statement)
+    for name in names:
+        bindings.pop(name, None)
+    if assigned is not None:
+        for name in names:
+            bindings[name] = assigned
+    elif isinstance(statement, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        bindings[statement.name] = Binding(
+            f"{definition_prefix}.{statement.name}", "local_definition"
+        )
+
+
+def _literal_truth(node: ast.AST) -> bool | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, bool):
+        return node.value
+    return None
+
+
+def _binding_branch_exit(
+    parsed: ParsedSource,
+    statements: list[ast.stmt],
+    incoming: dict[str, Binding],
+    *,
+    definition_prefix: str,
+) -> dict[str, Binding]:
+    bindings = dict(incoming)
+    for statement in statements:
+        if isinstance(statement, ast.If):
+            truth = _literal_truth(statement.test)
+            if truth is True:
+                bindings = _binding_branch_exit(
+                    parsed,
+                    statement.body,
+                    bindings,
+                    definition_prefix=definition_prefix,
+                )
+            elif truth is False:
+                bindings = _binding_branch_exit(
+                    parsed,
+                    statement.orelse,
+                    bindings,
+                    definition_prefix=definition_prefix,
+                )
+            else:
+                bindings = _join_binding_states(
+                    [
+                        _binding_branch_exit(
+                            parsed,
+                            statement.body,
+                            bindings,
+                            definition_prefix=definition_prefix,
+                        ),
+                        _binding_branch_exit(
+                            parsed,
+                            statement.orelse,
+                            bindings,
+                            definition_prefix=definition_prefix,
+                        ),
+                    ]
+                )
+            continue
+        _advance_binding_state(
+            parsed,
+            statement,
+            bindings,
+            definition_prefix=definition_prefix,
+        )
+    return bindings
+
+
 def _binding_timeline(parsed: ParsedSource) -> BindingTimeline:
     bindings: dict[str, Binding] = {}
     before: dict[int, dict[str, Binding]] = {}
     module = _module_name(parsed.relative_path)
     for node in parsed.tree.body:
         before[id(node)] = dict(bindings)
-        imported = _import_bindings(parsed.relative_path, node)
-        if imported:
-            bindings.update(imported)
-            continue
-        assigned = _assignment_binding(node, bindings) if isinstance(node, (ast.Assign, ast.AnnAssign)) else None
-        names = _statement_bound_names(node)
-        for name in names:
-            bindings.pop(name, None)
-        if assigned is not None:
-            for name in names:
-                bindings[name] = assigned
-        elif isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            bindings[node.name] = Binding(f"{module}.{node.name}", "local_definition")
+        if isinstance(node, ast.If):
+            bindings = _binding_branch_exit(
+                parsed, [node], bindings, definition_prefix=module
+            )
+        else:
+            _advance_binding_state(
+                parsed, node, bindings, definition_prefix=module
+            )
     return BindingTimeline(before, dict(bindings))
 
 
@@ -612,7 +739,11 @@ def _class_body_bindings(
         if imported:
             bindings.update(imported)
             continue
-        assigned = _assignment_binding(statement, bindings) if isinstance(statement, (ast.Assign, ast.AnnAssign)) else None
+        assigned = (
+            _assignment_binding(statement, bindings)
+            if isinstance(statement, (ast.Assign, ast.AnnAssign))
+            else None
+        )
         names = _statement_bound_names(statement)
         for name in names:
             bindings.pop(name, None)
@@ -774,6 +905,51 @@ def _iter_lexical_nodes(statements: list[ast.stmt]) -> Iterator[ast.AST]:
             continue
         children = list(ast.iter_child_nodes(node))
         stack.extend(reversed(children))
+
+
+def _definition_expressions(node: ast.AST) -> list[ast.AST]:
+    """Expressions evaluated outside a newly defined function/class body."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        expressions: list[ast.AST] = [*node.decorator_list]
+        expressions.extend(node.args.defaults)
+        expressions.extend(
+            default for default in node.args.kw_defaults if default is not None
+        )
+        expressions.extend(
+            argument.annotation
+            for argument in _function_argument_nodes(node)
+            if argument.annotation is not None
+        )
+        if node.returns is not None:
+            expressions.append(node.returns)
+        expressions.extend(getattr(node, "type_params", ()))
+        return expressions
+    if isinstance(node, ast.Lambda):
+        expressions = [*node.args.defaults]
+        expressions.extend(
+            default for default in node.args.kw_defaults if default is not None
+        )
+        return expressions
+    if isinstance(node, ast.ClassDef):
+        return [
+            *node.decorator_list,
+            *node.bases,
+            *(keyword.value for keyword in node.keywords),
+            *getattr(node, "type_params", ()),
+        ]
+    return []
+
+
+def _iter_evaluated_nodes(root: ast.AST) -> Iterator[ast.AST]:
+    """Walk runtime-evaluated expressions without crossing a new body scope."""
+    stack = [root]
+    while stack:
+        node = stack.pop()
+        yield node
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+            stack.extend(reversed(_definition_expressions(node)))
+            continue
+        stack.extend(reversed(list(ast.iter_child_nodes(node))))
 
 
 def _function_argument_nodes(
@@ -1336,25 +1512,18 @@ def _caught_exception_forwarded(handler: ast.ExceptHandler) -> bool:
         return False
 
     def contains_caught_name(root: ast.AST) -> bool:
-        stack = [root]
-        while stack:
-            candidate = stack.pop()
-            if isinstance(candidate, ast.Name) and candidate.id == handler.name:
-                return True
-            if isinstance(
-                candidate,
-                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
-            ):
-                continue
-            stack.extend(ast.iter_child_nodes(candidate))
-        return False
+        return any(
+            isinstance(candidate, ast.Name) and candidate.id == handler.name
+            for candidate in _iter_evaluated_nodes(root)
+        )
 
-    for node in _iter_lexical_nodes(handler.body):
-        if not isinstance(node, ast.Call):
-            continue
-        values = [*node.args, *(keyword.value for keyword in node.keywords)]
-        if any(contains_caught_name(value) for value in values):
-            return True
+    for statement in handler.body:
+        for node in _iter_evaluated_nodes(statement):
+            if not isinstance(node, ast.Call):
+                continue
+            values = [*node.args, *(keyword.value for keyword in node.keywords)]
+            if any(contains_caught_name(value) for value in values):
+                return True
     return False
 
 
@@ -2005,25 +2174,12 @@ def _one_step_error_parameters(
                         proven.setdefault(target_key, set()).add(keyword.arg)
 
             def inspect_expression(root: ast.AST, error_names: set[str]) -> None:
-                stack = [root]
-                while stack:
-                    node = stack.pop()
-                    if isinstance(
-                        node,
-                        (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
-                    ):
-                        continue
+                for node in _iter_evaluated_nodes(root):
                     if isinstance(node, ast.Call):
                         inspect_call(node, error_names)
-                    stack.extend(ast.iter_child_nodes(node))
 
             def merge_error_names(states: list[set[str]]) -> set[str]:
-                if not states:
-                    return set()
-                merged = set(states[0])
-                for state in states[1:]:
-                    merged.intersection_update(state)
-                return merged
+                return {name for state in states for name in state}
 
             def scan_simple(statement: ast.stmt, incoming: set[str]) -> set[str]:
                 error_names = set(incoming)
@@ -2125,21 +2281,34 @@ def _handler_receiver(
     return (
         binding is not None
         and binding.kind == "framework_instance"
-        and binding.origin in HANDLER_CONSTRUCTORS
+        and binding.origin in {*HANDLER_CONSTRUCTORS, "<framework-handler>"}
     )
 
 
 def _handler_registration_findings(
     parsed: ParsedSource,
+    analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
     timeline = _binding_timeline(parsed)
+    module = _module_name(parsed.relative_path)
 
     def inspect_call(call: ast.Call, bindings: dict[str, Binding]) -> None:
-        if not isinstance(call.func, ast.Attribute) or not _handler_receiver(
-            call.func.value, bindings
+        if (
+            not isinstance(call.func, ast.Attribute)
+            or call.func.attr not in {"exception_handler", "add_exception_handler"}
+            or not isinstance(call.func.value, ast.Name)
         ):
+            return
+        receiver = bindings.get(call.func.value.id)
+        if receiver == AMBIGUOUS_BINDING:
+            analysis.append(
+                f"{parsed.relative_path}:{call.lineno} "
+                "Ninja handler receiver provenance 분석 불능"
+            )
+            return
+        if not _handler_receiver(call.func.value, bindings):
             return
         if call.func.attr == "exception_handler":
             _append_finding(
@@ -2159,68 +2328,77 @@ def _handler_registration_findings(
             )
 
     def inspect_expression(root: ast.AST, bindings: dict[str, Binding]) -> None:
-        stack = [root]
-        while stack:
-            candidate = stack.pop()
+        for candidate in _iter_evaluated_nodes(root):
             if isinstance(candidate, ast.Call):
                 inspect_call(candidate, bindings)
-            if candidate is not root and isinstance(
-                candidate,
-                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
-            ):
-                continue
-            stack.extend(ast.iter_child_nodes(candidate))
-
-    def advance(statement: ast.stmt, bindings: dict[str, Binding]) -> None:
-        imported = _import_bindings(parsed.relative_path, statement)
-        if imported:
-            bindings.update(imported)
-            return
-        assigned = (
-            _assignment_binding(statement, bindings)
-            if isinstance(statement, (ast.Assign, ast.AnnAssign))
-            else None
-        )
-        names = _statement_bound_names(statement)
-        for name in names:
-            bindings.pop(name, None)
-        if assigned is not None:
-            for name in names:
-                bindings[name] = assigned
 
     def nested_bound_names(statement: ast.stmt) -> set[str]:
-        names: set[str] = set()
-        for candidate in _iter_lexical_nodes([statement]):
-            if isinstance(candidate, ast.stmt):
-                names.update(_statement_bound_names(candidate))
-        return names
+        return {
+            name
+            for candidate in _iter_lexical_nodes([statement])
+            if isinstance(candidate, ast.stmt)
+            for name in _statement_bound_names(candidate)
+        }
 
     def scan_suite(
         statements: list[ast.stmt],
         incoming: dict[str, Binding],
         *,
         scope_kind: str,
-    ) -> None:
+    ) -> dict[str, Binding]:
         bindings = dict(incoming)
         for statement in statements:
             if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                for decorator in statement.decorator_list:
-                    inspect_expression(decorator, bindings)
+                for expression in _definition_expressions(statement):
+                    inspect_expression(expression, bindings)
                 body_bindings = dict(timeline.final)
                 if scope_kind == "function":
                     body_bindings.update(bindings)
                 for name in _function_local_names(statement):
                     body_bindings.pop(name, None)
                 scan_suite(statement.body, body_bindings, scope_kind="function")
-                advance(statement, bindings)
+                _advance_binding_state(
+                    parsed,
+                    statement,
+                    bindings,
+                    definition_prefix=module,
+                )
                 continue
             if isinstance(statement, ast.ClassDef):
-                for decorator in statement.decorator_list:
-                    inspect_expression(decorator, bindings)
+                for expression in _definition_expressions(statement):
+                    inspect_expression(expression, bindings)
                 scan_suite(statement.body, bindings, scope_kind="class")
-                advance(statement, bindings)
+                _advance_binding_state(
+                    parsed,
+                    statement,
+                    bindings,
+                    definition_prefix=module,
+                )
                 continue
-            if isinstance(statement, (ast.If, ast.While)):
+            if isinstance(statement, ast.If):
+                inspect_expression(statement.test, bindings)
+                truth = _literal_truth(statement.test)
+                if truth is True:
+                    bindings = scan_suite(
+                        statement.body, bindings, scope_kind=scope_kind
+                    )
+                elif truth is False:
+                    bindings = scan_suite(
+                        statement.orelse, bindings, scope_kind=scope_kind
+                    )
+                else:
+                    bindings = _join_binding_states(
+                        [
+                            scan_suite(
+                                statement.body, bindings, scope_kind=scope_kind
+                            ),
+                            scan_suite(
+                                statement.orelse, bindings, scope_kind=scope_kind
+                            ),
+                        ]
+                    )
+                continue
+            if isinstance(statement, ast.While):
                 inspect_expression(statement.test, bindings)
                 scan_suite(statement.body, bindings, scope_kind=scope_kind)
                 scan_suite(statement.orelse, bindings, scope_kind=scope_kind)
@@ -2245,15 +2423,23 @@ def _handler_registration_findings(
                 scan_suite(statement.finalbody, bindings, scope_kind=scope_kind)
                 for handler in statement.handlers:
                     branch = dict(bindings)
+                    if handler.type is not None:
+                        inspect_expression(handler.type, branch)
                     if handler.name:
                         branch.pop(handler.name, None)
                     scan_suite(handler.body, branch, scope_kind=scope_kind)
             else:
                 inspect_expression(statement, bindings)
-                advance(statement, bindings)
+                _advance_binding_state(
+                    parsed,
+                    statement,
+                    bindings,
+                    definition_prefix=module,
+                )
                 continue
             for name in nested_bound_names(statement):
                 bindings.pop(name, None)
+        return bindings
 
     scan_suite(parsed.tree.body, {}, scope_kind="module")
 
@@ -2267,11 +2453,7 @@ def _helper_function_facts(
     facts = HelperFacts()
 
     def inspect_expression(root: ast.AST, error_names: set[str]) -> None:
-        stack = [root]
-        while stack:
-            node = stack.pop()
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
-                continue
+        for node in _iter_evaluated_nodes(root):
             if isinstance(node, ast.Call):
                 constructor = _known_constructor(function, node, language, analysis)
                 if constructor is not None:
@@ -2284,15 +2466,9 @@ def _helper_function_facts(
                     _model_dump_receivers(node) & error_names
                 ):
                     facts.serializer_node = node
-            stack.extend(ast.iter_child_nodes(node))
 
     def merge_error_names(states: list[set[str]]) -> set[str]:
-        if not states:
-            return set()
-        merged = set(states[0])
-        for state in states[1:]:
-            merged.intersection_update(state)
-        return merged
+        return {name for state in states for name in state}
 
     def scan_simple(statement: ast.stmt, incoming: set[str]) -> set[str]:
         error_names = set(incoming)
@@ -2384,9 +2560,19 @@ def _helper_function_facts(
 def _nested_functions(
     statements: list[ast.stmt],
 ) -> Iterator[ast.FunctionDef | ast.AsyncFunctionDef]:
-    for node in _iter_lexical_nodes(statements):
+    stack: list[ast.stmt] = list(reversed(statements))
+    while stack:
+        node = stack.pop()
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             yield node
+            continue
+        for _, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                stack.extend(
+                    reversed([item for item in value if isinstance(item, ast.stmt)])
+                )
+            elif isinstance(value, ast.stmt):
+                stack.append(value)
 
 
 def _helper_findings(
@@ -2399,7 +2585,7 @@ def _helper_findings(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
-    _handler_registration_findings(parsed, findings, seen)
+    _handler_registration_findings(parsed, analysis, findings, seen)
 
     def analyze_helper(function: Operation) -> None:
         initial_error_names = (
@@ -2451,6 +2637,16 @@ def _helper_findings(
 
     for function, _ in _module_functions(parsed, owner_bc):
         if id(function.node) in operation_ids:
+            for nested in _nested_functions(function.node.body):
+                analyze_helper(
+                    _function_context(
+                        parsed,
+                        nested,
+                        owner_bc,
+                        function.body_bindings,
+                        function.body_bindings,
+                    )
+                )
             continue
         analyze_helper(function)
 

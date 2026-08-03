@@ -1474,6 +1474,128 @@ router = Router()
 def raw_success(request):
     return Status(200, {'ok': True})
 """
+    branch_router_handler = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+def registered_handler(request, exc):
+    return None
+
+
+if True:
+    branch_router = Router()
+branch_router.add_exception_handler(LessonMissing, registered_handler)
+"""
+    ambiguous_branch_handler = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+def registered_handler(request, exc):
+    return None
+
+
+if handlers_enabled:
+    selected_receiver = Router()
+selected_receiver.add_exception_handler(LessonMissing, registered_handler)
+"""
+    arbitrary_branch_handler = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+class Registry:
+    def add_exception_handler(self, *args):
+        return None
+
+
+if True:
+    ordinary_receiver = Registry()
+ordinary_receiver.add_exception_handler(LessonMissing, registered_handler)
+"""
+    module_shadowed_isinstance_result = builtin_isinstance_result.replace(
+        "router = Router()",
+        "router = Router()\nisinstance = lambda *args: True",
+    )
+    lambda_default_forwarding = """from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.presentation_layer.schema.error_out import LessonErrorCode, LessonErrorOut
+from application.lesson.presentation_layer.forwarder import forward_error
+
+router = Router()
+
+
+@router.get('/{lesson_id}', response={200: dict, 404: LessonErrorOut})
+def get_lesson_controller(request, lesson_id: int):
+    try:
+        lesson = get_lesson(lesson_id)
+    except LessonMissing as exc:
+        error = LessonErrorOut(
+            code=LessonErrorCode.NOT_FOUND,
+            title=(lambda hidden=forward_error(exc): hidden)(),
+            status=404,
+            detail='missing',
+        )
+        return Status(error.status, error)
+    return lesson
+"""
+    lambda_keyword_default_forwarding = lambda_default_forwarding.replace(
+        "lambda hidden=forward_error(exc): hidden",
+        "lambda *, hidden=forward_error(exc): hidden",
+    )
+    lambda_body_forwarding_control = lambda_default_forwarding.replace(
+        "title=(lambda hidden=forward_error(exc): hidden)(),",
+        "title='missing',\n            detail=lambda: forward_error(exc),",
+    ).replace("            detail='missing',\n", "", 1)
+    lambda_nonforwarding_default_control = lambda_default_forwarding.replace(
+        "forward_error(exc)",
+        "forward_error('safe')",
+    )
+    conditional_error_serializer = """from django.http import JsonResponse
+from .schema.error_out import LessonNotFoundError
+
+
+def maybe_emit(value: LessonNotFoundError, success, use_success: bool):
+    if use_success:
+        value = success
+    return JsonResponse(value.model_dump(), status=200)
+"""
+    proven_success_serializer = conditional_error_serializer.replace(
+        "    if use_success:\n        value = success\n",
+        "    if use_success:\n        value = success\n    else:\n        value = success\n",
+    )
+    selected_serializer_controller = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "from ninja import Router, Status",
+        "from ninja import Router, Status\nfrom .transport import maybe_emit",
+    )
+    operation_nested_factory = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "    try:\n",
+        "    def make_error():\n"
+        "        return LessonNotFoundError()\n\n"
+        "    try:\n",
+    )
+    operation_nested_benign = operation_nested_factory.replace(
+        "        return LessonNotFoundError()",
+        "        return None",
+    )
+    local_class_factory = """from .schema.error_out import LessonNotFoundError
+
+
+def assemble():
+    class LocalFactory:
+        def make(self):
+            return LessonNotFoundError()
+    return LocalFactory
+"""
+    local_class_benign = local_class_factory.replace(
+        "            return LessonNotFoundError()",
+        "            return None",
+    )
     return [
         Case("controller-clean-sync-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_sync_annassign), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-async-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_async), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
@@ -1554,6 +1676,21 @@ def raw_success(request):
         Case("controller-direct-raw-dict-error-status-outside-arm", with_files(("application/lesson/presentation_layer/controller.py", raw_dict_error_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-direct-raw-name-error-status-outside-arm", with_files(("application/lesson/presentation_layer/controller.py", raw_name_error_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-clean-direct-success-status", with_files(("application/lesson/presentation_layer/controller.py", success_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-branch-created-router-handler", with_files(("application/lesson/presentation_layer/controller.py", branch_router_handler), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "custom Ninja add_exception_handler forbidden"),
+        Case("controller-fresh-analysis-ambiguous-branch-handler-receiver", with_files(("application/lesson/presentation_layer/controller.py", ambiguous_branch_handler), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-fresh-clean-arbitrary-branch-handler-receiver", with_files(("application/lesson/presentation_layer/controller.py", arbitrary_branch_handler), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-analysis-module-shadowed-isinstance-predicate", with_files(("application/lesson/presentation_layer/controller.py", module_shadowed_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-fresh-clean-true-builtin-isinstance-predicate", with_files(("application/lesson/presentation_layer/controller.py", builtin_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-caught-exception-forwarded-in-lambda-default", with_files(("application/lesson/presentation_layer/controller.py", lambda_default_forwarding), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "caught exception forwarding forbidden"),
+        Case("controller-fresh-caught-exception-forwarded-in-lambda-keyword-default", with_files(("application/lesson/presentation_layer/controller.py", lambda_keyword_default_forwarding), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "caught exception forwarding forbidden"),
+        Case("controller-fresh-clean-caught-exception-in-lambda-body-scope", with_files(("application/lesson/presentation_layer/controller.py", lambda_body_forwarding_control), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-clean-nonforwarding-lambda-default", with_files(("application/lesson/presentation_layer/controller.py", lambda_nonforwarding_default_control), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(value): return value\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-conditional-errorout-raw-serializer", with_files(("application/lesson/presentation_layer/controller.py", selected_serializer_controller), ("application/lesson/presentation_layer/transport.py", conditional_error_serializer), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "ErrorOut raw HTTP serializer helper forbidden"),
+        Case("controller-fresh-clean-all-paths-success-serializer", with_files(("application/lesson/presentation_layer/controller.py", selected_serializer_controller), ("application/lesson/presentation_layer/transport.py", proven_success_serializer), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-operation-nested-prepared-factory", with_files(("application/lesson/presentation_layer/controller.py", operation_nested_factory), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "prepared ErrorOut factory/helper forbidden"),
+        Case("controller-fresh-clean-operation-nested-benign-helper", with_files(("application/lesson/presentation_layer/controller.py", operation_nested_benign), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-fresh-local-class-method-prepared-factory", with_files(("application/lesson/presentation_layer/controller.py", selected_nested_helper_controller), ("application/lesson/presentation_layer/assembler.py", local_class_factory), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "prepared ErrorOut factory/helper forbidden"),
+        Case("controller-fresh-clean-local-class-method-benign-helper", with_files(("application/lesson/presentation_layer/controller.py", selected_nested_helper_controller), ("application/lesson/presentation_layer/assembler.py", local_class_benign), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         # Reviewer gaps deliberately remain outside the deterministic oracle:
         # application collaborator identity, broad exception hidden by re-export,
         # and two-hop/off-selection helpers.
