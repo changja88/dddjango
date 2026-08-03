@@ -317,6 +317,7 @@ def _is_code_production_path(relative_path: Path) -> bool:
         and not relative_path.name.startswith("test_")
         and not relative_path.name.endswith("_test.py")
         and relative_path.name != "test.py"
+        and relative_path.name != "tests.py"
         and relative_path.name != "conftest.py"
     )
 
