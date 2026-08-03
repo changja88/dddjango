@@ -431,13 +431,13 @@ Expected: 11/11 source-body↔Claude, Claude↔Codex reference in sync.
 - Modify: `dddjango/scripts/check-context-isolation.py`
 - Mirror: `codex-dddjango/skills/dddjango/scripts/check-context-isolation.py`
 
-- [ ] Step 1: 기존 S1~S3와 ACL 카브아웃을 그대로 보존한다.
-- [ ] Step 2: 구 `check-error-centralization.py`의 application HTTP 직접 신호와 touched/untracked collector를 byte-level 동작 회귀로 옮긴 legacy purity slice를 추가한다. preserve/auto에서는 이 exact legacy collector를 유지해 이번 변경의 application HTTP 누수는 exit 2, 기존 untouched는 grandfather하며, git/read 판정 불능은 기존과 같은 fail-open 의미를 보존한다.
-- [ ] Step 3: §1.2 CLI를 구현한다. 기존 S1~S3와 preserve/auto legacy purity는 기존 touched 범위·fail-open 의미를 유지하고, code-profile 신규 slice는 명시 selector로 필터한 production full tree에 적용해 선택 범위·root/read/syntax 분석 불능을 exit 1로 fail-closed한다.
+- [ ] Step 1: positional `TARGET_DIR` 단독·`auto`·`preserve-established` legacy lane은 기존 전역 S1~S3 의미 predicate와 ACL 카브아웃을 그대로 쓰고, 기존처럼 touched file에만 적용해 untouched를 grandfather한다. 파일 read 실패와 S1~S3 syntax failure는 skip한다. Git touched 판정 실패는 fail-open이라고 부르지 않고, 기존대로 후보를 touched로 보수 판정해 나머지 직접 신호가 있으면 차단한다.
+- [ ] Step 2: 구 `check-error-centralization.py`의 application HTTP raw regex·진단 label·전역 collector·touched/untracked 판정을 byte-level 동작 회귀로 옮긴다. positional/auto/preserve에서는 정확한 legacy collector를 사용하고 syntax parse 없이 raw text를 검사한다. 이 slice는 구 checker처럼 표준 `application/` 컨테이너 밖 `application_layer/`도 찾아야 하므로 기존 no-`application/` 조기 반환보다 먼저 실행한다.
+- [ ] Step 3: §1.2 CLI를 구현한다. `dddjango-code-json`은 selector와 `scope-bc`로 한 번 만든 TARGET_DIR 기준 상대 production inventory(Git tracked+untracked non-ignored, test/migration/cache/venv/generated 제외)를 공유한다. 변경하지 않은 S1~S3 의미 predicate는 이 filtered production 전체에 적용해 touched 상태로 구조 위반을 숨기지 않고, legacy HTTP raw signal predicate는 같은 inventory의 touched `application_layer` 부분집합에만 적용한다. root/layer/error-language 신규 slice도 같은 filtered full tree를 쓰며, touched Ninja import가 legacy와 layer slice 양쪽에 걸려도 한 번만 진단한다.
 - [ ] Step 4: root API slice — 전달된 정확한 `api-module`에 API instance가 하나인지 확인하고 BC import, root-local GlobalErrorCode/ErrorOut/catalog/exception mapping/path별 error branch, custom handler를 차단한다. registrar 위치·호출은 중복 검사하지 않고 Task D3b의 기존 composition-root checker가 소유한다. 동적 root mapping 동형은 reviewer 몫이다.
 - [ ] Step 5: layer purity slice — code-profile `scope-bc`의 domain/application/infra production source가 Ninja/Ninja Extra, Django HTTP response/status, common/BC ErrorOut/ErrorCode를 import하면 차단한다.
 - [ ] Step 6: BC error language slice — 다른 BC ErrorCode/ErrorOut import는 code-profile 계층에서 차단한다. 다른 BC domain exception은 기존 S1처럼 `infra_layer/acl/`의 명시 번역만 허용한다.
-- [ ] Step 7: full-tree source는 tracked+untracked non-ignored production Python을 포함하고 test/migration/cache/venv/generated를 제외한다. root/symlink 탈출, read/syntax 실패는 exit 1이다. docstring과 출력에서 legacy touched와 code full-tree를 구분한다.
+- [ ] Step 7: code-profile inventory의 root/resolve·symlink 탈출·selected membership·read·strict UTF-8·syntax 분석 실패는 exit 1로 fail-closed하고, blocker가 함께 있어도 분석 오류 exit 1을 우선한다. docstring과 출력은 positional/auto/preserve의 exact legacy touched lane, code의 filtered touched raw-signal lane, code filtered full-tree 구조 lane을 구분한다.
 - [ ] Step 8: Task A1의 root/local catalog/legacy purity 사례와 기존 S1~S3 회귀를 모두 GREEN으로 만든 뒤 미러한다.
 
 ### Task D3b: 기존 `check-composition-root.py`에 API registrar 조립 slice 추가

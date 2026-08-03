@@ -533,7 +533,84 @@ def load_lesson():
 def load_lesson():
     return NativeJsonResponse({"error": "missing"}, status=404)
 """
+    legacy_django_http_import_only = """from django.http import JsonResponse
+
+
+def load_lesson():
+    return None
+"""
+    legacy_raw_status_only = """def load_lesson():
+    status = 404
+    return status
+"""
+    malformed_legacy_raw_status = """def load_lesson(:
+    status = 404
+"""
     clean_legacy = "def load_lesson(): return None\n"
+    tracked_s1_files = with_files(
+        (
+            "application/lesson/domain_layer/service.py",
+            "from application.catalog.infra_layer.repository import CatalogRepository\n",
+        ),
+        (
+            "application/catalog/infra_layer/repository.py",
+            "class CatalogRepository: pass\n",
+        ),
+        base=CONTEXT_FILES,
+    )
+    preserve_tracked_s1_files = {
+        **tracked_s1_files,
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": "def legacy(request): return {'legacy': True}\n",
+    }
+    code_touched_status_files = with_files(
+        (
+            "application/lesson/application_layer/use_case.py",
+            legacy_raw_status_only,
+        ),
+        base=CONTEXT_FILES,
+    )
+    code_touched_status_baseline = with_files(
+        (
+            "application/lesson/application_layer/use_case.py",
+            clean_legacy,
+        ),
+        base=CONTEXT_FILES,
+    )
+    cross_bc_error_import_files = with_files(
+        (
+            "application/lesson/presentation_layer/controller.py",
+            "from application.catalog.presentation_layer.schema.error_out "
+            "import CatalogErrorCode, CatalogErrorOut\n\n"
+            "def get_lesson(request):\n"
+            "    return {'id': 1}\n",
+        ),
+        (
+            "application/catalog/presentation_layer/schema/error_out.py",
+            CATALOG_DUPLICATE_ERROR_OUT,
+        ),
+        base=CONTEXT_FILES,
+    )
+    preserve_django_import_files = {
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": "pass\n",
+        "application/legacy/application_layer/use_case.py": legacy_django_http_import_only,
+    }
+    preserve_django_import_baseline = {
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": "pass\n",
+        "application/legacy/application_layer/use_case.py": clean_legacy,
+    }
+    preserve_malformed_files = {
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": "pass\n",
+        "application/legacy/application_layer/use_case.py": malformed_legacy_raw_status,
+    }
+    preserve_malformed_baseline = {
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": "pass\n",
+        "application/legacy/application_layer/use_case.py": clean_legacy,
+    }
     empty_error_bc_files = with_files(
         (
             "application/lesson/presentation_layer/controller.py",
@@ -563,34 +640,43 @@ def load_lesson():
         Case("context-clean-separated-preserve-scope", with_files(("legacy/api.py", "api = object()\n"), ("legacy/controller.py", "def legacy(request): return {'error': 'old'}\n"), base=CONTEXT_FILES), "check-context-isolation.py", preserve_args, 0, ""),
         Case("context-clean-existing-s1-s3-permitted-directions", with_files(("application/lesson/domain_layer/service.py", "from application.lesson.domain_layer.model import Lesson\n"), ("application/catalog/published_service/public/contract/query.py", "class CatalogQuery: pass\n"), ("application/lesson/application_layer/use_catalog.py", "from application.catalog.published_service.public.contract.query import CatalogQuery\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 0, ""),
         Case("context-clean-empty-error-bc", empty_error_bc_files, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson"), 0, ""),
+        Case("context-preserve-unchanged-tracked-s1-grandfathered", preserve_tracked_s1_files, "check-context-isolation.py", preserve_args, 0, "", baseline_files=preserve_tracked_s1_files),
+        Case("context-preserve-touched-django-http-import-only-clean", preserve_django_import_files, "check-context-isolation.py", preserve_args, 0, "", baseline_files=preserve_django_import_baseline),
         Case("context-root-api-imports-bc", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\nfrom application.lesson.presentation_layer.controller import get_lesson\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-local-global-error-code", with_files(("config/api.py", "from enum import StrEnum\nfrom ninja_extra import NinjaExtraAPI\nclass GlobalErrorCode(StrEnum):\n    BAD = 'bad'\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-local-error-out", with_files(("config/api.py", "from ninja import Schema\nfrom ninja_extra import NinjaExtraAPI\nclass ErrorOut(Schema):\n    detail: str\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-local-error-catalog", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\nERROR_CATALOG = {'missing': (404, 'lesson_not_found')}\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-local-exception-mapping", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\ndef map_exception(exc):\n    if isinstance(exc, LookupError):\n        return 404, {'code': 'lesson_not_found'}\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-path-specific-error-branch", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\ndef handle(request):\n    if request.path.startswith('/lessons'):\n        return 404, {'code': 'lesson_not_found'}\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
+        Case("context-root-api-custom-exception-handler", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\n\napi = NinjaExtraAPI()\n\n\n@api.exception_handler(LookupError)\ndef handle_lookup(request, exc):\n    return None\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-domain-imports-ninja", with_files(("application/lesson/domain_layer/model.py", "from ninja import Status\nclass Lesson: pass\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-application-imports-django-http", with_files(("application/lesson/application_layer/use_case.py", "from django.http import JsonResponse\ndef run(): return None\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-infra-imports-common-error-out", with_files(("application/lesson/infra_layer/repository.py", "from common.ninja.response.error_out import ErrorOut\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-application-imports-own-bc-error-out", with_files(("application/lesson/application_layer/use_case.py", "from application.lesson.presentation_layer.schema.error_out import LessonErrorOut\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-layer-imports-other-bc-error-code", with_files(("application/lesson/application_layer/use_case.py", "from application.catalog.presentation_layer.schema.error_out import CatalogErrorCode\n"), ("application/catalog/presentation_layer/schema/error_out.py", CATALOG_DUPLICATE_ERROR_OUT), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog", "--error-bc", "catalog"), 2, "BLOCKER"),
         Case("context-layer-imports-other-bc-error-out", with_files(("application/lesson/infra_layer/repository.py", "from application.catalog.presentation_layer.schema.error_out import CatalogErrorOut\n"), ("application/catalog/presentation_layer/schema/error_out.py", CATALOG_DUPLICATE_ERROR_OUT), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog", "--error-bc", "catalog"), 2, "BLOCKER"),
+        Case("context-selected-controller-imports-other-bc-error-language", cross_bc_error_import_files, "check-context-isolation.py", context_args("--scope-bc", "catalog", "--error-bc", "catalog"), 2, "BLOCKER"),
         Case("context-cross-bc-exception-outside-acl", with_files(("application/lesson/presentation_layer/controller.py", "from application.catalog.domain_layer.exceptions import CatalogMissing\n"), ("application/catalog/domain_layer/exceptions.py", "class CatalogMissing(Exception): pass\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 2, "BLOCKER"),
         Case("context-existing-s1-cross-bc-internal", with_files(("application/lesson/domain_layer/service.py", "from application.catalog.infra_layer.repository import CatalogRepository\n"), ("application/catalog/infra_layer/repository.py", "class CatalogRepository: pass\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 2, "BLOCKER"),
+        Case("context-code-unchanged-tracked-s1-blocked", tracked_s1_files, "check-context-isolation.py", context_args("--scope-bc", "catalog"), 2, "BLOCKER", baseline_files=tracked_s1_files),
         Case("context-existing-s2-contract-layer-import", with_files(("application/lesson/published_service/public/contract/query.py", "from application.lesson.domain_layer.model import Lesson\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-existing-s3-own-published-import", with_files(("application/lesson/application_layer/use_case.py", "from application.lesson.published_service.public.contract.query import LessonQuery\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
+        Case("context-code-touched-application-http-status-signal", code_touched_status_files, "check-context-isolation.py", context_args(), 2, "BLOCKER", baseline_files=code_touched_status_baseline),
         Case("context-preserve-untouched-application-http-grandfathered", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}, "check-context-isolation.py", preserve_args, 0, "", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}),
         Case("context-preserve-touched-application-http-error-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
         Case("context-preserve-touched-application-http-import-only-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_import_only}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
         Case("context-preserve-touched-application-raw-http-response-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_raw_http_response}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
         Case("context-preserve-touched-application-http-status-keyword-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error_status}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
         Case("context-preserve-untracked-application-http-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n"}),
+        Case("context-preserve-http-signal-without-application-container", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "legacy/application_layer/use_case.py": legacy_raw_status_only}, "check-context-isolation.py", preserve_args, 2, "BLOCKER"),
+        Case("context-preserve-malformed-python-raw-http-signal", preserve_malformed_files, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files=preserve_malformed_baseline),
         Case("context-analysis-multiple-api-instances", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\npublic_api = NinjaExtraAPI()\ninternal_api = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 1, "사용 오류"),
         Case("context-analysis-api-controller-overlap", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "config/api.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 1, "사용 오류", allowed_arg_issues=frozenset({"overlap:--api-module/--controller-module"})),
         Case("context-analysis-selected-api-syntax", with_files(("config/api.py", "api = (\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 1, "사용 오류"),
         Case("context-analysis-selected-controller-read", CONTEXT_FILES, "check-context-isolation.py", context_args("--controller-module", "application/lesson/presentation_layer/missing.py"), 1, "사용 오류"),
         Case("context-analysis-selected-root-escape", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "../outside.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 1, "사용 오류", allowed_arg_issues=frozenset({"root-escape:--api-module"})),
         Case("context-analysis-incomplete-code-source-args", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
+        Case("context-analysis-missing-scope-bc-production-tree", CONTEXT_FILES, "check-context-isolation.py", context_args("--scope-bc", "catalog"), 1, "사용 오류"),
         Case("context-clean-auto-profile-legacy-rules", CONTEXT_FILES, "check-context-isolation.py", AUTO_PROFILE_ARGS, 0, ""),
         Case("context-clean-legacy-positional-help", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR,), 0, ""),
         Case("context-fp-tests-migrations-cache-venv", {**CONTEXT_FILES, "application/lesson/application_layer/tests/test_leak.py": "from ninja import Status\n", "application/lesson/application_layer/migrations/0001_leak.py": "from ninja import Status\n", "application/lesson/application_layer/.cache/leak.py": "from ninja import Status\n", "application/lesson/application_layer/.venv/leak.py": "from ninja import Status\n"}, "check-context-isolation.py", context_args(), 0, ""),
