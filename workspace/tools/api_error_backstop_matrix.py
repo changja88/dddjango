@@ -987,6 +987,241 @@ router.add_exception_handler(LessonMissing, registered_handler)
         "return Status(error.status, error)",
         "return Status(404, error)",
     )
+    match_status_capture = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "    try:\n",
+        "    match lesson_id:\n"
+        "        case Status if enabled:\n"
+        "            pass\n"
+        "    try:\n",
+    )
+    match_error_out_capture = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "    try:\n",
+        "    match values:\n"
+        "        case [*LessonNotFoundError] if enabled:\n"
+        "            pass\n"
+        "    try:\n",
+    )
+    match_exception_capture = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "    try:\n",
+        "    match values:\n"
+        "        case {'value': captured, **LessonMissing} if enabled:\n"
+        "            pass\n"
+        "    try:\n",
+    )
+    match_unrelated_capture = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "    try:\n",
+        "    match values:\n"
+        "        case {'value': captured, **rest} if enabled:\n"
+        "            pass\n"
+        "    try:\n",
+    )
+    class_body_classvar_common = DYNAMIC_COMMON_ERROR_OUT.replace(
+        "class ErrorOut(Schema):\n",
+        "class ErrorOut(Schema):\n"
+        "    from typing import ClassVar as Metadata\n"
+        "    registry: Metadata[dict] = {}\n",
+    )
+    module_classvar_common = DYNAMIC_COMMON_ERROR_OUT.replace(
+        "from ninja import Schema",
+        "from ninja import Schema\nfrom typing import ClassVar as Metadata",
+    ).replace(
+        "class ErrorOut(Schema):\n",
+        "class ErrorOut(Schema):\n    registry: Metadata[dict] = {}\n",
+    )
+    direct_base_passes_classvar = direct_base.replace(
+        "trace_id='lesson-missing')",
+        "trace_id='lesson-missing', registry={})",
+    )
+    function_handler_call = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+def install_handlers():
+    router.add_exception_handler(LessonMissing, registered_handler)
+"""
+    nested_handler_decorator = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+def install_handlers():
+    @router.exception_handler(LessonMissing)
+    def registered_handler(request, exc):
+        return None
+    return registered_handler
+"""
+    conditional_handler_call = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+if handlers_enabled:
+    router.add_exception_handler(LessonMissing, registered_handler)
+"""
+    class_method_handler_call = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+class Installer:
+    def install(self):
+        router.add_exception_handler(LessonMissing, registered_handler)
+"""
+    arbitrary_handler_receiver = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+
+class Registry:
+    def add_exception_handler(self, *args):
+        return None
+
+
+registry = Registry()
+
+
+def install_handlers():
+    registry.add_exception_handler(LessonMissing, registered_handler)
+"""
+    builtin_isinstance_result = """from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+router = Router()
+
+
+@router.get('/{lesson_id}', response={200: dict, 404: LessonNotFoundError})
+def get_lesson_controller(request, lesson_id: int):
+    result = get_lesson(lesson_id)
+    if isinstance(result, LessonMissing):
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    return result
+"""
+    shadowed_isinstance_result = builtin_isinstance_result.replace(
+        "    result = get_lesson(lesson_id)",
+        "    isinstance = custom_predicate\n    result = get_lesson(lesson_id)",
+    )
+    shadowed_isinstance_helper = mapping_helper.replace(
+        "def convert(value):\n    if isinstance(value, LessonMissing):",
+        "def convert(value):\n"
+        "    isinstance = custom_predicate\n"
+        "    if isinstance(value, LessonMissing):",
+    )
+    forwarded_exception_container = forwarded_exception.replace(
+        "return forward_error(exc)",
+        "return forward_error({'caught': exc})",
+    )
+    nested_lambda_exception_reference = """from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.presentation_layer.schema.error_out import LessonErrorCode, LessonErrorOut
+
+router = Router()
+
+
+@router.get('/{lesson_id}', response={200: dict, 404: LessonErrorOut})
+def get_lesson_controller(request, lesson_id: int):
+    try:
+        lesson = get_lesson(lesson_id)
+    except LessonMissing as exc:
+        error = LessonErrorOut(
+            code=LessonErrorCode.NOT_FOUND,
+            title='missing',
+            status=404,
+            detail=(lambda: exc),
+        )
+        return Status(error.status, error)
+    return lesson
+"""
+    temporal_serializer_helper = """from django.http import JsonResponse
+from .schema.error_out import LessonErrorCode, LessonErrorOut
+
+
+def emit(value):
+    response = JsonResponse(value.model_dump(), status=200)
+    value = LessonErrorOut(
+        code=LessonErrorCode.NOT_FOUND,
+        title='missing',
+        status=404,
+        detail='missing',
+    )
+    return response
+"""
+    temporal_serializer_controller = """from ninja import Router, Status
+from application.lesson.application_layer.use_cases import LessonMissing, get_lesson
+from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+from application.lesson.presentation_layer.transport import emit
+
+router = Router()
+
+
+@router.get('/{lesson_id}', response={404: LessonNotFoundError})
+def get_lesson_controller(request, lesson_id: int):
+    value = get_lesson(lesson_id)
+    emit(value)
+    try:
+        lesson = get_lesson(lesson_id)
+    except LessonMissing:
+        value = LessonNotFoundError()
+        return Status(value.status, value)
+    return lesson
+"""
+    selected_nested_helper_controller = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "from ninja import Router, Status",
+        "from ninja import Router, Status\nfrom .assembler import assemble",
+    )
+    nested_prepared_factory = """from .schema.error_out import LessonNotFoundError
+
+
+def assemble():
+    def build():
+        return LessonNotFoundError()
+    return build()
+"""
+    nested_factory_control = """def assemble():
+    def build():
+        return {'ok': True}
+    return build()
+"""
+    raw_dict_error_status = """from ninja import Router, Status
+
+router = Router()
+
+
+@router.get('/raw', response={200: dict})
+def raw_error(request):
+    return Status(404, {'code': 'lesson_not_found'})
+"""
+    raw_name_error_status = """from ninja import Router, Status
+
+router = Router()
+
+
+@router.get('/raw', response={200: dict})
+def raw_error(request):
+    payload = {'code': 'lesson_unavailable'}
+    return Status(503, payload)
+"""
+    success_status = """from ninja import Router, Status
+
+router = Router()
+
+
+@router.get('/raw', response={200: dict})
+def raw_success(request):
+    return Status(200, {'ok': True})
+"""
     return [
         Case("controller-clean-sync-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_sync_annassign), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-async-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_async), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
@@ -1031,6 +1266,42 @@ router.add_exception_handler(LessonMissing, registered_handler)
         Case("controller-analysis-duplicate-controller-selector", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args("--controller-module", "application/lesson/presentation_layer/controller.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"duplicate:--controller-module"})),
         Case("controller-analysis-auto-profile", CONTROLLER_FILES, "check-api-error-controller-contract.py", AUTO_PROFILE_ARGS, 0, ""),
         Case("controller-analysis-missing-args", CONTROLLER_FILES, "check-api-error-controller-contract.py", (TARGET_DIR, "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--error-profile", "missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
+        Case("controller-analysis-matchas-status-capture", with_files(("application/lesson/presentation_layer/controller.py", match_status_capture), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-analysis-matchstar-errorout-capture", with_files(("application/lesson/presentation_layer/controller.py", match_error_out_capture), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-analysis-matchmapping-exception-capture", with_files(("application/lesson/presentation_layer/controller.py", match_exception_capture), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case(
+            "controller-clean-match-unrelated-capture",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/controller.py",
+                    match_unrelated_capture,
+                ),
+                base=CONTROLLER_FILES,
+            ),
+            "check-api-error-controller-contract.py",
+            controller_args(),
+            0 if sys.version_info >= (3, 10) else 1,
+            "" if sys.version_info >= (3, 10) else "사용 오류",
+        ),
+        Case("controller-clean-class-body-classvar-alias-five-fields", with_files(("common/ninja/response/error_out.py", class_body_classvar_common), ("application/lesson/presentation_layer/schema/error_out.py", DYNAMIC_LESSON_ERROR_OUT), ("application/lesson/presentation_layer/controller.py", direct_base), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-class-body-classvar-cannot-be-passed", with_files(("common/ninja/response/error_out.py", class_body_classvar_common), ("application/lesson/presentation_layer/schema/error_out.py", DYNAMIC_LESSON_ERROR_OUT), ("application/lesson/presentation_layer/controller.py", direct_base_passes_classvar), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-clean-module-classvar-alias-control", with_files(("common/ninja/response/error_out.py", module_classvar_common), ("application/lesson/presentation_layer/schema/error_out.py", DYNAMIC_LESSON_ERROR_OUT), ("application/lesson/presentation_layer/controller.py", direct_base), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-function-add-exception-handler-call", with_files(("application/lesson/presentation_layer/controller.py", function_handler_call), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-nested-exception-handler-decorator", with_files(("application/lesson/presentation_layer/controller.py", nested_handler_decorator), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-module-if-add-exception-handler-call", with_files(("application/lesson/presentation_layer/controller.py", conditional_handler_call), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-class-method-add-exception-handler-call", with_files(("application/lesson/presentation_layer/controller.py", class_method_handler_call), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-clean-arbitrary-nested-handler-receiver", with_files(("application/lesson/presentation_layer/controller.py", arbitrary_handler_receiver), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-analysis-shadowed-isinstance-result-predicate", with_files(("application/lesson/presentation_layer/controller.py", shadowed_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-clean-builtin-isinstance-result-predicate", with_files(("application/lesson/presentation_layer/controller.py", builtin_isinstance_result), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-analysis-shadowed-isinstance-helper-predicate", with_files(("application/lesson/presentation_layer/controller.py", mapping_controller), ("application/lesson/presentation_layer/bridge.py", shadowed_isinstance_helper), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-caught-exception-forwarded-in-container", with_files(("application/lesson/presentation_layer/controller.py", forwarded_exception_container), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(exc): return exc\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "caught exception forwarding forbidden"),
+        Case("controller-clean-caught-exception-nested-lambda-scope", with_files(("application/lesson/presentation_layer/controller.py", nested_lambda_exception_reference), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-serializer-before-later-errorout-assignment", with_files(("application/lesson/presentation_layer/controller.py", temporal_serializer_controller), ("application/lesson/presentation_layer/transport.py", temporal_serializer_helper), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-one-hop-nested-prepared-factory", with_files(("application/lesson/presentation_layer/controller.py", selected_nested_helper_controller), ("application/lesson/presentation_layer/assembler.py", nested_prepared_factory), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "prepared ErrorOut factory/helper forbidden"),
+        Case("controller-clean-one-hop-nested-helper-without-errorout", with_files(("application/lesson/presentation_layer/controller.py", selected_nested_helper_controller), ("application/lesson/presentation_layer/assembler.py", nested_factory_control), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-direct-raw-dict-error-status-outside-arm", with_files(("application/lesson/presentation_layer/controller.py", raw_dict_error_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-direct-raw-name-error-status-outside-arm", with_files(("application/lesson/presentation_layer/controller.py", raw_name_error_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-clean-direct-success-status", with_files(("application/lesson/presentation_layer/controller.py", success_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         # Reviewer gaps deliberately remain outside the deterministic oracle:
         # application collaborator identity, broad exception hidden by re-export,
         # and two-hop/off-selection helpers.

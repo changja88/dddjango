@@ -62,6 +62,9 @@ RAW_RESPONSE_TYPES = {
 }
 TRY_STAR = getattr(ast, "TryStar", None)
 MATCH = getattr(ast, "Match", None)
+MATCH_AS = getattr(ast, "MatchAs", None)
+MATCH_STAR = getattr(ast, "MatchStar", None)
+MATCH_MAPPING = getattr(ast, "MatchMapping", None)
 
 
 class UsageError(Exception):
@@ -145,6 +148,14 @@ class Finding:
 
     def render(self) -> str:
         return f"  - {self.path}:{self.lineno}  {self.category}: {self.shown}"
+
+
+@dataclass
+class HelperFacts:
+    has_prepared: bool = False
+    has_error_constructor: bool = False
+    has_exception_test: bool = False
+    serializer_node: ast.AST | None = None
 
 
 def _argument_parser() -> _UsageParser:
@@ -653,13 +664,23 @@ def _classvar(annotation: ast.AST, bindings: dict[str, Binding]) -> bool:
     )
 
 
-def _public_fields(node: ast.ClassDef, bindings: dict[str, Binding]) -> set[str]:
+def _public_fields(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    bindings: dict[str, Binding],
+) -> set[str]:
     fields: set[str] = set()
+    before = _class_body_bindings(parsed, node, bindings)
     for statement in node.body:
         if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
             continue
         name = statement.target.id
-        if name.startswith("_") or name == "model_config" or _classvar(statement.annotation, bindings):
+        statement_bindings = before.get(id(statement), bindings)
+        if (
+            name.startswith("_")
+            or name == "model_config"
+            or _classvar(statement.annotation, statement_bindings)
+        ):
             continue
         fields.add(name)
     return fields
@@ -683,7 +704,9 @@ def _error_language(
             analysis.append(f"{COMMON_ERROR_PATH}: common ErrorOut provenance 분석 불능")
         else:
             common_fields = _public_fields(
-                classes[0], timeline.before.get(id(classes[0]), {})
+                common,
+                classes[0],
+                timeline.before.get(id(classes[0]), {}),
             )
             if not common_fields:
                 analysis.append(f"{COMMON_ERROR_PATH}: common public field set 분석 불능")
@@ -779,6 +802,20 @@ def _function_local_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[s
             names.add(candidate.name)
         if isinstance(candidate, ast.NamedExpr):
             names.update(_target_names(candidate.target))
+        if MATCH_AS is not None and isinstance(candidate, MATCH_AS) and candidate.name:
+            names.add(candidate.name)
+        if (
+            MATCH_STAR is not None
+            and isinstance(candidate, MATCH_STAR)
+            and candidate.name
+        ):
+            names.add(candidate.name)
+        if (
+            MATCH_MAPPING is not None
+            and isinstance(candidate, MATCH_MAPPING)
+            and candidate.rest
+        ):
+            names.add(candidate.rest)
         if isinstance(candidate, ast.stmt):
             names.update(_statement_bound_names(candidate))
     return names - globals_ - nonlocals
@@ -1297,11 +1334,26 @@ def _exception_origin_valid(operation: Operation, node: ast.AST) -> bool | None:
 def _caught_exception_forwarded(handler: ast.ExceptHandler) -> bool:
     if not handler.name:
         return False
+
+    def contains_caught_name(root: ast.AST) -> bool:
+        stack = [root]
+        while stack:
+            candidate = stack.pop()
+            if isinstance(candidate, ast.Name) and candidate.id == handler.name:
+                return True
+            if isinstance(
+                candidate,
+                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
+            ):
+                continue
+            stack.extend(ast.iter_child_nodes(candidate))
+        return False
+
     for node in _iter_lexical_nodes(handler.body):
         if not isinstance(node, ast.Call):
             continue
         values = [*node.args, *(keyword.value for keyword in node.keywords)]
-        if any(isinstance(value, ast.Name) and value.id == handler.name for value in values):
+        if any(contains_caught_name(value) for value in values):
             return True
     return False
 
@@ -1416,6 +1468,27 @@ def _result_test_name(test: ast.AST) -> str | None:
     return None
 
 
+def _builtin_isinstance_call(
+    function: Operation,
+    node: ast.AST,
+    analysis: list[str],
+) -> bool:
+    if not (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "isinstance"
+    ):
+        return False
+    binding = function.body_bindings.get("isinstance")
+    if "isinstance" in function.local_names or binding is not None:
+        analysis.append(
+            f"{function.parsed.relative_path}:{node.lineno} "
+            "isinstance builtin provenance 분석 불능"
+        )
+        return False
+    return True
+
+
 def _supported_result_test(
     operation: Operation,
     test: ast.AST,
@@ -1435,14 +1508,14 @@ def _supported_result_test(
         return True
     if (
         isinstance(test, ast.Call)
-        and isinstance(test.func, ast.Name)
-        and test.func.id == "isinstance"
         and len(test.args) == 2
         and not test.keywords
         and isinstance(test.args[0], ast.Name)
         and test.args[0].id == result_name
         and isinstance(test.args[1], ast.Name)
     ):
+        if not _builtin_isinstance_call(operation, test, analysis):
+            return False
         validity = _exception_origin_valid(operation, test.args[1])
         if validity is None:
             analysis.append(
@@ -1520,6 +1593,21 @@ def _status_is_error_mapping(
     ) is not None
 
 
+def _literal_error_status_call(
+    operation: Operation,
+    call: ast.Call,
+    analysis: list[str],
+) -> bool:
+    if not _status_call(operation, call, analysis) or len(call.args) < 2:
+        return False
+    status = call.args[0]
+    return (
+        isinstance(status, ast.Constant)
+        and isinstance(status.value, int)
+        and 400 <= status.value <= 599
+    )
+
+
 def _branch_has_error_behavior(
     operation: Operation,
     statements: list[ast.stmt],
@@ -1536,6 +1624,8 @@ def _branch_has_error_behavior(
             if _status_is_error_mapping(
                 operation, node, error_assignments, language, analysis
             ):
+                return True
+            if _literal_error_status_call(operation, node, analysis):
                 return True
     return False
 
@@ -1694,12 +1784,10 @@ def _analyze_results(
                 node,
                 "ErrorOut construction is not owned by an approved catch/Result arm",
             )
-        if (
-            _status_is_error_mapping(
-                operation, node, error_assignments, language, analysis
-            )
-            and id(node) not in allowed_status_calls
-        ):
+        error_status = _status_is_error_mapping(
+            operation, node, error_assignments, language, analysis
+        ) or _literal_error_status_call(operation, node, analysis)
+        if error_status and id(node) not in allowed_status_calls:
             _append_finding(
                 findings,
                 seen,
@@ -1815,11 +1903,10 @@ def _model_dump_receivers(node: ast.AST) -> set[str]:
 def _exception_identification(
     function: Operation,
     node: ast.AST,
+    analysis: list[str],
 ) -> bool:
     return (
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "isinstance"
+        _builtin_isinstance_call(function, node, analysis)
         and len(node.args) == 2
         and not node.keywords
         and _exception_origin_valid(function, node.args[1]) is True
@@ -1880,30 +1967,26 @@ def _one_step_error_parameters(
         parts = path.parts
         owner = parts[1] if len(parts) > 2 and parts[0] == "application" else ""
         for caller, _ in _module_functions(source, owner):
-            evidence_names = _annotated_error_parameters(caller, language) | set(
-                _known_error_assignments(caller, language, analysis)
-            )
-            for call in _iter_lexical_nodes(caller.node.body):
+            def inspect_call(call: ast.Call, error_names: set[str]) -> None:
                 if (
-                    not isinstance(call, ast.Call)
-                    or not isinstance(call.func, ast.Name)
+                    not isinstance(call.func, ast.Name)
                     or call.func.id in caller.local_names
                     or any(isinstance(argument, ast.Starred) for argument in call.args)
                 ):
-                    continue
+                    return
                 binding = caller.body_bindings.get(call.func.id)
                 if binding is None or binding.kind not in {
                     "symbol_import",
                     "local_definition",
                 }:
-                    continue
+                    return
                 target = targets.get(binding.origin)
                 if target is None:
-                    continue
+                    return
                 target_path, target_node, positional, keywords = target
 
                 def error_value(value: ast.AST) -> bool:
-                    if isinstance(value, ast.Name) and value.id in evidence_names:
+                    if isinstance(value, ast.Name) and value.id in error_names:
                         return True
                     return isinstance(value, ast.Call) and _known_constructor(
                         caller, value, language, analysis
@@ -1920,6 +2003,116 @@ def _one_step_error_parameters(
                         and error_value(keyword.value)
                     ):
                         proven.setdefault(target_key, set()).add(keyword.arg)
+
+            def inspect_expression(root: ast.AST, error_names: set[str]) -> None:
+                stack = [root]
+                while stack:
+                    node = stack.pop()
+                    if isinstance(
+                        node,
+                        (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
+                    ):
+                        continue
+                    if isinstance(node, ast.Call):
+                        inspect_call(node, error_names)
+                    stack.extend(ast.iter_child_nodes(node))
+
+            def merge_error_names(states: list[set[str]]) -> set[str]:
+                if not states:
+                    return set()
+                merged = set(states[0])
+                for state in states[1:]:
+                    merged.intersection_update(state)
+                return merged
+
+            def scan_simple(statement: ast.stmt, incoming: set[str]) -> set[str]:
+                error_names = set(incoming)
+                inspect_expression(statement, error_names)
+                error_names.difference_update(_statement_bound_names(statement))
+                target = _simple_assignment_target(statement)
+                value = _statement_value(statement)
+                if target is not None and isinstance(value, ast.Call):
+                    if _known_constructor(caller, value, language, analysis) is not None:
+                        error_names.add(target)
+                return error_names
+
+            def scan_suite(
+                statements: list[ast.stmt], incoming: set[str]
+            ) -> set[str]:
+                error_names = set(incoming)
+                for statement in statements:
+                    if isinstance(
+                        statement,
+                        (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+                    ):
+                        error_names.difference_update(
+                            _statement_bound_names(statement)
+                        )
+                        continue
+                    if isinstance(statement, ast.If):
+                        inspect_expression(statement.test, error_names)
+                        error_names = merge_error_names(
+                            [
+                                scan_suite(statement.body, error_names),
+                                scan_suite(statement.orelse, error_names),
+                            ]
+                        )
+                        continue
+                    if isinstance(statement, ast.While):
+                        inspect_expression(statement.test, error_names)
+                        body_out = scan_suite(statement.body, error_names)
+                        error_names = merge_error_names(
+                            [
+                                error_names,
+                                scan_suite(statement.orelse, error_names),
+                                scan_suite(statement.orelse, body_out),
+                            ]
+                        )
+                        continue
+                    if isinstance(statement, (ast.For, ast.AsyncFor)):
+                        inspect_expression(statement.iter, error_names)
+                        body_in = set(error_names)
+                        body_in.difference_update(_target_names(statement.target))
+                        body_out = scan_suite(statement.body, body_in)
+                        error_names = merge_error_names(
+                            [
+                                scan_suite(statement.orelse, error_names),
+                                scan_suite(statement.orelse, body_out),
+                            ]
+                        )
+                        continue
+                    if isinstance(statement, (ast.With, ast.AsyncWith)):
+                        body_in = set(error_names)
+                        for item in statement.items:
+                            inspect_expression(item.context_expr, body_in)
+                            if item.optional_vars is not None:
+                                body_in.difference_update(
+                                    _target_names(item.optional_vars)
+                                )
+                        error_names = scan_suite(statement.body, body_in)
+                        continue
+                    if isinstance(statement, ast.Try):
+                        normal = scan_suite(statement.body, error_names)
+                        outcomes = [scan_suite(statement.orelse, normal)]
+                        for handler in statement.handlers:
+                            handler_in = set(error_names)
+                            if handler.type is not None:
+                                inspect_expression(handler.type, handler_in)
+                            if handler.name:
+                                handler_in.discard(handler.name)
+                            outcomes.append(scan_suite(handler.body, handler_in))
+                        error_names = scan_suite(
+                            statement.finalbody,
+                            merge_error_names(outcomes),
+                        )
+                        continue
+                    error_names = scan_simple(statement, error_names)
+                return error_names
+
+            scan_suite(
+                caller.node.body,
+                _annotated_error_parameters(caller, language),
+            )
     return proven
 
 
@@ -1942,57 +2135,258 @@ def _handler_registration_findings(
     seen: set[tuple[Path, int, str]],
 ) -> None:
     timeline = _binding_timeline(parsed)
-    for statement in parsed.tree.body:
-        bindings = timeline.before.get(id(statement), {})
-        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            for decorator in statement.decorator_list:
-                if (
-                    isinstance(decorator, ast.Call)
-                    and isinstance(decorator.func, ast.Attribute)
-                    and decorator.func.attr == "exception_handler"
-                    and _handler_receiver(decorator.func.value, bindings)
-                ):
-                    _append_finding(
-                        findings,
-                        seen,
-                        parsed,
-                        decorator,
-                        "custom Ninja exception_handler forbidden",
-                    )
-        elif isinstance(statement, ast.ClassDef):
-            class_before = _class_body_bindings(parsed, statement, bindings)
-            for member in statement.body:
-                if not isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    continue
-                member_bindings = class_before.get(id(member), bindings)
-                for decorator in member.decorator_list:
-                    if (
-                        isinstance(decorator, ast.Call)
-                        and isinstance(decorator.func, ast.Attribute)
-                        and decorator.func.attr == "exception_handler"
-                        and _handler_receiver(decorator.func.value, member_bindings)
-                    ):
-                        _append_finding(
-                            findings,
-                            seen,
-                            parsed,
-                            decorator,
-                            "custom Ninja exception_handler forbidden",
-                        )
-        if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call):
-            call = statement.value
-            if (
-                isinstance(call.func, ast.Attribute)
-                and call.func.attr == "add_exception_handler"
-                and _handler_receiver(call.func.value, bindings)
+
+    def inspect_call(call: ast.Call, bindings: dict[str, Binding]) -> None:
+        if not isinstance(call.func, ast.Attribute) or not _handler_receiver(
+            call.func.value, bindings
+        ):
+            return
+        if call.func.attr == "exception_handler":
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                call,
+                "custom Ninja exception_handler forbidden",
+            )
+        elif call.func.attr == "add_exception_handler":
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                call,
+                "custom Ninja add_exception_handler forbidden",
+            )
+
+    def inspect_expression(root: ast.AST, bindings: dict[str, Binding]) -> None:
+        stack = [root]
+        while stack:
+            candidate = stack.pop()
+            if isinstance(candidate, ast.Call):
+                inspect_call(candidate, bindings)
+            if candidate is not root and isinstance(
+                candidate,
+                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
             ):
-                _append_finding(
-                    findings,
-                    seen,
-                    parsed,
-                    call,
-                    "custom Ninja add_exception_handler forbidden",
+                continue
+            stack.extend(ast.iter_child_nodes(candidate))
+
+    def advance(statement: ast.stmt, bindings: dict[str, Binding]) -> None:
+        imported = _import_bindings(parsed.relative_path, statement)
+        if imported:
+            bindings.update(imported)
+            return
+        assigned = (
+            _assignment_binding(statement, bindings)
+            if isinstance(statement, (ast.Assign, ast.AnnAssign))
+            else None
+        )
+        names = _statement_bound_names(statement)
+        for name in names:
+            bindings.pop(name, None)
+        if assigned is not None:
+            for name in names:
+                bindings[name] = assigned
+
+    def nested_bound_names(statement: ast.stmt) -> set[str]:
+        names: set[str] = set()
+        for candidate in _iter_lexical_nodes([statement]):
+            if isinstance(candidate, ast.stmt):
+                names.update(_statement_bound_names(candidate))
+        return names
+
+    def scan_suite(
+        statements: list[ast.stmt],
+        incoming: dict[str, Binding],
+        *,
+        scope_kind: str,
+    ) -> None:
+        bindings = dict(incoming)
+        for statement in statements:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                for decorator in statement.decorator_list:
+                    inspect_expression(decorator, bindings)
+                body_bindings = dict(timeline.final)
+                if scope_kind == "function":
+                    body_bindings.update(bindings)
+                for name in _function_local_names(statement):
+                    body_bindings.pop(name, None)
+                scan_suite(statement.body, body_bindings, scope_kind="function")
+                advance(statement, bindings)
+                continue
+            if isinstance(statement, ast.ClassDef):
+                for decorator in statement.decorator_list:
+                    inspect_expression(decorator, bindings)
+                scan_suite(statement.body, bindings, scope_kind="class")
+                advance(statement, bindings)
+                continue
+            if isinstance(statement, (ast.If, ast.While)):
+                inspect_expression(statement.test, bindings)
+                scan_suite(statement.body, bindings, scope_kind=scope_kind)
+                scan_suite(statement.orelse, bindings, scope_kind=scope_kind)
+            elif isinstance(statement, (ast.For, ast.AsyncFor)):
+                inspect_expression(statement.iter, bindings)
+                branch = dict(bindings)
+                for name in _target_names(statement.target):
+                    branch.pop(name, None)
+                scan_suite(statement.body, branch, scope_kind=scope_kind)
+                scan_suite(statement.orelse, bindings, scope_kind=scope_kind)
+            elif isinstance(statement, (ast.With, ast.AsyncWith)):
+                branch = dict(bindings)
+                for item in statement.items:
+                    inspect_expression(item.context_expr, branch)
+                    if item.optional_vars is not None:
+                        for name in _target_names(item.optional_vars):
+                            branch.pop(name, None)
+                scan_suite(statement.body, branch, scope_kind=scope_kind)
+            elif isinstance(statement, ast.Try):
+                scan_suite(statement.body, bindings, scope_kind=scope_kind)
+                scan_suite(statement.orelse, bindings, scope_kind=scope_kind)
+                scan_suite(statement.finalbody, bindings, scope_kind=scope_kind)
+                for handler in statement.handlers:
+                    branch = dict(bindings)
+                    if handler.name:
+                        branch.pop(handler.name, None)
+                    scan_suite(handler.body, branch, scope_kind=scope_kind)
+            else:
+                inspect_expression(statement, bindings)
+                advance(statement, bindings)
+                continue
+            for name in nested_bound_names(statement):
+                bindings.pop(name, None)
+
+    scan_suite(parsed.tree.body, {}, scope_kind="module")
+
+
+def _helper_function_facts(
+    function: Operation,
+    language: ErrorLanguage,
+    initial_error_names: set[str],
+    analysis: list[str],
+) -> HelperFacts:
+    facts = HelperFacts()
+
+    def inspect_expression(root: ast.AST, error_names: set[str]) -> None:
+        stack = [root]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                continue
+            if isinstance(node, ast.Call):
+                constructor = _known_constructor(function, node, language, analysis)
+                if constructor is not None:
+                    facts.has_error_constructor = True
+                    if constructor[0] == "prepared":
+                        facts.has_prepared = True
+                if _exception_identification(function, node, analysis):
+                    facts.has_exception_test = True
+                if _raw_response_call(function, node) and (
+                    _model_dump_receivers(node) & error_names
+                ):
+                    facts.serializer_node = node
+            stack.extend(ast.iter_child_nodes(node))
+
+    def merge_error_names(states: list[set[str]]) -> set[str]:
+        if not states:
+            return set()
+        merged = set(states[0])
+        for state in states[1:]:
+            merged.intersection_update(state)
+        return merged
+
+    def scan_simple(statement: ast.stmt, incoming: set[str]) -> set[str]:
+        error_names = set(incoming)
+        value = _statement_value(statement)
+        if value is not None:
+            inspect_expression(value, error_names)
+        elif not isinstance(
+            statement,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
+        ):
+            inspect_expression(statement, error_names)
+
+        bound = _statement_bound_names(statement)
+        error_names.difference_update(bound)
+        target = _simple_assignment_target(statement)
+        if target is not None and isinstance(value, ast.Call):
+            if _known_constructor(function, value, language, analysis) is not None:
+                error_names.add(target)
+        return error_names
+
+    def scan_suite(statements: list[ast.stmt], incoming: set[str]) -> set[str]:
+        error_names = set(incoming)
+        for statement in statements:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                error_names.difference_update(_statement_bound_names(statement))
+                continue
+            if isinstance(statement, ast.If):
+                inspect_expression(statement.test, error_names)
+                error_names = merge_error_names(
+                    [
+                        scan_suite(statement.body, error_names),
+                        scan_suite(statement.orelse, error_names),
+                    ]
                 )
+                continue
+            if isinstance(statement, ast.While):
+                inspect_expression(statement.test, error_names)
+                body_out = scan_suite(statement.body, error_names)
+                error_names = merge_error_names(
+                    [
+                        error_names,
+                        scan_suite(statement.orelse, error_names),
+                        scan_suite(statement.orelse, body_out),
+                    ]
+                )
+                continue
+            if isinstance(statement, (ast.For, ast.AsyncFor)):
+                inspect_expression(statement.iter, error_names)
+                body_in = set(error_names)
+                body_in.difference_update(_target_names(statement.target))
+                body_out = scan_suite(statement.body, body_in)
+                error_names = merge_error_names(
+                    [
+                        scan_suite(statement.orelse, error_names),
+                        scan_suite(statement.orelse, body_out),
+                    ]
+                )
+                continue
+            if isinstance(statement, (ast.With, ast.AsyncWith)):
+                body_in = set(error_names)
+                for item in statement.items:
+                    inspect_expression(item.context_expr, body_in)
+                    if item.optional_vars is not None:
+                        body_in.difference_update(_target_names(item.optional_vars))
+                error_names = scan_suite(statement.body, body_in)
+                continue
+            if isinstance(statement, ast.Try):
+                normal = scan_suite(statement.body, error_names)
+                outcomes = [scan_suite(statement.orelse, normal)]
+                for handler in statement.handlers:
+                    handler_in = set(error_names)
+                    if handler.type is not None:
+                        inspect_expression(handler.type, handler_in)
+                    if handler.name:
+                        handler_in.discard(handler.name)
+                    outcomes.append(scan_suite(handler.body, handler_in))
+                error_names = scan_suite(
+                    statement.finalbody,
+                    merge_error_names(outcomes),
+                )
+                continue
+            error_names = scan_simple(statement, error_names)
+        return error_names
+
+    scan_suite(function.node.body, initial_error_names)
+    return facts
+
+
+def _nested_functions(
+    statements: list[ast.stmt],
+) -> Iterator[ast.FunctionDef | ast.AsyncFunctionDef]:
+    for node in _iter_lexical_nodes(statements):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            yield node
 
 
 def _helper_findings(
@@ -2006,33 +2400,21 @@ def _helper_findings(
     seen: set[tuple[Path, int, str]],
 ) -> None:
     _handler_registration_findings(parsed, findings, seen)
-    for function, _ in _module_functions(parsed, owner_bc):
-        if id(function.node) in operation_ids:
-            continue
-        annotated_errors = _annotated_error_parameters(function, language)
-        local_errors = _known_error_assignments(function, language, analysis)
-        evidence_names = (
-            annotated_errors
-            | set(local_errors)
-            | one_step_parameters.get((parsed.relative_path, id(function.node)), set())
+
+    def analyze_helper(function: Operation) -> None:
+        initial_error_names = (
+            _annotated_error_parameters(function, language)
+            | one_step_parameters.get(
+                (parsed.relative_path, id(function.node)), set()
+            )
         )
-        has_prepared = False
-        has_error_constructor = False
-        has_exception_test = False
-        serializer_node: ast.AST | None = None
-        for node in _iter_lexical_nodes(function.node.body):
-            if isinstance(node, ast.Call):
-                constructor = _known_constructor(function, node, language, analysis)
-                if constructor is not None:
-                    has_error_constructor = True
-                    if constructor[0] == "prepared":
-                        has_prepared = True
-                if _exception_identification(function, node):
-                    has_exception_test = True
-                if _raw_response_call(function, node):
-                    if _model_dump_receivers(node) & evidence_names:
-                        serializer_node = node
-        if has_prepared:
+        facts = _helper_function_facts(
+            function,
+            language,
+            set(initial_error_names),
+            analysis,
+        )
+        if facts.has_prepared:
             _append_finding(
                 findings,
                 seen,
@@ -2040,15 +2422,15 @@ def _helper_findings(
                 function.node,
                 "prepared ErrorOut factory/helper forbidden",
             )
-        if serializer_node is not None:
+        if facts.serializer_node is not None:
             _append_finding(
                 findings,
                 seen,
                 parsed,
-                serializer_node,
+                facts.serializer_node,
                 "ErrorOut raw HTTP serializer helper forbidden",
             )
-        if has_exception_test and has_error_constructor:
+        if facts.has_exception_test and facts.has_error_constructor:
             _append_finding(
                 findings,
                 seen,
@@ -2056,6 +2438,21 @@ def _helper_findings(
                 function.node,
                 "exception-to-ErrorOut mapping helper forbidden",
             )
+
+        for nested in _nested_functions(function.node.body):
+            nested_context = _function_context(
+                parsed,
+                nested,
+                owner_bc,
+                function.body_bindings,
+                function.body_bindings,
+            )
+            analyze_helper(nested_context)
+
+    for function, _ in _module_functions(parsed, owner_bc):
+        if id(function.node) in operation_ids:
+            continue
+        analyze_helper(function)
 
 
 def _analyze_operation(
