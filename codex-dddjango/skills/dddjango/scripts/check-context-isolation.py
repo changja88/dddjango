@@ -26,7 +26,8 @@
 테스트를 깨지 않는다(green). discipline-reviewer 의미 게이트 한 점에만 의존하면 LLM 이
 프로즈 규칙을 회피하는 표면이 된다 — 이 스크립트가 직접형을 결정적으로 메우고, 의미 변종
 (변수 우회·간접 재수출·상대 import(`from ..domain_layer import x`)·문자열 동적 import)은
-reviewer 몫이다(고정밀·저-recall, 거짓 양성 ≈0). 파싱 불가 파일은 fail-open(스킵)한다.
+reviewer 몫이다(고정밀·저-recall, 거짓 양성 ≈0). positional/auto/preserve의 파싱 불가 파일은
+legacy 호환을 위해 fail-open하고, code profile의 선택된 production source는 fail-closed한다.
 
 **ACL 면제(미스캘리브 차단)** — `infra_layer/acl/`(인접 경로 한정 — `repository/acl/` 류
 은닉 배치는 면제 아님) 의 미이주 ACL 이 업스트림(타 BC) 모델·예외를 import·번역하는 건
@@ -54,8 +55,9 @@ OHS 미경유(OHS 존재 시)·도메인 누수(포트 ABC 미준수)인지는 �
   직접 import 하는 건 S1 로 포착된다.
 
 레거시 API 순도 lane은 positional/auto/preserve 실행에서 기존 application_layer HTTP 직접
-신호와 touched grandfathering을 그대로 보존한다. 명시 code-profile의 filtered full-tree
-검사는 후속 slice가 소유하며, auto는 Error response G2 증거가 아니다.
+신호와 touched grandfathering을 그대로 보존한다. 명시 code profile은 Git tracked+untracked
+non-ignored production inventory에서 scope BC 전체에 S1~S3를, touched application_layer에
+기존 raw HTTP 신호를 적용한다. auto는 Error response G2 증거가 아니다.
 
 사용법: check-context-isolation.py [TARGET_DIR] [--error-profile PROFILE ...]
 종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
@@ -64,6 +66,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import os
 import re
 import subprocess
 import sys
@@ -74,6 +77,15 @@ from typing import Iterator
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 LAYER_DIR_NAMES = {"domain_layer", "application_layer", "infra_layer"}
+CODE_SKIP_DIRS = {
+    *SKIP_DIRS,
+    ".cache",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "migrations",
+    "generated",
+}
 
 # S1: 타 BC 내부 계층. domain/infra 만(루브릭 SD-7) — application_layer 는 의미 레인.
 CROSS_BC_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.(?:domain_layer|infra_layer)(?:\.|$)")
@@ -125,6 +137,20 @@ class Config:
     controller_modules: tuple[str, ...]
     scope_bcs: tuple[str, ...]
     error_bcs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CodeInventory:
+    relative_paths: tuple[Path, ...]
+    git_root: Path | None
+
+
+@dataclass(frozen=True)
+class ParsedSource:
+    relative_path: Path
+    source: str
+    tree: ast.AST
+    touched: bool
 
 
 def _argument_parser() -> _UsageParser:
@@ -281,6 +307,250 @@ def _parse_config(argv: list[str]) -> Config:
     )
 
 
+def _is_code_production_path(relative_path: Path) -> bool:
+    parts = relative_path.parts
+    return (
+        relative_path.suffix == ".py"
+        and not set(parts) & CODE_SKIP_DIRS
+        and not set(parts) & TEST_DIR_NAMES
+        and not relative_path.name.startswith("test_")
+        and not relative_path.name.endswith("_test.py")
+        and relative_path.name != "test.py"
+        and relative_path.name != "conftest.py"
+    )
+
+
+def _filesystem_code_paths(root: Path) -> tuple[Path, ...]:
+    paths: list[Path] = []
+    walk_errors: list[str] = []
+
+    def record_walk_error(exc: OSError) -> None:
+        walk_errors.append(str(exc))
+
+    for directory, names, filenames in os.walk(
+        root,
+        topdown=True,
+        followlinks=False,
+        onerror=record_walk_error,
+    ):
+        directory_path = Path(directory)
+        try:
+            directory_relative = directory_path.relative_to(root)
+        except ValueError as exc:
+            raise UsageError(f"inventory root 탈출: {directory_path}") from exc
+        names[:] = sorted(
+            name
+            for name in names
+            if not set((*directory_relative.parts, name)) & CODE_SKIP_DIRS
+            and name not in TEST_DIR_NAMES
+        )
+        for filename in sorted(filenames):
+            relative_path = directory_relative / filename
+            if _is_code_production_path(relative_path):
+                paths.append(relative_path)
+    if walk_errors:
+        raise UsageError(f"production inventory 탐색 불능: {'; '.join(sorted(walk_errors))}")
+    return tuple(sorted(paths, key=Path.as_posix))
+
+
+def _code_inventory(root: Path) -> CodeInventory:
+    try:
+        probe = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git worktree 판정 불능: {exc}") from exc
+    if probe.returncode != 0 or probe.stdout.strip() != "true":
+        return CodeInventory(_filesystem_code_paths(root), None)
+
+    try:
+        top_level = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git worktree root 분석 불능: {exc}") from exc
+    if top_level.returncode != 0:
+        detail = top_level.stderr.strip() or top_level.stdout.strip()
+        raise UsageError(f"Git worktree root 분석 불능: {detail}")
+    try:
+        git_root = Path(top_level.stdout.strip()).resolve()
+        target_prefix = root.relative_to(git_root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise UsageError(f"Git worktree root/target 관계 분석 불능: {exc}") from exc
+
+    try:
+        listed = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git production inventory 불능: {exc}") from exc
+    if listed.returncode != 0:
+        detail = os.fsdecode(listed.stderr).strip() or os.fsdecode(listed.stdout).strip()
+        raise UsageError(f"Git production inventory 불능: {detail}")
+
+    relative_paths: list[Path] = []
+    for encoded in listed.stdout.split(b"\0"):
+        if not encoded:
+            continue
+        git_relative = Path(os.fsdecode(encoded))
+        if git_relative.is_absolute() or ".." in git_relative.parts:
+            raise UsageError(f"Git inventory 경로 불능: {git_relative}")
+        try:
+            target_relative = git_relative.relative_to(target_prefix)
+        except ValueError:
+            continue
+        if _is_code_production_path(target_relative):
+            relative_paths.append(target_relative)
+    if len(relative_paths) != len(set(relative_paths)):
+        raise UsageError("Git production inventory에 중복 경로가 있음")
+    return CodeInventory(
+        tuple(sorted(relative_paths, key=Path.as_posix)),
+        git_root,
+    )
+
+
+def _code_is_touched(git_root: Path | None, file_path: Path) -> bool:
+    if git_root is None:
+        return True
+    try:
+        git_relative = file_path.relative_to(git_root)
+    except ValueError as exc:
+        raise UsageError(f"touched source가 Git root 밖임: {file_path}") from exc
+    try:
+        tracked = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "ls-files",
+                "--error-unmatch",
+                "--",
+                git_relative.as_posix(),
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"touched source 추적 불능: {git_relative} ({exc})") from exc
+    if tracked.returncode != 0:
+        return True
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(git_root), "rev-parse", "--verify", "HEAD"],
+            capture_output=True,
+            check=False,
+        )
+        if head.returncode != 0:
+            return True
+        changed = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "diff",
+                "--quiet",
+                "HEAD",
+                "--",
+                git_relative.as_posix(),
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"touched source 비교 불능: {git_relative} ({exc})") from exc
+    if changed.returncode not in {0, 1}:
+        detail = os.fsdecode(changed.stderr).strip() or os.fsdecode(changed.stdout).strip()
+        raise UsageError(f"touched source 비교 불능: {git_relative} ({detail})")
+    return changed.returncode == 1
+
+
+def _code_sources(config: Config) -> list[ParsedSource]:
+    inventory = _code_inventory(config.root)
+    inventory_paths = set(inventory.relative_paths)
+    issues: list[str] = []
+
+    selected_paths = [Path(config.api_module or "")]
+    selected_paths.extend(Path(raw) for raw in config.controller_modules)
+    for selected in selected_paths:
+        if selected not in inventory_paths:
+            issues.append(f"선택 source가 production inventory에 없음: {selected}")
+
+    scoped_paths: list[Path] = []
+    for scope_bc in config.scope_bcs:
+        bc_paths = [
+            relative
+            for relative in inventory.relative_paths
+            if len(relative.parts) >= 3
+            and relative.parts[:2] == ("application", scope_bc)
+        ]
+        if not bc_paths:
+            issues.append(f"scope BC production source 없음: application/{scope_bc}/")
+        scoped_paths.extend(bc_paths)
+    if issues:
+        raise UsageError("; ".join(sorted(set(issues))))
+
+    source_paths = sorted(set((*scoped_paths, *selected_paths)), key=Path.as_posix)
+    parsed: list[ParsedSource] = []
+    resolved_paths: dict[Path, Path] = {}
+    for relative_path in source_paths:
+        try:
+            file_path = (config.root / relative_path).resolve()
+        except (OSError, RuntimeError) as exc:
+            issues.append(f"production source resolve 불능: {relative_path} ({exc})")
+            continue
+        try:
+            file_path.relative_to(config.root)
+        except ValueError:
+            issues.append(f"production source root/symlink 탈출: {relative_path}")
+            continue
+        previous = resolved_paths.get(file_path)
+        if previous is not None:
+            issues.append(f"production source resolved path 중복: {previous}, {relative_path}")
+            continue
+        resolved_paths[file_path] = relative_path
+        try:
+            if not file_path.is_file():
+                issues.append(f"production source 없음: {relative_path}")
+                continue
+            source = file_path.read_text(encoding="utf-8")
+            tree = ast.parse(source, filename=relative_path.as_posix())
+            touched = _code_is_touched(inventory.git_root, file_path)
+        except (OSError, UnicodeError, SyntaxError) as exc:
+            issues.append(f"production source 분석 불능: {relative_path} ({exc})")
+            continue
+        except UsageError as exc:
+            issues.append(str(exc))
+            continue
+        parsed.append(
+            ParsedSource(
+                relative_path=relative_path,
+                source=source,
+                tree=tree,
+                touched=touched,
+            )
+        )
+    if issues:
+        raise UsageError("; ".join(sorted(set(issues))))
+    return parsed
+
+
 def _legacy_application_layer_files(root: Path) -> list[Path]:
     """구 checker의 application_layer raw-signal 후보를 순서까지 그대로 수집한다."""
     out: list[Path] = []
@@ -344,6 +614,37 @@ def _print_legacy_http(findings: list[str]) -> None:
         "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
         "positional/auto/preserve lane은 구 check-error-centralization의 raw signal과 "
         "grandfathering을 그대로 보존한다."
+    )
+
+
+def _code_http_findings(sources: list[ParsedSource]) -> list[str]:
+    findings: list[str] = []
+    for parsed in sources:
+        if "application_layer" not in parsed.relative_path.parts or not parsed.touched:
+            continue
+        signals = [
+            label
+            for regex, label in LEGACY_SIGNAL_CHECKS
+            if regex.search(parsed.source)
+        ]
+        if signals:
+            findings.append(
+                f"  - {parsed.relative_path}: {'; '.join(signals)}"
+            )
+    return findings
+
+
+def _print_code_http(findings: list[str]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — code-profile filtered inventory의 touched "
+        "application_layer가 HTTP 오류 응답을 직접 생성/의존함(presentation 경계 밖):"
+    )
+    for finding in findings:
+        print(finding)
+    print(
+        "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
+        "dddjango-code-json lane은 scope BC의 filtered production inventory 중 touched "
+        "application_layer에 구 raw HTTP signal을 적용한다."
     )
 
 
@@ -415,6 +716,53 @@ def _imported_paths(tree: ast.AST) -> Iterator[tuple[int, str]]:
                         yield node.lineno, f"{node.module}.{alias.name}"
 
 
+def _source_s1_s3_findings(
+    relative_path: Path,
+    source: str,
+    tree: ast.AST,
+) -> tuple[list[str], list[str], list[str]]:
+    rel_parts = relative_path.parts
+    own = _own_bc(rel_parts)
+    src_lines = source.splitlines()
+    is_contract = _is_contract_file(rel_parts)
+    is_acl = _is_acl_file(rel_parts)
+    in_layer = bool(set(rel_parts) & LAYER_DIR_NAMES)
+    s1_findings: list[str] = []
+    s2_findings: list[str] = []
+    s3_findings: list[str] = []
+    seen: set[tuple[int, str]] = set()
+    for lineno, dotted in _imported_paths(tree):
+        shown = (
+            src_lines[lineno - 1].strip()
+            if 0 < lineno <= len(src_lines)
+            else dotted
+        )
+        if is_contract:
+            if LAYER_ANY_RE.match(dotted) and (lineno, "s2") not in seen:
+                seen.add((lineno, "s2"))
+                s2_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+            continue
+        cross_bc = CROSS_BC_RE.match(dotted)
+        if (
+            cross_bc
+            and cross_bc.group(1) != own
+            and not is_acl
+            and (lineno, "s1") not in seen
+        ):
+            seen.add((lineno, "s1"))
+            s1_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+        published = PUBLISHED_RE.match(dotted)
+        if (
+            published
+            and published.group(1) == own
+            and in_layer
+            and (lineno, "s3") not in seen
+        ):
+            seen.add((lineno, "s3"))
+            s3_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+    return s1_findings, s2_findings, s3_findings
+
+
 def _is_new_or_modified(root: Path, file_path: Path) -> bool:
     """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과)."""
     if not (root / ".git").exists():
@@ -449,57 +797,65 @@ def main(argv: list[str]) -> int:
         return int(exc.code)
 
     root = config.root
-    legacy_http_findings = (
-        _legacy_http_findings(root)
-        if config.profile in {None, "auto", "preserve-established"}
-        else []
-    )
-    if not _has_application_container(root):
-        if legacy_http_findings:
-            _print_legacy_http(legacy_http_findings)
-            return 2
-        return 0  # S1~S3 표준 레이아웃 미적용. legacy HTTP lane은 위에서 먼저 실행.
-
+    legacy_http_findings: list[str] = []
+    code_http_findings: list[str] = []
     s1_findings: list[str] = []  # cross-BC 내부 결합
     s2_findings: list[str] = []  # contract 무의존 위반
     s3_findings: list[str] = []  # published 계약 관통
-    for f, rel_parts in _prod_py_files(root):
-        if not _is_new_or_modified(root, f):
-            continue
-        own = _own_bc(rel_parts)
-        try:
-            source = f.read_text(encoding="utf-8", errors="replace")
-            tree = ast.parse(source)
-        except (OSError, SyntaxError):
-            continue  # 파싱 불가 → fail-open(스킵) — green 전제라 실코드는 파싱된다.
-        src_lines = source.splitlines()
-        is_contract = _is_contract_file(rel_parts)
-        is_acl = _is_acl_file(rel_parts)
-        in_layer = bool(set(rel_parts) & LAYER_DIR_NAMES)
-        rel = f.relative_to(root)
-        seen: set[tuple[int, str]] = set()  # (lineno, slice) — 한 import 문 1발화
-        for lineno, dotted in _imported_paths(tree):
-            shown = src_lines[lineno - 1].strip() if 0 < lineno <= len(src_lines) else dotted
-            if is_contract:
-                # S2 — contract 는 어느 계층도 import 하지 않는다(자기 BC 포함).
-                if LAYER_ANY_RE.match(dotted) and (lineno, "s2") not in seen:
-                    seen.add((lineno, "s2"))
-                    s2_findings.append(f"  - {rel}:{lineno}  {shown}")
-                continue  # contract 파일은 S2 전담(중복 계상 방지).
-            m = CROSS_BC_RE.match(dotted)
-            if m and m.group(1) != own and not is_acl and (lineno, "s1") not in seen:
-                seen.add((lineno, "s1"))  # S1 — 타 BC 내부 계층(ACL 면제)
-                s1_findings.append(f"  - {rel}:{lineno}  {shown}")
-            p = PUBLISHED_RE.match(dotted)
-            if p and p.group(1) == own and in_layer and (lineno, "s3") not in seen:
-                seen.add((lineno, "s3"))  # S3 — 자기 published 역-import(관통)
-                s3_findings.append(f"  - {rel}:{lineno}  {shown}")
 
-    if not (legacy_http_findings or s1_findings or s2_findings or s3_findings):
+    if config.profile == "dddjango-code-json":
+        try:
+            code_sources = _code_sources(config)
+        except UsageError as exc:
+            print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+        code_http_findings = _code_http_findings(code_sources)
+        for parsed in code_sources:
+            found_s1, found_s2, found_s3 = _source_s1_s3_findings(
+                parsed.relative_path,
+                parsed.source,
+                parsed.tree,
+            )
+            s1_findings.extend(found_s1)
+            s2_findings.extend(found_s2)
+            s3_findings.extend(found_s3)
+    else:
+        legacy_http_findings = _legacy_http_findings(root)
+        if not _has_application_container(root):
+            if legacy_http_findings:
+                _print_legacy_http(legacy_http_findings)
+                return 2
+            return 0
+        for file_path, _ in _prod_py_files(root):
+            if not _is_new_or_modified(root, file_path):
+                continue
+            try:
+                source = file_path.read_text(encoding="utf-8", errors="replace")
+                tree = ast.parse(source)
+            except (OSError, SyntaxError):
+                continue
+            found_s1, found_s2, found_s3 = _source_s1_s3_findings(
+                file_path.relative_to(root),
+                source,
+                tree,
+            )
+            s1_findings.extend(found_s1)
+            s2_findings.extend(found_s2)
+            s3_findings.extend(found_s3)
+
+    if not (
+        legacy_http_findings
+        or code_http_findings
+        or s1_findings
+        or s2_findings
+        or s3_findings
+    ):
         return 0
 
     if legacy_http_findings:
         _print_legacy_http(legacy_http_findings)
+    if code_http_findings:
+        _print_code_http(code_http_findings)
     if s1_findings:
         print(
             "[check-context-isolation] BLOCKER — ACL 밖(도메인/응용/presentation)에서 타 BC 의 "
