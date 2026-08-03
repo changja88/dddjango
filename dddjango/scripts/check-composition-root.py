@@ -1148,6 +1148,35 @@ def _registrar_parameter_states(
     def merge(*states: str) -> str:
         return states[0] if states and len(set(states)) == 1 else "ambiguous"
 
+    def explicit_raise_states(
+        statements: list[ast.stmt], incoming: str
+    ) -> list[str]:
+        """Parameter states at explicit raises; implicit exceptions stay unknown."""
+        active = {incoming}
+        raised: list[str] = []
+        for statement in statements:
+            if not active:
+                break
+            if isinstance(statement, ast.Raise):
+                raised.extend(active)
+                active.clear()
+                continue
+            if isinstance(statement, ast.If):
+                next_active: set[str] = set()
+                for state in active:
+                    raised.extend(explicit_raise_states(statement.body, state))
+                    raised.extend(explicit_raise_states(statement.orelse, state))
+                    body_state = flow(statement.body, state)
+                    else_state = flow(statement.orelse, state)
+                    next_active.update((body_state, else_state))
+                active = next_active
+                continue
+            if parameter_name in _statement_bound_names(
+                statement, annotations_evaluated=annotations_evaluated
+            ):
+                active = {"rebound"}
+        return raised
+
     def flow(statements: list[ast.stmt], incoming: str) -> str:
         state = incoming
         for statement in statements:
@@ -1187,9 +1216,13 @@ def _registrar_parameter_states(
             if isinstance(statement, ast.Try):
                 normal = flow(statement.orelse, flow(statement.body, state))
                 outcomes = [normal]
+                raised_states = explicit_raise_states(statement.body, state)
+                handler_base = merge(*raised_states) if raised_states else state
                 for handler in statement.handlers:
                     handler_state = (
-                        "rebound" if handler.name == parameter_name else state
+                        "rebound"
+                        if handler.name == parameter_name
+                        else handler_base
                     )
                     outcomes.append(flow(handler.body, handler_state))
                 state = flow(statement.finalbody, merge(*outcomes))
