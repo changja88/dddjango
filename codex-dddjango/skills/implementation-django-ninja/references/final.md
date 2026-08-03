@@ -635,69 +635,58 @@ raw DB/SDK exception을 catch하지 않고, 컨트롤러가 방금 raise한 예�
 않는다. 서로 다른 공개 의미가 필요한 known exception은 별도 catch와 concrete로 나누고,
 같은 공개 의미로 수렴할 때만 tuple catch를 쓴다.
 
-다음은 10번 slot이 `ReserveOrderOutcome.INSUFFICIENT_STOCK`을 승인된 failed outcome으로
-정한 경우의 copyable 직접 변환이다. call 뒤 branch가 BC `ErrorOut`을 만들며 예외 path를
-흉내 내지 않는다.
+다음은 10번 slot이 `ReserveOrderInsufficientStockResult`를 승인된 failed Result로 정한
+경우의 controller-owned 직접 변환이다. application request/Result variant는 application
+layer DTO에서 import하고 command는 BC `composition_root`에서 조립한다. call 뒤 branch가 BC
+`ErrorOut`을 만들며 예외 path나 presentation helper를 흉내 내지 않는다.
 
 ```python
-from __future__ import annotations
+from ninja import Status
+from ninja_extra import api_controller, route, status
 
-from dataclasses import dataclass
-from enum import StrEnum
-from typing import Protocol
-
+from application.order.application_layer.reserve_order.dto.reserve_order_request import (
+    ReserveOrderRequest,
+)
+from application.order.application_layer.reserve_order.dto.reserve_order_result import (
+    ReserveOrderInsufficientStockResult,
+    ReserveOrderSucceededResult,
+)
+from application.order.composition_root import build_reserve_order_command
 from application.order.presentation_layer.schema.error_out import (
     OrderErrorOut,
     OrderInsufficientStockError,
 )
+from application.order.presentation_layer.schema.reserve_order_in import ReserveOrderIn
 from application.order.presentation_layer.schema.order_out import OrderOut
-from ninja import Status
 
 
-class ReserveOrderOutcome(StrEnum):
-    CREATED = "created"
-    INSUFFICIENT_STOCK = "insufficient_stock"
+@api_controller("/orders", tags=["orders"], auto_import=False)
+class OrderController:
+    @route.post(
+        "/reserve",
+        response={201: OrderOut, 409: OrderErrorOut},
+        summary="주문 예약",
+        description="재고가 부족하면 409, 가능하면 예약 주문을 만든다.",
+    )
+    def reserve_order(
+        self,
+        request,
+        payload: ReserveOrderIn,
+    ) -> Status[OrderOut | OrderErrorOut]:
+        request_value = ReserveOrderRequest(
+            order_id=payload.order_id,
+            quantity=payload.quantity,
+        )
+        command = build_reserve_order_command()
+        result = command.execute(request_value)
 
+        if isinstance(result, ReserveOrderInsufficientStockResult):
+            error = OrderInsufficientStockError()
+            return Status(error.status, error)
 
-@dataclass(frozen=True)
-class ReservedOrder:
-    id: int
-    status: str
-
-
-@dataclass(frozen=True)
-class ReserveOrderSucceeded:
-    order: ReservedOrder
-
-
-@dataclass(frozen=True)
-class ReserveOrderInsufficientStock:
-    outcome: ReserveOrderOutcome = ReserveOrderOutcome.INSUFFICIENT_STOCK
-
-
-ReserveOrderResult = ReserveOrderSucceeded | ReserveOrderInsufficientStock
-
-
-class ReserveOrderCommand(Protocol):
-    def execute(self, request: ReserveOrderRequest) -> ReserveOrderResult: ...
-
-
-@dataclass(frozen=True)
-class ReserveOrderRequest:
-    order_id: int
-
-
-def reserve_order_from_outcome(
-    command: ReserveOrderCommand,
-    request_value: ReserveOrderRequest,
-) -> OrderOut | Status[OrderErrorOut]:
-    result = command.execute(request_value)
-
-    if isinstance(result, ReserveOrderInsufficientStock):
-        error = OrderInsufficientStockError()
-        return Status(error.status, error)
-
-    return OrderOut.from_result(result.order)
+        if isinstance(result, ReserveOrderSucceededResult):
+            response = OrderOut.from_result(result.order)
+            return Status(status.HTTP_201_CREATED, response)
 ```
 
 반대로 use case가 계약상 Result/`None`을 native 성공으로 반환하면 controller가 그 값을 helper
