@@ -65,6 +65,13 @@ VALIDATOR_DECORATORS = {
     "pydantic.root_validator",
     "pydantic.validator",
 }
+FIELD_ALIAS_OPTIONS = {
+    "alias",
+    "validation_alias",
+    "serialization_alias",
+}
+MODEL_CONFIG_ALIAS_OPTIONS = {"alias_generator"}
+TRY_NODES = (ast.Try,) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
 
 
 class UsageError(Exception):
@@ -630,14 +637,57 @@ def _classvar(annotation: ast.AST, bindings: dict[str, str]) -> bool:
     return dotted in {"ClassVar", "typing.ClassVar"} or resolved == "typing.ClassVar"
 
 
-def _contains_field_factory_call(
+def _explicit_alias_option(keyword: ast.keyword) -> bool:
+    return (
+        keyword.arg is not None
+        and keyword.arg in FIELD_ALIAS_OPTIONS
+        and not (
+            isinstance(keyword.value, ast.Constant)
+            and keyword.value.value is None
+        )
+    )
+
+
+def _contains_field_alias(
     node: ast.AST, bindings: dict[str, str]
 ) -> bool:
     return any(
         isinstance(candidate, ast.Call)
         and _resolve(candidate.func, bindings) in FIELD_FACTORIES
+        and any(_explicit_alias_option(keyword) for keyword in candidate.keywords)
         for candidate in ast.walk(node)
     )
+
+
+def _model_config_has_alias(node: ast.AST) -> bool:
+    def is_alias_entry(key: ast.AST | None, value: ast.AST) -> bool:
+        return (
+            isinstance(key, ast.Constant)
+            and key.value in MODEL_CONFIG_ALIAS_OPTIONS
+            and not (isinstance(value, ast.Constant) and value.value is None)
+        )
+
+    if isinstance(node, ast.Dict):
+        return any(
+            is_alias_entry(key, value)
+            for key, value in zip(node.keys, node.values, strict=True)
+        )
+    if isinstance(node, ast.Call):
+        if any(
+            keyword.arg in MODEL_CONFIG_ALIAS_OPTIONS
+            and not (
+                isinstance(keyword.value, ast.Constant)
+                and keyword.value.value is None
+            )
+            for keyword in node.keywords
+            if keyword.arg is not None
+        ):
+            return True
+        return any(
+            isinstance(argument, ast.Dict) and _model_config_has_alias(argument)
+            for argument in node.args
+        )
+    return False
 
 
 def _append_finding(
@@ -675,7 +725,8 @@ def _base_contract(
         _append_finding(findings, seen, parsed, node, category)
         return False
     raw_tails = [(_expression_name(base) or "").rsplit(".", 1)[-1] for base in node.bases]
-    if expected_tail in raw_tails:
+    resolved_tails = [(name or "").rsplit(".", 1)[-1] for name in resolved]
+    if expected_tail in raw_tails or expected_tail in resolved_tails:
         analysis.append(
             f"{parsed.relative_path}:{node.lineno} required base provenance 분석 불능: {expected}"
         )
@@ -684,14 +735,31 @@ def _base_contract(
     return False
 
 
+def _class_body_bindings(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    initial_bindings: dict[str, str],
+) -> dict[int, dict[str, str]]:
+    bindings = dict(initial_bindings)
+    before: dict[int, dict[str, str]] = {}
+    for statement in node.body:
+        before[id(statement)] = dict(bindings)
+        _update_bindings(parsed, statement, bindings, module_scope=False)
+    return before
+
+
 def _public_annassigns(
-    node: ast.ClassDef, bindings: dict[str, str]
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    initial_bindings: dict[str, str],
 ) -> dict[str, ast.AnnAssign]:
     fields: dict[str, ast.AnnAssign] = {}
+    before = _class_body_bindings(parsed, node, initial_bindings)
     for statement in node.body:
         if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
             continue
         name = statement.target.id
+        bindings = before.get(id(statement), initial_bindings)
         if name.startswith("_") or name == "model_config" or _classvar(statement.annotation, bindings):
             continue
         fields[name] = statement
@@ -701,16 +769,22 @@ def _public_annassigns(
 def _class_member_findings(
     parsed: ParsedSource,
     node: ast.ClassDef,
-    bindings: dict[str, str],
+    initial_bindings: dict[str, str],
     allowed_fields: set[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
     field_names: set[str] = set()
+    before = _class_body_bindings(parsed, node, initial_bindings)
     for statement in node.body:
+        bindings = before.get(id(statement), initial_bindings)
         if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
             name = statement.target.id
-            if name.startswith("_") or name == "model_config" or _classvar(statement.annotation, bindings):
+            if name == "model_config":
+                if statement.value is not None and _model_config_has_alias(statement.value):
+                    _append_finding(findings, seen, parsed, statement, "model config alias")
+                continue
+            if name.startswith("_") or _classvar(statement.annotation, bindings):
                 continue
             if name in field_names:
                 _append_finding(findings, seen, parsed, statement, "duplicate public field")
@@ -718,14 +792,17 @@ def _class_member_findings(
             if name not in allowed_fields:
                 _append_finding(findings, seen, parsed, statement, "additional public field")
             if (
-                isinstance(statement.value, ast.Call)
-                and _resolve(statement.value.func, bindings) in FIELD_FACTORIES
-            ) or _contains_field_factory_call(statement.annotation, bindings):
-                _append_finding(findings, seen, parsed, statement, "field alias/default factory")
+                statement.value is not None
+                and _contains_field_alias(statement.value, bindings)
+            ) or _contains_field_alias(statement.annotation, bindings):
+                _append_finding(findings, seen, parsed, statement, "field alias")
         elif isinstance(statement, ast.Assign):
             names = {name for target in statement.targets for name in _target_names(target)}
             for name in names:
-                if not name.startswith("_") and name != "model_config":
+                if name == "model_config":
+                    if _model_config_has_alias(statement.value):
+                        _append_finding(findings, seen, parsed, statement, "model config alias")
+                elif not name.startswith("_"):
                     _append_finding(findings, seen, parsed, statement, "public class assignment/helper")
         elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
             decorated_validator = any(
@@ -740,6 +817,24 @@ def _class_member_findings(
                 _append_finding(findings, seen, parsed, statement, "validator/public helper")
         elif isinstance(statement, ast.ClassDef) and not statement.name.startswith("_"):
             _append_finding(findings, seen, parsed, statement, "public nested class/helper")
+
+
+def _assignment_value(statement: ast.stmt) -> ast.AST | None:
+    if isinstance(statement, ast.Assign):
+        return statement.value
+    if isinstance(statement, ast.AnnAssign):
+        return statement.value
+    return None
+
+
+def _is_functional_enum(
+    statement: ast.stmt, bindings: dict[str, str]
+) -> bool:
+    value = _assignment_value(statement)
+    return (
+        isinstance(value, ast.Call)
+        and _resolve(value.func, bindings) in ENUM_BASES
+    )
 
 
 def _analyze_common(
@@ -772,7 +867,7 @@ def _analyze_common(
             seen,
             "common ErrorOut must directly inherit ninja.Schema",
         )
-        fields = _public_annassigns(error_out, bindings)
+        fields = _public_annassigns(parsed, error_out, bindings)
         for name, field in fields.items():
             if field.value is None:
                 required_fields.add(name)
@@ -806,6 +901,15 @@ def _analyze_common(
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             _append_finding(findings, seen, parsed, node, "common module helper/function forbidden")
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            bindings = before.get(id(node), {})
+            if _is_functional_enum(node, bindings):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    node,
+                    "common module functional Enum forbidden",
+                )
             targets = (
                 {name for target in node.targets for name in _target_names(target)}
                 if isinstance(node, ast.Assign)
@@ -820,6 +924,51 @@ def _snake_to_pascal(name: str) -> str:
     return "".join(part.capitalize() for part in name.split("_"))
 
 
+def _enum_reserved_name(name: str) -> bool:
+    if name.startswith("__"):
+        return True
+    return len(name) > 2 and name.startswith("_") and name.endswith("_")
+
+
+def _static_enum_ignore_names(value: ast.AST | None) -> set[str] | None:
+    if isinstance(value, ast.Constant) and isinstance(value.value, str):
+        return set(value.value.replace(",", " ").split())
+    if isinstance(value, (ast.List, ast.Tuple, ast.Set)) and all(
+        isinstance(item, ast.Constant) and isinstance(item.value, str)
+        for item in value.elts
+    ):
+        return {item.value for item in value.elts}
+    return None
+
+
+def _enum_ignored_names(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    analysis: list[str],
+) -> set[str]:
+    ignored: set[str] = set()
+    for statement in node.body:
+        targets: set[str] = set()
+        if isinstance(statement, ast.Assign):
+            targets = {
+                name
+                for target in statement.targets
+                for name in _target_names(target)
+            }
+        elif isinstance(statement, ast.AnnAssign):
+            targets = _target_names(statement.target)
+        if "_ignore_" not in targets:
+            continue
+        names = _static_enum_ignore_names(_assignment_value(statement))
+        if names is None:
+            analysis.append(
+                f"{parsed.relative_path}:{statement.lineno} dynamic Enum _ignore_ 분석 불능"
+            )
+        else:
+            ignored.update(names)
+    return ignored
+
+
 def _enum_members(
     parsed: ParsedSource,
     node: ast.ClassDef,
@@ -829,6 +978,7 @@ def _enum_members(
 ) -> dict[str, str]:
     members: dict[str, str] = {}
     member_names: set[str] = set()
+    ignored_names = _enum_ignored_names(parsed, node, analysis)
     for statement in node.body:
         names: list[str] = []
         value: ast.AST | None = None
@@ -836,7 +986,7 @@ def _enum_members(
             if all(isinstance(target, ast.Name) for target in statement.targets):
                 names = [target.id for target in statement.targets]
             elif any(
-                not name.startswith("_")
+                not _enum_reserved_name(name) and name not in ignored_names
                 for target in statement.targets
                 for name in _target_names(target)
             ):
@@ -855,8 +1005,14 @@ def _enum_members(
             if not statement.name.startswith("_"):
                 _append_finding(findings, seen, parsed, statement, "Enum public helper forbidden")
             continue
-        public_names = [name for name in names if not name.startswith("_")]
-        for name in public_names:
+        enum_names = [
+            name
+            for name in names
+            if not _enum_reserved_name(name) and name not in ignored_names
+        ]
+        for name in enum_names:
+            if value is None:
+                continue
             if name in member_names:
                 _append_finding(findings, seen, parsed, statement, "duplicate Enum member")
             member_names.add(name)
@@ -910,6 +1066,17 @@ def _analyze_bc_module(
         is_str_enum = any(_resolve(base, bindings) == STR_ENUM for base in node.bases)
         if node not in enums and (node.name.endswith("ErrorCode") or is_str_enum):
             _append_finding(findings, seen, parsed, node, "second ErrorCode/StrEnum container")
+    for node in parsed.tree.body:
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            bindings = before.get(id(node), {})
+            if _is_functional_enum(node, bindings):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    node,
+                    "second ErrorCode/StrEnum container",
+                )
 
     members: dict[str, str] = {}
     if len(enums) == 1:
@@ -957,14 +1124,16 @@ def _analyze_bc_module(
             seen,
             f"{base_name} must directly inherit common ErrorOut",
         )
-        fields = _public_annassigns(base, bindings)
+        fields = _public_annassigns(parsed, base, bindings)
+        field_bindings = _class_body_bindings(parsed, base, bindings)
         if set(fields) != {"code"}:
             _append_finding(findings, seen, parsed, base, "BC ErrorOut base may expose only code")
         code_field = fields.get("code")
         if code_field is not None:
             if code_field.value is not None:
                 _append_finding(findings, seen, parsed, code_field, "BC base code must have no default")
-            if _resolve(code_field.annotation, bindings) != enum_full:
+            code_bindings = field_bindings.get(id(code_field), bindings)
+            if _resolve(code_field.annotation, code_bindings) != enum_full:
                 _append_finding(findings, seen, parsed, code_field, "BC base code type must be own ErrorCode")
         _class_member_findings(parsed, base, bindings, {"code"}, findings, seen)
 
@@ -1002,7 +1171,8 @@ def _analyze_bc_module(
         ):
             continue
         known_concrete.add(f"{module}.{node.name}")
-        fields = _public_annassigns(node, bindings)
+        fields = _public_annassigns(parsed, node, bindings)
+        field_bindings = _class_body_bindings(parsed, node, bindings)
         for field_name in set(fields) - required_fields:
             _append_finding(findings, seen, parsed, fields[field_name], "concrete adds field outside common shape")
         for required in required_fields:
@@ -1013,7 +1183,8 @@ def _analyze_bc_module(
         if code_field is not None and code_field.value is not None:
             if isinstance(code_field.value, ast.Constant) and isinstance(code_field.value.value, str):
                 _append_finding(findings, seen, parsed, code_field, "raw string ErrorOut code")
-            resolved_default = _resolve(code_field.value, bindings)
+            code_bindings = field_bindings.get(id(code_field), bindings)
+            resolved_default = _resolve(code_field.value, code_bindings)
             valid_values = {f"{enum_full}.{name}" for name in members}
             if resolved_default not in valid_values:
                 _append_finding(findings, seen, parsed, code_field, "concrete code default must use own ErrorCode member")
@@ -1033,6 +1204,121 @@ def _function_argument_names(
     return names
 
 
+def _pattern_bound_names(pattern: ast.pattern) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(pattern):
+        if isinstance(node, ast.MatchAs) and node.name is not None:
+            names.add(node.name)
+        elif isinstance(node, ast.MatchStar) and node.name is not None:
+            names.add(node.name)
+        elif isinstance(node, ast.MatchMapping) and node.rest is not None:
+            names.add(node.rest)
+    return names
+
+
+class _FunctionLocalCollector(ast.NodeVisitor):
+    def __init__(self) -> None:
+        self.bound: set[str] = set()
+        self.globals: set[str] = set()
+        self.nonlocals: set[str] = set()
+
+    def visit_Global(self, node: ast.Global) -> None:
+        self.globals.update(node.names)
+
+    def visit_Nonlocal(self, node: ast.Nonlocal) -> None:
+        self.nonlocals.update(node.names)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        self.bound.update(_bound_names(node))
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        self.bound.update(_bound_names(node))
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        for target in node.targets:
+            self.bound.update(_target_names(target))
+        self.visit(node.value)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        self.bound.update(_target_names(node.target))
+        self.visit(node.annotation)
+        if node.value is not None:
+            self.visit(node.value)
+
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        self.bound.update(_target_names(node.target))
+        self.visit(node.value)
+
+    def visit_Delete(self, node: ast.Delete) -> None:
+        for target in node.targets:
+            self.bound.update(_target_names(target))
+
+    def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
+        self.bound.update(_target_names(node.target))
+        self.visit(node.value)
+
+    def visit_For(self, node: ast.For) -> None:
+        self.bound.update(_target_names(node.target))
+        self.visit(node.iter)
+        for statement in (*node.body, *node.orelse):
+            self.visit(statement)
+
+    visit_AsyncFor = visit_For
+
+    def visit_With(self, node: ast.With) -> None:
+        for item in node.items:
+            self.visit(item.context_expr)
+            if item.optional_vars is not None:
+                self.bound.update(_target_names(item.optional_vars))
+        for statement in node.body:
+            self.visit(statement)
+
+    visit_AsyncWith = visit_With
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
+        if node.name is not None:
+            self.bound.add(node.name)
+        if node.type is not None:
+            self.visit(node.type)
+        for statement in node.body:
+            self.visit(statement)
+
+    def visit_Match(self, node: ast.Match) -> None:
+        self.visit(node.subject)
+        for case in node.cases:
+            self.bound.update(_pattern_bound_names(case.pattern))
+            if case.guard is not None:
+                self.visit(case.guard)
+            for statement in case.body:
+                self.visit(statement)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self.bound.add(node.name)
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        self.bound.add(node.name)
+
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        return
+
+    def visit_comprehension(self, node: ast.comprehension) -> None:
+        self.visit(node.iter)
+        for condition in node.ifs:
+            self.visit(condition)
+
+
+def _function_local_names(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> set[str]:
+    collector = _FunctionLocalCollector()
+    collector.bound.update(_function_argument_names(node))
+    for statement in node.body:
+        collector.visit(statement)
+    return (collector.bound - collector.globals) | collector.nonlocals
+
+
 def _statement_expression_roots(statement: ast.stmt) -> list[ast.AST]:
     if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
         return [statement.value] if statement.value is not None else []
@@ -1050,6 +1336,8 @@ def _statement_expression_roots(statement: ast.stmt) -> list[ast.AST]:
         return [statement.iter]
     if isinstance(statement, (ast.With, ast.AsyncWith)):
         return [item.context_expr for item in statement.items]
+    if isinstance(statement, ast.Match):
+        return [statement.subject]
     if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
         defaults = [*statement.args.defaults]
         defaults.extend(
@@ -1073,6 +1361,9 @@ def _statement_shadow_names(statement: ast.stmt) -> set[str]:
         for item in statement.items:
             if item.optional_vars is not None:
                 names.update(_target_names(item.optional_vars))
+    elif isinstance(statement, ast.Match):
+        for case in statement.cases:
+            names.update(_pattern_bound_names(case.pattern))
     return names
 
 
@@ -1130,6 +1421,13 @@ def _update_bindings(
         bindings[statement.name] = f"{_module_name(parsed.relative_path)}.{statement.name}"
 
 
+def _final_module_bindings(parsed: ParsedSource) -> dict[str, str]:
+    bindings: dict[str, str] = {}
+    for statement in parsed.tree.body:
+        _update_bindings(parsed, statement, bindings, module_scope=True)
+    return bindings
+
+
 def _merge_object_bindings(
     *states: dict[str, str],
 ) -> dict[str, str]:
@@ -1172,6 +1470,7 @@ def _raw_code_suite(
     seen: set[tuple[Path, int, str]],
     *,
     module_scope: bool,
+    function_globals: dict[str, str],
 ) -> dict[str, str]:
     bindings = dict(initial_bindings)
     local_objects = dict(initial_objects)
@@ -1226,8 +1525,8 @@ def _raw_code_suite(
                     )
 
         if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            child_bindings = dict(bindings)
-            for name in _function_argument_names(statement):
+            child_bindings = dict(function_globals)
+            for name in _function_local_names(statement):
                 child_bindings.pop(name, None)
             _raw_code_suite(
                 parsed,
@@ -1238,6 +1537,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
         elif isinstance(statement, ast.ClassDef):
             _raw_code_suite(
@@ -1249,6 +1549,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
         elif isinstance(statement, ast.If):
             body_objects = _raw_code_suite(
@@ -1260,6 +1561,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
             if statement.orelse:
                 else_objects = _raw_code_suite(
@@ -1271,6 +1573,7 @@ def _raw_code_suite(
                     findings,
                     seen,
                     module_scope=False,
+                    function_globals=function_globals,
                 )
             else:
                 else_objects = dict(local_objects)
@@ -1290,6 +1593,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
             loop_objects = _merge_object_bindings(child_objects, body_objects)
             if statement.orelse:
@@ -1302,6 +1606,7 @@ def _raw_code_suite(
                     findings,
                     seen,
                     module_scope=False,
+                    function_globals=function_globals,
                 )
             else:
                 else_objects = loop_objects
@@ -1328,8 +1633,40 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
-        elif isinstance(statement, ast.Try):
+        elif isinstance(statement, ast.Match):
+            path_objects = [dict(local_objects)]
+            for case in statement.cases:
+                case_bindings = dict(bindings)
+                case_objects = dict(local_objects)
+                for name in _pattern_bound_names(case.pattern):
+                    case_bindings.pop(name, None)
+                    case_objects.pop(name, None)
+                if case.guard is not None:
+                    _raw_constructor_calls(
+                        parsed,
+                        [case.guard],
+                        case_bindings,
+                        known_classes,
+                        findings,
+                        seen,
+                    )
+                path_objects.append(
+                    _raw_code_suite(
+                        parsed,
+                        case.body,
+                        case_bindings,
+                        case_objects,
+                        known_classes,
+                        findings,
+                        seen,
+                        module_scope=False,
+                        function_globals=function_globals,
+                    )
+                )
+            local_objects = _merge_object_bindings(*path_objects)
+        elif isinstance(statement, TRY_NODES):
             body_objects = _raw_code_suite(
                 parsed,
                 statement.body,
@@ -1339,6 +1676,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
             normal_objects = _raw_code_suite(
                 parsed,
@@ -1349,6 +1687,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
             path_objects = [normal_objects]
             for handler in statement.handlers:
@@ -1367,6 +1706,7 @@ def _raw_code_suite(
                         findings,
                         seen,
                         module_scope=False,
+                        function_globals=function_globals,
                     )
                 )
             local_objects = _raw_code_suite(
@@ -1378,6 +1718,7 @@ def _raw_code_suite(
                 findings,
                 seen,
                 module_scope=False,
+                function_globals=function_globals,
             )
 
         _update_bindings(
@@ -1392,6 +1733,7 @@ def _raw_code_findings(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
+    function_globals = _final_module_bindings(parsed)
     _raw_code_suite(
         parsed,
         parsed.tree.body,
@@ -1401,6 +1743,7 @@ def _raw_code_findings(
         findings,
         seen,
         module_scope=True,
+        function_globals=function_globals,
     )
 
 
