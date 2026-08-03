@@ -811,6 +811,13 @@ def main(argv: list[str]) -> int:
             return 1
         code_http_findings = _code_http_findings(code_sources)
         for parsed in code_sources:
+            relative_parts = parsed.relative_path.parts
+            if not (
+                len(relative_parts) >= 3
+                and relative_parts[0] == "application"
+                and relative_parts[1] in config.scope_bcs
+            ):
+                continue
             found_s1, found_s2, found_s3 = _source_s1_s3_findings(
                 parsed.relative_path,
                 parsed.source,
