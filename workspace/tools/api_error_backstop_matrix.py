@@ -778,7 +778,18 @@ def get_lesson(request):
 
 def controller_cases() -> list[Case]:
     """Controller shape cases; the checker is intentionally absent at this RED stage."""
-    clean_async = CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("def get_lesson_controller", "async def get_lesson_controller").replace("lesson = get_lesson(lesson_id)", "lesson = await get_lesson(lesson_id)")
+    clean_sync_annassign = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "lesson = get_lesson(lesson_id)",
+        "lesson: dict = get_lesson(lesson_id)",
+    )
+    clean_async = (
+        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace("def get_lesson_controller", "async def get_lesson_controller")
+        .replace("lesson = get_lesson(lesson_id)", "await get_lesson(lesson_id)")
+        .replace("    return lesson\n", "    return {'ok': True}\n")
+    )
     clean_tuple = (
         CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
         .replace(
@@ -795,7 +806,15 @@ def controller_cases() -> list[Case]:
     )
     clean_result_none = (
         CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace(
+            "LessonMissing, get_lesson",
+            "LessonID, LessonMissing, get_lesson",
+        )
         .replace("lesson = get_lesson(lesson_id)", "result = get_lesson(lesson_id)")
+        .replace(
+            "result = get_lesson(lesson_id)",
+            "result = get_lesson(LessonID(lesson_id))",
+        )
         .replace(
             "    return lesson\n",
             "    if result is None:\n"
@@ -804,13 +823,28 @@ def controller_cases() -> list[Case]:
             "    return result\n",
         )
     )
+    clean_result_none_use_cases = CONTROLLER_FILES[
+        "application/lesson/application_layer/use_cases.py"
+    ].replace(
+        "class LessonMissing(Exception):",
+        "class LessonID(int):\n"
+        "    pass\n\n\n"
+        "class LessonMissing(Exception):",
+    )
     empty_error_bc_files = with_files(
         ("application/lesson/presentation_layer/schema/error_out.py", "<REMOVE>"),
     )
     preserve_controller_files = {
         "legacy/api.py": "api = object()\n",
         "legacy/controller.py": """from django.http import JsonResponse
+from ninja import NinjaAPI
 
+legacy_api = NinjaAPI()
+
+
+@legacy_api.exception_handler(LookupError)
+def legacy_error_handler(request, exc):
+    return JsonResponse({"error": "legacy failure"}, status=404)
 
 def legacy_controller(request):
     return JsonResponse({"error": "legacy missing"}, status=404)
@@ -833,42 +867,171 @@ def legacy_controller(request):
     )
     direct_base = (
         CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
-        .replace("LessonNotFoundError()", "LessonErrorOut(code=LessonErrorCode.NOT_FOUND, title='missing', status=404, detail='missing')")
+        .replace(
+            "LessonNotFoundError()",
+            "LessonErrorOut(code=LessonErrorCode.NOT_FOUND, title='missing', "
+            "status=404, detail='missing', trace_id='lesson-missing')",
+        )
         .replace("404: LessonNotFoundError", "404: LessonErrorOut")
         .replace("from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError", "from application.lesson.presentation_layer.schema.error_out import LessonErrorCode, LessonErrorOut")
     )
+    direct_base_extra_field = direct_base.replace(
+        "trace_id='lesson-missing')",
+        "trace_id='lesson-missing', retryable=False)",
+    )
+    relative_alias_controller = """from ninja import Router, Status as ApiStatus
+from ..application_layer.use_cases import LessonMissing as MissingLesson, get_lesson as load_lesson
+from .schema.error_out import LessonNotFoundError as MissingLessonOut
+
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict, 404: MissingLessonOut})
+def get_lesson_controller(request, lesson_id: int):
+    try:
+        lesson = load_lesson(lesson_id)
+    except MissingLesson:
+        error = MissingLessonOut()
+        return ApiStatus(error.status, error)
+    return lesson
+"""
+    unselected_preserve_handler = """from ninja import NinjaAPI
+
+legacy_api = NinjaAPI()
+
+
+@legacy_api.exception_handler(LookupError)
+def preserve_handler(request, exc):
+    return {"legacy": True}
+"""
+    serializer_controller = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "from ninja import Router, Status",
+        "from ninja import Router, Status\nfrom .transport import emit",
+    )
+    serializer_helper = """from django.http import JsonResponse
+
+
+def emit(value):
+    return JsonResponse(value.model_dump(), status=value.status)
+"""
+    mapping_controller = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "from ninja import Router, Status",
+        "from ninja import Router, Status\nfrom .bridge import convert",
+    )
+    mapping_helper = """from application.lesson.application_layer.use_cases import LessonMissing
+from .schema.error_out import LessonNotFoundError
+
+
+def convert(value):
+    if isinstance(value, LessonMissing):
+        return LessonNotFoundError()
+    return None
+"""
+    forwarded_exception = (
+        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace(
+            "from ninja import Router, Status",
+            "from ninja import Router, Status\nfrom .forwarder import forward_error",
+        )
+        .replace("except LessonMissing:", "except LessonMissing as exc:")
+        .replace(
+            "error = LessonNotFoundError()\n        return Status(error.status, error)",
+            "return forward_error(exc)",
+        )
+    )
+    multiple_peer_calls = (
+        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace(
+            "LessonMissing, get_lesson",
+            "LessonMissing, get_lesson, record_access",
+        )
+        .replace(
+            "lesson = get_lesson(lesson_id)",
+            "lesson, audit = get_lesson(lesson_id), record_access(lesson_id)",
+        )
+    )
+    multiple_peer_use_cases = CONTROLLER_FILES[
+        "application/lesson/application_layer/use_cases.py"
+    ] + "\n\ndef record_access(lesson_id: int):\n    return {'lesson_id': lesson_id}\n"
+    add_handler_call = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ] + """
+
+def registered_handler(request, exc):
+    return None
+
+
+router.add_exception_handler(LessonMissing, registered_handler)
+"""
+    bare_catch = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace("except LessonMissing:", "except:")
+    tuple_base_exception = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "except LessonMissing:",
+        "except (LessonMissing, BaseException):",
+    )
+    explicit_reraise = (
+        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace("except LessonMissing:", "except LessonMissing as exc:")
+        .replace(
+            "error = LessonNotFoundError()\n        return Status(error.status, error)",
+            "raise exc",
+        )
+    )
+    hardcoded_status = CONTROLLER_FILES[
+        "application/lesson/presentation_layer/controller.py"
+    ].replace(
+        "return Status(error.status, error)",
+        "return Status(404, error)",
+    )
     return [
-        Case("controller-clean-sync-narrow-try", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-sync-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_sync_annassign), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-async-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_async), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-tuple-catch-prepared-concrete", with_files(("application/lesson/presentation_layer/controller.py", clean_tuple), ("application/lesson/application_layer/use_cases.py", clean_tuple_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
-        Case("controller-clean-event-specific-base", with_files(("application/lesson/presentation_layer/controller.py", direct_base), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
-        Case("controller-clean-result-none-prepared-errorout-status", with_files(("application/lesson/presentation_layer/controller.py", clean_result_none), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-event-specific-base", with_files(("common/ninja/response/error_out.py", DYNAMIC_COMMON_ERROR_OUT), ("application/lesson/presentation_layer/schema/error_out.py", DYNAMIC_LESSON_ERROR_OUT), ("application/lesson/presentation_layer/controller.py", direct_base), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-result-none-prepared-errorout-status", with_files(("application/lesson/presentation_layer/controller.py", clean_result_none), ("application/lesson/application_layer/use_cases.py", clean_result_none_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-approved-retry-after", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from django.http import HttpResponse\nfrom ninja import Router, Status").replace("def get_lesson_controller(request, lesson_id: int):", "def get_lesson_controller(request, response: HttpResponse, lesson_id: int):").replace("        return Status(error.status, error)", "        response['Retry-After'] = '1'\n        return Status(error.status, error)")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
-        Case("controller-clean-unselected-preserve-handler", with_files(("application/lesson/presentation_layer/preserve_controller.py", "def preserve_controller(request): return {'legacy': True}\n"), ("application/lesson/presentation_layer/preserve_handler.py", "def preserve_handler(request, exc): return {'legacy': True}\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-relative-as-import-provenance", with_files(("application/lesson/presentation_layer/controller.py", relative_alias_controller), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-unselected-preserve-handler", with_files(("application/lesson/presentation_layer/preserve_controller.py", "def preserve_controller(request): return {'legacy': True}\n"), ("application/lesson/presentation_layer/preserve_handler.py", unselected_preserve_handler), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-empty-error-bc", empty_error_bc_files, "check-api-error-controller-contract.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson"), 0, ""),
         Case("controller-clean-preserve-profile-na", preserve_controller_files, "check-api-error-controller-contract.py", preserve_controller_args, 0, ""),
-        Case("controller-direct-presentation-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .factory import make_error").replace("error = LessonNotFoundError()", "error = make_error()")), ("application/lesson/presentation_layer/factory.py", "from .schema.error_out import LessonNotFoundError\ndef make_error(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
-        Case("controller-direct-one-hop-serializer-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .serializer import serialize_error").replace("error = LessonNotFoundError()", "error = serialize_error()")), ("application/lesson/presentation_layer/serializer.py", "from .schema.error_out import LessonNotFoundError\ndef serialize_error(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
-        Case("controller-direct-one-hop-mapping-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .mapping import map_error").replace("error = LessonNotFoundError()", "error = map_error()")), ("application/lesson/presentation_layer/mapping.py", "from .schema.error_out import LessonNotFoundError\ndef map_error(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-direct-presentation-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .assembler import assemble").replace("error = LessonNotFoundError()", "error = assemble()")), ("application/lesson/presentation_layer/assembler.py", "from .schema.error_out import LessonNotFoundError\ndef assemble(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-direct-one-hop-serializer-helper", with_files(("application/lesson/presentation_layer/controller.py", serializer_controller), ("application/lesson/presentation_layer/transport.py", serializer_helper), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-direct-one-hop-mapping-helper", with_files(("application/lesson/presentation_layer/controller.py", mapping_controller), ("application/lesson/presentation_layer/bridge.py", mapping_helper), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-registered-handler", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"] + "\n@router.exception_handler(LessonMissing)\ndef handler(request, exc): pass\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-add-exception-handler-call", with_files(("application/lesson/presentation_layer/controller.py", add_handler_call), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-wide-try", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("try:\n        lesson =", "try:\n        prepared = lesson_id\n        lesson =")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-multiple-peer-outer-calls-one-statement", with_files(("application/lesson/presentation_layer/controller.py", multiple_peer_calls), ("application/lesson/application_layer/use_cases.py", multiple_peer_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-success-transform-inside-try", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("lesson = get_lesson(lesson_id)", "lesson = get_lesson(lesson_id)\n        return {'lesson': lesson}")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-broad-catch", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("except LessonMissing:", "except Exception:")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-bare-catch", with_files(("application/lesson/presentation_layer/controller.py", bare_catch), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-tuple-catch-includes-base-exception", with_files(("application/lesson/presentation_layer/controller.py", tuple_base_exception), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-framework-catch", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom ninja.errors import HttpError").replace("except LessonMissing:", "except HttpError:")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
-        Case("controller-raw-infra-catch", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("except LessonMissing:", "except OSError:")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-raw-infra-catch", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from django.db import DatabaseError as StorageFailure\nfrom ninja import Router, Status").replace("except LessonMissing:", "except StorageFailure:")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-immediate-raise-catch", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("    try:\n        lesson = get_lesson(lesson_id)", "    lesson = None\n    try:\n        raise LessonMissing()")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-known-reraises", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("error = LessonNotFoundError()\n        return Status(error.status, error)", "raise")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-known-explicit-reraise", with_files(("application/lesson/presentation_layer/controller.py", explicit_reraise), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-known-raises-http-error", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom ninja.errors import HttpError").replace("error = LessonNotFoundError()\n        return Status(error.status, error)", "raise HttpError(404, 'missing')")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
-        Case("controller-known-forwards-exception", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .forwarder import forward_error").replace("return Status(error.status, error)", "return forward_error(error)")), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(error): return error\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-known-forwards-exception", with_files(("application/lesson/presentation_layer/controller.py", forwarded_exception), ("application/lesson/presentation_layer/forwarder.py", "def forward_error(exc): return exc\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-no-direct-status", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("return Status(error.status, error)", "return error")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-status-does-not-use-body-status", with_files(("application/lesson/presentation_layer/controller.py", hardcoded_status), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-concrete-called-with-args", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("LessonNotFoundError()", "LessonNotFoundError(detail='missing')")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
+        Case("controller-base-extra-constructor-field", with_files(("common/ninja/response/error_out.py", DYNAMIC_COMMON_ERROR_OUT), ("application/lesson/presentation_layer/schema/error_out.py", DYNAMIC_LESSON_ERROR_OUT), ("application/lesson/presentation_layer/controller.py", direct_base_extra_field), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-error-tuple-raw-response-dict", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("return Status(error.status, error)", "return 404, {'code': 'lesson_not_found'}")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-error-raw-response", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom ninja.responses import Response").replace("return Status(error.status, error)", "return Response({'code': 'lesson_not_found'}, status=404)")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
-        Case("controller-analysis-unresolved-status-reexport", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from .exports import Status\nfrom ninja import Router")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
-        Case("controller-analysis-unresolved-error-out-reexport", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError", "from .exports import LessonNotFoundError")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-analysis-unresolved-status-reexport", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from .exports import Status\nfrom ninja import Router")), ("application/lesson/presentation_layer/exports.py", "from ninja import Status\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
+        Case("controller-analysis-unresolved-error-out-reexport", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError", "from .exports import LessonNotFoundError")), ("application/lesson/presentation_layer/exports.py", "from .schema.error_out import LessonNotFoundError\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-analysis-selected-syntax", with_files(("application/lesson/presentation_layer/controller.py", "def broken(:\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-analysis-one-hop-syntax", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .factory import make_error")), ("application/lesson/presentation_layer/factory.py", "def broken(:\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-analysis-missing-selected-controller-path", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args("--controller-module", "application/lesson/presentation_layer/missing_controller.py"), 1, "사용 오류"),
+        Case("controller-analysis-selected-root-escape", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args("--controller-module", "../outside.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"root-escape:--controller-module"})),
+        Case("controller-analysis-duplicate-controller-selector", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args("--controller-module", "application/lesson/presentation_layer/controller.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"duplicate:--controller-module"})),
         Case("controller-analysis-auto-profile", CONTROLLER_FILES, "check-api-error-controller-contract.py", AUTO_PROFILE_ARGS, 0, ""),
         Case("controller-analysis-missing-args", CONTROLLER_FILES, "check-api-error-controller-contract.py", (TARGET_DIR, "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--error-profile", "missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
         # Reviewer gaps deliberately remain outside the deterministic oracle:
