@@ -1,20 +1,28 @@
-# dddjango 평가 방법론 v3 — 채점·집계·완료·과적합 (집행 사양)
+# dddjango 평가 방법론 v4 candidate — 채점·집계·완료·과적합 (집행 사양)
 
-> **상태**: v3 (2026-06-02). v2(2026-05-31, DR-24+적대3렌즈) → **적대 3렌즈 재감사**(판정레인·집계/완료·과적합/현실성) 반영해 *집행 레이어*를 채움. 평가 *항목*은 `RUBRIC.md`. 이 문서는 *어떻게 결정론적으로 라벨을 산출하는가*.
+> **상태**: `candidate` · **NOT ACTIVE** · **NOT FROZEN** · **SCORING PROHIBITED**.
+> 사용자 명시 freeze 전에는 어떤 fixture도 이 방법으로 채점·집계하거나 결과 파일을 만들지 않는다.
+> **후보 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
+> `v4-candidate`. 결과 identity는
+> `epoch + error profile + rubric version + dimension ID`다.
+> **v3 재현 경계**: full SHA `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`.
+> working tree의 historical v3 결과 14개는 byte 불변이며 v4로 소급 판정하지 않는다.
 > **측정 대상(사용자 확정)**: 산출물의 *규칙 준수 수준(절대값)* + *기능 정확성*. **baseline 통제 arm 없음.** 판정 바=표준 규칙(§근거 조항), 앵커(RUBRIC §E)=예시.
 > **인과 한계(과대주장 차단)**: 이 평가는 산출물이 규칙을 *지킨 수준인가*를 측정한다 — *플러그인이 규칙을 지키게 야기했는가*(baseline 대비 인과 기여)는 측정 범위 밖이고 본 방법으론 주장 불가(§3 N=1·차별가치 비측정과 정합).
 > **표준 버전 시점(소급 FAIL 금지)**: fixture는 *그 산출 시점의 플러그인 표준 버전*으로 채점한다. 표준이 이후 개정돼도(예: 1.4.0 R/C/Q 응용 명명 — `…Command`/`…Query` 인터랙터) 그 이전 산출분을 새 규칙으로 소급 위반 처리하지 않는다 — 채점 근거 조항은 산출 당시 버전 기준으로 인용한다. **2026-06-08 개정의 소급 구분**: ① §632-(2) 면제 폐지·SH-3 치명 격상 = *표준 개정(신규 규칙)* → **소급 FAIL 금지**(이전 산출 fixture는 구 규칙으로 채점·신규 산출분부터 적용); ② 발견1 SH-1/4 마스크 C 정정 = *기존 규칙의 올바른 적용* → **소급 아님이되 기준 변경도 아님**(SH-1/4는 v3부터 불변·`check-structure.py`가 줄곧 루트 `apps.py`를 FAIL-신호로 방출·마스크 C 산문이 잘못 PASS로 뒤집던 것 교정이라 §5.4 "결과 본 뒤 기준 변경 금지" 위반 아님 → cbvlive-codex 재판정 가능).
 
 ---
 
-## 0. 동결 상태 게이트 (채점 착수 전 필수)
+## 0. v4 candidate 상태 게이트 (채점 착수 전 필수)
 
 **미동결 상태로 채점하면 §5 사전등록을 자동 위반한다(채점 중 기준 확정 = 사후 합리화).** 따라서:
 
-> ⛔ **아래 '동결-전-결정'이 전부 해소되고 이 문서·RUBRIC 헤더가 "동결됨"으로 바뀌기 전에는 어떤 fixture도 채점하지 않는다.**
+> ⛔ **현재 v4는 NOT ACTIVE / NOT FROZEN이다. 적대 리뷰·34-ID 대조와 사용자 명시
+> freeze가 끝나기 전에는 어떤 fixture도 채점하지 않는다. 이 문서가 스스로 상태를 활성화하거나
+> 동결할 수 없다.**
 
-### 0.1 동결-전-결정 해소표 (v3 확정)
-| # | 결정 | 확정값(2026-06-02) |
+### 0.1 v4 candidate 사전등록표 (아직 미승인·미동결)
+| # | 결정 | v4 candidate 값 |
 |---|---|---|
 | 치명 게이트 목록 | **SD 전부 · FC 전부 · SH-1·2·3·4·7 · (조건부)NJ-1·2 · Q-4** (Q-4 치명 승격·SH-3 종류폴더·골격 치명 격상 2026-06-08) |
 | Q-4 메커니즘 치명? | **치명** (커스텀 DB백엔드·`DatabaseWrapper`·PRAGMA·몽키패치 = SD-6 계층순수·메커니즘소유권과 직결) |
@@ -23,18 +31,28 @@
 | 라이브 발화(§4 #4) | **완료 필수 아님 — 정적/라이브 분리 보고**(§4.3). P1a·P2·P3 게이트 정의는 §4.1 |
 | 마스크 C "판정 적재" 조임 | **이진 하위질문으로 조작화**(§1.1.M) + 경합 시 보수=*적재됨* |
 | FC-1 등록 주체·시점 | **§1.4 확정**(적대 grader·프롬프트 직후·코드 열람 전) |
-| S-NINJA 치명 배치 | **NJ-1·2 조건부 치명, NJ-3·4=비치명 '강'(§2.4 Q-편입), NJ-5·6=경미** |
-| 빠지거나 과한 항목 | **현 차원 집합 동결**(추가/삭제 없음). **개정 2026-06-07·DR-47: NJ-7(오류 변환 완전성·catch-all) 1회 추가**(§6.2 선재·33항목 측정 차원 부재 빈틈·비치명 '강'·동기 정직표기 §5.2). **동결 해제 2건째 2026-06-08: NJ-1 *판정기준* 개정**(차원 수 불변·신설 아님 — 함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers` 허용으로 확장; 판정기준은 사전등록 동결 대상이라 명시 해제. 근거: ninja-extra 클래스 컨트롤러 도입). **동결 해제 3건째 2026-06-08: SH-3 치명 격상 + §632-(2) 면제 폐지**(차원 수 불변·치명 배정+판정기준 변경 — 데이터소스 골격 무조건·종류 폴더 부재 FAIL. 근거: 표준 개정 `architecture-ddd:632`·`houserules:21`, fixture 동기 아님. 발견1 SH-1/4 마스크 C 정정은 기준 불변·적용 교정이라 해제 불요) |
+| S-NINJA 치명 배치 | **NJ-1·2 조건부 치명, NJ-3·4·7=비치명 '강'(§2.4 Q-편입), NJ-5·6=경미** |
+| 차원 집합 | **정확히 34개 candidate**: `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`. NJ-7은 비치명 '강'을 유지하고 v4 의미를 `BC 오류 직접 계약`으로 재정의한다. 적대 리뷰·기계 대조·사용자 freeze 전에는 이 값을 채점에 쓰지 않는다. |
 
 ### 0.2 고정 입력 규율
 런 리셋·고정 게이트 답(BC배치·렌즈·API스택·G1/G2 승인 기준·thinking)은 **각 태스크 CRIB**(fixture *밖*)에 둔다. **표준 태스크 프롬프트(라이브 `/dddjango` 입력 정본·verbatim)는 `tools/FC-GOLDEN.md` 헤더에 박제** — coordinator 정리본 `scope.md`(Phase 0 "무엇/경계" 확장)가 아니라 *사용자 입력 원문* 한 줄이 정본(혼동 주의). *(구 `RETEST-HANDOFF.md`는 폴더 재구조화로 제거됨 — 고정 게이트 답의 정본은 태스크별 CRIB이며, 본 문서 §1.4 골든표 동결과 함께 freeze 산출물에 포함한다.)*
 
-### 0.3 동결 선결 작업 (미완 — "동결됨" 전 필수, 적대 재감사 E5 실측)
-> 아래가 끝나기 전엔 §0 게이트상 채점 착수 금지. doc이 아니라 *산출물* 작업.
-1. **8벌 실경로 박제** — ✅ §5.1에 실재 디렉터리명으로 교정 완료(livefire·p1a-v3=`-codex/-claude`).
-2. **6벌 CRIB 정본** — `smoke2-{codexB,claudeA}`·`p1a-livefire-{codex,claude}`·`p1a-v3-{codex,claude}` CRIB 부재(현재 `final-*`만 존재). 고정 게이트 답 동결에 필요. ⚠️ p1a 계열은 이미 런이 돌아 *사후 재구성*이라 "채점 기준이 아닌 *런 당시 입력 기록*"으로 한정 명시(§5.4 "결과 본 뒤 기준 변경 금지"와 긴장 회피).
-3. **FC 사전등록 산출물** — 태스크-독립 골든 행위표(재고10·주문3→201∧잔7 / 재고2·주문5→409∧불변) + mutation 3종 논리 정의 + 픽스처별 실행 어댑터(조정자 작성). 코드 열람 전 타임스탬프·미열람 선언 동봉(§1.4).
-4. **결정 스크립트(선택)** — SH·NJ·Q-4·SD-7(FAIL방향)은 수작업 grep로 갈음 가능(동결 blocker 아님). 결정론·재현 위해 `check-*.py`로 승격 권장. SD-7 PASS방향·Q-5 신규/재작성 분기는 술어가 §1.1 표서 폐합됨(의미 레인 위임 명시).
+### 0.3 v4 candidate freeze 선결 작업 (미완)
+> 아래 네 조건이 모두 끝나기 전에는 v4를 활성화·동결하거나 채점에 사용할 수 없다.
+1. **34-ID 기계 대조** — `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`의 누락·중복이 없음을 검증한다.
+2. **candidate diff와 적대 리뷰** — 선택한 에러 프로필의 SD-6·NJ-4·NJ-7·Q-2·EP·FC M3 계약을 교차 검토한다.
+3. **역사 보존 증거** — working tree의 v3 결과 14개가 byte 불변이고 candidate로 새 결과를 만들거나 채점하지 않았음을 확인한다.
+4. **사용자 명시 freeze** — 문서가 스스로 active/frozen 상태를 선언하지 않는다. 사용자가 명시적으로 승인한 뒤 별도 변경으로 상태를 전환한다.
+
+### 0.4 v3 역사적 freeze 메모 (v4 비규범)
+다음은 v3 당시의 선결 작업 기록이다. full SHA
+`d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`에서 재현하며 v4 candidate의
+freeze 완료 증거로 재사용하지 않는다.
+
+1. **8벌 실경로 박제** — v3 §5.1에서 실재 디렉터리명으로 교정했다.
+2. **6벌 CRIB 정본** — v3 당시 미완 항목이었다.
+3. **FC 사전등록 산출물** — v3 골든 행위표와 mutation 정의를 요구했다.
+4. **결정 스크립트(선택)** — v3 당시 수작업 grep 대체를 허용했다.
 
 ---
 
@@ -50,7 +68,7 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 ### 1.1 결정 레인
 - **구조-인지 grep/스크립트** (경로 고정 금지 — `orders`vs`order`·포트 위치 이동에 강건).
 - 산출 = `{신호 有/無}` + 줄 인용. **각 항목에 "원리상 못 보는 것" blind-spot 카드** 동봉.
-- **실재 스크립트는 2개뿐**(`check-error-centralization.py`=SD-6 부분, `check-mechanism-ownership.py`=Q-4 부분). 나머지 결정 항목은 아래 **항목별 결정-판정 표**의 grep 절차로 집행한다. 절차가 grep로 닫히지 않는 부분은 의미 레인이 1차 판정(레인 칸을 정직 표기).
+- dddjango 정본의 결정적 checker는 **현재 19개**다. runtime fixture의 14개 테스트는 계약 동작을 재현하는 검증 fixture이며 **20번째 checker가 아니다**. 아래 표는 관련 checker와 의미 레인을 함께 사용한다.
 
 #### 항목별 결정-판정 표 (치명 결정 항목 우선; 구조-인지 명령)
 | 항목 | 명령(개념) | PASS 신호 | FAIL 신호 | blind-spot 카드 |
@@ -60,11 +78,12 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 | **SH-4** Django앱 위치 | `models.py`·`migrations/`의 부모가 `infra_layer/django_<app>/`인가 + AppConfig `label` | infra_layer/django_ 하위 | 루트/앱루트/도메인 `models.py`(마스크 C 곱) | label 보존은 텍스트, 이력 동작은 Q-5 |
 | **SH-7** 포트 위치 | `find -type d -name port`의 부모가 `domain_layer`인가 | `domain_layer/<agg>/port/` | `application_layer`/`infra_layer` | — |
 | **SD-3** 무복제 | infra 리포의 CAS `update/filter`에 비즈조건(`stock__gte=`·`F()` 판정)이 있나(grep) | version/CAS 가드만 | `stock__gte=` 등 판정 SQL 복제 | helper 경유·동적 조건문은 의미 레인 |
-| **SD-6** 계층순수성 | `check-error-centralization.py`(application_layer **한정**) + grep `from ninja`/`JsonResponse(` in domain | application HTTP변환 0 | application이 status 변환 | **스크립트는 application_layer만 봄** — presentation 수제응답·domain HTTP import·status:int 객체 흐름은 **못 봄**(의미 레인 필수) |
+| **SD-6** 계층순수성 | `check-context-isolation.py` + `check-api-error-controller-contract.py` + domain/application의 HTTP·Ninja import 의미 확인 | domain/application이 HTTP를 모르고, 알려진 자기 BC 예외→status 선택은 소유 controller가 직접 수행 | domain/application의 HTTP 계약 누수; helper/handler로 매핑 이동; status DTO로 우회 | checker가 리터럴 HTTP import를 못 찾더라도 application DTO가 `status`를 운반하면 **Goodhart 의미 FAIL**. controller의 직접 status 선택은 PASS이며 중앙 handler는 PASS가 아니다. |
 | **SD-7** 컨텍스트 통신 | 타 BC `domain_layer`/`infra_layer` 직접 import 있나(grep import 경로) | (의미) OHS/ACL 포트만 소비 | (결정) 타 BC 구체구현 직접 import | **비대칭**: FAIL 방향(구체 infra/domain 경로 import)은 grep로 *완전히 닫힘*; PASS 방향("그게 OHS 표면인가 concrete impl인가")은 catalog 공개표면 정의 의존 = **의미 레인 필수**. published_service 빈 패키지=OHS 부재도 FAIL |
 | **SH-9** 단일 레이아웃 | 한 앱에 `test`+`tests`·`src`+`apps` 공존하나(`find`) | 단일 레이아웃 | 공존 | — |
 | **NJ-1** 스택 | 신규 JSON API가 `NinjaAPI`/`NinjaExtraAPI` + (`Router` ∨ `@api_controller`/`register_controllers`)인가 vs `JsonResponse`/DRF(grep) | ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러 | plain view·DRF(greenfield) | 기존 확립 스택 존중은 houserules §1; 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 PASS) |
-| **NJ-4** status 선언 | operation `response={...}` dict에 다중 status schema(grep `response=`) — **`openapi_extra`/`get_openapi_schema` 선언은 불충족**(§2.2 line111) | 오류 status가 `response={...}`에 | `response=`에 201(성공)만, 오류는 `openapi_extra`/핸들러에만 | **`openapi_extra`로 오류를 OpenAPI에 넣어도 NJ-4 FAIL**(가시성≠`response=` 선언); 진짜 미선언(핸들러-only·OpenAPI 부재)만 Q-2 |
+| **NJ-4** BC 오류 OpenAPI 선언 | `check-openapi-error-declaration.py` + controller `response={...}` 확인 | controller가 직접 반환하는 BC 오류 status가 **같은 BC base ErrorOut**으로 선언됨 | 직접 반환 BC status 누락; **그 status의 직접 BC 반환이 없는데** framework 401/403/route 404/422/429/500을 BC ErrorOut으로 광고; `openapi_extra`/사후 후가공 | 같은 BC base를 여러 status에 쓰며 status별 code Enum subset보다 전체 code가 노출되는 것은 승인된 단순화로 PASS. |
+| **NJ-7** BC 오류 직접 계약 | `check-api-error-controller-contract.py` + controller 오류 arm 의미 확인 | application 호출 한 문장만 감싼 좁은 `try`; 구체 예외 catch; 준비된 no-arg concrete ErrorOut 또는 BC base 직접 생성; `Status` 직접 반환; framework 오류는 기본 처리 | 오류 helper/handler/catch-all; bare·`Exception`·`BaseException` catch; 넓은 `try`; raw dict/tuple/`Response`/`JsonResponse` 오류 반환 | 실패 Result/`None`은 예외를 만들지 않고 같은 controller에서 직접 반환해도 PASS. 미식별 예외는 잡지 않는다. |
 | **Q-4** 메커니즘(치명) | `check-mechanism-ownership.py` + grep `DatabaseWrapper`/PRAGMA/monkeypatch | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 명세 승인된 메커니즘은 면제(의미 확인) |
 | **Q-5** 마이그레이션 | (순서) ①이주 여부 판정(마스크 C가 그 앱을 '신규 앱'으로 봤나) → ②이주 시: 기존 `0001` 불변·`db_table`/`label` 보존·state-only rename ops grep | 신규앱이 자기 0001 보유(정당) / 이주 시 0001 불변·state-only | **기존 앱**의 0001 재작성·테이블 rename DDL | **앵커 양매핑 주의**: 동일물리(baseline 0001 `D`+새앱 0001 생성)가 '신규앱 정당'↔'재작성 위반' 양쪽 — 마스크 C의 신규/기존 라벨이 *먼저* 갈라야 PASS/FAIL 결정. 이주 미시도(평면 유지)면 state-only ops 술어 **N/A**. brownfield 실적용은 .venv 실행 |
 
@@ -96,9 +115,10 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 - **소급 미적용**: 본 절(2026-06-09 신설)은 *신설 이후* 라이브/재채점분만 구속. 기존 8벌·duplive·ptcat 등 산출분은 면제(§4.3.1 EP·§6.1 #9.5 소급금지 패턴 정합) — 단 ptcat-codex는 본 사건 당사자라 그 채점지에 한해 오기 정정.
 
 ### 1.2 의미 레인 (결정 결과에 **blind**)
-- **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "오류→status를 *고르거나 만드는* 줄이 operation·application·domain에 있나? (Y/N)+줄".
-- **🔴 에러 경로 정독 의무(NJ-1·3·4·SD-6 — `poc-codex` miss 반영)**: operation 본문·backstop exit0만으로 NJ/SD-6 판정 **금지**. 모든 `@api.exception_handler`·problem 헬퍼·content-negotiation 데코레이터를 읽어 §6.2 대조한다. 이진질문: (Q-a) 에러 응답이 `ninja.responses.Response` 아닌 `django.http.JsonResponse`로 나가나?(Y=🟡 NJ-1 경미) (Q-b) 오류 status가 `response={}` 아닌 `openapi_extra`/핸들러에만 있나?(Y=NJ-4 FAIL). **양방향 보정**: §6.2가 *중앙 핸들러의 dict 빌드+`ninja.responses.Response` 반환*을 처방하므로 그 형태는 **준수**(SD-6 'raw 응답'·NJ-1 'plain leak'으로 over-call 금지·죽은 schema 아님).
+- **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "domain/application이 HTTP status·Ninja 타입을 아는가? (Y/N)+줄", "알려진 자기 BC 예외→status 선택을 소유 controller가 직접 하는가? (Y/N)+줄".
+- **🔴 에러 경로 정독 의무(NJ-1·3·4·7·SD-6·Q-2)**: operation 본문·checker exit 0만으로 판정 **금지**. controller의 `try/except`·`response={}`·ErrorOut 생성·반환을 읽고 custom handler/helper/catch-all 및 framework 오류 수동 계약이 없는지 대조한다. controller의 좁은 구체 catch와 직접 `Status(error.status, error)` 반환은 PASS다. handler/helper/catch-all, 넓은 catch, raw 오류 응답, application status DTO는 FAIL 신호다.
 - **필수 줄 인용** — 인용 없는 PASS 무효.
+- **Q-2 판정 의미** — 선택한 error profile의 **wire shape·HTTP/body status·필요 header·version 정책이 서로 일관한지**만 판정한다. 다른 profile(RFC 9457 등)의 형태를 섞거나 framework 기본 오류에 BC shape를 강제하면 FAIL이다.
 - **판정 바=표준 §근거 조항**; 앵커=예시로만 대조(임계값 아님).
 - **grader 배포본 = 익명 스니펫 + 표준 §근거만**. fixture명·줄번호·런타임은 조정자 보유(grader 미수령) — 앵커 줄번호 노출과 마스킹의 모순(C-F4)을 *출처 비공개*로 해소.
 - **N 표기 분리**: `N_grader`=*채점 grader 수*(≥3, 블라인드·런타임 마스킹). `N_run`(§4)=*완료 선언용 블라인드 런 샘플 수*(≥5). 둘은 다른 축이다.
@@ -111,7 +131,7 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 ### 1.4 기능 정확성 측정 (FC)
 - **FC-1 골든 오라클**: **(주체)** 적대 grader가 **(시점)** 프롬프트 수령 직후·코드 *열람 전*에 **(형식)** *태스크-독립 행위표*(입력상태,요청)→(기대 status,부작용) + 타임스탬프 + "코드 미열람" 선언을 freeze 산출물에 커밋(열람 후 수정 금지·git diff 검증). **행위표 ⊥ 실행 어댑터**(실측 교정): 행위표는 코드 미열람으로 8벌 공통 작성 가능하나 *실제 두드릴 route+요청 schema*는 픽스처마다 달라(동일 태스크라도 BC 분해 분기) **조정자가 코드 열람 후 어댑터를 짠다** — "미열람"은 행위표에만. **작성자 ⊥ 채점자**(골든표 작성한 적대 grader는 그 fixture 의미 grader 제외 → 그 픽스처 N_grader를 1 늘려 유효 3 유지). 실행=인수 테스트와 독립한 호출 스크립트로 `.venv` 실측. **명세·기존 테스트는 오라클 불인정**.
   - **러너(runner) = `pytest`(pytest-django)**: FC-1 골든 행위 검증·Q-6 스위트 실행은 **프로젝트 루트에서 `.venv/bin/pytest`**로 돌린다(픽스처의 pytest 설정 `pytest.ini`/`pyproject.toml`·`DJANGO_SETTINGS_MODULE`이 적용되는 루트). 픽스처에 pytest 설정이 없으면 `.venv/bin/pytest -p pytest_django --ds=<settings>`로 명시하거나 픽스처 venv에 `pytest-django` 설치를 선행한다. **`manage.py test`(unittest 디스커버리)는 함수형 `def test_*()` pytest 테스트를 0개로 수집해 FC-2를 거짓 PASS시키므로 금지.** **🔴 오염 차단(2026-06-09 ptcat 교훈)**: 조정자가 픽스처 venv에 `pytest-django` 등을 설치-선행하면 §1.1.T의 `env`/`used` 축이 오염된다(env 도구가 코디 행동을 대체·관측 무효). 따라서 ① 도구 스냅샷(§1.1.T `env`)은 설치-선행 **전**에 뜨고, ② 조정자 설치분은 `(조정자 추가)` 태그로 `produced`(코디 핀 책무)에서 배제하며, ③ 가능하면 **채점용 러너 venv를 라이브 baseline과 별도 복제**해 라이브 산출 환경(코디가 설치·핀한 그 상태)을 변형하지 않는다. `pytest`는 Django `TestCase` **와** 함수형 pytest 테스트를 **둘 다** 수집하므로 표준이 pytest 관용구로 전환된 신규 산출물과 구 fixture(`TestCase`)를 한 러너로 안전히 채점한다. **러너만 바뀌고 골든 green→red 오라클 로직은 불변.**
-- **FC-2 mutation**: *논리 mutation 3종*(①차감 부호 ②핵심 판정 경계 `<`/`>=` ③핵심 status 값)을 fixture 열람 전 동결하되, **주입 사이트 = FC-1 골든이 두드리는 경로상의 핵심 판정 메서드 1곳**(조정자가 행위표 동결 후 코드 열람해 식별; **DB CHECK constraint는 도메인 판정 아니므로 제외**). 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`. **러너 = `.venv/bin/pytest`(FC-1과 동일)**: mutation 주입 후 `pytest`로 스위트를 돌려 red를 확인한다(`manage.py test`는 함수형 pytest 테스트를 수집 못 해 mutation 주입에도 green→**FC-2 거짓 PASS** 위험이라 금지). **러너만 바뀌고 mutation 주입→red 기대 로직은 불변**(주입 사이트·red율 100% 판정 동일).
+- **FC-2 mutation**: *논리 mutation 3종*을 fixture 열람 전 동결한다. M1=차감 부호, M2=핵심 판정 경계(`<`/`>=`), **M3=controller에서 `Status`에 넘기는 구체 오류의 기본 `status` 또는 BC base 직접 생성자의 `status`를 다른 값으로 바꾸는 mutation**이다. M3는 **실제 HTTP status와 body `status`가 모두 red**여야 PASS다. 주입 site는 FC-1 골든이 두드리는 경로에서 찾고, M1/M2는 핵심 domain 판정 메서드, M3는 site controller의 `Status`/error mapping에 둔다. 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`; 러너는 `.venv/bin/pytest`다.
 - **FC-3 도메인 정합**: 의미 grader가 골든 결과+코드 정독으로 명백한 도메인 오류(음수 재고·차감 역전·인과 역전) 판정.
 
 ### 1.5 채점 결정성 가드 — 부정 단정·수집 오라클·런-정지 (2026-06-10 신설 · lastlive-claude 오채점 박제)
@@ -141,7 +161,7 @@ lastlive-claude 사건 교훈: 채점이 "테스트 0·테스트도구 0·pytest
 ### 2.1 치명 집합·조건부·강 (정본 = §0.1; 세 곳이 한 목록)
 - **치명 정본 목록**(§0.1·§2 step2 의사코드와 *동일 집합*): SD-1~7 · FC-1~3 · SH-1·2·3·4·7 · **(조건부)NJ-1·2** · Q-4. ← 이 한 목록만 정본이며 §0.1/§2 step2/RUBRIC '치명' 칸이 모두 이를 가리킨다(N1 불일치 차단). **SH-3 치명 격상 2026-06-08(§632-(2) 면제 폐지·동결 해제 3건째).**
 - **NJ 조건부**: HTTP/JSON operation이 **하나라도 있을 때만** NJ-1·2가 치명. 순수 도메인/CLI/배치/서버렌더 픽스처 → S-NINJA 차원 전체 **N/A**(FAIL 아님, 게이트 미적용).
-- **NJ-3·4·7 ('강')**: 비-치명이나 §2.4 Q 카운트에 *정규 항목으로 편입*(현재 사문화 해소) — '강' 항목 FAIL은 품질 상한을 '중'으로 강등. NJ-5·6=경미(정규 카운트, 강등 없음). **NJ-7**(오류 변환 완전성·catch-all, DR-47 추가)=강 — catch-all 부재/되던지기로 미식별·비-retryable이 problem+json 단일변환점 우회 시 FAIL(결정 레인 grep `@api.exception_handler(Exception)`+bare `raise exc`; §6.2:368/469/477). status는 정당(500)이라 치명 아님.
+- **NJ-3·4·7 ('강')**: 비-치명이나 §2.4 Q 카운트에 *정규 항목으로 편입* — '강' 항목 FAIL은 품질 상한을 '중'으로 강등. NJ-5·6=경미(정규 카운트, 강등 없음). **NJ-7 `BC 오류 직접 계약`**은 좁은 application 호출 `try`, 구체 catch, 준비된 no-arg ErrorOut 또는 BC base 직접 생성, controller의 직접 `Status` 반환, framework 기본 처리를 요구한다. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL이다.
 
 ### 2.2 의미적 변종 라우팅 (일반 규칙)
 - **치명 항목의 의미 레인 FAIL은 결정 레인 PASS와 무관하게 step2 치명 FAIL**이다. SD-6은 그 *한 사례*(스크립트 exit0이어도 의미 FAIL이면 치명) — 일반 규칙의 인스턴스다.
@@ -174,7 +194,7 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 
 ### 4.1 게이트 정의 (P1a·P2·P3)
 완료 #4가 요구하는 "게이트 라이브 발화"의 게이트:
-- **P1a** = *API 오류 응답 중앙화 규율*(discipline-reviewer + `check-error-centralization.py`): application/domain이 오류→HTTP status 변환을 직접 하면 blocker. (DR-20·22·23, ninja §2.2·§6.2)
+- **P1a** = *계층 HTTP 무지 + 소유 controller 직접 계약*(`check-context-isolation.py` + `check-api-error-controller-contract.py`): domain/application이 HTTP·Ninja 타입을 알거나, 알려진 자기 BC 예외→status 선택을 소유 controller가 직접 하지 않고 helper/handler로 옮기면 blocker. controller의 좁은 구체 catch와 직접 `Status` 반환이 준수 형태다.
 - **P2** = *메커니즘 소유권 백스톱*(`check-mechanism-ownership.py`): 프로덕션 DB 트랜잭션·락·격리 메커니즘을 명세 승인 없이 커스텀 백엔드로 교체하면 blocker. (architecture-db §9.5·§16.4 = Q-4 라이브판)
 - **P3** = *Risky Write §9.6 규율*(discipline-reviewer 4스테이지): 동시성 민감 쓰기의 §9.6 6요소·동시성 테스트 누락 시 blocker. (architecture-db §9.6)
 - *(셋 다 `commands/dddjango.md`·discipline-reviewer에 배선된 실재 게이트. 정의 정본=각 worklog + DEVLOG DR 항목 교차참조.)*
@@ -187,30 +207,30 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 
 ### 4.3 라이브 완료 (별도 fresh 런 트랙 — 완료 *분리 보고*)
 4. **핵심 게이트 라이브 발화** — P1a·P2·P3가 *위반 주입* 조건에서 실제 blocker 발화.
-   - **위반주입 프로토콜**: 게이트별 known-violation ≥1 카탈로그(P1a=application이 status 매핑; P2=커스텀 sqlite immediate 백엔드; P3=§9.6 미충족 동시성 쓰기) → fresh `/dddjango` 런에 주입 → **발화 PASS 기준 = 3회 주입 중 3회 blocker**(준수만 보는 exit0은 차단 미stress라 불인정). 운영=조정자.
+   - **위반주입 프로토콜**: 게이트별 known-violation ≥1 카탈로그(P1a=domain/application HTTP 누수 또는 controller 매핑을 helper/handler로 이동; P2=커스텀 sqlite immediate 백엔드; P3=§9.6 미충족 동시성 쓰기) → fresh `/dddjango` 런에 주입 → **발화 PASS 기준 = 3회 주입 중 3회 blocker**(준수만 보는 exit0은 차단 미stress라 불인정). 운영=조정자.
 - **N_run≥5 블라인드 런** + 태스크 형태 **2종 이상**(N=1·단일태스크는 완료 자격 없음).
 - 정적 채점은 "라이브 발화"의 대리로 **무효**(DR-21: 텍스트판별 통과≠라이브 발화) → 4.2(정적)와 4.3(라이브)을 **분리 보고**.
 - **산출물 폴더 동작 관측 (DR-40 — 별도 트랙, 완료 비산입)**: P1a·P2·P3와 달리 백스톱이 없어 *위반 주입→blocker 발화*가 아니라 *정상 재빌드 시나리오에서 코디가 폴더 규약을 따르나*를 관측한다. **시나리오**: fresh `/dddjango`로 기능 A 빌드(신규) → 같은 A를 재빌드(또는 수정 모드)로 재호출. **관측 PASS(전부 충족)**: ① 신규 시 `.dddjango/<YYYYMMDD-HHMM>-<slug>/`에 `scope.md`·`design-spec.md` 생성(date prefix 형식) ② 재빌드 시 코디가 `ls .dddjango/` 목록을 G0에 제시·사용자 선택(ⓐ/ⓑ) ③ ⓐ 선택 시 새 폴더 미생성·기존 폴더 재사용(폴더 수 불변·생성일 prefix 유지). **별도 라벨 `폴더 동작: 관측 / 미관측 / 미검증`로 분리 보고**하고 — **§4.4 "완료" 정의(아래)에는 산입하지 않는다**(프로세스 편의 동작이라 치명 안전속성 P1a/P2/P3과 무게가 다름). 근거 = `commands/dddjango.md` 「산출물 위치」·Phase 0(DR-40).
 
 #### 4.3.1 에러 경로 라이브 관측 매트릭스 (별도 트랙, 완료 비산입 — DR-40 폴더 관측과 동급 무게; aclex 라운드 산물)
 P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의 에러 경로 계약**을 *매 라이브 런마다 균일하게* probe해 회귀(예: ACL-EX2 transient→500 누수)를 ad-hoc이 아닌 **사전등록 커버리지**로 잡는다. 이 트랙의 가치는 *균일·전수성*에 있다(매번 같은 계약을 같은 방식으로 확인).
-> ⚠️ **이 트랙은 탐지(관측)이지 예방이 아니다**(적대 3렌즈 합의·P1a가 4번 증명: 채점기준 명시 ≠ 라이브 차단). probe FAIL은 *코드를 고치지 않으며*, **RUBRIC 차원/치명 게이트를 신설·소급변경하지 않는다(freeze 유지)**. 별도 라벨 `에러경로 계약: 관측 / 부분 / 미검증`로 보고하고, 결과는 **2차원 라벨의 라이브 축(§4.4)** + **잔여-흠 원장**에만 입력한다. **EP probe는 치명 게이트가 아니므로 FAIL이어도 픽스처 종합 라벨(§2)을 자동 FAIL시키지 않는다.** (예방은 별 트랙 = 표준 텍스트/백스톱.)
+> ⚠️ **이 트랙은 탐지(관측)이지 예방이 아니다.** v4 candidate가 명시적으로 freeze되기 전에는 probe를 실행·채점하거나 결과를 만들지 않는다. 이후에도 EP probe는 치명 게이트가 아니며 픽스처 종합 라벨을 자동 FAIL시키지 않는다.
 
 - **2층 분리(FC-1 골든과 동형)**: ⓐ **계약 속성표(균일·코드 미열람)** — 모든 픽스처에 참인 에러 계약(내부 BC 분해 무관)을 코드 열람 전 동결. ⓑ **픽스처별 어댑터(조정자·코드 열람 후)** — 실제 두드릴 route+payload는 픽스처마다 다르므로(동일 태스크라도 BC 분해 분기) **§1.4 FC 실행 어댑터 기계를 재사용**해 조정자가 코드 열람 후 작성. "미열람" 선언은 ⓐ에만 적용.
 - **probe 실행 환경(미실측 방지·DR-50 정정)**: probe는 `setup_test_environment()` 또는 `settings.ALLOWED_HOSTS` override 후 두드린다(미적용 시 `DisallowedHost` 400 위양성·실측 불가). **미실측 시 status 추론 금지** — 추론은 ninja 파싱/검증 2단계를 혼동한다(dslive-claude EP-1: 절단 JSON을 422로 추론했으나 사후 실측 400; ninja `params/models.py`는 스키마검증 전 파싱단계에서 `HttpError(400)`을 raise). pytest 통합 테스트는 testserver 자동 허용이라 깨진-본문 케이스를 1건 포함하면 라이브 대리로 충분.
-- **status는 단일강제 금지·화이트리스트**(표준이 열어둔 자유도라 단일강제 시 거짓양성 — DR-44 D1 "retryable 503\|409 둘다 정당"·DR-38 신호동형 함정).
+- **status 판정**은 framework 기본 오류와 승인된 BC 오류를 먼저 구분한다. EP-1/2와 raw EP-3은 framework 기본 status를 관측하고 body를 정확 snapshot하지 않는다. 공개하기로 G1 승인한 retryable BC 오류만 승인 code/header와 함께 503 또는 계약상 409를 쓴다.
 
-| 키 | 계약 속성 (ⓐ 균일·미열람) | status 화이트리스트 | N/A·어댑터 규칙 (ⓑ) |
+| 키 | 계약 속성 (ⓐ 균일·미열람) | 기대 status/shape | N/A·어댑터 규칙 (ⓑ) |
 |---|---|---|---|
-| **EP-1 깨진 본문** | 비-JSON/절단 본문 POST → problem+json 클라이언트 오류 | **{400}** + `application/problem+json` | HTTP operation 없으면 차원 N/A |
-| **EP-2 무효 입력** | 도메인/스키마 위반(수량 0·음수) → problem+json 클라이언트 오류 | **{422, 400}** | 수량 필드 없으면 픽스처의 다른 필수검증 필드로 대체 |
-| **EP-3 transient 소진** | transient 인프라 경합(락 경합·CAS 재시도 소진) → **retryable, 절대 500 아님** | **{503, 409}** | **종단 유형별 어댑터**: (i) ACL이 raw transient를 경계 핸들러로 전파→경계 직접 주입(락/소진); (ii) ACL이 *도메인 예외로 번역*(raw 종단 없음·Codex 대안 B)→raw probe **N/A**, 도메인경로(소진→도메인예외→핸들러)로 *동일 계약* 검증 |
-| **EP-4 재고 부족** | 재고<주문 → 충돌 | **{409}** | FC-1 골든과 중복 — 골든이 1차, 여기선 라이브 축 교차확인만 |
+| **EP-1 깨진 본문** | 비-JSON/절단 본문 POST는 Ninja 파싱 단계의 framework 오류 | 기본 **400**; BC ErrorOut shape/code가 아니어야 함; exact body snapshot 금지 | HTTP operation 없으면 N/A |
+| **EP-2 요청 검증 실패** | Schema 필수값·타입·범위 검증 실패는 framework 오류 | 기본 **422**; BC ErrorOut shape/code가 아니어야 함; exact body snapshot 금지 | 적합한 요청 필드를 fixture별로 선택. HTTP operation 없으면 N/A |
+| **EP-3 인프라/승인 retryable** | **(a)** raw DB·인프라·미식별 예외, **(b)** G1에서 안정적인 공개 retryable 의미를 승인해 infra가 자기 BC 예외로 정규화한 경로를 분리 | (a) framework 기본 **500**, BC code/header 없음. (b) 소유 controller가 **503 또는 계약상 409** + 승인 BC code + 승인 표준 header 반환 | raw 오류를 catch-all로 변환하지 않는다. (b)가 G1 승인되지 않았거나 정규화 경로가 없으면 그 arm만 N/A |
+| **EP-4 재고 부족** | 재고<주문인 알려진 BC 충돌 | **409** + 승인된 자기 BC code의 `application/json`; HTTP status=body `status` | FC-1 골든이 1차, 여기서는 라이브 축 교차확인 |
 
-> **C 정책 무충돌(415 EP 항목 부재 → 무변경)**: 이 EP-1~4 매트릭스에는 **415/406 협상 항목이 없으므로** Q-1 415/406 C 정책(RUBRIC E 앵커)과 **무충돌** — EP 표는 **바꾸지 않는다**.
+> **C 정책 무충돌**: 이 EP-1~4 매트릭스에는 **415/406 협상 항목이 없다**. Q-1의 외부 공개 API 조건부 협상 정책과 EP의 framework/BC 오류 종단을 섞지 않는다.
 
 - **정적 대응물(거대 식별자 — 라이브서 제외)**: 외부 식별자에 거대값을 라이브로 던지는 probe는 422\|500이 **둘 다 방어 가능**(vacuous·underdetermined)이라 라이브 매트릭스에서 **뺀다**. 대신 *정적 스키마 검사*로 관측: 외부 식별자 수치 필드가 상한(`le=`/`lt=`/범위 validator)을 **선언**하나(min1/architecture-api §5.1). 라이브 발화가 아닌 **정적 관측**이며 RUBRIC min 차원 판정을 바꾸지 않는다.
-- **EP-3 균일불가 해소(N/A 규칙의 핵심 사례)**: 순진안은 "raw OperationalError 종단" probe를 모든 런에 강제하려다 **균일 불가**였다(Claude=ACL raw raise 1종단·Codex=ACL 도메인번역·OperationalError 종단 없음·app 2곳 분산). EP-3은 *계약*("소진→retryable, 500 아님")만 균일 고정하고 *probe 종단*은 어댑터가 픽스처별로 고른다 → 균일 적용 가능. **maj1과 반대축**(maj1=과잉매핑[transient를 과하게 retryable]·EP-3=과소매핑[진짜 transient를 500으로]·ACL-EX2가 그 인스턴스).
+- **EP-3 두 arm 분리**: raw infra 예외를 공개 retryable과 동일시하지 않는다. raw arm은 기본 500을 확인한다. 공개 retryable arm은 **G1 승인 + 자기 BC 예외 정규화**가 있는 경우에만 controller의 503/409·code·header를 확인한다. 전역 추측·raw catch-all은 어느 arm에서도 허용하지 않는다.
 - **소급 차단(freeze 정합)**: 이 매트릭스는 *신설 라이브 관측 트랙*이다. **신설 이전 산출 fixture를 EP probe FAIL로 소급 FAIL시키지 않는다**(헤더 line6 소급-FAIL-금지 + §5.4 "결과 본 뒤 기준 변경 금지"). 신설 이후 라이브 런부터 균일 적용한다.
 - 근거 = `ACLEX-CLAUDE-FIX-PLAN.md` probe 매트릭스 검토(적대 3렌즈 FIX-THEN-GO)·`ACLEX-AB-HANDOFF.md` probe 표·DR-44/45(ACL 전수성 #1 미해결).
 - **RUBRIC 정합(SSOT·DR-47)**: 관측 *항목*(EP-1~4 이름)은 `RUBRIC.md` **TIER-OBS**에 스텁 등재(라벨 무영향·freeze 밖)하고, *계약 속성·status 화이트리스트·N/A·어댑터*는 **여기 §4.3.1이 단일 정본**(RUBRIC은 status 미복제). 매 라이브 채점지 **표 섹션 필수화** 집행은 §6.1 #9.5.
@@ -222,7 +242,7 @@ P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의
 - **현 fixture(N=1·단일태스크 timeline)로는 4.3 충족 불가 → 최대 "정적 준수"까지 보고, "완료" 선언 금지**(정직).
 
 ### 4.5 비용 정직 인지
-full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 × N≥3 ≈ 1,500+ grader 판정*이다(큼). 결정 레인(grep)은 거의 무비용, **인적 비용은 의미 레인**에 집중. 비용 절감 변형(치명만 N≥3 등)은 **부록**으로만 두고 기본은 full.
+full 후보(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판정 비용이 든다. 결정 레인(grep)은 거의 무비용이고 **인적 비용은 의미 레인**에 집중된다. 단, 현재 candidate로는 이 산정에 따라 실제 채점하지 않는다.
 
 > **완료 한계 명시**: 이 완료는 "규칙 준수+기능 정확"까지다 — baseline 인과·미시 유지보수성·보안(누출 제외)·명세 내적 품질은 *별도/후속*(과대주장 금지).
 
@@ -248,16 +268,16 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 
 ---
 
-## 6. 채점 결과지 표준 형식 (산출 템플릿 — 형식 동결)
+## 6. v4 candidate 채점 결과지 표준 형식 (아직 미동결)
 
-> 모든 신규 채점 결과지(`results/<YYYYMMDD-HHMM>-<라운드>-<런타임>.md`)는 아래 골격·순서·칼럼을 그대로 유지한다. **형식 표류 차단**: 기존 결과지가 두 형식(`smoke4`=per-tier 표 / `p1a-v3`=치명군 grouping)으로 갈려 있던 것을 단일 템플릿으로 동결한다. *기존 파일 소급 개편은 별건*(요청 시).
+> 이 템플릿도 v4 candidate다. 사용자 명시 freeze 전에는 복사·채점·결과 생성을 금지한다. freeze 이후 신규 결과지는 아래 골격·순서·칼럼을 사용한다. v3 결과 14개는 소급 개편하지 않는다.
 
 ### 6.1 섹션 순서 (RUBRIC 레터링 그대로 — 어기면 형식 위반)
 1. **헤더 블록**(§6.2)
 2. **종합 판정 (사전식 집계)**(§6.3) — verdict-first
 3. **A. TIER-S 척추 — S-DDD**(SD-1~7)
 4. **B. TIER-S 척추 — S-HR**(SH-1~10)
-5. **TIER-S(조건부) — S-NINJA**(NJ-1~6; HTTP operation 없으면 차원 전체 N/A 명시)
+5. **TIER-S(조건부) — S-NINJA**(NJ-1~7; HTTP operation 없으면 차원 전체 N/A 명시)
 6. **TIER-S(핵심) — FC**(FC-1~3)
 7. **C. 기존규약 마스크 (적용 메모)** — §1.1.M MQ0/MQ1/MQ2 명시(SH-1·4 입력이라 종합 한 줄로 압축·생략 금지). *기존규약 없는 순수 greenfield면 "N/A — 신규 앱뿐, §0 전부 강제" 한 줄이라도 섹션 유지*(레터링 무결성).
 8. **D. TIER-Q 품질**(Q-1~7)
@@ -269,7 +289,7 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 > 차원 표(3~8)는 `RUBRIC`의 **A→B→NINJA→FC→C→D** 레터링을 그대로 따른다. *C 누락 = 레터링 끊김 = 형식 위반*. E(앵커)는 루브릭 전용(결과지 미포함).
 
 ### 6.2 헤더 블록 (인용블록 `>`, 필수 필드)
-방법(v3) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설(8벌 밖=라벨 비구속) · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**(코디네이터 보고 대신 조정자 직접 검증).
+상태(`candidate · NOT ACTIVE · NOT FROZEN · SCORING PROHIBITED`, freeze 이후에는 승인된 상태값) · epoch(`2026-08-03-code-json`) · error profile(`dddjango-code-json`) · rubric version(`v4-candidate`) · dimension ID · identity(`epoch + error profile + rubric version + dimension ID`) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설 · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**.
 - **fixture 도구 환경**(필수 필드 — 2026-06-09 신설·**라이브/재채점분 한정·기존 산출분 면제**, §4.3.1 소급금지 패턴 정합): 채점 *착수 전* venv 도구 스냅샷(`pip freeze`/site-packages 테스트도구 목록) + `requirements.txt`·`pyproject.toml` 테스트도구 핀 유무를 박제(§1.1.T `env`). **조정자가 채점 위해 추가한 도구는 `(조정자 추가)` 태그**로 표기해 코디 산출물(`produced`)과 분리. 이 필드 부재로 신설 *이전* 채점지를 형식 위반/재작성 대상으로 삼지 않는다.
 
 ### 6.3 종합 판정 표 (사전식 — §2 의사코드 그대로)
@@ -290,7 +310,8 @@ full 정본(N_grader≥3 전수)은 대략 *치명·비치명 ~33항목 × 8벌 
 
 ---
 
-## v3 변경 요약 (적대 3렌즈 재감사 반영)
+## v3 역사 기록 (full SHA로만 재현; v4 비규범)
+> v3의 중앙 handler/catch-all/problem+json 오류 경로 기준은 **v3에서 폐기; v4 동일 ID 재정의**다. 아래 기록은 historical v3 결과를 해석할 때만 사용하고 v4 candidate 판정에 섞지 않는다.
 - **§0 동결 게이트 + 동결-전-결정 9개 확정**(미동결 채점 = §5 자기위반 차단; C-F5).
 - **판정 레인 집행**: 항목별 결정-판정 표(A-F3)·마스크 C 이진질문(A-F4)·조정자/grader 역할 분리(A-F7)·FC-1 등록 주체·시점(A-F6).
 - **집계 폐합**: 치명 항목 의미변종 일반 라우팅(A-F5·B-F4)·Q-4 치명 승격(B-F3)·NJ 조건부/강 편입(B-F2)·Q 카운트 기반(B-F7)·실질성 측정화(B-F6)·N_grader/N_run 분리(B-F8).
