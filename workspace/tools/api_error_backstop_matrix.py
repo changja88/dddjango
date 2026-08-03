@@ -18,6 +18,7 @@ from typing import Final
 REPOSITORY_ROOT: Final = Path(__file__).resolve().parents[2]
 CHECKER_DIR: Final = REPOSITORY_ROOT / "dddjango" / "scripts"
 TARGET_DIR: Final = "TARGET_DIR"
+AUTO_PROFILE_ARGS: Final = (TARGET_DIR, "--error-profile", "auto")
 
 # This is deliberately the full public vocabulary of the future Coordinator
 # command.  Keeping it here makes a changed prompt/checker CLI observable in
@@ -73,6 +74,55 @@ CHECKER_ALLOWED_ARGUMENTS: Final = {
         {"--error-profile", "--scope", "--api-module", "--urlconf-module", "--registrar-module"}
     ),
     "check-response-schema-bypass.py": frozenset({"--controller-module"}),
+}
+TARGET_ONLY_CHECKERS: Final = frozenset(
+    {
+        "check-error-centralization.py",
+        "check-context-isolation.py",
+        "check-composition-root.py",
+        "check-openapi-error-declaration.py",
+        "check-response-schema-bypass.py",
+    }
+)
+PROFILE_REQUIRED_ARGUMENTS: Final = {
+    "dddjango-code-json": {
+        "check-error-centralization.py": frozenset(
+            {
+                "--scope",
+                "--api-module",
+                "--controller-module",
+                "--scope-bc",
+                "--project-code-error-module",
+            }
+        ),
+        "check-api-error-controller-contract.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-context-isolation.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-openapi-error-declaration.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-composition-root.py": frozenset(
+            {"--scope", "--api-module", "--urlconf-module", "--registrar-module"}
+        ),
+    },
+    "preserve-established": {
+        "check-error-centralization.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-api-error-controller-contract.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-context-isolation.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-openapi-error-declaration.py": frozenset(
+            {"--scope", "--api-module", "--controller-module", "--scope-bc"}
+        ),
+        "check-composition-root.py": frozenset(),
+    },
 }
 
 COMMON_ERROR_OUT = """from ninja import Schema
@@ -311,7 +361,7 @@ def schema_cases() -> list[Case]:
         Case("schema-analysis-error-bc-not-subset", BASE_FILES, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "catalog", "--error-bc", "lesson", "--project-code-error-module", "common/ninja/response/error_out.py", "--project-code-error-module", "application/lesson/presentation_layer/schema/error_out.py"), 1, "사용 오류"),
         Case("schema-analysis-candidate-absent-from-inventory", BASE_FILES, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson", "--project-code-error-module", "common/ninja/response/error_out.py"), 1, "사용 오류"),
         Case("schema-analysis-module-in-both-inventories", BASE_FILES, "check-error-centralization.py", schema_args("--project-preserve-error-module", "application/lesson/presentation_layer/schema/error_out.py"), 1, "사용 오류"),
-        Case("schema-analysis-auto-profile", BASE_FILES, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "auto", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson", "--project-code-error-module", "common/ninja/response/error_out.py", "--project-code-error-module", "application/lesson/presentation_layer/schema/error_out.py"), 0, ""),
+        Case("schema-analysis-auto-profile", BASE_FILES, "check-error-centralization.py", AUTO_PROFILE_ARGS, 0, ""),
         Case("schema-analysis-missing-profile-args", BASE_FILES, "check-error-centralization.py", (TARGET_DIR, "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--error-profile", "missing:--api-module", "missing:--controller-module", "missing:--scope-bc", "missing:--project-code-error-module"})),
         Case("schema-fp-tests-migrations-docstrings-logs", with_files(("application/lesson/tests/test_codes.py", "code = 'lesson_not_found'\n"), ("application/lesson/migrations/0001_initial.py", "code = 'lesson_not_found'\n"), ("application/lesson/presentation_layer/log.py", "import logging\nlogger = logging.getLogger(__name__)\n'''code = lesson_not_found'''\nlogger.info('code=%s', 'lesson_not_found')\n")), "check-error-centralization.py", schema_args(), 0, ""),
         Case("schema-fp-classvar-private-benign-config-import-alias", with_files(("application/lesson/presentation_layer/schema/error_out.py", LESSON_ERROR_OUT.replace("from enum import StrEnum", "from enum import StrEnum\nfrom typing import ClassVar").replace("class LessonErrorOut(ErrorOut):\n    code: LessonErrorCode", "class LessonErrorOut(ErrorOut):\n    model_config = {'populate_by_name': True}\n    _cache: ClassVar[dict] = {}\n    code: LessonErrorCode"))), "check-error-centralization.py", schema_args(), 0, ""),
@@ -324,7 +374,59 @@ def schema_cases() -> list[Case]:
 def controller_cases() -> list[Case]:
     """Controller shape cases; the checker is intentionally absent at this RED stage."""
     clean_async = CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("def get_lesson_controller", "async def get_lesson_controller").replace("lesson = get_lesson(lesson_id)", "lesson = await get_lesson(lesson_id)")
-    clean_tuple = CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("except LessonMissing:", "except (LessonMissing, LookupError):")
+    clean_tuple = (
+        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace(
+            "LessonMissing, get_lesson",
+            "LessonMissing, LessonUnavailable, get_lesson",
+        )
+        .replace("except LessonMissing:", "except (LessonMissing, LessonUnavailable):")
+    )
+    clean_tuple_use_cases = CONTROLLER_FILES[
+        "application/lesson/application_layer/use_cases.py"
+    ].replace(
+        "\n\ndef get_lesson",
+        "\n\nclass LessonUnavailable(Exception):\n    pass\n\n\ndef get_lesson",
+    )
+    clean_result_none = (
+        CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
+        .replace("lesson = get_lesson(lesson_id)", "result = get_lesson(lesson_id)")
+        .replace(
+            "    return lesson\n",
+            "    if result is None:\n"
+            "        error = LessonNotFoundError()\n"
+            "        return Status(error.status, error)\n"
+            "    return result\n",
+        )
+    )
+    empty_error_bc_files = with_files(
+        ("application/lesson/presentation_layer/schema/error_out.py", "<REMOVE>"),
+    )
+    preserve_controller_files = {
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": """from ninja.errors import HttpError
+
+
+def legacy_controller(request):
+    raise HttpError(404, "legacy missing")
+""",
+        "legacy/handler.py": "def legacy_handler(request, exc): return {'error': 'legacy'}\n",
+    }
+    preserve_controller_args = (
+        TARGET_DIR,
+        "--error-profile",
+        "preserve-established",
+        "--scope",
+        "legacy-v1",
+        "--api-module",
+        "legacy/api.py",
+        "--controller-module",
+        "legacy/controller.py",
+        "--scope-bc",
+        "legacy",
+        "--error-bc",
+        "legacy",
+    )
     direct_base = (
         CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"]
         .replace("LessonNotFoundError()", "LessonErrorOut(code=LessonErrorCode.NOT_FOUND, title='missing', status=404, detail='missing')")
@@ -334,11 +436,13 @@ def controller_cases() -> list[Case]:
     return [
         Case("controller-clean-sync-narrow-try", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-async-narrow-try", with_files(("application/lesson/presentation_layer/controller.py", clean_async), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
-        Case("controller-clean-tuple-catch-prepared-concrete", with_files(("application/lesson/presentation_layer/controller.py", clean_tuple), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-tuple-catch-prepared-concrete", with_files(("application/lesson/presentation_layer/controller.py", clean_tuple), ("application/lesson/application_layer/use_cases.py", clean_tuple_use_cases), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-event-specific-base", with_files(("application/lesson/presentation_layer/controller.py", direct_base), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
-        Case("controller-clean-result-none-direct-return", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("return lesson", "result = lesson\n    if result is None:\n        return None\n    return result")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-result-none-prepared-errorout-status", with_files(("application/lesson/presentation_layer/controller.py", clean_result_none), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-approved-retry-after", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from django.http import HttpResponse\nfrom ninja import Router, Status").replace("def get_lesson_controller(request, lesson_id: int):", "def get_lesson_controller(request, response: HttpResponse, lesson_id: int):").replace("        return Status(error.status, error)", "        response['Retry-After'] = '1'\n        return Status(error.status, error)")), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
         Case("controller-clean-unselected-preserve-handler", with_files(("application/lesson/presentation_layer/preserve_controller.py", "def preserve_controller(request): return {'legacy': True}\n"), ("application/lesson/presentation_layer/preserve_handler.py", "def preserve_handler(request, exc): return {'legacy': True}\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 0, ""),
+        Case("controller-clean-empty-error-bc", empty_error_bc_files, "check-api-error-controller-contract.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson"), 0, ""),
+        Case("controller-clean-preserve-profile-na", preserve_controller_files, "check-api-error-controller-contract.py", preserve_controller_args, 0, ""),
         Case("controller-direct-presentation-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .factory import make_error").replace("error = LessonNotFoundError()", "error = make_error()")), ("application/lesson/presentation_layer/factory.py", "from .schema.error_out import LessonNotFoundError\ndef make_error(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-direct-one-hop-serializer-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .serializer import serialize_error").replace("error = LessonNotFoundError()", "error = serialize_error()")), ("application/lesson/presentation_layer/serializer.py", "from .schema.error_out import LessonNotFoundError\ndef serialize_error(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
         Case("controller-direct-one-hop-mapping-helper", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .mapping import map_error").replace("error = LessonNotFoundError()", "error = map_error()")), ("application/lesson/presentation_layer/mapping.py", "from .schema.error_out import LessonNotFoundError\ndef map_error(): return LessonNotFoundError()\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 2, "BLOCKER"),
@@ -361,8 +465,8 @@ def controller_cases() -> list[Case]:
         Case("controller-analysis-selected-syntax", with_files(("application/lesson/presentation_layer/controller.py", "def broken(:\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-analysis-one-hop-syntax", with_files(("application/lesson/presentation_layer/controller.py", CONTROLLER_FILES["application/lesson/presentation_layer/controller.py"].replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom .factory import make_error")), ("application/lesson/presentation_layer/factory.py", "def broken(:\n"), base=CONTROLLER_FILES), "check-api-error-controller-contract.py", controller_args(), 1, "사용 오류"),
         Case("controller-analysis-missing-selected-controller-path", CONTROLLER_FILES, "check-api-error-controller-contract.py", controller_args("--controller-module", "application/lesson/presentation_layer/missing_controller.py"), 1, "사용 오류"),
-        Case("controller-analysis-auto-profile", CONTROLLER_FILES, "check-api-error-controller-contract.py", (TARGET_DIR, "--error-profile", "auto", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 0, ""),
-        Case("controller-analysis-missing-args", CONTROLLER_FILES, "check-api-error-controller-contract.py", (TARGET_DIR, "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--error-profile", "missing:--api-module", "missing:--controller-module", "missing:--scope-bc", "missing:--error-bc"})),
+        Case("controller-analysis-auto-profile", CONTROLLER_FILES, "check-api-error-controller-contract.py", AUTO_PROFILE_ARGS, 0, ""),
+        Case("controller-analysis-missing-args", CONTROLLER_FILES, "check-api-error-controller-contract.py", (TARGET_DIR, "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--error-profile", "missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
         # Reviewer gaps deliberately remain outside the deterministic oracle:
         # application collaborator identity, broad exception hidden by re-export,
         # and two-hop/off-selection helpers.
@@ -406,12 +510,39 @@ def context_args(*extra: str) -> tuple[str, ...]:
 
 def context_cases() -> list[Case]:
     """Context, root-purity, layer-purity, and grandfathering cases."""
-    legacy_http = """from ninja import HttpError
+    legacy_http_error = """from ninja import HttpError
 
 def load_lesson():
     raise HttpError(404, "missing")
 """
+    legacy_http_import_only = """from django.http import JsonResponse
+from ninja import Status
+
+
+def load_lesson():
+    return None
+"""
+    legacy_raw_http_response = """from django.http import JsonResponse
+
+
+def load_lesson():
+    return JsonResponse({"error": "missing"})
+"""
+    legacy_http_error_status = """from django.http import JsonResponse as NativeJsonResponse
+
+
+def load_lesson():
+    return NativeJsonResponse({"error": "missing"}, status=404)
+"""
     clean_legacy = "def load_lesson(): return None\n"
+    empty_error_bc_files = with_files(
+        (
+            "application/lesson/presentation_layer/controller.py",
+            "def get_lesson(request): return {'id': 1}\n",
+        ),
+        ("application/lesson/presentation_layer/schema/error_out.py", "<REMOVE>"),
+        base=CONTEXT_FILES,
+    )
     preserve_args = (
         TARGET_DIR,
         "--error-profile",
@@ -432,6 +563,7 @@ def load_lesson():
         Case("context-clean-upstream-exception-translated-in-acl", with_files(("application/lesson/infra_layer/acl/catalog.py", "from application.catalog.domain_layer.exceptions import CatalogMissing\nfrom application.lesson.domain_layer.exceptions import LessonCatalogUnavailable\n\n\ndef load_catalog(fetch):\n    try:\n        return fetch()\n    except CatalogMissing as exc:\n        raise LessonCatalogUnavailable() from exc\n"), ("application/catalog/domain_layer/exceptions.py", "class CatalogMissing(Exception): pass\n"), ("application/lesson/domain_layer/exceptions.py", "class LessonCatalogUnavailable(Exception): pass\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 0, ""),
         Case("context-clean-separated-preserve-scope", with_files(("legacy/api.py", "api = object()\n"), ("legacy/controller.py", "def legacy(request): return {'error': 'old'}\n"), base=CONTEXT_FILES), "check-context-isolation.py", preserve_args, 0, ""),
         Case("context-clean-existing-s1-s3-permitted-directions", with_files(("application/lesson/domain_layer/service.py", "from application.lesson.domain_layer.model import Lesson\n"), ("application/catalog/published_service/public/contract/query.py", "class CatalogQuery: pass\n"), ("application/lesson/application_layer/use_catalog.py", "from application.catalog.published_service.public.contract.query import CatalogQuery\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 0, ""),
+        Case("context-clean-empty-error-bc", empty_error_bc_files, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson"), 0, ""),
         Case("context-root-api-imports-bc", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\nfrom application.lesson.presentation_layer.controller import get_lesson\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-local-global-error-code", with_files(("config/api.py", "from enum import StrEnum\nfrom ninja_extra import NinjaExtraAPI\nclass GlobalErrorCode(StrEnum):\n    BAD = 'bad'\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-root-api-local-error-out", with_files(("config/api.py", "from ninja import Schema\nfrom ninja_extra import NinjaExtraAPI\nclass ErrorOut(Schema):\n    detail: str\napi = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
@@ -448,16 +580,19 @@ def load_lesson():
         Case("context-existing-s1-cross-bc-internal", with_files(("application/lesson/domain_layer/service.py", "from application.catalog.infra_layer.repository import CatalogRepository\n"), ("application/catalog/infra_layer/repository.py", "class CatalogRepository: pass\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args("--scope-bc", "catalog"), 2, "BLOCKER"),
         Case("context-existing-s2-contract-layer-import", with_files(("application/lesson/published_service/public/contract/query.py", "from application.lesson.domain_layer.model import Lesson\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
         Case("context-existing-s3-own-published-import", with_files(("application/lesson/application_layer/use_case.py", "from application.lesson.published_service.public.contract.query import LessonQuery\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 2, "BLOCKER"),
-        Case("context-preserve-untouched-application-http-grandfathered", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http}, "check-context-isolation.py", preserve_args, 0, "", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http}),
-        Case("context-preserve-touched-application-http-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
-        Case("context-preserve-untracked-application-http-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n"}),
+        Case("context-preserve-untouched-application-http-grandfathered", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}, "check-context-isolation.py", preserve_args, 0, "", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}),
+        Case("context-preserve-touched-application-http-error-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
+        Case("context-preserve-touched-application-http-import-only-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_import_only}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
+        Case("context-preserve-touched-application-raw-http-response-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_raw_http_response}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
+        Case("context-preserve-touched-application-http-status-keyword-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error_status}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": clean_legacy}),
+        Case("context-preserve-untracked-application-http-blocked", {"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n", "application/legacy/application_layer/use_case.py": legacy_http_error}, "check-context-isolation.py", preserve_args, 2, "BLOCKER", baseline_files={"legacy/api.py": "api = object()\n", "legacy/controller.py": "pass\n"}),
         Case("context-analysis-multiple-api-instances", with_files(("config/api.py", "from ninja_extra import NinjaExtraAPI\npublic_api = NinjaExtraAPI()\ninternal_api = NinjaExtraAPI()\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 1, "사용 오류"),
         Case("context-analysis-api-controller-overlap", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "config/api.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 1, "사용 오류", allowed_arg_issues=frozenset({"overlap:--api-module/--controller-module"})),
         Case("context-analysis-selected-api-syntax", with_files(("config/api.py", "api = (\n"), base=CONTEXT_FILES), "check-context-isolation.py", context_args(), 1, "사용 오류"),
         Case("context-analysis-selected-controller-read", CONTEXT_FILES, "check-context-isolation.py", context_args("--controller-module", "application/lesson/presentation_layer/missing.py"), 1, "사용 오류"),
         Case("context-analysis-selected-root-escape", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "../outside.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 1, "사용 오류", allowed_arg_issues=frozenset({"root-escape:--api-module"})),
-        Case("context-analysis-incomplete-code-source-args", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--api-module", "missing:--controller-module", "missing:--scope-bc", "missing:--error-bc"})),
-        Case("context-clean-auto-profile-legacy-rules", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "auto", "--scope", "diagnostic", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 0, ""),
+        Case("context-analysis-incomplete-code-source-args", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
+        Case("context-clean-auto-profile-legacy-rules", CONTEXT_FILES, "check-context-isolation.py", AUTO_PROFILE_ARGS, 0, ""),
         Case("context-clean-legacy-positional-help", CONTEXT_FILES, "check-context-isolation.py", (TARGET_DIR,), 0, ""),
         Case("context-fp-tests-migrations-cache-venv", {**CONTEXT_FILES, "application/lesson/application_layer/tests/test_leak.py": "from ninja import Status\n", "application/lesson/application_layer/migrations/0001_leak.py": "from ninja import Status\n", "application/lesson/application_layer/.cache/leak.py": "from ninja import Status\n", "application/lesson/application_layer/.venv/leak.py": "from ninja import Status\n"}, "check-context-isolation.py", context_args(), 0, ""),
         Case("context-fp-unignored-generated-path", {**CONTEXT_FILES, ".gitignore": "application/lesson/application_layer/ignored_leak.py\n", "application/lesson/application_layer/generated/leak.py": "from application.lesson.published_service.public.contract.query import LessonQuery\n"}, "check-context-isolation.py", context_args(), 0, "", baseline_files={**CONTEXT_FILES, ".gitignore": "application/lesson/application_layer/ignored_leak.py\n"}),
@@ -543,19 +678,7 @@ def composition_cases() -> list[Case]:
         "--registrar-module",
         "legacy/registrar.py",
     )
-    auto_selector_args = (
-        TARGET_DIR,
-        "--error-profile",
-        "auto",
-        "--scope",
-        "diagnostic",
-        "--api-module",
-        "legacy/api.py",
-        "--urlconf-module",
-        "legacy/urls.py",
-        "--registrar-module",
-        "legacy/registrar.py",
-    )
+    auto_selector_args = AUTO_PROFILE_ARGS
     inactive_registrar_files = {
         "legacy/api.py": "api = object()\n",
         "legacy/urls.py": "from legacy.api import api\n",
@@ -646,6 +769,22 @@ def openapi_args(*extra: str) -> tuple[str, ...]:
 
 def openapi_cases() -> list[Case]:
     """Returned-error/status/schema agreement and OpenAPI purity cases."""
+    empty_error_bc_files = with_files(
+        (
+            "application/lesson/presentation_layer/controller.py",
+            """from ninja import Router
+
+router = Router()
+
+
+@router.get("/{lesson_id}", response={200: dict})
+def get_lesson(request, lesson_id: int):
+    return {"id": lesson_id}
+""",
+        ),
+        ("application/lesson/presentation_layer/schema/error_out.py", "<REMOVE>"),
+        base=OPENAPI_FILES,
+    )
     preserve_files = {
         "legacy/api.py": "api = object()\n",
         "legacy/controller.py": """from ninja import Router
@@ -745,6 +884,7 @@ def ignored(request): return {"ok": True}
         Case("openapi-clean-framework-statuses-not-advertised", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-separated-preserve-response-behavior", clean_with_preserve, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-security-examples-metadata", with_files(("application/lesson/presentation_layer/controller.py", metadata_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-empty-error-bc", empty_error_bc_files, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson"), 0, ""),
         Case("openapi-returned-409-missing-from-response", with_files(("application/lesson/presentation_layer/controller.py", missing_409), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-returned-error-mapped-to-other-bc-base", with_files(("application/catalog/presentation_layer/schema/error_out.py", CATALOG_DUPLICATE_ERROR_OUT), ("application/lesson/presentation_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonErrorOut", "409: CatalogErrorOut").replace("from application.lesson.presentation_layer.schema.error_out import", "from application.catalog.presentation_layer.schema.error_out import CatalogErrorOut\nfrom application.lesson.presentation_layer.schema.error_out import")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args("--scope-bc", "catalog", "--error-bc", "catalog"), 2, "BLOCKER"),
         Case("openapi-returned-error-mapped-to-common-base", with_files(("application/lesson/presentation_layer/controller.py", OPENAPI_CONTROLLER.replace("409: LessonErrorOut", "409: ErrorOut").replace("from ninja import Router, Status", "from ninja import Router, Status\nfrom common.ninja.response.error_out import ErrorOut")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
@@ -766,8 +906,8 @@ def ignored(request): return {"ok": True}
         Case("openapi-analysis-selected-controller-syntax", with_files(("application/lesson/presentation_layer/controller.py", "def broken(:\n"), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
         Case("openapi-analysis-selected-controller-read", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args("--controller-module", "application/lesson/presentation_layer/missing.py"), 1, "사용 오류"),
         Case("openapi-analysis-selected-root-escape", OPENAPI_FILES, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "../outside.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 1, "사용 오류", allowed_arg_issues=frozenset({"root-escape:--api-module"})),
-        Case("openapi-clean-auto-profile-legacy-rules", OPENAPI_FILES, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "auto", "--scope", "diagnostic", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--error-bc", "lesson"), 0, ""),
-        Case("openapi-analysis-missing-code-source-args", OPENAPI_FILES, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--api-module", "missing:--controller-module", "missing:--scope-bc", "missing:--error-bc"})),
+        Case("openapi-clean-auto-profile-legacy-rules", OPENAPI_FILES, "check-openapi-error-declaration.py", AUTO_PROFILE_ARGS, 0, ""),
+        Case("openapi-analysis-missing-code-source-args", OPENAPI_FILES, "check-openapi-error-declaration.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
         Case("openapi-clean-legacy-positional-help", OPENAPI_FILES, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, ""),
         Case("openapi-fp-tests-migrations-cache-venv", {**OPENAPI_FILES, "application/lesson/presentation_layer/tests/test_openapi.py": excluded_violation, "application/lesson/presentation_layer/migrations/0001_openapi.py": excluded_violation, "application/lesson/presentation_layer/.cache/openapi.py": excluded_violation, "application/lesson/presentation_layer/.venv/openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, ""),
         Case("openapi-fp-unignored-generated-path", {**OPENAPI_FILES, ".gitignore": "application/lesson/presentation_layer/ignored_openapi.py\n", "application/lesson/presentation_layer/generated/openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, "", baseline_files={**OPENAPI_FILES, ".gitignore": "application/lesson/presentation_layer/ignored_openapi.py\n"}),
@@ -939,6 +1079,8 @@ def validate_checker_args(case: Case) -> None:
         index += arity + 1
 
     if not values_by_argument:
+        if case.checker not in TARGET_ONLY_CHECKERS:
+            raise ValueError(f"[{case.name}] checker does not support target-only invocation")
         if case.allowed_arg_issues:
             raise ValueError(f"[{case.name}] target-only command cannot allow argument issues")
         return
@@ -950,58 +1092,42 @@ def validate_checker_args(case: Case) -> None:
     if unsupported:
         raise ValueError(f"[{case.name}] unsupported checker-specific arguments: {sorted(unsupported)}")
 
-    required_arguments = {
-        "check-error-centralization.py": {
+    issues: set[str] = set()
+    profile_values = values_by_argument.get("--error-profile", [])
+    if case.checker == "check-response-schema-bypass.py":
+        required_arguments = {"--controller-module"}
+    elif not profile_values:
+        required_arguments = {
             "--error-profile",
-            "--scope",
-            "--api-module",
-            "--controller-module",
-            "--scope-bc",
-            "--project-code-error-module",
-        },
-        "check-api-error-controller-contract.py": {
-            "--error-profile",
-            "--scope",
-            "--api-module",
-            "--controller-module",
-            "--scope-bc",
-            "--error-bc",
-        },
-        "check-context-isolation.py": {
-            "--error-profile",
-            "--scope",
-            "--api-module",
-            "--controller-module",
-            "--scope-bc",
-            "--error-bc",
-        },
-        "check-openapi-error-declaration.py": {
-            "--error-profile",
-            "--scope",
-            "--api-module",
-            "--controller-module",
-            "--scope-bc",
-            "--error-bc",
-        },
-        "check-composition-root.py": {
-            "--error-profile",
-            "--scope",
-            "--api-module",
-            "--urlconf-module",
-            "--registrar-module",
-        },
-        "check-response-schema-bypass.py": {"--controller-module"},
-    }[case.checker]
-    issues = {
+            *PROFILE_REQUIRED_ARGUMENTS["dddjango-code-json"][case.checker],
+        }
+    elif len(profile_values) != 1:
+        required_arguments = set()
+    elif profile_values == ["auto"]:
+        required_arguments = set()
+        for argument in set(values_by_argument) - {"--error-profile"}:
+            issues.add(f"auto-selector:{argument}")
+    elif profile_values[0] in PROFILE_REQUIRED_ARGUMENTS:
+        required_arguments = set(
+            PROFILE_REQUIRED_ARGUMENTS[profile_values[0]][case.checker]
+        )
+        if (
+            profile_values == ["preserve-established"]
+            and case.checker == "check-composition-root.py"
+            and set(values_by_argument) - {"--error-profile"}
+        ):
+            required_arguments.update(
+                {"--scope", "--api-module", "--urlconf-module", "--registrar-module"}
+            )
+    else:
+        required_arguments = set()
+        issues.add("value:--error-profile")
+
+    issues.update(
         f"missing:{argument}"
         for argument in required_arguments
         if not values_by_argument.get(argument)
-    }
-
-    profile_values = values_by_argument.get("--error-profile", [])
-    if profile_values == ["preserve-established"] and case.checker == "check-error-centralization.py":
-        if not values_by_argument.get("--project-preserve-error-module"):
-            issues.add("missing:--project-preserve-error-module")
+    )
 
     for argument, values in values_by_argument.items():
         if argument in SINGULAR_ARGUMENTS and len(values) != 1:
