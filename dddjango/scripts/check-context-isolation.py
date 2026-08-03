@@ -68,6 +68,7 @@ import argparse
 import ast
 import os
 import re
+import stat
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -353,6 +354,20 @@ def _filesystem_code_paths(root: Path) -> tuple[Path, ...]:
     return tuple(sorted(paths, key=Path.as_posix))
 
 
+def _has_git_marker(root: Path) -> bool:
+    for directory in (root, *root.parents):
+        marker = directory / ".git"
+        try:
+            marker_mode = marker.stat().st_mode
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise UsageError(f"Git marker 접근 불능: {marker} ({exc})") from exc
+        if stat.S_ISDIR(marker_mode) or stat.S_ISREG(marker_mode):
+            return True
+    return False
+
+
 def _code_inventory(root: Path) -> CodeInventory:
     try:
         probe = subprocess.run(
@@ -363,7 +378,12 @@ def _code_inventory(root: Path) -> CodeInventory:
         )
     except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
         raise UsageError(f"Git worktree 판정 불능: {exc}") from exc
-    if probe.returncode != 0 or probe.stdout.strip() != "true":
+    if probe.returncode != 0:
+        if _has_git_marker(root):
+            detail = probe.stderr.strip() or probe.stdout.strip()
+            raise UsageError(f"Git worktree 판정 불능: {detail}")
+        return CodeInventory(_filesystem_code_paths(root), None)
+    if probe.stdout.strip() != "true":
         return CodeInventory(_filesystem_code_paths(root), None)
 
     try:
@@ -426,9 +446,7 @@ def _code_inventory(root: Path) -> CodeInventory:
     )
 
 
-def _code_is_touched(git_root: Path | None, file_path: Path) -> bool:
-    if git_root is None:
-        return True
+def _git_path_is_touched(git_root: Path, file_path: Path) -> bool:
     try:
         git_relative = file_path.relative_to(git_root)
     except ValueError as exc:
@@ -481,6 +499,20 @@ def _code_is_touched(git_root: Path | None, file_path: Path) -> bool:
     return changed.returncode == 1
 
 
+def _code_is_touched(
+    git_root: Path | None,
+    lexical_path: Path,
+    resolved_path: Path,
+) -> bool:
+    if git_root is None:
+        return True
+    lexical_touched = _git_path_is_touched(git_root, lexical_path)
+    if lexical_path == resolved_path:
+        return lexical_touched
+    resolved_touched = _git_path_is_touched(git_root, resolved_path)
+    return lexical_touched or resolved_touched
+
+
 def _code_sources(config: Config) -> list[ParsedSource]:
     inventory = _code_inventory(config.root)
     inventory_paths = set(inventory.relative_paths)
@@ -510,8 +542,9 @@ def _code_sources(config: Config) -> list[ParsedSource]:
     parsed: list[ParsedSource] = []
     resolved_paths: dict[Path, Path] = {}
     for relative_path in source_paths:
+        lexical_path = config.root / relative_path
         try:
-            file_path = (config.root / relative_path).resolve()
+            file_path = lexical_path.resolve()
         except (OSError, RuntimeError) as exc:
             issues.append(f"production source resolve 불능: {relative_path} ({exc})")
             continue
@@ -531,7 +564,11 @@ def _code_sources(config: Config) -> list[ParsedSource]:
                 continue
             source = file_path.read_text(encoding="utf-8")
             tree = ast.parse(source, filename=relative_path.as_posix())
-            touched = _code_is_touched(inventory.git_root, file_path)
+            touched = _code_is_touched(
+                inventory.git_root,
+                lexical_path,
+                file_path,
+            )
         except (OSError, UnicodeError, SyntaxError) as exc:
             issues.append(f"production source 분석 불능: {relative_path} ({exc})")
             continue
