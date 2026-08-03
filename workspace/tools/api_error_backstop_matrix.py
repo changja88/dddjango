@@ -162,6 +162,35 @@ class LessonConflictError(LessonErrorOut):
     detail: str = "The lesson cannot be changed."
 """
 
+ALIAS_COMMON_ERROR_OUT = COMMON_ERROR_OUT.replace(
+    "from ninja import Schema",
+    "from ninja import Schema as NinjaSchema",
+).replace("class ErrorOut(Schema):", "class ErrorOut(NinjaSchema):")
+
+ALIAS_LESSON_ERROR_OUT = (
+    LESSON_ERROR_OUT.replace("from enum import StrEnum", "from enum import StrEnum as StringEnum")
+    .replace(
+        "from common.ninja.response.error_out import ErrorOut",
+        "from common.ninja.response.error_out import ErrorOut as CommonErrorOut",
+    )
+    .replace("class LessonErrorCode(StrEnum):", "class LessonErrorCode(StringEnum):")
+    .replace("class LessonErrorOut(ErrorOut):", "class LessonErrorOut(CommonErrorOut):")
+)
+
+DYNAMIC_COMMON_ERROR_OUT = COMMON_ERROR_OUT + "    trace_id: str\n"
+
+DYNAMIC_LESSON_ERROR_OUT = (
+    LESSON_ERROR_OUT.replace(
+        '    detail: str = "The lesson does not exist."\n',
+        '    detail: str = "The lesson does not exist."\n'
+        '    trace_id: str = "lesson-not-found"\n',
+    ).replace(
+        '    detail: str = "The lesson cannot be changed."\n',
+        '    detail: str = "The lesson cannot be changed."\n'
+        '    trace_id: str = "lesson-conflict"\n',
+    )
+)
+
 CATALOG_DUPLICATE_ERROR_OUT = """from enum import StrEnum
 from common.ninja.response.error_out import ErrorOut
 
@@ -180,6 +209,11 @@ class CatalogNotFoundError(CatalogErrorOut):
     status: int = 404
     detail: str = "The catalog entry does not exist."
 """
+
+VALID_CATALOG_ERROR_OUT = CATALOG_DUPLICATE_ERROR_OUT.replace(
+    'NOT_FOUND = "lesson_not_found"',
+    'NOT_FOUND = "catalog_not_found"',
+)
 
 BASE_FILES: Final = {
     "common/ninja/response/__init__.py": "",
@@ -325,6 +359,82 @@ def schema_cases() -> list[Case]:
         .replace("class LessonNotFoundError(LessonErrorOut):", "class LessonNotFoundError(ErrorOut):")
         .replace("class LessonConflictError(LessonErrorOut):", "class LessonConflictError(ErrorOut):")
     )
+    preserve_empty_inventories = {
+        "legacy/api.py": "api = object()\n",
+        "legacy/controller.py": "def legacy(request): return {'error': 'old'}\n",
+        "application/legacy/application_layer/use_case.py": (
+            "def run():\n"
+            "    status = 404\n"
+            "    return status\n"
+        ),
+    }
+    preserve_empty_inventory_args = (
+        TARGET_DIR,
+        "--error-profile",
+        "preserve-established",
+        "--scope",
+        "legacy-v1",
+        "--api-module",
+        "legacy/api.py",
+        "--controller-module",
+        "legacy/controller.py",
+        "--scope-bc",
+        "legacy",
+    )
+    alias_import_files = with_files(
+        ("common/ninja/response/error_out.py", ALIAS_COMMON_ERROR_OUT),
+        ("application/lesson/presentation_layer/schema/error_out.py", ALIAS_LESSON_ERROR_OUT),
+    )
+    dynamic_required_files = with_files(
+        ("common/ninja/response/error_out.py", DYNAMIC_COMMON_ERROR_OUT),
+        ("application/lesson/presentation_layer/schema/error_out.py", DYNAMIC_LESSON_ERROR_OUT),
+    )
+    missing_dynamic_default = DYNAMIC_LESSON_ERROR_OUT.replace(
+        '    trace_id: str = "lesson-not-found"\n',
+        "",
+        1,
+    )
+    preserve_duplicate_error_out = LESSON_ERROR_OUT.replace("Lesson", "Legacy")
+    code_with_preserve_duplicate = with_files(
+        (
+            "application/legacy/presentation_layer/schema/error_out.py",
+            preserve_duplicate_error_out,
+        ),
+    )
+    shared_code_concretes = (
+        LESSON_ERROR_OUT.replace(
+            "code: LessonErrorCode = LessonErrorCode.CONFLICT",
+            "code: LessonErrorCode = LessonErrorCode.NOT_FOUND",
+        )
+        .replace('title: str = "Lesson conflict"', 'title: str = "Lesson not found"')
+        .replace("status: int = 409", "status: int = 404")
+    )
+    ignored_generated_baseline = {
+        **BASE_FILES,
+        ".gitignore": "common/ninja/response/ignored.py\n",
+    }
+    ignored_generated_files = {
+        **ignored_generated_baseline,
+        "common/ninja/response/ignored.py": "def ignored_helper(): pass\n",
+        "common/ninja/response/generated/decoy.py": "def generated_helper(): pass\n",
+    }
+    foreign_enum_default = LESSON_ERROR_OUT.replace(
+        "from common.ninja.response.error_out import ErrorOut",
+        "from common.ninja.response.error_out import ErrorOut\n"
+        "from application.catalog.presentation_layer.schema.error_out import CatalogErrorCode",
+    ).replace(
+        "code: LessonErrorCode = LessonErrorCode.NOT_FOUND",
+        "code: LessonErrorCode = CatalogErrorCode.NOT_FOUND",
+        1,
+    )
+    raw_string_controller = """from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+
+def get_lesson(request):
+    error = LessonNotFoundError()
+    error.code = "lesson_not_found"
+    return error
+"""
     return [
         Case("schema-clean-common-base-and-two-concrete", BASE_FILES, "check-error-centralization.py", schema_args(), 0, ""),
         Case("schema-clean-empty-error-bc", common_only, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--project-code-error-module", "common/ninja/response/error_out.py"), 0, ""),
@@ -332,6 +442,87 @@ def schema_cases() -> list[Case]:
         Case("schema-clean-same-profile-common-enum-reuse-v1", reused_surfaces, "check-error-centralization.py", schema_args(), 0, ""),
         Case("schema-clean-same-profile-common-enum-reuse-v2", reused_surfaces, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v2", "--api-module", "config/api_v2.py", "--controller-module", "application/lesson/presentation_layer/controller_v2.py", "--scope-bc", "lesson", "--error-bc", "lesson", "--project-code-error-module", "common/ninja/response/error_out.py", "--project-code-error-module", "application/lesson/presentation_layer/schema/error_out.py"), 0, ""),
         Case("schema-clean-canonical-looking-preserve-excluded", preserve, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "preserve-established", "--scope", "legacy", "--api-module", "legacy/api.py", "--controller-module", "legacy/controller.py", "--scope-bc", "legacy", "--error-bc", "legacy", "--project-code-error-module", "common/ninja/response/error_out.py", "--project-preserve-error-module", "legacy/errors.py"), 0, ""),
+        Case(
+            "schema-clean-preserve-empty-inventories",
+            preserve_empty_inventories,
+            "check-error-centralization.py",
+            preserve_empty_inventory_args,
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-target-only-auto-na",
+            with_files(("common/ninja/response/error_out.py", "class Broken(:\n")),
+            "check-error-centralization.py",
+            (TARGET_DIR,),
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-required-import-aliases",
+            alias_import_files,
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-dynamic-common-required-field",
+            dynamic_required_files,
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-code-profile-preserve-duplicate-excluded",
+            code_with_preserve_duplicate,
+            "check-error-centralization.py",
+            schema_args(
+                "--project-preserve-error-module",
+                "application/legacy/presentation_layer/schema/error_out.py",
+            ),
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-unprefixed-wire-code",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    LESSON_ERROR_OUT.replace("lesson_not_found", "not_found").replace(
+                        "lesson_conflict",
+                        "conflict",
+                    ),
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-multiple-concrete-share-one-code",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    shared_code_concretes,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-clean-git-ignored-generated-decoys",
+            ignored_generated_files,
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+            baseline_files=ignored_generated_baseline,
+        ),
         Case("schema-missing-designated-error-bc-artifact", with_files(("application/lesson/presentation_layer/schema/error_out.py", "<REMOVE>")), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         Case("schema-common-init-missing", with_files(("common/ninja/response/__init__.py", "<REMOVE>")), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         Case("schema-common-error-out-missing", with_files(("common/ninja/response/error_out.py", "<REMOVE>")), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
@@ -352,7 +543,221 @@ def schema_cases() -> list[Case]:
         Case("schema-project-duplicate-wire-code-across-bcs", duplicate_project_code, "check-error-centralization.py", schema_args("--scope-bc", "catalog", "--error-bc", "catalog", "--project-code-error-module", "application/catalog/presentation_layer/schema/error_out.py"), 2, "BLOCKER"),
         Case("schema-literal-code", with_files(("application/lesson/presentation_layer/schema/error_out.py", LESSON_ERROR_OUT.replace("from enum import StrEnum", "from enum import StrEnum\nfrom typing import Literal").replace("code: LessonErrorCode", "code: Literal['lesson_not_found']", 1))), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
         Case("schema-str-code", with_files(("application/lesson/presentation_layer/schema/error_out.py", LESSON_ERROR_OUT.replace("code: LessonErrorCode", "code: str", 1))), "check-error-centralization.py", schema_args(), 2, "BLOCKER"),
+        Case(
+            "schema-concrete-missing-dynamic-required-default",
+            with_files(
+                ("common/ninja/response/error_out.py", DYNAMIC_COMMON_ERROR_OUT),
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    missing_dynamic_default,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-common-init-nonempty",
+            with_files(
+                (
+                    "common/ninja/response/__init__.py",
+                    "from .error_out import ErrorOut\n",
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-common-helper",
+            with_files(
+                (
+                    "common/ninja/response/error_out.py",
+                    COMMON_ERROR_OUT + "\ndef make_error():\n    return ErrorOut\n",
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-common-enum",
+            with_files(
+                (
+                    "common/ninja/response/error_out.py",
+                    COMMON_ERROR_OUT
+                    + "\nfrom enum import StrEnum\n\n"
+                    + "class CommonErrorCode(StrEnum):\n"
+                    + '    NOT_FOUND = "not_found"\n',
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-common-duplicate-errorout",
+            with_files(
+                (
+                    "common/ninja/response/error_out.py",
+                    COMMON_ERROR_OUT
+                    + "\nclass ErrorOut(Schema):\n"
+                    + "    code: str\n"
+                    + "    title: str\n"
+                    + "    status: int\n"
+                    + "    detail: str\n",
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-enum-wrong-inheritance",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    LESSON_ERROR_OUT.replace("from enum import StrEnum", "from enum import Enum").replace(
+                        "class LessonErrorCode(StrEnum):",
+                        "class LessonErrorCode(Enum):",
+                    ),
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-enum-wire-not-snake-case",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    LESSON_ERROR_OUT.replace("lesson_not_found", "Lesson-Not-Found"),
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-project-duplicate-wire-code-within-enum",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    LESSON_ERROR_OUT.replace("lesson_conflict", "lesson_not_found"),
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-base-code-has-default",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    LESSON_ERROR_OUT.replace(
+                        "    code: LessonErrorCode\n",
+                        "    code: LessonErrorCode = LessonErrorCode.NOT_FOUND\n",
+                        1,
+                    ),
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-concrete-code-default-from-other-enum",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    foreign_enum_default,
+                ),
+                (
+                    "application/catalog/presentation_layer/schema/error_out.py",
+                    VALID_CATALOG_ERROR_OUT,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(
+                "--scope-bc",
+                "catalog",
+                "--error-bc",
+                "catalog",
+                "--project-code-error-module",
+                "application/catalog/presentation_layer/schema/error_out.py",
+            ),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-raw-string-code-selected-controller",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/controller.py",
+                    raw_string_controller,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-extra-untracked-common-file",
+            with_files(
+                (
+                    "common/ninja/response/helper.py",
+                    "def make_error(): pass\n",
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+            baseline_files=BASE_FILES,
+        ),
         Case("schema-analysis-syntax", with_files(("application/lesson/presentation_layer/schema/error_out.py", "class Broken(:\n")), "check-error-centralization.py", schema_args(), 1, "사용 오류"),
+        Case(
+            "schema-analysis-dynamic-enum-value",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    LESSON_ERROR_OUT.replace(
+                        'NOT_FOUND = "lesson_not_found"',
+                        "NOT_FOUND = make_code()",
+                    ),
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            1,
+            "사용 오류",
+        ),
+        Case(
+            "schema-analysis-duplicate-inventory-selector",
+            BASE_FILES,
+            "check-error-centralization.py",
+            schema_args(
+                "--project-code-error-module",
+                "application/lesson/presentation_layer/schema/error_out.py",
+            ),
+            1,
+            "사용 오류",
+            allowed_arg_issues=frozenset(
+                {"duplicate:--project-code-error-module"}
+            ),
+        ),
         Case("schema-analysis-root-escape", BASE_FILES, "check-error-centralization.py", schema_args("--project-code-error-module", "../outside.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"root-escape:--project-code-error-module"})),
         Case("schema-analysis-unresolved-base", with_files(("application/lesson/presentation_layer/schema/error_out.py", LESSON_ERROR_OUT.replace("from common.ninja.response.error_out import ErrorOut", "from missing import ErrorOut"))), "check-error-centralization.py", schema_args(), 1, "사용 오류"),
         Case("schema-analysis-missing-source", BASE_FILES, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--project-code-error-module", "application/lesson/presentation_layer/schema/error_out.py"), 1, "사용 오류", allowed_arg_issues=frozenset({"missing:--scope", "missing:--api-module", "missing:--controller-module", "missing:--scope-bc"})),
