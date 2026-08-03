@@ -184,10 +184,10 @@ common/
 
 application/
 ├── lessons/
-│   ├── lessons_api_router.py
-│   │   # register_lessons_api(api): controller 등록만 수행
-│   │
 │   └── presentation_layer/
+│       ├── registrar.py
+│       │   # register_lessons_api(api): controller 등록만 수행
+│       │
 │       ├── api/
 │       │   └── lesson/
 │       │       └── lesson_controller.py
@@ -202,8 +202,8 @@ application/
 │               # LessonNotFoundError 등 준비된 같은-shape 응답
 │
 └── <bc>/
-    ├── <bc>_api_router.py
     └── presentation_layer/
+        ├── registrar.py
         ├── api/
         │   └── <resource>/
         │       └── <resource>_controller.py
@@ -433,7 +433,7 @@ discipline reviewer가 확인한다.
 ### 8.4 BC controller 등록
 
 ```python
-# application/lessons/lessons_api_router.py
+# application/lessons/presentation_layer/registrar.py
 
 def register_lessons_api(api: NinjaExtraAPI) -> None:
     api.register_controllers(LessonController)
