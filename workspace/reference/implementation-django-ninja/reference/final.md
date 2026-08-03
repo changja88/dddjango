@@ -651,6 +651,8 @@ layer DTO에서 import하고 command는 BC `composition_root`에서 조립한다
 `ErrorOut`을 만들며 예외 path나 presentation helper를 흉내 내지 않는다.
 
 ```python
+from typing import assert_never
+
 from ninja import Status
 from ninja_extra import api_controller, route, status
 
@@ -659,6 +661,7 @@ from application.order.application_layer.reserve_order.dto.reserve_order_request
 )
 from application.order.application_layer.reserve_order.dto.reserve_order_result import (
     ReserveOrderInsufficientStockResult,
+    ReserveOrderResult,
     ReserveOrderSucceededResult,
 )
 from application.order.composition_root import build_reserve_order_command
@@ -666,8 +669,8 @@ from application.order.presentation_layer.schema.error_out import (
     OrderErrorOut,
     OrderInsufficientStockError,
 )
-from application.order.presentation_layer.schema.reserve_order_in import ReserveOrderIn
-from application.order.presentation_layer.schema.order_out import OrderOut
+from application.order.presentation_layer.schema.schema_in import OrderIn
+from application.order.presentation_layer.schema.schema_out import OrderOut
 
 
 @api_controller("/orders", tags=["orders"], auto_import=False)
@@ -681,14 +684,14 @@ class OrderController:
     def reserve_order(
         self,
         request,
-        payload: ReserveOrderIn,
+        payload: OrderIn,
     ) -> Status[OrderOut | OrderErrorOut]:
         request_value = ReserveOrderRequest(
             order_id=payload.order_id,
             quantity=payload.quantity,
         )
         command = build_reserve_order_command()
-        result = command.execute(request_value)
+        result: ReserveOrderResult = command.execute(request_value)
 
         if isinstance(result, ReserveOrderInsufficientStockResult):
             error = OrderInsufficientStockError()
@@ -697,7 +700,13 @@ class OrderController:
         if isinstance(result, ReserveOrderSucceededResult):
             response = OrderOut.from_result(result.order)
             return Status(status.HTTP_201_CREATED, response)
+
+        assert_never(result)
 ```
+
+application-owned closed `ReserveOrderResult`와 `assert_never`가 mapping을 exhaustive하게 만든다.
+새 variant나 untyped 값은 `None`으로 조용히 반환되거나 BC 오류로 꾸며지지 않고 framework-owned
+500 계약 위반으로 드러난다.
 
 반대로 use case가 계약상 Result/`None`을 native 성공으로 반환하면 controller가 그 값을 helper
 없이 직접 성공 계약으로 반환할 수 있다. `None`/Result 자체가 언제나 실패라는 뜻은 아니다.
