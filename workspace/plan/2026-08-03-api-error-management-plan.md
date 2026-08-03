@@ -127,7 +127,7 @@ Error response가 있는 설계 명세는 다음 12개 항목을 표 형태로 �
 - Create: `workspace/tools/api_error_backstop_matrix.py`
 
 - [ ] Step 1: `tempfile.TemporaryDirectory` 안에 최소 Django/Ninja 소스 트리만 문자열 fixture로 만들고 checker를 `subprocess.run`하는 data-driven runner를 작성한다. Django/ninja import 실행은 하지 않고 AST checker의 exit code/stdout만 검증한다.
-- [ ] Step 2: 각 case는 `name`, `files`, `checker`, checker별 `checker_args`(`TARGET_DIR`, profile/scope, 정확한 API/controller/URLconf/registrar source, scope/error BC, project code/preserve error-module inventory 포함), `expected_exit`, `expected_fragment`를 가진다. 실패 시 전체 case 이름과 실제 stdout/stderr를 출력하고 마지막에 통과 수를 출력한다. Coordinator가 실제 렌더할 명령도 같은 runner에서 실행해 문서용 인자와 checker CLI가 갈리지 않게 한다.
+- [ ] Step 2: 각 case는 `name`, `files`, `checker`, checker별 `checker_args`(`TARGET_DIR`, profile/scope, 정확한 API/controller/URLconf/registrar source, scope/error BC, project code/preserve error-module inventory 포함), `expected_exit`, `expected_fragment`를 가진다. 실패 시 전체 case 이름과 실제 stdout/stderr를 출력하고 마지막에 통과 수를 출력한다. Coordinator prompt의 명령 계약에서 추출해 verifier가 합성한 명령도 같은 runner에서 실행해 문서용 인자와 checker CLI가 갈리지 않게 한다. 이를 별도 Coordinator renderer의 런타임 관측으로 부르지 않는다.
 - [ ] Step 3: 정본 checker만 대상으로 RED를 먼저 실행한다.
 
 ```bash
@@ -518,8 +518,8 @@ python3 workspace/tools/api_error_backstop_matrix.py
 Expected: 모든 case PASS. 각 위반 case는 정확히 exit 2, 분석 불능 case는 exit 1, 정상/brownfield/excluded case는 exit 0.
 
 - [ ] Step 3: 파일 count만 맞고 Coordinator가 새 checker를 호출하지 않는 사각을 막는다. Claude command와 Codex orchestrator에서 `check-*.py` 이름 집합·순서를 실제 19개 파일과 대조한다. 네 API-error contract checker의 profile/scope/API/controller/scope-BC/error-BC와 schema의 project inventory, composition checker의 URLconf/registrar selector까지 추출해 문서 계약과 일치시키며, 삭제된 catch-all은 0회·새 controller checker는 정확히 1회여야 한다.
-- [ ] Step 4: Coordinator가 실제 렌더하는 19개 명령을 합성 target에서 실행한다. 네 API-error contract checker와 composition registrar slice는 완전한 code-profile 인자와 preserve/auto 인자를 실행하고, 나머지 14개는 현행 positional target/default CLI를 사용한다. composition checker는 어느 mode에서도 기존 DI slice를 잃지 않는다. root-only 수동 호환이 있더라도 Error response G2 증거로 집계하지 않는다.
-- [ ] Step 5: 한 checker의 exit 1과 다른 checker의 exit 2를 각각 주입해 Coordinator가 둘 다 보존하고 G2를 거부하는지 검증한다. parser 사용 오류가 1, 계약 위반이 2, `--help`가 0인지도 실제 프로세스로 확인한다.
+- [ ] Step 4: Claude command와 Codex orchestrator prompt에서 19개 registry·selector 명령 계약을 추출하고, 그 계약대로 verifier가 합성한 명령을 합성 target에서 실행한다. Coordinator는 실행 가능한 별도 renderer가 아니라 prompt이므로 “실제 렌더링을 런타임 관측했다”고 과장하지 않는다. 네 API-error contract checker와 composition registrar slice는 완전한 code-profile 인자와 preserve/auto 인자를 실행하고, 나머지 14개는 현행 positional target/default CLI를 사용한다. composition checker는 어느 mode에서도 기존 DI slice를 잃지 않는다. root-only 수동 호환이 있더라도 Error response G2 증거로 집계하지 않는다.
+- [ ] Step 5: 한 checker의 exit 1과 다른 checker의 exit 2를 각각 합성 실행에 주입해 둘 다 수집되는지 확인하고, Coordinator prompt가 두 exit를 모두 G2 blocker로 보존하며 한 실패 뒤에도 나머지 결과를 수집하도록 명시하는지 별도로 의미 검증한다. 이를 실행 가능한 Coordinator exit-propagation 구현의 관측으로 보고하지 않는다. selector/argparse 계약을 소유하는 API-error-aware 6개(#2·#3·#5·#6·#15·#16)는 각각 `--help=0`, 대표 parser/selector 사용 오류=1, 계약 위반=2를 실제 프로세스로 확인한다. 나머지 13개 positional legacy checker는 기존 CLI를 소급 변경하지 않고 valid target/default 실행과 invalid/missing target=1을 확인한다. 이 13개에 `--help` 계약을 새로 발명하지 않는다.
 
 ---
 
@@ -627,9 +627,9 @@ python3 -c 'from pathlib import Path; files=list(Path("dddjango/scripts").glob("
 python3 workspace/tools/corpus_mirror_sync.py --check
 ```
 
-- [ ] Step 3: checker count/byte mirror, Coordinator 실제 명령, 전체 matrix를 다시 실행한다.
+- [ ] Step 3: checker count/byte mirror, Coordinator prompt의 명령 계약과 그 계약에서 합성한 checker 명령, 전체 matrix를 다시 검증한다. 실행 가능한 별도 Coordinator renderer가 있는 것처럼 보고하지 않는다.
 - [ ] Step 4: Part A2 runtime fixture를 `python -B`로 다시 실행하고 resolved version, `Status` 회귀, auth/framework/OpenAPI 결과를 기록한다.
-- [ ] Step 5: Claude/Codex Coordinator에서 추출한 checker registry 집합·순서가 실제 19개 파일과 같고, 네 API-error contract checker 호출에 승인 profile/scope/API/controller/scope-BC/error-BC, schema checker에 두 project error-module inventory, composition checker에 URLconf/registrar selector가 있는지 검증한다. injected exit 1/2가 모두 G2 거부로 전파되는지도 확인한다.
+- [ ] Step 5: Claude/Codex Coordinator prompt에서 추출한 checker registry 집합·순서가 실제 19개 파일과 같고, 네 API-error contract checker 호출에 승인 profile/scope/API/controller/scope-BC/error-BC, schema checker에 두 project error-module inventory, composition checker에 URLconf/registrar selector가 있는지 검증한다. API-error-aware 6개는 `--help=0`, positional legacy 13개는 valid target/default와 invalid/missing target=1이라는 각자 CLI 계약을 지킨다. 합성 실행에서 exit 1/2를 각각 관측하고, prompt가 둘 다 G2 blocker로 선언하며 모든 결과 수집을 요구하는지는 문서 의미로 대조한다. 이 둘을 실행 가능한 Coordinator 전파 테스트 하나로 합쳐 주장하지 않는다.
 - [ ] Step 6: 의미 미러 10쌍을 단일 표로 대조한다: 지식 SKILL 4쌍(architecture-api, Ninja, houserules, test), 역할 5쌍(architect, API reviewer, acceptance, coder, discipline reviewer), Coordinator 1쌍. 각 쌍의 12-slot/profile/direct Status/framework default/new checker 필수 anchor와 central handler/catch-all 구 anchor 부재를 검사하고 플랫폼 전용 frontmatter 차이만 허용한다. web/cleancode SKILL 두 쌍은 삭제 심볼·구 규칙을 직접 담지 않아 변경 비대상인지 negative check한다.
 - [ ] Step 7: RUBRIC·EVAL template·metrix에서 기대 ID 집합 `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7 = 34`를 파싱해 중복·누락 없이 대조한다. `workspace/eval/results`는 tracked 14개인지, untracked 추가와 `git diff HEAD -- workspace/eval/results`가 0인지 구현 시작 시 기록한 baseline과 byte 대조한다.
 - [ ] Step 8: Claude plugin 구조를 검증한다.
