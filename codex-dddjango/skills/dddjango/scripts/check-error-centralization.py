@@ -71,7 +71,31 @@ FIELD_ALIAS_OPTIONS = {
     "serialization_alias",
 }
 MODEL_CONFIG_ALIAS_OPTIONS = {"alias_generator"}
-TRY_NODES = (ast.Try,) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
+MATCH_NODES = tuple(
+    node_type
+    for node_type in (getattr(ast, "Match", None),)
+    if node_type is not None
+)
+MATCH_AS_NODES = tuple(
+    node_type
+    for node_type in (getattr(ast, "MatchAs", None),)
+    if node_type is not None
+)
+MATCH_STAR_NODES = tuple(
+    node_type
+    for node_type in (getattr(ast, "MatchStar", None),)
+    if node_type is not None
+)
+MATCH_MAPPING_NODES = tuple(
+    node_type
+    for node_type in (getattr(ast, "MatchMapping", None),)
+    if node_type is not None
+)
+TRY_NODES = (ast.Try,) + tuple(
+    node_type
+    for node_type in (getattr(ast, "TryStar", None),)
+    if node_type is not None
+)
 
 
 class UsageError(Exception):
@@ -670,7 +694,7 @@ def _model_config_has_alias(node: ast.AST) -> bool:
     if isinstance(node, ast.Dict):
         return any(
             is_alias_entry(key, value)
-            for key, value in zip(node.keys, node.values, strict=True)
+            for key, value in zip(node.keys, node.values)
         )
     if isinstance(node, ast.Call):
         if any(
@@ -1204,14 +1228,14 @@ def _function_argument_names(
     return names
 
 
-def _pattern_bound_names(pattern: ast.pattern) -> set[str]:
+def _pattern_bound_names(pattern: ast.AST) -> set[str]:
     names: set[str] = set()
     for node in ast.walk(pattern):
-        if isinstance(node, ast.MatchAs) and node.name is not None:
+        if isinstance(node, MATCH_AS_NODES) and node.name is not None:
             names.add(node.name)
-        elif isinstance(node, ast.MatchStar) and node.name is not None:
+        elif isinstance(node, MATCH_STAR_NODES) and node.name is not None:
             names.add(node.name)
-        elif isinstance(node, ast.MatchMapping) and node.rest is not None:
+        elif isinstance(node, MATCH_MAPPING_NODES) and node.rest is not None:
             names.add(node.rest)
     return names
 
@@ -1283,7 +1307,7 @@ class _FunctionLocalCollector(ast.NodeVisitor):
         for statement in node.body:
             self.visit(statement)
 
-    def visit_Match(self, node: ast.Match) -> None:
+    def visit_Match(self, node: ast.AST) -> None:
         self.visit(node.subject)
         for case in node.cases:
             self.bound.update(_pattern_bound_names(case.pattern))
@@ -1336,7 +1360,7 @@ def _statement_expression_roots(statement: ast.stmt) -> list[ast.AST]:
         return [statement.iter]
     if isinstance(statement, (ast.With, ast.AsyncWith)):
         return [item.context_expr for item in statement.items]
-    if isinstance(statement, ast.Match):
+    if isinstance(statement, MATCH_NODES):
         return [statement.subject]
     if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
         defaults = [*statement.args.defaults]
@@ -1361,7 +1385,7 @@ def _statement_shadow_names(statement: ast.stmt) -> set[str]:
         for item in statement.items:
             if item.optional_vars is not None:
                 names.update(_target_names(item.optional_vars))
-    elif isinstance(statement, ast.Match):
+    elif isinstance(statement, MATCH_NODES):
         for case in statement.cases:
             names.update(_pattern_bound_names(case.pattern))
     return names
@@ -1635,7 +1659,7 @@ def _raw_code_suite(
                 module_scope=False,
                 function_globals=function_globals,
             )
-        elif isinstance(statement, ast.Match):
+        elif isinstance(statement, MATCH_NODES):
             path_objects = [dict(local_objects)]
             for case in statement.cases:
                 case_bindings = dict(bindings)
