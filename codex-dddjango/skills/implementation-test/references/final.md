@@ -2491,6 +2491,8 @@ code profile의 첫 경계는 실제 Ninja/Pydantic Schema다. 공통 `ErrorOut`
 
 ```python
 import pytest
+from importlib import import_module
+from inspect import isclass
 from pydantic import ValidationError
 
 from common.ninja.response.error_out import ErrorOut
@@ -2504,10 +2506,26 @@ from application.orders.presentation_layer.schema.error_out import (
 )
 
 
+# 7~10번 slot에서 읽은 완전한 BC inventory다. error-BC가 승인되지 않은 scope에서는
+# 두 literal을 모두 빈 tuple/dict로 두고 공통 ErrorOut 테스트만 유지한다.
 APPROVED_BC_BASES_WITH_CODES = (
     (InventoryErrorOut, InventoryErrorCode),
     (OrderErrorOut, OrderErrorCode),
 )
+APPROVED_ERROR_BC_BASE_REFS = {
+    InventoryErrorOut: "#/components/schemas/InventoryErrorOut",
+    OrderErrorOut: "#/components/schemas/OrderErrorOut",
+}
+APPROVED_ERROR_BC_MODULES = (
+    "application.inventory.presentation_layer.schema.error_out",
+    "application.orders.presentation_layer.schema.error_out",
+)
+# Enum narrowing의 valid input도 승인 inventory에 속한다. error-BC가 없는 scope에서는 빈
+# dict로 두며, 그 때 이 BC-specific test는 common ErrorOut test를 대신하지 않는다.
+APPROVED_BC_ENUM_VALID_EXAMPLES = {
+    InventoryErrorOut: InventoryErrorCode.ITEM_NOT_FOUND,
+    OrderErrorOut: OrderErrorCode.PRODUCT_NOT_FOUND,
+}
 
 
 def test_common_error_out_has_exact_approved_shape():
@@ -2525,22 +2543,47 @@ def test_common_error_out_has_exact_approved_shape():
     } == {"code", "title", "status", "detail"}
 
 
-def test_inventory_error_code_accepts_only_its_approved_enum():
-    valid = InventoryErrorOut(
-        code="inventory_item_not_found",
-        title="Inventory item not found",
-        status=404,
-        detail="The requested inventory item does not exist.",
-    )
-    assert valid.code is InventoryErrorCode.ITEM_NOT_FOUND
+def _discover_error_bc_bases_with_codes():
+    discovered = set()
+    for module_name in APPROVED_ERROR_BC_MODULES:
+        module = import_module(module_name)
+        for candidate in vars(module).values():
+            if (
+                isclass(candidate)
+                and candidate is not ErrorOut
+                and ErrorOut in candidate.__bases__
+            ):
+                discovered.add((candidate, candidate.model_fields["code"].annotation))
+    return discovered
 
-    with pytest.raises(ValidationError):
-        InventoryErrorOut(
-            code="inventory_undefined_code",
-            title="Undefined",
+
+def test_approved_bc_error_codes_are_narrowed_and_reject_unknown_wire_values():
+    approved = dict(APPROVED_BC_BASES_WITH_CODES)
+    discovered = dict(_discover_error_bc_bases_with_codes())
+    assert discovered == approved
+
+    if not approved:
+        assert APPROVED_BC_ENUM_VALID_EXAMPLES == {}
+        return
+
+    assert APPROVED_BC_ENUM_VALID_EXAMPLES.keys() == approved.keys()
+    for bc_base, code_enum in approved.items():
+        valid_code = APPROVED_BC_ENUM_VALID_EXAMPLES[bc_base]
+        valid = bc_base(
+            code=valid_code,
+            title="Approved example",
             status=400,
-            detail="This public code was never approved.",
+            detail="An approved literal demonstrates enum narrowing.",
         )
+        assert valid.code is valid_code
+
+        with pytest.raises(ValidationError):
+            bc_base(
+                code=f"{bc_base.__name__}_unapproved_wire_code",
+                title="Never approved",
+                status=400,
+                detail="This public wire code is not in the approved Enum.",
+            )
 
 
 def _all_subclasses(base):
@@ -2600,11 +2643,13 @@ def _managed_concrete_error_types():
 
 
 def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
-    # 7~10번 slot에서 온 완전한 literal inventory다. 이 예시에서는 두 BC와
-    # 다섯 concrete가 승인됐지만, 빈 inventory도 유효한 계약 상태다.
+    # 이 예시에서는 두 BC와 다섯 concrete가 승인됐지만, 빈 inventory도 유효하다.
     approved_bc_bases = {bc_base for bc_base, _code_enum in APPROVED_BC_BASES_WITH_CODES}
-    discovered_bc_bases = {InventoryErrorOut, OrderErrorOut}
+    discovered_bc_bases = {
+        bc_base for bc_base, _code_enum in _discover_error_bc_bases_with_codes()
+    }
     assert discovered_bc_bases == approved_bc_bases
+    assert set(APPROVED_ERROR_BC_BASE_REFS) == approved_bc_bases
     if approved_bc_bases:
         assert discovered_bc_bases
 
@@ -2671,7 +2716,8 @@ from application.orders.presentation_layer.schema.error_out import (
 )
 
 
-APPROVED_BC_BASES = (InventoryErrorOut, OrderErrorOut)
+# slot 7~10이 비어 있으면 이 tuple과 아래 세 catalog도 모두 비어야 한다.
+APPROVED_BC_BASES = tuple(APPROVED_ERROR_BC_BASE_REFS)
 APPROVED_CONCRETE_ERROR_CONTRACTS = {
     InventoryItemNotFoundError: (
         "inventory_item_not_found",
@@ -2694,6 +2740,13 @@ APPROVED_CONCRETE_ERROR_CONTRACTS = {
         "Order temporarily unavailable",
     ),
 }
+APPROVED_CONCRETE_ERROR_SCHEMA_REFS = {
+    "#/components/schemas/InventoryItemNotFoundError",
+    "#/components/schemas/InventoryTemporarilyUnavailableError",
+    "#/components/schemas/OrderProductNotFoundError",
+    "#/components/schemas/OrderInsufficientStockError",
+    "#/components/schemas/OrderTemporarilyUnavailableError",
+}
 APPROVED_PUBLIC_ERROR_TITLES = {
     "inventory_item_not_found": "Inventory item not found",
     "inventory_temporarily_unavailable": "Inventory temporarily unavailable",
@@ -2715,6 +2768,13 @@ APPROVED_PUBLIC_ERROR_CODES = {
 
 
 def test_public_wire_codes_are_project_wide_unique_and_titles_are_stable():
+    if not APPROVED_BC_BASES:
+        assert APPROVED_CONCRETE_ERROR_CONTRACTS == {}
+        assert APPROVED_CONCRETE_ERROR_SCHEMA_REFS == set()
+        assert APPROVED_PUBLIC_ERROR_TITLES == {}
+        assert APPROVED_PUBLIC_ERROR_CODES == set()
+        return
+
     enum_types = {
         bc_base.model_fields["code"].annotation for bc_base in APPROVED_BC_BASES
     }
@@ -2751,8 +2811,10 @@ def test_public_wire_codes_are_project_wide_unique_and_titles_are_stable():
     )
 ```
 
-`APPROVED_BC_BASES`, concrete 계약, public title catalog는 8~12번 slot의 완전한 리터럴
-inventory다. class 이름 접미사에 의존하지 않고 각 승인 BC base에서 재귀 discovery하므로 새
+`APPROVED_ERROR_BC_BASE_REFS`, concrete 계약, public title catalog는 7~12번 slot의 완전한
+리터럴 inventory다. error-BC가 없는 승인 scope는 이 inventories를 빈 값으로 두며, 공통
+`ErrorOut` shape 외에 Inventory/Order 전용 postcondition을 실행하지 않는다. class 이름
+접미사에 의존하지 않고 각 승인 BC base에서 재귀 discovery하므로 새
 concrete가 생기면 exact class/code key coverage가 먼저 실패한다. `all()`은 그 exact coverage
 단언 뒤에만 둔다. 사건별 concrete가 없는 direct-base code와 여러 surface가 재사용하는 mapping의
 title은 아래 별도 mapping-case inventory와 실제 HTTP 응답으로 고정한다.
@@ -3277,31 +3339,49 @@ header를 예시 때문에 발명하지 않는다. 모든 선택된 실패는 fr
 `request.auth`에 `ErrorOut`이나 exception object를 저장하지 않아야 한다.
 
 ```python
-# slot 12의 실제 mount/승인 literal만 넣는다. 빈 경우에도 새 endpoint를 만들지 않는다.
+# 이 예시의 slot 12가 승인·mount한 두 literal이다. 각 label은 backend의 내부 return/raise를
+# HTTP가 관찰한다는 주장이 아니라, 해당 입력·route가 설계에서 승인한 mechanism의 trace다.
 APPROVED_AUTH_FAILURE_CASES = (
-    # ("none", "/실제-승인된-auth-endpoint", {"HTTP_AUTHORIZATION": "..."}),
-    # ("authentication_error", "/실제-승인된-auth-endpoint", {"HTTP_AUTHORIZATION": "..."}),
+    ("none", "/api/auth/rejected-token", {"HTTP_AUTHORIZATION": "Bearer rejected-token"}),
+    (
+        "authentication_error",
+        "/api/auth/disabled-principal",
+        {"HTTP_AUTHORIZATION": "Bearer disabled-principal"},
+    ),
 )
 
 
-@pytest.mark.parametrize(
-    "mechanism, url, headers",
-    APPROVED_AUTH_FAILURE_CASES,
-)
-def test_approved_auth_failures_remain_framework_owned(client, mechanism, url, headers):
-    approved_mechanisms = {
-        case_mechanism for case_mechanism, _url, _headers in APPROVED_AUTH_FAILURE_CASES
+def test_approved_auth_failures_remain_framework_owned(client):
+    # 이 test가 존재하는 scope의 slot 12는 비어 있지 않다. 빈 scope에서는 이 test 자체를
+    # 만들지 않으며 empty-parametrize skip/xfail로 대체하지 않는다.
+    assert APPROVED_AUTH_FAILURE_CASES
+    expected_cases = {
+        (mechanism, url, frozenset(headers.items()))
+        for mechanism, url, headers in APPROVED_AUTH_FAILURE_CASES
     }
-    assert approved_mechanisms <= {"none", "authentication_error"}
+    assert len(APPROVED_AUTH_FAILURE_CASES) == len(expected_cases)
+    approved_mechanisms = {
+        mechanism for mechanism, _url, _headers in APPROVED_AUTH_FAILURE_CASES
+    }
+    assert approved_mechanisms == {"none", "authentication_error"}
 
-    response = client.get(url, **headers)
+    observed_cases = set()
+    for mechanism, url, headers in APPROVED_AUTH_FAILURE_CASES:
+        response = client.get(url, **headers)
 
-    assert response.status_code == 401
-    auth = getattr(response.wsgi_request, "auth", None)
-    assert not isinstance(auth, ErrorOut)
-    assert not isinstance(auth, BaseException)
-    assert_not_managed_error(response)
+        assert response.status_code == 401
+        auth = getattr(response.wsgi_request, "auth", None)
+        assert not isinstance(auth, ErrorOut)
+        assert not isinstance(auth, BaseException)
+        assert_not_managed_error(response)
+        observed_cases.add((mechanism, url, frozenset(headers.items())))
+
+    assert observed_cases == expected_cases
 ```
+
+slot 12에 auth failure case가 하나도 없으면 이 test function 전체를 생략한다. 빈 parameter
+set을 pytest에 넘겨 skip/xfail을 만들거나 테스트를 유지하려고 endpoint·header·mechanism을
+발명하지 않는다.
 
 HTTP 의미론상 401 challenge가 필요한 일반 지침과 특정 Ninja/auth backend의 default capability는
 구분한다. 신규 default smoke가 실제로 `WWW-Authenticate`를 내지 않는다면 그 header를 발명하기
@@ -3321,25 +3401,52 @@ Schema로 광고되지 않아야 한다.
 ```python
 HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
 
+# 12번 slot의 독립 OpenAPI oracle이다. slot-10 runtime mapping에서 만들지 않으며, error-BC가
+# 없는 승인 scope에서는 이 literal과 아래 concrete ref set도 빈 값이다.
+APPROVED_MANAGED_ERROR_REFS = {
+    ("/api/v1/inventory/items/{item_id}", "get", "404"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v2/inventory/items/{item_id}", "get", "404"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v1/inventory/reservations/{reservation_id}", "patch", "409"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v1/inventory/reservations", "post", "503"): (
+        "#/components/schemas/InventoryErrorOut"
+    ),
+    ("/api/v1/orders/{order_id}", "get", "404"): (
+        "#/components/schemas/OrderErrorOut"
+    ),
+    ("/api/v1/orders", "post", "409"): "#/components/schemas/OrderErrorOut",
+    ("/api/v1/orders/retry", "post", "503"): (
+        "#/components/schemas/OrderErrorOut"
+    ),
+    ("/api/v1/orders/{order_id}", "patch", "409"): (
+        "#/components/schemas/OrderErrorOut"
+    ),
+}
 
-def _project_prepared_cases_to_openapi_refs():
+def _project_prepared_cases_to_openapi_quadruples():
     return {
-        (path, method, str(status)): APPROVED_OPENAPI_BASE_REF_BY_CASE[case]
+        (path, method, str(status), APPROVED_OPENAPI_BASE_REF_BY_CASE[case])
         for case in APPROVED_MAPPING_CASES
         for path, method, status, _failure_name in (case,)
     }
 
 
-APPROVED_MANAGED_ERROR_REFS = _project_prepared_cases_to_openapi_refs()
+def _assert_one_base_per_openapi_key(quadruples):
+    refs_by_key = {}
+    for path, method, status, ref in quadruples:
+        refs_by_key.setdefault((path, method, status), set()).add(ref)
+    assert all(len(refs) == 1 for refs in refs_by_key.values())
+
+
 COMPLETE_MANAGED_ERROR_SCHEMA_REFS = {
     "#/components/schemas/ErrorOut",
-    "#/components/schemas/InventoryErrorOut",
-    "#/components/schemas/InventoryItemNotFoundError",
-    "#/components/schemas/InventoryTemporarilyUnavailableError",
-    "#/components/schemas/OrderErrorOut",
-    "#/components/schemas/OrderProductNotFoundError",
-    "#/components/schemas/OrderInsufficientStockError",
-    "#/components/schemas/OrderTemporarilyUnavailableError",
+    *APPROVED_ERROR_BC_BASE_REFS.values(),
+    *APPROVED_CONCRETE_ERROR_SCHEMA_REFS,
 }
 
 
@@ -3399,6 +3506,14 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
     assert response.status_code == 200
     document = response.json()
     assert APPROVED_OPENAPI_BASE_REF_BY_CASE.keys() == APPROVED_MAPPING_CASES.keys()
+    projected_quadruples = _project_prepared_cases_to_openapi_quadruples()
+    slot_12_quadruples = {
+        (path, method, status, ref)
+        for (path, method, status), ref in APPROVED_MANAGED_ERROR_REFS.items()
+    }
+    _assert_one_base_per_openapi_key(projected_quadruples)
+    _assert_one_base_per_openapi_key(slot_12_quadruples)
+    assert projected_quadruples == slot_12_quadruples
 
     expected_occurrences = {
         (path, method, status, "application/json", ref)
@@ -3410,12 +3525,12 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
         assert expected_occurrences
     else:
         assert APPROVED_CONCRETE_ERROR_CONTRACTS == {}
+        assert APPROVED_CONCRETE_ERROR_SCHEMA_REFS == set()
         assert expected_occurrences == set()
     assert actual_occurrences == expected_occurrences
-    assert set(APPROVED_MANAGED_ERROR_REFS.values()) == {
-        "#/components/schemas/InventoryErrorOut",
-        "#/components/schemas/OrderErrorOut",
-    }
+    assert set(APPROVED_MANAGED_ERROR_REFS.values()) == set(
+        APPROVED_ERROR_BC_BASE_REFS.values()
+    )
     assert set(APPROVED_MANAGED_ERROR_REFS.values()) < (
         COMPLETE_MANAGED_ERROR_SCHEMA_REFS
     )
@@ -3426,11 +3541,14 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
         assert schema == {"$ref": approved_ref}
 ```
 
-`APPROVED_MAPPING_CASES`는 각 `(path, method, status, concrete failure)` runtime case를 별도로
-보존한다. 이 예시에서는 여덟 case가 여덟 OpenAPI tuple로 보이지만, 그것은 예시의 수일 뿐
-일대일 법칙이 아니다. `APPROVED_MANAGED_ERROR_REFS`는 모든 complete case를
-`(path, method, status, BC base ref)`로 투영·deduplicate한 12번 slot occurrence inventory와
-exact하게 비교한다. 두 OpenAPI literal은 12번 slot의 **완전한** BC base ref와
+`APPROVED_MAPPING_CASES`와 `APPROVED_OPENAPI_BASE_REF_BY_CASE`는 각
+`(path, method, status, concrete failure)` runtime case를 별도로 보존한다.
+`_project_prepared_cases_to_openapi_quadruples()`는 이를 `(path, method, status, BC base ref)`
+set으로 투영하므로 같은 key·같은 base는 deduplicate하고, 같은 key에 다른 base가 있으면
+one-base-per-key 단언이 실패한다. `APPROVED_MANAGED_ERROR_REFS`는 이 투영에서 만들지 않는
+독립 12번 slot oracle이며, 두 quadruple set은 exact하게 같아야 한다. 이 예시에서 여덟 case가
+여덟 OpenAPI tuple로 보이는 것은 예시의 수일 뿐 일대일 법칙이 아니다. 두 OpenAPI literal은
+12번 slot의 **완전한** BC base ref와
 managed common/base/concrete ErrorOut ref inventory다. collector는 선택한 framework path 문자열만 훑지 않고 모든 operation과
 모든 response status의 실제 schema를 재귀 순회하며 response/component `$ref`도 따라간다. 따라서
 framework status나 다른 operation에 common/base/concrete ErrorOut이 한 번이라도 나타나면 exact occurrence

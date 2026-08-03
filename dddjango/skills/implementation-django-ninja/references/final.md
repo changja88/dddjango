@@ -593,13 +593,16 @@ return Status(error.status, error)
 
 **컨트롤러가 변환을 소유한다.** known domain/application failure의 공개 code·status 선택은
 해당 BC controller가 한다. 짧은 반복 mapping은 의도적인 지역 중복이며, 다음 순서를
-operation마다 그대로 보인다.
+10번 slot이 승인한 한 path로 보인다.
 
-1. 입력 Schema를 application value/request로 준비하고 use case를 조립한다.
-2. `try`에는 최외곽 application call 문장 하나만 둔다.
-3. 구체 known exception 또는 구체 exception tuple만 catch한다.
-4. no-arg concrete 오류를 만든 뒤 `Status(error.status, error)`를 직접 반환한다.
-5. 성공 변환은 `try` 뒤에서 한다.
+1. **exception path:** 입력 Schema를 준비하고 `try`에는 최외곽 application call 한 문장만
+   둔다. 구체 known exception 또는 구체 exception tuple만 catch해 no-arg concrete 또는
+   populated BC-base `ErrorOut`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
+   `Status(error.status, error)`를 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
+2. **failed Result/`None`/outcome path:** 입력 Schema를 준비한 뒤 application call을 정확히
+   한 번 하고, `try` 없이 승인된 failure branch를 call 바로 다음에 둔다. 같은 ErrorOut/header/
+   두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch 뒤에 둔다. 예외·catch·helper·
+   mapping table을 꾸며내지 않는다.
 
 §2.2가 sync concrete-catch 예시다. async와 동일한 contract는 다음과 같다.
 
@@ -632,18 +635,69 @@ raw DB/SDK exception을 catch하지 않고, 컨트롤러가 방금 raise한 예�
 않는다. 서로 다른 공개 의미가 필요한 known exception은 별도 catch와 concrete로 나누고,
 같은 공개 의미로 수렴할 때만 tuple catch를 쓴다.
 
-다음은 10번 slot이 `ReserveOrderResult.insufficient_stock`을 승인된 failed outcome으로
-정한 경우의 유효한 직접 변환이다. call 뒤 branch가 BC `ErrorOut`을 만들며 예외 path를
+다음은 10번 slot이 `ReserveOrderOutcome.INSUFFICIENT_STOCK`을 승인된 failed outcome으로
+정한 경우의 copyable 직접 변환이다. call 뒤 branch가 BC `ErrorOut`을 만들며 예외 path를
 흉내 내지 않는다.
 
 ```python
-result = command.execute(request_value)
+from __future__ import annotations
 
-if result is ReserveOrderResult.insufficient_stock:
-    error = OrderInsufficientStockError()
-    return Status(error.status, error)
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Protocol
 
-return OrderOut.from_result(result)
+from application.order.presentation_layer.schema.error_out import (
+    OrderErrorOut,
+    OrderInsufficientStockError,
+)
+from application.order.presentation_layer.schema.order_out import OrderOut
+from ninja import Status
+
+
+class ReserveOrderOutcome(StrEnum):
+    CREATED = "created"
+    INSUFFICIENT_STOCK = "insufficient_stock"
+
+
+@dataclass(frozen=True)
+class ReservedOrder:
+    id: int
+    status: str
+
+
+@dataclass(frozen=True)
+class ReserveOrderSucceeded:
+    order: ReservedOrder
+
+
+@dataclass(frozen=True)
+class ReserveOrderInsufficientStock:
+    outcome: ReserveOrderOutcome = ReserveOrderOutcome.INSUFFICIENT_STOCK
+
+
+ReserveOrderResult = ReserveOrderSucceeded | ReserveOrderInsufficientStock
+
+
+class ReserveOrderCommand(Protocol):
+    def execute(self, request: ReserveOrderRequest) -> ReserveOrderResult: ...
+
+
+@dataclass(frozen=True)
+class ReserveOrderRequest:
+    order_id: int
+
+
+def reserve_order_from_outcome(
+    command: ReserveOrderCommand,
+    request_value: ReserveOrderRequest,
+) -> OrderOut | Status[OrderErrorOut]:
+    result = command.execute(request_value)
+
+    if isinstance(result, ReserveOrderInsufficientStock):
+        error = OrderInsufficientStockError()
+        return Status(error.status, error)
+
+    return OrderOut.from_result(result.order)
 ```
 
 반대로 use case가 계약상 Result/`None`을 native 성공으로 반환하면 controller가 그 값을 helper
@@ -661,7 +715,8 @@ return result
 
 승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않는다.
 명세가 retryable BC 503과 `Retry-After`를 승인했다면 controller method가 주입된 응답용(temporal)
-Django `HttpResponse`를 받아 catch 안에서 header를 설정한 뒤 두 인자 `Status`를 반환한다.
+Django `HttpResponse`를 받아 선택된 mapping branch에서 header를 설정한 뒤 두 인자 `Status`를
+반환한다. exception path의 구체 catch는 그 branch의 한 형태다.
 
 ```python
 from django.http import HttpResponse
