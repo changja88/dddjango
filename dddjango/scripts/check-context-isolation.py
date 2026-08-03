@@ -127,7 +127,7 @@ ROOT_API_CONSTRUCTORS = {
 }
 ROOT_API_IMPORT_RE = re.compile(r"^application\.[A-Za-z_]\w*(?:\.|$)")
 ERROR_STATUS_NAME_RE = re.compile(r"(?:^|_)(?:4|5)\d\d(?:_|$)")
-EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)(?:_|$)", re.IGNORECASE)
+EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)$", re.IGNORECASE)
 HTTP_FACILITY_NAME_RE = re.compile(r"(?:status|response|http)", re.IGNORECASE)
 COMMON_ERROR_MODULE = "common.ninja.response.error_out"
 NINJA_SCHEMA_BASE = "ninja.Schema"
