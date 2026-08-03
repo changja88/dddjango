@@ -53,15 +53,21 @@ OHS 미경유(OHS 존재 시)·도메인 누수(포트 ABC 미준수)인지는 �
   거짓양성↓) — 의미 레인 몫. presentation·application 이 타 BC 의 *예외*(domain_layer 하위)를
   직접 import 하는 건 S1 로 포착된다.
 
-사용법: check-context-isolation.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리 — 프로젝트 루트)
+레거시 API 순도 lane은 positional/auto/preserve 실행에서 기존 application_layer HTTP 직접
+신호와 touched grandfathering을 그대로 보존한다. 명시 code-profile의 filtered full-tree
+검사는 후속 slice가 소유하며, auto는 Error response G2 증거가 아니다.
+
+사용법: check-context-isolation.py [TARGET_DIR] [--error-profile PROFILE ...]
 종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
 """
 from __future__ import annotations
 
+import argparse
 import ast
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
@@ -77,6 +83,260 @@ LAYER_ANY_RE = re.compile(
 )
 # S3: 자기 BC published_service 역-import(관통).
 PUBLISHED_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.published_service(?:\.|$)")
+
+# 구 check-error-centralization.py의 raw application-layer HTTP 신호. positional/auto/preserve
+# lane에서 collector·순서·label·touched 의미를 바꾸지 않는다.
+LEGACY_RESPONSE_CALL_RE = re.compile(
+    r"\b(?:JsonResponse|HttpResponse|HttpResponseBadRequest|HttpResponseForbidden"
+    r"|HttpResponseNotFound|HttpResponseNotAllowed|HttpResponseServerError)\s*\("
+)
+LEGACY_ERROR_STATUS_RE = re.compile(r"\bstatus(?:_code)?\s*=\s*[45]\d\d\b")
+LEGACY_HTTP_ERROR_RE = re.compile(r"\bHttpError\s*\(\s*[45]\d\d\b")
+LEGACY_NINJA_IMPORT_RE = re.compile(
+    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
+    re.MULTILINE,
+)
+LEGACY_SIGNAL_CHECKS = (
+    (LEGACY_RESPONSE_CALL_RE, "수제 HTTP 응답 객체 생성(JsonResponse/HttpResponse)"),
+    (LEGACY_ERROR_STATUS_RE, "오류 status code 직접 선택(status[_code]=4xx/5xx)"),
+    (LEGACY_HTTP_ERROR_RE, "ninja HttpError 를 status 와 함께 raise"),
+    (LEGACY_NINJA_IMPORT_RE, "ninja(web 프레임워크) import — application 은 web 을 모른다"),
+)
+
+ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
+BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+
+
+class UsageError(Exception):
+    """CLI/selector analysis error normalized to exit 1."""
+
+
+class _UsageParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        raise UsageError(message)
+
+
+@dataclass(frozen=True)
+class Config:
+    root: Path
+    profile: str | None
+    scope: str | None
+    api_module: str | None
+    controller_modules: tuple[str, ...]
+    scope_bcs: tuple[str, ...]
+    error_bcs: tuple[str, ...]
+
+
+def _argument_parser() -> _UsageParser:
+    parser = _UsageParser(add_help=True)
+    parser.add_argument("target", nargs="?", default=".")
+    parser.add_argument("--error-profile", action="append")
+    parser.add_argument("--scope", action="append")
+    parser.add_argument("--api-module", action="append")
+    parser.add_argument("--controller-module", action="append", default=[])
+    parser.add_argument("--scope-bc", action="append", default=[])
+    parser.add_argument("--error-bc", action="append", default=[])
+    return parser
+
+
+def _one(
+    option: str,
+    values: list[str] | None,
+    *,
+    required: bool,
+    issues: list[str],
+) -> str | None:
+    actual = values or []
+    if required and not actual:
+        issues.append(f"필수 인자 누락: {option}")
+        return None
+    if len(actual) > 1:
+        issues.append(f"단일 인자 중복: {option}")
+    return actual[0] if actual else None
+
+
+def _unique(option: str, values: list[str], issues: list[str]) -> tuple[str, ...]:
+    if len(values) != len(set(values)):
+        issues.append(f"반복 인자 중복: {option}")
+    return tuple(values)
+
+
+def _selected_source(root: Path, option: str, raw: str, issues: list[str]) -> Path | None:
+    rel = Path(raw)
+    if (
+        rel.is_absolute()
+        or ".." in rel.parts
+        or rel.as_posix() != raw
+        or "/" not in raw
+        or rel.suffix != ".py"
+    ):
+        issues.append(f"잘못된 source path: {option}={raw}")
+        return None
+    resolved = (root / rel).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError:
+        issues.append(f"root/symlink 탈출: {option}={raw}")
+        return None
+    if not resolved.is_file():
+        issues.append(f"선택 source 없음: {option}={raw}")
+        return None
+    try:
+        source = resolved.read_text(encoding="utf-8")
+        ast.parse(source, filename=raw)
+    except (OSError, UnicodeError, SyntaxError) as exc:
+        issues.append(f"선택 source 분석 불능: {option}={raw} ({exc})")
+        return None
+    return resolved
+
+
+def _parse_config(argv: list[str]) -> Config:
+    namespace = _argument_parser().parse_args(argv)
+    root = Path(namespace.target).resolve()
+    if not root.is_dir():
+        raise UsageError(f"디렉터리 아님 {root}")
+
+    issues: list[str] = []
+    profile = _one(
+        "--error-profile",
+        namespace.error_profile,
+        required=False,
+        issues=issues,
+    )
+    selectors_present = any(
+        (
+            namespace.scope,
+            namespace.api_module,
+            namespace.controller_module,
+            namespace.scope_bc,
+            namespace.error_bc,
+        )
+    )
+    if profile is None and selectors_present:
+        issues.append("selector 사용 시 --error-profile 필수")
+    if profile is not None and profile not in ERROR_PROFILES:
+        issues.append(f"지원하지 않는 --error-profile: {profile}")
+    if profile == "auto" and selectors_present:
+        issues.append("auto profile에는 scope/source/BC selector를 전달하지 않음")
+
+    explicit = profile in {"dddjango-code-json", "preserve-established"}
+    scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
+    api_module = _one(
+        "--api-module",
+        namespace.api_module,
+        required=explicit,
+        issues=issues,
+    )
+    controller_modules = _unique(
+        "--controller-module", namespace.controller_module, issues
+    )
+    scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
+    error_bcs = _unique("--error-bc", namespace.error_bc, issues)
+    if explicit and not controller_modules:
+        issues.append("필수 인자 누락: --controller-module")
+    if explicit and not scope_bcs:
+        issues.append("필수 인자 누락: --scope-bc")
+    if scope is not None and not scope.strip():
+        issues.append("--scope는 빈 문자열일 수 없음")
+    for option, names in (("--scope-bc", scope_bcs), ("--error-bc", error_bcs)):
+        for name in names:
+            if not BC_NAME_RE.fullmatch(name):
+                issues.append(f"잘못된 BC 이름: {option}={name}")
+    if not set(error_bcs).issubset(scope_bcs):
+        issues.append("--error-bc는 --scope-bc의 부분집합이어야 함")
+
+    resolved_by_role: dict[str, list[Path]] = {"api": [], "controller": []}
+    if api_module is not None:
+        path = _selected_source(root, "--api-module", api_module, issues)
+        if path is not None:
+            resolved_by_role["api"].append(path)
+    for raw in controller_modules:
+        path = _selected_source(root, "--controller-module", raw, issues)
+        if path is not None:
+            resolved_by_role["controller"].append(path)
+    if set(resolved_by_role["api"]) & set(resolved_by_role["controller"]):
+        issues.append("--api-module과 --controller-module 역할 overlap")
+    all_selected = resolved_by_role["api"] + resolved_by_role["controller"]
+    if len(all_selected) != len(set(all_selected)):
+        issues.append("선택 source가 같은 resolved path를 중복 지정함")
+
+    if issues:
+        raise UsageError("; ".join(issues))
+    return Config(
+        root=root,
+        profile=profile,
+        scope=scope,
+        api_module=api_module,
+        controller_modules=controller_modules,
+        scope_bcs=scope_bcs,
+        error_bcs=error_bcs,
+    )
+
+
+def _legacy_application_layer_files(root: Path) -> list[Path]:
+    """구 checker의 application_layer raw-signal 후보를 순서까지 그대로 수집한다."""
+    out: list[Path] = []
+    for path in root.rglob("*.py"):
+        parts = set(path.parts)
+        if parts & SKIP_DIRS:
+            continue
+        if "application_layer" not in parts:
+            continue
+        if parts & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
+            continue
+        out.append(path)
+    return out
+
+
+def _legacy_is_new_or_modified(root: Path, file_path: Path) -> bool:
+    """구 checker의 touched/untracked/Git-불능 보수 판정을 그대로 보존한다."""
+    if not (root / ".git").exists():
+        return True
+    try:
+        rel = file_path.relative_to(root)
+    except ValueError:
+        return True
+    try:
+        tracked = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)],
+            capture_output=True,
+        )
+        if tracked.returncode != 0:
+            return True
+        changed = subprocess.run(
+            ["git", "-C", str(root), "diff", "--quiet", "HEAD", "--", str(rel)],
+        )
+        return changed.returncode != 0
+    except (OSError, subprocess.SubprocessError):
+        return True
+
+
+def _legacy_http_findings(root: Path) -> list[str]:
+    findings: list[str] = []
+    for app_file in _legacy_application_layer_files(root):
+        try:
+            body = app_file.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        signals = [label for regex, label in LEGACY_SIGNAL_CHECKS if regex.search(body)]
+        if not signals or not _legacy_is_new_or_modified(root, app_file):
+            continue
+        findings.append(f"  - {app_file.relative_to(root)}: {'; '.join(signals)}")
+    return findings
+
+
+def _print_legacy_http(findings: list[str]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — legacy touched application_layer가 "
+        "HTTP 오류 응답을 직접 생성/의존함(presentation 경계 밖):"
+    )
+    for finding in findings:
+        print(finding)
+    print(
+        "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
+        "positional/auto/preserve lane은 구 check-error-centralization의 raw signal과 "
+        "grandfathering을 그대로 보존한다."
+    )
 
 
 def _has_application_container(root: Path) -> bool:
@@ -172,12 +432,25 @@ def _is_new_or_modified(root: Path, file_path: Path) -> bool:
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
-    if not root.is_dir():
-        print(f"[check-context-isolation] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+    try:
+        config = _parse_config(argv[1:])
+    except UsageError as exc:
+        print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
         return 1
+    except SystemExit as exc:  # argparse --help
+        return int(exc.code)
+
+    root = config.root
+    legacy_http_findings = (
+        _legacy_http_findings(root)
+        if config.profile in {None, "auto", "preserve-established"}
+        else []
+    )
     if not _has_application_container(root):
-        return 0  # 표준 레이아웃(`application/`) 미적용 → 해당 없음.
+        if legacy_http_findings:
+            _print_legacy_http(legacy_http_findings)
+            return 2
+        return 0  # S1~S3 표준 레이아웃 미적용. legacy HTTP lane은 위에서 먼저 실행.
 
     s1_findings: list[str] = []  # cross-BC 내부 결합
     s2_findings: list[str] = []  # contract 무의존 위반
@@ -214,9 +487,11 @@ def main(argv: list[str]) -> int:
                 seen.add((lineno, "s3"))  # S3 — 자기 published 역-import(관통)
                 s3_findings.append(f"  - {rel}:{lineno}  {shown}")
 
-    if not (s1_findings or s2_findings or s3_findings):
+    if not (legacy_http_findings or s1_findings or s2_findings or s3_findings):
         return 0
 
+    if legacy_http_findings:
+        _print_legacy_http(legacy_http_findings)
     if s1_findings:
         print(
             "[check-context-isolation] BLOCKER — ACL 밖(도메인/응용/presentation)에서 타 BC 의 "
