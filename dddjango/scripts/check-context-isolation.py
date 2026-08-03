@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """dddjango 컨텍스트 격리 결정적 백스톱 (SD-7 — 컨텍스트 간 통신).
 
-`check-layer-skeleton.py`(구조 골격)의 *의존 방향* 짝이다. 세 슬라이스를 잡는다:
+`check-layer-skeleton.py`(구조 골격)의 *의존 방향* 짝이다. 아래 S1~S3는 full-tree
+컨텍스트 통신 슬라이스이며, code-profile API 경계 lane과 legacy HTTP lane은 뒤에서 구분한다:
 
   S1  cross-BC 내부 결합 — ACL/OHS 경로 *밖*에서 한 바운디드 컨텍스트(BC)가 다른 BC 의
       `domain_layer`/`infra_layer` 를 직접 import 하는 것(architecture-ddd §2.5·§3.2(3):
@@ -20,7 +21,7 @@
       import 도 대상 밖이다. `infra_layer/acl/` 도 3계층이므로 자기 published 역-import 는
       S3 대상이다 — ACL 면제는 S1(업스트림 번역) 한정).
 
-*왜 결정적 백스톱인가* — 세 슬라이스 모두 **AST import 노드** 직격의 FP≈0 직접형이고
+*왜 결정적 백스톱인가* — 컨텍스트 통신 S1~S3 모두 **AST import 노드** 직격의 FP≈0 직접형이고
 (`ast.parse` — 문자열·주석 안의 import 유사 텍스트에 오발화하지 않는다; `import x`·
 `from x import y`·콤마 다중·별칭 전 형태, 함수 내부 지연 import 포함), 어느 것도 컴파일·
 테스트를 깨지 않는다(green). discipline-reviewer 의미 게이트 한 점에만 의존하면 LLM 이
@@ -55,9 +56,11 @@ OHS 미경유(OHS 존재 시)·도메인 누수(포트 ABC 미준수)인지는 �
   직접 import 하는 건 S1 로 포착된다.
 
 레거시 API 순도 lane은 positional/auto/preserve 실행에서 기존 application_layer HTTP 직접
-신호와 touched grandfathering을 그대로 보존한다. 명시 code profile은 Git tracked+untracked
-non-ignored production inventory에서 scope BC 전체에 S1~S3를, touched application_layer에
-기존 raw HTTP 신호를 적용한다. auto는 Error response G2 증거가 아니다.
+신호와 touched grandfathering을 그대로 보존한다. 명시 code profile은 선택 root API의
+Ninja API 조립 전용 소유권, scope BC inner layer의 Ninja framework/canonical error language,
+selected BC 사이의 error language를 검사하고, Git tracked+untracked non-ignored production
+full tree에 S1~S3를, touched application_layer에 기존 raw HTTP 신호를 적용한다. auto는
+Error response G2 증거가 아니다.
 
 사용법: check-context-isolation.py [TARGET_DIR] [--error-profile PROFILE ...]
 종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
@@ -126,24 +129,23 @@ ROOT_API_IMPORT_RE = re.compile(r"^application\.[A-Za-z_]\w*(?:\.|$)")
 ERROR_STATUS_NAME_RE = re.compile(r"(?:^|_)(?:4|5)\d\d(?:_|$)")
 EXCEPTION_NAME_RE = re.compile(r"(?:exception|error)", re.IGNORECASE)
 EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)(?:_|$)", re.IGNORECASE)
-MAPPING_FLOW_RE = re.compile(
-    r"(?:map|handle|translate|convert|render|response)",
-    re.IGNORECASE,
-)
 HTTP_FACILITY_NAME_RE = re.compile(r"(?:status|response|http)", re.IGNORECASE)
-NINJA_HTTP_MODULE_PARTS = {
-    "errors",
-    "exceptions",
-    "http",
+COMMON_ERROR_MODULE = "common.ninja.response.error_out"
+NINJA_SCHEMA_BASE = "ninja.Schema"
+COMMON_ERROR_OUT_BASE = f"{COMMON_ERROR_MODULE}.ErrorOut"
+ERROR_CATALOG_SUBJECT_WORDS = {"error", "problem", "exception"}
+ERROR_CATALOG_PLURAL_WORDS = {"errors", "problems", "exceptions"}
+ERROR_CATALOG_ROLE_WORDS = {
+    "catalog",
+    "catalogs",
+    "map",
+    "maps",
+    "mapping",
+    "mappings",
     "response",
     "responses",
-    "status",
-    "statuses",
-}
-COMMON_ERROR_MODULE = "common.ninja.response.error_out"
-ROOT_ERROR_OUT_BASES = {
-    "ninja.Schema",
-    f"{COMMON_ERROR_MODULE}.ErrorOut",
+    "code",
+    "codes",
 }
 
 
@@ -819,20 +821,68 @@ def _expression_dotted_name(node: ast.AST) -> str | None:
     return None
 
 
-def _module_import_bindings(tree: ast.AST) -> dict[str, str]:
+def _local_target_names(target: ast.AST) -> set[str]:
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, ast.Starred):
+        return _local_target_names(target.value)
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return {
+            name
+            for element in target.elts
+            for name in _local_target_names(element)
+        }
+    return set()
+
+
+def _statement_bound_names(node: ast.stmt) -> set[str]:
+    if isinstance(node, ast.Import):
+        return {
+            alias.asname or alias.name.split(".", 1)[0]
+            for alias in node.names
+        }
+    if isinstance(node, ast.ImportFrom):
+        return {
+            alias.asname or alias.name
+            for alias in node.names
+            if alias.name != "*"
+        }
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return {node.name}
+    if isinstance(node, ast.Assign):
+        return {
+            name
+            for target in node.targets
+            for name in _local_target_names(target)
+        }
+    if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+        return _local_target_names(node.target)
+    return set()
+
+
+def _module_statement_import_bindings(
+    tree: ast.AST,
+) -> dict[int, dict[str, str]]:
+    """Import provenance visible immediately before each module statement."""
     bindings: dict[str, str] = {}
+    bindings_before: dict[int, dict[str, str]] = {}
     for node in getattr(tree, "body", []):
+        bindings_before[id(node)] = dict(bindings)
         if isinstance(node, ast.Import):
             for alias in node.names:
                 local_name = alias.asname or alias.name.split(".", 1)[0]
                 bindings[local_name] = alias.name if alias.asname else local_name
-        elif isinstance(node, ast.ImportFrom) and not node.level and node.module:
+            continue
+        if isinstance(node, ast.ImportFrom) and not node.level and node.module:
             for alias in node.names:
                 if alias.name == "*":
                     continue
                 local_name = alias.asname or alias.name
                 bindings[local_name] = f"{node.module}.{alias.name}"
-    return bindings
+            continue
+        for name in _statement_bound_names(node):
+            bindings.pop(name, None)
+    return bindings_before
 
 
 def _resolve_imported_expression(
@@ -919,8 +969,12 @@ def _assignment_target_names(target: ast.AST) -> list[str | None]:
     return [_expression_dotted_name(target)]
 
 
-def _required_root_api_object(tree: ast.AST, bindings: dict[str, str]) -> str:
-    assigned_objects: list[str | None] = []
+def _required_root_api_object(
+    tree: ast.AST,
+    bindings_before: dict[int, dict[str, str]],
+) -> str:
+    assigned_objects: set[str] = set()
+    constructor_events = 0
     for node in getattr(tree, "body", []):
         value: ast.AST | None = None
         targets: list[ast.AST] = []
@@ -930,19 +984,31 @@ def _required_root_api_object(tree: ast.AST, bindings: dict[str, str]) -> str:
         elif isinstance(node, ast.AnnAssign) and node.value is not None:
             value = node.value
             targets = [node.target]
+        target_names = [
+            name
+            for target in targets
+            for name in _assignment_target_names(target)
+            if name is not None
+        ]
+        assigned_objects.difference_update(_statement_bound_names(node))
+        assigned_objects.difference_update(target_names)
         if not isinstance(value, ast.Call):
             continue
-        constructor = _resolve_imported_expression(value.func, bindings)
+        constructor = _resolve_imported_expression(
+            value.func,
+            bindings_before.get(id(node), {}),
+        )
         if constructor not in ROOT_API_CONSTRUCTORS:
             continue
-        for target in targets:
-            assigned_objects.extend(_assignment_target_names(target))
-    if len(assigned_objects) != 1 or assigned_objects[0] is None:
+        constructor_events += 1
+        assigned_objects.update(target_names)
+    if constructor_events != 1 or len(assigned_objects) != 1:
         raise UsageError(
-            "selected root API의 proven Ninja API instance assignment가 "
-            f"정확히 하나여야 함: {len(assigned_objects)}개"
+            "selected root API의 proven Ninja API constructor event와 최종 object "
+            "binding이 각각 정확히 하나여야 함: "
+            f"event {constructor_events}개, binding {len(assigned_objects)}개"
         )
-    return assigned_objects[0]
+    return next(iter(assigned_objects))
 
 
 def _expression_has_error_status(node: ast.AST) -> bool:
@@ -1004,6 +1070,41 @@ def _assignment_names_and_value(
     return [], None
 
 
+def _identifier_words(name: str) -> set[str]:
+    identifier = name.rsplit(".", 1)[-1]
+    separated = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", identifier)
+    return {
+        word.lower()
+        for word in re.split(r"[^A-Za-z0-9]+", separated)
+        if word
+    }
+
+
+def _is_error_catalog_name(name: str) -> bool:
+    words = _identifier_words(name)
+    return bool(words & ERROR_CATALOG_PLURAL_WORDS) or (
+        bool(words & ERROR_CATALOG_SUBJECT_WORDS)
+        and bool(words & ERROR_CATALOG_ROLE_WORDS)
+    )
+
+
+def _is_direct_mapping_expression(node: ast.AST | None) -> bool:
+    return isinstance(node, (ast.Dict, ast.DictComp)) or (
+        isinstance(node, ast.Call)
+        and _expression_dotted_name(node.func) == "dict"
+    )
+
+
+def _class_public_annotated_fields(node: ast.ClassDef) -> set[str]:
+    return {
+        statement.target.id.lower()
+        for statement in node.body
+        if isinstance(statement, ast.AnnAssign)
+        and isinstance(statement.target, ast.Name)
+        and not statement.target.id.startswith("_")
+    }
+
+
 def _is_exception_type_expression(node: ast.AST) -> bool:
     if isinstance(node, (ast.Tuple, ast.List)):
         return any(_is_exception_type_expression(element) for element in node.elts)
@@ -1039,14 +1140,13 @@ def _function_is_exception_mapping(
     has_exception_flow = _has_exception_isinstance(node) or any(
         isinstance(child, ast.ExceptHandler) for child in ast.walk(node)
     )
-    has_mapping_flow = bool(MAPPING_FLOW_RE.search(node.name)) or has_exception_flow
     has_error_return = any(
         isinstance(child, ast.Return)
         and child.value is not None
         and _expression_has_error_signal(child.value)
         for child in ast.walk(node)
     )
-    return (has_exception_context or has_exception_flow) and has_mapping_flow and has_error_return
+    return (has_exception_context or has_exception_flow) and has_error_return
 
 
 def _is_request_path_test(node: ast.AST) -> bool:
@@ -1073,8 +1173,8 @@ def _body_has_error_return(statements: list[ast.stmt]) -> bool:
 
 
 def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
-    bindings = _module_import_bindings(parsed.tree)
-    api_object = _required_root_api_object(parsed.tree, bindings)
+    bindings_before = _module_statement_import_bindings(parsed.tree)
+    api_object = _required_root_api_object(parsed.tree, bindings_before)
     findings: list[BoundaryFinding] = []
     seen: set[tuple[Path, int, str]] = set()
     source_lines = parsed.source.splitlines()
@@ -1092,10 +1192,17 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
 
     for node in getattr(parsed.tree, "body", []):
         if isinstance(node, ast.ClassDef):
+            statement_bindings = bindings_before.get(id(node), {})
             resolved_bases = {
                 resolved
                 for base in node.bases
-                if (resolved := _resolve_imported_expression(base, bindings)) is not None
+                if (
+                    resolved := _resolve_imported_expression(
+                        base,
+                        statement_bindings,
+                    )
+                )
+                is not None
             }
             if node.name.endswith("ErrorCode") and "enum.StrEnum" in resolved_bases:
                 _append_boundary_finding(
@@ -1106,7 +1213,13 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
                     lineno=node.lineno,
                     category="root-api-error-code",
                 )
-            if node.name.endswith("ErrorOut") and resolved_bases & ROOT_ERROR_OUT_BASES:
+            public_fields = _class_public_annotated_fields(node)
+            is_common_error_out = COMMON_ERROR_OUT_BASE in resolved_bases
+            is_ninja_error_schema = NINJA_SCHEMA_BASE in resolved_bases and (
+                node.name.endswith("ErrorOut")
+                or {"code", "status"} <= public_fields
+            )
+            if is_common_error_out or is_ninja_error_schema:
                 _append_boundary_finding(
                     findings,
                     seen,
@@ -1117,9 +1230,8 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
                 )
         names, value = _assignment_names_and_value(node)
         if (
-            isinstance(value, ast.Dict)
-            and any(EXCEPTION_NAME_RE.search(name) for name in names)
-            and _expression_has_error_signal(value)
+            _is_direct_mapping_expression(value)
+            and any(_is_error_catalog_name(name) for name in names)
         ):
             _append_boundary_finding(
                 findings,
@@ -1143,7 +1255,10 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
         if (
             isinstance(node, ast.If)
             and _is_request_path_test(node.test)
-            and _body_has_error_return(node.body)
+            and (
+                _body_has_error_return(node.body)
+                or _body_has_error_return(node.orelse)
+            )
         ):
             _append_boundary_finding(
                 findings,
@@ -1211,14 +1326,9 @@ def _reference_matches_module(reference: ImportReference, module: str) -> bool:
     )
 
 
-def _reference_is_ninja_http(reference: ImportReference) -> bool:
-    parts = reference.full_path.split(".")
-    if not parts or parts[0] not in {"ninja", "ninja_extra"}:
-        return False
-    if set(part.lower() for part in parts[1:]) & NINJA_HTTP_MODULE_PARTS:
-        return True
-    candidate = reference.imported_name or parts[-1]
-    return bool(HTTP_FACILITY_NAME_RE.search(candidate))
+def _reference_is_ninja_framework(reference: ImportReference) -> bool:
+    root = reference.full_path.split(".", 1)[0]
+    return root in {"ninja", "ninja_extra"}
 
 
 def _reference_is_django_http(reference: ImportReference) -> bool:
@@ -1275,8 +1385,8 @@ def _source_error_boundary_findings(
 
     for reference in _import_references(parsed.relative_path, parsed.tree):
         if in_inner_layer:
-            is_ninja_http = _reference_is_ninja_http(reference)
-            if is_ninja_http or _reference_is_django_http(reference):
+            is_ninja_framework = _reference_is_ninja_framework(reference)
+            if is_ninja_framework or _reference_is_django_http(reference):
                 _append_boundary_finding(
                     layer_findings,
                     seen,
@@ -1285,7 +1395,7 @@ def _source_error_boundary_findings(
                     lineno=reference.lineno,
                     category="layer-http-facility",
                 )
-                if is_ninja_http and in_application_layer:
+                if is_ninja_framework and in_application_layer:
                     suppress_raw_ninja_import = True
             if _reference_matches_module(reference, COMMON_ERROR_MODULE):
                 _append_boundary_finding(
@@ -1340,7 +1450,8 @@ def _source_error_boundary_findings(
 def _print_layer_purity_findings(findings: list[BoundaryFinding]) -> None:
     print(
         "[check-context-isolation] BLOCKER — inner layer(domain/application/infra)가 "
-        "HTTP facility 또는 canonical ErrorOut/ErrorCode 언어를 import 함(layer purity 위반):"
+        "Ninja framework, Django HTTP facility 또는 canonical ErrorOut/ErrorCode 언어를 "
+        "import 함(layer purity 위반):"
     )
     for finding in findings:
         print(finding.render())
