@@ -806,20 +806,16 @@ def _discover_operations(
         definition_bindings: dict[str, Binding],
         enclosure: str,
     ) -> None:
-        decorators = [
+        activating = [
             decorator
             for decorator in node.decorator_list
-            if _operation_decorator(
+            if isinstance(decorator, ast.Call)
+            and _decorator_activates(decorator, definition_bindings)
+            and _operation_decorator(
                 decorator,
                 definition_bindings,
                 fail_on_ambiguity=fail_on_ambiguity,
             )
-        ]
-        activating = [
-            decorator
-            for decorator in decorators
-            if isinstance(decorator, ast.Call)
-            and _decorator_activates(decorator, definition_bindings)
         ]
         if not activating:
             return
@@ -865,6 +861,20 @@ def _raw_success_call(
     call = node.value
     if not isinstance(call.func, ast.Name) or call.func.id in operation.local_names:
         return None
+    if any(keyword.arg is None for keyword in call.keywords):
+        return None
+    statuses = [keyword.value for keyword in call.keywords if keyword.arg == "status"]
+    if statuses:
+        if len(statuses) != 1:
+            return None
+        status = statuses[0]
+        if not (
+            isinstance(status, ast.Constant)
+            and isinstance(status.value, int)
+            and not isinstance(status.value, bool)
+            and status.value in SUCCESS_BODY_STATUSES
+        ):
+            return None
     binding = operation.body_bindings.get(call.func.id)
     if binding is not None and binding.kind == "ambiguous":
         if fail_on_ambiguity:
@@ -878,22 +888,7 @@ def _raw_success_call(
         or binding.origin not in RAW_RESPONSE_ORIGINS
     ):
         return None
-    if any(keyword.arg is None for keyword in call.keywords):
-        return None
-    statuses = [keyword.value for keyword in call.keywords if keyword.arg == "status"]
-    if not statuses:
-        return call
-    if len(statuses) != 1:
-        return None
-    status = statuses[0]
-    if (
-        isinstance(status, ast.Constant)
-        and isinstance(status.value, int)
-        and not isinstance(status.value, bool)
-        and status.value in SUCCESS_BODY_STATUSES
-    ):
-        return call
-    return None
+    return call
 
 
 def _findings(

@@ -2761,6 +2761,38 @@ if os.getenv("CUSTOM_ROUTER"):
 def endpoint(request):
     return JsonResponse({"id": 1})
 """
+    conditional_response_status_500 = conditional_response_rebind.replace(
+        'return JsonResponse({"id": 1})',
+        'return JsonResponse({"id": 1}, status=500)',
+    )
+    conditional_response_dynamic_kwargs = conditional_response_rebind.replace(
+        "def endpoint(request):\n    return JsonResponse({\"id\": 1})",
+        "def endpoint(request, options):\n    return JsonResponse({\"id\": 1}, **options)",
+    )
+    conditional_response_status_200 = conditional_response_rebind.replace(
+        'return JsonResponse({"id": 1})',
+        'return JsonResponse({"id": 1}, status=200)',
+    )
+    conditional_http_response_default_200 = conditional_response_rebind.replace(
+        "from django.http import JsonResponse",
+        "from django.http import HttpResponse",
+    ).replace(
+        "JsonResponse",
+        "HttpResponse",
+    ).replace(
+        'return HttpResponse({"id": 1})',
+        "return HttpResponse('{\"id\": 1}', content_type=\"application/json\")",
+    )
+    conditional_router_no_content = """import os
+from ninja import Router
+from django.http import HttpResponse
+router = Router()
+if os.getenv("CUSTOM_ROUTER"):
+    router = object()
+@router.delete("/", response={204: None})
+def endpoint(request):
+    return HttpResponse(status=204)
+"""
     deterministic_response_rebind = conditional_response_rebind.replace(
         'if os.getenv("CUSTOM_RESPONSE"):\n    def JsonResponse(*args, **kwargs):\n        return object()\n',
         "def JsonResponse(*args, **kwargs):\n    return object()\n",
@@ -2843,6 +2875,13 @@ def import_endpoint(request):
         Case("success-fresh-clean-deterministic-rebind-away", {**success_files(deterministic_response_rebind), "application/catalog/presentation_layer/controller.py": deterministic_router_rebind}, "check-response-schema-bypass.py", success_args("--controller-module", "application/catalog/presentation_layer/controller.py"), 0, ""),
         Case("success-fresh-clean-match-capture-shadows", success_files(match_capture_shadows), "check-response-schema-bypass.py", success_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
         Case("success-fresh-clean-lexical-shadow-controls", success_files(lexical_shadow_controls), "check-response-schema-bypass.py", success_args(), 0, ""),
+        Case("success-scope-clean-ambiguous-response-literal-500", success_files(conditional_response_status_500), "check-response-schema-bypass.py", success_args(), 0, ""),
+        Case("success-scope-clean-ambiguous-response-dynamic-kwargs", success_files(conditional_response_dynamic_kwargs), "check-response-schema-bypass.py", success_args(), 0, ""),
+        Case("success-scope-clean-ambiguous-router-schema-less-204", success_files(conditional_router_no_content), "check-response-schema-bypass.py", success_args(), 0, ""),
+        Case("success-scope-analysis-selected-ambiguous-response-literal-200", success_files(conditional_response_status_200), "check-response-schema-bypass.py", success_args(), 1, "사용 오류"),
+        Case("success-scope-analysis-selected-ambiguous-response-default-200", success_files(conditional_http_response_default_200), "check-response-schema-bypass.py", success_args(), 1, "사용 오류"),
+        Case("success-scope-clean-positional-ambiguous-response-default-200", success_files(conditional_http_response_default_200), "check-response-schema-bypass.py", (TARGET_DIR,), 0, ""),
+        Case("success-scope-clean-positional-ambiguous-router-declared-200", success_files(conditional_router_rebind), "check-response-schema-bypass.py", (TARGET_DIR,), 0, ""),
         Case("success-fp-tests-migrations-cache-venv", {**success_files(schema_object), "application/lesson/presentation_layer/tests/test_bypass.py": raw_200_decoy, "application/lesson/presentation_layer/migrations/0001_bypass.py": raw_200_decoy, "application/lesson/presentation_layer/.cache/bypass.py": raw_200_decoy, "application/lesson/presentation_layer/.venv/bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, ""),
         Case("success-fp-unignored-generated-path", {**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n", "application/lesson/presentation_layer/generated/bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, "", baseline_files={**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n"}),
         Case("success-fp-git-ignored-selected-path", {**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n", "application/lesson/presentation_layer/ignored_bypass.py": raw_200_decoy}, "check-response-schema-bypass.py", (TARGET_DIR,), 0, "", baseline_files={**success_files(schema_object), ".gitignore": "application/lesson/presentation_layer/ignored_bypass.py\n"}),
