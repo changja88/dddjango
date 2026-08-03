@@ -123,7 +123,10 @@ class Finding:
     shown: str
 
     def render(self) -> str:
-        return f"  - {self.relative_path}:{self.lineno}  {self.shown}"
+        return (
+            f"  - {self.relative_path}:{self.lineno}  {self.category}"
+            f" — {self.shown}"
+        )
 
 
 @dataclass(frozen=True)
@@ -169,95 +172,6 @@ def _find_bc_dirs(root: Path) -> list[Path]:
 def _has_any_layer(bc_dir: Path) -> bool:
     """4계층 폴더 중 하나라도 있으면 4계층 앱(이 백스톱 검사 대상)."""
     return any((bc_dir / layer).is_dir() for layer in LAYER_DIRS)
-
-
-def _has_real_py(d: Path) -> bool:
-    """디렉터리가 비-`__init__.py` `.py`를 (재귀로) 담는가 — 빈 골격 패키지 제외."""
-    for p in d.rglob("*.py"):
-        if set(p.relative_to(d).parts) & SKIP_DIRS:
-            continue
-        if p.name != "__init__.py":
-            return True
-    return False
-
-
-def _needs_composition_root(bc_dir: Path) -> bool:
-    """이 BC가 컴포지션 루트를 필요로 하는가 — `application_layer`에 *실 application 로직*
-    (비-`__init__` `.py`)이 있으면 True. command/query 유스케이스뿐 아니라 `service/`·`handler/`
-    오케스트레이션 등 application_layer 의 어떤 실 로직이라도 배선(구체 infra 주입)을 요구하므로
-    신호로 본다 — 빈 `command/` 만 남기고 `service/` 로 로직을 fold 하는 우회를 봉쇄한다.
-    `dto/`(입력 데이터 형태일 뿐 배선 대상 아님)·test 경로·SKIP_DIRS 는 제외.
-
-    데이터소스 BC 는 `architecture-ddd` §632 상 `application_layer` 가 *빈 계층*(feature 0개·
-    `__init__.py` 만)이라 실 로직이 없어 False → 면제(거짓 양성 0)."""
-    app_layer = bc_dir / "application_layer"
-    if not app_layer.is_dir():
-        return False
-    for p in app_layer.rglob("*.py"):
-        if p.name == "__init__.py":
-            continue
-        rel_parts = set(p.relative_to(app_layer).parts)
-        if rel_parts & SKIP_DIRS or rel_parts & TEST_DIR_NAMES:
-            continue
-        if "dto" in rel_parts:
-            continue  # dto = 입력 데이터 형태, 배선 대상 아님.
-        return True
-    return False
-
-
-def _composition_issues(bc_dir: Path) -> list[str]:
-    """BC의 컴포지션 루트 구조 위반(off-tree 폴더·오배치 파일)을 설명 리스트로."""
-    issues: list[str] = []
-
-    # V1 — off-tree `composition/` 폴더 (BC 루트 직속, 실코드 보유).
-    comp_dir = bc_dir / COMPOSITION_DIR
-    if comp_dir.is_dir() and _has_real_py(comp_dir):
-        payload = sorted(
-            p.name
-            for p in comp_dir.rglob("*.py")
-            if p.name != "__init__.py"
-            and not set(p.relative_to(comp_dir).parts) & SKIP_DIRS
-        )
-        issues.append(
-            f"{COMPOSITION_DIR}/ 폴더에 배선 코드({', '.join(payload[:3])}) — DI 조립은 "
-            f"BC 루트 단일 파일 `{COMPOSITION_FILE}`가 소유(폴더로 분열 금지)"
-        )
-
-    # V2 — `composition_root.py` 오배치 (BC 루트가 아닌 계층/하위 폴더).
-    for f in bc_dir.rglob(COMPOSITION_FILE):
-        rel_parts = f.relative_to(bc_dir).parts
-        rel_set = set(rel_parts)
-        if rel_set & SKIP_DIRS or rel_set & TEST_DIR_NAMES:
-            continue
-        if COMPOSITION_DIR in rel_set:
-            continue  # `composition/` 안의 것은 V1이 이미 잡음(이중 보고 회피).
-        if f.parent != bc_dir:
-            issues.append(
-                f"{f.relative_to(bc_dir).as_posix()} — `{COMPOSITION_FILE}`는 BC 루트"
-                f"(`<app>/{COMPOSITION_FILE}`)가 소유, 계층/하위 폴더에 두지 않는다"
-            )
-    return issues
-
-
-def _is_new_or_modified(root: Path, bc_dir: Path) -> bool:
-    """git 레포면 이 BC 하위에 이번 변경(신규/수정/미추적)이 있는지. git 아니면 True."""
-    if not (root / ".git").exists():
-        return True
-    try:
-        rel = bc_dir.relative_to(root)
-    except ValueError:
-        return True
-    try:
-        res = subprocess.run(
-            ["git", "-C", str(root), "status", "--porcelain", "--", str(rel)],
-            capture_output=True,
-            text=True,
-        )
-        if res.returncode != 0:
-            return True  # git 판단 불가 → 안전하게 가드 통과(나머지 AND 가 좁힌다).
-        return bool(res.stdout.strip())
-    except (OSError, subprocess.SubprocessError):
-        return True
 
 
 def _argument_parser() -> _UsageParser:
@@ -628,6 +542,33 @@ def _git_path_is_touched(git_root: Path, file_path: Path) -> bool:
     return changed.returncode == 1
 
 
+def _git_tree_has_tracked_changes(git_root: Path, directory: Path) -> bool:
+    """HEAD 대비 디렉터리 변경 — 현재 inventory에서 사라진 staged deletion도 포함."""
+    try:
+        git_relative = directory.relative_to(git_root)
+    except ValueError as exc:
+        raise UsageError(f"touched directory가 Git root 밖임: {directory}") from exc
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(git_root), "rev-parse", "--verify", "HEAD"],
+            capture_output=True,
+            check=False,
+        )
+        if head.returncode != 0:
+            return True
+        changed = subprocess.run(
+            ["git", "-C", str(git_root), "diff", "--quiet", "HEAD", "--", git_relative.as_posix()],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"touched directory 비교 불능: {git_relative} ({exc})") from exc
+    if changed.returncode not in {0, 1}:
+        detail = os.fsdecode(changed.stderr).strip() or os.fsdecode(changed.stdout).strip()
+        raise UsageError(f"touched directory 비교 불능: {git_relative} ({detail})")
+    return changed.returncode == 1
+
+
 def _path_is_under(path: Path, directory: Path) -> bool:
     try:
         path.relative_to(directory)
@@ -647,10 +588,15 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> list[str]:
             (path for path in eligible if _path_is_under(path, bc_relative)),
             key=Path.as_posix,
         )
-        if inventory.git_root is not None and not any(
-            _git_path_is_touched(inventory.git_root, root / path) for path in bc_paths
-        ):
-            continue
+        if inventory.git_root is not None:
+            current_path_touched = any(
+                _git_path_is_touched(inventory.git_root, root / path) for path in bc_paths
+            )
+            tracked_tree_changed = _git_tree_has_tracked_changes(
+                inventory.git_root, root / bc_relative
+            )
+            if not current_path_touched and not tracked_tree_changed:
+                continue
 
         issues: list[str] = []
         composition_relative = bc_relative / COMPOSITION_DIR
@@ -671,7 +617,7 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> list[str]:
             if path.name != COMPOSITION_FILE or not (root / path).is_file():
                 continue
             local = path.relative_to(bc_relative)
-            if COMPOSITION_DIR in local.parts or len(local.parts) == 1:
+            if _path_is_under(path, composition_relative) or len(local.parts) == 1:
                 continue
             issues.append(
                 f"{local.as_posix()} — `{COMPOSITION_FILE}`는 BC 루트"
@@ -715,6 +661,9 @@ def _expression_dotted_name(node: ast.AST) -> str | None:
 def _target_names(target: ast.AST) -> set[str]:
     if isinstance(target, ast.Name):
         return {target.id}
+    if isinstance(target, ast.Attribute):
+        dotted = _expression_dotted_name(target)
+        return {dotted.split(".", 1)[0]} if dotted is not None else set()
     if isinstance(target, ast.Starred):
         return _target_names(target.value)
     if isinstance(target, (ast.Tuple, ast.List)):
@@ -859,7 +808,8 @@ def _resolve_imported_expression(
 
 
 def _fact_covers(fact: ImportFact, target: str) -> bool:
-    return target == fact.full_path or target.startswith(f"{fact.full_path}.")
+    target_module, _, _ = target.rpartition(".")
+    return target == fact.full_path or target_module == fact.full_path
 
 
 def _assignment_target_names(target: ast.AST) -> list[str | None]:
@@ -1114,14 +1064,19 @@ def _analyze_registrar(
         )
 
 
-def _historically_resolves(
-    node: ast.AST, historical: dict[str, set[str]], expected: str
+def _previous_import_resolves(
+    node: ast.AST, facts: list[ImportFact], expected: str, before_line: int
 ) -> bool:
     dotted = _expression_dotted_name(node)
     if dotted is None:
         return False
     first, *rest = dotted.split(".")
-    return any(".".join((binding, *rest)) == expected for binding in historical.get(first, set()))
+    return any(
+        fact.local_name == first
+        and fact.lineno < before_line
+        and ".".join((fact.binding, *rest)) == expected
+        for fact in facts
+    )
 
 
 def _analyze_urlconf(
@@ -1132,7 +1087,7 @@ def _analyze_urlconf(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
-    before, facts, historical = _import_state(parsed)
+    before, facts, _ = _import_state(parsed)
     required = [selected_api_object, *(spec.full_path for spec in specs)]
     for target in required:
         if not any(_fact_covers(fact, target) for fact in facts):
@@ -1147,7 +1102,7 @@ def _analyze_urlconf(
         resolved = _resolve_imported_expression(call.func, bindings)
         if resolved not in expected_paths:
             for expected in expected_paths:
-                if _historically_resolves(call.func, historical, expected):
+                if _previous_import_resolves(call.func, facts, expected, call.lineno):
                     analysis.append(
                         f"URLconf registrar provenance shadow/rebinding 분석 불능: {expected}:{call.lineno}"
                     )
@@ -1268,7 +1223,16 @@ def main(argv: list[str]) -> int:
             print(finding.render())
         for finding in di_findings:
             print(finding)
-        print(
+        if composition_findings:
+            print(
+                "  API 근거: implementation-django-ninja §2.2·discipline-houserules §1. "
+                "각 BC의 canonical `presentation_layer/registrar.py`가 "
+                "`register_<bc>_api(api)` 안에서만 controller를 등록하고, 선택 URLconf가 "
+                "선택 API object를 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
+                "signature/provenance/owner/count를 그 직접 계약에 맞춰라."
+            )
+        if di_findings:
+            print(
             "  근거: discipline-houserules §0(트리·파일표). DI 조립은 BC 루트 "
             "`application/<app>/composition_root.py` 단일 파일이 소유하고, presentation은 "
             "`build_<usecase>_command()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` "
@@ -1278,7 +1242,7 @@ def main(argv: list[str]) -> int:
             "`composition_root.py`를 BC 루트로 올려라. application 로직(command/query/service 등)을 "
             "가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root.py`를 만들어 "
             "`build_<usecase>_command()` 팩토리를 둬라(데이터소스 BC는 해당 없음)."
-        )
+            )
         return 2
 
     return 0
