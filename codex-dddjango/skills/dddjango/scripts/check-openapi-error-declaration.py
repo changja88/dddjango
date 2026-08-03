@@ -58,6 +58,7 @@ ROUTER_INSTANCE = "@ninja-router-instance"
 API_TYPE_PREFIX = "@ninja-api-type:"
 API_RECEIVER = "@selected-api-receiver"
 API_SCHEMA_METHOD = "@selected-api-schema-method"
+BUILTIN_SETATTR = "@builtin-setattr"
 AMBIGUOUS_API_SCHEMA_METHOD = "@ambiguous-selected-api-schema-method"
 AMBIGUOUS_BINDING = "@ambiguous-binding"
 AMBIGUOUS_ERROR_INSTANCE = "@ambiguous-error-instance"
@@ -123,12 +124,14 @@ class ErrorSymbol:
 class ErrorInstance:
     symbol: ErrorSymbol
     direct_status: int | None = None
+    alias_depth: int = 0
 
 
 @dataclass
 class ProvenanceState:
     bindings: dict[str, str]
     instances: dict[str, ErrorInstance | str]
+    falls_through: bool = True
 
 
 @dataclass(frozen=True)
@@ -764,7 +767,11 @@ def _is_ambiguous_resolution(resolved: str | None) -> bool:
 
 
 def _copy_provenance(state: ProvenanceState) -> ProvenanceState:
-    return ProvenanceState(dict(state.bindings), dict(state.instances))
+    return ProvenanceState(
+        dict(state.bindings),
+        dict(state.instances),
+        state.falls_through,
+    )
 
 
 def _merge_instances(
@@ -785,9 +792,12 @@ def _merge_instances(
 
 
 def _merge_provenance(states: list[ProvenanceState]) -> ProvenanceState:
+    reachable = [state for state in states if state.falls_through]
+    merged = reachable or states
     return ProvenanceState(
-        _merge_bindings([state.bindings for state in states]),
-        _merge_instances([state.instances for state in states]),
+        _merge_bindings([state.bindings for state in merged]),
+        _merge_instances([state.instances for state in merged]),
+        bool(reachable),
     )
 
 
@@ -897,6 +907,8 @@ def _statement_provenance_flow(
         )
 
     for statement in statements:
+        if not state.falls_through:
+            break
         if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if on_function is None:
                 on_simple(statement, state)
@@ -979,6 +991,8 @@ def _statement_provenance_flow(
             reachable, include_unmatched = _match_outcomes(statement)
             outcomes: list[ProvenanceState] = []
             for index, case in enumerate(statement.cases):
+                if index not in reachable:
+                    continue
                 branch = _copy_provenance(base)
                 _drop_provenance_names(
                     branch, _pattern_capture_names(case.pattern)
@@ -990,14 +1004,14 @@ def _statement_provenance_flow(
                         annotations_evaluated=annotations_evaluated,
                         on_expression=on_expression,
                     )
-                result = flow(case.body, branch)
-                if index in reachable:
-                    outcomes.append(result)
+                outcomes.append(flow(case.body, branch))
             if include_unmatched:
                 outcomes.append(base)
             state = _merge_provenance(outcomes)
             continue
         on_simple(statement, state)
+        if isinstance(statement, ast.Return):
+            state.falls_through = False
     return state
 
 
@@ -1529,7 +1543,15 @@ def _operation_requirements(
         if value is not None:
             instance = _constructed_error(value, state.bindings, catalog)
             if instance is None and isinstance(value, ast.Name):
-                instance = state.instances.get(value.id)
+                previous = state.instances.get(value.id)
+                if isinstance(previous, ErrorInstance) and previous.alias_depth == 0:
+                    instance = ErrorInstance(
+                        previous.symbol,
+                        previous.direct_status,
+                        alias_depth=1,
+                    )
+                elif previous == AMBIGUOUS_ERROR_INSTANCE:
+                    instance = previous
         _advance_bindings(
             statement,
             operation.relative_path,
@@ -1984,7 +2006,7 @@ def _api_module_findings(
                 isinstance(call, ast.Call)
                 and isinstance(call.func, ast.Name)
                 and call.func.id == "setattr"
-                and "setattr" not in bindings
+                and _resolve_expression(call.func, bindings) == BUILTIN_SETATTR
                 and len(call.args) >= 2
                 and isinstance(call.args[1], ast.Constant)
                 and call.args[1].value == "get_openapi_schema"
@@ -2186,7 +2208,7 @@ def _api_module_findings(
 
     bindings = scan_block(
         parsed.tree.body,
-        {},
+        {"setattr": BUILTIN_SETATTR},
         scope_kind="module",
         deferred=deferred_functions,
     )

@@ -2022,6 +2022,81 @@ def list_lessons(request):
     success_status_extra = ninja_status_extra.replace(
         "HTTP_401_UNAUTHORIZED", "HTTP_200_OK"
     )
+    early_return_instance = """from ninja import Router, Status
+from application.lesson.presentation_layer.schema.error_out import LessonConflictError, LessonErrorOut, LessonNotFoundError
+
+router = Router()
+
+@router.get('/{lesson_id}', response={200: dict, 404: LessonErrorOut, 409: LessonErrorOut})
+def get_lesson(request, lesson_id: int):
+    error = LessonNotFoundError()
+    if lesson_id:
+        error = LessonConflictError()
+        return Status(error.status, error)
+    return Status(error.status, error)
+"""
+    early_return_selected_api = """from ninja_extra import NinjaExtraAPI
+from vendor import external_api
+
+api = NinjaExtraAPI()
+
+def build_schema(enabled):
+    alias = api
+    if enabled:
+        alias = external_api
+        return {}
+    return alias.get_openapi_schema()
+"""
+    unreachable_match_error = flow_controller(
+        """match 1:
+    case 2:
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+    case 1:
+        return {"id": lesson_id}"""
+    )
+    unreachable_match_selected_api = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+
+match 1:
+    case 2:
+        api.get_openapi_schema()
+    case 1:
+        pass
+"""
+    shadowed_setattr = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+
+def install(setattr):
+    setattr(api, "get_openapi_schema", replacement)
+"""
+    two_step_instance_alias = flow_controller(
+        """error = LessonNotFoundError()
+first = error
+second = first
+return Status(second.status, second)"""
+    )
+    one_step_standard_status_alias = """from ninja import Router, status
+
+router = Router()
+unauthorized = status.HTTP_401_UNAUTHORIZED
+
+@router.get('/lessons', response={200: dict}, openapi_extra={'responses': {unauthorized: {}}})
+def list_lessons(request):
+    return []
+"""
+    unselected_controller_call = """from ninja import Router
+from config.api import api
+
+router = Router()
+api.get_openapi_schema()
+
+@router.get('/catalog', response={200: dict})
+def list_catalog(request):
+    return []
+"""
     return [
         Case("openapi-clean-direct-404-409-same-bc-base", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-framework-statuses-not-advertised", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
@@ -2088,6 +2163,14 @@ def list_lessons(request):
         Case("openapi-extra-ninja-status-constant", with_files(("application/lesson/presentation_layer/controller.py", ninja_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-extra-httpstatus-constant", with_files(("application/lesson/presentation_layer/controller.py", http_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-clean-extra-success-status-constant", with_files(("application/lesson/presentation_layer/controller.py", success_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round3-clean-early-return-error-instance", with_files(("application/lesson/presentation_layer/controller.py", early_return_instance), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round3-selected-api-after-early-return", with_files(("config/api.py", early_return_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-round3-clean-unreachable-match-error-return", with_files(("application/lesson/presentation_layer/controller.py", unreachable_match_error), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-round3-clean-unreachable-match-selected-api", with_files(("config/api.py", unreachable_match_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-round3-clean-shadowed-setattr", with_files(("config/api.py", shadowed_setattr), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round3-clean-two-step-error-instance-alias", with_files(("application/lesson/presentation_layer/controller.py", two_step_instance_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round3-one-step-standard-status-alias", with_files(("application/lesson/presentation_layer/controller.py", one_step_standard_status_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-round3-clean-unselected-controller-api-call", with_files(("application/catalog/presentation_layer/controller.py", unselected_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         # Reviewer-only: dynamic response mappings and status-specific code
         # subset precision for a shared BC base schema.
     ]
