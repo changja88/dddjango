@@ -460,12 +460,12 @@ Expected: 11/11 source-body↔Claude, Claude↔Codex reference in sync.
 - Modify: `dddjango/scripts/check-openapi-error-declaration.py`
 - Mirror: `codex-dddjango/skills/dddjango/scripts/check-openapi-error-declaration.py`
 
-- [ ] Step 1: 기존 touched-file `openapi_extra` 오류 status와 `response=` 누락 검출을 먼저 회귀 fixture로 고정한다. preserve/auto branch에서 이 동작을 그대로 유지한 뒤 code-profile 기능을 추가한다.
+- [ ] Step 1: 기존 touched-file `openapi_extra` 오류 status와 `response=` 누락 검출을 먼저 회귀 fixture로 고정한다. preserve/auto branch에서 finding 의미와 touched/grandfather 동작을 유지한 뒤 code-profile 기능을 추가한다. 단, production component filter는 TARGET-relative 경로에 적용해 ancestor `test`/`venv`가 전체 프로젝트를 숨기던 결함을 고치고, 복수 finding은 filesystem 순서 대신 TARGET-relative lexical 순서로 결정화한다.
 - [ ] Step 2: §1.2 CLI와 정확한 controller module selector를 구현한다. code branch는 concrete의 정적으로 해석 가능한 status default와 BC base direct constructor status를 모아 operation별 관리 대상 오류 status를 구한다. literal과 `status.HTTP_404_NOT_FOUND`/`HTTPStatus.NOT_FOUND` 같은 결정적 표준 상수를 지원한다.
 - [ ] Step 3: decorator `response={...}`의 status key와 Schema symbol을 파싱하고 실제 반환하는 각 오류 status가 같은 BC `<Bc>ErrorOut`으로 선언됐는지 대조한다. 보증은 status→BC base class까지이며 status별 code subset의 Enum 과대 노출은 승인된 한계라고 진단한다.
 - [ ] Step 4: `response=`에 ErrorOut을 선언했지만 해당 operation에 직접 BC ErrorOut 반환이 없는 framework 401/403/route 404/422/429/500 광고를 차단한다. 404/422 숫자 자체가 아니라 직접 BC 반환 존재 여부로 판별한다.
 - [ ] Step 5: code profile에서 framework error response용 `openapi_extra`와 모든 `get_openapi_schema` override/monkeypatch/별도 postprocessor 직접형을 차단한다. decorator의 servers/security/examples 등 non-response metadata는 보존하되 생성 schema 사후수정과 혼동하지 않는다.
-- [ ] Step 6: preserve/auto에서는 기존 touched `openapi_extra`-only 오류 선언 검사를 유지하고 신규 BC base/direct-Status 정합은 N/A로 둔다.
+- [ ] Step 6: preserve/auto에서는 기존 touched `openapi_extra`-only 오류 선언 검사를 유지하고 신규 BC base/direct-Status 정합은 N/A로 둔다. 승인된 production filter·root-relative filter·deterministic ordering 교정 외 finding set/content와 exit는 legacy differential로 보존한다.
 - [ ] Step 7: 필수 error status/Schema mapping을 해석하지 못하면 code mode에서 exit 1이다. 동적 성공 response처럼 오류 계약 증명과 무관한 표현이나 분리된 brownfield controller는 건드리지 않는다.
 - [ ] Step 8: Task A1 OpenAPI/legacy case를 RED→GREEN으로 만든 뒤 미러한다.
 
