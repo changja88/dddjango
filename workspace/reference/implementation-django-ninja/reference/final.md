@@ -140,13 +140,15 @@ Operation 구현 기준:
   `StreamingHttpResponse`, redirect, schema-less 204는 framework-native 성공
   carveout이며 오류 응답 우회를 허용하지 않는다.
 
-Operation의 순서는 고정한다.
+Operation은 10번 slot이 승인한 **한 경로**를 선택한다.
 
-1. request Schema를 application value/request object로 준비하고 use case를 조립한다.
-2. `try`에는 최외곽 application call 문장 하나만 둔다.
-3. 구체적인 known exception만 catch한다.
-4. catch 안에서 concrete `ErrorOut`을 준비해 직접 `Status`로 반환한다.
-5. 성공 변환은 `try` 뒤에서 수행한다.
+- **exception path:** request를 준비한 뒤 `try`에는 최외곽 application call 한 문장만 둔다.
+  구체 exception 또는 구체 exception tuple만 catch하고, catch 안에서 no-arg concrete 또는
+  populated BC-base `ErrorOut`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
+  `Status(error.status, error)`로 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
+- **failed Result/`None`/outcome path:** application call을 정확히 한 번 한 뒤, `try` 없이
+  slot이 승인한 failed branch를 call 바로 다음에 둔다. 같은 ErrorOut/header/두 인자 `Status`
+  구성을 직접 수행하며, 예외·catch·helper·mapping table을 꾸며내지 않는다.
 
 ```python
 from ninja import Status
@@ -486,7 +488,7 @@ def list_orders(request):
 - `422`: semantically invalid input 또는 framework validation error 계약
 - `429`: rate limit
 - `503`: 일시적 서비스 불가(과부하·정비·승인된 일시 경합). 직접 공개하는 retryable BC
-  오류라면 controller가 주입받은 Django temporal `HttpResponse`에 승인된 `Retry-After`를
+  오류라면 controller가 주입받은 응답용(temporal) Django `HttpResponse`에 승인된 `Retry-After`를
   설정한 뒤 두 인자 `Status`를 반환한다. 503/409 선택은 명세 §5/G1이 정하고 raw 인프라
   예외를 controller가 임의 분류하지 않는다(§6.2,
   `architecture-api` §13.4).
@@ -640,8 +642,24 @@ raw DB/SDK exception을 catch하지 않고, 컨트롤러가 방금 raise한 예�
 않는다. 서로 다른 공개 의미가 필요한 known exception은 별도 catch와 concrete로 나누고,
 같은 공개 의미로 수렴할 때만 tuple catch를 쓴다.
 
-use case가 계약상 Result/`None`을 정상 결과로 반환하면 controller가 그 값을 helper 없이
-직접 성공 계약으로 반환할 수 있다. 실패를 Result의 익명 dict나 `None`으로 숨기는 규칙은 아니다.
+다음은 10번 slot이 `ReserveOrderResult.insufficient_stock`을 승인된 failed outcome으로
+정한 경우의 유효한 직접 변환이다. call 뒤 branch가 BC `ErrorOut`을 만들며 예외 path를
+흉내 내지 않는다.
+
+```python
+result = command.execute(request_value)
+
+if result is ReserveOrderResult.insufficient_stock:
+    error = OrderInsufficientStockError()
+    return Status(error.status, error)
+
+return OrderOut.from_result(result)
+```
+
+반대로 use case가 계약상 Result/`None`을 native 성공으로 반환하면 controller가 그 값을 helper
+없이 직접 성공 계약으로 반환할 수 있다. `None`/Result 자체가 언제나 실패라는 뜻은 아니다.
+12-slot이 그 operation의 의미를 결정하며, 실패를 Result의 익명 dict나 `None`으로 숨기는 규칙은
+아니다.
 
 ```python
 result = query.execute(query_value)
@@ -652,8 +670,8 @@ return result
 ```
 
 승인된 BC 오류 헤더도 같은 controller가 소유하되 `Status` 생성자에 header를 넘기지 않는다.
-명세가 retryable BC 503과 `Retry-After`를 승인했다면 controller method가 Django temporal
-`HttpResponse`를 받아 catch 안에서 header를 설정한 뒤 두 인자 `Status`를 반환한다.
+명세가 retryable BC 503과 `Retry-After`를 승인했다면 controller method가 주입된 응답용(temporal)
+Django `HttpResponse`를 받아 catch 안에서 header를 설정한 뒤 두 인자 `Status`를 반환한다.
 
 ```python
 from django.http import HttpResponse

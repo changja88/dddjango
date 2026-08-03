@@ -2610,8 +2610,19 @@ def _managed_concrete_error_types():
 
 
 def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
+    # 7~10번 slot에서 온 완전한 literal inventory다. 이 예시에서는 두 BC와
+    # 다섯 concrete가 승인됐지만, 빈 inventory도 유효한 계약 상태다.
+    approved_bc_bases = {bc_base for bc_base, _code_enum in APPROVED_BC_BASES_WITH_CODES}
+    discovered_bc_bases = {InventoryErrorOut, OrderErrorOut}
+    assert discovered_bc_bases == approved_bc_bases
+    if approved_bc_bases:
+        assert discovered_bc_bases
+
     error_types = _managed_concrete_error_types()
-    assert error_types  # 비어 있는 discovery는 아무것도 증명하지 않는다.
+    approved_concrete_types = set(APPROVED_CONCRETE_ERROR_CONTRACTS)
+    assert error_types == approved_concrete_types
+    if approved_concrete_types:
+        assert error_types
 
     for bc_base, code_enum in APPROVED_BC_BASES_WITH_CODES:
         assert set(bc_base.model_fields) == set(ErrorOut.model_fields)
@@ -2642,7 +2653,11 @@ def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
 ```
 
 BC base 자체는 공통 required/default 계약을 그대로 보존하므로 무인자 생성을 요구하지 않는다.
-무인자 생성과 모든 필드 default는 사건별 concrete에만 적용한다. 위
+무인자 생성, validator/alias 비교와 모든 필드 default는 승인된 사건별 concrete에만 적용한다.
+7~10번 slot의 error-BC 또는 concrete inventory가 비어 있으면 공통 `ErrorOut`의 exact shape
+테스트는 그대로 수행하되, 위 exact set은 각각 빈 집합이어야 하고 managed BC `ErrorOut`은
+runtime/OpenAPI 어디에도 나타나지 않아야 한다. public error를 테스트 편의를 위해 발명하지
+않는다. 위
 `__pydantic_decorators__` 검사는 private Pydantic API에 의존하는 **지원 pin 한정 runtime
 backstop**이다. validator 추가 금지의 결정적 소스 판정은 schema checker가 소유하며, pin이
 바뀌면 decorator representation을 먼저 실측하고 이 runtime 비교를 갱신한다.
@@ -2940,6 +2955,60 @@ APPROVED_MAPPING_CASES = {
 }
 
 
+# slot 12는 각 runtime case를 보존한 뒤 OpenAPI key space로 투영한다. 서로 다른
+# concrete failure가 하나의 (path, method, status, BC base ref)에 수렴할 수 있다.
+APPROVED_OPENAPI_BASE_REF_BY_CASE = {
+    (
+        "/api/v1/inventory/items/{item_id}",
+        "get",
+        404,
+        "InventoryItemNotFound",
+    ): "#/components/schemas/InventoryErrorOut",
+    (
+        "/api/v2/inventory/items/{item_id}",
+        "get",
+        404,
+        "ArchivedInventoryItemNotFound",
+    ): "#/components/schemas/InventoryErrorOut",
+    (
+        "/api/v1/inventory/reservations/{reservation_id}",
+        "patch",
+        409,
+        "InventoryVersionMismatch",
+    ): "#/components/schemas/InventoryErrorOut",
+    (
+        "/api/v1/inventory/reservations",
+        "post",
+        503,
+        "InventoryTemporarilyUnavailable",
+    ): "#/components/schemas/InventoryErrorOut",
+    (
+        "/api/v1/orders/{order_id}",
+        "get",
+        404,
+        "OrderProductNotFound",
+    ): "#/components/schemas/OrderErrorOut",
+    (
+        "/api/v1/orders",
+        "post",
+        409,
+        "OrderInsufficientStock",
+    ): "#/components/schemas/OrderErrorOut",
+    (
+        "/api/v1/orders/retry",
+        "post",
+        503,
+        "OrderTemporarilyUnavailable",
+    ): "#/components/schemas/OrderErrorOut",
+    (
+        "/api/v1/orders/{order_id}",
+        "patch",
+        409,
+        "OrderVersionMismatch",
+    ): "#/components/schemas/OrderErrorOut",
+}
+
+
 def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
     client,
     mocker,
@@ -3211,21 +3280,36 @@ def test_unidentified_exception_uses_safe_framework_500(mocker):
 500 경로를 관찰한다.
 
 authentication backend는 성공 시 identity/principal을 반환하고 실패 시 `None` 또는 framework
-`AuthenticationError`를 사용한다. 아래 smoke는 두 실제 auth 경로가 401로 끝나고
-`request.auth`에 ErrorOut이 저장되지 않았음을 확인한다.
+`AuthenticationError`를 사용한다. 12번 slot은 실제로 mount·승인된 endpoint와 그 failure
+mechanism을 **모두 그리고 오직 그것만** literal inventory로 제공한다. 두 mechanism이 모두
+있는 경우에만 둘 다 test한다. 하나만 승인됐다면 하나만 test하는 것이 정상이며 endpoint나
+header를 예시 때문에 발명하지 않는다. 모든 선택된 실패는 framework-owned 401로 끝나고
+`request.auth`에 `ErrorOut`이나 exception object를 저장하지 않아야 한다.
 
 ```python
-@pytest.mark.parametrize(
-    "url",
-    ["/api/auth/rejected-token", "/api/auth/disabled-principal"],
+# slot 12의 실제 mount/승인 literal만 넣는다. 빈 경우에도 새 endpoint를 만들지 않는다.
+APPROVED_AUTH_FAILURE_CASES = (
+    # ("none", "/실제-승인된-auth-endpoint", {"HTTP_AUTHORIZATION": "..."}),
+    # ("authentication_error", "/실제-승인된-auth-endpoint", {"HTTP_AUTHORIZATION": "..."}),
 )
-def test_auth_failures_remain_framework_owned(client, url):
-    response = client.get(url, HTTP_AUTHORIZATION="Bearer rejected-token")
+
+
+@pytest.mark.parametrize(
+    "mechanism, url, headers",
+    APPROVED_AUTH_FAILURE_CASES,
+)
+def test_approved_auth_failures_remain_framework_owned(client, mechanism, url, headers):
+    approved_mechanisms = {
+        case_mechanism for case_mechanism, _url, _headers in APPROVED_AUTH_FAILURE_CASES
+    }
+    assert approved_mechanisms <= {"none", "authentication_error"}
+
+    response = client.get(url, **headers)
 
     assert response.status_code == 401
     auth = getattr(response.wsgi_request, "auth", None)
-    assert auth is None
     assert not isinstance(auth, ErrorOut)
+    assert not isinstance(auth, BaseException)
     assert_not_managed_error(response)
 ```
 
@@ -3246,30 +3330,17 @@ Schema로 광고되지 않아야 한다.
 
 ```python
 HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
-APPROVED_MANAGED_ERROR_REFS = {
-    ("/api/v1/inventory/items/{item_id}", "get", "404"): (
-        "#/components/schemas/InventoryErrorOut"
-    ),
-    ("/api/v2/inventory/items/{item_id}", "get", "404"): (
-        "#/components/schemas/InventoryErrorOut"
-    ),
-    ("/api/v1/inventory/reservations/{reservation_id}", "patch", "409"): (
-        "#/components/schemas/InventoryErrorOut"
-    ),
-    ("/api/v1/inventory/reservations", "post", "503"): (
-        "#/components/schemas/InventoryErrorOut"
-    ),
-    ("/api/v1/orders/{order_id}", "get", "404"): (
-        "#/components/schemas/OrderErrorOut"
-    ),
-    ("/api/v1/orders", "post", "409"): "#/components/schemas/OrderErrorOut",
-    ("/api/v1/orders/retry", "post", "503"): (
-        "#/components/schemas/OrderErrorOut"
-    ),
-    ("/api/v1/orders/{order_id}", "patch", "409"): (
-        "#/components/schemas/OrderErrorOut"
-    ),
-}
+
+
+def _project_prepared_cases_to_openapi_refs():
+    return {
+        (path, method, str(status)): APPROVED_OPENAPI_BASE_REF_BY_CASE[case]
+        for case in APPROVED_MAPPING_CASES
+        for path, method, status, _failure_name in (case,)
+    }
+
+
+APPROVED_MANAGED_ERROR_REFS = _project_prepared_cases_to_openapi_refs()
 COMPLETE_MANAGED_ERROR_SCHEMA_REFS = {
     "#/components/schemas/ErrorOut",
     "#/components/schemas/InventoryErrorOut",
@@ -3337,13 +3408,7 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
 
     assert response.status_code == 200
     document = response.json()
-    prepared_mapping_tuples = {
-        (path, method, str(status))
-        for path, method, status, _failure_name in APPROVED_MAPPING_CASES
-    }
-    assert len(APPROVED_MAPPING_CASES) == 8
-    assert len(prepared_mapping_tuples) == 8
-    assert set(APPROVED_MANAGED_ERROR_REFS) == prepared_mapping_tuples
+    assert APPROVED_OPENAPI_BASE_REF_BY_CASE.keys() == APPROVED_MAPPING_CASES.keys()
 
     expected_occurrences = {
         (path, method, status, "application/json", ref)
@@ -3351,7 +3416,11 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
     }
     actual_occurrences = set(_managed_response_ref_occurrences(document))
 
-    assert expected_occurrences
+    if APPROVED_BC_BASES:
+        assert expected_occurrences
+    else:
+        assert APPROVED_CONCRETE_ERROR_CONTRACTS == {}
+        assert expected_occurrences == set()
     assert actual_occurrences == expected_occurrences
     assert set(APPROVED_MANAGED_ERROR_REFS.values()) == {
         "#/components/schemas/InventoryErrorOut",
@@ -3367,9 +3436,11 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
         assert schema == {"$ref": approved_ref}
 ```
 
-`APPROVED_MAPPING_CASES`의 8개 prepared mapping tuple과
-`APPROVED_MANAGED_ERROR_REFS`의 8개 OpenAPI tuple은 exact set으로 같아야 한다. 두 OpenAPI
-literal은 12번 slot의 **완전한** `(path, method, status) -> BC base ref`와
+`APPROVED_MAPPING_CASES`는 각 `(path, method, status, concrete failure)` runtime case를 별도로
+보존한다. 이 예시에서는 여덟 case가 여덟 OpenAPI tuple로 보이지만, 그것은 예시의 수일 뿐
+일대일 법칙이 아니다. `APPROVED_MANAGED_ERROR_REFS`는 모든 complete case를
+`(path, method, status, BC base ref)`로 투영·deduplicate한 12번 slot occurrence inventory와
+exact하게 비교한다. 두 OpenAPI literal은 12번 slot의 **완전한** BC base ref와
 managed common/base/concrete ErrorOut ref inventory다. collector는 선택한 framework path 문자열만 훑지 않고 모든 operation과
 모든 response status의 실제 schema를 재귀 순회하며 response/component `$ref`도 따라간다. 따라서
 framework status나 다른 operation에 common/base/concrete ErrorOut이 한 번이라도 나타나면 exact occurrence
