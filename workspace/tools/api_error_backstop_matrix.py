@@ -435,7 +435,259 @@ def get_lesson(request):
     error.code = "lesson_not_found"
     return error
 """
+    exact_concrete_code_annotation = LESSON_ERROR_OUT.replace(
+        "class LessonNotFoundError(LessonErrorOut):",
+        "class PreparedLessonMissing(LessonErrorOut):",
+    )
+    broadened_concrete_code_annotation = exact_concrete_code_annotation.replace(
+        "code: LessonErrorCode = LessonErrorCode.NOT_FOUND",
+        "code: object = LessonErrorCode.NOT_FOUND",
+        1,
+    )
+    indirect_alias_model_config = LESSON_ERROR_OUT.replace(
+        "from common.ninja.response.error_out import ErrorOut",
+        "from common.ninja.response.error_out import ErrorOut\n"
+        "from pydantic import ConfigDict",
+    ).replace(
+        "class LessonNotFoundError(LessonErrorOut):",
+        "class LessonNotFoundError(LessonErrorOut):\n"
+        "    _wire_config = ConfigDict(alias_generator=lambda value: 'x_' + value)\n"
+        "    model_config = _wire_config",
+    )
+    benign_indirect_model_config = LESSON_ERROR_OUT.replace(
+        "from common.ninja.response.error_out import ErrorOut",
+        "from common.ninja.response.error_out import ErrorOut\n"
+        "from pydantic import ConfigDict",
+    ).replace(
+        "class LessonNotFoundError(LessonErrorOut):",
+        "class LessonNotFoundError(LessonErrorOut):\n"
+        "    _unused_wire_config = ConfigDict(alias_generator=lambda value: 'x_' + value)\n"
+        "    _benign_config = ConfigDict(title='Lesson error')\n"
+        "    model_config = _benign_config",
+    )
+    nested_outside_concrete = """from application.lesson.presentation_layer.schema.error_out import LessonErrorCode, LessonErrorOut
+
+
+def build_error_type():
+    class NestedLessonError(LessonErrorOut):
+        code: LessonErrorCode = LessonErrorCode.NOT_FOUND
+        title: str = "Nested"
+        status: int = 404
+        detail: str = "Nested outside the canonical module."
+    return NestedLessonError
+"""
+    unrelated_nested_class = """def build_record_type():
+    class NestedRecord:
+        code = "ordinary_record"
+    return NestedRecord
+"""
+    walrus_bound_error = """from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+
+def get_lesson(request):
+    (error := LessonNotFoundError())
+    error.code = "lesson_not_found"
+    return error
+"""
+    unrelated_walrus_object = """class Box:
+    pass
+
+
+def get_lesson(request):
+    (box := Box())
+    box.code = "ordinary_value"
+    return box
+"""
+    concrete_name_ending_error_out = LESSON_ERROR_OUT.replace(
+        "class LessonNotFoundError(LessonErrorOut):",
+        "class LessonNotFoundErrorOut(LessonErrorOut):",
+    )
+    true_second_bc_base = LESSON_ERROR_OUT + """
+
+class AnotherLessonErrorOut(ErrorOut):
+    code: LessonErrorCode
+"""
+    shadowed_constructor_expressions = """from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+
+def decoys(factories):
+    return (
+        (lambda LessonNotFoundError: LessonNotFoundError(code="ordinary"))(dict),
+        [LessonNotFoundError(code="ordinary") for LessonNotFoundError in factories],
+        {LessonNotFoundError(code="ordinary") for LessonNotFoundError in factories},
+        {index: LessonNotFoundError(code="ordinary") for index, LessonNotFoundError in enumerate(factories)},
+        tuple(LessonNotFoundError(code="ordinary") for LessonNotFoundError in factories),
+    )
+"""
+    unshadowed_constructor_expressions = """from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+
+def raw_errors(factories):
+    return (
+        (lambda factory: LessonNotFoundError(code="lesson_not_found"))(dict),
+        [LessonNotFoundError(code="lesson_not_found") for factory in factories],
+        {LessonNotFoundError(code="lesson_not_found") for factory in factories},
+        {index: LessonNotFoundError(code="lesson_not_found") for index, factory in enumerate(factories)},
+        tuple(LessonNotFoundError(code="lesson_not_found") for factory in factories),
+    )
+"""
     return [
+        Case(
+            "schema-fresh-clean-concrete-code-annotation-exact",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    exact_concrete_code_annotation,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-fresh-invalid-concrete-code-annotation-broadened",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    broadened_concrete_code_annotation,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-fresh-clean-private-and-benign-model-config-bindings",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    benign_indirect_model_config,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-fresh-invalid-private-model-config-alias-binding",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    indirect_alias_model_config,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-fresh-clean-unrelated-nested-class",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/nested.py",
+                    unrelated_nested_class,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-fresh-invalid-nested-concrete-outside-canonical-module",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/nested.py",
+                    nested_outside_concrete,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-fresh-clean-unrelated-walrus-object-code",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/controller.py",
+                    unrelated_walrus_object,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-fresh-invalid-walrus-bound-error-code",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/controller.py",
+                    walrus_bound_error,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-fresh-clean-concrete-name-ending-error-out",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    concrete_name_ending_error_out,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-fresh-invalid-true-second-bc-base",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/schema/error_out.py",
+                    true_second_bc_base,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
+        Case(
+            "schema-fresh-clean-shadowed-lambda-and-comprehension-constructors",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/controller.py",
+                    shadowed_constructor_expressions,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            0,
+            "",
+        ),
+        Case(
+            "schema-fresh-invalid-unshadowed-lambda-and-comprehension-constructors",
+            with_files(
+                (
+                    "application/lesson/presentation_layer/controller.py",
+                    unshadowed_constructor_expressions,
+                ),
+            ),
+            "check-error-centralization.py",
+            schema_args(),
+            2,
+            "BLOCKER",
+        ),
         Case("schema-clean-common-base-and-two-concrete", BASE_FILES, "check-error-centralization.py", schema_args(), 0, ""),
         Case("schema-clean-empty-error-bc", common_only, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/lesson/presentation_layer/controller.py", "--scope-bc", "lesson", "--project-code-error-module", "common/ninja/response/error_out.py"), 0, ""),
         Case("schema-clean-no-error-bc-in-scope", no_error_bc, "check-error-centralization.py", (TARGET_DIR, "--error-profile", "dddjango-code-json", "--scope", "public-v1", "--api-module", "config/api.py", "--controller-module", "application/catalog/presentation_layer/controller.py", "--scope-bc", "catalog", "--project-code-error-module", "common/ninja/response/error_out.py"), 0, ""),

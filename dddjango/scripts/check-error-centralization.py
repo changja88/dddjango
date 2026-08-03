@@ -714,6 +714,55 @@ def _model_config_has_alias(node: ast.AST) -> bool:
     return False
 
 
+def _value_bindings_before(
+    statements: list[ast.stmt],
+    initial: dict[str, ast.AST | None] | None = None,
+) -> dict[int, dict[str, ast.AST | None]]:
+    values = dict(initial or {})
+    before: dict[int, dict[str, ast.AST | None]] = {}
+    for statement in statements:
+        before[id(statement)] = dict(values)
+        collector = _FunctionLocalCollector()
+        collector.visit(statement)
+        for name in collector.bound:
+            values.pop(name, None)
+        if isinstance(statement, ast.Assign):
+            for target in statement.targets:
+                if isinstance(target, ast.Name):
+                    values[target.id] = statement.value
+                else:
+                    for name in _target_names(target):
+                        values[name] = None
+        elif isinstance(statement, ast.AnnAssign) and isinstance(
+            statement.target, ast.Name
+        ):
+            values[statement.target.id] = statement.value
+    return before
+
+
+def _class_value_bindings(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+) -> dict[int, dict[str, ast.AST | None]]:
+    module_before = _value_bindings_before(parsed.tree.body)
+    return _value_bindings_before(
+        node.body,
+        module_before.get(id(node), {}),
+    )
+
+
+def _resolved_model_config_alias(
+    node: ast.AST,
+    values: dict[str, ast.AST | None],
+) -> bool | None:
+    if not isinstance(node, ast.Name):
+        return _model_config_has_alias(node)
+    resolved = values.get(node.id)
+    if resolved is None or isinstance(resolved, ast.Name):
+        return None
+    return _model_config_has_alias(resolved)
+
+
 def _append_finding(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
@@ -795,18 +844,27 @@ def _class_member_findings(
     node: ast.ClassDef,
     initial_bindings: dict[str, str],
     allowed_fields: set[str],
+    analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
     field_names: set[str] = set()
     before = _class_body_bindings(parsed, node, initial_bindings)
+    value_before = _class_value_bindings(parsed, node)
     for statement in node.body:
         bindings = before.get(id(statement), initial_bindings)
+        values = value_before.get(id(statement), {})
         if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
             name = statement.target.id
             if name == "model_config":
-                if statement.value is not None and _model_config_has_alias(statement.value):
-                    _append_finding(findings, seen, parsed, statement, "model config alias")
+                if statement.value is not None:
+                    has_alias = _resolved_model_config_alias(statement.value, values)
+                    if has_alias is None:
+                        analysis.append(
+                            f"{parsed.relative_path}:{statement.lineno} model_config value provenance 분석 불능"
+                        )
+                    elif has_alias:
+                        _append_finding(findings, seen, parsed, statement, "model config alias")
                 continue
             if name.startswith("_") or _classvar(statement.annotation, bindings):
                 continue
@@ -824,7 +882,12 @@ def _class_member_findings(
             names = {name for target in statement.targets for name in _target_names(target)}
             for name in names:
                 if name == "model_config":
-                    if _model_config_has_alias(statement.value):
+                    has_alias = _resolved_model_config_alias(statement.value, values)
+                    if has_alias is None:
+                        analysis.append(
+                            f"{parsed.relative_path}:{statement.lineno} model_config value provenance 분석 불능"
+                        )
+                    elif has_alias:
                         _append_finding(findings, seen, parsed, statement, "model config alias")
                 elif not name.startswith("_"):
                     _append_finding(findings, seen, parsed, statement, "public class assignment/helper")
@@ -898,7 +961,7 @@ def _analyze_common(
             else:
                 _append_finding(findings, seen, parsed, field, "common ErrorOut field must be required")
         _class_member_findings(
-            parsed, error_out, bindings, set(fields), findings, seen
+            parsed, error_out, bindings, set(fields), analysis, findings, seen
         )
         if "code" not in required_fields:
             _append_finding(findings, seen, parsed, error_out, "common ErrorOut requires public code field")
@@ -1131,7 +1194,7 @@ def _analyze_bc_module(
     for node in classes:
         bindings = before.get(id(node), {})
         direct_common = any(_resolve(base, bindings) == COMMON_ERROR_OUT for base in node.bases)
-        if node not in bases and (node.name.endswith("ErrorOut") or direct_common):
+        if node not in bases and direct_common:
             _append_finding(findings, seen, parsed, node, "second BC ErrorOut base")
 
     if len(bases) == 1:
@@ -1159,7 +1222,9 @@ def _analyze_bc_module(
             code_bindings = field_bindings.get(id(code_field), bindings)
             if _resolve(code_field.annotation, code_bindings) != enum_full:
                 _append_finding(findings, seen, parsed, code_field, "BC base code type must be own ErrorCode")
-        _class_member_findings(parsed, base, bindings, {"code"}, findings, seen)
+        _class_member_findings(
+            parsed, base, bindings, {"code"}, analysis, findings, seen
+        )
 
     known_concrete: set[str] = set()
     for node in classes:
@@ -1169,7 +1234,6 @@ def _analyze_bc_module(
         invalid_container = (
             node.name.endswith("ErrorCode")
             or is_str_enum
-            or node.name.endswith("ErrorOut")
             or direct_common
         )
         raw_base_names = {
@@ -1208,24 +1272,42 @@ def _analyze_bc_module(
             if isinstance(code_field.value, ast.Constant) and isinstance(code_field.value.value, str):
                 _append_finding(findings, seen, parsed, code_field, "raw string ErrorOut code")
             code_bindings = field_bindings.get(id(code_field), bindings)
+            if _resolve(code_field.annotation, code_bindings) != enum_full:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    code_field,
+                    "concrete code type must be own ErrorCode",
+                )
             resolved_default = _resolve(code_field.value, code_bindings)
             valid_values = {f"{enum_full}.{name}" for name in members}
             if resolved_default not in valid_values:
                 _append_finding(findings, seen, parsed, code_field, "concrete code default must use own ErrorCode member")
-        _class_member_findings(parsed, node, bindings, required_fields, findings, seen)
+        _class_member_findings(
+            parsed, node, bindings, required_fields, analysis, findings, seen
+        )
     return members, known_concrete, base_full
+
+
+def _argument_names(arguments: ast.arguments) -> set[str]:
+    positional = [
+        *arguments.posonlyargs,
+        *arguments.args,
+        *arguments.kwonlyargs,
+    ]
+    names = {argument.arg for argument in positional}
+    if arguments.vararg is not None:
+        names.add(arguments.vararg.arg)
+    if arguments.kwarg is not None:
+        names.add(arguments.kwarg.arg)
+    return names
 
 
 def _function_argument_names(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> set[str]:
-    positional = [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs]
-    names = {argument.arg for argument in positional}
-    if node.args.vararg is not None:
-        names.add(node.args.vararg.arg)
-    if node.args.kwarg is not None:
-        names.add(node.args.kwarg.arg)
-    return names
+    return _argument_names(node.args)
 
 
 def _pattern_bound_names(pattern: ast.AST) -> set[str]:
@@ -1398,24 +1480,74 @@ def _raw_constructor_calls(
     known_classes: set[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
-) -> None:
+) -> dict[str, str]:
+    named_objects: dict[str, str] = {}
+
+    def visit(
+        node: ast.AST,
+        scope_bindings: dict[str, str],
+        exported_objects: dict[str, str],
+    ) -> None:
+        if isinstance(node, ast.Lambda):
+            for default in node.args.defaults:
+                visit(default, scope_bindings, exported_objects)
+            for default in node.args.kw_defaults:
+                if default is not None:
+                    visit(default, scope_bindings, exported_objects)
+            child_bindings = dict(scope_bindings)
+            for name in _argument_names(node.args):
+                child_bindings.pop(name, None)
+            visit(node.body, child_bindings, {})
+            return
+
+        if isinstance(
+            node,
+            (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp),
+        ):
+            child_bindings = dict(scope_bindings)
+            for generator in node.generators:
+                visit(generator.iter, child_bindings, exported_objects)
+                for name in _target_names(generator.target):
+                    child_bindings.pop(name, None)
+                for condition in generator.ifs:
+                    visit(condition, child_bindings, exported_objects)
+            if isinstance(node, ast.DictComp):
+                visit(node.key, child_bindings, exported_objects)
+                visit(node.value, child_bindings, exported_objects)
+            else:
+                visit(node.elt, child_bindings, exported_objects)
+            return
+
+        if isinstance(node, ast.NamedExpr):
+            visit(node.value, scope_bindings, exported_objects)
+            if isinstance(node.target, ast.Name) and isinstance(node.value, ast.Call):
+                constructor = _resolve(node.value.func, scope_bindings)
+                if constructor in known_classes:
+                    exported_objects[node.target.id] = constructor
+            return
+
+        if isinstance(node, ast.Call):
+            if _resolve(node.func, scope_bindings) in known_classes:
+                for keyword in node.keywords:
+                    if (
+                        keyword.arg == "code"
+                        and isinstance(keyword.value, ast.Constant)
+                        and isinstance(keyword.value.value, str)
+                    ):
+                        _append_finding(
+                            findings,
+                            seen,
+                            parsed,
+                            keyword,
+                            "raw string code constructor argument",
+                        )
+
+        for child in ast.iter_child_nodes(node):
+            visit(child, scope_bindings, exported_objects)
+
     for root in roots:
-        for call in (node for node in ast.walk(root) if isinstance(node, ast.Call)):
-            if _resolve(call.func, bindings) not in known_classes:
-                continue
-            for keyword in call.keywords:
-                if (
-                    keyword.arg == "code"
-                    and isinstance(keyword.value, ast.Constant)
-                    and isinstance(keyword.value.value, str)
-                ):
-                    _append_finding(
-                        findings,
-                        seen,
-                        parsed,
-                        keyword,
-                        "raw string code constructor argument",
-                    )
+        visit(root, bindings, named_objects)
+    return named_objects
 
 
 def _update_bindings(
@@ -1495,11 +1627,12 @@ def _raw_code_suite(
     *,
     module_scope: bool,
     function_globals: dict[str, str],
+    outside_bases: set[str] | None = None,
 ) -> dict[str, str]:
     bindings = dict(initial_bindings)
     local_objects = dict(initial_objects)
     for statement in statements:
-        _raw_constructor_calls(
+        expression_objects = _raw_constructor_calls(
             parsed,
             _statement_expression_roots(statement),
             bindings,
@@ -1519,6 +1652,7 @@ def _raw_code_suite(
         shadow_names = _statement_shadow_names(statement)
         for name in shadow_names:
             local_objects.pop(name, None)
+        local_objects.update(expression_objects)
         target_names = {name for target in targets for name in _target_names(target)}
         if isinstance(value, ast.Call):
             constructor = _resolve(value.func, bindings)
@@ -1562,8 +1696,20 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
         elif isinstance(statement, ast.ClassDef):
+            if outside_bases and any(
+                _resolve(base, bindings) in outside_bases
+                for base in statement.bases
+            ):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "concrete ErrorOut outside canonical module",
+                )
             _raw_code_suite(
                 parsed,
                 statement.body,
@@ -1574,6 +1720,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
         elif isinstance(statement, ast.If):
             body_objects = _raw_code_suite(
@@ -1586,6 +1733,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
             if statement.orelse:
                 else_objects = _raw_code_suite(
@@ -1598,6 +1746,7 @@ def _raw_code_suite(
                     seen,
                     module_scope=False,
                     function_globals=function_globals,
+                    outside_bases=outside_bases,
                 )
             else:
                 else_objects = dict(local_objects)
@@ -1618,6 +1767,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
             loop_objects = _merge_object_bindings(child_objects, body_objects)
             if statement.orelse:
@@ -1631,6 +1781,7 @@ def _raw_code_suite(
                     seen,
                     module_scope=False,
                     function_globals=function_globals,
+                    outside_bases=outside_bases,
                 )
             else:
                 else_objects = loop_objects
@@ -1658,6 +1809,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
         elif isinstance(statement, MATCH_NODES):
             path_objects = [dict(local_objects)]
@@ -1687,6 +1839,7 @@ def _raw_code_suite(
                         seen,
                         module_scope=False,
                         function_globals=function_globals,
+                        outside_bases=outside_bases,
                     )
                 )
             local_objects = _merge_object_bindings(*path_objects)
@@ -1701,6 +1854,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
             normal_objects = _raw_code_suite(
                 parsed,
@@ -1712,6 +1866,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
             path_objects = [normal_objects]
             for handler in statement.handlers:
@@ -1731,6 +1886,7 @@ def _raw_code_suite(
                         seen,
                         module_scope=False,
                         function_globals=function_globals,
+                        outside_bases=outside_bases,
                     )
                 )
             local_objects = _raw_code_suite(
@@ -1743,6 +1899,7 @@ def _raw_code_suite(
                 seen,
                 module_scope=False,
                 function_globals=function_globals,
+                outside_bases=outside_bases,
             )
 
         _update_bindings(
@@ -1768,6 +1925,27 @@ def _raw_code_findings(
         seen,
         module_scope=True,
         function_globals=function_globals,
+    )
+
+
+def _outside_canonical_class_findings(
+    parsed: ParsedSource,
+    known_bases: set[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> None:
+    function_globals = _final_module_bindings(parsed)
+    _raw_code_suite(
+        parsed,
+        parsed.tree.body,
+        {},
+        {},
+        set(),
+        findings,
+        seen,
+        module_scope=True,
+        function_globals=function_globals,
+        outside_bases=known_bases,
     )
 
 
@@ -1839,13 +2017,12 @@ def _schema_findings(
             continue
         if not any(_path_under_bc(path, bc) for bc in config.scope_bcs):
             continue
-        before = _module_bindings(source)
-        for node in source.tree.body:
-            if not isinstance(node, ast.ClassDef):
-                continue
-            bindings = before.get(id(node), {})
-            if any(_resolve(base, bindings) in known_bases for base in node.bases):
-                _append_finding(findings, seen, source, node, "concrete ErrorOut outside canonical module")
+        _outside_canonical_class_findings(
+            source,
+            known_bases,
+            findings,
+            seen,
+        )
 
     raw_paths = {Path(raw) for raw in config.controller_modules}
     raw_paths.update(code_paths)
