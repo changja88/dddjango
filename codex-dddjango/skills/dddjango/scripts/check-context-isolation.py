@@ -127,7 +127,6 @@ ROOT_API_CONSTRUCTORS = {
 }
 ROOT_API_IMPORT_RE = re.compile(r"^application\.[A-Za-z_]\w*(?:\.|$)")
 ERROR_STATUS_NAME_RE = re.compile(r"(?:^|_)(?:4|5)\d\d(?:_|$)")
-EXCEPTION_NAME_RE = re.compile(r"(?:exception|error)", re.IGNORECASE)
 EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)(?:_|$)", re.IGNORECASE)
 HTTP_FACILITY_NAME_RE = re.compile(r"(?:status|response|http)", re.IGNORECASE)
 COMMON_ERROR_MODULE = "common.ninja.response.error_out"
@@ -1011,45 +1010,6 @@ def _required_root_api_object(
     return next(iter(assigned_objects))
 
 
-def _expression_has_error_status(node: ast.AST) -> bool:
-    for child in ast.walk(node):
-        if (
-            isinstance(child, ast.Constant)
-            and isinstance(child.value, int)
-            and not isinstance(child.value, bool)
-            and 400 <= child.value < 600
-        ):
-            return True
-        dotted = _expression_dotted_name(child)
-        if dotted is not None and ERROR_STATUS_NAME_RE.search(dotted.upper()):
-            return True
-    return False
-
-
-def _expression_has_code_value(node: ast.AST) -> bool:
-    for child in ast.walk(node):
-        if isinstance(child, ast.Dict):
-            for key in child.keys:
-                if (
-                    isinstance(key, ast.Constant)
-                    and isinstance(key.value, str)
-                    and (key.value.lower() == "code" or key.value.lower().endswith("_code"))
-                ):
-                    return True
-        elif isinstance(child, ast.Call):
-            if any(
-                keyword.arg is not None
-                and (keyword.arg.lower() == "code" or keyword.arg.lower().endswith("_code"))
-                for keyword in child.keywords
-            ):
-                return True
-    return False
-
-
-def _expression_has_error_signal(node: ast.AST) -> bool:
-    return _expression_has_error_status(node) or _expression_has_code_value(node)
-
-
 def _assignment_names_and_value(
     node: ast.AST,
 ) -> tuple[list[str], ast.AST | None]:
@@ -1078,6 +1038,94 @@ def _identifier_words(name: str) -> set[str]:
         for word in re.split(r"[^A-Za-z0-9]+", separated)
         if word
     }
+
+
+def _is_error_status_value(node: ast.AST) -> bool:
+    if (
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, int)
+        and not isinstance(node.value, bool)
+    ):
+        return 400 <= node.value < 600
+    dotted = _expression_dotted_name(node)
+    return dotted is not None and bool(ERROR_STATUS_NAME_RE.search(dotted.upper()))
+
+
+def _is_error_code_field(name: str) -> bool:
+    if name.lower() == "code":
+        return True
+    words = _identifier_words(name)
+    qualifiers = ERROR_CATALOG_SUBJECT_WORDS | ERROR_CATALOG_PLURAL_WORDS
+    return "code" in words and bool(words & qualifiers)
+
+
+def _expression_nodes_without_nested_lambda(node: ast.AST) -> Iterator[ast.AST]:
+    pending = [node]
+    while pending:
+        current = pending.pop()
+        yield current
+        if isinstance(current, ast.Lambda):
+            continue
+        pending.extend(reversed(list(ast.iter_child_nodes(current))))
+
+
+def _expression_has_error_code_field(node: ast.AST) -> bool:
+    for child in _expression_nodes_without_nested_lambda(node):
+        if isinstance(child, ast.Dict):
+            if any(
+                isinstance(key, ast.Constant)
+                and isinstance(key.value, str)
+                and _is_error_code_field(key.value)
+                for key in child.keys
+            ):
+                return True
+        elif isinstance(child, ast.Call):
+            if any(
+                keyword.arg is not None
+                and _is_error_code_field(keyword.arg)
+                for keyword in child.keywords
+            ):
+                return True
+    return False
+
+
+def _return_is_error_shaped(node: ast.AST) -> bool:
+    if _expression_has_error_code_field(node):
+        return True
+    if (
+        isinstance(node, ast.Tuple)
+        and node.elts
+        and _is_error_status_value(node.elts[0])
+    ):
+        return True
+    for child in _expression_nodes_without_nested_lambda(node):
+        if isinstance(child, ast.Dict):
+            for key, value in zip(child.keys, child.values):
+                if (
+                    isinstance(key, ast.Constant)
+                    and isinstance(key.value, str)
+                    and key.value.lower() in {"status", "status_code"}
+                    and _is_error_status_value(value)
+                ):
+                    return True
+            continue
+        if not isinstance(child, ast.Call):
+            continue
+        function_name = _expression_dotted_name(child.func)
+        if (
+            function_name is not None
+            and function_name.rsplit(".", 1)[-1] == "Status"
+            and child.args
+            and _is_error_status_value(child.args[0])
+        ):
+            return True
+        if any(
+            keyword.arg in {"status", "status_code"}
+            and _is_error_status_value(keyword.value)
+            for keyword in child.keywords
+        ):
+            return True
+    return False
 
 
 def _is_error_catalog_name(name: str) -> bool:
@@ -1115,15 +1163,26 @@ def _is_exception_type_expression(node: ast.AST) -> bool:
     return name.endswith(("Error", "Exception")) or name == "BaseException"
 
 
-def _has_exception_isinstance(node: ast.AST) -> bool:
-    for child in ast.walk(node):
-        if not isinstance(child, ast.Call) or len(child.args) < 2:
+def _is_exception_isinstance_call(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and len(node.args) >= 2
+        and _expression_dotted_name(node.func) == "isinstance"
+        and _is_exception_type_expression(node.args[1])
+    )
+
+
+def _scope_nodes(statements: list[ast.stmt]) -> Iterator[ast.AST]:
+    pending: list[ast.AST] = list(reversed(statements))
+    while pending:
+        current = pending.pop()
+        yield current
+        if isinstance(
+            current,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
+        ):
             continue
-        if _expression_dotted_name(child.func) != "isinstance":
-            continue
-        if _is_exception_type_expression(child.args[1]):
-            return True
-    return False
+        pending.extend(reversed(list(ast.iter_child_nodes(current))))
 
 
 def _function_is_exception_mapping(
@@ -1134,17 +1193,20 @@ def _function_is_exception_mapping(
         *node.args.args,
         *node.args.kwonlyargs,
     )
-    has_exception_context = bool(EXCEPTION_NAME_RE.search(node.name)) or any(
+    has_exception_context = any(
         EXCEPTION_ARGUMENT_RE.search(argument.arg) for argument in arguments
     )
-    has_exception_flow = _has_exception_isinstance(node) or any(
-        isinstance(child, ast.ExceptHandler) for child in ast.walk(node)
+    body_nodes = tuple(_scope_nodes(node.body))
+    has_exception_flow = any(
+        isinstance(child, ast.ExceptHandler)
+        or _is_exception_isinstance_call(child)
+        for child in body_nodes
     )
     has_error_return = any(
         isinstance(child, ast.Return)
         and child.value is not None
-        and _expression_has_error_signal(child.value)
-        for child in ast.walk(node)
+        and _return_is_error_shaped(child.value)
+        for child in body_nodes
     )
     return (has_exception_context or has_exception_flow) and has_error_return
 
@@ -1166,9 +1228,8 @@ def _body_has_error_return(statements: list[ast.stmt]) -> bool:
     return any(
         isinstance(child, ast.Return)
         and child.value is not None
-        and _expression_has_error_signal(child.value)
-        for statement in statements
-        for child in ast.walk(statement)
+        and _return_is_error_shaped(child.value)
+        for child in _scope_nodes(statements)
     )
 
 
