@@ -172,7 +172,11 @@ def _selected_source(root: Path, option: str, raw: str, issues: list[str]) -> Pa
     ):
         issues.append(f"잘못된 source path: {option}={raw}")
         return None
-    resolved = (root / rel).resolve()
+    try:
+        resolved = (root / rel).resolve()
+    except (OSError, RuntimeError) as exc:
+        issues.append(f"source path resolve 불능: {option}={raw} ({exc})")
+        return None
     try:
         resolved.relative_to(root)
     except ValueError:
@@ -192,8 +196,12 @@ def _selected_source(root: Path, option: str, raw: str, issues: list[str]) -> Pa
 
 def _parse_config(argv: list[str]) -> Config:
     namespace = _argument_parser().parse_args(argv)
-    root = Path(namespace.target).resolve()
-    if not root.is_dir():
+    try:
+        root = Path(namespace.target).resolve()
+        root_is_dir = root.is_dir()
+    except (OSError, RuntimeError) as exc:
+        raise UsageError(f"TARGET_DIR resolve 불능: {namespace.target} ({exc})") from exc
+    if not root_is_dir:
         raise UsageError(f"디렉터리 아님 {root}")
 
     issues: list[str] = []
