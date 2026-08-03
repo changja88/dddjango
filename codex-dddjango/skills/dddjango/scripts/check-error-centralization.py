@@ -1,139 +1,1427 @@
 #!/usr/bin/env python3
-"""dddjango API 오류 중앙화 결정적 백스톱 (P1a).
+"""dddjango code-profile ErrorOut schema contract backstop.
 
-좁은 **고정밀·저-recall** 게이트다. 4계층 DDD에서 코더가 **application 계층이
-오류→HTTP status 매핑을 직접 수행**한 정확한 형태(P1a 라이브-파이어에서 실제로
-난 Codex 형태 — application service 가 status code 를 골라 problem body 를 조립)만
-차단한다. status 맵을 모듈 밖으로 추출하거나 변수로 우회하는 *의미적* 회피,
-presentation operation 본문의 수제 응답은 **일부러 잡지 않는다** — 그건
-② design-architect 생산자 예방(명세에 "오류→status = presentation 단일 소유")과
-③ discipline-reviewer 의미 체크(operation 수제·부분 중앙화·우회)가 담당한다.
-여기서 거짓 양성을 내면 정당한 도메인 outcome·성공 응답·plain Django/DRF·기존
-코드를 막으므로, **경로·신호·diff 의 AND 합성으로만** 차단한다.
+The checker is deliberately profile-gated.  Positional-only, ``auto``, and
+``preserve-established`` invocations do not apply schema semantics; preserve
+still validates the selectors it supplies.  ``dddjango-code-json`` validates
+the canonical common/BC ErrorOut modules, project inventory correspondence,
+wire-code uniqueness, and narrow direct raw-string ``code`` forms.
 
-AND 조건(전부 참이어야 blocker):
-  1) 파일 경로가 4계층 **application 계층**(`application_layer/`)이고 테스트가
-     아님(`test/`·`tests/`·`test_*.py`·`conftest.py` 제외) — presentation·domain·
-     infra 계층은 제외(operation 본문 수제는 ③ discipline-reviewer 몫).
-  2) 그 파일이 HTTP 오류 응답을 **직접 생성/의존**: `JsonResponse(`/`HttpResponse(`
-     호출, `status_code=4xx|5xx`/`status=4xx|5xx` 오류 status 대입, ninja
-     `HttpError(4xx|5xx`, 또는 `from ninja…` import. application 은 HTTP 를 몰라야
-     하므로(도메인 예외 raise·결과 반환만) 이 신호 자체가 책임 누수다
-     (`implementation-django-ninja` §2.2·§6.2).
-  3) (git 레포면) 그 파일이 이번 변경에서 새로 추가/수정됨 — 기존에 커밋된
-     코드는 존중. git 아니면 이 가드는 건너뛴다.
-
-사용법: check-error-centralization.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
-종료코드: 0=clean, 2=blocker(발견 출력), 1=사용 오류.
+Exit codes: 0=clean/N/A, 2=contract blocker, 1=usage or analysis error.
 """
 from __future__ import annotations
 
+import argparse
+import ast
+import os
 import re
+import stat
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
+
+ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
+BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+WIRE_CODE_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 TEST_DIR_NAMES = {"test", "tests"}
-
-# application 계층이 HTTP 오류 응답을 직접 만드는 신호(전부 책임 누수).
-# 호출은 paren 을 요구해 dead-import 를 배제하고, status 는 4xx/5xx 리터럴 대입만
-# 봐서 외부 응답의 status 읽기·성공 status(2xx)·도메인 enum 을 배제한다.
-RESPONSE_CALL_RE = re.compile(
-    r"\b(?:JsonResponse|HttpResponse|HttpResponseBadRequest|HttpResponseForbidden"
-    r"|HttpResponseNotFound|HttpResponseNotAllowed|HttpResponseServerError)\s*\("
-)
-ERROR_STATUS_RE = re.compile(r"\bstatus(?:_code)?\s*=\s*[45]\d\d\b")
-HTTP_ERROR_RE = re.compile(r"\bHttpError\s*\(\s*[45]\d\d\b")
-NINJA_IMPORT_RE = re.compile(
-    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
-    re.MULTILINE,
-)
-
-SIGNAL_CHECKS = (
-    (RESPONSE_CALL_RE, "수제 HTTP 응답 객체 생성(JsonResponse/HttpResponse)"),
-    (ERROR_STATUS_RE, "오류 status code 직접 선택(status[_code]=4xx/5xx)"),
-    (HTTP_ERROR_RE, "ninja HttpError 를 status 와 함께 raise"),
-    (NINJA_IMPORT_RE, "ninja(web 프레임워크) import — application 은 web 을 모른다"),
-)
-
-
-def _find_application_layer_files(root: Path) -> list[Path]:
-    """4계층 application 계층의 프로덕션 .py 후보(venv·테스트 제외)."""
-    out: list[Path] = []
-    for path in root.rglob("*.py"):
-        parts = set(path.parts)
-        if parts & SKIP_DIRS:
-            continue
-        if "application_layer" not in parts:
-            continue
-        # application 계층 안의 테스트는 프로덕션 누수가 아니다 → 제외.
-        if parts & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
-            continue
-        out.append(path)
-    return out
+CODE_SKIP_DIRS = {
+    ".venv",
+    "venv",
+    "site-packages",
+    "node_modules",
+    ".git",
+    "__pycache__",
+    ".cache",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "migrations",
+    "generated",
+}
+COMMON_INIT = Path("common/ninja/response/__init__.py")
+COMMON_ERROR = Path("common/ninja/response/error_out.py")
+COMMON_ERROR_MODULE = "common.ninja.response.error_out"
+COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.ErrorOut"
+NINJA_SCHEMA = "ninja.Schema"
+STR_ENUM = "enum.StrEnum"
+FIELD_FACTORIES = {
+    "ninja.Field",
+    "pydantic.Field",
+    "pydantic.fields.Field",
+}
+VALIDATOR_DECORATORS = {
+    "pydantic.field_validator",
+    "pydantic.model_validator",
+    "pydantic.root_validator",
+    "pydantic.validator",
+}
 
 
-def _is_new_or_modified(root: Path, file_path: Path) -> bool:
-    """git 레포면 이번 변경에서 추가/수정됐는지. git 아니면 True(가드 통과)."""
-    if not (root / ".git").exists():
-        return True
+class UsageError(Exception):
+    """CLI, inventory, selected-source, or provenance analysis failure."""
+
+
+class _UsageParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        raise UsageError(message)
+
+
+@dataclass(frozen=True)
+class Config:
+    root: Path
+    profile: str | None
+    scope: str | None
+    api_module: str | None
+    controller_modules: tuple[str, ...]
+    scope_bcs: tuple[str, ...]
+    error_bcs: tuple[str, ...]
+    code_error_modules: tuple[str, ...]
+    preserve_error_modules: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CodeInventory:
+    relative_paths: tuple[Path, ...]
+    git_root: Path | None
+
+
+@dataclass(frozen=True)
+class ParsedSource:
+    relative_path: Path
+    source: str
+    tree: ast.Module
+
+
+@dataclass(frozen=True)
+class Finding:
+    relative_path: Path
+    lineno: int
+    category: str
+    shown: str
+
+    def render(self) -> str:
+        return f"  - {self.relative_path}:{self.lineno}  {self.category}: {self.shown}"
+
+
+def _argument_parser() -> _UsageParser:
+    parser = _UsageParser(add_help=True)
+    parser.add_argument("target", nargs="?", default=".")
+    parser.add_argument("--error-profile", action="append")
+    parser.add_argument("--scope", action="append")
+    parser.add_argument("--api-module", action="append")
+    parser.add_argument("--controller-module", action="append", default=[])
+    parser.add_argument("--scope-bc", action="append", default=[])
+    parser.add_argument("--error-bc", action="append", default=[])
+    parser.add_argument("--project-code-error-module", action="append", default=[])
+    parser.add_argument("--project-preserve-error-module", action="append", default=[])
+    return parser
+
+
+def _one(
+    option: str,
+    values: list[str] | None,
+    *,
+    required: bool,
+    issues: list[str],
+) -> str | None:
+    actual = values or []
+    if required and not actual:
+        issues.append(f"필수 인자 누락: {option}")
+    if len(actual) > 1:
+        issues.append(f"단일 인자 중복: {option}")
+    return actual[0] if actual else None
+
+
+def _unique(option: str, values: list[str], issues: list[str]) -> tuple[str, ...]:
+    if len(values) != len(set(values)):
+        issues.append(f"반복 인자 중복: {option}")
+    return tuple(values)
+
+
+def _source_path(option: str, raw: str, issues: list[str]) -> Path | None:
+    path = Path(raw)
+    if (
+        path.is_absolute()
+        or ".." in path.parts
+        or path.as_posix() != raw
+        or "/" not in raw
+        or path.suffix != ".py"
+    ):
+        issues.append(f"잘못된 source path: {option}={raw}")
+        return None
+    return path
+
+
+def _parse_config(argv: list[str]) -> Config:
+    namespace = _argument_parser().parse_args(argv)
     try:
-        rel = file_path.relative_to(root)
-    except ValueError:
-        return True
+        root = Path(namespace.target).resolve()
+        root_is_dir = root.is_dir()
+    except (OSError, RuntimeError) as exc:
+        raise UsageError(f"TARGET_DIR resolve 불능: {namespace.target} ({exc})") from exc
+    if not root_is_dir:
+        raise UsageError(f"디렉터리 아님 {root}")
+
+    issues: list[str] = []
+    profile = _one("--error-profile", namespace.error_profile, required=False, issues=issues)
+    selectors_present = any(
+        (
+            namespace.scope,
+            namespace.api_module,
+            namespace.controller_module,
+            namespace.scope_bc,
+            namespace.error_bc,
+            namespace.project_code_error_module,
+            namespace.project_preserve_error_module,
+        )
+    )
+    if profile is None and selectors_present:
+        issues.append("selector 사용 시 --error-profile 필수")
+    if profile is not None and profile not in ERROR_PROFILES:
+        issues.append(f"지원하지 않는 --error-profile: {profile}")
+    if profile == "auto" and selectors_present:
+        issues.append("auto profile에는 selector를 전달하지 않음")
+
+    explicit = profile in {"dddjango-code-json", "preserve-established"}
+    code_profile = profile == "dddjango-code-json"
+    scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
+    api_module = _one(
+        "--api-module", namespace.api_module, required=explicit, issues=issues
+    )
+    controllers = _unique("--controller-module", namespace.controller_module, issues)
+    scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
+    error_bcs = _unique("--error-bc", namespace.error_bc, issues)
+    code_modules = _unique(
+        "--project-code-error-module", namespace.project_code_error_module, issues
+    )
+    preserve_modules = _unique(
+        "--project-preserve-error-module",
+        namespace.project_preserve_error_module,
+        issues,
+    )
+    if explicit and not controllers:
+        issues.append("필수 인자 누락: --controller-module")
+    if explicit and not scope_bcs:
+        issues.append("필수 인자 누락: --scope-bc")
+    if code_profile and not code_modules:
+        issues.append("필수 인자 누락: --project-code-error-module")
+    if scope is not None and not scope.strip():
+        issues.append("--scope는 빈 문자열일 수 없음")
+    for option, names in (("--scope-bc", scope_bcs), ("--error-bc", error_bcs)):
+        for name in names:
+            if not BC_NAME_RE.fullmatch(name):
+                issues.append(f"잘못된 BC 이름: {option}={name}")
+    if not set(error_bcs).issubset(scope_bcs):
+        issues.append("--error-bc는 --scope-bc의 부분집합이어야 함")
+    if set(code_modules) & set(preserve_modules):
+        issues.append("project code/preserve error inventory overlap")
+
+    role_values: list[tuple[str, str]] = []
+    if api_module is not None:
+        role_values.append(("--api-module", api_module))
+    role_values.extend(("--controller-module", raw) for raw in controllers)
+    role_values.extend(("--project-code-error-module", raw) for raw in code_modules)
+    role_values.extend(
+        ("--project-preserve-error-module", raw) for raw in preserve_modules
+    )
+    lexical: list[tuple[str, Path]] = []
+    for option, raw in role_values:
+        path = _source_path(option, raw, issues)
+        if path is not None:
+            lexical.append((option, path))
+
+    resolved: list[tuple[str, Path, Path]] = []
+    for option, relative in lexical:
+        try:
+            candidate = (root / relative).resolve()
+            candidate.relative_to(root)
+        except ValueError:
+            issues.append(f"root/symlink 탈출: {option}={relative.as_posix()}")
+            continue
+        except (OSError, RuntimeError) as exc:
+            issues.append(f"source path resolve 불능: {option}={relative} ({exc})")
+            continue
+        resolved.append((option, relative, candidate))
+
+    for index, (left_role, left_rel, left_path) in enumerate(resolved):
+        for right_role, right_rel, right_path in resolved[index + 1 :]:
+            if left_path != right_path:
+                continue
+            same_inventory_role = left_role == right_role and left_role.startswith("--project-")
+            if same_inventory_role and left_rel == right_rel:
+                continue
+            issues.append(
+                "선택 source role/resolved path overlap: "
+                f"{left_role}={left_rel}, {right_role}={right_rel}"
+            )
+
+    if issues:
+        raise UsageError("; ".join(issues))
+    return Config(
+        root,
+        profile,
+        scope,
+        api_module,
+        controllers,
+        scope_bcs,
+        error_bcs,
+        code_modules,
+        preserve_modules,
+    )
+
+
+def _is_production_path(relative_path: Path) -> bool:
+    parts = relative_path.parts
+    return (
+        relative_path.suffix == ".py"
+        and not set(parts) & CODE_SKIP_DIRS
+        and not set(parts) & TEST_DIR_NAMES
+        and not relative_path.name.startswith("test_")
+        and not relative_path.name.endswith("_test.py")
+        and relative_path.name not in {"test.py", "tests.py", "conftest.py"}
+    )
+
+
+def _filesystem_paths(root: Path) -> tuple[Path, ...]:
+    paths: list[Path] = []
+    errors: list[str] = []
+
+    def record_error(exc: OSError) -> None:
+        errors.append(str(exc))
+
+    for directory, names, filenames in os.walk(
+        root, topdown=True, followlinks=False, onerror=record_error
+    ):
+        relative_dir = Path(directory).relative_to(root)
+        names[:] = sorted(
+            name
+            for name in names
+            if not set((*relative_dir.parts, name)) & CODE_SKIP_DIRS
+            and name not in TEST_DIR_NAMES
+        )
+        for filename in sorted(filenames):
+            relative = relative_dir / filename
+            if _is_production_path(relative):
+                paths.append(relative)
+    if errors:
+        raise UsageError(f"production inventory 탐색 불능: {'; '.join(sorted(errors))}")
+    return tuple(sorted(paths, key=Path.as_posix))
+
+
+def _has_git_marker(root: Path) -> bool:
+    for directory in (root, *root.parents):
+        marker = directory / ".git"
+        try:
+            mode = marker.stat().st_mode
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise UsageError(f"Git marker 접근 불능: {marker} ({exc})") from exc
+        if stat.S_ISDIR(mode) or stat.S_ISREG(mode):
+            return True
+    return False
+
+
+def _production_inventory(root: Path) -> CodeInventory:
     try:
-        # 추적되지 않으면(신규) error-unmatch 가 non-zero → 신규로 간주.
-        tracked = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)],
+        probe = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
             capture_output=True,
+            text=True,
+            check=False,
         )
-        if tracked.returncode != 0:
-            return True  # 신규 파일.
-        # 추적 중이면 HEAD 대비 변경됐는지.
-        changed = subprocess.run(
-            ["git", "-C", str(root), "diff", "--quiet", "HEAD", "--", str(rel)],
+    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git worktree 판정 불능: {exc}") from exc
+    if probe.returncode != 0:
+        if _has_git_marker(root):
+            detail = probe.stderr.strip() or probe.stdout.strip()
+            raise UsageError(f"Git worktree 판정 불능: {detail}")
+        return CodeInventory(_filesystem_paths(root), None)
+    if probe.stdout.strip() != "true":
+        return CodeInventory(_filesystem_paths(root), None)
+
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
         )
-        return changed.returncode != 0
-    except (OSError, subprocess.SubprocessError):
-        return True  # git 판단 불가 시 안전하게 가드 통과(나머지 AND 가 좁힌다).
+    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git worktree root 분석 불능: {exc}") from exc
+    if top.returncode != 0:
+        raise UsageError(
+            f"Git worktree root 분석 불능: {top.stderr.strip() or top.stdout.strip()}"
+        )
+    try:
+        git_root = Path(top.stdout.strip()).resolve()
+        target_prefix = root.relative_to(git_root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise UsageError(f"Git worktree root/target 관계 분석 불능: {exc}") from exc
+    try:
+        listed = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git production inventory 불능: {exc}") from exc
+    if listed.returncode != 0:
+        detail = os.fsdecode(listed.stderr).strip() or os.fsdecode(listed.stdout).strip()
+        raise UsageError(f"Git production inventory 불능: {detail}")
+    paths: list[Path] = []
+    for encoded in listed.stdout.split(b"\0"):
+        if not encoded:
+            continue
+        git_relative = Path(os.fsdecode(encoded))
+        if git_relative.is_absolute() or ".." in git_relative.parts:
+            raise UsageError(f"Git inventory 경로 불능: {git_relative}")
+        try:
+            target_relative = git_relative.relative_to(target_prefix)
+        except ValueError:
+            continue
+        if _is_production_path(target_relative):
+            paths.append(target_relative)
+    if len(paths) != len(set(paths)):
+        raise UsageError("Git production inventory에 중복 경로가 있음")
+    return CodeInventory(tuple(sorted(paths, key=Path.as_posix)), git_root)
+
+
+def _bc_error_path(bc: str) -> Path:
+    return Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+
+
+def _candidate_bc(path: Path) -> str | None:
+    parts = path.parts
+    if (
+        len(parts) == 5
+        and parts[0] == "application"
+        and parts[2:] == ("presentation_layer", "schema", "error_out.py")
+        and BC_NAME_RE.fullmatch(parts[1])
+    ):
+        return parts[1]
+    return None
+
+
+def _is_schema_candidate(path: Path) -> bool:
+    return path == COMMON_ERROR or _candidate_bc(path) is not None
+
+
+def _path_under_bc(path: Path, bc: str) -> bool:
+    return len(path.parts) >= 2 and path.parts[:2] == ("application", bc)
+
+
+def _source_plan(
+    config: Config, inventory: CodeInventory
+) -> tuple[set[Path], set[Path], set[Path], list[str], list[str]]:
+    inventory_paths = set(inventory.relative_paths)
+    analysis: list[str] = []
+    blockers: list[str] = []
+    code_paths = {Path(raw) for raw in config.code_error_modules}
+    preserve_paths = {Path(raw) for raw in config.preserve_error_modules}
+    source_paths: set[Path] = set()
+
+    common_selected = [Path(config.api_module or "")]
+    common_selected.extend(Path(raw) for raw in config.controller_modules)
+    common_selected.extend(code_paths)
+    common_selected.extend(preserve_paths)
+    for path in common_selected:
+        if path in inventory_paths:
+            source_paths.add(path)
+        elif config.profile == "preserve-established" or path not in code_paths:
+            analysis.append(f"선택 source가 production inventory에 없음: {path}")
+
+    if config.profile != "dddjango-code-json":
+        return source_paths, code_paths, preserve_paths, analysis, blockers
+
+    discovered = {path for path in inventory_paths if _is_schema_candidate(path)}
+    union = code_paths | preserve_paths
+    if COMMON_ERROR not in code_paths:
+        analysis.append(
+            "code inventory에 common/ninja/response/error_out.py가 필요함"
+        )
+    for path in union:
+        if not _is_schema_candidate(path):
+            analysis.append(f"project error inventory의 noncanonical module: {path}")
+    if code_paths & preserve_paths:
+        analysis.append("project code/preserve error inventory overlap")
+
+    required_missing = {COMMON_ERROR}
+    required_missing.update(_bc_error_path(bc) for bc in config.error_bcs)
+    for path in sorted(required_missing, key=Path.as_posix):
+        if path not in inventory_paths:
+            blockers.append(f"필수 canonical ErrorOut artifact 부재: {path}")
+    for bc in config.error_bcs:
+        path = _bc_error_path(bc)
+        if path in inventory_paths and path not in code_paths:
+            analysis.append(f"designated error BC module이 code inventory에 없음: {path}")
+
+    for path in sorted(union - discovered, key=Path.as_posix):
+        if path not in required_missing:
+            analysis.append(f"project error inventory module이 production candidate에 없음: {path}")
+    for path in sorted(discovered - union, key=Path.as_posix):
+        analysis.append(f"canonical candidate가 project inventory union에 없음: {path}")
+
+    for bc in config.scope_bcs:
+        scoped = {path for path in inventory_paths if _path_under_bc(path, bc)}
+        if not scoped:
+            analysis.append(f"scope BC production source 없음: application/{bc}/")
+        source_paths.update(scoped)
+    response_prefix = Path("common/ninja/response")
+    source_paths.update(
+        path
+        for path in inventory_paths
+        if path.parent == response_prefix or response_prefix in path.parents
+    )
+    source_paths.update(discovered)
+    return source_paths, code_paths, preserve_paths, analysis, blockers
+
+
+def _load_sources(
+    root: Path, source_paths: set[Path]
+) -> tuple[dict[Path, ParsedSource], list[str]]:
+    parsed: dict[Path, ParsedSource] = {}
+    issues: list[str] = []
+    resolved_paths: dict[Path, Path] = {}
+    for relative in sorted(source_paths, key=Path.as_posix):
+        lexical = root / relative
+        try:
+            resolved = lexical.resolve()
+            resolved.relative_to(root)
+        except ValueError:
+            issues.append(f"production source root/symlink 탈출: {relative}")
+            continue
+        except (OSError, RuntimeError) as exc:
+            issues.append(f"production source resolve 불능: {relative} ({exc})")
+            continue
+        previous = resolved_paths.get(resolved)
+        if previous is not None and previous != relative:
+            issues.append(f"production source resolved path 중복: {previous}, {relative}")
+            continue
+        resolved_paths[resolved] = relative
+        try:
+            if not resolved.is_file():
+                issues.append(f"production source 없음: {relative}")
+                continue
+            source = resolved.read_text(encoding="utf-8")
+            tree = ast.parse(source, filename=relative.as_posix())
+        except (OSError, UnicodeError, SyntaxError) as exc:
+            issues.append(f"production source 분석 불능: {relative} ({exc})")
+            continue
+        parsed[relative] = ParsedSource(relative, source, tree)
+    return parsed, issues
+
+
+def _module_name(path: Path) -> str:
+    return ".".join(path.with_suffix("").parts)
+
+
+def _expression_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        owner = _expression_name(node.value)
+        if owner is not None:
+            return f"{owner}.{node.attr}"
+    return None
+
+
+def _target_names(target: ast.AST) -> set[str]:
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, ast.Starred):
+        return _target_names(target.value)
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return {name for item in target.elts for name in _target_names(item)}
+    return set()
+
+
+def _bound_names(node: ast.stmt) -> set[str]:
+    if isinstance(node, ast.Import):
+        return {alias.asname or alias.name.split(".", 1)[0] for alias in node.names}
+    if isinstance(node, ast.ImportFrom):
+        return {alias.asname or alias.name for alias in node.names if alias.name != "*"}
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return {node.name}
+    if isinstance(node, ast.Assign):
+        return {name for target in node.targets for name in _target_names(target)}
+    if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+        return _target_names(node.target)
+    if isinstance(node, ast.Delete):
+        return {name for target in node.targets for name in _target_names(target)}
+    return set()
+
+
+def _absolute_from_module(path: Path, node: ast.ImportFrom) -> str | None:
+    if node.level == 0:
+        return node.module
+    package = list(path.parent.parts)
+    drop = node.level - 1
+    if drop > len(package):
+        return None
+    if drop:
+        package = package[:-drop]
+    if node.module:
+        package.extend(node.module.split("."))
+    return ".".join(package) or None
+
+
+def _module_bindings(parsed: ParsedSource) -> dict[int, dict[str, str]]:
+    bindings: dict[str, str] = {}
+    before: dict[int, dict[str, str]] = {}
+    module = _module_name(parsed.relative_path)
+    for node in parsed.tree.body:
+        before[id(node)] = dict(bindings)
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local = alias.asname or alias.name.split(".", 1)[0]
+                bindings[local] = alias.name if alias.asname else local
+            continue
+        if isinstance(node, ast.ImportFrom):
+            imported_module = _absolute_from_module(parsed.relative_path, node)
+            if imported_module is not None:
+                for alias in node.names:
+                    if alias.name != "*":
+                        bindings[alias.asname or alias.name] = (
+                            f"{imported_module}.{alias.name}"
+                        )
+                continue
+        for name in _bound_names(node):
+            bindings.pop(name, None)
+        if isinstance(node, ast.ClassDef):
+            bindings[node.name] = f"{module}.{node.name}"
+    return before
+
+
+def _resolve(node: ast.AST, bindings: dict[str, str]) -> str | None:
+    dotted = _expression_name(node)
+    if dotted is None:
+        return None
+    first, *rest = dotted.split(".")
+    imported = bindings.get(first)
+    if imported is None:
+        return None
+    return ".".join((imported, *rest))
+
+
+def _classvar(annotation: ast.AST, bindings: dict[str, str]) -> bool:
+    target = annotation.value if isinstance(annotation, ast.Subscript) else annotation
+    dotted = _expression_name(target)
+    resolved = _resolve(target, bindings)
+    return dotted in {"ClassVar", "typing.ClassVar"} or resolved == "typing.ClassVar"
+
+
+def _append_finding(
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+    parsed: ParsedSource,
+    node: ast.AST,
+    category: str,
+) -> None:
+    lineno = getattr(node, "lineno", 1)
+    key = (parsed.relative_path, lineno, category)
+    if key in seen:
+        return
+    seen.add(key)
+    lines = parsed.source.splitlines()
+    shown = lines[lineno - 1].strip() if 0 < lineno <= len(lines) else category
+    findings.append(Finding(parsed.relative_path, lineno, category, shown))
+
+
+def _base_contract(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    bindings: dict[str, str],
+    expected: str,
+    expected_tail: str,
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+    category: str,
+) -> bool:
+    resolved = [_resolve(base, bindings) for base in node.bases]
+    if len(node.bases) == 1 and resolved == [expected]:
+        return True
+    if expected in resolved:
+        _append_finding(findings, seen, parsed, node, category)
+        return False
+    raw_tails = [(_expression_name(base) or "").rsplit(".", 1)[-1] for base in node.bases]
+    if expected_tail in raw_tails:
+        analysis.append(
+            f"{parsed.relative_path}:{node.lineno} required base provenance 분석 불능: {expected}"
+        )
+    else:
+        _append_finding(findings, seen, parsed, node, category)
+    return False
+
+
+def _public_annassigns(
+    node: ast.ClassDef, bindings: dict[str, str]
+) -> dict[str, ast.AnnAssign]:
+    fields: dict[str, ast.AnnAssign] = {}
+    for statement in node.body:
+        if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
+            continue
+        name = statement.target.id
+        if name.startswith("_") or name == "model_config" or _classvar(statement.annotation, bindings):
+            continue
+        fields[name] = statement
+    return fields
+
+
+def _class_member_findings(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    bindings: dict[str, str],
+    allowed_fields: set[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> None:
+    field_names: set[str] = set()
+    for statement in node.body:
+        if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+            name = statement.target.id
+            if name.startswith("_") or name == "model_config" or _classvar(statement.annotation, bindings):
+                continue
+            if name in field_names:
+                _append_finding(findings, seen, parsed, statement, "duplicate public field")
+            field_names.add(name)
+            if name not in allowed_fields:
+                _append_finding(findings, seen, parsed, statement, "additional public field")
+            if isinstance(statement.value, ast.Call):
+                if _resolve(statement.value.func, bindings) in FIELD_FACTORIES:
+                    _append_finding(findings, seen, parsed, statement, "field alias/default factory")
+        elif isinstance(statement, ast.Assign):
+            names = {name for target in statement.targets for name in _target_names(target)}
+            for name in names:
+                if not name.startswith("_") and name != "model_config":
+                    _append_finding(findings, seen, parsed, statement, "public class assignment/helper")
+        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            decorated_validator = any(
+                _resolve(
+                    decorator.func if isinstance(decorator, ast.Call) else decorator,
+                    bindings,
+                )
+                in VALIDATOR_DECORATORS
+                for decorator in statement.decorator_list
+            )
+            if decorated_validator or not statement.name.startswith("_"):
+                _append_finding(findings, seen, parsed, statement, "validator/public helper")
+        elif isinstance(statement, ast.ClassDef) and not statement.name.startswith("_"):
+            _append_finding(findings, seen, parsed, statement, "public nested class/helper")
+
+
+def _analyze_common(
+    parsed: ParsedSource | None,
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> set[str]:
+    if parsed is None:
+        return set()
+    before = _module_bindings(parsed)
+    error_outs = [
+        node for node in parsed.tree.body if isinstance(node, ast.ClassDef) and node.name == "ErrorOut"
+    ]
+    if len(error_outs) != 1:
+        anchor: ast.AST = error_outs[0] if error_outs else parsed.tree
+        _append_finding(findings, seen, parsed, anchor, "exactly one common ErrorOut required")
+    required_fields: set[str] = set()
+    if len(error_outs) == 1:
+        error_out = error_outs[0]
+        bindings = before.get(id(error_out), {})
+        _base_contract(
+            parsed,
+            error_out,
+            bindings,
+            NINJA_SCHEMA,
+            "Schema",
+            analysis,
+            findings,
+            seen,
+            "common ErrorOut must directly inherit ninja.Schema",
+        )
+        fields = _public_annassigns(error_out, bindings)
+        for name, field in fields.items():
+            if field.value is None:
+                required_fields.add(name)
+            else:
+                _append_finding(findings, seen, parsed, field, "common ErrorOut field must be required")
+        _class_member_findings(
+            parsed, error_out, bindings, set(fields), findings, seen
+        )
+        if "code" not in required_fields:
+            _append_finding(findings, seen, parsed, error_out, "common ErrorOut requires public code field")
+
+    for node in parsed.tree.body:
+        if isinstance(node, ast.ClassDef) and node not in error_outs:
+            bindings = before.get(id(node), {})
+            inherits_error = any(
+                _resolve(base, bindings) == COMMON_ERROR_OUT
+                or (_expression_name(base) or "") == "ErrorOut"
+                for base in node.bases
+            )
+            if inherits_error or not node.name.startswith("_"):
+                _append_finding(findings, seen, parsed, node, "common module public/derived class forbidden")
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            _append_finding(findings, seen, parsed, node, "common module helper/function forbidden")
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = (
+                {name for target in node.targets for name in _target_names(target)}
+                if isinstance(node, ast.Assign)
+                else _target_names(node.target)
+            )
+            if any(not name.startswith("_") and name != "model_config" for name in targets):
+                _append_finding(findings, seen, parsed, node, "common module public artifact forbidden")
+    return required_fields
+
+
+def _snake_to_pascal(name: str) -> str:
+    return "".join(part.capitalize() for part in name.split("_"))
+
+
+def _enum_members(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> dict[str, str]:
+    members: dict[str, str] = {}
+    member_names: set[str] = set()
+    for statement in node.body:
+        names: list[str] = []
+        value: ast.AST | None = None
+        if isinstance(statement, ast.Assign):
+            if all(isinstance(target, ast.Name) for target in statement.targets):
+                names = [target.id for target in statement.targets]
+            elif any(
+                not name.startswith("_")
+                for target in statement.targets
+                for name in _target_names(target)
+            ):
+                analysis.append(
+                    f"{parsed.relative_path}:{statement.lineno} dynamic Enum member shape 분석 불능"
+                )
+            value = statement.value
+        elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+            names = [statement.target.id]
+            value = statement.value
+        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if not statement.name.startswith("_"):
+                _append_finding(findings, seen, parsed, statement, "Enum public helper forbidden")
+            continue
+        elif isinstance(statement, ast.ClassDef):
+            if not statement.name.startswith("_"):
+                _append_finding(findings, seen, parsed, statement, "Enum public helper forbidden")
+            continue
+        public_names = [name for name in names if not name.startswith("_")]
+        for name in public_names:
+            if name in member_names:
+                _append_finding(findings, seen, parsed, statement, "duplicate Enum member")
+            member_names.add(name)
+            if not isinstance(value, ast.Constant) or not isinstance(value.value, str):
+                analysis.append(
+                    f"{parsed.relative_path}:{statement.lineno} dynamic Enum value 분석 불능: {name}"
+                )
+                continue
+            members[name] = value.value
+            if not WIRE_CODE_RE.fullmatch(value.value):
+                _append_finding(findings, seen, parsed, statement, "wire code must be snake_case")
+    if not member_names:
+        _append_finding(findings, seen, parsed, node, "ErrorCode requires a wire-code member")
+    counts: dict[str, int] = {}
+    for value in members.values():
+        counts[value] = counts.get(value, 0) + 1
+    for value, count in counts.items():
+        if count > 1:
+            _append_finding(findings, seen, parsed, node, f"duplicate wire code in Enum: {value}")
+    return members
+
+
+def _analyze_bc_module(
+    parsed: ParsedSource,
+    bc: str,
+    required_fields: set[str],
+    analysis: list[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> tuple[dict[str, str], set[str], str]:
+    before = _module_bindings(parsed)
+    prefix = _snake_to_pascal(bc)
+    enum_name = f"{prefix}ErrorCode"
+    base_name = f"{prefix}ErrorOut"
+    module = _module_name(parsed.relative_path)
+    enum_full = f"{module}.{enum_name}"
+    base_full = f"{module}.{base_name}"
+    classes = [node for node in parsed.tree.body if isinstance(node, ast.ClassDef)]
+
+    enums = [node for node in classes if node.name == enum_name]
+    if len(enums) != 1:
+        _append_finding(
+            findings,
+            seen,
+            parsed,
+            enums[0] if enums else parsed.tree,
+            f"exactly one {enum_name} required",
+        )
+    for node in classes:
+        bindings = before.get(id(node), {})
+        is_str_enum = any(_resolve(base, bindings) == STR_ENUM for base in node.bases)
+        if node not in enums and (node.name.endswith("ErrorCode") or is_str_enum):
+            _append_finding(findings, seen, parsed, node, "second ErrorCode/StrEnum container")
+
+    members: dict[str, str] = {}
+    if len(enums) == 1:
+        enum = enums[0]
+        bindings = before.get(id(enum), {})
+        _base_contract(
+            parsed,
+            enum,
+            bindings,
+            STR_ENUM,
+            "StrEnum",
+            analysis,
+            findings,
+            seen,
+            f"{enum_name} must directly inherit enum.StrEnum",
+        )
+        members = _enum_members(parsed, enum, analysis, findings, seen)
+
+    bases = [node for node in classes if node.name == base_name]
+    if len(bases) != 1:
+        _append_finding(
+            findings,
+            seen,
+            parsed,
+            bases[0] if bases else parsed.tree,
+            f"exactly one {base_name} required",
+        )
+    for node in classes:
+        bindings = before.get(id(node), {})
+        direct_common = any(_resolve(base, bindings) == COMMON_ERROR_OUT for base in node.bases)
+        if node not in bases and (node.name.endswith("ErrorOut") or direct_common):
+            _append_finding(findings, seen, parsed, node, "second BC ErrorOut base")
+
+    if len(bases) == 1:
+        base = bases[0]
+        bindings = before.get(id(base), {})
+        _base_contract(
+            parsed,
+            base,
+            bindings,
+            COMMON_ERROR_OUT,
+            "ErrorOut",
+            analysis,
+            findings,
+            seen,
+            f"{base_name} must directly inherit common ErrorOut",
+        )
+        fields = _public_annassigns(base, bindings)
+        if set(fields) != {"code"}:
+            _append_finding(findings, seen, parsed, base, "BC ErrorOut base may expose only code")
+        code_field = fields.get("code")
+        if code_field is not None:
+            if code_field.value is not None:
+                _append_finding(findings, seen, parsed, code_field, "BC base code must have no default")
+            if _resolve(code_field.annotation, bindings) != enum_full:
+                _append_finding(findings, seen, parsed, code_field, "BC base code type must be own ErrorCode")
+        _class_member_findings(parsed, base, bindings, {"code"}, findings, seen)
+
+    known_concrete: set[str] = set()
+    for node in classes:
+        bindings = before.get(id(node), {})
+        is_str_enum = any(_resolve(base, bindings) == STR_ENUM for base in node.bases)
+        direct_common = any(_resolve(base, bindings) == COMMON_ERROR_OUT for base in node.bases)
+        invalid_container = (
+            node.name.endswith("ErrorCode")
+            or is_str_enum
+            or node.name.endswith("ErrorOut")
+            or direct_common
+        )
+        raw_base_names = {
+            (_expression_name(base) or "").rsplit(".", 1)[-1] for base in node.bases
+        }
+        prepared_by_base = any(
+            _resolve(base, bindings) == base_full for base in node.bases
+        ) or base_name in raw_base_names
+        if node in enums or node in bases or invalid_container:
+            continue
+        if node.name.startswith("_") and not prepared_by_base:
+            continue
+        if not _base_contract(
+            parsed,
+            node,
+            bindings,
+            base_full,
+            base_name,
+            analysis,
+            findings,
+            seen,
+            f"{node.name} must directly inherit {base_name}",
+        ):
+            continue
+        known_concrete.add(f"{module}.{node.name}")
+        fields = _public_annassigns(node, bindings)
+        for field_name in set(fields) - required_fields:
+            _append_finding(findings, seen, parsed, fields[field_name], "concrete adds field outside common shape")
+        for required in required_fields:
+            field = fields.get(required)
+            if field is None or field.value is None:
+                _append_finding(findings, seen, parsed, node, f"concrete missing required default: {required}")
+        code_field = fields.get("code")
+        if code_field is not None and code_field.value is not None:
+            if isinstance(code_field.value, ast.Constant) and isinstance(code_field.value.value, str):
+                _append_finding(findings, seen, parsed, code_field, "raw string ErrorOut code")
+            resolved_default = _resolve(code_field.value, bindings)
+            valid_values = {f"{enum_full}.{name}" for name in members}
+            if resolved_default not in valid_values:
+                _append_finding(findings, seen, parsed, code_field, "concrete code default must use own ErrorCode member")
+        _class_member_findings(parsed, node, bindings, required_fields, findings, seen)
+    return members, known_concrete, base_full
+
+
+def _function_argument_names(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> set[str]:
+    positional = [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs]
+    names = {argument.arg for argument in positional}
+    if node.args.vararg is not None:
+        names.add(node.args.vararg.arg)
+    if node.args.kwarg is not None:
+        names.add(node.args.kwarg.arg)
+    return names
+
+
+def _statement_expression_roots(statement: ast.stmt) -> list[ast.AST]:
+    if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+        return [statement.value] if statement.value is not None else []
+    if isinstance(statement, ast.Expr):
+        return [statement.value]
+    if isinstance(statement, ast.Return):
+        return [statement.value] if statement.value is not None else []
+    if isinstance(statement, ast.Raise):
+        return [node for node in (statement.exc, statement.cause) if node is not None]
+    if isinstance(statement, ast.Assert):
+        return [node for node in (statement.test, statement.msg) if node is not None]
+    if isinstance(statement, (ast.If, ast.While)):
+        return [statement.test]
+    if isinstance(statement, (ast.For, ast.AsyncFor)):
+        return [statement.iter]
+    if isinstance(statement, (ast.With, ast.AsyncWith)):
+        return [item.context_expr for item in statement.items]
+    if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        defaults = [*statement.args.defaults]
+        defaults.extend(
+            default for default in statement.args.kw_defaults if default is not None
+        )
+        return [*statement.decorator_list, *defaults]
+    if isinstance(statement, ast.ClassDef):
+        return [
+            *statement.decorator_list,
+            *statement.bases,
+            *(keyword.value for keyword in statement.keywords),
+        ]
+    return []
+
+
+def _statement_shadow_names(statement: ast.stmt) -> set[str]:
+    names = _bound_names(statement)
+    if isinstance(statement, (ast.For, ast.AsyncFor)):
+        names.update(_target_names(statement.target))
+    elif isinstance(statement, (ast.With, ast.AsyncWith)):
+        for item in statement.items:
+            if item.optional_vars is not None:
+                names.update(_target_names(item.optional_vars))
+    return names
+
+
+def _raw_constructor_calls(
+    parsed: ParsedSource,
+    roots: list[ast.AST],
+    bindings: dict[str, str],
+    known_classes: set[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> None:
+    for root in roots:
+        for call in (node for node in ast.walk(root) if isinstance(node, ast.Call)):
+            if _resolve(call.func, bindings) not in known_classes:
+                continue
+            for keyword in call.keywords:
+                if (
+                    keyword.arg == "code"
+                    and isinstance(keyword.value, ast.Constant)
+                    and isinstance(keyword.value.value, str)
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        keyword,
+                        "raw string code constructor argument",
+                    )
+
+
+def _update_bindings(
+    parsed: ParsedSource,
+    statement: ast.stmt,
+    bindings: dict[str, str],
+    *,
+    module_scope: bool,
+) -> None:
+    if isinstance(statement, ast.Import):
+        for alias in statement.names:
+            local = alias.asname or alias.name.split(".", 1)[0]
+            bindings[local] = alias.name if alias.asname else local
+        return
+    if isinstance(statement, ast.ImportFrom):
+        imported_module = _absolute_from_module(parsed.relative_path, statement)
+        if imported_module is not None:
+            for alias in statement.names:
+                if alias.name != "*":
+                    bindings[alias.asname or alias.name] = (
+                        f"{imported_module}.{alias.name}"
+                    )
+        return
+    for name in _statement_shadow_names(statement):
+        bindings.pop(name, None)
+    if module_scope and isinstance(statement, ast.ClassDef):
+        bindings[statement.name] = f"{_module_name(parsed.relative_path)}.{statement.name}"
+
+
+def _raw_code_suite(
+    parsed: ParsedSource,
+    statements: list[ast.stmt],
+    initial_bindings: dict[str, str],
+    initial_objects: dict[str, str],
+    known_classes: set[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+    *,
+    module_scope: bool,
+) -> None:
+    bindings = dict(initial_bindings)
+    local_objects = dict(initial_objects)
+    for statement in statements:
+        _raw_constructor_calls(
+            parsed,
+            _statement_expression_roots(statement),
+            bindings,
+            known_classes,
+            findings,
+            seen,
+        )
+
+        value: ast.AST | None = None
+        targets: list[ast.AST] = []
+        if isinstance(statement, ast.Assign):
+            value = statement.value
+            targets = statement.targets
+        elif isinstance(statement, ast.AnnAssign) and statement.value is not None:
+            value = statement.value
+            targets = [statement.target]
+        shadow_names = _statement_shadow_names(statement)
+        for name in shadow_names:
+            local_objects.pop(name, None)
+        target_names = {name for target in targets for name in _target_names(target)}
+        if isinstance(value, ast.Call):
+            constructor = _resolve(value.func, bindings)
+            if constructor in known_classes:
+                for name in target_names:
+                    local_objects[name] = constructor
+        if isinstance(statement, (ast.Assign, ast.AnnAssign)) and isinstance(
+            statement.value, ast.Constant
+        ) and isinstance(statement.value.value, str):
+            assignment_targets = (
+                statement.targets
+                if isinstance(statement, ast.Assign)
+                else [statement.target]
+            )
+            for target in assignment_targets:
+                if (
+                    isinstance(target, ast.Attribute)
+                    and target.attr == "code"
+                    and isinstance(target.value, ast.Name)
+                    and target.value.id in local_objects
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "raw string one-step object.code assignment",
+                    )
+
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            child_bindings = dict(bindings)
+            for name in _function_argument_names(statement):
+                child_bindings.pop(name, None)
+            _raw_code_suite(
+                parsed,
+                statement.body,
+                child_bindings,
+                {},
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+        elif isinstance(statement, ast.ClassDef):
+            _raw_code_suite(
+                parsed,
+                statement.body,
+                bindings,
+                {},
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+        elif isinstance(statement, (ast.If, ast.While)):
+            for branch in (statement.body, statement.orelse):
+                _raw_code_suite(
+                    parsed,
+                    branch,
+                    bindings,
+                    local_objects,
+                    known_classes,
+                    findings,
+                    seen,
+                    module_scope=False,
+                )
+        elif isinstance(statement, (ast.For, ast.AsyncFor)):
+            child_bindings = dict(bindings)
+            child_objects = dict(local_objects)
+            for name in shadow_names:
+                child_bindings.pop(name, None)
+                child_objects.pop(name, None)
+            for branch in (statement.body, statement.orelse):
+                _raw_code_suite(
+                    parsed,
+                    branch,
+                    child_bindings,
+                    child_objects,
+                    known_classes,
+                    findings,
+                    seen,
+                    module_scope=False,
+                )
+        elif isinstance(statement, (ast.With, ast.AsyncWith)):
+            child_bindings = dict(bindings)
+            child_objects = dict(local_objects)
+            for name in shadow_names:
+                child_bindings.pop(name, None)
+                child_objects.pop(name, None)
+            _raw_code_suite(
+                parsed,
+                statement.body,
+                child_bindings,
+                child_objects,
+                known_classes,
+                findings,
+                seen,
+                module_scope=False,
+            )
+        elif isinstance(statement, ast.Try):
+            for branch in (statement.body, statement.orelse, statement.finalbody):
+                _raw_code_suite(
+                    parsed,
+                    branch,
+                    bindings,
+                    local_objects,
+                    known_classes,
+                    findings,
+                    seen,
+                    module_scope=False,
+                )
+            for handler in statement.handlers:
+                handler_bindings = dict(bindings)
+                handler_objects = dict(local_objects)
+                if handler.name is not None:
+                    handler_bindings.pop(handler.name, None)
+                    handler_objects.pop(handler.name, None)
+                _raw_code_suite(
+                    parsed,
+                    handler.body,
+                    handler_bindings,
+                    handler_objects,
+                    known_classes,
+                    findings,
+                    seen,
+                    module_scope=False,
+                )
+
+        _update_bindings(
+            parsed, statement, bindings, module_scope=module_scope
+        )
+
+
+def _raw_code_findings(
+    parsed: ParsedSource,
+    known_classes: set[str],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> None:
+    _raw_code_suite(
+        parsed,
+        parsed.tree.body,
+        {},
+        {},
+        known_classes,
+        findings,
+        seen,
+        module_scope=True,
+    )
+
+
+def _schema_findings(
+    config: Config,
+    inventory: CodeInventory,
+    parsed: dict[Path, ParsedSource],
+    code_paths: set[Path],
+    preserve_paths: set[Path],
+    initial_blockers: list[str],
+) -> tuple[list[str], list[Finding], list[str]]:
+    analysis: list[str] = []
+    findings: list[Finding] = []
+    seen: set[tuple[Path, int, str]] = set()
+    structural_blockers = list(initial_blockers)
+
+    inventory_paths = set(inventory.relative_paths)
+    response_files = {
+        path
+        for path in inventory_paths
+        if path.parent == Path("common/ninja/response")
+        or Path("common/ninja/response") in path.parents
+    }
+    if COMMON_INIT not in inventory_paths:
+        structural_blockers.append(f"필수 common artifact 부재: {COMMON_INIT}")
+    else:
+        init_source = parsed.get(COMMON_INIT)
+        if init_source is not None and init_source.source.encode("utf-8") != b"":
+            structural_blockers.append(f"common response __init__.py는 byte-empty여야 함: {COMMON_INIT}")
+    if COMMON_ERROR not in inventory_paths:
+        structural_blockers.append(f"필수 common artifact 부재: {COMMON_ERROR}")
+    for extra in sorted(response_files - {COMMON_INIT, COMMON_ERROR}, key=Path.as_posix):
+        structural_blockers.append(f"common response extra production module 금지: {extra}")
+
+    required_fields = _analyze_common(
+        parsed.get(COMMON_ERROR), analysis, findings, seen
+    )
+    all_wire_values: dict[str, list[tuple[Path, str]]] = {}
+    known_classes = {COMMON_ERROR_OUT}
+    known_bases: set[str] = set()
+    for path in sorted(code_paths, key=Path.as_posix):
+        bc = _candidate_bc(path)
+        source = parsed.get(path)
+        if bc is None or source is None:
+            continue
+        members, concretes, base_full = _analyze_bc_module(
+            source, bc, required_fields, analysis, findings, seen
+        )
+        known_classes.add(base_full)
+        known_classes.update(concretes)
+        known_bases.add(base_full)
+        for member, value in members.items():
+            all_wire_values.setdefault(value, []).append((path, member))
+    for value, owners in all_wire_values.items():
+        if len(owners) > 1:
+            path, _ = owners[0]
+            source = parsed.get(path)
+            if source is not None:
+                _append_finding(
+                    findings,
+                    seen,
+                    source,
+                    source.tree,
+                    f"duplicate project code wire value: {value}",
+                )
+
+    for path, source in parsed.items():
+        if path in code_paths or path in preserve_paths:
+            continue
+        if not any(_path_under_bc(path, bc) for bc in config.scope_bcs):
+            continue
+        before = _module_bindings(source)
+        for node in source.tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            bindings = before.get(id(node), {})
+            if any(_resolve(base, bindings) in known_bases for base in node.bases):
+                _append_finding(findings, seen, source, node, "concrete ErrorOut outside canonical module")
+
+    raw_paths = {Path(raw) for raw in config.controller_modules}
+    raw_paths.update(code_paths)
+    for path in sorted(raw_paths, key=Path.as_posix):
+        source = parsed.get(path)
+        if source is not None:
+            _raw_code_findings(source, known_classes, findings, seen)
+    return sorted(set(analysis)), sorted(
+        findings, key=lambda item: (item.relative_path.as_posix(), item.lineno, item.category)
+    ), sorted(set(structural_blockers))
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
-    if not root.is_dir():
-        print(f"[check-error-centralization] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+    try:
+        config = _parse_config(argv[1:])
+    except UsageError as exc:
+        print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
+        return 1
+    except SystemExit as exc:
+        return int(exc.code)
+
+    if config.profile in {None, "auto"}:
+        return 0
+    try:
+        inventory = _production_inventory(config.root)
+        source_paths, code_paths, preserve_paths, plan_analysis, blockers = _source_plan(
+            config, inventory
+        )
+        parsed, source_analysis = _load_sources(config.root, source_paths)
+        analysis = [*plan_analysis, *source_analysis]
+        findings: list[Finding] = []
+        if config.profile == "dddjango-code-json":
+            semantic_analysis, findings, blockers = _schema_findings(
+                config,
+                inventory,
+                parsed,
+                code_paths,
+                preserve_paths,
+                blockers,
+            )
+            analysis.extend(semantic_analysis)
+        if analysis:
+            raise UsageError("; ".join(sorted(set(analysis))))
+    except UsageError as exc:
+        print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
         return 1
 
-    findings: list[str] = []
-    for app_file in _find_application_layer_files(root):
-        try:
-            body = app_file.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        signals = [label for rx, label in SIGNAL_CHECKS if rx.search(body)]
-        if not signals:
-            continue
-        # 조건 3: 이번 변경에서 추가/수정.
-        if not _is_new_or_modified(root, app_file):
-            continue
-        findings.append(f"  - {app_file.relative_to(root)}: {'; '.join(signals)}")
-
-    if findings:
+    if findings or blockers:
         print(
-            "[check-error-centralization] BLOCKER — application 계층이 오류→HTTP "
-            "status 변환을 직접 수행함(presentation 경계 밖 = API 오류 중앙화·책임 배치 위반):"
+            "[check-error-centralization] BLOCKER — code-profile ErrorOut schema, "
+            "inventory, or raw code contract violation:"
         )
-        for f in findings:
-            print(f)
+        for blocker in blockers:
+            print(f"  - {blocker}")
+        for finding in findings:
+            print(finding.render())
         print(
-            "  근거: implementation-django-ninja §2.2·§6.2. 오류→HTTP status 매핑은 "
-            "presentation 의 단일 소유자(@api.exception_handler + problem 헬퍼, 또는 "
-            "create_response 오버라이드)가 갖는다 — application/domain 은 도메인 예외를 raise "
-            "하거나 결과(outcome/Result)를 반환하고 HTTP 를 모른다. 설계로 반송하라."
+            "  근거: common ErrorOut는 동적 required wire shape의 단일 기반이고, 각 BC는 "
+            "canonical ErrorCode/ErrorOut hierarchy와 project-wide unique wire code를 소유한다."
         )
         return 2
-
     return 0
 
 
