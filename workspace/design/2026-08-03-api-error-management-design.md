@@ -44,7 +44,7 @@ API 에러의 공통 응답 형식은 한 곳에서 유지하되, 각 바운디�
 | controller 책임 | 서비스 호출, 알려진 BC 예외 catch, 준비된 ErrorOut의 `Status` 반환 |
 | BC 오류 body 생성 | BC `error_out.py`의 준비된 Schema를 인자 없이 생성하거나 BC base를 직접 생성 |
 | 오류 helper | ErrorOut 생성·고정값 조립·HTTP Response 변환·예외 매핑 helper를 만들지 않음 |
-| 비-JSON 응답 | 파일 다운로드·스트리밍·redirect는 오류 helper 금지 대상이 아님 |
+| 비-JSON 응답 | 비오류 성공 arm의 파일 다운로드·스트리밍·redirect는 오류 helper 금지 대상이 아님. 알려진 BC 실패 arm에서는 ErrorOut의 직접 `Status` 반환을 우회할 수 없음 |
 | OpenAPI | BC 오류만 `response={status: <Bc>ErrorOut}`으로 선언. 수동 후가공 금지 |
 | 재시도 표현 | `retryable` body 필드 대신 에러 `code`, HTTP status와 표준 header 사용 |
 
@@ -354,8 +354,9 @@ class LessonController:
         request: HttpRequest,
         lesson_id: int,
     ) -> Status[LessonOut | LessonErrorOut]:
+        query = build_get_lesson_query()
         try:
-            lesson = build_get_lesson_query().execute(lesson_id)
+            lesson = query.execute(lesson_id)
         except LessonNotFoundException:
             error = LessonNotFoundError()
             return Status(error.status, error)
@@ -369,7 +370,10 @@ class LessonController:
 `try` 본문에는 예외 계약을 가진 application 호출을 수행하는 최상위 문장 하나만 둔다.
 호출 결과를 변수에 대입하거나 `await`하는 형태는 허용하며, 호출 인자를 만들기 위한 중첩
 생성자는 같은 문장 안에 있을 수 있다. 요청 Schema 변환과 입력 준비는 `try` 앞에 두고,
-성공 결과 변환과 실패 Result 판정은 `try` 뒤에 둔다.
+성공 결과 변환은 `try` 뒤에 둔다. 실패 Result/None을 반환하는 application 호출은 예외용
+`try`에 넣지 않는다. 모든 `try` 밖에서 결과를 대입하고 바로 다음 실행 문장의 실패 분기에서
+ErrorOut을 직접 반환한다. 예외 호출의 `try` 뒤에서 같은 결과를 다시 실패 Result로 처리하는
+혼합 경로는 허용하지 않는다.
 
 알려진 구체 예외 또는 구체 예외들의 tuple만 catch한다. bare `except`, `except Exception`,
 `except BaseException`은 쓰지 않는다. 각 `except`는 고정 오류라면 준비된 concrete ErrorOut을
