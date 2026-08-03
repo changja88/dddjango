@@ -1817,6 +1817,211 @@ router = Router()
 @router.get("/ignored", response={200: dict}, openapi_extra={"responses": {"500": {"description": "ignored"}}})
 def ignored(request): return {"ok": True}
 """
+
+    def flow_controller(body: str, response: str = "{200: dict}") -> str:
+        indented = "\n".join(
+            f"    {line}" if line else "" for line in body.splitlines()
+        )
+        return (
+            "from ninja import Router, Status\n"
+            "from application.lesson.presentation_layer.schema.error_out import "
+            "LessonErrorOut, LessonNotFoundError\n\n"
+            "router = Router()\n\n"
+            f"@router.get('/{{lesson_id}}', response={response})\n"
+            "def get_lesson(request, lesson_id: int):\n"
+            f"{indented}\n"
+        )
+
+    match_body = """match lesson_id:
+    case _:
+        error = LessonNotFoundError()
+        return Status(error.status, error)"""
+    trystar_body = """try:
+    error = LessonNotFoundError()
+    return Status(error.status, error)
+except* Exception:
+    raise"""
+    if_join_body = """if lesson_id:
+    error = LessonNotFoundError()
+else:
+    error = LessonNotFoundError()
+return Status(error.status, error)"""
+    with_join_body = """with request_scope():
+    error = LessonNotFoundError()
+return Status(error.status, error)"""
+    try_join_body = """try:
+    error = LessonNotFoundError()
+except LookupError:
+    error = LessonNotFoundError()
+return Status(error.status, error)"""
+    alias_body = """error = LessonNotFoundError()
+alias = error
+return Status(alias.status, alias)"""
+    ambiguous_join_body = """if lesson_id:
+    error = LessonNotFoundError()
+else:
+    error = None
+return Status(error.status, error)"""
+    module_match_controller = """from ninja import Router, Status
+from application.lesson.presentation_layer.schema.error_out import LessonErrorOut, LessonNotFoundError
+
+router = Router()
+
+match 1:
+    case 1:
+        @router.get('/{lesson_id}', response={200: dict})
+        def get_lesson(request, lesson_id: int):
+            error = LessonNotFoundError()
+            return Status(error.status, error)
+"""
+
+    no_direct_common = """from ninja import Router
+from common.ninja.response.error_out import ErrorOut
+
+router = Router()
+
+@router.get('/lessons', response={200: dict, 401: ErrorOut})
+def list_lessons(request):
+    return []
+"""
+    no_direct_concrete = """from ninja import Router
+from application.lesson.presentation_layer.schema.error_out import LessonNotFoundError
+
+router = Router()
+
+@router.get('/lessons', response={200: dict, 401: LessonNotFoundError})
+def list_lessons(request):
+    return []
+"""
+    no_direct_base = no_direct_concrete.replace(
+        "LessonNotFoundError", "LessonErrorOut"
+    )
+    no_direct_dict = """from ninja import Router
+
+router = Router()
+
+@router.get('/lessons', response={200: dict, 401: dict})
+def list_lessons(request):
+    return []
+"""
+    no_direct_framework_schema = """from ninja import Router
+from ninja.errors import AuthenticationError
+
+router = Router()
+
+@router.get('/lessons', response={200: dict, 401: AuthenticationError})
+def list_lessons(request):
+    return []
+"""
+    empty_error_bc_args = (
+        TARGET_DIR,
+        "--error-profile",
+        "dddjango-code-json",
+        "--scope",
+        "public-v1",
+        "--api-module",
+        "config/api.py",
+        "--controller-module",
+        "application/lesson/presentation_layer/controller.py",
+        "--scope-bc",
+        "lesson",
+    )
+
+    selected_method_alias = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+schema_builder = api.get_openapi_schema
+schema_builder()
+"""
+    selected_setattr = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+setattr(api, 'get_openapi_schema', replacement)
+"""
+    arbitrary_receiver = """from ninja_extra import NinjaExtraAPI
+from vendor import external_api
+
+api = NinjaExtraAPI()
+external_api.get_openapi_schema()
+"""
+    arbitrary_setattr = """from ninja_extra import NinjaExtraAPI
+from vendor import external_api
+
+api = NinjaExtraAPI()
+setattr(external_api, 'get_openapi_schema', replacement)
+"""
+    arbitrary_class = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+
+class DocumentationCache:
+    def get_openapi_schema(self):
+        return {}
+"""
+    ambiguous_selected_alias = """from ninja_extra import NinjaExtraAPI
+from vendor import external_api
+
+api = NinjaExtraAPI()
+alias = api
+if enabled:
+    alias = external_api
+alias.get_openapi_schema()
+"""
+    match_rebound_alias = """from ninja_extra import NinjaExtraAPI
+from vendor import external_api
+
+api = NinjaExtraAPI()
+alias = api
+match 1:
+    case 1:
+        alias = external_api
+alias.get_openapi_schema()
+"""
+    trystar_rebound_alias = """from ninja_extra import NinjaExtraAPI
+from vendor import external_api
+
+api = NinjaExtraAPI()
+alias = api
+try:
+    alias = external_api
+except* Exception:
+    alias = external_api
+alias.get_openapi_schema()
+"""
+    selected_controller_call = """from ninja import Router
+from config.api import api
+
+router = Router()
+api.get_openapi_schema()
+
+@router.get('/lessons', response={200: dict})
+def list_lessons(request):
+    return []
+"""
+    arbitrary_controller_call = selected_controller_call.replace(
+        "from config.api import api", "from vendor import api"
+    )
+
+    ninja_status_extra = """from ninja import Router, status
+
+router = Router()
+
+@router.get('/lessons', response={200: dict}, openapi_extra={'responses': {status.HTTP_401_UNAUTHORIZED: {}}})
+def list_lessons(request):
+    return []
+"""
+    http_status_extra = """from http import HTTPStatus
+from ninja import Router
+
+router = Router()
+
+@router.get('/lessons', response={200: dict}, openapi_extra={'responses': {HTTPStatus.UNAUTHORIZED: {}}})
+def list_lessons(request):
+    return []
+"""
+    success_status_extra = ninja_status_extra.replace(
+        "HTTP_401_UNAUTHORIZED", "HTTP_200_OK"
+    )
     return [
         Case("openapi-clean-direct-404-409-same-bc-base", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-framework-statuses-not-advertised", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
@@ -1850,6 +2055,39 @@ def ignored(request): return {"ok": True}
         Case("openapi-fp-tests-migrations-cache-venv", {**OPENAPI_FILES, "application/lesson/presentation_layer/tests/test_openapi.py": excluded_violation, "application/lesson/presentation_layer/migrations/0001_openapi.py": excluded_violation, "application/lesson/presentation_layer/.cache/openapi.py": excluded_violation, "application/lesson/presentation_layer/.venv/openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, ""),
         Case("openapi-fp-unignored-generated-path", {**OPENAPI_FILES, ".gitignore": "application/lesson/presentation_layer/ignored_openapi.py\n", "application/lesson/presentation_layer/generated/openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, "", baseline_files={**OPENAPI_FILES, ".gitignore": "application/lesson/presentation_layer/ignored_openapi.py\n"}),
         Case("openapi-fp-git-ignored-selected-path", {**OPENAPI_FILES, ".gitignore": "application/lesson/presentation_layer/ignored_openapi.py\n", "application/lesson/presentation_layer/ignored_openapi.py": excluded_violation}, "check-openapi-error-declaration.py", (TARGET_DIR,), 0, "", baseline_files={**OPENAPI_FILES, ".gitignore": "application/lesson/presentation_layer/ignored_openapi.py\n"}),
+        Case("openapi-flow-match-return-missing-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(match_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2 if sys.version_info >= (3, 10) else 1, "BLOCKER" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-flow-match-return-correct-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(match_body, "{200: dict, 404: LessonErrorOut}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-flow-module-match-operation", with_files(("application/lesson/presentation_layer/controller.py", module_match_controller), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2 if sys.version_info >= (3, 10) else 1, "BLOCKER" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-flow-trystar-return-missing-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(trystar_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2 if sys.version_info >= (3, 11) else 1, "BLOCKER" if sys.version_info >= (3, 11) else "사용 오류"),
+        Case("openapi-flow-trystar-return-correct-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(trystar_body, "{200: dict, 404: LessonErrorOut}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 11) else 1, "" if sys.version_info >= (3, 11) else "사용 오류"),
+        Case("openapi-flow-if-join-missing-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(if_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-flow-if-join-correct-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(if_join_body, "{200: dict, 404: LessonErrorOut}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-with-join-missing-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(with_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-flow-with-join-correct-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(with_join_body, "{200: dict, 404: LessonErrorOut}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-try-join-missing-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(try_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-flow-try-join-correct-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(try_join_body, "{200: dict, 404: LessonErrorOut}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-flow-error-instance-alias-missing-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(alias_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-flow-error-instance-alias-correct-response", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(alias_body, "{200: dict, 404: LessonErrorOut}")), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-analysis-error-instance-ambiguous-join", with_files(("application/lesson/presentation_layer/controller.py", flow_controller(ambiguous_join_body)), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
+        Case("openapi-framework-common-error-advertised", with_files(("application/lesson/presentation_layer/controller.py", no_direct_common), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-framework-common-error-advertised-empty-error-bc", with_files(("application/lesson/presentation_layer/controller.py", no_direct_common), ("application/lesson/presentation_layer/schema/error_out.py", "<REMOVE>"), base=OPENAPI_FILES), "check-openapi-error-declaration.py", empty_error_bc_args, 2, "BLOCKER"),
+        Case("openapi-framework-bc-base-error-advertised", with_files(("application/lesson/presentation_layer/controller.py", no_direct_base), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-framework-concrete-error-advertised", with_files(("application/lesson/presentation_layer/controller.py", no_direct_concrete), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-clean-framework-dict-error-status", with_files(("application/lesson/presentation_layer/controller.py", no_direct_dict), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-framework-owned-error-schema", with_files(("application/lesson/presentation_layer/controller.py", no_direct_framework_schema), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-code-selected-bound-method-call", with_files(("config/api.py", selected_method_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-code-selected-literal-setattr", with_files(("config/api.py", selected_setattr), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-code-selected-controller-import-call", with_files(("application/lesson/presentation_layer/controller.py", selected_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-clean-arbitrary-schema-receiver", with_files(("config/api.py", arbitrary_receiver), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-arbitrary-schema-setattr", with_files(("config/api.py", arbitrary_setattr), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-arbitrary-schema-class", with_files(("config/api.py", arbitrary_class), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-clean-arbitrary-controller-receiver", with_files(("application/lesson/presentation_layer/controller.py", arbitrary_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-analysis-conditionally-rebound-selected-receiver", with_files(("config/api.py", ambiguous_selected_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 1, "사용 오류"),
+        Case("openapi-clean-match-rebound-selected-receiver", with_files(("config/api.py", match_rebound_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 10) else 1, "" if sys.version_info >= (3, 10) else "사용 오류"),
+        Case("openapi-clean-trystar-rebound-selected-receiver", with_files(("config/api.py", trystar_rebound_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0 if sys.version_info >= (3, 11) else 1, "" if sys.version_info >= (3, 11) else "사용 오류"),
+        Case("openapi-extra-ninja-status-constant", with_files(("application/lesson/presentation_layer/controller.py", ninja_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-extra-httpstatus-constant", with_files(("application/lesson/presentation_layer/controller.py", http_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-clean-extra-success-status-constant", with_files(("application/lesson/presentation_layer/controller.py", success_status_extra), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         # Reviewer-only: dynamic response mappings and status-specific code
         # subset precision for a shared BC base schema.
     ]
