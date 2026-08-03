@@ -56,6 +56,7 @@ NINJA_IMPORT_RE = re.compile(
 ROUTER_INSTANCE = "@ninja-router-instance"
 API_TYPE_PREFIX = "@ninja-api-type:"
 API_RECEIVER = "@selected-api-receiver"
+AMBIGUOUS_BINDING = "@ambiguous-binding"
 
 
 class UsageError(Exception):
@@ -714,6 +715,180 @@ def _resolve_expression(node: ast.AST, bindings: dict[str, str]) -> str | None:
     return ".".join((bound, *rest))
 
 
+def _merge_bindings(states: list[dict[str, str]]) -> dict[str, str]:
+    """Keep only provenance shared by every possible control-flow outcome."""
+    if not states:
+        return {}
+    missing = object()
+    merged: dict[str, str] = {}
+    for name in set().union(*(state.keys() for state in states)):
+        values = [state.get(name, missing) for state in states]
+        first = values[0]
+        if first is not missing and all(value == first for value in values[1:]):
+            merged[name] = first
+        elif any(value is not missing for value in values):
+            merged[name] = AMBIGUOUS_BINDING
+    return merged
+
+
+def _is_ambiguous_resolution(resolved: str | None) -> bool:
+    return resolved == AMBIGUOUS_BINDING or (
+        resolved is not None and resolved.startswith(f"{AMBIGUOUS_BINDING}.")
+    )
+
+
+def _invalidate_expression_bindings(
+    expression: ast.expr,
+    bindings: dict[str, str],
+    *,
+    annotations_evaluated: bool,
+) -> None:
+    wrapper = ast.Expr(value=expression)
+    for name in _evaluated_named_expression_names(
+        wrapper, annotations_evaluated=annotations_evaluated
+    ):
+        bindings.pop(name, None)
+
+
+def _bindings_after_block(
+    statements: list[ast.stmt],
+    incoming: dict[str, str],
+    relative_path: Path,
+    *,
+    recognize_router: bool,
+    annotations_evaluated: bool,
+) -> dict[str, str]:
+    bindings = dict(incoming)
+    for statement in statements:
+        if isinstance(statement, (ast.If, ast.While)):
+            branch = dict(bindings)
+            _invalidate_expression_bindings(
+                statement.test,
+                branch,
+                annotations_evaluated=annotations_evaluated,
+            )
+            outcomes = [
+                _bindings_after_block(
+                    statement.body,
+                    branch,
+                    relative_path,
+                    recognize_router=recognize_router,
+                    annotations_evaluated=annotations_evaluated,
+                ),
+                _bindings_after_block(
+                    statement.orelse,
+                    branch,
+                    relative_path,
+                    recognize_router=recognize_router,
+                    annotations_evaluated=annotations_evaluated,
+                ),
+            ]
+            if isinstance(statement, ast.While):
+                outcomes.append(branch)
+            bindings = _merge_bindings(outcomes)
+            continue
+        if isinstance(statement, (ast.For, ast.AsyncFor)):
+            branch = dict(bindings)
+            _invalidate_expression_bindings(
+                statement.iter,
+                branch,
+                annotations_evaluated=annotations_evaluated,
+            )
+            for name in _target_names(statement.target):
+                branch.pop(name, None)
+            body_out = _bindings_after_block(
+                statement.body,
+                branch,
+                relative_path,
+                recognize_router=recognize_router,
+                annotations_evaluated=annotations_evaluated,
+            )
+            bindings = _merge_bindings(
+                [
+                    _bindings_after_block(
+                        statement.orelse,
+                        dict(bindings),
+                        relative_path,
+                        recognize_router=recognize_router,
+                        annotations_evaluated=annotations_evaluated,
+                    ),
+                    _bindings_after_block(
+                        statement.orelse,
+                        body_out,
+                        relative_path,
+                        recognize_router=recognize_router,
+                        annotations_evaluated=annotations_evaluated,
+                    ),
+                ]
+            )
+            continue
+        if isinstance(statement, (ast.With, ast.AsyncWith)):
+            branch = dict(bindings)
+            for item in statement.items:
+                _invalidate_expression_bindings(
+                    item.context_expr,
+                    branch,
+                    annotations_evaluated=annotations_evaluated,
+                )
+                if item.optional_vars is not None:
+                    for name in _target_names(item.optional_vars):
+                        branch.pop(name, None)
+            bindings = _bindings_after_block(
+                statement.body,
+                branch,
+                relative_path,
+                recognize_router=recognize_router,
+                annotations_evaluated=annotations_evaluated,
+            )
+            continue
+        if isinstance(statement, ast.Try):
+            normal = _bindings_after_block(
+                statement.body,
+                dict(bindings),
+                relative_path,
+                recognize_router=recognize_router,
+                annotations_evaluated=annotations_evaluated,
+            )
+            outcomes = [
+                _bindings_after_block(
+                    statement.orelse,
+                    normal,
+                    relative_path,
+                    recognize_router=recognize_router,
+                    annotations_evaluated=annotations_evaluated,
+                )
+            ]
+            for handler in statement.handlers:
+                branch = dict(bindings)
+                if handler.name:
+                    branch.pop(handler.name, None)
+                outcomes.append(
+                    _bindings_after_block(
+                        handler.body,
+                        branch,
+                        relative_path,
+                        recognize_router=recognize_router,
+                        annotations_evaluated=annotations_evaluated,
+                    )
+                )
+            bindings = _bindings_after_block(
+                statement.finalbody,
+                _merge_bindings(outcomes),
+                relative_path,
+                recognize_router=recognize_router,
+                annotations_evaluated=annotations_evaluated,
+            )
+            continue
+        _advance_bindings(
+            statement,
+            relative_path,
+            bindings,
+            recognize_router=recognize_router,
+            annotations_evaluated=annotations_evaluated,
+        )
+    return bindings
+
+
 def _target_names(target: ast.AST) -> set[str]:
     if isinstance(target, ast.Name):
         return {target.id}
@@ -1013,6 +1188,10 @@ def _operation_decorator(
         if resolved is None:
             continue
         owner, separator, method = resolved.rpartition(".")
+        if separator and method in HTTP_METHODS and _is_ambiguous_resolution(owner):
+            raise UsageError(
+                f"operation decorator receiver provenance 분석 불능: line {decorator.lineno}"
+            )
         if separator and method in HTTP_METHODS and owner in {
             ROUTER_INSTANCE,
             "ninja_extra.route",
@@ -1024,21 +1203,19 @@ def _operation_decorator(
 def _collect_operations(parsed: ParsedSource) -> list[Operation]:
     operations: list[Operation] = []
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
-    final_module_bindings: dict[str, str] = {}
-    for statement in parsed.tree.body:
-        _advance_bindings(
-            statement,
-            parsed.relative_path,
-            final_module_bindings,
-            recognize_router=True,
-            annotations_evaluated=annotations_evaluated,
-        )
+    final_module_bindings = _bindings_after_block(
+        parsed.tree.body,
+        {},
+        parsed.relative_path,
+        recognize_router=True,
+        annotations_evaluated=annotations_evaluated,
+    )
 
     def visit_block(
         statements: list[ast.stmt],
         incoming: dict[str, str],
         owners: tuple[str, ...],
-    ) -> None:
+    ) -> dict[str, str]:
         bindings = dict(incoming)
         for statement in statements:
             if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -1076,23 +1253,64 @@ def _collect_operations(parsed: ParsedSource) -> list[Operation]:
                 bindings.pop(statement.name, None)
                 continue
             if isinstance(statement, (ast.If, ast.While)):
-                visit_block(statement.body, dict(bindings), owners)
-                visit_block(statement.orelse, dict(bindings), owners)
+                branch_incoming = dict(bindings)
+                _invalidate_expression_bindings(
+                    statement.test,
+                    branch_incoming,
+                    annotations_evaluated=annotations_evaluated,
+                )
+                outcomes = [
+                    visit_block(statement.body, branch_incoming, owners),
+                    visit_block(statement.orelse, branch_incoming, owners),
+                ]
+                if isinstance(statement, ast.While):
+                    outcomes.append(branch_incoming)
+                bindings = _merge_bindings(outcomes)
+                continue
             elif isinstance(statement, (ast.For, ast.AsyncFor)):
                 branch = dict(bindings)
+                _invalidate_expression_bindings(
+                    statement.iter,
+                    branch,
+                    annotations_evaluated=annotations_evaluated,
+                )
                 for name in _target_names(statement.target):
                     branch.pop(name, None)
-                visit_block(statement.body, branch, owners)
-                visit_block(statement.orelse, dict(bindings), owners)
+                body_out = visit_block(statement.body, branch, owners)
+                bindings = _merge_bindings(
+                    [
+                        visit_block(statement.orelse, dict(bindings), owners),
+                        visit_block(statement.orelse, body_out, owners),
+                    ]
+                )
+                continue
+            elif isinstance(statement, (ast.With, ast.AsyncWith)):
+                branch = dict(bindings)
+                for item in statement.items:
+                    _invalidate_expression_bindings(
+                        item.context_expr,
+                        branch,
+                        annotations_evaluated=annotations_evaluated,
+                    )
+                    if item.optional_vars is not None:
+                        for name in _target_names(item.optional_vars):
+                            branch.pop(name, None)
+                bindings = visit_block(statement.body, branch, owners)
+                continue
             elif isinstance(statement, ast.Try):
-                visit_block(statement.body, dict(bindings), owners)
-                visit_block(statement.orelse, dict(bindings), owners)
-                visit_block(statement.finalbody, dict(bindings), owners)
+                normal = visit_block(statement.body, dict(bindings), owners)
+                outcomes = [visit_block(statement.orelse, normal, owners)]
                 for handler in statement.handlers:
                     branch = dict(bindings)
                     if handler.name:
                         branch.pop(handler.name, None)
-                    visit_block(handler.body, branch, owners)
+                    outcomes.append(visit_block(handler.body, branch, owners))
+                bindings = visit_block(
+                    statement.finalbody,
+                    _merge_bindings(outcomes),
+                    owners,
+                )
+                continue
             _advance_bindings(
                 statement,
                 parsed.relative_path,
@@ -1100,6 +1318,7 @@ def _collect_operations(parsed: ParsedSource) -> list[Operation]:
                 recognize_router=True,
                 annotations_evaluated=annotations_evaluated,
             )
+        return bindings
 
     visit_block(parsed.tree.body, {}, ())
     return operations
@@ -1129,6 +1348,10 @@ def _constructed_error(
     if not isinstance(value, ast.Call):
         return None
     resolved = _resolve_expression(value.func, bindings)
+    if _is_ambiguous_resolution(resolved):
+        raise UsageError(
+            f"returned ErrorOut provenance 분석 불능: line {value.lineno}"
+        )
     symbol = catalog.get(resolved or "")
     if symbol is None or symbol.kind not in {"base", "concrete"}:
         return None
@@ -1155,7 +1378,12 @@ def _status_return_instance(
     value = statement.value
     if not isinstance(value, ast.Call):
         return None
-    if _resolve_expression(value.func, bindings) != "ninja.Status":
+    resolved = _resolve_expression(value.func, bindings)
+    if _is_ambiguous_resolution(resolved):
+        raise UsageError(
+            f"returned Status provenance 분석 불능: line {statement.lineno}"
+        )
+    if resolved != "ninja.Status":
         return None
     if len(value.args) < 2:
         return None
@@ -1423,27 +1651,468 @@ def _openapi_extra_findings(operation: Operation) -> list[Finding]:
     return []
 
 
-def _api_expression_has_schema_call(
+def _api_schema_call_state(
     expression: ast.AST,
     bindings: dict[str, str],
-) -> bool:
-    for node in ast.walk(expression):
-        if isinstance(node, ast.Lambda) and node is not expression:
-            continue
-        if not isinstance(node, ast.Call):
-            continue
-        resolved = _resolve_expression(node.func, bindings)
-        if resolved == f"{API_RECEIVER}.get_openapi_schema":
-            return True
-    return False
+) -> tuple[int | None, int | None]:
+    selected: list[int] = []
+    ambiguous: list[int] = []
+
+    def visit(node: ast.AST, current: dict[str, str]) -> None:
+        if isinstance(node, ast.Lambda):
+            for default in (*node.args.defaults, *node.args.kw_defaults):
+                if default is not None:
+                    visit(default, current)
+            local = dict(current)
+            arguments = [
+                *node.args.posonlyargs,
+                *node.args.args,
+                *node.args.kwonlyargs,
+            ]
+            if node.args.vararg is not None:
+                arguments.append(node.args.vararg)
+            if node.args.kwarg is not None:
+                arguments.append(node.args.kwarg)
+            for argument in arguments:
+                local.pop(argument.arg, None)
+            visit(node.body, local)
+            return
+        if isinstance(
+            node, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)
+        ):
+            local = dict(current)
+            for generator in node.generators:
+                visit(generator.iter, local)
+                for name in _target_names(generator.target):
+                    local.pop(name, None)
+                for condition in generator.ifs:
+                    visit(condition, local)
+            if isinstance(node, ast.DictComp):
+                visit(node.key, local)
+                visit(node.value, local)
+            else:
+                visit(node.elt, local)
+            return
+        if isinstance(node, ast.Call):
+            resolved = _resolve_expression(node.func, current)
+            if resolved == f"{API_RECEIVER}.get_openapi_schema":
+                selected.append(node.lineno)
+            elif _is_ambiguous_resolution(resolved) and resolved.endswith(
+                ".get_openapi_schema"
+            ):
+                ambiguous.append(node.lineno)
+        for child in ast.iter_child_nodes(node):
+            visit(child, current)
+
+    visit(expression, bindings)
+    return (
+        min(selected) if selected else None,
+        min(ambiguous) if ambiguous else None,
+    )
+
+
+def _function_local_names(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> set[str]:
+    names: set[str] = set()
+    global_names: set[str] = set()
+    nonlocal_names: set[str] = set()
+
+    class Collector(ast.NodeVisitor):
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+            names.add(node.name)
+            for expression in (*node.decorator_list, *node.args.defaults):
+                self.visit(expression)
+            for default in node.args.kw_defaults:
+                if default is not None:
+                    self.visit(default)
+
+        def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+            self.visit_FunctionDef(node)
+
+        def visit_ClassDef(self, node: ast.ClassDef) -> None:
+            names.add(node.name)
+            for expression in (*node.decorator_list, *node.bases):
+                self.visit(expression)
+            for keyword in node.keywords:
+                self.visit(keyword.value)
+
+        def visit_Lambda(self, node: ast.Lambda) -> None:
+            for default in (*node.args.defaults, *node.args.kw_defaults):
+                if default is not None:
+                    self.visit(default)
+
+        def visit_Name(self, node: ast.Name) -> None:
+            if isinstance(node.ctx, (ast.Store, ast.Del)):
+                names.add(node.id)
+
+        def visit_Import(self, node: ast.Import) -> None:
+            names.update(
+                alias.asname or alias.name.split(".", 1)[0] for alias in node.names
+            )
+
+        def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+            names.update(
+                alias.asname or alias.name
+                for alias in node.names
+                if alias.name != "*"
+            )
+
+        def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
+            if node.name:
+                names.add(node.name)
+            if node.type is not None:
+                self.visit(node.type)
+            for statement in node.body:
+                self.visit(statement)
+
+        def visit_Global(self, node: ast.Global) -> None:
+            global_names.update(node.names)
+
+        def visit_Nonlocal(self, node: ast.Nonlocal) -> None:
+            nonlocal_names.update(node.names)
+
+        def visit_comprehension(self, node: ast.comprehension) -> None:
+            self.visit(node.iter)
+            for condition in node.ifs:
+                self.visit(condition)
+
+    collector = Collector()
+    for statement in function.body:
+        collector.visit(statement)
+    return names - global_names - nonlocal_names
+
+
+def _attribute_assignment_targets(statement: ast.stmt) -> list[ast.Attribute]:
+    targets: list[ast.AST] = []
+    if isinstance(statement, ast.Assign):
+        targets.extend(statement.targets)
+    elif isinstance(statement, ast.AnnAssign) and statement.value is not None:
+        targets.append(statement.target)
+    elif isinstance(statement, ast.AugAssign):
+        targets.append(statement.target)
+
+    attributes: list[ast.Attribute] = []
+
+    def collect(target: ast.AST) -> None:
+        if isinstance(target, ast.Attribute):
+            attributes.append(target)
+        elif isinstance(target, ast.Starred):
+            collect(target.value)
+        elif isinstance(target, (ast.Tuple, ast.List)):
+            for element in target.elts:
+                collect(element)
+
+    for target in targets:
+        collect(target)
+    return attributes
 
 
 def _api_module_findings(parsed: ParsedSource) -> list[Finding]:
     findings: list[Finding] = []
-    bindings: dict[str, str] = {}
     receiver_events = 0
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
-    deferred_functions: list[ast.FunctionDef | ast.AsyncFunctionDef] = []
+    deferred_functions: list[
+        tuple[ast.FunctionDef | ast.AsyncFunctionDef, dict[str, str]]
+    ] = []
+
+    def scan_expression(expression: ast.AST, bindings: dict[str, str]) -> None:
+        selected_line, ambiguous_line = _api_schema_call_state(expression, bindings)
+        if ambiguous_line is not None:
+            raise UsageError(
+                "selected API receiver provenance 분석 불능: "
+                f"{parsed.relative_path}:{ambiguous_line} get_openapi_schema"
+            )
+        if selected_line is not None:
+            findings.append(
+                Finding(
+                    parsed.relative_path,
+                    selected_line,
+                    "openapi-postprocess",
+                    "선택 API receiver의 get_openapi_schema 직접 호출/후처리",
+                )
+            )
+
+    def scan_definition_expressions(
+        definition: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+        bindings: dict[str, str],
+    ) -> None:
+        expressions: list[ast.AST] = list(definition.decorator_list)
+        if isinstance(definition, ast.ClassDef):
+            expressions.extend(definition.bases)
+            expressions.extend(keyword.value for keyword in definition.keywords)
+        else:
+            expressions.extend(definition.args.defaults)
+            expressions.extend(
+                default
+                for default in definition.args.kw_defaults
+                if default is not None
+            )
+            if annotations_evaluated:
+                arguments = [
+                    *definition.args.posonlyargs,
+                    *definition.args.args,
+                    *definition.args.kwonlyargs,
+                ]
+                if definition.args.vararg is not None:
+                    arguments.append(definition.args.vararg)
+                if definition.args.kwarg is not None:
+                    arguments.append(definition.args.kwarg)
+                expressions.extend(
+                    argument.annotation
+                    for argument in arguments
+                    if argument.annotation is not None
+                )
+                if definition.returns is not None:
+                    expressions.append(definition.returns)
+        for expression in expressions:
+            scan_expression(expression, bindings)
+
+    def scan_monkeypatch(
+        statement: ast.stmt, bindings: dict[str, str]
+    ) -> None:
+        for target in _attribute_assignment_targets(statement):
+            if target.attr != "get_openapi_schema":
+                continue
+            receiver = _resolve_expression(target.value, bindings)
+            if _is_ambiguous_resolution(receiver):
+                raise UsageError(
+                    "selected API receiver provenance 분석 불능: "
+                    f"{parsed.relative_path}:{target.lineno} get_openapi_schema assignment"
+                )
+            if receiver == API_RECEIVER:
+                findings.append(
+                    Finding(
+                        parsed.relative_path,
+                        target.lineno,
+                        "openapi-monkeypatch",
+                        "선택 API receiver의 get_openapi_schema assignment/monkeypatch",
+                    )
+                )
+
+    def scan_block(
+        statements: list[ast.stmt],
+        incoming: dict[str, str],
+        *,
+        scope_kind: str,
+        deferred: list[
+            tuple[ast.FunctionDef | ast.AsyncFunctionDef, dict[str, str]]
+        ],
+    ) -> dict[str, str]:
+        nonlocal receiver_events
+        bindings = dict(incoming)
+        for statement in statements:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                scan_definition_expressions(statement, bindings)
+                deferred.append((statement, dict(bindings)))
+                for name in _evaluated_named_expression_names(
+                    statement, annotations_evaluated=annotations_evaluated
+                ):
+                    bindings.pop(name, None)
+                bindings.pop(statement.name, None)
+                continue
+
+            if isinstance(statement, ast.ClassDef):
+                scan_definition_expressions(statement, bindings)
+                bases = {_resolve_expression(base, bindings) for base in statement.bases}
+                if any(_is_ambiguous_resolution(base) for base in bases):
+                    raise UsageError(
+                        "Ninja API subclass provenance 분석 불능: "
+                        f"{parsed.relative_path}:{statement.lineno} {statement.name}"
+                    )
+                api_subclass = any(
+                    base in ROOT_API_CONSTRUCTORS
+                    or (base is not None and base.startswith(API_TYPE_PREFIX))
+                    for base in bases
+                )
+                if api_subclass:
+                    for member in statement.body:
+                        if (
+                            isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            and member.name == "get_openapi_schema"
+                        ):
+                            findings.append(
+                                Finding(
+                                    parsed.relative_path,
+                                    member.lineno,
+                                    "openapi-override",
+                                    f"Ninja API subclass {statement.name}의 "
+                                    "get_openapi_schema override",
+                                )
+                            )
+                    derived_class = f"{API_TYPE_PREFIX}{statement.name}"
+                else:
+                    derived_class = None
+                scan_block(
+                    statement.body,
+                    dict(bindings),
+                    scope_kind="class",
+                    deferred=deferred,
+                )
+                for name in _evaluated_named_expression_names(
+                    statement, annotations_evaluated=annotations_evaluated
+                ):
+                    bindings.pop(name, None)
+                bindings.pop(statement.name, None)
+                if derived_class is not None:
+                    bindings[statement.name] = derived_class
+                continue
+
+            if isinstance(statement, (ast.If, ast.While)):
+                scan_expression(statement.test, bindings)
+                branch_incoming = dict(bindings)
+                _invalidate_expression_bindings(
+                    statement.test,
+                    branch_incoming,
+                    annotations_evaluated=annotations_evaluated,
+                )
+                outcomes = [
+                    scan_block(
+                        statement.body,
+                        branch_incoming,
+                        scope_kind=scope_kind,
+                        deferred=deferred,
+                    ),
+                    scan_block(
+                        statement.orelse,
+                        branch_incoming,
+                        scope_kind=scope_kind,
+                        deferred=deferred,
+                    ),
+                ]
+                if isinstance(statement, ast.While):
+                    outcomes.append(branch_incoming)
+                bindings = _merge_bindings(outcomes)
+                continue
+
+            if isinstance(statement, (ast.For, ast.AsyncFor)):
+                scan_expression(statement.iter, bindings)
+                branch = dict(bindings)
+                _invalidate_expression_bindings(
+                    statement.iter,
+                    branch,
+                    annotations_evaluated=annotations_evaluated,
+                )
+                for name in _target_names(statement.target):
+                    branch.pop(name, None)
+                body_out = scan_block(
+                    statement.body,
+                    branch,
+                    scope_kind=scope_kind,
+                    deferred=deferred,
+                )
+                bindings = _merge_bindings(
+                    [
+                        scan_block(
+                            statement.orelse,
+                            dict(bindings),
+                            scope_kind=scope_kind,
+                            deferred=deferred,
+                        ),
+                        scan_block(
+                            statement.orelse,
+                            body_out,
+                            scope_kind=scope_kind,
+                            deferred=deferred,
+                        ),
+                    ]
+                )
+                continue
+
+            if isinstance(statement, (ast.With, ast.AsyncWith)):
+                branch = dict(bindings)
+                for item in statement.items:
+                    scan_expression(item.context_expr, branch)
+                    _invalidate_expression_bindings(
+                        item.context_expr,
+                        branch,
+                        annotations_evaluated=annotations_evaluated,
+                    )
+                    if item.optional_vars is not None:
+                        for name in _target_names(item.optional_vars):
+                            branch.pop(name, None)
+                bindings = scan_block(
+                    statement.body,
+                    branch,
+                    scope_kind=scope_kind,
+                    deferred=deferred,
+                )
+                continue
+
+            if isinstance(statement, ast.Try):
+                normal = scan_block(
+                    statement.body,
+                    dict(bindings),
+                    scope_kind=scope_kind,
+                    deferred=deferred,
+                )
+                outcomes = [
+                    scan_block(
+                        statement.orelse,
+                        normal,
+                        scope_kind=scope_kind,
+                        deferred=deferred,
+                    )
+                ]
+                for handler in statement.handlers:
+                    branch = dict(bindings)
+                    if handler.type is not None:
+                        scan_expression(handler.type, branch)
+                    if handler.name:
+                        branch.pop(handler.name, None)
+                    outcomes.append(
+                        scan_block(
+                            handler.body,
+                            branch,
+                            scope_kind=scope_kind,
+                            deferred=deferred,
+                        )
+                    )
+                bindings = scan_block(
+                    statement.finalbody,
+                    _merge_bindings(outcomes),
+                    scope_kind=scope_kind,
+                    deferred=deferred,
+                )
+                continue
+
+            scan_expression(statement, bindings)
+            scan_monkeypatch(statement, bindings)
+            targets, value = _assigned_value(statement)
+            names = {name for target in targets for name in _target_names(target)}
+            derived: str | None = None
+            if value is not None:
+                if isinstance(value, ast.Call) and scope_kind == "module":
+                    constructor = _resolve_expression(value.func, bindings)
+                    if _is_ambiguous_resolution(constructor):
+                        raise UsageError(
+                            "selected API constructor provenance 분석 불능: "
+                            f"{parsed.relative_path}:{value.lineno}"
+                        )
+                    if constructor in ROOT_API_CONSTRUCTORS or (
+                        constructor is not None
+                        and constructor.startswith(API_TYPE_PREFIX)
+                    ):
+                        derived = API_RECEIVER
+                        receiver_events += 1
+                if derived is None:
+                    resolved_value = _resolve_expression(value, bindings)
+                    if resolved_value in {API_RECEIVER, AMBIGUOUS_BINDING}:
+                        derived = resolved_value
+            if _update_imports(statement, parsed.relative_path, bindings):
+                continue
+            for name in _evaluated_named_expression_names(
+                statement, annotations_evaluated=annotations_evaluated
+            ):
+                bindings.pop(name, None)
+            for name in names:
+                bindings.pop(name, None)
+            if len(names) == 1 and derived is not None:
+                bindings[next(iter(names))] = derived
+            if not targets:
+                for name in _direct_bound_names(statement):
+                    bindings.pop(name, None)
+        return bindings
 
     def scan_function(
         function: ast.FunctionDef | ast.AsyncFunctionDef,
@@ -1462,147 +2131,38 @@ def _api_module_findings(parsed: ParsedSource) -> list[Finding]:
             arguments.add(function.args.vararg.arg)
         if function.args.kwarg is not None:
             arguments.add(function.args.kwarg.arg)
-        for name in arguments:
+        for name in arguments | _function_local_names(function):
             local.pop(name, None)
-
-        def visit_block(statements: list[ast.stmt], incoming: dict[str, str]) -> None:
-            current = dict(incoming)
-            for statement in statements:
-                if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    current.pop(statement.name, None)
-                    continue
-                if _api_expression_has_schema_call(statement, current):
-                    findings.append(
-                        Finding(
-                            parsed.relative_path,
-                            statement.lineno,
-                            "openapi-postprocess",
-                            "선택 API receiver의 get_openapi_schema 직접 호출/후처리",
-                        )
-                    )
-                if isinstance(statement, (ast.If, ast.While)):
-                    visit_block(statement.body, current)
-                    visit_block(statement.orelse, current)
-                elif isinstance(statement, ast.Try):
-                    visit_block(statement.body, current)
-                    visit_block(statement.orelse, current)
-                    visit_block(statement.finalbody, current)
-                    for handler in statement.handlers:
-                        visit_block(handler.body, current)
-                _advance_bindings(
-                    statement,
-                    parsed.relative_path,
-                    current,
-                    annotations_evaluated=annotations_evaluated,
-                )
-
-        visit_block(function.body, local)
-
-    for statement in parsed.tree.body:
-        current = dict(bindings)
-        if isinstance(statement, ast.ClassDef):
-            bases = {_resolve_expression(base, current) for base in statement.bases}
-            api_subclass = any(
-                base in ROOT_API_CONSTRUCTORS
-                or (base is not None and base.startswith(API_TYPE_PREFIX))
-                for base in bases
+        nested: list[
+            tuple[ast.FunctionDef | ast.AsyncFunctionDef, dict[str, str]]
+        ] = []
+        final_local = scan_block(
+            function.body,
+            local,
+            scope_kind="function",
+            deferred=nested,
+        )
+        for nested_function, definition_bindings in nested:
+            scan_function(
+                nested_function,
+                _merge_bindings([definition_bindings, final_local]),
             )
-            if api_subclass:
-                for member in statement.body:
-                    if not isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        continue
-                    deferred_functions.append(member)
-                    if member.name == "get_openapi_schema":
-                        findings.append(
-                            Finding(
-                                parsed.relative_path,
-                                member.lineno,
-                                "openapi-override",
-                                f"Ninja API subclass {statement.name}의 "
-                                "get_openapi_schema override",
-                            )
-                        )
-                derived_class = f"{API_TYPE_PREFIX}{statement.name}"
-            else:
-                derived_class = None
-            for name in _evaluated_named_expression_names(
-                statement, annotations_evaluated=annotations_evaluated
-            ):
-                bindings.pop(name, None)
-            bindings.pop(statement.name, None)
-            if derived_class is not None:
-                bindings[statement.name] = derived_class
-            continue
 
-        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            deferred_functions.append(statement)
-            for name in _evaluated_named_expression_names(
-                statement, annotations_evaluated=annotations_evaluated
-            ):
-                bindings.pop(name, None)
-            bindings.pop(statement.name, None)
-            continue
-
-        if _api_expression_has_schema_call(statement, current):
-            findings.append(
-                Finding(
-                    parsed.relative_path,
-                    statement.lineno,
-                    "openapi-postprocess",
-                    "선택 API receiver의 get_openapi_schema 직접 호출/후처리",
-                )
-            )
-        for node in ast.walk(statement):
-            if not isinstance(node, (ast.Assign, ast.AnnAssign)):
-                continue
-            targets, _ = _assigned_value(node)
-            for target in targets:
-                if not isinstance(target, ast.Attribute) or target.attr != "get_openapi_schema":
-                    continue
-                if _resolve_expression(target.value, current) == API_RECEIVER:
-                    findings.append(
-                        Finding(
-                            parsed.relative_path,
-                            target.lineno,
-                            "openapi-monkeypatch",
-                            "선택 API receiver의 get_openapi_schema assignment/monkeypatch",
-                        )
-                    )
-
-        targets, value = _assigned_value(statement)
-        names = {name for target in targets for name in _target_names(target)}
-        derived: str | None = None
-        if value is not None:
-            if isinstance(value, ast.Call):
-                constructor = _resolve_expression(value.func, current)
-                if constructor in ROOT_API_CONSTRUCTORS or (
-                    constructor is not None and constructor.startswith(API_TYPE_PREFIX)
-                ):
-                    derived = API_RECEIVER
-                    receiver_events += 1
-            if derived is None and _resolve_expression(value, current) == API_RECEIVER:
-                derived = API_RECEIVER
-        if _update_imports(statement, parsed.relative_path, bindings):
-            continue
-        for name in _evaluated_named_expression_names(
-            statement, annotations_evaluated=annotations_evaluated
-        ):
-            bindings.pop(name, None)
-        for name in names:
-            bindings.pop(name, None)
-        if len(names) == 1 and derived is not None:
-            bindings[next(iter(names))] = derived
-        if not targets:
-            for name in _direct_bound_names(statement):
-                bindings.pop(name, None)
-
-    final_receivers = {name for name, value in bindings.items() if value == API_RECEIVER}
+    bindings = scan_block(
+        parsed.tree.body,
+        {},
+        scope_kind="module",
+        deferred=deferred_functions,
+    )
+    final_receivers = {
+        name for name, value in bindings.items() if value == API_RECEIVER
+    }
     if receiver_events != 1 or not final_receivers:
         raise UsageError(
             "selected API receiver provenance 분석 불능: proven constructor event와 "
             "final receiver 필요"
         )
-    for function in deferred_functions:
+    for function, _ in deferred_functions:
         scan_function(function, bindings)
     return findings
 

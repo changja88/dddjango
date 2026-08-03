@@ -7,23 +7,23 @@
 `IntegrityError`)를 **`from` 없이 새로 생성(Call)해 raise**한 정확한 형태(ACL-EX2 — 라이브에서
 난 형태: ACL CAS 소진 시 `raise OperationalError(f"재고 차감 CAS 경합이 ...")`)만 차단한다.
 
-왜 차단하나: presentation 경계의 transient recognizer(`_is_retryable_db_error`)는 *실 드라이버*
-예외의 메시지/시그니처·`__cause__` SQLSTATE 로 retryable 을 가린다. 코드가 *합성*한 인프라
-예외는 실 메시지·`__cause__` 가 없어 recognizer 사각 → 영구장애로 오분류돼 503 의도가 500 으로
-샌다(과소매핑). 계산된 transient 는 협력 포트가 선언한 **도메인 transient-마커 예외 타입**으로
-raise 해 핸들러가 *타입* 으로 매핑해야 한다(implementation-django-ninja §6.2).
+프로필별 결과는 둘뿐이다. `dddjango-code-json`에서 raw 인프라 실패는 기본적으로 framework
+500에 맡긴다. 안정된 공개 의미가 G1에서 승인된 실패만 owning infra/ACL이 같은 BC의 concrete
+domain/application 예외로 정규화하고, 그 BC controller가 직접 매핑한다. `preserve-established`는
+이미 승인된 brownfield 동작이 의존할 때만 기존 `raise ... from driver_exc` cause chain을 보존한다.
+어느 프로필에서도 synthetic 인프라 예외, global recognizer, 새 cause-chain mechanism을 도입하지
+않는다(implementation-django-ninja §6.2).
 
-`from` 절은 면제한다 — 실 드라이버 예외를 잡아 재시도하다 *그 원본을 보존*해 되던지는
-`raise OperationalError(...) from driver_exc` 는 `__cause__` 가 살아 recognizer 가 SQLSTATE 로
-인식하므로 정당한 대안이다(node.cause 가 None 이 아니면 통과).
+`from` 절은 predicate상 면제하지만(node.cause 가 None 이 아니면 통과), 이는 위의 승인된
+`preserve-established` cause-chain 보존을 위한 구조적 호환이며 새 mechanism의 허가가 아니다.
 
 저-recall(일부러 안 잡음 — discipline-reviewer 의미 렌즈가 담당):
   - 헬퍼·변수 우회 합성(`exc = OperationalError(...); raise exc`, `raise _make_transient()`),
   - `infra_layer` 밖(application·domain) 합성,
   - `raise OperationalError(...) from None`(명시 cause 억제).
-거짓 양성을 내면 정당한 도메인 타입 번역(`raise StockContention(...) from exc`)·`from` 보존
-재던지기·테스트 더블을 막으므로, **infra_layer 경로 + raw 인프라 예외 *생성*(Call) + `from`
-부재 + 비테스트 + git-touched 의 AND** 로만 차단한다.
+거짓 양성을 내면 정당한 같은-BC concrete 예외 정규화(`raise StockContention(...) from exc`)·
+이미 승인된 preserve cause-chain 보존·테스트 더블을 막으므로, **infra_layer 경로 + raw 인프라
+예외 *생성*(Call) + `from` 부재 + 비테스트 + git-touched 의 AND** 로만 차단한다.
 
 AND 조건(전부 참이어야 blocker):
   1) 파일 경로에 `infra_layer` 디렉터리 포함(ACL·리포지토리 등 인프라 경계). 도메인 타입
@@ -141,13 +141,12 @@ def main(argv: list[str]) -> int:
         for f in findings:
             print(f)
         print(
-            "  근거: implementation-django-ninja §6.2. presentation transient recognizer 는 "
-            "*실 드라이버* 예외의 메시지/SQLSTATE(`__cause__`)로 retryable 을 가리므로, 코드가 "
-            "합성한 인프라 예외는 사각 → 영구장애로 오분류돼 503 의도가 500 으로 샌다(과소매핑). "
-            "계산된 transient 는 협력 포트가 선언한 도메인 transient-마커 예외 *타입*으로 raise 해 "
-            "핸들러가 타입 매핑하라(Codex 대안 B). 실 드라이버 예외를 잡아 재시도하다 소진했다면 "
-            "원본을 `raise ... from driver_exc` 로 보존하면 recognizer 가 `__cause__` 로 인식한다. "
-            "설계로 반송하라."
+            "  근거: `dddjango-code-json`에서 raw 인프라 실패는 기본적으로 framework 500으로 남긴다. "
+            "안정된 공개 의미가 G1에서 승인된 실패만 owning infra/ACL이 같은 BC의 concrete "
+            "domain/application 예외로 정규화하고 그 BC controller가 직접 매핑한다. "
+            "`preserve-established`에서는 이미 승인된 brownfield 동작이 의존할 때만 기존 "
+            "`raise ... from driver_exc` cause chain을 보존한다. synthetic 인프라 예외, global "
+            "recognizer, 새 cause-chain mechanism을 도입하지 말고 설계로 반송하라."
         )
         return 2
 
