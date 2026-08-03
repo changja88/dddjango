@@ -223,9 +223,9 @@ except OutOfStockException:
     return Status(error.status, error)
 ```
 
-인증·인가·요청 validation·route 404·throttle·미식별 500은 BC ErrorOut으로 바꾸지 않고
-Django Ninja/Django 기본 처리를 그대로 쓴다. project `api.py`는 API 인스턴스와 API 자체
-설정만, BC `presentation_layer/registrar.py`는 전달받은 API에 자기 controller 등록만,
+인증·인가·요청 validation·route 404·throttle·일반 `HttpError`·미식별 500은 BC
+ErrorOut으로 바꾸지 않고 Django Ninja/Django 기본 처리를 그대로 쓴다. project `api.py`는
+API 인스턴스와 API 자체 설정만, BC `presentation_layer/registrar.py`는 전달받은 API에 자기 controller 등록만,
 project `urls.py`는 모든 registrar 호출과 API mount만 소유한다. 독립
 public/internal·version·core profile scope를 새로 나눈다면 G1에서 별도 계약으로 승인한다.
 이미 배포된 brownfield 오류 표면은 승인 없이 새 profile로 이주하지 않는다.

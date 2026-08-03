@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans`. 각 단계는 체크박스(`- [ ]`) 단위로 실행하고, 정본을 먼저 고친 뒤 미러를 갱신한다.
 
-**Status:** 스펙·코퍼스·과적합 3축 적대 리뷰 반영 완료 · 구현 착수 전
+**Status:** 구현·3축 적대 리뷰·최종 검증 완료 · v4 사용자 동결 승인 대기
 
 **Approved design:** `workspace/design/2026-08-03-api-error-management-design.md` (설계 본문 commit `73c575e`; 사용자 승인·구 설계 superseded metadata는 이 계획과 같은 문서 기준선 commit에 기록)
 
@@ -586,7 +586,7 @@ Expected: 모든 case PASS. 각 위반 case는 정확히 exit 2, 분석 불능 c
 
 ### Task F1: 금지/허용 anchor 감사
 
-- [ ] Step 1: 활성 배포 표면에서 새 프로필을 정반대로 말하는 문구를 검색한다.
+- [x] Step 1: 활성 배포 표면에서 새 프로필을 정반대로 말하는 문구를 검색한다.
 
 ```bash
 git grep -n -E '중앙.*(exception_handler|예외.?핸들러)|catch-all.*필수|problem helper|<problem>_error_out|type=about:blank|instance.*problem\+json|11-slot' -- dddjango codex-dddjango README.md workspace/eval/README.md workspace/eval/rubric workspace/eval/tools workspace/flow
@@ -595,15 +595,15 @@ grep -R -nE 'catch-all.*필수|problem_response|validation_error_out|common\.nin
 
 Expected: RFC brownfield 절과 서버렌더 별도 규칙 외 신규 기본 강제 잔존 0. `workspace/eval/results/**`, 과거 design/plan, DEVLOG의 과거 항목은 역사 자료라 이 자동 잔존 게이트의 검색 범위에서 제외하고, 새 문서가 이를 현재 규범으로 다시 참조하지 않는지만 별도로 확인한다.
 
-- [ ] Step 2: 새 필수 anchor가 Claude/Codex 양쪽에 있는지 확인한다.
+- [x] Step 2: 새 필수 anchor가 Claude/Codex 양쪽에 있는지 확인한다.
 
 ```bash
 git grep -n -E 'dddjango-code-json|common ErrorOut shape/approval|BC 오류 직접 계약|check-api-error-controller-contract' -- dddjango codex-dddjango README.md workspace/eval/rubric workspace/eval/tools
 ```
 
-- [ ] Step 3: `check-catch-all-handler.py` 파일/게이트 참조는 역사 문서·과거 results 외 0인지 확인한다.
-- [ ] Step 4: 일반 RFC 9457 설명이 `architecture-api` brownfield/alternative 프로필에 남아 있고 신규 default와 혼합되지 않았는지 사람이 문맥으로 다시 읽는다.
-- [ ] Step 5: 삭제/금지된 구현과 구 등록 방식이 활성 표면에 남지 않았는지 별도 검색한다.
+- [x] Step 3: `check-catch-all-handler.py` 파일/게이트 참조는 역사 문서·과거 results 외 0인지 확인한다.
+- [x] Step 4: 일반 RFC 9457 설명이 `architecture-api` brownfield/alternative 프로필에 남아 있고 신규 default와 혼합되지 않았는지 사람이 문맥으로 다시 읽는다.
+- [x] Step 5: 삭제/금지된 구현과 구 등록 방식이 활성 표면에 남지 않았는지 별도 검색한다.
 
 ```bash
 git grep -n -E 'common\.ninja\.errors|problem_response|validation_error_out|from .*\.api import api|^[[:space:]]*api\.register_controllers' -- dddjango codex-dddjango README.md
@@ -615,31 +615,31 @@ Expected: `common.ninja.errors` import, 신규 code-profile 생성 레시피의 
 
 ### Task F2: 정적·미러·플러그인 검증
 
-- [ ] Step 1: Python 소스를 pyc 생성 없이 compile한다.
+- [x] Step 1: Python 소스를 pyc 생성 없이 compile한다.
 
 ```bash
 python3 -c 'from pathlib import Path; files=list(Path("dddjango/scripts").glob("*.py"))+list(Path("codex-dddjango/skills/dddjango/scripts").glob("*.py"))+[Path("workspace/tools/api_error_backstop_matrix.py")]; [compile(p.read_text(), str(p), "exec") for p in files]'
 ```
 
-- [ ] Step 2: reference mirror를 다시 확인한다.
+- [x] Step 2: reference mirror를 다시 확인한다.
 
 ```bash
 python3 workspace/tools/corpus_mirror_sync.py --check
 ```
 
-- [ ] Step 3: checker count/byte mirror, Coordinator prompt의 명령 계약과 그 계약에서 합성한 checker 명령, 전체 matrix를 다시 검증한다. 실행 가능한 별도 Coordinator renderer가 있는 것처럼 보고하지 않는다.
-- [ ] Step 4: Part A2 runtime fixture를 `python -B`로 다시 실행하고 resolved version, `Status` 회귀, auth/framework/OpenAPI 결과를 기록한다.
-- [ ] Step 5: Claude/Codex Coordinator prompt에서 추출한 checker registry 집합·순서가 실제 19개 파일과 같고, 네 API-error contract checker 호출에 승인 profile/scope/API/controller/scope-BC/error-BC, schema checker에 두 project error-module inventory, composition checker에 URLconf/registrar selector가 있는지 검증한다. API-error-aware 6개는 `--help=0`, positional legacy 13개는 valid target/default와 invalid/missing target=1이라는 각자 CLI 계약을 지킨다. 합성 실행에서 exit 1/2를 각각 관측하고, prompt가 둘 다 G2 blocker로 선언하며 모든 결과 수집을 요구하는지는 문서 의미로 대조한다. 이 둘을 실행 가능한 Coordinator 전파 테스트 하나로 합쳐 주장하지 않는다.
-- [ ] Step 6: 의미 미러 10쌍을 단일 표로 대조한다: 지식 SKILL 4쌍(architecture-api, Ninja, houserules, test), 역할 5쌍(architect, API reviewer, acceptance, coder, discipline reviewer), Coordinator 1쌍. 각 쌍의 12-slot/profile/direct Status/framework default/new checker 필수 anchor와 central handler/catch-all 구 anchor 부재를 검사하고 플랫폼 전용 frontmatter 차이만 허용한다. web/cleancode SKILL 두 쌍은 삭제 심볼·구 규칙을 직접 담지 않아 변경 비대상인지 negative check한다.
-- [ ] Step 7: RUBRIC·EVAL template·metrix에서 기대 ID 집합 `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7 = 34`를 파싱해 중복·누락 없이 대조한다. `workspace/eval/results`는 tracked 14개인지, untracked 추가와 `git diff HEAD -- workspace/eval/results`가 0인지 구현 시작 시 기록한 baseline과 byte 대조한다.
-- [ ] Step 8: Claude plugin 구조를 검증한다.
+- [x] Step 3: checker count/byte mirror, Coordinator prompt의 명령 계약과 그 계약에서 합성한 checker 명령, 전체 matrix를 다시 검증한다. 실행 가능한 별도 Coordinator renderer가 있는 것처럼 보고하지 않는다.
+- [x] Step 4: Part A2 runtime fixture를 `python -B`로 다시 실행하고 resolved version, `Status` 회귀, auth/framework/OpenAPI 결과를 기록한다.
+- [x] Step 5: Claude/Codex Coordinator prompt에서 추출한 checker registry 집합·순서가 실제 19개 파일과 같고, 네 API-error contract checker 호출에 승인 profile/scope/API/controller/scope-BC/error-BC, schema checker에 두 project error-module inventory, composition checker에 URLconf/registrar selector가 있는지 검증한다. API-error-aware 6개는 `--help=0`, positional legacy 13개는 valid target/default와 invalid/missing target=1이라는 각자 CLI 계약을 지킨다. 합성 실행에서 exit 1/2를 각각 관측하고, prompt가 둘 다 G2 blocker로 선언하며 모든 결과 수집을 요구하는지는 문서 의미로 대조한다. 이 둘을 실행 가능한 Coordinator 전파 테스트 하나로 합쳐 주장하지 않는다.
+- [x] Step 6: 의미 미러 10쌍을 단일 표로 대조한다: 지식 SKILL 4쌍(architecture-api, Ninja, houserules, test), 역할 5쌍(architect, API reviewer, acceptance, coder, discipline reviewer), Coordinator 1쌍. 각 쌍의 12-slot/profile/direct Status/framework default/new checker 필수 anchor와 central handler/catch-all 구 anchor 부재를 검사하고 플랫폼 전용 frontmatter 차이만 허용한다. web/cleancode SKILL 두 쌍은 삭제 심볼·구 규칙을 직접 담지 않아 변경 비대상인지 negative check한다.
+- [x] Step 7: RUBRIC·EVAL template·metrix에서 기대 ID 집합 `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7 = 34`를 파싱해 중복·누락 없이 대조한다. `workspace/eval/results`는 tracked 14개인지, untracked 추가와 `git diff HEAD -- workspace/eval/results`가 0인지 구현 시작 시 기록한 baseline과 byte 대조한다.
+- [x] Step 8: Claude plugin 구조를 검증한다.
 
 ```bash
 claude plugin validate dddjango --strict
 ```
 
-- [ ] Step 9: Codex manifest JSON과 양 manifest version 동일성을 읽기 전용으로 확인한다. 버전은 바꾸지 않는다.
-- [ ] Step 10: whitespace/diff를 확인한다.
+- [x] Step 9: Codex manifest JSON과 양 manifest version 동일성을 읽기 전용으로 확인한다. 버전은 바꾸지 않는다.
+- [x] Step 10: whitespace/diff를 확인한다.
 
 ```bash
 git diff --check
@@ -649,20 +649,22 @@ git diff --stat
 
 ### Task F3: fresh-context 적대 리뷰 3축과 중재
 
-- [ ] Step 1: **스펙 추적 reviewer**에게 승인 설계 §1~17과 이 계획의 1:1 누락/왜곡, 특히 12 불변식·필드 변경 승인·framework 기본·helper 금지·try/no-arg를 공격하게 한다.
-- [ ] Step 2: **코퍼스/미러 reviewer**에게 Claude/Codex/reference/workspace/eval/checker registry의 모순, stale anchor, byte/semantic mirror 누락, 역사 문서 오염을 공격하게 한다.
-- [ ] Step 3: **과적합/실효 reviewer**에게 checker activation, AST false positive/negative, brownfield/다중 API scope, ACL 카브아웃, 동적 OpenAPI, file/stream/redirect, 평가 소급을 공격하게 한다.
-- [ ] Step 4: 첫 holdout 전에 checker byte hash를 동결한다. 과적합 reviewer는 A1 matrix를 보지 않은 fresh context에서 설계와 구현된 checker만 보고 최소 8개의 holdout fixture(분리/공유 brownfield, alias/re-export, Pydantic 메타필드, helper 2-hop, dynamic response, auth ErrorOut, artifact 전무)를 임시 경로에 작성한다. 최초 실행의 오탐/미발화를 수정 전 증거로 기록하고 유효 case는 이후 A1 회귀 matrix에 편입한다.
-- [ ] Step 5: 첫 holdout으로 checker를 고친 뒤 다른 fresh reviewer가 2~4개의 작은 2차 unseen case를 만든다. 최종 판정 전 구현자와 A1 matrix에 공개하지 않고 실행하며, 이 결과를 회귀 matrix 재실행과 별도 효능 증거로 기록한다. 통과 뒤 재발 방지를 위해 편입할 수 있으나 그것을 “unseen 통과” 증거로 재사용하지 않는다.
-- [ ] Step 6: 지적을 `adopt | reject | defer`로 중재하고 근거를 이 문서의 `Implementation Adversarial Review Record`에 남긴다. 중요한 수정 후 최소 한 reviewer에게 재검토를 요청한다.
+- [x] Step 1: **스펙 추적 reviewer**에게 승인 설계 §1~17과 이 계획의 1:1 누락/왜곡, 특히 12 불변식·필드 변경 승인·framework 기본·helper 금지·try/no-arg를 공격하게 한다.
+- [x] Step 2: **코퍼스/미러 reviewer**에게 Claude/Codex/reference/workspace/eval/checker registry의 모순, stale anchor, byte/semantic mirror 누락, 역사 문서 오염을 공격하게 한다.
+- [x] Step 3: **과적합/실효 reviewer**에게 checker activation, AST false positive/negative, brownfield/다중 API scope, ACL 카브아웃, 동적 OpenAPI, file/stream/redirect, 평가 소급을 공격하게 한다.
+- [x] Step 4: 첫 holdout 전에 checker byte hash를 동결한다. 과적합 reviewer는 A1 matrix를 보지 않은 fresh context에서 설계와 구현된 checker만 보고 최소 8개의 holdout fixture(분리/공유 brownfield, alias/re-export, Pydantic 메타필드, helper 2-hop, dynamic response, auth ErrorOut, artifact 전무)를 임시 경로에 작성한다. 최초 실행의 오탐/미발화를 수정 전 증거로 기록하고 유효 case는 이후 A1 회귀 matrix에 편입한다.
+- [x] Step 5: 첫 holdout으로 checker를 고친 뒤 다른 fresh reviewer가 2~4개의 작은 2차 unseen case를 만든다. 최종 판정 전 구현자와 A1 matrix에 공개하지 않고 실행하며, 이 결과를 회귀 matrix 재실행과 별도 효능 증거로 기록한다. 통과 뒤 재발 방지를 위해 편입할 수 있으나 그것을 “unseen 통과” 증거로 재사용하지 않는다.
+- [x] Step 6: 지적을 `adopt | reject | defer`로 중재하고 근거를 이 문서의 `Implementation Adversarial Review Record`에 남긴다. 중요한 수정 후 최소 한 reviewer에게 재검토를 요청한다.
 - [ ] Step 7: v4 평가 diff·34-ID 대조·epoch key를 사용자에게 제시하고 명시적 freeze 승인을 받는다. 승인 전에는 새 fixture를 채점하거나 active/frozen으로 표시하지 않는다.
-- [ ] Step 8: 리뷰 반영 뒤 F1/F2를 처음부터 다시 실행한다. 리뷰 전 결과를 최종 증거로 재사용하지 않는다.
+- [x] Step 8: 리뷰 반영 뒤 F1/F2를 처음부터 다시 실행한다. 리뷰 전 결과를 최종 증거로 재사용하지 않는다.
 
 ### Task F4: 커밋 경계
 
-- [ ] Step 1: 구현 diff가 플러그인/corpus/eval/검증 도구/DEVLOG와 이 계획의 구현 리뷰 기록 범위뿐인지 확인한다.
-- [ ] Step 2: 사용자 소유 변경이 섞이지 않았는지 `git status --short`와 `git diff`로 확인한다.
-- [ ] Step 3: 아래처럼 예상 파일을 정확히 지정해 한 구현 커밋으로 기록한다. 이 계획은 F3의 구현 리뷰 기록 때문에 포함한다. 두 설계 metadata는 선행 문서 기준선 commit에 있으므로 구현 diff에는 포함하지 않는다. 디렉터리 전체를 stage하지 않으며, 목록 밖 생성·수정 파일이 있거나 시작 전 변경과 겹치면 중단해 사용자 변경을 분리한다.
+- [x] Step 1: 구현 diff가 플러그인/corpus/eval/검증 도구/DEVLOG와 이 계획의 구현 리뷰 기록 범위뿐인지 확인한다.
+- [x] Step 2: 사용자 소유 변경이 섞이지 않았는지 `git status --short`와 `git diff`로 확인한다.
+- [x] Step 3: 아래 예상 파일을 정확히 지정해 구현 이력을 기록한다. 이 계획은 F3의 구현 리뷰 기록 때문에 포함한다. 두 설계 metadata는 선행 문서 기준선 commit에 있으므로 구현 diff에는 포함하지 않는다. 디렉터리 전체를 stage하지 않으며, 목록 밖 생성·수정 파일이 있거나 시작 전 변경과 겹치면 중단해 사용자 변경을 분리한다.
+
+  실제 구현은 fresh-review RED와 root-cause fix를 보존하기 위해 검토 가능한 순서의 작은 commit들로 기록했고, 마지막 closure commit은 README·DEVLOG·이 계획 세 파일만 정확히 stage한다. 아래 목록은 단일 commit 명령의 재실행 지시가 아니라 전체 구현 scope의 allowlist 기록이다.
 
 ```bash
 git add -- \
@@ -788,6 +790,8 @@ git commit -m "feat: adopt BC-owned API error contracts"
 
 | 관점 | 지적 | 판정 | 구현 반영 |
 |---|---|---|---|
-| 스펙 추적 | pending | pending | pending |
-| 코퍼스·미러 | pending | pending | pending |
-| 과적합·실효 | pending | pending | pending |
+| 스펙 추적 | 계획 상태가 아직 “구현 착수 전”이었고 README framework-default 요약에 일반 `HttpError`가 빠짐 | adopt | 상태를 실제 단계로 고치고 README에 일반 `HttpError`를 추가했다. 별도 reviewer가 승인 불변식 12/12를 추적했고 Critical/Important 0으로 판정했다. |
+| 코퍼스·미러 | 제품 finding 없음. 해당 reviewer는 과거 matrix 작업 이력 때문에 unseen 판정에는 사용할 수 없음 | adopt | unseen 증거에서 분리했다. 의미 미러 10/10, reference 11/11, checker·registry 19/19, 평가 ID 34/34, 과거 result 14개 byte 보존을 독립 확인했다. |
+| 과적합·실효 | D1 fresh 25-case에서 6 root, D2 17-probe에서 6 root, D3 15-probe에서 2 root, D4·D5의 별도 fresh review에서 control-flow·provenance·scope 오탐/미발화를 발견 | adopt | 각 review 전 immutable commit/archive와 checker hash를 기록하고 최초 expected/actual을 보존했다. root-cause 수정과 causal/control matrix 편입 뒤 D1 6/6, D2 최종 4/4, D3 최종 3/3, D4 최종 11/11, D5 최종 인접 probe 4/4를 양 Python에서 재검토해 unresolved Critical/Important/Minor 0으로 닫았다. |
+| 2단 holdout | 첫 fresh suite에서 defect를 찾은 뒤 reviewer-separated fix/re-review가 2~4개 인접 unseen control을 추가해 수정의 과적합과 새 오탐을 다시 공격해야 함 | adopt | D2 4-case, D3 3-case, D5 4-case 2차 probe를 최초 실행 증거와 matrix 재실행에서 분리했다. 유효 case는 이후 회귀로 편입했으나 최초 unseen 증거로 재사용하지 않았다. |
+| 감사 무결성 | 최종 통합 holdout을 추가 실행하려던 일회성 Codex가 timebox 안에 fixture를 실행하지 못함 | reject | 프로세스를 종료했고 어떤 PASS 증거로도 세지 않았다. 이미 완료된 checker별 fresh/2차 holdout과 최종 355-case matrix만 판정 근거로 사용한다. |
