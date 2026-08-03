@@ -1127,6 +1127,84 @@ def _canonical_lexical_owner(
     return not special_expression and owners == [canonical]
 
 
+def _registrar_parameter_states(
+    function: ast.FunctionDef,
+    parameter_name: str,
+    *,
+    annotations_evaluated: bool,
+) -> dict[int, str]:
+    """Incoming API parameter identity immediately before each direct call."""
+    call_states: dict[int, str] = {}
+
+    def record_calls(node: ast.AST, state: str) -> None:
+        for child in ast.walk(node):
+            if (
+                isinstance(child, ast.Call)
+                and isinstance(child.func, ast.Attribute)
+                and child.func.attr == "register_controllers"
+            ):
+                call_states[id(child)] = state
+
+    def merge(*states: str) -> str:
+        return states[0] if states and len(set(states)) == 1 else "ambiguous"
+
+    def flow(statements: list[ast.stmt], incoming: str) -> str:
+        state = incoming
+        for statement in statements:
+            if isinstance(statement, ast.If):
+                record_calls(statement.test, state)
+                body_state = flow(statement.body, state)
+                else_state = flow(statement.orelse, state)
+                state = merge(body_state, else_state)
+                continue
+            if isinstance(statement, ast.While):
+                record_calls(statement.test, state)
+                body_state = flow(statement.body, state)
+                else_state = flow(statement.orelse, state)
+                state = merge(state, body_state, else_state)
+                continue
+            if isinstance(statement, (ast.For, ast.AsyncFor)):
+                record_calls(statement.iter, state)
+                body_start = (
+                    "rebound"
+                    if parameter_name in _target_names(statement.target)
+                    else state
+                )
+                body_state = flow(statement.body, body_start)
+                else_state = flow(statement.orelse, merge(state, body_state))
+                state = merge(state, body_state, else_state)
+                continue
+            if isinstance(statement, (ast.With, ast.AsyncWith)):
+                for item in statement.items:
+                    record_calls(item.context_expr, state)
+                    if (
+                        item.optional_vars is not None
+                        and parameter_name in _target_names(item.optional_vars)
+                    ):
+                        state = "rebound"
+                state = flow(statement.body, state)
+                continue
+            if isinstance(statement, ast.Try):
+                normal = flow(statement.orelse, flow(statement.body, state))
+                outcomes = [normal]
+                for handler in statement.handlers:
+                    handler_state = (
+                        "rebound" if handler.name == parameter_name else state
+                    )
+                    outcomes.append(flow(handler.body, handler_state))
+                state = flow(statement.finalbody, merge(*outcomes))
+                continue
+            record_calls(statement, state)
+            if parameter_name in _statement_bound_names(
+                statement, annotations_evaluated=annotations_evaluated
+            ):
+                state = "rebound"
+        return state
+
+    flow(function.body, "incoming")
+    return call_states
+
+
 def _append_finding(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
@@ -1191,6 +1269,7 @@ def _analyze_registrar(
     parsed: ParsedSource,
     spec: RegistrarSpec,
     selected_api_module: str,
+    analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
@@ -1253,16 +1332,38 @@ def _analyze_registrar(
                 findings, seen, parsed, canonical, "registrar signature must be one required positional parameter"
             )
 
+    parameter_states = (
+        _registrar_parameter_states(
+            canonical,
+            parameter_name,
+            annotations_evaluated=_annotations_are_evaluated(parsed.tree),
+        )
+        if canonical is not None and parameter_name is not None
+        else {}
+    )
     for call in _direct_registration_calls(parsed):
         direct_owner = _expression_dotted_name(call.func.value)
+        parameter_state = parameter_states.get(id(call))
         allowed = (
             canonical is not None
             and parameter_name is not None
             and direct_owner == parameter_name
             and _canonical_lexical_owner(call, canonical, parsed.tree, parents)
+            and parameter_state == "incoming"
         )
         if allowed:
             allowed_calls.append(call)
+        elif (
+            canonical is not None
+            and parameter_name is not None
+            and direct_owner == parameter_name
+            and _canonical_lexical_owner(call, canonical, parsed.tree, parents)
+            and parameter_state == "ambiguous"
+        ):
+            analysis.append(
+                "canonical registrar API parameter provenance 분석 불능: "
+                f"{spec.function_name}:{call.lineno}"
+            )
         else:
             _append_finding(
                 findings, seen, parsed, call, "register_controllers outside canonical registrar owner"
@@ -1389,7 +1490,7 @@ def _composition_semantics(
         source = parsed.get(spec.relative_path)
         if source is not None:
             _analyze_registrar(
-                source, spec, selected_api_module, findings, seen
+                source, spec, selected_api_module, analysis, findings, seen
             )
 
     urlconf = parsed.get(Path(config.urlconf_module or ""))

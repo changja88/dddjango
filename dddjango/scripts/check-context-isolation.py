@@ -856,6 +856,42 @@ def _statement_bound_names(node: ast.stmt) -> set[str]:
         }
     if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
         return _local_target_names(node.target)
+    if isinstance(node, (ast.For, ast.AsyncFor)):
+        return _local_target_names(node.target) | {
+            name
+            for statement in (*node.body, *node.orelse)
+            for name in _statement_bound_names(statement)
+        }
+    if isinstance(node, (ast.With, ast.AsyncWith)):
+        return {
+            name
+            for item in node.items
+            if item.optional_vars is not None
+            for name in _local_target_names(item.optional_vars)
+        } | {
+            name for statement in node.body for name in _statement_bound_names(statement)
+        }
+    if isinstance(node, (ast.If, ast.While)):
+        return {
+            name
+            for statement in (*node.body, *node.orelse)
+            for name in _statement_bound_names(statement)
+        }
+    if isinstance(node, ast.Try):
+        statements = [*node.body, *node.orelse, *node.finalbody]
+        names = {
+            name for statement in statements for name in _statement_bound_names(statement)
+        }
+        for handler in node.handlers:
+            if handler.name:
+                names.add(handler.name)
+            for statement in handler.body:
+                names.update(_statement_bound_names(statement))
+        return names
+    if isinstance(node, ast.Delete):
+        return {
+            name for target in node.targets for name in _local_target_names(target)
+        }
     return set()
 
 
