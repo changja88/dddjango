@@ -118,6 +118,33 @@ LEGACY_SIGNAL_CHECKS = (
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+ROOT_API_CONSTRUCTORS = {
+    "ninja.NinjaAPI",
+    "ninja_extra.NinjaExtraAPI",
+}
+ROOT_API_IMPORT_RE = re.compile(r"^application\.[A-Za-z_]\w*(?:\.|$)")
+ERROR_STATUS_NAME_RE = re.compile(r"(?:^|_)(?:4|5)\d\d(?:_|$)")
+EXCEPTION_NAME_RE = re.compile(r"(?:exception|error)", re.IGNORECASE)
+EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)(?:_|$)", re.IGNORECASE)
+MAPPING_FLOW_RE = re.compile(
+    r"(?:map|handle|translate|convert|render|response)",
+    re.IGNORECASE,
+)
+HTTP_FACILITY_NAME_RE = re.compile(r"(?:status|response|http)", re.IGNORECASE)
+NINJA_HTTP_MODULE_PARTS = {
+    "errors",
+    "exceptions",
+    "http",
+    "response",
+    "responses",
+    "status",
+    "statuses",
+}
+COMMON_ERROR_MODULE = "common.ninja.response.error_out"
+ROOT_ERROR_OUT_BASES = {
+    "ninja.Schema",
+    f"{COMMON_ERROR_MODULE}.ErrorOut",
+}
 
 
 class UsageError(Exception):
@@ -152,6 +179,26 @@ class ParsedSource:
     source: str
     tree: ast.AST
     touched: bool
+
+
+@dataclass(frozen=True)
+class ImportReference:
+    lineno: int
+    module: str
+    imported_name: str | None
+    full_path: str
+    absolute: bool
+
+
+@dataclass(frozen=True)
+class BoundaryFinding:
+    relative_path: Path
+    lineno: int
+    category: str
+    shown: str
+
+    def render(self) -> str:
+        return f"  - {self.relative_path}:{self.lineno}  {self.shown}"
 
 
 def _argument_parser() -> _UsageParser:
@@ -655,7 +702,11 @@ def _print_legacy_http(findings: list[str]) -> None:
     )
 
 
-def _code_http_findings(sources: list[ParsedSource]) -> list[str]:
+def _code_http_findings(
+    sources: list[ParsedSource],
+    suppress_ninja_import_paths: set[Path] | None = None,
+) -> list[str]:
+    suppressed_paths = suppress_ninja_import_paths or set()
     findings: list[str] = []
     for parsed in sources:
         if "application_layer" not in parsed.relative_path.parts or not parsed.touched:
@@ -663,6 +714,10 @@ def _code_http_findings(sources: list[ParsedSource]) -> list[str]:
         signals = [
             label
             for regex, label in LEGACY_SIGNAL_CHECKS
+            if not (
+                regex is LEGACY_NINJA_IMPORT_RE
+                and parsed.relative_path in suppressed_paths
+            )
             if regex.search(parsed.source)
         ]
         if signals:
@@ -754,6 +809,560 @@ def _imported_paths(tree: ast.AST) -> Iterator[tuple[int, str]]:
                         yield node.lineno, f"{node.module}.{alias.name}"
 
 
+def _expression_dotted_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        owner = _expression_dotted_name(node.value)
+        if owner is not None:
+            return f"{owner}.{node.attr}"
+    return None
+
+
+def _module_import_bindings(tree: ast.AST) -> dict[str, str]:
+    bindings: dict[str, str] = {}
+    for node in getattr(tree, "body", []):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local_name = alias.asname or alias.name.split(".", 1)[0]
+                bindings[local_name] = alias.name if alias.asname else local_name
+        elif isinstance(node, ast.ImportFrom) and not node.level and node.module:
+            for alias in node.names:
+                if alias.name == "*":
+                    continue
+                local_name = alias.asname or alias.name
+                bindings[local_name] = f"{node.module}.{alias.name}"
+    return bindings
+
+
+def _resolve_imported_expression(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> str | None:
+    dotted = _expression_dotted_name(node)
+    if dotted is None:
+        return None
+    first, *rest = dotted.split(".")
+    imported = bindings.get(first)
+    if imported is None:
+        return None
+    return ".".join((imported, *rest))
+
+
+def _import_references(
+    relative_path: Path,
+    tree: ast.AST,
+) -> Iterator[ImportReference]:
+    package_parts = relative_path.parent.parts
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                yield ImportReference(
+                    lineno=node.lineno,
+                    module=alias.name,
+                    imported_name=None,
+                    full_path=alias.name,
+                    absolute=True,
+                )
+            continue
+        if not isinstance(node, ast.ImportFrom) or node.level > 1:
+            continue
+        if node.level == 1:
+            module_parts = (*package_parts, *(node.module or "").split("."))
+            module = ".".join(part for part in module_parts if part)
+        else:
+            module = node.module or ""
+        if not module:
+            continue
+        for alias in node.names:
+            full_path = module if alias.name == "*" else f"{module}.{alias.name}"
+            yield ImportReference(
+                lineno=node.lineno,
+                module=module,
+                imported_name=alias.name,
+                full_path=full_path,
+                absolute=node.level == 0,
+            )
+
+
+def _append_boundary_finding(
+    findings: list[BoundaryFinding],
+    seen: set[tuple[Path, int, str]],
+    *,
+    relative_path: Path,
+    source_lines: list[str],
+    lineno: int,
+    category: str,
+) -> None:
+    key = (relative_path, lineno, category)
+    if key in seen:
+        return
+    seen.add(key)
+    shown = source_lines[lineno - 1].strip() if 0 < lineno <= len(source_lines) else category
+    findings.append(
+        BoundaryFinding(
+            relative_path=relative_path,
+            lineno=lineno,
+            category=category,
+            shown=shown,
+        )
+    )
+
+
+def _assignment_target_names(target: ast.AST) -> list[str | None]:
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return [
+            name
+            for element in target.elts
+            for name in _assignment_target_names(element)
+        ]
+    return [_expression_dotted_name(target)]
+
+
+def _required_root_api_object(tree: ast.AST, bindings: dict[str, str]) -> str:
+    assigned_objects: list[str | None] = []
+    for node in getattr(tree, "body", []):
+        value: ast.AST | None = None
+        targets: list[ast.AST] = []
+        if isinstance(node, ast.Assign):
+            value = node.value
+            targets = node.targets
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            value = node.value
+            targets = [node.target]
+        if not isinstance(value, ast.Call):
+            continue
+        constructor = _resolve_imported_expression(value.func, bindings)
+        if constructor not in ROOT_API_CONSTRUCTORS:
+            continue
+        for target in targets:
+            assigned_objects.extend(_assignment_target_names(target))
+    if len(assigned_objects) != 1 or assigned_objects[0] is None:
+        raise UsageError(
+            "selected root API의 proven Ninja API instance assignment가 "
+            f"정확히 하나여야 함: {len(assigned_objects)}개"
+        )
+    return assigned_objects[0]
+
+
+def _expression_has_error_status(node: ast.AST) -> bool:
+    for child in ast.walk(node):
+        if (
+            isinstance(child, ast.Constant)
+            and isinstance(child.value, int)
+            and not isinstance(child.value, bool)
+            and 400 <= child.value < 600
+        ):
+            return True
+        dotted = _expression_dotted_name(child)
+        if dotted is not None and ERROR_STATUS_NAME_RE.search(dotted.upper()):
+            return True
+    return False
+
+
+def _expression_has_code_value(node: ast.AST) -> bool:
+    for child in ast.walk(node):
+        if isinstance(child, ast.Dict):
+            for key in child.keys:
+                if (
+                    isinstance(key, ast.Constant)
+                    and isinstance(key.value, str)
+                    and (key.value.lower() == "code" or key.value.lower().endswith("_code"))
+                ):
+                    return True
+        elif isinstance(child, ast.Call):
+            if any(
+                keyword.arg is not None
+                and (keyword.arg.lower() == "code" or keyword.arg.lower().endswith("_code"))
+                for keyword in child.keywords
+            ):
+                return True
+    return False
+
+
+def _expression_has_error_signal(node: ast.AST) -> bool:
+    return _expression_has_error_status(node) or _expression_has_code_value(node)
+
+
+def _assignment_names_and_value(
+    node: ast.AST,
+) -> tuple[list[str], ast.AST | None]:
+    if isinstance(node, ast.Assign):
+        names = [
+            name
+            for target in node.targets
+            for name in _assignment_target_names(target)
+            if name is not None
+        ]
+        return names, node.value
+    if isinstance(node, ast.AnnAssign):
+        return [
+            name
+            for name in _assignment_target_names(node.target)
+            if name is not None
+        ], node.value
+    return [], None
+
+
+def _is_exception_type_expression(node: ast.AST) -> bool:
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return any(_is_exception_type_expression(element) for element in node.elts)
+    dotted = _expression_dotted_name(node)
+    if dotted is None:
+        return False
+    name = dotted.rsplit(".", 1)[-1]
+    return name.endswith(("Error", "Exception")) or name == "BaseException"
+
+
+def _has_exception_isinstance(node: ast.AST) -> bool:
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Call) or len(child.args) < 2:
+            continue
+        if _expression_dotted_name(child.func) != "isinstance":
+            continue
+        if _is_exception_type_expression(child.args[1]):
+            return True
+    return False
+
+
+def _function_is_exception_mapping(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> bool:
+    arguments = (
+        *getattr(node.args, "posonlyargs", []),
+        *node.args.args,
+        *node.args.kwonlyargs,
+    )
+    has_exception_context = bool(EXCEPTION_NAME_RE.search(node.name)) or any(
+        EXCEPTION_ARGUMENT_RE.search(argument.arg) for argument in arguments
+    )
+    has_exception_flow = _has_exception_isinstance(node) or any(
+        isinstance(child, ast.ExceptHandler) for child in ast.walk(node)
+    )
+    has_mapping_flow = bool(MAPPING_FLOW_RE.search(node.name)) or has_exception_flow
+    has_error_return = any(
+        isinstance(child, ast.Return)
+        and child.value is not None
+        and _expression_has_error_signal(child.value)
+        for child in ast.walk(node)
+    )
+    return (has_exception_context or has_exception_flow) and has_mapping_flow and has_error_return
+
+
+def _is_request_path_test(node: ast.AST) -> bool:
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Attribute) or child.attr != "path":
+            continue
+        owner = _expression_dotted_name(child.value)
+        if owner is None:
+            continue
+        root_name = owner.split(".", 1)[0].lower()
+        if root_name == "req" or root_name == "request" or root_name.endswith("_request"):
+            return True
+    return False
+
+
+def _body_has_error_return(statements: list[ast.stmt]) -> bool:
+    return any(
+        isinstance(child, ast.Return)
+        and child.value is not None
+        and _expression_has_error_signal(child.value)
+        for statement in statements
+        for child in ast.walk(statement)
+    )
+
+
+def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
+    bindings = _module_import_bindings(parsed.tree)
+    api_object = _required_root_api_object(parsed.tree, bindings)
+    findings: list[BoundaryFinding] = []
+    seen: set[tuple[Path, int, str]] = set()
+    source_lines = parsed.source.splitlines()
+
+    for reference in _import_references(parsed.relative_path, parsed.tree):
+        if reference.absolute and ROOT_API_IMPORT_RE.match(reference.full_path):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=reference.lineno,
+                category="root-api-application-import",
+            )
+
+    for node in getattr(parsed.tree, "body", []):
+        if isinstance(node, ast.ClassDef):
+            resolved_bases = {
+                resolved
+                for base in node.bases
+                if (resolved := _resolve_imported_expression(base, bindings)) is not None
+            }
+            if node.name.endswith("ErrorCode") and "enum.StrEnum" in resolved_bases:
+                _append_boundary_finding(
+                    findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=node.lineno,
+                    category="root-api-error-code",
+                )
+            if node.name.endswith("ErrorOut") and resolved_bases & ROOT_ERROR_OUT_BASES:
+                _append_boundary_finding(
+                    findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=node.lineno,
+                    category="root-api-error-out",
+                )
+        names, value = _assignment_names_and_value(node)
+        if (
+            isinstance(value, ast.Dict)
+            and any(EXCEPTION_NAME_RE.search(name) for name in names)
+            and _expression_has_error_signal(value)
+        ):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=node.lineno,
+                category="root-api-error-catalog",
+            )
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _function_is_exception_mapping(node):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=node.lineno,
+                category="root-api-exception-mapping",
+            )
+
+    for node in ast.walk(parsed.tree):
+        if (
+            isinstance(node, ast.If)
+            and _is_request_path_test(node.test)
+            and _body_has_error_return(node.body)
+        ):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=node.lineno,
+                category="root-api-path-error-branch",
+            )
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        if node.func.attr not in {"exception_handler", "add_exception_handler"}:
+            continue
+        if _expression_dotted_name(node.func.value) != api_object:
+            continue
+        _append_boundary_finding(
+            findings,
+            seen,
+            relative_path=parsed.relative_path,
+            source_lines=source_lines,
+            lineno=node.lineno,
+            category="root-api-exception-handler",
+        )
+    return sorted(
+        findings,
+        key=lambda finding: (
+            finding.relative_path.as_posix(),
+            finding.lineno,
+            finding.category,
+        ),
+    )
+
+
+def _selected_parsed_source(
+    sources: list[ParsedSource],
+    relative_path: str | None,
+) -> ParsedSource:
+    selected = Path(relative_path or "")
+    for parsed in sources:
+        if parsed.relative_path == selected:
+            return parsed
+    raise UsageError(f"선택 root API source 분석 결과 없음: {selected}")
+
+
+def _print_root_api_findings(findings: list[BoundaryFinding]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — selected root API가 BC 내부 또는 "
+        "오류 언어/매핑을 직접 소유함(root API 경계 위반):"
+    )
+    for finding in findings:
+        print(finding.render())
+    print(
+        "  근거: root API는 Ninja API 인스턴스와 registrar 조립만 소유한다. "
+        "BC 내부 import, 오류 schema/code/catalog/mapping, path별 오류 분기, "
+        "전역 exception handler는 각 BC presentation 경계로 내린다."
+    )
+
+
+def _reference_matches_module(reference: ImportReference, module: str) -> bool:
+    return (
+        reference.module == module
+        or reference.module.startswith(f"{module}.")
+        or reference.full_path == module
+        or reference.full_path.startswith(f"{module}.")
+    )
+
+
+def _reference_is_ninja_http(reference: ImportReference) -> bool:
+    parts = reference.full_path.split(".")
+    if not parts or parts[0] not in {"ninja", "ninja_extra"}:
+        return False
+    if set(part.lower() for part in parts[1:]) & NINJA_HTTP_MODULE_PARTS:
+        return True
+    candidate = reference.imported_name or parts[-1]
+    return bool(HTTP_FACILITY_NAME_RE.search(candidate))
+
+
+def _reference_is_django_http(reference: ImportReference) -> bool:
+    if not reference.full_path.startswith("django."):
+        return False
+    if reference.full_path == "django.http" or reference.full_path.startswith("django.http."):
+        return True
+    candidate = reference.imported_name or reference.full_path.rsplit(".", 1)[-1]
+    return bool(HTTP_FACILITY_NAME_RE.search(candidate))
+
+
+def _canonical_bc_error_module(bc: str) -> str:
+    return f"application.{bc}.presentation_layer.schema.error_out"
+
+
+def _reference_bc(reference: ImportReference) -> str | None:
+    parts = reference.full_path.split(".")
+    if len(parts) >= 2 and parts[0] == "application":
+        return parts[1]
+    return None
+
+
+def _reference_is_foreign_error_language(
+    reference: ImportReference,
+    foreign_bc: str,
+) -> bool:
+    if _reference_matches_module(reference, _canonical_bc_error_module(foreign_bc)):
+        return True
+    symbol = reference.imported_name
+    if symbol in {None, "*"}:
+        symbol = reference.full_path.rsplit(".", 1)[-1]
+    return symbol.endswith(("ErrorCode", "ErrorOut"))
+
+
+def _source_error_boundary_findings(
+    parsed: ParsedSource,
+    selected_bcs: tuple[str, ...],
+) -> tuple[list[BoundaryFinding], list[BoundaryFinding], bool]:
+    parts = parsed.relative_path.parts
+    if (
+        len(parts) < 3
+        or parts[0] != "application"
+        or parts[1] not in selected_bcs
+    ):
+        return [], [], False
+    own_bc = parts[1]
+    in_inner_layer = parts[2] in LAYER_DIR_NAMES
+    in_application_layer = parts[2] == "application_layer"
+    source_lines = parsed.source.splitlines()
+    layer_findings: list[BoundaryFinding] = []
+    cross_bc_findings: list[BoundaryFinding] = []
+    seen: set[tuple[Path, int, str]] = set()
+    suppress_raw_ninja_import = False
+
+    for reference in _import_references(parsed.relative_path, parsed.tree):
+        if in_inner_layer:
+            is_ninja_http = _reference_is_ninja_http(reference)
+            if is_ninja_http or _reference_is_django_http(reference):
+                _append_boundary_finding(
+                    layer_findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=reference.lineno,
+                    category="layer-http-facility",
+                )
+                if is_ninja_http and in_application_layer:
+                    suppress_raw_ninja_import = True
+            if _reference_matches_module(reference, COMMON_ERROR_MODULE):
+                _append_boundary_finding(
+                    layer_findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=reference.lineno,
+                    category="layer-common-error-language",
+                )
+            if _reference_matches_module(
+                reference,
+                _canonical_bc_error_module(own_bc),
+            ):
+                _append_boundary_finding(
+                    layer_findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=reference.lineno,
+                    category="layer-own-error-language",
+                )
+
+        foreign_bc = _reference_bc(reference)
+        if (
+            foreign_bc is not None
+            and foreign_bc != own_bc
+            and foreign_bc in selected_bcs
+            and _reference_is_foreign_error_language(reference, foreign_bc)
+        ):
+            _append_boundary_finding(
+                cross_bc_findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=reference.lineno,
+                category="cross-bc-error-language",
+            )
+
+    sort_key = lambda finding: (
+        finding.relative_path.as_posix(),
+        finding.lineno,
+        finding.category,
+    )
+    return (
+        sorted(layer_findings, key=sort_key),
+        sorted(cross_bc_findings, key=sort_key),
+        suppress_raw_ninja_import,
+    )
+
+
+def _print_layer_purity_findings(findings: list[BoundaryFinding]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — inner layer(domain/application/infra)가 "
+        "HTTP facility 또는 canonical ErrorOut/ErrorCode 언어를 import 함(layer purity 위반):"
+    )
+    for finding in findings:
+        print(finding.render())
+    print(
+        "  근거: HTTP status/response와 error response schema/code는 presentation 경계가 "
+        "소유한다. inner layer는 도메인 값·예외·DTO만 사용한다."
+    )
+
+
+def _print_cross_bc_error_findings(findings: list[BoundaryFinding]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — selected BC source가 다른 selected BC의 "
+        "ErrorCode/ErrorOut 언어를 직접 import 함(cross-BC error language 누수):"
+    )
+    for finding in findings:
+        print(finding.render())
+    print(
+        "  근거: 각 BC의 error code/schema는 해당 BC presentation 경계의 언어다. "
+        "컨텍스트 간에는 OHS/ACL 계약으로 번역하고 foreign ErrorCode/ErrorOut을 공유하지 않는다."
+    )
+
+
 def _source_s1_s3_findings(
     relative_path: Path,
     source: str,
@@ -837,6 +1446,9 @@ def main(argv: list[str]) -> int:
     root = config.root
     legacy_http_findings: list[str] = []
     code_http_findings: list[str] = []
+    root_api_findings: list[BoundaryFinding] = []
+    layer_purity_findings: list[BoundaryFinding] = []
+    cross_bc_error_findings: list[BoundaryFinding] = []
     s1_findings: list[str] = []  # cross-BC 내부 결합
     s2_findings: list[str] = []  # contract 무의존 위반
     s3_findings: list[str] = []  # published 계약 관통
@@ -847,8 +1459,22 @@ def main(argv: list[str]) -> int:
         except UsageError as exc:
             print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
             return 1
-        code_http_findings = _code_http_findings(code_sources)
+        try:
+            root_api_findings = _root_api_findings(
+                _selected_parsed_source(code_sources, config.api_module)
+            )
+        except UsageError as exc:
+            print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+        suppress_ninja_import_paths: set[Path] = set()
         for parsed in code_sources:
+            found_layer, found_cross_bc, suppress_raw_ninja = (
+                _source_error_boundary_findings(parsed, config.scope_bcs)
+            )
+            layer_purity_findings.extend(found_layer)
+            cross_bc_error_findings.extend(found_cross_bc)
+            if suppress_raw_ninja:
+                suppress_ninja_import_paths.add(parsed.relative_path)
             relative_parts = parsed.relative_path.parts
             if not (
                 len(relative_parts) >= 3
@@ -864,6 +1490,10 @@ def main(argv: list[str]) -> int:
             s1_findings.extend(found_s1)
             s2_findings.extend(found_s2)
             s3_findings.extend(found_s3)
+        code_http_findings = _code_http_findings(
+            code_sources,
+            suppress_ninja_import_paths,
+        )
     else:
         legacy_http_findings = _legacy_http_findings(root)
         if not _has_application_container(root):
@@ -891,6 +1521,9 @@ def main(argv: list[str]) -> int:
     if not (
         legacy_http_findings
         or code_http_findings
+        or root_api_findings
+        or layer_purity_findings
+        or cross_bc_error_findings
         or s1_findings
         or s2_findings
         or s3_findings
@@ -899,6 +1532,12 @@ def main(argv: list[str]) -> int:
 
     if legacy_http_findings:
         _print_legacy_http(legacy_http_findings)
+    if root_api_findings:
+        _print_root_api_findings(root_api_findings)
+    if layer_purity_findings:
+        _print_layer_purity_findings(layer_purity_findings)
+    if cross_bc_error_findings:
+        _print_cross_bc_error_findings(cross_bc_error_findings)
     if code_http_findings:
         _print_code_http(code_http_findings)
     if s1_findings:
