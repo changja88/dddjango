@@ -2097,6 +2097,40 @@ api.get_openapi_schema()
 def list_catalog(request):
     return []
 """
+    mandatory_finally_error = """from ninja import Router, Status
+from application.lesson.presentation_layer.schema.error_out import LessonErrorOut, LessonNotFoundError
+
+router = Router()
+
+@router.get('/{lesson_id}', response={200: dict})
+def get_lesson(request, lesson_id: int):
+    try:
+        return {'id': lesson_id}
+    finally:
+        error = LessonNotFoundError()
+        return Status(error.status, error)
+"""
+    mandatory_finally_selected_api = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+
+def build_schema():
+    try:
+        return {}
+    finally:
+        api.get_openapi_schema()
+"""
+    terminal_try_benign_finally = """from ninja_extra import NinjaExtraAPI
+
+api = NinjaExtraAPI()
+
+def build_schema():
+    try:
+        return {}
+    finally:
+        pass
+    api.get_openapi_schema()
+"""
     return [
         Case("openapi-clean-direct-404-409-same-bc-base", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-clean-framework-statuses-not-advertised", OPENAPI_FILES, "check-openapi-error-declaration.py", openapi_args(), 0, ""),
@@ -2171,6 +2205,9 @@ def list_catalog(request):
         Case("openapi-round3-clean-two-step-error-instance-alias", with_files(("application/lesson/presentation_layer/controller.py", two_step_instance_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         Case("openapi-round3-one-step-standard-status-alias", with_files(("application/lesson/presentation_layer/controller.py", one_step_standard_status_alias), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
         Case("openapi-round3-clean-unselected-controller-api-call", with_files(("application/catalog/presentation_layer/controller.py", unselected_controller_call), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
+        Case("openapi-round4-mandatory-finally-error-return", with_files(("application/lesson/presentation_layer/controller.py", mandatory_finally_error), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-round4-mandatory-finally-selected-api", with_files(("config/api.py", mandatory_finally_selected_api), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 2, "BLOCKER"),
+        Case("openapi-round4-clean-terminal-try-benign-finally", with_files(("config/api.py", terminal_try_benign_finally), base=OPENAPI_FILES), "check-openapi-error-declaration.py", openapi_args(), 0, ""),
         # Reviewer-only: dynamic response mappings and status-specific code
         # subset precision for a shared BC base schema.
     ]

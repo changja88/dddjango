@@ -978,7 +978,11 @@ def _statement_provenance_flow(
                 if handler.name:
                     _drop_provenance_names(branch, {handler.name})
                 outcomes.append(flow(handler.body, branch))
-            state = flow(statement.finalbody, _merge_provenance(outcomes))
+            pending = _merge_provenance(outcomes)
+            pending_falls_through = pending.falls_through
+            pending.falls_through = True
+            state = flow(statement.finalbody, pending)
+            state.falls_through = pending_falls_through and state.falls_through
             continue
         if MATCH_NODE is not None and isinstance(statement, MATCH_NODE):
             base = _copy_provenance(state)
