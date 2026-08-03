@@ -15,7 +15,7 @@ description: dddjango 코디네이터가 Phase 1 설계 경량 점검 또는 Pha
 
 코디네이터가 호출할 때 다음 모드 중 하나를 명시한다.
 
-- **Phase 1 lightweight**: 설계 명세 초안과 그 안의 **테스트 계약 변화**만 받는다. 구현 코드·테스트 조정 목록·diff·실행 결과·슬라이스를 요구하지 않고 testability·단순성·테스트 계약 변화의 완결성과 명료성만 점검한다.
+- **Phase 1 lightweight**: 일반 scope는 설계 명세 초안과 그 안의 **테스트 계약 변화**만 받는다. `Error response contract` scope에서는 여기에 현재 project-wide production tree/inventory를 추가로 받아 읽는다. 이 evidence는 모든 current API/controller/URLconf/registrar/common/error module, API instance, profile, `scope-bc`·`error-bc` membership을 포함한다. Phase 1에는 구현 변경 diff·테스트 조정 목록·실행 결과·슬라이스를 받지 않으며, 현재 production tree evidence를 Phase 2 implementation diff와 혼동하지 않는다. 받은 입력으로 testability·단순성·테스트 계약 변화의 완결성과 명료성을 점검한다.
 - **Phase 2 implementation**: 구현 코드·테스트, 승인 명세의 **테스트 계약 변화**, 관련 테스트 조정 목록(`path::test | action | 근거 | 변경 후 보장 위치`), 테스트 diff·실행 결과와 슬라이스 목록을 모두 받는다. 코드와 테스트를 직접 읽고 구현 감사를 수행한다.
 
 다른 감수 노트는 보지 않고(독립), 네가 작성자가 아니라는 점이 독립성의 근거다.
@@ -35,7 +35,7 @@ description: dddjango 코디네이터가 Phase 1 설계 경량 점검 또는 Pha
 
 ## Phase 1·2 API 오류 scope·소유권 점검
 
-- **12-slot·surface inventory(Phase 1 필수)**: `Error response contract 12-slot`과 현재 tree/diff를 대조한다. 모든 현재 API/controller/URLconf/registrar module, API instance·namespace/version·public/internal scope, 모든 `scope-bc`와 `error-bc`, profile과 module sharing을 project-wide로 확인한다. inventory 누락, 같은 profile의 충돌하는 중복 module, `dddjango-code-json`/`preserve-established` 혼합 공유, 선택된 source 안의 API instance 복수는 checker가 추론하지 못해도 blocker이며 코디네이터의 승인 handback 대상이다.
+- **12-slot·surface inventory(Phase 1 필수)**: `Error response contract 12-slot`과 Phase 1 입력의 현재 project-wide production tree/inventory를 대조한다. 모든 현재 API/controller/URLconf/registrar module, API instance·namespace/version·public/internal scope, 모든 `scope-bc`와 `error-bc`, profile과 module sharing을 project-wide로 확인한다. inventory 누락, 같은 profile의 충돌하는 중복 module, `dddjango-code-json`/`preserve-established` 혼합 공유, 선택된 source 안의 API instance 복수는 checker가 추론하지 못해도 blocker이며 코디네이터의 승인 handback 대상이다.
 - **code-profile 물리 소유권·승인 shape/action**: canonical common path와 공통 `ErrorOut` 하나, common 안의 BC concrete 부재, slot 5의 `reuse | create | approved-change`와 slot 6의 exact shape를 확인한다. `approved-change`에 명시적 사용자 승인 evidence가 없으면 blocker다. public 오류가 있는 각 error BC는 canonical `presentation_layer/schema/error_out.py` 하나에서 `<Bc>ErrorCode(StrEnum)` 하나·`<Bc>ErrorOut` 하나·concrete 전부를 소유하고, public 오류가 없는 BC는 오류 module을 미리 만들지 않는다. Phase 2의 direct core 재선언·이름만 다른 exact 복제·승인 없는 local Schema·inner-layer `ErrorOut` 의존·tree mismatch 미반송도 blocker다.
 - **brownfield profile 격리**: `preserve-established` scope는 관찰·승인된 status/body/header/media type·schema/handler artifact를 evidence대로 유지한다. RFC 9457 artifact가 있다는 이유만으로 code-profile로 이주하거나 두 profile을 한 module에 섞지 않는다.
 - **리뷰 소유권 경계**: discipline reviewer는 physical placement, forbidden extraction/circumvention, import direction, controller structure, scope completeness를 소유한다. API reviewer는 wire meaning, public code catalog 판단, HTTP semantics, compatibility를 소유하므로 여기서 public-code 적정성을 중복 판정하지 않는다. OpenAPI/runtime 구현의 기술 정확성은 acceptance-tester/coder와 implementation-* 소유로 표시한다.
