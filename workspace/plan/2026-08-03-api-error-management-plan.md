@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans`. 정본을 먼저 고친 뒤 미러를 갱신한다. 아래 체크박스는 승인 당시의 작업 분해를 보존한 역사 기록이며 소급 완료 표시는 하지 않는다. 실제 실행·완료 상태와 미해결 항목은 이 문서의 `Status`, `Implementation Adversarial Review Record`, 최종 검증 증거를 기준으로 판정한다.
 
-**Status:** ErrorOut shape 비고정 보정·구현·재검증 완료 · v4 사용자 동결 승인 대기
+**Status:** ErrorOut shape 비고정 보정·구현·재검증 완료 · v4 사용자 명시 승인(`2026-08-04T11:59:05+0900`) · ACTIVE/FROZEN
 
 **Approved design:** `workspace/design/2026-08-03-api-error-management-design.md` (설계 본문 commit `73c575e`; 사용자 승인·구 설계 superseded metadata는 이 계획과 같은 문서 기준선 commit에 기록)
 
@@ -655,7 +655,7 @@ git diff --stat
 - [x] Step 4: 첫 holdout 전에 checker byte hash를 동결한다. 과적합 reviewer는 A1 matrix를 보지 않은 fresh context에서 설계와 구현된 checker만 보고 최소 8개의 holdout fixture(분리/공유 brownfield, alias/re-export, Pydantic 메타필드, helper 2-hop, dynamic response, auth ErrorOut, artifact 전무)를 임시 경로에 작성한다. 최초 실행의 오탐/미발화를 수정 전 증거로 기록하고 유효 case는 이후 A1 회귀 matrix에 편입한다.
 - [x] Step 5: 첫 holdout으로 checker를 고친 뒤 다른 fresh reviewer가 2~4개의 작은 2차 unseen case를 만든다. 최종 판정 전 구현자와 A1 matrix에 공개하지 않고 실행하며, 이 결과를 회귀 matrix 재실행과 별도 효능 증거로 기록한다. 통과 뒤 재발 방지를 위해 편입할 수 있으나 그것을 “unseen 통과” 증거로 재사용하지 않는다.
 - [x] Step 6: 지적을 `adopt | reject | defer`로 중재하고 근거를 이 문서의 `Implementation Adversarial Review Record`에 남긴다. 중요한 수정 후 최소 한 reviewer에게 재검토를 요청한다.
-- [ ] Step 7: v4 평가 diff·34-ID 대조·epoch key를 사용자에게 제시하고 명시적 freeze 승인을 받는다. 승인 전에는 새 fixture를 채점하거나 active/frozen으로 표시하지 않는다.
+- [x] Step 7: v4 평가 diff·34-ID 대조·epoch key를 사용자에게 제시하고 명시적 freeze 승인을 받는다. 사용자가 `2026-08-04T11:59:05+0900`에 `v4 동결 승인`으로 승인했으며 별도 freeze 변경에서 active/frozen으로 전환한다. historical v3 결과 14개는 byte 보존한다.
 - [x] Step 8: 리뷰 반영 뒤 F1/F2를 처음부터 다시 실행한다. 리뷰 전 결과를 최종 증거로 재사용하지 않는다.
 
 ### Task F4: 커밋 경계

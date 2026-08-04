@@ -1,9 +1,10 @@
-# FC 사전등록 산출물 v4 candidate — 골든 오라클 + mutation (EVAL-METHOD §1.4)
+# FC 사전등록 산출물 v4 frozen baseline — 골든 오라클 + mutation (EVAL-METHOD §1.4)
 
-> **상태**: `candidate` · **NOT ACTIVE** · **NOT FROZEN** · **SCORING PROHIBITED**.
-> 사용자 명시 freeze 전에는 골든 채점이나 mutation 판정을 실행하지 않는다.
+> **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
+> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과의 골든 채점과 mutation
+> 판정에 사용한다. historical v3 결과에는 소급 적용하지 않는다.
 > **결과 identity 규칙**: `epoch + error profile + rubric version + dimension ID`.
-> 이 문서의 후보 값은 `2026-08-03-code-json + dddjango-code-json + v4-candidate + FC-{1|2|3}`다.
+> 이 문서의 동결 값은 `2026-08-03-code-json + dddjango-code-json + v4-candidate + FC-{1|2|3}`다.
 > v3 재현 locator full SHA: `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`.
 > **태스크-독립 행위표**(태스크 프롬프트+표준만으로 작성, fixture 코드 무관).
 > **태스크**: "주문 생성 API — 요청 상품·수량의 주문 생성, catalog가 재고 소유·주문 시 차감(부족 시 409)."
@@ -38,8 +39,7 @@
 > concrete default 또는 BC base 직접 생성자 값을 변조하고,
 > HTTP status와 JSON body `status`가 함께 red인지 확인한다. 예외 handler는 주입 사이트가 아니다.
 > **DB CHECK constraint(`stock__gte=0`)는 도메인 판정 아니므로 mutation 대상 제외.**
-> v4가 freeze된 뒤에도 red율 100%가 아니면 FC-2 FAIL(vacuous 테스트)이며, 현재 candidate에서는
-> 그 판정을 산출하지 않는다.
+> 동결된 v4에서 red율 100%가 아니면 FC-2 FAIL(vacuous 테스트)이다.
 
 ## 3. 픽스처별 실행 어댑터 (조정자 — 코드 열람 후 기록)
 > 동일 태스크라도 BC 분해가 런마다 달라 route+payload가 갈림. 행위표(§1)는 공통, 아래만 픽스처별.

@@ -1,8 +1,9 @@
-# dddjango 평가지 v4 candidate — 규칙 준수 + 기능 정확성 (평가 항목)
+# dddjango 평가지 v4 frozen baseline — 규칙 준수 + 기능 정확성 (평가 항목)
 
-> **상태**: `candidate` · **NOT ACTIVE** · **NOT FROZEN** · **SCORING PROHIBITED**.
-> 사용자 명시 freeze 전에는 어떤 fixture도 이 문서로 채점·집계하지 않는다.
-> **후보 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
+> **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
+> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과를 이 문서로 채점·집계한다.
+> historical v3 결과에는 소급 적용하지 않는다.
+> **동결 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
 > `v4-candidate`. 결과 identity는
 > `epoch + error profile + rubric version + dimension ID`다.
 > **v3 재현 경계**: v3 기준과 historical 결과는 full SHA
@@ -139,8 +140,8 @@
 ## TIER-OBS(라이브 전용·비채점) — 에러 경로 라이브 관측 트랙
 
 > **성격**: 라이브 런에서만 적용할 비채점 관측 후보다. **A~D의 정확히 34개 채점
-> 차원·치명 게이트 밖**이며 35번째 차원이 아니다. v4는 아직 NOT ACTIVE / NOT FROZEN이므로
-> EP probe도 현재 실행·채점하지 않는다. 사용자 freeze 뒤 라이브 관측을 시작하더라도 probe
+> 차원·치명 게이트 밖**이며 35번째 차원이 아니다. 동결 이후 새 v4 라이브 결과에서는
+> EP probe를 실행·기록한다. probe
 > 결과는 차원 점수나 종합 FAIL로 환산하지 않고 라이브 축과 잔여흠 원장에만 기록한다.
 > **정본 분리(SSOT)**: 아래 표는 항목과 필수 계약의 요약이다. **상세 N/A 규칙·probe 어댑터·판정 절차의 단일 정본은 `EVAL-METHOD.md §4.3.1`**이다. 매 라이브 채점지 **필수 섹션화 집행 = `EVAL-METHOD.md §6.1` #9.5**.
 > **NJ-7과 구분(이중계상 차단)**: NJ-7은 controller의 BC 오류 직접 계약을 정적·의미
@@ -171,7 +172,7 @@
 | 항목 | FAIL 예시 | PASS 예시 |
 |---|---|---|
 | SD-3 빈혈 무복제 | Codex `catalog/published_service/stock.py:42` `stock__gte=quantity` | Claude `catalog/.../product.py:35-46` `Product.deduct_stock()` |
-| SD-6 계층순수성/P1a | v4 FAIL: application이 status DTO/HTTP 의미를 소유하거나 controller가 mapping을 helper/handler에 위임 | **v3 역사 PASS(현재 폐기)**: 중앙 handler 발화. **v4 candidate PASS bar**: domain/application HTTP 무지 + 알려진 BC 예외를 해당 controller가 직접 catch/`Status` 반환 |
+| SD-6 계층순수성/P1a | v4 FAIL: application이 status DTO/HTTP 의미를 소유하거나 controller가 mapping을 helper/handler에 위임 | **v3 역사 PASS(현재 폐기)**: 중앙 handler 발화. **v4 frozen PASS bar**: domain/application HTTP 무지 + 알려진 BC 예외를 해당 controller가 직접 catch/`Status` 반환 |
 | SD-7 컨텍스트 통신 | Claude `p1a-v3 order_api_router.py:26`·`create_order_app.py:17`(ACL 밖 presentation·application이 catalog 도메인 **예외** 직접 import = 번역 ACL 미격리) | Codex `catalog_acl.py`(OHS만) · Claude `smoke4 product_stock_acl.py`(catalog 결합이 ACL에만 격리 — 미이주 직접통합은 표준 §2 허용) |
 | SH-4 Django앱 위치 | Codex `catalog/models.py`·`catalog/migrations/` 루트(touched 데이터소스라 위반·개정 2026-06-08) / **cbvlive-codex 루트 `catalog/apps.py`·`views.py`·`tests.py` 잔재**(셰임 이주해도 앱 패키지 루트 존속→SH-1·4 FAIL) | Claude `application/catalog/infra_layer/django_catalog/models/` + **루트 catalog 완전 삭제**(cbvlive-claude); migrations-only 핀(apps.py 이주)은 SH-4 🟡·Q-5 |
 | SH-7 협력포트 위치 | Codex `application_layer/create_order/port/` | Claude `domain_layer/order/port/` |
@@ -181,7 +182,7 @@
 | Q-4 메커니즘 | final-claudeA `config/db_backends/sqlite3_immediate/base.py` | p1a-v3 양쪽 순수 version CAS |
 | Q-5 마이그레이션 | Claude `django_catalog/migrations/0001_initial.py:14-25`(기존 0001 재작성) | 신규 앱 0001 + 별도 0002 expand |
 | NJ-2 operation 얇음 | Codex `smoke2-codexB/.../create_order/api_orders.py:108-213`(operation이 `json.loads(request.body)` 수동파싱+수동검증+7 except status 분기) | Claude `p1a-v3-claude/.../api_order.py:61-63`(schema 바인딩→service→`Status(201,…)` 매핑만) |
-| NJ-4 status 선언 | `poc-codex/.../api_orders.py:209,211`(`response={201}`만·오류 6종은 `openapi_extra`로 → 가시성O·`response=` 위반) | **v3 역사 예시(소급 불변)**: `201/400/404/406/409/415/422` 선언. **v4 candidate PASS bar**: 실제 직접 BC 반환 status만 동일 BC `<Bc>ErrorOut>`으로 선언하고 framework 기본 status는 ErrorOut으로 광고하지 않음 |
+| NJ-4 status 선언 | `poc-codex/.../api_orders.py:209,211`(`response={201}`만·오류 6종은 `openapi_extra`로 → 가시성O·`response=` 위반) | **v3 역사 예시(소급 불변)**: `201/400/404/406/409/415/422` 선언. **v4 frozen PASS bar**: 실제 직접 BC 반환 status만 동일 BC `<Bc>ErrorOut>`으로 선언하고 framework 기본 status는 ErrorOut으로 광고하지 않음 |
 | NJ-5 문서화 | Codex `final-codexB/.../api_orders.py:31` 반환타입 `Union[...,HttpResponse]`(어댑터 누수) | p1a-v3 양쪽 `operation_id`+`summary`(+Claude `tags`) |
 | FC-3 도메인 정합 | (반례) 차감 부호 역전·음수 재고 허용·인과 역전 | 8벌 모두 재고 차감 방향 정상 |
 | Q-3 동시성 결정성 | Codex `test_..._api.py` `Barrier(2)`+ThreadPool 실스레드 레이스(스케줄러 의존=비결정·flaky) | 결정적 CAS-스파이(stale `version` 1회 주입→수렴) |
@@ -214,10 +215,11 @@
    - **동결 해제 2건째(2026-06-08): NJ-1 판정기준을 클래스 컨트롤러(`NinjaExtraAPI`/`@api_controller`) 허용으로 개정** — *차원 수 불변*(NJ-1 신설 아님)·*판정기준* 변경만(함수형 `NinjaAPI`+`Router`만 합격이던 결정 레인을 `NinjaExtraAPI`+`@api_controller`/`register_controllers`도 PASS로 확장). 판정기준은 §5 사전등록 동결 대상이므로 명시 해제로 기록한다. 근거: ninja-extra 클래스 컨트롤러 도입(2026-06-08). 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 ninja 스택 PASS).
    - **동결 해제 3건째(2026-06-08): SH-3 치명 격상 + §632-(2) 면제 폐지 반영** — *차원 수 불변*(SH-3 신설 아님)·**치명 배정 변경**(비치명 `—`→치명) + **판정기준 변경**(데이터소스 골격을 빈 패키지로 무조건 실현·종류 폴더 부재 시 FAIL). 치명 배정·판정기준은 §5 사전등록 동결 대상이라 명시 해제로 기록. **근거 = 표준 동기**(fixture 동기 아님): `architecture-ddd/references/final.md:632` §632-(2) 개정(데이터소스 깊이 면제 폐지) + `discipline-houserules` §0-1 — 평가지가 *개정된 표준*을 따라가는 것(§5.2 "criteria는 표준 §근거에 선재"와 정합·NJ-7과 달리 fixture 관찰 산물 아님). **발견1(SH-1/4 마스크 C 정정)은 별개 성격** — 차원·치명·판정기준 변경이 아니라 *기존 SH-1/4 규칙의 올바른 적용*(루트 `apps.py` 잔재=위반)을 마스크 C 산문이 잘못 PASS로 뒤집던 것을 바로잡음 → **freeze 해제 불요**(기준 불변·적용만 교정).
 
-## v4 candidate 사전등록 요약 — NOT ACTIVE / NOT FROZEN
+## v4 동결 사전등록 요약 — ACTIVE / FROZEN
 
 - 채점 차원은 정확히 34개다: `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`.
 - NJ-7 ID와 비치명 강도는 유지하되 의미를 `BC 오류 직접 계약`으로 바꾼다.
-- 이 후보는 적대 리뷰·34-ID 기계 대조와 사용자 명시 freeze 전까지 scoring prohibited다.
+- 적대 리뷰·34-ID 기계 대조를 마친 뒤 사용자 명시 승인(`2026-08-04T11:59:05+0900`)으로
+  동결됐다. 변경하려면 명시적 unfreeze 또는 새 epoch 승인이 필요하다.
 
 (채점 절차·집계·bisect·결승선·과적합 방지·**산출 형식(§6)** = `EVAL-METHOD.md`)

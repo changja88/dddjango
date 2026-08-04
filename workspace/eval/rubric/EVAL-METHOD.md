@@ -1,8 +1,9 @@
-# dddjango 평가 방법론 v4 candidate — 채점·집계·완료·과적합 (집행 사양)
+# dddjango 평가 방법론 v4 frozen baseline — 채점·집계·완료·과적합 (집행 사양)
 
-> **상태**: `candidate` · **NOT ACTIVE** · **NOT FROZEN** · **SCORING PROHIBITED**.
-> 사용자 명시 freeze 전에는 어떤 fixture도 이 방법으로 채점·집계하거나 결과 파일을 만들지 않는다.
-> **후보 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
+> **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
+> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과를 이 방법으로
+> 채점·집계한다. historical v3 결과에는 소급 적용하지 않는다.
+> **동결 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
 > `v4-candidate`. 결과 identity는
 > `epoch + error profile + rubric version + dimension ID`다.
 > **v3 재현 경계**: full SHA `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`.
@@ -13,16 +14,17 @@
 
 ---
 
-## 0. v4 candidate 상태 게이트 (채점 착수 전 필수)
+## 0. v4 동결 상태 게이트 (채점 착수 전 필수)
 
-**미동결 상태로 채점하면 §5 사전등록을 자동 위반한다(채점 중 기준 확정 = 사후 합리화).** 따라서:
+**미동결 상태로 채점하면 §5 사전등록을 자동 위반한다(채점 중 기준 확정 = 사후 합리화).**
+현재 기준은 아래 선결 작업과 사용자 승인을 마쳐 동결됐다.
 
-> ⛔ **현재 v4는 NOT ACTIVE / NOT FROZEN이다. 적대 리뷰·34-ID 대조와 사용자 명시
-> freeze가 끝나기 전에는 어떤 fixture도 채점하지 않는다. 이 문서가 스스로 상태를 활성화하거나
-> 동결할 수 없다.**
+> ✅ **현재 v4는 ACTIVE / FROZEN이다. 승인 이후 새로 생산하는 v4 결과만 채점한다.
+> historical v3 결과 14개는 수정·재채점하지 않으며, 기준 변경에는 명시적 unfreeze 또는
+> 새 epoch 승인이 필요하다.**
 
-### 0.1 v4 candidate 사전등록표 (아직 미승인·미동결)
-| # | 결정 | v4 candidate 값 |
+### 0.1 v4 동결 사전등록표 (승인·동결 완료)
+| # | 결정 | v4 동결 값 |
 |---|---|---|
 | 치명 게이트 목록 | **SD 전부 · FC 전부 · SH-1·2·3·4·7 · (조건부)NJ-1·2 · Q-4** (Q-4 치명 승격·SH-3 종류폴더·골격 치명 격상 2026-06-08) |
 | Q-4 메커니즘 치명? | **치명** (커스텀 DB백엔드·`DatabaseWrapper`·PRAGMA·몽키패치 = SD-6 계층순수·메커니즘소유권과 직결) |
@@ -32,21 +34,20 @@
 | 마스크 C "판정 적재" 조임 | **이진 하위질문으로 조작화**(§1.1.M) + 경합 시 보수=*적재됨* |
 | FC-1 등록 주체·시점 | **§1.4 확정**(적대 grader·프롬프트 직후·코드 열람 전) |
 | S-NINJA 치명 배치 | **NJ-1·2 조건부 치명, NJ-3·4·7=비치명 '강'(§2.4 Q-편입), NJ-5·6=경미** |
-| 차원 집합 | **정확히 34개 candidate**: `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`. NJ-7은 비치명 '강'을 유지하고 v4 의미를 `BC 오류 직접 계약`으로 재정의한다. 적대 리뷰·기계 대조·사용자 freeze 전에는 이 값을 채점에 쓰지 않는다. |
+| 차원 집합 | **정확히 34개 동결 차원**: `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`. NJ-7은 비치명 '강'을 유지하고 v4 의미를 `BC 오류 직접 계약`으로 재정의한다. 승인 이후 새 v4 결과에 이 값을 사용한다. |
 
 ### 0.2 고정 입력 규율
 런 리셋·고정 게이트 답(BC배치·렌즈·API스택·G1/G2 승인 기준·thinking)은 **각 태스크 CRIB**(fixture *밖*)에 둔다. **표준 태스크 프롬프트(라이브 `/dddjango` 입력 정본·verbatim)는 `tools/FC-GOLDEN.md` 헤더에 박제** — coordinator 정리본 `scope.md`(Phase 0 "무엇/경계" 확장)가 아니라 *사용자 입력 원문* 한 줄이 정본(혼동 주의). *(구 `RETEST-HANDOFF.md`는 폴더 재구조화로 제거됨 — 고정 게이트 답의 정본은 태스크별 CRIB이며, 본 문서 §1.4 골든표 동결과 함께 freeze 산출물에 포함한다.)*
 
-### 0.3 v4 candidate freeze 선결 작업 (미완)
-> 아래 네 조건이 모두 끝나기 전에는 v4를 활성화·동결하거나 채점에 사용할 수 없다.
-1. **34-ID 기계 대조** — `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`의 누락·중복이 없음을 검증한다.
-2. **candidate diff와 적대 리뷰** — 선택한 에러 프로필의 SD-6·NJ-4·NJ-7·Q-2·EP·FC M3 계약을 교차 검토한다.
-3. **역사 보존 증거** — working tree의 v3 결과 14개가 byte 불변이고 candidate로 새 결과를 만들거나 채점하지 않았음을 확인한다.
-4. **사용자 명시 freeze** — 문서가 스스로 active/frozen 상태를 선언하지 않는다. 사용자가 명시적으로 승인한 뒤 별도 변경으로 상태를 전환한다.
+### 0.3 v4 freeze 선결 작업 (완료)
+1. **34-ID 기계 대조 완료** — `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`의 누락·중복이 없음을 검증했다.
+2. **candidate diff와 적대 리뷰 완료** — 선택한 에러 프로필의 SD-6·NJ-4·NJ-7·Q-2·EP·FC M3 계약을 fresh-context 3축으로 교차 검토했다.
+3. **역사 보존 확인** — working tree의 v3 결과 14개가 byte 불변이고 candidate로 새 결과를 만들거나 채점하지 않았음을 확인했다.
+4. **사용자 명시 freeze 완료** — `2026-08-04T11:59:05+0900`에 승인받고 이 별도 변경으로 active/frozen 상태를 전환했다.
 
 ### 0.4 v3 역사적 freeze 메모 (v4 비규범)
 다음은 v3 당시의 선결 작업 기록이다. full SHA
-`d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`에서 재현하며 v4 candidate의
+`d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`에서 재현하며 동결된 v4의
 freeze 완료 증거로 재사용하지 않는다.
 
 1. **8벌 실경로 박제** — v3 §5.1에서 실재 디렉터리명으로 교정했다.
@@ -214,7 +215,7 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 
 #### 4.3.1 에러 경로 라이브 관측 매트릭스 (별도 트랙, 완료 비산입 — DR-40 폴더 관측과 동급 무게; aclex 라운드 산물)
 P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의 에러 경로 계약**을 *매 라이브 런마다 균일하게* probe해 회귀(예: ACL-EX2 transient→500 누수)를 ad-hoc이 아닌 **사전등록 커버리지**로 잡는다. 이 트랙의 가치는 *균일·전수성*에 있다(매번 같은 계약을 같은 방식으로 확인).
-> ⚠️ **이 트랙은 탐지(관측)이지 예방이 아니다.** v4 candidate가 명시적으로 freeze되기 전에는 probe를 실행·채점하거나 결과를 만들지 않는다. 이후에도 EP probe는 치명 게이트가 아니며 픽스처 종합 라벨을 자동 FAIL시키지 않는다.
+> ⚠️ **이 트랙은 탐지(관측)이지 예방이 아니다.** 동결 이후 새 v4 라이브 결과에는 probe를 실행·기록한다. EP probe는 치명 게이트가 아니며 픽스처 종합 라벨을 자동 FAIL시키지 않는다.
 
 - **2층 분리(FC-1 골든과 동형)**: ⓐ **계약 속성표(균일·코드 미열람)** — 모든 픽스처에 참인 에러 계약(내부 BC 분해 무관)을 코드 열람 전 동결. ⓑ **픽스처별 어댑터(조정자·코드 열람 후)** — 실제 두드릴 route+payload는 픽스처마다 다르므로(동일 태스크라도 BC 분해 분기) **§1.4 FC 실행 어댑터 기계를 재사용**해 조정자가 코드 열람 후 작성. "미열람" 선언은 ⓐ에만 적용.
 - **probe 실행 환경(미실측 방지·DR-50 정정)**: probe는 `setup_test_environment()` 또는 `settings.ALLOWED_HOSTS` override 후 두드린다(미적용 시 `DisallowedHost` 400 위양성·실측 불가). **미실측 시 status 추론 금지** — 추론은 ninja 파싱/검증 2단계를 혼동한다(dslive-claude EP-1: 절단 JSON을 422로 추론했으나 사후 실측 400; ninja `params/models.py`는 스키마검증 전 파싱단계에서 `HttpError(400)`을 raise). pytest 통합 테스트는 testserver 자동 허용이라 깨진-본문 케이스를 1건 포함하면 라이브 대리로 충분.
@@ -231,7 +232,7 @@ P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의
 
 - **정적 대응물(거대 식별자 — 라이브서 제외)**: 외부 식별자에 거대값을 라이브로 던지는 probe는 422\|500이 **둘 다 방어 가능**(vacuous·underdetermined)이라 라이브 매트릭스에서 **뺀다**. 대신 *정적 스키마 검사*로 관측: 외부 식별자 수치 필드가 상한(`le=`/`lt=`/범위 validator)을 **선언**하나(min1/architecture-api §5.1). 라이브 발화가 아닌 **정적 관측**이며 RUBRIC min 차원 판정을 바꾸지 않는다.
 - **EP-3 두 arm 분리**: raw infra 예외를 공개 retryable과 동일시하지 않는다. raw arm은 기본 500을 확인한다. 공개 retryable arm은 **G1 승인 + 자기 BC 예외 정규화**가 있는 경우에만 controller의 503/409·code·header를 확인한다. 전역 추측·raw catch-all은 어느 arm에서도 허용하지 않는다.
-- **v4 적용 경계·소급 차단(freeze 정합)**: 이 매트릭스는 사용자가 `2026-08-03-code-json` epoch를 명시적으로 freeze한 **뒤 새로 생산하는 v4 라이브 결과**에만 균일 적용한다. working tree의 historical v3 결과 14개는 재작성·재채점하거나 EP 섹션을 추가하지 않는다. 이 경계는 **§0.3 「v4 candidate freeze 선결 작업」**과 **§6 「v4 candidate 채점 결과지 표준 형식」**의 candidate/no-retro gate를 따른다(§5.4 "결과 본 뒤 기준 변경 금지" 정합).
+- **v4 적용 경계·소급 차단(freeze 정합)**: 이 매트릭스는 사용자가 `2026-08-03-code-json` epoch를 명시적으로 freeze한 **뒤 새로 생산하는 v4 라이브 결과**에만 균일 적용한다. working tree의 historical v3 결과 14개는 재작성·재채점하거나 EP 섹션을 추가하지 않는다. 이 경계는 **§0.3 「v4 freeze 선결 작업」**과 **§6 「v4 동결 채점 결과지 표준 형식」**의 frozen/no-retro gate를 따른다(§5.4 "결과 본 뒤 기준 변경 금지" 정합).
 - 근거 = `ACLEX-CLAUDE-FIX-PLAN.md` probe 매트릭스 검토(적대 3렌즈 FIX-THEN-GO)·`ACLEX-AB-HANDOFF.md` probe 표·DR-44/45(ACL 전수성 #1 미해결).
 - **RUBRIC 정합(SSOT·DR-47)**: 관측 *항목*(EP-1~4 이름)은 `RUBRIC.md` **TIER-OBS**에 스텁 등재(라벨 무영향·freeze 밖)하고, *계약 속성·status 화이트리스트·N/A·어댑터*는 **여기 §4.3.1이 단일 정본**(RUBRIC은 status 미복제). 매 라이브 채점지 **표 섹션 필수화** 집행은 §6.1 #9.5.
 
@@ -242,7 +243,7 @@ P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의
 - **현 fixture(N=1·단일태스크 timeline)로는 4.3 충족 불가 → 최대 "정적 준수"까지 보고, "완료" 선언 금지**(정직).
 
 ### 4.5 비용 정직 인지
-full 후보(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판정 비용이 든다. 결정 레인(grep)은 거의 무비용이고 **인적 비용은 의미 레인**에 집중된다. 단, 현재 candidate로는 이 산정에 따라 실제 채점하지 않는다.
+full 평가(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판정 비용이 든다. 결정 레인(grep)은 거의 무비용이고 **인적 비용은 의미 레인**에 집중된다.
 
 > **완료 한계 명시**: 이 완료는 "규칙 준수+기능 정확"까지다 — baseline 인과·미시 유지보수성·보안(누출 제외)·명세 내적 품질은 *별도/후속*(과대주장 금지).
 
@@ -268,9 +269,9 @@ full 후보(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판
 
 ---
 
-## 6. v4 candidate 채점 결과지 표준 형식 (아직 미동결)
+## 6. v4 동결 채점 결과지 표준 형식
 
-> 이 템플릿도 v4 candidate다. 사용자 명시 freeze 전에는 복사·채점·결과 생성을 금지한다. freeze 이후 신규 결과지는 아래 골격·순서·칼럼을 사용한다. v3 결과 14개는 소급 개편하지 않는다.
+> 승인 이후 신규 v4 결과지는 아래 동결 골격·순서·칼럼을 사용한다. v3 결과 14개는 소급 개편하지 않는다.
 
 ### 6.1 섹션 순서 (RUBRIC 레터링 그대로 — 어기면 형식 위반)
 1. **헤더 블록**(§6.2)
@@ -289,7 +290,7 @@ full 후보(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판
 > 차원 표(3~8)는 `RUBRIC`의 **A→B→NINJA→FC→C→D** 레터링을 그대로 따른다. *C 누락 = 레터링 끊김 = 형식 위반*. E(앵커)는 루브릭 전용(결과지 미포함).
 
 ### 6.2 헤더 블록 (인용블록 `>`, 필수 필드)
-상태(`candidate · NOT ACTIVE · NOT FROZEN · SCORING PROHIBITED`, freeze 이후에는 승인된 상태값) · epoch(`2026-08-03-code-json`) · error profile(`dddjango-code-json`) · rubric version(`v4-candidate`) · dimension ID · identity(`epoch + error profile + rubric version + dimension ID`) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설 · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**.
+상태(`active · FROZEN · SCORING ENABLED`) · epoch(`2026-08-03-code-json`) · error profile(`dddjango-code-json`) · rubric version(`v4-candidate`) · dimension ID · identity(`epoch + error profile + rubric version + dimension ID`) · 채점일 · 픽스처(절대경로+기존규약 상태) · 런타임·N · 태스크 요지 · 게이트(BC/렌즈/스택/G1·G2/thinking 고정값) · **범례**(✅ PASS · ❌ FAIL · 🟡 WEAK/경미 · ⏸️ 보류 · ➖ N/A) · **필수 ⚠️ 단서**(해당 시): 리허설 · `N_grader`(<3이면 명시) · FC 전수 미실행 · **자기보고 불신**.
 - **fixture 도구 환경**(**사용자가 `2026-08-03-code-json` epoch를 명시적으로 freeze한 뒤 새로 생산하는 v4 결과지의 필수 필드**): 채점 *착수 전* venv 도구 스냅샷(`pip freeze`/site-packages 테스트도구 목록) + `requirements.txt`·`pyproject.toml` 테스트도구 핀 유무를 박제(§1.1.T `env`). **조정자가 채점 위해 추가한 도구는 `(조정자 추가)` 태그**로 표기해 코디 산출물(`produced`)과 분리. working tree의 historical v3 결과 14개는 이 필드를 추가하려고 재작성·재채점하지 않는다.
 
 ### 6.3 종합 판정 표 (사전식 — §2 의사코드 그대로)
@@ -311,7 +312,7 @@ full 후보(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판
 ---
 
 ## v3 역사 기록 (full SHA로만 재현; v4 비규범)
-> v3의 중앙 handler/catch-all/problem+json 오류 경로 기준은 **v3에서 폐기; v4 동일 ID 재정의**다. 아래 기록은 historical v3 결과를 해석할 때만 사용하고 v4 candidate 판정에 섞지 않는다.
+> v3의 중앙 handler/catch-all/problem+json 오류 경로 기준은 **v3에서 폐기; v4 동일 ID 재정의**다. 아래 기록은 historical v3 결과를 해석할 때만 사용하고 동결된 v4 판정에 섞지 않는다.
 - **v3 라이브 결과지 rollout 맥락(비규범)**: `maj1live(2026-06-07)`부터 v3 결과지에 EP 표 섹션을 사용했고 fixture 도구 환경 필드는 2026-06-09에 신설했다. 두 날짜는 active v4 cutoff가 아니며, v4 적용 경계는 사용자 명시 freeze 뒤 새로 생산하는 결과다. historical v3 결과 14개를 재작성·재채점하거나 EP/환경 섹션을 추가하는 근거로 사용하지 않는다.
 - **§0 동결 게이트 + 동결-전-결정 9개 확정**(미동결 채점 = §5 자기위반 차단; C-F5).
 - **판정 레인 집행**: 항목별 결정-판정 표(A-F3)·마스크 C 이진질문(A-F4)·조정자/grader 역할 분리(A-F7)·FC-1 등록 주체·시점(A-F6).

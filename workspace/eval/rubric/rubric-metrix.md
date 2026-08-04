@@ -1,8 +1,9 @@
-# dddjango v4 candidate 채점 결과지 템플릿 (rubric-metrix)
+# dddjango v4 frozen baseline 채점 결과지 템플릿 (rubric-metrix)
 
-> **상태**: `candidate` · **NOT ACTIVE** · **NOT FROZEN** · **SCORING PROHIBITED**.
-> 사용자 명시 freeze 전에는 이 템플릿을 복사·채점하거나 `results/`에 결과를 만들지 않는다.
-> **후보 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
+> **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
+> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과에 이 템플릿을 사용한다.
+> historical v3 결과에는 소급 적용하지 않는다.
+> **동결 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
 > `v4-candidate`.
 > **결과 identity**: `epoch + error profile + rubric version + dimension ID`.
 > **v3 locator**: full SHA `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`.
@@ -10,15 +11,15 @@
 
 ## 사용 조건
 
-- 이 파일은 v4 후보 보고 형식이다. 현재는 사용·채점 금지이며 스스로 active/frozen 상태를 만들지 않는다.
-- 사용자 freeze 이후에만 `EVAL-METHOD.md` 절차를 따라 한 runtime당 결과 파일 하나를 만든다.
+- 이 파일은 동결된 v4 보고 형식이다. 기준 변경에는 명시적 unfreeze 또는 새 epoch 승인이 필요하다.
+- 승인 이후 새 v4 평가에서 `EVAL-METHOD.md` 절차를 따라 한 runtime당 결과 파일 하나를 만든다.
 - 결정·의미·종합은 `✅ PASS · ❌ FAIL · 🟡 WEAK · ⏸️ 보류 · ➖ N/A`로 기록한다.
 - Result에는 조정자가 직접 확인한 `file:line` 근거를 쓴다. 결정 PASS여도 의미 판정을 생략하지 않는다.
 - 치명 후보 마스크는 **SD-1~7 · FC-1~3 · SH-1·2·3·4·7 · (HTTP operation이 있을 때) NJ-1·2 · Q-4**다.
 
 ## 1. 헤더 블록
 
-> **상태**: candidate · NOT ACTIVE · NOT FROZEN · SCORING PROHIBITED
+> **상태**: active · FROZEN · SCORING ENABLED
 > **epoch**: 2026-08-03-code-json
 > **error profile**: dddjango-code-json
 > **rubric version**: v4-candidate
@@ -29,7 +30,7 @@
 > **런타임 / N_grader**:
 > **태스크 요지 / 고정 게이트 답**:
 > **fixture 도구 환경(env / produced / used)**:
-> **단서**: 사용자 freeze 전 사용 금지 · 조정자 직접 검증 · 해당 시 리허설/FC 미실행
+> **단서**: 동결 이후 신규 v4 결과 전용 · 조정자 직접 검증 · 해당 시 리허설/FC 미실행
 
 ## 2. 종합 판정 (사전식 집계)
 
@@ -123,7 +124,7 @@
 
 ## TIER-OBS — 에러 경로 라이브 관측 (EP, 비채점)
 
-> EP는 34개 채점 차원 밖의 관측이다. 현재 candidate에서는 실행·채점 금지다. freeze 이후에도 종합 라벨을 자동 변경하지 않는다.
+> EP는 34개 채점 차원 밖의 관측이다. 동결 이후 새 v4 라이브 결과에서 실행·기록하며 종합 라벨을 자동 변경하지 않는다.
 
 | 키 | probe | 기대 계약 | 관측 | 판정 |
 |---|---|---|---|---|
