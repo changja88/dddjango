@@ -30,11 +30,12 @@
 |---|---|---|---|
 | M1 | 차감 **부호 역전** (`stock -= qty` → `stock += qty`) | 재고 차감 테스트 red | 핵심 판정 메서드 내. DB CHECK constraint 아님 |
 | M2 | 판정 **경계 변조** (`stock < qty` → `stock <= qty`, 또는 `>=`→`>`) | 경계(재고==수량) 테스트 red | G3 경계 케이스가 잡아야 |
-| M3 | 오류 concrete ErrorOut의 `status` default 또는 BC base ErrorOut 직접 생성자의 `status`를 변조(예: `409` → `200`) | **HTTP status 단언과 body `status` 단언이 모두 red** | 해당 controller의 `Status`/error mapping |
+| M3 | controller의 승인 HTTP status 표현을 변조(예: `409` → `200`). slot 6이 body status property를 승인한 fixture만 그 concrete/base 값도 별도로 변조 | HTTP status 계약이 red. body status property가 승인된 fixture는 해당 일치 단언도 red | 해당 controller의 `Status`/error mapping |
 
 > **주입 사이트**: M1·M2는 FC-1 골든이 두드리는 경로상의 **핵심 판정 메서드 1곳**,
 > M3은 부족 오류를 직접 반환하는 **해당 controller의 `Status`/error mapping**이다.
-> concrete `status` default와 BC base 직접 생성자 status 중 실제 경로가 쓰는 한 곳을 변조하고,
+> body status property는 plugin 기본이 아니다. 해당 fixture의 slot 6에 실제로 있을 때만 그
+> concrete default 또는 BC base 직접 생성자 값을 변조하고,
 > HTTP status와 JSON body `status`가 함께 red인지 확인한다. 예외 handler는 주입 사이트가 아니다.
 > **DB CHECK constraint(`stock__gte=0`)는 도메인 판정 아니므로 mutation 대상 제외.**
 > v4가 freeze된 뒤에도 red율 100%가 아니면 FC-2 FAIL(vacuous 테스트)이며, 현재 candidate에서는

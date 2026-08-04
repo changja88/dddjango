@@ -5,7 +5,7 @@ The checker is deliberately profile-gated.  Positional-only, ``auto``, and
 ``preserve-established`` invocations do not apply schema semantics; preserve
 still validates the selectors it supplies.  ``dddjango-code-json`` validates
 the canonical common/BC ErrorOut modules, project inventory correspondence,
-wire-code uniqueness, and narrow direct raw-string ``code`` forms.
+wire-code uniqueness, and narrow direct raw-string discriminator forms.
 
 Exit codes: 0=clean/N/A, 2=contract blocker, 1=usage or analysis error.
 """
@@ -51,6 +51,82 @@ FIELD_FACTORIES = {
     "pydantic.Field",
     "pydantic.fields.Field",
 }
+ALIAS_CHOICES_FACTORIES = {
+    "pydantic.AliasChoices",
+    "pydantic.aliases.AliasChoices",
+}
+ALIAS_PATH_FACTORIES = {
+    "pydantic.AliasPath",
+    "pydantic.aliases.AliasPath",
+}
+STATIC_CONFIG_FACTORIES = {
+    "dict",
+    "builtins.dict",
+    "pydantic.ConfigDict",
+    "pydantic.config.ConfigDict",
+}
+STATIC_FIELD_CONTRACT_FACTORIES = (
+    FIELD_FACTORIES
+    | ALIAS_CHOICES_FACTORIES
+    | ALIAS_PATH_FACTORIES
+)
+FIELD_CONTRACT_SYMBOL_PREFIXES = (
+    "builtins.",
+    "pydantic.",
+    "pydantic_core.",
+    "typing.",
+    "typing_extensions.",
+)
+STATIC_ALIAS_GENERATORS = {
+    "pydantic.alias_generators.to_camel",
+    "pydantic.alias_generators.to_pascal",
+    "pydantic.alias_generators.to_snake",
+}
+STATIC_FIELD_DEFAULT_FACTORIES = {
+    "bool",
+    "builtins.bool",
+    "builtins.bytes",
+    "builtins.dict",
+    "builtins.float",
+    "builtins.frozenset",
+    "builtins.int",
+    "builtins.list",
+    "builtins.set",
+    "builtins.str",
+    "builtins.tuple",
+    "bytes",
+    "dict",
+    "float",
+    "frozenset",
+    "int",
+    "list",
+    "set",
+    "str",
+    "tuple",
+}
+STATIC_FIELD_SENTINELS = {
+    "pydantic.fields.PydanticUndefined",
+    "pydantic_core.PydanticUndefined",
+    "pydantic_core._pydantic_core.PydanticUndefined",
+}
+STATIC_LITERAL_PREFIX = "<static-literal>:"
+STATIC_AST_PREFIX = "<static-ast>:"
+BUILTIN_CONTRACT_SYMBOLS = {
+    "None",
+    "bool",
+    "bytes",
+    "complex",
+    "dict",
+    "float",
+    "frozenset",
+    "int",
+    "list",
+    "object",
+    "set",
+    "str",
+    "tuple",
+    "type",
+}
 ENUM_BASES = {
     "enum.Enum",
     "enum.IntEnum",
@@ -59,18 +135,24 @@ ENUM_BASES = {
     "enum.IntFlag",
     "enum.ReprEnum",
 }
-VALIDATOR_DECORATORS = {
+SCHEMA_DECORATORS = {
+    "pydantic.computed_field",
+    "pydantic.field_serializer",
     "pydantic.field_validator",
+    "pydantic.model_serializer",
     "pydantic.model_validator",
     "pydantic.root_validator",
     "pydantic.validator",
 }
-FIELD_ALIAS_OPTIONS = {
-    "alias",
-    "validation_alias",
-    "serialization_alias",
+SCHEMA_DECORATOR_TAILS = {
+    "computed_field",
+    "field_serializer",
+    "field_validator",
+    "model_serializer",
+    "model_validator",
+    "root_validator",
+    "validator",
 }
-MODEL_CONFIG_ALIAS_OPTIONS = {"alias_generator"}
 MATCH_NODES = tuple(
     node_type
     for node_type in (getattr(ast, "Match", None),)
@@ -142,6 +224,32 @@ class Finding:
 
     def render(self) -> str:
         return f"  - {self.relative_path}:{self.lineno}  {self.category}: {self.shown}"
+
+
+NodeSignature = tuple[object, ...]
+
+
+@dataclass(frozen=True)
+class CommonFieldContract:
+    """Observed common ErrorOut field contract; no property name is predefined."""
+
+    annotation: NodeSignature
+    discriminator_annotation: NodeSignature | None
+    metadata: tuple[NodeSignature, ...]
+    required: bool
+    default: NodeSignature
+    constructor_keys: frozenset[str]
+    constructor_paths: frozenset[tuple[str | int, ...]]
+    constructor_keys_complete: bool
+
+
+@dataclass(frozen=True)
+class KnownErrorClass:
+    discriminator_keys: frozenset[str]
+    discriminator_paths: frozenset[tuple[str | int, ...]]
+    keys_complete: bool
+    wire_values: frozenset[str]
+    alias_analysis: list[str]
 
 
 def _argument_parser() -> _UsageParser:
@@ -566,6 +674,48 @@ def _module_name(path: Path) -> str:
     return ".".join(path.with_suffix("").parts)
 
 
+def _project_module_prefixes(paths: tuple[Path, ...]) -> set[str]:
+    """Return importable project package/module prefixes from inventory paths."""
+
+    prefixes: set[str] = set()
+    for path in paths:
+        parts = list(path.with_suffix("").parts)
+        if parts and parts[-1] == "__init__":
+            parts.pop()
+        for end in range(1, len(parts) + 1):
+            prefixes.add(".".join(parts[:end]))
+    return prefixes
+
+
+def _project_import_nodes(
+    parsed: ParsedSource,
+    project_module_prefixes: set[str],
+    *,
+    allowed_modules: frozenset[str] = frozenset(),
+    recursive: bool = False,
+) -> list[ast.stmt]:
+    nodes: list[ast.stmt] = []
+    statements = ast.walk(parsed.tree) if recursive else parsed.tree.body
+    for statement in statements:
+        imported_modules: list[str | None] = []
+        if isinstance(statement, ast.Import):
+            imported_modules.extend(alias.name for alias in statement.names)
+        elif isinstance(statement, ast.ImportFrom):
+            imported_modules.append(
+                _absolute_from_module(parsed.relative_path, statement)
+            )
+        if any(
+            imported is None
+            or (
+                imported in project_module_prefixes
+                and imported not in allowed_modules
+            )
+            for imported in imported_modules
+        ):
+            nodes.append(statement)
+    return nodes
+
+
 def _expression_name(node: ast.AST) -> str | None:
     if isinstance(node, ast.Name):
         return node.id
@@ -640,6 +790,8 @@ def _module_bindings(parsed: ParsedSource) -> dict[int, dict[str, str]]:
             bindings.pop(name, None)
         if isinstance(node, ast.ClassDef):
             bindings[node.name] = f"{module}.{node.name}"
+        else:
+            _bind_static_assignment(node, bindings)
     return before
 
 
@@ -651,7 +803,77 @@ def _resolve(node: ast.AST, bindings: dict[str, str]) -> str | None:
     imported = bindings.get(first)
     if imported is None:
         return None
+    if imported.startswith((STATIC_LITERAL_PREFIX, STATIC_AST_PREFIX)):
+        return imported if not rest else None
     return ".".join((imported, *rest))
+
+
+def _static_literal_binding(value: object) -> str:
+    return f"{STATIC_LITERAL_PREFIX}{type(value).__name__}:{value!r}"
+
+
+def _static_literal_value(binding: str | None) -> object:
+    if binding is None or not binding.startswith(STATIC_LITERAL_PREFIX):
+        return _NO_STATIC_VALUE
+    _prefix, _separator, payload = binding.partition(STATIC_LITERAL_PREFIX)
+    type_name, separator, literal = payload.partition(":")
+    if not separator:
+        return _NO_STATIC_VALUE
+    try:
+        value = ast.literal_eval(literal)
+    except (SyntaxError, ValueError):
+        return _NO_STATIC_VALUE
+    return value if type(value).__name__ == type_name else _NO_STATIC_VALUE
+
+
+_NO_STATIC_VALUE = object()
+
+
+def _static_ast_value(binding: str | None) -> ast.AST | None:
+    if binding is None or not binding.startswith(STATIC_AST_PREFIX):
+        return None
+    try:
+        return ast.parse(
+            binding.removeprefix(STATIC_AST_PREFIX),
+            mode="eval",
+        ).body
+    except SyntaxError:
+        return None
+
+
+def _static_assignment_binding(
+    value: ast.AST | None,
+    bindings: dict[str, str],
+) -> str | None:
+    if isinstance(value, ast.Constant):
+        return _static_literal_binding(value.value)
+    if isinstance(value, (ast.Dict, ast.List, ast.Tuple, ast.Set)):
+        try:
+            return _static_literal_binding(ast.literal_eval(value))
+        except (TypeError, ValueError):
+            return f"{STATIC_AST_PREFIX}{ast.unparse(value)}"
+    if value is not None:
+        return _resolve(value, bindings)
+    return None
+
+
+def _bind_static_assignment(
+    statement: ast.stmt,
+    bindings: dict[str, str],
+) -> None:
+    if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+        target = statement.targets[0]
+        value = statement.value
+    elif isinstance(statement, ast.AnnAssign):
+        target = statement.target
+        value = statement.value
+    else:
+        return
+    if not isinstance(target, ast.Name):
+        return
+    static_binding = _static_assignment_binding(value, bindings)
+    if static_binding is not None:
+        bindings[target.id] = static_binding
 
 
 def _classvar(annotation: ast.AST, bindings: dict[str, str]) -> bool:
@@ -661,106 +883,1004 @@ def _classvar(annotation: ast.AST, bindings: dict[str, str]) -> bool:
     return dotted in {"ClassVar", "typing.ClassVar"} or resolved == "typing.ClassVar"
 
 
-def _explicit_alias_option(keyword: ast.keyword) -> bool:
+def _symbol_name(node: ast.AST, bindings: dict[str, str]) -> str | None:
+    dotted = _expression_name(node)
+    if dotted is None:
+        return None
+    return _resolve(node, bindings) or dotted
+
+
+def _is_field_call(node: ast.AST, bindings: dict[str, str]) -> bool:
     return (
-        keyword.arg is not None
-        and keyword.arg in FIELD_ALIAS_OPTIONS
-        and not (
-            isinstance(keyword.value, ast.Constant)
-            and keyword.value.value is None
-        )
+        isinstance(node, ast.Call)
+        and _resolve(node.func, bindings) in FIELD_FACTORIES
     )
 
 
-def _contains_field_alias(
-    node: ast.AST, bindings: dict[str, str]
-) -> bool:
-    return any(
-        isinstance(candidate, ast.Call)
-        and _resolve(candidate.func, bindings) in FIELD_FACTORIES
-        and any(_explicit_alias_option(keyword) for keyword in candidate.keywords)
-        for candidate in ast.walk(node)
+def _static_string_value(node: ast.AST, bindings: dict[str, str]) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    value = _static_literal_value(_resolve(node, bindings))
+    return value if isinstance(value, str) else None
+
+
+def _static_path_part(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> str | int | None:
+    value = _static_string_value(node, bindings)
+    if value is not None:
+        return value
+    if isinstance(node, ast.Constant) and isinstance(node.value, int):
+        return node.value
+    resolved = _static_literal_value(_resolve(node, bindings))
+    return resolved if isinstance(resolved, int) else None
+
+
+def _alias_input_paths(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> set[tuple[str | int, ...]]:
+    direct = _static_string_value(node, bindings)
+    if direct is not None:
+        return {(direct,)}
+    if not isinstance(node, ast.Call):
+        return set()
+    factory = _resolve(node.func, bindings)
+    if factory in ALIAS_CHOICES_FACTORIES:
+        return {
+            path
+            for argument in node.args
+            for path in _alias_input_paths(argument, bindings)
+        }
+    if factory in ALIAS_PATH_FACTORIES:
+        parts = tuple(_static_path_part(argument, bindings) for argument in node.args)
+        if parts and all(part is not None for part in parts):
+            return {tuple(part for part in parts if part is not None)}
+    return set()
+
+
+def _field_constructor_paths(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+    alias_generator: str | None = None,
+) -> frozenset[tuple[str | int, ...]]:
+    """Static validation-input paths that may address this field.
+
+    The Python field name is retained even when alias-only validation would reject it:
+    a raw discriminator passed through an invalid spelling is still invalid production
+    code and must not become a bypass.  Explicit validation aliases, aliases and the
+    top-level key of AliasPath/AliasChoices are added when statically knowable.
+    """
+
+    paths: set[tuple[str | int, ...]] = (
+        {(field.target.id,)} if isinstance(field.target, ast.Name) else set()
+    )
+    roots = [field.annotation]
+    if field.value is not None:
+        roots.append(field.value)
+    for root in roots:
+        for candidate in ast.walk(root):
+            if not _is_field_call(candidate, bindings):
+                continue
+            assert isinstance(candidate, ast.Call)
+            for keyword in candidate.keywords:
+                if keyword.arg in {"alias", "validation_alias"}:
+                    paths.update(_alias_input_paths(keyword.value, bindings))
+    if isinstance(field.target, ast.Name):
+        generated = _generated_alias(field.target.id, alias_generator)
+        if generated is not None:
+            paths.add((generated,))
+    return frozenset(paths)
+
+
+def _field_constructor_keys(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+    alias_generator: str | None = None,
+) -> frozenset[str]:
+    return frozenset(
+        path[0]
+        for path in _field_constructor_paths(field, bindings, alias_generator)
+        if path and isinstance(path[0], str)
     )
 
 
-def _model_config_has_alias(node: ast.AST) -> bool:
-    def is_alias_entry(key: ast.AST | None, value: ast.AST) -> bool:
-        return (
-            isinstance(key, ast.Constant)
-            and key.value in MODEL_CONFIG_ALIAS_OPTIONS
-            and not (isinstance(value, ast.Constant) and value.value is None)
-        )
-
-    if isinstance(node, ast.Dict):
-        return any(
-            is_alias_entry(key, value)
-            for key, value in zip(node.keys, node.values)
-        )
-    if isinstance(node, ast.Call):
-        if any(
-            keyword.arg in MODEL_CONFIG_ALIAS_OPTIONS
-            and not (
-                isinstance(keyword.value, ast.Constant)
-                and keyword.value.value is None
-            )
-            for keyword in node.keywords
-            if keyword.arg is not None
+def _generated_alias(field_name: str, generator: str | None) -> str | None:
+    if generator == "pydantic.alias_generators.to_pascal":
+        camel = field_name.title()
+        return re.sub(r"([0-9A-Za-z])_(?=[0-9A-Z])", lambda match: match.group(1), camel)
+    if generator == "pydantic.alias_generators.to_camel":
+        if re.match(r"^[a-z]+[A-Za-z0-9]*$", field_name) and not re.search(
+            r"\d[a-z]", field_name
         ):
+            return field_name
+        pascal = _generated_alias(field_name, "pydantic.alias_generators.to_pascal")
+        assert pascal is not None
+        return re.sub(r"(^_*[A-Z])", lambda match: match.group(1).lower(), pascal)
+    if generator == "pydantic.alias_generators.to_snake":
+        snake = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", field_name)
+        snake = re.sub(r"([a-z])([A-Z])", r"\1_\2", snake)
+        snake = re.sub(r"([0-9])([A-Z])", r"\1_\2", snake)
+        snake = re.sub(r"([a-z])([0-9])", r"\1_\2", snake)
+        return snake.replace("-", "_").lower()
+    return None
+
+
+def _common_alias_generator(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    outer: dict[str, str],
+) -> tuple[str | None, bool]:
+    before = _class_body_bindings(parsed, node, outer)
+    body_candidate: tuple[ast.AST, dict[str, str]] | None = None
+    body_config_seen = False
+    body_config_complete = True
+    legacy_candidate: tuple[ast.AST, dict[str, str]] | None = None
+    legacy_config_seen = False
+    for statement in node.body:
+        bindings = before.get(id(statement), outer)
+        value: ast.AST | None = None
+        targets: set[str] = set()
+        if isinstance(statement, ast.Assign):
+            value = statement.value
+            targets = {
+                name
+                for target in statement.targets
+                for name in _target_names(target)
+            }
+        elif isinstance(statement, ast.AnnAssign):
+            value = statement.value
+            targets = _target_names(statement.target)
+        if "model_config" in targets:
+            # A later class-body assignment replaces the earlier namespace
+            # value; ConfigDict assignments are not merged by Python.
+            body_config_seen = True
+            body_candidate = None
+            body_config_complete = True
+            if isinstance(value, ast.Call):
+                resolved_factory = _resolve(value.func, bindings)
+                if resolved_factory not in {
+                    "dict",
+                    "pydantic.ConfigDict",
+                    "pydantic.config.ConfigDict",
+                } or value.args or any(keyword.arg is None for keyword in value.keywords):
+                    body_config_complete = False
+                for keyword in value.keywords:
+                    if keyword.arg == "alias_generator":
+                        body_candidate = (keyword.value, bindings)
+            elif isinstance(value, ast.Dict):
+                for key, item in zip(value.keys, value.values):
+                    if key is None:
+                        body_config_complete = False
+                    elif _static_string_value(key, bindings) == "alias_generator":
+                        body_candidate = (item, bindings)
+                    elif _static_string_value(key, bindings) is None:
+                        body_config_complete = False
+            else:
+                body_config_complete = False
+        if isinstance(statement, ast.ClassDef) and statement.name == "Config":
+            legacy_config_seen = True
+            legacy_candidate = None
+            config_before = _class_body_bindings(parsed, statement, bindings)
+            for config_statement in statement.body:
+                if not isinstance(config_statement, (ast.Assign, ast.AnnAssign)):
+                    continue
+                config_targets = (
+                    {
+                        name
+                        for target in config_statement.targets
+                        for name in _target_names(target)
+                    }
+                    if isinstance(config_statement, ast.Assign)
+                    else _target_names(config_statement.target)
+                )
+                if "alias_generator" in config_targets:
+                    config_value = config_statement.value
+                    if config_value is not None:
+                        legacy_candidate = (
+                            config_value,
+                            config_before.get(id(config_statement), bindings),
+                        )
+    if body_config_seen and legacy_config_seen:
+        return None, False
+
+    candidate = body_candidate if body_config_seen else legacy_candidate
+    complete = body_config_complete if body_config_seen else True
+
+    # Pydantic class-header config kwargs override the body model_config.
+    for keyword in node.keywords:
+        if keyword.arg == "alias_generator":
+            candidate = (keyword.value, outer)
+            complete = True
+
+    if candidate is None:
+        return None, complete
+    value, bindings = candidate
+    if isinstance(value, ast.Constant) and value.value is None:
+        return None, complete
+    resolved = _resolve(value, bindings)
+    return resolved, complete and resolved in {
+        "pydantic.alias_generators.to_camel",
+        "pydantic.alias_generators.to_pascal",
+        "pydantic.alias_generators.to_snake",
+    }
+
+
+def _config_expression_requires_runtime_proof(
+    node: ast.AST | None,
+    bindings: dict[str, str],
+    seen_static_bindings: frozenset[str] = frozenset(),
+    *,
+    field_contract: bool = False,
+    config_key: str | None = None,
+) -> bool:
+    """Whether a config expression can execute project-defined Python.
+
+    This is intentionally a small inert-value recognizer, not a Python
+    interpreter.  Pydantic config accepts callables under keys other than
+    ``alias_generator`` (for example ``json_schema_extra``), and class-header
+    ``**`` expansion can hide any config key.  Anything outside literal
+    containers, three alias generators in the exact ``alias_generator`` slot,
+    and direct ``dict``/``ConfigDict`` construction is handed to target-pin
+    runtime proof. Field annotations separately allow trusted type symbols;
+    config values do not, because even a builtin attribute can be an executable
+    hook under keys such as ``json_schema_extra``.
+    """
+
+    if node is None:
+        return True
+    if isinstance(node, ast.Constant):
+        return False
+    if isinstance(node, ast.Dict):
+        for key, value in zip(node.keys, node.values):
+            if key is not None and _config_expression_requires_runtime_proof(
+                key,
+                bindings,
+                seen_static_bindings,
+                field_contract=field_contract,
+            ):
+                return True
+            nested_key = (
+                key.value
+                if isinstance(key, ast.Constant) and isinstance(key.value, str)
+                else None
+            )
+            if _config_expression_requires_runtime_proof(
+                value,
+                bindings,
+                seen_static_bindings,
+                field_contract=field_contract,
+                config_key=nested_key,
+            ):
+                return True
+        return False
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        return any(
+            _config_expression_requires_runtime_proof(
+                element,
+                bindings,
+                seen_static_bindings,
+                field_contract=field_contract,
+                config_key=config_key,
+            )
+            for element in node.elts
+        )
+    if isinstance(node, ast.UnaryOp):
+        try:
+            ast.literal_eval(node)
+        except (TypeError, ValueError):
+            return True
+        return False
+    if isinstance(node, ast.Call):
+        factory = _resolve(node.func, bindings) or _expression_name(node.func)
+        if factory not in STATIC_CONFIG_FACTORIES:
             return True
         return any(
-            isinstance(argument, ast.Dict) and _model_config_has_alias(argument)
+            _config_expression_requires_runtime_proof(
+                argument,
+                bindings,
+                seen_static_bindings,
+                field_contract=field_contract,
+                config_key=config_key,
+            )
             for argument in node.args
+        ) or any(
+            _config_expression_requires_runtime_proof(
+                keyword.value,
+                bindings,
+                seen_static_bindings,
+                field_contract=field_contract,
+                config_key=keyword.arg,
+            )
+            for keyword in node.keywords
         )
+    if isinstance(node, (ast.Name, ast.Attribute)):
+        resolved = _resolve(node, bindings)
+        if _static_literal_value(resolved) is not _NO_STATIC_VALUE:
+            return False
+        static_node = _static_ast_value(resolved)
+        if static_node is not None:
+            assert resolved is not None
+            if resolved in seen_static_bindings:
+                return True
+            return _config_expression_requires_runtime_proof(
+                static_node,
+                bindings,
+                seen_static_bindings | {resolved},
+                field_contract=field_contract,
+                config_key=config_key,
+            )
+        if resolved is None:
+            return not (
+                field_contract
+                and (_expression_name(node) or "") in BUILTIN_CONTRACT_SYMBOLS
+            )
+        if field_contract and resolved.startswith(FIELD_CONTRACT_SYMBOL_PREFIXES):
+            return False
+        return not (
+            config_key == "alias_generator"
+            and resolved in STATIC_ALIAS_GENERATORS
+        )
+    return True
+
+
+def _field_contract_expression_requires_runtime_proof(
+    node: ast.AST | None,
+    bindings: dict[str, str],
+    *,
+    annotation: bool = False,
+    default_factory: bool = False,
+) -> bool:
+    """Recognize declarative field/type expressions without executing Python."""
+
+    if node is None or isinstance(node, ast.Constant):
+        return False
+    if isinstance(node, ast.Call):
+        factory = _resolve(node.func, bindings) or _expression_name(node.func)
+        if factory not in STATIC_FIELD_CONTRACT_FACTORIES:
+            return True
+        if factory in FIELD_FACTORIES:
+            return any(
+                _field_contract_expression_requires_runtime_proof(
+                    argument,
+                    bindings,
+                )
+                for argument in node.args
+            ) or any(
+                _field_contract_expression_requires_runtime_proof(
+                    keyword.value,
+                    bindings,
+                    default_factory=keyword.arg == "default_factory",
+                )
+                for keyword in node.keywords
+            )
+        return any(
+            _field_contract_expression_requires_runtime_proof(
+                argument,
+                bindings,
+            )
+            for argument in node.args
+        ) or any(
+            _field_contract_expression_requires_runtime_proof(
+                keyword.value,
+                bindings,
+            )
+            for keyword in node.keywords
+        )
+    if isinstance(node, (ast.Dict, ast.List, ast.Tuple, ast.Set)):
+        values = (
+            [
+                candidate
+                for key, value in zip(node.keys, node.values)
+                for candidate in (key, value)
+                if candidate is not None
+            ]
+            if isinstance(node, ast.Dict)
+            else list(node.elts)
+        )
+        return any(
+            _field_contract_expression_requires_runtime_proof(
+                value,
+                bindings,
+                annotation=annotation,
+                default_factory=default_factory,
+            )
+            for value in values
+        )
+    if isinstance(node, ast.Subscript):
+        if not annotation:
+            return True
+        return _field_contract_expression_requires_runtime_proof(
+            node.value,
+            bindings,
+            annotation=True,
+        ) or _field_contract_expression_requires_runtime_proof(
+            node.slice,
+            bindings,
+            annotation=True,
+        )
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        if not annotation:
+            return True
+        return _field_contract_expression_requires_runtime_proof(
+            node.left,
+            bindings,
+            annotation=True,
+        ) or _field_contract_expression_requires_runtime_proof(
+            node.right,
+            bindings,
+            annotation=True,
+        )
+    if isinstance(node, ast.UnaryOp):
+        try:
+            ast.literal_eval(node)
+        except (TypeError, ValueError):
+            return True
+        return False
+    if isinstance(node, (ast.Name, ast.Attribute)):
+        resolved = _resolve(node, bindings)
+        expression = _expression_name(node) or ""
+        if default_factory:
+            return (resolved or expression) not in STATIC_FIELD_DEFAULT_FACTORIES
+        if not annotation:
+            if _static_literal_value(resolved) is not _NO_STATIC_VALUE:
+                return False
+            return resolved not in STATIC_FIELD_SENTINELS
+        return _config_expression_requires_runtime_proof(
+            node,
+            bindings,
+            field_contract=True,
+        )
+    return True
+
+
+def _common_config_requires_runtime_proof(
+    parsed: ParsedSource,
+    node: ast.ClassDef,
+    outer: dict[str, str],
+) -> bool:
+    """Conservatively detect dynamic common ErrorOut config/decorators."""
+
+    if any(
+        _config_expression_requires_runtime_proof(decorator, outer)
+        for decorator in node.decorator_list
+    ):
+        return True
+    if any(
+        _config_expression_requires_runtime_proof(
+            keyword.value,
+            outer,
+            config_key=keyword.arg,
+        )
+        for keyword in node.keywords
+    ):
+        return True
+
+    before = _class_body_bindings(parsed, node, outer)
+    for statement in node.body:
+        bindings = before.get(id(statement), outer)
+        if isinstance(statement, ast.Assign):
+            targets = {
+                name
+                for target in statement.targets
+                for name in _target_names(target)
+            }
+            if "model_config" in targets and _config_expression_requires_runtime_proof(
+                statement.value,
+                bindings,
+            ):
+                return True
+        elif isinstance(statement, ast.AnnAssign):
+            if (
+                "model_config" in _target_names(statement.target)
+                and _config_expression_requires_runtime_proof(
+                    statement.value,
+                    bindings,
+                )
+            ):
+                return True
+            if (
+                isinstance(statement.target, ast.Name)
+                and statement.target.id.startswith("_")
+                and _config_expression_requires_runtime_proof(
+                    statement.value,
+                    bindings,
+                )
+            ):
+                return True
+            if _classvar(statement.annotation, bindings):
+                if _classvar_binding_requires_runtime_proof(statement.value):
+                    return True
+            elif _field_contract_expression_requires_runtime_proof(
+                statement.value,
+                bindings,
+            ):
+                return True
+        elif isinstance(statement, ast.ClassDef) and statement.name == "Config":
+            if any(
+                _config_expression_requires_runtime_proof(base, bindings)
+                for base in statement.bases
+            ) or any(
+                _config_expression_requires_runtime_proof(decorator, bindings)
+                for decorator in statement.decorator_list
+            ) or any(
+                _config_expression_requires_runtime_proof(
+                    keyword.value,
+                    bindings,
+                    config_key=keyword.arg,
+                )
+                for keyword in statement.keywords
+            ):
+                return True
+            config_before = _class_body_bindings(parsed, statement, bindings)
+            for config_statement in statement.body:
+                config_bindings = config_before.get(id(config_statement), bindings)
+                if isinstance(config_statement, ast.Assign):
+                    config_targets = {
+                        name
+                        for target in config_statement.targets
+                        for name in _target_names(target)
+                    }
+                    if _config_expression_requires_runtime_proof(
+                        config_statement.value,
+                        config_bindings,
+                        config_key=(
+                            next(iter(config_targets))
+                            if len(config_targets) == 1
+                            else None
+                        ),
+                    ):
+                        return True
+                elif isinstance(config_statement, ast.AnnAssign):
+                    config_targets = _target_names(config_statement.target)
+                    if _config_expression_requires_runtime_proof(
+                        config_statement.value,
+                        config_bindings,
+                        config_key=(
+                            next(iter(config_targets))
+                            if len(config_targets) == 1
+                            else None
+                        ),
+                    ):
+                        return True
+                elif isinstance(
+                    config_statement,
+                    (ast.FunctionDef, ast.AsyncFunctionDef),
+                ):
+                    return True
+                elif isinstance(config_statement, ast.Expr):
+                    if not (
+                        isinstance(config_statement.value, ast.Constant)
+                        and isinstance(config_statement.value.value, str)
+                    ) and _config_expression_requires_runtime_proof(
+                        config_statement.value,
+                        config_bindings,
+                    ):
+                        return True
+                elif not isinstance(config_statement, ast.Pass):
+                    return True
+        if any(
+            isinstance(candidate, ast.Name) and candidate.id == "model_config"
+            for candidate in ast.walk(statement)
+        ):
+            direct_assignment = (
+                isinstance(statement, ast.Assign)
+                and len(statement.targets) == 1
+                and isinstance(statement.targets[0], ast.Name)
+                and statement.targets[0].id == "model_config"
+            ) or (
+                isinstance(statement, ast.AnnAssign)
+                and isinstance(statement.target, ast.Name)
+                and statement.target.id == "model_config"
+            )
+            if not direct_assignment:
+                return True
+        if isinstance(statement, ast.Expr):
+            if not (
+                isinstance(statement.value, ast.Constant)
+                and isinstance(statement.value.value, str)
+            ):
+                return True
+        elif isinstance(statement, ast.Assign):
+            if any(not isinstance(target, ast.Name) for target in statement.targets):
+                return True
+            if (
+                any(
+                    isinstance(target, ast.Name) and target.id.startswith("_")
+                    for target in statement.targets
+                )
+                and _config_expression_requires_runtime_proof(
+                    statement.value,
+                    bindings,
+                )
+            ):
+                return True
+        elif isinstance(statement, ast.AnnAssign):
+            if not isinstance(statement.target, ast.Name):
+                return True
+        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return True
+        elif not isinstance(
+            statement,
+            (
+                ast.ClassDef,
+                ast.Pass,
+            ),
+        ):
+            return True
     return False
 
 
-def _value_bindings_before(
-    statements: list[ast.stmt],
-    initial: dict[str, ast.AST | None] | None = None,
-) -> dict[int, dict[str, ast.AST | None]]:
-    values = dict(initial or {})
-    before: dict[int, dict[str, ast.AST | None]] = {}
-    for statement in statements:
-        before[id(statement)] = dict(values)
-        collector = _FunctionLocalCollector()
-        collector.visit(statement)
-        for name in collector.bound:
-            values.pop(name, None)
-        if isinstance(statement, ast.Assign):
-            for target in statement.targets:
-                if isinstance(target, ast.Name):
-                    values[target.id] = statement.value
-                else:
-                    for name in _target_names(target):
-                        values[name] = None
-        elif isinstance(statement, ast.AnnAssign) and isinstance(
-            statement.target, ast.Name
-        ):
-            values[statement.target.id] = statement.value
-    return before
+def _signature(
+    node: ast.AST | None,
+    bindings: dict[str, str],
+    *,
+    replacements: dict[str, str] | None = None,
+) -> NodeSignature:
+    """Return an import-alias-neutral, deterministic AST signature."""
+
+    if node is None:
+        return ("none-node",)
+    replacements = replacements or {}
+    symbol = _symbol_name(node, bindings)
+    if symbol is not None:
+        static_value = _static_literal_value(symbol)
+        if static_value is not _NO_STATIC_VALUE:
+            return (
+                "constant",
+                type(static_value).__name__,
+                repr(static_value),
+            )
+        return ("symbol", replacements.get(symbol, symbol))
+    if isinstance(node, ast.Constant):
+        return ("constant", type(node.value).__name__, repr(node.value))
+    if isinstance(node, ast.Subscript):
+        return (
+            "subscript",
+            _signature(node.value, bindings, replacements=replacements),
+            _signature(node.slice, bindings, replacements=replacements),
+        )
+    if isinstance(node, ast.BinOp):
+        return (
+            "binop",
+            type(node.op).__name__,
+            _signature(node.left, bindings, replacements=replacements),
+            _signature(node.right, bindings, replacements=replacements),
+        )
+    if isinstance(node, ast.UnaryOp):
+        return (
+            "unary",
+            type(node.op).__name__,
+            _signature(node.operand, bindings, replacements=replacements),
+        )
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return (
+            type(node).__name__.lower(),
+            *(
+                _signature(item, bindings, replacements=replacements)
+                for item in node.elts
+            ),
+        )
+    if isinstance(node, (ast.Set, ast.Dict)):
+        if isinstance(node, ast.Set):
+            items = [
+                _signature(item, bindings, replacements=replacements)
+                for item in node.elts
+            ]
+        else:
+            items = [
+                (
+                    "item",
+                    _signature(key, bindings, replacements=replacements),
+                    _signature(value, bindings, replacements=replacements),
+                )
+                for key, value in zip(node.keys, node.values)
+            ]
+        return (type(node).__name__.lower(), *sorted(items, key=repr))
+    if isinstance(node, ast.Call):
+        keywords = sorted(
+            (
+                keyword.arg or "**",
+                _signature(keyword.value, bindings, replacements=replacements),
+            )
+            for keyword in node.keywords
+        )
+        return (
+            "call",
+            _signature(node.func, bindings, replacements=replacements),
+            tuple(
+                _signature(argument, bindings, replacements=replacements)
+                for argument in node.args
+            ),
+            tuple(keywords),
+        )
+    if isinstance(node, ast.keyword):
+        return (
+            "keyword",
+            node.arg,
+            _signature(node.value, bindings, replacements=replacements),
+        )
+    return ("ast", ast.dump(node, include_attributes=False))
 
 
-def _class_value_bindings(
+def _unresolved_contract_symbols(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> set[str]:
+    unresolved: set[str] = set()
+
+    def visit(candidate: ast.AST) -> None:
+        if isinstance(candidate, (ast.Name, ast.Attribute)):
+            dotted = _expression_name(candidate)
+            if dotted is None:
+                return
+            if _resolve(candidate, bindings) is None:
+                first = dotted.split(".", 1)[0]
+                if first not in BUILTIN_CONTRACT_SYMBOLS:
+                    unresolved.add(dotted)
+            return
+        for child in ast.iter_child_nodes(candidate):
+            visit(child)
+
+    visit(node)
+    return unresolved
+
+
+def _record_unresolved_field_contract(
     parsed: ParsedSource,
-    node: ast.ClassDef,
-) -> dict[int, dict[str, ast.AST | None]]:
-    module_before = _value_bindings_before(parsed.tree.body)
-    return _value_bindings_before(
-        node.body,
-        module_before.get(id(node), {}),
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+    analysis: list[str],
+) -> None:
+    roots = [field.annotation]
+    if field.value is not None:
+        roots.append(field.value)
+    symbols = set().union(
+        *(_unresolved_contract_symbols(root, bindings) for root in roots)
+    )
+    if symbols:
+        analysis.append(
+            f"{parsed.relative_path}:{field.lineno} field contract symbol provenance 분석 불능: "
+            + ", ".join(sorted(symbols))
+        )
+    default_kind = _field_default_kind(field, bindings)
+    if default_kind in {"conflict", "invalid_factory"}:
+        analysis.append(
+            f"{parsed.relative_path}:{field.lineno} invalid Field default/default_factory contract: "
+            f"{default_kind}"
+        )
+
+
+def _annotated_parts(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> tuple[ast.AST, tuple[ast.AST, ...]] | None:
+    if not isinstance(node, ast.Subscript):
+        return None
+    symbol = _symbol_name(node.value, bindings)
+    if symbol not in {
+        "Annotated",
+        "typing.Annotated",
+        "typing_extensions.Annotated",
+    }:
+        return None
+    parts = node.slice.elts if isinstance(node.slice, ast.Tuple) else [node.slice]
+    if not parts:
+        return None
+    return parts[0], tuple(parts[1:])
+
+
+def _ordered_annotation_field_calls(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> tuple[ast.Call, ...]:
+    """Return Field metadata in Pydantic's inner-to-outer merge order."""
+
+    parts = _annotated_parts(node, bindings)
+    if parts is None:
+        return ()
+    inner, metadata = parts
+    calls = list(_ordered_annotation_field_calls(inner, bindings))
+    calls.extend(
+        candidate
+        for candidate in metadata
+        if _is_field_call(candidate, bindings)
+        and isinstance(candidate, ast.Call)
+    )
+    return tuple(calls)
+
+
+def _annotation_signature(
+    node: ast.AST,
+    bindings: dict[str, str],
+    *,
+    replacements: dict[str, str] | None = None,
+) -> NodeSignature:
+    annotated = _annotated_parts(node, bindings)
+    if annotated is None:
+        return _signature(node, bindings, replacements=replacements)
+    inner, extras = annotated
+    non_field_extras = tuple(
+        _signature(extra, bindings, replacements=replacements)
+        for extra in extras
+        if not _is_field_call(extra, bindings)
+    )
+    inner_signature = _annotation_signature(
+        inner,
+        bindings,
+        replacements=replacements,
+    )
+    if not non_field_extras:
+        return inner_signature
+    return ("annotated", inner_signature, non_field_extras)
+
+
+def _annotation_symbol_count(
+    node: ast.AST,
+    bindings: dict[str, str],
+    symbols: set[str],
+) -> int:
+    symbol = _symbol_name(node, bindings)
+    if symbol is not None:
+        return int(symbol in symbols)
+    annotated = _annotated_parts(node, bindings)
+    if annotated is not None:
+        inner, extras = annotated
+        return _annotation_symbol_count(inner, bindings, symbols) + sum(
+            _annotation_symbol_count(extra, bindings, symbols)
+            for extra in extras
+            if not _is_field_call(extra, bindings)
+        )
+    return sum(
+        _annotation_symbol_count(child, bindings, symbols)
+        for child in ast.iter_child_nodes(node)
     )
 
 
-def _resolved_model_config_alias(
+def _is_none_annotation(node: ast.AST, bindings: dict[str, str]) -> bool:
+    if isinstance(node, ast.Constant) and node.value is None:
+        return True
+    return _symbol_name(node, bindings) in {"None", "types.NoneType"}
+
+
+def _is_scalar_discriminator_annotation(
     node: ast.AST,
-    values: dict[str, ast.AST | None],
-) -> bool | None:
-    if not isinstance(node, ast.Name):
-        return _model_config_has_alias(node)
-    resolved = values.get(node.id)
-    if resolved is None or isinstance(resolved, ast.Name):
+    bindings: dict[str, str],
+    symbols: set[str],
+) -> bool:
+    """Accept a scalar identifier and its nullable/Annotated wrappers, not containers."""
+
+    annotated = _annotated_parts(node, bindings)
+    if annotated is not None:
+        inner, _extras = annotated
+        return _is_scalar_discriminator_annotation(inner, bindings, symbols)
+    symbol = _symbol_name(node, bindings)
+    if symbol is not None:
+        return symbol in symbols
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        return (
+            _is_scalar_discriminator_annotation(node.left, bindings, symbols)
+            and _is_none_annotation(node.right, bindings)
+        ) or (
+            _is_none_annotation(node.left, bindings)
+            and _is_scalar_discriminator_annotation(node.right, bindings, symbols)
+        )
+    if not isinstance(node, ast.Subscript):
+        return False
+    wrapper = _symbol_name(node.value, bindings)
+    if wrapper in {"Optional", "typing.Optional"}:
+        return _is_scalar_discriminator_annotation(node.slice, bindings, symbols)
+    if wrapper not in {"Union", "typing.Union"}:
+        return False
+    parts = node.slice.elts if isinstance(node.slice, ast.Tuple) else [node.slice]
+    return (
+        len(parts) == 2
+        and sum(_is_none_annotation(part, bindings) for part in parts) == 1
+        and any(
+            _is_scalar_discriminator_annotation(part, bindings, symbols)
+            for part in parts
+        )
+    )
+
+
+def _field_metadata_signature(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+) -> tuple[NodeSignature, ...]:
+    calls: list[NodeSignature] = []
+    field_calls = list(_ordered_annotation_field_calls(field.annotation, bindings))
+    if _is_field_call(field.value, bindings):
+        assert isinstance(field.value, ast.Call)
+        field_calls.append(field.value)
+    for candidate in field_calls:
+        positional_metadata = candidate.args[1:]
+        keyword_metadata = [
+            keyword
+            for keyword in candidate.keywords
+            if keyword.arg not in {"default", "default_factory"}
+        ]
+        calls.append(
+            (
+                "Field",
+                tuple(_signature(argument, bindings) for argument in positional_metadata),
+                tuple(
+                    sorted(
+                        (
+                            keyword.arg or "**",
+                            _signature(keyword.value, bindings),
+                        )
+                        for keyword in keyword_metadata
+                    )
+                ),
+            )
+        )
+    return tuple(calls)
+
+
+def _default_signature(
+    value: ast.AST | None,
+    bindings: dict[str, str],
+    *,
+    enum_full: str | None = None,
+    enum_members: dict[str, str] | None = None,
+) -> NodeSignature:
+    if value is None:
+        return ("required",)
+    if isinstance(value, ast.Constant):
+        return ("value", type(value.value).__name__, repr(value.value))
+    resolved = _resolve(value, bindings)
+    static_value = _static_literal_value(resolved)
+    if static_value is not _NO_STATIC_VALUE:
+        return ("value", type(static_value).__name__, repr(static_value))
+    if enum_full is not None and enum_members is not None and resolved is not None:
+        prefix = f"{enum_full}."
+        if resolved.startswith(prefix):
+            member = resolved.removeprefix(prefix)
+            if member in enum_members:
+                wire_value = enum_members[member]
+                return ("value", "str", repr(wire_value))
+    return ("expression", _signature(value, bindings))
+
+
+def _field_default_signature(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+    *,
+    enum_full: str | None = None,
+    enum_members: dict[str, str] | None = None,
+) -> NodeSignature:
+    return (
+        _field_default_kind(field, bindings),
+        _default_signature(
+            _field_default_expression(field, bindings),
+            bindings,
+            enum_full=enum_full,
+            enum_members=enum_members,
+        ),
+    )
+
+
+def _enum_member_name(
+    value: ast.AST | None,
+    bindings: dict[str, str],
+    enum_full: str,
+    enum_members: dict[str, str],
+) -> str | None:
+    resolved = _resolve(value, bindings) if value is not None else None
+    prefix = f"{enum_full}."
+    if resolved is None or not resolved.startswith(prefix):
         return None
-    return _model_config_has_alias(resolved)
+    member = resolved.removeprefix(prefix)
+    return member if member in enum_members else None
+
+
+def _default_is_none(value: ast.AST | None, bindings: dict[str, str]) -> bool:
+    if isinstance(value, ast.Constant) and value.value is None:
+        return True
+    return _static_literal_value(
+        _resolve(value, bindings) if value is not None else None
+    ) is None
 
 
 def _append_finding(
@@ -839,6 +1959,156 @@ def _public_annassigns(
     return fields
 
 
+def _is_required_sentinel(
+    value: ast.AST,
+    bindings: dict[str, str],
+) -> bool:
+    if isinstance(value, ast.Constant) and value.value is Ellipsis:
+        return True
+    return _resolve(value, bindings) in {
+        "pydantic_core.PydanticUndefined",
+        "pydantic_core._pydantic_core.PydanticUndefined",
+        "pydantic.fields.PydanticUndefined",
+    }
+
+
+def _field_call_default_spec(
+    call: ast.Call,
+    bindings: dict[str, str],
+) -> tuple[str, ast.AST | None] | None:
+
+    default_value = call.args[0] if call.args else None
+    default_declared = bool(call.args)
+    factory_value: ast.AST | None = None
+    factory_declared = False
+    for keyword in call.keywords:
+        if keyword.arg == "default":
+            default_declared = True
+            default_value = keyword.value
+        elif keyword.arg == "default_factory":
+            factory_declared = True
+            factory_value = keyword.value
+    default_is_set = (
+        default_declared
+        and default_value is not None
+        and not _is_required_sentinel(default_value, bindings)
+    )
+    factory_is_set = factory_declared and factory_value is not None and not (
+        isinstance(factory_value, ast.Constant) and factory_value.value is None
+    ) and not _is_required_sentinel(factory_value, bindings)
+    if default_is_set and factory_is_set:
+        return "conflict", None
+    if (
+        factory_declared
+        and isinstance(factory_value, ast.Constant)
+        and factory_value.value is Ellipsis
+    ):
+        return "invalid_factory", None
+    if factory_is_set:
+        return "default_factory", factory_value
+    if default_is_set:
+        return "default", default_value
+    if factory_declared and isinstance(factory_value, ast.Constant) and (
+        factory_value.value is None
+    ):
+        return "clear_factory", None
+    return None
+
+
+def _merge_field_default_spec(
+    current: tuple[str, ast.AST | None],
+    declared: tuple[str, ast.AST | None] | None,
+) -> tuple[str, ast.AST | None]:
+    if declared is None:
+        return current
+    if current[0] in {"conflict", "invalid_factory"}:
+        return current
+    if declared[0] in {"conflict", "invalid_factory"}:
+        return declared
+    if declared[0] == "clear_factory":
+        return current if current[0] == "default" else ("required", None)
+    if {current[0], declared[0]} == {"default", "default_factory"}:
+        return "conflict", None
+    return declared
+
+
+def _field_default_spec(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+) -> tuple[str, ast.AST | None]:
+    spec: tuple[str, ast.AST | None] = ("required", None)
+    for candidate in _ordered_annotation_field_calls(field.annotation, bindings):
+        declared = _field_call_default_spec(candidate, bindings)
+        spec = _merge_field_default_spec(spec, declared)
+
+    value = field.value
+    if value is None:
+        return spec
+    if not _is_field_call(value, bindings):
+        if _is_required_sentinel(value, bindings):
+            return spec
+        if spec[0] == "default_factory":
+            return "conflict", None
+        return "default", value
+    assert isinstance(value, ast.Call)
+    declared = _field_call_default_spec(value, bindings)
+    return _merge_field_default_spec(spec, declared)
+
+
+def _field_default_expression(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+) -> ast.AST | None:
+    return _field_default_spec(field, bindings)[1]
+
+
+def _field_default_kind(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+) -> str:
+    return _field_default_spec(field, bindings)[0]
+
+
+def _field_is_required(
+    field: ast.AnnAssign,
+    bindings: dict[str, str],
+) -> bool:
+    return _field_default_kind(field, bindings) == "required"
+
+
+def _classvar_binding_requires_runtime_proof(value: ast.AST | None) -> bool:
+    """ClassVar references are inert; executed expressions are not."""
+
+    if value is None or isinstance(value, (ast.Constant, ast.Name, ast.Attribute)):
+        return False
+    if isinstance(value, ast.Lambda):
+        defaults = [*value.args.defaults, *value.args.kw_defaults]
+        return any(
+            _classvar_binding_requires_runtime_proof(default)
+            for default in defaults
+            if default is not None
+        )
+    if isinstance(value, (ast.Dict, ast.List, ast.Tuple, ast.Set)):
+        values = (
+            [
+                candidate
+                for key, item in zip(value.keys, value.values)
+                for candidate in (key, item)
+                if candidate is not None
+            ]
+            if isinstance(value, ast.Dict)
+            else list(value.elts)
+        )
+        return any(_classvar_binding_requires_runtime_proof(item) for item in values)
+    if isinstance(value, ast.UnaryOp):
+        try:
+            ast.literal_eval(value)
+        except (TypeError, ValueError):
+            return True
+        return False
+    return True
+
+
 def _class_member_findings(
     parsed: ParsedSource,
     node: ast.ClassDef,
@@ -847,63 +2117,223 @@ def _class_member_findings(
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
+    *,
+    allow_model_config: bool = False,
+    allow_schema_decorators: bool = False,
 ) -> None:
+    def pydantic_hook(name: str) -> bool:
+        return name.startswith(("__get_pydantic_", "__pydantic_")) or name in {
+            "__get_validators__",
+            "__modify_schema__",
+        }
+
+    def contains_schema_decorator_factory(
+        value: ast.AST | None,
+        bindings: dict[str, str],
+    ) -> bool:
+        if value is None:
+            return False
+        for candidate in ast.walk(value):
+            if not isinstance(candidate, ast.Call):
+                continue
+            resolved = _resolve(candidate.func, bindings)
+            if resolved in SCHEMA_DECORATORS:
+                return True
+            if (
+                resolved is not None
+                and resolved.startswith("pydantic.")
+                and resolved.rsplit(".", 1)[-1] in SCHEMA_DECORATOR_TAILS
+            ):
+                return True
+        return False
+
+    if not allow_model_config:
+        for decorator in node.decorator_list:
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                decorator,
+                "class decorator outside common ErrorOut",
+            )
+        for keyword in node.keywords:
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                keyword,
+                "class keyword config outside common ErrorOut",
+            )
     field_names: set[str] = set()
     before = _class_body_bindings(parsed, node, initial_bindings)
-    value_before = _class_value_bindings(parsed, node)
     for statement in node.body:
         bindings = before.get(id(statement), initial_bindings)
-        values = value_before.get(id(statement), {})
         if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
             name = statement.target.id
-            if name == "model_config":
-                if statement.value is not None:
-                    has_alias = _resolved_model_config_alias(statement.value, values)
-                    if has_alias is None:
-                        analysis.append(
-                            f"{parsed.relative_path}:{statement.lineno} model_config value provenance 분석 불능"
-                        )
-                    elif has_alias:
-                        _append_finding(findings, seen, parsed, statement, "model config alias")
+            if not allow_model_config and pydantic_hook(name):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "Pydantic hook override outside common ErrorOut",
+                )
                 continue
-            if name.startswith("_") or _classvar(statement.annotation, bindings):
+            if name == "model_config":
+                if not allow_model_config:
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "model_config override outside common ErrorOut",
+                    )
+                continue
+            if _classvar(statement.annotation, bindings):
+                if _classvar_binding_requires_runtime_proof(statement.value):
+                    if allow_model_config:
+                        analysis.append(
+                            "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                            f"{parsed.relative_path}:{statement.lineno} "
+                            "common ErrorOut dynamic ClassVar binding은 "
+                            "target-pin runtime proof 필요"
+                        )
+                    else:
+                        _append_finding(
+                            findings,
+                            seen,
+                            parsed,
+                            statement,
+                            "dynamic ClassVar assignment outside common ErrorOut",
+                        )
+                continue
+            if name.startswith("_"):
+                if not allow_model_config and contains_schema_decorator_factory(
+                    statement.value,
+                    bindings,
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "schema decorator proxy outside common ErrorOut",
+                    )
+                elif (
+                    not allow_model_config
+                    and _static_assignment_binding(statement.value, bindings) is None
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "dynamic private class assignment outside common ErrorOut",
+                    )
                 continue
             if name in field_names:
                 _append_finding(findings, seen, parsed, statement, "duplicate public field")
             field_names.add(name)
             if name not in allowed_fields:
                 _append_finding(findings, seen, parsed, statement, "additional public field")
-            if (
-                statement.value is not None
-                and _contains_field_alias(statement.value, bindings)
-            ) or _contains_field_alias(statement.annotation, bindings):
-                _append_finding(findings, seen, parsed, statement, "field alias")
         elif isinstance(statement, ast.Assign):
             names = {name for target in statement.targets for name in _target_names(target)}
+            if not names and not allow_model_config:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "complex class assignment outside common ErrorOut",
+                )
             for name in names:
-                if name == "model_config":
-                    has_alias = _resolved_model_config_alias(statement.value, values)
-                    if has_alias is None:
-                        analysis.append(
-                            f"{parsed.relative_path}:{statement.lineno} model_config value provenance 분석 불능"
+                if not allow_model_config and pydantic_hook(name):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "Pydantic hook override outside common ErrorOut",
+                    )
+                elif name == "model_config":
+                    if not allow_model_config:
+                        _append_finding(
+                            findings,
+                            seen,
+                            parsed,
+                            statement,
+                            "model_config override outside common ErrorOut",
                         )
-                    elif has_alias:
-                        _append_finding(findings, seen, parsed, statement, "model config alias")
                 elif not name.startswith("_"):
                     _append_finding(findings, seen, parsed, statement, "public class assignment/helper")
+                elif not allow_model_config and contains_schema_decorator_factory(
+                    statement.value,
+                    bindings,
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "schema decorator proxy outside common ErrorOut",
+                    )
+            if (
+                not allow_model_config
+                and names
+                and all(name.startswith("_") for name in names)
+                and _static_assignment_binding(statement.value, bindings) is None
+            ):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "dynamic private class assignment outside common ErrorOut",
+                )
         elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            decorated_validator = any(
+            decorated_schema_method = any(
                 _resolve(
                     decorator.func if isinstance(decorator, ast.Call) else decorator,
                     bindings,
                 )
-                in VALIDATOR_DECORATORS
+                in SCHEMA_DECORATORS
                 for decorator in statement.decorator_list
             )
-            if decorated_validator or not statement.name.startswith("_"):
+            if not allow_schema_decorators or (
+                not decorated_schema_method and not statement.name.startswith("_")
+            ):
                 _append_finding(findings, seen, parsed, statement, "validator/public helper")
-        elif isinstance(statement, ast.ClassDef) and not statement.name.startswith("_"):
+        elif (
+            isinstance(statement, ast.ClassDef)
+            and not statement.name.startswith("_")
+            and not (allow_model_config and statement.name == "Config")
+        ):
             _append_finding(findings, seen, parsed, statement, "public nested class/helper")
+        elif (
+            isinstance(statement, ast.ClassDef)
+            and allow_model_config
+            and statement.name == "Config"
+        ) or isinstance(statement, ast.Pass) or (
+            isinstance(statement, ast.Expr)
+            and isinstance(statement.value, ast.Constant)
+            and isinstance(statement.value.value, str)
+        ):
+            continue
+        else:
+            if allow_model_config:
+                analysis.append(
+                    "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                    f"{parsed.relative_path}:{statement.lineno} "
+                    "common ErrorOut executable class-body statement는 target-pin runtime proof 필요"
+                )
+            else:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "executable class-body statement outside common ErrorOut",
+                )
 
 
 def _assignment_value(statement: ast.stmt) -> ast.AST | None:
@@ -924,22 +2354,303 @@ def _is_functional_enum(
     )
 
 
+def _bc_module_artifact_findings(
+    parsed: ParsedSource,
+    allowed_classes: set[ast.ClassDef],
+    findings: list[Finding],
+    seen: set[tuple[Path, int, str]],
+) -> None:
+    """Keep the canonical BC error module declarative and mutation-free."""
+
+    before = _module_bindings(parsed)
+    for statement in parsed.tree.body:
+        if isinstance(statement, (ast.Import, ast.ImportFrom)):
+            continue
+        if isinstance(statement, ast.ClassDef):
+            if statement not in allowed_classes:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "BC error module extra class/helper forbidden",
+                )
+            continue
+        if (
+            isinstance(statement, ast.Expr)
+            and isinstance(statement.value, ast.Constant)
+            and isinstance(statement.value.value, str)
+        ):
+            continue
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1:
+            target = statement.targets[0]
+            value = statement.value
+        elif isinstance(statement, ast.AnnAssign):
+            target = statement.target
+            value = statement.value
+        else:
+            target = None
+            value = None
+        bindings = before.get(id(statement), {})
+        if (
+            isinstance(target, ast.Name)
+            and target.id.startswith("_")
+            and _static_assignment_binding(value, bindings) is not None
+        ):
+            continue
+        _append_finding(
+            findings,
+            seen,
+            parsed,
+            statement,
+            "BC error module helper/mutation/side effect forbidden",
+        )
+
+
+COMMON_CONFIG_MUTATION_METHODS = {
+    "__delitem__",
+    "__init__",
+    "__ior__",
+    "__setitem__",
+    "clear",
+    "pop",
+    "popitem",
+    "setdefault",
+    "update",
+}
+
+
+def _executed_expression_calls(node: ast.AST) -> list[ast.Call]:
+    """Return calls executed by an expression without entering deferred lambdas."""
+
+    calls: list[ast.Call] = []
+    if isinstance(node, ast.Lambda):
+        for default in node.args.defaults:
+            calls.extend(_executed_expression_calls(default))
+        for default in node.args.kw_defaults:
+            if default is not None:
+                calls.extend(_executed_expression_calls(default))
+        return calls
+    if isinstance(node, ast.Call):
+        calls.append(node)
+        if isinstance(node.func, ast.Lambda):
+            for default in node.func.args.defaults:
+                calls.extend(_executed_expression_calls(default))
+            for default in node.func.args.kw_defaults:
+                if default is not None:
+                    calls.extend(_executed_expression_calls(default))
+            calls.extend(_executed_expression_calls(node.func.body))
+        else:
+            calls.extend(_executed_expression_calls(node.func))
+        for argument in node.args:
+            calls.extend(_executed_expression_calls(argument))
+        for keyword in node.keywords:
+            calls.extend(_executed_expression_calls(keyword.value))
+        return calls
+    for child in ast.iter_child_nodes(node):
+        calls.extend(_executed_expression_calls(child))
+    return calls
+
+
+def _visible_common_schema_mutation(
+    value: ast.AST | None,
+    bindings: dict[str, str],
+    named_lambdas: dict[str, ast.Lambda] | None = None,
+) -> bool:
+    """Detect a visible import-time mutation hidden inside an expression."""
+
+    if value is None:
+        return False
+
+    schema_kind = "schema"
+    config_kind = "config"
+    rebuild_kind = "rebuild"
+    mutator_kind = "config_mutator"
+    getter_kind = "getattr"
+    setter_kind = "setattr"
+    deleter_kind = "delattr"
+    schema_symbols = {NINJA_SCHEMA, COMMON_ERROR_OUT, "Schema", "ErrorOut"}
+    config_symbols = {f"{symbol}.model_config" for symbol in schema_symbols}
+    rebuild_symbols = {f"{symbol}.model_rebuild" for symbol in schema_symbols}
+    named_lambdas = named_lambdas or {}
+
+    def resolved_kinds(resolved: str | None) -> set[str]:
+        if resolved is None:
+            return set()
+        if resolved in schema_symbols:
+            return {schema_kind}
+        if resolved in config_symbols:
+            return {config_kind}
+        if resolved in rebuild_symbols:
+            return {rebuild_kind}
+        if any(
+            resolved == f"{symbol}.{method}"
+            for symbol in config_symbols
+            for method in COMMON_CONFIG_MUTATION_METHODS
+        ):
+            return {mutator_kind}
+        if resolved in {"getattr", "builtins.getattr"}:
+            return {getter_kind}
+        if resolved in {
+            "setattr",
+            "builtins.setattr",
+            "type.__setattr__",
+            "builtins.type.__setattr__",
+        }:
+            return {setter_kind}
+        if resolved in {
+            "delattr",
+            "builtins.delattr",
+            "type.__delattr__",
+            "builtins.type.__delattr__",
+        }:
+            return {deleter_kind}
+        return set()
+
+    def value_kinds(node: ast.AST | None, local: dict[str, set[str]]) -> set[str]:
+        if node is None:
+            return set()
+        if isinstance(node, ast.Name) and node.id in local:
+            return set(local[node.id])
+        resolved = _resolve(node, bindings) or _expression_name(node)
+        kinds = resolved_kinds(resolved)
+        if kinds:
+            return kinds
+        if isinstance(node, ast.Attribute):
+            owner = value_kinds(node.value, local)
+            if schema_kind in owner and node.attr == "model_config":
+                return {config_kind}
+            if schema_kind in owner and node.attr == "model_rebuild":
+                return {rebuild_kind}
+            if config_kind in owner and node.attr in COMMON_CONFIG_MUTATION_METHODS:
+                return {mutator_kind}
+            return set()
+        if isinstance(node, ast.Call):
+            callee = value_kinds(node.func, local)
+            if getter_kind not in callee or len(node.args) < 2:
+                return set()
+            attribute = (
+                node.args[1].value
+                if isinstance(node.args[1], ast.Constant)
+                and isinstance(node.args[1].value, str)
+                else None
+            )
+            target = value_kinds(node.args[0], local)
+            if schema_kind in target and attribute == "model_config":
+                return {config_kind}
+            if schema_kind in target and attribute == "model_rebuild":
+                return {rebuild_kind}
+            if config_kind in target and attribute in COMMON_CONFIG_MUTATION_METHODS:
+                return {mutator_kind}
+            return set()
+        if isinstance(node, ast.IfExp):
+            return value_kinds(node.body, local) | value_kinds(node.orelse, local)
+        if isinstance(node, ast.BoolOp):
+            return set().union(*(value_kinds(item, local) for item in node.values))
+        if isinstance(node, ast.NamedExpr):
+            return value_kinds(node.value, local)
+        return set()
+
+    def call_mutates(call: ast.Call, local: dict[str, set[str]]) -> bool:
+        callee = value_kinds(call.func, local)
+        if rebuild_kind in callee or mutator_kind in callee:
+            return True
+        if not callee & {setter_kind, deleter_kind} or len(call.args) < 2:
+            return False
+        attribute = (
+            call.args[1].value
+            if isinstance(call.args[1], ast.Constant)
+            and isinstance(call.args[1].value, str)
+            else None
+        )
+        return (
+            schema_kind in value_kinds(call.args[0], local)
+            and attribute in {"model_config", "model_rebuild"}
+        )
+
+    def expression_mutates(node: ast.AST, local: dict[str, set[str]]) -> bool:
+        if isinstance(node, ast.Lambda):
+            defaults = [*node.args.defaults, *node.args.kw_defaults]
+            return any(
+                expression_mutates(default, local)
+                for default in defaults
+                if default is not None
+            )
+        if isinstance(node, ast.Call):
+            if any(expression_mutates(argument, local) for argument in node.args):
+                return True
+            if any(expression_mutates(keyword.value, local) for keyword in node.keywords):
+                return True
+            if isinstance(node.func, ast.Lambda):
+                child = {name: set(kinds) for name, kinds in local.items()}
+                positional = [*node.func.args.posonlyargs, *node.func.args.args]
+                default_offset = len(positional) - len(node.func.args.defaults)
+                for index, default in enumerate(node.func.args.defaults, default_offset):
+                    child[positional[index].arg] = value_kinds(default, local)
+                for parameter, argument in zip(positional, node.args):
+                    child[parameter.arg] = value_kinds(argument, local)
+                for parameter, default in zip(
+                    node.func.args.kwonlyargs,
+                    node.func.args.kw_defaults,
+                ):
+                    if default is not None:
+                        child[parameter.arg] = value_kinds(default, local)
+                for keyword in node.keywords:
+                    if keyword.arg is not None:
+                        child[keyword.arg] = value_kinds(keyword.value, local)
+                return expression_mutates(node.func.body, child)
+            if isinstance(node.func, ast.Name) and node.func.id in named_lambdas:
+                lambda_ = named_lambdas[node.func.id]
+                child = {name: set(kinds) for name, kinds in local.items()}
+                positional = [*lambda_.args.posonlyargs, *lambda_.args.args]
+                default_offset = len(positional) - len(lambda_.args.defaults)
+                for index, default in enumerate(lambda_.args.defaults, default_offset):
+                    child[positional[index].arg] = value_kinds(default, local)
+                for parameter, argument in zip(positional, node.args):
+                    child[parameter.arg] = value_kinds(argument, local)
+                for parameter, default in zip(
+                    lambda_.args.kwonlyargs,
+                    lambda_.args.kw_defaults,
+                ):
+                    if default is not None:
+                        child[parameter.arg] = value_kinds(default, local)
+                for keyword in node.keywords:
+                    if keyword.arg is not None:
+                        child[keyword.arg] = value_kinds(keyword.value, local)
+                return expression_mutates(lambda_.body, child)
+            return call_mutates(node, local) or expression_mutates(node.func, local)
+        return any(expression_mutates(child, local) for child in ast.iter_child_nodes(node))
+
+    return expression_mutates(value, {})
+
+
 def _analyze_common(
     parsed: ParsedSource | None,
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
-) -> set[str]:
+    project_module_prefixes: set[str],
+) -> dict[str, CommonFieldContract]:
     if parsed is None:
-        return set()
+        return {}
     before = _module_bindings(parsed)
+    for statement in _project_import_nodes(
+        parsed,
+        project_module_prefixes,
+        recursive=True,
+    ):
+        analysis.append(
+            "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+            f"{parsed.relative_path}:{statement.lineno} "
+            "common ErrorOut의 project/relative import는 target-pin runtime proof 필요"
+        )
     error_outs = [
         node for node in parsed.tree.body if isinstance(node, ast.ClassDef) and node.name == "ErrorOut"
     ]
     if len(error_outs) != 1:
         anchor: ast.AST = error_outs[0] if error_outs else parsed.tree
         _append_finding(findings, seen, parsed, anchor, "exactly one common ErrorOut required")
-    required_fields: set[str] = set()
+    contracts: dict[str, CommonFieldContract] = {}
     if len(error_outs) == 1:
         error_out = error_outs[0]
         bindings = before.get(id(error_out), {})
@@ -955,19 +2666,158 @@ def _analyze_common(
             "common ErrorOut must directly inherit ninja.Schema",
         )
         fields = _public_annassigns(parsed, error_out, bindings)
-        for name, field in fields.items():
-            if field.value is None:
-                required_fields.add(name)
-            else:
-                _append_finding(findings, seen, parsed, field, "common ErrorOut field must be required")
-        _class_member_findings(
-            parsed, error_out, bindings, set(fields), analysis, findings, seen
+        field_bindings = _class_body_bindings(parsed, error_out, bindings)
+        for statement in error_out.body:
+            statement_value = (
+                statement.value
+                if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.Expr))
+                else None
+            )
+            statement_bindings = field_bindings.get(id(statement), bindings)
+            standalone_expression = isinstance(statement, ast.Expr) and not (
+                isinstance(statement.value, ast.Constant)
+                and isinstance(statement.value.value, str)
+            )
+            dynamic_classvar = (
+                isinstance(statement, ast.AnnAssign)
+                and _classvar(statement.annotation, statement_bindings)
+            )
+            if (standalone_expression or dynamic_classvar) and _visible_common_schema_mutation(
+                statement_value,
+                statement_bindings,
+            ):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    statement,
+                    "common ErrorOut direct mutation/side effect forbidden",
+                )
+        alias_generator, alias_generator_known = _common_alias_generator(
+            parsed,
+            error_out,
+            bindings,
         )
-        if "code" not in required_fields:
-            _append_finding(findings, seen, parsed, error_out, "common ErrorOut requires public code field")
+        if not alias_generator_known or _common_config_requires_runtime_proof(
+            parsed,
+            error_out,
+            bindings,
+        ):
+            analysis.append(
+                "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                f"{parsed.relative_path}:{error_out.lineno} "
+                "project custom ErrorOut config/decorator는 target-pin runtime proof 필요"
+            )
+        for name, field in fields.items():
+            bindings_at_field = field_bindings.get(id(field), bindings)
+            if _field_contract_expression_requires_runtime_proof(
+                field.annotation,
+                bindings_at_field,
+                annotation=True,
+            ) or _field_contract_expression_requires_runtime_proof(
+                field.value,
+                bindings_at_field,
+            ):
+                analysis.append(
+                    "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                    f"{parsed.relative_path}:{field.lineno} "
+                    "common ErrorOut dynamic field contract는 target-pin runtime proof 필요"
+                )
+            _record_unresolved_field_contract(
+                parsed,
+                field,
+                bindings_at_field,
+                analysis,
+            )
+            discriminator_annotation = None
+            if _is_scalar_discriminator_annotation(
+                field.annotation,
+                bindings_at_field,
+                {"str", "builtins.str"},
+            ):
+                discriminator_annotation = _annotation_signature(
+                    field.annotation,
+                    bindings_at_field,
+                    replacements={
+                        "str": "<bc-error-code>",
+                        "builtins.str": "<bc-error-code>",
+                    },
+                )
+            contracts[name] = CommonFieldContract(
+                annotation=_annotation_signature(
+                    field.annotation,
+                    bindings_at_field,
+                ),
+                discriminator_annotation=discriminator_annotation,
+                metadata=_field_metadata_signature(field, bindings_at_field),
+                required=_field_is_required(field, bindings_at_field),
+                default=_field_default_signature(field, bindings_at_field),
+                constructor_keys=_field_constructor_keys(
+                    field,
+                    bindings_at_field,
+                    alias_generator,
+                ),
+                constructor_paths=_field_constructor_paths(
+                    field,
+                    bindings_at_field,
+                    alias_generator,
+                ),
+                constructor_keys_complete=alias_generator_known,
+            )
+        _class_member_findings(
+            parsed,
+            error_out,
+            bindings,
+            set(contracts),
+            analysis,
+            findings,
+            seen,
+            allow_model_config=True,
+            allow_schema_decorators=True,
+        )
+    named_lambdas: dict[str, ast.Lambda] = {}
+
+    def assigned_lambdas(node: ast.Assign | ast.AnnAssign) -> dict[str, ast.Lambda]:
+        assigned: dict[str, ast.Lambda] = {}
+
+        def collect(target: ast.AST, value: ast.AST | None) -> None:
+            if isinstance(target, ast.Name):
+                lambda_ = (
+                    value
+                    if isinstance(value, ast.Lambda)
+                    else named_lambdas.get(value.id)
+                    if isinstance(value, ast.Name)
+                    else None
+                )
+                if lambda_ is not None:
+                    assigned[target.id] = lambda_
+                return
+            if (
+                isinstance(target, (ast.Tuple, ast.List))
+                and isinstance(value, (ast.Tuple, ast.List))
+                and len(target.elts) == len(value.elts)
+            ):
+                for child_target, child_value in zip(target.elts, value.elts):
+                    collect(child_target, child_value)
+
+        value = _assignment_value(node)
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                collect(target, value)
+        else:
+            collect(node.target, value)
+        return assigned
 
     for node in parsed.tree.body:
-        if isinstance(node, ast.ClassDef) and node not in error_outs:
+        if isinstance(node, (ast.Import, ast.ImportFrom)) or node in error_outs:
+            continue
+        if (
+            isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+        ):
+            continue
+        if isinstance(node, ast.ClassDef):
             bindings = before.get(id(node), {})
             inherits_error = any(
                 _resolve(base, bindings) == COMMON_ERROR_OUT
@@ -1002,9 +2852,40 @@ def _analyze_common(
                 if isinstance(node, ast.Assign)
                 else _target_names(node.target)
             )
-            if any(not name.startswith("_") and name != "model_config" for name in targets):
+            if not targets or any(not name.startswith("_") for name in targets):
                 _append_finding(findings, seen, parsed, node, "common module public artifact forbidden")
-    return required_fields
+            elif _visible_common_schema_mutation(
+                _assignment_value(node),
+                bindings,
+                named_lambdas,
+            ):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    node,
+                    "common module helper/mutation/side effect forbidden",
+                )
+            elif _static_assignment_binding(_assignment_value(node), bindings) is None:
+                analysis.append(
+                    "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                    f"{parsed.relative_path}:{node.lineno} "
+                    "common ErrorOut module의 dynamic private binding은 target-pin runtime proof 필요"
+                )
+            lambda_bindings = assigned_lambdas(node)
+            for target in targets:
+                named_lambdas.pop(target, None)
+                if target in lambda_bindings:
+                    named_lambdas[target] = lambda_bindings[target]
+        else:
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                node,
+                "common module helper/mutation/side effect forbidden",
+            )
+    return contracts
 
 
 def _snake_to_pascal(name: str) -> str:
@@ -1125,18 +3006,39 @@ def _enum_members(
 def _analyze_bc_module(
     parsed: ParsedSource,
     bc: str,
-    required_fields: set[str],
+    common_contracts: dict[str, CommonFieldContract],
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
-) -> tuple[dict[str, str], set[str], str]:
+    project_module_prefixes: set[str],
+) -> tuple[
+    dict[str, str],
+    set[str],
+    str,
+    str | None,
+    frozenset[str],
+    frozenset[tuple[str | int, ...]],
+    bool,
+]:
     before = _module_bindings(parsed)
+    for statement in _project_import_nodes(
+        parsed,
+        project_module_prefixes,
+        allowed_modules=frozenset({COMMON_ERROR_MODULE}),
+        recursive=True,
+    ):
+        analysis.append(
+            "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+            f"{parsed.relative_path}:{statement.lineno} "
+            "BC ErrorOut의 추가 project/relative import는 target-pin runtime proof 필요"
+        )
     prefix = _snake_to_pascal(bc)
     enum_name = f"{prefix}ErrorCode"
     base_name = f"{prefix}ErrorOut"
     module = _module_name(parsed.relative_path)
     enum_full = f"{module}.{enum_name}"
     base_full = f"{module}.{base_name}"
+    common_fields = set(common_contracts)
     classes = [node for node in parsed.tree.body if isinstance(node, ast.ClassDef)]
 
     enums = [node for node in classes if node.name == enum_name]
@@ -1183,6 +3085,7 @@ def _analyze_bc_module(
         members = _enum_members(parsed, enum, analysis, findings, seen)
 
     bases = [node for node in classes if node.name == base_name]
+    allowed_class_nodes: set[ast.ClassDef] = {*enums, *bases}
     if len(bases) != 1:
         _append_finding(
             findings,
@@ -1197,6 +3100,13 @@ def _analyze_bc_module(
         if node not in bases and direct_common:
             _append_finding(findings, seen, parsed, node, "second BC ErrorOut base")
 
+    discriminator_field_name: str | None = None
+    discriminator_constructor_keys: frozenset[str] = frozenset()
+    discriminator_constructor_paths: frozenset[tuple[str | int, ...]] = (
+        frozenset()
+    )
+    discriminator_constructor_keys_complete = True
+    base_discriminator_default_member: str | None = None
     if len(bases) == 1:
         base = bases[0]
         bindings = before.get(id(base), {})
@@ -1213,17 +3123,157 @@ def _analyze_bc_module(
         )
         fields = _public_annassigns(parsed, base, bindings)
         field_bindings = _class_body_bindings(parsed, base, bindings)
-        if set(fields) != {"code"}:
-            _append_finding(findings, seen, parsed, base, "BC ErrorOut base may expose only code")
-        code_field = fields.get("code")
-        if code_field is not None:
-            if code_field.value is not None:
-                _append_finding(findings, seen, parsed, code_field, "BC base code must have no default")
-            code_bindings = field_bindings.get(id(code_field), bindings)
-            if _resolve(code_field.annotation, code_bindings) != enum_full:
-                _append_finding(findings, seen, parsed, code_field, "BC base code type must be own ErrorCode")
+        discriminator_fields = []
+        for field_name, field in fields.items():
+            bindings_at_field = field_bindings.get(id(field), bindings)
+            if _is_scalar_discriminator_annotation(
+                field.annotation,
+                bindings_at_field,
+                {enum_full},
+            ):
+                discriminator_fields.append((field_name, field))
+        if len(fields) != 1 or len(discriminator_fields) != 1:
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                base,
+                "BC ErrorOut base must narrow exactly one common field to own ErrorCode",
+            )
+        if len(discriminator_fields) == 1:
+            discriminator_field_name, discriminator_field = discriminator_fields[0]
+            discriminator_bindings = field_bindings.get(
+                id(discriminator_field), bindings
+            )
+            discriminator_constructor_keys = _field_constructor_keys(
+                discriminator_field,
+                discriminator_bindings,
+            )
+            discriminator_constructor_paths = _field_constructor_paths(
+                discriminator_field,
+                discriminator_bindings,
+            )
+            _record_unresolved_field_contract(
+                parsed,
+                discriminator_field,
+                discriminator_bindings,
+                analysis,
+            )
+            if discriminator_field_name not in common_fields:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    discriminator_field,
+                    "BC ErrorOut discriminator must override common field",
+                )
+            else:
+                contract = common_contracts[discriminator_field_name]
+                discriminator_constructor_keys_complete = (
+                    contract.constructor_keys_complete
+                )
+                discriminator_constructor_keys = frozenset(
+                    set(discriminator_constructor_keys)
+                    | set(contract.constructor_keys)
+                )
+                discriminator_constructor_paths = frozenset(
+                    set(discriminator_constructor_paths)
+                    | set(contract.constructor_paths)
+                )
+                narrowed_signature = _annotation_signature(
+                    discriminator_field.annotation,
+                    discriminator_bindings,
+                    replacements={enum_full: "<bc-error-code>"},
+                )
+                if (
+                    contract.discriminator_annotation is None
+                    or narrowed_signature != contract.discriminator_annotation
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        discriminator_field,
+                        "BC base must preserve common annotation/nullability while narrowing str to own ErrorCode",
+                    )
+                if (
+                    _field_metadata_signature(
+                        discriminator_field,
+                        discriminator_bindings,
+                    )
+                    != contract.metadata
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        discriminator_field,
+                        "BC base field metadata must match common ErrorOut",
+                    )
+                discriminator_default = _field_default_expression(
+                    discriminator_field,
+                    discriminator_bindings,
+                )
+                if (
+                    _field_default_signature(
+                        discriminator_field,
+                        discriminator_bindings,
+                        enum_full=enum_full,
+                        enum_members=members,
+                    )
+                    != contract.default
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        discriminator_field,
+                        "BC base must preserve common required/default semantics",
+                    )
+                if isinstance(discriminator_default, ast.Constant) and isinstance(
+                    discriminator_default.value,
+                    str,
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        discriminator_field,
+                        "raw string ErrorOut discriminator",
+                    )
+                base_discriminator_default_member = _enum_member_name(
+                    discriminator_default,
+                    discriminator_bindings,
+                    enum_full,
+                    members,
+                )
+                if (
+                    _field_default_kind(
+                        discriminator_field,
+                        discriminator_bindings,
+                    )
+                    != "required"
+                    and not _default_is_none(
+                        discriminator_default,
+                        discriminator_bindings,
+                    )
+                    and base_discriminator_default_member is None
+                ):
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        discriminator_field,
+                        "BC base discriminator default must be own ErrorCode member or None",
+                    )
         _class_member_findings(
-            parsed, base, bindings, {"code"}, analysis, findings, seen
+            parsed,
+            base,
+            bindings,
+            {discriminator_field_name} if discriminator_field_name is not None else set(),
+            analysis,
+            findings,
+            seen,
         )
 
     known_concrete: set[str] = set()
@@ -1246,6 +3296,8 @@ def _analyze_bc_module(
             continue
         if node.name.startswith("_") and not prepared_by_base:
             continue
+        if prepared_by_base:
+            allowed_class_nodes.add(node)
         if not _base_contract(
             parsed,
             node,
@@ -1261,33 +3313,149 @@ def _analyze_bc_module(
         known_concrete.add(f"{module}.{node.name}")
         fields = _public_annassigns(parsed, node, bindings)
         field_bindings = _class_body_bindings(parsed, node, bindings)
-        for field_name in set(fields) - required_fields:
+        for field_name in set(fields) - common_fields:
             _append_finding(findings, seen, parsed, fields[field_name], "concrete adds field outside common shape")
-        for required in required_fields:
-            field = fields.get(required)
-            if field is None or field.value is None:
-                _append_finding(findings, seen, parsed, node, f"concrete missing required default: {required}")
-        code_field = fields.get("code")
-        if code_field is not None and code_field.value is not None:
-            if isinstance(code_field.value, ast.Constant) and isinstance(code_field.value.value, str):
-                _append_finding(findings, seen, parsed, code_field, "raw string ErrorOut code")
-            code_bindings = field_bindings.get(id(code_field), bindings)
-            if _resolve(code_field.annotation, code_bindings) != enum_full:
+        for field_name in set(fields) & common_fields:
+            field = fields[field_name]
+            bindings_at_field = field_bindings.get(id(field), bindings)
+            _record_unresolved_field_contract(
+                parsed,
+                field,
+                bindings_at_field,
+                analysis,
+            )
+            contract = common_contracts[field_name]
+            if (
+                _field_metadata_signature(field, bindings_at_field)
+                != contract.metadata
+            ):
                 _append_finding(
                     findings,
                     seen,
                     parsed,
-                    code_field,
-                    "concrete code type must be own ErrorCode",
+                    field,
+                    "concrete field metadata must match common ErrorOut",
                 )
-            resolved_default = _resolve(code_field.value, code_bindings)
-            valid_values = {f"{enum_full}.{name}" for name in members}
-            if resolved_default not in valid_values:
-                _append_finding(findings, seen, parsed, code_field, "concrete code default must use own ErrorCode member")
-        _class_member_findings(
-            parsed, node, bindings, required_fields, analysis, findings, seen
+            if field_name == discriminator_field_name:
+                actual_annotation = _annotation_signature(
+                    field.annotation,
+                    bindings_at_field,
+                    replacements={enum_full: "<bc-error-code>"},
+                )
+                expected_annotation = contract.discriminator_annotation
+                category = (
+                    "concrete discriminator must preserve common annotation/nullability "
+                    "while using own ErrorCode"
+                )
+            else:
+                actual_annotation = _annotation_signature(
+                    field.annotation,
+                    bindings_at_field,
+                )
+                expected_annotation = contract.annotation
+                category = "concrete field annotation/nullability must match common ErrorOut"
+            if actual_annotation != expected_annotation:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    field,
+                    category,
+                )
+            if _field_is_required(field, bindings_at_field):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    field,
+                    f"concrete field must have a no-arg default: {field_name}",
+                )
+        for field_name, contract in common_contracts.items():
+            if not contract.required:
+                continue
+            if field_name == discriminator_field_name:
+                inherited_default = base_discriminator_default_member is not None
+            else:
+                inherited_default = False
+            if field_name not in fields and not inherited_default:
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    node,
+                    f"concrete missing required default: {field_name}",
+                )
+        discriminator_field = (
+            fields.get(discriminator_field_name)
+            if discriminator_field_name is not None
+            else None
         )
-    return members, known_concrete, base_full
+        if discriminator_field is not None:
+            discriminator_bindings = field_bindings.get(
+                id(discriminator_field), bindings
+            )
+            discriminator_default = _field_default_expression(
+                discriminator_field,
+                discriminator_bindings,
+            )
+            if isinstance(discriminator_default, ast.Constant) and isinstance(
+                discriminator_default.value, str
+            ):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    discriminator_field,
+                    "raw string ErrorOut discriminator",
+                )
+            if (
+                _enum_member_name(
+                    discriminator_default,
+                    discriminator_bindings,
+                    enum_full,
+                    members,
+                )
+                is None
+            ):
+                _append_finding(
+                    findings,
+                    seen,
+                    parsed,
+                    discriminator_field,
+                    "concrete discriminator default must use own ErrorCode member",
+                )
+        elif base_discriminator_default_member is None:
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                node,
+                "concrete discriminator requires own ErrorCode default",
+            )
+        _class_member_findings(
+            parsed,
+            node,
+            bindings,
+            common_fields,
+            analysis,
+            findings,
+            seen,
+        )
+    _bc_module_artifact_findings(
+        parsed,
+        allowed_class_nodes,
+        findings,
+        seen,
+    )
+    return (
+        members,
+        known_concrete,
+        base_full,
+        discriminator_field_name,
+        discriminator_constructor_keys,
+        discriminator_constructor_paths,
+        discriminator_constructor_keys_complete,
+    )
 
 
 def _argument_names(arguments: ast.arguments) -> set[str]:
@@ -1477,7 +3645,7 @@ def _raw_constructor_calls(
     parsed: ParsedSource,
     roots: list[ast.AST],
     bindings: dict[str, str],
-    known_classes: set[str],
+    known_classes: dict[str, KnownErrorClass],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> dict[str, str]:
@@ -1527,19 +3695,126 @@ def _raw_constructor_calls(
             return
 
         if isinstance(node, ast.Call):
-            if _resolve(node.func, scope_bindings) in known_classes:
+            constructor = _resolve(node.func, scope_bindings)
+            error_contract = known_classes.get(constructor or "")
+            if error_contract is not None:
+                entries: list[tuple[str, ast.AST, ast.AST]] = []
                 for keyword in node.keywords:
+                    if keyword.arg is not None:
+                        entries.append((keyword.arg, keyword.value, keyword))
+                        continue
+                    if isinstance(keyword.value, ast.Dict) and all(
+                        key is not None
+                        and _static_string_value(key, scope_bindings) is not None
+                        for key in keyword.value.keys
+                    ):
+                        entries.extend(
+                            (
+                                _static_string_value(key, scope_bindings) or "",
+                                item,
+                                keyword,
+                            )
+                            for key, item in zip(
+                                keyword.value.keys,
+                                keyword.value.values,
+                            )
+                            if key is not None
+                        )
+                    else:
+                        error_contract.alias_analysis.append(
+                            f"{parsed.relative_path}:{keyword.lineno} dynamic ErrorOut **constructor argument 분석 불능"
+                        )
+
+                def value_at_path(
+                    value: ast.AST,
+                    tail: tuple[str | int, ...],
+                ) -> tuple[str, ast.AST | None]:
+                    if not tail:
+                        return "found", value
+
+                    static_container = _static_literal_value(
+                        _resolve(value, scope_bindings)
+                    )
+                    if static_container is not _NO_STATIC_VALUE:
+                        current: object = static_container
+                        try:
+                            for part in tail:
+                                current = current[part]  # type: ignore[index]
+                        except (IndexError, KeyError, TypeError):
+                            return "missing", None
+                        return "found", ast.Constant(current)
+
+                    static_ast = _static_ast_value(
+                        _resolve(value, scope_bindings)
+                    )
+                    if static_ast is not None:
+                        return value_at_path(static_ast, tail)
+
+                    part, remaining = tail[0], tail[1:]
+                    if isinstance(value, ast.Dict):
+                        state = "missing"
+                        selected: ast.AST | None = None
+                        for key, item in zip(value.keys, value.values):
+                            if key is None:
+                                unpack_state, unpack_value = value_at_path(
+                                    item,
+                                    (part,),
+                                )
+                                if unpack_state == "found":
+                                    state, selected = "found", unpack_value
+                                elif unpack_state == "uncertain":
+                                    state, selected = "uncertain", None
+                            elif _static_path_part(key, scope_bindings) == part:
+                                state, selected = "found", item
+                        if state != "found" or selected is None:
+                            return state, None
+                        return value_at_path(selected, remaining)
                     if (
-                        keyword.arg == "code"
-                        and isinstance(keyword.value, ast.Constant)
-                        and isinstance(keyword.value.value, str)
+                        isinstance(part, int)
+                        and isinstance(value, (ast.List, ast.Tuple))
+                    ):
+                        if -len(value.elts) <= part < len(value.elts):
+                            return value_at_path(value.elts[part], remaining)
+                        return "missing", None
+                    return "uncertain", None
+
+                for key, value, anchor in entries:
+                    discriminator_results = [
+                        value_at_path(value, path[1:])
+                        for path in error_contract.discriminator_paths
+                        if path and path[0] == key
+                    ]
+                    if any(
+                        _static_string_value(leaf, scope_bindings) is not None
+                        for state, leaf in discriminator_results
+                        if state == "found" and leaf is not None
                     ):
                         _append_finding(
                             findings,
                             seen,
                             parsed,
-                            keyword,
-                            "raw string code constructor argument",
+                            anchor,
+                            "raw string discriminator constructor argument",
+                        )
+                    elif any(
+                        state == "uncertain"
+                        for state, _leaf in discriminator_results
+                    ):
+                        error_contract.alias_analysis.append(
+                            f"{parsed.relative_path}:{anchor.lineno} discriminator validation path 분석 불능"
+                        )
+                    elif (
+                        not error_contract.keys_complete
+                        and key not in error_contract.discriminator_keys
+                        and any(
+                            _static_string_value(candidate, scope_bindings)
+                            is not None
+                            for candidate in ast.walk(value)
+                        )
+                    ):
+                        error_contract.alias_analysis.append(
+                            "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                            f"{parsed.relative_path}:{anchor.lineno} custom alias_generator constructor-key 분석 불능"
                         )
 
         for child in ast.iter_child_nodes(node):
@@ -1575,6 +3850,8 @@ def _update_bindings(
         bindings.pop(name, None)
     if module_scope and isinstance(statement, ast.ClassDef):
         bindings[statement.name] = f"{_module_name(parsed.relative_path)}.{statement.name}"
+    else:
+        _bind_static_assignment(statement, bindings)
 
 
 def _final_module_bindings(parsed: ParsedSource) -> dict[str, str]:
@@ -1621,7 +3898,7 @@ def _raw_code_suite(
     statements: list[ast.stmt],
     initial_bindings: dict[str, str],
     initial_objects: dict[str, str],
-    known_classes: set[str],
+    known_classes: dict[str, KnownErrorClass],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
     *,
@@ -1659,9 +3936,10 @@ def _raw_code_suite(
             if constructor in known_classes:
                 for name in target_names:
                     local_objects[name] = constructor
-        if isinstance(statement, (ast.Assign, ast.AnnAssign)) and isinstance(
-            statement.value, ast.Constant
-        ) and isinstance(statement.value.value, str):
+        if (
+            isinstance(statement, (ast.Assign, ast.AnnAssign))
+            and _static_string_value(statement.value, bindings) is not None
+        ):
             assignment_targets = (
                 statement.targets
                 if isinstance(statement, ast.Assign)
@@ -1670,16 +3948,19 @@ def _raw_code_suite(
             for target in assignment_targets:
                 if (
                     isinstance(target, ast.Attribute)
-                    and target.attr == "code"
                     and isinstance(target.value, ast.Name)
                     and target.value.id in local_objects
+                    and target.attr
+                    in known_classes[
+                        local_objects[target.value.id]
+                    ].discriminator_keys
                 ):
                     _append_finding(
                         findings,
                         seen,
                         parsed,
                         statement,
-                        "raw string one-step object.code assignment",
+                        "raw string one-step discriminator assignment",
                     )
 
         if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -1910,7 +4191,7 @@ def _raw_code_suite(
 
 def _raw_code_findings(
     parsed: ParsedSource,
-    known_classes: set[str],
+    known_classes: dict[str, KnownErrorClass],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
 ) -> None:
@@ -1940,7 +4221,7 @@ def _outside_canonical_class_findings(
         parsed.tree.body,
         {},
         {},
-        set(),
+        {},
         findings,
         seen,
         module_scope=True,
@@ -1980,22 +4261,54 @@ def _schema_findings(
     for extra in sorted(response_files - {COMMON_INIT, COMMON_ERROR}, key=Path.as_posix):
         structural_blockers.append(f"common response extra production module 금지: {extra}")
 
-    required_fields = _analyze_common(
-        parsed.get(COMMON_ERROR), analysis, findings, seen
+    project_modules = _project_module_prefixes(inventory.relative_paths)
+    common_contracts = _analyze_common(
+        parsed.get(COMMON_ERROR),
+        analysis,
+        findings,
+        seen,
+        project_modules,
     )
     all_wire_values: dict[str, list[tuple[Path, str]]] = {}
-    known_classes = {COMMON_ERROR_OUT}
+    known_classes: dict[str, KnownErrorClass] = {}
     known_bases: set[str] = set()
     for path in sorted(code_paths, key=Path.as_posix):
         bc = _candidate_bc(path)
         source = parsed.get(path)
         if bc is None or source is None:
             continue
-        members, concretes, base_full = _analyze_bc_module(
-            source, bc, required_fields, analysis, findings, seen
+        (
+            members,
+            concretes,
+            base_full,
+            discriminator_field,
+            discriminator_constructor_keys,
+            discriminator_constructor_paths,
+            discriminator_constructor_keys_complete,
+        ) = _analyze_bc_module(
+            source,
+            bc,
+            common_contracts,
+            analysis,
+            findings,
+            seen,
+            project_modules,
         )
-        known_classes.add(base_full)
-        known_classes.update(concretes)
+        if discriminator_field is not None:
+            error_contract = KnownErrorClass(
+                discriminator_constructor_keys,
+                discriminator_constructor_paths,
+                discriminator_constructor_keys_complete,
+                frozenset(members.values()),
+                analysis,
+            )
+            known_classes[base_full] = error_contract
+            known_classes.update(
+                {
+                    concrete: error_contract
+                    for concrete in concretes
+                }
+            )
         known_bases.add(base_full)
         for member, value in members.items():
             all_wire_values.setdefault(value, []).append((path, member))
@@ -2064,26 +4377,30 @@ def main(argv: list[str]) -> int:
                 blockers,
             )
             analysis.extend(semantic_analysis)
+        dynamic_proof_only = bool(analysis) and all(
+            issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
+            for issue in analysis
+        )
+        if (findings or blockers) and (not analysis or dynamic_proof_only):
+            print(
+                "[check-error-centralization] BLOCKER — code-profile ErrorOut schema, "
+                "inventory, or raw code contract violation:"
+            )
+            for blocker in blockers:
+                print(f"  - {blocker}")
+            for finding in findings:
+                print(finding.render())
+            print(
+                "  근거: common ErrorOut는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
+                "canonical ErrorCode/ErrorOut hierarchy와 project-wide unique wire code를 소유한다."
+            )
+            return 2
         if analysis:
             raise UsageError("; ".join(sorted(set(analysis))))
     except UsageError as exc:
         print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
         return 1
 
-    if findings or blockers:
-        print(
-            "[check-error-centralization] BLOCKER — code-profile ErrorOut schema, "
-            "inventory, or raw code contract violation:"
-        )
-        for blocker in blockers:
-            print(f"  - {blocker}")
-        for finding in findings:
-            print(finding.render())
-        print(
-            "  근거: common ErrorOut는 동적 required wire shape의 단일 기반이고, 각 BC는 "
-            "canonical ErrorCode/ErrorOut hierarchy와 project-wide unique wire code를 소유한다."
-        )
-        return 2
     return 0
 
 

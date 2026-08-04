@@ -116,9 +116,9 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 
 ### 1.2 의미 레인 (결정 결과에 **blind**)
 - **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "domain/application이 HTTP status·Ninja 타입을 아는가? (Y/N)+줄", "알려진 자기 BC 예외→status 선택을 소유 controller가 직접 하는가? (Y/N)+줄".
-- **🔴 에러 경로 정독 의무(NJ-1·3·4·7·SD-6·Q-2)**: operation 본문·checker exit 0만으로 판정 **금지**. controller의 `try/except`·`response={}`·ErrorOut 생성·반환을 읽고 custom handler/helper/catch-all 및 framework 오류 수동 계약이 없는지 대조한다. controller의 좁은 구체 catch와 직접 `Status(error.status, error)` 반환은 PASS다. handler/helper/catch-all, 넓은 catch, raw 오류 응답, application status DTO는 FAIL 신호다.
+- **🔴 에러 경로 정독 의무(NJ-1·3·4·7·SD-6·Q-2)**: operation 본문·checker exit 0만으로 판정 **금지**. controller의 `try/except`·`response={}`·ErrorOut 생성·반환을 읽고 custom handler/helper/catch-all 및 framework 오류 수동 계약이 없는지 대조한다. controller의 좁은 구체 catch와 직접 two-argument `Status(<승인된 HTTP status 표현>, error)` 반환은 PASS다. `status` body property는 필수가 아니다. handler/helper/catch-all, 넓은 catch, raw 오류 응답, application status DTO는 FAIL 신호다.
 - **필수 줄 인용** — 인용 없는 PASS 무효.
-- **Q-2 판정 의미** — 선택한 error profile의 **wire shape·HTTP/body status·필요 header·version 정책이 서로 일관한지**만 판정한다. 다른 profile(RFC 9457 등)의 형태를 섞거나 framework 기본 오류에 BC shape를 강제하면 FAIL이다.
+- **Q-2 판정 의미** — 선택한 error profile의 **승인 exact wire shape·HTTP status·필요 header·version 정책이 서로 일관한지**만 판정한다. body status property가 승인된 scope만 HTTP와의 일치를 추가로 본다. 다른 profile(RFC 9457 등)의 형태를 섞거나 framework 기본 오류에 BC shape를 강제하면 FAIL이다.
 - **판정 바=표준 §근거 조항**; 앵커=예시로만 대조(임계값 아님).
 - **grader 배포본 = 익명 스니펫 + 표준 §근거만**. fixture명·줄번호·런타임은 조정자 보유(grader 미수령) — 앵커 줄번호 노출과 마스킹의 모순(C-F4)을 *출처 비공개*로 해소.
 - **N 표기 분리**: `N_grader`=*채점 grader 수*(≥3, 블라인드·런타임 마스킹). `N_run`(§4)=*완료 선언용 블라인드 런 샘플 수*(≥5). 둘은 다른 축이다.
@@ -131,7 +131,7 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 ### 1.4 기능 정확성 측정 (FC)
 - **FC-1 골든 오라클**: **(주체)** 적대 grader가 **(시점)** 프롬프트 수령 직후·코드 *열람 전*에 **(형식)** *태스크-독립 행위표*(입력상태,요청)→(기대 status,부작용) + 타임스탬프 + "코드 미열람" 선언을 freeze 산출물에 커밋(열람 후 수정 금지·git diff 검증). **행위표 ⊥ 실행 어댑터**(실측 교정): 행위표는 코드 미열람으로 8벌 공통 작성 가능하나 *실제 두드릴 route+요청 schema*는 픽스처마다 달라(동일 태스크라도 BC 분해 분기) **조정자가 코드 열람 후 어댑터를 짠다** — "미열람"은 행위표에만. **작성자 ⊥ 채점자**(골든표 작성한 적대 grader는 그 fixture 의미 grader 제외 → 그 픽스처 N_grader를 1 늘려 유효 3 유지). 실행=인수 테스트와 독립한 호출 스크립트로 `.venv` 실측. **명세·기존 테스트는 오라클 불인정**.
   - **러너(runner) = `pytest`(pytest-django)**: FC-1 골든 행위 검증·Q-6 스위트 실행은 **프로젝트 루트에서 `.venv/bin/pytest`**로 돌린다(픽스처의 pytest 설정 `pytest.ini`/`pyproject.toml`·`DJANGO_SETTINGS_MODULE`이 적용되는 루트). 픽스처에 pytest 설정이 없으면 `.venv/bin/pytest -p pytest_django --ds=<settings>`로 명시하거나 픽스처 venv에 `pytest-django` 설치를 선행한다. **`manage.py test`(unittest 디스커버리)는 함수형 `def test_*()` pytest 테스트를 0개로 수집해 FC-2를 거짓 PASS시키므로 금지.** **🔴 오염 차단(2026-06-09 ptcat 교훈)**: 조정자가 픽스처 venv에 `pytest-django` 등을 설치-선행하면 §1.1.T의 `env`/`used` 축이 오염된다(env 도구가 코디 행동을 대체·관측 무효). 따라서 ① 도구 스냅샷(§1.1.T `env`)은 설치-선행 **전**에 뜨고, ② 조정자 설치분은 `(조정자 추가)` 태그로 `produced`(코디 핀 책무)에서 배제하며, ③ 가능하면 **채점용 러너 venv를 라이브 baseline과 별도 복제**해 라이브 산출 환경(코디가 설치·핀한 그 상태)을 변형하지 않는다. `pytest`는 Django `TestCase` **와** 함수형 pytest 테스트를 **둘 다** 수집하므로 표준이 pytest 관용구로 전환된 신규 산출물과 구 fixture(`TestCase`)를 한 러너로 안전히 채점한다. **러너만 바뀌고 골든 green→red 오라클 로직은 불변.**
-- **FC-2 mutation**: *논리 mutation 3종*을 fixture 열람 전 동결한다. M1=차감 부호, M2=핵심 판정 경계(`<`/`>=`), **M3=controller에서 `Status`에 넘기는 구체 오류의 기본 `status` 또는 BC base 직접 생성자의 `status`를 다른 값으로 바꾸는 mutation**이다. M3는 **실제 HTTP status와 body `status`가 모두 red**여야 PASS다. 주입 site는 FC-1 골든이 두드리는 경로에서 찾고, M1/M2는 핵심 domain 판정 메서드, M3는 site controller의 `Status`/error mapping에 둔다. 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`; 러너는 `.venv/bin/pytest`다.
+- **FC-2 mutation**: *논리 mutation 3종*을 fixture 열람 전 동결한다. M1=차감 부호, M2=핵심 판정 경계(`<`/`>=`), **M3=controller가 `Status`에 넘기는 승인 HTTP status 표현을 다른 값으로 바꾸는 mutation**이다. M3는 실제 HTTP status가 red여야 PASS다. slot 6이 body status property를 승인한 fixture만 그 field의 concrete/base default 또는 직접 생성값도 별도 mutation하고 HTTP/body 일치 단언이 red인지 본다. body status property를 새로 요구하지 않는다. 주입 site는 FC-1 골든이 두드리는 경로에서 찾고, M1/M2는 핵심 domain 판정 메서드, M3는 site controller의 `Status`/error mapping에 둔다. 기존 테스트 red면 PASS, green이면 FAIL(vacuous). 수동 또는 `mutmut`; 러너는 `.venv/bin/pytest`다.
 - **FC-3 도메인 정합**: 의미 grader가 골든 결과+코드 정독으로 명백한 도메인 오류(음수 재고·차감 역전·인과 역전) 판정.
 
 ### 1.5 채점 결정성 가드 — 부정 단정·수집 오라클·런-정지 (2026-06-10 신설 · lastlive-claude 오채점 박제)
@@ -225,7 +225,7 @@ P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의
 | **EP-1 깨진 본문** | 비-JSON/절단 본문 POST는 Ninja 파싱 단계의 framework 오류 | 기본 **400**; BC ErrorOut shape/code가 아니어야 함; exact body snapshot 금지 | HTTP operation 없으면 N/A |
 | **EP-2 요청 검증 실패** | Schema 필수값·타입·범위 검증 실패는 framework 오류 | 기본 **422**; BC ErrorOut shape/code가 아니어야 함; exact body snapshot 금지 | 적합한 요청 필드를 fixture별로 선택. HTTP operation 없으면 N/A |
 | **EP-3 인프라/승인 retryable** | **(a)** raw DB·인프라·미식별 예외, **(b)** G1에서 안정적인 공개 retryable 의미를 승인해 infra가 자기 BC 예외로 정규화한 경로를 분리 | (a) framework 기본 **500**, BC code/header 없음. (b) 소유 controller가 **503 또는 계약상 409** + 승인 BC code + 승인 표준 header 반환 | raw 오류를 catch-all로 변환하지 않는다. (b)가 G1 승인되지 않았거나 정규화 경로가 없으면 그 arm만 N/A |
-| **EP-4 재고 부족** | 재고<주문인 알려진 BC 충돌 | **409** + 승인된 자기 BC code의 `application/json`; HTTP status=body `status` | FC-1 골든이 1차, 여기서는 라이브 축 교차확인 |
+| **EP-4 재고 부족** | 재고<주문인 알려진 BC 충돌 | **409** + slot 6의 승인 exact `application/json` body; body status property가 승인된 fixture에서만 HTTP와 일치 | FC-1 골든이 1차, 여기서는 라이브 축 교차확인 |
 
 > **C 정책 무충돌**: 이 EP-1~4 매트릭스에는 **415/406 협상 항목이 없다**. Q-1의 외부 공개 API 조건부 협상 정책과 EP의 framework/BC 오류 종단을 섞지 않는다.
 

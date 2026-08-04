@@ -26,6 +26,7 @@ from typing import Callable
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 HTTP_STATUS_CONSTANT_RE = re.compile(r"^HTTP_([1-5]\d\d)(?:_|$)")
+STATIC_LITERAL_PREFIX = "@static-literal:"
 HTTP_METHODS = {"delete", "get", "head", "options", "patch", "post", "put"}
 ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
 COMMON_ERROR_MODULE = "common.ninja.response.error_out"
@@ -53,6 +54,15 @@ NINJA_IMPORT_RE = re.compile(
     r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
     re.MULTILINE,
 )
+FIELD_FACTORIES = {
+    "ninja.Field",
+    "pydantic.Field",
+    "pydantic.fields.Field",
+}
+ALIAS_CHOICES_FACTORIES = {
+    "pydantic.AliasChoices",
+    "pydantic.aliases.AliasChoices",
+}
 
 ROUTER_INSTANCE = "@ninja-router-instance"
 API_TYPE_PREFIX = "@ninja-api-type:"
@@ -117,7 +127,9 @@ class ErrorSymbol:
     full_path: str
     bc: str | None
     kind: str
-    status: StatusSpec | None = None
+    field_defaults: dict[str, StatusSpec] | None = None
+    constructor_fields_by_key: dict[str, str] | None = None
+    constructor_keys_complete: bool = True
 
 
 @dataclass(frozen=True)
@@ -125,6 +137,7 @@ class ErrorInstance:
     symbol: ErrorSymbol
     direct_status: int | None = None
     alias_depth: int = 0
+    field_values: tuple[tuple[str, StatusSpec], ...] = ()
 
 
 @dataclass
@@ -733,7 +746,30 @@ def _resolve_expression(node: ast.AST, bindings: dict[str, str]) -> str | None:
     bound = bindings.get(first)
     if bound is None:
         return None
+    if bound.startswith(STATIC_LITERAL_PREFIX):
+        return bound if not rest else None
     return ".".join((bound, *rest))
+
+
+def _static_literal_binding(value: object) -> str:
+    return f"{STATIC_LITERAL_PREFIX}{type(value).__name__}:{value!r}"
+
+
+def _static_literal_value(binding: str | None) -> object:
+    if binding is None or not binding.startswith(STATIC_LITERAL_PREFIX):
+        return _NO_STATIC_VALUE
+    payload = binding.removeprefix(STATIC_LITERAL_PREFIX)
+    type_name, separator, literal = payload.partition(":")
+    if not separator:
+        return _NO_STATIC_VALUE
+    try:
+        value = ast.literal_eval(literal)
+    except (SyntaxError, ValueError):
+        return _NO_STATIC_VALUE
+    return value if type(value).__name__ == type_name else _NO_STATIC_VALUE
+
+
+_NO_STATIC_VALUE = object()
 
 
 def _merge_bindings(states: list[dict[str, str]]) -> dict[str, str]:
@@ -1195,7 +1231,9 @@ def _advance_bindings(
     names = {name for target in targets for name in _target_names(target)}
     derived: str | None = None
     if value is not None:
-        if isinstance(value, ast.Call) and recognize_router:
+        if isinstance(value, ast.Constant):
+            derived = _static_literal_binding(value.value)
+        elif isinstance(value, ast.Call) and recognize_router:
             constructor = _resolve_expression(value.func, bindings)
             if constructor in {"ninja.Router", "ninja_extra.Router"}:
                 derived = ROUTER_INSTANCE
@@ -1220,7 +1258,7 @@ def _module_symbol_bindings_before(
     """Import와 앞선 local class/function 정의의 module provenance."""
     before: dict[int, dict[str, str]] = {}
     bindings: dict[str, str] = {}
-    module = ".".join(parsed.relative_path.with_suffix("").parts)
+    module = _module_name(parsed.relative_path)
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
     for statement in parsed.tree.body:
         before[id(statement)] = dict(bindings)
@@ -1236,16 +1274,169 @@ def _module_symbol_bindings_before(
     return before
 
 
+def _module_name(path: Path) -> str:
+    parts = list(path.with_suffix("").parts)
+    if parts and parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
+
+
+def _final_module_symbol_bindings(parsed: ParsedSource) -> dict[str, str]:
+    """Runtime-visible final module bindings for project callable proof."""
+    bindings: dict[str, str] = {}
+    module = _module_name(parsed.relative_path)
+    annotations_evaluated = _annotations_are_evaluated(parsed.tree)
+    for statement in parsed.tree.body:
+        if isinstance(statement, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            bindings[statement.name] = f"{module}.{statement.name}"
+        else:
+            _advance_bindings(
+                statement,
+                parsed.relative_path,
+                bindings,
+                annotations_evaluated=annotations_evaluated,
+            )
+    return bindings
+
+
+def _simple_binding_target(node: ast.AST) -> bool:
+    if isinstance(node, ast.Name):
+        return True
+    if isinstance(node, ast.Starred):
+        return _simple_binding_target(node.value)
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return all(_simple_binding_target(item) for item in node.elts)
+    return False
+
+
+STATIC_PROOF_IMPORT_ROOTS = frozenset(
+    {"__future__", "builtins", "pydantic", "typing"}
+)
+
+
+def _annotation_is_inert(node: ast.AST | None) -> bool:
+    return node is None or isinstance(node, (ast.Name, ast.Constant))
+
+
+def _function_signature_is_inert(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> bool:
+    if node.decorator_list or getattr(node, "type_params", ()):
+        return False
+    defaults = (*node.args.defaults, *node.args.kw_defaults)
+    if any(default is not None and not _module_value_is_inert(default) for default in defaults):
+        return False
+    arguments = (
+        *node.args.posonlyargs,
+        *node.args.args,
+        *node.args.kwonlyargs,
+    )
+    if any(not _annotation_is_inert(argument.annotation) for argument in arguments):
+        return False
+    if node.args.vararg is not None and not _annotation_is_inert(
+        node.args.vararg.annotation
+    ):
+        return False
+    if node.args.kwarg is not None and not _annotation_is_inert(
+        node.args.kwarg.annotation
+    ):
+        return False
+    return _annotation_is_inert(node.returns)
+
+
+def _lambda_signature_is_inert(node: ast.Lambda) -> bool:
+    defaults = (*node.args.defaults, *node.args.kw_defaults)
+    return all(
+        default is None or _module_value_is_inert(default)
+        for default in defaults
+    )
+
+
+def _module_value_is_inert(node: ast.AST) -> bool:
+    if any(isinstance(candidate, ast.Call) for candidate in ast.walk(node)):
+        return False
+    try:
+        ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError):
+        pass
+    else:
+        return True
+    if isinstance(node, ast.Name):
+        return True
+    if isinstance(node, ast.Lambda):
+        return _lambda_signature_is_inert(node)
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return all(
+            not isinstance(item, ast.Starred) and _module_value_is_inert(item)
+            for item in node.elts
+        )
+    return False
+
+
+def _trusted_static_import(statement: ast.Import | ast.ImportFrom) -> bool:
+    if isinstance(statement, ast.Import):
+        modules = [alias.name for alias in statement.names]
+    else:
+        if (
+            statement.level
+            or statement.module is None
+            or any(alias.name == "*" for alias in statement.names)
+        ):
+            return False
+        modules = [statement.module]
+    return all(module.split(".", 1)[0] in STATIC_PROOF_IMPORT_ROOTS for module in modules)
+
+
+def _module_statement_is_static(statement: ast.stmt) -> bool:
+    if isinstance(statement, (ast.Import, ast.ImportFrom)):
+        return _trusted_static_import(statement)
+    if isinstance(statement, ast.FunctionDef):
+        return _function_signature_is_inert(statement)
+    if isinstance(statement, ast.Assign):
+        return all(_simple_binding_target(target) for target in statement.targets) and (
+            _module_value_is_inert(statement.value)
+        )
+    if isinstance(statement, ast.AnnAssign):
+        return (
+            _simple_binding_target(statement.target)
+            and _annotation_is_inert(statement.annotation)
+            and (
+                statement.value is None
+                or _module_value_is_inert(statement.value)
+            )
+        )
+    if isinstance(statement, ast.Expr):
+        return isinstance(statement.value, ast.Constant) and isinstance(
+            statement.value.value, str
+        )
+    return isinstance(statement, ast.Pass)
+
+
+def _module_namespace_is_static(parsed: ParsedSource) -> bool:
+    return all(_module_statement_is_static(statement) for statement in parsed.tree.body)
+
+
 def _status_from_expression(
     expression: ast.AST,
     bindings: dict[str, str],
 ) -> int | None:
     literal = _literal_status(expression)
-    if literal is not None:
+    if (
+        literal is not None
+        and isinstance(expression, ast.Constant)
+        and isinstance(expression.value, int)
+        and not isinstance(expression.value, bool)
+    ):
         return literal
     resolved = _resolve_expression(expression, bindings)
     if resolved is None:
         return None
+    static_value = _static_literal_value(resolved)
+    if (
+        isinstance(static_value, int)
+        and not isinstance(static_value, bool)
+    ):
+        return static_value
     if resolved.startswith("ninja.status.") or resolved.startswith("ninja_extra.status."):
         name = resolved.rsplit(".", 1)[-1]
         match = HTTP_STATUS_CONSTANT_RE.match(name)
@@ -1257,22 +1448,639 @@ def _status_from_expression(
     return None
 
 
-def _class_status_spec(
+def _field_call_default_expression(
+    expression: ast.Call,
+    bindings: dict[str, str],
+) -> tuple[bool, ast.AST | None]:
+    if _resolve_expression(expression.func, bindings) not in FIELD_FACTORIES:
+        return False, None
+    for keyword in expression.keywords:
+        if keyword.arg == "default":
+            if isinstance(keyword.value, ast.Constant) and keyword.value.value is Ellipsis:
+                return True, None
+            return True, keyword.value
+        if keyword.arg == "default_factory":
+            return True, None
+    if expression.args:
+        first = expression.args[0]
+        if isinstance(first, ast.Constant) and first.value is Ellipsis:
+            return True, None
+        return True, first
+    return False, None
+
+
+def _is_required_sentinel(node: ast.AST, bindings: dict[str, str]) -> bool:
+    if isinstance(node, ast.Constant) and node.value is Ellipsis:
+        return True
+    return _resolve_expression(node, bindings) in {
+        "pydantic_core.PydanticUndefined",
+        "pydantic_core._pydantic_core.PydanticUndefined",
+        "pydantic.fields.PydanticUndefined",
+    }
+
+
+def _field_call_default_spec(
+    expression: ast.Call,
+    bindings: dict[str, str],
+) -> tuple[str, ast.AST | None] | None:
+    if _resolve_expression(expression.func, bindings) not in FIELD_FACTORIES:
+        return None
+    default_value = expression.args[0] if expression.args else None
+    default_declared = bool(expression.args)
+    factory_value: ast.AST | None = None
+    factory_declared = False
+    for keyword in expression.keywords:
+        if keyword.arg == "default":
+            default_declared = True
+            default_value = keyword.value
+        elif keyword.arg == "default_factory":
+            factory_declared = True
+            factory_value = keyword.value
+    default_is_set = (
+        default_declared
+        and default_value is not None
+        and not _is_required_sentinel(default_value, bindings)
+    )
+    factory_is_set = factory_declared and factory_value is not None and not (
+        isinstance(factory_value, ast.Constant) and factory_value.value is None
+    ) and not _is_required_sentinel(factory_value, bindings)
+    if default_is_set and factory_is_set:
+        return "conflict", None
+    if (
+        factory_declared
+        and isinstance(factory_value, ast.Constant)
+        and factory_value.value is Ellipsis
+    ):
+        return "invalid_factory", None
+    if factory_is_set:
+        return "default_factory", None
+    if default_is_set:
+        return "default", default_value
+    if factory_declared and isinstance(factory_value, ast.Constant) and factory_value.value is None:
+        return "clear_factory", None
+    return None
+
+
+def _merge_field_default_spec(
+    current: tuple[str, ast.AST | None],
+    declared: tuple[str, ast.AST | None] | None,
+) -> tuple[str, ast.AST | None]:
+    if declared is None:
+        return current
+    if current[0] in {"conflict", "invalid_factory"}:
+        return current
+    if declared[0] in {"conflict", "invalid_factory"}:
+        return declared
+    if declared[0] == "clear_factory":
+        return current if current[0] == "default" else ("required", None)
+    if {current[0], declared[0]} == {"default", "default_factory"}:
+        return "conflict", None
+    return declared
+
+
+def _annotated_parts(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> tuple[ast.AST, tuple[ast.AST, ...]] | None:
+    if not isinstance(node, ast.Subscript):
+        return None
+    wrapper = _resolve_expression(node.value, bindings) or _expression_dotted_name(node.value)
+    if wrapper not in {"Annotated", "typing.Annotated", "typing_extensions.Annotated"}:
+        return None
+    parts = node.slice.elts if isinstance(node.slice, ast.Tuple) else [node.slice]
+    if not parts:
+        return None
+    return parts[0], tuple(parts[1:])
+
+
+def _ordered_annotation_field_calls(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> tuple[ast.Call, ...]:
+    parts = _annotated_parts(node, bindings)
+    if parts is None:
+        return ()
+    inner, metadata = parts
+    calls = list(_ordered_annotation_field_calls(inner, bindings))
+    calls.extend(
+        candidate
+        for candidate in metadata
+        if isinstance(candidate, ast.Call)
+        and _resolve_expression(candidate.func, bindings) in FIELD_FACTORIES
+    )
+    return tuple(calls)
+
+
+def _field_default_expression(
+    expression: ast.AST | None,
+    bindings: dict[str, str],
+) -> ast.AST | None:
+    if not isinstance(expression, ast.Call):
+        return expression
+    declared, default = _field_call_default_expression(expression, bindings)
+    if declared:
+        return default
+    if _resolve_expression(expression.func, bindings) in FIELD_FACTORIES:
+        return None
+    return expression
+
+
+def _annassign_default_expression(
+    statement: ast.AnnAssign,
+    bindings: dict[str, str],
+) -> ast.AST | None:
+    spec: tuple[str, ast.AST | None] = ("required", None)
+    for candidate in _ordered_annotation_field_calls(statement.annotation, bindings):
+        spec = _merge_field_default_spec(
+            spec,
+            _field_call_default_spec(candidate, bindings),
+        )
+
+    value = statement.value
+    if value is None:
+        return spec[1]
+    if not isinstance(value, ast.Call):
+        if _is_required_sentinel(value, bindings):
+            return spec[1]
+        return None if spec[0] == "default_factory" else value
+    if _resolve_expression(value.func, bindings) in FIELD_FACTORIES:
+        return _merge_field_default_spec(
+            spec,
+            _field_call_default_spec(value, bindings),
+        )[1]
+    return value
+
+
+def _class_field_specs(
     class_node: ast.ClassDef,
     bindings: dict[str, str],
     relative_path: Path,
-) -> StatusSpec:
+    *,
+    annotations_evaluated: bool,
+) -> dict[str, StatusSpec]:
+    fields: dict[str, StatusSpec] = {}
+    current_bindings = dict(bindings)
     for statement in class_node.body:
         if isinstance(statement, ast.AnnAssign):
-            if isinstance(statement.target, ast.Name) and statement.target.id == "status":
-                return StatusSpec(statement.value, dict(bindings), relative_path)
+            if isinstance(statement.target, ast.Name) and not statement.target.id.startswith("_"):
+                fields[statement.target.id] = StatusSpec(
+                    _annassign_default_expression(statement, current_bindings),
+                    dict(current_bindings),
+                    relative_path,
+                )
         elif isinstance(statement, ast.Assign):
-            if any(
-                isinstance(target, ast.Name) and target.id == "status"
-                for target in statement.targets
-            ):
-                return StatusSpec(statement.value, dict(bindings), relative_path)
-    return StatusSpec(None, dict(bindings), relative_path)
+            for target in statement.targets:
+                if isinstance(target, ast.Name) and not target.id.startswith("_"):
+                    fields[target.id] = StatusSpec(
+                        _field_default_expression(statement.value, current_bindings),
+                        dict(current_bindings),
+                        relative_path,
+                    )
+        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            decorator_origins = {
+                _resolve_expression(
+                    decorator.func if isinstance(decorator, ast.Call) else decorator,
+                    current_bindings,
+                )
+                or _expression_dotted_name(
+                    decorator.func if isinstance(decorator, ast.Call) else decorator
+                )
+                for decorator in statement.decorator_list
+            }
+            if "pydantic.computed_field" in decorator_origins:
+                body = [
+                    item
+                    for item in statement.body
+                    if not (
+                        isinstance(item, ast.Expr)
+                        and isinstance(item.value, ast.Constant)
+                        and isinstance(item.value.value, str)
+                    )
+                ]
+                value = body[0].value if len(body) == 1 and isinstance(body[0], ast.Return) else None
+                fields[statement.name] = StatusSpec(
+                    value,
+                    dict(current_bindings),
+                    relative_path,
+                )
+        _advance_bindings(
+            statement,
+            relative_path,
+            current_bindings,
+            annotations_evaluated=annotations_evaluated,
+        )
+    return fields
+
+
+def _static_string(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    value = _static_literal_value(_resolve_expression(node, bindings))
+    return value if isinstance(value, str) else None
+
+
+def _alias_values(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> set[str]:
+    direct = _static_string(node, bindings)
+    if direct is not None:
+        return {direct}
+    if not isinstance(node, ast.Call):
+        return set()
+    factory = _resolve_expression(node.func, bindings)
+    if factory not in ALIAS_CHOICES_FACTORIES:
+        return set()
+    values = {_static_string(argument, bindings) for argument in node.args}
+    return {value for value in values if value is not None}
+
+
+def _generated_alias(field_name: str, generator: str | None) -> str | None:
+    if generator == "pydantic.alias_generators.to_pascal":
+        camel = field_name.title()
+        return re.sub(r"([0-9A-Za-z])_(?=[0-9A-Z])", lambda match: match.group(1), camel)
+    if generator == "pydantic.alias_generators.to_camel":
+        if re.match(r"^[a-z]+[A-Za-z0-9]*$", field_name) and not re.search(
+            r"\d[a-z]", field_name
+        ):
+            return field_name
+        pascal = _generated_alias(field_name, "pydantic.alias_generators.to_pascal")
+        assert pascal is not None
+        return re.sub(r"(^_*[A-Z])", lambda match: match.group(1).lower(), pascal)
+    if generator == "pydantic.alias_generators.to_snake":
+        snake = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", field_name)
+        snake = re.sub(r"([a-z])([A-Z])", r"\1_\2", snake)
+        snake = re.sub(r"([0-9])([A-Z])", r"\1_\2", snake)
+        snake = re.sub(r"([a-z])([0-9])", r"\1_\2", snake)
+        return snake.replace("-", "_").lower()
+    return None
+
+
+def _static_alias_expression(
+    node: ast.AST,
+    parameter: str,
+    field_name: str,
+) -> str | None:
+    if isinstance(node, ast.Name) and node.id == parameter:
+        return field_name
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        pieces: list[str] = []
+        for value in node.values:
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                pieces.append(value.value)
+            elif isinstance(value, ast.FormattedValue):
+                rendered = _static_alias_expression(value.value, parameter, field_name)
+                if (
+                    rendered is None
+                    or value.format_spec is not None
+                    or value.conversion not in {-1, ord("s")}
+                ):
+                    return None
+                pieces.append(rendered)
+            else:
+                return None
+        return "".join(pieces)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left = _static_alias_expression(node.left, parameter, field_name)
+        right = _static_alias_expression(node.right, parameter, field_name)
+        return left + right if left is not None and right is not None else None
+    if isinstance(node, ast.IfExp):
+        if isinstance(node.test, ast.Constant) and isinstance(node.test.value, bool):
+            branch = node.body if node.test.value else node.orelse
+            return _static_alias_expression(branch, parameter, field_name)
+        return None
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        owner = _static_alias_expression(node.func.value, parameter, field_name)
+        if owner is None or node.keywords:
+            return None
+        arguments = [
+            _static_alias_expression(argument, parameter, field_name)
+            for argument in node.args
+        ]
+        if any(argument is None for argument in arguments):
+            return None
+        values = [argument for argument in arguments if argument is not None]
+        if node.func.attr == "lower" and not values:
+            return owner.lower()
+        if node.func.attr == "upper" and not values:
+            return owner.upper()
+        if node.func.attr == "title" and not values:
+            return owner.title()
+        if node.func.attr == "replace" and len(values) == 2:
+            return owner.replace(values[0], values[1])
+    return None
+
+
+def _project_alias(
+    generator: str | None,
+    field_name: str,
+    parsed_sources: dict[Path, ParsedSource],
+    root: Path,
+) -> str | None:
+    if generator is None or "." not in generator:
+        return None
+    module, function_name = generator.rsplit(".", 1)
+    candidates = (
+        Path(*module.split(".")).with_suffix(".py"),
+        Path(*module.split(".")) / "__init__.py",
+    )
+    source = next((parsed_sources.get(path) for path in candidates if path in parsed_sources), None)
+    if source is None:
+        for path in candidates:
+            try:
+                resolved = (root / path).resolve()
+                resolved.relative_to(root)
+                text = resolved.read_text(encoding="utf-8")
+                source = ParsedSource(path, text, ast.parse(text, filename=path.as_posix()))
+                break
+            except (FileNotFoundError, OSError, UnicodeError, SyntaxError, ValueError):
+                continue
+    if source is None:
+        return None
+    if not _module_namespace_is_static(source):
+        return None
+    functions = [
+        node
+        for node in source.tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == function_name
+    ]
+    if len(functions) != 1:
+        return None
+    function = functions[0]
+    if (
+        function.decorator_list
+        or function.args.posonlyargs
+        or len(function.args.args) != 1
+        or function.args.vararg is not None
+        or function.args.kwarg is not None
+        or function.args.kwonlyargs
+    ):
+        return None
+    body = [
+        statement
+        for statement in function.body
+        if not (
+            isinstance(statement, ast.Expr)
+            and isinstance(statement.value, ast.Constant)
+            and isinstance(statement.value.value, str)
+        )
+    ]
+    if len(body) != 1 or not isinstance(body[0], ast.Return) or body[0].value is None:
+        return None
+    final_bindings = _final_module_symbol_bindings(source)
+    if final_bindings.get(function_name) != (
+        f"{_module_name(source.relative_path)}.{function_name}"
+    ):
+        return None
+    return _static_alias_expression(
+        body[0].value,
+        function.args.args[0].arg,
+        field_name,
+    )
+
+
+def _project_config_alias_generator(
+    value: ast.AST,
+    bindings: dict[str, str],
+    parsed_sources: dict[Path, ParsedSource],
+    root: Path,
+) -> tuple[bool, str | None]:
+    if not isinstance(value, ast.Call) or value.args or value.keywords:
+        return False, None
+    resolved = _resolve_expression(value.func, bindings)
+    if resolved is None or "." not in resolved:
+        return False, None
+    module, function_name = resolved.rsplit(".", 1)
+    candidates = (
+        Path(*module.split(".")).with_suffix(".py"),
+        Path(*module.split(".")) / "__init__.py",
+    )
+    source = next((parsed_sources.get(path) for path in candidates if path in parsed_sources), None)
+    if source is None:
+        for path in candidates:
+            try:
+                candidate = (root / path).resolve()
+                candidate.relative_to(root)
+                text = candidate.read_text(encoding="utf-8")
+                source = ParsedSource(path, text, ast.parse(text, filename=path.as_posix()))
+                break
+            except (FileNotFoundError, OSError, UnicodeError, SyntaxError, ValueError):
+                continue
+    if source is None:
+        return False, None
+    if not _module_namespace_is_static(source):
+        return False, None
+    functions = [
+        node
+        for node in source.tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == function_name
+    ]
+    if len(functions) != 1:
+        return False, None
+    function = functions[0]
+    if (
+        function.decorator_list
+        or function.args.posonlyargs
+        or function.args.args
+        or function.args.vararg is not None
+        or function.args.kwarg is not None
+        or function.args.kwonlyargs
+    ):
+        return False, None
+    body = [
+        statement
+        for statement in function.body
+        if not (
+            isinstance(statement, ast.Expr)
+            and isinstance(statement.value, ast.Constant)
+            and isinstance(statement.value.value, str)
+        )
+    ]
+    if len(body) != 1 or not isinstance(body[0], ast.Return):
+        return False, None
+    returned = body[0].value
+    if not isinstance(returned, ast.Call):
+        return False, None
+    function_bindings = _final_module_symbol_bindings(source)
+    if function_bindings.get(function_name) != (
+        f"{_module_name(source.relative_path)}.{function_name}"
+    ):
+        return False, None
+    if _resolve_expression(returned.func, function_bindings) not in {
+        "dict",
+        "pydantic.ConfigDict",
+        "pydantic.config.ConfigDict",
+    } or returned.args or any(keyword.arg is None for keyword in returned.keywords):
+        return False, None
+    for keyword in returned.keywords:
+        if keyword.arg == "alias_generator":
+            if isinstance(keyword.value, ast.Constant) and keyword.value.value is None:
+                return True, None
+            generator = _resolve_expression(keyword.value, function_bindings)
+            return (True, generator) if generator is not None else (False, None)
+    return True, None
+
+
+def _class_alias_generator(
+    class_node: ast.ClassDef,
+    bindings: dict[str, str],
+    relative_path: Path,
+    parsed_sources: dict[Path, ParsedSource],
+    root: Path,
+    *,
+    annotations_evaluated: bool,
+) -> tuple[str | None, bool]:
+    current = dict(bindings)
+    body_generator: str | None = None
+    body_config_seen = False
+    body_config_complete = True
+    legacy_generator: str | None = None
+    legacy_config_seen = False
+    for statement in class_node.body:
+        targets, value = _assigned_value(statement)
+        names = {name for target in targets for name in _target_names(target)}
+        if "model_config" in names:
+            body_config_seen = True
+            body_generator = None
+            body_config_complete = True
+            if isinstance(value, ast.Call):
+                direct_factory = _resolve_expression(value.func, current)
+                if direct_factory not in {
+                    "dict",
+                    "pydantic.ConfigDict",
+                    "pydantic.config.ConfigDict",
+                }:
+                    found, project_generator = _project_config_alias_generator(
+                        value,
+                        current,
+                        parsed_sources,
+                        root,
+                    )
+                    body_config_complete = found
+                    body_generator = project_generator
+                else:
+                    if value.args or any(keyword.arg is None for keyword in value.keywords):
+                        body_config_complete = False
+                    for keyword in value.keywords:
+                        if keyword.arg == "alias_generator":
+                            body_generator = _resolve_expression(keyword.value, current)
+            elif isinstance(value, ast.Dict):
+                for key, item in zip(value.keys, value.values):
+                    if key is None:
+                        body_config_complete = False
+                    elif _static_string(key, current) == "alias_generator":
+                        body_generator = _resolve_expression(item, current)
+                    elif _static_string(key, current) is None:
+                        body_config_complete = False
+            else:
+                body_config_complete = False
+        if isinstance(statement, ast.ClassDef) and statement.name == "Config":
+            legacy_config_seen = True
+            legacy_generator = None
+            config_current = dict(current)
+            for config_statement in statement.body:
+                config_targets, config_value = _assigned_value(config_statement)
+                config_names = {
+                    name
+                    for target in config_targets
+                    for name in _target_names(target)
+                }
+                if "alias_generator" in config_names and config_value is not None:
+                    legacy_generator = _resolve_expression(config_value, config_current)
+                _advance_bindings(
+                    config_statement,
+                    relative_path,
+                    config_current,
+                    annotations_evaluated=annotations_evaluated,
+                )
+        _advance_bindings(
+            statement,
+            relative_path,
+            current,
+            annotations_evaluated=annotations_evaluated,
+        )
+    generator = body_generator if body_config_seen else legacy_generator
+    config_complete = (
+        body_config_complete if body_config_seen else True
+    ) and not (body_config_seen and legacy_config_seen)
+
+    # Pydantic class-header kwargs override body model_config values.
+    for keyword in class_node.keywords:
+        if keyword.arg == "alias_generator":
+            generator = (
+                None
+                if isinstance(keyword.value, ast.Constant) and keyword.value.value is None
+                else _resolve_expression(keyword.value, bindings)
+            )
+            config_complete = True
+    return generator, config_complete
+
+
+def _class_constructor_fields_by_key(
+    class_node: ast.ClassDef,
+    bindings: dict[str, str],
+    relative_path: Path,
+    parsed_sources: dict[Path, ParsedSource],
+    project_root: Path,
+    *,
+    annotations_evaluated: bool,
+) -> tuple[dict[str, str], bool]:
+    mapping: dict[str, str] = {}
+    current = dict(bindings)
+    generator, keys_complete = _class_alias_generator(
+        class_node,
+        bindings,
+        relative_path,
+        parsed_sources,
+        project_root,
+        annotations_evaluated=annotations_evaluated,
+    )
+    for statement in class_node.body:
+        if isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+            field_name = statement.target.id
+            if not field_name.startswith("_") and field_name != "model_config":
+                keys = {field_name}
+                roots = [statement.annotation]
+                if statement.value is not None:
+                    roots.append(statement.value)
+                for root in roots:
+                    for candidate in ast.walk(root):
+                        if not isinstance(candidate, ast.Call):
+                            continue
+                        if _resolve_expression(candidate.func, current) not in FIELD_FACTORIES:
+                            continue
+                        for keyword in candidate.keywords:
+                            if keyword.arg in {"alias", "validation_alias"}:
+                                keys.update(_alias_values(keyword.value, current))
+                generated = _generated_alias(field_name, generator) or _project_alias(
+                    generator,
+                    field_name,
+                    parsed_sources,
+                    project_root,
+                )
+                if generated is not None:
+                    keys.add(generated)
+                elif generator is not None:
+                    keys_complete = False
+                for key in keys:
+                    previous = mapping.get(key)
+                    if previous is not None and previous != field_name:
+                        raise UsageError(
+                            f"constructor alias collision 분석 불능: {relative_path}:{statement.lineno} {key}"
+                        )
+                    mapping[key] = field_name
+        _advance_bindings(
+            statement,
+            relative_path,
+            current,
+            annotations_evaluated=annotations_evaluated,
+        )
+    return mapping, keys_complete
 
 
 def _error_catalog(
@@ -1289,8 +2097,35 @@ def _error_catalog(
     )
     if common_class is None:
         raise UsageError("canonical common ErrorOut provenance 분석 불능")
+    common_relative = Path("common/ninja/response/error_out.py")
+    common_before = _module_symbol_bindings_before(common)
+    common_annotations_evaluated = _annotations_are_evaluated(common.tree)
+    common_fields = _class_field_specs(
+        common_class,
+        common_before[id(common_class)],
+        common_relative,
+        annotations_evaluated=common_annotations_evaluated,
+    )
+    (
+        common_constructor_fields,
+        common_constructor_keys_complete,
+    ) = _class_constructor_fields_by_key(
+        common_class,
+        common_before[id(common_class)],
+        common_relative,
+        parsed_by_path,
+        config.root,
+        annotations_evaluated=common_annotations_evaluated,
+    )
     catalog: dict[str, ErrorSymbol] = {
-        COMMON_ERROR_OUT: ErrorSymbol(COMMON_ERROR_OUT, None, "common")
+        COMMON_ERROR_OUT: ErrorSymbol(
+            COMMON_ERROR_OUT,
+            None,
+            "common",
+            common_fields,
+            common_constructor_fields,
+            common_constructor_keys_complete,
+        )
     }
     if not config.error_bcs:
         return catalog
@@ -1299,6 +2134,7 @@ def _error_catalog(
         relative = Path(f"application/{bc}/presentation_layer/schema/error_out.py")
         parsed = parsed_by_path[relative]
         before = _module_symbol_bindings_before(parsed)
+        annotations_evaluated = _annotations_are_evaluated(parsed.tree)
         module = ".".join(relative.with_suffix("").parts)
         base_nodes: list[ast.ClassDef] = []
         for node in parsed.tree.body:
@@ -1314,7 +2150,39 @@ def _error_catalog(
             )
         base_node = base_nodes[0]
         base_path = f"{module}.{base_node.name}"
-        catalog[base_path] = ErrorSymbol(base_path, bc, "base")
+        base_fields = {
+            **common_fields,
+            **_class_field_specs(
+                base_node,
+                before[id(base_node)],
+                relative,
+                annotations_evaluated=annotations_evaluated,
+            ),
+        }
+        (
+            own_base_constructor_fields,
+            own_base_constructor_keys_complete,
+        ) = _class_constructor_fields_by_key(
+                base_node,
+                before[id(base_node)],
+                relative,
+                parsed_by_path,
+                config.root,
+                annotations_evaluated=annotations_evaluated,
+            )
+        base_constructor_fields = {
+            **common_constructor_fields,
+            **own_base_constructor_fields,
+        }
+        catalog[base_path] = ErrorSymbol(
+            base_path,
+            bc,
+            "base",
+            base_fields,
+            base_constructor_fields,
+            common_constructor_keys_complete
+            and own_base_constructor_keys_complete,
+        )
         for node in parsed.tree.body:
             if not isinstance(node, ast.ClassDef) or node is base_node:
                 continue
@@ -1323,11 +2191,39 @@ def _error_catalog(
             if base_path not in bases:
                 continue
             full_path = f"{module}.{node.name}"
+            concrete_fields = {
+                **base_fields,
+                **_class_field_specs(
+                    node,
+                    bindings,
+                    relative,
+                    annotations_evaluated=annotations_evaluated,
+                ),
+            }
+            (
+                own_concrete_constructor_fields,
+                own_concrete_constructor_keys_complete,
+            ) = _class_constructor_fields_by_key(
+                    node,
+                    bindings,
+                    relative,
+                    parsed_by_path,
+                    config.root,
+                    annotations_evaluated=annotations_evaluated,
+                )
+            concrete_constructor_fields = {
+                **base_constructor_fields,
+                **own_concrete_constructor_fields,
+            }
             catalog[full_path] = ErrorSymbol(
                 full_path,
                 bc,
                 "concrete",
-                _class_status_spec(node, bindings, relative),
+                concrete_fields,
+                concrete_constructor_fields,
+                common_constructor_keys_complete
+                and own_base_constructor_keys_complete
+                and own_concrete_constructor_keys_complete,
             )
     return catalog
 
@@ -1433,23 +2329,16 @@ def _collect_operations(parsed: ParsedSource) -> list[Operation]:
 def _resolved_error_status(instance: ErrorInstance) -> int:
     if instance.direct_status is not None:
         return instance.direct_status
-    spec = instance.symbol.status
-    if spec is None or spec.expression is None:
-        raise UsageError(
-            f"returned error status provenance 분석 불능: {instance.symbol.full_path}"
-        )
-    status = _status_from_expression(spec.expression, spec.bindings)
-    if status is None:
-        raise UsageError(
-            f"returned error status provenance 분석 불능: {instance.symbol.full_path}"
-        )
-    return status
+    raise UsageError(
+        f"returned error status provenance 분석 불능: {instance.symbol.full_path}"
+    )
 
 
 def _constructed_error(
     value: ast.expr,
     bindings: dict[str, str],
     catalog: dict[str, ErrorSymbol],
+    relative_path: Path,
 ) -> ErrorInstance | None:
     if not isinstance(value, ast.Call):
         return None
@@ -1463,17 +2352,28 @@ def _constructed_error(
         return None
     if symbol.kind == "concrete":
         return ErrorInstance(symbol)
-    status_keyword = next(
-        (keyword.value for keyword in value.keywords if keyword.arg == "status"), None
-    )
-    if status_keyword is None:
-        return ErrorInstance(symbol)
-    status = _status_from_expression(status_keyword, bindings)
-    if status is None:
+    constructor_fields = symbol.constructor_fields_by_key or {}
+    if not symbol.constructor_keys_complete and any(
+        keyword.arg is not None and keyword.arg not in constructor_fields
+        for keyword in value.keywords
+    ):
         raise UsageError(
-            f"direct BC ErrorOut status provenance 분석 불능: {resolved}"
+            "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+            f"custom alias_generator constructor-key 분석 불능: line {value.lineno}"
         )
-    return ErrorInstance(symbol, status)
+    field_values = tuple(
+        (
+            (
+                constructor_fields.get(keyword.arg, keyword.arg)
+                if symbol.constructor_fields_by_key is not None
+                else keyword.arg
+            ),
+            StatusSpec(keyword.value, dict(bindings), relative_path),
+        )
+        for keyword in value.keywords
+        if keyword.arg is not None
+    )
+    return ErrorInstance(symbol, field_values=field_values)
 
 
 def _status_return_instance(
@@ -1494,20 +2394,37 @@ def _status_return_instance(
     if len(value.args) < 2:
         return None
     status_arg, body_arg = value.args[:2]
-    if not (
-        isinstance(status_arg, ast.Attribute)
-        and status_arg.attr == "status"
-        and isinstance(status_arg.value, ast.Name)
-        and isinstance(body_arg, ast.Name)
-        and status_arg.value.id == body_arg.id
-    ):
+    if not isinstance(body_arg, ast.Name):
         return None
     instance = instances.get(body_arg.id)
     if instance == AMBIGUOUS_ERROR_INSTANCE:
         raise UsageError(
             f"returned ErrorOut instance provenance 분석 불능: line {statement.lineno}"
         )
-    return instance if isinstance(instance, ErrorInstance) else None
+    if not isinstance(instance, ErrorInstance):
+        return None
+    status = _status_from_expression(status_arg, bindings)
+    if status is None and (
+        isinstance(status_arg, ast.Attribute)
+        and isinstance(status_arg.value, ast.Name)
+        and status_arg.value.id == body_arg.id
+    ):
+        field_name = status_arg.attr
+        spec = dict(instance.field_values).get(field_name)
+        if spec is None and instance.symbol.field_defaults is not None:
+            spec = instance.symbol.field_defaults.get(field_name)
+        if spec is not None and spec.expression is not None:
+            status = _status_from_expression(spec.expression, spec.bindings)
+    if status is None:
+        raise UsageError(
+            f"returned error HTTP status provenance 분석 불능: line {statement.lineno}"
+        )
+    return ErrorInstance(
+        instance.symbol,
+        direct_status=status,
+        alias_depth=instance.alias_depth,
+        field_values=instance.field_values,
+    )
 
 
 def _operation_requirements(
@@ -1545,7 +2462,12 @@ def _operation_requirements(
         names = {name for target in targets for name in _target_names(target)}
         instance: ErrorInstance | str | None = None
         if value is not None:
-            instance = _constructed_error(value, state.bindings, catalog)
+            instance = _constructed_error(
+                value,
+                state.bindings,
+                catalog,
+                operation.relative_path,
+            )
             if instance is None and isinstance(value, ast.Name):
                 previous = state.instances.get(value.id)
                 if isinstance(previous, ErrorInstance) and previous.alias_depth == 0:
@@ -1553,6 +2475,7 @@ def _operation_requirements(
                         previous.symbol,
                         previous.direct_status,
                         alias_depth=1,
+                        field_values=previous.field_values,
                     )
                 elif previous == AMBIGUOUS_ERROR_INSTANCE:
                     instance = previous
@@ -1718,13 +2641,19 @@ def _openapi_extra_findings(operation: Operation) -> list[Finding]:
             and isinstance(value, ast.Dict)
         ):
             continue
-        statuses = sorted(
-            status
-            for status_key in value.keys
-            if status_key is not None
-            for status in [_status_from_expression(status_key, operation.bindings)]
-            if status is not None and 400 <= status <= 599
-        )
+        statuses: list[int] = []
+        for status_key in value.keys:
+            if status_key is None:
+                continue
+            text = _static_string(status_key, operation.bindings)
+            status = (
+                int(text)
+                if text is not None and text.isdigit()
+                else _status_from_expression(status_key, operation.bindings)
+            )
+            if status is not None and 400 <= status <= 599:
+                statuses.append(status)
+        statuses.sort()
         if statuses:
             return [
                 Finding(
@@ -2252,9 +3181,8 @@ def _deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     )
 
 
-def _code_findings(config: Config) -> list[Finding]:
+def _code_findings(config: Config) -> tuple[list[str], list[Finding]]:
     parsed_by_path = _parse_code_sources(config)
-    catalog = _error_catalog(config, parsed_by_path)
     api = parsed_by_path[Path(config.api_module or "")]
     findings, selected_imports = _api_module_findings(api)
     controller_operations: list[Operation] = []
@@ -2267,11 +3195,26 @@ def _code_findings(config: Config) -> list[Finding]:
         )
         findings.extend(controller_findings)
         controller_operations.extend(_collect_operations(controller))
+    analysis: list[str] = []
+    try:
+        catalog = _error_catalog(config, parsed_by_path)
+    except UsageError as exc:
+        issue = str(exc)
+        if issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
+            analysis.append(issue)
+            return analysis, _deduplicate_findings(findings)
+        raise
     for operation in controller_operations:
-        requirements = _operation_requirements(operation, catalog)
-        findings.extend(_response_findings(operation, requirements, catalog))
-        findings.extend(_openapi_extra_findings(operation))
-    return _deduplicate_findings(findings)
+        try:
+            requirements = _operation_requirements(operation, catalog)
+            findings.extend(_response_findings(operation, requirements, catalog))
+            findings.extend(_openapi_extra_findings(operation))
+        except UsageError as exc:
+            issue = str(exc)
+            if not issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
+                raise
+            analysis.append(issue)
+    return sorted(set(analysis)), _deduplicate_findings(findings)
 
 
 def _print_legacy_findings(findings: list[str]) -> None:
@@ -2310,10 +3253,16 @@ def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
         if config.profile == "dddjango-code-json":
-            findings = _code_findings(config)
-            if findings:
+            analysis, findings = _code_findings(config)
+            dynamic_proof_only = bool(analysis) and all(
+                issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
+                for issue in analysis
+            )
+            if findings and (not analysis or dynamic_proof_only):
                 _print_code_findings(findings)
                 return 2
+            if analysis:
+                raise UsageError("; ".join(analysis))
             return 0
         legacy = _legacy_findings(config.root)
         if legacy:

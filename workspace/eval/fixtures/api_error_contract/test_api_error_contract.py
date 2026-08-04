@@ -42,6 +42,9 @@ class InventoryErrorCode(str, Enum):
     ITEM_CONFLICT = "inventory.item_conflict"
 
 
+# 이 runtime fixture는 slot 6에서 이 네 필드를 승인한 한 프로젝트 변종만 검증한다.
+# dddjango의 기본 ErrorOut property 목록이 아니며, 임의 shape 수용은 checker matrix의
+# custom error_type/msg/is_show 사례가 별도로 검증한다.
 class ErrorOut(Schema):
     status: int
     code: str

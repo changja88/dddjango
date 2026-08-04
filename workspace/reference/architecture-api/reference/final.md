@@ -247,15 +247,16 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 #### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)
 
 - media type은 `application/json`이다.
-- 공개 body는 `code`, `title`, `status`, `detail`을 가진다.
-- `code`는 안정적인 공개 식별자다. public하게 구별되거나 관찰 가능한 실패에만 부여하며, 여러 내부 예외는 하나의 public code로 합쳐질 수 있다.
-- body `status`는 실제 HTTP status와 일치한다. `title`은 code마다 안정적으로 유지하고, `detail`은 자동으로 `str(exc)`를 사용하거나 민감한 내부 정보를 누설하지 않는다.
-- 배포된 public code의 변경은 breaking change다. 한 클라이언트 Enum은 하나의 계약을 소비한다. 실제 클라이언트 migration은 별도 작업이지만, 12-slot rollout에는 동시 전환인지 version split인지 기록한다.
+- 플러그인이 정한 body property 목록은 없다. 기존 범위는 관찰된 exact `ErrorOut` shape를 보존하고, 신규 범위는 exact field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화를 일반 G1 승인과 분리해 명시 승인받는다.
+- 기준선 shape의 property 추가·삭제·이름·타입·존재성·변환 규칙·의미 변경은 일반 기능 승인이 아니라 별도 public contract 변경이다. 호환성 영향과 server/client/test 전환 범위를 보여 준 뒤 명시적 사용자 승인을 받는다.
+- 승인 shape의 한 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁혀 안정적인 공개 식별자를 제공한다. 그 필드명은 고정하지 않는다. public하게 구별되거나 관찰 가능한 실패에만 값을 부여하며, 여러 내부 예외는 하나의 public 식별자로 합쳐질 수 있다.
+- HTTP status 계약은 body property의 존재를 요구하거나 가정하지 않는다. 승인 shape에 status field가 있으면 실제 HTTP status와 일치시켜야 하지만, 그런 field가 없으면 controller의 literal/status 상수가 계약을 소유한다. 공개 문자열은 `str(exc)`를 자동 사용하거나 민감한 내부 정보를 누설하지 않는다.
+- 배포된 public 식별자의 변경은 breaking change다. 한 클라이언트 Enum은 하나의 계약을 소비한다. 실제 클라이언트 migration은 별도 작업이지만, 12-slot rollout에는 동시 전환인지 version split인지 기록한다.
 - framework-owned 401/403, route 404, 422, 429, `HttpError`, 500의 기본 응답은 이 code 계약의 body가 아니며, 그 본문이 정확하고 안정적인 공개 계약이라고 주장하지 않는다.
 
 #### framework 기본 응답과 공개 헤더의 경계
 
-프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 code body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 retryable BC 오류는 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
+프레임워크 기본 401/403/route 404/422/429/`HttpError`/500을 전역 handler나 helper로 BC body로 바꾸어 헤더를 합성하지 않는다. 확립된 계약이 401의 `WWW-Authenticate` 또는 429의 `Retry-After`를 요구하면 그 헤더는 보존하고 별도 설계한다. presentation controller가 직접 공개하는 retryable BC 오류는 승인된 `Retry-After` 헤더를 그 controller가 소유한다.
 
 ## 6. RFC 9457 에러 응답 형식
 

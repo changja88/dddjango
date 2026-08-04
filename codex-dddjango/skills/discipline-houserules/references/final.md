@@ -62,8 +62,8 @@
 - 횡단 관심사는 `common/`에 모으고, 그 안을 기술축(enum·django·ninja)으로 다시 나눈다. 프레임워크에 의존하면 `common/django`·`common/ninja`로, 비종속이면 `common/<project>`로 둔다.
 - **`common/`은 *프로젝트 루트*에 둔다(= `application/`의 형제) — `application/common/`처럼 `application/`(feature 앱 컨테이너) *안*에 넣지 않는다.** 일반 공용 코드는 2개 이상 BC가 실제로 공유할 때만 루트 `common/`으로 승격한다(YAGNI — 횡단이 생기기 전 조기 승격 금지). 이 일반 규칙은 아래 code-profile 오류 응답 생성 금지를 완화하지 않는다.
 - **Django Ninja 공통 `ErrorOut` Schema는 위 2-consumer 승격 규칙의 좁은 예외다.** 신규 dddjango code-profile의 승인된 contract scope는 첫 HTTP BC부터 `common/ninja/response/error_out.py::ErrorOut`을 사용한다. 이 디렉터리는 **빈 `__init__.py`와 `error_out.py`만** 둔다. problem helper/catalog, validation·retryable 전용 schema, 오류 family별 파일, namespace/version/profile 하위 예시를 표준 트리에 추가하지 않는다. 독립 scope가 실제로 필요하면 경로·프로필·동시 rollout을 G1에서 먼저 승인한다.
-- 공통 `ErrorOut`의 필드는 현재 승인된 API 계약이 소유한다. 이 하우스룰은 필드 집합을 영구 고정하지 않으며, 필드 추가·삭제·이름·타입·required 여부·의미 변경은 사용자 승인과 G1 계약 갱신 뒤에만 한다. 기존 공용 HTTP 경로와 동등 계약이 승인돼 있으면 그 경로를 우선 재사용한다.
-- **code-profile 오류 응답 helper는 공통 승격 후보가 아니다.** helper/factory/serializer/mapping/handler/decorator/global mapper를 새로 만들거나 공유 수를 이유로 `common/`에 올리지 않는다. 각 controller의 짧고 명시적인 exception→concrete `ErrorOut` 매핑 반복은 허용한다. 이 금지는 오류 응답 생성에 한정하며, 다른 목적의 일반 shared abstraction까지 금지하지 않는다.
+- 공통 `ErrorOut`의 필드는 현재 승인된 API 계약이 소유하며 plugin 기본 property 목록은 없다. 기존 프로젝트는 관찰된 exact shape를 보존하고 신규 scope는 exact field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 결과를 별도로 명시 승인받는다. 이후 property 추가·삭제·이름·타입·존재성·변환 규칙·의미 변경도 별도 사용자 승인과 G1 계약 갱신 뒤에만 한다. 기존 공용 HTTP 경로와 동등 계약이 승인돼 있으면 그 경로를 우선 재사용한다.
+- **code-profile 오류 응답 helper는 공통 승격 후보가 아니다.** helper/factory/ErrorOut→HTTP response serializer/mapping/exception handler/handler 등록 decorator/global mapper를 새로 만들거나 공유 수를 이유로 `common/`에 올리지 않는다. 각 controller의 짧고 명시적인 exception→concrete `ErrorOut` 매핑 반복은 허용한다. 이 금지는 ErrorOut을 HTTP 오류 응답으로 변환하거나 예외를 등록하는 추출에 한정한다. 승인된 common Schema의 Pydantic validator/serializer/decorator/hook과 다른 목적의 일반 shared abstraction은 금지하지 않는다.
 - 이미 배포된 brownfield 오류 표면은 관찰한 승인 계약을 보존한다. 새 code-profile로 자동 이주하거나 기존 RFC 9457 표면과 혼합하지 않는다. 새로 만들거나 touched한 범위의 프로필·버전·동시 rollout은 G1 결정이다. **G1이 그 범위에 code-profile을 선택하면 이 문서의 오류 artifact와 HTTP 등록 owner/path는 주변 소스 레이아웃 규약과 무관하게 정확히 적용한다**: 프로젝트 `api.py`·`urls.py`, BC `presentation_layer/registrar.py`, use-case가 있는 BC의 BC-root `composition_root.py`, 공통 `common/ninja/response/error_out.py`, BC `presentation_layer/schema/error_out.py`를 rename·move·대체하지 않는다. 기존 layout은 이 필수 경로 밖의 무관한 주변 디렉터리에만 유지한다. 옛 오류 계약·module-top-level 등록·오류 helper를 유지할 수 있는 것은 이미 승인된 legacy scope뿐이다.
 - **`common/enum/` 승격은 공유 커널 결정이다** — 같은 철자를 넘어 같은 *지식*이고, 두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만(`architecture-ddd` §2.5 공유 커널 — 공유 범위 최소화 필수). BC 내부 enum은 그 BC `domain_layer` 소유이고 다른 BC가 직접 import하지 않는다 — 같은 wire 값의 BC별 각자 선언은 중복이 아니라 published language 수용이다. **승격된 공유 커널(`common/enum/`·`common/<project>/`)은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다**(§2 "domain은 아무것도 의존하지 않는다"의 명시 예외 — 프레임워크 비종속이 조건).
 
@@ -140,9 +140,9 @@ application/<app>/
 HTTP 오류를 직접 공개하는 BC는 `presentation_layer/schema/error_out.py` **정확히 한 파일**에 오류 언어 전부를 둔다. HTTP 오류를 공개하지 않는 BC는 이 파일을 미리 만들지 않는다(`schema/` 골격은 빈 패키지로 유지).
 
 - snake_case BC 디렉터리를 PascalCase로 바꾼 값을 `<Bc>` 접두로 쓴다(`order_management` → `OrderManagement`).
-- `<Bc>ErrorCode(StrEnum)` 하나와, 공통 `ErrorOut`을 상속해 **`code: <Bc>ErrorCode`만 좁히는** `<Bc>ErrorOut` 하나를 둔다. `Literal`이나 맨 문자열 타입으로 Enum을 대신하지 않는다.
+- `<Bc>ErrorCode(StrEnum)` 하나와, 공통 `ErrorOut`을 상속해 **slot 6의 식별자 field 하나만 `<Bc>ErrorCode`로 좁히는** `<Bc>ErrorOut` 하나를 둔다. 그 field 이름은 고정하지 않고 `Literal`이나 맨 문자열 타입으로 Enum을 대신하지 않는다.
 - 모든 사건별 concrete subclass도 같은 파일에 두고 `<Bc><Meaning>Error`로 명명한다. 각 concrete의 기존 필드는 모두 default를 가져 인자 없이 생성돼야 한다.
-- BC base는 `code` 외 필드를 재정의·추가하지 않고, concrete는 새 필드·validator·alias·required 생성자 인자를 추가하지 않는다. 오류마다 파일을 나누거나 validation/retryable 전용 오류 schema를 만들지 않는다.
+- BC base는 slot 6의 식별자 field 외 필드를 재정의·추가하지 않는다. 그 field는 공통 annotation의 wrapper/nullability·required/default와 default를 제외한 `Field(...)` metadata를 보존하면서 `str` 자리만 자기 Enum으로 좁힌다. concrete는 새 필드·validator·child `model_config`·required 생성자 인자나 annotation/Field metadata drift를 추가하지 않는다. 승인 alias 등이 있는 field를 재선언할 때는 동일 metadata를 반복한다. 오류마다 파일을 나누거나 validation/retryable 전용 오류 schema를 만들지 않는다.
 - controller가 알려진 자기 BC exception을 직접 catch하고 concrete `ErrorOut()`과 status를 명시적으로 반환한다. 이 짧은 매핑의 controller 간 반복은 허용하며 helper로 추출하지 않는다.
 
 설계 선택:
@@ -215,7 +215,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `common/ninja/response/` | 선택된 code-profile의 공통 transport 오류 계약 | 빈 `__init__.py` + `error_out.py` 정확히 두 파일(현재 필드 변경은 사용자/G1 승인) |
 | `common/<project>/` | **프레임워크 비종속** 공용 = shared kernel(공유 값객체·커스텀 타입) | 공유 VO·타입. ※Django/Ninja 의존 시 위 두 폴더로 |
 
-> 위 `common/*`은 모두 *프로젝트 루트* `common/`(= `application/`의 형제) 아래다 — `application/common/`이 아니다. 일반적인 횡단 배치는 *2개 이상 BC가 실제로 공유할 때*만 한다. 단, §1의 contract-scope 공통 core `ErrorOut`은 첫 HTTP BC부터 root `common/ninja/response/`에 두는 좁은 예외다. code-profile 오류 응답 helper/factory/serializer/mapping/handler/decorator/global mapper는 공유돼도 승격하지 않는다. 이 금지는 다른 목적의 일반 shared abstraction에는 적용하지 않는다. enum은 추가로 공유 커널 기준을 통과해야 한다(같은 지식 + 같은 변경 사유 근거 — §1) — 같은 wire 값을 BC마다 각자 선언하는 것은 정상(published language 수용)이지 승격 사유가 아니다.
+> 위 `common/*`은 모두 *프로젝트 루트* `common/`(= `application/`의 형제) 아래다 — `application/common/`이 아니다. 일반적인 횡단 배치는 *2개 이상 BC가 실제로 공유할 때*만 한다. 단, §1의 contract-scope 공통 core `ErrorOut`은 첫 HTTP BC부터 root `common/ninja/response/`에 두는 좁은 예외다. code-profile 오류 응답 helper/factory/ErrorOut→HTTP response serializer/mapping/exception handler/handler 등록 decorator/global mapper는 공유돼도 승격하지 않는다. 이 금지는 다른 목적의 일반 shared abstraction에는 적용하지 않는다. enum은 추가로 공유 커널 기준을 통과해야 한다(같은 지식 + 같은 변경 사유 근거 — §1) — 같은 wire 값을 BC마다 각자 선언하는 것은 정상(published language 수용)이지 승격 사유가 아니다.
 
 **도메인 계층 `domain_layer/<aggregate>/` — 애그리거트(개념) 1차, 종류 2차 (§3 전술 패턴)**
 

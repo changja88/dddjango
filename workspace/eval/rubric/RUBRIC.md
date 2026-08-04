@@ -78,7 +78,7 @@
 | **NJ-7** BC 오류 직접 계약 | 알려진 BC 실패를 해당 controller가 좁은 application 호출 경계에서 직접 ErrorOut/Status로 변환하고 framework 오류는 기본 흐름 보존 | §6.2·§8 | application 호출 한 문장만 감싼 좁은 `try` + 구체 catch + direct no-arg concrete ErrorOut(또는 BC base 직접 생성) + `Status`; 미식별/framework 오류는 기본 처리 | 오류 helper·factory·custom handler·catch-all / bare·`Exception`·`BaseException` broad catch / raw `Response`·`JsonResponse`·dict 오류 응답 / 즉시 raise-catch 우회 | 결정+의미 | — (강) |
 
 > **NJ-4 정확성 경계**: 검사는 실제 직접 반환 status→같은 BC base Schema까지 보증한다.
-> 하나의 `<Bc>ErrorOut>`이 여러 status에 쓰여 각 status 문서에 BC Enum 전체 code subset이
+> 하나의 `<Bc>ErrorOut>`이 여러 status에 쓰여 각 status 문서에 BC Enum 전체 식별자 subset이
 > 과대 노출되는 것은 v4의 승인된 한계다. 이를 보완하려고 OpenAPI를 수동 후가공하지 않는다.
 >
 > **의도적 제외(표준이 강제 안 함·거짓양성 원천)**: operationId 명시(§8 "확인"일 뿐·자동생성),
@@ -97,7 +97,7 @@
 | ID | 항목 | PASS | FAIL | 레인 | 치명 |
 |---|---|---|---|---|---|
 | **FC-1** 골든 오라클 | 평가자가 *명세 무관* 외부 행위표를 사전등록(예: 재고10·주문3→201∧남은7 / 재고2·주문5→409∧재고불변∧주문0)하고 코드를 그 표로 직접 두드림 | 모든 골든 케이스 일치 | 하나라도 불일치(차감 방향·status·부작용) | 의미(외부 오라클 실행) | ✅ |
-| **FC-2** 테스트 비-vacuous | 핵심 로직 mutation(차감 부호·판정 경계)과 controller 오류 status mutation 후 테스트 red 확인 | M1·M2 각각 red + M3에서 concrete default 또는 BC base constructor status 변조 시 HTTP/body status 단언 모두 red | mutation에도 green 또는 M3의 HTTP/body 단언 한쪽만 red | 결정(주입 실행) | ✅ |
+| **FC-2** 테스트 비-vacuous | 핵심 로직 mutation(차감 부호·판정 경계)과 controller 오류 status mutation 후 테스트 red 확인 | M1·M2 각각 red + M3에서 controller HTTP status 표현 변조 시 HTTP 계약 red; body status property가 승인된 fixture는 그 값 변조도 red | mutation에도 green 또는 승인된 M3 계약 단언이 red가 아님 | 결정(주입 실행) | ✅ |
 | **FC-3** 도메인 정합(negative gate) | 명백한 도메인 오류 부재 — 음수 재고 허용·차감 방향 역전·주문↔재고 인과 역전 등 | 명백 오류 0 | 명백 도메인 오류 1+ | 의미 | ✅ |
 
 > **FC vs SD 구분**: SD는 "*비빈혈 형태*"(판정이 도메인에 있나), FC는 "*그 판정이 맞나*"(동작이 정답인가). 비빈혈인데 *틀린* 모델(잘못된 불변식)은 SD PASS·FC FAIL로 갈린다 — 적대리뷰 CF-2(틀린 도메인 모델) 차단.
@@ -125,7 +125,7 @@
 | ID | 항목 | §근거 | PASS | FAIL/WEAK | 레인 |
 |---|---|---|---|---|---|
 | **Q-1** 스코프/과설계·G1 | 요청 외 기능 발명 0(멱등성·멀티라인·합산이 task 요구였나); 양방향(과소=빈혈은 SD / 과잉=무거운 패턴 미도입 §6.8); 고-blast 트레이드오프를 G1 상정(사후기록≠상정) | ddd §6.8·houserules §1.1 | 요청 범위 내·미선택 패턴 근거 기록 | 요청 외 발명 / 무거운 패턴 남용 / 고-blast를 §Open Questions에만 | 의미(spec) |
-| **Q-2** API 계약 | 선택된 error profile의 wire/status/header/version 일관성 | architecture-api §4~14 | profile 선택과 wire shape·HTTP/body status·표준 header·version 전환이 일관 | profile 혼합 / HTTP-body status drift / 승인 header·version 전환 누락 | 의미 |
+| **Q-2** API 계약 | 선택된 error profile의 wire/status/header/version 일관성 | architecture-api §4~14 | profile 선택과 승인 exact wire shape·HTTP status·표준 header·version 전환이 일관; body status property는 승인된 scope만 일치 | profile 혼합 / 승인 shape·status drift / 승인 header·version 전환 누락 | 의미 |
 | **Q-3** §9.6 형식+테스트 실현 | Risky Write 8행 다뤄짐(N/A 근거); 선언 동시성 기준이 **실제 테스트로 실현**·소진→409 경로·결정적 CAS 스파이 | architecture-db §9.6·implementation-test §20.5 | 8행 + 동시성 전 분기 결정적 테스트 | 8행 누락 / 약속 테스트 부재 / 소진 경로 미테스트 | grep+의미 |
 | **Q-4** 메커니즘 소유권 **[🔴 치명 — v3 승격]** | 커스텀 DB 백엔드/`DatabaseWrapper`/PRAGMA/몽키패치 0 | architecture-db §9.5·§16.4 | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 결정 |
 | **Q-5** 마이그레이션 안전 | 기존 0001 불변·`db_table`/`label` 보존·expand 단계·backfill | architecture-db §11 | 이력 불변·호환 변경 | 기존 0001 재작성 / 테이블 rename 위험 | 결정+의미 |
@@ -152,7 +152,7 @@
 | **EP-1** 깨진 본문 | malformed body가 framework 기본 400이고 BC ErrorOut shape/code가 아님; body exact snapshot 금지 | HTTP operation 없으면 N/A |
 | **EP-2** 요청 검증 | request validation이 framework 기본 422이고 BC ErrorOut shape/code가 아님; body exact snapshot 금지 | 검증 가능한 필드가 없으면 다른 필수 필드 |
 | **EP-3** 인프라·retryable 두 종단 | raw 인프라 실패→framework 기본 500; G1 승인 stable public retryable 실패→자기 BC 예외 정규화→controller 503/409 + 승인 code/header | 두 종단과 N/A 규칙은 §4.3.1 |
-| **EP-4** 재고 부족 | 409 + 승인된 자기 BC code JSON | FC-1 골든과 교차확인 |
+| **EP-4** 재고 부족 | 409 + slot-6 승인 BC exact JSON body; 승인된 body status property가 있을 때만 HTTP와 일치 | FC-1 골든과 교차확인 |
 
 > **C 정책 무충돌**: EP-1~4에는 415/406 협상 항목이 없다. Q-1의 외부 공개 API
 > 조건부 정책과 섞지 않는다. EP status·shape·N/A 정본은 `EVAL-METHOD.md §4.3.1`이다.

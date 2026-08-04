@@ -2469,11 +2469,11 @@ scope마다 다음 carrier를 명세에서 그대로 읽고, 테스트가 profil
 | 3 | `error profile` | `dddjango-code-json` 또는 `preserve-established` |
 | 4 | `compatibility/rollout` | 보존·breaking·version 분리·동시 배포 결정 |
 | 5 | `common ErrorOut action` | `reuse \| create \| approved-change \| none`과 canonical import |
-| 6 | `common ErrorOut shape/approval` | 필드·타입·required와 변경 승인 |
+| 6 | `common ErrorOut shape/approval` | exact field set·타입·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화와 기준선 변경의 별도 승인 |
 | 7 | `BC error module` | 정확한 `<bc>/presentation_layer/schema/error_out.py` 또는 근거 있는 `none` |
 | 8 | `BC ErrorCode` | `<Bc>ErrorCode` 멤버와 public wire 문자열 |
-| 9 | `BC ErrorOut` | 공통 base 상속과 `code: <Bc>ErrorCode` narrowing |
-| 10 | `prepared error mapping` | 내부 실패 → concrete/base → `code/title/status/detail/header` |
+| 9 | `BC ErrorOut` | 공통 base 상속과 승인된 식별자 field의 `<Bc>ErrorCode` narrowing |
+| 10 | `prepared error mapping` | 내부 실패 → concrete/base → exact approved body/header와 HTTP status |
 | 11 | `controller mapping` | application 호출·좁은 `try`·catch 타입·직접 `Status` 반환 |
 | 12 | `response/OpenAPI/tests` | endpoint별 status/schema, framework-default 제외, runtime/OpenAPI/no-arg 기준 |
 
@@ -2485,62 +2485,153 @@ media type/OpenAPI를 그대로 검증한다. 그 scope가 RFC 9457이면 그때
 
 #### 19.2.1 Schema 계약: 공통 shape, BC narrowing, concrete 무인자 생성
 
-code profile의 첫 경계는 실제 Ninja/Pydantic Schema다. 공통 `ErrorOut`은 현재 승인된
-`code: str`, `title: str`, `status: int`, `detail: str` 네 required 필드만 가진다. 이 집합을
-변경하는 테스트와 코드는 사용자 승인과 G1의 6번 slot 갱신이 함께 있을 때만 바꾼다.
+code profile의 첫 경계는 실제 Ninja/Pydantic Schema다. dddjango가 정한 공통 property 목록은
+없다. `APPROVED_COMMON_*` 오라클은 기존 프로젝트에서 관찰·보존한 exact shape 또는 신규 G1의
+6번 slot에서 별도로 승인된 field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire property를 **literal로**
+옮긴 값이다. production `ErrorOut.model_fields`에서 기대값을 역산하면 자기참조 테스트가 되므로
+금지한다. 기준선 변경은 일반 구현 승인과 분리된 사용자 명시 승인과 테스트 계약 갱신이 함께
+있을 때만 한다.
 
 ```python
-import pytest
+from copy import deepcopy
+from enum import Enum
+from hashlib import sha256
 from importlib import import_module
-from inspect import isclass
+from inspect import getsource, isclass
+from typing import get_args
+
+import pytest
 from pydantic import ValidationError
 
-from common.ninja.response.error_out import ErrorOut
-from application.inventory.presentation_layer.schema.error_out import (
-    InventoryErrorCode,
-    InventoryErrorOut,
-)
-from application.orders.presentation_layer.schema.error_out import (
-    OrderErrorCode,
-    OrderErrorOut,
+
+DECORATOR_COLLECTIONS = (
+    "validators",
+    "field_validators",
+    "root_validators",
+    "field_serializers",
+    "model_serializers",
+    "model_validators",
+    "computed_fields",
 )
 
 
-# 7~10번 slot에서 읽은 완전한 BC inventory다. error-BC가 승인되지 않은 scope에서는
-# 두 literal을 모두 빈 tuple/dict로 두고 공통 ErrorOut 테스트만 유지한다.
-APPROVED_BC_BASES_WITH_CODES = (
-    (InventoryErrorOut, InventoryErrorCode),
-    (OrderErrorOut, OrderErrorCode),
-)
-APPROVED_ERROR_BC_BASE_REFS = {
-    InventoryErrorOut: "#/components/schemas/InventoryErrorOut",
-    OrderErrorOut: "#/components/schemas/OrderErrorOut",
-}
-APPROVED_ERROR_BC_MODULES = (
-    "application.inventory.presentation_layer.schema.error_out",
-    "application.orders.presentation_layer.schema.error_out",
-)
-# Enum narrowing의 valid input도 승인 inventory에 속한다. error-BC가 없는 scope에서는 빈
-# dict로 두며, 그 때 이 BC-specific test는 common ErrorOut test를 대신하지 않는다.
-APPROVED_BC_ENUM_VALID_EXAMPLES = {
-    InventoryErrorOut: InventoryErrorCode.ITEM_NOT_FOUND,
-    OrderErrorOut: OrderErrorCode.PRODUCT_NOT_FOUND,
-}
+def _callable_contract(value):
+    function = getattr(value, "__func__", value)
+    try:
+        source_digest = sha256(getsource(function).encode()).hexdigest()
+    except (OSError, TypeError):
+        source_digest = None
+    return {
+        "module": getattr(function, "__module__", None),
+        "qualname": getattr(function, "__qualname__", repr(function)),
+        "source_sha256": source_digest,
+    }
+
+
+def _literal_contract_value(value):
+    if value is None or isinstance(value, (bool, int, float, str, bytes)):
+        return value
+    if isinstance(value, Enum):
+        return {
+            "enum": f"{type(value).__module__}.{type(value).__qualname__}.{value.name}"
+        }
+    if callable(value):
+        return {"callable": _callable_contract(value)}
+    if isinstance(value, dict):
+        return {
+            _literal_contract_value(key): _literal_contract_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return {
+            "collection": type(value).__name__,
+            "items": tuple(_literal_contract_value(item) for item in value),
+        }
+    return {
+        "type": f"{type(value).__module__}.{type(value).__qualname__}",
+        "repr": repr(value),
+    }
+
+
+def approved_field_metadata(field):
+    """지원 pin의 FieldInfo 전체 계약을 비교 가능한 값으로 노출한다."""
+    field_info = field.asdict()
+    return {
+        "metadata": tuple(
+            _literal_contract_value(value) for value in field_info["metadata"]
+        ),
+        # default/default_factory, alias/validation_alias/serialization_alias,
+        # alias_priority, title/description/examples, discriminator,
+        # json_schema_extra, frozen/validate_default/repr/init/kw_only 등을
+        # pin이 노출하는 그대로 모두 포함한다.
+        "attributes": {
+            name: _literal_contract_value(value)
+            for name, value in field_info["attributes"].items()
+        },
+    }
+
+
+def approved_non_default_field_metadata(field):
+    metadata = approved_field_metadata(field)
+    attributes = dict(metadata["attributes"])
+    attributes.pop("default", None)
+    attributes.pop("default_factory", None)
+    return {"metadata": metadata["metadata"], "attributes": attributes}
+
+
+def approved_decorator_metadata(model):
+    decorators = model.__pydantic_decorators__
+    return {
+        collection_name: {
+            name: (
+                entry.cls_var_name,
+                _callable_contract(entry.func),
+                _literal_contract_value(entry.shim),
+                _literal_contract_value(entry.info),
+            )
+            for name, entry in getattr(decorators, collection_name).items()
+        }
+        for collection_name in DECORATOR_COLLECTIONS
+    }
 
 
 def test_common_error_out_has_exact_approved_shape():
-    assert set(ErrorOut.model_fields) == {"code", "title", "status", "detail"}
+    assert set(ErrorOut.model_fields) == set(APPROVED_COMMON_FIELD_ANNOTATIONS)
     assert {
         name: field.annotation for name, field in ErrorOut.model_fields.items()
-    } == {
-        "code": str,
-        "title": str,
-        "status": int,
-        "detail": str,
-    }
+    } == APPROVED_COMMON_FIELD_ANNOTATIONS
     assert {
         name for name, field in ErrorOut.model_fields.items() if field.is_required()
-    } == {"code", "title", "status", "detail"}
+    } == APPROVED_REQUIRED_COMMON_FIELDS
+    assert {
+        name: approved_field_metadata(field)
+        for name, field in ErrorOut.model_fields.items()
+    } == APPROVED_COMMON_FIELD_METADATA
+    assert dict(ErrorOut.model_config) == APPROVED_COMMON_MODEL_CONFIG
+    assert approved_decorator_metadata(ErrorOut) == APPROVED_COMMON_DECORATOR_METADATA
+
+
+def _annotation_contains(annotation, expected_type):
+    return annotation is expected_type or any(
+        _annotation_contains(argument, expected_type)
+        for argument in get_args(annotation)
+    )
+
+
+def _value_at_approved_path(payload, path):
+    value = payload
+    for part in path:
+        value = value[part]
+    return value
+
+
+def _replace_at_approved_path(payload, path, replacement):
+    copied = deepcopy(payload)
+    parent = copied
+    for part in path[:-1]:
+        parent = parent[part]
+    parent[path[-1]] = replacement
+    return copied
 
 
 def _discover_error_bc_bases_with_codes():
@@ -2553,54 +2644,48 @@ def _discover_error_bc_bases_with_codes():
                 and candidate is not ErrorOut
                 and ErrorOut in candidate.__bases__
             ):
-                discovered.add((candidate, candidate.model_fields["code"].annotation))
+                narrowed = [
+                    (name, code_enum)
+                    for name, field in candidate.model_fields.items()
+                    for code_enum in APPROVED_ERROR_CODE_ENUMS
+                    if _annotation_contains(field.annotation, code_enum)
+                ]
+                assert len(narrowed) == 1
+                discovered.add((candidate, *narrowed[0]))
     return discovered
 
 
 def test_approved_bc_error_codes_are_narrowed_and_reject_unknown_wire_values():
-    approved = dict(APPROVED_BC_BASES_WITH_CODES)
-    discovered = dict(_discover_error_bc_bases_with_codes())
+    approved = set(APPROVED_BC_BASE_DISCRIMINATORS)
+    discovered = _discover_error_bc_bases_with_codes()
     assert discovered == approved
 
     if not approved:
-        assert APPROVED_BC_ENUM_VALID_EXAMPLES == {}
+        assert APPROVED_BC_BASE_VALID_PAYLOADS == {}
         return
 
-    assert APPROVED_BC_ENUM_VALID_EXAMPLES.keys() == approved.keys()
-    for bc_base, code_enum in approved.items():
-        valid_code = APPROVED_BC_ENUM_VALID_EXAMPLES[bc_base]
-        valid = bc_base(
-            code=valid_code,
-            title="Approved example",
-            status=400,
-            detail="An approved literal demonstrates enum narrowing.",
+    for bc_base, discriminator_name, code_enum in approved:
+        valid_payload = APPROVED_BC_BASE_VALID_PAYLOADS[bc_base]
+        discriminator_input_path = APPROVED_BC_BASE_VALIDATION_PATHS[bc_base]
+        valid = bc_base(**valid_payload)
+        assert getattr(valid, discriminator_name) is _value_at_approved_path(
+            valid_payload,
+            discriminator_input_path,
         )
-        assert valid.code is valid_code
 
         with pytest.raises(ValidationError):
-            bc_base(
-                code=f"{bc_base.__name__}_unapproved_wire_code",
-                title="Never approved",
-                status=400,
-                detail="This public wire code is not in the approved Enum.",
+            invalid_payload = _replace_at_approved_path(
+                valid_payload,
+                discriminator_input_path,
+                f"{bc_base.__name__}_unapproved_wire_value",
             )
+            bc_base(**invalid_payload)
 
 
 def _all_subclasses(base):
     for child in base.__subclasses__():
         yield child
         yield from _all_subclasses(child)
-
-
-DECORATOR_COLLECTIONS = (
-    "validators",
-    "field_validators",
-    "root_validators",
-    "field_serializers",
-    "model_serializers",
-    "model_validators",
-    "computed_fields",
-)
 
 
 def _assert_same_decorator_entries(actual_model, expected_model):
@@ -2624,19 +2709,26 @@ def _assert_same_decorator_entries(actual_model, expected_model):
             assert actual_entry.info == expected_entry.info
 
 
-def _assert_same_field_metadata(actual, expected):
+def _wire_default(value):
+    return value.value if isinstance(value, Enum) else value
+
+
+def _assert_bc_field_preserves_common_contract(actual, expected, *, discriminator):
     assert actual.is_required() is expected.is_required()
-    assert actual.default == expected.default
     assert actual.default_factory is expected.default_factory
-    assert actual.alias == expected.alias
-    assert actual.validation_alias == expected.validation_alias
-    assert actual.serialization_alias == expected.serialization_alias
+    if discriminator:
+        assert _wire_default(actual.default) == _wire_default(expected.default)
+    else:
+        assert actual.default == expected.default
+    assert approved_non_default_field_metadata(
+        actual
+    ) == approved_non_default_field_metadata(expected)
 
 
 def _managed_concrete_error_types():
     return {
         error_type
-        for bc_base, _code_enum in APPROVED_BC_BASES_WITH_CODES
+        for bc_base, _field_name, _code_enum in APPROVED_BC_BASE_DISCRIMINATORS
         for error_type in _all_subclasses(bc_base)
         if error_type.__module__ == bc_base.__module__
     }
@@ -2644,9 +2736,11 @@ def _managed_concrete_error_types():
 
 def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
     # 이 예시에서는 두 BC와 다섯 concrete가 승인됐지만, 빈 inventory도 유효하다.
-    approved_bc_bases = {bc_base for bc_base, _code_enum in APPROVED_BC_BASES_WITH_CODES}
+    approved_bc_bases = {
+        bc_base for bc_base, _field_name, _code_enum in APPROVED_BC_BASE_DISCRIMINATORS
+    }
     discovered_bc_bases = {
-        bc_base for bc_base, _code_enum in _discover_error_bc_bases_with_codes()
+        bc_base for bc_base, _field_name, _code_enum in _discover_error_bc_bases_with_codes()
     }
     assert discovered_bc_bases == approved_bc_bases
     assert set(APPROVED_ERROR_BC_BASE_REFS) == approved_bc_bases
@@ -2659,36 +2753,57 @@ def test_every_managed_concrete_error_is_zero_argument_and_shape_neutral():
     if approved_concrete_types:
         assert error_types
 
-    for bc_base, code_enum in APPROVED_BC_BASES_WITH_CODES:
+    for bc_base, discriminator_name, code_enum in APPROVED_BC_BASE_DISCRIMINATORS:
         assert set(bc_base.model_fields) == set(ErrorOut.model_fields)
+        assert dict(bc_base.model_config) == APPROVED_COMMON_MODEL_CONFIG
         for name, common_field in ErrorOut.model_fields.items():
             bc_field = bc_base.model_fields[name]
-            expected_annotation = code_enum if name == "code" else common_field.annotation
-            assert bc_field.annotation is expected_annotation
-            _assert_same_field_metadata(bc_field, common_field)
+            expected_annotation = APPROVED_BC_BASE_FIELD_ANNOTATIONS[bc_base][name]
+            assert bc_field.annotation == expected_annotation
+            _assert_bc_field_preserves_common_contract(
+                bc_field,
+                common_field,
+                discriminator=name == discriminator_name,
+            )
         _assert_same_decorator_entries(bc_base, ErrorOut)
 
     for error_type in error_types:
         bc_base = next(
             base
-            for base, _code_enum in APPROVED_BC_BASES_WITH_CODES
+            for base, _field_name, _code_enum in APPROVED_BC_BASE_DISCRIMINATORS
             if issubclass(error_type, base)
         )
         error = error_type()  # required 생성자 인자가 생기면 여기서 실패한다.
         assert set(error_type.model_fields) == set(ErrorOut.model_fields)
+        assert dict(error_type.model_config) == dict(bc_base.model_config)
         assert all(not field.is_required() for field in error_type.model_fields.values())
         for name, field in error_type.model_fields.items():
             bc_field = bc_base.model_fields[name]
-            assert field.annotation is bc_field.annotation
-            assert field.alias == bc_field.alias
-            assert field.validation_alias == bc_field.validation_alias
-            assert field.serialization_alias == bc_field.serialization_alias
+            assert field.annotation == bc_field.annotation
+            assert approved_non_default_field_metadata(
+                field
+            ) == approved_non_default_field_metadata(bc_field)
         _assert_same_decorator_entries(error_type, bc_base)
-        assert set(error.model_dump()) == {"code", "title", "status", "detail"}
+        assert set(error.model_dump(by_alias=True)) == APPROVED_COMMON_WIRE_PROPERTIES
 ```
 
-BC base 자체는 공통 required/default 계약을 그대로 보존하므로 무인자 생성을 요구하지 않는다.
-무인자 생성, validator/alias 비교와 모든 필드 default는 승인된 사건별 concrete에만 적용한다.
+`APPROVED_COMMON_FIELD_ANNOTATIONS`, `APPROVED_REQUIRED_COMMON_FIELDS`,
+`APPROVED_COMMON_FIELD_METADATA`, `APPROVED_COMMON_MODEL_CONFIG`,
+`APPROVED_COMMON_DECORATOR_METADATA`, `APPROVED_COMMON_WIRE_PROPERTIES`,
+`APPROVED_BC_BASE_DISCRIMINATORS`,
+`APPROVED_BC_BASE_FIELD_ANNOTATIONS`, `APPROVED_BC_BASE_VALID_PAYLOADS`,
+`APPROVED_BC_BASE_VALIDATION_PATHS`는 위 예제 안에서
+production으로부터 계산하는 helper가 아니라,
+slot 6~10의 값을 테스트 파일에 literal로 채우는 오라클이다. property 이름은 프로젝트마다
+다를 수 있고 `status` body field가 없어도 정상이다. 각 validation path는
+`tuple[str | int, ...]` literal이다. 단순 alias는 `("type",)`,
+`AliasPath("payload", "kind")`는 `("payload", "kind")`처럼 쓰며, `AliasChoices`는 승인
+runtime case에서 실제 사용할 candidate path 하나를 명시한다.
+
+BC base 자체는 공통 annotation wrapper/nullability·required/default·Field metadata 계약을
+보존하고 공통 decorator를 그대로 상속하는지 비교하되 무인자 생성을 요구하지 않는다.
+무인자 생성과 모든 필드의 사건별 default 제공은 승인된 concrete에만 적용하며, concrete에도
+새 decorator/Field metadata drift가 없는지 비교한다.
 7~10번 slot의 error-BC 또는 concrete inventory가 비어 있으면 공통 `ErrorOut`의 exact shape
 테스트는 그대로 수행하되, 위 exact set은 각각 빈 집합이어야 하고 managed BC `ErrorOut`은
 runtime/OpenAPI 어디에도 나타나지 않아야 한다. public error를 테스트 편의를 위해 발명하지
@@ -2700,7 +2815,8 @@ backstop**이다. validator 추가 금지의 결정적 소스 판정은 schema c
 프로젝트 전체 code inventory는 12-slot의 `scope evidence`에 열거된 모든 code-profile 오류
 모듈을 넣는다. 독립 version도 같은 Enum을 재사용하면 class identity로 한 번만 세고, 별도
 Enum이 같은 wire 문자열을 복제하면 실패시킨다. concrete가 여러 surface에서 재사용되거나 같은
-public code로 수렴하더라도 title은 하나여야 한다.
+public 식별자로 수렴하면 slot 6이 정한 나머지 공개 문자열·boolean·metadata 기본값도 하나의
+승인 계약으로 일관해야 한다. 특정 `title` property의 존재를 가정하지 않는다.
 
 ```python
 from application.inventory.presentation_layer.schema.error_out import (
@@ -2719,26 +2835,7 @@ from application.orders.presentation_layer.schema.error_out import (
 # slot 7~10이 비어 있으면 이 tuple과 아래 세 catalog도 모두 비어야 한다.
 APPROVED_BC_BASES = tuple(APPROVED_ERROR_BC_BASE_REFS)
 APPROVED_CONCRETE_ERROR_CONTRACTS = {
-    InventoryItemNotFoundError: (
-        "inventory_item_not_found",
-        "Inventory item not found",
-    ),
-    InventoryTemporarilyUnavailableError: (
-        "inventory_temporarily_unavailable",
-        "Inventory temporarily unavailable",
-    ),
-    OrderProductNotFoundError: (
-        "order_product_not_found",
-        "Product not found",
-    ),
-    OrderInsufficientStockError: (
-        "order_insufficient_stock",
-        "Insufficient stock",
-    ),
-    OrderTemporarilyUnavailableError: (
-        "order_temporarily_unavailable",
-        "Order temporarily unavailable",
-    ),
+    # ConcreteErrorType: {"every_slot_6_field": "literal approved value"},
 }
 APPROVED_CONCRETE_ERROR_SCHEMA_REFS = {
     "#/components/schemas/InventoryItemNotFoundError",
@@ -2747,41 +2844,26 @@ APPROVED_CONCRETE_ERROR_SCHEMA_REFS = {
     "#/components/schemas/OrderInsufficientStockError",
     "#/components/schemas/OrderTemporarilyUnavailableError",
 }
-APPROVED_PUBLIC_ERROR_TITLES = {
-    "inventory_item_not_found": "Inventory item not found",
-    "inventory_temporarily_unavailable": "Inventory temporarily unavailable",
-    "inventory_version_mismatch": "Inventory version mismatch",
-    "order_product_not_found": "Product not found",
-    "order_insufficient_stock": "Insufficient stock",
-    "order_temporarily_unavailable": "Order temporarily unavailable",
-    "order_version_mismatch": "Order version mismatch",
-}
 APPROVED_PUBLIC_ERROR_CODES = {
-    "inventory_item_not_found",
-    "inventory_temporarily_unavailable",
-    "inventory_version_mismatch",
-    "order_product_not_found",
-    "order_insufficient_stock",
-    "order_temporarily_unavailable",
-    "order_version_mismatch",
+    # literal <Bc>ErrorCode wire values from slot 8,
 }
 
 
-def test_public_wire_codes_are_project_wide_unique_and_titles_are_stable():
+def test_public_wire_codes_are_project_wide_unique_and_concretes_match_approved_bodies():
     if not APPROVED_BC_BASES:
         assert APPROVED_CONCRETE_ERROR_CONTRACTS == {}
         assert APPROVED_CONCRETE_ERROR_SCHEMA_REFS == set()
-        assert APPROVED_PUBLIC_ERROR_TITLES == {}
         assert APPROVED_PUBLIC_ERROR_CODES == set()
         return
 
     enum_types = {
-        bc_base.model_fields["code"].annotation for bc_base in APPROVED_BC_BASES
+        code_enum
+        for _bc_base, _discriminator_name, code_enum
+        in APPROVED_BC_BASE_DISCRIMINATORS
     }
     wire_codes = [member.value for enum_type in enum_types for member in enum_type]
     assert len(wire_codes) == len(set(wire_codes))
     assert set(wire_codes) == APPROVED_PUBLIC_ERROR_CODES
-    assert APPROVED_PUBLIC_ERROR_CODES == APPROVED_PUBLIC_ERROR_TITLES.keys()
 
     concrete_types = {
         error_type
@@ -2791,33 +2873,23 @@ def test_public_wire_codes_are_project_wide_unique_and_titles_are_stable():
     }
     assert concrete_types == set(APPROVED_CONCRETE_ERROR_CONTRACTS)
 
-    observed_concrete_contracts = {}
-    for error_type in concrete_types:
-        error = error_type()
-        observed_concrete_contracts[error_type] = (error.code.value, error.title)
+    observed_concrete_contracts = {
+        error_type: error_type().model_dump(mode="json", by_alias=True)
+        for error_type in concrete_types
+    }
 
     assert observed_concrete_contracts.keys() == APPROVED_CONCRETE_ERROR_CONTRACTS.keys()
     assert observed_concrete_contracts == APPROVED_CONCRETE_ERROR_CONTRACTS
-    observed_concrete_codes = {
-        code for code, _title in observed_concrete_contracts.values()
-    }
-    expected_concrete_codes = {
-        code for code, _title in APPROVED_CONCRETE_ERROR_CONTRACTS.values()
-    }
-    assert observed_concrete_codes == expected_concrete_codes
-    assert all(
-        title == APPROVED_PUBLIC_ERROR_TITLES[code]
-        for code, title in observed_concrete_contracts.values()
-    )
 ```
 
-`APPROVED_ERROR_BC_BASE_REFS`, concrete 계약, public title catalog는 7~12번 slot의 완전한
+`APPROVED_ERROR_BC_BASE_REFS`, concrete exact body, public ErrorCode catalog는 7~12번 slot의 완전한
 리터럴 inventory다. error-BC가 없는 승인 scope는 이 inventories를 빈 값으로 두며, 공통
 `ErrorOut` shape 외에 Inventory/Order 전용 postcondition을 실행하지 않는다. class 이름
 접미사에 의존하지 않고 각 승인 BC base에서 재귀 discovery하므로 새
 concrete가 생기면 exact class/code key coverage가 먼저 실패한다. `all()`은 그 exact coverage
 단언 뒤에만 둔다. 사건별 concrete가 없는 direct-base code와 여러 surface가 재사용하는 mapping의
-title은 아래 별도 mapping-case inventory와 실제 HTTP 응답으로 고정한다.
+안정 필드는 slot 6·10이 그런 의미를 승인한 경우에만 아래 mapping-case inventory와 실제 HTTP
+응답으로 고정한다. 이름이 `title`인 property를 plugin 규칙으로 발명하지 않는다.
 
 #### 19.2.2 HTTP 계약: 알려진 예외를 실제 요청으로 관찰
 
@@ -2867,16 +2939,17 @@ def test_known_missing_failures_converge_on_one_public_error(
 
     assert response.status_code == 404
     body = response.json()
+    # 이 body는 이 예제 프로젝트의 slot 6/10 literal이지 plugin 기본 shape가 아니다.
     assert body == {
         "code": "inventory_item_not_found",
         "title": "Inventory item not found",
         "status": 404,
         "detail": "The requested inventory item does not exist.",
     }
-    assert body["status"] == response.status_code
     assert response.headers["Content-Type"].partition(";")[0] == "application/json"
-    assert "private row id=731" not in body["detail"]
-    assert "private archive bucket=cold-9" not in body["detail"]
+    rendered = response.content.decode()
+    assert "private row id=731" not in rendered
+    assert "private archive bucket=cold-9" not in rendered
 
 
 KNOWN_ERROR_SENSITIVE_HEADERS = {
@@ -2891,7 +2964,16 @@ BC_SPECIFIC_ERROR_HEADERS = {
     "X-Order-Error",
     "X-Legacy-Problem-Type",
 }
+# 이 네 값은 아래 예제 프로젝트의 slot 6 literal이다. alias가 있으면 Python attribute,
+# 생성 validation input path, 직렬화 wire key를 각각 적고, body에 HTTP status property가
+# 없으면 마지막 값을 None으로 둔다.
+APPROVED_DISCRIMINATOR_ATTRIBUTE = "code"
+APPROVED_DISCRIMINATOR_VALIDATION_PATH = ("code",)
+APPROVED_DISCRIMINATOR_WIRE_KEY = "code"
+APPROVED_BODY_STATUS_WIRE_KEY = "status"
 APPROVED_MAPPING_CASES = {
+    # 아래 body들은 이 예제 프로젝트의 slot 6/10을 채운 값일 뿐 plugin 기본 field가 아니다.
+    # 실제 프로젝트에서는 승인된 exact body 전체로 이 literal inventory를 교체한다.
     (
         "/api/v1/inventory/items/{item_id}",
         "get",
@@ -3174,7 +3256,6 @@ def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
     }
 
     assert responses_by_case.keys() == APPROVED_MAPPING_CASES.keys()
-    observed_titles_by_code = {}
     for case, response in responses_by_case.items():
         _path, _method, expected_status, _failure_name = case
         expected_contract = APPROVED_MAPPING_CASES[case]
@@ -3183,28 +3264,27 @@ def test_every_prepared_mapping_case_keeps_its_literal_external_contract(
         body = response.json()
         assert response.status_code == expected_status
         assert body == expected_body
-        assert body["status"] == response.status_code
+        if APPROVED_BODY_STATUS_WIRE_KEY is not None:
+            assert body[APPROVED_BODY_STATUS_WIRE_KEY] == response.status_code
         assert set(expected_headers) <= KNOWN_ERROR_SENSITIVE_HEADERS
         for name in KNOWN_ERROR_SENSITIVE_HEADERS:
             assert response.headers.get(name) == expected_headers.get(name)
-        observed_titles_by_code.setdefault(body["code"], set()).add(body["title"])
 
     expected_mapping_codes = {
-        contract["body"]["code"] for contract in APPROVED_MAPPING_CASES.values()
+        contract["body"][APPROVED_DISCRIMINATOR_WIRE_KEY]
+        for contract in APPROVED_MAPPING_CASES.values()
     }
     assert expected_mapping_codes == APPROVED_PUBLIC_ERROR_CODES
-    assert observed_titles_by_code.keys() == expected_mapping_codes
-    assert all(len(titles) == 1 for titles in observed_titles_by_code.values())
-    assert all(
-        titles == {APPROVED_PUBLIC_ERROR_TITLES[code]}
-        for code, titles in observed_titles_by_code.items()
-    )
 ```
 
 `APPROVED_MAPPING_CASES`는 10~12번 slot의 mapping case를 하나도 생략하지 않은 literal
-inventory다. 각 value가 exact `code/title/status/detail` body와 그 case에 승인된 known header
-기댓값을 함께 소유한다. case key coverage를 먼저 맞춘 뒤 실제 응답 body 전체, HTTP/body status,
-모든 known header의 승인값 또는 부재를 case별로 검증한다.
+inventory다. 각 value가 slot 6/10의 exact body와 그 case에 승인된 known header 기댓값을 함께
+소유한다. `APPROVED_DISCRIMINATOR_ATTRIBUTE`, `APPROVED_DISCRIMINATOR_VALIDATION_PATH`,
+`APPROVED_DISCRIMINATOR_WIRE_KEY`, `APPROVED_BODY_STATUS_WIRE_KEY`도 slot 6 literal이며,
+마지막 값은 body에 HTTP status property가 없는 계약에서는 `None`이다. case key coverage를 먼저
+맞춘 뒤 실제 응답 body 전체, HTTP status, 모든 known header의 승인값 또는 부재를 case별로
+검증한다. 위 inventory의 `code/title/status/detail`은 예제 프로젝트가 승인한 값일 뿐 공통
+property 계약이 아니다.
 
 header는 모든 Django 기본 header를 snapshot하지 않는다. 대신 10·12번 slot에서 조사한
 **완전한 known error-sensitive/legacy header inventory**와 mapping별 승인값을 각각 리터럴로
@@ -3232,6 +3312,8 @@ def test_retryable_inventory_failure_matches_known_header_inventory(
     )
 
     assert response.status_code == 503
+    # 아래 exact body는 이 예제 프로젝트의 승인 literal이다. 다른 프로젝트가 복사할
+    # plugin 기본 shape가 아니며 실제 slot 6/10 body 전체로 교체한다.
     assert response.json() == {
         "code": "inventory_temporarily_unavailable",
         "title": "Inventory temporarily unavailable",
@@ -3267,16 +3349,13 @@ application/domain exception으로 정규화한 뒤 이 동일한 HTTP 테스트
 
 401/403, route 404, request validation 422, throttling 429, 일반 `HttpError`, 미식별 500은
 code-profile BC body가 아니다. full body를 snapshot하지 말고 status와 **BC ErrorOut이 아님**을
-확인한다. JSON 또는 `+json` body라면 prefix와 무관하게 네 core key의 완전한 결합을 거부하고,
-별도로 project-wide literal public code 중 어느 것도 쓰지 않았음을 단언한다. 모든 media type에서
+확인한다. JSON 또는 `+json` body라면 승인된 exact common field set과 같지 않은지 확인하고,
+별도로 project-wide literal public ErrorCode 중 어느 것도 쓰지 않았음을 단언한다. 모든 media type에서
 BC-specific error header도 없어야 한다. non-JSON은 body를 해석하거나 snapshot하지 않고 status와
 header smoke까지만 한다.
 
 ```python
 from django.test import Client, override_settings
-
-
-ERROR_CORE_FIELDS = {"code", "title", "status", "detail"}
 
 
 def assert_not_managed_error(response):
@@ -3289,8 +3368,11 @@ def assert_not_managed_error(response):
     ):
         body = response.json()
         if isinstance(body, dict):
-            assert not ERROR_CORE_FIELDS <= set(body)
-            assert body.get("code") not in APPROVED_PUBLIC_ERROR_CODES
+            assert set(body) != APPROVED_COMMON_WIRE_PROPERTIES
+            assert (
+                body.get(APPROVED_DISCRIMINATOR_WIRE_KEY)
+                not in APPROVED_PUBLIC_ERROR_CODES
+            )
 
 
 @pytest.mark.parametrize(
@@ -3449,6 +3531,59 @@ COMPLETE_MANAGED_ERROR_SCHEMA_REFS = {
     *APPROVED_CONCRETE_ERROR_SCHEMA_REFS,
 }
 
+# 실제 component로 emit되는 ErrorCode Enum ref도 slot 8·12에서 production document를
+# 보지 않고 literal로 열거한다.
+APPROVED_ERROR_CODE_SCHEMA_REFS = {
+    "#/components/schemas/InventoryErrorCode",
+    "#/components/schemas/OrderErrorCode",
+}
+
+# 실제 문서에 emit될 것으로 승인한 managed component만 exact literal schema로 적는다.
+# COMPLETE_MANAGED_ERROR_SCHEMA_REFS의 common/concrete 전부가 emit된다고 가정하지 않는다.
+APPROVED_EMITTED_MANAGED_COMPONENT_SCHEMAS = {
+    "#/components/schemas/InventoryErrorCode": {
+        "enum": [
+            "inventory_item_not_found",
+            "inventory_version_mismatch",
+            "inventory_temporarily_unavailable",
+        ],
+        "title": "InventoryErrorCode",
+        "type": "string",
+    },
+    "#/components/schemas/InventoryErrorOut": {
+        "properties": {
+            "code": {"$ref": "#/components/schemas/InventoryErrorCode"},
+            "title": {"title": "Title", "type": "string"},
+            "status": {"title": "Status", "type": "integer"},
+            "detail": {"title": "Detail", "type": "string"},
+        },
+        "required": ["code", "title", "status", "detail"],
+        "title": "InventoryErrorOut",
+        "type": "object",
+    },
+    "#/components/schemas/OrderErrorCode": {
+        "enum": [
+            "order_product_not_found",
+            "order_insufficient_stock",
+            "order_temporarily_unavailable",
+            "order_version_mismatch",
+        ],
+        "title": "OrderErrorCode",
+        "type": "string",
+    },
+    "#/components/schemas/OrderErrorOut": {
+        "properties": {
+            "code": {"$ref": "#/components/schemas/OrderErrorCode"},
+            "title": {"title": "Title", "type": "string"},
+            "status": {"title": "Status", "type": "integer"},
+            "detail": {"title": "Detail", "type": "string"},
+        },
+        "required": ["code", "title", "status", "detail"],
+        "title": "OrderErrorOut",
+        "type": "object",
+    },
+}
+
 
 def _resolve_local_ref(document, ref):
     assert ref.startswith("#/")
@@ -3505,6 +3640,20 @@ def test_openapi_advertises_managed_errors_only_at_approved_tuples(client):
 
     assert response.status_code == 200
     document = response.json()
+    emitted_component_refs = {
+        f"#/components/schemas/{name}"
+        for name in document.get("components", {}).get("schemas", {})
+    }
+    managed_component_candidates = (
+        COMPLETE_MANAGED_ERROR_SCHEMA_REFS | APPROVED_ERROR_CODE_SCHEMA_REFS
+    )
+    assert emitted_component_refs & managed_component_candidates == set(
+        APPROVED_EMITTED_MANAGED_COMPONENT_SCHEMAS
+    )
+    for ref, approved_component in (
+        APPROVED_EMITTED_MANAGED_COMPONENT_SCHEMAS.items()
+    ):
+        assert _resolve_local_ref(document, ref) == approved_component
     assert APPROVED_OPENAPI_BASE_REF_BY_CASE.keys() == APPROVED_MAPPING_CASES.keys()
     projected_quadruples = _project_prepared_cases_to_openapi_quadruples()
     slot_12_quadruples = {
@@ -3554,6 +3703,13 @@ managed common/base/concrete ErrorOut ref inventory다. collector는 선택한 f
 framework status나 다른 operation에 common/base/concrete ErrorOut이 한 번이라도 나타나면 exact occurrence
 동등성이 실패하고, 승인 tuple이 base가 아닌 concrete/합성 schema를 가리켜도 마지막 direct
 mapping 단언이 실패한다.
+
+`APPROVED_ERROR_CODE_SCHEMA_REFS`와 `APPROVED_EMITTED_MANAGED_COMPONENT_SCHEMAS`도 production
+OpenAPI에서 역산하지 않는 slot 6·8·12의 완전한 literal component oracle이다. response occurrence
+inventory와 달리 unreferenced common/concrete가 무조건 emit된다고 가정하지 않고, 실제 emit이 승인된
+base와 그 base가 참조하는 `<Bc>ErrorCode` Enum component만 exact set으로 고정한다. property/required/
+alias/default/Enum value/추가 schema keyword를 포함한 각 emitted component 전체를 비교하므로 child
+Pydantic hook이나 post-definition mutation이 component shape를 바꾸면 `$ref` 위치가 그대로여도 실패한다.
 
 `openapi_extra`, `get_openapi_schema` override/monkeypatch/postprocessor 같은 수동 증강의 부재는
 source checker/reviewer가 판정한다. 테스트는 production hook의 호출 여부를 spy하지 않고 생성된

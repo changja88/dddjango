@@ -121,7 +121,7 @@ Operation 구현 기준:
   응답을 수동 선언하거나 사후 변형하지 않는다. operation의 `response=`가 runtime과
   OpenAPI가 함께 아는 계약이다.
 - known domain/application exception은 컨트롤러가 구체적으로 catch하고, 준비된
-  no-arg concrete `ErrorOut`을 `Status(error.status, error)`로 직접 반환한다. 오류
+  no-arg concrete `ErrorOut`을 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 오류
   `(status, schema)` tuple, raw `Response`/dict, 오류 helper/factory/serializer/mapper,
   등록 handler/decorator로 우회하지 않는다(§6.2).
 - **operation을 문서화한다** — `summary`·`description`·`tags`를 decorator 인자로 주어 Swagger UI의 그룹과 설명을 채운다. 외부 client가 읽는 계약 문서다.
@@ -135,7 +135,7 @@ Operation은 10번 slot이 승인한 **한 경로**를 선택한다.
 - **exception path:** request를 준비한 뒤 `try`에는 최외곽 application call 한 문장만 둔다.
   구체 exception 또는 구체 exception tuple만 catch하고, catch 안에서 no-arg concrete 또는
   populated BC-base `ErrorOut`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
-  `Status(error.status, error)`로 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
+  `Status(<승인된 HTTP status 표현>, error)`로 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
 - **failed Result/`None`/outcome path:** application call을 정확히 한 번 한 뒤, `try` 없이
   slot이 승인한 failed branch를 call 바로 다음에 둔다. 같은 ErrorOut/header/두 인자 `Status`
   구성을 직접 수행하며, 예외·catch·helper·mapping table을 꾸며내지 않는다.
@@ -182,10 +182,10 @@ class OrderController:
             order = command.execute(request_value)
         except ProductNotFound:
             error = OrderProductNotFoundError()
-            return Status(error.status, error)
+            return Status(status.HTTP_404_NOT_FOUND, error)
         except InsufficientStock:
             error = OrderInsufficientStockError()
-            return Status(error.status, error)
+            return Status(status.HTTP_409_CONFLICT, error)
 
         response = OrderOut(id=order.id, status=order.status)
         return Status(status.HTTP_201_CREATED, response)
@@ -380,7 +380,7 @@ operation 수준에 auth를 연결할 수 있다. 프로젝트의 기존 auth me
 - auth adapter는 성공 시 identity/principal을 반환한다. 실패는 `None`을 반환하거나
   framework `AuthenticationError`를 raise한다.
 - `ErrorOut`을 auth 결과로 반환하거나 `request.auth`에 저장하지 않는다. framework 401을
-  BC code body로 바꾸는 전역 변환도 추가하지 않는다(§6.2).
+  BC 식별자 body로 바꾸는 전역 변환도 추가하지 않는다(§6.2).
 - local development를 제외한 API traffic은 HTTPS를 전제로 한다.
 
 ### 4.2 Authorization
@@ -486,8 +486,8 @@ def list_orders(request):
 > `406`/`415`의 *처리 메커니즘*은 §6.3(콘텐츠 협상 실패) 참조 — ninja 경계 안에서 내고 전역 미들웨어로 가로채지 않는다.
 
 Django Ninja validation error의 default status·body는 framework-owned 응답이다. 새
-code-profile에서는 이를 BC code body로 맞추기 위한 전역 변환을 추가하지 않으며, 그 body를
-정확하고 안정적인 공개 code 계약이라고 주장하지 않는다. 별도 공개 계약이 필요하면 G1로
+code-profile에서는 이를 BC 식별자 body로 맞추기 위한 전역 변환을 추가하지 않으며, 그 body를
+정확하고 안정적인 공개 식별자 계약이라고 주장하지 않는다. 별도 공개 계약이 필요하면 G1로
 돌아가 profile과 호환성 범위를 먼저 승인한다.
 
 ### 6.2 `dddjango-code-json` 오류 프로필
@@ -496,9 +496,30 @@ code-profile에서는 이를 BC code body로 맞추기 위한 전역 변환을 �
 보존하고, 새 dddjango Django Ninja 범위의 기본은 `dddjango-code-json`이다. 이 절은 그
 기본 프로필의 copy-safe 구현 기준이다.
 
-**공통 core와 변경 gate.** 현재 공통 body는 `code`, `title`, `status`, `detail` 네 필드다.
-이는 현재 승인된 계약이지 영원히 불변인 선언이 아니다. 필드 추가·삭제·이름·타입·required
-여부·의미를 바꾸려면 사용자 승인과 G1 계약 갱신을 먼저 거친다. 코드부터 바꾸지 않는다.
+**공통 core와 변경 gate.** dddjango는 공통 body property를 정하지 않는다. 기존 프로젝트는
+관찰된 `ErrorOut` exact shape를 기준선으로 보존한다. 신규 scope는 exact field set·각 type·
+required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화를 G1 slot 6에서 먼저 제안하고 별도로
+명시 승인받는다. 기준선의 property 추가·삭제·이름·타입·존재성·변환 규칙·의미 변경도 일반
+기능 승인에 묻히지 않는 별도 contract 변경이다. 호환성 영향과 server/client/test 전환 범위를
+보여 준 뒤 사용자가 명시 승인하기 전에는 코드부터 바꾸지 않는다. `code/title/status/detail`과
+`error_type/msg/is_show`는 모두 가능한 프로젝트 계약 예일 뿐 plugin 기본값이 아니다.
+
+기존 승인 shape의 canonical common/BC schema 정의에 있는 dynamic field default·validator/serializer/
+Pydantic hook·custom config/decorator 또는 project·relative import/dynamic binding은 코드를 단순화하거나
+explicit alias를 새로 넣어 우회하지 않는다. class-header `**`·legacy `Config` 상속·non-alias config callable·config mutation을 포함한
+임의 Python의 import-time·호출-time 의미 때문에 schema checker가 항상
+`DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`를 낸다. canonical module의 직접 import-time mutation/side effect는
+proof 대상이 아니라 구조 위반으로 차단한다. controller/OpenAPI checker가 단순 형태를 정적으로
+계산해 추가 진단을 내더라도 이 marker를 없애지 않는다. target의 실제 dependency pin에서 model
+field/validation path/serialization alias를 introspect하고 실제 BC-base 생성 key·ErrorCode 멤버·exact
+dump, mounted status/body, generated OpenAPI를 함께 실행한다. API와
+discipline reviewer가 기존 shape 무변경을 확인한 경우에만 Coordinator가
+`RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS`로 해소한다. 이는 새 shape나 shape 변경의 별도 사용자 명시
+승인을 대신하지 않고, 다른 analysis/blocker를 면제하지도 않는다. controller 등 schema 소유 경계
+밖의 model config mutation은 기존 shape 보존 경로가 아니다. 선택 module의 직접 mutation과 직접
+import한 module-level callable 경로는 owning controller checker가 차단한다. imported class method·
+2-hop·dynamic dispatch는 결정적 AST 증명 범위 밖이므로 checker 통과로 면제하지 않고 API/discipline
+reviewer가 직접 읽는다.
 
 새 단일-scope code-profile의 공통 오류 디렉터리는 이 계약에 관해 빈 `__init__.py`와
 `error_out.py`만 둔다.
@@ -515,14 +536,13 @@ from ninja import Schema
 
 
 class ErrorOut(Schema):
-    code: str
-    title: str
-    status: int
-    detail: str
+    # slot 6에서 승인된 프로젝트 고유 필드만 그대로 선언한다.
+    ...
 ```
 
-공통 `ErrorOut`은 transport core shape만 소유한다. concrete 오류, code catalog,
-validator, alias, 임의 extension bag을 이 파일에 추가하지 않는다. 독립된 public/internal,
+공통 `ErrorOut`은 slot 6에서 승인된 transport core shape만 소유한다. concrete 오류와 BC
+ErrorCode catalog를 이 파일에 추가하지 않으며, 승인 shape 밖의 validator·field metadata·임의
+extension bag도 발명하지 않는다. 독립된 public/internal,
 version, namespace가 실제로 다른 계약 scope라면 G1에서 scope와 공통 경로를 각각 승인한다.
 기존 공용 경로가 있으면 승인된 동등 계약을 우선 재사용한다.
 
@@ -530,9 +550,9 @@ version, namespace가 실제로 다른 계약 scope라면 G1에서 scope와 공�
 `application/<bc>/presentation_layer/schema/error_out.py` 파일 하나에 다음을 함께 둔다.
 
 - `<Bc>ErrorCode(StrEnum)` 하나
-- 공통 `ErrorOut`을 상속하고 `code: <Bc>ErrorCode`만 좁히는 `<Bc>ErrorOut` 하나
+- 공통 `ErrorOut`을 상속하고 slot 6의 식별자 필드 하나만 `<Bc>ErrorCode`로 좁히는 `<Bc>ErrorOut` 하나
 - 반복해서 반환할 사건별 concrete `ErrorOut` subclass
-- BC가 공개하는 모든 code 값은 프로젝트 전체 code-profile inventory에서 중복되지 않는 값
+- BC가 공개하는 모든 식별자 문자열 값은 프로젝트 전체 code-profile inventory에서 중복되지 않는 값
 
 ```python
 # application/order/presentation_layer/schema/error_out.py
@@ -549,56 +569,42 @@ class OrderErrorCode(StrEnum):
 
 
 class OrderErrorOut(ErrorOut):
-    code: OrderErrorCode
+    # slot 6에서 지정한 공통 식별자 필드를 OrderErrorCode로 좁힌다.
+    ...
 
 
 class OrderProductNotFoundError(OrderErrorOut):
-    code: OrderErrorCode = OrderErrorCode.PRODUCT_NOT_FOUND
-    title: str = "Product not found"
-    status: int = 404
-    detail: str = "The requested product does not exist."
-
-
-class OrderInsufficientStockError(OrderErrorOut):
-    code: OrderErrorCode = OrderErrorCode.INSUFFICIENT_STOCK
-    title: str = "Insufficient stock"
-    status: int = 409
-    detail: str = "The order quantity is unavailable."
-
-
-class OrderTemporarilyUnavailableError(OrderErrorOut):
-    code: OrderErrorCode = OrderErrorCode.TEMPORARILY_UNAVAILABLE
-    title: str = "Order temporarily unavailable"
-    status: int = 503
-    detail: str = "Please retry the order later."
+    # slot 6의 모든 required field에 승인된 default를 제공한다.
+    # 식별자 default는 OrderErrorCode.PRODUCT_NOT_FOUND다.
+    ...
 ```
 
-concrete 오류의 `code/title/status/detail`은 모두 default가 있어 인자 없이 생성한다.
-필드·validator·alias를 concrete subclass에 추가하지 않고, URI·instance 같은 다른
-profile 필드도 섞지 않는다. 오류마다 파일을 나누거나 validation 전용 두 번째 오류
+BC base의 식별자 field는 공통 annotation의 wrapper/nullability·required/default와 default를
+제외한 `Field(...)` metadata를 보존하고 `str` 자리만 자기 Enum으로 좁힌다. 공통 default가
+문자열이면 같은 wire value의 Enum member로 표현한다. concrete 오류는 slot 6에서 해당
+concrete의 고정값으로 승인된 모든 required field에 default가 있어 인자 없이 생성한다.
+새 필드·validator·child `model_config`나 annotation/Field metadata drift를 concrete subclass에
+추가하지 않고, 승인 alias 등이 있는 field를 재선언하면 같은 metadata를 반복한다. URI·instance
+같은 다른 profile 필드도 섞지 않는다. 오류마다 파일을 나누거나 validation 전용 두 번째 오류
 schema 파일을 만들지 않는다.
 
 한 operation에서만 의미가 생기는 사건이고 별도 concrete type이 필요하지 않다고 승인된
 경우에는 BC base를 직접 채울 수 있다. 이것은 concrete를 인자와 함께 생성하는 우회가 아니다.
+실제 controller의 `OrderErrorOut(...)` 호출에 slot 6의 모든 field keyword와 승인된 값을 그
+자리에서 전부 명시하는 것이 아니라, 모든 required field와 그 사건에서 기본값을 덮어써야 하는
+승인 optional field만 keyword로 명시한다. 다음 문장에서
+`Status(status.HTTP_409_CONFLICT, error)`를 반환한다.
+dictionary unpacking, builder, factory, mapping table로 field 작성을 우회하지 않는다.
 
-```python
-error = OrderErrorOut(
-    code=OrderErrorCode.VERSION_MISMATCH,
-    title="Order version mismatch",
-    status=409,
-    detail="Reload the order and try again.",
-)
-return Status(error.status, error)
-```
-
-**컨트롤러가 변환을 소유한다.** known domain/application failure의 공개 code·status 선택은
+**컨트롤러가 변환을 소유한다.** known domain/application failure의 공개 식별자·status 선택은
 해당 BC controller가 한다. 짧은 반복 mapping은 의도적인 지역 중복이며, 다음 순서를
 10번 slot이 승인한 한 path로 보인다.
 
 1. **exception path:** 입력 Schema를 준비하고 `try`에는 최외곽 application call 한 문장만
    둔다. 구체 known exception 또는 구체 exception tuple만 catch해 no-arg concrete 또는
    populated BC-base `ErrorOut`, 필요하면 주입된 응답용 header를 만든 뒤 두 인자
-   `Status(error.status, error)`를 직접 반환한다. 성공 변환은 `try` 뒤에 둔다.
+   `Status(<승인된 HTTP status 표현>, error)`를 직접 반환한다. status 표현은 literal/Ninja
+   status 상수 또는 slot 6이 실제로 승인한 body field 접근일 수 있다. 성공 변환은 `try` 뒤에 둔다.
 2. **failed Result/`None`/outcome path:** 입력 Schema를 준비한 뒤 application call을 정확히
    한 번 하고, `try` 없이 승인된 failure branch를 call 바로 다음에 둔다. 같은 ErrorOut/header/
    두 인자 Status 구성을 직접 수행하며, 성공 변환은 그 branch 뒤에 둔다. 예외·catch·helper·
@@ -625,7 +631,7 @@ async def get_order(
         order = await query.execute(query_value)
     except (OrderNotFound, ArchivedOrderNotFound):
         error = OrderProductNotFoundError()
-        return Status(error.status, error)
+        return Status(status.HTTP_404_NOT_FOUND, error)
 
     return OrderOut.from_result(order)
 ```
@@ -685,7 +691,7 @@ class OrderController:
 
         if isinstance(result, ReserveOrderInsufficientStockResult):
             error = OrderInsufficientStockError()
-            return Status(error.status, error)
+            return Status(status.HTTP_409_CONFLICT, error)
 
         if isinstance(result, ReserveOrderSucceededResult):
             response = OrderOut.from_result(result.order)
@@ -740,13 +746,15 @@ def retry_order(
     except OrderContention:
         response["Retry-After"] = "1"
         error = OrderTemporarilyUnavailableError()
-        return Status(error.status, error)
+        return Status(status.HTTP_503_SERVICE_UNAVAILABLE, error)
 
     return OrderOut.from_result(order)
 ```
 
 **추출 금지.** 오류 응답 helper/factory/serializer/mapping, exception handler,
 handler 등록 decorator, generic response builder를 만들거나 호출하지 않는다.
+여기서 serializer와 decorator는 `ErrorOut`을 HTTP 응답으로 바꾸는 변환기와 예외 handler 등록을 뜻한다.
+승인된 common Schema 자체의 Pydantic validator/serializer/decorator/hook은 exact shape의 일부로 보존한다.
 오류를 raw `Response`/`JsonResponse`/`HttpResponse`, dict, tuple로 만들지 않고
 `model_dump`를 직접 호출하지 않는다. controller가 짧은 exception→concrete mapping과
 `Status` 반환을 직접 소유해야 runtime 직렬화와 `response=` 선언이 한눈에 대응한다.
@@ -858,7 +866,7 @@ runtime behavior뿐 아니라 generated schema의 client-visible contract를 바
 - required/optional/nullable field
 - enum, format, default
 - status별 response schema
-- 직접 반환하는 BC status별 `<Bc>ErrorOut` schema와 `code` enum
+- 직접 반환하는 BC status별 `<Bc>ErrorOut` schema와 승인 식별자 field의 Enum 값
 - framework-owned status가 BC `ErrorOut`으로 잘못 광고되지 않는지
 - auth/security requirement
 - pagination/filtering parameter와 response metadata
@@ -882,7 +890,7 @@ Django Ninja `TestClient`는 Router/API operation을 HTTP adapter 수준에서 �
 - status code와 header
 - response schema field/type
 - auth/permission wiring
-- 직접 반환한 BC 오류의 `code/title/status/detail` shape
+- 직접 반환한 BC 오류의 slot-6 exact body shape와 mapping별 HTTP status
 - pagination/filtering/sorting parameter
 - idempotency replay와 conflict
 - DRF-to-Ninja compatibility

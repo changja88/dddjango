@@ -80,7 +80,7 @@
 | **NJ-1** | 스택 채택 | 신규 JSON API는 Ninja/Ninja Extra, plain view·DRF 누수 없음 |  |  |  |  | 치명 |
 | **NJ-2** | operation 얇음(비오류) | 비즈 규칙·ORM·수동 parsing 없이 응용 호출과 schema 매핑 |  |  |  |  | 치명 |
 | **NJ-3** | Schema 입출력 분리 | 요청/응답 Schema 분리, domain 직접 직렬화 없음 |  |  |  |  | — (강) |
-| **NJ-4** | BC 오류 OpenAPI 선언 | controller가 직접 반환하는 BC status를 같은 BC base ErrorOut으로 선언; 직접 BC 반환이 없는 framework 401/403/route 404/422/429/500은 BC ErrorOut으로 광고하지 않음. status별 code subset 과다노출은 승인된 단순화 |  |  |  |  | — (강) |
+| **NJ-4** | BC 오류 OpenAPI 선언 | controller가 직접 반환하는 BC status를 같은 BC base ErrorOut으로 선언; 직접 BC 반환이 없는 framework 401/403/route 404/422/429/500은 BC ErrorOut으로 광고하지 않음. status별 식별자 subset 과다노출은 승인된 단순화 |  |  |  |  | — (강) |
 | **NJ-5** | operation 문서화 | summary/tags와 정보 있는 반환 타입 |  |  |  |  | — (경미) |
 | **NJ-6** | Ninja 버전 핀 | 신규 도입 시 버전 핀과 기존 관례 일치 |  |  |  |  | — (경미) |
 | **NJ-7** | BC 오류 직접 계약 | application 호출 한 문장만 감싼 좁은 try, 구체 catch, no-arg concrete ErrorOut 또는 BC base 직접 생성, controller의 직접 Status 반환, framework 기본 처리. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL |  |  |  |  | — (강) |
@@ -90,7 +90,7 @@
 | ID | 항목 | Result | 결정 | 의미 | 종합 | 치명 |
 |---|---|---|---|---|---|---|
 | **FC-1** | 코드 열람 전 골든 행위표의 status·부작용 전수 확인 |  |  |  |  | 치명 |
-| **FC-2** | M1 차감 부호·M2 판정 경계·M3 controller 오류 status mutation이 red. M3는 concrete 기본값 또는 BC base 직접 생성자 status를 바꾸고 HTTP status와 body status가 모두 red인지 확인 |  |  |  |  | 치명 |
+| **FC-2** | M1 차감 부호·M2 판정 경계·M3 controller HTTP status 표현 mutation이 red. slot 6이 body status property를 승인한 fixture만 해당 field mutation과 HTTP/body 일치도 red인지 확인 |  |  |  |  | 치명 |
 | **FC-3** | 음수 재고·차감 역전·인과 역전 같은 명백한 도메인 오류 부재 |  |  |  |  | 치명 |
 
 ## C. 기존규약 마스크 (필수 적용 메모)
@@ -108,7 +108,7 @@
 | ID | 항목 | §근거 | Result | 결정 | 의미 | 종합 |
 |---|---|---|---|---|---|---|
 | **Q-1** | 스코프/과설계·G1 | 요청 외 발명과 고-blast 결정의 승인 여부 |  |  |  |  |
-| **Q-2** | 선택 error profile 계약 일관성 | 선택한 profile의 wire shape·HTTP/body status·필요 header·version 정책이 일관함 |  |  |  |  |
+| **Q-2** | 선택 error profile 계약 일관성 | 선택한 profile의 승인 exact wire shape·HTTP status·필요 header·version 정책이 일관함; body status property는 승인된 scope만 비교 |  |  |  |  |
 | **Q-3** | Risky Write 형식+테스트 실현 | 동시성 기준과 실제 테스트 일치 |  |  |  |  |
 | **Q-4** | 메커니즘 소유권 [치명] | 승인 없는 DB backend/PRAGMA/monkeypatch 없음 |  |  |  |  |
 | **Q-5** | 마이그레이션 안전 | 0001·table/label·expand/backfill 안전 |  |  |  |  |
@@ -130,7 +130,7 @@
 | **EP-1** | 비-JSON/절단 body | framework 기본 400; BC shape/code 아님; exact body snapshot 금지 |  |  |
 | **EP-2** | request validation 실패 | framework 기본 422; BC shape/code 아님; exact body snapshot 금지 |  |  |
 | **EP-3** | (a) raw infra/미식별, (b) G1 승인된 공개 retryable | (a) 기본 500, (b) 자기 BC 예외→소유 controller 503 또는 계약상 409 + 승인 code/header; raw catch-all 없음 |  |  |
-| **EP-4** | 재고 부족 | 409 + 승인 BC code의 application/json; HTTP/body status 일치 |  |  |
+| **EP-4** | 재고 부족 | 409 + slot-6 승인 BC exact application/json body; body status property가 승인된 fixture만 HTTP와 일치 |  |  |
 
 ## 조정자 노트
 

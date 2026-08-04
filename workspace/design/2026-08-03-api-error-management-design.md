@@ -21,7 +21,7 @@ API 에러의 공통 응답 형식은 한 곳에서 유지하되, 각 바운디�
 6. 같은 에러 코드의 중복, 문자열 직접 사용, BC 간 에러 계약 침범을 사람이 놓치는 문제
 
 이 설계는 중앙에서 에러 종류를 등록하거나 예외를 변환하는 방식이 아니다. 공통은 BC가
-사용할 wire shape 하나만 소유하고, 각 BC는 자신의 공개 에러 언어와 준비된 오류 응답을
+사용할 **해당 프로젝트에서 승인된** wire shape 하나만 소유하고, 각 BC는 자신의 공개 에러 언어와 준비된 오류 응답을
 소유한다. 알려진 BC 오류만 controller가 커스텀 `ErrorOut`으로 반환하며, 인증·인가·route
 404·요청 검증·미식별 500 같은 framework 오류는 Django Ninja의 기본 처리를 사용한다.
 
@@ -29,16 +29,16 @@ API 에러의 공통 응답 형식은 한 곳에서 유지하되, 각 바운디�
 
 | 항목 | 결정 |
 |---|---|
-| 에러 식별자 | URI가 아닌 안정적인 `snake_case` 문자열 `code` |
+| 에러 식별자 | URI가 아닌 안정적인 `snake_case` 문자열 값. 이를 담는 필드명은 승인된 `ErrorOut` 계약이 결정 |
 | 표준 성격 | RFC 9457 Problem Details가 아닌 Broccoli/dddjango JSON 에러 계약 |
 | 미디어 타입 | `application/json` |
 | 공통 Schema | `common/ninja/response/error_out.py::ErrorOut` 정확히 하나 |
 | 공통 응답 디렉터리 | 빈 `__init__.py`와 `error_out.py`만 허용 |
-| 현재 승인된 공통 필드 | `code`, `title`, `status`, `detail`. 이후 변경은 사용자 명시 승인 필요 |
+| 공통 필드 계약 | 플러그인 기본 필드 없음. 기존 프로젝트는 관찰한 `ErrorOut`을 기준선으로 보존하고, 신규는 exact shape를 먼저 제안·승인받음. 어느 경우든 변경은 별도 사용자 명시 승인 필요 |
 | BC 코드 목록 | BC당 `<Bc>ErrorCode(StrEnum)` 정확히 하나 |
 | BC 응답 base Schema | BC당 `<Bc>ErrorOut(ErrorOut)` 정확히 하나 |
 | 준비된 구체 응답 | 같은 BC의 단일 `error_out.py` 안에서 `<Bc>ErrorOut` 상속으로만 허용 |
-| `Literal` | 사용하지 않음. BC `ErrorOut.code`를 BC `StrEnum`으로 제한 |
+| `Literal` | 사용하지 않음. BC `ErrorOut`이 승인된 식별자 필드 하나를 자기 BC `StrEnum`으로 제한 |
 | BC 예외 매핑 | 예외가 발생할 수 있는 해당 API controller가 직접 소유 |
 | framework 오류 | 별도 code·Schema·handler 없이 Django Ninja 기본 응답 사용 |
 | controller 책임 | 서비스 호출, 알려진 BC 예외 catch, 준비된 ErrorOut의 `Status` 반환 |
@@ -46,19 +46,37 @@ API 에러의 공통 응답 형식은 한 곳에서 유지하되, 각 바운디�
 | 오류 helper | ErrorOut 생성·고정값 조립·HTTP Response 변환·예외 매핑 helper를 만들지 않음 |
 | 비-JSON 응답 | 비오류 성공 arm의 파일 다운로드·스트리밍·redirect는 오류 helper 금지 대상이 아님. 알려진 BC 실패 arm에서는 ErrorOut의 직접 `Status` 반환을 우회할 수 없음 |
 | OpenAPI | BC 오류만 `response={status: <Bc>ErrorOut}`으로 선언. 수동 후가공 금지 |
-| 재시도 표현 | `retryable` body 필드 대신 에러 `code`, HTTP status와 표준 header 사용 |
+| 재시도 표현 | 승인된 body 계약, HTTP status와 표준 header로 표현. 새 body 필드는 별도 shape 변경 승인 없이는 추가하지 않음 |
 
 ## 3. 계약 범위와 용어
 
 ### 3.1 커스텀 ErrorOut 적용 대상
 
-클라이언트가 `code`로 구분해야 하는 BC의 공개 오류만 이 계약의 적용 대상이다.
+클라이언트가 승인된 식별자 필드로 구분해야 하는 BC의 공개 오류만 이 계약의 적용 대상이다.
 
 - controller가 직접 catch하는 자기 BC의 domain/application 공개 예외
 - application 호출이 반환한 명시적인 실패 Result
 - 클라이언트가 구분하거나 재시도해야 해서 BC가 공개하기로 한 오류
 
-이 오류는 해당 controller가 준비된 BC ErrorOut을 `Status(error.status, error)`로 반환한다.
+이 오류는 해당 controller가 준비된 BC ErrorOut을 two-argument
+`Status(<승인된 HTTP status 표현>, error)`로 반환한다. HTTP status는 body 필드일 수도 있고
+controller가 직접 쓰는 정수·Ninja status 상수일 수도 있으며, 플러그인은 `status`라는 body
+property를 요구하지 않는다.
+
+기존 승인 shape의 canonical common/BC schema 정의가 dynamic field default·validator/serializer/
+Pydantic hook·custom config/decorator 또는 project·relative import/dynamic binding에 의존하면 그
+metadata를 바꾸어 checker에 맞추지 않는다.
+임의 Python의 import-time·호출-time 의미를 결정적 AST checker가 완료 증거로 추측하지 않도록
+schema checker는 항상 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`를 낸다. class-header `**`·legacy
+`Config` 상속·non-alias config callable·config mutation도 같은 경계다. canonical module의 직접
+import-time mutation/side effect는 proof 대상이 아니라 구조 위반으로 차단한다. target-pin model
+introspection·실제 BC-base 생성·exact dump·mounted response/OpenAPI와 API/discipline 이중 review로만
+proof를 해소한다. controller/OpenAPI checker의 정적 계산은 추가 진단일 뿐 이 proof를 없애지 않는다.
+이 runtime proof는 기존 shape 보존 경로일 뿐 신규/변경 shape의 별도 명시 승인을 대체하지 않는다.
+controller 등 schema 소유 경계 밖에서 model config를 바꾸는 코드는 기존 shape가 아니라 소유권
+위반이다. 선택 module의 직접 mutation과 직접 import한 module-level callable 경로는 controller
+checker가 차단한다. imported class method·2-hop·dynamic dispatch는 결정적 AST 증명 범위 밖이므로
+checker 통과로 면제하지 않고 API/discipline reviewer가 직접 읽는다.
 
 ### 3.2 framework 기본 오류
 
@@ -75,7 +93,7 @@ API 에러의 공통 응답 형식은 한 곳에서 유지하되, 각 바운디�
 
 별도 `GlobalErrorCode`, 전역 ErrorOut, exception handler, catch-all을 만들지 않는다. Django
 Ninja와 Django의 기본 status와 body를 그대로 사용한다. 클라이언트는 이 오류를 body의
-`code`가 아니라 HTTP status로 처리하며 기본 body를 안정적인 커스텀 계약으로 파싱하지
+BC 식별자 필드가 아니라 HTTP status로 처리하며 기본 body를 안정적인 커스텀 계약으로 파싱하지
 않는다.
 
 인증 함수는 ErrorOut을 반환하지 않는다. Django Ninja에서 인증 함수의 truthy 반환값은
@@ -91,7 +109,7 @@ Ninja와 Django의 기본 status와 body를 그대로 사용한다. 클라이언
 
 ## 4. 외부 wire 계약
 
-### 4.1 공통 ErrorOut
+### 4.1 공통 ErrorOut과 승인 기준선
 
 ```python
 # common/ninja/response/error_out.py
@@ -100,41 +118,35 @@ from ninja import Schema
 
 
 class ErrorOut(Schema):
-    code: str
-    title: str
-    status: int
-    detail: str
+    # G1의 common ErrorOut shape/approval slot에서 승인된
+    # 프로젝트 고유 필드만 그대로 선언한다.
+    ...
 ```
 
-현재 승인된 계약에서는 네 필드가 모두 필수이며 항상 존재한다. controller가 Schema를
-`Status`로 반환하면 Django Ninja가 선언된 response Schema로 직렬화하므로 `model_dump()`나
-오류 응답 helper가 필요하지 않다.
+`ErrorOut`의 property 목록은 dddjango 플러그인이 정하지 않는다. 기존 프로젝트에서는 현재
+소스와 배포 wire를 관찰한 exact shape가 기준선이다. 신규 프로젝트에서는 architect가 field
+set·각 type·required/default·nullable·Field metadata·model config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·직렬화 결과를 G1 slot 6에 제안하고,
+사용자가 그 exact shape를 승인한 뒤에만 만든다. `code/title/status/detail`도,
+`error_type/msg/is_show`도 플러그인 기본값이 아니다.
 
-이 네 필드는 영구 불변으로 하드코딩한 범용 표준이 아니다. 다만 이미 서버와 클라이언트가
-공유하는 외부 계약이므로 dddjango가 일반 기능을 구현하면서 임의로 추가·삭제·이름 변경·타입
-변경·필수 여부 변경을 해서는 안 된다. 변경 필요를 발견하면 구현을 멈추고 사용자에게 영향을
-설명한 뒤 명시적으로 승인을 받는다. 승인 없이는 현재 계약을 그대로 보존한다. 승인된 변경은
-설계 명세와 서버·클라이언트·계약 테스트의 기대값을 함께 갱신한다.
+기준선에서 필드 추가·삭제·이름·타입·required/default·nullable·Field metadata·config·validator/serializer/computed field/Pydantic hook 또는 의미를
+하나라도 바꾸는 것은 일반 G1 승인에 묻히지 않는 별도 외부 계약 변경이다. 구현을 멈추고
+호환성 영향과 서버·클라이언트·테스트 전환 범위를 보여 준 뒤 명시적 사용자 승인을 받는다.
+승인 없이는 관찰된 기준선을 그대로 보존한다.
 
-### 4.2 필드 의미
+controller가 승인된 Schema를 `Status`로 반환하면 Django Ninja가 선언된 response Schema로
+직렬화하므로 `model_dump()`나 오류 응답 helper는 필요하지 않다.
 
-| 필드 | 계약 |
+### 4.2 shape에 반드시 기록할 항목
+
+| 항목 | 계약 |
 |---|---|
-| `code` | 클라이언트 분기·로그·분석에 사용하는 안정적인 기계 식별자 |
-| `title` | 같은 code에서 변하지 않는 짧은 설명 |
-| `status` | 실제 HTTP status와 반드시 동일한 정수 |
-| `detail` | 이번 발생에 대한 안전한 설명. 내부 스택·SQL·민감정보 금지 |
-
-### 4.3 BC 오류 응답 예시
-
-```json
-{
-  "code": "lesson_not_found",
-  "title": "Lesson not found",
-  "status": 404,
-  "detail": "The requested lesson does not exist."
-}
-```
+| property | exact field set과 wire 이름. 플러그인 고정 목록 없음 |
+| type/직렬화 | 각 Python type과 실제 JSON 표현 |
+| 값 존재성 | required/default/nullable 여부 |
+| 변환 규칙 | 모든 `Field(...)` metadata, `model_config`/legacy `Config`, validator·serializer·computed field와 실제 wire property set |
+| BC 식별자 | 어느 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁히는지 |
+| HTTP status | body 포함 여부와 무관하게 mapping별 실제 HTTP status 표현 |
 
 ### 4.4 제거되는 필드와 개념
 
@@ -143,13 +155,13 @@ class ErrorOut(Schema):
 - RFC 9457 `type` URI
 - `about:blank`
 - `application/problem+json`
-- `retryable` body 필드
+- 승인되지 않은 `retryable` body 필드
 - `invalid-params`
 - `instance`
-- 임의 `extensions` dict
+- 승인되지 않은 임의 `extensions` dict
 - Schema에 선언되지 않은 추가 key
 
-재시도 여부는 별도 boolean이 아니라 에러 `code`와 HTTP 의미로 결정한다. 서비스 일시
+재시도 여부는 승인 없는 별도 boolean을 추가하지 않고 승인된 식별자와 HTTP 의미로 결정한다. 서비스 일시
 불가는 `503 Service Unavailable`과 `Retry-After`로, 리소스·상태 충돌은 계약에 따라
 구체적인 code와 `409 Conflict`로 표현할 수 있다. 영구적인 장애에는 재시도를 권고하지
 않는다.
@@ -239,15 +251,17 @@ class LessonErrorCode(StrEnum):
 
 
 class LessonErrorOut(CommonErrorOut):
-    code: LessonErrorCode
+    error_type: LessonErrorCode
 
 
 class LessonNotFoundError(LessonErrorOut):
-    code: LessonErrorCode = LessonErrorCode.NOT_FOUND
-    title: str = "Lesson not found"
-    status: int = 404
-    detail: str = "The requested lesson does not exist."
+    error_type: LessonErrorCode = LessonErrorCode.NOT_FOUND
+    msg: str = "The requested lesson does not exist."
+    is_show: bool = True
 ```
+
+위 `error_type/msg/is_show`는 이 절의 한 승인 shape 예시일 뿐 plugin 기본 property가 아니다.
+다른 프로젝트는 slot 6에서 승인된 전혀 다른 field set을 그대로 쓴다.
 
 `LessonErrorCode`는 Enum 컨테이너 하나이고, 그 안에는 공개 에러 종류가 여러 개 들어갈 수
 있다. 에러 종류마다 Enum 클래스를 새로 만들지 않는다.
@@ -255,7 +269,9 @@ class LessonNotFoundError(LessonErrorOut):
 `LessonErrorOut`은 BC의 단일 base Schema다. `LessonNotFoundError()`처럼 고정된 값을 인자
 없이 바로 반환할 필요가 있으면 같은 `error_out.py` 안에 준비된 concrete Schema를 둘 수
 있다. 이 클래스는 `<Bc>ErrorOut`을 상속하고 공통 필드의 기본값만 고정한다. 새 필드,
-validator, alias, 별도 파일은 추가하지 않는다. 고정된 값을 채우기 위한 `make_*`, `build_*`,
+validator, child `model_config`, 별도 파일은 추가하지 않는다. 공통 field를 재선언한다면
+annotation/nullability와 default를 제외한 `Field(...)` metadata를 그대로 반복한다. 고정된
+값을 채우기 위한 `make_*`, `build_*`,
 `*_error()` factory 함수도 만들지 않는다.
 
 BC 디렉터리 `usage_quota`의 PascalCase 이름은 `UsageQuota`이며 클래스명은
@@ -263,10 +279,11 @@ BC 디렉터리 `usage_quota`의 PascalCase 이름은 `UsageQuota`이며 클래�
 
 ### 6.2 Literal을 사용하지 않는 이유
 
-`Literal[LessonErrorCode.NOT_FOUND]`는 특정 응답 Schema의 code를 타입 수준에서 정확히
+`Literal[LessonErrorCode.NOT_FOUND]`는 특정 응답 Schema의 식별자 field를 타입 수준에서 정확히
 하나로 고정한다. 이 설계에서 준비된 concrete Schema는 no-argument 생성 시의 기본값을
 고정하기 위한 것이지, 에러마다 서로 다른 wire shape나 `Literal` 계약을 만들기 위한 것이
-아니다. code 타입은 모든 BC Schema에서 `LessonErrorCode`로 유지한다.
+아니다. 식별자 field의 공통 wrapper/nullability는 유지하면서 `str` 자리만 모든 BC Schema에서
+`LessonErrorCode`로 바꾼다(예: `str | None` → `LessonErrorCode | None`).
 
 따라서 controller의 다음 선언에서 404와 409는 같은 BC ErrorOut을 사용한다.
 
@@ -279,16 +296,23 @@ response={
 ```
 
 생성 OpenAPI는 각 status에서 모든 `LessonErrorCode` 값을 허용하는 것으로 보인다. 실제
-`status`와 `code`의 올바른 조합은 controller 계약 테스트가 고정한다. 이를 보완하려고
+HTTP status와 slot 6이 승인한 식별자 field 값의 올바른 조합은 controller 계약 테스트가
+고정한다. 이를 보완하려고
 수동으로 OpenAPI를 후가공하지 않는다.
 
 ### 6.3 BC ErrorOut 확장은 별도 승인
 
-현재 표준의 BC base ErrorOut은 `code` 타입을 BC Enum으로 좁히는 역할만 한다. 준비된
-concrete ErrorOut은 기존 공통 필드의 기본값만 고정한다. 어느 쪽에도 추가 필드, validator,
-alias, arbitrary extension bag을 임의로 넣지 않는다. 특정 에러에 추가 데이터가 정말
-필요해지면 공통 또는 BC wire 계약 변경의 영향과 클라이언트 호환성을 설명하고 사용자에게
-별도 승인을 받는다. 승인 전에는 현재 shape를 보존한다.
+BC base ErrorOut은 slot 6에서 식별자로 승인된 field 하나의 타입을 자기 BC Enum으로
+좁히는 역할만 한다. 그 field 이름은 `code`, `error_type` 등 프로젝트 계약에 따라 달라질 수
+있고 플러그인이 정하지 않는다. BC base는 그 field의 nullable wrapper·required/default와
+default를 제외한 `Field(...)` metadata를 보존하며, 승인된 default가 문자열이면 동일 wire
+value의 자기 Enum member로 표현한다. 준비된 concrete ErrorOut은 승인된 공통 필드의 사건별
+기본값만 고정한다. 어느 쪽에도 추가 필드, validator, child `model_config`, arbitrary extension
+bag이나 기존과 다른 annotation/Field metadata를 임의로 넣지 않는다. alias 등 승인된 metadata가
+있는 field를 재선언할 때는 동일 metadata를 반복해야 한다. 특정 에러에 추가 데이터가 정말
+필요해지면 공통 또는 BC wire 계약 변경의 영향과
+클라이언트 호환성을 설명하고 사용자에게 별도 승인을 받는다. 승인 전에는 현재 shape를
+보존한다.
 
 ## 7. Framework 오류는 기본 처리
 
@@ -321,12 +345,12 @@ raw DB/인프라 예외와 미식별 예외도 controller가 잡지 않는다. D
 
 - 자기 BC의 domain/application 공개 예외 catch
 - 반환할 준비된 `<Bc>ErrorOut` 선택
-- 실제 HTTP status와 body `status` 일치
+- mapping별 실제 HTTP status와 승인된 exact body
 - 필요한 표준 HTTP header 반환
 
-에러의 `code`, `title`, `status`, `detail`이 고정되어 있으면 BC의 단일
+에러의 승인된 공통 필드 값이 사건과 무관하게 고정되어 있으면 BC의 단일
 `presentation_layer/schema/error_out.py`에 준비된 concrete Schema로 정의한다. controller는
-그 Schema를 인자 없이 생성하고 `Status(error.status, error)`로 바로 반환한다. 고정값을
+그 Schema를 인자 없이 생성하고 `Status(<승인된 HTTP status 표현>, error)`로 바로 반환한다. 고정값을
 채우기 위한 mapping 함수, factory, BC exception handler는 만들지 않는다.
 
 domain/application/infra 계층은 `ErrorOut`, `<Bc>ErrorCode`, Ninja `Status`/`Response`, HTTP
@@ -359,7 +383,7 @@ class LessonController:
             lesson = query.execute(lesson_id)
         except LessonNotFoundException:
             error = LessonNotFoundError()
-            return Status(error.status, error)
+            return Status(status.HTTP_404_NOT_FOUND, error)
 
         return Status(
             status.HTTP_200_OK,
@@ -377,8 +401,8 @@ ErrorOut을 직접 반환한다. 예외 호출의 `try` 뒤에서 같은 결과�
 
 알려진 구체 예외 또는 구체 예외들의 tuple만 catch한다. bare `except`, `except Exception`,
 `except BaseException`은 쓰지 않는다. 각 `except`는 고정 오류라면 준비된 concrete ErrorOut을
-인자 없이 생성하고, 발생별 `detail`이 필요하면 BC base ErrorOut을 그 자리에서 직접 생성해
-`Status`로 반환한다. 미식별 예외는 그대로 전파해 Django Ninja/Django의 기본 500 흐름이
+인자 없이 생성하고, 발생별 값이 필요하면 BC base ErrorOut을 그 자리에서 직접 생성해
+`Status(<승인된 HTTP status 표현>, error)`로 반환한다. 미식별 예외는 그대로 전파해 Django Ninja/Django의 기본 500 흐름이
 처리하게 한다.
 
 application 호출이 `None`이나 명시적인 실패 Result를 반환한 경우에는 같은 controller에서
@@ -387,21 +411,13 @@ application 호출이 `None`이나 명시적인 실패 Result를 반환한 경�
 ```python
 if compensation is None:
     error = CompensationFailError()
-    return Status(error.status, error)
+    return Status(status.HTTP_400_BAD_REQUEST, error)
 ```
 
-`detail`처럼 발생별 값이 필요한 오류는 factory를 만들지 않고 controller에서 BC base를
-직접 생성한다. 이 경우에도 `code`는 자기 BC Enum 멤버를 사용한다.
-
-```python
-error = LessonErrorOut(
-    code=LessonErrorCode.SCHEDULE_CONFLICT,
-    title="Lesson schedule conflict",
-    status=409,
-    detail=f"Lesson {lesson_id} conflicts with the selected schedule.",
-)
-return Status(error.status, error)
-```
+승인된 필드 중 발생별 값이 필요한 오류는 factory를 만들지 않고 controller에서 BC base를
+직접 생성한다. slot 6의 모든 required field를 명시하고, 그중 승인된 식별자 필드는 자기 BC
+Enum 멤버를 사용한다. HTTP status가 body property인지와 무관하게 마지막 반환은
+`Status(status.HTTP_409_CONFLICT, error)`처럼 승인된 HTTP status를 직접 결합한다.
 
 오류 응답에 header가 필요하면 주입받은 Django `HttpResponse`에 header만 설정하고 Schema는
 여전히 `Status`로 반환한다. 수제 응답 객체를 생성하지 않는다.
@@ -459,7 +475,7 @@ HTTP request
 -> controller가 application use case 호출
 -> 알려진 domain/application 예외를 controller가 catch
 -> 준비된 <Bc>ErrorOut 생성
--> controller가 Status(error.status, error) 반환
+-> controller가 Status(<승인된 HTTP status 표현>, error) 반환
 -> Ninja가 선언된 Schema로 application/json 직렬화
 ```
 
@@ -493,8 +509,8 @@ controller가 잡지 않은 raw DB/인프라/미식별 예외
 4. `openapi_extra`로 framework 오류 response를 수동 추가하지 않는다.
 5. `get_openapi_schema` override나 별도 함수로 생성 OpenAPI를 사후 수정하지 않는다.
 6. BC ErrorOut의 런타임과 OpenAPI media type은 Django Ninja 기본 `application/json`이다.
-7. 같은 BC ErrorOut을 여러 status에 선언하면서 code Enum 전체가 노출되는 것은 승인된
-   단순화다.
+7. 같은 BC ErrorOut을 여러 status에 선언하면서 식별자 field의 BC Enum 전체가 노출되는
+   것은 승인된 단순화다.
 
 ## 11. 강제 규칙 선별과 백스탑
 
@@ -510,8 +526,10 @@ checker 파일을 새로 만들지 않는다.
 
 ### 11.1 사용자 승인 게이트
 
-공통 `ErrorOut`의 현재 승인 필드는 `code/title/status/detail`이다. 이 필드 집합·이름·타입·
-필수 여부를 바꾸는 것은 허용된 일반 구현 작업이 아니라 외부 계약 변경이다. Coordinator는
+공통 `ErrorOut`에는 플러그인 기본 property 목록이 없다. 기존 scope의 관찰된 shape 또는 신규
+scope에서 별도로 승인된 exact shape가 기준선이다. 그 field 집합·이름·타입·required/default·
+nullability·모든 `Field` metadata·model config·legacy `Config`·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·실제 wire 직렬화·공개
+field 의미를 바꾸는 것은 허용된 일반 구현 작업이 아니라 외부 계약 변경이다. Coordinator는
 변경 필요를 발견하면 구현을 멈추고 사용자에게 영향과 서버·클라이언트 전환 범위를 설명한
 뒤 명시적으로 승인받는다. 승인되지 않은 변경은 차단한다.
 
@@ -523,7 +541,7 @@ shape는 G1 설계 명세가 소유하고, discipline reviewer는 구현이 그 
 
 | 소유자 | 차단할 정본 위반 |
 |---|---|
-| `check-error-centralization.py` | 공통 response 디렉터리 파일 증식, 공통 모듈의 BC Enum·concrete ErrorOut·helper 혼입, BC 밖 concrete ErrorOut, BC별 ErrorCode/ErrorOut base 증식, 준비된 concrete ErrorOut의 잘못된 상속·승인되지 않은 새 필드·기본값 누락, 문자열 code 직접 소비·중복 code를 한 Schema 계약 검사로 묶는다. 공통 필드 이름 네 개를 영구 하드코딩하지 않고 현재 승인된 공통 ErrorOut의 필수 필드를 기준으로 concrete의 무인자 생성 구조를 검사한다. |
+| `check-error-centralization.py` | 공통 response 디렉터리 파일 증식, 공통 모듈의 BC Enum·concrete ErrorOut·helper 혼입, BC 밖 concrete ErrorOut, BC별 ErrorCode/ErrorOut base 증식, 준비된 concrete ErrorOut의 잘못된 상속·승인되지 않은 새 필드·필수 기본값 누락, 문자열 식별자 직접 소비·중복 wire 값을 한 Schema 계약 검사로 묶는다. 특정 property 이름을 하드코딩하지 않고 현재 공통 `ErrorOut`의 전체/required field, 승인된 default·nullable·alias/config와 BC base가 자기 `ErrorCode`로 좁힌 식별자 field를 발견해 검사한다. |
 | `check-api-error-controller-contract.py` | ErrorOut 생성·고정값 조립·HTTP Response 변환 helper, 예외→ErrorOut mapping 함수와 custom handler, application 호출 외 문장을 포함한 넓은 `try`, bare/`Exception`/`BaseException` catch, 같은 `try`의 직접 raise 재포착, 준비된 concrete ErrorOut에 인자를 다시 채우는 반환, 오류용 tuple·수제 Response·dict 반환을 차단한다. |
 | `check-context-isolation.py` | root API의 BC 의존, domain/application/infra의 Ninja·ErrorOut 의존, 다른 BC의 ErrorCode/ErrorOut/예외 직접 import를 차단한다. |
 | `check-openapi-error-declaration.py` | controller가 직접 반환하는 BC 오류 status의 `response=` 누락과 framework 오류용 `openapi_extra`·생성 OpenAPI 사후 후가공을 차단한다. |
@@ -537,8 +555,8 @@ API 오류 checker에서 같은 판단을 중복하지 않는다.
 
 - 관리 대상 concrete ErrorOut을 발견해 `ConcreteErrorOut()` 무인자 생성이 실제로 성공하는지
   확인한다. AST 기본값 검사는 후보를 좁히고, 실행 테스트가 최종 동작을 보증한다.
-- 알려진 BC 예외별로 HTTP status와 body `status`가 같고 승인된 code/title/detail이
-  직렬화되는지 확인한다.
+- 알려진 BC 예외별로 승인된 HTTP status와 exact body가 직렬화되는지 확인한다. 승인 shape에
+  HTTP status property가 있을 때만 그 property와 실제 status의 일치를 추가로 확인한다.
 - 생성 OpenAPI가 controller의 관리 대상 BC 오류 Schema를 광고하는지 확인한다.
 - framework 기본 오류와 파일·스트리밍·redirect 응답은 BC ErrorOut 계약으로 오인하지 않는다.
 
@@ -554,13 +572,13 @@ API 오류 checker에서 같은 판단을 중복하지 않는다.
 | 영역 | 일반 규칙 |
 |---|---|
 | code 생성 기준 | 클라이언트가 구분해 처리하거나 안정적으로 관찰할 공개 오류일 때만 새 code를 만든다. |
-| 매핑 단위 | 내부 예외 수와 공개 code 수를 일치시키지 않는다. 여러 예외를 하나의 code로 합칠 수 있다. |
+| 매핑 단위 | 내부 예외 수와 공개 식별자 수를 일치시키지 않는다. 여러 예외를 하나의 식별자로 합칠 수 있다. |
 | 이름 | `not_found` 같은 모호한 값보다 `lesson_not_found`처럼 의미가 드러나는 값을 우선한다. BC prefix 자체는 강제하지 않는다. |
 | 안정성 | 배포한 code의 이름 변경·삭제·의미 재사용은 breaking change다. |
-| title | 같은 code이면 동일한 title을 유지한다. 발생별 정보는 detail로 보낸다. |
-| detail | 클라이언트와 사용자에게 안전한 정보만 포함한다. `str(exc)`를 자동으로 공개하지 않는다. |
-| status | 예외 클래스명이 아니라 HTTP 의미에 따라 선택한다. |
-| controller 매핑 의미 | 어떤 구체 예외를 어떤 공개 code/status로 매핑할지는 API 설계와 리뷰가 판단한다. checker는 승인된 매핑의 코드 형태만 강제한다. |
+| body field 안정성 | slot 6/10에서 같은 ErrorCode에 안정적이라고 승인한 body field만 동일성을 요구한다. `title` 등 특정 field를 전제하지 않는다. |
+| 공개 문자열 | 승인된 문자열 field에는 클라이언트와 사용자에게 안전한 정보만 넣고 `str(exc)`를 자동으로 공개하지 않는다. |
+| HTTP status | 예외 클래스명이 아니라 HTTP 의미에 따라 선택한다. body에 같은 이름의 property가 있을 필요는 없다. |
+| controller 매핑 의미 | 어떤 구체 예외를 어떤 공개 ErrorCode/HTTP status로 매핑할지는 API 설계와 리뷰가 판단한다. checker는 승인된 매핑의 코드 형태만 강제한다. |
 | 반복 허용 | 서로 다른 controller에 몇 줄의 명시적인 예외→ErrorOut 변환이 반복되어도 성급한 handler·factory 공통화를 하지 않는다. |
 | 실패 Result | `None`이나 실패 Result는 같은 controller에서 예외로 만들었다가 바로 잡지 않고 ErrorOut을 직접 반환한다. |
 | 알 수 없는 BC 예외 | controller에서 잡지 않고 Ninja/Django 기본 500 흐름까지 전파한다. |
@@ -579,7 +597,7 @@ API 오류 checker에서 같은 판단을 중복하지 않는다.
 
 | 대상 | 변경 |
 |---|---|
-| `check-error-centralization.py` | 현재의 application HTTP 누수 검사에서 §11.2의 공통/BC Schema 계약 검사로 책임을 교체한다. 승인된 공통 필드 집합을 기준으로 concrete 무인자 생성 구조를 검사하고 필드 네 개를 영구 상수로 박지 않는다. |
+| `check-error-centralization.py` | 현재의 application HTTP 누수 검사에서 §11.2의 공통/BC Schema 계약 검사로 책임을 교체한다. 현재 공통 필드 집합과 BC Enum으로 좁힌 식별자 필드를 동적으로 발견해 concrete 무인자 생성 구조를 검사한다. |
 | `check-context-isolation.py` | root API·계층 방향·BC 간 ErrorCode/ErrorOut/예외 import의 직접형만 추가한다. |
 | `check-openapi-error-declaration.py` | BC 오류의 `response=` 선언과 framework 오류 수동 선언·후가공 금지를 검사한다. |
 | `check-response-schema-bypass.py` | 기존 성공 JSON Schema 직접 우회 검사를 유지하고 파일·스트리밍·redirect 제외를 보존한다. 오류 helper 규칙은 넣지 않는다. |
@@ -597,20 +615,20 @@ API 오류 checker에서 같은 판단을 중복하지 않는다.
 
 - BC ErrorOut이 자기 BC ErrorCode 값은 허용한다.
 - 정의되지 않은 문자열 code는 거부한다.
-- 관리 대상 준비된 concrete ErrorOut을 모두 발견해 인자 없이 실제 생성하고 승인된
-  code/title/status/detail을 가지는지 확인한다.
+- 관리 대상 준비된 concrete ErrorOut을 모두 발견해 인자 없이 실제 생성하고 slot 6의
+  승인된 exact shape와 literal 값을 가지는지 확인한다.
 - concrete ErrorOut은 승인된 base에 없는 필수 필드를 추가하지 않는다.
 - BC code 값이 전체 프로젝트에서 중복되지 않는다.
 
 ### 14.2 BC mapping 테스트
 
-각 공개 code에 대해 최소한 다음을 고정한다.
+각 공개 식별자 값에 대해 최소한 다음을 고정한다.
 
 - 입력 예외 타입
-- 출력 code
-- HTTP/body status
-- 안정적인 title
-- 민감정보가 없는 detail
+- 출력 식별자와 exact body
+- HTTP status
+- 승인된 안정·가변 필드 값
+- 민감정보가 없는 공개 문자열
 - 필요한 HTTP header
 
 각 공개 BC 오류는 controller의 application 협력자를 해당 예외로 실패시키고 실제 HTTP
@@ -648,30 +666,31 @@ Broccoli의 현재 RFC 9457 형태에서 새 계약으로 바꾸는 것은 의�
 
 | 기존 | 신규 |
 |---|---|
-| `type` URI | `code` 문자열 |
+| `type` URI | slot 6이 승인한 scalar 식별자 field의 문자열 값 |
 | `application/problem+json` | `application/json` |
 | `about:blank` | 제거 |
-| `retryable` body field | 구체 code + HTTP status, 503이면 `Retry-After` |
+| `retryable` body field | 구체 승인 식별자 값 + HTTP status, 503이면 `Retry-After` |
 | `invalid-params` | Ninja 기본 422 body |
 | `instance` | 제거 |
 | 에러별/전역 problem catalog | BC별 ErrorCode Enum과 준비된 BC ErrorOut |
 | 커스텀 framework 오류 | Django Ninja/Django 기본 오류 응답 |
 
-서버와 인하우스 클라이언트를 같은 계약 버전으로 함께 배포한다. `type`과 `code`를 동시에
-내보내는 장기 호환 계층은 만들지 않는다. 기존 클라이언트가 동시에 남아 있어야 한다면
+서버와 인하우스 클라이언트를 같은 계약 버전으로 함께 배포한다. 기존 URI 식별자 property와
+새 slot-6 식별자 property를 동시에 내보내는 장기 호환 계층은 만들지 않는다. 기존 클라이언트가
+동시에 남아 있어야 한다면
 이 설계를 바로 구현하지 않고 API version 분리 또는 짧은 전환 기간을 별도 승인받는다.
 
 ### 15.2 Broccoli 서버 정리 대상
 
-1. 이 마이그레이션에서 승인한 대로 `common/ninja/response/error_out.py`를
-   `code/title/status/detail` 네 필드 shape로 교체한다.
+1. `common/ninja/response/error_out.py`의 현재 exact shape를 먼저 기준선으로 기록한다. 변경이
+   필요하면 일반 마이그레이션 승인과 분리해 사용자에게 새 exact shape를 승인받은 뒤에만 바꾼다.
 2. `common/ninja/response/validation_error_out.py`를 삭제한다.
 3. `GlobalErrorCode`, 전역 ErrorOut/catalog, `error_response()`, `server_error_response()`를 만들지 않는다.
 4. `problem_response`, `problem`, `problem_from_slug`, `_slug`, `PROBLEM_BASE`를 제거한다.
 5. `_DOMAIN_PROBLEMS`, `_PROBLEM_DETAILS`, `_EXCEPTION_PROBLEM_DETAILS`를 제거한다.
 6. `broccoli_server/api.py`의 모든 `application.*` import와 custom exception handler를 제거한다.
 7. 각 HTTP BC에 단일 `<Bc>ErrorCode`, `<Bc>ErrorOut` base와 필요한 준비된 concrete ErrorOut을 같은 `error_out.py`에 만든다.
-8. 각 controller가 자기 application/domain 예외를 catch해 `Status(error.status, error)`로 직접 반환하게 한다.
+8. 각 controller가 자기 application/domain 예외를 catch해 `Status(<승인된 HTTP status 표현>, error)`로 직접 반환하게 한다.
 9. 각 BC router를 controller만 등록하는 명시적 `register_<bc>_api(api)` 함수로 바꾼다.
 10. `urls.py`가 모든 BC registrar를 명시적으로 호출한다.
 11. Managed Copy 같은 BC path-specific response policy를 해당 BC presentation으로 이동한다.
@@ -703,7 +722,7 @@ URI Problem Details 대신 code 기반 JSON 계약을 선택한다는 우선순�
 
 ## 16. 비목표
 
-- 모든 내부 예외를 공개 code로 만드는 것
+- 모든 내부 예외를 공개 식별자로 만드는 것
 - 에러 code를 중앙 한 파일에 모두 모으는 것
 - BC끼리 ErrorCode나 ErrorOut을 공유하는 것
 - 요청 검증 오류를 사용자 친화적으로 변환하는 것
@@ -719,11 +738,11 @@ URI Problem Details 대신 code 기반 JSON 계약을 선택한다는 우선순�
 
 다음 문장이 모두 참이면 이 설계를 승인한다.
 
-1. 새 dddjango 표준은 RFC 9457 URI `type`이 아니라 문자열 `code`를 사용한다.
-2. 현재 승인 계약에서 controller가 의도적으로 반환하는 BC ErrorOut은 모두 `code/title/status/detail`을 포함한다.
+1. 새 dddjango 표준은 RFC 9457 URI `type`이 아니라 BC가 소유한 안정적 문자열 식별자를 사용하며 그 property 이름은 승인 shape가 정한다.
+2. 플러그인은 `ErrorOut` property를 고정하지 않고, 기존 exact shape 보존 또는 신규 exact shape의 별도 명시 승인을 요구한다.
 3. 인증·인가·route 404·요청 검증·throttling·raw 인프라·미식별 오류는 이 커스텀 계약 밖에 두고 framework 기본 처리를 사용한다.
 4. 공통 response 디렉터리에는 `error_out.py` 한 production module만 둔다.
-5. 공통 `ErrorOut`은 현재 승인된 네 필드 wire shape만 알고 BC code를 모른다. 필드 변경은 구현을 멈추고 사용자에게 별도 승인받는다.
+5. 공통 `ErrorOut`은 승인된 프로젝트 wire shape만 알고 BC code 목록을 모른다. shape 변경은 구현을 멈추고 사용자에게 별도 승인받는다.
 6. 각 BC는 ErrorCode Enum 하나와 ErrorOut base 하나를 소유한다.
 7. 준비된 concrete ErrorOut은 같은 BC `error_out.py`에서 공통 필드 기본값만 고정하고 인자 없이 생성된다.
 8. BC 에러별 `Literal`, 별도 Schema 파일, ErrorOut 고정값 factory, exception handler를 만들지 않는다.

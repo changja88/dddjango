@@ -185,13 +185,17 @@ your_project/
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
 
-Django Ninja의 신규 `dddjango-code-json` 오류 계약은 `code`, `title`, `status`,
-`detail`을 가진 공통 `ErrorOut`을 contract scope당 하나만 둔다. 이 shape를 바꾸려면
-호환성 영향을 설명하고 사용자 승인을 받는다. 각 BC의 단일
-`presentation_layer/schema/error_out.py`는 `<Bc>ErrorCode` StrEnum 하나, 공통 base의
-`code`를 그 Enum으로 좁힌 `<Bc>ErrorOut` 하나, 인자 없이 생성할 수 있는 prepared
-concrete ErrorOut을 필요한 만큼 소유한다. concrete는 새 필드·validator·alias를 추가하지
-않고 공통 필드의 기본값만 고정한다.
+Django Ninja의 신규 `dddjango-code-json` 오류 계약은 contract scope당 공통 `ErrorOut` 하나를
+두지만 **그 property 목록은 플러그인이 정하지 않는다**. 기존 프로젝트의 exact shape를
+보존하거나, 신규 shape의 field/type/required/default/nullable/Field metadata/model config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 결과를
+별도로 보여 주고 명시 승인받는다. 이후 shape 변경도 일반 기능 승인과 분리해 다시 승인받는다.
+각 BC의 단일 `presentation_layer/schema/error_out.py`는 `<Bc>ErrorCode` StrEnum 하나,
+slot 6이 지정한 식별자 field 하나를 그 Enum으로 좁힌 `<Bc>ErrorOut` 하나, 인자 없이 생성할
+수 있는 prepared concrete ErrorOut을 필요한 만큼 소유한다. BC base는 식별자 타입만
+`str`에서 자기 Enum으로 바꾸고 공통 annotation의 nullable 구조·required/default·`Field(...)`
+metadata를 보존한다. concrete는 새 필드·validator·`model_config`를 추가하지 않고, 필드를
+재선언할 때 annotation/nullability와 `Field(...)` metadata를 그대로 반복한 채 승인된 공통
+필드의 사건별 기본값만 고정한다.
 
 ```python
 class OrderErrorCode(StrEnum):
@@ -199,18 +203,22 @@ class OrderErrorCode(StrEnum):
 
 
 class OrderErrorOut(ErrorOut):
-    code: OrderErrorCode
+    error_type: OrderErrorCode
 
 
 class OutOfStockErrorOut(OrderErrorOut):
-    code: OrderErrorCode = OrderErrorCode.OUT_OF_STOCK
-    title: str = "Out of stock"
-    status: int = 409
-    detail: str = "The requested quantity is not available."
+    error_type: OrderErrorCode = OrderErrorCode.OUT_OF_STOCK
+    msg: str = "The requested quantity is not available."
+    is_show: bool = True
 ```
 
-controller는 application 호출 한 문장만 좁은 `try`에 두고 알려진 구체 예외만 catch한다.
-준비된 ErrorOut을 인자 없이 직접 생성해 `Status(error.status, error)`로 반환하며,
+위 `error_type/msg/is_show`도 한 프로젝트가 승인할 수 있는 shape 예시일 뿐 dddjango의
+기본값이 아니다. body에 HTTP `status` property가 없어도 controller가 HTTP status를 직접
+선택하므로 문제없다.
+`ErrorOut`의 exact property/type/required/default/nullable/Field metadata/config/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 의미는 기존 계약을 보존하거나
+신규 G1에서 별도로 명시 승인받는다. controller는 application 호출 한 문장만 좁은 `try`에
+두고 알려진 구체 예외만 catch한다. 준비된 ErrorOut을 인자 없이 직접 생성해
+`Status(<승인된 HTTP status 표현>, error)`로 반환하며,
 `response={409: OrderErrorOut}`처럼 BC base를 OpenAPI에 선언한다. 고정값을 채우는 factory,
 ErrorOut을 HTTP 응답으로 직렬화하는 helper, BC/custom exception handler, broad catch는 만들지
 않는다.
@@ -220,7 +228,7 @@ try:
     order = command.execute(request_dto)
 except OutOfStockException:
     error = OutOfStockErrorOut()
-    return Status(error.status, error)
+    return Status(status.HTTP_409_CONFLICT, error)
 ```
 
 인증·인가·요청 validation·route 404·throttle·일반 `HttpError`·미식별 500은 BC

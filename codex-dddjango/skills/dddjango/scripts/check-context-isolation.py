@@ -1087,7 +1087,9 @@ def _is_error_status_value(node: ast.AST) -> bool:
     return dotted is not None and bool(ERROR_STATUS_NAME_RE.search(dotted.upper()))
 
 
-def _is_error_code_field(name: str) -> bool:
+def _is_error_code_field(name: str, approved_identifiers: set[str]) -> bool:
+    if name in approved_identifiers:
+        return True
     if name.lower() == "code":
         return True
     words = _identifier_words(name)
@@ -1105,28 +1107,34 @@ def _expression_nodes_without_nested_lambda(node: ast.AST) -> Iterator[ast.AST]:
         pending.extend(reversed(list(ast.iter_child_nodes(current))))
 
 
-def _expression_has_error_code_field(node: ast.AST) -> bool:
+def _expression_has_error_code_field(
+    node: ast.AST,
+    approved_identifiers: set[str],
+) -> bool:
     for child in _expression_nodes_without_nested_lambda(node):
         if isinstance(child, ast.Dict):
             if any(
                 isinstance(key, ast.Constant)
                 and isinstance(key.value, str)
-                and _is_error_code_field(key.value)
+                and _is_error_code_field(key.value, approved_identifiers)
                 for key in child.keys
             ):
                 return True
         elif isinstance(child, ast.Call):
             if any(
                 keyword.arg is not None
-                and _is_error_code_field(keyword.arg)
+                and _is_error_code_field(keyword.arg, approved_identifiers)
                 for keyword in child.keywords
             ):
                 return True
     return False
 
 
-def _return_is_error_shaped(node: ast.AST) -> bool:
-    if _expression_has_error_code_field(node):
+def _return_is_error_shaped(
+    node: ast.AST,
+    approved_identifiers: set[str],
+) -> bool:
+    if _expression_has_error_code_field(node, approved_identifiers):
         return True
     if (
         isinstance(node, ast.Tuple)
@@ -1179,16 +1187,6 @@ def _is_direct_mapping_expression(node: ast.AST | None) -> bool:
     )
 
 
-def _class_public_annotated_fields(node: ast.ClassDef) -> set[str]:
-    return {
-        statement.target.id.lower()
-        for statement in node.body
-        if isinstance(statement, ast.AnnAssign)
-        and isinstance(statement.target, ast.Name)
-        and not statement.target.id.startswith("_")
-    }
-
-
 def _is_exception_type_expression(node: ast.AST) -> bool:
     if isinstance(node, (ast.Tuple, ast.List)):
         return any(_is_exception_type_expression(element) for element in node.elts)
@@ -1223,6 +1221,7 @@ def _scope_nodes(statements: list[ast.stmt]) -> Iterator[ast.AST]:
 
 def _function_is_exception_mapping(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
+    approved_identifiers: set[str],
 ) -> bool:
     arguments = (
         *getattr(node.args, "posonlyargs", []),
@@ -1241,7 +1240,7 @@ def _function_is_exception_mapping(
     has_error_return = any(
         isinstance(child, ast.Return)
         and child.value is not None
-        and _return_is_error_shaped(child.value)
+        and _return_is_error_shaped(child.value, approved_identifiers)
         for child in body_nodes
     )
     return (has_exception_context or has_exception_flow) and has_error_return
@@ -1260,16 +1259,74 @@ def _is_request_path_test(node: ast.AST) -> bool:
     return False
 
 
-def _body_has_error_return(statements: list[ast.stmt]) -> bool:
+def _body_has_error_return(
+    statements: list[ast.stmt],
+    approved_identifiers: set[str],
+) -> bool:
     return any(
         isinstance(child, ast.Return)
         and child.value is not None
-        and _return_is_error_shaped(child.value)
+        and _return_is_error_shaped(child.value, approved_identifiers)
         for child in _scope_nodes(statements)
     )
 
 
-def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
+def _approved_error_identifier_names(
+    sources: list[ParsedSource],
+    error_bcs: tuple[str, ...],
+) -> set[str]:
+    by_path = {source.relative_path: source for source in sources}
+    identifiers: set[str] = set()
+    for bc in error_bcs:
+        path = Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+        parsed = by_path.get(path)
+        if parsed is None:
+            raise UsageError(f"canonical BC ErrorOut source 없음: {path}")
+        prefix = "".join(part.capitalize() for part in bc.split("_"))
+        base_name = f"{prefix}ErrorOut"
+        enum_name = f"{prefix}ErrorCode"
+        bases = [
+            node
+            for node in parsed.tree.body
+            if isinstance(node, ast.ClassDef) and node.name == base_name
+        ]
+        if len(bases) != 1:
+            raise UsageError(f"canonical BC ErrorOut provenance 분석 불능: {path}")
+        candidates: list[ast.AnnAssign] = []
+        for statement in bases[0].body:
+            if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
+                continue
+            annotation_names = {
+                (name := _expression_dotted_name(candidate)).rsplit(".", 1)[-1]
+                for candidate in ast.walk(statement.annotation)
+                if isinstance(candidate, (ast.Name, ast.Attribute))
+                and (name := _expression_dotted_name(candidate)) is not None
+            }
+            if enum_name in annotation_names:
+                candidates.append(statement)
+        if len(candidates) != 1:
+            raise UsageError(f"canonical BC discriminator provenance 분석 불능: {path}")
+        field = candidates[0]
+        identifiers.add(field.target.id)
+        roots = [field.annotation]
+        if field.value is not None:
+            roots.append(field.value)
+        for root in roots:
+            for call in (candidate for candidate in ast.walk(root) if isinstance(candidate, ast.Call)):
+                for keyword in call.keywords:
+                    if (
+                        keyword.arg in {"alias", "validation_alias", "serialization_alias"}
+                        and isinstance(keyword.value, ast.Constant)
+                        and isinstance(keyword.value.value, str)
+                    ):
+                        identifiers.add(keyword.value.value)
+    return identifiers
+
+
+def _root_api_findings(
+    parsed: ParsedSource,
+    approved_identifiers: set[str],
+) -> list[BoundaryFinding]:
     bindings_before = _module_statement_import_bindings(parsed.tree)
     api_object = _required_root_api_object(parsed.tree, bindings_before)
     findings: list[BoundaryFinding] = []
@@ -1310,11 +1367,9 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
                     lineno=node.lineno,
                     category="root-api-error-code",
                 )
-            public_fields = _class_public_annotated_fields(node)
             is_common_error_out = COMMON_ERROR_OUT_BASE in resolved_bases
             is_ninja_error_schema = NINJA_SCHEMA_BASE in resolved_bases and (
                 node.name.endswith("ErrorOut")
-                or {"code", "status"} <= public_fields
             )
             if is_common_error_out or is_ninja_error_schema:
                 _append_boundary_finding(
@@ -1338,7 +1393,10 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
                 lineno=node.lineno,
                 category="root-api-error-catalog",
             )
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _function_is_exception_mapping(node):
+        if (
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and _function_is_exception_mapping(node, approved_identifiers)
+        ):
             _append_boundary_finding(
                 findings,
                 seen,
@@ -1353,8 +1411,8 @@ def _root_api_findings(parsed: ParsedSource) -> list[BoundaryFinding]:
             isinstance(node, ast.If)
             and _is_request_path_test(node.test)
             and (
-                _body_has_error_return(node.body)
-                or _body_has_error_return(node.orelse)
+                _body_has_error_return(node.body, approved_identifiers)
+                or _body_has_error_return(node.orelse, approved_identifiers)
             )
         ):
             _append_boundary_finding(
@@ -1669,8 +1727,13 @@ def main(argv: list[str]) -> int:
             print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
             return 1
         try:
+            approved_identifiers = _approved_error_identifier_names(
+                code_sources,
+                config.error_bcs,
+            )
             root_api_findings = _root_api_findings(
-                _selected_parsed_source(code_sources, config.api_module)
+                _selected_parsed_source(code_sources, config.api_module),
+                approved_identifiers,
             )
         except UsageError as exc:
             print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
