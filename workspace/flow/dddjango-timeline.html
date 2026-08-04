@@ -221,7 +221,7 @@
         </div>
         <div class="node">
           <div class="role"><span class="dot" style="background:var(--blue)"></span>design-review-api</div>
-          <div class="desc">엔드포인트·상태 코드·요청/응답 계약(RFC 9457)·실패 코드(401/403·406/415·409/422)·멱등성 키 정책·버전/하위호환</div>
+          <div class="desc">엔드포인트·상태 코드·요청/응답 계약·선택된 오류 profile(BC code 또는 기존 RFC 9457)·OpenAPI·실패 코드(401/403·406/415·409/422)·멱등성 키 정책·버전/하위호환</div>
           <div class="chips"><span class="chip a">architecture-api</span></div>
         </div>
         <div class="node">
@@ -307,12 +307,12 @@
           </div>
           <div class="conn sm"></div>
           <div class="node">
-            <div class="role"><span class="dot" style="background:var(--tx2)"></span>백스톱 16종</div>
-            <div class="desc"><b style="color:var(--tx)">coordinator</b>가 결정적 스크립트를 셸로 각 1회 실행 · git touched-gate(이번 변경분만)</div>
-            <div class="chips"><span class="chip n">스킬 아님 · 고정밀 저-recall 안전망</span></div>
+            <div class="role"><span class="dot" style="background:var(--tx2)"></span>백스톱 19종</div>
+            <div class="desc"><b style="color:var(--tx)">coordinator</b>가 결정적 스크립트를 셸로 각 1회 실행 · checker 계약에 따라 touched 또는 full-tree 검사 · API 오류 controller 직접 계약 포함</div>
+            <div class="chips"><span class="chip n">check-api-error-controller-contract · 스킬 아님 · 고정밀 저-recall 안전망</span></div>
           </div>
           <div class="conn sm"></div>
-          <div class="gate" style="min-width:0;width:auto">16종 전부 통과?</div>
+          <div class="gate" style="min-width:0;width:auto">19종 전부 통과?</div>
           <div class="backs"><span class="back o">↩ exit2 → <b style="color:var(--tx)">coordinator</b>가 발견 합쳐 성격 판단 → 설계(design-architect) <i>또는</i> coder 반송</span></div>
         </div>
       </div>
@@ -337,7 +337,7 @@
   <!-- ===== 수정 모드 ===== -->
   <div class="patchwrap">
     <h2>🔧 수정 모드 <span style="font-size:11px;font-weight:600;color:var(--tx3)">— 국소 변경은 풀 파이프라인을 다시 돌지 않는다</span></h2>
-    <p class="ps">기존 파일의 작은 변경이면 영향받는 부분만 짧게. 설계 변경이 없으면 G1′도 건너뛴다. 두 경로 모두 G2 직전 <b>백스톱 16종을 동일하게</b> 돌린다.</p>
+    <p class="ps">기존 파일의 작은 변경이면 영향받는 부분만 짧게. 설계 변경이 없으면 G1′도 건너뛴다. 두 경로 모두 G2 직전 <b>백스톱 19종을 동일하게</b> 돌린다.</p>
     <div class="patchrow">
       <div class="pstep"><div class="t">G0 · 영향 범위</div><div class="s">+ 산출물 폴더 확정</div></div>
       <div class="parrow">→</div>
@@ -345,7 +345,7 @@
       <div class="parrow">→</div>
       <div class="pstep"><div class="t">영향 테스트·구현</div><div class="s">acceptance-tester · coder</div></div>
       <div class="parrow">→</div>
-      <div class="pstep"><div class="t">백스톱 16종</div><div class="s">동일 실행 (touched만)</div></div>
+      <div class="pstep"><div class="t">백스톱 19종</div><div class="s">동일 실행 (checker별 범위)</div></div>
       <div class="parrow">→</div>
       <div class="pstep" style="background:#231d12;border-color:#4a3a1c"><div class="t" style="color:var(--amber)">💬 G2 승인</div><div class="s">discipline-reviewer 미앵커</div></div>
     </div>

@@ -3,8 +3,8 @@
 
 Codex 계열이 *태스크가 요청하지 않은* 멱등성(`Idempotency-Key` 필수·전용 record 테이블·
 replay store)을 architect 단계에서 silent 의무화해 코드로 구현하는 회귀(DR-24 C3·DR-27
-라이브 재현)를 차단한다. 이 스코프크립은 status:int 객체가 application 계층을 흐르게 하고
-중앙 예외핸들러를 죽은 코드로 만들어 SD-6·NJ-2 치명 FAIL 의 공통 뿌리다.
+라이브 재현)를 차단한다. 이 checker의 소유는 이번 변경에서 touched된 멱등성 산출물이
+G1 채택 승인 없이 accepted scope 밖에 추가되는 것을 막는 데 한정된다.
 
 *왜 결정적 백스톱인가* — 미요청 멱등성 금지 가드는 이미 `design-architect`(§9.6 Idempotency
 storage 행)에 산문으로 있으나, 첫 라이브 검증(DR-27)에서 architect 가 "risky write 라 권장"
@@ -189,11 +189,10 @@ def main(argv: list[str]) -> int:
         print(f"  - {a.relative_to(root).as_posix()}")
     print(
         "  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 "
-        "멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store 를 silent "
-        "하게 빌드하지 않는다 — 중복이 치명적이라 도입이 권장되면 G1 에 옵션/트레이드오프로 "
-        "표면화해 사용자 채택을 받고(채택 시 면제), 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. "
-        "미요청 멱등성을 코드로 박는 건 스코프 초과이며 status 객체가 application 을 흐르게 해 "
-        "중앙 예외핸들러를 죽인다(P1a/SD-6 뿌리). 채택할 거면 설계(G1)로 반송하라."
+        "멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 "
+        "빌드하지 않는다. 이번 변경에서 touched된 미요청 멱등성 산출물은 G1 채택 승인이 없는 한 "
+        "accepted scope 밖이다. 도입이 필요하면 G1에서 옵션/트레이드오프로 표면화해 사용자 채택을 "
+        "받고, 불요·범위 외면 '미적용'(알려진 한계)으로 둔다. 채택할 거면 설계(G1)로 반송하라."
     )
     return 2
 

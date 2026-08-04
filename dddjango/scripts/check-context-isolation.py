@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """dddjango 컨텍스트 격리 결정적 백스톱 (SD-7 — 컨텍스트 간 통신).
 
-`check-layer-skeleton.py`(구조 골격)의 *의존 방향* 짝이다. 세 슬라이스를 잡는다:
+`check-layer-skeleton.py`(구조 골격)의 *의존 방향* 짝이다. 아래 S1~S3는 full-tree
+컨텍스트 통신 슬라이스이며, code-profile API 경계 lane과 legacy HTTP lane은 뒤에서 구분한다:
 
   S1  cross-BC 내부 결합 — ACL/OHS 경로 *밖*에서 한 바운디드 컨텍스트(BC)가 다른 BC 의
       `domain_layer`/`infra_layer` 를 직접 import 하는 것(architecture-ddd §2.5·§3.2(3):
@@ -20,13 +21,14 @@
       import 도 대상 밖이다. `infra_layer/acl/` 도 3계층이므로 자기 published 역-import 는
       S3 대상이다 — ACL 면제는 S1(업스트림 번역) 한정).
 
-*왜 결정적 백스톱인가* — 세 슬라이스 모두 **AST import 노드** 직격의 FP≈0 직접형이고
+*왜 결정적 백스톱인가* — 컨텍스트 통신 S1~S3 모두 **AST import 노드** 직격의 FP≈0 직접형이고
 (`ast.parse` — 문자열·주석 안의 import 유사 텍스트에 오발화하지 않는다; `import x`·
 `from x import y`·콤마 다중·별칭 전 형태, 함수 내부 지연 import 포함), 어느 것도 컴파일·
 테스트를 깨지 않는다(green). discipline-reviewer 의미 게이트 한 점에만 의존하면 LLM 이
 프로즈 규칙을 회피하는 표면이 된다 — 이 스크립트가 직접형을 결정적으로 메우고, 의미 변종
 (변수 우회·간접 재수출·상대 import(`from ..domain_layer import x`)·문자열 동적 import)은
-reviewer 몫이다(고정밀·저-recall, 거짓 양성 ≈0). 파싱 불가 파일은 fail-open(스킵)한다.
+reviewer 몫이다(고정밀·저-recall, 거짓 양성 ≈0). positional/auto/preserve의 파싱 불가 파일은
+legacy 호환을 위해 fail-open하고, code profile의 선택된 production source는 fail-closed한다.
 
 **ACL 면제(미스캘리브 차단)** — `infra_layer/acl/`(인접 경로 한정 — `repository/acl/` 류
 은닉 배치는 면제 아님) 의 미이주 ACL 이 업스트림(타 BC) 모델·예외를 import·번역하는 건
@@ -53,21 +55,41 @@ OHS 미경유(OHS 존재 시)·도메인 누수(포트 ABC 미준수)인지는 �
   거짓양성↓) — 의미 레인 몫. presentation·application 이 타 BC 의 *예외*(domain_layer 하위)를
   직접 import 하는 건 S1 로 포착된다.
 
-사용법: check-context-isolation.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리 — 프로젝트 루트)
+레거시 API 순도 lane은 positional/auto/preserve 실행에서 기존 application_layer HTTP 직접
+신호와 touched grandfathering을 그대로 보존한다. 명시 code profile은 선택 root API의
+Ninja API 조립 전용 소유권, scope BC inner layer의 Ninja framework/canonical error language,
+selected BC 사이의 error language를 검사하고, Git tracked+untracked non-ignored production
+full tree에 S1~S3를, touched application_layer에 기존 raw HTTP 신호를 적용한다. auto는
+Error response G2 증거가 아니다.
+
+사용법: check-context-isolation.py [TARGET_DIR] [--error-profile PROFILE ...]
 종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
 """
 from __future__ import annotations
 
+import argparse
 import ast
+import os
 import re
+import stat
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
 TEST_DIR_NAMES = {"test", "tests"}
 LAYER_DIR_NAMES = {"domain_layer", "application_layer", "infra_layer"}
+CODE_SKIP_DIRS = {
+    *SKIP_DIRS,
+    ".cache",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "migrations",
+    "generated",
+}
 
 # S1: 타 BC 내부 계층. domain/infra 만(루브릭 SD-7) — application_layer 는 의미 레인.
 CROSS_BC_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.(?:domain_layer|infra_layer)(?:\.|$)")
@@ -77,6 +99,647 @@ LAYER_ANY_RE = re.compile(
 )
 # S3: 자기 BC published_service 역-import(관통).
 PUBLISHED_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.published_service(?:\.|$)")
+
+# 구 check-error-centralization.py의 raw application-layer HTTP 신호. positional/auto/preserve
+# lane에서 collector·순서·label·touched 의미를 바꾸지 않는다.
+LEGACY_RESPONSE_CALL_RE = re.compile(
+    r"\b(?:JsonResponse|HttpResponse|HttpResponseBadRequest|HttpResponseForbidden"
+    r"|HttpResponseNotFound|HttpResponseNotAllowed|HttpResponseServerError)\s*\("
+)
+LEGACY_ERROR_STATUS_RE = re.compile(r"\bstatus(?:_code)?\s*=\s*[45]\d\d\b")
+LEGACY_HTTP_ERROR_RE = re.compile(r"\bHttpError\s*\(\s*[45]\d\d\b")
+LEGACY_NINJA_IMPORT_RE = re.compile(
+    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
+    re.MULTILINE,
+)
+LEGACY_SIGNAL_CHECKS = (
+    (LEGACY_RESPONSE_CALL_RE, "수제 HTTP 응답 객체 생성(JsonResponse/HttpResponse)"),
+    (LEGACY_ERROR_STATUS_RE, "오류 status code 직접 선택(status[_code]=4xx/5xx)"),
+    (LEGACY_HTTP_ERROR_RE, "ninja HttpError 를 status 와 함께 raise"),
+    (LEGACY_NINJA_IMPORT_RE, "ninja(web 프레임워크) import — application 은 web 을 모른다"),
+)
+
+ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
+BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+ROOT_API_CONSTRUCTORS = {
+    "ninja.NinjaAPI",
+    "ninja_extra.NinjaExtraAPI",
+}
+ROOT_API_IMPORT_RE = re.compile(r"^application\.[A-Za-z_]\w*(?:\.|$)")
+ERROR_STATUS_NAME_RE = re.compile(r"(?:^|_)(?:4|5)\d\d(?:_|$)")
+EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)$", re.IGNORECASE)
+HTTP_FACILITY_NAME_RE = re.compile(r"(?:status|response|http)", re.IGNORECASE)
+COMMON_ERROR_MODULE = "common.ninja.response.error_out"
+NINJA_SCHEMA_BASE = "ninja.Schema"
+COMMON_ERROR_OUT_BASE = f"{COMMON_ERROR_MODULE}.ErrorOut"
+ERROR_CATALOG_SUBJECT_WORDS = {"error", "problem", "exception"}
+ERROR_CATALOG_PLURAL_WORDS = {"errors", "problems", "exceptions"}
+ERROR_CATALOG_ROLE_WORDS = {
+    "catalog",
+    "catalogs",
+    "map",
+    "maps",
+    "mapping",
+    "mappings",
+    "response",
+    "responses",
+    "code",
+    "codes",
+}
+
+
+class UsageError(Exception):
+    """CLI/selector analysis error normalized to exit 1."""
+
+
+class _UsageParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        raise UsageError(message)
+
+
+@dataclass(frozen=True)
+class Config:
+    root: Path
+    profile: str | None
+    scope: str | None
+    api_module: str | None
+    controller_modules: tuple[str, ...]
+    scope_bcs: tuple[str, ...]
+    error_bcs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CodeInventory:
+    relative_paths: tuple[Path, ...]
+    git_root: Path | None
+
+
+@dataclass(frozen=True)
+class ParsedSource:
+    relative_path: Path
+    source: str
+    tree: ast.AST
+    touched: bool
+
+
+@dataclass(frozen=True)
+class ImportReference:
+    lineno: int
+    module: str
+    imported_name: str | None
+    full_path: str
+    absolute: bool
+
+
+@dataclass(frozen=True)
+class BoundaryFinding:
+    relative_path: Path
+    lineno: int
+    category: str
+    shown: str
+
+    def render(self) -> str:
+        return f"  - {self.relative_path}:{self.lineno}  {self.shown}"
+
+
+def _argument_parser() -> _UsageParser:
+    parser = _UsageParser(add_help=True)
+    parser.add_argument("target", nargs="?", default=".")
+    parser.add_argument("--error-profile", action="append")
+    parser.add_argument("--scope", action="append")
+    parser.add_argument("--api-module", action="append")
+    parser.add_argument("--controller-module", action="append", default=[])
+    parser.add_argument("--scope-bc", action="append", default=[])
+    parser.add_argument("--error-bc", action="append", default=[])
+    return parser
+
+
+def _one(
+    option: str,
+    values: list[str] | None,
+    *,
+    required: bool,
+    issues: list[str],
+) -> str | None:
+    actual = values or []
+    if required and not actual:
+        issues.append(f"필수 인자 누락: {option}")
+        return None
+    if len(actual) > 1:
+        issues.append(f"단일 인자 중복: {option}")
+    return actual[0] if actual else None
+
+
+def _unique(option: str, values: list[str], issues: list[str]) -> tuple[str, ...]:
+    if len(values) != len(set(values)):
+        issues.append(f"반복 인자 중복: {option}")
+    return tuple(values)
+
+
+def _selected_source(root: Path, option: str, raw: str, issues: list[str]) -> Path | None:
+    rel = Path(raw)
+    if (
+        rel.is_absolute()
+        or ".." in rel.parts
+        or rel.as_posix() != raw
+        or "/" not in raw
+        or rel.suffix != ".py"
+    ):
+        issues.append(f"잘못된 source path: {option}={raw}")
+        return None
+    try:
+        resolved = (root / rel).resolve()
+    except (OSError, RuntimeError) as exc:
+        issues.append(f"source path resolve 불능: {option}={raw} ({exc})")
+        return None
+    try:
+        resolved.relative_to(root)
+    except ValueError:
+        issues.append(f"root/symlink 탈출: {option}={raw}")
+        return None
+    if not resolved.is_file():
+        issues.append(f"선택 source 없음: {option}={raw}")
+        return None
+    try:
+        source = resolved.read_text(encoding="utf-8")
+        ast.parse(source, filename=raw)
+    except (OSError, UnicodeError, SyntaxError) as exc:
+        issues.append(f"선택 source 분석 불능: {option}={raw} ({exc})")
+        return None
+    return resolved
+
+
+def _parse_config(argv: list[str]) -> Config:
+    namespace = _argument_parser().parse_args(argv)
+    try:
+        root = Path(namespace.target).resolve()
+        root_is_dir = root.is_dir()
+    except (OSError, RuntimeError) as exc:
+        raise UsageError(f"TARGET_DIR resolve 불능: {namespace.target} ({exc})") from exc
+    if not root_is_dir:
+        raise UsageError(f"디렉터리 아님 {root}")
+
+    issues: list[str] = []
+    profile = _one(
+        "--error-profile",
+        namespace.error_profile,
+        required=False,
+        issues=issues,
+    )
+    selectors_present = any(
+        (
+            namespace.scope,
+            namespace.api_module,
+            namespace.controller_module,
+            namespace.scope_bc,
+            namespace.error_bc,
+        )
+    )
+    if profile is None and selectors_present:
+        issues.append("selector 사용 시 --error-profile 필수")
+    if profile is not None and profile not in ERROR_PROFILES:
+        issues.append(f"지원하지 않는 --error-profile: {profile}")
+    if profile == "auto" and selectors_present:
+        issues.append("auto profile에는 scope/source/BC selector를 전달하지 않음")
+
+    explicit = profile in {"dddjango-code-json", "preserve-established"}
+    scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
+    api_module = _one(
+        "--api-module",
+        namespace.api_module,
+        required=explicit,
+        issues=issues,
+    )
+    controller_modules = _unique(
+        "--controller-module", namespace.controller_module, issues
+    )
+    scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
+    error_bcs = _unique("--error-bc", namespace.error_bc, issues)
+    if explicit and not controller_modules:
+        issues.append("필수 인자 누락: --controller-module")
+    if explicit and not scope_bcs:
+        issues.append("필수 인자 누락: --scope-bc")
+    if scope is not None and not scope.strip():
+        issues.append("--scope는 빈 문자열일 수 없음")
+    for option, names in (("--scope-bc", scope_bcs), ("--error-bc", error_bcs)):
+        for name in names:
+            if not BC_NAME_RE.fullmatch(name):
+                issues.append(f"잘못된 BC 이름: {option}={name}")
+    if not set(error_bcs).issubset(scope_bcs):
+        issues.append("--error-bc는 --scope-bc의 부분집합이어야 함")
+
+    resolved_by_role: dict[str, list[Path]] = {"api": [], "controller": []}
+    if api_module is not None:
+        path = _selected_source(root, "--api-module", api_module, issues)
+        if path is not None:
+            resolved_by_role["api"].append(path)
+    for raw in controller_modules:
+        path = _selected_source(root, "--controller-module", raw, issues)
+        if path is not None:
+            resolved_by_role["controller"].append(path)
+    if set(resolved_by_role["api"]) & set(resolved_by_role["controller"]):
+        issues.append("--api-module과 --controller-module 역할 overlap")
+    all_selected = resolved_by_role["api"] + resolved_by_role["controller"]
+    if len(all_selected) != len(set(all_selected)):
+        issues.append("선택 source가 같은 resolved path를 중복 지정함")
+
+    if issues:
+        raise UsageError("; ".join(issues))
+    return Config(
+        root=root,
+        profile=profile,
+        scope=scope,
+        api_module=api_module,
+        controller_modules=controller_modules,
+        scope_bcs=scope_bcs,
+        error_bcs=error_bcs,
+    )
+
+
+def _is_code_production_path(relative_path: Path) -> bool:
+    parts = relative_path.parts
+    return (
+        relative_path.suffix == ".py"
+        and not set(parts) & CODE_SKIP_DIRS
+        and not set(parts) & TEST_DIR_NAMES
+        and not relative_path.name.startswith("test_")
+        and not relative_path.name.endswith("_test.py")
+        and relative_path.name != "test.py"
+        and relative_path.name != "tests.py"
+        and relative_path.name != "conftest.py"
+    )
+
+
+def _filesystem_code_paths(root: Path) -> tuple[Path, ...]:
+    paths: list[Path] = []
+    walk_errors: list[str] = []
+
+    def record_walk_error(exc: OSError) -> None:
+        walk_errors.append(str(exc))
+
+    for directory, names, filenames in os.walk(
+        root,
+        topdown=True,
+        followlinks=False,
+        onerror=record_walk_error,
+    ):
+        directory_path = Path(directory)
+        try:
+            directory_relative = directory_path.relative_to(root)
+        except ValueError as exc:
+            raise UsageError(f"inventory root 탈출: {directory_path}") from exc
+        names[:] = sorted(
+            name
+            for name in names
+            if not set((*directory_relative.parts, name)) & CODE_SKIP_DIRS
+            and name not in TEST_DIR_NAMES
+        )
+        for filename in sorted(filenames):
+            relative_path = directory_relative / filename
+            if _is_code_production_path(relative_path):
+                paths.append(relative_path)
+    if walk_errors:
+        raise UsageError(f"production inventory 탐색 불능: {'; '.join(sorted(walk_errors))}")
+    return tuple(sorted(paths, key=Path.as_posix))
+
+
+def _has_git_marker(root: Path) -> bool:
+    for directory in (root, *root.parents):
+        marker = directory / ".git"
+        try:
+            marker_mode = marker.stat().st_mode
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise UsageError(f"Git marker 접근 불능: {marker} ({exc})") from exc
+        if stat.S_ISDIR(marker_mode) or stat.S_ISREG(marker_mode):
+            return True
+    return False
+
+
+def _code_inventory(root: Path) -> CodeInventory:
+    try:
+        probe = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git worktree 판정 불능: {exc}") from exc
+    if probe.returncode != 0:
+        if _has_git_marker(root):
+            detail = probe.stderr.strip() or probe.stdout.strip()
+            raise UsageError(f"Git worktree 판정 불능: {detail}")
+        return CodeInventory(_filesystem_code_paths(root), None)
+    if probe.stdout.strip() != "true":
+        return CodeInventory(_filesystem_code_paths(root), None)
+
+    try:
+        top_level = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git worktree root 분석 불능: {exc}") from exc
+    if top_level.returncode != 0:
+        detail = top_level.stderr.strip() or top_level.stdout.strip()
+        raise UsageError(f"Git worktree root 분석 불능: {detail}")
+    try:
+        git_root = Path(top_level.stdout.strip()).resolve()
+        target_prefix = root.relative_to(git_root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise UsageError(f"Git worktree root/target 관계 분석 불능: {exc}") from exc
+
+    try:
+        listed = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"Git production inventory 불능: {exc}") from exc
+    if listed.returncode != 0:
+        detail = os.fsdecode(listed.stderr).strip() or os.fsdecode(listed.stdout).strip()
+        raise UsageError(f"Git production inventory 불능: {detail}")
+
+    relative_paths: list[Path] = []
+    for encoded in listed.stdout.split(b"\0"):
+        if not encoded:
+            continue
+        git_relative = Path(os.fsdecode(encoded))
+        if git_relative.is_absolute() or ".." in git_relative.parts:
+            raise UsageError(f"Git inventory 경로 불능: {git_relative}")
+        try:
+            target_relative = git_relative.relative_to(target_prefix)
+        except ValueError:
+            continue
+        if _is_code_production_path(target_relative):
+            relative_paths.append(target_relative)
+    if len(relative_paths) != len(set(relative_paths)):
+        raise UsageError("Git production inventory에 중복 경로가 있음")
+    return CodeInventory(
+        tuple(sorted(relative_paths, key=Path.as_posix)),
+        git_root,
+    )
+
+
+def _git_path_is_touched(git_root: Path, file_path: Path) -> bool:
+    try:
+        git_relative = file_path.relative_to(git_root)
+    except ValueError as exc:
+        raise UsageError(f"touched source가 Git root 밖임: {file_path}") from exc
+    try:
+        tracked = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "ls-files",
+                "--error-unmatch",
+                "--",
+                git_relative.as_posix(),
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"touched source 추적 불능: {git_relative} ({exc})") from exc
+    if tracked.returncode != 0:
+        return True
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(git_root), "rev-parse", "--verify", "HEAD"],
+            capture_output=True,
+            check=False,
+        )
+        if head.returncode != 0:
+            return True
+        changed = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(git_root),
+                "diff",
+                "--quiet",
+                "HEAD",
+                "--",
+                git_relative.as_posix(),
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise UsageError(f"touched source 비교 불능: {git_relative} ({exc})") from exc
+    if changed.returncode not in {0, 1}:
+        detail = os.fsdecode(changed.stderr).strip() or os.fsdecode(changed.stdout).strip()
+        raise UsageError(f"touched source 비교 불능: {git_relative} ({detail})")
+    return changed.returncode == 1
+
+
+def _code_is_touched(
+    git_root: Path | None,
+    lexical_path: Path,
+    resolved_path: Path,
+) -> bool:
+    if git_root is None:
+        return True
+    lexical_touched = _git_path_is_touched(git_root, lexical_path)
+    if lexical_path == resolved_path:
+        return lexical_touched
+    resolved_touched = _git_path_is_touched(git_root, resolved_path)
+    return lexical_touched or resolved_touched
+
+
+def _code_sources(config: Config) -> list[ParsedSource]:
+    inventory = _code_inventory(config.root)
+    inventory_paths = set(inventory.relative_paths)
+    issues: list[str] = []
+
+    selected_paths = [Path(config.api_module or "")]
+    selected_paths.extend(Path(raw) for raw in config.controller_modules)
+    for selected in selected_paths:
+        if selected not in inventory_paths:
+            issues.append(f"선택 source가 production inventory에 없음: {selected}")
+
+    scoped_paths: list[Path] = []
+    for scope_bc in config.scope_bcs:
+        bc_paths = [
+            relative
+            for relative in inventory.relative_paths
+            if len(relative.parts) >= 3
+            and relative.parts[:2] == ("application", scope_bc)
+        ]
+        if not bc_paths:
+            issues.append(f"scope BC production source 없음: application/{scope_bc}/")
+        scoped_paths.extend(bc_paths)
+    if issues:
+        raise UsageError("; ".join(sorted(set(issues))))
+
+    source_paths = sorted(set((*scoped_paths, *selected_paths)), key=Path.as_posix)
+    parsed: list[ParsedSource] = []
+    resolved_paths: dict[Path, Path] = {}
+    for relative_path in source_paths:
+        lexical_path = config.root / relative_path
+        try:
+            file_path = lexical_path.resolve()
+        except (OSError, RuntimeError) as exc:
+            issues.append(f"production source resolve 불능: {relative_path} ({exc})")
+            continue
+        try:
+            file_path.relative_to(config.root)
+        except ValueError:
+            issues.append(f"production source root/symlink 탈출: {relative_path}")
+            continue
+        previous = resolved_paths.get(file_path)
+        if previous is not None:
+            issues.append(f"production source resolved path 중복: {previous}, {relative_path}")
+            continue
+        resolved_paths[file_path] = relative_path
+        try:
+            if not file_path.is_file():
+                issues.append(f"production source 없음: {relative_path}")
+                continue
+            source = file_path.read_text(encoding="utf-8")
+            tree = ast.parse(source, filename=relative_path.as_posix())
+            touched = _code_is_touched(
+                inventory.git_root,
+                lexical_path,
+                file_path,
+            )
+        except (OSError, UnicodeError, SyntaxError) as exc:
+            issues.append(f"production source 분석 불능: {relative_path} ({exc})")
+            continue
+        except UsageError as exc:
+            issues.append(str(exc))
+            continue
+        parsed.append(
+            ParsedSource(
+                relative_path=relative_path,
+                source=source,
+                tree=tree,
+                touched=touched,
+            )
+        )
+    if issues:
+        raise UsageError("; ".join(sorted(set(issues))))
+    return parsed
+
+
+def _legacy_application_layer_files(root: Path) -> list[Path]:
+    """구 checker의 application_layer raw-signal 후보를 순서까지 그대로 수집한다."""
+    out: list[Path] = []
+    for path in root.rglob("*.py"):
+        parts = set(path.parts)
+        if parts & SKIP_DIRS:
+            continue
+        if "application_layer" not in parts:
+            continue
+        if parts & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
+            continue
+        out.append(path)
+    return out
+
+
+def _legacy_is_new_or_modified(root: Path, file_path: Path) -> bool:
+    """구 checker의 touched/untracked/Git-불능 보수 판정을 그대로 보존한다."""
+    if not (root / ".git").exists():
+        return True
+    try:
+        rel = file_path.relative_to(root)
+    except ValueError:
+        return True
+    try:
+        tracked = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)],
+            capture_output=True,
+        )
+        if tracked.returncode != 0:
+            return True
+        changed = subprocess.run(
+            ["git", "-C", str(root), "diff", "--quiet", "HEAD", "--", str(rel)],
+        )
+        return changed.returncode != 0
+    except (OSError, subprocess.SubprocessError):
+        return True
+
+
+def _legacy_http_findings(root: Path) -> list[str]:
+    findings: list[str] = []
+    for app_file in _legacy_application_layer_files(root):
+        try:
+            body = app_file.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        signals = [label for regex, label in LEGACY_SIGNAL_CHECKS if regex.search(body)]
+        if not signals or not _legacy_is_new_or_modified(root, app_file):
+            continue
+        findings.append(f"  - {app_file.relative_to(root)}: {'; '.join(signals)}")
+    return findings
+
+
+def _print_legacy_http(findings: list[str]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — legacy touched application_layer가 "
+        "HTTP 오류 응답을 직접 생성/의존함(presentation 경계 밖):"
+    )
+    for finding in findings:
+        print(finding)
+    print(
+        "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
+        "positional/auto/preserve lane은 구 check-error-centralization의 raw signal과 "
+        "grandfathering을 그대로 보존한다."
+    )
+
+
+def _code_http_findings(
+    sources: list[ParsedSource],
+    suppress_ninja_import_paths: set[Path] | None = None,
+) -> list[str]:
+    suppressed_paths = suppress_ninja_import_paths or set()
+    findings: list[str] = []
+    for parsed in sources:
+        if "application_layer" not in parsed.relative_path.parts or not parsed.touched:
+            continue
+        signals = [
+            label
+            for regex, label in LEGACY_SIGNAL_CHECKS
+            if not (
+                regex is LEGACY_NINJA_IMPORT_RE
+                and parsed.relative_path in suppressed_paths
+            )
+            if regex.search(parsed.source)
+        ]
+        if signals:
+            findings.append(
+                f"  - {parsed.relative_path}: {'; '.join(signals)}"
+            )
+    return findings
+
+
+def _print_code_http(findings: list[str]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — code-profile filtered inventory의 touched "
+        "application_layer가 HTTP 오류 응답을 직접 생성/의존함(presentation 경계 밖):"
+    )
+    for finding in findings:
+        print(finding)
+    print(
+        "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
+        "dddjango-code-json lane은 scope BC의 filtered production inventory 중 touched "
+        "application_layer에 구 raw HTTP signal을 적용한다."
+    )
 
 
 def _has_application_container(root: Path) -> bool:
@@ -147,6 +810,873 @@ def _imported_paths(tree: ast.AST) -> Iterator[tuple[int, str]]:
                         yield node.lineno, f"{node.module}.{alias.name}"
 
 
+def _expression_dotted_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        owner = _expression_dotted_name(node.value)
+        if owner is not None:
+            return f"{owner}.{node.attr}"
+    return None
+
+
+def _local_target_names(target: ast.AST) -> set[str]:
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, ast.Starred):
+        return _local_target_names(target.value)
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return {
+            name
+            for element in target.elts
+            for name in _local_target_names(element)
+        }
+    return set()
+
+
+def _statement_bound_names(node: ast.stmt) -> set[str]:
+    if isinstance(node, ast.Import):
+        return {
+            alias.asname or alias.name.split(".", 1)[0]
+            for alias in node.names
+        }
+    if isinstance(node, ast.ImportFrom):
+        return {
+            alias.asname or alias.name
+            for alias in node.names
+            if alias.name != "*"
+        }
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return {node.name}
+    if isinstance(node, ast.Assign):
+        return {
+            name
+            for target in node.targets
+            for name in _local_target_names(target)
+        }
+    if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+        return _local_target_names(node.target)
+    if isinstance(node, (ast.For, ast.AsyncFor)):
+        return _local_target_names(node.target) | {
+            name
+            for statement in (*node.body, *node.orelse)
+            for name in _statement_bound_names(statement)
+        }
+    if isinstance(node, (ast.With, ast.AsyncWith)):
+        return {
+            name
+            for item in node.items
+            if item.optional_vars is not None
+            for name in _local_target_names(item.optional_vars)
+        } | {
+            name for statement in node.body for name in _statement_bound_names(statement)
+        }
+    if isinstance(node, (ast.If, ast.While)):
+        return {
+            name
+            for statement in (*node.body, *node.orelse)
+            for name in _statement_bound_names(statement)
+        }
+    if isinstance(node, ast.Try):
+        statements = [*node.body, *node.orelse, *node.finalbody]
+        names = {
+            name for statement in statements for name in _statement_bound_names(statement)
+        }
+        for handler in node.handlers:
+            if handler.name:
+                names.add(handler.name)
+            for statement in handler.body:
+                names.update(_statement_bound_names(statement))
+        return names
+    if isinstance(node, ast.Delete):
+        return {
+            name for target in node.targets for name in _local_target_names(target)
+        }
+    return set()
+
+
+def _module_statement_import_bindings(
+    tree: ast.AST,
+) -> dict[int, dict[str, str]]:
+    """Import provenance visible immediately before each module statement."""
+    bindings: dict[str, str] = {}
+    bindings_before: dict[int, dict[str, str]] = {}
+    for node in getattr(tree, "body", []):
+        bindings_before[id(node)] = dict(bindings)
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                local_name = alias.asname or alias.name.split(".", 1)[0]
+                bindings[local_name] = alias.name if alias.asname else local_name
+            continue
+        if isinstance(node, ast.ImportFrom) and not node.level and node.module:
+            for alias in node.names:
+                if alias.name == "*":
+                    continue
+                local_name = alias.asname or alias.name
+                bindings[local_name] = f"{node.module}.{alias.name}"
+            continue
+        for name in _statement_bound_names(node):
+            bindings.pop(name, None)
+    return bindings_before
+
+
+def _resolve_imported_expression(
+    node: ast.AST,
+    bindings: dict[str, str],
+) -> str | None:
+    dotted = _expression_dotted_name(node)
+    if dotted is None:
+        return None
+    first, *rest = dotted.split(".")
+    imported = bindings.get(first)
+    if imported is None:
+        return None
+    return ".".join((imported, *rest))
+
+
+def _import_references(
+    relative_path: Path,
+    tree: ast.AST,
+) -> Iterator[ImportReference]:
+    package_parts = relative_path.parent.parts
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                yield ImportReference(
+                    lineno=node.lineno,
+                    module=alias.name,
+                    imported_name=None,
+                    full_path=alias.name,
+                    absolute=True,
+                )
+            continue
+        if not isinstance(node, ast.ImportFrom) or node.level > 1:
+            continue
+        if node.level == 1:
+            module_parts = (*package_parts, *(node.module or "").split("."))
+            module = ".".join(part for part in module_parts if part)
+        else:
+            module = node.module or ""
+        if not module:
+            continue
+        for alias in node.names:
+            full_path = module if alias.name == "*" else f"{module}.{alias.name}"
+            yield ImportReference(
+                lineno=node.lineno,
+                module=module,
+                imported_name=alias.name,
+                full_path=full_path,
+                absolute=node.level == 0,
+            )
+
+
+def _append_boundary_finding(
+    findings: list[BoundaryFinding],
+    seen: set[tuple[Path, int, str]],
+    *,
+    relative_path: Path,
+    source_lines: list[str],
+    lineno: int,
+    category: str,
+) -> None:
+    key = (relative_path, lineno, category)
+    if key in seen:
+        return
+    seen.add(key)
+    shown = source_lines[lineno - 1].strip() if 0 < lineno <= len(source_lines) else category
+    findings.append(
+        BoundaryFinding(
+            relative_path=relative_path,
+            lineno=lineno,
+            category=category,
+            shown=shown,
+        )
+    )
+
+
+def _assignment_target_names(target: ast.AST) -> list[str | None]:
+    if isinstance(target, (ast.Tuple, ast.List)):
+        return [
+            name
+            for element in target.elts
+            for name in _assignment_target_names(element)
+        ]
+    return [_expression_dotted_name(target)]
+
+
+def _required_root_api_object(
+    tree: ast.AST,
+    bindings_before: dict[int, dict[str, str]],
+) -> str:
+    assigned_objects: set[str] = set()
+    constructor_events = 0
+    for node in getattr(tree, "body", []):
+        value: ast.AST | None = None
+        targets: list[ast.AST] = []
+        if isinstance(node, ast.Assign):
+            value = node.value
+            targets = node.targets
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            value = node.value
+            targets = [node.target]
+        target_names = [
+            name
+            for target in targets
+            for name in _assignment_target_names(target)
+            if name is not None
+        ]
+        assigned_objects.difference_update(_statement_bound_names(node))
+        assigned_objects.difference_update(target_names)
+        if not isinstance(value, ast.Call):
+            continue
+        constructor = _resolve_imported_expression(
+            value.func,
+            bindings_before.get(id(node), {}),
+        )
+        if constructor not in ROOT_API_CONSTRUCTORS:
+            continue
+        constructor_events += 1
+        assigned_objects.update(target_names)
+    if constructor_events != 1 or len(assigned_objects) != 1:
+        raise UsageError(
+            "selected root API의 proven Ninja API constructor event와 최종 object "
+            "binding이 각각 정확히 하나여야 함: "
+            f"event {constructor_events}개, binding {len(assigned_objects)}개"
+        )
+    return next(iter(assigned_objects))
+
+
+def _assignment_names_and_value(
+    node: ast.AST,
+) -> tuple[list[str], ast.AST | None]:
+    if isinstance(node, ast.Assign):
+        names = [
+            name
+            for target in node.targets
+            for name in _assignment_target_names(target)
+            if name is not None
+        ]
+        return names, node.value
+    if isinstance(node, ast.AnnAssign):
+        return [
+            name
+            for name in _assignment_target_names(node.target)
+            if name is not None
+        ], node.value
+    return [], None
+
+
+def _identifier_words(name: str) -> set[str]:
+    identifier = name.rsplit(".", 1)[-1]
+    separated = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", identifier)
+    return {
+        word.lower()
+        for word in re.split(r"[^A-Za-z0-9]+", separated)
+        if word
+    }
+
+
+def _is_error_status_value(node: ast.AST) -> bool:
+    if (
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, int)
+        and not isinstance(node.value, bool)
+    ):
+        return 400 <= node.value < 600
+    dotted = _expression_dotted_name(node)
+    return dotted is not None and bool(ERROR_STATUS_NAME_RE.search(dotted.upper()))
+
+
+def _is_error_code_field(name: str, approved_identifiers: set[str]) -> bool:
+    if name in approved_identifiers:
+        return True
+    if name.lower() == "code":
+        return True
+    words = _identifier_words(name)
+    qualifiers = ERROR_CATALOG_SUBJECT_WORDS | ERROR_CATALOG_PLURAL_WORDS
+    return "code" in words and bool(words & qualifiers)
+
+
+def _expression_nodes_without_nested_lambda(node: ast.AST) -> Iterator[ast.AST]:
+    pending = [node]
+    while pending:
+        current = pending.pop()
+        yield current
+        if isinstance(current, ast.Lambda):
+            continue
+        pending.extend(reversed(list(ast.iter_child_nodes(current))))
+
+
+def _expression_has_error_code_field(
+    node: ast.AST,
+    approved_identifiers: set[str],
+) -> bool:
+    for child in _expression_nodes_without_nested_lambda(node):
+        if isinstance(child, ast.Dict):
+            if any(
+                isinstance(key, ast.Constant)
+                and isinstance(key.value, str)
+                and _is_error_code_field(key.value, approved_identifiers)
+                for key in child.keys
+            ):
+                return True
+        elif isinstance(child, ast.Call):
+            if any(
+                keyword.arg is not None
+                and _is_error_code_field(keyword.arg, approved_identifiers)
+                for keyword in child.keywords
+            ):
+                return True
+    return False
+
+
+def _return_is_error_shaped(
+    node: ast.AST,
+    approved_identifiers: set[str],
+) -> bool:
+    if _expression_has_error_code_field(node, approved_identifiers):
+        return True
+    if (
+        isinstance(node, ast.Tuple)
+        and node.elts
+        and _is_error_status_value(node.elts[0])
+    ):
+        return True
+    for child in _expression_nodes_without_nested_lambda(node):
+        if isinstance(child, ast.Dict):
+            for key, value in zip(child.keys, child.values):
+                if (
+                    isinstance(key, ast.Constant)
+                    and isinstance(key.value, str)
+                    and key.value.lower() in {"status", "status_code"}
+                    and _is_error_status_value(value)
+                ):
+                    return True
+            continue
+        if not isinstance(child, ast.Call):
+            continue
+        function_name = _expression_dotted_name(child.func)
+        if (
+            function_name is not None
+            and function_name.rsplit(".", 1)[-1] == "Status"
+            and child.args
+            and _is_error_status_value(child.args[0])
+        ):
+            return True
+        if any(
+            keyword.arg in {"status", "status_code"}
+            and _is_error_status_value(keyword.value)
+            for keyword in child.keywords
+        ):
+            return True
+    return False
+
+
+def _is_error_catalog_name(name: str) -> bool:
+    words = _identifier_words(name)
+    return bool(words & ERROR_CATALOG_PLURAL_WORDS) or (
+        bool(words & ERROR_CATALOG_SUBJECT_WORDS)
+        and bool(words & ERROR_CATALOG_ROLE_WORDS)
+    )
+
+
+def _is_direct_mapping_expression(node: ast.AST | None) -> bool:
+    return isinstance(node, (ast.Dict, ast.DictComp)) or (
+        isinstance(node, ast.Call)
+        and _expression_dotted_name(node.func) == "dict"
+    )
+
+
+def _is_exception_type_expression(node: ast.AST) -> bool:
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return any(_is_exception_type_expression(element) for element in node.elts)
+    dotted = _expression_dotted_name(node)
+    if dotted is None:
+        return False
+    name = dotted.rsplit(".", 1)[-1]
+    return name.endswith(("Error", "Exception")) or name == "BaseException"
+
+
+def _is_exception_isinstance_call(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and len(node.args) >= 2
+        and _expression_dotted_name(node.func) == "isinstance"
+        and _is_exception_type_expression(node.args[1])
+    )
+
+
+def _scope_nodes(statements: list[ast.stmt]) -> Iterator[ast.AST]:
+    pending: list[ast.AST] = list(reversed(statements))
+    while pending:
+        current = pending.pop()
+        yield current
+        if isinstance(
+            current,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
+        ):
+            continue
+        pending.extend(reversed(list(ast.iter_child_nodes(current))))
+
+
+def _function_is_exception_mapping(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    approved_identifiers: set[str],
+) -> bool:
+    arguments = (
+        *getattr(node.args, "posonlyargs", []),
+        *node.args.args,
+        *node.args.kwonlyargs,
+    )
+    has_exception_context = any(
+        EXCEPTION_ARGUMENT_RE.search(argument.arg) for argument in arguments
+    )
+    body_nodes = tuple(_scope_nodes(node.body))
+    has_exception_flow = any(
+        isinstance(child, ast.ExceptHandler)
+        or _is_exception_isinstance_call(child)
+        for child in body_nodes
+    )
+    has_error_return = any(
+        isinstance(child, ast.Return)
+        and child.value is not None
+        and _return_is_error_shaped(child.value, approved_identifiers)
+        for child in body_nodes
+    )
+    return (has_exception_context or has_exception_flow) and has_error_return
+
+
+def _is_request_path_test(node: ast.AST) -> bool:
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Attribute) or child.attr != "path":
+            continue
+        owner = _expression_dotted_name(child.value)
+        if owner is None:
+            continue
+        root_name = owner.split(".", 1)[0].lower()
+        if root_name == "req" or root_name == "request" or root_name.endswith("_request"):
+            return True
+    return False
+
+
+def _body_has_error_return(
+    statements: list[ast.stmt],
+    approved_identifiers: set[str],
+) -> bool:
+    return any(
+        isinstance(child, ast.Return)
+        and child.value is not None
+        and _return_is_error_shaped(child.value, approved_identifiers)
+        for child in _scope_nodes(statements)
+    )
+
+
+def _approved_error_identifier_names(
+    sources: list[ParsedSource],
+    error_bcs: tuple[str, ...],
+) -> set[str]:
+    by_path = {source.relative_path: source for source in sources}
+    identifiers: set[str] = set()
+    for bc in error_bcs:
+        path = Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+        parsed = by_path.get(path)
+        if parsed is None:
+            raise UsageError(f"canonical BC ErrorOut source 없음: {path}")
+        prefix = "".join(part.capitalize() for part in bc.split("_"))
+        base_name = f"{prefix}ErrorOut"
+        enum_name = f"{prefix}ErrorCode"
+        bases = [
+            node
+            for node in parsed.tree.body
+            if isinstance(node, ast.ClassDef) and node.name == base_name
+        ]
+        if len(bases) != 1:
+            raise UsageError(f"canonical BC ErrorOut provenance 분석 불능: {path}")
+        candidates: list[ast.AnnAssign] = []
+        for statement in bases[0].body:
+            if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
+                continue
+            annotation_names = {
+                (name := _expression_dotted_name(candidate)).rsplit(".", 1)[-1]
+                for candidate in ast.walk(statement.annotation)
+                if isinstance(candidate, (ast.Name, ast.Attribute))
+                and (name := _expression_dotted_name(candidate)) is not None
+            }
+            if enum_name in annotation_names:
+                candidates.append(statement)
+        if len(candidates) != 1:
+            raise UsageError(f"canonical BC discriminator provenance 분석 불능: {path}")
+        field = candidates[0]
+        identifiers.add(field.target.id)
+        roots = [field.annotation]
+        if field.value is not None:
+            roots.append(field.value)
+        for root in roots:
+            for call in (candidate for candidate in ast.walk(root) if isinstance(candidate, ast.Call)):
+                for keyword in call.keywords:
+                    if (
+                        keyword.arg in {"alias", "validation_alias", "serialization_alias"}
+                        and isinstance(keyword.value, ast.Constant)
+                        and isinstance(keyword.value.value, str)
+                    ):
+                        identifiers.add(keyword.value.value)
+    return identifiers
+
+
+def _root_api_findings(
+    parsed: ParsedSource,
+    approved_identifiers: set[str],
+) -> list[BoundaryFinding]:
+    bindings_before = _module_statement_import_bindings(parsed.tree)
+    api_object = _required_root_api_object(parsed.tree, bindings_before)
+    findings: list[BoundaryFinding] = []
+    seen: set[tuple[Path, int, str]] = set()
+    source_lines = parsed.source.splitlines()
+
+    for reference in _import_references(parsed.relative_path, parsed.tree):
+        if reference.absolute and ROOT_API_IMPORT_RE.match(reference.full_path):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=reference.lineno,
+                category="root-api-application-import",
+            )
+
+    for node in getattr(parsed.tree, "body", []):
+        if isinstance(node, ast.ClassDef):
+            statement_bindings = bindings_before.get(id(node), {})
+            resolved_bases = {
+                resolved
+                for base in node.bases
+                if (
+                    resolved := _resolve_imported_expression(
+                        base,
+                        statement_bindings,
+                    )
+                )
+                is not None
+            }
+            if node.name.endswith("ErrorCode") and "enum.StrEnum" in resolved_bases:
+                _append_boundary_finding(
+                    findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=node.lineno,
+                    category="root-api-error-code",
+                )
+            is_common_error_out = COMMON_ERROR_OUT_BASE in resolved_bases
+            is_ninja_error_schema = NINJA_SCHEMA_BASE in resolved_bases and (
+                node.name.endswith("ErrorOut")
+            )
+            if is_common_error_out or is_ninja_error_schema:
+                _append_boundary_finding(
+                    findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=node.lineno,
+                    category="root-api-error-out",
+                )
+        names, value = _assignment_names_and_value(node)
+        if (
+            _is_direct_mapping_expression(value)
+            and any(_is_error_catalog_name(name) for name in names)
+        ):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=node.lineno,
+                category="root-api-error-catalog",
+            )
+        if (
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and _function_is_exception_mapping(node, approved_identifiers)
+        ):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=node.lineno,
+                category="root-api-exception-mapping",
+            )
+
+    for node in ast.walk(parsed.tree):
+        if (
+            isinstance(node, ast.If)
+            and _is_request_path_test(node.test)
+            and (
+                _body_has_error_return(node.body, approved_identifiers)
+                or _body_has_error_return(node.orelse, approved_identifiers)
+            )
+        ):
+            _append_boundary_finding(
+                findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=node.lineno,
+                category="root-api-path-error-branch",
+            )
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        if node.func.attr not in {"exception_handler", "add_exception_handler"}:
+            continue
+        if _expression_dotted_name(node.func.value) != api_object:
+            continue
+        _append_boundary_finding(
+            findings,
+            seen,
+            relative_path=parsed.relative_path,
+            source_lines=source_lines,
+            lineno=node.lineno,
+            category="root-api-exception-handler",
+        )
+    return sorted(
+        findings,
+        key=lambda finding: (
+            finding.relative_path.as_posix(),
+            finding.lineno,
+            finding.category,
+        ),
+    )
+
+
+def _selected_parsed_source(
+    sources: list[ParsedSource],
+    relative_path: str | None,
+) -> ParsedSource:
+    selected = Path(relative_path or "")
+    for parsed in sources:
+        if parsed.relative_path == selected:
+            return parsed
+    raise UsageError(f"선택 root API source 분석 결과 없음: {selected}")
+
+
+def _print_root_api_findings(findings: list[BoundaryFinding]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — selected root API가 BC 내부 또는 "
+        "오류 언어/매핑을 직접 소유함(root API 경계 위반):"
+    )
+    for finding in findings:
+        print(finding.render())
+    print(
+        "  근거: root API는 Ninja API 인스턴스와 API 자체 설정만 소유한다. "
+        "registrar 조립은 selected URLconf가 소유한다. BC 내부 import, 오류 "
+        "schema/code/catalog/mapping, path별 오류 분기, 전역 exception handler는 "
+        "각 BC presentation 경계로 내린다."
+    )
+
+
+def _reference_matches_module(reference: ImportReference, module: str) -> bool:
+    return (
+        reference.module == module
+        or reference.module.startswith(f"{module}.")
+        or reference.full_path == module
+        or reference.full_path.startswith(f"{module}.")
+    )
+
+
+def _reference_is_ninja_framework(reference: ImportReference) -> bool:
+    root = reference.full_path.split(".", 1)[0]
+    return root in {"ninja", "ninja_extra"}
+
+
+def _reference_is_django_http(reference: ImportReference) -> bool:
+    if not reference.full_path.startswith("django."):
+        return False
+    if reference.full_path == "django.http" or reference.full_path.startswith("django.http."):
+        return True
+    candidate = reference.imported_name or reference.full_path.rsplit(".", 1)[-1]
+    return bool(HTTP_FACILITY_NAME_RE.search(candidate))
+
+
+def _canonical_bc_error_module(bc: str) -> str:
+    return f"application.{bc}.presentation_layer.schema.error_out"
+
+
+def _reference_bc(reference: ImportReference) -> str | None:
+    parts = reference.full_path.split(".")
+    if len(parts) >= 2 and parts[0] == "application":
+        return parts[1]
+    return None
+
+
+def _reference_is_foreign_error_language(
+    reference: ImportReference,
+    foreign_bc: str,
+) -> bool:
+    if _reference_matches_module(reference, _canonical_bc_error_module(foreign_bc)):
+        return True
+    symbol = reference.imported_name
+    if symbol in {None, "*"}:
+        symbol = reference.full_path.rsplit(".", 1)[-1]
+    return symbol.endswith(("ErrorCode", "ErrorOut"))
+
+
+def _source_error_boundary_findings(
+    parsed: ParsedSource,
+    selected_bcs: tuple[str, ...],
+) -> tuple[list[BoundaryFinding], list[BoundaryFinding], bool]:
+    parts = parsed.relative_path.parts
+    if (
+        len(parts) < 3
+        or parts[0] != "application"
+        or parts[1] not in selected_bcs
+    ):
+        return [], [], False
+    own_bc = parts[1]
+    in_inner_layer = parts[2] in LAYER_DIR_NAMES
+    in_application_layer = parts[2] == "application_layer"
+    source_lines = parsed.source.splitlines()
+    layer_findings: list[BoundaryFinding] = []
+    cross_bc_findings: list[BoundaryFinding] = []
+    seen: set[tuple[Path, int, str]] = set()
+    suppress_raw_ninja_import = False
+
+    for reference in _import_references(parsed.relative_path, parsed.tree):
+        if in_inner_layer:
+            is_ninja_framework = _reference_is_ninja_framework(reference)
+            if is_ninja_framework or _reference_is_django_http(reference):
+                _append_boundary_finding(
+                    layer_findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=reference.lineno,
+                    category="layer-http-facility",
+                )
+                if is_ninja_framework and in_application_layer:
+                    suppress_raw_ninja_import = True
+            if _reference_matches_module(reference, COMMON_ERROR_MODULE):
+                _append_boundary_finding(
+                    layer_findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=reference.lineno,
+                    category="layer-common-error-language",
+                )
+            if _reference_matches_module(
+                reference,
+                _canonical_bc_error_module(own_bc),
+            ):
+                _append_boundary_finding(
+                    layer_findings,
+                    seen,
+                    relative_path=parsed.relative_path,
+                    source_lines=source_lines,
+                    lineno=reference.lineno,
+                    category="layer-own-error-language",
+                )
+
+        foreign_bc = _reference_bc(reference)
+        if (
+            foreign_bc is not None
+            and foreign_bc != own_bc
+            and foreign_bc in selected_bcs
+            and _reference_is_foreign_error_language(reference, foreign_bc)
+        ):
+            _append_boundary_finding(
+                cross_bc_findings,
+                seen,
+                relative_path=parsed.relative_path,
+                source_lines=source_lines,
+                lineno=reference.lineno,
+                category="cross-bc-error-language",
+            )
+
+    sort_key = lambda finding: (
+        finding.relative_path.as_posix(),
+        finding.lineno,
+        finding.category,
+    )
+    return (
+        sorted(layer_findings, key=sort_key),
+        sorted(cross_bc_findings, key=sort_key),
+        suppress_raw_ninja_import,
+    )
+
+
+def _print_layer_purity_findings(findings: list[BoundaryFinding]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — inner layer(domain/application/infra)가 "
+        "Ninja framework, Django HTTP facility 또는 canonical ErrorOut/ErrorCode 언어를 "
+        "import 함(layer purity 위반):"
+    )
+    for finding in findings:
+        print(finding.render())
+    print(
+        "  근거: HTTP status/response와 error response schema/code는 presentation 경계가 "
+        "소유한다. inner layer는 도메인 값·예외·DTO만 사용한다."
+    )
+
+
+def _print_cross_bc_error_findings(findings: list[BoundaryFinding]) -> None:
+    print(
+        "[check-context-isolation] BLOCKER — selected BC source가 다른 selected BC의 "
+        "ErrorCode/ErrorOut 언어를 직접 import 함(cross-BC error language 누수):"
+    )
+    for finding in findings:
+        print(finding.render())
+    print(
+        "  근거: 각 BC의 error code/schema는 해당 BC presentation 경계의 언어다. "
+        "컨텍스트 간에는 OHS/ACL 계약으로 번역하고 foreign ErrorCode/ErrorOut을 공유하지 않는다."
+    )
+
+
+def _source_s1_s3_findings(
+    relative_path: Path,
+    source: str,
+    tree: ast.AST,
+) -> tuple[list[str], list[str], list[str]]:
+    rel_parts = relative_path.parts
+    own = _own_bc(rel_parts)
+    src_lines = source.splitlines()
+    is_contract = _is_contract_file(rel_parts)
+    is_acl = _is_acl_file(rel_parts)
+    in_layer = bool(set(rel_parts) & LAYER_DIR_NAMES)
+    s1_findings: list[str] = []
+    s2_findings: list[str] = []
+    s3_findings: list[str] = []
+    seen: set[tuple[int, str]] = set()
+    for lineno, dotted in _imported_paths(tree):
+        shown = (
+            src_lines[lineno - 1].strip()
+            if 0 < lineno <= len(src_lines)
+            else dotted
+        )
+        if is_contract:
+            if LAYER_ANY_RE.match(dotted) and (lineno, "s2") not in seen:
+                seen.add((lineno, "s2"))
+                s2_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+            continue
+        cross_bc = CROSS_BC_RE.match(dotted)
+        if (
+            cross_bc
+            and cross_bc.group(1) != own
+            and not is_acl
+            and (lineno, "s1") not in seen
+        ):
+            seen.add((lineno, "s1"))
+            s1_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+        published = PUBLISHED_RE.match(dotted)
+        if (
+            published
+            and published.group(1) == own
+            and in_layer
+            and (lineno, "s3") not in seen
+        ):
+            seen.add((lineno, "s3"))
+            s3_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+    return s1_findings, s2_findings, s3_findings
+
+
 def _is_new_or_modified(root: Path, file_path: Path) -> bool:
     """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과)."""
     if not (root / ".git").exists():
@@ -172,51 +1702,116 @@ def _is_new_or_modified(root: Path, file_path: Path) -> bool:
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
-    if not root.is_dir():
-        print(f"[check-context-isolation] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+    try:
+        config = _parse_config(argv[1:])
+    except UsageError as exc:
+        print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
         return 1
-    if not _has_application_container(root):
-        return 0  # 표준 레이아웃(`application/`) 미적용 → 해당 없음.
+    except SystemExit as exc:  # argparse --help
+        return int(exc.code)
 
+    root = config.root
+    legacy_http_findings: list[str] = []
+    code_http_findings: list[str] = []
+    root_api_findings: list[BoundaryFinding] = []
+    layer_purity_findings: list[BoundaryFinding] = []
+    cross_bc_error_findings: list[BoundaryFinding] = []
     s1_findings: list[str] = []  # cross-BC 내부 결합
     s2_findings: list[str] = []  # contract 무의존 위반
     s3_findings: list[str] = []  # published 계약 관통
-    for f, rel_parts in _prod_py_files(root):
-        if not _is_new_or_modified(root, f):
-            continue
-        own = _own_bc(rel_parts)
-        try:
-            source = f.read_text(encoding="utf-8", errors="replace")
-            tree = ast.parse(source)
-        except (OSError, SyntaxError):
-            continue  # 파싱 불가 → fail-open(스킵) — green 전제라 실코드는 파싱된다.
-        src_lines = source.splitlines()
-        is_contract = _is_contract_file(rel_parts)
-        is_acl = _is_acl_file(rel_parts)
-        in_layer = bool(set(rel_parts) & LAYER_DIR_NAMES)
-        rel = f.relative_to(root)
-        seen: set[tuple[int, str]] = set()  # (lineno, slice) — 한 import 문 1발화
-        for lineno, dotted in _imported_paths(tree):
-            shown = src_lines[lineno - 1].strip() if 0 < lineno <= len(src_lines) else dotted
-            if is_contract:
-                # S2 — contract 는 어느 계층도 import 하지 않는다(자기 BC 포함).
-                if LAYER_ANY_RE.match(dotted) and (lineno, "s2") not in seen:
-                    seen.add((lineno, "s2"))
-                    s2_findings.append(f"  - {rel}:{lineno}  {shown}")
-                continue  # contract 파일은 S2 전담(중복 계상 방지).
-            m = CROSS_BC_RE.match(dotted)
-            if m and m.group(1) != own and not is_acl and (lineno, "s1") not in seen:
-                seen.add((lineno, "s1"))  # S1 — 타 BC 내부 계층(ACL 면제)
-                s1_findings.append(f"  - {rel}:{lineno}  {shown}")
-            p = PUBLISHED_RE.match(dotted)
-            if p and p.group(1) == own and in_layer and (lineno, "s3") not in seen:
-                seen.add((lineno, "s3"))  # S3 — 자기 published 역-import(관통)
-                s3_findings.append(f"  - {rel}:{lineno}  {shown}")
 
-    if not (s1_findings or s2_findings or s3_findings):
+    if config.profile == "dddjango-code-json":
+        try:
+            code_sources = _code_sources(config)
+        except UsageError as exc:
+            print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+        try:
+            approved_identifiers = _approved_error_identifier_names(
+                code_sources,
+                config.error_bcs,
+            )
+            root_api_findings = _root_api_findings(
+                _selected_parsed_source(code_sources, config.api_module),
+                approved_identifiers,
+            )
+        except UsageError as exc:
+            print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+        suppress_ninja_import_paths: set[Path] = set()
+        for parsed in code_sources:
+            found_layer, found_cross_bc, suppress_raw_ninja = (
+                _source_error_boundary_findings(parsed, config.scope_bcs)
+            )
+            layer_purity_findings.extend(found_layer)
+            cross_bc_error_findings.extend(found_cross_bc)
+            if suppress_raw_ninja:
+                suppress_ninja_import_paths.add(parsed.relative_path)
+            relative_parts = parsed.relative_path.parts
+            if not (
+                len(relative_parts) >= 3
+                and relative_parts[0] == "application"
+                and relative_parts[1] in config.scope_bcs
+            ):
+                continue
+            found_s1, found_s2, found_s3 = _source_s1_s3_findings(
+                parsed.relative_path,
+                parsed.source,
+                parsed.tree,
+            )
+            s1_findings.extend(found_s1)
+            s2_findings.extend(found_s2)
+            s3_findings.extend(found_s3)
+        code_http_findings = _code_http_findings(
+            code_sources,
+            suppress_ninja_import_paths,
+        )
+    else:
+        legacy_http_findings = _legacy_http_findings(root)
+        if not _has_application_container(root):
+            if legacy_http_findings:
+                _print_legacy_http(legacy_http_findings)
+                return 2
+            return 0
+        for file_path, _ in _prod_py_files(root):
+            if not _is_new_or_modified(root, file_path):
+                continue
+            try:
+                source = file_path.read_text(encoding="utf-8", errors="replace")
+                tree = ast.parse(source)
+            except (OSError, SyntaxError):
+                continue
+            found_s1, found_s2, found_s3 = _source_s1_s3_findings(
+                file_path.relative_to(root),
+                source,
+                tree,
+            )
+            s1_findings.extend(found_s1)
+            s2_findings.extend(found_s2)
+            s3_findings.extend(found_s3)
+
+    if not (
+        legacy_http_findings
+        or code_http_findings
+        or root_api_findings
+        or layer_purity_findings
+        or cross_bc_error_findings
+        or s1_findings
+        or s2_findings
+        or s3_findings
+    ):
         return 0
 
+    if legacy_http_findings:
+        _print_legacy_http(legacy_http_findings)
+    if root_api_findings:
+        _print_root_api_findings(root_api_findings)
+    if layer_purity_findings:
+        _print_layer_purity_findings(layer_purity_findings)
+    if cross_bc_error_findings:
+        _print_cross_bc_error_findings(cross_bc_error_findings)
+    if code_http_findings:
+        _print_code_http(code_http_findings)
     if s1_findings:
         print(
             "[check-context-isolation] BLOCKER — ACL 밖(도메인/응용/presentation)에서 타 BC 의 "

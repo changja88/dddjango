@@ -8,12 +8,17 @@
 을 무조건 반환)만 차단한다. disk I/O·`no such table`·`database is malformed` 같은 영구
 장애를 retryable 로 오분류해 클라이언트·재시도 루프가 영원히 못 고치는 장애를 두드리게 한다.
 
+이 판정은 G1에서 이미 승인된 `preserve-established` brownfield handler를 보존할 때 그 handler가
+인프라 오류 전체를 retryable로 넓히지 않게 지키는 방어선이다. `dddjango-code-json`에서는 custom
+handler/recognizer 자체가 controller 직접 오류 경계 계약에 독립적으로 위배되므로, 이 checker가
+발화하지 않아도 새 handler/recognizer를 만들 근거가 되지 않는다.
+
 헬퍼 무조건-True 위장(`if self._retryable(exc): ...` 이나 헬퍼가 항상 True)·register-only
 +무어노테이션 핸들러는 **일부러 잡지 않는다**(저-recall) — 그건 ② design-architect 생산자
 예방(명세에 "transient 변종만 retryable")과 ③ discipline-reviewer 의미 체크(transient
 과잉매핑 렌즈)가 담당한다. 거짓 양성을 내면 정당한 분기 핸들러(sqlstate 로 가르는 형태)·
-도메인 503(StockContention 등)·IntegrityError 500·대안 B(create_response)를 막으므로,
-**핸들러 타입 + 분기 부재 + retryable 반환의 AND** 로만 차단한다.
+도메인 503(StockContention 등)·IntegrityError 500·이미 승인된 preserve handler의 정당한
+분기를 막으므로, **핸들러 타입 + 분기 부재 + retryable 반환의 AND** 로만 차단한다.
 
 AND 조건(전부 참이어야 blocker):
   1) 함수가 transient 인프라 예외 핸들러 — `@*.exception_handler(OperationalError|
@@ -166,11 +171,12 @@ def main(argv: list[str]) -> int:
         for f in findings:
             print(f)
         print(
-            "  근거: implementation-django-ninja §6.2. `OperationalError`/`DatabaseError` "
-            "핸들러는 락·deadlock·serialization 같은 재시도성 시그니처만 503/409 로 올리고 "
-            "disk I/O·malformed 등 영구장애는 500 으로 가른다(`if not _is_retryable_db_error"
-            "(exc): return _server_error(...)`). 분기 없는 통째 503/409 는 영구장애를 "
-            "retryable 로 오분류한다. 설계로 반송하라."
+            "  근거: 이 predicate는 G1에서 이미 승인된 `preserve-established` handler가 "
+            "OperationalError/DatabaseError 전체를 retryable로 넓히지 않게 지킨다. 보존된 handler는 "
+            "락·deadlock·serialization 같은 재시도성 시그니처와 disk I/O·malformed 같은 영구장애를 "
+            "구별해야 한다. `dddjango-code-json`에서는 custom handler/recognizer 자체가 controller 직접 "
+            "오류 경계 계약에 독립적으로 위배되며, 이 checker의 발화 여부는 새 handler/recognizer "
+            "생성을 허가하지 않는다. 설계로 반송하라."
         )
         return 2
 

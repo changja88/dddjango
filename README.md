@@ -113,7 +113,7 @@ dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketpl
 - **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
 - **G2 · 구현** — 구현 코드 + 테스트 통과 결과 + 감수 리포트 + **19종 결정적 백스톱** 통과를 승인한다.
 
-> G2 직전에는 **19종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 선언/중앙화 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
+> G2 직전에는 **19종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 Schema·controller 직접 반환·OpenAPI 선언 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
 
 ### 테스트는 현행 계약만 본다
 
@@ -146,11 +146,13 @@ acceptance-tester가 먼저 **실패하는** 인수 테스트를 쓴다(예: "�
 ```
 your_project/
 ├── common/
-│   └── ninja/response/error_out.py       # contract scope의 공통 ErrorOut
+│   └── ninja/
+│       └── response/
+│           ├── __init__.py                 # 빈 package marker
+│           └── error_out.py                # contract scope의 공통 ErrorOut 하나
 └── application/                # 모든 feature 앱의 컨테이너 (루트 평면 금지)
     └── orders/
         ├── composition_root.py             # DI 배선 — build_place_order_command() 매요청 팩토리
-        ├── orders_api_router.py            # HTTP 진입점 등록
         ├── domain_layer/                   # 순수 비즈니스 규칙 (프레임워크 무관)
         │   └── order/                       # 애그리거트(개념) 1차
         │       ├── order.py                 # 애그리거트 루트 — class Order
@@ -170,8 +172,11 @@ your_project/
         │   ├── repository/django_order_repository.py  # DjangoOrderRepository (구현)
         │   └── acl/product_stock_adapter.py           # 다른 BC를 번역해 소비
         ├── presentation_layer/             # 바깥 계약 (종류 1차: api/ · schema/)
-        │   ├── api/order_controller.py       # django-ninja 컨트롤러 (얇은 어댑터)
-        │   └── schema/                       # schema_in·schema_out; 실제 확장만 <problem>_error_out
+        │   ├── registrar.py                  # register_orders_api(api); 자기 controller만 등록
+        │   ├── api/order_controller.py       # 구체 예외를 catch하고 ErrorOut을 직접 반환
+        │   └── schema/
+        │       ├── __init__.py
+        │       └── error_out.py              # OrderErrorCode·OrderErrorOut·prepared concrete
         └── test/                           # 의미군 분리
             └── unit/  integration/  e2e/
 ```
@@ -180,15 +185,58 @@ your_project/
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
 
-Django Ninja 오류 응답은 같은 API/namespace/version/core profile 안에서 BC마다 `ErrorOut`을
-다시 만들지 않는다. 신규 단일-scope 표준 표면은 첫 BC부터
-`common/ninja/response/error_out.py`를 canonical contract로 사용한다. 독립 public/internal·version·
-core profile scope를 둘 이상 새로 도입하면 namespace/version/profile 하위 경로로 분리하고,
-기존 공용 HTTP/version 경로가 있으면 그 경로를 우선한다.
-BC 로컬 Schema는 `InventoryConflictErrorOut`처럼 실제 problem extension이 있을 때만 공통
-base를 상속해 두며, controller의 `response=`도 그 concrete Schema를 가리킨다. generic
-handler/helper는 실제 공유 시에만 common으로 승격하고, exception mapping은 계속 BC
-presentation이 소유한다.
+Django Ninja의 신규 `dddjango-code-json` 오류 계약은 contract scope당 공통 `ErrorOut` 하나를
+두지만 **그 property 목록은 플러그인이 정하지 않는다**. 기존 프로젝트의 exact shape를
+보존하거나, 신규 shape의 field/type/required/default/nullable/Field metadata/model config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 결과를
+별도로 보여 주고 명시 승인받는다. 이후 shape 변경도 일반 기능 승인과 분리해 다시 승인받는다.
+각 BC의 단일 `presentation_layer/schema/error_out.py`는 `<Bc>ErrorCode` StrEnum 하나,
+slot 6이 지정한 식별자 field 하나를 그 Enum으로 좁힌 `<Bc>ErrorOut` 하나, 인자 없이 생성할
+수 있는 prepared concrete ErrorOut을 필요한 만큼 소유한다. BC base는 식별자 타입만
+`str`에서 자기 Enum으로 바꾸고 공통 annotation의 nullable 구조·required/default·`Field(...)`
+metadata를 보존한다. concrete는 새 필드·validator·`model_config`를 추가하지 않고, 필드를
+재선언할 때 annotation/nullability와 `Field(...)` metadata를 그대로 반복한 채 승인된 공통
+필드의 사건별 기본값만 고정한다.
+
+```python
+class OrderErrorCode(StrEnum):
+    OUT_OF_STOCK = "order_out_of_stock"
+
+
+class OrderErrorOut(ErrorOut):
+    error_type: OrderErrorCode
+
+
+class OutOfStockErrorOut(OrderErrorOut):
+    error_type: OrderErrorCode = OrderErrorCode.OUT_OF_STOCK
+    msg: str = "The requested quantity is not available."
+    is_show: bool = True
+```
+
+위 `error_type/msg/is_show`도 한 프로젝트가 승인할 수 있는 shape 예시일 뿐 dddjango의
+기본값이 아니다. body에 HTTP `status` property가 없어도 controller가 HTTP status를 직접
+선택하므로 문제없다.
+`ErrorOut`의 exact property/type/required/default/nullable/Field metadata/config/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 의미는 기존 계약을 보존하거나
+신규 G1에서 별도로 명시 승인받는다. controller는 application 호출 한 문장만 좁은 `try`에
+두고 알려진 구체 예외만 catch한다. 준비된 ErrorOut을 인자 없이 직접 생성해
+`Status(<승인된 HTTP status 표현>, error)`로 반환하며,
+`response={409: OrderErrorOut}`처럼 BC base를 OpenAPI에 선언한다. 고정값을 채우는 factory,
+ErrorOut을 HTTP 응답으로 직렬화하는 helper, BC/custom exception handler, broad catch는 만들지
+않는다.
+
+```python
+try:
+    order = command.execute(request_dto)
+except OutOfStockException:
+    error = OutOfStockErrorOut()
+    return Status(status.HTTP_409_CONFLICT, error)
+```
+
+인증·인가·요청 validation·route 404·throttle·일반 `HttpError`·미식별 500은 BC
+ErrorOut으로 바꾸지 않고 Django Ninja/Django 기본 처리를 그대로 쓴다. project `api.py`는
+API 인스턴스와 API 자체 설정만, BC `presentation_layer/registrar.py`는 전달받은 API에 자기 controller 등록만,
+project `urls.py`는 모든 registrar 호출과 API mount만 소유한다. 독립
+public/internal·version·core profile scope를 새로 나눈다면 G1에서 별도 계약으로 승인한다.
+이미 배포된 brownfield 오류 표면은 승인 없이 새 profile로 이주하지 않는다.
 
 진행 메모와 설계 명세는 `.dddjango/<날짜>-<기능-slug>/`(`scope.md`, `design-spec.md`)에 남는다 — 한 기능 = 한 폴더이고, 코드와 함께 커밋해 설계 결정 기록으로 남긴다.
 
