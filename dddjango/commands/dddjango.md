@@ -1,7 +1,6 @@
 ---
 description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.
 argument-hint: "[빌드할 기능 설명]"
-disable-model-invocation: true
 allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash
 ---
 
