@@ -1051,6 +1051,10 @@ class Migration(migrations.Migration):
 
 ### 11.1 N+1 문제 탐지와 해결 [DDoc]
 
+아래 profiler는 탐색에 사용할 수 있지만 query-count 테스트는 승인된 성능 계약과 독자 production
+failure가 중앙 입장 심사에서 `add/update`인 뒤에만 작성한다. 미입장 상태에서는 debug toolbar·silk·
+nplusone으로 관찰하고 exact query-count test를 만들지 않는다.
+
 ```python
 # 탐지 도구
 # 1. django-debug-toolbar -- 개발 환경에서 쿼리 수 실시간 확인
@@ -1280,6 +1284,8 @@ class EditArticleView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 
 ## 14. 테스트 패턴
 
+이 절은 `discipline-tdd` 입장 심사에서 `add`/`update`된 테스트의 Django mechanics를 고르는 작성 recipe다. framework class·fixture·transaction framework 자체를 시험하기 위해 테스트를 만들지 않으며, 실제 승인된 테스트가 있을 때만 아래 class와 layout을 선택한다.
+
 ### 14.1 TestCase 선택 기준 [DDoc]
 
 | 클래스 | 특징 | 사용 시나리오 |
@@ -1383,7 +1389,7 @@ class TestArticleAPI:
 
 - `@pytest.mark.django_db`로 DB 접근을 명시한다.
 - pytest 픽스처로 테스트 설정 코드를 50% 이상 줄일 수 있다.
-- `assertNumQueries`로 쿼리 수 회귀를 방지한다.
+- 쿼리 수가 승인된 성능 계약이고 독자 failure로 입장된 테스트에서만 `assertNumQueries`로 회귀를 방지한다.
 
 ### 14.4 테스트에서의 Django 공식 규칙 [DCS]
 
@@ -1587,9 +1593,9 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 | DB constraint | application bug나 다른 writer가 있어도 DB가 지켜야 하는 invariant는 무엇인가 |
 | side effect timing | email/payment/message/cache invalidation이 commit 전후 어디에서 실행되는가 |
 | isolation/retry | serialization failure, deadlock, duplicate key 같은 실패를 retry할지 forward-fix할지 |
-| verification | `TransactionTestCase`, concurrency test, integration test, migration SQL review, query-count check 중 무엇으로 확인하는가 |
+| verification candidates | transaction/constraint/race/rollback 등 보호할 위험·failure 후보와 근거. `TransactionTestCase`, concurrency/integration test, query-count check는 입장 결정 뒤 선택할 mechanics이고 migration SQL review는 별도 비테스트 검증 |
 
-테스트에서는 일반 DB-backed behavior는 `TestCase`로 충분하지만, commit hook, lock, DB trigger, transaction isolation을 검증해야 하면 `TransactionTestCase`나 실제 DB 기반 integration test가 필요하다.
+`verification candidates` 행은 테스트 의무가 아니며 결정은 `discipline-tdd`가 소유한다. DB unique/race/rollback/CAS가 다른 boundary와 독립된 production failure일 때만 coder가 `add`할 수 있고, HTTP 등이 같은 제품 failure를 이미 잡으며 독자 DB mechanism이 없으면 `reuse`한다. `add`된 테스트의 일반 DB-backed behavior에는 `TestCase`를 쓰고, commit hook·lock·DB trigger·transaction isolation을 실제로 보호해야 할 때만 `TransactionTestCase`나 실제 DB 기반 integration test를 쓴다. class 선택이나 transaction framework 자체는 새 테스트의 근거가 아니다.
 
 ### 16.5 트랜잭셔널 Outbox 구현 [DDoc]
 

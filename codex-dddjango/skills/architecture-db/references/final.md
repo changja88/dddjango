@@ -403,9 +403,11 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 | API handoff | `Idempotency-Key` replay/conflict 계약은 `architecture-api`와 맞추는지 |
 | Side-effect timing | 외부 결제, 알림, message publish를 commit 전/후 어디서 실행하는지 |
 | Isolation/retry | isolation level, deadlock/timeout/serialization failure retry 기준 |
-| Test criteria | duplicate request, concurrent request, retry, rollback 상황을 검증할 기준 |
+| Test criteria (candidate) | duplicate request, concurrent request, retry, rollback에서 보호할 위험·failure 후보와 근거. 자체로 테스트 의무가 아님 |
 
-**Test criteria의 동시성 검증은 결정적으로.** 위 `Test criteria`의 concurrent request·CAS 경합 기준은 **결정적 CAS-충돌 주입(스파이)** 으로 증명하는 것을 기본으로 한다 — 실제 스레드·커스텀 DB 백엔드 없이 `version` 경합을 1회 주입해 재시도 수렴을 검증한다(`implementation-test` §20.5). 스레드 기반 race 재현(`implementation-test` §20.4)은 보조이며, 그것을 위해 연결 *메커니즘*을 커스텀 백엔드로 바꾸지 않는다(stock `OPTIONS`만 — §9.5 연결 설정 경계·`implementation-django` §16.4).
+`Test criteria`는 `discipline-tdd` 입장 심사에 제출할 후보 목록이다. DB unique/race/rollback/CAS가 다른 boundary와 독립된 production failure이고 기존 권위 테스트가 보호하지 않을 때 coder가 `add`할 수 있다. HTTP 등 다른 boundary가 같은 제품 failure를 이미 잡고 후보에 독자 DB failure mechanism이 없으면 `reuse`하며 test artifact를 만들지 않는다. 현재 DB constraint·transaction·rollback·race·repository round-trip을 보호하는 유효한 기존 테스트는 보존한다.
+
+**`add`된 동시성 테스트의 mechanics는 결정적으로.** concurrent request·CAS 경합 테스트가 입장 승인된 뒤에는 **결정적 CAS-충돌 주입(스파이)** 으로 증명하는 것을 기본으로 한다 — 실제 스레드·커스텀 DB 백엔드 없이 `version` 경합을 1회 주입해 재시도 수렴을 검증한다(`implementation-test` §20.5). 스레드 기반 race 재현(`implementation-test` §20.4)은 보조이며, 그것을 위해 연결 *메커니즘*을 커스텀 백엔드로 바꾸지 않는다(stock `OPTIONS`만 — §9.5 연결 설정 경계·`implementation-django` §16.4).
 
 외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7).
 

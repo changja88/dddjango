@@ -37,14 +37,14 @@ TDD는 프로그래밍하면서 나타나는 **두려움을 관리하는 방법*
 ### 2.1 기본 사이클 [테스트주도 개발]
 
 ```
-Red   --> 작은 테스트를 하나 추가하고 실패하는 것을 확인한다
+Red   --> `add/update`로 승인된 작은 테스트가 실패하는 것을 확인한다
 Green --> 테스트를 통과시키기 위해 최소한의 코드를 작성한다
 Refactor --> 중복을 제거하고 코드를 정리한다
 ```
 
 상세 단계:
 
-1. **테스트를 작성한다** -- 마음속에 있는 오퍼레이션이 코드에 어떤 식으로 나타나길 원하는지 생각해보라. 이야기를 써내려가는 것이다
+1. **승인된 테스트를 작성한다** -- §5.5의 `add/update` 행이 오퍼레이션을 코드에 어떤 식으로 나타내길 원하는지 생각해보라. 이야기를 써내려가는 것이다
 2. **실행 가능하게 만든다** -- 빨리 초록 막대를 보는 것이 가장 중요하다. 깔끔한 해법이 명백히 보인다면 그것을 입력하라. 몇 분 걸릴 것 같으면 일단 적어 놓은 뒤에 원래 문제(초록 막대를 보는 것)로 돌아오자
 3. **올바르게 만든다** -- 시스템이 작동하므로 직전에 저질렀던 죄악을 수습하자. 중복을 제거하고 초록 막대로 되돌리자
 
@@ -53,7 +53,7 @@ Refactor --> 중복을 제거하고 코드를 정리한다
 ### 2.2 pytest로 보는 TDD 사이클
 
 ```python
-# --- Red: 실패하는 테스트 작성 ---
+# --- Red: add/update로 승인된 실패 테스트 작성 ---
 def test_add():
     assert add(3, 4) == 7  # NameError: add가 아직 없다
 
@@ -247,7 +247,7 @@ Vladimir Khorikov는 좋은 단위 테스트의 가치를 평가하는 4가지 �
 
 회귀 방지(Protection against Regressions)는 단순히 버그 발견 시 사후에 작성하는 회귀 테스트를 넘어, **모든 테스트가 처음부터 갖춰야 할 설계 원칙**이다. 테스트 설계 시점부터 "이 테스트가 향후 회귀를 얼마나 잘 방지하는가"를 고려해야 한다.
 
-실전 적용: 시스템 장애가 보고될 때에도 가장 먼저 할 일은 그 장애로 인하여 실패하는 테스트, 그리고 통과할 경우엔 장애가 수정되었다고 볼 수 있는 테스트를 작성하는 것이다. [테스트주도 개발]
+실전 적용: 시스템 장애가 보고되면 먼저 §5.5의 candidate로 두고 승인 계약·독자 production failure·기존 권위 coverage를 확인한다. 기존 테스트가 같은 failure를 잡으면 `reuse`하고, 그렇지 않아 `add/update`로 입장된 경우에만 그 장애로 실패하고 통과하면 수정됐다고 볼 수 있는 테스트를 작성한다. [테스트주도 개발]
 
 ```python
 def test_division_by_zero_returns_error():
@@ -360,11 +360,11 @@ def test_communication_based(mocker):
 
 ## 5. 빨간 막대 패턴 (테스트를 언제, 어디에 작성할 것인가) [테스트주도 개발]
 
-### 5.1 테스트 목록
+### 5.1 테스트 후보 목록
 
-시작하기 전에 작성해야 할 **테스트 목록을 모두 적어 둘 것**. 테스트 코드는 테스트 대상이 되는 코드를 작성하기 직전에 작성하는 것이 좋다.
+시작하기 전에 검토할 **테스트 후보 목록을 적어 둘 것**. 이 목록은 탐색 메모이지 test file·case·assertion·helper 작성 의무가 아니다. 각 후보는 §5.5의 영구 테스트 입장 심사를 통과한 `add`·`update`일 때만 Red가 된다. 테스트 코드는 테스트 대상이 되는 코드를 작성하기 직전에 작성하는 것이 좋다.
 
-테스트 목록은 대표 예시만 나열하는 메모가 아니라, 행위와 정책의 경계를 드러내는 작업 목록이다. 사용자가 경계 예시를 하나만 말했더라도 그 예시가 전체 테스트 범위를 닫는 것은 아니다. 할인율, 최소 주문 금액, 수량 제한, 유효 기간처럼 결과가 바뀌는 경계가 있으면, 경계 자체와 결과가 달라지는 가장 가까운 바깥쪽 값 또는 보완 상태를 함께 적는다.
+후보 목록은 대표 예시만 나열하는 메모가 아니라, 입장 심사할 행위와 정책의 경계를 드러내는 검토 목록이다. 사용자가 경계 예시를 하나만 말했더라도 그 예시가 전체 후보 범위를 닫는 것은 아니다. 할인율, 최소 주문 금액, 수량 제한, 유효 기간처럼 결과가 바뀌는 경계가 있으면, 경계 자체와 결과가 달라지는 가장 가까운 바깥쪽 값 또는 보완 상태를 후보로 함께 적는다.
 
 여러 독립 결정축이 결합된 정책에서는 각 축의 허용 사례와 거부 사례를 분리한다. 예를 들어 쿠폰 정책에서 만료일, 사용 여부, 활성 상태, 최소 주문 금액이 각각 결과를 바꾼다면 "이미 사용됨" 거부 사례가 "만료일 다음 날" 거부 사례를 대신하지 않는다. 유효 기간이 포함형이면 마지막 유효일은 허용 사례로, 그 다음 날은 거부 사례로 테스트 목록에 남긴다.
 
@@ -397,9 +397,57 @@ def test_empty_cart_total():
 
 자동화된 테스트가 널리 쓰이게 하려면 **테스트를 통해 설명을 요청하고, 테스트를 통해 설명**해야 한다.
 
-### 5.5 현행 계약 기반 테스트 목록과 수명 주기
+### 5.5 영구 테스트 입장 심사와 현행 계약 수명 주기
 
 영구 테스트의 오라클은 현재 구현이 아니라 **현재 승인된 요구·설계·지원 계약**이다. 현재 구현과 기존 테스트는 조사 증거일 뿐이다. 구현이 현재 계약을 어기면 올바른 실패 테스트를 구현에 맞춰 삭제·약화하지 않고 구현을 고친다.
+
+영구 test artifact를 `add/update/move/split/rename/remove/weaken`하거나 의미 보존 재조직하기 전에 다음 최소 행을 확정한다. 후보 목록·테스트 피라미드·coverage·과거 버그·상위 테스트 실패는 이 행을 건너뛸 독립 근거가 아니다.
+
+| candidate | protected contract/evidence | unique production failure | existing authoritative coverage | decision | owner/path |
+|---|---|---|---|---|---|
+
+- `protected contract/evidence`: 승인된 요구·설계·지원 근거 또는 실제 consumer와 보호할 관찰 의미를 적는다.
+- `unique production failure`: 이 테스트가 없을 때 놓치는 구체적인 production failure를 적는다.
+- `existing authoritative coverage`: 같은 계약을 보호하는 기존 권위 테스트의 경로·case 또는 없음을 적는다.
+- `owner/path`: decision을 수행할 역할과 편집·검증 대상을 적는다.
+
+`decision`은 다음 일곱 값으로 완결한다.
+
+- `add`: 독자적인 production failure를 보호할 새 영구 테스트를 만든다.
+- `update`: 승인된 계약 변경에 맞춰 지정된 기존 테스트의 의미를 갱신한다.
+- `reuse`: 기존 권위 테스트가 같은 제품 failure를 이미 잡고 후보가 독자적인 failure mechanism을 제시하지 못하므로 새 테스트를 만들지 않는다. 테스트 boundary가 달라도 이 조건이면 `reuse`다.
+- `retain`: 관련 기존 테스트의 현행 보호 의미를 유지한다.
+- `remove`: 명시적인 계약 종료 근거에 따라 지정된 기존 assertion/test만 제거한다.
+- `reject`: framework/private/test-tool mechanics 또는 권위 있는 제품 계약이 없는 비자격 후보이므로 영구 테스트로 만들지 않는다.
+- `pending`: 근거·계약·중복 여부가 불명확해 사용자 또는 설계 결정이 필요하다.
+
+`pending`은 G1/G1′ 승인과 Phase 2 완료를 막는다. `reuse`·`reject`에서는 새 test file·case·assertion·helper를 포함한 test artifact write가 0이다. `retain`의 의미 보존 move/split/rename/reorganization은 새 case·assertion·Red를 만들지 않고 전후에 같은 계약과 failure를 보호해야 한다. 재조직이 없으면 기존 artifact를 건드리지 않는다. `remove`는 새 명세의 침묵이나 현재 구현과의 불일치만으로 선택하지 않는다.
+
+영구 테스트가 보호할 수 있는 대상은 다음과 같다.
+
+- 외부 HTTP·이벤트·영속 wire, 사용자 관찰 상태, 보안·개인정보·규제 계약
+- application orchestration의 원자성·부수효과 순서·중복 방지·실패 처리
+- framework와 무관한 도메인 불변식·상태 전이·판정 경계
+- 현재 DB constraint·transaction·rollback·race·멱등성·repository round-trip
+- boundary adapter의 변환·정규화·fallback·known failure 번역
+- 별도 사용자 승인 근거 또는 실제 deployed consumer evidence 중 하나가 확인된 공개 Python 계약
+
+다음 항목은 그 자체로 영구 테스트 자격이 아니다.
+
+- Python·Django·Pydantic·Django Ninja 등 framework/stdlib의 기본 동작
+- Pydantic validator 배치·`ValidationError.loc`, private helper·module 배치, production source AST/import 형태
+- production docstring·slots·monkeypatch seam·nominal inheritance만 확인하는 assertion
+- 테스트 도구 호환을 위해 만든 production 의미
+- import 가능 여부나 loader 성공만 확인하는 availability test
+- quota·coverage·피라미드 비율·디버깅 편의만을 이유로 한 테스트 복제
+- migration 파일·함수·과거 state·적용 순서 자체를 oracle로 삼는 테스트
+- `.dddjango` 문서를 읽거나 파싱해 통과하는 제품 pytest
+
+형식이 meta/introspection이라는 이유만으로 모든 테스트를 금지하지 않는다. 공개 Python exact field·signature·exception hierarchy는 **별도 사용자 승인 근거 또는 실제 deployed consumer evidence 중 하나**가 있으면 입장 심사를 통과할 수 있으며 둘 다 요구하지 않는다. 두 근거가 충돌하거나 어느 쪽도 명확하지 않을 때만 `pending`이다. 반대로 내부 Schema·helper를 직접 호출하는 introspection은 공개 wire를 대신하지 않는다.
+
+중복은 **계약 + boundary + failure mechanism**을 함께 비교하되, boundary 차이만으로 `add`하지 않는다. 기존 권위 테스트가 다른 boundary에서라도 같은 제품 failure를 잡고 후보가 독자적인 failure mechanism을 제시하지 못하면 `reuse`다. 상위 테스트에서 버그를 발견했다는 이유만으로 같은 failure를 unit test로 자동 복제하지 않는다. domain 판정·application orchestration·DB race/constraint·adapter 변환·HTTP 직렬화처럼 층이 달라도 failure mechanism이 독립적일 때만 각각 `add`할 수 있다. 테스트를 나누는 행위는 가독성 recipe일 뿐 새 case의 입장 근거가 아니다.
+
+이번 실행의 Red만 위해 만든 `find_spec`·동적 import guard·대체 decorator·skip/xfail·loader helper는 만든 역할이 해당 surface의 첫 Green 직후 제거한다. 정상 import와 실제 행동 assertion만 남기며, 작업 전부터 있던 비계를 이번 실행이 만들었다고 간주해 임의 삭제하지 않는다.
 
 현재 계약에는 현재 도메인 불변식과 명시적 부재 의무뿐 아니라 지원 중인 구 API, 이미 저장된 데이터, 이미 발행된 이벤트, 보안·개인정보·규제 의무가 포함된다. 과거 버그에서 태어났어도 이 중 하나를 계속 검증하면 유효한 회귀 테스트다. 반대로 유일한 유지 근거가 과거 구현·종료된 계약·버그 번호·“예전에는 이랬다”뿐이면 history-only 테스트다.
 
@@ -424,7 +472,7 @@ Django migration 파일·번호·dependency graph·operation·적용 순서·과
 
 ### 6.1 가짜로 구현하기 (Fake It)
 
-실패하는 테스트를 만든 후 첫 번째 구현은 **상수를 반환**하게 하여 일단 통과시킨다. 그 후 상수를 변수를 사용하는 수식으로 변경한다.
+`add/update`로 승인된 실패 테스트를 만든 후 첫 번째 구현은 **상수를 반환**하게 하여 일단 통과시킨다. 그 후 상수를 변수를 사용하는 수식으로 변경한다.
 
 ```python
 # 단계 1: 상수 반환
@@ -575,7 +623,7 @@ TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 
 
 ### 9.1 이중 루프 TDD (Double Loop TDD)
 
-"Growing Object-Oriented Software, Guided by Tests"의 핵심 개념. 바깥 루프(인수 테스트)와 안쪽 루프(단위 테스트)를 동시에 운용한다.
+"Growing Object-Oriented Software, Guided by Tests"의 핵심 개념. 바깥 루프(인수 테스트)와 안쪽 루프(단위 테스트)는 서로 다른 피드백 범위를 제공하지만, 이중 루프라는 이유만으로 같은 계약의 양쪽 테스트가 자동 의무가 되지는 않는다. 각 영구 테스트 후보는 §5.5를 통과해야 한다.
 
 ```
 +---------------------------------------------------+
@@ -630,10 +678,12 @@ def test_registration_service_saves_user(mocker):
 
 GOOS의 첫 번째 단계: **가장 얇은 슬라이스의 실제 기능**을 구현하여 빌드, 배포, 테스트가 끝까지(end-to-end) 동작하는 것을 확인한다.
 
+Walking Skeleton은 import 가능 여부·loader 성공만 확인하는 availability test가 아니다. 실제로 관찰 가능한 얇은 end-to-end 행동이 있을 때만 영구 테스트 후보가 된다.
+
 ```python
 # Walking Skeleton: 최소한의 end-to-end 경로
 
-# 1. 가장 단순한 인수 테스트 작성
+# 1. 공개 E2E 행동이 add/update로 입장된 경우 가장 단순한 인수 테스트 작성
 def test_walking_skeleton_health_check(client):
     """시스템이 기동되어 응답할 수 있는지 확인하는 가장 얇은 슬라이스."""
     response = client.get("/health")
@@ -910,6 +960,8 @@ def test_user_is_active_by_default():
     assert user.is_active is True
 ```
 
+여기서 분리는 이미 입장한 한 계약을 읽기 쉽게 표현하는 recipe다. 분리 자체가 새 영구 case를 추가할 근거는 아니며, 새 case마다 §5.5의 독자적인 failure 판정이 필요하다.
+
 ### 12.2 코드 냄새 (Code Smells)
 
 테스트 코드 자체의 구조적 문제.
@@ -991,18 +1043,19 @@ pytest-bdd 구현 상세는 `workspace/reference/implementation-test/reference/f
 
 > "TDD는 프롬프트 엔지니어링이다. 테스트가 AI에게 '무엇을' 만들고 '언제 완료인지'를 알려준다."
 
-TDD의 Red-Green-Refactor 사이클은 AI 코딩 도구와 자연스럽게 결합된다.
+§5.5에서 `add/update`로 입장된 테스트에는 TDD의 Red-Green-Refactor 사이클을 AI 코딩 도구와 결합할 수 있다. 기능 요구나 AI 위험 자체가 새 영구 테스트를 자동 승인하지 않는다.
 
 ```
-전통 TDD:     개발자가 테스트 작성 -> 개발자가 구현
-AI 보조 TDD:  개발자가 테스트 작성 -> AI가 구현 제안 -> 개발자가 검증
-TDAID:        Plan -> Red -> Green(AI) -> Refactor(AI+개발자) -> Validate
+전통 TDD:     입장 결정 -> 개발자가 승인 테스트 작성 -> 개발자가 구현
+AI 보조 TDD:  입장 결정 -> 개발자가 승인 테스트 작성 -> AI가 구현 제안 -> 개발자가 검증
+TDAID:        Plan -> Admission -> Red -> Green(AI) -> Refactor(AI+개발자) -> Validate
 ```
 
 ### 17.2 AI 보조 TDD 워크플로우
 
 ```python
-# 1단계: 개발자가 명세로서의 테스트를 작성한다 (Red)
+# 입장 결정: 아래 parse 계약과 독자 failure가 add/update로 승인됐다고 가정
+# 1단계: 개발자가 승인된 명세 테스트를 작성한다 (Red)
 def test_parse_korean_date():
     """한국어 날짜 문자열을 파싱한다."""
     assert parse_date("2026년 4월 4일") == date(2026, 4, 4)
@@ -1030,19 +1083,20 @@ def test_parse_korean_date_edge_cases():
 
 | 위험 | TDD의 방어 효과 |
 |------|---------------|
-| AI 환각 (hallucinated code) | 실패하는 테스트가 잘못된 구현을 즉시 감지 |
+| AI 환각 (hallucinated code) | 입장된 실패 테스트가 잘못된 구현을 즉시 감지 |
 | 의도와 다른 구현 | 테스트가 명세 역할을 하여 의도를 명시 |
 | 보안 취약점 | 보안 테스트가 AI 생성 코드의 취약점 포착 |
 | 과도한 신뢰 | Red-Green 사이클이 점진적 검증을 강제 |
 
-### 17.4 Test-Driven AI Development (TDAID) 5단계
+### 17.4 dddjango Admission을 추가한 TDAID 6단계
 
 ```
-1. Plan     : 기능 요구사항을 테스트 목록으로 변환
-2. Red      : 실패하는 테스트 작성 (개발자)
-3. Green    : 테스트를 통과하는 구현 (AI 보조)
-4. Refactor : 코드 품질 개선 (AI + 개발자 협업)
-5. Validate : AI 생성 코드의 정확성, 보안, 성능 최종 검증
+1. Plan      : 기능 요구사항에서 테스트 candidate를 도출
+2. Admission : 계약·독자 failure·기존 coverage로 decision 확정
+3. Red       : `add/update`로 승인된 실패 테스트 작성
+4. Green     : 테스트를 통과하는 구현 (AI 보조)
+5. Refactor  : 코드 품질 개선 (AI + 개발자 협업)
+6. Validate  : AI 생성 코드의 정확성, 보안, 성능 최종 검증
 ```
 
 ---

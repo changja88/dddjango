@@ -23,7 +23,7 @@
 6. [상태 코드와 오류 응답](#6-상태-코드와-오류-응답)
 7. [Idempotency-Key](#7-idempotency-key)
 8. [OpenAPI](#8-openapi)
-9. [TestClient와 검증](#9-testclient와-검증)
+9. [Mounted Django client와 검증](#9-mounted-django-client와-검증)
 10. [DRF-to-Ninja migration](#10-drf-to-ninja-migration)
 11. [라우팅 기준](#11-라우팅-기준)
 12. [참고 문헌](#12-참고-문헌)
@@ -43,8 +43,8 @@ Django Ninja skill은 HTTP 요청과 응답을 Django application/service/usecas
 - service/usecase 호출
 - domain/application error를 API error contract로 변환
 - response schema와 status code mapping
-- OpenAPI에 드러나는 계약 변화 확인
-- Django Ninja `TestClient` 기반 HTTP contract 검증 기준 제시
+- OpenAPI에 드러나는 계약 변화의 candidate·승인 뒤 검증 기준 제시
+- 실제 mount를 통과하는 Django client 기반 HTTP contract 검증 기준 제시
 
 ### 1.2 다른 source reference로 위임할 책임
 
@@ -329,9 +329,16 @@ schema를 분리한다.
   유일 경로다. enum 파생과 문자열 Literal은 JSON schema가 동일하게 `const`로 렌더되므로
   OpenAPI 계약은 불변 — "계약 안정성 때문에 맨 Literal"은 이 위치에서 성립하지 않는다.
   `payload_schema_version` 등 버전 태그는 형태가 같아도 리터럴 동결 유지(발행 순간
-  동결되는 계약 표식 — §3.7 짝 조항). union-enum 동기 계약 테스트가 세트다
-  (`implementation-test` §15.5). 봉투 union을 페이지네이션 응답에 직접 조합하지 않는다
+  동결되는 계약 표식 — §3.7 짝 조항). union-enum 동기는 중앙 영구 테스트 입장 심사의
+  candidate다. 승인된 공개 event wire literal과 독자 failure를 보호해 `add/update`인 경우에만
+  직렬화 경계에서 검증한다(`discipline-tdd`; mechanics는 `implementation-test` §15.5).
+  봉투 union을 페이지네이션 응답에 직접 조합하지 않는다
   (ninja discriminated union+pagination의 OpenAPI 렌더 미해결 버그 — vitalik/django-ninja#1308).
+
+Schema의 validator 위치, `ValidationError.loc`, Pydantic/Ninja 기본 validation·직렬화는 그 자체로
+영구 테스트 자격이 아니다. 별도 사용자 승인 또는 실제 deployed consumer evidence가 있는 공개
+Python 계약이면 중앙 입장 심사로 판정할 수 있고, 공개 HTTP·wire 계약이면 isolated Schema 직접 호출이
+아니라 실제 mount 경계에서 검증한다.
 
 ### 3.2 ModelSchema 사용 기준
 
@@ -511,8 +518,10 @@ explicit alias를 새로 넣어 우회하지 않는다. class-header `**`·legac
 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`를 낸다. canonical module의 직접 import-time mutation/side effect는
 proof 대상이 아니라 구조 위반으로 차단한다. controller/OpenAPI checker가 단순 형태를 정적으로
 계산해 추가 진단을 내더라도 이 marker를 없애지 않는다. target의 실제 dependency pin에서 model
-field/validation path/serialization alias를 introspect하고 실제 BC-base 생성 key·ErrorCode 멤버·exact
-dump, mounted status/body, generated OpenAPI를 함께 실행한다. API와
+field/validation path/serialization alias와 실제 BC-base 생성 key·ErrorCode 멤버·exact dump를
+검토하는 것은 별도 shape 승인 근거를 위한 일회성 분석이며 영구 테스트를 자동 생성하지 않는다.
+mounted status/body와 generated OpenAPI는 각각 중앙 입장 심사의 공개 wire 후보이고,
+`add/update`일 때만 §8–§9의 mount 경계 recipe로 검증한다. API와
 discipline reviewer가 기존 shape 무변경을 확인한 경우에만 Coordinator가
 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS`로 해소한다. 이는 새 shape나 shape 변경의 별도 사용자 명시
 승인을 대신하지 않고, 다른 analysis/blocker를 면제하지도 않는다. controller 등 schema 소유 경계
@@ -797,8 +806,8 @@ controller나 전역 recognizer가 문자열·SQLSTATE로 분류하지 않는다
 `response={...}`에서 같은 BC base `<Bc>ErrorOut`에 매핑한다. concrete class는 runtime
 instance를 고정하지만 OpenAPI status mapping에는 BC base를 쓴다. 직접 반환하지 않는
 framework status는 BC base로 선언하지 않는다. 오류 응답 선언을 `openapi_extra`로 보충하거나
-`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 계약이
-바뀌면 생성된 OpenAPI에서 status별 BC base schema를 확인한다.
+`get_openapi_schema` override, monkeypatch, postprocessor로 사후 변형하지 않는다. 공개 OpenAPI
+후보가 중앙 입장 심사에서 `add/update`이면 mounted API의 생성 문서에서 status별 BC base schema를 확인한다.
 
 선언된 JSON 성공은 Schema 또는 `Status`를 통해 Ninja의 validation/serialization을 탄다.
 `FileResponse`, `StreamingHttpResponse`, redirect, schema-less 204는 성공 응답의
@@ -820,7 +829,8 @@ framework-native carveout이다. 어느 carveout도 오류 helper나 raw 오류 
 - **415**: 지원 media type을 제한하는 계약이 별도 승인된 endpoint만 처리한다.
   사용 중인 Django Ninja 버전에서 parser 예외가 다른 status로 정규화될 수 있으므로,
   현재 presentation 스타일과 호환되는 Ninja-owned pre-body 경계를 선택하고
-  `HttpError(415, "Unsupported media type")`가 실제 415로 나가는지 contract test로 확인한다.
+  공개 415 wire를 중앙 입장 심사의 candidate로 제출한다. `add/update`이면 실제 URLconf에
+  mount된 Django client로 `HttpError(415, "Unsupported media type")`가 415로 나가는지 검증한다.
 - 406/415는 framework `HttpError` body를 그대로 사용한다. BC `ErrorOut`, code,
   오류 helper, custom handler, raw response를 만들지 않고 BC `response={...}`에도
   광고하지 않는다.
@@ -859,7 +869,11 @@ concurrency behavior가 함께 결정되어야 한다.
 Django Ninja는 typed operation과 schema에서 OpenAPI 문서를 생성한다. 구현 변경은
 runtime behavior뿐 아니라 generated schema의 client-visible contract를 바꿀 수 있다.
 
-확인 항목:
+아래 항목은 자동 테스트 목록이 아니라 중앙 영구 테스트 입장 심사의 candidate다. 공개 OpenAPI
+계약과 독자 failure를 보호해 `add/update`인 항목만 프로젝트 URLconf에 mount된 API가 생성하는
+문서에서 검증한다. isolated Schema나 미등록 Router/controller가 만든 문서는 공개 OpenAPI 증거가 아니다.
+
+입장 심사 후보:
 
 - path, method, tag, operation id, summary
 - request body, query/path/header parameter
@@ -878,13 +892,13 @@ DRF-to-Ninja migration에서는 가능한 경우 기존 DRF schema와 Django Nin
 
 ---
 
-## 9. TestClient와 검증
+## 9. Mounted Django client와 검증
 
-### 9.1 TestClient 사용 범위
+### 9.1 공개 HTTP 검증 범위
 
-Django Ninja `TestClient`는 Router/API operation을 HTTP adapter 수준에서 검증하는
-도구다. Business rule은 domain/service test로 더 직접 검증하고, API test는 다음을
-중점으로 둔다.
+Django Ninja HTTP 항목도 먼저 `discipline-tdd`의 중앙 입장 심사를 거친다. 아래는 자동 테스트
+목록이 아니라 candidate이며, 승인된 공개 HTTP 계약과 독자 production failure가 `add/update`인
+경우에만 테스트를 작성한다. Business rule은 승인된 domain/service boundary에서 검증한다.
 
 - request schema validation
 - status code와 header
@@ -895,40 +909,43 @@ Django Ninja `TestClient`는 Router/API operation을 HTTP adapter 수준에서 �
 - idempotency replay와 conflict
 - DRF-to-Ninja compatibility
 
+공개 HTTP 계약은 `django.test.Client` 또는 프로젝트가 이미 쓰는 동등한 Django client로 실제
+URLconf에 mount된 endpoint를 호출한다. `ninja.testing.TestClient(router)`나
+`ninja_extra.testing.TestClient(Controller)`로 미등록 Router/controller를 직접 감싼 결과는 공개
+mount·registrar·middleware·URL prefix를 통과하지 않으므로 공개 HTTP 계약의 영구 증거가 아니다.
+
 ```python
-from ninja.testing import TestClient
+from django.test import Client
 
 
 def test_create_order_returns_201():
-    client = TestClient(router)
-    res = client.post("/orders", json={"product_id": 7, "quantity": 2})
+    client = Client()
+    res = client.post(
+        "/api/orders",  # 프로젝트 URLconf에 실제 mount된 경로
+        {"product_id": 7, "quantity": 2},
+        content_type="application/json",
+    )
     assert res.status_code == 201
     assert res.json()["status"] == "created"
-
-
-def test_invalid_quantity_returns_422():
-    client = TestClient(router)
-    res = client.post("/orders", json={"product_id": 7, "quantity": 0})
-    assert res.status_code == 422
 ```
 
-**클래스 컨트롤러(§2.3)는 `ninja_extra.testing.TestClient`로 테스트한다** — `from ninja_extra.testing
-import TestClient; client = TestClient(OrderController)`로 컨트롤러를 직접 감싼다(`ninja.testing.TestClient`는
-함수형 `Router`를 감싸므로 컨트롤러엔 맞지 않는다). 확립된 함수형 `Router` 경로는 기존
-`from ninja.testing import TestClient; TestClient(router)`를 그대로 쓴다 — 둘은 테스트 대상(컨트롤러 vs Router)에
-따라 병기한다. 검증 중점·assert 형태는 양쪽 동일하다.
+Framework 기본 401/403/404/422/429 body, Pydantic/Ninja 기본 직렬화, validator 배치,
+`ValidationError.loc`, private/helper/handler 직접 호출은 그 자체로 test 자격이 아니다. 별도 승인된
+공개 Python consumer 계약은 중앙 입장 심사를 통과하면 그 공개 boundary에서 테스트할 수 있지만,
+그 근거가 없으면 오류 helper/handler 내부 unit test를 만들지 않는다. 승인된 공개 status/body/header,
+wire Enum·security 계약을 실제 mount에서 검증하는 테스트까지 금지하는 규칙은 아니다.
 
 ### 9.2 검증 보고 기준
 
 검증 보고에는 실제 실행한 명령이나 검토한 artifact만 쓴다.
 
 - focused pytest path
-- Django Ninja `TestClient` test run
-- OpenAPI generation command
+- mounted Django client test run
+- mounted API의 OpenAPI generation command 또는 generated document
 - schema comparison artifact
 - compatibility checklist
 
-실행하지 않은 TestClient, pytest, OpenAPI, compatibility check는 `Not run`으로
+실행하지 않은 mounted client, pytest, OpenAPI, compatibility check는 `Not run`으로
 분명히 표시한다. Skill/reference loading command는 사용자 작업 검증으로 보고하지
 않는다.
 
@@ -954,7 +971,7 @@ Migration checklist:
 - client deprecation/migration note
 
 DRF-specific abstraction을 새 greenfield 표준으로 유지하지 않는다. 필요한 behavior는
-Django Ninja Router/Schema, service validation, controller-owned 오류 변환, TestClient 검증으로
+Django Ninja Router/Schema, service validation, controller-owned 오류 변환, mounted Django client 검증으로
 옮긴다.
 
 ---

@@ -114,7 +114,7 @@ Template에 raw domain object를 그대로 넘겨 template이 fallback, 권한, 
 
 - Optional field를 화면에 표시하면 `None`, blank string, missing value를 project-standard placeholder로 변환한 값을 context에 넣는다.
 - template은 준비된 display value를 렌더링하고, domain field의 raw fallback을 직접 결정하지 않는다.
-- optional display path는 render 또는 context test로 확인한다. 프로젝트가 `None`과 blank string을 구분하면 둘 다 확인한다.
+- optional display path는 중앙 영구 테스트 입장 심사의 candidate다. 승인된 표시 계약과 독자 failure가 `add/update`이면 실제 render/context 경계에서 확인하고, 그렇지 않으면 구조 규칙만으로 테스트를 만들지 않는다. 프로젝트가 `None`과 blank string을 공개적으로 구분하는지도 같은 심사에서 판정한다.
 - 목록 화면에서 relationship을 순회하면 view/query layer에서 N+1 query 위험을 먼저 검토한다.
 - template variable 이름은 화면 언어와 맞춘다. 내부 모델 필드 이름을 그대로 노출할 필요는 없다.
 
@@ -271,14 +271,14 @@ Protected page는 render 전에 view-level auth와 permission을 확인한다. T
 
 ## 10. Render acceptance checks
 
-Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/collectstatic/security check를 실행하지 않았다면 미실행으로 명시한다.
+Web 구현을 마칠 때는 실행한 검증만 보고한다. render/browser/collectstatic/security check를 실행하지 않았다면 미실행으로 명시한다. 아래 test-shaped 증거는 자동 의무가 아니라 중앙 입장 심사의 candidate 또는 `add/update` 뒤 mechanics recipe다. 승인된 render·wire·security 계약과 독자 failure를 보호하는 테스트는 허용하되 `reuse/reject`에서는 새 test artifact를 만들지 않는다.
 
 권장 검증 행렬:
 
 | 변경 유형 | 기대 증거 | gap 보고 기준 |
 |---|---|---|
-| template/context 변경 | render test, Django test client response, context assertion | 테스트가 없으면 수동 render 확인 여부와 미실행 사유 |
-| optional display value | `None`, blank string, missing optional path의 context/render assertion | raw field fallback을 template에 둔 경우 unfinished |
+| template/context 변경 | `add/update` 뒤 render test, Django test client response, context assertion | decision과 수동 render 확인 여부·미실행 사유 |
+| optional display value | `add/update` 뒤 승인된 `None`, blank string, missing optional path의 context/render assertion | raw field fallback을 template에 둔 경우 unfinished; test decision은 별도 |
 | static CSS/JS 변경 | rendered HTML의 static reference, referenced path existence | changed asset이 rendered page에서 참조되지 않으면 unfinished |
 | form 변경 | GET, valid POST, invalid POST, redirect, form error assertion | CSRF/auth/permission path 미확인 시 residual risk |
 | HTMX 변경 | fragment response, method/auth/permission/CSRF, redirect/header behavior | API-like contract가 필요하면 `implementation-django-ninja`/`architecture-api`로 handoff |
@@ -370,9 +370,13 @@ class TransientErrorMiddleware:
         return None                              # 도메인·미식별 → view-local 또는 handler500
 ```
 
+아래 테스트 예시는 중앙 입장 심사에서 공개 middleware response 후보가 `add/update`인 뒤의 mechanics다.
+private predicate를 직접 고정하지 않고 503/status header와 handler500 pass-through라는 관찰 응답을 검증한다.
+
 ```python
-# tests/test_transient_error_middleware.py — 실제 private predicate의 경계 감사
+# tests/test_transient_error_middleware.py — 공개 middleware response 계약
 from django.db import OperationalError
+from django.test import RequestFactory
 
 from myproject.middleware import TransientErrorMiddleware
 
@@ -381,34 +385,24 @@ def _middleware() -> TransientErrorMiddleware:
     return TransientErrorMiddleware(lambda request: None)
 
 
-def test_suppressed_lock_context_is_permanent_and_reaches_handler500():
+def test_retryable_db_error_returns_503_with_retry_after():
     middleware = _middleware()
-    try:
-        raise OperationalError("database is locked")
-    except OperationalError:
-        try:
-            raise OperationalError("no such table") from None
-        except OperationalError as permanent:
-            assert not middleware._is_retryable_db_error(permanent)
-            assert middleware.process_exception(object(), permanent) is None  # → handler500
+    request = RequestFactory().get("/orders/new")
+
+    response = middleware.process_exception(request, OperationalError("deadlock detected"))
+
+    assert response is not None
+    assert response.status_code == 503
+    assert response["Retry-After"] == "1"
 
 
-def test_explicit_lock_cause_is_retryable():
+def test_permanent_db_error_passes_through_to_handler500():
     middleware = _middleware()
-    try:
-        raise OperationalError("deadlock detected")
-    except OperationalError as lock:
-        try:
-            raise OperationalError("temporary wrapper") from lock
-        except OperationalError as wrapped:
-            assert middleware._is_retryable_db_error(wrapped)
+    request = RequestFactory().get("/orders/new")
 
+    response = middleware.process_exception(request, OperationalError("no such table"))
 
-def test_cyclic_context_terminates_without_retrying():
-    middleware = _middleware()
-    cycle = OperationalError("no such table")
-    cycle.__context__ = cycle
-    assert not middleware._is_retryable_db_error(cycle)
+    assert response is None  # Django의 handler500 경로로 전파
 ```
 
 ```python

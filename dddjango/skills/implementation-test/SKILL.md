@@ -1,6 +1,6 @@
 ---
 name: implementation-test
-description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 구분, pytest 구조·픽스처·마커·플러그인, Mock·테스트더블, Property-Based Testing, 팩토리, 시간·HTTP 모킹, 통합 테스트, 커버리지, 테스트 품질·안티패턴, Mutation Testing, BDD, Django Ninja TestClient, Idempotency·동시성 테스트, 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 무엇을 테스트하고 기존 테스트를 유지·갱신·분리·삭제할지는 discipline-tdd, Django 구현은 implementation-django 계열로 위임.
+description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 구분, pytest 구조·픽스처·마커·플러그인, Mock·테스트더블, Property-Based Testing, 팩토리, 시간·HTTP 모킹, 통합 테스트, 커버리지, 테스트 품질·안티패턴, Mutation Testing, BDD, mounted Django client API 계약, Idempotency·동시성 테스트, 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 무엇을 테스트하고 기존 테스트를 유지·갱신·분리·삭제할지는 discipline-tdd, Django 구현은 implementation-django 계열로 위임.
 user-invocable: false
 ---
 
@@ -8,16 +8,17 @@ user-invocable: false
 
 ## 언제 쓰나
 
-테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 설계·작성할 때 로드한다. 경계:
+테스트 코드·픽스처·더블·factory·계약 검증·커버리지·Mutation·BDD·동시성 테스트 코드를 작성할 때 로드한다. 이 skill은 `discipline-tdd` §5.5가 영구 테스트 입장 결정을 끝낸 **뒤** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직의 작성 mechanics만 제공한다. `retain` 재조직은 새 case·assertion·Red를 만들지 않고 전후 같은 보호를 유지한다. 후보나 `reuse`·`reject`를 새 test file·case·assertion·helper 의무로 바꾸지 않는다. 경계:
 
 - TDD 방법론과 테스트 수명 주기(무엇을 검증하고 유지·갱신·분리·삭제하는가) → `discipline-tdd`
 - Django 모델·ORM·서비스 레이어 구현 → `implementation-django`
-- Django Ninja Router/Schema·TestClient 계약 어댑터 구현 → `implementation-django-ninja`
+- Django Ninja Router/Schema·mounted public HTTP와 adapter-local client 계약 구현 → `implementation-django-ninja`
 - Django 뷰·템플릿·폼·HTMX 구현 → `implementation-django-web`
 
 ## 핵심 운영 원칙
 
-- 행동을 증명하는 가장 작은 테스트 범위를 선택; 피라미드 하단일수록 빠르고 안정 (§1)
+- **먼저 `discipline-tdd` §5.5의 decision row를 확인한다.** `add`·`update`와 명시 승인된 `retain` 의미 보존 재조직에만 아래 recipe를 적용한다. `retain` 재조직은 새 case·assertion·Red가 없고, `reuse`·`reject`에서는 test artifact write가 0이다. 피라미드·coverage·속도·도구 예시는 `add`의 근거가 아니다 (§1)
+- 입장된 행동을 증명하는 가장 작은 테스트 범위를 선택한다. 유효한 domain/application/DB/adapter/public contract 테스트를 단순히 상위 계층이라는 이유로 낮추거나 생략하지 않는다 (§1)
 - migration 파일·번호·과거 state·forward/reverse가 오라클이면 migration 전용 테스트이고, 현재 model·ORM·service·API·DB constraint가 오라클이면 DB-backed 현행 동작 테스트다. 이 절은 기술적으로 식별만 하고 수명 주기는 `discipline-tdd`에 넘긴다 (§1.4)
 - 테스트 러너·작성은 **pytest(pytest-django)** 기본 — 함수형 + `assert` + `@pytest.mark.django_db`(DB 접근 명시) + 픽스처 (§3, §4, §19.4)
 - 테스트 더블은 역할과 리스크 기준으로 선택: Stub→상태 검증, Mock→상호작용 검증, Fake→가벼운 협력자 (§2, §7.1)
@@ -25,14 +26,15 @@ user-invocable: false
 - **적극적 = 경계에서 수제 대신 전용 도구로 *업그레이드*하는 것이지, 더 많이 *mock·도구 추가*하는 것이 아니다.**
 - 픽스처는 명시적·격리적으로 작성, conftest 계층을 활용해 공유 범위 최소화 (§3.7, §4.2)
 - 검증은 상태·결과 우선, 화이트박스(내부 구현) 검증 회피 (§7.1, §15.3)
-- Hypothesis로 경계값·속성 기반 테스트, @example로 재현 케이스 고정 (§8)
+- 승인된 property-based case를 Hypothesis로 표현하고, 승인된 재현 경계는 @example로 고정한다. 도구가 입력을 많이 만들 수 있다는 사실은 새 테스트 근거가 아니다 (§8)
 - ORM 영속 픽스처의 기본은 **factory_boy**(만능 아님 — 정확 필드 행·VO/dataclass 직접 생성은 정당); 최소 필요 상태만 지정, DB fixture 최소화 (§9)
-- 동시성·idempotency 테스트는 DB 의미론이 필요하면 DB-backed 테스트로 (§20)
-- 커버리지 수치보다 의미 있는 assertion이 중요; mutmut로 테스트 유효성 검증 (§13, §17)
-- AAA(Arrange-Act-Assert) 패턴으로 테스트 구조 일관화 (§15.2)
+- 승인된 동시성·idempotency·CAS case가 DB 의미론을 보호하면 DB-backed mechanics를 쓴다 (§20)
+- 승인된 테스트의 유효성을 살필 때 coverage나 mutmut를 진단 도구로 쓸 수 있지만, 수치·생존 mutant 자체가 새 case/assertion 근거는 아니다 (§13, §17)
+- AAA(Arrange-Act-Assert), assertion 선택, Free Ride 방지와 테스트 분리는 이미 입장된 case의 가독성 recipe다. 새 case/assertion을 승인하지 않는다 (§3.4, §15.2, §16)
 - 외부 계약(HTTP 응답·DB 저장값·이벤트) 검증의 assert 기댓값은 리터럴로 — 프로덕션 상수 역수입은 자기참조 오라클; 도메인 내부 단위 테스트의 심볼 단언과 arrange의 심볼 사용은 허용 (§15.4)
-- Django Ninja 오류는 승인된 12-slot을 단일 근거로 `dddjango-code-json`과 `preserve-established`를 먼저 나눈다. plugin 기본 `ErrorOut` property 목록은 없다. 새/touched code scope는 slot 6의 literal exact field/type/required/default/nullability/모든 `Field` metadata/model config·legacy `Config`/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 직렬화/field 의미를 common→BC base→재귀 concrete에서 검증하고, Python attribute·validation input key·wire key를 분리해 BC `ErrorCode`로 좁힌 식별자 field·무인자 concrete의 완전 inventory와 실제 HTTP mapping-case 전체의 literal exact body·HTTP status·승인 error-header 값/부재를 고정한다. body status field는 slot 6에 있을 때만 HTTP와 비교한다. framework 401/403/route404/422/429/`HttpError`/500은 승인 exact shape·project public ErrorCode·BC header가 아닌지 smoke하되 full body를 snapshot하지 않는다. OpenAPI는 모든 operation/status의 schema ref를 재귀 순회해 실제로 emit된 managed component의 exact literal schema와, 승인 `(path, method, status)`의 `application/json` BC base 직접 매핑을 각각 단언한다. Pydantic decorator runtime introspection은 pin-sensitive backstop이고 validator/OpenAPI 수동증강·임의 header write 금지는 source checker/reviewer가 소유한다. `preserve-established`는 관찰·승인된 wire/media/header만 보존한다. error helper/factory/serializer/mapping/handler 내부 unit test는 만들지 않는다 (§19.2)
-- 발행 이벤트 봉투(태그드 유니온 + StrEnum 파생·birth-enum)에는 union-enum 동기 계약 테스트가 세트다 — union 멤버 태그 집합 == enum 멤버 집합; OHS published contract의 wire Literal 태그 union도 동일 세트(houserules §2 contract 무의존) (§15.5)
+- Django Ninja 오류는 입장된 HTTP mapping만 실제 mount된 Django client로 status/body/승인 header를 검증한다. plugin 기본 `ErrorOut` property 목록은 없고 shape 변경은 별도 명시 사용자 승인이 필요하다. 공개 OpenAPI 계약은 실제 mount된 생성 문서의 관련 operation/status/schema만 검증한다. 별도 승인 또는 실제 consumer evidence가 없는 Pydantic private introspection·framework 기본 직렬화와 error helper/factory/serializer/mapping/handler 내부 unit test는 만들지 않는다. framework 기본 body라도 입장된 public wire 계약이면 consumer가 의존하는 관련 field만 검증한다 (§19.2)
+- 발행 이벤트의 union-enum 동기 검증도 자동 세트가 아니라 입장 후 recipe다. 실제 published/wire drift의 독자 failure가 있고 기존 보호가 없을 때만 `add`할 수 있으며, 구조가 서로를 자명하게 반복하면 `reuse`·`reject`한다 (§15.5)
+- migration 전용 테스트와 DB-backed 현행 동작 테스트의 식별·수명 주기는 기존 규칙을 그대로 따른다 (§1.4, `discipline-tdd` §5.5)
 - 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16 — 상수 역수입 오라클은 §15.4)
 
 ## 상세 레퍼런스

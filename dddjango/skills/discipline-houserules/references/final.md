@@ -115,12 +115,17 @@ application/<app>/
 │   │   └── <feature>/                  #   <aggregate>_controller.py(@api_controller(..., auto_import=False)) — 얇은 어댑터
 │   └── schema/                         #   schema_in.py / schema_out.py; HTTP 오류를 직접 공개하면 error_out.py 정확히 1개
 │
-└── test/                               # 앱별 테스트 — 의미군 분리 (implementation-test §4.2)
-    ├── unit/                           #   순수 단위: 도메인·응용 (mock/stub)
-    ├── integration/                    #   DB·리포지토리·API 어댑터 (실제 DB) — HTTP 엔드포인트 테스트는 여기
-    ├── e2e/                            #   엔드투엔드 흐름                               [선택]
-    └── factories/                      #   factory_boy 팩토리 (ORM 영속 픽스처)            [선택]
+└── test/                               # 승인된 test artifact가 실제 있을 때만 [조건부]
+    ├── unit/                           #   승인된 순수 단위 artifact: 도메인·응용
+    ├── integration/                    #   승인된 DB·리포지토리·HTTP endpoint artifact
+    ├── e2e/                            #   승인된 엔드투엔드 artifact
+    └── factories/                      #   승인된 test가 실제 소비하는 factory_boy support
 ```
+
+`test/` 가지는 §0 코드 골격 불변식이 아니다. 중앙 test admission이 `add/update`한 artifact 또는
+`retain`하면서 의미 보존 재조직이 별도 승인된 기존 artifact가 있을 때만 기존 프로젝트 테스트 위치나
+위 표준 위치 안에 만든다. 구조 규칙만으로 test file/case/assertion/support package를 만들거나 기존
+테스트를 move/split/rename하지 않으며, 승인된 테스트가 없는 BC에는 빈 테스트 패키지를 만들지 않는다.
 
 의존 방향(단방향): `presentation_layer → application_layer → (domain_layer + infra_layer)`, `domain_layer`는 아무것도 의존하지 않는다.
 
@@ -159,7 +164,7 @@ HTTP 오류를 직접 공개하는 BC는 `presentation_layer/schema/error_out.py
 - **도메인 이벤트 흐름**: 발생(raise)은 `domain_layer` 애그리거트, 디스패치 타이밍은 UoW(§3.7 [의사결정#7]), 발행은 기본 **`transaction.on_commit()`**(§6.3), 외부 부수효과 유실이 치명적인 Risky Write만 **outbox**. 발행/전달 구체는 `implementation-django` §16.5·`architecture-db` §9.7 소유라 별도 `event_publisher/` 디렉터리를 두지 않는다.
 - **표현 계층은 얇은 입력 어댑터**(§6.1 interface, §3.6): api는 요청 파싱 → 응용 호출 → 응답·예외 변환만 하고 비즈니스 로직을 두지 않는다. **응답은 `schema_out`(DTO)로 노출하고 도메인 엔티티를 직접 직렬화하지 않는다**(Published Language 경계). HTTP 계약·status·Ninja `Router`/`Schema`/auth 구체는 `architecture-api`·`implementation-django-ninja` 소유.
 - **HTTP 오류 import 경계**: domain/application/infra는 Django Ninja, HTTP response, `common.ninja.response.ErrorOut`, 자기 BC presentation `ErrorOut`에 의존하지 않는다. 어떤 계층도 다른 BC의 `ErrorCode`/`ErrorOut`을 import하지 않는다. 다른 BC의 domain/application 예외 import는 명시적인 소비측 `infra_layer/acl/` 안에서만 허용하며, ACL은 이를 소비 BC 자신의 구체 domain/application 예외로 번역한다. presentation/application이 다른 BC 예외를 직접 import·catch하는 것은 금지다.
-- **테스트는 의미군으로**(implementation-test §4.2): 앱별 `<app>/test/{unit,integration,e2e}/`. 도메인·응용 단위 테스트는 `unit/`, DB·리포지토리·HTTP 엔드포인트 테스트는 `integration/`. 엔드포인트별 평면 나열(`test/api/...`)은 두지 않는다.
+- **승인된 테스트만 의미군으로**(implementation-test §4.2): 실제 승인 artifact가 있을 때 기존 프로젝트 테스트 위치를 우선하고, 확립 위치가 없으면 앱별 `<app>/test/{unit,integration,e2e}/`를 쓴다. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP endpoint=`integration/`. 이 배치 규칙은 test 생성 근거가 아니며 기존 테스트 자동 이동·분할과 빈 패키지 생성을 요구하지 않는다.
 
 ### 컨텍스트 간 통신 — OHS (제공 컨텍스트 소유)
 
@@ -187,7 +192,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 **제공 측 예외 번역 — exception_contract가 단일 출처.** OHS 함수는 도메인·응용 예외를 exception_contract에 선언된 published 예외로 번역해 던진다 — 도메인 예외의 raw 전파·재노출(`__all__` 포함) 금지. 재노출하면 소비 BC가 우리 `domain_layer` 타입 정체성에 결합해 §2.5 published language 경계가 무력화된다(소비 측 ACL 조문의 "동일 의미면 명시적 재노출"은 소비 측 ACL이 *업스트림 예외*를 포트 선언에 명시하고 그대로 통과시키는 허용이지, 제공 측이 자기 도메인 타입을 공개 계약에 올리는 면허가 아니다). exception_contract의 모든 예외는 서비스당 1개의 published base 예외를 상속한다(base 자신 제외·중간층 경유 전이 상속 허용 — `implementation-python` §15.2 최상위 예외, 소비자의 가족 단위 catch). 번역은 알려진 구체 예외의 전수 명시 매핑으로 하고, 폴백을 둘 경우 도메인·응용 예외 base 단위 catch에 한정하며(`except Exception` 광범위 포괄 금지 — 프로그래밍 오류는 published로 위장하지 않고 raw 전파가 정상) 폴백 published 타입은 retryable 의미로 위장하지 않는 중립 타입으로 정한다(`implementation-django-ninja` §6.2 동방향). **transient 짝 조항**: raw `OperationalError` 같은 미승인 인프라 실패는 published 오류로 감싸거나 presentation/global recognizer에서 분류하지 않는다. HTTP까지 도달하면 framework의 미식별 500이 기본이다. 안정된 공개 의미가 G1에서 승인된 실패만 owning infra/ACL이 자기 BC의 구체 domain/application exception으로 정규화하고, 그 BC controller가 직접 매핑한다. 인프라 예외를 합성해 신호하지 않는다.
 
-**contract 무의존 — import 방향.** contract 모듈은 domain·application·infra 어느 계층도 import하지 않는다(표준 라이브러리·같은 서비스 contract만) — 소비 BC의 계약 import가 무거운 그래프(Django 앱 로딩)를 끌고 오지 않게 하는 격리이고, 도메인 enum을 계약 필드 타입으로 노출하면 소비 BC가 우리 내부 enum에 결합한다(`architecture-ddd` §2.5 — BC 간 연결은 계약 타입 또는 wire value). **birth-enum 짝**: 우리 BC가 발행하는 이벤트 봉투를 OHS 계약으로도 노출할 때의 discriminator 자리는 이 격리가 우선한다 — domain enum 파생(`Literal[EventType.X]`) 대신 wire `Literal["…"]`을 유지하고 union-enum 동기 테스트(`implementation-test` §15.5)로 드리프트를 방어한다(`discipline-cleancode` §2.14 허용 목록 짝 조항의 명시 예외 — cleancode 쪽 카브아웃과 세트). contract 내부는 패키지 granularity로 `request_contract/* → response_contract/*` 단방향만 허용하고(영수증류 response를 후속 request가 필드로 품는 경우), 같은 kind 안에서는 연산 파일→공유 모듈 방향만 허용한다(연산 파일 간 직접 import 금지 — 공유가 생기면 공유 모듈로 내린다). `exception_contract/*`는 다른 kind 패키지의 모듈을 import하지 않고(자기 패키지 안 base 모듈 — published base·중간층 base — import는 상속 배선이라 허용) 계약 타입을 예외 필드에 싣지 않는다 — 멱등 재생이 기존 결과를 알려야 하면 예외에 결과 객체를 싣지 말고 response contract의 재생 표기(`replayed` 류)로 반환한다. 같은 격리 이유로 `<service>_service.py`의 composition_root import는 함수 내부 지연 import를 허용한다(사유 주석 1줄).
+**contract 무의존 — import 방향.** contract 모듈은 domain·application·infra 어느 계층도 import하지 않는다(표준 라이브러리·같은 서비스 contract만) — 소비 BC의 계약 import가 무거운 그래프(Django 앱 로딩)를 끌고 오지 않게 하는 격리이고, 도메인 enum을 계약 필드 타입으로 노출하면 소비 BC가 우리 내부 enum에 결합한다(`architecture-ddd` §2.5 — BC 간 연결은 계약 타입 또는 wire value). **birth-enum 짝**: 우리 BC가 발행하는 이벤트 봉투를 OHS 계약으로도 노출할 때의 discriminator 자리는 이 격리가 우선한다 — domain enum 파생(`Literal[EventType.X]`) 대신 wire `Literal["…"]`을 유지한다. union-enum 동기는 중앙 test admission 후보이며 승인된 공개 wire와 독자 failure가 `add/update`일 때만 `implementation-test` §15.5 mechanics로 검증한다(`discipline-cleancode` §2.14 허용 목록 짝 조항의 명시 예외). contract 내부는 패키지 granularity로 `request_contract/* → response_contract/*` 단방향만 허용하고(영수증류 response를 후속 request가 필드로 품는 경우), 같은 kind 안에서는 연산 파일→공유 모듈 방향만 허용한다(연산 파일 간 직접 import 금지 — 공유가 생기면 공유 모듈로 내린다). `exception_contract/*`는 다른 kind 패키지의 모듈을 import하지 않고(자기 패키지 안 base 모듈 — published base·중간층 base — import는 상속 배선이라 허용) 계약 타입을 예외 필드에 싣지 않는다 — 멱등 재생이 기존 결과를 알려야 하면 예외에 결과 객체를 싣지 말고 response contract의 재생 표기(`replayed` 류)로 반환한다. 같은 격리 이유로 `<service>_service.py`의 composition_root import는 함수 내부 지연 import를 허용한다(사유 주석 1줄).
 
 **이주 — 구 read/write·평면 OHS·구 3파일형 contract.** 구 구조는 '확립된 규약'으로서 신 규약 적용을 영구 면제하지 않는다: **새 서비스·새 공개 함수는 신 구조로만 추가한다**(구 `read.py`/`write.py`·구 3파일형 계약 모듈(2026-07-07형 `request_contract.py` 등)에 표면을 늘리지 않는다). 기존 함수의 국소 수정은 미이주로 허용한다 — OHS 이주는 타 BC 소비자의 import 경로를 깨는 파괴적 변경이므로 전면 이주는 별도 스코프(G1 트레이드오프)로 올린다. 3파일형 서비스에 새 연산을 추가할 때는 같은 이름의 모듈과 패키지가 공존할 수 없으므로 **그 kind만 패키지로 승격**하고 ⒝ 심으로 구 import 경로를 한시 유지한다(부분 이주 — 전면 이주 G1과 구분). kind를 승격하면 그 kind 안의 *기존* 계약 클래스도 연산당 1파일·공유 모듈로 재배치한다(소비자 경로는 ⒝ 심이 보존하므로 비파괴) — '기존 함수 국소 수정 미이주 허용'은 미승격 kind·구형 모듈에 한정한다. 이주 호환 심은 2형이다(재노출 금지 조문의 한시 예외 2형): ⒜ 구 read/write 평면 모듈이 신 구조를 재노출 ⒝ 3파일형→3패키지형 전환 시 `<kind>_contract/__init__.py`가 연산·공유 모듈을 재노출 — 둘 다 deprecation 주석을 명기하고 소비자 갱신과 함께 제거한다.
 
@@ -199,7 +204,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 ## §3 폴더별 레퍼런스 (존재 이유 · 위치 파일)
 
-`(코어)`는 항상 두고, `[선택]`(코드 골격)은 폴더를 항상 생성하되 트리거 조건 미충족 시 비어 있을 수 있다(생략 아님 — §0 불변식). 단 **테스트 의미군**(`e2e/` 등)은 `implementation-test` §4.2 소관이라 거기선 `e2e`가 진짜 선택이다(코드 골격 불변식과 별개). **`[통합 시]` 폴더**(`domain_layer/<aggregate>/port/`·`infra_layer/acl/`)도 2026-06-08 개정으로 **`[선택]`과 동일하게 폴더를 항상 빈 패키지로 생성한다** — 이전엔 '소비할 때만 생성·없으면 폴더 미생성'이었으나, 모든 BC가 동일 트리 골격을 갖도록 *폴더는 무조건 두고 ACL 어댑터·협력 포트 코드는 다른 컨텍스트를 실제 소비할 때만 채운다*(폴더=골격 불변식, 코드=통합 트리거).
+`(코어)`는 항상 두고, `[선택]`(코드 골격)은 폴더를 항상 생성하되 트리거 조건 미충족 시 비어 있을 수 있다(생략 아님 — §0 불변식). 단 **테스트 위치·의미군 전체**는 코드 골격 불변식이 아니다. 중앙 admission을 통과한 실제 artifact가 있을 때만 `implementation-test` §4.2에 따라 만들며, 테스트가 없는 BC에는 `test/`나 빈 `unit/integration/e2e` 패키지를 만들지 않는다. **`[통합 시]` 폴더**(`domain_layer/<aggregate>/port/`·`infra_layer/acl/`)도 2026-06-08 개정으로 **`[선택]`과 동일하게 폴더를 항상 빈 패키지로 생성한다** — 이전엔 '소비할 때만 생성·없으면 폴더 미생성'이었으나, 모든 BC가 동일 트리 골격을 갖도록 *폴더는 무조건 두고 ACL 어댑터·협력 포트 코드는 다른 컨텍스트를 실제 소비할 때만 채운다*(폴더=골격 불변식, 코드=통합 트리거).
 
 **최상위 · 공용**
 
@@ -264,7 +269,7 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 | `api/<feature>/` | HTTP **입력 어댑터**(얇게, §6.1 interface) | `<aggregate>_controller.py` → `class OrderController`(`@api_controller`); 함수형 레거시는 `api_<resource>.py` (Ninja Router 또는 `@api_controller` 클래스) |
 | `schema/` | BC 입출력 계약 DTO(Ninja Schema) | `schema_in.py`·`schema_out.py`; HTTP 오류를 직접 공개하는 BC만 `error_out.py` 정확히 1개(`<Bc>ErrorCode`·`<Bc>ErrorOut`·concrete 전부), 공개 오류가 없으면 미생성. **응답은 `schema_out`**, 도메인 직접 노출 금지 |
 | `<app>/published_service/` | 컨텍스트 간 **OHS**(다른 앱에 노출, §2.5/§6.7) | `<service>_service/`(서비스 1차) → `<service>_service.py`(공개 함수)·`contract/{request,response,exception}_contract/`(3패키지 — request/response는 연산당 1파일 `<operation>_<kind>_contract.py`, exception은 base `<service>_published_error.py`+예외 클래스당 1모듈; §2 OHS 내부 구조). 다른 앱은 **이것만** import(모듈 경로 직접 — `__init__` 재노출 없음) |
-| `<app>/test/` | 앱별 테스트 — **의미군 분리**(implementation-test §4.2) | `test/{unit,integration,e2e,factories}/`. 도메인·응용 단위=`unit/`, DB·리포지토리·HTTP 엔드포인트=`integration/`, factory_boy 팩토리=`factories/`. 엔드포인트별 평면 나열 금지 |
+| `<app>/test/` | 중앙 admission을 통과한 실제 앱별 테스트가 있을 때만 — **의미군 분리**(implementation-test §4.2) | 기존 프로젝트 테스트 위치 우선; 없으면 `test/{unit,integration,e2e,factories}/`. 승인 artifact만 배치하고 factory는 실제 소비할 때만 둔다. 구조만으로 생성·move/split하거나 빈 package를 만들지 않음 |
 | HTTP 등록 | BC의 side-effect-free registrar | `presentation_layer/registrar.py` → `register_<bc>_api(api)`가 전달받은 API에 자기 controller만 등록. project API import·함수 밖 등록 금지, controller는 `auto_import=False` |
 | 조립(배선) | DI 컴포지션 루트 — use-case·application 로직(command/query/service 등) 가진 BC는 **반드시 둔다**(데이터소스 BC=빈 `application_layer`는 생략) | `composition_root.py`를 **만들어** `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리로 구체 infra를 use-case에 매요청 주입하고, presentation은 그 팩토리를 **매요청 호출만** 한다. API/controller 등록 금지. 결정적 백스톱 `check-composition-root`이 정본 부재·off-tree·오배치를 집행 |
 
@@ -321,4 +326,4 @@ OHS를 한 폴더(중앙 `bridge/`)에 모으지 않는다 — 한 컨텍스트�
 
 - `architecture-ddd` §6.1 — 4계층 패키지 구조(`src/<context>/{domain,application,infrastructure,interface}/`). 이 표준은 같은 4계층을 `application/<app>/{..._layer}` 명명으로 구체화한 변종이다.
 - `implementation-django` §3.1 — 표준 Django 레이아웃(`config/settings/` 분할 + `apps/<app>/`). 설정 분할·앱 단위 조직의 근거.
-- `implementation-test` §4.2 — 테스트 의미군(`{unit,integration,e2e}`) 조직의 단독 소유자. `<app>/test/` 내부 구조가 여기서 온다.
+- `implementation-test` §4.2 — 실제 승인된 test artifact의 의미군(`{unit,integration,e2e}`) 조직 단독 소유자. `<app>/test/` 내부 구조가 여기서 오며 테스트 존재 자체를 요구하지 않는다.

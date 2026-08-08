@@ -1,6 +1,6 @@
 ---
 name: discipline-houserules
-description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①파일트리·디렉터리 구조·명명 규약(소스 레이아웃·테스트 의미군 분리·기존 규약 우선·평면 나열 방지·ORM/포트 클래스·파일 명명) ②타입 어노테이션 강제 수위(시그니처 필수·지역변수 권장) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python. 표준 파일트리는 references/final.md가 단일 출처이고, 그 배경 이론은 architecture-ddd(§6.1)·implementation-django(§3.1), 테스트 타입 조직은 implementation-test(§4.2)로 위임.
+description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①파일트리·디렉터리 구조·명명 규약(소스 레이아웃·승인된 테스트 의미군 분리·기존 규약 우선·평면 나열 방지·ORM/포트 클래스·파일 명명) ②타입 어노테이션 강제 수위(시그니처 필수·지역변수 권장) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python. 표준 파일트리는 references/final.md가 단일 출처이고, 그 배경 이론은 architecture-ddd(§6.1)·implementation-django(§3.1), 테스트 타입 조직은 implementation-test(§4.2)로 위임.
 ---
 
 # 하우스룰 규율
@@ -41,14 +41,14 @@ description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①�
    - **오류 brownfield** — 관찰된 승인 status/body/header/media type과 기존 RFC 9457 compatibility를 보존하고 code-profile로 자동 이주·혼합하지 않는다. 새/touched 범위의 프로필·version·동시 rollout은 G1 결정이며, 기존 RFC 원인 사슬 보존은 그 compatibility 범위에서만 유지한다. 상세 `references/final.md` §1·§2.
    - **DI 컴포지션 루트(조건부)** — use-case·application 로직(command/query/service 등)을 가진 BC는 BC 루트 `composition_root.py`를 만들어 `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리로 구체 infra를 매요청 주입하고 presentation은 호출만 한다(operation·application service 본문 직접 new-up 금지=Q-7 짝). 데이터소스 BC(빈 `application_layer`)는 생략. 상세 `references/final.md` §0 표·`implementation-django-ninja` 컴포지션 루트 절.
    - **상수·Enum 배치** — BC 내부 enum은 그 BC `domain_layer/` 소유(단일 출처; ORM `choices`·Schema는 파생·역참조 금지·`default=`는 `.value` 평탄화), 타 BC 직접 import 금지, `common/enum/` 승격은 공유 커널 결정(같은 지식 + 같은 변경 사유 근거)일 때만. 상세 `references/final.md` §1·`architecture-ddd` §2.5·§3.2·`implementation-django` §2.5.
-3. **테스트는 의미군으로 분리한다(평면 나열 금지).** `test_*.py`를 한 디렉터리에 의미 구분 없이 쏟지 않는다. 최소한 unit/integration(/e2e 또는 그에 준하는 분류)으로 나눈다 — 테스트 타입 조직은 `implementation-test` §4.2가 단독 소유한다(`implementation-django` §3.1도 이를 §4.2에 위임). 표준 트리에서는 앱별 `application/<app>/test/{unit,integration,e2e}/`에 둔다(`references/final.md` §2; HTTP 엔드포인트 테스트는 `integration/`). factory_boy 팩토리는 그 앱의 `test/factories/`에 둔다(§2 — 의미군과 같은 레벨의 적법한 테스트 하위폴더). 기존 규약이 앱별 `tests/`면 그 *안에서* 의미군 하위 분리를 둔다.
-4. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 한 번 택한 소스/테스트 레이아웃을 기능 전체에 일관 적용한다.
+3. **승인된 test artifact가 실제 있을 때만 의미군으로 조직한다.** 중앙 test admission이 `add/update`한 artifact 또는 `retain`하면서 의미 보존 재조직이 별도 승인된 기존 artifact만, 기존 프로젝트 테스트 위치나 표준 `application/<app>/test/` 안에서 unit/integration(/e2e) 의미군으로 둔다(`implementation-test` §4.2; HTTP endpoint=`integration/`, factory_boy=`factories/`). 구조 규칙 자체는 test file/case/assertion/support package를 만들거나 기존 테스트를 자동 move/split/rename하지 않는다. 승인된 테스트가 없는 BC에는 빈 `test/`·`tests/`·의미군 패키지를 강제하지 않는다.
+4. **한 프로젝트 안에서 레이아웃을 혼용하지 않는다.** 소스와 새로 배치하도록 승인된 테스트의 대상 레이아웃을 기능 전체에 일관 적용한다. 이 규칙만으로 기존 테스트 이동 권한이 생기지는 않는다.
 
 ## §2 충돌 중재 (코퍼스가 어긋날 때)
 
 코퍼스의 구조 규칙(`architecture-ddd` §6.1의 `src/<context>/` 4계층 ↔ `implementation-django` §3.1의 `apps/<app>/`)은 서로 다른 트리를 제시하지만, dddjango는 이 둘을 **런타임에 택일하지 않는다** — `references/final.md`가 단일 출처이고 §6.1/§3.1은 그 표준이 파생된 배경이다. 남는 변수는 §1.1(기존 프로젝트에 이미 확립된 규약)뿐이고, 그 경우 일관성을 위해 기존 규약을 따른다(표준을 그 위에 강제하지 않음).
 
-- **테스트 타입 조직**(unit/integration/e2e 의미군)은 `implementation-test` §4.2가 단독 소유한다(§3.1도 §4.2에 위임). 표준 트리는 이를 앱별 `application/<app>/test/`에 적용한다(§1.3). 기존 규약이 있으면 그 `tests/` 위치를 따르되 내부는 의미군 분리.
+- **테스트 타입 조직**(unit/integration/e2e 의미군)은 `implementation-test` §4.2가 단독 소유한다(§3.1도 §4.2에 위임). 실제 승인된 artifact에만 적용하며, 기존 규약이 있으면 그 테스트 위치를 따르고 없으면 앱별 `application/<app>/test/`를 쓴다. 구조만으로 기존 테스트를 옮기거나 빈 패키지를 만들지 않는다.
 
 ## §3 평면 금지 레드 플래그
 
@@ -69,8 +69,8 @@ description: dddjango 플러그인 고유 하우스룰 — 생성 코드의 ①�
 - **오류 계층 누수·raw infra 분류** — inner layer가 Ninja/HTTP/ErrorOut에 의존하거나 다른 BC ErrorCode/ErrorOut을 import하고, presentation/application이 타 BC exception을 직접 catch하거나 raw `OperationalError`를 global recognizer로 503/409에 분류한다.
 - **brownfield 자동 이주** — 관찰·승인된 기존 오류 계약을 G1 결정 없이 새 code-profile로 바꾸거나 두 프로필을 한 scope에 섞는다.
 - **command/query 연산 모듈에 공개 dataclass 인라인** — 유스케이스 반환·공유 데이터 계약이 `dto/`(반환 `<usecase>_result.py`·입력 `<usecase>_request.py`)를 이탈해 연산 파일에 정의되거나, `_` 사설 dataclass를 `execute()`가 반환한다(사설 위장 반환). 연산 모듈의 공개 표면은 연산 클래스뿐이다(`references/final.md` §3 표 dto/·§2 — 결정적 백스톱 `check-usecase-dto-placement` 집행; `_` 사설 내부 스테이징(비반환·비수출) 인라인과 `@dataclass class …Command` DI 필드 스타일 연산 클래스는 정당).
-- `test_*.py`가 의미군(unit/integration/…) 없이 한 디렉터리에 평면으로 나열돼 있다.
-- 인수 테스트와 단위 테스트가 같은 평면에 섞여 있다.
+- 승인된 `add/update` 또는 의미 보존 재조직 대상 `test_*.py`가 의미군(unit/integration/…) 없이 한 디렉터리에 평면으로 나열돼 있다.
+- 승인된 조직 대상의 인수 테스트와 단위 테스트가 같은 평면에 섞여 있다.
 - `startproject`/`startapp` 직후의 미조직 구조를 그대로 이어 쓴다.
 - 한 기능 안에서 `src/` 레이아웃과 `apps/` 레이아웃이 섞인다.
 

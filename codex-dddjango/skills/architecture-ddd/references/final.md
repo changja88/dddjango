@@ -633,7 +633,7 @@ class OrderRich:
 
 **상태·종류 값 집합의 표기와 계층 소유 — 단일 출처는 도메인 enum이다.** 생명주기·상태 전이·terminal 여부를 갖는 도메인 상태값과 종류 코드(type code)는 낱개 문자열 상수가 아니라 domain_layer의 `StrEnum`(또는 순수 `Enum`) 하나로 선언하고, ORM `choices`/`CheckConstraint`·presentation Schema는 거기서 파생한다 — import 방향은 infra/presentation→domain만 허용한다(`models.TextChoices` 자체 선언은 도메인 판정에 쓰이지 않는 순수 인프라 필드 한정; ORM `default=` 등 직렬화 경계는 `.value` 평탄화 — `implementation-django` §2.5). 소비는 심볼로만, 비교는 `==`로 한다 — 원시 리터럴 비교는 오타가 조용한 False로 잠복하고, `is`는 str로 흐르는 값에서 수화 누락 시 같은 실패를 오타 없이 만든다. 단 심볼 비교 자체가 목적지가 아니다: 도메인 어휘로 진술되는 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티(§3.3의 `OrderStatus.is_shippable`)이고, 심볼 비교는 그 술어 내부·리포지토리 필터·ACL 정규화 같은 잔여 위치에 남는다(승격 판정·허용 목록은 `discipline-cleancode` §2.14). 값에 검증·연산·불변식이 붙으면(집합의 폐쇄성과 무관하게) enum이 아니라 값 객체 승격 대상이다(§3.1의 `CountryCode`·`PhoneNumber`가 그 예).
 
-**판정을 소유하면 그 코드는 도메인 컨텍스트가 되어 표준 구조로 이주한다 — 소유는 구조까지 정한다.** 스코프가 기존 평면 코드(판정 없는 Django 모델 등)에 새 판정·불변식을 얹게 되면, 그 코드는 판정을 소유하는 도메인 컨텍스트가 된 것이므로 `domain_layer`의 애그리거트로 존재해야 한다 — 평면 모델에 판정 메서드를 직접 얹지 않는다(ORM≠도메인, 빈혈 회귀). 이주 기준은 *"레거시냐"가 아니라 "판정·불변식을 소유하느냐"*다: (1) 판정·불변식을 소유하면 도메인 컨텍스트 → 표준 구조로 이주한다. (2) 판정을 다른 컨텍스트가 소유하고 이 코드는 단순 상류 데이터 소스(필드·DB 제약만, 판정 없음)면 **도메인 판정 *실내용*(애그리거트 루트·도메인서비스의 판정 `.py` 코드)만 비운다** — 빈혈 회귀 방지로 평면 모델에 판정 메서드를 얹지 않는다. **표준 트리 *골격*은 데이터소스도 예외 없이 빈 패키지(`__init__.py`)로 실현한다 — `discipline-houserules` §0(위치·4계층·개념 1차·종류 2차) 불변식에 *깊이 면제는 없다*(이전의 '4계층/애그리거트 전개 면제'는 2026-06-08 폐지; 면제는 판정 실내용에 한정).** 데이터소스 BC: 위치 `application/<app>/`; `infra_layer/django_<app>/`에 ORM 실체; `domain_layer/<aggregate>/`에 *빈* 애그리거트 골격(종류 폴더 전부) — **애그리거트 1차 폴더명은 ORM 모델명에서 도출**(`ProductModel`→`domain_layer/product/`); 유스케이스(application feature)를 다른 BC가 소유해 이 BC엔 feature가 없으면 `application_layer`는 빈 계층 폴더로 둔다(§0-3 개념 1차는 *개념 식별 시*). `infra_layer`의 `repository`/`acl`/`adapter`·`presentation_layer`의 `api`/`schema`·`test` 의미군도 빈 패키지로 존속한다. 루트 평면 `<app>/`은 `discipline-houserules` §0-1 위반이다. 이 골격 실현은 *이번 작업이 touched한* 그 코드에 한정하며, 무관·미관여 기존 앱은 §1.1로 존중한다. (3) 컨텍스트 간 접근은 ACL 또는 published_service(OHS)로만 한다 — 다른 컨텍스트의 `domain_layer`/`infra_layer`를 직접 import하지 않는다(패턴 §2.5, 배치 `discipline-houserules` `references/final.md` §2 컨텍스트 간 통신). 단 대상 프로젝트에 이미 확립된 레이아웃 규약이 있으면 그 일관성을 존중하고(`discipline-houserules` §1.1), 이 이주는 *판정이 새로 얹히는 그 코드*에 한정한다 — 무관한 기존 코드를 표준으로 일괄 강제하지 않는다.
+**판정을 소유하면 그 코드는 도메인 컨텍스트가 되어 표준 구조로 이주한다 — 소유는 구조까지 정한다.** 스코프가 기존 평면 코드(판정 없는 Django 모델 등)에 새 판정·불변식을 얹게 되면, 그 코드는 판정을 소유하는 도메인 컨텍스트가 된 것이므로 `domain_layer`의 애그리거트로 존재해야 한다 — 평면 모델에 판정 메서드를 직접 얹지 않는다(ORM≠도메인, 빈혈 회귀). 이주 기준은 *"레거시냐"가 아니라 "판정·불변식을 소유하느냐"*다: (1) 판정·불변식을 소유하면 도메인 컨텍스트 → 표준 구조로 이주한다. (2) 판정을 다른 컨텍스트가 소유하고 이 코드는 단순 상류 데이터 소스(필드·DB 제약만, 판정 없음)면 **도메인 판정 *실내용*(애그리거트 루트·도메인서비스의 판정 `.py` 코드)만 비운다** — 빈혈 회귀 방지로 평면 모델에 판정 메서드를 얹지 않는다. **표준 트리 *골격*은 데이터소스도 예외 없이 빈 패키지(`__init__.py`)로 실현한다 — `discipline-houserules` §0(위치·4계층·개념 1차·종류 2차) 불변식에 *깊이 면제는 없다*(이전의 '4계층/애그리거트 전개 면제'는 2026-06-08 폐지; 면제는 판정 실내용에 한정).** 데이터소스 BC: 위치 `application/<app>/`; `infra_layer/django_<app>/`에 ORM 실체; `domain_layer/<aggregate>/`에 *빈* 애그리거트 골격(종류 폴더 전부) — **애그리거트 1차 폴더명은 ORM 모델명에서 도출**(`ProductModel`→`domain_layer/product/`); 유스케이스(application feature)를 다른 BC가 소유해 이 BC엔 feature가 없으면 `application_layer`는 빈 계층 폴더로 둔다(§0-3 개념 1차는 *개념 식별 시*). `infra_layer`의 `repository`/`acl`/`adapter`·`presentation_layer`의 `api`/`schema` 의미군은 빈 패키지로 존속한다. `test` 의미군은 `discipline-tdd` 입장 심사에서 실제 테스트가 승인된 경우에만 패키지와 레이아웃을 만든다. 루트 평면 `<app>/`은 `discipline-houserules` §0-1 위반이다. 이 골격 실현은 *이번 작업이 touched한* 그 코드에 한정하며, 무관·미관여 기존 앱은 §1.1로 존중한다. (3) 컨텍스트 간 접근은 ACL 또는 published_service(OHS)로만 한다 — 다른 컨텍스트의 `domain_layer`/`infra_layer`를 직접 import하지 않는다(패턴 §2.5, 배치 `discipline-houserules` `references/final.md` §2 컨텍스트 간 통신). 단 대상 프로젝트에 이미 확립된 레이아웃 규약이 있으면 그 일관성을 존중하고(`discipline-houserules` §1.1), 이 이주는 *판정이 새로 얹히는 그 코드*에 한정한다 — 무관한 기존 코드를 표준으로 일괄 강제하지 않는다.
 
 ### 3.3 애그리거트 (Aggregate)
 
@@ -1194,16 +1194,16 @@ class UnitOfWork:
 - 단순 in-process 후속 작업이며 `transaction.on_commit()`으로 충분하다.
 - 유실 가능성을 제품이 수용하거나 별도 운영 부담이 과하다.
 
-**Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 전달 메커니즘(at-least-once, consumer 멱등성, retry/dead-letter, 디스패처 운영)은 `architecture-db`(§9.7)가 소유하고, Django 트랜잭셔널 outbox 구체 구현은 `implementation-django`(§16.5)가, 신뢰성 검증은 `implementation-test`가 담당한다.
+**Outbox 채택 시 명시할 항목:** 애그리거트와 outbox 메시지를 쓰는 트랜잭션 owner, dispatcher owner, 전달 보장(delivery guarantee), consumer 멱등성 기준, retry/dead-letter 정책의 소유 영역, 발행 언어(published language) 필드. 전달 메커니즘(at-least-once, consumer 멱등성, retry/dead-letter, 디스패처 운영)은 `architecture-db`(§9.7)가 소유하고, Django 트랜잭셔널 outbox 구체 구현은 `implementation-django`(§16.5)가 담당한다. 신뢰성 검증 항목은 자동 테스트 세트가 아니라 `discipline-tdd` 입장 심사에 제출할 위험·failure 후보이며, `add` 결정 뒤의 작성 mechanics만 `implementation-test`가 담당한다.
 
 #### 발행 이벤트 타입 — 1종째부터 enum (birth-enum)
 
 **우리 BC가 발행하는 이벤트 봉투의 타입 판별자(discriminator — `event_type` 류)는 이벤트 종류가 1종일 때부터 domain_layer의 `StrEnum` 하나로 선언한다.** 트리거는 위치다: 발행 봉투의 판별자라는 구조 자체가 종류 확장의 증거이고, 이 값은 outbox 저장(위 Outbox·`implementation-django` §16.5)과 wire 노출로 §3.2 계층 소유의 승격 앵커(저장·계약 노출)에 기본 도달한다 — "분기가 생기면 승격"의 판정을 확장 시점의 코더에게 미루지 않고 탄생 시점에 확정한다(판단형 규칙은 준수율이 낮고, 승격 누락은 신호 없이 표류하며 이벤트가 늘수록 비쌈). 이름 기반 트리거는 여전히 금지다 — 이름이 type/kind라는 이유의 승격 금지, pass-through 상류 type 필드·데이터소스 BC 면제는 `discipline-cleancode` §2.14 그대로.
 
 - **배치·소유**: 발행 BC domain_layer의 이벤트 슬롯 `domain_layer/<aggregate>/event/event_type.py`(`discipline-houserules` §2). BC 내부 소유 — 다른 BC가 직접 import하지 않는다(§2.5 published language: 소비 BC는 wire 값을 각자 수용). 경계-로컬(presentation 봉투 모듈) 배치를 쓰지 않는 이유: outbox 리포지토리(infra)가 enum을 소비하므로 infra→presentation 역방향 import를 강제하게 된다 — domain 배치면 infra/presentation→domain 허용 방향으로 전원 접근 가능.
-- **파생 표기**: 봉투 계약 Schema의 태그 필드는 `Literal[EventType.X] = EventType.X`로 파생한다 — 평(non-Literal) Enum 필드는 discriminator로 쓸 수 없으므로(Pydantic) Literal 파생이 유일 경로다(wire 표기·봉투 union은 `implementation-django-ninja` §3.1, union-enum 동기 계약 테스트는 `implementation-test` §15.5 — 세트). ORM `default=`·마이그레이션 경계는 `.value` 평탄화(`implementation-django` §2.5).
+- **파생 표기**: 봉투 계약 Schema의 태그 필드는 `Literal[EventType.X] = EventType.X`로 파생한다 — 평(non-Literal) Enum 필드는 discriminator로 쓸 수 없으므로(Pydantic) Literal 파생이 유일 경로다(wire 표기·봉투 union은 `implementation-django-ninja` §3.1). union-enum 동기 검증은 `discipline-tdd` 입장 심사 후보이며, 공개/wire 드리프트가 독자 production failure이고 기존 권위 테스트가 보호하지 않을 때만 `add`한다. 승인 뒤 mechanics는 `implementation-test` §15.5를 따른다. ORM `default=`·마이그레이션 경계는 `.value` 평탄화(`implementation-django` §2.5).
 - **수명 — append-only**: 멤버는 추가만 한다. **값 변경·삭제 금지** — 발행된 메시지·outbox 행·소비자 계약에 옛 값이 살아 있다(protobuf enum 진화 규칙·마이그레이션 historical value와 동형). 이벤트 폐기는 멤버 삭제가 아니라 발행 중단+주석 표기. 스키마 비호환 변경은 기존 값 수정이 아니라 새 버전 태그(필요시 새 멤버) 추가+upcasting이다(Greg Young — "old version에서 convertible하지 않으면 새 버전이 아니라 새 이벤트다"; CloudEvents 동방향).
-- **제외(짝 조항)**: `payload_schema_version` 등 스키마 버전 태그는 판별자와 형태가 같지만(단일 멤버 Literal+같은 기본값) **리터럴 동결 유지** — 발행 순간 동결되는 계약 표식이라 enum화는 "수정 가능한 중앙 등록부"라는 잘못된 어포던스를 만든다. 상류 이벤트를 중계만 하는 **소비 측** 스키마의 태그도 비대상(published language 수용). **OHS published contract(`published_service/*/contract/`)로 발행 봉투를 노출할 때의 discriminator 자리도 비대상** — contract 무의존(`discipline-houserules` §2 OHS 내부 구조)이 우선해 wire `Literal["…"]`을 유지하고, union-enum 동기 테스트(`implementation-test` §15.5)가 드리프트를 방어한다(`discipline-cleancode` §2.14 재예외와 세트).
+- **제외(짝 조항)**: `payload_schema_version` 등 스키마 버전 태그는 판별자와 형태가 같지만(단일 멤버 Literal+같은 기본값) **리터럴 동결 유지** — 발행 순간 동결되는 계약 표식이라 enum화는 "수정 가능한 중앙 등록부"라는 잘못된 어포던스를 만든다. 상류 이벤트를 중계만 하는 **소비 측** 스키마의 태그도 비대상(published language 수용). **OHS published contract(`published_service/*/contract/`)로 발행 봉투를 노출할 때의 discriminator 자리도 비대상** — contract 무의존(`discipline-houserules` §2 OHS 내부 구조)이 우선해 wire `Literal["…"]`을 유지한다. 드리프트 검증 후보도 위 입장 심사에서 독자 failure와 기존 보호를 판정한다(`discipline-cleancode` §2.14 재예외).
 - **소비자 측 짝 규칙**: 소비 BC는 미지 event_type 처리 방침(UNKNOWN 폴백 또는 명시적 거부)을 함께 정한다 — 발행자의 멤버 추가는 소비자의 완전(match) 분기를 깨므로, 무방침 정규화는 신규 이벤트 도착 시 수집 경로를 죽인다(`discipline-cleancode` §2.14 열린 집합 조항 준용).
 
 ### 3.8 Specification 패턴
@@ -1648,13 +1648,15 @@ my_project/
 │       ├── money.py
 │       └── events.py                # 통합 이벤트 기반 클래스
 │
-├── tests/
+├── tests/                            # 승인된 테스트가 실제 있을 때만 구성
 │   ├── unit/                        # 도메인 로직 단위 테스트
 │   ├── integration/                 # 인프라 통합 테스트
 │   └── e2e/                         # 엔드투엔드 테스트
 │
 └── pyproject.toml
 ```
+
+`tests/` 하위 트리는 `discipline-tdd` 입장 심사에서 실제 테스트가 승인된 뒤 적용하는 레이아웃 예시다. 구조 규칙만으로 빈 test 패키지·새 파일·case를 만들지 않는다.
 
 **핵심 의존성 규칙:**
 - `domain/` -- 어디에도 의존하지 않는다. 순수 Python만 사용
@@ -2009,7 +2011,8 @@ class InventoryACL:
 | 트랜잭션 owner, 부수효과 타이밍 | `implementation-django`(§16) |
 | 락, 격리 수준, 인덱스, rollout | `architecture-db` |
 | 멱등성 저장, `Idempotency-Key`, status code | `architecture-api` |
-| 통합/동시성/멱등성 테스트 | `implementation-test` |
+| 테스트 후보 입장 결정 | `discipline-tdd` |
+| `add`된 통합/동시성/멱등성 테스트 mechanics | `implementation-test` |
 
 ---
 

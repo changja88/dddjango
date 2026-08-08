@@ -99,8 +99,8 @@ dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketpl
 | **Coordinator** | 전체 진행·게이트·산출물 통합 (직접 코드는 안 씀) |
 | **design-architect** | 통합 설계 명세 작성 (계층 배치·파일 구조 결정 포함) |
 | **design-review-ddd / api / db** | 설계를 각자의 관점에서 **병렬 독립 리뷰** |
-| **acceptance-tester** | 실패하는 인수 테스트 작성 (구현 전 기준 고정) |
-| **coder** | TDD로 구현, 인수 테스트를 통과시킴 |
+| **acceptance-tester** | 승인된 외부 계약 테스트만 조정하고 필요한 Red 작성 |
+| **coder** | 승인된 내부 계약만 TDD로 구현하고 기존 검증 anchor를 통과시킴 |
 | **discipline-reviewer** | 구조·타입·클린코드 규율 감수 |
 
 > 리뷰어는 기능에 따라 활성화된다 — **ddd는 항상**, API 계약이 바뀌면 **api**, 스키마·트랜잭션이 바뀌면 **db**가 붙는다.
@@ -110,14 +110,16 @@ dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketpl
 진행은 **3개의 게이트**로 끊긴다. 각 게이트에서 요약을 보고 "승인 / 수정 요청"을 고른다. 승인 전에는 절대 다음으로 넘어가지 않는다.
 
 - **G0 · 요구·경계** — 무엇을 만들지, 어디에 둘지(새 영역 vs 기존 영역 확장), 어떤 리뷰 관점을 켤지 확정한다.
-- **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
-- **G2 · 구현** — 구현 코드 + 테스트 통과 결과 + 감수 리포트 + **19종 결정적 백스톱** 통과를 승인한다.
+- **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과와 **영구 테스트 입장표**를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
+- **G2 · 구현** — 구현 코드 + 승인된 테스트 결정별 결과 + 테스트 diff 감수 + **19종 결정적 백스톱** 통과를 승인한다.
 
 > G2 직전에는 **19종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 Schema·controller 직접 반환·OpenAPI 선언 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
 
-### 테스트는 현행 계약만 본다
+### 테스트는 현행 계약만 보고, 입장 심사 후 만든다
 
-dddjango가 만드는 영구 테스트의 기준은 현재 구현이나 과거 이력이 아니라 **G1/G1′에서 승인된 현행 요구·설계·지원 계약**이다. migration 파일·과거 model state·forward/reverse 자체를 검증하는 새 테스트나 시나리오는 만들지 않는다. 관련 테스트에서 종료된 과거 기대를 발견하면 명시적 종료 근거에 따라 갱신·분리·삭제하고, 지원 중인 구 API·기존 데이터·발행 이벤트·현재 회귀 불변식은 보존한다. migration 구현·rollout/backfill 검토는 계속 수행한다.
+dddjango가 만드는 영구 테스트의 기준은 현재 구현이나 과거 이력이 아니라 **G1/G1′에서 승인된 현행 요구·설계·지원 계약**이다. Architect는 테스트 후보마다 `보호할 계약과 근거`, `그 테스트만 잡는 production failure`, `기존 권위 테스트의 중복 보호`, `결정`, `소유자와 경로`를 적는다. 결정은 `add/update/reuse/retain/remove/reject/pending` 중 하나이며, `pending`은 G1을 막고 `reuse/reject`에서는 새 테스트 파일·case·assertion·helper를 만들지 않는다.
+
+Python·Django·Pydantic의 기본 동작, private helper나 validator 배치, import 성공, coverage 비율은 그 자체로 제품 테스트가 아니다. 반대로 도메인 불변식, application 원자성, 독자적인 DB race/constraint, adapter 변환, 승인된 HTTP·이벤트·공개 consumer 계약은 각자 놓칠 production failure가 있으면 유효하다. migration 파일·과거 model state·forward/reverse 자체를 검증하는 새 테스트나 시나리오는 만들지 않되, 지원 중인 구 API·기존 데이터·발행 이벤트·현재 회귀 불변식을 보호하는 기존 테스트는 보존한다. migration 구현·rollout/backfill 검토도 계속 수행한다.
 
 ### 워크스루: "재고 있을 때만 주문 생성" 기능
 
@@ -129,10 +131,10 @@ dddjango가 만드는 영구 테스트의 기준은 현재 구현이나 과거 �
 Coordinator가 스코프를 정리해 보여준다: "주문 생성 시 재고를 확인·차감. 재고 부족이면 거부." 그리고 묻는다 — 이 기능을 *새 `orders` 영역*으로 둘까, 기존 영역에 넣을까? 리뷰는 ddd + api(엔드포인트 생김) + db(재고 차감=트랜잭션)로 켤까? → 당신이 승인.
 
 **2) 설계 → G1**
-design-architect가 설계 명세를 쓴다 — `Order` 애그리거트, 재고는 다른 컨텍스트라 `ProductStockPort`로 협력, 동시성 안전한 차감 방식, 4계층 파일 배치까지. 동시에 ddd·api·db 리뷰어가 **병렬로** 독립 비평하고, architect가 이를 반영·중재한다. → 최종 설계 명세를 당신이 승인.
+design-architect가 설계 명세를 쓴다 — `Order` 애그리거트, 재고는 다른 컨텍스트라 `ProductStockPort`로 협력, 동시성 안전한 차감 방식, 4계층 파일 배치와 테스트 후보별 입장 결정까지. 동시에 ddd·api·db 리뷰어가 **병렬로** 계약 근거·독자 실패·중복 여부를 비평하고, architect가 이를 반영·중재한다. → 최종 설계 명세와 테스트 입장표를 당신이 승인.
 
 **3) 구현(TDD) → G2**
-acceptance-tester가 먼저 **실패하는** 인수 테스트를 쓴다(예: "재고 3개일 때 5개 주문 → 409, 재고 그대로"). coder가 슬라이스 단위로 Red→Green→Refactor를 돌려 테스트를 통과시키고, discipline-reviewer가 구조·타입을 감수한다. → 코드·테스트·감수 결과를 당신이 승인.
+`add/update`로 승인된 외부 계약이 있으면 acceptance-tester가 먼저 실패하는 인수 테스트를 쓴다(예: "재고 3개일 때 5개 주문 → 409, 재고 그대로"). coder는 승인된 도메인·application·DB·adapter 결정만 슬라이스 단위 Red→Green→Refactor로 구현한다. `reuse`는 기존 테스트를 검증 anchor로만 쓰고, `reject`는 테스트 역할에 보내지 않는다. discipline-reviewer가 각 test diff를 G1 결정과 대조한다. → 코드·테스트·감수 결과를 당신이 승인.
 
 **4) 마무리**
 실제로 돌린 검증만 보고한다 — 테스트 결과, 마이그레이션, `manage.py check`, (구성돼 있으면) mypy strict.
@@ -177,11 +179,11 @@ your_project/
         │   └── schema/
         │       ├── __init__.py
         │       └── error_out.py              # OrderErrorCode·OrderErrorOut·prepared concrete
-        └── test/                           # 의미군 분리
+        └── test/                           # 승인된 테스트가 있을 때만 의미군 분리
             └── unit/  integration/  e2e/
 ```
 
-핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`, 테스트 unit/integration/e2e 분리. **이 규약들은 19종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
+핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`. 테스트가 실제 승인된 경우에만 unit/integration/e2e 의미군으로 배치한다. **이 규약들은 19종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
 

@@ -20,7 +20,7 @@ user-invocable: false
 - 복합 인덱스는 선택도 높은 컬럼을 앞에, 커버링 인덱스로 Index-Only Scan을 목표로, 부분 인덱스로 쓰기 비용을 최소화한다 — 인덱스 설계는 실제 액세스 패턴 기반으로 결정한다 (§7)
 - 비즈니스 불변식이 DB 경계에서 지켜져야 하면 unique constraint·FK·check constraint를 사용하고, 제약조건 rollout은 lock risk를 고려한 단계적 순서를 따른다 (§8)
 - 격리 수준은 필요 이상으로 높이지 않는다: 대부분의 OLTP는 Read Committed, 일관된 읽기가 필요하면 Repeatable Read, 정확성이 최우선인 금융·결제는 Serializable + retry (§9.4)
-- Risky Write(주문·결제·재고·예약·권한·ledger)에는 Transaction owner·Locking strategy·Idempotency storage·Side-effect timing·Isolation/retry·Test criteria를 명시한다 (§9.6)
+- Risky Write(주문·결제·재고·예약·권한·ledger)에는 Transaction owner·Locking strategy·Idempotency storage·Side-effect timing·Isolation/retry와 위험·failure 후보인 Test criteria를 명시한다. Test criteria 자체는 테스트 의무가 아니며, 독자 DB failure와 기존 보호를 비교한 `discipline-tdd` 입장 결정이 `add`일 때만 coder가 새 테스트를 작성한다 (§9.6)
 - 외부 결제·알림·메시지 발행은 DB 트랜잭션 내부에서 실행하지 않는다. 메시지 유실이 허용되지 않으면 트랜잭셔널 Outbox로 at-least-once 전달을 보장하고, consumer는 중복 수신을 무시할 수 있어야 한다 (§9.7)
 - 운영 컬럼·인덱스·constraint 변경은 Expand / Backfill / Contract 단계를 따르고, 대용량 backfill은 슬롯·lock risk를 고려한 배치 처리를 계획한다 (§11)
 
