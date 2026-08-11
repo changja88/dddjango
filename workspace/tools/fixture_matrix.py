@@ -13,8 +13,10 @@ exit 0 = 전수 일치 / exit 2 = 불일치 존재 / exit 1 = 재료 결손.
 """
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import date
 from pathlib import Path
 
@@ -107,7 +109,17 @@ def main(argv: "list[str]") -> int:
     ]
     mismatch: int = 0
     for label, cmd, _fx, want in cases:
-        got: int = subprocess.run(cmd, cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+        # fixture 는 git 밖 «임시 사본»으로 실행한다(hermetic) — 저장소 안 원본을 직접 주면
+        # 검사기의 git/touched 인식이 커밋 상태에 따라 결과를 바꾼다(2026-08-12 release 게이트
+        # 실측: fixture 가 untracked 일 땐 «신규»로 발화했는데 커밋 직후 tracked-무변이 되자
+        # touched 슬라이스가 0건 — 임시 사본은 비-git이라 «전 후보 검사» fail-closed 레인을 탄다).
+        fx_i: int = 3 if cmd[2] == "--scripts-dir" else 2
+        with tempfile.TemporaryDirectory() as td:
+            tmp_fx: Path = Path(td) / "fixture"
+            shutil.copytree(cmd[fx_i], tmp_fx)
+            run_cmd: list[str] = list(cmd)
+            run_cmd[fx_i] = str(tmp_fx)
+            got: int = subprocess.run(run_cmd, cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
         ok: bool = got == want
         if not ok:
             mismatch += 1
