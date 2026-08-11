@@ -17,7 +17,7 @@ Claude 처럼 멱등성 코드를 아예 안 지으면 (2) 에서 자명 통과�
   1) 프로젝트가 표준 레이아웃(`application/`)을 쓴다. 없으면 §1.1 존중 → exit 0.
   2) `application/<bc>/` 프로덕션(test 제외) 코드에 멱등성 *산출물* — 파일명/클래스/`db_table`
      에 `idempotency`, 또는 `Idempotency-Key` 처리 — 이 있고, (git 레포면) 이번 변경에서
-     새로 추가/수정됨(brownfield 의 기존 멱등성은 존중).
+     새로 추가/수정됨(기존 확립된 멱등 계약은 존중 — §13).
   3) `.dddjango/*/scope.md` 가 멱등성을 *미요청으로 단정* 한다(안정 템플릿 "멱등성 … 이번
      요청에 명시되지 않았다 / 이번 요청 아님 / 미요청 / 범위 밖").
   4) scope·design-spec 에 G1 사용자-승인 *채택* 배너("G1 … (사용자 승인) … 멱등성 도입/채택")
@@ -42,8 +42,35 @@ import subprocess
 import sys
 from pathlib import Path
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
+try:
+    import standard_tree as tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 TEST_DIR_NAMES = {"test", "tests"}
+DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+
+
+def _has_adoption_signal(bc_dir: Path) -> bool:
+    """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
+    has_layer = any((bc_dir / n).is_dir() for n in NEW_LAYERS)
+    has_marker = any((bc_dir / m).is_file() for m in DJANGO_APP_MARKERS) or any(
+        p.is_dir() and p.name.startswith("django_") for p in bc_dir.iterdir()
+    )
+    return has_layer or has_marker
+
+
+def _adopted(target: Path) -> bool:
+    for c in target.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIRS:
+            continue
+        for bc in sorted(c.iterdir()):
+            if bc.is_dir() and not bc.name.startswith(".") and _has_adoption_signal(bc):
+                return True
+    return False
 
 # (2) 멱등성 코드 산출물 신호 — 프로덕션 .py 의 파일명 또는 본문.
 _IDEMP_NAME_RE = re.compile(r"idempoten", re.IGNORECASE)
@@ -94,7 +121,7 @@ def _prod_py_under_application(root: Path) -> list[Path]:
 
 
 def _is_new_or_modified(root: Path, file_path: Path) -> bool:
-    """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과 — brownfield 가드는 git 일 때만)."""
+    """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과 — 기존-존중 가드는 git 일 때만)."""
     if not (root / ".git").exists():
         return True
     try:
@@ -172,6 +199,12 @@ def main(argv: list[str]) -> int:
         return 1
     if not _has_application_container(root):
         return 0  # 표준 레이아웃(`application/`) 미적용 → §1.1 존중, 해당 없음.
+
+    # 대상 0건 가드(#74) — 채택 신호는 있는데 application/ 프로덕션 파일이 0건이면
+    # 경로 계약이 어긋난 것이다(조용한 무동작 금지 · 명세 조각 ⓐ).
+    if not _prod_py_under_application(root) and _adopted(root):
+        print("blocker: 채택 신호는 있는데 application/ 프로덕션 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        return 2
 
     artifacts = _idempotency_artifacts(root)
     if not artifacts:

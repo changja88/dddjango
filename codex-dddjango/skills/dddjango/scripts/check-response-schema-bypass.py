@@ -19,6 +19,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
+try:
+    import standard_tree as _tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 OPERATION_CONSTRUCTORS = {
@@ -45,7 +51,30 @@ SKIP_DIR_NAMES = {
     ".ruff_cache",
     "migrations",
     "generated",
+    ".dddjango",
 }
+DRIVING_DIR_NAMES = frozenset({"driving_layer"})
+_ADOPTION_LAYERS = frozenset(
+    {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+)
+_DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+
+
+def _adopted(root: Path) -> bool:
+    """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
+    for c in root.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIR_NAMES:
+            continue
+        for bc in sorted(c.iterdir()):
+            if not bc.is_dir() or bc.name.startswith("."):
+                continue
+            if any((bc / n).is_dir() for n in _ADOPTION_LAYERS):
+                return True
+            if any((bc / m).is_file() for m in _DJANGO_APP_MARKERS):
+                return True
+            if any(p.is_dir() and p.name.startswith("django_") for p in bc.iterdir()):
+                return True
+    return False
 
 
 class UsageError(Exception):
@@ -188,7 +217,7 @@ def _eligible_presentation_path(path: Path) -> bool:
     parts = path.parts
     return (
         path.suffix == ".py"
-        and "presentation_layer" in parts
+        and bool(DRIVING_DIR_NAMES & set(parts))
         and not set(parts) & SKIP_DIR_NAMES
         and not set(parts) & TEST_DIR_NAMES
         and not path.name.startswith("test_")
@@ -420,8 +449,8 @@ def _positional_sources(config: Config, inventory: Inventory) -> list[ParsedSour
         try:
             parsed.append(_load_source(config.root, path))
         except UsageError:
-            # Legacy positional compatibility: inventory failures are fatal,
-            # but individual brownfield source failures are skipped.
+            # positional 호환 — inventory 실패는 치명이고, 개별 기존 source
+            # 파일의 로드 실패는 건너뛴다.
             continue
     return parsed
 
@@ -926,14 +955,14 @@ def _findings(
     )
 
 
-def _run(config: Config) -> list[Finding]:
+def _run(config: Config) -> tuple[list[Finding], int]:
     inventory = _production_inventory(config.root)
     parsed = (
         _selected_sources(config, inventory)
         if config.selected
         else _positional_sources(config, inventory)
     )
-    return _findings(parsed, fail_on_ambiguity=config.selected)
+    return _findings(parsed, fail_on_ambiguity=config.selected), len(inventory.paths)
 
 
 def main(argv: list[str]) -> int:
@@ -946,10 +975,19 @@ def main(argv: list[str]) -> int:
         return int(exc.code)
 
     try:
-        findings = _run(config)
+        findings, eligible_count = _run(config)
     except UsageError as exc:
         print(f"[check-response-schema-bypass] 사용 오류: {exc}", file=sys.stderr)
         return 1
+
+    # 대상 0건 가드(#74 · 명세 조각 ⓐ) — 채택 신호는 있는데 driving 층 파일이 0건이면
+    # 경로 계약이 어긋난 것이다. touched 공집합(정상)과 달리 «경로 불일치 0건»만 잡는다.
+    if eligible_count == 0 and _adopted(config.root):
+        print(
+            "[check-response-schema-bypass] blocker: 채택 신호는 있는데 driving 층 파일이 "
+            "0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        return 2
 
     if findings:
         print(

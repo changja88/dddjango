@@ -13,9 +13,11 @@ magic-string 검사는 오탐으로 생태계에서 기각된 부류라 시도�
 기본 면제) — 이 게이트는 '선언된 심볼의 존재'에 앵커된 부분집합만 결정적으로 강제한다.
 
 거짓 양성 회피 — AND 합성으로만 차단:
-  1) git 레포다. touched 한정 규약이라 git 없이는 식별 불가 → exit 0(보수적).
-  2) 그 파일이 이번 변경에서 touched(신규 `??`/`A` 또는 수정 `M`)다. 수정 파일은 **추가된
-     라인**(git diff -U0)에 위반 라인이 있을 때만 잡는다 — 기존 리터럴은 grandfather.
+  1) git 레포면 이번 변경에서 touched(신규 `??`/`A` 또는 수정 `M`)인 파일만 본다.
+     수정 파일은 **추가된 라인**(git diff -U0)에 위반 라인이 있을 때만 잡는다 — 기존
+     리터럴은 grandfather. **git 이 아니면 «전 파일을 touched 로 간주»하고 그 사실을
+     출력한다**(fail-closed · 명세 조각 ⓐ — 비-git 스킵은 검사가 꺼진 것이지 깨끗한
+     것이 아니다).
   3) `migrations/`·테스트 경로(`test`/`tests` 디렉터리·`test_*.py`·`conftest.py`)는 면제 —
      마이그레이션은 historical value 동결(`implementation-django` §10.4)이 오히려 규율이고,
      테스트 기댓값 리터럴은 `implementation-test` §15.4 가 허용·강제한다.
@@ -24,7 +26,7 @@ magic-string 검사는 오탐으로 생태계에서 기각된 부류라 시도�
      `implementation-django` §2.5)이라 잡지 않는다.
 
 사용법: check-choices-literal-consumption.py [TARGET_DIR]   (기본=현재 디렉터리)
-종료코드: 0=clean(또는 non-git·해당 없음), 2=blocker(발견 출력), 1=사용 오류.
+종료코드: 0=clean(또는 해당 없음), 2=blocker(발견 출력), 1=사용 오류.
 """
 from __future__ import annotations
 
@@ -34,7 +36,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
+SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 EXEMPT_DIR_NAMES = {"test", "tests", "migrations"}
 MODEL_SUFFIX = "Model"
 NON_MODEL_BASES = {"BaseModel"}  # pydantic 등 — ORM 모델로 오인 금지.
@@ -204,12 +206,6 @@ def main(argv: list[str]) -> int:
         return 1
 
     touched = _git_touched(root)
-    if touched is None:
-        return 0  # non-git — touched 식별 불가, 보수적 스킵.
-
-    candidates = {rel: code for rel, code in touched.items() if not _is_exempt_path(rel)}
-    if not candidates:
-        return 0
 
     # 레지스트리는 레포 전체(면제 경로 제외)에서 구축 — 필터 위반은 touched 파일이지만
     # 모델 선언은 기존(untouched) 파일에 있을 수 있다.
@@ -220,13 +216,22 @@ def main(argv: list[str]) -> int:
         if _is_exempt_path(rel):
             continue
         try:
-            tree = ast.parse(f.read_text(encoding="utf-8"))
+            mod_tree = ast.parse(f.read_text(encoding="utf-8"))
         except (SyntaxError, OSError, UnicodeDecodeError):
-            continue  # fail-open.
-        trees[rel] = tree
-        file_registry, _ = _scan_models(tree)
+            continue  # 파싱 불가 파일은 판정 유보.
+        trees[rel] = mod_tree
+        file_registry, _ = _scan_models(mod_tree)
         for model, fields in file_registry.items():
             registry.setdefault(model, set()).update(fields)
+
+    if touched is None:
+        # git 이 아니면 touched 식별이 불가하다 — «전 파일을 신규(touched)로 간주»한다(fail-closed).
+        print("주의: git 저장소가 아니다 — touched 식별이 불가해 «전 파일»을 검사한다(fail-closed)")
+        candidates = {rel: "??" for rel in trees}
+    else:
+        candidates = {rel: code for rel, code in touched.items() if not _is_exempt_path(rel)}
+    if not candidates:
+        return 0  # touched 공집합은 «정상»이다(중간 커밋 후 재실행 등 — 조각 ⓐ §3)
 
     findings: list[str] = []
     for rel, code in sorted(candidates.items()):

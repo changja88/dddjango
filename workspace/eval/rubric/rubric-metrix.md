@@ -1,17 +1,18 @@
-# dddjango v4 frozen baseline 채점 결과지 템플릿 (rubric-metrix)
+# dddjango v5 frozen baseline 채점 결과지 템플릿 (rubric-metrix)
 
 > **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
-> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과에 이 템플릿을 사용한다.
-> historical v3 결과에는 소급 적용하지 않는다.
-> **동결 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
-> `v4-candidate`.
+> 사용자 명시 승인(`2026-08-11T23:53:32+0900` — 최소 개정 epoch) 이후 새 v5 결과에 이 템플릿을 사용한다.
+> historical v3·v4 결과에는 소급 적용하지 않는다.
+> **동결 epoch/profile/version**: `2026-08-08-tree-revision` / `dddjango-code-json` /
+> `v5-candidate`.
 > **결과 identity**: `epoch + error profile + rubric version + dimension ID`.
+> **v4 locator**: full SHA `3239773d87df60ab8c2f10c8b189f6793cab1a36`.
 > **v3 locator**: full SHA `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`.
 > working tree의 historical v3 결과 14개는 byte 불변이며 소급 판정·재작성하지 않는다.
 
 ## 사용 조건
 
-- 이 파일은 동결된 v4 보고 형식이다. 기준 변경에는 명시적 unfreeze 또는 새 epoch 승인이 필요하다.
+- 이 파일은 동결된 v5 보고 형식이다. 기준 변경에는 명시적 unfreeze 또는 새 epoch 승인이 필요하다.
 - 승인 이후 새 v4 평가에서 `EVAL-METHOD.md` 절차를 따라 한 runtime당 결과 파일 하나를 만든다.
 - 결정·의미·종합은 `✅ PASS · ❌ FAIL · 🟡 WEAK · ⏸️ 보류 · ➖ N/A`로 기록한다.
 - Result에는 조정자가 직접 확인한 `file:line` 근거를 쓴다. 결정 PASS여도 의미 판정을 생략하지 않는다.
@@ -62,13 +63,13 @@
 | ID | 항목 | §근거 | Result | 결정 | 의미 | 종합 | 치명 |
 |---|---|---|---|---|---|---|---|
 | **SH-1** | 컨테이너 | 신규/touched 앱이 `application/<app>/` 아래 |  |  |  |  | 치명 |
-| **SH-2** | 4계층 | domain/application/infra/presentation 물리 분리 |  |  |  |  | 치명 |
-| **SH-3** | 종류 폴더+골격 | 종류 2차 폴더와 필요한 애그리거트 골격 실현 |  |  |  |  | 치명 |
-| **SH-4** | Django 앱 위치 | ORM/migration이 `infra_layer/django_<app>/`에 위치 |  |  |  |  | 치명 |
+| **SH-2** | 4계층 | driving/application/domain/driven `_layer` 물리 분리(판: registry #4) |  |  |  |  | 치명 |
+| **SH-3** | 골격+거주 명명 | standard_tree 고정·재등장 칸 실현 + 거주 명명(판: registry #4·#19·#26) |  |  |  |  | 치명 |
+| **SH-4** | Django 앱 위치 | ORM/migration이 `driven_layer/django_<bounded_context>/`에 위치(판: registry #17·#4) |  |  |  |  | 치명 |
 | **SH-5** | ORM 명명 | ORM `<Name>Model`, 도메인 bare 이름 |  |  |  |  | — |
 | **SH-6** | 포트/구현 명명 | 역할 접미사·기술 접두 규약 준수 |  |  |  |  | — |
-| **SH-7** | 협력 포트 위치 | 협력 포트가 domain aggregate의 `port/`에 위치 |  |  |  |  | 치명 |
-| **SH-8** | ACL 분리 | ACL이 infra `acl/`에 있고 repository와 분리 |  |  |  |  | — |
+| **SH-7** | 포트 선언 위치(v4와 반전) | 리포지토리=domain·능력/협력 포트=`application_layer/port/`(판: registry #22·#20·#4) |  |  |  |  | 치명 |
+| **SH-8** | ACL 분리 | ACL이 `driven_layer/adapter/anticorruption_layer/`에 있고 repository와 분리 |  |  |  |  | — |
 | **SH-9** | 단일 레이아웃 | 한 앱에 상충 레이아웃이 공존하지 않음 |  |  |  |  | — |
 | **SH-10** | 테스트 의미군 | unit/integration/e2e 의미군 분리 |  |  |  |  | — |
 
@@ -81,10 +82,10 @@
 | **NJ-1** | 스택 채택 | 신규 JSON API는 Ninja/Ninja Extra, plain view·DRF 누수 없음 |  |  |  |  | 치명 |
 | **NJ-2** | operation 얇음(비오류) | 비즈 규칙·ORM·수동 parsing 없이 응용 호출과 schema 매핑 |  |  |  |  | 치명 |
 | **NJ-3** | Schema 입출력 분리 | 요청/응답 Schema 분리, domain 직접 직렬화 없음 |  |  |  |  | — (강) |
-| **NJ-4** | BC 오류 OpenAPI 선언 | controller가 직접 반환하는 BC status를 같은 BC base ErrorOut으로 선언; 직접 BC 반환이 없는 framework 401/403/route 404/422/429/500은 BC ErrorOut으로 광고하지 않음. status별 식별자 subset 과다노출은 승인된 단순화 |  |  |  |  | — (강) |
+| **NJ-4** | BC 오류 OpenAPI 선언 | controller가 직접 반환하는 BC status를 같은 BC base <Bc>ErrorSchema으로 선언; 직접 BC 반환이 없는 framework 401/403/route 404/422/429/500은 BC ErrorOut으로 광고하지 않음. status별 식별자 subset 과다노출은 승인된 단순화 |  |  |  |  | — (강) |
 | **NJ-5** | operation 문서화 | summary/tags와 정보 있는 반환 타입 |  |  |  |  | — (경미) |
 | **NJ-6** | Ninja 버전 핀 | 신규 도입 시 버전 핀과 기존 관례 일치 |  |  |  |  | — (경미) |
-| **NJ-7** | BC 오류 직접 계약 | application 호출 한 문장만 감싼 좁은 try, 구체 catch, no-arg concrete ErrorOut 또는 BC base 직접 생성, controller의 직접 Status 반환, framework 기본 처리. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL |  |  |  |  | — (강) |
+| **NJ-7** | BC 오류 직접 계약 | application 호출 한 문장만 감싼 좁은 try, 구체 catch, no-arg concrete ErrorSchema 또는 BC base 직접 생성, controller의 직접 Status 반환, framework 기본 처리. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL |  |  |  |  | — (강) |
 
 ## TIER-S(핵심) — 기능 정확성 (FC)
 

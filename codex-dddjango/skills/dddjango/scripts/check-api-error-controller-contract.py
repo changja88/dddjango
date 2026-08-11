@@ -5,7 +5,7 @@ The checker is deliberately profile- and source-selected.  ``auto`` and
 ``preserve-established`` validate their generic CLI/source contract and add no
 new error-mapping semantics.  ``dddjango-code-json`` analyzes only selected
 controllers owned by an ``error-bc``, every declared error BC's canonical
-ErrorOut module, and the same-owner presentation modules imported directly by
+FrameworkErrorSchema module, and the same-owner presentation modules imported directly by
 those controllers.
 
 Exit codes: 0=clean/N/A/help, 2=contract blocker, 1=usage or analysis error.
@@ -44,9 +44,9 @@ CODE_SKIP_DIRS = {
     "migrations",
     "generated",
 }
-COMMON_ERROR_PATH = Path("common/ninja/response/error_out.py")
-COMMON_ERROR_MODULE = "common.ninja.response.error_out"
-COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.ErrorOut"
+COMMON_ERROR_PATH = Path("framework/ninja/framework_error_schema.py")
+COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
+COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 ROUTER_CONSTRUCTORS = {"ninja.Router"}
 HANDLER_CONSTRUCTORS = {
@@ -952,7 +952,7 @@ def _owner_bc(path: Path, scope_bcs: set[str]) -> str | None:
     if (
         len(parts) >= 4
         and parts[0] == "application"
-        and parts[2] == "presentation_layer"
+        and parts[2] == "driving_layer"
         and parts[1] in scope_bcs
     ):
         return parts[1]
@@ -960,7 +960,7 @@ def _owner_bc(path: Path, scope_bcs: set[str]) -> str | None:
 
 
 def _bc_error_path(bc: str) -> Path:
-    return Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+    return Path(f"application/{bc}/driving_layer/api/bc_error_schema.py")
 
 
 def _snake_to_pascal(name: str) -> str:
@@ -1399,8 +1399,8 @@ def _common_validation_config(
     body_options: dict[str, tuple[ast.AST, dict[str, Binding]]] = {}
     body_config_seen = False
     body_config_known = True
-    legacy_options: dict[str, tuple[ast.AST, dict[str, Binding]]] = {}
-    legacy_config_seen = False
+    nested_config_options: dict[str, tuple[ast.AST, dict[str, Binding]]] = {}
+    nested_config_seen = False
     before = _class_body_bindings(parsed, node, outer)
     for statement in node.body:
         bindings = before.get(id(statement), outer)
@@ -1444,8 +1444,8 @@ def _common_validation_config(
         if isinstance(statement, ast.ClassDef) and statement.name == "Config":
             # Duplicate nested Config definitions follow normal Python binding
             # semantics too: only the final class is visible to the metaclass.
-            legacy_config_seen = True
-            legacy_options = {}
+            nested_config_seen = True
+            nested_config_options = {}
             config_before = _class_body_bindings(parsed, statement, bindings)
             for config_statement in statement.body:
                 config_bindings = config_before.get(id(config_statement), bindings)
@@ -1463,14 +1463,14 @@ def _common_validation_config(
                     config_value = config_statement.value
                 if config_value is not None:
                     for name in names:
-                        legacy_options[name] = (config_value, config_bindings)
+                        nested_config_options[name] = (config_value, config_bindings)
 
-    config_ambiguous = body_config_seen and legacy_config_seen
+    config_ambiguous = body_config_seen and nested_config_seen
     if config_ambiguous:
         analysis.append(
             f"{parsed.relative_path}:{node.lineno} common model_config/Config 동시 선언 분석 불능"
         )
-    effective = dict(body_options if body_config_seen else legacy_options)
+    effective = dict(body_options if body_config_seen else nested_config_options)
     unknown_body = (body_config_seen and not body_config_known) or config_ambiguous
 
     # Pydantic metaclass class-header kwargs override body model_config keys.
@@ -1968,16 +1968,16 @@ def _error_language(
     certain_constructor_keys: frozenset[str] = frozenset()
     constructor_key_issues: list[str] = []
     if common is None:
-        analysis.append(f"필수 common ErrorOut source 없음: {COMMON_ERROR_PATH}")
+        analysis.append(f"필수 common FrameworkErrorSchema source 없음: {COMMON_ERROR_PATH}")
     else:
         timeline = _binding_timeline(common)
         classes = [
             node
             for node in common.tree.body
-            if isinstance(node, ast.ClassDef) and node.name == "ErrorOut"
+            if isinstance(node, ast.ClassDef) and node.name == "FrameworkErrorSchema"
         ]
         if len(classes) != 1:
-            analysis.append(f"{COMMON_ERROR_PATH}: common ErrorOut provenance 분석 불능")
+            analysis.append(f"{COMMON_ERROR_PATH}: common FrameworkErrorSchema provenance 분석 불능")
         else:
             common_node = classes[0]
             common_bindings = timeline.before.get(id(common_node), {})
@@ -2015,11 +2015,11 @@ def _error_language(
         path = _bc_error_path(bc)
         source = parsed.get(path)
         if source is None:
-            analysis.append(f"필수 canonical ErrorOut source 없음: {path}")
+            analysis.append(f"필수 canonical FrameworkErrorSchema source 없음: {path}")
             continue
         timeline = _binding_timeline(source)
         prefix = _snake_to_pascal(bc)
-        base_name = f"{prefix}ErrorOut"
+        base_name = f"{prefix}ErrorSchema"
         module = _module_name(path)
         base_origin = f"{module}.{base_name}"
         classes = [node for node in source.tree.body if isinstance(node, ast.ClassDef)]
@@ -2086,7 +2086,7 @@ def _error_language(
             if len(node.bases) == 1 and direct[0] is not None and direct[0].origin == base_origin:
                 known.add(f"{module}.{node.name}")
             elif any((_expression_name(base) or "").rsplit(".", 1)[-1] == base_name for base in node.bases):
-                analysis.append(f"{path}:{node.lineno} prepared ErrorOut base provenance 분석 불능")
+                analysis.append(f"{path}:{node.lineno} prepared FrameworkErrorSchema base provenance 분석 불능")
         prepared[bc] = frozenset(known)
     return ErrorLanguage(
         frozenset(common_fields),
@@ -2340,7 +2340,7 @@ def _module_path_index(inventory: CodeInventory) -> dict[str, Path]:
 
 
 def _presentation_module(module: str, owner_bc: str) -> bool:
-    prefix = f"application.{owner_bc}.presentation_layer"
+    prefix = f"application.{owner_bc}.driving_layer"
     return module == prefix or module.startswith(f"{prefix}.")
 
 
@@ -2682,7 +2682,7 @@ def _selected_source_plan(
             if owner is None:
                 analysis.append(
                     f"selected controller owner 분석 불능: {path} "
-                    "(application/<scope-bc>/presentation_layer/... 필요)"
+                    "(application/<scope-bc>/driving_layer/... 필요)"
                 )
             else:
                 owners[path] = owner
@@ -2748,14 +2748,14 @@ def _known_constructor(
     if name in operation.local_names:
         if name in known_tails or definition_was_known:
             analysis.append(
-                f"{operation.parsed.relative_path}:{call.lineno} ErrorOut function-local binding provenance 분석 불능: {name}"
+                f"{operation.parsed.relative_path}:{call.lineno} FrameworkErrorSchema function-local binding provenance 분석 불능: {name}"
             )
         return None
     binding = operation.body_bindings.get(name)
     if binding is None:
         if name in known_tails or definition_was_known:
             analysis.append(
-                f"{operation.parsed.relative_path}:{call.lineno} ErrorOut canonical provenance 분석 불능: {name}"
+                f"{operation.parsed.relative_path}:{call.lineno} FrameworkErrorSchema canonical provenance 분석 불능: {name}"
             )
         return None
     if binding.origin not in known:
@@ -2765,12 +2765,12 @@ def _known_constructor(
             or binding.origin.rsplit(".", 1)[-1] in known_tails
         ):
             analysis.append(
-                f"{operation.parsed.relative_path}:{call.lineno} ErrorOut re-export provenance 분석 불능: {binding.origin}"
+                f"{operation.parsed.relative_path}:{call.lineno} FrameworkErrorSchema re-export provenance 분석 불능: {binding.origin}"
             )
         return None
     if binding.kind not in {"symbol_import", "local_definition"}:
         analysis.append(
-            f"{operation.parsed.relative_path}:{call.lineno} ErrorOut direct provenance 분석 불능: {name}"
+            f"{operation.parsed.relative_path}:{call.lineno} FrameworkErrorSchema direct provenance 분석 불능: {name}"
         )
         return None
     if binding.origin == COMMON_ERROR_OUT:
@@ -2947,7 +2947,7 @@ def _constructor_arguments_valid(
         return False
     resolved = _resolve_binding(value, operation.body_bindings)
     enum_origin = (
-        f"application.{bc}.presentation_layer.schema.error_out."
+        f"application.{bc}.driving_layer.api.bc_error_schema."
         f"{_snake_to_pascal(bc)}ErrorCode"
     )
     return _is_direct_enum_member(resolved, enum_origin)
@@ -3251,7 +3251,7 @@ def _analyze_try(
             seen,
             allowed_error_calls,
             allowed_status_calls,
-            "managed catch must directly construct ErrorOut and return Status",
+            "managed catch must directly construct FrameworkErrorSchema and return Status",
         )
 
 
@@ -3498,7 +3498,7 @@ def _analyze_results(
         if assignment is None or not isinstance(branch, ast.If):
             continue
         if _known_constructor(operation, assignment[1], language, analysis) is not None:
-            # A local ErrorOut construction is mapping behavior, not the
+            # A local FrameworkErrorSchema construction is mapping behavior, not the
             # application-call assignment that can causally own a Result arm.
             continue
         result_name, _ = assignment
@@ -3521,7 +3521,7 @@ def _analyze_results(
             seen,
             allowed_error_calls,
             allowed_status_calls,
-            "Result arm must directly construct ErrorOut and return Status",
+            "Result arm must directly construct FrameworkErrorSchema and return Status",
         )
 
     for index, statement in enumerate(body):
@@ -3595,7 +3595,7 @@ def _analyze_results(
                 seen,
                 operation.parsed,
                 node,
-                "ErrorOut construction is not owned by an approved catch/Result arm",
+                "FrameworkErrorSchema construction is not owned by an approved catch/Result arm",
                 requires_static_error_shape=True,
             )
         error_status = _status_is_error_mapping(
@@ -3734,7 +3734,7 @@ def _one_step_error_parameters(
     language: ErrorLanguage,
     analysis: list[str],
 ) -> dict[tuple[Path, int], set[str]]:
-    """Prove one direct ErrorOut argument hop into a managed helper.
+    """Prove one direct FrameworkErrorSchema argument hop into a managed helper.
 
     The provenance deliberately does not propagate again from the callee, so a
     serializer reached only through a two-hop forwarding chain remains outside
@@ -4264,7 +4264,7 @@ def _helper_findings(
                 seen,
                 parsed,
                 function.node,
-                "prepared ErrorOut factory/helper forbidden",
+                "prepared FrameworkErrorSchema factory/helper forbidden",
             )
         if facts.serializer_node is not None:
             _append_finding(
@@ -4272,7 +4272,7 @@ def _helper_findings(
                 seen,
                 parsed,
                 facts.serializer_node,
-                "ErrorOut raw HTTP serializer helper forbidden",
+                "FrameworkErrorSchema raw HTTP serializer helper forbidden",
             )
         if facts.has_exception_test and facts.has_error_constructor:
             _append_finding(
@@ -4280,7 +4280,7 @@ def _helper_findings(
                 seen,
                 parsed,
                 function.node,
-                "exception-to-ErrorOut mapping helper forbidden",
+                "exception-to-FrameworkErrorSchema mapping helper forbidden",
             )
 
         for nested in _nested_functions(function.node.body):
@@ -4328,7 +4328,7 @@ def _schema_contract_mutation_nodes(
     entry_function_ids: set[int] | None = None,
     entry_invocations: dict[int, tuple[dict[str, set[str]], ...]] | None = None,
 ) -> list[ast.AST]:
-    """Find executed ErrorOut contract mutation outside the schema owner."""
+    """Find executed FrameworkErrorSchema contract mutation outside the schema owner."""
 
     config_aliases: set[str] = set()
     config_mutator_aliases: set[str] = set()
@@ -4394,9 +4394,9 @@ def _schema_contract_mutation_nodes(
         return None
 
     def canonical_error_module(module: str, *, relative: bool = False) -> bool:
-        return module == "common.ninja.response.error_out" or module.endswith(
-            "presentation_layer.schema.error_out"
-        ) or (relative and module == "schema.error_out")
+        return module == "framework.ninja.framework_error_schema" or module.endswith(
+            "driving_layer.api.bc_error_schema"
+        ) or (relative and module == "bc_error_schema")
 
     def schema_expression(value: ast.AST | None) -> bool:
         if isinstance(value, ast.Name):
@@ -4405,10 +4405,10 @@ def _schema_contract_mutation_nodes(
             return False
         dotted = _expression_name(value) or ""
         root = dotted.split(".", 1)[0]
-        return value.attr.endswith(("ErrorOut", "Error")) and (
+        return value.attr.endswith(("ErrorOut", "ErrorSchema", "Error")) and (
             root in error_schema_modules
-            or ".presentation_layer.schema.error_out." in f".{dotted}."
-            or ".common.ninja.response.error_out." in f".{dotted}."
+            or ".driving_layer.api.bc_error_schema." in f".{dotted}."
+            or ".framework.ninja.framework_error_schema." in f".{dotted}."
         )
 
     def builtin_module_expression(value: ast.AST | None) -> bool:
@@ -5220,14 +5220,13 @@ def _schema_contract_mutation_nodes(
                     module,
                     relative=node.level > 0,
                 ) and alias.name.endswith(
-                    ("ErrorOut", "Error")
+                    ("ErrorOut", "ErrorSchema", "Error")
                 ):
                     schema_aliases.add(local)
-                if alias.name == "error_out" and (
-                    module.endswith("presentation_layer.schema")
-                    or (node.level > 0 and module == "schema")
-                    or module == "common.ninja.response"
-                ):
+                if (
+                    alias.name == "bc_error_schema"
+                    and (module.endswith("driving_layer.api") or (node.level > 0 and not module))
+                ) or (alias.name == "framework_error_schema" and module == "framework.ninja"):
                     error_schema_modules.add(local)
             return
         if isinstance(node, ast.Import):
@@ -5665,15 +5664,15 @@ def _direct_external_entry_invocations(
         for resolved in expression_candidates(node, bindings, candidates):
             origin = resolved.origin
             canonical = (
-                ".presentation_layer.schema.error_out." in f".{origin}."
-                or ".common.ninja.response.error_out." in f".{origin}."
+                ".driving_layer.api.bc_error_schema." in f".{origin}."
+                or ".framework.ninja.framework_error_schema." in f".{origin}."
             )
             if canonical and origin.endswith(".model_config"):
                 kinds.add("config")
             elif canonical and origin.endswith(".model_rebuild"):
                 kinds.add("rebuild")
             elif canonical and origin.rsplit(".", 1)[-1].endswith(
-                ("ErrorOut", "Error")
+                ("ErrorOut", "ErrorSchema", "Error")
             ):
                 kinds.add("schema")
         return kinds
@@ -6497,7 +6496,7 @@ def _semantic_findings(
                 seen,
                 source,
                 node,
-                "ErrorOut/model config mutation in controller forbidden",
+                "FrameworkErrorSchema/model config mutation in controller forbidden",
             )
 
     for path in sorted(managed_paths, key=Path.as_posix):
@@ -6581,6 +6580,170 @@ def _run(config: Config) -> tuple[list[str], list[Finding]]:
     return sorted(set(analysis)), findings
 
 
+# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 11규칙 (트리 8·11·12행 · D7·D11·D27) ──
+#
+# 모든 프로필(auto 포함)에서 돈다 — 옛 판은 auto 에서 완전 무동작(fail-open)이었다.
+#   #120 api/ 1차 축은 <area>/ — 기술 폴더(ninja/ 등) 금지
+#   #121 api/<area>/ 이름 = application_layer/<area>/ 와 글자까지 동일
+#   #123 api/<area>/ 진입점은 <area>_controller.py 하나
+#   #124 요청 하나 = 메서드 하나(한 메서드에 라우트 데코 여럿 금지)
+#   #125(ⓓ) 컨트롤러 메서드 = 변환·1회 호출·변환만 — 분기·루프는 후보
+#   #126 도메인 예외 매핑은 메서드 «안» 직접 — handler 등록 decorator 금지
+#   #131 기술 이름은 파일이 아니라 클래스에(ninja_*.py 금지)
+#   #132 라우트 데코·인증·상태 코드는 «컨트롤러 파일»에만
+#   #474 입구 파일은 도메인 예외를 «타입»으로만 — except … as e 의 e 참조 금지
+#   #59·#62 는 전역 핸들러·except Exception — 입구 파일의 catch-all 을 #62 로 잡고,
+#        전역(project) 쪽은 기존 code-profile 기계가 담당한다.
+
+import ast as _ast
+
+try:
+    import standard_tree as _stree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+_TREE_DRIVING = ("driving_layer",)
+_TREE_OHS = ("open_host_service",)
+_TREE_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+_TREE_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+_TECH_DIR_TOKENS = {"ninja", "drf", "rest", "http", "views", "controllers", "handlers", "endpoints"}
+_TECH_FILE_TOKENS = ("ninja", "drf")
+_HTTP_DECO_NAMES = {"get", "post", "put", "patch", "delete", "head", "options", "api_operation", "route"}
+_CATCH_ALL_NAMES = {"Exception", "BaseException"}
+
+
+def _tree_bcs2(root: Path) -> list[Path]:
+    out: list[Path] = []
+    for c in root.rglob("application"):
+        if not c.is_dir() or set(c.parts) & CODE_SKIP_DIRS:
+            continue
+        out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+    return out
+
+
+def _tree_adopted2(bcs: list[Path]) -> bool:
+    for bc in bcs:
+        if any((bc / n).is_dir() for n in _TREE_LAYERS):
+            return True
+        if any((bc / m).is_file() for m in _TREE_APP_MARKERS):
+            return True
+        if any(p.is_dir() and p.name.startswith("django_") for p in bc.iterdir()):
+            return True
+    return False
+
+
+def _deco_route_name(deco: _ast.expr) -> str | None:
+    """라우트 데코레이터인가 — `@router.get(...)`·`@api.post(...)`·`@http_get(...)`."""
+    target = deco.func if isinstance(deco, _ast.Call) else deco
+    name = target.attr if isinstance(target, _ast.Attribute) else getattr(target, "id", "")
+    if not name:
+        return None
+    if name in _HTTP_DECO_NAMES or name.startswith("http_"):
+        return name
+    return None
+
+
+def _slice_check_controller_ast(f: Path, rel: Path, findings: list[str], candidates: list[str], is_controller: bool) -> None:
+    try:
+        mod = _ast.parse(f.read_text(encoding="utf-8"))
+    except (SyntaxError, OSError, UnicodeDecodeError):
+        return
+    domain_names: set[str] = set()
+    for node in _ast.walk(mod):
+        if isinstance(node, _ast.ImportFrom) and node.level == 0 and node.module:
+            if "domain_layer" in node.module.split("."):
+                domain_names.update(a.asname or a.name for a in node.names)
+    for node in _ast.walk(mod):
+        if isinstance(node, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+            routes = [d for d in node.decorator_list if _deco_route_name(d)]
+            deco_names = set()
+            for d in node.decorator_list:
+                t = d.func if isinstance(d, _ast.Call) else d
+                deco_names.add(t.attr if isinstance(t, _ast.Attribute) else getattr(t, "id", ""))
+            if "exception_handler" in deco_names:
+                findings.append(f"  [#126] {rel}:{node.lineno} handler 등록 decorator — 도메인 예외→ErrorSchema 매핑은 컨트롤러 메서드 «안»에 직접 쓴다(helper·factory·global mapper 금지)")
+            if len(routes) >= 2:
+                findings.append(f"  [#124] {rel}:{node.lineno} `{node.name}()` 에 라우트 데코가 {len(routes)}개 — 요청 하나당 메서드 하나다")
+            if routes and not is_controller:
+                findings.append(f"  [#132] {rel}:{node.lineno} 라우트 데코레이터가 컨트롤러 파일 밖에 있다 — 라우트·인증·상태 코드는 `<area>_controller.py` 에 온다")
+            if routes and is_controller:
+                for sub in node.body:
+                    if isinstance(sub, (_ast.For, _ast.While)):
+                        candidates.append(f"  [ⓓ#125] {rel}:{sub.lineno} 라우트 메서드 안 루프 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?")
+                        break
+                    if isinstance(sub, _ast.If) and not _is_exc_mapping_if(sub, domain_names):
+                        candidates.append(f"  [ⓓ#125] {rel}:{sub.lineno} 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?")
+                        break
+        elif isinstance(node, _ast.ExceptHandler):
+            caught = node.type
+            caught_names: list[str] = []
+            if isinstance(caught, _ast.Tuple):
+                caught_names = [getattr(e, "id", getattr(e, "attr", "")) for e in caught.elts]
+            elif caught is not None:
+                caught_names = [getattr(caught, "id", getattr(caught, "attr", ""))]
+            if caught is None or set(caught_names) & _CATCH_ALL_NAMES:
+                findings.append(f"  [#62] {rel}:{node.lineno} `except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다")
+            if node.name and set(caught_names) & domain_names:
+                for sub in _ast.walk(node):
+                    if isinstance(sub, _ast.Name) and sub.id == node.name and isinstance(sub.ctx, _ast.Load):
+                        findings.append(f"  [#474] {rel}:{sub.lineno} 도메인 예외를 `as {node.name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다")
+                        break
+
+
+def _is_exc_mapping_if(node: _ast.If, domain_names: set[str]) -> bool:
+    """`if isinstance(exc, DomainError):` 꼴 매핑 분기는 #126 의 정상 형태라 후보에서 뺀다."""
+    for sub in _ast.walk(node.test):
+        if isinstance(sub, _ast.Call) and getattr(sub.func, "id", "") == "isinstance":
+            return True
+    return False
+
+
+def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[list[str], list[str]]:
+    findings: list[str] = []
+    candidates: list[str] = []
+    for bc in bcs:
+        app_layer = bc / "application_layer"
+        app_areas = (
+            {p.name for p in app_layer.iterdir() if p.is_dir() and p.name not in ("port", "domain_bypass_query", "unit_of_work")}
+            if app_layer.is_dir()
+            else None
+        )
+        for driving in _TREE_DRIVING:
+            api = bc / driving / "api"
+            if api.is_dir():
+                for area in sorted(p for p in api.iterdir() if p.is_dir()):
+                    if area.name in ("webhook", "__pycache__") or area.name.startswith("."):
+                        continue
+                    area_rel = area.relative_to(root)
+                    if area.name.lower() in _TECH_DIR_TOKENS:
+                        findings.append(f"  [#120] {area_rel}/: `api/` 의 1차 축은 `<area>/` 다 — 기술 폴더(`{area.name}/`)를 만들지 않는다")
+                        continue
+                    if app_areas is not None and area.name not in app_areas:
+                        findings.append(f"  [#121] {area_rel}/: `api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다")
+                    entry = area / f"{area.name}_controller.py"
+                    if not entry.is_file():
+                        findings.append(f"  [#123] {area_rel}/: 진입점 `{area.name}_controller.py` 파일 하나가 온다")
+                    for p in sorted(area.glob("*_controller.py")):
+                        if p != entry:
+                            findings.append(f"  [#123] {p.relative_to(root)}: `api/<area>/` 의 진입점은 `{area.name}_controller.py` «하나»다")
+                # api/** 파일 규칙 — #131(기술 파일명) · 컨트롤러/비컨트롤러 AST
+                for p in sorted(api.rglob("*.py")):
+                    if set(p.relative_to(api).parts) & {"__pycache__"}:
+                        continue
+                    rel = p.relative_to(root)
+                    if any(tok in p.name.lower() for tok in _TECH_FILE_TOKENS):
+                        findings.append(f"  [#131] {rel}: 기술 이름은 파일이 아니라 «클래스»에 붙는다 — `NinjaTurnController` 처럼")
+                    _slice_check_controller_ast(p, rel, findings, candidates, p.name.endswith("_controller.py"))
+            for ohs_name in _TREE_OHS:
+                ohs = bc / driving / ohs_name
+                if not ohs.is_dir():
+                    continue
+                for p in sorted(ohs.rglob("*_service.py")):
+                    _slice_check_controller_ast(p, p.relative_to(root), findings, candidates, True)
+    return findings, candidates
+
+
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
@@ -6592,6 +6755,23 @@ def main(argv: list[str]) -> int:
         return 1
     except SystemExit as exc:
         return int(exc.code)
+
+    # 표준 트리 슬라이스 — 프로필과 무관하게 먼저 본다(옛 auto 무동작 = fail-open 차단).
+    bcs = _tree_bcs2(config.root)
+    if not any((bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING) and _tree_adopted2(bcs):
+        print("[check-api-error-controller-contract] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        return 2
+    tree_findings, tree_candidates = _tree_slice2(config.root, bcs)
+    if tree_findings:
+        print("[check-api-error-controller-contract] BLOCKER — 입구(컨트롤러) 계약 규율 위반 (트리 8·11·12행):")
+        for f in tree_findings:
+            print(f)
+    if tree_candidates:
+        print("[check-api-error-controller-contract] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")
+        for c in tree_candidates:
+            print(c)
+    if tree_findings:
+        return 2
 
     if config.profile == "auto":
         return 0

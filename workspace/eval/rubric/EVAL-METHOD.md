@@ -1,30 +1,32 @@
-# dddjango 평가 방법론 v4 frozen baseline — 채점·집계·완료·과적합 (집행 사양)
+# dddjango 평가 방법론 v5 frozen baseline — 채점·집계·완료·과적합 (집행 사양)
 
 > **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
-> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과를 이 방법으로
-> 채점·집계한다. historical v3 결과에는 소급 적용하지 않는다.
-> **동결 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
-> `v4-candidate`. 결과 identity는
+> 사용자 명시 승인(`2026-08-11T23:53:32+0900` — 최소 개정 epoch) 이후 새 v5 결과를 이 방법으로
+> 채점·집계한다. historical v3·v4 결과에는 소급 적용하지 않는다.
+> **동결 epoch/profile/version**: `2026-08-08-tree-revision` / `dddjango-code-json` /
+> `v5-candidate`. 결과 identity는
 > `epoch + error profile + rubric version + dimension ID`다.
+> **v4 재현 경계**: full SHA `3239773d87df60ab8c2f10c8b189f6793cab1a36`(epoch `2026-08-03-code-json`).
 > **v3 재현 경계**: full SHA `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`.
 > working tree의 historical v3 결과 14개는 byte 불변이며 v4로 소급 판정하지 않는다.
 > **측정 대상(사용자 확정)**: 산출물의 *규칙 준수 수준(절대값)* + *기능 정확성*. **baseline 통제 arm 없음.** 판정 바=표준 규칙(§근거 조항), 앵커(RUBRIC §E)=예시.
 > **인과 한계(과대주장 차단)**: 이 평가는 산출물이 규칙을 *지킨 수준인가*를 측정한다 — *플러그인이 규칙을 지키게 야기했는가*(baseline 대비 인과 기여)는 측정 범위 밖이고 본 방법으론 주장 불가(§3 N=1·차별가치 비측정과 정합).
-> **표준 버전 시점(소급 FAIL 금지)**: fixture는 *그 산출 시점의 플러그인 표준 버전*으로 채점한다. 표준이 이후 개정돼도(예: 1.4.0 R/C/Q 응용 명명 — `…Command`/`…Query` 인터랙터) 그 이전 산출분을 새 규칙으로 소급 위반 처리하지 않는다 — 채점 근거 조항은 산출 당시 버전 기준으로 인용한다. **2026-06-08 개정의 소급 구분**: ① §632-(2) 면제 폐지·SH-3 치명 격상 = *표준 개정(신규 규칙)* → **소급 FAIL 금지**(이전 산출 fixture는 구 규칙으로 채점·신규 산출분부터 적용); ② 발견1 SH-1/4 마스크 C 정정 = *기존 규칙의 올바른 적용* → **소급 아님이되 기준 변경도 아님**(SH-1/4는 v3부터 불변·`check-structure.py`가 줄곧 루트 `apps.py`를 FAIL-신호로 방출·마스크 C 산문이 잘못 PASS로 뒤집던 것 교정이라 §5.4 "결과 본 뒤 기준 변경 금지" 위반 아님 → cbvlive-codex 재판정 가능).
+> **표준 버전 시점(소급 FAIL 금지)**: fixture는 *그 산출 시점의 플러그인 표준 버전*으로 채점한다. 표준이 이후 개정돼도(예: 1.4.0 R/C/Q 응용 명명 — `…Command`/`…Query` 인터랙터) 그 이전 산출분을 새 규칙으로 소급 위반 처리하지 않는다 — 채점 근거 조항은 산출 당시 버전 기준으로 인용한다. **v5 epoch(2026-08-11)의 소급 구분**: 트리 개정 표준(538규칙 — 신 4계층 이름·`standard_tree` 140행·포트 위치 `application_layer/port/`·`_command/_query/_result` 어휘)은 *표준 개정(신규 규칙)* → v5 산출분부터 적용하고 **이전 산출분 소급 FAIL 금지**(v4 이전 fixture 는 v4 문면으로 채점). SH-7 은 방향이 반전됐으므로 epoch 표기 없는 SH-7 결과를 섞어 집계하지 않는다. **2026-06-08 개정의 소급 구분**: ① §632-(2) 면제 폐지·SH-3 치명 격상 = *표준 개정(신규 규칙)* → **소급 FAIL 금지**(이전 산출 fixture는 구 규칙으로 채점·신규 산출분부터 적용); ② 발견1 SH-1/4 마스크 C 정정 = *기존 규칙의 올바른 적용* → **소급 아님이되 기준 변경도 아님**(SH-1/4는 v3부터 불변·`check-structure.py`가 줄곧 루트 `apps.py`를 FAIL-신호로 방출·마스크 C 산문이 잘못 PASS로 뒤집던 것 교정이라 §5.4 "결과 본 뒤 기준 변경 금지" 위반 아님 → cbvlive-codex 재판정 가능).
+> **v5 문구 정리(2026-08-12 — 기준 불변·소급 재채점 불요)**: BC 오류 클래스 어휘 `<Bc>ErrorOut`→`<Bc>ErrorSchema`(경로 `driving_layer/api/bc_error_schema.py`) · 공통 오류 `FrameworkErrorSchema`(`framework/ninja/framework_error_schema.py` — #417) — NJ-4·NJ-7 등 문면을 결정 레인 검사기(08-12 repoint)에 추종시킨 것으로, 위임 대상 추종이라 기준 변경이 아니다. 역사 예시 앵커(v3 poc-codex 류)는 옛 문면 그대로 보존한다.
 
 ---
 
-## 0. v4 동결 상태 게이트 (채점 착수 전 필수)
+## 0. v5 동결 상태 게이트 (채점 착수 전 필수)
 
 **미동결 상태로 채점하면 §5 사전등록을 자동 위반한다(채점 중 기준 확정 = 사후 합리화).**
 현재 기준은 아래 선결 작업과 사용자 승인을 마쳐 동결됐다.
 
-> ✅ **현재 v4는 ACTIVE / FROZEN이다. 승인 이후 새로 생산하는 v4 결과만 채점한다.
+> ✅ **현재 v5는 ACTIVE / FROZEN이다. 승인 이후 새로 생산하는 v5 결과만 채점한다.
 > historical v3 결과 14개는 수정·재채점하지 않으며, 기준 변경에는 명시적 unfreeze 또는
 > 새 epoch 승인이 필요하다.**
 
-### 0.1 v4 동결 사전등록표 (승인·동결 완료)
-| # | 결정 | v4 동결 값 |
+### 0.1 동결 사전등록표 (v4 승인·v5 최소 개정 승계 — SH 판 위임 외 불변)
+| # | 결정 | 동결 값(v5) |
 |---|---|---|
 | 치명 게이트 목록 | **SD 전부 · FC 전부 · SH-1·2·3·4·7 · (조건부)NJ-1·2 · Q-4** (Q-4 치명 승격·SH-3 종류폴더·골격 치명 격상 2026-06-08) |
 | Q-4 메커니즘 치명? | **치명** (커스텀 DB백엔드·`DatabaseWrapper`·PRAGMA·몽키패치 = SD-6 계층순수·메커니즘소유권과 직결) |
@@ -34,7 +36,7 @@
 | 마스크 C "판정 적재" 조임 | **이진 하위질문으로 조작화**(§1.1.M) + 경합 시 보수=*적재됨* |
 | FC-1 등록 주체·시점 | **§1.4 확정**(적대 grader·프롬프트 직후·코드 열람 전) |
 | S-NINJA 치명 배치 | **NJ-1·2 조건부 치명, NJ-3·4·7=비치명 '강'(§2.4 Q-편입), NJ-5·6=경미** |
-| 차원 집합 | **정확히 34개 동결 차원**: `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`. NJ-7은 비치명 '강'을 유지하고 v4 의미를 `BC 오류 직접 계약`으로 재정의한다. 승인 이후 새 v4 결과에 이 값을 사용한다. |
+| 차원 집합 | **정확히 34개 동결 차원**: `SD-1..7 + SH-1..10 + NJ-1..7 + FC-1..3 + Q-1..7`. NJ-7은 비치명 '강'을 유지하고 `BC 오류 직접 계약` 의미를 유지한다. 승인 이후 새 v5 결과에 이 값을 사용한다. |
 
 ### 0.2 고정 입력 규율
 런 리셋·고정 게이트 답(BC배치·렌즈·API스택·G1/G2 승인 기준·thinking)은 **각 태스크 CRIB**(fixture *밖*)에 둔다. **표준 태스크 프롬프트(라이브 `/dddjango` 입력 정본·verbatim)는 `tools/FC-GOLDEN.md` 헤더에 박제** — coordinator 정리본 `scope.md`(Phase 0 "무엇/경계" 확장)가 아니라 *사용자 입력 원문* 한 줄이 정본(혼동 주의). *(구 `RETEST-HANDOFF.md`는 폴더 재구조화로 제거됨 — 고정 게이트 답의 정본은 태스크별 CRIB이며, 본 문서 §1.4 골든표 동결과 함께 freeze 산출물에 포함한다.)*
@@ -75,16 +77,16 @@ blind는 *설계 의도*가 아니라 *집행*이어야 한다. 행위자를 분
 | 항목 | 명령(개념) | PASS 신호 | FAIL 신호 | blind-spot 카드 |
 |---|---|---|---|---|
 | **SH-1** 컨테이너 | 신규 앱 디렉터리의 부모가 `application/`인가(`find -type d`) | 신규 앱이 `application/<app>/` | 루트/기타(마스크 C 곱) | "신규" 판정은 baseline diff 필요(§1.1.M) — **touched 데이터소스(MQ1=N)도 위치 의무라 루트 `apps.py` 잔재 시 SH-1 FAIL**(개정 2026-06-08·`check-structure.py:89`가 FAIL-신호 방출·마스크 C가 더는 PASS로 안 뒤집음) |
-| **SH-2** 4계층 | 앱 하위에 `{domain,application,infra,presentation}_layer/` 존재 | 4계층 물리분리 | 누락/평면 | 빈 골격만이면 §2.3③이 따로 본다 — **데이터소스 BC의 빈 4계층 `_layer`는 §632-(2)로 정당**(내용 없는 계층 폴더는 FAIL 아님); 단 종류 폴더 자체 부재(평면 접음)는 SH-3 |
-| **SH-4** Django앱 위치 | `models.py`·`migrations/`의 부모가 `infra_layer/django_<app>/`인가 + AppConfig `label` | infra_layer/django_ 하위 | 루트/앱루트/도메인 `models.py`(마스크 C 곱) | label 보존은 텍스트, 이력 동작은 Q-5 |
-| **SH-7** 포트 위치 | `find -type d -name port`의 부모가 `domain_layer`인가 | `domain_layer/<agg>/port/` | `application_layer`/`infra_layer` | — |
+| **SH-2** 4계층 | 앱 하위에 `{driving,application,domain,driven}_layer/` 존재 — 판은 `check-layer-skeleton`(registry #4) exit | 4계층 물리분리 | 누락/평면/옛 이름 잔존(트리 밖 칸 #81·#490) | 빈 골격만이면 §2.3③이 따로 본다 — 데이터소스 BC의 빈 계층 폴더는 정당(내용 없는 계층 폴더는 FAIL 아님); 종류 칸 자체 부재는 SH-3 |
+| **SH-4** Django앱 위치 | `models/`·`migrations/`의 부모가 `driven_layer/django_<bounded_context>/`인가 + AppConfig `label` — 판은 registry #17·#4 exit | driven_layer/django_ 하위 | 루트/앱루트/도메인 `models.py`(마스크 C 곱) | label 보존은 텍스트, 이력 동작은 Q-5 |
+| **SH-7** 포트 선언 위치(v5 — v4와 반전) | 리포지토리 선언이 `domain_layer/<agg>/<agg>_repository.py`이고 능력/협력 포트가 `application_layer/port/<capability>/`뿐인가 — 판은 registry #22·#20·#4 exit | `application_layer/port/` + 도메인 리포지토리 파일 | 트리 밖 `port/` 칸(`domain_layer` 하위 포함)·개명 변종(`ports/`·평면 `port.py`) | epoch 미표기 SH-7 결과와 혼합 집계 금지 |
 | **SD-3** 무복제 | infra 리포의 CAS `update/filter`에 비즈조건(`stock__gte=`·`F()` 판정)이 있나(grep) | version/CAS 가드만 | `stock__gte=` 등 판정 SQL 복제 | helper 경유·동적 조건문은 의미 레인 |
 | **SD-6** 계층순수성 | `check-context-isolation.py` + `check-api-error-controller-contract.py` + domain/application의 HTTP·Ninja import 의미 확인 | domain/application이 HTTP를 모르고, 알려진 자기 BC 예외→status 선택은 소유 controller가 직접 수행 | domain/application의 HTTP 계약 누수; helper/handler로 매핑 이동; status DTO로 우회 | checker가 리터럴 HTTP import를 못 찾더라도 application DTO가 `status`를 운반하면 **Goodhart 의미 FAIL**. controller의 직접 status 선택은 PASS이며 중앙 handler는 PASS가 아니다. |
-| **SD-7** 컨텍스트 통신 | 타 BC `domain_layer`/`infra_layer` 직접 import 있나(grep import 경로) | (의미) OHS/ACL 포트만 소비 | (결정) 타 BC 구체구현 직접 import | **비대칭**: FAIL 방향(구체 infra/domain 경로 import)은 grep로 *완전히 닫힘*; PASS 방향("그게 OHS 표면인가 concrete impl인가")은 catalog 공개표면 정의 의존 = **의미 레인 필수**. published_service 빈 패키지=OHS 부재도 FAIL |
+| **SD-7** 컨텍스트 통신 | 타 BC `domain_layer`/`driven_layer` 직접 import 있나(grep import 경로) | (의미) OHS/ACL 포트만 소비 | (결정) 타 BC 구체구현 직접 import | **비대칭**: FAIL 방향(구체 infra/domain 경로 import)은 grep로 *완전히 닫힘*; PASS 방향("그게 OHS 표면인가 concrete impl인가")은 catalog 공개표면 정의 의존 = **의미 레인 필수**. open_host_service 빈 패키지=OHS 부재도 FAIL(옛 `published_service`는 트리 밖 칸 — §4 이관 종료) |
 | **SH-9** 단일 레이아웃 | 한 앱에 `test`+`tests`·`src`+`apps` 공존하나(`find`) | 단일 레이아웃 | 공존 | — |
 | **NJ-1** 스택 | 신규 JSON API가 `NinjaAPI`/`NinjaExtraAPI` + (`Router` ∨ `@api_controller`/`register_controllers`)인가 vs `JsonResponse`/DRF(grep) | ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러 | plain view·DRF(greenfield) | 기존 확립 스택 존중은 houserules §1; 신규 표준=클래스 컨트롤러, 함수형 Router=레거시/415 격리 예외(둘 다 PASS) |
-| **NJ-4** BC 오류 OpenAPI 선언 | `check-openapi-error-declaration.py` + controller `response={...}` 확인 | controller가 직접 반환하는 BC 오류 status가 **같은 BC base ErrorOut**으로 선언됨 | 직접 반환 BC status 누락; **그 status의 직접 BC 반환이 없는데** framework 401/403/route 404/422/429/500을 BC ErrorOut으로 광고; `openapi_extra`/사후 후가공 | 같은 BC base를 여러 status에 쓰며 status별 code Enum subset보다 전체 code가 노출되는 것은 승인된 단순화로 PASS. |
-| **NJ-7** BC 오류 직접 계약 | `check-api-error-controller-contract.py` + controller 오류 arm 의미 확인 | application 호출 한 문장만 감싼 좁은 `try`; 구체 예외 catch; 준비된 no-arg concrete ErrorOut 또는 BC base 직접 생성; `Status` 직접 반환; framework 오류는 기본 처리 | 오류 helper/handler/catch-all; bare·`Exception`·`BaseException` catch; 넓은 `try`; raw dict/tuple/`Response`/`JsonResponse` 오류 반환 | 실패 Result/`None`은 예외를 만들지 않고 같은 controller에서 직접 반환해도 PASS. 미식별 예외는 잡지 않는다. |
+| **NJ-4** BC 오류 OpenAPI 선언 | `check-openapi-error-declaration.py` + controller `response={...}` 확인 | controller가 직접 반환하는 BC 오류 status가 **같은 BC base <Bc>ErrorSchema**으로 선언됨 | 직접 반환 BC status 누락; **그 status의 직접 BC 반환이 없는데** framework 401/403/route 404/422/429/500을 BC ErrorOut으로 광고; `openapi_extra`/사후 후가공 | 같은 BC base를 여러 status에 쓰며 status별 code Enum subset보다 전체 code가 노출되는 것은 승인된 단순화로 PASS. |
+| **NJ-7** BC 오류 직접 계약 | `check-api-error-controller-contract.py` + controller 오류 arm 의미 확인 | application 호출 한 문장만 감싼 좁은 `try`; 구체 예외 catch; 준비된 no-arg concrete ErrorSchema 또는 BC base 직접 생성; `Status` 직접 반환; framework 오류는 기본 처리 | 오류 helper/handler/catch-all; bare·`Exception`·`BaseException` catch; 넓은 `try`; raw dict/tuple/`Response`/`JsonResponse` 오류 반환 | 실패 Result/`None`은 예외를 만들지 않고 같은 controller에서 직접 반환해도 PASS. 미식별 예외는 잡지 않는다. |
 | **Q-4** 메커니즘(치명) | `check-mechanism-ownership.py` + grep `DatabaseWrapper`/PRAGMA/monkeypatch | 표준 ORM만 | 커스텀 백엔드/PRAGMA/몽키패치 | 명세 승인된 메커니즘은 면제(의미 확인) |
 | **Q-5** 마이그레이션 | (순서) ①이주 여부 판정(마스크 C가 그 앱을 '신규 앱'으로 봤나) → ②이주 시: 기존 `0001` 불변·`db_table`/`label` 보존·state-only rename ops grep | 신규앱이 자기 0001 보유(정당) / 이주 시 0001 불변·state-only | **기존 앱**의 0001 재작성·테이블 rename DDL | **앵커 양매핑 주의**: 동일물리(baseline 0001 `D`+새앱 0001 생성)가 '신규앱 정당'↔'재작성 위반' 양쪽 — 마스크 C의 신규/기존 라벨이 *먼저* 갈라야 PASS/FAIL 결정. 이주 미시도(평면 유지)면 state-only ops 술어 **N/A**. brownfield 실적용은 .venv 실행 |
 
@@ -117,7 +119,7 @@ ptcat 사건 교훈: 조정자가 fixture venv에 pytest를 선설치하면 "코
 
 ### 1.2 의미 레인 (결정 결과에 **blind**)
 - **이진 하위질문**으로 분해("잘 지켰나?" 금지). 예 SD-6: "domain/application이 HTTP status·Ninja 타입을 아는가? (Y/N)+줄", "알려진 자기 BC 예외→status 선택을 소유 controller가 직접 하는가? (Y/N)+줄".
-- **🔴 에러 경로 정독 의무(NJ-1·3·4·7·SD-6·Q-2)**: operation 본문·checker exit 0만으로 판정 **금지**. controller의 `try/except`·`response={}`·ErrorOut 생성·반환을 읽고 custom handler/helper/catch-all 및 framework 오류 수동 계약이 없는지 대조한다. controller의 좁은 구체 catch와 직접 two-argument `Status(<승인된 HTTP status 표현>, error)` 반환은 PASS다. `status` body property는 필수가 아니다. handler/helper/catch-all, 넓은 catch, raw 오류 응답, application status DTO는 FAIL 신호다.
+- **🔴 에러 경로 정독 의무(NJ-1·3·4·7·SD-6·Q-2)**: operation 본문·checker exit 0만으로 판정 **금지**. controller의 `try/except`·`response={}`·ErrorSchema 생성·반환을 읽고 custom handler/helper/catch-all 및 framework 오류 수동 계약이 없는지 대조한다. controller의 좁은 구체 catch와 직접 two-argument `Status(<승인된 HTTP status 표현>, error)` 반환은 PASS다. `status` body property는 필수가 아니다. handler/helper/catch-all, 넓은 catch, raw 오류 응답, application status DTO는 FAIL 신호다.
 - **필수 줄 인용** — 인용 없는 PASS 무효.
 - **Q-2 판정 의미** — 선택한 error profile의 **승인 exact wire shape·HTTP status·필요 header·version 정책이 서로 일관한지**만 판정한다. body status property가 승인된 scope만 HTTP와의 일치를 추가로 본다. 다른 profile(RFC 9457 등)의 형태를 섞거나 framework 기본 오류에 BC shape를 강제하면 FAIL이다.
 - **판정 바=표준 §근거 조항**; 앵커=예시로만 대조(임계값 아님).
@@ -162,7 +164,7 @@ lastlive-claude 사건 교훈: 채점이 "테스트 0·테스트도구 0·pytest
 ### 2.1 치명 집합·조건부·강 (정본 = §0.1; 세 곳이 한 목록)
 - **치명 정본 목록**(§0.1·§2 step2 의사코드와 *동일 집합*): SD-1~7 · FC-1~3 · SH-1·2·3·4·7 · **(조건부)NJ-1·2** · Q-4. ← 이 한 목록만 정본이며 §0.1/§2 step2/RUBRIC '치명' 칸이 모두 이를 가리킨다(N1 불일치 차단). **SH-3 치명 격상 2026-06-08(§632-(2) 면제 폐지·동결 해제 3건째).**
 - **NJ 조건부**: HTTP/JSON operation이 **하나라도 있을 때만** NJ-1·2가 치명. 순수 도메인/CLI/배치/서버렌더 픽스처 → S-NINJA 차원 전체 **N/A**(FAIL 아님, 게이트 미적용).
-- **NJ-3·4·7 ('강')**: 비-치명이나 §2.4 Q 카운트에 *정규 항목으로 편입* — '강' 항목 FAIL은 품질 상한을 '중'으로 강등. NJ-5·6=경미(정규 카운트, 강등 없음). **NJ-7 `BC 오류 직접 계약`**은 좁은 application 호출 `try`, 구체 catch, 준비된 no-arg ErrorOut 또는 BC base 직접 생성, controller의 직접 `Status` 반환, framework 기본 처리를 요구한다. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL이다.
+- **NJ-3·4·7 ('강')**: 비-치명이나 §2.4 Q 카운트에 *정규 항목으로 편입* — '강' 항목 FAIL은 품질 상한을 '중'으로 강등. NJ-5·6=경미(정규 카운트, 강등 없음). **NJ-7 `BC 오류 직접 계약`**은 좁은 application 호출 `try`, 구체 catch, 준비된 no-arg ErrorSchema 또는 BC base 직접 생성, controller의 직접 `Status` 반환, framework 기본 처리를 요구한다. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL이다.
 
 ### 2.2 의미적 변종 라우팅 (일반 규칙)
 - **치명 항목의 의미 레인 FAIL은 결정 레인 PASS와 무관하게 step2 치명 FAIL**이다. SD-6은 그 *한 사례*(스크립트 exit0이어도 의미 FAIL이면 치명) — 일반 규칙의 인스턴스다.
@@ -215,7 +217,7 @@ degenerate/vacuous 차단. ①② 중복판정(N3) 제거 — **③(빈 골격)�
 
 #### 4.3.1 에러 경로 라이브 관측 매트릭스 (별도 트랙, 완료 비산입 — DR-40 폴더 관측과 동급 무게; aclex 라운드 산물)
 P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의 에러 경로 계약**을 *매 라이브 런마다 균일하게* probe해 회귀(예: ACL-EX2 transient→500 누수)를 ad-hoc이 아닌 **사전등록 커버리지**로 잡는다. 이 트랙의 가치는 *균일·전수성*에 있다(매번 같은 계약을 같은 방식으로 확인).
-> ⚠️ **이 트랙은 탐지(관측)이지 예방이 아니다.** 동결 이후 새 v4 라이브 결과에는 probe를 실행·기록한다. EP probe는 치명 게이트가 아니며 픽스처 종합 라벨을 자동 FAIL시키지 않는다.
+> ⚠️ **이 트랙은 탐지(관측)이지 예방이 아니다.** 동결 이후 새 v5 라이브 결과에는 probe를 실행·기록한다. EP probe는 치명 게이트가 아니며 픽스처 종합 라벨을 자동 FAIL시키지 않는다.
 
 - **2층 분리(FC-1 골든과 동형)**: ⓐ **계약 속성표(균일·코드 미열람)** — 모든 픽스처에 참인 에러 계약(내부 BC 분해 무관)을 코드 열람 전 동결. ⓑ **픽스처별 어댑터(조정자·코드 열람 후)** — 실제 두드릴 route+payload는 픽스처마다 다르므로(동일 태스크라도 BC 분해 분기) **§1.4 FC 실행 어댑터 기계를 재사용**해 조정자가 코드 열람 후 작성. "미열람" 선언은 ⓐ에만 적용.
 - **probe 실행 환경(미실측 방지·DR-50 정정)**: probe는 `setup_test_environment()` 또는 `settings.ALLOWED_HOSTS` override 후 두드린다(미적용 시 `DisallowedHost` 400 위양성·실측 불가). **미실측 시 status 추론 금지** — 추론은 ninja 파싱/검증 2단계를 혼동한다(dslive-claude EP-1: 절단 JSON을 422로 추론했으나 사후 실측 400; ninja `params/models.py`는 스키마검증 전 파싱단계에서 `HttpError(400)`을 raise). pytest 통합 테스트는 testserver 자동 허용이라 깨진-본문 케이스를 1건 포함하면 라이브 대리로 충분.
@@ -223,8 +225,8 @@ P1a·P2·P3 게이트(*위반주입→blocker*)와 달리, **정상 산출물의
 
 | 키 | 계약 속성 (ⓐ 균일·미열람) | 기대 status/shape | N/A·어댑터 규칙 (ⓑ) |
 |---|---|---|---|
-| **EP-1 깨진 본문** | 비-JSON/절단 본문 POST는 Ninja 파싱 단계의 framework 오류 | 기본 **400**; BC ErrorOut shape/code가 아니어야 함; exact body snapshot 금지 | HTTP operation 없으면 N/A |
-| **EP-2 요청 검증 실패** | Schema 필수값·타입·범위 검증 실패는 framework 오류 | 기본 **422**; BC ErrorOut shape/code가 아니어야 함; exact body snapshot 금지 | 적합한 요청 필드를 fixture별로 선택. HTTP operation 없으면 N/A |
+| **EP-1 깨진 본문** | 비-JSON/절단 본문 POST는 Ninja 파싱 단계의 framework 오류 | 기본 **400**; BC ErrorSchema shape/code가 아니어야 함; exact body snapshot 금지 | HTTP operation 없으면 N/A |
+| **EP-2 요청 검증 실패** | Schema 필수값·타입·범위 검증 실패는 framework 오류 | 기본 **422**; BC ErrorSchema shape/code가 아니어야 함; exact body snapshot 금지 | 적합한 요청 필드를 fixture별로 선택. HTTP operation 없으면 N/A |
 | **EP-3 인프라/승인 retryable** | **(a)** raw DB·인프라·미식별 예외, **(b)** G1에서 안정적인 공개 retryable 의미를 승인해 infra가 자기 BC 예외로 정규화한 경로를 분리 | (a) framework 기본 **500**, BC code/header 없음. (b) 소유 controller가 **503 또는 계약상 409** + 승인 BC code + 승인 표준 header 반환 | raw 오류를 catch-all로 변환하지 않는다. (b)가 G1 승인되지 않았거나 정규화 경로가 없으면 그 arm만 N/A |
 | **EP-4 재고 부족** | 재고<주문인 알려진 BC 충돌 | **409** + slot 6의 승인 exact `application/json` body; body status property가 승인된 fixture에서만 HTTP와 일치 | FC-1 골든이 1차, 여기서는 라이브 축 교차확인 |
 
@@ -269,7 +271,7 @@ full 평가(N_grader≥3 전수)는 *정확히 34차원 × 8벌 × N≥3*의 판
 
 ---
 
-## 6. v4 동결 채점 결과지 표준 형식
+## 6. v5 동결 채점 결과지 표준 형식
 
 > 승인 이후 신규 v4 결과지는 아래 동결 골격·순서·칼럼을 사용한다. v3 결과 14개는 소급 개편하지 않는다.
 

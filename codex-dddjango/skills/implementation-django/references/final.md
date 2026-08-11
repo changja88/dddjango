@@ -208,7 +208,7 @@ class OrderStatus(StrEnum):
     PENDING = "pending"
     COMPLETED = "completed"
 
-# infra_layer/django_order/models/order_model.py — 파생 (사람용 라벨(i18n) 필요 시 명시 매핑 병기)
+# driven_layer/django_order/models/order_model.py — 파생 (사람용 라벨(i18n) 필요 시 명시 매핑 병기)
 class OrderModel(models.Model):
     status = models.CharField(
         max_length=20,
@@ -922,29 +922,24 @@ python manage.py sqlmigrate myapp 0002
 # .gitignore에 migrations/를 추가하지 않는다
 ```
 
-### 10.2 데이터 마이그레이션 [DDoc]
+### 10.2 데이터 마이그레이션 — 금지 [DDoc]
+
+**`migrations/` 에는 `makemigrations` 가 생성한 것만 둔다.** 사람이 `RunPython`/`RunSQL` 로 데이터를 채우는 마이그레이션 파일을 만들지 않는다. 마이그레이션은 「돌았다 / 안 돌았다」 두 상태뿐이라, §11.2 가 대형 backfill 에 요구하는 넷 — 배치 크기·pause 정책, 실패 배치의 멱등 재실행, 진행률·오류율 모니터링, 부분 완료 시 rollback/forward-fix 결정 — 을 구조적으로 하나도 만족시키지 못한다.
+
+대량 데이터 채우기는 파일의 자리 문제가 아니라 **배포 절차의 한 «단계»** 다 — Expand → **Backfill** → Contract(§11.1). Backfill 코드는 트리 밖 저장소 루트 `scripts/` 에 둔다(일회성 — 규정하지 않는다). 스키마 변경과 «순서»가 묶인 소량 정리(NOT NULL 을 걸기 전 NULL 채움 등)도 같은 3단계로 사람이 배포 절차에서 순서를 관리한다 — 마이그레이션 파일 하나로 접지 않는다.
+
+아래는 «이렇게 하지 않는다»의 반례다 — 상한 없는 루프가 한 트랜잭션 안에서 전 행을 건마다 저장한다(100만 행 = 100만 `.save()`).
 
 ```python
-from django.db import migrations
-
+# ✗ 금지 — makemigrations 가 만들지 않은 손 편집 데이터 마이그레이션
 def forward_func(apps, schema_editor):
     User = apps.get_model("users", "User")
-    for user in User.objects.filter(display_name=""):
+    for user in User.objects.filter(display_name=""):   # 상한 없는 루프
         user.display_name = user.username
         user.save(update_fields=["display_name"])
-
-def reverse_func(apps, schema_editor):
-    pass  # 롤백 시 데이터 원복이 불가능하면 pass
-
-class Migration(migrations.Migration):
-    dependencies = [("users", "0005_add_display_name")]
-    operations = [
-        migrations.RunPython(forward_func, reverse_func),
-    ]
 ```
 
-- `apps.get_model()`로 히스토리 시점의 모델을 가져온다 -- 직접 임포트하지 않는다.
-- 데이터 마이그레이션은 `squashmigrations`에서 보존되지 않으므로 별도 관리한다.
+- squash 정정: 데이터 마이그레이션은 기본값(`elidable=False`)에서 `squashmigrations` 때 **보존되며, 대신 그 지점에서 최적화가 끊긴다.** 지워지는 것은 `elidable=True` 를 명시했을 때뿐이다.
 
 ### 10.3 무중단(Zero-Downtime) 마이그레이션 [DfP]
 
@@ -977,23 +972,23 @@ class Migration(migrations.Migration):
 새로 소유해 표준 4계층 구조로 **이주가 이미 결정된 뒤**, 그 *마이그레이션 이력*을
 파괴 없이 보존하는 메커니즘이다. *언제* 이주하느냐(판정 소유 기준)는 여기 범위가
 아니라 `architecture-ddd` §3.2가 정한다 — 여기서는 결정된 이주를 *어떻게* 이력
-파괴 없이 수행하느냐(HOW)만 다룬다. 핵심 함정: 앱을 `infra_layer/django_<app>/`로
+파괴 없이 수행하느냐(HOW)만 다룬다. 핵심 함정: 앱을 `driven_layer/django_<bounded_context>/`로
 옮기며 ORM 클래스를 `<Name>Model`로 바꾸면 기본 테이블명(`<label>_<modelname>`)이
 달라져, 코더가 기존 `0001`을 *재작성*(fresh `initial`)하기 쉽다. 그러면 이미
 `0001_initial`을 적용한 기존 DB에서 그 마이그레이션이 skip되어 테이블이 안 생기거나
 후속 마이그레이션과 어긋난다(이력 불변 위반).
 
 ```python
-# 1) 앱을 infra_layer/django_<app>/로 옮긴다 — AppConfig.name 은 새 점경로지만
+# 1) 앱을 driven_layer/django_<bounded_context>/로 옮긴다 — AppConfig.name 은 새 점경로지만
 #    label 은 기존 값을 유지한다(이력은 (label, migration) 키로 추적되므로 label 이
 #    바뀌면 기존 0001 적용 기록과 끊긴다. import 점경로만 바뀌는 것은 무해).
-# infra_layer/django_catalog/apps.py
+# driven_layer/django_catalog/apps.py
 class CatalogConfig(AppConfig):
-    name = "application.catalog.infra_layer.django_catalog"  # 새 점경로
+    name = "application.catalog.driven_layer.django_catalog"  # 새 점경로
     label = "catalog"                                        # 기존 label 유지
 
 # 2) ORM 클래스명은 표준상 <Name>Model 이 되지만 테이블명은 기존 것을 명시 보존한다.
-# infra_layer/django_catalog/models/product_model.py
+# driven_layer/django_catalog/models/product_model.py
 class ProductModel(models.Model):          # 기존 class Product 에서 rename
     class Meta:
         db_table = "catalog_product"       # 기존 테이블명 — 클래스 rename 이 바꾸지 못하게

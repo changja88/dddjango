@@ -1,1857 +1,938 @@
 #!/usr/bin/env python3
-"""dddjango 컨텍스트 격리 결정적 백스톱 (SD-7 — 컨텍스트 간 통신).
+"""dddjango 컨텍스트 격리 검사기 — BC 경계·층 방향 규율의 결정적 백스톱.
 
-`check-layer-skeleton.py`(구조 골격)의 *의존 방향* 짝이다. 아래 S1~S3는 full-tree
-컨텍스트 통신 슬라이스이며, code-profile API 경계 lane과 legacy HTTP lane은 뒤에서 구분한다:
+check-layer-skeleton(존재·폐쇄)의 «의존 방향» 짝이다. 경로 기대는 `standard_tree.py`
+에서 도출한다. 총론 #1(안쪽으로만)·#3(관문으로만)·#5(예외 조문 없음)·#49(Shared
+Kernel 없음)·#83(BC 삭제 내성)은 아래 각론 진단이 집행한다.
 
-  S1  cross-BC 내부 결합 — ACL/OHS 경로 *밖*에서 한 바운디드 컨텍스트(BC)가 다른 BC 의
-      `domain_layer`/`infra_layer` 를 직접 import 하는 것(architecture-ddd §2.5·§3.2(3):
-      컨텍스트 간 접근은 ACL 또는 `published_service`(OHS)로만 — 다른 컨텍스트의 내부
-      계층을 직접 import 하지 않는다).
-  S2  OHS contract 무의존 위반 — `published_service/*/contract/` 모듈이 (자기 BC 포함
-      어느 BC 든) `domain_layer`/`application_layer`/`infra_layer` 를 import 하는 것
-      (houserules `references/final.md` §2 OHS 내부 구조: contract 는 표준 라이브러리·
-      같은 서비스 contract 만 — 소비 BC 의 계약 import 가 무거운 그래프(Django 앱 로딩)를
-      끌고 오지 않게 하는 격리이자 도메인 enum 노출 차단).
-  S3  published 계약 관통 — 자기 BC 의 `domain_layer`/`application_layer`/`infra_layer`
-      프로덕션 파일이 *자기* BC 의 `published_service` 를 import 하는 것(houserules §2
-      OHS 시그니처 계약: published 계약 타입을 application_layer 안으로 관통시키지 않는다
-      — 응용은 domain 에만 의존, OHS 가 필드 단위로 언랩·재조립한다. *타* BC 의
-      published_service 소비는 표준 경로라 대상이 아니고, presentation 의 자기 published
-      import 도 대상 밖이다. `infra_layer/acl/` 도 3계층이므로 자기 published 역-import 는
-      S3 대상이다 — ACL 면제는 S1(업스트림 번역) 한정).
+무엇을 잡나 (규칙 번호는 트리 개정 명세):
+  방향   #2 안쪽 두 칸은 구체 기술을 모른다 · #9 driven 은 domain·port 만
+         #93/#94/#95 driving 잎의 import 폭 · #185/#186 application 의 import 폭
+         #251 domain 으로 들어오는 화살표 · #288 도메인 리포지토리는 domain 안에서 안 부른다
+         #312 판정 인터페이스의 층(구현이 domain 밖을 import 하나) · #322 driven 으로
+         들어오는 화살표는 composition_root 뿐 · #328 django_<bc> 는 persistence 만
+  타 BC  #12 부를 수 있는 것은 OHS·published_event 둘 · #13 OHS 소비는 ACL 뿐
+         #98 타 BC composition_root 금지 · #102 driving 중 OHS 만 · #51 test→타 BC test 금지
+  OHS    #146 published_service 금지 · #149/#113 라우팅·등록 함수 금지 · #150 평면 .py 금지
+         #152/#154/#155 service·contract 구조 · #156/#157/#159/#160 계약 1타입=1파일
+         #162 응답에 도메인 금지 · #163 exception 은 서비스 스코프 · #164 도메인 예외 번역
+         #166/#167/#168/#170 기저 예외·상속·1클래스=1모듈·_v1 금지 · #453/#454 «없다»는 답
+         #455 사유는 코드로 · #472 contract 는 stdlib·같은 BC 계약만 · #482/#483/#484 명명
+         #633 인자는 request 하나 · #634 공개 표면은 함수만 · #295 raw 재노출 금지
+  ACL    #361 상대 BC 하나=폴더 하나 · #363 클래스명 <Bc><Capability>Adapter
+         #364 포트 파일명에 공급자 BC 금지 · #450 상호 ACL 금지 · #473 기저 예외를 잡는다
+  기타   #14 `with unit_of_work:` 안에서 크로스-BC 포트 호출 금지 · #110 auto_import=False
+         #117 두 번째 ErrorCode 컨테이너 금지 · #291/#292 예외의 자리 셋 · #431 부작용 등록 금지
 
-*왜 결정적 백스톱인가* — 컨텍스트 통신 S1~S3 모두 **AST import 노드** 직격의 FP≈0 직접형이고
-(`ast.parse` — 문자열·주석 안의 import 유사 텍스트에 오발화하지 않는다; `import x`·
-`from x import y`·콤마 다중·별칭 전 형태, 함수 내부 지연 import 포함), 어느 것도 컴파일·
-테스트를 깨지 않는다(green). discipline-reviewer 의미 게이트 한 점에만 의존하면 LLM 이
-프로즈 규칙을 회피하는 표면이 된다 — 이 스크립트가 직접형을 결정적으로 메우고, 의미 변종
-(변수 우회·간접 재수출·상대 import(`from ..domain_layer import x`)·문자열 동적 import)은
-reviewer 몫이다(고정밀·저-recall, 거짓 양성 ≈0). positional/auto/preserve의 파싱 불가 파일은
-legacy 호환을 위해 fail-open하고, code profile의 선택된 production source는 fail-closed한다.
+ast+ 후보 채널 (㉰ — exit 불산입, 마무리는 discipline-reviewer):
+  #151(창구 이름 — 기술·타 BC 토큰은 «확정» 위반) · #153(도메인 예외 속성 접근은 «확정»,
+  유스케이스 호출 0/2회↑는 후보) · #171(접미사뿐인 예외 이름) · #347(admin feature 의
+  애그리거트 쓰기) · #11(경계 애너테이션의 Model/QuerySet 은 «확정», 그 외 후보)
 
-**ACL 면제(미스캘리브 차단)** — `infra_layer/acl/`(인접 경로 한정 — `repository/acl/` 류
-은닉 배치는 면제 아님) 의 미이주 ACL 이 업스트림(타 BC) 모델·예외를 import·번역하는 건
-표준 §2(houserules `references/final.md` §2 컨텍스트 간 통신: "OHS 미이주·행잠금 불가피 시
-ACL로 명시 — 구현(업스트림 모델·예외 번역)은 `infra_layer/acl/` 에 가둔다") **명시 허용**이라
-차단하지 않는다. 진짜 위반은 ACL *밖*(도메인/응용/presentation)이 타 BC 내부를 직접
-import(예: 예외 번역이 ACL 에 안 갇혀 presentation·application 으로 누수)다. ACL 자신이
-OHS 미경유(OHS 존재 시)·도메인 누수(포트 ABC 미준수)인지는 의미 변종이라 discipline-reviewer
-의미 체크 몫이다. [근거: smoke4-claude(catalog 결합이 ACL 격리 → PASS) ↔ p1a-v3-claude
-(catalog 예외가 presentation·application 으로 누수 → FAIL)를 결정적으로 가르는 축.]
+  framework #470 강등의 사후 신호 — 공개 시그니처에 `kind`·`mode`·`bc`·`is_*` 매개변수(D38)
+  <project> #433 규칙을 «주소·예외 목록»으로 적지 않는다 — BC 경로 리터럴 컬렉션
+         (INSTALLED_APPS 등록은 제외)·도메인 예외 이름 컬렉션
 
-거짓 양성 회피 — AND 합성으로만 차단:
-  1) 프로젝트가 표준 레이아웃(`application/` 컨테이너)을 쓴다. 없으면 기존 확립 규약(§1.1)이라
-     적용 대상 아님 → exit 0. **경로 판정은 전부 TARGET_DIR 기준 상대 경로다** — 체크아웃
-     조상 디렉터리명(`…/application/…`·`…/venv/…` 등)에 오염되지 않는다(TARGET_DIR 는
-     프로젝트 루트를 전제한다 — `application/` 컨테이너 자체를 넘기면 대상 없음 exit 0).
-  2) `application/<bc>/` 하위 프로덕션 파일(test 디렉터리·`test_*.py`·`conftest.py` 제외 —
-     프로덕션 파일명에 `test_` 접두를 쓰지 않는 표준 명명을 전제한다)이 슬라이스 패턴에
-     걸린다. 컨테이너 직하 비-BC 파일(`application/glue.py`)의 BC 내부 import 는 보수적으로
-     S1 로 본다(BC 밖에서의 내부 접근).
-  3) (git 레포면) 그 파일이 이번 변경에서 새로 추가/수정됨 — 기존 커밋 코드는 존중(brownfield).
-     구 read/write 평면 OHS·이주 호환 심은 §2 이주 조문상 허용이라 어느 슬라이스에도 안 걸린다.
-  `application_layer` 의 cross-BC 직접 import 는 보수적으로 불-차단(루브릭 SD-7=domain/infra;
-  거짓양성↓) — 의미 레인 몫. presentation·application 이 타 BC 의 *예외*(domain_layer 하위)를
-  직접 import 하는 건 S1 로 포착된다.
+CLI 호환 심: registry 가 렌더하는 `--error-profile`·selector 들은 «수용하되 무시»한다 —
+그 lane(API error contract)은 전용 검사기 4종의 소유가 됐고, 실행·종료 계약은 무변이다.
 
-레거시 API 순도 lane은 positional/auto/preserve 실행에서 기존 application_layer HTTP 직접
-신호와 touched grandfathering을 그대로 보존한다. 명시 code profile은 선택 root API의
-Ninja API 조립 전용 소유권, scope BC inner layer의 Ninja framework/canonical error language,
-selected BC 사이의 error language를 검사하고, Git tracked+untracked non-ignored production
-full tree에 S1~S3를, touched application_layer에 기존 raw HTTP 신호를 적용한다. auto는
-Error response G2 증거가 아니다.
-
-사용법: check-context-isolation.py [TARGET_DIR] [--error-profile PROFILE ...]
-종료코드: 0=clean(또는 표준 레이아웃 미적용), 2=blocker(발견 출력), 1=사용 오류.
+사용법: check-context-isolation.py [TARGET_DIR] [--error-profile …] [selector …]
+종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 """
 from __future__ import annotations
 
 import argparse
 import ast
-import os
 import re
-import stat
-import subprocess
 import sys
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
-TEST_DIR_NAMES = {"test", "tests"}
-LAYER_DIR_NAMES = {"domain_layer", "application_layer", "infra_layer"}
-CODE_SKIP_DIRS = {
-    *SKIP_DIRS,
-    ".cache",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    "migrations",
-    "generated",
+try:
+    import standard_tree as tree
+    import business_vocab as vocab
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py/business_vocab.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+# #472 의 «표준 라이브러리» 판정 집합 — business_vocab 의 stdlib 축(배포판·기술 낱말 제외).
+STDLIB_NAMES = set(getattr(sys, "stdlib_module_names", ())) | set(vocab.STDLIB_FALLBACK)
+
+SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
+DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+
+TECH_TOP = {
+    "django", "ninja", "celery", "rest_framework", "redis", "kafka", "pika",
+    "boto3", "requests", "httpx", "psycopg", "psycopg2", "sqlalchemy", "grpc",
 }
-
-# S1: 타 BC 내부 계층. domain/infra 만(루브릭 SD-7) — application_layer 는 의미 레인.
-CROSS_BC_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.(?:domain_layer|infra_layer)(?:\.|$)")
-# S2: contract 모듈의 계층 import — BC 불문 3계층 전부(무의존 규칙이라 application_layer 포함).
-LAYER_ANY_RE = re.compile(
-    r"^application\.[A-Za-z_]\w*\.(?:domain_layer|application_layer|infra_layer)(?:\.|$)"
-)
-# S3: 자기 BC published_service 역-import(관통).
-PUBLISHED_RE = re.compile(r"^application\.([A-Za-z_]\w*)\.published_service(?:\.|$)")
-
-# 구 check-error-centralization.py의 raw application-layer HTTP 신호. positional/auto/preserve
-# lane에서 collector·순서·label·touched 의미를 바꾸지 않는다.
-LEGACY_RESPONSE_CALL_RE = re.compile(
-    r"\b(?:JsonResponse|HttpResponse|HttpResponseBadRequest|HttpResponseForbidden"
-    r"|HttpResponseNotFound|HttpResponseNotAllowed|HttpResponseServerError)\s*\("
-)
-LEGACY_ERROR_STATUS_RE = re.compile(r"\bstatus(?:_code)?\s*=\s*[45]\d\d\b")
-LEGACY_HTTP_ERROR_RE = re.compile(r"\bHttpError\s*\(\s*[45]\d\d\b")
-LEGACY_NINJA_IMPORT_RE = re.compile(
-    r"^\s*(?:from\s+ninja(?:_extra)?(?:\.\w+)*\s+import|import\s+ninja(?:_extra)?)\b",
-    re.MULTILINE,
-)
-LEGACY_SIGNAL_CHECKS = (
-    (LEGACY_RESPONSE_CALL_RE, "수제 HTTP 응답 객체 생성(JsonResponse/HttpResponse)"),
-    (LEGACY_ERROR_STATUS_RE, "오류 status code 직접 선택(status[_code]=4xx/5xx)"),
-    (LEGACY_HTTP_ERROR_RE, "ninja HttpError 를 status 와 함께 raise"),
-    (LEGACY_NINJA_IMPORT_RE, "ninja(web 프레임워크) import — application 은 web 을 모른다"),
-)
-
-ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
-BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
-ROOT_API_CONSTRUCTORS = {
-    "ninja.NinjaAPI",
-    "ninja_extra.NinjaExtraAPI",
-}
-ROOT_API_IMPORT_RE = re.compile(r"^application\.[A-Za-z_]\w*(?:\.|$)")
-ERROR_STATUS_NAME_RE = re.compile(r"(?:^|_)(?:4|5)\d\d(?:_|$)")
-EXCEPTION_ARGUMENT_RE = re.compile(r"^(?:exc|exception|error)$", re.IGNORECASE)
-HTTP_FACILITY_NAME_RE = re.compile(r"(?:status|response|http)", re.IGNORECASE)
-COMMON_ERROR_MODULE = "common.ninja.response.error_out"
-NINJA_SCHEMA_BASE = "ninja.Schema"
-COMMON_ERROR_OUT_BASE = f"{COMMON_ERROR_MODULE}.ErrorOut"
-ERROR_CATALOG_SUBJECT_WORDS = {"error", "problem", "exception"}
-ERROR_CATALOG_PLURAL_WORDS = {"errors", "problems", "exceptions"}
-ERROR_CATALOG_ROLE_WORDS = {
-    "catalog",
-    "catalogs",
-    "map",
-    "maps",
-    "mapping",
-    "mappings",
-    "response",
-    "responses",
-    "code",
-    "codes",
-}
+TECH_NAME_TOKENS = {"django", "ninja", "celery", "http", "grpc", "kafka", "redis", "sql", "orm", "rest", "api"}
+ANSWER_NOT_EXCEPTION = ("NotFound", "AlreadyExists", "AlreadyExist", "Duplicate", "Duplicated")
+FREEFORM_FIELDS = {"message", "reason", "detail"}
+IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
-class UsageError(Exception):
-    """CLI/selector analysis error normalized to exit 1."""
+class Findings(list):
+    def add(self, rule: str, path, msg: str) -> None:
+        self.append(f"[{rule}] {path}: {msg}")
 
 
-class _UsageParser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:
-        raise UsageError(message)
+class Candidates(list):
+    def add(self, rule: str, path, msg: str, question: str) -> None:
+        self.append(f"[ⓓ{rule}] {path}: {msg} — 물음: {question}")
 
 
-@dataclass(frozen=True)
-class Config:
-    root: Path
-    profile: str | None
-    scope: str | None
-    api_module: str | None
-    controller_modules: tuple[str, ...]
-    scope_bcs: tuple[str, ...]
-    error_bcs: tuple[str, ...]
+def _entries(d: Path) -> tuple[list[Path], list[Path]]:
+    dirs: list[Path] = []
+    files: list[Path] = []
+    for p in sorted(d.iterdir()):
+        if p.name.startswith(".") or p.name in SKIP_DIRS:
+            continue
+        (dirs if p.is_dir() else files).append(p)
+    return dirs, files
 
 
-@dataclass(frozen=True)
-class CodeInventory:
-    relative_paths: tuple[Path, ...]
-    git_root: Path | None
+def _has_adoption_signal(bc_dir: Path) -> bool:
+    has_layer = any((bc_dir / n).is_dir() for n in NEW_LAYERS)
+    has_marker = any((bc_dir / m).is_file() for m in DJANGO_APP_MARKERS) or any(
+        p.is_dir() and p.name.startswith("django_") for p in bc_dir.iterdir()
+    )
+    return has_layer or has_marker
 
 
-@dataclass(frozen=True)
-class ParsedSource:
-    relative_path: Path
-    source: str
-    tree: ast.AST
-    touched: bool
-
-
-@dataclass(frozen=True)
-class ImportReference:
-    lineno: int
-    module: str
-    imported_name: str | None
-    full_path: str
-    absolute: bool
-
-
-@dataclass(frozen=True)
-class BoundaryFinding:
-    relative_path: Path
-    lineno: int
-    category: str
-    shown: str
-
-    def render(self) -> str:
-        return f"  - {self.relative_path}:{self.lineno}  {self.shown}"
-
-
-def _argument_parser() -> _UsageParser:
-    parser = _UsageParser(add_help=True)
-    parser.add_argument("target", nargs="?", default=".")
-    parser.add_argument("--error-profile", action="append")
-    parser.add_argument("--scope", action="append")
-    parser.add_argument("--api-module", action="append")
-    parser.add_argument("--controller-module", action="append", default=[])
-    parser.add_argument("--scope-bc", action="append", default=[])
-    parser.add_argument("--error-bc", action="append", default=[])
-    return parser
-
-
-def _one(
-    option: str,
-    values: list[str] | None,
-    *,
-    required: bool,
-    issues: list[str],
-) -> str | None:
-    actual = values or []
-    if required and not actual:
-        issues.append(f"필수 인자 누락: {option}")
+def _parse(f: Path) -> ast.Module | None:
+    try:
+        return ast.parse(f.read_text(encoding="utf-8"))
+    except (SyntaxError, OSError, UnicodeDecodeError):
         return None
-    if len(actual) > 1:
-        issues.append(f"단일 인자 중복: {option}")
-    return actual[0] if actual else None
 
 
-def _unique(option: str, values: list[str], issues: list[str]) -> tuple[str, ...]:
-    if len(values) != len(set(values)):
-        issues.append(f"반복 인자 중복: {option}")
-    return tuple(values)
+def _camel(snake: str) -> str:
+    return "".join(w.capitalize() for w in snake.split("_"))
 
 
-def _selected_source(root: Path, option: str, raw: str, issues: list[str]) -> Path | None:
-    rel = Path(raw)
-    if (
-        rel.is_absolute()
-        or ".." in rel.parts
-        or rel.as_posix() != raw
-        or "/" not in raw
-        or rel.suffix != ".py"
-    ):
-        issues.append(f"잘못된 source path: {option}={raw}")
-        return None
-    try:
-        resolved = (root / rel).resolve()
-    except (OSError, RuntimeError) as exc:
-        issues.append(f"source path resolve 불능: {option}={raw} ({exc})")
-        return None
-    try:
-        resolved.relative_to(root)
-    except ValueError:
-        issues.append(f"root/symlink 탈출: {option}={raw}")
-        return None
-    if not resolved.is_file():
-        issues.append(f"선택 source 없음: {option}={raw}")
-        return None
-    try:
-        source = resolved.read_text(encoding="utf-8")
-        ast.parse(source, filename=raw)
-    except (OSError, UnicodeError, SyntaxError) as exc:
-        issues.append(f"선택 source 분석 불능: {option}={raw} ({exc})")
-        return None
-    return resolved
-
-
-def _parse_config(argv: list[str]) -> Config:
-    namespace = _argument_parser().parse_args(argv)
-    try:
-        root = Path(namespace.target).resolve()
-        root_is_dir = root.is_dir()
-    except (OSError, RuntimeError) as exc:
-        raise UsageError(f"TARGET_DIR resolve 불능: {namespace.target} ({exc})") from exc
-    if not root_is_dir:
-        raise UsageError(f"디렉터리 아님 {root}")
-
-    issues: list[str] = []
-    profile = _one(
-        "--error-profile",
-        namespace.error_profile,
-        required=False,
-        issues=issues,
-    )
-    selectors_present = any(
-        (
-            namespace.scope,
-            namespace.api_module,
-            namespace.controller_module,
-            namespace.scope_bc,
-            namespace.error_bc,
-        )
-    )
-    if profile is None and selectors_present:
-        issues.append("selector 사용 시 --error-profile 필수")
-    if profile is not None and profile not in ERROR_PROFILES:
-        issues.append(f"지원하지 않는 --error-profile: {profile}")
-    if profile == "auto" and selectors_present:
-        issues.append("auto profile에는 scope/source/BC selector를 전달하지 않음")
-
-    explicit = profile in {"dddjango-code-json", "preserve-established"}
-    scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
-    api_module = _one(
-        "--api-module",
-        namespace.api_module,
-        required=explicit,
-        issues=issues,
-    )
-    controller_modules = _unique(
-        "--controller-module", namespace.controller_module, issues
-    )
-    scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
-    error_bcs = _unique("--error-bc", namespace.error_bc, issues)
-    if explicit and not controller_modules:
-        issues.append("필수 인자 누락: --controller-module")
-    if explicit and not scope_bcs:
-        issues.append("필수 인자 누락: --scope-bc")
-    if scope is not None and not scope.strip():
-        issues.append("--scope는 빈 문자열일 수 없음")
-    for option, names in (("--scope-bc", scope_bcs), ("--error-bc", error_bcs)):
-        for name in names:
-            if not BC_NAME_RE.fullmatch(name):
-                issues.append(f"잘못된 BC 이름: {option}={name}")
-    if not set(error_bcs).issubset(scope_bcs):
-        issues.append("--error-bc는 --scope-bc의 부분집합이어야 함")
-
-    resolved_by_role: dict[str, list[Path]] = {"api": [], "controller": []}
-    if api_module is not None:
-        path = _selected_source(root, "--api-module", api_module, issues)
-        if path is not None:
-            resolved_by_role["api"].append(path)
-    for raw in controller_modules:
-        path = _selected_source(root, "--controller-module", raw, issues)
-        if path is not None:
-            resolved_by_role["controller"].append(path)
-    if set(resolved_by_role["api"]) & set(resolved_by_role["controller"]):
-        issues.append("--api-module과 --controller-module 역할 overlap")
-    all_selected = resolved_by_role["api"] + resolved_by_role["controller"]
-    if len(all_selected) != len(set(all_selected)):
-        issues.append("선택 source가 같은 resolved path를 중복 지정함")
-
-    if issues:
-        raise UsageError("; ".join(issues))
-    return Config(
-        root=root,
-        profile=profile,
-        scope=scope,
-        api_module=api_module,
-        controller_modules=controller_modules,
-        scope_bcs=scope_bcs,
-        error_bcs=error_bcs,
-    )
-
-
-def _is_code_production_path(relative_path: Path) -> bool:
-    parts = relative_path.parts
-    return (
-        relative_path.suffix == ".py"
-        and not set(parts) & CODE_SKIP_DIRS
-        and not set(parts) & TEST_DIR_NAMES
-        and not relative_path.name.startswith("test_")
-        and not relative_path.name.endswith("_test.py")
-        and relative_path.name != "test.py"
-        and relative_path.name != "tests.py"
-        and relative_path.name != "conftest.py"
-    )
-
-
-def _filesystem_code_paths(root: Path) -> tuple[Path, ...]:
-    paths: list[Path] = []
-    walk_errors: list[str] = []
-
-    def record_walk_error(exc: OSError) -> None:
-        walk_errors.append(str(exc))
-
-    for directory, names, filenames in os.walk(
-        root,
-        topdown=True,
-        followlinks=False,
-        onerror=record_walk_error,
-    ):
-        directory_path = Path(directory)
-        try:
-            directory_relative = directory_path.relative_to(root)
-        except ValueError as exc:
-            raise UsageError(f"inventory root 탈출: {directory_path}") from exc
-        names[:] = sorted(
-            name
-            for name in names
-            if not set((*directory_relative.parts, name)) & CODE_SKIP_DIRS
-            and name not in TEST_DIR_NAMES
-        )
-        for filename in sorted(filenames):
-            relative_path = directory_relative / filename
-            if _is_code_production_path(relative_path):
-                paths.append(relative_path)
-    if walk_errors:
-        raise UsageError(f"production inventory 탐색 불능: {'; '.join(sorted(walk_errors))}")
-    return tuple(sorted(paths, key=Path.as_posix))
-
-
-def _has_git_marker(root: Path) -> bool:
-    for directory in (root, *root.parents):
-        marker = directory / ".git"
-        try:
-            marker_mode = marker.stat().st_mode
-        except FileNotFoundError:
-            continue
-        except OSError as exc:
-            raise UsageError(f"Git marker 접근 불능: {marker} ({exc})") from exc
-        if stat.S_ISDIR(marker_mode) or stat.S_ISREG(marker_mode):
-            return True
-    return False
-
-
-def _code_inventory(root: Path) -> CodeInventory:
-    try:
-        probe = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
-        raise UsageError(f"Git worktree 판정 불능: {exc}") from exc
-    if probe.returncode != 0:
-        if _has_git_marker(root):
-            detail = probe.stderr.strip() or probe.stdout.strip()
-            raise UsageError(f"Git worktree 판정 불능: {detail}")
-        return CodeInventory(_filesystem_code_paths(root), None)
-    if probe.stdout.strip() != "true":
-        return CodeInventory(_filesystem_code_paths(root), None)
-
-    try:
-        top_level = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except (OSError, UnicodeError, subprocess.SubprocessError) as exc:
-        raise UsageError(f"Git worktree root 분석 불능: {exc}") from exc
-    if top_level.returncode != 0:
-        detail = top_level.stderr.strip() or top_level.stdout.strip()
-        raise UsageError(f"Git worktree root 분석 불능: {detail}")
-    try:
-        git_root = Path(top_level.stdout.strip()).resolve()
-        target_prefix = root.relative_to(git_root)
-    except (OSError, RuntimeError, ValueError) as exc:
-        raise UsageError(f"Git worktree root/target 관계 분석 불능: {exc}") from exc
-
-    try:
-        listed = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(git_root),
-                "ls-files",
-                "--cached",
-                "--others",
-                "--exclude-standard",
-                "-z",
-            ],
-            capture_output=True,
-            check=False,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise UsageError(f"Git production inventory 불능: {exc}") from exc
-    if listed.returncode != 0:
-        detail = os.fsdecode(listed.stderr).strip() or os.fsdecode(listed.stdout).strip()
-        raise UsageError(f"Git production inventory 불능: {detail}")
-
-    relative_paths: list[Path] = []
-    for encoded in listed.stdout.split(b"\0"):
-        if not encoded:
-            continue
-        git_relative = Path(os.fsdecode(encoded))
-        if git_relative.is_absolute() or ".." in git_relative.parts:
-            raise UsageError(f"Git inventory 경로 불능: {git_relative}")
-        try:
-            target_relative = git_relative.relative_to(target_prefix)
-        except ValueError:
-            continue
-        if _is_code_production_path(target_relative):
-            relative_paths.append(target_relative)
-    if len(relative_paths) != len(set(relative_paths)):
-        raise UsageError("Git production inventory에 중복 경로가 있음")
-    return CodeInventory(
-        tuple(sorted(relative_paths, key=Path.as_posix)),
-        git_root,
-    )
-
-
-def _git_path_is_touched(git_root: Path, file_path: Path) -> bool:
-    try:
-        git_relative = file_path.relative_to(git_root)
-    except ValueError as exc:
-        raise UsageError(f"touched source가 Git root 밖임: {file_path}") from exc
-    try:
-        tracked = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(git_root),
-                "ls-files",
-                "--error-unmatch",
-                "--",
-                git_relative.as_posix(),
-            ],
-            capture_output=True,
-            check=False,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise UsageError(f"touched source 추적 불능: {git_relative} ({exc})") from exc
-    if tracked.returncode != 0:
-        return True
-    try:
-        head = subprocess.run(
-            ["git", "-C", str(git_root), "rev-parse", "--verify", "HEAD"],
-            capture_output=True,
-            check=False,
-        )
-        if head.returncode != 0:
-            return True
-        changed = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(git_root),
-                "diff",
-                "--quiet",
-                "HEAD",
-                "--",
-                git_relative.as_posix(),
-            ],
-            capture_output=True,
-            check=False,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise UsageError(f"touched source 비교 불능: {git_relative} ({exc})") from exc
-    if changed.returncode not in {0, 1}:
-        detail = os.fsdecode(changed.stderr).strip() or os.fsdecode(changed.stdout).strip()
-        raise UsageError(f"touched source 비교 불능: {git_relative} ({detail})")
-    return changed.returncode == 1
-
-
-def _code_is_touched(
-    git_root: Path | None,
-    lexical_path: Path,
-    resolved_path: Path,
-) -> bool:
-    if git_root is None:
-        return True
-    lexical_touched = _git_path_is_touched(git_root, lexical_path)
-    if lexical_path == resolved_path:
-        return lexical_touched
-    resolved_touched = _git_path_is_touched(git_root, resolved_path)
-    return lexical_touched or resolved_touched
-
-
-def _code_sources(config: Config) -> list[ParsedSource]:
-    inventory = _code_inventory(config.root)
-    inventory_paths = set(inventory.relative_paths)
-    issues: list[str] = []
-
-    selected_paths = [Path(config.api_module or "")]
-    selected_paths.extend(Path(raw) for raw in config.controller_modules)
-    for selected in selected_paths:
-        if selected not in inventory_paths:
-            issues.append(f"선택 source가 production inventory에 없음: {selected}")
-
-    scoped_paths: list[Path] = []
-    for scope_bc in config.scope_bcs:
-        bc_paths = [
-            relative
-            for relative in inventory.relative_paths
-            if len(relative.parts) >= 3
-            and relative.parts[:2] == ("application", scope_bc)
-        ]
-        if not bc_paths:
-            issues.append(f"scope BC production source 없음: application/{scope_bc}/")
-        scoped_paths.extend(bc_paths)
-    if issues:
-        raise UsageError("; ".join(sorted(set(issues))))
-
-    source_paths = sorted(set((*scoped_paths, *selected_paths)), key=Path.as_posix)
-    parsed: list[ParsedSource] = []
-    resolved_paths: dict[Path, Path] = {}
-    for relative_path in source_paths:
-        lexical_path = config.root / relative_path
-        try:
-            file_path = lexical_path.resolve()
-        except (OSError, RuntimeError) as exc:
-            issues.append(f"production source resolve 불능: {relative_path} ({exc})")
-            continue
-        try:
-            file_path.relative_to(config.root)
-        except ValueError:
-            issues.append(f"production source root/symlink 탈출: {relative_path}")
-            continue
-        previous = resolved_paths.get(file_path)
-        if previous is not None:
-            issues.append(f"production source resolved path 중복: {previous}, {relative_path}")
-            continue
-        resolved_paths[file_path] = relative_path
-        try:
-            if not file_path.is_file():
-                issues.append(f"production source 없음: {relative_path}")
-                continue
-            source = file_path.read_text(encoding="utf-8")
-            tree = ast.parse(source, filename=relative_path.as_posix())
-            touched = _code_is_touched(
-                inventory.git_root,
-                lexical_path,
-                file_path,
-            )
-        except (OSError, UnicodeError, SyntaxError) as exc:
-            issues.append(f"production source 분석 불능: {relative_path} ({exc})")
-            continue
-        except UsageError as exc:
-            issues.append(str(exc))
-            continue
-        parsed.append(
-            ParsedSource(
-                relative_path=relative_path,
-                source=source,
-                tree=tree,
-                touched=touched,
-            )
-        )
-    if issues:
-        raise UsageError("; ".join(sorted(set(issues))))
-    return parsed
-
-
-def _legacy_application_layer_files(root: Path) -> list[Path]:
-    """구 checker의 application_layer raw-signal 후보를 순서까지 그대로 수집한다."""
-    out: list[Path] = []
-    for path in root.rglob("*.py"):
-        parts = set(path.parts)
-        if parts & SKIP_DIRS:
-            continue
-        if "application_layer" not in parts:
-            continue
-        if parts & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
-            continue
-        out.append(path)
+def _ann_idents(node: ast.expr | None) -> set[str]:
+    if node is None:
+        return set()
+    out: set[str] = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Name):
+            out.add(n.id)
+        elif isinstance(n, ast.Attribute):
+            out.add(n.attr)
+        elif isinstance(n, ast.Constant) and isinstance(n.value, str):
+            out.update(IDENT_RE.findall(n.value))
     return out
 
 
-def _legacy_is_new_or_modified(root: Path, file_path: Path) -> bool:
-    """구 checker의 touched/untracked/Git-불능 보수 판정을 그대로 보존한다."""
-    if not (root / ".git").exists():
-        return True
-    try:
-        rel = file_path.relative_to(root)
-    except ValueError:
-        return True
-    try:
-        tracked = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)],
-            capture_output=True,
+# ── 칸 분류 — 파일 경로·모듈 경로 공용 ──────────────────────────────────────
+
+def _spot(parts: tuple[str, ...]) -> str:
+    if not parts:
+        return "bc_root"
+    segs = parts
+    head = segs[0]
+    if head == "driving_layer":
+        sub = segs[1] if len(segs) > 1 else ""
+        if sub == "open_host_service":
+            return "ohs_contract" if "contract" in segs else "ohs"
+        if sub in ("api", "cron_job", "event_subscription"):
+            return sub
+        return "driving"
+    if head == "application_layer":
+        if len(segs) > 1 and segs[1] == "port":
+            return "app_port"
+        return "app"
+    if head == "domain_layer":
+        if "value_object" in segs or "shared_value_object" in segs:
+            return "domain_vo"
+        if "exception" in {s.removesuffix(".py") for s in segs[1:]}:
+            return "domain_exc"
+        last = segs[-1].removesuffix(".py")
+        if last.endswith("_repository"):
+            return "domain_repo"
+        if "domain_service" in segs:
+            return "domain_service"
+        return "domain"
+    if head == "driven_layer":
+        sub = segs[1] if len(segs) > 1 else ""
+        if sub.startswith("django_"):
+            return "django"
+        if "anticorruption_layer" in segs:
+            return "acl"
+        if "persistence" in segs:
+            return "persistence"
+        return "driven"
+    if head == "composition_root":
+        return "composition"
+    if head == "published_event":
+        return "published_event"
+    if head == "test":
+        return "test"
+    return "other"
+
+
+DOMAIN_SPOTS = {"domain", "domain_vo", "domain_exc", "domain_repo", "domain_service"}
+DRIVEN_SPOTS = {"driven", "django", "acl", "persistence"}
+DRIVING_SPOTS = {"driving", "api", "ohs", "ohs_contract", "cron_job", "event_subscription"}
+
+
+def _resolve_relative(file_parts: tuple[str, ...], level: int, module: str | None) -> tuple[str, ...] | None:
+    """상대 import 를 BC-상대 마디로 해석. None = BC 밖으로 탈출(level 과다)."""
+    pkg = list(file_parts[:-1])
+    up = level - 1
+    if up > len(pkg):
+        return None
+    base = pkg[: len(pkg) - up]
+    if module:
+        base.extend(module.split("."))
+    return tuple(base)
+
+
+def _imports(mod: ast.Module):
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                yield node, a.name, 0
+        elif isinstance(node, ast.ImportFrom):
+            yield node, node.module or "", node.level
+
+
+# ── 방향 매트릭스 ───────────────────────────────────────────────────────────
+
+def _apply_same_bc(loc: str, tgt: str, rel, mod_path: str, out: Findings) -> None:
+    if loc in ("api", "driving", "cron_job", "event_subscription"):
+        if tgt == "app_port":
+            out.add("#93", rel, f"driving 의 잎은 `application_layer/port/` 를 import 하지 않는다 — `{mod_path}`")
+        elif tgt in DRIVEN_SPOTS:
+            out.add("#94", rel, f"driving 의 잎은 `driven_layer/` 를 import 하지 않는다 — `{mod_path}`")
+        elif tgt in ("domain", "domain_repo", "domain_service"):
+            out.add("#95", rel, f"driving 잎이 domain 에서 가져올 수 있는 것은 exception·값 객체뿐이다 — `{mod_path}`")
+    elif loc == "ohs":
+        if tgt in DRIVEN_SPOTS:
+            out.add("#94", rel, f"driving 의 잎은 `driven_layer/` 를 import 하지 않는다 — `{mod_path}`")
+        elif tgt == "app_port":
+            out.add("#93", rel, f"driving 의 잎은 `application_layer/port/` 를 import 하지 않는다 — `{mod_path}`")
+        elif tgt in ("domain", "domain_repo", "domain_service"):
+            out.add("#95", rel, f"driving 잎이 domain 에서 가져올 수 있는 것은 exception·값 객체뿐이다 — `{mod_path}`")
+    elif loc == "ohs_contract":
+        if tgt != "ohs_contract":  # 같은 BC 의 다른 계약 import 는 허용 문면이다
+            out.add("#472", rel, f"`contract/` 는 표준 라이브러리와 같은 BC 의 다른 계약 말고는 import 하지 않는다 — `{mod_path}`")
+    elif loc in ("app", "app_port"):
+        if tgt in DRIVEN_SPOTS:
+            out.add("#185", rel, f"`application_layer` 는 `driven_layer` 를 import 하지 않는다(#322 — driven 으로 들어오는 화살표는 composition_root 뿐) — `{mod_path}`")
+        elif tgt in DRIVING_SPOTS:
+            out.add("#185", rel, f"`application_layer` 는 `driving_layer` 를 import 하지 않는다 — `{mod_path}`")
+    elif loc in DOMAIN_SPOTS:
+        if tgt == "domain_repo":
+            out.add("#288", rel, f"`<aggregate>_repository` 는 domain 안에서 아무도 import 하지 않는다 — `{mod_path}`")
+        elif tgt not in DOMAIN_SPOTS:
+            rule = "#312" if loc == "domain_service" else "#1"
+            out.add(rule, rel, f"domain 은 밖을 모른다(의존은 안쪽으로만) — `{mod_path}`")
+    elif loc in ("driven", "persistence", "acl"):
+        if tgt in DRIVEN_SPOTS and tgt != "django":
+            pass  # driven 내부 협력(persistence↔acl 등)은 이 검사기의 축이 아니다
+        elif tgt == "django":
+            if loc != "persistence":
+                out.add("#328", rel, f"`django_<bc>` 를 import 하는 것은 `adapter/persistence/` 아래뿐이다 — `{mod_path}`")
+        elif tgt not in DOMAIN_SPOTS and tgt != "app_port":
+            out.add("#9", rel, f"`driven_layer` 는 `domain_layer` 와 `application_layer/port/` 만 import 한다 — `{mod_path}`")
+    elif loc == "published_event":
+        if tgt in DOMAIN_SPOTS:
+            out.add("#251", rel, f"`published_event` 는 domain 을 import 하지 않는다(domain 으로 들어오는 화살표 셋에 없다) — `{mod_path}`")
+
+
+def _apply_other_bc(loc: str, tgt: str, tgt_bc: str, rel, mod_path: str, out: Findings) -> None:
+    if tgt in ("ohs", "ohs_contract"):
+        if loc == "acl":
+            return
+        if loc == "app":
+            out.add("#186", rel, f"`application_layer` 는 타 BC 를 직접 부르지 않고 자기 `port/` 를 거친다 — `{mod_path}`")
+        else:
+            out.add("#13", rel, f"타 BC 의 `open_host_service/` 를 import 하는 것은 `anticorruption_layer/` 뿐이다 — `{mod_path}`")
+        return
+    if tgt == "published_event":
+        return  # 사실 계약 소비 — 표준 경로(#12 의 둘째)
+    if loc == "test":
+        if tgt == "test":
+            out.add("#51", rel, f"BC 테스트가 다른 BC 의 test 를 import 하면 위반이다 — `{mod_path}`")
+        return  # 테스트의 그 밖 소비는 이 검사기가 확정하지 않는다
+    if tgt == "composition":
+        out.add("#98", rel, f"타 BC 의 `composition_root` 는 관문(OHS) 우회다 — `{mod_path}`")
+    elif tgt in ("api", "driving", "cron_job", "event_subscription"):
+        out.add("#102", rel, f"타 BC 는 driving 중 `open_host_service/` 아래만 import 한다 — `{mod_path}`")
+    elif loc == "app":
+        out.add("#186", rel, f"`application_layer` 는 타 BC 를 직접 부르지 않고 자기 `port/` 를 거친다 — `{mod_path}`")
+    else:
+        out.add("#12", rel, f"타 BC 에서 부를 수 있는 것은 OHS·published_event 둘이다(#83 — 이 import 는 BC 삭제 내성을 깬다) — `{mod_path}`")
+
+
+def _scan_imports(f: Path, bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> None:
+    file_parts = f.relative_to(bc).parts
+    loc = _spot(file_parts)
+    if loc in ("django", "composition", "other", "bc_root"):
+        return  # django 는 #326(check-db-table) 소유 · composition_root 는 전부를 안다
+    mod = _parse(f)
+    if mod is None:
+        return
+    rel = bc_rel / f.relative_to(bc)
+    for node, mod_path, level in _imports(mod):
+        if level > 0:
+            target_parts = _resolve_relative(file_parts, level, mod_path or None)
+            if target_parts is None:
+                out.add("#12", rel, "상대 import 가 BC 밖으로 탈출한다 — 타 BC 는 관문으로만 부른다")
+                continue
+            _apply_same_bc(loc, _spot(target_parts), rel, "." * level + mod_path, out)
+            continue
+        parts = mod_path.split(".")
+        if "application" in parts:
+            i = parts.index("application")
+            if i + 1 < len(parts) and parts[i + 1] in all_bcs:
+                tgt_bc = parts[i + 1]
+                tgt = _spot(tuple(parts[i + 2:]))
+                if tgt_bc == bc.name:
+                    _apply_same_bc(loc, tgt, rel, mod_path, out)
+                else:
+                    _apply_other_bc(loc, tgt, tgt_bc, rel, mod_path, out)
+                continue
+        if loc == "ohs_contract" and parts[0] not in STDLIB_NAMES and parts[0] != "application":
+            out.add("#472", rel, f"`contract/` 는 표준 라이브러리와 같은 BC 의 다른 계약 말고는 import 하지 않는다 — `{mod_path}`")
+            continue
+        if parts[0] in TECH_TOP and loc in (DOMAIN_SPOTS | {"app", "app_port"}):
+            out.add("#2", rel, f"안쪽 두 칸(domain·application)은 구체 기술을 모른다(#5 — 예외 조문은 없다, 전부 port 뒤로) — `{mod_path}`")
+
+
+# ── OHS — #146~#171 · #453~#455 · #482~#484 · #633 · #634 · #295 ───────────
+
+def _domain_imported_names(mod: ast.Module) -> set[str]:
+    """domain_layer 에서 import 된 이름(도메인 예외 raw 전파 판정용)."""
+    names: set[str] = set()
+    for node in ast.walk(mod):
+        if isinstance(node, ast.ImportFrom) and node.module and "domain_layer" in node.module.split("."):
+            names.update(a.asname or a.name for a in node.names)
+    return names
+
+
+def _check_ohs(ohs: Path, bc: Path, bc_rel: Path, agg_names: set[str], all_bcs: set[str],
+               out: Findings, cand: Candidates) -> None:
+    rel0 = bc_rel / ohs.relative_to(bc)
+    dirs, files = _entries(ohs)
+    for f in files:
+        if f.name != "__init__.py":
+            out.add("#150", rel0 / f.name, "`open_host_service/` 의 1차 축은 `<service>/` 폴더다 — 평면 `.py` 를 두지 않는다")
+
+    for svc in dirs:
+        srel = rel0 / svc.name
+        tokens = set(svc.name.split("_"))
+        if tokens & TECH_NAME_TOKENS or tokens & (all_bcs - {bc.name}):
+            out.add("#151", srel, "창구 이름은 「무엇을 해 주는가」로 짓는다 — 기술·타 BC 이름 토큰이 들어 있다")
+        elif svc.name.removesuffix("_service") in agg_names or svc.name in agg_names:
+            cand.add("#151", srel, f"창구 이름 `{svc.name}` 이 애그리거트 이름과 같다", "Q1(이 이름이 «무엇을 해 주는가»를 말하나)")
+
+        entry = svc / f"{svc.name}_service.py"
+        if not entry.is_file():
+            out.add("#152", srel / entry.name, f"창구의 진입점은 `{svc.name}_service.py` 하나다 — 부재")
+        sdirs, sfiles = _entries(svc)
+        for p in sdirs:
+            if p.name != "contract":
+                out.add("#154", srel / p.name, "`<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다")
+        for p in sfiles:
+            if p.name not in (entry.name, "__init__.py"):
+                out.add("#154", srel / p.name, "`<service>/` 안은 `<service>_service.py` 와 `contract/` 둘로 구성한다")
+
+        ops: set[str] = set()
+        if entry.is_file():
+            ops = _check_ohs_service(entry, srel / entry.name, out, cand)
+
+        contract = svc / "contract"
+        if contract.is_dir():
+            cdirs, cfiles = _entries(contract)
+            for p in cdirs:
+                if p.name not in ("request", "response", "exception"):
+                    out.add("#155", srel / "contract" / p.name, "`contract/` 는 `request/`·`response/`·`exception/` 셋으로 갈린다(#163 — exception 은 연산 축이 아니라 서비스 스코프다)")
+            for p in cfiles:
+                if p.name != "__init__.py":
+                    out.add("#155", srel / "contract" / p.name, "`contract/` 직계에 평면 파일을 두지 않는다")
+            _check_contract_kind(contract / "request", "Request", "#157", "#156", ops, srel, out)
+            _check_contract_kind(contract / "response", "Response", "#160", "#159", ops, srel, out)
+            _check_published_exceptions(contract / "exception", svc.name, srel, out, cand)
+
+
+def _check_ohs_service(entry: Path, rel, out: Findings, cand: Candidates) -> set[str]:
+    mod = _parse(entry)
+    if mod is None:
+        return set()
+    domain_names = _domain_imported_names(mod)
+    ops: set[str] = set()
+    for node in mod.body:
+        if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
+            out.add("#634", rel, f"`<service>_service.py` 의 공개 표면은 모듈 수준 «함수»뿐이다 — `{node.name}` (계약 클래스는 `contract/` 에 산다)")
+        if isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name) and t.id == "__all__":
+                    exported = {e.value for e in ast.walk(node.value) if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+                    for nm in sorted(exported & domain_names):
+                        out.add("#295", rel, f"도메인 예외를 `__all__` 로 재노출하지 않는다 — `{nm}`")
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) or node.name.startswith("_"):
+            continue
+        fn = node
+        if fn.name.endswith("_command"):
+            ops.add(fn.name.removesuffix("_command"))
+        elif fn.name.endswith("_query"):
+            ops.add(fn.name.removesuffix("_query"))
+        else:
+            out.add("#482", rel, f"창구 공개 함수 이름은 `_command`/`_query` 로 끝난다 — `{fn.name}`")
+            ops.add(fn.name)
+        n_params = len(fn.args.posonlyargs) + len(fn.args.args) + len(fn.args.kwonlyargs)
+        if n_params == 0:
+            if fn.name.endswith("_command"):
+                out.add("#633", rel, f"인자 0개는 입력 없는 `_query` 만 허용한다 — `{fn.name}`")
+        elif n_params > 1 or fn.args.vararg or fn.args.kwarg:
+            out.add("#633", rel, f"창구 공개 함수는 그 연산의 request 계약 «하나»만 받는다 — `{fn.name}`")
+        else:
+            only = (fn.args.posonlyargs + fn.args.args + fn.args.kwonlyargs)[0]
+            if only.annotation is not None and not any(i.endswith("Request") for i in _ann_idents(only.annotation)):
+                out.add("#633", rel, f"맨 스칼라 인자는 위반이다 — `{fn.name}` 은 request 계약을 받는다")
+        for sub in ast.walk(fn):
+            if isinstance(sub, ast.Raise) and sub.exc is not None:
+                exc_name = None
+                target = sub.exc.func if isinstance(sub.exc, ast.Call) else sub.exc
+                if isinstance(target, ast.Name):
+                    exc_name = target.id
+                if exc_name in domain_names:
+                    out.add("#164", rel, f"도메인 예외를 raw 로 전파하지 않는다 — `{exc_name}` 은 `contract/exception/` 타입으로 번역해 던진다(#295)")
+            if isinstance(sub, ast.ExceptHandler) and sub.name:
+                handler_types = _ann_idents(sub.type)
+                if handler_types & domain_names:
+                    for inner in ast.walk(sub):
+                        if isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name) and inner.value.id == sub.name:
+                            out.add("#153", rel, f"도메인 예외는 «타입»으로만 쓴다 — `{sub.name}.{inner.attr}` 속성 접근은 계약이 도메인 모양에 얹힌 것이다")
+                            break
+        calls = sum(
+            1 for sub in ast.walk(fn)
+            if isinstance(sub, ast.Call) and "use_case" in ast.dump(sub.func).lower()
         )
-        if tracked.returncode != 0:
-            return True
-        changed = subprocess.run(
-            ["git", "-C", str(root), "diff", "--quiet", "HEAD", "--", str(rel)],
+        exec_calls = sum(
+            1 for sub in ast.walk(fn)
+            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute) and sub.func.attr == "execute"
         )
-        return changed.returncode != 0
-    except (OSError, subprocess.SubprocessError):
-        return True
+        if max(calls, exec_calls) != 1:
+            cand.add("#153", f"{rel}:{fn.lineno}", f"`{fn.name}` 의 유스케이스 호출이 {max(calls, exec_calls)}회다 — 창구는 「바꾸고·부르고·되돌리는 일만」 한다", "「이 문장이 «계약↔응용 DTO 변환»인가」")
+        for d in fn.decorator_list:
+            ids = _ann_idents(d)
+            # 라우팅·등록 데코레이터만 문다 — 호출형 데코레이터 일반(@lru_cache(...) 류)은 #149 의 대상이 아니다.
+            if ids & {"route", "router", "api_controller", "register"} or (
+                ids & {"get", "post", "put", "patch", "delete", "head", "options"} and ids & {"api", "router", "app"}
+            ):
+                out.add("#149", rel, f"OHS 는 같은 프로세스 함수 호출이다 — 라우팅·등록을 두지 않는다(#113) — `{fn.name}`")
+                break
+    return ops
 
 
-def _legacy_http_findings(root: Path) -> list[str]:
-    findings: list[str] = []
-    for app_file in _legacy_application_layer_files(root):
-        try:
-            body = app_file.read_text(encoding="utf-8", errors="replace")
-        except OSError:
+def _check_contract_kind(kind_dir: Path, suffix: str, one_file_rule: str, only_rule: str,
+                         ops: set[str], srel, out: Findings) -> None:
+    if not kind_dir.is_dir():
+        return
+    kname = kind_dir.name
+    for f in sorted(kind_dir.glob("*.py")):
+        if f.name == "__init__.py":
             continue
-        signals = [label for regex, label in LEGACY_SIGNAL_CHECKS if regex.search(body)]
-        if not signals or not _legacy_is_new_or_modified(root, app_file):
+        rel = srel / "contract" / kname / f.name
+        stem = f.stem
+        expected_tail = f"_{kname}"
+        if stem.endswith(expected_tail):
+            op = stem.removesuffix(expected_tail)
+            if ops and op not in ops:
+                out.add("#483", rel, f"계약 파일은 창구 함수와 짝이다 — `{op}` 연산 함수가 `<service>_service.py` 에 없다")
+        mod = _parse(f)
+        if mod is None:
             continue
-        findings.append(f"  - {app_file.relative_to(root)}: {'; '.join(signals)}")
-    return findings
+        pubs = [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]
+        if len(pubs) >= 2:
+            out.add(one_file_rule, rel, f"계약 타입 하나 = 파일 하나다 — 공개 클래스가 {len(pubs)}개다")
+        for cls in pubs:
+            if not cls.name.endswith(suffix):
+                out.add("#484", rel, f"계약 클래스는 `<Operation>{suffix}` 다(`Result` 금지 — {only_rule}: 이 폴더에는 이 창구가 {'받는' if suffix == 'Request' else '돌려주는'} 타입만 온다) — `{cls.name}`")
+            if suffix == "Response":
+                field_names = {
+                    s.target.id for s in cls.body
+                    if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)
+                }
+                if field_names & FREEFORM_FIELDS and "code" not in field_names:
+                    out.add("#455", rel, f"못 해 준 사유는 «코드»로 담는다 — 자유 문자열({', '.join(sorted(field_names & FREEFORM_FIELDS))})만 있고 `code` 가 없다")
+        for node, mod_path, level in _imports(mod):
+            if level == 0 and "domain_layer" in mod_path.split("."):
+                if kname == "response":
+                    out.add("#162", rel, f"응답 계약에 도메인 객체를 그대로 담지 않는다 — `{mod_path}`")
 
 
-def _print_legacy_http(findings: list[str]) -> None:
-    print(
-        "[check-context-isolation] BLOCKER — legacy touched application_layer가 "
-        "HTTP 오류 응답을 직접 생성/의존함(presentation 경계 밖):"
-    )
-    for finding in findings:
-        print(finding)
-    print(
-        "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
-        "positional/auto/preserve lane은 구 check-error-centralization의 raw signal과 "
-        "grandfathering을 그대로 보존한다."
-    )
-
-
-def _code_http_findings(
-    sources: list[ParsedSource],
-    suppress_ninja_import_paths: set[Path] | None = None,
-) -> list[str]:
-    suppressed_paths = suppress_ninja_import_paths or set()
-    findings: list[str] = []
-    for parsed in sources:
-        if "application_layer" not in parsed.relative_path.parts or not parsed.touched:
+def _check_published_exceptions(exc_dir: Path, svc_name: str, srel, out: Findings, cand: Candidates) -> None:
+    if not exc_dir.is_dir():
+        return
+    base_file = exc_dir / f"{svc_name}_published_error.py"
+    py_files = [f for f in sorted(exc_dir.glob("*.py")) if f.name != "__init__.py"]
+    if py_files and not base_file.is_file():
+        out.add("#166", srel / "contract" / "exception" / base_file.name, f"서비스당 기저 예외 하나를 `{base_file.name}` 에 둔다 — 부재")
+    base_classes: set[str] = set()
+    bmod = _parse(base_file) if base_file.is_file() else None
+    if bmod is not None:
+        base_classes = {n.name for n in bmod.body if isinstance(n, ast.ClassDef)}
+    sibling_classes: set[str] = set()
+    parsed: list[tuple[Path, ast.Module]] = []
+    for f in py_files:
+        mod = _parse(f)
+        if mod is None:
             continue
-        signals = [
-            label
-            for regex, label in LEGACY_SIGNAL_CHECKS
-            if not (
-                regex is LEGACY_NINJA_IMPORT_RE
-                and parsed.relative_path in suppressed_paths
+        parsed.append((f, mod))
+        sibling_classes.update(n.name for n in mod.body if isinstance(n, ast.ClassDef))
+    for f, mod in parsed:
+        rel = srel / "contract" / "exception" / f.name
+        if re.search(r"_v\d+$", f.stem):
+            out.add("#170", rel, "예외 계약 파일에 `_v1` 접미를 붙이지 않는다")
+        pubs = [n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")]
+        if len(pubs) >= 2:
+            out.add("#168", rel, f"published 예외는 클래스 하나당 1모듈이다 — {len(pubs)}개")
+        for cls in pubs:
+            if re.search(r"V\d+$", cls.name):
+                out.add("#170", rel, f"예외 계약 클래스에 버전 접미를 붙이지 않는다 — `{cls.name}`")
+            if any(tok in cls.name for tok in ANSWER_NOT_EXCEPTION):
+                out.add("#453", rel, f"「물건이 없다·이미 있다·규칙이 거절한다」는 예외가 아니라 답이다(#454 — 공개 예외는 «돌려줄 것이 아예 없는» 갈래뿐) — `{cls.name}`")
+            if f != base_file:
+                base_names = {b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "") for b in cls.bases}
+                if base_names & {"Exception", "BaseException"} and not (base_names & (base_classes | sibling_classes)):
+                    out.add("#167", rel, f"published 예외는 기저 예외를 상속한다(중간층 경유 허용) — `{cls.name}` 이 `Exception` 직접 상속이다")
+            bare = cls.name
+            for tok in ("Error", "Exception", "Failed", "Failure"):
+                bare = bare.removesuffix(tok)
+            if not bare:
+                cand.add("#171", rel, f"예외 이름이 접미사뿐이다 — `{cls.name}`", "「부르는 쪽이 이름만 보고 분기할 수 있나」")
+
+
+# ── ACL — #361 · #363 · #450 · #473 ────────────────────────────────────────
+
+def _acl_dir(bc: Path) -> Path | None:
+    cand_path = bc / "driven_layer" / "adapter" / "anticorruption_layer"
+    return cand_path if cand_path.is_dir() else None
+
+
+def _check_acl(acl: Path, bc: Path, bc_rel: Path, out: Findings) -> set[str]:
+    rel0 = bc_rel / acl.relative_to(bc)
+    dirs, files = _entries(acl)
+    for f in files:
+        if f.name != "__init__.py":
+            out.add("#361", rel0 / f.name, "`anticorruption_layer/` 아래는 상대 BC 하나 = 폴더 하나다 — 평면 파일을 두지 않는다")
+    partners: set[str] = set()
+    for d in dirs:
+        partners.add(d.name)
+        for f in sorted(d.glob("*.py")):
+            if f.name == "__init__.py":
+                continue
+            rel = rel0 / d.name / f.name
+            mod = _parse(f)
+            if mod is None:
+                continue
+            expected_prefix = _camel(d.name)
+            for cls in (n for n in mod.body if isinstance(n, ast.ClassDef) and not n.name.startswith("_")):
+                if not cls.name.endswith("Adapter"):
+                    out.add("#363", rel, f"ACL 어댑터 클래스 이름은 `<Bc><Capability>Adapter` 다 — `{cls.name}`")
+                elif not cls.name.startswith(expected_prefix):
+                    out.add("#363", rel, f"ACL 어댑터 이름은 상대 BC(`{expected_prefix}`)로 시작한다 — `{cls.name}`")
+            uses_ohs = any(
+                level == 0 and "open_host_service" in p.split(".")
+                for _n, p, level in _imports(mod)
             )
-            if regex.search(parsed.source)
-        ]
-        if signals:
-            findings.append(
-                f"  - {parsed.relative_path}: {'; '.join(signals)}"
-            )
-    return findings
+            if not uses_ohs:
+                continue
+            base_names: set[str] = set()
+            for node in ast.walk(mod):
+                if isinstance(node, ast.ImportFrom) and node.module and "published_error" in node.module:
+                    base_names.update(a.asname or a.name for a in node.names)
+            if not base_names:
+                out.add("#473", rel, "ACL 어댑터는 상대 창구의 «기저 예외»를 반드시 잡는다 — 기저(`*_published_error`) import 가 없다")
+                continue
+            for node in ast.walk(mod):
+                if isinstance(node, ast.Try) and node.handlers:
+                    last = node.handlers[-1]
+                    if not (_ann_idents(last.type) & base_names):
+                        out.add("#473", rel, "try 의 마지막 except 에 상대 창구의 기저 예외가 있어야 한다(#167 짝 — 둘이 닫혀야 약속이 선다)")
+    return partners
 
 
-def _print_code_http(findings: list[str]) -> None:
-    print(
-        "[check-context-isolation] BLOCKER — code-profile filtered inventory의 touched "
-        "application_layer가 HTTP 오류 응답을 직접 생성/의존함(presentation 경계 밖):"
-    )
-    for finding in findings:
-        print(finding)
-    print(
-        "  근거: 오류→HTTP status/response 선택은 presentation 경계 소유다. "
-        "dddjango-code-json lane은 scope BC의 filtered production inventory 중 touched "
-        "application_layer에 구 raw HTTP signal을 적용한다."
-    )
+# ── 그 밖 — #14 · #110 · #113 · #117 · #146 · #291 · #292 · #364 · #431 · #347 ──
 
-
-def _has_application_container(root: Path) -> bool:
-    """표준 앱 컨테이너(`application/`)가 있나 — 없으면 기존 규약이라 적용 대상 아님."""
-    for path in root.rglob("application"):
-        if not path.is_dir():
-            continue
-        if set(path.relative_to(root).parts) & SKIP_DIRS:
-            continue
-        return True
-    return False
-
-
-def _own_bc(rel_parts: tuple[str, ...]) -> str | None:
-    """`application/<bc>/...` 의 <bc> (TARGET_DIR 기준 상대 경로에서)."""
-    if "application" in rel_parts:
-        i = rel_parts.index("application")
-        if i + 1 < len(rel_parts):
-            return rel_parts[i + 1]
-    return None
-
-
-def _prod_py_files(root: Path) -> list[tuple[Path, tuple[str, ...]]]:
-    """application/ 하위 프로덕션 .py 와 그 상대 parts — test 제외. ACL 면제는 S1 판정에서만."""
-    out: list[tuple[Path, tuple[str, ...]]] = []
-    for path in root.rglob("*.py"):
-        rel_parts = path.relative_to(root).parts
+def _check_ports(bc: Path, bc_rel: Path, all_bcs: set[str], out: Findings) -> None:
+    port = bc / "application_layer" / "port"
+    if not port.is_dir():
+        return
+    for p in sorted(port.rglob("*")):
+        rel_parts = p.relative_to(port).parts
         if set(rel_parts) & SKIP_DIRS:
             continue
-        if "application" not in rel_parts:
-            continue
-        if set(rel_parts) & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
-            continue
-        out.append((path, rel_parts))
-    return out
+        tokens = set(p.name.removesuffix(".py").split("_"))
+        if tokens & (all_bcs - {bc.name}):
+            out.add("#364", bc_rel / p.relative_to(bc), "포트는 «필요»(capability)로 이름 붙는다 — 포트 이름에 공급자 BC 이름을 넣지 않는다")
 
 
-def _is_contract_file(rel_parts: tuple[str, ...]) -> bool:
-    """`published_service/…/contract/…` 하위인가(S2 대상)."""
-    return (
-        "published_service" in rel_parts
-        and "contract" in rel_parts
-        and rel_parts.index("published_service") < rel_parts.index("contract")
-    )
-
-
-def _is_acl_file(rel_parts: tuple[str, ...]) -> bool:
-    """`infra_layer/acl/` 직하 계열인가(S1 면제 — 인접 경로 한정, `repository/acl/` 은닉은 비면제)."""
-    return any(
-        rel_parts[i] == "infra_layer" and rel_parts[i + 1] == "acl"
-        for i in range(len(rel_parts) - 1)
-    )
-
-
-def _imported_paths(tree: ast.AST) -> Iterator[tuple[int, str]]:
-    """모든 import 노드의 (lineno, 점경로) — 절대 import 만(상대 import 는 reviewer 몫)."""
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                yield node.lineno, alias.name
-        elif isinstance(node, ast.ImportFrom):
-            if node.level:  # 상대 import — 저-recall 설계(docstring), 의미 레인 몫.
-                continue
-            if node.module:
-                yield node.lineno, node.module
-                for alias in node.names:  # `from application.x import domain_layer` 형태 포착
-                    if alias.name != "*":
-                        yield node.lineno, f"{node.module}.{alias.name}"
-
-
-def _expression_dotted_name(node: ast.AST) -> str | None:
-    if isinstance(node, ast.Name):
-        return node.id
-    if isinstance(node, ast.Attribute):
-        owner = _expression_dotted_name(node.value)
-        if owner is not None:
-            return f"{owner}.{node.attr}"
-    return None
-
-
-def _local_target_names(target: ast.AST) -> set[str]:
-    if isinstance(target, ast.Name):
-        return {target.id}
-    if isinstance(target, ast.Starred):
-        return _local_target_names(target.value)
-    if isinstance(target, (ast.Tuple, ast.List)):
-        return {
-            name
-            for element in target.elts
-            for name in _local_target_names(element)
-        }
-    return set()
-
-
-def _statement_bound_names(node: ast.stmt) -> set[str]:
-    if isinstance(node, ast.Import):
-        return {
-            alias.asname or alias.name.split(".", 1)[0]
-            for alias in node.names
-        }
-    if isinstance(node, ast.ImportFrom):
-        return {
-            alias.asname or alias.name
-            for alias in node.names
-            if alias.name != "*"
-        }
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-        return {node.name}
-    if isinstance(node, ast.Assign):
-        return {
-            name
-            for target in node.targets
-            for name in _local_target_names(target)
-        }
-    if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
-        return _local_target_names(node.target)
-    if isinstance(node, (ast.For, ast.AsyncFor)):
-        return _local_target_names(node.target) | {
-            name
-            for statement in (*node.body, *node.orelse)
-            for name in _statement_bound_names(statement)
-        }
-    if isinstance(node, (ast.With, ast.AsyncWith)):
-        return {
-            name
-            for item in node.items
-            if item.optional_vars is not None
-            for name in _local_target_names(item.optional_vars)
-        } | {
-            name for statement in node.body for name in _statement_bound_names(statement)
-        }
-    if isinstance(node, (ast.If, ast.While)):
-        return {
-            name
-            for statement in (*node.body, *node.orelse)
-            for name in _statement_bound_names(statement)
-        }
-    if isinstance(node, ast.Try):
-        statements = [*node.body, *node.orelse, *node.finalbody]
-        names = {
-            name for statement in statements for name in _statement_bound_names(statement)
-        }
-        for handler in node.handlers:
-            if handler.name:
-                names.add(handler.name)
-            for statement in handler.body:
-                names.update(_statement_bound_names(statement))
+def _cross_bc_port_names(acl: Path | None) -> set[str]:
+    """ACL 어댑터가 구현(import)하는 자기 BC 포트 클래스 이름 — «크로스-BC 포트»의 정의."""
+    names: set[str] = set()
+    if acl is None:
         return names
-    if isinstance(node, ast.Delete):
-        return {
-            name for target in node.targets for name in _local_target_names(target)
-        }
-    return set()
-
-
-def _module_statement_import_bindings(
-    tree: ast.AST,
-) -> dict[int, dict[str, str]]:
-    """Import provenance visible immediately before each module statement."""
-    bindings: dict[str, str] = {}
-    bindings_before: dict[int, dict[str, str]] = {}
-    for node in getattr(tree, "body", []):
-        bindings_before[id(node)] = dict(bindings)
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                local_name = alias.asname or alias.name.split(".", 1)[0]
-                bindings[local_name] = alias.name if alias.asname else local_name
+    for f in acl.rglob("*.py"):
+        mod = _parse(f)
+        if mod is None:
             continue
-        if isinstance(node, ast.ImportFrom) and not node.level and node.module:
-            for alias in node.names:
-                if alias.name == "*":
-                    continue
-                local_name = alias.asname or alias.name
-                bindings[local_name] = f"{node.module}.{alias.name}"
-            continue
-        for name in _statement_bound_names(node):
-            bindings.pop(name, None)
-    return bindings_before
+        for node in ast.walk(mod):
+            if isinstance(node, ast.ImportFrom) and node.module and "port" in node.module.split("."):
+                names.update(a.asname or a.name for a in node.names if a.name.endswith("Port"))
+    return names
 
 
-def _resolve_imported_expression(
-    node: ast.AST,
-    bindings: dict[str, str],
-) -> str | None:
-    dotted = _expression_dotted_name(node)
-    if dotted is None:
-        return None
-    first, *rest = dotted.split(".")
-    imported = bindings.get(first)
-    if imported is None:
-        return None
-    return ".".join((imported, *rest))
-
-
-def _import_references(
-    relative_path: Path,
-    tree: ast.AST,
-) -> Iterator[ImportReference]:
-    package_parts = relative_path.parent.parts
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                yield ImportReference(
-                    lineno=node.lineno,
-                    module=alias.name,
-                    imported_name=None,
-                    full_path=alias.name,
-                    absolute=True,
-                )
-            continue
-        if not isinstance(node, ast.ImportFrom) or node.level > 1:
-            continue
-        if node.level == 1:
-            module_parts = (*package_parts, *(node.module or "").split("."))
-            module = ".".join(part for part in module_parts if part)
-        else:
-            module = node.module or ""
-        if not module:
-            continue
-        for alias in node.names:
-            full_path = module if alias.name == "*" else f"{module}.{alias.name}"
-            yield ImportReference(
-                lineno=node.lineno,
-                module=module,
-                imported_name=alias.name,
-                full_path=full_path,
-                absolute=node.level == 0,
-            )
-
-
-def _append_boundary_finding(
-    findings: list[BoundaryFinding],
-    seen: set[tuple[Path, int, str]],
-    *,
-    relative_path: Path,
-    source_lines: list[str],
-    lineno: int,
-    category: str,
-) -> None:
-    key = (relative_path, lineno, category)
-    if key in seen:
+def _check_uow_cross(bc: Path, bc_rel: Path, cross_ports: set[str], out: Findings) -> None:
+    if not cross_ports:
         return
-    seen.add(key)
-    shown = source_lines[lineno - 1].strip() if 0 < lineno <= len(source_lines) else category
-    findings.append(
-        BoundaryFinding(
-            relative_path=relative_path,
-            lineno=lineno,
-            category=category,
-            shown=shown,
-        )
-    )
-
-
-def _assignment_target_names(target: ast.AST) -> list[str | None]:
-    if isinstance(target, (ast.Tuple, ast.List)):
-        return [
-            name
-            for element in target.elts
-            for name in _assignment_target_names(element)
-        ]
-    return [_expression_dotted_name(target)]
-
-
-def _required_root_api_object(
-    tree: ast.AST,
-    bindings_before: dict[int, dict[str, str]],
-) -> str:
-    assigned_objects: set[str] = set()
-    constructor_events = 0
-    for node in getattr(tree, "body", []):
-        value: ast.AST | None = None
-        targets: list[ast.AST] = []
-        if isinstance(node, ast.Assign):
-            value = node.value
-            targets = node.targets
-        elif isinstance(node, ast.AnnAssign) and node.value is not None:
-            value = node.value
-            targets = [node.target]
-        target_names = [
-            name
-            for target in targets
-            for name in _assignment_target_names(target)
-            if name is not None
-        ]
-        assigned_objects.difference_update(_statement_bound_names(node))
-        assigned_objects.difference_update(target_names)
-        if not isinstance(value, ast.Call):
+    app = bc / "application_layer"
+    if not app.is_dir():
+        return
+    for f in sorted(app.rglob("*_use_case.py")):
+        mod = _parse(f)
+        if mod is None:
             continue
-        constructor = _resolve_imported_expression(
-            value.func,
-            bindings_before.get(id(node), {}),
-        )
-        if constructor not in ROOT_API_CONSTRUCTORS:
+        attr_names: set[str] = set()
+        for node in ast.walk(mod):
+            if isinstance(node, ast.FunctionDef) and node.name == "__init__":
+                for arg in node.args.args + node.args.kwonlyargs:
+                    if _ann_idents(arg.annotation) & cross_ports:
+                        attr_names.update({arg.arg, f"_{arg.arg}"})
+        if not attr_names:
             continue
-        constructor_events += 1
-        assigned_objects.update(target_names)
-    if constructor_events != 1 or len(assigned_objects) != 1:
-        raise UsageError(
-            "selected root API의 proven Ninja API constructor event와 최종 object "
-            "binding이 각각 정확히 하나여야 함: "
-            f"event {constructor_events}개, binding {len(assigned_objects)}개"
-        )
-    return next(iter(assigned_objects))
-
-
-def _assignment_names_and_value(
-    node: ast.AST,
-) -> tuple[list[str], ast.AST | None]:
-    if isinstance(node, ast.Assign):
-        names = [
-            name
-            for target in node.targets
-            for name in _assignment_target_names(target)
-            if name is not None
-        ]
-        return names, node.value
-    if isinstance(node, ast.AnnAssign):
-        return [
-            name
-            for name in _assignment_target_names(node.target)
-            if name is not None
-        ], node.value
-    return [], None
-
-
-def _identifier_words(name: str) -> set[str]:
-    identifier = name.rsplit(".", 1)[-1]
-    separated = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", identifier)
-    return {
-        word.lower()
-        for word in re.split(r"[^A-Za-z0-9]+", separated)
-        if word
-    }
-
-
-def _is_error_status_value(node: ast.AST) -> bool:
-    if (
-        isinstance(node, ast.Constant)
-        and isinstance(node.value, int)
-        and not isinstance(node.value, bool)
-    ):
-        return 400 <= node.value < 600
-    dotted = _expression_dotted_name(node)
-    return dotted is not None and bool(ERROR_STATUS_NAME_RE.search(dotted.upper()))
-
-
-def _is_error_code_field(name: str, approved_identifiers: set[str]) -> bool:
-    if name in approved_identifiers:
-        return True
-    if name.lower() == "code":
-        return True
-    words = _identifier_words(name)
-    qualifiers = ERROR_CATALOG_SUBJECT_WORDS | ERROR_CATALOG_PLURAL_WORDS
-    return "code" in words and bool(words & qualifiers)
-
-
-def _expression_nodes_without_nested_lambda(node: ast.AST) -> Iterator[ast.AST]:
-    pending = [node]
-    while pending:
-        current = pending.pop()
-        yield current
-        if isinstance(current, ast.Lambda):
-            continue
-        pending.extend(reversed(list(ast.iter_child_nodes(current))))
-
-
-def _expression_has_error_code_field(
-    node: ast.AST,
-    approved_identifiers: set[str],
-) -> bool:
-    for child in _expression_nodes_without_nested_lambda(node):
-        if isinstance(child, ast.Dict):
-            if any(
-                isinstance(key, ast.Constant)
-                and isinstance(key.value, str)
-                and _is_error_code_field(key.value, approved_identifiers)
-                for key in child.keys
-            ):
-                return True
-        elif isinstance(child, ast.Call):
-            if any(
-                keyword.arg is not None
-                and _is_error_code_field(keyword.arg, approved_identifiers)
-                for keyword in child.keywords
-            ):
-                return True
-    return False
-
-
-def _return_is_error_shaped(
-    node: ast.AST,
-    approved_identifiers: set[str],
-) -> bool:
-    if _expression_has_error_code_field(node, approved_identifiers):
-        return True
-    if (
-        isinstance(node, ast.Tuple)
-        and node.elts
-        and _is_error_status_value(node.elts[0])
-    ):
-        return True
-    for child in _expression_nodes_without_nested_lambda(node):
-        if isinstance(child, ast.Dict):
-            for key, value in zip(child.keys, child.values):
-                if (
-                    isinstance(key, ast.Constant)
-                    and isinstance(key.value, str)
-                    and key.value.lower() in {"status", "status_code"}
-                    and _is_error_status_value(value)
-                ):
-                    return True
-            continue
-        if not isinstance(child, ast.Call):
-            continue
-        function_name = _expression_dotted_name(child.func)
-        if (
-            function_name is not None
-            and function_name.rsplit(".", 1)[-1] == "Status"
-            and child.args
-            and _is_error_status_value(child.args[0])
-        ):
-            return True
-        if any(
-            keyword.arg in {"status", "status_code"}
-            and _is_error_status_value(keyword.value)
-            for keyword in child.keywords
-        ):
-            return True
-    return False
-
-
-def _is_error_catalog_name(name: str) -> bool:
-    words = _identifier_words(name)
-    return bool(words & ERROR_CATALOG_PLURAL_WORDS) or (
-        bool(words & ERROR_CATALOG_SUBJECT_WORDS)
-        and bool(words & ERROR_CATALOG_ROLE_WORDS)
-    )
-
-
-def _is_direct_mapping_expression(node: ast.AST | None) -> bool:
-    return isinstance(node, (ast.Dict, ast.DictComp)) or (
-        isinstance(node, ast.Call)
-        and _expression_dotted_name(node.func) == "dict"
-    )
-
-
-def _is_exception_type_expression(node: ast.AST) -> bool:
-    if isinstance(node, (ast.Tuple, ast.List)):
-        return any(_is_exception_type_expression(element) for element in node.elts)
-    dotted = _expression_dotted_name(node)
-    if dotted is None:
-        return False
-    name = dotted.rsplit(".", 1)[-1]
-    return name.endswith(("Error", "Exception")) or name == "BaseException"
-
-
-def _is_exception_isinstance_call(node: ast.AST) -> bool:
-    return (
-        isinstance(node, ast.Call)
-        and len(node.args) >= 2
-        and _expression_dotted_name(node.func) == "isinstance"
-        and _is_exception_type_expression(node.args[1])
-    )
-
-
-def _scope_nodes(statements: list[ast.stmt]) -> Iterator[ast.AST]:
-    pending: list[ast.AST] = list(reversed(statements))
-    while pending:
-        current = pending.pop()
-        yield current
-        if isinstance(
-            current,
-            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda),
-        ):
-            continue
-        pending.extend(reversed(list(ast.iter_child_nodes(current))))
-
-
-def _function_is_exception_mapping(
-    node: ast.FunctionDef | ast.AsyncFunctionDef,
-    approved_identifiers: set[str],
-) -> bool:
-    arguments = (
-        *getattr(node.args, "posonlyargs", []),
-        *node.args.args,
-        *node.args.kwonlyargs,
-    )
-    has_exception_context = any(
-        EXCEPTION_ARGUMENT_RE.search(argument.arg) for argument in arguments
-    )
-    body_nodes = tuple(_scope_nodes(node.body))
-    has_exception_flow = any(
-        isinstance(child, ast.ExceptHandler)
-        or _is_exception_isinstance_call(child)
-        for child in body_nodes
-    )
-    has_error_return = any(
-        isinstance(child, ast.Return)
-        and child.value is not None
-        and _return_is_error_shaped(child.value, approved_identifiers)
-        for child in body_nodes
-    )
-    return (has_exception_context or has_exception_flow) and has_error_return
-
-
-def _is_request_path_test(node: ast.AST) -> bool:
-    for child in ast.walk(node):
-        if not isinstance(child, ast.Attribute) or child.attr != "path":
-            continue
-        owner = _expression_dotted_name(child.value)
-        if owner is None:
-            continue
-        root_name = owner.split(".", 1)[0].lower()
-        if root_name == "req" or root_name == "request" or root_name.endswith("_request"):
-            return True
-    return False
-
-
-def _body_has_error_return(
-    statements: list[ast.stmt],
-    approved_identifiers: set[str],
-) -> bool:
-    return any(
-        isinstance(child, ast.Return)
-        and child.value is not None
-        and _return_is_error_shaped(child.value, approved_identifiers)
-        for child in _scope_nodes(statements)
-    )
-
-
-def _approved_error_identifier_names(
-    sources: list[ParsedSource],
-    error_bcs: tuple[str, ...],
-) -> set[str]:
-    by_path = {source.relative_path: source for source in sources}
-    identifiers: set[str] = set()
-    for bc in error_bcs:
-        path = Path(f"application/{bc}/presentation_layer/schema/error_out.py")
-        parsed = by_path.get(path)
-        if parsed is None:
-            raise UsageError(f"canonical BC ErrorOut source 없음: {path}")
-        prefix = "".join(part.capitalize() for part in bc.split("_"))
-        base_name = f"{prefix}ErrorOut"
-        enum_name = f"{prefix}ErrorCode"
-        bases = [
-            node
-            for node in parsed.tree.body
-            if isinstance(node, ast.ClassDef) and node.name == base_name
-        ]
-        if len(bases) != 1:
-            raise UsageError(f"canonical BC ErrorOut provenance 분석 불능: {path}")
-        candidates: list[ast.AnnAssign] = []
-        for statement in bases[0].body:
-            if not isinstance(statement, ast.AnnAssign) or not isinstance(statement.target, ast.Name):
+        for node in ast.walk(mod):
+            if not isinstance(node, ast.With):
                 continue
-            annotation_names = {
-                (name := _expression_dotted_name(candidate)).rsplit(".", 1)[-1]
-                for candidate in ast.walk(statement.annotation)
-                if isinstance(candidate, (ast.Name, ast.Attribute))
-                and (name := _expression_dotted_name(candidate)) is not None
-            }
-            if enum_name in annotation_names:
-                candidates.append(statement)
-        if len(candidates) != 1:
-            raise UsageError(f"canonical BC discriminator provenance 분석 불능: {path}")
-        field = candidates[0]
-        identifiers.add(field.target.id)
-        roots = [field.annotation]
-        if field.value is not None:
-            roots.append(field.value)
-        for root in roots:
-            for call in (candidate for candidate in ast.walk(root) if isinstance(candidate, ast.Call)):
-                for keyword in call.keywords:
-                    if (
-                        keyword.arg in {"alias", "validation_alias", "serialization_alias"}
-                        and isinstance(keyword.value, ast.Constant)
-                        and isinstance(keyword.value.value, str)
-                    ):
-                        identifiers.add(keyword.value.value)
-    return identifiers
-
-
-def _root_api_findings(
-    parsed: ParsedSource,
-    approved_identifiers: set[str],
-) -> list[BoundaryFinding]:
-    bindings_before = _module_statement_import_bindings(parsed.tree)
-    api_object = _required_root_api_object(parsed.tree, bindings_before)
-    findings: list[BoundaryFinding] = []
-    seen: set[tuple[Path, int, str]] = set()
-    source_lines = parsed.source.splitlines()
-
-    for reference in _import_references(parsed.relative_path, parsed.tree):
-        if reference.absolute and ROOT_API_IMPORT_RE.match(reference.full_path):
-            _append_boundary_finding(
-                findings,
-                seen,
-                relative_path=parsed.relative_path,
-                source_lines=source_lines,
-                lineno=reference.lineno,
-                category="root-api-application-import",
-            )
-
-    for node in getattr(parsed.tree, "body", []):
-        if isinstance(node, ast.ClassDef):
-            statement_bindings = bindings_before.get(id(node), {})
-            resolved_bases = {
-                resolved
-                for base in node.bases
+            ctx_text = " ".join(ast.dump(item.context_expr) for item in node.items).lower()
+            if "unit_of_work" not in ctx_text and "uow" not in ctx_text:
+                continue
+            for sub in ast.walk(node):
                 if (
-                    resolved := _resolve_imported_expression(
-                        base,
-                        statement_bindings,
+                    isinstance(sub, ast.Call)
+                    and isinstance(sub.func, ast.Attribute)
+                    and isinstance(sub.func.value, ast.Attribute)
+                    and sub.func.value.attr in attr_names
+                ):
+                    out.add("#14", bc_rel / f.relative_to(bc), f"`with unit_of_work:` 블록 «안»에서 크로스-BC 포트(`{sub.func.value.attr}`)를 부르면 위반이다")
+                    break
+
+
+def _check_api_controllers(bc: Path, bc_rel: Path, out: Findings) -> None:
+    for driving in ("driving_layer",):
+        api = bc / driving / "api"
+        if not api.is_dir():
+            continue
+        for f in sorted((bc / driving).rglob("api_router.py")):
+            if f.parent != api:
+                out.add("#113", bc_rel / f.relative_to(bc), "등록 파일은 `api/` 바로 밑에 둔다")
+        for f in sorted(api.rglob("*_controller.py")):
+            mod = _parse(f)
+            if mod is None:
+                continue
+            for node in mod.body:
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                for deco in node.decorator_list:
+                    target = deco.func if isinstance(deco, ast.Call) else deco
+                    nm = target.attr if isinstance(target, ast.Attribute) else getattr(target, "id", "")
+                    if nm != "api_controller":
+                        continue
+                    kwargs = {k.arg for k in deco.keywords} if isinstance(deco, ast.Call) else set()
+                    ok = isinstance(deco, ast.Call) and any(
+                        k.arg == "auto_import" and isinstance(k.value, ast.Constant) and k.value.value is False
+                        for k in deco.keywords
                     )
-                )
-                is not None
-            }
-            if node.name.endswith("ErrorCode") and "enum.StrEnum" in resolved_bases:
-                _append_boundary_finding(
-                    findings,
-                    seen,
-                    relative_path=parsed.relative_path,
-                    source_lines=source_lines,
-                    lineno=node.lineno,
-                    category="root-api-error-code",
-                )
-            is_common_error_out = COMMON_ERROR_OUT_BASE in resolved_bases
-            is_ninja_error_schema = NINJA_SCHEMA_BASE in resolved_bases and (
-                node.name.endswith("ErrorOut")
-            )
-            if is_common_error_out or is_ninja_error_schema:
-                _append_boundary_finding(
-                    findings,
-                    seen,
-                    relative_path=parsed.relative_path,
-                    source_lines=source_lines,
-                    lineno=node.lineno,
-                    category="root-api-error-out",
-                )
-        names, value = _assignment_names_and_value(node)
-        if (
-            _is_direct_mapping_expression(value)
-            and any(_is_error_catalog_name(name) for name in names)
-        ):
-            _append_boundary_finding(
-                findings,
-                seen,
-                relative_path=parsed.relative_path,
-                source_lines=source_lines,
-                lineno=node.lineno,
-                category="root-api-error-catalog",
-            )
-        if (
-            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-            and _function_is_exception_mapping(node, approved_identifiers)
-        ):
-            _append_boundary_finding(
-                findings,
-                seen,
-                relative_path=parsed.relative_path,
-                source_lines=source_lines,
-                lineno=node.lineno,
-                category="root-api-exception-mapping",
-            )
+                    if not ok:
+                        out.add("#110", bc_rel / f.relative_to(bc), f"`@api_controller(..., auto_import=False)` 로 자동 등록을 끈다 — `{node.name}`")
 
-    for node in ast.walk(parsed.tree):
-        if (
-            isinstance(node, ast.If)
-            and _is_request_path_test(node.test)
-            and (
-                _body_has_error_return(node.body, approved_identifiers)
-                or _body_has_error_return(node.orelse, approved_identifiers)
-            )
-        ):
-            _append_boundary_finding(
-                findings,
-                seen,
-                relative_path=parsed.relative_path,
-                source_lines=source_lines,
-                lineno=node.lineno,
-                category="root-api-path-error-branch",
-            )
-        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+
+def _check_exception_spots(bc: Path, bc_rel: Path, out: Findings) -> None:
+    dl = bc / "domain_layer"
+    if (dl / "exception.py").is_file():
+        out.add("#291", bc_rel / "domain_layer" / "exception.py", "BC 바로 밑 `domain_layer/exception.py` 를 두지 않는다 — 도메인 예외의 표준 자리는 애그리거트 밑 하나뿐이다")
+    if (dl / "exception").is_dir():
+        out.add("#292", bc_rel / "domain_layer" / "exception", "예외의 자리는 셋으로 갈린다 — 업무 규칙 위반은 `domain_layer/<aggregate>/exception/` 이다")
+    app = bc / "application_layer"
+    if app.is_dir():
+        for p in sorted(app.rglob("*")):
+            rp = p.relative_to(app).parts
+            if set(rp) & SKIP_DIRS or (rp and rp[0] == "port"):
+                continue
+            if (p.is_file() and p.name == "exception.py") or (p.is_dir() and p.name == "exception"):
+                out.add("#292", bc_rel / p.relative_to(bc), "application 쪽 예외 자리는 `port/<capability>/exception.py`(바깥 행위자의 죽음)뿐이다")
+
+
+def _check_banned_entrance_name(bc: Path, bc_rel: Path, out: Findings) -> None:
+    for spot in (bc / "published_service", bc / "driving_layer" / "published_service"):
+        if spot.is_dir():
+            out.add("#146", bc_rel / spot.relative_to(bc), "타 BC 입구는 `driving_layer/open_host_service/` 다 — `published_service/` 칸을 만들지 않는다")
+
+
+def _check_error_code_containers(bc: Path, bc_rel: Path, out: Findings) -> None:
+    containers: list[Path] = []
+    for f in sorted(bc.rglob("*.py")):
+        rp = f.relative_to(bc).parts
+        if set(rp) & SKIP_DIRS or rp[0] == "test":
             continue
-        if node.func.attr not in {"exception_handler", "add_exception_handler"}:
+        mod = _parse(f)
+        if mod is None:
             continue
-        if _expression_dotted_name(node.func.value) != api_object:
+        if any(isinstance(n, ast.ClassDef) and n.name.endswith("ErrorCode") for n in mod.body):
+            containers.append(f)
+    if len(containers) > 1:
+        for f in containers[1:]:
+            out.add("#117", bc_rel / f.relative_to(bc), f"BC 안에 두 번째 ErrorCode 컨테이너를 두지 않는다 — 첫째는 `{containers[0].relative_to(bc)}`")
+
+
+def _check_admin_features(bc: Path, bc_rel: Path, cand: Candidates) -> None:
+    for f in sorted(bc.rglob("*.py")):
+        rp = f.relative_to(bc).parts
+        if set(rp) & SKIP_DIRS or "feature" not in rp or "admin" not in rp:
             continue
-        _append_boundary_finding(
-            findings,
-            seen,
-            relative_path=parsed.relative_path,
-            source_lines=source_lines,
-            lineno=node.lineno,
-            category="root-api-exception-handler",
-        )
-    return sorted(
-        findings,
-        key=lambda finding: (
-            finding.relative_path.as_posix(),
-            finding.lineno,
-            finding.category,
-        ),
-    )
-
-
-def _selected_parsed_source(
-    sources: list[ParsedSource],
-    relative_path: str | None,
-) -> ParsedSource:
-    selected = Path(relative_path or "")
-    for parsed in sources:
-        if parsed.relative_path == selected:
-            return parsed
-    raise UsageError(f"선택 root API source 분석 결과 없음: {selected}")
-
-
-def _print_root_api_findings(findings: list[BoundaryFinding]) -> None:
-    print(
-        "[check-context-isolation] BLOCKER — selected root API가 BC 내부 또는 "
-        "오류 언어/매핑을 직접 소유함(root API 경계 위반):"
-    )
-    for finding in findings:
-        print(finding.render())
-    print(
-        "  근거: root API는 Ninja API 인스턴스와 API 자체 설정만 소유한다. "
-        "registrar 조립은 selected URLconf가 소유한다. BC 내부 import, 오류 "
-        "schema/code/catalog/mapping, path별 오류 분기, 전역 exception handler는 "
-        "각 BC presentation 경계로 내린다."
-    )
-
-
-def _reference_matches_module(reference: ImportReference, module: str) -> bool:
-    return (
-        reference.module == module
-        or reference.module.startswith(f"{module}.")
-        or reference.full_path == module
-        or reference.full_path.startswith(f"{module}.")
-    )
-
-
-def _reference_is_ninja_framework(reference: ImportReference) -> bool:
-    root = reference.full_path.split(".", 1)[0]
-    return root in {"ninja", "ninja_extra"}
-
-
-def _reference_is_django_http(reference: ImportReference) -> bool:
-    if not reference.full_path.startswith("django."):
-        return False
-    if reference.full_path == "django.http" or reference.full_path.startswith("django.http."):
-        return True
-    candidate = reference.imported_name or reference.full_path.rsplit(".", 1)[-1]
-    return bool(HTTP_FACILITY_NAME_RE.search(candidate))
-
-
-def _canonical_bc_error_module(bc: str) -> str:
-    return f"application.{bc}.presentation_layer.schema.error_out"
-
-
-def _reference_bc(reference: ImportReference) -> str | None:
-    parts = reference.full_path.split(".")
-    if len(parts) >= 2 and parts[0] == "application":
-        return parts[1]
-    return None
-
-
-def _reference_is_foreign_error_language(
-    reference: ImportReference,
-    foreign_bc: str,
-) -> bool:
-    if _reference_matches_module(reference, _canonical_bc_error_module(foreign_bc)):
-        return True
-    symbol = reference.imported_name
-    if symbol in {None, "*"}:
-        symbol = reference.full_path.rsplit(".", 1)[-1]
-    return symbol.endswith(("ErrorCode", "ErrorOut"))
-
-
-def _source_error_boundary_findings(
-    parsed: ParsedSource,
-    selected_bcs: tuple[str, ...],
-) -> tuple[list[BoundaryFinding], list[BoundaryFinding], bool]:
-    parts = parsed.relative_path.parts
-    if (
-        len(parts) < 3
-        or parts[0] != "application"
-        or parts[1] not in selected_bcs
-    ):
-        return [], [], False
-    own_bc = parts[1]
-    in_inner_layer = parts[2] in LAYER_DIR_NAMES
-    in_application_layer = parts[2] == "application_layer"
-    source_lines = parsed.source.splitlines()
-    layer_findings: list[BoundaryFinding] = []
-    cross_bc_findings: list[BoundaryFinding] = []
-    seen: set[tuple[Path, int, str]] = set()
-    suppress_raw_ninja_import = False
-
-    for reference in _import_references(parsed.relative_path, parsed.tree):
-        if in_inner_layer:
-            is_ninja_framework = _reference_is_ninja_framework(reference)
-            if is_ninja_framework or _reference_is_django_http(reference):
-                _append_boundary_finding(
-                    layer_findings,
-                    seen,
-                    relative_path=parsed.relative_path,
-                    source_lines=source_lines,
-                    lineno=reference.lineno,
-                    category="layer-http-facility",
-                )
-                if is_ninja_framework and in_application_layer:
-                    suppress_raw_ninja_import = True
-            if _reference_matches_module(reference, COMMON_ERROR_MODULE):
-                _append_boundary_finding(
-                    layer_findings,
-                    seen,
-                    relative_path=parsed.relative_path,
-                    source_lines=source_lines,
-                    lineno=reference.lineno,
-                    category="layer-common-error-language",
-                )
-            if _reference_matches_module(
-                reference,
-                _canonical_bc_error_module(own_bc),
-            ):
-                _append_boundary_finding(
-                    layer_findings,
-                    seen,
-                    relative_path=parsed.relative_path,
-                    source_lines=source_lines,
-                    lineno=reference.lineno,
-                    category="layer-own-error-language",
-                )
-
-        foreign_bc = _reference_bc(reference)
-        if (
-            foreign_bc is not None
-            and foreign_bc != own_bc
-            and foreign_bc in selected_bcs
-            and _reference_is_foreign_error_language(reference, foreign_bc)
-        ):
-            _append_boundary_finding(
-                cross_bc_findings,
-                seen,
-                relative_path=parsed.relative_path,
-                source_lines=source_lines,
-                lineno=reference.lineno,
-                category="cross-bc-error-language",
-            )
-
-    sort_key = lambda finding: (
-        finding.relative_path.as_posix(),
-        finding.lineno,
-        finding.category,
-    )
-    return (
-        sorted(layer_findings, key=sort_key),
-        sorted(cross_bc_findings, key=sort_key),
-        suppress_raw_ninja_import,
-    )
-
-
-def _print_layer_purity_findings(findings: list[BoundaryFinding]) -> None:
-    print(
-        "[check-context-isolation] BLOCKER — inner layer(domain/application/infra)가 "
-        "Ninja framework, Django HTTP facility 또는 canonical ErrorOut/ErrorCode 언어를 "
-        "import 함(layer purity 위반):"
-    )
-    for finding in findings:
-        print(finding.render())
-    print(
-        "  근거: HTTP status/response와 error response schema/code는 presentation 경계가 "
-        "소유한다. inner layer는 도메인 값·예외·DTO만 사용한다."
-    )
-
-
-def _print_cross_bc_error_findings(findings: list[BoundaryFinding]) -> None:
-    print(
-        "[check-context-isolation] BLOCKER — selected BC source가 다른 selected BC의 "
-        "ErrorCode/ErrorOut 언어를 직접 import 함(cross-BC error language 누수):"
-    )
-    for finding in findings:
-        print(finding.render())
-    print(
-        "  근거: 각 BC의 error code/schema는 해당 BC presentation 경계의 언어다. "
-        "컨텍스트 간에는 OHS/ACL 계약으로 번역하고 foreign ErrorCode/ErrorOut을 공유하지 않는다."
-    )
-
-
-def _source_s1_s3_findings(
-    relative_path: Path,
-    source: str,
-    tree: ast.AST,
-) -> tuple[list[str], list[str], list[str]]:
-    rel_parts = relative_path.parts
-    own = _own_bc(rel_parts)
-    src_lines = source.splitlines()
-    is_contract = _is_contract_file(rel_parts)
-    is_acl = _is_acl_file(rel_parts)
-    in_layer = bool(set(rel_parts) & LAYER_DIR_NAMES)
-    s1_findings: list[str] = []
-    s2_findings: list[str] = []
-    s3_findings: list[str] = []
-    seen: set[tuple[int, str]] = set()
-    for lineno, dotted in _imported_paths(tree):
-        shown = (
-            src_lines[lineno - 1].strip()
-            if 0 < lineno <= len(src_lines)
-            else dotted
-        )
-        if is_contract:
-            if LAYER_ANY_RE.match(dotted) and (lineno, "s2") not in seen:
-                seen.add((lineno, "s2"))
-                s2_findings.append(f"  - {relative_path}:{lineno}  {shown}")
+        mod = _parse(f)
+        if mod is None:
             continue
-        cross_bc = CROSS_BC_RE.match(dotted)
-        if (
-            cross_bc
-            and cross_bc.group(1) != own
-            and not is_acl
-            and (lineno, "s1") not in seen
-        ):
-            seen.add((lineno, "s1"))
-            s1_findings.append(f"  - {relative_path}:{lineno}  {shown}")
-        published = PUBLISHED_RE.match(dotted)
-        if (
-            published
-            and published.group(1) == own
-            and in_layer
-            and (lineno, "s3") not in seen
-        ):
-            seen.add((lineno, "s3"))
-            s3_findings.append(f"  - {relative_path}:{lineno}  {shown}")
-    return s1_findings, s2_findings, s3_findings
+        has_domain = any(level == 0 and "domain_layer" in p.split(".") for _n, p, level in _imports(mod))
+        has_repo_write = any(
+            isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in ("save", "remove", "save_all")
+            for n in ast.walk(mod)
+        )
+        if has_domain and has_repo_write:
+            cand.add("#347", bc_rel / f.relative_to(bc), "admin feature 가 애그리거트를 부르고 리포지토리 쓰기를 한다 — 공유 유스케이스는 `application_layer` 에 남긴다", "「이 조작을 사용자 API 도 하나」")
 
 
-def _is_new_or_modified(root: Path, file_path: Path) -> bool:
-    """git 레포면 이번 변경(추가/수정)인지. git 아니면 True(가드 통과)."""
-    if not (root / ".git").exists():
-        return True
-    try:
-        rel = file_path.relative_to(root)
-    except ValueError:
-        return True
-    try:
-        tracked = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "--error-unmatch", str(rel)],
-            capture_output=True,
-        )
-        if tracked.returncode != 0:
-            return True  # 신규 파일.
-        changed = subprocess.run(
-            ["git", "-C", str(root), "diff", "--quiet", "HEAD", "--", str(rel)],
-            capture_output=True,  # 커밋 0개 레포의 'bad revision' stderr 누출 방지.
-        )
-        return changed.returncode != 0
-    except (OSError, subprocess.SubprocessError):
-        return True  # git 판단 불가 → 안전하게 가드 통과(나머지 AND 가 좁힌다).
+def _check_boundary_annotations(bc: Path, bc_rel: Path, out: Findings) -> None:
+    """#11 확정 몫 — 경계 파일 애너테이션에 QuerySet·ORM Model 타입."""
+    boundary_globs = ("application_layer/port/**/*.py", "driving_layer/open_host_service/**/contract/**/*.py")
+    for pattern in boundary_globs:
+        for f in sorted(bc.glob(pattern)):
+            mod = _parse(f)
+            if mod is None:
+                continue
+            for node in ast.walk(mod):
+                anns: list[ast.expr | None] = []
+                if isinstance(node, ast.AnnAssign):
+                    anns.append(node.annotation)
+                elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    anns.extend(a.annotation for a in node.args.args + node.args.kwonlyargs)
+                    anns.append(node.returns)
+                for ann in anns:
+                    idents = _ann_idents(ann)
+                    bad = {i for i in idents if i == "QuerySet" or (i.endswith("Model") and i != "BaseModel")}
+                    for b in sorted(bad):
+                        out.add("#11", bc_rel / f.relative_to(bc), f"경계를 넘는 데이터에 엔티티도 DB 행도 실리지 않는다 — 애너테이션 `{b}` (연 쪽이 닫기까지 못 한다)")
+
+
+# D38 사후 신호 중 «기계 확정» 가능한 것은 BC 식별 인자뿐이다 — kind·mode·is_* 는
+# 일반 시그니처와 구별할 수 없어(무해한 mode 인자 실증) 확정 판정에서 걷었다(08-12 리뷰).
+BRANCH_PARAM_NAMES = {"bc", "bounded_context"}
+
+
+def _check_framework_demotion(target: Path, out: Findings) -> None:
+    """#470 — 강등을 매개변수로 때운 «사후 신호»(D38): framework 공개 시그니처의 BC 분기 매개변수."""
+    fw = target / "framework"
+    if not fw.is_dir():
+        return
+    for f in sorted(fw.rglob("*.py")):
+        rel_parts = f.relative_to(fw).parts
+        if set(rel_parts) & SKIP_DIRS or "test" in rel_parts:
+            continue
+        mod = _parse(f)
+        if mod is None:
+            continue
+        for node in ast.walk(mod):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) or node.name.startswith("_"):
+                continue
+            for arg in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
+                if arg.arg in BRANCH_PARAM_NAMES:
+                    out.add("#470", f.relative_to(target), f"`{node.name}({arg.arg}=…)` — 강등은 매개변수를 더 받는 것이 아니라 인라인해서 각 BC 로 돌려보내고 다시 뽑는 것이다(D38)")
+
+
+def _check_project_rule_lists(pkg: Path, target: Path, out: Findings) -> None:
+    """#433 — `<project>/` 파일의 «주소·예외 목록». INSTALLED_APPS(등록의 정본 자리)와
+    MIDDLEWARE 를 제외한다 — MIDDLEWARE 안의 BC 경로는 «주소 목록»이 아니라 «금지된
+    자가등록»이고 그 실체는 check-ninja-boundary-middleware(registry #8)가 소유한다
+    (겹침 재검토 2026-08-12 — 같은 항목 이중 발화 제거·중복 진단 금지)."""
+    for f in sorted(pkg.rglob("*.py")):
+        if set(f.relative_to(pkg).parts) & SKIP_DIRS:
+            continue
+        mod = _parse(f)
+        if mod is None:
+            continue
+        rel = f.relative_to(target)
+        domain_exc_names: set[str] = set()
+        for node in ast.walk(mod):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                mods = node.module.split(".")
+                if "domain_layer" in mods and "exception" in mods:
+                    domain_exc_names.update(a.asname or a.name for a in node.names)
+        for node in mod.body:
+            if not isinstance(node, ast.Assign):
+                continue
+            targets = {t.id for t in node.targets if isinstance(t, ast.Name)}
+            if targets & {"INSTALLED_APPS", "MIDDLEWARE"}:
+                continue
+            for coll in ast.walk(node.value):
+                if not isinstance(coll, (ast.List, ast.Tuple, ast.Set, ast.Dict)):
+                    continue
+                elems = (coll.keys + coll.values) if isinstance(coll, ast.Dict) else coll.elts
+                for el in elems:
+                    if el is None:
+                        continue
+                    if isinstance(el, ast.Constant) and isinstance(el.value, str) and el.value.startswith("application."):
+                        out.add("#433", rel, f"규칙을 «주소 목록»으로 적지 않는다 — BC 경로 리터럴 `{el.value}` (BC 가 늘 때마다 이 파일이 바뀐다 · #432)")
+                    elif isinstance(el, ast.Name) and el.id in domain_exc_names:
+                        out.add("#433", rel, f"규칙을 «예외 목록»으로 적지 않는다 — 도메인 예외 `{el.id}` 나열")
+
+
+def _find_project_pkg(target: Path) -> Path | None:
+    manage = target / "manage.py"
+    if manage.is_file():
+        m = re.search(r"DJANGO_SETTINGS_MODULE[\"']\s*,\s*[\"']([\w.]+)[\"']", manage.read_text(encoding="utf-8", errors="ignore"))
+        if m:
+            pkg = target / m.group(1).split(".")[0]
+            if pkg.is_dir():
+                return pkg
+    cands = [
+        p for p in sorted(target.iterdir())
+        if p.is_dir() and not p.name.startswith(".") and p.name not in SKIP_DIRS
+        and p.name not in ("application", "framework")
+        and ((p / "settings").is_dir() or (p / "settings.py").is_file())
+    ]
+    return cands[0] if len(cands) == 1 else None
+
+
+def _check_project_registration(target: Path, out: Findings) -> None:
+    pkg = _find_project_pkg(target)
+    if pkg is None:
+        return
+    _check_project_rule_lists(pkg, target, out)
+    for name in ("api.py", "urls.py"):
+        f = pkg / name
+        if not f.is_file():
+            continue
+        rel = f.relative_to(target)
+        try:
+            src = f.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "noqa: F401" in src:
+            out.add("#431", rel, "부작용 등록(`# noqa: F401` import 등록)은 금지다 — 허용은 `urls.py` 의 `register_<bc>_api(api)` 명시 호출뿐이다")
+        mod = _parse(f)
+        if mod is None:
+            continue
+        imported: dict[str, str] = {}
+        for node in mod.body:
+            if isinstance(node, ast.ImportFrom) and node.module and node.module.split(".")[0] == "application":
+                for a in node.names:
+                    imported[a.asname or a.name] = f"{node.module}.{a.name}"
+            elif isinstance(node, ast.Import):
+                for a in node.names:
+                    if a.name.split(".")[0] == "application":
+                        imported[(a.asname or a.name).split(".")[0]] = a.name
+        used = {n.id for n in ast.walk(mod) if isinstance(n, ast.Name)}
+        for nm, path in sorted(imported.items()):
+            if nm not in used:
+                out.add("#431", rel, f"쓰이지 않는 BC import — 부작용 등록이다(`{path}`)")
+
+
+# ── main ────────────────────────────────────────────────────────────────────
+
+def _build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(add_help=True)
+    p.add_argument("target", nargs="?", default=".")
+    # 호환 심 — registry 렌더가 넘기는 selector 들. API-error lane 은 전용 검사기 소유가
+    # 됐으므로 여기서는 수용만 하고 쓰지 않는다(실행·종료 계약 무변).
+    p.add_argument("--error-profile", action="append", default=[])
+    p.add_argument("--scope", action="append", default=[])
+    p.add_argument("--api-module", action="append", default=[])
+    p.add_argument("--controller-module", action="append", default=[])
+    p.add_argument("--scope-bc", action="append", default=[])
+    p.add_argument("--error-bc", action="append", default=[])
+    return p
 
 
 def main(argv: list[str]) -> int:
-    try:
-        config = _parse_config(argv[1:])
-    except UsageError as exc:
-        print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
+    ns = _build_parser().parse_args(argv)
+    target = Path(ns.target)
+    if not target.is_dir():
+        print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1
-    except SystemExit as exc:  # argparse --help
-        return int(exc.code)
 
-    root = config.root
-    legacy_http_findings: list[str] = []
-    code_http_findings: list[str] = []
-    root_api_findings: list[BoundaryFinding] = []
-    layer_purity_findings: list[BoundaryFinding] = []
-    cross_bc_error_findings: list[BoundaryFinding] = []
-    s1_findings: list[str] = []  # cross-BC 내부 결합
-    s2_findings: list[str] = []  # contract 무의존 위반
-    s3_findings: list[str] = []  # published 계약 관통
+    containers = [
+        p for p in target.rglob("application")
+        if p.is_dir() and not (set(p.parts) & SKIP_DIRS)
+    ]
+    bcs: list[Path] = []
+    for c in containers:
+        bcs.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
 
-    if config.profile == "dddjango-code-json":
-        try:
-            code_sources = _code_sources(config)
-        except UsageError as exc:
-            print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
-            return 1
-        try:
-            approved_identifiers = _approved_error_identifier_names(
-                code_sources,
-                config.error_bcs,
-            )
-            root_api_findings = _root_api_findings(
-                _selected_parsed_source(code_sources, config.api_module),
-                approved_identifiers,
-            )
-        except UsageError as exc:
-            print(f"[check-context-isolation] 사용 오류: {exc}", file=sys.stderr)
-            return 1
-        suppress_ninja_import_paths: set[Path] = set()
-        for parsed in code_sources:
-            found_layer, found_cross_bc, suppress_raw_ninja = (
-                _source_error_boundary_findings(parsed, config.scope_bcs)
-            )
-            layer_purity_findings.extend(found_layer)
-            cross_bc_error_findings.extend(found_cross_bc)
-            if suppress_raw_ninja:
-                suppress_ninja_import_paths.add(parsed.relative_path)
-            relative_parts = parsed.relative_path.parts
-            if not (
-                len(relative_parts) >= 3
-                and relative_parts[0] == "application"
-                and relative_parts[1] in config.scope_bcs
-            ):
-                continue
-            found_s1, found_s2, found_s3 = _source_s1_s3_findings(
-                parsed.relative_path,
-                parsed.source,
-                parsed.tree,
-            )
-            s1_findings.extend(found_s1)
-            s2_findings.extend(found_s2)
-            s3_findings.extend(found_s3)
-        code_http_findings = _code_http_findings(
-            code_sources,
-            suppress_ninja_import_paths,
-        )
-    else:
-        legacy_http_findings = _legacy_http_findings(root)
-        if not _has_application_container(root):
-            if legacy_http_findings:
-                _print_legacy_http(legacy_http_findings)
-                return 2
-            return 0
-        for file_path, _ in _prod_py_files(root):
-            if not _is_new_or_modified(root, file_path):
-                continue
-            try:
-                source = file_path.read_text(encoding="utf-8", errors="replace")
-                tree = ast.parse(source)
-            except (OSError, SyntaxError):
-                continue
-            found_s1, found_s2, found_s3 = _source_s1_s3_findings(
-                file_path.relative_to(root),
-                source,
-                tree,
-            )
-            s1_findings.extend(found_s1)
-            s2_findings.extend(found_s2)
-            s3_findings.extend(found_s3)
-
-    if not (
-        legacy_http_findings
-        or code_http_findings
-        or root_api_findings
-        or layer_purity_findings
-        or cross_bc_error_findings
-        or s1_findings
-        or s2_findings
-        or s3_findings
-    ):
+    if not any(_has_adoption_signal(b) for b in bcs):
+        print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
+    if not bcs:
+        print("blocker: 채택 신호는 있는데 검사할 BC 가 0건이다 — 조용한 무동작을 금지한다(#74)")
+        return 2
 
-    if legacy_http_findings:
-        _print_legacy_http(legacy_http_findings)
-    if root_api_findings:
-        _print_root_api_findings(root_api_findings)
-    if layer_purity_findings:
-        _print_layer_purity_findings(layer_purity_findings)
-    if cross_bc_error_findings:
-        _print_cross_bc_error_findings(cross_bc_error_findings)
-    if code_http_findings:
-        _print_code_http(code_http_findings)
-    if s1_findings:
-        print(
-            "[check-context-isolation] BLOCKER — ACL 밖(도메인/응용/presentation)에서 타 BC 의 "
-            "domain_layer/infra_layer 를 직접 import 함(컨텍스트 간 결합 누수):"
-        )
-        for line in s1_findings:
-            print(line)
-        print(
-            "  근거: architecture-ddd §2.5·§3.2(3)·discipline-houserules §2. 컨텍스트 간 접근은 "
-            "ACL 또는 published_service(OHS)로만 한다 — 다른 BC 의 내부 계층(예외 포함)을 직접 "
-            "import 하지 않는다. ACL 이 업스트림 모델·예외를 번역해 격리하거나(infra_layer/acl/), "
-            "OHS 를 경유하라. 접을 실질 사유가 있으면 코드에서 흘리지 말고 설계(G1)로 반송하라."
-        )
-    if s2_findings:
-        print(
-            "[check-context-isolation] BLOCKER — OHS contract 모듈이 계층"
-            "(domain/application/infra)을 import 함(contract 무의존 위반):"
-        )
-        for line in s2_findings:
-            print(line)
-        print(
-            "  근거: discipline-houserules `references/final.md` §2 OHS 내부 구조(contract 무의존). "
-            "contract 는 표준 라이브러리·같은 서비스 contract 만 import 한다 — 계약 타입은 wire 형"
-            "(str·Literal)으로 선언하고, 도메인 enum·모델을 계약 필드로 노출하지 않는다."
-        )
-    if s3_findings:
-        print(
-            "[check-context-isolation] BLOCKER — 자기 BC 의 계층(domain/application/infra)이 "
-            "자기 published_service 를 import 함(published 계약 관통):"
-        )
-        for line in s3_findings:
-            print(line)
-        print(
-            "  근거: discipline-houserules `references/final.md` §2 OHS 시그니처 계약. published "
-            "계약 타입을 application_layer 안으로 관통시키지 않는다 — 응용은 자기 DTO"
-            "(`<feature>/dto/<usecase>_request.py`·`<usecase>_result.py`)를 소유하고, OHS 가 "
-            "계약↔응용 DTO 를 필드 단위로 언랩·재조립한다(타 BC 의 published_service 소비는 정상)."
-        )
-    return 2
+    all_bcs = {b.name for b in bcs}
+    findings = Findings()
+    cand = Candidates()
+    acl_partners: dict[str, set[str]] = {}
+
+    for bc in bcs:
+        bc_rel = bc.relative_to(target)
+        dl = bc / "domain_layer"
+        agg_names: set[str] = set()
+        if dl.is_dir():
+            agg_dirs, _ = _entries(dl)
+            agg_names = {p.name for p in agg_dirs if p.name not in ("shared_value_object", "domain_service")}
+
+        for f in sorted(bc.rglob("*.py")):
+            if set(f.relative_to(bc).parts) & SKIP_DIRS:
+                continue
+            _scan_imports(f, bc, bc_rel, all_bcs, findings)
+
+        ohs = bc / "driving_layer" / "open_host_service"
+        if ohs.is_dir():
+            _check_ohs(ohs, bc, bc_rel, agg_names, all_bcs, findings, cand)
+
+        acl = _acl_dir(bc)
+        if acl is not None:
+            acl_partners[bc.name] = _check_acl(acl, bc, bc_rel, findings)
+        _check_uow_cross(bc, bc_rel, _cross_bc_port_names(acl), findings)
+        _check_ports(bc, bc_rel, all_bcs, findings)
+        _check_api_controllers(bc, bc_rel, findings)
+        _check_exception_spots(bc, bc_rel, findings)
+        _check_banned_entrance_name(bc, bc_rel, findings)
+        _check_error_code_containers(bc, bc_rel, findings)
+        _check_admin_features(bc, bc_rel, cand)
+        _check_boundary_annotations(bc, bc_rel, findings)
+
+    for a, partners in sorted(acl_partners.items()):
+        for b in sorted(partners):
+            if a in acl_partners.get(b, set()):
+                findings.add("#450", Path("application") / a, f"두 BC(`{a}`·`{b}`)가 서로의 `anticorruption_layer/` 에 들어 있다 — 순환 결합이다")
+
+    _check_framework_demotion(target, findings)
+    _check_project_registration(target, findings)
+
+    if cand:
+        print(f"ⓓ 후보 {len(cand)}건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:")
+        for c in cand:
+            print(" ", c)
+    if findings:
+        print(f"blocker {len(findings)}건 — 컨텍스트 격리·경계 규율 위반")
+        for f in findings:
+            print(" ", f)
+        return 2
+    print(f"clean — BC {len(bcs)}개 격리 규율 일치 (standard_tree {tree.SOURCE_SHA})")
+    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

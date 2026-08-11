@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """dddjango OpenAPI 오류 계약 결정적 백스톱.
 
-positional/auto/preserve 실행은 기존 ``openapi_extra.responses`` brownfield
+positional/auto/preserve 실행은 기존 ``openapi_extra.responses`` 저장소 전수
 검사를 보존한다. ``dddjango-code-json`` profile은 선택된 operation이 직접 반환하는
-BC 오류와 ``response={status: <Bc>ErrorOut}`` 선언의 일치를 검증하고, 선택 API
+BC 오류와 ``response={status: <Bc>ErrorSchema}`` 선언의 일치를 검증하고, 선택 API
 module의 수동 OpenAPI 후처리를 차단한다.
 
 종료코드: 0=clean, 1=사용/분석 오류, 2=blocker.
@@ -23,14 +23,20 @@ from pathlib import Path
 from typing import Callable
 
 
+try:
+    import standard_tree as _stree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 HTTP_STATUS_CONSTANT_RE = re.compile(r"^HTTP_([1-5]\d\d)(?:_|$)")
 STATIC_LITERAL_PREFIX = "@static-literal:"
 HTTP_METHODS = {"delete", "get", "head", "options", "patch", "post", "put"}
 ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
-COMMON_ERROR_MODULE = "common.ninja.response.error_out"
-COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.ErrorOut"
+COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
+COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
 
 SKIP_DIRS = {
     ".venv",
@@ -478,10 +484,10 @@ def _code_source_paths(config: Config) -> tuple[CodeInventory, tuple[Path, ...]]
     inventory_paths = set(inventory.relative_paths)
     required = [Path(config.api_module or "")]
     required.extend(Path(raw) for raw in config.controller_modules)
-    required.append(Path("common/ninja/response/error_out.py"))
+    required.append(Path("framework/ninja/framework_error_schema.py"))
     if config.error_bcs:
         required.extend(
-            Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+            Path(f"application/{bc}/driving_layer/api/bc_error_schema.py")
             for bc in config.error_bcs
         )
     issues = [
@@ -529,10 +535,10 @@ def _parse_code_sources(config: Config) -> dict[Path, ParsedSource]:
     return parsed
 
 
-def _legacy_is_production_path(relative_path: Path) -> bool:
+def _scan_is_production_path(relative_path: Path) -> bool:
     return (
         relative_path.suffix == ".py"
-        and "presentation_layer" in relative_path.parts
+        and bool(_TREE_DRIVING_SET & set(relative_path.parts))
         and not set(relative_path.parts) & CODE_SKIP_DIRS
         and not set(relative_path.parts) & TEST_DIR_NAMES
         and not relative_path.name.startswith("test_")
@@ -540,7 +546,7 @@ def _legacy_is_production_path(relative_path: Path) -> bool:
     )
 
 
-def _legacy_is_ignored_untracked(root: Path, relative_path: Path) -> bool:
+def _scan_is_ignored_untracked(root: Path, relative_path: Path) -> bool:
     if not (root / ".git").exists():
         return False
     try:
@@ -577,16 +583,16 @@ def _legacy_is_ignored_untracked(root: Path, relative_path: Path) -> bool:
         return False
 
 
-def _legacy_presentation_files(root: Path) -> list[Path]:
+def _scan_driving_files(root: Path) -> list[Path]:
     paths: list[Path] = []
     for path in root.rglob("*.py"):
         try:
             relative = path.relative_to(root)
         except ValueError:
             continue
-        if not _legacy_is_production_path(relative):
+        if not _scan_is_production_path(relative):
             continue
-        if _legacy_is_ignored_untracked(root, relative):
+        if _scan_is_ignored_untracked(root, relative):
             continue
         paths.append(path)
     return sorted(paths)
@@ -602,7 +608,7 @@ def _literal_status(node: ast.AST) -> int | None:
     return None
 
 
-def _legacy_response_statuses(
+def _scan_response_statuses(
     function: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> set[int]:
     for decorator in function.decorator_list:
@@ -623,7 +629,7 @@ def _legacy_response_statuses(
     return set()
 
 
-def _legacy_openapi_extra_statuses(
+def _scan_openapi_extra_statuses(
     function: ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> set[int]:
     statuses: set[int] = set()
@@ -650,7 +656,7 @@ def _legacy_openapi_extra_statuses(
     return statuses
 
 
-def _legacy_scan(source: str) -> list[str]:
+def _scan_operations(source: str) -> list[str]:
     if not NINJA_IMPORT_RE.search(source):
         return []
     try:
@@ -662,7 +668,7 @@ def _legacy_scan(source: str) -> list[str]:
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         missing = sorted(
-            _legacy_openapi_extra_statuses(node) - _legacy_response_statuses(node)
+            _scan_openapi_extra_statuses(node) - _scan_response_statuses(node)
         )
         if missing:
             findings.append(
@@ -672,7 +678,7 @@ def _legacy_scan(source: str) -> list[str]:
     return findings
 
 
-def _legacy_is_new_or_modified(root: Path, file_path: Path) -> bool:
+def _scan_is_new_or_modified(root: Path, file_path: Path) -> bool:
     if not (root / ".git").exists():
         return True
     try:
@@ -701,15 +707,15 @@ def _legacy_is_new_or_modified(root: Path, file_path: Path) -> bool:
         return True
 
 
-def _legacy_findings(root: Path) -> list[str]:
+def _repo_scan_findings(root: Path) -> list[str]:
     findings: list[str] = []
-    for path in _legacy_presentation_files(root):
+    for path in _scan_driving_files(root):
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        hits = _legacy_scan(source)
-        if hits and _legacy_is_new_or_modified(root, path):
+        hits = _scan_operations(source)
+        if hits and _scan_is_new_or_modified(root, path):
             findings.append(f"  - {path.relative_to(root)}: {'; '.join(hits)}")
     return findings
 
@@ -1939,8 +1945,8 @@ def _class_alias_generator(
     body_generator: str | None = None
     body_config_seen = False
     body_config_complete = True
-    legacy_generator: str | None = None
-    legacy_config_seen = False
+    nested_config_generator: str | None = None
+    nested_config_seen = False
     for statement in class_node.body:
         targets, value = _assigned_value(statement)
         names = {name for target in targets for name in _target_names(target)}
@@ -1980,8 +1986,8 @@ def _class_alias_generator(
             else:
                 body_config_complete = False
         if isinstance(statement, ast.ClassDef) and statement.name == "Config":
-            legacy_config_seen = True
-            legacy_generator = None
+            nested_config_seen = True
+            nested_config_generator = None
             config_current = dict(current)
             for config_statement in statement.body:
                 config_targets, config_value = _assigned_value(config_statement)
@@ -1991,7 +1997,7 @@ def _class_alias_generator(
                     for name in _target_names(target)
                 }
                 if "alias_generator" in config_names and config_value is not None:
-                    legacy_generator = _resolve_expression(config_value, config_current)
+                    nested_config_generator = _resolve_expression(config_value, config_current)
                 _advance_bindings(
                     config_statement,
                     relative_path,
@@ -2004,10 +2010,10 @@ def _class_alias_generator(
             current,
             annotations_evaluated=annotations_evaluated,
         )
-    generator = body_generator if body_config_seen else legacy_generator
+    generator = body_generator if body_config_seen else nested_config_generator
     config_complete = (
         body_config_complete if body_config_seen else True
-    ) and not (body_config_seen and legacy_config_seen)
+    ) and not (body_config_seen and nested_config_seen)
 
     # Pydantic class-header kwargs override body model_config values.
     for keyword in class_node.keywords:
@@ -2086,18 +2092,18 @@ def _class_constructor_fields_by_key(
 def _error_catalog(
     config: Config, parsed_by_path: dict[Path, ParsedSource]
 ) -> dict[str, ErrorSymbol]:
-    common = parsed_by_path[Path("common/ninja/response/error_out.py")]
+    common = parsed_by_path[Path("framework/ninja/framework_error_schema.py")]
     common_class = next(
         (
             node
             for node in common.tree.body
-            if isinstance(node, ast.ClassDef) and node.name == "ErrorOut"
+            if isinstance(node, ast.ClassDef) and node.name == "FrameworkErrorSchema"
         ),
         None,
     )
     if common_class is None:
-        raise UsageError("canonical common ErrorOut provenance 분석 불능")
-    common_relative = Path("common/ninja/response/error_out.py")
+        raise UsageError("canonical common FrameworkErrorSchema provenance 분석 불능")
+    common_relative = Path("framework/ninja/framework_error_schema.py")
     common_before = _module_symbol_bindings_before(common)
     common_annotations_evaluated = _annotations_are_evaluated(common.tree)
     common_fields = _class_field_specs(
@@ -2131,7 +2137,7 @@ def _error_catalog(
         return catalog
 
     for bc in config.error_bcs:
-        relative = Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+        relative = Path(f"application/{bc}/driving_layer/api/bc_error_schema.py")
         parsed = parsed_by_path[relative]
         before = _module_symbol_bindings_before(parsed)
         annotations_evaluated = _annotations_are_evaluated(parsed.tree)
@@ -2146,7 +2152,7 @@ def _error_catalog(
                 base_nodes.append(node)
         if len(base_nodes) != 1:
             raise UsageError(
-                f"canonical BC ErrorOut provenance 분석 불능: {relative}"
+                f"canonical BC FrameworkErrorSchema provenance 분석 불능: {relative}"
             )
         base_node = base_nodes[0]
         base_path = f"{module}.{base_node.name}"
@@ -2345,7 +2351,7 @@ def _constructed_error(
     resolved = _resolve_expression(value.func, bindings)
     if _is_ambiguous_resolution(resolved):
         raise UsageError(
-            f"returned ErrorOut provenance 분석 불능: line {value.lineno}"
+            f"returned FrameworkErrorSchema provenance 분석 불능: line {value.lineno}"
         )
     symbol = catalog.get(resolved or "")
     if symbol is None or symbol.kind not in {"base", "concrete"}:
@@ -2399,7 +2405,7 @@ def _status_return_instance(
     instance = instances.get(body_arg.id)
     if instance == AMBIGUOUS_ERROR_INSTANCE:
         raise UsageError(
-            f"returned ErrorOut instance provenance 분석 불능: line {statement.lineno}"
+            f"returned FrameworkErrorSchema instance provenance 분석 불능: line {statement.lineno}"
         )
     if not isinstance(instance, ErrorInstance):
         return None
@@ -2598,7 +2604,7 @@ def _response_findings(
         for bc in sorted(required_bcs):
             expected = base_by_bc.get(bc)
             if expected is None:
-                raise UsageError(f"required BC ErrorOut base 분석 불능: {bc}")
+                raise UsageError(f"required BC FrameworkErrorSchema base 분석 불능: {bc}")
             if not isinstance(schema, ErrorSymbol) or schema.full_path != expected.full_path:
                 shown = schema.full_path if isinstance(schema, ErrorSymbol) else schema
                 findings.append(
@@ -3217,7 +3223,7 @@ def _code_findings(config: Config) -> tuple[list[str], list[Finding]]:
     return sorted(set(analysis)), _deduplicate_findings(findings)
 
 
-def _print_legacy_findings(findings: list[str]) -> None:
+def _print_repo_scan_findings(findings: list[str]) -> None:
     print(
         "[check-openapi-error-declaration] BLOCKER — 오류 status 를 openapi_extra 로만 "
         "선언하고 "
@@ -3237,21 +3243,103 @@ def _print_legacy_findings(findings: list[str]) -> None:
 def _print_code_findings(findings: list[Finding]) -> None:
     print(
         "[check-openapi-error-declaration] BLOCKER — 직접 반환 BC 오류와 response= "
-        "ErrorOut 계약 불일치 또는 수동 OpenAPI 후처리:"
+        "<Bc>ErrorSchema 계약 불일치 또는 수동 OpenAPI 후처리:"
     )
     for finding in findings:
         print(finding.render())
     print(
-        "  조치: 각 직접 반환 status를 같은 BC의 <Bc>ErrorOut base로 선언하고, "
+        "  조치: 각 직접 반환 status를 같은 BC의 <Bc>ErrorSchema base로 선언하고, "
         "직접 반환하지 않는 BC 오류 광고와 "
         "openapi_extra/get_openapi_schema 후처리를 "
         "제거한다."
     )
 
 
+# ── 표준 트리 슬라이스 — #63 (D27 «OpenAPI 도 같다») ────────────────────────
+#
+# 오류 응답은 operation 이 `response={status: <Bc>ErrorSchema}` 로 «직접 선언»한다 —
+# openapi_extra 의 responses 보충 · `get_openapi_schema` override · `openapi_schema`
+# monkeypatch/postprocessor 는 사후 변형이라 위반이다. 모든 프로필에서 돈다.
+
+_TREE_DRIVING_SET = frozenset({"driving_layer"})
+_TREE_LAYERS63 = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+_TREE_APP_MARKERS63 = ("models.py", "apps.py", "views.py", "admin.py")
+
+
+def _tree_bcs63(root: Path) -> list[Path]:
+    out: list[Path] = []
+    for c in root.rglob("application"):
+        if not c.is_dir() or set(c.parts) & CODE_SKIP_DIRS:
+            continue
+        out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+    return out
+
+
+def _tree_adopted63(bcs: list[Path]) -> bool:
+    for bc in bcs:
+        if any((bc / n).is_dir() for n in _TREE_LAYERS63):
+            return True
+        if any((bc / m).is_file() for m in _TREE_APP_MARKERS63):
+            return True
+        if any(p.is_dir() and p.name.startswith("django_") for p in bc.iterdir()):
+            return True
+    return False
+
+
+def _dict_has_key(node: ast.AST, key: str) -> bool:
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.Dict):
+            for k in sub.keys:
+                if isinstance(k, ast.Constant) and k.value == key:
+                    return True
+    return False
+
+
+def _tree_slice63(root: Path) -> list[str]:
+    findings: list[str] = []
+    files: list[Path] = []
+    for p in sorted(root.rglob("*.py")):
+        rel = p.relative_to(root)
+        if _scan_is_production_path(rel):
+            files.append(p)
+    for f in files:
+        rel = f.relative_to(root)
+        try:
+            mod = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
+        except (SyntaxError, OSError):
+            continue
+        for node in ast.walk(mod):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name == "get_openapi_schema":
+                    findings.append(f"  [#63] {rel}:{node.lineno} `get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다")
+                for deco in node.decorator_list:
+                    if not isinstance(deco, ast.Call):
+                        continue
+                    for kw in deco.keywords:
+                        if kw.arg == "openapi_extra" and _dict_has_key(kw.value, "responses"):
+                            findings.append(f"  [#63] {rel}:{node.lineno} `openapi_extra` 의 responses 보충 — 오류 응답은 `response={{status: <Bc>ErrorSchema}}` 로 직접 선언한다")
+            elif isinstance(node, ast.Assign):
+                for t in node.targets:
+                    if isinstance(t, ast.Attribute) and t.attr in ("openapi_schema", "get_openapi_schema"):
+                        findings.append(f"  [#63] {rel}:{node.lineno} `{t.attr}` monkeypatch — OpenAPI 를 사후 변형하지 않는다")
+    return findings
+
+
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
+        bcs = _tree_bcs63(config.root)
+        if not any(
+            (bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING_SET
+        ) and _tree_adopted63(bcs):
+            print("[check-openapi-error-declaration] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            return 2
+        tree_findings = _tree_slice63(config.root)
+        if tree_findings:
+            print("[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):")
+            for f in tree_findings:
+                print(f)
+            return 2
         if config.profile == "dddjango-code-json":
             analysis, findings = _code_findings(config)
             dynamic_proof_only = bool(analysis) and all(
@@ -3264,9 +3352,9 @@ def main(argv: list[str]) -> int:
             if analysis:
                 raise UsageError("; ".join(analysis))
             return 0
-        legacy = _legacy_findings(config.root)
-        if legacy:
-            _print_legacy_findings(legacy)
+        repo_scan = _repo_scan_findings(config.root)
+        if repo_scan:
+            _print_repo_scan_findings(repo_scan)
             return 2
         return 0
     except UsageError as exc:

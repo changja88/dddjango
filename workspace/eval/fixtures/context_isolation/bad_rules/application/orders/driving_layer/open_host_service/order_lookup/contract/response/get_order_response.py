@@ -1,0 +1,2 @@
+class GetOrderResponse:
+    message: str

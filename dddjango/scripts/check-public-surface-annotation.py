@@ -1,262 +1,381 @@
 #!/usr/bin/env python3
-"""dddjango 공개 표면 어노테이션 가드 결정적 백스톱 (discipline-houserules §4·§4.1).
+"""dddjango 타입 전면 검사기 — «첫 대입에 타입» 규율의 결정적 백스톱.
 
-모듈 레벨 변수와 (일반) 클래스 변수 — 다른 코드가 import 하고 독자가 계약으로 읽는 *공개 표면* —
-의 첫 단순대입(`name = expr`)에 타입 어노테이션이 없는 경우를 적출한다. **함수 지역 변수는 보지
-않는다**(§4: 지역 변수는 권장이지 필수가 아니다 — mypy 가 추론하고 노이즈가 크다).
+트리 개정 명세의 타입 규칙 4개를 강제한다.
 
-*왜 결정적 백스톱인가* — §4 는 공개 표면 어노테이션을 필수로 박지만 mypy strict 의
-`disallow_untyped_defs` 는 *시그니처만* 강제하고 변수 어노테이션 전용 옵션은 없다. 공개 표면(모듈/
-클래스 본문 *직계*)은 좁아서 "bare 대입이면 거의 확실히 누락"이라 결정적으로 막을 수 있다(거짓양성
-≈0). 함수 지역 변수(넓고 추론 자명)는 보지 않으므로 noise 폭증을 피한다(§4.1 — 실익은 버그예방이
-아니라 공개 표면의 생성 결정성·계약 가독성).
+  #493 모든 이름은 «첫 대입»에 타입을 적는다 — 시그니처·속성·지역 변수에 예외가
+       없다(T49/D58 — 옛 판의 «지역 변수는 권장» 선과 «시그니처는 mypy 몫»
+       (`FunctionDef`→continue 결함)를 사용자 결정으로 뒤집었다). 빠지는 것은
+       **문법이 없는 여덟 자리뿐**: `for x in xs:` · `with … as f:` · `except … as e:` ·
+       `a, b = pair` · `a = b = 0` · `x += 1` · walrus · 컴프리헨션. 그리고
+       **재대입**(첫 바인딩이 아니다)과 **선언적 클래스 본문**(ORM 모델 필드·
+       ninja Schema 필드·enum 멤버 — 그 안의 «메서드»는 면제가 아니다)은 면제다.
+  #358 Thin Read 구현(`adapter/**/domain_bypass_query/`)이 바깥으로 내보내는 것은
+       «이름 붙인 정적 타입»뿐 — 반환 애너테이션에 `QuerySet`·`<Name>Model` 금지.
+  #456 모양이 틀린 요청은 계약 위반이라 `contract/exception/` 이 아니라 테스트·타입
+       체커가 받는다 — OHS `contract/exception/` 에 요청 검증 계열 예외 클래스 금지.
+  #69  (ast+ · ⓓ 후보) 개발자 실수를 막는 검사는 런타임이 아니라 테스트·타입 체커의
+       몫 — 프로덕션 `assert` · isinstance 가드 뒤 TypeError/ValueError raise 를
+       후보로만 출력한다(exit 불산입 · 마무리는 discipline-reviewer).
 
-거짓양성 ≈ 0 — 다음은 위반이 아니라 전부 통과(면제):
-  - 함수 본문 안 지역 변수(스코프가 함수면 본문 통째 검사 안 함).
-  - 모듈/클래스 본문 *직계* 가 아닌 곳(`if`/`try`/`with`/`for` 블록 내부 — TYPE_CHECKING 별칭·조건부
-    상수 포함). 직계만 보므로 조건부 대입의 위양성을 구조적으로 회피한다.
-  - 어노테이션 문법이 없는 바인딩: 언패킹(`a, b = …`)·다중 대입(`a = b = …`)·증강 대입(AugAssign)·
-    Subscript/Attribute 타깃(`d[k]=`·`self.x=`)·import·for/with/except 타깃·walrus.
-  - 재대입(같은 본문에서 이미 바인딩된 이름의 후속 대입 — 첫 바인딩만 본다).
-  - 던더(`__all__`·`__version__` 등)·`urlpatterns`(Django URLconf 매직 이름), 그리고 RHS 가 리터럴·
-    컬렉션 상수가 *아닌* 경우 — 호출식(`router = Router()`·`api = NinjaAPI()`), 타입 별칭(`= Union[...]`),
-    이름 참조·재export(`router = make_router`), 표현식. 타입이 RHS·원본에서 자명하거나 관용
-    무어노테이션이라 면제. 검출 대상은 리터럴·컬렉션 상수(`= 3`·`= "..."`·`= [...]`·`= {...}`)뿐이다.
-  - 선언적 프레임워크 클래스 본문(base 가 `Model`/`Enum`/`*Choices`/`Form`/`Serializer`/`Schema`/
-    `BaseModel`/`TypedDict`/`NamedTuple` 또는 `@dataclass`, 클래스명 `Meta`/`Config`) — 필드/멤버
-    선언이 관용이라 통째 면제. pydantic/ninja `Schema`·`dataclass` 필드는 정상이면 이미 `x: T`
-    (AnnAssign)라 매치되지 않고, bare 면 필드가 안 되는 버그지만 그 의미 판정은 reviewer 몫이다.
-  - *알려진 한계(위양성 방향·현 코퍼스 0건)*: 선언적 클래스 면제는 *직계* base 이름 매칭이라, 프로젝트-로컬
-    추상 base 2단 상속(`class X(BaseSchema)`)·별칭 import base(`Model as M`)·`Exception` 서브클래스의
-    리터럴 클래스 상수는 면제가 못 미쳐 검출될 수 있다 — 막다른길은 아니고(어노테이트로 통과)
-    discipline-reviewer 의미 점검이 '선언적 클래스 손자/별칭'을 면제로 보완한다.
-  - production 만(`test`/`tests`/`migrations`/`settings` 디렉터리·`settings.py`/`urls.py`/`manage.py`/
-    `asgi.py`/`wsgi.py`/`conftest.py` 제외), 이번 작업 신규/수정분만(git untracked/modified, 판정
-    불가면 스킵 — brownfield 레거시 거짓양성 회피).
+문법 외 면제(도구·프로토콜 소유 — 사람이 짓는 자리가 아니다):
+  - `migrations/`(#593 이 모양을 소유) · `manage.py`/`wsgi.py`/`asgi.py`(생성 골격).
+  - 던더(`__all__` 등)·`urlpatterns` — 인터프리터/Django 가 이름과 형을 소유한다.
+  - `test/` 의 unit/integration/e2e(«테스트 — 안이 자유» #384)와 `test_*.py`·
+    `conftest.py`. 재료 칸(`factories/`·`fake/`)은 규칙이 그대로 산다.
 
-사용법: check-public-surface-annotation.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
-종료코드: 0=clean(또는 판정불가), 2=blocker(발견 출력), 1=사용 오류.
+가드 계약 (명세 조각 ⓐ): 대상 0건 가드(#74) · git 유무와 무관하게 전 파일
+검사(fail-closed — 기존 코드도 면제가 아니라 빚이다).
+
+사용법: check-public-surface-annotation.py [TARGET_DIR]   (기본: 현재 디렉터리)
+종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 """
 from __future__ import annotations
 
 import ast
-import subprocess
 import sys
 from pathlib import Path
 
+try:
+    import standard_tree as tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
 SKIP_DIRS = {
-    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__",
+    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
     "build", "dist", ".tox", ".mypy_cache", ".pytest_cache", ".eggs",
 }
-# 검사 제외 디렉터리(테스트·자동생성·설정 관용 — 대량 bare 대입이 정상).
-SKIP_PATH_DIRS = {"test", "tests", "migrations", "settings"}
-# 검사 제외 파일(Django 진입·설정 파일 — `urlpatterns = [...]`·`DEBUG = True` 류 관용).
-SKIP_FILE_NAMES = {
-    "settings.py", "urls.py", "manage.py", "asgi.py", "wsgi.py", "conftest.py",
-}
+DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+SCAFFOLD_FILES = {"manage.py", "wsgi.py", "asgi.py"}
+TEST_DIR_NAMES = {"test", "tests"}
+TEST_FREE_DIRS = {"unit", "integration", "e2e"}
+MATERIAL_DIRS = {"factories", "fake"}
 
-# 선언적 프레임워크 클래스 — 본문 대입이 "필드/멤버/옵션 선언" 관용이라 본문 통째 면제.
+DRIVEN_DIRS = {"driven_layer"}
+OHS_DIRS = {"open_host_service"}
+
+# 선언적 프레임워크 클래스 — 본문 «필드 대입»이 관용이라 대입만 면제(메서드는 검사).
 DECLARATIVE_BASE_NAMES = {
     "Model", "Enum", "IntEnum", "StrEnum", "Flag", "IntFlag",
     "Choices", "TextChoices", "IntegerChoices",
     "Form", "ModelForm", "Serializer", "ModelSerializer",
     "HyperlinkedModelSerializer", "Schema", "BaseModel",
     "TypedDict", "NamedTuple",
-    # Django 설정·등록 선언 클래스(`default_auto_field`·`name`·`list_display` 등은 관용 무어노테이션).
     "AppConfig", "ModelAdmin", "TabularInline", "StackedInline", "AdminSite",
+    "Factory", "DjangoModelFactory",
 }
 DECLARATIVE_CLASS_NAMES = {"Meta", "Config"}
 DECLARATIVE_DECORATORS = {"dataclass", "define", "frozen", "attrs"}
+PROTOCOL_NAMES = {"urlpatterns"}
 
-# Django 매직 모듈 변수 — 프레임워크가 특정 이름을 특정 위치에서 찾는 관용(어노테이션 비관용).
-EXEMPT_NAMES = {"urlpatterns"}
-
-# 검출 대상 RHS — 리터럴·컬렉션 상수만(계약 명시 효용 있는 진짜 상수). 그 외(호출·별칭·표현식)는 면제.
-LITERAL_RHS = (ast.Constant, ast.List, ast.Dict, ast.Set, ast.Tuple)
+VALIDATION_TOKENS = ("invalid", "validation", "malformed", "badrequest", "unprocessable")
+GUARD_EXC = {"TypeError", "ValueError"}
 
 
-def _callee_name(node: ast.AST) -> str | None:
-    """호출식의 callee 이름(`f(...)`→`f`, `a.b.c(...)`→`c`)."""
-    if isinstance(node, ast.Call):
-        f = node.func
-        if isinstance(f, ast.Name):
-            return f.id
-        if isinstance(f, ast.Attribute):
-            return f.attr
-    return None
+class Findings(list):
+    def add(self, rule: str, path: Path, msg: str) -> None:
+        self.append(f"[{rule}] {path}: {msg}")
 
 
-def _base_names(cls: ast.ClassDef) -> set[str]:
-    names: set[str] = set()
-    for b in cls.bases:
-        if isinstance(b, ast.Name):
-            names.add(b.id)
-        elif isinstance(b, ast.Attribute):
-            names.add(b.attr)
-    return names
+class Candidates(list):
+    def add(self, rule: str, path: Path, msg: str, question: str) -> None:
+        self.append(f"[ⓓ{rule}] {path}: {msg} — 물음: {question}")
 
 
-def _decorator_names(node: ast.ClassDef) -> set[str]:
-    names: set[str] = set()
-    for d in node.decorator_list:
-        if isinstance(d, ast.Name):
-            names.add(d.id)
-        elif isinstance(d, ast.Attribute):
-            names.add(d.attr)
-        else:
-            n = _callee_name(d)
-            if n:
-                names.add(n)
-    return names
+def _has_adoption_signal(bc_dir: Path) -> bool:
+    """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
+    has_layer = any((bc_dir / n).is_dir() for n in NEW_LAYERS)
+    has_marker = any((bc_dir / m).is_file() for m in DJANGO_APP_MARKERS) or any(
+        p.is_dir() and p.name.startswith("django_") for p in bc_dir.iterdir()
+    )
+    return has_layer or has_marker
 
 
-def _is_declarative_class(cls: ast.ClassDef) -> bool:
-    """필드/멤버 선언이 관용이라 클래스 변수 규칙에서 면제할 클래스인가."""
-    if cls.name in DECLARATIVE_CLASS_NAMES:
-        return True
-    if _base_names(cls) & DECLARATIVE_BASE_NAMES:
-        return True
-    if _decorator_names(cls) & DECLARATIVE_DECORATORS:
-        return True
+def _adopted(target: Path) -> bool:
+    for c in target.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIRS:
+            continue
+        for bc in sorted(c.iterdir()):
+            if bc.is_dir() and not bc.name.startswith(".") and _has_adoption_signal(bc):
+                return True
     return False
 
 
-def _rhs_exempt(value: ast.AST) -> bool:
-    """검출 대상은 리터럴·컬렉션 상수(`= 3`·`= "..."`·`= [...]`·`= {...}`)뿐 — 계약 명시 효용이 있는
-    진짜 상수다. 그 외는 면제: 호출식(`Router()`·`NinjaAPI()`·`getLogger()`·`models.CharField()` — 타입이
-    RHS 에서 자명·관용 무어노테이션), 타입 별칭(`Union[...]`), 이름 참조·재export(`router = make_router`),
-    표현식(`A + B`). 거짓양성≈0 — 면제 쪽으로 기운다."""
-    return not isinstance(value, LITERAL_RHS)
+def _is_target_file(path: Path) -> bool:
+    parts = set(path.parts)
+    if parts & SKIP_DIRS or "migrations" in parts:
+        return False
+    if path.name in SCAFFOLD_FILES:
+        return False
+    if path.name.startswith("test_") or path.name == "conftest.py":
+        return False
+    if parts & TEST_DIR_NAMES:
+        # «테스트=자유 · 재료=규칙»(#384) — factories/·fake/ 만 검사한다.
+        if not (parts & MATERIAL_DIRS):
+            return False
+        if parts & TEST_FREE_DIRS:
+            return False
+    return True
+
+
+def _name_of(node: ast.AST) -> str:
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    return ""
+
+
+def _is_declarative_class(cls: ast.ClassDef) -> bool:
+    if cls.name in DECLARATIVE_CLASS_NAMES:
+        return True
+    if {_name_of(b) for b in cls.bases} & DECLARATIVE_BASE_NAMES:
+        return True
+    deco = set()
+    for d in cls.decorator_list:
+        deco.add(_name_of(d.func) if isinstance(d, ast.Call) else _name_of(d))
+    return bool(deco & DECLARATIVE_DECORATORS)
 
 
 def _is_dunder(name: str) -> bool:
     return name.startswith("__") and name.endswith("__")
 
 
-def _record_bindings(node: ast.AST, bound: set[str]) -> None:
-    """node 하위에서 바인딩되는 모든 이름을 기록(직계 첫 바인딩 판정의 면제 기반)."""
+# ── #493 — 시그니처 · 지역 변수 · 속성 · 모듈/클래스 변수 ────────────────────
+
+def _check_signature(fn: ast.FunctionDef | ast.AsyncFunctionDef, in_class: bool, rel: Path, out: Findings) -> None:
+    args = fn.args
+    positional = list(args.posonlyargs) + list(args.args)
+    for i, a in enumerate(positional):
+        if in_class and i == 0 and a.arg in ("self", "cls"):
+            continue  # 관례 수신자 — 애너테이션 문법 관례가 없다
+        if a.annotation is None:
+            out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 매개변수 `{a.arg}` 에 타입이 없다")
+    for a in args.kwonlyargs:
+        if a.annotation is None:
+            out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 매개변수 `{a.arg}` 에 타입이 없다")
+    for a in (args.vararg, args.kwarg):
+        if a is not None and a.annotation is None:
+            out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 매개변수 `*{a.arg}` 에 타입이 없다")
+    if fn.returns is None:
+        out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 반환 타입이 없다")
+
+
+def _record_syntax_bindings(node: ast.AST, bound: set[str]) -> None:
+    """문법이 없는 자리(for/with/except/언패킹/다중/증강/walrus/컴프리헨션)의 바인딩을 기록만 한다."""
     for n in ast.walk(node):
         if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store):
             bound.add(n.id)
         elif isinstance(n, (ast.Import, ast.ImportFrom)):
             for a in n.names:
                 bound.add((a.asname or a.name).split(".")[0])
+        elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            bound.update(n.names)
 
 
-def _scan_body(body: list[ast.stmt], in_class: bool, findings: list[str]) -> None:
-    """모듈/클래스 본문 *직계* 의 첫 단순대입 어노테이션 누락을 모은다(스코프별 재귀)."""
-    bound: set[str] = set()
-    for stmt in body:
+def _scan_stmts(
+    stmts: list[ast.stmt], scope: str, bound: set[str], rel: Path,
+    out: Findings, declarative: bool,
+) -> None:
+    """한 스코프의 문장열을 소스 순서로 걸으며 «첫 단순대입»의 타입 누락을 모은다.
+
+    scope ∈ {module, class, function}. 제어 블록(if/try/for/while/with) 안은 같은
+    스코프라 본문을 이어 걷는다(첫 바인딩 판정은 소스 순서)."""
+    for stmt in stmts:
         if isinstance(stmt, ast.ClassDef):
             bound.add(stmt.name)
-            if not _is_declarative_class(stmt):
-                _scan_body(stmt.body, True, findings)  # 일반 클래스 본문만 재귀
+            _scan_class(stmt, rel, out)
             continue
         if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
             bound.add(stmt.name)
-            continue  # 함수 본문 = 지역 변수, 검사 안 함
+            _check_signature(stmt, scope == "class", rel, out)
+            fn_bound: set[str] = {a.arg for a in (
+                list(stmt.args.posonlyargs) + list(stmt.args.args) + list(stmt.args.kwonlyargs)
+            )}
+            for va in (stmt.args.vararg, stmt.args.kwarg):
+                if va is not None:
+                    fn_bound.add(va.arg)
+            _scan_stmts(stmt.body, "function", fn_bound, rel, out, False)
+            continue
         if isinstance(stmt, ast.AnnAssign):
             if isinstance(stmt.target, ast.Name):
-                bound.add(stmt.target.id)  # 이미 어노테이트됨
+                bound.add(stmt.target.id)
             continue
         if isinstance(stmt, ast.Assign):
             if len(stmt.targets) == 1 and isinstance(stmt.targets[0], ast.Name):
                 name = stmt.targets[0].id
-                if name in bound:
-                    continue  # 재대입(첫 바인딩만 본다)
+                first = name not in bound
                 bound.add(name)
-                if _is_dunder(name) or name in EXEMPT_NAMES or _rhs_exempt(stmt.value):
-                    continue
-                scope = "클래스 변수" if in_class else "모듈 변수"
-                findings.append(f"{name} ({scope}, line {stmt.lineno})")
+                if first and not declarative and not _is_dunder(name) and name not in PROTOCOL_NAMES:
+                    where = {"module": "모듈 변수", "class": "클래스 변수", "function": "지역 변수"}[scope]
+                    out.add("#493", rel, f":{stmt.lineno} {where} `{name}` 의 첫 대입에 타입이 없다 — `name: T = …`")
             else:
-                _record_bindings(stmt, bound)  # 언패킹·다중·비-Name 타깃
+                _record_syntax_bindings(stmt, bound)  # 언패킹·다중·비-Name 타깃(문법 면제)
             continue
-        _record_bindings(stmt, bound)  # If/Try/With/For/AugAssign/Import 등 — 기록만
+        if isinstance(stmt, (ast.If, ast.While)):
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
+            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative)
+            continue
+        if isinstance(stmt, (ast.For, ast.AsyncFor)):
+            _record_syntax_bindings(stmt.target, bound)
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
+            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative)
+            continue
+        if isinstance(stmt, (ast.With, ast.AsyncWith)):
+            for item in stmt.items:
+                if item.optional_vars is not None:
+                    _record_syntax_bindings(item.optional_vars, bound)
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
+            continue
+        if isinstance(stmt, ast.Try):
+            _scan_stmts(stmt.body, scope, bound, rel, out, declarative)
+            for h in stmt.handlers:
+                if h.name:
+                    bound.add(h.name)
+                _scan_stmts(h.body, scope, bound, rel, out, declarative)
+            _scan_stmts(stmt.orelse, scope, bound, rel, out, declarative)
+            _scan_stmts(stmt.finalbody, scope, bound, rel, out, declarative)
+            continue
+        _record_syntax_bindings(stmt, bound)  # AugAssign·Import·Expr(walrus 포함) — 기록만
 
 
-def _scan_file(path: Path) -> list[str]:
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-    except (SyntaxError, OSError, UnicodeDecodeError):
-        return []
-    findings: list[str] = []
-    _scan_body(tree.body, False, findings)
-    return findings
+def _scan_class(cls: ast.ClassDef, rel: Path, out: Findings) -> None:
+    declarative = _is_declarative_class(cls)
+    bound: set[str] = set()
+    _scan_stmts(cls.body, "class", bound, rel, out, declarative)
+    if declarative:
+        return  # 선언적 본문 — 속성 규칙도 프레임워크 관용에 맡긴다
+    # 속성(#493) — self.x 의 첫 대입: 클래스 본문 `x: T` 나 `self.x: T = …` 가 어디에도 없으면 위반.
+    annotated: set[str] = {
+        s.target.id for s in cls.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)
+    }
+    assigned: dict[str, int] = {}
+    for node in ast.walk(cls):
+        target = None
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Attribute):
+            target = node.target
+            is_ann = True
+        elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Attribute):
+            target = node.targets[0]
+            is_ann = False
+        else:
+            continue
+        if not (isinstance(target.value, ast.Name) and target.value.id == "self"):
+            continue
+        if is_ann:
+            annotated.add(target.attr)
+        else:
+            assigned.setdefault(target.attr, node.lineno)
+    for attr, lineno in sorted(assigned.items(), key=lambda kv: kv[1]):
+        if attr not in annotated and not _is_dunder(attr):
+            out.add("#493", rel, f":{lineno} 속성 `self.{attr}` 의 첫 대입에 타입이 없다 — `self.{attr}: T = …` 또는 클래스 본문 `{attr}: T`")
 
 
-def _git_available(root: Path) -> bool:
-    return (root / ".git").exists()
+# ── #358 · #456 · #69 ───────────────────────────────────────────────────────
+
+def _annotation_names(node: ast.AST) -> set[str]:
+    out: set[str] = set()
+    for n in ast.walk(node):
+        nm = _name_of(n)
+        if nm:
+            out.add(nm)
+        if isinstance(n, ast.Constant) and isinstance(n.value, str):
+            try:  # 문자열 애너테이션(`-> "QuerySet[OrderModel]"`)도 같은 판으로
+                out |= _annotation_names(ast.parse(n.value, mode="eval").body)
+            except SyntaxError:
+                pass
+    return out
 
 
-def _porcelain(root: Path, relpath: str) -> str | None:
-    try:
-        res = subprocess.run(
-            ["git", "-C", str(root), "status", "--porcelain", "--", relpath],
-            capture_output=True,
-            text=True,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return None
-    if res.returncode != 0:
-        return None
-    return res.stdout
+def _check_thin_read(mod: ast.Module, rel: Path, out: Findings) -> None:
+    """#358 — Thin Read 구현의 반환 애너테이션에 QuerySet·<Name>Model 금지."""
+    for fn in (n for n in ast.walk(mod) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))):
+        if fn.returns is None:
+            continue  # 부재는 #493 이 잡는다 — 중복 진단 금지
+        names = _annotation_names(fn.returns)
+        bad = {n for n in names if n == "QuerySet" or (n.endswith("Model") and n != "BaseModel")}
+        if bad:
+            out.add("#358", rel, f":{fn.lineno} `{fn.name}()` 반환 타입에 `{', '.join(sorted(bad))}` — Thin Read 는 이름 붙인 정적 타입만 내보낸다(ORM 로우·QuerySet 금지)")
 
 
-def _is_new_or_modified(root: Path, file: Path) -> bool | None:
-    """이번 작업이 이 파일을 새로 만들거나 수정했나. 판정 불가면 None(→ 스킵)."""
-    if not _git_available(root):
-        return None
-    rel = file.relative_to(root).as_posix()
-    out = _porcelain(root, rel)
-    if out is None:
-        return None
-    return bool(out.strip())
+def _check_contract_exceptions(mod: ast.Module, rel: Path, out: Findings) -> None:
+    """#456 — OHS contract/exception/ 에 요청 검증 계열 예외 클래스 금지."""
+    for cls in (n for n in ast.walk(mod) if isinstance(n, ast.ClassDef)):
+        low = cls.name.lower()
+        if any(tok in low for tok in VALIDATION_TOKENS):
+            out.add("#456", rel, f"`{cls.name}` — 모양이 틀린 요청은 계약 위반이라 테스트·타입 체커가 받는다(`contract/exception/` 의 자리가 아니다)")
+
+
+def _collect_runtime_guards(mod: ast.Module, rel: Path, cands: Candidates) -> None:
+    """#69 (ⓓ 후보) — 프로덕션 assert · isinstance 가드 뒤 TypeError/ValueError."""
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Assert):
+            cands.add("#69", rel, f":{node.lineno} 프로덕션 `assert`", "이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?")
+        elif isinstance(node, ast.If):
+            has_isinstance = any(
+                isinstance(c, ast.Call) and _name_of(c.func) == "isinstance" for c in ast.walk(node.test)
+            )
+            if not has_isinstance:
+                continue
+            for sub in node.body:
+                for r in ast.walk(sub):
+                    if isinstance(r, ast.Raise) and r.exc is not None:
+                        exc_name = _name_of(r.exc.func) if isinstance(r.exc, ast.Call) else _name_of(r.exc)
+                        if exc_name in GUARD_EXC:
+                            cands.add("#69", rel, f":{node.lineno} isinstance 가드 뒤 `raise {exc_name}`", "이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?")
+                            break
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
-    if not root.is_dir():
-        print(f"[check-public-surface-annotation] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+    if len(argv) > 1:
+        print(f"사용법: {Path(sys.argv[0]).name} [TARGET_DIR]", file=sys.stderr)
+        return 1
+    target = Path(argv[0]).resolve() if argv else Path.cwd()
+    if not target.is_dir():
+        print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1
 
-    findings: list[str] = []
-    for path in root.rglob("*.py"):
-        if set(path.parts) & SKIP_DIRS:
+    files = [p for p in sorted(target.rglob("*.py")) if _is_target_file(p)]
+
+    # 대상 0건 가드(#74) — 채택 신호는 있는데 파일이 0건이면 경로 계약이 어긋난 것.
+    if not files:
+        if _adopted(target):
+            print("blocker: 채택 신호는 있는데 검사 대상 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            return 2
+        print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
+        return 0
+
+    findings = Findings()
+    candidates = Candidates()
+    for f in files:
+        try:
+            mod = ast.parse(f.read_text(encoding="utf-8"))
+        except (SyntaxError, OSError, UnicodeDecodeError):
             continue
-        if set(path.parts) & SKIP_PATH_DIRS:
-            continue
-        if path.name in SKIP_FILE_NAMES:
-            continue
-        hits = _scan_file(path)
-        if not hits:
-            continue
-        if _is_new_or_modified(root, path) is not True:
-            continue  # 미변경·비-git → 스킵(거짓양성 회피)
-        rel = path.relative_to(root).as_posix()
-        for h in hits:
-            findings.append(f"  - {rel}: {h}")
+        rel = f.relative_to(target)
+        parts = set(rel.parts)
+        _scan_stmts(mod.body, "module", set(), rel, findings, False)
+        if (parts & DRIVEN_DIRS) and "domain_bypass_query" in parts:
+            _check_thin_read(mod, rel, findings)
+        if (parts & OHS_DIRS) and "contract" in parts and "exception" in parts:
+            _check_contract_exceptions(mod, rel, findings)
+        _collect_runtime_guards(mod, rel, candidates)
 
     if findings:
-        print(
-            "[check-public-surface-annotation] BLOCKER — 공개 표면(모듈/클래스 변수)의 첫 "
-            "단순대입에 타입 어노테이션이 없다(discipline-houserules §4):"
-        )
+        print(f"blocker {len(findings)}건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» 외)")
         for f in findings:
-            print(f)
-        print(
-            "  근거: `discipline-houserules` §4·§4.1. 모듈 상수·클래스 변수는 다른 코드가 import 하고 "
-            "독자가 계약으로 읽는 공개 표면이라 `name: T = expr` 로 타입을 명시한다. 함수 지역 변수는 "
-            "권장(필수 아님)이라 보지 않는다. 합법 경로(누락이 위반 아님): 함수 지역 변수, 어노테이션 "
-            "문법이 없는 곳(`for`/`with`/`except`/언패킹/다중·증강 대입), 재대입, `self.x=`(타입은 클래스 "
-            "본문 `x: T` 선언으로), Django 모델 필드·`Meta`/`Config`·enum 멤버, RHS 가 리터럴 상수가 "
-            "아닌 경우(`router = Router()` 호출식·`= Union[...]` 타입 별칭·이름 참조). pydantic/ninja "
-            "`Schema`·`dataclass` 필드는 오히려 `x: T` 가 필수다."
-        )
+            print(" ", f)
+    if candidates:
+        print(f"ⓓ 후보 {len(candidates)}건 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입)")
+        for c in candidates:
+            print(" ", c)
+    if findings:
         return 2
-
+    print(f"clean — 파일 {len(files)}개 타입 규율 일치 (standard_tree {tree.SOURCE_SHA})")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

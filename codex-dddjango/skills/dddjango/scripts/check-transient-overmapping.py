@@ -31,8 +31,11 @@ AND 조건(전부 참이어야 blocker):
      리터럴 인자. 500-only 핸들러(IntegrityError 등)는 retryable 아니라 제외.
   4) (git 레포면) 그 파일이 이번 변경에서 새로 추가/수정됨 — 기존 커밋 코드는 존중.
 
+이관 계약 (명세 조각 ⓐ):
+  - 대상 0건 가드(#74): 채택 신호는 있는데 프로덕션 파일이 0건이면 exit 2.
+
 사용법: check-transient-overmapping.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
-종료코드: 0=clean, 2=blocker(발견 출력), 1=사용 오류.
+종료코드: 0=clean(또는 표준 미채택), 2=blocker(발견 출력), 1=사용/분석 오류.
 """
 from __future__ import annotations
 
@@ -41,8 +44,35 @@ import subprocess
 import sys
 from pathlib import Path
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
+try:
+    import standard_tree as tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 TEST_DIR_NAMES = {"test", "tests"}
+DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+
+
+def _has_adoption_signal(bc_dir: Path) -> bool:
+    """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
+    has_layer = any((bc_dir / n).is_dir() for n in NEW_LAYERS)
+    has_marker = any((bc_dir / m).is_file() for m in DJANGO_APP_MARKERS) or any(
+        p.is_dir() and p.name.startswith("django_") for p in bc_dir.iterdir()
+    )
+    return has_layer or has_marker
+
+
+def _adopted(target: Path) -> bool:
+    for c in target.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIRS:
+            continue
+        for bc in sorted(c.iterdir()):
+            if bc.is_dir() and not bc.name.startswith(".") and _has_adoption_signal(bc):
+                return True
+    return False
 
 RETRYABLE_STATUSES = {503, 409}
 TARGET_EXC = {"OperationalError", "DatabaseError"}
@@ -141,8 +171,16 @@ def main(argv: list[str]) -> int:
         print(f"[check-transient-overmapping] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
 
+    prod_files = _find_production_files(root)
+    # 대상 0건 가드(#74) — 채택 신호는 있는데 프로덕션 파일이 0건이면 경로 계약이 어긋난 것.
+    if not prod_files:
+        if _adopted(root):
+            print("blocker: 채택 신호는 있는데 프로덕션 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            return 2
+        return 0
+
     findings: list[str] = []
-    for prod_file in _find_production_files(root):
+    for prod_file in prod_files:
         try:
             tree = ast.parse(prod_file.read_text(encoding="utf-8", errors="replace"))
         except (OSError, SyntaxError):

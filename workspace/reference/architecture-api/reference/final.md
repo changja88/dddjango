@@ -247,7 +247,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 #### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)
 
 - media type은 `application/json`이다.
-- 플러그인이 정한 body property 목록은 없다. 기존 범위는 관찰된 exact `ErrorOut` shape를 보존하고, 신규 범위는 exact field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화를 일반 G1 승인과 분리해 명시 승인받는다.
+- 플러그인이 정한 body property 목록은 없다. 기존 범위는 관찰된 exact 오류 schema shape를 보존하고, 신규 범위는 exact field set·type·required/default·nullable·Field metadata·model config/legacy Config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 직렬화를 일반 G1 승인과 분리해 명시 승인받는다.
 - 기준선 shape의 property 추가·삭제·이름·타입·존재성·변환 규칙·의미 변경은 일반 기능 승인이 아니라 별도 public contract 변경이다. 호환성 영향과 server/client/test 전환 범위를 보여 준 뒤 명시적 사용자 승인을 받는다.
 - 승인 shape의 한 공통 필드를 BC `ErrorCode(StrEnum)`으로 좁혀 안정적인 공개 식별자를 제공한다. 그 필드명은 고정하지 않는다. public하게 구별되거나 관찰 가능한 실패에만 값을 부여하며, 여러 내부 예외는 하나의 public 식별자로 합쳐질 수 있다.
 - HTTP status 계약은 body property의 존재를 요구하거나 가정하지 않는다. 승인 shape에 status field가 있으면 실제 HTTP status와 일치시켜야 하지만, 그런 field가 없으면 controller의 literal/status 상수가 계약을 소유한다. 공개 문자열은 `str(exc)`를 자동 사용하거나 민감한 내부 정보를 누설하지 않는다.

@@ -111,9 +111,9 @@ dddjango@changja88-dddjango  installed, enabled  1.0.5    ~/.codex/.tmp/marketpl
 
 - **G0 · 요구·경계** — 무엇을 만들지, 어디에 둘지(새 영역 vs 기존 영역 확장), 어떤 리뷰 관점을 켤지 확정한다.
 - **G1 · 설계** — architect의 설계 명세 + 리뷰 반영 결과와 **영구 테스트 입장표**를 승인한다. 이 명세가 이후 테스트·코드의 **단일 근거**가 된다.
-- **G2 · 구현** — 구현 코드 + 승인된 테스트 결정별 결과 + 테스트 diff 감수 + **19종 결정적 백스톱** 통과를 승인한다.
+- **G2 · 구현** — 구현 코드 + 승인된 테스트 결정별 결과 + 테스트 diff 감수 + **27종 결정적 백스톱** 통과를 승인한다.
 
-> G2 직전에는 **19종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 4계층 골격, 컴포지션 루트, API 오류 Schema·controller 직접 반환·OpenAPI 선언 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
+> G2 직전에는 **27종의 결정적 백스톱**(파이썬 검사 스크립트)이 자동으로 돌아 구조·계약 회귀를 차단한다 — 컨테이너 위치, 표준 트리 골격(140행), 컴포지션 루트, 컨텍스트 격리, 명명·업무 어휘, API 오류 Schema·controller 직접 반환·OpenAPI 선언 등을 고정밀로 검사해, 에이전트의 의미 감수가 놓칠 수 있는 위반을 마지막 안전망으로 잡는다.
 
 ### 테스트는 현행 계약만 보고, 입장 심사 후 만든다
 
@@ -147,53 +147,65 @@ design-architect가 설계 명세를 쓴다 — `Order` 애그리거트, 재고�
 
 ```
 your_project/
-├── common/
+├── framework/                              # 저장소 횡단 공용 — BC를 모른다
 │   └── ninja/
-│       └── response/
-│           ├── __init__.py                 # 빈 package marker
-│           └── error_out.py                # contract scope의 공통 ErrorOut 하나
-└── application/                # 모든 feature 앱의 컨테이너 (루트 평면 금지)
+│       ├── __init__.py
+│       └── framework_error_schema.py       # contract scope의 공통 FrameworkErrorSchema 하나
+└── application/                # 모든 feature 앱(BC)의 컨테이너 (루트 평면 금지)
     └── orders/
-        ├── composition_root.py             # DI 배선 — build_place_order_command() 매요청 팩토리
+        ├── composition_root/               # DI 배선 «폴더» — BC 루트
+        │   ├── dependency_wiring.py         # build_place_order_command() 매요청 팩토리
+        │   └── event_wiring.py              # 사실(이벤트) 구독 결선
+        ├── published_event/                 # 밖에 공개하는 사실
+        ├── driving_layer/                  # 입구 — 전송(transport) 1차
+        │   ├── api/
+        │   │   ├── api_router.py            # register_orders_api(api); 자기 controller만 등록
+        │   │   ├── bc_error_schema.py       # OrderErrorCode·OrderErrorSchema·prepared concrete
+        │   │   └── order/                   # <area>
+        │   │       ├── order_controller.py  # 구체 예외를 catch하고 오류 schema를 직접 반환
+        │   │       └── schema/              # schema_in.py · schema_out.py
+        │   ├── open_host_service/           # 다른 BC가 부르는 창구 — 같은 프로세스 함수 호출
+        │   ├── cron_job/
+        │   └── event_subscription/
+        ├── application_layer/              # 유스케이스 흐름 (무엇을 언제)
+        │   ├── order/                       # <area>
+        │   │   └── place_order/
+        │   │       ├── place_order_use_case.py   # 유스케이스 본문 — execute 규약
+        │   │       ├── place_order_command.py    # 들어가는 자료 (안 쓰는 쪽은 빈 파일)
+        │   │       ├── place_order_query.py
+        │   │       └── place_order_result.py
+        │   └── port/                        # 능력·협력 포트 선언
+        │       └── product_stock/product_stock_port.py   # 다른 컨텍스트 협력 포트
         ├── domain_layer/                   # 순수 비즈니스 규칙 (프레임워크 무관)
         │   └── order/                       # 애그리거트(개념) 1차
         │       ├── order.py                 # 애그리거트 루트 — class Order
-        │       ├── entity/  value_object/   # 종속 엔티티·값 객체 (종류 2차 폴더)
-        │       ├── repository/order_repository.py   # OrderRepository (추상 인터페이스)
-        │       ├── port/product_stock_port.py       # 다른 컨텍스트 협력 포트
-        │       └── exception.py
-        ├── application_layer/              # 유스케이스 흐름 (무엇을 언제)
-        │   └── place_order/
-        │       ├── command/place_order_command.py   # PlaceOrderCommand.execute(request)
-        │       └── dto/place_order_request.py
-        ├── infra_layer/                    # ORM·외부 연동 등 세부 구현
+        │       ├── entity/  value_object/  event/
+        │       ├── order_repository.py      # OrderRepository (추상 — 도메인 소유)
+        │       └── exception/
+        ├── driven_layer/                   # 밖으로 나가는 세부 구현
         │   ├── django_orders/               # 여기서 startapp
         │   │   ├── apps.py
-        │   │   ├── models.py                 # class OrderModel(models.Model)
-        │   │   └── migrations/
-        │   ├── repository/django_order_repository.py  # DjangoOrderRepository (구현)
-        │   └── acl/product_stock_adapter.py           # 다른 BC를 번역해 소비
-        ├── presentation_layer/             # 바깥 계약 (종류 1차: api/ · schema/)
-        │   ├── registrar.py                  # register_orders_api(api); 자기 controller만 등록
-        │   ├── api/order_controller.py       # 구체 예외를 catch하고 ErrorOut을 직접 반환
-        │   └── schema/
-        │       ├── __init__.py
-        │       └── error_out.py              # OrderErrorCode·OrderErrorOut·prepared concrete
-        └── test/                           # 승인된 테스트가 있을 때만 의미군 분리
-            └── unit/  integration/  e2e/
+        │   │   ├── models/order_model.py    # class OrderModel(models.Model)
+        │   │   └── migrations/              # 생성물만 — 사람이 손대지 않는다
+        │   └── adapter/
+        │       ├── persistence/repository/order_repository.py    # DjangoOrderRepository (구현)
+        │       └── anticorruption_layer/products/product_stock_adapter.py  # 다른 BC를 번역해 소비
+        └── test/                           # 승인된 테스트가 있을 때만 다섯 자식
+            └── unit/  integration/  e2e/  factories/  fake/
 ```
 
-핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 4계층 물리 분리, **개념 1차·종류 2차** 폴더(단 `presentation_layer`는 `api/`·`schema/`가 고정 종류 폴더), ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트의 `composition_root.py`. 테스트가 실제 승인된 경우에만 unit/integration/e2e 의미군으로 배치한다. **이 규약들은 19종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
+핵심 규약이 일관되게 강제된다 — `application/` 컨테이너, 표준 트리 골격(모든 BC가 내용과 무관하게 같은 140행 트리 — 빈 칸도 빈 패키지로 실현), 4계층(driving·application·domain·driven) 물리 분리, 입구는 전송 1차·도메인은 개념 1차, ORM은 `<Name>Model`·도메인은 bare 이름, 추상/구현 명명 규칙(`OrderRepository` ↔ `DjangoOrderRepository`), DI 배선은 BC 루트 «폴더» `composition_root/`(결선은 `dependency_wiring.py`). 테스트가 실제 승인된 경우에만 다섯 자식(unit/integration/e2e/factories/fake)으로 배치한다. **이 규약들은 27종의 결정적 백스톱이 구현 게이트(G2) 직전에 자동 검증**한다.
 
 > 대상 프로젝트에 **이미 확립된 구조 규약이 있으면 그것을 우선**한다. 위 표준은 미조직 프로젝트의 기본값이다.
 
-Django Ninja의 신규 `dddjango-code-json` 오류 계약은 contract scope당 공통 `ErrorOut` 하나를
+Django Ninja의 신규 `dddjango-code-json` 오류 계약은 contract scope당 공통
+`FrameworkErrorSchema` 하나(`framework/ninja/framework_error_schema.py`)를
 두지만 **그 property 목록은 플러그인이 정하지 않는다**. 기존 프로젝트의 exact shape를
 보존하거나, 신규 shape의 field/type/required/default/nullable/Field metadata/model config·validator/serializer/computed field/Pydantic hook inventory와 effective semantics·wire 결과를
 별도로 보여 주고 명시 승인받는다. 이후 shape 변경도 일반 기능 승인과 분리해 다시 승인받는다.
-각 BC의 단일 `presentation_layer/schema/error_out.py`는 `<Bc>ErrorCode` StrEnum 하나,
-slot 6이 지정한 식별자 field 하나를 그 Enum으로 좁힌 `<Bc>ErrorOut` 하나, 인자 없이 생성할
-수 있는 prepared concrete ErrorOut을 필요한 만큼 소유한다. BC base는 식별자 타입만
+각 BC의 단일 `driving_layer/api/bc_error_schema.py`는 `<Bc>ErrorCode` StrEnum 하나,
+slot 6이 지정한 식별자 field 하나를 그 Enum으로 좁힌 `<Bc>ErrorSchema` 하나, 인자 없이 생성할
+수 있는 prepared concrete 오류를 필요한 만큼 소유한다. BC base는 식별자 타입만
 `str`에서 자기 Enum으로 바꾸고 공통 annotation의 nullable 구조·required/default·`Field(...)`
 metadata를 보존한다. concrete는 새 필드·validator·`model_config`를 추가하지 않고, 필드를
 재선언할 때 annotation/nullability와 `Field(...)` metadata를 그대로 반복한 채 승인된 공통
@@ -204,11 +216,11 @@ class OrderErrorCode(StrEnum):
     OUT_OF_STOCK = "order_out_of_stock"
 
 
-class OrderErrorOut(ErrorOut):
+class OrderErrorSchema(FrameworkErrorSchema):
     error_type: OrderErrorCode
 
 
-class OutOfStockErrorOut(OrderErrorOut):
+class OutOfStockError(OrderErrorSchema):
     error_type: OrderErrorCode = OrderErrorCode.OUT_OF_STOCK
     msg: str = "The requested quantity is not available."
     is_show: bool = True
@@ -217,25 +229,25 @@ class OutOfStockErrorOut(OrderErrorOut):
 위 `error_type/msg/is_show`도 한 프로젝트가 승인할 수 있는 shape 예시일 뿐 dddjango의
 기본값이 아니다. body에 HTTP `status` property가 없어도 controller가 HTTP status를 직접
 선택하므로 문제없다.
-`ErrorOut`의 exact property/type/required/default/nullable/Field metadata/config/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 의미는 기존 계약을 보존하거나
+오류 schema의 exact property/type/required/default/nullable/Field metadata/config/validator/serializer/computed field/Pydantic hook inventory와 effective semantics/wire 의미는 기존 계약을 보존하거나
 신규 G1에서 별도로 명시 승인받는다. controller는 application 호출 한 문장만 좁은 `try`에
-두고 알려진 구체 예외만 catch한다. 준비된 ErrorOut을 인자 없이 직접 생성해
+두고 알려진 구체 예외만 catch한다. 준비된 concrete 오류를 인자 없이 직접 생성해
 `Status(<승인된 HTTP status 표현>, error)`로 반환하며,
-`response={409: OrderErrorOut}`처럼 BC base를 OpenAPI에 선언한다. 고정값을 채우는 factory,
-ErrorOut을 HTTP 응답으로 직렬화하는 helper, BC/custom exception handler, broad catch는 만들지
+`response={409: OrderErrorSchema}`처럼 BC base를 OpenAPI에 선언한다. 고정값을 채우는 factory,
+오류 schema를 HTTP 응답으로 직렬화하는 helper, BC/custom exception handler, broad catch는 만들지
 않는다.
 
 ```python
 try:
     order = command.execute(request_dto)
 except OutOfStockException:
-    error = OutOfStockErrorOut()
+    error = OutOfStockError()
     return Status(status.HTTP_409_CONFLICT, error)
 ```
 
 인증·인가·요청 validation·route 404·throttle·일반 `HttpError`·미식별 500은 BC
-ErrorOut으로 바꾸지 않고 Django Ninja/Django 기본 처리를 그대로 쓴다. project `api.py`는
-API 인스턴스와 API 자체 설정만, BC `presentation_layer/registrar.py`는 전달받은 API에 자기 controller 등록만,
+오류 schema로 바꾸지 않고 Django Ninja/Django 기본 처리를 그대로 쓴다. project `api.py`는
+API 인스턴스와 API 자체 설정만, BC `driving_layer/api/api_router.py`는 전달받은 API에 자기 controller 등록만,
 project `urls.py`는 모든 registrar 호출과 API mount만 소유한다. 독립
 public/internal·version·core profile scope를 새로 나눈다면 G1에서 별도 계약으로 승인한다.
 이미 배포된 brownfield 오류 표면은 승인 없이 새 profile로 이주하지 않는다.
@@ -266,7 +278,7 @@ dddjango는 작업 규모를 보고 알맞게 움직인다.
 - **커맨드 1개**: `/dddjango`
 - **에이전트 7개**: `design-architect`, `design-review-ddd`, `design-review-api`, `design-review-db`, `acceptance-tester`, `coder`, `discipline-reviewer`
 - **스킬 11개**: 아키텍처(`architecture-ddd`/`-api`/`-db`), 규율(`discipline-houserules`/`-cleancode`/`-tdd`), 구현(`implementation-django`/`-django-ninja`/`-django-web`/`-python`/`-test`)
-- **결정적 백스톱 19종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
+- **결정적 백스톱 27종**: 구조·계약 회귀를 G2 직전에 자동 차단하는 파이썬 검사 스크립트
 
 ---
 

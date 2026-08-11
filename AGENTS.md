@@ -15,7 +15,7 @@ byte-exact로 미러하고, checker script는 별도 byte mirror로 검증한다
 
 - `dddjango/` — 실제 플러그인. `.claude-plugin/plugin.json`(매니페스트) +
   `commands/dddjango.md`(Coordinator) + `agents/*.md`(7개 subagent) +
-  `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 19종).
+  `skills/*/SKILL.md`(11개 스킬) + `scripts/check-*.py`(결정적 백스톱 27종).
 - `workspace/reference/**` — 배포 reference의 출처·P1 메타데이터를 보존하는 소스 미러.
   배포 본문 정본은 `dddjango/skills/*/references/final.md`이며,
   `corpus_mirror_sync.py --write`가 workspace 소스 본문과 Codex reference를 갱신한다.

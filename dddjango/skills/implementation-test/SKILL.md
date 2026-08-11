@@ -32,7 +32,7 @@ user-invocable: false
 - 승인된 테스트의 유효성을 살필 때 coverage나 mutmut를 진단 도구로 쓸 수 있지만, 수치·생존 mutant 자체가 새 case/assertion 근거는 아니다 (§13, §17)
 - AAA(Arrange-Act-Assert), assertion 선택, Free Ride 방지와 테스트 분리는 이미 입장된 case의 가독성 recipe다. 새 case/assertion을 승인하지 않는다 (§3.4, §15.2, §16)
 - 외부 계약(HTTP 응답·DB 저장값·이벤트) 검증의 assert 기댓값은 리터럴로 — 프로덕션 상수 역수입은 자기참조 오라클; 도메인 내부 단위 테스트의 심볼 단언과 arrange의 심볼 사용은 허용 (§15.4)
-- Django Ninja 오류는 입장된 HTTP mapping만 실제 mount된 Django client로 status/body/승인 header를 검증한다. plugin 기본 `ErrorOut` property 목록은 없고 shape 변경은 별도 명시 사용자 승인이 필요하다. 공개 OpenAPI 계약은 실제 mount된 생성 문서의 관련 operation/status/schema만 검증한다. 별도 승인 또는 실제 consumer evidence가 없는 Pydantic private introspection·framework 기본 직렬화와 error helper/factory/serializer/mapping/handler 내부 unit test는 만들지 않는다. framework 기본 body라도 입장된 public wire 계약이면 consumer가 의존하는 관련 field만 검증한다 (§19.2)
+- Django Ninja 오류는 입장된 HTTP mapping만 실제 mount된 Django client로 status/body/승인 header를 검증한다. plugin 기본 오류 schema property 목록은 없고 shape 변경은 별도 명시 사용자 승인이 필요하다. 공개 OpenAPI 계약은 실제 mount된 생성 문서의 관련 operation/status/schema만 검증한다. 별도 승인 또는 실제 consumer evidence가 없는 Pydantic private introspection·framework 기본 직렬화와 error helper/factory/serializer/mapping/handler 내부 unit test는 만들지 않는다. framework 기본 body라도 입장된 public wire 계약이면 consumer가 의존하는 관련 field만 검증한다 (§19.2)
 - 발행 이벤트의 union-enum 동기 검증도 자동 세트가 아니라 입장 후 recipe다. 실제 published/wire drift의 독자 failure가 있고 기존 보호가 없을 때만 `add`할 수 있으며, 구조가 서로를 자명하게 반복하면 `reuse`·`reject`한다 (§15.5)
 - migration 전용 테스트와 DB-backed 현행 동작 테스트의 식별·수명 주기는 기존 규칙을 그대로 따른다 (§1.4, `discipline-tdd` §5.5)
 - 테스트 안티패턴(복잡한 조건문·프로덕션 로직 재사용·숨겨진 의존성)을 피한다 (§16 — 상수 역수입 오라클은 §15.4)

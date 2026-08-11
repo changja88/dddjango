@@ -1,40 +1,29 @@
 #!/usr/bin/env python3
-"""dddjango 인프라 예외 *합성* 결정적 백스톱 (ACL-EX2).
+"""dddjango 인프라 예외 검사기 — 합성 금지(ACL-EX2) + 전수 명시 매핑(#129)의 결정적 백스톱.
 
-좁은 **고정밀·저-recall** 게이트다. `infra_layer`(ACL·리포지토리 등 인프라 경계)가
-*계산된* transient/경합(낙관락·CAS 재시도 소진 등 — 드라이버가 던진 게 아니라 코드가
-스스로 판정한 결과)을 신호하려고 raw 인프라 DB 예외(`OperationalError`/`DatabaseError`/
-`IntegrityError`)를 **`from` 없이 새로 생성(Call)해 raise**한 정확한 형태(ACL-EX2 — 라이브에서
-난 형태: ACL CAS 소진 시 `raise OperationalError(f"재고 차감 CAS 경합이 ...")`)만 차단한다.
+두 슬라이스를 강제한다. 대상은 driven 쪽(`driven_layer/`)이다.
 
-프로필별 결과는 둘뿐이다. `dddjango-code-json`에서 raw 인프라 실패는 기본적으로 framework
-500에 맡긴다. 안정된 공개 의미가 G1에서 승인된 실패만 owning infra/ACL이 같은 BC의 concrete
-domain/application 예외로 정규화하고, 그 BC controller가 직접 매핑한다. `preserve-established`는
-이미 승인된 brownfield 동작이 의존할 때만 기존 `raise ... from driver_exc` cause chain을 보존한다.
-어느 프로필에서도 synthetic 인프라 예외, global recognizer, 새 cause-chain mechanism을 도입하지
-않는다(implementation-django-ninja §6.2).
+⑴ 현행 관할 — 인프라 예외 *합성* (ACL-EX2 · 고정밀 AND 게이트, 무변):
+  driven 경계가 *계산된* transient/경합을 신호하려고 raw 인프라 DB 예외
+  (`OperationalError`/`DatabaseError`/`IntegrityError`)를 `from` 없이 새로
+  생성(Call)해 raise 한 형태만 차단한다. AND 조건(전부 참이어야 blocker):
+    1) 파일이 driven 층 안이다(`driven_layer`).
+    2) raise 의 예외가 Call 이고 생성 타입이 위 셋 — 재던지기·bare 클래스 제외.
+    3) `raise ... from X` 의 cause 부재 — `from` 보존 재던지기는 제외.
+    4) (git 레포면) 이번 변경에서 추가/수정됨 — git 아니면 가드 통과(fail-closed).
 
-`from` 절은 predicate상 면제하지만(node.cause 가 None 이 아니면 통과), 이는 위의 승인된
-`preserve-established` cause-chain 보존을 위한 구조적 호환이며 새 mechanism의 허가가 아니다.
+⑵ 트리 개정 명세 몫 — #129 (D27):
+  예외 번역은 «알려진 구체 예외의 전수 명시 매핑»으로 한다 — driven 층에서
+  `except Exception`/`except BaseException`/bare `except:` 를 잡아 놓고 그 안에서
+  «새 예외를 생성해» raise 하면(catch-all 번역) 위반이다. 알 수 없는 실패를
+  번역하는 것은 매핑이 아니라 은폐다. 단순 정리 후 재던지기(`raise`/`raise e`)는
+  번역이 아니라 잡지 않는다.
 
-저-recall(일부러 안 잡음 — discipline-reviewer 의미 렌즈가 담당):
-  - 헬퍼·변수 우회 합성(`exc = OperationalError(...); raise exc`, `raise _make_transient()`),
-  - `infra_layer` 밖(application·domain) 합성,
-  - `raise OperationalError(...) from None`(명시 cause 억제).
-거짓 양성을 내면 정당한 같은-BC concrete 예외 정규화(`raise StockContention(...) from exc`)·
-이미 승인된 preserve cause-chain 보존·테스트 더블을 막으므로, **infra_layer 경로 + raw 인프라
-예외 *생성*(Call) + `from` 부재 + 비테스트 + git-touched 의 AND** 로만 차단한다.
+가드 계약 (명세 조각 ⓐ):
+  - 대상 0건 가드(#74): 채택 신호는 있는데 driven 쪽 파일이 0건이면 exit 2.
 
-AND 조건(전부 참이어야 blocker):
-  1) 파일 경로에 `infra_layer` 디렉터리 포함(ACL·리포지토리 등 인프라 경계). 도메인 타입
-     (`StockContention` 등)은 TARGET_EXC 가 아니라 매칭 자체가 안 됨.
-  2) `raise` 의 예외가 **Call** 이고 그 생성 타입이 `OperationalError`/`DatabaseError`/
-     `IntegrityError` — 변수 재던지기(`raise e`)·bare 클래스는 Call 이 아니라 제외(정당 전파).
-  3) `raise ... from X` 의 cause 가 **부재**(`node.cause is None`) — `from` 보존 재던지기는 제외.
-  4) (git 레포면) 그 파일이 이번 변경에서 새로 추가/수정됨 — 기존 커밋 코드는 존중.
-
-사용법: check-synthetic-infra-exc.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
-종료코드: 0=clean, 2=blocker(발견 출력), 1=사용 오류.
+사용법: check-synthetic-infra-exc.py [TARGET_DIR]   (기본: 현재 디렉터리)
+종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 """
 from __future__ import annotations
 
@@ -43,15 +32,49 @@ import subprocess
 import sys
 from pathlib import Path
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
+try:
+    import standard_tree as tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 TEST_DIR_NAMES = {"test", "tests"}
-INFRA_DIR_NAME = "infra_layer"
+DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+
+DRIVEN = "driven_layer"
+DRIVEN_DIRS = (DRIVEN,)
 
 TARGET_EXC = {"OperationalError", "DatabaseError", "IntegrityError"}
+CATCH_ALL = {"Exception", "BaseException"}
+
+
+class Findings(list):
+    def add(self, rule: str, path: Path, msg: str) -> None:
+        self.append(f"[{rule}] {path}: {msg}")
+
+
+def _has_adoption_signal(bc_dir: Path) -> bool:
+    """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
+    has_layer = any((bc_dir / n).is_dir() for n in NEW_LAYERS)
+    has_marker = any((bc_dir / m).is_file() for m in DJANGO_APP_MARKERS) or any(
+        p.is_dir() and p.name.startswith("django_") for p in bc_dir.iterdir()
+    )
+    return has_layer or has_marker
+
+
+def _adopted(target: Path) -> bool:
+    for c in target.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIRS:
+            continue
+        for bc in sorted(c.iterdir()):
+            if bc.is_dir() and not bc.name.startswith(".") and _has_adoption_signal(bc):
+                return True
+    return False
 
 
 def _call_name(node: ast.AST) -> str | None:
-    """Call 의 func 가 가리키는 이름 — `OperationalError(...)` 든 `db.OperationalError(...)` 든."""
     if isinstance(node, ast.Name):
         return node.id
     if isinstance(node, ast.Attribute):
@@ -59,24 +82,7 @@ def _call_name(node: ast.AST) -> str | None:
     return None
 
 
-def _synthesis_raises(tree: ast.AST) -> list[tuple[int, str]]:
-    """`from` 없이 인프라 DB 예외를 *생성*(Call)해 raise 하는 지점 — (lineno, exc_name)."""
-    out: list[tuple[int, str]] = []
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Raise):
-            continue
-        if node.cause is not None:           # `raise ... from X` → 원본 보존(면제).
-            continue
-        exc = node.exc
-        if not isinstance(exc, ast.Call):    # 변수 재던지기·bare 클래스 → 정당 전파(면제).
-            continue
-        nm = _call_name(exc.func)
-        if nm in TARGET_EXC:
-            out.append((node.lineno, nm))
-    return out
-
-
-def _find_infra_files(root: Path) -> list[Path]:
+def _find_driven_files(root: Path) -> list[Path]:
     out: list[Path] = []
     for path in root.rglob("*.py"):
         parts = set(path.parts)
@@ -84,14 +90,14 @@ def _find_infra_files(root: Path) -> list[Path]:
             continue
         if parts & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
             continue
-        if INFRA_DIR_NAME not in path.parts:   # 인프라 경계 한정(고정밀).
+        if not (parts & set(DRIVEN_DIRS)):
             continue
         out.append(path)
-    return out
+    return sorted(out)
 
 
 def _is_new_or_modified(root: Path, file_path: Path) -> bool:
-    """git 레포면 이번 변경에서 추가/수정됐는지. git 아니면 True(가드 통과)."""
+    """git 레포면 이번 변경에서 추가/수정됐는지. git 아니면 True(가드 통과 — fail-closed)."""
     if not (root / ".git").exists():
         return True
     try:
@@ -110,48 +116,88 @@ def _is_new_or_modified(root: Path, file_path: Path) -> bool:
         )
         return changed.returncode != 0
     except (OSError, subprocess.SubprocessError):
-        return True  # git 판단 불가 시 안전하게 가드 통과(나머지 AND 가 좁힌다).
+        return True
+
+
+def _synthesis_raises(mod: ast.AST) -> list[tuple[int, str]]:
+    """`from` 없이 인프라 DB 예외를 *생성*(Call)해 raise 하는 지점 — (lineno, exc_name)."""
+    out: list[tuple[int, str]] = []
+    for node in ast.walk(mod):
+        if not isinstance(node, ast.Raise):
+            continue
+        if node.cause is not None:          # `raise ... from X` → 원본 보존(면제).
+            continue
+        exc = node.exc
+        if not isinstance(exc, ast.Call):   # 변수 재던지기·bare 클래스 → 정당 전파(면제).
+            continue
+        nm = _call_name(exc.func)
+        if nm in TARGET_EXC:
+            out.append((node.lineno, nm))
+    return out
+
+
+def _is_catch_all(handler: ast.ExceptHandler) -> bool:
+    t = handler.type
+    if t is None:
+        return True  # bare `except:`
+    if isinstance(t, ast.Tuple):
+        return any(_call_name(el) in CATCH_ALL for el in t.elts)
+    return _call_name(t) in CATCH_ALL
+
+
+def _catch_all_translations(mod: ast.AST) -> list[int]:
+    """#129 — catch-all 로 잡아 «새 예외를 생성해» raise 하는 지점(lineno들)."""
+    out: list[int] = []
+    for node in ast.walk(mod):
+        if not isinstance(node, ast.ExceptHandler) or not _is_catch_all(node):
+            continue
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.Raise) and isinstance(sub.exc, ast.Call):
+                out.append(sub.lineno)
+    return out
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
-    if not root.is_dir():
-        print(f"[check-synthetic-infra-exc] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+    if len(argv) > 1:
+        print(f"사용법: {Path(sys.argv[0]).name} [TARGET_DIR]", file=sys.stderr)
+        return 1
+    target = Path(argv[0]).resolve() if argv else Path.cwd()
+    if not target.is_dir():
+        print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1
 
-    findings: list[str] = []
-    for infra_file in _find_infra_files(root):
+    files = _find_driven_files(target)
+
+    # 대상 0건 가드(#74) — 채택 신호는 있는데 driven 쪽 파일이 0건이면 경로 계약이 어긋난 것.
+    if not files:
+        if _adopted(target):
+            print("blocker: 채택 신호는 있는데 driven 층 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            return 2
+        print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
+        return 0
+
+    findings = Findings()
+    for f in files:
         try:
-            tree = ast.parse(infra_file.read_text(encoding="utf-8", errors="replace"))
+            mod = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
         except (OSError, SyntaxError):
             continue
-        hits = _synthesis_raises(tree)
-        if hits and _is_new_or_modified(root, infra_file):
+        rel = f.relative_to(target)
+        hits = _synthesis_raises(mod)
+        if hits and _is_new_or_modified(target, f):
             for lineno, exc_name in hits:
-                findings.append(
-                    f"  - {infra_file.relative_to(root)}:{lineno} "
-                    f"raise {exc_name}(...) — `from` 없이 인프라 예외 합성"
-                )
+                findings.add("합성", rel, f":{lineno} `raise {exc_name}(...)` — `from` 없이 raw 인프라 예외를 합성했다(계산된 실패는 같은 BC 의 concrete 예외로 정규화한다)")
+        for lineno in _catch_all_translations(mod):
+            findings.add("#129", rel, f":{lineno} catch-all(`except Exception`/bare) 안에서 새 예외를 생성해 raise — 예외 번역은 알려진 구체 예외의 전수 명시 매핑으로 한다")
 
     if findings:
-        print(
-            "[check-synthetic-infra-exc] BLOCKER — infra_layer 가 계산된 transient/경합을 raw "
-            "인프라 예외로 *합성*해 raise 함(ACL-EX2):"
-        )
+        print(f"blocker {len(findings)}건 — driven 층 예외 규율 위반")
         for f in findings:
-            print(f)
-        print(
-            "  근거: `dddjango-code-json`에서 raw 인프라 실패는 기본적으로 framework 500으로 남긴다. "
-            "안정된 공개 의미가 G1에서 승인된 실패만 owning infra/ACL이 같은 BC의 concrete "
-            "domain/application 예외로 정규화하고 그 BC controller가 직접 매핑한다. "
-            "`preserve-established`에서는 이미 승인된 brownfield 동작이 의존할 때만 기존 "
-            "`raise ... from driver_exc` cause chain을 보존한다. synthetic 인프라 예외, global "
-            "recognizer, 새 cause-chain mechanism을 도입하지 말고 설계로 반송하라."
-        )
+            print(" ", f)
         return 2
-
+    print(f"clean — driven 층 파일 {len(files)}개 규율 일치 (standard_tree {tree.SOURCE_SHA})")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

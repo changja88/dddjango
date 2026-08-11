@@ -1,0 +1,1753 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>커맨드 · 자료 · 사건 — 이름은 «실패 계약»의 선언이다</title>
+<style>
+  :root {
+    --paper:#F2F4F3; --card:#FAFBFA; --sunk:#E7EBEA;
+    --ink:#141D20; --ink-2:#4E5F64; --ink-3:#7E9095;
+    --rule:#C9D2D2; --rule-soft:#DDE4E3;
+
+    --cmd:#2B4C7E;    --cmd-bg:#E3EAF4;
+    --evt:#1B6E6B;    --evt-bg:#DCEDEC;
+    --doc:#6E7A7E;    --doc-bg:#E7EBEC;
+    --flag:#A8442E;   --flag-bg:#F7E2DC;
+    --ok:#2F6B4F;     --ok-bg:#DFEDE5;
+
+    --sans:'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+    --mono:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+      --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+      --rule:#2D3C42; --rule-soft:#223036;
+      --cmd:#7BA3DC;  --cmd-bg:#16253A;
+      --evt:#5FC0BC;  --evt-bg:#122E2D;
+      --doc:#93A2A6;  --doc-bg:#1F2A2D;
+      --flag:#E08165; --flag-bg:#33201A;
+      --ok:#77BE99;   --ok-bg:#16281F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+    --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+    --rule:#2D3C42; --rule-soft:#223036;
+    --cmd:#7BA3DC;  --cmd-bg:#16253A;
+    --evt:#5FC0BC;  --evt-bg:#122E2D;
+    --doc:#93A2A6;  --doc-bg:#1F2A2D;
+    --flag:#E08165; --flag-bg:#33201A;
+    --ok:#77BE99;   --ok-bg:#16281F;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size:15.5px; line-height:1.78;
+    -webkit-font-smoothing: antialiased; letter-spacing:-0.003em;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 26px; }
+
+  header.top { padding: 58px 0 26px; }
+  .eyebrow { font-size:12.5px; letter-spacing:.11em; text-transform:uppercase;
+             color: var(--ink-3); font-weight:700; }
+  h1 { font-size: clamp(26px, 4.2vw, 38px); line-height:1.28; margin:12px 0 0;
+       font-weight:760; letter-spacing:-.02em; text-wrap:balance; }
+  .lede { margin:16px 0 0; color: var(--ink-2); font-size:16.5px; max-width: 64ch; }
+  .meta { margin-top:18px; font-size:13px; color: var(--ink-3); font-family: var(--mono); }
+
+  /* 탭 — 페이지 넷 */
+  nav.tabs { position:sticky; top:0; z-index:5; background:var(--paper);
+             border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+             display:flex; gap:2px; flex-wrap:wrap; padding:0; margin:0; }
+  nav.tabs button { appearance:none; background:none; border:0; border-bottom:2px solid transparent;
+                    padding:13px 15px 11px; font:inherit; font-size:14.5px; font-weight:700;
+                    color:var(--ink-3); cursor:pointer; letter-spacing:-.012em; }
+  nav.tabs button:hover { color:var(--ink-2); }
+  nav.tabs button[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--ink); }
+  nav.tabs button:focus-visible { outline:2px solid var(--cmd); outline-offset:-3px; border-radius:4px; }
+  nav.tabs .dot { display:inline-block; width:8px; height:8px; border-radius:50%;
+                  margin-right:8px; vertical-align:1px; background:var(--ink-3); }
+  nav.tabs .d-map { background:var(--ink); }
+  nav.tabs .d-cmd { background:var(--cmd); }
+  nav.tabs .d-doc { background:var(--doc); }
+  nav.tabs .d-evt { background:var(--evt); }
+
+  .page { padding:0; }
+  .page[hidden] { display:none; }
+  .pagehead { padding:44px 0 8px; }
+  .pagehead h2 { display:block; font-size: clamp(22px,3.4vw,30px); line-height:1.3;
+                 margin:10px 0 0; font-weight:760; letter-spacing:-.02em; }
+  .pagehead .lede { font-size:16px; }
+
+  section { padding: 44px 0 6px; }
+  h2 { font-size:20.5px; font-weight:720; letter-spacing:-.015em; margin:0 0 6px;
+       display:flex; align-items:baseline; gap:11px; }
+  h2 .n { font-family: var(--mono); font-size:13px; color: var(--ink-3);
+          border:1px solid var(--rule); border-radius:5px; padding:1px 7px; font-weight:600; }
+  h3 { font-size:16px; font-weight:700; margin:30px 0 8px; letter-spacing:-.01em; }
+  p { margin:11px 0; max-width: 70ch; }
+  .dim { color: var(--ink-2); }
+  b, strong { font-weight:700; }
+  code { font-family: var(--mono); font-size:.885em; background: var(--sunk);
+         padding:1.5px 5px; border-radius:4px; }
+
+  .cards { display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); margin:20px 0 6px; }
+  .card { background: var(--card); border:1px solid var(--rule-soft); border-radius:11px;
+          padding:16px 17px 17px; }
+  .card .tag { font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+  .card h4 { margin:7px 0 3px; font-size:16.5px; font-weight:740; letter-spacing:-.01em; }
+  .card .ex { font-family: var(--mono); font-size:12.5px; color: var(--ink-2); margin:2px 0 10px; }
+  .card ul { margin:0; padding-left:17px; font-size:14px; color: var(--ink-2); }
+  .card li { margin:3px 0; }
+  .c-cmd { border-color: var(--cmd); }        .c-cmd  .tag { color: var(--cmd); }
+  .c-evt { border-color: var(--evt); }        .c-evt  .tag { color: var(--evt); }
+  .c-doc { border-color: var(--rule); }       .c-doc  .tag { color: var(--doc); }
+
+  .tablewrap { overflow-x:auto; margin:20px 0 4px; }
+  table { border-collapse: collapse; width:100%; min-width: 620px; font-size:14.2px; }
+  th, td { text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule-soft); vertical-align:top; }
+  thead th { font-size:12.5px; letter-spacing:.05em; text-transform:uppercase;
+             color: var(--ink-3); border-bottom:1px solid var(--rule); font-weight:700; }
+  tbody tr:last-child td { border-bottom:none; }
+  td.k { font-weight:700; white-space:nowrap; }
+  .mono { font-family: var(--mono); font-size:13px; }
+
+  figure { margin: 26px 0 8px; }
+  figure svg { display:block; width:100%; height:auto; max-width:100%;
+               background: var(--card); border:1px solid var(--rule-soft); border-radius:12px; }
+  figcaption { margin-top:10px; font-size:13.5px; color: var(--ink-2); max-width: 72ch; }
+  figcaption b { color: var(--ink); }
+
+  /* SVG 공통 */
+  .box   { fill: var(--sunk); stroke: var(--rule); stroke-width:1.2; }
+  .box-c { fill: var(--cmd-bg); stroke: var(--cmd); stroke-width:1.4; }
+  .box-e { fill: var(--evt-bg); stroke: var(--evt); stroke-width:1.4; }
+  .box-d { fill: var(--doc-bg); stroke: var(--doc); stroke-width:1.4; }
+  .box-f { fill: var(--flag-bg); stroke: var(--flag); stroke-width:1.4; }
+  .box-o { fill: var(--ok-bg);  stroke: var(--ok);  stroke-width:1.4; }
+  .box-p { fill: none; stroke: var(--rule); stroke-width:1.2; stroke-dasharray:5 4; }
+  .t     { fill: var(--ink); font-family: var(--sans); font-size:13px; }
+  .t-s   { fill: var(--ink-2); font-family: var(--sans); font-size:11.5px; }
+  .t-xs  { fill: var(--ink-3); font-family: var(--sans); font-size:11px; }
+  .t-m   { fill: var(--ink); font-family: var(--mono); font-size:12px; }
+  .t-md  { fill: var(--ink-3); font-family: var(--mono); font-size:12px; }
+  .t-h   { fill: var(--ink); font-family: var(--sans); font-size:14px; font-weight:700; }
+  .t-c   { fill: var(--cmd); font-family: var(--sans); font-size:14px; font-weight:700; }
+  .t-e   { fill: var(--evt); font-family: var(--sans); font-size:14px; font-weight:700; }
+  .t-d   { fill: var(--doc); font-family: var(--sans); font-size:14px; font-weight:700; }
+  .t-cm  { fill: var(--cmd); font-family: var(--mono); font-size:12px; font-weight:700; }
+  .t-em  { fill: var(--evt); font-family: var(--mono); font-size:12px; font-weight:700; }
+  .t-dm  { fill: var(--doc); font-family: var(--mono); font-size:12px; font-weight:700; }
+  .t-flag{ fill: var(--flag); font-family: var(--sans); font-size:12px; font-weight:700; }
+  .t-ok  { fill: var(--ok);  font-family: var(--sans); font-size:12px; font-weight:700; }
+  .ln    { stroke: var(--rule); stroke-width:1.3; fill:none; }
+  .ln-c  { stroke: var(--cmd); stroke-width:1.8; fill:none; }
+  .ln-e  { stroke: var(--evt); stroke-width:1.8; fill:none; }
+  .ln-o  { stroke: var(--doc); stroke-width:1.8; fill:none; }
+  .ln-d  { stroke: var(--ink-3); stroke-width:1.2; fill:none; stroke-dasharray:4 4; }
+  .ln-f  { stroke: var(--flag); stroke-width:1.8; fill:none; stroke-dasharray:6 4; }
+  .axis  { stroke: var(--ink-3); stroke-width:1.4; fill:none; }
+
+  blockquote { margin:18px 0; padding:13px 18px; border-left:3px solid var(--rule);
+               background: var(--card); border-radius:0 9px 9px 0; color: var(--ink-2);
+               font-size:14.5px; }
+  blockquote em { color: var(--ink); font-style:normal; font-weight:600; }
+  blockquote .src { display:block; margin-top:7px; font-size:12.5px; color: var(--ink-3); font-family: var(--mono); }
+
+  .rule-note { margin:24px 0; padding:18px 20px; background: var(--card);
+               border:1px solid var(--rule); border-radius:11px; }
+  .rule-note .big { font-size:17px; font-weight:740; letter-spacing:-.012em; }
+  .rule-note ul, .rule-note ol { margin:12px 0 0; padding-left:20px; }
+  .rule-note li { margin:6px 0; }
+  .rule-note p { max-width:none; }
+
+  .two { display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); margin:18px 0 6px; }
+  .two .b { background: var(--card); border:1px solid var(--rule-soft); border-radius:11px; padding:15px 17px 16px; }
+  .two .b h4 { margin:0 0 6px; font-size:15.5px; font-weight:720; }
+  .two .b p { margin:0; font-size:14px; color: var(--ink-2); max-width:none; }
+  .two .b ul { margin:8px 0 0; padding-left:17px; font-size:14px; color:var(--ink-2); }
+  .two .b li { margin:4px 0; }
+  .two .b.bad { border-color: var(--flag); }
+  .two .b.good { border-color: var(--ok); }
+
+  .pick { display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); margin:18px 0 6px; }
+  .pick .p { background: var(--card); border:1px solid var(--rule-soft); border-radius:11px; padding:15px 17px; }
+  .pick .p.rec { border-color: var(--ok); }
+  .pick .p .lab { font-family: var(--mono); font-size:12px; color: var(--ink-3); font-weight:700; }
+  .pick .p h4 { margin:6px 0 6px; font-size:15.5px; font-weight:720; }
+  .pick .p p { margin:0; font-size:13.8px; color: var(--ink-2); }
+  .rec-badge { display:inline-block; margin-left:7px; font-size:11px; font-weight:800;
+               color: var(--ok); background: var(--ok-bg); border-radius:20px; padding:1px 9px;
+               letter-spacing:.04em; vertical-align:2px; }
+
+  .codewrap { overflow-x:auto; margin:16px 0 4px; background: var(--card);
+              border:1px solid var(--rule-soft); border-radius:11px; padding:14px 16px; }
+  .codewrap pre { margin:0; font-family: var(--mono); font-size:12.5px; line-height:1.72; }
+
+  footer { margin-top:56px; padding:26px 0 90px; border-top:1px solid var(--rule);
+           font-size:13px; color: var(--ink-3); }
+  footer ol { padding-left:20px; margin:10px 0 0; }
+  footer li { margin:5px 0; }
+  footer .mono { color: var(--ink-2); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">dddjango · 설계 노트</div>
+  <h1>커맨드 · 자료 · 사건<br>— 이름은 «실패 계약»의 선언이다</h1>
+  <p class="lede">같은 데이터를 같은 곳으로 보내도, <b>과거형으로 부르느냐 명령형으로 부르느냐</b>에 따라
+  실패의 책임이 반대편으로 간다. 첫 페이지는 셋을 <b>가르는 자</b>를 세우고,
+  나머지 세 페이지는 <b>셋을 하나씩</b> — 각각이 우리 트리에 <b>어떤 칸을 만드는지</b>까지 본다.</p>
+  <p class="meta">2026-08-08 · T1 부속 · 정본 <span class="dim">docs/work_flow.html</span> 의 결정 D34·D31·D36 과 이어짐</p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="문서 페이지">
+  <button type="button" role="tab" data-page="p-map" aria-selected="true"><span class="dot d-map"></span>가름 — 셋을 어떻게 나누나</button>
+  <button type="button" role="tab" data-page="p-cmd" aria-selected="false"><span class="dot d-cmd"></span>커맨드</button>
+  <button type="button" role="tab" data-page="p-doc" aria-selected="false"><span class="dot d-doc"></span>자료</button>
+  <button type="button" role="tab" data-page="p-evt" aria-selected="false"><span class="dot d-evt"></span>사건</button>
+</nav>
+
+<!-- ═══════════════════════════ 페이지 1 ═══════════════════════════ -->
+<div class="page" id="p-map" role="tabpanel" aria-label="가름">
+
+
+<!-- ───────────────────────────── 1 ───────────────────────────── -->
+<section>
+  <h2><span class="n">1</span> 메시지의 «의도»는 셋뿐이다</h2>
+  <p>Hohpe 의 <em>Enterprise Integration Patterns</em> 가 메시지를 셋으로 갈랐다.
+  중요한 것은 <b>담긴 데이터가 아니라 의도</b>다 — 같은 <code>child_id</code> 를 보내도 셋 중 어느 것이냐에 따라 다른 물건이 된다.</p>
+
+  <div class="cards">
+    <div class="card c-cmd">
+      <div class="tag">Command</div>
+      <h4>명령</h4>
+      <div class="ex">RevokeDevice · 명령형 동사</div>
+      <ul>
+        <li>받는 이 <b>하나</b> — 지정한다</li>
+        <li>실패를 <b>발신자가</b> 알아야 한다</li>
+        <li>거절될 수 있다</li>
+      </ul>
+    </div>
+    <div class="card c-doc">
+      <div class="tag">Document</div>
+      <h4>자료</h4>
+      <div class="ex">DeviceList · 명사</div>
+      <ul>
+        <li>데이터를 넘길 뿐</li>
+        <li>무엇을 할지는 받는 쪽이 정한다</li>
+        <li>«실패»라는 개념이 약하다</li>
+      </ul>
+    </div>
+    <div class="card c-evt">
+      <div class="tag">Event</div>
+      <h4>사건</h4>
+      <div class="ex">DeviceRevoked · 과거형 사실</div>
+      <ul>
+        <li>받는 이 <b>여럿</b> — 누군지 모른다</li>
+        <li>발신자는 <b>성패를 몰라도</b> 된다</li>
+        <li>거절될 수 없다 — 이미 일어났다</li>
+      </ul>
+    </div>
+  </div>
+
+  <blockquote>
+    <em>“Use a Command Message to reliably <b>invoke a procedure</b> in another application.”</em><br>
+    <em>“Whereas a Command Message tells the receiver to invoke certain behavior, a Document Message just passes data and <b>lets the receiver decide</b> what, if anything, to do with the data.”</em><br>
+    <em>“Many events are empty; <b>their mere occurrence tells the observer to react</b>.”</em>
+    <span class="src">Hohpe &amp; Woolf · enterpriseintegrationpatterns.com</span>
+  </blockquote>
+</section>
+
+<!-- ───────────────────────────── 2 ───────────────────────────── -->
+<section>
+  <h2><span class="n">2</span> 이름의 문법 형태가 «책임의 방향»을 선언한다</h2>
+  <p>이게 축이다. 과거형이냐 명령형이냐는 취향이 아니라,
+  <b>실패를 누가 처리하는가</b>를 코드에 박는 일이다.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 316" role="img"
+         aria-label="왼쪽은 명령: 발신자가 수신자에게 요청하고 결과와 실패를 되돌려받아 책임이 발신자에게 남는다. 오른쪽은 사건: 발신자가 여러 수신자에게 발행하고 되돌아오는 화살표가 없어 책임이 각 수신자에게 넘어간다.">
+      <defs>
+        <marker id="ah-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--cmd)"/>
+        </marker>
+        <marker id="ah-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--evt)"/>
+        </marker>
+      </defs>
+
+      <line class="ln" x1="450" y1="18" x2="450" y2="298"/>
+
+      <!-- 왼쪽: 명령 -->
+      <text class="t-c" x="42" y="34">명령 — 책임이 «발신자»에게 남는다</text>
+      <rect class="box-c" x="110" y="64" width="180" height="52" rx="8"/>
+      <text class="t" x="200" y="95" text-anchor="middle">발신자</text>
+
+      <rect class="box" x="110" y="204" width="180" height="52" rx="8"/>
+      <text class="t" x="200" y="235" text-anchor="middle">수신자 (하나)</text>
+
+      <line class="ln-c" x1="166" y1="120" x2="166" y2="198" marker-end="url(#ah-c)"/>
+      <text class="t-s" x="156" y="150" text-anchor="end">① 요청</text>
+      <text class="t-s" x="156" y="166" text-anchor="end">RevokeDevice</text>
+
+      <line class="ln-c" x1="238" y1="198" x2="238" y2="120" marker-end="url(#ah-c)"/>
+      <text class="t-s" x="250" y="150">② 결과 · 실패</text>
+      <text class="t-s" x="250" y="166">되돌아온다</text>
+
+      <rect class="box-f" x="60" y="274" width="280" height="26" rx="13"/>
+      <text class="t-flag" x="200" y="291" text-anchor="middle">실패 처리 · 재시도 = 발신자 몫</text>
+
+      <!-- 오른쪽: 사건 -->
+      <text class="t-e" x="482" y="34">사건 — 책임이 «수신자»로 넘어간다</text>
+      <rect class="box-e" x="550" y="64" width="180" height="52" rx="8"/>
+      <text class="t" x="640" y="95" text-anchor="middle">발신자</text>
+
+      <rect class="box" x="480" y="204" width="100" height="52" rx="8"/>
+      <text class="t" x="530" y="235" text-anchor="middle">수신자 A</text>
+      <rect class="box" x="590" y="204" width="100" height="52" rx="8"/>
+      <text class="t" x="640" y="235" text-anchor="middle">수신자 B</text>
+      <rect class="box" x="700" y="204" width="100" height="52" rx="8"/>
+      <text class="t" x="750" y="235" text-anchor="middle">수신자 C</text>
+
+      <path class="ln-e" d="M622,120 L536,198" marker-end="url(#ah-e)"/>
+      <path class="ln-e" d="M640,120 L640,198" marker-end="url(#ah-e)"/>
+      <path class="ln-e" d="M658,120 L744,198" marker-end="url(#ah-e)"/>
+      <text class="t-s" x="640" y="164" text-anchor="middle">발행 — DeviceRevoked</text>
+      <text class="t-s" x="640" y="181" text-anchor="middle">되돌아오는 화살표가 없다</text>
+
+      <rect class="box-o" x="500" y="274" width="280" height="26" rx="13"/>
+      <text class="t-ok" x="640" y="291" text-anchor="middle">실패 처리 = 각 수신자 몫</text>
+    </svg>
+    <figcaption><b>되돌아오는 화살표의 유무</b>가 전부다. 명령은 결과가 발신자에게 돌아오므로 발신자가 재시도·보상을 진다.
+    사건은 돌아오는 길이 없으므로 발신자는 «보냈다»로 끝나고, 못 한 쪽이 스스로 감당한다.</figcaption>
+  </figure>
+
+  <p><b>책임의 방향이 정해지면 나머지가 전부 따라온다</b> — 실패 처리의 위치, 수신자의 수, 재시도의 주체,
+  계약이 바뀔 때 누가 깨지는가. 그래서 이름을 잘못 붙이면 <b>그 뒤의 결정이 통째로 어긋난다</b>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>물음</th><th>명령</th><th>사건</th></tr></thead>
+    <tbody>
+      <tr><td class="k">이름 형태</td><td class="mono">RevokeDevice — 명령형</td><td class="mono">DeviceRevoked — 과거형</td></tr>
+      <tr><td class="k">받는 이</td><td>하나 (지정)</td><td>여럿 (모름)</td></tr>
+      <tr><td class="k">실패했을 때</td><td><b>시끄럽게</b> — 발신자가 안다</td><td><b>각자 조용히</b> — 발신자는 모른다</td></tr>
+      <tr><td class="k">거절 가능</td><td>가능 — 선행조건 위반</td><td>불가 — 이미 일어난 사실</td></tr>
+      <tr><td class="k">수신자를 늘리면</td><td>발신자를 고쳐야 한다</td><td>발신자는 그대로</td></tr>
+      <tr><td class="k">추적</td><td>호출 스택으로 따라간다</td><td>정적으로 안 보인다</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ───────────────────────────── 3 ───────────────────────────── -->
+<section>
+  <h2><span class="n">3</span> 그래서 이름이 «다음 사람»의 코드를 결정한다</h2>
+  <p>이름은 문서가 아니다. <b>다음 사람이 쓸 <code>except</code> 블록</b>이다.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 400" role="img"
+         aria-label="같은 코드에서 출발해 이름이 notification 이면 다음 개발자가 실패를 무시하는 코드를 쓰고 기기가 인가된 채 남는다. 이름이 revocation 이면 재시도와 실패 기록을 붙여 실제 요구가 지켜진다.">
+      <defs>
+        <marker id="ah-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <rect class="box" x="330" y="16" width="240" height="42" rx="8"/>
+      <text class="t" x="450" y="42" text-anchor="middle">같은 코드 · 같은 호출</text>
+
+      <path class="ln" d="M420,58 L240,96" marker-end="url(#ah-n)"/>
+      <path class="ln" d="M480,58 L660,96" marker-end="url(#ah-n)"/>
+
+      <!-- 1행 이름 -->
+      <rect class="box-e" x="60" y="100" width="360" height="46" rx="8"/>
+      <text class="t-m" x="240" y="122" text-anchor="middle">port/child_eviction_notification/</text>
+      <text class="t-m" x="240" y="139" text-anchor="middle">notify(child_id)</text>
+
+      <rect class="box-c" x="480" y="100" width="360" height="46" rx="8"/>
+      <text class="t-m" x="660" y="122" text-anchor="middle">port/device_revocation/</text>
+      <text class="t-m" x="660" y="139" text-anchor="middle">revoke_for_child(child_id)</text>
+
+      <line class="ln" x1="240" y1="146" x2="240" y2="180" marker-end="url(#ah-n)"/>
+      <line class="ln" x1="660" y1="146" x2="660" y2="180" marker-end="url(#ah-n)"/>
+
+      <!-- 2행 읽히는 것 -->
+      <rect class="box" x="60" y="184" width="360" height="44" rx="8"/>
+      <text class="t" x="240" y="212" text-anchor="middle">「알림이네 — 실패해도 괜찮겠지」</text>
+
+      <rect class="box" x="480" y="184" width="360" height="44" rx="8"/>
+      <text class="t" x="660" y="212" text-anchor="middle">「회수구나 — 실패하면 큰일이네」</text>
+
+      <line class="ln" x1="240" y1="228" x2="240" y2="262" marker-end="url(#ah-n)"/>
+      <line class="ln" x1="660" y1="228" x2="660" y2="262" marker-end="url(#ah-n)"/>
+
+      <!-- 3행 쓰는 코드 -->
+      <rect class="box" x="60" y="266" width="360" height="52" rx="8"/>
+      <text class="t-m" x="240" y="288" text-anchor="middle">try: notify(...)</text>
+      <text class="t-m" x="240" y="306" text-anchor="middle">except Exception: log.warning(...)</text>
+
+      <rect class="box" x="480" y="266" width="360" height="52" rx="8"/>
+      <text class="t-m" x="660" y="288" text-anchor="middle">재시도 · 실패 기록 · 경보</text>
+      <text class="t-m" x="660" y="306" text-anchor="middle">「누가 이 실패를 보나」를 정한다</text>
+
+      <line class="ln" x1="240" y1="318" x2="240" y2="348" marker-end="url(#ah-n)"/>
+      <line class="ln" x1="660" y1="318" x2="660" y2="348" marker-end="url(#ah-n)"/>
+
+      <!-- 4행 결과 -->
+      <rect class="box-f" x="60" y="352" width="360" height="36" rx="8"/>
+      <text class="t-flag" x="240" y="375" text-anchor="middle">기기가 인가된 채 남는다 — 조용히</text>
+
+      <rect class="box-o" x="480" y="352" width="360" height="36" rx="8"/>
+      <text class="t-ok" x="660" y="375" text-anchor="middle">실제 요구가 지켜진다</text>
+    </svg>
+    <figcaption>같은 호출인데 <b>이름 하나가 두 갈래로 갈라놓는다</b>. 트리 설계에서 이름 규칙이 중요한 진짜 이유가 이것이다 —
+    이름은 설명이 아니라 <b>다음 사람의 판단을 미리 정하는 장치</b>다.</figcaption>
+  </figure>
+</section>
+
+<!-- ───────────────────────────── 4 ───────────────────────────── -->
+<section>
+  <h2><span class="n">4</span> Fowler 의 «수동공격적 커맨드»</h2>
+  <blockquote>
+    <em>“A simple example of this trap is when an event is used as a <b>passive-aggressive command</b>.
+    This happens when the source system <b>expects the recipient to carry out an action</b>,
+    and ought to use a command message to show that intention, <b>but styles the message as an event instead</b>.”</em>
+    <span class="src">Martin Fowler · What do you mean by “Event-Driven”? (2017)</span>
+  </blockquote>
+
+  <p>왜 «수동공격적»인가 — <b>겉으로는 요구하지 않는 척하면서 실제로는 요구하기 때문</b>이다.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 272" role="img"
+         aria-label="발신자가 사건 어휘로 선언하지만 실제로는 수신자가 반드시 수행하기를 기대하며, 그 틈에서 아무도 실패를 잡지 않아 발신자는 성공으로 기록한다.">
+      <defs>
+        <marker id="ah-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--evt)"/>
+        </marker>
+        <marker id="ah-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--flag)"/>
+        </marker>
+      </defs>
+
+      <rect class="box" x="60" y="86" width="180" height="60" rx="8"/>
+      <text class="t" x="150" y="122" text-anchor="middle">발신자</text>
+
+      <rect class="box" x="660" y="86" width="180" height="60" rx="8"/>
+      <text class="t" x="750" y="122" text-anchor="middle">수신자</text>
+
+      <text class="t-s" x="450" y="44" text-anchor="middle">— 말과 실제가 어긋난 두 겹 —</text>
+
+      <line class="ln-e" x1="240" y1="102" x2="656" y2="102" marker-end="url(#ah-g)"/>
+      <text class="t-s" x="450" y="92" text-anchor="middle">선언 — 「일어났어」 (사건 어휘)</text>
+
+      <line class="ln-f" x1="240" y1="136" x2="656" y2="136" marker-end="url(#ah-r)"/>
+      <text class="t-flag" x="450" y="156" text-anchor="middle">실제 — 「반드시 회수해」 (커맨드)</text>
+
+      <rect class="box-f" x="230" y="192" width="440" height="58" rx="10"/>
+      <text class="t-flag" x="450" y="215" text-anchor="middle">안 하면? 아무도 안 잡는다</text>
+      <text class="t-s" x="450" y="235" text-anchor="middle">발신자는 «성공»으로 기록하고, 책임지는 자리가 사라진다</text>
+    </svg>
+    <figcaption>사건의 계약(«실패는 각자»)을 빌려 쓰면서 커맨드의 기대(«반드시»)를 품는 상태.
+    <b>둘 사이의 틈에 «아무도 책임지지 않는 자리»가 생긴다.</b></figcaption>
+  </figure>
+</section>
+
+<!-- ───────────────────────────── 5 ───────────────────────────── -->
+<section>
+  <h2><span class="n">5</span> 우리 자리를 재보면 — 이름이 «안 닫힌 결정»을 드러낸다</h2>
+  <p>여기가 진짜 발견이다. 우리 포트는 <b>이름 · 의미 · 메커니즘 셋이 서로 다른 곳</b>에 서 있다.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 350" role="img"
+         aria-label="커맨드에서 사건까지의 축 위에 이름은 사건 쪽, 의미는 커맨드 쪽, 메커니즘은 어느 쪽도 만족하지 못하는 가운데에 놓여 셋이 어긋나 있다.">
+      <defs>
+        <marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <!-- 축 -->
+      <line class="axis" x1="150" y1="62" x2="790" y2="62" marker-start="url(#ah-a)" marker-end="url(#ah-a)"/>
+      <text class="t-c" x="150" y="42" text-anchor="start">커맨드 — 「반드시 일어나야 한다」</text>
+      <text class="t-e" x="790" y="42" text-anchor="end">사건 — 「안 되면 각자 감당」</text>
+      <line class="ln" x1="470" y1="54" x2="470" y2="70"/>
+
+      <!-- 레인 1 이름 -->
+      <text class="t-h" x="34" y="128">이름</text>
+      <line class="ln-d" x1="700" y1="70" x2="700" y2="122"/>
+      <circle cx="700" cy="128" r="7" fill="var(--evt)"/>
+      <text class="t-m" x="686" y="132" text-anchor="end">…_notification.notify()</text>
+      <text class="t-s" x="716" y="132">사건 쪽에 서 있다</text>
+
+      <!-- 레인 2 의미 -->
+      <text class="t-h" x="34" y="196">의미</text>
+      <line class="ln-d" x1="212" y1="70" x2="212" y2="190"/>
+      <circle cx="212" cy="196" r="7" fill="var(--cmd)"/>
+      <text class="t" x="228" y="200">기기 권한을 «반드시» 회수해야 한다</text>
+      <text class="t-s" x="228" y="217">— 안 되면 보안 문제</text>
+
+      <!-- 레인 3 메커니즘 -->
+      <text class="t-h" x="34" y="266">메커니즘</text>
+      <line class="ln-d" x1="470" y1="70" x2="470" y2="260"/>
+      <circle cx="470" cy="266" r="7" fill="none" stroke="var(--flag)" stroke-width="2.4"/>
+      <path d="M465,261 L475,271 M475,261 L465,271" stroke="var(--flag)" stroke-width="2" fill="none"/>
+      <text class="t-m" x="456" y="252" text-anchor="end">uow.after_commit(...)</text>
+      <text class="t-m" x="456" y="270" text-anchor="end">재시도 0</text>
+      <text class="t-flag" x="490" y="258">커맨드로는 부족 — 커밋 뒤라 롤백을 못 한다</text>
+      <text class="t-flag" x="490" y="276">사건으로도 부족 — 실패해도 아무 기록이 없다</text>
+
+      <rect class="box-f" x="150" y="304" width="640" height="32" rx="10"/>
+      <text class="t-flag" x="470" y="325" text-anchor="middle">셋이 한 점에 모이지 않는다 = 아직 «정하지 않은» 결정이 있다</text>
+    </svg>
+    <figcaption><b>이름이 어긋난 것이 문제가 아니라, 이름이 «아직 안 정한 것»을 드러낸 것이다.</b>
+    커맨드로 확정하면 재시도 장치가 필요해지고, 사건으로 확정하면 «기기가 인가된 채 남는 것을 허용한다»는 보안 판단이 필요해진다.
+    지금은 둘 다 안 했다.</figcaption>
+  </figure>
+
+  <p class="dim">이것이 <b>T19(전달 보장)</b> 과 같은 뿌리다. 「전달 보장이 없다」가 추상적으로 들렸다면, 여기가 그 구체적인 자리다.</p>
+</section>
+
+<!-- ───────────────────────────── 6 ───────────────────────────── -->
+<section>
+  <h2><span class="n">6</span> 판정 규칙 — 물음 하나</h2>
+
+  <div class="rule-note">
+    <div class="big">「이 호출이 실패했을 때 <b>«누가»</b> 알아야 하나?」</div>
+    <ul>
+      <li><b>발신자</b> → <span style="color:var(--cmd);font-weight:700">커맨드</span>. 이름은 명령형, 실패는 시끄럽게, 재시도는 발신자 몫</li>
+      <li><b>수신자만</b> → <span style="color:var(--evt);font-weight:700">사건</span>. 이름은 과거형, 실패는 각자, 발신자는 성공으로 끝냄</li>
+      <li><b>아무도</b> → 지워도 되는 코드다</li>
+    </ul>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 900 336" role="img"
+         aria-label="실패했을 때 누가 알아야 하는지에 따라 세 갈래로 갈리는 판정 트리. 발신자면 커맨드, 수신자만이면 사건, 아무도 아니면 삭제 대상이다.">
+      <defs>
+        <marker id="ah-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <rect class="box" x="260" y="16" width="380" height="48" rx="10"/>
+      <text class="t-h" x="450" y="46" text-anchor="middle">이 호출이 실패하면 «누가» 알아야 하나?</text>
+
+      <path class="ln" d="M380,64 L170,112" marker-end="url(#ah-t)"/>
+      <path class="ln" d="M450,64 L450,112" marker-end="url(#ah-t)"/>
+      <path class="ln" d="M520,64 L730,112" marker-end="url(#ah-t)"/>
+
+      <rect class="box-c" x="40" y="116" width="260" height="38" rx="8"/>
+      <text class="t" x="170" y="141" text-anchor="middle">발신자</text>
+      <rect class="box-e" x="320" y="116" width="260" height="38" rx="8"/>
+      <text class="t" x="450" y="141" text-anchor="middle">수신자만</text>
+      <rect class="box" x="600" y="116" width="260" height="38" rx="8"/>
+      <text class="t" x="730" y="141" text-anchor="middle">아무도</text>
+
+      <line class="ln" x1="170" y1="154" x2="170" y2="184" marker-end="url(#ah-t)"/>
+      <line class="ln" x1="450" y1="154" x2="450" y2="184" marker-end="url(#ah-t)"/>
+      <line class="ln" x1="730" y1="154" x2="730" y2="184" marker-end="url(#ah-t)"/>
+
+      <rect class="box" x="40" y="188" width="260" height="112" rx="10"/>
+      <text class="t-c" x="170" y="212" text-anchor="middle">커맨드</text>
+      <text class="t-s" x="60" y="236">· 이름은 명령형 동사</text>
+      <text class="t-s" x="60" y="256">· 실패는 «시끄럽게»</text>
+      <text class="t-s" x="60" y="276">· 재시도·보상은 발신자 몫</text>
+      <text class="t-s" x="60" y="294">· 직접 호출이 자연스럽다</text>
+
+      <rect class="box" x="320" y="188" width="260" height="112" rx="10"/>
+      <text class="t-e" x="450" y="212" text-anchor="middle">사건</text>
+      <text class="t-s" x="340" y="236">· 이름은 과거형 사실</text>
+      <text class="t-s" x="340" y="256">· 실패는 «각자»</text>
+      <text class="t-s" x="340" y="276">· 발신자는 성공으로 끝냄</text>
+      <text class="t-s" x="340" y="294">· 수신자를 늘려도 발신자 불변</text>
+
+      <rect class="box" x="600" y="188" width="260" height="112" rx="10"/>
+      <text class="t-flag" x="730" y="212" text-anchor="middle">죽은 코드</text>
+      <text class="t-s" x="620" y="236">· 아무도 결과를 안 본다면</text>
+      <text class="t-s" x="620" y="256">· 그 호출은 있으나 마나다</text>
+      <text class="t-s" x="620" y="276">· 지우고 규칙을 다시 본다</text>
+    </svg>
+    <figcaption>Bogard 가 같은 자를 다르게 말했다 —
+    <em>“<b>If I cared enough to have the side effects occur, I would instead just couple myself directly</b> to that other service as an argument to my domain’s method.”</em></figcaption>
+  </figure>
+</section>
+
+<!-- ───────────────────────────── 7 ───────────────────────────── -->
+<section>
+  <h2><span class="n">7</span> 그럼 <code>open_host_service/</code> 와는 뭐가 다른가</h2>
+  <p>여기서 한 번 헷갈리는 자리가 있다. <b>OHS 도 «BC 사이의 계약»이고 사건도 «BC 사이의 계약»</b>이라,
+  둘이 같은 자리를 두고 다투는 것처럼 보이기 때문이다.
+  그런데 <b>축이 다르다</b> — 커맨드와 사건은 §2 에서 본 대로 «실패를 누가 지나»로 갈린 둘이고,
+  <b>OHS 는 그 축 위의 값이 아니라 «화살표의 반대편 끝»</b>이다.</p>
+
+  <blockquote>
+    <em>“<b>Define a protocol that gives access to your subsystem as a set of SERVICES.</b>
+    Open the protocol so that all who need to integrate with you can use it.”</em><br>
+    <span class="dim">… “it only pays off when the subsystem’s resources can be described as a
+    <b>cohesive set of SERVICES</b> and when there are a <b>significant number of integrations</b>.”</span>
+    <span class="src">Eric Evans · Domain-Driven Design (2003) · Open Host Service</span>
+  </blockquote>
+  <p class="dim">원문이 OHS 를 <b>«서비스의 집합»</b> 이라고 정의한다는 데 주목할 것 —
+  <b>부르면 하는 것</b>이지 알리는 것이 아니다. 「여러 곳이 나를 통합해 올 때 번역기를 매번 새로 만들지 말라」가 이 패턴이 푸는 문제고,
+  <b>그 문제 자체가 «남이 나를 부르는» 상황</b>이다.</p>
+
+  <h3>하나 — OHS 는 커맨드의 «반대편 끝»이다</h3>
+
+  <figure>
+    <svg viewBox="0 0 900 320" role="img"
+         aria-label="위쪽 레인은 커맨드: BC A 의 포트에서 출발해 부패 방지 층을 거쳐 BC 경계를 넘어 BC B 의 open_host_service 로 들어가 유스케이스에 닿고, 실패는 부른 쪽으로 되돌아온다. 즉 한 화살표를 보내는 쪽에서는 포트, 받는 쪽에서는 OHS 라 부른다. 아래쪽 레인은 사건: 도메인 이벤트는 같은 BC 안에서만 읽히고 경계를 넘지 못하며, 넘기려면 브로커부터 타입 레지스트리까지 새 칸 여덟이 필요하다.">
+      <defs>
+        <marker id="ah-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--cmd)"/>
+        </marker>
+        <marker id="ah-e2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--evt)"/>
+        </marker>
+      </defs>
+
+      <text class="t-h" x="20" y="26">BC A — 보내는 쪽</text>
+      <text class="t-h" x="478" y="26">BC B — 받는 쪽</text>
+      <line class="ln-d" x1="460" y1="38" x2="460" y2="312"/>
+      <text class="t-s" x="466" y="52">BC 경계</text>
+
+      <!-- ① 커맨드 레인 -->
+      <text class="t-c" x="20" y="64">① 커맨드 — 한 화살표인데 «이름이 둘»이다</text>
+
+      <rect class="box-c" x="20" y="76" width="196" height="56" rx="9"/>
+      <text class="t-m" x="118" y="100" text-anchor="middle">application_layer/</text>
+      <text class="t-m" x="118" y="118" text-anchor="middle">port/&lt;capability&gt;/</text>
+
+      <line class="ln-c" x1="216" y1="104" x2="232" y2="104" marker-end="url(#ah-c2)"/>
+
+      <rect class="box" x="236" y="76" width="214" height="56" rx="9"/>
+      <text class="t-m" x="343" y="100" text-anchor="middle">driven_layer/adapter/</text>
+      <text class="t-m" x="343" y="118" text-anchor="middle">anticorruption_layer/&lt;bc&gt;/</text>
+
+      <line class="ln-c" x1="450" y1="104" x2="486" y2="104" marker-end="url(#ah-c2)"/>
+
+      <rect class="box-c" x="490" y="76" width="214" height="56" rx="9"/>
+      <text class="t-m" x="597" y="100" text-anchor="middle">driving_layer/</text>
+      <text class="t-m" x="597" y="118" text-anchor="middle">open_host_service/&lt;service&gt;/</text>
+
+      <line class="ln-c" x1="704" y1="104" x2="720" y2="104" marker-end="url(#ah-c2)"/>
+      <rect class="box" x="724" y="76" width="156" height="56" rx="9"/>
+      <text class="t" x="802" y="109" text-anchor="middle">유스케이스</text>
+
+      <polyline class="ln-c" points="640,132 640,166 130,166 130,136" marker-end="url(#ah-c2)"/>
+      <text class="t-s" x="385" y="159" text-anchor="middle">실패가 «부른 쪽»으로 돌아온다 — 그래서 이 선은 커맨드다</text>
+
+      <rect class="box" x="118" y="182" width="664" height="28" rx="14"/>
+      <text class="t-s" x="450" y="201" text-anchor="middle">보내는 쪽에선 «포트», 받는 쪽에선 «OHS» — 대안이 아니라 <tspan font-weight="700">같은 선의 양 끝</tspan>이다</text>
+
+      <!-- ② 사건 레인 -->
+      <text class="t-e" x="20" y="234">② 사건 — 반대편 끝이 «없다»</text>
+
+      <rect class="box-e" x="20" y="246" width="210" height="60" rx="9"/>
+      <text class="t-m" x="125" y="270" text-anchor="middle">domain_layer/&lt;aggregate&gt;/</text>
+      <text class="t-m" x="125" y="289" text-anchor="middle">event/&lt;event&gt;.py</text>
+
+      <line class="ln-e" x1="230" y1="276" x2="246" y2="276" marker-end="url(#ah-e2)"/>
+
+      <rect class="box" x="250" y="246" width="180" height="60" rx="9"/>
+      <text class="t" x="340" y="270" text-anchor="middle">BC 안에서만 읽는다</text>
+      <text class="t-s" x="340" y="290" text-anchor="middle">트리 51·52행 규칙</text>
+
+      <line class="ln-f" x1="434" y1="276" x2="450" y2="276"/>
+      <path d="M453,268 L467,283 M467,268 L453,283" stroke="var(--flag)" stroke-width="2.2" fill="none"/>
+      <text class="t-flag" x="460" y="303" text-anchor="middle">못 넘는다</text>
+
+      <rect class="box" x="490" y="242" width="390" height="68" rx="10"/>
+      <text class="t-flag" x="685" y="266" text-anchor="middle">받는 칸이 «없다» — 열려면 새 칸 여덟</text>
+      <text class="t-s" x="685" y="286" text-anchor="middle">브로커 · 발행 포트 · 통합 이벤트 계약 · 소비 진입점</text>
+      <text class="t-s" x="685" y="303" text-anchor="middle">인바운드 핸들러 · outbox · 릴레이 · 타입 레지스트리</text>
+    </svg>
+    <figcaption><b>「커맨드냐 OHS 냐」는 물음이 성립하지 않는다.</b> 둘은 한 화살표의 양 끝이라,
+    같은 호출을 보내는 쪽에서 부르는 이름과 받는 쪽에서 부르는 이름이 다를 뿐이다.
+    <b>사건에는 그 반대편 끝이 정해져 있지 않고</b>, 그래서 밖으로 내보내려면 오른쪽 아래 여덟 칸을 새로 지어야 한다.</figcaption>
+  </figure>
+
+  <p>이름이 둘인 것은 <b>«누구의 어휘로 부르느냐»가 다르기 때문</b>이다.
+  나가는 쪽은 <b>내 어휘로 선언</b>하고(<code>port/&lt;capability&gt;/</code> — 내가 필요한 능력의 이름),
+  받는 쪽은 <b>자기 어휘로 공개</b>한다(<code>open_host_service/&lt;service&gt;/</code> — 그 BC 가 제공하는 서비스의 이름).
+  그 둘 사이를 번역하는 자리가 <code>adapter/anticorruption_layer/&lt;bc&gt;/</code> 다.
+  <b>세 칸이 한 화살표를 셋으로 나눠 가진 것</b>이지, 셋이 서로 다른 채널인 것이 아니다.</p>
+
+  <p>사건은 다르다. <b>반대편 끝이 정해져 있지 않은 것이 사건의 정의</b>다(§2 — 받는 이가 여럿이고 누군지 모른다).
+  그래서 사건을 BC 밖으로 내보내기로 하면 <b>반대편 끝을 새로 지어야</b> 하고, 그 목록이 위 그림의 여덟 칸이다.
+  우리 트리는 그 칸을 열지 않았고, 그래서 도메인 이벤트는 <b>BC 안에서만 산다</b>.</p>
+
+  <h3>둘 — 그럼 사건을 쓰면 OHS 가 필요 없어지나</h3>
+
+  <p>흔한 오해 하나를 먼저 걷어내자. 「사건은 발행자가 구독자를 모르니 결합이 없고, OHS 는 소비자가 제공자를 아니까 결합이 있다」 —
+  <b>이건 틀렸다.</b> 둘 다 <b>«말하는 쪽»은 «듣는 쪽»을 모른다</b>. OHS 도 누가 부를지 모른 채 프로토콜만 공개하고(그게 Evans 가 «Open» 이라 부른 것이다),
+  발행자도 누가 구독할지 모른다. <b>무지의 구조는 같다.</b></p>
+
+  <p>진짜로 다른 것은 둘이다 — <b>누가 시작하나</b>, 그리고 <b>«언제»의 값인가</b>.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 302" role="img"
+         aria-label="같은 시간축을 두 레인이 공유한다. 위 레인 OHS 는 값이 바뀐 시각에 아무 일도 하지 않고, 값이 필요해진 시각에 물어서 지금의 값을 받는다. 아래 레인 사건은 값이 바뀐 시각에 밀어서 복제본에 넣어 두고, 값이 필요해진 시각에는 자기 복제본을 읽으므로 그때의 값이다. 두 시각 사이 구간에서는 원본이 이미 바뀌었을 수 있다.">
+      <defs>
+        <marker id="ah-a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <text class="t-s" x="330" y="18" text-anchor="middle">① 원본에서 값이 «바뀐» 시각</text>
+      <text class="t-s" x="650" y="18" text-anchor="middle">② 그 값이 «필요해진» 시각</text>
+      <line class="ln-d" x1="330" y1="26" x2="330" y2="278"/>
+      <line class="ln-d" x1="650" y1="26" x2="650" y2="278"/>
+
+      <!-- 레인 1 : OHS -->
+      <text class="t-c" x="20" y="46">OHS — 필요할 때 «묻는다» (pull)</text>
+
+      <rect class="box-c" x="556" y="52" width="190" height="48" rx="9"/>
+      <text class="t-s" x="651" y="74" text-anchor="middle">묻는다 — 그 자리에서</text>
+      <text class="t-s" x="651" y="92" text-anchor="middle">«지금»의 값이 온다</text>
+      <line class="ln-c" x1="651" y1="100" x2="651" y2="112" marker-end="url(#ah-c2)"/>
+
+      <rect class="box" x="246" y="76" width="168" height="32" rx="16"/>
+      <text class="t-s" x="330" y="97" text-anchor="middle">아무 일도 안 한다</text>
+
+      <line class="axis" x1="150" y1="118" x2="850" y2="118" marker-end="url(#ah-a2)"/>
+      <text class="t-s" x="850" y="136" text-anchor="end">시간</text>
+
+      <!-- 레인 2 : 사건 -->
+      <text class="t-e" x="20" y="180">사건 — 생겼을 때 «민다» (push)</text>
+
+      <rect class="box-e" x="246" y="190" width="168" height="48" rx="9"/>
+      <text class="t-s" x="330" y="212" text-anchor="middle">밀려온다 — 받아서</text>
+      <text class="t-s" x="330" y="230" text-anchor="middle">«복제본»에 넣어 둔다</text>
+      <line class="ln-e" x1="330" y1="238" x2="330" y2="246" marker-end="url(#ah-e2)"/>
+
+      <rect class="box" x="556" y="190" width="190" height="48" rx="9"/>
+      <text class="t-s" x="651" y="212" text-anchor="middle">자기 «복제본»을 읽는다</text>
+      <text class="t-s" x="651" y="230" text-anchor="middle">— «그때»의 값이다</text>
+      <line class="ln" x1="651" y1="238" x2="651" y2="246" marker-end="url(#ah-a2)"/>
+
+      <line class="axis" x1="150" y1="252" x2="850" y2="252" marker-end="url(#ah-a2)"/>
+
+      <path class="ln-f" d="M330,258 L330,268 L650,268 L650,258"/>
+      <text class="t-flag" x="490" y="288" text-anchor="middle">이 구간 — 원본은 이미 또 바뀌었을 수 있다</text>
+    </svg>
+    <figcaption>같은 데이터를 얻어도 <b>«언제의 것»이냐가 다르다.</b>
+    OHS 는 <b>묻는 순간의 현재</b>를 주고, 사건은 <b>일어난 그때의 사실</b>을 준다.
+    그래서 둘은 서로를 대신하는 것이 아니라 <b>다른 물음에 답한다</b>.</figcaption>
+  </figure>
+
+  <p>여기서 결론이 나온다. <b>사건은 OHS 를 대체하지 못한다.</b>
+  「<b>지금</b> 이 아이의 상태는?」이라는 물음에 사건의 흐름은 답할 수 없다 —
+  사건은 <b>과거 조각의 나열</b>이고, 거기서 «현재»를 만들려면 받는 쪽이 <b>복제본을 쌓아 두어야</b> 한다.
+  그 복제본을 만드는 것이 앞 그림 여덟 칸의 절반이 하는 일이고,
+  짓는 순간 <b>「원본과 복제본이 다르면 어느 쪽이 맞나」</b>라는 새 문제가 따라온다.</p>
+
+  <p>반대 방향은 된다. <b>사건으로 할 만한 일을 OHS + 커맨드로 하는 것</b> — 우리 트리가 지금 하고 있는 것이 그것이다.
+  값은 언제나 «지금» 것이고 복제본이 없으니 어긋날 자리도 없다.
+  <b>대신 보내는 쪽이 실패를 진다</b> — 그 값을 치르는 것이 §5 에서 본 자리다.</p>
+
+  <div class="rule-note">
+    <div class="big">★ 그래서 물음은 «OHS 냐 사건이냐»가 아니다</div>
+    <ul>
+      <li><b>OHS · 커맨드</b> — 부른 자리에서 답이 온다. <b>실패가 그 흐름 안에 남는다.</b></li>
+      <li><b>사건</b> — 답이 없다. <b>흐름이 거기서 끊기고 뒤는 다른 트랜잭션이 된다.</b></li>
+      <li>그러므로 판정은 <b>「이 일을 «끊을» 이유가 있나」</b> 다 — 끊을 이유가 없으면 사건도 없다.</li>
+    </ul>
+  </div>
+
+  <h3>셋 — 축으로 나란히 놓으면</h3>
+
+  <div class="tablewrap">
+  <table style="min-width:760px">
+    <thead><tr><th>물음</th><th>OHS <span class="dim">들어오는 창구</span></th><th>커맨드 포트 <span class="dim">나가는 창구</span></th><th>사건</th></tr></thead>
+    <tbody>
+      <tr><td class="k">화살표 방향</td><td>내 BC 로 <b>들어온다</b></td><td>내 BC 에서 <b>나간다</b></td><td>내 BC 에서 <b>나간다</b></td></tr>
+      <tr><td class="k">누가 시작하나</td><td>부르는 쪽이 <b>필요할 때</b></td><td>내가 <b>시켜야 할 때</b></td><td>내 안에서 <b>일어났을 때</b></td></tr>
+      <tr><td class="k">답이 돌아오나</td><td>돌아간다 — <b>거절도 답이다</b></td><td>돌아온다 — 성패</td><td><b>없다</b></td></tr>
+      <tr><td class="k">실패를 누가 아나</td><td>부른 쪽</td><td>보낸 나</td><td>각자</td></tr>
+      <tr><td class="k">상대를 아나</td><td>누가 부를지 <b>모른다</b></td><td>하나를 <b>지정한다</b></td><td>누가 들을지 <b>모른다</b></td></tr>
+      <tr><td class="k">«언제»의 값인가</td><td>부른 <b>지금</b></td><td>— <span class="dim">값이 아니라 지시다</span></td><td>일어난 <b>그때</b></td></tr>
+      <tr><td class="k">우리 트리의 자리</td>
+          <td class="mono">driving_layer/<br>open_host_service/&lt;service&gt;/</td>
+          <td class="mono">application_layer/port/&lt;capability&gt;/<br>↔ driven_layer/adapter/…</td>
+          <td class="mono">domain_layer/&lt;aggregate&gt;/event/<br><span class="dim">— BC 안에서만</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="dim">§5 의 어긋남을 이 지도 위에 놓으면 더 또렷해진다 —
+  <code>port/child_eviction_notification/</code> 은 <b>위 레인(커맨드 채널)에 앉아 있다</b>.
+  받는 쪽이 상대 BC 의 OHS 든 바깥 시스템이든, <b>실패가 우리에게 돌아오는 자리</b>다.
+  <b>그런데 이름만 아래 레인 것이다.</b> 채널은 이미 골라 놨고, 이름이 안 따라온 것이다.</p>
+</section>
+
+<!-- ───────────────────────────── 8 ───────────────────────────── -->
+<section>
+  <h2><span class="n">8</span> 일반 규칙 — 트리 설계에 그대로 쓴다</h2>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>이름의 문법 형태</th><th>읽히는 뜻</th><th>선언되는 실패 계약</th></tr></thead>
+    <tbody>
+      <tr><td class="k mono">과거형 명사구<br><span class="dim">DeviceRevoked</span></td><td>「일어났다」</td><td>실패는 <b>각자</b> — 발신자는 모른다</td></tr>
+      <tr><td class="k mono">명령형 동사구<br><span class="dim">RevokeDevice</span></td><td>「해라」</td><td>실패는 <b>발신자</b> — 시끄럽게 돌아온다</td></tr>
+      <tr><td class="k mono">명사 (자료)<br><span class="dim">DeviceList</span></td><td>「이것이다」</td><td>실패라는 개념이 <b>없다</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule-note" style="border-color:var(--flag)">
+    <div class="big" style="color:var(--flag)">★ «알림 · notification · notify» 는 위험한 낱말이다</div>
+    <p style="margin:9px 0 0">한국어로도 영어로도 <b>사건처럼</b> 들리는데, 실제로는 <b>커맨드</b>인 경우가 대부분이기 때문이다.
+    이 낱말이 보이면 반드시 §6 의 물음을 대 볼 것.</p>
+  </div>
+
+  <p>이 자는 우리 트리의 다른 자리에도 그대로 댈 수 있다 —
+  <code>open_host_service/…/contract/request/</code> 안의 타입이 명령형인지 과거형인지,
+  <code>port/&lt;capability&gt;/</code> 의 메서드가 「해라」인지 「알려줘」인지.
+  <b>어휘가 판정을 흐리는 자리가 더 있을 수 있다.</b></p>
+</section>
+
+<!-- ───────────────────────────── 8 ───────────────────────────── -->
+<section>
+  <h2><span class="n">8</span> T1 을 닫을 때 고를 것 — 셋</h2>
+  <div class="pick">
+    <div class="p">
+      <div class="lab">ⓐ</div>
+      <h4>커맨드로 확정</h4>
+      <p>이름을 <span class="mono">device_revocation</span> 류 명령형으로 바꾸고 실패는 시끄럽게.
+      <b>재시도·기록 장치가 함께 필요해진다 → T19 가 같이 열린다.</b></p>
+    </div>
+    <div class="p">
+      <div class="lab">ⓑ</div>
+      <h4>사건으로 확정</h4>
+      <p>이름을 유지하고 「이 포트의 실패는 발신자가 책임지지 않는다」를 명문화.
+      대신 <b>«교정 수단»(주기 대사·재동기)을 규칙으로 요구</b> — Open edX · django-cqrs 노선.</p>
+    </div>
+    <div class="p rec">
+      <div class="lab">ⓒ <span class="rec-badge">권고</span></div>
+      <h4>이름만 먼저 정리</h4>
+      <p>의미가 커맨드이므로 이름도 커맨드로. <b>전달 보장은 T19 에서 따로 정한다.</b>
+      지금 확실히 정할 수 있는 것만 정하는 길.</p>
+    </div>
+  </div>
+</section>
+
+</div><!-- /page 가름 -->
+
+<!-- ═══════════════════════════ 페이지 2 · 커맨드 ═══════════════════════════ -->
+<div class="page" id="p-cmd" role="tabpanel" aria-label="커맨드" hidden>
+
+<div class="pagehead">
+  <div class="eyebrow" style="color:var(--cmd)">메시지의 의도 ① · Command Message</div>
+  <h2>커맨드 — 「해라」</h2>
+  <p class="lede">받는 이가 <b>하나로 정해져 있고</b>, 못 하면 <b>보낸 쪽이 알아야 하는</b> 메시지.
+  이름은 명령형 동사로 짓고, 실패는 <b>선언한다</b>.</p>
+</div>
+
+<section>
+  <h2><span class="n">1</span> 한 문장으로</h2>
+  <p><b>「내가 못 하는 일을 남에게 시킨다. 그리고 결과는 내가 받는다.」</b></p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>축</th><th>커맨드는 이렇다</th><th>왜 그런가</th></tr></thead>
+    <tbody>
+      <tr><td class="k">받는 이</td><td><b>하나</b> — 내가 지정한다</td><td>「누구에게 시키는지」를 내가 알아야 시킨 것이다</td></tr>
+      <tr><td class="k">답</td><td><b>온다</b> — 성공 · 거절 · 실패</td><td>내가 결과를 봐야 하니 돌아오는 길이 있다</td></tr>
+      <tr><td class="k">실패를 아는 자</td><td><b>보낸 나</b></td><td>이게 커맨드를 커맨드이게 하는 한 가지다</td></tr>
+      <tr><td class="k">거절</td><td><b>될 수 있다</b></td><td>상대가 선행조건을 못 맞추면 「못 한다」고 답한다</td></tr>
+      <tr><td class="k">이름</td><td class="mono">RevokeDevice · revoke_for_child()</td><td>명령형 동사구 — 「해라」로 읽혀야 한다</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <blockquote>
+    <em>“Use a Command Message to reliably <b>invoke a procedure</b> in another application.”</em>
+    <span class="src">Hohpe &amp; Woolf · Enterprise Integration Patterns · Command Message</span>
+  </blockquote>
+  <p class="dim">원문의 낱말이 <b>invoke a procedure</b> — 「절차를 부른다」다.
+  알리는 것도, 자료를 건네는 것도 아니고 <b>남의 절차를 내가 부르는 것</b>이라는 뜻이다.
+  그래서 <b>부른 자리에 답이 돌아오고</b>, 답이 돌아오니 <b>실패도 돌아온다</b>.</p>
+</section>
+
+<section>
+  <h2><span class="n">2</span> 커맨드 하나를 만들면 «무엇이 생기나»</h2>
+  <p>개념만 보면 「메서드 하나 부르는 것」인데, 트리에서는 <b>네 조각</b>이 생긴다.
+  이 그림이 이 페이지의 핵심이다.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 348" role="img"
+         aria-label="커맨드 하나를 만들면 보내는 BC 에는 포트 폴더 안에 선언 파일과 실패 파일이 생기고 필요하면 자료 파일이 생기며 드리븐 어댑터에 같은 이름의 구현 파일이 생긴다. 받는 BC 에는 open_host_service 안에 공개 함수와 계약 폴더가 생기고 계약 폴더에는 요청 응답 예외가 각각 파일로 놓인다.">
+      <text class="t-c" x="30" y="30">보내는 BC — 내가 시키는 쪽</text>
+      <text class="t-h" x="478" y="30">받는 BC — 상대가 여는 창구</text>
+      <line class="ln-d" x1="458" y1="42" x2="458" y2="292"/>
+
+      <text class="t-m"  x="30" y="62">application/&lt;bc&gt;/</text>
+      <text class="t-m"  x="30" y="83">├&#160;application_layer/</text>
+      <text class="t-m"  x="30" y="104">│&#160;├&#160;&lt;feature&gt;/&lt;use_case&gt;/</text>
+      <text class="t-m"  x="30" y="125">│&#160;│&#160;└&#160;&lt;use_case&gt;_use_case.py</text>
+      <text class="t-xs" x="248" y="125">부른다</text>
+      <text class="t-m"  x="30" y="146">│&#160;└&#160;port/&lt;capability&gt;/</text>
+      <text class="t-cm" x="30" y="167">│&#160;&#160;&#160;├&#160;&lt;capability&gt;.py</text>
+      <text class="t-xs" x="248" y="167">★ 선언 — 무엇을 시키나</text>
+      <text class="t-cm" x="30" y="188">│&#160;&#160;&#160;├&#160;exception.py</text>
+      <text class="t-xs" x="248" y="188">★ 실패 — 필수다</text>
+      <text class="t-m"  x="30" y="209">│&#160;&#160;&#160;└&#160;&lt;payload&gt;.py</text>
+      <text class="t-xs" x="248" y="209">☆ 자료 — 필요할 때만</text>
+      <text class="t-m"  x="30" y="230">└&#160;driven_layer/adapter/</text>
+      <text class="t-m"  x="30" y="251">&#160;&#160;└&#160;anticorruption_layer/&lt;bc&gt;/</text>
+      <text class="t-cm" x="30" y="272">&#160;&#160;&#160;&#160;└&#160;&lt;capability&gt;.py</text>
+      <text class="t-xs" x="248" y="272">★ 구현 — 이름이 선언과 같다</text>
+
+      <text class="t-m"  x="478" y="62">application/&lt;other_bc&gt;/</text>
+      <text class="t-m"  x="478" y="83">└&#160;driving_layer/</text>
+      <text class="t-m"  x="478" y="104">&#160;&#160;└&#160;open_host_service/&lt;service&gt;/</text>
+      <text class="t-cm" x="478" y="125">&#160;&#160;&#160;&#160;├&#160;&lt;service&gt;_service.py</text>
+      <text class="t-xs" x="752" y="125">★ 공개 함수</text>
+      <text class="t-m"  x="478" y="146">&#160;&#160;&#160;&#160;└&#160;contract/</text>
+      <text class="t-cm" x="478" y="167">&#160;&#160;&#160;&#160;&#160;&#160;├&#160;request/&lt;request&gt;.py</text>
+      <text class="t-xs" x="752" y="167">★ 받는 말</text>
+      <text class="t-cm" x="478" y="188">&#160;&#160;&#160;&#160;&#160;&#160;├&#160;response/&lt;response&gt;.py</text>
+      <text class="t-xs" x="752" y="188">★ 낼 수 있는 답</text>
+      <text class="t-m"  x="478" y="209">&#160;&#160;&#160;&#160;&#160;&#160;└&#160;exception/</text>
+      <text class="t-cm" x="478" y="230">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;├&#160;&lt;service&gt;_published_error.py</text>
+      <text class="t-cm" x="478" y="251">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;└&#160;&lt;exception&gt;.py</text>
+      <text class="t-xs" x="752" y="251">★ 기저 + 갈래</text>
+
+      <rect class="box" x="30" y="304" width="840" height="28" rx="14"/>
+      <text class="t-s" x="450" y="323" text-anchor="middle">★ 이 커맨드 하나 때문에 «반드시» 생기는 파일 &#160;·&#160; ☆ 원시값·값 객체로 안 될 때만 생기는 파일</text>
+    </svg>
+    <figcaption>왼쪽 넷이 <b>보내는 쪽의 몫</b>이고, 오른쪽이 <b>받는 쪽이 이미 열어 둔 창구</b>다.
+    받는 쪽이 우리 저장소 밖(벤더 API 같은 것)이면 오른쪽은 없고, 대신 계약이 저장소 밖에 있다.</figcaption>
+  </figure>
+
+  <h3>네 조각이 각각 무엇인가</h3>
+  <div class="two">
+    <div class="b">
+      <h4>① 선언 — <span class="mono">port/&lt;capability&gt;/&lt;capability&gt;.py</span></h4>
+      <p>「무엇을 시키나」. 포트는 인터페이스가 아니라 <b>«대화»</b>다 —
+      대화 하나의 어휘 셋(무엇을 말하나 · 무엇을 듣나 · 무엇이 잘못되나)이 한 폴더에 산다.
+      <b>이름은 내 어휘</b>다. 상대가 그 일을 뭐라고 부르든 상관없다.</p>
+    </div>
+    <div class="b">
+      <h4>② 실패 — <span class="mono">port/&lt;capability&gt;/exception.py</span></h4>
+      <p><b>필수다.</b> 이게 없으면 어댑터가 <b>번역할 대상이 없어</b>
+      django·SDK 예외가 그대로 안으로 샌다.
+      규칙 하나 더 — <b>도메인 예외를 상속하지 않는다</b>. 포트 실패는 업무 규칙 위반이 아니다.</p>
+    </div>
+    <div class="b">
+      <h4>③ 자료 — <span class="mono">port/&lt;capability&gt;/&lt;payload&gt;.py</span></h4>
+      <p>원시값이나 값 객체로 안 될 때만 생긴다.
+      <b>DTO 도 값 객체도 아니다</b> — 유스케이스의 입출력이 아니고 도메인 개념도 아니다.
+      «이 대화가 주고받는 자료»일 뿐이다. 자세한 건 <b>자료 페이지</b>에서.</p>
+    </div>
+    <div class="b">
+      <h4>④ 구현 — <span class="mono">driven_layer/adapter/…/&lt;capability&gt;.py</span></h4>
+      <p><code>adapter/</code> 아래 모든 <code>.py</code> 는 <b>어떤 선언의 구현이고, 파일 이름이 그 선언과 같다</b>.
+      1:1 이 폴더 규칙 하나로 걸린다. 기술 이름은 클래스에 붙인다 —
+      <span class="mono">DjangoOrderRepository</span> 처럼.</p>
+    </div>
+  </div>
+
+  <h3>구현 자리는 셋으로 갈린다 — 판정은 「밖에 «상대»가 있나」</h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>상대가 누구인가</th><th>구현이 사는 자리</th><th>덧붙는 규칙</th></tr></thead>
+    <tbody>
+      <tr><td class="k">우리 저장소 안의 다른 BC</td><td class="mono">adapter/anticorruption_layer/&lt;bc&gt;/</td>
+          <td><b>타 BC 를 import 하는 건 여기뿐</b> · 상대 창구의 <b>기저 예외를 반드시 잡는다</b></td></tr>
+      <tr><td class="k">저장소 밖 시스템</td><td class="mono">adapter/external_system/&lt;system&gt;/</td>
+          <td>계약이 저장소 밖에 있다 · <b>타임아웃·재시도는 여기만</b></td></tr>
+      <tr><td class="k">상대가 아예 없다<br><span class="dim">기술만 필요</span></td><td class="mono">adapter/&lt;capability&gt;/</td>
+          <td>시계·해시·PDF 같은 것 · 계약에 업무 어휘가 0이면 <b>나중에 <code>framework/</code> 로 올라갈 «자격»</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span> 한 커맨드가 도는 모양 — 그리고 돌아오는 것 셋</h2>
+
+  <figure>
+    <svg viewBox="0 0 900 330" role="img"
+         aria-label="유스케이스가 포트를 부르고 포트의 구현인 어댑터가 상대 BC 의 open_host_service 를 부른다. 답은 부른 쪽으로 되돌아오며 돌아오는 것은 세 갈래다. 첫째 거절은 계약의 응답 코드로 오고 유스케이스가 업무 판정으로 읽는다. 둘째 상대의 실패는 상대 창구의 기저 예외로 오고 어댑터가 잡아 포트 예외로 번역한다. 셋째 인프라 실패는 타임아웃이나 연결 끊김이며 재시도는 외부 시스템 어댑터에서만 한다.">
+      <defs>
+        <marker id="ah-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--cmd)"/>
+        </marker>
+      </defs>
+
+      <rect class="box" x="20" y="56" width="176" height="50" rx="9"/>
+      <text class="t" x="108" y="80" text-anchor="middle">유스케이스</text>
+      <text class="t-xs" x="108" y="97" text-anchor="middle">업무 흐름을 지휘한다</text>
+
+      <line class="ln-c" x1="196" y1="81" x2="222" y2="81" marker-end="url(#ah-c3)"/>
+
+      <rect class="box-c" x="228" y="56" width="186" height="50" rx="9"/>
+      <text class="t-m" x="321" y="79" text-anchor="middle">port/&lt;capability&gt;/</text>
+      <text class="t-xs" x="321" y="96" text-anchor="middle">선언 — 내 어휘</text>
+
+      <line class="ln-c" x1="414" y1="81" x2="440" y2="81" marker-end="url(#ah-c3)"/>
+
+      <rect class="box" x="446" y="56" width="186" height="50" rx="9"/>
+      <text class="t-m" x="539" y="79" text-anchor="middle">adapter/…/&lt;capability&gt;.py</text>
+      <text class="t-xs" x="539" y="96" text-anchor="middle">구현 — 번역만 한다</text>
+
+      <line class="ln-c" x1="632" y1="81" x2="658" y2="81" marker-end="url(#ah-c3)"/>
+
+      <rect class="box-c" x="664" y="56" width="216" height="50" rx="9"/>
+      <text class="t-m" x="772" y="79" text-anchor="middle">open_host_service/</text>
+      <text class="t-xs" x="772" y="96" text-anchor="middle">상대 BC 의 공개 창구</text>
+
+      <polyline class="ln-c" points="772,106 772,142 108,142 108,112" marker-end="url(#ah-c3)"/>
+      <text class="t-s" x="440" y="135" text-anchor="middle">답이 «부른 자리»로 돌아온다 — 그래서 실패도 여기 남는다</text>
+
+      <text class="t-flag" x="20" y="176">돌아오는 것은 셋이다 — 각각 어디서 잡고 어디로 보내나</text>
+
+      <rect class="box" x="20" y="190" width="277" height="118" rx="10"/>
+      <text class="t-h" x="38" y="214">① 거절</text>
+      <text class="t-s" x="38" y="238">상대가 「못 한다」고 «답»한다</text>
+      <text class="t-md" x="38" y="257">contract/response/ 의 코드</text>
+      <text class="t-s" x="38" y="276">업무 판정이라 유스케이스가 읽는다</text>
+      <text class="t-xs" x="38" y="295">— 예외가 아니다. 거절도 답이다</text>
+
+      <rect class="box" x="311" y="190" width="277" height="118" rx="10"/>
+      <text class="t-h" x="329" y="214">② 상대의 실패</text>
+      <text class="t-s" x="329" y="238">상대 창구가 예외를 던진다</text>
+      <text class="t-md" x="329" y="257">&lt;service&gt;_published_error</text>
+      <text class="t-s" x="329" y="276">어댑터가 «반드시» 잡아서</text>
+      <text class="t-md" x="329" y="295">port/…/exception.py 로 번역</text>
+
+      <rect class="box" x="602" y="190" width="278" height="118" rx="10"/>
+      <text class="t-h" x="620" y="214">③ 인프라 실패</text>
+      <text class="t-s" x="620" y="238">타임아웃 · 연결 끊김</text>
+      <text class="t-s" x="620" y="257">재시도는 external_system/ 만</text>
+      <text class="t-s" x="620" y="276">나머지는 그대로 번역해 올린다</text>
+      <text class="t-xs" x="620" y="295">— django·SDK 예외는 못 넘어온다</text>
+    </svg>
+    <figcaption>커맨드의 값은 <b>이 그림에 «잡히지 않는 갈래»가 없다는 것</b>이다.
+    셋 다 부른 자리로 돌아오고, 셋 다 잡는 자리가 정해져 있다.
+    사건에는 이 그림이 없다 — 돌아오는 길이 없기 때문이다.</figcaption>
+  </figure>
+
+  <div class="codewrap">
+<pre><code># application_layer/port/device_revocation/device_revocation.py   ← ① 선언
+class DeviceRevocation(Protocol):
+    def revoke_for_child(self, child_id: ChildId) -> None: ...     # 명령형 — 「해라」
+
+# application_layer/port/device_revocation/exception.py            ← ② 실패 (필수)
+class DeviceRevocationFailed(Exception): ...                       # 도메인 예외를 상속하지 않는다
+
+# driven_layer/adapter/anticorruption_layer/pairing/device_revocation.py   ← ④ 구현
+class PairingDeviceRevocation:                    # 파일 이름 = 선언 이름 (1:1)
+    def revoke_for_child(self, child_id):
+        try:
+            pairing_service.revoke(child_id.value)          # 상대의 open_host_service
+        except PairingPublishedError as exc:                # 기저 예외 — 반드시 잡는다
+            raise DeviceRevocationFailed(...) from exc      # 내 어휘로 번역해 올린다</code></pre>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4</span> 지켜야 하는 것 넷</h2>
+  <div class="rule-note">
+    <ol>
+      <li><b>이름은 명령형 동사구</b> — 파일 이름만 보고 「무엇을 시키는가」가 읽혀야 한다.
+      <span class="dim">과거형이면 다음 사람이 실패를 무시하는 코드를 쓴다(가름 페이지 §3).</span></li>
+      <li><b>실패는 선언한다</b> — <code>exception.py</code> 는 선택이 아니다.
+      <span class="dim">번역 대상이 없으면 전역 제약(바깥 예외는 안으로 못 들어온다)이 여기서 깨진다.</span></li>
+      <li><b>받는 이는 하나</b> — 둘 이상이면 커맨드가 둘이거나, 애초에 사건이다.
+      <span class="dim">「여럿에게 한 번에」가 필요해지는 순간이 사건을 검토할 때다.</span></li>
+      <li><b>어댑터는 «판정»하지 않는다</b> — 번역만 한다.
+      <span class="dim">상대의 답을 보고 업무 결론을 내리면 업무 규칙이 드리븐 층으로 샌 것이다.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span> 흔한 실수 셋</h2>
+  <div class="two">
+    <div class="b bad">
+      <h4>① 사건 이름을 단 커맨드</h4>
+      <p><span class="mono">…_notification / notify()</span> 처럼 이름은 사건인데 의미가 커맨드인 경우.
+      Fowler 가 <b>수동공격적 커맨드</b>라 부른 것이고, 「반드시 해야 하는데 아무도 실패를 안 잡는」 자리가 생긴다.</p>
+    </div>
+    <div class="b bad">
+      <h4>② 커밋 뒤에 보내는 커맨드</h4>
+      <p><span class="mono">after_commit</span> 뒤에 부르면 <b>실패해도 롤백을 못 한다</b>.
+      커맨드라면 결과를 봐야 하는데, 볼 시점에 되돌릴 수단이 없다 —
+      <b>커맨드로도 사건으로도 부족한 상태</b>가 된다.</p>
+    </div>
+    <div class="b bad">
+      <h4>③ 어댑터가 상대 예외를 안 잡는다</h4>
+      <p>구체 타입 두어 개만 잡고 <b>기저 예외를 안 잡으면</b>,
+      상대가 예외를 하나 늘리는 순간 <b>이쪽 코드가 한 글자도 안 바뀌었는데 낡는다</b>.
+      새 예외가 그대로 통과해 안으로 들어간다.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">6</span> 언제 커맨드가 «아닌가»</h2>
+  <div class="rule-note">
+    <div class="big">「이 호출이 실패하면 «누가» 알아야 하나?」에 <b>발신자</b>가 아니면 커맨드가 아니다</div>
+    <ul>
+      <li><b>수신자만 알면 된다</b> → <span style="color:var(--evt);font-weight:700">사건</span>. 받는 이가 여럿이고 누군지 모른다면 더더욱.</li>
+      <li><b>아무도 안 봐도 된다</b> → 지워도 되는 코드다. 「그래도 있으면 좋으니까」는 근거가 아니다.</li>
+      <li><b>시키는 게 아니라 «건네는» 것이다</b> → <span style="color:var(--doc);font-weight:700">자료</span>. 무엇을 할지는 받는 쪽이 정한다.</li>
+    </ul>
+  </div>
+</section>
+</div><!-- /page 커맨드 -->
+
+<!-- ═══════════════════════════ 페이지 3 · 자료 ═══════════════════════════ -->
+<div class="page" id="p-doc" role="tabpanel" aria-label="자료" hidden>
+
+<div class="pagehead">
+  <div class="eyebrow" style="color:var(--doc)">메시지의 의도 ② · Document Message</div>
+  <h2>자료 — 「이것이다」</h2>
+  <p class="lede">무엇을 하라고 시키지 않고 <b>데이터만 넘긴다</b>. 무엇을 할지는 받는 쪽이 정한다.
+  셋 중 <b>압도적으로 많은데 가장 눈에 안 띄는</b> 물건이다.</p>
+</div>
+
+<section>
+  <h2><span class="n">1</span> 한 문장으로</h2>
+  <p><b>「이게 그 값이다. 뭘 할지는 네가 정해라.」</b></p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>축</th><th>자료는 이렇다</th><th>왜 그런가</th></tr></thead>
+    <tbody>
+      <tr><td class="k">받는 이</td><td>상관없다</td><td>지시가 아니니 «누구에게»가 의미를 안 바꾼다</td></tr>
+      <tr><td class="k">답</td><td>없거나, <b>자료 자체가 답</b>이다</td><td>질문에 대한 답으로 오는 것도 자료다</td></tr>
+      <tr><td class="k">실패를 아는 자</td><td><b>«실패»라는 개념이 약하다</b></td><td>자료는 성공하지도 실패하지도 않는다</td></tr>
+      <tr><td class="k">이름</td><td class="mono">DeviceList · ChildSummary</td><td>명사 — 「이것이다」로 읽힌다</td></tr>
+      <tr><td class="k">그래서</td><td><b>잘못된 자리에 있어도 돈다</b></td><td>규칙으로 자리를 정해 줘야 하는 유일한 갈래다</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <blockquote>
+    <em>“Whereas a Command Message tells the receiver to invoke certain behavior,
+    a Document Message just passes data and <b>lets the receiver decide</b> what, if anything, to do with the data.”</em>
+    <span class="src">Hohpe &amp; Woolf · Enterprise Integration Patterns · Document Message</span>
+  </blockquote>
+</section>
+
+<section>
+  <h2><span class="n">2</span> 왜 제일 많은데 제일 안 보이나</h2>
+  <p>커맨드는 못 하면 <b>터진다</b>. 사건은 못 받으면 <b>밀린다</b>. 둘 다 잘못 두면 곧 표가 난다.
+  그런데 <b>자료는 잘못된 자리에 있어도 그냥 돈다</b> — 실패 계약이 없기 때문이다.</p>
+  <p>그래서 자료만이 <b>「어디에 두나」를 규칙으로 정해야 하는 갈래</b>다.
+  아래 두 그림이 그 규칙 전부다 — 하나는 <b>같은 값이 경계마다 옷을 갈아입는 모양</b>,
+  다른 하나는 <b>어느 옷이 어느 폴더에 사는가</b>.</p>
+</section>
+
+<section>
+  <h2><span class="n">3</span> 같은 값이 경계마다 «옷을 갈아입는다»</h2>
+
+  <figure>
+    <svg viewBox="0 0 900 306" role="img"
+         aria-label="들어오는 길에서 HTTP JSON 은 schema_in 으로 그다음 dto_in 으로 그다음 값 객체와 애그리거트로 세 번 옷을 갈아입고, 나가는 길에서 도메인은 dto_out 으로 schema_out 으로 다시 HTTP JSON 으로 세 번 갈아입는다. 각 옷의 주인이 다르다.">
+      <defs>
+        <marker id="ah-d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--doc)"/>
+        </marker>
+      </defs>
+
+      <text class="t-d" x="20" y="26">들어오는 길 — 바깥에서 도메인까지</text>
+
+      <text class="t-xs" x="217" y="46" text-anchor="middle">①</text>
+      <text class="t-xs" x="445" y="46" text-anchor="middle">②</text>
+      <text class="t-xs" x="673" y="46" text-anchor="middle">③</text>
+
+      <rect class="box" x="20" y="52" width="180" height="50" rx="9"/>
+      <text class="t" x="110" y="76" text-anchor="middle">HTTP JSON</text>
+      <text class="t-xs" x="110" y="93" text-anchor="middle">바깥 세상의 것</text>
+      <line class="ln-o" x1="200" y1="77" x2="234" y2="77" marker-end="url(#ah-d1)"/>
+
+      <rect class="box-d" x="238" y="52" width="190" height="50" rx="9"/>
+      <text class="t-m" x="333" y="75" text-anchor="middle">api/…/schema_in.py</text>
+      <text class="t-xs" x="333" y="93" text-anchor="middle">HTTP 계약의 것</text>
+      <line class="ln-o" x1="428" y1="77" x2="462" y2="77" marker-end="url(#ah-d1)"/>
+
+      <rect class="box-d" x="466" y="52" width="190" height="50" rx="9"/>
+      <text class="t-m" x="561" y="75" text-anchor="middle">…/dto/dto_in.py</text>
+      <text class="t-xs" x="561" y="93" text-anchor="middle">유스케이스의 것</text>
+      <line class="ln-o" x1="656" y1="77" x2="690" y2="77" marker-end="url(#ah-d1)"/>
+
+      <rect class="box" x="694" y="52" width="186" height="50" rx="9"/>
+      <text class="t" x="787" y="76" text-anchor="middle">값 객체 · 애그리거트</text>
+      <text class="t-xs" x="787" y="93" text-anchor="middle">도메인의 것</text>
+
+      <text class="t-s" x="20" y="126">① 입구 라이브러리가 빚는다 &#160;&#160; ② 컨트롤러가 옮긴다 &#160;&#160; ③ 유스케이스가 도메인으로 만든다</text>
+
+      <text class="t-d" x="20" y="166">나가는 길 — 도메인에서 바깥까지</text>
+
+      <text class="t-xs" x="223" y="186" text-anchor="middle">④</text>
+      <text class="t-xs" x="451" y="186" text-anchor="middle">⑤</text>
+      <text class="t-xs" x="679" y="186" text-anchor="middle">⑥</text>
+
+      <rect class="box" x="20" y="192" width="186" height="50" rx="9"/>
+      <text class="t" x="113" y="216" text-anchor="middle">값 객체 · 애그리거트</text>
+      <text class="t-xs" x="113" y="233" text-anchor="middle">도메인의 것</text>
+      <line class="ln-o" x1="206" y1="217" x2="240" y2="217" marker-end="url(#ah-d1)"/>
+
+      <rect class="box-d" x="244" y="192" width="190" height="50" rx="9"/>
+      <text class="t-m" x="339" y="215" text-anchor="middle">…/dto/dto_out.py</text>
+      <text class="t-xs" x="339" y="233" text-anchor="middle">유스케이스의 것</text>
+      <line class="ln-o" x1="434" y1="217" x2="468" y2="217" marker-end="url(#ah-d1)"/>
+
+      <rect class="box-d" x="472" y="192" width="190" height="50" rx="9"/>
+      <text class="t-m" x="567" y="215" text-anchor="middle">api/…/schema_out.py</text>
+      <text class="t-xs" x="567" y="233" text-anchor="middle">HTTP 계약의 것</text>
+      <line class="ln-o" x1="662" y1="217" x2="696" y2="217" marker-end="url(#ah-d1)"/>
+
+      <rect class="box" x="700" y="192" width="180" height="50" rx="9"/>
+      <text class="t" x="790" y="216" text-anchor="middle">HTTP JSON</text>
+      <text class="t-xs" x="790" y="233" text-anchor="middle">바깥 세상의 것</text>
+
+      <text class="t-s" x="20" y="266">④ 유스케이스가 빚는다 &#160;&#160; ⑤ 컨트롤러가 옮긴다 &#160;&#160; ⑥ 입구 라이브러리가 내보낸다</text>
+
+      <rect class="box-p" x="20" y="276" width="860" height="24" rx="12"/>
+      <text class="t-xs" x="450" y="292" text-anchor="middle">옆 BC 로 나갈 땐 한 벌 더 — contract/request · contract/response 와 port/&lt;capability&gt;/&lt;payload&gt;.py</text>
+    </svg>
+    <figcaption><b>여섯 번 갈아입고, 옷마다 주인이 다르다.</b>
+    이걸 건너뛰고 한 벌로 관통시키면 —
+    <b>HTTP 필드 이름이 바뀔 때 유스케이스가 바뀌고, DB 컬럼이 바뀔 때 API 가 바뀐다.</b>
+    옷을 나누는 값이 그것이다.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="n">4</span> 자료가 사는 다섯 자리 — 판정은 「누구의 경계를 넘나」</h2>
+
+  <figure>
+    <svg viewBox="0 0 900 314" role="img"
+         aria-label="이 자료가 누구의 경계를 넘느냐는 물음 하나로 다섯 자리가 갈린다. 밖과 우리 사이는 api 의 schema, 입구와 유스케이스 사이는 dto, 유스케이스와 포트 사이는 payload, 우리 BC 와 남의 BC 사이는 open_host_service 의 contract, 도메인 안은 value_object 다.">
+      <defs>
+        <marker id="ah-d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <rect class="box-d" x="230" y="14" width="440" height="42" rx="10"/>
+      <text class="t-h" x="450" y="41" text-anchor="middle">이 자료는 «누구의» 경계를 넘나?</text>
+      <line class="ln" x1="450" y1="56" x2="450" y2="76" marker-end="url(#ah-d2)"/>
+
+      <rect class="box" x="40" y="80" width="820" height="40" rx="8"/>
+      <text class="t" x="58" y="105">밖 ↔ 우리</text>
+      <text class="t-m" x="250" y="105">driving_layer/api/&lt;feature&gt;/schema/</text>
+      <text class="t-xs" x="700" y="105">HTTP 계약의 것</text>
+
+      <rect class="box" x="40" y="126" width="820" height="40" rx="8"/>
+      <text class="t" x="58" y="151">입구 ↔ 유스케이스</text>
+      <text class="t-m" x="250" y="151">application_layer/&lt;feature&gt;/&lt;use_case&gt;/dto/</text>
+      <text class="t-xs" x="700" y="151">유스케이스의 것</text>
+
+      <rect class="box" x="40" y="172" width="820" height="40" rx="8"/>
+      <text class="t" x="58" y="197">유스케이스 ↔ 포트</text>
+      <text class="t-m" x="250" y="197">application_layer/port/&lt;capability&gt;/&lt;payload&gt;.py</text>
+      <text class="t-xs" x="700" y="197">«대화»의 것</text>
+
+      <rect class="box" x="40" y="218" width="820" height="40" rx="8"/>
+      <text class="t" x="58" y="243">우리 BC ↔ 남의 BC</text>
+      <text class="t-m" x="250" y="243">open_host_service/&lt;service&gt;/contract/</text>
+      <text class="t-xs" x="700" y="243">공개 표면의 것</text>
+
+      <rect class="box" x="40" y="264" width="820" height="40" rx="8"/>
+      <text class="t" x="58" y="289">도메인 안</text>
+      <text class="t-m" x="250" y="289">domain_layer/&lt;aggregate&gt;/value_object/</text>
+      <text class="t-xs" x="700" y="289">도메인의 것</text>
+    </svg>
+    <figcaption>다섯 자리가 <b>다섯 개의 서로 다른 «경계»에 하나씩</b> 붙어 있다.
+    그래서 자리를 고를 때 물을 것은 「이게 무슨 데이터인가」가 아니라
+    <b>「이게 «어느 선»을 넘어가는가」</b>다.</figcaption>
+  </figure>
+
+  <div class="codewrap">
+<pre><code># driving_layer/api/child/schema/schema_in.py            ← HTTP 의 것
+class EvictChildIn(Schema):
+    child_id: str                       # 바깥이 보내는 «날것»의 모양
+
+# application_layer/child/evict_child/dto/dto_in.py      ← 유스케이스의 것
+@dataclass(frozen=True)
+class EvictChildIn:
+    child_id: ChildId                   # 검사하지 않는다 — 이미 검사된 값이 온다
+
+# driving_layer/open_host_service/child_lifecycle/contract/response/eviction_result.py
+@dataclass(frozen=True)
+class EvictionResult:                   # 「거절도 답이다」
+    accepted: bool
+    rejected_reason: RejectionCode | None    # 사유는 «코드»로 — 자유 문자열이면 위반</code></pre>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span> 지켜야 하는 것 다섯</h2>
+  <div class="rule-note">
+    <ol>
+      <li><b>DTO 는 검사하지 않는다</b> — 검사 자리는 둘뿐이다.
+      <span class="dim">막을 게 «사용자»면 입구와 애그리거트가, 막을 게 «개발자»면 테스트와 타입 체커가 한다.
+      DTO 에까지 검사를 넣으면 진짜 판정이 어디인지 아무도 모르게 된다.</span></li>
+      <li><b>엔티티도 DB 로우도 경계 밖으로 넘기지 않는다</b>.
+      <span class="dim">넘기는 순간 바깥이 도메인 내부 구조에 묶인다.</span></li>
+      <li><b><code>contract/</code> 는 표준 라이브러리와 «같은 BC 의 다른 계약» 말고는 import 하지 않는다</b>.
+      <span class="dim">계약이 또 다른 BC 의 계약을 담으면, 부르는 쪽이 폴더 하나 없이 제3의 BC 에 묶인다.</span></li>
+      <li><b><code>response/</code> 는 «성공의 모양»이 아니라 «이 창구가 낼 수 있는 답 전부»다</b> — 거절도 답이다.
+      <span class="dim">못 해 준 사유는 <b>코드</b>로 담는다. 자유 문자열이면 부르는 쪽이 문자열을 파싱하게 된다.</span></li>
+      <li><b><code>&lt;payload&gt;</code> 는 DTO 가 아니다</b>.
+      <span class="dim">유스케이스의 입출력이 아니고 도메인 개념도 아니다. 「이 대화가 주고받는 자료」일 뿐이다.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">6</span> 흔한 실수 셋</h2>
+  <div class="two">
+    <div class="b bad">
+      <h4>① schema 를 dto 로 그대로 쓴다</h4>
+      <p>「같은 필드니까」가 이유다. 그런데 그 순간
+      <b>HTTP 가 바뀌면 유스케이스가 바뀐다</b>. 두 옷이 같아 보이는 건 지금뿐이고,
+      갈라놓는 값은 <b>바뀔 때</b> 나온다.</p>
+    </div>
+    <div class="b bad">
+      <h4>② DTO 에 검증을 넣는다</h4>
+      <p>검사 자리가 셋(입구·DTO·도메인)이 되고,
+      <b>어느 것이 진짜 판정인지 아무도 모르게 된다</b>.
+      셋이 어긋나기 시작하면 버그는 「어디서 안 막혔나」를 찾는 일이 된다.</p>
+    </div>
+    <div class="b bad">
+      <h4>③ 사유를 자유 문자열로 담는다</h4>
+      <p><span class="mono">reason: str = "정원 초과"</span> 같은 것.
+      부르는 쪽이 <b>문자열을 파싱</b>하게 되고, 메시지 한 글자만 고쳐도 남의 코드가 깨진다.
+      <b>코드로 담고 문구는 따로</b>.</p>
+    </div>
+  </div>
+</section>
+</div><!-- /page 자료 -->
+
+<!-- ═══════════════════════════ 페이지 4 · 사건 ═══════════════════════════ -->
+<div class="page" id="p-evt" role="tabpanel" aria-label="사건" hidden>
+
+<div class="pagehead">
+  <div class="eyebrow" style="color:var(--evt)">메시지의 의도 ③ · Event Message</div>
+  <h2>사건 — 「일어났다」</h2>
+  <p class="lede">이미 벌어진 사실. <b>거절할 수 없고</b>, 받는 이가 몇인지 모르며,
+  <b>못 받은 쪽이 스스로 감당한다</b>. 셋 중 가장 매력적으로 들리고, 가장 비싸다.</p>
+</div>
+
+<section>
+  <h2><span class="n">1</span> 한 문장으로 — 그리고 계보 하나</h2>
+  <p><b>「이런 일이 있었다. 필요한 사람은 알아서 써라.」</b></p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>축</th><th>사건은 이렇다</th><th>왜 그런가</th></tr></thead>
+    <tbody>
+      <tr><td class="k">받는 이</td><td><b>여럿</b> — 누군지 모른다</td><td>알면 그건 지목이고, 지목이면 커맨드다</td></tr>
+      <tr><td class="k">답</td><td><b>없다</b></td><td>돌아오는 길이 없는 것이 사건의 정의다</td></tr>
+      <tr><td class="k">실패를 아는 자</td><td><b>각 수신자</b> — 발신자는 모른다</td><td>발신자는 «보냈다»로 자기 일이 끝난다</td></tr>
+      <tr><td class="k">거절</td><td><b>불가</b></td><td>이미 일어난 사실은 거절할 대상이 아니다</td></tr>
+      <tr><td class="k">이름</td><td class="mono">DeviceRevoked · ChildEvicted</td><td>과거형 사실 — 「일어났다」로 읽힌다</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule-note">
+    <div class="big">★ 계보 — 도메인 이벤트는 DDD 의 «원래» 물건이 아니다</div>
+    <ul>
+      <li><b>2004 블루북의 빌딩블록 여덟에 이벤트가 없다.</b></li>
+      <li>Evans 가 <b>2009 QCon London</b> 에서 처음 얹었고 — <em>“They are overemphasized. But let’s add another one anyway!”</em></li>
+      <li><b>2015 『DDD Reference』</b> 에 <span class="mono">Domain Events *</span> 로 등재되고
+      각주가 붙는다 — <span class="mono">* New term introduced since the 2004 book.</span></li>
+      <li>Evans 가 감사의 말에서 출처를 밝힌다 — <b>Greg Young · Udi Dahan</b>(CQRS · Event Sourcing).
+      즉 <b>EDA 에서 DDD 로 «역수입»된 개념</b>이다.</li>
+    </ul>
+    <p style="margin-top:12px"><b>그래서 「DDD 냐 이벤트 드리븐이냐」는 잘못된 이분법이다.</b>
+    도메인 이벤트는 이미 이벤트 드리븐 쪽에서 건너온 물건이다.</p>
+  </div>
+
+  <p class="dim">덧붙여 — <b>원전은 «누가 읽는가»를 묻지 않는다.</b>
+  『DDD Reference』 전문에 <span class="mono">subscribe</span>·<span class="mono">consume</span>·<span class="mono">listen</span> 이
+  각각 0회 나온다. Fowler(2005)도 반응 없는 이벤트를 정의에 포함시킨다 —
+  <em>“some may be worth recording but don’t provoke a reaction.”</em>
+  <b>「읽는 코드가 없으면 이벤트가 아니다」는 우리가 «좁힌» 규칙</b>이고, 원전이 준 규칙이 아니다.
+  좁힌 이유는 §3 에 적는다.</p>
+</section>
+
+<section>
+  <h2><span class="n">2</span> 사건은 둘로 갈린다 — 이 구분을 안 하면 대화가 안 된다</h2>
+  <p>「이벤트를 쓰자」는 말이 두 개의 아주 다른 물건을 가리킨다.
+  <b>둘의 값도 비용도 완전히 다르다.</b></p>
+
+  <div class="tablewrap">
+  <table style="min-width:700px">
+    <thead><tr><th>축</th><th>도메인 이벤트</th><th>통합 이벤트</th></tr></thead>
+    <tbody>
+      <tr><td class="k">사는 곳</td><td>한 BC <b>안</b></td><td>BC <b>밖</b> · 프로세스 밖</td></tr>
+      <tr><td class="k">어휘</td><td>도메인 어휘 그대로</td><td><b>공개 계약</b> — 번역해서 내보낸다</td></tr>
+      <tr><td class="k">트랜잭션</td><td>같은 커밋 또는 커밋 직후</td><td><b>별도 커밋</b> — 끊긴다</td></tr>
+      <tr><td class="k">깨지면</td><td>내가 고친다</td><td><b>남이 깨진다</b></td></tr>
+      <tr><td class="k">필요한 장치</td><td>없음 — 클래스 하나</td><td><b>여덟 칸</b> (§4)</td></tr>
+      <tr><td class="k">우리 트리</td><td class="mono">domain_layer/&lt;aggregate&gt;/event/</td><td><b>없다</b> — 열지 않았다 (§5)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="dim">앞으로 §3 은 <b>도메인 이벤트</b>, §4~§5 는 <b>통합 이벤트</b> 이야기다.</p>
+</section>
+
+<section>
+  <h2><span class="n">3</span> 도메인 이벤트가 사는 칸 — 그리고 판정</h2>
+
+  <figure>
+    <svg viewBox="0 0 900 272" role="img"
+         aria-label="왼쪽은 도메인 이벤트가 사는 폴더 구조로 애그리거트 폴더 안에 event 폴더가 있고 그 안에 과거형 사실 파일이 하나씩 놓인다. 오른쪽은 판정으로, 이 BC 안에서 읽는 코드가 있으면 이벤트이고 없으면 이벤트가 아니라 알림이므로 포트로 간다. 그리고 발행 장치는 이 칸에 살지 않는다.">
+      <defs>
+        <marker id="ah-e3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <text class="t-e" x="30" y="32">도메인 이벤트가 사는 칸</text>
+      <line class="ln-d" x1="452" y1="44" x2="452" y2="258"/>
+
+      <text class="t-m"  x="30" y="62">domain_layer/</text>
+      <text class="t-m"  x="30" y="83">└&#160;&lt;aggregate&gt;/</text>
+      <text class="t-m"  x="30" y="104">&#160;&#160;&#160;├&#160;&lt;aggregate&gt;.py</text>
+      <text class="t-xs" x="248" y="104">기록만 한다</text>
+      <text class="t-m"  x="30" y="125">&#160;&#160;&#160;├&#160;event/</text>
+      <text class="t-em" x="30" y="146">&#160;&#160;&#160;│&#160;&#160;└&#160;&lt;event&gt;.py</text>
+      <text class="t-xs" x="248" y="146">★ 과거형 사실 1 = 파일 1</text>
+      <text class="t-m"  x="30" y="167">&#160;&#160;&#160;├&#160;&lt;aggregate&gt;_repository.py</text>
+      <text class="t-m"  x="30" y="188">&#160;&#160;&#160;└&#160;exception.py</text>
+
+      <rect class="box" x="470" y="48" width="410" height="44" rx="10"/>
+      <text class="t-h" x="675" y="76" text-anchor="middle">이 BC 안에서 «읽는» 코드가 있나?</text>
+
+      <path class="ln" d="M600,92 L566,114" marker-end="url(#ah-e3)"/>
+      <path class="ln" d="M752,92 L786,114" marker-end="url(#ah-e3)"/>
+
+      <rect class="box-e" x="470" y="118" width="196" height="74" rx="9"/>
+      <text class="t-e" x="568" y="142" text-anchor="middle">예</text>
+      <text class="t-m" x="568" y="163" text-anchor="middle">event/&lt;event&gt;.py</text>
+      <text class="t-xs" x="568" y="181" text-anchor="middle">사건이다</text>
+
+      <rect class="box-c" x="684" y="118" width="196" height="74" rx="9"/>
+      <text class="t-c" x="782" y="142" text-anchor="middle">아니오</text>
+      <text class="t-s" x="782" y="162" text-anchor="middle">사건이 아니라 «알림»</text>
+      <text class="t-m" x="782" y="182" text-anchor="middle">port/&lt;capability&gt;/</text>
+
+      <rect class="box-f" x="470" y="206" width="410" height="46" rx="10"/>
+      <text class="t-flag" x="675" y="227" text-anchor="middle">발행 장치는 이 칸에 살지 않는다</text>
+      <text class="t-s" x="675" y="245" text-anchor="middle">레지스트리 · dispatch — 밖으로 나갈 일이면 애초에 포트다</text>
+    </svg>
+    <figcaption>왼쪽은 <b>사실을 «담는» 자리</b>일 뿐이고, 오른쪽 판정이 그 자리에 들어올 자격을 가른다.
+    「밖으로 알려야 하는 것」은 여기 들어오지 못한다 — 그건 커맨드다.</figcaption>
+  </figure>
+
+  <div class="codewrap">
+<pre><code># domain_layer/child/event/child_evicted.py
+@dataclass(frozen=True)
+class ChildEvicted:                  # 과거형 사실 — 거절할 수 없다
+    child_id: ChildId
+    occurred_at: datetime
+
+# domain_layer/child/child.py
+class Child:
+    def evict(self) -&gt; None:
+        self._assert_can_evict()                        # 불변식 검사
+        self._record(ChildEvicted(self.id, now()))      # 기록«만» 한다 — 아무도 부르지 않는다</code></pre>
+  </div>
+
+  <h3>규칙 넷</h3>
+  <div class="rule-note">
+    <ol>
+      <li><b>과거형 사실 하나 = 파일 하나.</b></li>
+      <li><b>같은 BC 안에서만 읽는다</b> — 밖에서 읽으면 그건 통합 이벤트이고, 우리 트리엔 그 칸이 없다.</li>
+      <li><b>애그리거트는 «기록»만 한다</b> — 아무도 부르지 않는다. 부르는 순간 도메인이 실행 순서를 알게 된다.</li>
+      <li><b>발행 장치(레지스트리 · dispatch)는 여기 안 산다</b> — 밖으로 나갈 일이면 애초에 포트다.</li>
+    </ol>
+  </div>
+
+  <h3>그래서 왜 「읽는 코드가 없으면 이벤트가 아니다」로 «좁혔나»</h3>
+  <p>§1 에 적었듯 이건 원전이 준 규칙이 아니다. 좁힌 이유는 <b>소비자 없는 이벤트가 실제로 맞는 운명 셋</b> 때문이다 —
+  참조 구현들을 훑으면 셋 중 하나로 간다.</p>
+  <div class="two">
+    <div class="b">
+      <h4>ⓐ 테스트 오라클이 된다</h4>
+      <p>프로덕션 코드는 아무도 안 읽고 <b>테스트만 읽는다</b>.
+      의도한 설계면 괜찮지만, 그러면 <b>테스트를 위해 도메인에 칸을 만든 것</b>임을 문서에 적어야 한다.</p>
+    </div>
+    <div class="b">
+      <h4>ⓑ 이벤트 스토어가 읽는다</h4>
+      <p>이벤트 소싱을 하면 «저장 형식» 자체가 소비자다.
+      <b>우리는 이벤트 소싱을 하지 않는다</b> — 그러니 이 길은 닫혀 있다.</p>
+    </div>
+    <div class="b bad">
+      <h4>ⓒ 로거에 물려 썩는다</h4>
+      <p>가장 흔한 결말. 헥사고날 참조 구현인 <span class="mono">dddsample-core</span> 에도
+      <span class="mono">// TODO why is this unused?</span> 가 그대로 남아 있다.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4</span> 통합 이벤트를 켜면 «무엇이 생기나» — 여덟 칸</h2>
+  <p>여기가 값을 치르는 자리다. 「이벤트를 발행한다」는 한 줄이 <b>여덟 칸</b>을 부른다 —
+  참조 구현 셋을 전수로 훑으면 <b>셋 다 여덟을 전부 갖고 있다</b>.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 342" role="img"
+         aria-label="통합 이벤트를 쓰면 보내는 쪽에 outbox 테이블 릴레이 워커 발행 포트와 어댑터 브로커 설정 넷이 생기고, 양쪽이 함께 보는 것으로 통합 이벤트 계약과 타입 레지스트리 둘이 생기며, 받는 쪽에 소비자 진입점과 인바운드 핸들러 둘이 생긴다. 모두 여덟이다.">
+      <defs>
+        <marker id="ah-e4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--evt)"/>
+        </marker>
+      </defs>
+
+      <text class="t-h" x="151" y="42" text-anchor="middle">보내는 쪽 — 넷</text>
+      <text class="t-h" x="441" y="42" text-anchor="middle">양쪽이 함께 보는 것 — 둘</text>
+      <text class="t-h" x="740" y="42" text-anchor="middle">받는 쪽 — 둘</text>
+
+      <rect class="box-p" x="20" y="54" width="262" height="212" rx="12"/>
+      <rect class="box-p" x="310" y="54" width="262" height="212" rx="12"/>
+      <rect class="box-p" x="600" y="54" width="280" height="212" rx="12"/>
+
+      <rect class="box-e" x="36" y="70" width="230" height="42" rx="8"/>
+      <text class="t-s" x="50" y="88">① outbox 테이블</text>
+      <text class="t-xs" x="50" y="104">보낼 것을 같은 커밋에 남긴다</text>
+
+      <rect class="box-e" x="36" y="118" width="230" height="42" rx="8"/>
+      <text class="t-s" x="50" y="136">② 릴레이 워커</text>
+      <text class="t-xs" x="50" y="152">꺼내서 브로커로 민다</text>
+
+      <rect class="box-e" x="36" y="166" width="230" height="42" rx="8"/>
+      <text class="t-s" x="50" y="184">③ 발행 포트 + 어댑터</text>
+      <text class="t-xs" x="50" y="200">「민다」를 선언하고 구현한다</text>
+
+      <rect class="box-e" x="36" y="214" width="230" height="42" rx="8"/>
+      <text class="t-s" x="50" y="232">④ 브로커 설정 · 연결</text>
+      <text class="t-xs" x="50" y="248">redis · rabbitmq — 운영이 는다</text>
+
+      <line class="ln-e" x1="282" y1="160" x2="304" y2="160" marker-end="url(#ah-e4)"/>
+
+      <rect class="box-f" x="326" y="86" width="230" height="60" rx="8"/>
+      <text class="t-flag" x="340" y="106">⑤ 통합 이벤트 계약</text>
+      <text class="t-xs" x="340" y="123">양쪽이 «같은 것»을 봐야 한다</text>
+      <text class="t-xs" x="340" y="139">— 앉을 자리가 없다 (§5)</text>
+
+      <rect class="box-e" x="326" y="164" width="230" height="60" rx="8"/>
+      <text class="t-s" x="340" y="184">⑥ 타입 레지스트리</text>
+      <text class="t-xs" x="340" y="201">직렬화 이름 ↔ 클래스</text>
+      <text class="t-xs" x="340" y="217">이름을 바꾸면 옛 메시지가 죽는다</text>
+
+      <line class="ln-e" x1="572" y1="160" x2="594" y2="160" marker-end="url(#ah-e4)"/>
+
+      <rect class="box-e" x="616" y="86" width="248" height="60" rx="8"/>
+      <text class="t-s" x="630" y="106">⑦ 소비자 진입점</text>
+      <text class="t-xs" x="630" y="123">celery task · consumer 루프</text>
+      <text class="t-xs" x="630" y="139">— 입구가 하나 더 는다</text>
+
+      <rect class="box-e" x="616" y="164" width="248" height="60" rx="8"/>
+      <text class="t-s" x="630" y="184">⑧ 인바운드 핸들러</text>
+      <text class="t-xs" x="630" y="201">받아서 «내 커맨드»로 번역한다</text>
+      <text class="t-xs" x="630" y="217">응용·도메인에 드는 건 이것뿐</text>
+
+      <rect class="box-f" x="20" y="280" width="860" height="48" rx="10"/>
+      <text class="t-flag" x="450" y="301" text-anchor="middle">★ 이 여덟을 부르는 것은 «브로커가 있느냐»가 아니라 «트랜잭션을 끊었느냐»다</text>
+      <text class="t-s" x="450" y="319" text-anchor="middle">인메모리 버스만 써도 모듈끼리 커밋을 공유하지 않으면 여덟이 전부 필요하다 &#160;·&#160; BC 16 환산 = 테이블 48 · 워커 48</text>
+    </svg>
+    <figcaption>여덟 중 <b>응용·도메인에 드는 것은 ⑧ 하나뿐</b>이고 나머지 일곱은 전부 인프라다.
+    선택 항목(inbox · 멱등성 키 · 지연 커맨드 · 사가 · 참조 규칙 강제 · 풀 피드)은 여기 안 셌다.</figcaption>
+  </figure>
+
+  <div class="rule-note" style="border-color:var(--flag)">
+    <div class="big" style="color:var(--flag)">★ 그리고 이벤트가 결합을 없애 주지도 않는다</div>
+    <p style="margin:9px 0 0">참조 구현 하나를 프로젝트 참조 전수로 재 보면 <b>모듈 수준 순환이 3쌍</b> 나온다 —
+    비동기 100% 강제인데도 그렇다. 저자 본인이 인정한다 —
+    <em>“coupling … exists only on the structure of Integration Events.”</em><br>
+    <b>Spring Modulith</b> 는 아예 «이벤트를 듣는 것»도 의존으로 세고 순환 검사에서 예외를 주지 않는다.
+    <b>결합을 없애는 것은 이벤트가 아니라 «의존 역전»</b>이고, 이벤트는 그걸 실행하는 한 가지 수단일 뿐이다.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span> 그런데 우리 트리엔 «통합 이벤트 계약»이 앉을 자리가 없다</h2>
+  <p>여덟 중 ⑤ 하나가 특히 문제다. <b>양쪽이 같은 타입을 봐야 하는데</b>, 그 타입을 어디 두든 우리 트리의 규칙 하나를 깬다.</p>
+
+  <figure>
+    <svg viewBox="0 0 900 252" role="img"
+         aria-label="통합 이벤트 계약을 둘 자리 후보 셋이 모두 막힌다. BC 안에 두면 남이 BC 내부를 import 하게 되어 전역 제약을 위반하고, open_host_service 의 contract 에 두면 그 자리는 부르면 답하는 방향이라 판정이 서지 않으며, framework 에 두면 BC 하나를 지우면 바뀌므로 자격에 걸린다.">
+      <defs>
+        <marker id="ah-f3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <rect class="box-f" x="250" y="12" width="400" height="42" rx="10"/>
+      <text class="t-h" x="450" y="39" text-anchor="middle">통합 이벤트 계약을 «어디» 두나?</text>
+
+      <path class="ln" d="M390,54 L180,84" marker-end="url(#ah-f3)"/>
+      <path class="ln" d="M450,54 L450,84" marker-end="url(#ah-f3)"/>
+      <path class="ln" d="M510,54 L720,84" marker-end="url(#ah-f3)"/>
+
+      <rect class="box" x="20" y="88" width="270" height="104" rx="10"/>
+      <text class="t-md" x="38" y="112">application/&lt;bc&gt;/ 안</text>
+      <text class="t-flag" x="38" y="138">✕ 전역 제약 ③ 위반</text>
+      <text class="t-s" x="38" y="158">남이 내 BC «내부»를</text>
+      <text class="t-s" x="38" y="176">import 하게 된다</text>
+
+      <rect class="box" x="315" y="88" width="270" height="104" rx="10"/>
+      <text class="t-md" x="333" y="112">open_host_service/…/contract/</text>
+      <text class="t-flag" x="333" y="138">✕ 방향이 반대다</text>
+      <text class="t-s" x="333" y="158">거긴 «부르면 답하는» 자리라</text>
+      <text class="t-s" x="333" y="176">그 칸의 판정이 안 선다</text>
+
+      <rect class="box" x="610" y="88" width="270" height="104" rx="10"/>
+      <text class="t-md" x="628" y="112">framework/&lt;capability&gt;/</text>
+      <text class="t-flag" x="628" y="138">✕ «자격»에 걸린다</text>
+      <text class="t-s" x="628" y="158">「BC 하나를 지우면</text>
+      <text class="t-s" x="628" y="176">이 파일이 바뀌나」 — 바뀐다</text>
+
+      <rect class="box-p" x="20" y="204" width="860" height="34" rx="12"/>
+      <text class="t-s" x="450" y="226" text-anchor="middle">참조 구현은 «별도 컴파일 단위»를 하나 더 만들어 풀었다 — 파이썬엔 그 장치가 없다</text>
+    </svg>
+    <figcaption>이건 취향이나 실측의 문제가 아니라 <b>«배치»의 문제</b>다.
+    통합 이벤트를 열려면 <b>먼저 전역 제약을 손봐야 한다</b> — 그래서 이 칸은 「나중에 필요하면 연다」로 미룰 수 있는 종류가 아니다.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="n">6</span> 사건의 실패 양식 — 「보냈다」가 「닿았다」가 아니다</h2>
+  <p>사건에는 돌아오는 길이 없다. 그래서 <b>실패가 조용하다</b>.
+  Django 위에서 흔히 쓰는 <span class="mono">on_commit</span> 방식의 실패 양식이 알려져 있다.</p>
+
+  <div class="two">
+    <div class="b bad">
+      <h4>① 커밋과 발행 «사이»에서 죽는다</h4>
+      <p>커밋은 됐는데 발행 전에 프로세스가 죽으면 <b>그 사건은 영구히 사라진다</b>.
+      아무도 모른다 — 원본 쪽은 성공으로 기록돼 있다.</p>
+    </div>
+    <div class="b bad">
+      <h4>② 브로커가 내려간 구간이 통째로 빈다</h4>
+      <p>①보다 <b>훨씬 흔한</b> 양식. 브로커가 5분 죽어 있으면 그 5분치가 전부 없어진다.
+      <span class="mono">outbox</span> 가 푸는 게 정확히 이 둘이다.</p>
+    </div>
+    <div class="b bad">
+      <h4>③ 순서가 보장되지 않는다</h4>
+      <p>받는 쪽이 「생성 → 수정」을 뒤집어 받을 수 있다.
+      그래서 <b>at-least-once + 멱등성</b> 이 짝으로 따라온다.</p>
+    </div>
+  </div>
+
+  <p class="dim">Django 자체의 단서도 셋이다 —
+  <b>콜백 하나가 터지면 뒤의 콜백이 안 돈다</b> ·
+  <b>트랜잭션 밖에서 부르면 즉시 실행된다</b>(테스트와 프로덕션 동작이 갈린다) ·
+  <b><span class="mono">TestCase</span> 안에서는 한 번도 안 돈다</b>(테스트가 초록인데 프로덕션에서 안 도는 전형적 함정).</p>
+
+  <blockquote>
+    <em>“Where possible you should opt for <b>directly calling the handling code</b>.”</em><br>
+    <em>“If the sender and receiver of your custom signal are both within your project,
+    you’re better off using an <b>explicit function call</b>.”</em>
+    <span class="src">Django 공식 문서 · topics/signals</span>
+  </blockquote>
+</section>
+
+<section>
+  <h2><span class="n">7</span> 그래서 언제 쓰나 — 자료가 주는 자</h2>
+  <div class="rule-note">
+    <div class="big">★ 이벤트는 «전파의 수단»이 아니라 «트랜잭션을 나누는 수단»이다</div>
+    <ul>
+      <li>BC 안에서는 <b>애그리거트 사이의 트랜잭션</b>을 나눈다 — 「한 트랜잭션 = 한 애그리거트」를 지키려고.</li>
+      <li>BC 밖에서는 <b>커밋 자체</b>를 나눈다 — 「여기까지는 됐고, 다음은 나중에」.</li>
+      <li><b>나눌 이유가 없으면 이벤트도 없다.</b> 이게 하나뿐인 판정 기준이다.</li>
+    </ul>
+  </div>
+
+  <div class="two">
+    <div class="b">
+      <h4>하한은 명확하다</h4>
+      <p>소비자가 <b>하나뿐</b>이면 이벤트 인프라를 걷어내는 편이 낫다.
+      <em>“If all the collaborating parties operate upon the same database,
+      it’s better to make the flow of the domain logic explicit.”</em></p>
+    </div>
+    <div class="b">
+      <h4>상한은 «어떤» 1차 자료에도 없다</h4>
+      <p>「소비자 몇이면 이벤트가 이긴다」는 숫자를 준 자료가 없다.
+      <b>이건 확인 못 한 것이지, 없다는 뜻이 아니다</b> — 그러니 숫자로 정당화하지 않는다.</p>
+    </div>
+    <div class="b good">
+      <h4>진짜 축은 «순환»이다</h4>
+      <p><b>“Which of the two modules could exist without the other?”</b>
+      A 가 B 없이 못 살면 그냥 부르면 되고,
+      <b>서로가 서로를 불러야 하면</b> 그 짝에서만 방향을 뒤집는 수단으로 이벤트를 쓴다.</p>
+    </div>
+  </div>
+
+  <p>정리하면 — <b>사건은 「멀리 알리고 싶어서」 고르는 것이 아니라 「여기서 끊어야 해서」 고르는 것</b>이다.
+  그리고 끊는 순간 §4 의 여덟 칸과 §6 의 실패 양식이 함께 온다.
+  <b>그 값을 치를 이유가 있는지</b>가 유일한 물음이다.</p>
+</section>
+</div><!-- /page 사건 -->
+
+<footer>
+  <div><b>출처</b> — 전부 1차 자료로 원문 대조함</div>
+  <ol>
+    <li>Gregor Hohpe &amp; Bobby Woolf, <span class="mono">Enterprise Integration Patterns</span> — Command / Document / Event Message</li>
+    <li>Eric Evans, <span class="mono">Domain-Driven Design</span> ch.14 — OPEN HOST SERVICE:
+      “Define a protocol that gives access to your subsystem as a set of SERVICES.”</li>
+    <li>Eric Evans, <span class="mono">Domain-Driven Design Reference</span> (2015) — <span class="mono">Domain Events *</span>
+      및 각주 <span class="mono">“* New term introduced since the 2004 book.”</span> · 감사의 말(Greg Young · Udi Dahan)</li>
+    <li>Martin Fowler, <span class="mono">What do you mean by “Event-Driven”?</span> (2017) — passive-aggressive command</li>
+    <li>Martin Fowler, <span class="mono">Event Sourcing / Domain Event</span> (2005) — “some may be worth recording but don’t provoke a reaction”</li>
+    <li>Jimmy Bogard, <span class="mono">A better domain events pattern</span> (2014) — “if I cared enough… couple myself directly”</li>
+    <li>Percival &amp; Gregory, <span class="mono">Architecture Patterns with Python</span> ch.10 — Event: fail independently / Command: fail noisily</li>
+    <li>Vladimir Khorikov — 소비자가 하나면 이벤트 인프라를 걷어내라 · “operate upon the same database … make the flow explicit”</li>
+    <li>Oliver Drotbohm (Spring Modulith) — “Which of the two modules could exist without the other?” · 이벤트 리스너도 의존으로 집계</li>
+    <li>Kamil Grzybek, <span class="mono">modular-monolith-with-ddd</span> ADR 0014 —
+      “We allow direct calls in the future, but this should be an exception, not a rule.”</li>
+    <li>Open edX <span class="mono">ADR-15 / openedx-events</span> — <span class="mono">on_commit</span> 실패 양식 셋 · outbox 는 Provisional</li>
+    <li>Django 공식 문서 <span class="mono">topics/signals</span> · <span class="mono">topics/db/transactions</span> —
+      직접 호출 권고 · <span class="mono">on_commit</span> 콜백은 트랜잭션의 일부가 아니다</li>
+    <li><span class="mono">dddsample-core</span> — 헥사고날 참조 구현인데 이벤트를 만들지 않고 이름 붙인 포트 메서드를 직접 부른다</li>
+  </ol>
+  <div style="margin-top:14px">dddjango · <span class="mono">workspace/design/2026-08-08-command-vs-event.html</span> ·
+  정본이 아니라 <b>학습·판단용 부속 문서</b>다. 정본은 <span class="mono">docs/work_flow.html</span>.</div>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var tabs  = Array.prototype.slice.call(document.querySelectorAll('nav.tabs button'));
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  function show(id, scroll) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-page') === id)); });
+    pages.forEach(function (p) { p.hidden = (p.id !== id); });
+    if (location.hash.slice(1) !== id) { history.replaceState(null, '', '#' + id); }
+    if (scroll) { window.scrollTo(0, 0); }
+  }
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () { show(b.getAttribute('data-page'), true); });
+  });
+  window.addEventListener('hashchange', function () {
+    var h = location.hash.slice(1);
+    if (pages.some(function (p) { return p.id === h; })) { show(h, false); }
+  });
+  var init = location.hash.slice(1);
+  show(pages.some(function (p) { return p.id === init; }) ? init : pages[0].id, false);
+})();
+</script>
+</body>
+</html>

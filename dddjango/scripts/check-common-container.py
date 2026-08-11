@@ -1,41 +1,45 @@
 #!/usr/bin/env python3
-"""dddjango 횡단 `common/` 컨테이너 레벨 결정적 백스톱 (discipline-houserules §1 집행).
+"""dddjango 횡단 `framework/` 컨테이너 레벨 결정적 백스톱.
 
-표준 트리에서 `common/`(앱 횡단 공용 — `enum/`·`django/`·`ninja/`·`<project>/` 기술축)은
-*프로젝트 루트* 에 둔다 = `application/` 의 *형제*. 그런데 `application/common/` 처럼
-`application/`(= feature 앱 컨테이너) *안* 에 넣으면 §1 위반이다. 회귀(smoke6-claude:
-clock/identifier 같은 오류 무관 횡단 utility를 `application/common/utility.py` 에 둠 =
+표준 트리에서 `framework/`(저장소 횡단 공용 — 트리 112~134행)는 *프로젝트 루트* 에 둔다
+= `application/` 의 *형제*. `common` 은 옛 이름이다 — 이관 종료(2026-08-12) 후 수용하지
+않고, 오배치 버킷 «검출»(#49)로만 알아본다. 그런데 `application/framework/`
+(또는 `application/common/`)처럼 `application/`(= BC 컨테이너) *안* 에 넣으면 위반이다.
+회귀(smoke6: clock/identifier 같은 횡단 utility 를 `application/common/utility.py` 에 둠 =
 횡단 버킷의 컨테이너 레벨 오류)를 막는다.
 
-*왜 결정적 백스톱인가* — 헬퍼 위치는 코더 구현 결정이고(설계 명세가 "presentation 경계"라
-해도 코더가 common/ 으로 승격), `check-app-container`(§0-1, 앱이 `application/` *밖*)나
-`check-layer-skeleton`(§0-2, BC 4계층 깊이)에 안 걸린다(common 은 앱이 아니라 잡히지 않음).
-이 좁은 그물이 "common 레벨" 한 축을 모델 무관하게 집행한다 — 단일 BC 전용 utility는
-그 BC의 소유 계층에 두고, 오류 무관 utility가 실제 횡단 공유될 때만 root `common/`에 둔다는
-*예방* 은 houserules §1 가이드 몫이고, 이건 그 보조 백스톱이다. 오류 전용 공통 artifact는
-승격하지 않으며, contract-scope canonical core `ErrorOut`만 첫 HTTP BC부터 root
-`common/ninja/response/`에 두는 birth-common 예외다. `application/common/`이 아니라는
-이 검사의 위치 판정은 그대로 적용된다.
+*왜 결정적 백스톱인가* — 헬퍼 위치는 코더 구현 결정이고, `check-app-container`(앱이
+`application/` *밖*)나 `check-layer-skeleton`(BC 층 골격)에 안 걸린다(횡단 버킷은 앱이
+아니라 잡히지 않음). 이 좁은 그물이 "framework 레벨" 한 축을 집행한다 — 승격의 자는
+「이 낱말의 뜻을 누가 정하나」(D38)이고, BC 하나가 뜻을 정하는 것은 그 BC 소유 층에 남는다.
 
-거짓양성 ≈ 0 — *feature 앱이 아닌* `application/common/` 만 차단:
-  G1) 레포 루트 직속 `application/` 존재 = 표준 채택. 없으면 exit 0(§1.1 존중).
-  G2) `application/common/` 디렉터리가 존재하고, (a) 4계층 앱이 *아니며*(`domain_layer/`·
-      `application_layer/`·`infra_layer/`·`presentation_layer/` 중 하나도 없음 — 'common'
-      이라는 *진짜 feature 앱* 은 제외) (b) 내용이 있다(서브디렉터리 또는 `__init__.py` 아닌
-      `.py`). 이러면 루트에 둘 횡단 버킷(`ninja/`·`django/`·`enum/`·`<project>/` 기술축이든
-      평면 `problem.py` 든)을 `application/` 안에 잘못 넣은 것이다(reviewer 회피 C1·C2 포함).
+거짓양성 ≈ 0 — *BC 가 아닌* `application/{framework|common}/` 만 차단:
+  G1) 레포 루트 직속 `application/` 존재 = 표준 채택. 없으면 exit 0.
+  G2) `application/framework/`(또는 `application/common/`) 디렉터리가 존재하고,
+      (a) 층 폴더 앱이 *아니며*(새·옛 층 이름 어느 것도 없음 — 'common' 이라는 *진짜
+      BC* 는 제외) (b) 내용이 있다(서브디렉터리 또는 `__init__.py` 아닌 `.py`).
   G1 ∧ G2 → exit 2(blocker). 아니면 exit 0.
 
-사용법: check-common-container.py [TARGET_DIR]   (기본=현재 디렉터리)
-종료코드: 0=clean(또는 표준 미적용), 2=blocker(발견 출력), 1=사용 오류.
+사용법: check-common-container.py [TARGET_DIR]   (기본: 현재 디렉터리)
+종료코드: 0=clean(또는 표준 미적용) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# 4계층 앱 마커 — 이게 있으면 'common' 이라는 *feature 앱* 이라 횡단 버킷 오배치 아님.
-LAYER_DIRS = ("domain_layer", "application_layer", "infra_layer", "presentation_layer")
+try:
+    import standard_tree as tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+# 층 폴더 마커 — 이게 있으면 그 이름의 *진짜 BC* 라 횡단 버킷 오배치가 아니다.
+NEW_LAYERS = ("driving_layer", "application_layer", "domain_layer", "driven_layer")
+LAYER_DIRS = NEW_LAYERS
+
+# 루트 횡단 버킷의 이름 — `common` 은 역사적 버킷 낱말이다(#49 검출 리터럴 · 수용 아님).
+BUCKET_NAMES = ("framework", "common")
 
 
 def _root_application(root: Path) -> Path | None:
@@ -53,50 +57,55 @@ def _has_content(d: Path) -> bool:
     return False
 
 
-def _is_misplaced_common(common_dir: Path) -> bool:
-    """`application/common/` 이 (feature 앱이 아닌) 오배치 횡단 버킷인가."""
-    if not common_dir.is_dir():
+def _is_misplaced_bucket(bucket_dir: Path) -> bool:
+    """`application/{framework|common}/` 이 (BC 가 아닌) 오배치 횡단 버킷인가."""
+    if not bucket_dir.is_dir():
         return False
-    if any((common_dir / layer).is_dir() for layer in LAYER_DIRS):
-        return False  # 4계층 'common' feature 앱 → 이 백스톱 대상 아님(§0-2 영역).
-    return _has_content(common_dir)
+    if any((bucket_dir / layer).is_dir() for layer in LAYER_DIRS):
+        return False  # 층 폴더를 가진 '진짜 BC' → check-layer-skeleton 영역.
+    return _has_content(bucket_dir)
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
+    if len(argv) > 1:
+        print(f"사용법: {Path(sys.argv[0]).name} [TARGET_DIR]", file=sys.stderr)
+        return 1
+    root = Path(argv[0]).resolve() if argv else Path.cwd()
     if not root.is_dir():
-        print(f"[check-common-container] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+        print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
     app_container = _root_application(root)
     if app_container is None:
-        return 0  # 표준 레이아웃 미적용 → §1.1 존중, 해당 없음.
+        return 0  # 표준 레이아웃 미적용 → 기존 규약 존중, 해당 없음.
 
-    common_under_app = app_container / "common"
-    if _is_misplaced_common(common_under_app):
+    findings: list[str] = []
+    for name in BUCKET_NAMES:
+        bucket = app_container / name
+        if not _is_misplaced_bucket(bucket):
+            continue
         inside = sorted(
             p.name + ("/" if p.is_dir() else "")
-            for p in common_under_app.iterdir()
+            for p in bucket.iterdir()
             if p.name != "__pycache__"
         )
+        findings.append(f"  [컨테이너] {bucket.relative_to(root).as_posix()}/  (내용: {', '.join(inside)})")
+
+    if findings:
+        print("blocker — 횡단 `framework/` 버킷이 `application/` 안에 있다 (트리 112행: `framework/` 는 프로젝트 루트 = `application/` 의 형제)")
+        for f in findings:
+            print(f)
         print(
-            "[check-common-container] BLOCKER — 횡단 `common/` 버킷이 `application/` 안에 있다"
-            "(discipline-houserules §1: `common/` 은 프로젝트 루트 = `application/` 의 형제):"
-        )
-        print(f"  - {common_under_app.relative_to(root).as_posix()}/  (내용: {', '.join(inside)})")
-        print(
-            "  근거: `common/`(앱 횡단 공용)은 *프로젝트 루트* 에 두고 `application/` 안에 넣지 "
-            "않는다 — `application/` 은 feature 앱 컨테이너다. 단일 BC 전용 utility는 그 BC의 소유 "
-            "계층에 두고, clock/identifier 같은 오류 무관 횡단 utility가 실제 여러 BC에서 공유될 때만 "
-            "root `common/<기술축>/`에 둔다(YAGNI). 오류 전용 공통 artifact는 승격하지 않는다. 단, "
-            "contract-scope canonical core `ErrorOut`만 첫 HTTP BC부터 root "
-            "`common/ninja/response/`에 두는 birth-common 예외다(houserules §1). 내용의 소유 규칙에 "
-            "따라 root common 또는 owning BC 계층으로 옮겨라."
+            "  근거: `framework/`(저장소 횡단 공용 — 옛 이름 `common/` 도 같은 버킷이다)는 "
+            "프로젝트 루트에 두고 `application/` 안에 넣지 않는다 — `application/` 은 BC "
+            "컨테이너다. 승격의 자는 「이 낱말의 뜻을 누가 정하나」(D38): BC 하나가 뜻을 "
+            "정하면 그 BC 의 소유 층에 두고, 어느 BC 도 뜻을 정하지 않는 기계 부품만 루트 "
+            "`framework/<capability|technology>/` 로 올린다. 내용의 소유에 따라 루트 "
+            "`framework/` 또는 소유 BC 층으로 옮겨라."
         )
         return 2
-
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

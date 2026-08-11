@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """dddjango 컴포지션 루트(DI 배선) 위치 결정적 백스톱 (discipline-houserules §0 집행).
 
-표준 트리에서 DI 조립(컴포지션 루트)은 BC 루트의 *단일 파일* `application/<app>/composition_root.py`가
-소유한다(houserules §0 트리·파일표; `implementation-django-ninja` "컴포지션 루트" 절). presentation은
-그 `build_<usecase>_command()` 팩토리를 매요청 호출만 하고, operation 본문에서
-`Django…Repository()`/`…Adapter()`를 직접 생성하지 않는다(Q-7). 이 백스톱은 배선이 그 단일 파일을
-벗어나거나 부재인 *구조적* 변종 셋을 차단한다:
+표준 트리에서 DI 조립(컴포지션 루트)은 BC 루트의 `composition_root/`(결선은 `dependency_wiring.py`
+— 트리 2~4행·#84·#85)가 소유한다(정본). driving 층은 `build_<usecase>_*()` 팩토리를
+매요청 호출만 하고, operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지
+않는다(Q-7). 이 백스톱은 배선이 정본을 벗어나거나 부재인 *구조적* 변종 셋을 차단한다:
   - **off-tree `composition/` 폴더(V1)**: `application/<app>/composition/`에 배선 코드(provider 등)를
     폴더로 둠 = 정본 트리에 없는 노드(루트가 폴더로 분열). 라이브 관측 변종(Codex `composition/
     place_order_provider.py`).
-  - **`composition_root.py` 오배치(V2)**: `composition_root.py`가 BC 루트가 아니라 계층/하위 폴더
-    (`presentation_layer/`·`infra_layer/` 등)에 묻힘 = 위치 위반(BC 루트 소유여야).
-  - **정본 부재(V3)**: application 로직(command/query/service 등)을 가진 BC인데 BC 루트
-    `composition_root.py`가 *아예 없음* = 배선이 `di/`·`wiring/`·라우터·config 등으로 흩어졌거나
-    미생성(긍정 의무 미이행). 정본 파일의 존재를 무조건이 아니라 *application 로직이 있을 때* 요구해
-    데이터소스 BC(빈 `application_layer`)는 면제한다.
+  - **단일 파일 `composition_root.py`(V2)**: 어디에 있든 트리에 없는 모양이다 — 정본은
+    BC 루트 «폴더» `composition_root/`(트리 2행)다.
+  - **정본 부재(V3)**: application 로직(command/query/service 등)을 가진 BC인데 BC 루트에
+    `composition_root/` 폴더가 *아예 없음* = 배선이 `di/`·`wiring/`·라우터·config 등으로
+    흩어졌거나 미생성(긍정 의무 미이행). 폴더 존재를 무조건이 아니라 *application 로직이
+    있을 때* 요구해 데이터소스 BC(빈 `application_layer`)는 면제한다.
 
 *왜 결정적 백스톱인가* — 배선 위치는 코더 구현 결정이고 테스트가 안 걸려 TDD Red로 안 잡힌다.
 discipline-reviewer 의미 게이트 한 점에만 의존하면 off-tree 폴더가 'Q-7 준수(어댑터를 operation
@@ -27,15 +26,16 @@ discipline-reviewer 의미 게이트 한 점에만 의존하면 off-tree 폴더�
      확립 규약(§1.1)이라 적용 대상이 아니다 → exit 0.
   2) `application/<bc>/`가 *4계층 앱*이다(계층 폴더 하나라도 보유) — 비-앱 잡동사니 패키지 제외.
   3) (git 레포면) 그 BC 하위에 이번 변경(신규/수정/미추적)이 있다 = 이번 작업이 건드린 BC.
-     기존 커밋된 채 안 건드린 BC는 존중(brownfield) → 건너뜀.
-  위 셋이 참인 BC에서:
+     기존 커밋된 채 안 건드린 BC는 존중(§1.1) → 건너뜀.
+  위 셋이 참인 BC에서(정본 = BC 루트 «폴더» `composition_root/` — 결선은 `dependency_wiring.py`,
+  트리 2~4행):
     - BC 루트 직속 `composition/`(`<bc>/composition/`)가 비-`__init__` `.py`를 담으면 blocker
       (off-tree 폴더·V1). 빈 패키지·test 경로는 면제. 도메인 애그리거트 `domain_layer/composition/`은
       BC 루트 직속이 아니라 애초에 대상이 아니다(거짓 양성 0).
-    - `composition_root.py`가 BC 루트(`<bc>/composition_root.py`)가 아닌 계층/하위 폴더에 있으면
-      blocker(오배치·V2). test 경로·`composition/` 안의 것(위 V1이 이미 잡음)은 면제. BC 루트의 것은 정상.
+    - `composition_root.py` «단일 파일» 모양은 어디에 있든 blocker(V2) — 그 모양 자체가 트리에
+      없다. test 경로·`composition/` 안의 것(위 V1이 이미 잡음)은 면제.
     - `application_layer`에 실 application 로직(비-`__init__` `.py`; `dto/`·test 제외)이 있는데 BC 루트
-      `composition_root.py`가 없으면 blocker(부재·V3). command/query 만이 아니라 `service/`·`handler/`
+      `composition_root/` 폴더가 없으면 blocker(부재·V3). command/query 만이 아니라 `service/`·`handler/`
       등 application_layer 실 로직 전체가 신호다(빈 `command/` 만 남기고 `service/` 로 fold 하는 우회
       봉쇄). 데이터소스 BC(§632 상 `application_layer` 가 빈 계층)는 로직이 없어 면제(거짓 양성 0).
       정본이 존재하되 *비어 있고 실배선이 딴 곳에* fold 된 알리바이는 형태로 못 가르므로
@@ -59,7 +59,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__"}
+try:
+    import standard_tree as _tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 CODE_SKIP_DIRS = {
     *SKIP_DIRS,
     ".cache",
@@ -70,15 +76,17 @@ CODE_SKIP_DIRS = {
     "generated",
 }
 
-# 4계층 — houserules §0-2. "이 BC가 4계층 앱인가"의 신호(하나라도 폴더면 검사 대상).
-LAYER_DIRS = ("domain_layer", "application_layer", "infra_layer", "presentation_layer")
+# 4계층 — "이 BC가 4계층 앱인가"의 신호(하나라도 폴더면 검사 대상).
+LAYER_DIRS = (
+    "domain_layer", "application_layer", "driving_layer", "driven_layer",
+)
 
 TEST_DIR_NAMES = {"test", "tests"}
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 ROOT_API_CONSTRUCTORS = {"ninja.NinjaAPI", "ninja_extra.NinjaExtraAPI"}
 
-# 정본 배선 노드 — BC 루트의 단일 파일. 폴더 변종(아래)은 off-tree.
+# 옛 단일 파일 모양(V2 검출용)과 off-tree 변종 폴더 이름(V1 검출용) — 정본은 `composition_root/` 폴더다.
 COMPOSITION_FILE = "composition_root.py"
 COMPOSITION_DIR = "composition"
 
@@ -610,18 +618,18 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> list[str]:
         if payload:
             issues.append(
                 f"{COMPOSITION_DIR}/ 폴더에 배선 코드({', '.join(payload[:3])}) — DI 조립은 "
-                f"BC 루트 단일 파일 `{COMPOSITION_FILE}`가 소유(폴더로 분열 금지)"
+                "BC 루트 «폴더» `composition_root/`(결선은 `dependency_wiring.py` — 트리 2~4행)가 소유한다"
             )
 
         for path in bc_paths:
             if path.name != COMPOSITION_FILE or not (root / path).is_file():
                 continue
             local = path.relative_to(bc_relative)
-            if _path_is_under(path, composition_relative) or len(local.parts) == 1:
+            if _path_is_under(path, composition_relative):
                 continue
             issues.append(
-                f"{local.as_posix()} — `{COMPOSITION_FILE}`는 BC 루트"
-                f"(`<app>/{COMPOSITION_FILE}`)가 소유, 계층/하위 폴더에 두지 않는다"
+                f"{local.as_posix()} — 단일 파일 `{COMPOSITION_FILE}` 모양은 트리에 없다 — "
+                "정본은 BC 루트 «폴더» `composition_root/`(트리 2행)다"
             )
 
         application_relative = bc_relative / "application_layer"
@@ -632,13 +640,12 @@ def _filtered_di_findings(root: Path, inventory: CodeInventory) -> list[str]:
             and (root / path).is_file()
             for path in bc_paths
         )
-        canonical_root = root / bc_relative / COMPOSITION_FILE
-        if needs_root and not canonical_root.is_file():
+        if needs_root and not (root / bc_relative / "composition_root").is_dir():
             issues.insert(
                 0,
-                f"`{COMPOSITION_FILE}` 부재 — application 로직(command/query/service 등)을 가진 BC는 "
-                f"DI 조립을 BC 루트 단일 파일 `{COMPOSITION_FILE}`가 소유한다(배선을 `di/`·`wiring/`·"
-                f"라우터·config 에 두지 말고 정본 파일을 만들어 `build_<usecase>_command()` 팩토리를 둬라)",
+                "`composition_root/` 부재 — application 로직(command/query/service 등)을 가진 BC는 "
+                "DI 조립을 BC 루트 폴더 `composition_root/`(결선은 `dependency_wiring.py` — 트리 2~4행)가 "
+                "소유한다(배선을 `di/`·`wiring/`·라우터·config 에 두지 않는다)",
             )
         findings.extend(f"  - {bc_relative}: {issue}" for issue in issues)
     return findings
@@ -1282,14 +1289,14 @@ def _bare_registration_decorators(parsed: ParsedSource) -> list[ast.Attribute]:
 def _registrar_spec(relative_path: Path) -> RegistrarSpec:
     parts = relative_path.parts
     if (
-        len(parts) != 4
+        len(parts) != 5
         or parts[0] != "application"
-        or parts[2:] != ("presentation_layer", "registrar.py")
+        or parts[2:] != ("driving_layer", "api", "api_router.py")
         or not parts[1].isidentifier()
     ):
         raise UsageError(
             "canonical registrar placement 분석 불능: "
-            f"{relative_path} (application/<bc>/presentation_layer/registrar.py 필요)"
+            f"{relative_path} (application/<bc>/driving_layer/api/api_router.py 필요)"
         )
     bc = parts[1]
     function_name = f"register_{bc}_api"
@@ -1545,6 +1552,254 @@ def _composition_semantics(
     )
 
 
+# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 18규칙 (트리 2~4·8·9·136·137행) ──
+#
+# 새 트리 모양(composition_root/ 폴더 · api/api_router.py · <project>/{api,urls}.py)에
+# 대한 기계 규칙. 변종(단일 composition_root.py · off-tree composition/)은
+# 위 V1~V3·registrar 검사가 담당한다.
+#   #84/#497 composition_root/ 는 BC 루트의 «폴더»·결선 하나=파일 하나
+#   #85/#86(ⓓ) dependency_wiring.py 는 build_* 팩토리만 · 조건/계산은 후보
+#   #498/#500/#501 event_wiring.py 는 꽂기만(표 금지·이름 있는 최상단 함수만·DB 금지)
+#   #101 BC 안쪽·composition_root 은 driving 층을 import 하지 않는다
+#   #105/#112 api/ 직계 파일 둘뿐 · 등록 파일 이름은 api_router.py(접두 금지)
+#   #107/#108/#109/#111 api_router.py 의 등록 함수 하나·전역 API import 금지·
+#        top-level 부작용 등록 금지·등록 밖 일 금지
+#   #437 <project>/api.py 닫힌 허용 목록 · #440/#441 <project>/urls.py 등록만
+#   #511(ⓓ) api/ 2차 축 — 계약 소유(OAuth 콜백은 webhook/<provider>/) 후보
+
+_DRIVING_SEGMENTS = frozenset(
+    {"driving_layer"}
+)
+_INNER_SEGMENTS = ("application_layer", "domain_layer", "driven_layer", "composition_root")
+_WIRING_FILES = {"dependency_wiring.py", "event_wiring.py"}
+_STDLIB_OK = {
+    "__future__", "typing", "collections", "functools", "itertools", "dataclasses",
+    "enum", "abc", "datetime", "decimal", "uuid", "logging",
+}
+_API_ROUTER_IMPORT_OK = _STDLIB_OK | {"django", "ninja", "application", "framework"}
+_PROVIDERISH_TOKENS = ("oauth", "callback", "sso")
+
+
+def _slice_imports(mod: ast.Module) -> list[tuple[int, str]]:
+    out: list[tuple[int, str]] = []
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            out.extend((node.lineno, a.name) for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            out.append((node.lineno, node.module))
+    return out
+
+
+def _slice_parse(path: Path) -> ast.Module | None:
+    try:
+        return ast.parse(path.read_text(encoding="utf-8"))
+    except (SyntaxError, OSError, UnicodeDecodeError):
+        return None
+
+
+def _check_dependency_wiring(f: Path, rel: Path, findings: list[str], candidates: list[str]) -> None:
+    mod = _slice_parse(f)
+    if mod is None:
+        return
+    for node in mod.body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue  # docstring
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if not node.name.startswith("build_"):
+                findings.append(f"  [#85] {rel}: `{node.name}()` — dependency_wiring.py 에는 `build_<use_case>()` 팩토리만 온다(«만들기»와 «꽂기» 둘뿐)")
+            for sub in ast.walk(node):
+                if isinstance(sub, (ast.If, ast.IfExp)):
+                    candidates.append(f"  [ⓓ#86] {rel}:{sub.lineno} 결선 함수 안 조건문 — 물음: 이 분기는 업무를 가르는가(그렇다면 유스케이스로 내린다)?")
+                    break
+            continue
+        findings.append(f"  [#85] {rel}:{node.lineno} dependency_wiring.py 최상단에는 import 와 build_* 팩토리만 온다")
+
+
+def _check_event_wiring(f: Path, rel: Path, findings: list[str]) -> None:
+    mod = _slice_parse(f)
+    if mod is None:
+        return
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Dict):
+            findings.append(f"  [#498] {rel}:{node.lineno} event_wiring.py 에서 표(dict)를 만들었다 — 표는 event_subscription/event_router.py 소유, 여기는 브로커에 «꽂는» 것만 한다")
+        elif isinstance(node, ast.Lambda):
+            findings.append(f"  [#500] {rel}:{node.lineno} 구독으로 람다를 넘겼다 — 모듈 최상단 이름 있는 함수만(매번 다른 객체라 멱등이 깨진다)")
+        elif isinstance(node, ast.Call):
+            fn = node.func
+            nm = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
+            if nm == "partial":
+                findings.append(f"  [#500] {rel}:{node.lineno} `functools.partial` 을 구독으로 넘겼다 — 모듈 최상단 이름 있는 함수만")
+        elif isinstance(node, ast.Attribute) and node.attr == "objects":
+            findings.append(f"  [#501] {rel}:{node.lineno} event_wiring.py 에서 DB 를 만졌다 — 모든 관리 명령에서 도는 자리다")
+
+
+def _check_composition_dir(bc: Path, bc_rel: Path, findings: list[str], candidates: list[str]) -> None:
+    comp = bc / "composition_root"
+    if not comp.is_dir():
+        # 오배치(#84) — 층 폴더 안 composition_root/ 를 찾는다
+        for layer in LAYER_DIRS:
+            nested = bc / layer
+            if not nested.is_dir():
+                continue
+            for p in nested.rglob("composition_root"):
+                if p.is_dir():
+                    findings.append(f"  [#84] {bc_rel / p.relative_to(bc)}: `composition_root/` 는 BC 루트에 둔다 — 네 층 폴더 어디에도 두지 않는다")
+        return
+    for p in sorted(comp.iterdir()):
+        if p.name.startswith(".") or p.name == "__pycache__":
+            continue
+        if p.is_dir():
+            findings.append(f"  [#497] {bc_rel}/composition_root/{p.name}: 폴더 금지 — «결선 하나 = 파일 하나»(지금은 dependency_wiring.py 와 event_wiring.py 둘)")
+        elif p.suffix == ".py" and p.name != "__init__.py" and p.name not in _WIRING_FILES:
+            findings.append(f"  [#497] {bc_rel}/composition_root/{p.name}: 결선 파일은 dependency_wiring.py·event_wiring.py 둘이다")
+    dep = comp / "dependency_wiring.py"
+    if dep.is_file():
+        _check_dependency_wiring(dep, bc_rel / "composition_root/dependency_wiring.py", findings, candidates)
+    ev = comp / "event_wiring.py"
+    if ev.is_file():
+        _check_event_wiring(ev, bc_rel / "composition_root/event_wiring.py", findings)
+
+
+def _check_inner_driving_imports(bc: Path, bc_rel: Path, findings: list[str]) -> None:
+    for seg in _INNER_SEGMENTS:
+        base = bc / seg
+        files: list[Path] = []
+        if base.is_dir():
+            files = [p for p in base.rglob("*.py") if not (set(p.parts) & CODE_SKIP_DIRS) and "test" not in p.parts]
+        elif seg == "composition_root" and (bc / "composition_root.py").is_file():
+            files = [bc / "composition_root.py"]
+        for f in files:
+            mod = _slice_parse(f)
+            if mod is None:
+                continue
+            for lineno, path_str in _slice_imports(mod):
+                if set(path_str.split(".")) & _DRIVING_SEGMENTS:
+                    findings.append(f"  [#101] {bc_rel / f.relative_to(bc)}:{lineno} `{path_str}` — BC 안쪽과 composition_root 은 driving 층을 import 하지 않는다(예외 없음 · rd-2)")
+
+
+def _check_api_dir(bc: Path, bc_rel: Path, findings: list[str], candidates: list[str]) -> None:
+    for driving_name in _DRIVING_SEGMENTS:
+        api = bc / driving_name / "api"
+        if not api.is_dir():
+            continue
+        api_rel = bc_rel / driving_name / "api"
+        for p in sorted(api.iterdir()):
+            if p.name.startswith(".") or p.name == "__pycache__":
+                continue
+            if p.is_file() and p.suffix == ".py":
+                if p.name != "api_router.py" and ("api_router" in p.name or p.name.endswith("_router.py")):
+                    findings.append(f"  [#112] {api_rel / p.name}: 등록 파일 이름은 `api_router.py` 다 — `<bounded_context>_` 접두를 붙이지 않는다")
+                elif p.name not in ("api_router.py", "bc_error_schema.py", "__init__.py"):
+                    findings.append(f"  [#105] {api_rel / p.name}: `api/` 직계 파일은 `api_router.py` 와 `bc_error_schema.py` 둘뿐이다")
+            elif p.is_dir() and any(tok in p.name.lower() for tok in _PROVIDERISH_TOKENS):
+                candidates.append(f"  [ⓓ#511] {api_rel / p.name}/ — 물음: 이 입구의 계약을 바깥이 소유하는가(OAuth 콜백 포함)? 그러면 `webhook/<provider>/` 자리다")
+        router = api / "api_router.py"
+        if router.is_file():
+            _check_api_router(router, api_rel / "api_router.py", bc.name, findings)
+
+
+def _check_api_router(f: Path, rel: Path, bc_name: str, findings: list[str]) -> None:
+    mod = _slice_parse(f)
+    if mod is None:
+        return
+    reg_fns = [n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    named = [n for n in reg_fns if n.name.startswith("register_") and n.name.endswith("_api")]
+    if len(named) != 1 or len(reg_fns) != len(named):
+        findings.append(f"  [#107] {rel}: `def register_{bc_name}_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 {len(reg_fns)}개)")
+    elif len(named[0].args.args) != 1:
+        findings.append(f"  [#107] {rel}: 등록 함수는 전역 API 를 «인자 하나»로 받는다 — `register_{bc_name}_api(api)`")
+    for node in mod.body:
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            fn = node.value.func
+            nm = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
+            if nm in ("register_controllers", "add_router"):
+                findings.append(f"  [#109] {rel}:{node.lineno} module top-level 등록 호출 — 등록은 `register_<bc>_api(api)` 함수 «안»에서만 한다(부작용 등록 금지)")
+            else:
+                findings.append(f"  [#111] {rel}:{node.lineno} api_router.py 의 일은 컨트롤러 import·`api.register_controllers(...)`·접두사/태그뿐이다")
+        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.ClassDef)):
+            findings.append(f"  [#111] {rel}:{getattr(node, 'lineno', 0)} api_router.py 에 등록 밖 정의가 있다 — 컨트롤러 import 와 등록 함수만 둔다")
+    for lineno, path_str in _slice_imports(mod):
+        top = path_str.split(".")[0]
+        if top not in _API_ROUTER_IMPORT_OK:
+            findings.append(f"  [#108] {rel}:{lineno} `{path_str}` import — 전역 API 객체는 import 하지 않고 인자로 받는다(BC 가 프로젝트를 import 하지 않는다)")
+
+
+def _find_project_dirs(root: Path) -> list[Path]:
+    out: list[Path] = []
+    for p in sorted(root.rglob("urls.py")):
+        d = p.parent
+        if set(d.parts) & CODE_SKIP_DIRS or "application" in d.parts:
+            continue
+        if (d / "settings").is_dir() or (d / "settings.py").is_file() or (d / "api.py").is_file():
+            out.append(d)
+    return out
+
+
+def _check_project_api(f: Path, rel: Path, findings: list[str]) -> None:
+    mod = _slice_parse(f)
+    if mod is None:
+        return
+    for lineno, path_str in _slice_imports(mod):
+        if path_str.split(".")[0] == "application":
+            findings.append(f"  [#437] {rel}:{lineno} `{path_str}` import — `<project>/api.py` 에는 전역 API 객체 하나와 프레임워크 오류 핸들러만 온다(BC import 금지)")
+    for node in mod.body:
+        if isinstance(node, ast.ClassDef):
+            findings.append(f"  [#437] {rel}:{node.lineno} `{node.name}` 정의 — ErrorSchema·예외 목록·매핑은 전부 위반이다(닫힌 허용 목록)")
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            deco_names = set()
+            for d in node.decorator_list:
+                fn = d.func if isinstance(d, ast.Call) else d
+                deco_names.add(fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", ""))
+            if "exception_handler" not in deco_names:
+                findings.append(f"  [#437] {rel}:{node.lineno} `{node.name}()` — 프레임워크 오류 핸들러 밖의 함수는 이 파일에 오지 않는다")
+
+
+def _check_project_urls(f: Path, rel: Path, findings: list[str]) -> None:
+    mod = _slice_parse(f)
+    if mod is None:
+        return
+    imported_regs: dict[str, int] = {}
+    for node in ast.walk(mod):
+        if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            if node.module.split(".")[0] != "application":
+                continue
+            for a in node.names:
+                name = a.asname or a.name
+                if a.name.startswith("register_") and a.name.endswith("_api"):
+                    imported_regs[name] = node.lineno
+                else:
+                    findings.append(f"  [#441] {rel}:{node.lineno} `{node.module}.{a.name}` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다")
+    called = {
+        (n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
+        for n in ast.walk(mod) if isinstance(n, ast.Call)
+    }
+    for name, lineno in imported_regs.items():
+        if name not in called:
+            findings.append(f"  [#440] {rel}:{lineno} `{name}` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»")
+
+
+def _standard_tree_slice(root: Path) -> tuple[list[str], list[str]]:
+    findings: list[str] = []
+    candidates: list[str] = []
+    for bc in _find_bc_dirs(root):
+        if not _has_any_layer(bc):
+            continue
+        bc_rel = bc.relative_to(root)
+        _check_composition_dir(bc, bc_rel, findings, candidates)
+        _check_inner_driving_imports(bc, bc_rel, findings)
+        _check_api_dir(bc, bc_rel, findings, candidates)
+    for d in _find_project_dirs(root):
+        api_py = d / "api.py"
+        if api_py.is_file():
+            _check_project_api(api_py, api_py.relative_to(root), findings)
+        urls_py = d / "urls.py"
+        if urls_py.is_file():
+            _check_project_urls(urls_py, urls_py.relative_to(root), findings)
+    return findings, candidates
+
+
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
@@ -1558,6 +1813,7 @@ def main(argv: list[str]) -> int:
             if analysis:
                 raise UsageError("; ".join(analysis))
         di_findings = _filtered_di_findings(config.root, inventory)
+        tree_findings, tree_candidates = _standard_tree_slice(config.root)
     except UsageError as exc:
         print(f"[check-composition-root] 사용 오류: {exc}", file=sys.stderr)
         return 1
@@ -1570,30 +1826,38 @@ def main(argv: list[str]) -> int:
             print(finding.render())
         print(
             "  API 근거: implementation-django-ninja §2.2·discipline-houserules §1. "
-            "각 BC의 canonical `presentation_layer/registrar.py`가 "
+            "각 BC의 canonical `driving_layer/api/api_router.py`가 "
             "`register_<bc>_api(api)` 안에서만 controller를 등록하고, 선택 URLconf가 "
             "선택 API object를 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
             "signature/provenance/owner/count를 그 직접 계약에 맞춰라."
         )
     if di_findings:
         print(
-            "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 BC 루트 단일 파일 "
-            "`composition_root.py`를 벗어났거나 부재다(off-tree `composition/` 폴더·오배치·부재):"
+            "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 정본 폴더 "
+            "`composition_root/` 밖에 있거나 부재다(off-tree `composition/` 폴더·단일 파일 모양·부재):"
         )
         for finding in di_findings:
             print(finding)
         print(
-            "  근거: discipline-houserules §0(트리·파일표). DI 조립은 BC 루트 "
-            "`application/<app>/composition_root.py` 단일 파일이 소유하고, presentation은 "
-            "`build_<usecase>_command()` 팩토리를 매요청 호출만 한다 — feature별 `composition/` "
-            "폴더로 쪼개(루트 분열)거나 계층 하위에 묻지 않는다(operation 본문에서 "
+            "  근거: discipline-houserules §1(트리 2~4행). DI 조립은 BC 루트 «폴더» "
+            "`application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · "
+            "사실 결선은 `event_wiring.py`), driving 쪽은 `build_<usecase>_command()` 팩토리를 "
+            "매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 "
+            "단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 "
             "`Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` "
-            "폴더의 provider들을 BC 루트 `composition_root.py` 한 파일로 합치거나, 묻힌 "
-            "`composition_root.py`를 BC 루트로 올려라. application 로직(command/query/service 등)을 "
-            "가졌는데 정본이 아예 없으면(부재) BC 루트에 `composition_root.py`를 만들어 "
-            "`build_<usecase>_command()` 팩토리를 둬라(데이터소스 BC는 해당 없음)."
+            "폴더의 provider들과 단일 파일의 배선은 `composition_root/dependency_wiring.py`로 "
+            "옮겨라. application 로직(command/query/service 등)을 가졌는데 정본이 아예 없으면(부재) "
+            "BC 루트에 `composition_root/` 폴더를 만들어 배선을 둬라(데이터소스 BC는 해당 없음)."
         )
-    if composition_findings or di_findings:
+    if tree_findings:
+        print("[check-composition-root] BLOCKER — 표준 트리 결선·등록 규율 위반 (트리 2~4·8·9·136·137행):")
+        for f in tree_findings:
+            print(f)
+    if tree_candidates:
+        print("[check-composition-root] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")
+        for c in tree_candidates:
+            print(c)
+    if composition_findings or di_findings or tree_findings:
         return 2
 
     return 0

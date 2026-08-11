@@ -1,135 +1,110 @@
 #!/usr/bin/env python3
-"""dddjango pytest 러너 설정 깨짐 결정적 백스톱 (Phase 2 러너 준비 §6.2 집행).
+"""dddjango 테스트 규율 검사기 — pytest 바인딩 + `test/` 구조·settings 환경축의 결정적 백스톱.
 
-pytest 설정 파일은 *존재* 하는데 pytest-django 를 Django settings 에 묶지 못하는
-*결정적 깨짐* 을 적출한다 — 이 상태에선 `DJANGO_SETTINGS_MODULE` 미설정으로 ORM/모델
-import 가 `ImproperlyConfigured` 로 죽어 **테스트 수집이 조용히 실패**하고, acceptance-tester
-의 깨끗한 Red 가 성립하지 않는다. Phase 2 의 러너 준비 단계가 greenfield 에 pytest 를 깔며
-`[tool.pytest.ini_options]` 에 실제 `DJANGO_SETTINGS_MODULE` 을 박도록 명령하는데, 그 산출이
-설정만 만들고 settings 바인딩을 빠뜨린 회귀를 결정적으로 막는다.
+세 슬라이스를 강제한다.
 
-대상 설정(이번 작업이 새로 만들/수정한 것만):
-  - `pytest.ini`  ([pytest] 섹션)
-  - `setup.cfg`   ([tool:pytest] 섹션)
-  - `pyproject.toml` ([tool.pytest.ini_options])
-  - `tox.ini`     ([pytest] 섹션)
+⑴ 현행 관할 — pytest ↔ Django settings 바인딩 (무변 · 전면화):
+  pytest 설정 파일(pytest.ini·tox.ini·setup.cfg·pyproject.toml)은 *존재* 하는데
+  pytest-django 를 Django settings 에 묶지 못하면 테스트 수집이 조용히 실패한다(0
+  collected). 설정이 아예 없는 것(manage.py test 관례)은 위반이 아니다. 바인딩 성립:
+  `DJANGO_SETTINGS_MODULE`·addopts `--ds=`·`ds` 키·`django_find_project`·pytest-env
+  `env`·conftest 의 Django 셋업. touched 한정을 걷고 전 설정을 본다 — 깨진 바인딩은
+  언제 커밋됐든 지금 깨져 있다(기존 코드도 면제가 아니라 빚).
 
-*왜 결정적 백스톱인가* — 설정-없음(manage.py test 관례)과 설정-있으나-바인딩-없음은 둘 다
-`manage.py test` 로는 Green 처럼 보일 수 있고(pytest 미경유), pytest 수집 실패는 "0 tests
-collected" 류로 조용히 지나간다. discipline-reviewer 가 프로즈로 잡으려면 회피 표면이 된다 —
-이 스크립트가 그 절반을 결정적으로 메운다(고정밀·저-recall, 거짓양성 ≈0).
+⑵ 트리 개정 명세 몫 — `test/` 구조 (트리 105~111행 · D56):
+  #383/#384 `test/` 의 직계 자식은 다섯뿐 — `unit/`·`integration/`·`e2e/`(«테스트» —
+       안이 자유)·`factories/`·`fake/`(«재료» — 규칙이 산다). 직계 파일은
+       `conftest.py`·`__init__.py` 만(#596 — 파일 이름은 pytest 소유라 폐쇄(#490)
+       비대상, 그래서 이 검사기는 test 파일 «이름»을 검사하지 않는다).
+  #385 BC `test/` 에는 그 BC 의 테스트만 — `application.<타BC>.…` import 금지.
+  #387 `test/unit/` 은 DB 를 켜지 않는다(`django_db`·django.test TestCase·`.objects`).
+  #388 `test/unit/` 은 `factories/` 를 import 하지 않는다(가짜 구현은 `fake/`).
+  #389 `test/integration/` 은 진짜 DB 를 켠다 — DB 신호가 하나도 없는 test 파일은 위반.
+  #390 `test/e2e/` 는 입구를 거친다 — TestClient/Client·cron_job 신호가 없으면 위반.
+  #391 `factories/` 는 `integration/` «안»이 아니라 그 형제다.
+  #392 `factories/` 에는 factory_boy 픽스처만 온다.
 
-거짓양성 ≈ 0 — 다음은 *위반이 아니라* 전부 통과(발화 안 함):
-  - **pytest 설정이 아예 없음** — 프로젝트가 `manage.py test`/Django TestCase 관례를 쓰는
-    *존중 대상* 경우다(Phase 2 러너 준비가 명시적으로 존중). 설정 파일이 없으면 무조건 exit 0.
-    (이 스크립트는 "pytest 를 도입했는데 깨졌다" 만 본다 — "pytest 를 안 썼다" 는 위반이 아니다.)
-  - **설정 자체에 `DJANGO_SETTINGS_MODULE` 이 있음** — `DJANGO_SETTINGS_MODULE = a.b.settings`
-    또는 addopts/명령행의 `--ds=a.b.settings`(pytest-django 별칭 `ds`)로 바인딩됐으면 정상.
-  - **conftest 가 Django 를 셋업함** — 레포 어디든 `conftest.py` 가
-    `os.environ.setdefault("DJANGO_SETTINGS_MODULE"`, `django.setup(`, `settings.configure(`,
-    또는 `pytest_configure` 로 Django 를 구성하면 정상 경로다(설정 파일 밖 바인딩).
-  - **`django_find_project` / `addopts --ds=`** — pytest-django 의 프로젝트 자동탐색/명령행
-    settings 지정으로도 바인딩이 성립한다.
-  - 이번 작업이 건드린 설정만 본다(git 신규/수정·미추적). 기존에 커밋된 채 안 건드린 설정은
-    존중(brownfield) → 건너뜀. git 판정 불가면 스킵(거짓양성 회피).
-  - 파싱 실패·파일 부재 등 어떤 예외든 **fail-open**(exit 0) — 이건 정밀 그물이지 정확성
-    오라클이 아니다. 못 읽으면 막지 않는다(잘못된 차단보다 미차단을 택한다).
+⑶ 트리 개정 명세 몫 — `<project>/settings/` 환경축 (트리 139·140행):
+  #445 갈리는 축은 환경 하나뿐 — 기능별 분할 파일(celery.py·logging.py 등) 금지.
+  #446 «환경 하나 = 파일 하나» — base·local·production·test 는 예시(목록 열림 — T64).
+       온전한 환경 이름(staging 등)은 허용하고 «약어»(prod·stg·dev …)만 위반이다.
+  #447 공통 설정은 `base` 에 두고 환경 파일은 그것을 가져와 덮어쓴다.
 
-사용법: check-test-config.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
-종료코드: 0=clean(또는 설정 없음·판정 불가·파싱 실패), 2=blocker(발견 출력), 1=사용 오류.
+이관 계약 (명세 조각 ⓐ): 대상 0건 가드(#74) · 분석 실패는 exit 1(fail-open 금지 —
+옛 판의 «어떤 예외든 exit 0»을 걷었다).
+
+사용법: check-test-config.py [TARGET_DIR]   (기본: 현재 디렉터리)
+종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 """
 from __future__ import annotations
 
+import ast
 import configparser
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 try:
+    import standard_tree as tree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
+
+try:
     import tomllib  # Python 3.11+
-except ModuleNotFoundError:  # pragma: no cover - 3.10 이하 fallback
+except ModuleNotFoundError:  # 3.10 이하 — 텍스트 스캔 fallback
     tomllib = None  # type: ignore[assignment]
 
 SKIP_DIRS = {
-    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__",
+    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
     "build", "dist", ".tox", ".mypy_cache", ".pytest_cache", ".eggs",
 }
+DJANGO_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+NEW_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
 
-# pytest 설정 파일 이름과 그 안에서 pytest 설정을 담는 섹션 헤더.
-# pyproject.toml 은 TOML 이라 별도 처리(아래).
-INI_CONFIGS = {
-    "pytest.ini": "[pytest]",
-    "tox.ini": "[pytest]",
-    "setup.cfg": "[tool:pytest]",
+TEST_CHILDREN = {"unit", "integration", "e2e", "factories", "fake"}
+TEST_DIRECT_FILES = {"conftest.py", "__init__.py"}
+
+# settings/ 파일 이름 — 약어(#446 · 규율 ④)와 기능 분할(#445) 블록리스트.
+ABBREV_BAN = {"prod": "production", "dev": "local", "stg": "staging", "stag": "staging", "loc": "local", "tst": "test"}
+FEATURE_BAN = {
+    "celery", "database", "db", "logging", "cache", "storage", "email",
+    "auth", "api", "static", "cors", "rest", "drf", "security",
 }
+
+INI_CONFIGS = {"pytest.ini": "[pytest]", "tox.ini": "[pytest]", "setup.cfg": "[tool:pytest]"}
 PYPROJECT_SECTION = "[tool.pytest.ini_options]"
-
-# 설정 *텍스트* 에 이 중 하나라도 있으면 Django settings 바인딩이 성립한 것으로 본다(고정밀·관용).
-# tomllib 부재(3.10 이하)·configparser 실패 시의 **텍스트 스캔 fallback** 에서만 쓴다 — 구조화 파서
-# 경로(tomllib·configparser)는 키를 정밀 확인한다. fallback 은 라인-앵커로 위양성을 피한다:
-#   DJANGO_SETTINGS_MODULE — 직접 환경/옵션 지정(라인 키 `DJANGO_SETTINGS_MODULE = …` 또는 본문 등장).
-#   --ds=a.b.settings / --ds a.b.settings — pytest-django addopts 별칭(명령행 형태).
-#   ds = a.b.settings — pytest-django ini 별칭 키(라인-앵커, `python_files`·`addopts` 등 다른 키와
-#     구분하려고 줄 시작에서 `ds` 키만 매칭).
-#   django_find_project — pytest-django 프로젝트 자동탐색.
-BINDING_LINE_RE = re.compile(
-    r"^\s*(?:DJANGO_SETTINGS_MODULE|ds|django_find_project)\s*[=:]",
-    re.MULTILINE,
-)
+BINDING_LINE_RE = re.compile(r"^\s*(?:DJANGO_SETTINGS_MODULE|ds|django_find_project)\s*[=:]", re.MULTILINE)
 BINDING_SUBSTRINGS = ("DJANGO_SETTINGS_MODULE", "--ds=", "--ds ", "django_find_project")
-
-
-def _text_has_binding(text: str) -> bool:
-    """텍스트 스캔 fallback — 구조화 파서를 못 쓸 때만. 명령행 `--ds=`·`DJANGO_SETTINGS_MODULE`
-    본문 등장, 또는 라인-앵커 ini 키(`ds =`·`DJANGO_SETTINGS_MODULE =`·`django_find_project =`)를 본다."""
-    if any(s in text for s in BINDING_SUBSTRINGS):
-        return True
-    return BINDING_LINE_RE.search(text) is not None
-
-# conftest 가 Django 를 구성하는 신호(설정 파일 밖 바인딩 — 전부 정상 경로).
 CONFTEST_MARKERS = (
-    'os.environ.setdefault("DJANGO_SETTINGS_MODULE"',
-    "os.environ.setdefault('DJANGO_SETTINGS_MODULE'",
-    'os.environ["DJANGO_SETTINGS_MODULE"]',
-    "os.environ['DJANGO_SETTINGS_MODULE']",
-    "DJANGO_SETTINGS_MODULE",
-    "django.setup(",
-    "settings.configure(",
-    "pytest_configure",
+    "DJANGO_SETTINGS_MODULE", "django.setup(", "settings.configure(", "pytest_configure",
 )
 
-
-def _git_available(root: Path) -> bool:
-    return (root / ".git").exists()
-
-
-def _porcelain(root: Path, relpath: str) -> str | None:
-    try:
-        res = subprocess.run(
-            ["git", "-C", str(root), "status", "--porcelain", "--", relpath],
-            capture_output=True,
-            text=True,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return None
-    if res.returncode != 0:
-        return None
-    return res.stdout
+DB_TEST_BASES = {"TestCase", "TransactionTestCase", "LiveServerTestCase"}
+ENTRANCE_NAMES = {"Client", "TestClient", "TestAsyncClient", "APIClient"}
 
 
-def _is_new_or_modified(root: Path, file: Path) -> bool | None:
-    """이번 작업이 이 파일을 새로 만들거나 수정했나. 판정 불가면 None(→ 스킵)."""
-    if not _git_available(root):
-        return None
-    try:
-        rel = file.relative_to(root).as_posix()
-    except ValueError:
-        return None
-    out = _porcelain(root, rel)
-    if out is None:
-        return None
-    return bool(out.strip())
+class Findings(list):
+    def add(self, rule: str, path: Path, msg: str) -> None:
+        self.append(f"[{rule}] {path}: {msg}")
+
+
+def _has_adoption_signal(bc_dir: Path) -> bool:
+    """채택 신호원 둘(#78) — check-layer-skeleton 과 같은 판."""
+    has_layer = any((bc_dir / n).is_dir() for n in NEW_LAYERS)
+    has_marker = any((bc_dir / m).is_file() for m in DJANGO_APP_MARKERS) or any(
+        p.is_dir() and p.name.startswith("django_") for p in bc_dir.iterdir()
+    )
+    return has_layer or has_marker
+
+
+def _find_bcs(target: Path) -> list[Path]:
+    bcs: list[Path] = []
+    for c in target.rglob("application"):
+        if not c.is_dir() or set(c.parts) & SKIP_DIRS:
+            continue
+        bcs.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+    return bcs
 
 
 def _read_text(path: Path) -> str | None:
@@ -139,8 +114,15 @@ def _read_text(path: Path) -> str | None:
         return None
 
 
+# ── 슬라이스 ⑴ — pytest ↔ Django settings 바인딩 ────────────────────────────
+
+def _text_has_binding(text: str) -> bool:
+    if any(s in text for s in BINDING_SUBSTRINGS):
+        return True
+    return BINDING_LINE_RE.search(text) is not None
+
+
 def _ds_in_addopts(addopts: object) -> bool:
-    """addopts(문자열 또는 리스트)에 `--ds=`/`ds` settings 지정이 있나."""
     if isinstance(addopts, str):
         text = addopts
     elif isinstance(addopts, (list, tuple)):
@@ -151,10 +133,6 @@ def _ds_in_addopts(addopts: object) -> bool:
 
 
 def _env_has_ds(env: object) -> bool:
-    """pytest-env 의 `env` 키(리스트 또는 멀티라인 문자열)가 `DJANGO_SETTINGS_MODULE` 을
-    설정하나. pytest-env 플러그인은 `env = ["DJANGO_SETTINGS_MODULE=proj.settings"]`(TOML 리스트)
-    또는 ini 멀티라인 `env =\\n    DJANGO_SETTINGS_MODULE=proj.settings` 로 settings 를 바인딩한다.
-    값을 문자열화해 `DJANGO_SETTINGS_MODULE` 등장만 본다(고정밀·관용)."""
     if isinstance(env, str):
         text = env
     elif isinstance(env, (list, tuple)):
@@ -165,42 +143,34 @@ def _env_has_ds(env: object) -> bool:
 
 
 def _toml_has_binding(path: Path) -> bool | None:
-    """pyproject.toml `[tool.pytest.ini_options]` 에 Django settings 바인딩이 있나.
-    pytest 설정 섹션 자체가 없으면 None(이 파일은 pytest 설정이 아님→대상 아님).
-    바인딩 있으면 True, 설정은 있으나 바인딩 없으면 False."""
+    """pyproject.toml — pytest 섹션이 없으면 None(대상 아님)."""
+    text = _read_text(path)
+    if text is None:
+        return None
     if tomllib is not None:
         try:
-            data = tomllib.loads(path.read_text(encoding="utf-8"))
+            data = tomllib.loads(text)
         except Exception:
-            return None  # 파싱 실패 → fail-open(이 파일은 판정 불가)
+            return _text_has_binding(text) or None  # 파싱 실패 — 텍스트 신호가 없으면 판정 유보
         section = data.get("tool", {}).get("pytest", {}).get("ini_options")
         if not isinstance(section, dict):
-            return None  # pytest 설정 섹션 없음 → 대상 아님
-        if "DJANGO_SETTINGS_MODULE" in section:
+            return None
+        if "DJANGO_SETTINGS_MODULE" in section or "django_find_project" in section:
             return True
-        if "django_find_project" in section:
+        if str(section.get("ds", "")).strip():
             return True
-        if "ds" in section and str(section.get("ds", "")).strip():
-            return True
-        if _ds_in_addopts(section.get("addopts")):
-            return True
-        if _env_has_ds(section.get("env")):  # pytest-env 플러그인 바인딩
+        if _ds_in_addopts(section.get("addopts")) or _env_has_ds(section.get("env")):
             return True
         return False
-    # tomllib 부재(3.10 이하) — 텍스트 스캔 fallback.
-    text = _read_text(path)
-    if text is None or PYPROJECT_SECTION not in text:
+    if PYPROJECT_SECTION not in text:
         return None
     return _text_has_binding(text)
 
 
 def _ini_has_binding(path: Path, section_header: str) -> bool | None:
-    """INI 류(pytest.ini·tox.ini·setup.cfg) 설정에 Django settings 바인딩이 있나.
-    pytest 설정 섹션 자체가 없으면 None(대상 아님)."""
     text = _read_text(path)
     if text is None or section_header not in text:
-        return None  # pytest 설정 섹션 없음 → 대상 아님
-    # configparser 로 해당 섹션 키를 정밀 확인하되, 실패하면 텍스트 스캔으로 fail-open.
+        return None
     section_name = section_header.strip("[]")
     parser = configparser.ConfigParser()
     try:
@@ -210,101 +180,225 @@ def _ini_has_binding(path: Path, section_header: str) -> bool | None:
     if not parser.has_section(section_name):
         return None
     items = {k.lower(): (v or "") for k, v in parser.items(section_name)}
-    if "django_settings_module" in items:
-        return True
-    if "django_find_project" in items:
+    if "django_settings_module" in items or "django_find_project" in items:
         return True
     if items.get("ds", "").strip():
         return True
-    if _ds_in_addopts(items.get("addopts", "")):
+    if _ds_in_addopts(items.get("addopts", "")) or _env_has_ds(items.get("env")):
         return True
-    if _env_has_ds(items.get("env")):  # pytest-env 플러그인 바인딩
-        return True
-    # pytest 섹션엔 바인딩 키가 없으나 같은 파일의 다른 섹션이 settings 를 묶을 수 있다
-    # (예: tox.ini `[testenv]` 의 `setenv = DJANGO_SETTINGS_MODULE = …`). TOML fallback 과
-    # 동일한 fail-open — 본문 스캔으로 settings 신호를 보고 거짓양성을 피한다.
+    # 같은 파일의 다른 섹션이 settings 를 묶을 수 있다(tox `[testenv] setenv`).
     return _text_has_binding(text)
 
 
 def _conftest_configures_django(root: Path) -> bool:
-    """레포 어디든 conftest.py 가 Django 를 셋업하면 True(설정 파일 밖 바인딩)."""
     for path in root.rglob("conftest.py"):
         if set(path.parts) & SKIP_DIRS:
             continue
         text = _read_text(path)
-        if text is None:
-            continue
-        if any(m in text for m in CONFTEST_MARKERS):
+        if text is not None and any(m in text for m in CONFTEST_MARKERS):
             return True
     return False
 
 
-def _find_pytest_configs(root: Path) -> list[tuple[Path, bool | None]]:
-    """이번 작업이 건드린 pytest 설정 파일과 각자의 바인딩 보유 여부.
-    (path, has_binding) — has_binding 가 None 이면 그 파일은 pytest 설정이 아니거나 판정 불가."""
-    out: list[tuple[Path, bool | None]] = []
-    for path in root.rglob("*"):
-        if not path.is_file():
+def _find_pytest_configs(root: Path) -> list[tuple[Path, bool]]:
+    """(path, has_binding) — pytest 설정 섹션을 가진 파일 전부(전면 · touched 무관)."""
+    out: list[tuple[Path, bool]] = []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or set(path.parts) & SKIP_DIRS:
             continue
-        if set(path.parts) & SKIP_DIRS:
-            continue
-        name = path.name
-        if name == "pyproject.toml":
+        if path.name == "pyproject.toml":
             has = _toml_has_binding(path)
-        elif name in INI_CONFIGS:
-            has = _ini_has_binding(path, INI_CONFIGS[name])
+        elif path.name in INI_CONFIGS:
+            has = _ini_has_binding(path, INI_CONFIGS[path.name])
         else:
             continue
-        if has is None:
-            continue  # pytest 설정 섹션 없음·판정 불가 → 대상 아님
-        if _is_new_or_modified(root, path) is not True:
-            continue  # 미변경·비-git·판정 불가 → 스킵(brownfield 존중·거짓양성 회피)
-        out.append((path, has))
+        if has is not None:
+            out.append((path, has))
     return out
 
 
+def _check_binding(root: Path, configs: list[tuple[Path, bool]], out: Findings) -> None:
+    if not configs:
+        return  # pytest 미도입(manage.py test 관례) — 위반이 아니다
+    if any(has for _, has in configs) or _conftest_configures_django(root):
+        return
+    for path, _ in configs:
+        out.add("바인딩", path.relative_to(root), "pytest 설정에 Django settings 바인딩이 없다 — `DJANGO_SETTINGS_MODULE`(또는 `--ds=`/`django_find_project`/conftest 셋업)이 없으면 수집이 조용히 실패한다(0 collected)")
+
+
+# ── 슬라이스 ⑵ — BC test/ 구조 ──────────────────────────────────────────────
+
+def _imports_of(mod: ast.Module) -> list[str]:
+    out: list[str] = []
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Import):
+            out.extend(a.name for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            out.append(node.module)
+    return out
+
+
+def _db_signals(mod: ast.Module) -> bool:
+    for node in ast.walk(mod):
+        if isinstance(node, ast.Attribute) and node.attr in ("django_db", "objects"):
+            return True
+        if isinstance(node, ast.Name) and node.id == "django_db":
+            return True
+        if isinstance(node, ast.ImportFrom) and node.module == "django.test":
+            if any(a.name in DB_TEST_BASES or a.name == "Client" for a in node.names):
+                return True
+    return False
+
+
+def _entrance_signals(mod: ast.Module) -> bool:
+    for node in ast.walk(mod):
+        if isinstance(node, (ast.Name, ast.Attribute)):
+            nm = node.id if isinstance(node, ast.Name) else node.attr
+            if nm in ENTRANCE_NAMES:
+                return True
+    for p in _imports_of(mod):
+        if "cron_job" in p:
+            return True
+    return False
+
+
+def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
+    test_dir = bc / "test"
+    if not test_dir.is_dir():
+        return  # 존재는 skeleton #488 소유 — 여기서 중복으로 내지 않는다
+    for p in sorted(test_dir.iterdir()):
+        if p.name.startswith(".") or p.name == "__pycache__":
+            continue
+        if p.is_dir():
+            if p.name not in TEST_CHILDREN:
+                out.add("#384", bc_rel / "test" / p.name, "`test/` 의 자식은 다섯뿐이다 — unit/·integration/·e2e/·factories/·fake/ (#383: 폴더 이름이 «무엇을 켜고 도는가»를 말한다)")
+        elif p.name not in TEST_DIRECT_FILES:
+            out.add("#384", bc_rel / "test" / p.name, "`test/` 직계 파일은 `conftest.py` 뿐이다 — 테스트는 unit/·integration/·e2e/ 안으로")
+
+    # factories/ 위치(#391) — test/ 직계가 아닌 곳의 factories/
+    for p in test_dir.rglob("factories"):
+        if p.is_dir() and p.parent != test_dir:
+            out.add("#391", bc_rel / p.relative_to(bc), "`factories/` 는 `integration/` 안이 아니라 그 형제로 둔다")
+
+    for f in sorted(test_dir.rglob("*.py")):
+        rel_in = f.relative_to(test_dir)
+        rel = bc_rel / "test" / rel_in
+        try:
+            mod = ast.parse(f.read_text(encoding="utf-8"))
+        except (SyntaxError, OSError, UnicodeDecodeError):
+            continue
+        top = rel_in.parts[0] if len(rel_in.parts) > 1 else ""
+        imports = _imports_of(mod)
+        for p in imports:
+            parts = p.split(".")
+            if parts[0] == "application" and len(parts) > 1 and parts[1] != bc.name:
+                out.add("#385", rel, f"`{p}` import — BC `test/` 에는 그 BC 의 테스트만 온다(타 BC 는 입구로 검사한다)")
+        if top == "unit":
+            if _db_signals(mod):
+                out.add("#387", rel, "`test/unit/` 은 DB 를 켜지 않는다 — 포트 자리에는 `fake/` 의 가짜 구현을 꽂는다")
+            if any("factories" in p.split(".") for p in imports):
+                out.add("#388", rel, "`test/unit/` 은 `factories/` 를 import 하지 않는다")
+        elif top == "integration" and f.name.startswith("test_"):
+            if not _db_signals(mod):
+                out.add("#389", rel, "`test/integration/` 은 진짜 DB 를 켠다 — DB 신호(django_db·TestCase·.objects)가 없다면 unit/ 자리다")
+        elif top == "e2e" and f.name.startswith("test_"):
+            if not _entrance_signals(mod):
+                out.add("#390", rel, "`test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job)를 안 거치면 위반이다")
+        if top == "factories" and f.name != "__init__.py":
+            has_factory = any(p == "factory" or p.startswith("factory.") for p in imports) or any(
+                isinstance(n, ast.ClassDef) and any(str(getattr(b, "attr", getattr(b, "id", ""))).endswith("Factory") for b in n.bases)
+                for n in ast.walk(mod)
+            )
+            if not has_factory:
+                out.add("#392", rel, "`factories/` 에는 factory_boy 픽스처만 온다 — 다른 재료는 `fake/` 또는 테스트 안으로")
+
+
+# ── 슬라이스 ⑶ — <project>/settings/ 환경축 ─────────────────────────────────
+
+def _find_settings_dirs(root: Path) -> list[Path]:
+    out: list[Path] = []
+    for p in root.rglob("settings"):
+        if not p.is_dir() or set(p.parts) & SKIP_DIRS:
+            continue
+        if "application" in p.parts:
+            continue  # BC 안 settings 는 이 축이 아니다(있다면 skeleton 몫)
+        out.append(p)
+    return sorted(out)
+
+
+def _base_imported(mod: ast.Module) -> bool:
+    for node in ast.walk(mod):
+        if isinstance(node, ast.ImportFrom):
+            m = node.module or ""
+            if m == "base" or m.endswith(".base"):
+                return True
+            if node.level >= 1 and (m == "base" or any(a.name == "base" for a in node.names)):
+                return True
+    return False
+
+
+def _check_settings_dir(d: Path, root: Path, out: Findings) -> None:
+    for f in sorted(d.glob("*.py")):
+        rel = f.relative_to(root)
+        stem = f.stem
+        if stem in ("__init__", "base"):
+            continue
+        if stem in ABBREV_BAN:
+            out.add("#446", rel, f"환경 파일 이름에 약어를 쓰지 않는다 — `{stem}` 이 아니라 `{ABBREV_BAN[stem]}`")
+            continue
+        if stem in FEATURE_BAN:
+            out.add("#445", rel, f"`settings/` 에서 갈리는 축은 환경 하나뿐이다 — 기능별 파일(`{stem}.py`)로 쪼개지 않는다(공통 설정은 `base.py` 로)")
+            continue
+        try:
+            mod = ast.parse(f.read_text(encoding="utf-8"))
+        except (SyntaxError, OSError, UnicodeDecodeError):
+            continue
+        if not _base_imported(mod):
+            out.add("#447", rel, "환경 파일은 `base` 를 가져와 덮어쓴다 — `from .base import *` 가 없다")
+
+
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
-    if not root.is_dir():
-        print(f"[check-test-config] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
+    if len(argv) > 1:
+        print(f"사용법: {Path(sys.argv[0]).name} [TARGET_DIR]", file=sys.stderr)
+        return 1
+    target = Path(argv[0]).resolve() if argv else Path.cwd()
+    if not target.is_dir():
+        print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1
 
     try:
-        configs = _find_pytest_configs(root)
-    except Exception:
-        return 0  # 어떤 예외든 fail-open(정밀 그물이지 정확성 오라클 아님).
+        bcs = _find_bcs(target)
+        configs = _find_pytest_configs(target)
+        settings_dirs = _find_settings_dirs(target)
+        test_dirs = [bc / "test" for bc in bcs if (bc / "test").is_dir()]
 
-    if not configs:
-        return 0  # pytest 설정 없음(manage.py test 관례 존중) → 발화 안 함.
+        adopted = any(_has_adoption_signal(b) for b in bcs)
+        # 대상 0건 가드(#74) — 채택 신호는 있는데 이 검사기의 대상이 전부 0건이면 exit 2.
+        if adopted and not test_dirs and not configs and not settings_dirs:
+            print("blocker: 채택 신호는 있는데 test/·pytest 설정·settings 대상이 전부 0건이다 — 조용한 무동작을 금지한다(#74)")
+            return 2
+        if not adopted and not configs and not settings_dirs:
+            print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
+            return 0
 
-    # 설정 중 하나라도 자체 바인딩을 가지면 러너는 묶인다. conftest 의 Django 셋업도 바인딩.
-    if any(has for _, has in configs):
-        return 0
-    if _conftest_configures_django(root):
-        return 0
+        findings = Findings()
+        _check_binding(target, configs, findings)
+        for bc in bcs:
+            _check_bc_test(bc, bc.relative_to(target), findings)
+        for d in settings_dirs:
+            _check_settings_dir(d, target, findings)
+    except Exception as exc:  # 분석 실패는 조용한 통과가 아니다 — fail-closed
+        print(f"분석 오류: {exc}", file=sys.stderr)
+        return 1
 
-    findings: list[str] = []
-    for path, _ in configs:
-        findings.append(f"  - {path.relative_to(root).as_posix()}")
-
-    print(
-        "[check-test-config] BLOCKER — pytest 설정은 있으나 Django settings 바인딩이 없다"
-        "(pytest-django 가 테스트를 수집할 수 없는 결정적 깨짐):"
-    )
-    for f in findings:
-        print(f)
-    print(
-        "  근거: Phase 2 러너 준비·`implementation-test`/`implementation-django` §6.2. 위 pytest "
-        "설정에 `DJANGO_SETTINGS_MODULE`(또는 addopts `--ds=`/`django_find_project`)가 없고 "
-        "conftest 의 Django 셋업(`os.environ.setdefault(\"DJANGO_SETTINGS_MODULE\"…`·"
-        "`django.setup()`·`settings.configure()`·`pytest_configure`)도 없다 — pytest-django 가 "
-        "settings 를 못 찾아 ORM/모델 import 가 `ImproperlyConfigured` 로 죽고 테스트 수집이 "
-        "조용히 실패한다(0 collected). 설정에 프로젝트의 실제 `DJANGO_SETTINGS_MODULE` 을 더하거나 "
-        "conftest 에서 Django 를 셋업하라. (pytest 설정을 아예 두지 않고 `manage.py test` 관례를 "
-        "쓰는 것은 위반이 아니다 — 이 가드는 'pytest 를 도입했는데 바인딩이 깨진' 경우만 본다.)"
-    )
-    return 2
+    if findings:
+        print(f"blocker {len(findings)}건 — 테스트·settings 규율 위반 (트리 105~111·139·140행)")
+        for f in findings:
+            print(" ", f)
+        return 2
+    print(f"clean — test/ {len(test_dirs)}곳 · pytest 설정 {len(configs)}개 · settings {len(settings_dirs)}곳 규율 일치 (standard_tree {tree.SOURCE_SHA})")
+    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    sys.exit(main(sys.argv[1:]))

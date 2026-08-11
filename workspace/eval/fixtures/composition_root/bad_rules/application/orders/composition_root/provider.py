@@ -1,0 +1,2 @@
+def provide() -> None:
+    pass

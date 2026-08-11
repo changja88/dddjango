@@ -1,0 +1,2 @@
+class InvoiceErrorSchema:
+    pass

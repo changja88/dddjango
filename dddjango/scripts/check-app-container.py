@@ -41,7 +41,7 @@ import sys
 from pathlib import Path
 
 SKIP_DIRS = {
-    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__",
+    ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
     "build", "dist", ".tox", ".mypy_cache", ".pytest_cache", ".eggs",
 }
 
@@ -114,14 +114,17 @@ def _porcelain(root: Path, relpath: str) -> str | None:
     return res.stdout
 
 
-def _touched_with_new_domain(root: Path, d: Path) -> bool | None:
-    """이번 변경이 D 에 새 도메인 작업을 더했나. 판정 불가면 None(→ 스킵)."""
+def _touched_with_new_domain(root: Path, d: Path) -> bool:
+    """이번 변경이 D 에 새 도메인 작업을 더했나.
+
+    git 이 없거나 판정이 불가하면 True — «전부 이번 작업으로 간주»한다(fail-closed ·
+    명세 조각 ⓐ). 비-git 스킵은 검사가 꺼진 것이지 깨끗한 것이 아니다."""
     if not _git_available(root):
-        return None
+        return True
     rel = d.relative_to(root).as_posix()
     out = _porcelain(root, rel)
     if out is None:
-        return None
+        return True
     for line in out.splitlines():
         if len(line) < 4:
             continue
@@ -163,7 +166,7 @@ def _has_real_app_content(app_dir: Path) -> bool:
 
 def _has_migrated_counterpart(app_container: Path, name: str) -> bool:
     """`application/` 하위에 D 의 *실질* 이주 대응 앱이 있나(있으면 면제=G3 거짓)."""
-    # 표준 위치: application/<name>/infra_layer/django_<name>/
+    # 표준 위치: application/<name>/driven_layer/django_<name>/
     for django_pkg in app_container.rglob(f"django_{name}"):
         if django_pkg.is_dir() and _has_real_app_content(django_pkg):
             return True
@@ -189,11 +192,13 @@ def main(argv: list[str]) -> int:
     if app_container is None:
         return 0  # 표준 레이아웃(`application/`) 미적용 → §1.1 존중, 해당 없음.
 
+    if not _git_available(root):
+        print("주의: git 저장소가 아니다 — touched 식별이 불가해 «전 후보»를 검사한다(fail-closed)")
+
     findings: list[str] = []
     for d in _iter_candidate_apps(root, app_container):
-        touched = _touched_with_new_domain(root, d)
-        if touched is not True:
-            continue  # 미touch·판정불가(비-git) → 스킵(거짓양성 회피).
+        if not _touched_with_new_domain(root, d):
+            continue  # git 판정 가능 + 미touch → 존중(§1.1 — touched 만 본다)
         if _has_migrated_counterpart(app_container, d.name):
             continue  # 이미 application/ 로 이주됨(빈 껍데기 아닌 실질) → orphan/정리 영역.
         findings.append(f"  - {d.relative_to(root).as_posix()}/")
@@ -207,7 +212,7 @@ def main(argv: list[str]) -> int:
             print(f)
         print(
             "  근거: discipline-houserules §0-1. 이번 작업이 건드린(새 마이그레이션/판정) "
-            "기존 앱도 위치는 `application/<app>/`(데이터소스면 `infra_layer/django_<app>/`)로 "
+            "기존 앱도 위치는 `application/<bc>/`(장고 앱이면 `driven_layer/django_<bc>/`)로 "
             "이주한다 — `architecture-ddd` §632-(2) 2026-06-08 개정으로 데이터소스 면제는 *판정 "
             "실내용(.py)*에 한정하고 위치·4계층·애그리거트 골격은 무조건이다; 이 스크립트는 그중 "
             "*위치* 한 축만 본다. 기존 0001 보존은 `implementation-django` §10.4(label/db_table 유지·state-only "

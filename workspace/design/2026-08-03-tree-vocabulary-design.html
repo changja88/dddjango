@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>dddjango 표준 트리 — 현행 진단</title>
+
+<style>
+  :root {
+    --paper:#F2F4F3; --card:#FAFBFA; --sunk:#E7EBEA;
+    --ink:#141D20; --ink-2:#4E5F64; --ink-3:#7E9095;
+    --rule:#C9D2D2; --rule-soft:#DDE4E3; --tree-line:#9FADAD;
+
+    --ddd:#1B6E6B;    --ddd-bg:#DCEDEC;
+    --hex:#2B4C7E;    --hex-bg:#E3EAF4;
+    --clean:#7A4478;  --clean-bg:#F0E4EF;
+    --own:#6E7A7E;    --own-bg:#E7EBEC;
+
+    --flag:#A8442E;   --flag-bg:#F7E2DC;
+    --ok:#2F6B4F;     --ok-bg:#DFEDE5;
+
+    --sans:'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+    --mono:ui-monospace, 'SF Mono', SFMono-Regular, Menlo, 'Cascadia Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+      --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+      --rule:#2D3C42; --rule-soft:#223036; --tree-line:#4A5F66;
+      --ddd:#5FC0BC;   --ddd-bg:#122E2D;
+      --hex:#7BA3DC;   --hex-bg:#16253A;
+      --clean:#C48FC1; --clean-bg:#2A1E29;
+      --own:#93A2A6;   --own-bg:#1F2A2D;
+      --flag:#E08165;  --flag-bg:#33201A;
+      --ok:#77BE99;    --ok-bg:#16281F;
+    }
+  }
+  :root[data-theme="light"] {
+    --paper:#F2F4F3; --card:#FAFBFA; --sunk:#E7EBEA;
+    --ink:#141D20; --ink-2:#4E5F64; --ink-3:#7E9095;
+    --rule:#C9D2D2; --rule-soft:#DDE4E3; --tree-line:#9FADAD;
+    --ddd:#1B6E6B; --ddd-bg:#DCEDEC;
+    --hex:#2B4C7E; --hex-bg:#E3EAF4;
+    --clean:#7A4478; --clean-bg:#F0E4EF;
+    --own:#6E7A7E; --own-bg:#E7EBEC;
+    --flag:#A8442E; --flag-bg:#F7E2DC;
+    --ok:#2F6B4F; --ok-bg:#DFEDE5;
+  }
+  :root[data-theme="dark"] {
+    --paper:#0F1618; --card:#182226; --sunk:#1E2A2E;
+    --ink:#E4EBEC; --ink-2:#9FB0B4; --ink-3:#74868B;
+    --rule:#2D3C42; --rule-soft:#223036; --tree-line:#4A5F66;
+    --ddd:#5FC0BC; --ddd-bg:#122E2D;
+    --hex:#7BA3DC; --hex-bg:#16253A;
+    --clean:#C48FC1; --clean-bg:#2A1E29;
+    --own:#93A2A6; --own-bg:#1F2A2D;
+    --flag:#E08165; --flag-bg:#33201A;
+    --ok:#77BE99; --ok-bg:#16281F;
+  }
+
+  * { box-sizing: border-box; }
+  /* 단독 파일이라 브라우저 기본 여백을 직접 지운다 */
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 15.5px; line-height: 1.78;
+    -webkit-font-smoothing: antialiased; letter-spacing: -0.003em;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 26px; }
+  .wide { max-width: min(1900px, 97vw); margin: 0 auto; padding: 0 22px; }
+  .tail { padding-bottom: 110px; }
+
+  section { padding: 40px 0 4px; display: flex; flex-direction: column; gap: 15px;
+            border-top: 1px solid var(--rule-soft); }
+  header.top + section { border-top: none; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--ink-3);
+    display: flex; gap: 11px; align-items: center; margin: 0;
+  }
+  .eyebrow::after { content:""; flex:1; height:1px; background: var(--rule); }
+  h2 { margin: 0; font-size: clamp(19px, 3.4vw, 25px); line-height: 1.34;
+       font-weight: 800; letter-spacing: -0.03em; text-wrap: balance; }
+  h3 { margin: 14px 0 -2px; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+  p { margin: 0; max-width: 70ch; }
+  p b, li b, td b { color: var(--ink); font-weight: 700; }
+  ul { margin: 0; padding-left: 1.15em; max-width: 70ch; display: flex; flex-direction: column; gap: 6px; }
+  li::marker { color: var(--ink-3); }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--sunk);
+         padding: 1.5px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+  a { color: var(--hex); }
+  :focus-visible { outline: 2px solid var(--hex); outline-offset: 3px; }
+  [id] { scroll-margin-top: 18px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+  header.top { padding: 48px 0 24px; border-bottom: 2px solid var(--ink);
+               display: flex; flex-direction: column; gap: 14px; }
+  .kicker { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em;
+            text-transform: uppercase; color: var(--ink-3); }
+  h1 { margin: 0; font-size: clamp(26px, 4.6vw, 37px); line-height: 1.24;
+       font-weight: 800; letter-spacing: -0.035em; text-wrap: balance; }
+  .lede { font-size: 16.5px; color: var(--ink-2); max-width: 70ch; }
+  .lede b { color: var(--ink); font-weight: 700; }
+
+  /* ── 범례 ── */
+  .legend { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .lg { border: 1px solid var(--rule); background: var(--card); padding: 12px 14px;
+        display: flex; flex-direction: column; gap: 5px; border-left-width: 3px; }
+  .lg.ddd { border-left-color: var(--ddd); } .lg.hex { border-left-color: var(--hex); }
+  .lg.clean { border-left-color: var(--clean); } .lg.own { border-left-color: var(--own); }
+  .lg .n { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+  .lg.ddd .n { color: var(--ddd); } .lg.hex .n { color: var(--hex); }
+  .lg.clean .n { color: var(--clean); } .lg.own .n { color: var(--own); }
+  .lg .d { font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
+
+  /* ══ 좌우 트리 ══ */
+  .duo { display: grid; gap: 20px; align-items: start; }
+  @media (min-width: 1000px) { .duo { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 18px; } }
+  .duo > * { min-width: 0; }
+  .solo { display: block; }
+  .solo > * { min-width: 0; }
+  .side-hd { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+             padding-bottom: 8px; margin-bottom: 9px; border-bottom: 2px solid var(--ink); }
+  .side-hd .t { font-size: 17px; font-weight: 800; letter-spacing: -0.025em; }
+  .side-hd .s { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.04em; }
+  .side.rev .side-hd { border-bottom-color: var(--ok); }
+  .side.rev .side-hd .t { color: var(--ok); }
+
+  .tree-scroll { overflow-x: auto; border: 1px solid var(--rule); background: var(--card); }
+  .tree { min-width: 0; font-family: var(--mono); font-size: 11.5px; line-height: 1.62; }
+  /* 행 정렬은 stretch. baseline 은 핀·주석 유무에 따라 경로 칸을 위아래로 흔들어
+     선을 어긋나게 했다. --lh 가 절대 px 라 모든 칸의 첫 줄 중심이 한 축에 놓인다. */
+  .tr { display: grid; grid-template-columns: 34ch 52px minmax(0, 1fr) 92px;
+        gap: 0 10px; align-items: stretch;
+        --lh: 19px; --pad: 3px;
+        padding: var(--pad) 12px; border-left: 3px solid transparent; }
+  .tr > * { min-width: 0; line-height: var(--lh); }
+  .tr.ddd   { border-left-color: var(--ddd);   background: linear-gradient(90deg, var(--ddd-bg) 0%, transparent 62%); }
+  .tr.hex   { border-left-color: var(--hex);   background: linear-gradient(90deg, var(--hex-bg) 0%, transparent 62%); }
+  .tr.clean { border-left-color: var(--clean); background: linear-gradient(90deg, var(--clean-bg) 0%, transparent 62%); }
+  .tr.own   { border-left-color: var(--own);   background: linear-gradient(90deg, var(--own-bg) 0%, transparent 62%); }
+
+  /* 트리 선은 문자가 아니라 CSS 로 긋는다 — 폰트 폴백에 좌우되지 않는다.
+     세로 선은 «높이»가 아니라 top/bottom 으로 잡아 행 경계까지 그린다 —
+     주석이 두 줄이 되든 핀이 접히든 위아래 행과 정확히 맞물린다. */
+  .tr .path { color: var(--ink); white-space: nowrap; display: flex; align-items: stretch; }
+  .tr .g { position: relative; flex: 0 0 1.5em; }
+  .tr .g.v::before, .tr .g.t::before {
+    content: ""; position: absolute; left: 0.45em;
+    top: calc(-1 * var(--pad)); bottom: calc(-1 * var(--pad));
+    border-left: 1.5px solid var(--tree-line);
+  }
+  .tr .g.l::before {                              /* 마지막 자식 — 꺾이고 끝난다 */
+    content: ""; position: absolute; left: 0.45em;
+    top: calc(-1 * var(--pad)); height: calc(var(--pad) + var(--lh) / 2);
+    border-left: 1.5px solid var(--tree-line);
+  }
+  .tr .g.t::after, .tr .g.l::after {              /* 이름으로 뻗는 가로 획 */
+    content: ""; position: absolute; left: 0.45em; top: calc(var(--lh) / 2 - 0.75px);
+    width: 1.05em; border-top: 1.5px solid var(--tree-line);
+  }
+  .tr .nm { flex: 0 0 auto; align-self: flex-start; }
+  .tr .path b { font-weight: 400; }
+  .tr .nm b { font-weight: 700; }
+  /* 가로 패딩은 .tr 과 모바일 override 에 맡긴다 — shorthand 로 덮으면
+     명시도가 높아 모바일에서 이 행만 2px 밀린다(실제로 그랬다) */
+  .tr.gap { --pad: 0px; padding-top: 0; padding-bottom: 0; min-height: 10px; }
+
+  .tr .lin { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+             font-weight: 700; white-space: nowrap; }
+  .tr.ddd .lin { color: var(--ddd); } .tr.hex .lin { color: var(--hex); }
+  .tr.clean .lin { color: var(--clean); } .tr.own .lin { color: var(--own); }
+  .tr .note { font-family: var(--sans); font-size: 11.5px; color: var(--ink-2);
+              letter-spacing: 0; overflow-wrap: anywhere; }
+  .tr .note em { font-style: normal; color: var(--ink); font-weight: 600; }
+  .tr .flagcell { text-align: right; }
+  .tr.hit { box-shadow: inset 0 0 0 1px var(--flag); }
+  .tr.lit { box-shadow: inset 0 0 0 1.5px var(--flag); }
+
+  .tree-head { display: grid; grid-template-columns: 34ch 52px minmax(0,1fr) 92px;
+    gap: 0 10px; padding: 8px 12px 8px 15px; background: var(--sunk);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-3); }
+  .tree-head span:last-child { text-align: right; }
+
+  /* 수정본 변경 표식 */
+  .tr .chg { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 700;
+             padding: 0 5px; border-radius: 2px; letter-spacing: 0.04em; white-space: nowrap;
+             margin-right: 5px; vertical-align: 1px; }
+  .tr .chg.hold { background: var(--sunk); color: var(--ink-3); border: 1px solid var(--rule); }
+  .tr.open { border-left-color: var(--flag); border-left-style: dashed;
+             background: linear-gradient(90deg, var(--flag-bg) 0%, transparent 58%); }
+  .tr.open .chg { background: transparent; color: var(--flag); border: 1px dashed var(--flag); }
+  .tr.open .lin { color: var(--flag); }
+
+  /* ── 표식(핀) — 호버하면 팝업 ── */
+  .pin { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 700;
+         background: var(--flag); color: #fff; padding: 1px 6px; border-radius: 2px;
+         text-decoration: none; letter-spacing: 0.03em; white-space: nowrap;
+         border: none; cursor: pointer; }
+  .pin + .pin { margin-left: 3px; }
+  .pin:hover { filter: brightness(1.14); }
+  .pin.on { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .pin.d { background: var(--hex); color: #fff; }
+  .pin.fix { background: var(--ok); }
+
+  #tip { position: fixed; z-index: 90; max-width: min(390px, 92vw);
+         background: var(--card); border: 1px solid var(--ink);
+         box-shadow: 0 10px 30px rgba(0,0,0,0.22); padding: 12px 14px;
+         display: none; flex-direction: column; gap: 6px; }
+  #tip.on { display: flex; }
+  #tip .th { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  #tip .tid { font-family: var(--mono); font-size: 10px; font-weight: 700;
+              background: var(--flag); color: #fff; padding: 1px 6px; border-radius: 2px; }
+  #tip .tvd { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
+              padding: 1px 7px; border-radius: 2px; }
+  #tip .tt { font-size: 13.5px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.45; }
+  #tip .td { font-size: 12.5px; color: var(--ink-2); line-height: 1.62; }
+  #tip .td b { color: var(--ink); }
+  #tip .tf { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); letter-spacing: 0.06em; }
+
+  .rev-key { display: flex; flex-wrap: wrap; gap: 7px 15px; padding: 10px 12px;
+             border: 1px solid var(--rule); border-top: none; background: var(--sunk);
+             font-size: 11px; color: var(--ink-2); }
+  .rev-key span { display: inline-flex; align-items: center; gap: 6px; }
+  .rev-key i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+
+  .rationale { display: flex; flex-direction: column; gap: 0; margin-top: 16px;
+               border: 1px solid var(--rule); background: var(--card); }
+  .rationale > .rh { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--ink-3); padding: 9px 15px;
+    background: var(--sunk); border-bottom: 1px solid var(--rule); }
+  .rz { padding: 12px 15px; border-bottom: 1px solid var(--rule-soft);
+        display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .rz > * { min-width: 0; }
+  .rz:last-child { border-bottom: none; }
+  .rz > .k { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--ink); }
+  .rz > .v { font-size: 13px; color: var(--ink-2); line-height: 1.65; }
+  .rz > .v b { color: var(--ink); }
+  .rz:target { background: var(--flag-bg); box-shadow: inset 3px 0 0 var(--flag); }
+  @media (min-width: 1200px) { .rationale.two { columns: 2; column-gap: 0; }
+    .rationale.two .rz { break-inside: avoid; } }
+
+  /* ══ 문제 상세 ══ */
+  .pnav { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pnav button { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+    background: var(--sunk); color: var(--ink-2); border: 1px solid transparent;
+    padding: 3px 9px; border-radius: 2px; cursor: pointer; line-height: 1.6; }
+  .pnav button:hover { border-color: var(--flag); color: var(--flag); }
+  .pnav button[aria-pressed="true"] { background: var(--flag); color: #fff; }
+
+  .prob { border: 1px solid var(--rule); background: var(--card);
+          border-left: 3px solid var(--flag); padding: 17px 20px;
+          flex-direction: column; gap: 10px; min-width: 0; }
+  .prob { display: none; }
+  .prob.on { display: flex; }
+  .prob > * { min-width: 0; }
+  .prob > .hd { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+  .prob .id { font-family: var(--mono); font-size: 11px; font-weight: 700;
+              background: var(--flag); color: #fff; padding: 2px 7px; border-radius: 2px; }
+  .prob .ttl { font-size: 17px; font-weight: 800; letter-spacing: -0.025em; text-wrap: balance; }
+  .prob .where { font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+    padding-bottom: 8px; border-bottom: 1px solid var(--rule-soft); overflow-wrap: anywhere; }
+  .prob p { font-size: 14px; line-height: 1.72; }
+  .prob .kv { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 4px 14px; font-size: 13.5px; }
+  .prob .kv dt { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--ink-3); padding-top: 4px; white-space: nowrap; }
+  .prob .kv dd { margin: 0; min-width: 0; color: var(--ink-2); line-height: 1.62; }
+  .prob .kv dd b { color: var(--ink); }
+  /* 결정 카드 — 아직 답이 없는 항목 */
+  .prob.decide { border-left-color: var(--hex); border-left-style: dashed; }
+  .prob.decide .id { background: var(--hex); }
+  .prob.decide .kv dd { line-height: 1.72; }
+  .vd { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+        padding: 2px 8px; border-radius: 2px; white-space: nowrap; }
+  .vd.open { background: transparent; color: var(--flag); border: 1px dashed var(--flag); }
+  .sev { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em;
+         text-transform: uppercase; padding: 2px 7px; border-radius: 2px; }
+  .sev.hi  { background: var(--flag-bg); color: var(--flag); }
+  .sev.mid { background: var(--sunk); color: var(--ink-2); }
+  .sev.doc { background: var(--hex-bg); color: var(--hex); }
+  .src { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em;
+         padding: 2px 8px; border-radius: 2px; border: 1px solid; }
+  .src.plug { background: var(--clean-bg); color: var(--clean); border-color: var(--clean); }
+  .src.impl { background: var(--ddd-bg);   color: var(--ddd);   border-color: var(--ddd); }
+  .src.both { background: var(--own-bg);   color: var(--ink-2); border-color: var(--own); }
+
+  /* ── 공통 블록 ── */
+  section > *, .prob > * { min-width: 0; }
+  .tw { overflow-x: auto; border: 1px solid var(--rule); min-width: 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 440px; background: var(--card); font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 13px; border-bottom: 1px solid var(--rule-soft);
+           vertical-align: top; line-height: 1.58; }
+  thead th { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 600; background: var(--sunk);
+    border-bottom: 1.5px solid var(--rule); white-space: nowrap; }
+  tbody tr:last-child td, tbody tr:last-child th { border-bottom: none; }
+  tbody th { font-weight: 700; background: var(--sunk); border-right: 1px solid var(--rule-soft); white-space: nowrap; }
+  td.num, th.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.mono { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+  td.dim { color: var(--ink-3); }
+  td.bad { color: var(--flag); font-weight: 700; }
+  td.good { color: var(--ok); font-weight: 700; }
+  .pre-wrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--card); min-width: 0; }
+  pre { margin: 0; padding: 14px 17px; }
+  pre code { background: none; padding: 0; font-size: 11.5px; line-height: 1.85; white-space: pre; color: var(--ink); }
+  aside.note { border-left: 2px solid var(--hex); background: var(--hex-bg);
+    padding: 13px 16px; display: flex; flex-direction: column; gap: 7px; max-width: 74ch; }
+  aside.note .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--hex); font-weight: 700; }
+  aside.note p { font-size: 13.5px; max-width: none; }
+  aside.note.settled { border-left-color: var(--ok); background: var(--ok-bg); }
+  aside.note.settled .lbl { color: var(--ok); }
+  tr.done { background: var(--ok-bg); }
+  tr.done th { color: var(--ok); }
+  .ans { display: block; margin-top: 6px; font-size: 12.5px; color: var(--ink-2); }
+  .ans b { color: var(--ink); }
+  .empty-state { border: 1px dashed var(--rule);
+    background: repeating-linear-gradient(-45deg, transparent, transparent 9px, var(--sunk) 9px, var(--sunk) 10px);
+    padding: 22px 20px; display: flex; flex-direction: column; gap: 8px; max-width: 74ch; }
+  .empty-state .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+  .empty-state p { font-size: 13.5px; color: var(--ink-2); max-width: none; }
+  .warn-box { border-left: 2px solid var(--flag); background: var(--flag-bg);
+    padding: 12px 15px; display: flex; flex-direction: column; gap: 6px; max-width: 74ch; }
+  .warn-box .lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--flag); font-weight: 700; }
+  .warn-box p { font-size: 13.5px; max-width: none; }
+  .colophon { margin-top: 38px; padding-top: 15px; border-top: 1px solid var(--rule-soft);
+    font-family: var(--mono); font-size: 10.5px; line-height: 1.8; color: var(--ink-3); }
+
+  /* 좁아지면 주석 열을 접는다 — 경로 34ch 는 어느 폭에서도 유지 */
+  @media (max-width: 1439px) {
+    .tr .note, .tree-head span:nth-child(3) { display: none; }
+    .tr, .tree-head { grid-template-columns: 34ch minmax(0, 1fr) 92px; }
+  }
+  @media (max-width: 999px) {
+    .tr .note, .tree-head span:nth-child(3) { display: block; }
+    .tr, .tree-head { grid-template-columns: 34ch 52px minmax(0, 1fr) 92px; }
+  }
+  @media (max-width: 780px) {
+    .tr .note, .tree-head span:nth-child(3) { display: none; }
+    .tr, .tree-head { grid-template-columns: 34ch minmax(0, 1fr) 92px; }
+  }
+  @media (max-width: 620px) {
+    .wrap, .wide { padding: 0 15px; }
+    .tree { font-size: 10.5px; }
+    .tr { --lh: 17px; }
+    .tr .lin, .tree-head span:nth-child(2) { display: none; }
+    .tr, .tree-head { grid-template-columns: 34ch minmax(0, 1fr); gap: 0 8px;
+                      padding-left: 10px; padding-right: 10px; }
+    .tr .flagcell { display: none; }
+    .tr .flagcell.keep { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">dddjango 플러그인 · discipline-houserules §2 표준 파일트리</p>
+  <h1>강제되는 트리 전문 — 계보와 문제를 그 위에 표시한다</h1>
+  <p class="lede">
+    정본이 모든 바운디드 컨텍스트에 <b>무조건 생성하라고 규정한 트리</b>를 한 줄도 빼지 않고 펼친 것이다.
+    각 줄이 <b>DDD · 헥사고날 · 클린</b> 중 어느 계보에서 왔는지, 실측에서 <b>무엇이 어긋났는지</b>를 같은 자리에 붙였다.
+    줄 오른쪽의 <span class="pin">P1</span> 표식에 <b>마우스를 올리면</b> 그 자리의 문제가 바로 뜬다.
+    수치는 전부 <code>broccoli-server</code> 15개 BC 실측이다.
+    <br><b>이 문서는 진단서다</b> — 고치는 안은 <a href="#revlink">별도 문서</a>가 갖는다.
+  </p>
+</header>
+
+<section id="legend">
+  <p class="eyebrow">범례</p>
+  <h2>네 계보가 한 트리에 산다</h2>
+  <p>이 트리는 셋에서 하나씩 가져와 합친 것이다. <b>조합 자체는 흠이 아니다</b> — 실무 표준은 대개 그렇게 만들어진다. 문제는 <em>이음매에 이름 없는 칸이 생겼는데 아무도 이름 붙이지 않은 것</em>이다.</p>
+
+  <div class="legend">
+    <div class="lg ddd">
+      <span class="n">DDD · Evans 2003</span>
+      <span class="d">도메인 <em>안쪽</em>을 조직하는 어휘. 애그리거트·엔티티·값 객체·리포지토리·OHS·ACL — 전부 원전 이름 그대로다.</span>
+    </div>
+    <div class="lg hex">
+      <span class="n">HEXAGONAL · Cockburn 2005</span>
+      <span class="d">바깥과의 <em>경계</em>. 포트와 어댑터. 안쪽 조직에는 아무 말도 하지 않는다.</span>
+    </div>
+    <div class="lg clean">
+      <span class="n">CLEAN · Martin 2012</span>
+      <span class="d">유스케이스 인터랙터와 Main 컴포넌트. <em>이름은 DDD인데 내용물이 클린인 칸</em>이 여기서 나온다.</span>
+    </div>
+    <div class="lg own">
+      <span class="n">DDDJANGO 고유</span>
+      <span class="d">원전에 없고 이 플러그인이 만든 것. 테스트 의미군·오케스트레이션 <code>service/</code>·<code>_layer</code> 접미사.</span>
+    </div>
+  </div>
+
+  <aside class="note">
+    <span class="lbl">표식 읽는 법</span>
+    <p><span class="pin">P6</span> 그 자리에서 발견된 문제다. 표식이 없는 줄은 <b>실측에서 어긋남이 없었다</b>는 뜻이다.</p>
+    <p><b>마우스를 올리면</b> 팝업으로 요지가 뜨고, <b>누르면</b> 아래 상세로 간다. 터치 화면에서는 한 번 누르면 팝업, 다시 누르면 상세로 이동한다.</p>
+  </aside>
+</section>
+
+</div><!-- /wrap -->
+
+<div class="wide">
+<section id="tree">
+  <p class="eyebrow">§2 앱 4계층 전개 — 정본 73~119줄</p>
+  <h2>트리 전문 — 현행</h2>
+
+  <div class="solo">
+
+  <div class="side now">
+    <div class="side-hd">
+      <span class="t">현행</span>
+      <span class="s">정본 §2 · 표식 P1~P12 · 마우스를 올리면 팝업</span>
+    </div>
+    <div class="tree-scroll">
+      <div class="tree-head"><span>경로</span><span>계보</span><span>무엇인가 · 실측</span><span>문제</span></div>
+      <div class="tree">
+
+      <div class="tr own">
+        <span class="path"><b class="nm"><b>application/&lt;app&gt;/</b></b></span>
+        <span class="lin">고유</span>
+        <span class="note">BC 루트 — <em>4계층 어디에도 속하지 않는다.</em> 실측 15개 BC</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr own">
+        <span class="path"><i class="g t"></i><b class="nm">&lt;app&gt;_api_router.py</b></span>
+        <span class="lin">고유</span>
+        <span class="note">HTTP 진입점 — BC 로컬 컨트롤러 등록</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr clean">
+        <span class="path"><i class="g t"></i><b class="nm">composition_root.py</b></span>
+        <span class="lin">Clean</span>
+        <span class="note">Main 컴포넌트 — <em>포트와 어댑터가 실제로 만나는 유일한 지점</em></span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr hit ddd">
+        <span class="path"><i class="g t"></i><b class="nm">published_service/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">오픈 호스트 서비스(OHS) — 다른 BC는 이것만 본다</span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p6" data-go="p6">P6</button></span>
+      </div>
+
+      <div class="tr gap ddd">
+        <span class="path"><i class="g v"></i></span><span class="lin"></span><span class="note"></span><span class="flagcell"></span>
+      </div>
+
+      <div class="tr ddd">
+        <span class="path"><i class="g t"></i><b class="nm"><b>domain_layer/</b></b></span>
+        <span class="lin">DDD ①</span>
+        <span class="note">도메인 — 의존 없음. <em>전술 패턴이 원전 이름 그대로 산다</em></span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr hit ddd">
+        <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">&lt;aggregate&gt;/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">애그리거트 1차 폴더 — <em>백스톱이 이 아래를 안 본다</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p8" data-go="p8">P8</button></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">&lt;aggregate&gt;.py</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">애그리거트 루트 — 일관성 경계</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">entity/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">종속 엔티티</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">value_object/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">값 객체</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr hit ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">repository/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">리포지토리 ABC — 실질은 포트다. 실측 38개, <em>38개 전부 1:1 구현</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p9" data-go="p9">P9</button></span>
+      </div>
+      <div class="tr hit hex">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm"><b>port/</b></b></span>
+        <span class="lin">Hex</span>
+        <span class="note"><em>도메인 안의 유일한 헥사고날 어휘.</em> 실측 48개 — 역할이 넷 섞여 있다</span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p1" data-go="p1">P1</button><button type="button" class="pin" data-k="p10" data-go="p10">P10</button></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">domain_service/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">stateless 도메인 로직</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">event/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">도메인 이벤트 정의</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g t"></i><b class="nm">specification/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">Specification</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g sp"></i><i class="g l"></i><b class="nm">exception.py</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">도메인 예외</span>
+        <span class="flagcell"></span>
+      </div>
+
+      <div class="tr gap clean">
+        <span class="path"><i class="g v"></i></span><span class="lin"></span><span class="note"></span><span class="flagcell"></span>
+      </div>
+
+      <div class="tr hit clean">
+        <span class="path"><i class="g t"></i><b class="nm"><b>application_layer/</b></b></span>
+        <span class="lin">Clean ②</span>
+        <span class="note"><em>이름은 DDD, 내용물은 클린.</em> Django 를 61건 import 한다</span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p2" data-go="p2">P2</button><button type="button" class="pin" data-k="p12" data-go="p12">P12</button></span>
+      </div>
+      <div class="tr clean">
+        <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">&lt;feature&gt;/</b></span>
+        <span class="lin">Clean</span>
+        <span class="note">feature 1차 폴더</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr clean">
+        <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">command/</b></span>
+        <span class="lin">Clean</span>
+        <span class="note">쓰기 유스케이스 인터랙터 — <code>execute(request)</code></span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr clean">
+        <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">query/</b></span>
+        <span class="lin">Clean</span>
+        <span class="note">조회 유스케이스 인터랙터</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr clean">
+        <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">dto/</b></span>
+        <span class="lin">Clean</span>
+        <span class="note">Input · Output Data</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g v"></i><i class="g t"></i><b class="nm">handler/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">도메인 이벤트 핸들러</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr hit own">
+        <span class="path"><i class="g v"></i><i class="g v"></i><i class="g l"></i><b class="nm">service/</b></span>
+        <span class="lin">고유</span>
+        <span class="note">다중 유스케이스 오케스트레이션 — <em>실측: 여기에 ABC 5개가 얹혔다</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p2" data-go="p2">P2</button></span>
+      </div>
+      <div class="tr hit ddd">
+        <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">unit_of_work.py</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">UoW 인터페이스 — <em>응용이 소유하도록 허용된 유일한 추상. 앱당 1개</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p3" data-go="p3">P3</button></span>
+      </div>
+
+      <div class="tr gap hex">
+        <span class="path"><i class="g v"></i></span><span class="lin"></span><span class="note"></span><span class="flagcell"></span>
+      </div>
+
+      <div class="tr hit hex">
+        <span class="path"><i class="g t"></i><b class="nm"><b>infra_layer/</b></b></span>
+        <span class="lin">Hex ③</span>
+        <span class="note">피주도 어댑터 — <em>정본 121줄은 응용이 여기를 의존한다고 적었다</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p11" data-go="p11">P11</button></span>
+      </div>
+      <div class="tr own">
+        <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">django_&lt;app&gt;/</b></span>
+        <span class="lin">고유</span>
+        <span class="note">ORM 모델 · migrations · admin</span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr hit ddd">
+        <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">repository/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">domain repository ABC 구현. 실측 41파일 — <em>이탈 3건</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p9" data-go="p9">P9</button></span>
+      </div>
+      <div class="tr ddd">
+        <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">acl/</b></span>
+        <span class="lin">DDD</span>
+        <span class="note">부패 방지 계층. 실측 26파일 — <em>26개 전부 포트 구현. 이탈 0</em></span>
+        <span class="flagcell"></span>
+      </div>
+      <div class="tr hit hex">
+        <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm"><b>adapter/</b></b></span>
+        <span class="lin">Hex</span>
+        <span class="note">"외부 서비스" 어댑터. 실측 29파일 — <em>이탈 8건. 트리의 최후 수용소</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p4" data-go="p4">P4</button><button type="button" class="pin" data-k="p5" data-go="p5">P5</button></span>
+      </div>
+
+      <div class="tr gap hex">
+        <span class="path"><i class="g v"></i></span><span class="lin"></span><span class="note"></span><span class="flagcell"></span>
+      </div>
+
+      <div class="tr hit hex">
+        <span class="path"><i class="g t"></i><b class="nm"><b>presentation_layer/</b></b></span>
+        <span class="lin">Hex ④</span>
+        <span class="note">주도 어댑터 — <em>정본도 「입력 어댑터」라 부르는데 폴더 이름엔 그 말이 없다</em></span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p7" data-go="p7">P7</button></span>
+      </div>
+      <div class="tr hex">
+        <span class="path"><i class="g v"></i><i class="g t"></i><b class="nm">api/&lt;feature&gt;/</b></span>
+        <span class="lin">Hex</span>
+        <span class="note">HTTP 입력 어댑터 — 얇게</span>
+        <span class="flagcell keep"><button type="button" class="pin" data-k="p7" data-go="p7">P7</button></span>
+      </div>
+      <div class="tr hex">
+        <span class="path"><i class="g v"></i><i class="g l"></i><b class="nm">schema/</b></span>
+        <span class="lin">Hex</span>
+        <span class="note">입출력 계약 DTO</span>
+        <span class="flagcell"></span>
+      </div>
+
+      <div class="tr gap own">
+        <span class="path"><i class="g v"></i></span><span class="lin"></span><span class="note"></span><span class="flagcell"></span>
+      </div>
+
+      <div class="tr own">
+        <span class="path"><i class="g l"></i><b class="nm">test/</b></span>
+        <span class="lin">고유</span>
+        <span class="note">의미군 분리 — unit · integration · e2e · factories</span>
+        <span class="flagcell"></span>
+      </div>
+
+      </div>
+    </div>
+    <div class="rev-key">
+      <span><i style="background:var(--flag)"></i>표식이 있는 줄 = 그 자리에서 발견된 문제</span>
+      <span>표식 없음 = 실측에서 어긋남 없음</span>
+    </div>
+  </div><!-- /side now -->
+
+
+  </div><!-- /solo -->
+
+  <div class="duo confirmed" style="margin-top:22px">
+    <aside class="note settled" style="max-width:none">
+      <span class="lbl">R1 — 구역 배정 (2026-08-03 확정)</span>
+      <p>구역마다 <b>1차 어휘를 담당하는 계보를 하나씩</b> 둔다. 그래야 한 폴더를 두세 계보 말로 번갈아 설명하는 일이 없어진다.</p>
+      <p><code>domain_layer/</code> → <b>DDD</b>(비즈니스 로직·전술 패턴) · <code>application_layer/</code> → <b>클린</b>(유스케이스 조율) · <code>boundary/</code>·<code>presentation_layer/</code>·<code>infra_layer/</code> → <b>헥사고날</b>(바깥을 갈아끼워도 안쪽이 안 바뀌게).</p>
+      <p>이 배정 하나가 두 칸을 결정했다 — <code>port/</code>는 DDD 목록에 없는 유일한 칸이라 <b>도메인에서 나가고</b>, <code>repository/</code>는 Evans 6장 building block이라 <b>남는다</b>.</p>
+    </aside>
+    <aside class="note" style="max-width:none">
+      <span class="lbl">구역 담당 ≠ 검사 범위 — 전역 제약 셋은 트리 전체에 걸린다</span>
+      <p>구역은 «누가 이 방의 말을 정하나»이고, 아래 셋은 «집 전체에 걸린 규칙»이다. 계보마다 하나씩 갖고, 자기 구역 밖에서도 검사된다.</p>
+      <p><b>① 의존은 안쪽으로만 향한다</b>(클린) · <b>② 안쪽은 구체 기술을 모른다</b>(헥사고날) · <b>③ BC 경계는 관문으로만 넘는다</b>(DDD).</p>
+      <p>이 구분이 없으면 «헥사고날은 경계 폴더 담당이니 <code>application_layer</code>의 Django import는 헥사고날 문제가 아니다» 같은 결론이 나온다. 실제로 그 지점에서 <b>61건</b>이 새고 있었고 P1~P11 어디에도 안 잡혀 있었다.</p>
+    </aside>
+  </div>
+
+  <aside class="note" style="max-width:none">
+    <span class="lbl">헥사고날의 목적을 다시 확인 — BC 경계가 아니다</span>
+    <p>Cockburn의 목적은 «애플리케이션이 사용자·프로그램·테스트·배치 <b>어느 쪽에서든 똑같이 구동</b>되고, 최종 장치와 DB <b>없이 개발·테스트</b>될 수 있게 한다»이다. «누구와 통신하는가»는 DDD 컨텍스트 맵의 질문이지 헥사고날의 질문이 아니다. 그래서 헥사고날의 검사는 폴더가 아니라 <b>의존성</b>이다 — <code>domain_layer</code>는 바깥 기술 <b>0건</b>으로 깨끗하지만, <code>application_layer</code>는 Django를 <b>61건</b> import한다(<code>transaction</code> 37 · <code>timezone</code> 20 · <code>connection</code> 3 · DB 예외 5).</p>
+  </aside>
+
+</section>
+</div><!-- /wide -->
+
+<div class="wide">
+<section id="detail">
+  <p class="eyebrow">상세</p>
+  <h2>문제 상세</h2>
+  <p>위 트리의 표식을 누르거나 아래 칩을 고르면 그 문제의 상세가 뜬다.</p>
+
+  <div class="pnav" id="pnav" role="group" aria-label="문제 선택"></div>
+
+  <div class="solo">
+    <div class="side now">
+            <div class="prob-list">
+    <div class="prob" id="p1">
+      <div class="hd"><span class="id">P1</span><span class="ttl">한 이름 아래 역할이 넷 — 그런데 정의가 네 곳에서 서로 다르다</span><span class="src plug">플러그인 결함</span><span class="sev hi">코드 비틀림</span></div>
+      <p class="where">domain_layer/&lt;aggregate&gt;/port/ &nbsp;·&nbsp; 정본 84 · 202 · 269줄</p>
+      <p>정본이 <code>port/</code>를 정의하는 문장이 <b>네 곳에 있고 범위가 전부 다르다.</b> 202줄은 한 행 안에서 정의문과 예시 칸이 어긋난다 — 정의문은 "다른 컨텍스트"라 못 박는데 바로 옆 예시가 <code>PaymentGateway</code>(Stripe)를 든다. 실무자는 예시를 따라간다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>정본 위치</th><th>말하는 범위</th><th class="num">덮는 실측</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">84줄 트리 주석</td><td>"ACL 포트"</td><td class="num">28 / 48</td></tr>
+            <tr><td class="mono">202줄 정의문</td><td>"다른 컨텍스트를 소비할 때"</td><td class="num">28 / 48</td></tr>
+            <tr><td class="mono">202줄 예시 칸</td><td>+ "외부서비스(Gateway 패턴)"</td><td class="num">41 / 48</td></tr>
+            <tr><td class="mono">269줄 §4 명명</td><td>+ "도메인 역할 추상"</td><td class="num dim">경계 불명</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>실측 48개의 정체</b> — 정의문이 덮는 것은 첫 칸뿐이다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>무엇인가</th><th class="num">수</th><th>구현이 사는 곳</th><th>정본이 덮나</th></tr></thead>
+          <tbody>
+            <tr><th>다른 BC 협력</th><td class="num">28</td><td class="mono">infra_layer/acl/</td><td class="good">정의문 안</td></tr>
+            <tr><th>외부 시스템 게이트웨이</th><td class="num">13</td><td class="mono">infra_layer/adapter/</td><td class="dim">예시 칸에만</td></tr>
+            <tr><th>프로세스 내부 기술<br><span class="dim" style="font-weight:400">시계 · 난수 · 토큰</span></th><td class="num">5</td><td class="mono">infra_layer/adapter/</td><td class="bad">어느 문장에도 없음</td></tr>
+            <tr><th>전략 확장점</th><td class="num">2</td><td class="mono dim">구현 0 — 앞으로도<br>infra 에 안 생김</td><td class="bad">어느 문장에도 없음</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <dl class="kv">
+        <dt>핵심</dt>
+        <dd><b>코드가 틀린 게 아니다.</b> 시계·난수를 포트로 뽑아 도메인 밖으로 미는 건 헥사고날 정석이다. 정본이 그 범위를 안 적었을 뿐이고, 이들을 옮기면 오히려 원전을 어긴다.</dd>
+        <dt>원전 대조</dt>
+        <dd>코퍼스 <code>architecture-ddd</code> §5.3은 "포트는 <b>응용/도메인이</b> 필요로 하는 역할"이라며 응용 소유까지 인정한다. <b>정본이 원전보다 좁다.</b></dd>
+        <dt>처방 방향</dt>
+        <dd>코드 이동이 아니라 <b>정의문 일원화</b>. §4의 "도메인 역할 추상"을 정식 범주로 승격하면 5개가 그대로 정당해진다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p2">
+      <div class="hd"><span class="id">P2</span><span class="ttl">응용이 소유하는 추상에 이름 붙은 자리가 없다</span><span class="src plug">플러그인 결함</span><span class="sev hi">코드 비틀림</span></div>
+      <p class="where">application_layer/ &nbsp;·&nbsp; 정본 97 · 202 · 219줄 + 백스톱 check-layer-skeleton.py</p>
+      <p>클린이라면 Output Port는 Use Cases 계층이 소유한다. dddjango는 소유를 <b>도메인으로 못 박았고</b>(202줄), 백스톱이 <code>application_layer/**/port/</code>에 실코드가 있으면 커밋을 막는다. 뚫려 있는 예외는 <code>unit_of_work.py</code> <b>하나뿐</b>이다. 트랜잭션 경계가 아닌 추상이 필요해지는 순간 갈 곳이 없다.</p>
+      <p><b>실측 — 이름이 없으니 남의 폴더로 흩어졌다.</b></p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>BC</th><th>무엇을 두려 했나</th><th>실제로 간 곳</th></tr></thead>
+          <tbody>
+            <tr><th>ai_chat</th><td>실행자 · 이벤트 싱크 · 구독 · 취소 신호 · 슬롯 게이트 <b>ABC 5개</b></td><td class="mono bad">application_layer/…/service/<br><span class="dim">오케스트레이션 칸에 얹음</span></td></tr>
+            <tr><th>billing · products</th><td>UoW 구현</td><td class="mono bad">infra_layer/unit_of_work/<br><span class="dim">표준에 없는 폴더 발명</span></td></tr>
+            <tr><th>usage_quota</th><td>UoW 구현</td><td class="mono bad">infra_layer/repository/<br><span class="dim">남의 칸에 투입</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <dl class="kv">
+        <dt>백스톱 우회</dt>
+        <dd>백스톱은 폴더명 <code>port</code>만 직격한다. <code>service/</code>로 이름을 바꾸면 <b>그대로 통과</b>한다 — ai_chat 5개가 지금 통과 중이다.</dd>
+        <dt>고칠 때의 함의</dt>
+        <dd>응용 소유를 인정하는 것은 <b>클린 쪽으로 반 걸음 옮기는 결정</b>이다. 202줄 조문과 백스톱을 함께 손봐야 앞뒤가 맞는다. 조문은 두고 폴더만 추가하면 표준이 자기 자신과 모순된다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p3">
+      <div class="hd"><span class="id">P3</span><span class="ttl">UoW는 선언 슬롯만 있고 구현 슬롯이 없다</span><span class="src plug">플러그인 결함</span><span class="sev hi">코드 비틀림</span></div>
+      <p class="where">application_layer/unit_of_work.py ↔ infra_layer/ &nbsp;·&nbsp; 정본 219줄 · §3 인프라 표</p>
+      <p>정본 §3 인프라 표의 칸은 넷뿐이다 — <code>django_&lt;app&gt;</code> · <code>repository</code> · <code>acl</code> · <code>adapter</code>. <b>UoW 구현이 들어갈 칸이 없다.</b> 219줄이 "구현은 <code>transaction.atomic()</code>으로 충분"이라 적어 자리를 아예 만들지 않았기 때문이다. 커스텀 UoW가 실제로 필요해지자 <b>3개 BC가 3가지 답</b>을 냈다(위 P2 표).</p>
+      <dl class="kv">
+        <dt>원전 대조</dt>
+        <dd>코퍼스 §6.1 트리에는 <code>infrastructure/unit_of_work.py</code>가 <b>있다.</b> 표준이 파생되면서 이 칸이 떨어졌다.</dd>
+        <dt>P2와의 관계</dt>
+        <dd>P2가 <em>선언</em> 자리 부재라면 P3은 <em>구현</em> 자리 부재다. 한 짝이다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p4">
+      <div class="hd"><span class="id">P4</span><span class="ttl"><code>adapter/</code>가 트리의 최후 수용소가 됐다</span><span class="src plug">플러그인 결함</span><span class="sev hi">코드 비틀림</span></div>
+      <p class="where">infra_layer/adapter/ &nbsp;·&nbsp; 정본 107 · 231줄</p>
+      <p>정본은 <code>adapter/</code>를 "<b>외부 서비스</b> 어댑터(인증·푸시·결제 등) ※외부 I/O 전용"으로 못 박는다. 실측 29파일 중 <b>8건</b>이 그 정의 밖이다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>무엇이</th><th class="num">수</th><th>왜 거기 있나</th></tr></thead>
+          <tbody>
+            <tr><td>도메인 포트 구현</td><td class="num">21</td><td class="dim">정본이 말한 그대로 — 정상</td></tr>
+            <tr><td><code>application_layer</code> ABC 구현</td><td class="num bad">2</td><td>구현하는 ABC가 응용에 있어 <code>acl/</code>도 <code>adapter/</code>도 자격이 없는데 <b>남은 칸이 여기뿐</b></td></tr>
+            <tr><td>다른 BC의 OHS 소비 코드</td><td class="num bad">2</td><td>표준이 <b>"OHS를 소비하는 코드가 어디 사는지"를 안 정했다</b></td></tr>
+            <tr><td>포트 없는 직접 구현 · 순수 매핑 · 상수 모듈</td><td class="num bad">3</td><td>어느 칸에도 이름이 없다</td></tr>
+            <tr><td>포트 구현 + 헬퍼 동거</td><td class="num dim">1</td><td class="dim">준정상</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="note">
+        <span class="lbl">발단 문서의 진단을 뒤집는 실측</span>
+        <p>발단 문서는 <em>"<code>acl/</code>은 정의가 좁아 깨끗하고 <code>adapter/</code>는 넓어서 샌다"</em>고 봤다. 그런데 세 칸을 다 재면 <b>정의가 좁은 <code>repository/</code>도 샌다</b>(3건). 그리고 <b>세 칸 전부 "정의가 넓어서 흘러든" 사례가 0건</b>이다 — 들어온 것은 전부 <em>갈 데가 없어서 밀려온 것</em>이다.</p>
+        <p>그렇다면 넓은 정의는 <b>누수의 원인이 아니라 목적지</b>다. 갈 데 없는 코드가 가장 넓은 칸으로 모일 뿐이고, <code>acl/</code>이 깨끗한 건 정의가 좁아서가 아니라 <b>"다른 BC 상대"라는 목적지에 밀려올 이유가 없어서</b>다.</p>
+        <p><b>처방이 갈린다</b> — 정의만 좁히면 그 8건이 다른 칸으로 옮겨갈 뿐이다. 실제로 이미 그러고 있다(P2·P3). <em>자리를 먼저 만들어야 한다.</em></p>
+      </aside>
+    </div>
+
+    <div class="prob" id="p5">
+      <div class="hd"><span class="id">P5</span><span class="ttl">선언은 한 폴더, 구현은 두 폴더 — 축이 서로 다르다</span><span class="src plug">플러그인 결함</span><span class="sev mid">구조 불일치</span></div>
+      <p class="where">domain_layer/&lt;agg&gt;/port/ → infra_layer/{acl, adapter}/</p>
+      <p>헥사고날에서 포트와 어댑터는 1:1 쌍이다. 여기선 선언 폴더 <b>하나</b>에서 나온 포트가 구현 폴더 <b>둘</b>로 갈린다 — 상대가 다른 BC면 <code>acl/</code>, 외부면 <code>adapter/</code>.</p>
+      <div class="pre-wrap">
+<pre><code>domain_layer/&lt;agg&gt;/port/   48개 ── 선언은 한 폴더        [헥사고날의 시선]
+        │
+        ├──→ infra_layer/acl/       28개 · 26파일           [DDD 컨텍스트 맵의 시선]
+        └──→ infra_layer/adapter/   외부 13 + 내부 기술 5</code></pre>
+      </div>
+      <p>선언을 한 폴더에 모은 것은 헥사고날, 구현을 상대별로 가른 것은 DDD 컨텍스트 맵이다. <b>두 시선의 축이 다르다.</b> 폴더만 보고는 어떤 포트가 어디 구현됐는지 알 수 없다.</p>
+      <dl class="kv">
+        <dt>P1과의 관계</dt>
+        <dd>P1을 풀려고 <code>port/</code> 정의를 넓히면 <b>이 불일치가 더 벌어진다.</b> 대안은 둘 — ⒜ 구현도 한 폴더로 합친다(헥사고날 축 통일) ⒝ 선언도 상대별로 가른다(컨텍스트 맵 축 통일).</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p6">
+      <div class="hd"><span class="id">P6</span><span class="ttl">정본이 "기본"이라 부른 경로가 실무에서 거의 안 쓰인다 — 쓸 자리가 없어서</span><span class="src plug">플러그인 결함</span><span class="sev hi">규정 공백</span></div>
+      <p class="where">published_service/ 소비 측 · 정본 §2 131줄 · 168줄</p>
+
+      <aside class="note">
+        <span class="lbl">먼저 — OHS 자체는 잘 쓰이고 있다</span>
+        <p>"OHS가 사용되지 않는다"는 아니다. <b>15개 BC 중 10개가 OHS를 노출하고, 크로스-BC 통신 24건 중 22건이 실제로 OHS를 거친다.</b> BC 독립은 지켜지고 있다. 문제는 <em>어느 경로로 거치는가</em>이고, 그게 정본 서술과 정반대다.</p>
+      </aside>
+
+      <p>정본은 두 경로를 제시하고 <b>우열을 명시</b>한다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>경로</th><th>정본의 규정</th><th class="num">실측</th></tr></thead>
+          <tbody>
+            <tr>
+              <th>⒜ OHS 직접 소비</th>
+              <td>131줄 — "다른 BC는 그 앱의 <code>published_service/</code>로 소비하는 게 <b>기본</b>이다"<br>168줄 — "<b>기본은</b> 대상 앱의 <code>published_service/</code>만 import한다"</td>
+              <td class="num bad">2건</td>
+            </tr>
+            <tr>
+              <th>⒝ 포트 + ACL</th>
+              <td>131줄 — "OHS가 없거나 단일 트랜잭션·행 잠금이 <b>불가피하면</b>" 쓰는 <em>우회로</em></td>
+              <td class="num good">22건</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>기본과 예외가 정확히 뒤집혀 있다.</b> 그리고 이건 실무의 일탈이 아니다 — 정본 자신이 168줄 <em>끝</em>에서 이렇게 적는다:</p>
+      <div class="pre-wrap">
+<pre><code>"대상이 OHS를 노출하면 ACL 구현을 OHS 호출로 교체하고 포트는 유지한다"
+                                                   (§2 통합 진화 지침)</code></pre>
+      </div>
+      <p>즉 정본은 <b>⒝(포트+ACL이 OHS를 호출)를 진화의 종착점으로 제시</b>한다. 실측이 그대로다 — <code>acl/</code> 26파일 중 <b>22개가 OHS를 호출</b>하고 4개만 아직 업스트림을 직접 만진다(미진화). <em>코드는 정본의 진화 지침을 충실히 따랐다.</em></p>
+
+      <div class="warn-box">
+        <span class="lbl">그렇다면 ⒜는 왜 2건뿐인가 — 놓을 자리가 없다</span>
+        <p>OHS를 <b>포트로 감싸지 않고 직접</b> 소비하려면 그 코드가 어느 계층에 살아야 하는지 정본이 말하지 않는다. 그리고 각 계층의 기존 규정이 전부 그것을 배제한다.</p>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>계층</th><th>OHS 직접 소비가 가능한가</th></tr></thead>
+          <tbody>
+            <tr><th><code>domain_layer</code></th><td class="bad">불가 — 아무것도 의존하지 않는다. 다른 BC는 포트로만 안다</td></tr>
+            <tr><th><code>application_layer</code></th><td class="bad">불가 — "<b>domain 에만 의존</b>"이 §2·§3 표의 원칙이다. 타 BC의 OHS는 domain 이 아니다</td></tr>
+            <tr><th><code>infra_layer/acl/</code></th><td class="bad">불가 — "domain <code>port/</code> ABC <b>구현</b>" 전용. 포트가 없으면 자격이 없다</td></tr>
+            <tr><th><code>infra_layer/adapter/</code></th><td class="bad">불가 — "<b>외부 서비스</b>(인증·푸시·결제)" 전용. 다른 BC 는 외부 서비스가 아니다</td></tr>
+            <tr><th><code>presentation_layer</code></th><td class="dim">HTTP 입력 어댑터 — 소비 위치로 규정된 바 없다</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>합법적인 자리가 하나도 없다.</b> 그래서 실무는 둘 중 하나를 택했다 — 대부분은 포트를 만들어 ⒝로 우회했고(22건), 포트를 만들 이유가 없던 2건은 <code>adapter/</code>로 흘러들었다.</p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>⒜ 를 택한 2건</th><th>무엇을 하나</th><th>왜 포트가 없나</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">lessons/…/adapter/<br>lesson_reminder_sender.py</td><td><code>delivery</code> OHS 로 수업 알림 발송</td><td rowspan="2">도메인이 결과를 받아 판정하지 않는다. <b>단방향 통지</b>라 도메인이 의존할 역할이 없어 포트를 뚫을 근거가 없다</td></tr>
+            <tr><td class="mono">lessons/…/adapter/<br>parent_registration_notifier.py</td><td><code>accounts</code>·<code>notifications</code> OHS 로 학부모 등록 통지</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <dl class="kv">
+        <dt>왜 플러그인 결함인가</dt>
+        <dd>broccoli-server 가 규칙을 어긴 게 아니다. <b>정본이 "기본"이라 부른 경로에 실행 가능한 자리를 안 준 것</b>이고, 그 결과 그 경로를 쓰려는 코드가 갈 데를 잃었다. 정본을 그대로 따르면 누구든 같은 자리에 빠진다.</dd>
+        <dt>부수 결함 — 서술이 실무와 뒤집혀 있다</dt>
+        <dd>131·168줄은 ⒜를 "기본", ⒝를 "불가피할 때의 우회로"로 적는데, 같은 168줄 끝의 진화 지침은 ⒝를 종착점으로 제시한다. <b>한 문단 안에서 우열이 뒤집힌다.</b> 신규 작업자는 앞부분만 읽고 ⒜를 시도했다가 자리가 없어 막힌다.</dd>
+        <dt>결정해야 할 것</dt>
+        <dd>⒜에 자리를 줄 것인가(예: 통지형 소비 전용 칸), 아니면 <b>⒝를 정식 기본으로 승격</b>하고 ⒜를 좁은 예외로 재서술할 것인가. 후자면 문서만 고치면 되고 코드는 이미 그 형태다.</dd>
+        <dt>연결</dt>
+        <dd>이 2건이 <code>adapter/</code>로 흘러든 것이 <button type="button" class="pin" data-k="p4" data-go="p4">P4</button>의 이탈 8건 중 2건이다. P4 를 풀려면 P6 을 먼저 정해야 한다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p7">
+      <div class="hd"><span class="id">P7</span><span class="ttl"><code>adapter</code>라는 이름이 반쪽만 쓰인다</span><span class="src plug">플러그인 결함</span><span class="sev doc">명명</span></div>
+      <p class="where">presentation_layer/api/ &nbsp;·&nbsp; 정본 109 · 135 · 237 · 272줄</p>
+      <p>헥사고날에서 어댑터는 양쪽이다 — 밖에서 안을 두드리는 <b>주도 어댑터</b>, 안이 밖에 부탁하는 <b>피주도 어댑터</b>. dddjango의 <code>infra_layer/adapter/</code>는 피주도 전용이고, 주도 어댑터는 <code>presentation_layer/api/</code>에 다른 이름으로 산다.</p>
+      <p>정본은 네 곳에서 일관되게 "<b>입력 어댑터</b>"라 부른다 — <em>개념은 정확히 알고 있다.</em> 다만 폴더 이름에 그 말이 없다. 결과적으로 "adapter 폴더에 있는 것 = 나가는 것"이라는 국소 규칙이 생기고, <code>api/</code>가 어댑터라는 사실이 트리에서 사라진다.</p>
+      <dl class="kv"><dt>실피해</dt><dd>작다. 다만 헥사고날을 배우고 온 사람이 트리를 처음 볼 때 반드시 걸리는 자리다.</dd></dl>
+    </div>
+
+    <div class="prob" id="p8">
+      <div class="hd"><span class="id">P8</span><span class="ttl">백스톱이 지금 아무것도 잡지 못한다</span><span class="src both">플러그인+구현</span><span class="sev hi">집행 공백</span></div>
+      <p class="where">dddjango/scripts/check-layer-skeleton.py (+ Codex 미러 1벌)</p>
+      <p>실제로 돌려 봤다. <b>두 겹으로 무력화돼 있다.</b></p>
+      <div class="pre-wrap">
+<pre><code>① 있는 그대로 실행                          → 종료코드 0
+② touched-gate 를 끄고 15개 BC 전수 실행     → 종료코드 0</code></pre>
+      </div>
+      <p>검증했다 — 패치는 적용됐고(BC 후보 15 → 검사 대상 15 → 통과 15), 스크립트 자체는 합성 위반 프로젝트에서 정상 발화한다. 그런데도 <b>실제 코드에서 0건</b>이다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>무력화 층</th><th>왜</th></tr></thead>
+          <tbody>
+            <tr><th>touched-gate</th><td><code>git status --porcelain</code>이 비면 BC를 <b>아예 안 본다.</b> 커밋된 코드는 영구 면제 — 평상시 검사 대상이 0이다</td></tr>
+            <tr><th>설계상 저-recall</th><td>gate를 열어도 못 잡는다. 애그리거트 밖 <code>domain_layer/port/</code> 2건은 <b>검사 계층 목록 밖</b>, ai_chat의 ABC 5개는 폴더명이 <code>service/</code>라 <code>port</code> 직격을 비껴가고, <code>infra_layer/unit_of_work/</code> 같은 <b>표준 밖 폴더 신설은 검사 항목 자체가 없다</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <dl class="kv">
+        <dt>함의</dt>
+        <dd>정의를 고쳐도 <b>기계가 안 보면 다음 프로젝트에서 같은 표류가 반복된다.</b> "정의 개정"과 "백스톱 확장"은 한 묶음으로 결정해야 한다.</dd>
+        <dt>부수 발견</dt>
+        <dd><code>parental_controls</code>가 포트를 <code>domain_layer/port/</code>(애그리거트 폴더를 건너뜀)에 뒀다 — 2건. 정의상 명백한 위반인데 검사 범위 밖이라 통과 중이다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p9">
+      <div class="hd"><span class="id">P9</span><span class="ttl"><code>repository/</code>도 샌다 — 정의가 좁은데도</span><span class="src both">플러그인+구현</span><span class="sev mid">자리 부재</span></div>
+      <p class="where">infra_layer/repository/ &nbsp;·&nbsp; 실측 41파일 중 3건</p>
+      <p>가장 건강할 것으로 예상한 칸이다. 실제로 <b>domain ABC 38개가 38개 전부 1:1로 구현</b>돼 있고 애그리거트 밖 배치도 0이다. 그런데 이탈이 3건 있다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>대상</th><th>무엇인가</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">usage_quota_unit_of_work.py</td><td>UoW 구현체 — 자리가 없어 여기로 (P3)</td></tr>
+            <tr><td class="mono">usage_block_event_reader.py</td><td>포트 없이 ORM을 직접 읽는 무상속 클래스</td></tr>
+            <tr><td class="mono">persistence_error_normalizer.py</td><td>공개 클래스 0 · 모듈 함수 5개 — 드라이버 예외 판별</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>세 건 전부 <b>갈 데가 없어 밀려온 것</b>이다. 이것이 P4의 진단을 뒤집는 근거가 됐다 — 좁은 정의도 밀려오는 것은 못 막는다.</p>
+    </div>
+
+    <div class="prob" id="p10">
+      <div class="hd"><span class="id">P10</span><span class="ttl">명명 규약이 판정하지 않는 접미사가 있고, 답이 갈렸다</span><span class="src plug">플러그인 결함</span><span class="sev doc">명명</span></div>
+      <p class="where">정본 §4 264~270줄 &nbsp;·&nbsp; 실측 port ABC 48개</p>
+      <p>§4는 세 접미사만 판정한다 — <code>Repository</code>·<code>Gateway</code>(확립 패턴명 → 구현도 유지 + 기술 한정자), <code>Port</code>(위치 표식 → 구현은 <code>Adapter</code>). 실측에는 규약 밖 접미사가 있다.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>접미사</th><th class="num">수</th><th>§4 규약</th><th>실제 구현 이름</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">Port</td><td class="num">32</td><td>구현은 <code>…Adapter</code></td><td class="mono dim">DjangoUtcClockAdapter ✓</td></tr>
+            <tr><td class="mono">Gateway</td><td class="num">11</td><td>구현도 <code>Gateway</code></td><td class="mono dim">OpenAiLlmStreamingGateway ✓</td></tr>
+            <tr><td class="mono">Issuer</td><td class="num bad">2</td><td class="bad">없음</td><td class="mono">PairingToken<b>Service</b> · ChildDeviceToken<b>Service</b></td></tr>
+            <tr><td class="mono">Generator</td><td class="num bad">1</td><td class="bad">없음</td><td class="mono">Secure<b>OtpCodeGenerator</b> <span class="dim">(접미사 유지)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>규약이 없는 3개에서 <b>두 가지 다른 답</b>이 나왔다 — 하나는 접미사를 <code>Service</code>로 교체했고, 하나는 <code>Gateway</code>처럼 유지했다.</p>
+      <dl class="kv">
+        <dt>덤으로 나온 것</dt>
+        <dd><code>port/</code> 폴더 안에 포트가 아닌 <b><code>@dataclass(frozen=True)</code> 12개</b>가 있다 — 포트가 주고받는 계약 값 객체다. 코퍼스는 "포트 입출력은 값 객체를 쓴다"고 <em>쓰는 것</em>은 규정하나 <em>어디 두는지</em>는 말하지 않고, 트리에는 별도 <code>value_object/</code>가 있다. 판단 근거가 정본에 없다.</dd>
+        <dt>또 하나</dt>
+        <dd>정본은 "협력 포트(<b>ABC</b>)"라 못 박는데 코퍼스 §5.3은 "<b>구조적 협력이면 Protocol을 우선 고려</b>"라 한다. <code>pairing</code>이 실제로 Protocol을 썼다(2건). 원전이 넓고 정본이 좁은 <b>세 번째 사례</b>다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p11">
+      <div class="hd"><span class="id">P11</span><span class="ttl">의존 방향 한 줄이 DIP 이전 그림이다</span><span class="src plug">플러그인 결함</span><span class="sev doc">문서만의 결함</span></div>
+      <p class="where">정본 121줄</p>
+      <div class="pre-wrap">
+<pre><code>presentation_layer → application_layer → (domain_layer + infra_layer)
+                                                          ▲
+                                    application 이 infra 를 의존한다고 읽힌다</code></pre>
+      </div>
+      <p>이 화살표는 <b>Evans 2003 원판의 계층 그림</b>이다. 거기서 인프라는 맨 아래 토대라 위 계층이 자유롭게 쓴다 — DIP가 들어오기 전 그림이다. 코퍼스 §6.1은 이미 뒤집어 놓았다("<code>infrastructure/</code>는 <code>domain/</code>과 <code>application/</code>에 의존한다"). 정본은 그 한 줄만 안 뒤집고 가져왔다.</p>
+      <dl class="kv">
+        <dt>실측</dt>
+        <dd><code>application_layer</code>에서 <code>infra_layer</code>를 import하는 파일 <b>0개.</b> 코드는 DIP를 지키고 있고 <b>틀린 것은 문장 한 줄</b>이다.</dd>
+        <dt>그래도 고쳐야 하는 이유</dt>
+        <dd>"정본이 맞다"고 읽고 들어오는 신규 작업자에게 <b>인프라를 응용에서 직접 불러도 된다는 허가증</b>으로 읽힌다. 고치는 비용도 한 줄이다.</dd>
+      </dl>
+    </div>
+
+    <div class="prob" id="p12">
+      <div class="hd"><span class="id">P12</span><span class="ttl">육각형 안쪽이 프레임워크에 직접 묶여 있다</span><span class="src both">플러그인+구현</span><span class="sev hi">코드 비틀림</span></div>
+      <p class="where">application_layer/** &nbsp;·&nbsp; 정본에 해당 조문 없음(공백)</p>
+      <p>헥사고날의 목적은 <b>«바깥 장치와 DB 없이 개발·테스트할 수 있게»</b>다. 그 검사는 폴더가 아니라 <b>의존성</b>이다 — 안쪽이 구체 기술을 아는가. 재보니 도메인은 깨끗한데 <b>응용이 Django를 61건 import</b>한다.</p>
+      <div class="pre-wrap">
+<pre><code>domain_layer      ← 바깥 기술 :   0건   ✅
+application_layer ← django    :  61건   ❌
+
+  from django.db import transaction     37   ← 정본 219줄이 UoW 실현으로 허용
+  from django.utils import timezone     20   ← 허용 조문 없음
+  from django.db import connection       3   ← 없음
+  IntegrityError · OperationalError      5   ← 없음</code></pre>
+      </div>
+      <dl class="kv">
+        <dt>가장 아픈 것</dt>
+        <dd><code>timezone.now()</code> <b>20건</b>. <code>managed_copy</code>에는 <code>UtcClockPort</code>가 있다. <b>같은 관심사(시각)를 어떤 BC는 포트로, 어떤 BC는 Django 직접 호출로</b> 처리한다. 테스트에서 시각을 고정하려면 어떤 BC는 주입하고 어떤 BC는 몽키패치해야 한다 — 헥사고날이 없애려던 상황 그 자체다.</dd>
+        <dt>왜 지금까지 안 보였나</dt>
+        <dd>헥사고날 어휘(<code>port</code>·<code>adapter</code>·driving/driven)를 <b>BC 안/밖 구분에 갖다 쓰느라</b> 정작 헥사고날이 요구하는 검사를 안 했다. P1~P11 어디에도 이 항목이 없다.</dd>
+        <dt>P3과 얽힌다</dt>
+        <dd>정본이 UoW 실현을 <code>transaction.atomic()</code>으로 허용한 순간 응용이 Django를 알게 된다(37건). 헥사고날 기준으론 UoW도 포트여야 하고 <code>transaction.atomic()</code>은 그 어댑터여야 한다. <button type="button" class="pin" data-k="p3" data-go="p3">P3</button></dd>
+        <dt>처방 방향</dt>
+        <dd>정본에 <b>전역 제약 ②</b>를 신설한다 — «<code>domain_layer</code>·<code>application_layer</code>는 프레임워크·드라이버를 import하지 않는다». 예외를 둘지(<code>transaction</code>) 포트로 뺄지가 결정 대상이고, AST 한 줄로 검사된다.</dd>
+      </dl>
+    </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div><!-- /wide -->
+
+<div class="wrap tail">
+<!-- ══════════════ 출처 분류 ══════════════ -->
+<section id="origin">
+  <p class="eyebrow">출처 분류</p>
+  <h2>고쳐야 할 대상이 둘로 갈린다</h2>
+
+  <p>같은 "문제"라도 <b>플러그인을 고쳐야 하는 것</b>과 <b>broccoli-server를 고쳐야 하는 것</b>은 처방도 담당도 다르다. 후자는 이 작업의 범위 밖이지만(프로덕션 코드 읽기 전용), 기록해 두지 않으면 나중에 근거를 다시 만들어야 한다.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>분류</th><th>판정 기준</th><th>해당</th><th>누가 고치나</th></tr></thead>
+      <tbody>
+        <tr>
+          <th><span class="src plug">플러그인 결함</span></th>
+          <td>정본이 <b>잘못 적었거나 · 규정이 없거나 · 스스로 모순</b>된다. 정본을 그대로 따르면 누구든 같은 자리에 빠진다</td>
+          <td class="num">P1 P2 P3 P4<br>P5 P6 P7 P10 P11</td>
+          <td>이 작업 — 플러그인 개정</td>
+        </tr>
+        <tr>
+          <th><span class="src both">플러그인+구현</span></th>
+          <td>정본에 공백이 있고 <b>구현도 별도로 이탈</b>했다. 원인과 증상이 섞여 있어 갈라 봐야 한다</td>
+          <td class="num">P8 P9</td>
+          <td>양쪽 — 아래 B 항목 참조</td>
+        </tr>
+        <tr>
+          <th><span class="src impl">구현 이탈</span></th>
+          <td>정본이 <b>명확히 규정했는데</b> 안 지켰다. 플러그인엔 잘못이 없다</td>
+          <td class="num">B1 B2 B3</td>
+          <td><b>별도 작업</b> — broccoli-server 정리</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>B — broccoli-server 에서만 드러난 이탈</h3>
+  <p>정본이 명확히 규정한 것을 안 지킨 사례다. 셋 다 <b>백스톱이 못 잡아</b> 통과 중이므로, 플러그인 쪽 숙제는 "규정을 고치는 것"이 아니라 <button type="button" class="pin" data-k="p8" data-go="p8">P8</button>의 <em>탐지 범위를 넓히는 것</em>이다.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>무엇이</th><th>정본 규정</th><th>왜 안 잡히나</th></tr></thead>
+      <tbody>
+        <tr>
+          <th>B1</th>
+          <td><code>parental_controls</code>가 포트를 <b>애그리거트 폴더를 건너뛰고</b> <code>domain_layer/port/</code>에 둠 — 2건</td>
+          <td class="mono">202줄<br>domain_layer/<br>&lt;aggregate&gt;/port/</td>
+          <td>백스톱의 검사 계층 목록이 <code>application_layer</code>·<code>infra_layer</code>뿐 — <code>domain_layer</code> 하위는 <b>범위 밖</b></td>
+        </tr>
+        <tr>
+          <th>B2</th>
+          <td><code>usage_block_event_reader.py</code> — <code>repository/</code>에 포트 없이 ORM 을 직접 읽는 무상속 클래스</td>
+          <td class="mono">229줄<br>domain repository<br>ABC 구현</td>
+          <td>백스톱은 <code>repository/</code> <b>폴더 존재</b>만 본다. 내용 자격은 미검사</td>
+        </tr>
+        <tr>
+          <th>B3</th>
+          <td><code>parent_session_token_service.py</code> — <code>adapter/</code>에 포트 없이 ORM 을 직접 쓰는 클래스</td>
+          <td class="mono">231줄<br>외부 서비스 어댑터<br>(외부 I/O 전용)</td>
+          <td><code>adapter/</code>는 백스톱 검사 항목 자체가 없다</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="note">
+    <span class="lbl">B 로 분류하지 <em>않은</em> 것 — 원인이 플러그인에 있는 증상들</span>
+    <p><code>ai_chat</code>이 <code>service/</code>에 ABC 5개를 얹은 것, <code>billing</code>·<code>products</code>가 <code>infra_layer/unit_of_work/</code> 폴더를 발명한 것, <code>lessons</code> 2건이 <code>adapter/</code>로 흘러든 것 — 전부 <b>갈 자리가 없어서</b> 생긴 일이다(P2·P3·P6). 구현을 탓하면 원인이 남는다. 자리를 만들면 저절로 해소된다.</p>
+  </aside>
+</section>
+
+<!-- ══════════════ 정리 ══════════════ -->
+<section id="roots">
+  <p class="eyebrow">정리</p>
+  <h2>11건이 세 뿌리에서 나온다</h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>뿌리</th><th>해당 문제</th><th>처방 방향</th></tr></thead>
+      <tbody>
+        <tr>
+          <th>① 자리가 없다<br><span class="dim" style="font-weight:400">이름 붙은 칸이 아예 없어<br>가장 가까운 칸으로 밀려남</span></th>
+          <td><b>P2</b> 응용 소유 추상 · <b>P3</b> UoW 구현 · <b>P4</b> adapter 수용소 · <b>P6</b> OHS 소비 코드 · <b>P9</b> repository 이탈</td>
+          <td><b>새 자리를 만들어 코드를 옮긴다.</b> 정의를 좁히는 것만으로는 다른 칸으로 옮겨갈 뿐이다</td>
+        </tr>
+        <tr>
+          <th>② 정의가 못 따라갔다<br><span class="dim" style="font-weight:400">코드가 원전을 따랐는데<br>정본이 그 범위를 안 적음</span></th>
+          <td><b>P1</b> port 정의 4곳 불일치 · <b>P10</b> 명명 규약 사각 · <b>P11</b> 의존 화살표</td>
+          <td><b>정의를 넓혀 실무를 추인한다.</b> 코드를 옮기면 오히려 원전을 어긴다</td>
+        </tr>
+        <tr>
+          <th>③ 기계가 안 본다<br><span class="dim" style="font-weight:400">글은 있는데 집행이 없음</span></th>
+          <td><b>P8</b> 백스톱 집행력 0 · <b>P5</b> 축 불일치 · <b>P7</b> 이름 불일치</td>
+          <td><b>정의 개정과 백스톱 확장을 한 묶음으로</b> 결정한다</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="note">
+    <span class="lbl">가장 중요한 한 줄</span>
+    <p>발단 문서는 <em>"넓은 정의가 새는 원인"</em>이라 봤다. 세 칸을 다 재고 나면 다르다 — <b>세 칸 전부 "정의가 넓어 흘러든" 사례가 0건</b>이고, 이탈은 전부 <b>갈 데가 없어 밀려온 것</b>이었다. 넓은 정의는 원인이 아니라 <em>목적지</em>다. 그래서 <b>①이 먼저다</b> — 자리를 만들지 않고 정의만 손보면 물량이 옮겨갈 뿐이다.</p>
+  </aside>
+
+  <h3>결정해야 할 것 넷</h3>
+  <ul>
+    <li><b>응용 소유 추상을 인정할 것인가</b> — 인정하면 클린 쪽으로 반 걸음. 202줄 조문·백스톱·에이전트 프롬프트를 함께 개정해야 앞뒤가 맞는다 (P2·P3)</li>
+    <li><b><code>port/</code> 정의를 어디까지 넓힐 것인가</b> — "다른 BC 협력" → "도메인이 의존하는 모든 역할 추상"으로 넓히면 P1이 풀리지만 P5가 더 벌어진다</li>
+    <li><b><code>adapter/</code>를 <code>acl/</code>처럼 구조적 정의로 좁힐 것인가</b> — 좁히려면 밀려난 8건에 먼저 자리를 줘야 한다 (P4·P6)</li>
+    <li><b>백스톱을 내용까지 보게 할 것인가</b> — 정의가 검증 가능해지면 거짓 양성 없이 가능해진다 (P8)</li>
+  </ul>
+
+</section>
+
+<!-- ══════════════ 목표와 규칙 ══════════════ -->
+<section id="charter">
+  <p class="eyebrow">다음 단계</p>
+  <h2>목표와 규칙 — 개별 문제를 풀기 전에 먼저 정한다</h2>
+
+  <div class="empty-state">
+    <span class="lbl">비어 있음 — 이것을 정하는 것이 다음 작업이다</span>
+    <p>11건을 하나씩 독립으로 결정하면 <b>서로 모순되는 답이 나온다.</b> 실제로 그럴 조합이 이미 보인다 — <button type="button" class="pin" data-k="p1" data-go="p1">P1</button>을 풀려고 <code>port/</code> 정의를 넓히면 <button type="button" class="pin" data-k="p5" data-go="p5">P5</button>의 축 불일치가 더 벌어지고, <button type="button" class="pin" data-k="p4" data-go="p4">P4</button>를 풀려고 <code>adapter/</code>를 좁히면 <button type="button" class="pin" data-k="p2" data-go="p2">P2</button>·<button type="button" class="pin" data-k="p3" data-go="p3">P3</button>·<button type="button" class="pin" data-k="p6" data-go="p6">P6</button>의 밀려난 코드가 갈 데를 잃는다.</p>
+  </div>
+
+  <h3>정해야 할 규칙</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>정할 것</th><th>왜 먼저 필요한가</th></tr></thead>
+      <tbody>
+        <tr class="done"><th>R1</th><td><b>계보 충돌 시 무엇이 이기나</b> — DDD · 헥사고날 · 클린이 다른 답을 낼 때<br><span class="ans">→ <b>구역마다 담당 계보를 하나씩 둔다.</b> <code>domain_layer</code>=DDD · <code>application_layer</code>=클린 · <code>boundary</code>·<code>presentation_layer</code>·<code>infra_layer</code>=헥사고날. 충돌은 «어느 구역의 질문인가»로 먼저 가른다. 단 <b>전역 제약 셋</b>(의존 방향·기술 격리·BC 관문)은 구역과 무관하게 트리 전체에 걸린다.</span></td><td><b>2026-08-03 확정.</b> 이 배정 하나로 P1·P5가 결정됐다 — <code>port/</code>는 DDD 목록에 없는 유일한 칸이라 도메인에서 나가고, <code>repository/</code>는 Evans building block이라 남는다</td></tr>
+        <tr><th>R2</th><td><b>원전(코퍼스) vs 정본이 어긋나면 누가 이기나</b></td><td>세 사례가 이미 있다 — 포트 소유 주체 · 포트 상대 범위 · ABC 대 Protocol. 전부 원전이 넓고 정본이 좁다</td></tr>
+        <tr><th>R3</th><td><b>트리에 칸을 늘릴 것인가 줄일 것인가</b> — 복잡도 예산</td><td>뿌리 ①(자리 없음)의 처방은 칸 추가다. 무제한 추가하면 골격이 비대해져 §0 불변식의 비용이 커진다</td></tr>
+        <tr><th>R4</th><td><b>정본 조문과 백스톱을 어떤 순서·단위로 고치나</b></td><td>조문만 고치고 백스톱을 두면 집행이 안 되고, 반대면 거짓 양성이 난다. <button type="button" class="pin" data-k="p8" data-go="p8">P8</button></td></tr>
+        <tr><th>R5</th><td><b>기존 코드 처리</b> — 일괄 이주 / touched 만 / grandfathering</td><td>15개 BC 전부가 §0 불변식을 상속한다. 이 선택이 개정의 실행 비용을 결정한다</td></tr>
+        <tr><th>R6</th><td><b>개정을 한 번에 할 것인가 단계적으로 할 것인가</b></td><td>표면이 넓다 — 정본 3벌 · checker 2벌 · "협력 포트" 문구 21개 파일. 부분 개정 중에는 표준이 자기 자신과 모순된다</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="note settled">
+    <span class="lbl">목표 — 2026-08-03 확정</span>
+    <p><b>dddjango 플러그인의 목표는 헥사고날 · 클린 아키텍처 · DDD 셋을 완벽하게 녹여내는 것이다.</b> 따라서 모든 결정은 <em>세 관점 전부에서</em> 검토하고, 그 검토 결과를 결정 근거에 남긴다. 앞서 열거한 후보 중 ⒟(원전 계보 반영)가 목표 자체이고, ⒜(자기 모순 없음)·⒝(실무가 갈 자리)·⒞(기계 판정)는 그 목표가 실제로 달성됐는지 확인하는 <b>검증 수단</b>이다 — 셋 중 하나라도 깨지면 "녹여냈다"고 할 수 없다.</p>
+  </aside>
+
+  <aside class="note settled">
+    <span class="lbl">R1 — 위 목표의 직접 귀결</span>
+    <p>목표가 "셋 다"이므로 R1은 <b>승자를 고르는 규칙이 아니다.</b> 계보가 충돌해 보이면 먼저 <em>셋을 동시에 만족하는 형태가 있는지</em> 찾는다. P6이 실례다 — 컨테이너 신설은 DDD(경계 명시)·클린(Interface Adapters 링)이 지지하고 헥사고날은 driving/driven 구분만 유지되면 중립인데, <b>이름을 <code>anti_corruption_layer/</code>로 두는 순간에만</b> DDD 패턴 정의가 깨진다. 즉 충돌로 보였던 것이 <em>이름 하나의 문제</em>였다. 정말로 셋을 동시에 못 만족하는 사안이 나오면 그때 사안별로 고르고, <b>어느 계보를 왜 접었는지</b>를 결정 근거에 명시한다.</p>
+  </aside>
+</section>
+
+<!-- ══════════════ 결정 ══════════════ -->
+<section id="decide">
+  <p class="eyebrow">결정</p>
+  <h2>최종 결정</h2>
+
+  <div class="empty-state">
+    <span class="lbl">비어 있음 — 위 목표·규칙을 정한 뒤 문제를 하나씩 채운다</span>
+    <p>진단 중 나온 처방 방향은 각 문제 카드의 <em>처방 방향</em> 줄에만 두고 여기로 올리지 않는다. 여기 올라온 항목은 <b>확정</b>이며, 확정 시 각 행에 <em>왜</em>와 <em>기각한 대안</em>을 남긴다.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>항목</th><th>결정</th><th>근거</th><th>기각한 대안</th></tr></thead>
+      <tbody><tr><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td></tr></tbody>
+    </table>
+  </div>
+
+  <h3>기존 코드 처리 방침</h3>
+  <div class="empty-state">
+    <span class="lbl">비어 있음 — 위 결정 확정 후 작성</span>
+    <p>표준을 바꾸면 <b>이미 그 표준으로 생성된 코드가 규격 밖이 된다.</b> 정본 §1.1은 "기존 확립 규약 존중"이지만 <em>표준 자신이 바뀌는 경우</em>는 다루지 않는다.</p>
+  </div>
+  <ul>
+    <li>일괄 이주 / touched만 이주 / grandfathering 중 무엇인가</li>
+    <li>백스톱의 touched-gate가 기존 코드를 자동 면제하는데, 그 면제가 이번 개정에도 유효한가</li>
+    <li>broccoli-server 실제 이주는 <b>별도 작업</b>이다(이 문서 범위 밖) — 그 작업이 참조할 근거를 여기 남긴다</li>
+  </ul>
+</section>
+
+<!-- ══════════════ 변경 표면 ══════════════ -->
+<section id="surface">
+  <p class="eyebrow">분모</p>
+  <h2>결정 하나가 움직이는 범위</h2>
+
+  <p>진행 추적은 <code>workspace/plan/</code>의 계획 문서가 소유한다. 여기서는 <b>분모의 크기</b>만 기록한다 — 결정 하나가 얼마나 넓게 퍼지는지 모르면 <em>"구현 완료"가 거짓 신호가 된다.</em></p>
+
+  <div class="pre-wrap">
+<pre><code># 재현 · cwd = dddjango 저장소 루트
+for f in $(find . -name "final.md" -path "*houserules*"); do echo "$(md5 -q $f) $f"; done
+for f in $(find . -name "check-layer-skeleton.py" -not -path "*__pycache__*"); do echo "$(md5 -q $f) $f"; done
+grep -rl "협력 포트" --include="*.md" --include="*.py" . | grep -v "/eval/"</code></pre>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>표면</th><th class="num">사본</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">discipline-houserules/<br>references/final.md</td><td class="num"><b>3벌</b></td><td><code>dddjango/</code>(정본) · <code>workspace/reference/</code> · <code>codex-dddjango/</code> — md5 동일</td></tr>
+        <tr><td class="mono">check-layer-skeleton.py</td><td class="num"><b>2벌</b></td><td><code>dddjango/scripts/</code> · <code>codex-dddjango/skills/dddjango/scripts/</code> — md5 동일</td></tr>
+        <tr><td class="mono">"협력 포트" 문구 보유 파일</td><td class="num"><b>21개</b></td><td>eval 제외 · 정본 · SKILL · 에이전트 · Coordinator · checker · README · DEVLOG</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="note">
+    <span class="lbl">동기화 규율 — 기존 plan 관례 승계</span>
+    <p>정본 <code>dddjango/</code>를 <b>먼저</b> 고치고 <code>corpus_mirror_sync.py --write</code>로 미러를 갱신한다. workspace·Codex 미러를 직접 편집하지 않는다. 역할·Coordinator·<code>SKILL.md</code>는 플랫폼 형식을 유지한 <b>의미 미러</b>라 수동 갱신한다. checker는 정본 구현 후 Codex 위치에 byte-exact 복사한다.</p>
+  </aside>
+
+  <div class="warn-box">
+    <span class="lbl">함의</span>
+    <p>"port 정의 개정 완료"를 <em>서술로</em> 적으면 Codex 미러가 반대로 판정하는 상태가 <b>완료로 기록된다.</b> 결정 이후의 진행 추적은 반드시 <b>체크리스트</b>여야 한다.</p>
+  </div>
+</section>
+
+<!-- ══════════════ 부록 ══════════════ -->
+<section id="appendix">
+  <p class="eyebrow">부록 A</p>
+  <h2>기준선 실측과 재현 명령</h2>
+
+  <p>조사 착수 시점(2026-08-03)의 broccoli-server 상태다. 코드가 바뀌면 이 표와 대조한다.</p>
+
+  <div class="warn-box">
+    <span class="lbl">파싱 규율</span>
+    <p><b>반드시 대상 프로젝트 인터프리터로 한다</b> — <code>.venv/bin/python</code>(3.14). 시스템 <code>python3</code>(3.9)로는 <code>type X = ...</code>(3.12+)을 쓴 <b>26개 파일이 조용히 누락</b>된다.</p>
+  </div>
+
+  <div class="pre-wrap">
+<pre><code># cwd = /Users/hyun/Desktop/broccoli-server
+ls application/ | grep -v __ | wc -l
+find application -path "*/domain_layer/*/port/*.py" ! -name "__init__.py" | wc -l
+find application -path "*/domain_layer/port/*.py"   ! -name "__init__.py" | wc -l
+find application -path "*/infra_layer/acl/*.py"     ! -name "__init__.py" | wc -l
+find application -path "*/infra_layer/adapter/*.py" ! -name "__init__.py" | wc -l
+grep -rn "infra_layer" application/*/application_layer/ --include="*.py" | grep -c import
+grep -rn "class Django.*UnitOfWork" application --include="*.py" | grep -v test</code></pre>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>항목</th><th class="num">값</th></tr></thead>
+      <tbody>
+        <tr><th>BC 수</th><td class="num">15</td></tr>
+        <tr><th><code>domain_layer/&lt;agg&gt;/port/</code> 파일</th><td class="num">46</td></tr>
+        <tr><th><code>domain_layer/port/</code> 파일 <span class="dim">애그리거트 밖 · 백스톱 사각</span></th><td class="num">2 <span class="dim">parental_controls</span></td></tr>
+        <tr><th>└ 위 48개 파일이 담은 <b>포트 선언</b></th><td class="num"><b>48</b> <span class="dim">ABC 46 + Protocol 2</span></td></tr>
+        <tr><th>└ 같은 폴더의 비-포트 <code>@dataclass</code></th><td class="num">12</td></tr>
+        <tr><th>└ 같은 폴더의 예외 클래스</th><td class="num">4</td></tr>
+        <tr><th>포트 구현 슬롯</th><td class="num">acl 28 · adapter 18 · 구현없음 2</td></tr>
+        <tr><th><code>domain_layer/&lt;agg&gt;/repository/</code> ABC</th><td class="num">38 <span class="dim">전부 1:1</span></td></tr>
+        <tr><th><code>infra_layer/repository/</code> 파일</th><td class="num">41 <span class="dim">이탈 3</span></td></tr>
+        <tr><th><code>infra_layer/acl/</code> 파일</th><td class="num">26 <span class="dim">이탈 0</span></td></tr>
+        <tr><th><code>infra_layer/adapter/</code> 파일</th><td class="num">29 <span class="dim">이탈 8</span></td></tr>
+        <tr><th><code>application_layer</code> ABC</th><td class="num">8 <span class="dim">ai_chat 5 · unit_of_work 3</span></td></tr>
+        <tr><th>표준 밖 <code>infra_layer/unit_of_work/</code></th><td class="num">2 BC <span class="dim">billing · products</span></td></tr>
+        <tr><th><code>application_layer</code> → <code>infra_layer</code> import</th><td class="num good">0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>백스톱 실증 재현</h3>
+  <div class="pre-wrap">
+<pre><code># cwd = /Users/hyun/Desktop/broccoli-server
+python3 /Users/hyun/Desktop/dddjango/dddjango/scripts/check-layer-skeleton.py .   # -> 0
+
+# touched-gate 해제 후 전수
+sed 's|^    if not (root / ".git").exists():|    if True:|' \
+  /Users/hyun/Desktop/dddjango/dddjango/scripts/check-layer-skeleton.py > /tmp/skeleton-all.py
+python3 /tmp/skeleton-all.py .                                                    # -> 0</code></pre>
+  </div>
+
+  <p class="eyebrow" style="margin-top:26px">부록 B</p>
+  <h2>조사 이력과 측정 사고</h2>
+
+  <p>문제 11건은 개념 단위 조사(<code>repository</code> → <code>port</code> → <code>adapter</code>+<code>acl</code>)로 도출했다. 계층(<code>*_layer</code>) 축이 아니라 <b>어휘</b> 축으로 자른 이유는 ⒜ 계층은 이미 건강하고(import 0건) ⒝ 핵심 문제가 계층을 가로지르며 ⒞ 이상 현상의 형태가 전부 "어휘 하나가 여러 뜻·여러 자리를 갖는다"였기 때문이다.</p>
+
+  <p>조사 중 <b>측정 사고가 2건</b> 있었고, 둘 다 결론을 바꿨다.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>사고</th><th>무슨 일이</th><th>결론이 어떻게 바뀌었나</th></tr></thead>
+      <tbody>
+        <tr>
+          <th>⒜ 인터프리터<br>불일치</th>
+          <td>시스템 <code>python3</code>(3.9)로 AST 파싱해 3.12+ 구문 파일 26개가 조용히 누락. <code>except SyntaxError: continue</code>가 실패를 삼켰다</td>
+          <td><code>repository</code> 이탈을 4건으로 셌으나 실제 3건. "<code>ChildTurnReportSignalRepository</code> 구현 0"은 <b>허위</b>였다(정상 구현 존재)</td>
+        </tr>
+        <tr>
+          <th>⒝ 정본 정의를<br>측정 기준으로</th>
+          <td>정본 202줄이 "협력 포트(<b>ABC</b>)"라 못 박기에 ABC만 셌고 <code>Protocol</code> 포트 2개를 못 봤다</td>
+          <td>총계 46 → <b>48</b>, <code>acl</code> 구현 26 → <b>28</b>. 정정 후 발단 artifact의 28/13/5/2 = 48과 <b>정확히 일치</b></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="warn-box">
+    <span class="lbl">⒝ 가 특히 중요한 이유</span>
+    <p><b>좁은 정의는 실무만 왜곡하는 게 아니라 감사 도구까지 좁힌다.</b> 정본을 검증하는 측정이 정본의 전제를 물려받으면 그 전제 밖은 영원히 안 보인다. 이후 조사에서는 폴더 안 <em>모든</em> 공개 선언을 먼저 세고 형태별로 가른다.</p>
+  </div>
+
+  <p class="colophon" id="colophon">
+    <b>이 문서가 정본이다</b> — <code>workspace/design/2026-08-03-tree-vocabulary-design.html</code>. 별도 마크다운을 두지 않는다<br>
+    <b>이 문서는 진단서다</b> — 현행 트리와 문제 P1~P12·B1~B3만 담는다. 고치는 안은 <b id="revlink"><code>docs/work_flow.html</code></b>이 갖는다<br>
+    상태: 문제 식별 완료 · R1 확정 · 수정안은 별도 문서에서 겉에서 안으로 한 겹씩 진행<br>
+    트리 출처: <code>dddjango/skills/discipline-houserules/references/final.md</code> §2 73~119줄 (297줄 중)<br>
+    실측 대상: <code>/Users/hyun/Desktop/broccoli-server</code> · BC 15개 · <b>읽기 전용</b>(이 작업에서 프로덕션 코드는 수정하지 않는다)<br>
+    계보 구분 근거: Evans 『Domain-Driven Design』 · Cockburn 「Hexagonal Architecture」 · Martin 『Clean Architecture』
+  </p>
+</section>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true">
+  <div class="th"><span class="tid"></span><span class="tvd"></span></div>
+  <div class="tt"></div>
+  <div class="td"></div>
+  <div class="tf"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var TIPS = {
+    p1: { id: "P1", t: "한 이름 아래 역할이 넷 — 정의가 네 곳에서 다르다",
+      d: "정본이 <code>port/</code>를 정의하는 문장이 84·202(정의문)·202(예시 칸)·269줄 <b>네 곳</b>에 있고 범위가 전부 다르다. 실측 48개 중 정의문이 덮는 것은 <b>28개뿐</b> — 시계·난수 5개와 전략 확장점 2개는 어느 문장에도 없다." },
+    p2: { id: "P2", t: "응용이 소유하는 추상에 이름 붙은 자리가 없다",
+      d: "클린이라면 Output Port는 Use Cases 계층 것인데 정본은 소유를 <b>도메인으로 못 박았고</b> 백스톱이 <code>application_layer/**/port/</code>를 막는다. 갈 곳 없는 ABC 5개가 <code>service/</code>에, UoW 구현이 남의 폴더에 흩어졌다." },
+    p3: { id: "P3", t: "UoW는 선언 슬롯만 있고 구현 슬롯이 없다",
+      d: "§3 인프라 표의 칸은 넷뿐이라 <b>UoW 구현이 들어갈 자리가 없다</b>. 219줄이 «<code>transaction.atomic()</code>으로 충분»이라 적어 칸을 안 만들었고, 실제로 필요해지자 <b>3개 BC가 3가지 답</b>을 냈다." },
+    p4: { id: "P4", t: "adapter/ 가 트리의 최후 수용소가 됐다",
+      d: "«외부 서비스 전용»으로 못 박혔는데 실측 29파일 중 <b>8건</b>이 정의 밖이다. 세 칸을 다 재면 «정의가 넓어 흘러든» 사례는 <b>0건</b> — 전부 갈 데가 없어 밀려온 것이다." },
+    p5: { id: "P5", t: "선언은 한 폴더, 구현은 두 폴더 — 축이 다르다",
+      d: "포트 선언은 <code>domain_layer/&lt;agg&gt;/port/</code> 한 곳인데 구현은 상대에 따라 <code>acl/</code>과 <code>adapter/</code>로 갈린다. 선언은 <b>헥사고날 축</b>, 구현은 <b>DDD 컨텍스트 맵 축</b>이라 폴더만 보고는 짝을 못 찾는다." },
+    p6: { id: "P6", t: "«기본»이라 부른 경로가 2건뿐 — 놓을 자리가 없어서",
+      d: "정본은 OHS 직접 소비를 «기본», 포트+ACL을 «불가피할 때»라 적는데 실측은 <b>2건 대 22건</b>으로 정확히 뒤집혀 있다. 다섯 계층의 기존 규정이 전부 OHS 직접 소비를 배제해 <b>합법적인 자리가 하나도 없다</b>." },
+    p7: { id: "P7", t: "adapter 라는 이름이 반쪽만 쓰인다",
+      d: "헥사고날 어댑터는 driving·driven 양쪽인데 폴더 이름은 <b>피주도 전용</b>이다. 정본은 네 곳에서 <code>api/</code>를 «입력 어댑터»라 부르면서 폴더 이름엔 그 말이 없다." },
+    p8: { id: "P8", t: "백스톱이 지금 아무것도 잡지 못한다",
+      d: "실제로 돌려 봤다 — <b>종료코드 0</b>. touched-gate가 커밋된 코드를 아예 안 보고, 게이트를 꺼도 15개 BC 전수에서 0건이다. 설계상 저-recall이라 폴더명 <code>port</code>만 직격한다." },
+    p9: { id: "P9", t: "repository/ 도 샌다 — 정의가 좁은데도",
+      d: "domain ABC 38개가 <b>38개 전부 1:1 구현</b>으로 가장 건강한 칸인데 이탈이 3건 있다. 셋 다 갈 데가 없어 밀려온 것 — <b>좁은 정의도 밀려오는 것은 못 막는다</b>." },
+    p10:{ id: "P10", t: "명명 규약이 판정하지 않는 접미사가 있다",
+      d: "§4는 <code>Repository</code>·<code>Gateway</code>·<code>Port</code> 셋만 판정한다. 규약 밖 <code>Issuer</code> 2 · <code>Generator</code> 1에서 <b>두 가지 다른 답</b>이 나왔고, <code>port/</code> 폴더 안에 포트가 아닌 <code>@dataclass</code> 12개가 산다." },
+    p11:{ id: "P11", t: "의존 방향 한 줄이 DIP 이전 그림이다",
+      d: "정본 121줄 «presentation → application → (domain + infra)»는 <b>응용이 인프라를 의존한다</b>고 읽힌다. 코드는 지키고 있다(import <b>0건</b>) — 틀린 것은 문장 한 줄이다." },
+    p12:{ id: "P12", t: "육각형 안쪽이 프레임워크에 직접 묶여 있다",
+      d: "도메인은 바깥 기술 <b>0건</b>인데 <code>application_layer</code>가 django를 <b>61건</b> import한다(<code>transaction</code> 37 · <code>timezone</code> 20 · <code>connection</code> 3 · DB예외 5). 헥사고날의 검사는 폴더가 아니라 <b>의존성</b>이다." },
+
+    "v-p1": { id: "P1", vd: "거의 닫힘", cls: "ok",
+      t: "정의가 한 문장이 된다", d: "새 정의 «이 BC가 바깥에 요구하는 약속»이 실측 46개 중 <b>44개</b>를 덮는다. 네 곳으로 갈렸던 문장이 하나가 된다. 남는 2개는 프로덕션 어댑터가 0이라 포트가 아니라 <b>도메인 내부 전략</b>이다." },
+    "v-p2": { id: "P2", vd: "크게 열림", cls: "ok",
+      t: "예상 못 한 소득 — ABC 10개가 그대로 들어간다", d: "<code>application_layer</code>의 ABC 13개 중 <b>10개</b>가 자기 docstring에서 스스로를 «경계»·«출구»·«port»라 부르고 있었다. 좁은 정의 때문에 자격이 없었을 뿐이라 정의를 넓히면 <b>부수 효과로 닫힌다</b>." },
+    "v-p3": { id: "P3", vd: "안 닫힘 · 복잡해짐", cls: "bad",
+      t: "[검토] 표시만 되고 결정이 더 어려워졌다", d: "219줄의 <code>transaction.atomic()</code> 허용이 <b>전역 제약 ②와 정면 충돌</b>한다(실측 37건). ⒜ 예외로 둔다(간단하나 구멍) ⒝ UoW를 포트로 올린다(정합하나 15개 BC 전부에 어댑터가 생긴다)." },
+    "v-p4": { id: "P4", vd: "8건 중 4건", cls: "half",
+      t: "절반만 자리를 얻는다", d: "타 BC OHS 소비 <b>2건</b>이 <code>acl/</code>로, application ABC 구현 <b>2건</b>이 그 ABC의 이동으로 자격을 얻는다. 포트 없는 직접 구현·순수 매핑·상수 모듈 <b>3건</b>은 여전히 이름이 없다." },
+    "v-p5": { id: "P5", vd: "결함 → 설계로 재분류", cls: "half",
+      t: "1:2 구조는 그대로, 다만 근거가 생긴다", d: "선언은 <b>BC 축</b>, 구현은 <b>상대 축</b> — 두 축이 다른 건 원전이 원래 그렇다. 다만 둘을 잇는 건 <b>명명 규약뿐</b>이라 P5의 답이 P10에 걸린다." },
+    "v-p6": { id: "P6", vd: "2/3", cls: "half",
+      t: "자리 없음은 닫히고 인증 27건이 남는다", d: "«기본/예외» 이분을 폐기하고 <code>boundary/port/</code>+<code>acl/</code>을 <b>유일 경로</b>로 확정하면 ①이 닫힌다. ②(ACL 담 넘기 3건)는 조문만 서고 집행은 P8에 달렸다. ③ 인증 27건은 미결." },
+    "v-p7": { id: "P7", vd: "부분", cls: "half",
+      t: "어휘는 대칭이 되고 폴더 이름은 그대로", d: "구역 배정이 <b>driving/driven을 공식 어휘</b>로 만든다. 다만 <code>presentation_layer/api/</code>를 «입력 어댑터»라 부르면서 이름엔 그 말이 없는 상태는 유지된다 — 바꾸면 전 BC의 import가 깨진다." },
+    "v-p8": { id: "P8", vd: "악화", cls: "bad",
+      t: "미집행 규칙이 늘어난다", d: "이 안은 규칙을 <b>최소 넷</b> 추가하는데 백스톱은 그대로다. <b>이 안의 실효가 여기 달려 있다</b> — 규칙을 늘릴수록 P8의 비용이 커지는 구조라, 규칙 확정과 검사 확장을 한 묶음으로 가야 한다." },
+    "v-p9": { id: "P9", vd: "무관", cls: "none",
+      t: "이 안이 건드리지 않는다", d: "3건 전부 BC 경계와 무관하다(<code>infra_layer/repository/</code>가 타 BC를 만지는 건수 <b>0건</b>). 다만 <code>usage_block_event_reader.py</code>는 그 ABC가 <code>boundary/port/</code>로 가면 <b>1건은 정상화될 수 있다</b>." },
+    "v-p10": { id: "P10", vd: "압력 증가", cls: "bad",
+      t: "56개가 한 폴더에 모인다", d: "포트 46 + 응용에서 올라온 10 = <b>56개</b>. <code>Port·Gateway·Reader·Publisher·Sink·Gate·Executor·Signal·Revoker·Subscription·Projector</code>가 한자리에 늘어서는데 정본이 판정하는 건 셋뿐이다." },
+    "v-p11": { id: "P11", vd: "강제로 닫힘", cls: "ok",
+      t: "화살표를 안 고칠 수 없다", d: "<code>boundary/</code>가 생기면 121줄 화살표를 다시 그려야 하고, 그 과정에서 <b>인프라가 안쪽을 향한다</b>는 사실이 문장에 들어온다. 비용은 한 줄." },
+    "v-p12": { id: "P12", vd: "조문만", cls: "half",
+      t: "제약은 서고 61건의 처리는 미정", d: "«<code>domain_layer</code>·<code>application_layer</code>는 프레임워크를 import하지 않는다»가 조문이 되고 <b>AST 한 줄로 검사</b>된다. 다만 <code>transaction</code> 37 · <code>timezone</code> 20 · 나머지 8의 처리는 정해지지 않았다." },
+
+    n1: { id: "N1", vd: "가장 심각", cls: "new",
+      t: "boundary/ 가 안과 밖을 함께 담는다",
+      d: "<code>port/</code>는 선언(육각형 <b>안쪽</b>), <code>published_service/</code>는 어댑터(<b>바깥</b>)라 의존 화살표가 반대로 흐른다. <b>우리가 <code>infra_layer</code>를 비판한 근거(«한 폴더에 두 링»)를 새로 만드는 셈</b>이다. ⒜ 하위 폴더별 규칙 ⒝ <code>published_service/</code>를 <code>presentation_layer/</code>로." },
+    n2: { id: "N2", vd: "미결", cls: "new",
+      t: "boundary/port/ 의 조직 축이 없다",
+      d: "56개를 평면으로 두면 정본 §0-4(종류 2차 폴더·평면 금지)와 충돌한다. <b>상대별</b>은 헥사고날에 반하고(상대를 아는 건 어댑터의 일), <b>역할별</b>은 판단형이라 표류한다." },
+    n3: { id: "N3", vd: "미결", cls: "new",
+      t: "repository/ 가 남는 근거가 두 겹이다",
+      d: "«DDD 어휘라서»(구역 배정)와 «애그리거트와 함께 변해서»(실측 73%·92%)가 병존한다. <b>어느 쪽이 1차인지 명시</b>해야 나중에 «X도 DDD 어휘인데»가 재발하지 않는다." },
+    n4: { id: "N4", vd: "미결", cls: "new",
+      t: "boundary/ 를 §0 항상-생성에 넣을 것인가",
+      d: "넣으면 15개 BC 전부에 빈 <code>boundary/{published_service, port}/</code>가 생긴다. 데이터소스 BC도 예외 없다." },
+    n5: { id: "N5", vd: "비용", cls: "new",
+      t: "이주 규모 438건",
+      d: "OHS 크로스-BC import <b>215건</b>(프로덕션 125·테스트 90) + 포트 import <b>223건</b>(파일 140개). 둘 다 경로 접두사 치환이라 기계 변환은 가능하나 <b>R5(기존 코드 처리)가 아직 비어 있다</b>." },
+    n6: { id: "N6", vd: "제약 위반", cls: "new",
+      t: "RandomDrawPort 가 전역 제약 ①을 어긴다",
+      d: "도메인 서비스가 비복원 추출 <em>도중에</em> 난수를 요구하는데(상한이 직전 결과에 의존해 미리 못 넘긴다) 포트가 <code>boundary/</code>로 가면 <b>도메인이 바깥을 의존</b>하게 된다. 46개 중 유일한 사례." }
+  };
+
+  var tip = document.getElementById("tip");
+  var tId = tip.querySelector(".tid");
+  var tVd = tip.querySelector(".tvd");
+  var tT  = tip.querySelector(".tt");
+  var tD  = tip.querySelector(".td");
+  var tF  = tip.querySelector(".tf");
+  var coarse = window.matchMedia("(hover: none)").matches;
+  var armed = null;
+
+  var VDBG = { ok: "var(--ok)", half: "var(--flag)", bad: "var(--ink)", none: "var(--sunk)", "new": "var(--flag)" };
+  var VDFG = { ok: "#fff", half: "#fff", bad: "var(--paper)", none: "var(--ink-3)", "new": "#fff" };
+
+  function showTip(el) {
+    var k = el.dataset.k;
+    var data = TIPS[k];
+    if (!data) { return; }
+    tId.textContent = data.id;
+    if (data.vd) {
+      tVd.textContent = data.vd;
+      tVd.style.display = "";
+      tVd.style.background = VDBG[data.cls] || "var(--sunk)";
+      tVd.style.color = VDFG[data.cls] || "var(--ink)";
+    } else {
+      tVd.style.display = "none";
+    }
+    tT.innerHTML = data.t;
+    tD.innerHTML = data.d;
+    tF.textContent = coarse ? "다시 누르면 상세로" : "누르면 아래 상세로";
+    tip.classList.add("on");
+    tip.setAttribute("aria-hidden", "false");
+
+    var r = el.getBoundingClientRect();
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
+    var top = r.bottom + 8;
+    if (top + h > window.innerHeight - 8) { top = Math.max(8, r.top - h - 8); }
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+  function hideTip() {
+    tip.classList.remove("on");
+    tip.setAttribute("aria-hidden", "true");
+  }
+
+  var pins = Array.prototype.slice.call(document.querySelectorAll(".pin"));
+  pins.forEach(function (el) {
+    if (el.dataset.k) {
+      el.addEventListener("mouseenter", function () { showTip(el); });
+      el.addEventListener("mouseleave", hideTip);
+      el.addEventListener("focus", function () { showTip(el); });
+      el.addEventListener("blur", hideTip);
+    }
+    el.addEventListener("click", function (e) {
+      e.preventDefault();
+      var go = el.dataset.go || (el.getAttribute("href") || "").replace("#", "");
+      if (!go) { return; }
+      if (coarse && el.dataset.k && armed !== el) { armed = el; showTip(el); return; }
+      armed = null; hideTip();
+      if (go.charAt(0) === "n") { gotoNew(go); } else { select(go, true); }
+    });
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { hideTip(); } });
+  window.addEventListener("scroll", hideTip, { passive: true });
+
+  function gotoNew(id) {
+    var el = document.getElementById(id);
+    if (!el) { return; }
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.style.transition = "background 240ms";
+    el.style.background = "var(--flag-bg)";
+    setTimeout(function () { el.style.background = ""; }, 1600);
+    try { history.replaceState(null, "", "#" + id); } catch (err) { /* file:// */ }
+  }
+
+  // 카드 · 칩 · 트리 줄
+  var nowCards = Array.prototype.slice.call(
+    document.querySelectorAll('#detail .side.now .prob'));
+  var allCards = Array.prototype.slice.call(document.querySelectorAll(".prob"));
+  var pnav = document.getElementById("pnav");
+  var rows = Array.prototype.slice.call(document.querySelectorAll(".tr"));
+
+  rows.forEach(function (row) {
+    var ids = Array.prototype.map.call(row.querySelectorAll(".pin"), function (a) {
+      return a.dataset.go || "";
+    }).filter(Boolean);
+    if (ids.length) { row.dataset.p = ids.join(" "); }
+  });
+
+  nowCards.forEach(function (card) {
+    var t = card.querySelector(".ttl");
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = card.id.toUpperCase();
+    b.dataset.go = card.id;
+    b.setAttribute("aria-pressed", "false");
+    b.title = t ? t.textContent : card.id;
+    b.addEventListener("click", function () { select(card.id, true); });
+    pnav.appendChild(b);
+  });
+
+  function select(id, scroll) {
+    if (!document.getElementById(id)) { return; }
+    allCards.forEach(function (c) {
+      c.classList.toggle("on", (c.dataset.p || c.id) === id);
+    });
+    pnav.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.go === id));
+    });
+    pins.forEach(function (el) { el.classList.toggle("on", el.dataset.go === id); });
+    rows.forEach(function (row) {
+      row.classList.toggle("lit", (row.dataset.p || "").split(" ").indexOf(id) !== -1);
+    });
+    try { history.replaceState(null, "", "#" + id); } catch (err) { /* file:// */ }
+    if (scroll) {
+      var sec = document.getElementById("detail");
+      if (sec) { sec.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    }
+  }
+
+  var initial = (location.hash || "").replace("#", "");
+  select(nowCards.some(function (c) { return c.id === initial; }) ? initial : "p1", false);
+})();
+</script>
+</body>
+</html>

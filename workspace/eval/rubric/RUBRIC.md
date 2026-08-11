@@ -1,11 +1,17 @@
-# dddjango 평가지 v4 frozen baseline — 규칙 준수 + 기능 정확성 (평가 항목)
+# dddjango 평가지 v5 frozen baseline — 규칙 준수 + 기능 정확성 (평가 항목)
 
 > **상태**: `active` · **FROZEN** · **SCORING ENABLED**.
-> 사용자 명시 승인(`2026-08-04T11:59:05+0900`) 이후 새 v4 결과를 이 문서로 채점·집계한다.
-> historical v3 결과에는 소급 적용하지 않는다.
-> **동결 epoch/profile/version**: `2026-08-03-code-json` / `dddjango-code-json` /
-> `v4-candidate`. 결과 identity는
+> 사용자 명시 승인(`2026-08-11T23:53:32+0900` — 최소 개정 epoch) 이후 새 v5 결과를 이 문서로 채점·집계한다.
+> historical v3·v4 결과에는 소급 적용하지 않는다.
+> **동결 epoch/profile/version**: `2026-08-08-tree-revision` / `dddjango-code-json` /
+> `v5-candidate`. 결과 identity는
 > `epoch + error profile + rubric version + dimension ID`다.
+> **v4 재현 경계**: v4 기준(`2026-08-03-code-json`/`v4-candidate`)과 그 결과는 full SHA
+> `3239773d87df60ab8c2f10c8b189f6793cab1a36` 에서 재현한다.
+> **v5 최소 개정 범위**: 구조 차원(SH 블록)의 «판»을 신 표준 정본(`standard_tree` 140행 ·
+> `discipline-houserules` `references/final.md` §0~§4)과 registry 27종에 위임한다 — 평가지가
+> 구조 값을 중복 소유하지 않는다. SD·NJ·FC·Q 차원·치명 배정·차원 수(34)는 불변.
+> §E 사례 앵커의 옛 경로(`infra_layer/…` 등)는 그 시점 fixture 실경로라 보존한다.
 > **v3 재현 경계**: v3 기준과 historical 결과는 full SHA
 > `d1fce5b43b13f8447b2a4b78f6c94e74efe8ff19`에서 재현한다. 기존 결과 14개는
 > 불변이며 v4 의미로 소급 판정하지 않는다.
@@ -29,7 +35,7 @@
 | **SD-4** 애그리거트 경계 | 1트랜잭션 1애그리거트(또는 동일DB 예외 명시)·최소 크기·타 애그리거트 ID 참조·일관성 방식 적정 | §3.3 규칙1~4 | 작은 경계·ID 참조·일관성 선택 근거 있음 | 거대 애그리거트 / 객체 직접 참조(도메인 FK 결합) / 근거 없는 복수 애그리거트 수정 | 결정(ID)+의미 | ✅ |
 | **SD-5** 모델 표현력 | 값객체 불변·도메인서비스 무상태(애그리거트 비의존)·식별자가 유비쿼터스 언어 | §3.1·§3.5·§2.3 | frozen 값객체 / 무상태 서비스 / 비즈 용어 네이밍 | 가변 값객체(setter) / 애그리거트가 서비스 주입받음 / CRUD·매직 네이밍 | 결정+의미 | ✅ |
 | **SD-6** 계층 순수성(P1a 포함) | domain/application이 HTTP·ORM presentation 타입을 모르고, 알려진 BC 예외→status mapping은 해당 controller가 직접 소유 | §5.1·§6.1; ninja §2.2·§6.2 | domain/application HTTP 무지 + 해당 controller가 알려진 구체 BC 예외를 직접 catch해 `Status` 반환 | domain/application의 HTTP·framework import 또는 status DTO 흐름 / mapping helper·handler로 소유 이동 / controller가 raw 오류 응답 생성 | 결정+의미 | ✅ |
-| **SD-7** 컨텍스트 통신 | 타 BC는 `published_service`(OHS)/ACL로만; 교차 결합(모델·예외)은 ACL에 격리 | §3.2(3)·§2.5 | OHS 소비, 또는 OHS 미이주 시 `infra_layer/acl/` ACL이 업스트림 import·번역(모델·**예외**까지 ACL 격리·도메인은 포트 ABC 의존) | **ACL 밖**(도메인/응용/presentation)이 타 BC `domain_layer`/`infra_layer`(예외 포함) 직접 import / OHS 존재하는데 미경유 / ACL이 번역 안 하고 누수 | 결정+의미 | ✅ |
+| **SD-7** 컨텍스트 통신 | 타 BC는 `open_host_service`(OHS — 옛 `published_service`)/ACL로만; 교차 결합(모델·예외)은 ACL에 격리 | §3.2(3)·§2.5 | OHS 소비, 또는 OHS 미이주 시 ACL(신 `driven_layer/adapter/anticorruption_layer/` · 미이주 옛 `infra_layer/acl/`은 트리 밖 칸 — §4 이관 종료)이 업스트림 import·번역(모델·**예외**까지 ACL 격리) | **ACL 밖**(도메인/응용/driving)이 타 BC `domain_layer`/`driven_layer`(옛 `infra_layer` — 예외 포함) 직접 import / OHS 존재하는데 미경유 / ACL이 번역 안 하고 누수 | 결정+의미 | ✅ |
 
 > **SD-6 주의(DR-24·Goodhart 차단)**: 결정적 checker는 import와 직접형 계약을
 > 좁게 증명하지만, `status: int` 같은 plain DTO가 HTTP 의미를 숨긴 채 application을 흐르는
@@ -38,21 +44,21 @@
 > 의미를 실은 DTO가 계층을 흐르면 SD-6 치명 FAIL이며 WEAK로 낮추지 않는다. 중앙 handler나
 > application 예외 재발생은 v4 PASS 근거가 아니다.
 
-> **SD-7 주의(미스캘리브 교정 2026-06-02)**: 결정 레인(`check-structure.py`)은 타 BC 내부 import를 신호로 내나 **`infra_layer/acl/` 미이주 ACL이 업스트림(catalog) 모델·리포·예외를 import·번역하는 건 표준 §2(houserules `final.md` §2 컨텍스트 간 통신 — 'OHS 미이주 시 ACL' 조문) 명시 허용 = FAIL 아님**(주의신호로만 분리; 도메인은 포트 ABC 의존·번역이 ACL 격리 시). **진짜 FAIL = ACL *밖*(도메인/응용/presentation)이 타 BC 내부를 직접 import**(예: 예외 번역이 ACL에 안 갇혀 누수) / OHS 존재하는데 미경유 / ACL 도메인누수. *근거*: smoke4-claude(catalog 결합이 ACL에 격리 → **PASS**) ↔ p1a-v3-claude(catalog 예외가 presentation·application으로 누수 `order_api_router.py:26`·`create_order_app.py:17` → **FAIL**)로 갈린다 — 과거 "Claude ACL infra import=FAIL" 앵커는 미스캘리브 오판이었다. **published_service 내부 구조**(서비스 1차 `<service>_service/`·contract 3패키지(request/response 연산당 1파일)·시그니처 3연조·published 계약 타입의 application_layer 관통 금지)는 houserules `final.md` §2 OHS 내부 구조 절(2026-07-07 신설·2026-07-08 3패키지 개정)이 규정한다 — SD-7 관측 시 함께 본다(관통·contract 계층 import는 `check-context-isolation` 확장 슬라이스가 결정 레인).
+> **SD-7 주의(미스캘리브 교정 2026-06-02)**: 결정 레인(v5: `check-context-isolation` — 옛 v4 레인 `check-structure.py`는 은퇴)은 타 BC 내부 import를 신호로 내나 **`infra_layer/acl/` 미이주 ACL이 업스트림(catalog) 모델·리포·예외를 import·번역하는 건 표준 §2(houserules `final.md` §2 컨텍스트 간 통신 — 'OHS 미이주 시 ACL' 조문) 명시 허용 = FAIL 아님**(주의신호로만 분리; 도메인은 포트 ABC 의존·번역이 ACL 격리 시). **진짜 FAIL = ACL *밖*(도메인/응용/presentation)이 타 BC 내부를 직접 import**(예: 예외 번역이 ACL에 안 갇혀 누수) / OHS 존재하는데 미경유 / ACL 도메인누수. *근거*: smoke4-claude(catalog 결합이 ACL에 격리 → **PASS**) ↔ p1a-v3-claude(catalog 예외가 presentation·application으로 누수 `order_api_router.py:26`·`create_order_app.py:17` → **FAIL**)로 갈린다 — 과거 "Claude ACL infra import=FAIL" 앵커는 미스캘리브 오판이었다. **open_host_service 내부 구조**(v5: `driving_layer/open_host_service/<service>/` 아래 `<service>_service.py`+`contract/{request,response,exception}/` — 트리 22~32행·#633·#634; 옛 `published_service`·구 contract 파일명은 트리 밖 칸 — §4 이관 종료)는 houserules `final.md` §1·§2 와 registry #6 이 규정한다 — SD-7 관측 시 함께 본다(관통·contract 계층 import는 `check-context-isolation` 확장 슬라이스가 결정 레인).
 
 ## B. TIER-S 척추 — houserules 충실도 (S-HR)
 표준: `dddjango/skills/discipline-houserules/references/final.md` + `SKILL.md`
 
 | ID | 항목 | §근거 | PASS | FAIL | 레인 | 치명 |
 |---|---|---|---|---|---|---|
-| **SH-1** 컨테이너 | 신규 앱이 `application/<app>/` 하위 | §0-1 | 신규 앱이 `application/` 하위 | 신규 앱이 루트(마스크 C 적용) | 결정 | ✅ |
-| **SH-2** 4계층 | `{domain,application,infra,presentation}_layer/` 물리 분리 | §0-2 | 4계층 존재 + **touched 데이터소스도 4계층 빈 패키지 실현**(유스케이스 없으면 `application_layer`만 빈 계층) | 누락/평면 / **데이터소스라며 계층 폴더 생략**(§0-2·§632-(2) 개정) | 결정 | ✅ |
-| **SH-3** 종류 폴더+거주 명명 | 종류 2차 폴더 전체(빈 패키지로 항상·`api`/`schema`/`acl`/`port` 포함), ORM/포트/리포가 평면 `.py` 아님; **거주 객체 명명(시점: ≥1.4.0 산출분): command/=`…Command`·query/=`…Query`·dto/=`@dataclass …Request`, 모두 `execute(request)`·repository/port 의존** | §0-3·§0-4·§4 | 종류 폴더 구조 + R/C/Q 명명 일치 + **데이터소스 BC도 종류 폴더·애그리거트 골격(`domain_layer/<aggregate>/` ORM 모델명 도출) 빈 패키지 실현** | 종류 2차 폴더(`entity`·`value_object`·`repository`·`command`·`query`·`dto`·`api`·`schema`)가 빈 패키지로라도 부재(평면 `.py`로 접음·골격 미생성) / **touched 데이터소스가 `domain_layer/<aggregate>/` 애그리거트 빈 골격 미생성**(§632-(2) 2026-06-08 개정·골격 무조건은 그 이후 산출분) / **command/에 `…Service`·자유함수·query/ selector 함수·dto/ 비-`@dataclass`(≥1.4.0 산출분)** | 결정(폴더·골격)+의미(명명) | ✅ |
-| **SH-4** Django앱 위치 | `models.py`·`migrations/`가 `infra_layer/django_<app>/`; AppConfig `name`=점경로·`label` | §0-5 | 모델/마이그가 `infra_layer/django_` | 루트/앱루트/도메인에 `models.py`(마스크 C 적용) | 결정 | ✅ |
+| **SH-1** 컨테이너 | 신규·touched 앱이 `application/<bounded_context>/` 하위 | final.md §0·§1 | 신규 앱이 `application/` 하위 — 판은 registry #7(check-app-container)·#4 | 신규 앱이 루트(마스크 C 적용) | 결정 | ✅ |
+| **SH-2** 4계층 | `{driving,application,domain,driven}_layer/` 물리 분리(v5 — 옛 이름은 트리 밖 칸 #81·#490) | final.md §0·§1 | 4계층 존재 + **touched 데이터소스도 빈 패키지 실현** — 판은 `standard_tree` 140행·registry #4(check-layer-skeleton) | 누락/평면/데이터소스 생략 — #4 exit 2 | 결정 | ✅ |
+| **SH-3** 골격+거주 명명 | 고정·재등장 칸 전체를 빈 채로도 실현(제1원칙 — 값은 `standard_tree` 140행이 소유) + 거주 명명(v5 산출분: `<use_case>_use_case.py` 공개 클래스 하나·`execute(<command|query>) → <result>` #635 · 자료는 `_command`/`_query`/`_result` · `dto` 낱말 0 #567) | final.md §0·§1·§3 | 골격·명명 — 판은 registry #4·#19(usecase-dto)·#26(naming) exit | 골격 접음·트리 밖 칸·명명 위반 — 해당 checker exit 2. **≤v4 산출분은 v4 문면(command/=`…Command`·dto/=`…Request`)으로 채점 — 소급 금지** | 결정+의미 | ✅ |
+| **SH-4** Django앱 위치 | `models/`·`migrations/`가 `driven_layer/django_<bounded_context>/`; AppConfig `name`=점경로·`label` | final.md §1(트리 75~81행) | 모델/마이그가 `driven_layer/django_` — 판은 registry #17(check-db-table apps.py 결선 포함)·#4 | 루트/앱루트/도메인에 `models.py`(마스크 C 적용) | 결정 | ✅ |
 | **SH-5** ORM 명명 | ORM `<Name>Model`, 도메인 bare | §0-6·§4 | 명명 분리 | 혼동(도메인에 Model접미사·ORM이 bare) | 결정 | — |
 | **SH-6** 포트/구현 명명 | 추상=개념+역할접미사(`Port`/`Repository`/`Gateway`); 구현=확립 패턴명(`Repository`/`Gateway`) 유지+기술접두·일반 포트는 `…Adapter`; `Interface`/`Impl`·파일명 약어 0 | §4 | 규약 준수 | `Interface`/`Impl` / `*_repo.py` / 일반 포트 구현이 `Port` 유지(Adapter 아님)·개념 base 불일치 | 결정 | — |
-| **SH-7** 협력 포트 위치 | 협력 포트가 `domain_layer/<agg>/port/` | §2 | `domain_layer/.../port/` | `application_layer`/`infra_layer`에 위치 | 결정 | ✅ |
-| **SH-8** ACL 분리 | ACL이 `infra_layer/acl/`(+domain `port/`), `repository/`에 안 섞임 | §2·§3 | acl 분리 | repository에 번역 어댑터 혼합 | 결정+의미 | — |
+| **SH-7** 포트 선언 위치(v5 — **v4와 반전**) | 리포지토리 선언=`domain_layer/<aggregate>/<aggregate>_repository.py`(#282) · 능력/협력 포트=`application_layer/port/<capability>/`뿐(#187) | final.md §1·§2 | 판은 registry #22(port-adapter-pairing)·#20(transaction-boundary)·#4 | 트리 밖 `port/` 칸(`domain_layer` 포함 다른 자리)·개명 변종 | 결정 | ✅ |
+| **SH-8** ACL 분리 | ACL 어댑터가 `driven_layer/adapter/anticorruption_layer/<other_bounded_context>/`(#365), `repository/`에 안 섞임(옛 `infra_layer/acl/`은 트리 밖 칸 — §4 이관 종료) | final.md §1·§2 | acl 분리 — 판은 registry #22·#6(context-isolation) | repository에 번역 어댑터 혼합 | 결정+의미 | — |
 | **SH-9** 단일 레이아웃 | 한 앱이 두 레이아웃 안 가짐 | §1.4 | 단일 레이아웃 | `test`+`tests` 공존·`src`+`apps` 혼용 | 결정 | — |
 | **SH-10** 테스트 의미군 | `test/{unit,integration,e2e}` 분리; HTTP=integration; 평면나열 0 | §1.3 | 의미군 분리·올바른 배치 | 평면 나열 / 의미 오배치 | 결정+의미 | — |
 
@@ -65,7 +71,7 @@
 > **비중복 보증**: domain/application HTTP 무지와 mapping 소유 위치는 **SD-6**,
 > 선택된 error profile의 wire/status/header/version 일관성은 **Q-2**, 일반 의존성 핀은
 > **Q-7**이 소유한다. NJ-2는 비오류 operation의 얇음을 보고, **NJ-7은 해당 controller의
-> 오류 직접 계약 형태**(좁은 try·구체 catch·직접 ErrorOut/Status·framework default)를 본다.
+> 오류 직접 계약 형태**(좁은 try·구체 catch·직접 ErrorSchema/Status·framework default)를 본다.
 > 즉 SD-6은 계층과 소유자, NJ-7은 그 소유자가 구현한 직접 경계의 완전성을 판정한다.
 
 | ID | 항목 | §근거 | PASS | FAIL | 레인 | 치명(조건부) |
@@ -73,20 +79,20 @@
 | **NJ-1** 스택 채택 | 신규 HTTP/JSON API를 Ninja(`NinjaAPI`/`NinjaExtraAPI`)로 — (`Router` ∨ `@api_controller`/`register_controllers`) operation/컨트롤러; plain view·`JsonResponse`·DRF로 안 샘; 기존 스택 존중 (신규 표준=클래스 컨트롤러, 함수형 `Router`=레거시/415 격리 예외 — 둘 다 PASS) | §1.1·§10 | 신규 JSON API가 ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러로 등록 | 신규 JSON API가 plain `django.views`/`JsonResponse`·DRF로 구현(greenfield인데) | 결정 | ✅ |
 | **NJ-2** operation 얇음(비-오류) | operation 본문에 비즈로직·상태전이·ORM·수동 본문파싱·수동 필드검증 0; service 호출 + schema 매핑만 | §1.3·§2.2 | schema 바인딩→service 호출→응답 매핑만 | operation에 `json.loads`/수동검증/ORM/비즈 분기 | 의미(+grep) | ✅ |
 | **NJ-3** Schema 입출력 분리 | 요청·응답을 `Schema`/`ModelSchema`로 분리, 도메인 엔티티 직접 직렬화 0 | §2.2·§3.1 | 입·출력 별도 Schema, 도메인→DTO 매핑 | 도메인 객체 직접 `response=` / 내부필드 누출 | 결정+의미 | — (강) |
-| **NJ-4** BC 오류 response 정합 | controller가 실제로 직접 반환하는 BC 오류 status를 같은 BC `<Bc>ErrorOut>`으로 `response={...}`에 선언; framework 기본 오류를 BC Schema로 광고하지 않음 | §2.2·§8 | 직접 반환 BC status→동일 BC base 선언 + 직접 BC 반환 없는 framework 401/403/route 404/422/429/500 비광고 | 직접 반환 BC status 누락·다른 BC Schema / framework 기본 status를 ErrorOut으로 거짓 광고 / `openapi_extra`·사후 후가공 | 결정 | — (강) |
+| **NJ-4** BC 오류 response 정합 | controller가 실제로 직접 반환하는 BC 오류 status를 같은 BC `<Bc>ErrorSchema`으로 `response={...}`에 선언; framework 기본 오류를 BC Schema로 광고하지 않음 | §2.2·§8 | 직접 반환 BC status→동일 BC base 선언 + 직접 BC 반환 없는 framework 401/403/route 404/422/429/500 비광고 | 직접 반환 BC status 누락·다른 BC Schema / framework 기본 status를 ErrorOut으로 거짓 광고 / `openapi_extra`·사후 후가공 | 결정 | — (강) |
 | **NJ-5** operation 문서화 | `summary`(+`tags`) 부여, 무정보 반환타입(`-> object`) 금지 | §2.2 | summary/tags + 의미있는 반환타입 | summary 없음 / `-> object`·어댑터 누수형 | 결정 | — (경미) |
 | **NJ-6** ninja 버전 핀 표기 | 신규 도입 시 매니페스트에 버전 핀, 기존 관례와 일치 | §2.1 | `django-ninja==<버전>` 관례 일치 | 매니페스트 부재/무핀/표기 불일치 | 결정 | — (경미) |
-| **NJ-7** BC 오류 직접 계약 | 알려진 BC 실패를 해당 controller가 좁은 application 호출 경계에서 직접 ErrorOut/Status로 변환하고 framework 오류는 기본 흐름 보존 | §6.2·§8 | application 호출 한 문장만 감싼 좁은 `try` + 구체 catch + direct no-arg concrete ErrorOut(또는 BC base 직접 생성) + `Status`; 미식별/framework 오류는 기본 처리 | 오류 helper·factory·custom handler·catch-all / bare·`Exception`·`BaseException` broad catch / raw `Response`·`JsonResponse`·dict 오류 응답 / 즉시 raise-catch 우회 | 결정+의미 | — (강) |
+| **NJ-7** BC 오류 직접 계약 | 알려진 BC 실패를 해당 controller가 좁은 application 호출 경계에서 직접 ErrorSchema/Status로 변환하고 framework 오류는 기본 흐름 보존 | §6.2·§8 | application 호출 한 문장만 감싼 좁은 `try` + 구체 catch + direct no-arg concrete ErrorSchema(또는 BC base 직접 생성) + `Status`; 미식별/framework 오류는 기본 처리 | 오류 helper·factory·custom handler·catch-all / bare·`Exception`·`BaseException` broad catch / raw `Response`·`JsonResponse`·dict 오류 응답 / 즉시 raise-catch 우회 | 결정+의미 | — (강) |
 
 > **NJ-4 정확성 경계**: 검사는 실제 직접 반환 status→같은 BC base Schema까지 보증한다.
-> 하나의 `<Bc>ErrorOut>`이 여러 status에 쓰여 각 status 문서에 BC Enum 전체 식별자 subset이
+> 하나의 `<Bc>ErrorSchema`이 여러 status에 쓰여 각 status 문서에 BC Enum 전체 식별자 subset이
 > 과대 노출되는 것은 v4의 승인된 한계다. 이를 보완하려고 OpenAPI를 수동 후가공하지 않는다.
 >
 > **의도적 제외(표준이 강제 안 함·거짓양성 원천)**: operationId 명시(§8 "확인"일 뿐·자동생성),
 > framework 기본 body의 exact snapshot, Idempotency/인증/페이지네이션 정책 자체(Q-2 위임).
 > **앵커 한계(거짓양성 직결)**: NJ-2만 강한 양극 앵커(smoke2-codexB 극단 ↔ 준수 다수). **NJ-1·3·6은 8벌 전부 준수라 known-bad 부재** → 준수 강제 게이트로는 약함(동결 전 합성 반례/baseline plain-view 참조 결정).
 > **🔴 에러 경로 정독(NJ-4·NJ-7·SD-6)**: 성공 path와 checker exit 0만 보고 PASS를
-> 주지 않는다. controller의 application 호출, `try`/`except`, ErrorOut 생성, `Status`,
+> 주지 않는다. controller의 application 호출, `try`/`except`, ErrorSchema 생성, `Status`,
 > `response={...}`를 함께 읽고 모든 오류 helper·factory·custom handler·catch-all을 검색한다.
 > v4에서 handler나 raw `Response`/`JsonResponse`/dict 오류 응답은 정상 대안이 아니라 NJ-7
 > FAIL이다. 실제 직접 반환하는 BC status가 같은 BC base로 선언되지 않거나, 직접 BC 반환 없는
@@ -150,8 +156,8 @@
 
 | ID | 관측 항목 (무엇을 두드리나) | 비고 |
 |---|---|---|
-| **EP-1** 깨진 본문 | malformed body가 framework 기본 400이고 BC ErrorOut shape/code가 아님; body exact snapshot 금지 | HTTP operation 없으면 N/A |
-| **EP-2** 요청 검증 | request validation이 framework 기본 422이고 BC ErrorOut shape/code가 아님; body exact snapshot 금지 | 검증 가능한 필드가 없으면 다른 필수 필드 |
+| **EP-1** 깨진 본문 | malformed body가 framework 기본 400이고 BC ErrorSchema shape/code가 아님; body exact snapshot 금지 | HTTP operation 없으면 N/A |
+| **EP-2** 요청 검증 | request validation이 framework 기본 422이고 BC ErrorSchema shape/code가 아님; body exact snapshot 금지 | 검증 가능한 필드가 없으면 다른 필수 필드 |
 | **EP-3** 인프라·retryable 두 종단 | raw 인프라 실패→framework 기본 500; G1 승인 stable public retryable 실패→자기 BC 예외 정규화→controller 503/409 + 승인 code/header | 두 종단과 N/A 규칙은 §4.3.1 |
 | **EP-4** 재고 부족 | 409 + slot-6 승인 BC exact JSON body; 승인된 body status property가 있을 때만 HTTP와 일치 | FC-1 골든과 교차확인 |
 

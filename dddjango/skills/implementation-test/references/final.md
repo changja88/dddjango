@@ -357,7 +357,7 @@ minversion = "8.0"
 # 분할이 있으면 그 test 모듈(예: config.settings.test), 없으면 평면 모듈을 쓴다.
 DJANGO_SETTINGS_MODULE = "config.settings"
 
-# 테스트 검색 경로 — 앱별 test 루트(application/<app>/test/{unit,integration}/).
+# 테스트 검색 경로 — 앱별 test 루트(application/<bounded_context>/test/{unit,integration}/).
 # 생략하고 rootdir 자동 수집에 맡겨도 되며, 명시하려면 앱 test 루트를 나열한다.
 testpaths = ["application"]
 
@@ -1152,7 +1152,7 @@ factory_boy는 테스트 객체 생성을 위한 "청사진" 역할을 한다. J
 pip install factory_boy faker
 ```
 
-factory_boy는 **ORM 애그리거트/엔티티 영속 픽스처의 기본**이다 — 모든 객체에 강제하지 않는다. *정확한 필드 값*이 검증의 핵심인 행(동시성·경계 테스트; 예: §20.5의 CAS-충돌 스파이는 `ProductModel.objects.create(stock=5, version=0)`으로 일부러 정확한 행을 만든다)과 VO/dataclass 구성은 직접 생성이 더 명확하므로 그대로 둔다. 팩토리는 **`application/<app>/test/factories/`**(패키지)에 둔다 — 이 폴더는 테스트 트리 단일 출처(`discipline-houserules` §2)에 별도로 추가되므로 여기서는 위치만 가리킨다.
+factory_boy는 **ORM 애그리거트/엔티티 영속 픽스처의 기본**이다 — 모든 객체에 강제하지 않는다. *정확한 필드 값*이 검증의 핵심인 행(동시성·경계 테스트; 예: §20.5의 CAS-충돌 스파이는 `ProductModel.objects.create(stock=5, version=0)`으로 일부러 정확한 행을 만든다)과 VO/dataclass 구성은 직접 생성이 더 명확하므로 그대로 둔다. 팩토리는 **`application/<bounded_context>/test/factories/`**(패키지)에 둔다 — 이 폴더는 테스트 트리 단일 출처(`discipline-houserules` §2)에 별도로 추가되므로 여기서는 위치만 가리킨다.
 
 ### 9.2 기본 팩토리 정의
 
@@ -2418,8 +2418,8 @@ collaborator가 승인된 구체 예외를 내게 하고, 응답의 HTTP status,
 header 값·부재를 리터럴로 검증한다. serializer, helper, factory, mapping, handler 내부를 mock하거나
 직접 unit test하지 않는다.
 
-기댓값은 해당 decision row의 승인된 리터럴을 쓰되, dddjango가 고정하는 공통 `ErrorOut` property
-목록은 없다. 기존 공통 `ErrorOut` shape를 바꾸려면 별도의 명시적 사용자
+기댓값은 해당 decision row의 승인된 리터럴을 쓰되, dddjango가 고정하는 공통 오류 schema property
+목록은 없다. 기존 공통 오류 schema shape를 바꾸려면 별도의 명시적 사용자
 승인이 필요하며, 승인 전에는 변경도 그 변경을 전제로 한 assertion도 만들지 않는다.
 
 framework-owned 401/403/route 404/422/429/`HttpError`/500은 별도 입장 행에서 승인된 경우에만

@@ -37,7 +37,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 - 입장된 HTTP `add/update` 행은 실제 mounted Django client request로 승인 status/body/error-sensitive header와 비노출 의미를 검증한다. helper/factory/serializer/mapping/handler 내부는 직접 테스트하지 않는다.
 - framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 별도 승인 행이 있을 때만 status·민감정보 비노출을 smoke한다. 별도 승인 또는 실제 consumer evidence가 있는 public wire field는 해당 field만 exact 단언할 수 있지만 전체 body snapshot·private/framework mechanics로 확대하지 않는다. 명세에 없는 endpoint/backend/header를 발명하지 않는다.
 - 공개 OpenAPI `add/update` 행은 실제 URLconf에 mount된 generated document에서 관련 operation/status/media/schema만 검증한다. controller-only client나 `api.get_openapi_schema()`·helper 직접 호출로 대신하거나 전체 document를 snapshot하지 않는다.
-- native success download/stream/redirect/schema-less 204도 해당 계약의 `retain/add/update` 행에 따라 유지·작성하며 ErrorOut 규칙 때문에 새 smoke를 자동 추가하지 않는다.
+- native success download/stream/redirect/schema-less 204도 해당 계약의 `retain/add/update` 행에 따라 유지·작성하며 ErrorSchema 규칙 때문에 새 smoke를 자동 추가하지 않는다.
 - `preserve-established`는 2~4·10~12번 slot의 관찰·승인된 status/body/header/media type/OpenAPI만 검증한다. 해당 profile의 evidence가 RFC 9457을 기록한 경우에만 RFC field와 `application/problem+json`을 기대한다. 기존 RFC 테스트를 끝내거나 바꾸려면 **승인된 설계 명세에 기록된 현재 product-contract evidence**가 필요하다. 기록되지 않은 사용자 대화나 tester의 추론은 종료 근거가 아니다. code-profile shape를 섞어 강제하지 않는다.
 - error helper/handler/factory/serializer/mapping, `Status`, Schema 생성 같은 내부 구현은 직접 테스트하지 않는다. 실제 pytest Red command와 관련 failing assertion/traceback을 보고하고 skip/xfail을 쓰지 않는다. 모든 기대가 종료된 removal-only에는 가짜 negative Red를 만들지 않는다.
 - 이번 실행의 Red만 위해 만든 loader/dynamic import guard/대체 decorator/skip/xfail/helper는 해당 surface의 첫 Green 직후 네가 제거한다. 작업 전부터 있던 비계를 이번 실행이 만든 것으로 간주해 임의 삭제하지 않는다.

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""dddjango code-profile ErrorOut schema contract backstop.
+"""dddjango code-profile FrameworkErrorSchema schema contract backstop.
 
 The checker is deliberately profile-gated.  Positional-only, ``auto``, and
 ``preserve-established`` invocations do not apply schema semantics; preserve
 still validates the selectors it supplies.  ``dddjango-code-json`` validates
-the canonical common/BC ErrorOut modules, project inventory correspondence,
+the canonical common/BC FrameworkErrorSchema modules, project inventory correspondence,
 wire-code uniqueness, and narrow direct raw-string discriminator forms.
 
 Exit codes: 0=clean/N/A, 2=contract blocker, 1=usage or analysis error.
@@ -20,6 +20,12 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+try:
+    import standard_tree as _stree
+except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
+    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    sys.exit(1)
 
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
@@ -40,10 +46,11 @@ CODE_SKIP_DIRS = {
     "migrations",
     "generated",
 }
-COMMON_INIT = Path("common/ninja/response/__init__.py")
-COMMON_ERROR = Path("common/ninja/response/error_out.py")
-COMMON_ERROR_MODULE = "common.ninja.response.error_out"
-COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.ErrorOut"
+COMMON_INIT = Path("framework/ninja/__init__.py")
+COMMON_ERROR = Path("framework/ninja/framework_error_schema.py")
+COMMON_VALIDATION = Path("framework/ninja/framework_validation_error_schema.py")
+COMMON_ERROR_MODULE = "framework.ninja.framework_error_schema"
+COMMON_ERROR_OUT = f"{COMMON_ERROR_MODULE}.FrameworkErrorSchema"
 NINJA_SCHEMA = "ninja.Schema"
 STR_ENUM = "enum.StrEnum"
 FIELD_FACTORIES = {
@@ -231,7 +238,7 @@ NodeSignature = tuple[object, ...]
 
 @dataclass(frozen=True)
 class CommonFieldContract:
-    """Observed common ErrorOut field contract; no property name is predefined."""
+    """Observed common FrameworkErrorSchema field contract; no property name is predefined."""
 
     annotation: NodeSignature
     discriminator_annotation: NodeSignature | None
@@ -546,7 +553,7 @@ def _production_inventory(root: Path) -> CodeInventory:
 
 
 def _bc_error_path(bc: str) -> Path:
-    return Path(f"application/{bc}/presentation_layer/schema/error_out.py")
+    return Path(f"application/{bc}/driving_layer/api/bc_error_schema.py")
 
 
 def _candidate_bc(path: Path) -> str | None:
@@ -554,7 +561,7 @@ def _candidate_bc(path: Path) -> str | None:
     if (
         len(parts) == 5
         and parts[0] == "application"
-        and parts[2:] == ("presentation_layer", "schema", "error_out.py")
+        and parts[2:] == ("driving_layer", "api", "bc_error_schema.py")
         and BC_NAME_RE.fullmatch(parts[1])
     ):
         return parts[1]
@@ -596,7 +603,7 @@ def _source_plan(
     union = code_paths | preserve_paths
     if COMMON_ERROR not in code_paths:
         analysis.append(
-            "code inventory에 common/ninja/response/error_out.py가 필요함"
+            "code inventory에 framework/ninja/framework_error_schema.py가 필요함"
         )
     for path in union:
         if not _is_schema_candidate(path):
@@ -608,7 +615,7 @@ def _source_plan(
     required_missing.update(_bc_error_path(bc) for bc in config.error_bcs)
     for path in sorted(required_missing, key=Path.as_posix):
         if path not in inventory_paths:
-            blockers.append(f"필수 canonical ErrorOut artifact 부재: {path}")
+            blockers.append(f"필수 canonical FrameworkErrorSchema artifact 부재: {path}")
     for bc in config.error_bcs:
         path = _bc_error_path(bc)
         if path in inventory_paths and path not in code_paths:
@@ -625,12 +632,9 @@ def _source_plan(
         if not scoped:
             analysis.append(f"scope BC production source 없음: application/{bc}/")
         source_paths.update(scoped)
-    response_prefix = Path("common/ninja/response")
-    source_paths.update(
-        path
-        for path in inventory_paths
-        if path.parent == response_prefix or response_prefix in path.parents
-    )
+    # 정본 공용 모듈(#417) — framework/ninja/ 는 공유 <technology> 폴더라 오류 계약 파일만 끌어온다.
+    common_files = {COMMON_INIT, COMMON_ERROR, COMMON_VALIDATION}
+    source_paths.update(path for path in inventory_paths if path in common_files)
     source_paths.update(discovered)
     return source_paths, code_paths, preserve_paths, analysis, blockers
 
@@ -1016,8 +1020,8 @@ def _common_alias_generator(
     body_candidate: tuple[ast.AST, dict[str, str]] | None = None
     body_config_seen = False
     body_config_complete = True
-    legacy_candidate: tuple[ast.AST, dict[str, str]] | None = None
-    legacy_config_seen = False
+    nested_config_candidate: tuple[ast.AST, dict[str, str]] | None = None
+    nested_config_seen = False
     for statement in node.body:
         bindings = before.get(id(statement), outer)
         value: ast.AST | None = None
@@ -1060,8 +1064,8 @@ def _common_alias_generator(
             else:
                 body_config_complete = False
         if isinstance(statement, ast.ClassDef) and statement.name == "Config":
-            legacy_config_seen = True
-            legacy_candidate = None
+            nested_config_seen = True
+            nested_config_candidate = None
             config_before = _class_body_bindings(parsed, statement, bindings)
             for config_statement in statement.body:
                 if not isinstance(config_statement, (ast.Assign, ast.AnnAssign)):
@@ -1078,14 +1082,14 @@ def _common_alias_generator(
                 if "alias_generator" in config_targets:
                     config_value = config_statement.value
                     if config_value is not None:
-                        legacy_candidate = (
+                        nested_config_candidate = (
                             config_value,
                             config_before.get(id(config_statement), bindings),
                         )
-    if body_config_seen and legacy_config_seen:
+    if body_config_seen and nested_config_seen:
         return None, False
 
-    candidate = body_candidate if body_config_seen else legacy_candidate
+    candidate = body_candidate if body_config_seen else nested_config_candidate
     complete = body_config_complete if body_config_seen else True
 
     # Pydantic class-header config kwargs override the body model_config.
@@ -1340,7 +1344,7 @@ def _common_config_requires_runtime_proof(
     node: ast.ClassDef,
     outer: dict[str, str],
 ) -> bool:
-    """Conservatively detect dynamic common ErrorOut config/decorators."""
+    """Conservatively detect dynamic common FrameworkErrorSchema config/decorators."""
 
     if any(
         _config_expression_requires_runtime_proof(decorator, outer)
@@ -2154,7 +2158,7 @@ def _class_member_findings(
                 seen,
                 parsed,
                 decorator,
-                "class decorator outside common ErrorOut",
+                "class decorator outside common FrameworkErrorSchema",
             )
         for keyword in node.keywords:
             _append_finding(
@@ -2162,7 +2166,7 @@ def _class_member_findings(
                 seen,
                 parsed,
                 keyword,
-                "class keyword config outside common ErrorOut",
+                "class keyword config outside common FrameworkErrorSchema",
             )
     field_names: set[str] = set()
     before = _class_body_bindings(parsed, node, initial_bindings)
@@ -2176,7 +2180,7 @@ def _class_member_findings(
                     seen,
                     parsed,
                     statement,
-                    "Pydantic hook override outside common ErrorOut",
+                    "Pydantic hook override outside common FrameworkErrorSchema",
                 )
                 continue
             if name == "model_config":
@@ -2186,7 +2190,7 @@ def _class_member_findings(
                         seen,
                         parsed,
                         statement,
-                        "model_config override outside common ErrorOut",
+                        "model_config override outside common FrameworkErrorSchema",
                     )
                 continue
             if _classvar(statement.annotation, bindings):
@@ -2195,7 +2199,7 @@ def _class_member_findings(
                         analysis.append(
                             "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
                             f"{parsed.relative_path}:{statement.lineno} "
-                            "common ErrorOut dynamic ClassVar binding은 "
+                            "common FrameworkErrorSchema dynamic ClassVar binding은 "
                             "target-pin runtime proof 필요"
                         )
                     else:
@@ -2204,7 +2208,7 @@ def _class_member_findings(
                             seen,
                             parsed,
                             statement,
-                            "dynamic ClassVar assignment outside common ErrorOut",
+                            "dynamic ClassVar assignment outside common FrameworkErrorSchema",
                         )
                 continue
             if name.startswith("_"):
@@ -2217,7 +2221,7 @@ def _class_member_findings(
                         seen,
                         parsed,
                         statement,
-                        "schema decorator proxy outside common ErrorOut",
+                        "schema decorator proxy outside common FrameworkErrorSchema",
                     )
                 elif (
                     not allow_model_config
@@ -2228,7 +2232,7 @@ def _class_member_findings(
                         seen,
                         parsed,
                         statement,
-                        "dynamic private class assignment outside common ErrorOut",
+                        "dynamic private class assignment outside common FrameworkErrorSchema",
                     )
                 continue
             if name in field_names:
@@ -2244,7 +2248,7 @@ def _class_member_findings(
                     seen,
                     parsed,
                     statement,
-                    "complex class assignment outside common ErrorOut",
+                    "complex class assignment outside common FrameworkErrorSchema",
                 )
             for name in names:
                 if not allow_model_config and pydantic_hook(name):
@@ -2253,7 +2257,7 @@ def _class_member_findings(
                         seen,
                         parsed,
                         statement,
-                        "Pydantic hook override outside common ErrorOut",
+                        "Pydantic hook override outside common FrameworkErrorSchema",
                     )
                 elif name == "model_config":
                     if not allow_model_config:
@@ -2262,7 +2266,7 @@ def _class_member_findings(
                             seen,
                             parsed,
                             statement,
-                            "model_config override outside common ErrorOut",
+                            "model_config override outside common FrameworkErrorSchema",
                         )
                 elif not name.startswith("_"):
                     _append_finding(findings, seen, parsed, statement, "public class assignment/helper")
@@ -2275,7 +2279,7 @@ def _class_member_findings(
                         seen,
                         parsed,
                         statement,
-                        "schema decorator proxy outside common ErrorOut",
+                        "schema decorator proxy outside common FrameworkErrorSchema",
                     )
             if (
                 not allow_model_config
@@ -2288,7 +2292,7 @@ def _class_member_findings(
                     seen,
                     parsed,
                     statement,
-                    "dynamic private class assignment outside common ErrorOut",
+                    "dynamic private class assignment outside common FrameworkErrorSchema",
                 )
         elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
             decorated_schema_method = any(
@@ -2324,7 +2328,7 @@ def _class_member_findings(
                 analysis.append(
                     "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
                     f"{parsed.relative_path}:{statement.lineno} "
-                    "common ErrorOut executable class-body statement는 target-pin runtime proof 필요"
+                    "common FrameworkErrorSchema executable class-body statement는 target-pin runtime proof 필요"
                 )
             else:
                 _append_finding(
@@ -2332,7 +2336,7 @@ def _class_member_findings(
                     seen,
                     parsed,
                     statement,
-                    "executable class-body statement outside common ErrorOut",
+                    "executable class-body statement outside common FrameworkErrorSchema",
                 )
 
 
@@ -2469,7 +2473,7 @@ def _visible_common_schema_mutation(
     getter_kind = "getattr"
     setter_kind = "setattr"
     deleter_kind = "delattr"
-    schema_symbols = {NINJA_SCHEMA, COMMON_ERROR_OUT, "Schema", "ErrorOut"}
+    schema_symbols = {NINJA_SCHEMA, COMMON_ERROR_OUT, "Schema", "FrameworkErrorSchema"}
     config_symbols = {f"{symbol}.model_config" for symbol in schema_symbols}
     rebuild_symbols = {f"{symbol}.model_rebuild" for symbol in schema_symbols}
     named_lambdas = named_lambdas or {}
@@ -2645,11 +2649,11 @@ def _analyze_common(
             "common ErrorOut의 project/relative import는 target-pin runtime proof 필요"
         )
     error_outs = [
-        node for node in parsed.tree.body if isinstance(node, ast.ClassDef) and node.name == "ErrorOut"
+        node for node in parsed.tree.body if isinstance(node, ast.ClassDef) and node.name == "FrameworkErrorSchema"
     ]
     if len(error_outs) != 1:
         anchor: ast.AST = error_outs[0] if error_outs else parsed.tree
-        _append_finding(findings, seen, parsed, anchor, "exactly one common ErrorOut required")
+        _append_finding(findings, seen, parsed, anchor, "exactly one common FrameworkErrorSchema required")
     contracts: dict[str, CommonFieldContract] = {}
     if len(error_outs) == 1:
         error_out = error_outs[0]
@@ -2663,7 +2667,7 @@ def _analyze_common(
             analysis,
             findings,
             seen,
-            "common ErrorOut must directly inherit ninja.Schema",
+            "common FrameworkErrorSchema must directly inherit ninja.Schema",
         )
         fields = _public_annassigns(parsed, error_out, bindings)
         field_bindings = _class_body_bindings(parsed, error_out, bindings)
@@ -2691,7 +2695,7 @@ def _analyze_common(
                     seen,
                     parsed,
                     statement,
-                    "common ErrorOut direct mutation/side effect forbidden",
+                    "common FrameworkErrorSchema direct mutation/side effect forbidden",
                 )
         alias_generator, alias_generator_known = _common_alias_generator(
             parsed,
@@ -2706,7 +2710,7 @@ def _analyze_common(
             analysis.append(
                 "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
                 f"{parsed.relative_path}:{error_out.lineno} "
-                "project custom ErrorOut config/decorator는 target-pin runtime proof 필요"
+                "project custom FrameworkErrorSchema config/decorator는 target-pin runtime proof 필요"
             )
         for name, field in fields.items():
             bindings_at_field = field_bindings.get(id(field), bindings)
@@ -2721,7 +2725,7 @@ def _analyze_common(
                 analysis.append(
                     "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
                     f"{parsed.relative_path}:{field.lineno} "
-                    "common ErrorOut dynamic field contract는 target-pin runtime proof 필요"
+                    "common FrameworkErrorSchema dynamic field contract는 target-pin runtime proof 필요"
                 )
             _record_unresolved_field_contract(
                 parsed,
@@ -2821,7 +2825,7 @@ def _analyze_common(
             bindings = before.get(id(node), {})
             inherits_error = any(
                 _resolve(base, bindings) == COMMON_ERROR_OUT
-                or (_expression_name(base) or "") == "ErrorOut"
+                or (_expression_name(base) or "") == "FrameworkErrorSchema"
                 for base in node.bases
             )
             inherits_enum = any(
@@ -2870,7 +2874,7 @@ def _analyze_common(
                 analysis.append(
                     "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
                     f"{parsed.relative_path}:{node.lineno} "
-                    "common ErrorOut module의 dynamic private binding은 target-pin runtime proof 필요"
+                    "common FrameworkErrorSchema module의 dynamic private binding은 target-pin runtime proof 필요"
                 )
             lambda_bindings = assigned_lambdas(node)
             for target in targets:
@@ -3034,7 +3038,7 @@ def _analyze_bc_module(
         )
     prefix = _snake_to_pascal(bc)
     enum_name = f"{prefix}ErrorCode"
-    base_name = f"{prefix}ErrorOut"
+    base_name = f"{prefix}ErrorSchema"
     module = _module_name(parsed.relative_path)
     enum_full = f"{module}.{enum_name}"
     base_full = f"{module}.{base_name}"
@@ -3098,7 +3102,7 @@ def _analyze_bc_module(
         bindings = before.get(id(node), {})
         direct_common = any(_resolve(base, bindings) == COMMON_ERROR_OUT for base in node.bases)
         if node not in bases and direct_common:
-            _append_finding(findings, seen, parsed, node, "second BC ErrorOut base")
+            _append_finding(findings, seen, parsed, node, "second BC FrameworkErrorSchema base")
 
     discriminator_field_name: str | None = None
     discriminator_constructor_keys: frozenset[str] = frozenset()
@@ -3115,11 +3119,11 @@ def _analyze_bc_module(
             base,
             bindings,
             COMMON_ERROR_OUT,
-            "ErrorOut",
+            "FrameworkErrorSchema",
             analysis,
             findings,
             seen,
-            f"{base_name} must directly inherit common ErrorOut",
+            f"{base_name} must directly inherit common FrameworkErrorSchema",
         )
         fields = _public_annassigns(parsed, base, bindings)
         field_bindings = _class_body_bindings(parsed, base, bindings)
@@ -3138,7 +3142,7 @@ def _analyze_bc_module(
                 seen,
                 parsed,
                 base,
-                "BC ErrorOut base must narrow exactly one common field to own ErrorCode",
+                "BC FrameworkErrorSchema base must narrow exactly one common field to own ErrorCode",
             )
         if len(discriminator_fields) == 1:
             discriminator_field_name, discriminator_field = discriminator_fields[0]
@@ -3165,7 +3169,7 @@ def _analyze_bc_module(
                     seen,
                     parsed,
                     discriminator_field,
-                    "BC ErrorOut discriminator must override common field",
+                    "BC FrameworkErrorSchema discriminator must override common field",
                 )
             else:
                 contract = common_contracts[discriminator_field_name]
@@ -3208,7 +3212,7 @@ def _analyze_bc_module(
                         seen,
                         parsed,
                         discriminator_field,
-                        "BC base field metadata must match common ErrorOut",
+                        "BC base field metadata must match common FrameworkErrorSchema",
                     )
                 discriminator_default = _field_default_expression(
                     discriminator_field,
@@ -3239,7 +3243,7 @@ def _analyze_bc_module(
                         seen,
                         parsed,
                         discriminator_field,
-                        "raw string ErrorOut discriminator",
+                        "raw string FrameworkErrorSchema discriminator",
                     )
                 base_discriminator_default_member = _enum_member_name(
                     discriminator_default,
@@ -3334,7 +3338,7 @@ def _analyze_bc_module(
                     seen,
                     parsed,
                     field,
-                    "concrete field metadata must match common ErrorOut",
+                    "concrete field metadata must match common FrameworkErrorSchema",
                 )
             if field_name == discriminator_field_name:
                 actual_annotation = _annotation_signature(
@@ -3353,7 +3357,7 @@ def _analyze_bc_module(
                     bindings_at_field,
                 )
                 expected_annotation = contract.annotation
-                category = "concrete field annotation/nullability must match common ErrorOut"
+                category = "concrete field annotation/nullability must match common FrameworkErrorSchema"
             if actual_annotation != expected_annotation:
                 _append_finding(
                     findings,
@@ -3406,7 +3410,7 @@ def _analyze_bc_module(
                     seen,
                     parsed,
                     discriminator_field,
-                    "raw string ErrorOut discriminator",
+                    "raw string FrameworkErrorSchema discriminator",
                 )
             if (
                 _enum_member_name(
@@ -3722,7 +3726,7 @@ def _raw_constructor_calls(
                         )
                     else:
                         error_contract.alias_analysis.append(
-                            f"{parsed.relative_path}:{keyword.lineno} dynamic ErrorOut **constructor argument 분석 불능"
+                            f"{parsed.relative_path}:{keyword.lineno} dynamic FrameworkErrorSchema **constructor argument 분석 불능"
                         )
 
                 def value_at_path(
@@ -3989,7 +3993,7 @@ def _raw_code_suite(
                     seen,
                     parsed,
                     statement,
-                    "concrete ErrorOut outside canonical module",
+                    "concrete FrameworkErrorSchema outside canonical module",
                 )
             _raw_code_suite(
                 parsed,
@@ -4244,22 +4248,14 @@ def _schema_findings(
     structural_blockers = list(initial_blockers)
 
     inventory_paths = set(inventory.relative_paths)
-    response_files = {
-        path
-        for path in inventory_paths
-        if path.parent == Path("common/ninja/response")
-        or Path("common/ninja/response") in path.parents
-    }
+    # #417·#414 — framework/ninja/ 는 공유 <technology> 폴더다: 오류 계약은 정본 모듈 하나
+    # (framework_error_schema.py)에만 살고, 다른 <module>.py 는 이 계약의 대상이 아니다.
+    # (옛 response/ 전용 패키지의 byte-empty·extra 금지 검사는 패키지 소멸과 함께 걷었다 —
+    #  숨은 오류 스키마 모듈은 아래 noncanonical inventory 분석이 문다.)
     if COMMON_INIT not in inventory_paths:
         structural_blockers.append(f"필수 common artifact 부재: {COMMON_INIT}")
-    else:
-        init_source = parsed.get(COMMON_INIT)
-        if init_source is not None and init_source.source.encode("utf-8") != b"":
-            structural_blockers.append(f"common response __init__.py는 byte-empty여야 함: {COMMON_INIT}")
     if COMMON_ERROR not in inventory_paths:
         structural_blockers.append(f"필수 common artifact 부재: {COMMON_ERROR}")
-    for extra in sorted(response_files - {COMMON_INIT, COMMON_ERROR}, key=Path.as_posix):
-        structural_blockers.append(f"common response extra production module 금지: {extra}")
 
     project_modules = _project_module_prefixes(inventory.relative_paths)
     common_contracts = _analyze_common(
@@ -4348,6 +4344,100 @@ def _schema_findings(
     ), sorted(set(structural_blockers))
 
 
+# ── 표준 트리 슬라이스 — 트리 개정 명세 몫 4규칙 (트리 10행 · D27·D55) ──────
+#
+# 모든 프로필(auto 포함)에서 돈다 — 옛 판은 auto 에서 완전 무동작(fail-open)이었다.
+#   #114 `driving_layer/api/bc_error_schema.py` 는 BC 당 정확히 한 파일 · api/ 가
+#        있으면 «항상» 있다(HTTP 오류를 안 여는 BC 에도 빈 파일로).
+#   #568 이름의 자는 «폴더 안이면 접두, 밖이면 접미» — api/ 직계의 error·schema
+#        조합 딴 이름, schema/ 안의 error 파일이 위반.
+#   #572 `<Bc>ErrorSchema` 와 `<Bc>ErrorCode` 는 함께 온다(코드는 스키마 code 필드의 타입).
+#   #636 `<Bc>ErrorCode` 는 `StrEnum` 이다 — Literal·맨 문자열 상수 모음 금지.
+
+_TREE_DRIVING = ("driving_layer",)
+_TREE_LAYERS = {"driving_layer", "application_layer", "domain_layer", "driven_layer"}
+_TREE_APP_MARKERS = ("models.py", "apps.py", "views.py", "admin.py")
+
+
+def _tree_bcs(root: Path) -> list[Path]:
+    out: list[Path] = []
+    for c in root.rglob("application"):
+        if not c.is_dir() or set(c.parts) & CODE_SKIP_DIRS:
+            continue
+        out.extend(p for p in sorted(c.iterdir()) if p.is_dir() and not p.name.startswith("."))
+    return out
+
+
+def _tree_adopted(bcs: list[Path]) -> bool:
+    for bc in bcs:
+        if any((bc / n).is_dir() for n in _TREE_LAYERS):
+            return True
+        if any((bc / m).is_file() for m in _TREE_APP_MARKERS):
+            return True
+        if any(p.is_dir() and p.name.startswith("django_") for p in bc.iterdir()):
+            return True
+    return False
+
+
+def _tree_camel(bc_name: str) -> str:
+    return "".join(part.capitalize() for part in bc_name.split("_"))
+
+
+def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
+    findings: list[str] = []
+    for bc in bcs:
+        expected_prefix = _tree_camel(bc.name)
+        schema_files: list[Path] = []
+        for driving in _TREE_DRIVING:
+            api = bc / driving / "api"
+            if not api.is_dir():
+                continue
+            api_rel = api.relative_to(root)
+            schema_file = api / "bc_error_schema.py"
+            if schema_file.is_file():
+                schema_files.append(schema_file)
+            else:
+                findings.append(f"  [#114] {api_rel}: `bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)")
+            for p in sorted(api.glob("*.py")):
+                low = p.name.lower()
+                if p.name != "bc_error_schema.py" and "error" in low and "schema" in low:
+                    findings.append(f"  [#568] {p.relative_to(root)}: 폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다")
+            for schema_dir in api.rglob("schema"):
+                if not schema_dir.is_dir():
+                    continue
+                for p in sorted(schema_dir.glob("*error*.py")):
+                    findings.append(f"  [#568] {p.relative_to(root)}: `schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로")
+        if len(schema_files) > 1:
+            findings.append(f"  [#114] {bc.relative_to(root)}: `bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다")
+        for schema_file in schema_files:
+            rel = schema_file.relative_to(root)
+            try:
+                mod = ast.parse(schema_file.read_text(encoding="utf-8"))
+            except (SyntaxError, OSError, UnicodeDecodeError):
+                findings.append(f"  [분석] {rel}: bc_error_schema.py 를 파싱하지 못했다")
+                continue
+            classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
+            schemas = [c for c in classes if c.name.endswith("ErrorSchema")]
+            codes = [c for c in classes if c.name.endswith("ErrorCode")]
+            strenum_names = {"StrEnum"}  # `from enum import StrEnum as X` 별칭도 StrEnum 이다
+            for n in mod.body:
+                if isinstance(n, ast.ImportFrom) and n.module == "enum":
+                    strenum_names.update(a.asname or a.name for a in n.names if a.name == "StrEnum")
+            if not schemas and not codes:
+                continue  # 빈 파일 — HTTP 오류를 안 여는 BC(#114 문면)
+            expected_schema = f"{expected_prefix}ErrorSchema"
+            expected_code = f"{expected_prefix}ErrorCode"
+            if not any(c.name == expected_schema for c in schemas):
+                findings.append(f"  [#572] {rel}: 응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)")
+            if not any(c.name == expected_code for c in codes):
+                findings.append(f"  [#572] {rel}: 오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)")
+            for code_cls in codes:
+                base_names = {b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "") for b in code_cls.bases}
+                if not (base_names & strenum_names):
+                    findings.append(f"  [#636] {rel}: `{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다")
+    return findings
+
+
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
@@ -4356,6 +4446,20 @@ def main(argv: list[str]) -> int:
         return 1
     except SystemExit as exc:
         return int(exc.code)
+
+    # 표준 트리 슬라이스 — 프로필과 무관하게 먼저 본다(옛 auto 무동작 = fail-open 차단).
+    bcs = _tree_bcs(config.root)
+    if not any(
+        (bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING
+    ) and _tree_adopted(bcs):
+        print("[check-error-centralization] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        return 2
+    tree_findings = _tree_slice(config.root, bcs)
+    if tree_findings:
+        print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 10행):")
+        for f in tree_findings:
+            print(f)
+        return 2
 
     if config.profile in {None, "auto"}:
         return 0
@@ -4383,7 +4487,7 @@ def main(argv: list[str]) -> int:
         )
         if (findings or blockers) and (not analysis or dynamic_proof_only):
             print(
-                "[check-error-centralization] BLOCKER — code-profile ErrorOut schema, "
+                "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
                 "inventory, or raw code contract violation:"
             )
             for blocker in blockers:
@@ -4392,7 +4496,7 @@ def main(argv: list[str]) -> int:
                 print(finding.render())
             print(
                 "  근거: common ErrorOut는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
-                "canonical ErrorCode/ErrorOut hierarchy와 project-wide unique wire code를 소유한다."
+                "canonical ErrorCode/FrameworkErrorSchema hierarchy와 project-wide unique wire code를 소유한다."
             )
             return 2
         if analysis:
