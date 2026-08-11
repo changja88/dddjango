@@ -6557,7 +6557,7 @@ PLAN = [
   "리뷰 리포트 + 수정 반영된 작업 트리",
   "지적 전부 해소 + 검증 9종 green<span class='dim'>(spec_lint · tree_mirror · corpus · checker_lint ㉢ · "
   "reverse_coverage · fixture 57 · byte-copy 29 · backstop 675 · LEGACY grep 0)</span>"),
- (2, "커밋 + 플러그인 배포 — major bump", "todo",
+ (2, "커밋 + 플러그인 배포 — major bump", "done",
   "㉡ 원칙대로 <b>V1 걷기는 revert 가능한 한 커밋</b>으로 구성한다(커밋 실행은 사용자 확인을 받는다). "
   "이중 수용 제거는 <b>하위호환 단절</b>이므로 버전은 <b>v1.2.2 → v2.0.0</b>(major)다. "
   "배포 후 <code>broccoli-server</code> 쪽에서 새 버전이 로드되는지 확인한다.",
