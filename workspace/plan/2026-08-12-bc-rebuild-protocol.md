@@ -37,6 +37,16 @@
 python3 -c "import random; done={'child_settings'}; bcs=['accounts','ai_chat','billing','child_settings','delivery','entitlements','lessons','llm_meta','managed_copy','notifications','pairing','parent_settings','parental_controls','products','report','usage_quota']; print(random.Random('rebuild-round-N').choice(sorted(set(bcs)-done)))"
 ```
 
+- **실측 게이트 3(라운드 2 신설 · 2026-08-12)** — 뽑힌 BC 가 하나라도 어긋나면 후보에서
+  제거하고 **같은 Random 인스턴스로 재추첨**한다(결정적 — 같은 입력이면 같은 궤적):
+  1. **인바운드 0** — ②의 grep 실측 파일 0건. 삭제가 이웃 코드를 깨면 앵커 상태의
+     전역 baseline 이 죽는다(③ 삭제·⑤B 판정 불성립).
+  2. **비-test LOC ≤ 5,000** — 한 라운드에서 스팩 추출·재구현·평가가 실제로 닫히는 규모.
+  3. **HTTP 표면 ≥ 1 경로** — A축·오류 축 판정이 성립해야 라운드 목적이 선다.
+- 라운드 2 실측(2026-08-12): report 13,136(②)→llm_meta 5,082(②)→accounts(① 88)→
+  usage_quota(①2·②5,344)→parental_controls(①2·②5,296)→pairing(① 23)→**billing PASS**
+  (비-test 2,217 · 인바운드 0 · 컨트롤러 있음).
+
 ### ② 스팩 추출 (삭제 전 · 평가자가 작성 — 옛 코드 열람 허용)
 산출물 둘을 `<워크트리>/docs/rebuild/<bc>/` 에 둔다(③의 삭제 커밋에 함께 들어간다):
 
@@ -54,7 +64,8 @@ python3 /Users/hyun/Desktop/dddjango/workspace/tools/openapi_shape.py /tmp/opena
 
   원본 `openapi_raw.json` 은 옛 이름이 있으므로 **커밋·파이프라인 노출 금지**(임시 파일).
   shape 는 문서 표면(description·examples·tags)을 지운 것 — 그 등가는 A축 밖이고,
-  중요한 값(예: problem `type` URI)은 `spec.md` 가 요구로 적는다.
+  중요한 값(예: problem `type` URI)은 `spec.md` 가 요구로 적는다. 같은 원본에서
+  `--success-only` 판 **`api_shape_pre_success.json`** 도 함께 생성한다(⑤A 기준 — D3 개정).
 - 인바운드 표면 grep(결과를 `spec.md` 에 붙인다):
 
 ```bash
@@ -90,12 +101,26 @@ cd <워크트리> && claude "$(cat docs/rebuild/<bc>/request.md)"   # 지켜보�
 cd <워크트리> && claude -p "$(cat docs/rebuild/<bc>/request.md)" --permission-mode acceptEdits   # 헤드리스
 ```
 
+**레인 복수(2026-08-12 사용자 결정 — 라운드 2부터)**: 한 라운드를 파이프라인 구현체별
+**레인**으로 병렬 평가할 수 있다(라운드 2 = claude·codex 두 레인). 레인마다 **독립 클린룸
+워크트리**(같은 앵커 커밋에서 가지 친 독립 브랜치)를 쓴다 — 앵커 커밋 하나를 공유하므로
+`spec.md`·shape·`request.md` 는 자동으로 동일(공정성). ⑤·⑥ 판정과 대장 기록은 레인별로
+따로 한다. codex 레인은 codex 마켓 플러그인(`dddjango@changja88-dddjango`)이 같은 버전인지
+확인 후 기동(사용자):
+
+```bash
+cd <워크트리-codex> && codex "$(cat docs/rebuild/<bc>/request.md)"
+```
+
+제약: 레인 워크트리들끼리 `make test`/`make testp` 동시 실행 금지(로컬 postgres 공유 —
+§0 전제의 확장). 순차로 돌린다.
+
 완료 후 하네스 세션에 알리면 ⑤·⑥a 를 하네스가 잇는다.
 
 ### ⑤ 기계 판정 — 3축 (전부 명령 고정)
 | 축 | 명령 | 자 |
 |---|---|---|
-| **A. API shape** | ②와 같은 덤프→`openapi_shape.py`→`diff api_shape_pre.json api_shape_post.json` | diff 0 |
+| **A. API shape** | ②와 같은 덤프→`openapi_shape.py --success-only`→`diff api_shape_pre_success.json <post>` | **성공(2xx) 경로 diff 0** — 오류 경로의 선언·본문은 spec §오류 계약이 정본(⑤C·⑥ 검증 몫). **2026-08-12 D3 개정**: 오류 축을 code-json 표준으로 이주하는 라운드에선 오류 선언이 의도적으로 바뀌므로(FrameworkErrorSchema→BC ErrorSchema) 전체-모양 diff 는 A축 판정이 아니다(라운드 1·1′ 의 전-모양 판은 `api_shape_pre.json` 대비 기록으로 보존) |
 | **B. 전역 테스트** | `cd <워크트리> && make test` | 전체 green(신규 테스트 + 이웃 BC 테스트 — 인바운드 표면 검증) |
 | **C. 플러그인** | `python3 …/workspace/tools/bc_registry_run.py <워크트리> <bc>` + `python3 …/workspace/tools/migration_gate.py <워크트리>` | registry 27종 전부 exit 0 + gate 에서 해당 BC 잔존 0 |
 
@@ -147,4 +172,7 @@ cd <워크트리> && claude -p "$(cat docs/rebuild/<bc>/request.md)" --permissio
 
 | 라운드 | BC | 앵커 | A shape | B 전역 | C 플러그인 | ⑥a AI | ⑥b 사람 | 발견·처분 | 플러그인 수정 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | child_settings | 1c02d89a | ⚠(자녀 경로 0 · 타 BC x-date 시간값 1건=하네스) | ✅ 7199 green | ❌ registry exit 2 + gate 잔존 3 | ✅ 접수(14a67001) — 테스트 ⓑ 0건·spec 충실·개선 3·처분 «통과+문서 보강+플러그인 후보» | 생략(사용자 08-12 — ⑤ 불통과 라운드라 불요·재라운드에서 수행) | ④ ad27fa3b(클린룸 준수·파이프라인 정상 가동 — 세션 감사) · **V1 트리 재생산**: houserules §1.1 예외 ⑵ 미적용+표준 트리를 dddart 것으로 오인, 백스톱은 BC 폴더 TARGET 호출로 조용 exit 0 → ⑦-⑵ 플러그인 결함 2건(P1 결정 순서 사각·P2 호출 계약 사각) + ⑦-⑴ 하네스 1건(shape 시간 의존 값) | (⑥b 후) |
+| 1 | child_settings | 1c02d89a | ⚠(자녀 경로 0 · 타 BC x-date 시간값 1건=하네스) | ✅ 7199 green | ❌ registry exit 2 + gate 잔존 3 | ✅ 접수(14a67001) — 테스트 ⓑ 0건·spec 충실·개선 3·처분 «통과+문서 보강+플러그인 후보» | 생략(사용자 08-12 — ⑤ 불통과 라운드라 불요·재라운드에서 수행) | ④ ad27fa3b(클린룸 준수·파이프라인 정상 가동 — 세션 감사) · **V1 트리 재생산**: houserules §1.1 예외 ⑵ 미적용+표준 트리를 dddart 것으로 오인, 백스톱은 BC 폴더 TARGET 호출로 조용 exit 0 → ⑦-⑵ 플러그인 결함 2건(P1 결정 순서 사각·P2 호출 계약 사각) + ⑦-⑴ 하네스 1건(shape 시간 의존 값) | **v2.1.0**(P1′ 답습 발본색원·P2 호출 계약·H1 shape 시간값 — dddjango 47fce0d·release 398707b·fixture 84/84) |
+| 1′ | child_settings | 0ee0353f | ✅ diff 0 | ✅ 7193 green | ❌ registry 귀속 23건 (**gate 잔존 0 = V2 트리 달성** — P1′/P2 성공 자 충족) | ✅ v5 rubric 결과지 `workspace/eval/results/20260812-1747-csrebuildlive-claude.md` — 치명 1(SD-6)·정적 FAIL | 생략 가능 단서 해당(⑤ 불통과) — 사용자 판단 | ④ 6dedbfd0(클린룸 준수 — 감사: 금지 접근 0 · **registry 27종 루트 전수 실행 실측**·귀속 일부 자가 수정 후 잔존 23건을 «확립 규약 보존» 논리로 커밋) · 재라운드(플러그인 v2.1.0) — 클린룸 정화 1a248cdc(eval_ai·설계 명세·graphify stale 39 → 잔존 0) · **결함 축 이동**: V1 트리 재발 0, 대신 ⑴ 배선 답습(preserve 논리 월권 — api_router «parent_settings 동형»·#107-109/#431/#437) ⑵ SD-6 django.db 포트 우회(#2/#4 — port 칸 빈 채 우회) ⑶ 잎 import(#96·#326 — 단일 출처↔잎 규율 긴장) ⑷ 테스트 규율(#385·#387·#420) ⑸ 검사기 사각 2(#390=#385 그림자·#12 는 shadow 침묵) ⑹ 게이트 계약의 brownfield 귀속 공백 | **처분·수정 완료(08-12)**: 계획 v2(`2026-08-12-round1b-plugin-fixes.md`) — 적대 리뷰 4렌즈(판정 차분 재설계·two-pass·Call-흐름 신호·라이선스 전수) + D 결정(D1′=#96 오탐 정정+#326 파생 예외·D3=**code-json 이주**(spec 결함 발견 — spec 이 api.py 배선 지시)·D4=조사 종결) · 구현: registry_gate(차분)+checker_registry+검사기 3종+P1″ 산문 12곳+코퍼스 2곳 · 검증 전부 green(fixture 90/90·smoke 6/6·backstop 675 무변) · 라운드 2 준비 커밋 `0908671c`(spec 오류 절 재작성·pre_success·이관 빚 목록) · **v2.2.0 릴리즈 대기** |
+| 2·claude | billing | (클린룸 커밋 후 기록) | — | — | — | — | — | 준비(08-12): 시드 재추첨 게이트 궤적 report→…→billing · D3 code-json 스팩 · 2레인 신설(사용자 지시 「코덱스도」·「지난번과 다른 BC」 — child_settings 재라운드는 이월) | v2.2.0 대상 |
+| 2·codex | billing | (〃 — 같은 앵커) | — | — | — | — | — | 워크트리 `broccoli-rebuild-codex`(브랜치 `rebuild/standard-tree-codex`) — codex 마켓 플러그인 동버전 확인 후 기동 | v2.2.0 대상 |

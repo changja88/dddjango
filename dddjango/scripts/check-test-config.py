@@ -264,6 +264,52 @@ def _entrance_signals(mod: ast.Module) -> bool:
     return False
 
 
+# pytest-django 의 입구 fixture 관용구(2026-08-12 · 라운드 1′ C1 — 이름 토큰만 보던
+# 사각으로 blackbox e2e 5파일이 전부 오탐이었다).
+CLIENT_FIXTURES: "frozenset[str]" = frozenset({"client", "async_client"})
+# e2e 가 import 하면 «입구 우회» 신호인 자기 BC 구현 칸(#390 검출 보강 — blackbox 는
+# 계약만 본다 · acceptance 헌장 「프로덕션 구현 코드를 보지 않는다」).
+IMPL_LAYERS: "frozenset[str]" = frozenset(
+    {"domain_layer", "application_layer", "driving_layer", "driven_layer", "composition_root"}
+)
+
+
+def _flows_into_call(fn: "ast.FunctionDef | ast.AsyncFunctionDef", names: "set[str]") -> bool:
+    """인자가 «Call 로 흐르는가» — 수신자 attr 호출(client.get(...)) 또는 호출 인자
+    전달(helper(client)/helper(c=client)). 존재·Load 사용만으로는 신호가 아니다
+    (미사용 장식 인자·assert-only 우회 차단 — 적대 리뷰 R1·R2 실측)."""
+    for node in ast.walk(fn):
+        if not isinstance(node, ast.Call):
+            continue
+        f = node.func
+        if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name) and f.value.id in names:
+            return True
+        for a in list(node.args) + [kw.value for kw in node.keywords]:
+            if isinstance(a, ast.Name) and a.id in names:
+                return True
+    return False
+
+
+def _client_fixture_entrance(mod: ast.Module) -> bool:
+    """fixture 관용구 판정은 «all» 이다 — top-level test_* «전부»가 자기 client/async_client
+    인자를 Call 로 흘려야 파일이 입구 신호를 얻는다(혼합 파일 은닉 차단 — R5). test 함수가
+    0개면 불성립(공허 참 차단)."""
+    tests: "list[ast.FunctionDef | ast.AsyncFunctionDef]" = [
+        n for n in mod.body
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith("test_")
+    ]
+    if not tests:
+        return False
+    for fn in tests:
+        arg_names: "set[str]" = {
+            a.arg for a in list(fn.args.posonlyargs) + list(fn.args.args) + list(fn.args.kwonlyargs)
+        }
+        fixture_args: "set[str]" = arg_names & CLIENT_FIXTURES
+        if not fixture_args or not _flows_into_call(fn, fixture_args):
+            return False
+    return True
+
+
 def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
     test_dir = bc / "test"
     if not test_dir.is_dir():
@@ -304,8 +350,16 @@ def _check_bc_test(bc: Path, bc_rel: Path, out: Findings) -> None:
             if not _db_signals(mod):
                 out.add("#389", rel, "`test/integration/` 은 진짜 DB 를 켠다 — DB 신호(django_db·TestCase·.objects)가 없다면 unit/ 자리다")
         elif top == "e2e" and f.name.startswith("test_"):
-            if not _entrance_signals(mod):
-                out.add("#390", rel, "`test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job)를 안 거치면 위반이다")
+            if not (_entrance_signals(mod) or _client_fixture_entrance(mod)):
+                out.add("#390", rel, "`test/e2e/` 는 입구에서 출구까지 본다 — 입구(TestClient·API·cron_job·client fixture 사용)를 안 거치면 위반이다")
+        if top == "e2e":
+            for p in imports:
+                parts_own = p.split(".")
+                if (
+                    parts_own[0] == "application" and len(parts_own) > 2
+                    and parts_own[1] == bc.name and parts_own[2] in IMPL_LAYERS
+                ):
+                    out.add("#390", rel, f"`{p}` import — `test/e2e/` 는 blackbox 다(입구에서 출구까지 한 흐름 통째로): 자기 BC 구현 칸 import 는 입구 우회 신호다")
         if top == "factories" and f.name != "__init__.py":
             has_factory = any(p == "factory" or p.startswith("factory.") for p in imports) or any(
                 isinstance(n, ast.ClassDef) and any(str(getattr(b, "attr", getattr(b, "id", ""))).endswith("Factory") for b in n.bases)

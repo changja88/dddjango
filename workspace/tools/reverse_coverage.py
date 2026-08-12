@@ -112,6 +112,10 @@ def main() -> int:
                 why = "#628 실체 — 업무 어휘 재료(도메인 공개 심볼 토큰·불용어·기술 이름)"
             elif rel.name == "checker_target.py":
                 why = "호출 계약 공용 모듈 — 전 검사기 import(BC 모양 TARGET 거절 · 라운드 1 P2 · fixture_matrix 호출 계약 레인 27케이스가 행동 고정)"
+            elif rel.name == "checker_registry.py":
+                why = "registry 27종 로스터 단일 출처(라운드 1′ P3′) — registry_gate·bc_registry_run·fixture_matrix 소비 · glob 자기 검증"
+            elif rel.name == "registry_gate.py":
+                why = "판정 차분 게이트(라운드 1′ P3′ — 귀속=N∖L·앵커 비선택·이관 빚 채널) — commands 6번 게이트 판정 주체 · registry_gate_smoke 6케이스가 행동 고정"
             else:
                 nums = by_c.get(key, [])
                 if nums:

@@ -72,8 +72,9 @@ Codex mirror(`codex-dddjango/skills/dddjango/scripts/`)는 byte-copy 로 같은 
 
 ## checker 위반-fixture 결정 레인 (v5)
 
-`fixtures/`의 검사기별 good/bad_rules fixture 와 `workspace/tools/fixture_matrix.py`(57케이스)가
-「검사기마다 자기 위반 fixture 에서 exit 2」를 전수 실측한다 — 실측표는
+`fixtures/`의 검사기별 good/bad_rules fixture 와 `workspace/tools/fixture_matrix.py`(90케이스 —
+호출 계약 레인 27·수정 사이클 결정 레인 3×2 포함·2026-08-12)가 「검사기마다 자기 위반 fixture 에서 exit 2 ·
+BC 모양 TARGET 은 사용 오류 exit 1」을 전수 실측한다 — 실측표는
 `workspace/plan/2026-08-11-fixture-matrix.md`(생성물). `workspace/tools/reverse_coverage.py`는
 플러그인 전 파일의 규칙 커버리지(미설명 0)를 잰다. 옛 구조 판 `tools/check-structure.py`는
 **v5에서 은퇴**했다(v4-era 판 — 구조 판정은 registry #4 `check-layer-skeleton`이 소유; 파일은

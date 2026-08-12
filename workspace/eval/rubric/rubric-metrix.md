@@ -82,7 +82,7 @@
 | **NJ-1** | 스택 채택 | 신규 JSON API는 Ninja/Ninja Extra, plain view·DRF 누수 없음 |  |  |  |  | 치명 |
 | **NJ-2** | operation 얇음(비오류) | 비즈 규칙·ORM·수동 parsing 없이 응용 호출과 schema 매핑 |  |  |  |  | 치명 |
 | **NJ-3** | Schema 입출력 분리 | 요청/응답 Schema 분리, domain 직접 직렬화 없음 |  |  |  |  | — (강) |
-| **NJ-4** | BC 오류 OpenAPI 선언 | controller가 직접 반환하는 BC status를 같은 BC base <Bc>ErrorSchema으로 선언; 직접 BC 반환이 없는 framework 401/403/route 404/422/429/500은 BC ErrorOut으로 광고하지 않음. status별 식별자 subset 과다노출은 승인된 단순화 |  |  |  |  | — (강) |
+| **NJ-4** | BC 오류 OpenAPI 선언 | controller가 직접 반환하는 BC status를 같은 BC base <Bc>ErrorSchema으로 선언; 직접 BC 반환이 없는 framework 401/403/route 404/422/429/500은 <Bc>ErrorSchema로 광고하지 않음. status별 식별자 subset 과다노출은 승인된 단순화 |  |  |  |  | — (강) |
 | **NJ-5** | operation 문서화 | summary/tags와 정보 있는 반환 타입 |  |  |  |  | — (경미) |
 | **NJ-6** | Ninja 버전 핀 | 신규 도입 시 버전 핀과 기존 관례 일치 |  |  |  |  | — (경미) |
 | **NJ-7** | BC 오류 직접 계약 | application 호출 한 문장만 감싼 좁은 try, 구체 catch, no-arg concrete ErrorSchema 또는 BC base 직접 생성, controller의 직접 Status 반환, framework 기본 처리. helper/handler/catch-all·broad catch·raw 오류 응답은 FAIL |  |  |  |  | — (강) |

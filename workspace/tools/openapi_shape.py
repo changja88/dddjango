@@ -14,7 +14,12 @@
 security 요구의 스킴 «이름»은 securitySchemes 의 실물 모양으로 치환한다.
 순환 $ref 는 {"$cycle": true} 로 닫는다(이름을 남기지 않으려고 깊이만 끊는다).
 
-사용: python3 openapi_shape.py <openapi.json>   # stdout 으로 정렬 JSON — 파일로 리다이렉트
+`--success-only`(2026-08-12 D3 ㉰): 오류 축을 code-json 표준으로 «이주»하는 라운드에선
+오류 응답 선언이 의도적으로 바뀌므로(FrameworkErrorSchema→BC ErrorSchema), A축 등가는
+**성공(2xx) 경로만** 기계 판정하고 오류 경로는 개정 spec 명세 검증(⑤C·⑥) 몫이다 —
+이 플래그가 각 operation 의 responses 에서 비-2xx 를 걷는다.
+
+사용: python3 openapi_shape.py <openapi.json> [--success-only]
 exit 0 = 정상 / exit 1 = 재료 결손(파일 없음·JSON 아님).
 """
 from __future__ import annotations
@@ -98,9 +103,26 @@ def shape(doc: "dict[str, Any]") -> "dict[str, Any]":
     return {"paths": swap_security(paths)}
 
 
+def _drop_error_responses(node: Any) -> Any:
+    """--success-only — 각 operation 의 responses 에서 비-2xx 항목을 걷는다."""
+    if isinstance(node, dict):
+        out: "dict[str, Any]" = {}
+        for k, v in node.items():
+            if k == "responses" and isinstance(v, dict):
+                out[k] = {sk: _drop_error_responses(sv) for sk, sv in v.items() if str(sk).startswith("2")}
+            else:
+                out[k] = _drop_error_responses(v)
+        return out
+    if isinstance(node, list):
+        return [_drop_error_responses(v) for v in node]
+    return node
+
+
 def main(argv: "list[str]") -> int:
+    success_only: bool = "--success-only" in argv
+    argv = [a for a in argv if a != "--success-only"]
     if len(argv) != 1:
-        print("사용: openapi_shape.py <openapi.json>", file=sys.stderr)
+        print("사용: openapi_shape.py <openapi.json> [--success-only]", file=sys.stderr)
         return 1
     src = Path(argv[0])
     if not src.is_file():
@@ -111,7 +133,10 @@ def main(argv: "list[str]") -> int:
     except ValueError as e:
         print(f"재료 결손: JSON 아님 — {e}", file=sys.stderr)
         return 1
-    print(json.dumps(shape(doc), sort_keys=True, ensure_ascii=False, indent=1))
+    result: "dict[str, Any]" = shape(doc)
+    if success_only:
+        result = _drop_error_responses(result)
+    print(json.dumps(result, sort_keys=True, ensure_ascii=False, indent=1))
     return 0
 
 

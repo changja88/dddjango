@@ -79,7 +79,7 @@
 | **NJ-1** 스택 채택 | 신규 HTTP/JSON API를 Ninja(`NinjaAPI`/`NinjaExtraAPI`)로 — (`Router` ∨ `@api_controller`/`register_controllers`) operation/컨트롤러; plain view·`JsonResponse`·DRF로 안 샘; 기존 스택 존중 (신규 표준=클래스 컨트롤러, 함수형 `Router`=레거시/415 격리 예외 — 둘 다 PASS) | §1.1·§10 | 신규 JSON API가 ninja Router operation **또는** ninja-extra `@api_controller` 컨트롤러로 등록 | 신규 JSON API가 plain `django.views`/`JsonResponse`·DRF로 구현(greenfield인데) | 결정 | ✅ |
 | **NJ-2** operation 얇음(비-오류) | operation 본문에 비즈로직·상태전이·ORM·수동 본문파싱·수동 필드검증 0; service 호출 + schema 매핑만 | §1.3·§2.2 | schema 바인딩→service 호출→응답 매핑만 | operation에 `json.loads`/수동검증/ORM/비즈 분기 | 의미(+grep) | ✅ |
 | **NJ-3** Schema 입출력 분리 | 요청·응답을 `Schema`/`ModelSchema`로 분리, 도메인 엔티티 직접 직렬화 0 | §2.2·§3.1 | 입·출력 별도 Schema, 도메인→DTO 매핑 | 도메인 객체 직접 `response=` / 내부필드 누출 | 결정+의미 | — (강) |
-| **NJ-4** BC 오류 response 정합 | controller가 실제로 직접 반환하는 BC 오류 status를 같은 BC `<Bc>ErrorSchema`으로 `response={...}`에 선언; framework 기본 오류를 BC Schema로 광고하지 않음 | §2.2·§8 | 직접 반환 BC status→동일 BC base 선언 + 직접 BC 반환 없는 framework 401/403/route 404/422/429/500 비광고 | 직접 반환 BC status 누락·다른 BC Schema / framework 기본 status를 ErrorOut으로 거짓 광고 / `openapi_extra`·사후 후가공 | 결정 | — (강) |
+| **NJ-4** BC 오류 response 정합 | controller가 실제로 직접 반환하는 BC 오류 status를 같은 BC `<Bc>ErrorSchema`으로 `response={...}`에 선언; framework 기본 오류를 BC Schema로 광고하지 않음 | §2.2·§8 | 직접 반환 BC status→동일 BC base 선언 + 직접 BC 반환 없는 framework 401/403/route 404/422/429/500 비광고 | 직접 반환 BC status 누락·다른 BC Schema / framework 기본 status를 <Bc>ErrorSchema로 거짓 광고 / `openapi_extra`·사후 후가공 | 결정 | — (강) |
 | **NJ-5** operation 문서화 | `summary`(+`tags`) 부여, 무정보 반환타입(`-> object`) 금지 | §2.2 | summary/tags + 의미있는 반환타입 | summary 없음 / `-> object`·어댑터 누수형 | 결정 | — (경미) |
 | **NJ-6** ninja 버전 핀 표기 | 신규 도입 시 매니페스트에 버전 핀, 기존 관례와 일치 | §2.1 | `django-ninja==<버전>` 관례 일치 | 매니페스트 부재/무핀/표기 불일치 | 결정 | — (경미) |
 | **NJ-7** BC 오류 직접 계약 | 알려진 BC 실패를 해당 controller가 좁은 application 호출 경계에서 직접 ErrorSchema/Status로 변환하고 framework 오류는 기본 흐름 보존 | §6.2·§8 | application 호출 한 문장만 감싼 좁은 `try` + 구체 catch + direct no-arg concrete ErrorSchema(또는 BC base 직접 생성) + `Status`; 미식별/framework 오류는 기본 처리 | 오류 helper·factory·custom handler·catch-all / bare·`Exception`·`BaseException` broad catch / raw `Response`·`JsonResponse`·dict 오류 응답 / 즉시 raise-catch 우회 | 결정+의미 | — (강) |
@@ -96,7 +96,7 @@
 > `response={...}`를 함께 읽고 모든 오류 helper·factory·custom handler·catch-all을 검색한다.
 > v4에서 handler나 raw `Response`/`JsonResponse`/dict 오류 응답은 정상 대안이 아니라 NJ-7
 > FAIL이다. 실제 직접 반환하는 BC status가 같은 BC base로 선언되지 않거나, 직접 BC 반환 없는
-> framework 오류가 ErrorOut으로 광고되면 NJ-4 FAIL이다.
+> framework 오류가 <Bc>ErrorSchema로 광고되면 NJ-4 FAIL이다.
 
 ## TIER-S(핵심) — 기능 정확성 (FC)
 > 형태가 아무리 맞아도 *동작이 틀리면* 무가치다. FC는 코드가 **요청 기능을 실제로 올바르게** 하는지를 *명세와 독립된 외부 기준*으로 잰다 — 명세·코드·테스트가 같은 방향으로 틀린 순환(그린바 통과인데 기능 오류)을 차단. **치명 게이트.**

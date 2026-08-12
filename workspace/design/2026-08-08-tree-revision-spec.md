@@ -637,7 +637,7 @@ D40~D59 스무 장이 «하나도» 안 실려 있었고, 트리가 107 → 138�
 | 323 | 전역 제약 ②(안쪽은 구체 기술을 모른다)는 `driven_layer` 에 걸지 않는다 — 이 칸은 django·ORM·HTTP·벤더 SDK·브로커를 전부 알아도 된다. | D20 결정④ | `path` | principle |  | **면제** |
 | 324 | 이 칸의 이름은 `driven_layer/` 다 — `infra_layer/`·`infrastructure_layer/`·`driven_adapter/`·`secondary_adapter/` 를 쓰지 않는다. | 트리 75행+D16 | `path` | principle |  | **blocker** |
 | 325 | ORM 모델·마이그레이션·어드민이 사는 폴더는 `driven_layer/django_<bounded_context>/` 이고 그 자체가 장고 앱이다 — 폴더 이름은 `django_` + BC 이름이다. | 트리 76행+D15 | `path` | principle | `principle` | **blocker** |
-| 326 | `django_<bounded_context>/` 는 django 와 같은 폴더 안 말고 아무것도 import 하지 않는다 — `domain_layer` 도 금지다(잎). | 트리 76행+D15 검사①+D20 검사② | `ast` | principle |  | **blocker** |
+| 326 | `django_<bounded_context>/` 는 django 와 같은 폴더 안 말고 아무것도 import 하지 않는다 — `domain_layer` 도 금지다(잎). **예외(2026-08-12 D1′)**: 자기 BC domain VO(`value_object/`·`shared_value_object/`)의 **값 파생 전용** from-import 는 허용한다 — 나열·순회·멤버 참조까지이고, 호출(판정·행위)은 위반이다(`implementation-django` 「값 집합은 domain StrEnum 에서 파생」 요구와 정렬). | 트리 76행+D15 검사①+D20 검사② | `ast` | principle |  | **blocker** |
 | 327 | `django_<bounded_context>/admin/**` 는 driven_layer 화살표 검사와 잎 import 검사의 대상에서 뺀다. | D15 검사①+D20 검사①②+D21 | `path` | measured | `measured_ok` | **검사기** |
 | 328 | `django_<bounded_context>/` 를 import 하는 것은 `driven_layer/adapter/persistence/` 아래뿐이다. | D15 검사③+D20 검사③+D37 | `ast` | principle |  | **blocker** |
 | 329 | `apps.py` 의 AppConfig 는 `label` 을 명시 선언한다 — 기본값에 기대지 않는다. | 트리 77행+D15 검사④ | `ast` | principle |  | **blocker** |

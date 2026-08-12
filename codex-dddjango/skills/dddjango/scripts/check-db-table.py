@@ -236,8 +236,38 @@ def _leaf_violation(path_str: str, app_name: str) -> bool:
     return any(p in REPO_VOCAB for p in parts) or any(p.startswith("django_") for p in parts)
 
 
+def _vo_derivation_path(mod_path: str, bc: str) -> bool:
+    """#326 예외(2026-08-12 D1′) — 자기 BC domain VO 모듈인가.
+
+    `implementation-django` 코퍼스(:203·:215)가 「도메인 판정 값 집합은 domain StrEnum 에서
+    파생」을 요구해 잎 규칙과 상충하던 것을, «값 파생 전용» 좁은 예외로 정렬했다.
+    허용은 from-import + 나열·순회·멤버 참조까지 — 호출(판정·행위)은 여전히 위반이다."""
+    parts: "list[str]" = mod_path.split(".")
+    return (
+        parts[:2] == ["application", bc]
+        and "domain_layer" in parts
+        and ("value_object" in parts or "shared_value_object" in parts)
+    )
+
+
+def _called_symbols(mod: ast.Module, names: "set[str]") -> "set[str]":
+    """이름이 «호출»로 쓰였는가 — `Sym(...)` 또는 `Sym.method(...)`. 순회·comprehension·
+    멤버 속성 참조(`m.value`)는 호출이 아니라 파생이라 잡지 않는다."""
+    hit: "set[str]" = set()
+    for node in ast.walk(mod):
+        if not isinstance(node, ast.Call):
+            continue
+        fn = node.func
+        if isinstance(fn, ast.Name) and fn.id in names:
+            hit.add(fn.id)
+        elif isinstance(fn, ast.Attribute) and isinstance(fn.value, ast.Name) and fn.value.id in names:
+            hit.add(fn.value.id)
+    return hit
+
+
 def _check_leaf_imports(app_dir: Path, app_rel: Path, out: Findings) -> None:
     """#326 — `django_<bc>/` 는 잎. migrations/ 는 생성물이라, admin/** 은 #327 면제라 제외."""
+    bc_name: str = app_dir.name[len("django_"):] if app_dir.name.startswith("django_") else app_dir.name
     for f in sorted(app_dir.rglob("*.py")):
         rel_in_app = f.relative_to(app_dir)
         if set(rel_in_app.parts) & SKIP_DIRS or rel_in_app.parts[0] in ("migrations", "admin"):
@@ -247,6 +277,7 @@ def _check_leaf_imports(app_dir: Path, app_rel: Path, out: Findings) -> None:
         except (SyntaxError, OSError, UnicodeDecodeError):
             continue
         is_apps_py = rel_in_app.parts == ("apps.py",)
+        vo_symbols: "dict[str, str]" = {}
         for node in ast.walk(mod):
             if not isinstance(node, (ast.Import, ast.ImportFrom)):
                 continue
@@ -258,8 +289,15 @@ def _check_leaf_imports(app_dir: Path, app_rel: Path, out: Findings) -> None:
                     out.add("#326", app_rel / rel_in_app, f"상대 import 가 `{app_dir.name}/` 밖을 가리킨다 — 이 폴더는 잎이다")
                 continue
             for mod_path in _import_paths(node):
-                if _leaf_violation(mod_path, app_dir.name):
-                    out.add("#326", app_rel / rel_in_app, f"`{mod_path}` import — `django_<bc>/` 는 django 와 같은 폴더 안 말고 아무것도 import 하지 않는다(잎)")
+                if not _leaf_violation(mod_path, app_dir.name):
+                    continue
+                if isinstance(node, ast.ImportFrom) and _vo_derivation_path(mod_path, bc_name):
+                    for alias in node.names:  # 파생 전용 예외 — 사용을 아래에서 판정
+                        vo_symbols[alias.asname or alias.name] = mod_path
+                    continue
+                out.add("#326", app_rel / rel_in_app, f"`{mod_path}` import — `django_<bc>/` 는 django 와 같은 폴더 안 말고 아무것도 import 하지 않는다(잎 — 예외는 자기 BC domain VO 의 값 파생뿐)")
+        for sym in sorted(_called_symbols(mod, set(vo_symbols))):
+            out.add("#326", app_rel / rel_in_app, f"`{vo_symbols[sym]}` 의 `{sym}` 호출 — VO import 는 값 파생(나열·순회·멤버 참조) 전용이다: 판정·행위 호출은 잎 밖 몫")
 
 
 # ── models/ — #334 · #335 · #630 · #631 · #632 ─────────────────────────────

@@ -90,13 +90,14 @@ release:
 	else \
 		echo "[1/7] manifest 검증 (claude --strict)"; \
 		claude plugin validate $(PLUGIN) --strict; \
-		echo "[2/7] 검증 세트 (corpus·spec·checker·tree·coverage·fixture·backstop·byte-copy)"; \
+		echo "[2/7] 검증 세트 (corpus·spec·checker·tree·coverage·fixture·gate-smoke·backstop·byte-copy)"; \
 		python3 workspace/tools/corpus_mirror_sync.py --check; \
 		PYTHONUTF8=1 python3 workspace/tools/spec_lint.py; \
 		PYTHONUTF8=1 python3 workspace/tools/checker_lint.py; \
 		PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
 		PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
 		PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
+		PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
 		PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \
 		diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
 		echo "[3/7] 버전 기록 (Claude·Codex)"; \

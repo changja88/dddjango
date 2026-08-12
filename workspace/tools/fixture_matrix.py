@@ -2,11 +2,11 @@
 """전수 fixture 실측표 — 검사기 × 위반 fixture × 기대/실측 exit (5번 계획 Phase 4-3).
 
 「백스톱 실측 0」(5차 리뷰 최대 발견)의 종결 장치: 검사기마다 자기 위반
-fixture 에서 exit 2 가 나는지를 전수로 실측하고 표로 남긴다. eval v4 는
+fixture 에서 exit 2 가 나는지를 전수로 실측하고 표로 남긴다. eval v5 는
 FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 3 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
-       + 신설 8종×2 + checker_lint 2 + 호출 계약 27 = 84.
+       + 신설 8종×2 + checker_lint 2 + 호출 계약 27 + 수정 사이클 레인 3×2 = 90.
 
 호출 계약 레인(라운드 1 P2 — 2026-08-12): TARGET 에 «BC 폴더»를 주면 검사기가
 «표준 미채택 clean(exit 0)»으로 조용히 통과하던 사각을 고정한다 — BC 모양
@@ -60,6 +60,25 @@ AUTO_PAIRS: "list[tuple[str, str]]" = [
     ("check-api-error-controller-contract.py", "api_error_controller"),
     ("check-openapi-error-declaration.py", "openapi_error_declaration"),
 ]
+# 라운드 1′ 수정 사이클 레인(2026-08-12) — 검사기 «행동 변화» 고정용 추가 쌍.
+# PLAIN_PAIRS 와 분리한 이유: 그 목록은 registry 27종 로스터의 재료(bc_registry_run
+# import·호출 계약 레인)라 같은 검사기의 중복 등재가 로스터 assert 를 깨뜨린다.
+EXTRA_LANES: "list[tuple[str, str]]" = [
+    ("check-test-config.py", "test_config_entrance"),
+    ("check-event-publish.py", "event_publish_leaf"),
+    ("check-db-table.py", "db_table_choices"),
+]
+
+# 로스터 단일 출처 대조(2026-08-12 P3′) — 쌍 목록이 checker_registry 와 어긋나면 재료 결손.
+sys.path.insert(0, str(S))
+from checker_registry import REGISTRY  # noqa: E402
+
+_pairs_roster: "dict[str, bool]" = {"check-layer-skeleton.py": False}
+_pairs_roster.update({s: False for s, _ in PLAIN_PAIRS})
+_pairs_roster.update({s: True for s, _ in AUTO_PAIRS})
+assert _pairs_roster == {name: auto for name, auto in REGISTRY}, (
+    "fixture 쌍 목록이 checker_registry 로스터와 어긋난다"
+)
 
 
 def build_cases() -> "list[tuple[str, list[str], str, int]]":
@@ -81,6 +100,10 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
                  [sys.executable, str(S / script), str(fx), "--error-profile", "auto"],
                  f"{fixture}/{sub}", want)
             )
+    for script, fixture in EXTRA_LANES:
+        for sub, want in (("good", 0), ("bad_rules", 2)):
+            fx = F / fixture / sub
+            cases.append((f"{fixture}/{sub}", [sys.executable, str(S / script), str(fx)], f"{fixture}/{sub}", want))
     for sub, want in (("good", 0), ("bad_rules", 2)):
         fx = F / "checker_lint" / sub
         cases.append(
@@ -150,7 +173,7 @@ def main(argv: "list[str]") -> int:
             f"생성: {date.today().isoformat()} · `workspace/tools/fixture_matrix.py` 실행 산출물"
             "(손으로 고치지 않는다 — 재실행으로 재생성).\n\n"
             "「백스톱 실측 0」(5차 리뷰)의 종결 기록 — 검사기마다 자기 위반 fixture 에서 exit 2.\n"
-            "eval v4 FROZEN — 실측은 이 fixture 결정 레인만.\n\n"
+            "eval v5 FROZEN — 실측은 이 fixture 결정 레인만.\n\n"
             f"{table}\n\n{summary}\n",
             encoding="utf-8",
         )

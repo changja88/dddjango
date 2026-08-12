@@ -226,10 +226,14 @@ def _check_driving_leaf_imports(root: Path, bc: Path, f: Findings) -> None:
                 if not isinstance(node, ast.ImportFrom):
                     continue
                 m = node.module or ""
-                if ".domain_layer." in m or m.endswith(".domain_layer"):
+                if (".domain_layer." in m or m.endswith(".domain_layer")) and not any(
+                    seg in ("exception", "value_object", "shared_value_object") for seg in m.split(".")
+                ):
+                    # #95 허용 목록(exception·value_object·shared_value_object)을 뺀 나머지만
+                    # #96 — 2026-08-12 라운드 1′ D1′: blanket 검사가 #95 를 못 본 스펙 드리프트 교정.
                     f.add("#96", _rel(root, py, node.lineno),
                           "driving 잎이 domain_layer 를 import 한다 — 잎은 애그리거트·엔티티·"
-                          "리포지토리·도메인 이벤트를 모른다")
+                          "리포지토리·도메인 이벤트를 모른다(#95 예외: exception·값 객체)")
                 elif ".application_layer.port." in m:
                     f.add("#96", _rel(root, py, node.lineno),
                           "driving 잎이 포트 선언을 import 한다 — 잎이 아는 것은 유스케이스와 스키마뿐이다")

@@ -200,7 +200,7 @@ class Shirt(models.Model):
     )
 ```
 
-**계층 소유 — 도메인 판정에 쓰이는 값 집합의 단일 출처는 domain_layer의 `StrEnum`이다.** 위 TextChoices 자체 선언은 도메인 판정에 쓰이지 않는 **순수 인프라 필드에 한정**한다 — 도메인 상태를 TextChoices로 선언하면 domain이 판정 시 ORM 타입을 역참조하게 된다(`architecture-ddd` §3.2). 도메인 상태 필드는 domain Enum에서 파생시킨다. 순수 인프라 필드였던 값에 도메인 판정이 처음 생기는 슬라이스에서 파생형으로 전환한다(값 불변이면 `choices` 변경은 DB 무영향). 기존 TextChoices 관례가 확립된 프로젝트는 `discipline-houserules` §1.1(기존 규약 존중)로 그 관례를 따른다.
+**계층 소유 — 도메인 판정에 쓰이는 값 집합의 단일 출처는 domain_layer의 `StrEnum`이다.** 위 TextChoices 자체 선언은 도메인 판정에 쓰이지 않는 **순수 인프라 필드에 한정**한다 — 도메인 상태를 TextChoices로 선언하면 domain이 판정 시 ORM 타입을 역참조하게 된다(`architecture-ddd` §3.2). 도메인 상태 필드는 domain Enum에서 파생시킨다. 순수 인프라 필드였던 값에 도메인 판정이 처음 생기는 슬라이스에서 파생형으로 전환한다(값 불변이면 `choices` 변경은 DB 무영향). 기존 TextChoices 실물이 여러 곳에 보여도 그것은 규약이 아니라 아직 안 갚은 빚이다 — 값 집합의 배치에 기존 배치는 입력이 아니다(`discipline-houserules` §1.1·§4 — 2026-08-12).
 
 ```python
 # domain_layer/order/value_object/order_status.py — 단일 출처
