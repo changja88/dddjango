@@ -15,6 +15,8 @@ import os
 import stat
 import subprocess
 import sys
+
+import checker_target
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
@@ -173,6 +175,9 @@ def _parse_config(argv: list[str]) -> Config:
         is_directory = root.is_dir()
     except (OSError, RuntimeError) as exc:
         raise UsageError(f"TARGET_DIR resolve 불능: {namespace.target} ({exc})") from exc
+    bad_target_reason = checker_target.bc_shaped_target_reason(root)
+    if bad_target_reason is not None:
+        raise UsageError(bad_target_reason)
     if not is_directory:
         raise UsageError(f"디렉터리 아님 {root}")
 

@@ -8,7 +8,9 @@
 상태 코드)만 남는다 — 이 모양의 diff 0 이 스팩 등가의 기계 판정이다.
 
 지우는 키: operationId(모듈 경로 유래) · title(클래스 이름 유래) · tags(router 이름)
-· summary/description/example(s)(문서 표면 — 모양 아님. 중요한 값은 spec.md 가 요구로 적는다).
+· summary/description/example(s)(문서 표면 — 모양 아님. 중요한 값은 spec.md 가 요구로 적는다)
+· `x-date-*`(벽시계 파생 벤더 확장 — 라운드 1 실측: `x-date-maximum` 이 덤프 시점 날짜라
+  pre/post diff 를 오염시켰다. 시간 의존 값은 모양이 아니고, 경계 규칙 자체는 spec.md 몫).
 security 요구의 스킴 «이름»은 securitySchemes 의 실물 모양으로 치환한다.
 순환 $ref 는 {"$cycle": true} 로 닫는다(이름을 남기지 않으려고 깊이만 끊는다).
 
@@ -47,7 +49,7 @@ def _resolve(node: Any, defs: "dict[str, Any]", stack: "tuple[str, ...]", key: s
         for k in sorted(node):
             # DROP 은 «메타데이터 키»에만 — properties/ 밑의 k 는 페이로드 필드 이름이라
             # 같은 철자(title·description·example)여도 계약의 실물이다. 지우면 모양이 준다.
-            if k in DROP_KEYS and key != "properties":
+            if (k in DROP_KEYS or k.startswith("x-date-")) and key != "properties":
                 continue
             if k == "mapping" and isinstance(node[k], dict):
                 # discriminator.mapping 값은 스키마 이름 $ref — 키(wire 값)→변형 «모양» 결합은

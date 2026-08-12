@@ -45,6 +45,8 @@ import argparse
 import ast
 import re
 import sys
+
+import checker_target
 from pathlib import Path
 
 try:
@@ -860,6 +862,10 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str]) -> int:
     ns = _build_parser().parse_args(argv)
     target = Path(ns.target)
+    bad_target_reason = checker_target.bc_shaped_target_reason(target)
+    if bad_target_reason is not None:
+        print(f"사용 오류: {bad_target_reason}", file=sys.stderr)
+        return 1
     if not target.is_dir():
         print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1

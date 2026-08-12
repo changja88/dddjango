@@ -6563,7 +6563,7 @@ PLAN = [
   "배포 후 <code>broccoli-server</code> 쪽에서 새 버전이 로드되는지 확인한다.",
   "커밋(들) + v2.0.0 릴리스",
   "<code>make release</code> 통과 + <code>broccoli-server</code> 에서 새 버전 확인"),
- (3, "선행 이관 «추가 ①» — BC 밖 전역 작업", "todo",
+ (3, "선행 이관 «추가 ①» — BC 밖 전역 작업", "done",
   "BC 리빌드가 아닌 <b>전역 작업 하나</b>를 BC 루프보다 먼저 한다. "
   "⑴ 리빌드 <b>브랜치 신설</b> + 기존 테스트 전체 green 을 <b>baseline 으로 기록</b> · "
   "⑵ 루트 <code>common/</code> → <code>framework/</code> 이동 + 16개 BC 의 import <b>전역 재작성</b>"
@@ -6571,7 +6571,11 @@ PLAN = [
   "<b>이게 없으면 어느 BC 도 registry green 이 될 수 없다</b> · "
   "⑶ <code>broccoli-server</code> 의 <code>CLAUDE.md</code>·<code>AGENTS.md</code> 현행화 — "
   "옛 트리 서술이 남으면 리빌드 에이전트가 낡은 지침을 따른다. "
-  "<em>운영 중이 아니라서 DB·migrations 보존 자는 걷었다 — 동작 등가는 테스트가 잰다.</em>",
+  "<em>운영 중이 아니라서 DB·migrations 보존 자는 걷었다 — 동작 등가는 테스트가 잰다.</em> "
+  "<em><span class='dim'>08-12 실측: 워크트리 <code>broccoli-rebuild</code>(브랜치 rebuild/standard-tree) · "
+  "baseline 7200 green → 이관 후 7200 green 동일 · 이관 커밋 012a6440 · 루트 common 잔존 소멸(gate 71→70) · "
+  "업무 낱말 2건은 framework 부적격이라 BC 로 — child_report_topic→lessons test 재료(실사용처가 lessons 테스트뿐) · "
+  "notification_navigation→notifications value_object(delivery 직접 import 는 legacy 빚 — 그 BC 라운드가 갚는다).</span></em>",
   "브랜치 + baseline 기록 + <code>framework/</code> 이관 커밋",
   "테스트 green(=baseline 동일) + <code>migration_gate</code> 잔존 감소(루트 <code>common</code> 소멸)"),
  (4, "BC 클린룸 리빌드 루프 «추가 ②③»", "todo",

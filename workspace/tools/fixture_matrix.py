@@ -6,7 +6,12 @@ fixture 에서 exit 2 가 나는지를 전수로 실측하고 표로 남긴다. 
 FROZEN 이므로 실측은 이 fixture 결정 레인만 쓴다.
 
 케이스: skeleton 3 + 기존 15종×2 + API-error 3종×2(--error-profile auto)
-       + 신설 8종×2 + checker_lint 2 = 57.
+       + 신설 8종×2 + checker_lint 2 + 호출 계약 27 = 84.
+
+호출 계약 레인(라운드 1 P2 — 2026-08-12): TARGET 에 «BC 폴더»를 주면 검사기가
+«표준 미채택 clean(exit 0)»으로 조용히 통과하던 사각을 고정한다 — BC 모양
+TARGET 은 사용 오류 exit 1 이어야 한다(child_settings 라운드에서 파이프라인이
+정확히 이 호출로 V1 트리를 전부 green 처리했다).
 
 사용: python3 workspace/tools/fixture_matrix.py [--emit <md 경로>]
 exit 0 = 전수 일치 / exit 2 = 불일치 존재 / exit 1 = 재료 결손.
@@ -82,6 +87,16 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
             (f"checker_lint/{sub}",
              [sys.executable, str(TOOLS / "checker_lint.py"), "--scripts-dir", str(fx)],
              f"checker_lint/{sub}", want)
+        )
+    # 호출 계약 레인 — TARGET=BC 폴더(층 폴더 직계 보유)는 clean 이 아니라 사용 오류다.
+    bc_dir = F / "skeleton" / "good_bc" / "application" / "orders"
+    for script in [sk] + [s for s, _ in PLAIN_PAIRS]:
+        cases.append((f"invocation/{script}", [sys.executable, str(S / script), str(bc_dir)], "skeleton/good_bc(orders)", 1))
+    for script, _ in AUTO_PAIRS:
+        cases.append(
+            (f"invocation/{script} (auto)",
+             [sys.executable, str(S / script), str(bc_dir), "--error-profile", "auto"],
+             "skeleton/good_bc(orders)", 1)
         )
     return cases
 

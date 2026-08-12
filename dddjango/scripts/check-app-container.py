@@ -38,6 +38,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
+
+import checker_target
 from pathlib import Path
 
 SKIP_DIRS = {
@@ -184,6 +186,10 @@ def _has_migrated_counterpart(app_container: Path, name: str) -> bool:
 
 def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
+    bad_target_reason = checker_target.bc_shaped_target_reason(root)
+    if bad_target_reason is not None:
+        print(f"사용 오류: {bad_target_reason}", file=sys.stderr)
+        return 1
     if not root.is_dir():
         print(f"[check-app-container] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1

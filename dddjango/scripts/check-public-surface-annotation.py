@@ -34,6 +34,8 @@ from __future__ import annotations
 
 import ast
 import sys
+
+import checker_target
 from pathlib import Path
 
 try:
@@ -333,6 +335,10 @@ def main(argv: list[str]) -> int:
         print(f"사용법: {Path(sys.argv[0]).name} [TARGET_DIR]", file=sys.stderr)
         return 1
     target = Path(argv[0]).resolve() if argv else Path.cwd()
+    bad_target_reason = checker_target.bc_shaped_target_reason(target)
+    if bad_target_reason is not None:
+        print(f"사용 오류: {bad_target_reason}", file=sys.stderr)
+        return 1
     if not target.is_dir():
         print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1

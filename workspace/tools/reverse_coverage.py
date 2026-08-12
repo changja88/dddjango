@@ -10,6 +10,7 @@
       · scripts/check-*.py           — 매핑표 ⓒ 소유 규칙 ≥ 1
       · scripts/standard_tree.py     — 트리 140행 단일 출처(전 검사기 import)
       · scripts/business_vocab.py    — #628 실체(업무 어휘 재료)
+      · scripts/checker_target.py    — 호출 계약 공용 모듈(전 검사기 import · 라운드 1 P2)
       · skills/discipline-houserules — ⓐ 정본(final.md)·ⓑ SKILL(값 0)
       · 나머지 skills 10             — 책 코퍼스(corpus_mirror 11 · 치환 부류)
       · agents/*.md                  — 매핑표 ⓓ 소유 규칙(0이면 파이프라인 절차)
@@ -109,6 +110,8 @@ def main() -> int:
                 why = "트리 140행 단일 출처 — 전 검사기 import·#79 ROWS 구동·tree_mirror 삼중 동기"
             elif rel.name == "business_vocab.py":
                 why = "#628 실체 — 업무 어휘 재료(도메인 공개 심볼 토큰·불용어·기술 이름)"
+            elif rel.name == "checker_target.py":
+                why = "호출 계약 공용 모듈 — 전 검사기 import(BC 모양 TARGET 거절 · 라운드 1 P2 · fixture_matrix 호출 계약 레인 27케이스가 행동 고정)"
             else:
                 nums = by_c.get(key, [])
                 if nums:

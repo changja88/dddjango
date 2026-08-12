@@ -34,6 +34,8 @@ import ast
 import re
 import subprocess
 import sys
+
+import checker_target
 from pathlib import Path
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
@@ -201,6 +203,10 @@ def _scan_filter_literals(
 
 def main(argv: list[str]) -> int:
     root = Path(argv[1]).resolve() if len(argv) > 1 else Path.cwd()
+    bad_target_reason = checker_target.bc_shaped_target_reason(root)
+    if bad_target_reason is not None:
+        print(f"사용 오류: {bad_target_reason}", file=sys.stderr)
+        return 1
     if not root.is_dir():
         print(f"[check-choices-literal-consumption] 사용 오류: 디렉터리 아님 {root}", file=sys.stderr)
         return 1
