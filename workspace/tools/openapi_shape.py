@@ -17,7 +17,9 @@ security 요구의 스킴 «이름»은 securitySchemes 의 실물 모양으로 
 `--success-only`(2026-08-12 D3 ㉰): 오류 축을 code-json 표준으로 «이주»하는 라운드에선
 오류 응답 선언이 의도적으로 바뀌므로(FrameworkErrorSchema→BC ErrorSchema), A축 등가는
 **성공(2xx) 경로만** 기계 판정하고 오류 경로는 개정 spec 명세 검증(⑤C·⑥) 몫이다 —
-이 플래그가 각 operation 의 responses 에서 비-2xx 를 걷는다.
+이 플래그가 각 operation 의 responses 에서 비-2xx 를 걷고, operation 수준의
+`x-problem-slugs`(오류 slug 열거 벤더 확장 — 라운드 2 billing 실측: openapi_extra 로
+operation 에 실려 responses 밖에 남는 오류 축 표면)도 함께 걷는다.
 
 사용: python3 openapi_shape.py <openapi.json> [--success-only]
 exit 0 = 정상 / exit 1 = 재료 결손(파일 없음·JSON 아님).
@@ -104,10 +106,12 @@ def shape(doc: "dict[str, Any]") -> "dict[str, Any]":
 
 
 def _drop_error_responses(node: Any) -> Any:
-    """--success-only — 각 operation 의 responses 에서 비-2xx 항목을 걷는다."""
+    """--success-only — 비-2xx responses 와 오류 축 벤더 확장(`x-problem-slugs`)을 걷는다."""
     if isinstance(node, dict):
         out: "dict[str, Any]" = {}
         for k, v in node.items():
+            if k == "x-problem-slugs":
+                continue
             if k == "responses" and isinstance(v, dict):
                 out[k] = {sk: _drop_error_responses(sv) for sk, sv in v.items() if str(sk).startswith("2")}
             else:
