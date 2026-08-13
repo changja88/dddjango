@@ -19,6 +19,7 @@ multi_agent = true
 - 역할 위임 = `spawn_agent`로 **새 서브에이전트를 띄운다**. 결과 수신 = `wait_agent`. 슬롯 해제 = `close_agent`. 병렬 작업 = `spawn_agent`를 **여러 번** 호출한다.
 - 서브에이전트는 **실제로 띄워서 실행**한다 — 한 컨텍스트에서 역할을 순서대로 흉내내는 "sequential fallback"으로 후퇴하지 마라. 결과를 받기 전에 완료했다고 보고하지 않는다(`wait_agent` 수신 후에만 통합).
 - 각 역할 서브에이전트에는 **명령형으로** 지시한다: "역할 스킬 `dddjango-<역할>`을 로드해 그 역할로서 작동하라. 입력: …". 역할 스킬이 필요 지식 스킬(architecture-*, implementation-*, discipline-*)을 다시 로드한다.
+- **대기 정책(2026-08-13 — 라운드 2′ 실측 사고)**: `wait_agent` 의 timeout 반환은 실패가 아니라 **«아직 일하는 중»** 이다 — `list_agents` 가 `running` 인 동안은 `wait_agent` 를 계속 반복한다(반복 상한 없음 — 설계·구현 역할은 수십 분이 정상이다·조급 판정 금지). `interrupt_agent` 는 재촉 수단이 아니라 **진행 중인 턴을 파괴하는 버튼**이다 — 역할의 산출물 파일이 장시간(30분+) 생성·성장하지 않음을 실측했을 때의 마지막 수단으로만 쓴다(재촉 목적 사용 금지 — 실측 사고: 「명세를 닫는 중」 발화 직후 interrupt 로 15분치 작업이 파괴됐다). «결과 미수신» 판정은 `list_agents` 가 터미널 상태(errored·closed)를 보이거나 위 무진행을 실측했을 때만 성립한다 — **`running` 을 미수신으로 분류하지 않는다**.
 - `multi_agent`가 꺼져 있어 `spawn_agent`를 못 쓰면, 임의로 단일 컨텍스트 역할극을 하지 말고 **사용자에게 config 설정을 안내하고 멈춘다**.
 
 ## 진행 가시성
@@ -181,7 +182,7 @@ Ninja endpoint/error contract/response Schema가 변경되는 scope에서는 **G
 - **Error response contract mismatch**: `TREE_CONTRACT_MISMATCH`, `STOP_FOR_USER_APPROVAL`, `RUNTIME_CONTRACT_MISMATCH`는 모두 design-architect/G1로 반송하고 G2를 차단한다. role이나 코디네이터가 승인 shape·tree·profile·field·return form을 조용히 바꾸지 않는다.
 - **checker exit 1/2**: 모든 exact command·exit·diagnostic을 모아 함께 반송한다. 분석 불능(exit 1)은 차분과 무관하게 G2를 차단하며 warning으로 낮추지 않는다. 위반(exit 2)은 두 계열대로 — scope-렌더 command 의 exit 2 는 직접 차단, auto 위반 red 는 registry_gate 차분(귀속만 blocker·잔존은 보고 — Phase 2 step6).
 - **전체 suite의 무관 실패**: 관련 범위로 넓혀 수정하지 않고 별도 보고한다. 관련 검증 결과는 제시하되 전체 green을 주장하지 않는다.
-- **서브에이전트 결과 미수신/타임아웃**: `wait_agent`로 결과를 받지 못하면 완료로 보고하지 말고 blocked로 알린다.
+- **서브에이전트 결과 미수신**: «미수신»은 대기 정책의 자(터미널 상태 또는 30분+ 무진행 실측)로만 성립한다 — `wait_agent` timeout 자체는 미수신이 아니다(`running` 이면 계속 기다린다). 미수신이 성립하면 완료로 보고하지 말고 blocked로 알린다.
 - **검증 미실행**: 실행한 것처럼 보고하지 않는다 — 미실행 사유를 명시한다.
 
 ## 경계
