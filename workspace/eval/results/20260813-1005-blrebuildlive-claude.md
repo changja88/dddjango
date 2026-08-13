@@ -35,6 +35,7 @@
 - **귀속 15건의 실체**: 전부 `#12`(context-isolation) — ACL 3어댑터(`driven_layer/adapter/anticorruption_layer/{accounts,entitlements,products}/`)가 상류 **미이관 `published_service/`** 계약·서비스를 import(각 5건). **spec §5 가 축자로 지시한 의존**("전부 현존 코드, 열람 가능" + 표면 경로 명기)이고, 상류가 `open_host_service/`로 이관되면 자동 소멸하는 **이관 빚 클래스** — 앵커 빚 파일이 인증 1건만 수록하고 이 3표면을 빠뜨린 것이 근원(조정자=라운드 재료 결함 자인).
 - **#365×3 은 도구 아티팩트**: 워크트리 직접 실행에선 **#365 발화 0건 실측** — bc_registry_run 그림자 사본에서만 발화. **[사후 정정 08-13 — 적대 리뷰 실증]** 초판의 «git-free 과탐» 진단은 오진 — 검사기는 git 무관 파일트리 기반이고, 실체는 **단일-BC 그림자의 로스터 공백**(사본에 대상 BC만 복사돼 `bc_names={billing}` → 이웃 acl 이 «타 BC 아님»으로 읽힘). 이웃 빈 스텁을 얹으면 exit 0·#365=0 실측. 수정처=`bc_registry_run.py` ROSTER_AWARE(검사기 byte 무접촉 — ⑦·계획 `2026-08-13-ab-harvest-fixes.md` H4′).
 - **#210·#63 waiver 는 사문**: 최종 트리 직접 실행에서 두 검사기 모두 billing 발화 **0건** 실측(`check-usecase-dto-placement`·`check-openapi-error-declaration --error-profile auto`). 빚 파일의 두 waiver 는 중간 상태 흔적 또는 오진 — 주장된 «checker 가 성공 201 헤더 responses 키를 과대탐지» 는 최종 상태(controller `openapi_extra.responses.201.headers` 실재 + exit 0)로 **반증**된다.
+  **[사후 정정 08-14 — 라운드 3 소급 실증]** 위 «#210 발화 0 실측» 은 **python3.9 파싱 스킵 아티팩트**였다 — `payment_controller.py` 는 3.12+ 문법이라 3.9 AST 에서 SyntaxError→검사기 `_parse` None→침묵 스킵(fail-open). 실제로 controller 는 **domain 예외 12종을 direct import** 하며, 3.14 검사기라면 #210 이 발화한다. 따라서 **#210 waiver 는 사문이 아니라 세션의 정당한 관측**이었고(#63 반증은 유지), 이 오판이 라운드 3 레인 A STOP 대리 답변(«#210 충돌 기각»)의 근거로 재사용됐다. #210↔#95/NJ-7 문면 충돌은 실재 — 정본 결정은 수정 사이클로(라운드 3 결과지 메타 1). C축 red(정본 빚 기준 15건)·라운드 판정은 무변.
 
 ## A. TIER-S 척추 — S-DDD
 
