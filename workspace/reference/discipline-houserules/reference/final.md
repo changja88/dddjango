@@ -17,7 +17,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 - **#491** — 칸의 유형은 셋뿐이고 «조건부»는 없다 — ① 고정 이름 ② `<>` 첫 등장 ③ `<>` 재등장(조상이 이미 연 낱말이라 값이 이미 채워져 있어 ①과 같다).
 - **#492** — 「그 파일이 있어야 하나」는 트리가 정하고 「그것을 어떻게 쓰나」는 스킬이 정한다.
 
-골격의 실현 주체는 **coder** 다 — BC 를 새로 만들거나 touched 하면 고정·재등장 칸을 빈 채로라도 실현한다. 위반은 `check-layer-skeleton` 이 잡는다.
+골격의 실현 주체는 **coder** 다 — 승인 스코프의 BC 를 새로 만들거나 touched 하면(touched = G0 스코프의 그 BC — §4 와 같은 자 · 명세가 골격 실현을 지시한 데이터소스 BC 포함) 고정·재등장 칸을 빈 채로라도 실현한다. 위반은 `check-layer-skeleton` 이 잡는다.
 
 ## §1 표준 트리 — 140행
 
@@ -189,7 +189,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 - **#89** — 바깥 행위자가 BC 를 부르는 통로는 `driving_layer/` 뿐이다 — 다른 층에 입구를 두지 않는다.
 - **#90** — `driving_layer/` 의 자식은 `api/` · `open_host_service/` · `cron_job/` · `event_subscription/` 넷뿐이고 «어떤 전송으로 오나»로만 갈린다 — HTTP · 같은 프로세스 함수 호출 · celery · 브로커. 「누가 부르나」(행위자)로 가르지 않는다.
 - **#91** — 새 **전송**이 실제로 생기기 전에는 `driving_layer/` 의 자식을 늘리지 않는다 — 「새 행위자」로는 늘리지 않는다(웹훅이 그 반례다: 결제사라는 새 행위자가 왔지만 전송이 HTTP 라 2차 축 `webhook/<provider>/` 로 들어갔다). **늘리는 주체는 «정본 트리»다** — 개정되면 #486 에 따라 그 전송을 안 쓰는 BC 도 그 칸을 «빈 채로» 갖는다.
-- **#92** — `driving_layer/` 의 잎은 `application_layer/<area>/` 아래만 의존한다 — 예외는 넷: 도메인 exception·값 객체(#95) · `composition_root` 의 `build_`(#97) · 남의 `published_event/`(#507) · `framework/<technology>/`·`framework/<capability>/` 의 계약·스키마(브로커 포트는 여기 없다 — `application_layer` 쪽만 #7 이 연다).
+- **#92** — `driving_layer/` 의 잎은 `application_layer/<area>/` 아래만 의존한다 — 예외는 넷: 도메인 exception·값 객체(#95) · `composition_root` 의 `build_`(#97) · 남의 `published_event/`(#507) · `framework/<technology>/`·`framework/<capability>/` 의 계약·스키마(브로커 포트는 여기 없다 — `application_layer` 쪽만 #7 이 연다: `framework/broker/{internal,external}/*_broker_port.py` import 허용).
 - **#178** — 소비 task 가 껍데기를 넘어 조율을 시작하면 새 칸을 여는 것이 아니라 입구 로직 금지 위반을 고친다.
 
 ### 만들지 않는 칸
@@ -205,7 +205,7 @@ dddjango 는 **DDD · 클린 아키텍처 · 헥사고날** 셋을 조합해 Dja
 
 ### `<project>/`
 
-- **#429** — `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목은 «celery 채택» 전제에 묶인 조건부다 — 전제가 무산되면 이 목록도 다시 선다.
+- **#429** — `<project>/` 에는 프레임워크가 «전역에 딱 하나»를 요구하는 것만 온다 — `api.py` · `urls.py` · `celery.py` · `settings/`. `celery.py` 항목은 «celery 채택» 전제에 묶인 조건부다 — 전제가 무산되면 이 목록도 다시 선다(#491 «조건부 없음»의 자리는 트리 1행 `application/**` 이라 여기 걸리지 않는다 — `<project>/` 파트는 이 목록이 관할한다).
 - **#430** — `<project>/` 는 `application/` 을 «등록»만 하고 «타입»으로 알지 않는다 — 문자열 경로는 등록이고 import 는 앎이다.
 - **#432** — `<project>/` 는 BC 가 늘어도 커지지 않는다 — 판정 물음은 「BC 하나를 통째로 지웠을 때 이 파일이 바뀌나」다.
 - **#436** — `<project>/` 의 `health.py`·`home.py`·`asgi.py`·`wsgi.py` 는 표준 트리의 관할 밖이라 칸을 만들지 않는다(면제).

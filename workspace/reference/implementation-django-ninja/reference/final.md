@@ -154,19 +154,17 @@ Operation은 10번 slot이 승인한 **한 경로**를 선택한다.
 from ninja import Status
 from ninja_extra import api_controller, route, status
 
-from application.order.application_layer.place_order.command import (
-    InsufficientStock,
-    PlaceOrderRequest,
-    ProductNotFound,
-)
-from application.order.composition_root.dependency_wiring import build_place_order_command
+from application.order.application_layer.order.place_order.place_order_command import PlaceOrderCommand
+from application.order.composition_root.dependency_wiring import build_place_order
+from application.order.domain_layer.order.exception.insufficient_stock import InsufficientStock
+from application.order.domain_layer.order.exception.product_not_found import ProductNotFound
 from application.order.driving_layer.api.bc_error_schema import (
     OrderErrorSchema,
     OrderInsufficientStockError,
     OrderProductNotFoundError,
 )
-from application.order.driving_layer.schema.order_in import OrderIn
-from application.order.driving_layer.schema.order_out import OrderOut
+from application.order.driving_layer.api.order.schema.schema_in import OrderIn
+from application.order.driving_layer.api.order.schema.schema_out import OrderOut
 
 
 @api_controller("/orders", tags=["orders"], auto_import=False)
@@ -182,14 +180,14 @@ class OrderController:
         request,
         payload: OrderIn,
     ) -> Status[OrderOut | OrderErrorSchema]:
-        request_value = PlaceOrderRequest(
+        command = PlaceOrderCommand(
             product_id=payload.product_id,
             quantity=payload.quantity,
         )
-        command = build_place_order_command()
+        use_case = build_place_order()
 
         try:
-            order = command.execute(request_value)
+            order = use_case.execute(command)
         except ProductNotFound:
             error = OrderProductNotFoundError()
             return Status(status.HTTP_404_NOT_FOUND, error)
@@ -246,10 +244,10 @@ api = NinjaExtraAPI()
 ```
 
 ```python
-# application/order/driving_layer/registrar.py
+# application/order/driving_layer/api/api_router.py
 from ninja_extra import NinjaExtraAPI
 
-from .api.order_controller import OrderController
+from .order.order_controller import OrderController
 
 
 def register_order_api(api: NinjaExtraAPI) -> None:
@@ -260,7 +258,7 @@ def register_order_api(api: NinjaExtraAPI) -> None:
 # config/urls.py — explicit composition과 mount를 함께 소유한다.
 from django.urls import path
 
-from application.order.driving_layer.registrar import register_order_api
+from application.order.driving_layer.api.api_router import register_order_api
 from config.api import api
 
 register_order_api(api)
@@ -281,25 +279,25 @@ urlpatterns = [
   의존하는** 경우는 승인된 별도 scope로 보존할 수 있다 — 보존의 근거는 «소비자 의존»이지
   «먼저 작성돼 있음»이 아니다. 신규 BC마다 API 인스턴스를 만드는 것은 scope 분리가 아니다.
 
-**컴포지션 루트(배선) — `composition_root/`.** operation/메서드 본문에서 `Django…Repository()`·`…Adapter()`를 직접 생성하면 presentation→infra 직접 결합(Q-7)이다. DI 조립은 BC 루트 `application/<bounded_context>/composition_root/`에 모은다 — 결선은 `dependency_wiring.py`가 소유하고 use-case마다 `build_<usecase>_command()`/`build_<usecase>_query()` 팩토리를 두며, presentation은 컨트롤러 메서드에서 그 팩토리를 **호출만** 한다(매요청 조립). 이벤트 구독 결선은 `event_wiring.py`가 따로 진다. use-case 없는 순수 데이터소스 BC는 둘 게 없으니 생략한다.
+**컴포지션 루트(배선) — `composition_root/`.** operation/메서드 본문에서 `Django…Repository()`·`…Adapter()`를 직접 생성하면 presentation→infra 직접 결합(Q-7)이다. DI 조립은 BC 루트 `application/<bounded_context>/composition_root/`에 모은다 — 결선은 `dependency_wiring.py`가 소유하고 use-case마다 `build_<use_case>()` 팩토리를 두며, presentation은 컨트롤러 메서드에서 그 팩토리를 **호출만** 한다(매요청 조립). 이벤트 구독 결선은 `event_wiring.py`가 따로 진다. use-case 없는 순수 데이터소스 BC는 둘 게 없으니 생략한다.
 
 ```python
 # application/order/composition_root/dependency_wiring.py — BC 루트의 DI 결선. 구체 infra를 use-case에 주입.
-from application.order.application_layer.place_order.command.place_order_command import PlaceOrderCommand
-from application.order.driven_layer.acl.product_stock_adapter import DjangoProductStockAdapter
-from application.order.driven_layer.repository.order_repository import DjangoOrderRepository
+from application.order.application_layer.order.place_order.place_order_use_case import PlaceOrderUseCase
+from application.order.driven_layer.adapter.anticorruption_layer.catalog.product_stock_adapter import DjangoProductStockAdapter
+from application.order.driven_layer.adapter.persistence.repository.order_repository import DjangoOrderRepository
 
 
-def build_place_order_command() -> PlaceOrderCommand:
+def build_place_order() -> PlaceOrderUseCase:
     # 구체 infra를 고르는 유일한 곳 — 안쪽 계층은 domain repository/port 추상에만 의존(DIP).
-    return PlaceOrderCommand(
+    return PlaceOrderUseCase(
         order_repository=DjangoOrderRepository(),
         product_stock_port=DjangoProductStockAdapter(),
     )
 ```
 
-- **단일 파일·BC당 1개**: 컴포지션 루트는 "구체를 아는 유일한 곳"이라 한 파일에 모은다 — feature별 `composition/` 폴더로 쪼개면 루트가 분열돼 패턴 위반이다. `config/api.py`나 registrar(HTTP 등록)에 섞지도 않는다.
-- **매요청 호출**: 컨트롤러 메서드에서 `command = build_place_order_command()` 후 `command.execute(request)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).
+- **단일 파일·BC당 1개**: 컴포지션 루트는 "구체를 아는 유일한 곳"이라 한 파일에 모은다 — feature별 `composition/` 폴더로 쪼개면 루트가 분열돼 패턴 위반이다. `config/api.py`나 `api_router.py`(HTTP 등록)에 섞지도 않는다.
+- **매요청 호출**: 컨트롤러 메서드에서 `use_case = build_place_order()` 후 `use_case.execute(command)`. 모듈 레벨 전역 인스턴스로 import 시점에 만들지 않는다(import 부작용·테스트 오버라이드 회피).
 - **BC 격리**: order의 루트는 *자기 BC*의 infra/ACL만 import한다(`DjangoProductStockAdapter`는 order `driven_layer/adapter/anticorruption_layer/`; catalog는 직접 import 안 하고 OHS/ACL 경유). `composition_root/`(`dependency_wiring.py`)는 use-case DI만 소유하며 API instance·controller registration을 소유하지 않는다.
 
 **설치.** ninja-extra는 별도 앱이다 — `INSTALLED_APPS += ['ninja_extra']`가 필요하다(의존성
@@ -433,6 +431,8 @@ Filtering, sorting, search parameter는 public API contract다. Django Ninja
   selector/QuerySet method로 위임한다.
 - 검색, sparse fieldset, 복합 filter는 `architecture-api`의 계약이 먼저 있어야 한다.
 
+(아래는 Ninja 원생 함수형 예시다 — 이 플러그인의 신규 표면은 §2.3 의 클래스 컨트롤러 형태를 쓴다)
+
 ```python
 from typing import Optional
 from ninja import FilterSchema, Query
@@ -444,8 +444,8 @@ class OrderFilter(FilterSchema):
 
 @router.get("/orders", response=list[OrderOut])
 def list_orders(request, filters: Query[OrderFilter]):
-    query = build_list_orders_query()   # dependency_wiring.py 팩토리 — 매요청 조립(아래 "컴포지션 루트")
-    return query.execute(ListOrdersRequest(filters=filters))
+    use_case = build_list_orders()   # dependency_wiring.py 팩토리 — 매요청 조립(아래 "컴포지션 루트")
+    return use_case.execute(ListOrdersQuery(filters=filters))
 ```
 
 ### 5.2 Pagination
@@ -470,8 +470,8 @@ from ninja.pagination import paginate, PageNumberPagination
 @router.get("/orders", response=list[OrderOut])
 @paginate(PageNumberPagination)        # page size 상한 등은 NINJA_PAGINATION_* 설정으로
 def list_orders(request):
-    query = build_list_orders_query()   # dependency_wiring.py 팩토리 — 매요청 조립
-    return query.execute(ListOrdersRequest())   # Query가 QuerySet 반환 → paginate가 페이지로 자른다
+    use_case = build_list_orders()   # dependency_wiring.py 팩토리 — 매요청 조립
+    return use_case.execute(ListOrdersQuery())   # use case가 QuerySet 반환 → paginate가 페이지로 자른다
 ```
 
 ---
@@ -645,11 +645,11 @@ async def get_order(
     request,
     order_id: int,
 ) -> OrderOut | Status[OrderErrorSchema]:
-    query_value = GetOrderRequest(order_id=order_id)
-    query = build_get_order_query()
+    query_value = GetOrderQuery(order_id=order_id)
+    use_case = build_get_order()
 
     try:
-        order = await query.execute(query_value)
+        order = await use_case.execute(query_value)
     except (OrderNotFound, ArchivedOrderNotFound):
         error = OrderProductNotFoundError()
         return Status(status.HTTP_404_NOT_FOUND, error)
@@ -663,8 +663,8 @@ raw DB/SDK exception을 catch하지 않고, 컨트롤러가 방금 raise한 예�
 같은 공개 의미로 수렴할 때만 tuple catch를 쓴다.
 
 다음은 10번 slot이 `ReserveOrderInsufficientStockResult`를 승인된 failed Result로 정한
-경우의 controller-owned 직접 변환이다. application request/Result variant는 application
-layer DTO에서 import하고 command는 BC `composition_root`에서 조립한다. call 뒤 branch가 BC
+경우의 controller-owned 직접 변환이다. application command/Result variant는 application
+layer DTO에서 import하고 use case는 BC `composition_root`에서 조립한다. call 뒤 branch가 BC
 `ErrorSchema`를 만들며 예외 path나 presentation helper를 흉내 내지 않는다.
 
 ```python
@@ -673,21 +673,21 @@ from typing import assert_never
 from ninja import Status
 from ninja_extra import api_controller, route, status
 
-from application.order.application_layer.reserve_order.dto.reserve_order_request import (
-    ReserveOrderRequest,
+from application.order.application_layer.order.reserve_order.reserve_order_command import (
+    ReserveOrderCommand,
 )
-from application.order.application_layer.reserve_order.dto.reserve_order_result import (
+from application.order.application_layer.order.reserve_order.reserve_order_result import (
     ReserveOrderInsufficientStockResult,
     ReserveOrderResult,
     ReserveOrderSucceededResult,
 )
-from application.order.composition_root.dependency_wiring import build_reserve_order_command
+from application.order.composition_root.dependency_wiring import build_reserve_order
 from application.order.driving_layer.api.bc_error_schema import (
     OrderErrorSchema,
     OrderInsufficientStockError,
 )
-from application.order.driving_layer.schema.schema_in import OrderIn
-from application.order.driving_layer.schema.schema_out import OrderOut
+from application.order.driving_layer.api.order.schema.schema_in import OrderIn
+from application.order.driving_layer.api.order.schema.schema_out import OrderOut
 
 
 @api_controller("/orders", tags=["orders"], auto_import=False)
@@ -703,12 +703,12 @@ class OrderController:
         request,
         payload: OrderIn,
     ) -> Status[OrderOut | OrderErrorSchema]:
-        request_value = ReserveOrderRequest(
+        command = ReserveOrderCommand(
             order_id=payload.order_id,
             quantity=payload.quantity,
         )
-        command = build_reserve_order_command()
-        result: ReserveOrderResult = command.execute(request_value)
+        use_case = build_reserve_order()
+        result: ReserveOrderResult = use_case.execute(command)
 
         if isinstance(result, ReserveOrderInsufficientStockResult):
             error = OrderInsufficientStockError()
@@ -759,11 +759,11 @@ def retry_order(
     response: HttpResponse,
     payload: RetryOrderIn,
 ) -> OrderOut | Status[OrderErrorSchema]:
-    request_value = RetryOrderRequest(order_id=payload.order_id)
-    command = build_retry_order_command()
+    command = RetryOrderCommand(order_id=payload.order_id)
+    use_case = build_retry_order()
 
     try:
-        order = command.execute(request_value)
+        order = use_case.execute(command)
     except OrderContention:
         response["Retry-After"] = "1"
         error = OrderTemporarilyUnavailableError()

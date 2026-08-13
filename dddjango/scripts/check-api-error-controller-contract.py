@@ -6688,7 +6688,7 @@ def _slice_check_controller_ast(f: Path, rel: Path, findings: list[str], candida
             elif caught is not None:
                 caught_names = [getattr(caught, "id", getattr(caught, "attr", ""))]
             if caught is None or set(caught_names) & _CATCH_ALL_NAMES:
-                findings.append(f"  [#62] {rel}:{node.lineno} `except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다")
+                findings.append(f"  [#62] {rel}:{node.lineno} `except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 catch 한다: ninja §6.2)")
             if node.name and set(caught_names) & domain_names:
                 for sub in _ast.walk(node):
                     if isinstance(sub, _ast.Name) and sub.id == node.name and isinstance(sub.ctx, _ast.Load):

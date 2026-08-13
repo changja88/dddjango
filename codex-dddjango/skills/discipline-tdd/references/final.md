@@ -208,6 +208,8 @@ def test_money_addition():
 | 새로운 기능의 전체 설계 탐색 | Outside-In (런던 학파) |
 | 복잡한 알고리즘 구현 | Inside-Out (고전 학파) |
 
+> 이 표는 배경 지식이다 — 이 저장소의 기본은 고전 학파이고 Mock 은 외부 의존성 격리에만 쓴다(§7.6).
+
 ---
 
 ## 4. 좋은 단위 테스트의 4대 특성
@@ -413,7 +415,7 @@ def test_empty_cart_total():
 - `reject`: framework/private/test-tool mechanics 또는 권위 있는 제품 계약이 없는 비자격 후보이므로 영구 테스트로 만들지 않는다.
 - `pending`: 근거·계약·중복 여부가 불명확해 사용자 또는 설계 결정이 필요하다.
 
-`pending`은 G1/G1′ 승인과 Phase 2 완료를 막는다. `reuse`·`reject`에서는 새 test file·case·assertion·helper를 포함한 test artifact write가 0이다. `retain`의 의미 보존 move/split/rename/reorganization은 새 case·assertion·Red를 만들지 않고 전후에 같은 계약과 failure를 보호해야 한다. 재조직이 없으면 기존 artifact를 건드리지 않는다. `remove`는 새 명세의 침묵이나 현재 구현과의 불일치만으로 선택하지 않는다.
+`pending`은 G1/G1′ 승인과 Phase 2 완료를 막는다(G1/G1′=파이프라인 설계 승인 게이트 · Phase 2=구현 국면 — Coordinator 게이트 명칭). `reuse`·`reject`에서는 새 test file·case·assertion·helper를 포함한 test artifact write가 0이다. `retain`의 의미 보존 move/split/rename/reorganization은 새 case·assertion·Red를 만들지 않고 전후에 같은 계약과 failure를 보호해야 한다. 재조직이 없으면 기존 artifact를 건드리지 않는다. `remove`는 새 명세의 침묵이나 현재 구현과의 불일치만으로 선택하지 않는다.
 
 영구 테스트가 보호할 수 있는 대상은 다음과 같다.
 
@@ -596,7 +598,7 @@ def test_withdraw__amount_exceeds_balance__returns_insufficient_funds():
 
 ### 7.6 Mock보다 출력·상태 검증을 우선한다 [Khorikov]
 
-TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 > 통신 기반(Mock)** 순으로 선호한다. Mock은 외부 의존성(DB, API, 파일시스템, 결제, 알림 등) 격리에만 쓰고, 핵심 로직은 실제 객체의 출력/상태로 검증한다. 이는 무엇을 어떻게 검증할지에 대한 실천 원칙이며, Mock 우선순위표와 구체적 사용법(`Mock(spec=)`, `side_effect`, 호출/순서 검증)은 작성법이므로 `workspace/reference/implementation-test/reference/final.md` §7을 따른다. Mock이 필요한 경계에서의 *도구*는 pytest-mock `mocker` 픽스처다(자동 teardown) — 고전 학파 기본(§3 실제 협력 객체)은 불변이고 *도구만* 격상한다(무엇을·얼마나 mock할지는 위 우선순위가 소유).
+TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 > 통신 기반(Mock)** 순으로 선호한다. Mock은 외부 의존성(DB, API, 파일시스템, 결제, 알림 등) 격리에만 쓰고, 핵심 로직은 실제 객체의 출력/상태로 검증한다. 이는 무엇을 어떻게 검증할지에 대한 실천 원칙이며, Mock 우선순위표와 구체적 사용법(`Mock(spec=)`, `side_effect`, 호출/순서 검증)은 작성법이므로 `implementation-test` §7을 따른다. Mock이 필요한 경계에서의 *도구*는 pytest-mock `mocker` 픽스처다(자동 teardown) — 고전 학파 기본(§3 실제 협력 객체)은 불변이고 *도구만* 격상한다(무엇을·얼마나 mock할지는 위 우선순위가 소유).
 
 ### 7.7 깨진 테스트 / 깨끗한 체크인 [테스트주도 개발]
 
@@ -607,7 +609,7 @@ TDD로 구현을 몰아갈 때 검증 방식은 **출력 기반 > 상태 기반 
 
 ## 8. 테스트 더블 분류 체계
 
-테스트 더블의 상세 분류와 Python 구현은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
+테스트 더블의 상세 분류와 Python 구현은 `implementation-test` 스킬을 참조한다.
 
 ---
 
@@ -692,7 +694,7 @@ def test_walking_skeleton_health_check(client):
 
 ### 9.3 Mock Roles, Not Objects [Freeman, Pryce, Mackinnon, Walnes -- OOPSLA 2004]
 
-Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다. 프로덕션 코드는 구체 구현 클래스(예: `StripeGateway`, `SmtpSender`)가 아니라 역할(인터페이스)에 의존하고, 테스트는 그 역할을 Mock한다. 역할을 `Protocol`로 정의하고 `mocker.Mock(spec=...)`로 대체하는 구체 구현은 작성법이므로 `workspace/reference/implementation-test/reference/final.md` §7을 따른다.
+Mock의 대상은 구체적인 객체가 아니라 **역할(Role)** 이다. 프로덕션 코드는 구체 구현 클래스(예: `StripeGateway`, `SmtpSender`)가 아니라 역할(인터페이스)에 의존하고, 테스트는 그 역할을 Mock한다. 역할을 `Protocol`로 정의하고 `mocker.Mock(spec=...)`로 대체하는 구체 구현은 작성법이므로 `implementation-test` §7을 따른다.
 
 ### 9.4 Tell, Don't Ask 원칙 [Freeman & Pryce - GOOS]
 
@@ -990,19 +992,19 @@ def test_calculate_shipping_fee_for_domestic_order():
 
 ## 13. 레거시 코드 다루기
 
-레거시 코드 다루기는 `workspace/reference/discipline-cleancode/reference/final.md`를 참조한다.
+레거시 코드 다루기는 `discipline-cleancode` 스킬을 참조한다.
 
 ---
 
 ## 14. Property-Based Testing
 
-Property-Based Testing은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
+Property-Based Testing은 `implementation-test` 스킬을 참조한다.
 
 ---
 
 ## 15. Mutation Testing
 
-Mutation Testing은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
+Mutation Testing은 `implementation-test` 스킬을 참조한다.
 
 ---
 
@@ -1025,7 +1027,7 @@ TDD (코드 정확성) -> ATDD (인수 테스트) -> BDD (행위 명세 + 소통
 | 산출물 | 단위 테스트 | 살아있는 문서(living documentation) |
 | 참여자 | 개발자 | 개발자 + 기획자 + QA |
 
-pytest-bdd 구현 상세는 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
+pytest-bdd 구현 상세는 `implementation-test` 스킬을 참조한다.
 
 ---
 
@@ -1095,7 +1097,7 @@ def test_parse_korean_date_edge_cases():
 
 ## 18. Python 테스트 생태계 심화
 
-Python 테스트 도구 생태계는 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
+Python 테스트 도구 생태계는 `implementation-test` 스킬을 참조한다.
 
 ---
 

@@ -399,7 +399,7 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 | Transaction owner | 어떤 use case/service가 transaction boundary를 소유하는지 |
 | Locking strategy | unique constraint, optimistic, pessimistic, advisory, serializable 중 무엇을 쓰는지 |
 | Rule ownership | 판정·불변식을 도메인 애그리거트(또는 도메인 서비스)가 소유하고 리포지토리는 결과만 저장하는지 — 경합 가드(`version`) 외 비즈니스 판정을 SQL(예: `WHERE stock>=qty`)·ORM `update()`에 복제해 도메인 메서드를 죽이지 않는지(원칙 `architecture-ddd` §3.2, 메커니즘 위 §9.5) |
-| Idempotency storage | key scope, table, unique constraint, request fingerprint, stored result(= 도메인/응용 outcome; HTTP status·응답 표현은 presentation이 소유·replay 매핑 — `architecture-api` §13.3·P1a) |
+| Idempotency storage | key scope, table, unique constraint, request fingerprint, stored result(= 도메인/응용 outcome; HTTP status·응답 표현은 presentation이 소유·replay 매핑 — `architecture-api` §13.3) |
 | API handoff | `Idempotency-Key` replay/conflict 계약은 `architecture-api`와 맞추는지 |
 | Side-effect timing | 외부 결제, 알림, message publish를 commit 전/후 어디서 실행하는지 |
 | Isolation/retry | isolation level, deadlock/timeout/serialization failure retry 기준 |
@@ -409,13 +409,13 @@ Idempotency storage는 API 계약과 연결되지만, DB 설계에서는 최소�
 
 **`add`된 동시성 테스트의 mechanics는 결정적으로.** concurrent request·CAS 경합 테스트가 입장 승인된 뒤에는 **결정적 CAS-충돌 주입(스파이)** 으로 증명하는 것을 기본으로 한다 — 실제 스레드·커스텀 DB 백엔드 없이 `version` 경합을 1회 주입해 재시도 수렴을 검증한다(`implementation-test` §20.5). 스레드 기반 race 재현(`implementation-test` §20.4)은 보조이며, 그것을 위해 연결 *메커니즘*을 커스텀 백엔드로 바꾸지 않는다(stock `OPTIONS`만 — §9.5 연결 설정 경계·`implementation-django` §16.4).
 
-외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7).
+외부 결제, 알림, SDK 호출, message publish는 DB 트랜잭션 내부에서 실행하지 않는 것을 기본으로 한다. 같은 transaction에 묶어야 하는 명확한 이유가 없으면 commit 이후 handoff(`transaction.on_commit()`, domain event, outbox 등)를 사용한다. 메시지 유실이 허용되지 않으면 Outbox로 전달을 보장한다(§9.7)(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).
 
 > 출처: [PostgreSQL Documentation: Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 
 ### 9.7 Commit 후 메시지 전달과 Outbox
 
-DB 상태 변경과 외부 메시지 발행을 함께 해야 할 때, 둘은 서로 다른 시스템이라 원자적으로 묶이지 않는다. "DB 커밋 -> 브로커 발행" 순서는 커밋 후 발행 직전 장애 시 메시지가 유실되고, "브로커 발행 -> DB 커밋" 순서는 롤백 시 존재하지 않는 사실에 대한 메시지가 나간다. 이 **이중 쓰기(dual write)** 문제는 유실이 치명적일 때 Outbox로 해결한다.
+DB 상태 변경과 외부 메시지 발행을 함께 해야 할 때, 둘은 서로 다른 시스템이라 원자적으로 묶이지 않는다. "DB 커밋 -> 브로커 발행" 순서는 커밋 후 발행 직전 장애 시 메시지가 유실되고, "브로커 발행 -> DB 커밋" 순서는 롤백 시 존재하지 않는 사실에 대한 메시지가 나간다. 이 **이중 쓰기(dual write)** 문제는 유실이 치명적일 때 Outbox로 해결한다(듣는 쪽이 별도 배포 단위일 때만 — #529 · in-repo 소비자의 유실 불허는 받는 쪽 `cron_job/`→주인 OHS 폴링 #626).
 
 **트랜잭셔널 Outbox**: 브로커에 직접 발행하는 대신, 발행할 메시지를 비즈니스 데이터와 **같은 트랜잭션**으로 outbox 테이블에 기록한다. 커밋되면 상태 변경과 보낼 메시지가 원자적으로 함께 남는다. 별도 **디스패처**가 미발행 행을 읽어 브로커에 발행하고 발행 표시한다.
 

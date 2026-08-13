@@ -2,7 +2,7 @@
 
 
 > Python에서만 적용되는 관례, 패턴, 기법을 정리한 문서.
-> 클린코드 범용 원칙(네이밍, 함수 설계, SOLID 등)은 `workspace/reference/discipline-cleancode/reference/final.md`에서 다룬다.
+> 클린코드 범용 원칙(네이밍, 함수 설계, SOLID 등)은 `discipline-cleancode` 스킬에서 다룬다.
 > Python 3.10+ 이후 도입된 기능을 적극 채택하며, 최신 패턴을 기본으로 제시한다.
 
 ---
@@ -621,6 +621,8 @@ found = {
 
 ### 4.4 None 반환 대신 예외 발생 [파이썬코딩의기술]
 
+> dddjango 경계 단서: OHS 계약·승인된 failed-Result 경로에서는 «부재·거절은 답»(#453·#454)이라 raise 가 아니라 결과 분기다 — 이 절의 예외 우선은 그 밖의 일반 API 다.
+
 ```python
 # 나쁜 예: None 반환 - 0과 구분 불가
 def careful_divide(a, b):
@@ -1205,7 +1207,7 @@ class LegacyColor(str, Enum):
 - 의미 있는 유한 상태는 임의 문자열보다 `Enum` 또는 `StrEnum`으로 표현한다.
 - 직렬화 값이 문자열이어야 하고 프로젝트 target이 Python 3.11+이면 `StrEnum`을 우선 고려한다.
 - Python target이나 의존성 제약 때문에 `StrEnum`을 사용할 수 없으면 `str, Enum` 조합을 사용한다.
-- 값 집합이 작고 지역적인 분기 표현이면 `Literal`도 가능하지만, 상태에 의미나 동작이 붙으면 `Enum`/`StrEnum`이 더 안정적이다.
+- 값 집합이 작고 지역적인 분기 표현이면 `Literal`도 가능하지만, 상태에 의미나 동작이 붙으면 `Enum`/`StrEnum`이 더 안정적이다(가능/불가의 판정은 아래 `Literal` vs `Enum` 분업 항이 소유한다 — 도메인 상태·종류는 Enum 이다).
 - 승격 판정(무엇을 Enum으로 만들지)·리터럴 허용 목록·소비 규율의 소유자는 `discipline-cleancode` §2.14다 — 요지: 닫힌 집합을 분기·판정에 쓰면 1곳째부터 집합 단위 타입으로(낱개 모듈 상수 나열 금지), 선언된 값의 비교·분기·대입은 심볼로만(`state == State.ACTIVE`). 비교는 `==`를 쓴다 — `is`는 문자열 Enum 값이 경계에서 plain str로 흐를 때 수화 누락 시 조용한 False를 만든다.
 - **파생 분류 집합**(terminal set 등)의 지식은 enum이 소유한다 — 1순위는 프로퍼티(`@property def is_terminal(self) -> bool: ...`), 여러 원소를 묶는 상수가 필요하면 enum과 같은 모듈의 `frozenset`(원소는 심볼). 소비처 모듈마다 임의 frozenset을 재정의하지 않는다.
 - `Literal` vs `Enum` 분업(PEP 586): 위의 "지역적 분기 표현이면 `Literal` 가능"은 유지하되, 도메인 개념의 값 집합(상태·종류)은 Enum, 외부 API의 값 의존 계약(`open`의 mode처럼 인자 값에 따라 시그니처가 갈리는 자리)은 `Literal`로 가른다. `Literal`로 잠긴 인자 자리의 리터럴은 타입 체커가 검증하므로 허용이다.
@@ -2162,7 +2164,7 @@ def to_str(bytes_or_str):
 
 ## 20. 디자인 패턴 (Python 고유 구현)
 
-범용 디자인 패턴의 개념은 `workspace/reference/discipline-cleancode/reference/final.md`를 참조한다.
+범용 디자인 패턴의 개념은 `discipline-cleancode` 스킬을 참조한다.
 
 ### 20.1 `__init_subclass__` 레지스트리 패턴
 
@@ -2417,7 +2419,7 @@ def handle_result(result: Result) -> str:
 
 ## 24. 테스트
 
-테스트와 디버깅은 `workspace/reference/implementation-test/reference/final.md`를 참조한다.
+테스트와 디버깅은 `implementation-test` 스킬을 참조한다.
 
 ---
 
@@ -2485,7 +2487,7 @@ def find_anagrams(word: str) -> list[str]:
 - 클래스: 목적 + 중요 공개 애트리뷰트/메서드
 - 함수: 목적 + Args + Returns + Raises
 - 스크립트: 사용법(usage) 메시지 — 명령행 구문, 환경 변수, 입출력 파일
-- 타입 어노테이션과 중복되면 둘 중 하나만 유지
+- 타입 어노테이션과 중복되면 독스트링 쪽 타입 서술을 지운다(어노테이션은 항상 유지 — houserules «모든 이름 첫 대입에 타입»)
 
 ---
 

@@ -31,12 +31,12 @@ Coordinator가 다음을 준다:
 ## 작업 방식 (안쪽 루프 TDD)
 
 - **구현 전에 명세의 패키지·테스트 구조 결정을 읽고, 새 파일을 그 레이아웃에 맞춰 배치한다.** 구조를 새로 결정하지 않고 명세를 집행한다 — `discipline-houserules`(표준 파일트리 `references/final.md`)로 평면 나열·개념 누적을 피하고 입장 표가 승인한 test artifact가 있을 때만 그 artifact를 의미군에 둔다. 구조 규칙만으로 test file·case·assertion·helper·move/split이나 빈 test package를 만들지 않는다. 명세에 구조 결정이 없으면 임의로 정하지 말고 보고한다(설계로 반송). **명세의 구조 결정이 표준 골격(`final.md` §0 제1원칙 — 고정·재등장 칸)을 빠뜨렸거나 평면으로 접었으면, 임의 보정도 그대로 집행도 하지 말고 보고한다(명세-표준 괴리 = 설계 반송).**
-- **골격 실현 의무.** BC 를 새로 만들거나 touched 하면 `final.md` §0·§1 의 골격을 실현한다 — 고정·재등장 칸은 내용이 없어도 폴더는 `__init__.py` 로, 파일은 빈 파일로 만든다(#488). `<…>` 자리표시자 칸은 그 개념이 실제로 생길 때만 만들고, 트리에 없는 칸은 만들지 않는다(#489·#490). 골격 위반은 `check-layer-skeleton` 이 다른 검사보다 먼저 잡고 반송한다(#487) — 검사기를 통과시키려 트리 밖 우회를 만들지 않는다.
+- **골격 실현 의무.** 승인 스코프의 BC 를 새로 만들거나 touched 하면(touched = G0 스코프의 그 BC — 파일을 스친 사실이 아니라 · 명세가 골격 실현을 지시한 데이터소스 BC 포함) `final.md` §0·§1 의 골격을 실현한다 — 고정·재등장 칸은 내용이 없어도 폴더는 `__init__.py` 로, 파일은 빈 파일로 만든다(#488). `<…>` 자리표시자 칸은 그 개념이 실제로 생길 때만 만들고, 트리에 없는 칸은 만들지 않는다(#489·#490). 골격 위반은 `check-layer-skeleton` 이 다른 검사보다 먼저 잡고 반송한다(#487) — 검사기를 통과시키려 트리 밖 우회를 만들지 않는다.
 - 각 test edit 전에 입력 행의 protected contract/evidence·unique production failure·existing authoritative coverage·decision·owner/path를 확인한다. 행이 없거나 owner가 아니면 만들거나 고치지 않는다.
 - `add/update` 행에서만 Red→Green→Refactor를 반복한다. candidate·도구 recipe·coverage·상위 테스트 실패를 단위 Red로 자동 복제하지 않는다.
 - migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 기존 관련 migration 테스트의 기대 변경은 기존 assertion의 제자리 갱신·축소까지만 허용하며, 새 migration coverage가 필요하면 검증 공백을 보고한다.
 - 현행 assertion과 종료 assertion이 섞였으면 현행 보장을 남기도록 분리·부분 갱신한다. 지원 중인 구 API·영속 데이터·발행 이벤트·회귀 불변식은 보존한다.
-- 단위 테스트는 **무조건 pytest로** — 함수형 + `assert` + `mocker`(mock은 외부 경계 한정·§7.1 교리 불변) + factory_boy(ORM 영속 픽스처의 기본; 정확 필드 행·VO/dataclass는 직접 생성) + `@pytest.mark.django_db`. 구현 중 새 테스트 도구(factory_boy·freezegun·responses)가 필요하면 `implementation-django-ninja` §2.1 버전-핀 규율로 매니페스트에 핀한다(글로벌 임의 설치 금지). 기존 프로젝트가 `manage.py test`/Django `TestCase` 관례여도 새 테스트는 pytest로 쓴다(예외 없음 — pytest-django가 기존 `TestCase`도 수집).
+- 단위 테스트는 **무조건 pytest로** — 함수형 + `assert` + `mocker`(mock은 외부 경계 한정·`implementation-test` §7.1 교리 불변) + factory_boy(ORM 영속 픽스처의 기본; 정확 필드 행·VO/dataclass는 직접 생성) + `@pytest.mark.django_db`. 구현 중 새 테스트 도구(factory_boy·freezegun·responses)가 필요하면 `implementation-django-ninja` §2.1 버전-핀 규율로 매니페스트에 핀한다(글로벌 임의 설치 금지). 기존 프로젝트가 `manage.py test`/Django `TestCase` 관례여도 새 테스트는 pytest로 쓴다(예외 없음 — pytest-django가 기존 `TestCase`도 수집).
 - 입장된 내부 테스트는 승인된 domain/application/DB/adapter failure를 검증한다. 외부 테스트와 boundary가 달라도 독자 failure가 없으면 새 단위 테스트를 만들지 않는다.
 - 한 슬라이스를 통과시킬 만큼만 구현한다(YAGNI). 관련 단위 테스트와, 존재하는 경우 인수 테스트를 Bash로 실행해 Green을 확인한다. **내부 루프 실행 범위는 BC-범위가 기본이다(2026-08-13)** — 슬라이스 래칫의 pytest 는 대상 BC 의 테스트 경로(예: `application/<bc>/test/`)와 이번 슬라이스의 인수 테스트로 한정하고, 프로젝트 전역 스위트(`make test` 류)는 내부 루프에서 돌리지 않는다(전역 판정은 게이트·완료 기준 소유 — 이 규칙은 실행 «범위»만 줄이고 판정 «기준»은 바꾸지 않는다). 예외: 슬라이스가 **BC 폴더 밖**(framework/·프로젝트 settings·urls 등 — 슬라이스 0 의 빚 수리 포함)이나 **타 BC 가 소비하는 표면**(open_host_service/·published_event/·broker 계약)을 수정하면, 그 슬라이스의 래칫에는 영향 소비자의 테스트 경로를(불명확하면 전역 스위트 1회를) 포함한다 — 금지의 주어는 «관행적 전역 반복»이지 «영향 경로 실행»이 아니다. «이번 슬라이스의 인수 테스트»의 자는 이번 슬라이스에 붙은 입장 행과 입력으로 받은 acceptance 결과의 테스트 **전부**다 — 축소는 네 소유가 아니며, 0건 주장은 사유를 완료 보고에 명시한다. 완료 보고에 **pytest 호출 횟수·총 소요 한 줄**(형식 `pytest N회 · 총 M초`)을 남긴다 — **관찰 전용**이며 판정·평가에 쓰지 않는다: 수치를 줄이려는 실행 생략은 위반이다(Red→Green 사이클 규율 불변).
 - 작업에 맞는 스킬을 골라 쓴다: Django 코어(모델·ORM·서비스·트랜잭션)=implementation-django, JSON API 어댑터=implementation-django-ninja, 서버렌더 표현계층=implementation-django-web, Python 관용구·타입=implementation-python, 테스트 작성법=implementation-test. 클린코드·TDD 규율(discipline-cleancode·discipline-tdd)을 따른다.
@@ -55,7 +55,7 @@ Coordinator가 다음을 준다:
 
 ## 엣지·보고
 
-- 인수 테스트가 정해진 시도 후에도 계속 Red면 멈추고 보고한다: 명세 가정이 틀렸는지(설계로 반송) 구현 난점인지 구분해서.
+- 인수 테스트가 Coordinator 입력이 준 시도 예산 안에서도 계속 Red 면(입력에 예산이 없으면 추가 시도 없이 즉시) 멈추고 보고한다: 명세 가정이 틀렸는지(설계로 반송) 구현 난점인지 구분해서.
 - 인수 테스트가 설계 명세와 불일치하면 **임의로 고치지 않고** 보고한다(인수테스트/설계로 반송).
 - 테스트 계약 상태가 `pending`이거나 삭제·약화에 명시적 종료 근거가 없으면 구현을 진행하지 않고 설계로 반송한다.
 - 검증(테스트·마이그레이션·check)을 실행하지 않았으면 실행한 것처럼 보고하지 않는다 — 미실행 사유를 명시한다.

@@ -2,7 +2,7 @@
 """dddjango 컴포지션 루트(DI 배선) 위치 결정적 백스톱 (discipline-houserules §0 집행).
 
 표준 트리에서 DI 조립(컴포지션 루트)은 BC 루트의 `composition_root/`(결선은 `dependency_wiring.py`
-— 트리 2~4행·#84·#85)가 소유한다(정본). driving 층은 `build_<usecase>_*()` 팩토리를
+— 트리 2~4행·#84·#85)가 소유한다(정본). driving 층은 `build_<use_case>()` 팩토리를
 매요청 호출만 하고, operation 본문에서 `Django…Repository()`/`…Adapter()`를 직접 생성하지
 않는다(Q-7). 이 백스톱은 배선이 정본을 벗어나거나 부재인 *구조적* 변종 셋을 차단한다:
   - **off-tree `composition/` 폴더(V1)**: `application/<app>/composition/`에 배선 코드(provider 등)를
@@ -37,7 +37,7 @@ discipline-reviewer 의미 게이트 한 점에만 의존하면 off-tree 폴더�
     - `application_layer`에 실 application 로직(비-`__init__` `.py`; `dto/`·test 제외)이 있는데 BC 루트
       `composition_root/` 폴더가 없으면 blocker(부재·V3). command/query 만이 아니라 `service/`·`handler/`
       등 application_layer 실 로직 전체가 신호다(빈 `command/` 만 남기고 `service/` 로 fold 하는 우회
-      봉쇄). 데이터소스 BC(§632 상 `application_layer` 가 빈 계층)는 로직이 없어 면제(거짓 양성 0).
+      봉쇄). 데이터소스 BC(`architecture-ddd` §3.2 «판정 소유→구조 이주» 상 `application_layer` 가 빈 계층)는 로직이 없어 면제(거짓 양성 0).
       정본이 존재하되 *비어 있고 실배선이 딴 곳에* fold 된 알리바이는 형태로 못 가르므로
       discipline-reviewer 의미 레인 몫이다(이 V3는 *부재*만 결정적으로 잡는다).
 
@@ -1846,7 +1846,7 @@ def main(argv: list[str]) -> int:
         print(
             "  근거: discipline-houserules §1(트리 2~4행). DI 조립은 BC 루트 «폴더» "
             "`application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · "
-            "사실 결선은 `event_wiring.py`), driving 쪽은 `build_<usecase>_command()` 팩토리를 "
+            "사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 "
             "매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 "
             "단일 파일 `composition_root.py` 모양으로 두지 않는다(operation 본문에서 "
             "`Django…Repository()`/`…Adapter()`를 직접 생성하지 않는 Q-7의 짝). `composition/` "

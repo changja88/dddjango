@@ -610,7 +610,7 @@ count += 1  # 재시도 횟수를 추적하여 최대 3회 초과 시 중단하�
 
 ### 4.7 독스트링 작성법
 
-독스트링은 **무엇을** 문서화할지가 원칙이다 — 모듈/클래스/함수/스크립트의 동작·입출력·예외·호출 제약을 설명한다(§4.6). PEP 257 양식(삼중 따옴표, Args/Returns/Raises 구조)과 Python 작성 규칙은 `workspace/reference/implementation-python/reference/final.md` §26을 따른다.
+독스트링은 **무엇을** 문서화할지가 원칙이다 — 모듈/클래스/함수/스크립트의 동작·입출력·예외·호출 제약을 설명한다(§4.6). PEP 257 양식(삼중 따옴표, Args/Returns/Raises 구조)과 Python 작성 규칙은 `implementation-python` §26을 따른다.
 
 ---
 
@@ -624,7 +624,7 @@ count += 1  # 재시도 횟수를 추적하여 최대 3회 초과 시 중단하�
 
 500줄이 넘지 않고 대부분 200줄 정도인 파일로도 커다란 시스템을 구축할 수 있다. **[CC]**
 
-코드/주석의 구체적 줄 길이(line length) 수치는 Ruff 설정으로 강제하며 `workspace/reference/implementation-python/reference/final.md` §22를 따른다.
+코드/주석의 구체적 줄 길이(line length) 수치는 Ruff 설정으로 강제하며 `implementation-python` §22를 따른다.
 
 ### 5.3 일관성이 핵심이다 [PC]
 
@@ -991,7 +991,7 @@ class EventStreamer: ...
 | **Template business logic** | template tag, include, HTMX partial에서 권한/상태/가격 정책을 직접 계산한다 | 렌더링 관심사가 도메인 규칙을 숨기면 변경 누락과 중복이 커진다. |
 | **Service dumping ground** | 모든 로직을 `services.py`로 옮겼지만 함수들이 서로 다른 정책과 I/O를 공유 전역처럼 사용한다 | 이름만 service인 얕은 모듈은 책임 분리가 아니다. 유스케이스, 도메인 규칙, 조회, 외부 연동의 변경 이유를 다시 나눠야 한다. |
 
-다만 모든 Django model method가 Fat Model인 것은 아니다. 단일 엔티티의 불변식, 상태 질의, 표현 독립적인 작은 행위는 model이나 값 객체에 두는 편이 더 응집도 높을 수 있다. 반대로 transaction, locking, idempotency, aggregate 경계, REST contract, API error shape처럼 설계 결정이 먼저 필요한 문제는 클린 코드 스멜로만 처리하지 않고 DB/API/DDD 관련 기준으로 라우팅해야 한다.
+다만 모든 Django model method가 Fat Model인 것은 아니다. 단일 엔티티의 불변식, 상태 질의, 표현 독립적인 작은 행위는 model이나 값 객체에 두는 편이 더 응집도 높을 수 있다. 반대로 transaction, locking, idempotency, aggregate 경계, REST contract, API error shape처럼 설계 결정이 먼저 필요한 문제는 클린 코드 스멜로만 처리하지 않고 DB/API/DDD 관련 기준으로 라우팅해야 한다(`architecture-db`·`architecture-api`·`architecture-ddd` 스킬).
 
 ### 9.2 개방/폐쇄 원칙 (OCP) [PC] [CC]
 
@@ -1459,7 +1459,7 @@ class GraphEditor:
         self._tool.on_mouse_up(x, y)    # 조건문 없음
 ```
 
-> Python 고유 구현 트릭(`__init_subclass__` 레지스트리 등)은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
+> Python 고유 구현 트릭(`__init_subclass__` 레지스트리 등)은 `implementation-python` 스킬을 참조한다.
 
 ---
 
@@ -1560,6 +1560,8 @@ class TextBuffer:
 ```
 
 ### 12.2 2순위: 오류 코드보다 예외를 사용하라 [CC]
+
+> dddjango 경계 단서: «물건이 없다·이미 있다·규칙이 거절한다»는 예외가 아니라 «답»이다(#453·#454) — OHS 계약·승인된 failed-Result 경로에서는 raise 대신 결과 분기를 쓴다. 이 절의 raise 우선은 그 밖의 일반 오류 처리다.
 
 오류 코드를 반환하면 호출자는 오류 코드를 곧바로 처리해야 하고, 명령/조회 분리 규칙을 위반한다.
 
@@ -2507,7 +2509,7 @@ def calculate_total_with_tax(order_data: dict) -> float:
 
 ## 18. Python 관용구와 스타일
 
-Python 언어 특화 관례와 패턴은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
+Python 언어 특화 관례와 패턴은 `implementation-python` 스킬을 참조한다.
 
 ---
 

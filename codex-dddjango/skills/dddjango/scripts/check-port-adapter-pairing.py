@@ -400,7 +400,7 @@ def _check_domain_side(root: Path, bc: Path, f: Findings) -> None:
                       "application_layer/port/domain_bypass_query/ 다(#229)")
 
 
-# ── driven adapter — #319~#377 · #460~#583 ─────────────────────────────────
+# ── driven adapter — #319~#376 · #464~#583 ─────────────────────────────────
 
 def _check_driven(root: Path, bc: Path, agg_names: set, bc_vocab_set: set,
                   f: Findings, cand: Candidates) -> None:

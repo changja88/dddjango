@@ -8,8 +8,9 @@
               자기 published_event/·framework{broker,pure,계약(exception·*_in·*_out)}.
               여기서는 «층 역참조»(driving/driven import)와 framework 비계약 모듈만 문다
               (django 는 #4, 타 BC 는 #12 관할 — 중복 진단 금지).
-  #96  [ast]  driving_layer 잎은 domain_layer·port 선언을 import 하지 않는다
-              (api_router.py·event_router.py 는 잎이 아니다 — #99).
+  #96  [ast]  driving_layer 잎은 domain_layer 의 애그리거트·엔티티·리포지토리 선언·
+              도메인 이벤트와 port 선언을 import 하지 않는다 — #95 예외(exception·값 객체)는
+              허용이다 (api_router.py·event_router.py 는 잎이 아니다 — #99).
   #271 [ast+] 사실 이름은 과거형 — 확정: 첫 토큰이 애그리거트 공개 메서드와 같음
               (ReduceInventory↔reduce) / 후보: 끝 토큰이 -ed/-en·불규칙 과거분사 밖.
   #279 [ast]  핸들러는 application_layer 의 유스케이스다 — 구독·wiring 이

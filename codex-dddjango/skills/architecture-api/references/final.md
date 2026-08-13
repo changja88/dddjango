@@ -228,7 +228,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 한 API 범위 안에서는 RFC 프로필과 code 프로필의 wire 필드를 섞지 않는다. 특히 code 프로필에 `type`, `about:blank`, URI 요구사항이나 `application/problem+json`을 끼워 넣지 않는다.
 
-이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.
+이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다)(G1/G2=파이프라인의 설계/구현 승인 게이트 · 12-slot=오류 계약 기록표 `Error response contract 12-slot` · STOP=`STOP_FOR_USER_APPROVAL` — 사용자 결정으로만 진행). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.
 
 #### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)
 
@@ -544,7 +544,7 @@ Content-Type: application/json
 
 **동작 방식**:
 1. 클라이언트가 고유 키 생성 (V4 UUID 권장)
-2. 서버가 첫 요청의 결과를 저장 — 도메인 outcome은 응용 계층(트랜잭션)이 저장하고, HTTP status·응답 표현은 presentation이 소유한다(application·domain은 status를 만들지 않는다; §13.3·P1a)
+2. 서버가 첫 요청의 결과를 저장 — 도메인 outcome은 응용 계층(트랜잭션)이 저장하고, HTTP status·응답 표현은 presentation이 소유한다(application·domain은 status를 만들지 않는다; §13.3)
 3. 동일 키의 후속 요청은 저장된 결과를 반환
 4. 키는 24시간 후 만료 (일반적 정책)
 5. POST에만 적용 — GET, PUT, DELETE는 이미 멱등
@@ -569,7 +569,7 @@ Replay는 현재 자원 상태를 다시 조회해 새 응답을 만드는 것�
 
 ### 13.4 실전 원칙
 
-- 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수
+- 결제, 주문 생성 등 **중복이 치명적인 POST**에 필수(dddjango 파이프라인: 채택은 G0/G1 사용자 결정이다 — 미요청이면 기본 미적용·설계가 G1 에서 제안만 한다)
 - 멱등성 키를 내구성 있는 저장소(DB, Redis)에 보관
 - 동일 키의 동시 요청에 대한 레이스 컨디션 처리 필요
 - 동일 key와 다른 request content(fingerprint 불일치)는 충돌로 처리한다 — status(`422`/`409` 등)와 선택한 에러 프로필을 계약에서 고른다(§13.3)

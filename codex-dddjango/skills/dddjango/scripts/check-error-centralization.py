@@ -2651,7 +2651,7 @@ def _analyze_common(
         analysis.append(
             "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
             f"{parsed.relative_path}:{statement.lineno} "
-            "common ErrorOut의 project/relative import는 target-pin runtime proof 필요"
+            "common FrameworkErrorSchema의 project/relative import는 target-pin runtime proof 필요"
         )
     error_outs = [
         node for node in parsed.tree.body if isinstance(node, ast.ClassDef) and node.name == "FrameworkErrorSchema"
@@ -3039,7 +3039,7 @@ def _analyze_bc_module(
         analysis.append(
             "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
             f"{parsed.relative_path}:{statement.lineno} "
-            "BC ErrorOut의 추가 project/relative import는 target-pin runtime proof 필요"
+            "BC ErrorSchema의 추가 project/relative import는 target-pin runtime proof 필요"
         )
     prefix = _snake_to_pascal(bc)
     enum_name = f"{prefix}ErrorCode"
@@ -4500,7 +4500,7 @@ def main(argv: list[str]) -> int:
             for finding in findings:
                 print(finding.render())
             print(
-                "  근거: common ErrorOut는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
+                "  근거: common FrameworkErrorSchema는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
                 "canonical ErrorCode/FrameworkErrorSchema hierarchy와 project-wide unique wire code를 소유한다."
             )
             return 2

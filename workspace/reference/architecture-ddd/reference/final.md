@@ -374,7 +374,7 @@ class ERPAnticorruptionLayer:
 
 ACL은 경계 근처에 둔다. 여러 도메인 객체 내부에 번역 로직을 산발적으로 넣지 않는다. 데이터 형태뿐 아니라 status, 단위, 식별자, lifecycle 의미를 번역한다. 공개 API의 published language와 versioning이 관련되면 `architecture-api`로 넘긴다.
 
-**BC 간 enum·상수 공유 경계.** 상수·Enum은 기본적으로 그것을 소유한 바운디드 컨텍스트 내부 자산이다 — 다른 BC가 내부 Enum을 직접 import하지 않는다(유비쿼터스 언어는 BC 경계 안에서만 보편 §2.3; 같은 철자라도 컨텍스트마다 다른 개념). BC 간 연결은 published service 계약 타입 또는 wire value로 하고, 같은 wire 값을 BC마다 각자 선언하는 것은 지식의 중복이 아니라 **published language 수용**이다 — 상대 모델의 의미가 어긋나면 그때 ACL로 번역한다. 공용 승격은 **공유 커널 결정**이다: 같은 철자를 넘어 같은 지식임이 확인되고, 결정 가능한 대리 기준으로 **두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만** — 공유 범위 최소화 필수(위 표). 승격된 enum은 `common/enum/`에 두며, 공유 커널은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다(배치·의존 예외는 `discipline-houserules`). 발행 이벤트 봉투의 discriminator enum(§3.7 birth-enum)도 같은 원리다 — 발행 BC 내부 자산이고, 소비 BC는 wire 값을 각자 수용하며 발행 enum을 import하지 않는다.
+**BC 간 enum·상수 공유 경계.** 상수·Enum은 기본적으로 그것을 소유한 바운디드 컨텍스트 내부 자산이다 — 다른 BC가 내부 Enum을 직접 import하지 않는다(유비쿼터스 언어는 BC 경계 안에서만 보편 §2.3; 같은 철자라도 컨텍스트마다 다른 개념). BC 간 연결은 OHS(`open_host_service/`) 계약 타입 또는 wire value로 하고, 같은 wire 값을 BC마다 각자 선언하는 것은 지식의 중복이 아니라 **published language 수용**이다 — 상대 모델의 의미가 어긋나면 그때 ACL로 번역한다. 공용 승격은 **공유 커널 결정**이다: 같은 철자를 넘어 같은 지식임이 확인되고, 결정 가능한 대리 기준으로 **두 BC가 같은 변경 사유로 함께 수정된다는 근거가 명세에 있을 때만** — 공유 범위 최소화 필수(위 표). 승격된 enum 의 배치는 `discipline-houserules` 표준 트리가 정하며, 공유 커널은 도메인의 일부로 취급되어 domain_layer가 의존할 수 있는 유일한 외부다(배치·의존 예외는 `discipline-houserules`). 발행 이벤트 봉투의 discriminator enum(§3.7 birth-enum)도 같은 원리다 — 발행 BC 내부 자산이고, 소비 BC는 wire 값을 각자 수용하며 발행 enum을 import하지 않는다.
 
 ### 2.6 증류 (Distillation)
 
@@ -649,7 +649,7 @@ class OrderRich:
 
 **상태·종류 값 집합의 표기와 계층 소유 — 단일 출처는 도메인 enum이다.** 생명주기·상태 전이·terminal 여부를 갖는 도메인 상태값과 종류 코드(type code)는 낱개 문자열 상수가 아니라 domain_layer의 `StrEnum`(또는 순수 `Enum`) 하나로 선언하고, ORM `choices`/`CheckConstraint`·presentation Schema는 거기서 파생한다 — import 방향은 infra/presentation→domain만 허용한다(`models.TextChoices` 자체 선언은 도메인 판정에 쓰이지 않는 순수 인프라 필드 한정; ORM `default=` 등 직렬화 경계는 `.value` 평탄화 — `implementation-django` §2.5). 소비는 심볼로만, 비교는 `==`로 한다 — 원시 리터럴 비교는 오타가 조용한 False로 잠복하고, `is`는 str로 흐르는 값에서 수화 누락 시 같은 실패를 오타 없이 만든다. 단 심볼 비교 자체가 목적지가 아니다: 도메인 어휘로 진술되는 복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티(§3.3의 `OrderStatus.is_shippable`)이고, 심볼 비교는 그 술어 내부·리포지토리 필터·ACL 정규화 같은 잔여 위치에 남는다(승격 판정·허용 목록은 `discipline-cleancode` §2.14). 값에 검증·연산·불변식이 붙으면(집합의 폐쇄성과 무관하게) enum이 아니라 값 객체 승격 대상이다(§3.1의 `CountryCode`·`PhoneNumber`가 그 예).
 
-**판정을 소유하면 그 코드는 도메인 컨텍스트가 되어 표준 구조로 이주한다 — 소유는 구조까지 정한다.** 스코프가 기존 평면 코드(판정 없는 Django 모델 등)에 새 판정·불변식을 얹게 되면, 그 코드는 판정을 소유하는 도메인 컨텍스트가 된 것이므로 `domain_layer`의 애그리거트로 존재해야 한다 — 평면 모델에 판정 메서드를 직접 얹지 않는다(ORM≠도메인, 빈혈 회귀). 이주 기준은 *"레거시냐"가 아니라 "판정·불변식을 소유하느냐"*다: (1) 판정·불변식을 소유하면 도메인 컨텍스트 → 표준 구조로 이주한다. (2) 판정을 다른 컨텍스트가 소유하고 이 코드는 단순 상류 데이터 소스(필드·DB 제약만, 판정 없음)면 **도메인 판정 *실내용*(애그리거트 루트·도메인서비스의 판정 `.py` 코드)만 비운다** — 빈혈 회귀 방지로 평면 모델에 판정 메서드를 얹지 않는다. **표준 트리 *골격*은 데이터소스도 예외 없이 빈 패키지(`__init__.py`)로 실현한다 — `discipline-houserules` §0(위치·4계층·개념 1차·종류 2차) 불변식에 *깊이 면제는 없다*(이전의 '4계층/애그리거트 전개 면제'는 2026-06-08 폐지; 면제는 판정 실내용에 한정).** 데이터소스 BC: 위치 `application/<bounded_context>/`; `driven_layer/django_<bounded_context>/`에 ORM 실체; `domain_layer/<aggregate>/`에 *빈* 애그리거트 골격(종류 폴더 전부) — **애그리거트 1차 폴더명은 ORM 모델명에서 도출**(`ProductModel`→`domain_layer/product/`); 유스케이스(application feature)를 다른 BC가 소유해 이 BC엔 feature가 없으면 `application_layer`는 빈 계층 폴더로 둔다(§0-3 개념 1차는 *개념 식별 시*). `driven_layer`의 `repository`/`acl`/`adapter`·`driving_layer`의 `api`/`schema` 의미군은 빈 패키지로 존속한다. `test` 의미군은 `discipline-tdd` 입장 심사에서 실제 테스트가 승인된 경우에만 패키지와 레이아웃을 만든다. 루트 평면 `<app>/`은 `discipline-houserules` §0-1 위반이다. 이 골격 실현은 *이번 작업이 touched한* 그 코드에 한정하며, 무관·미관여 기존 앱은 §1.1로 존중한다. (3) 컨텍스트 간 접근은 ACL 또는 open_host_service(OHS)로만 한다 — 다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않는다(패턴 §2.5, 배치 `discipline-houserules` `references/final.md` §2 컨텍스트 간 통신). 이 이주는 *판정이 새로 얹히는 그 코드*에 한정한다 — 무관·미관여 기존 코드를 표준으로 일괄 강제하지 않는다(`discipline-houserules` §1.1 — 단 기존 배치가 몇 곳에 일관돼 보여도 그것은 «확립된 규약»이 아니라 아직 안 갚은 빚이고, 트리 결정의 입력이 아니다 — 2026-08-12).
+**판정을 소유하면 그 코드는 도메인 컨텍스트가 되어 표준 구조로 이주한다 — 소유는 구조까지 정한다.** 스코프가 기존 평면 코드(판정 없는 Django 모델 등)에 새 판정·불변식을 얹게 되면, 그 코드는 판정을 소유하는 도메인 컨텍스트가 된 것이므로 `domain_layer`의 애그리거트로 존재해야 한다 — 평면 모델에 판정 메서드를 직접 얹지 않는다(ORM≠도메인, 빈혈 회귀). 이주 기준은 *"레거시냐"가 아니라 "판정·불변식을 소유하느냐"*다: (1) 판정·불변식을 소유하면 도메인 컨텍스트 → 표준 구조로 이주한다. (2) 판정을 다른 컨텍스트가 소유하고 이 코드는 단순 상류 데이터 소스(필드·DB 제약만, 판정 없음)면 **도메인 판정 *실내용*(애그리거트 루트·도메인서비스의 판정 `.py` 코드)만 비운다** — 빈혈 회귀 방지로 평면 모델에 판정 메서드를 얹지 않는다. **표준 트리 *골격*은 데이터소스도 예외 없이 빈 패키지(`__init__.py`)로 실현한다 — `discipline-houserules` §0 제1원칙(#486~#492) 불변식에 *깊이 면제는 없다*(이전의 '4계층/애그리거트 전개 면제'는 2026-06-08 폐지; 면제는 판정 실내용에 한정).** 데이터소스 BC: 위치 `application/<bounded_context>/`; `driven_layer/django_<bounded_context>/`에 ORM 실체; `domain_layer/<aggregate>/`에 *빈* 애그리거트 골격(종류 폴더 전부) — **애그리거트 1차 폴더명은 ORM 모델명에서 도출**(`ProductModel`→`domain_layer/product/`); 유스케이스(application feature)를 다른 BC가 소유해 이 BC엔 feature가 없으면 `application_layer`는 빈 계층 폴더로 둔다(#489 — 자리표시자 칸은 개념이 실제로 생길 때). 고정·재등장 칸 전부(`discipline-houserules` §1)가 빈 패키지로 존속한다. `test` 의미군은 `discipline-tdd` 입장 심사에서 실제 테스트가 승인된 경우에만 패키지와 레이아웃을 만든다. 루트 평면 `<app>/`은 `discipline-houserules` #486·#490 위반이다. 이 골격 실현은 *이번 작업이 touched한* 그 코드에 한정하며, 무관·미관여 기존 앱은 §4(brownfield — 기존 배치는 빚이지 규약이 아니다)로 존중한다. (3) 컨텍스트 간 접근은 ACL 또는 open_host_service(OHS)로만 한다 — 다른 컨텍스트의 `domain_layer`/`driven_layer`를 직접 import하지 않는다(패턴 §2.5, 배치 `discipline-houserules` `references/final.md` §1(트리 22~32행 OHS·§2 입구)). 이 이주는 *판정이 새로 얹히는 그 코드*에 한정한다 — 무관·미관여 기존 코드를 표준으로 일괄 강제하지 않는다(`discipline-houserules` §4(brownfield — 기존 배치는 빚이지 규약이 아니다) — 단 기존 배치가 몇 곳에 일관돼 보여도 그것은 «확립된 규약»이 아니라 아직 안 갚은 빚이고, 트리 결정의 입력이 아니다 — 2026-08-12).
 
 ### 3.3 애그리거트 (Aggregate)
 
@@ -677,7 +677,7 @@ class OrderRich:
 
 > **[의사결정 #4] External 채택**: 서로 다른 애그리거트 간의 일관성은 도메인 이벤트를 통한 결과적 일관성(eventual consistency)으로 달성한다.
 
-> 실무 참고: 동일 데이터베이스 내 단순 케이스에서는 같은 트랜잭션에서 복수 애그리거트를 수정하는 것도 용인할 수 있다. 단, 이는 원칙의 예외이며 시스템이 분산되면 즉시 결과적 일관성으로 전환해야 한다.
+> 실무 참고: 동일 데이터베이스 내 단순 케이스에서는 같은 트랜잭션에서 복수 애그리거트를 수정하는 것도 용인할 수 있다 — 단 dddjango 생성 코드에서는 「한 트랜잭션 = 애그리거트 하나」(D50·#546)가 정본이라 이 용인은 배경 이론이다. 단, 이는 원칙의 예외이며 시스템이 분산되면 즉시 결과적 일관성으로 전환해야 한다.
 >
 > ⚠ 이 '복수 애그리거트 수정 용인'은 **런타임 트랜잭션 원자성**에 관한 것이지 **영속성 FK 결합을 허가하지 않는다**(규칙3의 ORM 확장과 직교한다). FK 없이도 같은 atomic 트랜잭션이 성립한다 — 응용 서비스/ACL이 같은 connection에서 두 애그리거트를 원자적으로 쓰면 된다. "한 트랜잭션에 묶인다"를 BC 경계 ORM FK의 근거로 끌어쓰지 마라.
 
@@ -1027,7 +1027,7 @@ class OrderBad:
 @dataclass
 class PlaceOrderCommand:
     """응용 서비스 입력 DTO"""
-    # ※ 이 메시지-어휘(…Command=입력 DTO)는 CQRS 이론 *교육*이다. 이 플러그인 *생성 코드*는 입력을 …Request로, 쓰기 *실행*을 …Command 인터랙터로 명명한다(houserules 권위). 두 어휘를 섞지 말 것.
+    # ※ 이 예시의 어휘(…Command=입력 자료)는 현행 표준과 «일치»한다: 입력 자료는 `<use_case>_command.py` 의 `<UseCase>Command`, 실행체는 `<use_case>_use_case.py` 의 `<UseCase>UseCase.execute`(#635)다. `…Request/…Response` 는 OHS contract 전용이다(#484) — 두 어휘를 섞지 말 것.
     orderer_id: str
     items: List[dict]
     shipping_address: dict
@@ -1114,7 +1114,7 @@ class OrderApplicationService:
 
 **이벤트 수집 -> 디스패치 패턴:**
 1. 애그리거트 안에 `_domain_events` 리스트를 두고 이벤트를 수집한다
-2. Unit of Work가 커밋 **직전**(동일 트랜잭션 내 부수 효과) 또는 **직후**(외부 통합)에 디스패치한다
+2. Unit of Work가 커밋 **직전**(동일 트랜잭션 내 부수 효과) 또는 **직후**(외부 통합)에 디스패치한다(dddjango 생성 코드는 `uow.after_commit` 한 경로다 — #539~#541 · 커밋 «직전» 디스패치는 배경 이론)
 3. 디스패치 타이밍이 명시되지 않으면 이벤트 유실이나 트랜잭션 불일치가 발생한다
 
 ```python
@@ -1189,6 +1189,7 @@ class UnitOfWork:
 
     def _dispatch_events(self, aggregate: AggregateRoot) -> None:
         """커밋 직전에 수집된 이벤트를 디스패치"""
+        # dddjango 생성 코드는 uow.after_commit 한 경로다(#539~#541) — 커밋 «직전» 디스패치는 배경 이론
         for event in aggregate.domain_events:
             self._event_bus.publish(event)
         aggregate.clear_events()
@@ -1201,7 +1202,7 @@ class UnitOfWork:
 발행 메시지의 스키마, 디스패처 구현, 전달 보장(at-least-once)·재시도·dead-letter는 **전달 메커니즘**이므로 이 문서가 다루지 않는다(아래 handoff). 이 문서는 "이벤트를 같은 트랜잭션에 적재한다"는 결정과 채택 여부만 소유한다.
 
 **Outbox를 선택하는 조건:**
-- DB 커밋 이후 외부 메시지 전달이 유실되면 안 된다.
+- DB 커밋 이후 외부 메시지 전달이 유실되면 안 된다(dddjango: 이 채택은 듣는 쪽이 «별도 배포 단위»일 때만이다 — #529 · external 에 내용이 오면 outbox 는 필수 딸림 #603 · 같은 저장소 소비자의 유실 불허는 브로커가 아니라 받는 쪽 `cron_job/`→주인 OHS 폴링이다 #626).
 - at-least-once 전달과 consumer 멱등성을 설계할 수 있다.
 - retry, dead-letter, dispatch ownership이 필요하다.
 
@@ -1680,9 +1681,9 @@ my_project/
 - `infrastructure/` -- `domain/`과 `application/`에 의존한다 (인터페이스 구현)
 - `interface/` -- `application/`에 의존한다 (유스케이스 호출)
 
-> Django 등 프레임워크 제약 시 [A]의 간소화된 구조(`views/`, `services/`, `domain/`, `infrastructure/`)를 차선으로 허용한다.
+> Django 등 프레임워크 제약 시 [A]의 간소화된 구조(`views/`, `services/`, `domain/`, `infrastructure/`)를 차선으로 허용한다 — 단 이것은 [A] 원전의 이론이다. dddjango *생성 코드*에는 적용하지 않는다(배치 권위는 다음 단서의 houserules).
 
-> dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `reference/final.md`) — §6.1의 4계층을 `application/<bounded_context>/{domain_layer, application_layer, driven_layer, driving_layer}/`로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §6.1은 그 표준이 파생된 이론적 배경이다.
+> dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `references/final.md`) — §6.1의 4계층을 `application/<bounded_context>/{domain_layer, application_layer, driven_layer, driving_layer}/`로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §6.1은 그 표준이 파생된 이론적 배경이다.
 
 ### 6.2 Data Mapper 패턴
 

@@ -2,8 +2,8 @@
 
 
 > Django template, TemplateView/Generic CBV, web form, static asset, HTMX fragment, CSRF-aware AJAX, render acceptance check를 위한 전용 source reference다.
-> Django 모델, ORM, 마이그레이션, 트랜잭션, 서비스/셀렉터 일반 구현은 `workspace/reference/implementation-django/reference/final.md`가 소유한다.
-> REST API 계약과 Django Ninja 구현은 각각 `workspace/reference/architecture-api/reference/final.md`, `workspace/reference/implementation-django-ninja/reference/final.md` 기준을 따른다.
+> Django 모델, ORM, 마이그레이션, 트랜잭션, 서비스/셀렉터 일반 구현은 `implementation-django` 스킬이 소유한다.
+> REST API 계약과 Django Ninja 구현은 각각 `architecture-api`·`implementation-django-ninja` 스킬 기준을 따른다.
 >
 > **출처 약어:**
 > - **[DDoc]** Django 공식 문서 (https://docs.djangoproject.com/)
@@ -13,7 +13,7 @@
 > - **[HS]** HackSoft Django Styleguide
 > - **[OWASP]** Django Security Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Django_Security_Cheat_Sheet.html)
 > - **[HTMX]** htmx 공식 문서 (https://htmx.org/docs/)
-> - **[dddjango-django]** `workspace/reference/implementation-django/reference/final.md`
+> - **[dddjango-django]** `implementation-django` 스킬 `references/final.md`
 
 ---
 
@@ -287,11 +287,11 @@ Service/usecase가 던진 예외는 **출처로 분류**해 처리 자리를 가
 - **사용자 에러(도메인 예외)는 view-local 재렌더**: 비즈니스 규칙 위반(재고 부족·중복 등 service가 raise한 우리 타입)은 그 view에서 narrow `except <DomainError>`로 잡아 폼을 재렌더한다 — 입력 값을 보존하고 `messages.error`로 사유를 싣는다(status 200, POST 성공은 PRG redirect). `except Exception` 같은 광범위 catch는 금지다 — 인프라 예외가 사용자 메시지로 둔갑해 중앙 경로를 우회한다(`discipline-cleancode` 구체적 예외 처리).
 - **사용자 에러를 `handler500`로 보내지 않는다**: `django.views.defaults.server_error(request, template_name="500.html")`는 **빈 Context**로 렌더하므로(시그니처가 `request`만 받는다) 도메인 메시지·폼 입력·필드 오류를 실을 수 없다. 사용자 에러를 `raise`해 500으로 보내면 "재고가 부족합니다" 같은 사유가 사용자에게 영영 안 보인다.
 - **시스템 에러(미식별·영구장애)는 중앙 `handler500`**: view가 잡지 않고 전파하면 Django가 500으로 변환해 `handler500`(프로젝트 URLconf에 등록)이 `500.html`을 렌더한다. custom handler view는 **`request` 인자만** 받고 `HttpResponseServerError`를 반환한다 — `handler404`와 달리 `exception` 인자를 받지 않으므로 `def server_error(request, exception)`로 쓰면 호출 시 TypeError로 500 핸들러 자체가 깨진다. `500.html`은 프로젝트에 하나만 둔다(view마다 에러 페이지를 만들지 않는다).
-- **transient 인프라 예외는 중앙에서 retryable**: DB 락·deadlock·serialization 같은 *재시도로 해소되는* 경합은 `process_exception(request, exception)` 미들웨어가 retryable(503+`Retry-After`)로 매핑한다 — `handler500`은 500 고정이라 503·헤더를 못 실으므로 미들웨어가 유일한 중앙 자리다. 현재 이 서버렌더 경계가 유일한 소비자이므로, retryable 판정은 Django HTML 미들웨어의 private predicate에 둔다. predicate는 원인 체인을 순환 없이 제한적으로 훑어 승인된 락·deadlock·serialization 신호와 PostgreSQL SQLSTATE만 인식하고, 원본 예외 문자열·SQL·secret을 응답이나 로그 메시지로 되돌려 주지 않는다. 명시 `__cause__`가 있으면 그것을 우선하고, 없을 때만 `__suppress_context__`가 거짓인 `__context__`를 따라간다 — `raise ... from None`이 의도적으로 숨긴 원인은 retryable 판정에 되살리지 않는다. 영구장애(disk I/O·`no such table`·malformed)는 `None`을 반환해 `handler500`로 전파한다 — `OperationalError` 클래스 전체를 분기 없이 통째 503으로 올리면 영구장애를 retryable로 오분류해 재시도 루프가 영원히 못 고치는 장애를 두드린다. 미들웨어는 503 응답을 *반환*만 하고 도메인 폼을 `render`하지 않는다(폼 재렌더는 view-local 몫). 같은 분류 지식을 실제로 공유하는 Django 경계가 둘 이상 생긴 경우에만 `common/django/` 승격을 검토하며, 그 전에는 공통 추상화를 만들지 않는다.
+- **transient 인프라 예외는 중앙에서 retryable**: DB 락·deadlock·serialization 같은 *재시도로 해소되는* 경합은 `process_exception(request, exception)` 미들웨어가 retryable(503+`Retry-After`)로 매핑한다 — `handler500`은 500 고정이라 503·헤더를 못 실으므로 미들웨어가 유일한 중앙 자리다. 현재 이 서버렌더 경계가 유일한 소비자이므로, retryable 판정은 Django HTML 미들웨어의 private predicate에 둔다. predicate는 원인 체인을 순환 없이 제한적으로 훑어 승인된 락·deadlock·serialization 신호와 PostgreSQL SQLSTATE만 인식하고, 원본 예외 문자열·SQL·secret을 응답이나 로그 메시지로 되돌려 주지 않는다. 명시 `__cause__`가 있으면 그것을 우선하고, 없을 때만 `__suppress_context__`가 거짓인 `__context__`를 따라간다 — `raise ... from None`이 의도적으로 숨긴 원인은 retryable 판정에 되살리지 않는다. 영구장애(disk I/O·`no such table`·malformed)는 `None`을 반환해 `handler500`로 전파한다 — `OperationalError` 클래스 전체를 분기 없이 통째 503으로 올리면 영구장애를 retryable로 오분류해 재시도 루프가 영원히 못 고치는 장애를 두드린다. 미들웨어는 503 응답을 *반환*만 하고 도메인 폼을 `render`하지 않는다(폼 재렌더는 view-local 몫). 같은 분류 지식을 실제로 공유하는 Django 경계가 둘 이상 생긴 경우에만 `framework/django/` 승격을 검토하며, 그 전에는 공통 추상화를 만들지 않는다.
 - **계산된 transient는 도메인 마커 타입으로**: ACL·앱이 낙관락·CAS 재시도를 스스로 소진 판정한 경우(드라이버 예외 부재)는 인프라 예외를 합성하지 말고 협력 포트가 선언한 도메인 transient-마커(`StockContention` 등 retryable 의미)로 raise하며, 미들웨어가 *타입*으로 retryable 매핑한다(`discipline-houserules` §2).
 - **응답 표현은 HTML 경계가 소유한다**: retryable *판정*과 *응답 표현*을 JSON API 경로와 공유하지 않는다. 서버렌더 transient는 이 절이 소유하고 HTML 503으로 내며, JSON 오류 schema·helper·응답 객체를 HTML 경로에 import하지 않는다.
 - **HTMX 경로는 fragment로 응답한다**: HTMX 요청(`HX-Request` 헤더)에서 도메인 에러는 전체 `500.html`이 아니라 **에러 fragment를 swap**한다 — 전체 문서를 `hx-target` 자리에 주입하면 UI가 깨진다. view는 `request.headers.get("HX-Request")`로 분기해 에러 fragment(200/422)를 내고, 시스템 에러·503도 HTMX 맥락이면 명세된 에러 표면(`HX-Reswap` 또는 에러 fragment)으로 처리한다.
-- **반복되는 처리 형태는 표준화**: 같은 `try → except <DomainError> → render(form, messages.error)`가 view마다 반복되면 단일 패턴(FBV) 또는 CBV `form_invalid()` 오버라이드로 묶는다. 도메인 예외가 많으면 공통 도메인 베이스를 한 except로 잡고 메시지 매핑 테이블을 쓴다(예외 종류마다 except 난립 금지 — ninja §6.2 대칭).
+- **반복되는 처리 형태는 표준화**: 같은 `try → except <DomainError> → render(form, messages.error)`가 view마다 반복되면 단일 패턴(FBV) 또는 CBV `form_invalid()` 오버라이드로 묶는다. 도메인 예외가 많으면 공통 도메인 베이스를 한 except로 잡고 메시지 매핑 테이블을 쓴다(예외 종류마다 except 난립 금지는 HTML 경계 한정 — ninja §6.2 는 반대로 concrete catch·직접 mapping 반복을 유지한다).
 
 ```python
 # myproject/errors.py — 시스템 에러 중앙 처리 (프로젝트 urls.py: handler500 = "myproject.errors.server_error")
@@ -307,7 +307,7 @@ def server_error(request):                       # request만 — handler404와 
 from django.db import OperationalError
 from django.shortcuts import render
 
-from application.order.domain_layer.order.exception import StockContention  # 도메인 transient 마커
+from application.order.domain_layer.order.exception.stock_contention import StockContention  # 도메인 transient 마커
 
 
 class TransientErrorMiddleware:
@@ -401,8 +401,9 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
-from application.order.application_layer.place_order.command.place_order_command import place_order
-from application.order.domain_layer.order.exception import InsufficientStock
+from application.order.application_layer.order.place_order.place_order_command import PlaceOrderCommand
+from application.order.application_layer.order.place_order.place_order_use_case import PlaceOrderUseCase
+from application.order.domain_layer.order.exception.insufficient_stock import InsufficientStock
 
 
 @require_http_methods(["GET", "POST"])
@@ -410,7 +411,8 @@ def order_create(request):
     form = OrderForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
-            order = place_order(**form.cleaned_data)     # service bare 호출 — 인프라 예외는 전파
+            command = PlaceOrderCommand(**form.cleaned_data)
+            order = PlaceOrderUseCase().execute(command)     # use case bare 호출 — 인프라 예외는 전파
         except InsufficientStock as exc:                 # narrow — 도메인 예외만
             messages.error(request, str(exc))
             if request.headers.get("HX-Request"):

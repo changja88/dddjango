@@ -179,7 +179,7 @@ class Person(models.Model):
 ### 2.5 선택지(Choices) 정의 [DCS]
 
 ```python
-# 순수 인프라 필드(도메인 판정 없음) 또는 기존 관례 프로젝트: TextChoices 자체 선언
+# 순수 인프라 필드(도메인 판정 없음): TextChoices 자체 선언
 class Order(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
@@ -286,7 +286,7 @@ repository_root/
 
 > 테스트 디렉터리 조직(`unit`/`integration`/`e2e` 의미군 분리, 디렉터리별 conftest)은 `implementation-test` §4.2가 소유한다. 위 `tests/`는 앱별 배치 시의 형태 예시이며, 테스트 파일을 한 디렉터리에 평면으로 나열하지 않는다.
 
-> dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `reference/final.md`) — §3.1의 설정 분할·앱 단위 조직을 토대로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §3.1은 그 표준의 배경이다.
+> dddjango가 *생성하는 코드*의 구체 표준 파일트리는 `discipline-houserules` 스킬이 소유한다(표준 트리는 그 `references/final.md`) — §3.1의 설정 분할·앱 단위 조직을 토대로 구체화한 표준이며, 생성 코드 배치 권위는 그 문서가 갖는다. 여기 §3.1은 그 표준의 배경이다.
 
 ### 3.2 앱 분리 기준 [TSD]
 
@@ -363,6 +363,8 @@ def get_default_view():
 ## 4. 모델 설계 패턴
 
 ### 4.1 Fat Model, Thin View 원칙 [TSD]
+
+> 이 절은 평면 Django(기존 관례 유지보수) 맥락의 원칙이다 — dddjango 표준 4계층에서는 판정·불변식은 `domain_layer` 애그리거트 소유이고 평면 ORM 모델에 판정 메서드를 얹으면 blocker 다(`architecture-ddd` §3.2).
 
 비즈니스 로직은 뷰가 아닌 모델(또는 서비스 레이어)에 둔다. Two Scoops of Django는 이를 **"Fat Models, Utility Modules, Thin Views, Stupid Templates"**로 정리한다.
 
@@ -855,6 +857,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
 ### 9.1 시그널을 사용해야 하는 경우 [DDoc]
 
+> BC «경계 간» 동작 트리거는 signal 이 아니라 `published_event/`·`event_subscription/` 소유다(#89·#90) — 아래 예는 같은 BC 내부·서드파티 모델 수신 한정.
+
 ```python
 # 좋은 예 1: 서드파티 라이브러리 모델에 후크 (코드를 직접 수정 불가)
 from django.contrib.auth.models import User
@@ -885,7 +889,7 @@ def send_order_email(sender, instance, created, **kwargs):
     if created:
         send_confirmation_email(instance)
 
-# 좋은 예: save() 오버라이드 또는 서비스 함수에서 직접 호출
+# 좋은 예: save() 오버라이드 또는 서비스 함수에서 직접 호출 (외부 부수효과는 커밋 전 실행 금지 — §16.4 on_commit 정렬이 전제다)
 class Order(models.Model):
     def save(self, *args, **kwargs):
         is_new = self._state.adding
@@ -1290,6 +1294,8 @@ class EditArticleView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
 | `TransactionTestCase` | 실제 트랜잭션 커밋, 느림 | `select_for_update()`, DB 트리거 테스트 |
 | `LiveServerTestCase` | 실제 서버 실행 | Selenium 통합 테스트 |
 
+> 이 표는 Django 원생 지식(기존 스위트 읽기용)이다 — 이 파이프라인의 «신규 add» 테스트는 무조건 pytest 관용구다(등가: `TestCase`→`@pytest.mark.django_db` · `TransactionTestCase`→`@pytest.mark.django_db(transaction=True)` — `implementation-test` §16).
+
 ```python
 from django.test import TestCase
 
@@ -1566,6 +1572,7 @@ def order_confirm(*, order: Order) -> Order:
         order.confirm()
         order.save(update_fields=["status", "confirmed_at"])
 
+        # 표준 트리 응용 계층에서는 uow.after_commit(...) 소유다(#200) — on_commit 직접 호출은 평면 Django 형태
         transaction.on_commit(lambda: notify_warehouse(order_id=order.id))
 
     return order
@@ -1590,7 +1597,7 @@ Risky write를 구현하거나 리뷰할 때는 다음 항목을 명시한다.
 | isolation/retry | serialization failure, deadlock, duplicate key 같은 실패를 retry할지 forward-fix할지 |
 | verification candidates | transaction/constraint/race/rollback 등 보호할 위험·failure 후보와 근거. `TransactionTestCase`, concurrency/integration test, query-count check는 입장 결정 뒤 선택할 mechanics이고 migration SQL review는 별도 비테스트 검증 |
 
-`verification candidates` 행은 테스트 의무가 아니며 결정은 `discipline-tdd`가 소유한다. DB unique/race/rollback/CAS가 다른 boundary와 독립된 production failure일 때만 coder가 `add`할 수 있고, HTTP 등이 같은 제품 failure를 이미 잡으며 독자 DB mechanism이 없으면 `reuse`한다. `add`된 테스트의 일반 DB-backed behavior에는 `TestCase`를 쓰고, commit hook·lock·DB trigger·transaction isolation을 실제로 보호해야 할 때만 `TransactionTestCase`나 실제 DB 기반 integration test를 쓴다. class 선택이나 transaction framework 자체는 새 테스트의 근거가 아니다.
+`verification candidates` 행은 테스트 의무가 아니며 결정은 `discipline-tdd`가 소유한다. DB unique/race/rollback/CAS가 다른 boundary와 독립된 production failure일 때만 coder가 `add`할 수 있고, HTTP 등이 같은 제품 failure를 이미 잡으며 독자 DB mechanism이 없으면 `reuse`한다. `add`된 테스트의 일반 DB-backed behavior에는 plain `@pytest.mark.django_db`를 쓰고, commit hook·lock·DB trigger·transaction isolation을 실제로 보호해야 할 때만 `@pytest.mark.django_db(transaction=True)`나 실제 DB 기반 integration test를 쓴다(기존 `TestCase` 스위트는 재작성하지 않는다 — 이 등가는 신규 `add` 에만). class 선택이나 transaction framework 자체는 새 테스트의 근거가 아니다.
 
 ### 16.5 트랜잭셔널 Outbox 구현 [DDoc]
 
@@ -1627,7 +1634,9 @@ def confirm_order(*, order: Order) -> Order:
     return order
 ```
 
-디스패처는 management command(또는 Celery beat/cron)로 주기 실행한다. 여러 워커가 같은 행을 집지 않도록 `select_for_update(skip_locked=True)`로 미발행 행을 잠그고, 발행에 성공하면 `published_at`을 찍는다.
+디스패처는 주기 실행한다 — dddjango 표준 트리에서 그 자리는 `driving_layer/cron_job/`(`<job>_cron_job.py`)이고, management command 는 평면 Django 배경 형태다(#58 — `application/**/management/commands/` 금지). 여러 워커가 같은 행을 집지 않도록 `select_for_update(skip_locked=True)`로 미발행 행을 잠그고, 발행에 성공하면 `published_at`을 찍는다.
+
+> 아래 예시는 Django 원생 management command 형식(배경)이다 — 표준 트리 코드는 같은 로직을 `cron_job/` 껍데기에서 부른다.
 
 ```python
 # management/commands/dispatch_outbox.py

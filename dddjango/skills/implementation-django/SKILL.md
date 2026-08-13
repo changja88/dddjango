@@ -19,7 +19,7 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 
 ## 핵심 운영 원칙
 
-- 비즈니스 로직은 fat model에 두고 뷰·시리얼라이저는 얇게 (§4.1)
+- 비즈니스 로직은 뷰가 아니라 모델·도메인에 — 평면 Django 맥락은 fat model(§4.1), dddjango 표준 4계층은 `domain_layer` 애그리거트 소유(`architecture-ddd` §3.2)
 - 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)
 - 트랜잭션·일관성 경계는 `transaction.atomic()`, 외부 부수효과는 `transaction.on_commit()` (§16.4)
 - 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)

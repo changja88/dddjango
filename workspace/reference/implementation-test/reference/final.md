@@ -1981,7 +1981,7 @@ def test_calculation():
 ```
 
 **T - Timely (적시에)**
-테스트는 적절한 시점에 작성한다. 다만 **언제·어떤 순서로** 테스트를 작성하는지(test-first, Red-Green 리듬 등 작성 시점의 실천)는 작성법이 아니라 방법론이므로 `workspace/reference/discipline-tdd/reference/final.md`가 다룬다.
+테스트는 적절한 시점에 작성한다. 다만 **언제·어떤 순서로** 테스트를 작성하는지(test-first, Red-Green 리듬 등 작성 시점의 실천)는 작성법이 아니라 방법론이므로 `discipline-tdd` 스킬이 다룬다.
 
 > 출처: Robert C. Martin, "Clean Code" (2008), [FIRST Principles - DZone](https://dzone.com/articles/first-principles-solid-rules-for-tests)
 
@@ -2141,7 +2141,7 @@ def test_order_total(order_with_two_items):
 **Free Ride (무임승차)**
 기존 테스트에 관련 없는 assert를 추가하는 패턴.
 
-관련 없는 assertion을 떼어낼 때도 별도 테스트를 자동 생성하지 않는다. 보호할 제품 계약·독자 failure가 있는지 입장 심사해 `add/update/reuse/reject`를 먼저 정하고, 기존에 입장된 의미의 가독성만 정리한다.
+관련 없는 assertion을 떼어낼 때도 별도 테스트를 자동 생성하지 않는다. 보호할 제품 계약·독자 failure 는 입장 심사 대상으로 소유자(`discipline-tdd` §5.5)에게 보내 decision 을 먼저 받고, 여기서는 기존에 입장된 의미의 가독성만 정리한다.
 
 ```python
 # 나쁜 예: 하나의 테스트에 관련 없는 검증 추가
@@ -2690,7 +2690,7 @@ def test_cas_conflict_once_then_retry_converges():
 
 ## 21. 테스트 디버깅 기법
 
-범용 Python 디버깅(repr, pdb, breakpoint)은 `workspace/reference/implementation-python/reference/final.md`를 참조한다.
+범용 Python 디버깅(repr, pdb, breakpoint)은 `implementation-python` 스킬을 참조한다.
 
 ### 21.1 pytest에서 디버거 진입
 
