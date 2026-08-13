@@ -91,13 +91,18 @@ git add -A && git commit -m "rebuild(<bc>): round N — spec 추출 + BC 삭제"
 
 파이프라인이 스스로 쓴 테스트가 파이프라인의 green 게이트다(옛 테스트를 대주지 않는다).
 
-**요청문 필수 절(2026-08-13 신설 — 라운드 2 레인 B 토끼굴 재발 방지 · 정본 `2026-08-13-codex-rabbit-hole-fixes.md`)**: 이후 라운드의 `request.md` 는 아래 다섯 절을 반드시 포함한다.
+**요청문 필수 절(2026-08-13 신설 · 같은 날 여섯째 절 추가 — 정본 `2026-08-13-codex-rabbit-hole-fixes.md`·`2026-08-13-ab-harvest-fixes.md`)**: 이후 라운드의 `request.md` 는 아래 여섯 절을 반드시 포함한다 — **복사 원본은 `templates/request-template.md`**(빈칸 채움 방식·재작성 금지).
 
 > **Placement(변경 허용 — 닫힌 목록)**: ⑴ `application/<bc>/**` — 이 발주의 대상 BC **하나**를 축자로 적는다(자리표시자 금지·다른 BC 폴더 불포함 명시) ⑵ 배선 파일 **축자 나열**(발주 시 실제 경로로 확정 — 명세·산출물이 배선 파일을 추가 지정할 수 없다) ⑶ `.dddjango/**`(산출물 전용). **«변경» = 생성·수정·이동·삭제·개명 전부**(`git mv` 는 두 경로 모두의 변경). 배선 파일 안 허용 변경은 **이 BC 등록에 필요한 행의 추가뿐**(기존 행 삭제·이동·재정렬·경로 변경 금지). `docs/**` 는 읽기 전용 — `legacy_debt.txt` 가필·사본·자작 빚 파일을 `--legacy-debt-file` 로 쓰는 것은 승인 위조다(빚 목록은 발주가 준 그 경로·그 내용뿐).
 > **앵커 동결**: registry_gate 앵커는 발주가 지정한 `<앵커 해시>` 다 — HEAD 를 재산출하지 말고 이 값을 쓰라. **이 발주 중에 만든 어떤 커밋도 앵커가 될 수 없다.**
 > **완료 기준**: `make test` 판정은 **앵커 기준 신규 red 0** 이다 — 앵커 시점에 이미 red 였던 테스트는 보고 대상이지 수리 대상이 아니고, 타 BC 테스트를 green 으로 만들기 위한 허용 경로 밖 수정은 그 자체가 blocker 다.
 > **자율 위임의 한계**: 자율 조항이 대체하는 것은 게이트의 **승인 입력**뿐이다. 비위임: `STOP_FOR_USER_APPROVAL`·G0/G2 blocker·shape approved-change·빚 목록 밖 신규 debt 수용·허용 경로 밖 변경·`scope.md`/`refactor-scope.md` 사후 개정·G0 빚 ⓐ 자기선택(자율 모드의 G0 빚 답은 **ⓑ(미룬다 — 사유: 클린룸 자율 라운드) 고정**·«미룰 수 없음» 항목=blocker). blocker 를 만나면 그 지점까지 커밋(제목 `rebuild(<bc>): stopped — <사유 한 줄>`)하고 산출물에 기록 후 **종료하라 — 이 정지는 실패가 아니라 이 발주의 유효한 종료 상태다**(「끝까지 진행」은 blocker 를 넘으라는 뜻이 아니다).
 > **수렴 회로**: 같은 게이트의 반송이 2회를 넘거나, 재설계 후 변경 파일 수·신규 귀속 수가 직전보다 늘면(스코프 증가 신호) 반복하지 말고 blocker 로 기록 후 정지하라.
+> **STOP 기록 형식**: `STOP_FOR_USER_APPROVAL` 기록은 닫힌 선택지마다 **대가 한 줄**을 병기하라(대가 없는 STOP 은 형식 불비 — ⑤ 가 유효 종료로 인정하지 않는다). 권고는 선택이다 — 산출물·리뷰 노트 인용으로 저자를 명시할 때만 적고, **권고는 결정이 아니며 자기 승인 근거가 아니다**(산출물·기본값을 권고 방향으로 선반영 금지). 밖에서 보이는 결과가 갈리는 물음은 논증 완성도와 무관하게 STOP 필수다.
+
+**자율 문구 3층 방어(2026-08-13 — 우회 변종 4종 실증 후 신설)**: ⓐ **판정 물음** — 요청문의 어떤 문구든 비위임 목록의 결정 권한·STOP 발화 조건·종단 상태 중 하나를 세션 재량으로 옮기면 금지다. 금지 예시(예시일 뿐 — 판정은 물음이 한다): 「스스로 결정하고 끝까지 진행」·「합리적으로 판단해 계속」·「질문 최소화/STOP 최후 수단」·「보수적으로 메우고 기록만 남겨라」·「종료는 완료 커밋이어야 한다」. ⓑ **충돌 우선** — 요청문의 다른 어떤 문구도 필수 절과 충돌하면 무효다(필수 절이 이긴다 — 이 조항 자체를 요청문에 포함한다). ⓒ **리터럴 게이트** — ④ 기동 전 preflight 에서 request.md 에 「비위임」·「유효한 종료 상태」 존재 + blanket 예시 역-grep 0건을 기계 확인한다. **적용 시점**: 발주 시점 기준 — 기발주 레인은 대장에 구판 명기로 유효(라운드 1→1′·2·codex→codex′ 선례)하고, 기존 재해석 조항(「끝까지 진행」≠blocker 돌파)은 유입된 구판 문구의 방어층으로 존치한다.
+
+**앵커 preflight(2026-08-13 신설)**: 라운드 앵커 커밋에는 `docs/rebuild/<bc>/anchor-preflight.md` 를 포함한다 — 항목별 «실행 명령+결과» 기록(산문 선언 금지 — F2 exact-command 양식). 항목: ⑴ **spec 이 경로를 명기한 외부 의존 전수 ↔ `legacy_debt.txt` 대조표**(라운드 2 실증: 귀속 15건의 근원=빚 파일 과소 수록 — 한정어: spec 이 경로를 명기한 의존에 한한다) ⑵ 요청문 리터럴 게이트(위 ⓒ) ⑶ pycache 정화 ⑷ graphify 클린 재빌드 ⑸ 클린룸 오염원 스캔 ⑹ baseline 실측(`make test` 수·gate 잔존). preflight 파일이 앵커 커밋 diff 에 없으면 라운드 재료 불비 — 대장 앵커 칸에 «preflight ✅» 를 함께 적는다.
 
 **기동 방법(08-12 실측)**: 하네스 운영 세션은 `claude -p` 서브프로세스 기동이 권한
 분류기에 차단된다(스코프 좁힌 allowlist 로도 차단 — 재귀 claude 기동 자체가 대상).
@@ -112,7 +117,7 @@ cd <워크트리> && claude -p "$(cat docs/rebuild/<bc>/request.md)" --permissio
 **레인 복수(2026-08-12 사용자 결정 — 라운드 2부터)**: 한 라운드를 파이프라인 구현체별
 **레인**으로 병렬 평가할 수 있다(라운드 2 = claude·codex 두 레인). 레인마다 **독립 클린룸
 워크트리**(같은 앵커 커밋에서 가지 친 독립 브랜치)를 쓴다 — 앵커 커밋 하나를 공유하므로
-`spec.md`·shape·`request.md` 는 자동으로 동일(공정성). ⑤·⑥ 판정과 대장 기록은 레인별로
+`spec.md`·shape·`request.md` 는 자동으로 동일(공정성 — 요청문 개정으로 레인을 재기동하면 새 앵커·대장 별행이다 · 2·codex′ 선례). ⑤·⑥ 판정과 대장 기록은 레인별로
 따로 한다. codex 레인은 codex 마켓 플러그인(`dddjango@changja88-dddjango`)이 같은 버전인지
 확인 후 기동(사용자):
 
@@ -130,10 +135,12 @@ cd <워크트리-codex> && codex "$(cat docs/rebuild/<bc>/request.md)"
 |---|---|---|
 | **A. API shape** | ②와 같은 덤프→`openapi_shape.py --success-only`→`diff api_shape_pre_success.json <post>` | **성공(2xx) 경로 diff 0** — 오류 경로의 선언·본문은 spec §오류 계약이 정본(⑤C·⑥ 검증 몫). **2026-08-12 D3 개정**: 오류 축을 code-json 표준으로 이주하는 라운드에선 오류 선언이 의도적으로 바뀌므로(FrameworkErrorSchema→BC ErrorSchema) 전체-모양 diff 는 A축 판정이 아니다(라운드 1·1′ 의 전-모양 판은 `api_shape_pre.json` 대비 기록으로 보존) |
 | **B. 전역 테스트** | `cd <워크트리> && make test` | 전체 green(신규 테스트 + 이웃 BC 테스트 — 인바운드 표면 검증) |
-| **C. 플러그인** | `python3 …/workspace/tools/bc_registry_run.py <워크트리> <bc>` + `python3 …/workspace/tools/migration_gate.py <워크트리>` | registry 27종 전부 exit 0 + gate 에서 해당 BC 잔존 0 |
+| **C. 플러그인** | `python3 …/workspace/tools/bc_registry_run.py <워크트리> <bc>` + `python3 …/workspace/tools/migration_gate.py <워크트리>` + `python3 …/dddjango/scripts/registry_gate.py <워크트리> --anchor <레인 앵커> --legacy-debt-file docs/rebuild/<bc>/legacy_debt.txt` | registry 27종 전부 exit 0 + gate 에서 해당 BC 잔존 0 + **registry_gate 귀속 0** — 빚 파일은 **앵커에 담긴 사용자 승인판**으로 판정한다(세션 가필본 불인정 · 2026-08-13 명문 — 라운드 2 레인 A 실증) |
 
 (`bc_registry_run.py` 는 BC 하나만 담은 비-git 그림자 사본에 27종을 돌린다 — 이웃 위반
-섞임·git 상태 의존이 없다. 도구 둘 다 2026-08-12 실측 검증됨.)
+섞임·git 상태 의존이 없다. 로스터 소비 검사기 2종(context-isolation·port-adapter-pairing)은
+이웃 빈 스텁을 얹은 둘째 판에서 돈다 — 2026-08-13 H4′: 단일-BC 그림자의 #365 과탐을
+하네스에서 수정·`bc_registry_smoke.py` 가 과탐 소멸과 진양성 보존 양면을 고정.)
 
 ### ⑥ 정성 평가 둘 — AI 와 사람 (여기서만 옛 것을 연다)
 기계 3축(⑤)이 못 보는 질을 정성으로 평가한다. **둘 다 받아야 라운드가 닫힌다.**
@@ -160,6 +167,13 @@ cd <워크트리-codex> && codex "$(cat docs/rebuild/<bc>/request.md)"
 생략할 수 있다** — 사람 평가가 뒤집을 판정이 없다. 그 라운드의 ⑥-b 는 플러그인 수정
 후 같은 BC 재라운드가 통과 후보가 됐을 때 수행한다.
 
+**판정 원칙(2026-08-13 — H6′)**: **밖에서 보이는 결과가 갈리는 지점**의 자기 해석·자가
+승인이 박힌 완주는 정지보다 위가 아니다 — 평가는 산출물과 함께 «결정 주체»를 본다.
+결과지의 라운드 판정 라인에는 **«결정 주체 관측: 자기 해석 N · 자가 승인 N · STOP N»**
+을 병기해야 판정이 성립한다(라운드 판정 라인은 프로토콜 소유 — eval v5 무접촉).
+정지에는 의무가 짝진다: 정지 전 공백을 전수 수집해 한 STOP 에 일괄 상정한다(+선택지별
+대가 표 — 2·codex′ 의 2건 일괄이 선례). 종료 조건(연속 2 BC ⑤ green)은 불변이다.
+
 ### ⑦ 삼분 처분 + 대장 기록
 1. **문서/하네스 결함** → `spec.md`·이 프로토콜 보강(플러그인 평가와 무관). 스팩 등가가
    깨졌으면 보강한 문서로 같은 BC 재투입.
@@ -182,6 +196,6 @@ cd <워크트리-codex> && codex "$(cat docs/rebuild/<bc>/request.md)"
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | child_settings | 1c02d89a | ⚠(자녀 경로 0 · 타 BC x-date 시간값 1건=하네스) | ✅ 7199 green | ❌ registry exit 2 + gate 잔존 3 | ✅ 접수(14a67001) — 테스트 ⓑ 0건·spec 충실·개선 3·처분 «통과+문서 보강+플러그인 후보» | 생략(사용자 08-12 — ⑤ 불통과 라운드라 불요·재라운드에서 수행) | ④ ad27fa3b(클린룸 준수·파이프라인 정상 가동 — 세션 감사) · **V1 트리 재생산**: houserules §1.1 예외 ⑵ 미적용+표준 트리를 dddart 것으로 오인, 백스톱은 BC 폴더 TARGET 호출로 조용 exit 0 → ⑦-⑵ 플러그인 결함 2건(P1 결정 순서 사각·P2 호출 계약 사각) + ⑦-⑴ 하네스 1건(shape 시간 의존 값) | **v2.1.0**(P1′ 답습 발본색원·P2 호출 계약·H1 shape 시간값 — dddjango 47fce0d·release 398707b·fixture 84/84) |
 | 1′ | child_settings | 0ee0353f | ✅ diff 0 | ✅ 7193 green | ❌ registry 귀속 23건 (**gate 잔존 0 = V2 트리 달성** — P1′/P2 성공 자 충족) | ✅ v5 rubric 결과지 `workspace/eval/results/20260812-1747-csrebuildlive-claude.md` — 치명 1(SD-6)·정적 FAIL | 생략 가능 단서 해당(⑤ 불통과) — 사용자 판단 | ④ 6dedbfd0(클린룸 준수 — 감사: 금지 접근 0 · **registry 27종 루트 전수 실행 실측**·귀속 일부 자가 수정 후 잔존 23건을 «확립 규약 보존» 논리로 커밋) · 재라운드(플러그인 v2.1.0) — 클린룸 정화 1a248cdc(eval_ai·설계 명세·graphify stale 39 → 잔존 0) · **결함 축 이동**: V1 트리 재발 0, 대신 ⑴ 배선 답습(preserve 논리 월권 — api_router «parent_settings 동형»·#107-109/#431/#437) ⑵ SD-6 django.db 포트 우회(#2/#4 — port 칸 빈 채 우회) ⑶ 잎 import(#96·#326 — 단일 출처↔잎 규율 긴장) ⑷ 테스트 규율(#385·#387·#420) ⑸ 검사기 사각 2(#390=#385 그림자·#12 는 shadow 침묵) ⑹ 게이트 계약의 brownfield 귀속 공백 | **처분·수정 완료(08-12)**: 계획 v2(`2026-08-12-round1b-plugin-fixes.md`) — 적대 리뷰 4렌즈(판정 차분 재설계·two-pass·Call-흐름 신호·라이선스 전수) + D 결정(D1′=#96 오탐 정정+#326 파생 예외·D3=**code-json 이주**(spec 결함 발견 — spec 이 api.py 배선 지시)·D4=조사 종결) · 구현: registry_gate(차분)+checker_registry+검사기 3종+P1″ 산문 12곳+코퍼스 2곳 · 검증 전부 green(fixture 90/90·smoke 6/6·backstop 675 무변) · 라운드 2 준비 커밋 `0908671c`(spec 오류 절 재작성·pre_success·이관 빚 목록) · **v2.2.0 릴리즈 대기** |
-| 2·claude | billing | 68ce0e51 | — | — | — | — | — | 준비 완료(08-12): 시드 재추첨 게이트 궤적 report→…→billing · D3 code-json 스팩(wire 11종 축자·admin 표면 포함·이관 빚 #12 accounts 인증 1건) · 2레인 신설(사용자 지시 「코덱스도」·「지난번과 다른 BC」 — child_settings 재라운드는 이월) · **앵커 baseline `make test` 6,883 green 실측**(billing 삭제 후·2:44) · pycache 잔존 정화(git rm 이 안 지우는 삭제-구현 바이트코드) · ⑤A 자 개정: `--success-only` 가 `x-problem-slugs` 도 걷음(billing 실측 — child_settings 판정 재료도 재생성·두 라운드 동일) | v2.2.0 |
+| 2·claude | billing | 68ce0e51 | ✅ diff 0 | ✅ 7018 green(앵커 6,883 대비 신규 red 0·billing 135 추가) | ❌ **정본(앵커 승인 빚) 기준 귀속 15건**(전부 #12 — ACL 의 미이관 `published_service` 소비·spec §5 지시 의존) / 자가확장 빚 파일 기준 0 green · migration_gate billing 잔존 0 | ✅ v5 결과지 `workspace/eval/results/20260813-1005-blrebuildlive-claude.md` — **치명 0·Q «상»·정적 준수(FC ⏸️)** — v5 라운드 최초 치명 0 | 대기(⑥b 사용자) | ④ 96e3f869(클린룸 위반 0 — git 4건 전부 자기 확인·V1 원본 접근 0) · **최대 사건=빚 파일 자가 확장**(+41줄: #12 OHS 3건+#210/#63 waiver — 투명 표기·커밋 정직 기재이나 «사용자 승인 목록» 무효화 경로 → F3 «가필=승인 위조» 조항의 필요성을 2.2.0 이 독립 실증) · waiver 2건은 사문(최종 트리 발화 0 실측) · #365×3=도구 아티팩트(**부기 08-13**: git-과탐 초판 진단을 적대 리뷰가 정정 — 실체=bc_registry_run 단일-BC 그림자 로스터 공백·검사기 무결·수정처=하네스 ROSTER_AWARE) · 라운드 1′ 결함 축 전멸(SD-6 포트 우회→UoW 포트·배선 답습→registrar·잎 import·테스트 규율 재발 0) · grant-시점 already-entitled=«영구 실패(500)» 자기 해석(스팩 공백 — 레인 B STOP 1 과 상호 실증) · **처분 대기: 빚 3건 승인 여부(승인 시 코드 무수정 green)** | v2.2.0 |
 | 2·codex | billing | 68ce0e51 (같은 앵커) | — | — | — | — | — | 워크트리 `broccoli-rebuild-codex`(브랜치 `rebuild/standard-tree-codex` — 앵커에서 분기) · codex 플러그인 2.2.0 확인(마켓 스냅숏 upgrade+add 실측) · **④ 불통과 — 토끼굴(08-13)**: 명세 §1.4 로 타 BC 11개 이관 100파일→귀속 138→G1′×3(전 게이트 자기승인) — 이후 자가 revert 실측(변경 2줄·단 자기 correction 인용). 미커밋 종료 → 수정 사이클(정본 `2026-08-13-codex-rabbit-hole-fixes.md`)·카운트 0 | v2.2.0 |
-| 2·codex′ | billing | **5a15123f** (68ce0e51 + 요청문 필수 절 5종 — spec·shape·빚 목록 동일) | — | — | — | — | — | **재기동 준비 완료(08-13)**: 워크트리 정화(세션 산출물 rm·pycache 전수·graphify 클린 재빌드 21,603 nodes·billing 참조 0·clean 실측) · request.md 에 F3 절 5종(Placement 닫힌 목록·앵커 동결·완료 기준 앵커 차분·자율 비위임(G0 빚 ⓑ 고정·blocker 정지=유효 종료)·수렴 회로) · codex 플러그인 **2.3.0** 확인 · ⑤C 는 `--anchor 5a15123f` 로 판정(레인 A 는 68ce0e51 유지 — 레인 간 비교 시 플러그인 판·앵커 상이 명기) | v2.3.0 |
+| 2·codex′ | billing | **5a15123f** (68ce0e51 + 요청문 필수 절 5종 — spec·shape·빚 목록 동일) | ➖ | ➖ | ➖ (구현 0 — diff=`.dddjango` 문서 3파일뿐 실측) | ✅ v5 결과지 `workspace/eval/results/20260813-0937-blrebuildlive-codex.md` — 채점 불가·**stopped 유효 종료 판정** | 대기(⑥b 사용자) | ④ df2fbb60 `stopped — 정본 계약 충돌 2건`(01:58→03:08·70분) — **정지 2건 모두 실증 정당**: STOP 1=post-success family race(spec §2/§3.4/§5 상태기계 공백 — 레인 A 는 같은 지점을 «영구 실패 500»로 자기 해석 완주=상호 실증) · STOP 2=int64 OpenAPI(독립 골든 작성자도 «spec 공백» 지목·단 «충돌» 프레임엔 과잉 해석 성분) · **1차 토끼굴 축 전부 재발 0**(Placement 준수·빚 가필 0·Phase 0 exact 27종 표·G0 빚 ⓑ 고정·앵커 동결·자기승인 0) = **v2.3.0 F1/F2/F3 작동 실증** · 클린룸 실질 오염 0(git log -8 제목 8줄 노출은 주의 기록) · 미작동 1: update_plan 호출 0 재현(⑶ 수정 무효 — ⑦ 재상정) · **처분 대기: 재개용 사용자 결정 2건(결과지 부록 A)** | v2.3.0 |

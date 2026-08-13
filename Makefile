@@ -98,6 +98,7 @@ release:
 		PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
 		PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
 		PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
+		PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
 		PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \
 		diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
 		echo "[3/7] 버전 기록 (Claude·Codex)"; \

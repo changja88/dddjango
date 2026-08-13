@@ -32,7 +32,7 @@ Coordinator가 다음을 준다:
 
 활성 lens에 해당하는 항목만 담는다:
 
-Ninja endpoint/error contract/response Schema를 새로 만들거나 바꾸는 scope라면 아래 계약을 적용한다. 새 dddjango Ninja scope의 기본 error profile은 `dddjango-code-json`이다. 관찰된 deployed/external/brownfield 계약이 현재 승인된 product-spec·consumer·wire·OpenAPI evidence로 확인되거나 사용자가 명시적으로 보존 승인하면 `preserve-established`를 쓴다. 두 종류의 evidence를 모두 요구하지 않으며, evidence가 미해결이거나 충돌할 때만 `STOP_FOR_USER_APPROVAL`이다. 의존성이 매니페스트에 없다는 사실만으로 API stack이나 profile을 낮추지 않고, 파일명으로 profile을 추론하지 않는다.
+Ninja endpoint/error contract/response Schema를 새로 만들거나 바꾸는 scope라면 아래 계약을 적용한다. 새 dddjango Ninja scope의 기본 error profile은 `dddjango-code-json`이다. 관찰된 deployed/external/brownfield 계약이 현재 승인된 product-spec·consumer·wire·OpenAPI evidence로 확인되거나 사용자가 명시적으로 보존 승인하면 `preserve-established`를 쓴다. 두 종류의 evidence를 모두 요구하지 않으며, evidence가 미해결이거나 충돌할 때만 `STOP_FOR_USER_APPROVAL`이다. STOP 기록은 닫힌 선택지마다 **대가 한 줄**을 병기한다(2026-08-13 — 대가 없는 선택지 목록은 형식 불비). 권고를 적으려면 산출물·리뷰 노트 인용으로 저자를 명시하고, 권고는 결정이 아니다 — 명세·기본값을 권고 방향으로 선반영하지 않는다. 밖에서 보이는 결과가 갈리는 물음은 논증이 완성돼 있어도 STOP 이다(완성된 논증은 STOP 생략 근거가 아니라 STOP 기록에 인용할 재료다). 의존성이 매니페스트에 없다는 사실만으로 API stack이나 profile을 낮추지 않고, 파일명으로 profile을 추론하지 않는다.
 
 ### Error response contract 12-slot
 

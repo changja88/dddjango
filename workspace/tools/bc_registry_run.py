@@ -9,10 +9,13 @@
 27종 목록은 플러그인의 `checker_registry.py`(단일 출처 — commands 순서·auto 플래그)에서
 가져온다(두 곳에 적지 않는다). checker_lint 는 검사기의 검사기라 BC 판정이 아니다 — 제외.
 
-two-pass(2026-08-12 · 라운드 1′ H2): 26종은 이웃 없는 그림자에 돌리고,
-`check-context-isolation.py` 만 이웃 BC «빈 스텁»(이름만)을 얹은 뒤 돌린다 — 타 BC
-import 분류(#12·#51)가 로스터 실재에 기대 침묵하던 사각을 닫되, 스텁이 skeleton 등에
-가짜 골격 blocker(#488 — 15 BC × 7칸 실측)를 만들지 않게 순서로 격리한다.
+two-pass(2026-08-12 · 라운드 1′ H2 / 2026-08-13 · 라운드 2 H4′ 확장): 25종은 이웃 없는
+그림자에 돌리고, 로스터 소비 검사기 2종 — `check-context-isolation.py`(타 BC import
+분류 #12·#51)·`check-port-adapter-pairing.py`(ACL 상대의 «우리 BC» 판정 #365) — 만
+이웃 BC «빈 스텁»(이름만)을 얹은 뒤 돌린다. 스텁이 skeleton 등에 가짜 골격
+blocker(#488 — 15 BC × 7칸 실측)를 만들지 않게 순서로 격리한다. (#365 과탐은 라운드 2
+레인 A에서 실측 — 이웃이 로스터에 없어 정당한 ACL 3폴더가 «저장소 밖 상대»로 발화.
+검사기는 파일트리 기반·무결이라 수정처는 이 하네스다 — `bc_registry_smoke.py` 가 고정.)
 한계(분업): 이웃 «내용»이 필요한 규칙(#505 류 — 타 BC 파일 스캔)은 이 단일-BC 그림자가
 원리상 판정할 수 없다 — 그 몫은 루트 실행 게이트(registry_gate)가 진다.
 
@@ -61,7 +64,8 @@ def add_neighbor_stubs(root: Path, bc: str, shadow: Path) -> int:
     """이웃 BC 를 «이름만 있는 빈 스텁»으로 그림자에 얹는다 — two-pass 둘째 판 전용.
 
     골격 없는 스텁은 skeleton 검사에 가짜 #488 을 만들므로(15 BC × 고정 칸 7 실측),
-    반드시 26종 실행 «후» 에 만들고 로스터 소비 검사기(context-isolation)만 본다."""
+    반드시 1차 판 실행 «후» 에 만들고 로스터 소비 검사기(context-isolation·
+    port-adapter-pairing)만 본다."""
     made: int = 0
     for d in sorted((root / "application").iterdir()):
         if not d.is_dir() or d.name.startswith((".", "__")) or d.name == bc:
@@ -74,7 +78,7 @@ def add_neighbor_stubs(root: Path, bc: str, shadow: Path) -> int:
     return made
 
 
-ROSTER_AWARE: "frozenset[str]" = frozenset({"check-context-isolation.py"})
+ROSTER_AWARE: "frozenset[str]" = frozenset({"check-context-isolation.py", "check-port-adapter-pairing.py"})
 
 
 def main(argv: "list[str]") -> int:
