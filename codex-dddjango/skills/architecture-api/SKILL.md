@@ -19,7 +19,7 @@ REST API 계약(리소스 설계, HTTP 메서드 의미론, 상태 코드, 요�
 
 - RFC 9110 HTTP 의미론 우선: 메서드 안전성·멱등성을 정확히 지키고, PUT은 전체 교체, PATCH는 부분 수정, POST는 non-idempotent 생성으로 구분 (§2)
 - URL은 명사·복수형·케밥케이스 리소스로 설계하고 동사 행위를 URL에 포함하지 않는다 (§3)
-- 에러 프로필은 기존 배포 계약을 먼저 보존하고, 새 dddjango Ninja 범위에는 `dddjango-code-json`(`application/json` + 별도로 승인된 프로젝트별 exact 오류 schema shape + BC `ErrorCode`)을 선택한다. 플러그인 기본 property 목록은 없으며 shape 변경은 별도 사용자 승인이 필요하다. RFC 9457 Problem Details는 별도 요구가 있을 때만 선택하고 두 프로필의 wire 필드는 한 범위에서 섞지 않는다 (§5.4, §6)
+- 에러 프로필은 기존 배포 계약을 먼저 보존하고, 새 dddjango Ninja 범위에는 `dddjango-code-json`(`application/json` + 별도로 승인된 프로젝트별 exact 오류 schema shape + BC `ErrorCode`)을 선택한다. 플러그인 기본 property 목록은 없으며 shape 변경은 별도 사용자 승인이 필요하다. RFC 9457 Problem Details는 별도 요구가 있을 때만 선택하고 두 프로필의 wire 필드는 한 범위에서 섞지 않는다 — 혼합 금지의 주어는 wire 필드다: **신규 범위**는 RFC 9457 wire 를 선택해도 표준 controller 레시피로 구현하고(preserve-established 범위는 native 보존 관할 — 이 문장의 대상 아님), 이 조합의 G2 게이트 취급은 아직 profile 열거에 없어 채택 시 G1 표면화(STOP) 대상이다 (§5.4, §6)
 - 요청/응답 계약은 상태 코드별 body·header·schema까지 포함해 명시적으로 기록하고, 계약 체크리스트(Resource·Method·Request·Response·Error·Auth·Compatibility·OpenAPI)를 엔드포인트 변경마다 검토한다 (§5)
 - 페이지네이션은 데이터 특성(정렬 안정성, 실시간성, 딥 페이지 여부)에 따라 오프셋·커서·페이지 방식 중 선택하고 선택 기준을 명시한다 (§9)
 - 버전 전략(URL·헤더·쿼리파라미터)과 하위 호환성·Deprecation 프로세스를 API 변경 전에 결정한다 (§10, §11)

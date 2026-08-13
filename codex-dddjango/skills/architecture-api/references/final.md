@@ -228,6 +228,8 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 한 API 범위 안에서는 RFC 프로필과 code 프로필의 wire 필드를 섞지 않는다. 특히 code 프로필에 `type`, `about:blank`, URI 요구사항이나 `application/problem+json`을 끼워 넣지 않는다.
 
+이 절이 고르는 것은 **wire 계약**(필드 집합·media type)이지 구현 형태가 아니며, 이 문단의 주어는 **신규 범위**(②·③으로 wire 프로필을 새로 고르는 산출물)다 — preserve-established(우선순위 ①) 범위는 native 메커니즘 보존이 관할이라(12-slot 계약 소유) 이 문단의 대상이 아니고, 확립 native 구현·배선을 표준 레시피로 옮길 근거가 되지 않는다. 신규 범위는 ③으로 RFC 9457 wire 를 선택해도 표준 controller 레시피(controller 소유·좁은 try·`bc_error_schema.py`·직접 `Status` 반환 — 레시피의 정본은 구현 스킬·검사기 계약이고 이 절은 wire 만 소유한다)로 구현한다: **«RFC 9457 wire + 표준 레시피»는 wire 규칙상 모순이 아니다**(2026-08-13 — 스팩이 이 조합을 표현하려 프로필 «이름»을 차용해 문면 모순이 된 사례 반영). 단 **G2 게이트·12-slot 의 profile 표기는 현재 `dddjango-code-json | preserve-established` 두 값뿐**이라 이 조합의 게이트 취급은 아직 열거에 없다 — 채택하려면 그 취급 결정을 G1 에서 표면화하라(STOP 대상이며, 스팩·플러그인 문면이 실제로 충돌하는 경우도 여전히 STOP 대상이다). 위 혼합 금지의 주어는 wire 필드다 — 구현 레시피를 프로필의 일부로 읽지 않는다.
+
 #### `dddjango-code-json` (새 dddjango Ninja 범위의 기본)
 
 - media type은 `application/json`이다.
@@ -244,7 +246,7 @@ API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상
 
 ## 6. RFC 9457 에러 응답 형식
 
-이 절은 §5.4에서 RFC 9457 프로필을 선택한 API 범위에만 적용한다. `dddjango-code-json` 범위에는 적용하지 않는다.
+이 절은 §5.4에서 RFC 9457 프로필을 선택한 API 범위에만 적용한다. `dddjango-code-json` 범위에는 적용하지 않는다. (wire 형식의 절이다 — 신규 RFC 범위의 구현 형태는 §5.4 마지막 문단의 단서를 따른다.)
 
 ### 6.1 Problem Details for HTTP APIs
 
