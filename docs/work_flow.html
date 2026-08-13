@@ -1967,7 +1967,8 @@ eShop·Grzybek 은 <b><code>SaveChanges</code></b> 가 걷는다.
             <div class="rd-w"><b>유스케이스가 «내보내는» 자료의 모양.</b> 컨트롤러가 이것만 보고 응답을 만들 수 있어야 한다 — 여기 빠진 값이 있으면 컨트롤러가 도메인을 들여다보게 된다.
 하나로 내든 흘려보내든 안에 실리는 알맹이는 같은 자를 받는다.
 <br><b>커맨드 쪽도 이 파일을 갖는다</b> — 만든 것의 <code>id</code> 하나만 돌려주더라도 그 값이 여기 산다. 돌려줄 것이 정말 없으면 <b>빈 파일</b>이다.
-<br>여기 오지 «않는» 것은 실패다. 그래서 이 파일에는 <b>성공했을 때의 모양 한 벌</b>만 있고, 갈래가 여럿이면 그것은 유스케이스가 둘이라는 신호다.</div>
+<br>여기 오지 «않는» 것은 실패다. 그래서 이 파일에는 <b>성공했을 때의 모양 한 벌</b>만 있고, 갈래가 여럿이면 그것은 유스케이스가 둘이라는 신호다.
+<br>실패 갈래는 <b>예외</b>로 나간다 — 같은 BC 의 <b>도메인 예외</b>는 컨트롤러가 직접 받아 오류 응답을 만든다(driving 잎이 domain 에서 가져올 수 있는 둘: exception·값 객체). 이것은 «도메인 들여다보기»가 아니라 실패 계약의 소비다.</div>
             <div class="rd-r"><span class="rd-k">규칙</span>유스케이스가 돌려주는 자료 — 클린의 <b>Output Data</b> 자리 · <b>실패를 여기 담으면 위반</b> <em>실패는 도메인 예외로 나간다. 플러그인 문서의 <code>failed Result</code> 는 <b>다른 낱말</b>이다 — 그건 「실패를 «값»으로 돌려주는 방식」이고 우리는 예외 노선이다</em> · <b>«나가는 자료의 모양»이지 «몇 개를 돌려주느냐»가 아니다</b> — 흐름이면 <code>Iterator[&lt;UseCase&gt;Result]</code> <em>← SSE</em>. <b>연 것은 유스케이스 안에서 닫는다</b> <em>구독 손잡이 자체는 못 나간다 — 나가는 것은 흐르는 알맹이뿐</em></div>
             <div class="rd-nm"><span class="rd-k">이름</span><b>폴더 이름 + <code>_result</code></b> — 클래스는 <code>&lt;UseCase&gt;Result</code>.<br><b><span class='no'>…Response</span> 를 쓰지 않는다</b> — 그 낱말은 <code>open_host_service/contract/response/</code> 것이고, 한 트리에서 같은 낱말이 <b>두 층을 가리키면</b> 어느 계약인지가 이름으로 안 갈린다.<br><b><span class='no'>…Out</span> 도 아니다</b> — 짝이 <code>_in</code> 이어야 하는데 이 쌍의 반대편은 <code>_command</code>·<code>_query</code> 다.</div>
           </li>

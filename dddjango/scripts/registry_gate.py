@@ -31,6 +31,7 @@ exit 0 = 귀속 0 / exit 2 = 귀속 존재 / exit 1 = 사용 오류·재료 결�
 from __future__ import annotations
 
 import argparse
+import ast
 import re
 import shutil
 import subprocess
@@ -47,6 +48,9 @@ _LINENO_RE: "re.Pattern[str]" = re.compile(r":\d+")
 _IGNORE_COPY: "tuple[str, ...]" = (
     ".git", ".venv", "venv", "__pycache__", "*.pyc", "node_modules",
     "graphify-out", ".mypy_cache", ".pytest_cache", ".ruff_cache", "staticfiles",
+    # F-C(2026-08-14): 숨김 디렉터리 전부 = 도구·하네스 영역(`.codex/`·`.dddjango/` 등) —
+    # 검사 표면이 아니다(라운드 3 실측: `.codex/cleanroom-guard.py` #493×4 오탐 귀속).
+    ".*", "site-packages", "build", "dist",
 )
 
 
@@ -73,6 +77,25 @@ def _snapshot_anchor(root: Path, anchor: str, dest: Path) -> "str | None":
 def _snapshot_current(root: Path, dest: Path) -> None:
     """working tree 를 비-git 사본으로 복사한다(무거운 비-소스 디렉터리 제외)."""
     shutil.copytree(root, dest, ignore=shutil.ignore_patterns(*_IGNORE_COPY))
+
+
+def _parse_fail_findings(target: Path) -> "set[str]":
+    """이 인터프리터로 파싱 불가한 검사 대상 — fail-open(침묵 스킵) 방지 합성 귀속(F-A 2026-08-14).
+
+    앵커·현재 «양쪽» 스냅숏에 같은 스캔을 걸어 차분 원리를 태운다 — 앵커에도 있던
+    깨진 파일은 legacy(L∩N), 새로 생긴 것만 귀속(N∖L). 고의 투입으로 red 를
+    «판정 불능(exit 1)»으로 바꾸는 우회(적대 리뷰 A1)가 성립하지 않는다.
+    """
+    out: "set[str]" = set()
+    for p in sorted(target.rglob("*.py")):
+        if any(seg.startswith(".") for seg in p.relative_to(target).parts[:-1]):
+            continue  # 숨김 디렉터리 = 도구·하네스 영역(F-C)
+        try:
+            ast.parse(p.read_text(encoding="utf-8"))
+        except (SyntaxError, UnicodeDecodeError):
+            out.add(f"(pre-scan) :: [#parse-fail] {p.relative_to(target)}: 이 인터프리터"
+                    f"({sys.version_info[0]}.{sys.version_info[1]})로 파싱 불가 — 검사기가 침묵 스킵하는 파일")
+    return out
 
 
 def _run_registry(target: Path) -> "tuple[dict[str, int], set[str]]":
@@ -150,6 +173,7 @@ def main(argv: "list[str]") -> int:
         if not is_git:
             print("주의: 비-git TARGET — 차분 불능이라 fail-closed(현재 위반 전량 귀속)")
             exits_n, n_set = _run_registry(cur)
+            n_set |= _parse_fail_findings(cur)
             l_set: "set[str]" = set()
             exits_l: "dict[str, int]" = {}
             anchor_sha: str = "(비-git)"
@@ -176,7 +200,9 @@ def main(argv: "list[str]") -> int:
                 print(f"재료 결손: {err}", file=sys.stderr)
                 return 1
             exits_l, l_set = _run_registry(anc)
+            l_set |= _parse_fail_findings(anc)
             exits_n, n_set = _run_registry(cur)
+            n_set |= _parse_fail_findings(cur)
 
     attributed: "list[str]" = sorted(n_set - l_set)
     resolved: "list[str]" = sorted(l_set - n_set)

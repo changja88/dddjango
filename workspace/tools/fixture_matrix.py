@@ -67,6 +67,9 @@ EXTRA_LANES: "list[tuple[str, str]]" = [
     ("check-test-config.py", "test_config_entrance"),
     ("check-event-publish.py", "event_publish_leaf"),
     ("check-db-table.py", "db_table_choices"),
+    # S2 F-B(2026-08-14) — #210 도메인 예외 면제: good=실선언 예외 클래스 직접 catch(구판 red→신판 green) ·
+    # bad_rules=예외 칸 세탁 2종(함수 import·__init__ 재수출)은 계속 red.
+    ("check-usecase-dto-placement.py", "usecase_dto_domain_exception"),
 ]
 
 # 로스터 단일 출처 대조(2026-08-12 P3′) — 쌍 목록이 checker_registry 와 어긋나면 재료 결손.

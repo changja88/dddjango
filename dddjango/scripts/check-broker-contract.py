@@ -394,7 +394,11 @@ def _check_external_obligations(root: Path, broker: Path, f: Findings) -> None:
     if not contents:
         return
     broker_text = "\n".join((p.read_text(encoding="utf-8") for p in _py_files(broker)))
-    repo_names = {p.name for p in root.rglob("*.py") if not set(p.parts) & SKIP_DIRS}
+    repo_names = {
+        p.name for p in root.rglob("*.py")
+        if not set(p.parts) & SKIP_DIRS
+        and not any(seg.startswith(".") for seg in p.relative_to(root).parts[:-1])  # 숨김 디렉터리 제외(F-C)
+    }
     where = _rel(root, ext)
     if not (any("outbox" in n for n in repo_names) or "outbox" in broker_text.lower()):
         f.add("#603", where, "⑴ outbox 가 없다 — 커밋과 발행을 한 트랜잭션에 묶는 선언이 필요하다")

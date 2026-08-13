@@ -24,7 +24,10 @@
   schema #139 제약 선언은 `schema_in.py` 에(컨트롤러의 Field·validator 는 위반)
          #142 요청 스키마는 도메인 객체를 만들지 않는다(#141: 값 객체 import 는 면제)
          #143/#144 `schema_out` 은 result 로 만든다 — 도메인·ORM 타입 노출 금지
-         #210 컨트롤러는 result 만 보고 응답을 만든다(도메인 들여다보기 금지)
+         #210 컨트롤러는 result 만 보고 응답을 만든다(도메인 들여다보기 금지 —
+              예외: 같은 BC `domain_layer/<agg>/exception/` 의 실선언 예외 클래스
+              import 는 #95·#92(driving 잎의 도메인 예외 허용) 준거 면제 · 2026-08-14
+              라운드 3 실증: 검사기 간 충돌 — billing NJ-7 확립 모양이 direct catch)
 
 ast+ 후보 채널 (㉰ — 기계가 후보를 좁히고 사람이 물음으로 마무리):
   #68(검증 raise 의 자리) · #103(입구의 값 객체 사용 폭) · #140(제약 0 스키마)
@@ -151,12 +154,55 @@ def _domain_kind(mod_path: str) -> str | None:
     rest = parts[i + 1:]
     if len(rest) >= 2 and rest[0] == rest[1]:  # domain_layer.<agg>.<agg> — 애그리거트 루트
         return "aggregate"
+    if "exception" in rest:  # domain_layer.<agg>.exception.* — 예외 칸(#95 가 driving 잎에 허용)
+        return "exception"
     return "other"
 
 
 def _is_orm_import(mod_path: str) -> bool:
     parts = mod_path.split(".")
     return any(p.startswith("django_") for p in parts) or ("driven_layer" in parts and "models" in parts)
+
+
+def _exception_based(cls: "ast.ClassDef", declared: "dict[str, ast.ClassDef]", depth: int = 0) -> bool:
+    """기반 사슬에 Exception/Error 가 닿는가 — 비-예외 클래스 밀반입 차단(#210 면제 조건 ⑶)."""
+    if depth > 5:
+        return False
+    for base in cls.bases:
+        name = base.attr if isinstance(base, ast.Attribute) else getattr(base, "id", "")
+        if name == "Exception" or name.endswith(("Exception", "Error")):
+            return True
+        if name in declared and _exception_based(declared[name], declared, depth + 1):
+            return True
+    return False
+
+
+def _lawful_domain_exception_import(mod_path: str, names: "list[str]", bc: Path) -> bool:
+    """같은 BC `domain_layer/<agg>/exception/<module>` 실선언 예외 클래스 import 인가.
+
+    #95·#92(driving 잎이 domain 에서 가져올 수 있는 것: exception·값 객체) 준거 면제의
+    Goodhart 방어 셋(2026-08-14 적대 리뷰): ⑴ 경로 깊이 고정(`exception/` 직계 모듈만)
+    ⑵ 가져온 이름 전부가 그 모듈이 «직접 선언한» ClassDef(재수출·함수·상수 세탁 차단 —
+    별칭 import 는 이름 불일치로 자연 탈락) ⑶ 기반 사슬에 Exception/Error 토큰.
+    타 BC 의 exception 은 면제 밖(#12 축과 별개로 여기서도 발화 유지)이다.
+    """
+    parts = mod_path.split(".")
+    if len(parts) != 6 or parts[:3] != ["application", bc.name, "domain_layer"]:
+        return False
+    if parts[4] != "exception":
+        return False
+    module_file = bc.joinpath(*parts[2:]).with_suffix(".py")
+    if not module_file.is_file():
+        return False
+    mod = _parse(module_file)
+    if mod is None:
+        return False
+    declared: "dict[str, ast.ClassDef]" = {
+        c.name: c for c in mod.body if isinstance(c, ast.ClassDef) and not c.name.startswith("_")
+    }
+    if not names or any(n not in declared for n in names):
+        return False
+    return all(_exception_based(declared[n], declared) for n in names)
 
 
 # ── application_layer 구조 — #182 · #183 · #188 · #190 · #192 · #193 ────────
@@ -470,14 +516,16 @@ def _check_schema_out(f: Path, rel, out: Findings) -> None:
             out.add("#144", rel, f"응답 스키마에 ORM 행을 싣지 않는다 — `{mod_path}`")
 
 
-def _check_controller(f: Path, rel, out: Findings, cand: Candidates) -> None:
+def _check_controller(f: Path, rel, bc: Path, out: Findings, cand: Candidates) -> None:
     mod = _parse(f)
     if mod is None:
         return
     vo_names: set[str] = set()
     for mod_path, names in _import_records(mod):
         kind = _domain_kind(mod_path)
-        if kind in ("entity", "aggregate", "other"):
+        if kind == "exception" and not _lawful_domain_exception_import(mod_path, names, bc):
+            out.add("#210", rel, f"컨트롤러는 `<use_case>_result` 만 보고 응답을 만든다 — `{mod_path}` 로 도메인을 들여다본다(예외 면제는 같은 BC `exception/` 직계 모듈의 실선언 예외 클래스뿐 — #95)")
+        elif kind in ("entity", "aggregate", "other"):
             out.add("#210", rel, f"컨트롤러는 `<use_case>_result` 만 보고 응답을 만든다 — `{mod_path}` 로 도메인을 들여다본다")
         elif kind == "value_object":
             vo_names.update(names)
@@ -587,7 +635,7 @@ def main(argv: list[str]) -> int:
                 elif f.name == "schema_out.py":
                     _check_schema_out(f, rel, findings)
                 elif f.name.endswith("_controller.py"):
-                    _check_controller(f, rel, findings, cand)
+                    _check_controller(f, rel, bc, findings, cand)
 
         for layer_name in DRIVEN_NAMES:
             repo_dir = bc / layer_name / "adapter" / "persistence" / "repository"

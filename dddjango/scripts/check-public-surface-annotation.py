@@ -343,7 +343,12 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1
 
-    files = [p for p in sorted(target.rglob("*.py")) if _is_target_file(p)]
+    # 숨김 디렉터리(도구·하네스 영역 — `.codex/` 등)는 공개 표면이 아니다(2026-08-14 F-C ·
+    # 라운드 3 실측: 클린룸 가드 훅 파일이 #493 귀속으로 오탐). 상대 경로 성분만 본다.
+    files = [
+        p for p in sorted(target.rglob("*.py"))
+        if _is_target_file(p) and not any(seg.startswith(".") for seg in p.relative_to(target).parts[:-1])
+    ]
 
     # 대상 0건 가드(#74) — 채택 신호는 있는데 파일이 0건이면 경로 계약이 어긋난 것.
     if not files:

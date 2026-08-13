@@ -24,6 +24,7 @@ exit 0 = 27종 전부 exit 0 / exit 2 = 위반 존재 / exit 1 = 재료 결손.
 """
 from __future__ import annotations
 
+import ast
 import shutil
 import subprocess
 import sys
@@ -33,6 +34,7 @@ from pathlib import Path
 S: Path = Path(__file__).resolve().parents[2] / "dddjango" / "scripts"
 sys.path.insert(0, str(S))
 from checker_registry import REGISTRY  # noqa: E402
+import checker_target  # noqa: E402
 
 
 def _project_dirs(root: Path) -> "list[Path]":
@@ -91,6 +93,13 @@ def main(argv: "list[str]") -> int:
         print(f"재료 결손: {root / 'application' / bc} 없음", file=sys.stderr)
         return 1
 
+    # F-A(2026-08-14): 그림자에는 pyproject 가 없어 checker_target 하한 게이트가 하위
+    # 검사기에서 무발화한다 — 실행기가 «소스 루트» 기준으로 대신 거른다(fail-closed).
+    gap: "str | None" = checker_target._interpreter_gap_reason(root)
+    if gap is not None:
+        print(f"사용 오류: {gap}", file=sys.stderr)
+        return 1
+
     checkers: "list[tuple[str, list[str]]]" = [
         (script, ["--error-profile", "auto"] if auto else []) for script, auto in REGISTRY
     ]
@@ -108,6 +117,20 @@ def main(argv: "list[str]") -> int:
     with tempfile.TemporaryDirectory() as td:
         shadow: Path = Path(td) / "shadow"
         build_shadow(root, bc, shadow)
+
+        # F-A pre-scan: 하한 충족 인터프리터인데도 파싱 불가면 «깨진 파일»이다 —
+        # 침묵 스킵(fail-open) 대신 합성 blocker 로 소리낸다(적대 리뷰: red 소거 우회 차단).
+        parse_fail: "list[str]" = []
+        for p in sorted(shadow.rglob("*.py")):
+            try:
+                ast.parse(p.read_text(encoding="utf-8"))
+            except (SyntaxError, UnicodeDecodeError):
+                parse_fail.append(str(p.relative_to(shadow)))
+        if parse_fail:
+            print(f"blocker [parse-fail] {len(parse_fail)}건 — 이 인터프리터({sys.version_info[0]}.{sys.version_info[1]})로 파싱 불가한 검사 대상:")
+            for rel in parse_fail:
+                print(f"  {rel}")
+            return 2
 
         def run_one(script: str, extra: "list[str]") -> None:
             nonlocal red

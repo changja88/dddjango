@@ -138,6 +138,8 @@ def _find_production_files(root: Path) -> list[Path]:
         parts = set(path.parts)
         if parts & SKIP_DIRS:
             continue
+        if any(seg.startswith(".") for seg in path.relative_to(root).parts[:-1]):
+            continue  # 숨김 디렉터리 = 도구·하네스 영역(F-C 2026-08-14)
         if parts & TEST_DIR_NAMES or path.name.startswith("test_") or path.name == "conftest.py":
             continue
         out.append(path)

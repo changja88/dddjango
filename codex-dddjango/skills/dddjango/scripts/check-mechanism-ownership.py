@@ -106,6 +106,8 @@ def _find_settings_files(root: Path) -> list[Path]:
     for path in root.rglob("*.py"):
         if set(path.parts) & SKIP_DIRS:
             continue
+        if any(seg.startswith(".") for seg in path.relative_to(root).parts[:-1]):
+            continue  # 숨김 디렉터리 = 도구·하네스 영역(F-C 2026-08-14)
         if path.name != "settings.py" and path.parent.name != "settings":
             continue
         if "test" in path.name.lower():
