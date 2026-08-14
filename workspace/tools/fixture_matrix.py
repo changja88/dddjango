@@ -114,6 +114,24 @@ def build_cases() -> "list[tuple[str, list[str], str, int]]":
              [sys.executable, str(TOOLS / "checker_lint.py"), "--scripts-dir", str(fx)],
              f"checker_lint/{sub}", want)
         )
+    # selector(scope) 모드 레인(2026-08-15 S3-r2′ 수정 사이클) — composition 의
+    # «ROOT_API_CONSTRUCTORS 직접 상속 로컬 클래스 팩토리» 인식 행동 고정.
+    # good=직접 생성 기준선(exit 0) · bad_rules=subclass 팩토리는 분석이 «진행»돼
+    # #437 위반으로 열거된다(exit 2 — 구판은 exit 1 분석 불능이라 앵커 차분 격리가
+    # 불가능했다) · bad_usage=비상속 로컬 클래스 팩토리는 여전히 분석 불능(exit 1 —
+    # 닫힌 허용 목록이 열리지 않았음 실증).
+    comp_selector_args = [
+        "--error-profile", "dddjango-code-json", "--scope", "public-v1",
+        "--api-module", "config/api.py", "--urlconf-module", "config/urls.py",
+        "--registrar-module", "application/lesson/driving_layer/api/api_router.py",
+    ]
+    for sub, want in (("good", 0), ("bad_rules", 2), ("bad_usage", 1)):
+        fx = F / "composition_selector" / sub
+        cases.append(
+            (f"composition_selector/{sub} (selector)",
+             [sys.executable, str(S / "check-composition-root.py"), str(fx), *comp_selector_args],
+             f"composition_selector/{sub}", want)
+        )
     # 호출 계약 레인 — TARGET=BC 폴더(층 폴더 직계 보유)는 clean 이 아니라 사용 오류다.
     bc_dir = F / "skeleton" / "good_bc" / "application" / "orders"
     for script in [sk] + [s for s, _ in PLAIN_PAIRS]:

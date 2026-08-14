@@ -1,0 +1,2 @@
+class OrderModel:
+    pass

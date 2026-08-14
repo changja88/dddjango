@@ -383,7 +383,9 @@ EXPECTED: "dict[tuple[str, str], tuple[int, tuple[tuple[int, int], ...], str]]" 
     ('port_adapter_pairing', 'check-composition-root.py'): (2, (), '가드-red'),
     ('port_adapter_pairing', 'check-db-table.py'): (2, ((318, 1), (325, 1)), '최소성'),
     ('port_adapter_pairing', 'check-error-centralization.py'): (2, (), '가드-red'),
-    ('port_adapter_pairing', 'check-layer-skeleton.py'): (2, ((488, 29), (490, 1)), '골격-부재'),
+    # (488, 29)→(488, 33) 2026-08-15: #462 admin 면제 fixture 4파일(django_orders/models·admin)
+    # 추가에 따른 골격-부재 카운트 증가 — 검사기 개정 영향 아님(이 레인은 skeleton 정본 아님).
+    ('port_adapter_pairing', 'check-layer-skeleton.py'): (2, ((488, 33), (490, 1)), '골격-부재'),
     ('port_adapter_pairing', 'check-mechanism-ownership.py'): (2, (), '가드-red'),
     ('port_adapter_pairing', 'check-missable-entrance.py'): (2, (), '가드-red'),
     ('port_adapter_pairing', 'check-ninja-boundary-middleware.py'): (2, (), '가드-red'),
