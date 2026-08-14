@@ -1042,6 +1042,7 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
     bindings_before, invalidated_before, _ = _import_state(parsed)
     annotations_evaluated = _annotations_are_evaluated(parsed.tree)
     assigned_objects: set[str] = set()
+    local_root_subclasses: set[str] = set()
     constructor_events = 0
     for node in parsed.tree.body:
         value: ast.AST | None = None
@@ -1058,12 +1059,32 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
             for name in _assignment_target_names(target)
             if name is not None
         ]
-        assigned_objects.difference_update(
-            _statement_bound_names(
-                node, annotations_evaluated=annotations_evaluated
-            )
+        bound_names = _statement_bound_names(
+            node, annotations_evaluated=annotations_evaluated
         )
+        assigned_objects.difference_update(bound_names)
         assigned_objects.difference_update(target_names)
+        # 같은 모듈에서 ROOT_API_CONSTRUCTORS 를 직접(또는 인정 사슬로) 상속해 정의한
+        # 클래스의 생성도 proven constructor event 다 — provenance 사슬이 모듈 안에서
+        # 닫힌다. 동명 재정의·침범은 인정을 취소한다(닫힌 허용 목록 규율 유지).
+        # (2026-08-15 S3-r2′ 실증: 중앙 api.py 의 `api = BroccoliNinjaAPI(...)` 가
+        #  event 0 으로 분석 불능 — subclass 정의 자체의 시비는 #437 이 따로 판정한다.)
+        local_root_subclasses.difference_update(bound_names)
+        local_root_subclasses.difference_update(target_names)
+        if isinstance(node, ast.ClassDef):
+            for base in node.bases:
+                resolved_base = _resolve_imported_expression(
+                    base,
+                    bindings_before.get(id(node), {}),
+                    invalidated_before.get(id(node), frozenset()),
+                )
+                if resolved_base in ROOT_API_CONSTRUCTORS or (
+                    resolved_base is None
+                    and isinstance(base, ast.Name)
+                    and base.id in local_root_subclasses
+                ):
+                    local_root_subclasses.add(node.name)
+                    break
         if not isinstance(value, ast.Call):
             continue
         constructor = _resolve_imported_expression(
@@ -1071,7 +1092,11 @@ def _required_root_api_object(parsed: ParsedSource) -> str:
             bindings_before.get(id(node), {}),
             invalidated_before.get(id(node), frozenset()),
         )
-        if constructor not in ROOT_API_CONSTRUCTORS:
+        if constructor not in ROOT_API_CONSTRUCTORS and not (
+            constructor is None
+            and isinstance(value.func, ast.Name)
+            and value.func.id in local_root_subclasses
+        ):
             continue
         constructor_events += 1
         assigned_objects.update(target_names)

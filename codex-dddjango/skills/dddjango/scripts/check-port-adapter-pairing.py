@@ -629,17 +629,22 @@ def _check_adapter_families(root: Path, bc: Path, adapter: Path, agg_names: set,
                                     f.add("#554", _rel(root, py, n.lineno),
                                           f"`{n.exc.func.id}` 로 바꾼다 — 어댑터는 «계약이 선언한 실패»"
                                           "로만 바꾼다(리포지토리면 도메인 예외, 능력 포트면 포트 예외)")
-    # #462 — ORM 모델 import 는 persistence 셋뿐.
+    # #462 — ORM 모델 import 는 persistence 셋 + django_<bc>/admin/ 뿐.
+    # admin/ 면제는 트리 정본과의 짝맞춤이다: §1 트리가 django_<bc>/admin/<entity>/
+    # (panel·form/·feature/) 칸을 명시하는데 관리 패널은 ModelAdmin 등록에 ORM 모델이
+    # 필수라, 면제 없이는 그 칸의 어떤 준수 구현도 불가능했다(2026-08-15 S3-r2′ 실증).
     for py in _py_files(driven):
         parts = py.relative_to(driven).parts
         if "persistence" in parts or "models" in parts or py.parent.name == "models":
+            continue
+        if len(parts) >= 2 and parts[0].startswith("django_") and parts[1] == "admin":
             continue
         mod = _parse(py)
         for node in ast.walk(mod) if mod else []:
             if isinstance(node, ast.ImportFrom) and re.search(r"(^|\.)models(\.|$)", node.module or ""):
                 f.add("#462", _rel(root, py, node.lineno),
                       "ORM 모델 import — 허용은 adapter/persistence/ 아래 셋(repository·"
-                      "domain_bypass_query·unit_of_work)뿐이다")
+                      "domain_bypass_query·unit_of_work)과 django_<bc>/admin/ 뿐이다")
 
 
 # ── fake — #575~#581 ───────────────────────────────────────────────────────
