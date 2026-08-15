@@ -50,10 +50,11 @@ import checker_target
 from pathlib import Path
 
 try:
+    import anchor_diff
     import standard_tree as tree
     import business_vocab as vocab
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py/business_vocab.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/business_vocab.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 # #472 의 «표준 라이브러리» 판정 집합 — business_vocab 의 stdlib 축(배포판·기술 낱말 제외).
@@ -856,6 +857,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--controller-module", action="append", default=[])
     p.add_argument("--scope-bc", action="append", default=[])
     p.add_argument("--error-bc", action="append", default=[])
+    # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
+    p.add_argument("--anchor", default=None)
+    p.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
+    p.add_argument(anchor_diff.DEBT_FLAG, dest="anchor_debt_file", default=None)
     return p
 
 
@@ -868,6 +873,19 @@ def main(argv: list[str]) -> int:
         return 1
     if not target.is_dir():
         print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
+        return 1
+    if ns.anchor is not None and ns.anchor_baseline:
+        print(f"사용 오류: --anchor 와 {anchor_diff.BASELINE_FLAG} 는 함께 전달할 수 없다", file=sys.stderr)
+        return 1
+    if ns.anchor_debt_file is not None and ns.anchor is None:
+        print(f"사용 오류: {anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있다(차분 전용 빚 채널)", file=sys.stderr)
+        return 1
+    if ns.anchor_baseline and anchor_diff.is_git_worktree(target.resolve()):
+        print(
+            f"사용 오류: {anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용이다 — "
+            "git 저장소 TARGET 에는 쓸 수 없다",
+            file=sys.stderr,
+        )
         return 1
 
     containers = [
@@ -935,6 +953,20 @@ def main(argv: list[str]) -> int:
         print(f"blocker {len(findings)}건 — 컨텍스트 격리·경계 규율 위반")
         for f in findings:
             print(" ", f)
+        if ns.anchor is not None:
+            try:
+                return anchor_diff.partition_exit(
+                    script=Path(__file__).resolve(),
+                    label="[check-context-isolation]",
+                    target=target,
+                    anchor=ns.anchor,
+                    argv=argv,
+                    findings=list(findings),
+                    debt_file=ns.anchor_debt_file,
+                )
+            except anchor_diff.AnchorDiffUsage as exc:
+                print(f"사용 오류: {exc}", file=sys.stderr)
+                return 1
         return 2
     print(f"clean — BC {len(bcs)}개 격리 규율 일치 (standard_tree {tree.SOURCE_SHA})")
     return 0

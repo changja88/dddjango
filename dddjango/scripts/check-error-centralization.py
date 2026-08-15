@@ -24,9 +24,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
+    import anchor_diff
     import standard_tree as _stree
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 
@@ -209,6 +210,9 @@ class Config:
     error_bcs: tuple[str, ...]
     code_error_modules: tuple[str, ...]
     preserve_error_modules: tuple[str, ...]
+    anchor: str | None
+    anchor_debt_file: str | None
+    anchor_baseline: bool
 
 
 @dataclass(frozen=True)
@@ -230,6 +234,9 @@ class Finding:
     lineno: int
     category: str
     shown: str
+    # Enum 멤버 «정적» 해석에 종속된 판정 — 동적 error shape 토큰만 남은 실행에서는
+    # 억제되어 runtime proof 경로가 대신 검증한다(#15 requires_static_error_shape 동형).
+    requires_static_error_shape: bool = False
 
     def render(self) -> str:
         return f"  - {self.relative_path}:{self.lineno}  {self.category}: {self.shown}"
@@ -272,6 +279,10 @@ def _argument_parser() -> _UsageParser:
     parser.add_argument("--error-bc", action="append", default=[])
     parser.add_argument("--project-code-error-module", action="append", default=[])
     parser.add_argument("--project-preserve-error-module", action="append", default=[])
+    # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
+    parser.add_argument("--anchor", default=None)
+    parser.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
+    parser.add_argument(anchor_diff.DEBT_FLAG, dest="anchor_debt_file", default=None)
     return parser
 
 
@@ -343,6 +354,14 @@ def _parse_config(argv: list[str]) -> Config:
     if profile == "auto" and selectors_present:
         issues.append("auto profile에는 selector를 전달하지 않음")
 
+    if namespace.anchor is not None and namespace.anchor_baseline:
+        issues.append(f"--anchor 와 {anchor_diff.BASELINE_FLAG} 는 함께 전달할 수 없음")
+    if namespace.anchor_debt_file is not None and namespace.anchor is None:
+        issues.append(f"{anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있음(차분 전용 빚 채널)")
+    if namespace.anchor_baseline and anchor_diff.is_git_worktree(root):
+        issues.append(
+            f"{anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용 — git 저장소 TARGET 금지"
+        )
     explicit = profile in {"dddjango-code-json", "preserve-established"}
     code_profile = profile == "dddjango-code-json"
     scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
@@ -360,11 +379,13 @@ def _parse_config(argv: list[str]) -> Config:
         namespace.project_preserve_error_module,
         issues,
     )
-    if explicit and not controllers:
+    if explicit and not controllers and not namespace.anchor_baseline:
+        # anchor-baseline 모드에선 앵커 트리에 없는 controller 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --controller-module")
     if explicit and not scope_bcs:
         issues.append("필수 인자 누락: --scope-bc")
-    if code_profile and not code_modules:
+    if code_profile and not code_modules and not namespace.anchor_baseline:
+        # anchor-baseline 모드에선 앵커 트리에 없는 inventory module 도 걷힌다(동상).
         issues.append("필수 인자 누락: --project-code-error-module")
     if scope is not None and not scope.strip():
         issues.append("--scope는 빈 문자열일 수 없음")
@@ -428,6 +449,9 @@ def _parse_config(argv: list[str]) -> Config:
         error_bcs,
         code_modules,
         preserve_modules,
+        namespace.anchor,
+        namespace.anchor_debt_file,
+        namespace.anchor_baseline,
     )
 
 
@@ -577,6 +601,26 @@ def _is_schema_candidate(path: Path) -> bool:
     return path == COMMON_ERROR or _candidate_bc(path) is not None
 
 
+def _skeleton_placeholder_module(root: Path, path: Path) -> bool:
+    """내용 없는 골격 파일(#114 «빈 파일»)인가 — inventory 대응 의무 면제 판정.
+
+    렌더 계약(2026-08-15)이 «내용 없는 골격 파일(빈 모듈)»을 project inventory 에서
+    제외하므로, 그 파일이 union 에 없는 것은 분석 오류가 아니다(내용이 생긴 뒤부터
+    검사한다). 판정은 보수적이다: 읽기·파싱 불능이거나 docstring 밖 문장이 하나라도
+    있으면 placeholder 가 아니다(기존 fail-closed 분석 오류 유지).
+    """
+    try:
+        body = ast.parse((root / path).read_text(encoding="utf-8")).body
+    except (OSError, UnicodeError, SyntaxError, ValueError):
+        return False
+    return not body or (
+        len(body) == 1
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
+    )
+
+
 def _path_under_bc(path: Path, bc: str) -> bool:
     return len(path.parts) >= 2 and path.parts[:2] == ("application", bc)
 
@@ -630,11 +674,15 @@ def _source_plan(
         if path not in required_missing:
             analysis.append(f"project error inventory module이 production candidate에 없음: {path}")
     for path in sorted(discovered - union, key=Path.as_posix):
+        if _skeleton_placeholder_module(config.root, path):
+            continue  # 렌더 계약이 제외한 빈 골격 — _skeleton_placeholder_module docstring
         analysis.append(f"canonical candidate가 project inventory union에 없음: {path}")
 
     for bc in config.scope_bcs:
         scoped = {path for path in inventory_paths if _path_under_bc(path, bc)}
-        if not scoped:
+        if not scoped and not config.anchor_baseline:
+            # anchor-baseline 모드에선 앵커 트리에 없는 scope BC 가 정상이다 —
+            # 그 표면의 진단은 정의상 전건 신규라 기준선에 있을 수 없다.
             analysis.append(f"scope BC production source 없음: application/{bc}/")
         source_paths.update(scoped)
     # 정본 공용 모듈(#417) — framework/ninja/ 는 공유 <technology> 폴더라 오류 계약 파일만 끌어온다.
@@ -1898,6 +1946,8 @@ def _append_finding(
     parsed: ParsedSource,
     node: ast.AST,
     category: str,
+    *,
+    requires_static_error_shape: bool = False,
 ) -> None:
     lineno = getattr(node, "lineno", 1)
     key = (parsed.relative_path, lineno, category)
@@ -1906,7 +1956,15 @@ def _append_finding(
     seen.add(key)
     lines = parsed.source.splitlines()
     shown = lines[lineno - 1].strip() if 0 < lineno <= len(lines) else category
-    findings.append(Finding(parsed.relative_path, lineno, category, shown))
+    findings.append(
+        Finding(
+            parsed.relative_path,
+            lineno,
+            category,
+            shown,
+            requires_static_error_shape=requires_static_error_shape,
+        )
+    )
 
 
 def _base_contract(
@@ -2922,8 +2980,9 @@ def _enum_ignored_names(
     parsed: ParsedSource,
     node: ast.ClassDef,
     analysis: list[str],
-) -> set[str]:
+) -> tuple[set[str], bool]:
     ignored: set[str] = set()
+    dynamic = False
     for statement in node.body:
         targets: set[str] = set()
         if isinstance(statement, ast.Assign):
@@ -2938,12 +2997,18 @@ def _enum_ignored_names(
             continue
         names = _static_enum_ignore_names(_assignment_value(statement))
         if names is None:
+            # canonical BC ErrorCode 컨테이너의 dynamic 멤버 집합 — 일반 분석 오류가
+            # 아니라 «동적 error shape» 유형이다(2026-08-15 r2″ 토큰 커버리지 확장):
+            # wire 멤버 목록이 정적으로 안 서므로 2-리뷰어 runtime proof 경로에 태운다.
+            dynamic = True
             analysis.append(
-                f"{parsed.relative_path}:{statement.lineno} dynamic Enum _ignore_ 분석 불능"
+                "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                f"{parsed.relative_path}:{statement.lineno} "
+                "dynamic Enum _ignore_ 정적 분석 불능 — target-pin runtime proof 필요"
             )
         else:
             ignored.update(names)
-    return ignored
+    return ignored, dynamic
 
 
 def _enum_members(
@@ -2952,10 +3017,13 @@ def _enum_members(
     analysis: list[str],
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
-) -> dict[str, str]:
+) -> tuple[dict[str, str], bool]:
+    """(멤버 사전, 사전이 동적 해석 불능으로 «불완전»한가) — 둘째 값이 참이면
+    멤버 사전 종속 판정(discriminator default 대조)은 파생 오탐이 되므로
+    requires_static_error_shape 로 억제하고 runtime proof 가 대신 검증한다."""
     members: dict[str, str] = {}
     member_names: set[str] = set()
-    ignored_names = _enum_ignored_names(parsed, node, analysis)
+    ignored_names, dynamic = _enum_ignored_names(parsed, node, analysis)
     for statement in node.body:
         names: list[str] = []
         value: ast.AST | None = None
@@ -2967,8 +3035,13 @@ def _enum_members(
                 for target in statement.targets
                 for name in _target_names(target)
             ):
+                # canonical BC ErrorCode 의 비정형 멤버 대입 — «동적 error shape» 유형
+                # (wire 멤버 모양이 정적으로 안 섬 · r2″ 토큰 커버리지 확장).
+                dynamic = True
                 analysis.append(
-                    f"{parsed.relative_path}:{statement.lineno} dynamic Enum member shape 분석 불능"
+                    "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                    f"{parsed.relative_path}:{statement.lineno} "
+                    "dynamic Enum member shape 정적 분석 불능 — target-pin runtime proof 필요"
                 )
             value = statement.value
         elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
@@ -2994,8 +3067,15 @@ def _enum_members(
                 _append_finding(findings, seen, parsed, statement, "duplicate Enum member")
             member_names.add(name)
             if not isinstance(value, ast.Constant) or not isinstance(value.value, str):
+                # canonical BC ErrorCode 멤버의 비-리터럴 wire 값(f-string·상수 참조 등) —
+                # 일반 분석 오류로 죽지 않고 «동적 error shape» 토큰을 발화해 2-리뷰어
+                # runtime proof 경로에 태운다(2026-08-15 r2″ — 이 케이스가 exit 1 로
+                # 죽어 proof 경로가 막혔던 토큰 커버리지 구멍의 실증 축).
+                dynamic = True
                 analysis.append(
-                    f"{parsed.relative_path}:{statement.lineno} dynamic Enum value 분석 불능: {name}"
+                    "DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "
+                    f"{parsed.relative_path}:{statement.lineno} "
+                    f"dynamic Enum value 정적 분석 불능({name}) — target-pin runtime proof 필요"
                 )
                 continue
             members[name] = value.value
@@ -3009,7 +3089,7 @@ def _enum_members(
     for value, count in counts.items():
         if count > 1:
             _append_finding(findings, seen, parsed, node, f"duplicate wire code in Enum: {value}")
-    return members
+    return members, dynamic
 
 
 def _analyze_bc_module(
@@ -3077,6 +3157,7 @@ def _analyze_bc_module(
                 )
 
     members: dict[str, str] = {}
+    members_dynamic: bool = False
     if len(enums) == 1:
         enum = enums[0]
         bindings = before.get(id(enum), {})
@@ -3091,7 +3172,7 @@ def _analyze_bc_module(
             seen,
             f"{enum_name} must directly inherit enum.StrEnum",
         )
-        members = _enum_members(parsed, enum, analysis, findings, seen)
+        members, members_dynamic = _enum_members(parsed, enum, analysis, findings, seen)
 
     bases = [node for node in classes if node.name == base_name]
     allowed_class_nodes: set[ast.ClassDef] = {*enums, *bases}
@@ -3268,12 +3349,15 @@ def _analyze_bc_module(
                     )
                     and base_discriminator_default_member is None
                 ):
+                    # 멤버 사전(members) 종속 판정 — 사전이 동적으로 «불완전»할 때만
+                    # 파생 오탐이 되므로 그때만 proof 위임(정적 사전에선 진짜 위반).
                     _append_finding(
                         findings,
                         seen,
                         parsed,
                         discriminator_field,
                         "BC base discriminator default must be own ErrorCode member or None",
+                        requires_static_error_shape=members_dynamic,
                     )
         _class_member_findings(
             parsed,
@@ -3426,12 +3510,15 @@ def _analyze_bc_module(
                 )
                 is None
             ):
+                # 멤버 사전(members) 종속 판정 — 사전이 동적으로 «불완전»할 때만
+                # 파생 오탐이 되므로 그때만 proof 위임(정적 사전에선 진짜 위반).
                 _append_finding(
                     findings,
                     seen,
                     parsed,
                     discriminator_field,
                     "concrete discriminator default must use own ErrorCode member",
+                    requires_static_error_shape=members_dynamic,
                 )
         elif base_discriminator_default_member is None:
             _append_finding(
@@ -4459,57 +4546,117 @@ def main(argv: list[str]) -> int:
     ) and _tree_adopted(bcs):
         print("[check-error-centralization] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
         return 2
+    # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
+    # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
+    collected: list[str] = []
+    pending_analysis: list[str] = []
     tree_findings = _tree_slice(config.root, bcs)
     if tree_findings:
         print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 10행):")
         for f in tree_findings:
             print(f)
-        return 2
-
-    if config.profile in {None, "auto"}:
-        return 0
-    try:
-        inventory = _production_inventory(config.root)
-        source_paths, code_paths, preserve_paths, plan_analysis, blockers = _source_plan(
-            config, inventory
-        )
-        parsed, source_analysis = _load_sources(config.root, source_paths)
-        analysis = [*plan_analysis, *source_analysis]
-        findings: list[Finding] = []
-        if config.profile == "dddjango-code-json":
-            semantic_analysis, findings, blockers = _schema_findings(
-                config,
-                inventory,
-                parsed,
-                code_paths,
-                preserve_paths,
-                blockers,
-            )
-            analysis.extend(semantic_analysis)
-        dynamic_proof_only = bool(analysis) and all(
-            issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
-            for issue in analysis
-        )
-        if (findings or blockers) and (not analysis or dynamic_proof_only):
-            print(
-                "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
-                "inventory, or raw code contract violation:"
-            )
-            for blocker in blockers:
-                print(f"  - {blocker}")
-            for finding in findings:
-                print(finding.render())
-            print(
-                "  근거: common FrameworkErrorSchema는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
-                "canonical ErrorCode/FrameworkErrorSchema hierarchy와 project-wide unique wire code를 소유한다."
-            )
+        if config.anchor is None:
             return 2
-        if analysis:
-            raise UsageError("; ".join(sorted(set(analysis))))
-    except UsageError as exc:
-        print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
-        return 1
+        collected.extend(tree_findings)
 
+    if config.profile not in {None, "auto"}:
+        try:
+            inventory = _production_inventory(config.root)
+            source_paths, code_paths, preserve_paths, plan_analysis, blockers = _source_plan(
+                config, inventory
+            )
+            parsed, source_analysis = _load_sources(config.root, source_paths)
+            analysis = [*plan_analysis, *source_analysis]
+            findings: list[Finding] = []
+            if config.profile == "dddjango-code-json":
+                semantic_analysis, findings, blockers = _schema_findings(
+                    config,
+                    inventory,
+                    parsed,
+                    code_paths,
+                    preserve_paths,
+                    blockers,
+                )
+                analysis.extend(semantic_analysis)
+            dynamic_proof_only = bool(analysis) and all(
+                issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
+                for issue in analysis
+            )
+            reported_findings = findings
+            if dynamic_proof_only:
+                # 정적 error shape 해석에 종속된 판정은 토큰-only 실행에서 억제하고
+                # runtime proof 가 대신 검증한다(#15 requires_static_error_shape 동형).
+                reported_findings = [
+                    finding
+                    for finding in findings
+                    if not finding.requires_static_error_shape
+                ]
+            if (reported_findings or blockers) and (not analysis or dynamic_proof_only):
+                print(
+                    "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
+                    "inventory, or raw code contract violation:"
+                )
+                for blocker in blockers:
+                    print(f"  - {blocker}")
+                for finding in reported_findings:
+                    print(finding.render())
+                if dynamic_proof_only:
+                    # 토큰 진단을 삼키지 않는다(정보 손실 0) — exit 는 findings 가 정하되,
+                    # 남은 정적 해석 불능이 «동적 error shape» 유형임을 함께 보고한다.
+                    print(
+                        "  (참고 — findings 해소 후 잔여 진단이 아래 토큰뿐이면 exit 1 "
+                        "runtime proof 경로가 적용된다:)"
+                    )
+                    for issue in sorted(set(analysis)):
+                        print(f"  - {issue}")
+                print(
+                    "  근거: common FrameworkErrorSchema는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
+                    "canonical ErrorCode/FrameworkErrorSchema hierarchy와 project-wide unique wire code를 소유한다."
+                )
+                if config.anchor is None:
+                    return 2
+                collected.extend(f"  - {blocker}" for blocker in blockers)
+                collected.extend(finding.render() for finding in reported_findings)
+                if dynamic_proof_only:
+                    # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
+                    # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
+                    pending_analysis = sorted(set(analysis))
+            elif analysis:
+                raise UsageError("; ".join(sorted(set(analysis))))
+        except UsageError as exc:
+            print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+
+    if collected:
+        try:
+            verdict = anchor_diff.partition_exit(
+                script=Path(__file__).resolve(),
+                label="[check-error-centralization]",
+                target=config.root,
+                anchor=config.anchor or "",
+                argv=argv[1:],
+                findings=collected,
+                path_flags=frozenset(
+                    {
+                        "--api-module",
+                        "--controller-module",
+                        "--project-code-error-module",
+                        "--project-preserve-error-module",
+                    }
+                ),
+                debt_file=config.anchor_debt_file,
+            )
+        except anchor_diff.AnchorDiffUsage as exc:
+            print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+        if verdict == 0 and pending_analysis:
+            # 토큰-only analysis 는 강등으로 소거되지 않는다 — proof 경로(exit 1).
+            print(
+                "[check-error-centralization] 사용 오류: " + "; ".join(pending_analysis),
+                file=sys.stderr,
+            )
+            return 1
+        return verdict
     return 0
 
 

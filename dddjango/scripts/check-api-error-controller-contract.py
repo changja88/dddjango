@@ -20,6 +20,7 @@ import stat
 import subprocess
 import sys
 
+import anchor_diff
 import checker_target
 from dataclasses import dataclass
 from http import HTTPStatus
@@ -103,6 +104,8 @@ class Config:
     controller_modules: tuple[Path, ...]
     scope_bcs: tuple[str, ...]
     error_bcs: tuple[str, ...]
+    anchor: str | None
+    anchor_debt_file: str | None
 
 
 @dataclass(frozen=True)
@@ -204,6 +207,10 @@ def _argument_parser() -> _UsageParser:
     parser.add_argument("--controller-module", action="append", default=[])
     parser.add_argument("--scope-bc", action="append", default=[])
     parser.add_argument("--error-bc", action="append", default=[])
+    # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
+    parser.add_argument("--anchor", default=None)
+    parser.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
+    parser.add_argument(anchor_diff.DEBT_FLAG, dest="anchor_debt_file", default=None)
     return parser
 
 
@@ -273,6 +280,14 @@ def _parse_config(argv: list[str]) -> Config:
     if profile == "auto" and selectors_present:
         issues.append("auto profile에는 selector를 전달하지 않음")
 
+    if namespace.anchor is not None and namespace.anchor_baseline:
+        issues.append(f"--anchor 와 {anchor_diff.BASELINE_FLAG} 는 함께 전달할 수 없음")
+    if namespace.anchor_debt_file is not None and namespace.anchor is None:
+        issues.append(f"{anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있음(차분 전용 빚 채널)")
+    if namespace.anchor_baseline and anchor_diff.is_git_worktree(root):
+        issues.append(
+            f"{anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용 — git 저장소 TARGET 금지"
+        )
     explicit = profile in {"dddjango-code-json", "preserve-established"}
     scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
     api_raw = _one(
@@ -283,7 +298,8 @@ def _parse_config(argv: list[str]) -> Config:
     )
     scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
     error_bcs = _unique("--error-bc", namespace.error_bc, issues)
-    if explicit and not controller_raw:
+    if explicit and not controller_raw and not namespace.anchor_baseline:
+        # anchor-baseline 모드에선 앵커 트리에 없는 controller 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --controller-module")
     if explicit and not scope_bcs:
         issues.append("필수 인자 누락: --scope-bc")
@@ -337,6 +353,8 @@ def _parse_config(argv: list[str]) -> Config:
         controller_modules=tuple(Path(raw) for raw in controller_raw),
         scope_bcs=scope_bcs,
         error_bcs=error_bcs,
+        anchor=namespace.anchor,
+        anchor_debt_file=namespace.anchor_debt_file,
     )
 
 
@@ -6766,6 +6784,10 @@ def main(argv: list[str]) -> int:
     if not any((bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING) and _tree_adopted2(bcs):
         print("[check-api-error-controller-contract] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
         return 2
+    # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
+    # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
+    collected: list[str] = []
+    pending_analysis: list[str] = []
     tree_findings, tree_candidates = _tree_slice2(config.root, bcs)
     if tree_findings:
         print("[check-api-error-controller-contract] BLOCKER — 입구(컨트롤러) 계약 규율 위반 (트리 8·11·12행):")
@@ -6776,46 +6798,79 @@ def main(argv: list[str]) -> int:
         for c in tree_candidates:
             print(c)
     if tree_findings:
-        return 2
-
-    if config.profile == "auto":
-        return 0
-    try:
-        analysis, findings = _run(config)
-        dynamic_proof_only = bool(analysis) and all(
-            issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
-            for issue in analysis
-        )
-        reported_findings = findings
-        if dynamic_proof_only:
-            reported_findings = [
-                finding
-                for finding in findings
-                if not finding.requires_static_error_shape
-            ]
-        if reported_findings and (not analysis or dynamic_proof_only):
-            print(
-                "[check-api-error-controller-contract] BLOCKER — code-profile "
-                "controller error mapping contract violation:"
-            )
-            for finding in reported_findings:
-                print(finding.render())
-            print(
-                "  근거: known BC failures are mapped directly by their selected "
-                "owner controller through one narrow exception or try-free Result "
-                "path and direct two-argument Status(<approved HTTP status>, error); helper/handler/raw "
-                "detours are not part of this contract."
-            )
+        if config.anchor is None:
             return 2
-        if analysis:
-            raise UsageError("; ".join(analysis))
-    except UsageError as exc:
-        print(
-            f"[check-api-error-controller-contract] 사용 오류: {exc}",
-            file=sys.stderr,
-        )
-        return 1
+        collected.extend(tree_findings)
 
+    if config.profile != "auto":
+        try:
+            analysis, findings = _run(config)
+            dynamic_proof_only = bool(analysis) and all(
+                issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
+                for issue in analysis
+            )
+            reported_findings = findings
+            if dynamic_proof_only:
+                reported_findings = [
+                    finding
+                    for finding in findings
+                    if not finding.requires_static_error_shape
+                ]
+            if reported_findings and (not analysis or dynamic_proof_only):
+                print(
+                    "[check-api-error-controller-contract] BLOCKER — code-profile "
+                    "controller error mapping contract violation:"
+                )
+                for finding in reported_findings:
+                    print(finding.render())
+                print(
+                    "  근거: known BC failures are mapped directly by their selected "
+                    "owner controller through one narrow exception or try-free Result "
+                    "path and direct two-argument Status(<approved HTTP status>, error); helper/handler/raw "
+                    "detours are not part of this contract."
+                )
+                if config.anchor is None:
+                    return 2
+                collected.extend(finding.render() for finding in reported_findings)
+                # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
+                # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
+                pending_analysis = analysis
+            elif analysis:
+                raise UsageError("; ".join(analysis))
+        except UsageError as exc:
+            print(
+                f"[check-api-error-controller-contract] 사용 오류: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+
+    if collected:
+        try:
+            verdict = anchor_diff.partition_exit(
+                script=Path(__file__).resolve(),
+                label="[check-api-error-controller-contract]",
+                target=config.root,
+                anchor=config.anchor or "",
+                argv=argv[1:],
+                findings=collected,
+                path_flags=frozenset({"--api-module", "--controller-module"}),
+                debt_file=config.anchor_debt_file,
+            )
+        except anchor_diff.AnchorDiffUsage as exc:
+            print(
+                f"[check-api-error-controller-contract] 사용 오류: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+        if verdict == 0 and pending_analysis:
+            # 토큰-only analysis 는 강등으로 소거되지 않는다 — proof 경로(exit 1).
+            print(
+                "[check-api-error-controller-contract] 사용 오류: "
+                + "; ".join(pending_analysis),
+                file=sys.stderr,
+            )
+            return 1
+        return verdict
     return 0
 
 

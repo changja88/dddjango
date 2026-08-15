@@ -26,9 +26,10 @@ from typing import Callable
 
 
 try:
+    import anchor_diff
     import standard_tree as _stree
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
@@ -108,6 +109,8 @@ class Config:
     controller_modules: tuple[str, ...]
     scope_bcs: tuple[str, ...]
     error_bcs: tuple[str, ...]
+    anchor: str | None
+    anchor_debt_file: str | None
 
 
 @dataclass(frozen=True)
@@ -191,6 +194,10 @@ def _argument_parser() -> _UsageParser:
     parser.add_argument("--controller-module", action="append", default=[])
     parser.add_argument("--scope-bc", action="append", default=[])
     parser.add_argument("--error-bc", action="append", default=[])
+    # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
+    parser.add_argument("--anchor", default=None)
+    parser.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
+    parser.add_argument(anchor_diff.DEBT_FLAG, dest="anchor_debt_file", default=None)
     return parser
 
 
@@ -290,6 +297,14 @@ def _parse_config(argv: list[str]) -> Config:
     if profile == "auto" and selectors_present:
         issues.append("auto profile에는 scope/source/BC selector를 전달하지 않음")
 
+    if namespace.anchor is not None and namespace.anchor_baseline:
+        issues.append(f"--anchor 와 {anchor_diff.BASELINE_FLAG} 는 함께 전달할 수 없음")
+    if namespace.anchor_debt_file is not None and namespace.anchor is None:
+        issues.append(f"{anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있음(차분 전용 빚 채널)")
+    if namespace.anchor_baseline and anchor_diff.is_git_worktree(root):
+        issues.append(
+            f"{anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용 — git 저장소 TARGET 금지"
+        )
     explicit = profile in {"dddjango-code-json", "preserve-established"}
     strict_content = profile == "dddjango-code-json"
     scope = _one("--scope", namespace.scope, required=explicit, issues=issues)
@@ -301,7 +316,8 @@ def _parse_config(argv: list[str]) -> Config:
     )
     scope_bcs = _unique("--scope-bc", namespace.scope_bc, issues)
     error_bcs = _unique("--error-bc", namespace.error_bc, issues)
-    if explicit and not controller_modules:
+    if explicit and not controller_modules and not namespace.anchor_baseline:
+        # anchor-baseline 모드에선 앵커 트리에 없는 controller 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --controller-module")
     if explicit and not scope_bcs:
         issues.append("필수 인자 누락: --scope-bc")
@@ -351,6 +367,8 @@ def _parse_config(argv: list[str]) -> Config:
         controller_modules=controller_modules,
         scope_bcs=scope_bcs,
         error_bcs=error_bcs,
+        anchor=namespace.anchor,
+        anchor_debt_file=namespace.anchor_debt_file,
     )
 
 
@@ -3339,12 +3357,18 @@ def main(argv: list[str]) -> int:
         ) and _tree_adopted63(bcs):
             print("[check-openapi-error-declaration] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
             return 2
+        # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
+        # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
+        collected: list[str] = []
+        pending_analysis: list[str] = []
         tree_findings = _tree_slice63(config.root)
         if tree_findings:
             print("[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):")
             for f in tree_findings:
                 print(f)
-            return 2
+            if config.anchor is None:
+                return 2
+            collected.extend(tree_findings)
         if config.profile == "dddjango-code-json":
             analysis, findings = _code_findings(config)
             dynamic_proof_only = bool(analysis) and all(
@@ -3353,15 +3377,39 @@ def main(argv: list[str]) -> int:
             )
             if findings and (not analysis or dynamic_proof_only):
                 _print_code_findings(findings)
-                return 2
-            if analysis:
+                if config.anchor is None:
+                    return 2
+                collected.extend(finding.render() for finding in findings)
+                # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
+                # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
+                pending_analysis = analysis
+            elif analysis:
                 raise UsageError("; ".join(analysis))
-            return 0
-        repo_scan = _repo_scan_findings(config.root)
-        if repo_scan:
-            _print_repo_scan_findings(repo_scan)
-            return 2
+        else:
+            repo_scan = _repo_scan_findings(config.root)
+            if repo_scan:
+                _print_repo_scan_findings(repo_scan)
+                if config.anchor is None:
+                    return 2
+                collected.extend(repo_scan)
+        if collected:
+            verdict = anchor_diff.partition_exit(
+                script=Path(__file__).resolve(),
+                label="[check-openapi-error-declaration]",
+                target=config.root,
+                anchor=config.anchor or "",
+                argv=argv[1:],
+                findings=collected,
+                path_flags=frozenset({"--api-module", "--controller-module"}),
+                debt_file=config.anchor_debt_file,
+            )
+            if verdict == 0 and pending_analysis:
+                raise UsageError("; ".join(pending_analysis))
+            return verdict
         return 0
+    except anchor_diff.AnchorDiffUsage as exc:
+        print(f"[check-openapi-error-declaration] 사용 오류: {exc}", file=sys.stderr)
+        return 1
     except UsageError as exc:
         print(f"[check-openapi-error-declaration] 사용 오류: {exc}", file=sys.stderr)
         return 1

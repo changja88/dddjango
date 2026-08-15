@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python:*)",
+      "Bash(DJANGO_SETTINGS_MODULE=broccoli_server.settings.test .venv/bin/python:*)",
+      "Bash(cat:*)",
+      "Bash(sed -n:*)",
+      "Bash(mkdir -p:*)",
+      "Bash(touch:*)",
+      "Bash(graphify query:*)"
+    ]
+  }
+}

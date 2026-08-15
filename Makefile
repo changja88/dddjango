@@ -80,7 +80,7 @@ release:
 		done; \
 		echo ""; echo "[dry-run] 실제 실행 시 수행할 단계 (미실행):"; \
 		echo "    [1] claude plugin validate $(PLUGIN) --strict"; \
-		echo "    [2] 검증 세트 — corpus·corpus_lint·checker_cross_matrix·spec_lint·checker_lint·tree_mirror·reverse_coverage·fixture_matrix·backstop_matrix·scripts byte-copy"; \
+		echo "    [2] 검증 세트 — corpus·corpus_lint·checker_cross_matrix·spec_lint·checker_lint·tree_mirror·reverse_coverage·fixture_matrix·anchor_diff_smoke·backstop_matrix·scripts byte-copy"; \
 		echo "    [3] 두 manifest에 v$$V 기록 (위 미리보기)"; \
 		echo "    [4] git commit -m 'release: v$$V' (manifest 2곳)"; \
 		echo "    [5] git tag -a $$TAG -m '$(NAME) v$$V'"; \
@@ -90,7 +90,7 @@ release:
 	else \
 		echo "[1/7] manifest 검증 (claude --strict)"; \
 		claude plugin validate $(PLUGIN) --strict; \
-		echo "[2/7] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·gate-smoke·backstop·byte-copy)"; \
+		echo "[2/7] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
 		python3 workspace/tools/corpus_mirror_sync.py --check; \
 		PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
 		PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
@@ -99,6 +99,7 @@ release:
 		PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
 		PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
 		PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
+		PYTHONUTF8=1 python3 workspace/tools/anchor_diff_smoke.py; \
 		PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
 		PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
 		PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \

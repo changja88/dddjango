@@ -62,9 +62,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
+    import anchor_diff
     import standard_tree as _tree
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
-    print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
+    print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
@@ -110,6 +111,8 @@ class Config:
     api_module: str | None
     urlconf_module: str | None
     registrar_modules: tuple[str, ...]
+    anchor: str | None
+    anchor_debt_file: str | None
 
 
 @dataclass(frozen=True)
@@ -192,6 +195,10 @@ def _argument_parser() -> _UsageParser:
     parser.add_argument("--api-module", action="append")
     parser.add_argument("--urlconf-module", action="append")
     parser.add_argument("--registrar-module", action="append", default=[])
+    # 판정 차분(anchor_diff) — 신규분만 blocker·앵커 기존분은 보고 강등(2026-08-15 r2″).
+    parser.add_argument("--anchor", default=None)
+    parser.add_argument(anchor_diff.BASELINE_FLAG, action="store_true", dest="anchor_baseline")
+    parser.add_argument(anchor_diff.DEBT_FLAG, dest="anchor_debt_file", default=None)
     return parser
 
 
@@ -276,10 +283,19 @@ def _parse_config(argv: list[str]) -> Config:
         required=code_profile,
         issues=issues,
     )
+    if namespace.anchor is not None and namespace.anchor_baseline:
+        issues.append(f"--anchor 와 {anchor_diff.BASELINE_FLAG} 는 함께 전달할 수 없음")
+    if namespace.anchor_debt_file is not None and namespace.anchor is None:
+        issues.append(f"{anchor_diff.DEBT_FLAG} 는 --anchor 와 함께만 쓸 수 있음(차분 전용 빚 채널)")
+    if namespace.anchor_baseline and anchor_diff.is_git_worktree(root):
+        issues.append(
+            f"{anchor_diff.BASELINE_FLAG} 는 앵커 스냅숏(비-git) 재실행 전용 — git 저장소 TARGET 금지"
+        )
     registrar_modules = tuple(namespace.registrar_module)
     if len(registrar_modules) != len(set(registrar_modules)):
         issues.append("반복 인자 중복: --registrar-module")
-    if code_profile and not registrar_modules:
+    if code_profile and not registrar_modules and not namespace.anchor_baseline:
+        # anchor-baseline 모드에선 앵커 트리에 없는 registrar 가 걷혀 빈 집합이 정상이다.
         issues.append("필수 인자 누락: --registrar-module")
     if preserve_profile and bool(urlconf_module) != bool(registrar_modules):
         issues.append(
@@ -342,6 +358,8 @@ def _parse_config(argv: list[str]) -> Config:
         api_module=api_module,
         urlconf_module=urlconf_module,
         registrar_modules=registrar_modules,
+        anchor=namespace.anchor,
+        anchor_debt_file=namespace.anchor_debt_file,
     )
 
 
@@ -1888,6 +1906,28 @@ def main(argv: list[str]) -> int:
         for c in tree_candidates:
             print(c)
     if composition_findings or di_findings or tree_findings:
+        if config.anchor is not None:
+            all_findings: list[str] = [
+                *(finding.render() for finding in composition_findings),
+                *di_findings,
+                *tree_findings,
+            ]
+            try:
+                return anchor_diff.partition_exit(
+                    script=Path(__file__).resolve(),
+                    label="[check-composition-root]",
+                    target=config.root,
+                    anchor=config.anchor,
+                    argv=argv[1:],
+                    findings=all_findings,
+                    path_flags=frozenset(
+                        {"--api-module", "--urlconf-module", "--registrar-module"}
+                    ),
+                    debt_file=config.anchor_debt_file,
+                )
+            except anchor_diff.AnchorDiffUsage as exc:
+                print(f"[check-composition-root] 사용 오류: {exc}", file=sys.stderr)
+                return 1
         return 2
 
     return 0
