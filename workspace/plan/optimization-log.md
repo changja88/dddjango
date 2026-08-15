@@ -504,3 +504,60 @@ migration_gate+registry_gate --anchor 5630e2f2 — 레인 .venv 3.14·정본 ddd
 - 이월 결점 현황: 1(entitlements)·5(401/503)·6(canon)=**종결** · 2(_events)=명문화 완료 ·
   3(FC-1)=다음 라운드 절차화 · 잔여 비차단: #2/#15 render 무태그·S2 `#12x`류·C2(billing
   다음)·dddart(사용자 직접).
+
+### S4-r1 기동 준비 1·2·3단계 (08-15 심야 — 사용자 지시 「1,2,3단계 진행해줘」)
+
+- **1단계 — v2.11.0 릴리즈 완료**: 커밋 2건(기능 2f9f877·문서 2c64672) → release
+  d067ef6·태그 `dddjango--v2.11.0`·GitHub Release(릴리즈 내장 검증 전건 green — smoke
+  14/7·backstop 679) → 설치본 갱신 **양 하네스 2.11.0**(claude cache=byte-identical
+  pycache 제외·codex marketplace=byte-identical). gh 계정 왕복(changja88→changhyun-hue).
+- **2단계 — billing spec preflight ⑻⑼⑽ 검수 완료**: **충돌 3+stale 빚 1** — ⑻-S2 DB
+  절 부재(S3-r1 STOP 축 그대로)·⑽ §3.3 선언 집합 #5 충돌(r2″ §3 축 동형)·⑽ §5
+  products 의존 사실 stale(published_service 부재 — r2″ 재구현으로 open_host_service·
+  답 갈래 전환)·`legacy_debt.txt` products 행 소멸 대상. ⑼ 실현 표면 4종·accounts/
+  entitlements 의존·api.py 공유 행=전부 ✅. **레인 갈림 실측**: products OHS 재량
+  지점(폴더명·갈래 표현)이 레인 A/B 서로 다름 → §5 개정은 «현 트리 계약 파일이 정본»
+  형태(경로 축자 금지). 개정안 A1~A5=`2026-08-15-billing-spec-preflight-respin.md`
+  — **spec 개정=비위임·사용자 승인 대기**.
+- **3단계 — FC-1 골든 v2 + 기동 절차**: 기존 골든(08-13 09:30 사전등록)이 spec 개정
+  2건(11:04)보다 앞서 작성된 것을 확인 — 격리 agent(읽기 3파일 한정)로 v2 갱신 기동.
+  앵커 상태 실측: 양 레인 `application/billing` 이미 부재(라운드 2 앵커 유지)·설치본
+  2.11.0·allowlist 파일 실재. 잔여 기동 걸음=docs respin 커밋→pycache→graphify→
+  baseline→배선 스모크→build_anchor→해시 기입(개정안 문서 말미에 등재).
+- **FC-1 골든 v2 완료**(`20260815-billing-fc1-golden-v2.md`·원본 v1 무접촉 보존·격리
+  선언 3파일 축자): 신설 I3(grant-시점 family_already_entitled=영구 실패 500·개정 ①
+  — v1 ※ 부재 행 해소)·확정 J2(2^63=입구 통과 후 가드 500·개정 ② — 구 공백 ① 해소)·
+  수정 I2(갈래 분리)·나머지 승계 무변(F1/F2/B4 정합 확인). 공백 재감사: 해소 1·잔존 8.
+  **v1 이 독립 재발견으로 표시한 라운드 2 레인 B STOP 2 지점이 전부 spec 개정으로
+  닫혔음을 골든이 교차 확인** — 사용자 확인 대기. 발주문 S4-r1 초안 리터럴 게이트
+  1·1·0 통과. **기동 준비 잔여=사용자 승인 2(개정안 A1~A5·FC-1 v2)+기동 지시.**
+
+### S4-r1 앵커 봉인 (08-15 심야 — 사용자 「승인」 후 집행)
+
+- 사용자 승인 접수(개정안 A1~A5 + FC-1 v2) → 양 레인 docs respin 적용: spec 개정
+  3건(A1 §7 DB 상수 신설·§8 개번 / A2 §3.3 선언 wire 한정 / A3 §5 products 이관
+  반영)·빚 A4(products 행 소멸·잔존 2행)·발주문 A5(r2″ 판형) — 양 레인 diff 0·리터럴
+  게이트 1·1·0.
+- 오염원 스캔 신규 발견 2폴더 걷음: `.dddjango/20260803-0134-ai-chat-streaming-core`
+  (V1 billing controller 경로 직인용)·`20260806-1657-ai-chat-room-history`(V1 오류
+  공유 방식 직인용) — 양 레인 git rm·잔존 언급 0.
+- 재실측 전건 green: graphify 클린 재빌드(billing 언급 0)·baseline **레인 A 6835
+  (2m51s)·레인 B 6858(2m48s)** — r2″ 봉인 수치 정확 일치·skip 0·**L5 병렬 재실증**
+  (POSTGRES_TEST_DB 분리) · migration_gate 53(양 레인 동일·billing 0)·openapi 51
+  paths·`/v1/payments` 부재·배선 잔존 1=§6-4 존치 문구 · 배선 스모크 PASS(양 레인·
+  원복 클린).
+- anchor-preflight.md S4-r1 판(10항·양 레인 동일 사본) 기입. **앵커: 레인 A
+  `04380b0f`·레인 B `8e11858c`**(첫 레인별 상이 앵커 — r2″ 독립 재구현 이후 트리
+  분기) → 해시 기입 **기동 HEAD: 레인 A `81284941`·레인 B `106a7d81`** — 양 트리
+  클린. 기동 시 잔여: 전 트리 pycache 소거·레인 B allowlist 병합(레인 A 는 7항목
+  실재)·레인 B 발주 파일-경유 전달·Monitor 하트비트 v2. **기동=사용자 지시 대기.**
+
+### S4-r1 기동 보류 (08-15 — 사용자 결정)
+
+- 사용자: 「billing 리빌드가 목적이라면 할 필요 없어 — broccoli-server 리빌드는
+  별도로 진행할 거야.」 → **기동 보류**. 순수 검증 가치(계측 ⓐ~ⓕ·billing급 복잡도
+  실증)만으로는 필수 아님(스트릭 N=2 기달성·수리 전건 정적 green) — 별도 리빌드가
+  이 파이프라인을 자율 모드로 그대로 쓸 경우에만 리허설 가치 재고.
+- 준비물 처분: 앵커 봉인 유지(레인 A `04380b0f`/`81284941`·레인 B `8e11858c`/
+  `106a7d81` — 유지 비용 0·언제든 기동 가능). spec 결함 3건 소거·FC-1 골든 v2·발주문
+  판형은 billing 재료를 쓰는 시점에 그대로 유효.
