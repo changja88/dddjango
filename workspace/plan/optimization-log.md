@@ -347,3 +347,70 @@ migration_gate+registry_gate --anchor 5630e2f2 — 레인 .venv 3.14·정본 ddd
   (확정표 3종·집행성 판정·coder 반환 규율·impl-notes 규율·턴 다이어트 — 2.10.0 후보)
   · C1 다음 라운드 무비용 실측(baseline=r2″) · C2 effort 실험(옵션·기본 보류).
   결정 대기: 리뷰 강도·C0 착수 시점(2.9.0 과의 순서).
+
+### 2.9.0 릴리즈 실행 완료 (08-15 — 사용자 지시)
+
+- 선행 커밋 2건(03b9760 기능분·590f626 문서분) → `make release` minor: 검증 세트 전건
+  green 재실행 → release 커밋 732b39b · 태그 dddjango--v2.9.0 · push · GitHub Release 생성.
+- gh 계정 changja88 전환 후 push·릴리즈, 직후 changhyun-hue 원상 복구.
+- 설치본 갱신: claude(`plugin update dddjango@changja88-dddjango` → 2.9.0)·
+  codex(`plugin marketplace upgrade` → 2.9.0) — 양쪽 scripts byte-identical 확인.
+- 결정 동결 계획 v0 경량 적대 리뷰 3렌즈(정합성·premortem·10th man) 병행 기동 — 결과
+  도착 시 v1 반영 예정.
+
+### 경량 리뷰 3렌즈 + 선행 프록시 실측 → 계획 v1 (08-15 심야)
+
+- 리뷰 수렴 2축: ① ⓐ(결정 재추론)의 크기 실측 0 — 선행 프록시 요구(premortem 1위·
+  10th man 반론 1·4) ② coder 재추론=품질 장치(재료 결함 3회 검출 주체)·freeze 왕복
+  비용 역전 ~2h·impl-notes 신설=무게이트 명세 수정 채널(정합성 치명 1·2).
+- **프록시 실측 2건(기존 원장·무비용)**: ⓐ-1 coder 간 중복 재조회 — 명세·표준류는
+  design-spec 1종 11회뿐(표준 final.md 도구 조회 0 — 스킬 로드 상주=prefill 축).
+  ⓐ-2 codex reasoning 요지 1,633건 전수 분류 — **결정·해석류 9.4% · 검증·조사·읽기
+  52.2%** · 구현 16% · 계획 8.5% · 기타 13.8%.
+- **판정: v0 핵심 전제(사고 몸통=결정 재추론) 실측 기각 → v1 개정** —
+  확정표 3종+freeze+반환 규율 **보류**(천장 ~10%대·치명 2·비용 역전) ·
+  **C0′ 저위험 문면 3건**(집행성 판정+증거 1행 / 재방문 금지+표준 충돌 면제 /
+  발주 리터럴 경로 — 2.10.0 후보) · **C3 컨텍스트 다이어트를 본선 후보로 피벗**
+  (검증·조사 52%·cache_read 73.8M·prefill 11~12M 직격 — 다음 사이클 조사) ·
+  C2 effort=사용자 결정 유지. 계획 정본 `2026-08-15-decision-freeze-plan.md` v1 갱신.
+
+### C0′ 저위험 문면 3건 반영 완료 (08-15 심야 — 로컬 수정+검증·미커밋 · 2.10.0 후보)
+
+- ① 집행성 판정+증거 1행: design-review-{ddd,api,db}(api 는 DESIGN_CONTRACT_REVIEW 한정)·
+  discipline-reviewer(Phase 1 규율 lens 한정) — «가능=명세 확정 결정 3곳 인용·불가=막히는
+  절 지목·인용 없는 가능 판정 무효».
+- ② 결정 재방문 금지+면제 1줄: coder·acceptance-tester — «명세↔정본 표준 충돌 발견=새
+  정보 → 기존 반송 축으로 즉시 보고»(재추론의 결함 검출 기능 보존 — 10th man 면제 반영).
+- ③ 검사기 확장-리터럴 호출: coder 규율 신설+Coordinator step4 입력에 플러그인 설치 루트
+  추가(B0-2 잔여 승인 ~15회 커버 — 부분 실행 비게이트·TARGET=`.`·렌더 기록 `${CLAUDE_
+  PLUGIN_ROOT}` 표기 정본 불변 병기).
+- 의도적 비대칭: ③은 claude 한정(승인 매칭 실측 근거가 claude 레인) · 턴 묶기(읽기 전용
+  확인 한정·TDD 사이클 제외)는 codex coder 한정(턴 수 병목이 codex 실측).
+- 미러: codex dddjango-{coder,acceptance-tester,design-review-×3,discipline-reviewer}
+  SKILL.md 동등 문면. 검증 세트 13종 전건 green 재실행 확인.
+- C3 선행 조사(컨텍스트 구성·발췌 단위·안전망) 백그라운드 진행 중.
+
+### C3 선행 조사 결과 — 보류 판정 + 스킬 오주입 결함 발견 (08-15)
+
+- 실측(coder 7세션): 기동 ~39k 중 스킬 stub 7.3k(19%) · **final.md 126.7k 는 기동
+  미주입·세션 Read 2건 1.9k 뿐** · 턴당 재소비 171k 중 스킬 몫 4.3% · 발췌 상한
+  stub 3개 2.2k/턴(~1.3%). 재소비 몸통=소스 Read 22.5%·Bash 출력 21%·spec 재독
+  18.8%·에코 15.7%·시스템/도구 고정 ~30k.
+- **C3 보류**(전제 «스킬 재료=재소비 몸통» 실측 기각 — v0 확정표와 같은 방식으로 조사
+  게이트가 구현 전에 죽임·비용 0). 재개 조건 2건 계획 §3 기록.
+- 안전망 확인: 기계 검출 456(84.8%)/ⓓ 82 — ⓓ 판정 소유는 reviewer 72·architect 4·
+  coder 0. 경계 성립.
+- **부수 발견(독립 수리)**: coder frontmatter 동명 스킬 3종이 **dddart 1.1.1 로
+  오주입**(원장 Base directory 실측 — Django coder 가 Flutter 하우스룰 stub 수령·
+  r2″ 는 그럼에도 귀속 0 완주 = 표준은 design-spec+검사기가 나름). 한정 표기 문법
+  공식 확인 후 dddjango agents 전수 수리 예정.
+
+### 스킬 오주입 결함 수리 (08-15 — dddjango agents 전수·미커밋)
+
+- 공식 문법 확인(code.claude.com/docs/en/sub-agents — qualified syntax): agent frontmatter
+  `skills:` 의 무한정 이름은 동명 충돌 시 해석이 비결정(자기 플러그인 우선 규칙 없음).
+- 수리: 7 agents 전수의 skills 항목을 `dddjango:<skill>` 한정 표기로 일괄 개정(오주입
+  실측 3종만이 아니라 전 항목 — 미래 충돌 원천 차단).
+- 검증: 세트 13종 전건 green + `claude plugin validate dddjango --strict` 통과.
+- 주의: 설치본 2.9.0 캐시는 무한정 표기 그대로 — **다음 라운드 전 2.10.0 릴리즈+설치본
+  갱신이 있어야 실전에 반영**된다(그 전 라운드는 종전과 동일한 비결정 해석).
