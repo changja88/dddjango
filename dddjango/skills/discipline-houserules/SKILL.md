@@ -1,6 +1,6 @@
 ---
 name: discipline-houserules
-description: dddjango 플러그인 고유 하우스룰 — ①표준 파일트리(BC 골격 140행·배치 결정 순서·이관/브라운필드 취급) ②타입 어노테이션(모든 이름의 첫 대입에 필수) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·BC·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 트리와 규칙 «값»의 단일 출처는 references/final.md 다. 보편 클린코드는 discipline-cleancode, Python 타입 지식은 implementation-python, 테스트 타입 조직은 implementation-test(§4.2).
+description: dddjango 플러그인 고유 하우스룰 — ①표준 파일트리(BC 골격 140행·배치 결정 순서·이관/브라운필드 취급) ②타입 어노테이션(모든 이름의 첫 대입에 필수) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·BC·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 트리와 규칙 «값»의 단일 출처는 references/final.md 다. 보편 클린코드는 dddjango:discipline-cleancode, Python 타입 지식은 implementation-python, 테스트 타입 조직은 dddjango:implementation-test(§4.2).
 user-invocable: false
 ---
 
@@ -10,7 +10,7 @@ user-invocable: false
 
 이 스킬은 **dddjango 플러그인이 만드는 코드에 한정된 집안 규칙(house rules)**이다. `discipline-cleancode`·`discipline-tdd` 가 책에서 온 *보편* 규율인 것과 달리, 여기 담긴 것은 "우리는 이렇게 한다"는 **플러그인 고유의 강제**다.
 
-**값과 절차를 가른다** — 트리·칸·규칙의 «값»은 전부 `references/final.md` 가 단일 출처로 소유하고, 이 SKILL.md 는 «언제 어떻게 읽나»(결정 순서·중재·신호)만 소유한다. 값을 여기에 복제하지 않는다 — 사본은 조용히 낡아 다음 재저작이 낡은 사본을 신뢰원으로 삼는다.
+**값과 절차를 가른다** — 트리·칸·규칙의 «값»은 전부 `references/final.md` 가 단일 출처로 소유하고, 이 SKILL.md 는 «언제 어떻게 읽나»(결정 순서·중재·신호)만 소유한다. 값을 여기에 복제하지 않는다 — 사본은 조용히 낡아 다음 재저작이 낡은 사본을 신뢰원으로 삼는다. 이 단일 출처의 관할은 트리·골격·명명 «값»이다 — 무접두 `#N` 규칙의 «본문» 정본은 저장소의 정본 명세이고 플러그인 배포본에는 동봉되지 않으며, 플러그인 문서에는 집행에 필요한 발췌만 실린다(2026-08-15).
 
 경계:
 

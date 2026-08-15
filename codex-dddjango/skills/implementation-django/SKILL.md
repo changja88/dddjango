@@ -12,16 +12,16 @@ Django 코어(모델·ORM·서비스 레이어·트랜잭션·설정·마이그�
 - 서버렌더 표현계층(뷰=어댑터·템플릿·웹폼·HTMX/CSRF) → `implementation-django-web`
 - JSON API 어댑터(Router/Schema) → `implementation-django-ninja`
 - 신규 REST API 계약 설계 → `architecture-api`
-- 도메인 전략·애그리거트·도메인이벤트 채택 → `architecture-ddd`
+- 도메인 전략·애그리거트·도메인이벤트 채택 → `dddjango-architecture-ddd`
 - DB 신뢰성·인덱스·트랜잭션 격리·outbox 전달 보장 → `architecture-db`
-- Python 관용구 → `implementation-python`, 클린코드 원칙 → `discipline-cleancode`
+- Python 관용구 → `implementation-python`, 클린코드 원칙 → `dddjango-discipline-cleancode`
 
 ## 핵심 운영 원칙
 
 - 비즈니스 로직은 fat model에 두고 뷰·시리얼라이저는 얇게 (§4.1)
 - 서비스 레이어 도입 시점과 HackSoft service/selector 패턴 (§16.1–§16.2)
 - 트랜잭션·일관성 경계는 `transaction.atomic()`, 외부 부수효과는 `transaction.on_commit()` (§16.4)
-- 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)
+- 메시지 유실이 불가하면 트랜잭셔널 outbox로 구현 (§16.5 — 채택 기준 `dddjango-architecture-ddd` §3.7, 전달 보장 `architecture-db` §9.7)
 - Choices 계층 소유: 도메인 상태 값 집합은 domain Enum 파생(TextChoices 자체 선언은 순수 인프라 필드 한정), `default=`는 `.value` 평탄화, 비교·`.filter()`는 심볼로만 (§2.5, 마이그레이션 동결 §10.4)
 - QuerySet 최적화·N+1 방지는 selector/QuerySet 메서드로 (§5, §11.1)
 - 마이그레이션은 안전·무중단 순서 준수 (§10)

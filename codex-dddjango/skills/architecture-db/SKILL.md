@@ -10,7 +10,7 @@ description: 관계형 데이터베이스 설계 지식 — ERD·정규화·역�
 관계형 DB 아키텍처 결정(데이터 모델링·인덱스 설계·제약조건·트랜잭션 격리·락 전략·멱등성 저장소·outbox 전달·rollout 안전성)이 필요할 때 로드한다. 경계:
 
 - Django ORM·마이그레이션 코드 작성 → `implementation-django`
-- 도메인 이벤트 채택 여부·애그리거트 경계 → `architecture-ddd`
+- 도메인 이벤트 채택 여부·애그리거트 경계 → `dddjango-architecture-ddd`
 - REST 계약·API 멱등성 키 정책 → `architecture-api`
 
 ## 핵심 운영 원칙

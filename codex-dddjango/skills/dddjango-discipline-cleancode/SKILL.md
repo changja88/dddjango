@@ -1,5 +1,5 @@
 ---
-name: discipline-cleancode
+name: dddjango-discipline-cleancode
 description: 기술 무관 클린코드 규율 — 네이밍, 함수 설계, 추상화·캡슐화, 깊은 모듈 설계, 객체 설계 원칙, SOLID, 상태 관리, 오류 처리, 중복 제거·DRY, 협력·의존성 관리, 리팩토링, 레거시 코드, 설계 철학. 코드를 새로 작성하거나 리팩터링할 때 명명·함수 형태·책임·캡슐화·추상화·SOLID·중복·오류 처리 원칙이 필요하면 로드한다. Python 언어 관용구·PEP8 기계적 규칙은 implementation-python, Django 특화 패턴은 implementation-django로 위임.
 ---
 
@@ -11,8 +11,8 @@ description: 기술 무관 클린코드 규율 — 네이밍, 함수 설계, 추
 
 - Python 언어 관용구·PEP8·타입 힌트·docstring 기계적 규칙 → `implementation-python`
 - Django 모델·ORM·서비스 레이어 특화 패턴 → `implementation-django`
-- 도메인 전략·애그리거트·바운디드 컨텍스트 → `architecture-ddd`
-- 테스트 코드 작성법(mock·픽스처·assert) → `implementation-test`
+- 도메인 전략·애그리거트·바운디드 컨텍스트 → `dddjango-architecture-ddd`
+- 테스트 코드 작성법(mock·픽스처·assert) → `dddjango-implementation-test`
 
 ## 핵심 운영 원칙
 

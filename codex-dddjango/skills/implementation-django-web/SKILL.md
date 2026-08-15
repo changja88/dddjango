@@ -13,8 +13,8 @@ Django TemplateView·Generic CBV/FBV·템플릿·웹폼·HTMX fragment·CSRF·vi
 - Django Ninja Router/Schema/API 어댑터 구현 → `implementation-django-ninja`
 - 모델·QuerySet·Manager·마이그레이션·트랜잭션 → `implementation-django`
 - DB locking·isolation·index·rollout/backfill → `architecture-db`
-- pytest 픽스처·테스트더블·상세 테스트 구현 → `implementation-test`
-- 도메인 상태 전이·정책·불변식 → `architecture-ddd`
+- pytest 픽스처·테스트더블·상세 테스트 구현 → `dddjango-implementation-test`
+- 도메인 상태 전이·정책·불변식 → `dddjango-architecture-ddd`
 
 ## 핵심 운영 원칙
 

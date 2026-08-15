@@ -591,7 +591,9 @@ class OrderProductNotFoundError(OrderErrorSchema):
 ```
 
 BC base의 식별자 field는 공통 annotation의 wrapper/nullability·required/default와 default를
-제외한 `Field(...)` metadata를 보존하고 `str` 자리만 자기 Enum으로 좁힌다. 공통 default가
+제외한 `Field(...)` metadata를 보존하고 `str` 자리만 자기 Enum으로 좁힌다. 단 좁힌 식별자
+field는 공통의 default를 잃어 required여도 canon이다(식별자 field 한정·ErrorCode 좁힘 동반일
+때만 — 2026-08-15). 공통 default가
 문자열이면 같은 wire value의 Enum member로 표현한다. concrete 오류는 slot 6에서 해당
 concrete의 고정값으로 승인된 모든 required field에 default가 있어 인자 없이 생성한다.
 새 필드·validator·child `model_config`나 annotation/Field metadata drift를 concrete subclass에

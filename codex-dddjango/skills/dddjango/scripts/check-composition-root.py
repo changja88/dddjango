@@ -1851,6 +1851,10 @@ def _standard_tree_slice(root: Path) -> tuple[list[str], list[str]]:
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
+        if config.anchor is not None:
+            # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚
+            # 파일·공허 차분이 침묵 exit 0 되지 않게 parse 직후 막는다(fail-closed).
+            anchor_diff.validate_materials(config.root, config.anchor, config.anchor_debt_file)
         inventory = _code_inventory(config.root)
         parsed: dict[Path, ParsedSource] = {}
         if config.profile in {"dddjango-code-json", "preserve-established"}:
@@ -1862,7 +1866,7 @@ def main(argv: list[str]) -> int:
                 raise UsageError("; ".join(analysis))
         di_findings = _filtered_di_findings(config.root, inventory)
         tree_findings, tree_candidates = _standard_tree_slice(config.root)
-    except UsageError as exc:
+    except (UsageError, anchor_diff.AnchorDiffUsage) as exc:
         print(f"[check-composition-root] 사용 오류: {exc}", file=sys.stderr)
         return 1
     except SystemExit as exc:  # argparse --help

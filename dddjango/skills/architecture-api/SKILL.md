@@ -1,6 +1,6 @@
 ---
 name: architecture-api
-description: REST/HTTP API 계약 설계 지식 — 리소스·메서드 의미론, 요청/응답 계약, 상태 코드, dddjango-code-json 기본과 선택형 RFC 9457 에러 프로필, 페이지네이션·버전관리·하위 호환성·Rate Limiting·멱등성 키·OpenAPI. REST/HTTP 계약(엔드포인트 설계, 상태 코드 선택, 에러 프로필, 버전·하위 호환성 결정, OpenAPI 반영)을 새로 정의하거나 변경할 때 먼저 로드한다. JSON 직렬화·라우터 구현은 implementation-django-ninja, 서버렌더 표현계층은 implementation-django-web, 도메인 모델·애그리거트는 architecture-ddd, 데이터 신뢰성·트랜잭션은 architecture-db로 위임.
+description: REST/HTTP API 계약 설계 지식 — 리소스·메서드 의미론, 요청/응답 계약, 상태 코드, dddjango-code-json 기본과 선택형 RFC 9457 에러 프로필, 페이지네이션·버전관리·하위 호환성·Rate Limiting·멱등성 키·OpenAPI. REST/HTTP 계약(엔드포인트 설계, 상태 코드 선택, 에러 프로필, 버전·하위 호환성 결정, OpenAPI 반영)을 새로 정의하거나 변경할 때 먼저 로드한다. JSON 직렬화·라우터 구현은 implementation-django-ninja, 서버렌더 표현계층은 implementation-django-web, 도메인 모델·애그리거트는 dddjango:architecture-ddd, 데이터 신뢰성·트랜잭션은 architecture-db로 위임.
 user-invocable: false
 ---
 

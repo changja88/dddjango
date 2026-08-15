@@ -1,5 +1,5 @@
 ---
-name: architecture-ddd
+name: dddjango-architecture-ddd
 description: 도메인 주도 설계(DDD) 지식 — 전략 패턴(바운디드 컨텍스트·유비쿼터스 언어·컨텍스트 맵·증류·이벤트 스토밍), 전술 패턴(값 객체·엔티티·애그리거트·리포지토리·도메인 서비스·응용 서비스·도메인 이벤트·Specification), 유연한 설계, 아키텍처(계층+DIP·핵사고날·CQRS), 구현 패턴(패키지 구조·Data Mapper·Repository+UoW·Event Sourcing·Saga·패턴 선택). 도메인 언어·비즈니스 정책·애그리거트 경계·컨텍스트 경계·도메인 이벤트 채택을 결정할 때 먼저 로드한다. Django 구현 코드는 implementation-django, outbox 전달 보장과 트랜잭션 설계는 architecture-db, API 계약은 architecture-api로 위임.
 ---
 

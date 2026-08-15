@@ -7,14 +7,20 @@ registry_gate_smoke 와 같은 부류(git 앵커가 재료 — fixture_matrix �
 케이스(2026-08-15 S3-r2″ 레인 B 유효 정지 → 개선 후보 ⑤ 수정의 고정):
   N  --anchor 미지정                        → exit 2 (현행 동작 완전 보존)
   V  공허 차분(앵커=HEAD·clean)             → exit 1 (커밋-후-검사 세탁 차단)
+  M  무발견 clean + resolve 불능 앵커        → exit 1 (F2 — 재료 선검증: bogus 앵커가
+                                              findings 0 이라고 침묵 exit 0 되지 않는다)
   A  신규 위반(앵커 이후 working)           → exit 2 + 신규분 절에 그 위반
   B  앵커 기존분-only                       → exit 0 + 기존분 전량 보고(침묵 금지)
   E  빚 채널(--legacy-debt-file 승인 매칭)   → exit 0 + «이관 빚» 절 보고
+  E2 숫자 없는 빚 tag(`##` 류)              → exit 1 (S2 — 발화 불능 규칙은 형식 오류)
   S1 selector 렌더 + 앵커에 없는 selector    → 앵커 재실행이 그 selector 를 걷고
      (check-composition-root code-json)       «selector 렌더 재실행» 기준선으로 성립,
                                               앵커 기존 위반은 강등(exit 0)
   S2 S1 + 신규 위반 추가                     → 같은 파일 안 신규 진단만 red(exit 2),
                                               기존 진단은 기존분 절로 분리
+  S3 S2 의 신규 위반을 `:N` 표기 빚으로 승인  → exit 0 + «이관 빚» 절 (F1 — 빚 매칭이
+                                              registry_gate 와 같은 «정규화 라인» 코퍼스:
+                                              라인번호 `:N` 표기 항목이 직접 계열에서도 격리)
   T  registry 2번 dynamic Enum 토큰          → exit 1 + DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED
      (check-error-centralization code-json)    (일반 분석 오류로 죽던 r2″ 축) · 정적
                                               대조군은 exit 0 무변
@@ -175,6 +181,15 @@ def main() -> int:
         code, out = _run(CTX, repo, ["--anchor", head])
         rows.append(("V 공허 차분", 1, code, "공허" in out, "앵커=HEAD·clean 세탁 차단"))
 
+        # M — 무발견 clean + resolve 불능 앵커: findings 0 이어도 재료 선검증이 막는다(F2).
+        repo, _anchor = _init_repo(td, "bogus", base)
+        code, out = _run(CTX, repo, ["--anchor", "deadbeef"])
+        rows.append((
+            "M clean+bogus 앵커", 1, code,
+            "resolve 불능" in out,
+            "무발견 clean 에서도 앵커 재료 선검증(F2)",
+        ))
+
         # A — 앵커 이후 working tree 신규 위반 → 신규분 blocker.
         repo, anchor = _init_repo(td, "new", base)
         _write(repo, _VIOLATION_REL, _VIOLATION_SRC)
@@ -207,6 +222,16 @@ def main() -> int:
             "E 빚 채널", 0, code,
             "이관 빚" in out and "schema_smoke" in out,
             "빚 매칭 신규분은 exit 제외·기록 의무",
+        ))
+
+        # E2 — 숫자 없는 빚 tag: 어떤 `[#N]` 과도 일치 불능인 «발화 불능 규칙» 거절(S2).
+        bad_debt: Path = td / "bad_debt.txt"
+        bad_debt.write_text("## schema_smoke\n", encoding="utf-8")
+        code, out = _run(CTX, repo, ["--anchor", anchor, "--legacy-debt-file", str(bad_debt)])
+        rows.append((
+            "E2 숫자 없는 tag 거절", 1, code,
+            "형식 오류" in out,
+            "발화 불능 빚 규칙은 조용히 수용하지 않는다(S2)",
         ))
 
         # S1 — selector 렌더 + 앵커에 없는 selector 경로: 앵커 재실행이 그 selector 를
@@ -243,6 +268,23 @@ def main() -> int:
             and "controller` import" in out.split("== 신규분")[-1]
             and "앵커 기존분(잔존) 1건" in out,
             "신규 진단만 red·기존 진단은 보고 절",
+        ))
+
+        # S3 — F1: S2 의 신규 위반(`config/api.py:1 …`)을 «정규화 표기»(`:N`) 빚으로 승인.
+        #      빚 매칭 코퍼스가 registry_gate 와 같은 정규화 라인이므로 `:N` 항목이
+        #      직접 계열에서도 격리된다(원문 라인 매칭이던 구판에선 매칭 불능 → exit 2).
+        norm_debt: Path = td / "norm_debt.txt"
+        norm_debt.write_text("#437 config/api.py:N\n", encoding="utf-8")
+        code, out = _run(
+            COMP, repo_dir,
+            [*_S_ARGS, "--anchor", anchor, "--legacy-debt-file", str(norm_debt)],
+        )
+        rows.append((
+            "S3 `:N` 표기 빚 격리(F1)", 0, code,
+            "신규분(앵커 이후) 0건" in out
+            and "config/api.py" in out.split("== 이관 빚")[-1].split("== 앵커 기존분")[0]
+            and "앵커 기존분(잔존) 1건" in out,
+            "빚 코퍼스=정규화 라인(registry_gate 동일)",
         ))
 
         # T — registry 2번 dynamic Enum 토큰: 일반 분석 오류 대신 PROOF 토큰 발화.

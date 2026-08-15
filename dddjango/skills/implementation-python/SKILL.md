@@ -1,6 +1,6 @@
 ---
 name: implementation-python
-description: Python 언어 특화 구현 지식 — 타입 힌트·타입 시스템, 구조적 패턴 매칭, 컬렉션·데이터 구조, 함수 설계, 데코레이터, 디스크립터, @property, 클래스 설계, Protocol 심화, Enum/dataclass/NamedTuple, 연산자 오버로딩, pydantic v2, 이터레이터·제너레이터, 컨텍스트 매니저, 예외 처리, 동시성·병렬성, 성능 프로파일링, f-문자열, Python 관용 표현, 디자인 패턴, Ruff, mypy/pyright, 디버깅, 독스트링, 정밀 연산, Python 3.14 변경사항. Python 관용구·타입·Protocol/ABC·경계 도구 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 기술무관 클린코드 원칙은 discipline-cleancode, Django 프레임워크는 implementation-django, 구조 패턴 선택은 architecture-ddd, 테스트 코드 작성은 implementation-test로 위임.
+description: Python 언어 특화 구현 지식 — 타입 힌트·타입 시스템, 구조적 패턴 매칭, 컬렉션·데이터 구조, 함수 설계, 데코레이터, 디스크립터, @property, 클래스 설계, Protocol 심화, Enum/dataclass/NamedTuple, 연산자 오버로딩, pydantic v2, 이터레이터·제너레이터, 컨텍스트 매니저, 예외 처리, 동시성·병렬성, 성능 프로파일링, f-문자열, Python 관용 표현, 디자인 패턴, Ruff, mypy/pyright, 디버깅, 독스트링, 정밀 연산, Python 3.14 변경사항. Python 관용구·타입·Protocol/ABC·경계 도구 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 기술무관 클린코드 원칙은 dddjango:discipline-cleancode, Django 프레임워크는 implementation-django, 구조 패턴 선택은 dddjango:architecture-ddd, 테스트 코드 작성은 implementation-test로 위임.
 user-invocable: false
 ---
 

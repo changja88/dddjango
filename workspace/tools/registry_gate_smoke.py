@@ -12,6 +12,8 @@ release 게이트 [2/7] 검증 세트에 등록되어 함께 돈다(Makefile).
   C  A1 공격(위반을 «선커밋»하고 무해 변경) → exit 2 (경로-매칭 게이트가 뚫리던 자리)
   D  A2 공격(골격 칸 «삭제» — 부재 위반)   → exit 2 (부재는 변경 집합에 경로가 없다)
   E  빚 채널(승인 목록 매칭)              → exit 0 + «이관 빚» 절 보고
+  U  usage 오류(알 수 없는 flag)          → exit 1 (F3 — 문면 계약 1=usage·2=위반,
+                                            argparse 기본 exit 2 로 새지 않는다)
 
 사용: python3 registry_gate_smoke.py
 exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
@@ -116,6 +118,17 @@ def main() -> int:
         )
         code, out = _gate(repo, anchor, ["--legacy-debt-file", str(debt)])
         rows.append(("E 빚 채널", 0, code, "이관 빚" in out and "schema_smoke" in out, "exit 제외·보고 필수"))
+
+        # U — usage 오류: 알 수 없는 flag → 문면 계약 exit 1(F3 — argparse 기본 2 봉합).
+        proc = subprocess.run(
+            [sys.executable, str(GATE), str(repo), "--nope"],
+            capture_output=True, text=True,
+        )
+        rows.append((
+            "U usage exit 1", 1, proc.returncode,
+            "사용 오류" in (proc.stdout + proc.stderr),
+            "usage 오류는 exit 1(F3)",
+        ))
 
     print("| 케이스 | 기대 exit | 실측 | 내용 | 판정 |")
     print("|---|---|---|---|---|")

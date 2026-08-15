@@ -3304,6 +3304,23 @@ def _analyze_bc_module(
                     discriminator_field,
                     discriminator_bindings,
                 )
+                # 승인 canon(2026-08-15): 식별자 field 를 자기 ErrorCode 로 «정확히»
+                # 좁히면서 공통의 default 를 잃어 required 가 되는 모양은 위반이 아니다.
+                # 면제는 세 조건 동시 충족일 때만 — ① 이 field 가 공통 식별자 field 이고
+                # ② annotation 좁힘이 공통 계약과 정확히 일치하며(ErrorCode 좁힘 동반)
+                # ③ 공통엔 default 가 있고 base 는 default 없이 required 다. 그 밖의
+                # required/default 의미 변화(default 값·kind 드리프트, 역방향 default
+                # 추가)는 계속 위반이다.
+                narrowed_required_canon: bool = (
+                    contract.discriminator_annotation is not None
+                    and narrowed_signature == contract.discriminator_annotation
+                    and not contract.required
+                    and _field_default_kind(
+                        discriminator_field,
+                        discriminator_bindings,
+                    )
+                    == "required"
+                )
                 if (
                     _field_default_signature(
                         discriminator_field,
@@ -3312,6 +3329,7 @@ def _analyze_bc_module(
                         enum_members=members,
                     )
                     != contract.default
+                    and not narrowed_required_canon
                 ):
                     _append_finding(
                         findings,
@@ -4539,6 +4557,15 @@ def main(argv: list[str]) -> int:
     except SystemExit as exc:
         return int(exc.code)
 
+    if config.anchor is not None:
+        # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚 파일·
+        # 공허 차분이 침묵 exit 0 되지 않게 parse 직후 막는다(fail-closed).
+        try:
+            anchor_diff.validate_materials(config.root, config.anchor, config.anchor_debt_file)
+        except anchor_diff.AnchorDiffUsage as exc:
+            print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
+            return 1
+
     # 표준 트리 슬라이스 — 프로필과 무관하게 먼저 본다(옛 auto 무동작 = fail-open 차단).
     bcs = _tree_bcs(config.root)
     if not any(
@@ -4645,6 +4672,7 @@ def main(argv: list[str]) -> int:
                     }
                 ),
                 debt_file=config.anchor_debt_file,
+                analysis_pending=bool(pending_analysis),
             )
         except anchor_diff.AnchorDiffUsage as exc:
             print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)

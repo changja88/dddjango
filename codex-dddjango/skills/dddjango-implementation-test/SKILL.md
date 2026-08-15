@@ -1,5 +1,5 @@
 ---
-name: implementation-test
+name: dddjango-implementation-test
 description: 테스트 코드 작성법 종합 지식 — 테스트 전략·피라미드, migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 구분, pytest 구조·픽스처·마커·플러그인, Mock·테스트더블, Property-Based Testing, 팩토리, 시간·HTTP 모킹, 통합 테스트, 커버리지, 테스트 품질·안티패턴, Mutation Testing, BDD, mounted Django client API 계약, Idempotency·동시성 테스트, 디버깅. 테스트 코드·픽스처·테스트더블·계약 검증 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. 무엇을 테스트하고 기존 테스트를 유지·갱신·분리·삭제할지는 discipline-tdd, Django 구현은 implementation-django 계열로 위임.
 ---
 

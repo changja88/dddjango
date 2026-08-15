@@ -6779,6 +6779,18 @@ def main(argv: list[str]) -> int:
     except SystemExit as exc:
         return int(exc.code)
 
+    if config.anchor is not None:
+        # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚 파일·
+        # 공허 차분이 침묵 exit 0 되지 않게 parse 직후 막는다(fail-closed).
+        try:
+            anchor_diff.validate_materials(config.root, config.anchor, config.anchor_debt_file)
+        except anchor_diff.AnchorDiffUsage as exc:
+            print(
+                f"[check-api-error-controller-contract] 사용 오류: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+
     # 표준 트리 슬라이스 — 프로필과 무관하게 먼저 본다(옛 auto 무동작 = fail-open 차단).
     bcs = _tree_bcs2(config.root)
     if not any((bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING) and _tree_adopted2(bcs):
@@ -6855,6 +6867,7 @@ def main(argv: list[str]) -> int:
                 findings=collected,
                 path_flags=frozenset({"--api-module", "--controller-module"}),
                 debt_file=config.anchor_debt_file,
+                analysis_pending=bool(pending_analysis),
             )
         except anchor_diff.AnchorDiffUsage as exc:
             print(

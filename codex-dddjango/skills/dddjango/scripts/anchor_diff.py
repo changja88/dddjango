@@ -44,7 +44,8 @@ from checker_registry import REGISTRY, checker_argv  # noqa: E402
 # 앵커 스냅숏 재실행 모드 flag — 다섯 검사기(registry 2·5·6·15·16번)가 공통 수용한다.
 BASELINE_FLAG: str = "--anchor-baseline"
 # 사용자 승인 «이관 빚» 목록 flag — registry_gate 와 같은 이름·같은 줄 형식
-# (`#<규칙> <부분문자열>`)·같은 의미(신규분 exit 에서 빼되 «빚» 절로 반드시 보고).
+# (`#<규칙> <부분문자열>`)·같은 의미(신규분 exit 에서 빼되 «빚» 절로 반드시 보고)·
+# 같은 매칭 코퍼스(정규화 라인 — `debt_match` 하나를 두 도구가 공유한다).
 # 검사기(check-*.py) 소스는 이 리터럴을 직접 쓰지 않고 이 상수만 참조한다(checker_lint ㉢
 # 는 check-*.py 만 훑는다 — registry_gate 처럼 이 모듈은 그 낱말 규율 밖이다).
 DEBT_FLAG: str = "--legacy-debt-file"
@@ -56,13 +57,14 @@ class AnchorDiffUsage(Exception):
     """--anchor 재료 결손·공허 차분 — 호출 검사기의 사용 오류 경로(exit 1)로 보낸다."""
 
 
-def _git(root: Path, *args: str) -> "subprocess.CompletedProcess[str]":
+def run_git(root: Path, *args: str) -> "subprocess.CompletedProcess[str]":
+    """git 실행 공용 헬퍼 — registry_gate 도 이것을 import 한다(복제 금지)."""
     return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
 
 
 def is_git_worktree(root: Path) -> bool:
     """`--anchor-baseline` 의 비-git 전용 가드와 앵커 재료 검증이 함께 쓴다."""
-    return _git(root, "rev-parse", "--is-inside-work-tree").returncode == 0
+    return run_git(root, "rev-parse", "--is-inside-work-tree").returncode == 0
 
 
 def resolve_anchor(root: Path, anchor: str) -> str:
@@ -71,12 +73,12 @@ def resolve_anchor(root: Path, anchor: str) -> str:
         raise AnchorDiffUsage(
             "--anchor 는 git 저장소 TARGET 에서만 쓸 수 있다 — 차분 재료가 없다"
         )
-    rev = _git(root, "rev-parse", "--verify", f"{anchor}^{{commit}}")
+    rev = run_git(root, "rev-parse", "--verify", f"{anchor}^{{commit}}")
     if rev.returncode != 0:
         raise AnchorDiffUsage(f"앵커 {anchor!r} resolve 불능 — {rev.stderr.strip()}")
     sha: str = rev.stdout.strip()
-    head: str = _git(root, "rev-parse", "HEAD").stdout.strip()
-    dirty: bool = bool(_git(root, "status", "--porcelain").stdout.strip())
+    head: str = run_git(root, "rev-parse", "HEAD").stdout.strip()
+    dirty: bool = bool(run_git(root, "status", "--porcelain").stdout.strip())
     if sha == head and not dirty:
         raise AnchorDiffUsage(
             "앵커=HEAD 이고 working tree 가 clean — 차분이 공허하다. 검사는 구현 커밋 "
@@ -85,8 +87,8 @@ def resolve_anchor(root: Path, anchor: str) -> str:
     return sha
 
 
-def _snapshot_anchor(root: Path, sha: str, dest: Path) -> None:
-    """앵커 커밋의 트리를 dest 에 푼다(registry_gate `_snapshot_anchor` 동형)."""
+def snapshot_anchor(root: Path, sha: str, dest: Path) -> None:
+    """앵커 커밋의 트리를 dest 에 푼다 — registry_gate 도 이것을 import 한다(복제 금지)."""
     dest.mkdir(parents=True)
     archive = subprocess.Popen(
         ["git", "-C", str(root), "archive", sha],
@@ -148,18 +150,50 @@ def _run_lines(cmd: "list[str]") -> "tuple[int, list[str]]":
     return proc.returncode, (proc.stdout + "\n" + proc.stderr).splitlines()
 
 
-def _load_debt(path: Path) -> "list[tuple[str, str]]":
-    """이관 빚 승인 목록 — registry_gate `_load_debt` 동형(`#<규칙> <부분문자열>`)."""
+def load_debt(path: Path) -> "list[tuple[str, str]]":
+    """이관 빚 승인 목록 로더 — registry_gate 도 이것을 import 한다(복제 금지).
+
+    줄 형식 `#<규칙번호> <부분문자열>`(빈 줄·`//` 주석 허용). tag 는 `#<숫자>` 만 받는다 —
+    숫자 없는 tag(`#`·`##` 류)는 어떤 진단의 `[#N]` 과도 일치할 수 없는 «발화 불능 규칙»
+    이라 조용히 수용하지 않고 형식 오류로 거절한다(fail-closed).
+    """
     out: "list[tuple[str, str]]" = []
     for raw in path.read_text(encoding="utf-8").splitlines():
         line: str = raw.strip()
         if not line or line.startswith("//"):
             continue
         parts: "list[str]" = line.split(None, 1)
-        if len(parts) != 2 or not parts[0].startswith("#"):
-            raise AnchorDiffUsage(f"빚 목록 줄 형식 오류: {raw!r} — `#<규칙> <부분문자열>`")
+        if len(parts) != 2 or re.fullmatch(r"#\d+", parts[0]) is None:
+            raise AnchorDiffUsage(
+                f"빚 목록 줄 형식 오류: {raw!r} — `#<규칙번호> <부분문자열>`(규칙번호는 숫자)"
+            )
         out.append((parts[0], parts[1]))
     return out
+
+
+def debt_match(normalized_line: str, debt_rules: "list[tuple[str, str]]") -> bool:
+    """빚 매칭 술어 — 두 도구(직접 계열·registry_gate)가 같은 코퍼스로 판정한다.
+
+    코퍼스는 «정규화 라인»(절대 경로 echo 제거·라인번호 `:N` 치환)이다 — 같은 빚 파일이
+    도구에 따라 다르게 읽히지 않는다. 레인 실물 형식(`#12 application.pairing` 류
+    dotted-module 부분문자열)은 정규화가 건드리지 않으므로 그대로 매칭된다(하위 호환).
+    """
+    return any(f"[{tag}]" in normalized_line and sub in normalized_line for tag, sub in debt_rules)
+
+
+def validate_materials(target: Path, anchor: str, debt_file: "str | None") -> None:
+    """`--anchor` 재료 선검증 — findings 유무와 무관하게 parse 직후 호출한다.
+
+    무발견 clean 실행에서도 resolve 불능 앵커·부재/형식 오류 빚 파일·공허 차분
+    (앵커=HEAD·clean)이 침묵 exit 0 으로 새지 않게 AnchorDiffUsage(호출측 사용 오류
+    exit 1)로 보낸다(fail-closed). partition_exit 의 재검증과 중복이지만 그쪽은
+    findings 가 있을 때만 도달한다."""
+    resolve_anchor(target.resolve(), anchor)
+    if debt_file is not None:
+        debt_path: Path = Path(debt_file)
+        if not debt_path.is_file():
+            raise AnchorDiffUsage(f"빚 목록 {debt_path} 없음")
+        load_debt(debt_path)
 
 
 def _normalize(line: str, roots: "tuple[str, ...]") -> str:
@@ -179,26 +213,30 @@ def partition_exit(
     findings: "list[str]",
     path_flags: "frozenset[str]" = frozenset(),
     debt_file: "str | None" = None,
+    analysis_pending: bool = False,
 ) -> int:
     """현재 findings 를 앵커 기준선과 대조해 차분 절을 출력하고 exit 를 정한다.
 
     반환 2 = 신규분 존재(현행대로 blocker) · 0 = 전건 앵커 기존분(강등 + 보고).
     debt_file(사용자 승인 목록)에 맞는 신규분은 exit 에서 빼되 «빚» 절로 보고한다
-    (registry_gate 와 동일 — 빚은 기록 근거이지 모양 복사 근거가 아니다).
+    (registry_gate 와 동일 — 빚은 기록 근거이지 모양 복사 근거가 아니다). 빚 매칭은
+    분류와 같은 «정규화 라인» 코퍼스에 건다(debt_match — registry_gate 동일 판정).
     재료 결손·공허 차분은 AnchorDiffUsage — 호출측 사용 오류 경로(exit 1)가 받는다.
     호출측은 findings 를 이미 전량 출력한 «뒤» 이 함수를 부른다(정보 손실 0).
+    analysis_pending=True 는 호출측에 강등으로 소거되지 않는 잔여 분석/토큰 진단이
+    남아 있다는 표식이다 — 판정 문구만 그 사실에 맞춘다(exit 계산 무변).
     """
     debt_rules: "list[tuple[str, str]]" = []
     if debt_file is not None:
         debt_path: Path = Path(debt_file)
         if not debt_path.is_file():
             raise AnchorDiffUsage(f"빚 목록 {debt_path} 없음")
-        debt_rules = _load_debt(debt_path)
+        debt_rules = load_debt(debt_path)
     resolved_target: Path = target.resolve()
     sha: str = resolve_anchor(resolved_target, anchor)
     with tempfile.TemporaryDirectory() as td:
         snap: Path = Path(td) / "anchor"
-        _snapshot_anchor(resolved_target, sha, snap)
+        snapshot_anchor(resolved_target, sha, snap)
         code, lines = _run_lines(_baseline_argv(script, snap, argv, path_flags))
         used: str = "selector 렌더 재실행"
         if code not in (0, 2):
@@ -223,7 +261,8 @@ def partition_exit(
     if debt_rules:  # 빚 매칭은 «신규분»에만 건다(registry_gate 동형 — 기존분은 이미 비-blocker).
         rest: "list[str]" = []
         for line in new:
-            hit: bool = any(f"[{tag}]" in line and sub in line for tag, sub in debt_rules)
+            # 분류와 같은 정규화 라인에 매칭 — registry_gate 와 같은 빚 파일을 같은 판정으로 읽는다.
+            hit: bool = debt_match(_normalize(line, roots), debt_rules)
             (debt if hit else rest).append(line)
         new = rest
 
@@ -244,6 +283,14 @@ def partition_exit(
     if new:
         print(f"판정: 신규분 {len(new)}건 → blocker(exit 2) — 기존분 {len(existing)}건은 별도 보고")
         return 2
+    if analysis_pending:
+        # 잔여 분석/토큰 진단이 남은 호출측 — «exit 0» 을 단정하면 실제 exit(proof 경로
+        # exit 1)와 어긋난다. 차분 몫의 판정만 말한다(동작 무변·문구 조건화).
+        print(
+            f"판정: 신규분 0건 → 차분 계열 강등 — 잔여 분석/토큰 진단의 exit 가 우선한다"
+            f"(앵커 기존분 {len(existing)}건과 빚 {len(debt)}건은 위 보고 채널로만 남긴다)"
+        )
+        return 0
     print(
         f"판정: 신규분 0건 → exit 0 (신규 0 ≠ 전체 clean — 앵커 기존분 {len(existing)}건과 "
         f"빚 {len(debt)}건은 위 보고 채널로만 남긴다)"

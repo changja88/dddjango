@@ -1,6 +1,6 @@
 ---
 name: implementation-django-ninja
-description: Django Ninja JSON API 어댑터 구현 지식 — Router/Schema/Operation, controller-owned <Bc>ErrorSchema, registrar 합성, 인증·인가, 필터링·정렬·페이지네이션, Idempotency-Key, OpenAPI 계약 확인, mounted Django client HTTP 계약 검증, DRF-to-Ninja 마이그레이션. Router·Schema·API 어댑터 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. REST 계약 설계는 architecture-api, 도메인 규칙·구조 패턴은 architecture-ddd, Django ORM·서비스·트랜잭션은 implementation-django, 테스트 픽스처·더블 구현은 implementation-test로 위임.
+description: Django Ninja JSON API 어댑터 구현 지식 — Router/Schema/Operation, controller-owned <Bc>ErrorSchema, registrar 합성, 인증·인가, 필터링·정렬·페이지네이션, Idempotency-Key, OpenAPI 계약 확인, mounted Django client HTTP 계약 검증, DRF-to-Ninja 마이그레이션. Router·Schema·API 어댑터 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. REST 계약 설계는 architecture-api, 도메인 규칙·구조 패턴은 dddjango-architecture-ddd, Django ORM·서비스·트랜잭션은 implementation-django, 테스트 픽스처·더블 구현은 implementation-test로 위임.
 ---
 
 # Django Ninja JSON API 구현
@@ -10,9 +10,9 @@ description: Django Ninja JSON API 어댑터 구현 지식 — Router/Schema/Ope
 Django Ninja Router/Schema/Operation·controller-owned <Bc>ErrorSchema·API registrar·인증·필터링·페이지네이션·OpenAPI·mounted Django client 코드를 설계·작성할 때 로드한다. 경계:
 
 - REST 리소스·URL·HTTP 메서드·상태 코드·헤더·콘텐츠 협상·버전·레이트리밋·idempotency 계약(키 정책) → `architecture-api` (idempotency 저장소·retention은 `architecture-db`)
-- 애그리거트·상태 전이·불변식·유스케이스 경계·구조 패턴(repository/UoW/핵사고날/CQRS/outbox/ACL) → `architecture-ddd`
+- 애그리거트·상태 전이·불변식·유스케이스 경계·구조 패턴(repository/UoW/핵사고날/CQRS/outbox/ACL) → `dddjango-architecture-ddd`
 - ORM 쿼리·셀렉터·서비스·트랜잭션·마이그레이션·캐시·보안 구현 → `implementation-django`
-- pytest 픽스처·팩토리·mock·테스트더블·동시성 테스트 구현 → `implementation-test`
+- pytest 픽스처·팩토리·mock·테스트더블·동시성 테스트 구현 → `dddjango-implementation-test`
 
 ## 핵심 운영 원칙
 

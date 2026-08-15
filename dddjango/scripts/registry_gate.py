@@ -40,6 +40,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import anchor_diff  # noqa: E402  — git·앵커 스냅숏·빚 로더·빚 매칭 공용(복제 통합)
 import checker_target  # noqa: E402
 from checker_registry import REGISTRY, checker_argv  # noqa: E402
 
@@ -54,24 +55,13 @@ _IGNORE_COPY: "tuple[str, ...]" = (
 )
 
 
-def _git(root: Path, *args: str) -> "subprocess.CompletedProcess[str]":
-    return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+class _UsageParser(argparse.ArgumentParser):
+    """usage 오류를 문면 계약(exit 1)으로 — argparse 기본 exit 2 는 «위반»과 겹친다
+    (check-composition-root `_UsageParser` 패턴 이식)."""
 
-
-def _snapshot_anchor(root: Path, anchor: str, dest: Path) -> "str | None":
-    """앵커 커밋의 트리를 dest 에 푼다. 실패 사유 문자열 또는 None."""
-    dest.mkdir(parents=True)
-    archive = subprocess.Popen(
-        ["git", "-C", str(root), "archive", anchor], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    untar = subprocess.run(["tar", "-x", "-C", str(dest)], stdin=archive.stdout, capture_output=True)
-    archive.stdout.close()  # type: ignore[union-attr]
-    _, arch_err = archive.communicate()
-    if archive.returncode != 0:
-        return f"git archive 실패: {arch_err.decode(errors='replace').strip()}"
-    if untar.returncode != 0:
-        return f"tar 실패: {untar.stderr.decode(errors='replace').strip()}"
-    return None
+    def error(self, message: str) -> None:
+        print(f"사용 오류: {message}", file=sys.stderr)
+        raise SystemExit(1)
 
 
 def _snapshot_current(root: Path, dest: Path) -> None:
@@ -125,22 +115,8 @@ def _run_registry(target: Path) -> "tuple[dict[str, int], set[str]]":
     return exits, findings
 
 
-def _load_debt(path: Path) -> "list[tuple[str, str]]":
-    """이관 빚 승인 목록 — 줄 형식 `#<규칙번호> <부분문자열>` (빈 줄·`//` 주석 허용)."""
-    out: "list[tuple[str, str]]" = []
-    for raw in path.read_text(encoding="utf-8").splitlines():
-        line: str = raw.strip()
-        if not line or line.startswith("//"):
-            continue
-        parts: "list[str]" = line.split(None, 1)
-        if len(parts) != 2 or not parts[0].startswith("#"):
-            raise ValueError(f"빚 목록 줄 형식 오류: {raw!r} — `#<규칙> <부분문자열>`")
-        out.append((parts[0], parts[1]))
-    return out
-
-
 def main(argv: "list[str]") -> int:
-    ap = argparse.ArgumentParser(add_help=True)
+    ap = _UsageParser(add_help=True)
     ap.add_argument("target")
     ap.add_argument("--anchor", required=False, default=None,
                     help="차분 기준(대장 앵커 또는 build-start 앵커) — actor 가 임의로 고르지 않는다")
@@ -162,9 +138,13 @@ def main(argv: "list[str]") -> int:
         if not debt_path.is_file():
             print(f"재료 결손: 빚 목록 {debt_path} 없음", file=sys.stderr)
             return 1
-        debt_rules = _load_debt(debt_path)
+        try:
+            debt_rules = anchor_diff.load_debt(debt_path)
+        except anchor_diff.AnchorDiffUsage as exc:  # 형식 오류 — traceback 아닌 사용 오류로
+            print(f"사용 오류: {exc}", file=sys.stderr)
+            return 1
 
-    is_git: bool = _git(root, "rev-parse", "--is-inside-work-tree").returncode == 0
+    is_git: bool = anchor_diff.is_git_worktree(root)
 
     with tempfile.TemporaryDirectory() as td:
         cur: Path = Path(td) / "current"
@@ -182,22 +162,23 @@ def main(argv: "list[str]") -> int:
                 print("사용 오류: git 저장소에는 --anchor <ref> 가 필수다 — 라운드=대장 앵커 · "
                       "파이프라인=Phase 2 진입 직전 기록된 build-start 앵커", file=sys.stderr)
                 return 1
-            rev = _git(root, "rev-parse", "--verify", f"{ns.anchor}^{{commit}}")
+            rev = anchor_diff.run_git(root, "rev-parse", "--verify", f"{ns.anchor}^{{commit}}")
             if rev.returncode != 0:
                 print(f"사용 오류: 앵커 {ns.anchor!r} resolve 불능 — {rev.stderr.strip()}", file=sys.stderr)
                 return 1
             anchor_sha = rev.stdout.strip()
-            head = _git(root, "rev-parse", "HEAD").stdout.strip()
-            dirty: bool = bool(_git(root, "status", "--porcelain").stdout.strip())
+            head = anchor_diff.run_git(root, "rev-parse", "HEAD").stdout.strip()
+            dirty: bool = bool(anchor_diff.run_git(root, "status", "--porcelain").stdout.strip())
             if anchor_sha == head and not dirty:
                 print("사용 오류: 앵커=HEAD 이고 working tree 가 clean — 차분이 공허하다. "
                       "게이트는 구현 커밋 «전»에 돌리거나, 런 시작점 앵커를 지정하라(공허 green 차단).",
                       file=sys.stderr)
                 return 1
             anc: Path = Path(td) / "anchor"
-            err: "str | None" = _snapshot_anchor(root, anchor_sha, anc)
-            if err is not None:
-                print(f"재료 결손: {err}", file=sys.stderr)
+            try:
+                anchor_diff.snapshot_anchor(root, anchor_sha, anc)
+            except anchor_diff.AnchorDiffUsage as exc:
+                print(f"재료 결손: {exc}", file=sys.stderr)
                 return 1
             exits_l, l_set = _run_registry(anc)
             l_set |= _parse_fail_findings(anc)
@@ -211,8 +192,8 @@ def main(argv: "list[str]") -> int:
     debt: "list[str]" = []
     if debt_rules:
         rest: "list[str]" = []
-        for line in attributed:
-            hit: bool = any(f"[{tag}]" in line and sub in line for tag, sub in debt_rules)
+        for line in attributed:  # 라인은 이미 정규화돼 있다 — debt_match 코퍼스 그대로.
+            hit: bool = anchor_diff.debt_match(line, debt_rules)
             (debt if hit else rest).append(line)
         attributed = rest
 

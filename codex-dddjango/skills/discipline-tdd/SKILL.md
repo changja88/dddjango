@@ -9,10 +9,10 @@ description: TDD 실천 규율 — Red-Green-Refactor 사이클, 언제·왜 TDD
 
 TDD 사이클을 어떻게 운용할지, 어떤 학파를 선택할지, 테스트 목록을 어디서 시작할지, AI 보조 구현 시 테스트를 어떻게 명세로 활용할지가 불명확할 때 로드한다. 경계:
 
-- pytest fixture·mock·assert·팩토리 상세 작성법 → `implementation-test`
-- 테스트 코드 품질(가독성·구조·냄새) 원칙 → `discipline-cleancode`
+- pytest fixture·mock·assert·팩토리 상세 작성법 → `dddjango-implementation-test`
+- 테스트 코드 품질(가독성·구조·냄새) 원칙 → `dddjango-discipline-cleancode`
 - Django TestClient·API 테스트 메커니즘 → `implementation-django`
-- migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 식별 → `implementation-test`
+- migration 전용 테스트와 DB-backed 현행 동작 테스트의 기술적 식별 → `dddjango-implementation-test`
 
 ## 핵심 운영 원칙
 

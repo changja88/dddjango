@@ -182,7 +182,9 @@ class Finding:
     detail: str
 
     def render(self) -> str:
-        return f"  - {self.relative_path}:{self.lineno}  {self.detail}"
+        # [#63] — 이 검사기의 규칙 소유는 #63 하나다(rule-owner-map). 태그 없는 렌더는
+        # 빚 채널(`[#N]` 매칭)이 원리상 닿을 수 없는 진단을 만든다 — 태그를 포함한다.
+        return f"  - {self.relative_path}:{self.lineno}  [#63] {self.detail}"
 
 
 def _argument_parser() -> _UsageParser:
@@ -3351,6 +3353,10 @@ def _tree_slice63(root: Path) -> list[str]:
 def main(argv: list[str]) -> int:
     try:
         config = _parse_config(argv[1:])
+        if config.anchor is not None:
+            # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚
+            # 파일·공허 차분이 침묵 exit 0 되지 않게 parse 직후 막는다(fail-closed).
+            anchor_diff.validate_materials(config.root, config.anchor, config.anchor_debt_file)
         bcs = _tree_bcs63(config.root)
         if not any(
             (bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING_SET
@@ -3402,6 +3408,7 @@ def main(argv: list[str]) -> int:
                 findings=collected,
                 path_flags=frozenset({"--api-module", "--controller-module"}),
                 debt_file=config.anchor_debt_file,
+                analysis_pending=bool(pending_analysis),
             )
             if verdict == 0 and pending_analysis:
                 raise UsageError("; ".join(pending_analysis))

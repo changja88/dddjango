@@ -846,8 +846,17 @@ def _check_project_registration(target: Path, out: Findings) -> None:
 
 # ── main ────────────────────────────────────────────────────────────────────
 
+class _UsageParser(argparse.ArgumentParser):
+    """usage 오류를 문면 계약(exit 1)으로 — argparse 기본 exit 2 는 «위반»과 겹친다
+    (check-composition-root `_UsageParser` 패턴 이식)."""
+
+    def error(self, message: str) -> None:
+        print(f"사용 오류: {message}", file=sys.stderr)
+        raise SystemExit(1)
+
+
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(add_help=True)
+    p = _UsageParser(add_help=True)
     p.add_argument("target", nargs="?", default=".")
     # 호환 심 — registry 렌더가 넘기는 selector 들. API-error lane 은 전용 검사기 소유가
     # 됐으므로 여기서는 수용만 하고 쓰지 않는다(실행·종료 계약 무변).
@@ -887,6 +896,14 @@ def main(argv: list[str]) -> int:
             file=sys.stderr,
         )
         return 1
+    if ns.anchor is not None:
+        # 재료 선검증 — 무발견 clean 이라도 resolve 불능 앵커·부재/형식 오류 빚 파일·
+        # 공허 차분이 침묵 exit 0 되지 않게 여기서 막는다(fail-closed).
+        try:
+            anchor_diff.validate_materials(target, ns.anchor, ns.anchor_debt_file)
+        except anchor_diff.AnchorDiffUsage as exc:
+            print(f"사용 오류: {exc}", file=sys.stderr)
+            return 1
 
     containers = [
         p for p in target.rglob("application")
@@ -962,6 +979,7 @@ def main(argv: list[str]) -> int:
                     anchor=ns.anchor,
                     argv=argv,
                     findings=list(findings),
+                    path_flags=frozenset({"--api-module", "--controller-module"}),
                     debt_file=ns.anchor_debt_file,
                 )
             except anchor_diff.AnchorDiffUsage as exc:

@@ -105,10 +105,16 @@ def discover_skills(root: Path) -> list[str]:
 
 
 def paths_for(root: Path, skill: str) -> dict[str, Path]:
+    # codex 미러는 전역 이름 충돌(형제 플러그인 dddart 동명 스킬) 회피를 위해
+    # `dddjango-` 접두 폴더를 우선 사용한다(2026-08-15 — 무접두 폴더는 하위 호환 fallback).
+    codex_base = root / "codex-dddjango" / "skills"
+    codex_dir = codex_base / f"dddjango-{skill}"
+    if not codex_dir.is_dir():
+        codex_dir = codex_base / skill
     return {
         "src": root / "workspace" / "reference" / skill / "reference" / "final.md",
         "dep": root / "dddjango" / "skills" / skill / "references" / "final.md",
-        "codex": root / "codex-dddjango" / "skills" / skill / "references" / "final.md",
+        "codex": codex_dir / "references" / "final.md",
     }
 
 

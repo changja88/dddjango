@@ -1,6 +1,6 @@
 ---
 name: implementation-django-ninja
-description: Django Ninja JSON API 어댑터 구현 지식 — Router/Schema/Operation, controller-owned <Bc>ErrorSchema, registrar 합성, 인증·인가, 필터링·정렬·페이지네이션, Idempotency-Key, OpenAPI 계약 확인, mounted Django client HTTP 계약 검증, DRF-to-Ninja 마이그레이션. Router·Schema·API 어댑터 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. REST 계약 설계는 architecture-api, 도메인 규칙·구조 패턴은 architecture-ddd, Django ORM·서비스·트랜잭션은 implementation-django, 테스트 픽스처·더블 구현은 implementation-test로 위임.
+description: Django Ninja JSON API 어댑터 구현 지식 — Router/Schema/Operation, controller-owned <Bc>ErrorSchema, registrar 합성, 인증·인가, 필터링·정렬·페이지네이션, Idempotency-Key, OpenAPI 계약 확인, mounted Django client HTTP 계약 검증, DRF-to-Ninja 마이그레이션. Router·Schema·API 어댑터 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. REST 계약 설계는 architecture-api, 도메인 규칙·구조 패턴은 dddjango:architecture-ddd, Django ORM·서비스·트랜잭션은 implementation-django, 테스트 픽스처·더블 구현은 implementation-test로 위임.
 user-invocable: false
 ---
 
