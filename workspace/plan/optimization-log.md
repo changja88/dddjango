@@ -414,3 +414,93 @@ migration_gate+registry_gate --anchor 5630e2f2 — 레인 .venv 3.14·정본 ddd
 - 검증: 세트 13종 전건 green + `claude plugin validate dddjango --strict` 통과.
 - 주의: 설치본 2.9.0 캐시는 무한정 표기 그대로 — **다음 라운드 전 2.10.0 릴리즈+설치본
   갱신이 있어야 실전에 반영**된다(그 전 라운드는 종전과 동일한 비결정 해석).
+
+### 2.10.0 릴리즈 실행 완료 (08-15 — 사용자 지시)
+
+- 선행 커밋 2건(a9c158b 기능분·4432368 문서분) → make release minor: 검증 전건 green →
+  release 커밋 5fec35a·태그 dddjango--v2.10.0·push·GitHub Release. 계정 전환→복구 동일.
+- 설치본: claude 2.10.0(한정 표기 8건 반영·scripts byte-identical 확인)·codex 2.10.0.
+- 이로써 C0′+스킬 한정 표기가 실전 반영 가능 상태 — 다음 라운드 검증 항목: ① 스킬
+  Base directory 전건 changja88-dddjango ② 승인 왕복 수 ③ 집행성 판정 실효 ④ thinking
+  비율(r2″ 대비).
+
+### 파이널 리뷰 5렌즈 완료 — 발견 종합 (08-15 심야)
+
+- 렌즈: ①통합 표면 ②미러 동기 ③죽은 참조 ④하네스 계약 ⑤이월 결점 + ⑥설치본 드리프트
+  (직접 — 양쪽 byte-identical·드리프트 0). 상세는 각 agent 보고(본 절은 색인).
+- 치명 4: ①C1 codex 지식 스킬 4종 dddart 충돌(무한정 로드가 유일 경로) ·
+  ②codex SKILL.md:120 `${CLAUDE_PLUGIN_ROOT}` 잔존(게이트 호출 해소 불능) ·
+  ②#82 유사 변형 보강 codex 누락 · ④F1 빚 파일 이중 파서 코퍼스 불일치(gate=정규화·
+  검사기=원문 — 현 실물은 우연 일치).
+- 중요 다수: ①I1 commands 디스패치 무한정 7곳(dddart 동명 4종) · ④F2 clean 시 앵커
+  검증 침묵 생략 · F3 usage exit 드리프트(gate·#6=2·나머지=1) · F4 build_anchor 축약
+  실물 · ③참조 끊김 4(architect §2/§4/§0-1·discipline §2 OHS)·걷힌 번호 범위 4·proof
+  주체 서술·정본 비동봉 29종 · ②codex 축약 3(감사 빈도·테스트 보존·G2 배너 증거) ·
+  ⑤#5 태그 부재(빚 채널 원리 봉쇄)·#2 출력 문구 오독.
+- 안심: 전 발견이 fail-closed 방향 — 거짓 green 구멍 0. 12-slot 라벨 3곳 완전 일치·
+  registry 순서 27종 일치·토큰 고아 0.
+- 보드에 2.9.0·2.10.0 행 기입(누락 소급).
+
+### 파이널 리뷰 A 배치 — 문면·개명 스트림 완료 (08-15 심야 · 코드 스트림 병행 중)
+
+- claude commands: 디스패치 8곳 `dddjango:` 한정(+한정 표기 규약 1줄)·houserules 인용 한정·
+  범위 표기 단서·proof 주체 일반화(registry #2·#5·#15)·registry # 접두 2곳·mismatch 표제
+  일반화·build_anchor 축약 수용 명시·후보 초과 처리 이식·G1′/첫-Green 표기 통일.
+- claude agents: architect 오참조 4건(§4→§3 ×2·§2 통신→§1 트리 22~32행·§0-1→django §10.4)
+  +OHS 주해 정정+산출물-우선 쓰기 이식 · discipline OHS 참조 교정 · coder/acceptance
+  재방문 절에 «행 확인은 재방문 아님» 보강 · acceptance frontmatter에 ninja 추가(§2.1
+  셋업 의무의 도달 경로 확보).
+- codex 미러: `${CLAUDE_PLUGIN_ROOT}` 잔존 치환+scripts 위치 해소 문장·#82 유사 변형
+  보강·축약 3건 복원(감사 빈도·테스트 보존·G2 배너 profile 증거)·architect 동일 오참조
+  5건·description 정합·예시/트래커/표기 복원 — 전건 claude 동등.
+- **codex 지식 스킬 4종 개명**(dddart 충돌 소멸): `dddjango-{architecture-ddd,discipline-
+  cleancode,discipline-houserules,implementation-test}` — frontmatter name·SKILL.md 참조
+  82건 치환·corpus_mirror_sync 접두 우선 매핑. claude 스킬 description 충돌 4이름도
+  `dddjango:` 한정(M1).
+- 검증(문서 계열): corpus_mirror·corpus_lint·spec_lint·tree_mirror·reverse_coverage·
+  plugin validate --strict 전건 green. 코드 스트림(F1·F2·F3·#5 태그 등) agent 완료 후
+  전체 13종 재실행 예정.
+
+### A 배치 코드 스트림 완료 + B 결정 8건 확정·집행 개시 (08-15 심야)
+
+- **A 코드 스트림(agent) 완료·메인 독립 재검증 전건 green**: F1 빚 매칭 정규화 통일
+  (debt_match 공용·registry_gate import) · F2 앵커 재료 선검증(5종·clean 침묵 통과 봉쇄) ·
+  F3 usage exit 1 통일(gate·#6) · S1·S2·S4·S6(복제 3벌→공용) · #5 findings `[#63]` 태그
+  (빚 채널 개통) · #2 출력 문구 조건화. smoke 14/14·gate 7/7·fixture 95(무-anchor
+  byte-identical)·backstop 675·byte-copy·validate --strict. 잔여 논점: #2·#15 render
+  무태그(복수 규칙 소유 — 빚 채널 봉쇄 잔존·후속 후보) · S2 잔여(`#12x` 실재 대조 밖).
+- **B 결정(사용자 · 08-15)**: ① base `type` canon **승인(b)** ② 401·503 patch+선언 제거+
+  entitlements repoint **묶음 수리 사이클 승인** ③ FC-1 골든=**라운드 준비 필수 산출물
+  명문화**(다음 기동 전 하네스 작성→사용자 확인) ④ **스트릭 N=2 확정·S4 진입·다음 BC=
+  billing 재도전** ⑤ C2 effort 실험 **동승 승인 — 단 billing 라운드 제외·그 다음부터**
+  (변형 agent 는 그 시점에 생성·릴리즈) ⑥ dddart 는 사용자 직접 수리 — 점검 프롬프트
+  전달(`workspace/plan/2026-08-15-dddart-name-isolation-prompt.md`) ⑦ #545 `_events` 가드
+  읽기 명문화 승인 ⑧ 정본 비동봉=현상 유지+문구 정정.
+- 집행: ①⑦⑧=교리 수리 agent · ②=레인 수리 agent(편집·검증까지 — 커밋은 메인) 병렬 기동.
+
+### ② 레인 묶음 수리 사이클 완료 (08-15 심야 — 양 레인 커밋 봉인)
+
+- 레인 A: docs fe4389f5(spec §3·§9·부록 A·preflight 9표면) + code 6969ef85(401·503 선언
+  2행 제거·선언-단언 e2e 동반 갱신·entitlements repoint) — **전체 6835 passed·skip 0**
+  (종전 6834+1skip — P15 스냅샷 생존 pass 전환). pre-commit(ruff·mypy strict) 전건 통과.
+- 레인 B: docs f3a10be + code 13c79a6(product_catalog controller — 실경로 확인 수정·openapi
+  선언 테스트 동반 갱신·repoint) — **전체 6858 passed·skip 0**(종전 6857+1skip).
+- #5 재실측(설치본 2.10.0·앵커 5630e2f2·빚 파일): 양 레인 exit 2·신규분 2 → **exit 0·
+  신규분 0**(기존분 1=api.py get_openapi_schema override 보고 채널 무변). #2 무변(exit 1·
+  기존분 2·PROOF 토큰 2 — ① canon 수리가 반영되면 기존분 2도 소멸 예정).
+- wire 무접촉 실증: 중앙 401/503 wire 테스트 전건 green 유지. 이월 결점 1(entitlements
+  영구 skip)·5(401·503 잔존·patch 미적용) **종결**.
+
+### 교리 수리 ①⑦⑧ 완료 — B 집행 전건 종결·2.11.0 릴리즈 준비 완료 (08-15 심야)
+
+- ① canon: 검사기 `narrowed_required_canon` 면제(3조건 동시 — 식별자 field·ErrorCode 좁힘
+  정확 일치·공통 default→required. 드리프트·역방향·타 field 는 계속 위반) · 정본 #572 예외
+  1문장 · slot 9 병기 8곳(ninja final.md 3벌 포함 — corpus --write 로 소스 splice) ·
+  backstop 양방향 4케이스 신설(675→**679**) · 레인 A #2 재실측: base-canon 기존분 2 →
+  **0 소멸**·PROOF 토큰 2·exit 1 유지.
+- ⑦ #545 «_events 비소모 읽기 인정» 명문화(spec :867·검사기 무변) · ⑧ 비동봉 문구 4곳.
+- 메인 독립 재검증: **전체 세트+validate 전건 green**(fixture 95·smoke 14/7·backstop 679·
+  byte-copy·corpus 11/11). **2.11.0 릴리즈 준비 완료 — 실행 대기.**
+- 이월 결점 현황: 1(entitlements)·5(401/503)·6(canon)=**종결** · 2(_events)=명문화 완료 ·
+  3(FC-1)=다음 라운드 절차화 · 잔여 비차단: #2/#15 render 무태그·S2 `#12x`류·C2(billing
+  다음)·dddart(사용자 직접).
