@@ -43,7 +43,7 @@ EXIT_STRUCTURE = 3
 
 SPEC_REL = "workspace/design/2026-08-08-tree-revision-spec.md"
 PRED_REL = "workspace/design/2026-08-11-predicates.md"
-TREE_REL = "docs/work_flow.html"
+TREE_REL = "docs/file_tree.html"
 MAP_REL = "workspace/plan/2026-08-11-rule-owner-map.md"
 
 GRADES = ("path", "ast", "ast+", "human")

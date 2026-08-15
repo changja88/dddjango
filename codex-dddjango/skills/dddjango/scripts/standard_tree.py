@@ -1,6 +1,6 @@
 """dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
-정본은 저장소의 `docs/work_flow.html`(트리 140행)이고, 이 파일은 검사기 19종이
+정본은 저장소의 `docs/file_tree.html`(트리 140행)이고, 이 파일은 검사기 19종이
 import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** — 정본이 개정되면
 `workspace/tools/tree_mirror_check.py --write` 가 이 파일을 다시 쓰고,
 `--check` 가 «정본 ≡ 이 파일 ≡ houserules final.md 트리 블록» 삼중 동기를 지킨다.
@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-SOURCE: str = "docs/work_flow.html"
+SOURCE: str = "docs/file_tree.html"
 SOURCE_SHA: str = "612f55e7ce52d5be"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
 
 Kind = Literal["fixed", "placeholder", "reappear"]

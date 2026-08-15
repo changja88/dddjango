@@ -6,7 +6,7 @@
 정본과의 동기를 지킨다. `corpus_mirror_sync.py` 와 같은 부류다.
 
 세 자리:
-  A 정본     docs/work_flow.html 의 `data-r` 행 140개 — 명세 «자리»의 「트리 N행」이 이 번호다.
+  A 정본     docs/file_tree.html 의 `data-r` 행 140개 — 명세 «자리»의 「트리 N행」이 이 번호다.
              (mkrev2.py:ROWS 가 아니라 «생성된 HTML»을 읽는 까닭: data-r 는 파트 순서라
               ROWS 리스트 인덱스와 다르고, 사용자 정본은 HTML 이다.)
   B 플러그인  dddjango/scripts/standard_tree.py — 검사기들이 import 하는 유일한 트리 데이터.
@@ -33,7 +33,7 @@ EXIT_USAGE = 1
 EXIT_DRIFT = 2
 EXIT_STRUCTURE = 3
 
-CANON_REL = "docs/work_flow.html"
+CANON_REL = "docs/file_tree.html"
 PLUGIN_REL = "dddjango/scripts/standard_tree.py"
 FINAL_REL = "dddjango/skills/discipline-houserules/references/final.md"
 TREE_ROW_COUNT = 140
@@ -119,7 +119,7 @@ def emit_plugin(rows: list[RowT], root: Path) -> None:
     body = ",\n".join(f"    Row({r}, {d}, {name!r}, {kind!r})" for r, d, name, kind in rows)
     module = f'''"""dddjango 표준 파일트리 — 정본의 기계 가독 사본 (데이터 모듈 · 게이트 아님).
 
-정본은 저장소의 `docs/work_flow.html`(트리 140행)이고, 이 파일은 검사기 19종이
+정본은 저장소의 `docs/file_tree.html`(트리 140행)이고, 이 파일은 검사기 19종이
 import 하는 유일한 트리 데이터다. **손으로 고치지 않는다** — 정본이 개정되면
 `workspace/tools/tree_mirror_check.py --write` 가 이 파일을 다시 쓰고,
 `--check` 가 «정본 ≡ 이 파일 ≡ houserules final.md 트리 블록» 삼중 동기를 지킨다.
@@ -134,7 +134,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-SOURCE: str = "docs/work_flow.html"
+SOURCE: str = "docs/file_tree.html"
 SOURCE_SHA: str = "{sha}"  # 생성 시점 정본 sha256[:16] — 출처 표시(동기 판정은 행 비교로 한다)
 
 Kind = Literal["fixed", "placeholder", "reappear"]

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""work_flow.html 생성기 — 이 파일이 원본이고, HTML 은 산출물이다.
+"""file_tree.html 생성기 — 이 파일이 원본이고, HTML 은 산출물이다.
 
-    python3 docs/mkrev2.py        →  docs/work_flow.html 을 덮어쓴다
+    python3 docs/mkrev2.py        →  docs/file_tree.html 을 덮어쓴다
 
 고칠 때는 **HTML 이 아니라 이 파일을** 고친다. 손으로 HTML 을 고치면 다음 실행에 날아간다.
 구성 — ROWS(트리 행) · FLOW(도해 SVG) · CARDS(결정 카드) · TIPS(핀 툴팁) · body(뼈대·JS).
-CSS 는 여기 없다. 기존 work_flow.html 의 <style> 을 읽어 그대로 다시 넣으므로
-**work_flow.html 이 있어야 실행된다**(CSS 를 고치려면 HTML 의 <style> 을 직접 고친다).
+CSS 는 여기 없다. 기존 file_tree.html 의 <style> 을 읽어 그대로 다시 넣으므로
+**file_tree.html 이 있어야 실행된다**(CSS 를 고치려면 HTML 의 <style> 을 직접 고친다).
 """
 import pathlib, re
 
 D = pathlib.Path(__file__).resolve().parent
-cur = (D / "work_flow.html").read_text(encoding="utf-8")
+cur = (D / "file_tree.html").read_text(encoding="utf-8")
 style = re.search(r"<style>.*?</style>", cur, re.S).group(0)
 TABCSS = """\
 /* [TAB-CSS] */
@@ -6351,7 +6351,7 @@ eShop·Grzybek SaveChanges 가 걷는다  커밋 «직전»</code></pre></div>
 ])
 
 # ── 결정 기록은 정본 «밖»에 둔다 ─────────────────────────────────────
-#    정본 work_flow.html 은 «플러그인을 쓸 사람»에게 공개하는 문서라 근거·기록을 담지 않는다.
+#    정본 file_tree.html 은 «플러그인을 쓸 사람»에게 공개하는 문서라 근거·기록을 담지 않는다.
 #    지우면 그대로 사라지므로 여기서 별도 기록 파일로 뽑는다 — 이 파일이 유일한 보관소다.
 LOGREC = """# 버린 안 · 뒤집은 판단
 
@@ -6393,7 +6393,7 @@ LOGREC = """# 버린 안 · 뒤집은 판단
 def _record():
     """CARDS 32장 + 버린 안 기록을 저장소 안 기록 파일 하나로 뽑는다."""
     o = ["# 결정 기록 — 각 칸을 왜 그렇게 정했나\n",
-         "정본 `docs/work_flow.html` 은 **플러그인을 쓸 사람에게 공개하는 문서**라 이 기록을 담지 않는다.",
+         "정본 `docs/file_tree.html` 은 **플러그인을 쓸 사람에게 공개하는 문서**라 이 기록을 담지 않는다.",
          "근거 · 버린 안 · 뒤집은 판단은 **여기가 유일한 보관소**다.",
          "고칠 자리는 `docs/mkrev2.py` 의 `CARDS` 이고 이 파일은 생성물이다 — `PYTHONUTF8=1 python3 docs/mkrev2.py`.",
          "정본 트리의 **D 표식에 마우스를 올리면** 같은 내용이 툴팁으로도 뜬다.\n", "---\n"]
@@ -7009,7 +7009,7 @@ doc = (body.replace("@@STYLE@@", style).replace("@@TABRAIL@@", TABRAIL).replace(
 # 근거 기록이 정본 밖으로 나갔으므로 «카드로 간다» 링크도 남기지 않는다 — D 표식은 툴팁 전용
 #   툴팁 본문 안의 것은 JS 문자열이라 \" 로 escape 돼 있다 — 둘 다 잡는다
 doc = re.sub(r'\sdata-go=\\?"[dp]\w*\\?"', "", doc)
-(D / "work_flow.html").write_text(doc, encoding="utf-8")
+(D / "file_tree.html").write_text(doc, encoding="utf-8")
 
 REC, _ncard = _record()
 _recpath = D.parent / "workspace" / "design" / "2026-08-07-decision-record.md"
