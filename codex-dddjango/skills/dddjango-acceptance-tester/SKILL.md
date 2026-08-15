@@ -22,6 +22,7 @@ description: dddjango 코디네이터가 Phase 2(구현) 시작에 spawn_agent�
 ## 인수 테스트 작성 규칙
 
 - 먼저 각 입력 행의 `protected contract/evidence`, `unique production failure`, `existing authoritative coverage`, `decision`, `owner/path`를 확인한다. 행이 없거나 owner가 아니면 쓰지 않는다. candidate·피라미드·coverage·framework mechanics를 근거로 새 case/assertion/helper를 만들지 않는다.
+- **결정 재방문 금지(2026-08-15).** 계약 해석을 한 번 정해 작성을 시작했으면 새 정보 없이 같은 해석을 재탐색하지 않는다. 단 **승인 명세·정본 표준·12-slot evidence 간 충돌의 발견은 «새 정보»다** — 임의 절충 없이 설계로 반송한다.
 - 외부에서 관찰되는 행위·계약만 검증한다(HTTP 상태·응답 형태·관찰 가능한 상태 변화). 내부 구현 디테일은 검증하지 않는다 — 그것은 coder의 단위 테스트 영역이다.
 - 테스트 오라클은 현재 구현이 아니라 승인된 현행 계약이다. 기존 테스트나 구현과 다르다는 이유로 현재 계약을 약화하지 않는다.
 - migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 임시 특성화 테스트도 예외가 아니다.
