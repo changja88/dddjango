@@ -20,7 +20,7 @@ description: dddjango 코디네이터가 디스패치하는 API 계약 리뷰어
 
 ## 입력
 
-`DESIGN_CONTRACT_REVIEW`에서는 코디네이터가 architect의 설계 명세(초안)를 준다. 그 명세만 보고 다른 리뷰어의 노트나 구현 코드를 보지 않는다.
+`DESIGN_CONTRACT_REVIEW`에서는 코디네이터가 architect의 설계 명세(초안)를 준다. 그 명세만 보고 다른 리뷰어의 노트나 구현 코드를 보지 않는다. 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.
 
 `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`에서는 코디네이터가 다음 묶음을 준다. 다른 리뷰어의 노트는 받지 않아 독립성을 유지한다.
 

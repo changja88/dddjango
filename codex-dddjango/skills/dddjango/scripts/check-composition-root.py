@@ -1877,7 +1877,7 @@ def main(argv: list[str]) -> int:
         for finding in composition_findings:
             print(finding.render())
         print(
-            "  API 근거: implementation-django-ninja §2.2·discipline-houserules §1. "
+            "  API 근거: implementation-django-ninja §2.2·discipline-houserules final.md §1. "
             "각 BC의 canonical `driving_layer/api/api_router.py`가 "
             "`register_<bc>_api(api)` 안에서만 controller를 등록하고, 선택 URLconf가 "
             "선택 API object를 각 registrar에 정확히 한 번 전달한다. 위 finding의 "
@@ -1891,7 +1891,7 @@ def main(argv: list[str]) -> int:
         for finding in di_findings:
             print(finding)
         print(
-            "  근거: discipline-houserules §1(트리 2~4행). DI 조립은 BC 루트 «폴더» "
+            "  근거: discipline-houserules final.md §1(트리 2~4행). DI 조립은 BC 루트 «폴더» "
             "`application/<bc>/composition_root/`가 소유하고(결선은 `dependency_wiring.py` · "
             "사실 결선은 `event_wiring.py`), driving 쪽은 `build_<use_case>()` 팩토리를 "
             "매요청 호출만 한다 — feature별 `composition/` 폴더로 쪼개거나 계층 하위에 묻거나 "
