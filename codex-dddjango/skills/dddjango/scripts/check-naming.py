@@ -50,7 +50,9 @@
 사용법: check-naming.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2). 방출은 공용 ordered emitter
+(emit_all) 경유 — stdout 위반·후보 라인 순서와 레코드 순서가 같고, 라인은 레코드
+필드의 순수 함수다(출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -490,8 +492,8 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     tech = vocab.tech_names()
     bcs = [bc for bc in vocab.bc_dirs(root) if _has_adoption_signal(bc)]
 
@@ -527,12 +529,10 @@ def main(argv: list[str]) -> int:
                     cand.add("#36", _rel(root, d), f"framework 칸 `{d.name}` 이 트리·기술·업무 어휘 어디에도 없다",
                              "이 이름에 예/아니오로 답하는 물음이 붙나")
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 이름 규율 위반 (풀어 쓰고·자리가 종류를 말하고·접두는 제 집을 가리킨다 — D9·D21·D33·D41)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

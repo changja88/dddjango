@@ -45,7 +45,9 @@ ast+ 후보 채널 (㉰ — 기계가 후보를 좁히고 사람이 물음으로
 사용법: check-usecase-dto-placement.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2). 방출은 공용 ordered emitter
+(emit_all) 경유 — stdout 위반·후보 라인 순서와 레코드 순서가 같고, 라인은 레코드
+필드의 순수 함수다(출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -588,8 +590,8 @@ def main(argv: list[str]) -> int:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     scanned_layers = 0
     for bc in bcs:
         bc_rel = bc.relative_to(target)
@@ -647,12 +649,10 @@ def main(argv: list[str]) -> int:
 
     if cand:
         print(f"ⓓ 후보 {len(cand)}건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:")
-        for c in cand:
-            print(" ", c)
+        emit_all(cand, printer=print, indent="  ")
     if findings:
         print(f"blocker {len(findings)}건 — 유스케이스·경계 자료 규율 위반")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — BC {len(bcs)}개 · 자료 계약 규율 일치 (트리 39~44행 · standard_tree {tree.SOURCE_SHA})")
     return 0

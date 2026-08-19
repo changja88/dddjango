@@ -554,8 +554,8 @@ def main(argv: list[str]) -> int:
 
     bcs = _find_bcs(root)
     adopted = [bc for bc in bcs if _has_adoption_signal(bc)]
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
 
     targets = 0
     for bc in adopted:
@@ -589,12 +589,10 @@ def main(argv: list[str]) -> int:
         emit_all(guard, printer=print, indent="")
         return 2
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 사실 발행·구독 위반 (표면은 published_event 하나 · 구독은 껍데기 — D40·D59)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

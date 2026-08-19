@@ -970,8 +970,8 @@ def main(argv: list[str]) -> int:
         return 2
 
     all_bcs = {b.name for b in bcs}
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     acl_partners: dict[str, set[str]] = {}
 
     for bc in bcs:
@@ -1013,12 +1013,10 @@ def main(argv: list[str]) -> int:
 
     if cand:
         print(f"ⓓ 후보 {len(cand)}건 — 기계가 좁힌 후보다(exit 불산입). 마무리는 discipline-reviewer 의 물음이 한다:")
-        for c in cand:
-            print(" ", c)
+        emit_all(cand, printer=print, indent="  ")
     if findings:
         print(f"blocker {len(findings)}건 — 컨텍스트 격리·경계 규율 위반")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         if ns.anchor is not None:
             try:
                 return anchor_diff.partition_exit(

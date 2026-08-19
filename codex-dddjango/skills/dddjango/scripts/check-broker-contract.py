@@ -54,7 +54,7 @@ import re
 import sys
 
 import checker_target
-from findings import Candidates, Findings
+from findings import Candidates, Findings, emit_all
 from pathlib import Path
 
 try:
@@ -420,8 +420,8 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     bc_names = vocab.bc_names(root)
 
     for celery_py in _find_celery_files(root):
@@ -433,12 +433,10 @@ def main(argv: list[str]) -> int:
         _check_publish_sites(root, broker, findings, cand)
         _check_external_obligations(root, broker, findings)
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 브로커 계약 위반 (internal/external 을 가르는 자는 「배달에 바깥 미들웨어가 필요한가」 — D59)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

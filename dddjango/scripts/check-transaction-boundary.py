@@ -40,7 +40,9 @@ ImportError fail-closed. ⓓ 후보는 exit 에 불산입, `[ⓓ#N]` 으로만 �
 사용법: check-transaction-boundary.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2). 방출은 공용 ordered emitter
+(emit_all) 경유 — stdout 위반·후보 라인 순서와 레코드 순서가 같고, 라인은 레코드
+필드의 순수 함수다(출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -480,8 +482,8 @@ def main(argv: list[str]) -> int:
 
     bcs = _find_bcs(root)
     adopted = [bc for bc in bcs if _has_adoption_signal(bc)]
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
 
     domain_seen = 0
     for bc in adopted:
@@ -506,12 +508,10 @@ def main(argv: list[str]) -> int:
         emit_all(guard, printer=print, indent="")
         return 2
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 트랜잭션 경계 위반 (한 트랜잭션 = 애그리거트 하나 · D50)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

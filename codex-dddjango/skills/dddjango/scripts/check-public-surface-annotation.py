@@ -30,7 +30,9 @@
 사용법: check-public-surface-annotation.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2). 방출은 공용 ordered emitter
+(emit_all) 경유 — stdout 위반·후보 라인 순서와 레코드 순서가 같고, 라인은 레코드
+필드의 순수 함수다(출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -354,8 +356,8 @@ def main(argv: list[str]) -> int:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings = Findings()
-    candidates = Candidates()
+    findings = Findings(defer=True)
+    candidates = Candidates(defer=True)
     for f in files:
         try:
             mod = ast.parse(f.read_text(encoding="utf-8"))
@@ -372,12 +374,10 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(f"blocker {len(findings)}건 — 타입 전면 규율 위반 (#493 «첫 대입에 타입» 외)")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
     if candidates:
         print(f"ⓓ 후보 {len(candidates)}건 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입)")
-        for c in candidates:
-            print(" ", c)
+        emit_all(candidates, printer=print, indent="  ")
     if findings:
         return 2
     print(f"clean — 파일 {len(files)}개 타입 규율 일치 (standard_tree {tree.SOURCE_SHA})")

@@ -47,7 +47,9 @@ fail-closed · ⓓ 후보 exit 불산입.
 사용법: check-port-adapter-pairing.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2). 방출은 공용 ordered emitter
+(emit_all) 경유 — stdout 위반·후보 라인 순서와 레코드 순서가 같고, 라인은 레코드
+필드의 순수 함수다(출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -814,8 +816,8 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     tech = vocab.tech_names()
     bcs = [bc for bc in vocab.bc_dirs(root) if _has_adoption_signal(bc)]
 
@@ -840,12 +842,10 @@ def main(argv: list[str]) -> int:
         _check_fake(root, bc, findings)
         _check_use_side(root, bc, bc_vocab_set, findings, cand)
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 포트·어댑터 짝맞춤 위반 (선언은 port/·구현은 adapter/·페이크는 test/fake/ — D37·D44·D51·D57)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

@@ -813,8 +813,8 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     bcs = [bc for bc in vocab.bc_dirs(root) if _has_adoption_signal(bc)]
 
     # 대상 0건 가드(#74) — touched 필터 없음이라 자리는 대상 집합 직후다(#75).
@@ -832,12 +832,10 @@ def main(argv: list[str]) -> int:
         _check_application_side(root, bc, findings, cand)
         _check_cache_bypass(root, bc, findings)
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 도메인 모델 위반 (루트를 지나고·값은 불변이고·한 트랜잭션 = 애그리거트 하나 — D12·D13·D50)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

@@ -393,8 +393,8 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     bcs = [bc for bc in vocab.bc_dirs(root) if _has_adoption_signal(bc)]
 
     # 대상 0건 가드(#74) — adopted 인데 driving 층이 0건이면 경로 계약 불일치다.
@@ -424,12 +424,10 @@ def main(argv: list[str]) -> int:
                         sub_edges.append((py, n.func.id[len("build_"):]))
         _check_entrance_use_cases(root, bc, hook_edges + sub_edges, cron_built, cand)
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 놓칠 수 있는 입구 위반 (입구는 껍데기·멱등은 유스케이스·빠짐은 cron 이 메운다 — D26·D53·D49)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 

@@ -49,7 +49,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import Candidates, Findings
+from findings import Candidates, Findings, emit_all
 from pathlib import Path
 
 try:
@@ -537,8 +537,8 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {root}", file=sys.stderr)
         return 1
 
-    findings = Findings()
-    cand = Candidates()
+    findings = Findings(defer=True)
+    cand = Candidates(defer=True)
     tech = vocab.tech_names()
     union = vocab.all_vocab(root)
     bc_names = vocab.bc_names(root)
@@ -584,12 +584,10 @@ def main(argv: list[str]) -> int:
                              f"기술 이름 폴더 `{d.name}/` — 기술을 1차 축으로 쓰는 자리는 "
                              "framework/<technology>/ 하나뿐이다")
 
-    for c in cand:
-        print(c)
+    emit_all(cand, printer=print, indent="")
     if findings:
         print("blocker — 업무 어휘·framework 격리 위반 (이 낱말의 뜻을 누가 정하나 — D24·D38·D47)")
-        for x in findings:
-            print(f"  {x}")
+        emit_all(findings, printer=print, indent="  ")
         return 2
     return 0
 
