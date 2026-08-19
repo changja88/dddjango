@@ -583,6 +583,9 @@ def main(argv: list[str]) -> int:
     if adopted and not any(
             (bc / "application_layer").is_dir() or any((bc / d).is_dir() for d in DRIVING_DIRS)
             for bc in adopted):
+        # 가드 발화 시에도 이미 수집된 레코드는 보존한다(라인 무인쇄 — 구판 add 시점
+        # 방출과 동치 · MEDIATION-3 M3/R4). 세그먼트 순서는 정상 경로와 같다(cand→findings).
+        emit_all(cand, findings, printer=None)
         guard = zero_target_guard(
             "blocker: 채택 신호는 있는데 application_layer/driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)"
         )

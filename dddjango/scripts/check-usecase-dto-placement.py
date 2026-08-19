@@ -641,6 +641,10 @@ def main(argv: list[str]) -> int:
         _check_validation_raises(bc, bc_rel, cand)
 
     if bcs and scanned_layers == 0 and not findings:
+        # 가드 발화 시에도 이미 수집된 레코드는 보존한다(라인 무인쇄 — 구판 add 시점
+        # 방출과 동치 · MEDIATION-3 M3/R4). 세그먼트 순서는 정상 경로와 같다(cand→findings —
+        # findings 는 가드 조건상 빈 컬렉션이지만 판형 통일로 함께 넘긴다).
+        emit_all(cand, findings, printer=None)
         guard = zero_target_guard(
             "blocker: 채택 신호는 있는데 `application_layer/` 가 0건이다 — 조용한 무동작을 금지한다(#74)"
         )

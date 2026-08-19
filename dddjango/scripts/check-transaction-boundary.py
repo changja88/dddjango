@@ -502,6 +502,9 @@ def main(argv: list[str]) -> int:
 
     # 대상 0건 가드(#74) — 채택 신호가 있는데 검사 대상 층이 하나도 안 열리면 경로 계약이 깨진 것.
     if adopted and domain_seen == 0 and not any((bc / "application_layer").is_dir() for bc in adopted):
+        # 가드 발화 시에도 이미 수집된 레코드는 보존한다(라인 무인쇄 — 구판 add 시점
+        # 방출과 동치 · MEDIATION-3 M3/R4). 세그먼트 순서는 정상 경로와 같다(cand→findings).
+        emit_all(cand, findings, printer=None)
         guard = zero_target_guard(
             "blocker — 표준 채택 신호가 있는데 domain_layer/application_layer 대상이 0건이다 (경로 계약 불일치 — #74)"
         )
