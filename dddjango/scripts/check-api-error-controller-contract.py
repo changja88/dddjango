@@ -9,6 +9,8 @@ FrameworkErrorSchema module, and the same-owner presentation modules imported di
 those controllers.
 
 Exit codes: 0=clean/N/A/help, 2=contract blocker, 1=usage or analysis error.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -22,11 +24,26 @@ import sys
 
 import anchor_diff
 import checker_target
+from findings import ContractFindings, SliceFindings
 from dataclasses import dataclass
 from http import HTTPStatus
 from pathlib import Path
 from typing import Iterator
 
+
+# code-profile 레인은 08-04 API-error 계약 레인이다(registry #15 —
+# dddjango/commands/dddjango.md:107). 이 레인 20 category 중 rule-owner-map 의 #N 에
+# 대응하는 근거가 있는 것은 아래 HANDLER_CATEGORIES 둘뿐이고(rule-owner-map ⓒ 소유 행
+# 의 #59 «전역 예외 핸들러/catch-all mapper 금지» 실현 — 이 검사기가 tree-slice 로는
+# 못 내는 유일 규칙이다). 나머지 18 category 는 #N 대응 근거가 없어(실측)
+# rule=null + contract_ref 로 나간다.
+CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
+HANDLER_CATEGORIES = frozenset(
+    {
+        "custom Ninja exception_handler forbidden",
+        "custom Ninja add_exception_handler forbidden",
+    }
+)
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
@@ -6667,7 +6684,7 @@ def _deco_route_name(deco: _ast.expr) -> str | None:
     return None
 
 
-def _slice_check_controller_ast(f: Path, rel: Path, findings: list[str], candidates: list[str], is_controller: bool) -> None:
+def _slice_check_controller_ast(f: Path, rel: Path, findings: SliceFindings, candidates: SliceFindings, is_controller: bool) -> None:
     try:
         mod = _ast.parse(f.read_text(encoding="utf-8"))
     except (SyntaxError, OSError, UnicodeDecodeError):
@@ -6684,19 +6701,27 @@ def _slice_check_controller_ast(f: Path, rel: Path, findings: list[str], candida
             for d in node.decorator_list:
                 t = d.func if isinstance(d, _ast.Call) else d
                 deco_names.add(t.attr if isinstance(t, _ast.Attribute) else getattr(t, "id", ""))
+            where = f"{rel}:{node.lineno}"
             if "exception_handler" in deco_names:
-                findings.append(f"  [#126] {rel}:{node.lineno} handler 등록 decorator — 도메인 예외→ErrorSchema 매핑은 컨트롤러 메서드 «안»에 직접 쓴다(helper·factory·global mapper 금지)")
+                msg = "handler 등록 decorator — 도메인 예외→ErrorSchema 매핑은 컨트롤러 메서드 «안»에 직접 쓴다(helper·factory·global mapper 금지)"
+                findings.add("#126", line=f"  [#126] {where} {msg}", where=where, msg=msg)
             if len(routes) >= 2:
-                findings.append(f"  [#124] {rel}:{node.lineno} `{node.name}()` 에 라우트 데코가 {len(routes)}개 — 요청 하나당 메서드 하나다")
+                msg = f"`{node.name}()` 에 라우트 데코가 {len(routes)}개 — 요청 하나당 메서드 하나다"
+                findings.add("#124", line=f"  [#124] {where} {msg}", where=where, msg=msg)
             if routes and not is_controller:
-                findings.append(f"  [#132] {rel}:{node.lineno} 라우트 데코레이터가 컨트롤러 파일 밖에 있다 — 라우트·인증·상태 코드는 `<area>_controller.py` 에 온다")
+                msg = "라우트 데코레이터가 컨트롤러 파일 밖에 있다 — 라우트·인증·상태 코드는 `<area>_controller.py` 에 온다"
+                findings.add("#132", line=f"  [#132] {where} {msg}", where=where, msg=msg)
             if routes and is_controller:
                 for sub in node.body:
                     if isinstance(sub, (_ast.For, _ast.While)):
-                        candidates.append(f"  [ⓓ#125] {rel}:{sub.lineno} 라우트 메서드 안 루프 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?")
+                        sub_where = f"{rel}:{sub.lineno}"
+                        msg = "라우트 메서드 안 루프 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?"
+                        candidates.add("#125", line=f"  [ⓓ#125] {sub_where} {msg}", where=sub_where, msg=msg, severity="info")
                         break
                     if isinstance(sub, _ast.If) and not _is_exc_mapping_if(sub, domain_names):
-                        candidates.append(f"  [ⓓ#125] {rel}:{sub.lineno} 라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?")
+                        sub_where = f"{rel}:{sub.lineno}"
+                        msg = "라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?"
+                        candidates.add("#125", line=f"  [ⓓ#125] {sub_where} {msg}", where=sub_where, msg=msg, severity="info")
                         break
         elif isinstance(node, _ast.ExceptHandler):
             caught = node.type
@@ -6706,11 +6731,15 @@ def _slice_check_controller_ast(f: Path, rel: Path, findings: list[str], candida
             elif caught is not None:
                 caught_names = [getattr(caught, "id", getattr(caught, "attr", ""))]
             if caught is None or set(caught_names) & _CATCH_ALL_NAMES:
-                findings.append(f"  [#62] {rel}:{node.lineno} `except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 catch 한다: ninja §6.2)")
+                where = f"{rel}:{node.lineno}"
+                msg = "`except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 catch 한다: ninja §6.2)"
+                findings.add("#62", line=f"  [#62] {where} {msg}", where=where, msg=msg)
             if node.name and set(caught_names) & domain_names:
                 for sub in _ast.walk(node):
                     if isinstance(sub, _ast.Name) and sub.id == node.name and isinstance(sub.ctx, _ast.Load):
-                        findings.append(f"  [#474] {rel}:{sub.lineno} 도메인 예외를 `as {node.name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다")
+                        sub_where = f"{rel}:{sub.lineno}"
+                        msg = f"도메인 예외를 `as {node.name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
+                        findings.add("#474", line=f"  [#474] {sub_where} {msg}", where=sub_where, msg=msg)
                         break
 
 
@@ -6722,9 +6751,9 @@ def _is_exc_mapping_if(node: _ast.If, domain_names: set[str]) -> bool:
     return False
 
 
-def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[list[str], list[str]]:
-    findings: list[str] = []
-    candidates: list[str] = []
+def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[SliceFindings, SliceFindings]:
+    findings = SliceFindings()
+    candidates = SliceFindings()
     for bc in bcs:
         app_layer = bc / "application_layer"
         app_areas = (
@@ -6739,24 +6768,31 @@ def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[list[str], list[str]]:
                     if area.name in ("webhook", "__pycache__") or area.name.startswith("."):
                         continue
                     area_rel = area.relative_to(root)
+                    area_where = f"{area_rel}/"
                     if area.name.lower() in _TECH_DIR_TOKENS:
-                        findings.append(f"  [#120] {area_rel}/: `api/` 의 1차 축은 `<area>/` 다 — 기술 폴더(`{area.name}/`)를 만들지 않는다")
+                        msg = f"`api/` 의 1차 축은 `<area>/` 다 — 기술 폴더(`{area.name}/`)를 만들지 않는다"
+                        findings.add("#120", line=f"  [#120] {area_where}: {msg}", where=area_where, msg=msg)
                         continue
                     if app_areas is not None and area.name not in app_areas:
-                        findings.append(f"  [#121] {area_rel}/: `api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다")
+                        msg = "`api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다"
+                        findings.add("#121", line=f"  [#121] {area_where}: {msg}", where=area_where, msg=msg)
                     entry = area / f"{area.name}_controller.py"
                     if not entry.is_file():
-                        findings.append(f"  [#123] {area_rel}/: 진입점 `{area.name}_controller.py` 파일 하나가 온다")
+                        msg = f"진입점 `{area.name}_controller.py` 파일 하나가 온다"
+                        findings.add("#123", line=f"  [#123] {area_where}: {msg}", where=area_where, msg=msg)
                     for p in sorted(area.glob("*_controller.py")):
                         if p != entry:
-                            findings.append(f"  [#123] {p.relative_to(root)}: `api/<area>/` 의 진입점은 `{area.name}_controller.py` «하나»다")
+                            where = f"{p.relative_to(root)}"
+                            msg = f"`api/<area>/` 의 진입점은 `{area.name}_controller.py` «하나»다"
+                            findings.add("#123", line=f"  [#123] {where}: {msg}", where=where, msg=msg)
                 # api/** 파일 규칙 — #131(기술 파일명) · 컨트롤러/비컨트롤러 AST
                 for p in sorted(api.rglob("*.py")):
                     if set(p.relative_to(api).parts) & {"__pycache__"}:
                         continue
                     rel = p.relative_to(root)
                     if any(tok in p.name.lower() for tok in _TECH_FILE_TOKENS):
-                        findings.append(f"  [#131] {rel}: 기술 이름은 파일이 아니라 «클래스»에 붙는다 — `NinjaTurnController` 처럼")
+                        msg = "기술 이름은 파일이 아니라 «클래스»에 붙는다 — `NinjaTurnController` 처럼"
+                        findings.add("#131", line=f"  [#131] {rel}: {msg}", where=rel, msg=msg)
                     _slice_check_controller_ast(p, rel, findings, candidates, p.name.endswith("_controller.py"))
             for ohs_name in _TREE_OHS:
                 ohs = bc / driving / ohs_name
@@ -6833,7 +6869,29 @@ def main(argv: list[str]) -> int:
                     "[check-api-error-controller-contract] BLOCKER — code-profile "
                     "controller error mapping contract violation:"
                 )
+                # 레코드는 필터 통과 후 «최종 집합»의 거울이다 — 라인 문면은 render()
+                # 소유 그대로 두고 add 만 얹는다(dedupe·필터·exit 경로 무변). 두 sink 를
+                # 나눠 출력하면 findings 순서가 섞이므로 인쇄는 이 단일 루프가 유지한다.
+                handler_records = SliceFindings()
+                contract_records = ContractFindings(CONTRACT_REF)
                 for finding in reported_findings:
+                    where = f"{finding.path}:{finding.lineno}"
+                    msg = f"{finding.category}: {finding.shown}"
+                    if finding.category in HANDLER_CATEGORIES:
+                        handler_records.add(
+                            "#59",
+                            line=finding.render(),
+                            where=where,
+                            msg=msg,
+                            symbol=finding.category,
+                        )
+                    else:
+                        contract_records.add(
+                            finding.render(),
+                            where=where,
+                            msg=msg,
+                            symbol=finding.category,
+                        )
                     print(finding.render())
                 print(
                     "  근거: known BC failures are mapped directly by their selected "
