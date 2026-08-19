@@ -8,7 +8,10 @@ module의 수동 OpenAPI 후처리를 차단한다.
 
 종료코드: 0=clean, 1=사용/분석 오류, 2=blocker.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인과 레코드는 공용 포매터(출력 계약 v2 — ordered emitter)가
+같은 순서로 산출하고, 전 위반의 귀속은 #63 하나다(rule-owner-map). 앵커 실행의
+tree↔code 동일 사건 이중 방출은 tree 사이트 선점 억제로 막는다(귀속 매핑표 v2
+overlap 절 — U14).
 """
 from __future__ import annotations
 
@@ -21,7 +24,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import SliceFindings
+from findings import Findings, emit_all, lines, zero_target_guard
 from dataclasses import dataclass
 from http import HTTPStatus
 from pathlib import Path
@@ -179,15 +182,14 @@ class Operation:
 
 @dataclass(frozen=True)
 class Finding:
+    # 라인 판형은 공용 포매터 소유(출력 계약 v2) — 자체 render 를 두지 않는다.
+    # symbol 은 확정 재료가 있는 사이트만 채운다(Operation → function.name ·
+    # override FunctionDef → .name — 없으면 None · 귀속 매핑표 v2 부속 A-1).
     relative_path: Path
     lineno: int
     category: str
     detail: str
-
-    def render(self) -> str:
-        # [#63] — 이 검사기의 규칙 소유는 #63 하나다(rule-owner-map). 태그 없는 렌더는
-        # 빚 채널(`[#N]` 매칭)이 원리상 닿을 수 없는 진단을 만든다 — 태그를 포함한다.
-        return f"  - {self.relative_path}:{self.lineno}  [#63] {self.detail}"
+    symbol: str | None = None
 
 
 def _argument_parser() -> _UsageParser:
@@ -735,8 +737,10 @@ def _scan_is_new_or_modified(root: Path, file_path: Path) -> bool:
         return True
 
 
-def _repo_scan_findings(root: Path) -> list[str]:
-    findings: list[str] = []
+def _repo_scan_findings(root: Path) -> Findings:
+    # repo 스캔 레인도 #63 violation 문법이다(where=경로 성분 · msg=사유) — 방출은
+    # 호출측 emit_all 이 한 순서로 수행한다(출력 계약 v2).
+    findings = Findings(defer=True)
     for path in _scan_driving_files(root):
         try:
             source = path.read_text(encoding="utf-8", errors="replace")
@@ -744,7 +748,7 @@ def _repo_scan_findings(root: Path) -> list[str]:
             continue
         hits = _scan_operations(source)
         if hits and _scan_is_new_or_modified(root, path):
-            findings.append(f"  - {path.relative_to(root)}: {'; '.join(hits)}")
+            findings.add("#63", where=path.relative_to(root), msg="; ".join(hits))
     return findings
 
 
@@ -2620,6 +2624,7 @@ def _response_findings(
                     "missing-response",
                     f"{operation.identity} 직접 반환 오류 status {status}가 "
                     "response=에서 누락",
+                    symbol=operation.function.name,
                 )
             )
             continue
@@ -2642,6 +2647,7 @@ def _response_findings(
                         "wrong-response-schema",
                         f"{operation.identity} status {status}는 "
                         f"{expected.full_path} 필요 (현재 {shown})",
+                        symbol=operation.function.name,
                     )
                 )
 
@@ -2659,6 +2665,7 @@ def _response_findings(
                     "extra-bc-advertisement",
                     f"{operation.identity} status {status}의 {schema.full_path} "
                     "선언에 직접 BC 오류 반환 없음",
+                    symbol=operation.function.name,
                 )
             )
     return findings
@@ -2696,6 +2703,7 @@ def _openapi_extra_findings(operation: Operation) -> list[Finding]:
                     "openapi-extra",
                     f"{operation.identity} 오류 responses {statuses}를 "
                     "openapi_extra로 수동 선언",
+                    symbol=operation.function.name,
                 )
             ]
     return []
@@ -3050,6 +3058,7 @@ def _api_module_findings(
                                 "openapi-override",
                                 f"Ninja API subclass {statement.name}의 "
                                 "get_openapi_schema override",
+                                symbol=member.name,
                             )
                         )
             class_bindings = dict(state.bindings)
@@ -3215,7 +3224,22 @@ def _deduplicate_findings(findings: list[Finding]) -> list[Finding]:
     )
 
 
-def _code_findings(config: Config) -> tuple[list[str], list[Finding]]:
+def _module_overlap_keys(findings: list[Finding]) -> set[tuple[str, str, int]]:
+    """module-scan 계열 code 사건의 tree 대응 좌표(앵커 레인 선점 억제 키 — 귀속
+    매핑표 v2 overlap 절): override 는 같은 def 행, monkeypatch 는 같은 대입 행.
+    (openapi-extra 는 function 행이 필요해 _code_findings 의 operation 루프가 채운다.)"""
+    keys: set[tuple[str, str, int]] = set()
+    for finding in findings:
+        if finding.category == "openapi-override":
+            keys.add(("override", finding.relative_path.as_posix(), finding.lineno))
+        elif finding.category == "openapi-monkeypatch":
+            keys.add(("monkeypatch", finding.relative_path.as_posix(), finding.lineno))
+    return keys
+
+
+def _code_findings(
+    config: Config,
+) -> tuple[list[str], list[Finding], set[tuple[str, str, int]]]:
     parsed_by_path = _parse_code_sources(config)
     api = parsed_by_path[Path(config.api_module or "")]
     findings, selected_imports = _api_module_findings(api)
@@ -3230,45 +3254,46 @@ def _code_findings(config: Config) -> tuple[list[str], list[Finding]]:
         findings.extend(controller_findings)
         controller_operations.extend(_collect_operations(controller))
     analysis: list[str] = []
+    overlap_keys: set[tuple[str, str, int]] = set()
     try:
         catalog = _error_catalog(config, parsed_by_path)
     except UsageError as exc:
         issue = str(exc)
         if issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
             analysis.append(issue)
-            return analysis, _deduplicate_findings(findings)
+            deduplicated = _deduplicate_findings(findings)
+            return analysis, deduplicated, _module_overlap_keys(deduplicated)
         raise
     for operation in controller_operations:
         try:
             requirements = _operation_requirements(operation, catalog)
             findings.extend(_response_findings(operation, requirements, catalog))
-            findings.extend(_openapi_extra_findings(operation))
+            extra_findings = _openapi_extra_findings(operation)
+            if extra_findings:
+                overlap_keys.add(
+                    (
+                        "openapi-extra",
+                        operation.relative_path.as_posix(),
+                        operation.function.lineno,
+                    )
+                )
+            findings.extend(extra_findings)
         except UsageError as exc:
             issue = str(exc)
             if not issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED "):
                 raise
             analysis.append(issue)
-    return sorted(set(analysis)), _deduplicate_findings(findings)
+    deduplicated = _deduplicate_findings(findings)
+    return sorted(set(analysis)), deduplicated, overlap_keys | _module_overlap_keys(deduplicated)
 
 
-def _print_repo_scan_findings(findings: list[str]) -> None:
+def _print_repo_scan_findings(findings: Findings) -> None:
     print(
         "[check-openapi-error-declaration] BLOCKER — 오류 status 를 openapi_extra 로만 "
         "선언하고 "
         "response={...} 엔 누락함(ninja 가 타입으로 미인지 = 선언 계약 밖):"
     )
-    records = SliceFindings()  # 라인 문면 무변 — 실제 출력 집합의 거울 레코드만 얹는다
-    for finding in findings:
-        # "  - {rel}: {hits}" — 선두 장식을 뗀 문면이 msg, 경로 성분이 where.
-        stripped = finding[4:] if finding.startswith("  - ") else finding.strip()
-        where, separator, msg = stripped.partition(": ")
-        records.add(
-            "#63",
-            line=finding,
-            where=where if separator else "(repo-scan)",
-            msg=msg if separator else stripped,
-        )
-        print(finding)
+    emit_all(findings, printer=print)
     print(
         "  근거: implementation-django-ninja §2.2 line111. 가능한 모든 status"
         "(404·409·422 등)를 response={...} 에 선언한다 — "
@@ -3278,22 +3303,26 @@ def _print_repo_scan_findings(findings: list[str]) -> None:
     )
 
 
-def _print_code_findings(findings: list[Finding]) -> None:
+def _code_findings_records(findings: list[Finding]) -> Findings:
+    # msg 는 `{category}: {detail}` — stdout 라인과 record message 가 같은 문면이다
+    # (출력 계약 v2 «openapi 행» 확정 · 귀속 매핑표 v2 부속 A-1).
+    records = Findings(defer=True)
+    for finding in findings:
+        records.add(
+            "#63",
+            where=f"{finding.relative_path}:{finding.lineno}",
+            msg=f"{finding.category}: {finding.detail}",
+            symbol=finding.symbol,
+        )
+    return records
+
+
+def _print_code_findings(records: Findings) -> None:
     print(
         "[check-openapi-error-declaration] BLOCKER — 직접 반환 BC 오류와 response= "
         "<Bc>ErrorSchema 계약 불일치 또는 수동 OpenAPI 후처리:"
     )
-    records = SliceFindings()  # 라인 문면 무변 — 실제 출력 집합의 거울 레코드만 얹는다
-    for finding in findings:
-        line = finding.render()
-        records.add(
-            "#63",
-            line=line,
-            where=f"{finding.relative_path}:{finding.lineno}",
-            msg=finding.detail,
-            symbol=finding.category,
-        )
-        print(line)
+    emit_all(records, printer=print)
     print(
         "  조치: 각 직접 반환 status를 같은 BC의 <Bc>ErrorSchema base로 선언하고, "
         "직접 반환하지 않는 BC 오류 광고와 "
@@ -3342,8 +3371,14 @@ def _dict_has_key(node: ast.AST, key: str) -> bool:
     return False
 
 
-def _tree_slice63(root: Path) -> list[str]:
-    findings = SliceFindings()
+def _tree_slice63(root: Path) -> tuple[Findings, list[tuple[str, str, int]]]:
+    """tree 3사이트 — 공용 포매터 violation 문법(B형 locator `{rel}:{lineno}` 정형화).
+
+    엔트리와 같은 순서의 keys 는 앵커 레인 tree↔code 동일 사건 선점 억제의 좌표다
+    (귀속 매핑표 v2 overlap 절 — override/monkeypatch 는 같은 행, openapi_extra 는
+    같은 function def 행에서 code 레인과 만난다)."""
+    findings = Findings(defer=True)
+    keys: list[tuple[str, str, int]] = []
     files: list[Path] = []
     for p in sorted(root.rglob("*.py")):
         rel = p.relative_to(root)
@@ -3360,7 +3395,8 @@ def _tree_slice63(root: Path) -> list[str]:
                 if node.name == "get_openapi_schema":
                     where = f"{rel}:{node.lineno}"
                     msg = "`get_openapi_schema` override — 오류 응답은 operation 의 `response=` 직접 선언으로만 문서화한다"
-                    findings.add("#63", line=f"  [#63] {where} {msg}", where=where, msg=msg)
+                    findings.add("#63", where=where, msg=msg)
+                    keys.append(("override", rel.as_posix(), node.lineno))
                 for deco in node.decorator_list:
                     if not isinstance(deco, ast.Call):
                         continue
@@ -3368,14 +3404,39 @@ def _tree_slice63(root: Path) -> list[str]:
                         if kw.arg == "openapi_extra" and _dict_has_key(kw.value, "responses"):
                             where = f"{rel}:{node.lineno}"
                             msg = "`openapi_extra` 의 responses 보충 — 오류 응답은 `response={status: <Bc>ErrorSchema}` 로 직접 선언한다"
-                            findings.add("#63", line=f"  [#63] {where} {msg}", where=where, msg=msg)
+                            findings.add("#63", where=where, msg=msg)
+                            keys.append(("openapi-extra", rel.as_posix(), node.lineno))
             elif isinstance(node, ast.Assign):
                 for t in node.targets:
                     if isinstance(t, ast.Attribute) and t.attr in ("openapi_schema", "get_openapi_schema"):
                         where = f"{rel}:{node.lineno}"
                         msg = f"`{t.attr}` monkeypatch — OpenAPI 를 사후 변형하지 않는다"
-                        findings.add("#63", line=f"  [#63] {where} {msg}", where=where, msg=msg)
-    return findings
+                        findings.add("#63", where=where, msg=msg)
+                        keys.append(("monkeypatch", rel.as_posix(), node.lineno))
+    return findings, keys
+
+
+def _suppress_overlapped_tree(
+    tree_findings: Findings,
+    tree_keys: list[tuple[str, str, int]],
+    code_keys: set[tuple[str, str, int]],
+) -> Findings:
+    """앵커 레인 tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 overlap 절 — U14).
+
+    code 레인이 같은 사건(openapi_extra·override·monkeypatch)을 적중한 대상의
+    tree 사이트는 라인·레코드 모두 방출하지 않는다(1건 대표 — 더 정밀한 판정이
+    이긴다. 대상 밖·code 미발화에서는 tree 단독 그대로)."""
+    kept = Findings(tree_findings.checker, defer=True)
+    for entry, key in zip(tree_findings.entries, tree_keys):
+        if key in code_keys:
+            continue
+        kept.add(entry.rule, entry.where, entry.msg, entry.symbol)
+    return kept
+
+
+def _print_tree_findings(findings: Findings) -> None:
+    print("[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):")
+    emit_all(findings, printer=print)
 
 
 def main(argv: list[str]) -> int:
@@ -3389,43 +3450,61 @@ def main(argv: list[str]) -> int:
         if not any(
             (bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING_SET
         ) and _tree_adopted63(bcs):
-            print("[check-openapi-error-declaration] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            emit_all(
+                zero_target_guard("[check-openapi-error-declaration] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)"),
+                printer=print,
+                indent="",
+            )
             return 2
         # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
         # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
         collected: list[str] = []
         pending_analysis: list[str] = []
-        tree_findings = _tree_slice63(config.root)
-        if tree_findings:
-            print("[check-openapi-error-declaration] BLOCKER — OpenAPI 오류 선언 규율 위반 (#63 · D27):")
-            for f in tree_findings:
-                print(f)
-            if config.anchor is None:
-                return 2
-            collected.extend(tree_findings)
+        tree_findings, tree_keys = _tree_slice63(config.root)
+        if tree_findings and config.anchor is None:
+            _print_tree_findings(tree_findings)
+            return 2
         if config.profile == "dddjango-code-json":
-            analysis, findings = _code_findings(config)
+            # 앵커 레인의 tree↔code 동일 사건 선점 억제를 위해 code 레인을 먼저
+            # 계산한다 — 분석 불능(UsageError)이어도 확정 tree 진단은 exit 1 전에
+            # 그대로 인쇄한다(현행 stdout 순서 보존 · 억제는 code 실발화 시에만).
+            try:
+                analysis, findings, code_keys = _code_findings(config)
+            except UsageError:
+                if tree_findings:
+                    _print_tree_findings(tree_findings)
+                raise
             dynamic_proof_only = bool(analysis) and all(
                 issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
                 for issue in analysis
             )
-            if findings and (not analysis or dynamic_proof_only):
-                _print_code_findings(findings)
+            emit_code = bool(findings) and (not analysis or dynamic_proof_only)
+            if emit_code and tree_findings:
+                tree_findings = _suppress_overlapped_tree(tree_findings, tree_keys, code_keys)
+            if tree_findings:
+                _print_tree_findings(tree_findings)
+                collected.extend(lines(tree_findings))
+            if emit_code:
+                records = _code_findings_records(findings)
+                _print_code_findings(records)
                 if config.anchor is None:
                     return 2
-                collected.extend(finding.render() for finding in findings)
+                collected.extend(lines(records))
                 # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
                 # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
                 pending_analysis = analysis
             elif analysis:
                 raise UsageError("; ".join(analysis))
         else:
+            if tree_findings:
+                _print_tree_findings(tree_findings)
+                collected.extend(lines(tree_findings))
             repo_scan = _repo_scan_findings(config.root)
             if repo_scan:
                 _print_repo_scan_findings(repo_scan)
                 if config.anchor is None:
                     return 2
-                collected.extend(repo_scan)
+                collected.extend(lines(repo_scan))
         if collected:
             verdict = anchor_diff.partition_exit(
                 script=Path(__file__).resolve(),
