@@ -4578,10 +4578,13 @@ def _tree_camel(bc_name: str) -> str:
     return "".join(part.capitalize() for part in bc_name.split("_"))
 
 
-def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
+def _tree_slice(root: Path, bcs: list[Path]) -> tuple[Findings, list[tuple[str, str] | None]]:
     # 구조화 엔트리 수집 — 라인은 포매터의 violation 문법(`[{rule}] {where}: {msg}`)으로
     # emit_all 이 생성한다(2-space 들여쓰기 포함 · 기존 A형 stdout byte 보존 — 출력 계약 v2).
+    # keys 는 엔트리와 1:1(귀속 매핑표 v2 §5) — 선점 억제 대상(#114 부재·#572·#636)만
+    # (rule, 정본 파일 posix) 사건 키를 갖고, 나머지(#568·#114 복수·분석)는 None(억제 밖).
     findings: Findings = Findings(defer=True)
+    keys: list[tuple[str, str] | None] = []
     for bc in bcs:
         expected_prefix = _tree_camel(bc.name)
         schema_files: list[Path] = []
@@ -4599,6 +4602,7 @@ def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
                     api_rel,
                     "`bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)",
                 )
+                keys.append(("#114", (api_rel / "bc_error_schema.py").as_posix()))
             for p in sorted(api.glob("*.py")):
                 low = p.name.lower()
                 if p.name != "bc_error_schema.py" and "error" in low and "schema" in low:
@@ -4607,6 +4611,7 @@ def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
                         p.relative_to(root),
                         "폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다",
                     )
+                    keys.append(None)
             for schema_dir in api.rglob("schema"):
                 if not schema_dir.is_dir():
                     continue
@@ -4616,12 +4621,14 @@ def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
                         p.relative_to(root),
                         "`schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로",
                     )
+                    keys.append(None)
         if len(schema_files) > 1:
             findings.add(
                 "#114",
                 bc.relative_to(root),
                 f"`bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다",
             )
+            keys.append(None)  # §5 억제는 부재 사이트 한정 — 복수는 code B1ⓐ(부재)와 딴 사건
         for schema_file in schema_files:
             rel = schema_file.relative_to(root)
             try:
@@ -4630,6 +4637,7 @@ def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
                 # "#N" 꼴 밖 표지 — findings.py 가 rule=null + sentinel 로 격리한다(parse-fail 류).
                 # 라인도 기존 센티널 문면 그대로(violation 문법 `[분석] {where}: {msg}`).
                 findings.add("분석", rel, "bc_error_schema.py 를 파싱하지 못했다")
+                keys.append(None)
                 continue
             classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
             schemas = [c for c in classes if c.name.endswith("ErrorSchema")]
@@ -4648,12 +4656,14 @@ def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
                     rel,
                     f"응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)",
                 )
+                keys.append(("#572", rel.as_posix()))
             if not any(c.name == expected_code for c in codes):
                 findings.add(
                     "#572",
                     rel,
                     f"오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)",
                 )
+                keys.append(("#572", rel.as_posix()))
             for code_cls in codes:
                 base_names = {b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "") for b in code_cls.bases}
                 if not (base_names & strenum_names):
@@ -4662,7 +4672,53 @@ def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
                         rel,
                         f"`{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다",
                     )
-    return findings
+                    keys.append(("#636", rel.as_posix()))
+    return findings, keys
+
+
+def _code_incident_keys(
+    blockers: list[Blocker], reported_findings: list[Finding]
+) -> set[tuple[str, str]]:
+    """code 레인 «실발화» 사건 키(귀속 매핑표 v2 §5 — 활성만으로는 억제하지 않는다).
+
+    #114 는 B1 BC 경로 blocker(«항상 있다» 위반 — 대상: config error_bcs)의 정본 경로,
+    #572·#636 은 같은 rule 로 실제 방출되는 finding 의 대상 파일이다. tree(api/ 존재 BC)와
+    code(config error_bcs) 두 대상 집합의 교집합은 정본 파일 경로 키의 상등으로 실현된다
+    — 대상 밖 BC 는 키가 만나지 않아 tree 단독 그대로 남는다."""
+    keys: set[tuple[str, str]] = {
+        ("#114", blocker.relative_path.as_posix())
+        for blocker in blockers
+        if blocker.kind == BLOCKER_KIND_BC_ERROR
+    }
+    keys.update(
+        (finding.rule, finding.relative_path.as_posix())
+        for finding in reported_findings
+        if finding.rule in {"#572", "#636"}
+    )
+    return keys
+
+
+def _suppress_overlapped_tree(
+    tree_findings: Findings,
+    tree_keys: list[tuple[str, str] | None],
+    code_keys: set[tuple[str, str]],
+) -> Findings:
+    """앵커 레인 tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 §5 — #114·#572·#636).
+
+    code 레인이 같은 rule 로 같은 사건을 적중한 대상의 tree 사이트는 라인·레코드 모두
+    방출하지 않는다(1건 대표 — 더 정밀한 판정이 이긴다. 대상 밖·code 미발화에서는
+    tree 단독 그대로)."""
+    kept: Findings = Findings(tree_findings.checker, defer=True)
+    for entry, key in zip(tree_findings.entries, tree_keys):
+        if key is not None and key in code_keys:
+            continue
+        kept.add(entry.rule, entry.where, entry.msg, entry.symbol)
+    return kept
+
+
+def _print_tree_findings(findings: Findings) -> None:
+    print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 10행):")
+    emit_all(findings, printer=print)
 
 
 def main(argv: list[str]) -> int:
@@ -4699,15 +4755,15 @@ def main(argv: list[str]) -> int:
     # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
     collected: list[str] = []
     pending_analysis: list[str] = []
-    tree_findings: Findings = _tree_slice(config.root, bcs)
-    if tree_findings:
-        print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 10행):")
-        emit_all(tree_findings, printer=print)
-        if config.anchor is None:
-            return 2
-        collected.extend(lines(tree_findings))
+    tree_findings, tree_keys = _tree_slice(config.root, bcs)
+    if tree_findings and config.anchor is None:
+        _print_tree_findings(tree_findings)
+        return 2
 
     if config.profile not in {None, "auto"}:
+        # 앵커 레인의 tree↔code 동일 사건 선점 억제(§5)를 위해 code 레인을 먼저
+        # 계산한다 — 분석 불능(UsageError)이어도 확정 tree 진단은 exit 1 전에
+        # 그대로 인쇄한다(현행 stdout 순서 보존 · 억제는 code 실발화 시에만).
         try:
             inventory = _production_inventory(config.root)
             source_paths, code_paths, preserve_paths, plan_analysis, blockers = _source_plan(
@@ -4739,78 +4795,94 @@ def main(argv: list[str]) -> int:
                     for finding in findings
                     if not finding.requires_static_error_shape
                 ]
-            if (reported_findings or blockers) and (not analysis or dynamic_proof_only):
-                print(
-                    "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
-                    "inventory, or raw code contract violation:"
-                )
-                # 방출 표면 — 라인은 레코드 필드의 순수 함수(violation `[#N] {where}: {msg}` ·
-                # 계약 `- {where}: {msg}`)이고, stdout 인쇄 순서 = 레코드 순서(emit_all 불변식).
-                # 판정(#N/계약)이 갈릴 때마다 defer 컬렉션을 이어 붙여 현행 인쇄 순서를 보존한다.
-                surfaces: list[Findings | ContractFindings] = []
-
-                def _violation_surface() -> Findings:
-                    tail = surfaces[-1] if surfaces else None
-                    if not isinstance(tail, Findings):
-                        tail = Findings(defer=True)
-                        surfaces.append(tail)
-                    return tail
-
-                def _contract_surface() -> ContractFindings:
-                    tail = surfaces[-1] if surfaces else None
-                    if not isinstance(tail, ContractFindings):
-                        tail = ContractFindings(CONTRACT_REF, defer=True)
-                        surfaces.append(tail)
-                    return tail
-
-                for blocker in blockers:
-                    # B1 BC 경로 = #114 «항상 있다» — 실경로 where(«(code-profile)» 표지 폐기).
-                    if blocker.kind == BLOCKER_KIND_BC_ERROR:
-                        _violation_surface().add(
-                            "#114", blocker.relative_path, blocker.reason
-                        )
-                    else:
-                        _contract_surface().add(
-                            where=blocker.relative_path, msg=blocker.reason
-                        )
-                for finding in reported_findings:
-                    finding_where: str = f"{finding.relative_path}:{finding.lineno}"
-                    finding_msg: str = f"{finding.category}: {finding.shown}"
-                    if finding.rule is not None:
-                        _violation_surface().add(
-                            finding.rule, finding_where, finding_msg, symbol=finding.symbol
-                        )
-                    else:
-                        _contract_surface().add(
-                            where=finding_where, msg=finding_msg, symbol=finding.symbol
-                        )
-                emit_all(*surfaces, printer=print)
-                if dynamic_proof_only:
-                    # 토큰 진단을 삼키지 않는다(정보 손실 0) — exit 는 findings 가 정하되,
-                    # 남은 정적 해석 불능이 «동적 error shape» 유형임을 함께 보고한다.
-                    print(
-                        "  (참고 — findings 해소 후 잔여 진단이 아래 토큰뿐이면 exit 1 "
-                        "runtime proof 경로가 적용된다:)"
-                    )
-                    for issue in sorted(set(analysis)):
-                        print(f"  - {issue}")
-                print(
-                    "  근거: common FrameworkErrorSchema는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
-                    "canonical ErrorCode/FrameworkErrorSchema hierarchy와 project-wide unique wire code를 소유한다."
-                )
-                if config.anchor is None:
-                    return 2
-                for surface in surfaces:
-                    collected.extend(lines(surface))
-                if dynamic_proof_only:
-                    # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
-                    # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
-                    pending_analysis = sorted(set(analysis))
-            elif analysis:
+            emit_code: bool = bool(reported_findings or blockers) and (
+                not analysis or dynamic_proof_only
+            )
+            if not emit_code and analysis:
                 raise UsageError("; ".join(sorted(set(analysis))))
         except UsageError as exc:
+            if tree_findings:
+                _print_tree_findings(tree_findings)
             print(f"[check-error-centralization] 사용 오류: {exc}", file=sys.stderr)
             return 1
+        if emit_code and tree_findings:
+            tree_findings = _suppress_overlapped_tree(
+                tree_findings, tree_keys, _code_incident_keys(blockers, reported_findings)
+            )
+        if tree_findings:
+            _print_tree_findings(tree_findings)
+            collected.extend(lines(tree_findings))
+        if emit_code:
+            print(
+                "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
+                "inventory, or raw code contract violation:"
+            )
+            # 방출 표면 — 라인은 레코드 필드의 순수 함수(violation `[#N] {where}: {msg}` ·
+            # 계약 `- {where}: {msg}`)이고, stdout 인쇄 순서 = 레코드 순서(emit_all 불변식).
+            # 판정(#N/계약)이 갈릴 때마다 defer 컬렉션을 이어 붙여 현행 인쇄 순서를 보존한다.
+            surfaces: list[Findings | ContractFindings] = []
+
+            def _violation_surface() -> Findings:
+                tail = surfaces[-1] if surfaces else None
+                if not isinstance(tail, Findings):
+                    tail = Findings(defer=True)
+                    surfaces.append(tail)
+                return tail
+
+            def _contract_surface() -> ContractFindings:
+                tail = surfaces[-1] if surfaces else None
+                if not isinstance(tail, ContractFindings):
+                    tail = ContractFindings(CONTRACT_REF, defer=True)
+                    surfaces.append(tail)
+                return tail
+
+            for blocker in blockers:
+                # B1 BC 경로 = #114 «항상 있다» — 실경로 where(«(code-profile)» 표지 폐기).
+                if blocker.kind == BLOCKER_KIND_BC_ERROR:
+                    _violation_surface().add(
+                        "#114", blocker.relative_path, blocker.reason
+                    )
+                else:
+                    _contract_surface().add(
+                        where=blocker.relative_path, msg=blocker.reason
+                    )
+            for finding in reported_findings:
+                finding_where: str = f"{finding.relative_path}:{finding.lineno}"
+                finding_msg: str = f"{finding.category}: {finding.shown}"
+                if finding.rule is not None:
+                    _violation_surface().add(
+                        finding.rule, finding_where, finding_msg, symbol=finding.symbol
+                    )
+                else:
+                    _contract_surface().add(
+                        where=finding_where, msg=finding_msg, symbol=finding.symbol
+                    )
+            emit_all(*surfaces, printer=print)
+            if dynamic_proof_only:
+                # 토큰 진단을 삼키지 않는다(정보 손실 0) — exit 는 findings 가 정하되,
+                # 남은 정적 해석 불능이 «동적 error shape» 유형임을 함께 보고한다.
+                print(
+                    "  (참고 — findings 해소 후 잔여 진단이 아래 토큰뿐이면 exit 1 "
+                    "runtime proof 경로가 적용된다:)"
+                )
+                for issue in sorted(set(analysis)):
+                    print(f"  - {issue}")
+            print(
+                "  근거: common FrameworkErrorSchema는 프로젝트에서 승인한 exact wire shape의 단일 기반이고, 각 BC는 "
+                "canonical ErrorCode/FrameworkErrorSchema hierarchy와 project-wide unique wire code를 소유한다."
+            )
+            if config.anchor is None:
+                return 2
+            for surface in surfaces:
+                collected.extend(lines(surface))
+            if dynamic_proof_only:
+                # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
+                # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
+                pending_analysis = sorted(set(analysis))
+    elif tree_findings:
+        # 앵커 모드 + 비 code-profile 실행 — tree 진단을 현행 그대로 인쇄·수집한다.
+        _print_tree_findings(tree_findings)
+        collected.extend(lines(tree_findings))
 
     if collected:
         try:
