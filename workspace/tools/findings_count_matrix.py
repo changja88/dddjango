@@ -143,7 +143,7 @@ EXPECTED: "dict[str, tuple[int, int, int, str, str]]" = {
     "check-db-table.py::git-clean": (2, 24, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#631×2,#632×1", "c0a20513dc57285b"),
     "check-db-table.py::git-modified": (2, 24, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#631×2,#632×1", "c0a20513dc57285b"),
     "check-db-table.py::git-untracked": (2, 26, 0, "#318×1,#324×2,#325×1,#326×2,#329×1,#330×2,#331×2,#332×1,#334×1,#335×2,#467×1,#535×1,#536×1,#537×1,#538×2,#630×2,#631×2,#632×1", "5b85011e45235434"),
-    "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 0, "#59×1,contract:선행 계약(08-04 API-error) 소유×2", "63461a8752062323"),
+    "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 0, "#59×1,#62×2", "97ef7c202f1d48d0"),
     "check-composition-root.py::composition_root_single_file": (2, 1, 0, "#497×1", "2c43cc1deddc1a8c"),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00"),
     "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8"),

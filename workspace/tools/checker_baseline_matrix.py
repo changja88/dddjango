@@ -243,7 +243,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     # tree green 시 code 레인 미도달 exit 0(표 하단 관찰 라인) — selector 렌더로 실도달.
     # parsed 0·synthetic True = code 레인 발화가 아직 [#N] 라인 앵커 밖(구 문면)이라는
     # 정직한 기록 — 3단계 포매터 이행 시 parsed 증가로 갱신된다(사유 의무).
-    "check-api-error-controller-contract.py::api_error_controller_code": (2, 0, 0, 5, True),
+    "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 3, 2, False),
     "check-composition-root.py::composition_root_single_file": (2, 1, 1, 2, False),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 1, 2, False),
     "check-error-centralization.py::error_centralization_code": (2, 1, 1, 4, False),

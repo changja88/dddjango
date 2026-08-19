@@ -10,7 +10,12 @@ those controllers.
 
 Exit codes: 0=clean/N/A/help, 2=contract blocker, 1=usage or analysis error.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 방출은 공용 ordered emitter(emit_all) 경유 — stdout 위반 라인 순서와
+레코드 순서가 같고, 라인은 레코드 필드의 순수 함수다(출력 계약 v2). code-profile
+category 의 #N 귀속/계약 잔류 판정은 귀속 매핑표 v2 가 정본이다
+(정본 문서명: 2026-08-19-ontology-t2-1-attribution-map).
+tree↔code 동일 사건 이중 방출은 tree 사이트 선점 억제로 막는다(귀속 매핑표 v2
+overlap 절 — #62·#474 는 handler 행, ⓓ#125 는 route 함수 def 행 좌표).
 """
 from __future__ import annotations
 
@@ -24,26 +29,20 @@ import sys
 
 import anchor_diff
 import checker_target
-from findings import ContractFindings, SliceFindings
+from findings import Candidates, ContractFindings, Findings, emit_all, lines, zero_target_guard
 from dataclasses import dataclass
 from http import HTTPStatus
 from pathlib import Path
 from typing import Iterator
 
 
-# code-profile 레인은 08-04 API-error 계약 레인이다(registry #15 —
-# dddjango/commands/dddjango.md:107). 이 레인 20 category 중 rule-owner-map 의 #N 에
-# 대응하는 근거가 있는 것은 아래 HANDLER_CATEGORIES 둘뿐이고(rule-owner-map ⓒ 소유 행
-# 의 #59 «전역 예외 핸들러/catch-all mapper 금지» 실현 — 이 검사기가 tree-slice 로는
-# 못 내는 유일 규칙이다). 나머지 18 category 는 #N 대응 근거가 없어(실측)
-# rule=null + contract_ref 로 나간다.
+# code-profile 레인은 08-04 API-error 선행 계약 레인이다(registry #15). rule-owner-map
+# 소유 5규칙(#59 «전역 예외 핸들러 금지» · #62 «except Exception 금지» · #125 «입구
+# 로직 금지» · #126 «매핑을 helper 로 옮기지 않는다» · #474 «도메인 예외는 타입으로만»)
+# 의 술어에 포섭되는 category 는 해당 #N violation 으로 방출하고(귀속 매핑표 v2 —
+# 2026-08-19-ontology-t2-1-attribution-map §1: 원자 술어 23 = #N 12 · 계약 11),
+# 그 밖의 category 만 08-04 선행 계약(rule=null + contract_ref)로 남는다.
 CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
-HANDLER_CATEGORIES = frozenset(
-    {
-        "custom Ninja exception_handler forbidden",
-        "custom Ninja add_exception_handler forbidden",
-    }
-)
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
@@ -201,10 +200,16 @@ class Finding:
     lineno: int
     category: str
     shown: str
+    # 귀속 매핑표 v2 — category 가 소유 규칙 문면의 술어에 포섭되면 "#N"(violation 방출),
+    # 08-04 선행 계약 잔류면 None(계약 방출 · rule=null + contract_ref).
+    rule: str | None = None
+    # 위반 심볼(U17) — 생성 지점 node 가 이름을 아는 경우만(FunctionDef/ClassDef 이름·
+    # AnnAssign 대상), 불명이면 null.
+    symbol: str | None = None
+    # tree↔code 동일 사건 선점 억제 좌표(귀속 매핑표 v2 overlap 절) — #62/#474 는
+    # handler 행, #125 는 route 함수 def 행. None 이면 억제 대상 아님.
+    overlap_line: int | None = None
     requires_static_error_shape: bool = False
-
-    def render(self) -> str:
-        return f"  - {self.path}:{self.lineno}  {self.category}: {self.shown}"
 
 
 @dataclass
@@ -2142,6 +2147,15 @@ def _error_language(
     )
 
 
+def _node_symbol(node: ast.AST) -> str | None:
+    """위반 심볼(U17) — node 가 안정 이름을 가진 경우만 채우고, 그 밖은 null."""
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return node.name
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return node.target.id
+    return None
+
+
 def _append_finding(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
@@ -2149,6 +2163,8 @@ def _append_finding(
     node: ast.AST,
     category: str,
     *,
+    rule: str | None = None,
+    overlap_line: int | None = None,
     requires_static_error_shape: bool = False,
 ) -> None:
     lineno = getattr(node, "lineno", 1)
@@ -2156,15 +2172,22 @@ def _append_finding(
     if key in seen:
         return
     seen.add(key)
-    lines = parsed.source.splitlines()
-    shown = lines[lineno - 1].strip() if 0 < lineno <= len(lines) else category
+    source_lines = parsed.source.splitlines()
+    shown = (
+        source_lines[lineno - 1].strip()
+        if 0 < lineno <= len(source_lines)
+        else category
+    )
     findings.append(
         Finding(
             parsed.relative_path,
             lineno,
             category,
             shown,
-            requires_static_error_shape,
+            rule=rule,
+            symbol=_node_symbol(node),
+            overlap_line=overlap_line,
+            requires_static_error_shape=requires_static_error_shape,
         )
     )
 
@@ -3080,6 +3103,7 @@ def _validate_mapping_body(
     allowed_error_calls: set[int],
     allowed_status_calls: set[int],
     category: str,
+    delegated_category: str,
 ) -> bool:
     body = _without_docstrings(statements)
     if len(body) < 2:
@@ -3100,6 +3124,15 @@ def _validate_mapping_body(
         _known_constructor(operation, value, language, analysis)
         if isinstance(value, ast.Call)
         else None
+    )
+    # 행19ⓐ/20ⓐ(귀속 매핑표 v2 — U3 분할): 오류 «생성»이 canonical constructor 가
+    # 아닌 호출(helper/factory/serializer)에 위임된 실패만 #126 «helper·factory·
+    # serializer 로 옮기지 않는다» 축자 포섭 — 그 밖의 본문 형태 오류(본문 길이·
+    # constructor 인자·중간 문장·Status 반환)는 08-04 계약 잔류(ⓑ 기존 문면 유지).
+    delegated: bool = (
+        error_name is not None
+        and isinstance(value, ast.Call)
+        and constructor is None
     )
     valid = True
     if error_name is None or not isinstance(value, ast.Call) or constructor is None:
@@ -3136,7 +3169,8 @@ def _validate_mapping_body(
         seen,
         operation.parsed,
         body[0],
-        category,
+        delegated_category if delegated else category,
+        rule="#126" if delegated else None,  # 행19ⓐ/20ⓐ — «helper·factory 로 옮기지 않는다» 축자
         requires_static_error_shape=True,
     )
     return False
@@ -3186,6 +3220,52 @@ def _exception_origin_valid(operation: Operation, node: ast.AST) -> bool | None:
         return False
     remainder = binding.origin[len(prefix) :]
     return remainder.startswith("application_layer.") or remainder.startswith("domain_layer.")
+
+
+def _exception_origin_layer(operation: Operation, node: ast.AST) -> str | None:
+    """catch type 의 층 판별(행7 분할 재료 — 귀속 매핑표 v2 U1·V5).
+
+    _exception_origin_valid 와 같은 binding 해석으로 자기 BC 의 domain_layer/
+    application_layer 만 확정하고, 그 밖(로컬 섀도잉·비 symbol_import·타 출처)은
+    None(층 미확정)으로 둔다."""
+    if not isinstance(node, ast.Name):
+        return None
+    if node.id in operation.local_names:
+        return None
+    binding = operation.body_bindings.get(node.id)
+    if binding is None or binding.kind != "symbol_import":
+        return None
+    prefix = f"application.{operation.owner_bc}."
+    if not binding.origin.startswith(prefix):
+        return None
+    remainder = binding.origin[len(prefix) :]
+    if remainder.startswith("domain_layer."):
+        return "domain"
+    if remainder.startswith("application_layer."):
+        return "application"
+    return None
+
+
+def _handler_forwarding_attribution(
+    operation: Operation,
+    handler: ast.ExceptHandler,
+) -> tuple[str, str | None]:
+    """행7 분할(귀속 매핑표 v2 — U1·V5): catch 출처(provenance)로 category 를 나눈다.
+
+    ⓐ 도메인 예외 전달 = #474 «입구 파일은 도메인 예외를 타입으로만 쓴다» ·
+    ⓑ 응용 예외 전달 = 08-04 계약(managed catch 규율 고유) ·
+    층 미확정 잔여(혼합 tuple catch 등)는 계약 보수(기존 문면 유지 — U3 준용)."""
+    layers: set[str] = set()
+    for type_node in _handler_type_names(handler.type) or []:
+        layer = _exception_origin_layer(operation, type_node)
+        if layer is None:
+            return "caught exception forwarding forbidden", None
+        layers.add(layer)
+    if layers == {"domain"}:
+        return "caught domain exception forwarding forbidden", "#474"
+    if layers == {"application"}:
+        return "caught application exception forwarding forbidden", None
+    return "caught exception forwarding forbidden", None
 
 
 def _caught_exception_forwarded(handler: ast.ExceptHandler) -> bool:
@@ -3242,14 +3322,29 @@ def _analyze_try(
             "managed try body must be one root-call statement",
         )
     if any(isinstance(candidate, ast.Raise) for candidate in _iter_lexical_nodes(node.body)):
+        # 행3(#125) — «입구에 로직을 두지 않는다» 확정 위반. tree ⓓ#125 겹침은
+        # route 함수 def 행 좌표로 선점 억제(overlap 절).
         _append_finding(
-            findings, seen, operation.parsed, node, "raise inside managed try"
+            findings,
+            seen,
+            operation.parsed,
+            node,
+            "raise inside managed try",
+            rule="#125",
+            overlap_line=operation.node.lineno,
         )
     for handler in node.handlers:
         type_nodes = _handler_type_names(handler.type)
         if type_nodes is None:
+            # 행4(#62) — bare `except:` 는 catch-all 의 극단형.
             _append_finding(
-                findings, seen, operation.parsed, handler, "bare catch forbidden"
+                findings,
+                seen,
+                operation.parsed,
+                handler,
+                "bare catch forbidden",
+                rule="#62",
+                overlap_line=handler.lineno,
             )
         else:
             for type_node in type_nodes:
@@ -3260,27 +3355,43 @@ def _analyze_try(
                         "caught exception runtime provenance 분석 불능"
                     )
                 elif not validity:
+                    # 행5(#62) — 자기 BC 도메인·응용 예외 밖 catch = «한정» 위반.
                     _append_finding(
                         findings,
                         seen,
                         operation.parsed,
                         type_node,
                         "catch must be direct own-BC application/domain exception",
+                        rule="#62",
+                        overlap_line=handler.lineno,
                     )
         if any(
             isinstance(candidate, ast.Raise)
             for candidate in _iter_lexical_nodes(handler.body)
         ):
-            _append_finding(
-                findings, seen, operation.parsed, handler, "raise inside managed catch"
-            )
-        if _caught_exception_forwarded(handler):
+            # 행6(#125) — catch arm 안 `raise` 도 «입구 로직 금지» 밖 동작.
             _append_finding(
                 findings,
                 seen,
                 operation.parsed,
                 handler,
-                "caught exception forwarding forbidden",
+                "raise inside managed catch",
+                rule="#125",
+                overlap_line=operation.node.lineno,
+            )
+        if _caught_exception_forwarded(handler):
+            # 행7 분할(U1·V5) — 도메인 전달 = #474 / 응용 전달·층 미확정 = 계약.
+            forward_category, forward_rule = _handler_forwarding_attribution(
+                operation, handler
+            )
+            _append_finding(
+                findings,
+                seen,
+                operation.parsed,
+                handler,
+                forward_category,
+                rule=forward_rule,
+                overlap_line=handler.lineno if forward_rule == "#474" else None,
             )
         _validate_mapping_body(
             operation,
@@ -3292,6 +3403,7 @@ def _analyze_try(
             allowed_error_calls,
             allowed_status_calls,
             "managed catch must directly construct FrameworkErrorSchema and return Status",
+            "managed catch delegates error construction to helper/factory/serializer",
         )
 
 
@@ -3562,6 +3674,7 @@ def _analyze_results(
             allowed_error_calls,
             allowed_status_calls,
             "Result arm must directly construct FrameworkErrorSchema and return Status",
+            "Result arm delegates error construction to helper/factory/serializer",
         )
 
     for index, statement in enumerate(body):
@@ -4003,20 +4116,24 @@ def _handler_registration_findings(
         if not _handler_receiver(call.func.value, bindings):
             return
         if call.func.attr == "exception_handler":
+            # 행13(#59 유지) — «전역 예외 핸들러로 가로채지 않는다».
             _append_finding(
                 findings,
                 seen,
                 parsed,
                 call,
                 "custom Ninja exception_handler forbidden",
+                rule="#59",
             )
         elif call.func.attr == "add_exception_handler":
+            # 행14(#59 유지) — 행13 동일.
             _append_finding(
                 findings,
                 seen,
                 parsed,
                 call,
                 "custom Ninja add_exception_handler forbidden",
+                rule="#59",
             )
 
     def inspect_expression(root: ast.AST, bindings: dict[str, Binding]) -> None:
@@ -4299,28 +4416,34 @@ def _helper_findings(
             analysis,
         )
         if facts.has_prepared:
+            # 행15(#126) — «helper·factory 로 옮기지 않는다» 축자.
             _append_finding(
                 findings,
                 seen,
                 parsed,
                 function.node,
                 "prepared FrameworkErrorSchema factory/helper forbidden",
+                rule="#126",
             )
         if facts.serializer_node is not None:
+            # 행16(#126) — «serializer 로 옮기지 않는다» 축자(Call node — symbol null).
             _append_finding(
                 findings,
                 seen,
                 parsed,
                 facts.serializer_node,
                 "FrameworkErrorSchema raw HTTP serializer helper forbidden",
+                rule="#126",
             )
         if facts.has_exception_test and facts.has_error_constructor:
+            # 행17(#126) — «매핑을 helper 로 옮기지 않는다» 축자.
             _append_finding(
                 findings,
                 seen,
                 parsed,
                 function.node,
                 "exception-to-FrameworkErrorSchema mapping helper forbidden",
+                rule="#126",
             )
 
         for nested in _nested_functions(function.node.body):
@@ -6684,7 +6807,18 @@ def _deco_route_name(deco: _ast.expr) -> str | None:
     return None
 
 
-def _slice_check_controller_ast(f: Path, rel: Path, findings: SliceFindings, candidates: SliceFindings, is_controller: bool) -> None:
+def _slice_check_controller_ast(
+    f: Path,
+    rel: Path,
+    findings: Findings,
+    candidates: Candidates,
+    finding_keys: "list[tuple[str, str, int] | None]",
+    candidate_keys: "list[tuple[str, str, int] | None]",
+    is_controller: bool,
+) -> None:
+    # 라인은 공용 포매터의 violation/candidate 문법으로 emit_all 이 생성한다(B형
+    # locator 콜론 정형화 — 출력 계약 v2). keys 는 엔트리와 같은 순서의 tree↔code
+    # 동일 사건 좌표다(#62·#474 = handler 행 · ⓓ#125 = route 함수 def 행 — overlap 절).
     try:
         mod = _ast.parse(f.read_text(encoding="utf-8"))
     except (SyntaxError, OSError, UnicodeDecodeError):
@@ -6704,24 +6838,28 @@ def _slice_check_controller_ast(f: Path, rel: Path, findings: SliceFindings, can
             where = f"{rel}:{node.lineno}"
             if "exception_handler" in deco_names:
                 msg = "handler 등록 decorator — 도메인 예외→ErrorSchema 매핑은 컨트롤러 메서드 «안»에 직접 쓴다(helper·factory·global mapper 금지)"
-                findings.add("#126", line=f"  [#126] {where} {msg}", where=where, msg=msg)
+                findings.add("#126", where, msg)
+                finding_keys.append(None)
             if len(routes) >= 2:
                 msg = f"`{node.name}()` 에 라우트 데코가 {len(routes)}개 — 요청 하나당 메서드 하나다"
-                findings.add("#124", line=f"  [#124] {where} {msg}", where=where, msg=msg)
+                findings.add("#124", where, msg)
+                finding_keys.append(None)
             if routes and not is_controller:
                 msg = "라우트 데코레이터가 컨트롤러 파일 밖에 있다 — 라우트·인증·상태 코드는 `<area>_controller.py` 에 온다"
-                findings.add("#132", line=f"  [#132] {where} {msg}", where=where, msg=msg)
+                findings.add("#132", where, msg)
+                finding_keys.append(None)
             if routes and is_controller:
+                question = "입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?"
                 for sub in node.body:
                     if isinstance(sub, (_ast.For, _ast.While)):
                         sub_where = f"{rel}:{sub.lineno}"
-                        msg = "라우트 메서드 안 루프 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?"
-                        candidates.add("#125", line=f"  [ⓓ#125] {sub_where} {msg}", where=sub_where, msg=msg, severity="info")
+                        candidates.add("#125", sub_where, "라우트 메서드 안 루프", question)
+                        candidate_keys.append(("#125", rel.as_posix(), node.lineno))
                         break
                     if isinstance(sub, _ast.If) and not _is_exc_mapping_if(sub, domain_names):
                         sub_where = f"{rel}:{sub.lineno}"
-                        msg = "라우트 메서드 안 분기 — 물음: 입구가 변환·1회 호출을 넘어 로직을 갖는가(그러면 유스케이스로 내린다)?"
-                        candidates.add("#125", line=f"  [ⓓ#125] {sub_where} {msg}", where=sub_where, msg=msg, severity="info")
+                        candidates.add("#125", sub_where, "라우트 메서드 안 분기", question)
+                        candidate_keys.append(("#125", rel.as_posix(), node.lineno))
                         break
         elif isinstance(node, _ast.ExceptHandler):
             caught = node.type
@@ -6733,13 +6871,17 @@ def _slice_check_controller_ast(f: Path, rel: Path, findings: SliceFindings, can
             if caught is None or set(caught_names) & _CATCH_ALL_NAMES:
                 where = f"{rel}:{node.lineno}"
                 msg = "`except Exception`/bare — 폴백은 도메인·응용 base 단위 catch 로 한정한다(base 는 상한이다 — code-json managed controller 는 concrete/구체 tuple 만 catch 한다: ninja §6.2)"
-                findings.add("#62", line=f"  [#62] {where} {msg}", where=where, msg=msg)
+                findings.add("#62", where, msg)
+                finding_keys.append(("#62", rel.as_posix(), node.lineno))
             if node.name and set(caught_names) & domain_names:
                 for sub in _ast.walk(node):
                     if isinstance(sub, _ast.Name) and sub.id == node.name and isinstance(sub.ctx, _ast.Load):
                         sub_where = f"{rel}:{sub.lineno}"
                         msg = f"도메인 예외를 `as {node.name}` 로 묶어 참조했다 — 입구 파일은 도메인 예외를 «타입»으로만 쓴다"
-                        findings.add("#474", line=f"  [#474] {sub_where} {msg}", where=sub_where, msg=msg)
+                        # locator 는 참조 행이지만 사건 좌표는 handler 행이다
+                        # (overlap 절 — locator 가 달라도 같은 incident).
+                        findings.add("#474", sub_where, msg)
+                        finding_keys.append(("#474", rel.as_posix(), node.lineno))
                         break
 
 
@@ -6751,9 +6893,16 @@ def _is_exc_mapping_if(node: _ast.If, domain_names: set[str]) -> bool:
     return False
 
 
-def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[SliceFindings, SliceFindings]:
-    findings = SliceFindings()
-    candidates = SliceFindings()
+def _tree_slice2(
+    root: Path, bcs: list[Path]
+) -> "tuple[Findings, Candidates, list[tuple[str, str, int] | None], list[tuple[str, str, int] | None]]":
+    # 구조화 엔트리 수집 — 방출은 호출측 emit_all 이 한 순서로 수행한다(출력 계약 v2).
+    # keys 두 목록은 엔트리와 같은 순서·같은 길이다(선점 억제 zip 좌표 — 억제 비대상
+    # 사이트는 None).
+    findings: Findings = Findings(defer=True)
+    candidates: Candidates = Candidates(defer=True)
+    finding_keys: "list[tuple[str, str, int] | None]" = []
+    candidate_keys: "list[tuple[str, str, int] | None]" = []
     for bc in bcs:
         app_layer = bc / "application_layer"
         app_areas = (
@@ -6771,20 +6920,24 @@ def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[SliceFindings, SliceFindi
                     area_where = f"{area_rel}/"
                     if area.name.lower() in _TECH_DIR_TOKENS:
                         msg = f"`api/` 의 1차 축은 `<area>/` 다 — 기술 폴더(`{area.name}/`)를 만들지 않는다"
-                        findings.add("#120", line=f"  [#120] {area_where}: {msg}", where=area_where, msg=msg)
+                        findings.add("#120", area_where, msg)
+                        finding_keys.append(None)
                         continue
                     if app_areas is not None and area.name not in app_areas:
                         msg = "`api/<area>/` 이름은 안쪽 `application_layer/<area>/` 와 글자까지 같아야 한다"
-                        findings.add("#121", line=f"  [#121] {area_where}: {msg}", where=area_where, msg=msg)
+                        findings.add("#121", area_where, msg)
+                        finding_keys.append(None)
                     entry = area / f"{area.name}_controller.py"
                     if not entry.is_file():
                         msg = f"진입점 `{area.name}_controller.py` 파일 하나가 온다"
-                        findings.add("#123", line=f"  [#123] {area_where}: {msg}", where=area_where, msg=msg)
+                        findings.add("#123", area_where, msg)
+                        finding_keys.append(None)
                     for p in sorted(area.glob("*_controller.py")):
                         if p != entry:
                             where = f"{p.relative_to(root)}"
                             msg = f"`api/<area>/` 의 진입점은 `{area.name}_controller.py` «하나»다"
-                            findings.add("#123", line=f"  [#123] {where}: {msg}", where=where, msg=msg)
+                            findings.add("#123", where, msg)
+                            finding_keys.append(None)
                 # api/** 파일 규칙 — #131(기술 파일명) · 컨트롤러/비컨트롤러 AST
                 for p in sorted(api.rglob("*.py")):
                     if set(p.relative_to(api).parts) & {"__pycache__"}:
@@ -6792,15 +6945,63 @@ def _tree_slice2(root: Path, bcs: list[Path]) -> tuple[SliceFindings, SliceFindi
                     rel = p.relative_to(root)
                     if any(tok in p.name.lower() for tok in _TECH_FILE_TOKENS):
                         msg = "기술 이름은 파일이 아니라 «클래스»에 붙는다 — `NinjaTurnController` 처럼"
-                        findings.add("#131", line=f"  [#131] {rel}: {msg}", where=rel, msg=msg)
-                    _slice_check_controller_ast(p, rel, findings, candidates, p.name.endswith("_controller.py"))
+                        findings.add("#131", rel, msg)
+                        finding_keys.append(None)
+                    _slice_check_controller_ast(
+                        p, rel, findings, candidates, finding_keys, candidate_keys,
+                        p.name.endswith("_controller.py"),
+                    )
             for ohs_name in _TREE_OHS:
                 ohs = bc / driving / ohs_name
                 if not ohs.is_dir():
                     continue
                 for p in sorted(ohs.rglob("*_service.py")):
-                    _slice_check_controller_ast(p, p.relative_to(root), findings, candidates, True)
-    return findings, candidates
+                    _slice_check_controller_ast(
+                        p, p.relative_to(root), findings, candidates,
+                        finding_keys, candidate_keys, True,
+                    )
+    return findings, candidates, finding_keys, candidate_keys
+
+
+_OVERLAP_RULES: "frozenset[str]" = frozenset({"#62", "#474", "#125"})
+
+
+def _code_overlap_keys(findings: "list[Finding]") -> "set[tuple[str, str, int]]":
+    """code 레인 실발화 사건의 tree 대응 좌표(귀속 매핑표 v2 overlap 절) —
+    Finding.overlap_line 이 채워진 #62/#474/#125 만 억제 키가 된다."""
+    keys: "set[tuple[str, str, int]]" = set()
+    for finding in findings:
+        if finding.rule in _OVERLAP_RULES and finding.overlap_line is not None:
+            keys.add((finding.rule, finding.path.as_posix(), finding.overlap_line))
+    return keys
+
+
+def _suppress_overlapped_tree(
+    tree: "Findings | Candidates",
+    tree_keys: "list[tuple[str, str, int] | None]",
+    code_keys: "set[tuple[str, str, int]]",
+) -> "Findings | Candidates":
+    """tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 overlap 절 — U13·U14).
+
+    code 레인이 같은 사건(#62·#474 handler 행 · ⓓ#125 route 함수 def 행)을 적중한
+    대상의 tree 사이트는 라인·레코드 모두 방출하지 않는다(1건 대표 — 더 정밀한
+    판정이 이긴다. 대상 밖·code 미발화에서는 tree 단독 그대로)."""
+    kept = type(tree)(tree.checker, defer=True)
+    for entry, key in zip(tree.entries, tree_keys):
+        if key is not None and key in code_keys:
+            continue
+        kept.entries.append(entry)
+        kept.append(entry.line)
+    return kept
+
+
+def _print_tree_blocks(tree_findings: Findings, tree_candidates: Candidates) -> None:
+    if tree_findings:
+        print("[check-api-error-controller-contract] BLOCKER — 입구(컨트롤러) 계약 규율 위반 (트리 8·11·12행):")
+        emit_all(tree_findings, printer=print)
+    if tree_candidates:
+        print("[check-api-error-controller-contract] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")
+        emit_all(tree_candidates, printer=print)
 
 
 def main(argv: list[str]) -> int:
@@ -6830,29 +7031,34 @@ def main(argv: list[str]) -> int:
     # 표준 트리 슬라이스 — 프로필과 무관하게 먼저 본다(옛 auto 무동작 = fail-open 차단).
     bcs = _tree_bcs2(config.root)
     if not any((bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING) and _tree_adopted2(bcs):
-        print("[check-api-error-controller-contract] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        # 대상-0 가드 — 라인 = msg 원문(무들여쓰기 byte 보존) + rule=«대상0» 센티널
+        # 레코드. #74 는 달지 않는다(소유자 checker_lint — rule-owner-map).
+        guard: Findings = zero_target_guard(
+            "[check-api-error-controller-contract] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
     # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
     # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
     collected: list[str] = []
     pending_analysis: list[str] = []
-    tree_findings, tree_candidates = _tree_slice2(config.root, bcs)
-    if tree_findings:
-        print("[check-api-error-controller-contract] BLOCKER — 입구(컨트롤러) 계약 규율 위반 (트리 8·11·12행):")
-        for f in tree_findings:
-            print(f)
-    if tree_candidates:
-        print("[check-api-error-controller-contract] ⓓ 후보 — 기계가 후보를 좁혔다 · 마무리 물음은 discipline-reviewer 몫(exit 불산입):")
-        for c in tree_candidates:
-            print(c)
-    if tree_findings:
-        if config.anchor is None:
-            return 2
-        collected.extend(tree_findings)
+    tree_findings, tree_candidates, tree_keys, candidate_keys = _tree_slice2(config.root, bcs)
+    if tree_findings and config.anchor is None:
+        # tree 위반이 code 레인 전에 exit 2 를 선점한다(현행) — code 미실행이라
+        # 선점 억제 없음(tree 단독 그대로).
+        _print_tree_blocks(tree_findings, tree_candidates)
+        return 2
 
     if config.profile != "auto":
         try:
-            analysis, findings = _run(config)
+            # tree↔code 동일 사건 선점 억제를 위해 code 레인을 먼저 계산한다 —
+            # 분석 불능(UsageError)이어도 확정 tree 진단·후보는 exit 1 전에 그대로
+            # 인쇄한다(현행 stdout 순서 보존 · 억제는 code 실발화 시에만).
+            try:
+                analysis, findings = _run(config)
+            except UsageError:
+                _print_tree_blocks(tree_findings, tree_candidates)
+                raise
             dynamic_proof_only = bool(analysis) and all(
                 issue.startswith("DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED ")
                 for issue in analysis
@@ -6864,35 +7070,51 @@ def main(argv: list[str]) -> int:
                     for finding in findings
                     if not finding.requires_static_error_shape
                 ]
-            if reported_findings and (not analysis or dynamic_proof_only):
+            emit_code = bool(reported_findings) and (not analysis or dynamic_proof_only)
+            if emit_code and (tree_findings or tree_candidates):
+                code_keys = _code_overlap_keys(reported_findings)
+                tree_findings = _suppress_overlapped_tree(tree_findings, tree_keys, code_keys)
+                tree_candidates = _suppress_overlapped_tree(tree_candidates, candidate_keys, code_keys)
+            _print_tree_blocks(tree_findings, tree_candidates)
+            if tree_findings:
+                collected.extend(lines(tree_findings))
+            if emit_code:
                 print(
                     "[check-api-error-controller-contract] BLOCKER — code-profile "
                     "controller error mapping contract violation:"
                 )
-                # 레코드는 필터 통과 후 «최종 집합»의 거울이다 — 라인 문면은 render()
-                # 소유 그대로 두고 add 만 얹는다(dedupe·필터·exit 경로 무변). 두 sink 를
-                # 나눠 출력하면 findings 순서가 섞이므로 인쇄는 이 단일 루프가 유지한다.
-                handler_records = SliceFindings()
-                contract_records = ContractFindings(CONTRACT_REF)
+                # 방출 표면 — 라인은 레코드 필드의 순수 함수(violation `[#N] {where}:
+                # {msg}` · 계약 `- {where}: {msg}`)이고, stdout 인쇄 순서 = 레코드
+                # 순서(emit_all 불변식). 판정(#N/계약)이 갈릴 때마다 defer 컬렉션을
+                # 이어 붙여 현행 인쇄 순서를 보존한다.
+                surfaces: "list[Findings | ContractFindings]" = []
+
+                def _violation_surface() -> Findings:
+                    tail = surfaces[-1] if surfaces else None
+                    if not isinstance(tail, Findings):
+                        tail = Findings(defer=True)
+                        surfaces.append(tail)
+                    return tail
+
+                def _contract_surface() -> ContractFindings:
+                    tail = surfaces[-1] if surfaces else None
+                    if not isinstance(tail, ContractFindings):
+                        tail = ContractFindings(CONTRACT_REF, defer=True)
+                        surfaces.append(tail)
+                    return tail
+
                 for finding in reported_findings:
-                    where = f"{finding.path}:{finding.lineno}"
-                    msg = f"{finding.category}: {finding.shown}"
-                    if finding.category in HANDLER_CATEGORIES:
-                        handler_records.add(
-                            "#59",
-                            line=finding.render(),
-                            where=where,
-                            msg=msg,
-                            symbol=finding.category,
+                    finding_where: str = f"{finding.path}:{finding.lineno}"
+                    finding_msg: str = f"{finding.category}: {finding.shown}"
+                    if finding.rule is not None:
+                        _violation_surface().add(
+                            finding.rule, finding_where, finding_msg, symbol=finding.symbol
                         )
                     else:
-                        contract_records.add(
-                            finding.render(),
-                            where=where,
-                            msg=msg,
-                            symbol=finding.category,
+                        _contract_surface().add(
+                            where=finding_where, msg=finding_msg, symbol=finding.symbol
                         )
-                    print(finding.render())
+                emit_all(*surfaces, printer=print)
                 print(
                     "  근거: known BC failures are mapped directly by their selected "
                     "owner controller through one narrow exception or try-free Result "
@@ -6901,7 +7123,8 @@ def main(argv: list[str]) -> int:
                 )
                 if config.anchor is None:
                     return 2
-                collected.extend(finding.render() for finding in reported_findings)
+                for surface in surfaces:
+                    collected.extend(lines(surface))
                 # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
                 # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
                 pending_analysis = analysis
@@ -6913,6 +7136,10 @@ def main(argv: list[str]) -> int:
                 file=sys.stderr,
             )
             return 1
+    else:
+        _print_tree_blocks(tree_findings, tree_candidates)
+        if tree_findings:
+            collected.extend(lines(tree_findings))
 
     if collected:
         try:
