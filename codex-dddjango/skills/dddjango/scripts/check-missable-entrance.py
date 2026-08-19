@@ -46,6 +46,8 @@ fail-closed · ⓓ 후보는 exit 불산입.
 
 사용법: check-missable-entrance.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -53,6 +55,7 @@ import ast
 import sys
 
 import checker_target
+from findings import Candidates, Findings
 from pathlib import Path
 
 try:
@@ -73,16 +76,6 @@ NON_HTTP_IMPORTS = {"pika", "kombu", "confluent_kafka", "grpc", "grpcio", "webso
 ROLE_DIR_DENY = {"gateway", "provider", "payment", "billing", "notification", "auth", "external"}
 ROLE_SUFFIXES = ("_gateway", "_provider", "_client", "_service", "_api", "_system")
 IDEMPOTENCY_MACHINERY = {"get_or_create", "select_for_update", "lock", "acquire_lock"}
-
-
-class Findings(list):
-    def add(self, rule: str, where: str, msg: str) -> None:
-        self.append(f"[{rule}] {where}: {msg}")
-
-
-class Candidates(list):
-    def add(self, rule: str, where: str, msg: str, question: str) -> None:
-        self.append(f"[ⓓ{rule}] {where}: {msg} — 물음: {question}")
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:

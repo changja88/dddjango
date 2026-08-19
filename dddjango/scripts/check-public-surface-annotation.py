@@ -29,6 +29,8 @@
 
 사용법: check-public-surface-annotation.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -36,6 +38,7 @@ import ast
 import sys
 
 import checker_target
+from findings import Candidates, Findings
 from pathlib import Path
 
 try:
@@ -74,16 +77,6 @@ PROTOCOL_NAMES = {"urlpatterns"}
 
 VALIDATION_TOKENS = ("invalid", "validation", "malformed", "badrequest", "unprocessable")
 GUARD_EXC = {"TypeError", "ValueError"}
-
-
-class Findings(list):
-    def add(self, rule: str, path: Path, msg: str) -> None:
-        self.append(f"[{rule}] {path}: {msg}")
-
-
-class Candidates(list):
-    def add(self, rule: str, path: Path, msg: str, question: str) -> None:
-        self.append(f"[ⓓ{rule}] {path}: {msg} — 물음: {question}")
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:

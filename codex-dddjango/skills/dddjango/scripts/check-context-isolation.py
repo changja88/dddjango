@@ -38,6 +38,8 @@ CLI 호환 심: registry 가 렌더하는 `--error-profile`·selector 들은 «�
 
 사용법: check-context-isolation.py [TARGET_DIR] [--error-profile …] [selector …]
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -47,6 +49,7 @@ import re
 import sys
 
 import checker_target
+from findings import Candidates, Findings
 from pathlib import Path
 
 try:
@@ -72,16 +75,6 @@ TECH_NAME_TOKENS = {"django", "ninja", "celery", "http", "grpc", "kafka", "redis
 ANSWER_NOT_EXCEPTION = ("NotFound", "AlreadyExists", "AlreadyExist", "Duplicate", "Duplicated")
 FREEFORM_FIELDS = {"message", "reason", "detail"}
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-
-
-class Findings(list):
-    def add(self, rule: str, path, msg: str) -> None:
-        self.append(f"[{rule}] {path}: {msg}")
-
-
-class Candidates(list):
-    def add(self, rule: str, path, msg: str, question: str) -> None:
-        self.append(f"[ⓓ{rule}] {path}: {msg} — 물음: {question}")
 
 
 def _entries(d: Path) -> tuple[list[Path], list[Path]]:

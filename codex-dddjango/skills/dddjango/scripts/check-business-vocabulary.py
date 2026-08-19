@@ -38,6 +38,8 @@ ImportError fail-closed · ⓓ 후보 exit 불산입 · #604 는 git 없으면 �
 
 사용법: check-business-vocabulary.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -47,6 +49,7 @@ import subprocess
 import sys
 
 import checker_target
+from findings import Candidates, Findings
 from pathlib import Path
 
 try:
@@ -69,16 +72,6 @@ MEANS_WORDS = {"client", "cache", "sync", "cron", "queue", "http", "rest", "sdk"
 AUTH_TOKENS = {"auth", "authentication", "bearer"}
 CURATED_TECH = {"django", "ninja", "celery", "redis", "kafka", "smtp", "stripe", "postgres",
                 "postgresql", "mysql", "sqlite", "boto3", "s3", "sqs", "grpc", "drf", "rest"}
-
-
-class Findings(list):
-    def add(self, rule: str, where: str, msg: str) -> None:
-        self.append(f"[{rule}] {where}: {msg}")
-
-
-class Candidates(list):
-    def add(self, rule: str, where: str, msg: str, question: str) -> None:
-        self.append(f"[ⓓ{rule}] {where}: {msg} — 물음: {question}")
 
 
 def _parse(path: Path) -> ast.Module | None:

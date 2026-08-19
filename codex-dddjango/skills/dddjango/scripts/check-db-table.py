@@ -29,6 +29,8 @@
 
 사용법: check-db-table.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -38,6 +40,7 @@ import subprocess
 import sys
 
 import checker_target
+from findings import Findings
 from pathlib import Path
 
 try:
@@ -65,11 +68,6 @@ REPO_VOCAB = (
     {c.name.rstrip("/") for c in tree.children(tree.bc_root())}
     | {"application", "framework"}
 )
-
-
-class Findings(list):
-    def add(self, rule: str, path: Path, msg: str) -> None:
-        self.append(f"[{rule}] {path}: {msg}")
 
 
 def _entries(d: Path) -> tuple[list[Path], list[Path]]:

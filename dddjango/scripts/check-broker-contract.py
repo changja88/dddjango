@@ -44,6 +44,8 @@ ImportError fail-closed · ⓓ 후보는 exit 불산입.
 
 사용법: check-broker-contract.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 브로커 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -52,6 +54,7 @@ import re
 import sys
 
 import checker_target
+from findings import Candidates, Findings
 from pathlib import Path
 
 try:
@@ -69,16 +72,6 @@ MIDDLEWARE_IMPORTS = {
     "boto3", "psycopg2", "grpc", "grpcio", "django", "sqlalchemy", "pymongo",
 }
 ENVELOPE_HINTS = {"envelope", "source", "event_id", "message_id", "idempotency_key", "dedup_id"}
-
-
-class Findings(list):
-    def add(self, rule: str, where: str, msg: str) -> None:
-        self.append(f"[{rule}] {where}: {msg}")
-
-
-class Candidates(list):
-    def add(self, rule: str, where: str, msg: str, question: str) -> None:
-        self.append(f"[ⓓ{rule}] {where}: {msg} — 물음: {question}")
 
 
 def _parse(path: Path) -> ast.Module | None:

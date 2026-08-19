@@ -39,6 +39,8 @@ ImportError fail-closed. ⓓ 후보는 exit 에 불산입, `[ⓓ#N]` 으로만 �
 
 사용법: check-transaction-boundary.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -46,6 +48,7 @@ import ast
 import sys
 
 import checker_target
+from findings import Candidates, Findings
 from pathlib import Path
 
 try:
@@ -68,16 +71,6 @@ WRITE_PREFIX_BAN = ("add", "store", "persist", "insert", "put", "delete", "upser
 RETURN_WRAPPERS = {"Sequence", "list", "List", "Iterable", "Iterator", "tuple", "Tuple", "Optional", "Union"}
 RETURN_PRIMITIVES = {"bool", "int", "None"}
 RETURN_BAN = {"QuerySet", "dict", "Dict", "str", "float"}
-
-
-class Findings(list):
-    def add(self, rule: str, where: str, msg: str) -> None:
-        self.append(f"[{rule}] {where}: {msg}")
-
-
-class Candidates(list):
-    def add(self, rule: str, where: str, msg: str, question: str) -> None:
-        self.append(f"[ⓓ{rule}] {where}: {msg} — 물음: {question}")
 
 
 def _has_adoption_signal(bc_dir: Path) -> bool:
