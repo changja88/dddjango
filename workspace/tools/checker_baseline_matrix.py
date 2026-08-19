@@ -382,7 +382,7 @@ def _st_flush():
     for args, kwargs in reversed(_st_buffer):
         _st_orig_emit(*args, **kwargs)
 _st_atexit.register(_st_flush)
-""", True),
+""", False),
     ("duplicate", "레코드 중복 삽입(전건 2회 방출 — 라인 무변)", """
 # [self-test 변조: duplicate] 라인 채널은 그대로, 레코드를 전건 2회 방출한다.
 _st_orig_emit = _emit
@@ -440,7 +440,7 @@ def self_test() -> int:
     if failed:
         print(f"self-test 실패: 필수 red 미검출 — {failed}")
         return 2
-    print("self-test 통과: 필수 red 3종 검출(후속 대기 변조는 표기대로 유예)")
+    print("self-test 통과: 필수 red 4종 검출(reorder 유예 종료 — ordered 대조 기본화·V25 ⑤)")
     return 0
 
 
