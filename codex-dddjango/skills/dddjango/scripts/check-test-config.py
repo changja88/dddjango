@@ -424,6 +424,7 @@ def main(argv: list[str]) -> int:
         print(f"사용 오류: 디렉터리가 아니다 — {target}", file=sys.stderr)
         return 1
 
+    findings = Findings(defer=True)
     try:
         bcs = _find_bcs(target)
         configs = _find_pytest_configs(target)
@@ -442,20 +443,21 @@ def main(argv: list[str]) -> int:
             print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
             return 0
 
-        findings = Findings()
         _check_binding(target, configs, findings)
         for bc in bcs:
             _check_bc_test(bc, bc.relative_to(target), findings)
         for d in settings_dirs:
             _check_settings_dir(d, target, findings)
     except Exception as exc:  # 분석 실패는 조용한 통과가 아니다 — fail-closed
+        # 조기 반환 시에도 이미 수집된 레코드는 보존한다(라인 무인쇄 — 구판 add 시점
+        # 방출과 동치 · MEDIATION-3 M3/R4).
+        emit_all(findings, printer=None)
         print(f"분석 오류: {exc}", file=sys.stderr)
         return 1
 
     if findings:
         print(f"blocker {len(findings)}건 — 테스트·settings 규율 위반 (트리 105~111·139·140행)")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — test/ {len(test_dirs)}곳 · pytest 설정 {len(configs)}개 · settings {len(settings_dirs)}곳 규율 일치 (standard_tree {tree.SOURCE_SHA})")
     return 0

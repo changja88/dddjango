@@ -321,14 +321,13 @@ def main(argv: list[str]) -> int:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings = Findings()
+    findings = Findings(defer=True)
     _check_engine_swap(target, settings_files, findings)
     _check_migrations(target, mig_dirs, findings)
 
     if findings:
         print(f"blocker {len(findings)}건 — 메커니즘 소유권·migrations 규율 위반")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — settings {len(settings_files)}개 · migrations 폴더 {len(mig_dirs)}개 규율 일치 (트리 80·81행 · standard_tree {tree.SOURCE_SHA})")
     return 0

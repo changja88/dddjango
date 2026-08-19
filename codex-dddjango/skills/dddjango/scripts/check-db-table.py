@@ -527,7 +527,7 @@ def main(argv: list[str]) -> int:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings = Findings()
+    findings = Findings(defer=True)
     apps: list[tuple[Path, Path, str]] = []  # (app_dir, bc_rel, bc_name)
     for bc in bcs:
         bc_rel = bc.relative_to(target)
@@ -541,6 +541,10 @@ def main(argv: list[str]) -> int:
                     apps.append((p, bc_rel, bc.name))
 
     if not apps and not findings:
+        # 가드 발화 시에도 이미 수집된 레코드는 보존한다(라인 무인쇄 — 구판 add 시점
+        # 방출과 동치 · MEDIATION-3 M3/R4). findings 는 가드 조건상 빈 컬렉션이지만
+        # 판형 통일로 함께 넘긴다.
+        emit_all(findings, printer=None)
         guard = zero_target_guard(
             "blocker: 채택 신호는 있는데 `django_<bounded_context>/` 앱이 0건이다 — 조용한 무동작을 금지한다(#74)"
         )
@@ -574,8 +578,7 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(f"blocker {len(findings)}건 — driven_layer/django_<bc>/ 규율 위반")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — django 앱 {len(apps)}개 규율 일치 (트리 75~88행 · standard_tree {tree.SOURCE_SHA})")
     return 0

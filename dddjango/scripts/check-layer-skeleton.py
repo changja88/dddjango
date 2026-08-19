@@ -322,7 +322,7 @@ def main(argv: list[str]) -> int:
         emit_all(guard, printer=print, indent="")
         return 2
 
-    findings = Findings()
+    findings = Findings(defer=True)
     # 채택 저장소에서는 application/ 직계 «전부»가 BC 다(#486) — 신호 없는 평면 BC 도 검사한다.
     for bc in bcs:
         _check_bc(bc, findings)
@@ -336,8 +336,7 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(f"blocker {len(findings)}건 — 골격이 어긋나면 나머지 검사를 돌리지 않는다(#487)")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — BC {len(bcs)}개 골격 일치 (트리 140행 · standard_tree {tree.SOURCE_SHA})")
     return 0

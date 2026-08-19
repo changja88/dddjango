@@ -183,7 +183,7 @@ def main(argv: list[str]) -> int:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings = Findings()
+    findings = Findings(defer=True)
     for f in files:
         try:
             mod = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
@@ -199,8 +199,7 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(f"blocker {len(findings)}건 — driven 층 예외 규율 위반")
-        for f in findings:
-            print(" ", f)
+        emit_all(findings, printer=print, indent="  ")
         return 2
     print(f"clean — driven 층 파일 {len(files)}개 규율 일치 (standard_tree {tree.SOURCE_SHA})")
     return 0
