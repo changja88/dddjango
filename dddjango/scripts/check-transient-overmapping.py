@@ -36,6 +36,8 @@ AND 조건(전부 참이어야 blocker):
 
 사용법: check-transient-overmapping.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택), 2=blocker(발견 출력), 1=사용/분석 오류.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -44,6 +46,7 @@ import subprocess
 import sys
 
 import checker_target
+from findings import ContractFindings
 from pathlib import Path
 
 try:
@@ -51,6 +54,9 @@ try:
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
     print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
+
+# rule-owner-map 규칙 0건 — 선행 계약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
+CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 TEST_DIR_NAMES = {"test", "tests"}
@@ -187,7 +193,7 @@ def main(argv: list[str]) -> int:
             return 2
         return 0
 
-    findings: list[str] = []
+    findings = ContractFindings(CONTRACT_REF)
     for prod_file in prod_files:
         try:
             tree = ast.parse(prod_file.read_text(encoding="utf-8", errors="replace"))
@@ -203,10 +209,13 @@ def main(argv: list[str]) -> int:
         ]
         if hits and _is_new_or_modified(root, prod_file):
             for name, lineno in hits:
-                findings.append(
+                findings.add(
                     f"  - {prod_file.relative_to(root)}:{lineno} {name}(): "
                     "영구장애 구별 분기 없이 OperationalError/DatabaseError 를 "
-                    "통째 retryable(503/409)로 매핑"
+                    "통째 retryable(503/409)로 매핑",
+                    where=f"{prod_file.relative_to(root)}:{lineno}",
+                    msg="영구장애 구별 분기 없이 OperationalError/DatabaseError 를 통째 retryable(503/409)로 매핑",
+                    symbol=f"{name}()",
                 )
 
     if findings:

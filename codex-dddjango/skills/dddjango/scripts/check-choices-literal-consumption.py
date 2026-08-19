@@ -27,6 +27,8 @@ magic-string 검사는 오탐으로 생태계에서 기각된 부류라 시도�
 
 사용법: check-choices-literal-consumption.py [TARGET_DIR]   (기본=현재 디렉터리)
 종료코드: 0=clean(또는 해당 없음), 2=blocker(발견 출력), 1=사용 오류.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -36,7 +38,11 @@ import subprocess
 import sys
 
 import checker_target
+from findings import ContractFindings
 from pathlib import Path
+
+# rule-owner-map 규칙 0건 — 선행 계약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
+CONTRACT_REF = "선행 계약(2026-07-06 상수 승격) 소유"
 
 SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango"}
 EXEMPT_DIR_NAMES = {"test", "tests", "migrations"}
@@ -239,7 +245,7 @@ def main(argv: list[str]) -> int:
     if not candidates:
         return 0  # touched 공집합은 «정상»이다(중간 커밋 후 재실행 등 — 조각 ⓐ §3)
 
-    findings: list[str] = []
+    findings = ContractFindings(CONTRACT_REF)
     for rel, code in sorted(candidates.items()):
         tree = trees.get(rel)
         if tree is None:
@@ -249,13 +255,19 @@ def main(argv: list[str]) -> int:
         filter_violations = _scan_filter_literals(tree, registry)
         for lineno, model, field in default_violations:
             if added is None or lineno in added:
-                findings.append(
-                    f"  - {rel}:{lineno}: {model}.{field} — 심볼 choices 선언 필드의 `default=\"리터럴\"`"
+                findings.add(
+                    f"  - {rel}:{lineno}: {model}.{field} — 심볼 choices 선언 필드의 `default=\"리터럴\"`",
+                    where=f"{rel}:{lineno}",
+                    msg=f"{model}.{field} — 심볼 choices 선언 필드의 `default=\"리터럴\"`",
+                    symbol=f"{model}.{field}",
                 )
         for lineno, model, field in filter_violations:
             if added is None or lineno in added:
-                findings.append(
-                    f"  - {rel}:{lineno}: {model}.objects.filter/exclude({field}=리터럴) — 선언된 심볼 미사용"
+                findings.add(
+                    f"  - {rel}:{lineno}: {model}.objects.filter/exclude({field}=리터럴) — 선언된 심볼 미사용",
+                    where=f"{rel}:{lineno}",
+                    msg=f"{model}.objects.filter/exclude({field}=리터럴) — 선언된 심볼 미사용",
+                    symbol=f"{model}.{field}",
                 )
 
     if findings:

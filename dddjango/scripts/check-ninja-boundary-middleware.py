@@ -18,6 +18,8 @@ blocker. Django 기본(`django.middleware.*`)·서드파티·프로젝트 레벨
 
 사용법: check-ninja-boundary-middleware.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -26,6 +28,7 @@ import re
 import sys
 
 import checker_target
+from findings import ContractFindings
 from pathlib import Path
 
 try:
@@ -33,6 +36,9 @@ try:
 except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(분석 오류)
     print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
+
+# rule-owner-map 규칙 0건 — 선행 계약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
+CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
 
 SKIP_DIRS = {
     ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
@@ -151,7 +157,7 @@ def main(argv: list[str]) -> int:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings: list[str] = []
+    findings = ContractFindings(CONTRACT_REF)
     for settings_path in settings_files:
         try:
             text = settings_path.read_text(encoding="utf-8")
@@ -160,7 +166,14 @@ def main(argv: list[str]) -> int:
         rel = settings_path.relative_to(target).as_posix()
         for entry in _middleware_entries(text):
             if _BC_DRIVING_PATH.match(entry):
-                findings.append(f"  [미들웨어] {rel}: {entry}")
+                # where 는 파일 단위 — _middleware_entries 가 lineno 를 보존하지 않는다
+                # (정밀화는 T2-2 정비 후보 · 개작 원칙 = 문면·재료 불변).
+                findings.add(
+                    f"  [미들웨어] {rel}: {entry}", where=rel,
+                    msg=f"BC driving 층 미들웨어 {entry} 가 전역 MIDDLEWARE 에 자가등록됐다 — "
+                        f"협상·임의 status 는 ninja 경계 안에서 낸다(§6.3)",
+                    symbol=entry,
+                )
 
     if findings:
         print(f"blocker {len(findings)}건 — BC driving 층 코드가 전역 MIDDLEWARE 에 자가등록됐다")

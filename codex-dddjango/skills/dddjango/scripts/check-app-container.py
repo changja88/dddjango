@@ -33,6 +33,8 @@
 
 사용법: check-app-container.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 표준 미적용), 2=blocker(발견 출력), 1=사용 오류.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -40,7 +42,11 @@ import subprocess
 import sys
 
 import checker_target
+from findings import ContractFindings
 from pathlib import Path
+
+# rule-owner-map 규칙 0건 — 선행 규약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
+CONTRACT_REF = "선행 규약(표준 트리 전신 — application/ 컨테이너 위치) 소유"
 
 SKIP_DIRS = {
     ".venv", "venv", "site-packages", "node_modules", ".git", "__pycache__", ".dddjango",
@@ -201,13 +207,18 @@ def main(argv: list[str]) -> int:
     if not _git_available(root):
         print("주의: git 저장소가 아니다 — touched 식별이 불가해 «전 후보»를 검사한다(fail-closed)")
 
-    findings: list[str] = []
+    findings = ContractFindings(CONTRACT_REF)
     for d in _iter_candidate_apps(root, app_container):
         if not _touched_with_new_domain(root, d):
             continue  # git 판정 가능 + 미touch → 존중(§1.1 — touched 만 본다)
         if _has_migrated_counterpart(app_container, d.name):
             continue  # 이미 application/ 로 이주됨(빈 껍데기 아닌 실질) → orphan/정리 영역.
-        findings.append(f"  - {d.relative_to(root).as_posix()}/")
+        rel = d.relative_to(root).as_posix()
+        findings.add(
+            f"  - {rel}/", where=rel,
+            msg="Django 앱이 `application/` 밖 평면에 있다 — 앱은 `application/<app>/` 아래(houserules §0-1)",
+            symbol=d.name,
+        )
 
     if findings:
         print(
