@@ -19,3 +19,17 @@
 | M10 | Y사각4 | minor | #117 이관 쌍이 별개 fixture 기반 — pair-케이스 부재 | R6 동승: 같은 파일 셋으로 EC 침묵+context 발화를 함께 단언하는 backstop pair 케이스 |
 
 수리 순서: R1(직접·즉시) → R2·R3·R4·R7 병렬 에이전트 → 접합 → R5·R6(직접·하네스 소유) → 전체 재검증(verify·68+α레인·backstop·mutation·drift 재생성) → 결과 append → **T2-1 완료 재선언**.
+
+## 수리 결과 (2026-08-20 — 전건 착지)
+
+| 배치 | 커밋 | 실증 요지 |
+|---|---|---|
+| R1(M4) | `017977c` | SEALED 2건 교정(CR=faea9d3·openapi=ee62c5c)+오봉인 자동 검증(_validate_sealed)·리포트 재생성 — 허위 «byte 무변» 2건 정정(CR 26행·openapi 3행 진짜 diff 기록) |
+| R7(M7) | `288aa42` | 즉시 모드 잔여 5종 defer 이행 — 26레인 byte 무변·«add=수집·emit_all=유일 방출» 27종 완결·test-config fail-closed 경로 레코드 보존 |
+| R4(M3) | `592dabc` | 가드∧수집 유실 3종 수리(emit_all printer=None — 구판 동치 3판 대조)·27종 전수 감사 추가 유실 0 |
+| R3(M2) | `c1b185f` | EC anchor 모드 tree 억제 3행(#114·#572·#636) — codex 재현 2→1·대상 밖 BC tree 잔존 쌍·표준 6경로 byte 무변 |
+| R2(M1·M8) | `a0bf228` | CR 억제 사건 단위 키 재작성 — 재현 3축 FN 소생(2/0/2)·정상 억제 잔존·DI 헤더 정합(열거표 등재) |
+| R5(M5) | `f71376d` | 레코드→라인 재구성 ordered 대조(4판형+센티널)+mutation stdout-message-drift — self-test 5종 전건 red. 게이트가 A-4 미이행 잔여를 즉시 자기 적발 → `f878b52` 행번호 재배치 11곳 이행 |
+| R6(M6·M9·M10) | `329724d` | 가드 레인 20종 완결(72레인)·context-isolation A-5 확정 주기·#117 판별 binding 보강·pair 상수+CR 회귀 골든 3케이스(backstop 688) |
+
+재검증: 하네스 72레인 전건 green(ordered·재구성·13필드 oracle)·mutation 5종 전건 red 검출·drift 골든 8/8(수리 후 리포트 재생성 byte 동일 — 표준 레인 무변 확증)·backstop 688/688·make verify 전체 green(exit 보존 판형). **M1~M10 전건 종결 — T2-1 완료 재선언 성립.**
