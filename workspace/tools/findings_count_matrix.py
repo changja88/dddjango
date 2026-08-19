@@ -15,9 +15,10 @@ T2-1 보강 1단계(포매터 계약 §4-1) 확장:
   rule/sentinel/contract_ref 상호 배타·file 비어있지 않음·severity 값 공간·message
   비어있지 않음·expression null·ts UTC 형식·run_id 단일·record_id 유일+
   `{run_id}:{4자리 서수}` 연속 증가를 단언한다(위반 시 해당 행 red).
-- stdout↔record 대조: stdout 의 위반·후보 라인(`[#N]`/`[ⓓ#N]` 라인 앵커 — 계약·guard
-  라인은 현행 포매터 이행 «전»이라 제외. 3단계 이행 후 계약·guard 라인과 라인 문면
-  재구성 대조로 확장한다)을 (severity, rule) 항목으로 추출해 레코드와 대조한다.
+- stdout↔record 대조 2축: ⓐ 위반·후보 라인(`[#N]`/`[ⓓ#N]` 앵커)의 (severity, rule)
+  열 양방향 대조 ⓑ **라인 재구성 대조**(M5 — 전 레코드를 포매터 판형(violation·
+  candidate·계약·guard·센티널)으로 재구성해 stdout 실재·순서를 subsequence 게이트 —
+  message·file·contract 문면 drift 검출·mutation stdout-message-drift 로 실증).
   기본은 **ordered** 대조다(V25 ⑤ — 순서 보존 방출 이행 전 검사기 완결로 기본
   전환. 기본화 첫 시도가 후보 채널 11종의 순서 불일치를 적발해 이행을 선행시킨
   뒤 전환했다. `--strict-order` 플래그는 호환 no-op). 잉여·누락·중복에 더해
@@ -222,7 +223,9 @@ def _measure_one(script: str, auto: bool, src: Path, lane: str, scripts_dir: Pat
                 if isinstance(obj.get("file"), str):
                     obj["file"] = obj["file"].replace(str(fx), "<FX>")
                 records.append(obj)
-    return proc.returncode, proc.stdout, records, issues
+        # 라인 재구성 대조(M5)의 대칭 정규화 — 레코드 file 과 같은 <FX> 좌표계.
+        stdout_norm = proc.stdout.replace(str(fx), "<FX>")
+    return proc.returncode, stdout_norm, records, issues
 
 
 def _summarize(returncode: int, records: "list[dict]") -> "tuple[int, int, int, str, str]":
@@ -310,6 +313,41 @@ def _stream_items(stdout: str) -> "list[tuple[str, str]]":
         if m:
             items.append(("info", m.group(1)))
     return items
+
+
+def _reconstruct(r: dict) -> str:
+    """레코드 필드만으로 stdout 라인을 재구성(포매터 계약 §1 — 라인=필드의 순수 함수).
+    혼성 패널 M5: (severity, rule) 열 대조만으로는 message·file·계약·guard 문면
+    drift 를 못 잡는다(변이 실증) — 재구성 라인의 stdout 실재·순서를 게이트한다."""
+    rule = r.get("rule")
+    sev, f, m = r.get("severity"), r.get("file", ""), r.get("message", "")
+    if rule is not None:
+        return f"[ⓓ{rule}] {f}: {m}" if sev == "info" else f"[{rule}] {f}: {m}"
+    sent = r.get("sentinel")
+    if sent is not None:
+        # guard(대상-0 — file 은 "(target)" 고정)만 msg 원문 라인, 그 외 센티널
+        # («합성»·«바인딩»·«분석» — F0 격리)은 rule 자리 판형 그대로.
+        return m if f == "(target)" else f"[{sent}] {f}: {m}"
+    return f"- {f}: {m}"  # 계약(rule=null + contract_ref)
+
+
+def _reconstruct_compare(stdout: str, records: "list[dict]") -> "list[str]":
+    """레코드 전건의 재구성 라인이 stdout 에 «순서대로 실재»하는지(strip 비교·
+    subsequence 소비 — 자체가 ordered 대조라 strict 플래그와 무관 상시 게이트)."""
+    hay = [ln.strip() for ln in stdout.splitlines()]
+    pos = 0
+    missing: "list[str]" = []
+    for r in records:
+        want = _reconstruct(r)
+        try:
+            pos = hay.index(want, pos) + 1
+        except ValueError:
+            missing.append(want)
+    if missing:
+        head = "; ".join(m[:90] for m in missing[:3])
+        tail = f" 외 {len(missing) - 3}건" if len(missing) > 3 else ""
+        return [f"레코드 재구성 라인이 stdout 에 없거나 순서 이탈(문면 drift·유실): {head}{tail}"]
+    return []
 
 
 def _stream_compare(stdout: str, records: "list[dict]", strict_order: bool) -> "list[str]":
@@ -413,6 +451,7 @@ def main(argv: "list[str]") -> int:
         # 위험 레인 관찰 보류는 3단계 이행 완결로 게이트에 편입됐다(V25 ⑤ — 구 문면
         # 비앵커 라인이 전건 [#N]/계약 문법으로 정형화되어 전 레인 동일 대조).
         issues += _stream_compare(stdout, records, strict_order)
+        issues += _reconstruct_compare(stdout, records)
         got[key] = _summarize(code, records)
         prints[key] = _fingerprint(records)
         if issues:
@@ -426,6 +465,7 @@ def main(argv: "list[str]") -> int:
             g_issues += _record_oracle(script, g_records)
             # green 축도 게이트(V25 ⑤ — red 와 동일: 관찰 보류 종료).
             g_issues += _stream_compare(g_stdout, g_records, strict_order)
+            g_issues += _reconstruct_compare(g_stdout, g_records)
             if g_issues:
                 problems.setdefault(key, []).extend(g_issues)
 

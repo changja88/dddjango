@@ -390,6 +390,15 @@ def _emit(*args, **kwargs):
     _st_orig_emit(*args, **kwargs)
     _st_orig_emit(*args, **kwargs)
 """, False),
+    ("stdout-message-drift", "라인 문면만 변조(레코드 무변 — 혼성 패널 M5 실증 축)", """
+# [self-test 변조: stdout-message-drift] 레코드 필드는 그대로, violation 라인 문면만
+# 뒤에 표식을 붙인다 — (severity, rule) 열 대조는 통과하고 재구성 대조만 잡을 수 있다.
+_st_orig_line = FindingEntry.line
+def _st_drift_line(self):
+    s = _st_orig_line.fget(self)
+    return s + " [DRIFT]" if self.kind == "violation" else s
+FindingEntry.line = property(_st_drift_line)
+""", False),
 )
 
 
@@ -440,7 +449,7 @@ def self_test() -> int:
     if failed:
         print(f"self-test 실패: 필수 red 미검출 — {failed}")
         return 2
-    print("self-test 통과: 필수 red 4종 검출(reorder 유예 종료 — ordered 대조 기본화·V25 ⑤)")
+    print("self-test 통과: 필수 red 5종 검출(reorder=ordered 기본화·stdout-message-drift=재구성 대조 — M5)")
     return 0
 
 
