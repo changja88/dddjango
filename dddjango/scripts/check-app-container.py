@@ -34,7 +34,8 @@
 사용법: check-app-container.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 표준 미적용), 2=blocker(발견 출력), 1=사용 오류.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
+record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -42,7 +43,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all
 from pathlib import Path
 
 # rule-owner-map 규칙 0건 — 선행 규약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
@@ -207,7 +208,9 @@ def main(argv: list[str]) -> int:
     if not _git_available(root):
         print("주의: git 저장소가 아니다 — touched 식별이 불가해 «전 후보»를 검사한다(fail-closed)")
 
-    findings = ContractFindings(CONTRACT_REF)
+    # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+    # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+    findings = ContractFindings(CONTRACT_REF, defer=True)
     for d in _iter_candidate_apps(root, app_container):
         if not _touched_with_new_domain(root, d):
             continue  # git 판정 가능 + 미touch → 존중(§1.1 — touched 만 본다)
@@ -215,7 +218,7 @@ def main(argv: list[str]) -> int:
             continue  # 이미 application/ 로 이주됨(빈 껍데기 아닌 실질) → orphan/정리 영역.
         rel = d.relative_to(root).as_posix()
         findings.add(
-            f"  - {rel}/", where=rel,
+            where=rel,
             msg="Django 앱이 `application/` 밖 평면에 있다 — 앱은 `application/<app>/` 아래(houserules §0-1)",
             symbol=d.name,
         )
@@ -225,8 +228,7 @@ def main(argv: list[str]) -> int:
             "[check-app-container] BLOCKER — Django 앱이 `application/` 밖 평면에 있다"
             "(houserules §0-1: 앱은 `application/<app>/` 아래):"
         )
-        for f in findings:
-            print(f)
+        emit_all(findings, printer=print)
         print(
             "  근거: discipline-houserules §0-1. 이번 작업이 건드린(새 마이그레이션/판정) "
             "기존 앱도 위치는 `application/<bc>/`(장고 앱이면 `driven_layer/django_<bc>/`)로 "

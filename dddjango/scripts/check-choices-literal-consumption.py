@@ -28,7 +28,8 @@ magic-string 검사는 오탐으로 생태계에서 기각된 부류라 시도�
 사용법: check-choices-literal-consumption.py [TARGET_DIR]   (기본=현재 디렉터리)
 종료코드: 0=clean(또는 해당 없음), 2=blocker(발견 출력), 1=사용 오류.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
+record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all
 from pathlib import Path
 
 # rule-owner-map 규칙 0건 — 선행 계약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
@@ -245,7 +246,9 @@ def main(argv: list[str]) -> int:
     if not candidates:
         return 0  # touched 공집합은 «정상»이다(중간 커밋 후 재실행 등 — 조각 ⓐ §3)
 
-    findings = ContractFindings(CONTRACT_REF)
+    # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+    # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+    findings = ContractFindings(CONTRACT_REF, defer=True)
     for rel, code in sorted(candidates.items()):
         tree = trees.get(rel)
         if tree is None:
@@ -256,7 +259,6 @@ def main(argv: list[str]) -> int:
         for lineno, model, field in default_violations:
             if added is None or lineno in added:
                 findings.add(
-                    f"  - {rel}:{lineno}: {model}.{field} — 심볼 choices 선언 필드의 `default=\"리터럴\"`",
                     where=f"{rel}:{lineno}",
                     msg=f"{model}.{field} — 심볼 choices 선언 필드의 `default=\"리터럴\"`",
                     symbol=f"{model}.{field}",
@@ -264,7 +266,6 @@ def main(argv: list[str]) -> int:
         for lineno, model, field in filter_violations:
             if added is None or lineno in added:
                 findings.add(
-                    f"  - {rel}:{lineno}: {model}.objects.filter/exclude({field}=리터럴) — 선언된 심볼 미사용",
                     where=f"{rel}:{lineno}",
                     msg=f"{model}.objects.filter/exclude({field}=리터럴) — 선언된 심볼 미사용",
                     symbol=f"{model}.{field}",
@@ -275,8 +276,7 @@ def main(argv: list[str]) -> int:
             "[check-choices-literal-consumption] BLOCKER — 선언된 choices 값을 원시 리터럴로 "
             "소비했다(discipline-cleancode §2.14 소비 규율):"
         )
-        for x in findings:
-            print(x)
+        emit_all(findings, printer=print)
         print(
             "  근거: Enum/choices 가 선언된 값의 비교·분기·필터·대입·기본값은 그 심볼로만 "
             "참조한다 — 리터럴 오타는 조용한 항상-False 로 잠복하고 심볼 오타는 즉사한다. "

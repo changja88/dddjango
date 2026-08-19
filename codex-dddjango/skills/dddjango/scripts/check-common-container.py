@@ -24,14 +24,15 @@
 종료코드: 0=clean(또는 표준 미적용) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
 추가 방출한다 — 이 검사기는 rule-owner-map 규칙 0건(선행 계약 소속)이라 레코드는
-rule=null + contract_ref 로 나간다. 라인 출력·exit 의미론 무변(T0 B2).
+rule=null + contract_ref 로 나간다. 위반 라인은 공용 포매터의 계약 문법
+`- {where}: {msg}` 로 방출하며 record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all
 from pathlib import Path
 
 try:
@@ -93,7 +94,9 @@ def main(argv: list[str]) -> int:
     if app_container is None:
         return 0  # 표준 레이아웃 미적용 → 기존 규약 존중, 해당 없음.
 
-    findings = ContractFindings(CONTRACT_REF)
+    # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+    # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+    findings = ContractFindings(CONTRACT_REF, defer=True)
     for name in BUCKET_NAMES:
         bucket = app_container / name
         if not _is_misplaced_bucket(bucket):
@@ -105,15 +108,13 @@ def main(argv: list[str]) -> int:
         )
         rel = bucket.relative_to(root).as_posix()
         findings.add(
-            f"  [컨테이너] {rel}/  (내용: {', '.join(inside)})",
             where=rel,
             msg=f"횡단 버킷이 application/ 안에 있다 (내용: {', '.join(inside)})",
         )
 
     if findings:
         print("blocker — 횡단 `framework/` 버킷이 `application/` 안에 있다 (트리 112행: `framework/` 는 프로젝트 루트 = `application/` 의 형제)")
-        for f in findings:
-            print(f)
+        emit_all(findings, printer=print)
         print(
             "  근거: `framework/`(저장소 횡단 공용 — 옛 이름 `common/` 도 같은 버킷이다)는 "
             "프로젝트 루트에 두고 `application/` 안에 넣지 않는다 — `application/` 은 BC "

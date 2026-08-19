@@ -19,7 +19,8 @@ blocker. Django 기본(`django.middleware.*`)·서드파티·프로젝트 레벨
 사용법: check-ninja-boundary-middleware.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택) · 1=사용/분석 오류 · 2=blocker(발견 출력)
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
+record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ import re
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -152,12 +153,17 @@ def main(argv: list[str]) -> int:
     # 대상 0건 가드(#74) — 채택 신호는 있는데 settings 가 0건이면 경로 계약이 어긋난 것.
     if not settings_files:
         if _adopted(target):
-            print("blocker: 채택 신호는 있는데 settings 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            guard = zero_target_guard(
+                "blocker: 채택 신호는 있는데 settings 파일이 0건이다 — 조용한 무동작을 금지한다(#74)"
+            )
+            emit_all(guard, printer=print, indent="")
             return 2
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
         return 0
 
-    findings = ContractFindings(CONTRACT_REF)
+    # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+    # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+    findings = ContractFindings(CONTRACT_REF, defer=True)
     for settings_path in settings_files:
         try:
             text = settings_path.read_text(encoding="utf-8")
@@ -167,9 +173,9 @@ def main(argv: list[str]) -> int:
         for entry in _middleware_entries(text):
             if _BC_DRIVING_PATH.match(entry):
                 # where 는 파일 단위 — _middleware_entries 가 lineno 를 보존하지 않는다
-                # (정밀화는 T2-2 정비 후보 · 개작 원칙 = 문면·재료 불변).
+                # (정밀화는 T2-2 정비 후보 · 개작 원칙 = 재료 불변).
                 findings.add(
-                    f"  [미들웨어] {rel}: {entry}", where=rel,
+                    where=rel,
                     msg=f"BC driving 층 미들웨어 {entry} 가 전역 MIDDLEWARE 에 자가등록됐다 — "
                         f"협상·임의 status 는 ninja 경계 안에서 낸다(§6.3)",
                     symbol=entry,
@@ -177,8 +183,7 @@ def main(argv: list[str]) -> int:
 
     if findings:
         print(f"blocker {len(findings)}건 — BC driving 층 코드가 전역 MIDDLEWARE 에 자가등록됐다")
-        for f in findings:
-            print(f)
+        emit_all(findings, printer=print)
         print(
             "  근거: BC 입구는 전역 미들웨어 체인을 점유하지 않는다 — 협상·임의 status 는 "
             "ninja 경계 안에서 낸다(`Parser.parse_body` 415 · `HttpError(406)` · `HttpError(status)`). "

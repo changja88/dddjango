@@ -35,7 +35,8 @@ Claude 처럼 멱등성 코드를 아예 안 지으면 (2) 에서 자명 통과�
 사용법: check-idempotency-scope-creep.py [TARGET_DIR]   (기본=현재 디렉터리)
 종료코드: 0=clean(또는 표준 미적용·판정불가·정당 채택), 2=blocker(발견 출력), 1=사용 오류.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
+record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -44,7 +45,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -215,7 +216,10 @@ def main(argv: list[str]) -> int:
     # 대상 0건 가드(#74) — 채택 신호는 있는데 application/ 프로덕션 파일이 0건이면
     # 경로 계약이 어긋난 것이다(조용한 무동작 금지 · 명세 조각 ⓐ).
     if not _prod_py_under_application(root) and _adopted(root):
-        print("blocker: 채택 신호는 있는데 application/ 프로덕션 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        guard = zero_target_guard(
+            "blocker: 채택 신호는 있는데 application/ 프로덕션 파일이 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
 
     artifacts = _idempotency_artifacts(root)
@@ -226,11 +230,13 @@ def main(argv: list[str]) -> int:
     if _user_adopted(root):
         return 0  # G1 사용자-승인 채택 → 정당, 면제.
 
-    findings = ContractFindings(CONTRACT_REF)
+    # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+    # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+    findings = ContractFindings(CONTRACT_REF, defer=True)
     for a in artifacts:
         rel = a.relative_to(root).as_posix()
         findings.add(
-            f"  - {rel}", where=rel,
+            where=rel,
             msg="scope 가 멱등성을 미요청이라 단정했는데 이번 변경이 멱등성 산출물을 더했다 — "
                 "G1 채택 승인 없이 accepted scope 밖(C3 스코프크립)",
         )
@@ -238,8 +244,7 @@ def main(argv: list[str]) -> int:
         "[check-idempotency-scope-creep] BLOCKER — scope 가 멱등성을 미요청이라 단정했는데 "
         "멱등성 코드를 구현함(C3 멱등성 스코프크립 · G0=확장금지 위반):"
     )
-    for line in findings:
-        print(line)
+    emit_all(findings, printer=print)
     print(
         "  근거: `architecture-db` §9.6 Idempotency storage 행 · `design-architect`. 사용자가 "
         "멱등성(`Idempotency-Key`)을 요청하지 않았으면 전용 record 테이블·replay store를 silent하게 "

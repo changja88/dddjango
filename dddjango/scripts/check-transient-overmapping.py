@@ -37,7 +37,8 @@ AND 조건(전부 참이어야 blocker):
 사용법: check-transient-overmapping.py [TARGET_DIR]   (기본 TARGET_DIR=현재 디렉터리)
 종료코드: 0=clean(또는 표준 미채택), 2=blocker(발견 출력), 1=사용/분석 오류.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
+record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -46,7 +47,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -189,11 +190,16 @@ def main(argv: list[str]) -> int:
     # 대상 0건 가드(#74) — 채택 신호는 있는데 프로덕션 파일이 0건이면 경로 계약이 어긋난 것.
     if not prod_files:
         if _adopted(root):
-            print("blocker: 채택 신호는 있는데 프로덕션 파일이 0건이다 — 조용한 무동작을 금지한다(#74)")
+            guard = zero_target_guard(
+                "blocker: 채택 신호는 있는데 프로덕션 파일이 0건이다 — 조용한 무동작을 금지한다(#74)"
+            )
+            emit_all(guard, printer=print, indent="")
             return 2
         return 0
 
-    findings = ContractFindings(CONTRACT_REF)
+    # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+    # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+    findings = ContractFindings(CONTRACT_REF, defer=True)
     for prod_file in prod_files:
         try:
             tree = ast.parse(prod_file.read_text(encoding="utf-8", errors="replace"))
@@ -210,9 +216,6 @@ def main(argv: list[str]) -> int:
         if hits and _is_new_or_modified(root, prod_file):
             for name, lineno in hits:
                 findings.add(
-                    f"  - {prod_file.relative_to(root)}:{lineno} {name}(): "
-                    "영구장애 구별 분기 없이 OperationalError/DatabaseError 를 "
-                    "통째 retryable(503/409)로 매핑",
                     where=f"{prod_file.relative_to(root)}:{lineno}",
                     msg="영구장애 구별 분기 없이 OperationalError/DatabaseError 를 통째 retryable(503/409)로 매핑",
                     symbol=f"{name}()",
@@ -223,8 +226,7 @@ def main(argv: list[str]) -> int:
             "[check-transient-overmapping] BLOCKER — transient 인프라 예외 핸들러가 "
             "영구장애 변종을 구별하는 분기 없이 클래스 통째를 retryable 로 과잉매핑함(maj1):"
         )
-        for f in findings:
-            print(f)
+        emit_all(findings, printer=print)
         print(
             "  근거: 이 predicate는 G1에서 이미 승인된 `preserve-established` handler가 "
             "OperationalError/DatabaseError 전체를 retryable로 넓히지 않게 지킨다. 보존된 handler는 "
