@@ -32,16 +32,13 @@ stdout 오염 금지: registry_gate 의 위반 라인 파싱 등 기존 소비�
 사용(검사기 쪽):
   from findings import Findings, Candidates     # 출력 규약 준수군
   from findings import ContractFindings         # 규약 밖·선행 계약 검사기
-  from findings import SliceFindings            # tree-slice 이월 구간(라인 소유는 호출자·rule 실값)
   Findings().add(rule, where, msg)         → 라인 "[{rule}] {where}: {msg}" + violation 레코드
   Candidates().add(rule, where, msg, 물음) → 라인 "[ⓓ{rule}] {where}: {msg} — 물음: {q}" + info 레코드
-  ContractFindings(contract_ref).add(line, where=…, msg=…)
-                                           → 라인 문면은 호출자 소유 그대로(규약 밖 유지) +
+  ContractFindings(contract_ref, defer=True).add(where=…, msg=…)
+                                           → 라인 "- {where}: {msg}"(계약 문법) +
                                              rule=null·contract_ref 레코드
-  SliceFindings().add(rule, line, where=…, msg=…[, severity="info"])
-                                           → 라인 문면은 호출자 소유 그대로(기존 [#N] 문면 byte
-                                             보존 — T2-1 3단) + 실규칙 rule 레코드
-넷 다 list 하위 타입이라 기존 «if findings: … / for x in findings: print(…)» 사용처가 그대로 돈다.
+셋 다 list 하위 타입이라 기존 «if findings: … / for x in findings: print(…)» 사용처가 그대로 돈다.
+(SliceFindings·ContractFindings 의 line= 표면은 3단계 이행 완료로 제거 — V25 ⑤.)
 """
 from __future__ import annotations
 
@@ -245,29 +242,11 @@ class Candidates(list):
             _emit(self.checker, entry.rule, entry.where, entry.symbol, "info", entry.message)
 
 
-class SliceFindings(list):
-    """tree-slice 재저작 이월 구간용(T2-1 3단) — 라인 문면은 호출자 소유 그대로 append
-    하고(기존 `[#N]` 문면 byte 보존 — stdout 불변 편입), 구조화 레코드는 실규칙
-    rule("#N")로 나간다. ⓓ 후보 라인은 severity="info"(exit 불산입 채널의 레코드 대응).
-    라인 문면의 공용 재저작 여부는 T3 docstring IRI 재저작과 함께 재론한다."""
-
-    def __init__(self, checker: "str | None" = None) -> None:
-        super().__init__()
-        self.checker: str = checker or _default_checker()
-
-    def add(self, rule: str, line: str, where: "str | Path", msg: str,
-            symbol: "str | None" = None, severity: str = "violation") -> None:
-        self.append(line)
-        _emit(self.checker, rule, str(where), symbol, severity, msg)
-
-
 class ContractFindings(list):
     """선행 계약 검사기용(rule-owner-map 규칙 0건) — 레코드는 rule=null + contract_ref.
 
-    과도기 이중 모드(계약 v2 — line 인자는 V25 5단계에서 제거):
-    legacy = add(line, where=…, msg=…) 라인 호출자 소유·즉시 방출 /
-    v2 = defer=True + add(where=…, msg=…) — 라인은 포매터 계약 문법 `- {where}: {msg}`,
-    방출은 emit_all 에서."""
+    라인은 포매터 계약 문법 `- {where}: {msg}`(FindingEntry 의 순수 함수) — line 표면은
+    3단계 이행 완료로 제거됐다(V25 ⑤). defer=True + emit_all 방출이 표준."""
 
     def __init__(self, contract_ref: str, checker: "str | None" = None,
                  defer: bool = False) -> None:
@@ -277,14 +256,11 @@ class ContractFindings(list):
         self._defer: bool = defer
         self.entries: "list[FindingEntry]" = []
 
-    def add(self, line: "str | None" = None, where: "str | Path | None" = None,
-            msg: "str | None" = None, symbol: "str | None" = None) -> None:
-        if where is None or msg is None:
-            raise ValueError("ContractFindings.add 는 where·msg 가 필수다")
+    def add(self, where: "str | Path", msg: str, symbol: "str | None" = None) -> None:
         entry = FindingEntry("contract", None, where, msg, symbol, "violation",
                              self.checker, contract_ref=self.contract_ref)
         self.entries.append(entry)
-        self.append(line if line is not None else entry.line)
+        self.append(entry.line)
         if not self._defer:
             _emit(self.checker, None, entry.where, entry.symbol, "violation", entry.msg,
                   contract_ref=self.contract_ref)
