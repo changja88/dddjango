@@ -18,9 +18,9 @@ T2-1 보강 1단계(포매터 계약 §4-1) 확장:
 - stdout↔record 대조: stdout 의 위반·후보 라인(`[#N]`/`[ⓓ#N]` 라인 앵커 — 계약·guard
   라인은 현행 포매터 이행 «전»이라 제외. 3단계 이행 후 계약·guard 라인과 라인 문면
   재구성 대조로 확장한다)을 (severity, rule) 항목으로 추출해 레코드와 대조한다.
-  기본은 무순서 multiset 양방향(잉여·누락·중복 검출) — **ordered** 대조는 현행
-  검사기들이 순서 보장 전이므로 `--strict-order` 뒤에 둔다(3단계 이행 후 기본 전환 —
-  사양 §5-1 «red 여도 됨» 참조).
+  기본은 무순서 multiset 양방향(잉여·누락·중복 검출) — **ordered**(`--strict-order`)
+  기본화는 후보 채널 11종의 순서 보존 이행 후(V25 ⑤ — 기본화 시도 실측이 11레인
+  순서 불일치를 적발·이행 선행 재배열). 위험 레인 관찰 보류는 게이트 편입 완료.
 - multiset fingerprint 신설(구 열 유지): `(rule|sentinel|contract_ref, file, symbol,
   message, occurrence_index)` — occurrence_index 는 동일 4-튜플 내 방출 순 서수.
   `json.dumps(ensure_ascii=False)` 직렬화 sha16. EXPECTED 에는 아직 넣지 않고
@@ -343,6 +343,9 @@ def _usage() -> int:
 
 def main(argv: "list[str]") -> int:
     emit_expected = False
+    # ordered 기본화(V25 ⑤)는 후보 채널 11종의 순서 보존 이행 «후» — 기본화 시도 실측
+    # (2026-08-20)에서 11레인 순서 불일치(stdout 후보 블록 선행 ↔ 레코드 수집 순)가
+    # 드러나 이행 선행으로 재배열했다. 이행 완료 커밋에서 True 로 전환한다.
     strict_order = False
     scripts_dir: Path = S
     fixtures_dir: Path = F
@@ -407,15 +410,9 @@ def main(argv: "list[str]") -> int:
             continue
         code, stdout, records, issues = _measure_one(script, roster[script], red_src, lane, scripts_dir)
         issues += _record_oracle(script, records)
-        stream_issues = _stream_compare(stdout, records, strict_order)
-        if lane in _RISK_DIRS:
-            # 위험 레인의 code 레인 stdout 은 3단계 포매터 이행 «전» 구 문면(비앵커 라인 —
-            # 의도 변경 열거표 §2: dataclass code-profile #N 승격·openapi #63)이라
-            # stdout↔record 대조 차이는 관찰로만 보고한다(사양 §5-1 보류 편입 —
-            # 3단계 이행 커밋에서 게이트 전환). 13필드 oracle·계수는 정상 게이트.
-            observations.setdefault(key, []).extend(stream_issues)
-        else:
-            issues += stream_issues
+        # 위험 레인 관찰 보류는 3단계 이행 완결로 게이트에 편입됐다(V25 ⑤ — 구 문면
+        # 비앵커 라인이 전건 [#N]/계약 문법으로 정형화되어 전 레인 동일 대조).
+        issues += _stream_compare(stdout, records, strict_order)
         got[key] = _summarize(code, records)
         prints[key] = _fingerprint(records)
         if issues:
@@ -427,11 +424,8 @@ def main(argv: "list[str]") -> int:
             if g_code != 0 or g_records:
                 g_issues.append(f"green: exit {g_code} · 레코드 {len(g_records)} (기대 0·0)")
             g_issues += _record_oracle(script, g_records)
-            g_stream = _stream_compare(g_stdout, g_records, strict_order)
-            if lane in _RISK_DIRS:
-                observations.setdefault(key, []).extend(f"green: {m}" for m in g_stream)
-            else:
-                g_issues += g_stream
+            # green 축도 게이트(V25 ⑤ — red 와 동일: 관찰 보류 종료).
+            g_issues += _stream_compare(g_stdout, g_records, strict_order)
             if g_issues:
                 problems.setdefault(key, []).extend(g_issues)
 
