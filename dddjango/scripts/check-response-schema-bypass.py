@@ -7,7 +7,8 @@ exact selected set, including unchanged tracked files.
 
 Exit codes: 0=clean/help, 2=contract blocker, 1=usage or analysis error.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 위반 라인은 공용 포매터의 계약 문법 `- {where}: {msg}` 로 방출하며
+record 순서 = stdout 위반 라인 순서다(T2-1 출력 계약 v2).
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings
+from findings import ContractFindings, emit_all, zero_target_guard
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
@@ -142,15 +143,11 @@ class Operation:
 
 @dataclass(frozen=True)
 class Finding:
+    """내부 분석 단위 — 출력 라인은 공용 포매터 소유(출력 계약 v2)."""
+
     path: Path
     operation: str
     lineno: int
-
-    def render(self) -> str:
-        return (
-            f"  - {self.path}: operation '{self.operation}' "
-            f"(:{self.lineno} direct raw 200-203 response)"
-        )
 
 
 def _argument_parser() -> _UsageParser:
@@ -994,18 +991,19 @@ def main(argv: list[str]) -> int:
     # 대상 0건 가드(#74 · 명세 조각 ⓐ) — 채택 신호는 있는데 driving 층 파일이 0건이면
     # 경로 계약이 어긋난 것이다. touched 공집합(정상)과 달리 «경로 불일치 0건»만 잡는다.
     if eligible_count == 0 and _adopted(config.root):
-        print(
+        guard = zero_target_guard(
             "[check-response-schema-bypass] blocker: 채택 신호는 있는데 driving 층 파일이 "
             "0건이다 — 조용한 무동작을 금지한다(#74)"
         )
+        emit_all(guard, printer=print, indent="")
         return 2
 
     if findings:
-        # 레코드는 출력 대상과 1:1 거울 — 라인 문면은 render() 소유 그대로(선행 계약 판형).
-        record_findings = ContractFindings(CONTRACT_REF)
+        # 라인 = 레코드 필드의 순수 함수(계약 문법 `- {where}: {msg}`) — emit_all 이
+        # 인쇄와 레코드 방출을 같은 순서로 수행한다(출력 계약 v2).
+        record_findings = ContractFindings(CONTRACT_REF, defer=True)
         for finding in findings:
             record_findings.add(
-                finding.render(),
                 where=f"{finding.path}:{finding.lineno}",
                 msg=f"operation '{finding.operation}' — declared 200-203 schema bypassed by raw Django response",
                 symbol=finding.operation,
@@ -1015,8 +1013,7 @@ def main(argv: list[str]) -> int:
             "operation declares a body-bearing 200-203 schema but directly "
             "returns raw Django HttpResponse/JsonResponse:"
         )
-        for line in record_findings:
-            print(line)
+        emit_all(record_findings, printer=print)
         print(
             "  근거: a declared Ninja success schema must own validation and "
             "serialization; direct raw 200-203 Django responses bypass that "
