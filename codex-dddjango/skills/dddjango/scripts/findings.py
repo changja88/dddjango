@@ -32,12 +32,16 @@ stdout 오염 금지: registry_gate 의 위반 라인 파싱 등 기존 소비�
 사용(검사기 쪽):
   from findings import Findings, Candidates     # 출력 규약 준수군
   from findings import ContractFindings         # 규약 밖·선행 계약 검사기
+  from findings import SliceFindings            # tree-slice 이월 구간(라인 소유는 호출자·rule 실값)
   Findings().add(rule, where, msg)         → 라인 "[{rule}] {where}: {msg}" + violation 레코드
   Candidates().add(rule, where, msg, 물음) → 라인 "[ⓓ{rule}] {where}: {msg} — 물음: {q}" + info 레코드
   ContractFindings(contract_ref).add(line, where=…, msg=…)
                                            → 라인 문면은 호출자 소유 그대로(규약 밖 유지) +
                                              rule=null·contract_ref 레코드
-셋 다 list 하위 타입이라 기존 «if findings: … / for x in findings: print(…)» 사용처가 그대로 돈다.
+  SliceFindings().add(rule, line, where=…, msg=…[, severity="info"])
+                                           → 라인 문면은 호출자 소유 그대로(기존 [#N] 문면 byte
+                                             보존 — T2-1 3단) + 실규칙 rule 레코드
+넷 다 list 하위 타입이라 기존 «if findings: … / for x in findings: print(…)» 사용처가 그대로 돈다.
 """
 from __future__ import annotations
 
@@ -139,6 +143,22 @@ class Candidates(list):
         where_s: str = str(where)
         self.append(f"[ⓓ{rule}] {where_s}: {msg} — 물음: {question}")
         _emit(self.checker, rule, where_s, symbol, "info", f"{msg} — 물음: {question}")
+
+
+class SliceFindings(list):
+    """tree-slice 재저작 이월 구간용(T2-1 3단) — 라인 문면은 호출자 소유 그대로 append
+    하고(기존 `[#N]` 문면 byte 보존 — stdout 불변 편입), 구조화 레코드는 실규칙
+    rule("#N")로 나간다. ⓓ 후보 라인은 severity="info"(exit 불산입 채널의 레코드 대응).
+    라인 문면의 공용 재저작 여부는 T3 docstring IRI 재저작과 함께 재론한다."""
+
+    def __init__(self, checker: "str | None" = None) -> None:
+        super().__init__()
+        self.checker: str = checker or _default_checker()
+
+    def add(self, rule: str, line: str, where: "str | Path", msg: str,
+            symbol: "str | None" = None, severity: str = "violation") -> None:
+        self.append(line)
+        _emit(self.checker, rule, str(where), symbol, severity, msg)
 
 
 class ContractFindings(list):
