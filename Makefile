@@ -48,7 +48,7 @@ verify-ontology:
 verify-base:
 	@set -euo pipefail; \
 	if [[ -n "$${DJR_FINDINGS_JSON:-}" ]]; then echo "[preflight] DJR_FINDINGS_JSON 감지 — 외부 레코드 경로 격리 고지(차단 아님 — S#7): 메타 하네스(baseline·count·cross·fixture·backstop·findings-smoke)는 subprocess env 에서 스스로 제거한다. 잔여: gate 스모크 3종(registry·bc·anchor)은 미격리 — 지정 경로에 스모크 레코드가 append 될 수 있다"; fi; \
-	echo "[verify-base] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·baseline·count-golden·findings-smoke·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
+	echo "[verify-base] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·baseline·count-golden·findings-smoke·drift-golden·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
 	python3 workspace/tools/corpus_mirror_sync.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
@@ -60,6 +60,7 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/checker_baseline_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/findings_count_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/findings_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/construct_drift_report.py; \
 	PYTHONUTF8=1 python3 workspace/tools/anchor_diff_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
