@@ -130,31 +130,119 @@ def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
               file=sys.stderr)
 
 
-class Findings(list):
-    """출력 규약 준수군용 — 라인 "[{rule}] {where}: {msg}" + violation 레코드."""
+class FindingEntry:
+    """구조화 엔트리 — 공용 포매터의 유일한 입력(출력 계약 v2 §1).
 
-    def __init__(self, checker: "str | None" = None) -> None:
+    라인은 엔트리 필드의 순수 함수다(레코드만으로 stdout 위반 라인 재구성 가능).
+    kind 별 문법: violation `[{rule}] {where}: {msg}` · candidate `[ⓓ{rule}] {where}:
+    {msg} — 물음: {q}` · contract `- {where}: {msg}` · guard `{msg}` 원문.
+    """
+
+    __slots__ = ("kind", "rule", "contract_ref", "where", "symbol", "severity",
+                 "msg", "question", "checker")
+
+    def __init__(self, kind: str, rule: "str | None", where: "str | Path", msg: str,
+                 symbol: "str | None", severity: str, checker: str,
+                 question: "str | None" = None,
+                 contract_ref: "str | None" = None) -> None:
+        self.kind = kind
+        self.rule = rule
+        self.contract_ref = contract_ref
+        self.where = str(where)
+        self.symbol = symbol
+        self.severity = severity
+        self.msg = msg
+        self.question = question
+        self.checker = checker
+
+    @property
+    def line(self) -> str:
+        if self.kind == "violation":
+            return f"[{self.rule}] {self.where}: {self.msg}"
+        if self.kind == "candidate":
+            return f"[ⓓ{self.rule}] {self.where}: {self.msg} — 물음: {self.question}"
+        if self.kind == "contract":
+            return f"- {self.where}: {self.msg}"
+        return self.msg  # guard — 라인 = msg 원문
+
+    @property
+    def message(self) -> str:
+        """레코드 message — candidate 는 라인과 같은 결합 문면(현행 의미 유지)."""
+        if self.kind == "candidate":
+            return f"{self.msg} — 물음: {self.question}"
+        return self.msg
+
+
+def emit_all(*collections: "list", printer=None, indent: str = "  ") -> None:
+    """유일한 방출 지점(출력 계약 v2 — W1): 한 루프에서 라인 인쇄와 레코드 방출을
+    같은 순서로 수행한다. record 순서 = stdout 위반 라인 순서가 이 함수의 불변식.
+
+    defer 컬렉션 전용 — 즉시 방출 컬렉션(과도기 legacy)을 넘기면 이중 방출이므로
+    거부한다. printer=None 이면 레코드만(앵커 모드처럼 라인을 별도 소비하는 경로).
+    """
+    for coll in collections:
+        if not getattr(coll, "_defer", False):
+            raise ValueError("emit_all 은 defer 컬렉션 전용 — 즉시 방출분과 섞으면 레코드가 중복된다")
+        for entry in coll.entries:
+            if printer is not None:
+                printer(f"{indent}{entry.line}")
+            _emit(entry.checker, entry.rule, entry.where, entry.symbol,
+                  entry.severity, entry.message, contract_ref=entry.contract_ref)
+
+
+def lines(coll: "list") -> "list[str]":
+    """포매터 재사용 순수 함수(부작용 없음) — 앵커 collected 합류 등 라인 문자열 소비자용."""
+    return [entry.line for entry in coll.entries]
+
+
+def zero_target_guard(msg: str, checker: "str | None" = None) -> "Findings":
+    """대상-0 가드(21종 공용 — 계약 v2 이행 표): 라인 = msg 원문 + rule=«대상0» 센티널
+    레코드(_emit 의 격리로 rule=null+sentinel). exit 2 산입이므로 severity=violation."""
+    out = Findings(checker, defer=True)
+    entry = FindingEntry("guard", "대상0", "(target)", msg, None, "violation", out.checker)
+    out.entries.append(entry)
+    out.append(entry.line)
+    return out
+
+
+class Findings(list):
+    """출력 규약 준수군용 — 라인 "[{rule}] {where}: {msg}" + violation 레코드.
+
+    과도기 이중 모드(계약 v2 이행 — V25 3단계 완료 시 defer 가 유일 모드로 승격):
+    defer=False(기본·legacy) = add 시 즉시 레코드 방출 / defer=True = 구조화 수집만,
+    방출은 emit_all 에서 한 순서로. 두 모드 모두 list 내용물은 포매터 라인(소비자 호환)."""
+
+    def __init__(self, checker: "str | None" = None, defer: bool = False) -> None:
         super().__init__()
         self.checker: str = checker or _default_checker()
+        self._defer: bool = defer
+        self.entries: "list[FindingEntry]" = []
 
     def add(self, rule: str, where: "str | Path", msg: str, symbol: "str | None" = None) -> None:
-        where_s: str = str(where)  # Path 호출자(B/C형)와 라인 문면·레코드 file 을 한 문자열로 고정
-        self.append(f"[{rule}] {where_s}: {msg}")
-        _emit(self.checker, rule, where_s, symbol, "violation", msg)
+        entry = FindingEntry("violation", rule, where, msg, symbol, "violation", self.checker)
+        self.entries.append(entry)
+        self.append(entry.line)
+        if not self._defer:
+            _emit(self.checker, entry.rule, entry.where, entry.symbol, "violation", entry.msg)
 
 
 class Candidates(list):
     """ⓓ 후보 채널 — 라인 "[ⓓ{rule}] {where}: {msg} — 물음: {q}" + info 레코드(exit 불산입)."""
 
-    def __init__(self, checker: "str | None" = None) -> None:
+    def __init__(self, checker: "str | None" = None, defer: bool = False) -> None:
         super().__init__()
         self.checker: str = checker or _default_checker()
+        self._defer: bool = defer
+        self.entries: "list[FindingEntry]" = []
 
     def add(self, rule: str, where: "str | Path", msg: str, question: str,
             symbol: "str | None" = None) -> None:
-        where_s: str = str(where)
-        self.append(f"[ⓓ{rule}] {where_s}: {msg} — 물음: {question}")
-        _emit(self.checker, rule, where_s, symbol, "info", f"{msg} — 물음: {question}")
+        entry = FindingEntry("candidate", rule, where, msg, symbol, "info", self.checker,
+                             question=question)
+        self.entries.append(entry)
+        self.append(entry.line)
+        if not self._defer:
+            _emit(self.checker, entry.rule, entry.where, entry.symbol, "info", entry.message)
 
 
 class SliceFindings(list):
@@ -174,15 +262,29 @@ class SliceFindings(list):
 
 
 class ContractFindings(list):
-    """선행 계약 검사기용(rule-owner-map 규칙 0건 — 출력 규약 밖) — 라인 문면은 호출자
-    소유 그대로 append 하고, 구조화 레코드는 rule=null + contract_ref 로 나간다."""
+    """선행 계약 검사기용(rule-owner-map 규칙 0건) — 레코드는 rule=null + contract_ref.
 
-    def __init__(self, contract_ref: str, checker: "str | None" = None) -> None:
+    과도기 이중 모드(계약 v2 — line 인자는 V25 5단계에서 제거):
+    legacy = add(line, where=…, msg=…) 라인 호출자 소유·즉시 방출 /
+    v2 = defer=True + add(where=…, msg=…) — 라인은 포매터 계약 문법 `- {where}: {msg}`,
+    방출은 emit_all 에서."""
+
+    def __init__(self, contract_ref: str, checker: "str | None" = None,
+                 defer: bool = False) -> None:
         super().__init__()
         self.contract_ref: str = contract_ref
         self.checker: str = checker or _default_checker()
+        self._defer: bool = defer
+        self.entries: "list[FindingEntry]" = []
 
-    def add(self, line: str, where: "str | Path", msg: str, symbol: "str | None" = None) -> None:
-        self.append(line)
-        _emit(self.checker, None, str(where), symbol, "violation", msg,
-              contract_ref=self.contract_ref)
+    def add(self, line: "str | None" = None, where: "str | Path | None" = None,
+            msg: "str | None" = None, symbol: "str | None" = None) -> None:
+        if where is None or msg is None:
+            raise ValueError("ContractFindings.add 는 where·msg 가 필수다")
+        entry = FindingEntry("contract", None, where, msg, symbol, "violation",
+                             self.checker, contract_ref=self.contract_ref)
+        self.entries.append(entry)
+        self.append(line if line is not None else entry.line)
+        if not self._defer:
+            _emit(self.checker, None, entry.where, entry.symbol, "violation", entry.msg,
+                  contract_ref=self.contract_ref)
