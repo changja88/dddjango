@@ -21,6 +21,7 @@ exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
 from __future__ import annotations
 
 import shutil
+import os
 import subprocess
 import sys
 import tempfile
@@ -36,6 +37,13 @@ _GIT_ID: "list[str]" = ["-c", "user.email=smoke@dddjango", "-c", "user.name=smok
 _VIOLATION_REL: str = "application/orders/driving_layer/api/order/schema/schema_smoke.py"
 _VIOLATION_SRC: str = "from application.orders.domain_layer.order.order import Order\n\n_N: str = Order.__name__\n"
 
+
+
+def _scrubbed_env() -> "dict[str, str]":
+    """검사기 하위 실행 env — 사용자 DJR_FINDINGS_JSON 오염 차단(T2-1 적대 검증 레인 S 7번 잔여)."""
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    return env
 
 def _git(repo: Path, *args: str) -> "subprocess.CompletedProcess[str]":
     return subprocess.run(["git", "-C", str(repo), *_GIT_ID, *args], capture_output=True, text=True)
@@ -55,7 +63,7 @@ def _make_repo(td: Path, name: str) -> "tuple[Path, str]":
 def _gate(repo: Path, anchor: str, extra: "list[str] | None" = None) -> "tuple[int, str]":
     proc = subprocess.run(
         [sys.executable, str(GATE), str(repo), "--anchor", anchor] + (extra or []),
-        capture_output=True, text=True,
+        capture_output=True, text=True, env=_scrubbed_env(),
     )
     return proc.returncode, proc.stdout + proc.stderr
 
@@ -122,7 +130,7 @@ def main() -> int:
         # U — usage 오류: 알 수 없는 flag → 문면 계약 exit 1(F3 — argparse 기본 2 봉합).
         proc = subprocess.run(
             [sys.executable, str(GATE), str(repo), "--nope"],
-            capture_output=True, text=True,
+            capture_output=True, text=True, env=_scrubbed_env(),
         )
         rows.append((
             "U usage exit 1", 1, proc.returncode,

@@ -7,6 +7,7 @@ it must not import Django or Ninja itself.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -6538,7 +6539,12 @@ def run_case(case: Case) -> tuple[bool, str, int]:
         write_fixture(fixture_root, case.files)
         command = [sys.executable, str(checker)]
         command.extend(str(fixture_root) if arg == TARGET_DIR else arg for arg in case.checker_args)
-        completed = subprocess.run(command, capture_output=True, text=True, check=False)
+        # 사용자 환경의 DJR_FINDINGS_JSON 을 상속하면 이 하네스가 사용자의 실제 레코드
+        # 파일에 테스트 레코드를 append 한다(T2-1 적대 검증 레인 S 7번 —
+        # checker_baseline_matrix 판형). exit·fragment 만 재는 도구이므로 sink 를 끊는다.
+        env = dict(os.environ)
+        env.pop("DJR_FINDINGS_JSON", None)
+        completed = subprocess.run(command, capture_output=True, text=True, check=False, env=env)
     output = f"{completed.stdout}\n{completed.stderr}"
     tracebacks = output.count("Traceback (most recent call last):")
     fragment_matches = not case.expected_fragment or case.expected_fragment in output

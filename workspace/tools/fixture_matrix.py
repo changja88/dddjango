@@ -18,6 +18,7 @@ exit 0 = 전수 일치 / exit 2 = 불일치 존재 / exit 1 = 재료 결손.
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -178,7 +179,13 @@ def main(argv: "list[str]") -> int:
             shutil.copytree(cmd[fx_i], tmp_fx)
             run_cmd: list[str] = list(cmd)
             run_cmd[fx_i] = str(tmp_fx)
-            got: int = subprocess.run(run_cmd, cwd=str(ROOT), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+            # 사용자 환경의 DJR_FINDINGS_JSON 을 상속하면 이 하네스가 사용자의 실제
+            # 레코드 파일에 테스트 레코드를 append 한다(T2-1 적대 검증 레인 S 7번 —
+            # checker_baseline_matrix 판형). exit 만 재는 도구이므로 sink 를 아예 끊는다.
+            env: "dict[str, str]" = dict(os.environ)
+            env.pop("DJR_FINDINGS_JSON", None)
+            got: int = subprocess.run(run_cmd, cwd=str(ROOT), stdout=subprocess.DEVNULL,
+                                      stderr=subprocess.DEVNULL, env=env).returncode
         ok: bool = got == want
         if not ok:
             mismatch += 1

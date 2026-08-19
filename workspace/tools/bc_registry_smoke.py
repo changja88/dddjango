@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,13 @@ from pathlib import Path
 TOOLS: Path = Path(__file__).resolve().parent
 RUNNER: Path = TOOLS / "bc_registry_run.py"
 
+
+
+def _scrubbed_env() -> "dict[str, str]":
+    """검사기 하위 실행 env — 사용자 DJR_FINDINGS_JSON 오염 차단(T2-1 적대 검증 레인 S 7번 잔여)."""
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    return env
 
 def _mk(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
@@ -50,6 +58,7 @@ def main() -> int:
         build_mini_repo(repo)
         proc = subprocess.run(
             [sys.executable, str(RUNNER), str(repo), "alpha"],
+            env=_scrubbed_env(),
             capture_output=True, text=True,
         )
         out: str = proc.stdout + proc.stderr

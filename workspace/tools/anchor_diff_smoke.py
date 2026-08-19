@@ -36,6 +36,7 @@ exit 0 = 전 케이스 일치 / exit 2 = 불일치 / exit 1 = 재료 결손.
 from __future__ import annotations
 
 import shutil
+import os
 import subprocess
 import sys
 import tempfile
@@ -121,6 +122,13 @@ _S_ARGS: "list[str]" = [
 _S_REGISTRAR_REL: str = "application/lesson/driving_layer/api/api_router.py"
 
 
+
+def _scrubbed_env() -> "dict[str, str]":
+    """검사기 하위 실행 env — 사용자 DJR_FINDINGS_JSON 오염 차단(T2-1 적대 검증 레인 S 7번 잔여)."""
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    return env
+
 def _git(repo: Path, *args: str) -> "subprocess.CompletedProcess[str]":
     return subprocess.run(["git", "-C", str(repo), *_GIT_ID, *args], capture_output=True, text=True)
 
@@ -150,7 +158,8 @@ def _write(repo: Path, rel: str, src: str) -> None:
 
 def _run(script: Path, target: Path, extra: "list[str]") -> "tuple[int, str]":
     proc = subprocess.run(
-        [sys.executable, str(script), str(target), *extra], capture_output=True, text=True
+        [sys.executable, str(script), str(target), *extra], capture_output=True, text=True,
+        env=_scrubbed_env(),
     )
     return proc.returncode, proc.stdout + proc.stderr
 
