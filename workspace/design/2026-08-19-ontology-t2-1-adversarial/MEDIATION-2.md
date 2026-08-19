@@ -54,3 +54,7 @@ regen severity 봉인(choices=violation) · baseline `(exit,parsed_raw,normalize
 ## 다음 절차
 
 ① 매핑표 v2 재작성(에이전트 — U12 장부·분할 category·통계 재산출·#511 튜플·symbol 명세) ② 포매터 계약 v2 재작성(직접 — ordered emitter·표면 재설계·의도 변경 열거표·검증 계획 전면) ③ 규약 v1.1 문면 정정(잠정) ④ **반영 대조 레인 W**(경량 codex — v2 문서 2건이 본 중재 전건을 착지시켰는지) ⑤ 통과 시 코드 적용(V25 순서).
+
+## 부록: 반영 대조 레인 W 중재 (2026-08-20)
+
+W 8건(왜곡 5·모순 3) **전건 채택·즉시 정정**: W1 emitter 재설계(add=원시 엔트리만·emit_all 한 루프에서 억제→포맷→인쇄→record — lines() 순수 함수로 앵커 호환) · W2 매핑표 서문 SliceFindings 존치 문구 제거 · W3 DI V2/V3=억제(계약 아님) 정합 · W4 «검사기 판정 결과» 불변식 독립 항목+규약 제목 v1.1 · W5 열거표 4행 추가(EC 자기 중복·overlap 억제·ⓓ#511·행번호 11곳) · W6 multiset 병기를 5단계로 이동 · W7 drift 생성 명령(construct_drift_report.py) 명시 · W8 lazy-open 수치 유보 분리. **선행 설계 리뷰 종결 — 코드 적용(V25 순서) 개시.**

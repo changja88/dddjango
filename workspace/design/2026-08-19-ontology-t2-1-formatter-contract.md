@@ -7,9 +7,9 @@
 
 **원칙(T12 채택 정의)**: 구조화 입력 → 단일 포매터 → stdout 라인+record 동시·동순서 산출. 레코드만으로 stdout 위반 라인을 재구성할 수 있어야 한다.
 
-- 각 표면의 `add(...)`는 **구조화 수집만** 한다(레코드 즉시 방출 폐지). 내부에 `(rule|sentinel|contract_ref, where, symbol, severity, msg[, question])` 엔트리를 쌓고, list 내용물로는 포매터가 만든 라인을 유지(기존 `if findings:`/`len()`/앵커 `collected` 소비자 호환).
-- 저장 라인은 **무들여쓰기**·인쇄 시 호출자가 2-space(`print(" ", x)` 판형 — A형 byte 동일의 근거).
-- **`emit_records(*collections)`** 모듈 함수 신설: 검사기가 보고 지점에서 **stdout 인쇄 순서와 같은 순서로 1회 호출** — 이때만 JSONL 방출. 앵커 모드에서도 같은 순서로 호출(현행 레코드 의미 유지·유령 없음). record 순서 = stdout 위반 라인 순서 골든.
+- 각 표면의 `add(...)`는 **원시 구조화 엔트리만** 수집한다(레코드 즉시 방출·라인 사전 조립 모두 폐지 — W1 정정). 컬렉션은 엔트리 list이며 `if findings:`/`len()` 진리값 호환 유지.
+- **`emit_all(*collections, indent="  ")`** 공용 함수가 유일한 방출 지점: 한 루프에서 **선점 억제(overlap 표) → 라인 포맷 → stdout 인쇄 → 같은 엔트리의 record 방출**을 수행한다. **record 순서 = stdout 위반 라인 순서**는 이 함수의 산출 불변식(골든 고정).
+- 앵커 모드 등 라인 문자열이 별도로 필요한 소비자(collected 합류)는 `lines(collection)` 순수 함수(포매터 재사용·부작용 없음)를 쓴다 — 이 경로의 record 방출은 검사기의 보고 지점에서 `emit_all`(print 억제 옵션)로 1회.
 - 라인 문법(레코드 필드의 순수 함수):
   - violation: `[{rule}] {where}: {msg}`
   - candidate: `[ⓓ{rule}] {where}: {msg} — 물음: {question}` (record message = `{msg} — 물음: {question}` — 재구성 가능)
@@ -26,11 +26,15 @@
 | dataclass code-profile #N 승격 사이트(매핑표 v2) | `  - {path}:{lineno}  {category}: {shown}` | `  [#N] {path}:{lineno}: {category}: {shown}` | registry parsed 증가(기대표 사유 갱신)·backstop fragment 14종 정적 대조(§5-8) |
 | openapi code/repo(#63) | `  - {rp}:{lineno}  [#63] {detail}` / repo 자유문 | `  [#63] {rp}:{lineno}: {category}: {detail}` — **msg에 category 포함으로 확정**(V8: stdout·record 동일 msg) | `#63` fragment 잔존 확인 |
 | 계약 레인(자유 출력 5종·response-schema·common-container·code 계약 잔류분) | 검사기별 자유 문면 | `  - {where}: {msg}` (msg는 기존 사유 문면 승계) | registry 미파싱 유지(현행 동일)·fixture 골든 갱신 |
-| EC blocker 혼성·composition DI 혼성(V9) | `  - {문면}` | 판정별 분기: BC경로=#114·V1=#497 → violation 문법 / 나머지 → 계약 문법 (구조화 discriminant — 문자열 prefix 분기 금지) | 상동 |
+| EC blocker 혼성·composition DI 혼성(V9·W3 정정) | `  - {문면}` | 판정별 분기: EC B1 BC경로=#114·DI V1=#497 → violation 문법 / EC B1 common경로·B2·B3 → 계약 문법 / **DI V2·V3 → 소유자(#81·#488=layer-skeleton) 실발화 입증 후 방출 억제**(계약 아님 — U11) (구조화 discriminant — 문자열 prefix 분기 금지) | 상동 |
+| EC 자기 중복 제거(행17ⓑ base additional field·행23ⓐ second direct-common — #572 기존 finding 단독) | 계약 라인 방출 | **방출 제거**(같은 실행의 #572 finding이 단독 대표) | 계약 라인 감소(레인 픽스처 실증) |
+| overlap 표 선점 억제 전건(매핑표 v2 — composition/api/EC/openapi의 tree↔code 겹침 쌍) | tree `[#N]` 라인 + code 라인 | code 레인 활성·적중 시 **tree 사이트 라인 억제**(1건 대표) | 억제 쌍마다 (2건→1건) 픽스처 실증 |
+| ⓓ#511 특수 판형 | `  [ⓓ#511] {dir}/ — 물음: …` | `  [ⓓ#511] {dir}/: 외부 소유 계약 입구 후보(provider 성 디렉터리) — 물음: {q(접두 제거)}` (매핑표 부속 A-3 골든) | candidate 정형화 |
+| 행번호 재배치 11곳(synthetic 2·public-surface 9) | `[{rule}] {rel}: :{lineno} {msg}` | `[{rule}] {rel}:{lineno}: {msg}` | where locator 정밀화(레코드 file 동반 개선) |
 | guard 21종·헤더·근거 블록·clean 라인 | — | **무변**(guard는 라인 무변+record 신규) | 없음 |
 | 타 소유자 이관(EC #117 사건·composition DI V2/V3) | 해당 라인 방출 | **방출 제거**(소유자 단독 — layer-skeleton·context-isolation) | 적용 커밋에서 소유자 실발화 픽스처 실증 후 제거(U11 의무) |
 
-보존 표면의 정확한 한정(R#3 처분 착지): **{정상 red/green stdout(위 열거 외 무변), exit 의미론, 위반 incident multiset, 소비자 계약(registry 파싱·backstop 판정·debt 매칭·gate 판정 결과)}**. uncaught traceback byte는 계약 밖. `_entries()` OSError 안정 문면화는 백로그(별도 개선·T2-2 전 아님).
+보존 표면의 정확한 한정(R#3 처분 착지·W4 정정): **{정상 red/green stdout(위 열거 외 무변), exit 의미론, 검사기 판정 결과(대상별 red/green — 독립 항목), 위반 incident multiset, 소비자 계약(registry 파싱·backstop 판정·debt 매칭·gate 판정 결과)}**. uncaught traceback byte는 계약 밖. `_entries()` OSError 안정 문면화는 백로그(별도 개선·T2-2 전 아님).
 
 ## 3. incident-key·이중 방출 (U13·U14·V4)
 
@@ -41,13 +45,13 @@
 ## 4. 적용 순서 (V25 — 고정)
 
 1. **하네스 확장 선행**(신규 레인·oracle이 구현을 기다리며 red여도 됨 — 단 verify 편입은 green 후):
-   baseline `(exit, parsed_raw, normalized_unique, unparsed, synthetic)` 확장(gate `_normalize` import — S#4 처분 완성) · `(script,lane)` 키 공간 · git 3레인(영향 7종: response-schema·app-container·idempotency·transient·choices·synthetic·db-table) · 위험 레인 4종 픽스처(api #59 code·composition 단일 `composition_root.py`·openapi 직접 선언 누락·EC code) · cross_matrix violation/info 정규식 분리 · findings/0 **13필드 전건 oracle**+stdout↔record **ordered multiset 양방향 대조**(잉여·누락·중복·순서 각각 실패) · multiset fingerprint `(rule|sentinel|contract_ref, file, symbol, message, occurrence_index)`(동일 4-튜플 내 방출 순 서수·JSON ensure_ascii=False 직렬화·**구 sha 열과 병기 과도기**) · `--scripts-dir`/`--fixtures-dir` 주입점+mutation self-test(message-empty·record-drop·reorder·duplicate 4종 필수 red) · **전 메타 하네스 DJR_FINDINGS_JSON 제거**(fixture·cross·backstop — S#7 잔여)+verify 선두 env preflight.
+   baseline `(exit, parsed_raw, normalized_unique, unparsed, synthetic)` 확장(gate `_normalize` import — S#4 처분 완성) · `(script,lane)` 키 공간 · git 3레인(영향 7종: response-schema·app-container·idempotency·transient·choices·synthetic·db-table) · 위험 레인 4종 픽스처(api #59 code·composition 단일 `composition_root.py`·openapi 직접 선언 누락·EC code) · cross_matrix violation/info 정규식 분리 · findings/0 **13필드 전건 oracle**+stdout↔record **ordered multiset 양방향 대조**(잉여·누락·중복·순서 각각 실패) · multiset fingerprint 정의 확정 `(rule|sentinel|contract_ref, file, symbol, message, occurrence_index)`(동일 4-튜플 내 방출 순 서수·JSON ensure_ascii=False 직렬화 — **구/신 열 병기는 5단계**·W6 정정) · `--scripts-dir`/`--fixtures-dir` 주입점+mutation self-test(message-empty·record-drop·reorder·duplicate 4종 필수 red) · **전 메타 하네스 DJR_FINDINGS_JSON 제거**(fixture·cross·backstop — S#7 잔여)+verify 선두 env preflight.
 2. findings.py v2(순서 보존 emitter) — findings_smoke 골든으로 DM/CC 무변 실증.
 3. **검사기별 «매핑 v2+포매터» 원자 이행**(분리 커밋 — EXPECTED·픽스처 골든 갱신을 같은 커밋에서 검사기별 사유와 함께): 순서 = response-schema → EC → openapi → composition → api-error(리스크 오름차순) → 자유 출력 5종·common-container(계약 문법 이행) → guard 21종.
 4. regen severity 봉인(`choices=("violation",)` — info는 review-only 별도 함수).
-5. `SliceFindings`·`ContractFindings(line=)` 제거(`rg` 0 실증·codex 미러 0 diff).
+5. `SliceFindings`·`ContractFindings(line=)` 제거(`rg` 0 실증·codex 미러 0 diff) + **multiset fingerprint 구/신 열 병기 개시**(W6 — 표면 제거 후 별도 단계·과도기 종료 시 구 열 제거).
 6. debt 자산 전수 수집·구/신 매치 대조 리포트(V21 — B형 콜론 경계).
-7. D11: byte 골든 **총 8종**(domain-model·common-container·api-error·EC·composition·openapi·response-schema·context-isolation — 구판 기준=각 검사기 이행 직전 커밋 봉인) + **construct drift 리포트** `workspace/eval/ab/T2-construct-drift.md`(동일 픽스처·구판/신판 stdout·exit·record multiset 차이 전건 표).
+7. D11: byte 골든 **총 8종**(domain-model·common-container·api-error·EC·composition·openapi·response-schema·context-isolation — 구판 기준=각 검사기 이행 직전 커밋 봉인) + **construct drift 리포트** `workspace/eval/ab/T2-construct-drift.md`(동일 픽스처·구판/신판 stdout·exit·record multiset 차이 전건 표). **생성 명령(W7)**: `PYTHONUTF8=1 python3 workspace/tools/construct_drift_report.py --old-rev <봉인 커밋> --emit workspace/eval/ab/T2-construct-drift.md` — 신설 도구가 8종×red/green 레인을 구판(git show 전개)·신판에 동일 argv로 실행해 대조표를 재생성 가능하게 산출.
 8. 혼성 패널 재검(codex+신선 Claude) → T2-1 완료 재선언.
 
 ## 5. 검증 계획 (적용 각 단계의 green 조건)
@@ -59,7 +63,7 @@
 
 ## 6. 백로그 등재 (이번 범위 밖 — 소유 단계 명시)
 
-- lazy-open record writer + 8,000건 성능·FD 회귀 기준: **T2-5 진입 조건**(MEDIATION R#4 처분).
+- lazy-open/close-at-exit record writer 전환: **T2-5 진입 조건**(MEDIATION R#4 처분). 성능·FD 회귀 기준 **수치**는 T2-5 설계 시 확정(W8 — 지금 확정은 과잉이라는 부분 채택 유보 유지).
 - `_entries()` OSError 안정 진단 문면: 별도 개선(T2-2 전 불요).
 - registry_gate의 findings/0 주 채널 소비 전환: T2-3 재론(MEDIATION S#4 잔여).
 - 배포 코드 주석 규율: 로컬 절대 경로 금지·#N+정본명+요약만(V26) — 단계 3 이행 시 준수.
