@@ -83,11 +83,15 @@ class _Run:
 
 
 _run: "_Run | None" = None
+_sink_disabled: bool = False  # 쓰기 실패 후 프로세스 단위 비활성(라인 채널은 계속 산다)
 
 
 def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
           severity: str, message: str, contract_ref: "str | None" = None) -> None:
     """구조화 레코드 1건 방출 — 환경변수 미지정이면 무동작(라인 채널만 남는다)."""
+    global _run, _sink_disabled
+    if _sink_disabled:
+        return
     path_s: str = os.environ.get(ENV_VAR, "").strip()
     if not path_s:
         return
@@ -96,7 +100,6 @@ def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
     sentinel: "str | None" = None
     if rule is not None and not _RULE_FORM.fullmatch(rule):
         sentinel, rule = rule, None
-    global _run
     if _run is None:
         _run = _Run(checker)
     record: "dict[str, object]" = {
@@ -114,8 +117,17 @@ def _emit(checker: str, rule: "str | None", file: str, symbol: "str | None",
         "message": message,
         "expression": None,
     }
-    with open(path_s, "a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+    try:
+        with open(path_s, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError as exc:
+        # 레코드는 «추가» 채널이다 — 쓰기 실패가 검사기의 라인 출력·exit 를 죽이면
+        # 그 선언(«라인 출력·exit 의미론 무변»)이 거짓이 된다. 프로세스 단위로 sink 를
+        # 끄고 한 번만 경고한다(T2-1 적대 검증 레인 R 1번 — 부모 없는 경로·읽기 전용에서
+        # 27종 전부 FileNotFoundError 로 죽던 회귀).
+        _sink_disabled = True
+        print(f"주의: 구조화 레코드 채널 비활성 — {ENV_VAR} 경로에 쓸 수 없다({exc})",
+              file=sys.stderr)
 
 
 class Findings(list):

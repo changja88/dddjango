@@ -20,6 +20,7 @@ exit 0 = EXPECTED 전수 일치 / exit 2 = 불일치 존재 / exit 1 = 재료 �
 """
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -27,6 +28,8 @@ import sys
 import tempfile
 from datetime import date
 from pathlib import Path
+
+CHECKER_TIMEOUT_S: int = 300  # 무기한 verify 정지 방지(적대 검증 레인 S 9번)
 
 ROOT: Path = Path(__file__).resolve().parents[2]
 S: Path = ROOT / "dddjango" / "scripts"
@@ -89,9 +92,15 @@ def measure() -> "dict[str, tuple[int, int, int, bool]]":
         with tempfile.TemporaryDirectory() as td:
             tmp_fx = Path(td) / "fixture"
             shutil.copytree(fx, tmp_fx)
+            # 사용자 환경의 DJR_FINDINGS_JSON 을 상속하면 이 하네스가 사용자의 실제
+            # 레코드 파일에 테스트 레코드를 append 한다(T2-1 적대 검증 레인 S 7번 — 544행 오염
+            # 실증). 라인 채널만 재는 도구이므로 레코드 sink 를 아예 끊는다.
+            env = dict(os.environ)
+            env.pop("DJR_FINDINGS_JSON", None)
             proc = subprocess.run(
                 checker_argv(sys.executable, script, str(tmp_fx), auto),
-                capture_output=True, text=True, cwd=str(ROOT),
+                capture_output=True, text=True, cwd=str(ROOT), env=env,
+                timeout=CHECKER_TIMEOUT_S,
             )
         parsed = unparsed = 0
         for raw in (proc.stdout + "\n" + proc.stderr).splitlines():
@@ -116,9 +125,27 @@ def main(argv: "list[str]") -> int:
             return 1
         emit = Path(argv[i + 1])
 
+    # 로스터↔기대표 키 집합 양방향 검사(적대 검증 레인 S 10번) — assert 가 아니라 런타임 검사다
+    # (PYTHONOPTIMIZE=1 이면 assert 가 사라져 «26/26 일치»로 세탁된다).
+    roster = {script for script, _ in REGISTRY}
+    if len(roster) != 27:
+        print(f"재료 결손: REGISTRY 로스터 27종 가정 위반({len(roster)})", file=sys.stderr)
+        return 1
+    if not emit_expected and roster != set(EXPECTED):
+        print(f"재료 결손: 로스터↔EXPECTED 키 불일치 — 로스터만: {sorted(roster - set(EXPECTED))} · "
+              f"기대표만: {sorted(set(EXPECTED) - roster)}", file=sys.stderr)
+        return 1
+
     got = measure()
 
     if emit_expected:
+        # 실패 상태를 «새 정답»으로 세탁하는 것을 막는다(적대 검증 레인 S 1번): red 픽스처는
+        # exit 2 여야 하고, 라인 앵커가 전멸한 검사기를 조용히 동결하지 않는다.
+        bad = [s for s, (e, _p, _u, _syn) in got.items() if e != 2]
+        if bad:
+            print(f"거부: red 픽스처 exit 2 가 아닌 검사기 — {sorted(bad)}. 개작 결함을 "
+                  f"기대표로 세탁할 수 없다(사유와 함께 코드를 먼저 고쳐라)", file=sys.stderr)
+            return 1
         print('EXPECTED: "dict[str, tuple[int, int, int, bool]]" = {')
         for script, _ in REGISTRY:
             e, p, u, syn = got[script]

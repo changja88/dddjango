@@ -32,6 +32,7 @@ G2 를 통과할 수 없었다(같은 게이트를 다른 레인은 «해석»�
 """
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -146,7 +147,12 @@ def _baseline_argv(
 
 
 def _run_lines(cmd: "list[str]") -> "tuple[int, list[str]]":
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    # 기준선 재실행은 «측정 도구의 내부 호출»이라 구조화 레코드 채널을 상속하면 안 된다 —
+    # 부모 stdout 에 나오지 않는 앵커 진단이 레코드 파일에만 별도 run_id 로 쌓여
+    # «출력 없는 유령 레코드»가 된다(T2-1 적대 검증 레인 P 6번·R 2번 — 기존분-only 에서 정확히 2배).
+    env = dict(os.environ)
+    env.pop("DJR_FINDINGS_JSON", None)
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=env)
     return proc.returncode, (proc.stdout + "\n" + proc.stderr).splitlines()
 
 

@@ -44,7 +44,8 @@ _LANE.update({s: (f"{fx}/bad_rules", f"{fx}/good") for s, fx in AUTO_PAIRS})
 # 공용 findings 모듈 편입 완료 로스터 = REGISTRY 전체(T2-1 완료 — 27/27 승격 2026-08-19).
 # 로스터 이탈은 재료 결손으로 즉사한다(신설 검사기는 편입과 EXPECTED 등재가 동시 의무).
 CONVERTED: "tuple[str, ...]" = tuple(sorted(script for script, _ in REGISTRY))
-assert len(CONVERTED) == 27, f"REGISTRY 로스터 27종 가정 위반: {len(CONVERTED)}"
+
+CHECKER_TIMEOUT_S: int = 300  # 무기한 verify 정지 방지(적대 검증 레인 S 9번)
 
 # script -> (red_exit, violation수, info수, rule/sentinel 분포 요약, violation_id 집합 sha16)
 EXPECTED: "dict[str, tuple[int, int, int, str, str]]" = {
@@ -88,6 +89,7 @@ def _measure_one(script: str, auto: bool, lane_rel: str, want_records: bool):
         proc = subprocess.run(
             checker_argv(sys.executable, script, str(fx), auto),
             capture_output=True, text=True, cwd=str(ROOT), env=env,
+            timeout=CHECKER_TIMEOUT_S,
         )
         records: "list[dict]" = []
         if rec_path.exists():
@@ -121,6 +123,14 @@ def _summarize(returncode: int, records: "list[dict]"):
 def main(argv: "list[str]") -> int:
     emit_expected = "--emit-expected" in argv
     roster = dict(REGISTRY)
+    # 로스터·기대표 양방향 런타임 검사(적대 검증 레인 S 10번 — assert 는 PYTHONOPTIMIZE 로 소거된다).
+    if len(CONVERTED) != 27:
+        print(f"재료 결손: REGISTRY 로스터 27종 가정 위반({len(CONVERTED)})", file=sys.stderr)
+        return 1
+    if not emit_expected and set(CONVERTED) != set(EXPECTED):
+        print(f"재료 결손: 로스터↔EXPECTED 키 불일치 — 로스터만: {sorted(set(CONVERTED) - set(EXPECTED))} · "
+              f"기대표만: {sorted(set(EXPECTED) - set(CONVERTED))}", file=sys.stderr)
+        return 1
     got: "dict[str, tuple]" = {}
     for script in CONVERTED:
         if script not in roster:
@@ -134,6 +144,13 @@ def main(argv: "list[str]") -> int:
             return 2
 
     if emit_expected:
+        # 실패 상태 세탁 거부(적대 검증 레인 S 1번): red 는 exit 2 여야 하고 레코드가 0 건이면
+        # «편입이 깨진 것»이지 새 정답이 아니다.
+        bad = [s for s, (e, v, i, _d, _h) in got.items() if e != 2 or (v + i) == 0]
+        if bad:
+            print(f"거부: red 픽스처가 exit 2·레코드≥1 을 만족하지 않는 검사기 — {sorted(bad)}. "
+                  f"편입 결함을 기대표로 세탁할 수 없다", file=sys.stderr)
+            return 1
         print('EXPECTED: "dict[str, tuple[int, int, int, str, str]]" = {')
         for script in CONVERTED:
             e, v, i, dist, sha = got[script]
