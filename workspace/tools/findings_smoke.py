@@ -41,7 +41,9 @@ FIXTURES: Path = ROOT / "workspace" / "eval" / "fixtures"
 # 개작 «직전» 실측 stdout 의 SHA-256(2026-08-19 · python3.9/3.14 동일 실측) — ㉠ 의 기준.
 BASELINE_SHA: "dict[str, str]" = {
     "domain_model/bad_rules": "ab67c1ae12ecb06afa1fb1731f793efe30864f006a8db10b5315f6fb44e44b41",
-    "common_container/bad_rules": "3b8514c4af46986cb6276838ce4ad73e32ba6d60a3146cfe889ea4c762b41cc7",
+    # 계약 레인 이행(3a68fe3)의 의도 변경 열거표 등재분 반영 — `[컨테이너] {rel}/  (내용: …)`
+    # → `- {rel}: 횡단 버킷이 application/ 안에 있다 (내용: …)`(계약 문법 정형화).
+    "common_container/bad_rules": "5ce9427209a475032bf19b5cf8f16d356e6e976f2119afe1639159cc8afd23fc",
 }
 
 # DM-red 기대 레코드 표본(내용 단언 — 필드 그대로) · 계수 기대.
