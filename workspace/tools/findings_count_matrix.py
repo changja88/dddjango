@@ -146,7 +146,7 @@ EXPECTED: "dict[str, tuple[int, int, int, str, str]]" = {
     "check-api-error-controller-contract.py::api_error_controller_code": (2, 3, 0, "#59×1,contract:선행 계약(08-04 API-error) 소유×2", "63461a8752062323"),
     "check-composition-root.py::composition_root_single_file": (2, 2, 0, "contract:선행 계약(08-03 composition-root code-profile — DI V1–V3·URLconf/registrar) 소유×2", "44ac07f2c84cc2fc"),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00"),
-    "check-error-centralization.py::error_centralization_code": (2, 4, 0, "contract:선행 계약(08-04 API-error) 소유×4", "d4e73010da867d6b"),
+    "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8"),
 }
 
 

@@ -246,7 +246,7 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-api-error-controller-contract.py::api_error_controller_code": (2, 0, 0, 5, True),
     "check-composition-root.py::composition_root_single_file": (2, 0, 0, 4, True),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 1, 2, False),
-    "check-error-centralization.py::error_centralization_code": (2, 0, 0, 6, True),
+    "check-error-centralization.py::error_centralization_code": (2, 1, 1, 4, False),
 }
 
 

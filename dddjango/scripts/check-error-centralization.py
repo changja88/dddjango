@@ -9,7 +9,10 @@ wire-code uniqueness, and narrow direct raw-string discriminator forms.
 
 Exit codes: 0=clean/N/A, 2=contract blocker, 1=usage or analysis error.
 구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
-추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
+추가 방출한다. 방출은 공용 ordered emitter(emit_all) 경유 — stdout 위반 라인 순서와
+레코드 순서가 같고, 라인은 레코드 필드의 순수 함수다(출력 계약 v2). code-profile
+category 의 #N 귀속/계약 잔류 판정은 귀속 매핑표 v2 가 정본이다
+(정본 문서명: 2026-08-19-ontology-t2-1-attribution-map).
 """
 from __future__ import annotations
 
@@ -22,7 +25,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import ContractFindings, SliceFindings
+from findings import ContractFindings, Findings, emit_all, lines, zero_target_guard
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -34,8 +37,10 @@ except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(
     sys.exit(1)
 
 
-# rule-owner-map ⓒ 4규칙(#114·#568·#572·#636)은 tree-slice 레인 소유 — code-profile 레인은
-# 규칙 대응 근거가 없는 선행 계약 레인이다(`dddjango/commands/dddjango.md:111` 근거).
+# rule-owner-map ⓒ 4규칙(#114·#568·#572·#636)의 술어에 포섭되는 code-profile category 는
+# 해당 #N violation 으로 방출하고(귀속 매핑표 v2 — 2026-08-19-ontology-t2-1-attribution-map),
+# 그 밖의 category 만 08-04 선행 계약(rule=null) 로 남는다. 타 소유자 사건(#117 —
+# check-context-isolation 소유)은 rule=null 로도 내지 않는다(이중 계수 원천 차단).
 CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
@@ -241,12 +246,28 @@ class Finding:
     lineno: int
     category: str
     shown: str
+    # 귀속 매핑표 v2 — category 가 소유 규칙 문면의 술어에 포섭되면 "#N"(violation 방출),
+    # 08-04 선행 계약 잔류면 None(계약 방출 · rule=null + contract_ref).
+    rule: str | None = None
+    # 위반 심볼(U17) — 생성 지점 node 가 이름을 아는 경우만(ClassDef/FunctionDef 이름·
+    # AnnAssign 대상), 불명이면 null.
+    symbol: str | None = None
     # Enum 멤버 «정적» 해석에 종속된 판정 — 동적 error shape 토큰만 남은 실행에서는
     # 억제되어 runtime proof 경로가 대신 검증한다(#15 requires_static_error_shape 동형).
     requires_static_error_shape: bool = False
 
-    def render(self) -> str:
-        return f"  - {self.relative_path}:{self.lineno}  {self.category}: {self.shown}"
+
+# 구조화 blocker discriminant(문자열 prefix 분기 금지) — BC 경로 부재는 #114 «항상 있다»
+# 위반(violation), 공통 모듈 경로 부재는 08-04 선행 계약(귀속 매핑표 v2 §2.10 B1~B3).
+BLOCKER_KIND_BC_ERROR = "bc-error"
+BLOCKER_KIND_COMMON = "common"
+
+
+@dataclass(frozen=True)
+class Blocker:
+    kind: str
+    relative_path: Path
+    reason: str
 
 
 NodeSignature = tuple[object, ...]
@@ -634,10 +655,10 @@ def _path_under_bc(path: Path, bc: str) -> bool:
 
 def _source_plan(
     config: Config, inventory: CodeInventory
-) -> tuple[set[Path], set[Path], set[Path], list[str], list[str]]:
+) -> tuple[set[Path], set[Path], set[Path], list[str], list[Blocker]]:
     inventory_paths = set(inventory.relative_paths)
     analysis: list[str] = []
-    blockers: list[str] = []
+    blockers: list[Blocker] = []
     code_paths = {Path(raw) for raw in config.code_error_modules}
     preserve_paths = {Path(raw) for raw in config.preserve_error_modules}
     source_paths: set[Path] = set()
@@ -671,7 +692,13 @@ def _source_plan(
     required_missing.update(_bc_error_path(bc) for bc in config.error_bcs)
     for path in sorted(required_missing, key=Path.as_posix):
         if path not in inventory_paths:
-            blockers.append(f"필수 canonical FrameworkErrorSchema artifact 부재: {path}")
+            blockers.append(
+                Blocker(
+                    BLOCKER_KIND_COMMON if path == COMMON_ERROR else BLOCKER_KIND_BC_ERROR,
+                    path,
+                    "필수 canonical FrameworkErrorSchema artifact 부재",
+                )
+            )
     for bc in config.error_bcs:
         path = _bc_error_path(bc)
         if path in inventory_paths and path not in code_paths:
@@ -1947,6 +1974,15 @@ def _default_is_none(value: ast.AST | None, bindings: dict[str, str]) -> bool:
     ) is None
 
 
+def _node_symbol(node: ast.AST) -> str | None:
+    """위반 심볼(U17) — node 가 안정 이름을 가진 경우만 채우고, 그 밖은 null."""
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return node.name
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return node.target.id
+    return None
+
+
 def _append_finding(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
@@ -1954,6 +1990,7 @@ def _append_finding(
     node: ast.AST,
     category: str,
     *,
+    rule: str | None = None,
     requires_static_error_shape: bool = False,
 ) -> None:
     lineno = getattr(node, "lineno", 1)
@@ -1961,14 +1998,20 @@ def _append_finding(
     if key in seen:
         return
     seen.add(key)
-    lines = parsed.source.splitlines()
-    shown = lines[lineno - 1].strip() if 0 < lineno <= len(lines) else category
+    source_lines = parsed.source.splitlines()
+    shown = (
+        source_lines[lineno - 1].strip()
+        if 0 < lineno <= len(source_lines)
+        else category
+    )
     findings.append(
         Finding(
             parsed.relative_path,
             lineno,
             category,
             shown,
+            rule=rule,
+            symbol=_node_symbol(node),
             requires_static_error_shape=requires_static_error_shape,
         )
     )
@@ -1984,12 +2027,13 @@ def _base_contract(
     findings: list[Finding],
     seen: set[tuple[Path, int, str]],
     category: str,
+    rule: str | None = None,
 ) -> bool:
     resolved = [_resolve(base, bindings) for base in node.bases]
     if len(node.bases) == 1 and resolved == [expected]:
         return True
     if expected in resolved:
-        _append_finding(findings, seen, parsed, node, category)
+        _append_finding(findings, seen, parsed, node, category, rule=rule)
         return False
     raw_tails = [(_expression_name(base) or "").rsplit(".", 1)[-1] for base in node.bases]
     resolved_tails = [(name or "").rsplit(".", 1)[-1] for name in resolved]
@@ -1998,7 +2042,7 @@ def _base_contract(
             f"{parsed.relative_path}:{node.lineno} required base provenance 분석 불능: {expected}"
         )
     else:
-        _append_finding(findings, seen, parsed, node, category)
+        _append_finding(findings, seen, parsed, node, category, rule=rule)
     return False
 
 
@@ -2194,6 +2238,10 @@ def _class_member_findings(
     *,
     allow_model_config: bool = False,
     allow_schema_decorators: bool = False,
+    # BC base 주체 전용(귀속 매핑표 v2 행17ⓑ) — base 의 추가 field 사건은 같은 실행의
+    # «…must narrow exactly one common field…»(#572) finding 이 단독 대표하므로
+    # «additional public field» 를 중복 방출하지 않는다(자기 중복 소거).
+    suppress_additional_public_field: bool = False,
 ) -> None:
     def pydantic_hook(name: str) -> bool:
         return name.startswith(("__get_pydantic_", "__pydantic_")) or name in {
@@ -2308,7 +2356,7 @@ def _class_member_findings(
             if name in field_names:
                 _append_finding(findings, seen, parsed, statement, "duplicate public field")
             field_names.add(name)
-            if name not in allowed_fields:
+            if name not in allowed_fields and not suppress_additional_public_field:
                 _append_finding(findings, seen, parsed, statement, "additional public field")
         elif isinstance(statement, ast.Assign):
             names = {name for target in statement.targets for name in _target_names(target)}
@@ -2442,13 +2490,26 @@ def _bc_module_artifact_findings(
             continue
         if isinstance(statement, ast.ClassDef):
             if statement not in allowed_classes:
-                _append_finding(
-                    findings,
-                    seen,
-                    parsed,
-                    statement,
-                    "BC error module extra class/helper forbidden",
+                bindings = before.get(id(statement), {})
+                # 두 번째 ErrorCode/StrEnum 컨테이너는 #117 «BC 안에 두 번째 ErrorCode
+                # 컨테이너를 두지 않는다» 사건 — 소유자 check-context-isolation 단독 방출로
+                # 이관해 여기서는 내지 않는다(귀속 매핑표 v2 «타 소유자 이관» 행23ⓑ).
+                second_container: bool = statement.name.endswith("ErrorCode") or any(
+                    _resolve(base, bindings) == STR_ENUM for base in statement.bases
                 )
+                # 예상 밖 direct-common class 는 같은 실행의 «second BC FrameworkErrorSchema
+                # base»(#572) finding 이 사건을 단독 대표한다 — 중복 방출 소거(매핑표 v2 행23ⓐ).
+                direct_common: bool = any(
+                    _resolve(base, bindings) == COMMON_ERROR_OUT for base in statement.bases
+                )
+                if not second_container and not direct_common:
+                    _append_finding(
+                        findings,
+                        seen,
+                        parsed,
+                        statement,
+                        "BC error module extra class/helper forbidden",
+                    )
             continue
         if (
             isinstance(statement, ast.Expr)
@@ -2466,6 +2527,10 @@ def _bc_module_artifact_findings(
             target = None
             value = None
         bindings = before.get(id(statement), {})
+        if _is_functional_enum(statement, bindings):
+            # functional Enum 할당(두 번째 ErrorCode 성) 역시 #117 사건 — 소유자
+            # check-context-isolation 단독 방출로 이관(귀속 매핑표 v2 행24ⓐ).
+            continue
         if (
             isinstance(target, ast.Name)
             and target.id.startswith("_")
@@ -3138,30 +3203,20 @@ def _analyze_bc_module(
     classes = [node for node in parsed.tree.body if isinstance(node, ast.ClassDef)]
 
     enums = [node for node in classes if node.name == enum_name]
-    if len(enums) != 1:
+    if not enums:
+        # #572 — «<Bc>ErrorSchema 와 <Bc>ErrorCode 가 함께 온다»의 ErrorCode 부재 사건
+        # (원자 술어 분할 — 귀속 매핑표 v2 행30ⓐ). 복수(2개 이상) 사건은 #117 «두 번째
+        # ErrorCode 컨테이너 금지» 소유자(check-context-isolation) 단독 방출로 이관해
+        # 여기서는 내지 않는다(행30ⓑ). «second ErrorCode/StrEnum container»(클래스·
+        # functional Enum) 방출도 같은 #117 이관으로 제거했다(행31).
         _append_finding(
             findings,
             seen,
             parsed,
-            enums[0] if enums else parsed.tree,
-            f"exactly one {enum_name} required",
+            parsed.tree,
+            f"missing {enum_name}",
+            rule="#572",
         )
-    for node in classes:
-        bindings = before.get(id(node), {})
-        is_str_enum = any(_resolve(base, bindings) == STR_ENUM for base in node.bases)
-        if node not in enums and (node.name.endswith("ErrorCode") or is_str_enum):
-            _append_finding(findings, seen, parsed, node, "second ErrorCode/StrEnum container")
-    for node in parsed.tree.body:
-        if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            bindings = before.get(id(node), {})
-            if _is_functional_enum(node, bindings):
-                _append_finding(
-                    findings,
-                    seen,
-                    parsed,
-                    node,
-                    "second ErrorCode/StrEnum container",
-                )
 
     members: dict[str, str] = {}
     members_dynamic: bool = False
@@ -3178,6 +3233,7 @@ def _analyze_bc_module(
             findings,
             seen,
             f"{enum_name} must directly inherit enum.StrEnum",
+            rule="#636",  # «<Bc>ErrorCode 는 StrEnum 이다» 축자 포섭(귀속 매핑표 v2 행32)
         )
         members, members_dynamic = _enum_members(parsed, enum, analysis, findings, seen)
 
@@ -3190,12 +3246,21 @@ def _analyze_bc_module(
             parsed,
             bases[0] if bases else parsed.tree,
             f"exactly one {base_name} required",
+            rule="#572",  # «…와 …가 함께 온다»의 schema 동거 술어(귀속 매핑표 v2 행33)
         )
     for node in classes:
         bindings = before.get(id(node), {})
         direct_common = any(_resolve(base, bindings) == COMMON_ERROR_OUT for base in node.bases)
         if node not in bases and direct_common:
-            _append_finding(findings, seen, parsed, node, "second BC FrameworkErrorSchema base")
+            # «함께 온다»는 단수 동거다(귀속 매핑표 v2 행35) — 이 finding 이 사건 단독 대표.
+            _append_finding(
+                findings,
+                seen,
+                parsed,
+                node,
+                "second BC FrameworkErrorSchema base",
+                rule="#572",
+            )
 
     discriminator_field_name: str | None = None
     discriminator_constructor_keys: frozenset[str] = frozenset()
@@ -3236,6 +3301,7 @@ def _analyze_bc_module(
                 parsed,
                 base,
                 "BC FrameworkErrorSchema base must narrow exactly one common field to own ErrorCode",
+                rule="#572",  # «식별자 field 하나를 정확히 좁히면서»(귀속 매핑표 v2 행36)
             )
         if len(discriminator_fields) == 1:
             discriminator_field_name, discriminator_field = discriminator_fields[0]
@@ -3263,6 +3329,7 @@ def _analyze_bc_module(
                     parsed,
                     discriminator_field,
                     "BC FrameworkErrorSchema discriminator must override common field",
+                    rule="#572",  # 좁힘 대상은 «공통 스키마의 식별자 field»(매핑표 v2 행37)
                 )
             else:
                 contract = common_contracts[discriminator_field_name]
@@ -3292,6 +3359,7 @@ def _analyze_bc_module(
                         parsed,
                         discriminator_field,
                         "BC base must preserve common annotation/nullability while narrowing str to own ErrorCode",
+                        rule="#572",  # «정확히 좁히면서 … 그 밖의 의미 변경은 계속 위반»(매핑표 v2 행38)
                     )
                 if (
                     _field_metadata_signature(
@@ -3344,6 +3412,7 @@ def _analyze_bc_module(
                         parsed,
                         discriminator_field,
                         "BC base must preserve common required/default semantics",
+                        rule="#572",  # «required/default 의미 변경은 계속 위반» 축자(매핑표 v2 행40)
                     )
                 if isinstance(discriminator_default, ast.Constant) and isinstance(
                     discriminator_default.value,
@@ -3392,6 +3461,7 @@ def _analyze_bc_module(
             analysis,
             findings,
             seen,
+            suppress_additional_public_field=True,  # base 사건은 행36(#572) finding 단독 대표(매핑표 v2 행17ⓑ)
         )
 
     known_concrete: set[str] = set()
@@ -4357,12 +4427,12 @@ def _schema_findings(
     parsed: dict[Path, ParsedSource],
     code_paths: set[Path],
     preserve_paths: set[Path],
-    initial_blockers: list[str],
-) -> tuple[list[str], list[Finding], list[str]]:
+    initial_blockers: list[Blocker],
+) -> tuple[list[str], list[Finding], list[Blocker]]:
     analysis: list[str] = []
     findings: list[Finding] = []
     seen: set[tuple[Path, int, str]] = set()
-    structural_blockers = list(initial_blockers)
+    structural_blockers: list[Blocker] = list(initial_blockers)
 
     inventory_paths = set(inventory.relative_paths)
     # #417·#414 — framework/ninja/ 는 공유 <technology> 폴더다: 오류 계약은 정본 모듈 하나
@@ -4370,9 +4440,13 @@ def _schema_findings(
     # (옛 response/ 전용 패키지의 byte-empty·extra 금지 검사는 패키지 소멸과 함께 걷었다 —
     #  숨은 오류 스키마 모듈은 아래 noncanonical inventory 분석이 문다.)
     if COMMON_INIT not in inventory_paths:
-        structural_blockers.append(f"필수 common artifact 부재: {COMMON_INIT}")
+        structural_blockers.append(
+            Blocker(BLOCKER_KIND_COMMON, COMMON_INIT, "필수 common artifact 부재")
+        )
     if COMMON_ERROR not in inventory_paths:
-        structural_blockers.append(f"필수 common artifact 부재: {COMMON_ERROR}")
+        structural_blockers.append(
+            Blocker(BLOCKER_KIND_COMMON, COMMON_ERROR, "필수 common artifact 부재")
+        )
 
     project_modules = _project_module_prefixes(inventory.relative_paths)
     common_contracts = _analyze_common(
@@ -4458,7 +4532,11 @@ def _schema_findings(
             _raw_code_findings(source, known_classes, findings, seen)
     return sorted(set(analysis)), sorted(
         findings, key=lambda item: (item.relative_path.as_posix(), item.lineno, item.category)
-    ), sorted(set(structural_blockers))
+    ), sorted(
+        # 구판 문자열 정렬(`{reason}: {path}`)과 같은 가시 순서 — (reason, path) 키.
+        set(structural_blockers),
+        key=lambda blocker: (blocker.reason, blocker.relative_path.as_posix()),
+    )
 
 
 # ── 표준 트리 슬라이스 — 트리 개정 명세 몫 4규칙 (트리 10행 · D27·D55) ──────
@@ -4500,9 +4578,10 @@ def _tree_camel(bc_name: str) -> str:
     return "".join(part.capitalize() for part in bc_name.split("_"))
 
 
-def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
-    # 라인 문면은 호출자(이 함수) 소유 그대로 — 레코드만 실규칙 rule 로 함께 나간다.
-    findings: SliceFindings = SliceFindings()
+def _tree_slice(root: Path, bcs: list[Path]) -> Findings:
+    # 구조화 엔트리 수집 — 라인은 포매터의 violation 문법(`[{rule}] {where}: {msg}`)으로
+    # emit_all 이 생성한다(2-space 들여쓰기 포함 · 기존 A형 stdout byte 보존 — 출력 계약 v2).
+    findings: Findings = Findings(defer=True)
     for bc in bcs:
         expected_prefix = _tree_camel(bc.name)
         schema_files: list[Path] = []
@@ -4516,36 +4595,32 @@ def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
                 schema_files.append(schema_file)
             else:
                 findings.add(
-                    rule="#114",
-                    line=f"  [#114] {api_rel}: `bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)",
-                    where=api_rel,
-                    msg="`bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)",
+                    "#114",
+                    api_rel,
+                    "`bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)",
                 )
             for p in sorted(api.glob("*.py")):
                 low = p.name.lower()
                 if p.name != "bc_error_schema.py" and "error" in low and "schema" in low:
                     findings.add(
-                        rule="#568",
-                        line=f"  [#568] {p.relative_to(root)}: 폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다",
-                        where=p.relative_to(root),
-                        msg="폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다",
+                        "#568",
+                        p.relative_to(root),
+                        "폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다",
                     )
             for schema_dir in api.rglob("schema"):
                 if not schema_dir.is_dir():
                     continue
                 for p in sorted(schema_dir.glob("*error*.py")):
                     findings.add(
-                        rule="#568",
-                        line=f"  [#568] {p.relative_to(root)}: `schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로",
-                        where=p.relative_to(root),
-                        msg="`schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로",
+                        "#568",
+                        p.relative_to(root),
+                        "`schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로",
                     )
         if len(schema_files) > 1:
             findings.add(
-                rule="#114",
-                line=f"  [#114] {bc.relative_to(root)}: `bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다",
-                where=bc.relative_to(root),
-                msg=f"`bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다",
+                "#114",
+                bc.relative_to(root),
+                f"`bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다",
             )
         for schema_file in schema_files:
             rel = schema_file.relative_to(root)
@@ -4553,12 +4628,8 @@ def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
                 mod = ast.parse(schema_file.read_text(encoding="utf-8"))
             except (SyntaxError, OSError, UnicodeDecodeError):
                 # "#N" 꼴 밖 표지 — findings.py 가 rule=null + sentinel 로 격리한다(parse-fail 류).
-                findings.add(
-                    rule="분석",
-                    line=f"  [분석] {rel}: bc_error_schema.py 를 파싱하지 못했다",
-                    where=rel,
-                    msg="bc_error_schema.py 를 파싱하지 못했다",
-                )
+                # 라인도 기존 센티널 문면 그대로(violation 문법 `[분석] {where}: {msg}`).
+                findings.add("분석", rel, "bc_error_schema.py 를 파싱하지 못했다")
                 continue
             classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
             schemas = [c for c in classes if c.name.endswith("ErrorSchema")]
@@ -4573,26 +4644,23 @@ def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
             expected_code = f"{expected_prefix}ErrorCode"
             if not any(c.name == expected_schema for c in schemas):
                 findings.add(
-                    rule="#572",
-                    line=f"  [#572] {rel}: 응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)",
-                    where=rel,
-                    msg=f"응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)",
+                    "#572",
+                    rel,
+                    f"응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)",
                 )
             if not any(c.name == expected_code for c in codes):
                 findings.add(
-                    rule="#572",
-                    line=f"  [#572] {rel}: 오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)",
-                    where=rel,
-                    msg=f"오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)",
+                    "#572",
+                    rel,
+                    f"오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)",
                 )
             for code_cls in codes:
                 base_names = {b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "") for b in code_cls.bases}
                 if not (base_names & strenum_names):
                     findings.add(
-                        rule="#636",
-                        line=f"  [#636] {rel}: `{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다",
-                        where=rel,
-                        msg=f"`{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다",
+                        "#636",
+                        rel,
+                        f"`{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다",
                     )
     return findings
 
@@ -4620,20 +4688,24 @@ def main(argv: list[str]) -> int:
     if not any(
         (bc / d).is_dir() for bc in bcs for d in _TREE_DRIVING
     ) and _tree_adopted(bcs):
-        print("[check-error-centralization] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        # 대상-0 가드 — 라인 = msg 원문(무들여쓰기 byte 보존) + rule=«대상0» 센티널 레코드.
+        # #74 는 달지 않는다(소유자 checker_lint — rule-owner-map).
+        guard: Findings = zero_target_guard(
+            "[check-error-centralization] blocker: 채택 신호는 있는데 driving 층이 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
     # --anchor 미지정이면 현행 그대로 각 슬라이스에서 즉시 exit 2 — 지정 시에만
     # 슬라이스 진단을 모아 마지막에 판정 차분(anchor_diff)으로 exit 를 정한다.
     collected: list[str] = []
     pending_analysis: list[str] = []
-    tree_findings = _tree_slice(config.root, bcs)
+    tree_findings: Findings = _tree_slice(config.root, bcs)
     if tree_findings:
         print("[check-error-centralization] BLOCKER — BC 오류 스키마 동거 규율 위반 (트리 10행):")
-        for f in tree_findings:
-            print(f)
+        emit_all(tree_findings, printer=print)
         if config.anchor is None:
             return 2
-        collected.extend(tree_findings)
+        collected.extend(lines(tree_findings))
 
     if config.profile not in {None, "auto"}:
         try:
@@ -4672,20 +4744,47 @@ def main(argv: list[str]) -> int:
                     "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
                     "inventory, or raw code contract violation:"
                 )
-                # 레코드는 출력 대상과 1:1 거울 — 라인 문면은 blocker/render() 소유 그대로
-                # (선행 계약 판형 · rule=null + contract_ref).
-                record_findings: ContractFindings = ContractFindings(CONTRACT_REF)
+                # 방출 표면 — 라인은 레코드 필드의 순수 함수(violation `[#N] {where}: {msg}` ·
+                # 계약 `- {where}: {msg}`)이고, stdout 인쇄 순서 = 레코드 순서(emit_all 불변식).
+                # 판정(#N/계약)이 갈릴 때마다 defer 컬렉션을 이어 붙여 현행 인쇄 순서를 보존한다.
+                surfaces: list[Findings | ContractFindings] = []
+
+                def _violation_surface() -> Findings:
+                    tail = surfaces[-1] if surfaces else None
+                    if not isinstance(tail, Findings):
+                        tail = Findings(defer=True)
+                        surfaces.append(tail)
+                    return tail
+
+                def _contract_surface() -> ContractFindings:
+                    tail = surfaces[-1] if surfaces else None
+                    if not isinstance(tail, ContractFindings):
+                        tail = ContractFindings(CONTRACT_REF, defer=True)
+                        surfaces.append(tail)
+                    return tail
+
                 for blocker in blockers:
-                    print(f"  - {blocker}")
-                    record_findings.add(f"  - {blocker}", where="(code-profile)", msg=blocker)
+                    # B1 BC 경로 = #114 «항상 있다» — 실경로 where(«(code-profile)» 표지 폐기).
+                    if blocker.kind == BLOCKER_KIND_BC_ERROR:
+                        _violation_surface().add(
+                            "#114", blocker.relative_path, blocker.reason
+                        )
+                    else:
+                        _contract_surface().add(
+                            where=blocker.relative_path, msg=blocker.reason
+                        )
                 for finding in reported_findings:
-                    print(finding.render())
-                    record_findings.add(
-                        finding.render(),
-                        where=f"{finding.relative_path}:{finding.lineno}",
-                        msg=f"{finding.category}: {finding.shown}",
-                        symbol=finding.category,
-                    )
+                    finding_where: str = f"{finding.relative_path}:{finding.lineno}"
+                    finding_msg: str = f"{finding.category}: {finding.shown}"
+                    if finding.rule is not None:
+                        _violation_surface().add(
+                            finding.rule, finding_where, finding_msg, symbol=finding.symbol
+                        )
+                    else:
+                        _contract_surface().add(
+                            where=finding_where, msg=finding_msg, symbol=finding.symbol
+                        )
+                emit_all(*surfaces, printer=print)
                 if dynamic_proof_only:
                     # 토큰 진단을 삼키지 않는다(정보 손실 0) — exit 는 findings 가 정하되,
                     # 남은 정적 해석 불능이 «동적 error shape» 유형임을 함께 보고한다.
@@ -4701,8 +4800,8 @@ def main(argv: list[str]) -> int:
                 )
                 if config.anchor is None:
                     return 2
-                collected.extend(f"  - {blocker}" for blocker in blockers)
-                collected.extend(finding.render() for finding in reported_findings)
+                for surface in surfaces:
+                    collected.extend(lines(surface))
                 if dynamic_proof_only:
                     # 토큰-only analysis 는 차분 강등으로 소거되지 않는다 — findings 가
                     # 전건 앵커 기존분이어도 proof 경로(exit 1)로 남긴다(fail-open 차단).
