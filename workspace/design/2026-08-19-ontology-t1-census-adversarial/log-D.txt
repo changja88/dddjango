@@ -1,0 +1,2227 @@
+Reading additional input from stdin...
+OpenAI Codex v0.148.0
+--------
+[1mworkdir:[0m /Users/hyun/Desktop/dddjango
+[1mmodel:[0m gpt-5.6-sol
+[1mprovider:[0m openai
+[1mapproval:[0m on-request
+[1msandbox:[0m read-only
+[1mreasoning effort:[0m xhigh
+[1mreasoning summaries:[0m auto
+[1msession id:[0m 01a01923-3282-7932-b185-72f495c3751e
+--------
+[36muser[0m
+너는 적대 검증자다. 온톨로지 센서스의 **규범 문장 계수 잔차 판정 4건**(T1 계수 3,225 vs P0 3,217)을 재심하라 — 각 판정이 P0 계수 규약과 T1 규약 문면으로 정당화되는지, 판정이 틀렸다면 올바른 계수는 무엇인지.
+
+## 규약 (판정의 유일 기준)
+- P0 규약: 규범 문장 = «에이전트·파이프라인·생성 코드의 행동을 구속하는 지시·금지·조건 문장(설명·예제·이유 제외, 애매하면 포함+비고)».
+- T1 추가 규약: 코드 펜스 안 텍스트는 규범 계수 밖(단 그 코드를 강제하는 산문이 있으면 그 산문이 규범). 표·체크리스트의 구속 항목은 포함.
+
+## 재심 대상 4건
+1. **E03 −11**: `workspace/design/2026-08-19-ontology-t1-census/E03-recon.md` §4가 «코드 펜스 내 지시 주석 11건 제외»를 주장(§1.2·1.7·1.8·3.5·4.5·8.9·9.5·10.8·16.1·17.3·27.1). 원문 `dddjango/skills/implementation-python/references/final.md`에서 이 11곳을 실측하라 — 정말 펜스 안인가? 그 코드를 강제하는 산문이 밖에 있는가(있다면 제외가 아니라 산문 계수여야 한다)?
+2. **E08 +1**: `E08-recon.md` — architecture-api final의 «의존 항목 명시 기록» 지시 1문장 신규 계수. 원문에서 해당 문장을 찾아 규범성 판정.
+3. **E09 +10**: `E09-recon.md` — 두 SKILL.md frontmatter 계상(web 4·houserules 6). frontmatter(description 등)의 문장들이 «행동 구속»인지, 4/6 배분이 실제 문면과 맞는지 원문 실측(`dddjango/skills/implementation-django-web/SKILL.md`·`dddjango/skills/discipline-houserules/SKILL.md` 선두).
+4. **E10 +8**: `E10-recon.md` — 8문서 frontmatter description 각 1문 계수. `dddjango/commands/dddjango.md`+`dddjango/agents/*.md` 선두를 실측해 8건이 실제로 각 1문인지, 규범성 판정이 규약에 맞는지.
+
+추가: E05의 h4 접힘 절 P0 계수 재배분(«§4.2: s026=1·s027=2·s028=0») 표본 1건을 `E05-recon.md`와 원문(`dddjango/skills/implementation-django/references/final.md`)으로 검산하라.
+
+## 출력 형식 (최종 메시지로만 — 파일 쓰기 금지)
+```
+# L-D 계수 잔차 재심 결과
+| # | 대상 | 판정(유지/뒤집힘/부분 수정) | 근거(원문 인용·행) | 수정 시 올바른 계수 |
+## 종합
+3,225라는 총계가 유지되는가, 수정되어야 하는가
+```
+[1m[33mwarning:[0m[0m Under-development features enabled: default_mode_request_user_input. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /Users/hyun/.codex/config.toml.
+[2m**Planning read-only repo inspection**
+**Confirming graphify and inspection requirements**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "pwd; test -f graphify-out/graph.json && echo GRAPHIFY=yes || echo GRAPHIFY=no; test -f .serena/project.yml && echo SERENA=yes || echo SERENA=no; rg -n '"'^#|''^##|''^###|''^####|```|의존 항목|dependency|description:'"' workspace/design/2026-08-19-ontology-t1-census/E03-recon.md workspace/design/2026-08-19-ontology-t1-census/E05-recon.md workspace/design/2026-08-19-ontology-t1-census/E08-recon.md workspace/design/2026-08-19-ontology-t1-census/E09-recon.md workspace/design/2026-08-19-ontology-t1-census/E10-recon.md dddjango/skills/implementation-django-web/SKILL.md dddjango/skills/discipline-houserules/SKILL.md dddjango/commands/dddjango.md dddjango/agents/*.md"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+/Users/hyun/Desktop/dddjango
+GRAPHIFY=no
+SERENA=no
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md:1:# E08 — P0 대사 노트 (T1-1 절 유형 센서스)
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md:6:## §1 문서별 접기 규약 명문화
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md:12:## §2 P0 절 전건 대사 표 (39건)
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md:56:## §3 잔차
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md:62:## §4 규범 계수 대조
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md:1:# E05 — implementation-django P0 대사 노트 (T1-1)
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md:5:## §1 문서별 접기 규약 명문화
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md:19:## §2 P0 절 전건 대사 표
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md:100:## §3 잔차
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md:106:## §4 규범 계수 대조
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md:114:## 부기 — codex 대응 요약
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:1:# E03 — implementation-python T1-1 P0 대사 노트
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:7:## §1 문서별 접기 규약 명문화
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:15:## §2 P0 절 전건 대사 표
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:59:## §3 잔차
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:63:## §4 규범 계수 대조
+dddjango/agents/design-review-api.md:3:description: dddjango 파이프라인에서 Coordinator가 호출한다. 기본 Phase 1에서는 architect 명세를 API 계약 관점으로 독립 리뷰하고, 예외적인 Phase 2 동적 error shape 증명 모드에서는 승인 기준선과 runtime/OpenAPI 증거가 같은 계약인지 읽기 전용으로 확인한다. 명세나 코드를 직접 수정하지 않는다.
+dddjango/agents/design-review-api.md:12:## 실행 모드
+dddjango/agents/design-review-api.md:19:## 입력
+dddjango/agents/design-review-api.md:27:- target dependency pin
+dddjango/agents/design-review-api.md:32:## 산출
+dddjango/agents/design-review-api.md:45:## 점검 항목 (계약 lens만)
+dddjango/agents/design-review-api.md:54:### Error response contract 12-slot
+dddjango/agents/design-review-api.md:60:3. **`error profile`**: 새 dddjango Ninja scope는 `dddjango-code-json`인지, observed deployed/external/brownfield contract는 현재 승인된 product-spec·consumer·wire·OpenAPI evidence로 확인되거나 explicit user approval이 있으면 `preserve-established`인지 확인한다. 둘 모두를 요구하거나 dependency/file name으로 profile을 추론하면 blocker다. RFC 9457은 preserve scope가 선택한 profile-native contract일 수 있으며, 위반은 선택 profile과 wire/implementation의 mismatch다.
+dddjango/agents/design-review-api.md:71:- `dddjango-code-json`에서 framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500을 BC response로 광고하거나 변환하지 않았는지, established framework header dependency를 보존하고 테스트하는지 본다.
+dddjango/agents/design-review-api.md:80:## 경계
+dddjango/agents/coder.md:3:description: dddjango 파이프라인 Phase 2(구현)에서 Coordinator가 호출한다. 승인된 현행 계약과 영구 테스트 입장 표의 domain/application/DB/adapter 소유 행만 집행하며 구현한다.
+dddjango/agents/coder.md:18:## 입력
+dddjango/agents/coder.md:27:## 산출
+dddjango/agents/coder.md:31:## 작업 방식 (안쪽 루프 TDD)
+dddjango/agents/coder.md:38:- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 기존 관련 migration 테스트의 기대 변경은 기존 assertion의 제자리 갱신·축소까지만 허용하며, 새 migration coverage가 필요하면 검증 공백을 보고한다.
+dddjango/agents/coder.md:53:- **배선·등록 형태는 profile 무관 표준이다**(2026-08-12 라운드 1′): 승인 scope마다 API 하나, `auto_import=False` controller, side-effect-free BC registrar(`register_<bc>_api`), registrar를 명시적으로 호출해 API를 mount하는 root URL composition. import-time registration을 금지하며 BC `composition_root/`(`dependency_wiring.py` — final.md §1 트리 2~4행)가 dependency injection만 소유한다. framework 오류를 위해 함수형 `Router`를 발명하거나 강제하지 않는다. `preserve-established`가 유지하는 native 는 오류 wire 산출물(schema/handler/body)이지 registration/composition 이 아니다 — **기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니다.** 이 표준의 관할은 승인 스코프가 낳는 산출물(신규 파일·기존 파일에 추가되는 줄)이다 — 승인 스코프 밖 기존 배선·배치는 어떤 위반 판정을 근거로도 이 작업에서 옮기지 않는다(강제 전파 금지 — 이동 권한은 G0 사용자 빚 결정→슬라이스 0 뿐 · `discipline-houserules` SKILL §1.1 판정 물음 · 2026-08-13).
+dddjango/agents/coder.md:54:- `dddjango-code-json`, 또는 preserve slot이 동일 mechanism을 명시 승인한 경우에만, 대상 프로젝트의 **실제 dependency pin**으로 Ninja two-argument `Status`, literal/status constant와 실제로 slot 6이 승인한 body-field status 표현, multi-response declaration의 실행 계약을 검증한다. 존재하지 않는 `status` body property를 plugin fixture로 요구하지 않는다. 지원하지 않으면 field를 rename하거나 tuple로 되돌리지 않고 `RUNTIME_CONTRACT_MISMATCH`에 exact dependency version·command·failure를 기록해 설계로 반송한다. 그 밖의 `preserve-established`는 slot에 승인된 native runtime mechanism을 target pin에서 실행해 검증하고 불일치하면 같은 형식으로 반송한다.
+dddjango/agents/coder.md:58:## 엣지·보고
+dddjango/agents/coder.md:65:## 경계
+dddjango/agents/design-architect.md:3:description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. 승인된 스코프를 받아 architecture-ddd/api/db와 영구 테스트 입장 표를 한 명세로 통합 작성하고, 독립 리뷰어 노트를 반영·중재해 최종 설계 명세를 만든다. 코드는 쓰지 않는다.
+dddjango/agents/design-architect.md:15:## 입력
+dddjango/agents/design-architect.md:27:## 산출
+dddjango/agents/design-architect.md:31:## 명세에 담는 것
+dddjango/agents/design-architect.md:37:### Error response contract 12-slot
+dddjango/agents/design-architect.md:43:3. **`error profile`**: scope마다 `dddjango-code-json | preserve-established` 중 하나와 선택 근거를 쓴다. RFC 9457 wire가 관찰됐다면 `preserve-established`의 profile-native 계약으로 보존할 수 있지만 파일명이나 dependency 유무는 근거가 아니다. preserve scope는 code-profile artifact와 격리한다.
+dddjango/agents/design-architect.md:58:- **API 스택**(lens 무관, 새 API 표면이 생기면 항상 결정): 외부에 노출되는 새 HTTP/JSON API surface가 있으면 stack을 명세의 1급 결정으로 박는다. 프로젝트에 확립된 DRF·plain Django contract가 있으면 보존하고(«계약 profile» 축 — preserve-established; 파일트리 축이 아니다 — 트리는 `discipline-houserules` SKILL §1 로 언제나 표준), 없으면 Django Ninja를 적용한다. dependency가 아직 manifest에 없다는 사실만으로 plain으로 낮추거나 `preserve-established`로 바꾸지 않는다. 새 Ninja surface는 `NinjaExtraAPI` + `@api_controller` class controller(aggregate 단위)이고, 승인된 scope마다 profile에 맞는 project API instance 하나를 둔다. **composition(배선·등록)은 profile 무관 표준이다**(2026-08-12 라운드 1′): `auto_import=False`의 side-effect-free BC registrar(`register_<bc>_api`), URLconf의 explicit registrar call과 mount로 구성하며 import-time registration은 하지 않는다 — 기존 BC 의 배선 실물(`*_api_router.py` 동형)은 배선 결정의 입력이 아니고, preserve 를 배선 답습의 근거로 명세에 박지 않는다. 이 문장들은 **신규 산출물의 형태**를 정할 뿐 **기존 코드의 처분 권한**이 아니다 — 명세는 승인 스코프의 산출물 목록 밖 기존 파일의 이동·개명·재배선을 결정으로 박지 않는다: 기존 코드의 처분은 G0 빚 결정(ⓐ/ⓑ)이 확정하고 명세는 ⓐ 승인 항목만 슬라이스 0으로 옮겨 적는다(2026-08-13 라운드 2 실증 — 명세가 «canonical 이관·면제 없음»을 자가 결정으로 박자 11 BC 100파일이 이동됐다). BC `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — final.md §1 트리 2~4행)가 DI만 소유한다. Controller는 one-statement application call에서 concrete domain/application exception을 catch하거나 failed Result를 처리하고, no-arg concrete `ErrorSchema` 또는 event-specific 값으로 명시적으로 채운 BC base `ErrorSchema`을 만든 뒤 직접 `Status(<승인된 HTTP status 표현>, error)`를 반환한다. internal failure type과 output object를 명확히 구분하고 error handler/helper/factory/serializer로 빼지 않는다. `preserve-established`이면 관찰된 profile-native controller/handler/schema behavior를 보존하며 code-profile output/direct-`Status` recipe를 도입하지 않는다(보존 대상은 **오류 wire 산출물**까지 — registration/composition·트리·import 방향은 위 표준 그대로다). 성공 응답은 선언한 2xx `response` schema의 `Status`/schema 객체를 반환하고, 입력은 선언적 `payload: Schema`로 받는다. 406/415를 승인한 경우에도 tested version-compatible Ninja-owned pre-body/framework `HttpError` path를 쓰며 함수형 `Router`를 강제하거나 operation에서 raw body를 수동 parsing하지 않는다. **새 surface가 server-render HTML view면**(JSON API 아님) service의 domain/application exception은 view-local form re-render+`messages.error`(200), infra/unknown exception은 project `handler500`+`500.html`(`request`-only·empty Context), 승인된 transient contract는 `process_exception` retryable 503으로 표현하고 출처별 책임을 명세한다(`implementation-django-web` §11).
+dddjango/agents/design-architect.md:62:- **패키지·테스트 구조**(lens 무관, 항상 결정): 소스 코드의 물리적 배치(레이아웃)와 테스트 디렉터리 조직을 명세가 결정한다. `discipline-houserules` SKILL §1 을 따른다 — **소스 파일트리는 언제나 dddjango 표준 파일트리다(기존 레이아웃은 트리 결정의 입력이 아니다 — 옛 층 이름 답습은 빚 증식)**. (이 문장도 신규 산출물의 형태 문장이다 — 승인 스코프 밖 기존 배치의 이동 지시가 아니다: §API스택의 처분-권한 문구와 같은 한계를 진다.) **`discipline-houserules` `references/final.md`를 읽고 §0 불변식과 §1 표준 트리(140행)의 고정·재등장 칸을 명세에 그대로 박는다** — 컨테이너·4계층 `_layer`(내용이 없어도 폴더로)·칸·파일 이름의 «값»은 final.md 가 소유하니 여기 값을 복사해 두지 않는다(Django 앱 위치·ORM 클래스명 규약 포함 — §1·§3). 이 불변식은 YAGNI·단순성·"단일 기능이라 불필요"로 **생략·축소하지 않는다** — 접어야 할 실질 사유가 있으면 명세에 박지 말고 트레이드오프로 G1에 올린다. **빈 계층은 그 관심사가 *실제로 없을 때만*이다 — 그 BC가 HTTP/CLI 진입(컨트롤러 메서드·operation·엔드포인트)을 하나라도 가지면 표현이 있는 것이므로 빈 `driving_layer`로 두지 말고 컨트롤러 메서드(레거시면 함수형 operation)·schema를 실현한다. 표현 없음으로 판단하면 그 근거(예: ACL/`open_host_service`로만 소비되는 내부 전용 BC)를 명세에 1줄 남긴다 — 빈 골격은 표현 *부재*를 표시할 뿐 표현 *불요*를 판정하지 않으니, 빈 폴더가 '표현 검토 완료'의 거짓 신호가 되지 않게 한다.** 입장 표가 승인한 test artifact가 있을 때만 기존 또는 승인된 레이아웃의 의미군에 배치한다. 구조 규칙 자체로 test file·case·assertion·helper·move/split이나 빈 test package를 만들지 않는다. 표준 트리 적용과 **ORM 명명·Django 앱 위치, 그리고 명세가 도입하는 리포지토리·포트(통합 ACL 포트 포함)의 §3 명명**을 명세에 남겨 coder가 그대로 집행하게 한다. 포트·리포지토리·어댑터의 파일·클래스 명명 규약은 final.md §1(각 칸의 이름 줄 — `<aggregate>_repository.py`·`<capability>_port.py`·`<technology>_adapter.py` 꼴)·§3이 소유한다 — 명세는 그 규약을 «읽고» 구체 이름(어느 애그리거트·어느 능력·어느 기술)만 결정해 박는다(`Interface`/`Impl` 타입표식·파일명 약어 금지 포함 §3). 이름 짓기는 구조·계약 *결정*(경계 참조)의 일부라 설계 단계에서 정하고 사후 교정에 미루지 않는다 — ORM 명명을 명세에 박는 것과 같은 이유다. **다른 바운디드 컨텍스트와의 통신·외부 의존**은 OHS(`open_host_service`)를 우선하고, 직접 통합이 불가피하면 **ACL로 분리**(`application_layer/port/` 협력 포트 + `driven_layer/adapter/anticorruption_layer/` 어댑터, 리포지토리에 섞지 않음; **업스트림 모델·예외 번역을 ACL에 격리해 presentation·application이 타 BC 예외를 직접 잡지 않게** 명세에 박는다)할지, 또는 결과적 일관성으로 충분하면 비동기 **도메인 이벤트**를 쓸지(즉시 일관성=동기 OHS/ACL, 결과적=이벤트; 선택 기준 `architecture-ddd` 규칙4·§6.8)를 명세에서 결정한다(구조·파일 값은 `references/final.md` §1 트리 22~32행 소유). **OHS를 노출·수정하는 스코프면 open_host_service 내부 구조를 명세 1급 결정으로 박는다** — 구조·파일 이름의 값은 final.md §1 트리 22~32행(`driving_layer/open_host_service/<service>/` 아래 `<service>_service.py` + `contract/{request,response,exception}/` — 그중 `contract/exception/` 아래 `<service>_published_error.py`)이 소유한다. 명세가 결정하는 것: 각 공개 함수의 request/response 계약 시그니처(#633 — 파라미터는 계약 1개·0개는 `_query` 위임만), 예외 번역표(도메인→published 매핑·폴백 수위·transient raw 통과). LLM 일반지식으로 재분류하지 않는다(명세에 안 박으면 coder가 즉흥 산출 — 죽은 표준). **포트 선언의 «자리»도 final.md §1·§2가 소유한다 — 애그리거트에 붙는 계약은 `domain_layer/<aggregate>/<aggregate>_repository.py`(#282), 안 붙는 협력·능력 포트는 `application_layer/port/<capability>/`뿐(#187), ACL 구현은 `driven_layer/adapter/anticorruption_layer/<other_bounded_context>/`다(#365). 다른 이름의 재분류('use-case dependency' 등)로 트리 밖 `port/` 칸을 만들지 않는다.** **가드 — `architecture-ddd` §3.3 규칙4("동일 DB 단순 케이스에서 한 트랜잭션에 복수 애그리거트 수정 용인")는 *애그리거트(일관성) 경계* 완화 규칙이지 *두 개념을 같은 BC로 합쳐 ACL을 생략해도 된다는 허가가 아니다.* BC 배치·ACL 생략은 유비쿼터스 언어·소유 경계로 판단하고, 규칙4를 그 근거로 끌어쓰지 마라(애그리거트 레벨 규칙을 컨텍스트 레벨 결정에 오용 금지).** **타 BC 참조는 ID 값 + ACL/OHS로 명세하고 BC 경계 ORM FK(`ForeignKey`·`OneToOneField`·`ManyToManyField`)를 결과 제약으로 금지한다 — 안 박으면 코더가 '참조 무결성' 명분으로 cross-BC FK를 넣어 상류 모델 형상·삭제정책을 하류에 결합시킨다(`architecture-ddd` §3.3 규칙3 영속성 확장; 규칙4의 '동일 DB 용인'은 트랜잭션 원자성이지 FK 허가가 아니다 — ID 값 참조 + ACL 존재검증으로 무결성 보장).**
+dddjango/agents/design-architect.md:63:- **응용 유스케이스 연산·자료 계약**: 유스케이스는 연산 객체로 명세한다 — 파일·이름·시그니처의 값은 final.md §1 트리 39~44행이 소유한다: `application_layer/<area>/<use_case>/` 아래 `<use_case>_use_case.py`(연산 — 공개 클래스 하나·`execute(<command|query>) → <result>` 규약 #635)·`<use_case>_command.py`/`<use_case>_query.py`(들어가는 자료)·`<use_case>_result.py`(나오는 자료 — 연산 모듈에 공개 자료 클래스를 인라인 명세하지 않는다). `dto` 낱말은 어디에도 쓰지 않는다(#567 — `schema`는 기술 실물, 경계 자료는 `_command`/`_query`/`_result`). presentation은 `schema_in`을 command/query로 변환만 하고 operation 본문에서 인프라 어댑터를 직접 생성하지 않는다 — DI 조립은 `composition_root/`(`dependency_wiring.py`의 `build_*` 팩토리 — 트리 2~4행·#85)가 소유하고 presentation은 매요청 호출만 한다(그 위치를 명세에 박는다). 도메인 우회 읽기(`domain_bypass_query`) 채택 여부는 명세 결정으로 남긴다.
+dddjango/agents/design-architect.md:82:## 리뷰 반영·충돌 중재
+dddjango/agents/design-architect.md:92:## 경계
+dddjango/agents/discipline-reviewer.md:3:description: dddjango 파이프라인에서 Coordinator가 Phase 1 설계 경량 점검, Phase 2 구현 게이트 감사 또는 제한된 동적 FrameworkErrorSchema 증명 감사에 호출한다. 지정된 모드의 산출물을 클린코드·TDD·현행 계약 규율 관점으로 독립 감사하고 리포트를 낸다. 코드를 직접 수정하지 않는다.
+dddjango/agents/discipline-reviewer.md:14:## 입력
+dddjango/agents/discipline-reviewer.md:23:  - target dependency pin
+dddjango/agents/discipline-reviewer.md:32:## 산출
+dddjango/agents/discipline-reviewer.md:43:## 감사 빈도 (적응형)
+dddjango/agents/discipline-reviewer.md:47:## 영구 테스트 입장 감사
+dddjango/agents/discipline-reviewer.md:56:## Phase 1·2 API 오류 scope·소유권 점검
+dddjango/agents/discipline-reviewer.md:63:## Phase 2 점검 항목 (클린코드·TDD 규율만)
+dddjango/agents/discipline-reviewer.md:83:- **API 오류 규율 5 — returned status·OpenAPI·framework default(blocker)**: active `dddjango-code-json` scope에서 operation이 실제 직접 반환하는 모든 BC 오류 status는 `response={...}`에서 같은 BC base로 선언되어야 하고, 승인된 endpoint→status→BC-base mapping tuple·runtime 반환·generated OpenAPI의 status/schema 출현은 완전하며 서로 같아야 한다. framework-owned 401/403/route 404/422/429/general `HttpError`/unknown 500은 BC 오류로 직접 반환하거나 BC base로 광고하지 않는다. auth backend는 성공 시 identity/principal, 실패 시 `None` 또는 framework `AuthenticationError`만 반환·raise하며 truthy `FrameworkErrorSchema`/Schema를 `request.auth`에 넣지 않는다. framework-established header dependency를 숨기거나 명세에 없는 header를 꾸며내지 않는다. status→BC base 선언만으로 허용 식별자 subset이 증명되지 않으므로 실제 runtime mapping case 검증을 생략하지 않는다.
+dddjango/agents/discipline-reviewer.md:85:- **API 오류 checker/reviewer 사각(명시 검토)**: 관련 checker가 exit 0이어도 semantic compliance의 증거가 아니다. 반드시 (a) 직접 import한 1-hop class method mutation·2-hop helper·선택 source 밖 helper·renamed converter, (b) dynamic import/registration·required symbol 재수출, (c) 문법상 concrete 이름이나 의미상 broad base인 exception, (d) Ninja/`FrameworkErrorSchema` import 없이 inner layer를 흐르는 HTTP status/code DTO, (e) project-wide inventory 완전성·mixed-profile shared module·scope 안의 API instance 복수, (f) root-local catalog/mapping·registrar/composition lookalike, (g) auth backend의 truthy `FrameworkErrorSchema`/Schema와 숨은 framework-header dependency를 직접 읽는다.
+dddjango/agents/discipline-reviewer.md:126:## 경계
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:1:# E10 P0 대사 노트 — command + pipeline agents
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:5:## §1 문서별 접기 규약 명문화
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:20:## §2 P0 절 전건 대사 표
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:85:## §3 잔차
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:91:## §4 규범 계수 대조
+dddjango/agents/design-review-db.md:3:description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. architect의 설계 명세를 데이터 관점(인덱스·제약·트랜잭션·마이그레이션 안전)으로만 독립 리뷰하고 리뷰 노트를 낸다. 명세나 코드를 직접 수정하지 않는다.
+dddjango/agents/design-review-db.md:12:## 입력
+dddjango/agents/design-review-db.md:16:## 산출
+dddjango/agents/design-review-db.md:27:## 점검 항목 (데이터 lens만)
+dddjango/agents/design-review-db.md:40:## 경계
+dddjango/agents/design-review-ddd.md:3:description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. architect의 설계 명세를 도메인 관점(애그리거트 경계·불변식·도메인 이벤트)으로만 독립 리뷰하고 리뷰 노트를 낸다. 명세나 코드를 직접 수정하지 않는다.
+dddjango/agents/design-review-ddd.md:11:## 입력
+dddjango/agents/design-review-ddd.md:15:## 산출
+dddjango/agents/design-review-ddd.md:28:## 점검 항목 (도메인 lens만)
+dddjango/agents/design-review-ddd.md:40:## 경계
+workspace/design/2026-08-19-ontology-t1-census/E09-recon.md:1:# E09 대사 노트 — T1-1 절 유형 센서스 vs P0 상세 인벤토리
+workspace/design/2026-08-19-ontology-t1-census/E09-recon.md:5:## §1 문서별 접기 규약
+workspace/design/2026-08-19-ontology-t1-census/E09-recon.md:14:## §2 P0 절 전건 대사 표
+workspace/design/2026-08-19-ontology-t1-census/E09-recon.md:61:## §3 잔차
+workspace/design/2026-08-19-ontology-t1-census/E09-recon.md:76:## §4 규범 계수 대조
+dddjango/skills/implementation-django-web/SKILL.md:3:description: Django 서버렌더 표현계층 구현 지식 — TemplateView/Generic CBV/FBV 선택, Context 준비, 템플릿·base template·includes/components, Static files·CSS·JS, Web forms·POST flow, HTMX fragment·AJAX, CSRF·XSS·보안 설정, View auth·permission, Render acceptance checks. Django 서버렌더 뷰·템플릿·폼·HTMX 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. Django 코어(모델·ORM·트랜잭션)는 implementation-django, JSON API 어댑터는 implementation-django-ninja, REST 계약 설계는 architecture-api로 위임.
+dddjango/skills/implementation-django-web/SKILL.md:7:# Django 서버렌더 표현계층 구현
+dddjango/skills/implementation-django-web/SKILL.md:9:## 언제 쓰나
+dddjango/skills/implementation-django-web/SKILL.md:20:## 핵심 운영 원칙
+dddjango/skills/implementation-django-web/SKILL.md:32:## 상세 레퍼런스
+dddjango/skills/discipline-houserules/SKILL.md:3:description: dddjango 플러그인 고유 하우스룰 — ①표준 파일트리(BC 골격 140행·배치 결정 순서·이관/브라운필드 취급) ②타입 어노테이션(모든 이름의 첫 대입에 필수) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·BC·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 트리와 규칙 «값»의 단일 출처는 references/final.md 다. 보편 클린코드는 dddjango:discipline-cleancode, Python 타입 지식은 implementation-python, 테스트 타입 조직은 dddjango:implementation-test(§4.2).
+dddjango/skills/discipline-houserules/SKILL.md:7:# 하우스룰 규율
+dddjango/skills/discipline-houserules/SKILL.md:9:## 무엇이고 왜
+dddjango/skills/discipline-houserules/SKILL.md:22:## §1 파일트리 결정 순서
+dddjango/skills/discipline-houserules/SKILL.md:34:## §2 충돌 중재
+dddjango/skills/discipline-houserules/SKILL.md:38:## §3 구조 결정이 빠졌다는 신호
+dddjango/skills/discipline-houserules/SKILL.md:49:## §4 타입 어노테이션
+dddjango/skills/discipline-houserules/SKILL.md:61:### §4.1 왜 전부인가
+dddjango/skills/discipline-houserules/SKILL.md:65:## §5 코드 주석·docstring 언어
+dddjango/skills/discipline-houserules/SKILL.md:69:## §6 패키지·의존성
+dddjango/skills/discipline-houserules/SKILL.md:71:### §6.1 부트스트랩·표준 도구셋
+dddjango/skills/discipline-houserules/SKILL.md:75:### §6.2 새 런타임 의존성의 버전 선택
+dddjango/commands/dddjango.md:2:description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.
+dddjango/commands/dddjango.md:13:## 산출물 위치
+dddjango/commands/dddjango.md:26:## 진행 가시성
+dddjango/commands/dddjango.md:40:```
+dddjango/commands/dddjango.md:49:```
+dddjango/commands/dddjango.md:57:## 시작: 모드 판별
+dddjango/commands/dddjango.md:61:## Phase 0 — 요구·스코프 (G0)
+dddjango/commands/dddjango.md:73:## Phase 1 — 설계 (G1)
+dddjango/commands/dddjango.md:86:## Phase 2 — 구현 (G2, 이중 루프 TDD)
+dddjango/commands/dddjango.md:88:1. **입장 결정과 조건부 테스트 러너 준비** — 승인된 입장 표를 먼저 읽는다. 새 영구 테스트 artifact가 필요한 `add/update` 행이 하나 이상 있을 때만 pytest 가용성을 확인하고, 그때 설정이 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 Tier-1(pytest·pytest-django·pytest-mock·factory_boy)을 설치한 뒤 루트 `[tool.pytest.ini_options]`에 프로젝트의 실제 `DJANGO_SETTINGS_MODULE`(manage.py/env에서 감지)을 기록한다. `reuse`는 확립된 기존 러너로 지정 anchor만 실행하며 dependency·manifest·runner config를 바꾸지 않는다. 일반 `retain`, `reject`, `remove`만 있는 변경도 runner setup write를 만들지 않는다. 기존 `TestCase` 스위트를 pytest 관용구로 재작성하지 않으며, 승인된 `add/update`로 새 테스트를 쓸 때만 pytest 관용구를 사용한다.
+dddjango/commands/dddjango.md:103:   - **composition command**: registry #16에는 positional target과 relevant common selectors인 `--error-profile`, `--scope`, `--api-module`을 렌더하고, `--anchor`(+승인 빚 목록이 있으면 `--legacy-debt-file`)를 위 네 checker 렌더와 같은 값으로 준다. `dddjango-code-json`에서만 정확히 하나의 `--urlconf-module <project-relative-path>`와 반복 `--registrar-module <project-relative-path>`가 필수다. `preserve-established`는 승인 evidence에 native URLconf/registrar selector가 있으면 전달할 수 있지만 새 registrar slice는 N/A이고 code-profile selector를 발명하지 않는다. `auto`도 새 registrar slice는 N/A다. **N/A 는 검사 슬라이스의 생략이지 배선 표준의 면제가 아니다** — 배선·등록 형태는 profile 무관 표준(#105~#112)이다(2026-08-12. 그리고 «면제가 아니다»는 신규 산출물의 형태 문장이다 — 승인 스코프 밖 기존 배선을 옮길 근거가 아니다 · 2026-08-13). project URLconf/side-effect-free registrar assembly slice와 기존 BC DI V1–V3 slice는 별도 책임이며 기존 DI slice는 모든 mode에서 항상 실행한다. BC `composition_root/`(`dependency_wiring.py`)는 DI owner이지 URL registrar owner가 아니다.
+dddjango/commands/dddjango.md:123:   16. `${CLAUDE_PLUGIN_ROOT}/scripts/check-composition-root.py` — `composition_root/` 정본(dependency_wiring #84~#86·event_wiring #498~#501)·api_router 결선(#105~#112)·`api.py`/`urls.py` 닫힌 목록(#437·#440·#441) + 기존 BC DI V1–V3·project URLconf/registrar slice.
+dddjango/commands/dddjango.md:137:   - **실행·종료 계약**: 각 승인 scope에 렌더된 required command와 나머지 required checker를 `Bash`로 정확히 1회 실행하고, 모든 run의 exact command·exit·diagnostic을 모은다. `0=clean/not-applicable/help`, `1=usage/selectors/incomplete scope/analysis failure`, `2=deterministic contract violation`이다. 판정은 두 실행 계열로 갈린다(2026-08-13 명문화 — 두 문장의 긴장이 라운드 2 오독을 낳았다): ⓐ **직접 실행 계열** — 위에서 렌더한 scope 별 command 와 나머지 required checker 를 네가 직접 실행한 결과. 이 계열의 **exit 1 전부는 현행 유지 — 차분에 종속되지 않는 직접 G2 blocker** 이고(단 잔여 diagnostic 전건이 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED` 인 exit 1 은 아래 runtime proof 경로다 — registry #2 의 토큰 발화 케이스 포함), **scope-렌더 command 의 exit 2 는 검사기 자신의 `--anchor` 판정 차분을 거친다(2026-08-15 r2″ — registry #2·#5·#6·#15·#16 · registry #2 는 토큰-only exit 1 proof 경로를 강등으로 소거하지 않는다)**: 진단이 «앵커 이후 신규분»과 «앵커 기존분»으로 분류되어, **신규분(승인 빚 목록 매칭 제외)이 하나라도 있으면 현행대로 직접 blocker(exit 2)** 이며 한꺼번에 coder/design/G1 로 반송하고, **진단 전건이 앵커 기존분이면 검사기가 exit 0 + 기존분 별도 보고로 강등한다(blocker 아님 — legacy 잔존 보고 채널과 같은 보고 의무·즉석 수리 금지)**. `--anchor` 없이 실행됐거나 `--anchor` 를 받지 않는 검사기의 scope-렌더 exit 2 는 현행 그대로 직접 blocker 다(측정 실패는 위반 목록이 없어 차분이 불가능하고, registry_gate 는 auto 렌더만 내부 실행하므로 scope-렌더 위반은 registry_gate 차분 시야 밖이다 — 그 구멍은 검사기 자신의 앵커 차분이 진다. 측정되지 않은 검사기의 green 을 주장하지 않는다). ⓑ **차분 계열** — auto-렌더 **위반 red(exit 2)의 게이트 판정 주체는 6번의 registry_gate(판정 차분)다**: 귀속 red 만 blocker 이고 legacy 잔존은 별도 보고 의무다(잔존을 이유로 G2 를 영구 차단하지도, 귀속 red 를 «확립 규약» 논리로 수용하지도 않는다 — 2026-08-12 라운드 1′). 게이트 자신의 exit 1(공허 차분·앵커 재료 결손·사용 오류)은 측정 실패로서 blocker 이고, 잔존 절의 「[진단 미파싱] fail-closed 귀속」은 legacy 로 읽지 않고 측정 실패로 반송한다(앵커·현재 양측 동일 crash 의 상쇄 사각). **legacy 잔존 red 는 이 빌드에서 즉석 수리하지 않는다 — 보고 채널로만 남긴다**(이 금지의 주어는 checker 위반 red 다 — 테스트 실패 채널(5번)과 섞지 않는다). 예외 둘: `refactor-scope.md`에 G0-ⓐ로 기재된 항목의 슬라이스 0 수리는 승인된 작업이고, G2 시점 신규 발견이 «미룰 수 없음» 판정이면 조용히 고치지도 미루지도 않고 AskUserQuestion 으로 G0 빚 결정을 재상정한다(채택 시 G1′ 경유로 슬라이스 0 편입). 미이관 표준 경로 의존이 유일한 잔존 귀속이면 임의 수용하지 않고 `STOP_FOR_USER_APPROVAL` 로 표면화한다 — 승인되면 사용자 승인 «이관 빚» 목록(`registry_gate.py --legacy-debt-file`)으로 기록·격리하되, **빚 분류는 red 를 기록하는 근거이지 legacy 모양을 «추가로» 복사할 근거가 아니다.** 단, 남은 exit 1 diagnostic **전부**가 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`이고 canonical common/BC schema 정의의 dynamic field default·method/hook·config/decorator·project/relative import/binding·BC ErrorCode 의 dynamic Enum wire 멤버/값(2026-08-15 — legacy 동적 StrEnum 이 일반 분석 오류로 죽어 proof 경로가 막히던 토큰 커버리지 구멍을 닫음) 때문에 해당 diagnostic 을 내는 검사기(registry #2·#5·#15)가 의도적으로 낸 경우에는 warning으로 낮추지 말고 target의 실제 dependency pin에서 runtime proof를 수행한다. action별 기준 evidence는 `reuse`면 관찰된 exact baseline이고 `create | approved-change`면 일반 G1과 분리해 받은 명시적 사용자 shape 승인이다. 그 기준선과 runtime의 **field name/type/required/default/nullability, validation·serialization alias/path를 포함한 모든 `Field` metadata, `model_config`와 legacy `Config`, decorator·validator·serializer·Pydantic hook inventory와 effective semantics, 실제 wire 직렬화**를 전부 대조한다. 또한 각 실제 direct BC-base 생성문을 승인 key와 `<Bc>ErrorCode` 멤버로 생성해 exact dump를 검증하고 mounted endpoint status/body와 generated OpenAPI를 함께 검증한다. API reviewer가 `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW` 모드에서 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_API_CONFIRMATION`을, discipline reviewer가 `DYNAMIC_ERROR_SHAPE_DISCIPLINE_REVIEW` 모드에서 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS_DISCIPLINE_CONFIRMATION`을 서로의 노트를 받지 않고 각각 낸 경우에만 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS`로 기록할 수 있다. 미승인 shape이거나 proof 시점 결과가 action별 승인 기준선과 하나라도 다르거나 다른 exit 1 또는 «귀속» exit 2가 섞이거나 proof가 실패하면 blocker다(legacy 잔존 exit 2 는 proof 를 막지 않는다 — brownfield 상존 잔존과의 상시 충돌 방지 · 2026-08-13). 이 proof와 reviewer token은 shape 승인을 새로 만들거나 대신하지 않는다. 한 실패 뒤 나머지 결과를 버리지 않는다.
+dddjango/commands/dddjango.md:138:   - **checker별 exit-0 blind spot**: registry #15는 직접 import한 1-hop class method mutation·2-hop/renamed helper와 broad exception re-export의 의미를, registry #6/#16은 dynamic import/registration과 root-local mapping/registrar/composition lookalike를, registry #2와 preflight는 inventory semantic completeness·mixed-profile sharing·multiple API instance를 완전 증명하지 못한다. registry #5/#16은 dynamic OpenAPI/registrar semantics를 증명하지 못하고, auth의 truthy `ErrorSchema`과 hidden framework-header dependency는 acceptance/discipline/API review가 직접 읽는다. checker count·exit 0 또는 `RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS`는 runtime contract test, mounted generated OpenAPI, role review, 별도 shape approval이나 G2 사용자 승인을 대신하지 않는다.
+dddjango/commands/dddjango.md:141:## Phase 3 — 마무리·검증 보고
+dddjango/commands/dddjango.md:145:## 수정 모드 (부분 수정)
+dddjango/commands/dddjango.md:157:## 엣지 처리
+dddjango/commands/dddjango.md:169:## 경계
+dddjango/agents/acceptance-tester.md:3:description: dddjango 파이프라인 Phase 2(구현) 시작에 Coordinator가 호출한다. 승인된 현행 외부 계약과 관련 테스트를 대조하고, 입장 표에서 `add/update`로 승인된 외부 계약만 바깥 루프 Red로 만든다. 구현을 보지 않는 블랙박스다. 구현 코드는 쓰지 않는다.
+dddjango/agents/acceptance-tester.md:15:## 입력
+dddjango/agents/acceptance-tester.md:19:## 산출
+dddjango/agents/acceptance-tester.md:23:## 인수 테스트 작성 규칙
+dddjango/agents/acceptance-tester.md:29:- migration 파일·번호·dependency·operation·과거 model state·forward/reverse·DDL 자체를 검증하는 테스트를 새로 만들거나 새 case·assertion·시나리오로 확장하지 않는다. 임시 특성화 테스트도 예외가 아니다.
+dddjango/agents/acceptance-tester.md:47:- `add/update`로 새·변경 Red를 써야 할 때만 테스트 러너 가용성을 확인한다. 그때 pytest 설정이 없으면 `implementation-django-ninja` §2.1 버전-핀 규율로 pytest 스택을 셋업한 뒤 Red를 실행한다. `reuse`는 확립된 기존 러너로 anchor만 실행하고, 일반 `retain`·`remove`·`reject`에서는 dependency·manifest·runner config를 쓰지 않는다. 승인된 새 인수 테스트는 pytest 관용구(함수형 + `assert` + `@pytest.mark.django_db` + 픽스처)로 쓴다. 기존 `TestCase` 스위트를 재작성하거나 빈 `tests.py` 때문에 새 test artifact를 만들지 않는다.
+dddjango/agents/acceptance-tester.md:49:## 경계
+
+[2m**Planning full recon file parsing**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-19-ontology-t1-census/E03-recon.md; nl -ba workspace/design/2026-08-19-ontology-t1-census/E05-recon.md; nl -ba workspace/design/2026-08-19-ontology-t1-census/E08-recon.md; nl -ba workspace/design/2026-08-19-ontology-t1-census/E09-recon.md; nl -ba workspace/design/2026-08-19-ontology-t1-census/E10-recon.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E03 — implementation-python T1-1 P0 대사 노트
+     2	
+     3	작성일: 2026-08-19 · 담당: E03 문서군 담당자
+     4	기계 절: sections.tsv p0_group=E03 148절 (implementation-python-skill 5 + implementation-python-final 143)
+     5	P0 정본: `workspace/design/2026-08-18-p0-census/E03-implementation-python.md` (절 37 · 규범 문장 112)
+     6	
+     7	## §1 문서별 접기 규약 명문화
+     8	
+     9	**implementation-python-skill** (P0 4절 ← 기계 5절):
+    10	P0는 YAML frontmatter와 h1 제목을 «헤더(frontmatter+제목)» 한 절로 병합했다(서두 병합 — 기계 절단은 (전문) s001과 h1 s002를 분리). 나머지 h2 3절(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 1:1 대응한다.
+    11	
+    12	**implementation-python-final** (P0 33절 ← 기계 143절):
+    13	P0는 h2 단위(§N 번호 절·부록 A–C·출처)로 절을 세고, h3 소절(§N.M) 전부를 상위 h2 절에 접었다. 서문(h1 제목+인용 blockquote)은 별도 1절(기계 s001과 1:1). 부록 A–C는 하위 h3가 없어 1:1. 출처는 h2 s138에 h3 5절(s139–s143: PEP 문서·Python 공식 문서·서적·도구 문서·커뮤니티)을 접었다. 부록·서두를 제외하거나 건너뛴 절은 없다 — 전 기계 절이 P0 37절 중 하나에 귀속된다.
+    14	
+    15	## §2 P0 절 전건 대사 표
+    16	
+    17	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    18	|---|---|---|
+    19	| [SKILL] 헤더(frontmatter+제목) | skill s001–s002 (2절) | 서두 병합(frontmatter+h1) |
+    20	| [SKILL] 언제 쓰나 | skill s003 | 1:1 |
+    21	| [SKILL] 핵심 운영 원칙 | skill s004 | 1:1 |
+    22	| [SKILL] 상세 레퍼런스 | skill s005 | 1:1 |
+    23	| [final] 서문(제목·인용) | s001 | 1:1 |
+    24	| [final] §1 타입 힌트와 타입 시스템 | s002-1 ~ s016-1.14 (15절) | h3 접기(1.1–1.14) |
+    25	| [final] §2 구조적 패턴 매칭 | s017-2 ~ s021-2.4 (5절) | h3 접기 |
+    26	| [final] §3 컬렉션 선택과 데이터 구조 | s022-3 ~ s027-3.5 (6절) | h3 접기 |
+    27	| [final] §4 함수 설계 | s028-4 ~ s033-4.5 (6절) | h3 접기 |
+    28	| [final] §5 데코레이터 | s034-5 ~ s037-5.3 (4절) | h3 접기 |
+    29	| [final] §6 디스크립터 | s038-6 ~ s040-6.2 (3절) | h3 접기 |
+    30	| [final] §7 @property와 애트리뷰트 접근 | s041-7 ~ s043-7.2 (3절) | h3 접기 |
+    31	| [final] §8 클래스 설계 | s044-8 ~ s053-8.9 (10절) | h3 접기 |
+    32	| [final] §9 Protocol 심화 | s054-9 ~ s059-9.5 (6절) | h3 접기 |
+    33	| [final] §10 Enum, dataclass, NamedTuple | s060-10 ~ s068-10.8 (9절) | h3 접기 |
+    34	| [final] §11 연산자 오버로딩 | s069-11 ~ s070-11.1 (2절) | h3 접기 |
+    35	| [final] §12 pydantic v2 | s071-12 ~ s075-12.3 (5절) | h3 접기(12.0–12.3) |
+    36	| [final] §13 이터레이터·제너레이터·컴프리헨션 | s076-13 ~ s083-13.7 (8절) | h3 접기 |
+    37	| [final] §14 컨텍스트 매니저와 with문 | s084-14 ~ s086-14.2 (3절) | h3 접기 |
+    38	| [final] §15 예외 처리 | s087-15 ~ s090-15.3 (4절) | h3 접기 |
+    39	| [final] §16 동시성과 병렬성 | s091-16 ~ s097-16.6 (7절) | h3 접기 |
+    40	| [final] §17 성능 프로파일링과 최적화 | s098-17 ~ s102-17.4 (5절) | h3 접기 |
+    41	| [final] §18 f-문자열 개선과 PEG 파서 | s103-18 ~ s104-18.1 (2절) | h3 접기 |
+    42	| [final] §19 파이썬다운 관용 표현 | s105-19 ~ s111-19.6 (7절) | h3 접기 |
+    43	| [final] §20 디자인 패턴 | s112-20 ~ s115-20.3 (4절) | h3 접기 |
+    44	| [final] §21 Repository / Unit of Work | s116-21 | 1:1(하위 h3 없음) |
+    45	| [final] §22 Ruff | s117-22 ~ s119-22.2 (3절) | h3 접기 |
+    46	| [final] §23 mypy/pyright 최신 기능 | s120-23 ~ s123-23.3 (4절) | h3 접기 |
+    47	| [final] §24 테스트 | s124-24 | 1:1(위임 스텁) |
+    48	| [final] §25 디버깅 기법 | s125-25 ~ s127-25.2 (3절) | h3 접기 |
+    49	| [final] §26 독스트링과 문서화 | s128-26 ~ s129-26.1 (2절) | h3 접기 |
+    50	| [final] §27 정밀 연산 | s130-27 ~ s131-27.1 (2절) | h3 접기 |
+    51	| [final] §28 Python 3.14 주요 변경사항 | s132-28 ~ s134-28.2 (3절) | h3 접기 |
+    52	| [final] 부록 A | s135 | 1:1 |
+    53	| [final] 부록 B | s136 | 1:1 |
+    54	| [final] 부록 C | s137 | 1:1 |
+    55	| [final] 출처 | s138 ~ s143 (6절) | h3 접기(출처 하위 5목록) |
+    56	
+    57	검산: skill 2+1+1+1 = 5 · final 1 + (§1–§28 소계 133) + 부록 3 + 출처 6 = 143 → 합 148 = sections.tsv E03 행 수와 일치.
+    58	
+    59	## §3 잔차
+    60	
+    61	**설명 불가 잔차 0.** P0 37절 전건이 위 두 접기 규약(h3→h2 접기, SKILL 서두 병합)으로 기계 148절에 남김없이 대응하고, 어느 쪽에만 존재하는 절도 없다.
+    62	
+    63	## §4 규범 계수 대조
+    64	
+    65	이번 T1 norm_count 합 **101** vs P0 **112** — 차 **−11**.
+    66	
+    67	차이의 원인은 전량 계수 규약 차이이며 절 대응 문제가 아니다:
+    68	
+    69	1. **코드 펜스 내 주석 제외(−11)** — P0 집계 방침은 «코드 주석 안이라도 일반화된 지시 표지(반드시·필수·대신 사용·권장)가 있으면 포함»이었으나, T1 규약은 코드 펜스 안 텍스트를 계수에서 제외한다. 해당 11건: §1.2 «반드시 None 체크», §1.7 «PEP 695 권장», §1.8 «내부 타입 명시», §3.5 «list 대신 deque», §4.5 «반환값 4개 이상 클래스/namedtuple», §8.9 «dict 대신 UserDict», §9.5 «반드시 정적 타입 체커 의존», §10.8 «typing 버전 권장», §16.1 «Lock 필수», §17.3 «타입 일관 유지», §27.1 «Decimal str 생성자 필수». 각 건은 classify.tsv 해당 절 note에 표기했다. 이 제외로 §9·§27은 T1 기준 규범 0 절이 된다(P0에선 각 1).
+    70	2. **유지한 P0 특례(계수 연속성)** — §19.6 명명 표 2개=표 단위 각 1(행 단위 계수 안 함), §22.1·§23.1·§23.2 설정 블록=각 규범 1단위(권장/strict 설정은 예제 코드가 아니라 구속 설정으로 보아 펜스 제외 규칙 비적용 — P0 방침 승계), §10.1=항 단위 14(다항 문장의 항 분할 계수 승계).
+    71	3. **P0는 절 단위 집계** — h3별 배분은 P0 비고의 소절 지목(예: §1의 10건을 1.2/1.3/1.5/1.7/1.8/1.11/1.12에 배분)을 따라 재구성했고, 전 절에서 P0 절 소계와 «T1 합 + 펜스 제외분»이 일치함을 확인했다(92−11=81 [final] + 20 [SKILL] = 101).
+    72	
+    73	부기: codex 대응은 final.md가 byte 동일(전 143절 SAME), SKILL.md는 frontmatter(s001)만 DIFF — `user-invocable: false` 부재 + 스킬명 표기 치환(`dddjango:x`→`dddjango-x`). 표기 치환만 있는 s003은 SAME으로 판정했다. T4 잔차 규모는 사실상 SKILL frontmatter 1건이다.
+     1	# E05 — implementation-django P0 대사 노트 (T1-1)
+     2	
+     3	담당: E05 · 판정일 2026-08-19 · 기계 절: sections.tsv p0_group=E05, 98절(SKILL 5 + final 93) · P0 정본: `workspace/design/2026-08-18-p0-census/E05-implementation-django.md`(74절·규범 246)
+     4	
+     5	## §1 문서별 접기 규약 명문화
+     6	
+     7	**implementation-django-skill (기계 5절 → P0 4절)**
+     8	
+     9	- 규약 S-1: P0는 본문 없는 h1 헤딩 절(기계 s002 «Django 코어 구현», 2행)을 절로 세지 않는다. 나머지 기계 절(전문·언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 P0 절과 1:1.
+    10	
+    11	**implementation-django-final (기계 93절 → P0 70절)**
+    12	
+    13	- 규약 F-1 (h1 제외): 문서 h1(기계 s001, 2행)은 P0 절이 아니다.
+    14	- 규약 F-2 (본문 없는 장 헤딩 제외): 본문 텍스트가 0인 h2 장 스텁(헤딩+공백 2행)은 P0 절이 아니다 — §3·§4·§5·§10·§11·§12·§13·§15·§16·§17의 10개(기계 s018·s023·s031·s048·s053·s058·s061·s071·s074·s080). 반대로 본문이 있는 h2 도입(§1·§2·§8·§9·§14 도입, 위임 전용 §6·§7)은 P0 «도입»/단독 절로 유지.
+    15	- 규약 F-3 (h4를 상위 h3에 접음): h4(####) 하위 절은 상위 h3 절에 접어 한 절로 계수 — §4.2(+s026·s027·s028), §17.1(+s082·s083·s084), §17.3(+s087·s088·s089)의 9개 기계 절이 P0 3절에 접힘. 접힌 절의 P0 규범 수는 h4 단위로 분배 가능(§2 대사 표·classify.tsv 비고 참조).
+    16	- 규약 F-4 (부록 병합): 말미 «참고 자료»는 h2+h3 셋(기계 s090~s093, 4절)을 P0 1절로 병합.
+    17	- 산식 검산: 70 + h1 1 + 장 스텁 10 + h4 분리 9 + 참고 자료 분리 3 = 93 ✓ / SKILL 4 + 1 = 5 ✓.
+    18	
+    19	## §2 P0 절 전건 대사 표
+    20	
+    21	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    22	|---|---|---|
+    23	| SKILL frontmatter | implementation-django-skill/s001 | 1:1 |
+    24	| SKILL «언제 쓰나» | implementation-django-skill/s003 | 1:1 (s002 h1은 S-1 제외) |
+    25	| SKILL «핵심 운영 원칙» | implementation-django-skill/s004 | 1:1 |
+    26	| SKILL «상세 레퍼런스» | implementation-django-skill/s005 | 1:1 |
+    27	| 목차 | implementation-django-final/s002 | 1:1 (s001 h1은 F-1 제외) |
+    28	| §1 도입 | s003-1 | 1:1 |
+    29	| §1.1 전체 철학 | s004-1.1 | 1:1 |
+    30	| §1.2 모델 철학 | s005-1.2 | 1:1 |
+    31	| §1.3 DB API 철학 | s006-1.3 | 1:1 |
+    32	| §1.4 URL 설계 철학 | s007-1.4 | 1:1 |
+    33	| §1.5 템플릿 철학 | s008-1.5 | 1:1 |
+    34	| §1.6 뷰 철학 | s009-1.6 | 1:1 |
+    35	| §2 도입 | s010-2 | 1:1 (본문 있는 장 도입 — F-2 유지 측) |
+    36	| §2.1 포매팅 기본 규칙 | s011-2.1 | 1:1 |
+    37	| §2.2 임포트 순서 | s012-2.2 | 1:1 |
+    38	| §2.3 문자열 포매팅 | s013-2.3 | 1:1 |
+    39	| §2.4 모델 코딩 스타일 | s014-2.4 | 1:1 |
+    40	| §2.5 선택지(Choices) 정의 | s015-2.5 | 1:1 |
+    41	| §2.6 템플릿 코딩 스타일 | s016-2.6 | 1:1 |
+    42	| §2.7 뷰 코딩 스타일 | s017-2.7 | 1:1 |
+    43	| §3.1 프로젝트 레이아웃 | s019-3.1 | 1:1 (s018 장 스텁은 F-2 제외) |
+    44	| §3.2 앱 분리 기준 | s020-3.2 | 1:1 |
+    45	| §3.3 설정 분리 | s021-3.3 | 1:1 |
+    46	| §3.4 settings 접근 주의 | s022-3.4 | 1:1 |
+    47	| §4.1 Fat Model | s024-4.1 | 1:1 (s023 장 스텁은 F-2 제외) |
+    48	| §4.2 모델 상속 패턴 | s025-4.2 + s026 + s027 + s028 | F-3 (규범 3 = s026:1 + s027:2) |
+    49	| §4.3 필드 선택 가이드 | s029-4.3 | 1:1 |
+    50	| §4.4 모델 유효성 검증 | s030-4.4 | 1:1 |
+    51	| §5.1 Custom Manager/QuerySet | s032-5.1 | 1:1 (s031 장 스텁은 F-2 제외) |
+    52	| §5.2 QuerySet 최적화 | s033-5.2 | 1:1 |
+    53	| §5.3 only/defer/values | s034-5.3 | 1:1 |
+    54	| §5.4 annotate/aggregate | s035-5.4 | 1:1 |
+    55	| §5.5 bulk 연산 | s036-5.5 | 1:1 |
+    56	| §6 뷰 패턴 (위임) | s037-6 | 1:1 (위임 본문 있는 장 = 절) |
+    57	| §7 폼과 유효성 검증 (위임) | s038-7 | 1:1 |
+    58	| §8 도입 | s039-8 | 1:1 |
+    59	| §8.1 기존 DRF Serializer | s040-8.1 | 1:1 |
+    60	| §8.2 기존 DRF ViewSet | s041-8.2 | 1:1 |
+    61	| §8.3 Permission 패턴 | s042-8.3 | 1:1 |
+    62	| §8.4 Pagination | s043-8.4 | 1:1 |
+    63	| §8.5 기존 DRF 버전 관리 | s044-8.5 | 1:1 |
+    64	| §9 도입 | s045-9 | 1:1 |
+    65	| §9.1 시그널 사용 경우 | s046-9.1 | 1:1 |
+    66	| §9.2 시그널 회피 경우 | s047-9.2 | 1:1 |
+    67	| §10.1 마이그레이션 기본 원칙 | s049-10.1 | 1:1 (s048 장 스텁은 F-2 제외) |
+    68	| §10.2 데이터 마이그레이션 — 금지 | s050-10.2 | 1:1 |
+    69	| §10.3 무중단 마이그레이션 | s051-10.3 | 1:1 |
+    70	| §10.4 이력 보존 (이주 후) | s052-10.4 | 1:1 |
+    71	| §11.1 N+1 탐지 | s054-11.1 | 1:1 (s053 장 스텁은 F-2 제외) |
+    72	| §11.2 인덱스 전략 | s055-11.2 | 1:1 |
+    73	| §11.3 update_fields | s056-11.3 | 1:1 |
+    74	| §11.4 exists/count | s057-11.4 | 1:1 |
+    75	| §12.1 캐싱 수준 | s059-12.1 | 1:1 (s058 장 스텁은 F-2 제외) |
+    76	| §12.2 캐시 무효화 | s060-12.2 | 1:1 |
+    77	| §13.1 내장 보안 기능 | s062-13.1 | 1:1 (s061 장 스텁은 F-2 제외) |
+    78	| §13.2 보안 설정 체크리스트 | s063-13.2 | 1:1 |
+    79	| §13.3 Raw SQL | s064-13.3 | 1:1 |
+    80	| §13.4 인증과 인가 | s065-13.4 | 1:1 |
+    81	| §14 도입 | s066-14 | 1:1 |
+    82	| §14.1 TestCase 선택 기준 | s067-14.1 | 1:1 |
+    83	| §14.2 Factory Boy | s068-14.2 | 1:1 |
+    84	| §14.3 pytest-django | s069-14.3 | 1:1 |
+    85	| §14.4 Django 공식 테스트 규칙 | s070-14.4 | 1:1 |
+    86	| §15.1 미들웨어 실행 순서 | s072-15.1 | 1:1 (s071 장 스텁은 F-2 제외) |
+    87	| §15.2 커스텀 미들웨어 | s073-15.2 | 1:1 |
+    88	| §16.1 서비스 레이어 시점 | s075-16.1 | 1:1 (s074 장 스텁은 F-2 제외) |
+    89	| §16.2 HackSoft 패턴 | s076-16.2 | 1:1 |
+    90	| §16.3 DDD 트레이드오프 | s077-16.3 | 1:1 |
+    91	| §16.4 트랜잭션·일관성 경계 | s078-16.4 | 1:1 |
+    92	| §16.5 Outbox 구현 | s079-16.5 | 1:1 |
+    93	| §17.1 Django 5.0 | s081-17.1 + s082 + s083 + s084 | F-3 (규범 0 — 전 h4 소개 전용, s080 장 스텁은 F-2 제외) |
+    94	| §17.2 Django 5.1 | s085-17.2 | 1:1 |
+    95	| §17.3 Django 5.2 | s086-17.3 + s087 + s088 + s089 | F-3 (규범 2 = s087:2 — ⚠ BC 경계 ORM FK 금지) |
+    96	| 참고 자료 | s090 + s091 + s092 + s093 | F-4 |
+    97	
+    98	전건 74행. P0에만 있는 절 0 · 규약 밖 기계 절 0.
+    99	
+   100	## §3 잔차
+   101	
+   102	**설명 불가 잔차 0.**
+   103	
+   104	기계에만 있는 24절은 전부 규약으로 설명된다: S-1(1: SKILL s002) · F-1(1: final s001) · F-2(10: 장 스텁) · F-3(9: h4) · F-4(3: 참고 자료 h3 셋). P0에만 있고 기계에 없는 절도 없다.
+   105	
+   106	## §4 규범 계수 대조
+   107	
+   108	이번 norm_count 합 = **246** (SKILL 23 + final 223) — **P0 246과 차이 0.**
+   109	
+   110	측정 연속성 의무에 따라 절 단위 계수는 P0 정본 값을 그대로 채택했고, 기계 절이 P0 절보다 잘게 쪼개진 곳(F-3의 §4.2·§17.3)만 P0 절 계수를 h4 단위로 분배했다(§4.2: 3 = Abstract 권장 1 + MTI 주의·Abstract+FK 우선 2, Proxy 0 / §17.3: 2 = Composite PK 절의 ⚠ BC 경계 FK 금지 2, 나머지 h4 0). 분배는 P0 비고의 문장 지목을 그대로 따랐으므로 재판정에 의한 증감이 없다. P0가 절 단위 집계였음에도 차이가 안 나는 이유: P0 접기에서 사라진 기계 절(h1·장 스텁·참고 자료 h3)이 모두 규범 0 절이라 분배 손실이 없기 때문.
+   111	
+   112	부수 확인: 코드 펜스 안 예제 텍스트는 계수 제외(P0 동일), 단 규칙을 실어 나르는 코드 주석·표 행은 포함(P0 규약 계승 — §2.3·§2.4·§10.1·§13.1 표 열·§16.4 표 행 등). 체크리스트(«- [ ]») 운반체는 E05 두 문서에 0건(grep 확인).
+   113	
+   114	## 부기 — codex 대응 요약
+   115	
+   116	- `codex-dddjango/skills/implementation-django/references/final.md`는 dddjango판과 **byte-identical**(diff 0행) → final 93절 전부 SAME.
+   117	- `codex-dddjango/skills/implementation-django/SKILL.md`는 4개 행 차이: 스킬명 표기 치환(`architecture-ddd`→`dddjango-architecture-ddd` 등, s003·s004 — SAME 범위) 외에 ① s001 frontmatter의 `user-invocable: false` 키 부재, ② s004 fat model bullet이 구본(«비즈니스 로직은 fat model에 두고 뷰·시리얼라이저는 얇게» — 4계층 `domain_layer` 애그리거트 소유 규범 미반영) → s001·s004 DIFF. 집계: SAME 96 · DIFF 2 · ABSENT 0.
+   118	- 재진술 의심 8절(SKILL s001·s004 + final s029·s032·s055·s069·s076·s079). P0 횡단 발견 2의 «말미 체크리스트» 사본층은 E05에 없음 — SKILL 요약↔final 본문의 2중 구조.
+     1	# E08 — P0 대사 노트 (T1-1 절 유형 센서스)
+     2	
+     3	담당 문서군: architecture-db-skill · architecture-db-final · architecture-api-skill · architecture-api-final
+     4	기계 절 145 (sections.tsv E08 행 수와 동수) ↔ P0 39절 · 규범 310문장 (`workspace/design/2026-08-18-p0-census/E08-architecture-db-api.md`)
+     5	
+     6	## §1 문서별 접기 규약 명문화
+     7	
+     8	- **architecture-db-skill / architecture-api-skill (공통 규약)**: P0 절 = frontmatter 1절 + h2 3절. 기계 절의 `(전문)`(s001)이 P0 frontmatter 절에 1:1 대응하고, h2 3절(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 1:1 대응한다. **h1 제목 절(s002, 본문 0행)은 P0가 절로 계수하지 않았다**(제목 전용 — 서두 병합이 아니라 미계수). 따라서 기계 5절 = P0 4절 + h1 제목 절 1.
+     9	- **architecture-db-final / architecture-api-final (공통 규약)**: P0 절 = 목차(h2) 1절 + 최상위 §N(h2) 절. **h3 소절(§N.M)은 전부 상위 §N에 접는다**(P0 집계 방식 메모 «소절(§N.M)은 상위 절에 귀속» 그대로). api-final의 **h4 2절(s025 `dddjango-code-json`·s026 framework 경계)은 §5.4(h3)에 접히고, §5.4는 다시 §5(h2)에 접힌다.** h1 제목 절(s001)은 SKILL과 같은 규약으로 P0 미계수. 부록 제외 규약은 없다 — §14/§15 참고 문헌도 P0 절로 계수됐다(규범 0).
+    10	- 검산: db-final 기계 68 = h1 1 + P0 15절(목차 1 + h2 14 + 접힌 h3 52). api-final 기계 67 = h1 1 + P0 16절(목차 1 + h2 15 + 접힌 h3 48 + 접힌 h4 2). SKILL 각 5 = h1 1 + P0 4절. 합 145 = P0 39 + h1 제목 절 4 + 접힌 h3/h4 102.
+    11	
+    12	## §2 P0 절 전건 대사 표 (39건)
+    13	
+    14	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    15	|---|---|---|
+    16	| db-skill frontmatter | architecture-db-skill/s001 | (전문) 1:1 |
+    17	| db-skill 언제 쓰나 | architecture-db-skill/s003 | h2 1:1 |
+    18	| db-skill 핵심 운영 원칙 | architecture-db-skill/s004 | h2 1:1 |
+    19	| db-skill 상세 레퍼런스 | architecture-db-skill/s005 | h2 1:1 |
+    20	| db-final 목차 | architecture-db-final/s002 | h2 1:1 |
+    21	| db-final §1 | s003-1 + s004-1.1 + s005-1.2 | h3→h2 접기 |
+    22	| db-final §2 | s006-2 + s007-2.1…s011-2.5 | h3→h2 접기 |
+    23	| db-final §3 | s012-3 + s013-3.1…s016-3.4 | h3→h2 접기 |
+    24	| db-final §4 | s017-4 + s018-4.1…s020-4.3 | h3→h2 접기 |
+    25	| db-final §5 | s021-5 | h2 단독(소절 없음) 1:1 |
+    26	| db-final §6 | s022-6 + s023-6.1…s026-6.4 | h3→h2 접기 |
+    27	| db-final §7 | s027-7 + s028-7.1…s031-7.4 | h3→h2 접기 |
+    28	| db-final §8 | s032-8 + s033-8.1…s036-8.4 | h3→h2 접기 |
+    29	| db-final §9 | s037-9 + s038-9.1…s044-9.7 | h3→h2 접기 |
+    30	| db-final §10 | s045-10 + s046-10.1…s050-10.5 | h3→h2 접기 |
+    31	| db-final §11 | s051-11 + s052-11.1…s056-11.5 | h3→h2 접기 |
+    32	| db-final §12 | s057-12 + s058-12.1…s061-12.4 | h3→h2 접기 |
+    33	| db-final §13 | s062-13 + s063-13.1…s067-13.5 | h3→h2 접기 |
+    34	| db-final §14 | s068-14 | h2 단독 1:1 |
+    35	| api-skill frontmatter | architecture-api-skill/s001 | (전문) 1:1 |
+    36	| api-skill 언제 쓰나 | architecture-api-skill/s003 | h2 1:1 |
+    37	| api-skill 핵심 운영 원칙 | architecture-api-skill/s004 | h2 1:1 |
+    38	| api-skill 상세 레퍼런스 | architecture-api-skill/s005 | h2 1:1 |
+    39	| api-final 목차 | architecture-api-final/s002 | h2 1:1 |
+    40	| api-final §1 | s003-1 + s004-1.1…s007-1.4 | h3→h2 접기 |
+    41	| api-final §2 | s008-2 + s009-2.1…s011-2.3 | h3→h2 접기 |
+    42	| api-final §3 | s012-3 + s013-3.1…s015-3.3 | h3→h2 접기 |
+    43	| api-final §4 | s016-4 + s017-4.1…s019-4.3 | h3→h2 접기 |
+    44	| api-final §5 | s020-5 + s021-5.1…s024-5.4 + s025 + s026 | h3→h2 접기 + **h4 2절→§5.4→§5 이중 접기** |
+    45	| api-final §6 | s027-6 + s028-6.1…s030-6.3 | h3→h2 접기 |
+    46	| api-final §7 | s031-7 + s032-7.1…s034-7.3 | h3→h2 접기 |
+    47	| api-final §8 | s035-8 + s036-8.1…s039-8.4 | h3→h2 접기 |
+    48	| api-final §9 | s040-9 + s041-9.1…s043-9.3 | h3→h2 접기 |
+    49	| api-final §10 | s044-10 + s045-10.1…s047-10.3 | h3→h2 접기 |
+    50	| api-final §11 | s048-11 + s049-11.1…s051-11.3 | h3→h2 접기 |
+    51	| api-final §12 | s052-12 + s053-12.1…s056-12.4 | h3→h2 접기 |
+    52	| api-final §13 | s057-13 + s058-13.1…s061-13.4 | h3→h2 접기 |
+    53	| api-final §14 | s062-14 + s063-14.1…s066-14.4 | h3→h2 접기 |
+    54	| api-final §15 | s067-15 | h2 단독 1:1 |
+    55	
+    56	## §3 잔차
+    57	
+    58	**설명 불가 잔차 0.**
+    59	
+    60	기계에만 있고 P0에 없는 절은 h1 제목 절 4건(architecture-db-skill/s002, architecture-db-final/s001, architecture-api-skill/s002, architecture-api-final/s001)뿐이며, 전부 §1의 «h1 제목 절 미계수» 규약으로 설명된다(각 절은 제목+공백 2행 이하, 규범 0). P0에만 있고 기계에 없는 절은 없다. 그 외 기계 절 전건이 §2의 접기 규약 안에서 P0 39절에 귀속된다.
+    61	
+    62	## §4 규범 계수 대조
+    63	
+    64	| 구분 | 이번(기계 절 합) | P0 | 차 |
+    65	|---|---:|---:|---:|
+    66	| architecture-db-skill | 18 | 18 | 0 |
+    67	| architecture-db-final | 106 | 106 | 0 |
+    68	| architecture-api-skill | 20 | 20 | 0 |
+    69	| architecture-api-final | 167 | 166 | **+1** |
+    70	| **합계** | **311** | **310** | **+1** |
+    71	
+    72	차이의 원인:
+    73	
+    74	1. **+1의 단일 원인 — api-final s020-5(§5 서두)**: «클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다»는 기록 의무 지시다. P0 §5=45의 구성 명세(§5.1=9 + §5.2=6 + §5.3=1 + §5.4=29)에 서두 몫이 없어 P0는 이 문장을 계수하지 않은 것으로 추정된다(P0는 db §8·§11 서두 지시는 계수했으므로 비일관 지점). 이번 센서스는 «애매하면 포함+비고» 규약을 적용해 1로 계수했다.
+    75	2. **P0는 절 단위 집계였고 이번은 기계 절 단위 배분**이라, h3/h4로 쪼개진 소절별 수치는 이번 센서스의 신규 산출이다. 배분은 P0 비고의 구성 명세를 그대로 따랐다(§9: 9.4=1/9.5=18/9.6=12/9.7=12, §5: 5.1=9/5.2=6/5.3=1/5.4=29, §8: 8.1=3/8.2=3/8.3=3/8.4=12, §13: 13.2=6/13.3=12/13.4=6 등).
+    76	3. **P0 내부 불일치 1건 승계 처리**: api §5.4의 P0 비고 내부 합(우선순위 4+혼합 금지 2+관할 4+code-json 15+framework 3 = 28)이 절 합(29)과 1 어긋난다. 이번 배분에서는 관할 문단을 문장 단위로 재검해 5문장(wire 계약 주어 선언·preserve 비대상·신규 범위 레시피·G1 표면화 STOP·혼합 금지 주어)으로 계수, s024-5.4=11 + s025=15 + s026=3 = 29로 절 합을 유지했다.
+    77	4. 표 행 계수의 P0 비일관(예: §7.4·§8.1·§11.3 표 행은 계수, §9.4·§11.4·§5.3 표 행은 미계수)은 그대로 승계하고 각 행 note에 표기했다 — 수치 연속성을 우선했다.
+    78	
+    79	부기(codex 대사): 4파일 전부 SAME — final.md 2건은 codex판과 바이트 동일, SKILL.md 2건은 `architecture-ddd`→`dddjango-architecture-ddd` 개명(콜론→대시 접두 포함)과 `user-invocable: false` 제거뿐(플랫폼 표기 치환 이내, P0 특이 발견 6 «표류 아님» 재확인). DIFF 0 · ABSENT 0.
+     1	# E09 대사 노트 — T1-1 절 유형 센서스 vs P0 상세 인벤토리
+     2	
+     3	기준: 기계 절 = `sections.tsv` p0_group=E09 46행. P0 정본 = `workspace/design/2026-08-18-p0-census/E09-web-houserules.md`(절 40·규범 276).
+     4	
+     5	## §1 문서별 접기 규약
+     6	
+     7	- **implementation-django-web-skill** (기계 5 ↔ P0 3): P0는 YAML frontmatter(전문)와 본문 없는 h1 제목을 절로 세지 않았다 — 기계 s001(전문)·s002(h1)는 P0 절 목록 밖의 서두 절이다. h2 3개(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)는 1:1 대응.
+     8	- **implementation-django-web-final** (기계 12 ↔ P0 12): 완전 1:1. 기계 s001은 h1 제목+출처 약어 인용 블록(1~19행)을 한 절로 묶으며 P0 «머리말(출처 약어 블록)»과 대응(h1은 머리말에 접힘). h2 §1~§11은 그대로 1:1.
+     9	- **discipline-houserules-skill** (기계 12 ↔ P0 10): 위와 같은 서두 규약 — s001(전문)·s002(h1)가 P0 밖. 나머지 h2/h3 10개는 1:1 (P0도 §4.1·§6.1·§6.2 h3를 개별 절로 셌으므로 h3 접기는 없음).
+    10	- **discipline-houserules-final** (기계 17 ↔ P0 15): 기계 s001은 h1+정본 선언 블록(1~6행)을 한 절로 묶어 P0 «머리말»과 1:1. P0는 «§2·§4는 직속 본문 없이 하위 헤딩만 있어 하위 헤딩을 절로 셈»이라 명문화했고, 기계는 그 h2 헤더 자체를 본문 0의 별도 절(s005-2·s012-4)로 낸다 — 헤더 절 2개가 P0 밖. h3 하위 헤딩 9개(§2 아래 5·§4 아래 4)는 P0 하위 절과 1:1.
+    11	
+    12	요약 규약: **P0 절 40 = 기계 절 46 − 서두 절 4(전문 2·h1 제목 2) − 본문 없는 h2 헤더 절 2.**
+    13	
+    14	## §2 P0 절 전건 대사 표
+    15	
+    16	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    17	|---|---|---|
+    18	| web SKILL: 언제 쓰나 | implementation-django-web-skill/s003 | 1:1 |
+    19	| web SKILL: 핵심 운영 원칙 | implementation-django-web-skill/s004 | 1:1 |
+    20	| web SKILL: 상세 레퍼런스 | implementation-django-web-skill/s005 | 1:1 |
+    21	| web final: 머리말(출처 약어 블록) | implementation-django-web-final/s001 | h1 접힘 |
+    22	| web final: §1 책임 범위와 handoff | implementation-django-web-final/s002-1 | 1:1 |
+    23	| web final: §2 TemplateView/CBV/FBV 선택 | implementation-django-web-final/s003-2 | 1:1 |
+    24	| web final: §3 Context 준비와 표시 값 | implementation-django-web-final/s004-3 | 1:1 |
+    25	| web final: §4 Templates·base·includes | implementation-django-web-final/s005-4 | 1:1 |
+    26	| web final: §5 Static files·CSS·JS | implementation-django-web-final/s006-5 | 1:1 |
+    27	| web final: §6 Web forms·POST flow | implementation-django-web-final/s007-6 | 1:1 |
+    28	| web final: §7 HTMX fragment·AJAX | implementation-django-web-final/s008-7 | 1:1 |
+    29	| web final: §8 CSRF·XSS·security setting | implementation-django-web-final/s009-8 | 1:1 |
+    30	| web final: §9 View auth·permission | implementation-django-web-final/s010-9 | 1:1 |
+    31	| web final: §10 Render acceptance checks | implementation-django-web-final/s011-10 | 1:1 |
+    32	| web final: §11 서버렌더 에러 처리 | implementation-django-web-final/s012-11 | 1:1 |
+    33	| hr SKILL: 무엇이고 왜 | discipline-houserules-skill/s003 | 1:1 |
+    34	| hr SKILL: §1 파일트리 결정 순서 | discipline-houserules-skill/s004-1 | 1:1 |
+    35	| hr SKILL: §2 충돌 중재 | discipline-houserules-skill/s005-2 | 1:1 |
+    36	| hr SKILL: §3 구조 결정이 빠졌다는 신호 | discipline-houserules-skill/s006-3 | 1:1 |
+    37	| hr SKILL: §4 타입 어노테이션 | discipline-houserules-skill/s007-4 | 1:1 |
+    38	| hr SKILL: §4.1 왜 전부인가 | discipline-houserules-skill/s008-4.1 | 1:1 (h3) |
+    39	| hr SKILL: §5 코드 주석·docstring 언어 | discipline-houserules-skill/s009-5 | 1:1 |
+    40	| hr SKILL: §6 패키지·의존성 | discipline-houserules-skill/s010-6 | 1:1 (헤더만 — P0도 0규범) |
+    41	| hr SKILL: §6.1 부트스트랩·표준 도구셋 | discipline-houserules-skill/s011-6.1 | 1:1 (h3) |
+    42	| hr SKILL: §6.2 새 런타임 의존성 버전 선택 | discipline-houserules-skill/s012-6.2 | 1:1 (h3) |
+    43	| hr final: 머리말(정본 선언 블록) | discipline-houserules-final/s001 | h1 접힘 |
+    44	| hr final: 무엇이고 왜 | discipline-houserules-final/s002 | 1:1 |
+    45	| hr final: §0 제1원칙 | discipline-houserules-final/s003-0 | 1:1 |
+    46	| hr final: §1 표준 트리 — 140행 | discipline-houserules-final/s004-1 | 1:1 |
+    47	| hr final: §2 골격 — BC 직계 일곱뿐 | discipline-houserules-final/s006 | h3 하위 절 1:1 (§2 헤더는 s005-2로 분리) |
+    48	| hr final: §2 골격 — 입구 driving_layer | discipline-houserules-final/s007 | h3 하위 절 1:1 |
+    49	| hr final: §2 골격 — 만들지 않는 칸 | discipline-houserules-final/s008 | h3 하위 절 1:1 |
+    50	| hr final: §2 골격 — migrations 생성물만 | discipline-houserules-final/s009 | h3 하위 절 1:1 |
+    51	| hr final: §2 골격 — `<project>/` | discipline-houserules-final/s010 | h3 하위 절 1:1 |
+    52	| hr final: §3 명명 | discipline-houserules-final/s011-3 | 1:1 |
+    53	| hr final: §4 이관 — 종료 기록 | discipline-houserules-final/s013 | h3 하위 절 1:1 (§4 헤더는 s012-4로 분리) |
+    54	| hr final: §4 이관 — brownfield 빚 | discipline-houserules-final/s014 | h3 하위 절 1:1 |
+    55	| hr final: §4 이관 — 검사기 가드 계약 | discipline-houserules-final/s015 | h3 하위 절 1:1 |
+    56	| hr final: §4 이관 — 규칙 개정 이행 순서 | discipline-houserules-final/s016 | h3 하위 절 1:1 |
+    57	| hr final: 배경 | discipline-houserules-final/s017 | 1:1 |
+    58	
+    59	P0 40절 전건 대응 완료.
+    60	
+    61	## §3 잔차
+    62	
+    63	기계에만 있는 절 6건 — 전부 §1 접기 규약이 설명한다:
+    64	
+    65	| 기계 절 | 성격 | 규약 |
+    66	|---|---|---|
+    67	| implementation-django-web-skill/s001 | YAML frontmatter(전문) | 서두 절 — P0 비계수 |
+    68	| implementation-django-web-skill/s002 | h1 제목(본문 0) | 서두 절 — P0 비계수 |
+    69	| discipline-houserules-skill/s001 | YAML frontmatter(전문) | 서두 절 — P0 비계수 |
+    70	| discipline-houserules-skill/s002 | h1 제목(본문 0) | 서두 절 — P0 비계수 |
+    71	| discipline-houserules-final/s005-2 | §2 h2 헤더(직속 본문 0) | 헤더 절 — P0는 하위 헤딩만 절로 셈 |
+    72	| discipline-houserules-final/s012-4 | §4 h2 헤더(직속 본문 0) | 헤더 절 — P0는 하위 헤딩만 절로 셈 |
+    73	
+    74	P0에만 있는 절: 0건. **설명 불가 잔차 0.**
+    75	
+    76	## §4 규범 계수 대조
+    77	
+    78	| 문서 | 이번 계수 | P0 | 차이 |
+    79	|---|---|---|---|
+    80	| implementation-django-web-skill | 22 | 18 | +4 |
+    81	| implementation-django-web-final | 129 | 129 | 0 |
+    82	| discipline-houserules-skill | 77 | 71 | +6 |
+    83	| discipline-houserules-final | 58 | 58 | 0 |
+    84	| **합계** | **286** | **276** | **+10** |
+    85	
+    86	차이의 원인은 단일하다: **frontmatter(전문) 절 2건**이 P0 절 목록 밖이라 P0에서 규범 0으로 집계됐고, 이번 센서스는 «(전문) 절의 YAML description은 라우터 트리거 문면 — 애매하면 포함+비고» 규약에 따라 web-skill s001에 4(로드 1+위임 3)·hr-skill s001에 6(로드 1+반드시 사용 1+단일 출처 1+위임 3)을 보수 계상했다. P0가 센 40절의 절 단위 계수는 전 절에서 P0 값과 일치하게 재확인됐다(§11의 24건은 문장 단위 재계수로 검증). h1 제목 절 2건·h2 헤더 절 2건은 규범 0이라 계수 차이에 기여하지 않는다.
+    87	
+    88	부기 — codex 대응: 4파일 모두 codex 쌍둥이 존재(P0 ④축 승계 — houserules 쪽은 `dddjango-discipline-houserules`로 접두 개명). 두 final.md는 codex판과 **byte 동일**, 두 SKILL.md의 차이는 frontmatter `user-invocable: false` 제거와 참조 스킬명의 `dddjango-` 접두 치환뿐 — 전부 플랫폼 표기 치환 이내이므로 46절 전건 SAME. T4 잔차 규모 0 예상.
+     1	# E10 P0 대사 노트 — command + pipeline agents
+     2	
+     3	작성일: 2026-08-19. 대상: 기계 절 54(sections.tsv p0_group=E10) ↔ P0 상세 인벤토리 58절(`workspace/design/2026-08-18-p0-census/E10-command-agents.md`).
+     4	
+     5	## §1 문서별 접기 규약 명문화
+     6	
+     7	공통 규약(8개 문서 전부):
+     8	
+     9	- **(전문) 합성절**: 기계 절 s001은 YAML frontmatter(L1~) + 헤딩 없는 서두(역할 선언 문단)를 한 절로 묶는다. P0의 «전문» 절은 서두 문단만 계수했으므로, P0 전문 ↔ 기계 s001은 **범위 확대 대응**(frontmatter 포함)이다. frontmatter `description`은 라우터 트리거 문면으로 T1 규약(«애매하면 포함+비고»)에 따라 규범 1문으로 가산했고, `tools:`/`skills:` 목록은 문장이 아닌 기계 설정 값이라 계수하지 않았다.
+    10	- **h2·h3 절 단위**: 기계 절은 h2와 h3을 각각 독립 절로 낸다. P0는 h2 단위로 계수하고 내부 h3은 비고로만 언급했으므로, 내부 h3을 가진 P0 절 하나는 기계 절 둘(h2 앞부분 + h3 이하)에 대응한다.
+    11	
+    12	문서별 특칙:
+    13	
+    14	- **command-dddjango**: P0는 Phase 2를 코퍼스 실참조 단위인 번호 step(1~7)으로 쪼개 7절로 계수했다. step 번호는 h2 아래 번호 목록이지 헤딩이 아니므로 기계 절 분할 단위가 아니다 → **P0 step 1~7 일곱 절이 기계 s007 하나로 접힌다**. 나머지 h2 절은 1:1.
+    15	- **agent-design-architect**: P0 «명세에 담는 것»(158) 한 절 ↔ 기계 s004(L31~36, h2 앞부분) + s005(L37~81, h3 «Error response contract 12-slot» 이하 — lens 불릿·입장 표 포함). 계수 분할은 직접 재계수로 s004=9, s005=149.
+    16	- **agent-design-review-api**: P0 «점검 항목 (계약 lens만)»(72) 한 절 ↔ 기계 s005(L45~53) + s006(L54~79, h3 12-slot 이하). 직접 재계수로 s005=10, s006=62.
+    17	- 나머지 5개 에이전트 문서(acceptance-tester·coder·design-review-db·design-review-ddd·discipline-reviewer): 내부 h3 없음 — P0 절과 기계 절이 전건 1:1(전문 규약만 적용).
+    18	- 부록·제외 절 없음. 서두 병합 없음(각 문서 서두는 전문 합성절 하나뿐).
+    19	
+    20	## §2 P0 절 전건 대사 표
+    21	
+    22	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    23	|---|---|---|
+    24	| command/전문·번호 공간 규약 (L7–11) | command-dddjango/s001 (L1–12) | 전문 합성(frontmatter 포함 확대) |
+    25	| command/산출물 위치 | command-dddjango/s002 | 1:1 |
+    26	| command/진행 가시성 | command-dddjango/s003 | 1:1 |
+    27	| command/시작: 모드 판별 | command-dddjango/s004 | 1:1 |
+    28	| command/Phase 0 — 요구·스코프 (G0) | command-dddjango/s005 | 1:1 |
+    29	| command/Phase 1 — 설계 (G1) | command-dddjango/s006 | 1:1 |
+    30	| command/Phase 2 step 1 (러너 준비) | command-dddjango/s007 (L86–140) | step 접기(7→1) |
+    31	| command/Phase 2 step 2 (한정 검색·dispatch) | command-dddjango/s007 | step 접기 |
+    32	| command/Phase 2 step 3 (슬라이스 도출) | command-dddjango/s007 | step 접기 |
+    33	| command/Phase 2 step 4 (coder 호출·슬라이스 감사) | command-dddjango/s007 | step 접기 |
+    34	| command/Phase 2 step 5 (규율 감사·suite 실행) | command-dddjango/s007 | step 접기 |
+    35	| command/Phase 2 step 6 (결정적 백스톱 27종) | command-dddjango/s007 | step 접기 |
+    36	| command/Phase 2 step 7 (G2 배너) | command-dddjango/s007 | step 접기 |
+    37	| command/Phase 3 — 마무리·검증 보고 | command-dddjango/s008 | 1:1 |
+    38	| command/수정 모드 (부분 수정) | command-dddjango/s009 | 1:1 |
+    39	| command/엣지 처리 | command-dddjango/s010 | 1:1 |
+    40	| command/경계 | command-dddjango/s011 | 1:1 |
+    41	| acceptance/전문 (L13) | agent-acceptance-tester/s001 (L1–14) | 전문 합성 |
+    42	| acceptance/입력 | agent-acceptance-tester/s002 | 1:1 |
+    43	| acceptance/산출 | agent-acceptance-tester/s003 | 1:1 |
+    44	| acceptance/인수 테스트 작성 규칙 | agent-acceptance-tester/s004 | 1:1 |
+    45	| acceptance/경계 | agent-acceptance-tester/s005 | 1:1 |
+    46	| coder/전문 (L16) | agent-coder/s001 (L1–17) | 전문 합성 |
+    47	| coder/입력 | agent-coder/s002 | 1:1 |
+    48	| coder/산출 | agent-coder/s003 | 1:1 |
+    49	| coder/작업 방식 (안쪽 루프 TDD) | agent-coder/s004 | 1:1 |
+    50	| coder/엣지·보고 | agent-coder/s005 | 1:1 |
+    51	| coder/경계 | agent-coder/s006 | 1:1 |
+    52	| architect/전문 (L13) | agent-design-architect/s001 (L1–14) | 전문 합성 |
+    53	| architect/입력 | agent-design-architect/s002 | 1:1 |
+    54	| architect/산출 | agent-design-architect/s003 | 1:1 |
+    55	| architect/명세에 담는 것 | agent-design-architect/s004+s005 (L31–36 / L37–81) | h3 분리(1→2) |
+    56	| architect/리뷰 반영·충돌 중재 | agent-design-architect/s006 | 1:1 |
+    57	| architect/경계 | agent-design-architect/s007 | 1:1 |
+    58	| review-api/전문 (L10) | agent-design-review-api/s001 (L1–11) | 전문 합성 |
+    59	| review-api/실행 모드 | agent-design-review-api/s002 | 1:1 |
+    60	| review-api/입력 | agent-design-review-api/s003 | 1:1 |
+    61	| review-api/산출 | agent-design-review-api/s004 | 1:1 |
+    62	| review-api/점검 항목 (계약 lens만) | agent-design-review-api/s005+s006 (L45–53 / L54–79) | h3 분리(1→2) |
+    63	| review-api/경계 | agent-design-review-api/s007 | 1:1 |
+    64	| review-db/전문 (L10) | agent-design-review-db/s001 (L1–11) | 전문 합성 |
+    65	| review-db/입력 | agent-design-review-db/s002 | 1:1 |
+    66	| review-db/산출 | agent-design-review-db/s003 | 1:1 |
+    67	| review-db/점검 항목 (데이터 lens만) | agent-design-review-db/s004 | 1:1 |
+    68	| review-db/경계 | agent-design-review-db/s005 | 1:1 |
+    69	| review-ddd/전문 (L9) | agent-design-review-ddd/s001 (L1–10) | 전문 합성 |
+    70	| review-ddd/입력 | agent-design-review-ddd/s002 | 1:1 |
+    71	| review-ddd/산출 | agent-design-review-ddd/s003 | 1:1 |
+    72	| review-ddd/점검 항목 (도메인 lens만) | agent-design-review-ddd/s004 | 1:1 |
+    73	| review-ddd/경계 | agent-design-review-ddd/s005 | 1:1 |
+    74	| discipline/전문 (L12) | agent-discipline-reviewer/s001 (L1–13) | 전문 합성 |
+    75	| discipline/입력 | agent-discipline-reviewer/s002 | 1:1 |
+    76	| discipline/산출 | agent-discipline-reviewer/s003 | 1:1 |
+    77	| discipline/감사 빈도 (적응형) | agent-discipline-reviewer/s004 | 1:1 |
+    78	| discipline/영구 테스트 입장 감사 | agent-discipline-reviewer/s005 | 1:1 |
+    79	| discipline/Phase 1·2 API 오류 scope·소유권 점검 | agent-discipline-reviewer/s006 | 1:1 |
+    80	| discipline/Phase 2 점검 항목 (클린코드·TDD 규율만) | agent-discipline-reviewer/s007 | 1:1 |
+    81	| discipline/경계 | agent-discipline-reviewer/s008 | 1:1 |
+    82	
+    83	P0 58건 전건 대응 완료(1:1 44건 · 전문 합성 8건 · step 접기 7→1 1건 · h3 분리 1→2 2건). 기계 절 54건 전건이 표에 등장한다(s007은 7건 수용, architect s004·s005 / api s005·s006은 분리 수용).
+    84	
+    85	## §3 잔차
+    86	
+    87	**설명 불가 잔차 0.**
+    88	
+    89	경계 사례(규약 안으로 설명됨): ① frontmatter는 P0 계수 범위 밖이었으나 기계 (전문) 절에 포함 — §1 전문 합성 규약으로 흡수(description +1 계수는 §4에 반영). ② P0의 step 단위·h3 언급은 절 목록의 계수 단위 차이일 뿐 본문 누락·초과가 아님을 라인 범위 합으로 확인(command L86–140 = step1~7 전체, architect L31–81 = «명세에 담는 것» 전체, api L45–79 = «점검 항목» 전체).
+    90	
+    91	## §4 규범 계수 대조
+    92	
+    93	이번 분류 norm_count 합 = **1068** vs P0 = **1060**. 차이 **+8**.
+    94	
+    95	- **+8 전액 = frontmatter description 가산**: 8개 문서의 YAML description(라우터/디스패치 트리거 문면)을 T1 판정 기준의 «(전문) 절 description은 애매하면 포함+비고» 규약에 따라 문서당 1문으로 가산했다. P0는 헤딩 본문만 계수해 이 8문이 없었다.
+    96	- 본문 계수는 P0 절 계수를 측정 연속성 의무에 따라 그대로 승계하고 기계 절 경계로 재배분만 했다: command s007 = P0 step1~7 합(5+5+4+10+18+81+6=129), architect 158 → s004 9 + s005 149(분할점 직접 재계수), api 72 → s005 10 + s006 62(동일). 재배분 합은 각 P0 원값과 일치한다.
+    97	- 문서별: command 314(=313+1) · acceptance 76(=75+1) · coder 104(=103+1) · architect 179(=178+1) · api 95(=94+1) · db 36(=35+1) · ddd 29(=28+1) · discipline 235(=234+1).
+    98	
+    99	부기 — codex 대응 요약(3값): SAME 47 · DIFF 7 · ABSENT 0. DIFF 7건 = command s001·s003·s006·s007·s010·s011(실행 모델·게이트 채널·병렬 정의·플러그인 루트 전달 등 플랫폼 재작성이 문면 치환 범위를 넘음) + coder s004(검사기 확장-리터럴 경로 불릿 부재·«읽기 전용 한 턴 묶기» 불릿 추가). 에이전트 7종의 나머지 절은 «Coordinator→코디네이터»·스킬 접두(`dddjango-`) 치환·«로드할 지식 스킬» 절 신설(frontmatter skills: 목록의 형식 치환) 이내로 SAME. architect «산출물-우선 쓰기» 문단은 codex에서 산출 절로 이동했으나 규범 등가라 SAME 유지(절 이동은 비고 기재).
+
+[2m**Planning line-based heading extraction**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg -n '"'^#{2,4} (?:§)?(?:1'"\\.2|1\\.7|1\\.8|3\\.5|4\\.5|8\\.9|9\\.5|10\\.8|16\\.1|17\\.3|27\\.1)|"'^#{2,4} '"' dddjango/skills/implementation-python/references/final.md"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+10:## 1. 타입 힌트와 타입 시스템
+12:### 1.1 타입 어노테이션 기본 [단단한 파이썬] [파이썬코딩의기술]
+32:### 1.2 Optional과 None 처리 [단단한 파이썬]
+56:### 1.3 Union과 합 타입으로 상태 공간 제어 [단단한 파이썬]
+83:### 1.4 Literal, Final, NewType [단단한 파이썬]
+103:### 1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]
+122:### 1.6 제네릭과 TypeVar [단단한 파이썬] [PEP 695]
+139:### 1.7 PEP 695: 새 타입 매개변수 문법 (Python 3.12+) [PEP 695]
+177:### 1.8 컬렉션 타입 어노테이션 [단단한 파이썬]
+188:### 1.9 @override 데코레이터 (3.12+) [PEP 698]
+238:### 1.10 ParamSpec: 데코레이터 시그니처 보존 [PEP 612]
+277:### 1.11 Concatenate: 매개변수 추가/제거 [PEP 612]
+306:### 1.12 TypeIs vs TypeGuard: 타입 좁히기 [PEP 742, PEP 647]
+332:### 1.13 TypeVarTuple과 Unpack: 가변 길이 제네릭 [PEP 646]
+353:### 1.14 타입 매개변수 기본값 (Python 3.13+) [PEP 696]
+368:## 2. 구조적 패턴 매칭 (match/case) -- Python 3.10+
+372:### 2.1 패턴 매칭의 7가지 패턴 유형
+415:### 2.2 클래스 패턴과 \_\_match\_args\_\_
+439:### 2.3 매핑 패턴과 REST 캡처
+452:### 2.4 패턴 매칭 실전 활용: 상태 머신
+479:## 3. 컬렉션 선택과 데이터 구조
+481:### 3.1 목적에 맞는 컬렉션 선택 [단단한 파이썬]
+494:### 3.2 딕셔너리 키 접근: get과 defaultdict [파이썬코딩의기술]
+515:### 3.3 __missing__으로 키별 디폴트 값 생성 [파이썬코딩의기술]
+530:### 3.4 정렬: key 파라미터와 튜플 비교 [파이썬코딩의기술]
+540:### 3.5 성능 특화 자료구조 [파이썬코딩의기술]
+563:## 4. 함수 설계: Python 특화 기법
+565:### 4.1 가변 디폴트 인자의 함정: None 사용 [파이썬코딩의기술]
+587:### 4.2 위치 전용(/), 키워드 전용(*) 인자 [파이썬코딩의기술]
+602:### 4.3 왈러스 연산자(:=)로 반복 제거 [파이썬코딩의기술]
+622:### 4.4 None 반환 대신 예외 발생 [파이썬코딩의기술]
+643:### 4.5 언패킹 활용 [파이썬코딩의기술]
+664:## 5. 데코레이터
+666:### 5.1 functools.wraps 필수 사용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]
+689:### 5.2 데코레이터에 인자 전달 [파이썬 클린코드 2nd]
+726:### 5.3 클래스 데코레이터: 메타클래스 대안 [파이썬코딩의기술]
+745:## 6. 디스크립터
+747:### 6.1 디스크립터 프로토콜 [파이썬코딩의기술] [파이썬 클린코드 2nd]
+751:### 6.2 디스크립터 검증 프레임워크: ABC 기반 패턴 [Python 공식 Descriptor HowTo Guide]
+826:## 7. @property와 애트리뷰트 접근
+828:### 7.1 세터/게터 대신 평범한 애트리뷰트 [파이썬코딩의기술]
+858:### 7.2 __getattr__과 __getattribute__ [파이썬코딩의기술]
+880:## 8. 클래스 설계: Python 특화 패턴
+882:### 8.1 __call__로 호출 가능한 객체 [파이썬코딩의기술]
+899:### 8.2 @classmethod를 팩토리 메서드로 활용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]
+919:### 8.3 인스턴스 메서드 vs 클래스 메서드 vs 정적 메서드 [슬기로운 파이썬 트릭]
+935:### 8.4 __repr__과 __str__ [슬기로운 파이썬 트릭] [파이썬코딩의기술]
+957:### 8.5 비공개(__) 대신 보호(_) 애트리뷰트 [파이썬코딩의기술]
+975:### 8.6 __init_subclass__로 하위 클래스 검증 (3.6+) [파이썬코딩의기술]
+995:### 8.7 __init_subclass__ 고급 활용: 플러그인 레지스트리 [Fluent Python 2nd]
+1025:### 8.8 믹스인 클래스 [파이썬코딩의기술]
+1047:### 8.9 collections.abc로 커스텀 컨테이너 [파이썬코딩의기술] [단단한 파이썬]
+1066:## 9. Protocol 심화 -- 구조적 서브타이핑의 실전 활용
+1070:### 9.1 Protocol 기본 [단단한 파이썬]
+1100:### 9.2 Protocol 합성과 확장 [PEP 544]
+1124:### 9.3 Protocol에 속성과 클래스 변수 정의 [PEP 544]
+1141:### 9.4 제네릭 Protocol [PEP 544]
+1160:### 9.5 @runtime_checkable의 한계 [PEP 544]
+1180:## 10. Enum, dataclass, NamedTuple
+1182:### 10.1 Enum/StrEnum: 상수 그룹화 [단단한 파이썬] [Python 공식 문서]
+1215:### 10.2 dataclass 기본 [단단한 파이썬]
+1231:### 10.3 dataclass(slots=True): 메모리 최적화 (3.10+) [Python dataclasses 공식 문서]
+1254:### 10.4 dataclass(frozen=True)와 불변성 계층 [단단한 파이썬] [Python dataclasses 공식 문서]
+1272:### 10.5 dataclass(kw_only=True): 키워드 전용 필드 (3.10+) [Python dataclasses 공식 문서]
+1294:### 10.6 match_args와 패턴 매칭 통합 (3.10+) [Python dataclasses 공식 문서]
+1314:### 10.7 __post_init__과 InitVar 고급 활용 [Python dataclasses 공식 문서]
+1336:### 10.8 NamedTuple: 불변 레코드 [슬기로운 파이썬 트릭]
+1353:## 11. 연산자 오버로딩과 Python 데이터 모델 심화
+1357:### 11.1 연산자 오버로딩 규칙 [Fluent Python 2nd]
+1426:## 12. pydantic v2 -- 런타임 검증의 새 표준
+1432:### 12.0 pydantic v2 boundary 결정
+1444:### 12.1 v1 vs v2 주요 API 변경
+1486:### 12.2 model_validator: 모델 수준 검증
+1512:### 12.3 Strict Mode: 타입 강제 변환 제어
+1540:## 13. 이터레이터, 제너레이터, 컴프리헨션
+1542:### 13.1 이터레이터 프로토콜 [슬기로운 파이썬 트릭] [파이썬 클린코드 2nd]
+1563:### 13.2 리스트 대신 제너레이터 [파이썬코딩의기술] [파이썬 클린코드 2nd]
+1581:### 13.3 제너레이터 식 [파이썬코딩의기술]
+1595:### 13.4 yield from으로 제너레이터 합성 [파이썬코딩의기술]
+1611:### 13.5 send, throw 사용 금지 [파이썬코딩의기술]
+1615:### 13.6 itertools 활용 [파이썬코딩의기술]
+1636:### 13.7 컴프리헨션 인라이닝 (Python 3.12+) [PEP 709]
+1661:## 14. 컨텍스트 매니저와 with문
+1663:### 14.1 커스텀 컨텍스트 매니저 [파이썬코딩의기술] [슬기로운 파이썬 트릭]
+1692:### 14.2 with문 활용 패턴 [파이썬코딩의기술] [슬기로운 파이썬 트릭]
+1716:## 15. 예외 처리
+1718:### 15.1 try/except/else/finally 각 블록 활용 [파이썬코딩의기술]
+1731:### 15.2 최상위 예외 클래스 정의 [파이썬코딩의기술]
+1750:### 15.3 @deprecated로 지원 중단 표시 (3.13+) [PEP 702]
+1792:## 16. 동시성과 병렬성
+1794:### 16.1 GIL과 스레드 선택 기준 [파이썬코딩의기술]
+1817:### 16.2 asyncio.TaskGroup: 구조적 동시성 (3.11+) [PEP 654]
+1859:### 16.3 Free-Threaded Python (3.13+) [PEP 703]
+1893:### 16.4 Subinterpreters (Python 3.14+) [PEP 734]
+1909:### 16.5 ThreadPoolExecutor [파이썬코딩의기술]
+1919:### 16.6 Queue로 스레드 간 작업 조율 [파이썬코딩의기술]
+1931:## 17. 성능 프로파일링과 최적화
+1937:### 17.1 프로파일링 도구 계층
+1969:### 17.2 성능 최적화 전략 [High Performance Python 2nd]
+2010:### 17.3 Python 3.11 성능 개선: Specializing Adaptive Interpreter [PEP 659]
+2023:### 17.4 JIT 컴파일러 (Python 3.13+) [PEP 744]
+2047:## 18. f-문자열 개선과 PEG 파서
+2049:### 18.1 f-문자열 제한 해제 (PEP 701, Python 3.12+)
+2080:## 19. 파이썬다운 관용 표현
+2082:### 19.1 f-문자열 사용 [파이썬코딩의기술]
+2094:### 19.2 enumerate, zip 활용 [파이썬코딩의기술]
+2114:### 19.3 빈 컨테이너 검사 [파이썬코딩의기술]
+2126:### 19.4 bytes와 str 분리 (유니코드 샌드위치) [파이썬코딩의기술]
+2137:### 19.5 for/while 뒤 else 금지 [파이썬코딩의기술]
+2141:### 19.6 명명 규칙 [PEP 8] [슬기로운 파이썬 트릭]
+2165:## 20. 디자인 패턴 (Python 고유 구현)
+2169:### 20.1 `__init_subclass__` 레지스트리 패턴
+2192:### 20.2 Protocol 기반 디스패치
+2207:### 20.3 `@dataclass` + 팩토리 조합
+2232:## 21. Repository / Unit of Work
+2238:## 22. Ruff -- 통합 린터/포매터
+2244:### 22.1 권장 pyproject.toml 설정
+2283:### 22.2 Ruff의 핵심 규칙 카테고리
+2326:## 23. mypy/pyright 최신 기능
+2330:### 23.1 mypy strict 모드 설정
+2355:### 23.2 pyright strict 모드
+2368:### 23.3 타입 좁히기(Type Narrowing) 패턴
+2420:## 24. 테스트
+2426:## 25. 디버깅 기법 [파이썬코딩의기술]
+2428:### 25.1 repr 문자열 활용
+2442:### 25.2 pdb 대화형 디버거
+2467:## 26. 독스트링과 문서화
+2469:### 26.1 독스트링 규칙 [파이썬코딩의기술]
+2494:## 27. 정밀 연산
+2496:### 27.1 Decimal과 Fraction [파이썬코딩의기술]
+2515:## 28. Python 3.14 주요 변경사항
+2519:### 28.1 어노테이션 지연 평가 (PEP 649)
+2537:### 28.2 Template Strings (t-strings) -- PEP 750
+2573:## 부록 A: Python 3.10-3.14 핵심 변경사항 요약
+2583:## 부록 B: 타입 시스템 진화 요약
+2598:## 부록 C: 주요 매직 메서드 요약
+2620:## 출처
+2622:### PEP 문서
+2644:### Python 공식 문서
+2654:### 서적
+2664:### 도구 문서
+2671:### 커뮤니티
+
+[2m**Planning token-range extraction with sed**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'for range in 32,55 139,176 177,187 540,562 643,663 1047,1065 1160,1179 1336,1352 1794,1816 2010,2022 2496,2514; do sed -n "${range}p" dddjango/skills/implementation-python/references/final.md; done'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+### 1.2 Optional과 None 처리 [단단한 파이썬]
+
+None은 모든 변수에 할당될 수 있어서 "10억 달러짜리 실수"라 불린다. Optional 타입으로 None의 존재를 명시하라.
+
+```python
+# 나쁜 예: None 반환 가능성이 시그니처에 안 보임
+def find_user(user_id: int) -> User:
+    ...  # None을 반환할 수도 있음
+
+# 좋은 예: Optional로 None 가능성 명시
+from typing import Optional
+
+def find_user(user_id: int) -> Optional[User]:
+    ...  # None 또는 User 반환
+
+# 호출 측에서 반드시 None 체크 필요
+user = find_user(42)
+if user is not None:
+    user.activate()
+```
+
+- `Optional[X]`는 `Union[X, None]`과 동등하다. Python 3.10+에서는 `X | None`을 사용할 수 있다.
+- mypy `--strict-optional` 옵션으로 None 처리를 강제하라.
+
+### 1.7 PEP 695: 새 타입 매개변수 문법 (Python 3.12+) [PEP 695]
+
+TypeVar를 전역 스코프에 선언해야 하는 번거로움과 공변/반공변의 복잡성을 제거한다.
+
+```python
+# === Python 3.11 이전: 장황한 문법 (레거시 참고) ===
+from typing import TypeVar, Generic
+T = TypeVar('T')
+S = TypeVar('S', bound=str)    # 상한 제약
+N = TypeVar('N', int, float)   # 값 제약
+
+class Container(Generic[T]):
+    def __init__(self, value: T) -> None:
+        self.value = value
+    def get(self) -> T:
+        return self.value
+
+# === Python 3.12+: 간결한 새 문법 — 권장 ===
+class Container[T]:
+    def __init__(self, value: T) -> None:
+        self.value = value
+    def get(self) -> T:
+        return self.value
+
+# 상한 제약 (bound)
+def longest[S: str](a: S, b: S) -> S:
+    return a if len(a) >= len(b) else b
+
+# 값 제약 (constrained)
+def add[N: (int, float)](a: N, b: N) -> N:
+    return a + b
+
+# type 문으로 타입 앨리어스 선언 (지연 평가)
+type Vector[T] = list[T]
+type Matrix[T] = list[Vector[T]]
+type RecursiveList[T] = T | list['RecursiveList[T]']  # 순환 참조 가능
+```
+
+### 1.8 컬렉션 타입 어노테이션 [단단한 파이썬]
+
+```python
+# 나쁜 예: 컬렉션 내부 타입 불명
+def process(items: list) -> dict: ...
+
+# 좋은 예: 컬렉션 내부 타입 명시 (3.9+ 내장 타입 사용)
+AuthorCount = dict[str, int]
+def process(items: list[Cookbook]) -> AuthorCount: ...
+```
+
+### 3.5 성능 특화 자료구조 [파이썬코딩의기술]
+
+```python
+from collections import deque
+from bisect import bisect_left
+from heapq import heappush, heappop
+
+# deque: 양방향 O(1) - FIFO 큐에 list 대신 사용
+queue = deque()
+queue.append(item)       # 오른쪽 삽입
+queue.popleft()          # 왼쪽 제거 (list.pop(0)은 O(n))
+
+# bisect: 정렬된 시퀀스에서 이진 검색
+index = bisect_left(sorted_data, target)
+
+# heapq: 우선순위 큐 - O(log n) 삽입/삭제
+heap = []
+heappush(heap, (priority, item))
+_, item = heappop(heap)
+```
+
+---
+
+### 4.5 언패킹 활용 [파이썬코딩의기술]
+
+```python
+# 인덱스 대신 언패킹
+first, second = item
+
+# 스왑
+a[i-1], a[i] = a[i], a[i-1]
+
+# 별표 식(starred expression)
+oldest, second, *others = sorted_ages
+
+# 반환값 4개 이상이면 클래스/namedtuple 사용
+# 나쁜 예
+min, max, avg, med, cnt = get_stats(lengths)
+# 좋은 예
+stats = get_stats(lengths)  # Stats 객체 반환
+```
+
+---
+
+### 8.9 collections.abc로 커스텀 컨테이너 [파이썬코딩의기술] [단단한 파이썬]
+
+커스텀 컨테이너를 만들 때 `collections.abc`를 상속하면 필수 메서드 누락을 방지한다.
+
+```python
+from collections.abc import Sequence
+
+class BadType(Sequence):
+    pass  # TypeError: __getitem__, __len__ 미구현
+
+# dict 오버라이딩은 dict 대신 UserDict 사용
+from collections import UserDict
+class MyDict(UserDict):
+    def __getitem__(self, key):
+        ...  # 안전하게 오버라이딩 가능
+```
+
+---
+
+### 9.5 @runtime_checkable의 한계 [PEP 544]
+
+```python
+@runtime_checkable
+class HasClose(Protocol):
+    def close(self) -> None: ...
+
+class FakeCloser:
+    def close(self, force: bool = False) -> str:
+        return "closed"
+
+# 주의: isinstance는 메서드 시그니처를 검사하지 않음
+assert isinstance(FakeCloser(), HasClose)  # True! 시그니처 불일치인데도 통과
+
+# 따라서 runtime_checkable은 "이 메서드가 존재하는가"만 확인
+# 정확한 타입 검증은 반드시 정적 타입 체커(mypy/pyright)에 의존하라
+```
+
+---
+
+### 10.8 NamedTuple: 불변 레코드 [슬기로운 파이썬 트릭]
+
+```python
+# typing 버전 — 권장
+from typing import NamedTuple
+class Car(NamedTuple):
+    color: str
+    mileage: float
+
+car = Car('red', 3812)
+car.color       # 이름으로 접근
+car[0]          # 인덱스로도 접근
+car._asdict()   # dict 변환
+```
+
+---
+
+### 16.1 GIL과 스레드 선택 기준 [파이썬코딩의기술]
+
+- **GIL**: CPython에서 한 번에 하나의 스레드만 바이트코드 실행.
+- **스레드 사용**: 블로킹 I/O 시 (파일, 네트워크). GIL은 시스템 콜 전에 해제됨.
+- **CPU 병렬화**: 기본적으로 `multiprocessing`이나 C 확장 사용. Free-threaded 빌드(3.13+)에서는 스레드도 가능.
+
+```python
+# 블로킹 I/O -> 스레드 OK
+from threading import Thread
+threads = [Thread(target=slow_io_call) for _ in range(5)]
+for t in threads: t.start()
+
+# 스레드 간 데이터 경합 -> Lock 필수
+from threading import Lock
+class LockingCounter:
+    def __init__(self):
+        self.lock = Lock()
+        self.count = 0
+    def increment(self, offset):
+        with self.lock:
+            self.count += offset
+```
+
+### 17.3 Python 3.11 성능 개선: Specializing Adaptive Interpreter [PEP 659]
+
+Python 3.11은 3.10 대비 평균 25%, 최대 60% 빠르다. 핵심 메커니즘은 **특화 적응 인터프리터**이다.
+
+```python
+# 개발자가 할 일: 타입을 일관되게 유지하라
+# 나쁜 예: 혼합 타입 리스트 (특화 불가)
+mixed = [1, 2.0, 3, 4.0]
+
+# 좋은 예: 단일 타입 리스트 (특화 가능)
+ints = [1, 2, 3, 4]
+```
+
+### 27.1 Decimal과 Fraction [파이썬코딩의기술]
+
+```python
+from decimal import Decimal, ROUND_UP
+
+# 나쁜 예: IEEE 754 부동소수점 오차
+rate = 1.45
+cost = rate * 222 / 60  # 5.364999999...
+
+# 좋은 예: Decimal (str 생성자 필수)
+rate = Decimal('1.45')
+cost = rate * Decimal('222') / Decimal('60')
+
+# 반올림
+rounded = cost.quantize(Decimal('0.01'), rounding=ROUND_UP)
+```
+
+---
+
+
+[2m**Evaluating prose versus fenced comment exclusions**
+**Planning reconciliation of P0 and T1 counts**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg -n 'implementation-python-final|§1\\.2|§1\\.7|§1\\.8|§3\\.5|§4\\.5|§8\\.9|§9\\.5|§10\\.8|§16\\.1|§17\\.3|§27\\.1' workspace/design/2026-08-19-ontology-t1-census -g '*.tsv' -g '*.md' | head -n 300"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+workspace/design/2026-08-19-ontology-t1-census/E01-recon.md:33:| §1.2 전략 설계 우선 원칙 | s004-1.2 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E01-recon.md:47:| §3.5 도메인 서비스 | s022-3.5 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E01-recon.md:56:| §4.5 독립형 클래스 | s033-4.5 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:5:implementation-python-skill	s004	REF	none	11	Y:implementation-python-final/다수(§1–§23)	SAME	final 본문 규범 요약 사본; «ABC(§9)»·«제너레이터(§13.2)»·«with문(§14)»은 본문에 규범 없음(P0 특이2 역전)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:7:implementation-python-final	s001	REF	none	2	Y:implementation-python-skill/s003	SAME	서문 정책 2(cleancode 위임+3.10+ 적극 채택)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:8:implementation-python-final	s002-1	NAR	none	0	N	SAME	h2 헤더만
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:9:implementation-python-final	s003-1.1	NAR	code	0	N	SAME	설명·예제 전용
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:10:implementation-python-final	s004-1.2	REF	code	2	Y:implementation-python-skill/s004	SAME	Optional 명시+--strict-optional 강제; SKILL «X|None»과 강도 불일치(P0 특이3); 펜스 주석 «반드시 None 체크»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:11:implementation-python-final	s005-1.3	REF	code	1	N	SAME	합 타입으로 비정상 상태 배제하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:12:implementation-python-final	s006-1.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:13:implementation-python-final	s007-1.5	REF	code	1	N	SAME	TypedDict 사용하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:14:implementation-python-final	s008-1.6	NAR	code	0	N	SAME	펜스 주석 «권장» 있음(P0는 1.7측만 계상)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:15:implementation-python-final	s009-1.7	NAR	code	0	N	SAME	펜스 주석 «권장»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:16:implementation-python-final	s010-1.8	NAR	code	0	N	SAME	펜스 주석 «내부 타입 명시»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:17:implementation-python-final	s011-1.9	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:18:implementation-python-final	s012-1.10	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:19:implementation-python-final	s013-1.11	REF	code	1	N	SAME	Concatenate 용처 지정 서술 — 애매→포함(P0 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:20:implementation-python-final	s014-1.12	REF	code	2	N	SAME	TypeIs 사용하라+TypeGuard는 특수 경우만
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:21:implementation-python-final	s015-1.13	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:22:implementation-python-final	s016-1.14	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:23:implementation-python-final	s017-2	NAR	none	0	N	SAME	h2 헤더+출처 인용
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:24:implementation-python-final	s018-2.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:25:implementation-python-final	s019-2.2	NAR	code	0	N	SAME	isinstance 체인 전환은 나쁜/좋은 예 라벨로만(P0 미계상 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:26:implementation-python-final	s020-2.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:27:implementation-python-final	s021-2.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:28:implementation-python-final	s022-3	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:29:implementation-python-final	s023-3.1	NAR	table	0	N	SAME	컬렉션 선택 기준 표=설명 성격(P0 미계상 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:30:implementation-python-final	s024-3.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:31:implementation-python-final	s025-3.3	REF	code	1	N	SAME	dict 상속+__missing__ 구현하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:32:implementation-python-final	s026-3.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:33:implementation-python-final	s027-3.5	NAR	code	0	N	SAME	펜스 주석 «FIFO 큐에 list 대신 deque»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:34:implementation-python-final	s028-4	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:35:implementation-python-final	s029-4.1	NAR	code	0	N	SAME	가변 디폴트 금지는 헤딩·예제로만(P0 미계상 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:36:implementation-python-final	s030-4.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:37:implementation-python-final	s031-4.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:38:implementation-python-final	s032-4.4	REF	code	1	Y:전역규칙#453·#454	SAME	dddjango 경계 단서 blockquote — OHS·승인된 failed-Result 경로는 raise 아닌 결과 분기
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:39:implementation-python-final	s033-4.5	NAR	code	0	N	SAME	펜스 주석 «반환값 4개 이상이면 클래스/namedtuple»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:40:implementation-python-final	s034-5	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:41:implementation-python-final	s035-5.1	REF	code	1	N	SAME	@wraps로 보존하라(헤딩에 «필수»)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:42:implementation-python-final	s036-5.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:43:implementation-python-final	s037-5.3	REF	code	1	N	SAME	메타클래스보다 클래스 데코레이터 사용하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:44:implementation-python-final	s038-6	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:45:implementation-python-final	s039-6.1	REF	none	1	Y:implementation-python-skill/s004	SAME	재사용 애트리뷰트 로직 용처 지정 — 애매→포함(P0 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:46:implementation-python-final	s040-6.2	REF	code	2	N	SAME	의사결정 #5(External 채택)+레거시 참고 권장문(절 내 재진술)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:47:implementation-python-final	s041-7	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:48:implementation-python-final	s042-7.1	REF	code	1	Y:implementation-python-skill/s004	SAME	평범한 애트리뷰트로 시작→필요 시 @property 전환하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:49:implementation-python-final	s043-7.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:50:implementation-python-final	s044-8	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:51:implementation-python-final	s045-8.1	REF	code	1	N	SAME	상태 유지 훅은 클로저 대신 __call__ 클래스
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:52:implementation-python-final	s046-8.2	REF	code	1	N	SAME	대체 생성자는 @classmethod
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:53:implementation-python-final	s047-8.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:54:implementation-python-final	s048-8.4	REF	code	1	N	SAME	모든 클래스에 최소 __repr__ 구현하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:55:implementation-python-final	s049-8.5	REF	code	1	N	SAME	__는 하위 클래스 충돌 방지에만
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:56:implementation-python-final	s050-8.6	REF	code	1	N	SAME	메타클래스 대신 __init_subclass__
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:57:implementation-python-final	s051-8.7	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:58:implementation-python-final	s052-8.8	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:59:implementation-python-final	s053-8.9	REF	code	1	N	SAME	collections.abc 상속 조건 서술 애매→포함(P0 승계); 펜스 주석 «dict 대신 UserDict»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:60:implementation-python-final	s054-9	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:61:implementation-python-final	s055-9.1	NAR	code	0	N	SAME	타입 체크 4단계 목록=설명
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:62:implementation-python-final	s056-9.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:63:implementation-python-final	s057-9.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:64:implementation-python-final	s058-9.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:65:implementation-python-final	s059-9.5	NAR	code	0	N	SAME	펜스 주석 «반드시 정적 타입 체커에 의존하라»(P0 +1) T1 제외 — T1 기준 §9 규범 0
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:66:implementation-python-final	s060-10	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:67:implementation-python-final	s061-10.1	REF	code	14	Y:discipline-cleancode/§2.14	SAME	P0 항 단위 계수 14 승계(다항 문장 분할); cleancode §2.14 요지 재진술+소유 지정; 고유 규범 밀집(P0 특이5)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:68:implementation-python-final	s062-10.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:69:implementation-python-final	s063-10.3	REF	code	1	N	SAME	의사결정 #7 slots=True 권장; 주의문은 설명
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:70:implementation-python-final	s064-10.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:71:implementation-python-final	s065-10.5	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:72:implementation-python-final	s066-10.6	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:73:implementation-python-final	s067-10.7	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:74:implementation-python-final	s068-10.8	NAR	code	0	N	SAME	펜스 주석 «typing 버전 — 권장»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:75:implementation-python-final	s069-11	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:76:implementation-python-final	s070-11.1	REF	code	3	N	SAME	핵심 규칙 bullet 3(NotImplemented 반환·__hash__ 동반 정의·@는 __matmul__)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:77:implementation-python-final	s071-12	REF	none	1	N	SAME	h2 헤더 blockquote 의사결정 #1(pydantic v2 API 사용)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:78:implementation-python-final	s072-12.0	REF	none	11	Y:implementation-python-skill/s004	SAME	dddjango 고유 boundary 결정 밀집 절(P0 특이5) — 경계 전용·도메인 진리값 금지 등 11
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:79:implementation-python-final	s073-12.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:80:implementation-python-final	s074-12.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:81:implementation-python-final	s075-12.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:82:implementation-python-final	s076-13	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:83:implementation-python-final	s077-13.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:84:implementation-python-final	s078-13.2	NAR	code	0	N	SAME	예제로만 표현 — SKILL 요약이 더 명시적(P0 특이2)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:85:implementation-python-final	s079-13.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:86:implementation-python-final	s080-13.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:87:implementation-python-final	s081-13.5	REF	none	1	Y:implementation-python-skill/s004	SAME	금지는 헤딩·본문은 대안 지시 1(이터레이터 입력 또는 상태 클래스)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:88:implementation-python-final	s082-13.6	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:89:implementation-python-final	s083-13.7	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:90:implementation-python-final	s084-14	NAR	none	0	N	SAME	규범 0 — SKILL «with문 리소스 해제» 규범의 본문 부재(P0 특이2)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:91:implementation-python-final	s085-14.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:92:implementation-python-final	s086-14.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:93:implementation-python-final	s087-15	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:94:implementation-python-final	s088-15.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:95:implementation-python-final	s089-15.2	REF	code	1	Y:implementation-python-skill/s004	SAME	API 모듈 최상위 Exception 정의하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:96:implementation-python-final	s090-15.3	REF	code	2	N	SAME	의사결정 #4(@deprecated)+레거시 조건 지시(3.13 미만 warnings.warn)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:97:implementation-python-final	s091-16	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:98:implementation-python-final	s092-16.1	REF	code	2	Y:implementation-python-skill/s004	SAME	스레드=블로킹 I/O·CPU=multiprocessing; 펜스 주석 «Lock 필수»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:99:implementation-python-final	s093-16.2	REF	code	1	Y:implementation-python-skill/s004	SAME	의사결정 #3(TaskGroup 기본); 레거시 참고는 설명
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:100:implementation-python-final	s094-16.3	REF	code	1	N	SAME	의사결정 #2(Free-threading 반영); 현재 상태 목록은 설명
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:101:implementation-python-final	s095-16.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:102:implementation-python-final	s096-16.5	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:103:implementation-python-final	s097-16.6	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:104:implementation-python-final	s098-17	REF	none	1	N	SAME	h2 헤더 blockquote 의사결정 #6(3단계 프로파일링 체계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:105:implementation-python-final	s099-17.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:106:implementation-python-final	s100-17.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:107:implementation-python-final	s101-17.3	NAR	code	0	N	SAME	펜스 주석 «타입을 일관되게 유지하라»(P0 +1) T1 제외
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:108:implementation-python-final	s102-17.4	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:109:implementation-python-final	s103-18	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:110:implementation-python-final	s104-18.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:111:implementation-python-final	s105-19	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:112:implementation-python-final	s106-19.1	NAR	code	0	N	SAME	f-문자열 규범은 나쁜/좋은 예로만
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:113:implementation-python-final	s107-19.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:114:implementation-python-final	s108-19.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:115:implementation-python-final	s109-19.4	REF	code	1	N	SAME	인코딩/디코딩은 가장 먼 경계에서 수행하라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:116:implementation-python-final	s110-19.5	REF	none	1	N	SAME	루프 뒤 else 사용하지 마라
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:117:implementation-python-final	s111-19.6	REF	table	2	N	SAME	명명 표 2개=표 단위 각 1 규범(P0 방침 승계 — 행 단위 아님)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:118:implementation-python-final	s112-20	REF	none	1	Y:implementation-python-final/s001	SAME	cleancode 위임 재진술(서문·SKILL과 3중)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:119:implementation-python-final	s113-20.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:120:implementation-python-final	s114-20.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:121:implementation-python-final	s115-20.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:122:implementation-python-final	s116-21	REF	none	3	Y:implementation-python-skill/s003	SAME	위임 스텁 — architecture-ddd(§5·§6)·implementation-django(§16) 소유 지정+본 문서 범위; SKILL 표 미등재(P0 특이4·6)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:123:implementation-python-final	s117-22	NAR	none	0	N	SAME	도구 소개 설명
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:124:implementation-python-final	s118-22.1	REF	code	1	N	SAME	권장 pyproject.toml 설정 블록=규범 1단위(P0 방침 승계 — 예제 아닌 구속 설정)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:125:implementation-python-final	s119-22.2	NAR	code	0	N	SAME	규칙 카테고리 예시
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:126:implementation-python-final	s120-23	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:127:implementation-python-final	s121-23.1	REF	code	1	Y:implementation-python-skill/s004	SAME	mypy strict 설정 블록=규범 1단위(P0 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:128:implementation-python-final	s122-23.2	REF	code	1	Y:implementation-python-skill/s004	SAME	pyright strict 설정 블록=규범 1단위(P0 승계)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:129:implementation-python-final	s123-23.3	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:130:implementation-python-final	s124-24	REF	none	1	Y:implementation-python-skill/s003	SAME	위임 스텁(implementation-test 참조) — §25 존재와 긴장(P0 특이6); SKILL 표 미등재
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:131:implementation-python-final	s125-25	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:132:implementation-python-final	s126-25.1	REF	code	1	N	SAME	print 디버깅 시 repr 호출해야 한다
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:133:implementation-python-final	s127-25.2	NAR	code,table	0	N	SAME	pdb 명령어 표=설명성
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:134:implementation-python-final	s128-26	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:135:implementation-python-final	s129-26.1	REF	code	6	N	SAME	대상별 독스트링 형식 4+중복 타입 서술 삭제+어노테이션 항상 유지(houserules 소유 지목)
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:136:implementation-python-final	s130-27	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:137:implementation-python-final	s131-27.1	NAR	code	0	N	SAME	펜스 주석 «Decimal str 생성자 필수»(P0 +1) T1 제외 — T1 기준 §27 규범 0
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:138:implementation-python-final	s132-28	NAR	none	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:139:implementation-python-final	s133-28.1	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:140:implementation-python-final	s134-28.2	NAR	code	0	N	SAME	-
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:141:implementation-python-final	s135	NAR	table	0	N	SAME	치트시트 표
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:142:implementation-python-final	s136	NAR	table	0	N	SAME	치트시트 표
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:143:implementation-python-final	s137	NAR	table	0	N	SAME	치트시트 표
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:144:implementation-python-final	s138	NAR	none	0	N	SAME	h2 헤더만
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:145:implementation-python-final	s139	NAR	none	0	N	SAME	링크 목록
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:146:implementation-python-final	s140	NAR	none	0	N	SAME	링크 목록
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:147:implementation-python-final	s141	NAR	none	0	N	SAME	서적 목록
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:148:implementation-python-final	s142	NAR	none	0	N	SAME	링크 목록
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv:149:implementation-python-final	s143	NAR	none	0	N	SAME	링크 목록
+workspace/design/2026-08-19-ontology-t1-census/E06-recon.md:31:| §1.2 TDD를 해야 하는 이유: 용기 | discipline-tdd-final/s004-1.2 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E06-recon.md:42:| §4.5 세 가지 테스트 스타일 | discipline-tdd-final/s018-4.5 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E06-recon.md:81:| §16.1 TDD와 BDD의 관계 | discipline-tdd-final/s064-16.1 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E06-recon.md:84:| §17.3 TDD가 AI 코딩에서 더 중요한 이유 | discipline-tdd-final/s068-17.3 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E07-recon.md:30:| §1.2 다른 source reference로 위임할 책임 | final/s005-1.2 | 1:1 |
+workspace/design/2026-08-19-ontology-t1-census/E07-recon.md:68:- 표본 재검증: §1.2=4(위임 4문장)·§11=6(불릿 6)·§9.2=3·§10=4를 원문에서 재계수해 P0 값과 일치 확인.
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv:92:implementation-django-final	s086-17.3	NAR	none	0	N	SAME	절 헤딩만. P0 §17.3(규범 2)은 h4 셋 접은 계수 — s087에 분배
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv:93:implementation-django-final	s087	REF	code	2	N	SAME	⚠ bullet: BC 경계 ORM FK 금지 — 값 참조로(architecture-ddd §3.3 규칙3). 기능 절에 경계 규범 끼임(P0 §17.3 분배 2)
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:215:implementation-python-final	E03	s001	1	1		Python 언어 특화 가이드	1	9	9	a8dc8a615b0f3f7b1d183451d82618983c21d1e1000a8f9c629f801928562bbb	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:216:implementation-python-final	E03	s002-1	2	2	1	1. 타입 힌트와 타입 시스템	10	11	2	cfcc15f2c90e4a0726779a9deba64190c268e441f095b940c924dee78ffc19ee	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:217:implementation-python-final	E03	s003-1.1	3	3	1.1	1.1 타입 어노테이션 기본 [단단한 파이썬] [파이썬코딩의기술]	12	31	20	8421d688fa58de78b41abdcb09ac5a592dbb954e2ec3f09e48751f51c0a90551	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:218:implementation-python-final	E03	s004-1.2	4	3	1.2	1.2 Optional과 None 처리 [단단한 파이썬]	32	55	24	80951eb40d3c21b62c5cbdb0cd90d31fb04526282afa900472d2e3dd93a601c2	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:219:implementation-python-final	E03	s005-1.3	5	3	1.3	1.3 Union과 합 타입으로 상태 공간 제어 [단단한 파이썬]	56	82	27	e21853f05333fae9f9e7326cceb79f4095bd569388b7fa4dab305362386b507d	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:220:implementation-python-final	E03	s006-1.4	6	3	1.4	1.4 Literal, Final, NewType [단단한 파이썬]	83	102	20	b32b2be7686cb9179462ca5343bdd33cee986301f52156f68591fb467c424734	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:221:implementation-python-final	E03	s007-1.5	7	3	1.5	1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]	103	121	19	e11056890dcc90cb3dc3b896a92c2ae6a189a941b9bb6f76d3f0d96b8d31be76	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:222:implementation-python-final	E03	s008-1.6	8	3	1.6	1.6 제네릭과 TypeVar [단단한 파이썬] [PEP 695]	122	138	17	b09392fe71e48371dae668fdc4042e3e635552eb676ab28d51cffcc5cef058df	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:223:implementation-python-final	E03	s009-1.7	9	3	1.7	1.7 PEP 695: 새 타입 매개변수 문법 (Python 3.12+) [PEP 695]	139	176	38	b0b754135a1a769d2c3dc545f37662921e4f0ab7a68d5e1275ff02cfb3f05e2b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:224:implementation-python-final	E03	s010-1.8	10	3	1.8	1.8 컬렉션 타입 어노테이션 [단단한 파이썬]	177	187	11	ef2875e9507ee5a4c7c169d5d212a2748fcf986b5fc1cce0c7294846d89782a5	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:225:implementation-python-final	E03	s011-1.9	11	3	1.9	1.9 @override 데코레이터 (3.12+) [PEP 698]	188	237	50	f1e04b147aef32f43763f98a5960868f315518b45557b06847a4fe799fed43b7	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:226:implementation-python-final	E03	s012-1.10	12	3	1.10	1.10 ParamSpec: 데코레이터 시그니처 보존 [PEP 612]	238	276	39	9950ea97344e3a1af7a3ee31667fbeb073fdf19b6a94b811f7b91be5a12e3457	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:227:implementation-python-final	E03	s013-1.11	13	3	1.11	1.11 Concatenate: 매개변수 추가/제거 [PEP 612]	277	305	29	1783331a7171324eedb0ddc3bb1b2c94bcedde203bea1a102ce3f593cc1c5199	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:228:implementation-python-final	E03	s014-1.12	14	3	1.12	1.12 TypeIs vs TypeGuard: 타입 좁히기 [PEP 742, PEP 647]	306	331	26	5033bb420ce99590ad9a659132d204edde85e9dc1498fac2c7e49d6efba49641	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:229:implementation-python-final	E03	s015-1.13	15	3	1.13	1.13 TypeVarTuple과 Unpack: 가변 길이 제네릭 [PEP 646]	332	352	21	0a7c3b15d59b13f576befc549911b67196c8bc115201ae3ca09802bb36626ce1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:230:implementation-python-final	E03	s016-1.14	16	3	1.14	1.14 타입 매개변수 기본값 (Python 3.13+) [PEP 696]	353	367	15	f8f00a8459668da749e42173544e15b0ddd0c6d0099bf339af723cd6349610dc	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:231:implementation-python-final	E03	s017-2	17	2	2	2. 구조적 패턴 매칭 (match/case) -- Python 3.10+	368	371	4	21ffaf82c6d6bdd5888357f58e256dca90c67b9e667cbe1547afc984fa3b6cc0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:232:implementation-python-final	E03	s018-2.1	18	3	2.1	2.1 패턴 매칭의 7가지 패턴 유형	372	414	43	bed0b7c2b22624ca2fe3c91cc7f01d6ea9878eba7d92663d5c67513eae586174	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:233:implementation-python-final	E03	s019-2.2	19	3	2.2	2.2 클래스 패턴과 \_\_match\_args\_\_	415	438	24	3537603670e46fea7dc63eb8a198c88ac5c8cbf361f697fd21aa73ad570e1a45	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:234:implementation-python-final	E03	s020-2.3	20	3	2.3	2.3 매핑 패턴과 REST 캡처	439	451	13	834fcdaa70b852fc620020cd2a2d87bf89e7eda427ecd457a10e5e270a42abfa	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:235:implementation-python-final	E03	s021-2.4	21	3	2.4	2.4 패턴 매칭 실전 활용: 상태 머신	452	478	27	0162399e00e3ef4a3de3ef824bc4dfc56cf2bf0c18915aeca857328269da9060	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:236:implementation-python-final	E03	s022-3	22	2	3	3. 컬렉션 선택과 데이터 구조	479	480	2	462184e82f6ddb5e0f4cb6e66b082992b1bb605cc55c534d1cada6b2d5b548b5	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:237:implementation-python-final	E03	s023-3.1	23	3	3.1	3.1 목적에 맞는 컬렉션 선택 [단단한 파이썬]	481	493	13	681ad78e71afc9f3b3382f2a0f7b2d12872940c4436d8f24799e6571921bc130	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:238:implementation-python-final	E03	s024-3.2	24	3	3.2	3.2 딕셔너리 키 접근: get과 defaultdict [파이썬코딩의기술]	494	514	21	76769d1951e82ee4f6a558e070633730ffa67c545b9e727edc537a8e89c6decf	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:239:implementation-python-final	E03	s025-3.3	25	3	3.3	3.3 __missing__으로 키별 디폴트 값 생성 [파이썬코딩의기술]	515	529	15	5effcdc1bd03f9c887006dd890f6f2d0c6675c891f99e7e0e242a1682f270a55	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:240:implementation-python-final	E03	s026-3.4	26	3	3.4	3.4 정렬: key 파라미터와 튜플 비교 [파이썬코딩의기술]	530	539	10	c8bd50fe76504ed58845ae83bd388fbdc1a5f0a63ab342ba8d4600a7a620904e	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:241:implementation-python-final	E03	s027-3.5	27	3	3.5	3.5 성능 특화 자료구조 [파이썬코딩의기술]	540	562	23	cef3f67611341249bdcb561afdc4ed617e1a5b8dfcd58b3a853060d1adf4d818	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:242:implementation-python-final	E03	s028-4	28	2	4	4. 함수 설계: Python 특화 기법	563	564	2	7c9333d7c46466fa6503fd29a07ed04e76db7c853546b00d80cc403d748693fe	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:243:implementation-python-final	E03	s029-4.1	29	3	4.1	4.1 가변 디폴트 인자의 함정: None 사용 [파이썬코딩의기술]	565	586	22	06e2b58ace49e663dafe816c3bb7627cfd24ac71c4c43470a93f383a76a262f0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:244:implementation-python-final	E03	s030-4.2	30	3	4.2	4.2 위치 전용(/), 키워드 전용(*) 인자 [파이썬코딩의기술]	587	601	15	3bc8590b5d411d08d63c750d3172ddfdbbbd3a267d138ac027364246232f31b3	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:245:implementation-python-final	E03	s031-4.3	31	3	4.3	4.3 왈러스 연산자(:=)로 반복 제거 [파이썬코딩의기술]	602	621	20	2f20d086e47380d67710996c636fd74ba807d11a5776e8f8cf69bedb027ffd2d	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:246:implementation-python-final	E03	s032-4.4	32	3	4.4	4.4 None 반환 대신 예외 발생 [파이썬코딩의기술]	622	642	21	4d4b3115daa25d25da70d1a9d15cc4937371d579b0d4a32abf78670707285d9e	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:247:implementation-python-final	E03	s033-4.5	33	3	4.5	4.5 언패킹 활용 [파이썬코딩의기술]	643	663	21	3c81b1c3d6eaaf0f7143266c026e64c57bf86ff3eab3e6dd65b4e42cca7b2d2b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:248:implementation-python-final	E03	s034-5	34	2	5	5. 데코레이터	664	665	2	88ff344e8495386b376ed34ee96eb8daf62c07d63ce8f9fe04ea03a452f54d0b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:249:implementation-python-final	E03	s035-5.1	35	3	5.1	5.1 functools.wraps 필수 사용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	666	688	23	806bb6a560ee62dcd6245305441334f3a06de9f6a3078ac27058cc64ca810641	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:250:implementation-python-final	E03	s036-5.2	36	3	5.2	5.2 데코레이터에 인자 전달 [파이썬 클린코드 2nd]	689	725	37	f41e2bfa578eb9dd368ccbc2d86bf5c9555374fd86a437998715ff409104bfd9	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:251:implementation-python-final	E03	s037-5.3	37	3	5.3	5.3 클래스 데코레이터: 메타클래스 대안 [파이썬코딩의기술]	726	744	19	6e2dda919e86bc467379bb8578c182af6bc4b3ec4f1a7492ec83cf8342bf7d0d	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:252:implementation-python-final	E03	s038-6	38	2	6	6. 디스크립터	745	746	2	195eb2efd781247b876f2b90ef407413b775727dc219a3a68043ba4448fa6a8b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:253:implementation-python-final	E03	s039-6.1	39	3	6.1	6.1 디스크립터 프로토콜 [파이썬코딩의기술] [파이썬 클린코드 2nd]	747	750	4	96f892336187c00485a97125b973ebfe885c51f3952a2b14dc2ba8d487cc1501	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:254:implementation-python-final	E03	s040-6.2	40	3	6.2	6.2 디스크립터 검증 프레임워크: ABC 기반 패턴 [Python 공식 Descriptor HowTo Guide]	751	825	75	666e507e5d0a233ffdf8ebceb422ab8a0435d7dfd57c9a20bfd6a30736566b5a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:255:implementation-python-final	E03	s041-7	41	2	7	7. @property와 애트리뷰트 접근	826	827	2	42a1a7124343eb302ea44510c55059df4db5936ff30fad0cb3f48e5019c54606	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:256:implementation-python-final	E03	s042-7.1	42	3	7.1	7.1 세터/게터 대신 평범한 애트리뷰트 [파이썬코딩의기술]	828	857	30	f45aa99a7b380c46856168fe26a13c09047f697d43779855669c6242ab2c9eb7	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:257:implementation-python-final	E03	s043-7.2	43	3	7.2	7.2 __getattr__과 __getattribute__ [파이썬코딩의기술]	858	879	22	b5d6a755a7d1c2a32cb0ca142631b7c6002daed3714e4336ed784b11026973c8	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:258:implementation-python-final	E03	s044-8	44	2	8	8. 클래스 설계: Python 특화 패턴	880	881	2	bbe4484365166549a4ffb4bbd8499e6874df3d6739afedc9c7a0c8108c98feb6	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:259:implementation-python-final	E03	s045-8.1	45	3	8.1	8.1 __call__로 호출 가능한 객체 [파이썬코딩의기술]	882	898	17	fdf423e3fcab53f382bf7e8ad478efac81cbc71af363591d792991a06ce16886	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:260:implementation-python-final	E03	s046-8.2	46	3	8.2	8.2 @classmethod를 팩토리 메서드로 활용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	899	918	20	00f7b3aef6607ccc6ae4aa36b2559ea55c233d3ae52c65ecae8f0f887b2474f3	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:261:implementation-python-final	E03	s047-8.3	47	3	8.3	8.3 인스턴스 메서드 vs 클래스 메서드 vs 정적 메서드 [슬기로운 파이썬 트릭]	919	934	16	69126520764be8e70ea685dc9e60c8371c3c346061265418a528ea984643758b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:262:implementation-python-final	E03	s048-8.4	48	3	8.4	8.4 __repr__과 __str__ [슬기로운 파이썬 트릭] [파이썬코딩의기술]	935	956	22	3660089413995be87ceb2eeaa99d5f3d1d6794787afac00004dd2bb7ad2bcc7e	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:263:implementation-python-final	E03	s049-8.5	49	3	8.5	8.5 비공개(__) 대신 보호(_) 애트리뷰트 [파이썬코딩의기술]	957	974	18	fd74fc664662ca8edaa1ee4b9f9ae599531abac920d88278219079dd0198b9e0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:264:implementation-python-final	E03	s050-8.6	50	3	8.6	8.6 __init_subclass__로 하위 클래스 검증 (3.6+) [파이썬코딩의기술]	975	994	20	fa3d29b335915afa6da812629cf9eb02d249198d82ad68e2d55d9ad5bb049ab4	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:265:implementation-python-final	E03	s051-8.7	51	3	8.7	8.7 __init_subclass__ 고급 활용: 플러그인 레지스트리 [Fluent Python 2nd]	995	1024	30	2645171190fa29d7c2020d97281653b87ae119ece03465b65b3a0b8e71e4a938	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:266:implementation-python-final	E03	s052-8.8	52	3	8.8	8.8 믹스인 클래스 [파이썬코딩의기술]	1025	1046	22	a7c0a4a1906a6cc06797a88976fbf8cbb9d272893f70ebf89e7ec3c06dea1685	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:267:implementation-python-final	E03	s053-8.9	53	3	8.9	8.9 collections.abc로 커스텀 컨테이너 [파이썬코딩의기술] [단단한 파이썬]	1047	1065	19	b8279165c20f58e90213efaa040a1d41cd3a7e8a7b6f3c0abfe399db65c19887	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:268:implementation-python-final	E03	s054-9	54	2	9	9. Protocol 심화 -- 구조적 서브타이핑의 실전 활용	1066	1069	4	bbee8f78f75cd97866ea3fee79136a0baa42355a7af8e0640952b74cf81a2f00	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:269:implementation-python-final	E03	s055-9.1	55	3	9.1	9.1 Protocol 기본 [단단한 파이썬]	1070	1099	30	041437f712b81ee88f3aa92f93cd15b50ed78899b8bface41e3103d47a8cb6a8	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:270:implementation-python-final	E03	s056-9.2	56	3	9.2	9.2 Protocol 합성과 확장 [PEP 544]	1100	1123	24	9f8703ce9ff905c24ea4da3b85fea3a7d31ce203dc343a21940d144a917e8fe0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:271:implementation-python-final	E03	s057-9.3	57	3	9.3	9.3 Protocol에 속성과 클래스 변수 정의 [PEP 544]	1124	1140	17	d2184e6da425291f1ad47bf69fae258d4796c4daa056c67ca2a84e387f0cacf5	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:272:implementation-python-final	E03	s058-9.4	58	3	9.4	9.4 제네릭 Protocol [PEP 544]	1141	1159	19	a0a1960196959983778e631891d55d2fb143ce59f9f4ee7a2b6ca854b647464e	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:273:implementation-python-final	E03	s059-9.5	59	3	9.5	9.5 @runtime_checkable의 한계 [PEP 544]	1160	1179	20	d860a273f61cc067e35b830ca39858c92e5bb85f4e914be31dd76f968fdff940	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:274:implementation-python-final	E03	s060-10	60	2	10	10. Enum, dataclass, NamedTuple	1180	1181	2	bfea970ad7965f13caf3a58e690e6704ebf37581e495952966bcc606d5ec9615	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:275:implementation-python-final	E03	s061-10.1	61	3	10.1	10.1 Enum/StrEnum: 상수 그룹화 [단단한 파이썬] [Python 공식 문서]	1182	1214	33	3fb50a8613cb2d1e7824eae28bf9e3b4cd853c8244455711d8f5a5af88015def	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:276:implementation-python-final	E03	s062-10.2	62	3	10.2	10.2 dataclass 기본 [단단한 파이썬]	1215	1230	16	4f6284b0660e44cdf879dd3aa8a3331fbaf767bcff64b6096b7f078efbe542a2	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:277:implementation-python-final	E03	s063-10.3	63	3	10.3	10.3 dataclass(slots=True): 메모리 최적화 (3.10+) [Python dataclasses 공식 문서]	1231	1253	23	ce9c0fe2f28dc4e71e9eea35c94f5496c1a76317c5c11eea084724f9e55f26a9	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:278:implementation-python-final	E03	s064-10.4	64	3	10.4	10.4 dataclass(frozen=True)와 불변성 계층 [단단한 파이썬] [Python dataclasses 공식 문서]	1254	1271	18	3eebda4ec270284f9ebcd5fd34f19b5d26cadaa37769e6724add9ec37bcb23ce	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:279:implementation-python-final	E03	s065-10.5	65	3	10.5	10.5 dataclass(kw_only=True): 키워드 전용 필드 (3.10+) [Python dataclasses 공식 문서]	1272	1293	22	4e7faef10b768e3da19f144dcd26e3990d2705004a95804fe97f1bc448b09ef4	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:280:implementation-python-final	E03	s066-10.6	66	3	10.6	10.6 match_args와 패턴 매칭 통합 (3.10+) [Python dataclasses 공식 문서]	1294	1313	20	b4743d8b22a55ad20e0b704d953b4dd9ca57345846c93cfce6d608d124c10ac5	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:281:implementation-python-final	E03	s067-10.7	67	3	10.7	10.7 __post_init__과 InitVar 고급 활용 [Python dataclasses 공식 문서]	1314	1335	22	b365f0c64289a453d4d563f8928f2bee4a508cdfb7509ee4fc1ee7eece428acc	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:282:implementation-python-final	E03	s068-10.8	68	3	10.8	10.8 NamedTuple: 불변 레코드 [슬기로운 파이썬 트릭]	1336	1352	17	77cb933f89505c1c11dfabd30f62d369a9363eb8bc2edbf3e7c663581af3c0e1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:283:implementation-python-final	E03	s069-11	69	2	11	11. 연산자 오버로딩과 Python 데이터 모델 심화	1353	1356	4	5e921ff555fff58021b4b9a5e289c7bb16daa01e9f5842b15377ae1c5e4807aa	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:284:implementation-python-final	E03	s070-11.1	70	3	11.1	11.1 연산자 오버로딩 규칙 [Fluent Python 2nd]	1357	1425	69	d78fa05b5e466786bb08678333a08202a5ea30eb24440ebae7809a1107d1ba6f	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:285:implementation-python-final	E03	s071-12	71	2	12	12. pydantic v2 -- 런타임 검증의 새 표준	1426	1431	6	49bf2304e8ebb0deaf4ae8dcaff26ef3266e9181c3da62184fb65bb6e065a18a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:286:implementation-python-final	E03	s072-12.0	72	3	12.0	12.0 pydantic v2 boundary 결정	1432	1443	12	2f84f27f9931537b49e3cc92c0efdd55bd6966e776c0ed5930e96aa2d41ba187	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:287:implementation-python-final	E03	s073-12.1	73	3	12.1	12.1 v1 vs v2 주요 API 변경	1444	1485	42	06e243d3b9d982b13b8f2f462e68cfc31873fb7162a791e189d7b95477640427	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:288:implementation-python-final	E03	s074-12.2	74	3	12.2	12.2 model_validator: 모델 수준 검증	1486	1511	26	a43281dddd237ef7c287502b153e14e97885a33bcb967d89c8062a3f06aed165	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:289:implementation-python-final	E03	s075-12.3	75	3	12.3	12.3 Strict Mode: 타입 강제 변환 제어	1512	1539	28	010e47edaac0e0eb31dd6d871185c99a61f8794c32d2442a7c486dd1cef0e345	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:290:implementation-python-final	E03	s076-13	76	2	13	13. 이터레이터, 제너레이터, 컴프리헨션	1540	1541	2	3600ea2d9717aaebb5c87b190ea2bef6ba50147e33c2fbbda741d2f32a34cc06	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:291:implementation-python-final	E03	s077-13.1	77	3	13.1	13.1 이터레이터 프로토콜 [슬기로운 파이썬 트릭] [파이썬 클린코드 2nd]	1542	1562	21	c4fa301907dc97e33fdf30f262e938ff793300f87d42fc0cd91fec235543d3c0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:292:implementation-python-final	E03	s078-13.2	78	3	13.2	13.2 리스트 대신 제너레이터 [파이썬코딩의기술] [파이썬 클린코드 2nd]	1563	1580	18	63aef4f349f06b4cc546a9c27c46c72938664415ad3d59904b0fe4d5b7542231	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:293:implementation-python-final	E03	s079-13.3	79	3	13.3	13.3 제너레이터 식 [파이썬코딩의기술]	1581	1594	14	09531dfccd0a7c6dd4da4ca5efc6632ec1d032728872c98ece3a9e9c680a0160	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:294:implementation-python-final	E03	s080-13.4	80	3	13.4	13.4 yield from으로 제너레이터 합성 [파이썬코딩의기술]	1595	1610	16	1a1342ec0947a5a63fc22558ee571bff6a0585e6f786dba16efcc16e35b7e863	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:295:implementation-python-final	E03	s081-13.5	81	3	13.5	13.5 send, throw 사용 금지 [파이썬코딩의기술]	1611	1614	4	2f61860e4f6f5e1807020206fb25f6f98296a5321e65aee90c75508af14e27f3	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:296:implementation-python-final	E03	s082-13.6	82	3	13.6	13.6 itertools 활용 [파이썬코딩의기술]	1615	1635	21	07cfec312828201b0498b4d3918008489443a814dbc0894f9c31cee9a86e167e	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:297:implementation-python-final	E03	s083-13.7	83	3	13.7	13.7 컴프리헨션 인라이닝 (Python 3.12+) [PEP 709]	1636	1660	25	ba660b11e0d08703defd9434171c40e828b27b09c12bdbfc0eeaa9ec1867efbf	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:298:implementation-python-final	E03	s084-14	84	2	14	14. 컨텍스트 매니저와 with문	1661	1662	2	51f531665027802be0cc477bb0b512b72d67f1dbc6dd275bc640561d05d0205f	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:299:implementation-python-final	E03	s085-14.1	85	3	14.1	14.1 커스텀 컨텍스트 매니저 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	1663	1691	29	f704ccd3c8f61227d20ea2e1c9c01d908feb79657e47d2499fc72a0e88c9c40c	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:300:implementation-python-final	E03	s086-14.2	86	3	14.2	14.2 with문 활용 패턴 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	1692	1715	24	5d2d43d7245779654e2e7a4570d437852411a91bc6573880cf0e8c54f3e6a64b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:301:implementation-python-final	E03	s087-15	87	2	15	15. 예외 처리	1716	1717	2	1a855254a40677b208c0b116794875387b9d79016ecb682c42ee4082111bdf4c	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:302:implementation-python-final	E03	s088-15.1	88	3	15.1	15.1 try/except/else/finally 각 블록 활용 [파이썬코딩의기술]	1718	1730	13	d264da31412eff5c62430af395d809728e6bfae3ae262f8b62bea4f6a9ef0a55	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:303:implementation-python-final	E03	s089-15.2	89	3	15.2	15.2 최상위 예외 클래스 정의 [파이썬코딩의기술]	1731	1749	19	bc08f48b9483a7b66d00cd9b71ad4724e2cc2ebb4606cc46618d4f7f8450b187	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:304:implementation-python-final	E03	s090-15.3	90	3	15.3	15.3 @deprecated로 지원 중단 표시 (3.13+) [PEP 702]	1750	1791	42	5de32a2997362d03b8b838d2289bcfb0699421c696473f19bac38de191c18f29	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:305:implementation-python-final	E03	s091-16	91	2	16	16. 동시성과 병렬성	1792	1793	2	519e80b124746b4b1211c167dbf3ed05ff5a5e1f97fd8ef7e574131af1197ca0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:306:implementation-python-final	E03	s092-16.1	92	3	16.1	16.1 GIL과 스레드 선택 기준 [파이썬코딩의기술]	1794	1816	23	1aa304427c1abc7d3fa542780313b953a076b56b0469626ca01eccc39e43a0ed	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:307:implementation-python-final	E03	s093-16.2	93	3	16.2	16.2 asyncio.TaskGroup: 구조적 동시성 (3.11+) [PEP 654]	1817	1858	42	956afed08ef6516a7f47b1aae65b13b28d8426f217852c7f008e4e84632ee116	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:308:implementation-python-final	E03	s094-16.3	94	3	16.3	16.3 Free-Threaded Python (3.13+) [PEP 703]	1859	1892	34	c0845c18ae42abaff7d4ed3403897ddcf1c3a18d87c6b12b46e289b6918600c1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:309:implementation-python-final	E03	s095-16.4	95	3	16.4	16.4 Subinterpreters (Python 3.14+) [PEP 734]	1893	1908	16	b2f52cdb5d7c0218df0980dc2be5fa15bb382fe8c0a2068f8589dfa7573247be	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:310:implementation-python-final	E03	s096-16.5	96	3	16.5	16.5 ThreadPoolExecutor [파이썬코딩의기술]	1909	1918	10	7b89a9b6c68f9f9ea5df876ad8dad4b26c28627d712b674d6a0a39ca3ac91318	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:311:implementation-python-final	E03	s097-16.6	97	3	16.6	16.6 Queue로 스레드 간 작업 조율 [파이썬코딩의기술]	1919	1930	12	0e8d48f8beefe342b6f2d100e43c997c11aa9725fb76f9dfaeed6317a08d6c0f	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:312:implementation-python-final	E03	s098-17	98	2	17	17. 성능 프로파일링과 최적화	1931	1936	6	a735e5c272e3396b4bc30d60c5f26e323cddae4b668615bb72ec55f510a34625	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:313:implementation-python-final	E03	s099-17.1	99	3	17.1	17.1 프로파일링 도구 계층	1937	1968	32	1a87736987bfaef13b5f49d994bdddf886c36533bc0153d8402a45564b4eb366	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:314:implementation-python-final	E03	s100-17.2	100	3	17.2	17.2 성능 최적화 전략 [High Performance Python 2nd]	1969	2009	41	3d3e437751b3f67deb7a79ef1fc437f60ff51e674db463ffa4005ae4e585ec66	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:315:implementation-python-final	E03	s101-17.3	101	3	17.3	17.3 Python 3.11 성능 개선: Specializing Adaptive Interpreter [PEP 659]	2010	2022	13	58d9de9dab1df21fa334b901d4fdafe410d7d35cad6ec9ef935215fb2ee5d8b1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:316:implementation-python-final	E03	s102-17.4	102	3	17.4	17.4 JIT 컴파일러 (Python 3.13+) [PEP 744]	2023	2046	24	210e480e79e405d9dd0a56cb3385f41abfdc683ba5810fb7edd5bd6d2e5a827a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:317:implementation-python-final	E03	s103-18	103	2	18	18. f-문자열 개선과 PEG 파서	2047	2048	2	d37a38b5b9d6d020182ee92c334054c8867393b74ee5970c6702c7bed513e813	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:318:implementation-python-final	E03	s104-18.1	104	3	18.1	18.1 f-문자열 제한 해제 (PEP 701, Python 3.12+)	2049	2079	31	f76f7fa3fb859f50d713f986f3849741d09e01e2b9f3cf6e2131fedc23afa3d1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:319:implementation-python-final	E03	s105-19	105	2	19	19. 파이썬다운 관용 표현	2080	2081	2	858fec9e6bc31540ac968db44196a200759d8381d8ac9f5c85c7cde525058106	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:320:implementation-python-final	E03	s106-19.1	106	3	19.1	19.1 f-문자열 사용 [파이썬코딩의기술]	2082	2093	12	fa343abfea6cd7acfc3fb519c5bf2f10ebbfdbde18b446d6caf306ec08652386	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:321:implementation-python-final	E03	s107-19.2	107	3	19.2	19.2 enumerate, zip 활용 [파이썬코딩의기술]	2094	2113	20	9655fac342d2c2a58ff218b60d108e544943598ea2142b838525151f2fa87d9b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:322:implementation-python-final	E03	s108-19.3	108	3	19.3	19.3 빈 컨테이너 검사 [파이썬코딩의기술]	2114	2125	12	5392adc22fc2245bd378e4dbe59e1ad13300f5da2fd7cd509b182d03e68f6cb1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:323:implementation-python-final	E03	s109-19.4	109	3	19.4	19.4 bytes와 str 분리 (유니코드 샌드위치) [파이썬코딩의기술]	2126	2136	11	6678f90251a7e38b3198acb8aac8b0e185df9d62c36bfc7e58d4533c89c414cd	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:324:implementation-python-final	E03	s110-19.5	110	3	19.5	19.5 for/while 뒤 else 금지 [파이썬코딩의기술]	2137	2140	4	02683f3a11c95759b2a83a678d03406df4bd6a67ad576ba083567d117291e2e0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:325:implementation-python-final	E03	s111-19.6	111	3	19.6	19.6 명명 규칙 [PEP 8] [슬기로운 파이썬 트릭]	2141	2164	24	f49a21ab1e56f2fafcae01582ed812bfcf5077d65221b7bcfa2817a3cfdcef1f	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:326:implementation-python-final	E03	s112-20	112	2	20	20. 디자인 패턴 (Python 고유 구현)	2165	2168	4	097ddaaa084297d1515b64c09ad57d70699b5b65af3513b286c0982ede68d9ac	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:327:implementation-python-final	E03	s113-20.1	113	3	20.1	20.1 `__init_subclass__` 레지스트리 패턴	2169	2191	23	815d20431b3837c8960ab1f8c8bbaab043a4068ac081ed62c623c2b1204eaf5d	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:328:implementation-python-final	E03	s114-20.2	114	3	20.2	20.2 Protocol 기반 디스패치	2192	2206	15	4b9d4c892c7d1e969f66f9d528873ccb588030387f6c109eee6772707d3e3dee	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:329:implementation-python-final	E03	s115-20.3	115	3	20.3	20.3 `@dataclass` + 팩토리 조합	2207	2231	25	f881deeb3af877bbc347d94bdebbbb800da5fdc0aae99c32fb1509b0ab87a53b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:330:implementation-python-final	E03	s116-21	116	2	21	21. Repository / Unit of Work	2232	2237	6	e06154e5e1faa003af879cdd1be466e462056b7580ed9084d420d9ab84be4c33	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:331:implementation-python-final	E03	s117-22	117	2	22	22. Ruff -- 통합 린터/포매터	2238	2243	6	8eab3504066367adae19463c526a4525316e53020dc7858acd80f8eb5b78468b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:332:implementation-python-final	E03	s118-22.1	118	3	22.1	22.1 권장 pyproject.toml 설정	2244	2282	39	c2a6954d7c3ce8761584cb0aceb7cf3116f3ef46f62e0088a070045557685487	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:333:implementation-python-final	E03	s119-22.2	119	3	22.2	22.2 Ruff의 핵심 규칙 카테고리	2283	2325	43	5cdc47a7b6ec34d47cdecfd7bbed089333641e7538722ea2dea25e71e95cbf77	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:334:implementation-python-final	E03	s120-23	120	2	23	23. mypy/pyright 최신 기능	2326	2329	4	1797576e0716fef453de52aaffc1141c796b94fe6518f6e44025dad3a33ad056	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:335:implementation-python-final	E03	s121-23.1	121	3	23.1	23.1 mypy strict 모드 설정	2330	2354	25	6606576f2824ac8dc558bb8f1c3021aee8b4f1da784284e3108a2952a5c0ae8c	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:336:implementation-python-final	E03	s122-23.2	122	3	23.2	23.2 pyright strict 모드	2355	2367	13	5dc76dc9b5eb1e2fce54b7be4f8c21c982ba25c38e79b41e753422b3bf0a1f04	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:337:implementation-python-final	E03	s123-23.3	123	3	23.3	23.3 타입 좁히기(Type Narrowing) 패턴	2368	2419	52	52a4c44cc1c8fe519d492e092a75c119444b20a76ae36ead493a96f5a314ee67	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:338:implementation-python-final	E03	s124-24	124	2	24	24. 테스트	2420	2425	6	be532b00b627b10debb686ccef21aef7dafdf087851e02ac693346d061e375c0	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:339:implementation-python-final	E03	s125-25	125	2	25	25. 디버깅 기법 [파이썬코딩의기술]	2426	2427	2	8a17a2908bc74ab4238fc52bb6e97289fa5c58584a924dbe5fdb512a33738a29	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:340:implementation-python-final	E03	s126-25.1	126	3	25.1	25.1 repr 문자열 활용	2428	2441	14	1ed99abe1e0cdd5af5327a0f23165ab2f78d48b6ef1526d8650785197c2a55b3	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:341:implementation-python-final	E03	s127-25.2	127	3	25.2	25.2 pdb 대화형 디버거	2442	2466	25	bfae5fe1152d3c6b37615e0bf701e6096c7a807696da679ccf6b7c79115c7f63	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:342:implementation-python-final	E03	s128-26	128	2	26	26. 독스트링과 문서화	2467	2468	2	7d93119372e916ea4cfbd64110b3d9a9b5630c82227d1150c51b0c5b4aa8ae25	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:343:implementation-python-final	E03	s129-26.1	129	3	26.1	26.1 독스트링 규칙 [파이썬코딩의기술]	2469	2493	25	fbbd09f110f0600b877232956d9b1554f5e961fde4a859fee4091d98578d3fb8	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:344:implementation-python-final	E03	s130-27	130	2	27	27. 정밀 연산	2494	2495	2	958e62e5112ce06d67ac467339c5930c34ee3d60a9e9d3e43c62b40df1aec66b	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:345:implementation-python-final	E03	s131-27.1	131	3	27.1	27.1 Decimal과 Fraction [파이썬코딩의기술]	2496	2514	19	2da368867f62d169ad2fc777ca2dbe1d28d9d79b9f9c2aac9214793472e21f88	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:346:implementation-python-final	E03	s132-28	132	2	28	28. Python 3.14 주요 변경사항	2515	2518	4	7c43c7b2ac4f927a4a4362ec6f84d6c76ea9e1e314f13b35726f0d36d53e4206	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:347:implementation-python-final	E03	s133-28.1	133	3	28.1	28.1 어노테이션 지연 평가 (PEP 649)	2519	2536	18	34a861d84a88a6ed875ef5a141b8390116d84f25072a6eb9300ebd1ad6796f69	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:348:implementation-python-final	E03	s134-28.2	134	3	28.2	28.2 Template Strings (t-strings) -- PEP 750	2537	2572	36	81a5058a84094b52e5209c9b56181941e8a85687165ffb38899f8fac86173afe	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:349:implementation-python-final	E03	s135	135	2		부록 A: Python 3.10-3.14 핵심 변경사항 요약	2573	2582	10	8926c37fd204ecfeb5e9649396b3b6631cf2c60c5858ba58fa4599e11947b3e8	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:350:implementation-python-final	E03	s136	136	2		부록 B: 타입 시스템 진화 요약	2583	2597	15	b96eae5871921d2524e5936521b422aa0988fe0f14fab091c5c4fd20f0eee32a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:351:implementation-python-final	E03	s137	137	2		부록 C: 주요 매직 메서드 요약	2598	2619	22	70242632552f1fbaefc6793cf36057f4af26637fd80fe51e87eda47369259e42	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:352:implementation-python-final	E03	s138	138	2		출처	2620	2621	2	9baf7e9d6388e195875cc8f021bea4300b0acc8ecdc1d23accabf81d960afd2f	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:353:implementation-python-final	E03	s139	139	3		PEP 문서	2622	2643	22	43f11d61c44deff79dc2a15628eca1bf3104adb2c33f14d9564a5cdbb2c06a8f	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:354:implementation-python-final	E03	s140	140	3		Python 공식 문서	2644	2653	10	7573b07fe10efd64348a7b20c57483a91a188e0f4c9bdfd99a453a3ca7eb5ddc	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:355:implementation-python-final	E03	s141	141	3		서적	2654	2663	10	b4414c9e5467f0c46dcbd3fc3fdf42047a4aad6db3037186f0d270ab929e4f61	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:356:implementation-python-final	E03	s142	142	3		도구 문서	2664	2670	7	09e684d8bf80e6de22c76230fda75512e98a648cb7a79be7aeb99bd05d3af3bc	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:357:implementation-python-final	E03	s143	143	3		커뮤니티	2671	2675	5	8f2647d1af80e95cf2a2c2e9c7309cf0424a8b4ce6b1c37add91f2f928f8204a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/E07-classify.tsv:4:implementation-django-ninja-skill	s003	REF	none	5	Y:implementation-django-ninja-final/s005-1.2	SAME	경계 4행 = 3중 라우팅 표면(frontmatter·§1.2/§11). codex 스킬명 표기 치환 2건 이내
+workspace/design/2026-08-19-ontology-t1-census/E07-classify.tsv:37:implementation-django-ninja-final	s031-11	REF	none	6	Y:implementation-django-ninja-skill/s003	SAME	3중 라우팅 표면(frontmatter·«언제 쓰나»·§1.2)
+
+[2m**Assessing outside normative prose enforcement**
+**Distinguishing normative versus descriptive prose**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg -n -C 5 '클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다' dddjango/skills/architecture-api/references/final.md; nl -ba workspace/design/2026-08-19-ontology-t1-census/E08-recon.md | sed -n '56,80p'; rg -n 'architecture-api-final\\ts020-5' workspace/design/2026-08-19-ontology-t1-census/E08-classify.tsv"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+175-
+176----
+177-
+178-## 5. 요청/응답 계약
+179-
+180:API 계약은 URL과 메서드만이 아니라 요청 본문, 응답 본문, 상태 코드, 헤더, 에러 형식의 조합이다. 클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다.
+181-
+182-### 5.1 요청 계약
+183-
+184-- 필수 필드와 선택 필드를 구분한다
+185-- 필드 타입, 형식, 단위, 허용 범위, 기본값을 명시한다
+    56	## §3 잔차
+    57	
+    58	**설명 불가 잔차 0.**
+    59	
+    60	기계에만 있고 P0에 없는 절은 h1 제목 절 4건(architecture-db-skill/s002, architecture-db-final/s001, architecture-api-skill/s002, architecture-api-final/s001)뿐이며, 전부 §1의 «h1 제목 절 미계수» 규약으로 설명된다(각 절은 제목+공백 2행 이하, 규범 0). P0에만 있고 기계에 없는 절은 없다. 그 외 기계 절 전건이 §2의 접기 규약 안에서 P0 39절에 귀속된다.
+    61	
+    62	## §4 규범 계수 대조
+    63	
+    64	| 구분 | 이번(기계 절 합) | P0 | 차 |
+    65	|---|---:|---:|---:|
+    66	| architecture-db-skill | 18 | 18 | 0 |
+    67	| architecture-db-final | 106 | 106 | 0 |
+    68	| architecture-api-skill | 20 | 20 | 0 |
+    69	| architecture-api-final | 167 | 166 | **+1** |
+    70	| **합계** | **311** | **310** | **+1** |
+    71	
+    72	차이의 원인:
+    73	
+    74	1. **+1의 단일 원인 — api-final s020-5(§5 서두)**: «클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다»는 기록 의무 지시다. P0 §5=45의 구성 명세(§5.1=9 + §5.2=6 + §5.3=1 + §5.4=29)에 서두 몫이 없어 P0는 이 문장을 계수하지 않은 것으로 추정된다(P0는 db §8·§11 서두 지시는 계수했으므로 비일관 지점). 이번 센서스는 «애매하면 포함+비고» 규약을 적용해 1로 계수했다.
+    75	2. **P0는 절 단위 집계였고 이번은 기계 절 단위 배분**이라, h3/h4로 쪼개진 소절별 수치는 이번 센서스의 신규 산출이다. 배분은 P0 비고의 구성 명세를 그대로 따랐다(§9: 9.4=1/9.5=18/9.6=12/9.7=12, §5: 5.1=9/5.2=6/5.3=1/5.4=29, §8: 8.1=3/8.2=3/8.3=3/8.4=12, §13: 13.2=6/13.3=12/13.4=6 등).
+    76	3. **P0 내부 불일치 1건 승계 처리**: api §5.4의 P0 비고 내부 합(우선순위 4+혼합 금지 2+관할 4+code-json 15+framework 3 = 28)이 절 합(29)과 1 어긋난다. 이번 배분에서는 관할 문단을 문장 단위로 재검해 5문장(wire 계약 주어 선언·preserve 비대상·신규 범위 레시피·G1 표면화 STOP·혼합 금지 주어)으로 계수, s024-5.4=11 + s025=15 + s026=3 = 29로 절 합을 유지했다.
+    77	4. 표 행 계수의 P0 비일관(예: §7.4·§8.1·§11.3 표 행은 계수, §9.4·§11.4·§5.3 표 행은 미계수)은 그대로 승계하고 각 행 note에 표기했다 — 수치 연속성을 우선했다.
+    78	
+    79	부기(codex 대사): 4파일 전부 SAME — final.md 2건은 codex판과 바이트 동일, SKILL.md 2건은 `architecture-ddd`→`dddjango-architecture-ddd` 개명(콜론→대시 접두 포함)과 `user-invocable: false` 제거뿐(플랫폼 표기 치환 이내, P0 특이 발견 6 «표류 아님» 재확인). DIFF 0 · ABSENT 0.
+99:architecture-api-final	s020-5	REF	none	1	N	SAME	§서두 «의존 항목 명시 기록» 지시 — P0 §5 구성(9+6+1+29=45)에 미포함 추정, 애매→포함 규약 적용(+1)
+
+[2m**Analyzing sentence counts for normative parsing**
+**Refining normative sentence unit definitions**[0m
+[2m**Verifying clause count adjustments**
+**Assessing normative sentence counts**[0m
+[2m**Reviewing normative status of clauses**
+**Evaluating normativity of frontmatter sentences**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'for f in dddjango/commands/dddjango.md dddjango/agents/acceptance-tester.md dddjango/agents/coder.md dddjango/agents/design-architect.md dddjango/agents/design-review-api.md dddjango/agents/design-review-db.md dddjango/agents/design-review-ddd.md dddjango/agents/discipline-reviewer.md; do echo "$f"; nl -ba "$f" | sed -n '"'1,16p'; done"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+dddjango/commands/dddjango.md
+     1	---
+     2	description: 기존 Django 프로젝트에서 한 기능을 DDD로 끝까지 빌드하는 오케스트레이터 (요구→설계→구현, 단계 게이트). Django 기능을 DDD/TDD로 설계·구현하고 싶을 때 사용.
+     3	argument-hint: "[빌드할 기능 설명]"
+     4	allowed-tools: Agent, AskUserQuestion, TodoWrite, Read, Grep, Glob, Write, Bash
+     5	---
+     6	
+     7	너는 dddjango 파이프라인의 **Coordinator**다. 기존 Django 프로젝트 안에서 사용자가 요청한 **한 기능**을 DDD 방식으로 요구 정리 → 설계 → 구현(테스트 포함)까지 단계별 게이트로 끌고 간다. 너는 오케스트레이션·사용자 게이트·산출물 통합·검증 보고를 맡고, **설계 명세·인수 테스트·구현 코드는 직접 쓰지 않고 subagent에 위임**한다.
+     8	
+     9	빌드할 기능: $ARGUMENTS
+    10	
+    11	**번호 공간 규약**: 이 문서에서 백스톱 registry 순번은 항상 `registry #N`(1~27)으로 적고, 순번 리스트는 `registry #2·#15·#6` 처럼 접두 하나에 `·` 로 잇는다 — 무접두 `#N` 은 전부 정본 명세의 규칙 번호다(같은 숫자가 두 공간에 실재하므로 접두가 유일한 판별 근거다). 범위 표기 `#A~#B` 는 정본에서 걷힌 번호를 제외한 실재 번호만 가리킨다. 무접두 `#N` 규칙의 «본문» 정본은 저장소의 정본 명세이고 플러그인 배포본에는 동봉되지 않는다 — 플러그인 문서에는 집행에 필요한 발췌만 실린다(2026-08-15).
+    12	
+    13	## 산출물 위치
+    14	
+    15	- 스코프 메모 → `<산출물 폴더>/scope.md`
+    16	- 리팩터링 스코프 → `<산출물 폴더>/refactor-scope.md` (코디네이터 소유 — Phase 0 빚 스캔 결과 + 사용자 결정의 «이번 작업 기록». `scope.md`는 사람이 정한 범위, 이 파일은 기계가 낸 빚이라 서로 다른 이유로 바뀌므로 섞지 않는다)
+dddjango/agents/acceptance-tester.md
+     1	---
+     2	name: acceptance-tester
+     3	description: dddjango 파이프라인 Phase 2(구현) 시작에 Coordinator가 호출한다. 승인된 현행 외부 계약과 관련 테스트를 대조하고, 입장 표에서 `add/update`로 승인된 외부 계약만 바깥 루프 Red로 만든다. 구현을 보지 않는 블랙박스다. 구현 코드는 쓰지 않는다.
+     4	tools: Read, Grep, Glob, Edit, Write, Bash
+     5	skills:
+     6	  - dddjango:discipline-tdd
+     7	  - dddjango:implementation-test
+     8	  - dddjango:architecture-api
+     9	  - dddjango:architecture-ddd
+    10	  - dddjango:implementation-django-ninja
+    11	---
+    12	
+    13	너는 dddjango 파이프라인의 **인수 테스트 작성자(acceptance tester)**다. 승인된 영구 테스트 입장 표에서 외부 HTTP·event·user-observable·public contract를 소유한 행만 집행한다. `discipline-tdd`의 decision을 먼저 적용하고 `implementation-test`는 입장된 `add/update`의 작성 mechanics로만 쓴다. 너의 블랙박스 독립성이 테스트를 구현 편향에서 보호한다.
+    14	
+    15	## 입력
+    16	
+dddjango/agents/coder.md
+     1	---
+     2	name: coder
+     3	description: dddjango 파이프라인 Phase 2(구현)에서 Coordinator가 호출한다. 승인된 현행 계약과 영구 테스트 입장 표의 domain/application/DB/adapter 소유 행만 집행하며 구현한다.
+     4	tools: Read, Grep, Glob, Edit, Write, Bash
+     5	skills:
+     6	  - dddjango:implementation-django
+     7	  - dddjango:implementation-django-ninja
+     8	  - dddjango:implementation-django-web
+     9	  - dddjango:implementation-python
+    10	  - dddjango:discipline-tdd
+    11	  - dddjango:implementation-test
+    12	  - dddjango:discipline-cleancode
+    13	  - dddjango:discipline-houserules
+    14	---
+    15	
+    16	너는 dddjango 파이프라인의 **메인 코더**다. 제품 구현과 입장 표에서 coder가 owner인 domain/application/DB/adapter 행만 소유한다. `discipline-tdd` decision을 먼저 적용하고 `implementation-test`는 승인된 `add/update`의 mechanics로만 쓴다.
+dddjango/agents/design-architect.md
+     1	---
+     2	name: design-architect
+     3	description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. 승인된 스코프를 받아 architecture-ddd/api/db와 영구 테스트 입장 표를 한 명세로 통합 작성하고, 독립 리뷰어 노트를 반영·중재해 최종 설계 명세를 만든다. 코드는 쓰지 않는다.
+     4	tools: Read, Grep, Glob, Edit, Write
+     5	skills:
+     6	  - dddjango:architecture-ddd
+     7	  - dddjango:architecture-api
+     8	  - dddjango:architecture-db
+     9	  - dddjango:discipline-houserules
+    10	  - dddjango:discipline-tdd
+    11	---
+    12	
+    13	너는 dddjango 파이프라인의 **설계 architect**다. 한 기능의 설계를 한 머릿속에서 응집해 통합 설계 명세를 작성하는 단일 작성자다. 이 명세는 이후 인수 테스트와 코드의 단일 근거(source of truth)가 된다.
+    14	
+    15	## 입력
+    16	
+dddjango/agents/design-review-api.md
+     1	---
+     2	name: design-review-api
+     3	description: dddjango 파이프라인에서 Coordinator가 호출한다. 기본 Phase 1에서는 architect 명세를 API 계약 관점으로 독립 리뷰하고, 예외적인 Phase 2 동적 error shape 증명 모드에서는 승인 기준선과 runtime/OpenAPI 증거가 같은 계약인지 읽기 전용으로 확인한다. 명세나 코드를 직접 수정하지 않는다.
+     4	tools: Read, Grep, Glob
+     5	skills:
+     6	  - dddjango:architecture-api
+     7	  - dddjango:discipline-tdd
+     8	---
+     9	
+    10	너는 dddjango 파이프라인의 **API 계약 리뷰어**다. 기본 설계 리뷰와 제한된 동적 error shape 증명 리뷰 중 Coordinator가 명시한 한 모드만 읽기 전용으로 수행한다.
+    11	
+    12	## 실행 모드
+    13	
+    14	- `DESIGN_CONTRACT_REVIEW`: 기본 Phase 1 모드다. architect의 통합 설계 명세를 계약 관점 하나로 독립 비평한다.
+    15	- `DYNAMIC_ERROR_SHAPE_PROOF_REVIEW`: Phase 2 checker의 남은 exit 1 diagnostic 전부가 `DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED`인 경우에만 쓰는 예외 모드다. `reuse`의 관찰된 exact baseline 또는 `create | approved-change`의 별도 명시 승인 shape와 target-pin runtime/mounted OpenAPI 증거가 동일 계약인지 확인할 뿐, shape를 새로 승인하지 않는다.
+    16	
+dddjango/agents/design-review-db.md
+     1	---
+     2	name: design-review-db
+     3	description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. architect의 설계 명세를 데이터 관점(인덱스·제약·트랜잭션·마이그레이션 안전)으로만 독립 리뷰하고 리뷰 노트를 낸다. 명세나 코드를 직접 수정하지 않는다.
+     4	tools: Read, Grep, Glob
+     5	skills:
+     6	  - dddjango:architecture-db
+     7	  - dddjango:discipline-tdd
+     8	---
+     9	
+    10	너는 dddjango 파이프라인의 **데이터(DB) 설계 리뷰어**다. architect가 쓴 통합 설계 명세를 *데이터 관점 하나로만* 독립적으로 비평하는 읽기 전용 리뷰어다. 너의 독립성이 architect의 블라인드스팟을 잡는다.
+    11	
+    12	## 입력
+    13	
+    14	Coordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.
+    15	
+    16	## 산출
+dddjango/agents/design-review-ddd.md
+     1	---
+     2	name: design-review-ddd
+     3	description: dddjango 파이프라인 Phase 1(설계)에서 Coordinator가 호출한다. architect의 설계 명세를 도메인 관점(애그리거트 경계·불변식·도메인 이벤트)으로만 독립 리뷰하고 리뷰 노트를 낸다. 명세나 코드를 직접 수정하지 않는다.
+     4	tools: Read, Grep, Glob
+     5	skills:
+     6	  - dddjango:architecture-ddd
+     7	---
+     8	
+     9	너는 dddjango 파이프라인의 **도메인(DDD) 설계 리뷰어**다. architect가 쓴 통합 설계 명세를 *도메인 관점 하나로만* 독립적으로 비평하는 읽기 전용 리뷰어다. 너의 독립성이 architect의 블라인드스팟을 잡는다.
+    10	
+    11	## 입력
+    12	
+    13	Coordinator가 architect의 설계 명세(초안)를 준다. 너는 그 명세만 본다 — 다른 리뷰어의 노트나 구현 코드를 보지 않는다(편향 방지). 로드한 스킬 본문·references 참조는 이 제한 밖이다 — 제한 대상은 타 리뷰어의 노트·구현 코드다.
+    14	
+    15	## 산출
+    16	
+dddjango/agents/discipline-reviewer.md
+     1	---
+     2	name: discipline-reviewer
+     3	description: dddjango 파이프라인에서 Coordinator가 Phase 1 설계 경량 점검, Phase 2 구현 게이트 감사 또는 제한된 동적 FrameworkErrorSchema 증명 감사에 호출한다. 지정된 모드의 산출물을 클린코드·TDD·현행 계약 규율 관점으로 독립 감사하고 리포트를 낸다. 코드를 직접 수정하지 않는다.
+     4	tools: Read, Grep, Glob
+     5	skills:
+     6	  - dddjango:discipline-cleancode
+     7	  - dddjango:discipline-tdd
+     8	  - dddjango:implementation-test
+     9	  - dddjango:discipline-houserules
+    10	---
+    11	
+    12	너는 dddjango 파이프라인의 **규율 감수자(discipline reviewer)**다. 설계 경량 점검, 구현 코드와 acceptance-tester·coder가 조정한 테스트 또는 제한된 동적 FrameworkErrorSchema 증거를 클린코드·TDD·현행 계약 규율 관점으로 독립 감사하는 읽기 전용 감수자다. subagent는 단발 실행이라 실시간 감시가 아니라 체크포인트에서 단발 감사한다.
+    13	
+    14	## 입력
+    15	
+    16	Coordinator가 호출할 때 다음 모드 중 하나를 명시한다.
+
+[2m**Clarifying frontmatter description roles**
+**Assessing frontmatter description sentence norms**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "nl -ba dddjango/skills/implementation-django/references/final.md | sed -n '390,490p'; rg -n 's02[5-8]-4\\.2|s02[5-8]' workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv workspace/design/2026-08-19-ontology-t1-census/sections.tsv; nl -ba workspace/design/2026-08-18-p0-census/E05-implementation-django.md | rg -n -C 3 '4\\.2|Abstract|Proxy|상속'"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+   390	            self.discount = self.total * Decimal("0.1")
+   391	        self.status = self.Status.CONFIRMED
+   392	        self.save(update_fields=["discount", "status"])
+   393	        self.send_confirmation_email()
+   394	
+   395	    def send_confirmation_email(self):
+   396	        send_mail("Order confirmed", ..., [self.user.email])
+   397	
+   398	# 뷰는 얇게
+   399	class OrderConfirmView(View):
+   400	    def post(self, request, pk):
+   401	        order = get_object_or_404(Order, pk=pk)
+   402	        order.confirm()
+   403	        return redirect("order-detail", pk=order.pk)
+   404	```
+   405	
+   406	단, 모델이 2000줄 이상으로 비대해지면 서비스 레이어 분리를 검토한다 (16장 참조).
+   407	
+   408	### 4.2 모델 상속 패턴 [DDoc]
+   409	
+   410	Django는 세 가지 모델 상속을 제공한다.
+   411	
+   412	#### Abstract Base Class (추상 베이스 클래스) -- 권장
+   413	
+   414	```python
+   415	# 좋은 예: 공통 필드를 추상 클래스로 추출
+   416	class TimeStampedModel(models.Model):
+   417	    created_at = models.DateTimeField(auto_now_add=True)
+   418	    updated_at = models.DateTimeField(auto_now=True)
+   419	
+   420	    class Meta:
+   421	        abstract = True  # 테이블을 생성하지 않음
+   422	
+   423	class Article(TimeStampedModel):
+   424	    title = models.CharField(max_length=200)
+   425	    body = models.TextField()
+   426	    # created_at, updated_at 자동 상속
+   427	```
+   428	
+   429	- 테이블을 생성하지 않아 조인 비용이 없다.
+   430	- 여러 모델에서 공통 필드를 재사용할 때 가장 적합하다.
+   431	
+   432	#### Multi-table Inheritance -- 주의해서 사용
+   433	
+   434	```python
+   435	# 주의: 각 모델마다 별도 테이블 생성 + 암묵적 OneToOneField
+   436	class Place(models.Model):
+   437	    name = models.CharField(max_length=50)
+   438	    address = models.CharField(max_length=80)
+   439	
+   440	class Restaurant(Place):  # place_ptr 자동 생성
+   441	    serves_pizza = models.BooleanField(default=False)
+   442	```
+   443	
+   444	- 조회 시 자동으로 JOIN이 발생하여 성능 저하 가능.
+   445	- 대부분의 경우 **Abstract Base Class + 명시적 ForeignKey**가 더 낫다. **[TSD]**
+   446	
+   447	#### Proxy Model -- Python 레벨 동작 변경
+   448	
+   449	```python
+   450	class Order(models.Model):
+   451	    status = models.CharField(max_length=20)
+   452	    amount = models.DecimalField(max_digits=10, decimal_places=2)
+   453	
+   454	class ExpensiveOrder(Order):
+   455	    """고가 주문만 필터링하는 프록시 모델."""
+   456	    class Meta:
+   457	        proxy = True
+   458	
+   459	    objects = ExpensiveOrderManager()
+   460	
+   461	    def apply_premium_discount(self):
+   462	        self.amount *= Decimal("0.95")
+   463	        self.save(update_fields=["amount"])
+   464	```
+   465	
+   466	- 테이블 구조를 변경하지 않고 Python 레벨 동작(매니저, 메서드)만 변경한다.
+   467	- 기존 테이블 위에 다른 인터페이스를 제공할 때 유용하다.
+   468	
+   469	### 4.3 필드 선택 가이드 [DDoc]
+   470	
+   471	```python
+   472	# 나쁜 예: BooleanField 남발로 상태 폭발
+   473	class Task(models.Model):
+   474	    is_started = models.BooleanField(default=False)
+   475	    is_completed = models.BooleanField(default=False)
+   476	    is_cancelled = models.BooleanField(default=False)
+   477	    # is_started=True, is_completed=True, is_cancelled=True 같은
+   478	    # 불가능한 상태 조합이 가능
+   479	
+   480	# 좋은 예: TextChoices로 상태를 하나의 필드에 표현
+   481	class Task(models.Model):
+   482	    class Status(models.TextChoices):
+   483	        PENDING = "pending", "Pending"
+   484	        STARTED = "started", "Started"
+   485	        COMPLETED = "completed", "Completed"
+   486	        CANCELLED = "cancelled", "Cancelled"
+   487	
+   488	    status = models.CharField(
+   489	        max_length=20,
+   490	        choices=Status,
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv:31:implementation-django-final	s025-4.2	NAR	none	0	N	SAME	§4.2 도입문만(«세 가지 모델 상속 제공»). P0 §4.2(3규범)는 h4 셋 접은 계수 — s026·s027에 분배
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv:32:implementation-django-final	s026	REF	code	1	N	SAME	Abstract Base Class 권장(P0 §4.2 분배 1)
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv:33:implementation-django-final	s027	REF	code	2	N	SAME	MTI 주의+Abstract+FK 우선(P0 §4.2 분배 2)
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv:34:implementation-django-final	s028	NAR	code	0	N	SAME	Proxy Model — 설명·예제 전용(P0 §4.2 분배 0)
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:31:architecture-ddd-final	E01	s025	25	4		Outbox 패턴	1182	1199	18	9e697910498454feb355ec4e11f329ea8c92415d64f6cfaed9b2ef976189a06d	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:32:architecture-ddd-final	E01	s026	26	4		발행 이벤트 타입 — 1종째부터 enum (birth-enum)	1200	1209	10	ed3ec39344bf7dc018fe84eedb4a10b38945f445d5c7ae6dd974cf6067ef74ae	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:33:architecture-ddd-final	E01	s027-3.8	27	3	3.8	3.8 Specification 패턴	1210	1326	117	a3d9290c781fd02b2b0be19217d6e40afda82e4628664b3bb3c68bf1934a7581	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:34:architecture-ddd-final	E01	s028-4	28	2	4	4. 유연한 설계 (Supple Design)	1327	1332	6	bde558f44703b336be722b89625e4d3f7c66fe5c36ee575f27540e5fd4af7cd8	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:92:discipline-cleancode-final	E02	s025-2.13	25	3	2.13	2.13 루프 변수 명명 [CodeC]	291	303	13	540fad3f1e01dca693be9675a53f39778e9a7272c61b242cae190f5410f5f5e7	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:93:discipline-cleancode-final	E02	s026-2.14	26	3	2.14	2.14 매직 값과 상수 승격 판정 [PP] [Ref]	304	328	25	421a459edc07d1c221afaa014440ff90b18db0186a36aa1f5ea1b655bffd2932	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:94:discipline-cleancode-final	E02	s027-3	27	2	3	3. 함수와 메서드 설계	329	330	2	20cd4a30ec73d738840c054bbd757229973fc4a16865e61992bbe55f421bb3b6	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:95:discipline-cleancode-final	E02	s028-3.1	28	3	3.1	3.1 함수는 작게, 모듈은 깊게 [CC] [APoSD]	331	386	56	be45b0249e106f1a4b8431cc2c3c75388f883320d5fd4d7637c12c4db88d135d	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:239:implementation-python-final	E03	s025-3.3	25	3	3.3	3.3 __missing__으로 키별 디폴트 값 생성 [파이썬코딩의기술]	515	529	15	5effcdc1bd03f9c887006dd890f6f2d0c6675c891f99e7e0e242a1682f270a55	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:240:implementation-python-final	E03	s026-3.4	26	3	3.4	3.4 정렬: key 파라미터와 튜플 비교 [파이썬코딩의기술]	530	539	10	c8bd50fe76504ed58845ae83bd388fbdc1a5f0a63ab342ba8d4600a7a620904e	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:241:implementation-python-final	E03	s027-3.5	27	3	3.5	3.5 성능 특화 자료구조 [파이썬코딩의기술]	540	562	23	cef3f67611341249bdcb561afdc4ed617e1a5b8dfcd58b3a853060d1adf4d818	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:242:implementation-python-final	E03	s028-4	28	2	4	4. 함수 설계: Python 특화 기법	563	564	2	7c9333d7c46466fa6503fd29a07ed04e76db7c853546b00d80cc403d748693fe	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:387:implementation-test-final	E04	s025-5.2	25	3	5.2	5.2 커스텀 마커와 마커 활용 패턴	466	506	41	00019ace31a9c77a44d6e2244a07facd1a84e96f94bbe776a3161e9213b39fd2	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:388:implementation-test-final	E04	s026-5.3	26	3	5.3	5.3 마커에서 fixture로 데이터 전달	507	534	28	d3737625ae52c31103af8146726fb98725e0e0bbbbc321e892964eb68ae64642	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:389:implementation-test-final	E04	s027-6	27	2	6	6. pytest 플러그인 생태계	535	538	4	31be8467dbed8d41ca82341be56f81ee0ba3987cd3a91b679c481fbbaa9671df	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:390:implementation-test-final	E04	s028-6.1	28	3	6.1	6.1 pytest-xdist: 병렬 테스트 실행	539	582	44	2a149e92bd14fb4e7376950a71229077dacdbeb7048977b8382921b40b65cf41	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:501:implementation-django-final	E05	s025-4.2	25	3	4.2	4.2 모델 상속 패턴 [DDoc]	408	411	4	7d777c131319b4bc913106900c970411022c3103bf6e10dcc5bf8491ab6cd878	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:502:implementation-django-final	E05	s026	26	4		Abstract Base Class (추상 베이스 클래스) -- 권장	412	431	20	6a78bf1546940889c95caf5a54518d4a6c336fd9a6e067e48d5aa6506382a968	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:503:implementation-django-final	E05	s027	27	4		Multi-table Inheritance -- 주의해서 사용	432	446	15	b420b232e3f1c9af8735f97e485cc1713e1e8d3476e3269d320e8d6cf3496cf3	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:504:implementation-django-final	E05	s028	28	4		Proxy Model -- Python 레벨 동작 변경	447	468	22	a51700cdc62bb1c2d3a5f9281a95f116d851e67442162b42ae7f15f391d7b104	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:599:discipline-tdd-final	E06	s025-5.5	25	3	5.5	5.5 영구 테스트 입장 심사와 현행 계약 수명 주기	394	464	71	167039474f1811d83d38de9b11b90469644e16c2465d0dacbc29f9f3d0a94e39	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:600:discipline-tdd-final	E06	s026-6	26	2	6	6. 초록 막대 패턴 (테스트를 통과시키는 전략) [테스트주도 개발]	465	466	2	d9a53b9821b144c300c605affca0649c0eaca73c35f6ab048502ccdbdaa3212a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:601:discipline-tdd-final	E06	s027-6.1	27	3	6.1	6.1 가짜로 구현하기 (Fake It)	467	489	23	b80723bbf8c8e25195f55555eaac8bd6f6881c919270ad30ba467d6c770e03a1	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:602:discipline-tdd-final	E06	s028-6.2	28	3	6.2	6.2 삼각측량 (Triangulation)	490	505	16	0ba6fd7f4b1e779b54d38241ad5191739f82d6d88183e898cffba32aca0c674a	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:675:implementation-django-ninja-final	E07	s025-7	25	2	7	7. Idempotency-Key	854	872	19	5ff8d77764f7bbf634579825ef4a215c7fda91209606b8a1ad0d0d3392eb9662	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:676:implementation-django-ninja-final	E07	s026-8	26	2	8	8. OpenAPI	873	900	28	43e367206ef2ba29bf03450fdae3c05e05c884d06ab7f0b620a3633f707e4eef	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:677:implementation-django-ninja-final	E07	s027-9	27	2	9	9. Mounted Django client와 검증	901	902	2	111076d7fd272ab9a9ec3949cca3beb06f9b130dca4afb9901a9a5a00c424309	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:678:implementation-django-ninja-final	E07	s028-9.1	28	3	9.1	9.1 공개 HTTP 검증 범위	903	943	41	71341dc313fb81b4e82fc580f68fcd4f0ae248125c21a18a2810c1fcb772cac8	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:712:architecture-db-final	E08	s025-6.3	25	3	6.3	6.3 쓰기	202	212	11	aff337443bc710dd46eb4953ff57f573c55ba000b1faa5a3ac4b6cb0ad9fa5db	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:713:architecture-db-final	E08	s026-6.4	26	3	6.4	6.4 인덱스의 근본 트레이드오프	213	222	10	46ed198302d90fa00d6a48a740a4115bce1cef0b6d4db017aabb27bc47c61856	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:714:architecture-db-final	E08	s027-7	27	2	7	7. 인덱스 설계 베스트 프랙티스	223	224	2	de69c62de07a4dbf247b34ff4e473795ba032fa8bb2e87105cedf2e180e3e197	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:715:architecture-db-final	E08	s028-7.1	28	3	7.1	7.1 복합 인덱스 컬럼 순서	225	241	17	151ceff2aa0265d4bb9aea8348b200060a9ed82cd28d3806ae39e0304f727ed4	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:785:architecture-api-final	E08	s025	25	4		`dddjango-code-json` (새 dddjango Ninja 범위의 기본)	233	242	10	cfacc5271fd358a6344b303336ce17c34056851c7ba862089ecde3a629dea098	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:786:architecture-api-final	E08	s026	26	4		framework 기본 응답과 공개 헤더의 경계	243	246	4	cefa4f8a3f630d7bba7bdf4ed7344936ae6d65b08961baacb4a534a0911401b3	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:787:architecture-api-final	E08	s027-6	27	2	6	6. RFC 9457 에러 응답 형식	247	250	4	c7e33b86378325a2ee69c913483386824e9b65ccdddd8afcc1fa1db638defa04	Y	N	N
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv:788:architecture-api-final	E08	s028-6.1	28	3	6.1	6.1 Problem Details for HTTP APIs	251	262	12	4f42520caeee172d8bad6e43468b12adb8957f3f41c2250eea2a7adb6608dec8	Y	N	N
+10-    10	| `dddjango/skills/implementation-django/references/final.md` | 1789 | 70 | 223 |
+11-    11	| **합계** | 1842 | **74** | **246** |
+12-    12	
+13:    13	- ④쌍둥이(파일 단위): 두 파일 모두 codex판 존재 — `codex-dddjango/skills/implementation-django/SKILL.md`, `codex-dddjango/skills/implementation-django/references/final.md` (find로 확인). 전 74절에 «있음» 상속.
+14-    14	- 축 판정 기준 메모:
+15-    15	  - ①앵커 «있음» = §N/§N.M 번호 절. SKILL.md의 번호 없는 관례 헤딩(«언제 쓰나» 등)과 final.md의 목차·참고 자료는 «없음»으로 판정(파일명 없이 코퍼스 내 유일성 없음).
+16-    16	  - ③백스톱: 스크립트명 지목은 §10.4의 `check-db-table.py`가 유일(+ 같은 절의 `makemigrations --check`·`sqlmigrate` 결정적 검증 절차) → 그 절만 «커버». 규범 문장 0인 절은 «비커버(규범 없음)», 나머지는 «불명».
+--
+47-    47	| §2.5 선택지(Choices) 정의 | 12 | 있음 | 명시 | 불명 | **문서 내 핵심 규칙 절**: 계층 소유(단일 출처 domain StrEnum)·TextChoices 인프라 한정·파생 전환 시점·`.value` 평탄화·소비 규율(심볼만·`==`·`is` 금지). 소유 포인터: architecture-ddd §3.2·discipline-houserules §1.1·§4·discipline-cleancode §2.14. 날짜 낙인 «2026-08-12» 인용 |
+48-    48	| §2.6 템플릿 코딩 스타일 | 1 | 있음 | 명시 | 불명 | 전문 위임: implementation-django-web §4 소유 |
+49-    49	| §2.7 뷰 코딩 스타일 | 1 | 있음 | 없음 | 불명 | «첫 매개변수 반드시 request» — 코드 주석 형태 |
+50:    50	| §3.1 프로젝트 레이아웃 | 4 | 있음 | 명시 | 불명 | 테스트 평면 나열 금지·조직 규칙 implementation-test §4.2 소유·표준 파일트리는 discipline-houserules 소유(배치 권위 명시). 이 절 자신은 «배경»으로 강등돼 있음 |
+51-    51	| §3.2 앱 분리 기준 | 3 | 있음 | 없음 | 불명 | 복수형 명명·한 문장 목적·순환 의존 재검토 |
+52-    52	| §3.3 설정 분리 | 2 | 있음 | 없음 | 불명 | 비밀 하드코딩 절대 금지·.env gitignore |
+53-    53	| §3.4 settings 접근 주의 | 1 | 있음 | 없음 | 불명 | 모듈 최상위 접근 회피 — 규칙은 좋은/나쁜 예 코드로 표현 |
+54-    54	| §4.1 Fat Model | 4 | 있음 | 명시 | 불명 | 인용구가 절 전체를 «평면 Django 한정»으로 조건화 + 표준 4계층에서 평면 ORM 판정 메서드 = **blocker** 선언(architecture-ddd §3.2 소유). 2000줄 기준 |
+55:    55	| §4.2 모델 상속 패턴 | 3 | 있음 | 없음 | 불명 | Abstract 권장·MTI 주의·Abstract+FK 우선 |
+56-    56	| §4.3 필드 선택 가이드 | 4 | 있음 | 명시 | 불명 | 도메인 판정 발생 시 §2.5 계층 소유로 전환(재진술)·JSONField 한정·Decimal/Float |
+57-    57	| §4.4 모델 유효성 검증 | 3 | 있음 | 없음 | 불명 | clean()+CheckConstraint 이중 방어·full_clean() 호출 경로 |
+58-    58	| §5.1 Custom Manager/QuerySet | 2 | 있음 | 없음 | 불명 | 체이닝·get_queryset 오버라이드 주의. §2.5 소비 규율 재진술이 코드 주석에 |
+--
+87-    87	| §13.4 인증과 인가 | 0 | 있음 | 없음 | 비커버 | 예시 코드만 |
+88-    88	| §14 도입 | 3 | 있음 | 명시 | 불명 | discipline-tdd 입장 심사 소유 명시·framework 자체 시험 금지·승인 테스트 있을 때만 선택 |
+89-    89	| §14.1 TestCase 선택 기준 | 3 | 있음 | 명시 | 불명 | 선택 표(집계 1) + 인용구 «신규 add는 무조건 pytest 관용구» + 등가 매핑 출처 implementation-test §16 |
+90:    90	| §14.2 Factory Boy | 0 | 있음 | 없음 | 비커버 | 사용법 설명으로 판정(«~한다» 3건은 예제 해설이라 제외 — 애매) |
+91-    91	| §14.3 pytest-django | 2 | 있음 | 없음 | 불명 | django_db 명시·assertNumQueries는 입장된 테스트에서만(§11.1 재진술, 판정 주체 암시만) |
+92-    92	| §14.4 Django 공식 테스트 규칙 | 3 | 있음 | 없음 | 불명 | assertIs(x, True)·assertRaisesMessage·독스트링 서술 형식 |
+93-    93	| §15.1 미들웨어 실행 순서 | 1 | 있음 | 없음 | 불명 | Security 첫 번째·Session은 Auth 앞 |
+
+[2m**Confirming normative sentence counts**
+**Revising sentence count breakdown**
+**Classifying normative sentences by role**[0m
+[2m**Clarifying normative sentence usage**
+**Planning line referencing with ripgrep**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg -n '반드시 None 체크|Python 3\\.12\\+: 간결한 새 문법|컬렉션 내부 타입 명시|FIFO 큐에 list 대신 사용|반환값 4개 이상이면|dict 대신 UserDict|정확한 타입 검증은 반드시|typing 버전 — 권장|스레드 간 데이터 경합|개발자가 할 일: 타입을 일관되게|str 생성자 필수|"'```'"' dddjango/skills/implementation-python/references/final.md | sed -n '1,220p'"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+16:```python
+26:```
+36:```python
+47:# 호출 측에서 반드시 None 체크 필요
+51:```
+60:```python
+81:```
+85:```python
+101:```
+107:```python
+120:```
+124:```python
+137:```
+143:```python
+156:# === Python 3.12+: 간결한 새 문법 — 권장 ===
+175:```
+179:```python
+183:# 좋은 예: 컬렉션 내부 타입 명시 (3.9+ 내장 타입 사용)
+186:```
+190:```python
+236:```
+242:```python
+275:```
+281:```python
+304:```
+310:```python
+328:```
+336:```python
+351:```
+355:```python
+364:```
+376:```python
+413:```
+419:```python
+437:```
+443:```python
+450:```
+454:```python
+475:```
+496:```python
+513:```
+519:```python
+528:```
+532:```python
+538:```
+542:```python
+547:# deque: 양방향 O(1) - FIFO 큐에 list 대신 사용
+559:```
+569:```python
+585:```
+589:```python
+600:```
+604:```python
+620:```
+626:```python
+641:```
+645:```python
+655:# 반환값 4개 이상이면 클래스/namedtuple 사용
+660:```
+670:```python
+687:```
+691:```python
+724:```
+730:```python
+741:```
+756:```python
+820:```
+832:```python
+856:```
+863:```python
+876:```
+886:```python
+897:```
+903:```python
+917:```
+921:```python
+933:```
+939:```python
+955:```
+959:```python
+969:```
+979:```python
+993:```
+997:```python
+1023:```
+1029:```python
+1045:```
+1051:```python
+1057:# dict 오버라이딩은 dict 대신 UserDict 사용
+1062:```
+1074:```python
+1092:```
+1104:```python
+1122:```
+1126:```python
+1139:```
+1143:```python
+1158:```
+1162:```python
+1175:# 정확한 타입 검증은 반드시 정적 타입 체커(mypy/pyright)에 의존하라
+1176:```
+1184:```python
+1205:```
+1217:```python
+1229:```
+1235:```python
+1250:```
+1256:```python
+1270:```
+1274:```python
+1292:```
+1296:```python
+1312:```
+1316:```python
+1334:```
+1338:```python
+1339:# typing 버전 — 권장
+1349:```
+1359:```python
+1417:```
+1446:```python
+1484:```
+1488:```python
+1510:```
+1514:```python
+1536:```
+1546:```python
+1561:```
+1565:```python
+1579:```
+1583:```python
+1593:```
+1597:```python
+1609:```
+1617:```python
+1634:```
+1640:```python
+1647:```
+1653:```python
+1657:```
+1665:```python
+1690:```
+1694:```python
+1712:```
+1720:```python
+1729:```
+1735:```python
+1748:```
+1754:```python
+1784:```
+1800:```python
+1806:# 스레드 간 데이터 경합 -> Lock 필수
+1815:```
+1821:```python
+1855:```
+1865:```python
+1885:```
+1897:```python
+1907:```
+1911:```python
+1917:```
+1921:```python
+1927:```
+1939:```python
+1967:```
+1971:```python
+2008:```
+2014:```python
+2015:# 개발자가 할 일: 타입을 일관되게 유지하라
+2021:```
+2025:```python
+2043:```
+2053:```python
+2076:```
+2084:```python
+2092:```
+2096:```python
+2112:```
+2116:```python
+2124:```
+2130:```python
+2135:```
+2171:```python
+2190:```
+2194:```python
+2205:```
+2209:```python
+2228:```
+2246:```toml
+2281:```
+2285:```python
+2322:```
+2332:```toml
+2353:```
+2357:```json
+2366:```
+2370:```python
+2416:```
+2432:```python
+2440:```
+2444:```python
+2449:```
+2471:```python
+2484:```
+2498:```python
+2505:# 좋은 예: Decimal (str 생성자 필수)
+2511:```
+2521:```python
+2535:```
+2539:```python
+2569:```
+
+[2m**Planning prose line references for fencing**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "nl -ba dddjango/skills/implementation-python/references/final.md | sed -n '32,54p;139,187p;540,562p;643,663p;1047,1065p;1160,1179p;1336,1352p;1794,1816p;2010,2022p;2496,2514p'"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+    32	### 1.2 Optional과 None 처리 [단단한 파이썬]
+    33	
+    34	None은 모든 변수에 할당될 수 있어서 "10억 달러짜리 실수"라 불린다. Optional 타입으로 None의 존재를 명시하라.
+    35	
+    36	```python
+    37	# 나쁜 예: None 반환 가능성이 시그니처에 안 보임
+    38	def find_user(user_id: int) -> User:
+    39	    ...  # None을 반환할 수도 있음
+    40	
+    41	# 좋은 예: Optional로 None 가능성 명시
+    42	from typing import Optional
+    43	
+    44	def find_user(user_id: int) -> Optional[User]:
+    45	    ...  # None 또는 User 반환
+    46	
+    47	# 호출 측에서 반드시 None 체크 필요
+    48	user = find_user(42)
+    49	if user is not None:
+    50	    user.activate()
+    51	```
+    52	
+    53	- `Optional[X]`는 `Union[X, None]`과 동등하다. Python 3.10+에서는 `X | None`을 사용할 수 있다.
+    54	- mypy `--strict-optional` 옵션으로 None 처리를 강제하라.
+   139	### 1.7 PEP 695: 새 타입 매개변수 문법 (Python 3.12+) [PEP 695]
+   140	
+   141	TypeVar를 전역 스코프에 선언해야 하는 번거로움과 공변/반공변의 복잡성을 제거한다.
+   142	
+   143	```python
+   144	# === Python 3.11 이전: 장황한 문법 (레거시 참고) ===
+   145	from typing import TypeVar, Generic
+   146	T = TypeVar('T')
+   147	S = TypeVar('S', bound=str)    # 상한 제약
+   148	N = TypeVar('N', int, float)   # 값 제약
+   149	
+   150	class Container(Generic[T]):
+   151	    def __init__(self, value: T) -> None:
+   152	        self.value = value
+   153	    def get(self) -> T:
+   154	        return self.value
+   155	
+   156	# === Python 3.12+: 간결한 새 문법 — 권장 ===
+   157	class Container[T]:
+   158	    def __init__(self, value: T) -> None:
+   159	        self.value = value
+   160	    def get(self) -> T:
+   161	        return self.value
+   162	
+   163	# 상한 제약 (bound)
+   164	def longest[S: str](a: S, b: S) -> S:
+   165	    return a if len(a) >= len(b) else b
+   166	
+   167	# 값 제약 (constrained)
+   168	def add[N: (int, float)](a: N, b: N) -> N:
+   169	    return a + b
+   170	
+   171	# type 문으로 타입 앨리어스 선언 (지연 평가)
+   172	type Vector[T] = list[T]
+   173	type Matrix[T] = list[Vector[T]]
+   174	type RecursiveList[T] = T | list['RecursiveList[T]']  # 순환 참조 가능
+   175	```
+   176	
+   177	### 1.8 컬렉션 타입 어노테이션 [단단한 파이썬]
+   178	
+   179	```python
+   180	# 나쁜 예: 컬렉션 내부 타입 불명
+   181	def process(items: list) -> dict: ...
+   182	
+   183	# 좋은 예: 컬렉션 내부 타입 명시 (3.9+ 내장 타입 사용)
+   184	AuthorCount = dict[str, int]
+   185	def process(items: list[Cookbook]) -> AuthorCount: ...
+   186	```
+   187	
+   540	### 3.5 성능 특화 자료구조 [파이썬코딩의기술]
+   541	
+   542	```python
+   543	from collections import deque
+   544	from bisect import bisect_left
+   545	from heapq import heappush, heappop
+   546	
+   547	# deque: 양방향 O(1) - FIFO 큐에 list 대신 사용
+   548	queue = deque()
+   549	queue.append(item)       # 오른쪽 삽입
+   550	queue.popleft()          # 왼쪽 제거 (list.pop(0)은 O(n))
+   551	
+   552	# bisect: 정렬된 시퀀스에서 이진 검색
+   553	index = bisect_left(sorted_data, target)
+   554	
+   555	# heapq: 우선순위 큐 - O(log n) 삽입/삭제
+   556	heap = []
+   557	heappush(heap, (priority, item))
+   558	_, item = heappop(heap)
+   559	```
+   560	
+   561	---
+   562	
+   643	### 4.5 언패킹 활용 [파이썬코딩의기술]
+   644	
+   645	```python
+   646	# 인덱스 대신 언패킹
+   647	first, second = item
+   648	
+   649	# 스왑
+   650	a[i-1], a[i] = a[i], a[i-1]
+   651	
+   652	# 별표 식(starred expression)
+   653	oldest, second, *others = sorted_ages
+   654	
+   655	# 반환값 4개 이상이면 클래스/namedtuple 사용
+   656	# 나쁜 예
+   657	min, max, avg, med, cnt = get_stats(lengths)
+   658	# 좋은 예
+   659	stats = get_stats(lengths)  # Stats 객체 반환
+   660	```
+   661	
+   662	---
+   663	
+  1047	### 8.9 collections.abc로 커스텀 컨테이너 [파이썬코딩의기술] [단단한 파이썬]
+  1048	
+  1049	커스텀 컨테이너를 만들 때 `collections.abc`를 상속하면 필수 메서드 누락을 방지한다.
+  1050	
+  1051	```python
+  1052	from collections.abc import Sequence
+  1053	
+  1054	class BadType(Sequence):
+  1055	    pass  # TypeError: __getitem__, __len__ 미구현
+  1056	
+  1057	# dict 오버라이딩은 dict 대신 UserDict 사용
+  1058	from collections import UserDict
+  1059	class MyDict(UserDict):
+  1060	    def __getitem__(self, key):
+  1061	        ...  # 안전하게 오버라이딩 가능
+  1062	```
+  1063	
+  1064	---
+  1065	
+  1160	### 9.5 @runtime_checkable의 한계 [PEP 544]
+  1161	
+  1162	```python
+  1163	@runtime_checkable
+  1164	class HasClose(Protocol):
+  1165	    def close(self) -> None: ...
+  1166	
+  1167	class FakeCloser:
+  1168	    def close(self, force: bool = False) -> str:
+  1169	        return "closed"
+  1170	
+  1171	# 주의: isinstance는 메서드 시그니처를 검사하지 않음
+  1172	assert isinstance(FakeCloser(), HasClose)  # True! 시그니처 불일치인데도 통과
+  1173	
+  1174	# 따라서 runtime_checkable은 "이 메서드가 존재하는가"만 확인
+  1175	# 정확한 타입 검증은 반드시 정적 타입 체커(mypy/pyright)에 의존하라
+  1176	```
+  1177	
+  1178	---
+  1179	
+  1336	### 10.8 NamedTuple: 불변 레코드 [슬기로운 파이썬 트릭]
+  1337	
+  1338	```python
+  1339	# typing 버전 — 권장
+  1340	from typing import NamedTuple
+  1341	class Car(NamedTuple):
+  1342	    color: str
+  1343	    mileage: float
+  1344	
+  1345	car = Car('red', 3812)
+  1346	car.color       # 이름으로 접근
+  1347	car[0]          # 인덱스로도 접근
+  1348	car._asdict()   # dict 변환
+  1349	```
+  1350	
+  1351	---
+  1352	
+  1794	### 16.1 GIL과 스레드 선택 기준 [파이썬코딩의기술]
+  1795	
+  1796	- **GIL**: CPython에서 한 번에 하나의 스레드만 바이트코드 실행.
+  1797	- **스레드 사용**: 블로킹 I/O 시 (파일, 네트워크). GIL은 시스템 콜 전에 해제됨.
+  1798	- **CPU 병렬화**: 기본적으로 `multiprocessing`이나 C 확장 사용. Free-threaded 빌드(3.13+)에서는 스레드도 가능.
+  1799	
+  1800	```python
+  1801	# 블로킹 I/O -> 스레드 OK
+  1802	from threading import Thread
+  1803	threads = [Thread(target=slow_io_call) for _ in range(5)]
+  1804	for t in threads: t.start()
+  1805	
+  1806	# 스레드 간 데이터 경합 -> Lock 필수
+  1807	from threading import Lock
+  1808	class LockingCounter:
+  1809	    def __init__(self):
+  1810	        self.lock = Lock()
+  1811	        self.count = 0
+  1812	    def increment(self, offset):
+  1813	        with self.lock:
+  1814	            self.count += offset
+  1815	```
+  1816	
+  2010	### 17.3 Python 3.11 성능 개선: Specializing Adaptive Interpreter [PEP 659]
+  2011	
+  2012	Python 3.11은 3.10 대비 평균 25%, 최대 60% 빠르다. 핵심 메커니즘은 **특화 적응 인터프리터**이다.
+  2013	
+  2014	```python
+  2015	# 개발자가 할 일: 타입을 일관되게 유지하라
+  2016	# 나쁜 예: 혼합 타입 리스트 (특화 불가)
+  2017	mixed = [1, 2.0, 3, 4.0]
+  2018	
+  2019	# 좋은 예: 단일 타입 리스트 (특화 가능)
+  2020	ints = [1, 2, 3, 4]
+  2021	```
+  2022	
+  2496	### 27.1 Decimal과 Fraction [파이썬코딩의기술]
+  2497	
+  2498	```python
+  2499	from decimal import Decimal, ROUND_UP
+  2500	
+  2501	# 나쁜 예: IEEE 754 부동소수점 오차
+  2502	rate = 1.45
+  2503	cost = rate * 222 / 60  # 5.364999999...
+  2504	
+  2505	# 좋은 예: Decimal (str 생성자 필수)
+  2506	rate = Decimal('1.45')
+  2507	cost = rate * Decimal('222') / Decimal('60')
+  2508	
+  2509	# 반올림
+  2510	rounded = cost.quantize(Decimal('0.01'), rounding=ROUND_UP)
+  2511	```
+  2512	
+  2513	---
+  2514	
+
+[2m**Verifying thread blocking I/O details**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "nl -ba dddjango/skills/implementation-django-web/SKILL.md | sed -n '1,8p'; nl -ba dddjango/skills/discipline-houserules/SKILL.md | sed -n '1,8p'; nl -ba workspace/design/2026-08-19-ontology-t1-census/E09-recon.md | sed -n '76,88p'; nl -ba workspace/design/2026-08-19-ontology-t1-census/E10-recon.md | sed -n '91,99p'"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	---
+     2	name: implementation-django-web
+     3	description: Django 서버렌더 표현계층 구현 지식 — TemplateView/Generic CBV/FBV 선택, Context 준비, 템플릿·base template·includes/components, Static files·CSS·JS, Web forms·POST flow, HTMX fragment·AJAX, CSRF·XSS·보안 설정, View auth·permission, Render acceptance checks. Django 서버렌더 뷰·템플릿·폼·HTMX 코드를 새로 작성하거나 리팩터링할 때 먼저 로드한다. Django 코어(모델·ORM·트랜잭션)는 implementation-django, JSON API 어댑터는 implementation-django-ninja, REST 계약 설계는 architecture-api로 위임.
+     4	user-invocable: false
+     5	---
+     6	
+     7	# Django 서버렌더 표현계층 구현
+     8	
+     1	---
+     2	name: discipline-houserules
+     3	description: dddjango 플러그인 고유 하우스룰 — ①표준 파일트리(BC 골격 140행·배치 결정 순서·이관/브라운필드 취급) ②타입 어노테이션(모든 이름의 첫 대입에 필수) ③코드 주석·docstring 언어 규율. 코드를 어느 파일/디렉터리에 둘지·어떻게 타입을 달지·주석을 어느 언어로 쓸지 정하거나 검수할 때 로드한다. 새 모듈·BC·테스트를 만들거나 프로젝트 레이아웃·코드 규약을 결정·점검하는 상황이면 반드시 사용. 트리와 규칙 «값»의 단일 출처는 references/final.md 다. 보편 클린코드는 dddjango:discipline-cleancode, Python 타입 지식은 implementation-python, 테스트 타입 조직은 dddjango:implementation-test(§4.2).
+     4	user-invocable: false
+     5	---
+     6	
+     7	# 하우스룰 규율
+     8	
+    76	## §4 규범 계수 대조
+    77	
+    78	| 문서 | 이번 계수 | P0 | 차이 |
+    79	|---|---|---|---|
+    80	| implementation-django-web-skill | 22 | 18 | +4 |
+    81	| implementation-django-web-final | 129 | 129 | 0 |
+    82	| discipline-houserules-skill | 77 | 71 | +6 |
+    83	| discipline-houserules-final | 58 | 58 | 0 |
+    84	| **합계** | **286** | **276** | **+10** |
+    85	
+    86	차이의 원인은 단일하다: **frontmatter(전문) 절 2건**이 P0 절 목록 밖이라 P0에서 규범 0으로 집계됐고, 이번 센서스는 «(전문) 절의 YAML description은 라우터 트리거 문면 — 애매하면 포함+비고» 규약에 따라 web-skill s001에 4(로드 1+위임 3)·hr-skill s001에 6(로드 1+반드시 사용 1+단일 출처 1+위임 3)을 보수 계상했다. P0가 센 40절의 절 단위 계수는 전 절에서 P0 값과 일치하게 재확인됐다(§11의 24건은 문장 단위 재계수로 검증). h1 제목 절 2건·h2 헤더 절 2건은 규범 0이라 계수 차이에 기여하지 않는다.
+    87	
+    88	부기 — codex 대응: 4파일 모두 codex 쌍둥이 존재(P0 ④축 승계 — houserules 쪽은 `dddjango-discipline-houserules`로 접두 개명). 두 final.md는 codex판과 **byte 동일**, 두 SKILL.md의 차이는 frontmatter `user-invocable: false` 제거와 참조 스킬명의 `dddjango-` 접두 치환뿐 — 전부 플랫폼 표기 치환 이내이므로 46절 전건 SAME. T4 잔차 규모 0 예상.
+    91	## §4 규범 계수 대조
+    92	
+    93	이번 분류 norm_count 합 = **1068** vs P0 = **1060**. 차이 **+8**.
+    94	
+    95	- **+8 전액 = frontmatter description 가산**: 8개 문서의 YAML description(라우터/디스패치 트리거 문면)을 T1 판정 기준의 «(전문) 절 description은 애매하면 포함+비고» 규약에 따라 문서당 1문으로 가산했다. P0는 헤딩 본문만 계수해 이 8문이 없었다.
+    96	- 본문 계수는 P0 절 계수를 측정 연속성 의무에 따라 그대로 승계하고 기계 절 경계로 재배분만 했다: command s007 = P0 step1~7 합(5+5+4+10+18+81+6=129), architect 158 → s004 9 + s005 149(분할점 직접 재계수), api 72 → s005 10 + s006 62(동일). 재배분 합은 각 P0 원값과 일치한다.
+    97	- 문서별: command 314(=313+1) · acceptance 76(=75+1) · coder 104(=103+1) · architect 179(=178+1) · api 95(=94+1) · db 36(=35+1) · ddd 29(=28+1) · discipline 235(=234+1).
+    98	
+    99	부기 — codex 대응 요약(3값): SAME 47 · DIFF 7 · ABSENT 0. DIFF 7건 = command s001·s003·s006·s007·s010·s011(실행 모델·게이트 채널·병렬 정의·플러그인 루트 전달 등 플랫폼 재작성이 문면 치환 범위를 넘음) + coder s004(검사기 확장-리터럴 경로 불릿 부재·«읽기 전용 한 턴 묶기» 불릿 추가). 에이전트 7종의 나머지 절은 «Coordinator→코디네이터»·스킬 접두(`dddjango-`) 치환·«로드할 지식 스킬» 절 신설(frontmatter skills: 목록의 형식 치환) 이내로 SAME. architect «산출물-우선 쓰기» 문단은 codex에서 산출 절로 이동했으나 규범 등가라 SAME 유지(절 이동은 비고 기재).
+
+[2m**Defining normative sentence criteria**
+**Clarifying normative sentence examples in Korean**
+**Confirming agent role action classification**[0m
+[2m**Evaluating code comment counting discrepancy**
+**Clarifying P0 and T1 counting rules**
+**Verifying prose counting outside code fences**[0m
+[2m**Reviewing directive duplication in headings**
+**Verifying None handling directive in prose**[0m
+[2m**Planning code citation formatting with line links**
+**Designing grouped markdown line citations**[0m
+[2m**Clarifying count correction logic**
+**Verifying detailed count adjustments**[0m
+[2m**Clarifying sentence count criteria**
+**Confirming sentence exclusion rules and formatting**
+**Verifying baseline counts and citation approach**[0m
+[35m[3mcodex[0m[0m
+# L-D 계수 잔차 재심 결과
+
+| # | 대상 | 판정(유지/뒤집힘/부분 수정) | 근거(원문 인용·행) | 수정 시 올바른 계수 |
+|---:|---|---|---|---:|
+| 1 | **E03 −11** — 코드 펜스 내 지시 주석 11건 | **유지** | 11건 모두 실제 코드 펜스 안이다: [§1.2 L36–51](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:36), [§1.7 L143–175](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:143), [§1.8 L179–186](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:179), [§3.5 L542–559](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:542), [§4.5 L645–660](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:645), [§8.9 L1051–1062](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1051), [§9.5 L1162–1176](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1162), [§10.8 L1338–1349](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1338), [§16.1 L1800–1815](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1800), [§17.3 L2014–2021](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:2014), [§27.1 L2498–2511](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:2498). 따라서 T1의 펜스 배제 규칙이 직접 적용된다. 밖의 산문 규범은 §1.2의 “Optional…명시하라”와 “`--strict-optional`…강제하라”([L34](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:34), [L54](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:54)), §8.9의 `collections.abc` 조건([L1049](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1049)), §16.1의 스레드·CPU 선택 기준([L1797](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1797))뿐이며 이미 별도 계수된 문장이다. 각각 펜스 속 “None 체크·UserDict·Lock” 지시와 동일 문장을 밖에서 재진술하지 않는다. | 수정 없음: **101**, P0 대비 **−11** |
+| 2 | **E08 +1** — architecture-api의 의존 항목 기록 의무 | **유지** | “클라이언트가 의존할 수 있는 항목은 **명시적으로 기록한다**”([L180](/Users/hyun/Desktop/dddjango/dddjango/skills/architecture-api/references/final.md:180))는 에이전트가 API 계약에 무엇을 기록해야 하는지 직접 구속한다. 앞 문장의 설명과 달리 명시적 산출물 작성 의무이므로 P0 정의상 규범 문장이다. | 수정 없음: architecture-api-final **167**, E08 **311**, P0 대비 **+1** |
+| 3 | **E09 +10** — 두 SKILL frontmatter 4·6 | **부분 수정** | web description은 실제 3문장이고, 첫 문장은 주제 설명이다. 규범은 “먼저 로드한다” 1문과 세 위임 대상을 한 문장으로 묶은 위임문 1문뿐이다([web L3](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django-web/SKILL.md:3)). 쉼표로 병렬 나열된 세 위임은 표·체크리스트 항목이 아니므로 3문장으로 쪼갤 근거가 없다. 따라서 **4가 아니라 2**다. houserules도 5문장 중 첫 문장은 주제 설명이고, 규범은 로드·반드시 사용·단일 출처·위임 각 1문이다([houserules L3](/Users/hyun/Desktop/dddjango/dddjango/skills/discipline-houserules/SKILL.md:3)). 마지막 세 위임 역시 한 문장이므로 **6이 아니라 4**다. | web-skill **20**(P0 18+2), houserules-skill **75**(P0 71+4), E09 **282**; 잔차 **+6** |
+| 4 | **E10 +8** — 8문서 description 각 1문 | **부분 수정** | description 필드 하나를 문장 하나로 센 것은 P0의 “규범 **문장**” 단위와 맞지 않는다. command는 실제 2문장 중 사용 조건 1문만 규범([L2](/Users/hyun/Desktop/dddjango/dddjango/commands/dddjango.md:2)). 나머지는 문장별로 모두 호출 조건·소유 범위·읽기 전용·수정 금지 등의 행동 제약이다: acceptance **4문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/acceptance-tester.md:3)), coder **2문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/coder.md:3)), architect **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-architect.md:3)), API reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-review-api.md:3)), DB reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-review-db.md:3)), DDD reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-review-ddd.md:3)), discipline reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/discipline-reviewer.md:3)). 총 23개 표면 문장 중 command의 첫 설명문만 제외되어 규범은 **22문장**이다. | E10 **1,082**; P0 대비 **+22** |
+| 5 | 추가 검산 — **E05 §4.2 h4 재배분** | **유지** | s026은 헤딩 자체가 “Abstract Base Class — **권장**”이고 산문도 “가장 적합”이라고 한다([L412](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:412), [L429](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:429)) → 1. s027은 “주의해서 사용”([L432](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:432))과 “Abstract Base Class + 명시적 ForeignKey가 더 낫다”([L445](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:445)) → 2. s028은 Proxy의 성질·용도 설명뿐이다([L447](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:447), [L466](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:466)) → 0. 코드 펜스의 예제·주석은 이 계수에 쓰이지 않았다. | 수정 없음: **s026=1 · s027=2 · s028=0** |
+
+## 종합
+
+**3,225는 유지되지 않는다. 올바른 총계는 3,235다.**
+
+- 확정 잔차: E03 **−11** + E08 **+1** + E09 **+6** + E10 **+22** = **+18**
+- 따라서 P0 **3,217 + 18 = 3,235**
+- 기존 3,225에서 보면 E09 수정 **−4**, E10 수정 **+14**, 순증 **+10**이다.
+- E05 표본 재배분은 맞으므로 총계에는 영향이 없다.
+
+Serena: skipped — 문서 원문과 계수표의 단일행·펜스 범위 검산이라 기본 읽기 도구로 충분했다.
+[2mtokens used[0m
+109,082
+# L-D 계수 잔차 재심 결과
+
+| # | 대상 | 판정(유지/뒤집힘/부분 수정) | 근거(원문 인용·행) | 수정 시 올바른 계수 |
+|---:|---|---|---|---:|
+| 1 | **E03 −11** — 코드 펜스 내 지시 주석 11건 | **유지** | 11건 모두 실제 코드 펜스 안이다: [§1.2 L36–51](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:36), [§1.7 L143–175](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:143), [§1.8 L179–186](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:179), [§3.5 L542–559](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:542), [§4.5 L645–660](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:645), [§8.9 L1051–1062](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1051), [§9.5 L1162–1176](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1162), [§10.8 L1338–1349](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1338), [§16.1 L1800–1815](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1800), [§17.3 L2014–2021](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:2014), [§27.1 L2498–2511](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:2498). 따라서 T1의 펜스 배제 규칙이 직접 적용된다. 밖의 산문 규범은 §1.2의 “Optional…명시하라”와 “`--strict-optional`…강제하라”([L34](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:34), [L54](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:54)), §8.9의 `collections.abc` 조건([L1049](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1049)), §16.1의 스레드·CPU 선택 기준([L1797](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-python/references/final.md:1797))뿐이며 이미 별도 계수된 문장이다. 각각 펜스 속 “None 체크·UserDict·Lock” 지시와 동일 문장을 밖에서 재진술하지 않는다. | 수정 없음: **101**, P0 대비 **−11** |
+| 2 | **E08 +1** — architecture-api의 의존 항목 기록 의무 | **유지** | “클라이언트가 의존할 수 있는 항목은 **명시적으로 기록한다**”([L180](/Users/hyun/Desktop/dddjango/dddjango/skills/architecture-api/references/final.md:180))는 에이전트가 API 계약에 무엇을 기록해야 하는지 직접 구속한다. 앞 문장의 설명과 달리 명시적 산출물 작성 의무이므로 P0 정의상 규범 문장이다. | 수정 없음: architecture-api-final **167**, E08 **311**, P0 대비 **+1** |
+| 3 | **E09 +10** — 두 SKILL frontmatter 4·6 | **부분 수정** | web description은 실제 3문장이고, 첫 문장은 주제 설명이다. 규범은 “먼저 로드한다” 1문과 세 위임 대상을 한 문장으로 묶은 위임문 1문뿐이다([web L3](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django-web/SKILL.md:3)). 쉼표로 병렬 나열된 세 위임은 표·체크리스트 항목이 아니므로 3문장으로 쪼갤 근거가 없다. 따라서 **4가 아니라 2**다. houserules도 5문장 중 첫 문장은 주제 설명이고, 규범은 로드·반드시 사용·단일 출처·위임 각 1문이다([houserules L3](/Users/hyun/Desktop/dddjango/dddjango/skills/discipline-houserules/SKILL.md:3)). 마지막 세 위임 역시 한 문장이므로 **6이 아니라 4**다. | web-skill **20**(P0 18+2), houserules-skill **75**(P0 71+4), E09 **282**; 잔차 **+6** |
+| 4 | **E10 +8** — 8문서 description 각 1문 | **부분 수정** | description 필드 하나를 문장 하나로 센 것은 P0의 “규범 **문장**” 단위와 맞지 않는다. command는 실제 2문장 중 사용 조건 1문만 규범([L2](/Users/hyun/Desktop/dddjango/dddjango/commands/dddjango.md:2)). 나머지는 문장별로 모두 호출 조건·소유 범위·읽기 전용·수정 금지 등의 행동 제약이다: acceptance **4문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/acceptance-tester.md:3)), coder **2문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/coder.md:3)), architect **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-architect.md:3)), API reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-review-api.md:3)), DB reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-review-db.md:3)), DDD reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/design-review-ddd.md:3)), discipline reviewer **3문**([L3](/Users/hyun/Desktop/dddjango/dddjango/agents/discipline-reviewer.md:3)). 총 23개 표면 문장 중 command의 첫 설명문만 제외되어 규범은 **22문장**이다. | E10 **1,082**; P0 대비 **+22** |
+| 5 | 추가 검산 — **E05 §4.2 h4 재배분** | **유지** | s026은 헤딩 자체가 “Abstract Base Class — **권장**”이고 산문도 “가장 적합”이라고 한다([L412](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:412), [L429](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:429)) → 1. s027은 “주의해서 사용”([L432](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:432))과 “Abstract Base Class + 명시적 ForeignKey가 더 낫다”([L445](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:445)) → 2. s028은 Proxy의 성질·용도 설명뿐이다([L447](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:447), [L466](/Users/hyun/Desktop/dddjango/dddjango/skills/implementation-django/references/final.md:466)) → 0. 코드 펜스의 예제·주석은 이 계수에 쓰이지 않았다. | 수정 없음: **s026=1 · s027=2 · s028=0** |
+
+## 종합
+
+**3,225는 유지되지 않는다. 올바른 총계는 3,235다.**
+
+- 확정 잔차: E03 **−11** + E08 **+1** + E09 **+6** + E10 **+22** = **+18**
+- 따라서 P0 **3,217 + 18 = 3,235**
+- 기존 3,225에서 보면 E09 수정 **−4**, E10 수정 **+14**, 순증 **+10**이다.
+- E05 표본 재배분은 맞으므로 총계에는 영향이 없다.
+
+Serena: skipped — 문서 원문과 계수표의 단일행·펜스 범위 검산이라 기본 읽기 도구로 충분했다.

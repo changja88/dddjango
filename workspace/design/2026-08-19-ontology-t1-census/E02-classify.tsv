@@ -1,0 +1,148 @@
+doc_key	section_key	type	carriers	norm_count	restate	codex	note
+discipline-cleancode-skill	s001	REF	none	2	Y:discipline-cleancode-skill/s003	SAME	frontmatter description=라우터 트리거 문면(애매→포함 규약); codex는 name 접두 개명·user-invocable 필드 제거 — 플랫폼 표기 이내
+discipline-cleancode-skill	s002	NAR	none	0	N	SAME	h1 문서 제목 절(본문 없음)
+discipline-cleancode-skill	s003	REF	none	5	Y:discipline-cleancode-skill/s001	SAME	로드 조건 1+위임 4; codex는 위임 스킬명 dddjango- 접두 치환
+discipline-cleancode-skill	s004	REF	none	11	Y:discipline-cleancode-final/s026-2.14	SAME	bullet 11=규범 11; final 본문 §2–§16 압축 — 3중 사본 층(a); bullet2는 §2.14 ~6지시 압축(동기화 누락 1순위 — P0 발견 5)
+discipline-cleancode-skill	s005	REF	table	2	N	SAME	final.md 단일 출처 지정 2문장; §1–§17 매핑표 자체는 비규범
+discipline-cleancode-final	s001	NAR	none	0	N	SAME	서두 — 출처 약어 11종 정의 산문
+discipline-cleancode-final	s002	NAR	none	0	N	SAME	목차
+discipline-cleancode-final	s003-1	NAR	none	0	N	SAME	장 헤더(본문 없음)
+discipline-cleancode-final	s004-1.1	NAR	none	0	N	SAME	인용 4건 전부 정의
+discipline-cleancode-final	s005-1.2	REF	none	3	N	SAME	명령형 명사화 목록 — 보수 포함(P0 승계)
+discipline-cleancode-final	s006-1.3	REF	none	1	N	SAME	«유연성은 필요한 경우에만» 조건 — 보수 포함
+discipline-cleancode-final	s007-1.4	NAR	code	0	N	SAME	비용 공식 펜스 — 설명
+discipline-cleancode-final	s008-1.5	NAR	none	0	N	SAME	개념 정의(하위 h4 2절 별도)
+discipline-cleancode-final	s009	NAR	table	0	N	SAME	발현 3종 표 — 전부 정의
+discipline-cleancode-final	s010	NAR	none	0	N	SAME	근원 2종 정의
+discipline-cleancode-final	s011-1.6	REF	none	1	N	SAME	-
+discipline-cleancode-final	s012-2	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s013-2.1	REF	code	1	N	SAME	-
+discipline-cleancode-final	s014-2.2	REF	code	1	N	SAME	-
+discipline-cleancode-final	s015-2.3	REF	code	1	N	SAME	본문은 진단문 — 헤딩 규칙 계상(P0)
+discipline-cleancode-final	s016-2.4	REF	code	3	N	SAME	수치 가이드(10–16자·15–20자) 포함
+discipline-cleancode-final	s017-2.5	REF	code	1	N	SAME	-
+discipline-cleancode-final	s018-2.6	REF	code	1	N	SAME	본문 코드뿐 — 헤딩 규칙 계상
+discipline-cleancode-final	s019-2.7	REF	code	1	N	SAME	-
+discipline-cleancode-final	s020-2.8	REF	code	1	N	SAME	-
+discipline-cleancode-final	s021-2.9	REF	code	1	N	SAME	-
+discipline-cleancode-final	s022-2.10	REF	code	1	N	SAME	-
+discipline-cleancode-final	s023-2.11	REF	code	1	N	SAME	명명+사용 2지시가 한 문장
+discipline-cleancode-final	s024-2.12	REF	code	1	N	SAME	헤딩 규칙 계상
+discipline-cleancode-final	s025-2.13	REF	code	1	N	SAME	규칙이 코드 라벨(허용/좋은 예)로만 표현 — 보수 포함
+discipline-cleancode-final	s026-2.14	REF	none	27	Y:discipline-cleancode-skill/s004	SAME	최대 밀도 절; check-choices-literal-consumption.py가 역지목(백스톱 부분 커버); 위임: architecture-ddd §3.1·§3.2·§3.7, implementation-test §15.4·§15.5, houserules §2
+discipline-cleancode-final	s027-3	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s028-3.1	REF	code	3	N	SAME	«의미 있는 이름…» 문장이 s029-3.2와 중복 수록
+discipline-cleancode-final	s029-3.2	REF	none	2	Y:discipline-cleancode-final/s028-3.1	SAME	동일 문장 그대로 중복(P0 특이 발견 6)
+discipline-cleancode-final	s030-3.3	REF	code	1	N	SAME	-
+discipline-cleancode-final	s031-3.4	REF	code	2	N	SAME	-
+discipline-cleancode-final	s032-3.5	REF	code	1	N	SAME	헤딩 규칙 계상
+discipline-cleancode-final	s033-3.6	REF	code	1	N	SAME	-
+discipline-cleancode-final	s034-3.7	REF	code	1	N	SAME	헤딩 규칙 계상
+discipline-cleancode-final	s035-3.8	REF	code	1	N	SAME	권고 수위 — 보수 포함
+discipline-cleancode-final	s036-3.9	NAR	none	0	N	SAME	h3 헤더만 — 규범(결정 횟수)은 하위 s038에
+discipline-cleancode-final	s037	NAR	none	0	N	SAME	이유 목록 — 설명 전용
+discipline-cleancode-final	s038	REF	code	1	N	SAME	결정 횟수 >10 → 재설계 고려(수치 임계)
+discipline-cleancode-final	s039-4	REF	none	1	N	SAME	장 도입 blockquote 통합 원칙(P0 «§4 도입»)
+discipline-cleancode-final	s040-4.1	REF	code	2	N	SAME	-
+discipline-cleancode-final	s041-4.2	REF	code	4	N	SAME	멤버 변수 주석 «반드시» 포함
+discipline-cleancode-final	s042-4.3	REF	table	3	N	SAME	규범이 표 3행으로 표현
+discipline-cleancode-final	s043-4.4	REF	none	1	N	SAME	TODO 나쁜 코드 핑계 금지만 계상
+discipline-cleancode-final	s044-4.5	REF	none	1	N	SAME	«그냥 삭제하라»만 계상 — 5항 목록은 암묵 금지
+discipline-cleancode-final	s045-4.6	REF	none	2	N	SAME	-
+discipline-cleancode-final	s046-4.7	REF	none	2	N	SAME	양식은 implementation-python §26 위임
+discipline-cleancode-final	s047-5	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s048-5.1	NAR	none	0	N	SAME	가치 서술만
+discipline-cleancode-final	s049-5.2	REF	none	1	N	SAME	수치는 Ruff 강제·implementation-python §22 위임(P0 백스톱 커버)
+discipline-cleancode-final	s050-5.3	NAR	none	0	N	SAME	가치 서술만
+discipline-cleancode-final	s051-5.4	REF	none	2	N	SAME	자동화+CI 편입 «되어야 한다»
+discipline-cleancode-final	s052-6	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s053-6.1	NAR	none	0	N	SAME	-
+discipline-cleancode-final	s054-6.2	REF	code	1	N	SAME	인용문이 지시로 기능
+discipline-cleancode-final	s055-6.3	REF	code	1	N	SAME	-
+discipline-cleancode-final	s056-6.4	REF	none	1	N	SAME	-
+discipline-cleancode-final	s057-6.5	REF	code	1	N	SAME	-
+discipline-cleancode-final	s058-7	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s059-7.1	NAR	code	0	N	SAME	개념 정의+ASCII 다이어그램 펜스
+discipline-cleancode-final	s060-7.2	NAR	code,table	0	N	SAME	대비 표+예제 — 지시는 SKILL bullet에만(P0)
+discipline-cleancode-final	s061-7.3	NAR	table	0	N	SAME	레드 플래그 6종 표 — 검출 기준으로 기능하나 문장 형태 전부 정의(P0 승계, 애매)
+discipline-cleancode-final	s062-8	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s063-8.1	REF	code	1	N	SAME	조건-결과 경고문 — 보수 포함
+discipline-cleancode-final	s064-8.2	REF	code	1	N	SAME	-
+discipline-cleancode-final	s065-8.3	REF	code	1	N	SAME	-
+discipline-cleancode-final	s066-8.4	REF	code	1	N	SAME	헤딩 규칙 계상
+discipline-cleancode-final	s067-8.5	REF	code	1	N	SAME	-
+discipline-cleancode-final	s068-8.6	REF	code	1	N	SAME	-
+discipline-cleancode-final	s069-9	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s070-9.1	REF	code	2	N	SAME	P0 §9.1=6을 s070:2+s071:4로 배분
+discipline-cleancode-final	s071	REF	table	4	N	SAME	표 판단열 지시형 2행만 계상+변경 이유 우선 기준 1+DB/API/DDD 라우팅 1(P0 방침 승계)
+discipline-cleancode-final	s072-9.2	REF	code	2	N	SAME	-
+discipline-cleancode-final	s073-9.3	REF	code	2	N	SAME	-
+discipline-cleancode-final	s074-9.4	REF	code	2	N	SAME	-
+discipline-cleancode-final	s075-9.5	REF	code	2	N	SAME	-
+discipline-cleancode-final	s076-10	NAR	none	0	N	SAME	장 도입 — 범위 서술만(P0 «§10 도입»=0)
+discipline-cleancode-final	s077-10.1	NAR	code	0	N	SAME	패턴 기술+예제
+discipline-cleancode-final	s078-10.2	REF	code	1	N	SAME	«상속보다 구성을 선호» — 보수 포함
+discipline-cleancode-final	s079-10.3	NAR	code	0	N	SAME	-
+discipline-cleancode-final	s080-10.4	REF	code	1	N	SAME	«None 검사 대신 … 사용한다»
+discipline-cleancode-final	s081-10.5	NAR	code	0	N	SAME	-
+discipline-cleancode-final	s082-10.6	NAR	code	0	N	SAME	-
+discipline-cleancode-final	s083-10.7	NAR	code	0	N	SAME	dddart판(base 클래스 금지)과 의도적 계열 차이(P0)
+discipline-cleancode-final	s084-10.8	REF	code	3	N	SAME	조건부 지시(같은 조건문 2회 반복 시 객체화)+implementation-python 참조 지시
+discipline-cleancode-final	s085-11	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s086-11.1	REF	code	3	N	SAME	-
+discipline-cleancode-final	s087-11.2	REF	code	2	N	SAME	-
+discipline-cleancode-final	s088-11.3	REF	code	1	N	SAME	-
+discipline-cleancode-final	s089-11.4	REF	none	3	N	SAME	-
+discipline-cleancode-final	s090-12	REF	none	3	N	SAME	장 도입 blockquote 1순위/2순위(P0 «§12 도입»)
+discipline-cleancode-final	s091-12.1	REF	code	1	N	SAME	-
+discipline-cleancode-final	s092-12.2	REF	code	4	N	SAME	dddjango 경계 단서 blockquote가 결정 ID #453·#454 인용
+discipline-cleancode-final	s093-12.3	REF	code	7	N	SAME	framework 소유권 조건부 허용 — implementation-django-ninja §6.2; 조건·예외 조항 밀도 높음
+discipline-cleancode-final	s094-12.4	REF	none	2	N	SAME	-
+discipline-cleancode-final	s095-12.5	REF	code	1	N	SAME	-
+discipline-cleancode-final	s096-12.6	REF	code	1	N	SAME	-
+discipline-cleancode-final	s097-12.7	REF	none	4	N	SAME	P0 §12.7=7을 s097:4+s098:3+s099:0으로 배분
+discipline-cleancode-final	s098	REF	code,table	3	N	SAME	단언 vs 오류 처리 표 3행 계상
+discipline-cleancode-final	s099	NAR	code	0	N	SAME	정확성/견고성 대비 — 정의(P0)
+discipline-cleancode-final	s100-13	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s101-13.1	REF	code	4	N	SAME	§2.14 원리 2가 본 절을 우선 규칙으로 인용(역방향 결합)
+discipline-cleancode-final	s102-13.2	NAR	code	0	N	SAME	예시 절
+discipline-cleancode-final	s103-13.3	REF	none	1	N	SAME	-
+discipline-cleancode-final	s104-14	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s105-14.1	NAR	none	0	N	SAME	정의 3항
+discipline-cleancode-final	s106-14.2	REF	none	2	N	SAME	-
+discipline-cleancode-final	s107-14.3	REF	code	2	N	SAME	-
+discipline-cleancode-final	s108-14.4	REF	code	2	N	SAME	-
+discipline-cleancode-final	s109-14.5	REF	code	1	N	SAME	-
+discipline-cleancode-final	s110-14.6	REF	code	2	N	SAME	-
+discipline-cleancode-final	s111-15	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s112-15.1	NAR	none	0	N	SAME	검출 지시는 SKILL bullet(«감지하고 제거하라»)에만(P0)
+discipline-cleancode-final	s113	NAR	code,table	0	N	SAME	스멜 표 — 전부 정의 형태
+discipline-cleancode-final	s114	NAR	code,table	0	N	SAME	-
+discipline-cleancode-final	s115	NAR	code,table	0	N	SAME	-
+discipline-cleancode-final	s116	NAR	code,table	0	N	SAME	-
+discipline-cleancode-final	s117	NAR	code,table	0	N	SAME	-
+discipline-cleancode-final	s118-15.2	NAR	none	0	N	SAME	h3 헤더만
+discipline-cleancode-final	s119	NAR	code	0	N	SAME	Before/After 코드만
+discipline-cleancode-final	s120	NAR	code	0	N	SAME	-
+discipline-cleancode-final	s121	NAR	code	0	N	SAME	-
+discipline-cleancode-final	s122	NAR	code	0	N	SAME	-
+discipline-cleancode-final	s123-15.3	NAR	code	0	N	SAME	기법 기술 — «대체할 수 있다» 가능 서술(P0 0 승계, 애매)
+discipline-cleancode-final	s124-16	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s125-16.1	NAR	none	0	N	SAME	정의(테스트 없는 코드)
+discipline-cleancode-final	s126-16.2	NAR	code,table	0	N	SAME	Seam 개념·유형 표 — 정의
+discipline-cleancode-final	s127-16.3	REF	code	1	N	SAME	-
+discipline-cleancode-final	s128-16.4	REF	code	1	N	SAME	-
+discipline-cleancode-final	s129-16.5	REF	code	5	N	SAME	소유: discipline-tdd §5.5(문서 내 유일한 «소유한다» 명문); non-migration 한정·영구 고정 금지
+discipline-cleancode-final	s130-16.6	REF	none	1	N	SAME	-
+discipline-cleancode-final	s131-17	NAR	none	0	N	SAME	장 헤더
+discipline-cleancode-final	s132-17.1	REF	none	6	N	SAME	구현 3단계 수칙 포함
+discipline-cleancode-final	s133-17.2	REF	none	1	N	SAME	-
+discipline-cleancode-final	s134-17.3	REF	none	4	N	SAME	절차 4단계
+discipline-cleancode-final	s135-17.4	REF	none	1	N	SAME	GoF 인용이 지시로 기능
+discipline-cleancode-final	s136-17.5	REF	none	1	N	SAME	-
+discipline-cleancode-final	s137-17.6	REF	none	2	N	SAME	-
+discipline-cleancode-final	s138-17.7	REF	code	2	N	SAME	-
+discipline-cleancode-final	s139-17.8	NAR	table	0	N	SAME	대비 표 — 정의
+discipline-cleancode-final	s140-17.9	REF	table	4	N	SAME	팁 표 5행 중 지시형 4행 계상(ETC는 가치 서술)
+discipline-cleancode-final	s141-18	REF	none	1	N	SAME	절 전체가 implementation-python 위임 포인터 1문장
+discipline-cleancode-final	s142	REF	table	29	Y:discipline-cleancode-final/s013..s140(본문 압축)	SAME	본문 §1–§16 압축 재진술 29행 — 3중 사본 층(c); 운반체는 표(«- [ ]» 체크박스 아님)

@@ -1,0 +1,55 @@
+doc_key	section_key	type	carriers	norm_count	restate	codex	note
+command-dddjango	s001	REF	none	6	N	DIFF	frontmatter description=라우터 트리거(+1 애매 포함); codex는 description 재작성·$ARGUMENTS/allowed-tools 부재(번호 공간 규약 문면은 동일)
+command-dddjango	s002	REF	none	9	N	SAME	-
+command-dddjango	s003	REF	code	22	N	DIFF	배너 코드 펜스=앵커화된 출력 계약(구속); codex는 task 리스트 보조 채널·배너 «task 리스트» 필드 삭제, 승인 질문이 별도 절로 재편
+command-dddjango	s004	REF	none	5	N	SAME	Read/Grep/Glob→네이티브 도구 치환
+command-dddjango	s005	REF	none	39	Y:agent-coder/s004	SAME	배선 표준 #105~#112 문장 사본; AskUserQuestion→게이트 질문 채널 치환
+command-dddjango	s006	REF	none	52	Y:agent-design-architect/s005	DIFF	12-slot label·순서 리터럴 재등장(3중 병렬); codex는 병렬 정의 재정의(spawn 먼저·wait 뒤)·리뷰어 입력 «플러그인 설치 루트» 문장 부재
+command-dddjango	s007	REF	none	129	Y:agent-coder/s003	DIFF	P0 step1~7(5+5+4+10+18+81+6) 합산; 보고 형식 리터럴·비계 제거 사본; codex는 coder 입력 플러그인 루트 부재·registry 경로 표기 상이·G2 배너 문면 가감
+command-dddjango	s008	REF	none	3	N	SAME	-
+command-dddjango	s009	REF	none	17	N	SAME	step6 «그대로 적용»은 정본 역참조(사본 아님); 직접 쓰기→직접 patch 치환
+command-dddjango	s010	REF	none	17	Y:command-dddjango/s007	DIFF	checker exit 1/2 처리 축약 재서술(P0 비고); codex는 «서브에이전트 결과 미수신» 불릿 추가
+command-dddjango	s011	REF	none	15	Y:agent-design-architect/s004	DIFF	게이트 질문·STOP 기록 형식 쌍; codex는 입력 채널 문단을 request_user_input 규격으로 재작성+보일러플레이트 금지 불릿 추가
+agent-acceptance-tester	s001	REF	none	6	N	DIFF	[adv 중재 정정 2026-08-19] SAME→DIFF(codex 로드 목록 4종 — ninja 삭제 실측)·norm 3→6(description 문장 단위 4문)
+agent-acceptance-tester	s002	REF	none	5	N	SAME	-
+agent-acceptance-tester	s003	REF	none	5	Y:agent-coder/s003	SAME	보고 형식 `path::test | decision | …` 리터럴 3중 사본(command s007 포함)
+agent-acceptance-tester	s004	REF	none	57	Y:agent-coder/s004	DIFF	[adv 중재 정정 2026-08-19] SAME→DIFF — 양판 동일 문자열이나 codex에서 implementation-test·architecture-ddd가 부재 스킬명(치환 누락형 잠재 표류)
+agent-acceptance-tester	s005	REF	none	6	N	SAME	-
+agent-coder	s001	REF	none	4	N	SAME	[adv 중재 정정 2026-08-19] norm 3→4 — description 문장 단위 2문
+agent-coder	s002	REF	none	2	N	SAME	-
+agent-coder	s003	REF	none	4	Y:agent-acceptance-tester/s003	SAME	보고 형식 리터럴 3중 사본
+agent-coder	s004	REF	none	82	Y:agent-acceptance-tester/s004	DIFF	codex: «검사기 확장-리터럴 경로»(2026-08-15) 불릿 부재+«읽기 전용 한 턴 묶기» 불릿 추가 — 규범 차이
+agent-coder	s005	REF	none	4	N	SAME	-
+agent-coder	s006	REF	none	9	Y:agent-discipline-reviewer/s007	SAME	메커니즘 대체 금지(출처-불문) — discipline 메커니즘-소유권 규율과 쌍
+agent-design-architect	s001	REF	none	3	N	SAME	[adv 중재 정정 2026-08-19] norm 1→3 — description 문장 단위 3문
+agent-design-architect	s002	REF	none	6	N	SAME	-
+agent-design-architect	s003	REF	none	3	N	SAME	codex는 «산출물-우선 쓰기» 문단이 이 절로 이동해 실림(규범 등가 — SAME 유지)
+agent-design-architect	s004	REF	none	9	Y:command-dddjango/s011	SAME	P0 «명세에 담는 것» 158을 기계 경계(31~36/37~81)로 분할한 앞부분(직접 계수 9); STOP 기록 형식 쌍
+agent-design-architect	s005	REF	table	149	Y:agent-design-review-api/s006	SAME	P0 158의 잔여(h3 12-slot~입장 표); 입장 표 헤더 표=구속 운반체; 12-slot 3중 병렬·Risky Write 8행(db s004와); codex는 산출물-우선 쓰기 문단이 s003으로 이동
+agent-design-architect	s006	REF	none	7	N	SAME	-
+agent-design-architect	s007	REF	none	4	N	SAME	-
+agent-design-review-api	s001	REF	none	4	N	SAME	[adv 중재 정정 2026-08-19] norm 2→4 — description 문장 단위 3문
+agent-design-review-api	s002	REF	none	4	N	SAME	-
+agent-design-review-api	s003	REF	none	3	N	SAME	-
+agent-design-review-api	s004	REF	none	11	Y:agent-design-review-db/s003	SAME	집행성 판정 1행·산출 형식(발견/권고·심각도) 동형; RESOLVED 토큰은 discipline s003과 대칭 계약(사본 아님)
+agent-design-review-api	s005	REF	none	10	N	SAME	P0 «점검 항목» 72를 기계 경계(45~53/54~79)로 분할한 앞부분(직접 계수 10)
+agent-design-review-api	s006	REF	none	62	Y:agent-design-architect/s005	SAME	P0 72의 잔여; 12-slot 심사판 병렬·URL 합성(acceptance s004와) 사본
+agent-design-review-api	s007	REF	none	3	Y:agent-design-review-db/s005	SAME	«스코프 넓히는 권고 금지» 동형 문장 4중(P0 미기재 — 신규 의심)
+agent-design-review-db	s001	REF	none	4	N	SAME	[adv 중재 정정 2026-08-19] norm 2→4 — 동상
+agent-design-review-db	s002	REF	none	2	N	SAME	-
+agent-design-review-db	s003	REF	none	6	Y:agent-design-review-ddd/s003	SAME	집행성 판정 1행 — 리뷰어 3종+discipline 4곳 동형(P0 비고)
+agent-design-review-db	s004	REF	none	23	Y:agent-design-architect/s005	SAME	Risky Write 8행 «의미적 충족» 심사 — architect 작성 계약과 병렬 전개
+agent-design-review-db	s005	REF	none	3	Y:agent-design-review-ddd/s005	SAME	스코프 권고 금지 동형
+agent-design-review-ddd	s001	REF	none	4	N	SAME	[adv 중재 정정 2026-08-19] norm 2→4 — 동상
+agent-design-review-ddd	s002	REF	none	2	N	SAME	-
+agent-design-review-ddd	s003	REF	none	9	Y:agent-design-review-db/s003	SAME	집행성 판정 동형; 판정-소유 대조 표는 command s006 구문검사와 계약 쌍(사본 아님)
+agent-design-review-ddd	s004	REF	none	13	Y:agent-design-architect/s005	SAME	판정 소유→구조 이주 §3.2 — architect s005·discipline s007과 병렬
+agent-design-review-ddd	s005	REF	none	3	Y:agent-design-review-api/s007	SAME	스코프 권고 금지 동형
+agent-discipline-reviewer	s001	REF	none	4	N	SAME	[adv 중재 정정 2026-08-19] norm 2→4 — 동상
+agent-discipline-reviewer	s002	REF	none	16	Y:agent-design-review-db/s003	SAME	집행성 판정 1행 동형(Phase 1 모드 말미); change inventory 스코프 검사 포함
+agent-discipline-reviewer	s003	REF	none	11	Y:agent-design-review-api/s004	SAME	산출 형식(발견/권고·심각도) 동형 4중; RESOLVED 토큰은 api와 대칭
+agent-discipline-reviewer	s004	REF	none	3	N	SAME	정본 역참조(위임 — 사본 아님); «커맨드»→«dddjango SKILL의» 치환
+agent-discipline-reviewer	s005	REF	none	18	Y:agent-coder/s004	SAME	첫-Green 비계 4중 사본·입장 표 규칙 — architect 입장 표와 병렬
+agent-discipline-reviewer	s006	REF	none	13	Y:command-dddjango/s007	SAME	12-slot inventory 대조 — command preflight와 병렬; bc_error_schema canonical 경로 리터럴
+agent-discipline-reviewer	s007	REF	table	163	Y:agent-coder/s006	SAME	ⓓ 물음 표 8행=구속 운반체(P0 계수 포함); 메커니즘-소유권(coder 경계와 쌍)·배선 표준 병렬; codex 차이는 스킬 접두 치환뿐
+agent-discipline-reviewer	s008	REF	none	9	Y:agent-design-review-api/s007	SAME	스코프 권고 금지 동형; 소유권/정확성 구분 반복 명문화

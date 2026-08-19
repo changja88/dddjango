@@ -1,0 +1,62 @@
+doc_key	section_key	type	carriers	norm_count	restate	codex	note
+architecture-ddd-skill	s001	REF	none	2	Y:architecture-ddd-skill/s003	SAME	[adv 중재 정정 2026-08-19] DIFF→SAME — 개명·user-invocable 이내(정규화 diff 잔차 0 실측), 판정 일관성(E02·E07·E08 동일 성질 SAME)
+architecture-ddd-skill	s002	NAR	none	0	N	SAME	h1 제목 전용(P0 미계수 절)
+architecture-ddd-skill	s003	REF	none	4	Y:architecture-ddd-skill/s001	SAME	로드 조건 1+경계 위임 3 — s001 description과 상호 재진술
+architecture-ddd-skill	s004	REF	none	10	Y:architecture-ddd-final/s052-9	SAME	final 본문 각 §의 압축 재진술 — 본문·§9·SKILL 3중 사본(P0 횡단 발견 2)
+architecture-ddd-skill	s005	REF	table	2	N	SAME	주제→§ 라우팅 표 자체는 규범 계수 제외(P0 승계)
+architecture-ddd-final	s001	NAR	none	0	N	SAME	문서 제목 h1(P0 미계수)
+architecture-ddd-final	s002-1	NAR	none	0	N	SAME	P0 «§1 서두» — 방법론 정의 산문
+architecture-ddd-final	s003-1.1	NAR	none	0	N	SAME	Vernon 인용만
+architecture-ddd-final	s004-1.2	REF	none	6	Y:architecture-ddd-final/s051-8	SAME	[의사결정 #6]+번호 명령 4+«활용하되» — §8 #6·SKILL s004에도 사본
+architecture-ddd-final	s005-1.3	NAR	table	0	N	SAME	서적 비교표
+architecture-ddd-final	s006-2	NAR	none	0	N	SAME	장 제목 전용 h2(P0 미계수)
+architecture-ddd-final	s007-2.1	REF	code	2	N	SAME	«~은 지식 탐구가 아니다» 정의형 부정 — 애매 보수 포함(P0 승계)
+architecture-ddd-final	s008-2.2	REF	code,table	1	N	SAME	표 셀 «사내 구현 필수»만 규범
+architecture-ddd-final	s009-2.3	REF	code	4	Y:architecture-ddd-final/s052-9	SAME	BC 내에서만 유효 원칙 — §9·SKILL s004에 사본
+architecture-ddd-final	s010-2.4	REF	code	4	Y:architecture-ddd-final/s052-9	SAME	«반드시 그래야 하는 것은 아니다» 허용형 — 애매 포함(P0 승계). §9 BC 행이 [B] 문장 사본
+architecture-ddd-final	s011-2.5	REF	code,table	17	Y:architecture-ddd-final/s026	SAME	BC 간 enum·상수 공유 경계 단락이 birth-enum 원리 재진술 포함. 표 마커 셀 3 계수
+architecture-ddd-final	s012-2.6	REF	code,table	1	N	SAME	표 셀 «최고의 인재를 투입해야 한다»만
+architecture-ddd-final	s013-2.7	NAR	table	0	N	SAME	색상·변형 표 — 서술
+architecture-ddd-final	s014-2.8	NAR	table	0	N	SAME	Conway 법칙 서술·매핑 표
+architecture-ddd-final	s015-3	NAR	none	0	N	SAME	장 제목 전용 h2(P0 미계수)
+architecture-ddd-final	s016-3.1	REF	code	3	Y:architecture-ddd-final/s052-9	SAME	불변·동등성·setter 금지 — §9 값 객체 행에 사본
+architecture-ddd-final	s017-3.2	REF	code	23	Y:architecture-ddd-final/s052-9	SAME	dddjango 고유 규범 최밀집(빈혈 차단 4·enum 단일 출처 5·구조 이주 12) — §8 #1·§9·SKILL 사본
+architecture-ddd-final	s018-3.3	NAR	none	0	N	SAME	§3.3 서두 정의 산문 — P0 §3.3 17문장은 전부 s019 귀속
+architecture-ddd-final	s019	REF	code	17	Y:architecture-ddd-final/s052-9	SAME	Vernon 4규칙(헤딩 4+규칙1 2+규칙2 인용 1+규칙3 ORM 확장 4+규칙4 6) — §8 #4·§9·SKILL 사본
+architecture-ddd-final	s020	NAR	code	0	N	SAME	팩토리 예제 전용(h4)
+architecture-ddd-final	s021-3.4	REF	code	4	Y:architecture-ddd-final/s052-9	SAME	Cosmic Python 인용=규칙 포함(P0 규약 ②). 코드 주석 «별도 리포지토리 만들지 않는다»는 예제로 제외
+architecture-ddd-final	s022-3.5	REF	code	6	Y:architecture-ddd-final/s052-9	SAME	[의사결정 #3] — §8 #3·§9·SKILL 사본
+architecture-ddd-final	s023-3.6	REF	code	9	Y:architecture-ddd-final/s052-9	SAME	예제 코드 내부 규범 주석 2건 포함(#635·#484 «두 어휘를 섞지 말 것» — P0 규약 ③). §9·SKILL 사본
+architecture-ddd-final	s024-3.7	REF	code	3	Y:architecture-ddd-final/s052-9	SAME	[의사결정 #7]+수집→디스패치 2(uow.after_commit — 본문·코드 주석 절 내 중복). §8 #7·§9·SKILL 사본
+architecture-ddd-final	s025	REF	none	14	N	SAME	Outbox(h4) — 선택 조건 불릿 내 #529·#603·#626 내장 규칙 각각 셈(P0 승계). 소유 핸드오프 4건 포함
+architecture-ddd-final	s026	REF	none	18	Y:architecture-ddd-skill/s004	SAME	birth-enum(h4) — SKILL 불릿·§2.5 단락·§6.7 코드 주석에 사본. 배치·파생 Literal·append-only·제외 짝조항·소비자 짝규칙
+architecture-ddd-final	s027-3.8	NAR	code,table	0	N	SAME	패턴 정의+용도 표+코드
+architecture-ddd-final	s028-4	NAR	none	0	N	SAME	P0 «§4 서두» — Evans 패턴 6가지 소개
+architecture-ddd-final	s029-4.1	REF	code	1	N	SAME	-
+architecture-ddd-final	s030-4.2	REF	code	1	N	SAME	-
+architecture-ddd-final	s031-4.3	REF	code	1	N	SAME	-
+architecture-ddd-final	s032-4.4	REF	none	2	N	SAME	-
+architecture-ddd-final	s033-4.5	REF	none	1	N	SAME	-
+architecture-ddd-final	s034-4.6	REF	code	1	N	SAME	조건형 권고 — 애매 보수 포함(P0 승계)
+architecture-ddd-final	s035-5	REF	none	1	Y:architecture-ddd-final/s051-8	SAME	P0 «§5 서두» [의사결정 #5] — §8 #5에 사본
+architecture-ddd-final	s036-5.1	REF	code	3	Y:architecture-ddd-final/s052-9	SAME	방향 규칙 3 — §9 계층+DIP 행·SKILL 사본. 펜스는 계층 다이어그램
+architecture-ddd-final	s037-5.2	REF	code	2	Y:architecture-ddd-final/s052-9	SAME	§9·SKILL 사본
+architecture-ddd-final	s038-5.3	REF	none	16	N	SAME	방향 1+선택 4+회피 3+포트 5+어댑터 3. §9 핵사고날 행은 주제 서술이라 사본 아님으로 판정
+architecture-ddd-final	s039-5.4	REF	none	10	Y:architecture-ddd-final/s051-8	SAME	[의사결정 #2]·Greg Young 인용=규칙 — §8 #2·§9 사본. «선택 적용 안전» 애매 포함(P0 승계)
+architecture-ddd-final	s040-5.5	REF	code,table	5	N	SAME	표 셀 명령형 5 — Evans 패턴 서술의 명령형 표기, 애매 보수 포함(P0 승계)
+architecture-ddd-final	s041-6	NAR	none	0	N	SAME	장 제목 전용 h2(P0 미계수)
+architecture-ddd-final	s042-6.1	REF	code	11	Y:architecture-ddd-final/s051-8	SAME	[의사결정 #8]·houserules 배치 권위 이양 — §8 #8 사본. 트리 펜스 내 tests/ 주석은 본문 동일 규칙으로 제외
+architecture-ddd-final	s043-6.2	REF	none	2	N	SAME	-
+architecture-ddd-final	s044-6.3	REF	code	3	N	SAME	-
+architecture-ddd-final	s045-6.4	NAR	code	0	N	SAME	Fowler 인용+코드
+architecture-ddd-final	s046-6.5	REF	code,table	2	N	SAME	보상 실행 1+멱등성 필수 1
+architecture-ddd-final	s047-6.6	REF	code	2	N	SAME	«적합하다» 권고형 — 애매 보수 포함(P0 승계)
+architecture-ddd-final	s048-6.7	REF	code,table	2	Y:architecture-ddd-final/s026	SAME	코드 주석에 birth-enum·§2.5 재진술(계수는 제외 — 본문 규칙 사본). 표 셀 «최소화 필수» 포함
+architecture-ddd-final	s049-6.8	REF	table	14	Y:architecture-ddd-skill/s004	SAME	소유권 표 6행=순수 규범(행 단위 계수, P0 승계). SKILL 불릿 10 사본
+architecture-ddd-final	s050-7	REF	code	3	N	SAME	통찰 3건 — 서술·규범 경계 애매, 보수 포함(P0 승계)
+architecture-ddd-final	s051-8	REF	table	8	Y:architecture-ddd-final/s017-3.2	SAME	의사결정 #1~#8 레지스트리 표 — 본문 8절(s004-1.2·s017·s019·s022·s024·s035·s039·s042)의 정본 재진술
+architecture-ddd-final	s052-9	REF	table	14	Y:architecture-ddd-skill/s004	SAME	14행 전부 본문 재진술 — 본문·§9·SKILL 3중 사본의 축(표류 위험)
+architecture-ddd-final	s053	NAR	none	0	N	SAME	출처 종합 서두(제목만)
+architecture-ddd-final	s054	NAR	none	0	N	SAME	서지 목록
+architecture-ddd-final	s055	NAR	none	0	N	SAME	서지 목록
+architecture-ddd-final	s056	NAR	none	0	N	SAME	서지 목록

@@ -1,0 +1,146 @@
+doc_key	section_key	type	carriers	norm_count	restate	codex	note
+architecture-db-skill	s001	REF	none	2	Y:architecture-db-skill/s003	DIFF	[adv 중재 정정 2026-08-19] SAME→DIFF — codex description에 미치환 구명 architecture-ddd 지시
+architecture-db-skill	s002	NAR	none	0	N	SAME	h1 제목 전용(P0 미계수 절)
+architecture-db-skill	s003	REF	none	4	N	SAME	로드 조건 1+위임 경계 3; codex: architecture-ddd→dddjango-architecture-ddd 개명(플랫폼 치환)
+architecture-db-skill	s004	REF	none	10	Y:architecture-db-final/s019-4.2+s031-7.4+s032-8+s041-9.4+s043-9.6+s044-9.7+s051-11	SAME	final.md §4·5·7·8·9.4·9.6·9.7·11 요약-복제(SKILL↔final 사본 패턴)
+architecture-db-skill	s005	REF	table	2	N	SAME	라우팅 표 행은 매핑이라 미계수(P0 승계)
+architecture-db-final	s001	NAR	none	0	N	SAME	h1 제목 전용(P0 미계수 절)
+architecture-db-final	s002	NAR	none	0	N	SAME	목차(앵커 링크 목록)
+architecture-db-final	s003-1	NAR	none	0	N	SAME	§머리(본문 없음)
+architecture-db-final	s004-1.1	NAR	code,table	0	N	SAME	프로세스 서술
+architecture-db-final	s005-1.2	REF	none	1	N	SAME	청유형 «말을 믿지 말자» 보수 포함(P0 승계)
+architecture-db-final	s006-2	NAR	none	0	N	SAME	§머리
+architecture-db-final	s007-2.1	NAR	table	0	N	SAME	정의 표
+architecture-db-final	s008-2.2	REF	none	2	N	SAME	ERD 작성 원칙 2
+architecture-db-final	s009-2.3	REF	table	1	N	SAME	인조키 지시 1; 키 종류 표는 정의
+architecture-db-final	s010-2.4	NAR	table	0	N	SAME	-
+architecture-db-final	s011-2.5	NAR	none	0	N	SAME	표기 정의·예시
+architecture-db-final	s012-3	NAR	none	0	N	SAME	§머리
+architecture-db-final	s013-3.1	NAR	none	0	N	SAME	정의
+architecture-db-final	s014-3.2	NAR	table	0	N	SAME	정규형 정의 표
+architecture-db-final	s015-3.3	NAR	code	0	N	SAME	위반 예시
+architecture-db-final	s016-3.4	REF	none	1	Y:architecture-db-final/s019-4.2	SAME	정규화-먼저 규칙 사본(4중 출현의 하나)
+architecture-db-final	s017-4	NAR	none	0	N	SAME	§머리
+architecture-db-final	s018-4.1	NAR	none	0	N	SAME	설명
+architecture-db-final	s019-4.2	REF	none	2	N	SAME	정규화-먼저 규칙 정본으로 지정
+architecture-db-final	s020-4.3	NAR	table	0	N	SAME	기법 비교 표
+architecture-db-final	s021-5	REF	code	2	N	SAME	순서 의무 2; 순서 목록 자체는 코드 펜스 내(예제 계수 제외)
+architecture-db-final	s022-6	NAR	none	0	N	SAME	§머리
+architecture-db-final	s023-6.1	NAR	none	0	N	SAME	메커니즘 설명
+architecture-db-final	s024-6.2	NAR	none	0	N	SAME	-
+architecture-db-final	s025-6.3	NAR	none	0	N	SAME	WAL 서술 포함 — 규범 없음(P0 §6=0 승계)
+architecture-db-final	s026-6.4	NAR	none	0	N	SAME	트레이드오프 사실 서술
+architecture-db-final	s027-7	NAR	none	0	N	SAME	§머리
+architecture-db-final	s028-7.1	REF	code	2	N	SAME	순서 결정 규칙 2; 최좌선 접두사 규칙은 사실 서술
+architecture-db-final	s029-7.2	NAR	code	0	N	SAME	-
+architecture-db-final	s030-7.3	NAR	code	0	N	SAME	-
+architecture-db-final	s031-7.4	REF	table	4	N	SAME	원칙 표 행 4(표 행 계수)
+architecture-db-final	s032-8	REF	none	1	N	SAME	§서두 보호 원칙 1
+architecture-db-final	s033-8.1	REF	table	5	N	SAME	주의 셀 5(표 행 계수)
+architecture-db-final	s034-8.2	REF	table	3	N	SAME	cascade 금지 1+BC 경계 FK 금지 2; 삭제 정책 표 행은 매핑 미계수
+architecture-db-final	s035-8.3	REF	table	5	N	SAME	매핑 표 행 4+«최소한 다음을 정한다» 1; 하위 불릿 6은 지시 1건의 열거
+architecture-db-final	s036-8.4	REF	none	5	N	SAME	rollout 설계 의무 1+단계 4(번호 목록 — 체크리스트 아님)
+architecture-db-final	s037-9	NAR	none	0	N	SAME	§머리
+architecture-db-final	s038-9.1	NAR	table	0	N	SAME	ACID 정의
+architecture-db-final	s039-9.2	NAR	table	0	N	SAME	-
+architecture-db-final	s040-9.3	NAR	table	0	N	SAME	-
+architecture-db-final	s041-9.4	REF	table	1	N	SAME	핵심 지시 1; 매핑 표 행 3 미계수(P0 §9.4=1 승계 — 표 행 계수 비일관 지점, 애매)
+architecture-db-final	s042-9.5	REF	table	18	N	SAME	최중량: 엔진 의존성·연결 설정 경계·낙관적 동시성 단락(P0 18 승계); api s018-4.2 CAS status와 규칙 쌍
+architecture-db-final	s043-9.6	REF	table	12	N	SAME	Risky Write 블록·Test criteria 심사; api s060-13.3과 규칙 쌍(상호 참조 — 사본 아님)
+architecture-db-final	s044-9.7	REF	table	12	N	SAME	Outbox 표 포함; #529·#626 인라인 결정
+architecture-db-final	s045-10	NAR	none	0	N	SAME	§머리
+architecture-db-final	s046-10.1	REF	code,table	1	N	SAME	ANALYZE 조건 지시 1
+architecture-db-final	s047-10.2	NAR	table	0	N	SAME	-
+architecture-db-final	s048-10.3	NAR	table	0	N	SAME	-
+architecture-db-final	s049-10.4	NAR	code	0	N	SAME	-
+architecture-db-final	s050-10.5	REF	table	3	N	SAME	원칙 표 4행 중 3 계수(서브쿼리 행은 서술 — P0 승계)
+architecture-db-final	s051-11	REF	none	2	N	SAME	관할 선언 2(구현은 implementation-django로 위임)
+architecture-db-final	s052-11.1	REF	table	2	N	SAME	호환 시간 고려 의무 1+add/copy/switch/drop 분해 지시 1; 단계 표는 설명
+architecture-db-final	s053-11.2	REF	none	5	N	SAME	위험 대응 불릿 5
+architecture-db-final	s054-11.3	REF	table	5	N	SAME	설계 기준 셀 5(표 행 계수)
+architecture-db-final	s055-11.4	REF	table	1	N	SAME	forward-fix 검토 의무 1; 대응 기준 표 행 미계수(P0 승계)
+architecture-db-final	s056-11.5	REF	none	1	N	SAME	산출물 의무 1(불릿 7은 열거)
+architecture-db-final	s057-12	NAR	none	0	N	SAME	§머리+개요
+architecture-db-final	s058-12.1	NAR	table	0	N	SAME	비교 표
+architecture-db-final	s059-12.2	NAR	code	0	N	SAME	-
+architecture-db-final	s060-12.3	NAR	code	0	N	SAME	-
+architecture-db-final	s061-12.4	REF	table	4	N	SAME	선택 가이드 표 행 4
+architecture-db-final	s062-13	NAR	none	0	N	SAME	§머리+개요
+architecture-db-final	s063-13.1	NAR	table	0	N	SAME	비교 표
+architecture-db-final	s064-13.2	NAR	code	0	N	SAME	-
+architecture-db-final	s065-13.3	NAR	code	0	N	SAME	-
+architecture-db-final	s066-13.4	REF	code	1	N	SAME	앱 레벨 무결성 보장 의무 1
+architecture-db-final	s067-13.5	REF	table	4	N	SAME	선택 가이드 표 행 4
+architecture-db-final	s068-14	NAR	table	0	N	SAME	출처 표
+architecture-api-skill	s001	REF	none	2	Y:architecture-api-skill/s003	SAME	frontmatter=라우터 트리거(애매→포함); 위임 문면 s003 중복; 표기 혼재(dddjango: 콜론 접두); codex: 개명+user-invocable 제거(플랫폼 치환 이내)
+architecture-api-skill	s002	NAR	none	0	N	SAME	h1 제목 전용(P0 미계수 절)
+architecture-api-skill	s003	REF	none	6	N	SAME	로드 조건 1+위임 경계 5; codex: 개명 표기(플랫폼 치환)
+architecture-api-skill	s004	REF	none	10	Y:architecture-api-final/s013-3.1+s023-5.3+s024-5.4+s042-9.2+s047-10.3+s049-11.1+s060-13.3+s065-14.3	SAME	final 요약-복제; 단 §2 멱등성 불릿의 지시력은 SKILL에만 있음(P0: final §2=0)
+architecture-api-skill	s005	REF	table	2	N	SAME	db판과 동일 패턴 — 라우팅 표 행 미계수
+architecture-api-final	s001	NAR	none	0	N	SAME	h1 제목 전용(P0 미계수 절)
+architecture-api-final	s002	NAR	none	0	N	SAME	목차
+architecture-api-final	s003-1	NAR	none	0	N	SAME	§머리
+architecture-api-final	s004-1.1	NAR	none	0	N	SAME	정의
+architecture-api-final	s005-1.2	NAR	table	0	N	SAME	-
+architecture-api-final	s006-1.3	NAR	none	0	N	SAME	REST 원칙 설명(P0 §1=0 승계)
+architecture-api-final	s007-1.4	NAR	none	0	N	SAME	-
+architecture-api-final	s008-2	NAR	none	0	N	SAME	§머리
+architecture-api-final	s009-2.1	NAR	table	0	N	SAME	속성 표·PATCH 뉘앙스 전부 사실 서술(P0 §2=0; 지시력은 api-skill s004)
+architecture-api-final	s010-2.2	NAR	table	0	N	SAME	-
+architecture-api-final	s011-2.3	NAR	table	0	N	SAME	-
+architecture-api-final	s012-3	NAR	none	0	N	SAME	§머리
+architecture-api-final	s013-3.1	REF	table	5	N	SAME	명명 규칙 표 행 5
+architecture-api-final	s014-3.2	REF	code	2	N	SAME	슬래시 사용 1+3단계 이상 회피 1
+architecture-api-final	s015-3.3	NAR	code	0	N	SAME	패턴 예시
+architecture-api-final	s016-4	NAR	none	0	N	SAME	§머리
+architecture-api-final	s017-4.1	NAR	table	0	N	SAME	분류 표
+architecture-api-final	s018-4.2	REF	table	16	N	SAME	상태 코드 매핑 13(표 행)+CAS 소진 status 규칙 3(db s042-9.5와 규칙 쌍)
+architecture-api-final	s019-4.3	REF	none	1	N	SAME	PRG 보수 포함(P0 승계)
+architecture-api-final	s020-5	REF	none	1	N	SAME	§서두 «의존 항목 명시 기록» 지시 — P0 §5 구성(9+6+1+29=45)에 미포함 추정, 애매→포함 규약 적용(+1)
+architecture-api-final	s021-5.1	REF	none	9	N	SAME	입력 상한 의무·매직넘버 위임 포함
+architecture-api-final	s022-5.2	REF	none	6	N	SAME	-
+architecture-api-final	s023-5.3	REF	table	1	N	SAME	검토 의무 1; 체크리스트 «표» 8행은 확인 항목 미계수(P0 승계); «- [ ]» 운반체 아님
+architecture-api-final	s024-5.4	REF	none	11	N	SAME	우선순위 4+wire 혼합 금지 2+신규/preserve 관할 5(P0 비고 내부 합 28 vs 절 합 29 — 관할 5로 배분해 29 유지)
+architecture-api-final	s025	REF	none	15	N	SAME	h4: code-json 불릿 15(P0 승계)
+architecture-api-final	s026	REF	none	3	N	SAME	h4: framework 헤더 경계 3; 전역 합성 금지 정본으로 지정
+architecture-api-final	s027-6	REF	none	3	N	SAME	적용 범위 자기 선언 3
+architecture-api-final	s028-6.1	NAR	table	0	N	SAME	필드 정의 표
+architecture-api-final	s029-6.2	REF	code	1	N	SAME	확장 필드 무시 의무 1
+architecture-api-final	s030-6.3	REF	none	3	N	SAME	핵심 규칙 3
+architecture-api-final	s031-7	NAR	none	0	N	SAME	§머리
+architecture-api-final	s032-7.1	NAR	table	0	N	SAME	-
+architecture-api-final	s033-7.2	REF	table,code	7	Y:architecture-api-final/s026	SAME	406/415 매핑 2+혼동 금지 1+인용 블록 4; 전역 합성 금지 1문장 s026과 중복(부분)
+architecture-api-final	s034-7.3	NAR	table	0	N	SAME	-
+architecture-api-final	s035-8	NAR	none	0	N	SAME	§머리
+architecture-api-final	s036-8.1	REF	table	3	Y:architecture-api-final/s026	SAME	challenge 의무·확립 보존+G1·합성 금지; 합성 금지 1문장 s026 중복(부분)
+architecture-api-final	s037-8.2	REF	table	3	N	SAME	선택 기준 표 행 3
+architecture-api-final	s038-8.3	REF	none	3	Y:architecture-api-final/s021-5.1	SAME	쿼리 파라미터 비밀 금지 1문장 s021-5.1과 중복(부분)
+architecture-api-final	s039-8.4	REF	table	12	Y:architecture-api-final/s036-8.1	SAME	Bearer 표 행 2 포함; challenge 규칙 재진술 1 포함(부분)
+architecture-api-final	s040-9	NAR	none	0	N	SAME	§머리
+architecture-api-final	s041-9.1	NAR	table	0	N	SAME	접근법 비교·성능 사실
+architecture-api-final	s042-9.2	REF	table	3	N	SAME	선택 기준 표 행 3
+architecture-api-final	s043-9.3	REF	none	4	N	SAME	실전 원칙 4
+architecture-api-final	s044-10	NAR	none	0	N	SAME	§머리
+architecture-api-final	s045-10.1	NAR	table	0	N	SAME	전략 비교 표
+architecture-api-final	s046-10.2	NAR	none	0	N	SAME	사례 서술
+architecture-api-final	s047-10.3	REF	none	2	N	SAME	«일반 패턴» 불릿은 서술 제외(P0 승계)
+architecture-api-final	s048-11	NAR	none	0	N	SAME	§머리
+architecture-api-final	s049-11.1	REF	table	9	N	SAME	Breaking 판정 표 행 9(파이프라인이 쓰는 판정 기준)
+architecture-api-final	s050-11.2	REF	code	5	N	SAME	Deprecation 프로세스 5단계
+architecture-api-final	s051-11.3	REF	none	3	N	SAME	«추가는 자유, 제거는 금지» 포함
+architecture-api-final	s052-12	NAR	none	0	N	SAME	§머리
+architecture-api-final	s053-12.1	NAR	code	0	N	SAME	헤더 예시
+architecture-api-final	s054-12.2	NAR	code	0	N	SAME	계약 예시
+architecture-api-final	s055-12.3	REF	table	4	N	SAME	알고리즘 매핑 표 행 4
+architecture-api-final	s056-12.4	REF	none	4	Y:architecture-api-final/s026	SAME	Retry-After 보존·전역 합성 금지·controller 소유 — s026 경계와 중복(부분)
+architecture-api-final	s057-13	NAR	none	0	N	SAME	§머리
+architecture-api-final	s058-13.1	NAR	none	0	N	SAME	문제 서술
+architecture-api-final	s059-13.2	REF	code	6	N	SAME	동작 방식 6(status presentation 소유 내장)
+architecture-api-final	s060-13.3	REF	table	12	N	SAME	계약 결정 의무 1+표 내장 3+replay 소유권 5+fingerprint 3; db s043-9.6과 규칙 쌍(상호 참조)
+architecture-api-final	s061-13.4	REF	none	6	Y:architecture-api-final/s060-13.3	SAME	fingerprint 충돌 처리 재진술 포함(부분); 채택=G0/G1 사용자 결정 포함
+architecture-api-final	s062-14	NAR	none	0	N	SAME	§머리
+architecture-api-final	s063-14.1	NAR	none	0	N	SAME	정의
+architecture-api-final	s064-14.2	NAR	none	0	N	SAME	용도 목록
+architecture-api-final	s065-14.3	REF	none	1	N	SAME	반영 의무 1(+표면 목록 9는 열거)
+architecture-api-final	s066-14.4	REF	none	3	N	SAME	실전 원칙 3
+architecture-api-final	s067-15	NAR	table	0	N	SAME	출처 표

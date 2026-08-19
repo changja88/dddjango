@@ -1,0 +1,3 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+<https://numchida.com/ns/djr#s/dddjango/bad doc.md/s001> djr:kind djr:kind-prose .

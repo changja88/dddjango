@@ -30,6 +30,10 @@ from ontology_canon import (
 DEFAULT_ROOT = REPO_ROOT / "ontology"
 LIST_ALLOWED_DIRS = ("shapes",)
 PREFIX_DECL = re.compile(r"^@prefix\s+([A-Za-z][\w.-]*):\s*<([^>]*)>\s*\.\s*$")
+# §14 폐쇄 인코딩 집합 — fragment 안 원시 금지 문자(percent-encoding 필수 문자)
+FRAGMENT_BAD = re.compile(r'[ `<>"{}|\\^#\x00-\x1f\x7f-\x9f]')
+# %는 %XX(대문자 hex)만 — 소문자·불완전 pct는 위반(정규형 고정)
+FRAGMENT_BAD_PCT = re.compile(r"%(?![0-9A-F]{2})")
 SEVERITY_QUERY = """
 SELECT ?severity (COUNT(?result) AS ?n) WHERE {
     ?report <http://www.w3.org/ns/shacl#result> ?result .
@@ -89,13 +93,56 @@ def check_prefix_decls(source: str, registry: dict[str, str]) -> list[dict]:
     return errors
 
 
+def check_djr_fragments(graph, registry: dict[str, str]) -> list[dict]:
+    """§14 게이트 ② 확장 — djr IRI fragment 문법+정규형 검사(rdflib 무저항 통과 백스톱).
+
+    정규형 = «폐쇄 집합 문자만·대문자 hex로» 인코딩: frag_encode(unquote(frag)) == frag.
+    비정규(불필요 인코딩 %73 등)는 서로 다른 IRI가 같은 절 키로 충돌하므로 차단(L-H #12)."""
+    from urllib.parse import unquote
+
+    from rdflib import URIRef
+
+    from ontology_canon import frag_encode
+
+    djr_ns = registry.get("djr")
+    if not djr_ns:
+        return []
+    errors = []
+    seen: set[str] = set()
+    for triple in graph:
+        for node in triple:
+            if not isinstance(node, URIRef):
+                continue
+            s = str(node)
+            if not s.startswith(djr_ns) or s in seen:
+                continue
+            seen.add(s)
+            frag = s[len(djr_ns):]
+            if FRAGMENT_BAD.search(frag) or FRAGMENT_BAD_PCT.search(frag):
+                errors.append(
+                    {
+                        "node": s,
+                        "reason": "djr IRI fragment 문법 위반 — §14 폐쇄 인코딩 집합의 원시 금지 문자 또는 비정규 pct-encoding(%XX 대문자 hex만)",
+                    }
+                )
+                continue
+            if frag_encode(unquote(frag)) != frag:
+                errors.append(
+                    {
+                        "node": s,
+                        "reason": "djr IRI fragment 비정규형 — §14 정규형(폐쇄 집합 문자만 인코딩) 위반(불필요 pct-encoding)",
+                    }
+                )
+    return errors
+
+
 def merged_data_graph(file_graph, path: Path, root: Path):
     from rdflib import Graph
 
     merged = Graph()
     for triple in file_graph:
         merged.add(triple)
-    for extra_dir in (root / "vocab", root / "wiring"):
+    for extra_dir in (root / "vocab", root / "wiring", root / "rules"):
         for extra in sorted(extra_dir.glob("*.ttl")):
             if extra.resolve() == path.resolve():
                 continue
@@ -146,6 +193,7 @@ def run_gate(path: Path, registry: dict[str, str], write: bool, root: Path) -> d
     if not unicodedata.is_normalized("NFC", source):
         errors2.append({"node": "", "reason": "유니코드 NFC 위반(authoring §3)"})
     errors2.extend(check_prefix_decls(source, registry))
+    errors2.extend(check_djr_fragments(g, registry))
     canon_text = None
     try:
         canon_text = canon_turtle(g, registry, allow_lists=allow_lists(path, root))

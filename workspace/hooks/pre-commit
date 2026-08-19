@@ -5,6 +5,16 @@
 # 훅 단일 루트 = workspace/hooks (설치: make ontology-hooks · 해제: git config --unset core.hooksPath)
 
 changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^ontology/.*\.ttl$' || true)
+# T1-4 트리거 2축: 코퍼스 md 변경 시 stdlib 검사만(원장 부식·그래프 소유 절 무단 수정 — .venv 불요).
+# 렌더 full 검증(rdflib)은 verify·릴리즈 2점 — 절충임을 자인(t1-plan §2 T1-4).
+changed_md=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^dddjango/(skills|agents|commands)/.*\.md$' || true)
+if [ -n "$changed_md" ]; then
+    echo "[pre-commit] 코퍼스 md 변경 — 원장 부식 검사(stdlib)"
+    python3 workspace/tools/ontology_ledger_check.py || {
+        echo "[pre-commit] 원장 위반 — 정당한 산문 개정이면 LEDGER.tsv 재기준선 append(새 해시+사유), 그래프 소유 절이면 rules 정본에서 수정"
+        exit 1
+    }
+fi
 if [ -z "$changed" ]; then
     exit 0
 fi

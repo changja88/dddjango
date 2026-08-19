@@ -21,20 +21,28 @@ verify: verify-ontology verify-base
 verify-ontology:
 	@set -euo pipefail; \
 	test -x $(VENV_PY) || { echo "ERROR: .venv 부재 — make ontology-env 필요"; exit 1; }; \
-	echo "[verify-ontology 0/6] 도구 사슬 스모크"; \
+	echo "[verify-ontology 0/10] 도구 사슬 스모크"; \
 	$(VENV_PY) workspace/tools/ontology_env_smoke.py; \
-	echo "[verify-ontology 1/6] 4단 저작 게이트 (전 ttl)"; \
+	echo "[verify-ontology 1/10] 4단 저작 게이트 (전 ttl)"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_gate.py; \
-	echo "[verify-ontology 2/6] meta-SHACL 2층"; \
+	echo "[verify-ontology 2/10] meta-SHACL 2층"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_meta_shacl.py; \
-	echo "[verify-ontology 3/6] SHACL 본검증 (전량 병합)"; \
+	echo "[verify-ontology 3/10] SHACL 본검증 (전량 병합)"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_shacl_full.py; \
-	echo "[verify-ontology 4/6] 계층 병합·적용 대상 계수 회귀"; \
+	echo "[verify-ontology 4/10] 계층 병합·적용 대상 계수 회귀"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_hierarchy_check.py --with-golden; \
-	echo "[verify-ontology 5/6] 골든 페어 red/green"; \
+	echo "[verify-ontology 5/10] 골든 페어 red/green"; \
 	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_golden_check.py; \
-	echo "[verify-ontology 6/6] 게이트 스모크 (오류 계열→차단 단 매핑 표)"; \
-	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_gate_smoke.py
+	echo "[verify-ontology 6/10] 게이트 스모크 (오류 계열→차단 단 매핑 표)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_gate_smoke.py; \
+	echo "[verify-ontology 7/10] ISSUED 대장↔정본 정합"; \
+	python3 workspace/tools/ontology_issued_check.py; \
+	echo "[verify-ontology 8/10] 원장 부식 검사 (LEDGER 926 기준선)"; \
+	python3 workspace/tools/ontology_ledger_check.py; \
+	echo "[verify-ontology 9/10] 렌더 동기 (투영물 == render(그래프))"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_render_sync.py; \
+	echo "[verify-ontology 10/10] 구조 검증 (SPARQL 5종·순서·datatype)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_structural_check.py
 
 # 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8)
 verify-base:

@@ -214,9 +214,9 @@
 <h1>온톨로지 적용 조감도</h1>
 <p class="lede">개발 완료까지 여기서 진행을 본다 — 이 페이지에는 <b>내가 확인할 것</b>과 <b>진행도</b>만. 세부 계획·근거·기록은 저장소 문서(블루프린트·진행 로그)에서 Claude가 관리한다.</p>
 
-<div class="banner"><span class="bk">내 확인 — T0 커밋 승인 · 2026-08-19</span>
-<b>T0 검수 통과 — 디시전 시트 4건 전부 승인·반영 완료, <span class="mono">make verify</span> 전체 green(온톨로지 단+기존 검증 세트 — 최초 완전 통과).</b> 반영 내역: ① 블록↔Work 3노드형 확정+블루프린트 <b>개정 1</b> 기록 ② 규범 소유 의무 = 검사기 ∨ 위임 에이전트(셰이프·골든 반영) ③ alias·RevisionKind 존치 확정 ④ 표류 6건 EXPECTED 일괄 갱신(청정/현재 트리 이중 emit 일치 검증·정확히 유령값 6건만 교정).
-<p class="how">남은 확인 하나: <b>T0 전체 커밋 승인</b>. 커밋 범위 — ontology/ 정본 트리(24파일)·도구 9종·Makefile(verify 신설·release 편입)·findings.py+검사기 개작 2종(+codex 동기)·픽스처·감사 기록 3벌·블루프린트 개정 1·계획/로그. 승인하시면 커밋하고 <b>T1 세부 계획</b>(파일럿 이관) 수립으로 넘어갑니다.</p>
+<div class="banner info"><span class="bk">확인 대기 없음 · 2026-08-19</span>
+<b>T1 완결(게이트 2 승인)</b> — 파일럿 이관+산출물 적대 검증(codex 4레인) 완료. 4절 → <b>125 Work·73블록</b>(R-0001~R-0125 — 검증 발견 58건 중 52 채택 반영: 유형 오판 9 교정·누락 8 추가·배선 21 교정으로 검사기 16종 실사용·도구 blocker 18건 수정 후 클린 재채번). 코퍼스 diff는 <b>파일당 마커 1행뿐</b>(마커 제거 시 원문과 byte 잔차 0 — 상시 검사로 승격). SPARQL 조인 성립(담당 개체 25 역조인·Expression 왕복 125), 렌더 동기·미러 11/11·롤백 리허설·어휘 v1 봉인·verify <b>[10/10]</b>.
+<p class="how">진행: T1 산출물 커밋(표류 처분 분리+본체 한 커밋+기록 마감) → <b>T2 세부 계획 수립</b>(폐루프 완성+3암 A/B — off/루프만/루프+그래프). 다음 내 확인 = <b>T2 계획 검토</b>, 그 다음 = <b>T2 게이트: 계속/조정 판정</b>(전량 이관의 관문).</p>
 </div>
 
 <h2>청사진 — 온톨로지가 어디에 어떻게 (발주 한 건의 실물로)</h2>
@@ -261,7 +261,7 @@
 <h3>① 규칙이 사는 곳 — <span style="color: var(--ink-soft); font-weight: 600;">규칙 코퍼스</span> <span class="badge become">그래프가 된다</span></h3>
 <div class="ba">
   <div class="side now"><span class="tag">지금 — 실물</span>
-    <p><span class="mono">skills/architecture-ddd/references/final.md</span> 539행 절 안의 632행 문단, 전문 그대로:</p>
+    <p><span class="mono">skills/architecture-ddd/references/final.md</span> 539행 절 안의 633행 문단(그래프 이관 후 행 — 마커 1행 삽입분 반영), 전문 그대로:</p>
 <pre class="ttl">### 3.2 엔티티 (Entity)
   …
 **판정·불변식은 도메인이 소유하고 프로덕션 경로에서
@@ -309,7 +309,7 @@ djr:blk-add-3-2-5 a djr:ProseBlock ;
   독립적으로 생성·접근하지 않는다 (§3.2, §8)
 - 응용 서비스는 흐름 제어와 트랜잭션 관리만
   담당하고, 비즈니스 로직을 두지 않는다 (§3.6)</pre>
-    <p>§3.2 본문(위 632행 문단)까지 실독할지는 <b>coder의 판단</b> — 요약만 보고 넘어갈 수 있음(확률).</p>
+    <p>§3.2 본문(위 633행 문단)까지 실독할지는 <b>coder의 판단</b> — 요약만 보고 넘어갈 수 있음(확률).</p>
   </div>
   <div class="side aft"><span class="tag">완성형 — v3.2 형식</span>
     <p>변경 경로(orders BC·domain/application 층)로 질의 카탈로그 실행:</p>
@@ -328,8 +328,8 @@ R-0421(의무): 응용 서비스는 흐름 제어와 트랜잭션
 </div>
 
 <h3>③ coder의 실수 — 양쪽 동일</h3>
-<p class="tx">이 실수의 실물 표본은 코퍼스 자신이 갖고 있습니다 — <span class="mono">final.md</span> 585행, 안티패턴으로 박아둔 실제 예제 코드:</p>
-<pre class="ttl"><span class="c"># === 빈혈 도메인 모델 (Anemic Domain Model) -- 안티패턴 ===   ← final.md 585행 실물</span>
+<p class="tx">이 실수의 실물 표본은 코퍼스 자신이 갖고 있습니다 — <span class="mono">final.md</span> 586행, 안티패턴으로 박아둔 실제 예제 코드:</p>
+<pre class="ttl"><span class="c"># === 빈혈 도메인 모델 (Anemic Domain Model) -- 안티패턴 ===   ← final.md 586행 실물</span>
 @dataclass
 class OrderAnemic:
     """데이터만 있고 행동이 없는 빈혈 모델"""
@@ -385,7 +385,7 @@ R-0417: "판정·불변식은 도메인이 소유하고
   프로덕션 경로에서 실행된다(빈혈 차단)."
 위치: orders/application/services.py#cancel_order
 지시: 판정을 애그리거트로 이동해 이 함수만 재작성.</pre>
-    <p>고쳐진 코드의 목표 형태도 코퍼스 실물이 이미 보여줍니다 — <span class="mono">final.md</span> 607·622행(실물):</p>
+    <p>고쳐진 코드의 목표 형태도 코퍼스 실물이 이미 보여줍니다 — <span class="mono">final.md</span> 608·623행(실물 — 이관 후 행):</p>
 <pre class="ttl"><span class="c"># === 풍부한 도메인 모델 (Rich Domain Model) -- DDD 지향 ===</span>
 class OrderRich:
     def <b>cancel</b>(self) -> None:
@@ -450,21 +450,21 @@ GROUP BY ?rule ORDER BY DESC(?n)
 <p class="tx" style="margin-top:1.2rem;"><b>실행 단계 T0~T5</b> (v3.2 §8 — 동결 후 착수, 단계 사이는 전부 내 게이트):</p>
 
 <div class="phase">
-  <div class="ph"><span class="pn">T0</span><span class="pt">기반 — 스택 구축 + 그래프 없이 도는 폐루프</span><span class="st next">검수 통과 — 커밋 대기</span></div>
+  <div class="ph"><span class="pn">T0</span><span class="pt">기반 — 스택 구축 + 그래프 없이 도는 폐루프</span><span class="st next">완료 ✓ 91fae74</span></div>
   <p>그래프 저장소 골격·어휘·SHACL 셰이프·저작 게이트·<code>make verify</code> 신설. 병행으로 위반 재생성 루프 시제품(그래프 없이 기존 검사기로 — 실증 근거가 있는 부품 먼저).</p>
   <div class="ask"><span class="k">내 확인</span>T0 검수 — 고의 오류 픽스처 전 항목 차단 확인</div>
 </div>
 <div class="gate">게이트 — T0 검수</div>
 
-<div class="phase wait">
-  <div class="ph"><span class="pn">T1</span><span class="pt">파일럿 이관</span><span class="st wait">대기</span></div>
-  <p>606절 유형 분류(+codex 대응) 후 대표 스킬 1~2개를 그래프로 이관, 렌더 투영이 원문과 같은지 검증.</p>
-  <div class="ask"><span class="k">내 확인</span>절 분류 동결 + 파일럿 검수 + 표류 2건 처분</div>
+<div class="phase">
+  <div class="ph"><span class="pn">T1</span><span class="pt">파일럿 이관</span><span class="st next">완료 ✓ 게이트 2 통과</span></div>
+  <p>센서스 926절 동결(게이트 1 ✓·적대 검증 경유) → 파일럿 4절 이관 <b>125 Work·73블록</b>(산출물 적대 검증 codex 4레인 — 발견 58건 중재·반영) — 마커 제거 후 byte 잔차 0, SPARQL 조인 5종 성립, 렌더 동기·미러·원장·롤백 리허설 전부 green, verify [10/10].</p>
+  <div class="ask"><span class="k">내 확인</span>완료 — 게이트 1(센서스 동결)·게이트 2(검수 12항) 전부 승인</div>
 </div>
 <div class="gate">게이트 — T1 검수</div>
 
-<div class="phase wait">
-  <div class="ph"><span class="pn">T2</span><span class="pt">폐루프 완성 + A/B 측정</span><span class="st wait">대기</span></div>
+<div class="phase">
+  <div class="ph"><span class="pn">T2</span><span class="pt">폐루프 완성 + A/B 측정</span><span class="st next">계획 수립 중</span></div>
   <p>검사기 출력을 위반 그래프로 통일, 위반만 들고 재생성하는 루프 배선, 3조건 비교 실험(off/루프만/루프+그래프)으로 품질 이득 측정.</p>
   <div class="ask"><span class="k">내 확인</span><b>계속/조정 판정</b>(사전 등록 규칙 통과 확인) — 이 게이트가 전량 이관의 관문</div>
 </div>
@@ -536,7 +536,12 @@ GROUP BY ?rule ORDER BY DESC(?n)
       <tr><td>2026-08-19</td><td>T0 계획 검토</td><td>통과 — D1·D2·D3·D5 전건 승인(사용자)</td></tr>
       <tr><td>2026-08-19</td><td>T0 구현</td><td>완료 — A트랙 9항+B트랙 3항, verify-ontology 전 6단 green·1왕복 데모 7→0</td></tr>
       <tr><td>2026-08-19</td><td><b>T0 검수</b></td><td><b>통과</b> — 기계 기준 6항 green + 대리 검수(감사 14건·표류 판정) + 디시전 시트 4건 «전부 승인»(개정 1·소유 확장·EXPECTED 갱신). make verify 전체 green</td></tr>
-      <tr><td>—</td><td>T0 커밋</td><td><b>승인 대기</b></td></tr>
+      <tr><td>2026-08-19</td><td>T0 커밋</td><td>완료 — <span class="mono">07c2be3</span>+<span class="mono">91fae74</span>(훅 실전 첫 가동·통과)</td></tr>
+      <tr><td>2026-08-19</td><td>T1 계획 적대 리뷰</td><td>3렌즈 42건 전건 반영 → <b>v1.1</b>(T0 개작 3건 포함)</td></tr>
+      <tr><td>2026-08-19</td><td>T1 계획 검토</td><td>통과 — D6·D7·D8 전건 승인, <b>개정 2</b>(LEDGER.tsv) 기록</td></tr>
+      <tr><td>2026-08-19</td><td>게이트 1: 센서스 동결</td><td><b>통과(승인)</b> — 926절·REF 539·규범 3,235·codex DIFF 14·적대 검증(codex 4레인) 경유. 체크리스트 절 처분안 승인 포함</td></tr>
+      <tr><td>2026-08-19</td><td>게이트 2: T1 검수(12항)</td><td><b>통과(승인)</b> — 파일럿 125 Work(적대 검증 52건 반영·클린 재채번)·byte 잔차 0·SPARQL 5종·verify [10/10]</td></tr>
+      <tr><td>—</td><td>게이트 2: T1 검수(12항)</td><td>대기</td></tr>
     </tbody>
   </table>
 </div>

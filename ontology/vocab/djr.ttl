@@ -168,6 +168,9 @@ djr:owner-graph a djr:SectionOwner ;
 djr:owner-prose a djr:SectionOwner ;
     skos:prefLabel "산문 소유"@ko .
 
+djr:parentSection a rdf:Property ;
+    skos:prefLabel "상위 절"@ko .
+
 djr:pathGlob a rdf:Property ;
     skos:prefLabel "경로 글롭"@ko .
 

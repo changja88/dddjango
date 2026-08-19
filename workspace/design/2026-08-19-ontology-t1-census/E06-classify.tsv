@@ -1,0 +1,77 @@
+doc_key	section_key	type	carriers	norm_count	restate	codex	note
+discipline-tdd-skill	s001	REF	none	2	Y:discipline-tdd-skill/s003	DIFF	frontmatter description=라우터 트리거(애매+포함 규약). codex에 user-invocable:false 부재, description 내 implementation-test 표기 미치환
+discipline-tdd-skill	s002	NAR	none	0	N	SAME	h1 제목 스텁(내용 0)
+discipline-tdd-skill	s003	REF	none	5	Y:discipline-tdd-final/s038-8	SAME	위임 4건이 final 위임 스텁(§8·§13~§15·§18)과 중복. codex는 스킬명 dddjango- 접두 치환(implementation-django는 codex에도 무접두 실존) — 플랫폼 표기 치환 이내
+discipline-tdd-skill	s004	REF	none	17	Y:discipline-tdd-final/s025-5.5	SAME	12불릿 전부 final § 인용 요약 사본. P0 표류 의심: pending이 G1만 언급(원문은 G1/G1preview·Phase 2). 불릿1(목표·용기)은 가치 선언이나 보수 포함(P0 승계)
+discipline-tdd-skill	s005	REF	table	2	N	SAME	주제↔§ 매핑표 13행은 비규범. 규범=final 준거 «따른다»+«필요한 항목만 읽는다» 2
+discipline-tdd-final	s001	REF	none	2	Y:discipline-tdd-final/s025-5.5	SAME	무앵커 전역 규칙(h1 직후 인용구). reuse·reject→write 0 규칙 3중 사본(서문·skill s004·§5.5)의 하나
+discipline-tdd-final	s002-1	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s003-1.1	NAR	none	0	N	SAME	목표 설명 산문. skill/s004 불릿1이 이 절을 규범으로 승격 인용(위상 불일치, P0 승계)
+discipline-tdd-final	s004-1.2	NAR	none	0	N	SAME	«보안·동시성은 TDD만으로 부족» 경고는 한계 서술로 제외(P0 승계)
+discipline-tdd-final	s005-2	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s006-2.1	REF	code	11	N	SAME	코드 펜스 안 사이클 절차 지시 3 + 상세 단계 8 규범 계수(P0 승계, 애매)
+discipline-tdd-final	s007-2.2	NAR	code	0	N	SAME	예제 코드만
+discipline-tdd-final	s008-3	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s009-3.1	NAR	table	0	N	SAME	학파 비교표·설명
+discipline-tdd-final	s010-3.2	NAR	code	0	N	SAME	예제 코드만
+discipline-tdd-final	s011-3.3	NAR	code	0	N	SAME	«혼합이 효과적» 권고는 조언 수준으로 제외(P0 승계, 애매)
+discipline-tdd-final	s012-3.4	REF	table	1	N	SAME	표는 인용구가 배경 지식으로 강등. 실규범(고전 학파 기본·Mock은 외부 의존성 격리만)이 강등 인용구 안에 있음
+discipline-tdd-final	s013-4	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s014-4.1	NAR	code,table	0	N	SAME	4기둥 도식(ASCII 펜스)·표 설명
+discipline-tdd-final	s015-4.2	REF	code	4	Y:discipline-tdd-final/s025-5.5	SAME	장애 보고→§5.5 candidate 우선 절차 재서술 2 + 설계 원칙 의무 2
+discipline-tdd-final	s016-4.3	NAR	none	0	N	SAME	설명만
+discipline-tdd-final	s017-4.4	NAR	code	0	N	SAME	설명·예제
+discipline-tdd-final	s018-4.5	REF	code,table	2	Y:discipline-tdd-final/s036-7.6	SAME	검증 우선순위(출력>상태>통신)·순수 함수 추출 — §7.6과 2중 규칙
+discipline-tdd-final	s019-4.6	NAR	table	0	N	SAME	품질 속성 표만
+discipline-tdd-final	s020-5	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s021-5.1	REF	code	10	Y:discipline-tdd-final/s025-5.5	SAME	«각 후보는 §5.5 통과 add·update일 때만 Red» 전역 규칙 재진술 포함. 쿠폰 예시 문장도 규칙 서술형이라 포함(P0 애매 승계)
+discipline-tdd-final	s022-5.2	REF	none	2	N	SAME	다음 테스트 선택 기준
+discipline-tdd-final	s023-5.3	REF	code	2	N	SAME	시작점 규칙
+discipline-tdd-final	s024-5.4	REF	none	1	N	SAME	한 문장 지시
+discipline-tdd-final	s025-5.5	REF	table	57	Y:discipline-tdd-skill/s004	SAME	최대 절(182중 57=31%). 7값 decision·심사표 스키마 표·화이트 6항/블랙 8항(명사구는 지배문 1씩만 계수)·조정 6분기·migration 금지·DB-backed 허용(P0 승계). skill 요약·서문과 3중 사본, 표류 의심
+discipline-tdd-final	s026-6	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s027-6.1	REF	code	2	N	SAME	상수 반환→변수화 절차
+discipline-tdd-final	s028-6.2	REF	code	2	N	SAME	«예 2개 이상일 때만 추상화» + 사용 시점 권고(애매, P0 승계 포함)
+discipline-tdd-final	s029-6.3	REF	none	2	N	SAME	권고 포함(애매, P0 승계)
+discipline-tdd-final	s030-7	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s031-7.1	REF	code	3	N	SAME	독립성 의무·공유 상태 제거·fixture 사용
+discipline-tdd-final	s032-7.2	REF	code	3	N	SAME	AAA 의무 + Assert First 사고법(인용구 안 규범 포함)
+discipline-tdd-final	s033-7.3	REF	none	3	N	SAME	상수 중복 의미 금지 포함
+discipline-tdd-final	s034-7.4	REF	code	1	N	SAME	관계 드러내기 지시
+discipline-tdd-final	s035-7.5	REF	code	1	N	SAME	명명 패턴은 코드 펜스 형식 명세지만 규범 1 계수(P0 승계)
+discipline-tdd-final	s036-7.6	REF	none	4	Y:discipline-tdd-final/s018-4.5	SAME	검증 우선순위 소유 선언·implementation-test §7 위임·mocker 도구 지정. §4.5와 2중
+discipline-tdd-final	s037-7.7	REF	none	1	N	SAME	팀 규칙만 규범. 혼자 규칙은 서술형 제외(애매, P0 승계)
+discipline-tdd-final	s038-8	REF	none	1	N	SAME	implementation-test 위임 스텁
+discipline-tdd-final	s039-9	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s040-9.1	REF	code	2	Y:discipline-tdd-final/s025-5.5	SAME	«양쪽 테스트 자동 의무 아님»·«각 후보는 §5.5 통과» — 후자는 전역 규칙 재진술
+discipline-tdd-final	s041-9.2	REF	code	3	N	SAME	availability test 부정·실제 E2E 행동일 때만 후보
+discipline-tdd-final	s042-9.3	REF	none	3	N	SAME	역할 Mock 원칙 + implementation-test §7 위임
+discipline-tdd-final	s043-9.4	REF	code	1	N	SAME	인용구 지시 1
+discipline-tdd-final	s044-10	NAR	table	0	N	SAME	§10 헤딩 직속 패턴×단계 표(P0에서 별도 절로 계수, 규범 0)
+discipline-tdd-final	s045-10.1	REF	code	1	N	SAME	불변 유지 지시
+discipline-tdd-final	s046-10.2	REF	code	1	N	SAME	동일 프로토콜 제공
+discipline-tdd-final	s047-10.3	REF	code	1	N	SAME	생성 유연성
+discipline-tdd-final	s048-11	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s049-11.1	REF	none	2	N	SAME	단계적 수렴·합치기
+discipline-tdd-final	s050-11.2	REF	none	1	N	SAME	격리 지시
+discipline-tdd-final	s051-11.3	REF	code	6	N	SAME	지시 1 + 5단계 절차
+discipline-tdd-final	s052-11.4	REF	code	1	N	SAME	-
+discipline-tdd-final	s053-11.5	REF	none	1	N	SAME	-
+discipline-tdd-final	s054-11.6	REF	code	1	N	SAME	Protocol 사용
+discipline-tdd-final	s055-11.7	REF	none	1	N	SAME	-
+discipline-tdd-final	s056-11.8	REF	none	1	N	SAME	-
+discipline-tdd-final	s057-12	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s058-12.1	REF	table,code	2	Y:discipline-tdd-final/s025-5.5	SAME	예제 뒤 2문장만 계수(«분리는 recipe»·«새 case는 §5.5 판정» — 후자 재진술). 표 해결책 열 6칸은 명사구 준규범, 문장 아님(P0 승계)
+discipline-tdd-final	s059-12.2	NAR	table,code	0	N	SAME	정의 표·예제만
+discipline-tdd-final	s060-13	REF	none	1	N	SAME	discipline-cleancode 위임 스텁
+discipline-tdd-final	s061-14	REF	none	1	N	SAME	implementation-test 위임 스텁
+discipline-tdd-final	s062-15	REF	none	1	N	SAME	implementation-test 위임 스텁
+discipline-tdd-final	s063-16	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s064-16.1	REF	code,table	1	N	SAME	설명·진화 경로 펜스·비교표 속 pytest-bdd 위임 1만 규범
+discipline-tdd-final	s065-17	NAR	none	0	N	SAME	h2 장 제목 스텁
+discipline-tdd-final	s066-17.1	REF	code	2	Y:discipline-tdd-final/s025-5.5	SAME	§5.5 입장 전제·«요구/AI 위험이 자동 승인 아님» — 전자는 전역 규칙 재진술
+discipline-tdd-final	s067-17.2	NAR	code	0	N	SAME	예제 코드·주석만
+discipline-tdd-final	s068-17.3	NAR	table	0	N	SAME	위험×방어 표만
+discipline-tdd-final	s069-17.4	REF	code	6	Y:discipline-tdd-final/s025-5.5	SAME	Plan→Admission→Red→Green→Refactor→Validate 6단계 코드 펜스 절차를 규범 계수(P0 애매 승계). Admission 행=§5.5 심사 압축 사본
+discipline-tdd-final	s070-18	REF	none	1	N	SAME	implementation-test 위임 스텁
+discipline-tdd-final	s071	NAR	table	0	N	SAME	서지 표만

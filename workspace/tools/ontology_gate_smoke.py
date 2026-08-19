@@ -34,6 +34,7 @@ EXPECTATIONS = [
     ("noncanon-serialization", "gate", "2-canon"),
     ("hash-mutation", "gate-fault", "3-hash"),
     ("expression-iri-compaction", "gate", "1-parse"),
+    ("fragment-syntax", "gate", "2-canon"),
     ("shacl-unwired-norm", "gate-full", "4-shacl"),
     ("closed-nonleaf", "meta", "2층"),
     ("closed-noignore", "meta", "2층"),

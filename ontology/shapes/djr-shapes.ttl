@@ -65,9 +65,9 @@ djr:BlockShape-statesNorm a sh:PropertyShape ;
     sh:path djr:statesNorm .
 
 djr:BlockShape-text a sh:PropertyShape ;
-    sh:datatype rdf:langString ;
     sh:maxCount 1 ;
     sh:minCount 1 ;
+    sh:or ( djr:TextIsLangString djr:TextIsString ) ;
     sh:path djr:text .
 
 djr:ExpressionShape a sh:NodeShape ;
@@ -140,7 +140,7 @@ djr:PrefLabelShape-label a sh:PropertyShape ;
     sh:uniqueLang true .
 
 djr:SectionShape a sh:NodeShape ;
-    sh:property djr:SectionShape-headingCurrent, djr:SectionShape-headingSnapshot, djr:SectionShape-inDocument, djr:SectionShape-sectionNumber, djr:SectionShape-sectionOwner ;
+    sh:property djr:SectionShape-headingCurrent, djr:SectionShape-headingSnapshot, djr:SectionShape-inDocument, djr:SectionShape-parentSection, djr:SectionShape-sectionNumber, djr:SectionShape-sectionOwner ;
     sh:targetClass djr:Section .
 
 djr:SectionShape-headingCurrent a sh:PropertyShape ;
@@ -159,6 +159,12 @@ djr:SectionShape-inDocument a sh:PropertyShape ;
     sh:maxCount 1 ;
     sh:nodeKind sh:IRI ;
     sh:path djr:inDocument .
+
+djr:SectionShape-parentSection a sh:PropertyShape ;
+    sh:class djr:Section ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:parentSection .
 
 djr:SectionShape-sectionNumber a sh:PropertyShape ;
     sh:datatype xsd:string ;
@@ -193,6 +199,12 @@ djr:SyncDebtShape-section a sh:PropertyShape ;
     sh:minCount 1 ;
     sh:nodeKind sh:IRI ;
     sh:path djr:debtSection .
+
+djr:TextIsLangString a sh:NodeShape ;
+    sh:datatype rdf:langString .
+
+djr:TextIsString a sh:NodeShape ;
+    sh:datatype xsd:string .
 
 djr:ViolationShape a sh:NodeShape ;
     sh:property djr:ViolationShape-byChecker, djr:ViolationShape-detectedAt, djr:ViolationShape-evidence, djr:ViolationShape-runId, djr:ViolationShape-severity, djr:ViolationShape-targetFile, djr:ViolationShape-targetSymbol, djr:ViolationShape-violatesExpression, djr:ViolationShape-violatesWork ;

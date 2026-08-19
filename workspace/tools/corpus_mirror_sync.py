@@ -118,26 +118,87 @@ def paths_for(root: Path, skill: str) -> dict[str, Path]:
     }
 
 
+def _graph_owned_rows(root: Path, skill: str) -> list[dict]:
+    """원장(LEDGER.tsv)에서 이 스킬 final의 그래프 소유 절 유효 행(마지막 행 유효)."""
+    import csv as _csv
+
+    ledger = root / "ontology" / "LEDGER.tsv"
+    if not ledger.is_file():
+        # L-H #11: 원장 부재 시 fail-open 금지 — 배포본에 그래프 마커가 있으면 구조 오류.
+        # (--write 가 마커 포함 렌더 절을 소스 미러에 복사해 이관 시점 원문을 파괴하는 경로 차단)
+        dep = paths_for(root, skill)["dep"]
+        if dep.is_file() and "graph-owned" in dep.read_text(encoding="utf-8"):
+            raise StructureError(
+                f"{skill}: 배포본에 graph-owned 마커가 있으나 ontology/LEDGER.tsv 부재 — 원장 없이 절제·병합 불가")
+        return []
+    eff: dict[str, dict] = {}
+    with open(ledger, encoding="utf-8") as f:
+        for r in _csv.DictReader(f, delimiter="\t"):
+            if r["doc_key"] == f"{skill}-final":
+                eff[r["section_key"]] = r
+    return [r for r in eff.values() if r["owner"] == "graph"]
+
+
+def _excise_graph_sections(root: Path, skill: str, dep_body: str, src_body: str,
+                           rows: list[dict]) -> tuple[str, str, list[tuple[str, str]]]:
+    """(절제된 dep 본문, 절제된 src 본문, [(dep 스팬, src 스팬)] — --write 병합용).
+
+    동결 §9: 그래프 소유 절은 inv1 비교 스코프에서 제외. dep 쪽 절은 절 키로,
+    src 쪽 절은 baseline 해시로 찾는다(소스 미러는 preamble 때문에 서수가 밀리므로).
+    스팬을 찾지 못하거나 유일하지 않으면 StructureError(exit 3).
+    """
+    import hashlib as _hashlib
+
+    from ontology_census import parse_sections
+
+    p = paths_for(root, skill)
+    dep_secs = {s["section_key"]: s for s in parse_sections(p["dep"].read_bytes())}
+    src_secs = list(parse_sections(p["src"].read_bytes()))
+    pairs = []
+    for row in rows:
+        skey = row["section_key"]
+        if skey not in dep_secs:
+            raise StructureError(f"{skill}: 그래프 소유 절 {skey} 이 배포 분할에 없음(구조 훼손)")
+        dep_span = dep_secs[skey]["span"].decode("utf-8")
+        src_matches = [s for s in src_secs
+                       if _hashlib.sha256(s["span"]).hexdigest() == row["baseline_sha256"]]
+        if len(src_matches) != 1:
+            raise StructureError(
+                f"{skill}: 소스 미러에서 {skey} 기준선 스팬 매칭 {len(src_matches)}건(기대 1)")
+        src_span = src_matches[0]["span"].decode("utf-8")
+        if dep_body.count(dep_span) != 1 or src_body.count(src_span) != 1:
+            raise StructureError(f"{skill}: {skey} 스팬이 본문에서 유일하지 않음")
+        dep_body = dep_body.replace(dep_span, "", 1)
+        src_body = src_body.replace(src_span, "", 1)
+        pairs.append((dep_span, src_span))
+    return dep_body, src_body, pairs
+
+
 def check_skill(root: Path, skill: str) -> dict:
     """한 스킬의 두 불변식 검사. 반환 dict: status in {in_sync, drift, structure}."""
     p = paths_for(root, skill)
     result = {"skill": skill, "inv1": "in_sync", "inv2": "in_sync", "notes": []}
 
-    # 불변식1: 소스 본문 ≡ 배포 본문
+    # 불변식1: 소스 본문 ≡ 배포 본문 (그래프 소유 절 스팬 절제 — 동결 §9, T1 개작)
     if not p["src"].is_file():
         result["inv1"] = "structure"
         result["notes"].append(f"소스 미러 부재: {p['src']}")
     else:
         try:
-            _, dep_body = split_at_body(p["dep"])
-            _, src_body = split_at_body(p["src"])
+            _, dep_body_l = split_at_body(p["dep"])
+            _, src_body_l = split_at_body(p["src"])
+            dep_body, src_body = "\n".join(dep_body_l), "\n".join(src_body_l)
+            rows = _graph_owned_rows(root, skill)
+            if rows:
+                dep_body, src_body, _ = _excise_graph_sections(
+                    root, skill, dep_body, src_body, rows)
         except StructureError as e:
             result["inv1"] = "structure"
             result["notes"].append(str(e))
         else:
-            if "\n".join(src_body) != "\n".join(dep_body):
+            if src_body != dep_body:
                 result["inv1"] = "drift"
-                result["notes"].append("소스 본문 ≠ 배포 본문 (소스 stale)")
+                result["notes"].append("소스 본문 ≠ 배포 본문 (소스 stale·그래프 절 절제 후)")
 
     # 불변식2: 배포(Claude) ≡ 배포(Codex) 전체 파일
     if not p["codex"].is_file():
@@ -165,11 +226,19 @@ def write_skill(root: Path, skill: str, result: dict) -> list[str]:
         return [f"{skill}: 구조 깨짐 → 자동 동기 불가, 건너뜀"]
 
     if result["inv1"] == "drift":
-        src_preamble, _ = split_at_body(p["src"])
-        _, dep_body = split_at_body(p["dep"])
-        new_src = "\n".join(src_preamble + dep_body)
-        p["src"].write_text(new_src, encoding="utf-8")
-        actions.append(f"{skill}: 불변식1 소스 본문 ← 배포 본문 (preamble 보존)")
+        src_preamble, src_body_l = split_at_body(p["src"])
+        _, dep_body_l = split_at_body(p["dep"])
+        new_body = "\n".join(dep_body_l)
+        rows = _graph_owned_rows(root, skill)
+        if rows:
+            # 스팬 보존 병합(동결 §9): 배포의 그래프 절 렌더 스팬(마커 포함)을
+            # 소스의 이관 시점 원문 스팬으로 되치환 — 소스 미러는 원문을 유지한다.
+            _, _, pairs = _excise_graph_sections(
+                root, skill, "\n".join(dep_body_l), "\n".join(src_body_l), rows)
+            for dep_span, src_span in pairs:
+                new_body = new_body.replace(dep_span, src_span, 1)
+        p["src"].write_text("\n".join(src_preamble) + "\n" + new_body, encoding="utf-8")
+        actions.append(f"{skill}: 불변식1 소스 본문 ← 배포 본문 (preamble·그래프 절 스팬 보존)")
 
     if result["inv2"] == "drift":
         p["codex"].write_text(p["dep"].read_text(encoding="utf-8"), encoding="utf-8")

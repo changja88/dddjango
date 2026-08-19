@@ -537,6 +537,7 @@ class PhoneNumber:
 ```
 
 ### 3.2 엔티티 (Entity)
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 > 출처: [A][B][C], Millett
 > **[의사결정 #1] External 채택**: 엔티티는 애그리거트의 일부로만 사용한다.
@@ -2056,6 +2057,7 @@ class ClassB:
 ---
 
 ## 8. 의사결정 요약
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 | # | 주제 | 채택 | 근거 |
 |---|------|------|------|

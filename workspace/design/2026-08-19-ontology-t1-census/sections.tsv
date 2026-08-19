@@ -1,0 +1,927 @@
+doc_key	p0_group	section_key	ordinal	level	anchor	heading	line_start	line_end	line_count	sha256	nfc	has_tab	has_crlf
+architecture-ddd-skill	E01	s001	1	0		(전문)	1	6	6	4a14e6766959aebd3a62e75f54274c52c208e7317915d4ac37d6d9e757025478	Y	N	N
+architecture-ddd-skill	E01	s002	2	1		도메인 주도 설계 (DDD)	7	8	2	bf7d72fc2ab6b1e4d33a1105a7b95fd77443816cd404ede197c4445bb222f803	Y	N	N
+architecture-ddd-skill	E01	s003	3	2		언제 쓰나	9	16	8	6b8ab53baec953a5170d6fb93f10fcdd15e9846ed2ef25b3956ad1e8fffbf7a2	Y	N	N
+architecture-ddd-skill	E01	s004	4	2		핵심 운영 원칙	17	29	13	1fe481024fa70a2411b882c59f83cbaded91c511edbac56d7918ca481415590e	Y	N	N
+architecture-ddd-skill	E01	s005	5	2		상세 레퍼런스	30	45	16	1361fad71d6871cb0c256753d40fb060c3a61ac5210050a8613bc1a269dea123	Y	N	N
+architecture-ddd-final	E01	s001	1	1		DDD(도메인 주도 설계) 종합 가이드	1	2	2	c52f7a545043b906828eca3244e3735443aeef8b3bcbf68105c24fbb8cb246b8	Y	N	N
+architecture-ddd-final	E01	s002-1	2	2	1	1. DDD란 무엇인가	3	6	4	64b53b4537e335c6a4b4a87c98432aac79bdac5abbb7dfb44e431f7304816d75	Y	N	N
+architecture-ddd-final	E01	s003-1.1	3	3	1.1	1.1 DDD의 핵심 요약	7	10	4	76b155d090144035d70bbe9a99de2f8572f0952bb2eb3015b8bab8450293e5db	Y	N	N
+architecture-ddd-final	E01	s004-1.2	4	3	1.2	1.2 전략 설계 우선 원칙	11	23	13	2346c55e38856c0bb5c9def965c8805336311c0302c0168dca2e874654b6fa75	Y	N	N
+architecture-ddd-final	E01	s005-1.3	5	3	1.3	1.3 주요 참고 자료의 관점 차이	24	33	10	877b54a36e5ca466f9a92a193331229a461fbe91991df1dd73f2d0d3a98ad8e0	Y	N	N
+architecture-ddd-final	E01	s006-2	6	2	2	2. 전략 패턴 (Strategic Patterns)	34	35	2	1ee34d0bbfb9016e728789b785b349f86f8e8e7272e3a68115d4654e6bd65426	Y	N	N
+architecture-ddd-final	E01	s007-2.1	7	3	2.1	2.1 지식 탐구 (Knowledge Crunching)	36	103	68	a9e6a57d5f0522f6181bf3c3d2c7dfd9f08cc4db9709b4eb89fe6d131dec7f10	Y	N	N
+architecture-ddd-final	E01	s008-2.2	8	3	2.2	2.2 도메인과 하위 도메인	104	168	65	f32892f4cb5b99884643fd733d7a83dbcd8ab6ba72fe4ce5ad7fe8deb7795099	Y	N	N
+architecture-ddd-final	E01	s009-2.3	9	3	2.3	2.3 유비쿼터스 언어 (Ubiquitous Language)	169	211	43	66a06400de4f961af8372518f5f0318ecf9a725d1fe61610e2422b01f6f23bdc	Y	N	N
+architecture-ddd-final	E01	s010-2.4	10	3	2.4	2.4 바운디드 컨텍스트 (Bounded Context)	212	253	42	0e7ad62f010c56a1fa518580d9a6ee17a3f84f82a66c4fc566f7d0f7504012f4	Y	N	N
+architecture-ddd-final	E01	s011-2.5	11	3	2.5	2.5 컨텍스트 맵 (Context Map)	254	362	109	8c42437018e9173ed0235f56102c913454cb2c5d65b4f338540808bedee6962c	Y	N	N
+architecture-ddd-final	E01	s012-2.6	12	3	2.6	2.6 증류 (Distillation)	363	418	56	f289867fc1551127c41e2b3043020092b79245adeaec7623ef65c4f458b626f4	Y	N	N
+architecture-ddd-final	E01	s013-2.7	13	3	2.7	2.7 Event Storming (이벤트 스토밍)	419	445	27	d625f8b43eeb8544ecbbee321d5b1acd3691fe4cc8c38d5232ba8110968b7e3b	Y	N	N
+architecture-ddd-final	E01	s014-2.8	14	3	2.8	2.8 전략 DDD와 팀 토폴로지	446	462	17	331e973b770ff2d2864ef4289484380a4256e5fa5945f4440f7a19e4b5a45814	Y	N	N
+architecture-ddd-final	E01	s015-3	15	2	3	3. 전술 패턴 (Tactical Patterns)	463	464	2	1c45412fd230500436a11ce201dc5ebe0b77470f01ded873ce4000e5b3ed6428	Y	N	N
+architecture-ddd-final	E01	s016-3.1	16	3	3.1	3.1 값 객체 (Value Object)	465	538	74	1e38254c2a28300823d1e77bf69bcd5c943f58f797377aef427bc40dc7b75f58	Y	N	N
+architecture-ddd-final	E01	s017-3.2	17	3	3.2	3.2 엔티티 (Entity)	539	637	99	f72075797a2748ed7e8440284b5062f8f45b77e10b75fd1ea26988afe7813f92	Y	N	N
+architecture-ddd-final	E01	s018-3.3	18	3	3.3	3.3 애그리거트 (Aggregate)	638	643	6	ff84133e3f26aae2618e2a944c23c563df61e153024db697cd733c7b7b382367	Y	N	N
+architecture-ddd-final	E01	s019	19	4		Vernon의 4가지 설계 규칙	644	820	177	9466d5b51c8d8e1f20c97a47f01fa26664fc3050264a0d43b00e3445419e3d5c	Y	N	N
+architecture-ddd-final	E01	s020	20	4		애그리거트를 팩토리로 사용하기 [A]	821	837	17	4f678267882658fa0fc84f2cb47194da536c260541512bd16314fbe9a44a65d6	Y	N	N
+architecture-ddd-final	E01	s021-3.4	21	3	3.4	3.4 리포지토리 (Repository)	838	897	60	ff4bffcc783b0be8bd2fb7ff68c2ec1ba1a782cad48b4e998afefa7956d5f258	Y	N	N
+architecture-ddd-final	E01	s022-3.5	22	3	3.5	3.5 도메인 서비스 (Domain Service)	898	993	96	af227560fa91bb74b64ef6fc59a81f4e281304e3dcc8591bbe6a0e28560ea4eb	Y	N	N
+architecture-ddd-final	E01	s023-3.6	23	3	3.6	3.6 응용 서비스 (Application Service)	994	1091	98	c513f6bd242d65eb1efc142cbf3de52498bd7a6ee391e8861f1f93d98b974b7c	Y	N	N
+architecture-ddd-final	E01	s024-3.7	24	3	3.7	3.7 도메인 이벤트 (Domain Event)	1092	1181	90	32c30c16b8c7f2466bacb1f27a4346272da7f698fe7a00f9bd7a08f1b7dea396	Y	N	N
+architecture-ddd-final	E01	s025	25	4		Outbox 패턴	1182	1199	18	9e697910498454feb355ec4e11f329ea8c92415d64f6cfaed9b2ef976189a06d	Y	N	N
+architecture-ddd-final	E01	s026	26	4		발행 이벤트 타입 — 1종째부터 enum (birth-enum)	1200	1209	10	ed3ec39344bf7dc018fe84eedb4a10b38945f445d5c7ae6dd974cf6067ef74ae	Y	N	N
+architecture-ddd-final	E01	s027-3.8	27	3	3.8	3.8 Specification 패턴	1210	1326	117	a3d9290c781fd02b2b0be19217d6e40afda82e4628664b3bb3c68bf1934a7581	Y	N	N
+architecture-ddd-final	E01	s028-4	28	2	4	4. 유연한 설계 (Supple Design)	1327	1332	6	bde558f44703b336be722b89625e4d3f7c66fe5c36ee575f27540e5fd4af7cd8	Y	N	N
+architecture-ddd-final	E01	s029-4.1	29	3	4.1	4.1 의도를 드러내는 인터페이스 (Intention-Revealing Interfaces)	1333	1356	24	9ad00cfc7b3f73a74cd828d41a98b893f3041b969faba666b7345bf29a836985	Y	N	N
+architecture-ddd-final	E01	s030-4.2	30	3	4.2	4.2 부작용 없는 함수 (Side-Effect-Free Functions)	1357	1373	17	12863377f8731a96a5b81fb0651646735b59d684d100487b8227daab61f3e475	Y	N	N
+architecture-ddd-final	E01	s031-4.3	31	3	4.3	4.3 단언 (Assertions)	1374	1390	17	01b2632eb5300a2913933f29eac98fd77c2ea87d3df3f9718ad001b74c14da75	Y	N	N
+architecture-ddd-final	E01	s032-4.4	32	3	4.4	4.4 개념적 윤곽 (Conceptual Contours)	1391	1394	4	ae6ef36841208a90e2b365b5b0a223c4d3639671c4b2073243706e5dc55bb7a9	Y	N	N
+architecture-ddd-final	E01	s033-4.5	33	3	4.5	4.5 독립형 클래스 (Standalone Classes)	1395	1398	4	9d7d93a75f89e72522beb587f7c180ac8a94581247cf4104586fc08a63b9291e	Y	N	N
+architecture-ddd-final	E01	s034-4.6	34	3	4.6	4.6 연산의 닫힘 (Closure of Operations)	1399	1425	27	2f2570dc3e9bf831ef7ba64e3a1c473dfa860a071e6cbf749c8e7c0ccac272e0	Y	N	N
+architecture-ddd-final	E01	s035-5	35	2	5	5. 아키텍처	1426	1429	4	194045538988b39d10bf280add73e088e260e83f6030f797d7727f009e92145a	Y	N	N
+architecture-ddd-final	E01	s036-5.1	36	3	5.1	5.1 계층 아키텍처	1430	1442	13	a2aa1223732e44f4a189ee8bb9e3f1b02d08c0fcf5572f772e922b16b410e69e	Y	N	N
+architecture-ddd-final	E01	s037-5.2	37	3	5.2	5.2 DIP (의존성 역전 원칙)	1443	1490	48	c9da88577cf5e84aa6e0d03853d06b04f47eccdb07f730ed6ee1aff44399ae95	Y	N	N
+architecture-ddd-final	E01	s038-5.3	38	3	5.3	5.3 핵사고날 아키텍처 (포트와 어댑터)	1491	1517	27	a7eff936bb7d91056b35b5a14c9691848527916cbad6f861b41e9ada68ec64fc	Y	N	N
+architecture-ddd-final	E01	s039-5.4	39	3	5.4	5.4 CQRS (커맨드-쿼리 책임 분리)	1518	1536	19	2331f593e4eefbd424b1cd2cda7f6012b885f5cc3eeb089cc40b9f5b845e16cb	Y	N	N
+architecture-ddd-final	E01	s040-5.5	40	3	5.5	5.5 대규모 구조 (Large-Scale Structure)	1537	1604	68	577da04a0cea5d809f5f2d11926310d234cf64101df30ebe82289fa073dac073	Y	N	N
+architecture-ddd-final	E01	s041-6	41	2	6	6. 구현 패턴	1605	1606	2	74a0672bc28c62b712091ba3348e56f3d256b3d53c41b4c5ba44836b4623b52e	Y	N	N
+architecture-ddd-final	E01	s042-6.1	42	3	6.1	6.1 패키지 구조	1607	1671	65	015e4538c270bb400e83090c8ebacff5f6762a38b2e37adccffbd2b54755a696	Y	N	N
+architecture-ddd-final	E01	s043-6.2	43	3	6.2	6.2 Data Mapper 패턴	1672	1677	6	56efb2e2db0992c9b7c52f151e568f6208ac7c35323044b472d831ca62719842	Y	N	N
+architecture-ddd-final	E01	s044-6.3	44	3	6.3	6.3 Repository + Unit of Work 패턴	1678	1728	51	796f4b69c7c811c2a0692c7dfc79314976341c221fac55b0265f407842b0ad67	Y	N	N
+architecture-ddd-final	E01	s045-6.4	45	3	6.4	6.4 Event Sourcing	1729	1842	114	dfc1c4cdb390d4170dfa6c1c51543d028b0247d80245dcbb1ec2e91ab22b3178	Y	N	N
+architecture-ddd-final	E01	s046-6.5	46	3	6.5	6.5 Saga 패턴 (분산 트랜잭션)	1843	1911	69	27d96d2f005d51fae00c13ba35a838d50ef6a223e8ce5cb10972db4d3f881caf	Y	N	N
+architecture-ddd-final	E01	s047-6.6	47	3	6.6	6.6 단순한 비즈니스 로직 패턴	1912	1940	29	62bd044fd74c0a81c6e5fda75f83a2f3764f21be2f601efed76c5c1134d10b40	Y	N	N
+architecture-ddd-final	E01	s048-6.7	48	3	6.7	6.7 마이크로서비스와 DDD	1941	1995	55	224e413b84e3ca816aa9b61a5ed0d0a716b7e3d9490c70304717aeecb0e4a36f	Y	N	N
+architecture-ddd-final	E01	s049-6.8	49	3	6.8	6.8 패턴 선택 절차와 Risky Write 라우팅	1996	2019	24	efae38b707c56e37c10965600a2c9bad03327a8e74a25e8745cf3e96e468d408	Y	N	N
+architecture-ddd-final	E01	s050-7	50	2	7	7. 복잡성 관리 원칙	2020	2057	38	f3ee18d53b6ce27adc897619e3fd4ed0103ade578fd4babdbe020ae7ada8c537	Y	N	N
+architecture-ddd-final	E01	s051-8	51	2	8	8. 의사결정 요약	2058	2072	15	f99c8c0d9579d55d756857b2a3349e7e45a0d143d1a58be4828d483059294df0	Y	N	N
+architecture-ddd-final	E01	s052-9	52	2	9	9. 핵심 요약	2073	2093	21	95a51fa05ce98e993776eeea1602c4ce2fd6301d46df9f3fffff6aa2fd2c3488	Y	N	N
+architecture-ddd-final	E01	s053	53	2		출처 종합	2094	2095	2	d6ba4ba70f1554688348d2eef470e0587fc40b8aaac6229c0fe6e26d90c83eaf	Y	N	N
+architecture-ddd-final	E01	s054	54	3		서적	2096	2107	12	f76cc5127045b9cf0d5174b4a4e01b1e8f46d50b6ba113b4a82309839c926588	Y	N	N
+architecture-ddd-final	E01	s055	55	3		논문/시리즈	2108	2113	6	897a4e2128eef6d06385eb8a309b8e84fa4beaa4a654dac22468f7cddfc93207	Y	N	N
+architecture-ddd-final	E01	s056	56	3		웹 자료	2114	2122	9	9c12acd4dd650f1994abbba782376d0e4f97e706e4622f17f7b8a632f72b593d	Y	N	N
+discipline-cleancode-skill	E02	s001	1	0		(전문)	1	6	6	34620531d59b06bf740dacf83c8d68cb583ba1bdcdf146046f3a7813bb7da0ca	Y	N	N
+discipline-cleancode-skill	E02	s002	2	1		클린코드 규율	7	8	2	6b6b28d8ee6a1c87de98df21b591a05283fc27354a7b8ef8cdf9cdff86fb4954	Y	N	N
+discipline-cleancode-skill	E02	s003	3	2		언제 쓰나	9	17	9	d2508fb5878ad9b5f00027a67af687363fed2447956e579be2e34cacf773894d	Y	N	N
+discipline-cleancode-skill	E02	s004	4	2		핵심 운영 원칙	18	31	14	706786132b50c48951d4538fd4ba7932f88dc006002474fe9704f39748b1bc08	Y	N	N
+discipline-cleancode-skill	E02	s005	5	2		상세 레퍼런스	32	56	25	b722368b1066cd7e5a543607fa747f6b63c98aa63b0a0e231d3ec20b5d8da2cb	Y	N	N
+discipline-cleancode-final	E02	s001	1	1		범용 클린 코드 원칙 종합 가이드	1	21	21	28326b52ea0a7fae9ad495b0d43b14d3686b65657887522275912fa2b4aae796	Y	N	N
+discipline-cleancode-final	E02	s002	2	2		목차	22	44	23	15165a3f1144455bc0da936bed90d1df08c9ced3e7ef8c969eb34f0a32d92311	Y	N	N
+discipline-cleancode-final	E02	s003-1	3	2	1	1. 클린 코드란 무엇인가	45	46	2	43c5ab496c110bf82156feb5dac042d5c5265ac2cdf02fa513904c8bf7d5d5e1	Y	N	N
+discipline-cleancode-final	E02	s004-1.1	4	3	1.1	1.1 핵심 정의	47	58	12	826bce2b05b8b070a8b6543bc68e3f9a88d57f37addabb5df51ee664f7de69cc	Y	N	N
+discipline-cleancode-final	E02	s005-1.2	5	3	1.2	1.2 클린 코드의 세 가지 비결 [CC]	59	66	8	7ebf0edd0b1fc7038a6117b0f7ed3cce85253f4d4e82688219ac8267c827efdb	Y	N	N
+discipline-cleancode-final	E02	s006-1.3	6	3	1.3	1.3 세 가지 가치 [IP]	67	74	8	b703b594204de4b15cf28f78cc95b55f711a3b95d24f002cb062aeda0e0eafe8	Y	N	N
+discipline-cleancode-final	E02	s007-1.4	7	3	1.4	1.4 소프트웨어 비용 공식 [IP]	75	83	9	ea31ae313f661f22055ade0bcc1d812e220c048246584b6a42ffe85d868e79a6	Y	N	N
+discipline-cleancode-final	E02	s008-1.5	8	3	1.5	1.5 복잡성의 본질 [APoSD]	84	87	4	db1307fb1c083c3fdd9d73eb92c04684292d91ed728cd9b0c935555dde63ea98	Y	N	N
+discipline-cleancode-final	E02	s009	9	4		복잡성의 세 가지 발현	88	95	8	fd1f9f232ce2e68fb4d8137ee3fa7f288762b2ace40e051b0330d1fff5741e26	Y	N	N
+discipline-cleancode-final	E02	s010	10	4		복잡성의 두 가지 근원	96	100	5	fb1256b7cb3d09e612f28e37091774d2c95b30241e4f1c4d5723e9161357bddb	Y	N	N
+discipline-cleancode-final	E02	s011-1.6	11	3	1.6	1.6 제1 기술적 명령: 복잡성 관리 [CodeC]	101	106	6	e7638dfb2ef38b49937a1b82ca6b4617329c9b8e8f95a49da7e23eb3514cf4e1	Y	N	N
+discipline-cleancode-final	E02	s012-2	12	2	2	2. 이름 짓기 (Naming)	107	108	2	e9ab2309d5f15f2e443a386eff81043250c44e0119747e4b588aafc2f77ca9a2	Y	N	N
+discipline-cleancode-final	E02	s013-2.1	13	3	2.1	2.1 의도를 분명히 밝혀라 [CC]	109	121	13	ca0daa32cab3bbdf62f7d658c4d546ae2d89d300339ca0ac49e35229a11fe4cf	Y	N	N
+discipline-cleancode-final	E02	s014-2.2	14	3	2.2	2.2 그릇된 정보를 피하라 [CC]	122	134	13	4d4895dba700bcee8520fefe84a3de4e726680b1e26356f598949586d81ae13c	Y	N	N
+discipline-cleancode-final	E02	s015-2.3	15	3	2.3	2.3 의미 있게 구분하라 [CC]	135	148	14	53e86619f9001580d522ba895985a75bcbf817acb064a42e10ab20b4b82630cb	Y	N	N
+discipline-cleancode-final	E02	s016-2.4	16	3	2.4	2.4 검색하기 쉬운 이름과 변수 이름 길이 [CC] [CodeC]	149	166	18	473ec22cd88f984c2e0531075a94844cb81ed9e7c5d5fff34df4f01ec2b29642	Y	N	N
+discipline-cleancode-final	E02	s017-2.5	17	3	2.5	2.5 한 개념에 한 단어를 사용하라 [CC]	167	186	20	0a5ce960559ac5b71d9e3970294b126eb7b63324de69f1494d095a5420f90b4a	Y	N	N
+discipline-cleancode-final	E02	s018-2.6	18	3	2.6	2.6 클래스 이름은 명사, 메서드 이름은 동사 [CC] [IP]	187	198	12	3626364b856868c03585ad4eba2c996191b780951425dc28df3ddc05558b8111	Y	N	N
+discipline-cleancode-final	E02	s019-2.7	19	3	2.7	2.7 의도 제시형 이름 [IP]	199	210	12	070f247ff5e157c5352aaf2d684aaec6401b7a4a728a8bcc2e76c3d153b9e061	Y	N	N
+discipline-cleancode-final	E02	s020-2.8	20	3	2.8	2.8 역할 제시형 작명 [IP]	211	223	13	601fcaa8a41e5865fc0f622069bfb1a02255399ba9b630a4d86ab8c99eccbb16	Y	N	N
+discipline-cleancode-final	E02	s021-2.9	21	3	2.9	2.9 컬렉션은 복수형으로 [IP]	224	235	12	53444f5fab4fc36c3d031937d9110b84c3f5436823557385ee96bad38f852d2f	Y	N	N
+discipline-cleancode-final	E02	s022-2.10	22	3	2.10	2.10 한정자(Qualifier) 배치: 핵심 개념을 앞에 [CodeC]	236	252	17	8c6be510b63993d8f92ffe6048eb807cae0fb5396bfdd0f7f02f4928c130ccf5	Y	N	N
+discipline-cleancode-final	E02	s023-2.11	23	3	2.11	2.11 불리언 변수 명명과 사용 [CodeC]	253	278	26	020894cccc0da426cbb4064aab131ae64b1dbfca5941d9bf379f7a43ace4ec22	Y	N	N
+discipline-cleancode-final	E02	s024-2.12	24	3	2.12	2.12 `num` 사용 회피 [CodeC]	279	290	12	78b58bc961fcb35e06152266373b7ada0429f7654ae7349463ee5cc46b15044c	Y	N	N
+discipline-cleancode-final	E02	s025-2.13	25	3	2.13	2.13 루프 변수 명명 [CodeC]	291	303	13	540fad3f1e01dca693be9675a53f39778e9a7272c61b242cae190f5410f5f5e7	Y	N	N
+discipline-cleancode-final	E02	s026-2.14	26	3	2.14	2.14 매직 값과 상수 승격 판정 [PP] [Ref]	304	328	25	421a459edc07d1c221afaa014440ff90b18db0186a36aa1f5ea1b655bffd2932	Y	N	N
+discipline-cleancode-final	E02	s027-3	27	2	3	3. 함수와 메서드 설계	329	330	2	20cd4a30ec73d738840c054bbd757229973fc4a16865e61992bbe55f421bb3b6	Y	N	N
+discipline-cleancode-final	E02	s028-3.1	28	3	3.1	3.1 함수는 작게, 모듈은 깊게 [CC] [APoSD]	331	386	56	be45b0249e106f1a4b8431cc2c3c75388f883320d5fd4d7637c12c4db88d135d	Y	N	N
+discipline-cleancode-final	E02	s029-3.2	29	3	3.2	3.2 한 가지만 해라 [CC] [IP]	387	392	6	acec70a2fc8b6ad69636854bc50009782bd7b75fd60ed61594645ac890adb8dd	Y	N	N
+discipline-cleancode-final	E02	s030-3.3	30	3	3.3	3.3 추상화 수준은 하나로 [CC] [IP]	393	410	18	03f8bd18279364e1ad2f14925b294a979dd94e15f9632b01b801fde01e3c21f0	Y	N	N
+discipline-cleancode-final	E02	s031-3.4	31	3	3.4	3.4 함수 인수는 최소로 [CC] [IP]	411	422	12	f77b2886e55daff64e494d6c462201f7c163784e1f9f177cdf8342721eb3b461	Y	N	N
+discipline-cleancode-final	E02	s032-3.5	32	3	3.5	3.5 플래그 인수를 쓰지 마라 [CC]	423	435	13	7a6e330a19763738ef7c5d8b063dc8a12b1d721223b8c4350cd73995337430ba	Y	N	N
+discipline-cleancode-final	E02	s033-3.6	33	3	3.6	3.6 명령과 조회를 분리하라 [CC]	436	456	21	154a722020fb412274c65630768974d2832b6de14ab294e7cbddb382125ca00b	Y	N	N
+discipline-cleancode-final	E02	s034-3.7	34	3	3.7	3.7 부수 효과를 일으키지 마라 [CC]	457	483	27	ffabba48547f600f1c7610a6bbb80f161cac8195aa9339db18cbbbd47854b9dc	Y	N	N
+discipline-cleancode-final	E02	s035-3.8	35	3	3.8	3.8 대칭성을 활용하라 [IP]	484	504	21	52a7e35ec47c8bc96ce6ad41116f1120788d6879fe098b18793a36bb0ff819b0	Y	N	N
+discipline-cleancode-final	E02	s036-3.9	36	3	3.9	3.9 고품질 루틴 설계 [CodeC]	505	506	2	23379a80a5fae325e7e3f03496155bfd387442de432590582e2c567f5e6c3721	Y	N	N
+discipline-cleancode-final	E02	s037	37	4		루틴을 만들어야 하는 이유	507	514	8	f62561f86f07b3cd8c9ee11cb2bb5a6101751231f440b570efe6f44f062286e1	Y	N	N
+discipline-cleancode-final	E02	s038	38	4		루틴의 결정 횟수(Decision Count)	515	544	30	56120fb60baad6cca9c29a4e62a84c9b873c4bd1590381dea79036bfa97aa463	Y	N	N
+discipline-cleancode-final	E02	s039-4	39	2	4	4. 주석과 문서화	545	548	4	9af2840763a5ba742dd468bcc5002bfa417251fda3bd1b696b3d575ba9d3a9a6	Y	N	N
+discipline-cleancode-final	E02	s040-4.1	40	3	4.1	4.1 구현 주석은 최소화하라 [CC] [IP]	549	565	17	ab21aa142441c21f02a3f969a6a1310d1735ba14450edb3179050a487e8f9a9a	Y	N	N
+discipline-cleancode-final	E02	s041-4.2	41	3	4.2	4.2 인터페이스 주석은 필수로 작성하라 [APoSD]	566	581	16	6dbd169e482f691a253fdf7248d215f7f80c38427e4827f77baddd68ad50d216	Y	N	N
+discipline-cleancode-final	E02	s042-4.3	42	3	4.3	4.3 계층별 주석 가이드라인 요약	582	589	8	71b91446be46cce0888e2b83bc17cec152ce06ef4e3e4ee149f68b4e7ab73fe6	Y	N	N
+discipline-cleancode-final	E02	s043-4.4	43	3	4.4	4.4 유용한 주석의 유형 [CC]	590	597	8	316ad94f5eb14b201fc781fb415216acc5444f0a8130ae16baabfb0cd2b54164	Y	N	N
+discipline-cleancode-final	E02	s044-4.5	44	3	4.5	4.5 나쁜 주석의 유형 [CC]	598	605	8	4ddce8104c7d54d80d40be3c57b95825ea13edc171e9c5d3ffbc70e51e642944	Y	N	N
+discipline-cleancode-final	E02	s045-4.6	45	3	4.6	4.6 문서화와 주석은 다르다 [PC]	606	610	5	6519863de2596d827ef29a251e4ce5f0279b73de92482474beebcaa313f364ce	Y	N	N
+discipline-cleancode-final	E02	s046-4.7	46	3	4.7	4.7 독스트링 작성법	611	616	6	aad603ff3fbd544d1e433af04acd4a5ae23bfdfa8e17f2bd9d394966c14abdf1	Y	N	N
+discipline-cleancode-final	E02	s047-5	47	2	5	5. 코드 형식과 구조	617	618	2	2ab683c2187a1a48fc22f0a731d2455b07605111e996fee13040f268606e48e9	Y	N	N
+discipline-cleancode-final	E02	s048-5.1	48	3	5.1	5.1 형식은 의사소통이다 [CC]	619	622	4	1e55b769db949f4659aaad0b743aad278389fd1701db22aaec6ad8986f15d68f	Y	N	N
+discipline-cleancode-final	E02	s049-5.2	49	3	5.2	5.2 적절한 행 길이를 유지하라 [CC]	623	628	6	2a4433c525c6166399210382f18b96904997e773a24d8adb02080b03fbaf7f58	Y	N	N
+discipline-cleancode-final	E02	s050-5.3	50	3	5.3	5.3 일관성이 핵심이다 [PC]	629	632	4	d04efe31164bd3d5f81227b87d298db7fd2b50a6a00d3ef3568b46111c71fc7f	Y	N	N
+discipline-cleancode-final	E02	s051-5.4	51	3	5.4	5.4 자동화 도구를 활용하라 [PC]	633	638	6	864ecd414f5edd51ac892d906f3fe9a81ede63144e05b898a43f0a453b1deb5d	Y	N	N
+discipline-cleancode-final	E02	s052-6	52	2	6	6. 추상화와 캡슐화	639	640	2	40b68f6702668b132f3f51832723f05591e6a1bc117b5d8f5502009b92029da4	Y	N	N
+discipline-cleancode-final	E02	s053-6.1	53	3	6.1	6.1 추상화를 통한 복잡성 극복 [OO]	641	648	8	de4f1eb05e6f683bfe3aa541896bc5b338f2457c59593c881ee39025c78ff06e	Y	N	N
+discipline-cleancode-final	E02	s054-6.2	54	3	6.2	6.2 구현이 아니라 인터페이스에 맞춰 코딩하라 [IP] [OO]	649	668	20	e75c3554e68a300f154d32497e691781d875bf52df2c661d4776a24926ab1ae1	Y	N	N
+discipline-cleancode-final	E02	s055-6.3	55	3	6.3	6.3 상태를 캡슐화하라 [OO]	669	697	29	c0263c39d888c239388b2ae43e911d09445755be56beacde704b56bce582b742	Y	N	N
+discipline-cleancode-final	E02	s056-6.4	56	3	6.4	6.4 인터페이스와 구현의 분리 원칙 [OO]	698	703	6	7c78d73d46a56aadb566de9d606e4be54f90e89f4599a35cf4b0f91f81e5b0b5	Y	N	N
+discipline-cleancode-final	E02	s057-6.5	57	3	6.5	6.5 정보 은닉 (Information Hiding) [APoSD]	704	737	34	6235cd4727e4b2e483c11d8f616ea7addbb9485d42945728a1840c2703114d2e	Y	N	N
+discipline-cleancode-final	E02	s058-7	58	2	7	7. 깊은 모듈 설계 [APoSD]	738	739	2	74578910ee89ced94b1c1eab0fe48d922583947b5b59c23f1e04b0d02cef3183	Y	N	N
+discipline-cleancode-final	E02	s059-7.1	59	3	7.1	7.1 깊은 모듈 vs 얕은 모듈	740	755	16	2b9b8087d75e1bdc1b3751dad2a0c1025ab8b32c8b2acd07bdeb7f2b16fc5bc7	Y	N	N
+discipline-cleancode-final	E02	s060-7.2	60	3	7.2	7.2 전략적 프로그래밍 vs 전술적 프로그래밍 [APoSD]	756	818	63	1ec4422fdea7b29376d16fb7af88edbabe3a679f84d7ca62407e1e4cc60c716c	Y	N	N
+discipline-cleancode-final	E02	s061-7.3	61	3	7.3	7.3 설계의 레드 플래그 [APoSD]	819	831	13	9ea20b0129cfb7ba7b751fa4190e144c828077778478fbe210e14e04bc356e8a	Y	N	N
+discipline-cleancode-final	E02	s062-8	62	2	8	8. 객체 설계 원칙	832	833	2	f3dfb6ebeefd22bca137fa1f59a8bd0872e85f54a849726f5281656422fe24a7	Y	N	N
+discipline-cleancode-final	E02	s063-8.1	63	3	8.1	8.1 행동이 상태를 결정한다 [OO]	834	855	22	ac4bb2b1f19c20b4355a14a0210fab10071a327b11022435b1913c599a5eabd3	Y	N	N
+discipline-cleancode-final	E02	s064-8.2	64	3	8.2	8.2 묻지 말고 시켜라 (Tell, Don't Ask) [OO]	856	869	14	b00a5b0053ce819df9143276ede91ee2e81f7da016b059209dde34d641ec7fc4	Y	N	N
+discipline-cleancode-final	E02	s065-8.3	65	3	8.3	8.3 조건문을 다형성으로 대체하라 [CC] [IP]	870	898	29	5c0c2cd661e3e77b7f086913d76f5ffcc66aaca69fc7af584f0b6c5ea2d2e7fe	Y	N	N
+discipline-cleancode-final	E02	s066-8.4	66	3	8.4	8.4 위임으로 유연성 확보 [IP]	899	915	17	6cefc8b772ab07a09e0e94df771eaf4aa2d10656f728fb8506cd7329187fcf83	Y	N	N
+discipline-cleancode-final	E02	s067-8.5	67	3	8.5	8.5 로직과 데이터를 함께 유지하라 [IP]	916	936	21	8cd1b6fd4f79f1b775caa934adb6a5a0712daf383a0282e806f7b01d615c46d6	Y	N	N
+discipline-cleancode-final	E02	s068-8.6	68	3	8.6	8.6 변화율에 따라 분리하라 [IP]	937	960	24	23a192312ab0fb16d3390c57303cb8885a180b59302d95ccff02d72aadb91f20	Y	N	N
+discipline-cleancode-final	E02	s069-9	69	2	9	9. SOLID 원칙	961	962	2	cd8d91ba2e0f9a24bfc737e59db3be5d0927c60ec09eed8b3070d3b3000f5614	Y	N	N
+discipline-cleancode-final	E02	s070-9.1	70	3	9.1	9.1 단일 책임 원칙 (SRP) [PC] [CC]	963	981	19	b56609663c9d275dcb7cad744d87d1415b530bebd01cb8d45cb5f997c49664c9	Y	N	N
+discipline-cleancode-final	E02	s071	71	4		Django/dddjango 경계에서의 책임 분리	982	995	14	6e7ed4ebf762096e3b0f14ea32f80a75e013d090deb2cffe9adcf6438733aa25	Y	N	N
+discipline-cleancode-final	E02	s072-9.2	72	3	9.2	9.2 개방/폐쇄 원칙 (OCP) [PC] [CC]	996	1028	33	b13cfc8e3a1bf6a74e794dd7c19b7a1c236490501f8e77afb05ebd5912227378	Y	N	N
+discipline-cleancode-final	E02	s073-9.3	73	3	9.3	9.3 리스코프 치환 원칙 (LSP) [PC] [OO]	1029	1048	20	9a02f54924d9d27647c08012307ffba928d5cd5efe3c69ad68d71d58b1df61f0	Y	N	N
+discipline-cleancode-final	E02	s074-9.4	74	3	9.4	9.4 인터페이스 분리 원칙 (ISP) [PC]	1049	1066	18	a671854985c2951d8d4234b954d98e041c4991f1f162f4e158895b8671e4c469	Y	N	N
+discipline-cleancode-final	E02	s075-9.5	75	3	9.5	9.5 의존성 역전 원칙 (DIP) [PC]	1067	1090	24	ccc7eb00ff1503a894b4888132588a5418d454ae93dcc5a1a5101ec02df24a7a	Y	N	N
+discipline-cleancode-final	E02	s076-10	76	2	10	10. 디자인 패턴	1091	1094	4	deb7c8a3a8d40d2f1c9ba7177507cbdbc9b7c33c53c10d3532828ddb93bc4da5	Y	N	N
+discipline-cleancode-final	E02	s077-10.1	77	3	10.1	10.1 팩토리 메서드 (Factory Method) [GoF]	1095	1141	47	a16df1dca3d045748ecd8a8504db3d6e95f307993d8a38ec5257c6c0ef224845	Y	N	N
+discipline-cleancode-final	E02	s078-10.2	78	3	10.2	10.2 추상 팩토리 (Abstract Factory) [GoF]	1142	1196	55	5498c28e6259e432f55b3c98b59e82448b3e16b60af9a0bd9c239f2b70f40718	Y	N	N
+discipline-cleancode-final	E02	s079-10.3	79	3	10.3	10.3 값 객체 (Value Object) [Kent Beck]	1197	1227	31	bd8d8c47f67818b86af66bc0aa10472cdb341a1b31506be3f7f00331915bf399	Y	N	N
+discipline-cleancode-final	E02	s080-10.4	80	3	10.4	10.4 널 객체 (Null Object) [Kent Beck]	1228	1264	37	34b163a7e72c4e7822ae5938e43a13836344e857cedf0f800cd5642a3f4163aa	Y	N	N
+discipline-cleancode-final	E02	s081-10.5	81	3	10.5	10.5 전략 패턴 (Strategy) [GoF]	1265	1306	42	cdfecebedcf44fa145605e81bf1f493a5d935e3dfc9dc755b0d3848374b84368	Y	N	N
+discipline-cleancode-final	E02	s082-10.6	82	3	10.6	10.6 옵저버 패턴 (Observer) [GoF]	1307	1352	46	aee3141b81ff68c7d61a99d604d0eb4e32036e3dda106f8cc08457cf66fe2d17	Y	N	N
+discipline-cleancode-final	E02	s083-10.7	83	3	10.7	10.7 템플릿 메서드 (Template Method) [GoF] [Kent Beck]	1353	1407	55	331b7804b6c278d2ab29629d4bac2119f52cecede8a6d759f185f7d18b92fd86	Y	N	N
+discipline-cleancode-final	E02	s084-10.8	84	3	10.8	10.8 플러거블 객체 (Pluggable Object) [Kent Beck]	1408	1465	58	be6b05c256b03487e595de08ee9019fa88abc60df9885f99187cd6f55fa4b1f7	Y	N	N
+discipline-cleancode-final	E02	s085-11	85	2	11	11. 상태 관리	1466	1467	2	75c3fe02e735ef4ee0fff4c2c02a26824717538ead956e19e40ef0d38e4cdd6a	Y	N	N
+discipline-cleancode-final	E02	s086-11.1	86	3	11.1	11.1 변수의 범위와 생명주기를 일치시켜라 [IP] [CodeC]	1468	1484	17	2b601cb196b8170ce93d07e2fe6d91d31e35ba36639e57521d1191db29ea7416	Y	N	N
+discipline-cleancode-final	E02	s087-11.2	87	3	11.2	11.2 값 객체를 활용하라 [IP] [OO]	1485	1505	21	2fe11bc1ef367ef7292ad63341423be9ed80c00bd6738e6f221abfb5d596570e	Y	N	N
+discipline-cleancode-final	E02	s088-11.3	88	3	11.3	11.3 상태 접근은 간접 접근을 기본으로 [IP]	1506	1528	23	5f7387e775f732633623855d87aa13f372c2f1473b5577baf925b318a6f9ff22	Y	N	N
+discipline-cleancode-final	E02	s089-11.4	89	3	11.4	11.4 공용 상태 vs 가변 상태 [IP]	1529	1536	8	7285c2f1e941a9289a281f7c90d14adc285f39aeed1a7c2c1340599f06e7a17a	Y	N	N
+discipline-cleancode-final	E02	s090-12	90	2	12	12. 오류 처리	1537	1540	4	883534592bb380d327c803d0b55bb9147630632e00012be5e7152eb58f743440	Y	N	N
+discipline-cleancode-final	E02	s091-12.1	91	3	12.1	12.1 1순위: 오류를 존재에서 제거하라 [APoSD]	1541	1561	21	66f84c7f6f58ebb40e471e27c2c2979b4ce780294dbacd8cdb0a4b33035e98a9	Y	N	N
+discipline-cleancode-final	E02	s092-12.2	92	3	12.2	12.2 2순위: 오류 코드보다 예외를 사용하라 [CC]	1562	1582	21	110cef04d40e771333106ed5bf630385c10ca23a79191fb67b3119d0d3e88551	Y	N	N
+discipline-cleancode-final	E02	s093-12.3	93	3	12.3	12.3 Try/Catch 분리는 의도와 인지 경계를 따른다 [CC]	1583	1613	31	18db44a9ae513a8610999b6e8fb7d183592a8371c2ded3bef68f1d00fe42e456	Y	N	N
+discipline-cleancode-final	E02	s094-12.4	94	3	12.4	12.4 올바른 추상화 수준에서 예외를 처리하라 [PC]	1614	1617	4	b4e4ddd78e1a9f5abca2fa6091c5c93b3e6944e61523155900880eb191068462	Y	N	N
+discipline-cleancode-final	E02	s095-12.5	95	3	12.5	12.5 보호절(Guard Clause)을 활용하라 [IP]	1618	1643	26	2fbb370fdf3c39267ff81fd20877558e4b4b282c0100ee4443a7f8d38d15c008	Y	N	N
+discipline-cleancode-final	E02	s096-12.6	96	3	12.6	12.6 계약에 의한 디자인 (DbC) [PC]	1644	1659	16	8d0fc0c0e0e81112b06a725a54e5541ca91debff7c231de593b43894e2ddf490	Y	N	N
+discipline-cleancode-final	E02	s097-12.7	97	3	12.7	12.7 방어적 프로그래밍 [CodeC]	1660	1663	4	c800e027f550e4b71edae6711ac38c10cea243c713fbc11b35c9f0c8332541fe	Y	N	N
+discipline-cleancode-final	E02	s098	98	4		단언(Assertion) vs 오류 처리	1664	1689	26	48beba3f80058f5111771bf2421050de2a1cc794f795c82f8e29e8e20e7b7cac	Y	N	N
+discipline-cleancode-final	E02	s099	99	4		정확성(Correctness) vs 견고성(Robustness)	1690	1715	26	75a4c85d0d005c7bc07d4c850140aab200c28fc085805995bd5698367ad063cf	Y	N	N
+discipline-cleancode-final	E02	s100-13	100	2	13	13. 중복 제거와 DRY	1716	1717	2	853c3d096dda1210092f8120dd2fa57d505917abd1e08cddd0d40ebc0f5d5036	Y	N	N
+discipline-cleancode-final	E02	s101-13.1	101	3	13.1	13.1 DRY는 지식의 중복을 금지하는 것이다 [PP]	1718	1758	41	953df11e244024b75222c38da66cb12271512a480918cb92af695f1c7f5ea8ad	Y	N	N
+discipline-cleancode-final	E02	s102-13.2	102	3	13.2	13.2 코드 중복 제거 예시 [CC] [PC]	1759	1780	22	0fd046faebc57b78ecd28ab10e50639078576defded4bba96843b1e82a2966de	Y	N	N
+discipline-cleancode-final	E02	s103-13.3	103	3	13.3	13.3 지역적 변화의 원칙 [IP]	1781	1786	6	664e30c0ab75993333c9d0c797d71b46a985cf30e6881ef5c28976293e833399	Y	N	N
+discipline-cleancode-final	E02	s104-14	104	2	14	14. 협력과 의존성 관리	1787	1788	2	809512403e4897c1f719215bc41735d283a1cf7f3ba29bedcbe8393dffc5bd87	Y	N	N
+discipline-cleancode-final	E02	s105-14.1	105	3	14.1	14.1 역할, 책임, 협력 [OO]	1789	1796	8	38e666324b68354b0c27ac72aea1befa62b787e3b8ec6fe910f1f85a2062f14d	Y	N	N
+discipline-cleancode-final	E02	s106-14.2	106	3	14.2	14.2 메시지가 인터페이스를 결정한다 [OO]	1797	1802	6	27ddef7bfa1cdf6a95d32b25652388c6a6e66b6a97d17140bd926ef4f45d5150	Y	N	N
+discipline-cleancode-final	E02	s107-14.3	107	3	14.3	14.3 응집력과 결합력 [PC] [IP]	1803	1827	25	1340e56dfacf8718e4afef123353771bc024c41dec7f4836659f3a15f7bbb89d	Y	N	N
+discipline-cleancode-final	E02	s108-14.4	108	3	14.4	14.4 상속보다 합성을 우선하라 [IP] [PC] [OO]	1828	1854	27	0b5a9016ed50d83406ec0110e0573cf13720c856d6a9dc6d7f95d026939d6636	Y	N	N
+discipline-cleancode-final	E02	s109-14.5	109	3	14.5	14.5 직교성 (Orthogonality) [PP]	1855	1891	37	335e163cea22f7649c368f6dda9a4e5f5472cac3111d68e6fdb1d890564fdedb	Y	N	N
+discipline-cleancode-final	E02	s110-14.6	110	3	14.6	14.6 가역성 (Reversibility) [PP]	1892	1923	32	da11c686480a8db782ce5abcad379cb658978ecc462cf9868ee4246eaf7073f2	Y	N	N
+discipline-cleancode-final	E02	s111-15	111	2	15	15. 리팩토링	1924	1925	2	aae9ccfad08123af3c20f450e8db71ec10b65810cd7983b30e37532ee75fff03	Y	N	N
+discipline-cleancode-final	E02	s112-15.1	112	3	15.1	15.1 코드 스멜 카탈로그 [Ref]	1926	1929	4	79d195dce7e28c11320dcaad43fa41aad78a95ee8cf0351e744a055e272258e6	Y	N	N
+discipline-cleancode-final	E02	s113	113	4		비대화 스멜 (Bloaters)	1930	1981	52	8852513aaafbbabcd923c68a74833f9baaf690b7f5438834ac5abf4f9c225019	Y	N	N
+discipline-cleancode-final	E02	s114	114	4		객체지향 남용 스멜 (OO Abusers)	1982	2017	36	c2a21546759c75b616a30bf1447fe8c078fe83bbf145221ae60b2b663c6edb21	Y	N	N
+discipline-cleancode-final	E02	s115	115	4		변경 방해 스멜 (Change Preventers)	2018	2048	31	2b2492f324a8226c97ec0443fad88520becde1810300ac37d4fbaa1301756e15	Y	N	N
+discipline-cleancode-final	E02	s116	116	4		불필요한 것들 (Dispensables)	2049	2076	28	aaafa4f664b845af24a7e60d2529db81d5274e1e35fe2be49da50a47923781d6	Y	N	N
+discipline-cleancode-final	E02	s117	117	4		커플러 스멜 (Couplers)	2077	2105	29	4d216bd92c75f92d6bf78b27c62b41a39a1ca9285a00843829b2ba6dfc5431ae	Y	N	N
+discipline-cleancode-final	E02	s118-15.2	118	3	15.2	15.2 주요 리팩토링 기법 [Ref]	2106	2107	2	2db64f1520b2ef11dc4126d74e63c7312563ab70ea13d12bf78842ce1f2060a3	Y	N	N
+discipline-cleancode-final	E02	s119	119	4		Extract Method	2108	2142	35	3c59850347b9833c6e205d9615ef9769042a00bfeabe5f18f97eed05caa52c4d	Y	N	N
+discipline-cleancode-final	E02	s120	120	4		Replace Temp with Query	2143	2167	25	16f117abec52e0adb1914436b9efbdf9ac8f53b3fd68ce3ff334592d13b70cd5	Y	N	N
+discipline-cleancode-final	E02	s121	121	4		Decompose Conditional	2168	2194	27	1e3325f355b9699b9344ebfc77fa14b207788aa39afb74b2354ace1a09675881	Y	N	N
+discipline-cleancode-final	E02	s122	122	4		Replace Nested Conditional with Guard Clauses	2195	2222	28	b91cf4034cab4e794a7255e9d33fedb0f5ec7c4532e315824ab7c09b595e8f68	Y	N	N
+discipline-cleancode-final	E02	s123-15.3	123	3	15.3	15.3 테이블 주도 방법 (Table-Driven Methods) [CodeC]	2223	2270	48	8ede2e58e945bf0b6dbdc5e6f0a026b77384ab1b14414008897d93745f5e3c5a	Y	N	N
+discipline-cleancode-final	E02	s124-16	124	2	16	16. 레거시 코드 다루기	2271	2272	2	097ac27d6526a549abac09bb6445e7994ca7c90e20280a025c67420a59884af8	Y	N	N
+discipline-cleancode-final	E02	s125-16.1	125	3	16.1	16.1 레거시 코드의 정의 [WELC]	2273	2278	6	24c0dd7a5854c8eed409d761e9f19f205c2a06d8fb6b1f028857b0ec36246122	Y	N	N
+discipline-cleancode-final	E02	s126-16.2	126	3	16.2	16.2 Seam 개념 [WELC]	2279	2329	51	61f757a9fbf6bce28b37df121874794db150f2d7e792baaf9da3a25933f6b4a4	Y	N	N
+discipline-cleancode-final	E02	s127-16.3	127	3	16.3	16.3 Sprout Method (발아 메서드) [WELC]	2330	2363	34	c060dfcc01e95bb7f93f76f4806d0b45784f6803449edd83251821afe2e218c1	Y	N	N
+discipline-cleancode-final	E02	s128-16.4	128	3	16.4	16.4 Wrap Method (감싸기 메서드) [WELC]	2364	2388	25	d2d300328589a1eb0d10e1e958643cabef16360ef7495868a045af9756640117	Y	N	N
+discipline-cleancode-final	E02	s129-16.5	129	3	16.5	16.5 특성화 테스트 (Characterization Tests) [WELC]	2389	2404	16	1e0751d9d9c139414852846646b43666750e4b68c84f12fc8deb9eee80bb0a95	Y	N	N
+discipline-cleancode-final	E02	s130-16.6	130	3	16.6	16.6 Sensing과 Separation [WELC]	2405	2413	9	7474a7329a9c040cc70a6819b0cf17982f8bdecdd481c190859870bd59c45ec1	Y	N	N
+discipline-cleancode-final	E02	s131-17	131	2	17	17. 설계 철학과 프로세스	2414	2415	2	9bcd5e6e46ca798d37565d4486993bfc6e694f28d276722f51c236d877260023	Y	N	N
+discipline-cleancode-final	E02	s132-17.1	132	3	17.1	17.1 설계 단계에서 두 번 설계하고, 구현 단계에서 빠르게 다듬어라 [APoSD] [CC] [OO]	2416	2431	16	1eca3757dcb06a932e6ebcbf0017e9a8faddbb50aaa06f7e89833671929c7ee8	Y	N	N
+discipline-cleancode-final	E02	s133-17.2	133	3	17.2	17.2 안정적인 구조 중심 설계 [OO]	2432	2438	7	ad7b14a0ccda8877424fb36c2e71fada439c4743b6e34fabe4bacb1411b2c2f0	Y	N	N
+discipline-cleancode-final	E02	s134-17.3	134	3	17.3	17.3 책임 주도 설계 (RDD) [OO]	2439	2445	7	eace6b517c3ab8484adec08a7430248ec962bfd926572c6804f49e0a59b71c8f	Y	N	N
+discipline-cleancode-final	E02	s135-17.4	135	3	17.4	17.4 세 가지 관점으로 클래스를 바라보라 [OO]	2446	2453	8	c1cb04ce8e2786faea44cdc922772b18469f65ae8f25baa1888044dd81bba0fb	Y	N	N
+discipline-cleancode-final	E02	s136-17.5	136	3	17.5	17.5 YAGNI [PC]	2454	2457	4	b837ebd615df36835946bc7a2708aa7497979d61e3d05914217e592dd41a3735	Y	N	N
+discipline-cleancode-final	E02	s137-17.6	137	3	17.6	17.6 패턴은 절대적 진리가 아니다 [IP]	2458	2463	6	95f8b5c6c207ecce62b7d3051ccf544c36030dd16a099af1ea1656ddd77046ae	Y	N	N
+discipline-cleancode-final	E02	s138-17.7	138	3	17.7	17.7 깨진 창문 이론 [PP]	2464	2486	23	a951f6512b2d16b2ab8c98dcebd2e39e72c51005567d60cd04c8b8de83305cc9	Y	N	N
+discipline-cleancode-final	E02	s139-17.8	139	3	17.8	17.8 추적탄 (Tracer Bullets) [PP]	2487	2497	11	31ba99ec3f74fd17562e2aaf26d395689cc475d266c0c5937d49e8110b522b2c	Y	N	N
+discipline-cleancode-final	E02	s140-17.9	140	3	17.9	17.9 기타 핵심 팁 [PP]	2498	2509	12	742130baf83c12350d58e9c553b093f644096a3875703825be3830b5546d34f0	Y	N	N
+discipline-cleancode-final	E02	s141-18	141	2	18	18. Python 관용구와 스타일	2510	2515	6	4141f4c63d6c56a5cba375686eb9a4dac8e938c327b04f31e51f2f27ce0589aa	Y	N	N
+discipline-cleancode-final	E02	s142	142	2		핵심 요약 체크리스트	2516	2548	33	76b38bffe67007985591712407cebc17b6413632b36a5e2dad459e937275681c	Y	N	N
+implementation-python-skill	E03	s001	1	0		(전문)	1	6	6	64c532c68928488d5cba8d4562b770a72fe244ecb259c253d1dca206846dbe24	Y	N	N
+implementation-python-skill	E03	s002	2	1		Python 언어 특화 구현	7	8	2	bba0314fd43a9d6f6a84eafbfc9a908339af4fb6a6cf0a9b0ece6ad61c46b092	Y	N	N
+implementation-python-skill	E03	s003	3	2		언제 쓰나	9	17	9	457b8dcd11fdbdb05959bee26a012a36410114aafe4dcf62069802f184412a85	Y	N	N
+implementation-python-skill	E03	s004	4	2		핵심 운영 원칙	18	31	14	186864339fe7bfcfeed38c606202c985709c4a97b1253c75d3fd2d4b557e19ee	Y	N	N
+implementation-python-skill	E03	s005	5	2		상세 레퍼런스	32	68	37	32e08dc1b9eb4bcf7e9da836a320cfd93232359fbdea7e04897b4b0380e683c2	Y	N	N
+implementation-python-final	E03	s001	1	1		Python 언어 특화 가이드	1	9	9	a8dc8a615b0f3f7b1d183451d82618983c21d1e1000a8f9c629f801928562bbb	Y	N	N
+implementation-python-final	E03	s002-1	2	2	1	1. 타입 힌트와 타입 시스템	10	11	2	cfcc15f2c90e4a0726779a9deba64190c268e441f095b940c924dee78ffc19ee	Y	N	N
+implementation-python-final	E03	s003-1.1	3	3	1.1	1.1 타입 어노테이션 기본 [단단한 파이썬] [파이썬코딩의기술]	12	31	20	8421d688fa58de78b41abdcb09ac5a592dbb954e2ec3f09e48751f51c0a90551	Y	N	N
+implementation-python-final	E03	s004-1.2	4	3	1.2	1.2 Optional과 None 처리 [단단한 파이썬]	32	55	24	80951eb40d3c21b62c5cbdb0cd90d31fb04526282afa900472d2e3dd93a601c2	Y	N	N
+implementation-python-final	E03	s005-1.3	5	3	1.3	1.3 Union과 합 타입으로 상태 공간 제어 [단단한 파이썬]	56	82	27	e21853f05333fae9f9e7326cceb79f4095bd569388b7fa4dab305362386b507d	Y	N	N
+implementation-python-final	E03	s006-1.4	6	3	1.4	1.4 Literal, Final, NewType [단단한 파이썬]	83	102	20	b32b2be7686cb9179462ca5343bdd33cee986301f52156f68591fb467c424734	Y	N	N
+implementation-python-final	E03	s007-1.5	7	3	1.5	1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]	103	121	19	e11056890dcc90cb3dc3b896a92c2ae6a189a941b9bb6f76d3f0d96b8d31be76	Y	N	N
+implementation-python-final	E03	s008-1.6	8	3	1.6	1.6 제네릭과 TypeVar [단단한 파이썬] [PEP 695]	122	138	17	b09392fe71e48371dae668fdc4042e3e635552eb676ab28d51cffcc5cef058df	Y	N	N
+implementation-python-final	E03	s009-1.7	9	3	1.7	1.7 PEP 695: 새 타입 매개변수 문법 (Python 3.12+) [PEP 695]	139	176	38	b0b754135a1a769d2c3dc545f37662921e4f0ab7a68d5e1275ff02cfb3f05e2b	Y	N	N
+implementation-python-final	E03	s010-1.8	10	3	1.8	1.8 컬렉션 타입 어노테이션 [단단한 파이썬]	177	187	11	ef2875e9507ee5a4c7c169d5d212a2748fcf986b5fc1cce0c7294846d89782a5	Y	N	N
+implementation-python-final	E03	s011-1.9	11	3	1.9	1.9 @override 데코레이터 (3.12+) [PEP 698]	188	237	50	f1e04b147aef32f43763f98a5960868f315518b45557b06847a4fe799fed43b7	Y	N	N
+implementation-python-final	E03	s012-1.10	12	3	1.10	1.10 ParamSpec: 데코레이터 시그니처 보존 [PEP 612]	238	276	39	9950ea97344e3a1af7a3ee31667fbeb073fdf19b6a94b811f7b91be5a12e3457	Y	N	N
+implementation-python-final	E03	s013-1.11	13	3	1.11	1.11 Concatenate: 매개변수 추가/제거 [PEP 612]	277	305	29	1783331a7171324eedb0ddc3bb1b2c94bcedde203bea1a102ce3f593cc1c5199	Y	N	N
+implementation-python-final	E03	s014-1.12	14	3	1.12	1.12 TypeIs vs TypeGuard: 타입 좁히기 [PEP 742, PEP 647]	306	331	26	5033bb420ce99590ad9a659132d204edde85e9dc1498fac2c7e49d6efba49641	Y	N	N
+implementation-python-final	E03	s015-1.13	15	3	1.13	1.13 TypeVarTuple과 Unpack: 가변 길이 제네릭 [PEP 646]	332	352	21	0a7c3b15d59b13f576befc549911b67196c8bc115201ae3ca09802bb36626ce1	Y	N	N
+implementation-python-final	E03	s016-1.14	16	3	1.14	1.14 타입 매개변수 기본값 (Python 3.13+) [PEP 696]	353	367	15	f8f00a8459668da749e42173544e15b0ddd0c6d0099bf339af723cd6349610dc	Y	N	N
+implementation-python-final	E03	s017-2	17	2	2	2. 구조적 패턴 매칭 (match/case) -- Python 3.10+	368	371	4	21ffaf82c6d6bdd5888357f58e256dca90c67b9e667cbe1547afc984fa3b6cc0	Y	N	N
+implementation-python-final	E03	s018-2.1	18	3	2.1	2.1 패턴 매칭의 7가지 패턴 유형	372	414	43	bed0b7c2b22624ca2fe3c91cc7f01d6ea9878eba7d92663d5c67513eae586174	Y	N	N
+implementation-python-final	E03	s019-2.2	19	3	2.2	2.2 클래스 패턴과 \_\_match\_args\_\_	415	438	24	3537603670e46fea7dc63eb8a198c88ac5c8cbf361f697fd21aa73ad570e1a45	Y	N	N
+implementation-python-final	E03	s020-2.3	20	3	2.3	2.3 매핑 패턴과 REST 캡처	439	451	13	834fcdaa70b852fc620020cd2a2d87bf89e7eda427ecd457a10e5e270a42abfa	Y	N	N
+implementation-python-final	E03	s021-2.4	21	3	2.4	2.4 패턴 매칭 실전 활용: 상태 머신	452	478	27	0162399e00e3ef4a3de3ef824bc4dfc56cf2bf0c18915aeca857328269da9060	Y	N	N
+implementation-python-final	E03	s022-3	22	2	3	3. 컬렉션 선택과 데이터 구조	479	480	2	462184e82f6ddb5e0f4cb6e66b082992b1bb605cc55c534d1cada6b2d5b548b5	Y	N	N
+implementation-python-final	E03	s023-3.1	23	3	3.1	3.1 목적에 맞는 컬렉션 선택 [단단한 파이썬]	481	493	13	681ad78e71afc9f3b3382f2a0f7b2d12872940c4436d8f24799e6571921bc130	Y	N	N
+implementation-python-final	E03	s024-3.2	24	3	3.2	3.2 딕셔너리 키 접근: get과 defaultdict [파이썬코딩의기술]	494	514	21	76769d1951e82ee4f6a558e070633730ffa67c545b9e727edc537a8e89c6decf	Y	N	N
+implementation-python-final	E03	s025-3.3	25	3	3.3	3.3 __missing__으로 키별 디폴트 값 생성 [파이썬코딩의기술]	515	529	15	5effcdc1bd03f9c887006dd890f6f2d0c6675c891f99e7e0e242a1682f270a55	Y	N	N
+implementation-python-final	E03	s026-3.4	26	3	3.4	3.4 정렬: key 파라미터와 튜플 비교 [파이썬코딩의기술]	530	539	10	c8bd50fe76504ed58845ae83bd388fbdc1a5f0a63ab342ba8d4600a7a620904e	Y	N	N
+implementation-python-final	E03	s027-3.5	27	3	3.5	3.5 성능 특화 자료구조 [파이썬코딩의기술]	540	562	23	cef3f67611341249bdcb561afdc4ed617e1a5b8dfcd58b3a853060d1adf4d818	Y	N	N
+implementation-python-final	E03	s028-4	28	2	4	4. 함수 설계: Python 특화 기법	563	564	2	7c9333d7c46466fa6503fd29a07ed04e76db7c853546b00d80cc403d748693fe	Y	N	N
+implementation-python-final	E03	s029-4.1	29	3	4.1	4.1 가변 디폴트 인자의 함정: None 사용 [파이썬코딩의기술]	565	586	22	06e2b58ace49e663dafe816c3bb7627cfd24ac71c4c43470a93f383a76a262f0	Y	N	N
+implementation-python-final	E03	s030-4.2	30	3	4.2	4.2 위치 전용(/), 키워드 전용(*) 인자 [파이썬코딩의기술]	587	601	15	3bc8590b5d411d08d63c750d3172ddfdbbbd3a267d138ac027364246232f31b3	Y	N	N
+implementation-python-final	E03	s031-4.3	31	3	4.3	4.3 왈러스 연산자(:=)로 반복 제거 [파이썬코딩의기술]	602	621	20	2f20d086e47380d67710996c636fd74ba807d11a5776e8f8cf69bedb027ffd2d	Y	N	N
+implementation-python-final	E03	s032-4.4	32	3	4.4	4.4 None 반환 대신 예외 발생 [파이썬코딩의기술]	622	642	21	4d4b3115daa25d25da70d1a9d15cc4937371d579b0d4a32abf78670707285d9e	Y	N	N
+implementation-python-final	E03	s033-4.5	33	3	4.5	4.5 언패킹 활용 [파이썬코딩의기술]	643	663	21	3c81b1c3d6eaaf0f7143266c026e64c57bf86ff3eab3e6dd65b4e42cca7b2d2b	Y	N	N
+implementation-python-final	E03	s034-5	34	2	5	5. 데코레이터	664	665	2	88ff344e8495386b376ed34ee96eb8daf62c07d63ce8f9fe04ea03a452f54d0b	Y	N	N
+implementation-python-final	E03	s035-5.1	35	3	5.1	5.1 functools.wraps 필수 사용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	666	688	23	806bb6a560ee62dcd6245305441334f3a06de9f6a3078ac27058cc64ca810641	Y	N	N
+implementation-python-final	E03	s036-5.2	36	3	5.2	5.2 데코레이터에 인자 전달 [파이썬 클린코드 2nd]	689	725	37	f41e2bfa578eb9dd368ccbc2d86bf5c9555374fd86a437998715ff409104bfd9	Y	N	N
+implementation-python-final	E03	s037-5.3	37	3	5.3	5.3 클래스 데코레이터: 메타클래스 대안 [파이썬코딩의기술]	726	744	19	6e2dda919e86bc467379bb8578c182af6bc4b3ec4f1a7492ec83cf8342bf7d0d	Y	N	N
+implementation-python-final	E03	s038-6	38	2	6	6. 디스크립터	745	746	2	195eb2efd781247b876f2b90ef407413b775727dc219a3a68043ba4448fa6a8b	Y	N	N
+implementation-python-final	E03	s039-6.1	39	3	6.1	6.1 디스크립터 프로토콜 [파이썬코딩의기술] [파이썬 클린코드 2nd]	747	750	4	96f892336187c00485a97125b973ebfe885c51f3952a2b14dc2ba8d487cc1501	Y	N	N
+implementation-python-final	E03	s040-6.2	40	3	6.2	6.2 디스크립터 검증 프레임워크: ABC 기반 패턴 [Python 공식 Descriptor HowTo Guide]	751	825	75	666e507e5d0a233ffdf8ebceb422ab8a0435d7dfd57c9a20bfd6a30736566b5a	Y	N	N
+implementation-python-final	E03	s041-7	41	2	7	7. @property와 애트리뷰트 접근	826	827	2	42a1a7124343eb302ea44510c55059df4db5936ff30fad0cb3f48e5019c54606	Y	N	N
+implementation-python-final	E03	s042-7.1	42	3	7.1	7.1 세터/게터 대신 평범한 애트리뷰트 [파이썬코딩의기술]	828	857	30	f45aa99a7b380c46856168fe26a13c09047f697d43779855669c6242ab2c9eb7	Y	N	N
+implementation-python-final	E03	s043-7.2	43	3	7.2	7.2 __getattr__과 __getattribute__ [파이썬코딩의기술]	858	879	22	b5d6a755a7d1c2a32cb0ca142631b7c6002daed3714e4336ed784b11026973c8	Y	N	N
+implementation-python-final	E03	s044-8	44	2	8	8. 클래스 설계: Python 특화 패턴	880	881	2	bbe4484365166549a4ffb4bbd8499e6874df3d6739afedc9c7a0c8108c98feb6	Y	N	N
+implementation-python-final	E03	s045-8.1	45	3	8.1	8.1 __call__로 호출 가능한 객체 [파이썬코딩의기술]	882	898	17	fdf423e3fcab53f382bf7e8ad478efac81cbc71af363591d792991a06ce16886	Y	N	N
+implementation-python-final	E03	s046-8.2	46	3	8.2	8.2 @classmethod를 팩토리 메서드로 활용 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	899	918	20	00f7b3aef6607ccc6ae4aa36b2559ea55c233d3ae52c65ecae8f0f887b2474f3	Y	N	N
+implementation-python-final	E03	s047-8.3	47	3	8.3	8.3 인스턴스 메서드 vs 클래스 메서드 vs 정적 메서드 [슬기로운 파이썬 트릭]	919	934	16	69126520764be8e70ea685dc9e60c8371c3c346061265418a528ea984643758b	Y	N	N
+implementation-python-final	E03	s048-8.4	48	3	8.4	8.4 __repr__과 __str__ [슬기로운 파이썬 트릭] [파이썬코딩의기술]	935	956	22	3660089413995be87ceb2eeaa99d5f3d1d6794787afac00004dd2bb7ad2bcc7e	Y	N	N
+implementation-python-final	E03	s049-8.5	49	3	8.5	8.5 비공개(__) 대신 보호(_) 애트리뷰트 [파이썬코딩의기술]	957	974	18	fd74fc664662ca8edaa1ee4b9f9ae599531abac920d88278219079dd0198b9e0	Y	N	N
+implementation-python-final	E03	s050-8.6	50	3	8.6	8.6 __init_subclass__로 하위 클래스 검증 (3.6+) [파이썬코딩의기술]	975	994	20	fa3d29b335915afa6da812629cf9eb02d249198d82ad68e2d55d9ad5bb049ab4	Y	N	N
+implementation-python-final	E03	s051-8.7	51	3	8.7	8.7 __init_subclass__ 고급 활용: 플러그인 레지스트리 [Fluent Python 2nd]	995	1024	30	2645171190fa29d7c2020d97281653b87ae119ece03465b65b3a0b8e71e4a938	Y	N	N
+implementation-python-final	E03	s052-8.8	52	3	8.8	8.8 믹스인 클래스 [파이썬코딩의기술]	1025	1046	22	a7c0a4a1906a6cc06797a88976fbf8cbb9d272893f70ebf89e7ec3c06dea1685	Y	N	N
+implementation-python-final	E03	s053-8.9	53	3	8.9	8.9 collections.abc로 커스텀 컨테이너 [파이썬코딩의기술] [단단한 파이썬]	1047	1065	19	b8279165c20f58e90213efaa040a1d41cd3a7e8a7b6f3c0abfe399db65c19887	Y	N	N
+implementation-python-final	E03	s054-9	54	2	9	9. Protocol 심화 -- 구조적 서브타이핑의 실전 활용	1066	1069	4	bbee8f78f75cd97866ea3fee79136a0baa42355a7af8e0640952b74cf81a2f00	Y	N	N
+implementation-python-final	E03	s055-9.1	55	3	9.1	9.1 Protocol 기본 [단단한 파이썬]	1070	1099	30	041437f712b81ee88f3aa92f93cd15b50ed78899b8bface41e3103d47a8cb6a8	Y	N	N
+implementation-python-final	E03	s056-9.2	56	3	9.2	9.2 Protocol 합성과 확장 [PEP 544]	1100	1123	24	9f8703ce9ff905c24ea4da3b85fea3a7d31ce203dc343a21940d144a917e8fe0	Y	N	N
+implementation-python-final	E03	s057-9.3	57	3	9.3	9.3 Protocol에 속성과 클래스 변수 정의 [PEP 544]	1124	1140	17	d2184e6da425291f1ad47bf69fae258d4796c4daa056c67ca2a84e387f0cacf5	Y	N	N
+implementation-python-final	E03	s058-9.4	58	3	9.4	9.4 제네릭 Protocol [PEP 544]	1141	1159	19	a0a1960196959983778e631891d55d2fb143ce59f9f4ee7a2b6ca854b647464e	Y	N	N
+implementation-python-final	E03	s059-9.5	59	3	9.5	9.5 @runtime_checkable의 한계 [PEP 544]	1160	1179	20	d860a273f61cc067e35b830ca39858c92e5bb85f4e914be31dd76f968fdff940	Y	N	N
+implementation-python-final	E03	s060-10	60	2	10	10. Enum, dataclass, NamedTuple	1180	1181	2	bfea970ad7965f13caf3a58e690e6704ebf37581e495952966bcc606d5ec9615	Y	N	N
+implementation-python-final	E03	s061-10.1	61	3	10.1	10.1 Enum/StrEnum: 상수 그룹화 [단단한 파이썬] [Python 공식 문서]	1182	1214	33	3fb50a8613cb2d1e7824eae28bf9e3b4cd853c8244455711d8f5a5af88015def	Y	N	N
+implementation-python-final	E03	s062-10.2	62	3	10.2	10.2 dataclass 기본 [단단한 파이썬]	1215	1230	16	4f6284b0660e44cdf879dd3aa8a3331fbaf767bcff64b6096b7f078efbe542a2	Y	N	N
+implementation-python-final	E03	s063-10.3	63	3	10.3	10.3 dataclass(slots=True): 메모리 최적화 (3.10+) [Python dataclasses 공식 문서]	1231	1253	23	ce9c0fe2f28dc4e71e9eea35c94f5496c1a76317c5c11eea084724f9e55f26a9	Y	N	N
+implementation-python-final	E03	s064-10.4	64	3	10.4	10.4 dataclass(frozen=True)와 불변성 계층 [단단한 파이썬] [Python dataclasses 공식 문서]	1254	1271	18	3eebda4ec270284f9ebcd5fd34f19b5d26cadaa37769e6724add9ec37bcb23ce	Y	N	N
+implementation-python-final	E03	s065-10.5	65	3	10.5	10.5 dataclass(kw_only=True): 키워드 전용 필드 (3.10+) [Python dataclasses 공식 문서]	1272	1293	22	4e7faef10b768e3da19f144dcd26e3990d2705004a95804fe97f1bc448b09ef4	Y	N	N
+implementation-python-final	E03	s066-10.6	66	3	10.6	10.6 match_args와 패턴 매칭 통합 (3.10+) [Python dataclasses 공식 문서]	1294	1313	20	b4743d8b22a55ad20e0b704d953b4dd9ca57345846c93cfce6d608d124c10ac5	Y	N	N
+implementation-python-final	E03	s067-10.7	67	3	10.7	10.7 __post_init__과 InitVar 고급 활용 [Python dataclasses 공식 문서]	1314	1335	22	b365f0c64289a453d4d563f8928f2bee4a508cdfb7509ee4fc1ee7eece428acc	Y	N	N
+implementation-python-final	E03	s068-10.8	68	3	10.8	10.8 NamedTuple: 불변 레코드 [슬기로운 파이썬 트릭]	1336	1352	17	77cb933f89505c1c11dfabd30f62d369a9363eb8bc2edbf3e7c663581af3c0e1	Y	N	N
+implementation-python-final	E03	s069-11	69	2	11	11. 연산자 오버로딩과 Python 데이터 모델 심화	1353	1356	4	5e921ff555fff58021b4b9a5e289c7bb16daa01e9f5842b15377ae1c5e4807aa	Y	N	N
+implementation-python-final	E03	s070-11.1	70	3	11.1	11.1 연산자 오버로딩 규칙 [Fluent Python 2nd]	1357	1425	69	d78fa05b5e466786bb08678333a08202a5ea30eb24440ebae7809a1107d1ba6f	Y	N	N
+implementation-python-final	E03	s071-12	71	2	12	12. pydantic v2 -- 런타임 검증의 새 표준	1426	1431	6	49bf2304e8ebb0deaf4ae8dcaff26ef3266e9181c3da62184fb65bb6e065a18a	Y	N	N
+implementation-python-final	E03	s072-12.0	72	3	12.0	12.0 pydantic v2 boundary 결정	1432	1443	12	2f84f27f9931537b49e3cc92c0efdd55bd6966e776c0ed5930e96aa2d41ba187	Y	N	N
+implementation-python-final	E03	s073-12.1	73	3	12.1	12.1 v1 vs v2 주요 API 변경	1444	1485	42	06e243d3b9d982b13b8f2f462e68cfc31873fb7162a791e189d7b95477640427	Y	N	N
+implementation-python-final	E03	s074-12.2	74	3	12.2	12.2 model_validator: 모델 수준 검증	1486	1511	26	a43281dddd237ef7c287502b153e14e97885a33bcb967d89c8062a3f06aed165	Y	N	N
+implementation-python-final	E03	s075-12.3	75	3	12.3	12.3 Strict Mode: 타입 강제 변환 제어	1512	1539	28	010e47edaac0e0eb31dd6d871185c99a61f8794c32d2442a7c486dd1cef0e345	Y	N	N
+implementation-python-final	E03	s076-13	76	2	13	13. 이터레이터, 제너레이터, 컴프리헨션	1540	1541	2	3600ea2d9717aaebb5c87b190ea2bef6ba50147e33c2fbbda741d2f32a34cc06	Y	N	N
+implementation-python-final	E03	s077-13.1	77	3	13.1	13.1 이터레이터 프로토콜 [슬기로운 파이썬 트릭] [파이썬 클린코드 2nd]	1542	1562	21	c4fa301907dc97e33fdf30f262e938ff793300f87d42fc0cd91fec235543d3c0	Y	N	N
+implementation-python-final	E03	s078-13.2	78	3	13.2	13.2 리스트 대신 제너레이터 [파이썬코딩의기술] [파이썬 클린코드 2nd]	1563	1580	18	63aef4f349f06b4cc546a9c27c46c72938664415ad3d59904b0fe4d5b7542231	Y	N	N
+implementation-python-final	E03	s079-13.3	79	3	13.3	13.3 제너레이터 식 [파이썬코딩의기술]	1581	1594	14	09531dfccd0a7c6dd4da4ca5efc6632ec1d032728872c98ece3a9e9c680a0160	Y	N	N
+implementation-python-final	E03	s080-13.4	80	3	13.4	13.4 yield from으로 제너레이터 합성 [파이썬코딩의기술]	1595	1610	16	1a1342ec0947a5a63fc22558ee571bff6a0585e6f786dba16efcc16e35b7e863	Y	N	N
+implementation-python-final	E03	s081-13.5	81	3	13.5	13.5 send, throw 사용 금지 [파이썬코딩의기술]	1611	1614	4	2f61860e4f6f5e1807020206fb25f6f98296a5321e65aee90c75508af14e27f3	Y	N	N
+implementation-python-final	E03	s082-13.6	82	3	13.6	13.6 itertools 활용 [파이썬코딩의기술]	1615	1635	21	07cfec312828201b0498b4d3918008489443a814dbc0894f9c31cee9a86e167e	Y	N	N
+implementation-python-final	E03	s083-13.7	83	3	13.7	13.7 컴프리헨션 인라이닝 (Python 3.12+) [PEP 709]	1636	1660	25	ba660b11e0d08703defd9434171c40e828b27b09c12bdbfc0eeaa9ec1867efbf	Y	N	N
+implementation-python-final	E03	s084-14	84	2	14	14. 컨텍스트 매니저와 with문	1661	1662	2	51f531665027802be0cc477bb0b512b72d67f1dbc6dd275bc640561d05d0205f	Y	N	N
+implementation-python-final	E03	s085-14.1	85	3	14.1	14.1 커스텀 컨텍스트 매니저 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	1663	1691	29	f704ccd3c8f61227d20ea2e1c9c01d908feb79657e47d2499fc72a0e88c9c40c	Y	N	N
+implementation-python-final	E03	s086-14.2	86	3	14.2	14.2 with문 활용 패턴 [파이썬코딩의기술] [슬기로운 파이썬 트릭]	1692	1715	24	5d2d43d7245779654e2e7a4570d437852411a91bc6573880cf0e8c54f3e6a64b	Y	N	N
+implementation-python-final	E03	s087-15	87	2	15	15. 예외 처리	1716	1717	2	1a855254a40677b208c0b116794875387b9d79016ecb682c42ee4082111bdf4c	Y	N	N
+implementation-python-final	E03	s088-15.1	88	3	15.1	15.1 try/except/else/finally 각 블록 활용 [파이썬코딩의기술]	1718	1730	13	d264da31412eff5c62430af395d809728e6bfae3ae262f8b62bea4f6a9ef0a55	Y	N	N
+implementation-python-final	E03	s089-15.2	89	3	15.2	15.2 최상위 예외 클래스 정의 [파이썬코딩의기술]	1731	1749	19	bc08f48b9483a7b66d00cd9b71ad4724e2cc2ebb4606cc46618d4f7f8450b187	Y	N	N
+implementation-python-final	E03	s090-15.3	90	3	15.3	15.3 @deprecated로 지원 중단 표시 (3.13+) [PEP 702]	1750	1791	42	5de32a2997362d03b8b838d2289bcfb0699421c696473f19bac38de191c18f29	Y	N	N
+implementation-python-final	E03	s091-16	91	2	16	16. 동시성과 병렬성	1792	1793	2	519e80b124746b4b1211c167dbf3ed05ff5a5e1f97fd8ef7e574131af1197ca0	Y	N	N
+implementation-python-final	E03	s092-16.1	92	3	16.1	16.1 GIL과 스레드 선택 기준 [파이썬코딩의기술]	1794	1816	23	1aa304427c1abc7d3fa542780313b953a076b56b0469626ca01eccc39e43a0ed	Y	N	N
+implementation-python-final	E03	s093-16.2	93	3	16.2	16.2 asyncio.TaskGroup: 구조적 동시성 (3.11+) [PEP 654]	1817	1858	42	956afed08ef6516a7f47b1aae65b13b28d8426f217852c7f008e4e84632ee116	Y	N	N
+implementation-python-final	E03	s094-16.3	94	3	16.3	16.3 Free-Threaded Python (3.13+) [PEP 703]	1859	1892	34	c0845c18ae42abaff7d4ed3403897ddcf1c3a18d87c6b12b46e289b6918600c1	Y	N	N
+implementation-python-final	E03	s095-16.4	95	3	16.4	16.4 Subinterpreters (Python 3.14+) [PEP 734]	1893	1908	16	b2f52cdb5d7c0218df0980dc2be5fa15bb382fe8c0a2068f8589dfa7573247be	Y	N	N
+implementation-python-final	E03	s096-16.5	96	3	16.5	16.5 ThreadPoolExecutor [파이썬코딩의기술]	1909	1918	10	7b89a9b6c68f9f9ea5df876ad8dad4b26c28627d712b674d6a0a39ca3ac91318	Y	N	N
+implementation-python-final	E03	s097-16.6	97	3	16.6	16.6 Queue로 스레드 간 작업 조율 [파이썬코딩의기술]	1919	1930	12	0e8d48f8beefe342b6f2d100e43c997c11aa9725fb76f9dfaeed6317a08d6c0f	Y	N	N
+implementation-python-final	E03	s098-17	98	2	17	17. 성능 프로파일링과 최적화	1931	1936	6	a735e5c272e3396b4bc30d60c5f26e323cddae4b668615bb72ec55f510a34625	Y	N	N
+implementation-python-final	E03	s099-17.1	99	3	17.1	17.1 프로파일링 도구 계층	1937	1968	32	1a87736987bfaef13b5f49d994bdddf886c36533bc0153d8402a45564b4eb366	Y	N	N
+implementation-python-final	E03	s100-17.2	100	3	17.2	17.2 성능 최적화 전략 [High Performance Python 2nd]	1969	2009	41	3d3e437751b3f67deb7a79ef1fc437f60ff51e674db463ffa4005ae4e585ec66	Y	N	N
+implementation-python-final	E03	s101-17.3	101	3	17.3	17.3 Python 3.11 성능 개선: Specializing Adaptive Interpreter [PEP 659]	2010	2022	13	58d9de9dab1df21fa334b901d4fdafe410d7d35cad6ec9ef935215fb2ee5d8b1	Y	N	N
+implementation-python-final	E03	s102-17.4	102	3	17.4	17.4 JIT 컴파일러 (Python 3.13+) [PEP 744]	2023	2046	24	210e480e79e405d9dd0a56cb3385f41abfdc683ba5810fb7edd5bd6d2e5a827a	Y	N	N
+implementation-python-final	E03	s103-18	103	2	18	18. f-문자열 개선과 PEG 파서	2047	2048	2	d37a38b5b9d6d020182ee92c334054c8867393b74ee5970c6702c7bed513e813	Y	N	N
+implementation-python-final	E03	s104-18.1	104	3	18.1	18.1 f-문자열 제한 해제 (PEP 701, Python 3.12+)	2049	2079	31	f76f7fa3fb859f50d713f986f3849741d09e01e2b9f3cf6e2131fedc23afa3d1	Y	N	N
+implementation-python-final	E03	s105-19	105	2	19	19. 파이썬다운 관용 표현	2080	2081	2	858fec9e6bc31540ac968db44196a200759d8381d8ac9f5c85c7cde525058106	Y	N	N
+implementation-python-final	E03	s106-19.1	106	3	19.1	19.1 f-문자열 사용 [파이썬코딩의기술]	2082	2093	12	fa343abfea6cd7acfc3fb519c5bf2f10ebbfdbde18b446d6caf306ec08652386	Y	N	N
+implementation-python-final	E03	s107-19.2	107	3	19.2	19.2 enumerate, zip 활용 [파이썬코딩의기술]	2094	2113	20	9655fac342d2c2a58ff218b60d108e544943598ea2142b838525151f2fa87d9b	Y	N	N
+implementation-python-final	E03	s108-19.3	108	3	19.3	19.3 빈 컨테이너 검사 [파이썬코딩의기술]	2114	2125	12	5392adc22fc2245bd378e4dbe59e1ad13300f5da2fd7cd509b182d03e68f6cb1	Y	N	N
+implementation-python-final	E03	s109-19.4	109	3	19.4	19.4 bytes와 str 분리 (유니코드 샌드위치) [파이썬코딩의기술]	2126	2136	11	6678f90251a7e38b3198acb8aac8b0e185df9d62c36bfc7e58d4533c89c414cd	Y	N	N
+implementation-python-final	E03	s110-19.5	110	3	19.5	19.5 for/while 뒤 else 금지 [파이썬코딩의기술]	2137	2140	4	02683f3a11c95759b2a83a678d03406df4bd6a67ad576ba083567d117291e2e0	Y	N	N
+implementation-python-final	E03	s111-19.6	111	3	19.6	19.6 명명 규칙 [PEP 8] [슬기로운 파이썬 트릭]	2141	2164	24	f49a21ab1e56f2fafcae01582ed812bfcf5077d65221b7bcfa2817a3cfdcef1f	Y	N	N
+implementation-python-final	E03	s112-20	112	2	20	20. 디자인 패턴 (Python 고유 구현)	2165	2168	4	097ddaaa084297d1515b64c09ad57d70699b5b65af3513b286c0982ede68d9ac	Y	N	N
+implementation-python-final	E03	s113-20.1	113	3	20.1	20.1 `__init_subclass__` 레지스트리 패턴	2169	2191	23	815d20431b3837c8960ab1f8c8bbaab043a4068ac081ed62c623c2b1204eaf5d	Y	N	N
+implementation-python-final	E03	s114-20.2	114	3	20.2	20.2 Protocol 기반 디스패치	2192	2206	15	4b9d4c892c7d1e969f66f9d528873ccb588030387f6c109eee6772707d3e3dee	Y	N	N
+implementation-python-final	E03	s115-20.3	115	3	20.3	20.3 `@dataclass` + 팩토리 조합	2207	2231	25	f881deeb3af877bbc347d94bdebbbb800da5fdc0aae99c32fb1509b0ab87a53b	Y	N	N
+implementation-python-final	E03	s116-21	116	2	21	21. Repository / Unit of Work	2232	2237	6	e06154e5e1faa003af879cdd1be466e462056b7580ed9084d420d9ab84be4c33	Y	N	N
+implementation-python-final	E03	s117-22	117	2	22	22. Ruff -- 통합 린터/포매터	2238	2243	6	8eab3504066367adae19463c526a4525316e53020dc7858acd80f8eb5b78468b	Y	N	N
+implementation-python-final	E03	s118-22.1	118	3	22.1	22.1 권장 pyproject.toml 설정	2244	2282	39	c2a6954d7c3ce8761584cb0aceb7cf3116f3ef46f62e0088a070045557685487	Y	N	N
+implementation-python-final	E03	s119-22.2	119	3	22.2	22.2 Ruff의 핵심 규칙 카테고리	2283	2325	43	5cdc47a7b6ec34d47cdecfd7bbed089333641e7538722ea2dea25e71e95cbf77	Y	N	N
+implementation-python-final	E03	s120-23	120	2	23	23. mypy/pyright 최신 기능	2326	2329	4	1797576e0716fef453de52aaffc1141c796b94fe6518f6e44025dad3a33ad056	Y	N	N
+implementation-python-final	E03	s121-23.1	121	3	23.1	23.1 mypy strict 모드 설정	2330	2354	25	6606576f2824ac8dc558bb8f1c3021aee8b4f1da784284e3108a2952a5c0ae8c	Y	N	N
+implementation-python-final	E03	s122-23.2	122	3	23.2	23.2 pyright strict 모드	2355	2367	13	5dc76dc9b5eb1e2fce54b7be4f8c21c982ba25c38e79b41e753422b3bf0a1f04	Y	N	N
+implementation-python-final	E03	s123-23.3	123	3	23.3	23.3 타입 좁히기(Type Narrowing) 패턴	2368	2419	52	52a4c44cc1c8fe519d492e092a75c119444b20a76ae36ead493a96f5a314ee67	Y	N	N
+implementation-python-final	E03	s124-24	124	2	24	24. 테스트	2420	2425	6	be532b00b627b10debb686ccef21aef7dafdf087851e02ac693346d061e375c0	Y	N	N
+implementation-python-final	E03	s125-25	125	2	25	25. 디버깅 기법 [파이썬코딩의기술]	2426	2427	2	8a17a2908bc74ab4238fc52bb6e97289fa5c58584a924dbe5fdb512a33738a29	Y	N	N
+implementation-python-final	E03	s126-25.1	126	3	25.1	25.1 repr 문자열 활용	2428	2441	14	1ed99abe1e0cdd5af5327a0f23165ab2f78d48b6ef1526d8650785197c2a55b3	Y	N	N
+implementation-python-final	E03	s127-25.2	127	3	25.2	25.2 pdb 대화형 디버거	2442	2466	25	bfae5fe1152d3c6b37615e0bf701e6096c7a807696da679ccf6b7c79115c7f63	Y	N	N
+implementation-python-final	E03	s128-26	128	2	26	26. 독스트링과 문서화	2467	2468	2	7d93119372e916ea4cfbd64110b3d9a9b5630c82227d1150c51b0c5b4aa8ae25	Y	N	N
+implementation-python-final	E03	s129-26.1	129	3	26.1	26.1 독스트링 규칙 [파이썬코딩의기술]	2469	2493	25	fbbd09f110f0600b877232956d9b1554f5e961fde4a859fee4091d98578d3fb8	Y	N	N
+implementation-python-final	E03	s130-27	130	2	27	27. 정밀 연산	2494	2495	2	958e62e5112ce06d67ac467339c5930c34ee3d60a9e9d3e43c62b40df1aec66b	Y	N	N
+implementation-python-final	E03	s131-27.1	131	3	27.1	27.1 Decimal과 Fraction [파이썬코딩의기술]	2496	2514	19	2da368867f62d169ad2fc777ca2dbe1d28d9d79b9f9c2aac9214793472e21f88	Y	N	N
+implementation-python-final	E03	s132-28	132	2	28	28. Python 3.14 주요 변경사항	2515	2518	4	7c43c7b2ac4f927a4a4362ec6f84d6c76ea9e1e314f13b35726f0d36d53e4206	Y	N	N
+implementation-python-final	E03	s133-28.1	133	3	28.1	28.1 어노테이션 지연 평가 (PEP 649)	2519	2536	18	34a861d84a88a6ed875ef5a141b8390116d84f25072a6eb9300ebd1ad6796f69	Y	N	N
+implementation-python-final	E03	s134-28.2	134	3	28.2	28.2 Template Strings (t-strings) -- PEP 750	2537	2572	36	81a5058a84094b52e5209c9b56181941e8a85687165ffb38899f8fac86173afe	Y	N	N
+implementation-python-final	E03	s135	135	2		부록 A: Python 3.10-3.14 핵심 변경사항 요약	2573	2582	10	8926c37fd204ecfeb5e9649396b3b6631cf2c60c5858ba58fa4599e11947b3e8	Y	N	N
+implementation-python-final	E03	s136	136	2		부록 B: 타입 시스템 진화 요약	2583	2597	15	b96eae5871921d2524e5936521b422aa0988fe0f14fab091c5c4fd20f0eee32a	Y	N	N
+implementation-python-final	E03	s137	137	2		부록 C: 주요 매직 메서드 요약	2598	2619	22	70242632552f1fbaefc6793cf36057f4af26637fd80fe51e87eda47369259e42	Y	N	N
+implementation-python-final	E03	s138	138	2		출처	2620	2621	2	9baf7e9d6388e195875cc8f021bea4300b0acc8ecdc1d23accabf81d960afd2f	Y	N	N
+implementation-python-final	E03	s139	139	3		PEP 문서	2622	2643	22	43f11d61c44deff79dc2a15628eca1bf3104adb2c33f14d9564a5cdbb2c06a8f	Y	N	N
+implementation-python-final	E03	s140	140	3		Python 공식 문서	2644	2653	10	7573b07fe10efd64348a7b20c57483a91a188e0f4c9bdfd99a453a3ca7eb5ddc	Y	N	N
+implementation-python-final	E03	s141	141	3		서적	2654	2663	10	b4414c9e5467f0c46dcbd3fc3fdf42047a4aad6db3037186f0d270ab929e4f61	Y	N	N
+implementation-python-final	E03	s142	142	3		도구 문서	2664	2670	7	09e684d8bf80e6de22c76230fda75512e98a648cb7a79be7aeb99bd05d3af3bc	Y	N	N
+implementation-python-final	E03	s143	143	3		커뮤니티	2671	2675	5	8f2647d1af80e95cf2a2c2e9c7309cf0424a8b4ce6b1c37add91f2f928f8204a	Y	N	N
+implementation-test-skill	E04	s001	1	0		(전문)	1	6	6	d1b14e195a5c857e6cd377c3d0507f5551f7537263f1e9110d64e9de8c2f9020	Y	N	N
+implementation-test-skill	E04	s002	2	1		테스트 코드 작성법 종합	7	8	2	285ac0aac9ac5ca5e99d4863de27dbaad0317a762fd7d34bb3ff05e8d1858026	Y	N	N
+implementation-test-skill	E04	s003	3	2		언제 쓰나	9	17	9	21ef17698310637312cb423d3e138306bb4508777ce7d29cafb9c64f631cda57	Y	N	N
+implementation-test-skill	E04	s004	4	2		핵심 운영 원칙	18	39	22	7dfed9f89973d7f3a32d77c26edb11c92d3132eabdc50c9c82a2d4022463c024	Y	N	N
+implementation-test-skill	E04	s005	5	2		상세 레퍼런스	40	68	29	bcb69e7130d6e0bd945d55c13476e0464750c805f235a65baffb0f3c299b319e	Y	N	N
+implementation-test-final	E04	s001	1	1		Python 테스트 코드 작성 종합 가이드	1	7	7	b53a1da3d7446e2559bb3bdb31030ebd86ea1ef22f1bfe9466c51ebb036fcbef	Y	N	N
+implementation-test-final	E04	s002	2	2		목차	8	34	27	2a9e2de649fb9f4e285ee64259f3ab6c69cb431b1aa636a62cd752a7e459abb4	Y	N	N
+implementation-test-final	E04	s003-1	3	2	1	1. 테스트 전략과 피라미드	35	36	2	54213a8dcc1ca8af81aaee4a056a5fe3ac5c74545e503bd50f6cbe5b1455c8b5	Y	N	N
+implementation-test-final	E04	s004-1.1	4	3	1.1	1.1 Martin Fowler의 테스트 피라미드	37	69	33	9ae2411a13cc64250bf7c7bf4a8e58e2ba6256e1f67e32145331f72fe51a754f	Y	N	N
+implementation-test-final	E04	s005-1.2	5	3	1.2	1.2 Google의 SMURF 프레임워크	70	85	16	f7c0af1539f6def7067f529b27571a4c2f47d29d89a92316eb1343a0d8ab6439	Y	N	N
+implementation-test-final	E04	s006-1.3	6	3	1.3	1.3 Google의 테스트 크기 분류	86	99	14	0547f3596593de04fecdeca7de1927112726741e10b0d1b6c91ec708ab444cff	Y	N	N
+implementation-test-final	E04	s007-1.4	7	3	1.4	1.4 Migration 전용 테스트와 DB-backed 현행 동작 테스트 식별	100	112	13	2071a67765e8cbfa84c559665ecbee2004724630ad8f449d87fe6dd3496c5203	Y	N	N
+implementation-test-final	E04	s008-2	8	2	2	2. 테스트 더블 분류 체계	113	128	16	7df542d318fbc1962eb95a8d76a4053c3db76807ac58ce85fae1583fc810bcd4	Y	N	N
+implementation-test-final	E04	s009-3	9	2	3	3. pytest 기본 구조와 Fixture	129	130	2	4a7d3335ab96927b66a93343e598e12cd4bfe08a6a48f64b3e55bdf8d1a50a87	Y	N	N
+implementation-test-final	E04	s010-3.1	10	3	3.1	3.1 pytest 기본 구조 [파이썬코딩의기술]	131	151	21	8d944d21d42992daa1ab825ade535db846f89332f7953eb9dfda20412a0bf20b	Y	N	N
+implementation-test-final	E04	s011-3.2	11	3	3.2	3.2 Fixture (setUp/tearDown) [테스트주도 개발 + 파이썬코딩의기술]	152	227	76	de9299eaf4353ea41a40e070f3fc387a89afa58d3e249f54f3c9fd8edb872cf4	Y	N	N
+implementation-test-final	E04	s012-3.3	12	3	3.3	3.3 xUnit 패턴과 pytest 매핑 [테스트주도 개발 + 파이썬코딩의기술]	228	237	10	2c560ce0834d6f7a3964e06d912ef485a7ebe6f06c461dd3251c77fbf80efef8	Y	N	N
+implementation-test-final	E04	s013-3.4	13	3	3.4	3.4 단언(Assertion) [테스트주도 개발]	238	258	21	6f320b05f03882fa9aa23f62bc7731436883a66c2efd577b701facd987483ee4	Y	N	N
+implementation-test-final	E04	s014-3.5	14	3	3.5	3.5 예외 테스트 [테스트주도 개발]	259	269	11	bd428c5f326c91170770601a59631955ef08d72d62edad12511ee4d9440aa5e7	Y	N	N
+implementation-test-final	E04	s015-3.6	15	3	3.6	3.6 파라미터화 테스트	270	282	13	8f24d9ec0609ea36e97de502922181fe07d37b5a6275f6852e1cd3b068e27ae7	Y	N	N
+implementation-test-final	E04	s016-3.7	16	3	3.7	3.7 conftest.py를 활용한 공유 픽스처	283	302	20	d99a9f69f954e9a724e653c57bb8c6f46ca99402d1c989fd8cec59c513b9d6e1	Y	N	N
+implementation-test-final	E04	s017-3.8	17	3	3.8	3.8 monkeypatch를 활용한 환경 격리	303	313	11	b0e37618cfcf69ba2fe914c222978aaa01d533ebc68b14feace5fe2b601ccb52	Y	N	N
+implementation-test-final	E04	s018-3.9	18	3	3.9	3.9 tmp_path를 활용한 파일 테스트	314	326	13	382cc35e6a81124ea5a3e3ec678dce95733ed6dcd6379b6302e820bfd55de8ab	Y	N	N
+implementation-test-final	E04	s019-3.10	19	3	3.10	3.10 전체 테스트 실행	327	344	18	9a8ffd60ad2b29a824d133044016b957595790564d67769b9a69315fe8e56176	Y	N	N
+implementation-test-final	E04	s020-4	20	2	4	4. pytest 심화 설정	345	346	2	3a8332b8ae630519b469c019a5be2328825724429f4034c50ab5a1acb1f8bd2b	Y	N	N
+implementation-test-final	E04	s021-4.1	21	3	4.1	4.1 pyproject.toml 종합 설정	347	397	51	e3fd03cc1359a30c025a7a1496285623efad9ef5aac156147d4d4e42c6f114bb	Y	N	N
+implementation-test-final	E04	s022-4.2	22	3	4.2	4.2 conftest.py 계층 구조	398	415	18	830e722de88079da0df0d7920d1abe70cd098ccfabbb44b73a30581b6857e4fb	Y	N	N
+implementation-test-final	E04	s023-5	23	2	5	5. pytest 마커 시스템	416	417	2	dfbd4676a2c648559b7e60fcd2c37609da2af9d2c9715dbcef3e890247e94e68	Y	N	N
+implementation-test-final	E04	s024-5.1	24	3	5.1	5.1 내장 마커: skip, skipif, xfail	418	465	48	6f7ec455dbf7311697a3baa31a1a8556090e6c6b69a7cabe8fe386912277ff8f	Y	N	N
+implementation-test-final	E04	s025-5.2	25	3	5.2	5.2 커스텀 마커와 마커 활용 패턴	466	506	41	00019ace31a9c77a44d6e2244a07facd1a84e96f94bbe776a3161e9213b39fd2	Y	N	N
+implementation-test-final	E04	s026-5.3	26	3	5.3	5.3 마커에서 fixture로 데이터 전달	507	534	28	d3737625ae52c31103af8146726fb98725e0e0bbbbc321e892964eb68ae64642	Y	N	N
+implementation-test-final	E04	s027-6	27	2	6	6. pytest 플러그인 생태계	535	538	4	31be8467dbed8d41ca82341be56f81ee0ba3987cd3a91b679c481fbbaa9671df	Y	N	N
+implementation-test-final	E04	s028-6.1	28	3	6.1	6.1 pytest-xdist: 병렬 테스트 실행	539	582	44	2a149e92bd14fb4e7376950a71229077dacdbeb7048977b8382921b40b65cf41	Y	N	N
+implementation-test-final	E04	s029-6.2	29	3	6.2	6.2 pytest-asyncio: 비동기 테스트	583	624	42	6b15e3eac0d6fb5c4fb382458ecfa8b92f30bf3d6ab9eb7820da96bef83904cf	Y	N	N
+implementation-test-final	E04	s030-6.3	30	3	6.3	6.3 pytest-cov: 커버리지 통합	625	648	24	a61321428321a6406cccb13b7b687f640ef1f0a8d3755b3496a52bb16aa20f6a	Y	N	N
+implementation-test-final	E04	s031-6.4	31	3	6.4	6.4 pytest-randomly: 테스트 순서 무작위화	649	670	22	388e93f4af95b2bce76c51225d0a168dfdc001a7374815ab906119416ce1dac8	Y	N	N
+implementation-test-final	E04	s032-6.5	32	3	6.5	6.5 pytest-timeout: 테스트 시간 제한	671	698	28	c2d242f4ece86729d3b59a8be35213865b34c690b801a1f3ed387d64763cc68c	Y	N	N
+implementation-test-final	E04	s033-7	33	2	7	7. Mock과 테스트 더블 실전	699	702	4	f0d0278c81823f3ae6162673052b594d81b2ee61be236c7d4bb9935530dee978	Y	N	N
+implementation-test-final	E04	s034-7.1	34	3	7.1	7.1 검증 방식 우선순위 [Unit Testing - Khorikov + 파이썬코딩의기술]	703	714	12	ff5c9c75d2ecfe2ac898752361a740b2ab132d519d0118cbf8161edaaccb1c88	Y	N	N
+implementation-test-final	E04	s035-7.2	35	3	7.2	7.2 Mock 기본 사용법 [파이썬코딩의기술]	715	748	34	53cc92ab5d87709d6db809d156757b13fe235aa65c2cc3356a06c4ef38de0287	Y	N	N
+implementation-test-final	E04	s036-7.3	36	3	7.3	7.3 의존 관계 캡슐화로 모킹을 쉽게 만들기 [파이썬코딩의기술]	749	785	37	8150955387b6c8895a4a31c9d6fcfaee6c06f9733c4b75e016f14da3aff940a1	Y	N	N
+implementation-test-final	E04	s037-7.4	37	3	7.4	7.4 PropertyMock: 프로퍼티 모킹	786	822	37	337280663130551894926087837d664f91e72214e0f5d604ca1452988cfc3681	Y	N	N
+implementation-test-final	E04	s038-7.5	38	3	7.5	7.5 AsyncMock: 비동기 함수 모킹	823	872	50	201d4cb533432b39650a4a7d71680928c6010825e3272ded0ef5fc500f84b628	Y	N	N
+implementation-test-final	E04	s039-7.6	39	3	7.6	7.6 seal(): Mock 객체 봉인	873	912	40	81d4c4b1d3b0ba84647b8ee9e3640c07cf886e10e7c174bf8d189c9e705031d1	Y	N	N
+implementation-test-final	E04	s040-7.7	40	3	7.7	7.7 side_effect 고급 활용	913	955	43	d5a1751eb94d20888cee305ab7d987a4a206ec7b1e8dff165bfab6a7f70ee4f6	Y	N	N
+implementation-test-final	E04	s041-7.8	41	3	7.8	7.8 호출 순서 검증	956	981	26	fc1c60af9a286800aa3a56c08a09645596fa1024686965394e35e6ef98db2d3a	Y	N	N
+implementation-test-final	E04	s042-8	42	2	8	8. Property-Based Testing (Hypothesis)	982	987	6	d0eea5041d167ea838fb042263d3170e013b01a134fdf3c69d7f6f8a1ef468e8	Y	N	N
+implementation-test-final	E04	s043-8.1	43	3	8.1	8.1 기본 사용법	988	1022	35	37072c057097859d08b3856cd7b40e7ecc8586536f675f001e803c2d241c2508	Y	N	N
+implementation-test-final	E04	s044-8.2	44	3	8.2	8.2 전략(Strategies) 조합	1023	1059	37	3d0168d310e96e2ccd70ee9982df58a748eeeff423288be77355cf06e74f62fd	Y	N	N
+implementation-test-final	E04	s045-8.3	45	3	8.3	8.3 @example: 경계값 명시	1060	1075	16	30408928b380521d98009b8900d90774bb786789a8af928db8d82197e5441e5a	Y	N	N
+implementation-test-final	E04	s046-8.4	46	3	8.4	8.4 settings로 실행 제어	1076	1099	24	5bbf43f5104eef7a43e2012b668f663605726b932facdf93f1d7fc5b065ccfff	Y	N	N
+implementation-test-final	E04	s047-8.5	47	3	8.5	8.5 Stateful Testing: 시퀀스 기반 테스트	1100	1144	45	cdf0772b89eb260cee7bc67af6f13fb11cfeab2287d047d456ce5fa635cfd198	Y	N	N
+implementation-test-final	E04	s048-9	48	2	9	9. 테스트 데이터 팩토리 (factory_boy + Faker)	1145	1146	2	ccc02a2d5c1d896fc26993b82ebe87ade05c587c987538b50e5e0ac0faad759e	Y	N	N
+implementation-test-final	E04	s049-9.1	49	3	9.1	9.1 기본 개념	1147	1156	10	91ee87bd75ba076c6282124ec788b085188db37270f7f92ea292b6e4c2612975	Y	N	N
+implementation-test-final	E04	s050-9.2	50	3	9.2	9.2 기본 팩토리 정의	1157	1186	30	33f24dafa580af08aca8281978ea0882521559730fe62266e306771b894b8005	Y	N	N
+implementation-test-final	E04	s051-9.3	51	3	9.3	9.3 관계 처리: SubFactory, RelatedFactory	1187	1220	34	e9f4165ecde2174e81a2d9e85ad0392e969c917020e5d73ea081c54bea62bceb	Y	N	N
+implementation-test-final	E04	s052-9.4	52	3	9.4	9.4 Trait: 변형 객체 생성	1221	1264	44	06fcee75aba869adce35c07c171fb6a37a35b33035e0463a83918b615cbd32bc	Y	N	N
+implementation-test-final	E04	s053-9.5	53	3	9.5	9.5 배치 생성과 재현성	1265	1290	26	161a540b0b6ae536e2afc189609a6dbc8cd215658eaa37bd8e040d7f9d0583db	Y	N	N
+implementation-test-final	E04	s054-9.6	54	3	9.6	9.6 SQLAlchemy / Django ORM 통합	1291	1317	27	3f82e1a4af90d6f87387eb10ff0d226de3ef60dfe045b2a2acc92a9558c50437	Y	N	N
+implementation-test-final	E04	s055-10	55	2	10	10. 시간 모킹 (freezegun / time-machine)	1318	1321	4	303176b9c47fa25a6262e259d09ce1c2c0e8944a4dc05487bcf049e3807cc554	Y	N	N
+implementation-test-final	E04	s056-10.1	56	3	10.1	10.1 freezegun	1322	1365	44	de9da823c839e5d466f8023c149c2b0dcdd38578d7d8235caf3cef4839a22934	Y	N	N
+implementation-test-final	E04	s057-10.2	57	3	10.2	10.2 time-machine	1366	1411	46	37ecb628b503aded44cca53f7a3446ae16eb9db0d01307eee0b9104b7ddf2cb6	Y	N	N
+implementation-test-final	E04	s058-10.3	58	3	10.3	10.3 비교 및 선택 기준	1412	1425	14	78513cf0d4e12ea96f6791ba20b7d54ca4a8395e79c1e489cf6fe69fd78ca38c	Y	N	N
+implementation-test-final	E04	s059-11	59	2	11	11. HTTP 모킹 (responses / aioresponses)	1426	1427	2	e632878371d1024a8ee3f3b18f59b998e7afd9dfa304ef7b154d71db67e66a15	Y	N	N
+implementation-test-final	E04	s060-11.1	60	3	11.1	11.1 responses: requests 라이브러리 모킹	1428	1503	76	119ddbc58268ddeec8f9953dde1bf97cc86296dfe9e4ec71315d7cd2fbee7f37	Y	N	N
+implementation-test-final	E04	s061-11.2	61	3	11.2	11.2 aioresponses: aiohttp 모킹	1504	1540	37	be2f6e7a576e96b4b611231c79a0457085642b578f0f60940913ad0608e50a7e	Y	N	N
+implementation-test-final	E04	s062-11.3	62	3	11.3	11.3 HTTPretty: 소켓 레벨 인터셉트	1541	1582	42	72b5542a3435f4f856968e2e4489c1ea300c9ccabd26457a805b68a4b6bc54b6	Y	N	N
+implementation-test-final	E04	s063-12	63	2	12	12. Docker 기반 통합 테스트 (testcontainers)	1583	1586	4	fc1ce1fad9503b2288a032e2e37ddcd93e77b2cd103a3cf1c4c30e610f7bcd55	Y	N	N
+implementation-test-final	E04	s064-12.1	64	3	12.1	12.1 PostgreSQL 통합 테스트	1587	1636	50	5ffcbf36bf865510f63ae22c65cea38a2f39365dbeada8b5e05efce636bf2ceb	Y	N	N
+implementation-test-final	E04	s065-12.2	65	3	12.2	12.2 Redis 통합 테스트	1637	1666	30	f569c92fd549de1e411af148673a1106446244ce919bc0065cbfd240518f3e36	Y	N	N
+implementation-test-final	E04	s066-12.3	66	3	12.3	12.3 여러 서비스 동시 사용	1667	1693	27	65fcca9e6e66a7fd23540d094eae531aed97f093124ab670010a0089f3e29d4d	Y	N	N
+implementation-test-final	E04	s067-13	67	2	13	13. 커버리지 설정 (coverage.py)	1694	1697	4	327b50c4689c76eb6060d0b86bb3e11746402bd05b4461b1668cac445a0d770e	Y	N	N
+implementation-test-final	E04	s068-13.1	68	3	13.1	13.1 pyproject.toml 종합 설정	1698	1753	56	35cf07defefa5e2d99b72ab742ad8d6b464c4f083ddf6f317708b7058449c598	Y	N	N
+implementation-test-final	E04	s069-13.2	69	3	13.2	13.2 활용 명령어	1754	1777	24	dd42fe7bc72da52e21b8b4fa9095e5fb0197612d56e03175c37dd270ff07012a	Y	N	N
+implementation-test-final	E04	s070-14	70	2	14	14. 멀티환경 테스트 (tox / nox)	1778	1781	4	55e43ef3222383da7c2209beb3e676c2a23fe89638ef302c2ba57f5ed24bc892	Y	N	N
+implementation-test-final	E04	s071-14.1	71	3	14.1	14.1 tox: 선언적 설정	1782	1819	38	a0db45218319aaf06c6a2398b10e7dd36c13a5bf6d8a349a9281ebca471c8524	Y	N	N
+implementation-test-final	E04	s072-14.2	72	3	14.2	14.2 nox: Python 코드 기반 설정	1820	1877	58	a78903c11c075ea32e696444e27bb9f51d573874d0819d2c1643e4e59b0b92e3	Y	N	N
+implementation-test-final	E04	s073-14.3	73	3	14.3	14.3 tox vs nox 비교	1878	1891	14	df0a84fcae19c75db33c91b01a004088ba9674c92ceb0b4090431dcf1f4c9c8b	Y	N	N
+implementation-test-final	E04	s074-15	74	2	15	15. 테스트 코드 품질 원칙	1892	1893	2	e963ddb7c9e9bd508f38c853e433387432da33f2b9b61887112ac5d332dfd18a	Y	N	N
+implementation-test-final	E04	s075-15.1	75	3	15.1	15.1 FIRST 원칙 [Clean Code - Robert C. Martin]	1894	1977	84	360fbf03421b05e91f462c9d680cc2c5891bf351cd5f7e08c3b97cb8429bc2bf	Y	N	N
+implementation-test-final	E04	s076-15.2	76	3	15.2	15.2 AAA 패턴 (Arrange-Act-Assert)	1978	2036	59	d4c0cb5fdc84798d08e3dbfb371d4b8771a9fd14f1e1784ee8608df2ecfab202	Y	N	N
+implementation-test-final	E04	s077-15.3	77	3	15.3	15.3 화이트박스 테스트를 피하라 [테스트주도 개발 + Codepipes Blog]	2037	2056	20	10b97307873b28f9de20313c568fcd1bbb015c62dbaac7f41321715fe672f804	Y	N	N
+implementation-test-final	E04	s078-15.4	78	3	15.4	15.4 외부 계약 기댓값은 리터럴로 — 프로덕션 상수 역수입 금지 [Google Testing Blog] [Khorikov]	2057	2070	14	0412a987bb23b3cb6b462c88eaeb456077b1bf0bbf80596a215af976ae9c8632	Y	N	N
+implementation-test-final	E04	s079-15.5	79	3	15.5	15.5 발행 이벤트 봉투의 union-enum 동기 후보	2071	2078	8	5beb4d4569e213d4f8c173e937b5cedfce05d6144677c43d1363ee0782e7b6d6	Y	N	N
+implementation-test-final	E04	s080-16	80	2	16	16. 테스트 안티패턴	2079	2080	2	87b292b94b848910c1b8976047630f369f67a2d8fd84d21753d101d6a4507255	Y	N	N
+implementation-test-final	E04	s081-16.1	81	3	16.1	16.1 코드 수준 안티패턴	2081	2187	107	e017be54536487fdcbfb30b5b4ea9f583b07d61a7f62c8f513deb9f6b9d45f48	Y	N	N
+implementation-test-final	E04	s082-16.2	82	3	16.2	16.2 전략 수준 안티패턴 [Codepipes Blog]	2188	2202	15	7d14f81062bcb8481fcf1dc6f5e6813787b94a83b8af937957792ec4b181d7be	Y	N	N
+implementation-test-final	E04	s083-17	83	2	17	17. Mutation Testing [mutmut]	2203	2206	4	bc8345b47adc944850048272856bdec2adb7f9771352af7183febd900dda1e05	Y	N	N
+implementation-test-final	E04	s084-17.1	84	3	17.1	17.1 개념: 테스트의 테스트	2207	2217	11	1f416628e5f16ab3ca07ac62d526f5fb04dbf272b8b1232cfac5cd4a0eda69ee	Y	N	N
+implementation-test-final	E04	s085-17.2	85	3	17.2	17.2 뮤테이션 종류	2218	2228	11	e5dbbfb7f37ac64be5b31a0792dc1be51a6d015b2f33f0c78596e044aee60a09	Y	N	N
+implementation-test-final	E04	s086-17.3	86	3	17.3	17.3 mutmut 사용법	2229	2244	16	c486f0a38b80c55f50f8a0425dac9bc26a64cfe9a55fc2df2f440dcb405490f2	Y	N	N
+implementation-test-final	E04	s087-17.4	87	3	17.4	17.4 결과 해석	2245	2278	34	079f9b4b010d272e6f0e8391e97733defc6afc45662099a036b122c60d8cf5e0	Y	N	N
+implementation-test-final	E04	s088-17.5	88	3	17.5	17.5 뮤테이션 점수 목표	2279	2284	6	ed8c4f9ec16c9fafab709b132f7991583a12327d29e1b20e94917ee518d2eb35	Y	N	N
+implementation-test-final	E04	s089-18	89	2	18	18. BDD pytest-bdd 구현	2285	2286	2	d8a2fe8bb8e287bf2aa5b95c9e965e9ca22b0baa916bb76de45b02459aeaff11	Y	N	N
+implementation-test-final	E04	s090-18.1	90	3	18.1	18.1 Given-When-Then [Daniel Terhorst-North & Chris Matts]	2287	2307	21	d84cd50d8f3a949fc51b1fa76dd45f588ffd8be29f645b83d2384b87a61ec955	Y	N	N
+implementation-test-final	E04	s091-18.2	91	3	18.2	18.2 pytest-bdd로 구현	2308	2376	69	291c838c38b6108b4ab0981726014f83bf3a99ec714c87a4cdecdde86b5885b3	Y	N	N
+implementation-test-final	E04	s092-19	92	2	19	19. Django Ninja API 계약 테스트	2377	2384	8	b2d6c21bcff3914c31a7508ca4a4da332cc5a93a256a7771ef56b503769145fc	Y	N	N
+implementation-test-final	E04	s093-19.1	93	3	19.1	19.1 Mounted 공개 응답 계약	2385	2408	24	2c7278b6d5ba622cc4c3c573d5622a8d5a0b4c831d7d114d311669b6a417b0a2	Y	N	N
+implementation-test-final	E04	s094-19.2	94	3	19.2	19.2 요청 검증과 오류 응답	2409	2413	5	7fcbf40af1b9ed27bb5942de66fc774259170b482c4083e89975bce81e44aa8e	Y	N	N
+implementation-test-final	E04	s095-19.2.1	95	4	19.2.1	19.2.1 승인된 HTTP 오류 계약	2414	2430	17	16b7e799fa3f95790d2f3e8f0e6dd5d90e3e7279ad92bdfde7ed3079acdf3bd8	Y	N	N
+implementation-test-final	E04	s096-19.2.2	96	4	19.2.2	19.2.2 공개 Python Schema 계약	2431	2445	15	81cd298ca90843a905260216c3d728d11aa66e6954956698740776004f10797a	Y	N	N
+implementation-test-final	E04	s097-19.2.3	97	4	19.2.3	19.2.3 공개 OpenAPI 계약	2446	2456	11	6d1f0c60f402f1b0ab10fe96e7eedd83494f8bf33158fa37560cc927e3e8d869	Y	N	N
+implementation-test-final	E04	s098-19.3	98	3	19.3	19.3 인증, 페이지네이션, 필터링	2457	2478	22	f521d6fe7b422794b01ae6bbea7bf8772ed2f3dd54f3c2ad2227749e6c4bf03e	Y	N	N
+implementation-test-final	E04	s099-19.4	99	3	19.4	19.4 pytest-django DB 접근 선택	2479	2505	27	5a2c93dab76869f9c62b1f0f8a6ce55d10e72e71dd6d6cc7645dc95505ee5fcc	Y	N	N
+implementation-test-final	E04	s100-20	100	2	20	20. Idempotency와 동시성 테스트	2506	2511	6	f8e2561268eccfbeb96d5a261c2c7c90094a91af8be17147f874a63df60f1aa4	Y	N	N
+implementation-test-final	E04	s101-20.1	101	3	20.1	20.1 Idempotency replay 계약	2512	2568	57	b628c81cb8591ccab09640c9ee41c6596ee6c65ba3c66537f193d324839323cf	Y	N	N
+implementation-test-final	E04	s102-20.2	102	3	20.2	20.2 중복 생성 방지와 DB 제약	2569	2585	17	04c528df57a26cb2aff41d96832429fc13f23cc6a589eeca2d485c2801cac698	Y	N	N
+implementation-test-final	E04	s103-20.3	103	3	20.3	20.3 Transaction과 row lock 테스트	2586	2613	28	429231d0a9ea1b3e6bfa849542259507c0356603d2dcd4265ca9ea60bbe75af7	Y	N	N
+implementation-test-final	E04	s104-20.4	104	3	20.4	20.4 Race condition 재현 테스트	2614	2640	27	12300e93d0f0505ed788c065720ca63d1b7f384fdfc63a6a918934d195c25509	Y	N	N
+implementation-test-final	E04	s105-20.5	105	3	20.5	20.5 결정적 CAS-충돌 재시도 테스트 (스파이)	2641	2680	40	ade5cfd4085ad1315cf0fb49e4c85ab7c81b4cdc6258b09387b86603fd8826d3	Y	N	N
+implementation-test-final	E04	s106-21	106	2	21	21. 테스트 디버깅 기법	2681	2684	4	55c74ec2c7205a5a74786e1dbddce9de859eb430b7a794a5c29b51c77149d986	Y	N	N
+implementation-test-final	E04	s107-21.1	107	3	21.1	21.1 pytest에서 디버거 진입	2685	2702	18	466f7d88fe269c6357d1ecf44fb2a7fe98564f0ce6b27e0485c1d68fb646336b	Y	N	N
+implementation-test-final	E04	s108-22	108	2	22	22. 참고 문헌	2703	2721	19	264a10a6602d8891527132935a227b676112590f4c0fbcde137525ee5aa0304b	Y	N	N
+implementation-test-final	E04	s109	109	2		부록: 도구 설치 한눈에 보기	2722	2754	33	be3e83f1c09cb16b291ae1be6baf75c68bd2c6d4401211e6dd243ad5cc20c5b3	Y	N	N
+implementation-django-skill	E05	s001	1	0		(전문)	1	6	6	24e7ac8bed064b153ffd7d04596532c5ac00003e0c0c86e7b1f0f0d53e2a757f	Y	N	N
+implementation-django-skill	E05	s002	2	1		Django 코어 구현	7	8	2	55b473a06eff45a8178aeca0bc6514185a33847400d77ef5e9a96b489a1dd981	Y	N	N
+implementation-django-skill	E05	s003	3	2		언제 쓰나	9	19	11	c5c62b0551e7668f222f77b5c4824d8131d716b9e34ecb0f48f998972192064d	Y	N	N
+implementation-django-skill	E05	s004	4	2		핵심 운영 원칙	20	30	11	537503d98f201b8facc43e681f9ac19ae4bd8b8b05d61b8f3c7a5689b79b94a0	Y	N	N
+implementation-django-skill	E05	s005	5	2		상세 레퍼런스	31	53	23	ba0c5c1bb6342f7854eb1e9ef2976f5aa683bf98d4c3c56f009e77a87a71dcba	Y	N	N
+implementation-django-final	E05	s001	1	1		Django 프레임워크 특화 가이드	1	2	2	5e0bb8eba79b4a3e4e587955ea7d05703ade8d530b11d98199dab7e288eca00c	Y	N	N
+implementation-django-final	E05	s002	2	2		목차	3	24	22	0929ba29ef764d76b21e70fb9125833ff2bc01b65413f0a19e52d0d03b1aa4eb	Y	N	N
+implementation-django-final	E05	s003-1	3	2	1	1. Django 설계 철학	25	28	4	b3254024012c4a70ed78bcb1a89f57fff93a482e62aca8d003b8479ad0451c82	Y	N	N
+implementation-django-final	E05	s004-1.1	4	3	1.1	1.1 전체 철학 (Overall)	29	39	11	4a8f8f03ccefbcb76b626cf5256b77c1da8786ad66689bdee85c052d1fdd3e21	Y	N	N
+implementation-django-final	E05	s005-1.2	5	3	1.2	1.2 모델 철학 (Models) [DDP]	40	45	6	b0ccf11bd50155744438d8fad8d4e94a6f57b895959d174b9ba24fae788856a8	Y	N	N
+implementation-django-final	E05	s006-1.3	6	3	1.3	1.3 데이터베이스 API 철학 (Database API) [DDP]	46	53	8	d6190d22512efee1e135d7dfd6733f6b2749b411a33c1b26c074aa1c39b76623	Y	N	N
+implementation-django-final	E05	s007-1.4	7	3	1.4	1.4 URL 설계 철학 (URL Design) [DDP]	54	60	7	f107172c2019cee67833bc9e884b36301dd099b7341577d8e91f3ccd38adb2be	Y	N	N
+implementation-django-final	E05	s008-1.5	8	3	1.5	1.5 템플릿 시스템 철학 (Template System) [DDP]	61	67	7	0f5ae2b1a6f4a79592ac091f70ab04145aec5f7506dd3bc6a3ae2db5fb104e98	Y	N	N
+implementation-django-final	E05	s009-1.6	9	3	1.6	1.6 뷰 철학 (Views) [DDP]	68	75	8	451ea13fa93680202c520964e4a6de9ecb71d86aa57c3f4e137bae217f8472de	Y	N	N
+implementation-django-final	E05	s010-2	10	2	2	2. Django 코딩 스타일	76	79	4	aa8927451db5f8b421248184020f49e503c2d9c09da658f6500610b96e7c6637	Y	N	N
+implementation-django-final	E05	s011-2.1	11	3	2.1	2.1 포매팅 기본 규칙 [DCS]	80	85	6	aa00b51f10b1e9ba6273602f057309719ba5e96dc5e01b6ed13782111e2a3fe3	Y	N	N
+implementation-django-final	E05	s012-2.2	12	3	2.2	2.2 임포트 순서 [DCS]	86	122	37	7353c3364bab4ec1ba817d2ac06bf65473d01b471603e6efa63ac2580b53262e	Y	N	N
+implementation-django-final	E05	s013-2.3	13	3	2.3	2.3 문자열 포매팅 [DCS]	123	143	21	6be1a3739748f17afdf22d93c76a8c4ad35cf3407e9c56eea4665409427e8998	Y	N	N
+implementation-django-final	E05	s014-2.4	14	3	2.4	2.4 모델 코딩 스타일 [DCS]	144	178	35	5773d90c827bc7a880dd4c517ec4f0651962327234d49c6f45f7050c61038530	Y	N	N
+implementation-django-final	E05	s015-2.5	15	3	2.5	2.5 선택지(Choices) 정의 [DCS]	179	223	45	2d4914e0a1a0e05a9b1827d08639d47667e626f33ce5595c534389532c82ce4a	Y	N	N
+implementation-django-final	E05	s016-2.6	16	3	2.6	2.6 템플릿 코딩 스타일 [DCS]	224	227	4	0b5356f67daf71e77b1cedf1a503c6fd3f44ab02cfe3be4a01761464f895ab46	Y	N	N
+implementation-django-final	E05	s017-2.7	17	3	2.7	2.7 뷰 코딩 스타일 [DCS]	228	241	14	1ef4512b26ff761d48a587557da399f44f41eaf148ef61d1f981e31bc76e4d4c	Y	N	N
+implementation-django-final	E05	s018-3	18	2	3	3. 프로젝트 구조와 앱 설계	242	243	2	ced15d1210f6f09731cde3b8664c28789e22299fa017871c9ed903059ca4122f	Y	N	N
+implementation-django-final	E05	s019-3.1	19	3	3.1	3.1 프로젝트 레이아웃 [TSD]	244	290	47	3a6ebf24e65e306a2fee7b1ead4bdc104b3836548c45f536c129a2c9b8b676e2	Y	N	N
+implementation-django-final	E05	s020-3.2	20	3	3.2	3.2 앱 분리 기준 [TSD]	291	307	17	40a39f3be4ac9aa74dc30fc69b0c0615599dcb0d23b09bb697d9c4cb4e6cd074	Y	N	N
+implementation-django-final	E05	s021-3.3	21	3	3.3	3.3 설정(Settings) 분리 [TSD] [DfP]	308	341	34	7acb814b7c70f73e29350b10078c5d99bec44f934074103e71f839a184dc1de0	Y	N	N
+implementation-django-final	E05	s022-3.4	22	3	3.4	3.4 settings 접근 시 주의사항 [DCS]	342	362	21	847b1798d638659fd828eb1a218c2bf15f1d3174937149043a8c3153e12d8f2c	Y	N	N
+implementation-django-final	E05	s023-4	23	2	4	4. 모델 설계 패턴	363	364	2	a369648b7e3444326988f961ec30776e982634398aeb1f3daffb55c1478217c7	Y	N	N
+implementation-django-final	E05	s024-4.1	24	3	4.1	4.1 Fat Model, Thin View 원칙 [TSD]	365	407	43	3ca17d0a25a9db2472bc2764e00baadebad2290e9caf76a10fca779609e4b644	Y	N	N
+implementation-django-final	E05	s025-4.2	25	3	4.2	4.2 모델 상속 패턴 [DDoc]	408	411	4	7d777c131319b4bc913106900c970411022c3103bf6e10dcc5bf8491ab6cd878	Y	N	N
+implementation-django-final	E05	s026	26	4		Abstract Base Class (추상 베이스 클래스) -- 권장	412	431	20	6a78bf1546940889c95caf5a54518d4a6c336fd9a6e067e48d5aa6506382a968	Y	N	N
+implementation-django-final	E05	s027	27	4		Multi-table Inheritance -- 주의해서 사용	432	446	15	b420b232e3f1c9af8735f97e485cc1713e1e8d3476e3269d320e8d6cf3496cf3	Y	N	N
+implementation-django-final	E05	s028	28	4		Proxy Model -- Python 레벨 동작 변경	447	468	22	a51700cdc62bb1c2d3a5f9281a95f116d851e67442162b42ae7f15f391d7b104	Y	N	N
+implementation-django-final	E05	s029-4.3	29	3	4.3	4.3 필드 선택 가이드 [DDoc]	469	500	32	920e84df246ee182cb00d62a880f6d829b04d754145e62823279d72f83a27864	Y	N	N
+implementation-django-final	E05	s030-4.4	30	3	4.4	4.4 모델 유효성 검증 [DDoc]	501	529	29	910410a81b9ebafa93cfff7e18cd9a53402d73ece1cb778895a98c9eb3478618	Y	N	N
+implementation-django-final	E05	s031-5	31	2	5	5. QuerySet과 Manager 패턴	530	531	2	0001a91a453386e9ec53511c7191d216e3d07603dd4c10424fcfaa44267db008	Y	N	N
+implementation-django-final	E05	s032-5.1	32	3	5.1	5.1 Custom Manager와 QuerySet [DDoc] [TSD]	532	575	44	a3fe3069dde2c24d9681415ba403674b1f12feb7ca9d9fe3a8c311e4ce170065	Y	N	N
+implementation-django-final	E05	s033-5.2	33	3	5.2	5.2 QuerySet 최적화 필수 패턴 [DDoc]	576	612	37	f825498897cfaf1a82e0ca3938d74a4a906cb758f4d36d0df08425f403bca183	Y	N	N
+implementation-django-final	E05	s034-5.3	34	3	5.3	5.3 only(), defer(), values() [DDoc]	613	632	20	8eec354720e574abf1688c021b1582ff41e47b2c0b7435049846e8139b58f651	Y	N	N
+implementation-django-final	E05	s035-5.4	35	3	5.4	5.4 annotate()와 aggregate() [DDoc]	633	659	27	269868d987830b030cd5026647b1cfa28d77aa3130e77765988594cca7abc455	Y	N	N
+implementation-django-final	E05	s036-5.5	36	3	5.5	5.5 bulk 연산 [DDoc]	660	686	27	9cdaec42f71ce38480766be368df8aa71a859eafcb7ff66a32eae9edd34b835b	Y	N	N
+implementation-django-final	E05	s037-6	37	2	6	6. 뷰 패턴: CBV vs FBV	687	692	6	43d5b0b6b8b364fd3bc67a15aa252998815b9a4d018d4c5161049c2b94697327	Y	N	N
+implementation-django-final	E05	s038-7	38	2	7	7. 폼과 유효성 검증	693	698	6	c9bd86340c4c1a5a9994f72ba491f0f8fac3de9046234163165a50533854fd8e	Y	N	N
+implementation-django-final	E05	s039-8	39	2	8	8. REST API 경계와 기존 DRF 유지보수	699	704	6	aa3a86da23f449287ca14e5cbf7660bd21e3a9b7d0b4540003c0c4c0f66b58d5	Y	N	N
+implementation-django-final	E05	s040-8.1	40	3	8.1	8.1 기존 DRF Serializer 설계 [DRF]	705	742	38	9848b1e092f29601e0862ebadae9b02fecaed2134cd3ffa1252f50902f2df988	Y	N	N
+implementation-django-final	E05	s041-8.2	41	3	8.2	8.2 기존 DRF ViewSet과 Router [DRF]	743	782	40	b047b0f3872040860893029d4e45b6e9893d94190ee4541816178091746d06c7	Y	N	N
+implementation-django-final	E05	s042-8.3	42	3	8.3	8.3 Permission 패턴 [DRF]	783	799	17	fcda8994b178c3b46de8a323fa902a88740098a53972c79a745046edd0ee78e4	Y	N	N
+implementation-django-final	E05	s043-8.4	43	3	8.4	8.4 Pagination 설정 [DRF]	800	818	19	c278c78644523727dc431d987324a0e59cf7432889ea5e0a50198c25fe127d95	Y	N	N
+implementation-django-final	E05	s044-8.5	44	3	8.5	8.5 기존 DRF API 버전 관리 [DRF]	819	853	35	e051b3c733c4131df94920c9ad916a6cd4197bbe64449d3c6537054a9b0796b1	Y	N	N
+implementation-django-final	E05	s045-9	45	2	9	9. 시그널 사용 가이드라인	854	857	4	3b10aedd996ca2ba323c0f5752920e249b713688bdffe3592b816c755c3f28de	Y	N	N
+implementation-django-final	E05	s046-9.1	46	3	9.1	9.1 시그널을 사용해야 하는 경우 [DDoc]	858	882	25	f9d9dcb8318e669e3ef177022dd55f4862177af71e466cddd1a3294a87f09408	Y	N	N
+implementation-django-final	E05	s047-9.2	47	3	9.2	9.2 시그널을 피해야 하는 경우 (안티패턴) [HS]	883	915	33	7c118ee384e7c0f2a5ef145479a8fb802b820a424d0384ae7c04723aa98e6db5	Y	N	N
+implementation-django-final	E05	s048-10	48	2	10	10. 마이그레이션 베스트 프랙티스	916	917	2	121fbe50ec4400d81b077a1532fc492af16ffa6f86b6d58a515c998ca3a60c31	Y	N	N
+implementation-django-final	E05	s049-10.1	49	3	10.1	10.1 기본 원칙 [DDoc] [TSD]	918	928	11	111feeb383ffa148e0d616308910ab6d4804b2466aa3d5387a8db68061fcb55b	Y	N	N
+implementation-django-final	E05	s050-10.2	50	3	10.2	10.2 데이터 마이그레이션 — 금지 [DDoc]	929	947	19	4462562efc44bc6c3da9ad1cf355cbbba6ba1cb56d75fb8766d3891c3d4a58f4	Y	N	N
+implementation-django-final	E05	s051-10.3	51	3	10.3	10.3 무중단(Zero-Downtime) 마이그레이션 [DfP]	948	972	25	5c9861daeb949dfa55e82c609979b5beb627d95ae42afe40aef3e6428eecd78c	Y	N	N
+implementation-django-final	E05	s052-10.4	52	3	10.4	10.4 이미 이주가 결정된 뒤의 마이그레이션 이력 보존 [TSD] [DfP]	973	1048	76	f7180fee98f35c7a85ee0a36aad391c90dd1dc659784e174c54d974cc82f438b	Y	N	N
+implementation-django-final	E05	s053-11	53	2	11	11. 성능 최적화	1049	1050	2	bce3d6f5ccc4dd0640324137e75f21f33cd2dd0b9af75bdf2c4d390fdbbd3d2c	Y	N	N
+implementation-django-final	E05	s054-11.1	54	3	11.1	11.1 N+1 문제 탐지와 해결 [DDoc]	1051	1074	24	e0d77968de667e83ac6b18f03897e696ea2ea1bb78d605c9a260ede9952d1ba1	Y	N	N
+implementation-django-final	E05	s055-11.2	55	3	11.2	11.2 데이터베이스 인덱스 전략 [DDoc]	1075	1108	34	f2399317b9a44548f507b952a91bc5110349006d09c085d5eef7f413d983b546	Y	N	N
+implementation-django-final	E05	s056-11.3	56	3	11.3	11.3 save(update_fields=...) [DDoc]	1109	1123	15	04262467bbf500c6333052a54bcc43d169ed3433347d7824b18f073c6e83f61e	Y	N	N
+implementation-django-final	E05	s057-11.4	57	3	11.4	11.4 exists()와 count() [DDoc]	1124	1143	20	8718700470685b097b554880e1150f5be64ea517310fa6e7ae23b35cda535c5b	Y	N	N
+implementation-django-final	E05	s058-12	58	2	12	12. 캐싱 전략	1144	1145	2	44da06d9d18a375d4426039091aa00099f7075f7ee084ff29eb5a8e36bf7ca22	Y	N	N
+implementation-django-final	E05	s059-12.1	59	3	12.1	12.1 캐싱 수준 [DDoc]	1146	1182	37	1a5faa683ebca649824419aeee1a30e4d6561f1e8f361a0c31342993d881f5ba	Y	N	N
+implementation-django-final	E05	s060-12.2	60	3	12.2	12.2 캐시 무효화 패턴 [DDoc]	1183	1204	22	06c7909cfcf7b7f2fea2f8baa68fb417bb431b2236b7fbcf02839e0719970dbe	Y	N	N
+implementation-django-final	E05	s061-13	61	2	13	13. 보안	1205	1206	2	13b9707df557e6984405b57839d58f709ff8e24c9de7b429989ad0a8736cbf1e	Y	N	N
+implementation-django-final	E05	s062-13.1	62	3	13.1	13.1 Django 내장 보안 기능 [DDoc] [OWASP]	1207	1217	11	1b8f05f242e5cfa51ee4212ea8cea1866e25224661b411e8105300cbfbdb8c32	Y	N	N
+implementation-django-final	E05	s063-13.2	63	3	13.2	13.2 보안 설정 체크리스트 [DDoc] [OWASP]	1218	1246	29	470a85c7d8721c254fd9dbd2a95be1a9021122d46bf9da99cefa115e8f7fc3e8	Y	N	N
+implementation-django-final	E05	s064-13.3	64	3	13.3	13.3 Raw SQL 안전하게 사용 [DDoc]	1247	1262	16	dbc54227d599c3a432993b45bccb542c875a784f3439dc1cf0bbd0bb50c4eb69	Y	N	N
+implementation-django-final	E05	s065-13.4	65	3	13.4	13.4 인증과 인가 [DDoc]	1263	1283	21	9b88f235b3bc1b50c39b88f5b9e7c61316e69cb1c0804b568ec8c29c78253639	Y	N	N
+implementation-django-final	E05	s066-14	66	2	14	14. 테스트 패턴	1284	1287	4	1eec7958656d1176a14c0fd2983879f1187d65b7e59ece062e5efec7c5f01af8	Y	N	N
+implementation-django-final	E05	s067-14.1	67	3	14.1	14.1 TestCase 선택 기준 [DDoc]	1288	1311	24	d03987913bafdc633c2394e8627291c4e5e7ecb1062d110d7215894c5aa0c60f	Y	N	N
+implementation-django-final	E05	s068-14.2	68	3	14.2	14.2 Factory Boy 활용 [TDD]	1312	1357	46	551a6f00301ea3d2115bb1e0b5ecb6e06b6719b319d670299aed70e18afed647	Y	N	N
+implementation-django-final	E05	s069-14.3	69	3	14.3	14.3 pytest-django 활용 [TDD]	1358	1394	37	df469accf49fe724e733f9d0c3038ace194743243f1d712bb40704f5843c0be6	Y	N	N
+implementation-django-final	E05	s070-14.4	70	3	14.4	14.4 테스트에서의 Django 공식 규칙 [DCS]	1395	1414	20	66cd4fecf7f40367123707e84942e19e5789977b911ff0ebc74bd8bb84f38086	Y	N	N
+implementation-django-final	E05	s071-15	71	2	15	15. 미들웨어	1415	1416	2	6a26105ce5a32497db8628a9399d024251957ded942e9cc3ab9f4893622351b2	Y	N	N
+implementation-django-final	E05	s072-15.1	72	3	15.1	15.1 미들웨어 실행 순서 [DDoc]	1417	1428	12	9819bd3d065a1bad749d7000b6309fcda0176ff98169035ef78885e8282afc6f	Y	N	N
+implementation-django-final	E05	s073-15.2	73	3	15.2	15.2 커스텀 미들웨어 작성 [DDoc]	1429	1472	44	b460f9625ff6c88bb64bfce56537965c0af5636c61df0e115e0e1b2f0199647d	Y	N	N
+implementation-django-final	E05	s074-16	74	2	16	16. Django와 서비스 레이어 아키텍처	1473	1474	2	15ecfa4c33d5a745496c053c1d1aece5e31ae5c3c96f94319fbfc8b78e6480db	Y	N	N
+implementation-django-final	E05	s075-16.1	75	3	16.1	16.1 서비스 레이어가 필요한 시점 [TSD] [HS] [CP]	1475	1486	12	701571f8e6f115958cd2760f3064e9c640263c7b27f3f40341a2dca44c0d054d	Y	N	N
+implementation-django-final	E05	s076-16.2	76	3	16.2	16.2 HackSoft 서비스/셀렉터 패턴 [HS]	1487	1525	39	39aa46b3aeab7469d2278b3c0a3e16fb3d948adaaae605334b7fd19a8d24507e	Y	N	N
+implementation-django-final	E05	s077-16.3	77	3	16.3	16.3 DDD와 Django의 트레이드오프 [CP]	1526	1557	32	af73f1f2b59f350579d871e3efa69b7322aa09bfb0e7b137dfc48e27082d5517	Y	N	N
+implementation-django-final	E05	s078-16.4	78	3	16.4	16.4 트랜잭션과 일관성 경계 [DDoc] [CP]	1558	1601	44	5077b16043a2e9cb76f99c11510137069b0507973aa88d4e49fd2386c5237d35	Y	N	N
+implementation-django-final	E05	s079-16.5	79	3	16.5	16.5 트랜잭셔널 Outbox 구현 [DDoc]	1602	1667	66	8813953b584a344acb93ac44772d59ef70f341c70bade4e0ea93487fcb67d579	Y	N	N
+implementation-django-final	E05	s080-17	80	2	17	17. Django 5.x 새 기능	1668	1669	2	03d12f2a7903bd1eded07610a639a11c16dd664d319cb8527459403e8aec12e6	Y	N	N
+implementation-django-final	E05	s081-17.1	81	3	17.1	17.1 Django 5.0 주요 기능 [DDoc]	1670	1671	2	da2c4209fa9ed6b9fbc2d04c9e09fa0cb98a26e4a3dd309c92db7829941ce02a	Y	N	N
+implementation-django-final	E05	s082	82	4		db_default -- 데이터베이스 기본값	1672	1685	14	90c9c10957f5323ce493a678d57fbafb2bccbe5b1fb974a41a349c853ed8f729	Y	N	N
+implementation-django-final	E05	s083	83	4		GeneratedField -- DB 생성 필드	1686	1701	16	cb40845f4a37f1b6f970009ede8c9f23da4064d15cc615d104e70895a75632d3	Y	N	N
+implementation-django-final	E05	s084	84	4		딕셔너리 기반 Choices	1702	1712	11	7a93e1e1556c65ac927840981aa22369bdcb38c0e5313c8d9a3810b0be05808f	Y	N	N
+implementation-django-final	E05	s085-17.2	85	3	17.2	17.2 Django 5.1 주요 기능 [DDoc]	1713	1729	17	7d396b0b5207bb4492e0e4991176ea83057d751da41133b2dbb8990b9c482c5a	Y	N	N
+implementation-django-final	E05	s086-17.3	86	3	17.3	17.3 Django 5.2 주요 기능 (LTS) [DDoc]	1730	1731	2	916b57bdd5c808cc211b8a75f0aee6689df2df127ed13c479edca1ffa6f2d09e	Y	N	N
+implementation-django-final	E05	s087	87	4		Composite Primary Key -- 복합 기본키	1732	1747	16	8f332e86eb740e666e7481942c4e781b187883fc1d3ee1bf50cdd2d6cce019e9	Y	N	N
+implementation-django-final	E05	s088	88	4		자동 모델 임포트 in shell	1748	1755	8	dc7714a209622564e1a86c307f0fda5e528f864c9503d095220e5e3f45d97cc5	Y	N	N
+implementation-django-final	E05	s089	89	4		모델 제약 유효성 검증 개선	1756	1767	12	26413d5748bc2d2df4068af223fabc531bbd1a3d29029fac8e95261414e8cc9d	Y	N	N
+implementation-django-final	E05	s090	90	2		참고 자료	1768	1769	2	35f51f71d4e67bb2728a5ba99bf8794e5b5373fc275085bea179112fd1ae98f6	Y	N	N
+implementation-django-final	E05	s091	91	3		공식 문서	1770	1779	10	b4dc38aa2c7abab42b3f2442e3d097352344b3870bb4b212c9bd228bf0db861e	Y	N	N
+implementation-django-final	E05	s092	92	3		서적	1780	1785	6	f43fe4114594afbc80cb3df358e5f7cc5ba1ceab514a0959d27509702e06df6f	Y	N	N
+implementation-django-final	E05	s093	93	3		커뮤니티 가이드	1786	1789	4	0f9996e73673d3711e7ab7046826001247921dd1b4909d4a66ef6e08d6d8e5dd	Y	N	N
+discipline-tdd-skill	E06	s001	1	0		(전문)	1	6	6	237ab84a29ac91a6f69667290700de288170f0639a1addd47c64d779343cedb6	Y	N	N
+discipline-tdd-skill	E06	s002	2	1		TDD 실천 규율	7	8	2	2d8df6453c6bc77d2b2dd5de389c5959fa4266808615134fa2efc347b25a4969	Y	N	N
+discipline-tdd-skill	E06	s003	3	2		언제 쓰나	9	17	9	22645a8dc56925ef63f11e07971e00211c9a5bee0e99abeb12e59b898b8de23e	Y	N	N
+discipline-tdd-skill	E06	s004	4	2		핵심 운영 원칙	18	32	15	25e27e2ea1c4a63979e940f62dfbab6bcad8d07349e8a0f0151677ad1a2797e7	Y	N	N
+discipline-tdd-skill	E06	s005	5	2		상세 레퍼런스	33	53	21	b576bdbfad15d9d713493ba97f1e16c4623e3aa7deba5336fcba0a958e3184c4	Y	N	N
+discipline-tdd-final	E06	s001	1	1		TDD 개발 방법론 가이드	1	7	7	35e63c05321876c7370ce0e099dcee056073f1b01cc80d489cdb9e81207e6c77	Y	N	N
+discipline-tdd-final	E06	s002-1	2	2	1	1. TDD 핵심 철학	8	9	2	baebbb1815eea99c8321edf523fa953d72f185e2a1fac446d859e92e3e1aab8e	Y	N	N
+discipline-tdd-final	E06	s003-1.1	3	3	1.1	1.1 TDD의 목표 [테스트주도 개발]	10	16	7	ce8b8914a00052bc83cf5e0442d9ccc8ced0162ec7521e4532c01b580dcb4535	Y	N	N
+discipline-tdd-final	E06	s004-1.2	4	3	1.2	1.2 TDD를 해야 하는 이유: 용기 [테스트주도 개발]	17	26	10	078918756b37e9c6a896cc622300d30a9bb3740204b39db12007717153ed803d	Y	N	N
+discipline-tdd-final	E06	s005-2	5	2	2	2. TDD 사이클 (Red-Green-Refactor)	27	28	2	290aaba6edf966d6f3fdb2c61a1c0112bfb88160fddb65953d81d33df53801ba	Y	N	N
+discipline-tdd-final	E06	s006-2.1	6	3	2.1	2.1 기본 사이클 [테스트주도 개발]	29	44	16	ec6304c97ee14a8de67ffd42ba56fdd3991dbc6748ea2ca32c5c240938a71746	Y	N	N
+discipline-tdd-final	E06	s007-2.2	7	3	2.2	2.2 pytest로 보는 TDD 사이클	45	64	20	37d2d52e597e38e313c2c88c38d85862ea74dc3ad013bddaf385970c745e7daa	Y	N	N
+discipline-tdd-final	E06	s008-3	8	2	3	3. TDD 학파 비교: 고전 학파 vs 런던 학파	65	66	2	3543d5eb8b050bfb821d09e8a052959eaea90540cb1bb692baa718c80cea4eeb	Y	N	N
+discipline-tdd-final	E06	s009-3.1	9	3	3.1	3.1 두 학파의 기원과 핵심 차이 [Fowler - Mocks Aren't Stubs]	67	81	15	3af3fea0226665b75293a1096fec91354b1d8f3f5a2f6b07dc554b1d3c87456e	Y	N	N
+discipline-tdd-final	E06	s010-3.2	10	3	3.2	3.2 상태 검증 vs 행위 검증 [Fowler - Mocks Aren't Stubs]	82	138	57	307d32c49d7b705c2e44efe5a227ed5947fa84d93f8dd39e9c73e0a2eb03e1eb	Y	N	N
+discipline-tdd-final	E06	s011-3.3	11	3	3.3	3.3 Inside-Out vs Outside-In TDD	139	201	63	91f0717281e1706949818dc6ed4b9e605790a14952e825cafc86cddfad8ca674	Y	N	N
+discipline-tdd-final	E06	s012-3.4	12	3	3.4	3.4 실전 권고: 상황별 선택	202	214	13	ba5c88733c6985556af179f1df143b3200c5eb7e020bbfaab82eaaf1074237be	Y	N	N
+discipline-tdd-final	E06	s013-4	13	2	4	4. 좋은 단위 테스트의 4대 특성	215	216	2	e5d5f905e3646c833224e8dc5532899078735c08965e72b90f34d3467a6ec4eb	Y	N	N
+discipline-tdd-final	E06	s014-4.1	14	3	4.1	4.1 네 가지 기둥 (Four Pillars) [Khorikov - Unit Testing Principles]	217	239	23	b709fa6e2dfa35ce16324ed51d32a56658f8b8f2070ac4201ae931b71c187bb4	Y	N	N
+discipline-tdd-final	E06	s015-4.2	15	3	4.2	4.2 회귀 방지의 위상 [Khorikov]	240	252	13	f12c7afa6923534859bbdd21332ec223133f34fb3620b8b4dd5812da8ed1422c	Y	N	N
+discipline-tdd-final	E06	s016-4.3	16	3	4.3	4.3 리팩토링 내성 [Khorikov]	253	256	4	24efacd543e40439357b6454c4f2b85acae84a307b5f6b3258abff98237cc62e	Y	N	N
+discipline-tdd-final	E06	s017-4.4	17	3	4.4	4.4 CAP 정리와의 유사성 [Khorikov]	257	293	37	3fec96ca1b6da8687b7c820826db62f8d80b1851968107c33af02f1619ea0c49	Y	N	N
+discipline-tdd-final	E06	s018-4.5	18	3	4.5	4.5 세 가지 테스트 스타일 [Khorikov]	294	344	51	d92b884f18a05d688d8a89695ac13d7f230e825780d75b581b4967d86abe97bb	Y	N	N
+discipline-tdd-final	E06	s019-4.6	19	3	4.6	4.6 테스트 품질 3대 속성 [Osherove - The Art of Unit Testing]	345	354	10	99faab894934fa606809a6aa748ee5089ecd6c9cb454e43c40576d9f51ba01cf	Y	N	N
+discipline-tdd-final	E06	s020-5	20	2	5	5. 빨간 막대 패턴 (테스트를 언제, 어디에 작성할 것인가) [테스트주도 개발]	355	356	2	81c488453428d5efdf9bad18a169f2051c849686a1d26e4f2b63791a3bb2b727	Y	N	N
+discipline-tdd-final	E06	s021-5.1	21	3	5.1	5.1 테스트 후보 목록	357	375	19	87f5e17423fa609ad9f093d568e31e432bf2cbb44b26c98a50585c5ccc4b878c	Y	N	N
+discipline-tdd-final	E06	s022-5.2	22	3	5.2	5.2 한 단계 테스트	376	379	4	a4a4667d5fceb970205abaf8bf205d77ba4472d14b72ae30d6256d8644e4a468	Y	N	N
+discipline-tdd-final	E06	s023-5.3	23	3	5.3	5.3 시작 테스트	380	389	10	683e3bf49d3f66a7c7998ab95d05596974eb1125cc2cdb9b6b61c1a64e83f847	Y	N	N
+discipline-tdd-final	E06	s024-5.4	24	3	5.4	5.4 설명 테스트	390	393	4	585f5b59f437d53811600eaf316497f643efcea898389d19f3c5fd0d2c85b3de	Y	N	N
+discipline-tdd-final	E06	s025-5.5	25	3	5.5	5.5 영구 테스트 입장 심사와 현행 계약 수명 주기	394	464	71	167039474f1811d83d38de9b11b90469644e16c2465d0dacbc29f9f3d0a94e39	Y	N	N
+discipline-tdd-final	E06	s026-6	26	2	6	6. 초록 막대 패턴 (테스트를 통과시키는 전략) [테스트주도 개발]	465	466	2	d9a53b9821b144c300c605affca0649c0eaca73c35f6ab048502ccdbdaa3212a	Y	N	N
+discipline-tdd-final	E06	s027-6.1	27	3	6.1	6.1 가짜로 구현하기 (Fake It)	467	489	23	b80723bbf8c8e25195f55555eaac8bd6f6881c919270ad30ba467d6c770e03a1	Y	N	N
+discipline-tdd-final	E06	s028-6.2	28	3	6.2	6.2 삼각측량 (Triangulation)	490	505	16	0ba6fd7f4b1e779b54d38241ad5191739f82d6d88183e898cffba32aca0c674a	Y	N	N
+discipline-tdd-final	E06	s029-6.3	29	3	6.3	6.3 명백한 구현 (Obvious Implementation)	506	511	6	7f6ea58bc30534f3b91899754de3682db24fed8320b5d316e36946884e8c6c26	Y	N	N
+discipline-tdd-final	E06	s030-7	30	2	7	7. 테스팅 패턴 [테스트주도 개발]	512	513	2	2f571034b91b3e92a0715cf25d7f9e47ebe68e4b18f8480fa5ac2c26a97609bb	Y	N	N
+discipline-tdd-final	E06	s031-7.1	31	3	7.1	7.1 테스트 격리	514	538	25	086e60d64f9d97538408275fc7a45869909368d49185293a1817febe54918a2c	Y	N	N
+discipline-tdd-final	E06	s032-7.2	32	3	7.2	7.2 AAA 패턴: Arrange-Act-Assert [Osherove]	539	560	22	7c4324efb5fe7e35162ea20a44cfd0d09b165714e181216e1b1913896a73f328	Y	N	N
+discipline-tdd-final	E06	s033-7.3	33	3	7.3	7.3 테스트 데이터	561	566	6	d16e8baf00b10d6fa62e905ab3dfa4c4252db4441ded31a5b72ce53314d34991	Y	N	N
+discipline-tdd-final	E06	s034-7.4	34	3	7.4	7.4 명백한 데이터	567	578	12	34241fa371b8a6e4f4f0d690ffc3df4dbf3a767cc42fefb9ab8067811da95c44	Y	N	N
+discipline-tdd-final	E06	s035-7.5	35	3	7.5	7.5 테스트 명명 규칙 [Osherove]	579	598	20	2c295cd70be51e19783cfde5b54bc76872518a9a71e85d8b8249f297e46dab08	Y	N	N
+discipline-tdd-final	E06	s036-7.6	36	3	7.6	7.6 Mock보다 출력·상태 검증을 우선한다 [Khorikov]	599	602	4	4ec95303536c65982d490647b6e18e9b2ae2f69a678033d07d50f751101e5ef1	Y	N	N
+discipline-tdd-final	E06	s037-7.7	37	3	7.7	7.7 깨진 테스트 / 깨끗한 체크인 [테스트주도 개발]	603	609	7	34facc2b2f8a399b77486a26c50dc33319e5876066e9dd5fe45942052fedb13f	Y	N	N
+discipline-tdd-final	E06	s038-8	38	2	8	8. 테스트 더블 분류 체계	610	615	6	822615aa24493a65cfc28f6708e66010824ce7dd20459e4e5c2d2c87f9cd128b	Y	N	N
+discipline-tdd-final	E06	s039-9	39	2	9	9. Outside-In TDD와 이중 루프 [Freeman & Pryce - GOOS]	616	617	2	16e1a44bb0f68d9e7dbc7dfed84394df9e927f01033b0f08cea9250acbd53d6d	Y	N	N
+discipline-tdd-final	E06	s040-9.1	40	3	9.1	9.1 이중 루프 TDD (Double Loop TDD)	618	670	53	519c43a118f0d4b6fc6ef4ed0842c1e3eb70f54987affbf1497cba995cd42866	Y	N	N
+discipline-tdd-final	E06	s041-9.2	41	3	9.2	9.2 Walking Skeleton [Freeman & Pryce - GOOS]	671	694	24	a17f6fa2bd69c74f8432c92c06d76e4652369e70fe2d2021744f2e0960ed4709	Y	N	N
+discipline-tdd-final	E06	s042-9.3	42	3	9.3	9.3 Mock Roles, Not Objects [Freeman, Pryce, Mackinnon, Walnes -- OOPSLA 2004]	695	698	4	2f65b24711d46e125ecbe4bda70627b73f8bf434c4110c30f4a7320fcdad81c6	Y	N	N
+discipline-tdd-final	E06	s043-9.4	43	3	9.4	9.4 Tell, Don't Ask 원칙 [Freeman & Pryce - GOOS]	699	728	30	a122f2aa680fc10a6f615031552a2813ba74acdb15c81801d21575e94a050f1a	Y	N	N
+discipline-tdd-final	E06	s044-10	44	2	10	10. 디자인 패턴과 TDD [테스트주도 개발]	729	745	17	5fd485e2e8aa0831873b774d4517646556743282a4d21be3d063c9783342e8c8	Y	N	N
+discipline-tdd-final	E06	s045-10.1	45	3	10.1	10.1 값 객체 (Value Object)	746	770	25	95f7532448351a819cac047ac4eac09c4f592ea0535966679bc2c56e660b4f92	Y	N	N
+discipline-tdd-final	E06	s046-10.2	46	3	10.2	10.2 널 객체 (Null Object)	771	793	23	cb73d0d1f516383174a3c194cfd79215169ab98510d11049b77f174999281e45	Y	N	N
+discipline-tdd-final	E06	s047-10.3	47	3	10.3	10.3 팩토리 메서드 (Factory Method)	794	815	22	0ae640748995491b76aecbec4637d1fe4110b393595ce66da48f1a9df728e39a	Y	N	N
+discipline-tdd-final	E06	s048-11	48	2	11	11. 리팩토링 패턴 [테스트주도 개발]	816	817	2	2344981542dbad6450c3d861b1be77b1e80ffd25f8307bf8472394d6484c0185	Y	N	N
+discipline-tdd-final	E06	s049-11.1	49	3	11.1	11.1 차이점 일치시키기	818	821	4	28a732dae4eebbc239bc82d8cd47ee3302188a699c636437187c1c5606fe1517	Y	N	N
+discipline-tdd-final	E06	s050-11.2	50	3	11.2	11.2 변화 격리하기	822	825	4	a3dab4de3205fcf6accb245f17c8e28549dc7ddf9afe60a2d6bae0dae3d11147	Y	N	N
+discipline-tdd-final	E06	s051-11.3	51	3	11.3	11.3 데이터 이주시키기	826	855	30	48571a6d625d69d6d9be972467942abe428d13cbd3115ef83c130569bfd396f7	Y	N	N
+discipline-tdd-final	E06	s052-11.4	52	3	11.4	11.4 메서드 추출하기	856	876	21	a2d2db3df45c448a61446fb73b6e9de1fe4bb1a6a2c1b53f177fe595fb8779b7	Y	N	N
+discipline-tdd-final	E06	s053-11.5	53	3	11.5	11.5 메서드 인라인	877	880	4	832c974c8dbe1d753ebaa3d7532af8e4855eedef4e75003e6d6926cd274720be	Y	N	N
+discipline-tdd-final	E06	s054-11.6	54	3	11.6	11.6 인터페이스 추출하기	881	910	30	9083a3cd4c8aadc69face3be41042fe53b9ebfa30308eaa7c12de13a0b63c7a5	Y	N	N
+discipline-tdd-final	E06	s055-11.7	55	3	11.7	11.7 메서드 옮기기	911	914	4	a1917451b2b06f2a138af8855e0f212857f13ae46279ddf7971cc7b335613f7b	Y	N	N
+discipline-tdd-final	E06	s056-11.8	56	3	11.8	11.8 메서드 객체	915	920	6	124b33841c325ef75daea2343ee8cdbcc0f68a82c333fea853d304929b4e5503	Y	N	N
+discipline-tdd-final	E06	s057-12	57	2	12	12. 테스트 냄새 카탈로그 [Meszaros - xUnit Test Patterns]	921	922	2	61d1ed1d7bfd706839eaf25675c6267ce1299637a79df94f3709efda285cd526	Y	N	N
+discipline-tdd-final	E06	s058-12.1	58	3	12.1	12.1 행위 냄새 (Behavior Smells)	923	958	36	b47873565626dd64eeeced5bb752f521a5dc124fa8260cd1a64577f3a3d760f4	Y	N	N
+discipline-tdd-final	E06	s059-12.2	59	3	12.2	12.2 코드 냄새 (Code Smells)	959	992	34	40dbcf15540694e9349b17dea2ffc7f6806a5ea972a062568cee60fc3a7ff234	Y	N	N
+discipline-tdd-final	E06	s060-13	60	2	13	13. 레거시 코드 다루기	993	998	6	3e96273b0ad8ea506748bbc995bee4761fb97844dfab50d18d2b04777886e6ed	Y	N	N
+discipline-tdd-final	E06	s061-14	61	2	14	14. Property-Based Testing	999	1004	6	55ea9ef6656aec37c5b8eb9abb3b8fbf673e061c3c066f23b3d84a9f6c5ad5ac	Y	N	N
+discipline-tdd-final	E06	s062-15	62	2	15	15. Mutation Testing	1005	1010	6	90e80785c4a5b2ce956d847447eb0bc72fd2b60cb365475989fc9a99c9b677db	Y	N	N
+discipline-tdd-final	E06	s063-16	63	2	16	16. BDD (Behavior-Driven Development) [Cucumber, pytest-bdd]	1011	1012	2	ae4fd4879bccd44b15640c84981eba91971e055669025b47d1b02444dba012db	Y	N	N
+discipline-tdd-final	E06	s064-16.1	64	3	16.1	16.1 TDD와 BDD의 관계	1013	1033	21	bc35bcc1e2728fd1bf0b836fa40d68674612b3f3b80d70f6864b862a030f5301	Y	N	N
+discipline-tdd-final	E06	s065-17	65	2	17	17. TDD와 AI 코딩의 관계	1034	1035	2	9edf5f924329f5f63a31e28c577a85525ff38512313885037db052e648992abd	Y	N	N
+discipline-tdd-final	E06	s066-17.1	66	3	17.1	17.1 TDD as Prompt Engineering	1036	1047	12	abcf4261ed55557a453ebed7c1464c81f4ec79afd0bee91c04fcf9622d5bb705	Y	N	N
+discipline-tdd-final	E06	s067-17.2	67	3	17.2	17.2 AI 보조 TDD 워크플로우	1048	1075	28	99cd761bbfa394655ceb2b93354c92ed2febb06cc2aca13667b9be451913d3af	Y	N	N
+discipline-tdd-final	E06	s068-17.3	68	3	17.3	17.3 TDD가 AI 코딩에서 더 중요한 이유	1076	1084	9	99d42979523870eb9f5c99651c173a23b9b99c3952a9499a23e98da656a54065	Y	N	N
+discipline-tdd-final	E06	s069-17.4	69	3	17.4	17.4 dddjango Admission을 추가한 TDAID 6단계	1085	1097	13	3cfe5d9ba96bcbca7925a75938cbad6393980360898aeac4d1e2033f94899481	Y	N	N
+discipline-tdd-final	E06	s070-18	70	2	18	18. Python 테스트 생태계 심화	1098	1103	6	d723287679314446c27bdc80ce5a39f2806743c33a48518cb8749aa8998d3176	Y	N	N
+discipline-tdd-final	E06	s071	71	2		참고 문헌	1104	1122	19	4a27c4d250e41d7183fab783a66019916bde0015f6fc308f24fe54de0f01fe5f	Y	N	N
+implementation-django-ninja-skill	E07	s001	1	0		(전문)	1	6	6	d961f84f996bbdef7b046fa9799d918db5110a53c873888ba71514f1d472ac56	Y	N	N
+implementation-django-ninja-skill	E07	s002	2	1		Django Ninja JSON API 구현	7	8	2	984f0856bed339aeb2f2eba268ccfff11c12ccd95753ec908625e8be15ac7b3f	Y	N	N
+implementation-django-ninja-skill	E07	s003	3	2		언제 쓰나	9	17	9	663d2a2d12411970b8d50b2b905fd420c7e5740b7e5a71d3944d7f31fe761e70	Y	N	N
+implementation-django-ninja-skill	E07	s004	4	2		핵심 운영 원칙	18	37	20	dd1c9c5e065025dd5bc4639b8c39275626e45fdabb96a35f1fb5b84fba8b0606	Y	N	N
+implementation-django-ninja-skill	E07	s005	5	2		상세 레퍼런스	38	56	19	4624aece51e4d8b1fc431bb629bb8f3c97e74485b81cb0c231c9746407fd5bef	Y	N	N
+implementation-django-ninja-final	E07	s001	1	1		Django Ninja API 구현 종합 가이드	1	15	15	0ba63b112ef614eca7a8fb0bce90717c0f805a045d375d154ab7e746c6712a62	Y	N	N
+implementation-django-ninja-final	E07	s002	2	2		목차	16	32	17	d5afffbfcd72666a62ebb93e817eb08db967bf4e5329126c89ccbe31079fda50	Y	N	N
+implementation-django-ninja-final	E07	s003-1	3	2	1	1. 범위와 책임 경계	33	34	2	2736707ff781cbc2208c8f91bdcd85a82d7b7d54b48c6c775c69acd139f3dc37	Y	N	N
+implementation-django-ninja-final	E07	s004-1.1	4	3	1.1	1.1 Django Ninja skill의 역할	35	48	14	07b3259b44334d6e5d7cf9f8007c5feb2fb9957f83d5e2bcb26f358a7423ebc0	Y	N	N
+implementation-django-ninja-final	E07	s005-1.2	5	3	1.2	1.2 다른 source reference로 위임할 책임	49	60	12	37ac7507ee0431fa1f1025641f9b58664b89339b14c230b53e57fb64cad953c4	Y	N	N
+implementation-django-ninja-final	E07	s006-1.3	6	3	1.3	1.3 Router thinness 원칙	61	80	20	bc196f24da3a29395f973ed8708daa72ebf1dc13eef621a6a471d3dd587b39ed	Y	N	N
+implementation-django-ninja-final	E07	s007-2	7	2	2	2. Router와 endpoint operation	81	82	2	ab83980de6f03a8fc40c0885c85822e9df339cf7158878547af4c61d1adbe833	Y	N	N
+implementation-django-ninja-final	E07	s008-2.1	8	3	2.1	2.1 Router 등록	83	99	17	69dfbb6185701abdfda68bc946d92943db71974f11c4a2d4a62ab8b5a02f612d	Y	N	N
+implementation-django-ninja-final	E07	s009-2.2	9	3	2.2	2.2 Operation 선언	100	191	92	b4ab30922e0d80b652bbd68056ba8bbd8bb3dc9b8fb35d68b8207a3457e2e120	Y	N	N
+implementation-django-ninja-final	E07	s010-2.3	10	3	2.3	2.3 클래스 컨트롤러 (ninja-extra) — 신규 표준	192	305	114	3e782fee0e21b79cf618d9023a038ef3155a2fc69b0862fe99e8c5b001ac91ce	Y	N	N
+implementation-django-ninja-final	E07	s011-3	11	2	3	3. Schema와 ModelSchema	306	307	2	c4808a3376889b3ea5eacdd2271ce0f1678409dd6739879257c1068fbd1a01c6	Y	N	N
+implementation-django-ninja-final	E07	s012-3.1	12	3	3.1	3.1 Request/response schema 분리	308	341	34	4757b89fdd81ae80b9260e85dbd11fda6d3254352f18dc7d5e29b52299a7f733	Y	N	N
+implementation-django-ninja-final	E07	s013-3.2	13	3	3.2	3.2 ModelSchema 사용 기준	342	364	23	777f605cd1be48b13d5c689839ea7508e7c083aab482ffb68b20ed2408e7f474	Y	N	N
+implementation-django-ninja-final	E07	s014-3.3	14	3	3.3	3.3 Resolver와 computed field	365	372	8	27cf01830ac732292581471778f3392c3faf6d71731fe41e80b996e853fb8520	Y	N	N
+implementation-django-ninja-final	E07	s015-4	15	2	4	4. 인증과 인가	373	374	2	1d3a68707a10c36bf146a0deb8980eeae071b4b4aeec1d6735f2eaa8303f245c	Y	N	N
+implementation-django-ninja-final	E07	s016-4.1	16	3	4.1	4.1 Authentication	375	391	17	189fbd5f354f7d86ef5ae0809c57427c7e202531abb94e5b18d885a54a864c09	Y	N	N
+implementation-django-ninja-final	E07	s017-4.2	17	3	4.2	4.2 Authorization	392	406	15	56c77b45acc62a5a2fccdea4df313e837dff6f0e57a155061f9a1215263a04cf	Y	N	N
+implementation-django-ninja-final	E07	s018-5	18	2	5	5. Filtering, sorting, pagination	407	408	2	cba1d5c920445372d06feae342273e857cfabf04a22209ab77920f6a744f424b	Y	N	N
+implementation-django-ninja-final	E07	s019-5.1	19	3	5.1	5.1 Filtering과 sorting	409	440	32	3fe52544330919b6f500c0bb1b2499783081a9688cc368f4af4e3f05fef3f97e	Y	N	N
+implementation-django-ninja-final	E07	s020-5.2	20	3	5.2	5.2 Pagination	441	468	28	87a85f7f666a739f0301b826218dbd1d33664ab06faf1ff76917205f2443db4a	Y	N	N
+implementation-django-ninja-final	E07	s021-6	21	2	6	6. 상태 코드와 오류 응답	469	470	2	9828619d5c0d6be4330c2dd2e0334e531bd72cfa38ffcce0e52b93c740eeaafe	Y	N	N
+implementation-django-ninja-final	E07	s022-6.1	22	3	6.1	6.1 Status code mapping	471	500	30	9451ae1429819222e94380ee1090abe05d7898cbf95297a8eafc59ada453a9b6	Y	N	N
+implementation-django-ninja-final	E07	s023-6.2	23	3	6.2	6.2 `dddjango-code-json` 오류 프로필	501	826	326	3cb7f77da8529210d99564830cc5dcafbecc889fc1c1c13633f044219291901c	Y	N	N
+implementation-django-ninja-final	E07	s024-6.3	24	3	6.3	6.3 콘텐츠 협상 실패 (406/415)	827	853	27	1e93280cfda7ff2bf1fa67f8edf9b0cba3c72a238bdc2a17d134fa45d575df06	Y	N	N
+implementation-django-ninja-final	E07	s025-7	25	2	7	7. Idempotency-Key	854	872	19	5ff8d77764f7bbf634579825ef4a215c7fda91209606b8a1ad0d0d3392eb9662	Y	N	N
+implementation-django-ninja-final	E07	s026-8	26	2	8	8. OpenAPI	873	900	28	43e367206ef2ba29bf03450fdae3c05e05c884d06ab7f0b620a3633f707e4eef	Y	N	N
+implementation-django-ninja-final	E07	s027-9	27	2	9	9. Mounted Django client와 검증	901	902	2	111076d7fd272ab9a9ec3949cca3beb06f9b130dca4afb9901a9a5a00c424309	Y	N	N
+implementation-django-ninja-final	E07	s028-9.1	28	3	9.1	9.1 공개 HTTP 검증 범위	903	943	41	71341dc313fb81b4e82fc580f68fcd4f0ae248125c21a18a2810c1fcb772cac8	Y	N	N
+implementation-django-ninja-final	E07	s029-9.2	29	3	9.2	9.2 검증 보고 기준	944	959	16	c6409381c88a12e943faa0001257c21414a6fdb8d7049376aa7005bd306ec830	Y	N	N
+implementation-django-ninja-final	E07	s030-10	30	2	10	10. DRF-to-Ninja migration	960	984	25	38dafc4884a8772570ff4ac0b026e6003f41a04610634f5778d1dd9743b5891f	Y	N	N
+implementation-django-ninja-final	E07	s031-11	31	2	11	11. 라우팅 기준	985	1000	16	5112e79fa0c0b2fadc84a03d00b376ad6619f80fb29a4c497cd05ee1e23dff4a	Y	N	N
+implementation-django-ninja-final	E07	s032-12	32	2	12	12. 참고 문헌	1001	1019	19	49a5c2a2e9664a0e6d60bfda983d763ed850f9b63aabde81b67a2dd8be53b8c8	Y	N	N
+architecture-db-skill	E08	s001	1	0		(전문)	1	6	6	22c2bfada884a5c6193a998a48e84e7372de8bf347e73f625dfaf295fc9ad078	Y	N	N
+architecture-db-skill	E08	s002	2	1		데이터베이스 설계	7	8	2	499b1ecbdbe974c7762b6bf76dd3688573ae203d463c63ef3d185ab85b16404d	Y	N	N
+architecture-db-skill	E08	s003	3	2		언제 쓰나	9	16	8	83fdacedce81b8c22faeaa526305c3146413595c28db0cc3f0a1c6e814b3aaa9	Y	N	N
+architecture-db-skill	E08	s004	4	2		핵심 운영 원칙	17	26	10	17411580d859880404da0e6ae5a6909955f9d9880e1861ff6da6f945f49b6391	Y	N	N
+architecture-db-skill	E08	s005	5	2		상세 레퍼런스	27	47	21	b57a2efe6508b6abe8aeb671a00480ec3d91d28e2e87271f0411e41e8fff0696	Y	N	N
+architecture-db-final	E08	s001	1	1		데이터베이스 설계 종합 가이드	1	2	2	48cda3bca8d8990610cd56254921fd24c938737b81b88654fc75490d9adc47f4	Y	N	N
+architecture-db-final	E08	s002	2	2		목차	3	21	19	330eb75acf70f855b25f2718aa5744f1a828c1f546489202f2ead18ca0bd12d6	Y	N	N
+architecture-db-final	E08	s003-1	3	2	1	1. 데이터베이스 모델링 프로세스	22	23	2	e97ff49213370fb36080dcf0dd82bd4829b41ce1d7591b4b8ecf82a8a4c468b6	Y	N	N
+architecture-db-final	E08	s004-1.1	4	3	1.1	1.1 작업 순서	24	36	13	8643eded0d8ecf2d2e054278a1d54c8181beff221419e78627099f54dc3792de	Y	N	N
+architecture-db-final	E08	s005-1.2	5	3	1.2	1.2 업무 파악 원칙	37	45	9	2a8dd0d3bb1b4d669e9af054caf98453e09e70b389a7cbeef00a7403044457da	Y	N	N
+architecture-db-final	E08	s006-2	6	2	2	2. 개념적 데이터 모델링 (ERD)	46	47	2	17fddede7c675b84600a2455289f4e5a011f118b7e9359af58f9db7ef7a8740e	Y	N	N
+architecture-db-final	E08	s007-2.1	7	3	2.1	2.1 ERD 구성 요소	48	57	10	48cc2d55d5175e686f188b5e98492041fa533a4caebb3c7486b73e0fdcd47e3d	Y	N	N
+architecture-db-final	E08	s008-2.2	8	3	2.2	2.2 ERD 작성 원칙	58	64	7	507b031c7efe1f03cf0fbd885e110fbb16f34289fd6a2335bd703f0cc6b9d838	Y	N	N
+architecture-db-final	E08	s009-2.3	9	3	2.3	2.3 식별자 (Primary Key)	65	75	11	e57ebd9a13aa5725d5b9e58b39111f4ea1b23169227c4e7d6b5b4a10eebba757	Y	N	N
+architecture-db-final	E08	s010-2.4	10	3	2.4	2.4 Cardinality (기수)	76	83	8	30709f250f4f8bee223da2b590229bbcdc3227493e7e09a085b9eea3cf548954	Y	N	N
+architecture-db-final	E08	s011-2.5	11	3	2.5	2.5 Optionality (선택성)	84	95	12	8382a9f7a65c26a2593ccbfbd43848628f5a16209357cfa66c0777f7245ef278	Y	N	N
+architecture-db-final	E08	s012-3	12	2	3	3. 정규화 (1NF — BCNF)	96	97	2	60091df204dc071d4ee8b066fd26281c62bf57a3157c9e4264704afdcf555b2c	Y	N	N
+architecture-db-final	E08	s013-3.1	13	3	3.1	3.1 함수적 종속 (Functional Dependency)	98	101	4	528f86708470113b194364bb9f976ea03b8c1f974d8825b1757c184327888b7e	Y	N	N
+architecture-db-final	E08	s014-3.2	14	3	3.2	3.2 정규형 정의	102	110	9	22cb5350209bf41b3962d84beee5b700350989eb2af00de393a8c036c79a1283	Y	N	N
+architecture-db-final	E08	s015-3.3	15	3	3.3	3.3 정규형 위반 예시	111	132	22	3e086f83ec98cca7f2bd768680a89d32e72e5431ffb8786d54c279c5b8e8b465	Y	N	N
+architecture-db-final	E08	s016-3.4	16	3	3.4	3.4 정규화 핵심 원칙	133	140	8	61e606cf967cd800b8ae60cf559984070bf618e7cb48cedca47971da9dbe79f6	Y	N	N
+architecture-db-final	E08	s017-4	17	2	4	4. 역정규화 (Denormalization)	141	142	2	a56189877aee3c5c2a49e45e9894efb71bba7224a93ebe7c06f1a7d09442f7c9	Y	N	N
+architecture-db-final	E08	s018-4.1	18	3	4.1	4.1 역정규화란	143	150	8	17a4f8997c46b71d434a888b83afaefd3d2c1eb726db12b7c8fc53f7aa4fe7d2	Y	N	N
+architecture-db-final	E08	s019-4.2	19	3	4.2	4.2 핵심 원칙	151	154	4	cb504dae318b52527dfb9efaa393057d3f457b7275880d5228d7ef7d86cb0669	Y	N	N
+architecture-db-final	E08	s020-4.3	20	3	4.3	4.3 역정규화 4가지 기법	155	168	14	e29f5795ccb094345d07e810f0c6486dc32e53f3e54569cc8c19813d8a0548cf	Y	N	N
+architecture-db-final	E08	s021-5	21	2	5	5. 성능 최적화 순서	169	185	17	e84798cfa98d1c9b71bdc89cb881d1ad8ae5964ee552126f1de1a50e7818202f	Y	N	N
+architecture-db-final	E08	s022-6	22	2	6	6. 인덱스 아키텍처: B+Tree	186	189	4	ec142f4c779bdea445e4c05780bd69d10b663d3b28211107e77fd54017d78d2d	Y	N	N
+architecture-db-final	E08	s023-6.1	23	3	6.1	6.1 B+Tree 특징	190	197	8	41d4e0525b36c0579deac71160d8dec98bbd8fb2ea5f400535969bbed8df3da5	Y	N	N
+architecture-db-final	E08	s024-6.2	24	3	6.2	6.2 읽기	198	201	4	b998dc9113ba1935a520b2f634f3833894c838d2d70db47985890d98a28cbd80	Y	N	N
+architecture-db-final	E08	s025-6.3	25	3	6.3	6.3 쓰기	202	212	11	aff337443bc710dd46eb4953ff57f573c55ba000b1faa5a3ac4b6cb0ad9fa5db	Y	N	N
+architecture-db-final	E08	s026-6.4	26	3	6.4	6.4 인덱스의 근본 트레이드오프	213	222	10	46ed198302d90fa00d6a48a740a4115bce1cef0b6d4db017aabb27bc47c61856	Y	N	N
+architecture-db-final	E08	s027-7	27	2	7	7. 인덱스 설계 베스트 프랙티스	223	224	2	de69c62de07a4dbf247b34ff4e473795ba032fa8bb2e87105cedf2e180e3e197	Y	N	N
+architecture-db-final	E08	s028-7.1	28	3	7.1	7.1 복합 인덱스 컬럼 순서	225	241	17	151ceff2aa0265d4bb9aea8348b200060a9ed82cd28d3806ae39e0304f727ed4	Y	N	N
+architecture-db-final	E08	s029-7.2	29	3	7.2	7.2 커버링 인덱스 (Index-Only Scan)	242	251	10	fd24018375389a309b7bf74bfcfb333de04f2a97ea3d4def0a1265278bb8a416	Y	N	N
+architecture-db-final	E08	s030-7.3	30	3	7.3	7.3 부분 인덱스 (Partial Index)	252	262	11	4f94f5ec7353aaaf8112e30266d19d8c81bdb606fa8c9a6ae89f761b39fa955d	Y	N	N
+architecture-db-final	E08	s031-7.4	31	3	7.4	7.4 인덱스 설계 일반 원칙	263	275	13	788fa7804abc6e00d5d1d3bb3a340b352da272039df95dfe5c2efde0d149268d	Y	N	N
+architecture-db-final	E08	s032-8	32	2	8	8. 제약조건과 중복 방지	276	279	4	621a27762dc48b1690b0ca467af2f9a01ceea2649f969174b571441d36eb429b	Y	N	N
+architecture-db-final	E08	s033-8.1	33	3	8.1	8.1 제약조건 선택 기준	280	289	10	1337d847a5efe1860bb91915cdf9ca2597ad6dc604597c9a36ddfe2c85e78be9	Y	N	N
+architecture-db-final	E08	s034-8.2	34	3	8.2	8.2 FK 삭제 정책	290	302	13	e62733b81d00cf486eb5fb8dbcdd4785a01be9c8d84902b12b318986f2a34749	Y	N	N
+architecture-db-final	E08	s035-8.3	35	3	8.3	8.3 중복 방지와 멱등성 저장소	303	322	20	d65407364048f2316dbed14d7daa8b8859f7934f905267c6cf95869dedd56411	Y	N	N
+architecture-db-final	E08	s036-8.4	36	3	8.4	8.4 제약조건 rollout 원칙	323	333	11	0c6d87a86c0ee3b73699f54e77111609df3199e3a35236743e9723ad634d76b9	Y	N	N
+architecture-db-final	E08	s037-9	37	2	9	9. 트랜잭션, 격리 수준, 락	334	335	2	83c875a0d632739cf8c005cdfd84400d29d3d026e381aefd080957f77cf8b95a	Y	N	N
+architecture-db-final	E08	s038-9.1	38	3	9.1	9.1 ACID	336	344	9	f98fa6e410d500c3caa83d6e9a31864cd9ae04bfe2e79e227a6a2e38cf792869	Y	N	N
+architecture-db-final	E08	s039-9.2	39	3	9.2	9.2 이상 현상 (Phenomena)	345	353	9	2ebb62bf3da16cae772378e882ad8c5df6fea58c9b00fb786bf45c7a74b7b08f	Y	N	N
+architecture-db-final	E08	s040-9.3	40	3	9.3	9.3 4단계 격리 수준	354	362	9	089eece8029db8ea42afdfcb6e1c83d9c352e342e121ab19d719772d531e69fd	Y	N	N
+architecture-db-final	E08	s041-9.4	41	3	9.4	9.4 실전 선택 가이드	363	372	10	69d52ee84219e8334375b725443577018898c1fd3f66cd29f2057ee0b21d487c	Y	N	N
+architecture-db-final	E08	s042-9.5	42	3	9.5	9.5 락과 동시성 제어	373	392	20	f0356d3b3b5489d0ee087377f659bd719c45a756e34aab6a8dea971bfd05903f	Y	N	N
+architecture-db-final	E08	s043-9.6	43	3	9.6	9.6 Risky Write Consistency Block	393	415	23	ef07b0d17b1903a81f58a1db870c51335c4740239fd22fc6fc6f3819fae6126a	Y	N	N
+architecture-db-final	E08	s044-9.7	44	3	9.7	9.7 Commit 후 메시지 전달과 Outbox	416	434	19	32fa2721be317ebe00bf2b393889e6cd6ef62afefd8f2dd7d6c421dbfab1087b	Y	N	N
+architecture-db-final	E08	s045-10	45	2	10	10. 쿼리 최적화	435	436	2	6e8491d880421e4c6e21c95c109a254849c529b346a0b3e62670bb3760e837a8	Y	N	N
+architecture-db-final	E08	s046-10.1	46	3	10.1	10.1 EXPLAIN ANALYZE 읽기	437	459	23	204c3f9610733794ab4dfa3ae26c4cf008386f485443491b7374cccaa2d0e462	Y	N	N
+architecture-db-final	E08	s047-10.2	47	3	10.2	10.2 스캔 유형	460	468	9	37ca39237ccf3148845034377703feff2e0cd9916f4b5330d00c4f48868ef613	Y	N	N
+architecture-db-final	E08	s048-10.3	48	3	10.3	10.3 조인 유형	469	476	8	5a9d5c403967c9766eaae6dc4b4cab4341076260366ccd210e5710f26380fafc	Y	N	N
+architecture-db-final	E08	s049-10.4	49	3	10.4	10.4 N+1 문제	477	494	18	cd589d21a868b9c3522b5779502f7feccc3c451b1ee9e935c6ef9e3becae08d3	Y	N	N
+architecture-db-final	E08	s050-10.5	50	3	10.5	10.5 쿼리 최적화 일반 원칙	495	507	13	bc4504553a29a75f053425054bb1a3132ff2023dccf305ae1eb8a2c7447a25aa	Y	N	N
+architecture-db-final	E08	s051-11	51	2	11	11. 운영 rollout, backfill, migration safety	508	511	4	89db8ea95866ada4ba98c736fdaf224aed435f32925f3dd2159f641b98b4a0a5	Y	N	N
+architecture-db-final	E08	s052-11.1	52	3	11.1	11.1 Expand / Backfill / Contract	512	523	12	9e5e2633e45dfc88add20792feee9d699325210b0f1e56f6a973dc200cca8da6	Y	N	N
+architecture-db-final	E08	s053-11.2	53	3	11.2	11.2 Backfill 위험	524	533	10	b6a5bda1263913978c6b46413f42d5958d07edf24520ce55d5d7b046b49398a8	Y	N	N
+architecture-db-final	E08	s054-11.3	54	3	11.3	11.3 Index와 constraint lock risk	534	545	12	76ccc166d52b1cde2efa6ac8e999047e43dd29e19af129447e24699c112b5984	Y	N	N
+architecture-db-final	E08	s055-11.4	55	3	11.4	11.4 실패 대응	546	557	12	d7d7ed5fc056aaf9d29345843bc12a50da7d57cf50d9b6b9e2e0b7746f1d5995	Y	N	N
+architecture-db-final	E08	s056-11.5	56	3	11.5	11.5 Rollout 산출물	558	573	16	127dcee1afcf6a9b77fa9a0a16ff2c585cadbcc8e4ded5faeb269196d70c5885	Y	N	N
+architecture-db-final	E08	s057-12	57	2	12	12. 데이터 모델링 패턴: 계층 구조	574	577	4	efe584288dc14539183b1fb4e4d58dc0713ac53f6fa59fb69c1626d8d7f144a1	Y	N	N
+architecture-db-final	E08	s058-12.1	58	3	12.1	12.1 패턴 비교	578	586	9	e93826e2d8d328fd7c5775c2d130b4820f4d2aa7d51a1dd78c8da693d0fccaec	Y	N	N
+architecture-db-final	E08	s059-12.2	59	3	12.2	12.2 Adjacency List (인접 리스트)	587	607	21	c532c5bfacafbe3db8610354c59f73b24d6dad36262c8095b18dfad6138f16a0	Y	N	N
+architecture-db-final	E08	s060-12.3	60	3	12.3	12.3 Closure Table (폐쇄 테이블)	608	629	22	c95822094715908ef81f994b5450a7e9e9bb29076deb35d45231b92d93d40b15	Y	N	N
+architecture-db-final	E08	s061-12.4	61	3	12.4	12.4 선택 가이드	630	642	13	80f118c3e811b859a2ee9d29b59c49a35e1a4bb6cbbef291083536564d1b7e89	Y	N	N
+architecture-db-final	E08	s062-13	62	2	13	13. 데이터 모델링 패턴: 상속과 다형성	643	646	4	b06e7ec33905c1f94c5b8de6148b483c18c325f4a057d7bc7651dcb8970b6272	Y	N	N
+architecture-db-final	E08	s063-13.1	63	3	13.1	13.1 상속 패턴 비교	647	654	8	4df8d0ad20bcd02f6f6921d740cb0f6159268f44b11579a9adb4677c9c620988	Y	N	N
+architecture-db-final	E08	s064-13.2	64	3	13.2	13.2 Single Table Inheritance (STI)	655	672	18	9bc76a2e68080b1f41e2fd44a6d7c229e45244ddc2f48650f73e6db010076e78	Y	N	N
+architecture-db-final	E08	s065-13.3	65	3	13.3	13.3 Class Table Inheritance (CTI)	673	693	21	05da06eb9179045c4640bfe4d178d73c18fc1593dbf493948dab586fd1cc78a8	Y	N	N
+architecture-db-final	E08	s066-13.4	66	3	13.4	13.4 다형적 연관 (Polymorphic Associations)	694	708	15	8db84a6fd9e88587a243620044d21d6dcb4975fc65a4b795d5202065560a43c2	Y	N	N
+architecture-db-final	E08	s067-13.5	67	3	13.5	13.5 선택 가이드	709	721	13	8a43533897bb933bbe9931c984aeeac2e15dbcae7a07346a8897cc2db0af6227	Y	N	N
+architecture-db-final	E08	s068-14	68	2	14	14. 참고 문헌	722	736	15	cc3fbd3ff7085e083ea521ca8e0f64744262d36d1bcc0923b0d723dac1d2d862	Y	N	N
+architecture-api-skill	E08	s001	1	0		(전문)	1	6	6	3881b53f37bc5e099895a1968891a15e16756fd49b2019bea9782c1d62c1ed7f	Y	N	N
+architecture-api-skill	E08	s002	2	1		REST API 계약 설계	7	8	2	de87de911eda9b2fb0504b006c877b791736a6d5e09043c314da49641b0e61fd	Y	N	N
+architecture-api-skill	E08	s003	3	2		언제 쓰나	9	18	10	30cae3ae86bbbeece77b7a5ce315d591afac8d8e9862c1a8fd591c31b0f2a117	Y	N	N
+architecture-api-skill	E08	s004	4	2		핵심 운영 원칙	19	29	11	1fe4b993f24938fe93fcbe05b1327838f4d33fbf6adf12a0e093997baaf05329	Y	N	N
+architecture-api-skill	E08	s005	5	2		상세 레퍼런스	30	51	22	43dcf62e3b855cbcfdbbb4d67d056ffc284fc0f5baae019d3ec91255673e6ef0	Y	N	N
+architecture-api-final	E08	s001	1	1		REST API 설계 종합 가이드	1	2	2	b3e3690bc0aff2acffa012626d97e6a0c5b144d41e2db0df41643fc9ddcea6af	Y	N	N
+architecture-api-final	E08	s002	2	2		목차	3	22	20	121cc3e80245aee39a6e58fabc0545c5deb73e04bf5d30ce6a24c23d1755fb0b	Y	N	N
+architecture-api-final	E08	s003-1	3	2	1	1. REST 아키텍처 원칙	23	24	2	fbd566066d2e37706284e02c5f4b240b161a9607527a23baeab866cbb998dd76	Y	N	N
+architecture-api-final	E08	s004-1.1	4	3	1.1	1.1 REST 정의	25	28	4	d0d89371c1b5cf55911096df74bf4ab4d87f8dfbe3bfbbf0309848aa6a4a55c6	Y	N	N
+architecture-api-final	E08	s005-1.2	5	3	1.2	1.2 구성 요소	29	36	8	59525a9e3cc42cd4052d4d6de10f2b5875e98666015d7d974a353e064df23b04	Y	N	N
+architecture-api-final	E08	s006-1.3	6	3	1.3	1.3 핵심 원칙	37	43	7	7999ca642ff471d6e3b12919a883c1c0b543d99d8e8704875222f70392cd12ed	Y	N	N
+architecture-api-final	E08	s007-1.4	7	3	1.4	1.4 REST의 한계	44	52	9	32486ecd6f10e3d269d3fba9f1e80b2c730cd9c337bd451512c2cc6b3948345f	Y	N	N
+architecture-api-final	E08	s008-2	8	2	2	2. HTTP 메서드와 멱등성	53	54	2	b0ac60c08f33eb09d67bbbf8c2aa81173c629d630804c9324318f4be79186f15	Y	N	N
+architecture-api-final	E08	s009-2.1	9	3	2.1	2.1 메서드별 안전성과 멱등성	55	68	14	e6b84bcb39be897ab325dadbd213bbc3cec93733f857818b393ea7669d36e7f6	Y	N	N
+architecture-api-final	E08	s010-2.2	10	3	2.2	2.2 PUT vs PATCH	69	76	8	c4a620d66c91aaa5150cd237dbde99a99ab249cf72aedb1bf3a71588645c36f6	Y	N	N
+architecture-api-final	E08	s011-2.3	11	3	2.3	2.3 메서드-리소스 매트릭스	77	88	12	7860f01938582d357db6a1054376309c6ae4869854d826fdc74280334f4fb2f9	Y	N	N
+architecture-api-final	E08	s012-3	12	2	3	3. URL/리소스 설계 규칙	89	90	2	4fe7ca235590eae24a5926885aa129a924c90486e94f6bbe292404ce22c568bf	Y	N	N
+architecture-api-final	E08	s013-3.1	13	3	3.1	3.1 명명 규칙	91	100	10	62b233506db7e720ef8a8022fe610e6fe2c580e4c3962da19cca3c32477579c7	Y	N	N
+architecture-api-final	E08	s014-3.2	14	3	3.2	3.2 계층적 하위 리소스	101	110	10	ee76bea1b711c1f4e55301c46c2d3f9dd22a9f4b3410c93cdf949d2f5029ad8b	Y	N	N
+architecture-api-final	E08	s015-3.3	15	3	3.3	3.3 필터링, 정렬, 검색 패턴	111	125	15	1b1eb5f2f28261b86c7504bfe7e8afb34651f8eb39bf6021446668d7691a4212	Y	N	N
+architecture-api-final	E08	s016-4	16	2	4	4. HTTP 상태 코드	126	127	2	515ebbf6152c90585e3995861b82be3a3511c3210091c817a7560a4049fff360	Y	N	N
+architecture-api-final	E08	s017-4.1	17	3	4.1	4.1 분류	128	137	10	da618517e3788ba944d8d1e3a407ac0fece28df34fc462ce9f3983405edfb055	Y	N	N
+architecture-api-final	E08	s018-4.2	18	3	4.2	4.2 API에서 자주 사용하는 상태 코드	138	169	32	9f40b94b09c8b973be5196ec354363dcedf9fc7cc7c747f5f19aed3f45492db9	Y	N	N
+architecture-api-final	E08	s019-4.3	19	3	4.3	4.3 PRG (POST/Redirect/GET) 패턴	170	177	8	32d8b73e2935182eed6d2a7c34014841b5f1846dfc65e62c472cd61c2b531d7c	Y	N	N
+architecture-api-final	E08	s020-5	20	2	5	5. 요청/응답 계약	178	181	4	ba71559de1bac20b5c2ab8cd6daea0fd1ad4e1fe6a47fa0ffca5723b12e31105	Y	N	N
+architecture-api-final	E08	s021-5.1	21	3	5.1	5.1 요청 계약	182	192	11	5e237d6e4fb15070aa5d4176ee29ea8e3bf8f456c9114ae6460c67db44b18b6f	Y	N	N
+architecture-api-final	E08	s022-5.2	22	3	5.2	5.2 응답 계약	193	201	9	3c16642e91f0cee019704243a2fc1291fe446a38fe5ebf9a9889cc2c704d3e11	Y	N	N
+architecture-api-final	E08	s023-5.3	23	3	5.3	5.3 계약 체크리스트	202	220	19	735f8bc852d38974d4d33a201dc47ef4c2e69b61fb5c82cf2e0f65c2960d8a15	Y	N	N
+architecture-api-final	E08	s024-5.4	24	3	5.4	5.4 에러 프로필 선택	221	232	12	b8103af5d65163b054e79188fbf6c76ae8fcaedaabe3794067447e2424da8fc7	Y	N	N
+architecture-api-final	E08	s025	25	4		`dddjango-code-json` (새 dddjango Ninja 범위의 기본)	233	242	10	cfacc5271fd358a6344b303336ce17c34056851c7ba862089ecde3a629dea098	Y	N	N
+architecture-api-final	E08	s026	26	4		framework 기본 응답과 공개 헤더의 경계	243	246	4	cefa4f8a3f630d7bba7bdf4ed7344936ae6d65b08961baacb4a534a0911401b3	Y	N	N
+architecture-api-final	E08	s027-6	27	2	6	6. RFC 9457 에러 응답 형식	247	250	4	c7e33b86378325a2ee69c913483386824e9b65ccdddd8afcc1fa1db638defa04	Y	N	N
+architecture-api-final	E08	s028-6.1	28	3	6.1	6.1 Problem Details for HTTP APIs	251	262	12	4f42520caeee172d8bad6e43468b12adb8957f3f41c2250eea2a7adb6608dec8	Y	N	N
+architecture-api-final	E08	s029-6.2	29	3	6.2	6.2 예시	263	281	19	6c74d53d91663fecc86a94411734b9179797624b7f208d39bd6817547a24ecd9	Y	N	N
+architecture-api-final	E08	s030-6.3	30	3	6.3	6.3 핵심 규칙	282	291	10	9c774a31a391cf8c461a2128f49e37e17c12e706c7a348286a1f5fc9803a2b46	Y	N	N
+architecture-api-final	E08	s031-7	31	2	7	7. HTTP 헤더와 콘텐츠 협상	292	293	2	6362fc8fc8e18e62278c4748121998ad066f0d14ed7eb33bc4f4cf50541a99e7	Y	N	N
+architecture-api-final	E08	s032-7.1	32	3	7.1	7.1 표현 관련 헤더	294	302	9	c962882025e94fa8d77c9cd776cbfb8dd8f6b53cc781635739a3559d668ae955	Y	N	N
+architecture-api-final	E08	s033-7.2	33	3	7.2	7.2 콘텐츠 협상 (Content Negotiation)	303	331	29	698583d0ab579b2e6f98a9cb8db705f4d1e269a2be45ead95c7a0bf294560bde	Y	N	N
+architecture-api-final	E08	s034-7.3	34	3	7.3	7.3 캐시 관련 헤더	332	345	14	0fedaaf8c7e844d93ede59aba4062a35963f40754f3ee8756a7d0b113dff1cb5	Y	N	N
+architecture-api-final	E08	s035-8	35	2	8	8. 인증과 인가	346	347	2	f44e3a11f6e4e53d69ea30c20b08a371c7bfcf4603843370590aa7203cd2ae97	Y	N	N
+architecture-api-final	E08	s036-8.1	36	3	8.1	8.1 인증 vs 인가	348	361	14	b617812bbdbb3a3b276a58c50f144467983878266204f79485be2187dd00219e	Y	N	N
+architecture-api-final	E08	s037-8.2	37	3	8.2	8.2 인증 메커니즘 선택 기준	362	369	8	5df8c916a526d06a94fcf2b68732de2075967817ebe471f69a25c5ab98b97ffc	Y	N	N
+architecture-api-final	E08	s038-8.3	38	3	8.3	8.3 API 요청의 보안 원칙	370	377	8	65d67057343dd9ed55e9718849321ac8ed8a8bf86b0fd681595e673adb91af52	Y	N	N
+architecture-api-final	E08	s039-8.4	39	3	8.4	8.4 토큰 수명과 스코프	378	394	17	99f2454eb07e0750a8743dbd712bdbb40d901d809abdb7c76cb9f8b02319313a	Y	N	N
+architecture-api-final	E08	s040-9	40	2	9	9. 페이지네이션	395	396	2	d9ca307dad99371bf0d8d4a19a0b23bd0009e41c69fe096848ea2b750b54c070	Y	N	N
+architecture-api-final	E08	s041-9.1	41	3	9.1	9.1 세 가지 접근법	397	406	10	687a355340f2c41398cffa88857e823aa93087e8fc0a611764d60a9b7610df66	Y	N	N
+architecture-api-final	E08	s042-9.2	42	3	9.2	9.2 선택 기준	407	414	8	eff45bba6936a1e079073db5552e2b72be192f18ad090717ef7e58d0a469257d	Y	N	N
+architecture-api-final	E08	s043-9.3	43	3	9.3	9.3 실전 원칙	415	425	11	e09c6ea2293911ce7ca7b854de4ad0203305d9fa5607164af9cb6a0256918487	Y	N	N
+architecture-api-final	E08	s044-10	44	2	10	10. 버전 관리	426	427	2	c9c326db270a0ddc3a406eb2b52e61b6909da997fd1660baca4a857deff5584f	Y	N	N
+architecture-api-final	E08	s045-10.1	45	3	10.1	10.1 세 가지 전략	428	435	8	7611bb9ca4627bb0f608dc19416fe23b0222716296c2a3e7011ce1d06f703e16	Y	N	N
+architecture-api-final	E08	s046-10.2	46	3	10.2	10.2 Stripe의 날짜 기반 버전 관리	436	442	7	028f4933663e1f6e9c2ca3a45fca6bf3d223d981a9727dda580d3dd680f95da5	Y	N	N
+architecture-api-final	E08	s047-10.3	47	3	10.3	10.3 실전 원칙	443	452	10	38dc9b437d7755431a028b4acaf73e6e50a6e32a2bf180de1cadf14e7f1131c7	Y	N	N
+architecture-api-final	E08	s048-11	48	2	11	11. 하위 호환성과 Deprecation	453	454	2	7eb6d394b22e1cb50285a1dd02372b9936b0f8fd5607b49fc2be381273251431	Y	N	N
+architecture-api-final	E08	s049-11.1	49	3	11.1	11.1 Breaking vs Non-Breaking Change	455	468	14	0a9791c38c03910303fbe835593ee6195b67e9153452d94ec98a8ccd130d5412	Y	N	N
+architecture-api-final	E08	s050-11.2	50	3	11.2	11.2 Deprecation 프로세스	469	480	12	9febc19561b51100ac5fd193b76f7cd4aae3c5508db68e1c31c2d872dc77c85f	Y	N	N
+architecture-api-final	E08	s051-11.3	51	3	11.3	11.3 실전 원칙	481	488	8	11f33c633857a70a3a8b5669637e63b6158154c016de405833e0602668cad012	Y	N	N
+architecture-api-final	E08	s052-12	52	2	12	12. Rate Limiting	489	490	2	133b9d546d234335b80c107d0655e04800366770cbafc1899bd7a53329ef1daf	Y	N	N
+architecture-api-final	E08	s053-12.1	53	3	12.1	12.1 Rate Limit 헤더	491	499	9	dc9b1ba6ad2a285f5a2d58d53523379b845ab94234e4a669145c43f5974ec68f	Y	N	N
+architecture-api-final	E08	s054-12.2	54	3	12.2	12.2 429 Too Many Requests	500	509	10	8349e46d40c0734824dc8f5097c2858ced47fbe7c407e0733a11fc086a221d25	Y	N	N
+architecture-api-final	E08	s055-12.3	55	3	12.3	12.3 알고리즘 선택 기준	510	518	9	d29aff933ba642d96fd3b26dfc52122dff6ff800e7cbc70db0857832f21bb41f	Y	N	N
+architecture-api-final	E08	s056-12.4	56	3	12.4	12.4 실전 원칙	519	528	10	81c45ed8ac4670f25b3f4fec68d87a10c8575c313ecc96bfe46262917ee98457	Y	N	N
+architecture-api-final	E08	s057-13	57	2	13	13. 멱등성 키 (Idempotency-Key)	529	530	2	4c1efc0d75f29a2fa5323f59b8e703b82fe2375f16d8123005dd6a4170215b93	Y	N	N
+architecture-api-final	E08	s058-13.1	58	3	13.1	13.1 문제	531	534	4	5ec8c515324b7ba254ea5380d940adc498b7221e1fc48036177fa69c62432135	Y	N	N
+architecture-api-final	E08	s059-13.2	59	3	13.2	13.2 Idempotency-Key 패턴	535	551	17	f9a273b8bf0852fba03df4b77c096ca1e7082b93709971b1b935dcd72be18b91	Y	N	N
+architecture-api-final	E08	s060-13.3	60	3	13.3	13.3 계약 결정 사항	552	569	18	e9332eab18675afc4dcd53f9a0337f65b3f617110bc1a50447d5b068475abedd	Y	N	N
+architecture-api-final	E08	s061-13.4	61	3	13.4	13.4 실전 원칙	570	581	12	8c87031aa62ad288c211a71858105dea4cf0492e49cc5c8bfa604c6051b7109e	Y	N	N
+architecture-api-final	E08	s062-14	62	2	14	14. OpenAPI	582	583	2	80635b43559e256cfb594594506d29190706d57d6357a204e22adb789881867c	Y	N	N
+architecture-api-final	E08	s063-14.1	63	3	14.1	14.1 OpenAPI란	584	587	4	2c8e88a5fe3f027a74d219d386004a43f0fbaeeb8b30702ec5be54260494337f	Y	N	N
+architecture-api-final	E08	s064-14.2	64	3	14.2	14.2 용도	588	595	8	99794f1735816f4e7c949ffeef0f67630dfa739ecb0615783c7a00f6a0d50a9f	Y	N	N
+architecture-api-final	E08	s065-14.3	65	3	14.3	14.3 반영해야 할 계약 표면	596	609	14	108138f62216972d06796bba8bb17f4bc9a7770896059c08b5e4b446f79e03c7	Y	N	N
+architecture-api-final	E08	s066-14.4	66	3	14.4	14.4 실전 원칙	610	619	10	60041b8a02d700e23900b86ba6e94880d2118dddf48f45fc03af54c75184faf9	Y	N	N
+architecture-api-final	E08	s067-15	67	2	15	15. 참고 문헌	620	638	19	0c99ec7fa06c492490bedbd7f075efffcf090d6e56213aa76dd36c926e5a70ac	Y	N	N
+implementation-django-web-skill	E09	s001	1	0		(전문)	1	6	6	dd7d8b84341a8c468d64f67a912883292d7bb2341b98402f1e502c5fe53373ec	Y	N	N
+implementation-django-web-skill	E09	s002	2	1		Django 서버렌더 표현계층 구현	7	8	2	6bc36621064beeced4bf7b3e3135dad25c4d301ac8d34d6e89100f68a55a2c09	Y	N	N
+implementation-django-web-skill	E09	s003	3	2		언제 쓰나	9	19	11	17f460eca1aae50c4bea4ea25ae0b54607bf713bba47b1be6192123530f404e6	Y	N	N
+implementation-django-web-skill	E09	s004	4	2		핵심 운영 원칙	20	31	12	650fc3072c7647ee5d033d29de796b294bb24773be30979a4c7530b92b8f121b	Y	N	N
+implementation-django-web-skill	E09	s005	5	2		상세 레퍼런스	32	50	19	cf878795a0db2d085fd2317f7a5eedb72a88043083212c2976a49da636e3ccb0	Y	N	N
+implementation-django-web-final	E09	s001	1	1		Django Web 구현 가이드	1	19	19	514b8a8ecff53f2f6295b1cbb0a953f87575d4aa562e59a2d9d6972e3c05ebc1	Y	N	N
+implementation-django-web-final	E09	s002-1	2	2	1	1. 책임 범위와 handoff	20	36	17	fb9dd8e919cc956a1e63bfa438bfa6b12afbcc0082fd58fa039375bf330e9469	Y	N	N
+implementation-django-web-final	E09	s003-2	3	2	2	2. TemplateView, Generic CBV, FBV 선택	37	98	62	ce924aeb847832c4d2a3d91a6dc7ab54666814a8a73cecf1721b8622d0b4d7d5	Y	N	N
+implementation-django-web-final	E09	s004-3	4	2	3	3. Context 준비와 표시 값	99	110	12	35b2a4233dad9486c7ef65a6b85757f5e39d57087665cc36cd211954f3b09412	Y	N	N
+implementation-django-web-final	E09	s005-4	5	2	4	4. Templates, base template, includes/components	111	149	39	6b4e7afd233203e3b243c04e4d6787855c2cc2b98460f46c66cac2c8a8fc215e	Y	N	N
+implementation-django-web-final	E09	s006-5	6	2	5	5. Static files, CSS, JavaScript	150	162	13	352866dcdb253a67cb0d07e5967f08a947eeccd427465b2acac9fa7aae957c49	Y	N	N
+implementation-django-web-final	E09	s007-6	7	2	6	6. Web forms와 POST flow	163	206	44	e978b86bedcaef85dc7d340ffa5064d34b4aa0fa80864bc7e79e955495a88eae	Y	N	N
+implementation-django-web-final	E09	s008-7	8	2	7	7. HTMX fragment와 AJAX	207	237	31	de705a07cf38343787d750b001e78a541c3e2d501246faca1e90f9dcd0cbf46c	Y	N	N
+implementation-django-web-final	E09	s009-8	9	2	8	8. CSRF, XSS, security setting	238	250	13	752af501d0652d62827b2a7ff5e8ff8583f9efa5ef2ee74942d729f4107d9f16	Y	N	N
+implementation-django-web-final	E09	s010-9	10	2	9	9. View auth와 permission	251	261	11	1aaa23ede6af01e14041847c05a7c844ae9ad41f0d363ab163e90026d7b6f578	Y	N	N
+implementation-django-web-final	E09	s011-10	11	2	10	10. Render acceptance checks	262	280	19	c8a447a3c363e535bcaaadff8747cdb202d416ae329edb76d5cb11198d5fa330	Y	N	N
+implementation-django-web-final	E09	s012-11	12	2	11	11. 서버렌더 에러 처리	281	424	144	dcbd93d133f167e4ab9b81b14b8fb47943279986036c9d820ac66b406411499d	Y	N	N
+discipline-houserules-skill	E09	s001	1	0		(전문)	1	6	6	537dc36542c943f700fc75be062550d59d479585d59548a5ce510636469a430d	Y	N	N
+discipline-houserules-skill	E09	s002	2	1		하우스룰 규율	7	8	2	8e2859a5a4061c1811cbebacdb730c9ae9c7a8ecb80a55b7425447a6309b85a3	Y	N	N
+discipline-houserules-skill	E09	s003	3	2		무엇이고 왜	9	21	13	8dfb8e8e4cdf3956d01f7901d858e3fd3b261f672c26bcc327963014ab3bceb1	Y	N	N
+discipline-houserules-skill	E09	s004-1	4	2	1	§1 파일트리 결정 순서	22	33	12	91601714dd752677e5aba73f890b432e6416aa8eabfe8ea4ba6e554eb042334b	Y	N	N
+discipline-houserules-skill	E09	s005-2	5	2	2	§2 충돌 중재	34	37	4	378d9bbf1b03d2e05565da4c298e98cbb642e619169d9baee53021024d54703e	Y	N	N
+discipline-houserules-skill	E09	s006-3	6	2	3	§3 구조 결정이 빠졌다는 신호	38	48	11	c64723c138c98a0bfb81185519a0d77440fd7d93d85e8ea1e584ab56f1c03a64	Y	N	N
+discipline-houserules-skill	E09	s007-4	7	2	4	§4 타입 어노테이션	49	60	12	b2e965288ac9406df9a9e373312e1f0f52158eca224f76daa43e639842c5fd13	Y	N	N
+discipline-houserules-skill	E09	s008-4.1	8	3	4.1	§4.1 왜 전부인가	61	64	4	8817b8ee74808c14be29155d50f3496656c09012c3d2b8518e7761660c71fef3	Y	N	N
+discipline-houserules-skill	E09	s009-5	9	2	5	§5 코드 주석·docstring 언어	65	68	4	f8952879b90ba9d1fe5e360494654d7397035d0f4669674ab913b4284881987b	Y	N	N
+discipline-houserules-skill	E09	s010-6	10	2	6	§6 패키지·의존성	69	70	2	38953efc41bc271a20579124a37c1c51ea49c8fe5df490da002bca189e9a2c23	Y	N	N
+discipline-houserules-skill	E09	s011-6.1	11	3	6.1	§6.1 부트스트랩·표준 도구셋	71	74	4	b8f12e99d3e8d82dd83cb0a15a00cd0a0290a8fbdcf059f49586947b17eeacec	Y	N	N
+discipline-houserules-skill	E09	s012-6.2	12	3	6.2	§6.2 새 런타임 의존성의 버전 선택	75	83	9	a357189193aeaab896f4e11486d33801606c57f2745d0e8a429e1a9d02c45341	Y	N	N
+discipline-houserules-final	E09	s001	1	1		dddjango 표준 파일트리	1	6	6	863ae6e3b74f08af8ef83d6ea05653035a5ed57cd6ead3af73464b41039d95e8	Y	N	N
+discipline-houserules-final	E09	s002	2	2		무엇이고 왜	7	12	6	e73a74861bb9ee1e391e433abb609690d5e97c1c4eb7ec0de1ecffdf87206dd2	Y	N	N
+discipline-houserules-final	E09	s003-0	3	2	0	§0 제1원칙 — 골격은 내용과 무관하다	13	25	13	f62a35805be683d5ba4ab54fda4953e3e108051ff39978e8a7875ad2095f793f	Y	N	N
+discipline-houserules-final	E09	s004-1	4	2	1	§1 표준 트리 — 140행	26	180	155	61dbd5f1e9796dca931e2e6414a6cf5872fbea943a73f67460582d0cb06dea3a	Y	N	N
+discipline-houserules-final	E09	s005-2	5	2	2	§2 골격 규칙	181	182	2	47d6653207f239f88b7fabbe59b9d4cc6ca358d09bb91089876d49e59f6efded	Y	N	N
+discipline-houserules-final	E09	s006	6	3		BC 직계 — 일곱뿐	183	189	7	a71099fefe08b35ce1e68670c313897bc7169cc9cbcafb4fb2b6ceb2b0fccabe	Y	N	N
+discipline-houserules-final	E09	s007	7	3		입구 — `driving_layer/`	190	198	9	6125f69912b74969086300389ccc03a2e72675e80512774d1edb3d63ca3de5f0	Y	N	N
+discipline-houserules-final	E09	s008	8	3		만들지 않는 칸	199	205	7	22a30bf41fde565013a58786d9c368bd5f142d715f2d9e17511b11042e3f20ea	Y	N	N
+discipline-houserules-final	E09	s009	9	3		`migrations/` — 생성물만	206	209	4	9bf0c7b214f6ed20a5c1bbea4df55bdeabd64f1849bdf957a80041a1da1d3a3f	Y	N	N
+discipline-houserules-final	E09	s010	10	3		`<project>/`	210	216	7	973a8531fdfa0ceb0e86cce4ece5b468d56f8f25649261509e28b6e1cc1c4aea	Y	N	N
+discipline-houserules-final	E09	s011-3	11	2	3	§3 명명	217	221	5	82fb0aa48ba09d2b012434f68f08bd0d7d6948cc7ba6b7f5a3512b2eb0d52fea	Y	N	N
+discipline-houserules-final	E09	s012-4	12	2	4	§4 이관 — 종료 기록과 빚	222	223	2	32c0efa88f08e5d4d484bf04918b69a57e2c12b124468613978eafc479a41817	Y	N	N
+discipline-houserules-final	E09	s013	13	3		이관 종료 (2026-08-12)	224	227	4	a2afbb5f1f6acd756528aaf7e3217fde841a89c1edad2342fbe42c2c48197edd	Y	N	N
+discipline-houserules-final	E09	s014	14	3		brownfield 는 «면제»가 아니라 «아직 안 갚은 빚»이다	228	231	4	2fe0274e64eb32ba0891ce1debf4f114df97ec531aa1a83ce94d95f022006e44	Y	N	N
+discipline-houserules-final	E09	s015	15	3		검사기의 가드 계약	232	235	4	09c43059b67834d7b15e307b371e14baa2a346bfc19563f16f888583394f1104	Y	N	N
+discipline-houserules-final	E09	s016	16	3		규칙 개정의 이행 순서	236	239	4	6879b8086c3439e43a678360f062be9781a5ac7e12be7b7d64d870408171b322	Y	N	N
+discipline-houserules-final	E09	s017	17	2		배경 (이 표준이 파생된 곳)	240	242	3	3479e804ac0b1f15cc7f615d9ff5388db090c308477f0651478a9f3ee4232279	Y	N	N
+command-dddjango	E10	s001	1	0		(전문)	1	12	12	df36b9f547db3001d3428dc360dce0920cba9e6bc04627fe0e133a8cbfe510a0	Y	N	N
+command-dddjango	E10	s002	2	2		산출물 위치	13	25	13	f486f3774f4ebf1198a3140a0833a8d93905dacc8a2a1a76e93bd1ab97892cb6	Y	N	N
+command-dddjango	E10	s003	3	2		진행 가시성	26	56	31	2f6f82ed323b43f7db1a0bb8d4f7d249b6eeb377482d3e9141322023c1fb1823	Y	N	N
+command-dddjango	E10	s004	4	2		시작: 모드 판별	57	60	4	1977e9b16ca7c8becd667720ff919a89fbe068b3b21c1be8fbc2d7d0d18328fb	Y	N	N
+command-dddjango	E10	s005	5	2		Phase 0 — 요구·스코프 (G0)	61	72	12	e859c5889c4c4d95ea3b34cfcfd88dc542bbc01f038f6e751ed49e3333e8d837	Y	N	N
+command-dddjango	E10	s006	6	2		Phase 1 — 설계 (G1)	73	85	13	3aad752e7f25dd51489b7e7603641bd8a3214c5ed4d5f76388a9101805ec478b	Y	N	N
+command-dddjango	E10	s007	7	2		Phase 2 — 구현 (G2, 이중 루프 TDD)	86	140	55	c1f0d29a598f5f21f37d30aea9b0d6cee8e68ef1765dfb8fe4aba4ab00ea4c69	Y	N	N
+command-dddjango	E10	s008	8	2		Phase 3 — 마무리·검증 보고	141	144	4	70f81856eaacf625306457f49cd108b45a5e27720ef92651bab3a807feeb0b99	Y	N	N
+command-dddjango	E10	s009	9	2		수정 모드 (부분 수정)	145	156	12	9f3b4e3e5c35c86b97f17f42198999a3b8137196f531c22b0424e6b371eb2f0a	Y	N	N
+command-dddjango	E10	s010	10	2		엣지 처리	157	168	12	a95172ba1aa237d40c5542468c4071d90767fa7b82ec3a9c9e2356a3bcc5f761	Y	N	N
+command-dddjango	E10	s011	11	2		경계	169	176	8	ccaa3b536a63ce6d4ae457e623ba329e639f66063a287aa6664292744dc524cf	Y	N	N
+agent-acceptance-tester	E10	s001	1	0		(전문)	1	14	14	3803c9a8fa7cc9cb6ea58fbb64cd572e7c7321be96a5842f85708305fe22355f	Y	N	N
+agent-acceptance-tester	E10	s002	2	2		입력	15	18	4	57f202ead2eafc4be4d02e30291f23b7346f683079ab7b165e67cc7987bd2515	Y	N	N
+agent-acceptance-tester	E10	s003	3	2		산출	19	22	4	9a717932afb146f346fce2994e75c1ca502b698622952d57c545664ba9f78bf4	Y	N	N
+agent-acceptance-tester	E10	s004	4	2		인수 테스트 작성 규칙	23	48	26	7d9e448427f2ecaac682629646a0380cae26fad3897da4b7de2a2a7d9c39c100	Y	N	N
+agent-acceptance-tester	E10	s005	5	2		경계	49	54	6	0ce20b339e86ca74278d6e57f07c354a02ac824146ba6e487cc65e3e95017cbb	Y	N	N
+agent-coder	E10	s001	1	0		(전문)	1	17	17	142a1a295354697b6bf431c3f07b7e46a354c229ee8567fe736cef6e1c053bcb	Y	N	N
+agent-coder	E10	s002	2	2		입력	18	26	9	75f6ed7eb5a063bc98c6a47c8c0a1ebb11d979346b06d9d0fb9bf70c8ab0e65e	Y	N	N
+agent-coder	E10	s003	3	2		산출	27	30	4	b67ce91f1c3a8c57f94672e14826173b9ef0f74c14d9042206da2ef3049a290a	Y	N	N
+agent-coder	E10	s004	4	2		작업 방식 (안쪽 루프 TDD)	31	57	27	46c143e91adf91210d8e5eec8c4e37f63ef360f1fe70e8c65a2664205da8be30	Y	N	N
+agent-coder	E10	s005	5	2		엣지·보고	58	64	7	f7c4a6fe5fc65f6798e3949da7a0801b8a1e613c6c2de37852f9ca9a24cc60a4	Y	N	N
+agent-coder	E10	s006	6	2		경계	65	71	7	ffa1900fe756b057b3e86342f79062d55ffc98cea8216f1d49ae48f045515194	Y	N	N
+agent-design-architect	E10	s001	1	0		(전문)	1	14	14	b690f715b5d1668bb2e2ffc717008f3ec25a41edfdb50080d31e1e056f2fc914	Y	N	N
+agent-design-architect	E10	s002	2	2		입력	15	26	12	5caf4868448eb312bd84e96ce002cf3669e5bd4c655a067178f25a4f07c9a57d	Y	N	N
+agent-design-architect	E10	s003	3	2		산출	27	30	4	8c5d6b70205392c920ca179d7b15401a799d4b9376defefc8c91005c25e4e00f	Y	N	N
+agent-design-architect	E10	s004	4	2		명세에 담는 것	31	36	6	6440139a7735dcd8aaf3783a5aa5f9406ed2ee253d814cf7059886ec23d2ce4d	Y	N	N
+agent-design-architect	E10	s005	5	3		Error response contract 12-slot	37	81	45	ecfbd450dd3c3278504c64264676741da8507fbbd61343b1bbbfd25bd0dd2044	Y	N	N
+agent-design-architect	E10	s006	6	2		리뷰 반영·충돌 중재	82	91	10	de2d485b62dfe8e9ffbea7e321bcff9e12316d0e0d0bf779f96613071181c01a	Y	N	N
+agent-design-architect	E10	s007	7	2		경계	92	96	5	38580a21543a365f4913608faab6a355285958f865bfe3868acbfa6fffb1ad6e	Y	N	N
+agent-design-review-api	E10	s001	1	0		(전문)	1	11	11	cbcdf279fb76a7256944732f51099ef44171ebdbbc9ea6530b837b8f9def5c59	Y	N	N
+agent-design-review-api	E10	s002	2	2		실행 모드	12	18	7	c9ea6874a25f37f6185ca2468905a8ccecf1ead802aac9412353b2f1eb20f648	Y	N	N
+agent-design-review-api	E10	s003	3	2		입력	19	31	13	5af11028d4e9dcd64d567717d02644f2f9f0550eff0b2288eb27f691fda97168	Y	N	N
+agent-design-review-api	E10	s004	4	2		산출	32	44	13	52585c3d4da1d3414d37434d5b7af72ba641b4a53531c2d1037b4a7460628c00	Y	N	N
+agent-design-review-api	E10	s005	5	2		점검 항목 (계약 lens만)	45	53	9	7f619bc5a3cc56f2c2755f52bab42eebcc9e079bf02f94d1f7af3a34f9f2b13f	Y	N	N
+agent-design-review-api	E10	s006	6	3		Error response contract 12-slot	54	79	26	3622531ea8c546956d00fc1b627fc652f61a8d6ee471d5a6f87141e0872da7bd	Y	N	N
+agent-design-review-api	E10	s007	7	2		경계	80	84	5	fc5168d76f06f040d72067b203447ff99050fafaf8bdea5730d5f8724ce1a413	Y	N	N
+agent-design-review-db	E10	s001	1	0		(전문)	1	11	11	8df52f01ee6740e08b82e568a772a3a97ad20ba75b8ae5fe551516daa018a375	Y	N	N
+agent-design-review-db	E10	s002	2	2		입력	12	15	4	849bfc02fb9944c89780ad1e01696330c3e0dfeac6384f4e7187bd8216cd41aa	Y	N	N
+agent-design-review-db	E10	s003	3	2		산출	16	26	11	8116b715e4ba6a02e1fa4859606610060743bf0afc0e6bf391cb4012c1b71193	Y	N	N
+agent-design-review-db	E10	s004	4	2		점검 항목 (데이터 lens만)	27	39	13	31f05a7f45386fb1b6734c89fff06f80f555f615e72dc17c87a26b2416ac24e9	Y	N	N
+agent-design-review-db	E10	s005	5	2		경계	40	44	5	eff53e376c702c07aad482faa83b6d34aa7ae100d3fd46c720588fdd70ffb359	Y	N	N
+agent-design-review-ddd	E10	s001	1	0		(전문)	1	10	10	7acd787296d3862dd0f308a351a9e9598db36acb38f1415f199b9bb13550ca1a	Y	N	N
+agent-design-review-ddd	E10	s002	2	2		입력	11	14	4	849bfc02fb9944c89780ad1e01696330c3e0dfeac6384f4e7187bd8216cd41aa	Y	N	N
+agent-design-review-ddd	E10	s003	3	2		산출	15	27	13	12a44567c0c5717838a6760e3c9b8cf295241a45b98751e9c9d2f35c48d305ae	Y	N	N
+agent-design-review-ddd	E10	s004	4	2		점검 항목 (도메인 lens만)	28	39	12	9b11fffe0b08d9b523b200472423e98c386f229c05dd5d1cbdbff4ec81269667	Y	N	N
+agent-design-review-ddd	E10	s005	5	2		경계	40	44	5	e2482b4586f1df119762efd6bd2848bd9c948d7cf113422f26c51778f7d9c138	Y	N	N
+agent-discipline-reviewer	E10	s001	1	0		(전문)	1	13	13	b19700314a40db5dbdfa11c8a0eb655996da7be6df5c14b5a28bc35b1076fe22	Y	N	N
+agent-discipline-reviewer	E10	s002	2	2		입력	14	31	18	25045129f12bda4196e6bc3e87a4ee7bf8aa0cc105ef4a2b2886bbc7cb083e39	Y	N	N
+agent-discipline-reviewer	E10	s003	3	2		산출	32	42	11	a566f8a09ab136e64de775c0ea5333fd6b64f0a9077717852378b22a5c182b0d	Y	N	N
+agent-discipline-reviewer	E10	s004	4	2		감사 빈도 (적응형)	43	46	4	eb9cb6022f4c72813bc2089d48793f7e0c1f1ec9f39ff97d106a0e9fff533239	Y	N	N
+agent-discipline-reviewer	E10	s005	5	2		영구 테스트 입장 감사	47	55	9	3b8b4aedf37477db77df7578ae2253d2acd0ef062fec4bcb8c073b1ac442de27	Y	N	N
+agent-discipline-reviewer	E10	s006	6	2		Phase 1·2 API 오류 scope·소유권 점검	56	62	7	b45a4c41534efe44d92f4dedcd20aba83652f012a73972ac2ed18cedd9f16640	Y	N	N
+agent-discipline-reviewer	E10	s007	7	2		Phase 2 점검 항목 (클린코드·TDD 규율만)	63	125	63	5caff4ad3d274d161436ad55334a0f63e384e8be7a305bdff620fe518cce45e5	Y	N	N
+agent-discipline-reviewer	E10	s008	8	2		경계	126	130	5	f1a29062ca64e92f3dd1c6d935b5650c7530f10edfd7cd10c758415d9a512caf	Y	N	N

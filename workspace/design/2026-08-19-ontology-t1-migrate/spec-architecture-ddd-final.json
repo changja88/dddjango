@@ -1,0 +1,437 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "architecture-ddd-final",
+  "path": "dddjango/skills/architecture-ddd/references/final.md",
+  "restates_paths": {
+    "architecture-ddd-final": "dddjango/skills/architecture-ddd/references/final.md"
+  },
+  "sections": [
+    {
+      "section_key": "s051-8",
+      "line_start": 2058,
+      "line_end": 2072,
+      "blocks": [
+        {
+          "lines": [
+            2059,
+            2060
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2061,
+            2061
+          ],
+          "kind": "table-row"
+        },
+        {
+          "lines": [
+            2062,
+            2062
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 1 — 엔티티는 애그리거트의 일부로만 사용",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "설계 의사결정 준수 판정 — 문서군 기본값(architecture-ddd 설계 시점→design-review-ddd)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2063,
+            2063
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 2 — CQRS는 보조 패턴으로 선택 적용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-E: 선택적 적용=허용"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2064,
+            2064
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 3 — 애그리거트가 도메인 서비스를 모르게 분리",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2065,
+            2065
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 4 — 복수 애그리거트 수정은 결과적 일관성",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2066,
+            2066
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 5 — 계층+DIP 기반 동기 흐름",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2067,
+            2067
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 6 — 전략 설계 우선",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-E: 우선 규칙"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2068,
+            2068
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 7 — 도메인 이벤트 디스패치 타이밍 명시",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2069,
+            2069
+          ],
+          "kind": "table-row",
+          "norms": [
+            {
+              "label": "의사결정 8 — 4계층 명확 분리 패키지 구조",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "4계층 골격은 check-layer-skeleton.py 집행(rule-owner-map #10·#20·#21)+설계 판정 병행"
+            }
+          ]
+        },
+        {
+          "lines": [
+            2070,
+            2072
+          ],
+          "kind": "prose"
+        }
+      ]
+    },
+    {
+      "section_key": "s017-3.2",
+      "line_start": 539,
+      "line_end": 637,
+      "blocks": [
+        {
+          "lines": [
+            540,
+            543
+          ],
+          "kind": "norm",
+          "restates": [
+            "architecture-ddd-final/s051-8/b3"
+          ],
+          "note": "blockquote [의사결정 #1] — 정본은 s051-8 의사결정 표 1행(Work R 미채번·restates 연결). 출처 라인 포함 verbatim"
+        },
+        {
+          "lines": [
+            544,
+            545
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "엔티티 동등성은 식별자로 판정(값 동일해도 식별자 상이면 다른 객체)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "basis": "L-G 채택(prose→norm) — docstring #259·#260 식별자 축 [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            546,
+            547
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "엔티티의 행동·불변식 캡슐화(빈혈 모델 금지)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "L-G 채택(인용 프레임이나 «해야 한다» — 애매+포함, b7 W1 재진술 의심 비고) [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            548,
+            581
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            582,
+            583
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            584,
+            631
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            632,
+            633
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "판정·불변식의 도메인 소유와 프로덕션 실호출",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-domain-model.py",
+                "check-transaction-boundary.py"
+              ],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "rule-owner-map #17·#18 ast+(check-domain-model+discipline-reviewer)·P0 §3.2 커버 [adv 중재 정정 2026-08-19] L-F: #257 루트 경유(domain-model)+#195 root 호출 후 save 검사(transaction-boundary) 병기"
+            },
+            {
+              "label": "응용·리포지토리·인프라의 판정 대행·복제 금지",
+              "class": "Prohibition",
+              "enforcedBy": [],
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "B1 빈혈/판정 인프라 누수 축(rule-owner-map #8) [adv 중재 정정 2026-08-19] L-F: 복제 조건식 의미 동등성은 정적 검사 밖 — reviewer 단독"
+            },
+            {
+              "label": "판정의 SQL 이동 금지 — 인프라는 경합 가드만·충돌 시 도메인 재실행",
+              "class": "Prohibition",
+              "enforcedBy": [],
+              "basis": "같은 축 — 판정 SQL 이동 차단(stock__gte 류 grep 계열·db §9.5 메커니즘 위임) [adv 중재 정정 2026-08-19] L-F: SQL predicate 검사가 docstring에 부재 — 의미 감사",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ]
+            }
+          ]
+        },
+        {
+          "lines": [
+            634,
+            635
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "도메인 상태·종류 값의 StrEnum 단일 출처와 파생·import 방향",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "4원 지목 없음 — 위임 기본값"
+            },
+            {
+              "label": "값 집합 소비는 심볼로만·비교는 ==",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-F: 리터럴 소비 백스톱(§2.14) 실재",
+              "enforcedBy": [
+                "check-choices-literal-consumption.py"
+              ]
+            },
+            {
+              "label": "복합 상태 판정의 1차 시정은 애그리거트 술어·enum 프로퍼티",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "검증·연산·불변식 붙은 값의 값 객체 승격",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "동상(이탈 근거 부족 — 기본값 유지)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            636,
+            637
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "새 판정이 얹히는 코드의 domain_layer 애그리거트 이주(평면 모델 판정 금지)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "이주 판단은 설계 시점 — 문서군 기본값(설계)"
+            },
+            {
+              "label": "이주 기준 항-(1) — 판정·불변식 소유 시 표준 구조 이주",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "이주 기준 항-(2) — 단순 데이터 소스는 판정 실내용만 비움",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-E: 조건 분기 한정"
+            },
+            {
+              "label": "표준 트리 골격의 예외 없는 빈 패키지 실현(깊이 면제 없음)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "basis": "houserules §0 제1원칙 #486~#492 문면 지목 — docstring 집행"
+            },
+            {
+              "label": "데이터소스 BC 배치 — driven_layer ORM 실체·빈 애그리거트 골격·폴더명 도출",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py",
+                "check-db-table.py"
+              ],
+              "basis": "동상(#489 포함) [adv 중재 정정 2026-08-19] L-F: driven ORM 배치=db-table·애그리거트 도출=설계 판정 병기",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ]
+            },
+            {
+              "label": "고정·재등장 칸의 빈 패키지 존속",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-layer-skeleton.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "test 의미군은 입장 심사 승인 시에만 생성",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "4원 지목 없음 — 기본값 [adv 중재 정정 2026-08-19] L-E: 승인 조건부 한정"
+            },
+            {
+              "label": "루트 평면 <app>/ 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-app-container.py"
+              ],
+              "basis": "#486·#490 문면 지목 [adv 중재 정정 2026-08-19] L-F: 루트 평면 앱 차단은 app-container(§0-1 집행) 소관"
+            },
+            {
+              "label": "골격 실현의 touched 한정(무관 기존 앱은 §4 존중)",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "한정 조항의 판정 주체=같은 축(설계)"
+            },
+            {
+              "label": "컨텍스트 간 접근은 ACL·OHS로만(타 컨텍스트 내부 직접 import 금지)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-context-isolation.py"
+              ],
+              "basis": "rule-owner-map #1~#5"
+            },
+            {
+              "label": "이주의 신규 판정 한정(기존 배치 일괄 강제 금지 — 기존 배치는 빚)",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-ddd"
+              ],
+              "basis": "한정 조항 동축"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

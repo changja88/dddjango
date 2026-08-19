@@ -1,0 +1,1412 @@
+Reading additional input from stdin...
+OpenAI Codex v0.148.0
+--------
+[1mworkdir:[0m /Users/hyun/Desktop/dddjango
+[1mmodel:[0m gpt-5.6-sol
+[1mprovider:[0m openai
+[1mapproval:[0m on-request
+[1msandbox:[0m read-only
+[1mreasoning effort:[0m xhigh
+[1mreasoning summaries:[0m auto
+[1msession id:[0m 01a01923-24e3-7051-a758-0faf3aa89c7f
+--------
+[36muser[0m
+너는 적대 검증자다. 온톨로지 센서스의 **P0 대사 표(절 대응)를 반증**하라 — 대사 노트가 «미설명 잔차 0»을 주장하는데, 대응 누락·이중 귀속·잔차 은폐를 찾아내는 것이 과업이다.
+
+## 배경
+- P0 센서스(사람/LLM 수기 접기): `workspace/design/2026-08-18-p0-census/` 의 E03·E08·E10 파일이 P0 절 목록의 정본.
+- 기계 센서스(신규 정본): `workspace/design/2026-08-19-ontology-t1-census/sections.tsv` — fence 밖 ATX 헤딩 전 레벨 분할. 열: doc_key, p0_group, section_key, ordinal, level, anchor, heading, line_start, line_end, …
+- 대사 노트(검증 대상): `workspace/design/2026-08-19-ontology-t1-census/E03-recon.md` · `E08-recon.md` · `E10-recon.md` — P0 절 전건이 접기 규약으로 기계 절에 귀속된다고 주장.
+
+## 과업 (3자 대조 — E03·E08·E10 세 그룹)
+1. 각 recon의 §2 대사 표에서 **P0 절 전건**이 실제로 P0 정본 파일의 절 목록과 1:1로 대조되는지(P0 절이 표에서 빠졌거나 이름이 바뀌어 은폐되지 않았는지).
+2. 대사 표의 «대응 기계 절 키»가 sections.tsv에 실재하고 **한 기계 절이 두 P0 절에 이중 귀속되지 않는지**.
+3. 접기 규약 문장(§1)과 개별 대응이 모순되는 사례(규약은 «h3 접기»인데 특정 h3가 독립 대응된 경우 등).
+4. 산식 검산: 그룹별 기계 절 수(E03=148·E08=145·E10=54)와 P0 절 수(37·39·58)의 차가 규약 항목별 계수로 정확히 분해되는지.
+
+## 출력 형식 (최종 메시지로만 — 파일 쓰기 금지)
+```
+# L-B P0 대사 반증 결과
+## 발견
+| # | 그룹 | 유형(누락/이중 귀속/규약 모순/산식 불일치) | 내용 | 근거(파일·절) |
+(발견 0이면 «발견 0» 명시)
+## 검산 결과
+그룹별 산식 분해 재계산 표
+```
+[1m[33mwarning:[0m[0m Under-development features enabled: default_mode_request_user_input. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /Users/hyun/.codex/config.toml.
+[2m**Planning skill inspection and marker check**
+**Executing file marker check**[0m
+[35m[3mcodex[0m[0m
+요청하신 세 그룹을 P0 정본·`sections.tsv`·recon 표의 3자 대조로 다시 계산하겠습니다. 먼저 저장소의 graphify opt-in 표식을 확인하고, 있으면 프로젝트 관계 질의에 맞는 `graphify` 스킬 지침을 적용하겠습니다. 산식은 표의 서술을 믿지 않고 절 키 집합과 계수를 독립 재구성하겠습니다.
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'test -f graphify-out/graph.json && echo graphify-opt-in || echo graphify-not-opted-in
+test -f .serena/project.yml && echo serena-opt-in || echo serena-not-opted-in
+pwd'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+graphify-not-opted-in
+serena-not-opted-in
+/Users/hyun/Desktop/dddjango
+
+[2m**Planning file inspection with rg**[0m
+[35m[3mcodex[0m[0m
+graphify와 Serena 모두 저장소 opt-in 표식이 없어 사용하지 않습니다. 이 검증은 파일 간 집합 대조이므로 기본 읽기 도구로 원문 위치와 표 행을 직접 추적하겠습니다.
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'rg --files workspace/design/2026-08-18-p0-census workspace/design/2026-08-19-ontology-t1-census | sort'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+workspace/design/2026-08-18-p0-census/A1-backstops.md
+workspace/design/2026-08-18-p0-census/A2-tools.md
+workspace/design/2026-08-18-p0-census/A3-twins.md
+workspace/design/2026-08-18-p0-census/A4-pipeline.md
+workspace/design/2026-08-18-p0-census/E01-architecture-ddd.md
+workspace/design/2026-08-18-p0-census/E02-discipline-cleancode.md
+workspace/design/2026-08-18-p0-census/E03-implementation-python.md
+workspace/design/2026-08-18-p0-census/E04-implementation-test.md
+workspace/design/2026-08-18-p0-census/E05-implementation-django.md
+workspace/design/2026-08-18-p0-census/E06-discipline-tdd.md
+workspace/design/2026-08-18-p0-census/E07-implementation-django-ninja.md
+workspace/design/2026-08-18-p0-census/E08-architecture-db-api.md
+workspace/design/2026-08-18-p0-census/E09-web-houserules.md
+workspace/design/2026-08-18-p0-census/E10-command-agents.md
+workspace/design/2026-08-19-ontology-t1-census/E01-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E01-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E02-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E02-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E03-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E04-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E04-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E05-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E05-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E06-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E06-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E07-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E07-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E08-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E09-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E09-recon.md
+workspace/design/2026-08-19-ontology-t1-census/E10-classify.tsv
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md
+workspace/design/2026-08-19-ontology-t1-census/corpus-manifest.tsv
+workspace/design/2026-08-19-ontology-t1-census/sections.tsv
+
+[2m**Planning parallel file reading strategy**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-19-ontology-t1-census/E03-recon.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E03 — implementation-python T1-1 P0 대사 노트
+     2	
+     3	작성일: 2026-08-19 · 담당: E03 문서군 담당자
+     4	기계 절: sections.tsv p0_group=E03 148절 (implementation-python-skill 5 + implementation-python-final 143)
+     5	P0 정본: `workspace/design/2026-08-18-p0-census/E03-implementation-python.md` (절 37 · 규범 문장 112)
+     6	
+     7	## §1 문서별 접기 규약 명문화
+     8	
+     9	**implementation-python-skill** (P0 4절 ← 기계 5절):
+    10	P0는 YAML frontmatter와 h1 제목을 «헤더(frontmatter+제목)» 한 절로 병합했다(서두 병합 — 기계 절단은 (전문) s001과 h1 s002를 분리). 나머지 h2 3절(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 1:1 대응한다.
+    11	
+    12	**implementation-python-final** (P0 33절 ← 기계 143절):
+    13	P0는 h2 단위(§N 번호 절·부록 A–C·출처)로 절을 세고, h3 소절(§N.M) 전부를 상위 h2 절에 접었다. 서문(h1 제목+인용 blockquote)은 별도 1절(기계 s001과 1:1). 부록 A–C는 하위 h3가 없어 1:1. 출처는 h2 s138에 h3 5절(s139–s143: PEP 문서·Python 공식 문서·서적·도구 문서·커뮤니티)을 접었다. 부록·서두를 제외하거나 건너뛴 절은 없다 — 전 기계 절이 P0 37절 중 하나에 귀속된다.
+    14	
+    15	## §2 P0 절 전건 대사 표
+    16	
+    17	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    18	|---|---|---|
+    19	| [SKILL] 헤더(frontmatter+제목) | skill s001–s002 (2절) | 서두 병합(frontmatter+h1) |
+    20	| [SKILL] 언제 쓰나 | skill s003 | 1:1 |
+    21	| [SKILL] 핵심 운영 원칙 | skill s004 | 1:1 |
+    22	| [SKILL] 상세 레퍼런스 | skill s005 | 1:1 |
+    23	| [final] 서문(제목·인용) | s001 | 1:1 |
+    24	| [final] §1 타입 힌트와 타입 시스템 | s002-1 ~ s016-1.14 (15절) | h3 접기(1.1–1.14) |
+    25	| [final] §2 구조적 패턴 매칭 | s017-2 ~ s021-2.4 (5절) | h3 접기 |
+    26	| [final] §3 컬렉션 선택과 데이터 구조 | s022-3 ~ s027-3.5 (6절) | h3 접기 |
+    27	| [final] §4 함수 설계 | s028-4 ~ s033-4.5 (6절) | h3 접기 |
+    28	| [final] §5 데코레이터 | s034-5 ~ s037-5.3 (4절) | h3 접기 |
+    29	| [final] §6 디스크립터 | s038-6 ~ s040-6.2 (3절) | h3 접기 |
+    30	| [final] §7 @property와 애트리뷰트 접근 | s041-7 ~ s043-7.2 (3절) | h3 접기 |
+    31	| [final] §8 클래스 설계 | s044-8 ~ s053-8.9 (10절) | h3 접기 |
+    32	| [final] §9 Protocol 심화 | s054-9 ~ s059-9.5 (6절) | h3 접기 |
+    33	| [final] §10 Enum, dataclass, NamedTuple | s060-10 ~ s068-10.8 (9절) | h3 접기 |
+    34	| [final] §11 연산자 오버로딩 | s069-11 ~ s070-11.1 (2절) | h3 접기 |
+    35	| [final] §12 pydantic v2 | s071-12 ~ s075-12.3 (5절) | h3 접기(12.0–12.3) |
+    36	| [final] §13 이터레이터·제너레이터·컴프리헨션 | s076-13 ~ s083-13.7 (8절) | h3 접기 |
+    37	| [final] §14 컨텍스트 매니저와 with문 | s084-14 ~ s086-14.2 (3절) | h3 접기 |
+    38	| [final] §15 예외 처리 | s087-15 ~ s090-15.3 (4절) | h3 접기 |
+    39	| [final] §16 동시성과 병렬성 | s091-16 ~ s097-16.6 (7절) | h3 접기 |
+    40	| [final] §17 성능 프로파일링과 최적화 | s098-17 ~ s102-17.4 (5절) | h3 접기 |
+    41	| [final] §18 f-문자열 개선과 PEG 파서 | s103-18 ~ s104-18.1 (2절) | h3 접기 |
+    42	| [final] §19 파이썬다운 관용 표현 | s105-19 ~ s111-19.6 (7절) | h3 접기 |
+    43	| [final] §20 디자인 패턴 | s112-20 ~ s115-20.3 (4절) | h3 접기 |
+    44	| [final] §21 Repository / Unit of Work | s116-21 | 1:1(하위 h3 없음) |
+    45	| [final] §22 Ruff | s117-22 ~ s119-22.2 (3절) | h3 접기 |
+    46	| [final] §23 mypy/pyright 최신 기능 | s120-23 ~ s123-23.3 (4절) | h3 접기 |
+    47	| [final] §24 테스트 | s124-24 | 1:1(위임 스텁) |
+    48	| [final] §25 디버깅 기법 | s125-25 ~ s127-25.2 (3절) | h3 접기 |
+    49	| [final] §26 독스트링과 문서화 | s128-26 ~ s129-26.1 (2절) | h3 접기 |
+    50	| [final] §27 정밀 연산 | s130-27 ~ s131-27.1 (2절) | h3 접기 |
+    51	| [final] §28 Python 3.14 주요 변경사항 | s132-28 ~ s134-28.2 (3절) | h3 접기 |
+    52	| [final] 부록 A | s135 | 1:1 |
+    53	| [final] 부록 B | s136 | 1:1 |
+    54	| [final] 부록 C | s137 | 1:1 |
+    55	| [final] 출처 | s138 ~ s143 (6절) | h3 접기(출처 하위 5목록) |
+    56	
+    57	검산: skill 2+1+1+1 = 5 · final 1 + (§1–§28 소계 133) + 부록 3 + 출처 6 = 143 → 합 148 = sections.tsv E03 행 수와 일치.
+    58	
+    59	## §3 잔차
+    60	
+    61	**설명 불가 잔차 0.** P0 37절 전건이 위 두 접기 규약(h3→h2 접기, SKILL 서두 병합)으로 기계 148절에 남김없이 대응하고, 어느 쪽에만 존재하는 절도 없다.
+    62	
+    63	## §4 규범 계수 대조
+    64	
+    65	이번 T1 norm_count 합 **101** vs P0 **112** — 차 **−11**.
+    66	
+    67	차이의 원인은 전량 계수 규약 차이이며 절 대응 문제가 아니다:
+    68	
+    69	1. **코드 펜스 내 주석 제외(−11)** — P0 집계 방침은 «코드 주석 안이라도 일반화된 지시 표지(반드시·필수·대신 사용·권장)가 있으면 포함»이었으나, T1 규약은 코드 펜스 안 텍스트를 계수에서 제외한다. 해당 11건: §1.2 «반드시 None 체크», §1.7 «PEP 695 권장», §1.8 «내부 타입 명시», §3.5 «list 대신 deque», §4.5 «반환값 4개 이상 클래스/namedtuple», §8.9 «dict 대신 UserDict», §9.5 «반드시 정적 타입 체커 의존», §10.8 «typing 버전 권장», §16.1 «Lock 필수», §17.3 «타입 일관 유지», §27.1 «Decimal str 생성자 필수». 각 건은 classify.tsv 해당 절 note에 표기했다. 이 제외로 §9·§27은 T1 기준 규범 0 절이 된다(P0에선 각 1).
+    70	2. **유지한 P0 특례(계수 연속성)** — §19.6 명명 표 2개=표 단위 각 1(행 단위 계수 안 함), §22.1·§23.1·§23.2 설정 블록=각 규범 1단위(권장/strict 설정은 예제 코드가 아니라 구속 설정으로 보아 펜스 제외 규칙 비적용 — P0 방침 승계), §10.1=항 단위 14(다항 문장의 항 분할 계수 승계).
+    71	3. **P0는 절 단위 집계** — h3별 배분은 P0 비고의 소절 지목(예: §1의 10건을 1.2/1.3/1.5/1.7/1.8/1.11/1.12에 배분)을 따라 재구성했고, 전 절에서 P0 절 소계와 «T1 합 + 펜스 제외분»이 일치함을 확인했다(92−11=81 [final] + 20 [SKILL] = 101).
+    72	
+    73	부기: codex 대응은 final.md가 byte 동일(전 143절 SAME), SKILL.md는 frontmatter(s001)만 DIFF — `user-invocable: false` 부재 + 스킬명 표기 치환(`dddjango:x`→`dddjango-x`). 표기 치환만 있는 s003은 SAME으로 판정했다. T4 잔차 규모는 사실상 SKILL frontmatter 1건이다.
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-18-p0-census/E03-implementation-python.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E03 — implementation-python P0 센서스 상세 인벤토리
+     2	
+     3	조사일: 2026-08-18 · 담당: E03 문서 담당자
+     4	대상: `dddjango/skills/implementation-python/` (SKILL.md + references/final.md)
+     5	
+     6	## 파일별 요약
+     7	
+     8	| 파일 | 행수 | 절수 | 규범 문장수 | codex 쌍둥이(④) |
+     9	|---|---|---|---|---|
+    10	| `dddjango/skills/implementation-python/SKILL.md` | 68 | 4 | 20 | 존재 (`codex-dddjango/skills/implementation-python/SKILL.md`) |
+    11	| `dddjango/skills/implementation-python/references/final.md` | 2675 | 33 | 92 | 존재 (`codex-dddjango/skills/implementation-python/references/final.md`) |
+    12	| **합계** | 2743 | **37** | **112** | 전 절 상속: 쌍둥이 있음 |
+    13	
+    14	집계 방침(비고): 규범 문장은 «~하라/~한다/금지/필수/~만/…이면 ~» 표지 기준. 예제 코드·라벨(«나쁜 예/좋은 예»)·이유 서술은 제외하되, 코드 주석 안이라도 일반화된 지시 표지(«반드시»·«필수»·«대신 사용»·«권장»)가 있으면 포함하고 비고에 표시. §19.6 명명 규칙 표 2개는 표 단위로 각 1 규범으로 계상(문장 형태가 아니라 행 단위 계수는 안 함).
+    15	
+    16	---
+    17	
+    18	## SKILL.md (4절)
+    19	
+    20	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    21	|---|---|---|---|---|---|
+    22	| 헤더(frontmatter+제목) | 2 | 없음 | 명시 | 불명 | description 1문장에 4개 스킬 위임(cleancode·implementation-django·architecture-ddd·implementation-test). `user-invocable: false` 메타 |
+    23	| 언제 쓰나 | 5 | 없음 | 명시 | 불명 | 로드 조건 1 + 경계 위임 bullet 4. 헤더 description과 같은 위임 4건의 중복 서술 |
+    24	| 핵심 운영 원칙 | 11 | 없음 | 없음 | 불명 | 각 bullet이 (§N)로 final.md를 값 출처로 지목. 일부 bullet이 본문 §보다 강하거나 본문에 없는 규칙(특이 발견 2·3) |
+    25	| 상세 레퍼런스 | 2 | 없음 | 명시 | 불명 | «final.md의 해당 절을 따른다» + «필요한 항목만 읽는다». 주제↔§ 매핑 표. §21·§24(위임 스텁)는 표에서 누락 |
+    26	
+    27	SKILL.md 소계: 20문장. 앵커: 4절 모두 § 번호 없는 일반 헤딩(안정 표지 없음 판정).
+    28	
+    29	---
+    30	
+    31	## references/final.md (33절)
+    32	
+    33	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    34	|---|---|---|---|---|---|
+    35	| 서문(제목·인용) | 2 | 없음 | 명시 | 불명 | «클린코드 범용 원칙은 discipline-cleancode에서 다룬다» + «3.10+ 적극 채택·최신 패턴 기본» (문서 정책) |
+    36	| §1 타입 힌트와 타입 시스템 | 10 | 있음 | 없음 | 불명 | 소절 1.1–1.14. 1.2 «Optional로 명시하라»·«--strict-optional 강제하라»·주석 «반드시 None 체크»(주석 포함), 1.3 «합 타입으로 배제하라», 1.5 TypedDict, 1.7 PEP 695 권장, 1.8 내부 타입 명시(주석), 1.11 Concatenate 용처, 1.12 «TypeIs 사용하라»·«TypeGuard는 특수한 경우에만». check-public-surface-annotation.py(#493)와 잠재 대응이나 문면 연결 없음. SKILL.md의 «Optional→X\|None»과 달리 1.2는 허용 서술 + 좋은 예가 `Optional[User]` 사용(특이 발견 3) |
+    37	| §2 구조적 패턴 매칭 | 0 | 있음 | 없음 | 비커버 | 명시 규범 0 — 전부 예제·설명. isinstance 체인→match/case 전환은 «나쁜/좋은 예» 라벨로만 표현 |
+    38	| §3 컬렉션 선택과 데이터 구조 | 2 | 있음 | 없음 | 불명 | 3.3 «__missing__ 구현하라», 3.5 «FIFO 큐에 list 대신 deque»(주석). 3.1 선택 기준 표는 설명 성격으로 미계상 |
+    39	| §4 함수 설계 | 2 | 있음 | 없음 | 불명 | 4.4 dddjango 경계 단서 blockquote — 전역 규칙 ID #453·#454 인용(«부재·거절은 답»이면 raise 아닌 결과 분기), 4.5 «반환값 4개 이상이면 클래스/namedtuple»(주석). 4.1 가변 디폴트 금지는 헤딩·예제로만 표현(문장 미계상) |
+    40	| §5 데코레이터 | 2 | 있음 | 없음 | 불명 | 5.1 «@wraps로 보존하라»(헤딩에 «필수»), 5.3 «메타클래스보다 클래스 데코레이터» |
+    41	| §6 디스크립터 | 3 | 있음 | 없음 | 불명 | 6.1 용처 지정, 6.2 **의사결정 #5**(External 채택 — 공식 HowTo 패턴 기본) + 레거시 참고의 권장 재진술 |
+    42	| §7 @property와 애트리뷰트 접근 | 1 | 있음 | 없음 | 불명 | 7.1 «평범한 애트리뷰트로 시작, 필요 시 @property 전환» |
+    43	| §8 클래스 설계 | 7 | 있음 | 없음 | 불명 | 8.1 __call__, 8.2 @classmethod 팩토리, 8.4 «모든 클래스에 __repr__», 8.5 «__는 충돌 방지에만», 8.6 «메타클래스 대신 __init_subclass__», 8.9 collections.abc 상속(애매→포함)+«dict 대신 UserDict»(주석) |
+    44	| §9 Protocol 심화 | 1 | 있음 | 없음 | 불명 | 9.5 «정확한 타입 검증은 반드시 정적 타입 체커에 의존하라»(주석). SKILL.md가 §9에 귀속시킨 «ABC는 런타임 등록이 필요할 때만» 규칙이 본문에 없음(특이 발견 2) |
+    45	| §10 Enum, dataclass, NamedTuple | 16 | 있음 | 명시 | 불명 | 10.1이 14문장으로 최고 밀도 — 승격·소비 규율 소유자를 discipline-cleancode §2.14로 명시, «판정은 Literal vs Enum 분업 항이 소유», 파생 분류 집합은 enum 소유(프로퍼티 1순위·frozenset·재정의 금지), «비교는 ==»(is 금지 사유 포함). 10.3 의사결정 #7(slots=True 권장), 10.8 NamedTuple typing판 권장. check-choices-literal-consumption.py가 cleancode §2.14 소비 규율의 결정적 백스톱임을 스크립트 문면이 자기 선언하나 이 절 문면엔 스크립트 언급 없음 — 부분 대응(소비 규율만) |
+    46	| §11 연산자 오버로딩 | 3 | 있음 | 없음 | 불명 | «NotImplemented 반환(raise 금지)»·«__eq__ 정의 시 __hash__도»·«@는 __matmul__로» |
+    47	| §12 pydantic v2 | 12 | 있음 | 명시 | 불명 | 헤더 의사결정 #1(v2 API 사용) + 12.0 boundary 결정 11문장 — 경계 전용·도메인 진리값 금지·소유 경계(value object 등) 지정·에러 변환·strict 조건·ninja 기준 충돌 확인. 서적 요약이 아닌 dddjango 고유 결정 절(특이 발견 5) |
+    48	| §13 이터레이터·제너레이터·컴프리헨션 | 1 | 있음 | 없음 | 불명 | 13.5 send/throw 대안 지시(금지는 헤딩에만). 13.2 «리스트 대신 제너레이터»는 예제로만 — SKILL.md 요약이 본문보다 명시적 |
+    49	| §14 컨텍스트 매니저와 with문 | 0 | 있음 | 없음 | 비커버 | 명시 규범 0 — 전부 예제. SKILL.md 핵심 원칙의 «리소스 해제를 with문으로»는 본문에 문장 없음 |
+    50	| §15 예외 처리 | 3 | 있음 | 없음 | 불명 | 15.2 «최상위 Exception 정의하라», 15.3 의사결정 #4(@deprecated) + 레거시 조건 지시 |
+    51	| §16 동시성과 병렬성 | 5 | 있음 | 없음 | 불명 | 16.1 스레드=블로킹 I/O·CPU=multiprocessing·«Lock 필수»(주석), 16.2 의사결정 #3(TaskGroup 기본), 16.3 의사결정 #2(Free-threading 반영) |
+    52	| §17 성능 프로파일링과 최적화 | 2 | 있음 | 없음 | 불명 | 헤더 의사결정 #6(3단계 프로파일링 체계), 17.3 «타입을 일관되게 유지하라»(주석) |
+    53	| §18 f-문자열 개선과 PEG 파서 | 0 | 있음 | 없음 | 비커버 | 순수 기능 설명 |
+    54	| §19 파이썬다운 관용 표현 | 4 | 있음 | 없음 | 불명 | 19.4 «인코딩/디코딩은 가장 먼 경계에서», 19.5 «루프 뒤 else 사용하지 마라», 19.6 명명 규칙 표 2개(표 단위 각 1 계상 — 문장 아닌 표 형태 규범). Ruff(N 계열)와 잠재 대응이나 문면 연결 없음 |
+    55	| §20 디자인 패턴 | 1 | 있음 | 명시 | 불명 | «범용 개념은 discipline-cleancode 참조» — 본문은 Python 고유 구현 예제만 |
+    56	| §21 Repository / Unit of Work | 3 | 있음 | 명시 | 불명 | 위임 스텁 — «선택 기준은 architecture-ddd(§5·§6)가 소유»·«적용은 implementation-django(§16)가 담당»·«이 문서는 Python 경계 도구만». 문서 간 § 앵커 실사용 사례(특이 발견 4). SKILL.md 표에 미등재 |
+    57	| §22 Ruff | 1 | 있음 | 없음 | 커버 | 권장 pyproject.toml 설정 블록(설정=규범 1단위). Ruff 자체가 결정적 검사기로 문면에 명백 대응 |
+    58	| §23 mypy/pyright 최신 기능 | 2 | 있음 | 없음 | 커버 | strict 설정 2건(mypy·pyright — 설정=규범 단위). 도구 자체가 결정적 백스톱 |
+    59	| §24 테스트 | 1 | 있음 | 명시 | 불명 | 위임 스텁 — «테스트와 디버깅은 implementation-test 참조». 그런데 §25 디버깅 기법이 본문에 존재(특이 발견 6). SKILL.md 표에 미등재 |
+    60	| §25 디버깅 기법 | 1 | 있음 | 없음 | 불명 | 25.1 «print 디버깅 시 repr 호출해야 한다». §24 위임 문장과 긴장 |
+    61	| §26 독스트링과 문서화 | 6 | 있음 | 명시 | 불명 | 26.1 대상별 형식 규정 4 + «중복 타입 서술 삭제»·«어노테이션 항상 유지 — houserules «모든 이름 첫 대입에 타입»» (houserules를 규칙 소유자로 지목). check-public-surface-annotation.py(#493)가 그 규칙의 백스톱이나 이 절 문면엔 스크립트 언급 없음 — 부분 대응 |
+    62	| §27 정밀 연산 | 1 | 있음 | 없음 | 불명 | «Decimal str 생성자 필수»(주석) |
+    63	| §28 Python 3.14 주요 변경사항 | 0 | 있음 | 없음 | 비커버 | 순수 기능 설명 |
+    64	| 부록 A: 3.10–3.14 변경 요약 | 0 | 있음 | 없음 | 비커버 | 치트시트 표 — «부록 A» 라벨이 앵커 |
+    65	| 부록 B: 타입 시스템 진화 요약 | 0 | 있음 | 없음 | 비커버 | 치트시트 표 |
+    66	| 부록 C: 주요 매직 메서드 요약 | 0 | 있음 | 없음 | 비커버 | 치트시트 표 |
+    67	| 출처 | 0 | 없음 | 없음 | 비커버 | PEP·공식 문서·서적·도구·커뮤니티 목록 |
+    68	
+    69	final.md 소계: 92문장.
+    70	
+    71	---
+    72	
+    73	## 4축 집계 (절 수 37 기준)
+    74	
+    75	| 축 | 집계 |
+    76	|---|---|
+    77	| ①앵커 | 있음 31 (final.md §1–§28 + 부록 A–C) / 없음 6 (SKILL.md 4절 + final.md 서문·출처) |
+    78	| ②소유자 | 명시 10 (SKILL.md 헤더·언제 쓰나·상세 레퍼런스, final.md 서문·§10·§12·§20·§21·§24·§26) / 없음 27 |
+    79	| ③백스톱 | 커버 2 (§22·§23 — 도구 자체가 검사기) / 비커버 8 (규범 0인 절: §2·§14·§18·§28·부록 A–C·출처) / 불명 27 |
+    80	| ④쌍둥이 | 존재 37 / 부재 0 — `codex-dddjango/skills/implementation-python/`에 SKILL.md·references/final.md 둘 다 존재(파일 단위 판정, 전 절 상속) |
+    81	
+    82	---
+    83	
+    84	## 특이 발견
+    85	
+    86	1. **«의사결정 #N» ID 체계가 이미 존재** — final.md 곳곳의 blockquote에 의사결정 #1(§12, pydantic v2)·#2(§16.3)·#3(§16.2)·#4(§15.3)·#5(§6.2)·#6(§17)·#7(§10.3)이 «External 채택» 표기와 함께 산재. 번호가 문서 내 등장 순서와 무관해 별도 의사결정 대장의 존재를 암시한다. 온톨로지 규칙 ID의 선행 사례이자 수확 대상.
+    87	2. **SKILL.md 요약과 final.md 본문의 역전(표류 의심)** — SKILL.md 핵심 운영 원칙이 본문에 없는 규칙을 (§N) 귀속으로 선언한다: «ABC는 런타임 등록이 필요할 때만 (§9)»는 §9 본문에 부재, «제너레이터로 지연 평가 (§13.2)»·«컨텍스트 매니저로 리소스 해제 (§14)»는 본문이 예제뿐(규범 문장 0). 요약이 사실상 유일한 규범 문면인 절이 있다.
+    88	3. **Optional 표기 규범의 강도 불일치** — SKILL.md는 «Optional→X | None»을 원칙으로 걸지만 final.md §1.2는 «사용할 수 있다»(허용 서술)에 그치고 좋은 예 코드가 `Optional[User]`를 사용한다. Ruff UP007(§22 설정에 포함)이 실질 백스톱이나 문면 연결이 없다.
+    89	4. **문서 간 § 앵커가 이미 실사용 중** — §10.1→discipline-cleancode §2.14, §21→architecture-ddd §5·§6 + implementation-django §16, §26.1→houserules 규칙 인용. 또한 §4.4는 전역 규칙 ID #453·#454를, 저장소 스크립트는 #493·«cleancode §2.14»를 자기 문면에 인용 — § 번호 + #NNN 혼용 참조 체계가 이미 load-bearing이다.
+    90	5. **§12.0은 성격이 다른 절** — 서적 요약 중심의 문서 안에서 §12.0(pydantic boundary 결정, 11문장)과 §10.1(Enum 규율, 14문장)만 dddjango 고유 규범 밀집 구역이다. 온톨로지 등재 우선순위가 높은 두 절.
+    91	6. **§24 위임과 §25 존재의 모순** — §24가 «테스트와 디버깅은 implementation-test 참조»로 위임하는데 바로 다음 §25가 디버깅 기법을 본문에 담고 있고, SKILL.md 표에도 §25가 등재돼 위임 문장과 충돌한다(§21·§24 스텁은 표에서 누락 — 의도된 비대칭인지 불명).
+    92	7. **백스톱 스크립트와의 암묵 대응** — 문서 어디에도 check-*.py 언급이 0건이나, check-choices-literal-consumption.py(§10.1 소비 규율)와 check-public-surface-annotation.py(§1/§26 어노테이션 규율, #493)가 스크립트 쪽 문면에서 해당 규칙을 지목한다. 대응이 단방향(스크립트→문서)이라 문서만 읽어서는 백스톱 존재를 알 수 없다.
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-18-p0-census/E08-architecture-db-api.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E08 — architecture-db + architecture-api P0 센서스
+     2	
+     3	담당: 문서 담당자 E08 · 기준일 2026-08-18 · 담당 파일 4개(수정 없음, 읽기 전용 조사)
+     4	
+     5	## 파일별 요약
+     6	
+     7	| 파일 | 행수 | 절수 | 규범 문장수 |
+     8	|---|---:|---:|---:|
+     9	| `dddjango/skills/architecture-db/SKILL.md` | 47 | 4 | 18 |
+    10	| `dddjango/skills/architecture-db/references/final.md` | 736 | 15 (목차 + §1–§14) | 106 |
+    11	| `dddjango/skills/architecture-api/SKILL.md` | 51 | 4 | 20 |
+    12	| `dddjango/skills/architecture-api/references/final.md` | 638 | 16 (목차 + §1–§15) | 166 |
+    13	| **합계** | 1,472 | **39** | **310** |
+    14	
+    15	집계 방식 메모:
+    16	- 절 단위 = final.md는 최상위 §, SKILL.md는 H2 헤딩(+frontmatter 1절). 소절(§N.M)은 상위 절에 귀속시키고 비고에 명시.
+    17	- 규범 문장 = 지시·금지·조건 문장. 상황→권장/기준 매핑 표는 지시 내용을 담은 행(셀)을 문장 1로 보수적 포함(비고에 «표 행» 표시). 설명·정의·예제 코드·이유 서술 제외.
+    18	- ④쌍둥이는 파일 단위 판정 후 절에 상속: **4파일 모두 codex 쌍둥이 존재** (`codex-dddjango/skills/architecture-{db,api}/…`). references/final.md 2건은 바이트 동일, SKILL.md 2건은 개명 표기 차이만(아래 특이 발견 6).
+    19	
+    20	---
+    21	
+    22	## architecture-db/SKILL.md
+    23	
+    24	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    25	|---|---:|---|---|---|---|
+    26	| frontmatter (name·description·user-invocable) | 2 | 없음 | 없음 | 비커버 | «먼저 로드한다»·«…로 위임» 2건. `user-invocable: false`는 설정값이라 문장 미포함 |
+    27	| 언제 쓰나 | 4 | 없음 | 없음 | 비커버 | 로드 조건 1 + 위임 경계 화살표 3(→ implementation-django / architecture-ddd / architecture-api) |
+    28	| 핵심 운영 원칙 | 10 | 없음 | 명시(부분) | 불명 | 7개 불릿이 final.md §4·5·7·8·9.4·9.6·9.7·11 요약-복제. §9.6 불릿에 `discipline-tdd` 입장 결정·coder 주체 명시. §9.6 복제분은 check-idempotency-scope-creep.py 간접 커버이나 문면 스크립트 지목 없음 |
+    29	| 상세 레퍼런스 | 2 | 없음 | 없음 | 비커버 | «해당 절을 따른다»·«필요한 항목만 읽는다». 주제→§ 라우팅 표는 매핑이라 문장 미포함 |
+    30	
+    31	소계: 4절 · 18문장. SKILL 절에는 § 번호가 전혀 없고 헤딩도 전 스킬 공통 범용 문구(«언제 쓰나» 등)라 안정 앵커 부재.
+    32	
+    33	---
+    34	
+    35	## architecture-db/references/final.md
+    36	
+    37	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    38	|---|---:|---|---|---|---|
+    39	| 목차 | 0 | 없음 | 없음 | 비커버 | GitHub 앵커 링크(#1-…) — §N 표기와 이중 앵커 체계 |
+    40	| §1 데이터베이스 모델링 프로세스 | 1 | 있음 | 없음 | 비커버 | 청유형 «말을 믿지 말자 — …합의안을 갖자» 보수적 포함. 나머지 설명·표 |
+    41	| §2 개념적 데이터 모델링 (ERD) | 3 | 있음 | 없음 | 비커버 | 작성 원칙 2 + 인조키 조건 지시 1 |
+    42	| §3 정규화 (1NF — BCNF) | 1 | 있음 | 없음 | 비커버 | «정규화 먼저, 필요시에만 역정규화» — §4.2·§5·SKILL 불릿1과 중복 규칙 |
+    43	| §4 역정규화 | 2 | 있음 | 없음 | 비커버 | «반드시 정규화 먼저»·«읽기 많다고 바로 역정규화는 잘못» — §3.4와 중복 |
+    44	| §5 성능 최적화 순서 | 2 | 있음 | 없음 | 비커버 | «다음 순서를 반드시 지킨다»·«슬로우 쿼리부터 시작한다». 동일 규칙 4중 출현(SKILL·§3.4·§4.2·§5) |
+    45	| §6 인덱스 아키텍처: B+Tree | 0 | 있음 | 없음 | 비커버 | 전부 메커니즘 설명(WAL 서술 포함) — 규범 없음 |
+    46	| §7 인덱스 설계 베스트 프랙티스 | 6 | 있음 | 없음 | 비커버 | 순서 결정 규칙 2 + §7.4 원칙 표 행 4(표 행) |
+    47	| §8 제약조건과 중복 방지 | 19 | 있음 | 없음 | 불명 | 서두 보호 원칙 1, §8.1 주의 셀 5(표 행), cascade 금지 1, **BC 경계 FK 금지 2**(출처로 `architecture-ddd` §3.3 인용 — 출처 명시이지 판정 주체 아님), §8.3 매핑 표 4(표 행)+«최소한 다음을 정한다» 1, §8.4 rollout 1+단계 4. BC FK 금지는 check-context-isolation.py 인접이나 FK 검사 코드 없음 확인 → 불명 |
+    48	| §9 트랜잭션, 격리 수준, 락 | 43 | 있음 | 명시 | 커버(부분) | 최중량 절: §9.4=1, §9.5=18(엔진 의존성·연결 설정 경계·낙관적 동시성 단락), §9.6=12(Risky Write 블록·Test criteria 심사), §9.7=12(Outbox 표 포함). 소유자 다수 명시: 판정=도메인 책임, 테스트 입장=`discipline-tdd` 심사, ENGINE 교체=설계 승인, stored result HTTP 매핑=presentation(api §13.3). 백스톱: check-idempotency-scope-creep.py가 자기 문면에서 «architecture-db §9.6 Idempotency storage 집행» 명시 → §9.6 항목만 커버, 나머지(§9.5 CAS·§9.7 outbox)는 check-transaction-boundary·check-event-publish·check-broker-contract 인접이나 대응 미명시. 외부 피인용 최다: §9.5 9회·§9.6 2회·§9.7 3회. 인라인 결정 ID: #529·#626·D50(검사기측) |
+    49	| §10 쿼리 최적화 | 4 | 있음 | 없음 | 비커버 | ANALYZE 조건 지시 1 + §10.5 원칙 표 행 3(표 행) |
+    50	| §11 운영 rollout, backfill, migration safety | 16 | 있음 | 없음 | 비커버 | 관할 선언 2(구현은 implementation-django로 «넘긴다» — 위임 명시이나 판정 주체 아님), §11.1=2, §11.2 불릿 5, §11.3 설계 기준 셀 5(표 행), §11.4=1, §11.5 산출물 의무 1 |
+    51	| §12 데이터 모델링 패턴: 계층 구조 | 4 | 있음 | 없음 | 비커버 | §12.4 선택 가이드 매핑 4(표 행). 나머지 설명 |
+    52	| §13 데이터 모델링 패턴: 상속과 다형성 | 5 | 있음 | 없음 | 비커버 | 다형적 연관 앱 레벨 보장 의무 1 + §13.5 선택 가이드 4(표 행) |
+    53	| §14 참고 문헌 | 0 | 있음 | 없음 | 비커버 | 출처 표만 |
+    54	
+    55	소계: 15절 · 106문장.
+    56	
+    57	---
+    58	
+    59	## architecture-api/SKILL.md
+    60	
+    61	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    62	|---|---:|---|---|---|---|
+    63	| frontmatter (name·description·user-invocable) | 2 | 없음 | 없음 | 비커버 | «먼저 로드한다»·«…로 위임». 위임처 표기 혼재: `dddjango:architecture-ddd`(콜론 접두) vs `architecture-db`(무접두) |
+    64	| 언제 쓰나 | 6 | 없음 | 없음 | 비커버 | 로드 조건 1 + 위임 경계 5 |
+    65	| 핵심 운영 원칙 | 10 | 없음 | 명시(부분) | 불명 | 8불릿 = final.md § 요약-복제. 에러 프로필 불릿(3문장)에 승인 주체 명시: 별도 사용자 승인·G1 표면화(STOP). 해당 불릿은 check-api-error-controller-contract.py·check-error-centralization.py·check-openapi-error-declaration.py 인접이나 문면 스크립트 지목 없음 |
+    66	| 상세 레퍼런스 | 2 | 없음 | 없음 | 비커버 | db판과 동일 패턴 |
+    67	
+    68	소계: 4절 · 20문장.
+    69	
+    70	---
+    71	
+    72	## architecture-api/references/final.md
+    73	
+    74	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    75	|---|---:|---|---|---|---|
+    76	| 목차 | 0 | 없음 | 없음 | 비커버 | |
+    77	| §1 REST 아키텍처 원칙 | 0 | 있음 | 없음 | 비커버 | 정의·원칙 설명만 |
+    78	| §2 HTTP 메서드와 멱등성 | 0 | 있음 | 없음 | 비커버 | 속성 표·PATCH 멱등성 뉘앙스 전부 사실 서술. 지시력은 SKILL 불릿1이 담당 |
+    79	| §3 URL/리소스 설계 규칙 | 7 | 있음 | 없음 | 비커버 | 명명 규칙 표 5(표 행) + 계층 슬래시 1 + «3단계 이상 깊이는 피한다» 1 |
+    80	| §4 HTTP 상태 코드 | 17 | 있음 | 명시 | 불명 | 상태 코드 용도 매핑 13(표 행: 2xx 4·4xx 7·5xx 2, «애매하면 500» 포함) + **CAS 재시도 소진 status 규칙 3**(누락 금지 의무·controller 헤더 소유·설계자 임의 확정 금지 — 선택 venue §5/G1 명시) + PRG 1(보수적 포함). CAS 소진 규칙은 db §9.5와 짝인데 대응 검사기 불명 |
+    81	| §5 요청/응답 계약 (§5.4 포함) | 45 | 있음 | 명시 | 커버(부분) | §5.1=9(입력 상한 의무·매직넘버 위임 포함), §5.2=6, §5.3=1, **§5.4=29**(프로필 우선순위 4·wire 혼합 금지 2·신규 범위/preserve-established 관할 4·code-json 불릿 15·framework 헤더 경계 3). 소유자 최밀집: controller 소유, preserve-established=native 보존 관할(12-slot 계약 소유), shape 승인=명시적 사용자 승인, 열거 밖 조합=G1 표면화 STOP. §5.4 문면이 «레시피의 정본은 구현 스킬·검사기 계약»이라 검사기를 정본으로 지목 — check-api-error-controller-contract.py·check-error-centralization.py가 controller-owned 매핑 집행에 명백 대응(부분: wire shape 승인 자체는 게이트 소관). 인라인 결정 ID: «2026-08-13» 사례 각주, G1/G2·12-slot·STOP_FOR_USER_APPROVAL 용어 정의 내장. §5.4는 외부 피인용 있음 |
+    82	| §6 RFC 9457 에러 응답 형식 | 7 | 있음 | 없음 | 불명 | 적용 범위 자기 선언 3(§5.4 선택 범위에만 적용·code-json 범위 비적용·구현 형태는 §5.4 단서) + 확장 필드 무시 1 + §6.3 핵심 규칙 3. 관할 «범위»는 선언하나 판정 주체 명시는 없음 |
+    83	| §7 HTTP 헤더와 콘텐츠 협상 | 7 | 있음 | 없음 | 커버(부분) | 406/415 매핑 2(표 행) + 혼동 금지 1 + 인용 블록 4(별도 승인 범위 한정·Ninja-owned pre-body 경계·415 실확인·**전역 middleware/helper/handler 합성 금지**). 합성 금지는 문면이 implementation-django-ninja §6.3을 지목하고 check-ninja-boundary-middleware.py가 그 §6 집행을 자기 선언 — 체인 경유 명백 대응(부분). §7.2는 외부 피인용 3회 |
+    84	| §8 인증과 인가 | 21 | 있음 | 명시 | 불명 | §8.1=3(401 challenge 의무·확립 계약 보존+G1 회부·전역 합성 금지), §8.2 매핑 3(표 행), §8.3=3(쿼리 파라미터 비밀 금지 — §5.1과 중복), §8.4=12(Bearer 표 2 포함, challenge 규칙 재진술 중복 1 포함). 편차 처리 venue=G1 명시. 전역 합성 금지는 §7과 동일 규칙 반복이나 §8 문면엔 검사기 대응 체인 없음 → 불명 |
+    85	| §9 페이지네이션 | 7 | 있음 | 없음 | 비커버 | 선택 기준 매핑 3(표 행) + 실전 원칙 4 |
+    86	| §10 버전 관리 | 2 | 있음 | 없음 | 비커버 | «하나의 전략 일관 적용»·«문서화+마이그레이션 경로». «일반 패턴: URL path 메이저…»는 서술로 보고 제외 |
+    87	| §11 하위 호환성과 Deprecation | 17 | 있음 | 없음 | 비커버 | Breaking 판정표 9(표 행 — 파이프라인이 쓰는 판정 기준) + Deprecation 프로세스 5단계 + 실전 원칙 3(«추가는 자유, 제거는 금지» 포함) |
+    88	| §12 Rate Limiting | 8 | 있음 | 명시 | 불명 | 알고리즘 매핑 4(표 행) + 실전 원칙 4(Retry-After 보존·전역 합성 금지·controller 소유 — §5.4 framework 경계와 중복 규칙). controller 소유 명시 |
+    89	| §13 멱등성 키 (Idempotency-Key) | 24 | 있음 | 명시 | 커버(부분) | §13.2 동작 방식 6(presentation status 소유 규칙 내장), §13.3=12(계약 결정 의무 1+표 내장 3+replay 소유권 5+fingerprint 3), §13.4=6(**채택은 G0/G1 사용자 결정·미요청 기본 미적용** 포함). 소유자: presentation controller가 status·매핑 소유, 중앙 error handler 소유 금지, 채택=사용자 결정. check-idempotency-scope-creep.py가 채택 게이트를 집행하고 자기 문면에 «기존 확립된 멱등 계약은 존중 — §13» 참조 → 부분 커버. db §9.6 Idempotency storage와 규칙 쌍(상호 § 참조) |
+    90	| §14 OpenAPI | 4 | 있음 | 없음 | 커버(부분) | 반영 의무 1(+9개 표면 목록) + 실전 원칙 3. check-openapi-error-declaration.py(«OpenAPI 오류 계약 결정적 백스톱»)가 표면 목록 중 에러 프로필 항목에 명백 대응 — 부분 |
+    91	| §15 참고 문헌 | 0 | 있음 | 없음 | 비커버 | |
+    92	
+    93	소계: 16절 · 166문장.
+    94	
+    95	---
+    96	
+    97	## 4축 집계 (39절 기준)
+    98	
+    99	| 축 | 값 |
+   100	|---|---|
+   101	| ①앵커 | 있음 29 · 없음 10 (없음 = SKILL 8절 + 목차 2절) |
+   102	| ②소유자 | 명시 8 · 없음 31 (명시 = db SKILL 원칙, db §9, api SKILL 원칙, api §4·§5·§8·§12·§13) |
+   103	| ③백스톱 | 커버 5 · 불명 7 · 비커버 27 (커버 = db §9, api §5·§7·§13·§14 — **전부 부분 커버**) |
+   104	| ④쌍둥이 | 존재 39 · 부재 0 |
+   105	
+   106	---
+   107	
+   108	## 특이 발견
+   109	
+   110	1. **규범 극단 집중**: 310문장 중 db §9(43)·api §5.4(29)·api §13(24)·api §8(21) 네 클러스터가 117문장(38%). 나머지 절 다수는 교과 지식(규범 0~7)이라, 온톨로지 레지스트리 대상은 사실상 «게이트·소유권·경계» 클러스터에 한정된다.
+   111	2. **문서→검사기 참조 0회, 대응은 역방향 단방향**: 4파일 문면에 `check-*.py` 이름이 한 번도 없다. 대응 근거는 전부 검사기 쪽 docstring(check-idempotency-scope-creep.py → db §9.6·api §13 명시)이거나 참조 체인(api §7.2 → implementation-django-ninja §6.3 → check-ninja-boundary-middleware.py). 백스톱 커버 5절도 전부 부분 커버.
+   112	3. **이미 존재하는 ID 체계가 산문에 내장**: final.md §N 앵커(외부 피인용: db §9.5 9회, §9.7·api §7.2 각 3회, §9.6 2회 등), 이슈 번호(#529·#626), 날짜 결정 각주(«2026-08-13»), 게이트·계약 용어(G0/G1/G2·12-slot·STOP_FOR_USER_APPROVAL, 검사기측 D50·D59·C3). 온톨로지의 룰 ID 후보가 이미 존재하나 표기가 4종 혼재.
+   113	4. **피인용 허브 절에 소절 앵커 부재**: db §9.5는 최다 피인용(9회)인데 내부가 «엔진 의존성 단락», «위 낙관적 동시성 메커니즘» 같은 산문 포인터로만 구분된다(§9.5.x 없음). api §5.4도 동일(불릿·굵은 소제목만).
+   114	5. **동일 규칙의 다중 복제**: 정규화 우선 규칙 4곳(db SKILL 불릿1·§3.4·§4.2·§5), 전역 handler/helper 합성 금지 4곳(api §5.4·§7·§8×2·§12), 쿼리 파라미터 비밀 금지 2곳(api §5.1·§8.3), 401 challenge 의무 3곳(api §8.1 표·불릿·§8.4). SKILL 핵심 운영 원칙은 구조적으로 final.md 요약-복제라 표류 위험 상시.
+   115	6. **쌍둥이는 사실상 동기화 상태**: references/final.md 2건은 codex판과 바이트 동일. SKILL.md 2건만 차이 — codex판은 `user-invocable: false` 제거 + `architecture-ddd` → `dddjango-architecture-ddd` 개명 표기(의도된 이름 격리, 2c64672 커밋 계열). 표류 아님.
+   116	7. **규칙 쌍이 두 문서에 분산**: db §9.5 낙관적 동시성 ↔ api §4.2 CAS 소진 status, db §9.6 Idempotency storage(stored result) ↔ api §13.3 replay/status 소유 — 서로 § 번호로 상호 참조하며 한쪽만 고치면 깨지는 결합. 위임처 표기도 혼재(`dddjango:architecture-ddd` 콜론 접두 vs `architecture-db` 무접두, codex판은 `dddjango-` 접두).
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-19-ontology-t1-census/E08-recon.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E08 — P0 대사 노트 (T1-1 절 유형 센서스)
+     2	
+     3	담당 문서군: architecture-db-skill · architecture-db-final · architecture-api-skill · architecture-api-final
+     4	기계 절 145 (sections.tsv E08 행 수와 동수) ↔ P0 39절 · 규범 310문장 (`workspace/design/2026-08-18-p0-census/E08-architecture-db-api.md`)
+     5	
+     6	## §1 문서별 접기 규약 명문화
+     7	
+     8	- **architecture-db-skill / architecture-api-skill (공통 규약)**: P0 절 = frontmatter 1절 + h2 3절. 기계 절의 `(전문)`(s001)이 P0 frontmatter 절에 1:1 대응하고, h2 3절(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 1:1 대응한다. **h1 제목 절(s002, 본문 0행)은 P0가 절로 계수하지 않았다**(제목 전용 — 서두 병합이 아니라 미계수). 따라서 기계 5절 = P0 4절 + h1 제목 절 1.
+     9	- **architecture-db-final / architecture-api-final (공통 규약)**: P0 절 = 목차(h2) 1절 + 최상위 §N(h2) 절. **h3 소절(§N.M)은 전부 상위 §N에 접는다**(P0 집계 방식 메모 «소절(§N.M)은 상위 절에 귀속» 그대로). api-final의 **h4 2절(s025 `dddjango-code-json`·s026 framework 경계)은 §5.4(h3)에 접히고, §5.4는 다시 §5(h2)에 접힌다.** h1 제목 절(s001)은 SKILL과 같은 규약으로 P0 미계수. 부록 제외 규약은 없다 — §14/§15 참고 문헌도 P0 절로 계수됐다(규범 0).
+    10	- 검산: db-final 기계 68 = h1 1 + P0 15절(목차 1 + h2 14 + 접힌 h3 52). api-final 기계 67 = h1 1 + P0 16절(목차 1 + h2 15 + 접힌 h3 48 + 접힌 h4 2). SKILL 각 5 = h1 1 + P0 4절. 합 145 = P0 39 + h1 제목 절 4 + 접힌 h3/h4 102.
+    11	
+    12	## §2 P0 절 전건 대사 표 (39건)
+    13	
+    14	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    15	|---|---|---|
+    16	| db-skill frontmatter | architecture-db-skill/s001 | (전문) 1:1 |
+    17	| db-skill 언제 쓰나 | architecture-db-skill/s003 | h2 1:1 |
+    18	| db-skill 핵심 운영 원칙 | architecture-db-skill/s004 | h2 1:1 |
+    19	| db-skill 상세 레퍼런스 | architecture-db-skill/s005 | h2 1:1 |
+    20	| db-final 목차 | architecture-db-final/s002 | h2 1:1 |
+    21	| db-final §1 | s003-1 + s004-1.1 + s005-1.2 | h3→h2 접기 |
+    22	| db-final §2 | s006-2 + s007-2.1…s011-2.5 | h3→h2 접기 |
+    23	| db-final §3 | s012-3 + s013-3.1…s016-3.4 | h3→h2 접기 |
+    24	| db-final §4 | s017-4 + s018-4.1…s020-4.3 | h3→h2 접기 |
+    25	| db-final §5 | s021-5 | h2 단독(소절 없음) 1:1 |
+    26	| db-final §6 | s022-6 + s023-6.1…s026-6.4 | h3→h2 접기 |
+    27	| db-final §7 | s027-7 + s028-7.1…s031-7.4 | h3→h2 접기 |
+    28	| db-final §8 | s032-8 + s033-8.1…s036-8.4 | h3→h2 접기 |
+    29	| db-final §9 | s037-9 + s038-9.1…s044-9.7 | h3→h2 접기 |
+    30	| db-final §10 | s045-10 + s046-10.1…s050-10.5 | h3→h2 접기 |
+    31	| db-final §11 | s051-11 + s052-11.1…s056-11.5 | h3→h2 접기 |
+    32	| db-final §12 | s057-12 + s058-12.1…s061-12.4 | h3→h2 접기 |
+    33	| db-final §13 | s062-13 + s063-13.1…s067-13.5 | h3→h2 접기 |
+    34	| db-final §14 | s068-14 | h2 단독 1:1 |
+    35	| api-skill frontmatter | architecture-api-skill/s001 | (전문) 1:1 |
+    36	| api-skill 언제 쓰나 | architecture-api-skill/s003 | h2 1:1 |
+    37	| api-skill 핵심 운영 원칙 | architecture-api-skill/s004 | h2 1:1 |
+    38	| api-skill 상세 레퍼런스 | architecture-api-skill/s005 | h2 1:1 |
+    39	| api-final 목차 | architecture-api-final/s002 | h2 1:1 |
+    40	| api-final §1 | s003-1 + s004-1.1…s007-1.4 | h3→h2 접기 |
+    41	| api-final §2 | s008-2 + s009-2.1…s011-2.3 | h3→h2 접기 |
+    42	| api-final §3 | s012-3 + s013-3.1…s015-3.3 | h3→h2 접기 |
+    43	| api-final §4 | s016-4 + s017-4.1…s019-4.3 | h3→h2 접기 |
+    44	| api-final §5 | s020-5 + s021-5.1…s024-5.4 + s025 + s026 | h3→h2 접기 + **h4 2절→§5.4→§5 이중 접기** |
+    45	| api-final §6 | s027-6 + s028-6.1…s030-6.3 | h3→h2 접기 |
+    46	| api-final §7 | s031-7 + s032-7.1…s034-7.3 | h3→h2 접기 |
+    47	| api-final §8 | s035-8 + s036-8.1…s039-8.4 | h3→h2 접기 |
+    48	| api-final §9 | s040-9 + s041-9.1…s043-9.3 | h3→h2 접기 |
+    49	| api-final §10 | s044-10 + s045-10.1…s047-10.3 | h3→h2 접기 |
+    50	| api-final §11 | s048-11 + s049-11.1…s051-11.3 | h3→h2 접기 |
+    51	| api-final §12 | s052-12 + s053-12.1…s056-12.4 | h3→h2 접기 |
+    52	| api-final §13 | s057-13 + s058-13.1…s061-13.4 | h3→h2 접기 |
+    53	| api-final §14 | s062-14 + s063-14.1…s066-14.4 | h3→h2 접기 |
+    54	| api-final §15 | s067-15 | h2 단독 1:1 |
+    55	
+    56	## §3 잔차
+    57	
+    58	**설명 불가 잔차 0.**
+    59	
+    60	기계에만 있고 P0에 없는 절은 h1 제목 절 4건(architecture-db-skill/s002, architecture-db-final/s001, architecture-api-skill/s002, architecture-api-final/s001)뿐이며, 전부 §1의 «h1 제목 절 미계수» 규약으로 설명된다(각 절은 제목+공백 2행 이하, 규범 0). P0에만 있고 기계에 없는 절은 없다. 그 외 기계 절 전건이 §2의 접기 규약 안에서 P0 39절에 귀속된다.
+    61	
+    62	## §4 규범 계수 대조
+    63	
+    64	| 구분 | 이번(기계 절 합) | P0 | 차 |
+    65	|---|---:|---:|---:|
+    66	| architecture-db-skill | 18 | 18 | 0 |
+    67	| architecture-db-final | 106 | 106 | 0 |
+    68	| architecture-api-skill | 20 | 20 | 0 |
+    69	| architecture-api-final | 167 | 166 | **+1** |
+    70	| **합계** | **311** | **310** | **+1** |
+    71	
+    72	차이의 원인:
+    73	
+    74	1. **+1의 단일 원인 — api-final s020-5(§5 서두)**: «클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다»는 기록 의무 지시다. P0 §5=45의 구성 명세(§5.1=9 + §5.2=6 + §5.3=1 + §5.4=29)에 서두 몫이 없어 P0는 이 문장을 계수하지 않은 것으로 추정된다(P0는 db §8·§11 서두 지시는 계수했으므로 비일관 지점). 이번 센서스는 «애매하면 포함+비고» 규약을 적용해 1로 계수했다.
+    75	2. **P0는 절 단위 집계였고 이번은 기계 절 단위 배분**이라, h3/h4로 쪼개진 소절별 수치는 이번 센서스의 신규 산출이다. 배분은 P0 비고의 구성 명세를 그대로 따랐다(§9: 9.4=1/9.5=18/9.6=12/9.7=12, §5: 5.1=9/5.2=6/5.3=1/5.4=29, §8: 8.1=3/8.2=3/8.3=3/8.4=12, §13: 13.2=6/13.3=12/13.4=6 등).
+    76	3. **P0 내부 불일치 1건 승계 처리**: api §5.4의 P0 비고 내부 합(우선순위 4+혼합 금지 2+관할 4+code-json 15+framework 3 = 28)이 절 합(29)과 1 어긋난다. 이번 배분에서는 관할 문단을 문장 단위로 재검해 5문장(wire 계약 주어 선언·preserve 비대상·신규 범위 레시피·G1 표면화 STOP·혼합 금지 주어)으로 계수, s024-5.4=11 + s025=15 + s026=3 = 29로 절 합을 유지했다.
+    77	4. 표 행 계수의 P0 비일관(예: §7.4·§8.1·§11.3 표 행은 계수, §9.4·§11.4·§5.3 표 행은 미계수)은 그대로 승계하고 각 행 note에 표기했다 — 수치 연속성을 우선했다.
+    78	
+    79	부기(codex 대사): 4파일 전부 SAME — final.md 2건은 codex판과 바이트 동일, SKILL.md 2건은 `architecture-ddd`→`dddjango-architecture-ddd` 개명(콜론→대시 접두 포함)과 `user-invocable: false` 제거뿐(플랫폼 표기 치환 이내, P0 특이 발견 6 «표류 아님» 재확인). DIFF 0 · ABSENT 0.
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-19-ontology-t1-census/E10-recon.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E10 P0 대사 노트 — command + pipeline agents
+     2	
+     3	작성일: 2026-08-19. 대상: 기계 절 54(sections.tsv p0_group=E10) ↔ P0 상세 인벤토리 58절(`workspace/design/2026-08-18-p0-census/E10-command-agents.md`).
+     4	
+     5	## §1 문서별 접기 규약 명문화
+     6	
+     7	공통 규약(8개 문서 전부):
+     8	
+     9	- **(전문) 합성절**: 기계 절 s001은 YAML frontmatter(L1~) + 헤딩 없는 서두(역할 선언 문단)를 한 절로 묶는다. P0의 «전문» 절은 서두 문단만 계수했으므로, P0 전문 ↔ 기계 s001은 **범위 확대 대응**(frontmatter 포함)이다. frontmatter `description`은 라우터 트리거 문면으로 T1 규약(«애매하면 포함+비고»)에 따라 규범 1문으로 가산했고, `tools:`/`skills:` 목록은 문장이 아닌 기계 설정 값이라 계수하지 않았다.
+    10	- **h2·h3 절 단위**: 기계 절은 h2와 h3을 각각 독립 절로 낸다. P0는 h2 단위로 계수하고 내부 h3은 비고로만 언급했으므로, 내부 h3을 가진 P0 절 하나는 기계 절 둘(h2 앞부분 + h3 이하)에 대응한다.
+    11	
+    12	문서별 특칙:
+    13	
+    14	- **command-dddjango**: P0는 Phase 2를 코퍼스 실참조 단위인 번호 step(1~7)으로 쪼개 7절로 계수했다. step 번호는 h2 아래 번호 목록이지 헤딩이 아니므로 기계 절 분할 단위가 아니다 → **P0 step 1~7 일곱 절이 기계 s007 하나로 접힌다**. 나머지 h2 절은 1:1.
+    15	- **agent-design-architect**: P0 «명세에 담는 것»(158) 한 절 ↔ 기계 s004(L31~36, h2 앞부분) + s005(L37~81, h3 «Error response contract 12-slot» 이하 — lens 불릿·입장 표 포함). 계수 분할은 직접 재계수로 s004=9, s005=149.
+    16	- **agent-design-review-api**: P0 «점검 항목 (계약 lens만)»(72) 한 절 ↔ 기계 s005(L45~53) + s006(L54~79, h3 12-slot 이하). 직접 재계수로 s005=10, s006=62.
+    17	- 나머지 5개 에이전트 문서(acceptance-tester·coder·design-review-db·design-review-ddd·discipline-reviewer): 내부 h3 없음 — P0 절과 기계 절이 전건 1:1(전문 규약만 적용).
+    18	- 부록·제외 절 없음. 서두 병합 없음(각 문서 서두는 전문 합성절 하나뿐).
+    19	
+    20	## §2 P0 절 전건 대사 표
+    21	
+    22	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    23	|---|---|---|
+    24	| command/전문·번호 공간 규약 (L7–11) | command-dddjango/s001 (L1–12) | 전문 합성(frontmatter 포함 확대) |
+    25	| command/산출물 위치 | command-dddjango/s002 | 1:1 |
+    26	| command/진행 가시성 | command-dddjango/s003 | 1:1 |
+    27	| command/시작: 모드 판별 | command-dddjango/s004 | 1:1 |
+    28	| command/Phase 0 — 요구·스코프 (G0) | command-dddjango/s005 | 1:1 |
+    29	| command/Phase 1 — 설계 (G1) | command-dddjango/s006 | 1:1 |
+    30	| command/Phase 2 step 1 (러너 준비) | command-dddjango/s007 (L86–140) | step 접기(7→1) |
+    31	| command/Phase 2 step 2 (한정 검색·dispatch) | command-dddjango/s007 | step 접기 |
+    32	| command/Phase 2 step 3 (슬라이스 도출) | command-dddjango/s007 | step 접기 |
+    33	| command/Phase 2 step 4 (coder 호출·슬라이스 감사) | command-dddjango/s007 | step 접기 |
+    34	| command/Phase 2 step 5 (규율 감사·suite 실행) | command-dddjango/s007 | step 접기 |
+    35	| command/Phase 2 step 6 (결정적 백스톱 27종) | command-dddjango/s007 | step 접기 |
+    36	| command/Phase 2 step 7 (G2 배너) | command-dddjango/s007 | step 접기 |
+    37	| command/Phase 3 — 마무리·검증 보고 | command-dddjango/s008 | 1:1 |
+    38	| command/수정 모드 (부분 수정) | command-dddjango/s009 | 1:1 |
+    39	| command/엣지 처리 | command-dddjango/s010 | 1:1 |
+    40	| command/경계 | command-dddjango/s011 | 1:1 |
+    41	| acceptance/전문 (L13) | agent-acceptance-tester/s001 (L1–14) | 전문 합성 |
+    42	| acceptance/입력 | agent-acceptance-tester/s002 | 1:1 |
+    43	| acceptance/산출 | agent-acceptance-tester/s003 | 1:1 |
+    44	| acceptance/인수 테스트 작성 규칙 | agent-acceptance-tester/s004 | 1:1 |
+    45	| acceptance/경계 | agent-acceptance-tester/s005 | 1:1 |
+    46	| coder/전문 (L16) | agent-coder/s001 (L1–17) | 전문 합성 |
+    47	| coder/입력 | agent-coder/s002 | 1:1 |
+    48	| coder/산출 | agent-coder/s003 | 1:1 |
+    49	| coder/작업 방식 (안쪽 루프 TDD) | agent-coder/s004 | 1:1 |
+    50	| coder/엣지·보고 | agent-coder/s005 | 1:1 |
+    51	| coder/경계 | agent-coder/s006 | 1:1 |
+    52	| architect/전문 (L13) | agent-design-architect/s001 (L1–14) | 전문 합성 |
+    53	| architect/입력 | agent-design-architect/s002 | 1:1 |
+    54	| architect/산출 | agent-design-architect/s003 | 1:1 |
+    55	| architect/명세에 담는 것 | agent-design-architect/s004+s005 (L31–36 / L37–81) | h3 분리(1→2) |
+    56	| architect/리뷰 반영·충돌 중재 | agent-design-architect/s006 | 1:1 |
+    57	| architect/경계 | agent-design-architect/s007 | 1:1 |
+    58	| review-api/전문 (L10) | agent-design-review-api/s001 (L1–11) | 전문 합성 |
+    59	| review-api/실행 모드 | agent-design-review-api/s002 | 1:1 |
+    60	| review-api/입력 | agent-design-review-api/s003 | 1:1 |
+    61	| review-api/산출 | agent-design-review-api/s004 | 1:1 |
+    62	| review-api/점검 항목 (계약 lens만) | agent-design-review-api/s005+s006 (L45–53 / L54–79) | h3 분리(1→2) |
+    63	| review-api/경계 | agent-design-review-api/s007 | 1:1 |
+    64	| review-db/전문 (L10) | agent-design-review-db/s001 (L1–11) | 전문 합성 |
+    65	| review-db/입력 | agent-design-review-db/s002 | 1:1 |
+    66	| review-db/산출 | agent-design-review-db/s003 | 1:1 |
+    67	| review-db/점검 항목 (데이터 lens만) | agent-design-review-db/s004 | 1:1 |
+    68	| review-db/경계 | agent-design-review-db/s005 | 1:1 |
+    69	| review-ddd/전문 (L9) | agent-design-review-ddd/s001 (L1–10) | 전문 합성 |
+    70	| review-ddd/입력 | agent-design-review-ddd/s002 | 1:1 |
+    71	| review-ddd/산출 | agent-design-review-ddd/s003 | 1:1 |
+    72	| review-ddd/점검 항목 (도메인 lens만) | agent-design-review-ddd/s004 | 1:1 |
+    73	| review-ddd/경계 | agent-design-review-ddd/s005 | 1:1 |
+    74	| discipline/전문 (L12) | agent-discipline-reviewer/s001 (L1–13) | 전문 합성 |
+    75	| discipline/입력 | agent-discipline-reviewer/s002 | 1:1 |
+    76	| discipline/산출 | agent-discipline-reviewer/s003 | 1:1 |
+    77	| discipline/감사 빈도 (적응형) | agent-discipline-reviewer/s004 | 1:1 |
+    78	| discipline/영구 테스트 입장 감사 | agent-discipline-reviewer/s005 | 1:1 |
+    79	| discipline/Phase 1·2 API 오류 scope·소유권 점검 | agent-discipline-reviewer/s006 | 1:1 |
+    80	| discipline/Phase 2 점검 항목 (클린코드·TDD 규율만) | agent-discipline-reviewer/s007 | 1:1 |
+    81	| discipline/경계 | agent-discipline-reviewer/s008 | 1:1 |
+    82	
+    83	P0 58건 전건 대응 완료(1:1 44건 · 전문 합성 8건 · step 접기 7→1 1건 · h3 분리 1→2 2건). 기계 절 54건 전건이 표에 등장한다(s007은 7건 수용, architect s004·s005 / api s005·s006은 분리 수용).
+    84	
+    85	## §3 잔차
+    86	
+    87	**설명 불가 잔차 0.**
+    88	
+    89	경계 사례(규약 안으로 설명됨): ① frontmatter는 P0 계수 범위 밖이었으나 기계 (전문) 절에 포함 — §1 전문 합성 규약으로 흡수(description +1 계수는 §4에 반영). ② P0의 step 단위·h3 언급은 절 목록의 계수 단위 차이일 뿐 본문 누락·초과가 아님을 라인 범위 합으로 확인(command L86–140 = step1~7 전체, architect L31–81 = «명세에 담는 것» 전체, api L45–79 = «점검 항목» 전체).
+    90	
+    91	## §4 규범 계수 대조
+    92	
+    93	이번 분류 norm_count 합 = **1068** vs P0 = **1060**. 차이 **+8**.
+    94	
+    95	- **+8 전액 = frontmatter description 가산**: 8개 문서의 YAML description(라우터/디스패치 트리거 문면)을 T1 판정 기준의 «(전문) 절 description은 애매하면 포함+비고» 규약에 따라 문서당 1문으로 가산했다. P0는 헤딩 본문만 계수해 이 8문이 없었다.
+    96	- 본문 계수는 P0 절 계수를 측정 연속성 의무에 따라 그대로 승계하고 기계 절 경계로 재배분만 했다: command s007 = P0 step1~7 합(5+5+4+10+18+81+6=129), architect 158 → s004 9 + s005 149(분할점 직접 재계수), api 72 → s005 10 + s006 62(동일). 재배분 합은 각 P0 원값과 일치한다.
+    97	- 문서별: command 314(=313+1) · acceptance 76(=75+1) · coder 104(=103+1) · architect 179(=178+1) · api 95(=94+1) · db 36(=35+1) · ddd 29(=28+1) · discipline 235(=234+1).
+    98	
+    99	부기 — codex 대응 요약(3값): SAME 47 · DIFF 7 · ABSENT 0. DIFF 7건 = command s001·s003·s006·s007·s010·s011(실행 모델·게이트 채널·병렬 정의·플러그인 루트 전달 등 플랫폼 재작성이 문면 치환 범위를 넘음) + coder s004(검사기 확장-리터럴 경로 불릿 부재·«읽기 전용 한 턴 묶기» 불릿 추가). 에이전트 7종의 나머지 절은 «Coordinator→코디네이터»·스킬 접두(`dddjango-`) 치환·«로드할 지식 스킬» 절 신설(frontmatter skills: 목록의 형식 치환) 이내로 SAME. architect «산출물-우선 쓰기» 문단은 codex에서 산출 절로 이동했으나 규범 등가라 SAME 유지(절 이동은 비고 기재).
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-18-p0-census/E10-command-agents.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# P0 센서스 — E10: command + pipeline agents
+     2	
+     3	담당: `dddjango/commands/dddjango.md` + `dddjango/agents/*.md` 8개 파일 전수.
+     4	작성일: 2026-08-18.
+     5	
+     6	**계수 방법**: 절 = 헤딩(`##`/`###`) 단위, 단 커맨드 Phase 2는 번호 step(1~7)이 코퍼스 내 실제 참조 단위(«Phase 2 step 6» 등)라 step 단위로 쪼갬. 규범 문장 = 마침표(또는 불릿) 단위 문장 중 지시·금지·조건 표지를 가진 것 — 한 문장에 지시가 여럿이어도 1로 셈(문장 수 기준). 이유 서술(«*왜* — …»)·역할 정체성 단문·예시는 제외, 애매하면 포함하고 비고에 표시. ④쌍둥이는 파일 단위 판정(`codex-dddjango/skills/` Glob 확인)을 절에 상속.
+     7	
+     8	## 파일별 요약
+     9	
+    10	| 파일 | 행수 | 절수 | 규범 문장수 | codex 쌍둥이 |
+    11	|---|---|---|---|---|
+    12	| commands/dddjango.md | 176 | 17 | 313 | 있음 (`skills/dddjango/SKILL.md`) |
+    13	| agents/acceptance-tester.md | 54 | 5 | 75 | 있음 (`skills/dddjango-acceptance-tester/SKILL.md`) |
+    14	| agents/coder.md | 71 | 6 | 103 | 있음 (`skills/dddjango-coder/SKILL.md`) |
+    15	| agents/design-architect.md | 96 | 6 | 178 | 있음 (`skills/dddjango-design-architect/SKILL.md`) |
+    16	| agents/design-review-api.md | 84 | 6 | 94 | 있음 (`skills/dddjango-design-review-api/SKILL.md`) |
+    17	| agents/design-review-db.md | 44 | 5 | 35 | 있음 (`skills/dddjango-design-review-db/SKILL.md`) |
+    18	| agents/design-review-ddd.md | 44 | 5 | 28 | 있음 (`skills/dddjango-design-review-ddd/SKILL.md`) |
+    19	| agents/discipline-reviewer.md | 130 | 8 | 234 | 있음 (`skills/dddjango-discipline-reviewer/SKILL.md`) |
+    20	| **합계** | **699** | **58** | **1060** | 8/8 존재 |
+    21	
+    22	③백스톱 범례: 커버 = 문면이 check-*.py/registry_gate 등 결정적 검사기를 지목하거나 규칙 번호로 명백 대응. 비커버 = 절 규칙이 오케스트레이션 절차·출력 형식·리뷰 행위라 27종 검사기(코드 대상)의 관할 밖임이 명백. 불명 = 코드 산출물 규칙인데 스크립트 무언급·대응 부분적.
+    23	
+    24	## commands/dddjango.md (17절 · 313)
+    25	
+    26	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    27	|---|---|---|---|---|---|
+    28	| 전문·번호 공간 규약 (dddjango.md L7–11) | 5 | 없음 | 명시(Coordinator·subagent 위임) | 비커버 | 헤딩 없는 서두. registry #N ↔ 무접두 #N 이중 번호 공간 규약의 유일 정의처. 무접두 #N 본문 정본은 플러그인 미동봉(외부 의존 명시) |
+    29	| 산출물 위치 | 9 | 있음 | 명시(코디네이터 소유·architect 제자리 수정) | 비커버 | `.dddjango/` 폴더 규약·한 기능=한 폴더. 검사기 무대응(절차 규칙) |
+    30	| 진행 가시성 | 22 | 있음 | 명시(사용자 승인·discipline 권고 인용) | 비커버 | 게이트 배너 형식 블록 = 사실상 앵커화된 출력 계약. 날짜 스탬프(2026-08-13/15/17) 다수 |
+    31	| 시작: 모드 판별 | 5 | 있음 | 명시(사용자 확인) | 비커버 | 모드축/배치축 직교 선언 |
+    32	| Phase 0 — 요구·스코프 (G0) | 39 | 있음 | 명시(사용자·코디네이터·architect 경계) | 커버 | 빚 스캔 = «Phase 2 step 6 registry 그대로» 실행 + `registry_gate.py` 대체 실행 금지 명시. 절 내부에 스택 판정 소유(architect) 경계 문장 포함 |
+    33	| Phase 1 — 설계 (G1) | 52 | 있음 | 명시(architect·리뷰어 3종·discipline·Coordinator) | 비커버 | 12-slot label·순서 리터럴이 여기 재등장(architect 문서와 중복 서술 — 표류 위험). 병렬=«한 응답 안 다발» 정의 소유 |
+    34	| Phase 2 step 1 (러너 준비) | 5 | 있음(step 번호) | 명시(`implementation-django-ninja` §2.1 인용) | 커버 | pytest settings binding은 registry #12 `check-test-config.py`와 명백 대응 |
+    35	| Phase 2 step 2 (한정 검색·dispatch) | 5 | 있음(step 번호) | 명시(acceptance-tester/coder 라우팅) | 비커버 | 일곱 decision → 소유자 라우팅 표준의 정본 |
+    36	| Phase 2 step 3 (슬라이스 도출) | 4 | 있음(step 번호) | 명시(G0 빚 결정 참조) | 비커버 | 슬라이스 0(동작 불변) 선행 규칙 |
+    37	| Phase 2 step 4 (coder 호출·슬라이스 감사) | 10 | 있음(step 번호) | 명시(coder·discipline·원작성자) | 비커버 | 홀리스틱 갈음 조건(2026-08-17). discipline-reviewer §감사 빈도가 이 step을 정본으로 역참조 |
+    38	| Phase 2 step 5 (규율 감사·suite 실행) | 18 | 있음(step 번호) | 명시(역할 4종 라우팅·너=코디네이터 실행) | 비커버 | 무관/관련 실패의 자=기준선 실측(2026-08-13). G2 blocker 토큰 3종 정의 |
+    39	| Phase 2 step 6 (결정적 백스톱 27종) | 81 | 있음(step 번호·registry #1~#27) | 명시(검사기 27종 소유권 표·registry_gate·API/discipline reviewer 토큰) | 커버 | 최대 절. registry 표(27항목) = 검사기↔규칙번호 매핑의 정본. 앵커 차분/귀속 차분 두 계열 판정. exit-0 blind spot 절 포함. 규범 밀도 최고 지점 |
+    40	| Phase 2 step 7 (G2 배너) | 6 | 있음(step 번호) | 없음(승인 주체 «승인받는다»로만 암시) | 커버 | 27-registry·12-slot evidence 지목. G2 차단 조건 열거 |
+    41	| Phase 3 — 마무리·검증 보고 | 3 | 있음 | 없음 | 커버 | manage.py check·mypy strict 등 결정적 도구 지목 |
+    42	| 수정 모드 (부분 수정) | 17 | 있음 | 명시(너=코디네이터·G1′) | 커버 | «Phase 2 step6 그대로 적용» 역참조 — step 번호 앵커의 실사용례 |
+    43	| 엣지 처리 | 17 | 있음 | 명시(coder·architect·acceptance 반송처) | 커버 | checker exit 1/2 처리 재서술(step 6과 중복 — 축약판) |
+    44	| 경계 | 15 | 있음 | 명시(architect·acceptance-tester·coder) | 비커버 | 게이트 질문·STOP 기록 형식(2026-08-13)이 경계 절 안에 실림 — 절 제목과 내용 불일치(형식 규정이 «경계»에 동거) |
+    45	
+    46	## agents/acceptance-tester.md (5절 · 75)
+    47	
+    48	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    49	|---|---|---|---|---|---|
+    50	| 전문 (acceptance-tester.md L13) | 2 | 없음 | 명시(너=인수 테스트 작성자·소유 행) | 비커버 | discipline-tdd decision 우선·implementation-test는 mechanics 한정 |
+    51	| 입력 | 5 | 있음 | 명시(Coordinator·설계 반송) | 비커버 | 블랙박스(프로덕션 코드 불가시) 규칙 |
+    52	| 산출 | 5 | 있음 | 없음(주어 암시) | 비커버 | 보고 형식 `path::test \| decision \| …` — command step 5와 동일 리터럴(중복) |
+    53	| 인수 테스트 작성 규칙 | 57 | 있음 | 명시(coder 영역·discipline 감수자·설계 반송) | 불명 | 23개 불릿. 12-slot 오라클 규칙·URL 합성 규칙·pytest 셋업 — 테스트 산출물 규칙이나 스크립트 무언급(배치만 #12 간접 대응). «결정 재방문 금지(2026-08-15)» — coder와 쌍둥이 문장 |
+    54	| 경계 | 6 | 있음 | 명시(coder의 몫·네 소유) | 비커버 | 외부 계약 테스트는 파일 위치 무관 소유 선언 |
+    55	
+    56	## agents/coder.md (6절 · 103)
+    57	
+    58	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    59	|---|---|---|---|---|---|
+    60	| 전문 (coder.md L16) | 2 | 없음 | 명시(너=메인 코더·owner 행) | 비커버 | |
+    61	| 입력 | 2 | 있음 | 명시(Coordinator) | 비커버 | pending 입력 시 반송 |
+    62	| 산출 | 4 | 있음 | 없음(주어 암시) | 비커버 | 보고 형식 리터럴 — acceptance-tester·command와 3중 중복 |
+    63	| 작업 방식 (안쪽 루프 TDD) | 82 | 있음 | 명시(architect 소유·Coordinator 전달·설계 반송) | 커버 | 24개 불릿. `check-layer-skeleton` 스크립트명 직접 지목(#487)·검사기 확장-리터럴 호출 규칙(2026-08-15). 배선 표준(#105~#112)·TREE_CONTRACT_MISMATCH 대칭 반송(2026-08-13 라운드 2 실증 인용). 12-slot preflight — architect·command와 병렬 전개 |
+    64	| 엣지·보고 | 4 | 있음 | 명시(설계/인수테스트 반송) | 비커버 | |
+    65	| 경계 | 9 | 있음 | 명시(acceptance-tester/설계·architect 소유) | 커버 | 메커니즘 대체 금지 = registry #1 `check-mechanism-ownership.py`와 명백 대응(출처-불문 열거) |
+    66	
+    67	## agents/design-architect.md (6절 · 178)
+    68	
+    69	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    70	|---|---|---|---|---|---|
+    71	| 전문 (design-architect.md L13) | 0 | 없음 | 명시(너=단일 작성자) | 비커버 | 순수 역할 서술 — 규범 문장 0인 유일 절 |
+    72	| 입력 | 6 | 있음 | 명시(Coordinator·ddd 리뷰어·사용자 고정 결정) | 비커버 | BC 배치 존중·G1 override 좁은 재호출(타 절 불변) |
+    73	| 산출 | 3 | 있음 | 명시(coder·acceptance 몫) | 비커버 | |
+    74	| 명세에 담는 것 | 158 | 있음(내부 `### Error response contract 12-slot` 별도 헤딩) | 명시(final.md·§3.2·db lens 등 값-소유 위임 다수) | 커버(부분) | 최대 밀도 절. 12-slot 1~12 리터럴 label 정본(command·review-api와 3중 병렬). 트리·FK·dto 규칙은 registry #4·#17·#19와 규칙 번호로 명백 대응, 채널 물음 넷은 «검사기 없음·G1 설계 판정·ⓓ» 자기 선언 — 커버/비커버 혼재를 커버(부분)로 기재. Risky Write 8행 블록·산출물-우선 쓰기(2026-08-13)·값 사본 금지(«값 사본은 썩는다») 포함 |
+    75	| 리뷰 반영·충돌 중재 | 7 | 있음 | 명시(네가 중재·Coordinator 제시) | 비커버 | 메타 요약 블록 금지·자기모순 1회 스캔 |
+    76	| 경계 | 4 | 있음 | 명시(coder 몫·lens 소유) | 비커버 | |
+    77	
+    78	## agents/design-review-api.md (6절 · 94)
+    79	
+    80	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    81	|---|---|---|---|---|---|
+    82	| 전문 (design-review-api.md L10) | 1 | 없음 | 명시(Coordinator 지정 모드) | 비커버 | |
+    83	| 실행 모드 | 4 | 있음 | 명시(Coordinator) | 비커버 | 2모드(DESIGN / DYNAMIC_ERROR_SHAPE_PROOF) — 후자는 checker exit 1 토큰이 트리거 |
+    84	| 입력 | 3 | 있음 | 명시(Coordinator·독립성) | 비커버 | 스킬 references 실독 허용(제한은 타 노트·코드) |
+    85	| 산출 | 11 | 있음 | 명시(architect 몫·확인 토큰 계약) | 비커버 | 집행성 판정 1행(2026-08-15) — 인용 없는 «가능» 무효. RESOLVED_…_API_CONFIRMATION 토큰 발화 조건 |
+    86	| 점검 항목 (계약 lens만) | 72 | 있음(내부 12-slot 헤딩·slot 번호) | 명시(discipline-reviewer로 물리 판정 이관) | 비커버 | 12-slot 심사판 — architect 작성판과 slot별 병렬(표류 위험). URL 합성 규칙이 acceptance-tester와 중복 서술 |
+    87	| 경계 | 3 | 있음 | 명시(ddd·db 리뷰어 몫) | 비커버 | |
+    88	
+    89	## agents/design-review-db.md (5절 · 35)
+    90	
+    91	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    92	|---|---|---|---|---|---|
+    93	| 전문 (design-review-db.md L10) | 1 | 없음 | 명시(architect 명세·읽기 전용) | 비커버 | |
+    94	| 입력 | 2 | 있음 | 명시(Coordinator) | 비커버 | |
+    95	| 산출 | 6 | 있음 | 명시(architect 몫) | 비커버 | 집행성 판정 1행 — 3개 리뷰어 공통 형식(동형 3중 서술) |
+    96	| 점검 항목 (데이터 lens만) | 23 | 있음 | 명시(discipline-tdd·acceptance-tester 몫 위임·리뷰어 직접 재분류) | 비커버 | Risky Write 8행 «의미적 충족» 판정(리터럴 '§9.6' 불요) — 구조 완전성만, 적정성은 타 소유 |
+    97	| 경계 | 3 | 있음 | 명시(ddd·api 리뷰어 몫) | 비커버 | |
+    98	
+    99	## agents/design-review-ddd.md (5절 · 28)
+   100	
+   101	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+   102	|---|---|---|---|---|---|
+   103	| 전문 (design-review-ddd.md L9) | 1 | 없음 | 명시(architect 명세·읽기 전용) | 비커버 | 유일하게 discipline-tdd 스킬 미탑재 리뷰어 |
+   104	| 입력 | 2 | 있음 | 명시(Coordinator) | 비커버 | |
+   105	| 산출 | 9 | 있음 | 명시(architect 몫) | 비커버 | 판정-소유 대조 표(2026-08-17) 의무 — command Phase 1 step 2의 «존재 검사» 반송과 짝(구문 검사 계약) |
+   106	| 점검 항목 (도메인 lens만) | 13 | 있음 | 명시(`architecture-ddd` §3.2 항-(1)·(2) 값-소유 인용) | 비커버 | 빈혈 차단·구조 이주 대조 — discipline-reviewer Phase 2 빈혈 항목과 시점 분업(설계/구현) |
+   107	| 경계 | 3 | 있음 | 명시(api·db 리뷰어 몫) | 비커버 | |
+   108	
+   109	## agents/discipline-reviewer.md (8절 · 234)
+   110	
+   111	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+   112	|---|---|---|---|---|---|
+   113	| 전문 (discipline-reviewer.md L12) | 1 | 없음 | 명시(단발 체크포인트 감사) | 비커버 | |
+   114	| 입력 | 16 | 있음 | 명시(Coordinator 모드 명시 의무·독립성) | 비커버 | 3모드. Phase 1에 change inventory 스코프 검사(2026-08-13) 포함 |
+   115	| 산출 | 11 | 있음 | 명시(반송처 4종 라우팅) | 비커버 | RESOLVED_…_DISCIPLINE_CONFIRMATION 토큰 — api 리뷰어와 대칭 이중 확인 |
+   116	| 감사 빈도 (적응형) | 3 | 있음 | 명시(발동 기준 정본=커맨드 Phase 2 step 4·5 역참조) | 비커버 | 문서 간 정본 위임의 명시 사례 |
+   117	| 영구 테스트 입장 감사 | 18 | 있음 | 명시(원 소유자·설계 반송) | 비커버 | 일곱 decision·여섯 열 검사 — architect 입장 표와 대응 |
+   118	| Phase 1·2 API 오류 scope·소유권 점검 | 13 | 있음 | 명시(API reviewer 소유 경계·Coordinator handback) | 불명 | #114·#488 규칙 번호 대응 있으나 스크립트명 무언급. `bc_error_schema.py` canonical 경로 리터럴 보유 |
+   119	| Phase 2 점검 항목 (클린코드·TDD 규율만) | 163 | 있음 | 명시(«네 몫»/타 소유 경계 문장 다수·FC-2 그레이더 언급) | 커버(분업 명시) | 최대 절. `check-choices-literal-consumption`·`check-public-surface-annotation` 스크립트명 직접 지목 + «백스톱 사각 전담» 자기 정의. ⓓ 후보 물음 표 8행+개별 물음 13줄(#N 소유자 번호 체계) — rule-owner-map 별도 문서 언급. 면제 조문 16종 번호 열거. human 판정 둘(#254·#316) «검사기 아예 없음» 명시 |
+   120	| 경계 | 9 | 있음 | 명시(코더·implementation-*·API reviewer·acceptance 몫) | 비커버 | 소유권/정확성 구분 반복 명문화 |
+   121	
+   122	## 4축 집계 (절 수 기준, 총 58절)
+   123	
+   124	| 축 | 값 |
+   125	|---|---|
+   126	| ①앵커 | 있음 50 · 없음 8 (없음 = 각 문서의 헤딩 없는 전문/서두 8개) |
+   127	| ②소유자 | 명시 54 · 없음 4 (command step 7·Phase 3, acceptance 산출, coder 산출) |
+   128	| ③백스톱 | 커버 11 · 비커버 45 · 불명 2 (acceptance 작성 규칙, discipline API 오류 소유권 점검) |
+   129	| ④쌍둥이 | 존재 58 · 부재 0 (8파일 전부 codex-dddjango/skills/에 대응 SKILL.md 존재) |
+   130	
+   131	## 특이 발견
+   132	
+   133	1. **이중(실제로는 다중) 번호 공간이 이미 운용 중** — 커맨드 서두가 «registry #N(1~27) vs 무접두 #N(정본 명세 규칙 번호)» 규약을 명문화했고, 그 외에 12-slot 번호(1~12), Phase step 번호, ⓓ 물음 소유자 번호, 면제 조문 번호까지 이질적 참조 체계가 최소 5종 혼용된다. 무접두 #N의 본문 정본은 플러그인에 미동봉(발췌만) — 온톨로지 레지스트리가 흡수해야 할 1순위 ID 체계.
+   134	2. **앵커 공백은 정확히 «전문» 8곳뿐** — 각 문서의 헤딩 이전 서두(역할 선언+핵심 규범)가 참조 불가 지대다. 커맨드 전문은 번호 공간 규약이라는 코퍼스 전역 해석 규칙을 담고 있는데 앵커가 없다.
+   135	3. **Error response contract 12-slot이 3중+α 병렬 전개** — architect(작성 계약)·review-api(심사 계약)·command Phase 1(label·순서 리터럴 재독 계약)에 slot별 전문이 각각 실리고, coder(preflight)·acceptance(오라클 규칙)에도 축약판이 실린다. label 리터럴 «구문 검사»로 방어 중이나 slot 본문 의미는 문서 간 자연어 재서술이라 표류 위험 최대 지점.
+   136	4. **날짜 스탬프가 사실상 규칙 ID 대용** — (2026-08-12 라운드 1′)·(2026-08-13)·(2026-08-15)·(2026-08-17) 등이 개정 근거 앵커로 문서 횡단 반복 인용된다(같은 날짜가 서로 다른 규칙에 붙어 유일성 없음). 온톨로지 도입 시 규칙 ID로 치환할 후보.
+   137	5. **소유자 명시율 93%(54/58)** — «한 주제 한 소유자»가 문면에 관철된 코퍼스. 반면 결정적 백스톱 커버는 19%(11/58)이고, 그 공백을 discipline-reviewer가 «백스톱 사각 전담»으로 명문 흡수한다(ⓓ 후보 무응답 금지·human 판정 둘·면제 조문 16종). 규칙→판정자 매핑표(rule-owner-map) 별도 문서의 존재가 discipline-reviewer 문면에 언급됨 — 온톨로지의 직접 씨앗.
+   138	6. **동일 규범의 다중 사본(표류 감시 대상)**: ⓐ 비계 첫-Green 즉시 제거 — command step 4·acceptance·coder·discipline 4곳 동일 서술, ⓑ «결정 재방문 금지(2026-08-15)» — acceptance·coder 쌍둥이 문장, ⓒ 보고 형식 `path::test | decision | …` 리터럴 — command·acceptance·coder 3곳, ⓓ 배선 표준(#105~#112)+«preserve는 wire 산출물까지» — command·coder·architect·discipline 4곳, ⓔ URL 합성(@api_controller prefix+route) — acceptance·review-api 2곳, ⓕ 집행성 판정 1행 — 리뷰어 3종+discipline 4곳 동형.
+   139	7. **문서 간 정본 위임이 명시적** — discipline-reviewer §감사 빈도가 «커맨드 Phase 2 step 4·5가 정본»이라 역참조하고, architect·discipline이 트리·명명 «값»을 `references/final.md`에, 판정-이주 값을 `architecture-ddd` §3.2에 위임하며 «값 사본은 썩는다»는 원칙까지 명문. 다만 위임 참조 표기가 절 번호(§)·규칙 번호(#)·트리 행 번호(«22~32행»)로 제각각 — 앵커 표준화 여지.
+
+[2m**Planning read-only parsing strategy**[0m
+[35m[3mcodex[0m[0m
+초기 원문에서 E10 표는 같은 기계 키 `command-dddjango/s007`을 7개 P0 절에 반복 배정하면서도 이를 “이중 귀속 없음”으로 취급하고 있습니다. 이는 과업 2의 문자 그대로의 조건과 충돌할 가능성이 높습니다. 나머지 그룹도 범위 표기가 실제 키 집합을 정확히 덮는지, 규약상 허용된 다대일인지와 별개로 중복 귀속을 집합 수준에서 검산 중입니다.
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "head -n 3 workspace/design/2026-08-19-ontology-t1-census/sections.tsv
+awk -F '\\t' 'NR>1 && ("'$2=="E03" || $2=="E08" || $2=="E10") {c[$2]++; d[$2 FS $1]++} END {for (g in c) print "GROUP",g,c[g]; for (k in d) print "DOC",k,d[k]}'"' workspace/design/2026-08-19-ontology-t1-census/sections.tsv | sort"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+doc_key	p0_group	section_key	ordinal	level	anchor	heading	line_start	line_end	line_count	sha256	nfc	has_tab	has_crlf
+architecture-ddd-skill	E01	s001	1	0		(전문)	1	6	6	4a14e6766959aebd3a62e75f54274c52c208e7317915d4ac37d6d9e757025478	Y	N	N
+architecture-ddd-skill	E01	s002	2	1		도메인 주도 설계 (DDD)	7	8	2	bf7d72fc2ab6b1e4d33a1105a7b95fd77443816cd404ede197c4445bb222f803	Y	N	N
+DOC E03	implementation-python-final 143
+DOC E03	implementation-python-skill 5
+DOC E08	architecture-api-final 67
+DOC E08	architecture-api-skill 5
+DOC E08	architecture-db-final 68
+DOC E08	architecture-db-skill 5
+DOC E10	agent-acceptance-tester 5
+DOC E10	agent-coder 6
+DOC E10	agent-design-architect 7
+DOC E10	agent-design-review-api 7
+DOC E10	agent-design-review-db 5
+DOC E10	agent-design-review-ddd 5
+DOC E10	agent-discipline-reviewer 8
+DOC E10	command-dddjango 11
+GROUP E03 148
+GROUP E08 145
+GROUP E10 54
+
+[2m**Extracting P0 labels from table**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-18-p0-census/E08-architecture-db-api.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E08 — architecture-db + architecture-api P0 센서스
+     2	
+     3	담당: 문서 담당자 E08 · 기준일 2026-08-18 · 담당 파일 4개(수정 없음, 읽기 전용 조사)
+     4	
+     5	## 파일별 요약
+     6	
+     7	| 파일 | 행수 | 절수 | 규범 문장수 |
+     8	|---|---:|---:|---:|
+     9	| `dddjango/skills/architecture-db/SKILL.md` | 47 | 4 | 18 |
+    10	| `dddjango/skills/architecture-db/references/final.md` | 736 | 15 (목차 + §1–§14) | 106 |
+    11	| `dddjango/skills/architecture-api/SKILL.md` | 51 | 4 | 20 |
+    12	| `dddjango/skills/architecture-api/references/final.md` | 638 | 16 (목차 + §1–§15) | 166 |
+    13	| **합계** | 1,472 | **39** | **310** |
+    14	
+    15	집계 방식 메모:
+    16	- 절 단위 = final.md는 최상위 §, SKILL.md는 H2 헤딩(+frontmatter 1절). 소절(§N.M)은 상위 절에 귀속시키고 비고에 명시.
+    17	- 규범 문장 = 지시·금지·조건 문장. 상황→권장/기준 매핑 표는 지시 내용을 담은 행(셀)을 문장 1로 보수적 포함(비고에 «표 행» 표시). 설명·정의·예제 코드·이유 서술 제외.
+    18	- ④쌍둥이는 파일 단위 판정 후 절에 상속: **4파일 모두 codex 쌍둥이 존재** (`codex-dddjango/skills/architecture-{db,api}/…`). references/final.md 2건은 바이트 동일, SKILL.md 2건은 개명 표기 차이만(아래 특이 발견 6).
+    19	
+    20	---
+    21	
+    22	## architecture-db/SKILL.md
+    23	
+    24	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    25	|---|---:|---|---|---|---|
+    26	| frontmatter (name·description·user-invocable) | 2 | 없음 | 없음 | 비커버 | «먼저 로드한다»·«…로 위임» 2건. `user-invocable: false`는 설정값이라 문장 미포함 |
+    27	| 언제 쓰나 | 4 | 없음 | 없음 | 비커버 | 로드 조건 1 + 위임 경계 화살표 3(→ implementation-django / architecture-ddd / architecture-api) |
+    28	| 핵심 운영 원칙 | 10 | 없음 | 명시(부분) | 불명 | 7개 불릿이 final.md §4·5·7·8·9.4·9.6·9.7·11 요약-복제. §9.6 불릿에 `discipline-tdd` 입장 결정·coder 주체 명시. §9.6 복제분은 check-idempotency-scope-creep.py 간접 커버이나 문면 스크립트 지목 없음 |
+    29	| 상세 레퍼런스 | 2 | 없음 | 없음 | 비커버 | «해당 절을 따른다»·«필요한 항목만 읽는다». 주제→§ 라우팅 표는 매핑이라 문장 미포함 |
+    30	
+    31	소계: 4절 · 18문장. SKILL 절에는 § 번호가 전혀 없고 헤딩도 전 스킬 공통 범용 문구(«언제 쓰나» 등)라 안정 앵커 부재.
+    32	
+    33	---
+    34	
+    35	## architecture-db/references/final.md
+    36	
+    37	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    38	|---|---:|---|---|---|---|
+    39	| 목차 | 0 | 없음 | 없음 | 비커버 | GitHub 앵커 링크(#1-…) — §N 표기와 이중 앵커 체계 |
+    40	| §1 데이터베이스 모델링 프로세스 | 1 | 있음 | 없음 | 비커버 | 청유형 «말을 믿지 말자 — …합의안을 갖자» 보수적 포함. 나머지 설명·표 |
+    41	| §2 개념적 데이터 모델링 (ERD) | 3 | 있음 | 없음 | 비커버 | 작성 원칙 2 + 인조키 조건 지시 1 |
+    42	| §3 정규화 (1NF — BCNF) | 1 | 있음 | 없음 | 비커버 | «정규화 먼저, 필요시에만 역정규화» — §4.2·§5·SKILL 불릿1과 중복 규칙 |
+    43	| §4 역정규화 | 2 | 있음 | 없음 | 비커버 | «반드시 정규화 먼저»·«읽기 많다고 바로 역정규화는 잘못» — §3.4와 중복 |
+    44	| §5 성능 최적화 순서 | 2 | 있음 | 없음 | 비커버 | «다음 순서를 반드시 지킨다»·«슬로우 쿼리부터 시작한다». 동일 규칙 4중 출현(SKILL·§3.4·§4.2·§5) |
+    45	| §6 인덱스 아키텍처: B+Tree | 0 | 있음 | 없음 | 비커버 | 전부 메커니즘 설명(WAL 서술 포함) — 규범 없음 |
+    46	| §7 인덱스 설계 베스트 프랙티스 | 6 | 있음 | 없음 | 비커버 | 순서 결정 규칙 2 + §7.4 원칙 표 행 4(표 행) |
+    47	| §8 제약조건과 중복 방지 | 19 | 있음 | 없음 | 불명 | 서두 보호 원칙 1, §8.1 주의 셀 5(표 행), cascade 금지 1, **BC 경계 FK 금지 2**(출처로 `architecture-ddd` §3.3 인용 — 출처 명시이지 판정 주체 아님), §8.3 매핑 표 4(표 행)+«최소한 다음을 정한다» 1, §8.4 rollout 1+단계 4. BC FK 금지는 check-context-isolation.py 인접이나 FK 검사 코드 없음 확인 → 불명 |
+    48	| §9 트랜잭션, 격리 수준, 락 | 43 | 있음 | 명시 | 커버(부분) | 최중량 절: §9.4=1, §9.5=18(엔진 의존성·연결 설정 경계·낙관적 동시성 단락), §9.6=12(Risky Write 블록·Test criteria 심사), §9.7=12(Outbox 표 포함). 소유자 다수 명시: 판정=도메인 책임, 테스트 입장=`discipline-tdd` 심사, ENGINE 교체=설계 승인, stored result HTTP 매핑=presentation(api §13.3). 백스톱: check-idempotency-scope-creep.py가 자기 문면에서 «architecture-db §9.6 Idempotency storage 집행» 명시 → §9.6 항목만 커버, 나머지(§9.5 CAS·§9.7 outbox)는 check-transaction-boundary·check-event-publish·check-broker-contract 인접이나 대응 미명시. 외부 피인용 최다: §9.5 9회·§9.6 2회·§9.7 3회. 인라인 결정 ID: #529·#626·D50(검사기측) |
+    49	| §10 쿼리 최적화 | 4 | 있음 | 없음 | 비커버 | ANALYZE 조건 지시 1 + §10.5 원칙 표 행 3(표 행) |
+    50	| §11 운영 rollout, backfill, migration safety | 16 | 있음 | 없음 | 비커버 | 관할 선언 2(구현은 implementation-django로 «넘긴다» — 위임 명시이나 판정 주체 아님), §11.1=2, §11.2 불릿 5, §11.3 설계 기준 셀 5(표 행), §11.4=1, §11.5 산출물 의무 1 |
+    51	| §12 데이터 모델링 패턴: 계층 구조 | 4 | 있음 | 없음 | 비커버 | §12.4 선택 가이드 매핑 4(표 행). 나머지 설명 |
+    52	| §13 데이터 모델링 패턴: 상속과 다형성 | 5 | 있음 | 없음 | 비커버 | 다형적 연관 앱 레벨 보장 의무 1 + §13.5 선택 가이드 4(표 행) |
+    53	| §14 참고 문헌 | 0 | 있음 | 없음 | 비커버 | 출처 표만 |
+    54	
+    55	소계: 15절 · 106문장.
+    56	
+    57	---
+    58	
+    59	## architecture-api/SKILL.md
+    60	
+    61	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    62	|---|---:|---|---|---|---|
+    63	| frontmatter (name·description·user-invocable) | 2 | 없음 | 없음 | 비커버 | «먼저 로드한다»·«…로 위임». 위임처 표기 혼재: `dddjango:architecture-ddd`(콜론 접두) vs `architecture-db`(무접두) |
+    64	| 언제 쓰나 | 6 | 없음 | 없음 | 비커버 | 로드 조건 1 + 위임 경계 5 |
+    65	| 핵심 운영 원칙 | 10 | 없음 | 명시(부분) | 불명 | 8불릿 = final.md § 요약-복제. 에러 프로필 불릿(3문장)에 승인 주체 명시: 별도 사용자 승인·G1 표면화(STOP). 해당 불릿은 check-api-error-controller-contract.py·check-error-centralization.py·check-openapi-error-declaration.py 인접이나 문면 스크립트 지목 없음 |
+    66	| 상세 레퍼런스 | 2 | 없음 | 없음 | 비커버 | db판과 동일 패턴 |
+    67	
+    68	소계: 4절 · 20문장.
+    69	
+    70	---
+    71	
+    72	## architecture-api/references/final.md
+    73	
+    74	| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+    75	|---|---:|---|---|---|---|
+    76	| 목차 | 0 | 없음 | 없음 | 비커버 | |
+    77	| §1 REST 아키텍처 원칙 | 0 | 있음 | 없음 | 비커버 | 정의·원칙 설명만 |
+    78	| §2 HTTP 메서드와 멱등성 | 0 | 있음 | 없음 | 비커버 | 속성 표·PATCH 멱등성 뉘앙스 전부 사실 서술. 지시력은 SKILL 불릿1이 담당 |
+    79	| §3 URL/리소스 설계 규칙 | 7 | 있음 | 없음 | 비커버 | 명명 규칙 표 5(표 행) + 계층 슬래시 1 + «3단계 이상 깊이는 피한다» 1 |
+    80	| §4 HTTP 상태 코드 | 17 | 있음 | 명시 | 불명 | 상태 코드 용도 매핑 13(표 행: 2xx 4·4xx 7·5xx 2, «애매하면 500» 포함) + **CAS 재시도 소진 status 규칙 3**(누락 금지 의무·controller 헤더 소유·설계자 임의 확정 금지 — 선택 venue §5/G1 명시) + PRG 1(보수적 포함). CAS 소진 규칙은 db §9.5와 짝인데 대응 검사기 불명 |
+    81	| §5 요청/응답 계약 (§5.4 포함) | 45 | 있음 | 명시 | 커버(부분) | §5.1=9(입력 상한 의무·매직넘버 위임 포함), §5.2=6, §5.3=1, **§5.4=29**(프로필 우선순위 4·wire 혼합 금지 2·신규 범위/preserve-established 관할 4·code-json 불릿 15·framework 헤더 경계 3). 소유자 최밀집: controller 소유, preserve-established=native 보존 관할(12-slot 계약 소유), shape 승인=명시적 사용자 승인, 열거 밖 조합=G1 표면화 STOP. §5.4 문면이 «레시피의 정본은 구현 스킬·검사기 계약»이라 검사기를 정본으로 지목 — check-api-error-controller-contract.py·check-error-centralization.py가 controller-owned 매핑 집행에 명백 대응(부분: wire shape 승인 자체는 게이트 소관). 인라인 결정 ID: «2026-08-13» 사례 각주, G1/G2·12-slot·STOP_FOR_USER_APPROVAL 용어 정의 내장. §5.4는 외부 피인용 있음 |
+    82	| §6 RFC 9457 에러 응답 형식 | 7 | 있음 | 없음 | 불명 | 적용 범위 자기 선언 3(§5.4 선택 범위에만 적용·code-json 범위 비적용·구현 형태는 §5.4 단서) + 확장 필드 무시 1 + §6.3 핵심 규칙 3. 관할 «범위»는 선언하나 판정 주체 명시는 없음 |
+    83	| §7 HTTP 헤더와 콘텐츠 협상 | 7 | 있음 | 없음 | 커버(부분) | 406/415 매핑 2(표 행) + 혼동 금지 1 + 인용 블록 4(별도 승인 범위 한정·Ninja-owned pre-body 경계·415 실확인·**전역 middleware/helper/handler 합성 금지**). 합성 금지는 문면이 implementation-django-ninja §6.3을 지목하고 check-ninja-boundary-middleware.py가 그 §6 집행을 자기 선언 — 체인 경유 명백 대응(부분). §7.2는 외부 피인용 3회 |
+    84	| §8 인증과 인가 | 21 | 있음 | 명시 | 불명 | §8.1=3(401 challenge 의무·확립 계약 보존+G1 회부·전역 합성 금지), §8.2 매핑 3(표 행), §8.3=3(쿼리 파라미터 비밀 금지 — §5.1과 중복), §8.4=12(Bearer 표 2 포함, challenge 규칙 재진술 중복 1 포함). 편차 처리 venue=G1 명시. 전역 합성 금지는 §7과 동일 규칙 반복이나 §8 문면엔 검사기 대응 체인 없음 → 불명 |
+    85	| §9 페이지네이션 | 7 | 있음 | 없음 | 비커버 | 선택 기준 매핑 3(표 행) + 실전 원칙 4 |
+    86	| §10 버전 관리 | 2 | 있음 | 없음 | 비커버 | «하나의 전략 일관 적용»·«문서화+마이그레이션 경로». «일반 패턴: URL path 메이저…»는 서술로 보고 제외 |
+    87	| §11 하위 호환성과 Deprecation | 17 | 있음 | 없음 | 비커버 | Breaking 판정표 9(표 행 — 파이프라인이 쓰는 판정 기준) + Deprecation 프로세스 5단계 + 실전 원칙 3(«추가는 자유, 제거는 금지» 포함) |
+    88	| §12 Rate Limiting | 8 | 있음 | 명시 | 불명 | 알고리즘 매핑 4(표 행) + 실전 원칙 4(Retry-After 보존·전역 합성 금지·controller 소유 — §5.4 framework 경계와 중복 규칙). controller 소유 명시 |
+    89	| §13 멱등성 키 (Idempotency-Key) | 24 | 있음 | 명시 | 커버(부분) | §13.2 동작 방식 6(presentation status 소유 규칙 내장), §13.3=12(계약 결정 의무 1+표 내장 3+replay 소유권 5+fingerprint 3), §13.4=6(**채택은 G0/G1 사용자 결정·미요청 기본 미적용** 포함). 소유자: presentation controller가 status·매핑 소유, 중앙 error handler 소유 금지, 채택=사용자 결정. check-idempotency-scope-creep.py가 채택 게이트를 집행하고 자기 문면에 «기존 확립된 멱등 계약은 존중 — §13» 참조 → 부분 커버. db §9.6 Idempotency storage와 규칙 쌍(상호 § 참조) |
+    90	| §14 OpenAPI | 4 | 있음 | 없음 | 커버(부분) | 반영 의무 1(+9개 표면 목록) + 실전 원칙 3. check-openapi-error-declaration.py(«OpenAPI 오류 계약 결정적 백스톱»)가 표면 목록 중 에러 프로필 항목에 명백 대응 — 부분 |
+    91	| §15 참고 문헌 | 0 | 있음 | 없음 | 비커버 | |
+    92	
+    93	소계: 16절 · 166문장.
+    94	
+    95	---
+    96	
+    97	## 4축 집계 (39절 기준)
+    98	
+    99	| 축 | 값 |
+   100	|---|---|
+   101	| ①앵커 | 있음 29 · 없음 10 (없음 = SKILL 8절 + 목차 2절) |
+   102	| ②소유자 | 명시 8 · 없음 31 (명시 = db SKILL 원칙, db §9, api SKILL 원칙, api §4·§5·§8·§12·§13) |
+   103	| ③백스톱 | 커버 5 · 불명 7 · 비커버 27 (커버 = db §9, api §5·§7·§13·§14 — **전부 부분 커버**) |
+   104	| ④쌍둥이 | 존재 39 · 부재 0 |
+   105	
+   106	---
+   107	
+   108	## 특이 발견
+   109	
+   110	1. **규범 극단 집중**: 310문장 중 db §9(43)·api §5.4(29)·api §13(24)·api §8(21) 네 클러스터가 117문장(38%). 나머지 절 다수는 교과 지식(규범 0~7)이라, 온톨로지 레지스트리 대상은 사실상 «게이트·소유권·경계» 클러스터에 한정된다.
+   111	2. **문서→검사기 참조 0회, 대응은 역방향 단방향**: 4파일 문면에 `check-*.py` 이름이 한 번도 없다. 대응 근거는 전부 검사기 쪽 docstring(check-idempotency-scope-creep.py → db §9.6·api §13 명시)이거나 참조 체인(api §7.2 → implementation-django-ninja §6.3 → check-ninja-boundary-middleware.py). 백스톱 커버 5절도 전부 부분 커버.
+   112	3. **이미 존재하는 ID 체계가 산문에 내장**: final.md §N 앵커(외부 피인용: db §9.5 9회, §9.7·api §7.2 각 3회, §9.6 2회 등), 이슈 번호(#529·#626), 날짜 결정 각주(«2026-08-13»), 게이트·계약 용어(G0/G1/G2·12-slot·STOP_FOR_USER_APPROVAL, 검사기측 D50·D59·C3). 온톨로지의 룰 ID 후보가 이미 존재하나 표기가 4종 혼재.
+   113	4. **피인용 허브 절에 소절 앵커 부재**: db §9.5는 최다 피인용(9회)인데 내부가 «엔진 의존성 단락», «위 낙관적 동시성 메커니즘» 같은 산문 포인터로만 구분된다(§9.5.x 없음). api §5.4도 동일(불릿·굵은 소제목만).
+   114	5. **동일 규칙의 다중 복제**: 정규화 우선 규칙 4곳(db SKILL 불릿1·§3.4·§4.2·§5), 전역 handler/helper 합성 금지 4곳(api §5.4·§7·§8×2·§12), 쿼리 파라미터 비밀 금지 2곳(api §5.1·§8.3), 401 challenge 의무 3곳(api §8.1 표·불릿·§8.4). SKILL 핵심 운영 원칙은 구조적으로 final.md 요약-복제라 표류 위험 상시.
+   115	6. **쌍둥이는 사실상 동기화 상태**: references/final.md 2건은 codex판과 바이트 동일. SKILL.md 2건만 차이 — codex판은 `user-invocable: false` 제거 + `architecture-ddd` → `dddjango-architecture-ddd` 개명 표기(의도된 이름 격리, 2c64672 커밋 계열). 표류 아님.
+   116	7. **규칙 쌍이 두 문서에 분산**: db §9.5 낙관적 동시성 ↔ api §4.2 CAS 소진 status, db §9.6 Idempotency storage(stored result) ↔ api §13.3 replay/status 소유 — 서로 § 번호로 상호 참조하며 한쪽만 고치면 깨지는 결합. 위임처 표기도 혼재(`dddjango:architecture-ddd` 콜론 접두 vs `architecture-db` 무접두, codex판은 `dddjango-` 접두).
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'nl -ba workspace/design/2026-08-19-ontology-t1-census/E08-recon.md'[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+     1	# E08 — P0 대사 노트 (T1-1 절 유형 센서스)
+     2	
+     3	담당 문서군: architecture-db-skill · architecture-db-final · architecture-api-skill · architecture-api-final
+     4	기계 절 145 (sections.tsv E08 행 수와 동수) ↔ P0 39절 · 규범 310문장 (`workspace/design/2026-08-18-p0-census/E08-architecture-db-api.md`)
+     5	
+     6	## §1 문서별 접기 규약 명문화
+     7	
+     8	- **architecture-db-skill / architecture-api-skill (공통 규약)**: P0 절 = frontmatter 1절 + h2 3절. 기계 절의 `(전문)`(s001)이 P0 frontmatter 절에 1:1 대응하고, h2 3절(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 1:1 대응한다. **h1 제목 절(s002, 본문 0행)은 P0가 절로 계수하지 않았다**(제목 전용 — 서두 병합이 아니라 미계수). 따라서 기계 5절 = P0 4절 + h1 제목 절 1.
+     9	- **architecture-db-final / architecture-api-final (공통 규약)**: P0 절 = 목차(h2) 1절 + 최상위 §N(h2) 절. **h3 소절(§N.M)은 전부 상위 §N에 접는다**(P0 집계 방식 메모 «소절(§N.M)은 상위 절에 귀속» 그대로). api-final의 **h4 2절(s025 `dddjango-code-json`·s026 framework 경계)은 §5.4(h3)에 접히고, §5.4는 다시 §5(h2)에 접힌다.** h1 제목 절(s001)은 SKILL과 같은 규약으로 P0 미계수. 부록 제외 규약은 없다 — §14/§15 참고 문헌도 P0 절로 계수됐다(규범 0).
+    10	- 검산: db-final 기계 68 = h1 1 + P0 15절(목차 1 + h2 14 + 접힌 h3 52). api-final 기계 67 = h1 1 + P0 16절(목차 1 + h2 15 + 접힌 h3 48 + 접힌 h4 2). SKILL 각 5 = h1 1 + P0 4절. 합 145 = P0 39 + h1 제목 절 4 + 접힌 h3/h4 102.
+    11	
+    12	## §2 P0 절 전건 대사 표 (39건)
+    13	
+    14	| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+    15	|---|---|---|
+    16	| db-skill frontmatter | architecture-db-skill/s001 | (전문) 1:1 |
+    17	| db-skill 언제 쓰나 | architecture-db-skill/s003 | h2 1:1 |
+    18	| db-skill 핵심 운영 원칙 | architecture-db-skill/s004 | h2 1:1 |
+    19	| db-skill 상세 레퍼런스 | architecture-db-skill/s005 | h2 1:1 |
+    20	| db-final 목차 | architecture-db-final/s002 | h2 1:1 |
+    21	| db-final §1 | s003-1 + s004-1.1 + s005-1.2 | h3→h2 접기 |
+    22	| db-final §2 | s006-2 + s007-2.1…s011-2.5 | h3→h2 접기 |
+    23	| db-final §3 | s012-3 + s013-3.1…s016-3.4 | h3→h2 접기 |
+    24	| db-final §4 | s017-4 + s018-4.1…s020-4.3 | h3→h2 접기 |
+    25	| db-final §5 | s021-5 | h2 단독(소절 없음) 1:1 |
+    26	| db-final §6 | s022-6 + s023-6.1…s026-6.4 | h3→h2 접기 |
+    27	| db-final §7 | s027-7 + s028-7.1…s031-7.4 | h3→h2 접기 |
+    28	| db-final §8 | s032-8 + s033-8.1…s036-8.4 | h3→h2 접기 |
+    29	| db-final §9 | s037-9 + s038-9.1…s044-9.7 | h3→h2 접기 |
+    30	| db-final §10 | s045-10 + s046-10.1…s050-10.5 | h3→h2 접기 |
+    31	| db-final §11 | s051-11 + s052-11.1…s056-11.5 | h3→h2 접기 |
+    32	| db-final §12 | s057-12 + s058-12.1…s061-12.4 | h3→h2 접기 |
+    33	| db-final §13 | s062-13 + s063-13.1…s067-13.5 | h3→h2 접기 |
+    34	| db-final §14 | s068-14 | h2 단독 1:1 |
+    35	| api-skill frontmatter | architecture-api-skill/s001 | (전문) 1:1 |
+    36	| api-skill 언제 쓰나 | architecture-api-skill/s003 | h2 1:1 |
+    37	| api-skill 핵심 운영 원칙 | architecture-api-skill/s004 | h2 1:1 |
+    38	| api-skill 상세 레퍼런스 | architecture-api-skill/s005 | h2 1:1 |
+    39	| api-final 목차 | architecture-api-final/s002 | h2 1:1 |
+    40	| api-final §1 | s003-1 + s004-1.1…s007-1.4 | h3→h2 접기 |
+    41	| api-final §2 | s008-2 + s009-2.1…s011-2.3 | h3→h2 접기 |
+    42	| api-final §3 | s012-3 + s013-3.1…s015-3.3 | h3→h2 접기 |
+    43	| api-final §4 | s016-4 + s017-4.1…s019-4.3 | h3→h2 접기 |
+    44	| api-final §5 | s020-5 + s021-5.1…s024-5.4 + s025 + s026 | h3→h2 접기 + **h4 2절→§5.4→§5 이중 접기** |
+    45	| api-final §6 | s027-6 + s028-6.1…s030-6.3 | h3→h2 접기 |
+    46	| api-final §7 | s031-7 + s032-7.1…s034-7.3 | h3→h2 접기 |
+    47	| api-final §8 | s035-8 + s036-8.1…s039-8.4 | h3→h2 접기 |
+    48	| api-final §9 | s040-9 + s041-9.1…s043-9.3 | h3→h2 접기 |
+    49	| api-final §10 | s044-10 + s045-10.1…s047-10.3 | h3→h2 접기 |
+    50	| api-final §11 | s048-11 + s049-11.1…s051-11.3 | h3→h2 접기 |
+    51	| api-final §12 | s052-12 + s053-12.1…s056-12.4 | h3→h2 접기 |
+    52	| api-final §13 | s057-13 + s058-13.1…s061-13.4 | h3→h2 접기 |
+    53	| api-final §14 | s062-14 + s063-14.1…s066-14.4 | h3→h2 접기 |
+    54	| api-final §15 | s067-15 | h2 단독 1:1 |
+    55	
+    56	## §3 잔차
+    57	
+    58	**설명 불가 잔차 0.**
+    59	
+    60	기계에만 있고 P0에 없는 절은 h1 제목 절 4건(architecture-db-skill/s002, architecture-db-final/s001, architecture-api-skill/s002, architecture-api-final/s001)뿐이며, 전부 §1의 «h1 제목 절 미계수» 규약으로 설명된다(각 절은 제목+공백 2행 이하, 규범 0). P0에만 있고 기계에 없는 절은 없다. 그 외 기계 절 전건이 §2의 접기 규약 안에서 P0 39절에 귀속된다.
+    61	
+    62	## §4 규범 계수 대조
+    63	
+    64	| 구분 | 이번(기계 절 합) | P0 | 차 |
+    65	|---|---:|---:|---:|
+    66	| architecture-db-skill | 18 | 18 | 0 |
+    67	| architecture-db-final | 106 | 106 | 0 |
+    68	| architecture-api-skill | 20 | 20 | 0 |
+    69	| architecture-api-final | 167 | 166 | **+1** |
+    70	| **합계** | **311** | **310** | **+1** |
+    71	
+    72	차이의 원인:
+    73	
+    74	1. **+1의 단일 원인 — api-final s020-5(§5 서두)**: «클라이언트가 의존할 수 있는 항목은 명시적으로 기록한다»는 기록 의무 지시다. P0 §5=45의 구성 명세(§5.1=9 + §5.2=6 + §5.3=1 + §5.4=29)에 서두 몫이 없어 P0는 이 문장을 계수하지 않은 것으로 추정된다(P0는 db §8·§11 서두 지시는 계수했으므로 비일관 지점). 이번 센서스는 «애매하면 포함+비고» 규약을 적용해 1로 계수했다.
+    75	2. **P0는 절 단위 집계였고 이번은 기계 절 단위 배분**이라, h3/h4로 쪼개진 소절별 수치는 이번 센서스의 신규 산출이다. 배분은 P0 비고의 구성 명세를 그대로 따랐다(§9: 9.4=1/9.5=18/9.6=12/9.7=12, §5: 5.1=9/5.2=6/5.3=1/5.4=29, §8: 8.1=3/8.2=3/8.3=3/8.4=12, §13: 13.2=6/13.3=12/13.4=6 등).
+    76	3. **P0 내부 불일치 1건 승계 처리**: api §5.4의 P0 비고 내부 합(우선순위 4+혼합 금지 2+관할 4+code-json 15+framework 3 = 28)이 절 합(29)과 1 어긋난다. 이번 배분에서는 관할 문단을 문장 단위로 재검해 5문장(wire 계약 주어 선언·preserve 비대상·신규 범위 레시피·G1 표면화 STOP·혼합 금지 주어)으로 계수, s024-5.4=11 + s025=15 + s026=3 = 29로 절 합을 유지했다.
+    77	4. 표 행 계수의 P0 비일관(예: §7.4·§8.1·§11.3 표 행은 계수, §9.4·§11.4·§5.3 표 행은 미계수)은 그대로 승계하고 각 행 note에 표기했다 — 수치 연속성을 우선했다.
+    78	
+    79	부기(codex 대사): 4파일 전부 SAME — final.md 2건은 codex판과 바이트 동일, SKILL.md 2건은 `architecture-ddd`→`dddjango-architecture-ddd` 개명(콜론→대시 접두 포함)과 `user-invocable: false` 제거뿐(플랫폼 표기 치환 이내, P0 특이 발견 6 «표류 아님» 재확인). DIFF 0 · ABSENT 0.
+
+[2m**Verifying machine section assignments and overlaps**
+**Confirming section counts and label consistency**
+**Verifying existence of key anchors**[0m
+[2m**Clarifying section_key and anchor usage**
+**Identifying fabricated section_key-anchor strings**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "awk -F '\\t' 'NR==1 || ("'$2=="E03" && ($4<=20 || $4>=135)) || ($2=="E08" && ($1=="architecture-db-final" && $4<=8 || $1=="architecture-api-final" && $4>=20 && $4<=27)) || ($2=="E10" && ($1=="command-dddjango" || $1=="agent-design-architect")) {print $1 "'"\\t\" "'$3 "'"\\tlevel=\" "'$5 "'"\\tanchor=\" "'$6 "'"\\theading=\" "'$7 "'"\\tL\" "'$8 "-" $9}'"' workspace/design/2026-08-19-ontology-t1-census/sections.tsv"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+doc_key	section_key	level=level	anchor=anchor	heading=heading	Lline_start-line_end
+implementation-python-skill	s001	level=0	anchor=	heading=(전문)	L1-6
+implementation-python-skill	s002	level=1	anchor=	heading=Python 언어 특화 구현	L7-8
+implementation-python-skill	s003	level=2	anchor=	heading=언제 쓰나	L9-17
+implementation-python-skill	s004	level=2	anchor=	heading=핵심 운영 원칙	L18-31
+implementation-python-skill	s005	level=2	anchor=	heading=상세 레퍼런스	L32-68
+implementation-python-final	s001	level=1	anchor=	heading=Python 언어 특화 가이드	L1-9
+implementation-python-final	s002-1	level=2	anchor=1	heading=1. 타입 힌트와 타입 시스템	L10-11
+implementation-python-final	s003-1.1	level=3	anchor=1.1	heading=1.1 타입 어노테이션 기본 [단단한 파이썬] [파이썬코딩의기술]	L12-31
+implementation-python-final	s004-1.2	level=3	anchor=1.2	heading=1.2 Optional과 None 처리 [단단한 파이썬]	L32-55
+implementation-python-final	s005-1.3	level=3	anchor=1.3	heading=1.3 Union과 합 타입으로 상태 공간 제어 [단단한 파이썬]	L56-82
+implementation-python-final	s006-1.4	level=3	anchor=1.4	heading=1.4 Literal, Final, NewType [단단한 파이썬]	L83-102
+implementation-python-final	s007-1.5	level=3	anchor=1.5	heading=1.5 TypedDict: 이종 딕셔너리 타입 지정 [단단한 파이썬]	L103-121
+implementation-python-final	s008-1.6	level=3	anchor=1.6	heading=1.6 제네릭과 TypeVar [단단한 파이썬] [PEP 695]	L122-138
+implementation-python-final	s009-1.7	level=3	anchor=1.7	heading=1.7 PEP 695: 새 타입 매개변수 문법 (Python 3.12+) [PEP 695]	L139-176
+implementation-python-final	s010-1.8	level=3	anchor=1.8	heading=1.8 컬렉션 타입 어노테이션 [단단한 파이썬]	L177-187
+implementation-python-final	s011-1.9	level=3	anchor=1.9	heading=1.9 @override 데코레이터 (3.12+) [PEP 698]	L188-237
+implementation-python-final	s012-1.10	level=3	anchor=1.10	heading=1.10 ParamSpec: 데코레이터 시그니처 보존 [PEP 612]	L238-276
+implementation-python-final	s013-1.11	level=3	anchor=1.11	heading=1.11 Concatenate: 매개변수 추가/제거 [PEP 612]	L277-305
+implementation-python-final	s014-1.12	level=3	anchor=1.12	heading=1.12 TypeIs vs TypeGuard: 타입 좁히기 [PEP 742, PEP 647]	L306-331
+implementation-python-final	s015-1.13	level=3	anchor=1.13	heading=1.13 TypeVarTuple과 Unpack: 가변 길이 제네릭 [PEP 646]	L332-352
+implementation-python-final	s016-1.14	level=3	anchor=1.14	heading=1.14 타입 매개변수 기본값 (Python 3.13+) [PEP 696]	L353-367
+implementation-python-final	s017-2	level=2	anchor=2	heading=2. 구조적 패턴 매칭 (match/case) -- Python 3.10+	L368-371
+implementation-python-final	s018-2.1	level=3	anchor=2.1	heading=2.1 패턴 매칭의 7가지 패턴 유형	L372-414
+implementation-python-final	s019-2.2	level=3	anchor=2.2	heading=2.2 클래스 패턴과 \_\_match\_args\_\_	L415-438
+implementation-python-final	s020-2.3	level=3	anchor=2.3	heading=2.3 매핑 패턴과 REST 캡처	L439-451
+implementation-python-final	s135	level=2	anchor=	heading=부록 A: Python 3.10-3.14 핵심 변경사항 요약	L2573-2582
+implementation-python-final	s136	level=2	anchor=	heading=부록 B: 타입 시스템 진화 요약	L2583-2597
+implementation-python-final	s137	level=2	anchor=	heading=부록 C: 주요 매직 메서드 요약	L2598-2619
+implementation-python-final	s138	level=2	anchor=	heading=출처	L2620-2621
+implementation-python-final	s139	level=3	anchor=	heading=PEP 문서	L2622-2643
+implementation-python-final	s140	level=3	anchor=	heading=Python 공식 문서	L2644-2653
+implementation-python-final	s141	level=3	anchor=	heading=서적	L2654-2663
+implementation-python-final	s142	level=3	anchor=	heading=도구 문서	L2664-2670
+implementation-python-final	s143	level=3	anchor=	heading=커뮤니티	L2671-2675
+architecture-db-final	s001	level=1	anchor=	heading=데이터베이스 설계 종합 가이드	L1-2
+architecture-db-final	s002	level=2	anchor=	heading=목차	L3-21
+architecture-db-final	s003-1	level=2	anchor=1	heading=1. 데이터베이스 모델링 프로세스	L22-23
+architecture-db-final	s004-1.1	level=3	anchor=1.1	heading=1.1 작업 순서	L24-36
+architecture-db-final	s005-1.2	level=3	anchor=1.2	heading=1.2 업무 파악 원칙	L37-45
+architecture-db-final	s006-2	level=2	anchor=2	heading=2. 개념적 데이터 모델링 (ERD)	L46-47
+architecture-db-final	s007-2.1	level=3	anchor=2.1	heading=2.1 ERD 구성 요소	L48-57
+architecture-db-final	s008-2.2	level=3	anchor=2.2	heading=2.2 ERD 작성 원칙	L58-64
+architecture-api-final	s020-5	level=2	anchor=5	heading=5. 요청/응답 계약	L178-181
+architecture-api-final	s021-5.1	level=3	anchor=5.1	heading=5.1 요청 계약	L182-192
+architecture-api-final	s022-5.2	level=3	anchor=5.2	heading=5.2 응답 계약	L193-201
+architecture-api-final	s023-5.3	level=3	anchor=5.3	heading=5.3 계약 체크리스트	L202-220
+architecture-api-final	s024-5.4	level=3	anchor=5.4	heading=5.4 에러 프로필 선택	L221-232
+architecture-api-final	s025	level=4	anchor=	heading=`dddjango-code-json` (새 dddjango Ninja 범위의 기본)	L233-242
+architecture-api-final	s026	level=4	anchor=	heading=framework 기본 응답과 공개 헤더의 경계	L243-246
+architecture-api-final	s027-6	level=2	anchor=6	heading=6. RFC 9457 에러 응답 형식	L247-250
+command-dddjango	s001	level=0	anchor=	heading=(전문)	L1-12
+command-dddjango	s002	level=2	anchor=	heading=산출물 위치	L13-25
+command-dddjango	s003	level=2	anchor=	heading=진행 가시성	L26-56
+command-dddjango	s004	level=2	anchor=	heading=시작: 모드 판별	L57-60
+command-dddjango	s005	level=2	anchor=	heading=Phase 0 — 요구·스코프 (G0)	L61-72
+command-dddjango	s006	level=2	anchor=	heading=Phase 1 — 설계 (G1)	L73-85
+command-dddjango	s007	level=2	anchor=	heading=Phase 2 — 구현 (G2, 이중 루프 TDD)	L86-140
+command-dddjango	s008	level=2	anchor=	heading=Phase 3 — 마무리·검증 보고	L141-144
+command-dddjango	s009	level=2	anchor=	heading=수정 모드 (부분 수정)	L145-156
+command-dddjango	s010	level=2	anchor=	heading=엣지 처리	L157-168
+command-dddjango	s011	level=2	anchor=	heading=경계	L169-176
+agent-design-architect	s001	level=0	anchor=	heading=(전문)	L1-14
+agent-design-architect	s002	level=2	anchor=	heading=입력	L15-26
+agent-design-architect	s003	level=2	anchor=	heading=산출	L27-30
+agent-design-architect	s004	level=2	anchor=	heading=명세에 담는 것	L31-36
+agent-design-architect	s005	level=3	anchor=	heading=Error response contract 12-slot	L37-81
+agent-design-architect	s006	level=2	anchor=	heading=리뷰 반영·충돌 중재	L82-91
+agent-design-architect	s007	level=2	anchor=	heading=경계	L92-96
+
+[2m**Verifying section key parsing and range counts**
+**Reconciling hierarchical count differences**[0m
+[2m**Analyzing category row counts**
+**Identifying inconsistencies in category counts**[0m
+[2m**Verifying section ownership duplicates**
+**Inspecting P0 label mappings for omissions**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "sed -n '1,90p' workspace/design/2026-08-19-ontology-t1-census/E03-recon.md"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+# E03 — implementation-python T1-1 P0 대사 노트
+
+작성일: 2026-08-19 · 담당: E03 문서군 담당자
+기계 절: sections.tsv p0_group=E03 148절 (implementation-python-skill 5 + implementation-python-final 143)
+P0 정본: `workspace/design/2026-08-18-p0-census/E03-implementation-python.md` (절 37 · 규범 문장 112)
+
+## §1 문서별 접기 규약 명문화
+
+**implementation-python-skill** (P0 4절 ← 기계 5절):
+P0는 YAML frontmatter와 h1 제목을 «헤더(frontmatter+제목)» 한 절로 병합했다(서두 병합 — 기계 절단은 (전문) s001과 h1 s002를 분리). 나머지 h2 3절(언제 쓰나·핵심 운영 원칙·상세 레퍼런스)은 1:1 대응한다.
+
+**implementation-python-final** (P0 33절 ← 기계 143절):
+P0는 h2 단위(§N 번호 절·부록 A–C·출처)로 절을 세고, h3 소절(§N.M) 전부를 상위 h2 절에 접었다. 서문(h1 제목+인용 blockquote)은 별도 1절(기계 s001과 1:1). 부록 A–C는 하위 h3가 없어 1:1. 출처는 h2 s138에 h3 5절(s139–s143: PEP 문서·Python 공식 문서·서적·도구 문서·커뮤니티)을 접었다. 부록·서두를 제외하거나 건너뛴 절은 없다 — 전 기계 절이 P0 37절 중 하나에 귀속된다.
+
+## §2 P0 절 전건 대사 표
+
+| P0 절 라벨 | 대응 기계 절 키(범위) | 규약 |
+|---|---|---|
+| [SKILL] 헤더(frontmatter+제목) | skill s001–s002 (2절) | 서두 병합(frontmatter+h1) |
+| [SKILL] 언제 쓰나 | skill s003 | 1:1 |
+| [SKILL] 핵심 운영 원칙 | skill s004 | 1:1 |
+| [SKILL] 상세 레퍼런스 | skill s005 | 1:1 |
+| [final] 서문(제목·인용) | s001 | 1:1 |
+| [final] §1 타입 힌트와 타입 시스템 | s002-1 ~ s016-1.14 (15절) | h3 접기(1.1–1.14) |
+| [final] §2 구조적 패턴 매칭 | s017-2 ~ s021-2.4 (5절) | h3 접기 |
+| [final] §3 컬렉션 선택과 데이터 구조 | s022-3 ~ s027-3.5 (6절) | h3 접기 |
+| [final] §4 함수 설계 | s028-4 ~ s033-4.5 (6절) | h3 접기 |
+| [final] §5 데코레이터 | s034-5 ~ s037-5.3 (4절) | h3 접기 |
+| [final] §6 디스크립터 | s038-6 ~ s040-6.2 (3절) | h3 접기 |
+| [final] §7 @property와 애트리뷰트 접근 | s041-7 ~ s043-7.2 (3절) | h3 접기 |
+| [final] §8 클래스 설계 | s044-8 ~ s053-8.9 (10절) | h3 접기 |
+| [final] §9 Protocol 심화 | s054-9 ~ s059-9.5 (6절) | h3 접기 |
+| [final] §10 Enum, dataclass, NamedTuple | s060-10 ~ s068-10.8 (9절) | h3 접기 |
+| [final] §11 연산자 오버로딩 | s069-11 ~ s070-11.1 (2절) | h3 접기 |
+| [final] §12 pydantic v2 | s071-12 ~ s075-12.3 (5절) | h3 접기(12.0–12.3) |
+| [final] §13 이터레이터·제너레이터·컴프리헨션 | s076-13 ~ s083-13.7 (8절) | h3 접기 |
+| [final] §14 컨텍스트 매니저와 with문 | s084-14 ~ s086-14.2 (3절) | h3 접기 |
+| [final] §15 예외 처리 | s087-15 ~ s090-15.3 (4절) | h3 접기 |
+| [final] §16 동시성과 병렬성 | s091-16 ~ s097-16.6 (7절) | h3 접기 |
+| [final] §17 성능 프로파일링과 최적화 | s098-17 ~ s102-17.4 (5절) | h3 접기 |
+| [final] §18 f-문자열 개선과 PEG 파서 | s103-18 ~ s104-18.1 (2절) | h3 접기 |
+| [final] §19 파이썬다운 관용 표현 | s105-19 ~ s111-19.6 (7절) | h3 접기 |
+| [final] §20 디자인 패턴 | s112-20 ~ s115-20.3 (4절) | h3 접기 |
+| [final] §21 Repository / Unit of Work | s116-21 | 1:1(하위 h3 없음) |
+| [final] §22 Ruff | s117-22 ~ s119-22.2 (3절) | h3 접기 |
+| [final] §23 mypy/pyright 최신 기능 | s120-23 ~ s123-23.3 (4절) | h3 접기 |
+| [final] §24 테스트 | s124-24 | 1:1(위임 스텁) |
+| [final] §25 디버깅 기법 | s125-25 ~ s127-25.2 (3절) | h3 접기 |
+| [final] §26 독스트링과 문서화 | s128-26 ~ s129-26.1 (2절) | h3 접기 |
+| [final] §27 정밀 연산 | s130-27 ~ s131-27.1 (2절) | h3 접기 |
+| [final] §28 Python 3.14 주요 변경사항 | s132-28 ~ s134-28.2 (3절) | h3 접기 |
+| [final] 부록 A | s135 | 1:1 |
+| [final] 부록 B | s136 | 1:1 |
+| [final] 부록 C | s137 | 1:1 |
+| [final] 출처 | s138 ~ s143 (6절) | h3 접기(출처 하위 5목록) |
+
+검산: skill 2+1+1+1 = 5 · final 1 + (§1–§28 소계 133) + 부록 3 + 출처 6 = 143 → 합 148 = sections.tsv E03 행 수와 일치.
+
+## §3 잔차
+
+**설명 불가 잔차 0.** P0 37절 전건이 위 두 접기 규약(h3→h2 접기, SKILL 서두 병합)으로 기계 148절에 남김없이 대응하고, 어느 쪽에만 존재하는 절도 없다.
+
+## §4 규범 계수 대조
+
+이번 T1 norm_count 합 **101** vs P0 **112** — 차 **−11**.
+
+차이의 원인은 전량 계수 규약 차이이며 절 대응 문제가 아니다:
+
+1. **코드 펜스 내 주석 제외(−11)** — P0 집계 방침은 «코드 주석 안이라도 일반화된 지시 표지(반드시·필수·대신 사용·권장)가 있으면 포함»이었으나, T1 규약은 코드 펜스 안 텍스트를 계수에서 제외한다. 해당 11건: §1.2 «반드시 None 체크», §1.7 «PEP 695 권장», §1.8 «내부 타입 명시», §3.5 «list 대신 deque», §4.5 «반환값 4개 이상 클래스/namedtuple», §8.9 «dict 대신 UserDict», §9.5 «반드시 정적 타입 체커 의존», §10.8 «typing 버전 권장», §16.1 «Lock 필수», §17.3 «타입 일관 유지», §27.1 «Decimal str 생성자 필수». 각 건은 classify.tsv 해당 절 note에 표기했다. 이 제외로 §9·§27은 T1 기준 규범 0 절이 된다(P0에선 각 1).
+2. **유지한 P0 특례(계수 연속성)** — §19.6 명명 표 2개=표 단위 각 1(행 단위 계수 안 함), §22.1·§23.1·§23.2 설정 블록=각 규범 1단위(권장/strict 설정은 예제 코드가 아니라 구속 설정으로 보아 펜스 제외 규칙 비적용 — P0 방침 승계), §10.1=항 단위 14(다항 문장의 항 분할 계수 승계).
+3. **P0는 절 단위 집계** — h3별 배분은 P0 비고의 소절 지목(예: §1의 10건을 1.2/1.3/1.5/1.7/1.8/1.11/1.12에 배분)을 따라 재구성했고, 전 절에서 P0 절 소계와 «T1 합 + 펜스 제외분»이 일치함을 확인했다(92−11=81 [final] + 20 [SKILL] = 101).
+
+부기: codex 대응은 final.md가 byte 동일(전 143절 SAME), SKILL.md는 frontmatter(s001)만 DIFF — `user-invocable: false` 부재 + 스킬명 표기 치환(`dddjango:x`→`dddjango-x`). 표기 치환만 있는 s003은 SAME으로 판정했다. T4 잔차 규모는 사실상 SKILL frontmatter 1건이다.
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "sed -n '1,135p' workspace/design/2026-08-18-p0-census/E10-command-agents.md"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+# P0 센서스 — E10: command + pipeline agents
+
+담당: `dddjango/commands/dddjango.md` + `dddjango/agents/*.md` 8개 파일 전수.
+작성일: 2026-08-18.
+
+**계수 방법**: 절 = 헤딩(`##`/`###`) 단위, 단 커맨드 Phase 2는 번호 step(1~7)이 코퍼스 내 실제 참조 단위(«Phase 2 step 6» 등)라 step 단위로 쪼갬. 규범 문장 = 마침표(또는 불릿) 단위 문장 중 지시·금지·조건 표지를 가진 것 — 한 문장에 지시가 여럿이어도 1로 셈(문장 수 기준). 이유 서술(«*왜* — …»)·역할 정체성 단문·예시는 제외, 애매하면 포함하고 비고에 표시. ④쌍둥이는 파일 단위 판정(`codex-dddjango/skills/` Glob 확인)을 절에 상속.
+
+## 파일별 요약
+
+| 파일 | 행수 | 절수 | 규범 문장수 | codex 쌍둥이 |
+|---|---|---|---|---|
+| commands/dddjango.md | 176 | 17 | 313 | 있음 (`skills/dddjango/SKILL.md`) |
+| agents/acceptance-tester.md | 54 | 5 | 75 | 있음 (`skills/dddjango-acceptance-tester/SKILL.md`) |
+| agents/coder.md | 71 | 6 | 103 | 있음 (`skills/dddjango-coder/SKILL.md`) |
+| agents/design-architect.md | 96 | 6 | 178 | 있음 (`skills/dddjango-design-architect/SKILL.md`) |
+| agents/design-review-api.md | 84 | 6 | 94 | 있음 (`skills/dddjango-design-review-api/SKILL.md`) |
+| agents/design-review-db.md | 44 | 5 | 35 | 있음 (`skills/dddjango-design-review-db/SKILL.md`) |
+| agents/design-review-ddd.md | 44 | 5 | 28 | 있음 (`skills/dddjango-design-review-ddd/SKILL.md`) |
+| agents/discipline-reviewer.md | 130 | 8 | 234 | 있음 (`skills/dddjango-discipline-reviewer/SKILL.md`) |
+| **합계** | **699** | **58** | **1060** | 8/8 존재 |
+
+③백스톱 범례: 커버 = 문면이 check-*.py/registry_gate 등 결정적 검사기를 지목하거나 규칙 번호로 명백 대응. 비커버 = 절 규칙이 오케스트레이션 절차·출력 형식·리뷰 행위라 27종 검사기(코드 대상)의 관할 밖임이 명백. 불명 = 코드 산출물 규칙인데 스크립트 무언급·대응 부분적.
+
+## commands/dddjango.md (17절 · 313)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문·번호 공간 규약 (dddjango.md L7–11) | 5 | 없음 | 명시(Coordinator·subagent 위임) | 비커버 | 헤딩 없는 서두. registry #N ↔ 무접두 #N 이중 번호 공간 규약의 유일 정의처. 무접두 #N 본문 정본은 플러그인 미동봉(외부 의존 명시) |
+| 산출물 위치 | 9 | 있음 | 명시(코디네이터 소유·architect 제자리 수정) | 비커버 | `.dddjango/` 폴더 규약·한 기능=한 폴더. 검사기 무대응(절차 규칙) |
+| 진행 가시성 | 22 | 있음 | 명시(사용자 승인·discipline 권고 인용) | 비커버 | 게이트 배너 형식 블록 = 사실상 앵커화된 출력 계약. 날짜 스탬프(2026-08-13/15/17) 다수 |
+| 시작: 모드 판별 | 5 | 있음 | 명시(사용자 확인) | 비커버 | 모드축/배치축 직교 선언 |
+| Phase 0 — 요구·스코프 (G0) | 39 | 있음 | 명시(사용자·코디네이터·architect 경계) | 커버 | 빚 스캔 = «Phase 2 step 6 registry 그대로» 실행 + `registry_gate.py` 대체 실행 금지 명시. 절 내부에 스택 판정 소유(architect) 경계 문장 포함 |
+| Phase 1 — 설계 (G1) | 52 | 있음 | 명시(architect·리뷰어 3종·discipline·Coordinator) | 비커버 | 12-slot label·순서 리터럴이 여기 재등장(architect 문서와 중복 서술 — 표류 위험). 병렬=«한 응답 안 다발» 정의 소유 |
+| Phase 2 step 1 (러너 준비) | 5 | 있음(step 번호) | 명시(`implementation-django-ninja` §2.1 인용) | 커버 | pytest settings binding은 registry #12 `check-test-config.py`와 명백 대응 |
+| Phase 2 step 2 (한정 검색·dispatch) | 5 | 있음(step 번호) | 명시(acceptance-tester/coder 라우팅) | 비커버 | 일곱 decision → 소유자 라우팅 표준의 정본 |
+| Phase 2 step 3 (슬라이스 도출) | 4 | 있음(step 번호) | 명시(G0 빚 결정 참조) | 비커버 | 슬라이스 0(동작 불변) 선행 규칙 |
+| Phase 2 step 4 (coder 호출·슬라이스 감사) | 10 | 있음(step 번호) | 명시(coder·discipline·원작성자) | 비커버 | 홀리스틱 갈음 조건(2026-08-17). discipline-reviewer §감사 빈도가 이 step을 정본으로 역참조 |
+| Phase 2 step 5 (규율 감사·suite 실행) | 18 | 있음(step 번호) | 명시(역할 4종 라우팅·너=코디네이터 실행) | 비커버 | 무관/관련 실패의 자=기준선 실측(2026-08-13). G2 blocker 토큰 3종 정의 |
+| Phase 2 step 6 (결정적 백스톱 27종) | 81 | 있음(step 번호·registry #1~#27) | 명시(검사기 27종 소유권 표·registry_gate·API/discipline reviewer 토큰) | 커버 | 최대 절. registry 표(27항목) = 검사기↔규칙번호 매핑의 정본. 앵커 차분/귀속 차분 두 계열 판정. exit-0 blind spot 절 포함. 규범 밀도 최고 지점 |
+| Phase 2 step 7 (G2 배너) | 6 | 있음(step 번호) | 없음(승인 주체 «승인받는다»로만 암시) | 커버 | 27-registry·12-slot evidence 지목. G2 차단 조건 열거 |
+| Phase 3 — 마무리·검증 보고 | 3 | 있음 | 없음 | 커버 | manage.py check·mypy strict 등 결정적 도구 지목 |
+| 수정 모드 (부분 수정) | 17 | 있음 | 명시(너=코디네이터·G1′) | 커버 | «Phase 2 step6 그대로 적용» 역참조 — step 번호 앵커의 실사용례 |
+| 엣지 처리 | 17 | 있음 | 명시(coder·architect·acceptance 반송처) | 커버 | checker exit 1/2 처리 재서술(step 6과 중복 — 축약판) |
+| 경계 | 15 | 있음 | 명시(architect·acceptance-tester·coder) | 비커버 | 게이트 질문·STOP 기록 형식(2026-08-13)이 경계 절 안에 실림 — 절 제목과 내용 불일치(형식 규정이 «경계»에 동거) |
+
+## agents/acceptance-tester.md (5절 · 75)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (acceptance-tester.md L13) | 2 | 없음 | 명시(너=인수 테스트 작성자·소유 행) | 비커버 | discipline-tdd decision 우선·implementation-test는 mechanics 한정 |
+| 입력 | 5 | 있음 | 명시(Coordinator·설계 반송) | 비커버 | 블랙박스(프로덕션 코드 불가시) 규칙 |
+| 산출 | 5 | 있음 | 없음(주어 암시) | 비커버 | 보고 형식 `path::test \| decision \| …` — command step 5와 동일 리터럴(중복) |
+| 인수 테스트 작성 규칙 | 57 | 있음 | 명시(coder 영역·discipline 감수자·설계 반송) | 불명 | 23개 불릿. 12-slot 오라클 규칙·URL 합성 규칙·pytest 셋업 — 테스트 산출물 규칙이나 스크립트 무언급(배치만 #12 간접 대응). «결정 재방문 금지(2026-08-15)» — coder와 쌍둥이 문장 |
+| 경계 | 6 | 있음 | 명시(coder의 몫·네 소유) | 비커버 | 외부 계약 테스트는 파일 위치 무관 소유 선언 |
+
+## agents/coder.md (6절 · 103)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (coder.md L16) | 2 | 없음 | 명시(너=메인 코더·owner 행) | 비커버 | |
+| 입력 | 2 | 있음 | 명시(Coordinator) | 비커버 | pending 입력 시 반송 |
+| 산출 | 4 | 있음 | 없음(주어 암시) | 비커버 | 보고 형식 리터럴 — acceptance-tester·command와 3중 중복 |
+| 작업 방식 (안쪽 루프 TDD) | 82 | 있음 | 명시(architect 소유·Coordinator 전달·설계 반송) | 커버 | 24개 불릿. `check-layer-skeleton` 스크립트명 직접 지목(#487)·검사기 확장-리터럴 호출 규칙(2026-08-15). 배선 표준(#105~#112)·TREE_CONTRACT_MISMATCH 대칭 반송(2026-08-13 라운드 2 실증 인용). 12-slot preflight — architect·command와 병렬 전개 |
+| 엣지·보고 | 4 | 있음 | 명시(설계/인수테스트 반송) | 비커버 | |
+| 경계 | 9 | 있음 | 명시(acceptance-tester/설계·architect 소유) | 커버 | 메커니즘 대체 금지 = registry #1 `check-mechanism-ownership.py`와 명백 대응(출처-불문 열거) |
+
+## agents/design-architect.md (6절 · 178)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (design-architect.md L13) | 0 | 없음 | 명시(너=단일 작성자) | 비커버 | 순수 역할 서술 — 규범 문장 0인 유일 절 |
+| 입력 | 6 | 있음 | 명시(Coordinator·ddd 리뷰어·사용자 고정 결정) | 비커버 | BC 배치 존중·G1 override 좁은 재호출(타 절 불변) |
+| 산출 | 3 | 있음 | 명시(coder·acceptance 몫) | 비커버 | |
+| 명세에 담는 것 | 158 | 있음(내부 `### Error response contract 12-slot` 별도 헤딩) | 명시(final.md·§3.2·db lens 등 값-소유 위임 다수) | 커버(부분) | 최대 밀도 절. 12-slot 1~12 리터럴 label 정본(command·review-api와 3중 병렬). 트리·FK·dto 규칙은 registry #4·#17·#19와 규칙 번호로 명백 대응, 채널 물음 넷은 «검사기 없음·G1 설계 판정·ⓓ» 자기 선언 — 커버/비커버 혼재를 커버(부분)로 기재. Risky Write 8행 블록·산출물-우선 쓰기(2026-08-13)·값 사본 금지(«값 사본은 썩는다») 포함 |
+| 리뷰 반영·충돌 중재 | 7 | 있음 | 명시(네가 중재·Coordinator 제시) | 비커버 | 메타 요약 블록 금지·자기모순 1회 스캔 |
+| 경계 | 4 | 있음 | 명시(coder 몫·lens 소유) | 비커버 | |
+
+## agents/design-review-api.md (6절 · 94)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (design-review-api.md L10) | 1 | 없음 | 명시(Coordinator 지정 모드) | 비커버 | |
+| 실행 모드 | 4 | 있음 | 명시(Coordinator) | 비커버 | 2모드(DESIGN / DYNAMIC_ERROR_SHAPE_PROOF) — 후자는 checker exit 1 토큰이 트리거 |
+| 입력 | 3 | 있음 | 명시(Coordinator·독립성) | 비커버 | 스킬 references 실독 허용(제한은 타 노트·코드) |
+| 산출 | 11 | 있음 | 명시(architect 몫·확인 토큰 계약) | 비커버 | 집행성 판정 1행(2026-08-15) — 인용 없는 «가능» 무효. RESOLVED_…_API_CONFIRMATION 토큰 발화 조건 |
+| 점검 항목 (계약 lens만) | 72 | 있음(내부 12-slot 헤딩·slot 번호) | 명시(discipline-reviewer로 물리 판정 이관) | 비커버 | 12-slot 심사판 — architect 작성판과 slot별 병렬(표류 위험). URL 합성 규칙이 acceptance-tester와 중복 서술 |
+| 경계 | 3 | 있음 | 명시(ddd·db 리뷰어 몫) | 비커버 | |
+
+## agents/design-review-db.md (5절 · 35)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (design-review-db.md L10) | 1 | 없음 | 명시(architect 명세·읽기 전용) | 비커버 | |
+| 입력 | 2 | 있음 | 명시(Coordinator) | 비커버 | |
+| 산출 | 6 | 있음 | 명시(architect 몫) | 비커버 | 집행성 판정 1행 — 3개 리뷰어 공통 형식(동형 3중 서술) |
+| 점검 항목 (데이터 lens만) | 23 | 있음 | 명시(discipline-tdd·acceptance-tester 몫 위임·리뷰어 직접 재분류) | 비커버 | Risky Write 8행 «의미적 충족» 판정(리터럴 '§9.6' 불요) — 구조 완전성만, 적정성은 타 소유 |
+| 경계 | 3 | 있음 | 명시(ddd·api 리뷰어 몫) | 비커버 | |
+
+## agents/design-review-ddd.md (5절 · 28)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (design-review-ddd.md L9) | 1 | 없음 | 명시(architect 명세·읽기 전용) | 비커버 | 유일하게 discipline-tdd 스킬 미탑재 리뷰어 |
+| 입력 | 2 | 있음 | 명시(Coordinator) | 비커버 | |
+| 산출 | 9 | 있음 | 명시(architect 몫) | 비커버 | 판정-소유 대조 표(2026-08-17) 의무 — command Phase 1 step 2의 «존재 검사» 반송과 짝(구문 검사 계약) |
+| 점검 항목 (도메인 lens만) | 13 | 있음 | 명시(`architecture-ddd` §3.2 항-(1)·(2) 값-소유 인용) | 비커버 | 빈혈 차단·구조 이주 대조 — discipline-reviewer Phase 2 빈혈 항목과 시점 분업(설계/구현) |
+| 경계 | 3 | 있음 | 명시(api·db 리뷰어 몫) | 비커버 | |
+
+## agents/discipline-reviewer.md (8절 · 234)
+
+| 절 | 규범 문장 수 | ①앵커 | ②소유자 | ③백스톱 | 비고 |
+|---|---|---|---|---|---|
+| 전문 (discipline-reviewer.md L12) | 1 | 없음 | 명시(단발 체크포인트 감사) | 비커버 | |
+| 입력 | 16 | 있음 | 명시(Coordinator 모드 명시 의무·독립성) | 비커버 | 3모드. Phase 1에 change inventory 스코프 검사(2026-08-13) 포함 |
+| 산출 | 11 | 있음 | 명시(반송처 4종 라우팅) | 비커버 | RESOLVED_…_DISCIPLINE_CONFIRMATION 토큰 — api 리뷰어와 대칭 이중 확인 |
+| 감사 빈도 (적응형) | 3 | 있음 | 명시(발동 기준 정본=커맨드 Phase 2 step 4·5 역참조) | 비커버 | 문서 간 정본 위임의 명시 사례 |
+| 영구 테스트 입장 감사 | 18 | 있음 | 명시(원 소유자·설계 반송) | 비커버 | 일곱 decision·여섯 열 검사 — architect 입장 표와 대응 |
+| Phase 1·2 API 오류 scope·소유권 점검 | 13 | 있음 | 명시(API reviewer 소유 경계·Coordinator handback) | 불명 | #114·#488 규칙 번호 대응 있으나 스크립트명 무언급. `bc_error_schema.py` canonical 경로 리터럴 보유 |
+| Phase 2 점검 항목 (클린코드·TDD 규율만) | 163 | 있음 | 명시(«네 몫»/타 소유 경계 문장 다수·FC-2 그레이더 언급) | 커버(분업 명시) | 최대 절. `check-choices-literal-consumption`·`check-public-surface-annotation` 스크립트명 직접 지목 + «백스톱 사각 전담» 자기 정의. ⓓ 후보 물음 표 8행+개별 물음 13줄(#N 소유자 번호 체계) — rule-owner-map 별도 문서 언급. 면제 조문 16종 번호 열거. human 판정 둘(#254·#316) «검사기 아예 없음» 명시 |
+| 경계 | 9 | 있음 | 명시(코더·implementation-*·API reviewer·acceptance 몫) | 비커버 | 소유권/정확성 구분 반복 명문화 |
+
+## 4축 집계 (절 수 기준, 총 58절)
+
+| 축 | 값 |
+|---|---|
+| ①앵커 | 있음 50 · 없음 8 (없음 = 각 문서의 헤딩 없는 전문/서두 8개) |
+| ②소유자 | 명시 54 · 없음 4 (command step 7·Phase 3, acceptance 산출, coder 산출) |
+| ③백스톱 | 커버 11 · 비커버 45 · 불명 2 (acceptance 작성 규칙, discipline API 오류 소유권 점검) |
+| ④쌍둥이 | 존재 58 · 부재 0 (8파일 전부 codex-dddjango/skills/에 대응 SKILL.md 존재) |
+
+## 특이 발견
+
+1. **이중(실제로는 다중) 번호 공간이 이미 운용 중** — 커맨드 서두가 «registry #N(1~27) vs 무접두 #N(정본 명세 규칙 번호)» 규약을 명문화했고, 그 외에 12-slot 번호(1~12), Phase step 번호, ⓓ 물음 소유자 번호, 면제 조문 번호까지 이질적 참조 체계가 최소 5종 혼용된다. 무접두 #N의 본문 정본은 플러그인에 미동봉(발췌만) — 온톨로지 레지스트리가 흡수해야 할 1순위 ID 체계.
+2. **앵커 공백은 정확히 «전문» 8곳뿐** — 각 문서의 헤딩 이전 서두(역할 선언+핵심 규범)가 참조 불가 지대다. 커맨드 전문은 번호 공간 규약이라는 코퍼스 전역 해석 규칙을 담고 있는데 앵커가 없다.
+3. **Error response contract 12-slot이 3중+α 병렬 전개** — architect(작성 계약)·review-api(심사 계약)·command Phase 1(label·순서 리터럴 재독 계약)에 slot별 전문이 각각 실리고, coder(preflight)·acceptance(오라클 규칙)에도 축약판이 실린다. label 리터럴 «구문 검사»로 방어 중이나 slot 본문 의미는 문서 간 자연어 재서술이라 표류 위험 최대 지점.
+
+[2m**Identifying heading count inconsistency in P0 E10**
+**Confirming P0 heading counting aligns with recon §1**
+**Planning heading level count for E08 formula**[0m
+[2m**Extracting formula details and categories**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "awk -F '\\t' 'NR>1 && ("'$2=="E03" || $2=="E08" || $2=="E10") {k=$2 FS $1 FS $5; c[k]++} END {for(k in c) print k,c[k]}'"' workspace/design/2026-08-19-ontology-t1-census/sections.tsv | sort"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+E03	implementation-python-final	1 1
+E03	implementation-python-final	2 32
+E03	implementation-python-final	3 110
+E03	implementation-python-skill	0 1
+E03	implementation-python-skill	1 1
+E03	implementation-python-skill	2 3
+E08	architecture-api-final	1 1
+E08	architecture-api-final	2 16
+E08	architecture-api-final	3 48
+E08	architecture-api-final	4 2
+E08	architecture-api-skill	0 1
+E08	architecture-api-skill	1 1
+E08	architecture-api-skill	2 3
+E08	architecture-db-final	1 1
+E08	architecture-db-final	2 15
+E08	architecture-db-final	3 52
+E08	architecture-db-skill	0 1
+E08	architecture-db-skill	1 1
+E08	architecture-db-skill	2 3
+E10	agent-acceptance-tester	0 1
+E10	agent-acceptance-tester	2 4
+E10	agent-coder	0 1
+E10	agent-coder	2 5
+E10	agent-design-architect	0 1
+E10	agent-design-architect	2 5
+E10	agent-design-architect	3 1
+E10	agent-design-review-api	0 1
+E10	agent-design-review-api	2 5
+E10	agent-design-review-api	3 1
+E10	agent-design-review-db	0 1
+E10	agent-design-review-db	2 4
+E10	agent-design-review-ddd	0 1
+E10	agent-design-review-ddd	2 4
+E10	agent-discipline-reviewer	0 1
+E10	agent-discipline-reviewer	2 7
+E10	command-dddjango	0 1
+E10	command-dddjango	2 10
+
+[2m**Verifying line range claims and section mapping**
+**Assessing machine key uniqueness and range mapping**
+**Planning script for section key verification**[0m
+[2m**Planning precise section citations**
+**Analyzing finding categories and section counts**
+**Confirming E10 P0 step count**[0m
+[2m**Verifying 1:1 44 label count**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "awk 'BEGIN{in_table=0} /"'^## §2 /{in_table=1;next} /''^## §3 /{in_table=0} in_table && /''^'"\\|/ && "'$0 !~ /''^'"\\|---/ && "'$0 !~ /P0 절 라벨/ {rows++; if ($0 ~ /'"\\| 1:1 \\|/) one++; if ("'$0 ~ /전문 합성/) prof++; if ($0 ~ /step 접기/) step++; if ($0 ~ /h3 분리/) split++} END {print "rows="rows, "literal_1to1="one, "professional="prof, "step_rows="step, "split_rows="split}'"' workspace/design/2026-08-19-ontology-t1-census/E10-recon.md"[0m in /Users/hyun/Desktop/dddjango
+[31m exited 2 in 0ms:[0m
+awk: syntax error at source line 1
+ context is
+	BEGIN{in_table=0} /^## §2 /{in_table=1;next} /^## §3 /{in_table=0} in_table && /^\|/ && $0 !~ /^\|---/ && $0 !~ /P0 절 라벨/ {rows++; if ($0 ~ /\| 1:1 \|/) one++; if ($0 ~ /전문 합성/) prof++; if ($0 ~ /step 접기/) step++; if ($0 ~ /h3 분리/) >>>  split++ <<< 
+awk: illegal statement at source line 1
+awk: syntax error at source line 1
+
+[2m**Refactoring reserved function**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "awk 'BEGIN{inside=0} /"'^## §2 /{inside=1;next} /''^## §3 /{inside=0} inside && /''^'"\\|/ && "'$0 !~ /''^'"\\|---/ && "'$0 !~ /P0 절 라벨/ {rows++; if ($0 ~ /'"\\| 1:1 \\|/) one++; if ("'$0 ~ /전문 합성/) prof++; if ($0 ~ /step 접기/) step++; if ($0 ~ /h3 분리/) h3++} END {print "rows="rows, "literal_1to1="one, "professional="prof, "step_rows="step, "h3_rows="h3}'"' workspace/design/2026-08-19-ontology-t1-census/E10-recon.md"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+rows=58 literal_1to1=41 professional=8 step_rows=7 h3_rows=2
+
+[2m**Planning row count verification with awk**
+**Confirming row counts by document regions**[0m
+[35m[3mcodex[0m[0m
+현재까지 P0 표 행 수와 recon 행 수는 E03 37/37, E08 39/39, E10 58/58로 맞고, 기계 키도 `sections.tsv`에 실재합니다. 다만 E10은 “접기”라는 설명만으로 중복 소유를 해소하지 못합니다. `command-dddjango/s007`이 실제로 7개 P0 행에 반복되며, §2 말미의 유형별 행 수 `1:1 44건`도 표 실측값 41건과 다릅니다. 이제 이 두 반증이 최종 산식에 미치는 영향을 정리하겠습니다.
+[2m**Verifying skill range uniqueness and coverage**
+**Investigating label substitution and sequence integrity**[0m
+[2m**Clarifying header split details**
+**Analyzing duplicate assignment and count discrepancies**
+**Identifying formula description mismatch**[0m
+[2m**Planning clickable local markdown links**
+**Finalizing error validation and reporting format**
+**Confirming no browser or file writes needed**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg -n '"'^command-dddjango'"\\tE10\\ts007\\t' workspace/design/2026-08-19-ontology-t1-census/sections.tsv
+rg -n 'P0 58건 전건|command/Phase 2 step [1-7]' workspace/design/2026-08-19-ontology-t1-census/E10-recon.md
+rg -n '검산:|기계 68 =|합 145|기계 절 54|기계 절: sections.tsv' workspace/design/2026-08-19-ontology-t1-census/E03-recon.md workspace/design/2026-08-19-ontology-t1-census/E08-recon.md workspace/design/2026-08-19-ontology-t1-census/E10-recon.md"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+880:command-dddjango	E10	s007	7	2		Phase 2 — 구현 (G2, 이중 루프 TDD)	86	140	55	c1f0d29a598f5f21f37d30aea9b0d6cee8e68ef1765dfb8fe4aba4ab00ea4c69	Y	N	N
+30:| command/Phase 2 step 1 (러너 준비) | command-dddjango/s007 (L86–140) | step 접기(7→1) |
+31:| command/Phase 2 step 2 (한정 검색·dispatch) | command-dddjango/s007 | step 접기 |
+32:| command/Phase 2 step 3 (슬라이스 도출) | command-dddjango/s007 | step 접기 |
+33:| command/Phase 2 step 4 (coder 호출·슬라이스 감사) | command-dddjango/s007 | step 접기 |
+34:| command/Phase 2 step 5 (규율 감사·suite 실행) | command-dddjango/s007 | step 접기 |
+35:| command/Phase 2 step 6 (결정적 백스톱 27종) | command-dddjango/s007 | step 접기 |
+36:| command/Phase 2 step 7 (G2 배너) | command-dddjango/s007 | step 접기 |
+83:P0 58건 전건 대응 완료(1:1 44건 · 전문 합성 8건 · step 접기 7→1 1건 · h3 분리 1→2 2건). 기계 절 54건 전건이 표에 등장한다(s007은 7건 수용, architect s004·s005 / api s005·s006은 분리 수용).
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:3:작성일: 2026-08-19. 대상: 기계 절 54(sections.tsv p0_group=E10) ↔ P0 상세 인벤토리 58절(`workspace/design/2026-08-18-p0-census/E10-command-agents.md`).
+workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:83:P0 58건 전건 대응 완료(1:1 44건 · 전문 합성 8건 · step 접기 7→1 1건 · h3 분리 1→2 2건). 기계 절 54건 전건이 표에 등장한다(s007은 7건 수용, architect s004·s005 / api s005·s006은 분리 수용).
+workspace/design/2026-08-19-ontology-t1-census/E08-recon.md:10:- 검산: db-final 기계 68 = h1 1 + P0 15절(목차 1 + h2 14 + 접힌 h3 52). api-final 기계 67 = h1 1 + P0 16절(목차 1 + h2 15 + 접힌 h3 48 + 접힌 h4 2). SKILL 각 5 = h1 1 + P0 4절. 합 145 = P0 39 + h1 제목 절 4 + 접힌 h3/h4 102.
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:4:기계 절: sections.tsv p0_group=E03 148절 (implementation-python-skill 5 + implementation-python-final 143)
+workspace/design/2026-08-19-ontology-t1-census/E03-recon.md:57:검산: skill 2+1+1+1 = 5 · final 1 + (§1–§28 소계 133) + 부록 3 + 출처 6 = 143 → 합 148 = sections.tsv E03 행 수와 일치.
+
+[2m**Clarifying P0 section attribution condition**
+**Summarizing P0 validation and key counts**[0m
+[2m**Locating command table and phase step**[0m
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg -n '"'^'"\\| Phase 2 step [1-7]' workspace/design/2026-08-18-p0-census/E10-command-agents.md
+rg -n '"'^'"\\| \\[SKILL\\]|"'^'"\\| \\[final\\]' workspace/design/2026-08-19-ontology-t1-census/E03-recon.md | wc -l
+rg -n '"'^'"\\| (db|api)-(skill|final)' workspace/design/2026-08-19-ontology-t1-census/E08-recon.md | wc -l"[0m in /Users/hyun/Desktop/dddjango
+[32m succeeded in 0ms:[0m
+34:| Phase 2 step 1 (러너 준비) | 5 | 있음(step 번호) | 명시(`implementation-django-ninja` §2.1 인용) | 커버 | pytest settings binding은 registry #12 `check-test-config.py`와 명백 대응 |
+35:| Phase 2 step 2 (한정 검색·dispatch) | 5 | 있음(step 번호) | 명시(acceptance-tester/coder 라우팅) | 비커버 | 일곱 decision → 소유자 라우팅 표준의 정본 |
+36:| Phase 2 step 3 (슬라이스 도출) | 4 | 있음(step 번호) | 명시(G0 빚 결정 참조) | 비커버 | 슬라이스 0(동작 불변) 선행 규칙 |
+37:| Phase 2 step 4 (coder 호출·슬라이스 감사) | 10 | 있음(step 번호) | 명시(coder·discipline·원작성자) | 비커버 | 홀리스틱 갈음 조건(2026-08-17). discipline-reviewer §감사 빈도가 이 step을 정본으로 역참조 |
+38:| Phase 2 step 5 (규율 감사·suite 실행) | 18 | 있음(step 번호) | 명시(역할 4종 라우팅·너=코디네이터 실행) | 비커버 | 무관/관련 실패의 자=기준선 실측(2026-08-13). G2 blocker 토큰 3종 정의 |
+39:| Phase 2 step 6 (결정적 백스톱 27종) | 81 | 있음(step 번호·registry #1~#27) | 명시(검사기 27종 소유권 표·registry_gate·API/discipline reviewer 토큰) | 커버 | 최대 절. registry 표(27항목) = 검사기↔규칙번호 매핑의 정본. 앵커 차분/귀속 차분 두 계열 판정. exit-0 blind spot 절 포함. 규범 밀도 최고 지점 |
+40:| Phase 2 step 7 (G2 배너) | 6 | 있음(step 번호) | 없음(승인 주체 «승인받는다»로만 암시) | 커버 | 27-registry·12-slot evidence 지목. G2 차단 조건 열거 |
+      37
+      39
+
+[2m**Confirming E10 row counts and Serena skip note**
+**Validating category counts and duplicate mappings**
+**Noticing missing skill H1 in E08**[0m
+[2m**Planning P0 coverage columns**
+**Designing clickable evidence links**[0m
+[35m[3mcodex[0m[0m
+# L-B P0 대사 반증 결과
+
+## 발견
+
+| # | 그룹 | 유형(누락/이중 귀속/규약 모순/산식 불일치) | 내용 | 근거(파일·절) |
+|---:|---|---|---|---|
+| 1 | E10 | 이중 귀속 | 단일 기계 절 `command-dddjango/s007`이 P0의 Phase 2 step 1–7, 총 7개 절에 귀속됐다. 접기 규약에 공개된 다대일 대응이므로 숨겨진 잔차는 아니지만, “한 기계 절이 두 P0 절에 귀속되지 않는다”는 검증 조건에는 명백히 실패한다. 중복 귀속은 6건이다. | [P0 정본의 step 1–7](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-18-p0-census/E10-command-agents.md:34), [E10-recon §2의 7개 반복 행](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:30), [sections.tsv의 단일 s007 행](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-19-ontology-t1-census/sections.tsv:880) |
+| 2 | E10 | 산식 불일치 | §2 말미는 `1:1 44건`이라고 주장하지만 표의 실제 분류는 일반 1:1 41건, 전문 합성 8건, step 행 7건, h3 분리 행 2건이다. 올바른 P0 분해는 `41+8+7+2=58`, 기계 절 분해는 `41+8+1+4=54`다. 기재된 44를 독립 항목으로 적용하면 P0 61건·기계 57건이 되어 양쪽 모두 3건씩 초과한다. | [E10-recon §2 요약 산식](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:83) |
+
+P0 전건 대조에서는 누락이 없었다: E03 37/37, E08 39/39, E10 58/58이다. 존재하지 않는 기계 절 키와 §1 접기 규약에 반하는 개별 대응도 발견되지 않았다. E03·E08에는 이중 귀속이 없다.
+
+## 검산 결과
+
+| 그룹 | P0 절 수 | 기계−P0 차이의 독립 분해 | 재계산 기계 절 수 | sections.tsv | 판정 |
+|---|---:|---|---:|---:|---|
+| E03 | 37 | SKILL 헤더가 기계에서 `(전문)+h1`로 분리 `+1` · 번호 절 h3 접기 `+105` · 출처 하위 h3 5개 접기 `+5` → 총 `+111` | `37+1+105+5=148` | 148 | 일치 |
+| E08 | 39 | P0 미계수 h1 네 절 `+4` · db-final h3 `+52` · api-final h3 `+48` · api-final h4 `+2` → 총 `+106` | `39+4+52+48+2=145` | 145 | 일치 |
+| E10 | 58 | 전문 합성 `0` · command step 7→1 `−6` · architect h3 분리 `+1` · review-api h3 분리 `+1` → 총 `−4` | `58−6+1+1=54` | 54 | 총계는 일치하지만 7→1 이중 귀속이며, recon의 `1:1 44건` 세부 산식은 오류 |
+
+Serena: skipped — `.serena/project.yml`이 없어 기본 읽기 도구로 검증.
+[2mtokens used[0m
+89,486
+# L-B P0 대사 반증 결과
+
+## 발견
+
+| # | 그룹 | 유형(누락/이중 귀속/규약 모순/산식 불일치) | 내용 | 근거(파일·절) |
+|---:|---|---|---|---|
+| 1 | E10 | 이중 귀속 | 단일 기계 절 `command-dddjango/s007`이 P0의 Phase 2 step 1–7, 총 7개 절에 귀속됐다. 접기 규약에 공개된 다대일 대응이므로 숨겨진 잔차는 아니지만, “한 기계 절이 두 P0 절에 귀속되지 않는다”는 검증 조건에는 명백히 실패한다. 중복 귀속은 6건이다. | [P0 정본의 step 1–7](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-18-p0-census/E10-command-agents.md:34), [E10-recon §2의 7개 반복 행](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:30), [sections.tsv의 단일 s007 행](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-19-ontology-t1-census/sections.tsv:880) |
+| 2 | E10 | 산식 불일치 | §2 말미는 `1:1 44건`이라고 주장하지만 표의 실제 분류는 일반 1:1 41건, 전문 합성 8건, step 행 7건, h3 분리 행 2건이다. 올바른 P0 분해는 `41+8+7+2=58`, 기계 절 분해는 `41+8+1+4=54`다. 기재된 44를 독립 항목으로 적용하면 P0 61건·기계 57건이 되어 양쪽 모두 3건씩 초과한다. | [E10-recon §2 요약 산식](/Users/hyun/Desktop/dddjango/workspace/design/2026-08-19-ontology-t1-census/E10-recon.md:83) |
+
+P0 전건 대조에서는 누락이 없었다: E03 37/37, E08 39/39, E10 58/58이다. 존재하지 않는 기계 절 키와 §1 접기 규약에 반하는 개별 대응도 발견되지 않았다. E03·E08에는 이중 귀속이 없다.
+
+## 검산 결과
+
+| 그룹 | P0 절 수 | 기계−P0 차이의 독립 분해 | 재계산 기계 절 수 | sections.tsv | 판정 |
+|---|---:|---|---:|---:|---|
+| E03 | 37 | SKILL 헤더가 기계에서 `(전문)+h1`로 분리 `+1` · 번호 절 h3 접기 `+105` · 출처 하위 h3 5개 접기 `+5` → 총 `+111` | `37+1+105+5=148` | 148 | 일치 |
+| E08 | 39 | P0 미계수 h1 네 절 `+4` · db-final h3 `+52` · api-final h3 `+48` · api-final h4 `+2` → 총 `+106` | `39+4+52+48+2=145` | 145 | 일치 |
+| E10 | 58 | 전문 합성 `0` · command step 7→1 `−6` · architect h3 분리 `+1` · review-api h3 분리 `+1` → 총 `−4` | `58−6+1+1=54` | 54 | 총계는 일치하지만 7→1 이중 귀속이며, recon의 `1:1 44건` 세부 산식은 오류 |
+
+Serena: skipped — `.serena/project.yml`이 없어 기본 읽기 도구로 검증.

@@ -1,0 +1,107 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://numchida.com/ns/djr#a/agent-acceptance-tester> a djr:Agent ;
+    skos:prefLabel "agent-acceptance-tester"@ko .
+
+<https://numchida.com/ns/djr#a/agent-coder> a djr:Agent ;
+    skos:prefLabel "agent-coder"@ko .
+
+<https://numchida.com/ns/djr#a/agent-design-architect> a djr:Agent ;
+    skos:prefLabel "agent-design-architect"@ko .
+
+<https://numchida.com/ns/djr#a/agent-design-review-api> a djr:Agent ;
+    skos:prefLabel "agent-design-review-api"@ko .
+
+<https://numchida.com/ns/djr#a/agent-design-review-db> a djr:Agent ;
+    skos:prefLabel "agent-design-review-db"@ko .
+
+<https://numchida.com/ns/djr#a/agent-design-review-ddd> a djr:Agent ;
+    skos:prefLabel "agent-design-review-ddd"@ko .
+
+<https://numchida.com/ns/djr#a/agent-discipline-reviewer> a djr:Agent ;
+    skos:prefLabel "agent-discipline-reviewer"@ko .
+
+<https://numchida.com/ns/djr#a/command-dddjango> a djr:Agent ;
+    skos:prefLabel "command-dddjango"@ko .
+
+<https://numchida.com/ns/djr#c/check-api-error-controller-contract.py> a djr:Checker ;
+    skos:prefLabel "check-api-error-controller-contract.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-app-container.py> a djr:Checker ;
+    skos:prefLabel "check-app-container.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-broker-contract.py> a djr:Checker ;
+    skos:prefLabel "check-broker-contract.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-business-vocabulary.py> a djr:Checker ;
+    skos:prefLabel "check-business-vocabulary.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-choices-literal-consumption.py> a djr:Checker ;
+    skos:prefLabel "check-choices-literal-consumption.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-common-container.py> a djr:Checker ;
+    skos:prefLabel "check-common-container.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-composition-root.py> a djr:Checker ;
+    skos:prefLabel "check-composition-root.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-context-isolation.py> a djr:Checker ;
+    skos:prefLabel "check-context-isolation.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-db-table.py> a djr:Checker ;
+    skos:prefLabel "check-db-table.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-domain-model.py> a djr:Checker ;
+    skos:prefLabel "check-domain-model.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-error-centralization.py> a djr:Checker ;
+    skos:prefLabel "check-error-centralization.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-event-publish.py> a djr:Checker ;
+    skos:prefLabel "check-event-publish.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-idempotency-scope-creep.py> a djr:Checker ;
+    skos:prefLabel "check-idempotency-scope-creep.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-layer-skeleton.py> a djr:Checker ;
+    skos:prefLabel "check-layer-skeleton.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-mechanism-ownership.py> a djr:Checker ;
+    skos:prefLabel "check-mechanism-ownership.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-missable-entrance.py> a djr:Checker ;
+    skos:prefLabel "check-missable-entrance.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-naming.py> a djr:Checker ;
+    skos:prefLabel "check-naming.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-ninja-boundary-middleware.py> a djr:Checker ;
+    skos:prefLabel "check-ninja-boundary-middleware.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-openapi-error-declaration.py> a djr:Checker ;
+    skos:prefLabel "check-openapi-error-declaration.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-port-adapter-pairing.py> a djr:Checker ;
+    skos:prefLabel "check-port-adapter-pairing.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-public-surface-annotation.py> a djr:Checker ;
+    skos:prefLabel "check-public-surface-annotation.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-response-schema-bypass.py> a djr:Checker ;
+    skos:prefLabel "check-response-schema-bypass.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-synthetic-infra-exc.py> a djr:Checker ;
+    skos:prefLabel "check-synthetic-infra-exc.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-test-config.py> a djr:Checker ;
+    skos:prefLabel "check-test-config.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-transaction-boundary.py> a djr:Checker ;
+    skos:prefLabel "check-transaction-boundary.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-transient-overmapping.py> a djr:Checker ;
+    skos:prefLabel "check-transient-overmapping.py"@ko .
+
+<https://numchida.com/ns/djr#c/check-usecase-dto-placement.py> a djr:Checker ;
+    skos:prefLabel "check-usecase-dto-placement.py"@ko .

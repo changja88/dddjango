@@ -1,0 +1,1253 @@
+{
+  "schema": "migrate-spec/1",
+  "doc_key": "implementation-django-ninja-final",
+  "path": "dddjango/skills/implementation-django-ninja/references/final.md",
+  "sections": [
+    {
+      "section_key": "s022-6.1",
+      "line_start": 471,
+      "line_end": 500,
+      "blocks": [
+        {
+          "lines": [
+            472,
+            474
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "상태 코드 의미의 architecture-api 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "문면 역할명·docstring 지목 없음 — 위임 기본값 표(implementation-*→discipline-reviewer) [adv 중재 정정 2026-08-19] L-F: 문면이 architecture-api 기준을 직접 지정 — 명시 문면이 기본값에 우선"
+            }
+          ]
+        },
+        {
+          "lines": [
+            475,
+            475
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            476,
+            476
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            477,
+            477
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            478,
+            478
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            479,
+            479
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            480,
+            480
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            481,
+            481
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            482,
+            482
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            483,
+            483
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            484,
+            484
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            485,
+            485
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            486,
+            486
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            487,
+            487
+          ],
+          "kind": "norm"
+        },
+        {
+          "lines": [
+            488,
+            493
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "retryable BC 503의 Retry-After 컨트롤러 설정",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller-owned error mapping docstring 집행+marker DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED 발행자(§16 매핑 표)"
+            },
+            {
+              "label": "503/409 선택의 명세 §5/G1 소유",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "문면이 명세 §5·G1(게이트 절차)을 지목 — 절차 소유 Coordinator(기본값 이탈 근거)"
+            },
+            {
+              "label": "raw 인프라 예외의 controller 임의 분류 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "P0 E07 커버 판정 — docstring «§6 집행»(전역 변환 금지 축) [adv 중재 정정 2026-08-19] L-F: catch 대상 provenance 검사는 controller-contract 소관(ninja-boundary는 MIDDLEWARE 한정)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            494,
+            495
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "406/415의 ninja 경계 내 처리·전역 미들웨어 가로채기 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-ninja-boundary-middleware.py"
+              ],
+              "basis": "동일 축 — docstring «§6 집행»"
+            }
+          ]
+        },
+        {
+          "lines": [
+            496,
+            500
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Django Ninja validation 응답의 framework 소유(기본 status·body)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "L-E 누락 채택 — 소유 경계 선언(«애매하면 포함», §6.2 framework 오류 경계와 재진술 의심 비고) [adv 중재 정정 2026-08-19]"
+            },
+            {
+              "label": "framework validation body의 BC 식별자 전역 변환 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-ninja-boundary-middleware.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "P0 E07 «전역 변환 금지 축» 커버 판정 [adv 중재 정정 2026-08-19] L-F: middleware 등록+custom handler 두 경로 병기·간접 등록은 reviewer",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ]
+            },
+            {
+              "label": "framework body의 안정 공개 계약 주장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "계약 표명은 정적 검사 밖 — 위임 기본값"
+            },
+            {
+              "label": "별도 공개 계약의 G1 선승인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "문면이 G1 절차를 지목"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section_key": "s023-6.2",
+      "line_start": 501,
+      "line_end": 826,
+      "blocks": [
+        {
+          "lines": [
+            502,
+            506
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "오류 프로필 선택의 architecture-api §5.4 위임",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "프로필 선택은 API 계약 설계 판정"
+            },
+            {
+              "label": "배포 범위 계약 보존·신규 범위 기본 dddjango-code-json",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            507,
+            514
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "플러그인 공통 body property 부재(기본값 미규정)",
+              "class": "Prohibition",
+              "enforcedBy": [],
+              "basis": "schema checker 역할명 축(§16 매핑 표) [adv 중재 정정 2026-08-19] L-F: 검사기는 자기 입력(inventory) 전제 — 순환 배선 해소, 기본값 비채택 판정은 reviewer",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ]
+            },
+            {
+              "label": "기존 프로젝트의 관찰 shape 기준선 보존",
+              "class": "Obligation",
+              "enforcedBy": [],
+              "basis": "동상 — canonical shape 검증 docstring [adv 중재 정정 2026-08-19] L-F: preserve-established에서 schema semantics 미적용(docstring) — 계약 보존 판정은 API 설계 리뷰",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ]
+            },
+            {
+              "label": "신규 scope shape의 G1 slot 6 선제안·명시 승인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "G1 절차 지목"
+            },
+            {
+              "label": "기준선 property 변경은 별도 contract 변경",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "승인 절차 소유"
+            },
+            {
+              "label": "명시 승인 전 코드 선변경 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "예시 필드명들의 plugin 기본값 취급 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값 — 문면 표명 판정"
+            }
+          ]
+        },
+        {
+          "lines": [
+            515,
+            533
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인 shape의 동적 요소 단순화·alias 우회 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "schema checker — 동적 요소 보존 검증"
+            },
+            {
+              "label": "임의 Python 의미의 DYNAMIC_ERROR_SHAPE_PROOF_REQUIRED 상시 발행",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "marker 발행자 실측(§16 매핑 표) [adv 중재 정정 2026-08-19] L-F+재실측: marker를 양쪽이 공동 발행(error-centralization 3곳·controller-contract 4곳) — 병기"
+            },
+            {
+              "label": "canonical module 직접 import-time mutation의 구조 위반 차단",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "docstring — 구조 위반 차단"
+            },
+            {
+              "label": "타 checker 진단으로 marker 제거 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "marker 해소 절차는 Coordinator 소유"
+            },
+            {
+              "label": "dependency pin 검토는 일회성 분석(영구 테스트 자동 생성 금지)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            },
+            {
+              "label": "mounted wire 후보의 add/update 시 §8–§9 recipe 검증",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값 — 검증 절차 준수 [adv 중재 정정 2026-08-19] L-E: add/update 조건부 한정"
+            },
+            {
+              "label": "RESOLVED_DYNAMIC_ERROR_SHAPE_ANALYSIS 해소 조건(양 리뷰어 확인+Coordinator)",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango",
+                "agent-design-review-api",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "문면이 Coordinator 해소 절차 지목 [adv 중재 정정 2026-08-19] L-E: 조건부 한정 / L-F: 문면의 3주체 절차(양 리뷰어 확인+Coordinator)"
+            },
+            {
+              "label": "해소가 별도 승인·타 blocker를 대신하지 않음",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "schema 소유 경계 밖 model config mutation의 보존 경로 불인정",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "owning controller checker 차단 문면"
+            },
+            {
+              "label": "선택 module 직접 mutation·직접 import한 module-level callable 경로 차단",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "문면이 owning controller checker 지목 [adv 중재 정정 2026-08-19] L-E: «직접 import한» 한정어 복원(차단 범위 과대 표시 교정)"
+            },
+            {
+              "label": "AST 증명 범위 밖 경로의 checker 통과 면제 금지(리뷰어 직접 읽기)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api",
+                "agent-discipline-reviewer"
+              ],
+              "basis": "문면이 API/discipline reviewer 직독 지목"
+            }
+          ]
+        },
+        {
+          "lines": [
+            534,
+            537
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공통 오류 모듈 단일 경로(framework/ninja/framework_error_schema.py)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "canonical module 경로 검증 docstring"
+            },
+            {
+              "label": "framework/ninja/ 공유 폴더의 타 module 공존 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            538,
+            543
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            544,
+            553
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            554,
+            559
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공통 FrameworkErrorSchema의 승인 core shape 한정 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "schema checker"
+            },
+            {
+              "label": "공통 파일에 concrete·catalog 추가·shape 밖 발명 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "다른 계약 scope의 G1 개별 승인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "G1 절차"
+            },
+            {
+              "label": "기존 공용 경로의 승인 동등 계약 우선 재사용",
+              "class": "Override",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값 [adv 중재 정정 2026-08-19] L-E: 우선 규칙"
+            }
+          ]
+        },
+        {
+          "lines": [
+            560,
+            562
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC 오류 언어의 bc_error_schema.py 단일 파일 집약",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "BC schema 구성 검증"
+            }
+          ]
+        },
+        {
+          "lines": [
+            563,
+            563
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC 오류 파일의 <Bc>ErrorCode(StrEnum) 정확히 하나",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "L-G 채택 — b8 «다음을 함께 둔다»가 의무 동사 공급·독립 검사 가능 항목(b12 유일성 채번과 일관) [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            564,
+            564
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "공통 상속·식별자 좁힘 <Bc>ErrorSchema 정확히 하나",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "L-G 채택 — b8 «다음을 함께 둔다»가 의무 동사 공급·독립 검사 가능 항목(b12 유일성 채번과 일관) [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            565,
+            565
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "사건별 concrete ErrorSchema subclass의 같은 파일 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "L-G 채택 — b8 «다음을 함께 둔다»가 의무 동사 공급·독립 검사 가능 항목(b12 유일성 채번과 일관) [adv 중재 정정 2026-08-19]"
+            }
+          ]
+        },
+        {
+          "lines": [
+            566,
+            567
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC 공개 식별자 문자열의 프로젝트 전역 유일성",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "docstring wire-code uniqueness 검증"
+            }
+          ]
+        },
+        {
+          "lines": [
+            568,
+            592
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            593,
+            603
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "BC base 식별자 field의 공통 metadata 보존·Enum 좁힘",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "schema checker"
+            },
+            {
+              "label": "좁힌 식별자 field의 default 상실 canon 예외(2026-08-15)",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "날짜 스탬프 canon 예외 — 동일 검증 축"
+            },
+            {
+              "label": "문자열 공통 default의 동일 wire value Enum member 표현",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "concrete 오류의 무인자 생성(전 required default)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "concrete subclass의 신규 요소·drift 추가 금지·재선언 metadata 반복",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "타 profile 필드 혼합 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "오류별 파일 분리·validation 전용 제2 schema 파일 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            604,
+            611
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "승인된 단일 operation 사건의 BC base 직접 채움 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            },
+            {
+              "label": "BC base 직접 채움의 허용 범위 한정(concrete 인자 생성 우회 아님)",
+              "class": "Exception",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "L-E 누락 채택 — 허용 범위 한정 문장(«애매하면 포함») [adv 중재 정정 2026-08-19]"
+            },
+            {
+              "label": "직접 채움의 keyword 명시 범위(required+승인 optional만)",
+              "class": "Obligation",
+              "delegatedTo": [],
+              "basis": "기본값 [adv 중재 정정 2026-08-19] L-F: constructor keyword 집합·required 포함관계를 검사기가 직접 검증",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ]
+            },
+            {
+              "label": "다음 문장 두 인자 Status 반환",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller 계약 검증"
+            },
+            {
+              "label": "unpacking·builder·factory·mapping table 우회 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            612,
+            615
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "known failure의 식별자·status 선택은 BC controller 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller checker docstring"
+            },
+            {
+              "label": "짧은 반복 mapping의 지역 중복 인정·10번 slot 승인 한 path",
+              "class": "Permission",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "slot 승인 절차 지목 [adv 중재 정정 2026-08-19] L-E: 인정·허용 규범"
+            }
+          ]
+        },
+        {
+          "lines": [
+            616,
+            620
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "exception path — try에 최외곽 application call 한 문장만",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller 계약"
+            },
+            {
+              "label": "구체 known exception만 catch·직접 두 인자 Status 반환",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "status 표현의 허용 형태(literal·상수·승인 body field)",
+              "class": "Permission",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "성공 변환의 try 뒤 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            621,
+            625
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "Result/None path — call 정확히 1회·try 없는 failure branch 직후 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "동일 구성 직접 수행·성공 변환 branch 뒤 배치",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "예외·catch·helper·mapping table 꾸며내기 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            626,
+            627
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            628,
+            651
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            652,
+            656
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "try 안 준비·분기·로그·성공 변환 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "광역 exception·자기 raise 즉시 catch 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "공개 의미별 catch 분리·수렴 시에만 tuple catch",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상"
+            }
+          ]
+        },
+        {
+          "lines": [
+            657,
+            661
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "application DTO import·composition_root 조립",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-composition-root.py",
+                "check-usecase-dto-placement.py"
+              ],
+              "basis": "docstring §2.2 인용(P0 E07) — 조립 경로 검증 [adv 중재 정정 2026-08-19] L-F: DTO application 배치는 usecase-dto-placement 소관 병기"
+            },
+            {
+              "label": "call 뒤 branch의 직접 ErrorSchema 구성(helper 흉내 금지)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller 계약"
+            }
+          ]
+        },
+        {
+          "lines": [
+            662,
+            715
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            716,
+            719
+          ],
+          "kind": "prose"
+        },
+        {
+          "lines": [
+            720,
+            724
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "native 성공 Result/None의 직접 반환 허용",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            },
+            {
+              "label": "operation 의미는 12-slot이 결정(실패 은닉 규칙 아님)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "12-slot 절차 지목"
+            }
+          ]
+        },
+        {
+          "lines": [
+            725,
+            732
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            733,
+            737
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "오류 헤더의 controller 소유·Status 생성자 header 전달 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller 계약"
+            },
+            {
+              "label": "승인된 retryable 503의 주입 HttpResponse header 설정 절차",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상(§6.1 W2와 재진술 관계 의심 — 검수표)"
+            }
+          ]
+        },
+        {
+          "lines": [
+            738,
+            766
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            767,
+            775
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "오류 응답 helper·handler·builder 생성·호출 금지(추출 금지)",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "presentation helper 차단 축"
+            },
+            {
+              "label": "승인 common Schema 자체 hook의 exact shape 보존",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-error-centralization.py"
+              ],
+              "basis": "schema checker"
+            },
+            {
+              "label": "raw 응답·dict·tuple 오류·model_dump 직접 호출 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller 계약"
+            },
+            {
+              "label": "controller의 exception→concrete mapping·Status 반환 직접 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "L-E 누락 채택 — «직접 소유해야» 의무(«애매하면 포함», b16 소유 규범과 재진술 의심 비고) [adv 중재 정정 2026-08-19]"
+            },
+            {
+              "label": "여러 controller의 짧은 반복 허용(명시성)",
+              "class": "Permission",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            776,
+            782
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "framework 오류(401·403·404·422·429·HttpError·500) framework 소유",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-business-vocabulary.py",
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "경계 축 [adv 중재 정정 2026-08-19] L-F: #119 framework-owned 열거(business-vocabulary)+provenance 제한(controller-contract)·간접 소유는 reviewer",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ]
+            },
+            {
+              "label": "framework 오류의 BC 전환·전역 handler 가로채기 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "동상 [adv 중재 정정 2026-08-19] L-F: exception_handler·catch-all 금지는 controller-contract 구현 실재(ninja-boundary엔 해당 코드 없음)"
+            },
+            {
+              "label": "framework body의 wire contract 주장 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "표명 판정 — 기본값(§6.1 W7 재진술 의심 — 검수표)"
+            },
+            {
+              "label": "framework status의 BC response= 광고 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "OpenAPI checker"
+            }
+          ]
+        },
+        {
+          "lines": [
+            783,
+            786
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "authentication adapter 성공 반환 = identity/principal",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            },
+            {
+              "label": "인증 실패 = None 반환 또는 AuthenticationError raise",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            },
+            {
+              "label": "request.auth·인증 결과의 ErrorSchema 사용 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            }
+          ]
+        },
+        {
+          "lines": [
+            787,
+            801
+          ],
+          "kind": "code"
+        },
+        {
+          "lines": [
+            802,
+            808
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "raw 인프라 오류의 문자열·SQLSTATE 분류 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "경계 축(§6.1 W4 재진술 의심 — 검수표) [adv 중재 정정 2026-08-19] L-F: raw 예외 catch는 검사기·SQLSTATE 간접 recognizer는 reviewer",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ]
+            },
+            {
+              "label": "기본 경로 = framework 미식별 500",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            },
+            {
+              "label": "G1 승인 시에만 infra/ACL 정규화 후 구체 exception 직접 흐름",
+              "class": "Exception",
+              "delegatedTo": [
+                "command-dddjango"
+              ],
+              "basis": "G1 승인 조건 지목"
+            },
+            {
+              "label": "인프라 예외 합성·타 BC exception 통과 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값 [adv 중재 정정 2026-08-19] L-F: 합성 금지(synthetic-infra-exc)+타 BC 예외 직접 import(context-isolation) 병기·간접은 reviewer",
+              "enforcedBy": [
+                "check-synthetic-infra-exc.py",
+                "check-context-isolation.py"
+              ]
+            }
+          ]
+        },
+        {
+          "lines": [
+            809,
+            815
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "직접 반환 BC 오류 status의 response= BC base 매핑",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "OpenAPI checker docstring"
+            },
+            {
+              "label": "OpenAPI status mapping에 BC base 사용(concrete는 runtime 고정)",
+              "class": "Obligation",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "미반환 framework status의 BC base 선언 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "openapi_extra 보충·사후 변형 금지",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-openapi-error-declaration.py"
+              ],
+              "basis": "docstring — 수동 후처리 차단"
+            },
+            {
+              "label": "add/update 공개 후보의 mounted 생성 문서 확인",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값 — 검증 절차"
+            }
+          ]
+        },
+        {
+          "lines": [
+            816,
+            819
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "선언 JSON 성공의 Ninja validation/serialization 경유",
+              "class": "Obligation",
+              "delegatedTo": [],
+              "basis": "기본값 [adv 중재 정정 2026-08-19] L-F: 선언 schema 우회 raw 200-203 차단이 검사기 계약 그 자체",
+              "enforcedBy": [
+                "check-response-schema-bypass.py"
+              ]
+            },
+            {
+              "label": "framework-native 성공 carveout 4종 허용",
+              "class": "Permission",
+              "delegatedTo": [],
+              "basis": "기본값 [adv 중재 정정 2026-08-19] L-F: carveout 4종이 검사기에 구현돼 있음",
+              "enforcedBy": [
+                "check-response-schema-bypass.py"
+              ]
+            },
+            {
+              "label": "carveout의 오류 helper·raw 오류 응답 불허",
+              "class": "Prohibition",
+              "enforcedBy": [
+                "check-api-error-controller-contract.py"
+              ],
+              "basis": "controller 계약"
+            }
+          ]
+        },
+        {
+          "lines": [
+            820,
+            826
+          ],
+          "kind": "norm",
+          "norms": [
+            {
+              "label": "소비자 의존 기존 wire의 관찰 계약 그대로 보존",
+              "class": "Exception",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "wire 보존 판정은 API 계약 관점 [adv 중재 정정 2026-08-19] L-E: 소비자 의존 조건부 carveout(원문 자칭)"
+            },
+            {
+              "label": "보존 정당 근거 2종 한정(밖의 의존·비가역)",
+              "class": "Obligation",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "brownfield·코드 자리의 보존 근거 불인정(자리는 리팩터링 대상)",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-design-review-api"
+              ],
+              "basis": "동상"
+            },
+            {
+              "label": "carveout의 신규 helper 레시피·profile 혼합 제시 금지",
+              "class": "Prohibition",
+              "delegatedTo": [
+                "agent-discipline-reviewer"
+              ],
+              "basis": "기본값"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

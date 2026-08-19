@@ -7,10 +7,12 @@
 > - 이 로그 = 운영 기록(무엇을 언제 했고, 다음에 무엇을 하는지).
 > - 조감도 아티팩트 = 상황판(사용자 확인 사항 + 진행도만). URL: https://claude.ai/code/artifact/34737b9c-4919-4378-9a99-ba90de4e22f3 (2026-08-18 재발행 — 구 아티팩트 소실로 URL 교체. 원본: `workspace/design/ontology-adoption-map.html`)
 
-## 현재 상태 (2026-08-18)
+## 현재 상태 (2026-08-19)
 
-- **블루프린트 v3.2 동결 — 사용자 심의(⑤) 통과.** 준비 사이클 완주: 보강 조사 Q1~Q7(출처 310) → v3 → 적대 리뷰 69건 전건 반영(v3.1) → 검증 패스 2종 반영(v3.2) → **동결 선언(2026-08-18)** → 문서 세트 커밋(8b212d9).
-- **T0 세부 실행 계획 작성 완료(2026-08-18)** — `2026-08-18-ontology-t0-plan.md`. **사용자 검토 대기**: 재량 결정 D1~D4(release [2/7] 치환·pre-commit 범위·B트랙 대표 검사기 2종·파이썬 환경) + 검수 절차(동결 기준 4항+계획 추가 2항). 승인 시 작업 묶음 ①(A1~A4 기반·어휘)부터 착수.
+- **T1 완결(게이트 1·2 전부 통과) — T2 세부 계획 수립 중.** 다음 사용자 확인 = T2 계획 검토.
+- 완료 궤적: v3.2 동결(8b212d9) → **T0 완료**(커밋 07c2be3+91fae74 — 스택+폐루프 시제품·verify 최초 green) → **T1 계획 v1.1**(적대 리뷰 42건·D6~D8 승인·개정 2) → **T1-0** 발주 풀 O-1~O-7 → **T1-1** 센서스 926절(적대 검증: 기계 재검증+codex 독립 4레인 — 확정치 규범 3,235·REF 539) → **게이트 1 통과**(사용자 «동결 승인» 2026-08-19) → **T1-3~T1-6 완료**: 원장 926행 가동·파일럿 4절 이관 **117 Work·73블록**(R-0001~R-0117·마커 제거 후 byte 잔차 0 전건)·렌더/동기/미러(inv1 절 스팬 절제) 11/11·SPARQL 조인 5종 성립·어휘 v1 봉인·표류 2건 처분·T3 산출(13배치)·롤백 리허설 왕복(authoring §17) — `make verify` 전체 green(verify-ontology **[10/10]**+base 12종).
+- **미커밋**(전부 작업 트리 — 커밋은 게이트 2 통과 후 사용자 승인 시, «동기 가동+소유 전환+미러 처분 한 커밋» 규율): ontology/(rules 2·wiring 3·ISSUED·LEDGER)·코퍼스 마커 4행(claude 2+codex 2)·미러 갱신·도구 신설 7종+개작 4종·authoring §13~§17·계획/센서스/검수 문서 일체.
+- 게이트 2 이후: T1 커밋 → **T2 세부 계획**(폐루프 완성+3암 A/B — 측정 렌즈 미니 적대 리뷰+18실런 비용 산정 필수, v3.2 §6).
 
 ## 방향 전환 기록 (2026-08-18 — 사용자 조향)
 
@@ -40,13 +42,17 @@
 | 2026-08-19 | T0 계획 적대 리뷰 | 사용자 발의(«뒤엎기 어려우니 적대 검증·표준 준수 검토») — 3렌즈(표준 정합·잠금 비용·실물/동결 정합) 32건(blocker 1·major 15·minor 16) **전건 반영 → 계획 v1.1**. blocker: B3 주입 재료가 동결 E8 한정 위반 → 검사기 산출 발췌로 교정 | `-t0-adversarial/` L1~L3+MEDIATION |
 | 2026-08-19 | T0 계획 검토 | **통과** — D1~D5 전건 승인(사용자) | `-t0-plan.md` §6 |
 | 2026-08-19 | **T0 검수** | **통과** — 기계 기준 6항 green + 계약 실물은 대리 검수(신선한 눈 감사 14건 → 기계 수리 11건 반영·재정 4건 디시전 시트) → 사용자 «전부 승인»: ①블록↔Work 3노드형(블루프린트 **개정 1**) ②규범 소유=검사기∨위임 에이전트 ③alias·RevisionKind 존치 ④표류 6건 EXPECTED 일괄 갱신(유령값 실증·372→371행). **`make verify` 전체 green(온톨로지+기존 세트 — 최초)** | `-t0-adversarial/V-*.md`·블루프린트 §12 개정 1 |
-| — | T0 커밋 | **대기** — 사용자 커밋 승인 | — |
+| 2026-08-19 | T0 커밋 | **완료**(사용자 승인) — `07c2be3`(표류 교정 분리 커밋) + `91fae74`(T0 본체 — pre-commit 훅 실전 첫 가동·통과). push 미실행 | git log |
+| 2026-08-19 | T1 계획 적대 리뷰 | 3렌즈(동결 정합·렌더/기술 함정·실물 정합) **42건**(blocker 7·major 16·minor 19) 전건 중재 반영 → **v1.1**. 핵심: 게이트 ④ 교차 참조 위양성(실험 실증 — rules 전량 병합으로 처분)·블록 경계/공백 소유 규약 신설·발주 풀 사전 등록 복원(§6 하중 파라미터)·Expression 공정 단계 복원·센서스 «606 재현»→P0 대사 표 재정의·미러 실개작(절 스팬 절제) | `-t1-adversarial/` L1~L3+MEDIATION |
+| 2026-08-19 | T1 계획 검토 | **통과** — D6·D7·D8 전건 승인(사용자). D6 채택 = 블루프린트 **개정 2**(§3 트리에 LEDGER.tsv) 승인 겸함 — §12 기록 완료 | `-t1-plan.md` §5·블루프린트 §12 |
+| 2026-08-19 | **게이트 1: 센서스 동결** | **통과 — 사용자 «동결 승인»(2026-08-19, 체크리스트 절 처분안 포함)**. 상정 경위: T1-0 발주 풀 등록(15:02·D7 확정 15:05 후행 — 항목 11 증빙)+T1-1 완료: 30문서 926절(무손실 분할·17,398행 재현)·P0 대사 10그룹 전건 «미설명 잔차 0»·REF 539(T3 분모)/NAR 387·위생 전면 청정. **적대 검증(사용자 발의 — codex 독립 4레인+기계 재검증)**: L-A 유형 분류 발견 0(42절 표본)·L-B 대사 누락 0(산식 오기 1 정정)·L-C SAME→DIFF 4+DIFF→SAME 3(치환 누락형 잠재 표류 5건 발굴 — 전수 grep 확증)·L-D 계수 정정 2(계수 단위=문장) → **확정치: 규범 3,235(P0 +18 전건 설명)·codex SAME 912/DIFF 14/ABSENT 0**(REF 539 불변). **상정 사항 1건: 체크박스 운반체 코퍼스 전체 0 실증 → D7 «체크리스트 절 1» 불성립·표 운반체로 다양성 충족 처분안** | `-t1-census.md` §5+`-t1-census/`+`-t1-census-adversarial/` |
+| 2026-08-19 | **게이트 2: T1 검수(12항)** | **통과 — 사용자 «승인»(2026-08-19)**. 상정 경위: T1-3~T1-6 완료 후 사용자 발의 적대 검증(codex 4레인: L-E Work 전수·L-F wiring 전수·L-G 분해 경계·L-H 도구 코드): **발견 58건 → 채택 52·부분 채택 3·기각 1·등재 2** 전건 중재·반영. 확정: 파일럿 4절 **125 Work·73블록**(클린 재채번 R-0001~R-0125 — 유형 오판 9 교정·Override 첫 실사용·누락 8 추가·배선 21 교정으로 검사기 16종 실사용·도구 blocker 18건 수정)·마커 제거 후 byte 잔차 0 전건(상시 검사 승격)·SPARQL 조인 성립·미러 11/11·롤백 리허설·어휘 봉인·T3 산출(13배치)·verify **[10/10]**. 12항 증빙 = `-t1-review.md`(+§적대 검증) | `-t1-review.md`+`-t1-review-adversarial/` |
 
 ## 다음 작업 큐
 
-1. ~~준비 사이클 전체~~ ✓ · ~~T0 계획(v1.1)·D1~D5 승인~~ ✓ · ~~T0 구현(묶음 ①~④)~~ ✓ · ~~T0 검수~~ ✓(대리 검수+디시전 시트 전건 승인 — 개정 1·소유 확장·EXPECTED 갱신 반영, **make verify 전체 green**)
-2. **T0 커밋 — 사용자 승인 대기**(전 산출물 미커밋: ontology/·workspace/tools 신설 9종·Makefile·findings.py+개작 2종·codex 동기·픽스처·감사 기록·블루프린트 개정 1)
-3. 커밋 후 → **T1 세부 계획** 수립(절 유형 센서스 606절+codex 대응 병행·파일럿 이관(밀집·혼합 대표 포함)·렌더 투영+동기 검증기·절 단위 원장·어휘 v1 안정화 선언·롤백 리허설 — v3.2 §8 T1) → 검토 → T1 착수
+1. ~~T0 전체~~ ✓(커밋 `07c2be3`+`91fae74`) · ~~T1 계획 v1.1(리뷰 42건 반영)·D6~D8 승인·개정 2~~ ✓ · ~~T1-0 발주 풀(O-1~O-7·층화 3층·D7 후행 확정)~~ ✓ · ~~T1-1 센서스(926절·P0 대사·분류·codex 대응)~~ ✓ · ~~T1-2 대부분(authoring §13~§16·게이트 ④ rules 병합+② fragment 검사+픽스처·셰이프 개정 text sh:or/parentSection·기대표 20→22 갱신·issued_check 신설·verify-ontology 7/7 green)~~ ✓
+2. ~~게이트 1 통과(사용자 «동결 승인» — 적대 검증(codex 4레인) 경유)~~ ✓ · ~~원장 926행+ledger/issued check~~ ✓ · ~~T1-3 파일럿 이관 117 Work~~ ✓ · ~~T1-4 렌더러·동기·훅·미러 절제~~ ✓ · ~~T1-6 구조 검증·어휘 봉인·표류 처분·T3 산출·롤백 리허설~~ ✓ → ~~게이트 2 통과(사용자 «승인»)~~ ✓ → **T1 산출물 커밋(승인 흐름 — 표류 처분 분리+본체 한 커밋+기록 마감)** → **T2 세부 계획 수립**(폐루프 완성+3암 A/B — 측정 렌즈 미니 적대 리뷰+18실런 비용 산정 필수·계획 검토가 다음 사용자 게이트)
+3. 미커밋(다음 자연 커밋에 동반 — 사용자 승인 시): t1-plan·t1-adversarial·블루프린트 개정 1/2·adoption-log·상황판 + **T1 실행분**(T1-order-pool.md·t1-census.md+`-t1-census/`·ontology_census.py·ontology_issued_check.py·authoring §13~§16·ontology_gate.py 개작·셰이프/vocab 개정·fragment-syntax 픽스처·target-counts.json·Makefile [7/7])
 4. 이후 T1(절 유형 센서스+파일럿 이관) — T2 세부 계획에는 측정 렌즈 미니 적대 리뷰+18실런 비용 산정 필수(v3.2 §6)
 
 별도 트랙(대기): 표류 실증 2건 수정(codex fat-model·#A~#B — 별도 발주), DR-68 릴리스 후속 2건, push 미실행.
@@ -62,10 +68,20 @@
 | `2026-08-18-ontology-blueprint-v3.md` | **동결 정본 (v3.2, 2026-08-18 동결)** — E1~E8·블록 모델·폐루프·3암 A/B·T0~T5·도구 처분표 |
 | `2026-08-18-ontology-v3-adversarial/`(L1~L6 + MEDIATION.md) | ④′ v3 적대 리뷰 69건 + 중재·검증 기록 |
 | `2026-08-18-ontology-adversarial/` | ④ v2 적대 리뷰 기록 (참고용) |
-| `2026-08-18-ontology-t0-plan.md` | T0 세부 실행 계획(비동결·Claude 관리) — A1~A9·B1~B3·검수 절차·재량 결정 D1~D4 |
+| `2026-08-18-ontology-t0-plan.md` + `-t0-adversarial/` | T0 세부 실행 계획(v1.1)+3렌즈 리뷰·대리 검수 기록 — T0는 커밋 07c2be3+91fae74로 완결 |
+| `2026-08-19-ontology-t1-plan.md` + `-t1-adversarial/` | **T1 실행 명세 정본(v1.1)** + 3렌즈 리뷰 42건·중재 |
+| `2026-08-19-ontology-t1-census.md` + `-t1-census/` | T1-1 센서스 리포트(게이트 1 **동결본** — 926절·분류 TSV·대사 노트 10벌·manifest) |
+| `2026-08-19-ontology-t1-census-adversarial/` | 센서스 적대 검증(codex 4레인 L-A~L-D+PROMPT+MEDIATION) |
+| `2026-08-19-ontology-t1-migrate/`(spec-*.json) | 이관 명세(migrate-spec/1 — 블록 경계·Work·4원 배선 근거 전건) |
+| `2026-08-19-ontology-t1-review.md` | **게이트 2 검수 패키지**(12항 증빙+해상도 대조+T3 산출) |
+| `workspace/eval/ab/T1-order-pool.md` | 발주 후보 풀(§6 하중 파라미터 — O-1~O-7·D7 기록) |
+| `workspace/tools/ontology-authoring.md` | 저작 규약 §1~§17(§13 스팬 소유·§14 IRI·§15 공정·§16 wiring·§17 롤백) |
 | `2026-08-18-ontology-adoption-log.md` | 이 파일 — 진행 기록·큐·색인 |
 
 ## 세부 기록
+
+- 2026-08-19: **T1 계획 3렌즈 적대 리뷰 42건 전건 반영 → v1.1.** blocker 7의 공통 뿌리 = 판정 기준의 전제 규약(등가·센서스·배선·게이트 병합)을 미작성 문서로 미룸 → 전부 계획 문면으로 승격. 주요 처분: ⓐ 게이트 ④(+훅) 데이터 그래프에 rules/ 전량 병합(L3-1 실험 실증 — T0 개작 1) ⓑ 블록 스팬 소유 규약(리터럴=verbatim 스팬·구분자=선행 블록 귀속·렌더=단순 연결 — 파일럿 두 원문의 정반대 개행 관례 실측) ⓒ 마커 문법·등가=마커 제거 후 byte(잔차 0, 등급은 진단 전용) ⓓ T1-0 발주 풀 사전 등록 신설(§6 비가역 위반 방지) ⓔ 공정에 Expression 채번 복원(R-0001 시작·경로 필드 확정) ⓕ wiring=4원 종합 판단+역할명→파일명 매핑+위임 기본값 표+registry.ttl ⓖ 센서스 자기 검증을 P0 대사 표로 재정의(문서별 접기 규약이 실측 사실) ⓗ 미러 inv1 절 스팬 절제 실개작(동결 §9 준수 — «최소 개작» 정정) ⓘ 원장=606행 전 절(기준선 raw 해시)+재기준선 절차 ⓙ 훅 md 트리거 확장(stdlib 한정) ⓚ IRI 인코딩 폐쇄 집합+게이트 ② 문법 검사(rdflib 무저항 통과 실측). T0 스택 개작 3건(게이트 ④·훅·기대표 절차)이 T1 산출물로 등재됨.
+- 2026-08-19: **T1 세부 계획 v1 초안 작성**(`2026-08-19-ontology-t1-plan.md`) — 실측 선행: 코퍼스 606절·3,217문장(P0 재분류 방식 — 무에서 시작 아님), 밀집 대표 실측(ninja §6.2 = 85문장·검사기 3종 문면 배선 실재 / tdd §5.5 = 57문장·백스톱 공백 → D7 권고 = ninja §6.2+ddd 핵심 절 2), 표류 2건 실체(codex fat-model 잔존·#A~#B 문장 누락), v2 이월 자산(층① 정규화·잔차 4등급). 구성: T1-1 센서스(도구+병렬 분류+P0 대조 자기 검증)→게이트 1(동결) · T1-2 저작 규약 확장(절/블록 IRI 인코딩·이관 공정 7단 절차서) · T1-3 파일럿 이관(+해상도 대조 저작) · T1-4 렌더러+동기 검증기(층① 재사용·SyncDebt 경고 강등·골든 2건·미러 스코프 동일 커밋) · T1-5 원장(부식 방지 exit 2) · T1-6 검증 묶음(SPARQL 5종·어휘 안정화·표류 처분·T3 산출·롤백 리허설) → 게이트 2(검수 10항). 재량 결정 D6(원장 배치)·D7(파일럿 범위)·D8(센서스 병렬). **미니 적대 리뷰 3렌즈(동결 정합·렌더/기술 함정·실물 정합) 기동.**
 
 - 2026-08-19: **재량 결정 전건 승인**(사용자) — D1(verify 치환)·D2(훅 경량+fail-closed)·D3(분할)·D5(djr: 기저 URI = `https://numchida.com/ns/djr#`) 권고안대로, D4는 기결정(최신 파이썬). **T0 착수.**
 - 2026-08-19: **T0 묶음 ① 완료** — A1: python 3.14.7(brew python@3.14)+`.venv`+`ontology-requirements.txt`(전량 핀)+`make ontology-env`+`ontology_env_smoke.py`(RDFC 벡터 3종·pySHACL 왕복 내장) 전부 green. **RDFC-1.0 실사: rdfcanon 1.0.0 채택** — W3C 공식 스위트 61/64(실패 3건은 rdflib 파스 단계 타입 리터럴 정규화 = 사슬 수준 특성, 자체 구현도 동일·채택 판단 중립. SHA-384 1건 별도 통과). rdflib 7.6.0 위 구동 검증(rdfcanon의 7.5.0 정확 핀은 `--no-deps`로 우회, 근거 기록). A2: `ontology/` 골격+`workspace/tools/ontology-authoring.md`(금지 목록·직렬화 규칙 명세·재직렬화 전용 커밋·ISSUED 행 형식·어휘 개정 절차·RDFC 결정·ODRL 봉인/역할 표·훅 루트·A3 열린 결정 3건). A4: `prefixes.ttl`(vann 9접두·djr=D5 값)+빈 `ISSUED`. A3 초안: `vocab/djr.ttl`(클래스 21·프로퍼티 39·개체 12, 149 트리플, 저-공리 준수·파스/NFC/무주석 검사 통과).
@@ -77,6 +93,10 @@
 - 2026-08-18: T0 계획 수립 전 점검(사용자 요청) — 조사 2회(R1~R7 거버넌스 축→v2 / Q1~Q7 표준 스택·품질 축→v3)의 구분, 폐루프·소비 표면(렌더)·산출물 5종·이관 라운드트립·검증 두 축(내용=정답지 있음/배선=신규 저작)을 확인. 사용자가 v3.2 수록 여부 검증 요청 → 동결본 대조 표로 확인(수치는 조사 문서 소재·Turtle 예시 프로퍼티명은 가칭임을 명시).
 - 2026-08-18: **T0 세부 실행 계획 작성**(`-t0-plan.md`) — 실물 실측 선행: release [2/7]에 검증 세트 12종+33쌍 byte-diff 기존재(verify 편승 대상), git 훅 부재, python 3.9.6·rdflib/pySHACL 미설치, rule-owner-map=`workspace/plan/2026-08-11-rule-owner-map.md`, 규약 밖 11종 중 최소형=check-common-container(117행). A트랙 9항(A1~A9)·B트랙 3항(B1~B3)·작업 묶음 4개·검수 패키지 6항·재량 결정 D1~D4로 전개.
 - 2026-08-18: 심의 지원 — 사용자 요청으로 조감도에 «완성형 — 전체 플로우»(저작→게이트→그래프 정본→렌더/규칙 팩→에이전트→검사기→위반 그래프→재생성·개정 루프)와 «구성요소별 청사진»(8개 구성요소: 코퍼스·에이전트·Coordinator·검사기·도구·codex 쌍둥이·모노레포 명세·픽스처 — 각 지금→완성형→전환 Stage→v3.2 근거 절) 섹션 추가. RDF(데이터 모델·정본)/RDFS(그 안의 어휘 층) 층 관계 설명 제공.
+- 2026-08-19: **센서스 적대 검증**(사용자 발의 «코덱스를 써도 좋을 것 같아») — 기계 재검증(byte diff 11쌍·키 조인 926·신호어 역검사) 전부 정합 + codex CLI 0.148.0 독립 4레인(`-t1-census-adversarial/` — PROMPT 4벌·L-A~L-D·MEDIATION): L-A 유형 분류 발견 0(42절 반증 실패 — REF 539 신뢰 확보)·L-B 대사 누락 0(산식 오기 1 정정)·L-C SAME→DIFF 4+DIFF→SAME 3(**치환 누락형 잠재 표류 5건** — codex 문서가 개명 스킬을 구명으로 지시, 전수 grep 확증)·L-D 계수 단위=문장 정정 2(E09 +6·E10 +22). 중재=전건 원문 실측 후 채택/기각. 확정치 규범 3,235·codex SAME 912/DIFF 14. TSV 15행·recon 2벌 `[adv 중재 정정]` 반영.
+- 2026-08-19: **T1-3~T1-6 실행**(게이트 1 «동결 승인» 후 자율 구간). 원장 926행(`ontology/LEDGER.tsv` — 센서스 sha256 기준선)+`ontology_ledger_check.py`(부식 exit 2·self-test)+issued 패턴 교정(canon 축약형 djr:R-NNNN — 검사기 결함 실측 수정). **이관 파이프라인**: `ontology_migrate.py`(migrate-spec/1 — 리터럴은 원문 스팬 verbatim 기계 절단·무손실/좌표/해시 단언·ISSUED 재사용 큐·복원 원문 해석)+명세 2벌(`-t1-migrate/spec-*.json` — 블록 경계·kind·문장 Work·4원 basis 전건 기록). 파일럿 4절(D7+표 실증 대체 ddd §8 — **§6.1 '매핑표' 실물은 불릿임을 발견·보고**) → **117 Work·73블록**·게이트 1발 green·기대표 2회 갱신(전건 이관 계수와 정확 대조 — 회귀 검사 실증). **렌더 스택**: `ontology_render.py`(headingSnapshot+마커+블록 연결·--apply)+`ontology_render_sync.py`(마커 제거 후 잔차 0·SyncDebt 강등·--release·--smoke 골든 2건 red/green) — 코퍼스 diff는 파일당 마커 1행뿐(§13 구조적 등가 실물 증명). **미러**: inv1 절 스팬 절제 실개작(LEDGER 기반·src=baseline 해시 매칭·--write 스팬 보존 병합)·inv2 마커 동반 갱신 — 11/11. 훅 md 트리거(stdlib ledger_check). **T1-6**: `ontology_structural_check.py`(SPARQL 5종+order+kind↔datatype — RDF 1.1 정규화 반영 교정 2건 후 전부 정합·역조인 실물: discipline-reviewer 29·controller-contract 23…)·어휘 v1 봉인(§12 — checklist-item 존치 판단)·표류 2건 처분(fat-model 교체·#A~#B 추가)·T3 산출(잔여 3,118문장÷250=13배치)·롤백 리허설 왕복(sectionOwner 스위치 — authoring §17 신설). verify-ontology **[10/10]**(0 사슬·1 게이트·2 메타·3 SHACL·4 계수·5 골든·6 스모크·7 ISSUED·8 원장·9 렌더 동기·10 구조).
+- 2026-08-19: **T1 산출물 적대 검증**(사용자 발의 «T1 산출물은 리뷰할 필요 없어?») — codex 4레인(`-t1-review-adversarial/`): **L-E** Work 전수 117 반증 → 유형 오판 9(조건부·허용·우선 양상의 Obligation 평탄화 — Exception 5·Permission 2·Override 2)·라벨 왜곡 1·누락 3, **L-F** wiring 전수 반증 → 21건(4원 ② docstring을 8종만 참조한 것이 뿌리 — 미사용 검사기 9종의 정확한 담당 발굴·순환 배선·기본값 도피·오귀속. 조정 2: marker 공동 발행 재실측 병기·#257 실재), **L-G** 분해 경계 → prose 내 규범 2(ddd b2 식별자 동등성·b3 캡슐화 의무)+리스트 항 Work 3(b12 일관성) 채택·§6.1 13항 승격은 부분 기각(동결 계수 규약+블록 IRI 좌표 보존 — T2/T3 재론 등재), **L-H** 도구 correctness 20건(blocker 12) → 18건 즉시 수정(path↔manifest 대조·재사용 rid 정합·Expression 날짜 보존·LEDGER 메타 재append·census fail-closed·frontmatter 미폐쇄·render 원자성·mirror 원장 부재 fail-closed·fragment 정규형(frag_encode 단일 출처)·소유권 이중 정본 대조·owner 값 공간·SyncDebt 전체 IRI·issued 리터럴 제외+날짜·경로 검증·고아 Work·Expression 부재·미지 kind)+2건 T3 전 정비 등재(#6 절 키 서수 대장·#9 렌더 개행 잔여 — baseline 상시 검사가 방어). 중재=전건 실측(MEDIATION). 반영: 명세 정정→**ISSUED 클린 재채번 R-0001~R-0125**→재생성·재투영(«이미 동기»)→기대표 +8 정확 대조→verify green. authoring §16 «로스터 전수 실독 의무» 보강.
+- 2026-08-19: **T1-0~T1-2 실행**(사용자 «재가» 후). T1-0: 발주 풀 O-1~O-7 등록(실백로그 6 — S4-r1 billing 초안 실재·products·entitlements·child_settings·delivery·DR-62 잔존 / 합성 1 — 표준 스모크 발주 표기) 15:02 → D7 확정 15:05(선정-처치 독립 증빙). T1-1: `ontology_census.py`(stdlib·fence-aware·무손실 분할 단언·self-test) — **926절**(P0 606은 접기 규약 산물임이 10그룹 대사로 전건 설명·미설명 잔차 0), REF 539/NAR 387, 규범 3,225(P0 3,217 잔차 +8 전건 설명 — E03 −11 코드 펜스 지시 주석 비승계·frontmatter 보수 계상 +19), codex SAME 913/DIFF 13/ABSENT 0(fat-model 표류 절 좌표 = implementation-django-skill s004 재확인), 위생 전면 청정. **체크박스 운반체 0 실증 → D7 «체크리스트 절» 불성립 — 게이트 1 상정**. 분류는 D8대로 Workflow 10 에이전트 병렬(1.35M 토큰·10분). T1-2: authoring §13~§16 신설+게이트 ④ rules 전량 병합·② djr fragment 검사(red 픽스처 fragment-syntax·스모크 12케이스)+**어휘 개정(§7 절차)**: 변경 맵 = {djr:parentSection 추가(vocab+SectionShape-parentSection), BlockShape-text sh:datatype langString → sh:or(TextIsLangString·TextIsString), 기명 셰이프 djr:TextIsLangString·djr:TextIsString 신설} — 리네임 0·추가만, 게이트 --write 재직렬화·계수 기대표 MetaNodeShapeIriShape 20→22(사유: TextIs* 2종 — 회귀 검사가 정확히 검출) · `ontology_issued_check.py` 신설(verify-ontology [7/7] 편입) — verify-ontology 전체 green.
 
 ## 운영 규약
 

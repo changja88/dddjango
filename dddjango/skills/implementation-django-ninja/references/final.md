@@ -469,6 +469,7 @@ def list_orders(request):
 ## 6. 상태 코드와 오류 응답
 
 ### 6.1 Status code mapping
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 상태 코드의 의미는 `architecture-api` 기준을 따른다.
 
@@ -499,6 +500,7 @@ code-profile에서는 이를 BC 식별자 body로 맞추기 위한 전역 변환
 돌아가 profile과 호환성 범위를 먼저 승인한다.
 
 ### 6.2 `dddjango-code-json` 오류 프로필
+<!-- graph-owned: 이 절의 정본은 ontology 그래프다 — 수정은 rules 정본에서, 이 본문 직접 수정 금지 -->
 
 오류 프로필 선택은 `architecture-api` §5.4를 따른다. 이미 배포된 범위는 관찰한 계약을
 보존하고, 새 dddjango Django Ninja 범위의 기본은 `dddjango-code-json`이다. 이 절은 그

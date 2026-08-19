@@ -51,6 +51,21 @@ class CanonError(Exception):
         self.node = node
 
 
+# §14 폐쇄 인코딩 집합 — fragment 세그먼트의 percent-encoding 대상 문자(% 자기 포함·가역).
+ENCODE_CHARS = set(' #%`<>"{}|\\^') | {chr(c) for c in range(0x20)} | {chr(c) for c in range(0x7F, 0xA0)}
+
+
+def frag_encode(segment: str) -> str:
+    """§14 폐쇄 인코딩(대문자 hex 정규형) — frag_encode(unquote(x)) == x 가 정규형 판정."""
+    out = []
+    for ch in segment:
+        if ch in ENCODE_CHARS:
+            out.extend(f"%{b:02X}" for b in ch.encode("utf-8"))
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
 def load_prefix_registry(path: Path = PREFIXES_TTL) -> dict[str, str]:
     """prefixes.ttl의 vann 등재 (접두 → 네임스페이스 IRI). 등재 무결성도 검사."""
     g = Graph()

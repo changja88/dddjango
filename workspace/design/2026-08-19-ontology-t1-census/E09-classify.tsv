@@ -1,0 +1,47 @@
+doc_key	section_key	type	carriers	norm_count	restate	codex	note
+implementation-django-web-skill	s001	REF	none	2	Y:implementation-django-web-skill/s003	SAME	[adv 중재 정정 2026-08-19] norm 4→2 — 문장 단위 재계수: 주제 설명 1문 비규범·병렬 위임은 1문(로드 1+위임 1)
+implementation-django-web-skill	s002	NAR	none	0	N	SAME	h1 제목만(본문 0)
+implementation-django-web-skill	s003	REF	none	7	Y:implementation-django-web-final/s002-1	SAME	로드 조건 1+경계 위임 6(P0 계수 승계). 위임 6건이 final §1 위임표와 중복. codex는 스킬명 접두 치환뿐
+implementation-django-web-skill	s004	REF	none	9	Y:implementation-django-web-final/s002-1~s012-11	SAME	final §1~§11 요약 사본 9줄(§5·§9 누락) — houserules가 금지하는 값 복제 형태(P0 횡단 발견 4)
+implementation-django-web-skill	s005	REF	table	2	N	SAME	주제↔§N 매핑표 11행은 목차라 비계수(P0 승계)
+implementation-django-web-final	s001	REF	none	2	N	SAME	머리말 소유 위임 2문장. 출처 약어 [DDoc] 등은 근거 표기이지 규범 아님
+implementation-django-web-final	s002-1	REF	table	12	Y:implementation-django-web-skill/s003	SAME	위임표 6행 행당 1규범+스코프 선언 2 보수 포함. skill s004 요약줄과도 중복
+implementation-django-web-final	s003-2	REF	table,code	11	Y:implementation-django-web-skill/s004	SAME	선택표 5행 행당 1규범. «적합하다» 권고 1건 보수 포함
+implementation-django-web-final	s004-3	REF	none	10	Y:implementation-django-web-skill/s004	SAME	중앙 영구 테스트 입장 심사 판정 주체 명시
+implementation-django-web-final	s005-4	REF	code	15	Y:implementation-django-web-final/s002-1	SAME	기준 3묶음(base 4·includes 4·style 5)+선두 2. 템플릿 책임 규칙이 §1·skill s004와 3중
+implementation-django-web-final	s006-5	REF	none	10	N	SAME	skill s004 요약에서 누락된 절(사본 커버리지 구멍)
+implementation-django-web-final	s007-6	REF	code	7	Y:implementation-django-web-skill/s004	SAME	validation order 서술은 사실 진술로 제외(P0 승계)
+implementation-django-web-final	s008-7	REF	code	6	Y:implementation-django-web-skill/s004	SAME	«HTMX view는 web adapter다» 정의문 제외
+implementation-django-web-final	s009-8	REF	none	12	Y:implementation-django-web-skill/s004	SAME	check --deploy 실행·미실행 보고 의무 포함
+implementation-django-web-final	s010-9	REF	none	6	N	SAME	skill s004 요약에서 누락된 절
+implementation-django-web-final	s011-10	REF	table	14	Y:implementation-django-web-skill/s004	SAME	검증 행렬 8행 행당 1규범+선두 4+말미 2
+implementation-django-web-final	s012-11	REF	code	24	Y:implementation-django-web-skill/s004	SAME	최대 밀도 절. 코드 펜스 5개(예제 비계수·펜스 사이 산문 1 보수 포함). «discipline-houserules §2» 참조 표류 의심(P0 발견 3)
+discipline-houserules-skill	s001	REF	none	4	Y:discipline-houserules-skill/s003	SAME	[adv 중재 정정 2026-08-19] norm 6→4 — 동상(로드 1+반드시 사용 1+단일 출처 1+위임 1)
+discipline-houserules-skill	s002	NAR	none	0	N	SAME	h1 제목만(본문 0)
+discipline-houserules-skill	s003	REF	none	7	Y:discipline-houserules-final/s001	SAME	값/절차 소유 분리 3+경계 위임 4. 복제 금지·단일 출처 선언이 final 머리말과 상호 재진술. codex는 스킬명 접두 치환뿐
+discipline-houserules-skill	s004-1	REF	none	28	Y:discipline-houserules-final/s003-0	SAME	최대 밀도 절(P0 계수 승계). #487 검사 순서·트리 밖 칸·빚 문면이 final §0·§4와 부분 중복. 사고 날짜 각주 3건 내장
+discipline-houserules-skill	s005-2	REF	none	3	Y:discipline-houserules-skill/s003	SAME	final.md 단일 출처 재선언(문서 내 3회째). codex는 스킬명 접두 치환뿐
+discipline-houserules-skill	s006-3	REF	none	7	Y:discipline-houserules-skill/s004-1	SAME	신호 6개=진단 조건문으로 계수. 신호 4·6이 final s013·자체 §1 백스톱 계약의 재진술
+discipline-houserules-skill	s007-4	REF	none	9	N	SAME	문법 부재 자리 3묶음을 규범으로 계수(P0 승계)
+discipline-houserules-skill	s008-4.1	REF	none	2	N	SAME	대부분 이유 서술 — 집행 주체+«숨기지 않는다» 2건만 보수 포함
+discipline-houserules-skill	s009-5	REF	none	4	N	SAME	관례 우선→한국어→혼용 금지
+discipline-houserules-skill	s010-6	NAR	none	0	N	SAME	§6 헤더만 — 내용은 §6.1·§6.2
+discipline-houserules-skill	s011-6.1	REF	none	1	N	SAME	한 문장에 지시 3개 압축 — 마침표 단위 1로 계수(P0 승계)
+discipline-houserules-skill	s012-6.2	REF	none	10	N	SAME	resolve-후-핀·안정 릴리스·막힌 환경 보고
+discipline-houserules-final	s001	REF	none	3	Y:discipline-houserules-skill/s003	SAME	h1+정본 선언 블록. #N 정의문은 ID 체계 정의라 비계수. 복제 금지 선언이 skill s003과 상호 재진술
+discipline-houserules-final	s002	REF	none	1	Y:discipline-houserules-final/s003-0	SAME	#492 채널 분리 — §0에 같은 #492 재등장(문서 내 중복, P0 승계)
+discipline-houserules-final	s003-0	REF	none	12	N	SAME	#486~#492+실현 주체 coder+check-layer-skeleton 지목. #492 원출처(사본은 s002)
+discipline-houserules-final	s004-1	REF	code	3	N	SAME	트리 140행(```text)=규범 «값»이나 문장 비계수(행 번호가 좌표계, P0 승계). TREE 주석 내 «손으로 고치지 않는다» 포함
+discipline-houserules-final	s005-2	NAR	none	0	N	SAME	§2 헤더만(직속 본문 없음)
+discipline-houserules-final	s006	REF	none	7	N	SAME	#81·#82·#10·#628. #628 불용어 목록=저장소 데이터
+discipline-houserules-final	s007	REF	none	8	N	SAME	#88~#92·#178. #92 의존 방향 예외 4종
+discipline-houserules-final	s008	REF	none	5	N	SAME	#20·#21·#58·#187·#314 금지 칸 열거
+discipline-houserules-final	s009	REF	none	3	N	SAME	elidable 언급은 «덤»이라 제외(P0 승계)
+discipline-houserules-final	s010	REF	none	5	N	SAME	#429~#432·#436. celery.py 조건부는 #491과의 관할 분리를 문면이 직접 방어
+discipline-houserules-final	s011-3	REF	none	3	Y:discipline-houserules-final/s006	SAME	«BC 이름=업무 경계»가 #82(s006) 재인용 — 편입 예정 자리표시 상태. 명시적 비커버 선언(검사기 없음) vs check-naming.py 실존(P0 발견 5)
+discipline-houserules-final	s012-4	NAR	none	0	N	SAME	§4 헤더만(직속 본문 없음)
+discipline-houserules-final	s013	REF	none	2	N	SAME	이관 종료 2026-08-12 — skill s006-3 신호 4가 이 절의 사본(원출처는 여기)
+discipline-houserules-final	s014	REF	none	3	Y:discipline-houserules-skill/s004-1	SAME	«빚≠면제» 문면이 skill §1·§3에도 존재. 첫 문장(그림자다)은 설명 제외
+discipline-houserules-final	s015	REF	none	1	N	SAME	#74 exit 2 가드 계약
+discipline-houserules-final	s016	REF	none	1	N	SAME	#72 플러그인 셋 한 커밋 선행. 뒤집힘 결과는 이유 서술 제외
+discipline-houserules-final	s017	REF	none	1	N	SAME	대부분 서사(파생 출처) — «이 문서는 값만 싣는다» 1건 보수 포함으로 REF
