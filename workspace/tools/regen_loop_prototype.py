@@ -4,6 +4,9 @@
 조인: rule-owner-map T0 스냅숏(B1 — 동결 사본)에서 rule «#N» → 담당(ⓒ 검사기·ⓓ 에이전트)
 조립: «위반된 제약+핵심 맥락만» 주입 프롬프트 — 재료는 **번호+검사기 산출 발췌**(레코드의
       rule·file·message)뿐이다. 규범 본문 정본(final.md 등) 발췌는 동결 E8이 금지한다.
+      owner-map 유래 값(담당 검사기·에이전트)은 **조인·재검사 라우팅 내부 전용**이며 주입
+      문자열에 넣지 않는다(T2 적대 리뷰 L-1 정정 — E8 «검사기 산출 발췌» 한정의 회복.
+      필드 집합은 --self-test 골든으로 고정).
 선행 계약 검사기 레코드(rule=null+contract_ref)는 조인 공백으로 별도 보고한다(조인은
 check-domain-model 류 «#N» 레코드에서만 성립 — T0 계획 §3 B3).
 
@@ -57,14 +60,49 @@ def assemble_prompt(joined: "list[tuple[dict, dict]]") -> str:
         "수정 기준이다 — 규범 본문은 재주입하지 않는다. 위반이 난 파일만 수정하고, 무관한 코드는 건드리지 않는다.",
         "",
     ]
-    for rec, owner in joined:
-        checker = owner.get("검사기") or rec["checker"]
-        lines.append(f"- [{rec['rule']}] {rec['file']} — {rec['message']}  (담당: {checker})")
+    for rec, _owner in joined:
+        # _owner(owner-map 유래)는 조인 성립 확인·재검사 라우팅 전용 — 주입 필드는
+        # 검사기 산출 발췌(rule·file·message)로 닫는다(E8 — L-1 정정).
+        lines.append(f"- [{rec['rule']}] {rec['file']} — {rec['message']}")
     lines += ["", "수정 후 같은 검사기를 재실행해 위 항목이 0이 되는지 확인한다."]
     return "\n".join(lines)
 
 
+_SELF_TEST_GOLDEN = (
+    "다음은 결정적 검사기가 잡은 규칙 위반 목록이다. 각 항목의 검사기 산출 발췌(번호·위치·사유)만이\n"
+    "수정 기준이다 — 규범 본문은 재주입하지 않는다. 위반이 난 파일만 수정하고, 무관한 코드는 건드리지 않는다.\n"
+    "\n"
+    "- [#302] application/orders/domain_layer/x.py — 판정이 서비스로 새어 나갔다\n"
+    "- [#310] application/orders/domain_layer/y.py — 불변식 검사가 어댑터에 있다\n"
+    "\n"
+    "수정 후 같은 검사기를 재실행해 위 항목이 0이 되는지 확인한다."
+)
+
+
+def self_test() -> int:
+    """주입 필드 집합 골든 — owner-map 값이 프롬프트에 새면 red(E8·L-1 회귀 방지)."""
+    owner = {"판정": "ast", "검사기": "scripts/check-domain-model.py", "에이전트": None}
+    joined = [
+        ({"rule": "#302", "file": "application/orders/domain_layer/x.py",
+          "message": "판정이 서비스로 새어 나갔다", "checker": "check-domain-model.py"}, owner),
+        ({"rule": "#310", "file": "application/orders/domain_layer/y.py",
+          "message": "불변식 검사가 어댑터에 있다", "checker": "check-domain-model.py"}, owner),
+    ]
+    prompt = assemble_prompt(joined)
+    if prompt != _SELF_TEST_GOLDEN:
+        print("[self-test] 프롬프트가 골든과 다르다 — 주입 필드 집합 변경은 골든 갱신+사유 필수", file=sys.stderr)
+        return 2
+    for leak in ("담당", owner["검사기"], "check-domain-model.py"):
+        if leak in prompt:
+            print(f"[self-test] owner-map/검사기명 유출: {leak!r}", file=sys.stderr)
+            return 2
+    print("[self-test] 주입 필드 골든 일치 · owner-map 유출 0")
+    return 0
+
+
 def main() -> int:
+    if sys.argv[1:2] == ["--self-test"]:
+        return self_test()
     ap = argparse.ArgumentParser(description="재생성 루프 시제품(그래프 미경유·dry-run)")
     ap.add_argument("--records", required=True)
     ap.add_argument("--snapshot", default=str(SNAPSHOT))
