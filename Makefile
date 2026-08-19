@@ -47,7 +47,7 @@ verify-ontology:
 # 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8)
 verify-base:
 	@set -euo pipefail; \
-	echo "[verify-base] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·baseline·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
+	echo "[verify-base] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·baseline·count-golden·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
 	python3 workspace/tools/corpus_mirror_sync.py --check; \
 	PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
@@ -57,6 +57,7 @@ verify-base:
 	PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
 	PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/checker_baseline_matrix.py; \
+	PYTHONUTF8=1 python3 workspace/tools/findings_count_matrix.py; \
 	PYTHONUTF8=1 python3 workspace/tools/anchor_diff_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
 	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
