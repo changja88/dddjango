@@ -1,4 +1,8 @@
+<!doctype html>
+<html lang="ko">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>온톨로지 적용 조감도</title>
 <style>
   :root {
@@ -208,6 +212,8 @@
   .note { font-size: 0.82rem; color: var(--ink-faint); margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
   .note .mono { font-size: 0.78rem; }
 </style>
+</head>
+<body>
 
 <div class="wrap">
 <p class="eyebrow">Adoption Control · dddjango · 2026-08</p>
@@ -215,8 +221,8 @@
 <p class="lede">개발 완료까지 여기서 진행을 본다 — 이 페이지에는 <b>내가 확인할 것</b>과 <b>진행도</b>만. 세부 계획·근거·기록은 저장소 문서(블루프린트·진행 로그)에서 Claude가 관리한다.</p>
 
 <div class="banner info"><span class="bk">확인 대기 없음 · 2026-08-19</span>
-<b>T1 완결(게이트 2 승인)</b> — 파일럿 이관+산출물 적대 검증(codex 4레인) 완료. 4절 → <b>125 Work·73블록</b>(R-0001~R-0125 — 검증 발견 58건 중 52 채택 반영: 유형 오판 9 교정·누락 8 추가·배선 21 교정으로 검사기 16종 실사용·도구 blocker 18건 수정 후 클린 재채번). 코퍼스 diff는 <b>파일당 마커 1행뿐</b>(마커 제거 시 원문과 byte 잔차 0 — 상시 검사로 승격). SPARQL 조인 성립(담당 개체 25 역조인·Expression 왕복 125), 렌더 동기·미러 11/11·롤백 리허설·어휘 v1 봉인·verify <b>[10/10]</b>.
-<p class="how">진행: T1 산출물 커밋(표류 처분 분리+본체 한 커밋+기록 마감) → <b>T2 세부 계획 수립</b>(폐루프 완성+3암 A/B — off/루프만/루프+그래프). 다음 내 확인 = <b>T2 계획 검토</b>, 그 다음 = <b>T2 게이트: 계속/조정 판정</b>(전량 이관의 관문).</p>
+<b>T2 진입 게이트 통과(«승인» — 4건 전건)</b>: ① 동결 <b>개정 3·4</b> 기입(§6 비열화 «C≥B»→«V_C−V_B≤δ» · §8 «11종»→27종 체계+선행 계약 T3 이월) ② T2 = <b>«타당성 파일럿»</b>(운영 문턱 go/no-go·사례 연구 3건 한정) ③ D9~D12 권고안(D13 폐지 — <b>18런 고정</b>) ④ 비용 상한(실런 구간 기계 16~50h·과금 36~150M·런별 hard stop). O-5 반복성 재판정은 발주 풀에 append(리셋 앵커 실증은 실런 직전 게이트).
+<p class="how">진행: <b>T2-1 검사기 개작 25종</b>(기준선 실측 표→기계 치환 15→자유 출력 5→dataclass 대형 5·계수 골든 전수) → T2-2~T2-4(IRI·위반 그래프·루프·규칙 팩) → 구현 동결 manifest → <b>18실런</b>. 다음 내 확인 = <b>첫 블록(3런) 후 비용 재산정</b>(예산 초과 전망 시에만)·<b>T2 종료 게이트: 계속/조정 판정</b>(전량 이관의 관문).</p>
 </div>
 
 <h2>청사진 — 온톨로지가 어디에 어떻게 (발주 한 건의 실물로)</h2>
@@ -541,10 +547,15 @@ GROUP BY ?rule ORDER BY DESC(?n)
       <tr><td>2026-08-19</td><td>T1 계획 검토</td><td>통과 — D6·D7·D8 전건 승인, <b>개정 2</b>(LEDGER.tsv) 기록</td></tr>
       <tr><td>2026-08-19</td><td>게이트 1: 센서스 동결</td><td><b>통과(승인)</b> — 926절·REF 539·규범 3,235·codex DIFF 14·적대 검증(codex 4레인) 경유. 체크리스트 절 처분안 승인 포함</td></tr>
       <tr><td>2026-08-19</td><td>게이트 2: T1 검수(12항)</td><td><b>통과(승인)</b> — 파일럿 125 Work(적대 검증 52건 반영·클린 재채번)·byte 잔차 0·SPARQL 5종·verify [10/10]</td></tr>
-      <tr><td>—</td><td>게이트 2: T1 검수(12항)</td><td>대기</td></tr>
+      <tr><td>2026-08-19</td><td>T1 커밋</td><td>완료 — <span class="mono">77c9779</span>(표류 처분)+<span class="mono">ceb3c6a</span>(본체)+<span class="mono">ca5635d</span>(기록 마감)</td></tr>
+      <tr><td>2026-08-19</td><td>T2 계획 적대 리뷰</td><td>2레인(측정·동결/실물 정합) 29건 <b>전건 중재</b>(채택 26·부분 3·기각 0) → <b>v1.1</b> — 동결 문면 모순 2건 발굴(개정 상정)·D13 폐지·판정 산식 고정</td></tr>
+      <tr><td>2026-08-19</td><td><b>T2 진입 게이트(계획 v1.1 검토)</b></td><td><b>통과(승인)</b> — 동결 <b>개정 3·4</b>(§6 부등호·§8 27종 체계)+«타당성 파일럿» 재명명+D9~D12(D13 폐지·18런 고정)+비용 상한(기계 16~50h·과금 36~150M)</td></tr>
+      <tr><td>—</td><td>T2 종료 게이트: 계속/조정 판정</td><td>대기 — 18실런 후(중간: 첫 블록 비용 재산정은 초과 전망 시에만 확인 요청)</td></tr>
     </tbody>
   </table>
 </div>
 
 <p class="note">세부 문서(Claude 관리): <b>동결 후보 정본</b> <span class="mono">workspace/design/2026-08-18-ontology-blueprint-v3.md</span> (v3.2) · 진행 로그 <span class="mono">2026-08-18-ontology-adoption-log.md</span> · 보강 조사 <span class="mono">-v3-research/</span> · 적대 리뷰·중재 <span class="mono">-v3-adversarial/</span> · 배경 학습은 <a href="https://claude.ai/code/artifact/70af9350-e115-46cc-9101-e91764cf5311">온톨로지 학습 지도</a>.</p>
 </div>
+</body>
+</html>
