@@ -1,0 +1,28 @@
+@prefix vann: <http://purl.org/vocab/vann/> .
+
+<http://purl.org/dc/terms/> vann:preferredNamespacePrefix "dcterms" ;
+    vann:preferredNamespaceUri "http://purl.org/dc/terms/" .
+
+<http://purl.org/vocab/vann/> vann:preferredNamespacePrefix "vann" ;
+    vann:preferredNamespaceUri "http://purl.org/vocab/vann/" .
+
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#> vann:preferredNamespacePrefix "rdf" ;
+    vann:preferredNamespaceUri "http://www.w3.org/1999/02/22-rdf-syntax-ns#" .
+
+<http://www.w3.org/2000/01/rdf-schema#> vann:preferredNamespacePrefix "rdfs" ;
+    vann:preferredNamespaceUri "http://www.w3.org/2000/01/rdf-schema#" .
+
+<http://www.w3.org/2001/XMLSchema#> vann:preferredNamespacePrefix "xsd" ;
+    vann:preferredNamespaceUri "http://www.w3.org/2001/XMLSchema#" .
+
+<http://www.w3.org/2004/02/skos/core#> vann:preferredNamespacePrefix "skos" ;
+    vann:preferredNamespaceUri "http://www.w3.org/2004/02/skos/core#" .
+
+<http://www.w3.org/ns/prov#> vann:preferredNamespacePrefix "prov" ;
+    vann:preferredNamespaceUri "http://www.w3.org/ns/prov#" .
+
+<http://www.w3.org/ns/shacl#> vann:preferredNamespacePrefix "sh" ;
+    vann:preferredNamespaceUri "http://www.w3.org/ns/shacl#" .
+
+<https://numchida.com/ns/djr#> vann:preferredNamespacePrefix "djr" ;
+    vann:preferredNamespaceUri "https://numchida.com/ns/djr#" .

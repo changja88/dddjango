@@ -1,0 +1,4 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+# 정본 파일에 금지된 주석
+djr:golden-fx-2 a djr:Checker .

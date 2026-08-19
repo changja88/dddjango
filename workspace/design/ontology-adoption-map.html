@@ -1,0 +1,545 @@
+<meta charset="utf-8">
+<title>온톨로지 적용 조감도</title>
+<style>
+  :root {
+    --ground: #F6FAF7;
+    --panel: #ECF3EE;
+    --panel-2: #E2ECE6;
+    --ink: #1B2622;
+    --ink-soft: #4A5A54;
+    --ink-faint: #7A8A83;
+    --accent: #0E7365;
+    --accent-ink: #0A5A50;
+    --amber: #B0761F;
+    --amber-bg: #F5EDDE;
+    --line: #C9D8D0;
+    --code-bg: #E4EEE8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0F1715;
+      --panel: #16211E;
+      --panel-2: #1C2A26;
+      --ink: #DCE7E2;
+      --ink-soft: #9FB3AB;
+      --ink-faint: #6E817A;
+      --accent: #2FBFA9;
+      --accent-ink: #55D2BD;
+      --amber: #D9A24E;
+      --amber-bg: #2A2318;
+      --line: #2B3B35;
+      --code-bg: #1D2C27;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1715;
+    --panel: #16211E;
+    --panel-2: #1C2A26;
+    --ink: #DCE7E2;
+    --ink-soft: #9FB3AB;
+    --ink-faint: #6E817A;
+    --accent: #2FBFA9;
+    --accent-ink: #55D2BD;
+    --amber: #D9A24E;
+    --amber-bg: #2A2318;
+    --line: #2B3B35;
+    --code-bg: #1D2C27;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.7;
+    margin: 0;
+    padding: 0 1.25rem;
+    font-size: 16px;
+  }
+  .wrap { max-width: 56rem; margin: 0 auto; padding: 3rem 0 4.5rem; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem; letter-spacing: 0.14em; color: var(--accent);
+    text-transform: uppercase; margin: 0 0 0.6rem;
+  }
+  h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.6rem; text-wrap: balance; }
+  .lede { color: var(--ink-soft); margin: 0 0 0.4rem; }
+  .lede b { color: var(--ink); }
+  h2 { font-size: 1.12rem; font-weight: 800; letter-spacing: -0.01em; margin: 2.4rem 0 0.7rem; }
+  p.tx { font-size: 0.93rem; color: var(--ink-soft); margin: 0.4rem 0 0.8rem; }
+  p.tx b { color: var(--ink); }
+  code, .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.85em; background: var(--code-bg); padding: 0.08em 0.35em; border-radius: 3px;
+  }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover, a:focus-visible { text-decoration: underline; }
+
+  /* 확인 요청 배너 */
+  .banner {
+    border-radius: 6px; background: var(--amber-bg); padding: 0.9rem 1.15rem 1rem;
+    font-size: 0.94rem; color: var(--ink); margin: 1.4rem 0 0;
+    border-left: 4px solid var(--amber);
+  }
+  .banner .bk {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.68rem; letter-spacing: 0.12em; color: var(--amber);
+    font-weight: 700; display: block; margin-bottom: 0.35rem;
+  }
+  .banner .how { margin: 0.5rem 0 0; font-size: 0.87rem; color: var(--ink-soft); }
+  .banner .how b { color: var(--ink); }
+  .banner.info { background: var(--panel); border-left-color: var(--accent); }
+  .banner.info .bk { color: var(--accent); }
+
+  /* 준비 단계 스트립 */
+  .prep { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.8rem 0 0.4rem; }
+  .prep span {
+    font-size: 0.78rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 99px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--ground)); color: var(--accent-ink);
+  }
+  .prep span.pending { background: var(--amber-bg); color: var(--amber); font-weight: 700; }
+
+  /* Stage 카드 */
+  .phase {
+    border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: 6px; background: var(--panel); padding: 0.7rem 1rem 0.8rem; margin: 0.5rem 0;
+  }
+  .phase.wait { border-left-color: var(--line); }
+  .ph { display: flex; align-items: baseline; gap: 0.55rem; flex-wrap: wrap; }
+  .ph .pn {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.72rem; font-weight: 700; color: var(--accent);
+  }
+  .phase.wait .ph .pn { color: var(--ink-faint); }
+  .ph .pt { font-weight: 800; font-size: 0.95rem; }
+  .st {
+    display: inline-block; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.07em;
+    padding: 0.05rem 0.5rem; border-radius: 99px; vertical-align: middle;
+  }
+  .st.next { background: var(--accent); color: var(--ground); }
+  .st.wait { background: var(--panel-2); color: var(--ink-faint); }
+  .st.done { background: color-mix(in srgb, var(--accent) 20%, var(--ground)); color: var(--accent-ink); }
+  .phase p { margin: 0.25rem 0 0; font-size: 0.87rem; color: var(--ink-soft); }
+  .phase p b { color: var(--ink); }
+  .phase .ask { margin-top: 0.4rem; font-size: 0.84rem; color: var(--ink-soft); }
+  .phase .ask .k {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.64rem; letter-spacing: 0.1em; color: var(--amber); margin-right: 0.4rem; font-weight: 700;
+  }
+  .phase .ask b { color: var(--ink); }
+  .gate {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.28rem 0 0.28rem 1.1rem;
+    color: var(--ink-faint); font-size: 0.75rem;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .gate::before { content: "↓"; color: var(--accent); font-weight: 700; font-size: 0.95rem; }
+
+  /* 적용 지도 */
+  .hub {
+    border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px;
+    background: var(--panel); padding: 0.6rem 0.95rem; margin: 0.7rem 0 0.15rem;
+    font-weight: 800; font-size: 0.97rem;
+  }
+  .hub .sub {
+    display: block; font-weight: 400; font-size: 0.76rem; color: var(--ink-soft); margin-top: 0.1rem;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .hubarrow { text-align: center; color: var(--accent); font-weight: 700; font-size: 0.85rem; margin: 0.15rem 0; }
+  .apgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin: 0.3rem 0 0.6rem; }
+  @media (max-width: 640px) { .apgrid { grid-template-columns: 1fr; } }
+  .ap { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 0.55rem 0.8rem 0.65rem; }
+  .ap .aphead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+  .ap .aphead b { font-size: 0.9rem; }
+  .ap p { margin: 0.28rem 0 0; font-size: 0.82rem; color: var(--ink-soft); }
+  .ap p b { color: var(--ink); }
+  .badge { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; padding: 0.1rem 0.55rem; border-radius: 99px; white-space: nowrap; }
+  .badge.become { background: var(--accent); color: var(--ground); }
+  .badge.supply { background: var(--amber-bg); color: var(--amber); }
+  .badge.render { background: color-mix(in srgb, var(--accent) 18%, var(--ground)); color: var(--accent-ink); }
+  .badge.wire { background: var(--panel-2); color: var(--ink); border: 1px solid var(--accent); }
+  .badge.guard { background: var(--panel-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .badge.link { background: var(--ground); color: var(--ink-faint); border: 1px dashed var(--line); }
+  details.apdet summary { cursor: pointer; font-size: 0.85rem; color: var(--accent-ink); margin: 0.2rem 0 0.4rem; }
+  details.apdet summary:hover { text-decoration: underline; }
+
+  /* 실전 예시 */
+  h3 { font-size: 0.98rem; font-weight: 800; letter-spacing: -0.01em; margin: 1.6rem 0 0.45rem; }
+  pre.ttl {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.6rem 0.85rem; font-size: 0.76rem; line-height: 1.6; overflow-x: auto;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ink); margin: 0.45rem 0 0.2rem;
+  }
+  pre.ttl .c { color: var(--ink-faint); }
+  pre.ttl b { color: var(--accent-ink); font-weight: 700; }
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 0.4rem 0 0.2rem; }
+  @media (max-width: 720px) { .ba { grid-template-columns: 1fr; } }
+  .side { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 0.55rem 0.75rem 0.65rem; font-size: 0.84rem; color: var(--ink-soft); }
+  .side b { color: var(--ink); }
+  .side.now { border-left: 3px solid var(--amber); }
+  .side.aft { border-left: 3px solid var(--accent); }
+  .side .tag {
+    display: inline-block; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em;
+    padding: 0.05rem 0.5rem; border-radius: 99px; margin-bottom: 0.3rem;
+  }
+  .side.now .tag { background: var(--amber-bg); color: var(--amber); }
+  .side.aft .tag { background: color-mix(in srgb, var(--accent) 18%, var(--ground)); color: var(--accent-ink); }
+  .side pre.ttl { margin: 0.35rem 0 0.15rem; }
+  .side p { margin: 0.25rem 0 0; font-size: 0.82rem; }
+
+  /* 완성형 플로우 */
+  .flowmap { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 0.9rem 1.1rem 1rem; margin: 0.6rem 0; }
+  .frow { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin: 0.4rem 0; }
+  .fb { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 0.22rem 0.6rem; font-size: 0.82rem; color: var(--ink); }
+  .fb b { color: var(--accent-ink); }
+  .fb.core { border-left: 3px solid var(--accent); font-weight: 700; }
+  .fa { color: var(--accent); font-weight: 700; font-size: 0.9rem; }
+  .fnote { font-size: 0.72rem; color: var(--ink-faint); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .floop { margin-top: 0.55rem; padding-top: 0.55rem; border-top: 1px dashed var(--line); font-size: 0.83rem; color: var(--ink-soft); }
+  .floop b { color: var(--ink); }
+
+  /* 표 */
+  .tablewrap { overflow-x: auto; margin: 0.6rem 0 0.3rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.85rem; min-width: 30rem; }
+  th { text-align: left; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--ink-faint);
+       border-bottom: 2px solid var(--line); padding: 0.35rem 0.7rem 0.35rem 0; font-weight: 700; }
+  td { border-bottom: 1px solid var(--line); padding: 0.45rem 0.7rem 0.45rem 0; vertical-align: top; color: var(--ink-soft); }
+  td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  td b { color: var(--ink); }
+
+  .note { font-size: 0.82rem; color: var(--ink-faint); margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  .note .mono { font-size: 0.78rem; }
+</style>
+
+<div class="wrap">
+<p class="eyebrow">Adoption Control · dddjango · 2026-08</p>
+<h1>온톨로지 적용 조감도</h1>
+<p class="lede">개발 완료까지 여기서 진행을 본다 — 이 페이지에는 <b>내가 확인할 것</b>과 <b>진행도</b>만. 세부 계획·근거·기록은 저장소 문서(블루프린트·진행 로그)에서 Claude가 관리한다.</p>
+
+<div class="banner"><span class="bk">내 확인 — T0 커밋 승인 · 2026-08-19</span>
+<b>T0 검수 통과 — 디시전 시트 4건 전부 승인·반영 완료, <span class="mono">make verify</span> 전체 green(온톨로지 단+기존 검증 세트 — 최초 완전 통과).</b> 반영 내역: ① 블록↔Work 3노드형 확정+블루프린트 <b>개정 1</b> 기록 ② 규범 소유 의무 = 검사기 ∨ 위임 에이전트(셰이프·골든 반영) ③ alias·RevisionKind 존치 확정 ④ 표류 6건 EXPECTED 일괄 갱신(청정/현재 트리 이중 emit 일치 검증·정확히 유령값 6건만 교정).
+<p class="how">남은 확인 하나: <b>T0 전체 커밋 승인</b>. 커밋 범위 — ontology/ 정본 트리(24파일)·도구 9종·Makefile(verify 신설·release 편입)·findings.py+검사기 개작 2종(+codex 동기)·픽스처·감사 기록 3벌·블루프린트 개정 1·계획/로그. 승인하시면 커밋하고 <b>T1 세부 계획</b>(파일럿 이관) 수립으로 넘어갑니다.</p>
+</div>
+
+<h2>청사진 — 온톨로지가 어디에 어떻게 (발주 한 건의 실물로)</h2>
+
+<div class="hub">온톨로지 = RDF 그래프 정본<span class="sub">스택 부품 5개가 각각 정확히 어디에 적용되는지 ↓</span></div>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>부품</th><th>정확한 적용 지점</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ontology/</td><td>그래프 정본이 사는 <b>저장소 디렉터리</b> — <span class="mono">rules/&lt;문서&gt;.ttl</span>(규칙 본체) · <span class="mono">vocab/</span>(어휘) · <span class="mono">shapes/</span>(검사 규칙) · <span class="mono">wiring/</span>(검사기·경로·플랫폼 배선) · <span class="mono">prefixes.ttl</span> · <span class="mono">ISSUED</span>(ID 대장)</td></tr>
+      <tr><td>Turtle</td><td><b>저작 시점</b> — 에이전트가 규칙을 새로 쓰거나 고칠 때 쓰는 파일 문법(.ttl). 커밋되려면 4단 게이트(파스→정본 직렬화→의미 보존 해시→SHACL)를 통과해야 함</td></tr>
+      <tr><td>RDFS</td><td><b><span class="mono">vocab/</span> 안</b> — 규칙 유형·레이어의 클래스 계층(<span class="mono">rdfs:subClassOf</span>)에만 사용. «상위 계층(예: domain 층)에 걸린 규칙이 하위로 전파»되는 상속의 근거. 이것 말고 다른 RDFS/OWL 공리는 금지(E2)</td></tr>
+      <tr><td>SHACL</td><td><b>커밋·verify·릴리즈 시점</b> — <span class="mono">shapes/</span>가 <span class="mono">rules/·wiring/</span>를 검사(필수 필드·참조 무결성·알려진 모순 패턴). 대상은 <b>규칙 그래프 자체</b>이지 산출물 코드가 아님 — 코드 판정은 계속 검사기 27종 소유</td></tr>
+      <tr><td>SPARQL</td><td><b>소비·집계 시점</b> — ① 작업 경로→규칙 팩 선별(에이전트 주입) ② 위반 그래프 집계(준수율·반복 위반→개정 제안 큐) ③ SHACL 리포트의 severity별 게이트 판정. 전부 <b>사전 검증 질의 카탈로그</b>로만(즉석 생성 금지)</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="hubarrow">↓ 발주 한 건이 흐르는 순서대로 — 단계마다 걸리는 구성요소와 적용 방식(배지) ↓</div>
+
+<details class="apdet"><summary>상세 표 펼치기 — 8개 구성요소 전체: 지금 → 완성형 → 기술 → 전환 Stage → v3.2 근거 절</summary>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>구성요소</th><th>지금</th><th>완성형</th><th>기술</th><th>전환</th><th>청사진</th></tr></thead>
+    <tbody>
+      <tr><td>① 규칙 코퍼스</td><td>산문 30문서(3,217문장)가 정본</td><td><b>그래프 정본</b> + 참조성 절은 렌더 투영, 서사 절은 수기 존치</td><td>Turtle(RDF)+RDFS 어휘 · 정렬 직렬화기 · 자작 렌더러(그래프→markdown)</td><td>T1→T3</td><td>E1·§3·§4</td></tr>
+      <tr><td>② 파이프라인 에이전트 12종</td><td>SKILL 라우터+절 실독</td><td>실독 유지 + <b>규칙 팩 주입</b> + 위반 재생성 루프</td><td>SPARQL 질의 카탈로그(선별) · 소비는 렌더 markdown</td><td>T2·T4</td><td>E7·E8·§5</td></tr>
+      <tr><td>③ Coordinator·커맨드</td><td>flow 정본+registry 산문</td><td>flow 유지, registry 절만 렌더 투영</td><td>자작 렌더러</td><td>T2</td><td>§9</td></tr>
+      <tr><td>④ 결정적 검사기 27종</td><td>각자 출력 형식(규약 밖 11종)</td><td>공용 구조화 출력 → <b>위반 그래프</b>, 규칙 IRI 배선</td><td>Python 표준 라이브러리(무의존 출력 모듈) · 위반 개체 RDF(sh:ValidationResult 스타일)</td><td>T2</td><td>E8</td></tr>
+      <tr><td>⑤ 개발 도구 21종</td><td>산문 대상 정합 검사</td><td>대부분 존치 + 신설 게이트(verify·4단·동기 검증), 미러 도구는 T4 대체</td><td>pySHACL(+meta-SHACL) · rdflib(파스) · RDFC-1.0 정규화 해시 · make+pre-commit 훅</td><td>T0→T4</td><td>§9 처분표</td></tr>
+      <tr><td>⑥ codex 쌍둥이</td><td>수기 미러 — 19쌍 무방비</td><td>같은 그래프에서 <b>이중 렌더</b> — 미러 검사 소멸</td><td>플랫폼 파라미터 렌더(동일 그래프 2투영)</td><td>T4</td><td>§3</td></tr>
+      <tr><td>⑦ 모노레포 명세(538규칙)</td><td>저장소 산문 정본</td><td>범위 밖 잔존 — alias 연결만(T3 재검토)</td><td><code>djr:alias</code> 프로퍼티(RDF)</td><td>—</td><td>E6</td></tr>
+      <tr><td>⑧ 픽스처·평가</td><td>34가족·90케이스</td><td>존치·확장 — 골든 페어+어댑터 하네스</td><td>SHACL 골든 페어(valid/invalid) · fixture_matrix(Python)</td><td>T0</td><td>§9</td></tr>
+    </tbody>
+  </table>
+</div>
+</details>
+
+<p class="tx" style="margin-top:1rem;">시나리오 프롬프트:</p>
+<pre class="ttl">/dddjango 주문 취소 기능 추가해줘. 배송 시작 전에만 취소 가능해야 해.</pre>
+<p class="tx"><span style="color: var(--ink-faint); font-size: 0.82rem;">표기 원칙: <b>«지금» 쪽 인용은 전부 저장소 실물</b>(파일·행 병기, 한 글자도 안 고침). «완성형» 쪽의 Turtle·규칙 팩·레코드는 v3.2가 정의한 형식으로 같은 내용을 표현한 것(ID 번호만 예시).</span></p>
+
+<h3>① 규칙이 사는 곳 — <span style="color: var(--ink-soft); font-weight: 600;">규칙 코퍼스</span> <span class="badge become">그래프가 된다</span></h3>
+<div class="ba">
+  <div class="side now"><span class="tag">지금 — 실물</span>
+    <p><span class="mono">skills/architecture-ddd/references/final.md</span> 539행 절 안의 632행 문단, 전문 그대로:</p>
+<pre class="ttl">### 3.2 엔티티 (Entity)
+  …
+**판정·불변식은 도메인이 소유하고 프로덕션 경로에서
+실행된다(빈혈 차단).** 비즈니스 판정과 불변식은 도메인
+애그리거트(단일 애그리거트에 담기지 않으면 도메인
+서비스)가 소유하고(불변식 보호는 §3.3 규칙1), 응용
+서비스는 *조회 → 도메인 기능 실행(판정·상태 변경; 위반
+시 도메인 예외) → 영속화* 순서로 그것을 프로덕션 쓰기
+경로에서 **실제로 호출**한다(§3.6). 응용 서비스·리포지
+토리·인프라(SQL/ORM)는 그 판정을 대신 내리거나 복제하지
+않는다 — 판정을 인프라로 옮기면 같은 판정의 도메인
+메서드가 호출되지 않는 죽은 코드가 되어 위 빈혈 모델로
+회귀한다. 동시성 안전이 필요해도 판정을 SQL로 옮기지
+말고, 인프라엔 경합 가드(낙관적 `version`/CAS)만 두고
+충돌 시 응용 서비스가 재조회 후 도메인 메서드부터
+재실행한다(메커니즘 `architecture-db` §9.5).</pre>
+    <p>규칙 ID 없음 — 부를 이름은 «§3.2»뿐. 볼드 규범문과 해설 산문의 경계도 사람 독해.</p>
+  </div>
+  <div class="side aft"><span class="tag">완성형 — v3.2 형식</span>
+    <p>같은 문단이 블록 시퀀스로 그래프에 살고, 볼드 규범문 블록만 규칙(Work)으로 승격:</p>
+<pre class="ttl"><span class="c"># ontology/rules/architecture-ddd.ttl</span>
+<b>djr:R-0417</b> a djr:NormBlock , djr:Rule , djr:Obligation ;
+  djr:normText <b>"판정·불변식은 도메인이 소유하고
+   프로덕션 경로에서 실행된다(빈혈 차단)."</b>@ko ;
+  djr:inSection djr:sec-add-3-2 ; djr:order 4 ;
+  djr:appliesTo djr:layer-domain ;
+  djr:enforcedBy djr:agent-discipline-reviewer ;
+  djr:platform djr:claude , djr:codex .
+
+<span class="c"># 이어지는 해설 문장들은 산문 블록으로 통짜 보존</span>
+djr:blk-add-3-2-5 a djr:ProseBlock ;
+  djr:text "비즈니스 판정과 불변식은 도메인
+   애그리거트(단일 애그리거트에 담기지 않으면
+   도메인 서비스)가 소유하고…"@ko ;
+  djr:inSection djr:sec-add-3-2 ; djr:order 5 .</pre>
+    <p>렌더하면 왼쪽 문서가 그대로 다시 나옴(블록 모델) — 문장은 한 글자도 안 바뀜.</p>
+  </div>
+</div>
+
+<h3>② 프롬프트 → 규칙 주입 — <span style="color: var(--ink-soft); font-weight: 600;">파이프라인 에이전트</span> <span class="badge supply">그래프가 공급한다</span></h3>
+<div class="ba">
+  <div class="side now"><span class="tag">지금 — 실물</span>
+    <p>coder가 받는 것: <span class="mono">SKILL.md</span> 17행 «핵심 운영 원칙» 11항 중 이 발주에 걸리는 2항(실물):</p>
+<pre class="ttl">- 엔티티는 애그리거트의 일부로만 사용하고,
+  독립적으로 생성·접근하지 않는다 (§3.2, §8)
+- 응용 서비스는 흐름 제어와 트랜잭션 관리만
+  담당하고, 비즈니스 로직을 두지 않는다 (§3.6)</pre>
+    <p>§3.2 본문(위 632행 문단)까지 실독할지는 <b>coder의 판단</b> — 요약만 보고 넘어갈 수 있음(확률).</p>
+  </div>
+  <div class="side aft"><span class="tag">완성형 — v3.2 형식</span>
+    <p>변경 경로(orders BC·domain/application 층)로 질의 카탈로그 실행:</p>
+<pre class="ttl">SELECT ?rule ?text WHERE {
+  ?rule a djr:Rule ; djr:appliesTo ?layer ;
+        djr:normText ?text .
+  VALUES ?t { djr:layer-domain djr:layer-application }
+  ?t rdfs:subClassOf* ?layer . }</pre>
+    <p>결과 규칙 팩이 <b>반드시 주입</b> — 문장은 코퍼스 실물 그대로:</p>
+<pre class="ttl">[규칙 팩 — orders · domain/application]
+R-0417(의무): 판정·불변식은 도메인이 소유하고
+  프로덕션 경로에서 실행된다(빈혈 차단).
+R-0421(의무): 응용 서비스는 흐름 제어와 트랜잭션
+  관리만 담당하고, 비즈니스 로직을 두지 않는다. …</pre>
+  </div>
+</div>
+
+<h3>③ coder의 실수 — 양쪽 동일</h3>
+<p class="tx">이 실수의 실물 표본은 코퍼스 자신이 갖고 있습니다 — <span class="mono">final.md</span> 585행, 안티패턴으로 박아둔 실제 예제 코드:</p>
+<pre class="ttl"><span class="c"># === 빈혈 도메인 모델 (Anemic Domain Model) -- 안티패턴 ===   ← final.md 585행 실물</span>
+@dataclass
+class OrderAnemic:
+    """데이터만 있고 행동이 없는 빈혈 모델"""
+    id: str
+    customer_id: str
+    items: list
+    status: str
+    total: int
+
+class OrderServiceAnemic:
+    """모든 비즈니스 로직이 서비스에 집중 -- 절차적 프로그래밍과 동일"""
+    def place_order(self, order: OrderAnemic) -> None:
+        if not order.items:
+            raise ValueError("상품이 없습니다")
+        order.total = sum(i["price"] * i["qty"] for i in order.items)
+        <b>order.status = "placed"</b></pre>
+<p class="tx">이번 발주에서 coder가 같은 패턴으로 가면 <span class="mono">cancel_order</span> 서비스가 <span class="mono">order.status</span>를 직접 판정·변경하게 됩니다. LLM은 확률이라 이 실수는 <b>지금이든 완성형이든 똑같이</b> 날 수 있습니다.</p>
+
+<h3>④ 위반 판정 — <span style="color: var(--ink-soft); font-weight: 600;">검사기 27종·리뷰어</span> <span class="badge wire">그래프와 배선된다</span></h3>
+<div class="ba">
+  <div class="side now"><span class="tag">지금 — 실물</span>
+    <p>이 축을 잡는 결정적 검사기는 없습니다 — 저장소 스스로 그렇게 적어뒀습니다. <span class="mono">agents/discipline-reviewer.md</span> 76행(실물):</p>
+<pre class="ttl">빈혈 판정은 형태 매칭으로 거짓양성·거짓음성이
+양립 불가해 결정적 백스톱을 두지 않는다 —
+C형 빈혈 적출은 전적으로 너의 의미 점검 몫이다</pre>
+    <p><span class="mono">agents/design-review-ddd.md</span> 26행(실물):</p>
+<pre class="ttl">명세가 정의한 비즈니스 판정·불변식마다 «판정 →
+배정 위치(애그리거트·도메인 서비스 메서드)» 1행으로
+대조하고, 응용 서비스·인프라 경로에 남는 판정이
+있으면 그 행을 blocker로 올린다</pre>
+    <p>즉 잡는 주체가 전부 <b>LLM 리뷰어</b>고, 결과는 산문 리포트 — 놓치면 흔적 없이 머지.</p>
+  </div>
+  <div class="side aft"><span class="tag">완성형 — v3.2 형식</span>
+    <p>같은 리뷰어가 잡아도, 산문 코멘트가 아니라 <b>기계 가독 위반 레코드</b>로 남깁니다:</p>
+<pre class="ttl"><b>djr:V-20260818-007</b> a djr:Violation ;
+  djr:violates djr:R-0417 ; djr:atRevision "1" ;
+  djr:target "orders/application/services.py#cancel_order" ;
+  djr:foundBy djr:agent-discipline-reviewer ;
+  djr:severity djr:gate-blocking .</pre>
+    <p>이 레코드가 위반 그래프에 앉아 집계·재생성의 재료가 됩니다. 형태 매칭이 가능한 다른 규칙 축(타입 어노테이션·파일트리 등)은 검사기가 직접 exit 2 + 같은 형식의 레코드.</p>
+  </div>
+</div>
+
+<h3>⑤ 재작업 — <span style="color: var(--ink-soft); font-weight: 600;">에이전트 재생성 루프</span> <span class="badge supply">그래프가 공급한다</span></h3>
+<div class="ba">
+  <div class="side now"><span class="tag">지금</span>
+    <p>coder가 리뷰 산문 코멘트를 보고 <b>스킬 문서를 다시 읽으며</b> 수정 — 어디를 어떻게 고칠지 다시 독해.</p>
+  </div>
+  <div class="side aft"><span class="tag">완성형 — v3.2 형식</span>
+    <p>위반 레코드에서 재주입 프롬프트가 자동 구성 — <b>1건만, 좁게</b>:</p>
+<pre class="ttl">[위반 재생성 — 1건]
+R-0417: "판정·불변식은 도메인이 소유하고
+  프로덕션 경로에서 실행된다(빈혈 차단)."
+위치: orders/application/services.py#cancel_order
+지시: 판정을 애그리거트로 이동해 이 함수만 재작성.</pre>
+    <p>고쳐진 코드의 목표 형태도 코퍼스 실물이 이미 보여줍니다 — <span class="mono">final.md</span> 607·622행(실물):</p>
+<pre class="ttl"><span class="c"># === 풍부한 도메인 모델 (Rich Domain Model) -- DDD 지향 ===</span>
+class OrderRich:
+    def <b>cancel</b>(self) -> None:
+        """비즈니스 규칙이 도메인 객체 안에 있다"""
+        if self._status not in (OrderStatus.PLACED,
+                                OrderStatus.PREPARING):
+            raise ValueError(f"{self._status.value} 상태에서는
+                              취소할 수 없습니다")
+        self._status = OrderStatus.CANCELLED</pre>
+    <p>응용 서비스는 §3.2 실물 문장의 순서 그대로: <b>조회 → <span class="mono">order.cancel()</span> → 영속화</b>.</p>
+  </div>
+</div>
+
+<h3>⑥ 최종 결론(머지 이후) — <span style="color: var(--ink-soft); font-weight: 600;">개정 큐·codex 쌍둥이</span> <span class="badge render">그래프에서 생성된다</span></h3>
+<div class="ba">
+  <div class="side now"><span class="tag">지금</span>
+    <p>머지 끝. 이 규칙이 이번 달 몇 번 뚫렸는지 <b>기록 없음</b> — 규칙을 고칠 근거도 없음. codex판 문서는 손으로 따로 유지(표류 실증 2건이 이렇게 생김).</p>
+  </div>
+  <div class="side aft"><span class="tag">완성형 — v3.2 형식</span>
+    <p>머지 + 월말 위반 그래프 집계:</p>
+<pre class="ttl">SELECT ?rule (COUNT(?v) AS ?n) WHERE {
+  ?v a djr:Violation ; djr:violates ?rule }
+GROUP BY ?rule ORDER BY DESC(?n)
+<span class="c">→ djr:R-0417 · 5건 (1위)</span></pre>
+    <p>→ 개정 제안 큐에 자동 후보: <b>«R-0417에 반례 예제 블록 추가 검토»</b> — 규칙이 감이 아니라 데이터로 진화. codex판은 같은 노드에서 렌더라 표류 원천 불가.</p>
+  </div>
+</div>
+
+<p class="tx" style="margin-top:0.9rem;"><b>요약</b>: 실수(③)는 양쪽 동일 — 달라지는 건 그 다음 전부입니다. ②주입이 확률→보장, ④검출 결과가 산문→기계 가독 레코드, ⑤재작업이 전문 재독→좁은 재주입, ⑥개정이 감→데이터. «확률이 결과 품질에서 소요 횟수로 이동한다»가 이 그림입니다.</p>
+
+<p class="tx"><b>이 발주 경로에 직접 안 나온 나머지 구성요소 4개</b> (전체 8개의 상세는 위 «상세 표 펼치기»):</p>
+<div class="apgrid">
+  <div class="ap">
+    <div class="aphead"><b>Coordinator·커맨드</b><span class="badge render">그래프에서 생성된다</span></div>
+    <p>registry 절(검사기 목록)만 그래프 렌더로 대체 — flow 산문은 유지.</p>
+  </div>
+  <div class="ap">
+    <div class="aphead"><b>개발 도구 21종</b><span class="badge guard">그래프를 지킨다</span></div>
+    <p>①의 저작 게이트(4단·SHACL·직렬화)와 렌더 동기 검증이 이들의 새 임무 — 대부분 존치, 미러 도구만 T4 대체.</p>
+  </div>
+  <div class="ap">
+    <div class="aphead"><b>모노레포 명세(538규칙)</b><span class="badge link">이름만 연결</span></div>
+    <p>적용 범위 밖 — 산문 정본 잔존, <code>djr:alias</code>로 참조만(T3 재검토).</p>
+  </div>
+  <div class="ap">
+    <div class="aphead"><b>픽스처·평가</b><span class="badge wire">그래프와 배선된다</span></div>
+    <p>셰이프 골든 페어로 그래프 검증 자체를 검증 — 자기 검증 레인 확장.</p>
+  </div>
+</div>
+
+<h2>진행도</h2>
+<p class="tx"><b>v3 준비 사이클</b> (동결 전 — v2 자산은 이월):</p>
+<div class="prep">
+  <span>① 현황 실측 ✓</span>
+  <span>② 조사 1차 ✓</span>
+  <span>②′ 보강 조사 7레인 ✓</span>
+  <span>③ 블루프린트 v3 ✓</span>
+  <span>④ 적대 리뷰 69건+검증 2회 ✓</span>
+  <span>⑤ 심의·동결 ✓ <span class="mono" style="font-size:0.7rem;">8b212d9</span></span>
+</div>
+
+<p class="tx" style="margin-top:1.2rem;"><b>실행 단계 T0~T5</b> (v3.2 §8 — 동결 후 착수, 단계 사이는 전부 내 게이트):</p>
+
+<div class="phase">
+  <div class="ph"><span class="pn">T0</span><span class="pt">기반 — 스택 구축 + 그래프 없이 도는 폐루프</span><span class="st next">검수 통과 — 커밋 대기</span></div>
+  <p>그래프 저장소 골격·어휘·SHACL 셰이프·저작 게이트·<code>make verify</code> 신설. 병행으로 위반 재생성 루프 시제품(그래프 없이 기존 검사기로 — 실증 근거가 있는 부품 먼저).</p>
+  <div class="ask"><span class="k">내 확인</span>T0 검수 — 고의 오류 픽스처 전 항목 차단 확인</div>
+</div>
+<div class="gate">게이트 — T0 검수</div>
+
+<div class="phase wait">
+  <div class="ph"><span class="pn">T1</span><span class="pt">파일럿 이관</span><span class="st wait">대기</span></div>
+  <p>606절 유형 분류(+codex 대응) 후 대표 스킬 1~2개를 그래프로 이관, 렌더 투영이 원문과 같은지 검증.</p>
+  <div class="ask"><span class="k">내 확인</span>절 분류 동결 + 파일럿 검수 + 표류 2건 처분</div>
+</div>
+<div class="gate">게이트 — T1 검수</div>
+
+<div class="phase wait">
+  <div class="ph"><span class="pn">T2</span><span class="pt">폐루프 완성 + A/B 측정</span><span class="st wait">대기</span></div>
+  <p>검사기 출력을 위반 그래프로 통일, 위반만 들고 재생성하는 루프 배선, 3조건 비교 실험(off/루프만/루프+그래프)으로 품질 이득 측정.</p>
+  <div class="ask"><span class="k">내 확인</span><b>계속/조정 판정</b>(사전 등록 규칙 통과 확인) — 이 게이트가 전량 이관의 관문</div>
+</div>
+<div class="gate">게이트 — T2 판정</div>
+
+<div class="phase wait">
+  <div class="ph"><span class="pn">T3</span><span class="pt">전량 이관</span><span class="st wait">대기</span></div>
+  <p>참조성 절 전량을 그래프 정본으로(배치당 ≤250문장·간격 ≤2주), 산문은 렌더 투영물로 전환 완료.</p>
+  <div class="ask"><span class="k">내 확인</span>배치별 검수 + 전환 선언 승인</div>
+</div>
+<div class="gate">게이트 — T3 검수</div>
+
+<div class="phase wait">
+  <div class="ph"><span class="pn">T4</span><span class="pt">쌍둥이·주입 확대</span><span class="st wait">대기</span></div>
+  <p>같은 그래프에서 codex판도 렌더(미러 표류 검사의 구조적 소멸), 규칙 팩 주입을 전 에이전트로 확대.</p>
+  <div class="ask"><span class="k">내 확인</span>codex 잔차 심사 + 전환 승인</div>
+</div>
+<div class="gate">게이트 — T4 검수</div>
+
+<div class="phase wait">
+  <div class="ph"><span class="pn">T5</span><span class="pt">측정·수렴</span><span class="st wait">대기</span></div>
+  <p>품질 리포트 상시화(주기적 미니 A/B), 잔차 화이트리스트 전수 재심, 잔여 결정 정리.</p>
+  <div class="ask"><span class="k">내 확인</span>최종 평가 → <b>개발 완료</b></div>
+</div>
+
+<h2>완성형 — 전체 플로우</h2>
+<p class="tx">T5까지 끝났을 때 하루가 도는 모습 (v3.2 §3·§5):</p>
+<div class="flowmap">
+  <div class="frow">
+    <span class="fb">에이전트가 Turtle 저작</span><span class="fa">→</span>
+    <span class="fnote">①파스 ②정본 직렬화 ③의미 보존 해시 ④SHACL</span><span class="fa">→</span>
+    <span class="fb core">그래프 정본 <b>ontology/</b></span>
+  </div>
+  <div class="frow">
+    <span class="fb core">그래프 정본</span><span class="fa">→</span>
+    <span class="fnote">자동 렌더(단방향·직접 편집 금지)</span><span class="fa">→</span>
+    <span class="fb">투영 markdown — <b>dddjango판·codex판</b></span>
+    <span class="fb">규칙 팩 — 경로→SPARQL 선별</span>
+  </div>
+  <div class="frow">
+    <span class="fa">→</span>
+    <span class="fb">파이프라인 에이전트 <span class="fnote">(SKILL 라우터 실독+팩 주입)</span></span><span class="fa">→</span>
+    <span class="fb">산출물 — 코드·명세</span><span class="fa">→</span>
+    <span class="fb">검사기 27종+SHACL 판정</span><span class="fa">→</span>
+    <span class="fb core">위반 그래프</span>
+  </div>
+  <div class="floop">
+    <b>루프 ↩</b> 위반 그래프에서 — ① 위반된 규칙 레코드만 들고 <b>재생성</b>(에이전트로 즉시) ② 반복 위반 규칙은 <b>개정 제안 큐</b>(그래프 개정으로 — 규칙이 스스로 진화). 산문↔코드 미러 검사는 이 그림에 없음 — 같은 그래프에서 두 판을 렌더하므로 <b>검사가 소멸</b>.
+  </div>
+</div>
+
+<h2>게이트 로그</h2>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>날짜</th><th>게이트</th><th>결정</th></tr></thead>
+    <tbody>
+      <tr><td>2026-08-18</td><td>학습 충분 판정</td><td>통과 — 적용 전환 (Claude 판정 · 사용자 수용)</td></tr>
+      <tr><td>2026-08-18</td><td>준비 절차 승인</td><td>①실측→②조사→③작성→④적대 리뷰→⑤심의 5단계 승인</td></tr>
+      <tr><td>2026-08-18</td><td>① 현황 실측(P0) 검토</td><td><b>통과</b> (사용자)</td></tr>
+      <tr><td>2026-08-18</td><td>④ 적대 리뷰</td><td>54건 전건 반영 → 검증 2회 → v2.2 동결 후보</td></tr>
+      <tr><td>2026-08-18</td><td>⑤ 심의</td><td><b>방향 정정</b> — 목표 재정의(최대 적용·품질 우선·표준 스택 전면), v2.2 폐기·자산 이월, v3 재설계 개시 (사용자)</td></tr>
+      <tr><td>2026-08-18</td><td>②′ 보강 조사</td><td>7레인 완료(출처 310) — 폐루프=품질 본체 · 소비는 렌더 투영 · OWL 추론 배제 권고</td></tr>
+      <tr><td>2026-08-18</td><td>③′ 블루프린트 v3</td><td>초안 완성 — E1~E8·폐루프·이관 전략·A/B 내장·T0~T5</td></tr>
+      <tr><td>2026-08-18</td><td>④′ 적대 리뷰</td><td>6렌즈 69건(blocker 9) 전건 반영 → <b>v3.1</b> — 블록 모델·3암 A/B·지표 재정의</td></tr>
+      <tr><td>2026-08-18</td><td>검증 패스</td><td>V1 대조: blocker 9 전건 착지·미착지 0·반쪽 3 보완 / V2 신선한 눈: 10건 반영 → <b>v3.2 동결 후보</b></td></tr>
+      <tr><td>2026-08-18</td><td>⑤ v3.2 심의·동결</td><td><b>동결</b> (사용자) — 문서 세트 커밋 <span class="mono">8b212d9</span>, 이후 수정은 §10 개정 절차로만</td></tr>
+      <tr><td>2026-08-18</td><td>T0 세부 계획</td><td>작성 완료</td></tr>
+      <tr><td>2026-08-19</td><td>T0 계획 적대 리뷰</td><td>3렌즈(표준·잠금·실물/동결) 32건 전건 반영 → <b>v1.1</b></td></tr>
+      <tr><td>2026-08-19</td><td>T0 계획 검토</td><td>통과 — D1·D2·D3·D5 전건 승인(사용자)</td></tr>
+      <tr><td>2026-08-19</td><td>T0 구현</td><td>완료 — A트랙 9항+B트랙 3항, verify-ontology 전 6단 green·1왕복 데모 7→0</td></tr>
+      <tr><td>2026-08-19</td><td><b>T0 검수</b></td><td><b>통과</b> — 기계 기준 6항 green + 대리 검수(감사 14건·표류 판정) + 디시전 시트 4건 «전부 승인»(개정 1·소유 확장·EXPECTED 갱신). make verify 전체 green</td></tr>
+      <tr><td>—</td><td>T0 커밋</td><td><b>승인 대기</b></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="note">세부 문서(Claude 관리): <b>동결 후보 정본</b> <span class="mono">workspace/design/2026-08-18-ontology-blueprint-v3.md</span> (v3.2) · 진행 로그 <span class="mono">2026-08-18-ontology-adoption-log.md</span> · 보강 조사 <span class="mono">-v3-research/</span> · 적대 리뷰·중재 <span class="mono">-v3-adversarial/</span> · 배경 학습은 <a href="https://claude.ai/code/artifact/70af9350-e115-46cc-9101-e91764cf5311">온톨로지 학습 지도</a>.</p>
+</div>

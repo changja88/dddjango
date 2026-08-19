@@ -1,0 +1,3 @@
+@prefix foo: <http://example.org/foo#> .
+
+foo:x foo:y foo:z .

@@ -1,0 +1,5 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-fx-u1 a djr:Obligation ;
+    skos:prefLabel "미배선 규범 픽스처"@ko .

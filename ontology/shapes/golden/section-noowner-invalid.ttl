@@ -1,0 +1,4 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-section-i1 a djr:Section ;
+    djr:headingSnapshot "소유자 없는 절"@ko .

@@ -1,0 +1,6 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-block-1 a djr:Block ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:text "상태 전이의 판정과 불변식 검증은 애그리거트 루트가 소유한다."@ko .

@@ -1,0 +1,14 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-alias-1 a djr:AliasEntry ;
+    djr:aliasFor djr:golden-work-a1 ;
+    djr:aliasText "DJR-77" ;
+    djr:aliasType djr:alias-unique .
+
+djr:golden-checker-a1 a djr:Checker ;
+    skos:prefLabel "골든 검사기 a1"@ko .
+
+djr:golden-work-a1 a djr:Obligation ;
+    skos:prefLabel "골든 규범 a1"@ko ;
+    djr:enforcedBy djr:golden-checker-a1 .

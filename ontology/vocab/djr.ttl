@@ -1,0 +1,229 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:Agent a rdfs:Class ;
+    skos:prefLabel "에이전트"@ko .
+
+djr:AliasEntry a rdfs:Class ;
+    skos:prefLabel "별칭 항목"@ko .
+
+djr:AliasType a rdfs:Class ;
+    skos:prefLabel "별칭 유형"@ko .
+
+djr:Block a rdfs:Class ;
+    skos:prefLabel "블록"@ko .
+
+djr:BlockKind a rdfs:Class ;
+    skos:prefLabel "블록 종별"@ko .
+
+djr:Checker a rdfs:Class ;
+    skos:prefLabel "검사기"@ko .
+
+djr:Document a rdfs:Class ;
+    skos:prefLabel "문서"@ko .
+
+djr:Exception a rdfs:Class ;
+    rdfs:subClassOf djr:Norm ;
+    skos:prefLabel "예외"@ko .
+
+djr:Expression a rdfs:Class ;
+    skos:prefLabel "규범 판본"@ko .
+
+djr:Norm a rdfs:Class ;
+    rdfs:subClassOf djr:Work ;
+    skos:prefLabel "규범"@ko .
+
+djr:Obligation a rdfs:Class ;
+    rdfs:seeAlso <http://www.w3.org/ns/odrl/2/Duty> ;
+    rdfs:subClassOf djr:Norm ;
+    skos:prefLabel "의무"@ko .
+
+djr:Override a rdfs:Class ;
+    rdfs:subClassOf djr:Norm ;
+    skos:prefLabel "우선"@ko .
+
+djr:Permission a rdfs:Class ;
+    rdfs:seeAlso <http://www.w3.org/ns/odrl/2/Permission> ;
+    rdfs:subClassOf djr:Norm ;
+    skos:prefLabel "허용"@ko .
+
+djr:Platform a rdfs:Class ;
+    skos:prefLabel "플랫폼"@ko .
+
+djr:Prohibition a rdfs:Class ;
+    rdfs:seeAlso <http://www.w3.org/ns/odrl/2/Prohibition> ;
+    rdfs:subClassOf djr:Norm ;
+    skos:prefLabel "금지"@ko .
+
+djr:RevisionKind a rdfs:Class ;
+    skos:prefLabel "개정 분류"@ko .
+
+djr:Section a rdfs:Class ;
+    skos:prefLabel "절"@ko .
+
+djr:SectionOwner a rdfs:Class ;
+    skos:prefLabel "절 소유자"@ko .
+
+djr:SyncDebt a rdfs:Class ;
+    skos:prefLabel "동기 채무"@ko .
+
+djr:Violation a rdfs:Class ;
+    skos:prefLabel "위반 개체"@ko .
+
+djr:Work a rdfs:Class ;
+    skos:prefLabel "규범 정체성"@ko .
+
+djr:alias-contextual a djr:AliasType ;
+    skos:prefLabel "문맥 한정 별칭"@ko .
+
+djr:alias-unabsorbable a djr:AliasType ;
+    skos:prefLabel "흡수 불가 별칭"@ko .
+
+djr:alias-unique a djr:AliasType ;
+    skos:prefLabel "유일 별칭"@ko .
+
+djr:aliasFor a rdf:Property ;
+    skos:prefLabel "별칭 대상"@ko .
+
+djr:aliasText a rdf:Property ;
+    skos:prefLabel "별칭 문자열"@ko .
+
+djr:aliasType a rdf:Property ;
+    skos:prefLabel "별칭 유형 값"@ko .
+
+djr:appliesToPlatform a rdf:Property ;
+    skos:prefLabel "적용 플랫폼"@ko .
+
+djr:byChecker a rdf:Property ;
+    skos:prefLabel "판정 검사기"@ko .
+
+djr:currentExpression a rdf:Property ;
+    skos:prefLabel "현행 판본"@ko .
+
+djr:debtReason a rdf:Property ;
+    skos:prefLabel "채무 사유"@ko .
+
+djr:debtRegisteredOn a rdf:Property ;
+    skos:prefLabel "채무 등재일"@ko .
+
+djr:debtSection a rdf:Property ;
+    skos:prefLabel "채무 대상 절"@ko .
+
+djr:delegatedTo a rdf:Property ;
+    skos:prefLabel "위임 에이전트"@ko .
+
+djr:deprecated a rdf:Property ;
+    skos:prefLabel "폐기 여부"@ko .
+
+djr:detectedAt a rdf:Property ;
+    skos:prefLabel "판정 시각"@ko .
+
+djr:enforcedBy a rdf:Property ;
+    skos:prefLabel "담당 검사기"@ko .
+
+djr:evidence a rdf:Property ;
+    skos:prefLabel "근거"@ko .
+
+djr:headingCurrent a rdf:Property ;
+    skos:prefLabel "현행 헤딩"@ko .
+
+djr:headingSnapshot a rdf:Property ;
+    skos:prefLabel "채번 시점 헤딩"@ko .
+
+djr:inDocument a rdf:Property ;
+    skos:prefLabel "소속 문서"@ko .
+
+djr:inSection a rdf:Property ;
+    skos:prefLabel "소속 절"@ko .
+
+djr:kind a rdf:Property ;
+    skos:prefLabel "블록 종별 값"@ko .
+
+djr:kind-checklist-item a djr:BlockKind ;
+    skos:prefLabel "체크리스트 항"@ko .
+
+djr:kind-code a djr:BlockKind ;
+    skos:prefLabel "코드 블록"@ko .
+
+djr:kind-norm a djr:BlockKind ;
+    skos:prefLabel "규범 문장"@ko .
+
+djr:kind-prose a djr:BlockKind ;
+    skos:prefLabel "산문 문단"@ko .
+
+djr:kind-table-row a djr:BlockKind ;
+    skos:prefLabel "표 행"@ko .
+
+djr:order a rdf:Property ;
+    skos:prefLabel "블록 순서"@ko .
+
+djr:overrides a rdf:Property ;
+    skos:prefLabel "우선 대상"@ko .
+
+djr:owner-graph a djr:SectionOwner ;
+    skos:prefLabel "그래프 소유"@ko .
+
+djr:owner-prose a djr:SectionOwner ;
+    skos:prefLabel "산문 소유"@ko .
+
+djr:pathGlob a rdf:Property ;
+    skos:prefLabel "경로 글롭"@ko .
+
+djr:platform-claude a djr:Platform ;
+    skos:prefLabel "Claude 플랫폼"@ko .
+
+djr:platform-codex a djr:Platform ;
+    skos:prefLabel "codex 플랫폼"@ko .
+
+djr:replacedBy a rdf:Property ;
+    skos:prefLabel "대체 규범"@ko .
+
+djr:restates a rdf:Property ;
+    skos:prefLabel "재진술 원본"@ko .
+
+djr:revision a rdf:Property ;
+    skos:prefLabel "개정 번호"@ko .
+
+djr:revision-amendment a djr:RevisionKind ;
+    skos:prefLabel "규범 개정"@ko .
+
+djr:revision-clarification a djr:RevisionKind ;
+    skos:prefLabel "명확화"@ko .
+
+djr:revision-redefinition a djr:RevisionKind ;
+    skos:prefLabel "지시 대상 변경"@ko .
+
+djr:revisionKind a rdf:Property ;
+    skos:prefLabel "개정 분류 값"@ko .
+
+djr:runId a rdf:Property ;
+    skos:prefLabel "실행 식별자"@ko .
+
+djr:sectionNumber a rdf:Property ;
+    skos:prefLabel "절 번호"@ko .
+
+djr:sectionOwner a rdf:Property ;
+    skos:prefLabel "절 소유자 값"@ko .
+
+djr:severity a rdf:Property ;
+    skos:prefLabel "심각도"@ko .
+
+djr:statesNorm a rdf:Property ;
+    skos:prefLabel "진술 규범"@ko .
+
+djr:targetFile a rdf:Property ;
+    skos:prefLabel "대상 파일"@ko .
+
+djr:targetSymbol a rdf:Property ;
+    skos:prefLabel "대상 심볼"@ko .
+
+djr:text a rdf:Property ;
+    skos:prefLabel "블록 리터럴"@ko .
+
+djr:violatesExpression a rdf:Property ;
+    skos:prefLabel "위반 판본"@ko .
+
+djr:violatesWork a rdf:Property ;
+    skos:prefLabel "위반 규범"@ko .

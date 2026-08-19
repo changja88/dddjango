@@ -1,0 +1,6 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+djr:BadShape a sh:NodeShape ;
+    sh:property [ sh:path djr:kind ] ;
+    sh:targetClass djr:Block .

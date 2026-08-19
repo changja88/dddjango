@@ -1,0 +1,9 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-checker-u2 a djr:Checker ;
+    skos:prefLabel "골든 검사기 u2"@ko .
+
+djr:golden-work-u2 a djr:Norm ;
+    skos:prefLabel "규범 유형 없는 규범"@ko ;
+    djr:enforcedBy djr:golden-checker-u2 .

@@ -1,0 +1,11 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+djr:golden-debt-1 a djr:SyncDebt ;
+    djr:debtReason "핫픽스 — 산문 선반영, 그래프 반영 대기" ;
+    djr:debtRegisteredOn "2026-08-19"^^xsd:date ;
+    djr:debtSection djr:golden-section-d1 .
+
+djr:golden-section-d1 a djr:Section ;
+    djr:headingSnapshot "채무 대상 절"@ko ;
+    djr:sectionOwner djr:owner-graph .

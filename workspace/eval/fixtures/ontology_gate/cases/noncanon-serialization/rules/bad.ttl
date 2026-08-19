@@ -1,0 +1,4 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-fx-9 a djr:Checker .
+djr:golden-fx-3 a djr:Checker .

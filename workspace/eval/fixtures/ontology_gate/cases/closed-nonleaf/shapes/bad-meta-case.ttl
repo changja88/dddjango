@@ -1,0 +1,8 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+djr:BadClosed a sh:NodeShape ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:targetClass djr:Work .

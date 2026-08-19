@@ -1,0 +1,264 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+djr:AliasEntryShape a sh:NodeShape ;
+    sh:property djr:AliasEntryShape-aliasFor, djr:AliasEntryShape-aliasText, djr:AliasEntryShape-aliasType ;
+    sh:targetClass djr:AliasEntry .
+
+djr:AliasEntryShape-aliasFor a sh:PropertyShape ;
+    sh:class djr:Work ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:aliasFor .
+
+djr:AliasEntryShape-aliasText a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:aliasText .
+
+djr:AliasEntryShape-aliasType a sh:PropertyShape ;
+    sh:class djr:AliasType ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:aliasType .
+
+djr:BlockShape a sh:NodeShape ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property djr:BlockShape-inSection, djr:BlockShape-kind, djr:BlockShape-order, djr:BlockShape-restates, djr:BlockShape-statesNorm, djr:BlockShape-text ;
+    sh:targetClass djr:Block .
+
+djr:BlockShape-inSection a sh:PropertyShape ;
+    sh:class djr:Section ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:inSection .
+
+djr:BlockShape-kind a sh:PropertyShape ;
+    sh:class djr:BlockKind ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:kind .
+
+djr:BlockShape-order a sh:PropertyShape ;
+    sh:datatype xsd:integer ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:order .
+
+djr:BlockShape-restates a sh:PropertyShape ;
+    sh:class djr:Block ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:restates .
+
+djr:BlockShape-statesNorm a sh:PropertyShape ;
+    sh:class djr:Work ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:statesNorm .
+
+djr:BlockShape-text a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:text .
+
+djr:ExpressionShape a sh:NodeShape ;
+    sh:property djr:ExpressionShape-revision, djr:ExpressionShape-specializationOf ;
+    sh:targetClass djr:Expression .
+
+djr:ExpressionShape-revision a sh:PropertyShape ;
+    sh:datatype xsd:integer ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:revision .
+
+djr:ExpressionShape-specializationOf a sh:PropertyShape ;
+    sh:class djr:Work ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path prov:specializationOf .
+
+djr:HasChecker a sh:NodeShape ;
+    sh:property djr:HasChecker-p .
+
+djr:HasChecker-p a sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:path djr:enforcedBy .
+
+djr:HasDelegate a sh:NodeShape ;
+    sh:property djr:HasDelegate-p .
+
+djr:HasDelegate-p a sh:PropertyShape ;
+    sh:minCount 1 ;
+    sh:path djr:delegatedTo .
+
+djr:IsException a sh:NodeShape ;
+    sh:class djr:Exception .
+
+djr:IsObligation a sh:NodeShape ;
+    sh:class djr:Obligation .
+
+djr:IsOverride a sh:NodeShape ;
+    sh:class djr:Override .
+
+djr:IsPermission a sh:NodeShape ;
+    sh:class djr:Permission .
+
+djr:IsProhibition a sh:NodeShape ;
+    sh:class djr:Prohibition .
+
+djr:NormShape a sh:NodeShape ;
+    sh:or ( djr:HasChecker djr:HasDelegate ), ( djr:IsObligation djr:IsProhibition djr:IsPermission djr:IsException djr:IsOverride ) ;
+    sh:property djr:NormShape-delegatedTo, djr:NormShape-enforcedBy ;
+    sh:targetClass djr:Norm .
+
+djr:NormShape-delegatedTo a sh:PropertyShape ;
+    sh:class djr:Agent ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:delegatedTo .
+
+djr:NormShape-enforcedBy a sh:PropertyShape ;
+    sh:class djr:Checker ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:enforcedBy .
+
+djr:PrefLabelShape a sh:NodeShape ;
+    sh:property djr:PrefLabelShape-label ;
+    sh:targetSubjectsOf skos:prefLabel .
+
+djr:PrefLabelShape-label a sh:PropertyShape ;
+    sh:path skos:prefLabel ;
+    sh:uniqueLang true .
+
+djr:SectionShape a sh:NodeShape ;
+    sh:property djr:SectionShape-headingCurrent, djr:SectionShape-headingSnapshot, djr:SectionShape-inDocument, djr:SectionShape-sectionNumber, djr:SectionShape-sectionOwner ;
+    sh:targetClass djr:Section .
+
+djr:SectionShape-headingCurrent a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:maxCount 1 ;
+    sh:path djr:headingCurrent .
+
+djr:SectionShape-headingSnapshot a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:headingSnapshot .
+
+djr:SectionShape-inDocument a sh:PropertyShape ;
+    sh:class djr:Document ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:inDocument .
+
+djr:SectionShape-sectionNumber a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path djr:sectionNumber .
+
+djr:SectionShape-sectionOwner a sh:PropertyShape ;
+    sh:class djr:SectionOwner ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:sectionOwner .
+
+djr:SyncDebtShape a sh:NodeShape ;
+    sh:property djr:SyncDebtShape-reason, djr:SyncDebtShape-registeredOn, djr:SyncDebtShape-section ;
+    sh:targetClass djr:SyncDebt .
+
+djr:SyncDebtShape-reason a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:debtReason .
+
+djr:SyncDebtShape-registeredOn a sh:PropertyShape ;
+    sh:datatype xsd:date ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:debtRegisteredOn .
+
+djr:SyncDebtShape-section a sh:PropertyShape ;
+    sh:class djr:Section ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:debtSection .
+
+djr:ViolationShape a sh:NodeShape ;
+    sh:property djr:ViolationShape-byChecker, djr:ViolationShape-detectedAt, djr:ViolationShape-evidence, djr:ViolationShape-runId, djr:ViolationShape-severity, djr:ViolationShape-targetFile, djr:ViolationShape-targetSymbol, djr:ViolationShape-violatesExpression, djr:ViolationShape-violatesWork ;
+    sh:targetClass djr:Violation .
+
+djr:ViolationShape-byChecker a sh:PropertyShape ;
+    sh:class djr:Checker ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:byChecker .
+
+djr:ViolationShape-detectedAt a sh:PropertyShape ;
+    sh:datatype xsd:dateTime ;
+    sh:maxCount 1 ;
+    sh:path djr:detectedAt .
+
+djr:ViolationShape-evidence a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path djr:evidence .
+
+djr:ViolationShape-runId a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path djr:runId .
+
+djr:ViolationShape-severity a sh:PropertyShape ;
+    sh:in ( sh:Violation sh:Warning sh:Info ) ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path djr:severity .
+
+djr:ViolationShape-targetFile a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:path djr:targetFile .
+
+djr:ViolationShape-targetSymbol a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path djr:targetSymbol .
+
+djr:ViolationShape-violatesExpression a sh:PropertyShape ;
+    sh:class djr:Expression ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:violatesExpression .
+
+djr:ViolationShape-violatesWork a sh:PropertyShape ;
+    sh:class djr:Work ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:violatesWork .
+
+djr:WorkShape a sh:NodeShape ;
+    sh:property djr:WorkShape-currentExpression, djr:WorkShape-prefLabel ;
+    sh:targetClass djr:Work .
+
+djr:WorkShape-currentExpression a sh:PropertyShape ;
+    sh:class djr:Expression ;
+    sh:maxCount 1 ;
+    sh:nodeKind sh:IRI ;
+    sh:path djr:currentExpression .
+
+djr:WorkShape-prefLabel a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:minCount 1 ;
+    sh:path skos:prefLabel .

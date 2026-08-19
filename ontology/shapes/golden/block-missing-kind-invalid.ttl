@@ -1,0 +1,5 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-block-k1 a djr:Block ;
+    djr:order 1 ;
+    djr:text "kind 없는 블록."@ko .

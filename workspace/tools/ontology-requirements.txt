@@ -1,0 +1,16 @@
+# 온톨로지 메인테이너 환경 버전 고정 (T0 A1 — 2026-08-19 실측 확정)
+# 파이썬: 3.14.7 (brew python@3.14 — /opt/homebrew/bin/python3.14). venv: 저장소 루트 .venv (비커밋)
+# 설치: make ontology-env  (pip --no-deps 로 설치 — rdfcanon 1.0.0 이 rdflib==7.5.0 을 정확 핀하지만
+#       rdflib 7.6.0 에서 W3C rdf-canon 공식 스위트 61/64 검증 완료. 실패 3건은 rdflib 파스 단계의
+#       타입 리터럴 정규화(사슬 수준 특성 — 자체 구현도 동일), 1건은 SHA-384 별도 검증 통과.
+#       근거: workspace/tools/ontology-authoring.md §RDFC-1.0)
+html5rdf==1.2.1
+owlrl==7.6.2
+packaging==26.3
+prettytable==3.18.0
+pyparsing==3.3.2
+pyshacl==0.40.1
+rdfcanon==1.0.0
+rdflib==7.6.0
+sortedcontainers==2.4.0
+wcwidth==0.8.2

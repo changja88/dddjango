@@ -9,7 +9,71 @@ CODEX_MANIFEST  := codex-dddjango/.codex-plugin/plugin.json
 # DRY=1 이면 실제 변경/커밋/푸시/Release 없이 시뮬레이션만 (버전 선택·기록 미리보기까지 실제 로직 실행)
 DRY ?= 0
 
-.PHONY: release
+.PHONY: release ontology-env ontology-hooks verify verify-ontology verify-base
+
+VENV_PY := .venv/bin/python
+
+# 저장소 검증 세트 단일 출처 (D1 — release [2/7] 이 이 타깃을 호출)
+# 롤백·중단 시 되돌림: 아래 의존에서 verify-ontology 한 줄 삭제 (t0-plan §7)
+verify: verify-ontology verify-base
+
+# 온톨로지 단 — .venv 파이썬 고정 (T0 A8)
+verify-ontology:
+	@set -euo pipefail; \
+	test -x $(VENV_PY) || { echo "ERROR: .venv 부재 — make ontology-env 필요"; exit 1; }; \
+	echo "[verify-ontology 0/6] 도구 사슬 스모크"; \
+	$(VENV_PY) workspace/tools/ontology_env_smoke.py; \
+	echo "[verify-ontology 1/6] 4단 저작 게이트 (전 ttl)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_gate.py; \
+	echo "[verify-ontology 2/6] meta-SHACL 2층"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_meta_shacl.py; \
+	echo "[verify-ontology 3/6] SHACL 본검증 (전량 병합)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_shacl_full.py; \
+	echo "[verify-ontology 4/6] 계층 병합·적용 대상 계수 회귀"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_hierarchy_check.py --with-golden; \
+	echo "[verify-ontology 5/6] 골든 페어 red/green"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_golden_check.py; \
+	echo "[verify-ontology 6/6] 게이트 스모크 (오류 계열→차단 단 매핑 표)"; \
+	PYTHONPATH=workspace/tools $(VENV_PY) workspace/tools/ontology_gate_smoke.py
+
+# 기존 릴리즈 검증 세트 — 시스템 python3 유지 (실측 기반 보존, t0-plan A8)
+verify-base:
+	@set -euo pipefail; \
+	echo "[verify-base] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
+	python3 workspace/tools/corpus_mirror_sync.py --check; \
+	PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
+	PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
+	PYTHONUTF8=1 python3 workspace/tools/spec_lint.py; \
+	PYTHONUTF8=1 python3 workspace/tools/checker_lint.py; \
+	PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
+	PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
+	PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
+	PYTHONUTF8=1 python3 workspace/tools/anchor_diff_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
+	PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \
+	diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__
+
+# 훅 단일 루트 설치 (T0 A8 — D2): core.hooksPath = workspace/hooks
+ontology-hooks:
+	@set -euo pipefail; \
+	if ls .git/hooks 2>/dev/null | grep -v '\.sample$$' | grep -q .; then \
+		echo "경고: .git/hooks 에 비샘플 훅 존재 — core.hooksPath 전환 시 조용히 무시됨"; \
+	fi; \
+	chmod +x workspace/hooks/pre-commit; \
+	git config core.hooksPath workspace/hooks; \
+	echo "훅 단일 루트 = workspace/hooks (해제: git config --unset core.hooksPath)"
+
+# 온톨로지 메인테이너 환경(.venv) 구축 — 버전 고정: workspace/tools/ontology-requirements.txt
+# rdflib·pySHACL·rdfcanon 은 이 venv 전용 (플러그인 배포물 침투 금지 — 블루프린트 E7)
+ontology-env:
+	@set -euo pipefail; \
+	PY=/opt/homebrew/bin/python3.14; \
+	command -v "$$PY" >/dev/null || { echo "ERROR: python3.14 필요 — brew install python@3.14"; exit 1; }; \
+	"$$PY" -m venv .venv; \
+	.venv/bin/pip install --quiet --upgrade pip; \
+	.venv/bin/pip install --quiet --no-deps -r workspace/tools/ontology-requirements.txt; \
+	.venv/bin/python workspace/tools/ontology_env_smoke.py
 
 # 새 버전 릴리즈: 버전 선택(patch/minor/major) → 두 마켓 manifest 동시 기록
 #   → 커밋 → annotated 태그 → push(main+tag) → GitHub Release 페이지 생성.
@@ -90,20 +154,8 @@ release:
 	else \
 		echo "[1/7] manifest 검증 (claude --strict)"; \
 		claude plugin validate $(PLUGIN) --strict; \
-		echo "[2/7] 검증 세트 (corpus·corpus-lint·spec·checker·cross-matrix·tree·coverage·fixture·anchor-smoke·gate-smoke·backstop·byte-copy)"; \
-		python3 workspace/tools/corpus_mirror_sync.py --check; \
-		PYTHONUTF8=1 python3 workspace/tools/corpus_lint.py; \
-		PYTHONUTF8=1 python3 workspace/tools/checker_cross_matrix.py; \
-		PYTHONUTF8=1 python3 workspace/tools/spec_lint.py; \
-		PYTHONUTF8=1 python3 workspace/tools/checker_lint.py; \
-		PYTHONUTF8=1 python3 workspace/tools/tree_mirror_check.py; \
-		PYTHONUTF8=1 python3 workspace/tools/reverse_coverage.py; \
-		PYTHONUTF8=1 python3 workspace/tools/fixture_matrix.py; \
-		PYTHONUTF8=1 python3 workspace/tools/anchor_diff_smoke.py; \
-		PYTHONUTF8=1 python3 workspace/tools/registry_gate_smoke.py; \
-		PYTHONUTF8=1 python3 workspace/tools/bc_registry_smoke.py; \
-		PYTHONUTF8=1 python3 workspace/tools/api_error_backstop_matrix.py; \
-		diff -rq dddjango/scripts codex-dddjango/skills/dddjango/scripts --exclude=__pycache__; \
+		echo "[2/7] 검증 세트 — make verify (verify-ontology + verify-base, D1 단일 출처)"; \
+		$(MAKE) verify; \
 		echo "[3/7] 버전 기록 (Claude·Codex)"; \
 		sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$$V\"/" $(CLAUDE_MANIFEST); \
 		sed -i '' "s/\"version\": *\"[^\"]*\"/\"version\": \"$$V\"/" $(CODEX_MANIFEST); \

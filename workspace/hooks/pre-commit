@@ -1,0 +1,24 @@
+#!/bin/sh
+# 온톨로지 정본 pre-commit 훅 (T0 A8 — D2 승인 규약)
+# 변경된 ontology/**/*.ttl 한정 경량 게이트: 4단 게이트(④는 vocab+wiring 병합) + shapes 변경 시 meta-SHACL 2층.
+# 퇴행 조건: ttl 변경 없음 → 즉시 exit 0 · .venv 부재+ttl 변경 → fail-closed(설치 안내).
+# 훅 단일 루트 = workspace/hooks (설치: make ontology-hooks · 해제: git config --unset core.hooksPath)
+
+changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^ontology/.*\.ttl$' || true)
+if [ -z "$changed" ]; then
+    exit 0
+fi
+
+if [ ! -x .venv/bin/python ]; then
+    echo "[pre-commit] ontology/ ttl 변경이 스테이지돼 있으나 .venv 부재 — make ontology-env 실행 후 재시도 (fail-closed)"
+    exit 1
+fi
+
+echo "[pre-commit] 온톨로지 게이트: $(echo "$changed" | tr '\n' ' ')"
+PYTHONPATH=workspace/tools .venv/bin/python workspace/tools/ontology_gate.py $changed || exit 1
+
+if echo "$changed" | grep -q '^ontology/shapes/'; then
+    PYTHONPATH=workspace/tools .venv/bin/python workspace/tools/ontology_meta_shacl.py || exit 1
+fi
+
+exit 0

@@ -1,0 +1,26 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+djr:MetaClosedIgnoreTypeShape a sh:NodeShape ;
+    sh:sparql djr:MetaClosedIgnoreTypeShape-q ;
+    sh:targetSubjectsOf sh:closed .
+
+djr:MetaClosedIgnoreTypeShape-q sh:message "closed 셰이프는 sh:ignoredProperties ( rdf:type ) 의무 동반 — SHACL REC §4.8.1 은 rdf:type 을 자동 예외로 두지 않는다 (T0 계획 A6)" ;
+    sh:select "SELECT $this WHERE { $this <http://www.w3.org/ns/shacl#closed> true . FILTER NOT EXISTS { $this <http://www.w3.org/ns/shacl#ignoredProperties>/<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>*/<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> . } }" .
+
+djr:MetaClosedLeafShape a sh:NodeShape ;
+    sh:sparql djr:MetaClosedLeafShape-q ;
+    sh:targetSubjectsOf sh:closed .
+
+djr:MetaClosedLeafShape-q sh:message "sh:closed 는 말단 클래스 타깃 셰이프에만 허용 — 상위 클래스 타깃 closed 는 타깃 상속과 충돌 (E3)" ;
+    sh:select "SELECT $this WHERE { $this <http://www.w3.org/ns/shacl#closed> true . $this <http://www.w3.org/ns/shacl#targetClass> ?c . ?sub <http://www.w3.org/2000/01/rdf-schema#subClassOf>+ ?c . FILTER(?sub != ?c) }" .
+
+djr:MetaNodeShapeIriShape a sh:NodeShape ;
+    sh:message "셰이프 노드는 IRI 의무 (E4 — blank node 셰이프 금지)" ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass sh:NodeShape .
+
+djr:MetaPropertyShapeIriShape a sh:NodeShape ;
+    sh:message "프로퍼티 셰이프는 IRI 의무 (E4)" ;
+    sh:nodeKind sh:IRI ;
+    sh:targetObjectsOf sh:property .

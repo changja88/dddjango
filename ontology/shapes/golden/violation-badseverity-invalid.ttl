@@ -1,0 +1,21 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-checker-b1 a djr:Checker ;
+    skos:prefLabel "골든 검사기 b1"@ko .
+
+djr:golden-expr-b1 a djr:Expression ;
+    prov:specializationOf djr:golden-work-b1 ;
+    djr:revision 1 .
+
+djr:golden-violation-b1 a djr:Violation ;
+    djr:byChecker djr:golden-checker-b1 ;
+    djr:severity djr:golden-bogus-severity ;
+    djr:targetFile "apps/order/services.py" ;
+    djr:violatesExpression djr:golden-expr-b1 ;
+    djr:violatesWork djr:golden-work-b1 .
+
+djr:golden-work-b1 a djr:Obligation ;
+    skos:prefLabel "골든 규범 b1"@ko ;
+    djr:enforcedBy djr:golden-checker-b1 .

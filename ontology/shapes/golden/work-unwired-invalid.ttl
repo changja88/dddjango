@@ -1,0 +1,5 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-work-u1 a djr:Obligation ;
+    skos:prefLabel "담당 검사기 없는 규범"@ko .

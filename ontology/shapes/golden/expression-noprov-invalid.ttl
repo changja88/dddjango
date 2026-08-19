@@ -1,0 +1,4 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-expr-p1 a djr:Expression ;
+    djr:revision 2 .

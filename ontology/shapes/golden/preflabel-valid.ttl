@@ -1,0 +1,4 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-thing-v1 skos:prefLabel "언어당 하나뿐인 라벨"@ko .

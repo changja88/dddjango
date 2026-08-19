@@ -1,0 +1,3 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:R-0001@2026-08-18 a djr:Expression .

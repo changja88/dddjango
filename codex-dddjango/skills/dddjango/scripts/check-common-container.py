@@ -22,12 +22,16 @@
 
 사용법: check-common-container.py [TARGET_DIR]   (기본: 현재 디렉터리)
 종료코드: 0=clean(또는 표준 미적용) · 1=사용/분석 오류 · 2=blocker(발견 출력)
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 이 검사기는 rule-owner-map 규칙 0건(선행 계약 소속)이라 레코드는
+rule=null + contract_ref 로 나간다. 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
 import sys
 
 import checker_target
+from findings import ContractFindings
 from pathlib import Path
 
 try:
@@ -42,6 +46,10 @@ LAYER_DIRS = NEW_LAYERS
 
 # 루트 횡단 버킷의 이름 — `common` 은 역사적 버킷 낱말이다(#49 검출 리터럴 · 수용 아님).
 BUCKET_NAMES = ("framework", "common")
+
+# 구조화 레코드의 선행 계약 표기 — rule-owner-map 규칙 0건(reverse_coverage 의
+# PRIOR_CONTRACT_SCRIPTS 사유와 같은 소유 선언)이라 rule=null 로 나간다.
+CONTRACT_REF = "선행 규약(D38 승격/강등 — 루트 framework/ 배치) 소유"
 
 
 def _root_application(root: Path) -> Path | None:
@@ -85,7 +93,7 @@ def main(argv: list[str]) -> int:
     if app_container is None:
         return 0  # 표준 레이아웃 미적용 → 기존 규약 존중, 해당 없음.
 
-    findings: list[str] = []
+    findings = ContractFindings(CONTRACT_REF)
     for name in BUCKET_NAMES:
         bucket = app_container / name
         if not _is_misplaced_bucket(bucket):
@@ -95,7 +103,12 @@ def main(argv: list[str]) -> int:
             for p in bucket.iterdir()
             if p.name != "__pycache__"
         )
-        findings.append(f"  [컨테이너] {bucket.relative_to(root).as_posix()}/  (내용: {', '.join(inside)})")
+        rel = bucket.relative_to(root).as_posix()
+        findings.add(
+            f"  [컨테이너] {rel}/  (내용: {', '.join(inside)})",
+            where=rel,
+            msg=f"횡단 버킷이 application/ 안에 있다 (내용: {', '.join(inside)})",
+        )
 
     if findings:
         print("blocker — 횡단 `framework/` 버킷이 `application/` 안에 있다 (트리 112행: `framework/` 는 프로젝트 루트 = `application/` 의 형제)")

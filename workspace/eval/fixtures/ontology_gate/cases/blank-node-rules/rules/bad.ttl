@@ -1,0 +1,3 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-fx-1 djr:statesNorm [ djr:kind djr:kind-norm ] .

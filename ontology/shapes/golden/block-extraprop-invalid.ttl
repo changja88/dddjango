@@ -1,0 +1,7 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+
+djr:golden-block-e1 a djr:Block ;
+    djr:evidence "closed 셰이프 선언 밖 술어" ;
+    djr:kind djr:kind-norm ;
+    djr:order 1 ;
+    djr:text "잉여 술어를 단 블록."@ko .

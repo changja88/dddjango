@@ -1,0 +1,4 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-thing-d1 skos:prefLabel "라벨 둘"@ko, "라벨 하나"@ko .

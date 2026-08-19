@@ -1,0 +1,10 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+djr:golden-debt-i1 a djr:SyncDebt ;
+    djr:debtRegisteredOn "2026-08-19"^^xsd:date ;
+    djr:debtSection djr:golden-section-di1 .
+
+djr:golden-section-di1 a djr:Section ;
+    djr:headingSnapshot "사유 없는 채무의 절"@ko ;
+    djr:sectionOwner djr:owner-graph .

@@ -1,0 +1,9 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+djr:golden-agent-1 a djr:Agent ;
+    skos:prefLabel "골든 위임 에이전트"@ko .
+
+djr:golden-work-d1 a djr:Obligation ;
+    skos:prefLabel "위임 에이전트 소유 규범"@ko ;
+    djr:delegatedTo djr:golden-agent-1 .

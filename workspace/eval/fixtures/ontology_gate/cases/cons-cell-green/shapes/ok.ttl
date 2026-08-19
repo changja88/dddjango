@@ -1,0 +1,10 @@
+@prefix djr: <https://numchida.com/ns/djr#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+djr:OkShape a sh:NodeShape ;
+    sh:property djr:OkShape-p ;
+    sh:targetClass djr:Block .
+
+djr:OkShape-p a sh:PropertyShape ;
+    sh:in ( djr:kind-norm djr:kind-prose ) ;
+    sh:path djr:kind .
