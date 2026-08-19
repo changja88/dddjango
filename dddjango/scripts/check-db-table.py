@@ -40,7 +40,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import Findings
+from findings import Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -541,7 +541,10 @@ def main(argv: list[str]) -> int:
                     apps.append((p, bc_rel, bc.name))
 
     if not apps and not findings:
-        print("blocker: 채택 신호는 있는데 `django_<bounded_context>/` 앱이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        guard = zero_target_guard(
+            "blocker: 채택 신호는 있는데 `django_<bounded_context>/` 앱이 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
 
     new_set = _new_paths(target.resolve())

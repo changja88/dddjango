@@ -48,7 +48,7 @@ import ast
 import sys
 
 import checker_target
-from findings import Candidates, Findings
+from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -500,7 +500,10 @@ def main(argv: list[str]) -> int:
 
     # 대상 0건 가드(#74) — 채택 신호가 있는데 검사 대상 층이 하나도 안 열리면 경로 계약이 깨진 것.
     if adopted and domain_seen == 0 and not any((bc / "application_layer").is_dir() for bc in adopted):
-        print("blocker — 표준 채택 신호가 있는데 domain_layer/application_layer 대상이 0건이다 (경로 계약 불일치 — #74)")
+        guard = zero_target_guard(
+            "blocker — 표준 채택 신호가 있는데 domain_layer/application_layer 대상이 0건이다 (경로 계약 불일치 — #74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
 
     for c in cand:

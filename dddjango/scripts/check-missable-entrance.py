@@ -55,7 +55,7 @@ import ast
 import sys
 
 import checker_target
-from findings import Candidates, Findings
+from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -399,7 +399,10 @@ def main(argv: list[str]) -> int:
 
     # 대상 0건 가드(#74) — adopted 인데 driving 층이 0건이면 경로 계약 불일치다.
     if bcs and not any(_driving(bc) is not None for bc in bcs):
-        print("blocker: 채택 신호는 있는데 driving 층 디렉터리가 0건이다 — 조용한 무동작을 금지한다(#74)")
+        guard = zero_target_guard(
+            "blocker: 채택 신호는 있는데 driving 층 디렉터리가 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
 
     for bc in bcs:

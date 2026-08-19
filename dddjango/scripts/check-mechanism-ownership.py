@@ -40,7 +40,7 @@ import subprocess
 import sys
 
 import checker_target
-from findings import Findings
+from findings import Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -312,7 +312,10 @@ def main(argv: list[str]) -> int:
     # 대상 0건 가드(#74) — 채택 신호는 있는데 settings 도 migrations 도 안 보이면
     # 경로 계약이 어긋난 것이다(조용한 무동작 금지).
     if adopted and not settings_files and not mig_dirs:
-        print("blocker: 채택 신호는 있는데 settings·migrations 대상이 0건이다 — 조용한 무동작을 금지한다(#74)")
+        guard = zero_target_guard(
+            "blocker: 채택 신호는 있는데 settings·migrations 대상이 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
     if not adopted and not settings_files and not mig_dirs:
         print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")

@@ -65,6 +65,8 @@ from fixture_matrix import AUTO_PAIRS, PLAIN_PAIRS  # noqa: E402
 from checker_baseline_matrix import (  # noqa: E402
     GIT_LANES,
     GIT_AFFECTED,
+    GUARD_LANE,
+    GUARD_LANES,
     RISK_LANES,
     _RISK_DIRS,
     DEFAULT_LANE,
@@ -147,6 +149,22 @@ EXPECTED: "dict[str, tuple[int, int, int, str, str]]" = {
     "check-composition-root.py::composition_root_single_file": (2, 1, 0, "#497×1", "2c43cc1deddc1a8c"),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 0, "#63×1", "238f374c04cdbc00"),
     "check-error-centralization.py::error_centralization_code": (2, 3, 0, "#572×1,contract:선행 계약(08-04 API-error) 소유×2", "ca07fbbfc15d97c8"),
+    "check-db-table.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-domain-model.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-event-publish.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-idempotency-scope-creep.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-layer-skeleton.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-mechanism-ownership.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-missable-entrance.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-naming.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-ninja-boundary-middleware.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-port-adapter-pairing.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-public-surface-annotation.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-synthetic-infra-exc.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-test-config.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-transaction-boundary.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-transient-overmapping.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
+    "check-usecase-dto-placement.py::guard-zero": (2, 1, 0, "sentinel:대상0×1", "a660897a690a1683"),
 }
 
 
@@ -168,6 +186,9 @@ def lane_plan(fixtures_dir: Path) -> "list[tuple[str, str, str, Path | None, Pat
         plan.append((f"{script}::{lane_dir}", script, lane_dir,
                      red_src if red_src.is_dir() else None,
                      green_src if green_src.is_dir() else None))
+    for script, guard_fx in GUARD_LANES:
+        # 가드 레인(A-5 골든)은 red 축뿐 — «대상 0» 픽스처 자체가 발화 조건이라 green 짝 없음.
+        plan.append((f"{script}::{GUARD_LANE}", script, GUARD_LANE, fixtures_dir / guard_fx, None))
     return plan
 
 
@@ -354,7 +375,13 @@ def main(argv: "list[str]") -> int:
         default_keys = {k for k in EXPECTED if "::" not in k}
         git_keys = {k for k in EXPECTED if "::" in k and k.split("::", 1)[1] in GIT_LANES}
         want_git = {f"{s}::{lane}" for s in GIT_AFFECTED for lane in GIT_LANES}
-        risk_keys = set(EXPECTED) - default_keys - git_keys
+        guard_keys = {k for k in EXPECTED if k.endswith(f"::{GUARD_LANE}")}
+        want_guard = {f"{s}::{GUARD_LANE}" for s, _fx in GUARD_LANES}
+        if guard_keys != want_guard:
+            print(f"재료 결손: 가드 레인 키 불일치 — 선언만: {sorted(want_guard - guard_keys)} · "
+                  f"기대표만: {sorted(guard_keys - want_guard)}", file=sys.stderr)
+            return 1
+        risk_keys = set(EXPECTED) - default_keys - git_keys - guard_keys
         want_risk = {f"{s}::{d}" for s, d, _a in RISK_LANES}
         if default_keys != set(CONVERTED):
             print(f"재료 결손: 로스터↔EXPECTED 키 불일치 — 로스터만: {sorted(set(CONVERTED) - default_keys)} · "

@@ -105,6 +105,33 @@ RISK_LANES: "tuple[tuple[str, str, tuple[str, ...]], ...]" = (
 _RISK_DIRS: "frozenset[str]" = frozenset(d for _s, d, _a in RISK_LANES)
 _RISK_ARGV: "dict[str, tuple[str, ...]]" = {d: a for _s, d, a in RISK_LANES}
 
+# ── 가드 레인 16종(귀속 매핑표 v2 A-5/A-6 — 대상-0 가드 발화 골든) ──
+# 각 레인 = «층 신호 디렉터리만 있는» 픽스처(.gitkeep 뿐·파일 0)에 무옵션 positional
+# 호출 → exit 2·guard 1라인(stdout byte = 이행 전과 무변)·레코드 1건(rule=null·
+# sentinel=대상0·severity=violation). A-5 로스터 21 중 잔여 5는 별도: context-isolation
+# (가드 도달 불능 — 신호 판정이 공집합에서 선행 clean 하는 사도 분기·이행 보고 ⑤-2)·
+# EC/openapi/api-error/response-schema(code-profile argv 의존 발화 — 후속 등재).
+GUARD_LANE: str = "guard-zero"
+GUARD_LANES: "tuple[tuple[str, str], ...]" = (
+    ("check-db-table.py", "guard_zero_domain"),
+    ("check-domain-model.py", "guard_zero_django"),
+    ("check-event-publish.py", "guard_zero_domain"),
+    ("check-idempotency-scope-creep.py", "guard_zero_domain"),
+    ("check-layer-skeleton.py", "guard_zero_framework"),
+    ("check-mechanism-ownership.py", "guard_zero_domain"),
+    ("check-missable-entrance.py", "guard_zero_domain"),
+    ("check-naming.py", "guard_zero_domain"),
+    ("check-ninja-boundary-middleware.py", "guard_zero_domain"),
+    ("check-port-adapter-pairing.py", "guard_zero_domain"),
+    ("check-public-surface-annotation.py", "guard_zero_domain"),
+    ("check-synthetic-infra-exc.py", "guard_zero_domain"),
+    ("check-test-config.py", "guard_zero_domain"),
+    ("check-transaction-boundary.py", "guard_zero_django"),
+    ("check-transient-overmapping.py", "guard_zero_domain"),
+    ("check-usecase-dto-placement.py", "guard_zero_django"),
+)
+_GUARD_FIXTURE: "dict[str, str]" = dict(GUARD_LANES)
+
 
 def lane_allowed_exits(lane: str) -> "frozenset[int]":
     """emit-expected 세탁 거부의 레인별 정당 exit 선언 — git 레인은 clean 저장소에서
@@ -121,6 +148,9 @@ def lane_argv(script: str, auto: bool, target: str, scripts_dir: Path,
     self-test) 시에는 같은 «형태»로 주입 디렉터리를 쓴다."""
     if lane in _RISK_DIRS:
         return [sys.executable, str(scripts_dir / script), target, *_RISK_ARGV[lane]]
+    if lane == GUARD_LANE:
+        # 가드 재현은 무옵션 positional(A-5 재현 재료와 동일) — auto 플래그 미부가.
+        return [sys.executable, str(scripts_dir / script), target]
     if scripts_dir == S:
         return checker_argv(sys.executable, script, target, auto)
     argv: "list[str]" = [sys.executable, str(scripts_dir / script), target]
@@ -181,6 +211,8 @@ def lane_plan(fixtures_dir: Path) -> "list[tuple[str, str, str, Path | None]]":
     for script, lane_dir, _extra in RISK_LANES:
         src: Path = fixtures_dir / lane_dir / "bad_rules"
         plan.append((f"{script}::{lane_dir}", script, lane_dir, src if src.is_dir() else None))
+    for script, guard_fx in GUARD_LANES:
+        plan.append((f"{script}::{GUARD_LANE}", script, GUARD_LANE, fixtures_dir / guard_fx))
     return plan
 
 
@@ -247,6 +279,22 @@ EXPECTED: "dict[str, tuple[int, int, int, int, bool]]" = {
     "check-composition-root.py::composition_root_single_file": (2, 1, 1, 2, False),
     "check-openapi-error-declaration.py::openapi_decl_missing": (2, 1, 1, 2, False),
     "check-error-centralization.py::error_centralization_code": (2, 1, 1, 4, False),
+    "check-db-table.py::guard-zero": (2, 0, 0, 1, True),
+    "check-domain-model.py::guard-zero": (2, 0, 0, 1, True),
+    "check-event-publish.py::guard-zero": (2, 0, 0, 1, True),
+    "check-idempotency-scope-creep.py::guard-zero": (2, 0, 0, 1, True),
+    "check-layer-skeleton.py::guard-zero": (2, 0, 0, 1, True),
+    "check-mechanism-ownership.py::guard-zero": (2, 0, 0, 1, True),
+    "check-missable-entrance.py::guard-zero": (2, 0, 0, 1, True),
+    "check-naming.py::guard-zero": (2, 0, 0, 1, True),
+    "check-ninja-boundary-middleware.py::guard-zero": (2, 0, 0, 1, True),
+    "check-port-adapter-pairing.py::guard-zero": (2, 0, 0, 1, True),
+    "check-public-surface-annotation.py::guard-zero": (2, 0, 0, 1, True),
+    "check-synthetic-infra-exc.py::guard-zero": (2, 0, 0, 1, True),
+    "check-test-config.py::guard-zero": (2, 0, 0, 1, True),
+    "check-transaction-boundary.py::guard-zero": (2, 0, 0, 1, True),
+    "check-transient-overmapping.py::guard-zero": (2, 0, 0, 1, True),
+    "check-usecase-dto-placement.py::guard-zero": (2, 0, 0, 1, True),
 }
 
 
@@ -443,7 +491,13 @@ def main(argv: "list[str]") -> int:
         default_keys = {k for k in EXPECTED if "::" not in k}
         git_keys = {k for k in EXPECTED if "::" in k and k.split("::", 1)[1] in GIT_LANES}
         want_git = {f"{s}::{lane}" for s in GIT_AFFECTED for lane in GIT_LANES}
-        risk_keys = set(EXPECTED) - default_keys - git_keys
+        guard_keys = {k for k in EXPECTED if k.endswith(f"::{GUARD_LANE}")}
+        want_guard = {f"{s}::{GUARD_LANE}" for s, _fx in GUARD_LANES}
+        if guard_keys != want_guard:
+            print(f"재료 결손: 가드 레인 키 불일치 — 선언만: {sorted(want_guard - guard_keys)} · "
+                  f"기대표만: {sorted(guard_keys - want_guard)}", file=sys.stderr)
+            return 1
+        risk_keys = set(EXPECTED) - default_keys - git_keys - guard_keys
         want_risk = {f"{s}::{d}" for s, d, _a in RISK_LANES}
         if default_keys != roster:
             print(f"재료 결손: 로스터↔EXPECTED 키 불일치 — 로스터만: {sorted(roster - default_keys)} · "

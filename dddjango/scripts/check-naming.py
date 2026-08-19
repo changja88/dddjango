@@ -59,7 +59,7 @@ import re
 import sys
 
 import checker_target
-from findings import Candidates, Findings
+from findings import Candidates, Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -497,7 +497,10 @@ def main(argv: list[str]) -> int:
 
     # 대상 0건 가드(#74) — touched 필터 없음이라 자리는 대상 집합 직후다(#75).
     if bcs and not any(_py_files(bc) for bc in bcs):
-        print("blocker: 채택 신호는 있는데 검사할 .py 가 0건이다 — 조용한 무동작을 금지한다(#74)")
+        guard = zero_target_guard(
+            "blocker: 채택 신호는 있는데 검사할 .py 가 0건이다 — 조용한 무동작을 금지한다(#74)"
+        )
+        emit_all(guard, printer=print, indent="")
         return 2
 
     for bc in bcs:

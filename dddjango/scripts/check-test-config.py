@@ -46,7 +46,7 @@ import re
 import sys
 
 import checker_target
-from findings import Findings
+from findings import Findings, emit_all, zero_target_guard
 from pathlib import Path
 
 try:
@@ -433,7 +433,10 @@ def main(argv: list[str]) -> int:
         adopted = any(_has_adoption_signal(b) for b in bcs)
         # 대상 0건 가드(#74) — 채택 신호는 있는데 이 검사기의 대상이 전부 0건이면 exit 2.
         if adopted and not test_dirs and not configs and not settings_dirs:
-            print("blocker: 채택 신호는 있는데 test/·pytest 설정·settings 대상이 전부 0건이다 — 조용한 무동작을 금지한다(#74)")
+            guard = zero_target_guard(
+                "blocker: 채택 신호는 있는데 test/·pytest 설정·settings 대상이 전부 0건이다 — 조용한 무동작을 금지한다(#74)"
+            )
+            emit_all(guard, printer=print, indent="")
             return 2
         if not adopted and not configs and not settings_dirs:
             print("표준 레이아웃 미채택 — 검사 대상 없음 (clean)")
