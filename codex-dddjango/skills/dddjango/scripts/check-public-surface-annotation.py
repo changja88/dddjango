@@ -149,15 +149,15 @@ def _check_signature(fn: ast.FunctionDef | ast.AsyncFunctionDef, in_class: bool,
         if in_class and i == 0 and a.arg in ("self", "cls"):
             continue  # 관례 수신자 — 애너테이션 문법 관례가 없다
         if a.annotation is None:
-            out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 매개변수 `{a.arg}` 에 타입이 없다")
+            out.add("#493", f"{rel}:{fn.lineno}", f"`{fn.name}()` 매개변수 `{a.arg}` 에 타입이 없다")
     for a in args.kwonlyargs:
         if a.annotation is None:
-            out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 매개변수 `{a.arg}` 에 타입이 없다")
+            out.add("#493", f"{rel}:{fn.lineno}", f"`{fn.name}()` 매개변수 `{a.arg}` 에 타입이 없다")
     for a in (args.vararg, args.kwarg):
         if a is not None and a.annotation is None:
-            out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 매개변수 `*{a.arg}` 에 타입이 없다")
+            out.add("#493", f"{rel}:{fn.lineno}", f"`{fn.name}()` 매개변수 `*{a.arg}` 에 타입이 없다")
     if fn.returns is None:
-        out.add("#493", rel, f":{fn.lineno} `{fn.name}()` 반환 타입이 없다")
+        out.add("#493", f"{rel}:{fn.lineno}", f"`{fn.name}()` 반환 타입이 없다")
 
 
 def _record_syntax_bindings(node: ast.AST, bound: set[str]) -> None:
@@ -207,7 +207,7 @@ def _scan_stmts(
                 bound.add(name)
                 if first and not declarative and not _is_dunder(name) and name not in PROTOCOL_NAMES:
                     where = {"module": "모듈 변수", "class": "클래스 변수", "function": "지역 변수"}[scope]
-                    out.add("#493", rel, f":{stmt.lineno} {where} `{name}` 의 첫 대입에 타입이 없다 — `name: T = …`")
+                    out.add("#493", f"{rel}:{stmt.lineno}", f"{where} `{name}` 의 첫 대입에 타입이 없다 — `name: T = …`")
             else:
                 _record_syntax_bindings(stmt, bound)  # 언패킹·다중·비-Name 타깃(문법 면제)
             continue
@@ -267,7 +267,7 @@ def _scan_class(cls: ast.ClassDef, rel: Path, out: Findings) -> None:
             assigned.setdefault(target.attr, node.lineno)
     for attr, lineno in sorted(assigned.items(), key=lambda kv: kv[1]):
         if attr not in annotated and not _is_dunder(attr):
-            out.add("#493", rel, f":{lineno} 속성 `self.{attr}` 의 첫 대입에 타입이 없다 — `self.{attr}: T = …` 또는 클래스 본문 `{attr}: T`")
+            out.add("#493", f"{rel}:{lineno}", f"속성 `self.{attr}` 의 첫 대입에 타입이 없다 — `self.{attr}: T = …` 또는 클래스 본문 `{attr}: T`")
 
 
 # ── #358 · #456 · #69 ───────────────────────────────────────────────────────
@@ -294,7 +294,7 @@ def _check_thin_read(mod: ast.Module, rel: Path, out: Findings) -> None:
         names = _annotation_names(fn.returns)
         bad = {n for n in names if n == "QuerySet" or (n.endswith("Model") and n != "BaseModel")}
         if bad:
-            out.add("#358", rel, f":{fn.lineno} `{fn.name}()` 반환 타입에 `{', '.join(sorted(bad))}` — Thin Read 는 이름 붙인 정적 타입만 내보낸다(ORM 로우·QuerySet 금지)")
+            out.add("#358", f"{rel}:{fn.lineno}", f"`{fn.name}()` 반환 타입에 `{', '.join(sorted(bad))}` — Thin Read 는 이름 붙인 정적 타입만 내보낸다(ORM 로우·QuerySet 금지)")
 
 
 def _check_contract_exceptions(mod: ast.Module, rel: Path, out: Findings) -> None:
@@ -309,7 +309,7 @@ def _collect_runtime_guards(mod: ast.Module, rel: Path, cands: Candidates) -> No
     """#69 (ⓓ 후보) — 프로덕션 assert · isinstance 가드 뒤 TypeError/ValueError."""
     for node in ast.walk(mod):
         if isinstance(node, ast.Assert):
-            cands.add("#69", rel, f":{node.lineno} 프로덕션 `assert`", "이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?")
+            cands.add("#69", f"{rel}:{node.lineno}", f"프로덕션 `assert`", "이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?")
         elif isinstance(node, ast.If):
             has_isinstance = any(
                 isinstance(c, ast.Call) and _name_of(c.func) == "isinstance" for c in ast.walk(node.test)
@@ -321,7 +321,7 @@ def _collect_runtime_guards(mod: ast.Module, rel: Path, cands: Candidates) -> No
                     if isinstance(r, ast.Raise) and r.exc is not None:
                         exc_name = _name_of(r.exc.func) if isinstance(r.exc, ast.Call) else _name_of(r.exc)
                         if exc_name in GUARD_EXC:
-                            cands.add("#69", rel, f":{node.lineno} isinstance 가드 뒤 `raise {exc_name}`", "이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?")
+                            cands.add("#69", f"{rel}:{node.lineno}", f"isinstance 가드 뒤 `raise {exc_name}`", "이 검사는 런타임이 아니라 테스트·타입 체커의 몫인가?")
                             break
 
 

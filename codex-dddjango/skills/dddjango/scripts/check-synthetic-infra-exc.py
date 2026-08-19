@@ -193,9 +193,9 @@ def main(argv: list[str]) -> int:
         hits = _synthesis_raises(mod)
         if hits and _is_new_or_modified(target, f):
             for lineno, exc_name in hits:
-                findings.add("합성", rel, f":{lineno} `raise {exc_name}(...)` — `from` 없이 raw 인프라 예외를 합성했다(계산된 실패는 같은 BC 의 concrete 예외로 정규화한다)")
+                findings.add("합성", f"{rel}:{lineno}", f"`raise {exc_name}(...)` — `from` 없이 raw 인프라 예외를 합성했다(계산된 실패는 같은 BC 의 concrete 예외로 정규화한다)")
         for lineno in _catch_all_translations(mod):
-            findings.add("#129", rel, f":{lineno} catch-all(`except Exception`/bare) 안에서 새 예외를 생성해 raise — 예외 번역은 알려진 구체 예외의 전수 명시 매핑으로 한다")
+            findings.add("#129", f"{rel}:{lineno}", f"catch-all(`except Exception`/bare) 안에서 새 예외를 생성해 raise — 예외 번역은 알려진 구체 예외의 전수 명시 매핑으로 한다")
 
     if findings:
         print(f"blocker {len(findings)}건 — driven 층 예외 규율 위반")
