@@ -8,6 +8,8 @@ the canonical common/BC FrameworkErrorSchema modules, project inventory correspo
 wire-code uniqueness, and narrow direct raw-string discriminator forms.
 
 Exit codes: 0=clean/N/A, 2=contract blocker, 1=usage or analysis error.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -20,6 +22,7 @@ import subprocess
 import sys
 
 import checker_target
+from findings import ContractFindings, SliceFindings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,6 +33,10 @@ except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(
     print("분석 오류: standard_tree.py/anchor_diff.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
+
+# rule-owner-map ⓒ 4규칙(#114·#568·#572·#636)은 tree-slice 레인 소유 — code-profile 레인은
+# 규칙 대응 근거가 없는 선행 계약 레인이다(`dddjango/commands/dddjango.md:111` 근거).
+CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
 
 ERROR_PROFILES = {"auto", "dddjango-code-json", "preserve-established"}
 BC_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
@@ -4494,7 +4501,8 @@ def _tree_camel(bc_name: str) -> str:
 
 
 def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
-    findings: list[str] = []
+    # 라인 문면은 호출자(이 함수) 소유 그대로 — 레코드만 실규칙 rule 로 함께 나간다.
+    findings: SliceFindings = SliceFindings()
     for bc in bcs:
         expected_prefix = _tree_camel(bc.name)
         schema_files: list[Path] = []
@@ -4507,24 +4515,50 @@ def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
             if schema_file.is_file():
                 schema_files.append(schema_file)
             else:
-                findings.append(f"  [#114] {api_rel}: `bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)")
+                findings.add(
+                    rule="#114",
+                    line=f"  [#114] {api_rel}: `bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)",
+                    where=api_rel,
+                    msg="`bc_error_schema.py` 가 없다 — HTTP 오류를 아직 안 여는 BC 에도 «빈 파일»로 항상 있다(부모 api/ 가 항상이라)",
+                )
             for p in sorted(api.glob("*.py")):
                 low = p.name.lower()
                 if p.name != "bc_error_schema.py" and "error" in low and "schema" in low:
-                    findings.append(f"  [#568] {p.relative_to(root)}: 폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다")
+                    findings.add(
+                        rule="#568",
+                        line=f"  [#568] {p.relative_to(root)}: 폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다",
+                        where=p.relative_to(root),
+                        msg="폴더 밖 이름은 «접미» 자다 — BC 오류 스키마 파일은 `bc_error_schema.py` 하나다",
+                    )
             for schema_dir in api.rglob("schema"):
                 if not schema_dir.is_dir():
                     continue
                 for p in sorted(schema_dir.glob("*error*.py")):
-                    findings.append(f"  [#568] {p.relative_to(root)}: `schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로")
+                    findings.add(
+                        rule="#568",
+                        line=f"  [#568] {p.relative_to(root)}: `schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로",
+                        where=p.relative_to(root),
+                        msg="`schema/` 안 이름은 «접두» 자(schema_in/schema_out)다 — 오류 스키마는 `api/bc_error_schema.py` 로",
+                    )
         if len(schema_files) > 1:
-            findings.append(f"  [#114] {bc.relative_to(root)}: `bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다")
+            findings.add(
+                rule="#114",
+                line=f"  [#114] {bc.relative_to(root)}: `bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다",
+                where=bc.relative_to(root),
+                msg=f"`bc_error_schema.py` 가 {len(schema_files)}개다 — BC 당 정확히 하나다",
+            )
         for schema_file in schema_files:
             rel = schema_file.relative_to(root)
             try:
                 mod = ast.parse(schema_file.read_text(encoding="utf-8"))
             except (SyntaxError, OSError, UnicodeDecodeError):
-                findings.append(f"  [분석] {rel}: bc_error_schema.py 를 파싱하지 못했다")
+                # "#N" 꼴 밖 표지 — findings.py 가 rule=null + sentinel 로 격리한다(parse-fail 류).
+                findings.add(
+                    rule="분석",
+                    line=f"  [분석] {rel}: bc_error_schema.py 를 파싱하지 못했다",
+                    where=rel,
+                    msg="bc_error_schema.py 를 파싱하지 못했다",
+                )
                 continue
             classes = [n for n in mod.body if isinstance(n, ast.ClassDef)]
             schemas = [c for c in classes if c.name.endswith("ErrorSchema")]
@@ -4538,13 +4572,28 @@ def _tree_slice(root: Path, bcs: list[Path]) -> list[str]:
             expected_schema = f"{expected_prefix}ErrorSchema"
             expected_code = f"{expected_prefix}ErrorCode"
             if not any(c.name == expected_schema for c in schemas):
-                findings.append(f"  [#572] {rel}: 응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)")
+                findings.add(
+                    rule="#572",
+                    line=f"  [#572] {rel}: 응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)",
+                    where=rel,
+                    msg=f"응답 본문 클래스 `{expected_schema}` 가 없다 — `<Bc>ErrorCode` 와 함께 온다(코드는 스키마 code 필드의 «타입»)",
+                )
             if not any(c.name == expected_code for c in codes):
-                findings.append(f"  [#572] {rel}: 오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)")
+                findings.add(
+                    rule="#572",
+                    line=f"  [#572] {rel}: 오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)",
+                    where=rel,
+                    msg=f"오류 코드 `{expected_code}` 가 없다 — `<Bc>ErrorSchema` 와 함께 온다(떼면 둘이 따로 는다)",
+                )
             for code_cls in codes:
                 base_names = {b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "") for b in code_cls.bases}
                 if not (base_names & strenum_names):
-                    findings.append(f"  [#636] {rel}: `{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다")
+                    findings.add(
+                        rule="#636",
+                        line=f"  [#636] {rel}: `{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다",
+                        where=rel,
+                        msg=f"`{code_cls.name}` 는 `StrEnum` 이어야 한다 — Literal·맨 문자열 상수 모음으로 대신하지 않는다",
+                    )
     return findings
 
 
@@ -4623,10 +4672,20 @@ def main(argv: list[str]) -> int:
                     "[check-error-centralization] BLOCKER — code-profile FrameworkErrorSchema schema, "
                     "inventory, or raw code contract violation:"
                 )
+                # 레코드는 출력 대상과 1:1 거울 — 라인 문면은 blocker/render() 소유 그대로
+                # (선행 계약 판형 · rule=null + contract_ref).
+                record_findings: ContractFindings = ContractFindings(CONTRACT_REF)
                 for blocker in blockers:
                     print(f"  - {blocker}")
+                    record_findings.add(f"  - {blocker}", where="(code-profile)", msg=blocker)
                 for finding in reported_findings:
                     print(finding.render())
+                    record_findings.add(
+                        finding.render(),
+                        where=f"{finding.relative_path}:{finding.lineno}",
+                        msg=f"{finding.category}: {finding.shown}",
+                        symbol=finding.category,
+                    )
                 if dynamic_proof_only:
                     # 토큰 진단을 삼키지 않는다(정보 손실 0) — exit 는 findings 가 정하되,
                     # 남은 정적 해석 불능이 «동적 error shape» 유형임을 함께 보고한다.
