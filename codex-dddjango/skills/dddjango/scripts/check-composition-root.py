@@ -144,6 +144,10 @@ class Finding:
     rule: str | None = None
     # 위반 심볼(U17) — 생성 지점 node 가 안정 이름을 아는 경우만 채우고, 불명이면 null.
     symbol: str | None = None
+    # #440 선점 억제 키 재료(귀속 매핑표 v2 §5 · MEDIATION-3 M1/R2 — 사건 식별자 =
+    # registrar fn 이름). 방출 지점이 그 사건의 registrar 를 아는 경우(행8·9·10ⓐ)만
+    # 채우고, 그 밖(행6ⓒ decorator 등)은 None — 키를 만들지 않는다.
+    overlap_fn: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1291,6 +1295,7 @@ def _append_finding(
     category: str,
     *,
     rule: str | None = None,
+    overlap_fn: str | None = None,
 ) -> None:
     lineno = getattr(node, "lineno", 1)
     key = (parsed.relative_path, lineno, category)
@@ -1311,6 +1316,7 @@ def _append_finding(
             shown,
             rule=rule,
             symbol=_node_symbol(node),
+            overlap_fn=overlap_fn,
         )
     )
 
@@ -1546,6 +1552,9 @@ def _analyze_urlconf(
 
     parents = _parent_map(parsed.tree)
     events: dict[str, list[ast.Call]] = {spec.full_path: [] for spec in specs}
+    function_by_path: dict[str, str] = {
+        spec.full_path: spec.function_name for spec in specs
+    }
     expected_paths = set(events)
     for call in (node for node in ast.walk(parsed.tree) if isinstance(node, ast.Call)):
         top = _top_statement(call, parsed.tree, parents)
@@ -1566,6 +1575,7 @@ def _analyze_urlconf(
             _append_finding(
                 findings, seen, parsed, call,
                 "registrar call must be a module-level direct event", rule="#440",
+                overlap_fn=function_by_path[resolved],
             )
             continue
         events[resolved].append(call)
@@ -1574,6 +1584,7 @@ def _analyze_urlconf(
             _append_finding(
                 findings, seen, parsed, call,
                 "registrar URLconf call has wrong arity", rule="#440",
+                overlap_fn=function_by_path[resolved],
             )
             continue
         resolved_argument = _resolve_imported_expression(call.args[0], bindings, invalidated)
@@ -1596,6 +1607,7 @@ def _analyze_urlconf(
                 parsed.tree,
                 f"registrar call missing: {spec.function_name}",
                 rule="#440",
+                overlap_fn=spec.function_name,
             )
         elif count > 1:
             # 행10ⓑ — «정확히 한 번»은 #440 문면이 아니라 08-03 계약 문면에만 있다(V6).
@@ -1687,6 +1699,42 @@ def _composition_semantics(
     )
 
 
+# tree↔code 선점 억제 키의 rule 공간(귀속 매핑표 v2 §5 overlap 표 — CR 4행).
+_OVERLAP_RULES: frozenset[str] = frozenset({"#107", "#108", "#109", "#440"})
+# 양 레인 locator 가 rel:lineno 동축인 rule — discriminant = lineno.
+_LINE_KEY_RULES: frozenset[str] = frozenset({"#108", "#109"})
+
+
+def _code_overlap_keys(
+    findings: list[Finding],
+) -> frozenset[tuple[str, str, int | str | None]]:
+    """code 레인 «실발화» finding → tree 선점 억제 키(귀속 매핑표 v2 §5 · M1/R2).
+
+    파일 단위 활성이 아니라 사건 단위다 — code 가 실제 방출한 finding 만 키가 되고,
+    tree 는 정확히 대응하는 엔트리만 억제한다(code 미발화 사건의 tree 위반은 잃지
+    않는다). 키 판형 (rule, rel, discriminant):
+      #108/#109 — 양 레인 locator 동축: discriminant = lineno.
+      #107      — tree 는 파일 단위·code 는 행 단위: 파일×category 대응이라
+                  discriminant = None(그 파일에서 #107 계열 사건(행2·3·4) 실발화
+                  여부만 본다).
+      #440      — 사건 식별자 = registrar fn 이름: discriminant = overlap_fn.
+                  overlap_fn 미채움 #440(행6ⓒ decorator)은 대응 tree 사이트가 없어
+                  키를 만들지 않는다.
+    """
+    keys: set[tuple[str, str, int | str | None]] = set()
+    for finding in findings:
+        if finding.rule not in _OVERLAP_RULES:
+            continue
+        rel: str = finding.relative_path.as_posix()
+        if finding.rule in _LINE_KEY_RULES:
+            keys.add((finding.rule, rel, finding.lineno))
+        elif finding.rule == "#107":
+            keys.add(("#107", rel, None))
+        elif finding.overlap_fn is not None:
+            keys.add(("#440", rel, finding.overlap_fn))
+    return frozenset(keys)
+
+
 # ── 표준 트리 슬라이스 — 트리 개정 명세 몫 18규칙 (트리 2~4·8·9·136·137행) ──
 #
 # 새 트리 모양(composition_root/ 폴더 · api/api_router.py · <project>/{api,urls}.py)에
@@ -1702,10 +1750,13 @@ def _composition_semantics(
 #   #437 <project>/api.py 닫힌 허용 목록 · #440/#441 <project>/urls.py 등록만
 #   #511(ⓓ) api/ 2차 축 — 계약 소유(OAuth 콜백은 webhook/<provider>/) 후보
 #
-# tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 §5 overlap): code-profile 이 실분석한
-# registrar 파일의 #107·#108·#109 와 URLconf 파일의 #440 tree 사이트는 방출을 억제한다
-# (정밀 레인이 이긴다 — 대상 밖 파일·비-code 프로필은 tree 단독 그대로. #437 은 겹침
-# 미등재 — 관찰 대상이라 억제하지 않는다).
+# tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 §5 overlap · MEDIATION-3 M1/R2): code
+# 레인이 «실발화한» finding 에서 사건 단위 키를 만들고(_code_overlap_keys — #108/#109
+# = rel:lineno · #107 = 파일×category 대응 · #440 = URLconf×registrar fn 이름), 정확히
+# 대응하는 tree 엔트리만 억제한다(정밀 레인이 이긴다 — 그 대상에 대해 겹치는 tree
+# 술어만 선점 억제). code 가 포착하지 않는 사건(사설 함수·임의 import·spec 밖
+# registrar 미호출·add_router 등)은 code-profile 활성 파일이라도 tree 단독 그대로
+# 방출한다(#437 은 겹침 미등재 — 관찰 대상이라 억제하지 않는다).
 
 _DRIVING_SEGMENTS = frozenset(
     {"driving_layer"}
@@ -1869,7 +1920,7 @@ def _check_api_dir(
     bc_rel: Path,
     findings: Findings,
     candidates: Candidates,
-    code_registrars: frozenset[Path],
+    code_keys: frozenset[tuple[str, str, int | str | None]],
 ) -> None:
     for driving_name in _DRIVING_SEGMENTS:
         api = bc / driving_name / "api"
@@ -1907,31 +1958,40 @@ def _check_api_dir(
         if router.is_file():
             router_rel: Path = api_rel / "api_router.py"
             _check_api_router(
-                router, router_rel, bc.name, findings,
-                suppress_overlap=router_rel in code_registrars,
+                router, router_rel, bc.name, findings, code_keys=code_keys
             )
 
 
 def _check_api_router(
-    f: Path, rel: Path, bc_name: str, findings: Findings, *, suppress_overlap: bool
+    f: Path,
+    rel: Path,
+    bc_name: str,
+    findings: Findings,
+    *,
+    code_keys: frozenset[tuple[str, str, int | str | None]],
 ) -> None:
-    """suppress_overlap=True 면 tree #107·#108·#109 사이트를 방출하지 않는다 —
-    code-profile 이 이 registrar 파일을 실분석해 같은 사건을 더 정밀한 술어로 내는
-    대상이다(귀속 매핑표 v2 §5 overlap 선점 억제. #111 은 겹침 미등재라 그대로)."""
+    """tree #107·#108·#109 사이트의 선점 억제는 code 레인 «실발화 사건 키»로만 한다
+    (귀속 매핑표 v2 §5 · MEDIATION-3 M1/R2 — 파일 단위 활성 폐기): #108/#109 는
+    (rule, rel, lineno) 동일 좌표 키, #107 은 code 가 이 파일에서 #107 계열 사건을
+    실발화했을 때만 파일 단위 tree #107 억제. code 미발화 사건(사설 함수·임의
+    import·add_router 등)의 tree 위반은 그대로 방출한다(#111 은 겹침 미등재라 항상
+    그대로)."""
     mod = _slice_parse(f)
     if mod is None:
         return
+    rel_key: str = rel.as_posix()
+    file_107_covered: bool = ("#107", rel_key, None) in code_keys
     reg_fns = [n for n in mod.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     named = [n for n in reg_fns if n.name.startswith("register_") and n.name.endswith("_api")]
     if len(named) != 1 or len(reg_fns) != len(named):
-        if not suppress_overlap:
+        if not file_107_covered:
             findings.add(
                 "#107",
                 rel,
                 f"`def register_{bc_name}_api(api)` 등록 함수 «하나»만 갖는다(지금 함수 {len(reg_fns)}개)",
             )
     elif len(named[0].args.args) != 1:
-        if not suppress_overlap:
+        if not file_107_covered:
             findings.add(
                 "#107",
                 rel,
@@ -1942,7 +2002,7 @@ def _check_api_router(
             fn = node.value.func
             nm = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
             if nm in ("register_controllers", "add_router"):
-                if not suppress_overlap:
+                if ("#109", rel_key, node.lineno) not in code_keys:
                     findings.add(
                         "#109",
                         f"{rel}:{node.lineno}",
@@ -1960,11 +2020,9 @@ def _check_api_router(
                 f"{rel}:{getattr(node, 'lineno', 0)}",
                 "api_router.py 에 등록 밖 정의가 있다 — 컨트롤러 import 와 등록 함수만 둔다",
             )
-    if suppress_overlap:
-        return
     for lineno, path_str in _slice_imports(mod):
         top = path_str.split(".")[0]
-        if top not in _API_ROUTER_IMPORT_OK:
+        if top not in _API_ROUTER_IMPORT_OK and ("#108", rel_key, lineno) not in code_keys:
             findings.add(
                 "#108",
                 f"{rel}:{lineno}",
@@ -2015,15 +2073,21 @@ def _check_project_api(f: Path, rel: Path, findings: Findings) -> None:
 
 
 def _check_project_urls(
-    f: Path, rel: Path, findings: Findings, *, suppress_overlap: bool
+    f: Path,
+    rel: Path,
+    findings: Findings,
+    *,
+    code_keys: frozenset[tuple[str, str, int | str | None]],
 ) -> None:
-    """suppress_overlap=True 면 tree #440 사이트를 방출하지 않는다 — code-profile 이
-    이 URLconf 를 실분석해 같은 사건(미호출 등)을 더 정밀한 술어로 내는 대상이다
-    (귀속 매핑표 v2 §5 overlap 선점 억제. #441 은 겹침 미등재라 그대로)."""
+    """tree #440 사이트의 선점 억제는 code 레인 «실발화 사건 키»로만 한다(귀속
+    매핑표 v2 §5 · MEDIATION-3 M1/R2 — 파일 단위 활성 폐기): 사건 식별자는 registrar
+    fn 이름이다 — code 가 같은 URLconf 에서 같은 fn 의 #440 사건을 실발화했을 때만
+    그 fn 의 tree #440 을 억제한다. spec 밖 registrar 의 미호출 등 code 미발화
+    사건은 그대로 방출한다(#441 은 겹침 미등재라 항상 그대로)."""
     mod = _slice_parse(f)
     if mod is None:
         return
-    imported_regs: dict[str, int] = {}
+    imported_regs: dict[str, tuple[int, str]] = {}
     for node in ast.walk(mod):
         if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
             if node.module.split(".")[0] != "application":
@@ -2031,37 +2095,37 @@ def _check_project_urls(
             for a in node.names:
                 name = a.asname or a.name
                 if a.name.startswith("register_") and a.name.endswith("_api"):
-                    imported_regs[name] = node.lineno
+                    imported_regs[name] = (node.lineno, a.name)
                 else:
                     findings.add(
                         "#441",
                         f"{rel}:{node.lineno}",
                         f"`{node.module}.{a.name}` import — urls.py 가 BC 심볼을 쓰는 예외는 `register_<bc>_api` 명시 호출 하나뿐이다",
                     )
-    if suppress_overlap:
-        return
     called = {
         (n.func.id if isinstance(n.func, ast.Name) else getattr(n.func, "attr", ""))
         for n in ast.walk(mod) if isinstance(n, ast.Call)
     }
-    for name, lineno in imported_regs.items():
-        if name not in called:
-            findings.add(
-                "#440",
-                f"{rel}:{lineno}",
-                f"`{name}` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»",
-            )
+    rel_key: str = rel.as_posix()
+    for name, (lineno, imported_symbol) in imported_regs.items():
+        if name in called or ("#440", rel_key, imported_symbol) in code_keys:
+            continue
+        findings.add(
+            "#440",
+            f"{rel}:{lineno}",
+            f"`{name}` 을 import 하고 부르지 않았다 — urls.py 는 각 BC 의 `register_<bc>_api(api)` 를 «명시적으로 부른다»",
+        )
 
 
 def _standard_tree_slice(
     root: Path,
-    code_registrars: frozenset[Path],
-    code_urlconf: Path | None,
+    code_keys: frozenset[tuple[str, str, int | str | None]],
 ) -> tuple[Findings, Candidates]:
     """구조화 엔트리 수집 — 라인은 공용 포매터(violation `[{rule}] {where}: {msg}` ·
     candidate `[ⓓ{rule}] {where}: {msg} — 물음: {q}`)로 emit_all 이 생성한다(출력 계약 v2).
-    code_registrars/code_urlconf 는 code-profile 이 실분석한 파일 — 그 파일의 겹침 등재
-    tree 사이트(#107·#108·#109·#440)는 선점 억제한다(귀속 매핑표 v2 §5)."""
+    code_keys 는 code 레인 실발화 사건의 선점 억제 키(_code_overlap_keys) — 겹침 등재
+    tree 사이트(#107·#108·#109·#440)는 정확히 대응하는 키가 있을 때만 엔트리 단위로
+    억제한다(귀속 매핑표 v2 §5 · MEDIATION-3 M1/R2 — 파일 단위 활성 폐기)."""
     findings: Findings = Findings(defer=True)
     candidates: Candidates = Candidates(defer=True)
     for bc in _find_bc_dirs(root):
@@ -2070,7 +2134,7 @@ def _standard_tree_slice(
         bc_rel = bc.relative_to(root)
         _check_composition_dir(bc, bc_rel, findings, candidates)
         _check_inner_driving_imports(bc, bc_rel, findings)
-        _check_api_dir(bc, bc_rel, findings, candidates, code_registrars)
+        _check_api_dir(bc, bc_rel, findings, candidates, code_keys)
     for d in _find_project_dirs(root):
         api_py = d / "api.py"
         if api_py.is_file():
@@ -2078,10 +2142,7 @@ def _standard_tree_slice(
         urls_py = d / "urls.py"
         if urls_py.is_file():
             urls_rel: Path = urls_py.relative_to(root)
-            _check_project_urls(
-                urls_py, urls_rel, findings,
-                suppress_overlap=urls_rel == code_urlconf,
-            )
+            _check_project_urls(urls_py, urls_rel, findings, code_keys=code_keys)
     return findings, candidates
 
 
@@ -2102,21 +2163,14 @@ def main(argv: list[str]) -> int:
             if analysis:
                 raise UsageError("; ".join(analysis))
         di_findings: Findings = _filtered_di_findings(config.root, inventory)
-        # tree↔code 동일 사건 선점 억제 대상(귀속 매핑표 v2 §5 overlap) — code-profile 이
-        # 실분석한 registrar/URLconf 파일만. 비-code 프로필·대상 밖 파일은 tree 단독.
-        code_registrars: frozenset[Path] = frozenset()
-        code_urlconf: Path | None = None
-        if config.profile == "dddjango-code-json":
-            code_registrars = frozenset(
-                registrar
-                for raw in config.registrar_modules
-                if (registrar := Path(raw)) in parsed
-            )
-            urlconf_candidate: Path = Path(config.urlconf_module or "")
-            if urlconf_candidate in parsed:
-                code_urlconf = urlconf_candidate
+        # tree↔code 동일 사건 선점 억제(귀속 매핑표 v2 §5 · MEDIATION-3 M1/R2) — 키는
+        # code 레인이 «실발화한» finding 에서만 나온다(파일 단위 활성 폐기). 비-code
+        # 프로필은 composition_findings 가 비어 키도 공집합 = tree 단독 그대로.
+        code_overlap_keys: frozenset[tuple[str, str, int | str | None]] = (
+            _code_overlap_keys(composition_findings)
+        )
         tree_findings, tree_candidates = _standard_tree_slice(
-            config.root, code_registrars, code_urlconf
+            config.root, code_overlap_keys
         )
     except (UsageError, anchor_diff.AnchorDiffUsage) as exc:
         print(f"[check-composition-root] 사용 오류: {exc}", file=sys.stderr)
@@ -2165,8 +2219,8 @@ def main(argv: list[str]) -> int:
         )
     if di_findings:
         print(
-            "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 정본 폴더 "
-            "`composition_root/` 밖에 있거나 부재다(off-tree `composition/` 폴더·단일 파일 모양·부재):"
+            "[check-composition-root] BLOCKER — DI 조립(컴포지션 루트)이 트리에 없는 "
+            "단일 파일 `composition_root.py` 모양이다(#497 — 정본은 BC 루트 «폴더» `composition_root/`):"
         )
         emit_all(di_findings, printer=print)
         print(

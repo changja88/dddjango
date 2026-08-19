@@ -32,6 +32,7 @@
 | ⓓ#511 특수 판형 | `  [ⓓ#511] {dir}/ — 물음: …` | `  [ⓓ#511] {dir}/: 외부 소유 계약 입구 후보(provider 성 디렉터리) — 물음: {q(접두 제거)}` (매핑표 부속 A-3 골든) | candidate 정형화 |
 | 행번호 재배치 11곳(synthetic 2·public-surface 9) | `[{rule}] {rel}: :{lineno} {msg}` | `[{rule}] {rel}:{lineno}: {msg}` | where locator 정밀화(레코드 file 동반 개선) |
 | guard 21종·헤더·근거 블록·clean 라인 | — | **무변**(guard는 라인 무변+record 신규) | 없음 |
+| CR DI blocker 헤더(혼성 패널 M8 — 사후 등재) | `…밖에 있거나 부재다(off-tree \`composition/\` 폴더·단일 파일 모양·부재):` | `…트리에 없는 단일 파일 \`composition_root.py\` 모양이다(#497 — 정본은 BC 루트 «폴더» \`composition_root/\`):` — V2/V3 이관 후 실동작(#497 단독)과 문면 정합 | registry 미파싱 헤더·backstop fragment 무영향(실측) |
 | 타 소유자 이관(EC #117 사건·composition DI V2/V3) | 해당 라인 방출 | **방출 제거**(소유자 단독 — layer-skeleton·context-isolation) | 적용 커밋에서 소유자 실발화 픽스처 실증 후 제거(U11 의무) |
 
 보존 표면의 정확한 한정(R#3 처분 착지·W4 정정): **{정상 red/green stdout(위 열거 외 무변), exit 의미론, 검사기 판정 결과(대상별 red/green — 독립 항목), 위반 incident multiset, 소비자 계약(registry 파싱·backstop 판정·debt 매칭·gate 판정 결과)}**. uncaught traceback byte는 계약 밖. `_entries()` OSError 안정 문면화는 백로그(별도 개선·T2-2 전 아님).
