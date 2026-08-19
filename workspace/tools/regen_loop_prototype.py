@@ -107,7 +107,10 @@ def main() -> int:
     ap.add_argument("--records", required=True)
     ap.add_argument("--snapshot", default=str(SNAPSHOT))
     ap.add_argument("--filter-file", default="", help="file 필드 부분 일치로 범위 한정")
-    ap.add_argument("--severity", default="violation", help="주입 대상 심각도(기본 violation)")
+    # severity 봉인(중재 채택 — L-V 미착지 «choices=violation»): 주입 대상은 위반뿐이다.
+    # info(ⓓ 후보)는 discipline-reviewer 의 물음 채널이지 재생성 주입 재료가 아니다.
+    ap.add_argument("--severity", default="violation", choices=("violation",),
+                    help="주입 대상 심각도(violation 고정 — 후보 주입 오용 차단)")
     ap.add_argument("--out", default="", help="프롬프트 저장 경로(생략 시 stdout)")
     args = ap.parse_args()
 
