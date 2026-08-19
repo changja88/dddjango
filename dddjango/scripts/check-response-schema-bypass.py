@@ -6,6 +6,8 @@ explicit ``--controller-module`` invocation instead validates and analyzes the
 exact selected set, including unchanged tracked files.
 
 Exit codes: 0=clean/help, 2=contract blocker, 1=usage or analysis error.
+구조화 레코드: DJR_FINDINGS_JSON=<경로> 지정 시 findings.py(공용 모듈)가 JSON lines 를
+추가 방출한다 — 라인 출력·exit 의미론 무변(T0 B2).
 """
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ import subprocess
 import sys
 
 import checker_target
+from findings import ContractFindings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
@@ -27,6 +30,9 @@ except ImportError:  # 데이터 모듈 없이는 판정 불가 — fail-closed(
     print("분석 오류: standard_tree.py 를 찾지 못했다 — 검사기와 같은 폴더에 있어야 한다", file=sys.stderr)
     sys.exit(1)
 
+
+# rule-owner-map 규칙 0건 — 선행 계약 소유(reverse_coverage PRIOR_CONTRACT_SCRIPTS 등재).
+CONTRACT_REF = "선행 계약(08-04 API-error) 소유"
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 OPERATION_CONSTRUCTORS = {
@@ -995,13 +1001,22 @@ def main(argv: list[str]) -> int:
         return 2
 
     if findings:
+        # 레코드는 출력 대상과 1:1 거울 — 라인 문면은 render() 소유 그대로(선행 계약 판형).
+        record_findings = ContractFindings(CONTRACT_REF)
+        for finding in findings:
+            record_findings.add(
+                finding.render(),
+                where=f"{finding.path}:{finding.lineno}",
+                msg=f"operation '{finding.operation}' — declared 200-203 schema bypassed by raw Django response",
+                symbol=finding.operation,
+            )
         print(
             "[check-response-schema-bypass] BLOCKER — an ordinary JSON success "
             "operation declares a body-bearing 200-203 schema but directly "
             "returns raw Django HttpResponse/JsonResponse:"
         )
-        for finding in findings:
-            print(finding.render())
+        for line in record_findings:
+            print(line)
         print(
             "  근거: a declared Ninja success schema must own validation and "
             "serialization; direct raw 200-203 Django responses bypass that "
